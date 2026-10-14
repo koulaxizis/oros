@@ -134,7 +134,13 @@
       "xf.from": "From", "xf.to": "To", "xf.need": "Make two accounts first", "xf.deleted": "Transfer deleted",
       "err.same": "Pick two different accounts", "flt.xfer": "Transfers only", "flt.accs": "Accounts",
       "xf.aria": "Transfer {a} from {f} to {t}, {d}", "col.acc": "Account",
-      "exp.sheet": "Open in Spreadsheet", "exp.sheetCap": "Only the first {n} entries fit in one sheet"
+      "exp.sheet": "Open in Spreadsheet", "exp.sheetCap": "Only the first {n} entries fit in one sheet",
+      "menu.bank": "Import bank statement", "menu.rules": "Rules",
+      "flt.inbox": "Imported, no category ({n})", "inbox.bar": "{n} imported entries without a category",
+      "inbox.hint": "Pick a category for each one. Next time a rule can do it for you.",
+      "inbox.run": "Apply rules", "inbox.rule": "Rule…", "inbox.done": "Category set",
+      "inbox.empty": "Every imported entry has a category.", "inbox.cat": "Category for {x}",
+      "tag.bank": "Imported from the bank"
     },
     el: {
       "app": "Έσοδα & Έξοδα",
@@ -208,7 +214,13 @@
       "xf.from": "Από", "xf.to": "Προς", "xf.need": "Φτιάξε πρώτα δύο λογαριασμούς", "xf.deleted": "Η μεταφορά διαγράφηκε",
       "err.same": "Διάλεξε δύο διαφορετικούς λογαριασμούς", "flt.xfer": "Μόνο μεταφορές", "flt.accs": "Λογαριασμοί",
       "xf.aria": "Μεταφορά {a} από {f} προς {t}, {d}", "col.acc": "Λογαριασμός",
-      "exp.sheet": "Άνοιγμα στα Λογιστικά φύλλα", "exp.sheetCap": "Χωρούν μόνο οι πρώτες {n} κινήσεις σε ένα φύλλο"
+      "exp.sheet": "Άνοιγμα στα Λογιστικά φύλλα", "exp.sheetCap": "Χωρούν μόνο οι πρώτες {n} κινήσεις σε ένα φύλλο",
+      "menu.bank": "Εισαγωγή κίνησης λογαριασμού", "menu.rules": "Κανόνες",
+      "flt.inbox": "Εισαγόμενες χωρίς κατηγορία ({n})", "inbox.bar": "{n} εισαγόμενες κινήσεις χωρίς κατηγορία",
+      "inbox.hint": "Διάλεξε κατηγορία για την καθεμία. Την επόμενη φορά μπορεί να το κάνει ένας κανόνας.",
+      "inbox.run": "Εφαρμογή κανόνων", "inbox.rule": "Κανόνας…", "inbox.done": "Η κατηγορία μπήκε",
+      "inbox.empty": "Όλες οι εισαγόμενες κινήσεις έχουν κατηγορία.", "inbox.cat": "Κατηγορία για {x}",
+      "tag.bank": "Από την τράπεζα"
     }
   };
 
@@ -469,7 +481,55 @@
     if (!x || typeof x !== "object" || typeof x.id !== "string" || !ID_RE.test(x.id) ||
         !okStamp(x.m) || !parseYmd(x.d) || !okCents(x.a) || !KINDS[x.k]) return null;
     var c = typeof x.c === "string" && ID_RE.test(x.c) ? x.c : "";
-    return withExtras(withAcc({ id: x.id, m: x.m, d: x.d, a: x.a, k: x.k, c: c, n: normText(x.n, NOTE_LEN) }, x), x, AC_SKIP);
+    return withExtras(withAcc({ id: x.id, m: x.m, d: x.d, a: x.a, k: x.k, c: c, n: normText(x.n, NOTE_LEN) }, x), txBank(x), AC_SKIP);
+  }
+  // Bank import marker on an entry (since 1.98): src "bank", ot (the
+  // bank's own text, what rules match), fit (the bank's transaction id,
+  // OFX FITID / CAMT reference). Checked here, then written in name
+  // order together with any other flat extra (same order an older
+  // version keeps them in, so both write the same canonical JSON).
+  var SRC_TX_RE = /^[a-z0-9]{1,20}$/;
+  function txBank(x) {
+    var y = Object.assign({}, x);
+    if (!(typeof y.src === "string" && SRC_TX_RE.test(y.src))) delete y.src;
+    var ot = normText(y.ot, NOTE_LEN);
+    if (ot) y.ot = ot; else delete y.ot;
+    var fit = normText(y.fit, 80);
+    if (fit) y.fit = fit; else delete y.fit;
+    return y;
+  }
+  // Import rule (since 1.98): "if the bank's text contains q (and/or
+  // the amount is between lo and hi) → category c, kind k (the
+  // category's), rename py, note nt". Keys in name order after id, m:
+  // what an older version's carry-forward of an unknown collection
+  // writes too (canonical JSON).
+  var RULE_Q = 60;
+  function normRule(x) {
+    if (!x || typeof x !== "object" || typeof x.id !== "string" || !ID_RE.test(x.id) || !okStamp(x.m) ||
+        !KINDS[x.k] || typeof x.c !== "string" || !ID_RE.test(x.c)) return null;
+    var q = normText(x.q, RULE_Q);
+    var lo = isInt(x.lo) && x.lo > 0 && x.lo <= MAX_CENTS ? x.lo : 0;
+    var hi = isInt(x.hi) && x.hi > 0 && x.hi <= MAX_CENTS ? x.hi : 0;
+    if (lo && hi && hi < lo) hi = 0;
+    if (!q && !lo && !hi) return null;
+    return withExtras({ id: x.id, m: x.m, c: x.c, hi: hi, k: x.k, lo: lo, nt: normText(x.nt, 80), py: normText(x.py, RULE_Q), q: q }, x);
+  }
+  // Bank profile (since 1.98): how a bank's CSV reads, and which Budget
+  // account its statements go to. sig = the folded header row, or
+  // "ofx:<account>" / "camt:<IBAN>". Columns are 0-based, -1 = none.
+  var SEPS = { ";": 1, ",": 1, "\t": 1, "|": 1 };
+  var ENCS = { auto: 1, "utf-8": 1, "windows-1253": 1, "iso-8859-7": 1, "windows-1252": 1 };
+  function colOf(v) { return isInt(v) && v >= -1 && v < 200 ? v : -1; }
+  function normProf(x) {
+    if (!x || typeof x !== "object" || typeof x.id !== "string" || !ID_RE.test(x.id) || !okStamp(x.m)) return null;
+    var n = normText(x.n, NAME_LEN);
+    if (!n) return null;
+    return withExtras({ id: x.id, m: x.m,
+      ac: typeof x.ac === "string" && ID_RE.test(x.ac) ? x.ac : "",
+      ca: colOf(x.ca), ccr: colOf(x.ccr), cd: colOf(x.cd), cdb: colOf(x.cdb), cm: colOf(x.cm), cp: colOf(x.cp), cs: colOf(x.cs),
+      dec: x.dec === "," ? "," : ".", df: x.df === "mdy" || x.df === "ymd" ? x.df : "dmy",
+      enc: ENCS[x.enc] ? x.enc : "auto", inv: x.inv === true, n: n,
+      sep: SEPS[x.sep] ? x.sep : ",", sig: typeof x.sig === "string" ? x.sig.slice(0, 400) : "" }, x);
   }
   // category = { id, m, k, name ("" = the ready name), col (0–8) }
   function normCat(x) {
@@ -526,15 +586,17 @@
     { key: "bud",  tomb: null,  norm: normBud },
     { key: "rec",  tomb: "rec", norm: normRec },
     { key: "acc",  tomb: "acc", norm: normAcc },
-    { key: "xfer", tomb: "xfer", norm: normXfer }
+    { key: "xfer", tomb: "xfer", norm: normXfer },
+    { key: "prof", tomb: "prof", norm: normProf },   // in name order: where an older
+    { key: "rule", tomb: "rule", norm: normRule }    // version puts unknown collections
   ];
   // Known prefixes tx/cat/rec; a newer version's collection "<key>"
   // uses the tombstone prefix "<key>:" (2–8 lowercase letters).
   var TOMB_RE = /^[a-z]{2,8}:[a-z0-9-]{1,64}$/;
-  var KNOWN_TOP = { ver: 1, tx: 1, cats: 1, cat: 1, bud: 1, rec: 1, acc: 1, xfer: 1, set: 1, tombs: 1 };
+  var KNOWN_TOP = { ver: 1, tx: 1, cats: 1, cat: 1, bud: 1, rec: 1, acc: 1, xfer: 1, rule: 1, prof: 1, set: 1, tombs: 1 };
   var OTHER_RE = /^[a-z]{2,8}$/;
 
-  function emptyData() { return { ver: DATA_VER, tx: [], cats: [], bud: [], rec: [], acc: [], xfer: [], set: { m: 0, cur: "EUR" }, tombs: {} }; }
+  function emptyData() { return { ver: DATA_VER, tx: [], cats: [], bud: [], rec: [], acc: [], xfer: [], prof: [], rule: [], set: { m: 0, cur: "EUR" }, tombs: {} }; }
 
   function laterOf(a, b) {
     if (!a) return b;
@@ -841,6 +903,7 @@
     trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>',
     edit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
     warn: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l10 18H2z"/><path d="M12 10v5"/><path d="M12 18h.01"/></svg>',
+    bank: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10l9-6 9 6"/><path d="M5 10v8M10 10v8M14 10v8M19 10v8"/><path d="M3 21h18"/></svg>',
     over: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 7v6"/><path d="M12 16.5h.01"/></svg>'
   };
 
@@ -923,6 +986,8 @@
     add("all", t("flt.all"));
     add("k:o", t("flt.out"));
     add("k:i", t("flt.in"));
+    var nIn = inboxCount();
+    if (nIn || prev === "inbox") add("inbox", t("flt.inbox", { n: nIn }));
     var g1 = el("optgroup"); g1.label = t("cats.out");
     var g2 = el("optgroup"); g2.label = t("cats.in");
     cats().forEach(function (c) {
@@ -942,7 +1007,11 @@
     if (sel.value !== prev) { filter = "all"; sel.value = "all"; }
   }
 
+  // Imported from a bank and still without a category (the "inbox").
+  function inInbox(x) { return x.src === "bank" && !x.c; }
+  function inboxCount() { var n = 0; data.tx.forEach(function (x) { if (inInbox(x)) n++; }); return n; }
   function matches(x) {
+    if (filter === "inbox" && !inInbox(x)) return false;
     if (filter.indexOf("k:") === 0 && x.k !== filter.slice(2)) return false;
     if (filter.indexOf("c:") === 0 && x.c !== filter.slice(2)) return false;
     if (filter.indexOf("a:") === 0 && (x.ac || "") !== filter.slice(2)) return false;
@@ -965,9 +1034,11 @@
   function renderList() {
     var box = $("list");
     box.innerHTML = "";
+    var inbox = filter === "inbox";
+    renderInboxBar();
     var rows = data.tx.filter(function (x) {
-      return (query || mkOf(x.d) === viewMk) && matches(x);
-    }).concat(data.xfer.filter(function (x) {
+      return (query || inbox || mkOf(x.d) === viewMk) && matches(x);
+    }).concat(inbox ? [] : data.xfer.filter(function (x) {
       return (query || mkOf(x.d) === viewMk) && xferMatches(x);
     }));
     rows.sort(function (a, b) { return cmpStr(b.d, a.d) || b.m - a.m || cmpStr(b.id, a.id); });
@@ -975,7 +1046,7 @@
     found.hidden = !query;
     if (query) found.textContent = t("list.found", { n: rows.length });
     empty.hidden = rows.length > 0;
-    empty.textContent = (query || filter !== "all") ? t("list.none") : t("list.empty");
+    empty.textContent = inbox && !query ? t("inbox.empty") : (query || filter !== "all") ? t("list.none") : t("list.empty");
     var day = null, group = null, dayIn = 0, dayOut = 0, totEl = null;
     var flushDay = function () {
       if (totEl) totEl.textContent = (dayIn ? "+" + money(dayIn) + "  " : "") + (dayOut ? "−" + money(dayOut) : "");
@@ -985,7 +1056,7 @@
         flushDay();
         day = x.d; dayIn = 0; dayOut = 0;
         var head = el("div", "day-head");
-        head.appendChild(el("span", "day-name", dayLabel(x.d) + (query ? " " + x.d.slice(0, 4) : "")));
+        head.appendChild(el("span", "day-name", dayLabel(x.d) + (query || inbox ? " " + x.d.slice(0, 4) : "")));
         totEl = el("span", "day-tot");
         totEl.title = t("day.total");
         head.appendChild(totEl);
@@ -995,9 +1066,74 @@
       }
       if (!x.k) { group.appendChild(xferRow(x)); return; }   // a transfer: not in the day total
       if (x.k === "i") dayIn += x.a; else dayOut += x.a;
-      group.appendChild(txRow(x));
+      group.appendChild(inbox ? inboxRow(x) : txRow(x));
     });
     flushDay();
+  }
+  // The bar over the list: a way into the inbox, or, inside it, a hint
+  // and the rule buttons.
+  function renderInboxBar() {
+    var bar = $("inbox-bar"), n = inboxCount();
+    bar.innerHTML = "";
+    if (filter === "inbox") {
+      bar.hidden = false;
+      bar.className = "inbox-bar in";
+      bar.appendChild(el("p", "hint", t("inbox.hint")));
+      if (BANKUI) {
+        var acts = el("div", "inbox-acts");
+        if (data.rule.length && n) {
+          var run = el("button", "mini", t("inbox.run"));
+          run.type = "button";
+          run.addEventListener("click", function () { BANKUI.rerun(); });
+          acts.appendChild(run);
+        }
+        var rb = el("button", "mini", t("menu.rules"));
+        rb.type = "button";
+        rb.addEventListener("click", function () { BANKUI.rules(); });
+        acts.appendChild(rb);
+        bar.appendChild(acts);
+      }
+      return;
+    }
+    bar.hidden = !n;
+    bar.className = "inbox-bar";
+    if (!n) return;
+    var b = el("button", "inbox-go");
+    b.type = "button";
+    var ic = el("span", "ic");
+    ic.innerHTML = UI.bank;
+    b.appendChild(ic);
+    b.appendChild(el("span", "", t("inbox.bar", { n: n })));
+    b.addEventListener("click", function () {
+      filter = "inbox";
+      query = "";
+      $("q").value = "";
+      renderFilter();
+      renderList();
+    });
+    bar.appendChild(b);
+  }
+  // An inbox row: the entry, then its category right there.
+  function inboxRow(x) {
+    var li = txRow(x);
+    li.className = "inbox-li";
+    var bot = el("div", "inbox-bot");
+    var cs = catSelect(x.k, "");
+    cs.value = "";
+    cs.setAttribute("aria-label", t("inbox.cat", { x: x.n || money(x.a) }));
+    cs.addEventListener("change", function () {
+      if (!cs.value) return;
+      applyChanges([{ id: x.id, c: cs.value, n: x.n }], t("inbox.done"));
+    });
+    bot.appendChild(cs);
+    if (BANKUI) {
+      var rb = el("button", "mini", t("inbox.rule"));
+      rb.type = "button";
+      rb.addEventListener("click", function () { BANKUI.ruleFor({ k: x.k, c: cs.value, n: x.n, ot: x.ot }); });
+      bot.appendChild(rb);
+    }
+    li.appendChild(bot);
+    return li;
   }
 
   function txRow(x) {
@@ -1011,6 +1147,13 @@
     var sub = [an, x.n].filter(Boolean).join(" · ");
     if (sub) mid.appendChild(el("span", "tx-note", sub));
     b.appendChild(mid);
+    if (x.src === "bank") {
+      var bk = el("span", "tx-rec");
+      bk.innerHTML = UI.bank;
+      bk.title = t("tag.bank");
+      bk.setAttribute("aria-label", t("tag.bank"));
+      b.appendChild(bk);
+    }
     if (x.id.charAt(0) === "r" && /-\d{8}$/.test(x.id)) {
       var r = el("span", "tx-rec");
       r.innerHTML = UI.repeat;
@@ -1626,6 +1769,97 @@
       daysAgo: function (n) { return addDays(today, -n); },
       data: function () { return { tx: data.tx, tombs: data.tombs, cur: cur() }; },
       addEntries: addEntries
+    });
+  }
+
+  // Bank statements + rules (budget/bank.js core, budget/bankui.js
+  // dialogs). Imports go through addEntries (one write, Undo).
+  var BANKUI = window.OrosBudgetBank && window.OrosBudgetBankUI ? window.OrosBudgetBankUI : null;
+  function saveRule(v) {
+    var cur0 = v.id ? findIn(data.rule, v.id) : null;
+    var obj = normRule({ id: cur0 ? cur0.id : newId(), m: stamp(cur0 ? cur0.m : 0),
+                         k: v.k, c: v.c, q: v.q, lo: v.lo || 0, hi: v.hi || 0, py: v.py || "", nt: v.nt || "" });
+    if (!obj) return null;
+    if (cur0) data.rule = data.rule.filter(function (y) { return y.id !== cur0.id; });
+    data.rule.push(obj);
+    commit();
+    renderAll();
+    return obj;
+  }
+  function deleteRule(id, text) {
+    var r = findIn(data.rule, id);
+    if (!r) return;
+    var copy = JSON.parse(JSON.stringify(r));
+    data.rule = data.rule.filter(function (y) { return y.id !== id; });
+    tombstone("rule", id);
+    commit();
+    renderAll();
+    undoToast(text, function () {
+      untomb("rule", id);
+      copy.m = stamp(Math.max(copy.m, data.tombs["rule:" + id] || 0));
+      if (!findIn(data.rule, id)) data.rule.push(copy);
+      commit();
+      renderAll();
+    });
+  }
+  // Bank profile: by id, else by name (same name = same profile).
+  function saveProf(v) {
+    var cur0 = v.id ? findIn(data.prof, v.id) : null;
+    if (!cur0) data.prof.forEach(function (p) { if (!cur0 && p.n.toLowerCase() === String(v.n).toLowerCase()) cur0 = p; });
+    var base = cur0 ? Object.assign({}, cur0) : { id: newId(), m: 0 };
+    Object.keys(v).forEach(function (k) { if (k !== "id" && v[k] !== undefined) base[k] = v[k]; });
+    base.m = 0;
+    var obj = normProf(base);
+    if (!obj) return null;
+    var was = cur0 ? JSON.stringify(Object.assign({}, cur0, { m: 0 })) : "";
+    if (was === JSON.stringify(obj)) return cur0;   // nothing changed: no write, no sync
+    obj.m = stamp(cur0 ? cur0.m : 0);
+    if (cur0) data.prof = data.prof.filter(function (y) { return y.id !== cur0.id; });
+    data.prof.push(obj);
+    commit();
+    return obj;
+  }
+  // [{ id, c, n }] → set on the entries in one write; Undo puts back
+  // what they had (unless that entry was changed again since).
+  function applyChanges(list, text) {
+    var before = [];
+    list.forEach(function (ch) {
+      var x = findIn(data.tx, ch.id);
+      var n = normText(ch.n, NOTE_LEN);
+      if (!x || (x.c === ch.c && x.n === n)) return;
+      before.push({ id: x.id, c: x.c, n: x.n, nc: ch.c });
+      x.c = ch.c;
+      x.n = n;
+      x.m = stamp(x.m);
+    });
+    if (!before.length) return;
+    commit();
+    renderAll();
+    undoToast(text, function () {
+      before.forEach(function (b) {
+        var x = findIn(data.tx, b.id);
+        if (!x || x.c !== b.nc) return;
+        x.c = b.c; x.n = b.n; x.m = stamp(x.m);
+      });
+      commit();
+      renderAll();
+    });
+  }
+  function pickFile(accept) {
+    var dh = dialogHost();
+    return dh && typeof dh.openFile === "function" ? dh.openFile(accept) : localPick(accept);
+  }
+  function initBank() {
+    if (!BANKUI) return;
+    BANKUI.init({
+      lang: LANG, el: el, button: button, makeDialog: makeDialog, field: field, swatch: swatch,
+      showDialog: function (dlg) { document.body.appendChild(dlg); dlg.showModal(); },
+      catSelect: catSelect, fillCatSelect: fillCatSelect, accSelect: accSelect, kindSwitch: kindSwitch,
+      hasAccounts: function () { return data.acc.length > 0; },
+      data: function () { return data; }, cur: cur, catName: catName, catCol: catCol, money: money,
+      dateShort: dateShort, centsToInput: function (c) { return centsToInput(c, LANG); },
+      parseAmount: parseAmount, normText: normText, pickFile: pickFile, showToast: showToast,
+      addEntries: addEntries, saveRule: saveRule, deleteRule: deleteRule, saveProf: saveProf, applyChanges: applyChanges
     });
   }
 
@@ -2782,7 +3016,12 @@
     });
     $("flt").addEventListener("change", function () { filter = $("flt").value; renderList(); });
     var acts = { accounts: accountsDialog, cats: catsDialog, export: exportDialog, backup: backup, restore: restore, currency: currencyDialog,
-                 stripe: function () { if (PAY) PAY.open(); } };
+                 stripe: function () { if (PAY) PAY.open(); },
+                 bank: function () { if (BANKUI) BANKUI.open(); }, rules: function () { if (BANKUI) BANKUI.rules(); } };
+    ["bank", "rules"].forEach(function (k) {
+      var mb = document.querySelector('#menu [data-act="' + k + '"]');
+      if (mb) mb.hidden = !BANKUI;
+    });
     var payBtn = document.querySelector('#menu [data-act="stripe"]');
     if (payBtn) { payBtn.hidden = !(PAY && PAY.has()); if (PAY) payBtn.textContent = PAY.label(); }
     [].forEach.call(document.querySelectorAll("#menu [data-act]"), function (b) {
@@ -2878,6 +3117,7 @@
     load();
     loadPrefs();
     initPay();
+    initBank();
     applyI18n();
     wire();
     registerSync();

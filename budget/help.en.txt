@@ -31,12 +31,27 @@ From the `More` menu (the three dots), `Categories` lets you add your own (`New 
 `Currency` sets one currency for every entry. Changing it doesn't convert amounts.
 
 ## Sync and backup
-Entries, accounts, transfers, categories, limits, recurring entries and the currency sync through [orOS sync](help:t/sync). The open tab and your CSV choice stay on this device.
+Entries, accounts, transfers, categories, limits, recurring entries, rules, bank profiles and the currency sync through [orOS sync](help:t/sync). The open tab and your CSV choice stay on this device.
 
 From the `More` menu:
 - `Export`: pick a period (`This month`, `This year` or `Everything`) and save as `CSV`, `Excel` or `PDF report`. For CSV, choose Greek Excel or other apps, such as the orOS [Spreadsheet](app:spreadsheet). `Open in Spreadsheet` opens the entries and a summary straight in [Spreadsheet](app:spreadsheet).
 - `Backup (JSON)` saves everything to a file.
 - `Restore from backup` merges a backup into your data; it never overwrites newer items.
+
+## Bank statements
+`More` › `Import bank statement` reads a file you download from your bank's e-banking: CSV from any bank, OFX / QFX, QIF or CAMT.053 (XML). Nothing is added before you see it.
+
+- **Columns.** For a CSV, Budget finds the date, the description and the amount itself, including Greek files (`1.234,56`, `dd/mm/yyyy`, a `Χ/Π` marker, Windows-1253 text). If something is off, open `Columns and format`: pick the columns, one `Amount` column or separate `Debit` and `Credit` columns, the date order, the number format, the text encoding, or reverse the signs.
+- **Bank profile.** Type a name in `Remember as` (for example "Eurobank") and the columns and the `Budget account` are remembered on all your devices. The next file from that bank is recognised by itself.
+- **Preview.** Every row shows `New`, `Looks like an entry already here` (same account, date and amount with a similar description, or the same bank transaction id), `Already imported`, `Deleted here earlier` or `Skipped` (no date, no amount, another currency). Only ticked rows are imported; you can tick a duplicate if it really is a second one.
+- **Categories.** Pick a category on any row. After a correction, `Always do this` makes a rule from it, so the next import does it by itself.
+- `Import` adds them as normal entries, marked with a small bank icon. `Undo` takes back the whole import. The same file imported again, here or on another device, adds nothing twice.
+
+## Rules
+`More` › `Rules`: "if the description contains LIDL → Groceries". A rule can also look at an amount range (`Amount from`, `Amount to`), rename the entry (`Rename to`) and add a note. When several rules match, the one with the longest text wins. `Apply to uncategorised entries` runs them on what is already here; `Undo` puts it back.
+
+## Uncategorised imports
+When imported entries have no category, a bar above the list says how many. Tap it, or pick `Imported, no category` in the menu next to the search: you see them from every month, each with its category right there. `Apply rules` and `Rule…` help you clear them faster.
 
 ## Stripe and Invoice Ninja
 `More` › `Import from Stripe or Invoice Ninja` brings in an account you connected in [Settings](app:settings) › `Connected services` (for Stripe, a restricted key that can only read Balance). Pick the account, a start date, the categories and, if you use them, a Budget account, then `Read the account`: you see what will be added before anything is.
@@ -58,3 +73,5 @@ From the `More` menu:
 ## Limits
 - One currency for everything; there's no conversion.
 - Recurring entries are added only while Budget is open, and back-filled for up to two years.
+- Bank files are read on this device only; orOS never connects to your bank. Up to 5,000 rows and 8 MB per file; the preview shows the first 300 rows.
+- Amounts in another currency than Budget's are left out, not converted. A bank transfer between two of your accounts comes in as an expense in one and income in the other: change them into a `Transfer` by hand if you want.
