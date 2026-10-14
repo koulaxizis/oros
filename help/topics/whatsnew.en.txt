@@ -2,6 +2,7 @@
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
 ## Version 1.88.00
+- Contacts: `From an account` now works with Google. Microsoft follows soon.
 - orOS now has a public privacy policy page: useoros.online/privacy.html (English and Greek).
 - Contacts: contacts you add or change in the phone's contacts now come back into orOS (orOS Android app, "On this phone").
 
