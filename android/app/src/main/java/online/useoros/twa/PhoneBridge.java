@@ -252,6 +252,23 @@ public class PhoneBridge {
         return o;
     }
 
+    /** Edits made in the phone's "orOS" calendar go to the page (v2). */
+    private void sendChanges() {
+        if (!granted(CALENDAR_PERMS)) return;
+        try {
+            JSONArray ch = new CalendarWriter(app).changes();
+            if (ch.length() == 0) return;
+            JSONObject o = new JSONObject();
+            o.put("t", "changes");
+            o.put("what", "calendar");
+            o.put("items", ch);
+            diag("calendar changes sent: " + ch.length());
+            send(o);
+        } catch (Exception e) {
+            diag("calendar changes failed: " + e);
+        }
+    }
+
     private void handle(String message) {
         JSONObject m;
         try {
@@ -266,6 +283,13 @@ public class PhoneBridge {
             switch (t) {
                 case "state":
                     send(state());
+                    sendChanges();
+                    return;
+                case "applied":
+                    if ("calendar".equals(m.optString("what")) && granted(CALENDAR_PERMS)) {
+                        new CalendarWriter(app).ack(m.optJSONArray("refs"));
+                        diag("calendar changes taken: " + (m.optJSONArray("refs") == null ? 0 : m.optJSONArray("refs").length()));
+                    }
                     return;
                 case "contacts":
                 case "calendar": {
@@ -291,6 +315,7 @@ public class PhoneBridge {
                     done.put("kept", n[3]);
                     diag(t + " written: +" + n[0] + " ~" + n[1] + " -" + n[2] + " =" + n[3]);
                     send(done);
+                    if ("calendar".equals(t)) sendChanges();
                     return;
                 }
                 case "clear":

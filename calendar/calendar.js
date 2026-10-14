@@ -113,7 +113,7 @@
       "imp.title": "Import events",
       "ph.btn": "On this phone",
       "ph.title": "orOS calendar on this phone",
-      "ph.text": "Adds your orOS events, with their reminders, and the visible feeds to the phone's Calendar as an \"orOS\" calendar. They are read-only there: edit them here.",
+      "ph.text": "Adds your orOS events, with their reminders, to the phone's Calendar as an \"orOS\" calendar, and the visible feeds as a read-only \"orOS feeds\" one. Events you add or change in the \"orOS\" calendar there come back here when you open orOS.",
       "ph.on": "Show on this phone",
       "ph.what": "events",
       "ph.allow": "Allow access",
@@ -293,7 +293,7 @@
       "imp.title": "Εισαγωγή συμβάντων",
       "ph.btn": "Στο κινητό",
       "ph.title": "Το ημερολόγιο του orOS στο κινητό",
-      "ph.text": "Βάζει τα συμβάντα του orOS, με τις υπενθυμίσεις τους, και τις ορατές ροές στο Ημερολόγιο του κινητού ως ημερολόγιο \"orOS\". Εκεί είναι μόνο για ανάγνωση: τα αλλάζεις εδώ.",
+      "ph.text": "Βάζει τα συμβάντα του orOS, με τις υπενθυμίσεις τους, στο Ημερολόγιο του κινητού ως ημερολόγιο \"orOS\", και τις ορατές ροές ως \"orOS ροές\", μόνο για ανάγνωση. Ό,τι προσθέτεις ή αλλάζεις εκεί στο ημερολόγιο \"orOS\" έρχεται εδώ όταν ανοίγεις το orOS.",
       "ph.on": "Εμφάνιση στο κινητό",
       "ph.what": "συμβάντα",
       "ph.allow": "Να επιτραπεί",
@@ -4141,6 +4141,13 @@ function transientNote(title, body) {
   // days around today are written for phone.js (feedRows) to send with
   // the events: device-local "oros-phone-cal-feeds", only while the
   // mirror is on. Hidden labels stay hidden on the phone too.
+  // Edits made in the phone's Calendar (BR-PHONE v2): phone.js writes
+  // them to the blob, then this open copy re-reads it.
+  window.__orosPhoneReload = function (kind) {
+    if (kind !== "calendar") return;
+    loadState();
+    renderAll();
+  };
   var PHONE_FEEDS_KEY = "oros-phone-cal-feeds", PHONE_BACK = 14, PHONE_AHEAD = 180, phoneTimer = null;
   function phonePublish() {
     if (!orosPhone || !orosPhone.enabled("calendar")) return;
