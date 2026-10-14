@@ -1124,6 +1124,7 @@
       tickSafe("crmCheckTick", crmCheckTickThrottled);     // CRM: follow-up reminders (60s throttle)
       tickSafe("keepCheckTick", keepCheckTickThrottled);   // Contacts: keep in touch, "reach out" (60s throttle)
       tickSafe("garageCheckTick", garageCheckTickThrottled); // Garage: renewals + service reminder (60s throttle)
+      tickSafe("storageCheckTick", storageCheckTickThrottled); // Storage: warranty ends + return-by dates (60s throttle)
       tickSafe("minimalismCheckTick", minimalismCheckTickThrottled); // Wave 2: Minimalism daily ritual (60s throttle)
       tickSafe("petcareCheckTick", petcareCheckTickThrottled); // Pet Health Book: daily reminder (60s throttle)
       tickSafe("healthCheckTick", healthCheckTickThrottled); // Health: reminder times per measurement (60s throttle)
@@ -1739,6 +1740,65 @@
     if (now - garageLastTick < 60000) return;
     garageLastTick = now;
     garageCheckTick();
+  }
+
+  // Storage — warranty ends (30 days, 7 days, on the day) and lent
+  // items due back. Reads "oros-storage-data" directly (works with the
+  // app CLOSED) through storage/core.js (loaded by index.html, the SAME
+  // file the app runs). OFF by default: the reminder hour lives in the
+  // device-local "oros-storage-prefs" (remind 0–23, −1 = off). Each
+  // alert is announced once per step: device-local
+  // "oros-storage-notified" = { alertKey: lowest step announced },
+  // pruned to alerts that still exist. One grouped notification at
+  // most per tick. Honest limit (alarms): orOS closed = nothing fires;
+  // the next boot catches up (a warranty end up to 7 days back).
+  var STORAGE_DATA_KEY = "oros-storage-data";
+  var STORAGE_NOTIFIED_KEY = "oros-storage-notified";
+  function storageCheckTick() {
+    var Core = window.OrosStorageCore;
+    if (!Core) return;                                  // stale bundle — silent
+    var raw, prefs, notified;
+    try {
+      prefs = Core.readPrefs(JSON.parse(localStorage.getItem("oros-storage-prefs")));
+      if (prefs.remind < 0 || new Date().getHours() < prefs.remind) return;
+      raw = JSON.parse(localStorage.getItem(STORAGE_DATA_KEY));
+      notified = JSON.parse(localStorage.getItem(STORAGE_NOTIFIED_KEY)) || {};
+    } catch (e) { return; }
+    if (!raw || !Array.isArray(raw.ents) || !raw.ents.length) return;
+    var N = window.orosNotifs;
+    if (!(N && typeof N.emit === "function")) return;
+    if (!notified || typeof notified !== "object") notified = {};
+    var today = sysYmd();
+    var data = Core.mergeData(raw, raw);
+    var all = Core.alerts(data.ents, today);
+    var fresh = Core.toNotify(all, notified);
+    var next = {};
+    all.forEach(function (a) { if (Object.prototype.hasOwnProperty.call(notified, a.key)) next[a.key] = notified[a.key]; });
+    fresh.forEach(function (a) { next[a.key] = a.step; });
+    try { localStorage.setItem(STORAGE_NOTIFIED_KEY, JSON.stringify(next)); } catch (e) {}
+    if (!fresh.length) return;
+    var lang = state.lang === "el" ? "el" : "en";
+    var lines = fresh.slice(0, 3).map(function (a) { return Core.alertLine(a, data.ents, lang); });
+    if (fresh.length > 3) lines.push(lang === "el" ? "και " + (fresh.length - 3) + " ακόμα" : "and " + (fresh.length - 3) + " more");
+    var title = window.t("app.storage");
+    if (title === "app.storage") title = "Storage";    // missing-key fallback
+    var allLent = fresh.every(function (a) { return a.kind === "l"; });
+    N.emit({
+      ns: "storage",
+      key: "alerts-" + today + "-" + garageHash(fresh.map(function (a) { return a.key + ":" + a.step; }).join("|")),
+      type: "reminder",
+      title: title,
+      body: lines.join(" · "),
+      deepLink: "storage:" + (fresh.length > 1 && allLent ? "lent" : fresh[0].id)
+    });
+  }
+
+  var storageLastTick = 0;
+  function storageCheckTickThrottled() {
+    var now = Date.now();
+    if (now - storageLastTick < 60000) return;
+    storageLastTick = now;
+    storageCheckTick();
   }
 
   // Travel — the evening before departure ("Rome tomorrow · 6 items

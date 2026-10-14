@@ -553,6 +553,12 @@
     budget:   function (id) {
       if (/^[a-z0-9]{1,24}$/.test(String(id)) && typeof window.__orosOpenAt === 'function') window.__orosOpenAt('budget', { sub: String(id) });
     },
+    // Storage — "storage:<itemId>" (warranty / return-by reminder) or
+    // "storage:lent" (several items due back). Generic shell deep link.
+    storage:  function (target) {
+      if (typeof window.__orosOpenAt !== 'function') return;
+      window.__orosOpenAt('storage', target === 'lent' ? { view: 'lent' } : { id: String(target || '') });
+    },
     // Garage — "garage:upcoming" (reminder) or "garage:<id>".
     garage:   function (target) { if (typeof window.__orosOpenGarage === 'function') window.__orosOpenGarage(target); },
     // Pet Health Book — "petcare:today" (daily reminder) or "petcare:<petId>".

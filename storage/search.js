@@ -1,10 +1,11 @@
 // ============================================================
-// orOS Storage — universal search provider (v1.0.0)
+// orOS Storage — universal search provider (v1.1.0)
 // Loaded by the shell on the first menu search (apps.json
 // "search"). Read-only: reads oros-storage-data, never writes.
 // One hit per live entity (space, room, furniture, position, item):
 // its name as the title; where it is (the path "Home › Kitchen ›
-// Cupboard") and an item's note as text. Seeds without a rename use
+// Cupboard"), the note, the tags ("#winter") and, for a lent item,
+// who has it, as text (v1.1.0: notes of levels, tags, lent to). Seeds without a rename use
 // their name in ctx.lang. Tombstoned rows (del: true), and anything
 // whose parent chain is deleted or missing, are skipped.
 // Opens through the generic deep link: target { id } (receiver in
@@ -16,6 +17,10 @@
   var TYPES = { space: 1, room: 1, furniture: 1, position: 1, item: 1 };
 
   function str(v) { return typeof v === "string" ? v.trim() : ""; }
+  function tagsOf(e) {
+    if (!Array.isArray(e.tags)) return "";
+    return e.tags.map(str).filter(Boolean).slice(0, 10).map(function (x) { return "#" + x; }).join(" ");
+  }
 
   var PROVIDER = {
     id: "storage",
@@ -54,7 +59,8 @@
         out.push({
           id: e.id,
           title: nameOf(e) || (el ? "Χωρίς όνομα" : "Unnamed"),
-          text: [path.filter(Boolean).join(" › "), e.type === "item" ? str(e.note) : ""]
+          text: [path.filter(Boolean).join(" › "), str(e.note), tagsOf(e),
+                 e.type === "item" && e.lent && str(e.lent.to) ? (el ? "Δανεισμένο σε " : "Lent to ") + str(e.lent.to) : ""]
             .filter(Boolean).join(" · "),
           when: typeof e.mtime === "number" ? e.mtime : 0,
           target: { id: e.id }

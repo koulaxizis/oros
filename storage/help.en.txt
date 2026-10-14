@@ -1,43 +1,88 @@
 # Storage
-Storage is a home inventory: it helps you remember where you put things. You build it in levels, from a space down to the shelf or drawer where each item lives.
+Storage is a home inventory: it helps you remember where you put things, what they're worth and who borrowed them. You build it in levels, from a space down to the shelf or drawer where each item lives.
 
 ## Getting started
 Storage has five levels, each inside the one before:
 1. Space, such as your home, a holiday house or a storeroom. You start with one called `Home`.
 2. Room, such as the kitchen.
 3. Furniture, such as a wardrobe.
-4. Position, such as the top shelf or the second drawer.
+4. Position, such as the top shelf, the second drawer or a box.
 5. Items, the things themselves.
 
-Tap or click a space to open it. The button at the top right adds something to the level you're in: `Add space`, `Add room`, `Add furniture`, `Add position` or `Add item`. Give it a `Name` and press `Save`.
+Tap or click a space to open it. The button at the top right adds something to the level you're in: `Add space`, `Add room`, `Add furniture`, `Add position` or `Add item` (on a phone it shows only `+`). Give it a `Name` and press `Save`.
 
 ## Moving around
 - Tap or click a card to go inside it.
 - `‹ Back` takes you up one level; the path at the top lets you jump to any level above.
 - On a wide screen, a tree of all your spaces, rooms, furniture and positions sits on the side, so you can jump straight to any of them.
 
-Each card shows how much is inside it, such as `3 inside` or `5 items`.
+Each card shows how much is inside it, such as `3 inside` or `5 items`, and what it's worth when you've entered values.
 
 ## Items
 An item has a `Name`, a `Quantity` and a `Note (optional)`, for example "winter only" or "batteries AA". Use the − and + buttons on the item to change the quantity; it never goes below 1.
 
-## Rename and delete
-Every card has a pencil to `Rename` (for items, also to change the quantity and note) and a bin to `Delete`. Deleting a space, room, furniture or position also deletes everything inside it, so Storage always asks you first.
+The pencil on an item opens `Edit`, where you can also fill in:
+- `Tags (optional, separated by commas)`, such as `tools, camping`. Search finds them.
+- `Value of one (optional)`, such as `25` or `25,50`. Storage multiplies it by the quantity.
+- `Purchase date` and `Warranty until`.
+- `Photos`: up to 4 pictures. Press `+` and pick or take a photo.
+- `Receipt`: one picture or PDF, with `Attach a receipt`.
 
->! A delete can't be undone. Deleting a whole space removes all its rooms and items too.
+Photos and receipts are kept on the orOS disk, in Files › Storage, not inside your data. Storage redraws every picture before keeping it, so the location and camera details stored in a photo are left out. Vault Drive copies the files to your other devices; until it has, a photo shows `?` there.
+
+Spaces, rooms, furniture and positions can have a note and tags too, for example "Christmas decorations" on a box.
+
+## Rename and delete
+Every card has a pencil to `Rename` (`Edit` on items). `⋯` on a card has `Delete`. Deleting a space, room, furniture or position also deletes everything inside it, so Storage always asks you first.
+
+>! A delete can't be undone. Deleting a whole space removes all its rooms and items too, and their photos and receipts on this device.
+
+## Search
+The magnifier at the top searches every level at once: names, notes, tags and the person you lent something to. Each result shows where it is, such as `Home › Garage › Metal shelf › Box 1`. Tap a result to go there; an item opens the position it's in and lights up so you can spot it.
+
+The orOS menu search finds your Storage items, with their tags, as well.
+
+## Move
+Press `⋯` on a card and choose `Move…`. A tree shows every place it can go: an item goes into a position, a position onto furniture, furniture into a room and a room into a space. Pick one and it moves with everything inside it. `Undo` on the message puts it back.
+
+Spaces don't move, and nothing can move inside itself.
+
+## Value
+A bar at the top shows the value of the place you're in (`Total value` on the first level) and how many items it holds. The currency is set in `⋯` › `Settings…`.
+
+## Lending
+Press `⋯` on an item and choose `Lend…`. Fill in `Lent to` (or pick someone with `From Contacts`), `Lent on` and, if you like, `Return by (optional)`. The item then shows "Lent to Giorgos on 14 Oct 2026".
+
+`⋯` at the top › `Lent out` lists everything you've lent, the earliest return date first; late ones are in red. Press `Returned` when you get it back; `Undo` on the message brings the loan back if you pressed it by mistake.
+
+## QR labels for boxes
+`⋯` at the top › `Print QR labels…` prints an A4 sheet of 24 labels (70 × 37 mm), one for each space, room, furniture or position you tick. Each label has the place's name, where it is, and a QR code. `⋯` on a card › `QR label…` prints just that one.
+
+Scan a label with your phone's camera and orOS opens Storage at that place. Where the browser can read codes itself (Chrome on Android), `⋯` › `Scan a label` does the same from inside Storage.
+
+> A label points to the orOS address you printed it from. If you use orOS at another address, print the labels again.
+
+## Reminders
+`⋯` › `Settings…` › `Reminders on this device` turns on reminders from the hour you choose. Storage then tells you 30 days and 7 days before a warranty ends and on the day, and on the return-by date of something you lent. Reminders are off until you turn them on, separately on each device; they arrive like any other [notification](help:t/notifications).
 
 ## Sync and backup
 Everything you add syncs between your devices through [orOS sync](help:t/sync). Storage has no import or export of its own; the orOS [backup](help:t/backup) keeps a copy.
 
 ## Keyboard shortcuts
 - [[Enter]] on a selected card opens it.
-- [[Esc]] goes up one level.
+- [[/]] opens the search.
+- [[Esc]] goes up one level, or leaves the search.
 
 ## Tips
 - Name positions the way you'd describe them out loud ("top shelf, left"), so they still make sense in a year.
 - Use the note for details you'd otherwise forget, like a size or a battery type.
+- Tag things by use (`camping`, `winter`, `tools`) and search the tag to gather them from every room.
+- Stick a QR label on each box: scanning it shows what's inside without opening it.
 
 ## Limits
-- There's no search; you find things by browsing the levels.
-- You can't move an item or a level to a different place; delete it and add it again where it belongs.
-- Notes are kept to 300 characters.
+- Notes are kept to 300 characters; up to 10 tags of 30 characters each.
+- Up to 4 photos and one receipt per item; a PDF receipt can be up to 10 MB.
+- One currency for all values, chosen on each device; amounts aren't converted.
+- Reminders only fire while orOS is open; a warranty end missed by more than a week isn't announced afterwards.
+- Scanning inside Storage needs a browser with a built-in code reader (Chrome on Android); elsewhere use the phone's camera app.
+- A device that still runs an older orOS keeps your items but drops the new details (tags, value, dates, photos, loans) when it saves them. Update every device.
