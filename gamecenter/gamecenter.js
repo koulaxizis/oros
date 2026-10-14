@@ -444,9 +444,16 @@
       if (document.visibilityState === "visible") render();
     });
     window.addEventListener("focus", renderSoon);
-    window.__orosOpenAt = function (tg) { if (tg && tg.game) focusOn(tg.game); };
-    var tg = DK ? DK.takeTarget("gamecenter") : null;
-    if (tg && tg.game) focusOn(tg.game);
+    // { game } scrolls to its row; { play, daily? } (orOS Games icon
+    // shortcuts) opens that game, straight into its Daily if asked.
+    function openTarget(tg) {
+      if (!tg || typeof tg !== "object") return;
+      if (typeof tg.play === "string" && CORE.GAMES.indexOf(tg.play) >= 0) {
+        openGame(tg.play, tg.daily === true && CORE.DAILY.indexOf(tg.play) >= 0 ? { daily: true } : null);
+      } else if (tg.game) focusOn(tg.game);
+    }
+    window.__orosOpenAt = openTarget;
+    openTarget(DK ? DK.takeTarget("gamecenter") : null);
   }
 
   boot();

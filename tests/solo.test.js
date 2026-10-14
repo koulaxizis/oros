@@ -251,3 +251,14 @@ test("wave 5: business — invoice and customer shares; shortcuts reach their re
    ["timesheet/timesheet.js", /if \(t\.toggle\) \{ window\.__orosTimesheetToggle\(\)/], ["timesheet/timesheet.js", /if \(t\.newEntry\)/]
   ].forEach(([f, re]) => assert.match(read(f), re, f));
 });
+
+test("wave 6: orOS Games — every game in one app, Daily shortcuts, .pgn through Chess", () => {
+  assert.equal(S.nameOf("gamecenter", "el"), "orOS Παιχνίδια");
+  assert.deepEqual(S.APPS.gamecenter.shortcuts.map((x) => x.target.play), ["wordle", "crossword", "sudoku", "chess"]);
+  const m = S.manifestFor("gamecenter", F.table(), BASE);
+  assert.deepEqual(m.file_handlers[0].accept, { "application/x-chess-pgn": [".pgn"] });
+  assert.equal(S.shareTarget("gamecenter", { url: "", title: "", text: "hi" }, new Date()), null);
+  assert.equal(S.manifestFor("chess", F.table(), BASE), null);
+  assert.match(read("gamecenter/gamecenter.js"), /typeof tg\.play === "string" && CORE\.GAMES\.indexOf\(tg\.play\) >= 0/);
+  assert.match(read("gamecenter/gamecenter.js"), /openTarget\(DK \? DK\.takeTarget\("gamecenter"\) : null\)/);
+});
