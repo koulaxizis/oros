@@ -214,7 +214,7 @@ button:disabled { cursor: default; opacity: 0.4; }
   gap: 12px;
 }
 .msg { display: flex; min-width: 0; }
-.msg.user { justify-content: flex-end; }
+.msg.user { flex-direction: column; align-items: flex-end; }
 .msg.asst { flex-direction: column; align-items: flex-start; gap: 4px; }
 .dlg-btn.msg-copy {
   flex: 0 0 auto;
@@ -430,6 +430,57 @@ button:disabled { cursor: default; opacity: 0.4; }
 .icon-btn.send { width: 42px; height: 42px; background: var(--accent); color: var(--bg); }
 .icon-btn.send:hover:not(:disabled) { background: var(--accent-hover); }
 .icon-btn.send.stop { background: var(--danger); }
+.icon-btn.attach { width: 42px; height: 42px; flex-shrink: 0; }
+#composer.drop { outline: 2px dashed var(--accent); outline-offset: -4px; }
+.att-row {
+  max-width: 780px;
+  margin: 0 auto 6px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.att-row[hidden] { display: none; }
+.att-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  min-width: 0;
+  padding: 4px 6px 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  font-size: 12px;
+}
+.att-chip.busy { color: var(--text-dim); padding-right: 8px; }
+.att-chip.gone { color: var(--text-dim); border-style: dashed; padding-right: 8px; }
+.att-ic { display: inline-flex; flex-shrink: 0; color: var(--text-dim); }
+.att-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 220px; }
+.att-size { color: var(--text-dim); flex-shrink: 0; }
+.att-x {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; flex-shrink: 0;
+  border: 0; border-radius: 6px; background: transparent; color: var(--text-dim); cursor: pointer;
+}
+.att-x:hover, .att-x:focus-visible { background: var(--accent-soft); color: var(--text); }
+.att-goes { font-size: 11px; color: var(--text-dim); overflow-wrap: anywhere; }
+.msg-att { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; margin-bottom: 4px; max-width: 100%; }
+.att-acts { flex-wrap: wrap; }
+.dk-bar { display: flex; align-items: center; gap: 10px; margin: 6px 0 8px; }
+.dk-path { font-size: 12px; color: var(--text-dim); overflow-wrap: anywhere; min-width: 0; }
+.dk-list { list-style: none; margin: 0; padding: 0; max-height: min(50vh, 380px); overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; }
+.dk-list li { border-bottom: 1px solid var(--border); }
+.dk-list li:last-child { border-bottom: 0; }
+.dk-list li.hint { padding: 12px; font-size: 13px; color: var(--text-dim); }
+.dk-item {
+  display: flex; align-items: center; gap: 8px; width: 100%; min-height: 44px; padding: 8px 12px;
+  border: 0; background: transparent; color: var(--text); text-align: left; cursor: pointer; font-size: 14px;
+}
+.dk-item:hover, .dk-item:focus-visible { background: var(--accent-soft); }
+.dk-item.dir .dk-name::after { content: " /"; color: var(--text-dim); }
+.dk-name { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.dk-size { font-size: 12px; color: var(--text-dim); flex-shrink: 0; }
 
 /* ---------- 8. Welcome ---------- */
 #welcome {

@@ -76,6 +76,19 @@
       "chats.synced": "Synced to your devices (encrypted)",
       "chats.off": "History is off: conversations are not kept",
       "who": "{name} · {model}", "who.to": "Sent to {host}",
+      "btn.attach": "Attach a photo or PDF", "att.title": "Attach a file",
+      "att.what": "A photo (JPEG, PNG, WebP, GIF) or a PDF: a receipt, a business card, a poster, a document. Up to {n} per message.",
+      "att.whatImg": "A photo (JPEG, PNG, WebP, GIF): a receipt, a business card, a poster. Up to {n} per message.",
+      "att.hint": "The file goes only to {name}, only when you press Send. Large photos are made smaller first. Files are not kept with the conversation: once you leave the Assistant they can't be sent again.",
+      "att.device": "From this device…", "att.disk": "From the orOS disk…", "att.diskTitle": "Photos and PDFs on the orOS disk",
+      "att.up": "Up one folder", "att.loading": "Loading…", "att.empty": "No photos or PDFs here.", "att.reading": "Reading the file…",
+      "att.goes": "Goes to {name} when you send · {size}", "att.remove": "Remove {name}",
+      "att.gone": "not kept", "att.goneTip": "The file was only kept while the Assistant was open; it is not sent again.",
+      "att.err.none": "{name} can't read files here. Claude, ChatGPT, Gemini, Mistral and OpenRouter can.",
+      "att.err.type": "Only photos (JPEG, PNG, WebP, GIF) and PDF files can be attached.",
+      "att.err.pdf": "{name} can't read PDF files here. Claude, ChatGPT, Gemini and OpenRouter can; photos work.",
+      "att.err.size": "That file is too big ({size}; at most {max}).", "att.err.count": "At most {n} files per message.",
+      "att.err.read": "Could not read that file.",
       "who.chatOnly": "Chat only: no access to your data",
       "off.line": "You are offline. {name} can't be reached until you are back online.",
       "tool.search": "Searched for “{q}”",
@@ -213,6 +226,19 @@
       "chats.synced": "Συγχρονίζονται στις συσκευές σου (κρυπτογραφημένα)",
       "chats.off": "Το ιστορικό είναι κλειστό: οι συζητήσεις δεν κρατιούνται",
       "who": "{name} · {model}", "who.to": "Στέλνεται στο {host}",
+      "btn.attach": "Επισύναψη φωτογραφίας ή PDF", "att.title": "Επισύναψη αρχείου",
+      "att.what": "Μια φωτογραφία (JPEG, PNG, WebP, GIF) ή ένα PDF: απόδειξη, κάρτα επαγγελματία, αφίσα, έγγραφο. Έως {n} ανά μήνυμα.",
+      "att.whatImg": "Μια φωτογραφία (JPEG, PNG, WebP, GIF): απόδειξη, κάρτα επαγγελματία, αφίσα. Έως {n} ανά μήνυμα.",
+      "att.hint": "Το αρχείο πηγαίνει μόνο στο {name}, μόνο όταν πατήσεις Αποστολή. Οι μεγάλες φωτογραφίες μικραίνουν πρώτα. Τα αρχεία δεν κρατιούνται με τη συζήτηση: όταν βγεις από τον Βοηθό δεν ξαναστέλνονται.",
+      "att.device": "Από αυτή τη συσκευή…", "att.disk": "Από τον δίσκο του orOS…", "att.diskTitle": "Φωτογραφίες και PDF στον δίσκο του orOS",
+      "att.up": "Έναν φάκελο πάνω", "att.loading": "Φόρτωση…", "att.empty": "Δεν υπάρχουν φωτογραφίες ή PDF εδώ.", "att.reading": "Διαβάζεται το αρχείο…",
+      "att.goes": "Πηγαίνει στο {name} με την αποστολή · {size}", "att.remove": "Αφαίρεση: {name}",
+      "att.gone": "δεν κρατήθηκε", "att.goneTip": "Το αρχείο κρατήθηκε μόνο όσο ήταν ανοιχτός ο Βοηθός· δεν ξαναστέλνεται.",
+      "att.err.none": "Το {name} δεν διαβάζει αρχεία εδώ. Το κάνουν τα Claude, ChatGPT, Gemini, Mistral και OpenRouter.",
+      "att.err.type": "Επισυνάπτονται μόνο φωτογραφίες (JPEG, PNG, WebP, GIF) και αρχεία PDF.",
+      "att.err.pdf": "Το {name} δεν διαβάζει PDF εδώ. Το κάνουν τα Claude, ChatGPT, Gemini και OpenRouter· οι φωτογραφίες δουλεύουν.",
+      "att.err.size": "Το αρχείο είναι πολύ μεγάλο ({size}· έως {max}).", "att.err.count": "Έως {n} αρχεία ανά μήνυμα.",
+      "att.err.read": "Δεν διαβάστηκε το αρχείο.",
       "who.chatOnly": "Μόνο συζήτηση: χωρίς πρόσβαση στα δεδομένα σου",
       "off.line": "Είσαι εκτός σύνδεσης. Το {name} δεν είναι διαθέσιμο μέχρι να ξανασυνδεθείς.",
       "tool.search": "Αναζήτηση για «{q}»",
@@ -382,6 +408,8 @@
     spark: '<svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>',
     search: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>',
     x: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+    clip: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5l-8.6 8.6a5 5 0 0 1-7.1-7.1l8.6-8.6a3.4 3.4 0 0 1 4.8 4.8l-8.6 8.6a1.7 1.7 0 0 1-2.4-2.4l7.9-7.9"/></svg>',
+    file: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6v18h12V7z"/><path d="M14 3v4h4"/></svg>',
     edit: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>'
   };
 
@@ -881,19 +909,248 @@
     });
   }
 
+  // ---------- 7c. Attachments (phase 4 wave 3) ----------
+  // Photos and PDFs for the next message. The conversation keeps only
+  // { id, name, type, size }; the file (base64) stays in attMem while
+  // the Assistant is open and goes to the provider only with the user's
+  // own Send (core.js section 3b). Never stored, synced or exported.
+  var pending = [];        // [{ id, name, type, size }] for the next message
+  var attMem = {};         // id → base64, this session only
+  var attBusy = 0;         // files being read
+  var IMG_EDGE = 1568;     // longest side a photo is shrunk to
+  var DISK_EXT = /\.(jpe?g|png|webp|gif|pdf)$/i;
+  var EXT_TYPE = { jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp", gif: "image/gif", pdf: "application/pdf" };
+
+  function attId() { return "a" + newId().slice(1); }
+  function fmtSize(n) {
+    if (n < 1024) return n + " B";
+    if (n < 1024 * 1024) return Math.max(1, Math.round(n / 1024)) + " KB";
+    return (n / 1024 / 1024).toFixed(1).replace(/\.0$/, "") + " MB";
+  }
+  function attAllowed() {
+    var pid = curProv(), caps = pid ? C.attCaps(pid) : { img: false, pdf: false };
+    return ready() && (caps.img || caps.pdf);
+  }
+  function attErr(code) {
+    var pid = curProv();
+    return t("att.err." + code, { name: provName(pid), max: fmtSize(C.ATT_PDF), n: C.ATT_MAX });
+  }
+  function typeOf(name, type) {
+    if (C.attKind(type)) return type;
+    var m = /\.([a-z0-9]+)$/i.exec(String(name || ""));
+    return m && EXT_TYPE[m[1].toLowerCase()] || String(type || "");
+  }
+  function readB64(blob) {
+    return new Promise(function (resolve, reject) {
+      var r = new FileReader();
+      r.onload = function () { var u = String(r.result || ""), i = u.indexOf(","); resolve(i >= 0 ? u.slice(i + 1) : ""); };
+      r.onerror = function () { reject(r.error); };
+      r.readAsDataURL(blob);
+    });
+  }
+  // A photo larger than IMG_EDGE (or heavier than 1.5 MB) is redrawn
+  // smaller as JPEG: the AI reads it as well, it costs fewer tokens and
+  // leaves the device lighter. GIFs stay as they are.
+  function shrink(blob, type) {
+    if (type === "image/gif" || typeof createImageBitmap !== "function") return Promise.resolve({ blob: blob, type: type });
+    return createImageBitmap(blob).then(function (bmp) {
+      var w = bmp.width, h = bmp.height, k = Math.min(1, IMG_EDGE / Math.max(w, h));
+      if (k === 1 && blob.size <= 1.5 * 1024 * 1024) { if (bmp.close) bmp.close(); return { blob: blob, type: type }; }
+      var cv = document.createElement("canvas");
+      cv.width = Math.max(1, Math.round(w * k)); cv.height = Math.max(1, Math.round(h * k));
+      var g = cv.getContext("2d");
+      g.fillStyle = "#fff"; g.fillRect(0, 0, cv.width, cv.height);   // a transparent PNG gets white, not black
+      g.drawImage(bmp, 0, 0, cv.width, cv.height);
+      if (bmp.close) bmp.close();
+      return new Promise(function (resolve) {
+        cv.toBlob(function (b) { resolve(b && b.size < blob.size ? { blob: b, type: "image/jpeg" } : { blob: blob, type: type }); }, "image/jpeg", 0.85);
+      });
+    }, function () { return { blob: blob, type: type }; });
+  }
+  // name, blob (a File or a Blob from the orOS disk) → one pending file
+  function addBlob(name, blob) {
+    var pid = curProv(), type = typeOf(name, blob && blob.type);
+    var pre = C.checkAtt(pid, pending.concat(new Array(attBusy)), { type: type, size: C.attKind(type) === "img" ? 1 : blob.size });
+    if (pre) { showToast(pre === "size" ? t("att.err.size", { size: fmtSize(blob.size), max: fmtSize(C.ATT_PDF) }) : attErr(pre)); return Promise.resolve(); }
+    attBusy++;
+    renderAtt();
+    return (C.attKind(type) === "img" ? shrink(blob, type) : Promise.resolve({ blob: blob, type: type })).then(function (r) {
+      var code = C.checkAtt(pid, pending, { type: r.type, size: r.blob.size });
+      if (code) {
+        throw { shown: code === "size" ? t("att.err.size", { size: fmtSize(r.blob.size), max: fmtSize(C.attKind(r.type) === "pdf" ? C.ATT_PDF : C.ATT_IMG) }) : attErr(code) };
+      }
+      return readB64(r.blob).then(function (b64) {
+        var a = C.normAtt({ id: attId(), name: String(name || "file").replace(/[\\/]/g, "_"), type: r.type, size: r.blob.size });
+        if (!a || !b64) throw {};
+        attMem[a.id] = b64;
+        pending.push(a);
+      });
+    }).catch(function (e) {
+      showToast(e && e.shown ? e.shown : t("att.err.read"));
+    }).then(function () {
+      attBusy--;
+      renderAtt();
+    });
+  }
+  function addFiles(list) {
+    var files = Array.prototype.slice.call(list || []);
+    return files.reduce(function (p, f) { return p.then(function () { return addBlob(f.name, f); }); }, Promise.resolve());
+  }
+  function removeAtt(id) {
+    pending = pending.filter(function (a) { return a.id !== id; });
+    delete attMem[id];
+    renderAtt();
+  }
+  function clearPending(keepData) {
+    if (!keepData) pending.forEach(function (a) { delete attMem[a.id]; });
+    pending = [];
+    renderAtt();
+  }
+  // The chips above the message box, with what goes where and how much.
+  function renderAtt() {
+    var row = $("att-row"), btn = $("att-btn");
+    var can = attAllowed();
+    btn.disabled = !!busy || !can;
+    var tip = can ? t("btn.attach") : ready() ? t("att.err.none", { name: provName(curProv()) }) : t("btn.attach");
+    btn.title = tip;
+    btn.setAttribute("aria-label", tip);
+    row.textContent = "";
+    if (!pending.length && !attBusy) { row.hidden = true; return; }
+    row.hidden = false;
+    var total = 0;
+    pending.forEach(function (a) {
+      total += a.size;
+      var chip = el("span", "att-chip");
+      var ic = el("span", "att-ic"); ic.innerHTML = ICON.file; chip.appendChild(ic);
+      chip.appendChild(el("span", "att-name", a.name));
+      chip.appendChild(el("span", "att-size", fmtSize(a.size)));
+      var x = el("button", "att-x"); x.type = "button"; x.innerHTML = ICON.x;
+      x.setAttribute("aria-label", t("att.remove", { name: a.name })); x.title = t("att.remove", { name: a.name });
+      x.addEventListener("click", function () { removeAtt(a.id); });
+      chip.appendChild(x);
+      row.appendChild(chip);
+    });
+    if (attBusy) row.appendChild(el("span", "att-chip busy", t("att.reading")));
+    if (pending.length) row.appendChild(el("span", "att-goes", t("att.goes", { name: provName(curProv()), size: fmtSize(total) })));
+  }
+  function attachDialog() {
+    if (!attAllowed() || busy) return;
+    var caps = C.attCaps(curProv());
+    var dlg = makeDialog("as-attach");
+    dlg.appendChild(el("div", "dlg-title", t("att.title")));
+    dlg.appendChild(el("p", "dlg-text", t(caps.pdf ? "att.what" : "att.whatImg", { n: C.ATT_MAX })));
+    dlg.appendChild(el("p", "dlg-hint", t("att.hint", { name: provName(curProv()) })));
+    var acts = el("div", "dlg-actions att-acts");
+    acts.appendChild(button(t("btn.cancel"), "", function () { dlg.close(); }));
+    var fs = diskFS();
+    if (fs) acts.appendChild(button(t("att.disk"), "", function () { dlg.close(); diskPicker(fs); }));
+    acts.appendChild(button(t("att.device"), "primary", function () {
+      var inp = $("att-file");
+      inp.accept = caps.pdf ? "image/jpeg,image/png,image/webp,image/gif,application/pdf" : "image/jpeg,image/png,image/webp,image/gif";
+      inp.value = "";
+      dlg.close();
+      inp.click();
+    }));
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+  }
+  function diskFS() {
+    try { var f = window.parent && window.parent !== window ? window.parent.orosFS : null; return f && typeof f.ls === "function" && typeof f.readBlob === "function" ? f : null; }
+    catch (e) { return null; }
+  }
+  // A small browser of the orOS disk: folders, and photos / PDFs to
+  // pick one at a time.
+  function diskPicker(fs) {
+    var ROOT = "/internal", gen = 0;
+    var dlg = makeDialog("as-disk");
+    dlg.classList.add("wide");
+    dlg.appendChild(el("div", "dlg-title", t("att.diskTitle")));
+    var bar = el("div", "dk-bar");
+    var up = button(t("att.up"), "", function () { if (cwd !== ROOT) go(cwd.replace(/\/[^\/]+$/, "") || ROOT); });
+    var where = el("span", "dk-path");
+    bar.appendChild(up); bar.appendChild(where);
+    var list = el("ul", "dk-list");
+    dlg.appendChild(bar); dlg.appendChild(list);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("btn.cancel"), "", function () { dlg.close(); }));
+    dlg.appendChild(acts);
+    var cwd = ROOT, caps = C.attCaps(curProv());
+    function usable(name) { var ty = typeOf(name, ""), k = C.attKind(ty); return DISK_EXT.test(name) && !!caps[k]; }
+    function go(path) {
+      cwd = path;
+      var my = ++gen;
+      up.disabled = path === ROOT;
+      where.textContent = path === ROOT ? "/" : path.slice(ROOT.length);
+      list.textContent = "";
+      list.appendChild(el("li", "hint", t("att.loading")));
+      Promise.resolve(typeof fs.ready === "function" ? fs.ready() : null).then(function () { return fs.ls(path); }).then(function (entries) {
+        if (my !== gen) return;
+        list.textContent = "";
+        var rows = (entries || []).filter(function (en) {
+          return en && typeof en.name === "string" && en.name.charAt(0) !== "." && !(path === ROOT && en.name === "Assistant") && (en.dir || usable(en.name));
+        });
+        rows.sort(function (a, b) { return (b.dir ? 1 : 0) - (a.dir ? 1 : 0) || a.name.localeCompare(b.name); });
+        if (!rows.length) list.appendChild(el("li", "hint", t("att.empty")));
+        rows.forEach(function (en) {
+          var li = el("li"), pth = path + "/" + en.name;
+          var b = el("button", "dk-item" + (en.dir ? " dir" : "")); b.type = "button";
+          b.appendChild(el("span", "dk-name", en.name));
+          if (!en.dir && en.size) b.appendChild(el("span", "dk-size", fmtSize(en.size)));
+          b.addEventListener("click", function () {
+            if (en.dir) { go(pth); return; }
+            dlg.close();
+            Promise.resolve(fs.readBlob(pth)).then(function (blob) {
+              if (!blob) throw new Error("none");
+              return addBlob(en.name, blob);
+            }).catch(function () { showToast(t("att.err.read")); });
+          });
+          li.appendChild(b);
+          list.appendChild(li);
+        });
+      }, function () {
+        if (my !== gen) return;
+        list.textContent = "";
+        list.appendChild(el("li", "hint", t("att.empty")));
+      });
+    }
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    go(ROOT);
+  }
+  // The history as it goes to the provider: each attachment with its
+  // file, while this session still has it.
+  function withFiles(msgs) {
+    return msgs.map(function (m) {
+      if (!m || m.r !== "user" || !Array.isArray(m.att) || !m.att.length) return m;
+      return { r: "user", text: m.text, att: m.att.map(function (a) {
+        return attMem[a.id] ? { id: a.id, name: a.name, type: a.type, size: a.size, data: attMem[a.id] } : a;
+      }) };
+    });
+  }
+
   function send() {
     var box = $("input");
     var text = box.value.trim();
-    if (!text || busy) return;
+    if ((!text && !pending.length) || busy || attBusy) return;
     if (!ready()) { settingsDialog(); return; }
     if (text.length > MAX_INPUT) text = text.slice(0, MAX_INPUT);
+    // A file the chosen AI can't read (the provider changed since) stays
+    // in the box with the reason, instead of going out without it.
+    for (var i = 0; i < pending.length; i++) {
+      var code = C.checkAtt(curProv(), [], pending[i]);
+      if (code) { showToast(attErr(code)); return; }
+    }
     if (!chat) {
-      chat = { id: newId(), m: Date.now(), title: C.chatTitle(text), msgs: [], refs: {}, refN: 0 };
+      chat = { id: newId(), m: Date.now(), title: C.chatTitle(text || pending[0].name), msgs: [], refs: {}, refN: 0 };
       chats.unshift(chat);
       prefs.open = chat.id;
       savePrefs();
     }
-    chat.msgs.push({ r: "user", text: text });
+    var um = { r: "user", text: text };
+    if (pending.length) um.att = pending.map(function (a) { return { id: a.id, name: a.name, type: a.type, size: a.size }; });
+    chat.msgs.push(um);
+    clearPending(true);
     box.value = "";
     autosize();
     saveChat(chat);
@@ -918,13 +1175,14 @@
       tz: (function () { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch (e) { return ""; } })(),
       apps: apps.map(function (a) { return a.name + " (" + a.id + ")"; }),
       entries: kinds,
-      changes: chgApps.map(function (a) { return a.name + " (" + a.id + ")"; })
+      changes: chgApps.map(function (a) { return a.name + " (" + a.id + ")"; }),
+      files: (function () { var k = C.attCaps(pid); return k.pdf ? "pdf" : k.img ? "img" : ""; })()
     });
     var round = 0;
     function note(kind, text) { c.msgs.push({ r: "note", kind: kind, text: text }); }
     function next() {
       busy.live = "";
-      return callModel(pid, c.msgs, { system: system, tools: tools }, ctl && ctl.signal, function (txt) {
+      return callModel(pid, withFiles(c.msgs), { system: system, tools: tools }, ctl && ctl.signal, function (txt) {
         busy.live = txt;
         scheduleLive();
       }).then(function (res) {
@@ -1709,6 +1967,7 @@
     sb.setAttribute("aria-label", busy ? t("btn.stop") : t("btn.send"));
     sb.title = busy ? t("btn.stop") : t("btn.send");
     sb.classList.toggle("stop", !!busy);
+    renderAtt();
   }
 
   var liveTimer = 0;
@@ -1767,7 +2026,22 @@
   function drawMsg(host, m, c) {
     if (m.r === "user") {
       var u = el("div", "msg user");
-      u.appendChild(el("div", "bubble", m.text));
+      if (Array.isArray(m.att) && m.att.length) {
+        var files = el("div", "msg-att");
+        m.att.forEach(function (raw) {
+          var a = C.normAtt(raw);
+          if (!a) return;
+          var kept = !!attMem[a.id];
+          var chip = el("span", "att-chip" + (kept ? "" : " gone"));
+          var ic = el("span", "att-ic"); ic.innerHTML = ICON.file; chip.appendChild(ic);
+          chip.appendChild(el("span", "att-name", a.name));
+          chip.appendChild(el("span", "att-size", kept ? fmtSize(a.size) : t("att.gone")));
+          if (!kept) chip.title = t("att.goneTip");
+          files.appendChild(chip);
+        });
+        u.appendChild(files);
+      }
+      if (m.text) u.appendChild(el("div", "bubble", m.text));
       host.appendChild(u);
     } else if (m.r === "asst") {
       if (!m.text) return;
@@ -2473,6 +2747,7 @@
     $("side").setAttribute("aria-label", t("btn.chats"));
     $("wel-icon").innerHTML = ICON.spark;
     $("input").setAttribute("aria-label", t("ph.input"));
+    $("att-btn").innerHTML = ICON.clip;
   }
 
   function wire() {
@@ -2483,8 +2758,30 @@
     $("settings-btn").addEventListener("click", settingsDialog);
     $("wel-setup").addEventListener("click", settingsDialog);
     $("send-btn").addEventListener("click", function () { if (busy) stop(); else send(); });
+    $("att-btn").addEventListener("click", attachDialog);
+    $("att-file").addEventListener("change", function (e) { addFiles(e.target.files); e.target.value = ""; });
     var box = $("input");
     box.addEventListener("input", autosize);
+    // A photo pasted or dropped into the box is attached like a picked one.
+    box.addEventListener("paste", function (e) {
+      var fl = e.clipboardData && e.clipboardData.files;
+      if (!fl || !fl.length || !attAllowed() || busy) return;
+      e.preventDefault();
+      addFiles(fl);
+    });
+    var comp = $("composer");
+    comp.addEventListener("dragover", function (e) {
+      if (!attAllowed() || busy || !e.dataTransfer || [].indexOf.call(e.dataTransfer.types || [], "Files") < 0) return;
+      e.preventDefault();
+      comp.classList.add("drop");
+    });
+    comp.addEventListener("dragleave", function () { comp.classList.remove("drop"); });
+    comp.addEventListener("drop", function (e) {
+      comp.classList.remove("drop");
+      if (!e.dataTransfer || !e.dataTransfer.files || !e.dataTransfer.files.length) return;
+      e.preventDefault();
+      if (attAllowed() && !busy) addFiles(e.dataTransfer.files);
+    });
     box.addEventListener("keydown", function (e) {
       if (e.key === "Enter" && !e.shiftKey && !e.isComposing) {
         e.preventDefault();
