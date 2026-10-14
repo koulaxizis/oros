@@ -2059,8 +2059,9 @@
   function gpodderDlg() {
     if (!G) return;
     var raw = gRaw(), c = gCfg(), on = gOn();
+    if (!gState.busy) gState.msg = "";
     var dlg = makeDialog("pc-gp", "form-dlg");
-    var head = el("div", "notes-head");
+    var head = el("div", "notes-head g-head");
     head.appendChild(el("div", "dlg-title", t("g.title")));
     head.appendChild(button(t("pl.close"), "icon-btn", function () { dlg.close(); }, UI.x));
     dlg.appendChild(head);
@@ -2105,17 +2106,21 @@
       gSave(next);
       (pw.value ? G.savePass(pw.value) : Promise.resolve(true)).then(function () {
         pw.value = ""; pw.placeholder = t("g.passKeep"); on = true; c = next;
+        syncB.hidden = offB.hidden = false;
         gSync(false);
       });
     }));
-    if (on) row.appendChild(button(t("g.sync"), "txt-btn g-act", function () { gSync(false); }));
-    if (on) row.appendChild(button(t("g.off"), "txt-btn danger g-act", function () {
+    var syncB = button(t("g.sync"), "txt-btn g-act", function () { gSync(false); });
+    var offB = button(t("g.off"), "txt-btn danger g-act", function () {
       try { localStorage.removeItem(GKEY); } catch (e) {}
       G.dropPass();
       gState.msg = "";
       dlg.close();
       showToast(t("g.offDone"));
-    }));
+    });
+    syncB.hidden = offB.hidden = !on;
+    row.appendChild(syncB);
+    row.appendChild(offB);
     dlg.appendChild(row);
     dlg.appendChild(el("p", "dim small", t("g.auto")));
     dlg.appendChild(el("h3", "sec small", t("g.files")));

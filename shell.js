@@ -5718,7 +5718,7 @@
       reloaded = true;
       location.reload();
     }
-    ["oros-vault", "oros-fs", "oros-ofs", "oros-wallpaper", "oros-mail", "oros-feeds", "oros-museum", "oros-jigsaw", "oros-montage-media", "oros-montage-thumbs", "oros-maps-rec", "oros-links", "oros-chess", "oros-files-dbx", "oros-time-stage", "oros-assistant", "oros-legacy"].forEach(function (name) {
+    ["oros-vault", "oros-fs", "oros-ofs", "oros-wallpaper", "oros-mail", "oros-feeds", "oros-museum", "oros-jigsaw", "oros-montage-media", "oros-montage-thumbs", "oros-maps-rec", "oros-links", "oros-chess", "oros-files-dbx", "oros-time-stage", "oros-podcasts", "oros-podcasts-sync", "oros-assistant", "oros-legacy"].forEach(function (name) {
       try {
         var req = indexedDB.deleteDatabase(name);
         req.onsuccess = function () { setTimeout(bail, 50); };
@@ -6725,7 +6725,24 @@
     if (window.orosSync && typeof window.orosSync.markDirty === "function") {
       window.orosSync.markDirty();
     }
-    if (!rangOnPhone) alarmNotify(due);
+    if (!rangOnPhone) { alarmNotify(due); alarmRadio(due); }
+  }
+  // W42 — "wake up to a station": Radio keeps { alarmId: { m, st } } in
+  // its slice (oros-radio-data .wake, st null = removed). Radio's engine
+  // (radio/tools.js, in this window once Radio was opened) plays it in
+  // place with a fade-in; otherwise the Radio app opens and plays it
+  // (sessionStorage "oros-radio-wake" asks for the fade-in).
+  function alarmRadio(a) {
+    try {
+      var r = JSON.parse(localStorage.getItem("oros-radio-data") || "null");
+      var w = r && r.wake && typeof r.wake === "object" ? r.wake[a.id] : null;
+      var st = w && w.st;
+      if (!st || typeof st.stationuuid !== "string" || !st.stationuuid) return;
+      var eng = window.__orosRadioEngine;
+      if (eng && typeof eng.wake === "function" && eng.wake(st)) return;
+      try { sessionStorage.setItem("oros-radio-wake", "1"); } catch (e) {}
+      if (typeof window.__orosOpenRadio === "function") window.__orosOpenRadio(st.stationuuid);
+    } catch (e) {}
   }
   function ymdOf(ms) {
     var d = new Date(ms);

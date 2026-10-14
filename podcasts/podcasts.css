@@ -346,3 +346,5 @@ dialog.video-dlg:not([open]) { display: none; }
 .fx-note { max-width: 100%; overflow-wrap: anywhere; line-height: 1.4; }
 .field .inp { color: var(--text); font-weight: 400; font-size: 14px; }
 .g-status { min-height: 1.4em; margin: 10px 0 0; line-height: 1.45; overflow-wrap: anywhere; }
+.row-btns > [hidden] { display: none; }
+.notes-head.g-head { display: flex; justify-content: space-between; align-items: flex-start; }
