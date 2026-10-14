@@ -7,7 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Dice &amp; Coin · orOS</title>
 
-  <link rel="stylesheet" href="dice.css?v=1.92.00">
+  <link rel="stylesheet" href="dice.css?v=1.92.01">
 
 </head>
 <body>
@@ -61,7 +61,7 @@
   <div id="actions">
     <button type="button" id="roll-btn" class="primary" data-i18n="actions.roll">Roll</button>
     <button type="button" id="coin-btn" data-i18n="actions.coin">Flip Coin</button>
-    <button type="button" id="sfx-btn" aria-pressed="false" title="" aria-label="Sound"></button>
+    <button type="button" id="sfx-btn" aria-pressed="false" title="" aria-label="Sound" data-i18n-aria="aria.sfx"></button>
   </div>
 
   <!-- Result box -->
@@ -77,7 +77,7 @@
 
   <!-- Coin display -->
   <section id="coin-section">
-    <div id="coin" role="button" tabindex="0" aria-label="Flip coin">
+    <div id="coin" role="button" tabindex="0" aria-label="Flip coin" data-i18n-aria="aria.coin">
       <div class="coin-face front">
         <svg viewBox="0 0 100 100" role="img">
           <circle cx="50" cy="50" r="47" fill="var(--accent)"/>
@@ -116,7 +116,7 @@
 
   <div id="toast" role="status"></div>
 
-  <script src="dice.js?v=1.92.00"></script>
+  <script src="dice.js?v=1.92.01"></script>
 
 </body>
 </html>

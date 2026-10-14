@@ -35,6 +35,7 @@
   // ===== STRINGS =====
   var STRINGS = {
     en: {
+      "aria.location": "Location",
       "home":             "Home",
       "add.space":        "Add space",
       "add.room":        "Add room",
@@ -67,6 +68,7 @@
       "back":             "Back"
     },
     el: {
+      "aria.location": "Τοποθεσία",
       "home":             "Σπίτι",
       "add.space":        "Προσθήκη χώρου",
       "add.room":        "Προσθήκη δωματίου",
@@ -1097,6 +1099,7 @@
     watchPalette();
     dbInit();
     wireUI();
+    document.getElementById("crumbs").setAttribute("aria-label", t("aria.location"));
     render();
     registerSync();
     console.log("[orOS] storage.js v" + SCRIPT_V + " booted");

@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.92.01
+- Greek everywhere: the last English labels, tooltips and screen-reader names are now in Greek, and English words such as "board" or "project" became plain Greek words. A new check keeps every new string translated.
+
 ## Version 1.92.00
 - Chess plays on Lichess: find an opponent, challenge a friend or accept a challenge, and play rated or casual games on the orOS board with both clocks.
 

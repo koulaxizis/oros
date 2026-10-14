@@ -1680,6 +1680,8 @@ function t(key) { return (STRINGS[appLang()] || STRINGS.en)[key] || STRINGS.en[k
 
 Escape user text with `esc()` before `innerHTML`, and use `escAttr()` in attributes. Keep key parity EN↔EL; a quick script that diffs the key sets and greps `t('…')` / `data-i18n` usages catches missing keys (Writer had one).
 
+**Greek coverage (2026-10-14, Chris: "some users speak no English at all").** `tests/i18n.test.js` scans every `{ en: {…}, el: {…} }` table (and keys added later as `X.en["k"] = …`) in the shell and the apps: every English key must have a Greek string, and a Greek string may not be a copy of an English sentence; every `help.en.txt` / help topic needs a Greek page. Word lists and `maps/presets-data.js` are skipped. Accessible names count as text: an `aria-label`, `title` or `placeholder` written in the HTML is a placeholder that JS must translate (`data-i18n-aria="key"` / `data-i18n-title` / `data-i18n-ph`), and so are labels set by a library (Leaflet zoom and layer controls take `t()` strings). Prefer a plain Greek word over an English loanword when one exists (πίνακας, not board; έργο, not project); product and brand names stay as they are. The shell sets `#app-frame`'s `title` to the running app's name and relabels the sync button on every language change (`applyLang`).
+
 ### Form rebuild discipline (buildCapture) [carried]
 
 Read input values + scrollTop BEFORE `innerHTML=""`, rebuild, then restore.
@@ -6017,3 +6019,9 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Fair play: Analysis and "Analyse this game on Lichess" are off while a Lichess game runs; `Review this game` opens it with Analysis when it ends. Correspondence games are listed under `My games in progress` with a your-move notice; Lichess games don't count in the records against the computer.
 - Credits (CREDITS.md, Info, Bible Part VIII) and the privacy topic mention play; help (EN/EL) updated.
   - Tests: tests/chess.test.js (game stream, clocks, challenge and seek parameters, fair-play lock).
+
+### 2026-10-14 — Greek for every visible label + Greek coverage test (#327) — 1.92.01
+- Shell: `#sync-dot-btn` aria-label and `#app-frame` title (running app's name, `frame.title` otherwise) are relabelled in `applyLang` and on open.
+- Apps: English-only aria-labels/tooltips now translated via `data-i18n-aria` (To-Do, Files, Storage, Slides, Bookmarks, Maps incl. Leaflet zoom/layers, Dice, Radio, Montage); Netizen raw key `av.col7`; Spreadsheet B/I/U buttons no longer show SVG markup as text; Moon & Sky names Time «Ώρα».
+- Greek wording: plain Greek instead of English loanwords where one exists (Kanban πίνακας, Montage έργο / Καρέ-κλειδιά, Shelf, Writer, Contacts, Pixel/Wallpaper «Λέξη», Netizen, Device, Feeds, Meals, Συντροφάκι); matching help pages.
+  - Tests: tests/i18n.test.js (EN keys have EL strings, no EL copy of an English sentence, every help page has a Greek page); Tests workflow runs on any .js change.

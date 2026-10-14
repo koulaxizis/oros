@@ -47,6 +47,8 @@
 
   var STRINGS = {
     en: {
+      "aria.sfx": "Sound",
+      "aria.coin": "Flip coin",
       "builder.count":     "Count",
       "builder.type":      "Type",
       "builder.modifier":  "Modifier",
@@ -99,6 +101,8 @@
       "export.exported":   "Exported: {time}"
     },
     el: {
+      "aria.sfx": "Ήχος",
+      "aria.coin": "Στρίψε το νόμισμα",
       "builder.count":     "Πλήθος",
       "builder.type":      "Τύπος",
       "builder.modifier":  "Διόρθωση",
@@ -1279,6 +1283,7 @@
 
   // ---------- 12. Wiring & boot ----------
   function applyI18n() {
+    [].forEach.call(document.querySelectorAll("[data-i18n-aria]"), function (n) { n.setAttribute("aria-label", t(n.getAttribute("data-i18n-aria"))); });
     [].forEach.call(document.querySelectorAll("[data-i18n]"), function (el) {
       el.textContent = t(el.getAttribute("data-i18n"));
     });

@@ -61,6 +61,7 @@
 
   var STRINGS = {
     en: {
+      "aria.strip": "Slides",
       "app.name": "Slides", "loading": "Loading fonts…",
       "home.new": "New presentation", "home.import": "Open package", "home.search": "Search presentations",
       "home.empty.title": "No presentations yet",
@@ -150,6 +151,7 @@
       "btn.delete": "Delete", "btn.undo": "Undo", "btn.apply": "Apply", "btn.done": "Done"
     },
     el: {
+      "aria.strip": "Διαφάνειες",
       "app.name": "Παρουσιάσεις", "loading": "Φόρτωση γραμματοσειρών…",
       "home.new": "Νέα παρουσίαση", "home.import": "Άνοιγμα πακέτου", "home.search": "Αναζήτηση παρουσιάσεων",
       "home.empty.title": "Καμία παρουσίαση ακόμη",
@@ -925,6 +927,7 @@
   function applyI18n() {
     document.documentElement.lang = LANG;
     document.title = t("app.name") + " · orOS";
+    [].forEach.call(document.querySelectorAll("[data-i18n-aria]"), function (n) { n.setAttribute("aria-label", t(n.getAttribute("data-i18n-aria"))); });
     [].forEach.call(document.querySelectorAll("[data-i18n]"), function (n) {
       n.textContent = t(n.getAttribute("data-i18n"));
     });

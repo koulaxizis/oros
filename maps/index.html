@@ -6,8 +6,8 @@
   <script>if (window.top === window.self && !/[?&]standalone\b/.test(location.search)) location.replace("../?open=maps" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Maps · orOS</title>
-  <link rel="stylesheet" href="../vendor/leaflet.css?v=1.92.00">
-  <link rel="stylesheet" href="maps.css?v=1.92.00">
+  <link rel="stylesheet" href="../vendor/leaflet.css?v=1.92.01">
+  <link rel="stylesheet" href="maps.css?v=1.92.01">
 </head>
 <body>
 
@@ -19,7 +19,7 @@
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
     <input id="search" type="search" autocomplete="off" spellcheck="false"
            placeholder="Search a place…" data-i18n-ph="search.ph">
-    <button id="search-clear" hidden aria-label="Clear search"
+    <button id="search-clear" hidden aria-label="Clear search" data-i18n-aria="search.clear"
             data-i18n-title="search.clear" title="Clear">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
     </button>
@@ -51,7 +51,7 @@
       <span id="route-dist"></span>
       <span id="route-time"></span>
     </div>
-    <div id="route-profiles" role="group" aria-label="Travel mode">
+    <div id="route-profiles" role="group" aria-label="Travel mode" data-i18n-aria="aria.mode">
       <button id="rp-car" class="rp active" data-i18n-title="route.car" title="Car">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg>
       </button>
@@ -175,33 +175,33 @@
   <div id="toast" role="status"></div>
 
   <!-- Leaflet FIRST — maps.js depends on the global L -->
-  <script src="../vendor/leaflet.js?v=1.92.00"></script>
-  <script src="route-core.js?v=1.92.00"></script>
-  <script src="tools-core.js?v=1.92.00"></script>
-  <script src="maps.js?v=1.92.00"></script>
+  <script src="../vendor/leaflet.js?v=1.92.01"></script>
+  <script src="route-core.js?v=1.92.01"></script>
+  <script src="tools-core.js?v=1.92.01"></script>
+  <script src="maps.js?v=1.92.01"></script>
   <!-- OpenStreetMap: core (pure), sign-in + API, notes (Mapping mode) -->
-  <script src="osm.js?v=1.92.00"></script>
-  <script src="osm-api.js?v=1.92.00"></script>
-  <script src="notes.js?v=1.92.00"></script>
-  <script src="poi-core.js?v=1.92.00"></script>
-  <script src="everydoor-core.js?v=1.92.00"></script>
-  <script src="poi.js?v=1.92.00"></script>
-  <script src="entrances.js?v=1.92.00"></script>
-  <script src="tracks-core.js?v=1.92.00"></script>
-  <script src="tracks.js?v=1.92.00"></script>
-  <script src="heat-core.js?v=1.92.00"></script>
-  <script src="heat.js?v=1.92.00"></script>
-  <script src="quests-core.js?v=1.92.00"></script>
-  <script src="overlays-core.js?v=1.92.00"></script>
-  <script src="quests.js?v=1.92.00"></script>
-  <script src="transit-core.js?v=1.92.00"></script>
-  <script src="transit.js?v=1.92.00"></script>
-  <script src="tools.js?v=1.92.00"></script>
-  <script src="planner-core.js?v=1.92.00"></script>
-  <script src="planner.js?v=1.92.00"></script>
-  <script src="fav-core.js?v=1.92.00"></script>
-  <script src="fav.js?v=1.92.00"></script>
-  <script src="discover-core.js?v=1.92.00"></script>
-  <script src="discover.js?v=1.92.00"></script>
+  <script src="osm.js?v=1.92.01"></script>
+  <script src="osm-api.js?v=1.92.01"></script>
+  <script src="notes.js?v=1.92.01"></script>
+  <script src="poi-core.js?v=1.92.01"></script>
+  <script src="everydoor-core.js?v=1.92.01"></script>
+  <script src="poi.js?v=1.92.01"></script>
+  <script src="entrances.js?v=1.92.01"></script>
+  <script src="tracks-core.js?v=1.92.01"></script>
+  <script src="tracks.js?v=1.92.01"></script>
+  <script src="heat-core.js?v=1.92.01"></script>
+  <script src="heat.js?v=1.92.01"></script>
+  <script src="quests-core.js?v=1.92.01"></script>
+  <script src="overlays-core.js?v=1.92.01"></script>
+  <script src="quests.js?v=1.92.01"></script>
+  <script src="transit-core.js?v=1.92.01"></script>
+  <script src="transit.js?v=1.92.01"></script>
+  <script src="tools.js?v=1.92.01"></script>
+  <script src="planner-core.js?v=1.92.01"></script>
+  <script src="planner.js?v=1.92.01"></script>
+  <script src="fav-core.js?v=1.92.01"></script>
+  <script src="fav.js?v=1.92.01"></script>
+  <script src="discover-core.js?v=1.92.01"></script>
+  <script src="discover.js?v=1.92.01"></script>
 </body>
 </html>

@@ -6,7 +6,7 @@
   <script>if (window.top === window.self && !/[?&]standalone\b/.test(location.search)) location.replace("../?open=bookmarks" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Bookmarks · orOS</title>
-  <link rel="stylesheet" href="bookmarks.css?v=1.92.00">
+  <link rel="stylesheet" href="bookmarks.css?v=1.92.01">
 </head>
 <body>
 
@@ -14,7 +14,7 @@
        Tab = click to switch, dblclick/pencil = rename, horizontal
        drag = reorder (Wave 2), long-press = move menu (mobile). -->
   <header id="tabbar-wrap">
-    <nav id="tabs" role="tablist" aria-label="Folders"></nav>
+    <nav id="tabs" role="tablist" aria-label="Folders" data-i18n-aria="aria.folders"></nav>
     <button id="tab-add" data-i18n-title="tab.add" title="New folder"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
   </header>
 
@@ -36,7 +36,7 @@
     <div id="search-wrap">
       <input id="search" type="search" autocomplete="off" spellcheck="false"
              placeholder="Search…" data-i18n-ph="search.ph">
-      <button type="button" id="search-clear" hidden aria-label="Clear search"
+      <button type="button" id="search-clear" hidden aria-label="Clear search" data-i18n-aria="search.clear"
               data-i18n-title="search.clear" title="Clear">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
       </button>
@@ -207,9 +207,9 @@
   <!-- Undo / feedback toast -->
   <div id="toast" role="status"></div>
 
-  <script src="../links/core.js?v=1.92.00"></script>
-  <script src="../links/bookmarks.js?v=1.92.00"></script>
-  <script src="platforms.js?v=1.92.00"></script>
-  <script src="bookmarks.js?v=1.92.00"></script>
+  <script src="../links/core.js?v=1.92.01"></script>
+  <script src="../links/bookmarks.js?v=1.92.01"></script>
+  <script src="platforms.js?v=1.92.01"></script>
+  <script src="bookmarks.js?v=1.92.01"></script>
 </body>
 </html>
