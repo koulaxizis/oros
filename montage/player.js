@@ -53,19 +53,19 @@
     }
 
     // One media element per clip id (the video clip's picture and sound
-    // come from the same element).
-    function element(it) {
-      var e = els[it.id];
-      if (e && e.src === it.src) return e;
-      if (e) release(it.id);
-      var tag = it.k === "audio" ? "audio" : "video";
-      var m = document.createElement(tag);
+    // come from the same element). A clip whose sound was cleaned (na)
+    // has a second, sound-only element "<id>~na" for the cleaned file.
+    function element(n) {
+      var e = els[n.key];
+      if (e && e.src === n.src) return e;
+      if (e) release(n.key);
+      var m = document.createElement(n.tag);
       m.preload = "auto"; m.playsInline = true; m.crossOrigin = "anonymous";
       if ("preservesPitch" in m) m.preservesPitch = false;    // same as the export
-      e = els[it.id] = { el: m, src: it.src, ready: false, seeking: false, wantT: -1, gain: null };
+      e = els[n.key] = { el: m, src: n.src, ready: false, seeking: false, wantT: -1, gain: null };
       m.addEventListener("loadeddata", function () { e.ready = true; queueDraw(); });
       m.addEventListener("seeked", function () { e.seeking = false; queueDraw(); });
-      url(it.src).then(function (u) { if (u && els[it.id] === e) m.src = u; });
+      url(n.src).then(function (u) { if (u && els[n.key] === e) m.src = u; });
       return e;
     }
     function release(id) {
@@ -93,7 +93,12 @@
         var it = p.items[k];
         if (it.k !== "video" && it.k !== "audio") return;
         var pl = C.placeOf(p, k);
-        if (pl && pl.end > time - NEAR_BEFORE && pl.start < time + NEAR_AFTER) out[k] = { it: it, pl: pl };
+        if (!(pl && pl.end > time - NEAR_BEFORE && pl.start < time + NEAR_AFTER)) return;
+        var tag = it.k === "audio" ? "audio" : "video";
+        if (it.na && !it.rv && !it.mu) {
+          out[k] = { key: k, it: it, pl: pl, src: it.src, tag: tag, snd: false };
+          out[k + "~na"] = { key: k + "~na", it: it, pl: pl, src: it.na, tag: "audio", snd: true };
+        } else out[k] = { key: k, it: it, pl: pl, src: it.src, tag: tag, snd: true };
       });
       return out;
     }
@@ -107,11 +112,13 @@
       });
       Object.keys(els).forEach(function (k) { if (!near[k]) release(k); });
       Object.keys(near).forEach(function (k) {
-        var n = near[k], it = n.it, e = element(it);
+        var n = near[k], it = n.it, e = element(n);
         var local = time - n.pl.start, inside = local >= 0 && local < n.pl.end - n.pl.start;
         var want = C.srcTime(it, Math.max(0, local));
-        e.el.playbackRate = it.sp;
-        var g = gainOf[k] || 0;
+        // a speed curve changes the rate as the clip plays
+        var rate = Math.max(0.0625, Math.min(16, C.rateAt(it, Math.max(0, local))));
+        if (Math.abs(e.el.playbackRate - rate) > 0.005) { try { e.el.playbackRate = rate; } catch (x) {} }
+        var g = n.snd ? (gainOf[it.id] || 0) : 0;
         if (playing) audioOut(e);
         if (e.gain) { e.gain.gain.value = g; e.el.muted = false; e.el.volume = 1; }
         else { e.el.muted = g === 0; e.el.volume = Math.min(1, g); }

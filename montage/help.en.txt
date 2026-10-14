@@ -18,12 +18,14 @@ The timeline has five rows: `Text`, `Overlay`, `Main`, `Music` and `Voice`. The 
 
 ## Edit clips
 With a clip selected:
-- `Speed` plays it faster or slower. Speed also changes the pitch of the sound.
+- `Speed` plays it faster or slower. Speed also changes the pitch of the sound. A `Speed curve` changes the speed while the clip plays: pick `Hero`, `Bullet`, `Montage`, `Jump cut`, `Flash in` or `Flash out`, or make `Your own` by moving the playhead along the clip and changing `Speed at the playhead` (0.1× to 10×). Each change sets a point at that moment of the video, and the speed changes smoothly between points. The graph shows the curve and the clip's length follows it; `None` goes back to one speed.
 - `Volume` (up to 200 %), `Fade` (`Fade in`, `Fade out`) and `Mute` for its sound. `Extract sound` puts the sound of a video on the `Music` row (or `Voice`, if `Music` is taken there) so you can move it on its own.
 - `Transition` into the clip: `Dissolve`, `Through black`, `Slide`, `Wipe`, `Push up`, `Zoom` or `Circle`, with a `Length`.
 - `Adjust`: `Brightness`, `Contrast`, `Saturation`, `Warmth` and a `Filter` such as `Mono`, `Sepia`, `Film`, `Vintage` or `Golden`. `Open a .cube file` adds a `Colour look (.cube)`: a 3D LUT from a colour-grading app or a LUT pack, up to 64 points a side. It is kept like a picture (on this device, or synced with the project's media); `Remove the look` takes it off.
 - `Frame`: `Whole picture` or `Fill the frame`, `Rotate` and `Mirror`.
-- `To overlay` turns a clip into a picture in picture on top of the main video; `Position` sets `Left – right`, `Top – bottom`, `Size` and `Opacity`. `To main` puts it back.
+- `To overlay` turns a clip into a picture in picture on top of the main video; `Position` sets `Left – right`, `Top – bottom`, `Size` and `Opacity`, and `Border`, `Border colour` and `Rounded corners` frame it. `To main` puts it back.
+- `Chroma key` (videos and pictures) removes a green or blue screen. Switch on `Remove a colour (green or blue screen)`, choose `Green`, `Blue` or `Pick from the picture` (then tap the colour in the preview; [[Esc]] cancels), and set `Tolerance`, `Soft edge` and `Remove colour spill`. Put the keyed clip on the `Overlay` row over another video or picture.
+- `Reduce noise` (videos with sound and sound clips) takes steady background noise (fans, traffic, hum, wind) out of the clip's sound, on this device. Montage makes a cleaned copy of the sound, keeps it like your other media and plays it instead; `Back to the original sound` undoes it. Clips of the same file share one cleaned copy.
 - `Freeze frame` (videos on the `Main` row) holds the picture at the playhead for 2 seconds: the clip splits there and a still of that frame, at the video's full size, goes in between. Change its `Duration` like any picture.
 - `Reverse` (videos) plays the clip backwards, without sound; `Forwards` turns it back.
 - `Duplicate` and `Delete` (with `Undo`).
@@ -35,6 +37,14 @@ With a clip selected:
 3. Move with `+½ s`, `−½ s`, `Previous key` and `Next key`, and change values again. Between two keys Montage changes them at an even pace; before the first key and after the last one they stay put.
 
 `Add key` keeps the current values at the playhead, `Remove key` takes it away, `Remove all keys` starts over. Small diamonds on the clip in the timeline show its keys. Keys belong to the clip: `Split` and `Duplicate` keep the motion as it was, but trimming the start of a clip shifts its keys with it. A clip can have up to 60 keys.
+
+## Shapes for social media and reframe
+The project's `Shape` (`Wide 16:9`, `Tall 9:16`, `Square 1:1`, `Portrait 4:5`) can change at any time in `Project settings`. When a clip fills the frame and its picture is cropped to that shape, `Reframe` (videos and pictures) decides what stays in view:
+- `Auto reframe` looks through the clip and follows faces (where the browser can find them) or, otherwise, what moves near the middle, and sets keys along the clip.
+- `Focus left – right` and `Focus top – bottom` move the point that stays in the middle at the playhead; a key is set there. `Remove reframing` centres the picture again.
+- `Reframe all clips` in `Project settings` auto-reframes every video and picture on the `Main` row at once; one `Undo` takes it all back.
+
+Reframing switches the clip to `Fill the frame`. Everything happens on this device.
 
 ## Text, music and voice
 - `Text` adds a title at the playhead. `Edit text` changes the words, `Font`, `Text size`, `Colour`, `Outline`, `Box behind the text`, `Alignment` and `Entrance` (`Fade`, `Rise`, `Pop`). Drag its edges to make it show longer or shorter.
@@ -51,6 +61,7 @@ With a clip selected:
 - `Add a subtitle` puts a text at the playhead in subtitle style: small white letters with a black outline along the bottom of the picture.
 - `Open an SRT file` adds every line of an SRT (or WebVTT) subtitle file as its own text at the right time. You can edit, move or delete each one like any text.
 - `Save as SRT` writes all texts on the `Text` row as an SRT file, for YouTube or a video player.
+- `Make subtitles`, under `Subtitles from speech`, listens to the project's sound and writes what is said as subtitle texts. Choose the `Language` (`English`, `Ελληνικά`, or `Find it`). It runs on this device: the sound is not sent anywhere. The first time, Montage downloads the speech model (OpenAI's Whisper, about 42 MB, from Hugging Face) and the speech runtime (about 11 MB, from this site) and keeps them; after that it works offline. `Remove the speech model` gives the space back.
 
 ## Stickers and shapes
 `Stickers` (with nothing selected) opens `Stickers and shapes`:
@@ -97,3 +108,7 @@ In `Project settings` you can switch on `Sync this project's media`. Montage the
 - One file can be up to 4 GB. Very long 4K projects need a lot of browser storage.
 - Some browsers cannot make 4K or MP4 files; Montage offers only what your browser can do.
 - Pictures other than JPEG and PNG are turned into JPEG when you add them.
+- A speed curve has up to 20 points. As with a single speed, the sound changes pitch with the speed.
+- `Reduce noise` is for steady noise. It cannot remove music, other voices or sudden sounds.
+- `Auto reframe` follows faces only where the browser can find them (some versions of Chrome); elsewhere it follows motion, which can wander on busy shots. Set those keys by hand.
+- `Make subtitles` listens to the first 30 minutes of a project and uses Whisper's smallest model, so check the lines: names, quiet speech, speech over loud music and Greek come out wrong more often than clear English.

@@ -436,21 +436,26 @@
         gain.gain.setValueAtTime(curve[0], a - w0);
         gain.gain.setValueCurveAtTime(curve, a - w0, Math.max(0.001, b - a));
         gain.connect(ctx.destination);
-        var sa = seg["in"] + (a - seg.start) * seg.sp, sb = seg["in"] + (b - seg.start) * seg.sp;
-        for await (var wb of tr.sink.buffers(sa + tr.off, sb + tr.off)) {
-          var bt = wb.timestamp - tr.off;                       // seconds into the file
-          var when = seg.start + (bt - seg["in"]) / seg.sp - w0;  // seconds into this window
-          var node = ctx.createBufferSource();
-          node.buffer = wb.buffer;
-          node.playbackRate.value = seg.sp;
-          node.connect(gain);
-          var skip = 0;
-          if (when < a - w0) { skip = (a - w0 - when) * seg.sp; when = a - w0; }
-          if (skip >= wb.buffer.duration) continue;
-          var play = Math.min((wb.buffer.duration - skip), (b - w0 - when) * seg.sp);
-          if (play <= 0) continue;
-          node.start(when, skip, play);
-        }
+        // pieces of one rate each (one piece unless the clip has a speed
+        // curve); every decoded buffer plays the part of a piece it holds
+        var pieces = C.srcPieces(seg, a - seg.start, b - seg.start, 0.05), sa = Infinity, sb = -Infinity;
+        pieces.forEach(function (pc) { sa = Math.min(sa, pc.s0); sb = Math.max(sb, pc.s1); });
+        var bufs = [];
+        for await (var wb of tr.sink.buffers(sa + tr.off, sb + tr.off)) bufs.push({ bt: wb.timestamp - tr.off, buf: wb.buffer });
+        pieces.forEach(function (pc) {
+          var rate = (pc.s1 - pc.s0) / (pc.t1 - pc.t0);
+          if (!(rate > 0)) return;
+          bufs.forEach(function (x) {
+            var o0 = Math.max(pc.s0, x.bt), o1 = Math.min(pc.s1, x.bt + x.buf.duration);
+            if (o1 - o0 <= 1e-6) return;
+            var when = seg.start + pc.t0 + (o0 - pc.s0) / rate - w0;   // seconds into this window
+            var node = ctx.createBufferSource();
+            node.buffer = x.buf;
+            node.playbackRate.value = rate;
+            node.connect(gain);
+            node.start(Math.max(0, when), o0 - x.bt, o1 - o0);
+          });
+        });
       }
       var mixed = await ctx.startRendering();
       await asrc.add(mixed);
@@ -458,6 +463,36 @@
     }
   }
 
-  var api = { pickFormat: pickFormat, pickSoundFormat: pickSoundFormat, run: run, still: still, WIN: WIN, GIF_MAX_SEC: GIF_MAX_SEC, GifWriter: GifWriter };
+  // The project's sound for speech to text: the same mix as an export,
+  // folded to mono and brought down to 16 kHz window by window (so a
+  // long project never holds its 48 kHz mix whole).
+  //   opts = { project, file, cancelled, progress } → Float32Array at 16 kHz
+  var SPEECH_MAX_SEC = 30 * 60;
+  async function speech16k(opts) {
+    var C = root.MontageCore, p = opts.project;
+    var cancelled = opts.cancelled || function () { return false; };
+    var total = Math.min(C.duration(p), SPEECH_MAX_SEC), sound = C.soundPlan(p);
+    var out = new Float32Array(Math.ceil(total * 16000) + 16000), n = 0;
+    var lib = new Library(opts.file);
+    var sink = {
+      add: function (ab) {
+        var len = ab.length, mono = new Float32Array(len), chs = ab.numberOfChannels;
+        for (var c = 0; c < chs; c++) { var d = ab.getChannelData(c); for (var i = 0; i < len; i++) mono[i] += d[i] / chs; }
+        var lo = root.MontageASR.decimate3(mono);
+        var take = Math.min(lo.length, out.length - n);
+        out.set(lo.subarray(0, take), n); n += take;
+        return Promise.resolve();
+      }
+    };
+    try {
+      await mixSound(p, sound, lib, sink, Math.max(0.1, total), cancelled, opts.progress);
+    } finally {
+      lib.close();
+    }
+    if (cancelled()) throw new Error("cancelled");
+    return out.subarray(0, n);
+  }
+
+  var api = { pickFormat: pickFormat, pickSoundFormat: pickSoundFormat, run: run, still: still, speech16k: speech16k, SPEECH_MAX_SEC: SPEECH_MAX_SEC, WIN: WIN, GIF_MAX_SEC: GIF_MAX_SEC, GifWriter: GifWriter };
   root.MontageExport = api;
 })(typeof window !== "undefined" ? window : this);

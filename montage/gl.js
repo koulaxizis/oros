@@ -17,7 +17,8 @@
 // saturation, temperature, a filter, transitions (dx/dy shift, sc
 // zoom, iris circle, wipe clip, fade to black), a colour look from a
 // .cube table (layer lut: the table as an n²×n picture, asked from
-// source({ k: "lut" })). Titles are drawn with the 2D canvas into a
+// source({ k: "lut" })), chroma key (ck), border and rounded corners
+// (bd), and a reframe focus for fill (fc). Titles are drawn with the 2D canvas into a
 // texture and cached until their text or size changes.
 // ============================================================
 (function (root) {
@@ -31,10 +32,15 @@
   var FS = "#version 300 es\nprecision highp float;\n" +
     "uniform sampler2D t;uniform sampler2D lt;uniform float ln;uniform float a;uniform float bri;uniform vec4 lk;uniform mat3 fm;uniform vec3 fo;\n" +
     "uniform vec4 clip;uniform vec2 res;uniform bool solid;uniform vec3 col;uniform float iris;in vec2 uv;out vec4 o;\n" +
+    "uniform vec4 ck;uniform vec2 kc;uniform vec4 rr;uniform vec3 rd;uniform vec3 bc;\n" +
     "void main(){vec2 f=vec2(gl_FragCoord.x/res.x,1.0-gl_FragCoord.y/res.y);\n" +
     " if(f.x<clip.x||f.x>clip.z||f.y<clip.y||f.y>clip.w)discard;\n" +
     " if(iris>=0.0){vec2 d=(f-0.5)*res/max(res.x,res.y);if(length(d)>iris*0.7072)discard;}\n" +
     " vec4 c=solid?vec4(col,1.0):texture(t,uv);\n" +
+    // chroma key (MontageCore.chromaKey): distance in the CbCr plane
+    " if(ck.w>0.5){vec2 q=vec2(-0.1687*c.r-0.3313*c.g+0.5*c.b,0.5*c.r-0.4187*c.g-0.0813*c.b);\n" +
+    "  float bs=distance(q,kc)-ck.x;float l0=dot(c.rgb,vec3(0.2126,0.7152,0.0722));\n" +
+    "  c.rgb=mix(vec3(l0),c.rgb,pow(clamp(bs/ck.z,0.0,1.0),1.5));c.a*=pow(clamp(bs/ck.y,0.0,1.0),1.5);}\n" +
     " c.rgb+=lk.x;c.rgb=(c.rgb-0.5)*(1.0+lk.y)+0.5;\n" +
     " float l=dot(c.rgb,vec3(0.2126,0.7152,0.0722));c.rgb=mix(vec3(l),c.rgb,1.0+lk.z);\n" +
     " c.r+=lk.w*0.1;c.b-=lk.w*0.1;\n" +
@@ -42,6 +48,11 @@
     " if(ln>1.0){vec3 q=clamp(c.rgb,0.0,1.0)*(ln-1.0);float b0=floor(q.b),b1=min(b0+1.0,ln-1.0);\n" +
     "  vec2 rg=(q.rg+0.5)/vec2(ln*ln,ln);\n" +
     "  c.rgb=mix(texture(lt,rg+vec2(b0/ln,0.0)).rgb,texture(lt,rg+vec2(b1/ln,0.0)).rgb,q.b-b0);}\n" +
+    // rounded corners and a border inside the region rr (frame fractions)
+    " if(rd.z>0.5){vec2 q2=(f-rr.xy)*res;vec2 hs=rr.zw*res*0.5;vec2 e=abs(q2-hs)-(hs-vec2(rd.x));\n" +
+    "  float sd=length(max(e,0.0))+min(max(e.x,e.y),0.0)-rd.x;\n" +
+    "  if(rd.y>0.0){float bm=clamp(sd+rd.y+0.5,0.0,1.0);c.rgb=mix(c.rgb,bc,bm);c.a=mix(c.a,1.0,bm);}\n" +
+    "  c.a*=clamp(0.5-sd,0.0,1.0);}\n" +
     " c.rgb*=bri;o=vec4(c.rgb,c.a*a);}";
 
   // Filters: colour matrix (rows) + offset
@@ -72,16 +83,42 @@
     var n = parseInt(String(h || "#000000").slice(1), 16) || 0;
     return [(n >> 16 & 255) / 255, (n >> 8 & 255) / 255, (n & 255) / 255];
   }
+  // The chroma key's numbers (MontageCore.ckParams, kept here too so the
+  // compositor works on its own).
+  function ckParams(ck) {
+    return { sim: ck.tol / 100 * 0.3, sm: Math.max(0.001, ck.soft / 100 * 0.2), sp: Math.max(0.001, ck.sp / 100 * 0.3) };
+  }
   // Transpose a row-major 3x3 for uniformMatrix3fv (column-major).
   function colMajor(m) { return [m[0], m[3], m[6], m[1], m[4], m[7], m[2], m[5], m[8]]; }
 
   // Where a w×h picture lands inside a box (fractions of the frame),
-  // for a frame of fw×fh pixels. fit: contain; fill: cover.
-  function placeIn(box, w, h, fw, fh, fill) {
+  // for a frame of fw×fh pixels. fit: contain; fill: cover. focus
+  // (fill only) { x, y } 0..1 of the picture: that point goes to the
+  // middle of the box as far as the picture still covers the box
+  // (auto reframe).
+  function placeIn(box, w, h, fw, fh, fill, focus) {
     var bw = box.w * fw, bh = box.h * fh, sr = w / h, br = bw / bh;
     var dw, dh;
     if ((sr > br) !== !!fill) { dw = bw; dh = bw / sr; } else { dh = bh; dw = bh * sr; }
-    return { x: box.x + (bw - dw) / 2 / fw, y: box.y + (bh - dh) / 2 / fh, w: dw / fw, h: dh / fh };
+    var x = box.x + (bw - dw) / 2 / fw, y = box.y + (bh - dh) / 2 / fh;
+    if (fill && focus) {
+      var cx = box.x + box.w / 2 - focus.x * dw / fw, cy = box.y + box.h / 2 - focus.y * dh / fh;
+      x = Math.min(box.x, Math.max(box.x + box.w - dw / fw, cx));
+      y = Math.min(box.y, Math.max(box.y + box.h - dh / fh, cy));
+    }
+    return { x: x, y: y, w: dw / fw, h: dh / fh };
+  }
+  // Corner radius and border width in pixels for a region of rw×rh px
+  // in a fw×fh frame (bd from MontageCore: w % of the frame's shorter
+  // side, r % of the region's shorter side, at most a circle).
+  function borderPx(bd, rw, rh, fw, fh) {
+    var half = Math.min(rw, rh) / 2;
+    return { r: Math.min(half, bd.r / 100 * Math.min(rw, rh)), w: Math.min(half, bd.w / 100 * Math.min(fw, fh)) };
+  }
+  // The key colour in the CbCr plane (the shader's kc).
+  function keyCbCr(hex) {
+    var c = hexRgb(hex);
+    return [-0.1687 * c[0] - 0.3313 * c[1] + 0.5 * c[2], 0.5 * c[0] - 0.4187 * c[1] - 0.0813 * c[2]];
   }
 
   // Title layout: lines of text, size sz% of the frame height, inside
@@ -184,7 +221,7 @@
     gl.enableVertexAttribArray(loc);
     gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
     var U = {};
-    ["r", "rot", "fl", "t", "lt", "ln", "a", "bri", "lk", "fm", "fo", "clip", "res", "solid", "col", "iris"].forEach(function (n) { U[n] = gl.getUniformLocation(prog, n); });
+    ["r", "rot", "fl", "t", "lt", "ln", "a", "bri", "lk", "fm", "fo", "clip", "res", "solid", "col", "iris", "ck", "kc", "rr", "rd", "bc"].forEach(function (n) { U[n] = gl.getUniformLocation(prog, n); });
     var tex = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, tex);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
@@ -285,7 +322,7 @@
         var s = source(L);
         if (!s || !s.img || !(s.w > 0) || !(s.h > 0)) return;
         var sideways = L.rot === 90 || L.rot === 270;
-        var rect = placeIn(box, sideways ? s.h : s.w, sideways ? s.w : s.h, fw, fh, L.fit === "fill");
+        var rect = placeIn(box, sideways ? s.h : s.w, sideways ? s.w : s.h, fw, fh, L.fit === "fill", L.fc);
         if (L.fit === "fill") {
           clip[0] = Math.max(clip[0], box.x); clip[2] = Math.min(clip[2], box.x + box.w);
           clip[1] = box.y; clip[3] = box.y + box.h;
@@ -293,8 +330,18 @@
         try { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, s.img); }
         catch (e) { return; }                         // a frame that cannot be read yet
         useLut(L.lut, source);
+        if (L.ck) {
+          var cp = ckParams(L.ck), kc = keyCbCr(L.ck.col);
+          gl.uniform4f(U.ck, cp.sim, cp.sm, cp.sp, 1); gl.uniform2f(U.kc, kc[0], kc[1]);
+        }
+        if (L.bd) {
+          var reg = L.fit === "fill" ? box : rect, bp = borderPx(L.bd, reg.w * fw, reg.h * fh, fw, fh), bcol = hexRgb(L.bd.col);
+          gl.uniform4f(U.rr, reg.x, reg.y, reg.w, reg.h); gl.uniform3f(U.rd, bp.r, bp.w, 1); gl.uniform3f(U.bc, bcol[0], bcol[1], bcol[2]);
+        }
         quad(rect, L.rot, L.fl, L.alpha, L.bri, L.lk, L.flt, clip, null, iris);
         gl.uniform1f(U.ln, 0);
+        if (L.ck) gl.uniform4f(U.ck, 0, 1, 1, 0);
+        if (L.bd) gl.uniform3f(U.rd, 0, 0, 0);
       });
       Object.keys(titles).forEach(function (k) { if (!seen[k]) delete titles[k]; });
       gl.flush();
@@ -310,7 +357,7 @@
     return { draw: draw, dispose: dispose, gl: gl };
   }
 
-  var api = { create: create, placeIn: placeIn, titleAnim: titleAnim, FILTERS: Object.keys(FILTERS), FONTS: Object.keys(FONTS) };
+  var api = { create: create, placeIn: placeIn, borderPx: borderPx, keyCbCr: keyCbCr, ckParams: ckParams, titleAnim: titleAnim, FILTERS: Object.keys(FILTERS), FONTS: Object.keys(FONTS) };
   if (typeof module === "object" && module.exports) module.exports = api;
   else root.MontageGL = api;
 })(typeof window !== "undefined" ? window : this);

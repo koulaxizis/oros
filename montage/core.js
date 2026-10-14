@@ -15,7 +15,9 @@
 //               "ov" (overlay: picture in picture), "tt" (titles),
 //               "a1" / "a2" (sound: music, voice)
 //           main clips have an order `o`; the others a start `at`
-//           (seconds on the timeline).
+//           (seconds on the timeline). Optional (only when in use):
+//           sr speed curve, ck chroma key, bd border / corners,
+//           fc reframe focus keys, na cleaned sound (see normItem).
 //   Media are files on the orOS disk, /internal/Assets/<sha256>.<ext>
 //   (the same folder and ids as Atelier's clips.js); a project keeps
 //   only the ids, never the media.
@@ -158,7 +160,254 @@
     }
     var kf = normKf(o.kf, it);
     if (kf.length) it.kf = kf;                  // written only when the clip has keys
+    // Wave 41 fields, each written only when in use (absent = off), so
+    // a project without them is byte-identical on copies that predate them.
+    if (k === "video" || k === "audio") {
+      var sr = normSr(o.sr);
+      if (sr.length >= 2) it.sr = sr;           // speed curve (ramp)
+      if (isSound(o.na)) it.na = o.na;          // the clip's sound with the noise removed
+    }
+    if (k === "video" || k === "image") {
+      var ck = normCk(o.ck);
+      if (ck) it.ck = ck;                       // chroma key
+      var bd = normBd(o.bd);
+      if (bd) it.bd = bd;                       // border + rounded corners
+      var fc = normFc(o.fc);
+      if (fc.length) it.fc = fc;                // reframe: the point kept in view
+    }
     return it;
+  }
+
+  // ---------- Speed curve (ramp) ----------
+  // sr = [{ s, v }] sorted by s: s seconds into the FILE, v speed
+  // 0.1-10. Between keys the speed changes evenly along the file, before
+  // the first and after the last it holds. Because the keys sit on the
+  // file (not on the clip), a split or a trim keeps every frame's speed:
+  // both halves read the same curve. While a clip has a curve its `sp`
+  // is not used (it comes back when the curve is removed).
+  var MAX_SR = 20, SR_MIN = 0.1, SR_MAX = 10;
+  function normSr(v) {
+    if (!Array.isArray(v)) return [];
+    var byS = {};
+    v.slice(0, MAX_SR * 2).forEach(function (raw) {
+      var o = obj(raw);
+      if (!o || !isNum(o.s) || !isNum(o.v)) return;
+      var s = r3(clamp(o.s, 0, MAX_DUR));
+      byS[s] = { s: s, v: r3(clamp(o.v, SR_MIN, SR_MAX)) };
+    });
+    return Object.keys(byS).map(function (k) { return byS[k]; })
+      .sort(function (a, b) { return a.s - b.s; }).slice(0, MAX_SR);
+  }
+  // Speed of a curve at file second s.
+  function srAt(keys, s) {
+    var a = keys[0], b = keys[keys.length - 1];
+    if (s <= a.s) return a.v;
+    if (s >= b.s) return b.v;
+    for (var i = 1; i < keys.length; i++) if (keys[i].s >= s) { a = keys[i - 1]; b = keys[i]; break; }
+    return b.s > a.s ? a.v + (b.v - a.v) * (s - a.s) / (b.s - a.s) : a.v;
+  }
+  // Timeline seconds to read the file from s0 to s1 while the speed
+  // changes evenly from v0 to v1: ∫ ds / v(s).
+  function spanTime(s0, s1, v0, v1) {
+    var L = s1 - s0;
+    if (!(L > 0)) return 0;
+    if (Math.abs(v1 - v0) < 1e-9) return L / v0;
+    return L * Math.log(v1 / v0) / (v1 - v0);
+  }
+  // The clip's [in, out] cut into pieces of even change: [{ s0, s1, v0,
+  // v1, t0, t1 }] (t = seconds into the clip, reading forwards).
+  var rampCache = typeof WeakMap === "function" ? new WeakMap() : null;
+  function rampSegs(it) {
+    if (rampCache && rampCache.has(it)) return rampCache.get(it);
+    var keys = it.sr, pts = [it["in"]];
+    keys.forEach(function (k) { if (k.s > it["in"] + 1e-6 && k.s < it.out - 1e-6) pts.push(k.s); });
+    pts.push(it.out);
+    var out = [], t = 0;
+    for (var i = 0; i + 1 < pts.length; i++) {
+      var s0 = pts[i], s1 = pts[i + 1], v0 = srAt(keys, s0), v1 = srAt(keys, s1), d = spanTime(s0, s1, v0, v1);
+      out.push({ s0: s0, s1: s1, v0: v0, v1: v1, t0: t, t1: t + d });
+      t += d;
+    }
+    if (rampCache) rampCache.set(it, out);
+    return out;
+  }
+  function hasRamp(it) { return !!(it && it.sr && it.sr.length >= 2); }
+  // Seconds into the file reached `local` seconds into the clip, reading
+  // forwards from the in point (outside the clip: at the edge speed).
+  function fwdPos(it, local) {
+    if (!hasRamp(it)) return it["in"] + local * it.sp;
+    var segs = rampSegs(it), last = segs[segs.length - 1];
+    if (local <= 0) return it["in"] + local * segs[0].v0;
+    if (local >= last.t1) return it.out + (local - last.t1) * last.v1;
+    for (var i = 0; i < segs.length; i++) {
+      var g = segs[i];
+      if (local > g.t1 && i < segs.length - 1) continue;
+      var dt = local - g.t0, k = (g.v1 - g.v0) / (g.s1 - g.s0);
+      var s = Math.abs(k) < 1e-9 ? g.s0 + g.v0 * dt : g.s0 + g.v0 / k * (Math.exp(k * dt) - 1);
+      return clamp(s, g.s0, g.s1);
+    }
+    return it.out;
+  }
+  // The other way: seconds into the clip (reading forwards) where the
+  // file reaches second s.
+  function fwdLocal(it, s) {
+    if (!hasRamp(it)) return (s - it["in"]) / it.sp;
+    var segs = rampSegs(it), last = segs[segs.length - 1];
+    if (s <= it["in"]) return (s - it["in"]) / segs[0].v0;
+    if (s >= it.out) return last.t1 + (s - it.out) / last.v1;
+    for (var i = 0; i < segs.length; i++) {
+      var g = segs[i];
+      if (s > g.s1) continue;
+      return g.t0 + spanTime(g.s0, s, g.v0, g.v0 + (g.v1 - g.v0) * (s - g.s0) / (g.s1 - g.s0));
+    }
+    return last.t1;
+  }
+  // Speed `local` seconds into the clip (the playback rate there).
+  function rateAt(it, local) {
+    if (!hasRamp(it)) return it.sp;
+    var d = itemDur(it);
+    return srAt(it.sr, fwdPos(it, it.rv ? d - local : local));
+  }
+  // A curve from a preset (CapCut-style names) over the clip's in…out:
+  // [u (0..1 of the clip), speed] pairs.
+  var RAMPS = {
+    hero: [[0, 1], [0.35, 1], [0.5, 0.25], [0.65, 1], [1, 1]],
+    bullet: [[0, 2.5], [0.4, 0.2], [0.6, 0.2], [1, 2.5]],
+    montage: [[0, 1.5], [0.25, 0.5], [0.5, 2.5], [0.75, 0.5], [1, 1.5]],
+    jump: [[0, 0.6], [0.42, 0.6], [0.5, 4], [0.58, 0.6], [1, 0.6]],
+    flashin: [[0, 4], [0.3, 1], [1, 1]],
+    flashout: [[0, 1], [0.7, 1], [1, 4]]
+  };
+  function rampPreset(it, name) {
+    var r = RAMPS[name];
+    if (!r || !(it.out > it["in"])) return [];
+    return normSr(r.map(function (p) { return { s: it["in"] + (it.out - it["in"]) * p[0], v: p[1] }; }));
+  }
+  // The curve after setting speed v at file second s: a key within
+  // `near` seconds of s moves there, else a new key goes in.
+  function srSet(it, s, v, near) {
+    var keys = (it.sr || []).slice(), lim = near > 0 ? near : 1e-3, hit = -1;
+    keys.forEach(function (k, i) { if (Math.abs(k.s - s) <= lim && (hit < 0 || Math.abs(k.s - s) < Math.abs(keys[hit].s - s))) hit = i; });
+    if (hit >= 0) keys[hit] = { s: s, v: v }; else keys.push({ s: s, v: v });
+    if (keys.length < 2) keys.push({ s: s === it["in"] ? it.out : it["in"], v: v });
+    return normSr(keys);
+  }
+  // Pieces of a sound segment between a and b seconds into it, each
+  // short enough (`step`) to play at one rate: [{ t0, t1, s0, s1 }]
+  // (s = file seconds). Without a curve: one piece.
+  function srcPieces(seg, a, b, step) {
+    if (!(b > a)) return [];
+    if (!hasRamp(seg)) return [{ t0: a, t1: b, s0: seg["in"] + a * seg.sp, s1: seg["in"] + b * seg.sp }];
+    var n = Math.max(1, Math.ceil((b - a) / (step || 0.05))), out = [], prev = fwdPos(seg, a);
+    for (var i = 1; i <= n; i++) {
+      var t1 = a + (b - a) * i / n, s1 = fwdPos(seg, t1);
+      out.push({ t0: a + (b - a) * (i - 1) / n, t1: t1, s0: prev, s1: s1 });
+      prev = s1;
+    }
+    return out;
+  }
+  // New in or out point when an edge of a clip is dragged by dt
+  // timeline seconds (left edge: + shortens; right edge: + lengthens).
+  function trimSrc(it, edge, dt) {
+    var d = itemDur(it);
+    if (edge === "l") return dt >= 0 ? fwdPos(it, Math.min(dt, d)) : it["in"] + dt * rateAt(it, 0);
+    return dt <= 0 ? fwdPos(it, Math.max(0, d + dt)) : it.out + dt * (hasRamp(it) ? srAt(it.sr, it.out) : it.sp);
+  }
+
+  // ---------- Chroma key, border, reframe ----------
+  // ck = { col, tol, soft, sp }: pixels near the colour col become
+  // transparent; tol (0-100) how near, soft (0-100) the soft edge, sp
+  // (0-100) how much of the colour's spill is taken off what stays.
+  function normCk(v) {
+    var o = obj(v);
+    if (!o) return null;
+    return {
+      col: COLOR_RE.test(o.col) ? o.col : "#00b140",
+      tol: Math.round(num(o.tol, 40, 0, 100)), soft: Math.round(num(o.soft, 25, 0, 100)), sp: Math.round(num(o.sp, 50, 0, 100))
+    };
+  }
+  // The key's numbers as the compositor uses them (fractions of the
+  // CbCr plane): similarity, smoothness, spill.
+  function ckParams(ck) {
+    return { sim: ck.tol / 100 * 0.3, sm: Math.max(0.001, ck.soft / 100 * 0.2), sp: Math.max(0.001, ck.sp / 100 * 0.3) };
+  }
+  function cbcr(r, g, b) { return [-0.1687 * r - 0.3313 * g + 0.5 * b, 0.5 * r - 0.4187 * g - 0.0813 * b]; }
+  function hex3(h) { var n = parseInt(String(h).slice(1), 16) || 0; return [(n >> 16 & 255) / 255, (n >> 8 & 255) / 255, (n & 255) / 255]; }
+  // What the key does to one pixel (rgb 0..1): { a (alpha 0..1), rgb }.
+  // MontageGL's shader computes the same.
+  function chromaKey(rgb, ck) {
+    var q = ckParams(ck), k = hex3(ck.col), a = cbcr(rgb[0], rgb[1], rgb[2]), b = cbcr(k[0], k[1], k[2]);
+    var base = Math.sqrt((a[0] - b[0]) * (a[0] - b[0]) + (a[1] - b[1]) * (a[1] - b[1])) - q.sim;
+    var alpha = Math.pow(clamp(base / q.sm, 0, 1), 1.5), spill = Math.pow(clamp(base / q.sp, 0, 1), 1.5);
+    var l = 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2];
+    return { a: alpha, rgb: rgb.map(function (c) { return l + (c - l) * spill; }) };
+  }
+  // bd = { w, col, r }: border width (0-10, % of the frame's shorter
+  // side), its colour, corner radius (0-50, % of the picture's shorter
+  // side: 50 = a circle on a square).
+  function normBd(v) {
+    var o = obj(v);
+    if (!o) return null;
+    var w = r3(num(o.w, 0, 0, 10)), r = Math.round(num(o.r, 0, 0, 50));
+    if (!(w > 0) && !(r > 0)) return null;
+    return { w: w, col: COLOR_RE.test(o.col) ? o.col : "#ffffff", r: r };
+  }
+  // fc = [{ t, x, y }]: the point of the picture (x, y 0..1 of the file's
+  // own frame, before rotate and mirror) kept in the middle when the
+  // picture is cropped to fill its box. t = seconds into the file
+  // (video) or into the clip (picture), so splits and speed changes keep
+  // it. Even pace between keys, held outside.
+  var MAX_FC = 60;
+  function normFc(v) {
+    if (!Array.isArray(v)) return [];
+    var byT = {};
+    v.slice(0, MAX_FC * 2).forEach(function (raw) {
+      var o = obj(raw);
+      if (!o || !isNum(o.t) || !isNum(o.x) || !isNum(o.y)) return;
+      var t = r3(clamp(o.t, 0, MAX_DUR));
+      byT[t] = { t: t, x: r3(clamp(o.x, 0, 1)), y: r3(clamp(o.y, 0, 1)) };
+    });
+    return Object.keys(byT).map(function (k) { return byT[k]; })
+      .sort(function (a, b) { return a.t - b.t; }).slice(0, MAX_FC);
+  }
+  function fcAt(keys, t) {
+    if (!keys || !keys.length) return { x: 0.5, y: 0.5 };
+    var a = keys[0], b = keys[keys.length - 1];
+    if (t <= a.t) b = a;
+    else if (t >= b.t) a = b;
+    else for (var i = 1; i < keys.length; i++) if (keys[i].t >= t) { a = keys[i - 1]; b = keys[i]; break; }
+    var q = b.t > a.t ? (t - a.t) / (b.t - a.t) : 0;
+    return { x: a.x + (b.x - a.x) * q, y: a.y + (b.y - a.y) * q };
+  }
+  // The keys after setting the point at time t (a key within `near`
+  // seconds is replaced), or removing it (pt null).
+  function fcSet(keys, t, pt, near) {
+    var lim = near > 0 ? near : 1 / 120;
+    var out = (keys || []).filter(function (k) { return Math.abs(k.t - t) > lim; });
+    if (pt) out.push({ t: t, x: pt.x, y: pt.y });
+    return normFc(out);
+  }
+  // Media time of a clip `local` seconds in: file seconds for a video,
+  // clip seconds for a picture.
+  function mediaTime(it, local) { return it.k === "video" ? srcTime(it, local) : local; }
+  // Where the texture point (u, v) of a picture shows inside its placed
+  // rectangle after rotate (0/90/180/270) and mirror: the inverse of
+  // MontageGL's vertex mapping (uvOf).
+  function uvOf(px, py, rot, fl) {
+    var x = fl ? 1 - px : px, y = py;
+    if (rot === 90) return [y, 1 - x];
+    if (rot === 180) return [1 - x, 1 - y];
+    if (rot === 270) return [1 - y, x];
+    return [x, y];
+  }
+  function shownPoint(u, v, rot, fl) {
+    var p;
+    if (rot === 90) p = [1 - v, u];
+    else if (rot === 180) p = [1 - u, 1 - v];
+    else if (rot === 270) p = [v, 1 - u];
+    else p = [u, v];
+    if (fl) p[0] = 1 - p[0];
+    return p;
   }
 
   // ---------- Keyframes ----------
@@ -329,7 +578,10 @@
 
   // ---------- Timeline ----------
   function itemDur(it) {
-    if (it.k === "video" || it.k === "audio") return (it.out - it["in"]) / it.sp;
+    if (it.k === "video" || it.k === "audio") {
+      if (hasRamp(it)) { var g = rampSegs(it); return g.length ? g[g.length - 1].t1 : 0; }
+      return (it.out - it["in"]) / it.sp;
+    }
     return it.d;
   }
   function byOrder(a, b) { return a.o !== b.o ? a.o - b.o : cmpStr(a.id, b.id); }
@@ -390,6 +642,10 @@
   // Seconds into the file shown `local` seconds into a clip (backwards
   // from the out point when reversed).
   function srcTime(it, local) {
+    if (hasRamp(it)) {
+      if (it.rv) return Math.max(it["in"], fwdPos(it, itemDur(it) - local) - 0.001);
+      return Math.min(it.out, fwdPos(it, local));
+    }
     if (it.rv) return Math.max(it["in"], it.out - local * it.sp - 0.001);
     return Math.min(it.out, it["in"] + local * it.sp);
   }
@@ -400,7 +656,16 @@
       bri: 1, dx: 0, dy: 0, sc: 1, iris: -1, clip: null, local: local
     };
     if (it.k === "video") L.st = srcTime(it, local);
-    if (it.k === "video" || it.k === "image") { L.fit = it.fit; L.rot = it.rot; L.fl = it.fl; L.lk = it.lk; L.flt = it.flt; if (it.lut) L.lut = it.lut; }
+    if (it.k === "video" || it.k === "image") {
+      L.fit = it.fit; L.rot = it.rot; L.fl = it.fl; L.lk = it.lk; L.flt = it.flt;
+      if (it.lut) L.lut = it.lut;
+      if (it.ck) L.ck = it.ck;
+      if (it.bd) L.bd = it.bd;
+      if (it.fc && it.fit === "fill") {
+        var f = fcAt(it.fc, mediaTime(it, local)), sp = shownPoint(f.x, f.y, it.rot, it.fl);
+        L.fc = { x: sp[0], y: sp[1] };
+      }
+    }
     if (it.k === "shape") L.sh = it.sh;
     if (it.box) L.box = it.box;
     if (it.k === "title") { L.text = it.text; if (it.bg) L.bg = it.bg; }
@@ -467,14 +732,14 @@
       if (it.k !== "video" || it.mu || it.rv || it.vol === 0) return;
       var next = seq[i + 1];
       out.push(volKeys({
-        id: it.id, src: it.src, start: s.start, dur: s.end - s.start, "in": it["in"], sp: it.sp, vol: it.vol / 100,
+        id: it.id, src: it.na || it.src, start: s.start, dur: s.end - s.start, "in": it["in"], sp: it.sp, vol: it.vol / 100,
         fi: Math.max(it.fi, s.tx), fo: Math.max(it.fo, next ? next.tx : 0)
       }, it));
     });
     ["ov", "a1", "a2"].forEach(function (tr) {
       trackItems(p, tr).forEach(function (it) {
         if ((it.k !== "video" && it.k !== "audio") || it.mu || it.rv || it.vol === 0) return;
-        out.push(volKeys({ id: it.id, src: it.src, start: it.at, dur: itemDur(it), "in": it["in"], sp: it.sp, vol: it.vol / 100, fi: it.fi, fo: it.fo }, it));
+        out.push(volKeys({ id: it.id, src: it.na || it.src, start: it.at, dur: itemDur(it), "in": it["in"], sp: it.sp, vol: it.vol / 100, fi: it.fi, fo: it.fo }, it));
       });
     });
     // Ducking: Music (a1) drops by dk % while anything plays on Voice (a2).
@@ -495,9 +760,11 @@
     }
     return out.sort(function (a, b) { return a.start !== b.start ? a.start - b.start : cmpStr(a.id, b.id); });
   }
-  // A segment carries its clip's volume keys as kv [[t, 0..2], …].
+  // A segment carries its clip's volume keys as kv [[t, 0..2], …], and
+  // a speed curve as out + sr (srcPieces reads it).
   function volKeys(seg, it) {
     if (it.kf && it.kf.some(function (k) { return k.v !== 100; })) seg.kv = it.kf.map(function (k) { return [k.t, k.v / 100]; });
+    if (hasRamp(it)) { seg.out = it.out; seg.sr = it.sr; }
     return seg;
   }
   var DUCK_RAMP = 0.25;                // seconds the music takes to go down / up
@@ -533,6 +800,7 @@
     Object.keys(p.items).forEach(function (k) {
       if (p.items[k].src) ids[p.items[k].src] = 1;
       if (p.items[k].lut) ids[p.items[k].lut] = 1;
+      if (p.items[k].na) ids[p.items[k].na] = 1;
     });
     return Object.keys(ids).sort(cmpStr);
   }
@@ -644,8 +912,8 @@
     var left = JSON.parse(JSON.stringify(it)), right = JSON.parse(JSON.stringify(it));
     right.id = newId; right.fi = 0; left.fo = 0;
     if (it.k === "video" || it.k === "audio") {
-      if (it.rv) { var rcut = it.out - local * it.sp; left["in"] = rcut; right.out = rcut; }
-      else { var cut = it["in"] + local * it.sp; left.out = cut; right["in"] = cut; }
+      if (it.rv) { var rcut = hasRamp(it) ? fwdPos(it, dur - local) : it.out - local * it.sp; left["in"] = rcut; right.out = rcut; }
+      else { var cut = fwdPos(it, local); left.out = cut; right["in"] = cut; }
     } else { left.d = local; right.d = dur - local; }
     if (it.tr === "main") { right.tx = null; right.o = orderKey(p, iid, now); }
     else right.at = it.at + local;
@@ -676,7 +944,7 @@
     var pl = placeOf(p, iid);
     var a = normItem({
       id: newId, k: "audio", tr: track === "a2" ? "a2" : "a1", src: it.src, len: it.len, "in": it["in"], out: it.out,
-      sp: it.sp, vol: it.vol, fi: it.fi, fo: it.fo, at: pl.start, m: tick(p.tombs[newId], now), kf: it.kf
+      sp: it.sp, vol: it.vol, fi: it.fi, fo: it.fo, at: pl.start, m: tick(p.tombs[newId], now), kf: it.kf, sr: it.sr, na: it.na
     }, newId);
     if (!a) return d;
     p.items[newId] = a;
@@ -697,9 +965,16 @@
         var nn = normItem(nl, k);
         if (nn) { nn.m = tick(it.m, now); p.items[k] = it = nn; }
       }
+      if (it.na === oldId && isSound(newId)) {
+        var na = JSON.parse(JSON.stringify(it));
+        na.na = newId;
+        var nn2 = normItem(na, k);
+        if (nn2) { nn2.m = tick(it.m, now); p.items[k] = it = nn2; }
+      }
       if (it.src !== oldId) return;
       var next = JSON.parse(JSON.stringify(it));
       next.src = newId;
+      if (newId !== oldId) delete next.na;          // the cleaned sound was made from the old file
       if (it.k === "video" || it.k === "audio") {
         next.len = len || 0;
         if (len > 0 && next.out > len) { next.out = len; next["in"] = Math.min(next["in"], Math.max(0, len - MIN)); }
@@ -917,7 +1192,10 @@
     projectList: projectList, fmtTime: fmtTime, exportName: exportName,
     kfAt: kfAt, kfSet: kfSet, kfSplit: kfSplit, kfProps: kfProps, MAX_KEYS: MAX_KEYS,
     parseCube: parseCube, lutPixels: lutPixels, srcTime: srcTime,
-    parseSrt: parseSrt, toSrt: toSrt, addSubtitles: addSubtitles, freezeAt: freezeAt, SUB_BOX: SUB_BOX, DUCK_RAMP: DUCK_RAMP
+    parseSrt: parseSrt, toSrt: toSrt, addSubtitles: addSubtitles, freezeAt: freezeAt, SUB_BOX: SUB_BOX, DUCK_RAMP: DUCK_RAMP,
+    hasRamp: hasRamp, fwdPos: fwdPos, fwdLocal: fwdLocal, rateAt: rateAt, srAt: srAt, srSet: srSet, rampPreset: rampPreset,
+    RAMPS: Object.keys(RAMPS), SR_MIN: SR_MIN, SR_MAX: SR_MAX, MAX_SR: MAX_SR, srcPieces: srcPieces, trimSrc: trimSrc,
+    chromaKey: chromaKey, ckParams: ckParams, fcAt: fcAt, fcSet: fcSet, MAX_FC: MAX_FC, mediaTime: mediaTime, uvOf: uvOf, shownPoint: shownPoint
   };
   if (typeof module === "object" && module.exports) module.exports = api;
   else root.MontageCore = api;
