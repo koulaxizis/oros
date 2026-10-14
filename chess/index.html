@@ -44,9 +44,9 @@
 
   <!-- Status: the two sides (material lead), whose turn / result -->
   <div id="status">
-    <span class="side" id="side-w"><i class="chip w" aria-hidden="true"></i><span id="name-w"></span><em id="adv-w"></em></span>
+    <span class="side" id="side-w"><i class="chip w" aria-hidden="true"></i><span id="name-w"></span><em id="adv-w"></em><b class="clk" id="clk-w" hidden></b></span>
     <span id="turn" aria-live="polite"></span>
-    <span class="side" id="side-b"><em id="adv-b"></em><span id="name-b"></span><i class="chip b" aria-hidden="true"></i></span>
+    <span class="side" id="side-b"><b class="clk" id="clk-b" hidden></b><em id="adv-b"></em><span id="name-b"></span><i class="chip b" aria-hidden="true"></i></span>
   </div>
 
   <main id="play">
@@ -68,6 +68,19 @@
         </div>
         <div id="rv-eval" aria-live="polite" hidden></div>
         <div id="rv-info" hidden></div>
+      </div>
+      <!-- A game on Lichess: offers, resign, the game's page -->
+      <div id="online-bar" hidden>
+        <div id="lp-info" aria-live="polite"></div>
+        <div class="rv-nav">
+          <button type="button" class="rv-btn primary" id="lp-draw" data-i18n="lp.draw">Offer a draw</button>
+          <button type="button" class="rv-btn" id="lp-nodraw" data-i18n="lp.noDraw" hidden>Decline</button>
+          <button type="button" class="rv-btn" id="lp-claim" data-i18n="lp.claim" hidden>Claim victory</button>
+          <button type="button" class="rv-btn" id="lp-resign" data-i18n="lp.resign">Resign</button>
+          <button type="button" class="rv-btn" id="lp-review" data-i18n="lp.review" hidden>Review this game</button>
+          <button type="button" class="rv-btn" id="lp-new" data-i18n="lp.again" hidden>Play again</button>
+          <button type="button" class="rv-btn" id="lp-web" data-i18n="lp.web">On lichess.org</button>
+        </div>
       </div>
     </aside>
   </main>

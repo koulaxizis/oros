@@ -527,3 +527,66 @@ test("lichess: the daily puzzle opens at its start, with the solution after it",
   assert.equal(LI.puzzleGame({ game: { pgn: 5 }, puzzle: { solution: [] } }), null);
   assert.equal(LI.puzzleGame(null), null);
 });
+
+test("lichess play: scope, ids, ndjson lines and clock text", () => {
+  assert.equal(LI.hasPlay("board:play challenge:read challenge:write"), true);
+  assert.equal(LI.hasPlay("challenge:write,board:play,challenge:read,email:read"), true);
+  assert.equal(LI.hasPlay(""), false);
+  assert.equal(LI.hasPlay("board:play"), false);
+  assert.equal(LI.okId("Game0001"), "Game0001");
+  ["", "short", "Game00012", "Game/001", null].forEach((v) => assert.equal(LI.okId(v), "", J(v)));
+  const feed = LI.lineReader();
+  assert.deepEqual(feed('{"type":"a"}\n\n{"ty'), [{ type: "a" }]);
+  assert.deepEqual(feed('pe":"b"}\nnot json\n'), [{ type: "b" }]);
+  assert.deepEqual(feed("\n"), []);
+  assert.equal(LI.clockText(600000), "10:00");
+  assert.equal(LI.clockText(65000), "1:05");
+  assert.equal(LI.clockText(3725000), "1:02:05");
+  assert.equal(LI.clockText(9340), "0:09.3");
+  assert.equal(LI.clockText(-5), "0:00.0");
+});
+
+test("lichess play: game streams become orOS moves (castling as king takes rook too)", () => {
+  assert.deepEqual(LI.boardMoves(""), []);
+  assert.deepEqual(LI.boardMoves("e2e4 e7e5 g1f3 b8c6 f1c4 g8f6 e1h1"), ["e2e4", "e7e5", "g1f3", "b8c6", "f1c4", "g8f6", "e1g1"]);
+  assert.deepEqual(LI.boardMoves("e2e4 e7e5 g1f3 b8c6 f1c4 g8f6 e1g1").slice(-1), ["e1g1"]);
+  assert.equal(LI.boardMoves("e2e5"), null, "an illegal move");
+  assert.equal(LI.boardMoves("e2e4 <x>"), null);
+  const full = LI.gameFull({
+    type: "gameFull", id: "Game0001", variant: { key: "standard" }, speed: "rapid", rated: true,
+    white: { id: "chrisk", name: "ChrisK", rating: 1500 }, black: { id: "opp", name: "Opp<b>", title: "GM", rating: 2500 },
+    initialFen: "startpos", clock: { initial: 600000, increment: 5000 },
+    state: { type: "gameState", moves: "e2e4", wtime: 600000, btime: 599000, winc: 5000, binc: 5000, status: "started", bdraw: true }
+  }, "ChrisK");
+  assert.equal(full.human, "w");
+  assert.equal(full.black.name, "?", "a name Lichess would never send is not shown");
+  assert.equal(full.black.title, "GM");
+  assert.deepEqual(full.clock, { initial: 600000, increment: 5000 });
+  assert.deepEqual(full.state.moves, ["e2e4"]);
+  assert.equal(full.state.bdraw, true);
+  assert.equal(LI.gameFull({ type: "gameFull", id: "Game0001", white: {}, black: { id: "chrisk" }, state: { moves: "" } }, "chrisk").human, "b");
+  assert.equal(LI.gameFull({ type: "gameFull", id: "Game0001", variant: { key: "chess960" }, state: { moves: "" } }, "x"), null);
+  assert.equal(LI.gameFull({ type: "gameFull", id: "Game0001", initialFen: "8/8/8/8/8/8/8/K6k w - - 0 1", state: { moves: "" } }, "x"), null);
+  const s = LI.gameState({ type: "gameState", moves: "e2e4 e7e5", wtime: 1, btime: 2, status: "resign", winner: "black" });
+  assert.equal(s.status, "resign");
+  assert.equal(s.winner, "b");
+  assert.equal(LI.gameState({ moves: "", status: "weird" }).status, "unknownFinish");
+});
+
+test("lichess play: challenges that reach me and the games I'm playing", () => {
+  const ev = (c, compat) => ({ type: "challenge", challenge: Object.assign({ id: "Chal0001", status: "created",
+    challenger: { id: "rival", name: "Rival", rating: 1600 }, variant: { key: "standard" }, rated: true, speed: "rapid",
+    timeControl: { type: "clock", limit: 600, increment: 5 }, color: "white" }, c), compat: compat || { board: true } });
+  const c = LI.challengeIn(ev({}), "chrisk");
+  assert.deepEqual([c.id, c.from.name, c.tc, c.rated, c.color, c.ok], ["Chal0001", "Rival", "10+5", true, "b", true]);
+  assert.equal(LI.challengeIn(ev({ challenger: { id: "chrisk", name: "ChrisK" } }), "ChrisK"), null, "my own challenge");
+  assert.equal(LI.challengeIn(ev({ status: "accepted" }), "chrisk"), null);
+  assert.equal(LI.challengeIn(ev({ timeControl: { type: "correspondence", daysPerTurn: 3 } }), "chrisk").tc, "3d");
+  assert.equal(LI.challengeIn(ev({ variant: { key: "crazyhouse" } }), "chrisk").ok, false);
+  assert.equal(LI.challengeIn(ev({}, { board: false }), "chrisk").ok, false);
+  const list = LI.playing({ nowPlaying: [
+    { gameId: "Game0001", color: "black", isMyTurn: true, speed: "correspondence", opponent: { username: "Opp", rating: 1400 }, variant: { key: "standard" } },
+    { gameId: "Game0002", variant: { key: "atomic" }, opponent: { username: "X" } },
+    { gameId: "bad", opponent: {} }] });
+  assert.deepEqual(list, [{ id: "Game0001", opp: "Opp", rating: 1400, color: "b", myTurn: true, speed: "correspondence", secondsLeft: null }]);
+});

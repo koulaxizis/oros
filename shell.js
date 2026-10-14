@@ -5052,7 +5052,7 @@
           en: "Connected services: import bookmarks (Bookmarks)", el: "Συνδεδεμένες υπηρεσίες: εισαγωγή σελιδοδεικτών (Σελιδοδείκτες)" },
         { name: "Lichess API", url: "https://lichess.org/api",
           by: "Lichess.org (open source, AGPL-3.0); your own account", lic: { en: "Free API, game data CC0, your own sign-in", el: "Δωρεάν API, δεδομένα παρτίδων CC0, με δική σου σύνδεση" },
-          en: "Chess › Online accounts: your ratings and games, the daily puzzle, analysis on Lichess", el: "Σκάκι › Online λογαριασμοί: βαθμολογίες και παρτίδες σου, γρίφος της ημέρας, ανάλυση στο Lichess" },
+          en: "Chess › Online accounts: your ratings and games, the daily puzzle, analysis and playing on Lichess", el: "Σκάκι › Online λογαριασμοί: βαθμολογίες και παρτίδες σου, γρίφος της ημέρας, ανάλυση και παιχνίδι στο Lichess" },
         { name: "Chess.com Published-Data API", url: "https://support.chess.com/en/articles/9650547-published-data-api",
           by: "Chess.com, LLC; your own public profile", lic: { en: "Their terms, read only, no sign-in", el: "Οι όροι τους, μόνο ανάγνωση, χωρίς σύνδεση" },
           en: "Chess › Online accounts: your ratings, your games and the daily puzzle", el: "Σκάκι › Online λογαριασμοί: οι βαθμολογίες σου, οι παρτίδες σου και ο γρίφος της ημέρας" },
