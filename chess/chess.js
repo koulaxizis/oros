@@ -313,6 +313,7 @@
       "tr.opTrain": "Openings trainer", "tr.opHere": "This game: {name}",
       "tr.loading": "Loading…", "tr.loadFail": "Couldn't load the puzzles on this device.",
       "tr.packNote": "{n} puzzles on this device, offline. Their ratings are estimates.",
+      "tr.packSrc": "{n} puzzles on this device, offline: {l} from the Lichess puzzle database (CC0) with their Lichess ratings, {o} made by orOS (estimated ratings).",
       "tr.find": "Find the best move for {side}", "tr.findNext": "Good. Now the next move",
       "tr.wait": "Wait for the reply",
       "tr.wrong": "Not the move. Try again",
@@ -581,6 +582,7 @@
       "tr.opTrain": "Εξάσκηση στα ανοίγματα", "tr.opHere": "Αυτή η παρτίδα: {name}",
       "tr.loading": "Φόρτωση…", "tr.loadFail": "Δεν φορτώθηκαν οι γρίφοι σε αυτή τη συσκευή.",
       "tr.packNote": "{n} γρίφοι σε αυτή τη συσκευή, χωρίς σύνδεση. Οι βαθμοί τους είναι εκτιμήσεις.",
+      "tr.packSrc": "{n} γρίφοι σε αυτή τη συσκευή, χωρίς σύνδεση: {l} από τη βάση γρίφων του Lichess (CC0) με τους βαθμούς τους στο Lichess, {o} φτιαγμένοι από το orOS (εκτιμώμενοι βαθμοί).",
       "tr.find": "Βρες την καλύτερη κίνηση για τα {side}", "tr.findNext": "Σωστά. Τώρα η επόμενη κίνηση",
       "tr.wait": "Περίμενε την απάντηση",
       "tr.wrong": "Όχι αυτή. Δοκίμασε ξανά",
@@ -4225,8 +4227,10 @@
 
   // ---------- 7f. Training: puzzles and openings (train.js) ----------
   // Puzzles come from a pack in the Lichess puzzle layout (chess/
-  // puzzles-pack.js: window.OrosChessPacks, loaded on first use,
-  // offline from the service worker). Your first try at each puzzle goes to the synced history
+  // puzzles-lichess.js, cut from the Lichess puzzle database (CC0) by
+  // chess/tools/lichess-pack.js, and chess/puzzles-pack.js, orOS's own:
+  // window.OrosChessPacks, loaded on first use, offline from the
+  // service worker). Your first try at each puzzle goes to the synced history
   // (data.pz); the rating is computed from it (Glicko-1). Opening names
   // come from the Lichess chess-openings list (chess/openings-data.js),
   // looked up by position; the trainer plays one of its lines with you.
@@ -4246,23 +4250,35 @@
     };
     document.head.appendChild(s);
   }
+  // Both packs load (the Lichess one may be the empty placeholder, or
+  // missing from an old cache: then only the orOS pack counts) and merge
+  // into one list; an id seen twice keeps the first puzzle.
+  // TR.src = { lichess: n, oros: n } for the note under the buttons.
+  var TR_PACK_FILES = ["puzzles-lichess.js", "puzzles-pack.js"];
   function trPacks(done) {
     if (TR.packs) { done(true); return; }
-    trLoad("puzzles-pack.js", function () {
+    var left = TR_PACK_FILES.length;
+    function one() {
+      if (--left > 0) return;
+      if (TR.packs) { done(true); return; }      // a second caller while loading
       var packs = window.OrosChessPacks;
       if (!Array.isArray(packs)) { done(false); return; }
-      var list = [];
+      var list = [], src = { lichess: 0, oros: 0 };
       packs.forEach(function (pk) {
         if (!pk || typeof pk.csv !== "string") return;
+        var lich = /^lichess/.test(String(pk.id || ""));
         TRAIN.parsePack(pk.csv).forEach(function (p) {
           if (TR.byId[p.id] || !TRAIN.checkPuzzle(E, p)) return;
           TR.byId[p.id] = p;
           list.push(p);
+          src[lich ? "lichess" : "oros"]++;
         });
       });
       TR.packs = list;
+      TR.src = src;
       done(list.length > 0);
-    });
+    }
+    TR_PACK_FILES.forEach(function (f) { trLoad(f, one); });
   }
   function trOpenings(done) {
     if (TR.op) { done(true); return; }
@@ -4521,7 +4537,9 @@
         row1.appendChild(rb);
         row1.appendChild(button(t("tr.history"), "", historyDialog));
         body.appendChild(row1);
-        body.appendChild(el("div", "dlg-foot", t("tr.packNote", { n: TR.packs.length })));
+        body.appendChild(el("div", "dlg-foot", TR.src && TR.src.lichess
+          ? t("tr.packSrc", { n: TR.packs.length, l: TR.src.lichess, o: TR.src.oros })
+          : t("tr.packNote", { n: TR.packs.length })));
         setTimeout(function () { try { go.focus(); } catch (e) {} }, 0);
       }
       body.appendChild(el("div", "lp-sec", t("tr.op")));

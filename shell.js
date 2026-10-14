@@ -5495,6 +5495,9 @@
         { name: "Lichess chess-openings", url: "https://github.com/lichess-org/chess-openings",
           by: "Lichess contributors", lic: "CC0 1.0",
           en: "Opening names and the openings trainer (Chess)", el: "Ονόματα ανοιγμάτων και εξάσκηση (Σκάκι)" },
+        { name: "Lichess puzzle database", url: "https://database.lichess.org/#puzzles",
+          by: "Lichess contributors", lic: "CC0 1.0",
+          en: "Puzzles for the puzzle trainer, offline (Chess)", el: "Γρίφοι για την εξάσκηση, χωρίς σύνδεση (Σκάκι)" },
         { name: "PDMP3 (MP3 tables)", url: "https://github.com/technosaurus/PDMP3",
           by: "Krister Lagerström & contributors", lic: { en: "Public domain", el: "Κοινό κτήμα" },
           en: "Tables for MP3 export (Studio)", el: "Πίνακες για εξαγωγή MP3 (Studio)" }
