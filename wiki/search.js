@@ -1,9 +1,10 @@
 // ============================================================
-// orOS Wiki — universal search provider (v1.0.0)
+// orOS Wiki — universal search provider (v1.1.0)
 // Loaded by the shell on the first menu search (apps.json
 // "search"). Read-only: reads oros-wiki-data, never writes.
 // One hit per article: its title, and as text the article without
-// markup signs ([[links]], **, ##, tables) plus the wiki's name.
+// markup signs ([[links]], **, ##, tables, pictures, {{infobox}},
+// [^references]) plus the wiki's name.
 // Redirect pages are skipped (the article they point to is a hit).
 // Opens through __orosOpenAt("wiki", { a }).
 // ============================================================
@@ -14,8 +15,22 @@
   var REDIRECT = /^\s*#\s*(redirect|ανακατευθυνση|ανακατεύθυνση)\b/i;
 
   // Markup → text, without the full parser (the shell has no core.js).
+  var FILE = "(?:file|image|αρχείο|αρχειο|εικόνα|εικονα)\\s*:";
+  var RE_FILE_LINK = new RegExp("\\[\\[\\s*" + FILE + "([^\\]]*)\\]\\]", "gi");
+  var RE_FILE_ID = new RegExp(FILE + "\\s*[0-9a-f]{64}\\.(?:jpg|png)\\|?", "gi");
+  var OPTION = /^(left|right|center|centre|none|thumb|thumbnail|frame|frameless|αριστερά|δεξιά|κέντρο|\d+\s*px|alt\s*=.*)$/i;
   function plain(x) {
     return String(x || "")
+      .replace(RE_FILE_LINK, function (m, body) {
+        var parts = body.split("|").slice(1).filter(function (p) { return !OPTION.test(p.trim()); });
+        return " " + (parts.length ? parts[parts.length - 1] : "") + " ";
+      })
+      .replace(RE_FILE_ID, " ")
+      .replace(/^\s*\{\{[^\n]*$/gm, "")
+      .replace(/^\s*\}\}\s*$/gm, "")
+      .replace(/^\s*\|\s*([^=|\n]+?)\s*=\s*/gm, "$1: ")
+      .replace(/^\s*\[\^[^\]\s]{1,40}\]:\s*/gm, "")
+      .replace(/\[\^[^\]\s]{1,40}\]/g, "")
       .replace(/```[^\n]*\n?/g, "")
       .replace(/\[\[\s*:?\s*(?:category|κατηγορία|κατηγορια)\s*:[^\]]*\]\]/gi, " ")
       .replace(/\[\[([^\]|]*)\|([^\]]*)\]\]/g, "$2")
