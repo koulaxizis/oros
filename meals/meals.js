@@ -9,11 +9,17 @@
 //     fill the gaps, clear (Undo)
 //   - Shopping: computed from the week, quantities added up, by aisle,
 //     pantry items left out; ticks and own items are synced
-// The pure logic lives in core.js (OrosMealsCore).
+//   - Wave 2: import from a web address (JSON-LD, through the Reader's
+//     network layer and the orOS relay), pasted page source / JSON, or
+//     Paprika / Mealie / Tandoor files (import.js, loaded on demand);
+//     servings and units (as written / metric / US, per device) in the
+//     recipe and in cooking mode; a Household section
+// The pure logic lives in core.js (OrosMealsCore) and import.js
+// (OrosMealsImport).
 // Data:
 //   - synced slice "meals" (oros-meals-data): see core.js §9–10
 //   - device-local (R10): oros-meals-prefs (tab, "fits us" filter,
-//     "from today" switch)
+//     "from today" switch, units shown)
 // Sections:
 //   1. Constants, i18n, helpers
 //   2. Storage, prefs
@@ -52,7 +58,7 @@
   var STRINGS = {
     en: {
       "app.name": "Meal Planner", "tab.rc": "Recipes", "tab.wk": "Week", "tab.sh": "Shopping", "btn.settings": "Settings",
-      "rc.search": "Search recipes, or ingredients with commas…", "rc.new": "New recipe", "rc.paste": "Paste",
+      "rc.search": "Search recipes, or ingredients with commas…", "rc.new": "New recipe", "rc.paste": "Import",
       "rc.empty": "No recipes match.", "rc.none": "No recipes yet. Add one, or paste one from anywhere.",
       "rc.ingmode": "Recipes with: {list}", "f.fav": "★ Favourites", "f.fits": "Fits our diet",
       "rc.min": "{n} min", "rc.serv": "{n} serv.", "fav.add": "Add to favourites", "fav.del": "Remove from favourites",
@@ -70,7 +76,7 @@
       "sh.pantry": "I always have it", "sh.remove": "Remove", "sh.from.recipes": "for {list}",
       "aisle.produce": "Fruit & vegetables", "aisle.meat": "Meat", "aisle.fish": "Fish & seafood", "aisle.dairy": "Dairy & eggs",
       "aisle.bakery": "Bakery", "aisle.pantry": "Cupboard", "aisle.spices": "Spices & herbs", "aisle.frozen": "Frozen",
-      "aisle.drinks": "Drinks", "aisle.other": "Other",
+      "aisle.drinks": "Drinks", "aisle.household": "Household", "aisle.other": "Other",
       "course.": "No course", "course.breakfast": "Breakfast", "course.main": "Main", "course.side": "Side",
       "course.salad": "Salad", "course.soup": "Soup", "course.dessert": "Dessert", "course.snack": "Snack", "course.drink": "Drink",
       "diet.vegan": "Vegan", "diet.veg": "Vegetarian", "diet.pesc": "Pescatarian", "diet.raw": "Raw food",
@@ -93,8 +99,24 @@
       "e.discard": "Discard your changes to this recipe?", "e.discardOk": "Discard", "e.keep": "Keep editing",
       "e.max": "Up to {n} recipes", "e.suggested": "Ticked what the ingredients allow. Check keto, low-carb and raw yourself.",
       "e.suggestNone": "Add ingredients first",
-      "p.title": "Paste a recipe", "p.hint": "Paste a recipe from anywhere (a site, a message, a note). Ingredients and steps are found for you, then you check them before saving.",
-      "p.go": "Continue", "p.empty": "Paste some text first",
+      "p.title": "Import a recipe", "p.hint": "Or paste a recipe from anywhere: text from a site, a message or a note, or a page's source (HTML) or JSON. Ingredients and steps are found for you, then you check them before saving.",
+      "p.go": "Continue", "p.empty": "Type a web address, or paste some text first", "p.paste": "Paste the recipe",
+      "im.url": "Web address of a recipe", "im.fetch": "Fetch",
+      "im.urlHint": "Works with most recipe sites. Sites that don't let apps read them go through the orOS relay set up in Mail or Reader.",
+      "im.file": "Open a file…", "im.fileHint": "Paprika (.paprikarecipes), Mealie or Tandoor exports, a saved page (.html) or JSON.",
+      "im.loading": "Fetching the page…", "im.reading": "Reading the file…",
+      "im.none": "No recipe found there. Copy the recipe's text and paste it below.",
+      "im.noneFile": "No recipes found in this file.", "im.badUrl": "Type a web address (https://…)",
+      "im.err.offline": "You are offline.",
+      "im.err.norelay": "This site doesn't let apps read it. Set up the orOS relay in Mail, or open the page, copy the recipe and paste it below.",
+      "im.err.status": "The site answered with an error ({n}).",
+      "im.err.other": "Could not read the page ({code}). Copy the recipe and paste it below.",
+      "im.err.file": "Could not read this file.",
+      "im.many": "{n} recipes found", "im.manyHint": "Tick the ones to add. Ones you already have (same title) start unticked.",
+      "im.have": "already in your recipes", "im.add": "Add {n}", "im.all": "All", "im.noneSel": "None",
+      "v.photo": "Photo (opens the site)",
+      "un.label": "Units", "un.": "As written", "un.metric": "Metric", "un.us": "US",
+      "s.units": "Units on this device", "s.unitsHint": "Recipes, cooking mode and the shopping list show quantities and oven temperatures in these units.",
       "pk.title": "{slot}, {day}", "pk.search": "Search recipes…", "pk.text": "Or write something (“Out”, “Leftovers”)",
       "pk.addText": "Add", "pk.fitsFirst": "Fit our diet first",
       "it.open": "Open recipe", "it.move": "Move to", "it.moveBtn": "Move", "it.remove": "Remove", "it.servings": "Servings",
@@ -115,7 +137,7 @@
     },
     el: {
       "app.name": "Συνταγές & Μενού", "tab.rc": "Συνταγές", "tab.wk": "Εβδομάδα", "tab.sh": "Ψώνια", "btn.settings": "Ρυθμίσεις",
-      "rc.search": "Αναζήτηση συνταγών, ή υλικά με κόμμα…", "rc.new": "Νέα συνταγή", "rc.paste": "Επικόλληση",
+      "rc.search": "Αναζήτηση συνταγών, ή υλικά με κόμμα…", "rc.new": "Νέα συνταγή", "rc.paste": "Εισαγωγή",
       "rc.empty": "Καμία συνταγή δεν ταιριάζει.", "rc.none": "Καμία συνταγή ακόμα. Πρόσθεσε μία, ή επικόλλησε από οπουδήποτε.",
       "rc.ingmode": "Συνταγές με: {list}", "f.fav": "★ Αγαπημένες", "f.fits": "Για τη διατροφή μας",
       "rc.min": "{n}′", "rc.serv": "{n} μερ.", "fav.add": "Στις αγαπημένες", "fav.del": "Αφαίρεση από τις αγαπημένες",
@@ -133,7 +155,7 @@
       "sh.pantry": "Το έχω πάντα", "sh.remove": "Αφαίρεση", "sh.from.recipes": "για {list}",
       "aisle.produce": "Φρούτα & λαχανικά", "aisle.meat": "Κρέας", "aisle.fish": "Ψάρια & θαλασσινά", "aisle.dairy": "Γαλακτοκομικά & αυγά",
       "aisle.bakery": "Φούρνος", "aisle.pantry": "Ντουλάπι", "aisle.spices": "Μπαχαρικά & μυρωδικά", "aisle.frozen": "Κατεψυγμένα",
-      "aisle.drinks": "Ποτά", "aisle.other": "Άλλα",
+      "aisle.drinks": "Ποτά", "aisle.household": "Είδη σπιτιού", "aisle.other": "Άλλα",
       "course.": "Χωρίς είδος", "course.breakfast": "Πρωινό", "course.main": "Κυρίως", "course.side": "Συνοδευτικό",
       "course.salad": "Σαλάτα", "course.soup": "Σούπα", "course.dessert": "Γλυκό", "course.snack": "Σνακ", "course.drink": "Ρόφημα",
       "diet.vegan": "Vegan", "diet.veg": "Χορτοφαγική", "diet.pesc": "Pescatarian (με ψάρι)", "diet.raw": "Ωμοφαγική",
@@ -156,8 +178,24 @@
       "e.discard": "Να χαθούν οι αλλαγές σου σε αυτή τη συνταγή;", "e.discardOk": "Να χαθούν", "e.keep": "Συνέχεια",
       "e.max": "Έως {n} συνταγές", "e.suggested": "Τσεκαρίστηκαν όσες επιτρέπουν τα υλικά. Το keto, τους λίγους υδατάνθρακες και την ωμοφαγία έλεγξέ τα εσύ.",
       "e.suggestNone": "Γράψε πρώτα τα υλικά",
-      "p.title": "Επικόλληση συνταγής", "p.hint": "Επικόλλησε μια συνταγή από οπουδήποτε (site, μήνυμα, σημείωση). Τα υλικά και τα βήματα βρίσκονται μόνα τους και τα ελέγχεις πριν την αποθήκευση.",
-      "p.go": "Συνέχεια", "p.empty": "Επικόλλησε πρώτα κείμενο",
+      "p.title": "Εισαγωγή συνταγής", "p.hint": "Ή επικόλλησε μια συνταγή από οπουδήποτε: κείμενο από site, μήνυμα ή σημείωση, ή τον κώδικα μιας σελίδας (HTML) ή JSON. Τα υλικά και τα βήματα βρίσκονται μόνα τους και τα ελέγχεις πριν την αποθήκευση.",
+      "p.go": "Συνέχεια", "p.empty": "Γράψε μια διεύθυνση ή επικόλλησε πρώτα κείμενο", "p.paste": "Επικόλληση συνταγής",
+      "im.url": "Διεύθυνση (link) μιας συνταγής", "im.fetch": "Φέρε τη",
+      "im.urlHint": "Δουλεύει με τα περισσότερα sites συνταγών. Όσα δεν αφήνουν τις εφαρμογές να τα διαβάσουν περνούν από το relay του orOS που έχεις ορίσει στην Αλληλογραφία ή στον Αναγνώστη.",
+      "im.file": "Άνοιγμα αρχείου…", "im.fileHint": "Εξαγωγές από Paprika (.paprikarecipes), Mealie ή Tandoor, μια αποθηκευμένη σελίδα (.html) ή JSON.",
+      "im.loading": "Φέρνω τη σελίδα…", "im.reading": "Διαβάζω το αρχείο…",
+      "im.none": "Δεν βρέθηκε συνταγή εκεί. Αντέγραψε το κείμενο της συνταγής και επικόλλησέ το παρακάτω.",
+      "im.noneFile": "Δεν βρέθηκαν συνταγές σε αυτό το αρχείο.", "im.badUrl": "Γράψε μια διεύθυνση (https://…)",
+      "im.err.offline": "Δεν υπάρχει σύνδεση.",
+      "im.err.norelay": "Αυτό το site δεν αφήνει τις εφαρμογές να το διαβάσουν. Όρισε το relay του orOS στην Αλληλογραφία, ή άνοιξε τη σελίδα, αντέγραψε τη συνταγή και επικόλλησέ τη παρακάτω.",
+      "im.err.status": "Το site απάντησε με σφάλμα ({n}).",
+      "im.err.other": "Η σελίδα δεν διαβάστηκε ({code}). Αντέγραψε τη συνταγή και επικόλλησέ τη παρακάτω.",
+      "im.err.file": "Το αρχείο δεν διαβάστηκε.",
+      "im.many": "Βρέθηκαν {n} συνταγές", "im.manyHint": "Τσέκαρε όσες θέλεις να μπουν. Όσες έχεις ήδη (ίδιος τίτλος) ξεκινούν ατσεκάριστες.",
+      "im.have": "την έχεις ήδη", "im.add": "Προσθήκη {n}", "im.all": "Όλες", "im.noneSel": "Καμία",
+      "v.photo": "Φωτογραφία (ανοίγει το site)",
+      "un.label": "Μονάδες", "un.": "Όπως γράφτηκαν", "un.metric": "Μετρικές", "un.us": "ΗΠΑ",
+      "s.units": "Μονάδες σε αυτή τη συσκευή", "s.unitsHint": "Οι συνταγές, το μαγείρεμα και η λίστα για ψώνια δείχνουν ποσότητες και θερμοκρασίες φούρνου σε αυτές τις μονάδες.",
       "pk.title": "{slot}, {day}", "pk.search": "Αναζήτηση συνταγών…", "pk.text": "Ή γράψε κάτι («Έξω», «Περισσεύματα»)",
       "pk.addText": "Προσθήκη", "pk.fitsFirst": "Πρώτα όσα ταιριάζουν στη διατροφή μας",
       "it.open": "Άνοιγμα συνταγής", "it.move": "Μετακίνηση σε", "it.moveBtn": "Μετακίνηση", "it.remove": "Αφαίρεση", "it.servings": "Μερίδες",
@@ -215,7 +253,7 @@
     close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
     more: '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>',
     minus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14"/></svg>',
-    paste: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3h6v1M9 10h6M9 14h6M9 18h3"/></svg>',
+    paste: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg>',
     timer: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M10 2h4"/></svg>'
   };
 
@@ -259,7 +297,8 @@
     prefs = {
       tab: ["rc", "wk", "sh"].indexOf(p.tab) >= 0 ? p.tab : "wk",
       fits: p.fits === 0 ? 0 : 1,
-      from: p.from === 1 ? 1 : 0
+      from: p.from === 1 ? 1 : 0,
+      un: p.un === "metric" || p.un === "us" ? p.un : ""      // units shown (wave 2): "" as written
     };
   }
   function savePrefs() { try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); } catch (e) {} }
@@ -423,7 +462,7 @@
   }
 
   // ---------- 5. Shopping ----------
-  function shopList() { return C.buildShop(data, getRecipe, view.wk, prefs.from ? today() : null, LANG); }
+  function shopList() { return C.buildShop(data, getRecipe, view.wk, prefs.from ? today() : null, LANG, prefs.un); }
   function setTick(item, on) {
     if (item.manual) {
       var x = null;
@@ -829,6 +868,7 @@
     svRow.appendChild(el("span", "dlg-lbl inline", t("v.servings")));
     var svBox = stepper(sv, 1, C.LIM.servings, t("v.less"), t("v.more"), function (v) { sv = v; drawIngs(); });
     svRow.appendChild(svBox);
+    svRow.appendChild(unitsSeg(function () { drawIngs(); drawSteps(); }));
     dlg.appendChild(svRow);
 
     var cols = el("div", "v-cols");
@@ -852,7 +892,7 @@
         var cb = el("input");
         cb.type = "checkbox";
         lab.appendChild(cb);
-        var q = C.fmtIngQty(ing, LANG, sv / r.sv);
+        var q = C.fmtIngQty(ing, LANG, sv / r.sv, prefs.un);
         var sp = el("span", "");
         if (q) sp.appendChild(el("b", "", q + " "));
         sp.appendChild(document.createTextNode(ing.n + (ing.x ? ", " + ing.x : "")));
@@ -865,18 +905,29 @@
     cols.appendChild(left);
     var right = el("div", "v-col");
     right.appendChild(el("h3", "sec-h", t("v.steps")));
-    if (r.st.length) {
+    var stepBox = el("div", "");
+    right.appendChild(stepBox);
+    function drawSteps() {
+      stepBox.innerHTML = "";
+      if (!r.st.length) { stepBox.appendChild(el("p", "hint", t("v.nosteps"))); return; }
       var ol = el("ol", "steps");
-      r.st.forEach(function (s) { ol.appendChild(el("li", "", s)); });
-      right.appendChild(ol);
-    } else right.appendChild(el("p", "hint", t("v.nosteps")));
+      r.st.forEach(function (s) { ol.appendChild(el("li", "", C.convertTemps(s, prefs.un))); });
+      stepBox.appendChild(ol);
+    }
+    drawSteps();
     if (r.no) {
       right.appendChild(el("h3", "sec-h", t("v.notes")));
       right.appendChild(el("p", "notes", r.no));
     }
-    if (r.src) {
+    if (r.src || r.img) {
       right.appendChild(el("h3", "sec-h", t("v.source")));
-      right.appendChild(sourceNode(r.src));
+      if (r.src) right.appendChild(sourceNode(r.src));
+      if (r.img) {
+        // The picture stays on its site: a link, never loaded here.
+        var ph = sourceNode(r.img);
+        if (ph.tagName === "A") { ph.textContent = "🖼 " + t("v.photo"); ph.className = "src-link photo-link"; }
+        right.appendChild(ph);
+      }
     }
     cols.appendChild(right);
     dlg.appendChild(cols);
@@ -912,16 +963,17 @@
     return a;
   }
   function recipeText(r, sv) {
+    var un = prefs.un;
     var out = [(r.e ? r.e + " " : "") + r.t, t("share.serv", { n: sv }), ""];
     out.push(t("v.ings") + ":");
     var g = "";
     r.ig.forEach(function (ing) {
       if (ing.g && ing.g !== g) { g = ing.g; out.push(g + ":"); }
-      out.push("- " + C.ingToLine(ing, LANG, sv / r.sv));
+      out.push("- " + C.ingToLine(ing, LANG, sv / r.sv, un));
     });
     if (r.st.length) {
       out.push("", t("v.steps") + ":");
-      r.st.forEach(function (s, i) { out.push((i + 1) + ". " + s); });
+      r.st.forEach(function (s, i) { out.push((i + 1) + ". " + C.convertTemps(s, un)); });
     }
     if (r.no) out.push("", r.no);
     if (r.src) out.push("", t("v.source") + ": " + r.src);
@@ -934,8 +986,10 @@
     catch (e) { return null; }
   }
   function sharePayload(r) {
-    return { t: r.t, e: r.e, c: r.c, sv: r.sv, pt: r.pt, ct: r.ct, dt: r.dt, tg: r.tg,
+    var o = { t: r.t, e: r.e, c: r.c, sv: r.sv, pt: r.pt, ct: r.ct, dt: r.dt, tg: r.tg,
       ig: r.ig, st: r.st, no: r.no, src: r.src };
+    if (r.img) o.img = r.img;
+    return o;
   }
   function shareText(title, text) {
     if (!text) { showToast(t("toast.nothing")); return; }
@@ -979,11 +1033,11 @@
     box.appendChild(el("p", "", t("share.serv", { n: sv }) + (r.pt + r.ct ? " · ⏱ " + t("rc.min", { n: r.pt + r.ct }) : "")));
     box.appendChild(el("h2", "", t("v.ings")));
     var ul = el("ul");
-    r.ig.forEach(function (ing) { ul.appendChild(el("li", "", C.ingToLine(ing, LANG, sv / r.sv))); });
+    r.ig.forEach(function (ing) { ul.appendChild(el("li", "", C.ingToLine(ing, LANG, sv / r.sv, prefs.un))); });
     box.appendChild(ul);
     box.appendChild(el("h2", "", t("v.steps")));
     var ol = el("ol");
-    r.st.forEach(function (s) { ol.appendChild(el("li", "", s)); });
+    r.st.forEach(function (s) { ol.appendChild(el("li", "", C.convertTemps(s, prefs.un))); });
     box.appendChild(ol);
     if (r.no) { box.appendChild(el("h2", "", t("v.notes"))); box.appendChild(el("p", "", r.no)); }
     document.body.classList.add("printing");
@@ -1114,6 +1168,7 @@
         ig: C.textToIngs(fIngs.value),
         st: C.textToSteps(fSteps.value),
         no: fNotes.value, src: fSrc.value,
+        img: src.img || "",
         fv: src.fv === 1 ? 1 : 0
       };
     }
@@ -1164,26 +1219,237 @@
     return function () { clearTimeout(tm); tm = setTimeout(fn, ms); };
   }
 
+  // Import: a web address, pasted text (plain, a page's source or
+  // JSON) or a file (Paprika, Mealie, Tandoor, HTML, JSON). Pages and
+  // files are read as data by import.js; one recipe opens in the
+  // editor, several in a list to tick. Nothing is saved without Save /
+  // Add. The Reader's network layer (../feeds/fetch.js: direct, else
+  // the orOS relay's "web" op) and the ZIP reader (../atelier/zip.js)
+  // load only when needed.
+  var APP_V = (function () {
+    var m = ((document.currentScript && document.currentScript.src) || "").match(/[?&]v=([^&#]+)/);
+    return m ? m[1] : "";
+  })();
+  var loaded = {};
+  function loadScript(src) {
+    if (loaded[src]) return loaded[src];
+    loaded[src] = new Promise(function (resolve, reject) {
+      var s = document.createElement("script");
+      s.src = src + (APP_V ? "?v=" + encodeURIComponent(APP_V) : "");
+      s.onload = function () { resolve(); };
+      s.onerror = function () { delete loaded[src]; reject(new Error("load")); };
+      document.head.appendChild(s);
+    });
+    return loaded[src];
+  }
+  function needImport() { return window.OrosMealsImport ? Promise.resolve(window.OrosMealsImport) : loadScript("import.js").then(function () { return window.OrosMealsImport; }); }
+  function needFetch() {
+    return loadScript("../feeds/core.js").then(function () { return loadScript("../feeds/fetch.js"); })
+      .then(function () { return window.orosFeedsFetch; });
+  }
+  function needZip() { return window.AtelierZip ? Promise.resolve(window.AtelierZip) : loadScript("../atelier/zip.js").then(function () { return window.AtelierZip; }); }
+  // The relay the Reader uses (its own setting, else Mail's), read only.
+  function readerRelay() {
+    try {
+      var fc = window.orosFeedsCore, raw = JSON.parse(localStorage.getItem("oros-feeds-data") || "null");
+      if (fc && raw && raw.set && typeof fc.setting === "function") return fc.setting(raw, "relay") || "";
+    } catch (e) {}
+    return "";
+  }
+  function normUrl(s) {
+    s = String(s || "").trim();
+    if (!s || /\s/.test(s)) return "";
+    if (!/^[a-z][a-z0-9+.-]*:/i.test(s)) s = "https://" + s;
+    try {
+      var u = new URL(s);
+      if ((u.protocol !== "https:" && u.protocol !== "http:") || !/\./.test(u.hostname)) return "";
+      return u.href;
+    } catch (e) { return ""; }
+  }
+
   function openPaste() {
-    var dlg = makeDialog("ml-paste");
+    var dlg = makeDialog("ml-paste", "wide");
     dlg.appendChild(el("div", "dlg-title", t("p.title")));
-    dlg.appendChild(el("p", "hint", t("p.hint")));
+    var busy = false;
+    // Web address
+    var urow = el("div", "add-row");
+    var uin = el("input");
+    uin.type = "url";
+    uin.inputMode = "url";
+    uin.maxLength = 2000;
+    uin.autocomplete = "off";
+    uin.placeholder = "https://…";
+    var ulab = el("label", "dlg-lbl", t("im.url"));
+    uin.id = "ml-im-url";
+    ulab.setAttribute("for", uin.id);
+    var fetchBtn = button(t("im.fetch"), "primary", function () { goUrl(uin.value); });
+    uin.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); goUrl(uin.value); } });
+    urow.appendChild(uin); urow.appendChild(fetchBtn);
+    dlg.appendChild(ulab);
+    dlg.appendChild(urow);
+    dlg.appendChild(el("p", "hint", t("im.urlHint")));
+    var status = el("p", "im-status");
+    status.setAttribute("role", "status");
+    status.hidden = true;
+    dlg.appendChild(status);
+    // Paste
+    var plab = el("label", "dlg-lbl", t("p.paste"));
     var ta = el("textarea", "paste-in");
-    ta.rows = 12;
-    ta.maxLength = 30000;
-    ta.setAttribute("aria-label", t("p.title"));
+    ta.id = "ml-im-text";
+    plab.setAttribute("for", ta.id);
+    ta.rows = 9;
+    ta.maxLength = 3000000;
+    dlg.appendChild(plab);
+    dlg.appendChild(el("p", "hint", t("p.hint")));
     dlg.appendChild(ta);
+    // File
+    var frow = el("div", "im-file");
+    frow.appendChild(button(t("im.file"), "small", pickFile));
+    frow.appendChild(el("span", "hint", t("im.fileHint")));
+    dlg.appendChild(frow);
     var acts = el("div", "dlg-actions");
     acts.appendChild(button(t("e.cancel"), "", function () { dlg.close(); }));
-    acts.appendChild(button(t("p.go"), "primary", function () {
-      if (!ta.value.trim()) { showToast(t("p.empty")); ta.focus(); return; }
-      var d = C.parseRecipeText(ta.value);
-      dlg.close();
-      openEditor({ t: d.t, sv: d.sv || 4, pt: d.pt || 0, ct: d.ct || 0, ig: d.ig, st: d.st, no: d.no, dt: [], tg: [] });
-    }));
+    acts.appendChild(button(t("p.go"), "primary", goText));
     dlg.appendChild(acts);
     showDialog(dlg);
-    ta.focus();
+    if (!coarse()) uin.focus();
+
+    function say(msg, bad) {
+      status.hidden = !msg;
+      status.textContent = msg || "";
+      status.classList.toggle("bad", !!bad);
+    }
+    function lock(on) {
+      busy = on;
+      fetchBtn.disabled = on;
+      uin.disabled = on;
+    }
+    function done(list, emptyMsg) {
+      lock(false);
+      if (!dlg.open) return;
+      if (!list.length) { say(emptyMsg, true); return; }
+      dlg.close();
+      if (list.length === 1) openEditor(list[0]);
+      else openImportList(list);
+    }
+    function goUrl(raw) {
+      if (busy) return;
+      var url = normUrl(raw);
+      if (!url) { say(t("im.badUrl"), true); uin.focus(); return; }
+      uin.value = url;
+      lock(true);
+      say(t("im.loading"));
+      Promise.all([needImport(), needFetch()]).then(function (mods) {
+        var I = mods[0], F = mods[1];
+        return F.fetchOne(url, { relay: readerRelay, timeout: 20000,
+                                 accept: "text/html,application/xhtml+xml,application/ld+json;q=0.9,application/json;q=0.8,*/*;q=0.5" })
+          .then(function (r) {
+            if (r.status < 200 || r.status >= 300) { lock(false); say(t("im.err.status", { n: r.status }), true); return; }
+            var list = I.fromText(r.text || "", r.finalUrl || url);
+            list.forEach(function (d) { if (!d.src) d.src = r.finalUrl || url; });
+            done(list, t("im.none"));
+          });
+      }).catch(function (e) {
+        lock(false);
+        var code = (e && e.code) || "load";
+        if (code === "offline") say(t("im.err.offline"), true);
+        else if (code === "norelay" || code === "cors") say(t("im.err.norelay"), true);
+        else say(t("im.err.other", { code: code }), true);
+      });
+    }
+    function goText() {
+      if (busy) return;
+      var v = ta.value;
+      if (!v.trim()) {
+        if (uin.value.trim()) { goUrl(uin.value); return; }
+        say(t("p.empty"), true); ta.focus(); return;
+      }
+      if (/^\s*https?:\/\/\S+\s*$/i.test(v)) { goUrl(v); return; }
+      needImport().then(function (I) {
+        if (I.looksLikeData(v)) { done(I.fromText(v, ""), t("im.none")); return; }
+        var d = C.parseRecipeText(v);
+        dlg.close();
+        openEditor({ t: d.t, sv: d.sv || 4, pt: d.pt || 0, ct: d.ct || 0, ig: d.ig, st: d.st, no: d.no, dt: [], tg: [] });
+      }, function () { say(t("im.err.other", { code: "load" }), true); });
+    }
+    function pickFile() {
+      if (busy) return;
+      var accept = ".paprikarecipes,.paprikarecipe,.zip,.json,.html,.htm,application/json,application/zip,text/html";
+      var host = dialogHost();
+      var pick = host && typeof host.openFile === "function" ? host.openFile(accept) : localPickFile(accept);
+      Promise.resolve(pick).then(function (file) {
+        if (!file) return;
+        lock(true);
+        say(t("im.reading"));
+        return Promise.all([needImport(), file.arrayBuffer()]).then(function (res) {
+          var I = res[0], bytes = new Uint8Array(res[1]);
+          var zip = bytes.length > 3 && bytes[0] === 0x50 && bytes[1] === 0x4b;
+          return (zip ? needZip() : Promise.resolve(null)).then(function (Z) {
+            return I.fromBytes(bytes, file.name || "", Z);
+          });
+        }).then(function (list) { done(list, t("im.noneFile")); });
+      }).catch(function () { lock(false); say(t("im.err.file"), true); });
+    }
+  }
+
+  // Several recipes (a Paprika or Mealie export, a page with many):
+  // tick the ones to add; titles you already have start unticked.
+  function openImportList(list) {
+    var dlg = makeDialog("ml-implist", "wide");
+    dlg.appendChild(el("div", "dlg-title", t("im.many", { n: list.length })));
+    dlg.appendChild(el("p", "hint", t("im.manyHint")));
+    var have = {};
+    recipes().forEach(function (r) { have[C.fold(r.t)] = 1; });
+    var boxes = [];
+    var sel = el("div", "chips");
+    var ul = el("ul", "im-list");
+    list.forEach(function (d) {
+      var li = el("li", "");
+      var lab = el("label", "check");
+      var cb = el("input");
+      cb.type = "checkbox";
+      var dup = !!have[C.fold(d.t)];
+      cb.checked = !dup;
+      cb.addEventListener("change", count);
+      lab.appendChild(cb);
+      var sp = el("span", "", d.t);
+      if (dup) sp.appendChild(el("span", "hint", " · " + t("im.have")));
+      lab.appendChild(sp);
+      li.appendChild(lab);
+      ul.appendChild(li);
+      boxes.push(cb);
+    });
+    var all = el("button", "chip small", t("im.all"));
+    all.type = "button";
+    all.addEventListener("click", function () { boxes.forEach(function (b) { b.checked = true; }); count(); });
+    var none = el("button", "chip small", t("im.noneSel"));
+    none.type = "button";
+    none.addEventListener("click", function () { boxes.forEach(function (b) { b.checked = false; }); count(); });
+    sel.appendChild(all); sel.appendChild(none);
+    dlg.appendChild(sel);
+    dlg.appendChild(ul);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("e.cancel"), "", function () { dlg.close(); }));
+    var ok = button("", "primary", function () {
+      var added = 0;
+      for (var i = 0; i < list.length; i++) {
+        if (!boxes[i].checked) continue;
+        if (data.rc.length >= C.LIM.recipes) { showToast(t("e.max", { n: C.LIM.recipes })); break; }
+        if (putRecipe(Object.assign({ id: newId("r"), fv: 0 }, list[i]))) added++;
+      }
+      dlg.close();
+      renderAll();
+      showToast(t("toast.imported", { n: added }));
+    });
+    acts.appendChild(ok);
+    dlg.appendChild(acts);
+    function count() {
+      var n = boxes.filter(function (b) { return b.checked; }).length;
+      ok.textContent = t("im.add", { n: n });
+      ok.disabled = !n;
+    }
+    count();
+    showDialog(dlg);
   }
 
   // ---------- 9. Plan dialogs ----------
@@ -1386,6 +1652,31 @@
     showDialog(dlg);
   }
 
+  // "As written / Metric / US": a per-device choice (prefs.un).
+  function unitsSeg(onChange) {
+    var box = el("span", "seg");
+    box.setAttribute("role", "group");
+    box.setAttribute("aria-label", t("un.label"));
+    var btns = [];
+    ["", "metric", "us"].forEach(function (u) {
+      var b = el("button", "chip small", t("un." + u));
+      b.type = "button";
+      b.addEventListener("click", function () {
+        if (prefs.un === u) return;
+        prefs.un = u;
+        savePrefs();
+        btns.forEach(function (x) { x.b.setAttribute("aria-pressed", x.u === u ? "true" : "false"); x.b.classList.toggle("on", x.u === u); });
+        onChange(u);
+        renderShop();
+      });
+      b.setAttribute("aria-pressed", prefs.un === u ? "true" : "false");
+      b.classList.toggle("on", prefs.un === u);
+      btns.push({ u: u, b: b });
+      box.appendChild(b);
+    });
+    return box;
+  }
+
   function stepper(value, lo, hi, lessLbl, moreLbl, onChange) {
     var box = el("span", "stepper");
     var v = value;
@@ -1432,18 +1723,34 @@
     head.appendChild(el("h2", "v-title", r.t));
     head.appendChild(closeBtn(dlg));
     dlg.appendChild(head);
+    sv = sv || r.sv;
+    // Servings and units here too: the list follows, ticks stay.
+    var svRow = el("div", "sv-row");
+    svRow.appendChild(el("span", "dlg-lbl inline", t("v.servings")));
+    svRow.appendChild(stepper(sv, 1, C.LIM.servings, t("v.less"), t("v.more"), function (v) { sv = v; drawIngs(); }));
+    svRow.appendChild(unitsSeg(function () { drawIngs(); draw(); }));
+    dlg.appendChild(svRow);
     var ingT = el("details", "ck-ings");
-    ingT.appendChild(el("summary", "", t("ck.ings") + " · " + t("share.serv", { n: sv })));
+    var sum = el("summary", "");
+    ingT.appendChild(sum);
     var ul = el("ul", "ings");
+    var spans = [];
     r.ig.forEach(function (ing) {
       var li = el("li", "");
       var lab = el("label", "ing-lab");
       var cb = el("input"); cb.type = "checkbox";
       lab.appendChild(cb);
-      lab.appendChild(el("span", "", C.ingToLine(ing, LANG, sv / r.sv)));
+      var sp = el("span", "");
+      spans.push(sp);
+      lab.appendChild(sp);
       li.appendChild(lab);
       ul.appendChild(li);
     });
+    function drawIngs() {
+      sum.textContent = t("ck.ings") + " · " + t("share.serv", { n: sv });
+      r.ig.forEach(function (ing, k) { spans[k].textContent = C.ingToLine(ing, LANG, sv / r.sv, prefs.un); });
+    }
+    drawIngs();
     ingT.appendChild(ul);
     dlg.appendChild(ingT);
     var count = el("div", "ck-count");
@@ -1462,7 +1769,7 @@
     dlg.appendChild(el("p", "hint center", t("ck.awake")));
     function draw() {
       count.textContent = t("ck.step", { n: i + 1, m: steps.length });
-      text.textContent = steps[i];
+      text.textContent = C.convertTemps(steps[i], prefs.un);
       prev.disabled = i === 0;
       if (i >= steps.length - 1) { next.textContent = t("ck.done"); next.removeAttribute("aria-label"); }
       else { next.innerHTML = UI.right; next.setAttribute("aria-label", t("ck.next")); }
@@ -1644,6 +1951,12 @@
     });
     ws.appendChild(wsRow);
     dlg.appendChild(ws);
+
+    var un = el("fieldset", "");
+    un.appendChild(el("legend", "dlg-lbl", t("s.units")));
+    un.appendChild(el("p", "hint", t("s.unitsHint")));
+    un.appendChild(unitsSeg(function () {}));
+    dlg.appendChild(un);
 
     var pan = el("fieldset", "");
     pan.appendChild(el("legend", "dlg-lbl", t("s.pantry")));
@@ -2005,7 +2318,7 @@
     $("set-btn").addEventListener("click", openSettings);
     $("rc-search").addEventListener("input", function () { view.q = $("rc-search").value; renderRecipes(); });
     $("rc-new").addEventListener("click", function () { openEditor(null); });
-    $("rc-paste").addEventListener("click", openPaste);
+    $("rc-paste").addEventListener("click", function () { openPaste(); });
     [].forEach.call(document.querySelectorAll(".wk-prev"), function (b) { b.addEventListener("click", function () { shiftWeek(-1); }); });
     [].forEach.call(document.querySelectorAll(".wk-next"), function (b) { b.addEventListener("click", function () { shiftWeek(1); }); });
     [].forEach.call(document.querySelectorAll(".wk-today"), function (b) { b.addEventListener("click", function () { shiftWeek(0); }); });

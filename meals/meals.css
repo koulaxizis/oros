@@ -480,7 +480,20 @@ legend { padding: 0; }
 .steps li::marker { color: var(--accent); font-weight: 800; }
 .notes { font-size: 14px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
 .src-link { color: var(--accent); font-size: 14px; overflow-wrap: anywhere; }
-.paste-in { min-height: 220px; font-size: 13px; margin-top: 10px; }
+.paste-in { min-height: 160px; font-size: 13px; margin-top: 6px; }
+/* Import (wave 2) */
+.im-status { font-size: 13px; margin: 8px 0 2px; color: var(--text-dim); }
+label.dlg-lbl[for="ml-im-text"] { margin-top: 16px; }
+.im-status.bad { color: var(--warn); }
+.im-file { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 10px; }
+.im-file .hint { flex: 1 1 200px; min-width: 0; }
+.im-list { list-style: none; max-height: 50vh; overflow-y: auto; margin: 8px 0; border-top: 1px solid var(--border); }
+.im-list li { border-bottom: 1px solid var(--border); padding: 2px 0; }
+.im-list .check span { overflow-wrap: anywhere; }
+.photo-link { display: block; padding: 8px 0; }
+.sv-row { flex-wrap: wrap; }
+.seg { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+.add-row input { min-width: 0; }
 .warns:empty { display: none; }
 
 /* ---------- 9. Cooking mode + timers ---------- */
