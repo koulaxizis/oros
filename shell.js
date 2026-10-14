@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "2.03.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "2.04.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -367,6 +367,7 @@
     if (!f) return;
     var app = state.running, k = app ? "app." + app.id : "", n = app ? window.t(k) : "";
     f.setAttribute("title", app ? (n !== k ? n : app.name) : window.t("frame.title"));
+    if (SOLO) soloPaint();
   }
 
   // Language toggle reaches OPEN apps: iframes read orosLang once at
@@ -2740,6 +2741,7 @@
         openFromLaunchParam();
         searchFromLaunchParam();
         deliverShare();
+        if (SOLO) soloStart();
         // Files from the system's "Open with" (fileopen.js) wait for the app list.
         if (window.orosFileOpen) window.orosFileOpen.ready();
         if (window.orosPhone && window.orosPhone.ready) window.orosPhone.ready();
@@ -8437,6 +8439,148 @@
     window.orosSync.onAutoSync(function (kind) { if (kind !== "start") settingsNotify(); });
   }
 
+  // ---------- 9b. Single apps (solo.js) ----------
+  // "/?solo=<id>": this shell runs inside an installed single app
+  // ("orOS Notes" …, /<id>/solo.html) and shows only that app. No
+  // desktop, menu, Dock or tour; the bar button names the app and
+  // opens a small menu (sync, settings, help, the whole orOS). Any
+  // other app opened from it (Settings, a link from the app) gets
+  // Back, which returns to the single app. Everything else (sync,
+  // notifications, files, dialogs) is the shell as always.
+  var SOLO = (window.orosSolo && window.orosSolo.has && window.orosSolo.has(window.orosSolo.id)) ? window.orosSolo.id : "";
+  if (SOLO) document.body.classList.add("solo-mode");
+
+  function soloAppObj() {
+    for (var i = 0; i < state.apps.length; i++) {
+      if (state.apps[i].id === SOLO && state.apps[i].type === "internal") return state.apps[i];
+    }
+    return null;
+  }
+  function soloName() { return window.orosSolo.nameOf(SOLO, state.lang); }
+
+  // Window title, bar button and the host page's title.
+  function soloPaint() {
+    var app = state.running;
+    var mb = document.getElementById("btn-menu");
+    var lbl = document.getElementById("btn-menu-label");
+    if (!mb || !lbl || typeof window.t !== "function") return;
+    if (!app || app.id === SOLO) {
+      var k = "app." + SOLO, n = window.t(k);
+      lbl.textContent = n !== k ? n : SOLO;
+      mb.classList.remove("running");
+      mb.setAttribute("data-i18n-title", "solo.menu");
+      mb.setAttribute("title", window.t("solo.menu"));
+      mb.setAttribute("aria-haspopup", "menu");
+    } else {
+      lbl.textContent = window.t("running.back");
+      mb.classList.add("running");
+      mb.setAttribute("data-i18n-title", "running.back");
+      mb.setAttribute("title", window.t("running.back"));
+      mb.removeAttribute("aria-haspopup");
+    }
+    document.title = soloName();
+    var h = window.orosSolo.host();
+    if (h) h.title(soloName());
+  }
+
+  // Back to the single app. true = handled (returnToDesktop stops).
+  function soloHome() {
+    var app = soloAppObj();
+    if (!app) return false;
+    soloMenuClose();
+    if (!state.running || state.running.id !== SOLO) openApp(app);
+    return true;
+  }
+
+  function soloMenuClose() {
+    var m = document.getElementById("solo-menu");
+    if (m) m.remove();
+  }
+  function soloMenuButton() {
+    if (state.running && state.running.id !== SOLO) { soloHome(); return; }
+    if (document.getElementById("solo-menu")) { soloMenuClose(); return; }
+    var menu = document.createElement("div");
+    menu.id = "solo-menu";
+    menu.setAttribute("role", "menu");
+    [
+      ["solo.sync", function () { window.__orosOpenAt("settings", { section: "sync" }); }],
+      ["solo.settings", function () { openAppById("settings"); }],
+      ["solo.help", function () { openHelp(); }],
+      ["solo.full", function () { window.open("/", "_blank", "noopener"); }]
+    ].forEach(function (it) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.setAttribute("role", "menuitem");
+      b.textContent = window.t(it[0]);
+      b.addEventListener("click", function (e) {
+        e.stopPropagation();
+        soloMenuClose();
+        it[1]();
+      });
+      menu.appendChild(b);
+    });
+    menu.addEventListener("click", function (e) { e.stopPropagation(); });
+    document.body.appendChild(menu);
+    var first = menu.querySelector("button");
+    if (first) first.focus();
+  }
+  if (SOLO) {
+    document.addEventListener("click", function () { soloMenuClose(); });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape") soloMenuClose(); });
+  }
+
+  // Once the app list is in: the shortcut word or a share decides what
+  // opens first; otherwise the app itself (unless a launch parameter,
+  // e.g. a notification's deep link, already opened something).
+  var soloStarted = false;
+  function soloStart() {
+    if (soloStarted) return;
+    soloStarted = true;
+    var S = window.orosSolo, app = soloAppObj();
+    if (!app) return;
+    soloNotifsOnlyOwn();
+    var sc = S.shortcut(SOLO, S.word);
+    var sh = S.share ? S.shareTarget(SOLO, S.share, new Date()) : null;
+    if (sh && sh.calNew) { window.__orosOpenCalendarNew(sh.calNew); }
+    else if (sh && sh.target) { window.__orosOpenAt(sh.app, sh.target); }
+    else if (sc && sc.calNew) { window.__orosOpenCalendarNew({ date: sysYmd() }); }
+    else if (sc && sc.target) { window.__orosOpenAt(SOLO, sc.target); }
+    if (!state.running) openApp(app);
+    soloPaint();
+    soloBadgeTick();
+    setInterval(soloBadgeTick, 60000);
+    window.addEventListener("storage", soloBadgeTick);
+  }
+
+  // Notifications: a single app raises only its own (and orOS system
+  // notices such as an update). The other apps' reminders belong to
+  // orOS, which keeps raising them.
+  function soloNotifsOnlyOwn() {
+    var N = window.orosNotifs;
+    if (!N || typeof N.emit !== "function" || N.__soloWrapped) return;
+    var emit = N.emit;
+    N.emit = function (cand) {
+      var ns = cand && typeof cand === "object" ? cand.ns : "";
+      if (ns !== SOLO && ns !== "system") return null;
+      return emit.apply(N, arguments);
+    };
+    N.__soloWrapped = true;
+  }
+
+  // Icon badge (Badging API, through the host page): To-Do counts the
+  // open tasks due today or overdue. Others show none.
+  function soloBadgeTick() {
+    var h = window.orosSolo.host(), kind = window.orosSolo.APPS[SOLO].badge;
+    if (!h || kind !== "due") return;
+    var n = 0;
+    try {
+      var raw = JSON.parse(localStorage.getItem(TODO_DATA_KEY));
+      var TC = window.OrosTodoCore;
+      if (raw && Array.isArray(raw.lists) && TC) n = TC.dueSummary(raw, sysYmd()).count;
+    } catch (e) { n = 0; }
+    h.badge(n);
+  }
+
   // ---------- 10. App opening (fullscreen takeover) ----------
 
   function openApp(app, at) {
@@ -8460,9 +8604,11 @@
     mb.setAttribute("title", window.t("running.home"));   // paint NOW — don't wait for applyLang()
     var nk = "app." + app.id, tv = window.t(nk);
     document.title = ((tv === nk) ? app.name : tv) + " · orOS";   // #4: title follows the running app (translated)
+    if (SOLO) { soloMenuClose(); soloPaint(); }
   }
 
   function returnToDesktop() {
+    if (SOLO && soloHome()) return;   // a single app has no desktop
     state.running = null;
     document.body.classList.remove("app-running");
     document.getElementById("app-frame").src = "about:blank";
@@ -8487,6 +8633,7 @@
   }
   function toggleMenu() {
     closeNotifPanel();
+    if (SOLO) { soloMenuButton(); return; }
     if (state.running) { returnToDesktop(); return; }
     document.getElementById("app-menu").classList.toggle("open");
   }
@@ -8698,6 +8845,7 @@
   }
 
   function tourMaybe() {
+    if (SOLO) return;                  // the tour shows the desktop's top bar
     var pending;
     try { pending = localStorage.getItem(TOUR_KEY) === "1"; } catch (e) { pending = false; }
     if (!pending || tourBox) return;

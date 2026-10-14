@@ -8,7 +8,7 @@
   "use strict";
 
   // The groups, in the order shown. A deep link names one of these.
-  var SECTIONS = ["appearance", "menu", "notifications", "sync", "backup", "language", "files", "services", "system"];
+  var SECTIONS = ["appearance", "menu", "notifications", "sync", "backup", "language", "files", "solo", "services", "system"];
 
   // Where each setting lives: "all" = travels to every device through
   // sync, "device" = this device only. Mirrors the shell: lang, theme,
@@ -143,6 +143,17 @@
       "f.how.linux": "Linux: right-click a file › Properties › Open With › orOS › Set as default.",
       "f.how.mac": "Mac: select a file › Get Info › Open with › orOS › Change All.",
       "f.how.android": "Android: in Files, Gmail or any app, Share › orOS opens the file in the matching orOS app (orOS installed from Chrome). It cannot be the default for opening files yet.",
+
+      "s.solo": "Single apps", "d.solo": "Notes, Calendar and more, each as its own app",
+      "so.intro": "Install an orOS app on its own. It gets its own icon and window, opens straight into the app and works offline. On this device it shares its data with orOS. On another device, turn on sync inside it (app menu › Sync and cloud) to join your encrypted orOS cloud.",
+      "so.apps": "Available single apps",
+      "so.open": "Install",
+      "so.open.title": "Opens the app's page in a new tab, ready to install",
+      "so.how": "How to install",
+      "so.how.desktop": "Windows and Linux: in the new tab, choose Install in the address bar of Chrome or Edge. The app then appears in your Start menu or app list.",
+      "so.how.android": "Android: in the new tab, open Chrome's menu and choose Add to Home screen › Install.",
+      "so.how.iphone": "iPhone: in Safari, Share › Add to Home Screen.",
+      "so.none": "Single apps are not available in this orOS version.",
 
       "s.services": "Connected services", "d.services": "Your shop and other platforms orOS works with",
       "v.intro": "Link orOS to platforms you already use. Their keys stay sealed on this device: apps ask the system, never see them.",
@@ -358,6 +369,17 @@
       "f.how.linux": "Linux: δεξί κλικ σε αρχείο › Ιδιότητες › Άνοιγμα με › orOS › Ορισμός ως προεπιλογή.",
       "f.how.mac": "Mac: επίλεξε αρχείο › Λήψη πληροφοριών › Άνοιγμα με › orOS › Αλλαγή όλων.",
       "f.how.android": "Android: στα Αρχεία, στο Gmail ή σε όποια εφαρμογή, το Κοινοποίηση › orOS ανοίγει το αρχείο στη σωστή εφαρμογή του orOS (με το orOS εγκατεστημένο από Chrome). Προεπιλογή για άνοιγμα αρχείων δεν γίνεται ακόμα.",
+
+      "s.solo": "Μεμονωμένες εφαρμογές", "d.solo": "Σημειώσεις, Ημερολόγιο και άλλες, η καθεμία ως δική της εφαρμογή",
+      "so.intro": "Εγκατέστησε μια εφαρμογή του orOS μόνη της. Παίρνει δικό της εικονίδιο και παράθυρο, ανοίγει κατευθείαν στην εφαρμογή και δουλεύει χωρίς σύνδεση. Σε αυτή τη συσκευή μοιράζεται τα δεδομένα της με το orOS. Σε άλλη συσκευή, άνοιξε τον συγχρονισμό μέσα της (μενού εφαρμογής › Συγχρονισμός και cloud) για να συνδεθεί στο κρυπτογραφημένο cloud του orOS σου.",
+      "so.apps": "Διαθέσιμες μεμονωμένες εφαρμογές",
+      "so.open": "Εγκατάσταση",
+      "so.open.title": "Ανοίγει τη σελίδα της εφαρμογής σε νέα καρτέλα, έτοιμη για εγκατάσταση",
+      "so.how": "Πώς εγκαθίσταται",
+      "so.how.desktop": "Windows και Linux: στη νέα καρτέλα, πάτησε Εγκατάσταση στη γραμμή διευθύνσεων του Chrome ή του Edge. Η εφαρμογή εμφανίζεται μετά στο μενού Έναρξη ή στη λίστα εφαρμογών.",
+      "so.how.android": "Android: στη νέα καρτέλα, άνοιξε το μενού του Chrome και πάτησε Προσθήκη στην αρχική οθόνη › Εγκατάσταση.",
+      "so.how.iphone": "iPhone: στο Safari, Κοινοποίηση › Προσθήκη στην οθόνη Αφετηρίας.",
+      "so.none": "Οι μεμονωμένες εφαρμογές δεν υπάρχουν σε αυτή την έκδοση του orOS.",
 
       "s.services": "Συνδεδεμένες υπηρεσίες", "d.services": "Το κατάστημά σου και άλλες πλατφόρμες που δουλεύουν με το orOS",
       "v.intro": "Σύνδεσε το orOS με πλατφόρμες που ήδη χρησιμοποιείς. Τα κλειδιά τους μένουν κλειδωμένα σε αυτή τη συσκευή: οι εφαρμογές ζητούν από το σύστημα και δεν τα βλέπουν ποτέ.",

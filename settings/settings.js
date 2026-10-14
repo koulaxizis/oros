@@ -74,6 +74,7 @@
     sync: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.5 19a4.5 4.5 0 1 0-1.4-8.8A6 6 0 0 0 4.5 12 3.5 3.5 0 0 0 6 19z"/><rect x="9.5" y="13" width="5" height="4" rx="1"/><path d="M10.5 13v-1.2a1.5 1.5 0 0 1 3 0V13"/></svg>',
     backup: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M12 10v6M9 13l3 3 3-3"/></svg>',
     language: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>',
+    solo: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/><path d="M17 3v6M14 6h6"/></svg>',
     system: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
     files: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 14h6M12 11v6"/></svg>',
     menu: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 17.5h7M17.5 14v7"/></svg>',
@@ -733,6 +734,38 @@
     catch (e) { return null; }
   }
 
+  // Single apps (solo.js): "orOS Notes", "orOS Calendar" … installed on
+  // their own. Install opens the app's page in a new tab, where the
+  // browser offers its own install (a web page cannot install another).
+  function soloApi() {
+    var p = parentWin();
+    try { return (p && p.orosSolo && p.orosSolo.v >= 1) ? p.orosSolo : null; }
+    catch (e) { return null; }
+  }
+  function secSolo(host) {
+    var S = soloApi();
+    var c1 = card(t("so.apps"));
+    if (!S) {
+      c1.appendChild(el("p", "hint", t("so.none")));
+      host.appendChild(c1);
+      return;
+    }
+    c1.appendChild(el("p", "hint", t("so.intro")));
+    S.ids().forEach(function (id) {
+      var b = button(t("so.open"), "solo:" + id, function () {
+        window.open("/" + id + "/solo.html", "_blank", "noopener");
+      });
+      b.title = t("so.open.title");
+      c1.appendChild(row(S.nameOf(id, LANG), b));
+    });
+    host.appendChild(c1);
+    var c2 = card(t("so.how"));
+    ["desktop", "android", "iphone"].forEach(function (k) {
+      c2.appendChild(el("p", "hint", t("so.how." + k)));
+    });
+    host.appendChild(c2);
+  }
+
   function secFiles(host) {
     var F = fileOpen();
     var c1 = card(t("f.status"), "files");
@@ -1144,7 +1177,7 @@
 
   var SECTION_FN = {
     appearance: secAppearance, menu: secMenu, notifications: secNotifications, sync: secSync,
-    backup: secBackup, language: secLanguage, files: secFiles, services: secServices, system: secSystem
+    backup: secBackup, language: secLanguage, files: secFiles, solo: secSolo, services: secServices, system: secSystem
   };
 
   function renderNav(s) {

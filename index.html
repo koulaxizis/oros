@@ -252,7 +252,11 @@
       if (/[?&]code=/.test(window.location.search) &&
           sessionStorage.getItem("oros-pkce-verifier")) return false;
       var run = document.getElementById("oros-running");
-      if (run && run.classList.contains("active")) return false;      // an app is open
+      // A single app (solo.js) always shows its app: it updates while
+      // its window is in the background instead.
+      var soloHidden = !!(document.body && document.body.classList.contains("solo-mode")) &&
+        document.visibilityState === "hidden";
+      if (run && run.classList.contains("active") && !soloHidden) return false;   // an app is open
       var menu = document.getElementById("app-menu");
       if (menu && menu.classList.contains("open")) return false;      // user is in the menu
       if (document.querySelector("dialog[open]")) return false;        // a dialog is open
@@ -323,6 +327,7 @@
 </script>
 
   <script src="translations.js?v=2.03.00"></script>
+  <script src="solo.js?v=2.03.00"></script>
   <script src="sync.js?v=2.03.00"></script>
   <script src="vault.js?v=2.03.00"></script>
   <script src="pet.js?v=2.03.00"></script>
