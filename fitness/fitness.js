@@ -8,6 +8,11 @@
 //     ticks, a rest timer on this device, records as they happen
 //   - progression hint (+2.5 kg / +5 kg), history, charts, body
 //     measurements, CSV / JSON export, JSON restore (merge)
+//   - wave 29: supersets / circuits (linked entries, run round by
+//     round), progression programs 5/3/1, GZCLP, Linear 5×5
+//     (plan-core.js), outdoor walk / run / ride with GPS, splits and
+//     GPX (gps-core.js over maps/tracks-core.js), exercise pictures
+//     from wger.de on request (wger.js); section 7b
 // Data:
 //   - synced slice "fitness" (oros-fitness-data): exercises,
 //     programs, workouts, body entries LWW by m + tombstones,
@@ -151,7 +156,44 @@
       "csv.date": "Date", "csv.workout": "Workout", "csv.exercise": "Exercise", "csv.set": "Set",
       "csv.warm": "Warm-up", "csv.weight": "Weight ({u})", "csv.reps": "Reps", "csv.time": "Time (s)",
       "csv.dist": "Distance ({u})", "csv.e1rm": "Estimated 1RM ({u})", "csv.yes": "yes",
-      "feed.deleted": "This workout no longer exists."
+      "feed.deleted": "This workout no longer exists.",
+      "ss.link": "Superset with the next exercise", "ss.unlink": "Unlink from the next exercise",
+      "ss.superset": "Superset", "ss.circuit": "Circuit", "ss.round": "Round {n} of {of}",
+      "ss.restRound": "Rest after the round {t}", "ss.now": "Now: {ex}", "ss.hint": "Linked exercises are done round by round: one set of each, then the rest.",
+      "pl.title": "Progression programs", "pl.intro": "The app works out each session's sets and weights from your numbers and moves on after every finished workout.",
+      "pl.new": "New progression program", "pl.pick": "Choose a template",
+      "tpl.531": "5/3/1 (Wendler)", "tpl.gzclp": "GZCLP", "tpl.lin": "Linear 5×5",
+      "tplD.531": "4 days: press, deadlift, bench, squat. Weeks of 5s, 3s and 5/3/1, then a deload week. The last set is “+”: as many reps as you can.",
+      "tplD.gzclp": "4 days (A1, B1, A2, B2) in three tiers: heavy T1, volume T2, light T3. A missed session changes the sets and reps, not the weight.",
+      "tplD.lin": "Two alternating days (A, B), 5 sets of 5. Every good session adds weight; three misses in a row take 10% off.",
+      "pl.tm.531": "Training max (about 90% of your 1RM)", "pl.tm.gzclp": "5-rep max", "pl.tm.lin": "Starting weight",
+      "pl.fromHist": "Filled in from your history; change them as you like.",
+      "pl.round": "Round weights to ({u})", "pl.bbb": "Add 5 × 10 at 50% (Boring But Big)",
+      "pl.needTm": "Enter a weight for every lift", "pl.create": "Create", "pl.next": "Next: {pos}",
+      "pl.week": "Week {n}", "pl.deload": "Deload week", "pl.cycle": "Cycle {n}", "pl.day": "Day {d}",
+      "pl.skip": "Skip this session", "pl.skipQ": "Skip this session? The program moves on to the next one.", "pl.skipped": "Session skipped",
+      "pl.tms": "Training maxes", "pl.weights": "Working weights", "pl.edit": "Change numbers", "pl.saved": "Numbers saved", "pl.created": "Program created",
+      "pl.sum": "Program", "pl.stale": "This workout was not the program's next session, so the program did not move on.",
+      "pl.up": "{ex}: next time {w}", "pl.same": "{ex}: same weight next time ({w})",
+      "pl.stage": "{ex}: next time {sets} at {w}", "pl.reset": "{ex}: starts again at {sets} with {w}",
+      "pl.down": "{ex}: three misses in a row, down to {w}",
+      "pl.miss": "{ex}: the + set missed its reps; this training max goes down 10% when the cycle ends",
+      "pl.tmUp": "{ex}: new training max {w}", "pl.tmDown": "{ex}: training max down 10% to {w}",
+      "pl.plus": "+ = as many reps as you can", "pl.t3": "T3: pick your weight the first time; it's kept for next time.",
+      "gps.title": "Outdoor activity", "gps.walk": "Walk", "gps.run": "Run", "gps.ride": "Ride",
+      "gps.hint": "Records your route with this device's location while Workouts stays open on screen.",
+      "gps.dist": "Distance", "gps.time": "Time", "gps.pace": "Pace", "gps.speed": "Speed", "gps.lap": "This {u}",
+      "gps.pause": "Pause", "gps.resume": "Resume", "gps.paused": "Paused", "gps.waiting": "Waiting for GPS…",
+      "gps.acc": "GPS accuracy ±{m} m", "gps.denied": "Location is not allowed. Allow it for orOS in your browser or device settings, then tap Resume.",
+      "gps.none": "This device or browser cannot give a location.", "gps.splits": "Splits", "gps.map": "Route",
+      "gps.gpx": "Export GPX", "gps.noTrack": "No route was recorded.",
+      "gps.screen": "Keep the screen on and Workouts open: most browsers stop the location when the screen turns off or the app goes to the background, and the route then jumps in a straight line.",
+      "gps.perH": "{u}/h",
+      "pic.show": "Show picture", "pic.loading": "Looking on wger.de…", "pic.none": "wger.de has no picture for this exercise.",
+      "pic.offline": "You're offline. Pictures come from wger.de.", "pic.fail": "Could not reach wger.de. Try again later.",
+      "pic.by": "Picture: {author}", "pic.byNone": "Picture: wger.de contributors", "pic.src": "Source: wger.de · {name}",
+      "pic.note": "Fetched from wger.de only when you ask, then kept on this device. The closest match by name; it may show a variation.",
+      "pic.forget": "Remove from this device", "pic.retry": "Search again"
     },
     el: {
       "app": "Προπόνηση",
@@ -238,7 +280,44 @@
       "csv.date": "Ημερομηνία", "csv.workout": "Προπόνηση", "csv.exercise": "Άσκηση", "csv.set": "Σετ",
       "csv.warm": "Προθέρμανση", "csv.weight": "Βάρος ({u})", "csv.reps": "Επαναλήψεις", "csv.time": "Χρόνος (δ)",
       "csv.dist": "Απόσταση ({u})", "csv.e1rm": "Εκτιμώμενο 1RM ({u})", "csv.yes": "ναι",
-      "feed.deleted": "Αυτή η προπόνηση δεν υπάρχει πια."
+      "feed.deleted": "Αυτή η προπόνηση δεν υπάρχει πια.",
+      "ss.link": "Σούπερ σετ με την επόμενη άσκηση", "ss.unlink": "Αποσύνδεση από την επόμενη άσκηση",
+      "ss.superset": "Σούπερ σετ", "ss.circuit": "Κύκλωμα", "ss.round": "Γύρος {n} από {of}",
+      "ss.restRound": "Ανάπαυση μετά τον γύρο {t}", "ss.now": "Τώρα: {ex}", "ss.hint": "Οι συνδεδεμένες ασκήσεις γίνονται γύρο γύρο: ένα σετ από την καθεμία και μετά ανάπαυση.",
+      "pl.title": "Προγράμματα προόδου", "pl.intro": "Η εφαρμογή υπολογίζει τα σετ και τα βάρη κάθε προπόνησης από τα νούμερά σου και προχωρά μετά από κάθε ολοκληρωμένη προπόνηση.",
+      "pl.new": "Νέο πρόγραμμα προόδου", "pl.pick": "Διάλεξε πρότυπο",
+      "tpl.531": "5/3/1 (Wendler)", "tpl.gzclp": "GZCLP", "tpl.lin": "Γραμμικό 5×5",
+      "tplD.531": "4 ημέρες: πιέσεις ώμων, άρση θανάτου, πιέσεις πάγκου, καθίσματα. Εβδομάδες με 5άρια, 3άρια και 5/3/1 και μετά μια εβδομάδα αποφόρτισης. Το τελευταίο σετ είναι «+»: όσες επαναλήψεις μπορείς.",
+      "tplD.gzclp": "4 ημέρες (A1, B1, A2, B2) σε τρία επίπεδα: βαρύ T1, όγκος T2, ελαφρύ T3. Μια αποτυχημένη προπόνηση αλλάζει τα σετ και τις επαναλήψεις, όχι το βάρος.",
+      "tplD.lin": "Δύο ημέρες εναλλάξ (A, B), 5 σετ των 5. Κάθε καλή προπόνηση προσθέτει βάρος· τρεις αποτυχίες στη σειρά αφαιρούν 10%.",
+      "pl.tm.531": "Μέγιστο προπόνησης (περίπου 90% του 1RM σου)", "pl.tm.gzclp": "Μέγιστο 5 επαναλήψεων", "pl.tm.lin": "Αρχικό βάρος",
+      "pl.fromHist": "Συμπληρώθηκαν από το ιστορικό σου· άλλαξέ τα όπως θέλεις.",
+      "pl.round": "Στρογγυλοποίηση βαρών ανά ({u})", "pl.bbb": "Πρόσθεσε 5 × 10 στο 50% (Boring But Big)",
+      "pl.needTm": "Βάλε βάρος για κάθε άσκηση", "pl.create": "Δημιουργία", "pl.next": "Επόμενη: {pos}",
+      "pl.week": "Εβδομάδα {n}", "pl.deload": "Εβδομάδα αποφόρτισης", "pl.cycle": "Κύκλος {n}", "pl.day": "Ημέρα {d}",
+      "pl.skip": "Παράλειψη αυτής της προπόνησης", "pl.skipQ": "Παράλειψη αυτής της προπόνησης; Το πρόγραμμα περνά στην επόμενη.", "pl.skipped": "Η προπόνηση παραλείφθηκε",
+      "pl.tms": "Μέγιστα προπόνησης", "pl.weights": "Βάρη εργασίας", "pl.edit": "Αλλαγή νούμερων", "pl.saved": "Τα νούμερα αποθηκεύτηκαν", "pl.created": "Το πρόγραμμα δημιουργήθηκε",
+      "pl.sum": "Πρόγραμμα", "pl.stale": "Αυτή η προπόνηση δεν ήταν η επόμενη του προγράμματος, οπότε το πρόγραμμα δεν προχώρησε.",
+      "pl.up": "{ex}: την επόμενη φορά {w}", "pl.same": "{ex}: ίδιο βάρος την επόμενη φορά ({w})",
+      "pl.stage": "{ex}: την επόμενη φορά {sets} με {w}", "pl.reset": "{ex}: ξεκινά ξανά με {sets} και {w}",
+      "pl.down": "{ex}: τρεις αποτυχίες στη σειρά, κατεβαίνει στα {w}",
+      "pl.miss": "{ex}: το σετ + δεν έπιασε τις επαναλήψεις· αυτό το μέγιστο προπόνησης πέφτει 10% στο τέλος του κύκλου",
+      "pl.tmUp": "{ex}: νέο μέγιστο προπόνησης {w}", "pl.tmDown": "{ex}: το μέγιστο προπόνησης πέφτει 10% στα {w}",
+      "pl.plus": "+ = όσες επαναλήψεις μπορείς", "pl.t3": "T3: διάλεξε το βάρος σου την πρώτη φορά· κρατιέται για την επόμενη.",
+      "gps.title": "Δραστηριότητα στο ύπαιθρο", "gps.walk": "Περπάτημα", "gps.run": "Τρέξιμο", "gps.ride": "Ποδήλατο",
+      "gps.hint": "Καταγράφει τη διαδρομή σου με την τοποθεσία αυτής της συσκευής όσο η Προπόνηση μένει ανοιχτή στην οθόνη.",
+      "gps.dist": "Απόσταση", "gps.time": "Χρόνος", "gps.pace": "Ρυθμός", "gps.speed": "Ταχύτητα", "gps.lap": "Αυτό το {u}",
+      "gps.pause": "Παύση", "gps.resume": "Συνέχεια", "gps.paused": "Σε παύση", "gps.waiting": "Αναμονή για GPS…",
+      "gps.acc": "Ακρίβεια GPS ±{m} m", "gps.denied": "Η τοποθεσία δεν επιτρέπεται. Επίτρεψέ την για το orOS στις ρυθμίσεις του προγράμματος περιήγησης ή της συσκευής και πάτα Συνέχεια.",
+      "gps.none": "Αυτή η συσκευή ή το πρόγραμμα περιήγησης δεν δίνει τοποθεσία.", "gps.splits": "Ενδιάμεσοι χρόνοι", "gps.map": "Διαδρομή",
+      "gps.gpx": "Εξαγωγή GPX", "gps.noTrack": "Δεν καταγράφηκε διαδρομή.",
+      "gps.screen": "Κράτα την οθόνη αναμμένη και την Προπόνηση ανοιχτή: τα περισσότερα προγράμματα περιήγησης σταματούν την τοποθεσία όταν σβήνει η οθόνη ή η εφαρμογή πάει στο παρασκήνιο, και τότε η διαδρομή κάνει άλμα σε ευθεία γραμμή.",
+      "gps.perH": "{u}/ώ",
+      "pic.show": "Εμφάνιση εικόνας", "pic.loading": "Αναζήτηση στο wger.de…", "pic.none": "Το wger.de δεν έχει εικόνα γι' αυτή την άσκηση.",
+      "pic.offline": "Είσαι εκτός σύνδεσης. Οι εικόνες έρχονται από το wger.de.", "pic.fail": "Δεν ήταν δυνατή η σύνδεση με το wger.de. Δοκίμασε αργότερα.",
+      "pic.by": "Εικόνα: {author}", "pic.byNone": "Εικόνα: συντελεστές του wger.de", "pic.src": "Πηγή: wger.de · {name}",
+      "pic.note": "Έρχεται από το wger.de μόνο όταν το ζητάς και μετά κρατιέται σε αυτή τη συσκευή. Είναι η πιο κοντινή αντιστοιχία στο όνομα· μπορεί να δείχνει παραλλαγή.",
+      "pic.forget": "Αφαίρεση από αυτή τη συσκευή", "pic.retry": "Νέα αναζήτηση"
     }
   };
 
@@ -379,6 +458,13 @@
   //   pg:  [{ id, m, n, days: [{ id, n, wd[], it: [{ e, s, r, r2, t, w, rest }] }] }]
   //   wo:  [{ id, m, d, st, en, ti, p, pd, n, x: [{ e, tr, tr2, rest, s: [[w, r, t, dist, f]] }] }]
   //          en = 0 → the workout is still running
+  //   pl:  [{ id, m, n, tp, rd, bb, k, tm{}, sl{}, fl{} }]   progression programs (plan-core.js)
+  // Optional fields, written only when set (wave 29), so rows without
+  // them keep their old canonical JSON:
+  //   program item / workout entry  ln: 1  linked to the next one (superset, circuit)
+  //   workout entry  pk: "t1:x-squat"  pr: [reps per working set]  am: 1  (last set "+")
+  //   workout        pl: plan id, pp: plan position it was started at
+  //                  g: { a, ps, sg[] }  outdoor GPS session (gps-core.js)
   //   bm:  [{ id: "YYYY-MM-DD", m, w, wa, ch, ar }]
   //   set: { m, wu, du, incU, incL, rest }
   //   tombs: { "<coll>:<id>": deletedAt }
@@ -389,7 +475,12 @@
   var ID_RE = /^[a-z0-9-]{1,40}$/;
   var DAYID_RE = /^[a-z0-9]{1,12}$/;
   var YMD_RE = /^\d{4}-\d{2}-\d{2}$/;
-  var COLLS = ["ex", "pg", "wo", "bm"];
+  var COLLS = ["ex", "pg", "wo", "bm", "pl"];
+  var PK_RE = /^(m|a|t1|t2|t3|l):[a-z0-9-]{1,40}$/;
+  var TPLS = ["531", "gzclp", "lin"];
+  // The shared cores (plan-core.js, gps-core.js), also when this block
+  // runs on its own in Node tests.
+  function core(name) { return (typeof window !== "undefined" ? window : globalThis)[name] || null; }
 
   function normStr(s, max) {
     if (typeof s !== "string") return "";
@@ -419,7 +510,9 @@
     var s = clampInt(x.s, 1, MAX_SETS) || 1;
     var r = clampInt(x.r, 0, MAX_R), r2 = clampInt(x.r2, 0, MAX_R);
     if (r2 && r2 <= r) r2 = 0;
-    return { e: x.e, s: s, r: r, r2: r2, t: clampInt(x.t, 0, MAX_T), w: clampInt(x.w, 0, MAX_W), rest: clampInt(x.rest, 0, 3600) };
+    var v = { e: x.e, s: s, r: r, r2: r2, t: clampInt(x.t, 0, MAX_T), w: clampInt(x.w, 0, MAX_W), rest: clampInt(x.rest, 0, 3600) };
+    if (x.ln) v.ln = 1;
+    return v;
   }
   function normWd(list) {
     var seen = {}, out = [];
@@ -463,7 +556,14 @@
     });
     var tr = clampInt(x.tr, 0, MAX_R), tr2 = clampInt(x.tr2, 0, MAX_R);
     if (tr2 && tr2 <= tr) tr2 = 0;
-    return { e: x.e, tr: tr, tr2: tr2, rest: clampInt(x.rest, 0, 3600), s: s };
+    var v = { e: x.e, tr: tr, tr2: tr2, rest: clampInt(x.rest, 0, 3600), s: s };
+    if (x.ln) v.ln = 1;
+    if (typeof x.pk === "string" && PK_RE.test(x.pk)) {
+      v.pk = x.pk;
+      v.pr = (Array.isArray(x.pr) ? x.pr : []).slice(0, MAX_SETS).map(function (n) { return clampInt(n, 0, MAX_R); });
+      if (x.am) v.am = 1;
+    }
+    return v;
   }
   function normWo(x) {
     if (!x || typeof x !== "object" || typeof x.id !== "string" || !ID_RE.test(x.id) || !stamp(x)) return null;
@@ -474,13 +574,41 @@
       var v = normEntry(e);
       if (v && xs.length < MAX_ITEMS) xs.push(v);
     });
-    return {
+    var v = {
       id: x.id, m: x.m, d: x.d, st: x.st, en: en,
       ti: normStr(x.ti, NAME_LEN),
       p: typeof x.p === "string" && ID_RE.test(x.p) ? x.p : "",
       pd: typeof x.pd === "string" && DAYID_RE.test(x.pd) ? x.pd : "",
       n: normNote(x.n), x: xs
     };
+    if (typeof x.pl === "string" && ID_RE.test(x.pl)) { v.pl = x.pl; v.pp = clampInt(x.pp, 0, 1000000); }
+    var G = core("OrosFitnessGps");
+    if (x.g && G) { var g = G.normGps(x.g); if (g) v.g = g; }
+    return v;
+  }
+  // Progression program (plan-core.js): rd = plate step for rounding,
+  // k = sessions done, tm = numbers per lift, sl = slot state, fl =
+  // 5/3/1 lifts whose "+" set missed in this cycle.
+  var SLOT_RE = /^(t1|t2|t3|l):[a-z0-9-]{1,40}$/;
+  function normPl(x) {
+    if (!x || typeof x !== "object" || typeof x.id !== "string" || !ID_RE.test(x.id) || !stamp(x)) return null;
+    if (TPLS.indexOf(x.tp) < 0) return null;
+    var tm = {}, sl = {}, fl = {}, n = 0;
+    if (x.tm && typeof x.tm === "object") Object.keys(x.tm).sort().forEach(function (k) {
+      if (ID_RE.test(k) && n++ < 20) tm[k] = clampInt(x.tm[k], 0, MAX_W);
+    });
+    n = 0;
+    if (x.sl && typeof x.sl === "object") Object.keys(x.sl).sort().forEach(function (k) {
+      var s = x.sl[k];
+      if (!SLOT_RE.test(k) || !s || typeof s !== "object" || n++ >= 30) return;
+      sl[k] = { w: clampInt(s.w, 0, MAX_W), lv: clampInt(s.lv, 0, 2), b: clampInt(s.b, 0, MAX_W), f: clampInt(s.f, 0, 9) };
+    });
+    n = 0;
+    if (x.fl && typeof x.fl === "object") Object.keys(x.fl).sort().forEach(function (k) {
+      if (ID_RE.test(k) && x.fl[k] && n++ < 20) fl[k] = 1;
+    });
+    return { id: x.id, m: x.m, n: normStr(x.n, NAME_LEN), tp: x.tp, rd: clampInt(x.rd, 1, 100000) || 2500,
+             bb: x.bb ? 1 : 0, k: clampInt(x.k, 0, 1000000), tm: tm, sl: sl, fl: fl };
   }
   function normBm(x) {
     if (!x || typeof x !== "object" || typeof x.id !== "string" || !YMD_RE.test(x.id) || !stamp(x)) return null;
@@ -501,7 +629,7 @@
       hb: x.hb === 0 ? 0 : 1          // the read-only row in Habits (fitness/core.js)
     };
   }
-  var NORM = { ex: normEx, pg: normPg, wo: normWo, bm: normBm };
+  var NORM = { ex: normEx, pg: normPg, wo: normWo, bm: normBm, pl: normPl };
 
   function canonPick(cur, x) {
     return !cur || x.m > cur.m || (x.m === cur.m && JSON.stringify(x) > JSON.stringify(cur));
@@ -534,7 +662,9 @@
         if (k in tombs && tombs[k] >= best[id].m) return;
         rows.push(best[id]);
       });
-      out[c] = rows;
+      // "pl" (wave 29) appears only once used, so data without
+      // progression programs keeps its old canonical JSON.
+      if (c !== "pl" || rows.length) out[c] = rows;
     });
     var sa = normSettings(a.set), sb = normSettings(b.set);
     out.set = sa && sb ? (canonPick(sa, sb) ? sb : sa) : (sa || sb || null);
@@ -1161,6 +1291,7 @@
     return null;
   }
   function putRow(c, row) {
+    if (!data[c]) data[c] = [];
     var i, list = data[c];
     for (i = 0; i < list.length; i++) if (list[i].id === row.id) { list[i] = row; return; }
     list.push(row);
@@ -1171,7 +1302,7 @@
   function removeRow(c, id) {
     var row = findRow(c, id);
     if (!row) return null;
-    data[c] = data[c].filter(function (r) { return r.id !== id; });
+    data[c] = (data[c] || []).filter(function (r) { return r.id !== id; });
     var k = c + ":" + id;
     data.tombs[k] = Math.max(Date.now(), row.m, data.tombs[k] || 0);
     return row;
@@ -1201,7 +1332,8 @@
       pr: ["1m", "3m", "6m", "1y", "all"].indexOf(p.pr) >= 0 ? p.pr : "3m",
       snd: p.snd === 0 ? 0 : 1,
       vib: p.vib === 0 ? 0 : 1,
-      rest: p.rest && isInt(p.rest.end) && isInt(p.rest.total) ? { end: p.rest.end, total: p.rest.total, ex: normStr(p.rest.ex, NAME_LEN) } : null
+      rest: p.rest && isInt(p.rest.end) && isInt(p.rest.total) ? { end: p.rest.end, total: p.rest.total, ex: normStr(p.rest.ex, NAME_LEN) } : null,
+      gps: typeof p.gps === "string" && ID_RE.test(p.gps) ? p.gps : ""    // outdoor session recording on this device
     };
   }
   var prefsTimer = null;
@@ -1230,7 +1362,15 @@
     eye: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>',
     eyeOff: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18M10.6 5.1A10.9 10.9 0 0 1 12 5c7 0 11 7 11 7a18 18 0 0 1-3.2 4M6.6 6.6C3.4 8.6 1 12 1 12s4 7 11 7a10.6 10.6 0 0 0 5.4-1.6"/></svg>',
     play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg>',
-    trophy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg>'
+    trophy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg>',
+    link: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>',
+    image: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>',
+    pause: '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>',
+    skip: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4l10 8-10 8z"/><path d="M19 5v14"/></svg>',
+    download: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>',
+    walk: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13" cy="4" r="2"/><path d="M11 21l2-6-3-3 1-5 3 3h3M9 9l-3 3M13 15l2 6"/></svg>',
+    run: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="15" cy="4" r="2"/><path d="M4 17l4 1 2-4M10 14l3 2-1 5M13 16l-1-6 4 1 3 3M12 10L8 9l-2 3"/></svg>',
+    ride: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="17" r="3.5"/><circle cx="18.5" cy="17" r="3.5"/><circle cx="15" cy="5" r="1.5"/><path d="M5.5 17l4-7h5l4 7M9.5 10L12 17h-1M12 10l2-3"/></svg>'
   };
   var TABS = [["train", "dumbbell"], ["history", "history"], ["progress", "chart"], ["programs", "list"], ["body", "body"]];
 
@@ -1483,6 +1623,25 @@
     st.appendChild(empty);
     v.appendChild(st);
 
+    // Progression programs: the next session of each
+    if (plans().length) {
+      var sPl = section(t("pl.title"));
+      plans().forEach(function (pl) { sPl.appendChild(planCard(pl, !!act)); });
+      v.appendChild(sPl);
+    }
+
+    // Outdoor GPS session
+    var sg = section(t("gps.title"));
+    var row = el("div", "gps-starts");
+    ["walk", "run", "ride"].forEach(function (a) {
+      var b = txtBtn("go-btn gps-go", UI[a], t("gps." + a), function () { startGps(a); });
+      b.disabled = !!act;
+      row.appendChild(b);
+    });
+    sg.appendChild(row);
+    sg.appendChild(hint(t("gps.hint")));
+    v.appendChild(sg);
+
     // This week
     var fin = finished(data), ws = ymd(weekStart(new Date())), n = 0, sets = 0, last = null;
     fin.forEach(function (w) {
@@ -1519,7 +1678,7 @@
     var row = el("div", "day-card");
     var txt = el("div", "day-txt");
     txt.appendChild(el("b", "", r.name));
-    txt.appendChild(el("small", "", r.day.it.map(function (i) { return exInfo(data, i.e).name; }).join(" · ")));
+    txt.appendChild(el("small", "", itemNames(r.day.it, function (i) { return exInfo(data, i.e).name; })));
     var wd = r.day.wd.map(function (d) { return t("day." + d); }).join(" ");
     if (wd) txt.appendChild(el("small", "dim", wd));
     row.appendChild(txt);
@@ -1544,8 +1703,15 @@
       }
       sets.push(s);
     }
-    return { e: exId, tr: item ? item.r : (prev ? prev.tr : 0), tr2: item ? item.r2 : (prev ? prev.tr2 : 0),
-             rest: item ? item.rest : (prev ? prev.rest : 0), s: sets };
+    var entry = { e: exId, tr: item ? item.r : (prev ? prev.tr : 0), tr2: item ? item.r2 : (prev ? prev.tr2 : 0),
+                  rest: item ? item.rest : (prev ? prev.rest : 0), s: sets };
+    if (item && item.ln) entry.ln = 1;
+    return entry;
+  }
+  // Names of program items or workout entries; linked ones (superset,
+  // circuit) are joined with " + ".
+  function itemNames(list, nameOf) {
+    return list.map(function (i, k) { return nameOf(i) + (k < list.length - 1 ? (i.ln ? " + " : " · ") : ""); }).join("");
   }
 
   function startWorkout(ref) {
@@ -1598,6 +1764,7 @@
   }
 
   function renderEditor(v, w) {
+    if (w.g && !w.en) { renderGps(v, w); return; }
     var set = settings(), running = !w.en;
     setTitle(running ? (w.ti || t("wo.title")) : t("wo.editTitle"));
     var head = el("section", "sec wo-head");
@@ -1639,7 +1806,22 @@
     }
     v.appendChild(head);
 
-    w.x.forEach(function (e, ei) { v.appendChild(entryCard(w, e, ei, set)); });
+    // Supersets and circuits: linked entries share one box, run round by round.
+    var P = core("OrosFitnessPlan"), nx = running ? P.nextUp(w.x) : null;
+    if (w.en && w.g) v.appendChild(gpsSection(w, set));
+    if (w.x.some(function (e) { return e.am; })) v.appendChild(hint(t("pl.plus")));
+    P.groupsOf(w.x).forEach(function (g) {
+      if (g[0] === g[1]) { v.appendChild(entryCard(w, w.x[g[0]], g[0], set, nx, false)); return; }
+      var box = el("section", "grp"), head = el("div", "grp-h"), rd = P.roundOf(w.x, g);
+      head.appendChild(el("b", "", t(g[1] - g[0] === 1 ? "ss.superset" : "ss.circuit")));
+      var bits = [];
+      if (running) bits.push(t("ss.round", { n: rd.at, of: rd.of }));
+      bits.push(t("ss.restRound", { t: fmtTime(P.groupRest(w.x, g[0]) || set.rest) }));
+      head.appendChild(el("small", "", bits.join(" · ")));
+      box.appendChild(head);
+      for (var i = g[0]; i <= g[1]; i++) box.appendChild(entryCard(w, w.x[i], i, set, nx, true));
+      v.appendChild(box);
+    });
 
     var add = txtBtn("wide-btn", UI.plus, t("wo.addEx"), function () {
       pickExercise(function (exId) {
@@ -1670,6 +1852,7 @@
     if (running) {
       acts.appendChild(button(t("wo.discard"), "danger", function () {
         confirmDialog(t("wo.discardQ"), t("wo.discard"), true, function () {
+          if (gpsLive && gpsLive.id === w.id) gpsStop();
           removeRow("wo", w.id);
           saveNow(false);
           stopRest();
@@ -1699,21 +1882,34 @@
     return fmtDist(s[3], set.du) + " · " + fmtTime(s[2]);
   }
 
-  function entryCard(w, e, ei, set) {
+  var TIER = { t1: "T1", t2: "T2", t3: "T3", a: "BBB", m: "5/3/1", l: "5×5" };
+  function entryCard(w, e, ei, set, nx, inGroup) {
     var info = exInfo(data, e.e);
-    var card = el("section", "ex-card");
+    var card = el(inGroup ? "div" : "section", "ex-card");
     var top = el("div", "ex-top");
     var nm = el("div", "ex-name");
     nm.appendChild(el("b", "", info.name));
     var meta = [];
+    if (e.pk) meta.push(TIER[e.pk.slice(0, e.pk.indexOf(":"))] || "");
     if (e.tr || e.s.length) {
-      var rr = e.tr ? (e.tr2 ? e.tr + "–" + e.tr2 : String(e.tr)) : "";
+      var rr = e.tr ? (e.tr2 ? e.tr + "–" + e.tr2 : String(e.tr)) + (e.am ? "+" : "") : "";
       if (rr) meta.push(t("wo.target", { s: e.s.filter(function (s) { return !isWarm(s); }).length, r: rr }));
     }
-    meta.push(t("wo.rest", { t: fmtTime(e.rest || set.rest) }));
+    if (!inGroup) meta.push(t("wo.rest", { t: fmtTime(e.rest || set.rest) }));
     nm.appendChild(el("small", "", meta.join(" · ")));
     top.appendChild(nm);
     var mv = el("div", "ex-tools");
+    mv.appendChild(iconBtn("mini", UI.image, t("pic.show") + ": " + info.name, function () { picDialog(e.e); }));
+    if (ei < w.x.length - 1) {
+      var lk = iconBtn("mini" + (e.ln ? " on" : ""), UI.link, t(e.ln ? "ss.unlink" : "ss.link"), function () {
+        var x = findRow("wo", w.id);
+        if (!x || !x.x[ei]) return;
+        if (x.x[ei].ln) delete x.x[ei].ln; else x.x[ei].ln = 1;
+        woChanged(x, true);
+      });
+      lk.setAttribute("aria-pressed", e.ln ? "true" : "false");
+      mv.appendChild(lk);
+    }
     var up = iconBtn("mini", UI.up, t("wo.moveUp"), function () { moveEntry(w.id, ei, -1); });
     up.disabled = ei === 0;
     var dn = iconBtn("mini", UI.down, t("wo.moveDown"), function () { moveEntry(w.id, ei, 1); });
@@ -1761,12 +1957,16 @@
     setLabel(info).forEach(function (l) { hdr.appendChild(el("span", "c-v", l)); });
     hdr.appendChild(el("span", "c-ok", ""));
     tbl.appendChild(hdr);
-    var nWork = 0;
+    var nWork = 0, lastWork = -1;
+    e.s.forEach(function (s, si) { if (!isWarm(s)) lastWork = si; });
     e.s.forEach(function (s, si) {
       var warm = isWarm(s);
       if (!warm) nWork++;
-      tbl.appendChild(setRow(w, e, ei, s, si, warm ? "W" : String(nWork), info, set));
+      var row = setRow(w, e, ei, s, si, warm ? "W" : String(nWork) + (e.am && si === lastWork ? "+" : ""), info, set);
+      if (nx && nx[0] === ei && nx[1] === si) row.classList.add("next");
+      tbl.appendChild(row);
     });
+    if (e.pk && e.pk.indexOf("t3:") === 0 && !e.s.some(function (s) { return s[0] > 0; })) card.appendChild(hint(t("pl.t3")));
     card.appendChild(tbl);
 
     var foot = el("div", "ex-foot");
@@ -1840,10 +2040,16 @@
     woChanged(x, true);
     if (isDone(s) && !x.en) {
       if (!isWarm(s)) checkRecords(x);
-      var next = null;
-      for (var i = si + 1; i < e.s.length; i++) if (!isDone(e.s[i])) { next = exInfo(data, e.e).name; break; }
-      if (!next) for (var j = ei + 1; j < x.x.length; j++) if (x.x[j].s.some(function (q) { return !isDone(q); })) { next = exInfo(data, x.x[j].e).name; break; }
-      startRest(e.rest || settings().rest, next);
+      // Flow order: set after set, or a superset / circuit round by
+      // round with the rest after the round (plan-core.js).
+      var P = core("OrosFitnessPlan"), nxt = P.nextAfter(x.x, ei, si);
+      var next = nxt ? exInfo(data, x.x[nxt[0]].e).name : null, g = P.groupAt(x.x, ei);
+      if (g[0] === g[1]) startRest(e.rest || settings().rest, next);
+      else if (P.restAfter(x.x, ei, si)) startRest(P.groupRest(x.x, ei) || settings().rest, next);
+      else {
+        if (prefs.rest) stopRest();
+        if (next) live(t("ss.now", { ex: next }));
+      }
     }
   }
   function addSet(woId, ei, warm) {
@@ -1871,6 +2077,7 @@
   function finishWorkout(id) {
     var w = findRow("wo", id);
     if (!w) return;
+    if (w.g) { gpsFinalize(w); if (!w.x.some(function (e) { return e.s.some(isDone); })) { showToast(t("gps.noTrack")); return; } }
     var done = 0, open = 0;
     w.x.forEach(function (e) { e.s.forEach(function (s) { if (isDone(s)) done++; else open++; }); });
     if (!done) { showToast(t("wo.noSets")); return; }
@@ -1880,30 +2087,33 @@
       x.x.forEach(function (e) { e.s = e.s.filter(isDone); });
       x.x = x.x.filter(function (e) { return e.s.length; });
       x.en = Math.max(Date.now(), x.st + 60000);
+      if (x.g) { gpsStop(); gpsThin(x); x.g.ps = 0; }
       touch(x);
+      var notes = x.pl ? advancePlan(x) : null;
       saveNow(false);
       stopRest();
       editId = null;
       render();
-      summaryDialog(x);
+      summaryDialog(x, notes);
     };
     if (open) confirmDialog(t("wo.finishQ") + " " + t("wo.finishOpen", { n: open }), t("wo.finish"), false, go);
     else go();
   }
 
-  function summaryDialog(w) {
+  function summaryDialog(w, planNotes) {
     var set = settings();
     var dlg = makeDialog("fit-sum", t("sum.title"));
     dlg.appendChild(el("div", "sum-name", w.ti || t("wo.title")));
-    var grid = el("div", "sum-grid");
-    [[t("sum.duration"), t("unit.min", { n: woMinutes(w) })], [t("sum.volume"), fmtVol(woVolume(w))], [t("sum.sets"), String(woSets(w))]]
-      .forEach(function (p) {
-        var c = el("div", "sum-cell");
-        c.appendChild(el("b", "", p[1]));
-        c.appendChild(el("small", "", p[0]));
-        grid.appendChild(c);
-      });
-    dlg.appendChild(grid);
+    dlg.appendChild(sumGrid(w, set));
+    if (planNotes) {
+      dlg.appendChild(el("div", "dlg-sub", t("pl.sum")));
+      if (planNotes === "stale") dlg.appendChild(hint(t("pl.stale")));
+      else {
+        var pul = el("ul", "plan-notes");
+        planNotes.forEach(function (n) { pul.appendChild(el("li", "", planNoteText(n))); });
+        dlg.appendChild(pul);
+      }
+    }
     var recs = recordsOf(data, w);
     dlg.appendChild(el("div", "dlg-sub", t("sum.records")));
     if (!recs.length) dlg.appendChild(hint(t("sum.none")));
@@ -2154,6 +2364,620 @@
     if (wakeLock !== "pending") wakeLock = null;
   }
 
+  // ---------- 7b. Progression programs, outdoor GPS sessions, pictures ----------
+  // The rules live in plan-core.js (OrosFitnessPlan) and gps-core.js
+  // (OrosFitnessGps); this is their screen side.
+  function plans() { return data.pl || []; }
+  function planName(pl) { return pl.n || t("tpl." + pl.tp); }
+  function planPos(pl) {
+    var p = core("OrosFitnessPlan").position(pl);
+    if (pl.tp === "531") {
+      return t("pl.cycle", { n: p.cyc + 1 }) + " · " + (p.wk === 3 ? t("pl.deload") : t("pl.week", { n: p.wk + 1 })) +
+        " · " + exInfo(data, p.lift).name;
+    }
+    return t("pl.cycle", { n: p.cyc + 1 }) + " · " + t("pl.day", { d: p.dayName });
+  }
+  // "Squat 5×3+ · 100 kg" for each exercise of the next session
+  function sessionLines(pl) {
+    var set = settings();
+    return core("OrosFitnessPlan").session(pl).items.map(function (it) {
+      var work = it.sets.filter(function (s) { return !s.warm; }), top = 0, plus = false;
+      work.forEach(function (s) { top = Math.max(top, s.w); if (s.plus) plus = true; });
+      var reps = work.map(function (s) { return s.r; });
+      var same = reps.every(function (r) { return r === reps[0]; });
+      return exInfo(data, it.e).name + " " + (same ? work.length + "×" + reps[0] : reps.join("/")) + (plus ? "+" : "") +
+        (top ? " · " + fmtW(top, set.wu) + " " + set.wu : "");
+    });
+  }
+  function planCard(pl, busy, tools) {
+    var row = el("div", "day-card plan-card");
+    var txt = el("div", "day-txt");
+    txt.appendChild(el("b", "", planName(pl)));
+    txt.appendChild(el("small", "", t("pl.next", { pos: planPos(pl) })));
+    txt.appendChild(el("small", "dim", sessionLines(pl).join(" · ")));
+    row.appendChild(txt);
+    var side = el("div", "plan-side");
+    (tools || []).forEach(function (b) { side.appendChild(b); });
+    var b = txtBtn("go-btn", UI.play, t("train.start"), function () { startPlan(pl.id); });
+    b.disabled = busy;
+    side.appendChild(b);
+    row.appendChild(side);
+    return row;
+  }
+  function startPlan(plId) {
+    var pl = findRow("pl", plId);
+    if (!pl || activeWorkout()) return;
+    var P = core("OrosFitnessPlan"), ses = P.session(pl), now = Date.now();
+    var xs = ses.items.map(function (it) {
+      var e = P.entryOf(it);
+      // A slot without a weight yet (GZCLP T3 at first): last time's weight.
+      if (!e.s.some(function (s) { return s[0] > 0; })) {
+        var prev = lastEntry(data, e.e, now, null), pw = prev ? working(prev) : [];
+        if (pw.length) e.s.forEach(function (s) { if (!isWarm(s)) s[0] = pw[pw.length - 1][0]; });
+      }
+      return e;
+    });
+    var w = normWo({ id: newId(), m: now, d: ymd(new Date(now)), st: now, en: 0, ti: planName(pl) + " · " + planPos(pl),
+                     p: "", pd: "", n: "", x: xs, pl: pl.id, pp: ses.pos });
+    putRow("wo", w);
+    saveNow(true);
+    announced = {};
+    openEditor(w.id);
+  }
+  // A finished plan workout moves its program on (once).
+  function advancePlan(x) {
+    var pl = findRow("pl", x.pl);
+    if (!pl) return null;
+    var res = core("OrosFitnessPlan").advance(pl, x, settings());
+    if (!res) return "stale";
+    res.plan.m = Math.max(Date.now(), pl.m + 1);
+    var np = normPl(res.plan);
+    if (np) putRow("pl", np);
+    return res.notes;
+  }
+  function stageText(pk, lv) {
+    var P = core("OrosFitnessPlan"), tier = pk.slice(0, 2);
+    if (tier === "t1") return P.T1[lv][0] + "×" + P.T1[lv][1] + "+";
+    if (tier === "t2") return P.T2[lv][0] + "×" + P.T2[lv][1];
+    return "";
+  }
+  function planNoteText(n) {
+    var set = settings(), p = { ex: exInfo(data, n.e).name, w: fmtW(n.w, set.wu) + " " + set.wu };
+    if (n.what === "stage" || n.what === "reset") p.sets = stageText(n.pk, n.lv || 0);
+    return t("pl." + n.what, p);
+  }
+
+  // Programs tab: the progression programs and their numbers.
+  function renderPlans(v) {
+    var s = section(t("pl.title"));
+    s.appendChild(hint(t("pl.intro")));
+    var busy = !!activeWorkout();
+    plans().forEach(function (pl) {
+      s.appendChild(planCard(pl, busy, [
+        iconBtn("mini", UI.edit, t("pl.edit") + ": " + planName(pl), function () { planNumbersDialog(pl.id); }),
+        iconBtn("mini", UI.skip, t("pl.skip") + ": " + planName(pl), function () {
+          confirmDialog(t("pl.skipQ"), t("pl.skip"), false, function () {
+            var cur = findRow("pl", pl.id);
+            if (!cur) return;
+            var np = core("OrosFitnessPlan").skip(cur, settings());
+            np.m = Math.max(Date.now(), cur.m + 1);
+            putRow("pl", normPl(np));
+            saveNow(false);
+            render();
+            showToast(t("pl.skipped"));
+          });
+        }),
+        iconBtn("mini danger", UI.trash, t("pg.del") + ": " + planName(pl), function () {
+          var row = removeRow("pl", pl.id);
+          saveNow(false);
+          render();
+          undoToast(t("pg.deleted"), function () { restoreRow("pl", row); saveNow(false); render(); });
+        })
+      ]));
+    });
+    s.appendChild(txtBtn("wide-btn", UI.plus, t("pl.new"), newPlanDialog));
+    v.appendChild(s);
+  }
+  function defRound() { return settings().wu === "lb" ? Math.round(5 * LB_G) : 2500; }
+  function newPlanDialog() {
+    var P = core("OrosFitnessPlan"), set = settings();
+    var dlg = makeDialog("fit-plan", t("pl.new"));
+    var form = el("form");
+    form.method = "dialog";
+    var tp = el("select");
+    P.TPLS.forEach(function (x) { var o = el("option", "", t("tpl." + x)); o.value = x; tp.appendChild(o); });
+    form.appendChild(field(t("pl.pick"), tp));
+    var desc = el("p", "hint");
+    form.appendChild(desc);
+    var rd = input("text", fmtW(defRound(), set.wu), "decimal");
+    form.appendChild(field(t("pl.round", { u: set.wu }), rd));
+    var lifts = el("div", "plan-lifts");
+    form.appendChild(lifts);
+    var bbW = el("label", "chk"), bb = el("input");
+    bb.type = "checkbox";
+    bbW.appendChild(bb);
+    bbW.appendChild(el("span", "", t("pl.bbb")));
+    form.appendChild(bbW);
+    var inputs = {};
+    function paint() {
+      var x = tp.value, rdG = parseW(rd.value, set.wu), any = false;
+      desc.textContent = t("tplD." + x);
+      bbW.hidden = x !== "531";
+      lifts.innerHTML = "";
+      var fin = finished(data);
+      P.LIFTS[x].forEach(function (lift) {
+        var best = bestsFor(fin, lift, "wr", null).e1 || 0;
+        var sug = P.suggestStart(x, best, rdG > 0 ? rdG : defRound());
+        if (sug) any = true;
+        var i = input("text", sug ? fmtW(sug, set.wu) : "", "decimal");
+        inputs[lift] = i;
+        lifts.appendChild(field(exInfo(data, lift).name + " · " + t("pl.tm." + x) + " (" + set.wu + ")", i));
+      });
+      if (any) lifts.appendChild(hint(t("pl.fromHist")));
+    }
+    tp.addEventListener("change", function () { inputs = {}; paint(); });
+    paint();
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); }));
+    var ok = button(t("pl.create"), "primary", null);
+    ok.type = "submit";
+    acts.appendChild(ok);
+    form.appendChild(acts);
+    form.addEventListener("submit", function (ev) {
+      ev.preventDefault();
+      var x = tp.value, rdG = parseW(rd.value, set.wu), tm = {}, bad = false;
+      rd.classList.toggle("bad", !(rdG > 0));
+      if (!(rdG > 0)) return;
+      P.LIFTS[x].forEach(function (lift) {
+        var g = parseW(inputs[lift].value, set.wu);
+        inputs[lift].classList.toggle("bad", !(g > 0));
+        if (g > 0) tm[lift] = P.roundTo(g, rdG); else bad = true;
+      });
+      if (bad) { showToast(t("pl.needTm")); return; }
+      var row = normPl({ id: newId(), m: Date.now(), n: "", tp: x, rd: rdG, bb: x === "531" && bb.checked ? 1 : 0,
+                         k: 0, tm: tm, sl: P.initPlan(x, tm, rdG), fl: {} });
+      if (!row) return;
+      putRow("pl", row);
+      saveNow(false);
+      dlg.close();
+      render();
+      showToast(t("pl.created"));
+    });
+    dlg.appendChild(form);
+    openDialog(dlg);
+  }
+  // Change a program's numbers: 5/3/1 training maxes, GZCLP / Linear
+  // working weights, the plate step and BBB.
+  function planNumbersDialog(plId) {
+    var pl = findRow("pl", plId);
+    if (!pl) return;
+    var set = settings();
+    var dlg = makeDialog("fit-plan", planName(pl));
+    var form = el("form");
+    form.method = "dialog";
+    var rd = input("text", fmtW(pl.rd, set.wu), "decimal");
+    form.appendChild(field(t("pl.round", { u: set.wu }), rd));
+    form.appendChild(el("div", "dlg-sub", t(pl.tp === "531" ? "pl.tms" : "pl.weights")));
+    var fields = [];
+    if (pl.tp === "531") {
+      Object.keys(pl.tm).forEach(function (lift) {
+        var i = input("text", pl.tm[lift] ? fmtW(pl.tm[lift], set.wu) : "", "decimal");
+        fields.push({ kind: "tm", key: lift, inp: i });
+        form.appendChild(field(exInfo(data, lift).name + " (" + set.wu + ")", i));
+      });
+    } else {
+      Object.keys(pl.sl).forEach(function (k) {
+        var s = pl.sl[k], tier = k.slice(0, k.indexOf(":")), lift = k.slice(k.indexOf(":") + 1);
+        var i = input("text", s.w ? fmtW(s.w, set.wu) : "", "decimal");
+        fields.push({ kind: "sl", key: k, inp: i });
+        var lbl = (tier === "l" ? "" : TIER[tier] + " · ") + exInfo(data, lift).name +
+          (tier === "t1" || tier === "t2" ? " · " + stageText(k, s.lv) : "") + " (" + set.wu + ")";
+        form.appendChild(field(lbl, i));
+      });
+    }
+    var bb = null;
+    if (pl.tp === "531") {
+      var bbW = el("label", "chk");
+      bb = el("input");
+      bb.type = "checkbox";
+      bb.checked = !!pl.bb;
+      bbW.appendChild(bb);
+      bbW.appendChild(el("span", "", t("pl.bbb")));
+      form.appendChild(bbW);
+    }
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); }));
+    var ok = button(t("dlg.save"), "primary", null);
+    ok.type = "submit";
+    acts.appendChild(ok);
+    form.appendChild(acts);
+    form.addEventListener("submit", function (ev) {
+      ev.preventDefault();
+      var cur = findRow("pl", plId);
+      if (!cur) { dlg.close(); return; }
+      var x = JSON.parse(JSON.stringify(cur)), rdG = parseW(rd.value, set.wu), bad = !(rdG > 0);
+      rd.classList.toggle("bad", !(rdG > 0));
+      fields.forEach(function (f) {
+        var raw = f.inp.value.trim(), g = raw === "" ? 0 : parseW(raw, set.wu);
+        f.inp.classList.toggle("bad", isNaN(g));
+        if (isNaN(g)) { bad = true; return; }
+        if (f.kind === "tm") x.tm[f.key] = g; else x.sl[f.key].w = g;
+      });
+      if (bad) return;
+      x.rd = rdG;
+      if (bb) x.bb = bb.checked ? 1 : 0;
+      x.m = Math.max(Date.now(), cur.m + 1);
+      putRow("pl", normPl(x));
+      saveNow(false);
+      dlg.close();
+      render();
+      showToast(t("pl.saved"));
+    });
+    dlg.appendChild(form);
+    openDialog(dlg);
+  }
+
+  function sumGrid(w, set) {
+    var grid = el("div", "sum-grid"), cells;
+    if (w.g) {
+      var st = w.x[0] ? entryStats(w.x[0], "dt") : { dist: 0, time: 0 };
+      if (!st.dist && w.x[0] && w.x[0].s[0]) st = { dist: w.x[0].s[0][3], time: w.x[0].s[0][2] };
+      cells = [[t("gps.time"), fmtTime(st.time)], [t("gps.dist"), fmtDist(st.dist, set.du) + " " + set.du],
+               w.g.a === "ride" ? [t("gps.speed"), fmtSpeed(st.time, st.dist, set)] : [t("gps.pace"), fmtPace(st.time, st.dist, set)]];
+    } else {
+      cells = [[t("sum.duration"), t("unit.min", { n: woMinutes(w) })], [t("sum.volume"), fmtVol(woVolume(w))], [t("sum.sets"), String(woSets(w))]];
+    }
+    cells.forEach(function (p) {
+      var c = el("div", "sum-cell");
+      c.appendChild(el("b", "", p[1]));
+      c.appendChild(el("small", "", p[0]));
+      grid.appendChild(c);
+    });
+    return grid;
+  }
+  function fmtPace(sec, m, set) {
+    var p = core("OrosFitnessGps").pace(sec, m, dFactor(set.du));
+    return p > 0 && p < 360000 ? fmtTime(p) + " /" + set.du : "–";
+  }
+  function fmtSpeed(sec, m, set) {
+    var v = core("OrosFitnessGps").speed(sec, m, dFactor(set.du));
+    return v > 0 ? fmtNum(v, 1) + " " + t("gps.perH", { u: set.du }) : "–";
+  }
+
+  // Outdoor sessions. The watch runs only on the device that started
+  // (or resumed) it: prefs.gps holds that workout's id on this device.
+  var gpsLive = null, gpsUi = null;
+  function startGps(a) {
+    if (activeWorkout()) return;
+    var G = core("OrosFitnessGps"), now = Date.now();
+    var w = normWo({ id: newId(), m: now, d: ymd(new Date(now)), st: now, en: 0, ti: t("gps." + a), p: "", pd: "", n: "",
+                     x: [{ e: G.ACT_EX[a], tr: 0, tr2: 0, rest: 0, s: [[0, 0, 0, 0, 0]] }], g: { a: a, ps: 0, sg: [] } });
+    putRow("wo", w);
+    saveNow(true);
+    announced = {};
+    prefs.gps = w.id;
+    savePrefs();
+    gpsBegin(w);
+    openEditor(w.id);
+  }
+  function gpsBegin(w) {
+    var G = core("OrosFitnessGps");
+    gpsStop();
+    var closed = G.segsOf(w.g, w.st);
+    gpsLive = { id: w.id, watch: null, seg: [], closed: closed, base: G.statsOf(closed), acc: 0, err: "",
+                saved: Date.now(), segAt: w.g.sg.length };
+    if (!navigator.geolocation) { gpsLive.err = "none"; return; }
+    try {
+      gpsLive.watch = navigator.geolocation.watchPosition(gpsFix, gpsErr, { enableHighAccuracy: true, maximumAge: 0, timeout: 30000 });
+    } catch (e) { gpsLive.err = "none"; }
+  }
+  function gpsFix(pos) {
+    var L = gpsLive, G = core("OrosFitnessGps");
+    if (!L || !pos || !pos.coords) return;
+    var x = findRow("wo", L.id);
+    if (!x || x.en || !x.g || x.g.ps) { gpsStop(); return; }
+    L.err = "";
+    L.acc = Math.round(pos.coords.accuracy || 0);
+    // A cached fix from before the start (or a clock in the future) takes the time of arrival.
+    var now = Date.now(), tm = Math.round(pos.timestamp || 0);
+    if (!(tm >= x.st && tm <= now + 2000)) tm = now;
+    var fix = { lat: pos.coords.latitude, lon: pos.coords.longitude, acc: pos.coords.accuracy, t: tm };
+    var p = G.accept(L.seg.length ? L.seg[L.seg.length - 1] : null, fix);
+    if (p && G.countPts(L.closed) + L.seg.length < G.MAX_PTS) { L.seg.push([p[0], p[1], null, p[3]]); L.dirty = true; }
+    if (Date.now() - L.saved > 10000) gpsFlush();
+    gpsPaint();
+  }
+  function gpsErr(err) {
+    var L = gpsLive;
+    if (!L) return;
+    if (err && err.code === 1) {
+      L.err = "denied";
+      try { navigator.geolocation.clearWatch(L.watch); } catch (e) {}
+      L.watch = null;
+    } else L.err = "wait";
+    gpsPaint();
+  }
+  // The live segment into the row, distance and time into its one set.
+  function gpsFlush() {
+    var L = gpsLive, G = core("OrosFitnessGps"), x = L && findRow("wo", L.id);
+    if (!x || !x.g || x.en) return;
+    L.saved = Date.now();
+    if (!L.dirty) return;
+    L.dirty = false;
+    if (L.seg.length) x.g.sg[L.segAt] = G.encSeg(L.seg, x.st);
+    var st = gpsStats();
+    if (x.x[0] && x.x[0].s[0]) { x.x[0].s[0][2] = st.time; x.x[0].s[0][3] = st.dist; }
+    touch(x);
+    saveNow(true);
+  }
+  function gpsStats() {
+    var L = gpsLive, G = core("OrosFitnessGps"), cur = G.statsOf([L.seg]);
+    return { dist: L.base.dist + cur.dist, time: L.base.time + cur.time };
+  }
+  function gpsStop() {
+    if (!gpsLive) return;
+    gpsFlush();
+    if (gpsLive.watch !== null) { try { navigator.geolocation.clearWatch(gpsLive.watch); } catch (e) {} }
+    gpsLive = null;
+  }
+  function gpsPause(id) {
+    var x = findRow("wo", id);
+    if (!x || !x.g) return;
+    if (gpsLive && gpsLive.id === id) gpsStop();
+    x = findRow("wo", id);
+    x.g.ps = 1;
+    woChanged(x, true);
+  }
+  function gpsResume(id) {
+    var x = findRow("wo", id);
+    if (!x || !x.g) return;
+    x.g.ps = 0;
+    prefs.gps = id;
+    savePrefs();
+    woChanged(x, false);
+    gpsBegin(x);
+    render();
+  }
+  // Before Finish: the whole track gives the set's distance and time.
+  function gpsFinalize(w) {
+    if (gpsLive && gpsLive.id === w.id) { gpsLive.dirty = true; gpsFlush(); }
+    var G = core("OrosFitnessGps"), x = findRow("wo", w.id) || w;
+    var st = G.statsOf(G.segsOf(x.g, x.st));
+    if (!x.x.length) x.x.push({ e: G.ACT_EX[x.g.a], tr: 0, tr2: 0, rest: 0, s: [] });
+    x.x[0].s = [[0, 0, st.time, st.dist, st.time > 0 || st.dist > 0 ? F_DONE : 0]];
+  }
+  // A finished track is thinned (2 m) to keep the synced slice small.
+  function gpsThin(x) {
+    var G = core("OrosFitnessGps");
+    x.g.sg = G.thin(G.segsOf(x.g, x.st), 2).filter(function (s) { return s.length; })
+      .map(function (s) { return G.encSeg(s, x.st); });
+  }
+  function exportGpx(w) {
+    var G = core("OrosFitnessGps");
+    var text = G.gpx(w.ti || t("gps." + w.g.a), G.segsOf(w.g, w.st));
+    saveBlob(new Blob([text], { type: "application/gpx+xml" }), "orOS-workouts-" + w.d + "-" + w.g.a + ".gpx", "application/gpx+xml");
+  }
+  function mapSvg(segs) {
+    var G = core("OrosFitnessGps"), W = 320, H = 200, pr = G.project(segs, W, H, 14);
+    var s = sv("svg", { viewBox: "0 0 " + W + " " + H, "class": "gps-svg", role: "img", "aria-label": t("gps.map") });
+    sv("rect", { x: 0, y: 0, width: W, height: H, rx: 10, "class": "gps-bg" }, s);
+    if (!pr) return s;
+    pr.paths.forEach(function (d) { sv("path", { d: d, "class": "gps-line" }, s); });
+    sv("circle", { cx: pr.start[0], cy: pr.start[1], r: 5, "class": "gps-start" }, s);
+    sv("circle", { cx: pr.end[0], cy: pr.end[1], r: 5, "class": "gps-end" }, s);
+    return s;
+  }
+  function splitsList(sp, set) {
+    var box = el("div", "gps-splits");
+    sp.forEach(function (x) {
+      var row = el("div", "gps-split");
+      row.appendChild(el("span", "", x.full ? x.n + " " + set.du : fmtDist(x.d, set.du) + " " + set.du));
+      row.appendChild(el("b", "", fmtTime(x.t)));
+      row.appendChild(el("small", "", x.full ? "" : fmtPace(x.t, x.d, set)));
+      box.appendChild(row);
+    });
+    return box;
+  }
+  // Route and splits of a finished (or edited) outdoor workout.
+  function gpsSection(w, set) {
+    var G = core("OrosFitnessGps"), segs = G.segsOf(w.g, w.st), s = section(t("gps.map"));
+    if (!segs.length) { s.appendChild(hint(t("gps.noTrack"))); return s; }
+    s.appendChild(mapSvg(segs));
+    var sp = G.splits(segs, dFactor(set.du));
+    if (sp.length) {
+      s.appendChild(el("div", "dlg-sub", t("gps.splits")));
+      s.appendChild(splitsList(sp, set));
+    }
+    return s;
+  }
+
+  function renderGps(v, w) {
+    var set = settings();
+    setTitle(w.ti || t("gps." + w.g.a));
+    if (!w.g.ps && prefs.gps === w.id && !(gpsLive && gpsLive.id === w.id)) gpsBegin(w);
+    var head = el("section", "sec wo-head");
+    var ti = input("text", w.ti);
+    ti.maxLength = NAME_LEN;
+    ti.className = "wo-ti";
+    ti.setAttribute("aria-label", t("wo.title"));
+    ti.addEventListener("change", function () {
+      var x = findRow("wo", w.id);
+      if (!x) return;
+      x.ti = normStr(ti.value, NAME_LEN);
+      woChanged(x, false);
+      setTitle(x.ti || t("gps." + x.g.a));
+    });
+    head.appendChild(ti);
+    var clock = el("div", "wo-clock", fmtTime((Date.now() - w.st) / 1000));
+    clock.setAttribute("aria-label", t("wo.elapsed"));
+    head.appendChild(clock);
+    v.appendChild(head);
+
+    var box = el("section", "sec gps-live");
+    var grid = el("div", "gps-grid");
+    function cell(label) {
+      var c = el("div", "gps-cell"), b = el("b", "", "–");
+      c.appendChild(b);
+      c.appendChild(el("small", "", label));
+      grid.appendChild(c);
+      return b;
+    }
+    gpsUi = { id: w.id, clock: clock,
+              dist: cell(t("gps.dist") + " (" + set.du + ")"), time: cell(t("gps.time")),
+              pace: cell(w.g.a === "ride" ? t("gps.speed") : t("gps.pace")), lap: cell(t("gps.lap", { u: set.du })) };
+    box.appendChild(grid);
+    gpsUi.status = el("p", "gps-status");
+    gpsUi.status.setAttribute("role", "status");
+    box.appendChild(gpsUi.status);
+    gpsUi.map = el("div", "gps-map");
+    box.appendChild(gpsUi.map);
+    gpsUi.splits = el("div", "");
+    box.appendChild(gpsUi.splits);
+    var acts = el("div", "wo-actions gps-acts");
+    acts.appendChild(button(t("wo.discard"), "danger", function () {
+      confirmDialog(t("wo.discardQ"), t("wo.discard"), true, function () {
+        if (gpsLive && gpsLive.id === w.id) gpsStop();
+        removeRow("wo", w.id);
+        saveNow(false);
+        editId = null;
+        render();
+      });
+    }));
+    var recording = gpsLive && gpsLive.id === w.id && gpsLive.watch !== null && !w.g.ps;
+    acts.appendChild(recording ? button(t("gps.pause"), "", function () { gpsPause(w.id); })
+                               : button(t("gps.resume"), "", function () { gpsResume(w.id); }));
+    acts.appendChild(button(t("wo.finish"), "primary", function () { finishWorkout(w.id); }));
+    box.appendChild(acts);
+    box.appendChild(hint(t("gps.screen")));
+    v.appendChild(box);
+
+    var ns = section(t("wo.note"));
+    var ta = el("textarea", "note");
+    ta.value = w.n;
+    ta.maxLength = NOTE_LEN;
+    ta.rows = 2;
+    ta.setAttribute("aria-label", t("wo.note"));
+    ta.addEventListener("change", function () {
+      var x = findRow("wo", w.id);
+      if (!x) return;
+      x.n = normNote(ta.value);
+      woChanged(x, false);
+    });
+    ns.appendChild(ta);
+    v.appendChild(ns);
+    gpsUi.mapAt = 0;
+    gpsUi.nSplits = -1;
+    gpsPaint();
+    startTicker(gpsPaint);
+  }
+  function gpsPaint() {
+    var U = gpsUi, G = core("OrosFitnessGps");
+    if (!U || !U.dist || !document.body.contains(U.dist)) return;
+    var x = findRow("wo", U.id);
+    if (!x || !x.g) return;
+    var set = settings(), unitM = dFactor(set.du), L = gpsLive && gpsLive.id === x.id ? gpsLive : null;
+    var segs = L ? L.closed.concat(L.seg.length ? [L.seg] : []) : G.segsOf(x.g, x.st);
+    var st = G.statsOf(segs), time = st.time;
+    if (L && L.watch !== null && L.seg.length && !x.g.ps) time = L.base.time + Math.max(0, (Date.now() - L.seg[0][3]) / 1000);
+    U.clock.textContent = fmtTime((Date.now() - x.st) / 1000);
+    U.dist.textContent = fmtDist(st.dist, set.du);
+    U.time.textContent = fmtTime(time);
+    U.pace.textContent = x.g.a === "ride" ? fmtSpeed(time, st.dist, set) : fmtPace(time, st.dist, set);
+    var sp = G.splits(segs, unitM), last = sp.length && !sp[sp.length - 1].full ? sp[sp.length - 1] : null;
+    U.lap.textContent = last && last.d >= 50 ? (x.g.a === "ride" ? fmtSpeed(last.t, last.d, set) : fmtPace(last.t, last.d, set)) : "–";
+    var msg;
+    if (x.g.ps) msg = t("gps.paused");
+    else if (!L) msg = t("gps.paused");
+    else if (L.err === "denied") msg = t("gps.denied");
+    else if (L.err === "none") msg = t("gps.none");
+    else if (!L.acc || L.err === "wait") msg = t("gps.waiting");
+    else msg = t("gps.acc", { m: L.acc });
+    if (U.status.textContent !== msg) U.status.textContent = msg;
+    if (Date.now() - U.mapAt > 5000) {
+      U.mapAt = Date.now();
+      U.map.innerHTML = "";
+      if (segs.length) U.map.appendChild(mapSvg(segs));
+    }
+    var full = sp.filter(function (s) { return s.full; });
+    if (full.length !== U.nSplits) {
+      U.nSplits = full.length;
+      U.splits.innerHTML = "";
+      if (full.length) {
+        U.splits.appendChild(el("div", "dlg-sub", t("gps.splits")));
+        U.splits.appendChild(splitsList(full, set));
+      }
+    }
+  }
+
+  // Exercise pictures from wger.de (wger.js), only on request.
+  function picDialog(exId) {
+    var W = core("OrosFitnessWger"), info = exInfo(data, exId), seed = SEED_MAP[exId];
+    var dlg = makeDialog("fit-pic", info.name, true);
+    var body = el("div", "pic-body");
+    dlg.appendChild(body);
+    var acts = el("div", "dlg-actions");
+    dlg.appendChild(acts);
+    function link(text, href) {
+      var a = el("a", "", text);
+      a.href = href;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      return a;
+    }
+    function actions(hasPic) {
+      acts.innerHTML = "";
+      if (hasPic) acts.appendChild(button(t("pic.forget"), "", function () { W.forget(exId); dlg.close(); }));
+      else acts.appendChild(button(t("pic.retry"), "", look));
+      var cb = button(t("dlg.close"), "primary", function () { dlg.close(); });
+      acts.appendChild(cb);
+      try { cb.focus(); } catch (e) {}
+    }
+    function show(row) {
+      body.innerHTML = "";
+      var fig = el("figure", "pic-fig");
+      var img = el("img", "pic-img");
+      img.alt = info.name;
+      img.decoding = "async";
+      img.referrerPolicy = "no-referrer";
+      W.imageSrc(row.u).then(function (src) { img.src = src; });
+      fig.appendChild(img);
+      var cap = el("figcaption", "pic-credit");
+      var by = row.au ? t("pic.by", { author: row.au }) : t("pic.byNone");
+      cap.appendChild(row.auu ? link(by, row.auu) : el("span", "", by));
+      cap.appendChild(document.createTextNode(" · "));
+      cap.appendChild(row.liu ? link(row.li, row.liu) : el("span", "", row.li));
+      cap.appendChild(el("br"));
+      cap.appendChild(link(t("pic.src", { name: row.nm || info.name }), row.pg || W.BASE));
+      fig.appendChild(cap);
+      body.appendChild(fig);
+      body.appendChild(hint(t("pic.note")));
+      actions(true);
+    }
+    function message(key) {
+      body.innerHTML = "";
+      body.appendChild(el("p", "dlg-text", t(key)));
+      actions(false);
+    }
+    function look() {
+      message("pic.loading");
+      acts.innerHTML = "";
+      acts.appendChild(button(t("dlg.close"), "primary", function () { dlg.close(); }));
+      var terms = seed ? [seed.en] : [info.name];
+      W.lookup(exId, terms).then(function (r) {
+        if (!dlg.open) return;
+        if (r && r.pic) show(r.pic); else message("pic.none");
+      }, function (e) {
+        if (dlg.open) message(e && e.offline ? "pic.offline" : "pic.fail");
+      });
+    }
+    openDialog(dlg);
+    if (!W) { message("pic.fail"); return; }
+    var k = W.known(exId);
+    if (k && k.pic) show(k.pic);
+    else if (k && k.none) message("pic.none");
+    else look();
+  }
+
   // ---------- 8. History ----------
   var histFilter = { e: "", p: "", q: "", shown: 40 };
   function renderHistory(v) {
@@ -2237,20 +3061,22 @@
     if (!w.en) { openEditor(w.id); return; }
     var dlg = makeDialog("fit-wo", w.ti || t("wo.title"), true);
     dlg.appendChild(el("div", "dlg-sub", fmtDate(w.d, true) + " · " + fmtClock(w.st) + "–" + fmtClock(w.en)));
-    var grid = el("div", "sum-grid");
-    [[t("sum.duration"), t("unit.min", { n: woMinutes(w) })], [t("sum.volume"), fmtVol(woVolume(w))], [t("sum.sets"), String(woSets(w))]]
-      .forEach(function (p) {
-        var c = el("div", "sum-cell");
-        c.appendChild(el("b", "", p[1]));
-        c.appendChild(el("small", "", p[0]));
-        grid.appendChild(c);
-      });
-    dlg.appendChild(grid);
-    w.x.forEach(function (e) {
-      var info = exInfo(data, e.e), box = el("div", "wo-ex");
-      box.appendChild(el("b", "", info.name));
-      box.appendChild(el("small", "", e.s.map(function (s) { return (isWarm(s) ? "W " : "") + setSummary(s, info, set); }).join(" · ")));
-      dlg.appendChild(box);
+    dlg.appendChild(sumGrid(w, set));
+    if (w.g) dlg.appendChild(gpsSection(w, set));
+    var P = core("OrosFitnessPlan");
+    P.groupsOf(w.x).forEach(function (g) {
+      var host = dlg;
+      if (g[0] !== g[1]) {
+        host = el("div", "wo-grp");
+        host.appendChild(el("small", "grp-tag", t(g[1] - g[0] === 1 ? "ss.superset" : "ss.circuit")));
+        dlg.appendChild(host);
+      }
+      for (var i = g[0]; i <= g[1]; i++) {
+        var e = w.x[i], info = exInfo(data, e.e), box = el("div", "wo-ex");
+        box.appendChild(el("b", "", info.name));
+        box.appendChild(el("small", "", e.s.map(function (s) { return (isWarm(s) ? "W " : "") + setSummary(s, info, set); }).join(" · ")));
+        host.appendChild(box);
+      }
     });
     var recs = recordsOf(data, w);
     if (recs.length) {
@@ -2266,6 +3092,7 @@
     if (w.n) dlg.appendChild(el("p", "wo-note", w.n));
     var acts = el("div", "dlg-actions");
     acts.appendChild(button(t("dlg.delete"), "danger", function () { dlg.close(); deleteWorkout(w.id); }));
+    if (w.g && w.g.sg.length) acts.appendChild(button(t("gps.gpx"), "", function () { exportGpx(w); }));
     acts.appendChild(button(t("hist.edit"), "", function () { dlg.close(); openEditor(w.id); }));
     acts.appendChild(button(t("dlg.close"), "primary", function () { dlg.close(); }));
     dlg.appendChild(acts);
@@ -2603,6 +3430,8 @@
     }));
     v.appendChild(s);
 
+    renderPlans(v);
+
     var r = section(t("pg.ready"));
     SEED_PG.forEach(function (p) {
       r.appendChild(pgCard(seedName(p), p.days.map(function (d) { return dayRef(p.id, d.id); }), [
@@ -2624,10 +3453,10 @@
       var txt = el("div", "day-txt");
       var wd = r.day.wd.map(function (d) { return t("day." + d); }).join(" ");
       txt.appendChild(el("b", "", r.name + (wd ? " · " + wd : "")));
-      txt.appendChild(el("small", "", r.day.it.map(function (i) {
+      txt.appendChild(el("small", "", itemNames(r.day.it, function (i) {
         var info = exInfo(data, i.e), rr = info.k === "t" ? fmtTime(i.t) : (i.r2 ? i.r + "–" + i.r2 : String(i.r || ""));
         return info.name + (rr ? " " + i.s + "×" + rr : "");
-      }).join(" · ")));
+      })));
       row.appendChild(txt);
       if (r.pg && r.day.it.length) {
         var go = iconBtn("mini go", UI.play, t("train.start") + ": " + r.name, function () { startWorkout(r); });
@@ -2690,10 +3519,19 @@
       box.appendChild(wdRow);
 
       d.it.forEach(function (it, ii) {
-        var info = exInfo(data, it.e), row = el("div", "it-row");
+        var info = exInfo(data, it.e), linkedIn = ii > 0 && d.it[ii - 1].ln;
+        var row = el("div", "it-row" + (it.ln && ii < d.it.length - 1 ? " linked" : "") + (linkedIn ? " linked-in" : ""));
         var head = el("div", "ex-top");
         head.appendChild(el("b", "it-name", info.name));
         var tl = el("div", "ex-tools");
+        if (ii < d.it.length - 1) {
+          var lk = iconBtn("mini" + (it.ln ? " on" : ""), UI.link, t(it.ln ? "ss.unlink" : "ss.link"), function () {
+            if (it.ln) delete it.ln; else it.ln = 1;
+            render();
+          });
+          lk.setAttribute("aria-pressed", it.ln ? "true" : "false");
+          tl.appendChild(lk);
+        }
         var up = iconBtn("mini", UI.up, t("wo.moveUp"), function () { var x = d.it[ii]; d.it[ii] = d.it[ii - 1]; d.it[ii - 1] = x; render(); });
         up.disabled = ii === 0;
         var dw = iconBtn("mini", UI.down, t("wo.moveDown"), function () { var x = d.it[ii]; d.it[ii] = d.it[ii + 1]; d.it[ii + 1] = x; render(); });
@@ -3064,6 +3902,7 @@
         rows.forEach(function (x) {
           var r = el("div", "lib-row" + (x.h ? " off" : ""));
           r.appendChild(el("span", "", x.name + (x.seed ? "" : " · " + t("ex.mine"))));
+          r.appendChild(iconBtn("mini", UI.image, t("pic.show") + ": " + x.name, function () { picDialog(x.id); }));
           r.appendChild(iconBtn("mini", UI.edit, t("ex.edit") + ": " + x.name, function () {
             dlg.close();
             exerciseDialog(x, function () { libraryDialog(); });
@@ -3240,10 +4079,14 @@
       }, 200);
     });
     document.addEventListener("visibilitychange", function () {
-      if (document.visibilityState === "hidden") { savePrefsNow(); flushPaced(); releaseWake(); }
+      if (document.visibilityState === "hidden") {
+        if (gpsLive) { gpsLive.saved = 0; gpsFlush(); }
+        savePrefsNow(); flushPaced(); releaseWake();
+      }
       else { renderRest(); updateWakeLock(); }
     });
     window.addEventListener("pagehide", function () {
+      if (gpsLive) gpsFlush();
       savePrefsNow();
       flushPaced();
       try { if (actx) actx.close(); } catch (e) {}
