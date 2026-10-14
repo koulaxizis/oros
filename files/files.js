@@ -195,6 +195,7 @@
       "menu.download": "Download",
       "menu.moveTo":   "Move to…",
       "menu.copyTo":  "Copy to…",
+      "menu.toDropbox": "Send to Dropbox…",
       "menu.copyName": "Copy name",
       "menu.copyPath": "Copy path",
       "menu.copyContent": "Copy content",
@@ -377,6 +378,7 @@
       "menu.download": "Λήψη",
       "menu.moveTo":   "Μετακίνηση σε…",
       "menu.copyTo":   "Αντιγραφή σε…",
+      "menu.toDropbox": "Αποστολή στο Dropbox…",
       "menu.copyName": "Αντιγραφή ονόματος",
       "menu.copyPath": "Αντιγραφή διαδρομής",
       "menu.copyContent": "Αντιγραφή περιεχομένου",
@@ -833,6 +835,13 @@
   }
   function dbxActive() { var d = dbx(); return !!(d && d.isActive()); }
 
+  // Wave 3: plain copies of the selection into a Dropbox folder.
+  function sendToDropbox() {
+    var d = dbx(), paths = selectionPaths();
+    if (!d || !d.exportFrom || !paths.length || view === "trash") return;
+    d.exportFrom(paths);
+  }
+
   function initDropbox() {
     var d = dbx();
     if (!d) return;
@@ -846,6 +855,7 @@
       vault: vaultApi,
       pickFolder: pickFolderDialog,
       diskRoot: ROOT,
+      trash: TRASH,
       isImageExt: isImageExt,
       isTextExt: isTextExt,
       mimeFor: function (name) { return isTextExt(name) ? "text/plain" : mimeForExt(extOf(name)); }
@@ -2602,6 +2612,11 @@
     ctxMenu.appendChild(mkItem(CP_SVG, "menu.copyTo", function () {
       openPickerDialog("copy");
     }));
+    if (dbx() && dbx().exportFrom) {
+      ctxMenu.appendChild(mkItem(dbx().icon || "", "menu.toDropbox", function () {
+        sendToDropbox();
+      }));
+    }
     ctxMenu.appendChild(mkItem(ZIP_SVG, "menu.zip", function () {
       zipCreate(selectionPaths());
     }));
@@ -3955,6 +3970,9 @@
     bar.appendChild(selBtn("sb-zip", ZIP_SVG, "menu.zip", function () { zipCreate(selectionPaths()); }));
     bar.appendChild(selBtn("sb-move", MV_SVG, "menu.moveTo", function () { openPickerDialog("move"); }));
     bar.appendChild(selBtn("sb-copy", CP_SVG, "menu.copyTo", function () { openPickerDialog("copy"); }));
+    if (dbx() && dbx().exportFrom) {
+      bar.appendChild(selBtn("sb-dbx", dbx().icon || "", "menu.toDropbox", function () { sendToDropbox(); }));
+    }
     bar.appendChild(selBtn("sb-del", TRASH_SVG, "act.delete", function () {
       openDeleteDialog(view === "trash" ? "forever" : "trash");
     }));
@@ -3981,6 +3999,7 @@
     show("sb-zip", !trash, n > 0);
     show("sb-move", !trash, n > 0);
     show("sb-copy", !trash, n > 0);
+    show("sb-dbx", !trash, n > 0);
     show("sb-del", true, n > 0);
     show("sb-all", true, lastEntries.length > 0);
     var del = $("sb-del");

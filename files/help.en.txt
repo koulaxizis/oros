@@ -69,6 +69,12 @@ The orOS disk is the encrypted place: with orOS sync on, every file on it is enc
 - Moving needs orOS sync connected and unlocked. Copying works without it.
 - `Stop` ends a transfer: files already copied stay on the disk and no original is removed. If a transfer is cut short (closed tab, no connection), Files offers to `Continue` it next time.
 
+### Send from the orOS disk to Dropbox
+- On the disk, select files or folders and choose `Send to Dropbox…` (right-click menu, or the selection bar).
+- Pick the Dropbox folder and tap `Send here`, then `Start`. Files then shows that Dropbox folder.
+- Dropbox gets ordinary, unencrypted copies, so you can share them. The files stay as they are in orOS.
+- Nothing in Dropbox is overwritten: if the name is taken, the copy gets " (1)". orOS sync's own folder can't be chosen, and the Trash is never sent.
+
 - To use a Dropbox app of your own instead, open `Use my own app key`: create a Dropbox app with Full Dropbox access, tick the permissions shown, add the redirect address shown and enter the app key.
 
 > Files go straight between this browser and Dropbox. The connection is kept on this device only and is not synced.
@@ -103,4 +109,4 @@ The disk lives in this browser. When [orOS sync](help:t/sync) is connected and u
 - An empty folder moved to the Trash on one device reaches the others' Trash without being in their folders, because empty folders don't sync.
 - Very large files are slow to sync, as each is encrypted in one piece.
 - The Dropbox view needs a connection to the internet.
-- One transfer takes up to 1000 files and 1 GB; files over 300 MB stay in Dropbox (the disk encrypts each file whole in memory).
+- One transfer, either way, takes up to 1000 files and 1 GB, and files up to 300 MB each (the disk encrypts each file whole in memory).
