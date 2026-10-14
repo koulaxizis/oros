@@ -3161,6 +3161,7 @@
   //                    (shell fileopen.js): the OPML import
   function openTarget(x) {
     if (!x || typeof x !== "object" || document.querySelector("dialog[open]")) return;
+    if (x.addBlank === true) { addDialog(""); return; }   // single app "Add a feed" shortcut
     if (x.openFile) {
       var f = null;
       try {

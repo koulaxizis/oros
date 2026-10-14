@@ -1,0 +1,87 @@
+{
+  "name": "orOS Reader",
+  "short_name": "Reader",
+  "description": "orOS Reader: the orOS app on its own. Works offline, no cookies, no tracking; encrypted sync only if you turn it on.",
+  "id": "/feeds/solo.html",
+  "start_url": "/feeds/solo.html",
+  "scope": "/feeds/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#14120d",
+  "theme_color": "#1b1a18",
+  "icons": [
+    {
+      "src": "/icons/solo/feeds.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/solo/feeds-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/solo/feeds-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/solo/feeds-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "lang": "en",
+  "dir": "ltr",
+  "categories": [
+    "productivity",
+    "utilities"
+  ],
+  "shortcuts": [
+    {
+      "name": "Add a feed",
+      "short_name": "Add a feed",
+      "url": "/feeds/solo.html?do=add",
+      "icons": [
+        {
+          "src": "/icons/solo/feeds-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "file_handlers": [
+    {
+      "action": "/feeds/solo.html?file-open=feeds",
+      "accept": {
+        "text/x-opml": [
+          ".opml"
+        ]
+      }
+    }
+  ],
+  "share_target": {
+    "action": "/feeds/solo.html?share-target",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        {
+          "name": "files",
+          "accept": [
+            "text/x-opml",
+            ".opml"
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,124 @@
+{
+  "name": "orOS Photo Lab",
+  "short_name": "Photo Lab",
+  "description": "orOS Photo Lab: the orOS app on its own. Works offline, no cookies, no tracking; encrypted sync only if you turn it on.",
+  "id": "/photolab/solo.html",
+  "start_url": "/photolab/solo.html",
+  "scope": "/photolab/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#14120d",
+  "theme_color": "#1b1a18",
+  "icons": [
+    {
+      "src": "/icons/solo/photolab.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/solo/photolab-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/solo/photolab-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/solo/photolab-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "lang": "en",
+  "dir": "ltr",
+  "categories": [
+    "productivity",
+    "utilities"
+  ],
+  "shortcuts": [
+    {
+      "name": "New picture",
+      "short_name": "New picture",
+      "url": "/photolab/solo.html?do=new",
+      "icons": [
+        {
+          "src": "/icons/solo/photolab-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "file_handlers": [
+    {
+      "action": "/photolab/solo.html?file-open=photolab",
+      "accept": {
+        "image/png": [
+          ".png"
+        ],
+        "image/jpeg": [
+          ".jpg",
+          ".jpeg"
+        ],
+        "image/webp": [
+          ".webp"
+        ],
+        "image/gif": [
+          ".gif"
+        ],
+        "image/bmp": [
+          ".bmp"
+        ],
+        "image/avif": [
+          ".avif"
+        ],
+        "image/vnd.adobe.photoshop": [
+          ".psd"
+        ],
+        "image/openraster": [
+          ".ora"
+        ]
+      }
+    }
+  ],
+  "share_target": {
+    "action": "/photolab/solo.html?share-target",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        {
+          "name": "files",
+          "accept": [
+            "image/png",
+            ".png",
+            "image/jpeg",
+            ".jpg",
+            ".jpeg",
+            "image/webp",
+            ".webp",
+            "image/gif",
+            ".gif",
+            "image/bmp",
+            ".bmp",
+            "image/avif",
+            ".avif",
+            "image/vnd.adobe.photoshop",
+            ".psd",
+            "image/openraster",
+            ".ora"
+          ]
+        }
+      ]
+    }
+  }
+}

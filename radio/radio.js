@@ -2340,6 +2340,15 @@ function start(){
   wire();
   ensureEngine();       // W42: titles, recording, wake-up (shell side)
   consumeDeepLink();
+  // Single app (solo.js) icon shortcut { play: "last" }: the most
+  // recent station again.
+  window.__orosOpenAt = function (t) {
+    if (t && t.play === "last" && state.recents && state.recents[0]) playStation(state.recents[0]);
+  };
+  try {
+    if (window.parent && window.parent !== window && typeof window.parent.__orosTakeTarget === "function")
+      window.__orosOpenAt(window.parent.__orosTakeTarget("radio"));
+  } catch (e) {}
   console.log("[radio] ready — v0.3 Wave 3 complete");
 }
 
