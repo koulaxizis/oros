@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.14.00
+- Briefing: one tap in the Assistant or in Today sums up your day: today's agenda, what is late, birthdays this week and this month's spending, with suggested entries. Only when you press it; apps set to Ask first show on one card before anything is sent.
+
 ## Version 2.13.00
 - Ten more single apps: orOS Calculator, Time, Weather, Maps, Reader, Mail, Files, Podcasts, Radio and Photo Lab, each with its icon shortcuts; Maps, Reader, Podcasts, Mail and Photo Lab also take Android shares.
 

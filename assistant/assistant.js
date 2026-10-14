@@ -76,6 +76,14 @@
       "chats.synced": "Synced to your devices (encrypted)",
       "chats.off": "History is off: conversations are not kept",
       "who": "{name} · {model}", "who.to": "Sent to {host}",
+      "brief.btn": "Briefing", "brief.hint": "Today's agenda, what is late, birthdays this week and this month's spending, in one answer. It is sent only when you press it.",
+      "brief.msg": "Briefing for {date}", "brief.title": "Share with {name} for the briefing?",
+      "brief.text": "orOS worked these out on this device. Untick what {name} should not see. Only these lines go out, not the entries themselves.",
+      "brief.no": "Without these", "brief.shared": "Shared for the briefing: {apps}", "brief.heldOut": "Held back: {apps}",
+      "brief.none": "Nothing for a briefing: your apps have nothing for today or this week.",
+      "brief.held": "Nothing was shared, so no briefing was sent.",
+      "brief.noApps": "Allow some apps in Settings → Your data first.",
+      "brief.cant": "A briefing needs an AI service that can read your data: not the built-in browser model, and with Chat only off.",
       "who.web": "Web search on", "web.searched": "Searched the web: {q}", "web.sources": "Sources",
       "set.web": "Internet", "set.webOn": "Let Claude search the internet when an answer needs it",
       "set.webHint": "Off unless you switch it on. Works only with Claude: the search runs on Anthropic's servers, which charge $10 per 1,000 searches on top of tokens (at most {n} searches per answer). Search words go to Anthropic and its search partner; Claude is told never to put your orOS data in them unless you ask for that search. Each answer shows what was searched and its sources.",
@@ -230,6 +238,14 @@
       "chats.synced": "Συγχρονίζονται στις συσκευές σου (κρυπτογραφημένα)",
       "chats.off": "Το ιστορικό είναι κλειστό: οι συζητήσεις δεν κρατιούνται",
       "who": "{name} · {model}", "who.to": "Στέλνεται στο {host}",
+      "brief.btn": "Ενημέρωση ημέρας", "brief.hint": "Η ατζέντα της ημέρας, τα εκπρόθεσμα, τα γενέθλια της εβδομάδας και τα έξοδα του μήνα, σε μία απάντηση. Στέλνεται μόνο όταν το πατήσεις.",
+      "brief.msg": "Ενημέρωση για {date}", "brief.title": "Κοινοποίηση στο {name} για την ενημέρωση;",
+      "brief.text": "Το orOS τα υπολόγισε σε αυτή τη συσκευή. Ξετσέκαρε ό,τι δεν πρέπει να δει το {name}. Φεύγουν μόνο αυτές οι γραμμές, όχι οι ίδιες οι εγγραφές.",
+      "brief.no": "Χωρίς αυτά", "brief.shared": "Κοινοποιήθηκαν για την ενημέρωση: {apps}", "brief.heldOut": "Κρατήθηκαν: {apps}",
+      "brief.none": "Τίποτα για ενημέρωση: οι εφαρμογές σου δεν έχουν κάτι για σήμερα ή αυτή την εβδομάδα.",
+      "brief.held": "Δεν κοινοποιήθηκε τίποτα, οπότε δεν στάλθηκε ενημέρωση.",
+      "brief.noApps": "Επίτρεψε πρώτα κάποιες εφαρμογές στις Ρυθμίσεις → Τα δεδομένα σου.",
+      "brief.cant": "Η ενημέρωση θέλει υπηρεσία AI που διαβάζει τα δεδομένα σου: όχι το ενσωματωμένο μοντέλο του browser, και με το «Μόνο συζήτηση» κλειστό.",
       "who.web": "Αναζήτηση στο internet ανοιχτή", "web.searched": "Αναζήτηση στο internet: {q}", "web.sources": "Πηγές",
       "set.web": "Internet", "set.webOn": "Να ψάχνει το Claude στο internet όταν το χρειάζεται μια απάντηση",
       "set.webHint": "Κλειστό εκτός αν το ανοίξεις. Δουλεύει μόνο με το Claude: η αναζήτηση τρέχει στους servers της Anthropic, που χρεώνει $10 ανά 1.000 αναζητήσεις πέρα από τα tokens (έως {n} αναζητήσεις ανά απάντηση). Οι λέξεις της αναζήτησης πηγαίνουν στην Anthropic και στον συνεργάτη της για αναζητήσεις· το Claude έχει οδηγία να μη βάζει ποτέ σε αυτές δεδομένα σου από το orOS, εκτός αν ζητήσεις εσύ αυτή την αναζήτηση. Κάθε απάντηση δείχνει τι αναζητήθηκε και τις πηγές της.",
@@ -1745,6 +1761,137 @@
     });
   }
 
+  // ---------- 7d. Briefing (phase 4 wave 5) ----------
+  // One tap, never on its own (no server, so nothing runs in the
+  // background, and no charge the user did not ask for): the button in
+  // the welcome or Today's (__orosOpenAt("assistant", { brief: 1 }))
+  // works out the summaries on this device (C.briefPlan, buildSummary),
+  // shows the "Ask first" apps on ONE card, then sends one message with
+  // what was shared (C.briefText). "Never" apps are not read at all.
+  function briefCan() {
+    var pid = curProv();
+    return !!pid && !!C.PROVIDERS[pid] && !C.PROVIDERS[pid].builtin && !data.set.chat;
+  }
+  function briefDate() {
+    try { return new Date().toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB", { weekday: "long", day: "numeric", month: "long" }); }
+    catch (e) { return ymdNow(); }
+  }
+  function startBriefing() {
+    if (busy || attBusy || document.querySelector("dialog[open]")) return;
+    if (!ready()) { settingsDialog(); return; }
+    if (!briefCan()) { showToast(t("brief.cant")); return; }
+    var apps = readableApps(), byId = {};
+    apps.forEach(function (a) { byId[a.id] = a; });
+    var plan = C.briefPlan(summaryIds(apps));
+    if (!plan.length) { showToast(t("brief.noApps")); return; }
+    var today = ymdNow();
+    var c = { id: newId(), m: Date.now(), title: C.chatTitle(t("brief.msg", { date: briefDate() })), msgs: [], refs: {}, refN: 0 };
+    var prev = chat;
+    chat = c;
+    busy = { abort: null, live: "", consent: null, chat: c };
+    renderAll();
+    var sums = [];
+    var steps = plan.reduce(function (pr, x) {
+      return pr.then(function () {
+        return buildSummary({ app: x.app, month: today.slice(0, 7), days: x.days }, today).then(function (s) {
+          if (C.briefKeep(s)) sums.push({ app: byId[x.app], sum: s });
+        }, function () {});
+      });
+    }, Promise.resolve());
+    steps.then(function () {
+      var ask = sums.filter(function (x) { return x.app.perm === "ask"; });
+      return (ask.length ? briefConsent(ask) : Promise.resolve([])).then(function (chosen) {
+        if (chosen === null) return null;                // Esc / Stop: nothing happens
+        var shared = sums.filter(function (x) { return x.app.perm === "always" || chosen.indexOf(x) >= 0; });
+        var held = ask.filter(function (x) { return chosen.indexOf(x) < 0; }).map(function (x) { return x.app.name; });
+        return { shared: shared, held: held };
+      });
+    }).then(function (r) {
+      busy = null;
+      if (!r) { chat = prev; renderAll(); return; }
+      if (!r.shared.length) {
+        chat = prev;
+        renderAll();
+        showToast(t(sums.length ? "brief.held" : "brief.none"));
+        return;
+      }
+      var data2 = r.shared.map(function (x) {
+        var s = x.sum;
+        (s.items || []).forEach(function (it) {
+          if (it.target === undefined) return;
+          c.refN = (c.refN || 0) + 1;
+          it.ref = "r" + c.refN;
+          c.refs[it.ref] = { app: x.app.id, target: it.target, title: it.title };
+          delete it.target;
+        });
+        s.app_name = x.app.name;
+        return s;
+      });
+      c.msgs.push({ r: "user", text: t("brief.msg", { date: briefDate() }),
+                    brief: { date: today, apps: r.shared.map(function (x) { return x.app.name; }), held: r.held, data: data2 } });
+      chats.unshift(c);
+      prefs.open = c.id;
+      savePrefs();
+      saveChat(c);
+      runTurn(c);
+    });
+  }
+  // One card for every "Ask first" app of the briefing. → Promise<[x] | null>
+  function briefConsent(list) {
+    return new Promise(function (resolve) {
+      var done = false;
+      function finish(v) {
+        if (done) return;
+        done = true;
+        if (busy) { busy.consent = null; busy.card = null; }
+        renderMessages();
+        resolve(v);
+      }
+      var name = provName(curProv());
+      var card = el("section", "consent");
+      card.setAttribute("role", "group");
+      card.appendChild(el("h3", "", t("brief.title", { name: name })));
+      card.appendChild(el("p", "consent-text", t("brief.text", { name: name })));
+      var ul = el("ul", "consent-list"), boxes = [];
+      list.forEach(function (x) {
+        var li = el("li");
+        var lab = el("label", "consent-item");
+        var cb = el("input");
+        cb.type = "checkbox";
+        cb.checked = true;
+        cb.addEventListener("change", count);
+        boxes.push({ cb: cb, x: x });
+        lab.appendChild(cb);
+        var body = el("span", "consent-body");
+        body.appendChild(el("span", "consent-title", x.app.name));
+        var lines = S.preview(x.sum, LANG);
+        body.appendChild(el("span", "consent-meta brief-lines", lines.slice(0, 8).join("\n") + (lines.length > 8 ? "\n…" : "")));
+        lab.appendChild(body);
+        li.appendChild(lab);
+        ul.appendChild(li);
+      });
+      card.appendChild(ul);
+      var acts = el("div", "dlg-actions");
+      var no = button(t("brief.no"), "", function () { finish([]); });
+      var yes = button("", "primary", function () {
+        finish(boxes.filter(function (b) { return b.cb.checked; }).map(function (b) { return b.x; }));
+      });
+      acts.appendChild(no);
+      acts.appendChild(yes);
+      card.appendChild(acts);
+      function count() {
+        var n = boxes.filter(function (b) { return b.cb.checked; }).length;
+        yes.textContent = t("share.yes", { n: n });
+        yes.disabled = n === 0;
+      }
+      count();
+      if (busy) { busy.consent = finish; busy.card = card; }
+      renderMessages();
+      scrollEnd();
+      yes.focus();
+    });
+  }
+
   // ---------- 7b. Conversation sync (files through Vault Drive) ----------
   // Switch data.cs.on (synced, so every device follows it). Each chat
   // is written to C.CHAT_DIR/<id>.json on the orOS disk; Vault Drive
@@ -2017,14 +2164,18 @@
       $("welcome").hidden = false;
       $("wel-text").textContent = t("wel.text");
       $("wel-setup").hidden = false;
+      $("wel-brief").hidden = true;
+      $("wel-brief-hint").hidden = true;
       host.hidden = true;
       return;
     }
     host.hidden = false;
     if (!chat || !chat.msgs.length) {
-      $("welcome").hidden = false;
+      $("welcome").hidden = !!busy;
       $("wel-text").textContent = t("wel.ready");
       $("wel-setup").hidden = true;
+      $("wel-brief").hidden = !briefCan();
+      $("wel-brief-hint").hidden = !briefCan();
       if (!busy) return;
     } else {
       $("welcome").hidden = true;
@@ -2064,6 +2215,11 @@
         u.appendChild(files);
       }
       if (m.text) u.appendChild(el("div", "bubble", m.text));
+      if (m.brief && Array.isArray(m.brief.apps)) {
+        var bl = [t("brief.shared", { apps: m.brief.apps.join(", ") })];
+        if (Array.isArray(m.brief.held) && m.brief.held.length) bl.push(t("brief.heldOut", { apps: m.brief.held.join(", ") }));
+        u.appendChild(el("div", "brief-meta", bl.join(" · ")));
+      }
       host.appendChild(u);
     } else if (m.r === "asst") {
       var web = C.webSources(m.raw);
@@ -2816,6 +2972,7 @@
     $("side-new").addEventListener("click", function () { setSide(false); newChat(); });
     $("settings-btn").addEventListener("click", settingsDialog);
     $("wel-setup").addEventListener("click", settingsDialog);
+    $("wel-brief").addEventListener("click", startBriefing);
     $("send-btn").addEventListener("click", function () { if (busy) stop(); else send(); });
     $("att-btn").addEventListener("click", attachDialog);
     $("att-file").addEventListener("change", function (e) { addFiles(e.target.files); e.target.value = ""; });
@@ -2855,8 +3012,11 @@
 
   // Deep link (shell __orosOpenAt / __orosTakeTarget): { ask: "text" }
   // puts the text in the message box, ready to send. Nothing is sent
-  // by itself. A dialog open or an answer running → ignored.
+  // by itself. { brief: 1 } (Today's Briefing button, the user's own
+  // tap) starts a briefing, with its card for "Ask first" apps. A
+  // dialog open or an answer running → ignored.
   function openTarget(tg) {
+    if (tg && tg.brief === 1 && !busy && !document.querySelector("dialog[open]")) { startBriefing(); return true; }
     if (!tg || typeof tg.ask !== "string" || busy || document.querySelector("dialog[open]")) return false;
     var text = tg.ask.replace(/[\u0000-\u0008\u000b-\u001f\u007f]/g, " ").slice(0, MAX_INPUT);
     if (!text.trim()) return false;
