@@ -100,6 +100,8 @@
       "application/gpx+xml": [".gpx"],
       "application/vnd.google-earth.kml+xml": [".kml"],
       "application/geo+json": [".geojson"] } },
+    { app: "chess", accept: {
+      "application/x-chess-pgn": [".pgn"] } },
     // BR-FILE-IMPORT (owned by Calendar / Contacts): these two take the
     // file's text, not a token: __orosOpenAt(app, { <key>: { name, text } }).
     { app: "calendar", text: "importIcs", accept: {

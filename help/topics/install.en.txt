@@ -37,6 +37,7 @@ With orOS installed from Chrome or Edge on Windows, Linux or Mac, orOS appears i
 - [Photo Lab](app:photolab): .png, .jpg, .webp, .gif, .bmp, .avif, .psd, .ora
 - [Library](app:library): .epub, .pdf
 - [Maps](app:maps): .gpx, .kml, .geojson
+- [Chess](app:chess): .pgn
 - [Montage](app:montage): .mp4, .m4v, .webm, .mov
 - [Notes](app:notes): .txt, .md, as a choice next to Writer
 - [Text Tools](app:texttools): .txt, .csv, .tsv, as a choice next to the apps above

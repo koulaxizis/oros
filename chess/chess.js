@@ -18,22 +18,29 @@
 //     SAN move list
 //   - undo (vs the computer: your move and its answer; the game then
 //     counts for no record)
+//   - PGN: open (file, paste, Open with .pgn, deep link { pgn }), save
+//     and copy; review an opened game move by move with the Hard
+//     search as analysis, and Play from here (vs the computer or 2
+//     players; a game from a position is never recorded)
 // Data:
 //   - synced slice "chess" (oros-chess-data): results vs the computer
 //     per level [won, drawn, lost] as per-device counter rows (each
 //     device only grows its own row; merge = per-row join) + a reset
 //     stamp br. 2-player games are not recorded.
 //   - device-local (R10): oros-chess-prefs (mode, level, side, flip),
-//     oros-chess-session (the game in progress as UCI moves),
+//     oros-chess-session (the game on the board as UCI moves, also a
+//     reviewed PGN game),
 //     oros-chess-device (row id), oros-chess-sfx (sound on/off)
 // Sections:
 //   1. Constants, i18n, helpers
 //   2. Rules engine + computer player (makeEngine, also the worker)
+//   2b. PGN read / write (makePgn, pure)
 //   3. Synced data: load / save / normalize / merge (R5, R26)
 //   4. Device-local prefs + session
 //   5. Game flow (new, select, move, promotion, computer, undo, finish)
 //   6. Render (toolbar, status, board, move list)
 //   7. Dialogs (promotion, result, records, confirm)
+//   7b. PGN: open, save, review, analysis, Play from here, deep link
 //   8. Toasts
 //   9. Sound
 //  10. Input (pointer: click / drag / tap; keyboard; Contract Β)
@@ -131,7 +138,45 @@
       "toast.illegal": "Illegal move",
       "toast.inCheck": "Illegal move: your king is in check",
       "toast.pinned": "Illegal move: it would leave your king in check",
-      "toast.undone": "Undone: this game will not be recorded"
+      "toast.undone": "Undone: this game will not be recorded",
+      "res.fromPos": "Started from a position: this game is not recorded",
+      "btn.pgn": "Open or save a game (PGN)",
+      "pgn.title": "Games (PGN)",
+      "pgn.intro": "Open a game from a PGN file, or paste one, to replay it move by move. Save any game as PGN for Lichess, Chess.com or any chess program.",
+      "pgn.paste": "Paste a PGN here",
+      "pgn.openText": "Open pasted",
+      "pgn.openFile": "Open file…",
+      "pgn.save": "Save this game (.pgn)",
+      "pgn.copy": "Copy PGN",
+      "pgn.close": "Close",
+      "pgn.pick": "Choose a game ({n})",
+      "pgn.more": "Only the first 500 games of the file are listed.",
+      "pgn.none": "No game could be read from this PGN",
+      "pgn.big": "This PGN is too big (over 5 MB)",
+      "pgn.stop": "Stopped at move {no}: “{tok}” is not a legal move there",
+      "pgn.copied": "PGN copied",
+      "pgn.copyFail": "Could not copy: select the text and copy it",
+      "pgn.empty": "Make a move first: there is nothing to save yet",
+      "pgn.vsai": "vs Computer ({level})",
+      "pgn.duo": "2 players",
+      "toast.opened": "Game opened for review",
+      "toast.review": "Reviewing a game: use ◀ ▶, or Play from here",
+      "toast.fromHere": "Playing on from this position",
+      "rv.start": "Start position",
+      "rv.first": "To the start (Home)",
+      "rv.prev": "Previous move (←)",
+      "rv.next": "Next move (→)",
+      "rv.last": "To the end (End)",
+      "rv.ana": "Analysis",
+      "rv.anaHint": "Show the computer's view of each position (Hard level)",
+      "rv.thinking": "Thinking…",
+      "rv.eval": "{score} · best {san}",
+      "rv.evalOver": "No moves left in this position",
+      "rv.play": "Play from here",
+      "rv.playTitle": "Play on from this position",
+      "rv.playAi": "vs Computer, as {side}",
+      "rv.playDuo": "2 players",
+      "rv.playNote": "Games from a position are not recorded."
     },
     el: {
       "mode.ai": "Με υπολογιστή", "mode.duo": "2 παίκτες",
@@ -195,7 +240,45 @@
       "toast.illegal": "Μη νόμιμη κίνηση",
       "toast.inCheck": "Μη νόμιμη κίνηση: ο βασιλιάς σου έχει σαχ",
       "toast.pinned": "Μη νόμιμη κίνηση: ο βασιλιάς σου θα έμενε σε σαχ",
-      "toast.undone": "Έγινε αναίρεση: η παρτίδα δεν θα καταγραφεί"
+      "toast.undone": "Έγινε αναίρεση: η παρτίδα δεν θα καταγραφεί",
+      "res.fromPos": "Ξεκίνησε από θέση: η παρτίδα δεν καταγράφεται",
+      "btn.pgn": "Άνοιγμα ή αποθήκευση παρτίδας (PGN)",
+      "pgn.title": "Παρτίδες (PGN)",
+      "pgn.intro": "Άνοιξε μια παρτίδα από αρχείο PGN ή επικόλλησέ τη, για να την ξαναδείς κίνηση προς κίνηση. Αποθήκευσε οποιαδήποτε παρτίδα ως PGN για το Lichess, το Chess.com ή άλλο πρόγραμμα σκακιού.",
+      "pgn.paste": "Επικόλλησε εδώ ένα PGN",
+      "pgn.openText": "Άνοιγμα επικόλλησης",
+      "pgn.openFile": "Άνοιγμα αρχείου…",
+      "pgn.save": "Αποθήκευση παρτίδας (.pgn)",
+      "pgn.copy": "Αντιγραφή PGN",
+      "pgn.close": "Κλείσιμο",
+      "pgn.pick": "Διάλεξε παρτίδα ({n})",
+      "pgn.more": "Εμφανίζονται μόνο οι πρώτες 500 παρτίδες του αρχείου.",
+      "pgn.none": "Δεν βρέθηκε παρτίδα σε αυτό το PGN",
+      "pgn.big": "Το PGN είναι πολύ μεγάλο (πάνω από 5 MB)",
+      "pgn.stop": "Σταμάτησε στην κίνηση {no}: το «{tok}» δεν είναι νόμιμη κίνηση εκεί",
+      "pgn.copied": "Το PGN αντιγράφηκε",
+      "pgn.copyFail": "Δεν έγινε αντιγραφή: επίλεξε το κείμενο και αντίγραψέ το",
+      "pgn.empty": "Παίξε πρώτα μια κίνηση: δεν υπάρχει ακόμη κάτι για αποθήκευση",
+      "pgn.vsai": "Με υπολογιστή ({level})",
+      "pgn.duo": "2 παίκτες",
+      "toast.opened": "Η παρτίδα άνοιξε για ανασκόπηση",
+      "toast.review": "Ανασκόπηση παρτίδας: χρησιμοποίησε ◀ ▶ ή «Παίξε από εδώ»",
+      "toast.fromHere": "Συνεχίζεις από αυτή τη θέση",
+      "rv.start": "Αρχική θέση",
+      "rv.first": "Στην αρχή (Home)",
+      "rv.prev": "Προηγούμενη κίνηση (←)",
+      "rv.next": "Επόμενη κίνηση (→)",
+      "rv.last": "Στο τέλος (End)",
+      "rv.ana": "Ανάλυση",
+      "rv.anaHint": "Δείξε πώς βλέπει ο υπολογιστής κάθε θέση (επίπεδο Δύσκολο)",
+      "rv.thinking": "Σκέφτεται…",
+      "rv.eval": "{score} · καλύτερη {san}",
+      "rv.evalOver": "Δεν υπάρχουν κινήσεις σε αυτή τη θέση",
+      "rv.play": "Παίξε από εδώ",
+      "rv.playTitle": "Συνέχεια από αυτή τη θέση",
+      "rv.playAi": "Με υπολογιστή, με τα {side}",
+      "rv.playDuo": "2 παίκτες",
+      "rv.playNote": "Οι παρτίδες από θέση δεν καταγράφονται."
     }
   };
 
@@ -854,7 +937,190 @@
     };
   }
 
+  // ---------- 2b. PGN (pure: read and write games) ----------
+  // parse(text) → { games: [ { tags, fen, moves[uci], sans[], result,
+  //   stop?: { ply, tok } } ], more: bool } — every game of the text
+  //   (up to MAX_GAMES), comments, variations and NAGs skipped. A game
+  //   stops at its first move that is not legal (stop says where); a
+  //   game of another variant (Chess960, …) or with a bad FEN is left
+  //   out. Tag values are cleaned text (no control characters, ≤ 120);
+  //   only TAGS are kept. Nothing here touches the page.
+  // write({ tags, fen, moves, result }) → PGN text (export format:
+  //   seven-tag roster first, SetUp / FEN when it starts from a
+  //   position, lines ≤ 80).
+  function makePgn(E) {
+    var MAX_TEXT = 5 * 1024 * 1024, MAX_GAMES = 500, MAX_PLY = 1200, MAX_VAL = 120;
+    var TAGS = ["Event", "Site", "Date", "Round", "White", "Black", "Result",
+                "WhiteElo", "BlackElo", "TimeControl", "Termination", "ECO", "Opening"];
+    var ROSTER = ["Event", "Site", "Date", "Round", "White", "Black", "Result"];
+    var RESULTS = ["1-0", "0-1", "1/2-1/2", "*"];
+    var TAG_RE = /\[\s*([A-Za-z0-9_]{1,40})\s+"((?:[^"\\\r\n]|\\.){0,2000})"\s*\]/y;
+    var SAN_RE = /^([NBRQK])?([a-h])?([1-8])?[x:]?([a-h][1-8])(?:=?([NBRQnbrq]))?(?:e\.?p\.?)?$/;
+
+    function clean(v) {
+      return String(v === undefined || v === null ? "" : v)
+        .replace(/[\u0000-\u001f\u007f-\u009f\u2028\u2029]+/g, " ")
+        .replace(/\s+/g, " ").trim().slice(0, MAX_VAL);
+    }
+
+    // One SAN token (as people and sites write it) → the legal move, or 0.
+    function matchSan(P, tok) {
+      var s = String(tok || "").replace(/[+#!?]+$/, "").replace(/^0-0-0$/, "O-O-O").replace(/^0-0$/, "O-O");
+      var legal = E.legalMoves(P), i, m;
+      if (s === "O-O" || s === "O-O-O") {
+        for (i = 0; i < legal.length; i++) {
+          m = legal[i];
+          if ((E.mFlags(m) & 4) && (E.mTo(m) & 7) === (s === "O-O" ? 6 : 2)) return m;
+        }
+        return 0;
+      }
+      var x = SAN_RE.exec(s);
+      if (!x) return 0;
+      var ty = x[1] ? "PNBRQK".indexOf(x[1]) + 1 : 1;
+      var to = E.sqFrom(x[4]);
+      var file = x[2] ? "abcdefgh".indexOf(x[2]) : -1, rank = x[3] ? +x[3] - 1 : -1;
+      var pr = x[5] ? "NBRQ".indexOf(x[5].toUpperCase()) + 2 : 0;
+      var hits = [];
+      for (i = 0; i < legal.length; i++) {
+        m = legal[i];
+        var f = E.mFrom(m);
+        if (E.mTo(m) !== to || Math.abs(P.b[f]) !== ty) continue;
+        if (file >= 0 && (f & 7) !== file) continue;
+        if (rank >= 0 && (f >> 4) !== rank) continue;
+        // A pawn reaching the last rank with no piece named becomes a queen.
+        var mp = E.mPromo(m);
+        if (pr ? mp !== pr : (mp && mp !== 5)) continue;
+        hits.push(m);
+      }
+      return hits.length === 1 ? hits[0] : 0;
+    }
+
+    // The text → raw games { tags, toks[], result }.
+    function split(text) {
+      var out = [], cur = null, depth = 0, i = 0, n = text.length, more = false;
+      function close() {
+        if (cur && (cur.toks.length || Object.keys(cur.tags).length)) {
+          if (out.length < MAX_GAMES) out.push(cur); else more = true;
+        }
+        cur = null;
+      }
+      function game() { if (!cur) cur = { tags: {}, toks: [], result: "", started: false }; return cur; }
+      while (i < n && !more) {
+        var c = text.charAt(i);
+        if (c === " " || c === "\t" || c === "\n" || c === "\r") { i++; continue; }
+        if (c === "{") { var e = text.indexOf("}", i); i = e < 0 ? n : e + 1; continue; }
+        if (c === ";" || (c === "%" && (i === 0 || text.charAt(i - 1) === "\n"))) {
+          var nl = text.indexOf("\n", i); i = nl < 0 ? n : nl + 1; continue;
+        }
+        if (c === "(") { depth++; i++; continue; }
+        if (c === ")") { if (depth) depth--; i++; continue; }
+        if (c === "[" && !depth) {
+          TAG_RE.lastIndex = i;
+          var tm = TAG_RE.exec(text);
+          if (tm) {
+            if (cur && cur.started) close();
+            var g = game();
+            if (TAGS.indexOf(tm[1]) >= 0 || tm[1] === "FEN" || tm[1] === "SetUp" || tm[1] === "Variant") {
+              g.tags[tm[1]] = tm[2].replace(/\\(.)/g, "$1");
+            }
+            i = TAG_RE.lastIndex;
+            continue;
+          }
+          var nl2 = text.indexOf("\n", i); i = nl2 < 0 ? n : nl2 + 1; continue;
+        }
+        var j = i;
+        while (j < n && !/[\s{}()\[\];]/.test(text.charAt(j))) j++;
+        if (j === i) { i++; continue; }        // a stray ] or }
+        var w = text.slice(i, j);
+        i = j;
+        if (depth) continue;
+        w = w.replace(/^\d+\.+/, "");
+        if (!w || /^\$\d+$/.test(w) || /^[!?]+$/.test(w)) continue;
+        if (RESULTS.indexOf(w) >= 0) { game().result = w; close(); continue; }
+        var cg = game();
+        cg.started = true;
+        if (cg.toks.length < MAX_PLY + 1) cg.toks.push(w);
+      }
+      close();
+      return { raw: out, more: more };
+    }
+
+    function parse(text) {
+      text = String(text || "");
+      if (text.length > MAX_TEXT) return { games: [], more: false, big: true };
+      text = text.replace(/^﻿/, "");
+      var sp = split(text), games = [];
+      sp.raw.forEach(function (r) {
+        var variant = r.tags.Variant;
+        if (variant && !/^(standard|chess|from position)$/i.test(variant.trim())) return;
+        var fen = "";
+        if (r.tags.FEN && r.tags.SetUp !== "0") {
+          fen = clean(r.tags.FEN);
+          var P0 = E.parseFen(fen);
+          if (!P0) return;
+          fen = E.toFen(P0);
+          if (fen === E.START) fen = "";
+        }
+        var P = E.parseFen(fen || E.START), moves = [], sans = [], stop = null;
+        for (var k = 0; k < r.toks.length; k++) {
+          var m = moves.length < MAX_PLY ? matchSan(P, r.toks[k]) : 0;
+          if (!m) { stop = { ply: k, tok: clean(r.toks[k]).slice(0, 20) }; break; }
+          sans.push(E.san(P, m));
+          E.makeMove(P, m);
+          moves.push(E.toUci(m));
+        }
+        var tags = {};
+        TAGS.forEach(function (k2) { if (r.tags[k2] !== undefined && clean(r.tags[k2])) tags[k2] = clean(r.tags[k2]); });
+        var result = RESULTS.indexOf(tags.Result) >= 0 ? tags.Result : (r.result || "*");
+        var g = { tags: tags, fen: fen, moves: moves, sans: sans, result: result };
+        if (stop) g.stop = stop;
+        if (moves.length || fen) games.push(g);
+      });
+      return { games: games, more: sp.more };
+    }
+
+    function esc(v) { return clean(v).replace(/\\/g, "\\\\").replace(/"/g, '\\"'); }
+
+    function write(g) {
+      g = g || {};
+      var tags = g.tags || {}, lines = [];
+      var result = RESULTS.indexOf(g.result) >= 0 ? g.result : "*";
+      ROSTER.forEach(function (k) {
+        var v = k === "Result" ? result : (clean(tags[k]) || "?");
+        lines.push("[" + k + ' "' + esc(v) + '"]');
+      });
+      TAGS.forEach(function (k) {
+        if (ROSTER.indexOf(k) < 0 && clean(tags[k])) lines.push("[" + k + ' "' + esc(tags[k]) + '"]');
+      });
+      var P = E.parseFen(g.fen || E.START) || E.parseFen(E.START);
+      if (g.fen && E.toFen(P) !== E.START) {
+        lines.push('[SetUp "1"]');
+        lines.push('[FEN "' + E.toFen(P) + '"]');
+      }
+      var words = [], moves = g.moves || [];
+      for (var i = 0; i < moves.length; i++) {
+        var m = E.fromUci(P, moves[i]);
+        if (!m) break;
+        if (P.t > 0) words.push(P.n + ".");
+        else if (i === 0) words.push(P.n + "...");
+        words.push(E.san(P, m));
+        E.makeMove(P, m);
+      }
+      words.push(result);
+      var body = [], line = "";
+      words.forEach(function (w) {
+        if (line && line.length + 1 + w.length > 79) { body.push(line); line = w; }
+        else line = line ? line + " " + w : w;
+      });
+      if (line) body.push(line);
+      return lines.join("\n") + "\n\n" + body.join("\n") + "\n";
+    }
+
+    return { parse: parse, write: write, matchSan: matchSan, clean: clean, TAGS: TAGS, MAX_TEXT: MAX_TEXT };
+  }
+
   var E = makeEngine();
+  var PGN = makePgn(E);
   var GLYPH = ["", "♟", "♞", "♝", "♜", "♛", "♚"];
   var PIECE_VAL = [0, 1, 3, 3, 5, 9, 0];
 
@@ -982,7 +1248,7 @@
   }
 
   // ---------- 4. Device-local prefs + session ----------
-  var prefs = { mode: "ai", lv: "m", side: "w", flip: false };
+  var prefs = { mode: "ai", lv: "m", side: "w", flip: false, ana: false };
 
   function loadPrefs() {
     try {
@@ -992,6 +1258,7 @@
         if (LEVELS.indexOf(p.lv) >= 0) prefs.lv = p.lv;
         if (SIDES.indexOf(p.side) >= 0) prefs.side = p.side;
         prefs.flip = p.flip === true;
+        prefs.ana = p.ana === true;
       }
     } catch (e) {}
   }
@@ -1000,31 +1267,56 @@
   }
 
   // game = {
-  //   mode, lv,
+  //   mode, lv,            // mode ai | duo | review
   //   human: "w" | "b",    // your side vs the computer ("w" with 2 players)
-  //   moves: [uci…],       // from the start position
+  //   moves: [uci…],       // from the start position (or fen)
   //   done: bool,
-  //   unrated: bool        // an undo was used vs the computer
+  //   unrated: bool,       // an undo was used vs the computer, or it
+  //                        // started from a position (base / fen)
+  //   fen?: "<FEN>",       // a game that starts from a position
+  //   base?: n,            // "Play from here": the first n moves came
+  //                        // from a reviewed game (never undone)
+  //   tags?: {…}, result?, at: n   // review only: the PGN tags, its
+  //                        // result and the move shown (0…moves.length)
   // }
   // The position is always replayed from moves.
   var game = null;
   var pos = null, sans = [], legal = [], st = null;
 
   function validSession(g) {
-    if (!g || typeof g !== "object" || MODES.indexOf(g.mode) < 0 ||
+    if (!g || typeof g !== "object" || (MODES.indexOf(g.mode) < 0 && g.mode !== "review") ||
         LEVELS.indexOf(g.lv) < 0 || (g.human !== "w" && g.human !== "b") ||
         !Array.isArray(g.moves) || g.moves.length > MAX_PLIES) return false;
     for (var i = 0; i < g.moves.length; i++) {
       if (typeof g.moves[i] !== "string" || !/^[a-h][1-8][a-h][1-8][nbrq]?$/.test(g.moves[i])) return false;
     }
-    return !!E.replay(g.moves);
+    if (g.fen !== undefined && (typeof g.fen !== "string" || g.fen.length > 100 || !E.parseFen(g.fen))) return false;
+    if (g.base !== undefined && (!isInt(g.base) || g.base < 0 || g.base > g.moves.length)) return false;
+    return !!E.replay(g.moves, g.fen);
+  }
+  function cleanTags(x) {
+    var out = {};
+    if (!x || typeof x !== "object") return out;
+    PGN.TAGS.forEach(function (k) {
+      if (typeof x[k] === "string" && PGN.clean(x[k])) out[k] = PGN.clean(x[k]);
+    });
+    return out;
   }
   function loadSession() {
     try {
       var g = JSON.parse(localStorage.getItem(SESSION_KEY) || "null");
       if (validSession(g)) {
-        return { mode: g.mode, lv: g.lv, human: g.human, moves: g.moves.slice(),
-                 done: g.done === true, unrated: g.unrated === true };
+        var out = { mode: g.mode, lv: g.lv, human: g.human, moves: g.moves.slice(),
+                    done: g.done === true, unrated: g.unrated === true };
+        if (g.fen) out.fen = E.toFen(E.parseFen(g.fen));
+        if (g.base) out.base = g.base;
+        if (g.mode === "review") {
+          out.done = true;
+          out.tags = cleanTags(g.tags);
+          out.result = ["1-0", "0-1", "1/2-1/2"].indexOf(g.result) >= 0 ? g.result : "*";
+          out.at = isInt(g.at) && g.at >= 0 && g.at <= g.moves.length ? g.at : g.moves.length;
+        }
+        return out;
       }
     } catch (e) {}
     return null;
@@ -1050,12 +1342,18 @@
   function aiTurn() { return !!(game && game.mode === "ai" && !game.done && toMove() !== game.human); }
 
   // Rebuild the position, the SAN list and the legal moves from game.moves.
+  var revSans = { key: "", sans: [] };       // the reviewed game's SAN, once
   function syncPos() {
-    var r = E.replay(game.moves);
+    var shown = game.mode === "review" ? game.moves.slice(0, game.at) : game.moves;
+    var r = E.replay(shown, game.fen);
     pos = r.pos;
     sans = r.sans;
+    if (game.mode === "review") {
+      var key = (game.fen || "") + "|" + game.moves.join(" ");
+      if (revSans.key !== key) revSans = { key: key, sans: E.replay(game.moves, game.fen).sans };
+    }
     afterMove();
-    var u = game.moves[game.moves.length - 1];
+    var u = shown[shown.length - 1];
     lastFrom = u ? E.sqFrom(u.slice(0, 2)) : -1;
     lastTo = u ? E.sqFrom(u.slice(2, 4)) : -1;
   }
@@ -1065,19 +1363,24 @@
   }
 
   // A game in progress is never lost silently: Undo toast (R14).
-  function newGame(announce) {
-    var prev = inProgress() ? JSON.parse(JSON.stringify(game)) : null;
+  function newGame(announce) { replaceGame(fresh(), t("toast.newgame"), announce); }
+
+  // Any other game in its place (a new one, a PGN to review, "Play
+  // from here"); the one left behind comes back with Undo.
+  function replaceGame(next, msg, announce) {
+    var keep = inProgress() || (game && game.mode === "review");
+    var prev = keep ? JSON.parse(JSON.stringify(game)) : null;
     var prevPrefs = JSON.parse(JSON.stringify(prefs));
     cancelAi();
     closeDialogs();
-    game = fresh();
+    game = next;
     saveSession();
     sel = -1; anim = null;
     syncPos();
     renderAll(true);
     maybeAi();
     if (prev) {
-      undoToast(t("toast.newgame"), function () {
+      undoToast(msg, function () {
         cancelAi();
         closeDialogs();
         prefs = prevPrefs;
@@ -1090,11 +1393,16 @@
         maybeAi();
       });
     } else if (announce) {
-      live(t("toast.newgame"));
+      live(msg);
     }
   }
 
   function sideName(c) {
+    if (game && game.mode === "review") {
+      var tg = game.tags || {}, nm = tg[c === "w" ? "White" : "Black"], elo = tg[c === "w" ? "WhiteElo" : "BlackElo"];
+      if (!nm || nm === "?") return t("name." + c);
+      return nm + (elo && /^\d{3,4}$/.test(elo) ? " (" + elo + ")" : "");
+    }
     if (game && game.mode === "ai") return t(c === game.human ? "name.you" : "name.ai");
     return t("name." + c);
   }
@@ -1106,6 +1414,7 @@
   // A tap / click / Enter on a square.
   function onSquare(sq) {
     if (!game || document.querySelector("dialog[open]")) return;
+    if (game.mode === "review") { showToast(t("toast.review")); return; }
     if (game.done) { showToast(t("toast.over")); return; }            // R28
     if (aiTurn()) { showToast(t("toast.wait")); return; }
     var p = pos.b[sq], mine = !!p && colorOf(p) === toMove();
@@ -1173,14 +1482,14 @@
     if (worker || !workerOk) return worker;
     try {
       var src = "var E=(" + makeEngine.toString() + ")();" +
-        "onmessage=function(e){var d=e.data,r=E.replay(d.moves),m=0;" +
-        "if(r){m=E.choose(r.pos,d.lv,Math.random).move;}" +
-        "postMessage({id:d.id,uci:m?E.toUci(m):\"\"});};";
+        "onmessage=function(e){var d=e.data,r=E.replay(d.moves,d.fen||\"\"),c=null;" +
+        "if(r){c=E.choose(r.pos,d.lv,Math.random);}" +
+        "postMessage({id:d.id,uci:c&&c.move?E.toUci(c.move):\"\",score:c?c.score:0,depth:c?c.depth:0});};";
       var url = URL.createObjectURL(new Blob([src], { type: "text/javascript" }));
       worker = new Worker(url);
       worker.onmessage = function (e) {
         var d = e.data || {};
-        if (aiDone && d.id === aiJob) aiDone(d.uci);
+        if (aiDone && d.id === aiJob) aiDone(d.uci, d);
       };
       worker.onerror = function (e) {
         if (e && e.preventDefault) e.preventDefault();
@@ -1188,6 +1497,7 @@
         try { worker.terminate(); } catch (x) {}
         worker = null;
         if (thinking) { thinking = false; maybeAi(); }
+        else if (aiDone && game && game.mode === "review") runAnalysis();
       };
     } catch (e) {
       workerOk = false;
@@ -1223,7 +1533,7 @@
     };
     var w = getWorker();
     if (w) {
-      w.postMessage({ id: job, moves: game.moves.slice(), lv: game.lv });
+      w.postMessage({ id: job, moves: game.moves.slice(), fen: game.fen || "", lv: game.lv });
     } else {
       // No worker: search here after the "thinking" text paints, with a
       // shorter budget.
@@ -1239,9 +1549,10 @@
   // Undo: one move with 2 players; vs the computer, your last move and
   // its answer (the game then counts for no record).
   function canUndo() {
-    if (!game || game.done || !game.moves.length) return false;
+    var base = game ? game.base || 0 : 0;
+    if (!game || game.done || game.mode === "review" || game.moves.length <= base) return false;
     if (game.mode === "duo") return true;
-    var first = game.human === "w" ? 0 : 1;          // index of your first move
+    var first = base + (sideAt(base) === game.human ? 0 : 1);   // index of your first move
     return game.moves.length > first;
   }
   function undo() {
@@ -1250,7 +1561,7 @@
     closeDialogs();
     game.moves.pop();
     if (game.mode === "ai") {
-      while (game.moves.length && (game.moves.length % 2 === 0 ? "w" : "b") !== game.human) game.moves.pop();
+      while (game.moves.length > (game.base || 0) && sideAt(game.moves.length) !== game.human) game.moves.pop();
       if (!game.unrated) { game.unrated = true; showToast(t("toast.undone")); }
     }
     sel = -1; anim = null;
@@ -1259,6 +1570,12 @@
     renderAll(false);
     live(t("btn.undo").replace(/ \(.\)$/, ""));
     maybeAi();
+  }
+
+  // The side to move after n plies of this game.
+  function sideAt(n) {
+    var first = game.fen && game.fen.split(" ")[1] === "b" ? 1 : 0;
+    return (n + first) % 2 === 0 ? "w" : "b";
   }
 
   function winnerOf(s) { return s.result === "1-0" ? "w" : (s.result === "0-1" ? "b" : ""); }
@@ -1306,10 +1623,28 @@
     u.setAttribute("aria-label", u.title);
     $("flip-btn").setAttribute("aria-pressed", prefs.flip ? "true" : "false");
     paintSfxBtn();
+    renderReviewBar();
+  }
+
+  // "12. Nf3" / "12… Nf6": the move that led to the position after n plies.
+  function moveLabel(n) {
+    var first = sideAt(0) === "b" ? 1 : 0, startNo = fenMoveNo();
+    var v = n - 1 + first;
+    return (startNo + Math.floor(v / 2)) + (v % 2 ? "… " : ". ") + (revSans.sans[n - 1] || "");
+  }
+  function fenMoveNo() {
+    var n = game && game.fen ? +game.fen.split(" ")[5] : 1;
+    return isInt(n) && n > 0 ? n : 1;
   }
 
   function statusText() {
     if (!game || !st) return "";
+    if (game.mode === "review") {
+      var txt = game.at ? moveLabel(game.at) : t("rv.start");
+      if (game.at === game.moves.length && game.result && game.result !== "*") txt += " · " + game.result;
+      else if (st.over && st.reason === "mate") txt += " · " + t("res.mate");
+      return txt;
+    }
     if (st.over) {
       var w = winnerOf(st);
       if (st.reason === "mate") {
@@ -1344,7 +1679,8 @@
     $("adv-b").textContent = d < 0 ? "+" + (-d) : "";
     var tn = $("turn");
     tn.textContent = statusText();
-    tn.className = st.over ? "done" : (E.inCheck(pos) ? "warn" : "");
+    var rv = game.mode === "review";
+    tn.className = rv ? "" : (st.over ? "done" : (E.inCheck(pos) ? "warn" : ""));
     $("side-w").classList.toggle("turn", !st.over && toMove() === "w");
     $("side-b").classList.toggle("turn", !st.over && toMove() === "b");
     $("unrated").hidden = !(game.mode === "ai" && game.unrated);
@@ -1455,20 +1791,38 @@
     setTimeout(function () { b.classList.remove("shake"); }, 320);
   }
 
+  // One line per move number; a game from a position with black to
+  // move opens with "n… ". In review every move is a button to it.
   function renderMoves() {
-    var ol = $("moves");
+    var ol = $("moves"), rv = game.mode === "review";
+    var list = rv ? revSans.sans : sans, cur = rv ? game.at - 1 : list.length - 1;
+    var first = sideAt(0) === "b" ? 1 : 0, startNo = fenMoveNo(), li = null, curEl = null;
     ol.innerHTML = "";
-    for (var i = 0; i < sans.length; i += 2) {
-      var li = document.createElement("li");
-      li.appendChild(el("span", "no", (i / 2 + 1) + "."));
-      for (var k = i; k < Math.min(i + 2, sans.length); k++) {
-        li.appendChild(el("span", "mv" + (k === sans.length - 1 ? " cur" : ""), sans[k]));
+    ol.classList.toggle("review", rv);
+    for (var k = 0; k < list.length; k++) {
+      var v = k + first;
+      if (!li || v % 2 === 0) {
+        li = document.createElement("li");
+        li.appendChild(el("span", "no", (startNo + Math.floor(v / 2)) + "."));
+        if (v % 2) li.appendChild(el("span", "mv gap", "…"));
+        ol.appendChild(li);
       }
-      ol.appendChild(li);
+      var mv = el(rv ? "button" : "span", "mv" + (k === cur ? " cur" : ""), list[k]);
+      if (rv) {
+        mv.type = "button";
+        mv.setAttribute("data-ply", String(k + 1));
+        mv.setAttribute("aria-current", k === cur ? "true" : "false");
+      }
+      if (k === cur) curEl = mv;
+      li.appendChild(mv);
     }
-    var wrap = $("moves");
-    wrap.scrollTop = wrap.scrollHeight;
-    wrap.scrollLeft = wrap.scrollWidth;
+    if (rv) {
+      if (curEl && curEl.scrollIntoView) { try { curEl.scrollIntoView({ block: "nearest", inline: "nearest" }); } catch (e) {} }
+      else { ol.scrollTop = 0; ol.scrollLeft = 0; }
+      return;
+    }
+    ol.scrollTop = ol.scrollHeight;
+    ol.scrollLeft = ol.scrollWidth;
   }
 
   function live(msg) {
@@ -1554,7 +1908,7 @@
       : t("res.pwin", { side: t("sidel." + w) });
     dlg.appendChild(el("div", "dlg-hero", hero));
     dlg.appendChild(el("div", "dlg-msg dlg-center", t("res." + st.reason)));
-    if (ai && game.unrated) dlg.appendChild(el("div", "dlg-msg dlg-note", t("res.unrated")));
+    if (ai && game.unrated) dlg.appendChild(el("div", "dlg-msg dlg-note", t(game.base || game.fen ? "res.fromPos" : "res.unrated")));
     dlg.appendChild(row(t("res.moves"), String(Math.ceil(game.moves.length / 2))));
     if (ai) dlg.appendChild(row(t("res.rec") + " · " + t("level." + game.lv), totals(game.lv).join(" · ")));
     var acts = el("div", "dlg-actions");
@@ -1614,6 +1968,293 @@
     save();
     renderStatus();
     showToast(t("toast.reset"));
+  }
+
+  // ---------- 7b. PGN: open, save, review ----------
+  var ENGINE_MATE = 30000;                  // makeEngine's MATE
+
+  function dialogHost() {
+    try {
+      var d = window.parent && window.parent !== window ? window.parent.orosDialog : null;
+      if (d && typeof d.saveFile === "function" && typeof d.openFile === "function") return d;
+    } catch (e) {}
+    return null;
+  }
+  // Standalone (no shell): a plain file input.
+  function localOpen(accept) {
+    return new Promise(function (resolve) {
+      var inp = document.createElement("input");
+      inp.type = "file";
+      inp.accept = accept;
+      inp.addEventListener("change", function () { resolve(inp.files && inp.files[0] ? inp.files[0] : null); });
+      inp.click();
+    });
+  }
+
+  // The game on the board as PGN data.
+  function gameForPgn() {
+    if (game.mode === "review") {
+      return { tags: game.tags || {}, fen: game.fen || "", moves: game.moves, result: game.result || "*" };
+    }
+    var d = new Date(), pad = function (n) { return (n < 10 ? "0" : "") + n; };
+    var res = st && st.over ? (st.result === "1/2" ? "1/2-1/2" : st.result) : "*";
+    return {
+      tags: {
+        Event: "orOS Chess · " + (game.mode === "ai" ? t("pgn.vsai", { level: t("level." + game.lv) }) : t("pgn.duo")),
+        Site: "useoros.online",
+        Date: d.getFullYear() + "." + pad(d.getMonth() + 1) + "." + pad(d.getDate()),
+        White: sideName("w"), Black: sideName("b"), Result: res
+      },
+      fen: game.fen || "", moves: game.moves, result: res
+    };
+  }
+
+  function pgnFileName() {
+    var g = gameForPgn(), tg = g.tags;
+    var base = (tg.White || "white") + " - " + (tg.Black || "black") + (tg.Date ? " " + tg.Date : "");
+    base = base.replace(/[\\/:*?"<>|\u0000-\u001f]+/g, "").replace(/\s+/g, " ").trim().slice(0, 80) || "chess";
+    return base + ".pgn";
+  }
+
+  function savePgn() {
+    if (!game.moves.length && !game.fen) { showToast(t("pgn.empty")); return; }
+    var text = PGN.write(gameForPgn()), host = dialogHost();
+    if (host) {
+      host.saveFile({ text: text, filename: pgnFileName(), mime: "application/x-chess-pgn",
+                      types: [{ description: "PGN", accept: { "application/x-chess-pgn": [".pgn"] } }] })
+        .catch(function () {});
+      return;
+    }
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([text], { type: "application/x-chess-pgn" }));
+    a.download = pgnFileName();
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  }
+
+  function copyPgn(area) {
+    if (!game.moves.length && !game.fen) { showToast(t("pgn.empty")); return; }
+    var text = PGN.write(gameForPgn());
+    function fallback() {
+      if (area) { area.value = text; area.focus(); area.select(); }
+      showToast(t("pgn.copyFail"));
+    }
+    try {
+      navigator.clipboard.writeText(text).then(function () { showToast(t("pgn.copied")); }, fallback);
+    } catch (e) { fallback(); }
+  }
+
+  function pgnDialog() {
+    var dlg = makeDialog("chess-pgn");
+    dlg.classList.add("wide");
+    dlg.appendChild(el("div", "dlg-title", t("pgn.title")));
+    dlg.appendChild(el("div", "dlg-foot pgn-intro", t("pgn.intro")));
+    var area = el("textarea", "pgn-area");
+    area.placeholder = t("pgn.paste");
+    area.setAttribute("aria-label", t("pgn.paste"));
+    area.spellcheck = false;
+    area.rows = 5;
+    dlg.appendChild(area);
+    var open = el("div", "dlg-actions");
+    open.appendChild(button(t("pgn.openFile"), "", function () {
+      var host = dialogHost();
+      var pick = host ? host.openFile(".pgn,application/x-chess-pgn,text/plain") : localOpen(".pgn,text/plain");
+      pick.then(function (f) { if (f) { dlg.close(); openPgnFile(f); } }).catch(function () {});
+    }));
+    var go = button(t("pgn.openText"), "primary", function () {
+      if (!area.value.trim()) { area.focus(); return; }
+      var txt = area.value;
+      dlg.close();
+      openPgnText(txt);
+    });
+    open.appendChild(go);
+    dlg.appendChild(open);
+    var none = !game.moves.length && !game.fen;
+    var out = el("div", "dlg-actions");
+    var sv = button(t("pgn.save"), "", function () { savePgn(); });
+    var cp = button(t("pgn.copy"), "", function () { copyPgn(area); });
+    sv.disabled = cp.disabled = none;
+    out.appendChild(sv);
+    out.appendChild(cp);
+    dlg.appendChild(out);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("pgn.close"), "", function () { dlg.close(); }));
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    area.focus();
+  }
+
+  function openPgnFile(f) {
+    if (!f) return;
+    if (f.size > PGN.MAX_TEXT) { showToast(t("pgn.big")); return; }
+    f.text().then(openPgnText, function () { showToast(t("pgn.none")); });
+  }
+
+  function openPgnText(text) {
+    var r = PGN.parse(text);
+    if (r.big) { showToast(t("pgn.big")); return; }
+    if (!r.games.length) { showToast(t("pgn.none")); return; }
+    if (r.games.length === 1) { startReview(r.games[0]); return; }
+    pickDialog(r.games, r.more);
+  }
+
+  function pickDialog(games, more) {
+    var dlg = makeDialog("chess-pick");
+    dlg.classList.add("wide");
+    dlg.appendChild(el("div", "dlg-title", t("pgn.pick", { n: games.length })));
+    var list = el("div", "pick-list");
+    games.forEach(function (g) {
+      var tg = g.tags, b = el("button", "pick-btn");
+      b.type = "button";
+      b.appendChild(el("span", "pick-names", (tg.White || "?") + " – " + (tg.Black || "?")));
+      var meta = [g.result, tg.Date && tg.Date.indexOf("?") < 0 ? tg.Date : "", tg.Event && tg.Event !== "?" ? tg.Event : "",
+                  Math.ceil(g.moves.length / 2) + " " + t("res.moves").toLowerCase()].filter(Boolean).join(" · ");
+      b.appendChild(el("span", "pick-meta", meta));
+      b.addEventListener("click", function () { dlg.close(); startReview(g); });
+      list.appendChild(b);
+    });
+    dlg.appendChild(list);
+    if (more) dlg.appendChild(el("div", "dlg-foot", t("pgn.more")));
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("pgn.close"), "", function () { dlg.close(); }));
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    var first = list.querySelector("button");
+    if (first) first.focus();
+  }
+
+  function startReview(g) {
+    var next = { mode: "review", lv: prefs.lv, human: "w", moves: g.moves.slice(), done: true, unrated: false,
+                 tags: cleanTags(g.tags), result: g.result, at: g.moves.length };
+    if (g.fen) next.fen = g.fen;
+    replaceGame(next, t("toast.opened"), true);
+    runAnalysis();
+    if (g.stop) {
+      var first = sideAt(0) === "b" ? 1 : 0, v = g.stop.ply + first;
+      showToast(t("pgn.stop", { no: fenMoveNo() + Math.floor(v / 2), tok: g.stop.tok }));
+    }
+  }
+
+  function goTo(n) {
+    if (!game || game.mode !== "review" || document.querySelector("dialog[open]")) return;
+    n = Math.max(0, Math.min(game.moves.length, n));
+    if (n === game.at) return;
+    var step = n === game.at + 1;
+    game.at = n;
+    sel = -1;
+    syncPos();
+    if (step && !reduced) anim = { from: lastFrom, to: lastTo };
+    saveSession();
+    renderAll(false);
+    live(statusText());
+    runAnalysis();
+  }
+
+  function renderReviewBar() {
+    var bar = $("review-bar"), rv = !!(game && game.mode === "review");
+    bar.hidden = !rv;
+    if (!rv) return;
+    $("rv-first").disabled = $("rv-prev").disabled = game.at === 0;
+    $("rv-next").disabled = $("rv-last").disabled = game.at === game.moves.length;
+    var tg = game.tags || {};
+    var info = [tg.Event && tg.Event !== "?" ? tg.Event : "", tg.Date && tg.Date.indexOf("?") < 0 ? tg.Date : "",
+                tg.Opening || tg.ECO || "", tg.TimeControl && tg.TimeControl !== "-" ? tg.TimeControl : ""].filter(Boolean).join(" · ");
+    $("rv-info").textContent = info;
+    $("rv-info").hidden = !info;
+    var a = $("rv-ana");
+    a.setAttribute("aria-pressed", prefs.ana ? "true" : "false");
+    a.title = t("rv.anaHint");
+    $("rv-eval").hidden = !prefs.ana;
+    $("rv-play").disabled = !!(st && st.over);
+  }
+
+  // Analysis: the Hard search on the shown position, in the worker.
+  function evalText(score, side) {
+    var s = side === "w" ? score : -score;
+    if (Math.abs(s) > ENGINE_MATE - 1000) {
+      var mateIn = Math.ceil((ENGINE_MATE - Math.abs(s)) / 2);
+      return (s > 0 ? "#" : "#-") + mateIn;
+    }
+    return (s > 0 ? "+" : (s < 0 ? "−" : "")) + (Math.abs(s) / 100).toFixed(2);
+  }
+  function runAnalysis() {
+    var box = $("rv-eval");
+    if (!game || game.mode !== "review" || !prefs.ana) { if (game && game.mode === "review") cancelAi(); return; }
+    cancelAi();
+    if (st.over) { box.textContent = t("rv.evalOver"); return; }
+    box.textContent = t("rv.thinking");
+    var job = ++aiJob, side = toMove(), shown = game.moves.slice(0, game.at);
+    aiDone = function (uci, d) {
+      if (job !== aiJob) return;
+      aiDone = null;
+      var m = uci ? E.fromUci(pos, uci) : 0;
+      box.textContent = m ? t("rv.eval", { score: evalText((d && d.score) || 0, side), san: E.san(pos, m) }) : "";
+    };
+    var w = getWorker();
+    if (w) {
+      w.postMessage({ id: job, moves: shown, fen: game.fen || "", lv: "h" });
+    } else {
+      aiTimer = setTimeout(function () {
+        aiTimer = null;
+        if (job !== aiJob) return;
+        var r = E.choose(pos, "h", rand, 450);
+        if (aiDone) aiDone(r.move ? E.toUci(r.move) : "", r);
+      }, 40);
+    }
+  }
+
+  function playDialog() {
+    if (!game || game.mode !== "review" || (st && st.over)) return;
+    var dlg = makeDialog("chess-play");
+    dlg.appendChild(el("div", "dlg-title", t("rv.playTitle")));
+    var side = toMove();
+    var acts = el("div", "dlg-col");
+    var ai = button(t("rv.playAi", { side: t("sidel." + side) }), "primary", function () { dlg.close(); playFromHere("ai", side); });
+    acts.appendChild(ai);
+    acts.appendChild(button(t("rv.playDuo"), "", function () { dlg.close(); playFromHere("duo", "w"); }));
+    acts.appendChild(button(t("promo.cancel"), "", function () { dlg.close(); }));
+    dlg.appendChild(acts);
+    dlg.appendChild(el("div", "dlg-foot", t("rv.playNote")));
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    ai.focus();
+  }
+
+  function playFromHere(mode, human) {
+    var next = { mode: mode, lv: prefs.lv, human: human, moves: game.moves.slice(0, game.at),
+                 done: false, unrated: mode === "ai", base: game.at };
+    if (game.fen) next.fen = game.fen;
+    if (!next.base) delete next.base;
+    prefs.mode = mode;
+    if (mode === "ai") prefs.side = human;
+    savePrefs();
+    replaceGame(next, t("toast.fromHere"), true);
+  }
+
+  // Incoming deep links (shell __orosOpenAt / __orosTakeTarget):
+  //   { openFile: { token } }  a .pgn from the system's "Open with"
+  //                            (shell fileopen.js)
+  //   { pgn: "<text>" }        a PGN from another app
+  function openTarget(x) {
+    if (!x || typeof x !== "object") return;
+    if (x.openFile) {
+      var f = null;
+      try {
+        var p = window.parent;
+        if (typeof x.openFile.token === "string" && p && p !== window && typeof p.__orosTakeFile === "function")
+          f = p.__orosTakeFile(x.openFile.token);
+      } catch (e) { f = null; }
+      if (f) { closeDialogs(); openPgnFile(f); }
+      return;
+    }
+    if (typeof x.pgn === "string") {
+      closeDialogs();
+      if (x.pgn.length > PGN.MAX_TEXT) { showToast(t("pgn.big")); return; }
+      openPgnText(x.pgn);
+    }
   }
 
   // ---------- 8. Toasts ----------
@@ -1697,6 +2338,11 @@
     new:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>',
     undo:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>',
     flip:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v16M7 4 3 8M7 4l4 4"/><path d="M17 20V4M17 20l-4-4M17 20l4-4"/></svg>',
+    pgn:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg>',
+    first: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 5v14M18 6l-7 6 7 6z"/></svg>',
+    prev:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>',
+    next:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>',
+    last:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 5v14M6 6l7 6-7 6z"/></svg>',
     stats: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg>',
     sfxOn: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>',
     sfxOff:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M22 9l-6 6M16 9l6 6"/></svg>'
@@ -1810,7 +2456,7 @@
       if (e.altKey || e.shiftKey || e.ctrlKey || e.metaKey) return;   // never steal OS combos
       if (document.querySelector("dialog[open]")) return;
       var tag = (document.activeElement && document.activeElement.tagName) || "";
-      if (tag === "SELECT" || tag === "INPUT") return;
+      if (tag === "SELECT" || tag === "INPUT" || tag === "TEXTAREA") return;
       var onSq = document.activeElement && document.activeElement.classList &&
                  document.activeElement.classList.contains("sq");
       var arrows = { ArrowUp: -8, ArrowDown: 8, ArrowLeft: -1, ArrowRight: 1 };
@@ -1820,6 +2466,10 @@
         if ((d === -1 && i % 8 === 0) || (d === 1 && i % 8 === 7)) return;
         focusCell(i + d);
         return;
+      }
+      if (game && game.mode === "review" && !onSq && tag !== "TEXTAREA") {
+        var nav = { ArrowLeft: game.at - 1, ArrowRight: game.at + 1, Home: 0, End: game.moves.length };
+        if (nav[e.key] !== undefined) { e.preventDefault(); goTo(nav[e.key]); return; }
       }
       if (e.repeat) return;
       if (e.key === "Escape" && sel >= 0) { e.preventDefault(); select(-1); return; }
@@ -1925,7 +2575,9 @@
 
   function paintStatic() {
     [["new-btn", "new", "btn.new"], ["undo-btn", "undo", "btn.undo"],
-     ["flip-btn", "flip", "btn.flip"], ["stats-btn", "stats", "btn.stats"]].forEach(function (x) {
+     ["flip-btn", "flip", "btn.flip"], ["stats-btn", "stats", "btn.stats"], ["pgn-btn", "pgn", "btn.pgn"],
+     ["rv-first", "first", "rv.first"], ["rv-prev", "prev", "rv.prev"],
+     ["rv-next", "next", "rv.next"], ["rv-last", "last", "rv.last"]].forEach(function (x) {
       var b = $(x[0]);
       b.innerHTML = UI_ICONS[x[1]];
       b.setAttribute("aria-label", t(x[2]));
@@ -1959,6 +2611,22 @@
     $("undo-btn").addEventListener("click", function () { undo(); });
     $("flip-btn").addEventListener("click", flip);
     $("stats-btn").addEventListener("click", statsDialog);
+    $("pgn-btn").addEventListener("click", function () { pgnDialog(); });
+    $("rv-first").addEventListener("click", function () { goTo(0); });
+    $("rv-prev").addEventListener("click", function () { goTo(game.at - 1); });
+    $("rv-next").addEventListener("click", function () { goTo(game.at + 1); });
+    $("rv-last").addEventListener("click", function () { goTo(game.moves.length); });
+    $("rv-ana").addEventListener("click", function () {
+      prefs.ana = !prefs.ana;
+      savePrefs();
+      renderReviewBar();
+      runAnalysis();
+    });
+    $("rv-play").addEventListener("click", playDialog);
+    $("moves").addEventListener("click", function (e) {
+      var b = e.target.closest && e.target.closest("[data-ply]");
+      if (b && game && game.mode === "review") goTo(+b.getAttribute("data-ply"));
+    });
     $("sfx-btn").addEventListener("click", function () {
       try { localStorage.setItem(SFX_KEY, sfxOn() ? "0" : "1"); } catch (e) {}
       paintSfxBtn();
@@ -1990,7 +2658,8 @@
     game = loadSession();
     if (game) {
       // The resumed game decides what the toolbar shows.
-      prefs.mode = game.mode; prefs.lv = game.lv;
+      if (game.mode !== "review") prefs.mode = game.mode;
+      prefs.lv = game.lv;
     } else {
       game = fresh();
       saveSession();
@@ -2000,6 +2669,15 @@
     if (!whiteBottom()) focusIdx = 63 - focusIdx;
     renderAll(true);
     maybeAi();   // a game left on the computer's turn continues
+    runAnalysis();
+    window.__orosOpenAt = openTarget;
+    try {
+      var p = window.parent;
+      if (p && p !== window && typeof p.__orosTakeTarget === "function") {
+        var pending = p.__orosTakeTarget("chess");
+        if (pending) openTarget(pending);
+      }
+    } catch (e) {}
   }
 
   boot();
