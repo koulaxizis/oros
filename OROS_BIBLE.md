@@ -6582,3 +6582,9 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Shares open a form the person saves (Contacts reads a business card into New contact, Writer new document, Kanban quick add, Mind Map paste dialog, Wiki new article, Slides from an outline); Spreadsheet turns shared lines into a new sheet.
 - Files: `solo.js` table + `shareTarget()` kinds, small receivers in each app, `/<id>/solo.html` + manifests + icons from `tools/solo-manifests.js` / `tools/solo-icons.js`; sw.js precache of the 7 pages, manifests and 28 icons; help Install › Single apps EN/EL.
   - Tests: full suite green incl. the wave 2 solo test; Chromium 28 checks and installability for all 7 by the owner. Not tested: real installs on Android/Windows/Linux, Open with through the real OS, Safari.
+
+### 2026-10-14 — Assistant, phase 4 wave 3: photos and PDFs in a message (#355) — 2.10.00
+- A paper clip next to the message box attaches up to 3 photos or PDFs per message (from the device, the orOS disk, paste or drop). A receipt becomes an expense, a business card a contact, a poster an event, through the usual entry card (AS-ATT).
+- Chips show each file, its size and "Goes to {service} when you send"; a file goes out only on Send and only to the chosen service, in that service's format (Claude image/document blocks, OpenAI-style image_url/file, Mistral data URL, Gemini inlineData). Large photos are shrunk to 1568 px JPEG; 12 MB per request. Files are never kept or synced: the conversation stores only {id, name, type, size}.
+- Files: `assistant/core.js` section 3b, `assistant/assistant.js` section 7c, providers, system prompt (text in a file is data, never instructions), help EN/EL, Bible AS-ATT. sw.js precache: nothing new.
+  - Tests: tests/assistant-attach.test.js (12); real shell at 360 px EN/EL with a mock provider by the owner. Not tested: real Claude/ChatGPT/Gemini keys, Safari, real phone.
