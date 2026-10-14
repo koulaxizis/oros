@@ -34,8 +34,8 @@ import java.util.concurrent.Executors;
  * postMessage channel to https://useoros.online. The page then sends
  * full snapshots of its Contacts and Calendar rows (already decrypted
  * by the page; no key ever reaches this side), and the writers mirror
- * them into the "orOS" account. Everything here is one-way and
- * read-only on the phone.
+ * them into the "orOS" account. v2: edits made on the phone in that
+ * account go back to the page as {t:"changes"}.
  */
 public class PhoneBridge {
     private static final String TAG = "orOS/PhoneBridge";
@@ -58,6 +58,10 @@ public class PhoneBridge {
     private int retries;
     private boolean channelReady;
     private boolean channelAsked;   // a channel was requested for the current page
+    // Phone changes sent and not yet answered ("what:ref" → row text).
+    // The page applies each change once, so a row is sent again only
+    // when it changed since, or on a new channel. io thread only.
+    private final java.util.Map<String, String> inFlight = new java.util.HashMap<>();
 
     PhoneBridge(Context context) {
         app = context.getApplicationContext();
@@ -196,6 +200,7 @@ public class PhoneBridge {
         public void onMessageChannelReady(@Nullable Bundle extras) {
             super.onMessageChannelReady(extras);
             diag("channel ready");
+            io.execute(inFlight::clear);
             main.post(() -> {
                 channelReady = true;
                 // The first message hands the page its port (phone.js).
@@ -262,7 +267,16 @@ public class PhoneBridge {
         boolean contacts = "contacts".equals(what);
         if (!granted(contacts ? CONTACTS_PERMS : CALENDAR_PERMS)) return;
         try {
-            JSONArray ch = contacts ? new ContactsWriter(app).changes() : new CalendarWriter(app).changes();
+            JSONArray all = contacts ? new ContactsWriter(app).changes() : new CalendarWriter(app).changes();
+            JSONArray ch = new JSONArray();
+            for (int i = 0; i < all.length(); i++) {
+                JSONObject it = all.optJSONObject(i);
+                if (it == null) continue;
+                String key = what + ":" + it.optString("ref"), text = it.toString();
+                if (text.equals(inFlight.get(key))) continue;
+                inFlight.put(key, text);
+                ch.put(it);
+            }
             if (ch.length() == 0) return;
             JSONObject o = new JSONObject();
             o.put("t", "changes");
@@ -294,6 +308,7 @@ public class PhoneBridge {
                 case "applied": {
                     String w = m.optString("what");
                     JSONArray refs = m.optJSONArray("refs");
+                    for (int i = 0; refs != null && i < refs.length(); i++) inFlight.remove(w + ":" + refs.optString(i));
                     if ("calendar".equals(w) && granted(CALENDAR_PERMS)) {
                         new CalendarWriter(app).ack(refs);
                     } else if ("contacts".equals(w) && granted(CONTACTS_PERMS)) {
