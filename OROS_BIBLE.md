@@ -5962,3 +5962,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - phone.js + calendar/calendar.js: events you add, change or delete in the phone's "orOS" calendar now come back into orOS Calendar (two-way for your own events; feeds and holidays stay read-only on the phone).
 - android/: CalendarWriter reads phone-side changes and sends them over the bridge; the "orOS" calendar is now writable on the phone.
   - Tests: tests/phone.test.js (two-way rows, conflicts); Android build in CI. Real-phone test by Chris after this merge.
+
+### 2026-10-14 — Phone bridge: add to orOS from other Android apps (#318) — 1.87.00
+- android/ AddActivity: other Android apps can hand an event (calendar "insert" intents, .ics) to the orOS app; it opens orOS Calendar with the event ready to save.
+- phone.js + shell.js: orosPhone.ready() runs after the app list loads (next to orosFileOpen.ready()), so a pending add is delivered once Calendar can open; calendar/calendar.js receives it.
+  - Tests: full suite; Android build in CI. Real-phone test by Chris after this merge.
