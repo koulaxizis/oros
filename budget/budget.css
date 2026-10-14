@@ -662,3 +662,92 @@ dialog.mm-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
   .bk-check input, .bk-top input { width: 32px; height: 32px; margin-top: 0; }
   .bk-check { align-items: center; }
 }
+
+/* ---------- Wave 10: Plan tab, currencies, receipts, subscriptions, reports ---------- */
+.amt-row { display: flex; gap: 8px; align-items: flex-end; }
+.amt-row .fld:first-child { flex: 1 1 auto; }
+.amt-row .cur-fld { flex: 0 0 96px; }
+.cur-fld select { min-height: 48px; }
+.fx-line { margin-top: 4px; font-size: 12px; }
+.plan-sec { margin-bottom: 18px; }
+.plan-sec > .sub-h:first-child { margin-top: 4px; }
+.sec-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 16px 4px 6px; }
+.sec-head .sub-h { margin: 0; }
+.card .sec-head { margin: 0 0 8px; }
+.card .sec-head h2 { margin: 0; min-width: 0; }
+.env-intro .hint { margin-bottom: 10px; }
+.tba { display: flex; flex-direction: column; gap: 4px; }
+.tba-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.tba-k { font-size: 13px; font-weight: 800; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.6px; }
+.tba-v { font-size: 24px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.tba.pos .tba-v { color: var(--in-ink); }
+.tba.neg .tba-v, .tba.neg .tba-msg { color: var(--over); }
+.tba-msg { font-size: 14px; font-weight: 700; }
+.tba-acts { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+.env-list { list-style: none; display: flex; flex-direction: column; gap: 4px; }
+.env-av { display: flex; flex-direction: column; align-items: flex-end; flex-shrink: 0; }
+.env-av-v { font-size: 15px; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--in-ink); }
+.env.over .env-av-v, .env-av-k { color: var(--over); }
+.env-av-k { font-size: 11px; font-weight: 800; }
+.env .tx-note { white-space: normal; }
+.env-stop { text-align: right; margin-top: 6px; }
+.env-facts { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; margin: 0 0 12px; font-size: 13px; font-variant-numeric: tabular-nums; }
+.env-facts dt { color: var(--text-dim); }
+.env-facts dd { text-align: right; font-weight: 700; }
+.env-facts dd.neg { color: var(--over); }
+#bd-asg .mini { margin-bottom: 8px; }
+.goal .lim-head { margin-bottom: 8px; }
+.goal-name { flex: 1 1 auto; min-width: 0; min-height: 32px; text-align: left; background: none; border: none; font-weight: 800; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.goal-name:hover { color: var(--accent); }
+.goal .lim-state { font-weight: 700; }
+.sum2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.rec-view { margin-bottom: 10px; }
+.sub-amt { display: flex; flex-direction: column; align-items: flex-end; flex-shrink: 0; }
+.sub-y { font-size: 11px; color: var(--text-dim); white-space: nowrap; font-variant-numeric: tabular-nums; }
+#subs .tx-note { white-space: normal; }
+.sub-hour { margin-top: 14px; padding: 12px; background: var(--panel-bg); border: 1px solid var(--border); border-radius: 10px; }
+.sub-hour .fld { max-width: 240px; margin-bottom: 6px; }
+.legend.wrap { flex-wrap: wrap; gap: 6px 14px; }
+.yr-nav { display: inline-flex; gap: 6px; flex-shrink: 0; }
+.chart .stk { stroke: var(--panel-bg); stroke-width: 0.5; }
+.yr-table { margin-top: 10px; overflow-x: auto; max-width: 100%; border: 1px solid var(--border); border-radius: 8px; }
+.yr-table:focus-visible { outline: 2px solid var(--accent); }
+.yr-table table { border-collapse: collapse; font-size: 12px; font-variant-numeric: tabular-nums; min-width: 100%; }
+.yr-table th, .yr-table td { padding: 5px 7px; border-bottom: 1px solid var(--border); white-space: nowrap; text-align: left; font-weight: 400; }
+.yr-table thead th { font-weight: 800; color: var(--text-dim); position: sticky; top: 0; background: var(--panel-bg); }
+.yr-table tbody th { position: sticky; left: 0; background: var(--panel-bg); font-weight: 700; max-width: 9em; overflow: hidden; text-overflow: ellipsis; }
+.yr-table .num { text-align: right; }
+.yr-table .tot { font-weight: 800; }
+.yr-table .sumrow th, .yr-table .sumrow td { font-weight: 800; border-top: 2px solid var(--border); }
+.yr-table .sumrow.in td { color: var(--in-ink); }
+.nw-now { font-size: 18px; font-weight: 800; font-variant-numeric: tabular-nums; margin-bottom: 6px; }
+.nw-now.neg { color: var(--over); }
+.warn-t { color: var(--warn); }
+.acc-nw { display: flex; justify-content: space-between; gap: 8px; margin-top: 10px; padding: 10px 12px; border: 1px dashed var(--border); border-radius: 10px; font-weight: 800; font-size: 14px; }
+.acc-nw-v { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.acc-nw-v.neg { color: var(--over); }
+.rc-fld .rc-text { margin-top: 8px; }
+.rc-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.rc-th { width: 64px; height: 64px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); overflow: hidden; display: inline-flex; align-items: center; justify-content: center; padding: 0; font-size: 11px; color: var(--text-dim); }
+.rc-th img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.rc-add { font-size: 24px; font-weight: 700; color: var(--accent); border-style: dashed; }
+.rc-pdf { font-weight: 800; color: var(--text); font-size: 13px; }
+.rc-pdf.big { font-size: 28px; padding: 30px; text-align: center; }
+.rc-miss { padding: 2px; text-align: center; line-height: 1.2; }
+.rc-view img { display: block; max-width: 100%; max-height: 60vh; margin: 0 auto 10px; border-radius: 8px; }
+.rc-ta { width: 100%; min-height: 140px; padding: 8px 10px; font: inherit; font-size: 13px; color: inherit; background: var(--panel-bg); border: 1px solid var(--border); border-radius: 8px; resize: vertical; }
+.rc-ta:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); outline: none; }
+.rc-found { font-size: 14px; font-weight: 700; margin-top: 8px; min-height: 1.2em; }
+@media (max-width: 480px) {
+  .amt-row .cur-fld { flex-basis: 84px; }
+  .tba-v { font-size: 20px; }
+}
+@media (pointer: coarse) {
+  .goal-name { min-height: 44px; }
+  .rc-th { width: 72px; height: 72px; }
+}
+.env-av-v.zero { color: var(--text-dim); }
+@media (max-width: 480px) {
+  #tabs { gap: 2px; }
+  #tabs button { flex: 1 1 auto; padding: 6px 5px; }
+}

@@ -35,6 +35,7 @@
 
   <nav id="tabs" role="tablist">
     <button type="button" role="tab" id="tab-list" aria-controls="p-list" data-i18n="tab.list">Entries</button>
+    <button type="button" role="tab" id="tab-plan" aria-controls="p-plan" data-i18n="tab.plan">Plan</button>
     <button type="button" role="tab" id="tab-charts" aria-controls="p-charts" data-i18n="tab.charts">Charts</button>
     <button type="button" role="tab" id="tab-limits" aria-controls="p-limits" data-i18n="tab.limits">Limits</button>
     <button type="button" role="tab" id="tab-rec" aria-controls="p-rec" data-i18n="tab.rec">Recurring</button>
@@ -59,10 +60,16 @@
       <p class="hint empty" id="list-empty" hidden></p>
     </section>
 
+    <section id="p-plan" role="tabpanel" aria-labelledby="tab-plan" hidden>
+      <div id="plan"></div>
+    </section>
+
     <section id="p-charts" role="tabpanel" aria-labelledby="tab-charts" hidden>
       <div class="card"><h2 data-i18n="ch.donut">Expenses by category</h2><div id="ch-donut"></div></div>
       <div class="card"><h2 data-i18n="ch.bars">Income and expenses, 12 months</h2><div id="ch-bars"></div></div>
       <div class="card"><h2 data-i18n="ch.line">Balance at the end of each month</h2><div id="ch-line"></div></div>
+      <div class="card" id="ch-year" hidden></div>
+      <div class="card" id="ch-nw" hidden></div>
     </section>
 
     <section id="p-limits" role="tabpanel" aria-labelledby="tab-limits" hidden>
@@ -70,9 +77,11 @@
     </section>
 
     <section id="p-rec" role="tabpanel" aria-labelledby="tab-rec" hidden>
+      <div id="rec-head"></div>
       <button type="button" class="txt-btn" id="rec-add"></button>
       <p class="hint empty" id="rec-empty" data-i18n="rec.empty">Rent, salary, subscriptions: add them once and they appear on their day.</p>
       <ul id="rec" class="day-list"></ul>
+      <div id="subs" hidden></div>
     </section>
   </main>
 
@@ -85,6 +94,9 @@
   <script src="payments.js?v=1.98.00"></script>
   <script src="bank.js?v=1.98.00"></script>
   <script src="bankui.js?v=1.98.00"></script>
+  <script src="../units/core.js?v=1.98.00"></script>
+  <script src="plan.js?v=1.98.00"></script>
+  <script src="planui.js?v=1.98.00"></script>
   <script src="budget.js?v=1.98.00"></script>
 
 </body>

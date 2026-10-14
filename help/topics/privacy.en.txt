@@ -29,6 +29,7 @@ orOS itself runs from your device, but some apps need the internet for what they
 - [Atelier](app:atelier): Openverse, Wikimedia Commons, Iconify and Fontsource for free photos, icons and fonts; Pixabay and Pexels only with your own key.
 - [Media Shelf](app:shelf): Open Library and MusicBrainz, only when you tap `Find details online`. Only the title and creator you typed are sent.
 - [Unit Converter](app:units): Frankfurter, for the European Central Bank's currency rates, only when you open `Currency` or tap `Update rates`.
+- [Budget](app:budget): the same Frankfurter rates, only when an account or an entry is in another currency (at most every 6 hours). Nothing about your money is sent.
 - [Public Domain](app:pubdomain): Wikidata, for authors and their works.
 - [Reader](app:feeds) and [Podcasts](app:podcasts): the sites whose feeds you add.
 - [Mail](app:mail): your own mail provider, through the orOS mail relay, which passes your mail through and keeps nothing.

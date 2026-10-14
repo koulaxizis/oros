@@ -315,16 +315,16 @@ test("newer fields on items and settings survive a merge on this version", () =>
 });
 
 test("collections of a newer version merge LWW with their own tombstones", () => {
-  const a = D({ goal: [{ id: "cash", m: 5, n: "Cash" }, { id: "card", m: 5, n: "Card" }], tombs: { "goal:card": 6 } });
-  const b = D({ goal: [{ id: "cash", m: 7, n: "Wallet" }], plan: [{ id: "x1", m: 1, a: 100, f: "cash", t: "card" }] });
+  const a = D({ wish: [{ id: "cash", m: 5, n: "Cash" }, { id: "card", m: 5, n: "Card" }], tombs: { "wish:card": 6 } });
+  const b = D({ wish: [{ id: "cash", m: 7, n: "Wallet" }], plan: [{ id: "x1", m: 1, a: 100, f: "cash", t: "card" }] });
   const ab = B.mergeBudget(a, b), ba = B.mergeBudget(b, a);
   assert.equal(canon(ab), canon(ba));
   assert.equal(canon(B.mergeBudget(ab, ab)), canon(ab));
-  assert.deepEqual(ab.goal, [{ id: "cash", m: 7, n: "Wallet" }]);
+  assert.deepEqual(ab.wish, [{ id: "cash", m: 7, n: "Wallet" }]);
   assert.equal(ab.plan.length, 1);
-  assert.equal(ab.tombs["goal:card"], 6);
+  assert.equal(ab.tombs["wish:card"], 6);
   // key order is canonical whatever the order of the inputs
-  assert.deepEqual(Object.keys(ab), ["ver", "tx", "cats", "bud", "rec", "acc", "xfer", "prof", "rule", "goal", "plan", "set", "tombs"]);
+  assert.deepEqual(Object.keys(ab), ["ver", "tx", "cats", "bud", "rec", "acc", "xfer", "asg", "goal", "prof", "rule", "plan", "wish", "set", "tombs"]);
   // not a collection: bad name, not an array, bad items
   const n = B.mergeBudget(D({ BAD: [{ id: "x", m: 1 }], toolongname: [{ id: "x", m: 1 }], obj: { a: 1 }, zz: [null, { id: "UP", m: 1 }, { id: "ok", m: -1 }] }), B.emptyData());
   assert.equal("BAD" in n || "toolongname" in n || "obj" in n, false);
@@ -395,5 +395,5 @@ test("accounts and transfers: merge stays canonical, deletes stick", () => {
   assert.equal(canon(B.mergeBudget(ab, ab)), canon(ab));
   assert.equal(ab.acc[0].n, "Wallet");
   assert.deepEqual(ab.xfer, []);
-  assert.deepEqual(Object.keys(B.emptyData()), ["ver", "tx", "cats", "bud", "rec", "acc", "xfer", "prof", "rule", "set", "tombs"]);
+  assert.deepEqual(Object.keys(B.emptyData()), ["ver", "tx", "cats", "bud", "rec", "acc", "xfer", "asg", "goal", "prof", "rule", "set", "tombs"]);
 });

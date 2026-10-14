@@ -548,6 +548,11 @@
     meals:    function (what) {
       if (what === 'pantry' && typeof window.__orosOpenAt === 'function') window.__orosOpenAt('meals', { pantry: true });
     },
+    // Budget — "budget:sub:<recId>": a subscription reminder opens
+    // Recurring › Subscriptions with that entry. Generic shell deep link.
+    budget:   function (id) {
+      if (/^[a-z0-9]{1,24}$/.test(String(id)) && typeof window.__orosOpenAt === 'function') window.__orosOpenAt('budget', { sub: String(id) });
+    },
     // Garage — "garage:upcoming" (reminder) or "garage:<id>".
     garage:   function (target) { if (typeof window.__orosOpenGarage === 'function') window.__orosOpenGarage(target); },
     // Pet Health Book — "petcare:today" (daily reminder) or "petcare:<petId>".

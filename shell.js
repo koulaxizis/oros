@@ -1120,6 +1120,7 @@
       tickSafe("invoicesCheckTick", invoicesCheckTickThrottled); // Invoices wave 2: due / overdue reminder (60s throttle)
       tickSafe("stockCheckTick", stockCheckTickThrottled); // Stock: low-stock notice (60s throttle)
       tickSafe("mealsCheckTick", mealsCheckTickThrottled); // Meal Planner: pantry best-before reminder (60s throttle)
+      tickSafe("budgetCheckTick", budgetCheckTickThrottled); // Budget: subscription charge reminders (60s throttle)
       tickSafe("crmCheckTick", crmCheckTickThrottled);     // CRM: follow-up reminders (60s throttle)
       tickSafe("keepCheckTick", keepCheckTickThrottled);   // Contacts: keep in touch, "reach out" (60s throttle)
       tickSafe("garageCheckTick", garageCheckTickThrottled); // Garage: renewals + service reminder (60s throttle)
@@ -1520,6 +1521,62 @@
     if (now - mealsLastTick < 60000) return;
     mealsLastTick = now;
     mealsCheckTick();
+  }
+
+  // Budget — subscription reminders: "Netflix: 12,99 € tomorrow".
+  // Reads "oros-budget-data" directly (works with the app CLOSED) and
+  // asks budget/plan.js (loaded by index.html, the SAME file the app
+  // runs) which recurring expenses with a reminder ("nd" days before,
+  // synced) charge within their lead. From the device-local hour on
+  // (oros-budget-prefs.nh, default 9, -1 = off on this device); one
+  // notice per charge (the key names the entry and the charge date).
+  // No reminders set → silent (SH-B7).
+  var BUDGET_DATA_KEY = "oros-budget-data";
+  function budgetCheckTick() {
+    var Core = window.OrosBudgetPlan;
+    if (!Core) return;                                  // stale bundle — silent
+    var raw, prefs;
+    try {
+      prefs = JSON.parse(localStorage.getItem("oros-budget-prefs")) || {};
+      var hour = typeof prefs.nh === "number" && prefs.nh >= -1 && prefs.nh <= 23 ? Math.floor(prefs.nh) : 9;
+      if (hour < 0 || new Date().getHours() < hour) return;
+      raw = JSON.parse(localStorage.getItem(BUDGET_DATA_KEY));
+    } catch (e) { return; }
+    if (!raw || !Array.isArray(raw.rec) || !raw.rec.length) return;
+    var today = sysYmd();
+    var due = Core.subsDue(raw, today);
+    if (!due.length) return;
+    var N = window.orosNotifs;
+    if (!(N && typeof N.emit === "function")) return;
+    var el = state.lang === "el";
+    var cur = raw.set && typeof raw.set.cur === "string" && /^[A-Z]{3}$/.test(raw.set.cur) ? raw.set.cur : "EUR";
+    var fmt;
+    try { fmt = new Intl.NumberFormat(el ? "el-GR" : "en-GB", { style: "currency", currency: cur }); }
+    catch (e) { fmt = { format: function (v) { return v.toFixed(2) + " " + cur; } }; }
+    var names = {};
+    (Array.isArray(raw.cats) ? raw.cats : []).forEach(function (c) { if (c && typeof c.name === "string" && c.name) names[c.id] = c.name; });
+    var title = window.t("app.budget");
+    if (title === "app.budget") title = "Budget";       // missing-key fallback
+    due.forEach(function (d) {
+      var name = String(d.n || names[d.c] || (el ? "Πάγιο έξοδο" : "Recurring expense")).slice(0, 80);
+      var when = d.days === 0 ? (el ? "σήμερα" : "today") : d.days === 1 ? (el ? "αύριο" : "tomorrow")
+               : (el ? "στις " : "on ") + d.next.slice(8, 10) + "/" + d.next.slice(5, 7);
+      N.emit({
+        ns: "budget",
+        key: d.key,
+        type: "reminder",
+        title: title,
+        body: name + ": " + fmt.format(d.a / 100) + " " + when,
+        deepLink: "budget:sub:" + d.id
+      });
+    });
+  }
+  var budgetLastTick = 0;
+  function budgetCheckTickThrottled() {
+    var now = Date.now();
+    if (now - budgetLastTick < 60000) return;
+    budgetLastTick = now;
+    budgetCheckTick();
   }
 
   var stockLastTick = 0;
@@ -5202,7 +5259,7 @@
           en: "Authors and works (Public Domain)", el: "Δημιουργοί και έργα (Κοινό κτήμα)" },
         { name: "Frankfurter", url: "https://frankfurter.dev/",
           by: "Hakan Ensari; rates: European Central Bank", lic: { en: "MIT (software), ECB reference rates (data)", el: "MIT (λογισμικό), ισοτιμίες αναφοράς ΕΚΤ (δεδομένα)" },
-          en: "Exchange rates (Unit Converter)", el: "Ισοτιμίες (Μετατροπέας μονάδων)" },
+          en: "Exchange rates (Unit Converter, Budget)", el: "Ισοτιμίες (Μετατροπέας μονάδων, Έσοδα & Έξοδα)" },
         { name: "Wiktionary", url: "https://en.wiktionary.org/",
           by: "Wiktionary editors, Wikimedia Foundation", lic: "CC BY-SA 4.0 (text)",
           en: "Word meanings (Library look-up)", el: "Σημασίες λέξεων (Βιβλιοθήκη)" },
