@@ -787,12 +787,17 @@
       "todo (complete, reopen, reschedule: date, update: title / date / note, delete) · " +
       "calendar (reschedule: date / start / end, update: title / date / start / end / location / note, delete) · " +
       "budget (reschedule: date, update: amount / date / category / note, delete) · " +
-      "bookmarks (update: title / note, delete). One item per call; never guess a ref.",
+      "bookmarks (update: title / note, delete) · " +
+      "contacts (update: title = name / org / phone or email = add one / date = birthday / note, delete) · " +
+      "kanban (reschedule: date = due, update: title / date / note, move: column, delete) · " +
+      "shelf (update: title / note / status, delete) · " +
+      "habits (complete / reopen = today's tick of a yes/no habit, update: title) · " +
+      "plants (complete = watered today, update: title / note). One item per call; never guess a ref.",
     params: {
       type: "object",
       properties: {
         ref: { type: "string", description: "The item's ref from search_data or app_summary, e.g. r3." },
-        action: { type: "string", "enum": ["complete", "reopen", "reschedule", "update", "delete"] },
+        action: { type: "string", "enum": ["complete", "reopen", "reschedule", "update", "move", "delete"] },
         title: { type: "string", description: "New title (task text, event title, bookmark title)." },
         date: { type: "string", description: "New date YYYY-MM-DD (task due date, event day, entry date)." },
         start: { type: "string", description: "calendar: new start time HH:MM (24h)." },
@@ -800,6 +805,11 @@
         location: { type: "string", description: "calendar: new location." },
         note: { type: "string", description: "New note (replaces the old one; empty clears it)." },
         amount: { type: "number", description: "budget: new amount in currency units, e.g. 12.5." },
+        org: { type: "string", description: "contacts: new organisation / company." },
+        phone: { type: "string", description: "contacts: a phone number to add (the old ones stay)." },
+        email: { type: "string", description: "contacts: an e-mail address to add (the old ones stay)." },
+        column: { type: "string", description: "kanban move: the name of the column to move the card to." },
+        status: { type: "string", "enum": ["want", "now", "done", "dropped"], description: "shelf: want to watch/read, watching/reading now, finished, dropped." },
         category: { type: "string", "enum": ["groceries", "eating-out", "bills", "home", "transport", "health", "fun", "clothes", "gift", "salary", "freelance", "other"] }
       },
       required: ["ref", "action"]

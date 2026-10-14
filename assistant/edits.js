@@ -25,6 +25,15 @@
 //                 sorted by id, tombs sorted (canonical JSON)
 //       bookmarks items LWW on it.modified, tombstones deleted {id: ts},
 //                 keys sorted (BM-1)
+//     Phase 4 wave 2 (each section below says its app's contract):
+//       contacts  per-field stamps c.fm + c.mtime (CT-PF, merge.js
+//                 restamp), tombstones deleted [{ id, mtime }]
+//       kanban    card field groups c.fm + p/om order stamps, column
+//                 arrival rules as tools.js applyArrival, tombstones
+//                 board.deleted, canonical order as model.js canonState
+//       shelf     items / sessions LWW on m, tombstones by id, sorted
+//       habits    model.js setTick on today's local date
+//       plants    a water log entry as logTask, tombstones, sorted
 //     Every stamp is max(now, old + 1), so the change wins the merge
 //     on every device. The Assistant is the running app, so the app
 //     whose data changes is closed (one app frame): what it stores is
@@ -43,23 +52,36 @@
 (function (root) {
   "use strict";
 
-  var ACTIONS = ["complete", "reopen", "reschedule", "update", "delete"];
+  var ACTIONS = ["complete", "reopen", "reschedule", "update", "move", "delete"];
+  // Media Shelf statuses by the names the model knows.
+  var STATUS_NAMES = ["want", "now", "done", "dropped"];
   var APPS = {
     todo:      { key: "oros-todo-data",      actions: ["complete", "reopen", "reschedule", "update", "delete"] },
     calendar:  { key: "oros-calendar-data",  actions: ["reschedule", "update", "delete"] },
     budget:    { key: "oros-budget-data",    actions: ["reschedule", "update", "delete"] },
-    bookmarks: { key: "oros-bookmarks-data", actions: ["update", "delete"] }
+    bookmarks: { key: "oros-bookmarks-data", actions: ["update", "delete"] },
+    // Phase 4 wave 2
+    contacts:  { key: "oros-contacts-data",  actions: ["update", "delete"] },
+    kanban:    { key: "oros-kanban-data",    actions: ["reschedule", "update", "move", "delete"] },
+    shelf:     { key: "oros-shelf-data",     actions: ["update", "delete"] },
+    habits:    { key: "oros-habits-data",    actions: ["complete", "reopen", "update"] },
+    plants:    { key: "oros-plants-data",    actions: ["complete", "update"] }
   };
-  var APP_IDS = ["todo", "calendar", "budget", "bookmarks"];
+  var APP_IDS = ["todo", "calendar", "budget", "bookmarks", "contacts", "kanban", "shelf", "habits", "plants"];
   // What each app's update may set (the tool's argument names).
   var SETTABLE = {
     todo:      { title: 1, date: 1, note: 1 },
     calendar:  { title: 1, date: 1, start: 1, end: 1, location: 1, note: 1 },
     budget:    { amount: 1, date: 1, category: 1, note: 1 },
-    bookmarks: { title: 1, note: 1 }
+    bookmarks: { title: 1, note: 1 },
+    contacts:  { title: 1, org: 1, phone: 1, email: 1, date: 1, note: 1 },
+    kanban:    { title: 1, date: 1, note: 1 },
+    shelf:     { title: 1, note: 1, status: 1 },
+    habits:    { title: 1 },
+    plants:    { title: 1, note: 1 }
   };
   // The diff's fields, in the order the card shows them.
-  var VIEW_ORDER = ["title", "kind", "done", "amount", "date", "due", "start", "end", "category", "location", "url", "note"];
+  var VIEW_ORDER = ["title", "column", "kind", "status", "done", "watered", "org", "phone", "email", "birthday", "amount", "date", "due", "start", "end", "category", "location", "url", "labels", "subtasks", "position", "note"];
   // Budget's ready categories by the names the model knows (same
   // table as core.js BUDGET_CATS).
   var BUDGET_CATS = {
@@ -147,7 +169,34 @@
       if (CAT_NAMES.indexOf(args.category) < 0) return bad("category must be one of: " + CAT_NAMES.join(", ") + ".");
       set.category = args.category;
     }
+    // Phase 4 wave 2 fields (Contacts, Kanban, Media Shelf).
+    if (has(args, "org") && typeof args.org === "string") set.org = line(args.org, 80);
+    if (has(args, "phone") && args.phone !== null && args.phone !== undefined && args.phone !== "") {
+      var ph = line(args.phone, 40);
+      if (!/\d/.test(ph)) return bad("phone must contain digits.");
+      set.phone = ph;
+    }
+    if (has(args, "email") && args.email !== null && args.email !== undefined && args.email !== "") {
+      var em = line(args.email, 120);
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) return bad("email must be an e-mail address.");
+      set.email = em;
+    }
+    if (has(args, "column") && args.column !== null && args.column !== undefined && args.column !== "") {
+      var co = line(args.column, 120);
+      if (!co) return bad("column must not be empty.");
+      set.column = co;
+    }
+    if (has(args, "status") && args.status !== null && args.status !== undefined && args.status !== "") {
+      if (STATUS_NAMES.indexOf(args.status) < 0) return bad("status must be one of: " + STATUS_NAMES.join(", ") + ".");
+      set.status = args.status;
+    }
     var keys = Object.keys(set);
+    if (action === "move") {
+      if (!set.column) return bad("move needs the column to move the card to.");
+      if (keys.length > 1) return bad("move changes only the column; use update for the rest.");
+      return { ok: true, ref: ref, action: action, set: set };
+    }
+    if (set.column) return bad("column is only for move.");
     if (action === "complete" || action === "reopen" || action === "delete") {
       if (keys.length) return bad(action + " takes only ref; leave out " + keys.join(", ") + ".");
     } else if (action === "reschedule") {
@@ -584,8 +633,849 @@
     return { ok: true };
   }
 
-  var CHANGE = { todo: todoChange, calendar: calChange, budget: budgetChange, bookmarks: bookmarksChange };
-  var UNDO = { todo: todoUndo, calendar: calUndo, budget: budgetUndo, bookmarks: bookmarksUndo };
+  // ---------- 7. Contacts ----------
+  // oros-contacts-data { ver, labels, contacts: [c], deleted: [{ id, mtime }] }.
+  // Per-field stamps c.fm + c.mtime (CT-PF, contacts/merge.js): the
+  // app stamps every changed field in saveState → merge.restamp; the
+  // Assistant writes with the app closed, so it stamps here the same
+  // way (ctRestamp = merge.js restamp). Life against a tombstone is
+  // decided by c.mtime > deleted[].mtime (contacts.js mergeContacts).
+  // phone / email ADD a value the contact doesn't have yet; nothing is
+  // ever taken away from the lists. date = the birthday.
+  // A delete goes through like the app's own: the phone bridge
+  // (BR-PHONE) mirrors the whole slice, so the contact leaves the
+  // phone's "orOS" account on the next snapshot, exactly as when it
+  // is deleted in Contacts; Undo brings it back there too.
+  var CT_OLD = ["given", "middle", "family", "nickname", "org", "jobTitle",
+    "phones", "emails", "addresses", "websites", "im", "events", "relations",
+    "labelIds", "starred", "note", "photo"];
+  var CT_NEW = ["keep", "seen"];
+  var CT_FIELDS = CT_OLD.concat(CT_NEW);
+  var CT_STAMPS = CT_FIELDS.concat(["log"]);
+  // what this adapter may change (and Undo puts back)
+  var CT_RAW = ["given", "middle", "family", "org", "phones", "emails", "events", "note"];
+  function ctNum(v) { return typeof v === "number" && isFinite(v); }
+  function ctJ(v) { return JSON.stringify(v === undefined ? null : v); }
+  function ctMaxStamp(c) {
+    var mx = 0;
+    if (isObj(c.fm)) CT_STAMPS.forEach(function (f) { if (ctNum(c.fm[f]) && c.fm[f] > mx) mx = c.fm[f]; });
+    return mx;
+  }
+  function ctOldCode(c) { return isObj(c.fm) && (c.mtime || 0) > ctMaxStamp(c); }
+  function ctFieldStamp(c, f) {
+    if (CT_NEW.indexOf(f) !== -1 || f === "log") {
+      if (f !== "log" && !has(c, f)) return -1;
+      return (isObj(c.fm) && ctNum(c.fm[f])) ? c.fm[f] : 0;
+    }
+    if (!isObj(c.fm) || ctOldCode(c)) return c.mtime || 0;
+    return ctNum(c.fm[f]) ? c.fm[f] : 0;
+  }
+  // merge.js restamp(prev, cur, now) for a cur whose mtime the caller
+  // left as it was: the changed fields get one stamp newer than every
+  // stamp of prev, the others keep theirs.
+  function ctRestamp(prev, cur, now) {
+    var changed = CT_FIELDS.filter(function (f) { return ctJ(prev[f]) !== ctJ(cur[f]) || has(prev, f) !== has(cur, f); });
+    if (!changed.length) return false;
+    var fm = {};
+    CT_STAMPS.forEach(function (f) {
+      var st = ctFieldStamp(prev, f);
+      if (st >= 0 && (f !== "log" || st > 0)) fm[f] = st;
+    });
+    var s = stampAfter(now, Math.max(prev.mtime || 0, ctMaxStamp(prev)));
+    changed.forEach(function (f) { fm[f] = s; });
+    CT_NEW.forEach(function (f) { if (!has(cur, f)) delete fm[f]; });
+    cur.fm = fm;
+    cur.mtime = s;
+    return true;
+  }
+  // merge.js restamp(null, cur): a contact put back whole speaks with
+  // one stamp for every field it has.
+  function ctStampAll(c, s) {
+    var fm = {};
+    CT_FIELDS.forEach(function (f) { if (CT_NEW.indexOf(f) === -1 || has(c, f)) fm[f] = s; });
+    if ((Array.isArray(c.log) && c.log.length) || (isObj(c.logDel) && Object.keys(c.logDel).length)) fm.log = s;
+    c.mtime = s;
+    c.fm = fm;
+  }
+  function ctTomb(d, id) {
+    var t = -1;
+    (Array.isArray(d.deleted) ? d.deleted : []).forEach(function (x) { if (isObj(x) && x.id === id && ctNum(x.mtime) && x.mtime > t) t = x.mtime; });
+    return t;
+  }
+  function ctFind(d, target) {
+    if (!isObj(d) || !Array.isArray(d.contacts)) return null;
+    var id = typeof target === "string" ? target : (isObj(target) && typeof target.id === "string" ? target.id : "");
+    if (!id) return null;
+    for (var i = 0; i < d.contacts.length; i++) {
+      var c = d.contacts[i];
+      if (isObj(c) && c.id === id) {
+        var t = ctTomb(d, id);
+        if (t >= 0 && !((c.mtime || 0) > t)) return null;      // dead by its tombstone
+        return { c: c, i: i };
+      }
+    }
+    return null;
+  }
+  function ctStr(v) { return typeof v === "string" ? v.trim() : ""; }
+  function ctName(c) {
+    var n = [ctStr(c.given), ctStr(c.middle), ctStr(c.family)].filter(Boolean).join(" ");
+    return n || ctStr(c.nickname) || ctStr(c.org);
+  }
+  function ctVals(arr) {
+    return (Array.isArray(arr) ? arr : []).map(function (x) { return isObj(x) ? ctStr(x.v) : ""; }).filter(Boolean);
+  }
+  function ctBday(c) {
+    var ev = (Array.isArray(c.events) ? c.events : []).filter(function (e) { return isObj(e) && e.type === "birthday" && typeof e.day === "string"; })[0];
+    if (!ev) return "";
+    return (typeof ev.year === "number" ? String(ev.year) : "-") + "-" + ev.day;
+  }
+  function ctView(c) {
+    return {
+      title: ctName(c),
+      org: ctStr(c.org),
+      phone: ctVals(c.phones).join(", "),
+      email: ctVals(c.emails).join(", "),
+      birthday: ctBday(c),
+      note: typeof c.note === "string" ? c.note : ""
+    };
+  }
+  function ctDigits(s) { return String(s || "").replace(/\D+/g, ""); }
+  // "+30 69…" and "69…" are the same number (8+ digits in common at the end)
+  function ctSamePhone(a, b) {
+    var x = ctDigits(a), y = ctDigits(b);
+    if (!x || !y) return false;
+    if (x === y) return true;
+    var lo = x.length < y.length ? x : y, hi = lo === x ? y : x;
+    return lo.length >= 8 && hi.slice(-lo.length) === lo;
+  }
+  // contacts.js sanitizeContact event order: type, then day
+  function ctEvSort(a, b) { return a.type < b.type ? -1 : (a.type > b.type ? 1 : (a.day < b.day ? -1 : 1)); }
+
+  function contactsChange(d, target, ch, now) {
+    var h = ctFind(d, target);
+    if (!h) return bad("That contact is no longer in Contacts.");
+    var c = h.c, before = ctView(c), title = before.title || before.phone || before.email;
+    if (ch.action !== "update" && ch.action !== "delete") return bad("A contact can only be updated or deleted.");
+    if (ch.action === "delete") {
+      var copy = clone(c);
+      d.contacts.splice(h.i, 1);
+      var tm = stampAfter(now, Math.max(c.mtime || 0, ctMaxStamp(c), ctTomb(d, c.id)));
+      d.deleted = (Array.isArray(d.deleted) ? d.deleted : []).filter(function (x) { return !(isObj(x) && x.id === c.id); });
+      d.deleted.push({ id: c.id, mtime: tm });
+      return { ok: true, title: title, before: before, after: null, del: true,
+               undo: { t: "del", app: "contacts", index: h.i, c: copy } };
+    }
+    var s = ch.set;
+    var notOk = Object.keys(s).filter(function (k) { return !SETTABLE.contacts[k]; });
+    if (notOk.length) return bad("A contact has no " + notOk.join(", ") + " here (date is the birthday).");
+    var prev = clone(c);
+    if (has(s, "title") && s.title !== before.title) {
+      var w = s.title.split(" ").filter(Boolean), g, m = "", f = "";
+      if (w.length === 1) g = w[0];
+      else if (w.length >= 3 && ctStr(c.middle)) { g = w[0]; f = w[w.length - 1]; m = w.slice(1, -1).join(" "); }
+      else { f = w.pop(); g = w.join(" "); }
+      if (g.length > 60 || m.length > 60 || f.length > 60) return bad("That name is too long for Contacts (60 characters per part).");
+      c.given = g; c.middle = m; c.family = f;
+    }
+    if (has(s, "org")) c.org = s.org.slice(0, 80);
+    if (!ctName(c)) return bad("A contact needs a name or a company; it would have neither.");
+    if (has(s, "phone")) {
+      var ph = s.phone.slice(0, 40);
+      if (!ctVals(c.phones).some(function (v) { return ctSamePhone(v, ph); })) {
+        c.phones = (Array.isArray(c.phones) ? c.phones.slice() : []).concat([{ v: ph, type: "mobile" }]);
+      }
+    }
+    if (has(s, "email")) {
+      var em = s.email.slice(0, 120), low = em.toLowerCase();
+      if (!ctVals(c.emails).some(function (v) { return v.toLowerCase() === low; })) {
+        c.emails = (Array.isArray(c.emails) ? c.emails.slice() : []).concat([{ v: em, type: "home" }]);
+      }
+    }
+    if (has(s, "date")) {
+      var y = +s.date.slice(0, 4), day = s.date.slice(5);
+      if (y < 1850 || y > 2200) return bad("A birthday year must be between 1850 and 2200.");
+      var evs = (Array.isArray(c.events) ? c.events : []).map(clone), done = false;
+      evs.forEach(function (e) {
+        if (done || !isObj(e) || e.type !== "birthday") return;
+        e.day = day; e.year = y; done = true;
+      });
+      if (!done) evs.push({ day: day, year: y, type: "birthday", label: "" });
+      if (ctJ(evs) !== ctJ(c.events)) c.events = evs.sort(ctEvSort);
+    }
+    if (has(s, "note")) c.note = s.note.slice(0, 500);
+    if (!ctRestamp(prev, c, now)) {
+      CT_RAW.forEach(function (k) { if (has(prev, k)) c[k] = prev[k]; else delete c[k]; });
+      return bad("Nothing would change: the contact already looks like that.");
+    }
+    var p = {}, n = {};
+    CT_RAW.forEach(function (k) {
+      if (ctJ(prev[k]) === ctJ(c[k])) return;
+      p[k] = has(prev, k) ? clone(prev[k]) : null;
+      n[k] = clone(c[k]);
+    });
+    return { ok: true, title: title, before: before, after: ctView(c), del: false,
+             undo: { t: "set", app: "contacts", target: c.id, prev: p, next: n } };
+  }
+  function contactsUndo(d, u, now) {
+    if (!isObj(d) || !Array.isArray(d.contacts)) return bad("Contacts has no contacts.");
+    if (u.t === "del") {
+      if (!isObj(u.c) || typeof u.c.id !== "string" || !ID_RE.test(u.c.id)) return bad("bad undo");
+      for (var j = 0; j < d.contacts.length; j++) if (isObj(d.contacts[j]) && d.contacts[j].id === u.c.id) return bad("The contact is back already.");
+      var c = clone(u.c);
+      ctStampAll(c, stampAfter(now, Math.max(c.mtime || 0, ctMaxStamp(c), ctTomb(d, c.id))));
+      var at = Math.max(0, Math.min(d.contacts.length, Math.floor(u.index) || 0));
+      d.contacts.splice(at, 0, c);
+      if (Array.isArray(d.deleted)) d.deleted = d.deleted.filter(function (x) { return !(isObj(x) && x.id === c.id); });
+      return { ok: true };
+    }
+    var h = ctFind(d, u.target);
+    if (!h) return bad("That contact is no longer in Contacts.");
+    var keys = Object.keys(u.next || {}).filter(function (k) { return CT_RAW.indexOf(k) >= 0; });
+    for (var i = 0; i < keys.length; i++) {
+      if (ctJ(h.c[keys[i]]) !== ctJ(u.next[keys[i]])) return bad("The contact changed since; nothing was undone.");
+    }
+    var prev = clone(h.c);
+    keys.forEach(function (k) {
+      var v = u.prev ? u.prev[k] : null;
+      if (v === null || v === undefined) delete h.c[k]; else h.c[k] = clone(v);
+    });
+    ctRestamp(prev, h.c, now);
+    return { ok: true };
+  }
+
+  // ---------- 7. Kanban ----------
+  // kanban/model.js (K1): per-field card stamps card.fm (groups t text,
+  // n notes, d due, p column, …; fm.m = the card's mtime, else the card
+  // counts as an older whole-card write), stampCard = max(now, mtime + 1);
+  // tombstones per board deleted { cardId: ts } (a card is alive while
+  // mtime > ts); the column order stamp col.om; the stored copy is the
+  // canonical form (canonState: CARD/COL/BOARD key order, pos numbered,
+  // fm and tombstone keys sorted). A Kanban card has no done flag.
+  var KB_GROUPS = ["a", "c", "d", "k", "l", "n", "p", "s", "t", "x"];
+  var KB_CARD_KEYS = ["id", "text", "notes", "due", "labels", "subtasks", "info", "mtime", "pos"];
+  var KB_COL_KEYS = ["id", "name", "mtime", "om", "pos", "cards"];
+  var KB_BOARD_KEYS = ["id", "name", "archived", "color", "mtime", "om", "pos", "deleted", "labels", "columns"];
+  function kbOrder(obj, keys) {
+    var out = {};
+    keys.forEach(function (k) { if (obj[k] !== undefined) out[k] = obj[k]; });
+    Object.keys(obj).sort().forEach(function (k) { if (keys.indexOf(k) < 0 && obj[k] !== undefined) out[k] = obj[k]; });
+    return out;
+  }
+  // The board as canonState writes it (only key order, pos, sorted maps).
+  function kbCanon(d, bi) {
+    var b = d.boards[bi];
+    b.deleted = sortedObj(isObj(b.deleted) ? b.deleted : {});
+    b.columns = b.columns.map(function (col, ci) {
+      if (!isObj(col)) return col;
+      col.pos = ci;
+      col.cards = (Array.isArray(col.cards) ? col.cards : []).map(function (c, ki) {
+        if (!isObj(c)) return c;
+        c.pos = ki;
+        if (isObj(c.fm)) c.fm = sortedObj(c.fm);
+        return kbOrder(c, KB_CARD_KEYS);
+      });
+      return kbOrder(col, KB_COL_KEYS);
+    });
+    d.boards[bi] = kbOrder(b, KB_BOARD_KEYS);
+  }
+  function kbFmValid(c) { return isObj(c.fm) && typeof c.fm.m === "number" && c.fm.m === (c.mtime || 0); }
+  // model.js stampCard: an older card gets its fm first (every group at
+  // its old mtime), then the edited groups (null = all) take the stamp.
+  function kbStamp(c, groups, now, floor) {
+    var t = stampAfter(now, Math.max(c.mtime || 0, floor || 0));
+    if (!kbFmValid(c) || !groups) {
+      var base = groups ? (c.mtime || 0) : t;
+      c.fm = {};
+      KB_GROUPS.forEach(function (g) { c.fm[g] = base; });
+    }
+    (groups || []).forEach(function (g) { c.fm[g] = t; });
+    c.mtime = t;
+    c.fm.m = t;
+    return t;
+  }
+  function kbBoard(d, id) {
+    if (!isObj(d) || !Array.isArray(d.boards) || typeof id !== "string") return -1;
+    for (var i = 0; i < d.boards.length; i++) {
+      var b = d.boards[i];
+      if (isObj(b) && b.id === id && Array.isArray(b.columns)) return i;
+    }
+    return -1;
+  }
+  // The card by id anywhere on its board (it may have moved column).
+  function kbFind(d, target) {
+    if (!isObj(target) || typeof target.card !== "string") return null;
+    var bi = kbBoard(d, target.board);
+    if (bi < 0) return null;
+    var b = d.boards[bi];
+    for (var ci = 0; ci < b.columns.length; ci++) {
+      var col = b.columns[ci];
+      if (!isObj(col) || !Array.isArray(col.cards)) continue;
+      for (var ki = 0; ki < col.cards.length; ki++) {
+        if (isObj(col.cards[ki]) && col.cards[ki].id === target.card) return { bi: bi, b: b, ci: ci, col: col, ki: ki, card: col.cards[ki] };
+      }
+    }
+    return null;
+  }
+  function kbName(v) { return line(typeof v === "string" ? v : "", 1000); }
+  function kbArr(a) { return Array.isArray(a) ? a : []; }
+  function kbLabel(b, id) {
+    var ls = kbArr(b.labels);
+    for (var i = 0; i < ls.length; i++) if (isObj(ls[i]) && ls[i].id === id) return ls[i];
+    return null;
+  }
+  // pos = also where the card sits in its column (only for a move).
+  function kbView(b, col, c, pos) {
+    var subs = kbArr(c.subtasks).filter(isObj);
+    var v = {
+      title: typeof c.text === "string" ? c.text : "",
+      column: kbName(col.name),
+      due: realDate(c.due),
+      labels: kbArr(c.labels).map(function (id) { var l = kbLabel(b, id); return l ? kbName(l.name) : ""; }).filter(Boolean).join(", "),
+      subtasks: subs.length ? subs.filter(function (x) { return x.completed; }).length + "/" + subs.length : "",
+      note: typeof c.notes === "string" ? c.notes : ""
+    };
+    if (pos) v.position = (col.cards.indexOf(c) + 1) + "/" + col.cards.length;
+    return v;
+  }
+  function kbLocalDay(now) {
+    var t = new Date(now), m = t.getMonth() + 1, d = t.getDate();
+    return t.getFullYear() + "-" + (m < 10 ? "0" : "") + m + "-" + (d < 10 ? "0" : "") + d;
+  }
+  // kanban/tools.js applyArrival, the same rules in the same order and
+  // with the same stamps: the card has just arrived at the end of col.
+  // → the raw fields it changed (for undo).
+  function kbArrival(b, col, c, now) {
+    var auto = isObj(col.auto) ? col.auto : null, did = {};
+    if (!auto) return did;
+    if (auto.done && kbArr(c.subtasks).some(function (x) { return x && !x.completed; })) {
+      var at = kbStamp(c, ["s"], now);
+      c.subtasks.forEach(function (x) { if (x && !x.completed) { x.completed = true; x.m = at; } });
+      did.subtasks = 1;
+    }
+    var today = kbLocalDay(now);
+    if (auto.today && c.due !== today) { c.due = today; kbStamp(c, ["d"], now); did.due = 1; }
+    if (auto.label && kbLabel(b, auto.label) && kbArr(c.labels).indexOf(auto.label) < 0) {
+      c.labels = kbArr(c.labels).concat([auto.label]);
+      kbStamp(c, ["l"], now);
+      did.labels = 1;
+    }
+    var i = col.cards.indexOf(c);
+    if (auto.top && i > 0) {
+      col.cards.splice(i, 1);
+      col.cards.unshift(c);
+      col.om = Math.max(now, (col.om || 0) + 1);
+    }
+    return did;
+  }
+  function kbNoM(list) {
+    return kbArr(list).map(function (x) { if (!isObj(x)) return x; var y = clone(x); delete y.m; return y; });
+  }
+  function kbRaw(h) {
+    return { text: h.card.text, notes: h.card.notes, due: h.card.due === undefined ? null : h.card.due, col: h.col.id,
+             labels: clone(kbArr(h.card.labels)), subtasks: clone(kbArr(h.card.subtasks)) };
+  }
+
+  function kanbanChange(d, target, ch, now) {
+    var h = kbFind(d, target);
+    if (!h) return bad("That card is no longer in Kanban.");
+    var b = h.b, card = h.card, before = kbView(b, h.col, card, ch.action === "move"), title = before.title;
+    if (b.archived || (typeof b.id === "string" && b.id.indexOf("tpl-") === 0)) return bad("That card's board is archived; change it in Kanban.");
+    if (isObj(d.boardDeleted) && typeof d.boardDeleted[b.id] === "number" && d.boardDeleted[b.id] >= (b.mtime || 0)) return bad("That card's board was deleted.");
+    if (ch.action === "complete" || ch.action === "reopen") return bad("A Kanban card has no done mark; move it to another column instead.");
+    if (ch.action === "delete") {
+      if (Array.isArray(card.att) && card.att.length) return bad("That card has attachments on the orOS disk; delete it in Kanban.");
+      var copy = clone(card);
+      h.col.cards.splice(h.ki, 1);
+      if (!isObj(b.deleted)) b.deleted = {};
+      b.deleted[card.id] = stampAfter(now, Math.max(b.deleted[card.id] || 0, card.mtime || 0));
+      kbCanon(d, h.bi);
+      return { ok: true, title: title, before: before, after: null, del: true,
+               undo: { t: "del", app: "kanban", board: b.id, col: h.col.id, index: h.ki, card: copy } };
+    }
+    var prev = kbRaw(h), idx = h.ki;
+    if (ch.action === "move") {
+      var want = ch.set.column.toLowerCase();
+      var hits = b.columns.filter(function (c) { return isObj(c) && Array.isArray(c.cards) && kbName(c.name).toLowerCase() === want; });
+      var names = b.columns.filter(isObj).map(function (c) { return kbName(c.name); }).join(", ");
+      if (!hits.length) return bad("The board " + kbName(b.name) + " has no column " + ch.set.column + ". Its columns: " + names + ".");
+      if (hits.length > 1) return bad("The board " + kbName(b.name) + " has more than one column called " + ch.set.column + "; move the card in Kanban.");
+      var dest = hits[0];
+      if (dest === h.col) return bad("The card is already in " + kbName(dest.name) + ".");
+      // kanban.js moveCardTo: to the end of the column, column stamp p,
+      // both columns' order stamp om, then the column's arrival rules.
+      h.col.cards.splice(h.ki, 1);
+      dest.cards.push(card);
+      kbStamp(card, ["p"], now);
+      h.col.om = stampAfter(now, h.col.om);
+      dest.om = stampAfter(now, dest.om);
+      var did = kbArrival(b, dest, card, now);
+      var nxt = { col: dest.id }, pv0 = { col: prev.col };
+      if (did.subtasks) { nxt.subtasks = kbNoM(card.subtasks); pv0.subtasks = prev.subtasks; }
+      if (did.due) { nxt.due = card.due; pv0.due = prev.due; }
+      if (did.labels) { nxt.labels = clone(card.labels); pv0.labels = prev.labels; }
+      kbCanon(d, h.bi);
+      var h2 = kbFind(d, { board: b.id, card: card.id });
+      return { ok: true, title: title, before: before, after: kbView(h2.b, h2.col, h2.card, true), del: false,
+               undo: { t: "set", app: "kanban", target: { board: b.id, card: card.id }, index: idx, prev: pv0, next: nxt } };
+    }
+    var s = ch.set;
+    if (s.start || s.end) return bad("A Kanban card has a due date only, no start or end time.");
+    var notOk = Object.keys(s).filter(function (k) { return !SETTABLE.kanban[k]; });
+    if (notOk.length) return bad("A Kanban card has no " + notOk.join(", ") + ".");
+    var groups = [], next = {};
+    if (has(s, "title") && s.title.slice(0, 500) !== card.text) { card.text = s.title.slice(0, 500); groups.push("t"); next.text = card.text; }
+    if (has(s, "note") && s.note !== (typeof card.notes === "string" ? card.notes : "")) { card.notes = s.note; groups.push("n"); next.notes = card.notes; }
+    if (has(s, "date") && s.date !== card.due) { card.due = s.date; groups.push("d"); next.due = card.due; }
+    if (!groups.length) return bad("Nothing would change: the card already looks like that.");
+    kbStamp(card, groups, now);
+    kbCanon(d, h.bi);
+    var h3 = kbFind(d, { board: b.id, card: card.id });
+    var p2 = {};
+    Object.keys(next).forEach(function (k) { p2[k] = prev[k] === undefined ? null : prev[k]; });
+    return { ok: true, title: title, before: before, after: kbView(h3.b, h3.col, h3.card), del: false,
+             undo: { t: "set", app: "kanban", target: { board: b.id, card: card.id }, prev: p2, next: next } };
+  }
+  function kanbanUndo(d, u, now) {
+    if (u.t === "del") {
+      if (!isObj(u.card) || typeof u.card.id !== "string" || !ID_RE.test(u.card.id)) return bad("bad undo");
+      var bi = kbBoard(d, u.board);
+      if (bi < 0) return bad("Its board is gone.");
+      if (kbFind(d, { board: u.board, card: u.card.id })) return bad("The card is back already.");
+      var b = d.boards[bi], col = null;
+      b.columns.forEach(function (c) { if (isObj(c) && c.id === u.col && Array.isArray(c.cards)) col = c; });
+      if (!col) return bad("Its column is gone.");
+      var c = clone(u.card);
+      // kanban.js undo of a delete: every field group stamped anew.
+      kbStamp(c, null, now, (isObj(b.deleted) && b.deleted[c.id]) || 0);
+      var at = Math.max(0, Math.min(col.cards.length, Math.floor(u.index) || 0));
+      col.cards.splice(at, 0, c);
+      col.om = stampAfter(now, col.om);
+      if (isObj(b.deleted)) delete b.deleted[c.id];
+      kbCanon(d, bi);
+      return { ok: true };
+    }
+    var h = kbFind(d, u.target);
+    if (!h) return bad("That card is no longer in Kanban.");
+    var cur = kbRaw(h), nx = isObj(u.next) ? u.next : {}, pv = isObj(u.prev) ? u.prev : {};
+    cur.subtasks = kbNoM(cur.subtasks);
+    var keys = Object.keys(nx).filter(function (k) { return ["text", "notes", "due", "col", "labels", "subtasks"].indexOf(k) >= 0; });
+    for (var i = 0; i < keys.length; i++) {
+      if (JSON.stringify(cur[keys[i]] === undefined ? null : cur[keys[i]]) !== JSON.stringify(nx[keys[i]])) return bad("The card changed since; nothing was undone.");
+    }
+    var groups = [];
+    if (has(nx, "col")) {
+      var back = null;
+      h.b.columns.forEach(function (c) { if (isObj(c) && c.id === pv.col && Array.isArray(c.cards)) back = c; });
+      if (!back) return bad("Its old column is gone.");
+      h.col.cards.splice(h.ki, 1);
+      back.cards.splice(Math.max(0, Math.min(back.cards.length, Math.floor(u.index) || 0)), 0, h.card);
+      h.col.om = stampAfter(now, h.col.om);
+      back.om = stampAfter(now, back.om);
+      groups.push("p");
+    }
+    if (has(nx, "text")) { h.card.text = typeof pv.text === "string" ? pv.text : ""; groups.push("t"); }
+    if (has(nx, "notes")) { h.card.notes = typeof pv.notes === "string" ? pv.notes : ""; groups.push("n"); }
+    if (has(nx, "due")) { h.card.due = typeof pv.due === "string" && pv.due ? pv.due : null; groups.push("d"); }
+    if (has(nx, "labels")) { h.card.labels = clone(kbArr(pv.labels)); groups.push("l"); }
+    if (has(nx, "subtasks")) groups.push("s");
+    if (!groups.length) return bad("bad undo");
+    var st = kbStamp(h.card, groups, now);
+    // subtasks merge per item on its m: the put-back items carry the new stamp
+    if (has(nx, "subtasks")) h.card.subtasks = clone(kbArr(pv.subtasks)).map(function (x) { if (isObj(x)) x.m = st; return x; });
+    kbCanon(d, h.bi);
+    return { ok: true };
+  }
+
+  // ---------- Media Shelf ----------
+  // oros-shelf-data = { ver, items[] by id, sess[] by id, goals, tombs
+  // { id: ts } } (shelf.js section 2–3, mergeShelf). Items LWW on it.m,
+  // sessions (the status / progress log) LWW on s.m, tombstones shared
+  // by items and sessions, max-merged; a tombstone at or after m hides
+  // the row, a newer m resurrects (R17). Canonical: items and sess
+  // sorted by id, tombs sorted. A status change logs what setStatus
+  // logs: now → a start "s"; done → the missing pages as "p" (when the
+  // type has progress and a size) and a finish "d" dated today (the
+  // finished date); dropped → "x". Undo tombstones those sessions,
+  // as the app's own Undo does.
+  var SH_ST = { want: "want", now: "now", done: "done", dropped: "drop" };
+  var SH_ST_NAME = { want: "want", now: "now", done: "done", drop: "dropped" };
+  var SH_KIND = { book: "book", film: "film", series: "series", album: "music", podcast: "podcast", game: "game" };
+  var SH_ID = /^[a-z0-9]{6,40}$/;
+  function shYmd(now) {
+    var d = new Date(now), p = function (n) { return (n < 10 ? "0" : "") + n; };
+    return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
+  }
+  function shTombs(d) { return isObj(d.tombs) ? d.tombs : {}; }
+  function shLive(d, x) {
+    var tb = shTombs(d)[x.id];
+    return !(typeof tb === "number" && tb >= (Number(x.m) || 0));
+  }
+  function shFind(d, target) {
+    if (!isObj(d) || !Array.isArray(d.items) || !isObj(target) || typeof target.item !== "string") return null;
+    for (var i = 0; i < d.items.length; i++) {
+      var it = d.items[i];
+      if (isObj(it) && it.id === target.item && shLive(d, it)) return { it: it, i: i };
+    }
+    return null;
+  }
+  function shView(it) {
+    return {
+      title: typeof it.title === "string" ? it.title : "",
+      kind: SH_KIND[it.type] || "",
+      status: SH_ST_NAME[it.st] || "want",
+      note: typeof it.rev === "string" ? it.rev : ""
+    };
+  }
+  function shSessOf(d, id) {
+    return (Array.isArray(d.sess) ? d.sess : []).filter(function (s) { return isObj(s) && s.it === id && shLive(d, s); })
+      .sort(function (x, y) { return cmpStr(String(x.d), String(y.d)) || ((x.m || 0) - (y.m || 0)) || cmpStr(String(x.id), String(y.id)); });
+  }
+  // shelf.js progressOf: the highest page of the current run.
+  function shProgress(list) {
+    var at = 0, v = 0;
+    list.forEach(function (s, i) { if (s.k === "s") at = i; });
+    list.slice(at).forEach(function (s) { if (s.k === "p" && typeof s.v === "number" && s.v > v) v = s.v; });
+    return v;
+  }
+  function shNewId(d, t, k, itemId) {
+    var used = {};
+    (Array.isArray(d.sess) ? d.sess : []).forEach(function (s) { if (isObj(s)) used[s.id] = 1; });
+    Object.keys(shTombs(d)).forEach(function (id) { used[id] = 1; });
+    var base = t.toString(36) + k + itemId.slice(0, 16), id = base, n = 0;
+    while (used[id]) id = base + (++n);
+    return id;
+  }
+  function shSortRows(d) {
+    var by = function (p, q) { return cmpStr(String(p && p.id), String(q && q.id)); };
+    if (Array.isArray(d.items)) d.items.sort(by);
+    if (Array.isArray(d.sess)) d.sess.sort(by);
+    d.tombs = sortedObj(shTombs(d));
+  }
+  function shTomb(d, x, now) {
+    if (!isObj(d.tombs)) d.tombs = {};
+    d.tombs[x.id] = stampAfter(now, Math.max(d.tombs[x.id] || 0, x.m || 0));
+  }
+
+  function shelfChange(d, target, ch, now) {
+    var h = shFind(d, target);
+    if (!h) return bad("That title is no longer on the Media Shelf.");
+    var it = h.it, before = shView(it), title = before.title;
+    if (ch.action === "delete") {
+      var copy = clone(it), ss = shSessOf(d, it.id).map(clone);
+      var gone = {};
+      ss.forEach(function (s) { gone[s.id] = 1; });
+      d.items.splice(h.i, 1);
+      shTomb(d, it, now);
+      ss.forEach(function (s) { shTomb(d, s, now); });
+      if (Array.isArray(d.sess)) d.sess = d.sess.filter(function (s) { return !(isObj(s) && gone[s.id]); });
+      shSortRows(d);
+      return { ok: true, title: title, before: before, after: null, del: true,
+               undo: { t: "del", app: "shelf", item: copy, sess: ss } };
+    }
+    if (ch.action !== "update") return bad("A Media Shelf title takes update (status, title, note) or delete.");
+    var s = ch.set;
+    var notOk = Object.keys(s).filter(function (k) { return !SETTABLE.shelf[k]; });
+    if (notOk.length) return bad("A Media Shelf title has no " + notOk.join(", ") + ".");
+    var prev = { title: it.title, st: it.st, rev: typeof it.rev === "string" ? it.rev : "" }, changed = false, added = [];
+    if (has(s, "title")) {
+      var ti = line(s.title, 200);
+      if (ti && ti !== it.title) { it.title = ti; changed = true; }
+    }
+    if (has(s, "note")) {
+      var rv = s.note.replace(/\n{3,}/g, "\n\n").trim().slice(0, 4000);
+      if (rv !== prev.rev) { it.rev = rv; changed = true; }
+    }
+    var st = has(s, "status") ? SH_ST[s.status] : "";
+    if (st && st !== it.st) {
+      var t = Math.floor(now) || 0, day = shYmd(t);
+      if (!Array.isArray(d.sess)) d.sess = [];
+      var log = function (k, v) {
+        var x = { id: shNewId(d, t, k, it.id), m: t, it: it.id, k: k, d: day };
+        if (k === "p") x.v = v;
+        d.sess.push(x);
+        added.push(x.id);
+      };
+      if (st === "now") log("s");
+      if (st === "done") {
+        var prog = it.type === "book" || it.type === "series" || it.type === "podcast" || it.type === "game";
+        if (prog && typeof it.size === "number" && it.size > 0 && shProgress(shSessOf(d, it.id)) < it.size) log("p", it.size);
+        log("d");
+      }
+      if (st === "drop") log("x");
+      it.st = st;
+      changed = true;
+    }
+    if (!changed) return bad("Nothing would change: the title already looks like that.");
+    it.m = stampAfter(now, it.m);
+    shSortRows(d);
+    return { ok: true, title: title, before: before, after: shView(it), del: false,
+             undo: { t: "set", app: "shelf", target: { item: it.id }, prev: prev,
+                     next: { title: it.title, st: it.st, rev: it.rev }, sess: added } };
+  }
+  function shelfUndo(d, u, now) {
+    if (!isObj(d) || !Array.isArray(d.items)) return bad("The Media Shelf is empty.");
+    if (u.t === "del") {
+      if (!isObj(u.item) || typeof u.item.id !== "string" || !SH_ID.test(u.item.id)) return bad("bad undo");
+      if (shFind(d, { item: u.item.id })) return bad("The title is back already.");
+      // shelf.js deleteItem's Undo: a newer m resurrects past the
+      // tombstones, which stay (they may already have travelled).
+      var tb = shTombs(d);
+      d.items = d.items.filter(function (x) { return !(isObj(x) && x.id === u.item.id); });
+      var it = clone(u.item);
+      it.m = stampAfter(now, Math.max(it.m || 0, tb[it.id] || 0));
+      d.items.push(it);
+      if (!Array.isArray(d.sess)) d.sess = [];
+      (Array.isArray(u.sess) ? u.sess : []).forEach(function (s0) {
+        if (!isObj(s0) || typeof s0.id !== "string" || !SH_ID.test(s0.id)) return;
+        var s = clone(s0);
+        d.sess = d.sess.filter(function (x) { return !(isObj(x) && x.id === s.id); });
+        s.m = stampAfter(now, Math.max(s.m || 0, tb[s.id] || 0));
+        d.sess.push(s);
+      });
+      shSortRows(d);
+      return { ok: true };
+    }
+    var h = shFind(d, u.target);
+    if (!h) return bad("That title is no longer on the Media Shelf.");
+    var cur = h.it, nx = u.next || {};
+    if (cur.title !== nx.title || cur.st !== nx.st || (cur.rev || "") !== (nx.rev || "")) {
+      return bad("The title changed since; nothing was undone.");
+    }
+    var p = u.prev || {};
+    if (typeof p.title === "string" && p.title) cur.title = p.title;
+    if (has(SH_ST_NAME, p.st)) cur.st = p.st;
+    cur.rev = typeof p.rev === "string" ? p.rev : "";
+    var drop = {};
+    (Array.isArray(u.sess) ? u.sess : []).forEach(function (id) { drop[id] = 1; });
+    (Array.isArray(d.sess) ? d.sess : []).forEach(function (s) { if (isObj(s) && drop[s.id]) shTomb(d, s, now); });
+    if (Array.isArray(d.sess)) d.sess = d.sess.filter(function (s) { return !(isObj(s) && drop[s.id]); });
+    cur.m = stampAfter(now, cur.m);
+    shSortRows(d);
+    return { ok: true };
+  }
+
+  // ---------- Habits ----------
+  // oros-habits-data v2 = { ver, habits[], comps[], set? } (habits/
+  // model.js). Habits LWW per row on h.mtime (a delete is h.del = true
+  // with a new mtime, never done here). Day ticks are comps
+  // { id: "<habitId>|<ymd>", habitId, date, mtime, del, v?, sk?, nt? }
+  // merged field by field: the tick (mtime, del) LWW, equal → not
+  // ticked; sk / nt LWW on their own stamps. complete / reopen are
+  // model.js setTick(db, id, today, true / false, now): a missing row
+  // is pushed as { mtime: 0, del: true } first (compFor), a tick
+  // un-skips the day. Today = the local day of `now`, as the app's
+  // todayKey(). A number habit is filled in Habits (its value is a
+  // per-device share), so it is not ticked here.
+  var HB_DAY = /^\d{4}-\d{2}-\d{2}$/;
+  function hbYmd(now) {
+    var d = new Date(now), p = function (n) { return (n < 10 ? "0" : "") + n; };
+    return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
+  }
+  function hbIsNum(h) { return isObj(h.num) && typeof h.num.t === "number" && h.num.t > 0; }
+  function hbFind(d, target) {
+    if (!isObj(d) || !Array.isArray(d.habits) || !isObj(target) || typeof target.habit !== "string") return null;
+    for (var i = 0; i < d.habits.length; i++) {
+      var h = d.habits[i];
+      if (isObj(h) && h.id === target.habit && !h.del) return h;
+    }
+    return null;
+  }
+  function hbComp(d, id, day) {
+    var cid = id + "|" + day, cs = Array.isArray(d.comps) ? d.comps : [];
+    for (var i = 0; i < cs.length; i++) if (isObj(cs[i]) && cs[i].id === cid) return cs[i];
+    return null;
+  }
+  function hbView(d, h, day) {
+    var v = { title: typeof h.name === "string" ? h.name : "", date: day };
+    if (!hbIsNum(h)) { var c = hbComp(d, h.id, day); v.done = !!(c && !c.del); }
+    return v;
+  }
+  function hbTick(c) { return { mtime: c.mtime, del: !!c.del, sk: c.sk ? clone(c.sk) : null }; }
+
+  function habitsChange(d, target, ch, now) {
+    var h = hbFind(d, target);
+    if (!h) return bad("That habit is no longer in Habits.");
+    var day = hbYmd(now), before = hbView(d, h, day), title = before.title;
+    if (ch.action === "delete") return bad("Deleting a habit removes its whole history; delete it in Habits.");
+    if (ch.action === "complete" || ch.action === "reopen") {
+      if (hbIsNum(h)) return bad("That habit counts an amount: open Habits to enter how much.");
+      var want = ch.action === "complete";
+      if (before.done === want) return bad(want ? "That habit is already ticked for today." : "That habit is not ticked for today.");
+      var c = hbComp(d, h.id, day), made = !c;
+      if (!c) {
+        c = { id: h.id + "|" + day, habitId: h.id, date: day, mtime: 0, del: true };
+        if (!Array.isArray(d.comps)) d.comps = [];
+        d.comps.push(c);
+      }
+      var prev = made ? null : hbTick(c);
+      c.del = !want;
+      c.mtime = stampAfter(now, c.mtime);
+      if (want && c.sk && c.sk[0] === 1) c.sk = [0, stampAfter(now, c.sk[1])];   // done un-skips
+      return { ok: true, title: title, before: before, after: hbView(d, h, day), del: false,
+               undo: { t: "set", app: "habits", target: { habit: h.id }, day: day, prev: prev, next: hbTick(c) } };
+    }
+    if (ch.action !== "update") return bad("A habit can be ticked for today, unticked, or renamed.");
+    var s = ch.set;
+    if (has(s, "note")) return bad("Habits keeps notes per day, not per habit: add it to the day in Habits.");
+    var notOk = Object.keys(s).filter(function (k) { return !SETTABLE.habits[k]; });
+    if (notOk.length) return bad("A habit has no " + notOk.join(", ") + ".");
+    var nm = has(s, "title") ? s.title.slice(0, 200) : h.name;
+    if (nm === h.name) return bad("Nothing would change: the habit already looks like that.");
+    var old = h.name;
+    h.name = nm;
+    h.mtime = stampAfter(now, h.mtime);
+    return { ok: true, title: title, before: before, after: hbView(d, h, day), del: false,
+             undo: { t: "set", app: "habits", target: { habit: h.id }, prev: { name: old }, next: { name: nm } } };
+  }
+  function habitsUndo(d, u, now) {
+    if (!isObj(d) || !Array.isArray(d.habits)) return bad("Habits has no habits.");
+    if (u.t !== "set") return bad("bad undo");
+    var h = hbFind(d, u.target);
+    if (!h) return bad("That habit is no longer in Habits.");
+    if (typeof u.day === "string") {
+      if (!HB_DAY.test(u.day)) return bad("bad undo");
+      var c = hbComp(d, h.id, u.day);
+      if (!c || JSON.stringify(hbTick(c)) !== JSON.stringify(u.next)) return bad("The day changed since; nothing was undone.");
+      // Fresh stamps: the undone tick must beat the applied one on
+      // every device (a row that was new stays as an unticked row).
+      var p = u.prev;
+      c.del = p ? !!p.del : true;
+      c.mtime = stampAfter(now, c.mtime);
+      if (p && p.sk && c.sk && p.sk[0] !== c.sk[0]) c.sk = [p.sk[0] === 1 ? 1 : 0, stampAfter(now, c.sk[1])];
+      return { ok: true };
+    }
+    if (!isObj(u.next) || h.name !== u.next.name) return bad("The habit changed since; nothing was undone.");
+    if (!isObj(u.prev) || typeof u.prev.name !== "string" || !u.prev.name) return bad("bad undo");
+    h.name = u.prev.name;
+    h.mtime = stampAfter(now, h.mtime);
+    return { ok: true };
+  }
+
+  // ---------- Plant Care ----------
+  // oros-plants-data = { ver: 1, plants[] by id, log[] by id, tombs
+  // { id: ts } } (plants/core.js merge). Plants LWW on p.m, log entries
+  // { id, p, k, d, s, m } LWW per id, tombstones max-merged and shared
+  // by plants and entries; a tombstone at or after m hides the row.
+  // Canonical: plants and log sorted by id, tombs sorted. "Watered
+  // today" is plants.js logTask([water], false): one entry { k:
+  // "water", d: today, s: 0, m: now } and the water postponement
+  // (sn.water) cleared with a new p.m. The next due day is never
+  // stored (core.js nextDue derives it from st, the log and sn).
+  // Undo = a tombstone on the entry + the old postponement back.
+  // Today = the local day of `now`, as todayYmd().
+  var PL_ID = /^[a-z0-9]{6,40}$/;
+  function plYmd(now) {
+    var d = new Date(now), p = function (n) { return (n < 10 ? "0" : "") + n; };
+    return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
+  }
+  function plTombs(d) { return isObj(d.tombs) ? d.tombs : {}; }
+  function plLive(d, x) {
+    var tb = plTombs(d)[x.id];
+    return !(typeof tb === "number" && tb >= (Number(x.m) || 0));
+  }
+  function plFind(d, target) {
+    var id = typeof target === "string" ? target : isObj(target) && typeof target.id === "string" ? target.id : "";
+    if (!isObj(d) || !Array.isArray(d.plants) || !id) return null;
+    for (var i = 0; i < d.plants.length; i++) {
+      var p = d.plants[i];
+      if (isObj(p) && p.id === id && plLive(d, p)) return p;
+    }
+    return null;
+  }
+  function plWater(d, id) {
+    return (Array.isArray(d.log) ? d.log : []).filter(function (x) {
+      return isObj(x) && x.p === id && x.k === "water" && x.s !== 1 && plLive(d, x);
+    });
+  }
+  function plView(d, p) {
+    var last = "";
+    plWater(d, p.id).forEach(function (x) { if (realDate(x.d) && x.d > last) last = x.d; });
+    return {
+      title: typeof p.name === "string" ? p.name : "",
+      watered: last,
+      note: typeof p.notes === "string" ? p.notes : ""
+    };
+  }
+  function plSort(d) {
+    var by = function (a, b) { return cmpStr(String(a && a.id), String(b && b.id)); };
+    if (Array.isArray(d.plants)) d.plants.sort(by);
+    if (Array.isArray(d.log)) d.log.sort(by);
+    d.tombs = sortedObj(plTombs(d));
+  }
+  function plantsChange(d, target, ch, now) {
+    var p = plFind(d, target);
+    if (!p) return bad("That plant is no longer in Plant Care.");
+    var before = plView(d, p), title = before.title;
+    if (ch.action === "delete") return bad("Deleting a plant removes its care history; delete it in Plant Care.");
+    if (ch.action === "reopen") return bad("To take a watering back, remove it from the plant's history in Plant Care.");
+    if (ch.action === "complete") {
+      var t = Math.floor(now) || 0, day = plYmd(t);
+      if (plWater(d, p.id).some(function (x) { return x.d === day; })) return bad("That plant was already watered today.");
+      var used = {};
+      (Array.isArray(d.log) ? d.log : []).forEach(function (x) { if (isObj(x)) used[x.id] = 1; });
+      Object.keys(plTombs(d)).forEach(function (k) { used[k] = 1; });
+      var base = t.toString(36) + "w" + p.id.slice(0, 16), id = base, n = 0;
+      while (used[id]) id = base + (++n);
+      if (!Array.isArray(d.log)) d.log = [];
+      d.log.push({ id: id, p: p.id, k: "water", d: day, s: 0, m: t });
+      var oldSn = isObj(p.sn) && typeof p.sn.water === "string" ? p.sn.water : null;
+      if (oldSn) { delete p.sn.water; p.m = stampAfter(now, p.m); }
+      plSort(d);
+      return { ok: true, title: title, before: before, after: plView(d, p), del: false,
+               undo: { t: "set", app: "plants", target: { id: p.id }, entry: id, sn: oldSn } };
+    }
+    if (ch.action !== "update") return bad("A plant can be marked watered today, renamed, or have its notes changed.");
+    var s = ch.set;
+    var notOk = Object.keys(s).filter(function (k) { return !SETTABLE.plants[k]; });
+    if (notOk.length) return bad("A plant has no " + notOk.join(", ") + ".");
+    var prev = { name: p.name, notes: typeof p.notes === "string" ? p.notes : "" }, changed = false;
+    if (has(s, "title")) {
+      var nm = line(s.title, 40);
+      if (nm && nm !== p.name) { p.name = nm; changed = true; }
+    }
+    if (has(s, "note")) {
+      var nt = s.note.replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim().slice(0, 500);
+      if (nt !== prev.notes) { p.notes = nt; changed = true; }
+    }
+    if (!changed) return bad("Nothing would change: the plant already looks like that.");
+    p.m = stampAfter(now, p.m);
+    return { ok: true, title: title, before: before, after: plView(d, p), del: false,
+             undo: { t: "set", app: "plants", target: { id: p.id }, prev: prev, next: { name: p.name, notes: p.notes } } };
+  }
+  function plantsUndo(d, u, now) {
+    if (!isObj(d) || !Array.isArray(d.plants) || u.t !== "set") return bad("bad undo");
+    var p = plFind(d, u.target);
+    if (!p) return bad("That plant is no longer in Plant Care.");
+    if (typeof u.entry === "string") {
+      if (!PL_ID.test(u.entry)) return bad("bad undo");
+      var x = (Array.isArray(d.log) ? d.log : []).filter(function (e) { return isObj(e) && e.id === u.entry && plLive(d, e); })[0];
+      if (!x) return bad("That watering is no longer in the plant's history.");
+      if (!isObj(d.tombs)) d.tombs = {};
+      d.tombs[x.id] = stampAfter(now, Math.max(d.tombs[x.id] || 0, x.m || 0));
+      d.log = d.log.filter(function (e) { return !(isObj(e) && e.id === u.entry); });
+      if (typeof u.sn === "string" && realDate(u.sn)) {
+        var sn = isObj(p.sn) ? p.sn : {}, out = {};
+        sn.water = u.sn;
+        ["water", "fert", "mist", "repot"].forEach(function (k) { if (has(sn, k)) out[k] = sn[k]; });   // core.js KINDS order
+        p.sn = out;
+        p.m = stampAfter(now, p.m);
+      }
+      plSort(d);
+      return { ok: true };
+    }
+    if (!isObj(u.next) || p.name !== u.next.name || (p.notes || "") !== (u.next.notes || "")) {
+      return bad("The plant changed since; nothing was undone.");
+    }
+    if (isObj(u.prev) && typeof u.prev.name === "string" && u.prev.name) p.name = u.prev.name;
+    p.notes = isObj(u.prev) && typeof u.prev.notes === "string" ? u.prev.notes : "";
+    p.m = stampAfter(now, p.m);
+    return { ok: true };
+  }
+
+  var CHANGE = { todo: todoChange, calendar: calChange, budget: budgetChange, bookmarks: bookmarksChange,
+                 contacts: contactsChange, kanban: kanbanChange, shelf: shelfChange, habits: habitsChange, plants: plantsChange };
+  var UNDO = { todo: todoUndo, calendar: calUndo, budget: budgetUndo, bookmarks: bookmarksUndo,
+               contacts: contactsUndo, kanban: kanbanUndo, shelf: shelfUndo, habits: habitsUndo, plants: plantsUndo };
 
   // ---------- 7. Plan, apply, undo ----------
   // data = the app's stored JSON (parsed), target = the ref's target,
