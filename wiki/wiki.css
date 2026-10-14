@@ -224,6 +224,44 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; border-
 .toc a:hover { text-decoration: underline; }
 .toc-n { color: var(--text-dim); margin-right: 2px; }
 
+/* Wave 2: pictures, gallery, infobox, references */
+.wimg { display: block; max-width: 100%; height: auto; border-radius: 4px; background: var(--panel-bg); cursor: zoom-in; }
+.wimg.inl { display: inline-block; max-height: 1.6em; vertical-align: middle; cursor: default; }
+.wimg.wait, .wimg.missing { min-width: 120px; min-height: 80px; border: 1px dashed var(--border); }
+.wimg.missing { cursor: help; }
+.img-bad { display: inline-block; padding: 2px 8px; border: 1px dashed var(--danger); border-radius: 6px; color: var(--danger); font-size: 13px; }
+.fig { margin: 4px 0 14px; padding: 4px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel-bg); max-width: 100%; }
+.fig-right { float: right; clear: right; width: 230px; margin-left: 16px; }
+.fig-left { float: left; clear: left; width: 230px; margin-right: 16px; }
+.fig-center { width: fit-content; max-width: 100%; margin-left: auto; margin-right: auto; }
+.fig-none { width: 100%; }
+.fig-none .wimg { width: 100%; }
+.fig .wimg { margin: 0 auto; }
+.fig figcaption, .gal figcaption, .ibox-img figcaption, .ibox-cap { font-size: 13px; line-height: 1.4; color: var(--text-dim); padding: 4px 2px 0; overflow-wrap: anywhere; }
+.gal { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin: 0 0 14px; clear: both; }
+.gal-item { margin: 0; padding: 4px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel-bg); }
+.gal-item .wimg { width: 100%; height: 140px; object-fit: cover; }
+.ibox {
+  float: right; clear: right; width: 290px; max-width: 100%; margin: 0 0 14px 18px; padding: 8px;
+  border: 1px solid var(--border); border-radius: 8px; background: var(--panel-bg); font-size: 14px; line-height: 1.45;
+}
+.ibox-t { font-family: var(--serif); font-size: 19px; text-align: center; padding: 2px 4px 8px; overflow-wrap: anywhere; }
+.ibox-img { margin: 0 0 8px; text-align: center; }
+.ibox-img .wimg { margin: 0 auto; max-height: 320px; }
+.ibox table { width: 100%; min-width: 0; border-collapse: collapse; font-size: 13.5px; }
+.art-body .ibox th, .art-body .ibox td { border: none; border-top: 1px solid var(--border); padding: 5px 4px; background: transparent; }
+.art-body .ibox th { width: 40%; font-weight: 800; }
+.art-body .ibox td { overflow-wrap: anywhere; }
+.art-body h2 { clear: both; }
+sup.ref { font-size: 0.72em; line-height: 0; margin-left: 1px; }
+sup.ref a { color: var(--accent); text-decoration: none; }
+.refs { margin: 0 0 12px 28px; font-size: 14px; }
+.refs li { margin: 3px 0; overflow-wrap: anywhere; }
+.ref-up { color: var(--accent); text-decoration: none; font-weight: 800; }
+.ref-miss { color: var(--danger); font-style: italic; }
+.flash { animation: wk-flash 1.6s ease; border-radius: 4px; }
+@keyframes wk-flash { 0%, 40% { background: var(--accent-soft); } 100% { background: transparent; } }
+
 .cats-box {
   margin: 22px 0 8px; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel-bg);
   font-size: 14px; display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline;
@@ -259,6 +297,7 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; border-
 .ed-prev { min-height: 30dvh; padding: 12px 14px; border: 1px dashed var(--border); border-radius: 10px; }
 .actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .actions.end { justify-content: flex-end; }
+.tb-cite { font-family: var(--serif); font-size: 12px; }
 .cheat { font-size: 13px; color: var(--text-dim); }
 .cheat summary { cursor: pointer; font-weight: 700; min-height: 32px; display: flex; align-items: center; }
 .cheat ul { list-style: none; display: flex; flex-direction: column; gap: 4px; padding: 6px 0; font-family: var(--mono); font-size: 12px; }
@@ -332,7 +371,45 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; border-
 }
 .menu-item:hover, .menu-item:focus-visible { background: var(--accent-soft); color: var(--accent); outline: none; }
 .menu-item.danger { color: var(--danger); }
+.chip.danger { color: var(--danger); align-self: flex-start; }
 .check { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; }
+/* Form dialog (picture, infobox, reference, table, Files) */
+.dialog.wide { width: min(620px, calc(100vw - 24px)); }
+.form { display: flex; flex-direction: column; gap: 10px; }
+.fld-row { display: flex; flex-wrap: wrap; gap: 10px; }
+.fld-row .fld { flex: 1 1 140px; }
+.thumb-box { display: flex; justify-content: center; }
+.thumb { max-width: 100%; max-height: 180px; border-radius: 6px; border: 1px solid var(--border); }
+.ibox-img-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.ibox-img-row .thumb { max-height: 90px; }
+.kv { display: flex; flex-direction: column; gap: 6px; }
+.kv-row { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr) auto; gap: 6px; align-items: center; }
+.kv-row input { min-width: 0; width: 100%; }
+.cite-fields { display: flex; flex-direction: column; gap: 8px; }
+.cite-prev { font-size: 14px; padding: 8px 10px; border: 1px dashed var(--border); border-radius: 8px; overflow-wrap: anywhere; }
+.te-wrap { overflow-x: auto; max-width: 100%; }
+.te { border-collapse: collapse; }
+.te td { padding: 2px; vertical-align: middle; }
+.te input { width: 130px; min-width: 90px; }
+.te-head input { font-weight: 800; }
+.te-ctl { white-space: nowrap; }
+.te-ctl select { max-width: 110px; }
+.icon-btn.small { width: 30px; height: 30px; }
+.icon-btn.small svg { width: 16px; height: 16px; }
+.fl-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.fl-path { font-family: var(--mono); font-size: 12px; color: var(--text-dim); overflow-wrap: anywhere; min-width: 0; flex: 1 1 auto; }
+.fl-count { font-size: 13px; font-weight: 700; color: var(--accent); }
+.fl-list { display: flex; flex-direction: column; gap: 2px; max-height: 50dvh; overflow-y: auto; margin-top: 6px; }
+.fl-item {
+  text-align: left; min-height: 40px; padding: 6px 10px; border-radius: 8px; border: 1px solid transparent;
+  background: transparent; font-size: 14px; overflow-wrap: anywhere;
+}
+.fl-item:hover, .fl-item:focus-visible { background: var(--accent-soft); outline: none; }
+.fl-item[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+#form-err:empty { display: none; }
+#lightbox { width: min(960px, calc(100vw - 24px)); }
+#lb-img { display: block; max-width: 100%; max-height: calc(100dvh - 160px); margin: 0 auto; border-radius: 6px; }
+#lb-cap { font-size: 14px; color: var(--text-dim); text-align: center; overflow-wrap: anywhere; }
 .check input { width: 18px; height: 18px; accent-color: var(--accent); }
 
 #toast {
@@ -376,6 +453,11 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; border-
 }
 @media (max-width: 719px) {
   #page { padding: 12px 14px calc(48px + env(safe-area-inset-bottom, 0px)); }
+  .ibox, .fig-right, .fig-left { float: none; width: auto; max-width: 100%; margin: 0 0 14px; }
+  .ibox { width: 100%; }
+  .fig-right .wimg, .fig-left .wimg { max-height: 60dvh; }
+  .gal { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .te input { width: 110px; }
   .pg-title, .art-title { font-size: 24px; }
   .art-body h2 { font-size: 21px; }
   .sec > h2 { cursor: pointer; }
@@ -395,6 +477,10 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; border-
   .icon-btn { width: 44px; height: 44px; }
   .chip, .chip.small, select, input:not([type="checkbox"]), .menu-item, .nav-item, .art-tab, .ed-tab, .tb-btn { min-height: 44px; }
   .tb-btn { min-width: 44px; }
+  .icon-btn.small { width: 40px; height: 40px; }
+  sup.ref a { display: inline-block; padding: 8px 3px; margin: -8px 0; }
+  .ref-up { display: inline-block; min-width: 32px; min-height: 32px; line-height: 32px; text-align: center; }
+  .fl-item { min-height: 44px; }
   .sec-edit { min-height: 32px; }
   #toast button { min-height: 44px; }
   .check { min-height: 44px; }
@@ -409,6 +495,8 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; border-
   #toolbar, #side, #side-scrim, .art-tabs, .sec-edit, #toast, .conflict { display: none !important; }
   #main { overflow: visible; }
   .sec.closed > .sec-body { display: block !important; }
-  a.wl, a.xl { color: #000; }
+  a.wl, a.xl, sup.ref a, .ref-up { color: #000; }
+  .fig, .gal-item, .ibox { break-inside: avoid; background: #fff; border-color: #aaa; }
+  .art-body .ibox th, .art-body .ibox td { border-color: #aaa; }
 }
 [hidden] { display: none !important; }

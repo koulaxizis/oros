@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.01.00
+- Wiki articles can have pictures and galleries, an infobox with the key facts, numbered references with a form to cite books, web pages and people, and a table editor. Print an article or save it as a PDF.
+
 ## Version 2.00.00
 - Budget imports your bank statements (CSV from any bank, including Greek formats, plus OFX, QIF and CAMT.053), shows new and duplicate rows before adding them, and learns your categories with rules.
 - Budget: envelope budgeting, savings goals, a subscriptions view with reminders, yearly and net-worth reports, accounts in other currencies, and receipt photos or PDFs on entries.

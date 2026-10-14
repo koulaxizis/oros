@@ -13,7 +13,9 @@ An article starts with its lead text. With three headings or more, a `Contents` 
 
 Links to other articles are in the accent colour; red links lead to articles that don't exist yet. Web links open in a new tab. The categories of the article are listed at the bottom; tap one to see every article in it.
 
-Above every article are `Read`, `Edit` and `History`. The ⋯ button has `Rename…`, `What links here`, `Copy the text`, `Make this the main page` and `Delete this article`.
+Pictures open larger when you tap them. A small number in brackets, like `[1]`, is a reference: tap it to jump to its source in the `References` list at the end, and tap ↑ there to go back.
+
+Above every article are `Read`, `Edit` and `History`. The ⋯ button has `Rename…`, `What links here`, `Copy the text`, `Make this the main page`, `Print`, `Save as PDF` and `Delete this article`.
 
 ## Writing and formatting
 `Edit` opens the whole article. The `edit` link next to a heading opens only that section. The toolbar adds formatting for you; `Preview` shows the result before you save. `Formatting help` under the editor lists every sign:
@@ -26,6 +28,23 @@ Above every article are `Read`, `Edit` and `History`. The ⋯ button has `Rename
 - A table: a row like `| A | B |`, then `|---|---|`, then one line per row.
 - `[[Category:Name]]` files the article in a category. `[[:Category:Name]]` is a link to the category instead.
 - `#REDIRECT [[Article]]` as the first line turns a page into a redirect: whoever opens it lands on that article.
+- `[[File:…|Caption]]` a picture, `{{gallery … }}` several, `{{infobox … }}` the facts box, `text[^1]` with a line `[^1]: source` a reference.
+
+## Pictures and galleries
+In the editor, the 🖼 button adds a picture: `From this device`, `Take a photo` (on a phone) or `From Files`. Then write a `Caption` and pick a `Place` (`Right`, `Left`, `Centre` or `Full width`) and a `Size`. The ▤ button adds several pictures at once as a gallery.
+
+In the text a picture looks like `[[File:…|left|200px|Caption]]`; the long name after `File:` is the picture itself, so leave it as it is. You can change the place, the size (`200px`) and the caption by hand too. A gallery is a block between `{{gallery` and `}}` with one picture per line.
+
+Pictures are stored once on the orOS disk and travel with it to your other devices. Until a picture has arrived on a device, a dashed frame shows in its place.
+
+## Infobox
+The ⓘ button opens the infobox form: a `Title`, a `Picture`, a `Caption` and `Facts`, one `Name` and `Value` per row. The box shows at the top right of the article, and above the text on a phone. Press ⓘ again to change it, or `Remove the infobox` to take it out. In the text it is a block between `{{infobox` and `}}` with lines like `| Born = 1901`.
+
+## References
+The [1] button opens `Add a reference`. Pick the kind (`Book`, `Web page`, `Person` or `Note`), fill in what you know and press `Insert`: a number goes where the cursor was, and the source goes near the end of the text as a line like `[^1]: …`. You can also write them by hand: `text[^1]` and a line `[^1]: where it comes from`. The list is shown at the end of the article under `References`; a line with `{{references}}` puts it somewhere else.
+
+## Tables
+The ▦ button opens the table editor: type in the cells, add or remove rows and columns, and choose each column's alignment. The first row is the header row. With the cursor inside a table in the text, ▦ opens that table to change it.
 
 Write what you changed in `Summary of your changes`; it shows in the history and in `Recent changes`. Nothing is saved until you press `Save`, but what you type is kept on this device: if Wiki closes, your text is back the next time you edit the same article.
 
@@ -51,6 +70,9 @@ Type in the search field at the top: titles that match show as you type. Press [
 
 Wiki articles also show up in the orOS [quick search](help:t/menu#quick-search).
 
+## Print and PDF
+`Print` prints the article as you read it, without the buttons around it. `Save as PDF` makes a PDF file of the article with its pictures, infobox, tables and references, and saves it where you choose.
+
 ## Several wikis
 Use separate wikis for separate parts of your life, like work, home or a hobby. In the menu, `New wiki…` makes one, the list at the top switches between them, and `Rename this wiki…` and `Delete this wiki…` change the open one. Links, categories and search work inside one wiki.
 
@@ -70,6 +92,6 @@ Your wikis and articles sync between your devices through [orOS sync](help:t/syn
 - `Make this the main page` turns any article into the page the wiki opens with.
 
 ## Limits
-- No pictures in articles yet.
+- A gallery holds up to 60 pictures, and an infobox up to 60 rows.
 - An article holds up to 200,000 characters, and a wiki up to 5,000 articles.
 - The text of all your wikis shares the space orOS has on this device (about 5 MB); the history lives on the orOS disk and doesn't count against it.
