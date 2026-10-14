@@ -125,7 +125,7 @@ there are no recorded audio files. Emoji come from the device's own font.
 | Notion API ([Notion](https://developers.notion.com/reference/intro)) | Notion Labs, Inc. The workspace is the user's own | The user's own internal integration and its secret; read only (the pages shared with it and their blocks, the databases shared with it and their rows), from Notes › Import from Notion, Spreadsheet › Notion, Kanban › Import from other apps and Settings → Connected services, always through the orOS relay | Notes, Spreadsheet, Kanban, Settings |
 | Google People API and Microsoft Graph ([Google](https://developers.google.com/people), [Microsoft](https://learn.microsoft.com/graph/api/resources/contact)) | Google LLC; Microsoft Corporation. The accounts are the user's own | The user's own account, one sign-in per import (OAuth, read-only contacts scope, no refresh token, Google access revoked right after); called only from Contacts › From an account, straight from the browser; no code from them is shipped | Contacts |
 | [timologisi.online provider API](https://www.timologisi.online/) | Novus Conceptus; the account is the user's own | The user's own account and key; called only from Invoices → myDATA (AADE) and Settings → Connected services | Invoices, Settings |
-| [Dropbox](https://www.dropbox.com/) | Dropbox, Inc. | The user's own account; data end-to-end encrypted by orOS | Optional sync |
+| [Dropbox](https://www.dropbox.com/) | Dropbox, Inc. | The user's own account; data end-to-end encrypted by orOS | Optional sync; optional view of the whole Dropbox in Files |
 | [GitHub Pages](https://pages.github.com/) | GitHub, Inc. | Hosting | Serves useoros.online |
 
 Radio and TV streams belong to their broadcasters; orOS only plays the
