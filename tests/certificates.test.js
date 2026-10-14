@@ -292,7 +292,7 @@ test("app: every string has a Greek text and the shell knows the app", () => {
   assert.ok(me && me.category === "Business" && me.search === "search.js");
   const sw = fs.readFileSync(path.join(ROOT, "sw.js"), "utf8");
   ["certificates/core.js", "certificates/dk.js", "certificates/certificates.js", "certificates/search.js", "certificates/help.el.txt", "atelier/zip.js",
-   "certificates/sign.js", "certificates/verify.html", "certificates/badges.js"]
+   "certificates/sign.js", "certificates/verify.html"]
     .forEach((f) => assert.ok(sw.includes('"' + f + '"'), "precache " + f));
 });
 

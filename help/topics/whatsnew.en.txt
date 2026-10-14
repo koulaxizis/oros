@@ -1,9 +1,6 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
-## Version 2.02.00
-- Certificates: tick who came, print a sign-in sheet with a column for each day, give certificates only to those present, and export Open Badges 3.0 that people can add to a badge wallet.
-
 ## Version 2.01.00
 - Wiki articles can have pictures and galleries, an infobox with the key facts, numbered references with a form to cite books, web pages and people, and a table editor. Print an article or save it as a PDF.
 
