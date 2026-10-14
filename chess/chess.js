@@ -347,7 +347,20 @@
       "th.defensiveMove": "Defensive move", "th.quietMove": "Quiet move", "th.trappedPiece": "Trapped piece",
       "th.doubleCheck": "Double check", "th.smotheredMate": "Smothered mate", "th.zugzwang": "Zugzwang",
       "th.rookEndgame": "Rook endgame", "th.pawnEndgame": "Pawn endgame", "th.equality": "Equality",
-      "cc.note": "Data from Chess.com's public API. It refreshes a few times a day, so a game that just ended may take a while to appear."
+      "cc.note": "Data from Chess.com's public API. It refreshes a few times a day, so a game that just ended may take a while to appear.",
+      // Names for the rarer Lichess pack tags (display only; the pack generator balances the themes above)
+      "th.advancedPawn": "Advanced pawn", "th.master": "Master game", "th.masterVsMaster": "Master vs master",
+      "th.superGM": "Super GM game", "th.pillsburysMate": "Pillsbury's mate", "th.arabianMate": "Arabian mate",
+      "th.operaMate": "Opera mate", "th.anastasiaMate": "Anastasia's mate", "th.doubleBishopMate": "Double bishop mate",
+      "th.epauletteMate": "Epaulette mate", "th.dovetailMate": "Dovetail mate", "th.cornerMate": "Corner mate",
+      "th.blindSwineMate": "Blind swine mate", "th.balestraMate": "Balestra mate", "th.swallowstailMate": "Swallow's tail mate",
+      "th.killBoxMate": "Kill box mate", "th.hookMate": "Hook mate", "th.morphysMate": "Morphy's mate",
+      "th.triangleMate": "Triangle mate", "th.vukovicMate": "Vukovic mate", "th.queenEndgame": "Queen endgame",
+      "th.queenRookEndgame": "Queen and rook endgame", "th.bishopEndgame": "Bishop endgame", "th.knightEndgame": "Knight endgame",
+      "th.attackingF2F7": "Attacking f2 or f7", "th.discoveredCheck": "Discovered check", "th.exposedKing": "Exposed king",
+      "th.clearance": "Clearance", "th.xRayAttack": "X-ray attack", "th.capturingDefender": "Capture the defender",
+      "th.intermezzo": "Intermezzo", "th.interference": "Interference", "th.castling": "Castling",
+      "th.collinearMove": "Collinear move", "th.enPassant": "En passant", "th.underPromotion": "Underpromotion"
     },
     el: {
       "mode.ai": "Με υπολογιστή", "mode.duo": "2 παίκτες",
@@ -616,7 +629,20 @@
       "th.defensiveMove": "Αμυντική κίνηση", "th.quietMove": "Ήσυχη κίνηση", "th.trappedPiece": "Παγιδευμένο κομμάτι",
       "th.doubleCheck": "Διπλό σαχ", "th.smotheredMate": "Πνιγμένο ματ", "th.zugzwang": "Τσουγκτσβάνγκ",
       "th.rookEndgame": "Φινάλε πύργων", "th.pawnEndgame": "Φινάλε πιονιών", "th.equality": "Εξίσωση",
-      "cc.note": "Στοιχεία από το δημόσιο API του Chess.com. Ανανεώνονται λίγες φορές τη μέρα, οπότε μια παρτίδα που μόλις τελείωσε μπορεί να αργήσει να φανεί."
+      "cc.note": "Στοιχεία από το δημόσιο API του Chess.com. Ανανεώνονται λίγες φορές τη μέρα, οπότε μια παρτίδα που μόλις τελείωσε μπορεί να αργήσει να φανεί.",
+      // Names for the rarer Lichess pack tags (display only; the pack generator balances the themes above)
+      "th.advancedPawn": "Προωθημένο πιόνι", "th.master": "Παρτίδα μετρ", "th.masterVsMaster": "Μετρ εναντίον μετρ",
+      "th.superGM": "Παρτίδα κορυφαίου GM", "th.pillsburysMate": "Ματ του Pillsbury", "th.arabianMate": "Αραβικό ματ",
+      "th.operaMate": "Ματ της Όπερας", "th.anastasiaMate": "Ματ της Αναστασίας", "th.doubleBishopMate": "Ματ με δύο αξιωματικούς",
+      "th.epauletteMate": "Ματ με επωμίδες", "th.dovetailMate": "Ματ χελιδονοουράς", "th.cornerMate": "Ματ στη γωνία",
+      "th.blindSwineMate": "Ματ των τυφλών γουρουνιών", "th.balestraMate": "Ματ Balestra", "th.swallowstailMate": "Ματ ουράς χελιδονιού",
+      "th.killBoxMate": "Ματ σε κουτί", "th.hookMate": "Ματ με γάντζο", "th.morphysMate": "Ματ του Morphy",
+      "th.triangleMate": "Τριγωνικό ματ", "th.vukovicMate": "Ματ Vukovic", "th.queenEndgame": "Φινάλε βασιλισσών",
+      "th.queenRookEndgame": "Φινάλε βασίλισσας και πύργου", "th.bishopEndgame": "Φινάλε αξιωματικών", "th.knightEndgame": "Φινάλε ίππων",
+      "th.attackingF2F7": "Επίθεση στο f2 ή f7", "th.discoveredCheck": "Αποκαλυπτόμενο σαχ", "th.exposedKing": "Εκτεθειμένος βασιλιάς",
+      "th.clearance": "Εκκαθάριση", "th.xRayAttack": "Επίθεση ακτίνων Χ", "th.capturingDefender": "Αιχμαλώτιση του αμυνόμενου",
+      "th.intermezzo": "Ενδιάμεση κίνηση", "th.interference": "Παρεμβολή", "th.castling": "Ροκέ",
+      "th.collinearMove": "Κίνηση στην ίδια γραμμή", "th.enPassant": "Αν πασάν", "th.underPromotion": "Υποπροαγωγή"
     }
   };
 
