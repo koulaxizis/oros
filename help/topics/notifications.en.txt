@@ -33,7 +33,7 @@ On phones, browsers often pause pages that aren't on screen. For an alarm that r
 ## With the orOS Android app
 In the orOS app for Android, `Settings` › `Notifications` has `Reminders through the Android app`. Turn it on and tap `Allow`. The phone then rings these on its own, even when orOS is closed:
 
-- [Time](app:time) alarms, with the phone's alarm sound, until you dismiss them.
+- [Time](app:time) alarms and timers, with the phone's alarm sound, until you dismiss them.
 - [Water](app:water) reminders.
 - Tasks due in [To-Do](app:todo), at 09:00 on the day.
 

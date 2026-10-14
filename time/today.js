@@ -7,6 +7,7 @@
 // alarms that ring later today, at their time. A running timer or
 // Pomodoro is a "once" alarm set less than 3 hours ahead: left out
 // (it rings by itself within the hour), like any such short alarm.
+// Kitchen timers (wave 5, alarm ids "tmr-…") are always left out.
 // Opens the Alarms tab of Time (__orosOpenTime("alarms")).
 // Stage (wave 4), read-only from oros-time-stage (+ this device's
 // oros-time-stage-run): on an event's day, the next session and
@@ -63,6 +64,7 @@
       var out = [];
       (Array.isArray(list) ? list : []).forEach(function (a) {
         if (!a || typeof a.at !== "number" || a.at < ctx.now) return;
+        if (typeof a.id === "string" && a.id.indexOf("tmr-") === 0) return;   // a kitchen timer (wave 5)
         var d = new Date(a.at);
         var day = d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
         if (day !== ctx.today) return;

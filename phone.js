@@ -580,7 +580,8 @@
       }
       for (var n = 0; n < 3 && t <= end; n++) {
         if (t > now) rows.push({ id: "time:alarm-" + a.id + "-" + ymdLocal(t), at: t, kind: "alarm", ns: "time",
-                                 title: alarmTitle, body: str(a.label, 60) || alarmTitle, link: "time:alarms" });
+                                 title: alarmTitle, body: str(a.label, 60) || alarmTitle,
+                                 link: a.id.indexOf("tmr-") === 0 ? "time:timer" : "time:alarms" });   // Time wave 5: kitchen timers
         if (a.repeat !== "daily") break;
         var nx = new Date(t); nx.setDate(nx.getDate() + 1); t = nx.getTime();
       }
@@ -1167,7 +1168,9 @@
       document.addEventListener("visibilitychange", function () {
         send({ t: "seen", v: !document.hidden });
         if (!document.hidden) { pushAll(false); send({ t: "state" }); }
-        else { todayAt = 0; pushToday(false); }   // leaving: the widget gets the latest
+        // leaving: the widget gets the latest, and so do the reminders
+        // (a timer or alarm set in the last 15 s must reach the app)
+        else { todayAt = 0; pushToday(false); pushReminders(false); }
       });
     }
   });

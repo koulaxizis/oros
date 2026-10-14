@@ -3629,11 +3629,16 @@
   // The alarms that are ALIVE: valid, not deleted (tombstone at or
   // after their mtime), and not a once-alarm whose time has passed.
   // One entry per id (best version), sorted by id.
+  // Time wave 5: "tmr-" ids are the Time app's kitchen timers. They
+  // ring on this device only, so they never enter the slice (getter,
+  // merge) and a pull keeps the local ones (shellSliceSet).
+  function alarmIsTimer(id) { return typeof id === "string" && id.indexOf("tmr-") === 0; }
   function alarmsCanonical(list, tombs, now) {
     var byId = {};
     for (var i = 0; i < list.length; i++) {
       var c = alarmCanon(list[i]);
       if (!c) continue;
+      if (alarmIsTimer(c.id)) continue;
       if (c.repeat === "once" && c.at <= now) continue;
       if (tombs[c.id] && c.mtime <= tombs[c.id].t) continue;
       byId[c.id] = byId[c.id] ? alarmBetter(byId[c.id], c) : c;
@@ -3823,6 +3828,13 @@
             !(tombsNew[lc.id] && lc.mtime <= tombsNew[lc.id].t)) {
           keep.push(lc);
           keepIds[lc.id] = true;
+        }
+      }
+      // Time wave 5: this device's kitchen timers are not in the slice.
+      for (var ti = 0; ti < mine.length; ti++) {
+        if (mine[ti] && alarmIsTimer(mine[ti].id) && !keepIds[mine[ti].id]) {
+          keep.push(mine[ti]);
+          keepIds[mine[ti].id] = true;
         }
       }
       alarmsWrite(keep);
@@ -6243,7 +6255,18 @@
   // Three short pips — WebAudio, zero assets. Gesture-lock aware:
   // a suspended context can't resume without a click — the visual
   // overlay is the primary channel anyway.
-  function alarmPip() {
+  // Time wave 5: a kitchen timer picks one of these voices (stored in
+  // the Time app's device-local oros-time-timers, found by alarm id).
+  // "beep" is the original three pips. Each pattern fits in the 1.5 s
+  // repeat. [frequency Hz, start s]
+  var ALARM_SOUNDS = {
+    beep:    { type: "sine",     len: 0.18, vol: 0.16, notes: [[880, 0], [880, 0.24], [880, 0.48]] },
+    chime:   { type: "sine",     len: 0.45, vol: 0.14, notes: [[1318.5, 0], [1046.5, 0.3], [784, 0.6]] },
+    bell:    { type: "triangle", len: 0.9,  vol: 0.22, notes: [[660, 0], [990, 0.01], [660, 0.6]] },
+    digital: { type: "square",   len: 0.07, vol: 0.05, notes: [[1250, 0], [1250, 0.12], [1250, 0.24], [1250, 0.36], [1250, 0.6], [1250, 0.72], [1250, 0.84], [1250, 0.96]] },
+    gentle:  { type: "sine",     len: 0.55, vol: 0.1,  notes: [[523.25, 0], [659.25, 0.32], [783.99, 0.64]] }
+  };
+  function alarmPip(name) {
     try {
       var AC = window.AudioContext || window.webkitAudioContext;
       if (!AC) return;
@@ -6253,23 +6276,39 @@
         ctx.resume().catch(function () {});
       }
       // resumed is async — schedule pips anyway; they'll fire when ready
+      var snd = ALARM_SOUNDS[name] || ALARM_SOUNDS.beep;
       var t0 = ctx.currentTime;
-      for (var i = 0; i < 3; i++) {
+      for (var i = 0; i < snd.notes.length; i++) {
         var o = ctx.createOscillator();
         var g = ctx.createGain();
-        o.type = "sine";
-        o.frequency.value = 880;
-        var ts = t0 + i * 0.24;
+        o.type = snd.type;
+        o.frequency.value = snd.notes[i][0];
+        var ts = t0 + snd.notes[i][1];
         g.gain.setValueAtTime(0.0001, ts);
-        g.gain.exponentialRampToValueAtTime(0.16, ts + 0.02);
-        g.gain.exponentialRampToValueAtTime(0.0001, ts + 0.18);
+        g.gain.exponentialRampToValueAtTime(snd.vol, ts + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, ts + snd.len);
         o.connect(g);
         g.connect(ctx.destination);
         o.start(ts);
-        o.stop(ts + 0.2);
+        o.stop(ts + snd.len + 0.02);
       }
     } catch (e) { /* no audio — visual toast stands alone */ }
   }
+  // The voice of a kitchen timer's alarm; every other alarm beeps.
+  function alarmSoundOf(a) {
+    if (!a || !alarmIsTimer(a.id)) return "beep";
+    try {
+      var list = JSON.parse(localStorage.getItem("oros-time-timers"));
+      for (var i = 0; Array.isArray(list) && i < list.length; i++) {
+        if (list[i] && list[i].aid === a.id && ALARM_SOUNDS[list[i].sound]) return list[i].sound;
+      }
+    } catch (e) {}
+    return "beep";
+  }
+  // Preview for the Time app's sound pickers (same voices).
+  window.orosAlarmSound = function (name) {
+    if (typeof name === "string" && ALARM_SOUNDS[name]) alarmPip(name);
+  };
 
   function alarmStopRing() {
     if (alarmRing.timer) { clearInterval(alarmRing.timer); alarmRing.timer = null; }
@@ -6293,10 +6332,11 @@
         type: "alarm",
         title: window.t("alarm.title"),
         body: (a.label || window.t("alarm.title")),
-        deepLink: "time:alarms"
+        deepLink: alarmIsTimer(a.id) ? "time:timer" : "time:alarms"
       });
     }
     alarmStopRing();
+    var voice = alarmSoundOf(a);
     var el = document.createElement("div");
     el.id = "alarm-toast";
     el.setAttribute("role", "alert");
@@ -6359,8 +6399,8 @@
     el.appendChild(snoozeBtn);
     el.appendChild(btn);
     document.body.appendChild(el);
-    alarmPip();
-    alarmRing.timer = setInterval(alarmPip, 1500);
+    alarmPip(voice);
+    alarmRing.timer = setInterval(function () { alarmPip(voice); }, 1500);
     setTimeout(function () {
       if (document.getElementById("alarm-toast")) alarmStopRing();
     }, 30000);
@@ -6447,7 +6487,7 @@
       alarmsWrite(out);
       // SH-D1: a deletion must travel as a fact, or the union with a
       // device that still holds the alarm brings it back.
-      if (gone) {
+      if (gone && !alarmIsTimer(id)) {
         var tombs = alarmTombsRead();
         tombs[id] = { t: Math.max(Date.now(), gone.mtime), x: (gone.repeat === "once") ? gone.at : 0 };
         alarmTombsWrite(alarmTombsLive(tombs, Date.now()));
