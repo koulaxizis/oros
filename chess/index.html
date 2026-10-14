@@ -7,7 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Chess · orOS</title>
 
-  <link rel="stylesheet" href="chess.css?v=1.88.03">
+  <link rel="stylesheet" href="chess.css?v=1.89.00">
 
 </head>
 <body>
@@ -36,6 +36,7 @@
       <button type="button" class="icon-btn" id="undo-btn"></button>
       <button type="button" class="icon-btn" id="flip-btn"></button>
       <button type="button" class="icon-btn" id="stats-btn"></button>
+      <button type="button" class="icon-btn" id="pgn-btn"></button>
       <button type="button" class="icon-btn" id="sfx-btn" aria-pressed="false"></button>
     </div>
   </header>
@@ -54,13 +55,26 @@
     <aside id="moves-wrap">
       <div id="moves-head"><span data-i18n="moves.title">Moves</span><span id="unrated" data-i18n="st.unrated" hidden>Unrated</span></div>
       <ol id="moves"></ol>
+      <!-- Review of an opened PGN: step through it, analysis, play on -->
+      <div id="review-bar" hidden>
+        <div class="rv-nav">
+          <button type="button" class="icon-btn" id="rv-first"></button>
+          <button type="button" class="icon-btn" id="rv-prev"></button>
+          <button type="button" class="icon-btn" id="rv-next"></button>
+          <button type="button" class="icon-btn" id="rv-last"></button>
+          <button type="button" class="rv-btn" id="rv-ana" aria-pressed="false" data-i18n="rv.ana">Analysis</button>
+          <button type="button" class="rv-btn primary" id="rv-play" data-i18n="rv.play">Play from here</button>
+        </div>
+        <div id="rv-eval" aria-live="polite" hidden></div>
+        <div id="rv-info" hidden></div>
+      </div>
     </aside>
   </main>
 
   <div id="live" class="sr-only" aria-live="polite"></div>
   <div id="toast" role="status"></div>
 
-  <script src="chess.js?v=1.88.03"></script>
+  <script src="chess.js?v=1.89.00"></script>
 
 </body>
 </html>

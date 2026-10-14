@@ -26,14 +26,15 @@ function cut(from, to) {
 
 const C = (() => {
   const parts = [cut("  var DATA_VER", "  // ---------- 1.")];
-  ["cmpStr", "isInt", "makeEngine", "normRow", "joinRows", "mergeChess"].forEach((name) => {
+  ["cmpStr", "isInt", "makeEngine", "makePgn", "normRow", "joinRows", "mergeChess"].forEach((name) => {
     const i = SRC.indexOf("  function " + name + "(");
     if (i < 0) throw new Error("missing function " + name);
     parts.push(SRC.slice(i, SRC.indexOf("\n  }\n", i) + 4));
   });
-  return new Function(parts.join("\n") + "\nreturn { E: makeEngine(), makeEngine, mergeChess };")();
+  return new Function(parts.join("\n") + "\nreturn { E: makeEngine(), makeEngine, makePgn, mergeChess };")();
 })();
 const E = C.E;
+const PGN = C.makePgn(E);
 
 const J = JSON.stringify;
 const rnd = (n) => Math.floor(Math.random() * n);
@@ -287,4 +288,117 @@ test("chess: records merge is a join and a reset drops older rows", () => {
   }
   assert.equal(J(M({ rows: { d: { b: -1, s: { m: [1, 0, 0] } } } }, null).rows), "{}");
   assert.equal(J(M(null, undefined)), J({ ver: 1, br: 0, rows: {} }));
+});
+
+// ---------- PGN ----------
+const GAME = `[Event "Hoogovens \\"A\\""]
+[Site "Wijk aan Zee NED"]
+[Date "1999.01.20"]
+[Round "4"]
+[White "Kasparov, Garry"]
+[Black "Topalov, Veselin"]
+[Result "1-0"]
+[WhiteElo "2812"]
+[Annotator "someone"]
+
+1. e4 d6 2. d4 Nf6 3. Nc3 g6 4. Be3 Bg7 5. Qd2 c6 6. f3 b5 7. Nge2 Nbd7 8. Bh6
+Bxh6 9. Qxh6 Bb7 10. a3 e5 11. O-O-O Qe7 12. Kb1 a6 13. Nc1 O-O-O 14. Nb3 exd4
+15. Rxd4 c5 16. Rd1 Nb6 17. g3 Kb8 18. Na5 Ba8 19. Bh3 d5 20. Qf4+ Ka7 21. Rhe1
+d4 22. Nd5 Nbxd5 23. exd5 Qd6 24. Rxd4 cxd4 25. Re7+ Kb6 26. Qxd4+ Kxa5 27. b4+
+Ka4 28. Qc3 Qxd5 29. Ra7 Bb7 30. Rxb7 Qc4 31. Qxf6 Kxa3 32. Qxa6+ Kxb4 33. c3+
+Kxc3 34. Qa1+ Kd2 35. Qb2+ Kd1 36. Bf1 Rd2 37. Rd7 Rxd7 38. Bxc4 bxc4 39. Qxh8
+Rd3 40. Qa8 c3 41. Qa4+ Ke1 42. f4 f5 43. Kc1 Rd2 44. Qa7 1-0
+`;
+
+test("pgn: a full game, its tags (known ones only) and its result", () => {
+  const r = PGN.parse(GAME);
+  assert.equal(r.games.length, 1);
+  const g = r.games[0];
+  assert.equal(g.moves.length, 87);
+  assert.equal(g.result, "1-0");
+  assert.equal(g.fen, "");
+  assert.equal(g.stop, undefined);
+  assert.equal(g.tags.Event, 'Hoogovens "A"');
+  assert.equal(g.tags.White, "Kasparov, Garry");
+  assert.equal(g.tags.WhiteElo, "2812");
+  assert.equal(g.tags.Annotator, undefined, "tags outside the list are dropped");
+  assert.equal(g.sans[20], "O-O-O");
+  assert.equal(g.sans[86], "Qa7");
+  assert.ok(E.replay(g.moves), "the moves replay");
+});
+
+test("pgn: comments, variations, NAGs, annotations and loose notation", () => {
+  const r = PGN.parse(`; a line comment
+1.e4 {a comment with (brackets) and 1-0 inside} e5 (1... c5 2. Nf3 (2. c3) d6) 2.Nf3 $1 Nc6!? 3. Bb5 a6
+4. Ba4 Nf6 5. 0-0 Be7 6. Re1 b5 7. Bb3 d6 8. c3 O-O 9. h3 Nb8 10. d4 Nbd7 *`);
+  assert.equal(r.games.length, 1);
+  const g = r.games[0];
+  assert.equal(g.moves.length, 20);
+  assert.equal(g.result, "*");
+  assert.equal(g.sans[8], "O-O");
+  assert.equal(g.sans[17], "Nb8");
+  assert.equal(g.sans[19], "Nbd7");
+  // promotions without "=", "e.p." and over-specified moves
+  const P = E.parseFen("4k3/1P6/8/3pP3/8/8/8/R3K2R w KQ d6 0 1");
+  assert.equal(E.toUci(PGN.matchSan(P, "b8Q")), "b7b8q");
+  assert.equal(E.toUci(PGN.matchSan(P, "b8=n")), "b7b8n");
+  assert.equal(E.toUci(PGN.matchSan(P, "b8")), "b7b8q", "no piece named: a queen");
+  assert.equal(E.toUci(PGN.matchSan(P, "exd6e.p.")), "e5d6");
+  assert.equal(E.toUci(PGN.matchSan(P, "Ra1d1")), "a1d1");
+  assert.equal(E.toUci(PGN.matchSan(P, "0-0")), "e1g1");
+  assert.equal(PGN.matchSan(P, "Qd1"), 0, "no queen");
+  assert.equal(PGN.matchSan(E.parseFen("4k3/8/8/8/8/8/4K3/R6R w - - 0 1"), "Rd1"), 0, "ambiguous: two rooks");
+});
+
+test("pgn: many games, a game from a position, an illegal move, other variants", () => {
+  const r = PGN.parse(GAME + `
+[Event "Two"]
+1. d4 d5 2. Qd9 Nf6 *
+
+[Event "Endgame"]
+[SetUp "1"]
+[FEN "8/P7/8/8/8/8/8/k6K b - - 3 60"]
+60... Kb2 61. a8=Q *
+
+[Variant "Chess960"]
+[FEN "bqnb1rkr/pp3ppp/3ppn2/2p5/5P2/P2P4/NPP1P1PP/BQ1BNRKR w HFhf - 2 9"]
+9. g3 *
+`);
+  assert.equal(r.games.length, 3, "the Chess960 game is left out");
+  assert.deepEqual(r.games[1].moves, ["d2d4", "d7d5"]);
+  assert.deepEqual(r.games[1].stop, { ply: 2, tok: "Qd9" });
+  const e = r.games[2];
+  assert.equal(e.fen, "8/P7/8/8/8/8/8/k6K b - - 3 60");
+  assert.deepEqual(e.moves, ["a1b2", "a7a8q"]);
+  assert.equal(PGN.parse("[FEN \"not a fen\"]\n1. e4 *").games.length, 0, "a bad FEN drops the game");
+  assert.equal(PGN.parse("").games.length, 0);
+  assert.equal(PGN.parse("hello world").games.length, 0);
+  assert.equal(PGN.parse("x".repeat(PGN.MAX_TEXT + 1)).big, true);
+});
+
+test("pgn: write makes export PGN that reads back the same", () => {
+  const g = PGN.parse(GAME).games[0];
+  const out = PGN.write(g);
+  assert.match(out, /^\[Event "Hoogovens \\"A\\""\]\n\[Site "Wijk aan Zee NED"\]\n\[Date "1999.01.20"\]\n\[Round "4"\]\n\[White "Kasparov, Garry"\]\n\[Black "Topalov, Veselin"\]\n\[Result "1-0"\]\n\[WhiteElo "2812"\]\n\n1\. e4 d6/);
+  assert.ok(out.split("\n").every((l) => l.length <= 80));
+  assert.match(out, /44\. Qa7 1-0\n$/);
+  const back = PGN.parse(out).games[0];
+  assert.deepEqual(back.moves, g.moves);
+  assert.deepEqual(back.tags, g.tags);
+  // from a position with black to move: SetUp / FEN and "60..."
+  const e = PGN.write({ fen: "8/P7/8/8/8/8/8/k6K b - - 3 60", moves: ["a1b2", "a7a8q"], result: "*" });
+  assert.match(e, /\[SetUp "1"\]\n\[FEN "8\/P7\/8\/8\/8\/8\/8\/k6K b - - 3 60"\]/);
+  assert.match(e, /\n60\.\.\. Kb2 61\. a8=Q\+? \*\n$/);
+  assert.match(PGN.write({ moves: [] }), /\[Result "\*"\]\n\n\*\n$/);
+});
+
+test("pgn: tag values can never break out of their tag or carry control characters", () => {
+  const out = PGN.write({ tags: { White: 'A"] [Evil "x\n1. e4', Black: "B\\" }, moves: ["e2e4"], result: "1-0" });
+  assert.match(out, /\[White "A\\"\] \[Evil \\"x 1\. e4"\]/);
+  assert.match(out, /\[Black "B\\\\"\]/);
+  assert.equal(PGN.parse(out).games[0].tags.White, 'A"] [Evil "x 1. e4');
+  assert.equal(PGN.clean("a\u0000b c\td"), "a b c d");
+  assert.equal(PGN.clean("x".repeat(500)).length, 120);
+  const r = PGN.parse('[White "<img src=x onerror=alert(1)>"]\n1. e4 *');
+  assert.equal(r.games[0].tags.White, "<img src=x onerror=alert(1)>", "kept as text; the app shows it with textContent");
 });

@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.89.00
+- Chess opens, saves and reviews games as PGN files: step through any game, see the computer's analysis and play on from any position.
+
 ## Version 1.88.00
 - Contacts: `From an account` now works with Google. Microsoft follows soon.
 - orOS now has a public privacy policy page: useoros.online/privacy.html (English and Greek).

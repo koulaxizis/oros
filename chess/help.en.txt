@@ -24,6 +24,22 @@ A game in progress is kept on this device and waits for you next time.
 
 >! Games where you used undo, and all `2 players` games, are not recorded.
 
+## Games as PGN
+PGN is the file format every chess site and program uses for games. Open `Open or save a game (PGN)` in the toolbar:
+- `Open file…` opens a .pgn file, or paste a game in the box and press `Open pasted`. A file with many games lists them, so you pick one.
+- `Save this game (.pgn)` saves the game on the board; `Copy PGN` copies it, to paste into Lichess, Chess.com or another program.
+
+On a computer with orOS installed, .pgn files also open with orOS from the system's "Open with".
+
+## Reviewing a game
+An opened game shows its players, the result and the move list. Step through it with the buttons under the moves, with [[←]] [[→]] (and [[Home]] [[End]]), or by tapping any move in the list.
+- `Analysis` shows how the computer sees each position (the `Hard` level): the score from white's side (+1.00 is about a pawn ahead for white, #3 a mate in three) and the best move it finds.
+- `Play from here` continues the game from the position on the board: against the computer with the side to move, or with 2 players.
+
+>! A game played on from a position is not counted in the records.
+
+A game you were reviewing also waits for you next time. If a PGN has a move that isn't legal, the game opens up to that move and a message says where it stopped.
+
 ## Sync
 Your records against the computer sync between your devices through [orOS sync](help:t/sync). `Reset records` deletes them on every device, after you confirm. The mode, level, side, board turn, the game in progress and the sound button stay on this device.
 
