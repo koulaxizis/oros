@@ -60,6 +60,62 @@
         <div id="emojis" class="emojis" role="radiogroup" aria-labelledby="emoji-lbl"></div>
       </div>
 
+      <!-- Wave 30: the optional long entry of the day -->
+      <button type="button" id="long-open" class="chip long-open" data-i18n="long.open">Write more about this day</button>
+      <section id="long" class="card long" aria-labelledby="long-title" hidden>
+        <div class="long-head">
+          <h2 id="long-title" data-i18n="sec.long">More about this day</h2>
+          <span class="spacer"></span>
+          <div id="long-mode" class="seg" role="radiogroup" aria-labelledby="long-title">
+            <button type="button" id="mode-write" class="chip" role="radio" data-i18n="long.write">Write</button>
+            <button type="button" id="mode-prev" class="chip" role="radio" data-i18n="long.preview">Preview</button>
+          </div>
+        </div>
+        <div id="prompt-box" class="prompt">
+          <span class="lbl" data-i18n="pr.lbl">Question of the day</span>
+          <p id="prompt-q" class="prompt-q"></p>
+          <div class="actions">
+            <button type="button" id="prompt-use" class="chip" data-i18n="pr.use">Answer it</button>
+            <button type="button" id="prompt-next" class="chip" data-i18n="pr.next">Another question</button>
+          </div>
+        </div>
+        <div class="tpl-row">
+          <span id="tpl-lbl" class="lbl" data-i18n="tpl.lbl">Templates</span>
+          <div id="tpl-chips" class="chips" role="group" aria-labelledby="tpl-lbl"></div>
+        </div>
+        <label for="long-md" class="sr-only" data-i18n="f.long">The long entry (Markdown)</label>
+        <textarea id="long-md" rows="8" spellcheck="true"></textarea>
+        <div id="long-prev" class="md" hidden></div>
+        <div class="line-foot">
+          <span id="long-status" class="hint small" aria-live="polite"></span>
+          <span class="spacer"></span>
+          <button type="button" id="long-del" class="link-btn danger" data-i18n="long.del" hidden>Clear the long entry</button>
+        </div>
+        <p class="hint small" data-i18n="long.mdhint"></p>
+        <div class="long-sub">
+          <span id="ph-lbl" class="lbl" data-i18n="ph.lbl">Photos</span>
+          <div id="photos" class="photos" role="group" aria-labelledby="ph-lbl"></div>
+        </div>
+        <div class="long-sub">
+          <span class="lbl" data-i18n="loc.lbl">Place and weather</span>
+          <div class="actions meta-row">
+            <button type="button" id="loc-btn" class="chip"></button>
+            <button type="button" id="wx-btn" class="chip"></button>
+          </div>
+          <div id="loc-edit" class="loc-edit" hidden>
+            <label for="loc-name" class="sr-only" data-i18n="loc.name">Place name</label>
+            <input type="text" id="loc-name" maxlength="80" autocomplete="off">
+            <div class="actions">
+              <button type="button" id="loc-geo" class="chip" data-i18n="loc.geo">Use my position</button>
+              <button type="button" id="loc-save" class="chip on" data-i18n="loc.save">Save place</button>
+              <button type="button" id="loc-cancel" class="chip" data-i18n="loc.cancel">Cancel</button>
+              <button type="button" id="loc-remove" class="link-btn danger" data-i18n="loc.remove">Remove place</button>
+            </div>
+            <p id="loc-hint" class="hint small" data-i18n="loc.hint"></p>
+          </div>
+        </div>
+      </section>
+
       <section id="otd" class="card">
         <h2 id="otd-title" data-i18n="sec.otd">On this day</h2>
         <ul id="otd-list" class="lines"></ul>
@@ -134,12 +190,60 @@
       <button type="button" id="imp-btn" class="chip" data-i18n="btn.import">Choose a file</button>
       <input type="file" id="imp-file" accept=".csv,.json,.txt,text/csv,application/json,text/plain" hidden>
     </div>
+
+    <h3 data-i18n="sec.book">PDF book</h3>
+    <p class="hint small" data-i18n="book.hint"></p>
+    <div class="actions">
+      <label for="book-year" class="sr-only" data-i18n="f.year">Year</label>
+      <select id="book-year"></select>
+      <button type="button" id="book-btn" class="chip" data-i18n="btn.book">Make the PDF book</button>
+    </div>
+
+    <h3 data-i18n="sec.prompts">Your questions</h3>
+    <p class="hint small" data-i18n="prm.hint"></p>
+    <ul id="prm-list" class="prm-list"></ul>
+    <div class="actions prm-add">
+      <label for="prm-in" class="sr-only" data-i18n="prm.new">New question</label>
+      <input type="text" id="prm-in" maxlength="200" autocomplete="off">
+      <button type="button" id="prm-btn" class="chip" data-i18n="prm.add">Add</button>
+    </div>
+
+    <h3 data-i18n="sec.lock">PIN lock</h3>
+    <p class="hint small" data-i18n="lock.hint"></p>
+    <div id="pin-area" class="pin-area"></div>
+  </div>
+
+  <!-- Wave 30: PIN lock screen (device-local privacy screen) -->
+  <div id="lock" class="lock" role="dialog" aria-modal="true" aria-labelledby="lock-title" hidden>
+    <form id="lock-form" class="lock-box" autocomplete="off">
+      <div class="lock-ic" aria-hidden="true"></div>
+      <h2 id="lock-title" data-i18n="lock.title">The diary is locked</h2>
+      <label for="lock-pin" class="sr-only" data-i18n="lock.pin">PIN</label>
+      <input type="password" id="lock-pin" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="off">
+      <button type="submit" id="lock-go" class="chip on" data-i18n="lock.go">Unlock</button>
+      <p id="lock-msg" class="hint small" aria-live="assertive"></p>
+      <p class="hint small" data-i18n="lock.note"></p>
+    </form>
+  </div>
+
+  <!-- Wave 30: photo viewer -->
+  <div id="ph-view" class="dialog ph-view" role="dialog" aria-modal="true" aria-labelledby="ph-view-title" hidden>
+    <div class="dlg-head">
+      <h2 id="ph-view-title" data-i18n="ph.lbl">Photos</h2>
+      <span class="spacer"></span>
+      <button type="button" id="ph-close" class="icon-btn"></button>
+    </div>
+    <div id="ph-img" class="ph-img"></div>
+    <div class="actions">
+      <button type="button" id="ph-remove" class="link-btn danger" data-i18n="ph.remove">Remove this photo</button>
+    </div>
   </div>
 
   <div id="live" class="sr-only" aria-live="polite"></div>
   <div id="toast" role="status"></div>
 
   <script src="core.js?v=1.98.00"></script>
+  <script src="journal.js?v=1.98.00"></script>
   <script src="diary.js?v=1.98.00"></script>
 
 </body>

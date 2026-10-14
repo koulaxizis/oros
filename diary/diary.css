@@ -407,6 +407,152 @@ select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 
 
 
+/* ---------- 7b. Wave 30: long entry, photos, place, lock ---------- */
+.long-open { align-self: center; max-width: 100%; white-space: normal; text-align: center; }
+.long-head { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.long-head h2 { margin: 0; }
+.seg { display: inline-flex; gap: 4px; }
+.seg .chip { padding: 4px 12px; }
+.prompt {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--accent-soft);
+}
+.prompt-q { font-family: Georgia, "Iowan Old Style", "Palatino Linotype", serif; font-size: 16px; line-height: 1.4; overflow-wrap: anywhere; }
+.tpl-row { display: flex; flex-direction: column; gap: 6px; }
+.tpl-row .chip { white-space: normal; }
+#long-md {
+  width: 100%;
+  min-height: 180px;
+  resize: vertical;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 15px;
+  line-height: 1.55;
+}
+#long-md::placeholder { color: var(--text-dim); opacity: 0.8; }
+#long-md:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.md {
+  min-height: 80px;
+  padding: 4px 2px;
+  font-family: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
+  font-size: 16px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.md h3, .md h4 { font-family: inherit; text-transform: none; letter-spacing: 0; color: var(--text); margin: 4px 0 0; }
+.md h3 { font-size: 18px; }
+.md h4 { font-size: 16px; }
+.md ul, .md ol { padding-left: 22px; }
+.md ul { list-style: disc; }
+.md ol { list-style: decimal; }
+.md blockquote { border-left: 3px solid var(--accent); padding-left: 10px; color: var(--text-dim); font-style: italic; }
+.md code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.9em; background: var(--bg); border-radius: 4px; padding: 0 4px; }
+.md a { color: var(--accent); }
+.md hr { border: none; border-top: 1px solid var(--border); margin: 4px 30px; }
+.long-sub { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+.photos { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.ph-th {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  min-height: 48px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+.ph-th img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ph-th:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.ph-add { border-style: dashed; font-size: 26px; color: var(--accent); }
+.ph-add:disabled { opacity: 0.4; cursor: default; }
+.ph-miss { font-size: 11px; color: var(--text-dim); padding: 4px; text-align: center; line-height: 1.3; }
+.meta-row .chip { white-space: normal; text-align: left; max-width: 100%; }
+.loc-edit { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; border: 1px dashed var(--border); border-radius: 12px; }
+.loc-edit input, .prm-add input, .pin-in {
+  min-height: 40px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 15px;
+  width: 100%;
+  min-width: 0;
+}
+.loc-edit input:focus-visible, .prm-add input:focus-visible, .pin-in:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.line-long { margin-left: 6px; color: var(--accent); font-size: 0.85em; }
+.prm-list { display: flex; flex-direction: column; gap: 4px; }
+.prm-item { display: flex; align-items: center; gap: 8px; padding: 4px 0; border-bottom: 1px solid var(--border); }
+.prm-t { flex: 1 1 auto; min-width: 0; font-size: 14px; overflow-wrap: anywhere; }
+.prm-add { flex-wrap: nowrap; }
+.prm-add input { flex: 1 1 auto; }
+.pin-area, .pin-form { display: flex; flex-direction: column; gap: 8px; }
+.pin-in { max-width: 240px; letter-spacing: 0.2em; }
+.ph-view { width: min(720px, calc(100vw - 24px)); }
+.ph-img { display: flex; justify-content: center; }
+.ph-img img { max-width: 100%; max-height: calc(100dvh - 160px); border-radius: 10px; object-fit: contain; }
+.lock {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.lock-box {
+  width: min(340px, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+.lock-ic { width: 52px; height: 52px; color: var(--accent); }
+.lock-ic svg { width: 100%; height: 100%; }
+.lock-box h2 { font-size: 17px; color: var(--text); text-transform: none; letter-spacing: 0; }
+#lock-pin {
+  width: 100%;
+  min-height: 48px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--panel-bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 22px;
+  text-align: center;
+  letter-spacing: 0.3em;
+}
+#lock-pin:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+#lock-go { min-width: 140px; }
+#lock-msg:empty { display: none; }
+body.is-locked #toolbar, body.is-locked #tabs, body.is-locked #main { visibility: hidden; }
+@media (max-width: 560px) {
+  .photos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  #long-md { min-height: 200px; }
+}
+@media (pointer: coarse) {
+  .seg .chip, .loc-edit input, .prm-add input, .pin-in { min-height: 44px; }
+  .ph-th { min-height: 64px; }
+}
+
 /* ---------- 8. Mobile + touch ---------- */
 @media (max-width: 560px) {
   #toolbar { padding-left: 8px; padding-right: 8px; gap: 4px; }
@@ -433,7 +579,9 @@ select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 }
 @media print {
   html, body { height: auto; overflow: visible; background: #fff; color: #000; display: block; }
-  #toolbar, #tabs, #v-today, #v-days, .year-head, #year-empty, #toast, #scrim, .dialog { display: none !important; }
+  #toolbar, #tabs, #v-today, #v-days, .year-head, #year-empty, #toast, #scrim, .dialog, .lock { display: none !important; }
+  body.is-locked #main { display: none !important; }
+  .line-long { color: #555; }
   #main { overflow: visible; }
   #v-year { display: block !important; max-width: none; padding: 0; }
   #v-year::before { content: attr(data-print-title); display: block; font-size: 22px; font-weight: 800; margin-bottom: 12px; }
