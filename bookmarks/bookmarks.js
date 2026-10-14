@@ -98,6 +98,7 @@ function watchPalette() {
 
 const STR = {
   "en": {
+    "aria.folders": "Folders",
     "app.name": "Bookmarks",
     "tab.add": "New folder",
     "quick.add": "Paste a link — or link | title",
@@ -203,6 +204,7 @@ const STR = {
     "send.safe": "Nothing is saved until you press Save in orOS."
   },
   "el": {
+    "aria.folders": "Φάκελοι",
     "app.name": "Συντομεύσεις",
     "tab.add": "Νέος φάκελος",
     "quick.add": "Κόλλησε σύνδεσμο — ή σύνδεσμος | τίτλος",
@@ -329,6 +331,9 @@ function t(key, vars) {
 function applyI18n(root) {
   (root || document).querySelectorAll("[data-i18n]").forEach((el) => {
     el.textContent = t(el.getAttribute("data-i18n"));
+  });
+  (root || document).querySelectorAll("[data-i18n-aria]:not([data-i18n-title])").forEach((el) => {
+    el.setAttribute("aria-label", t(el.getAttribute("data-i18n-aria")));
   });
   (root || document).querySelectorAll("[data-i18n-ph]").forEach((el) => {
     el.placeholder = t(el.getAttribute("data-i18n-ph"));

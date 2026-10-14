@@ -53,6 +53,7 @@
 
   var STRINGS = {
     en: {
+      "aria.lists": "Lists",
       "quick.add":     "Add a task… (try “tomorrow”, “friday”)",
       "hide.completed":"Hide completed",
       "clear.completed":"Clear completed",
@@ -123,6 +124,7 @@
       "filtered.hint":  "Turn off “Hide completed” to see them."
     },
     el: {
+      "aria.lists": "Λίστες",
       "quick.add":     "Προσθήκη εργασίας… (δοκίμασε «αύριο», «παρασκευή»)",
       "hide.completed":"Απόκρυψη ολοκληρωμένων",
       "clear.completed":"Καθαρισμός ολοκληρωμένων",
@@ -2323,6 +2325,7 @@
 
   // ---------- 13. Wiring & boot ----------
   function applyI18n() {
+    [].forEach.call(document.querySelectorAll("[data-i18n-aria]"), function (n) { n.setAttribute("aria-label", t(n.getAttribute("data-i18n-aria"))); });
     var n = document.querySelectorAll("[data-i18n]");
     for (var i = 0; i < n.length; i++) {
       n[i].textContent = t(n[i].getAttribute("data-i18n"));

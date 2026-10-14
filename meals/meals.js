@@ -140,7 +140,7 @@
       "diet.keto": "Keto", "diet.lowcarb": "Λίγοι υδατάνθρακες", "diet.gf": "Χωρίς γλουτένη", "diet.lf": "Χωρίς λακτόζη",
       "diet.nut": "Χωρίς ξηρούς καρπούς", "diet.fast": "Νηστίσιμο",
       "dshort.vegan": "Vegan", "dshort.veg": "Χορτοφ.", "dshort.pesc": "Pesc", "dshort.raw": "Ωμοφ.", "dshort.keto": "Keto",
-      "dshort.lowcarb": "Low-carb", "dshort.gf": "Χ. γλουτένη", "dshort.lf": "Χ. λακτόζη", "dshort.nut": "Χ. ξηρούς", "dshort.fast": "Νηστίσιμο",
+      "dshort.lowcarb": "Λίγοι υδατ.", "dshort.gf": "Χ. γλουτένη", "dshort.lf": "Χ. λακτόζη", "dshort.nut": "Χ. ξηρούς", "dshort.fast": "Νηστίσιμο",
       "diet.none": "Τα τρώμε όλα (χωρίς περιορισμούς)",
       "warn.diet": "Είναι σημειωμένη {diet}, αλλά έχει: {list}", "warn.cooked": "χρόνο μαγειρέματος",
       "v.servings": "Μερίδες", "v.prep": "Προετοιμασία", "v.cook": "Μαγείρεμα", "v.ings": "Υλικά", "v.steps": "Εκτέλεση",

@@ -2682,7 +2682,7 @@ function applyI18n() {
 var SVG_ATTRS = ' xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"' +
   ' width="15" height="15" fill="none" stroke="currentColor"' +
   ' stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"' +
-  ' aria-hidden="true">';
+  ' aria-hidden="true"';
 function svg(inner, txt) {
   return "<svg" + SVG_ATTRS + (txt ? ' fill="currentColor" stroke="none"' : "") +
     ">" + inner + "</svg>";
@@ -2695,7 +2695,7 @@ var ICONS = {
   "tb-paste": svg('<rect x="5" y="4" width="10" height="13" rx="1.5"/><path d="M8 2.5h4v3H8z"/>'),
   "tb-bold":  svg('<text x="10" y="15" text-anchor="middle" style="font:700 13px sans-serif">B</text>', true),
   "tb-ital":  svg('<text x="10" y="15" text-anchor="middle" style="font:italic 600 13px sans-serif">I</text>', true),
-  "tb-und":   svg('<text x="10" y="14" text-anchor="middle" style="font:600 12px sans-serif">U</text><path d="M6 16h8"/>', true),
+  "tb-und":   svg('<text x="10" y="14" text-anchor="middle" style="font:600 12px sans-serif">U</text><path d="M6 16h8" stroke="currentColor"/>', true),
   "tb-al-l":  svg('<path d="M3 6h14M3 10h9M3 14h12"/>'),
   "tb-al-c":  svg('<path d="M3 6h14M5.5 10h9M4.5 14h11"/>'),
   "tb-al-r":  svg('<path d="M3 6h14M8 10h9M5 14h12"/>'),

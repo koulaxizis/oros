@@ -258,7 +258,7 @@
       "opt.cols": "Στήλες", "ph.cols": "π.χ. 3,1 ή 2-4",
       "opt.header": "Η πρώτη γραμμή είναι επικεφαλίδα",
       "opt.word": "Ολόκληρες λέξεις", "opt.regex": "Μοτίβο (regular expression)",
-      "opt.what": "Βρες", "val.what.emails": "Emails", "val.what.links": "Συνδέσμους", "val.what.phones": "Τηλέφωνα",
+      "opt.what": "Βρες", "val.what.emails": "Διευθύνσεις email", "val.what.links": "Συνδέσμους", "val.what.phones": "Τηλέφωνα",
       "val.what.numbers": "Αριθμούς", "val.what.hashtags": "#hashtags", "val.what.mentions": "@ονόματα",
       "opt.unique": "Το καθένα μία φορά", "opt.extract.sort": "Ταξινόμηση Α → Ω",
       "opt.url.dir": "Ενέργεια", "opt.base64.dir": "Ενέργεια", "opt.html.dir": "Ενέργεια",

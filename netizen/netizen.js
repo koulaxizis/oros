@@ -120,12 +120,12 @@
     el: {
       "tab.edit": "Επεξεργασία", "tab.card": "Κάρτα",
       "sec.identity": "Ταυτότητα", "sec.avatar": "Pixel avatar", "sec.contact": "Επικοινωνία",
-      "sec.links": "Sites & socials", "sec.about": "Bio & μότο", "sec.tags": "Ετικέτες & χαρακτηριστικά",
+      "sec.links": "Ιστότοποι & κοινωνικά δίκτυα", "sec.about": "Λίγα λόγια & μότο", "sec.tags": "Ετικέτες & χαρακτηριστικά",
       "sec.style": "Στυλ κάρτας",
       "f.user": "Όνομα χρήστη", "f.disp": "Εμφανιζόμενο όνομα", "f.pron": "Αντωνυμίες",
       "f.loc": "Τοποθεσία", "f.langs": "Γλώσσες", "f.since": "Netizen από (έτος)",
       "f.email": "Email", "f.phone": "Τηλέφωνο", "f.web": "Ιστοσελίδα",
-      "f.bio": "Bio", "f.motto": "Μότο",
+      "f.bio": "Λίγα λόγια", "f.motto": "Μότο",
       "ph.user": "υποχρεωτικό", "ph.disp": "Ελένη Παπαδοπούλου", "ph.pron": "αυτή",
       "ph.loc": "Αθήνα, Ελλάδα", "ph.langs": "Ελληνικά, Αγγλικά", "ph.since": "1999",
       "ph.email": "me@example.org", "ph.phone": "+30 …", "ph.web": "example.org",
@@ -1345,7 +1345,7 @@
     [].forEach.call($("av-pal").children, function (s) {
       var k = +s.getAttribute("data-c");
       s.hidden = k >= a.pal.length;
-      var title = k === 0 || !own ? t("av.col" + k) : t("av.colN", { n: k + 1 });
+      var title = k === 0 || (!own && k <= 6) ? t("av.col" + k) : t("av.colN", { n: k + 1 });
       if (s.title !== title) { s.title = title; s.setAttribute("aria-label", title); }
       if (s.hidden) return;
       s.style.background = k === 0 && c.av.t ? "transparent" : a.pal[k];
