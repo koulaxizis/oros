@@ -21,6 +21,7 @@
   var VERSION = "1.0.0";
   var DEFAULT_RELAY = "https://oros-mail-relay.koulaxizis-25b.workers.dev";   // = mail.js
   var SEND_TIMEOUT = 120000, MIN_GAP = 2000;
+  var MAX_RAW = 10 * 1024 * 1024;   // the relay's limit for a message (decoded)
   var PER_HOUR = { def: 60, min: 5, max: 500 };
 
   // ms between two messages for a per-hour limit
@@ -29,10 +30,17 @@
     return Math.max(MIN_GAP, Math.ceil(3600000 / n));
   }
   // relay error → "skip" (this address only: go on) or "stop" (pause the queue)
+  // A refusal with a 4xx (try later: greylisting, throttling) stops.
   function classify(err) {
     var c = err && err.code;
-    if (c === "rcpt" || c === "too-big") return "skip";
+    if (c === "too-big") return "skip";
+    if (c === "rcpt" && !/\b4\d\d\b/.test(String(err.msg || ""))) return "skip";
     return "stop";
+  }
+  // too big for the relay → { code: "too-big" } before anything is sent
+  function checkSize(bin) {
+    if (String(bin).length > MAX_RAW) throw { code: "too-big" };
+    return bin;
   }
   function isRate(err) {
     var c = err && err.code, m = String(err && err.msg || "");
@@ -48,7 +56,7 @@
     });
   }
 
-  var api = { VERSION: VERSION, PER_HOUR: PER_HOUR, MIN_GAP: MIN_GAP, gapFor: gapFor, classify: classify, isRate: isRate, message: message };
+  var api = { VERSION: VERSION, PER_HOUR: PER_HOUR, MIN_GAP: MIN_GAP, MAX_RAW: MAX_RAW, gapFor: gapFor, classify: classify, checkSize: checkSize, isRate: isRate, message: message };
   if (typeof module !== "undefined" && module.exports) { module.exports = api; return; }
   root.CertSend = api;
 
@@ -149,7 +157,7 @@
       Promise.resolve(cr || creds(o.acc).then(function (c) { cr = c; return c; })).then(function () {
         return o.build(p);
       }).then(function (m) {
-        return send(cr, o.acc.email, m.to, m.bin);
+        return send(cr, o.acc.email, m.to, checkSize(m.bin));
       }).then(function () {
         o.done(p);
         i++;

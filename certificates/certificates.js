@@ -149,7 +149,7 @@
       "send.err.rate": "The mail server refused more messages for now (its limit). Wait a while or lower the messages per hour, then go on.",
       "send.err.auth": "The mail server did not accept the password. Check the account in orOS Mail.",
       "send.err.nopass": "The password of this account is not on this device. Open the account in orOS Mail on this device first.",
-      "send.err.offline": "No connection. Go on when you are back online.", "send.err.other": "Sending stopped: {why}.",
+      "send.err.offline": "No connection. Go on when you are back online.", "send.maybe": "The last message ({name}) may already have gone out: check your Sent folder before going on.", "send.err.other": "Sending stopped: {why}.",
       "sheet.title": "SIGN-IN SHEET", "sheet.no": "#", "sheet.name": "Full name", "sheet.sign": "Signature", "sheet.page": "Page {i} of {n}",
       "badge.check": "Check this certificate",
       "wd": "Sun,Mon,Tue,Wed,Thu,Fri,Sat",
@@ -269,7 +269,7 @@
       "send.err.rate": "Ο server email δεν δέχεται άλλα μηνύματα προς το παρόν (το όριό του). Περίμενε λίγο ή μείωσε τα μηνύματα την ώρα και συνέχισε.",
       "send.err.auth": "Ο server email δεν δέχτηκε τον κωδικό. Έλεγξε τον λογαριασμό στο orOS Mail.",
       "send.err.nopass": "Ο κωδικός αυτού του λογαριασμού δεν υπάρχει σε αυτή τη συσκευή. Άνοιξε πρώτα τον λογαριασμό στο orOS Mail εδώ.",
-      "send.err.offline": "Δεν υπάρχει σύνδεση. Συνέχισε όταν συνδεθείς ξανά.", "send.err.other": "Η αποστολή σταμάτησε: {why}.",
+      "send.err.offline": "Δεν υπάρχει σύνδεση. Συνέχισε όταν συνδεθείς ξανά.", "send.maybe": "Το τελευταίο μήνυμα ({name}) ίσως έχει ήδη φύγει: έλεγξε τα Απεσταλμένα πριν συνεχίσεις.", "send.err.other": "Η αποστολή σταμάτησε: {why}.",
       "sheet.title": "ΠΑΡΟΥΣΙΟΛΟΓΙΟ", "sheet.no": "#", "sheet.name": "Ονοματεπώνυμο", "sheet.sign": "Υπογραφή", "sheet.page": "Σελίδα {i} από {n}",
       "badge.check": "Έλεγχος του πιστοποιητικού",
       "wd": "Κυρ,Δευ,Τρί,Τετ,Πέμ,Παρ,Σάβ",
@@ -1648,7 +1648,8 @@
       if (r.status === "paused") { st.textContent = t("send.paused", { s: r.s, n: r.n }); return; }
       var err = r.err || {}, S = window.CertSend, k = S.isRate(err) ? "rate" : err.code === "auth" ? "auth" : err.code === "nopass" ? "nopass" :
         /^(offline|network|timeout)$/.test(err.code) ? "offline" : "other";
-      st.textContent = t("send.sent", { s: r.s, n: r.n }) + " " + t("send.err." + k, { why: err.msg || err.code || "?" });
+      st.textContent = t("send.sent", { s: r.s, n: r.n }) + " " + t("send.err." + k, { why: err.msg || err.code || "?" }) +
+        (/^(network|timeout)$/.test(err.code) && r.last ? " " + t("send.maybe", { name: r.last }) : "");
       return;
     }
     go.textContent = t("send.go");
@@ -1719,7 +1720,7 @@
         renderSend();
       },
       failed: function (p) { sendRun.f.push(p.n); sendRun.bad[p.id] = 1; sendRun.cur = ""; renderSend(); },
-      step: function (i) { sendRun.cur = list[i].n; renderSend(); },
+      step: function (i) { sendRun.cur = list[i].n; sendRun.last = list[i].n; renderSend(); },
       end: function (reason, err) {
         sendQ = null;
         sendRun.status = reason; sendRun.err = err || null; sendRun.cur = "";

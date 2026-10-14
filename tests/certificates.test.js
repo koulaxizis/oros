@@ -517,6 +517,11 @@ test("send: pacing within the per-hour limit, at least 2 s apart", () => {
 test("send: one refused address is skipped, anything else stops the queue", () => {
   assert.equal(SD.classify({ code: "rcpt" }), "skip");
   assert.equal(SD.classify({ code: "too-big" }), "skip");
+  assert.equal(SD.classify({ code: "rcpt", msg: "550 5.1.1 no such user" }), "skip");
+  assert.equal(SD.classify({ code: "rcpt", msg: "450 4.2.1 try again later" }), "stop");
+  // an oversized message is skipped before it is sent (the relay would say bad-request)
+  assert.equal(SD.checkSize("x".repeat(10)), "x".repeat(10));
+  assert.throws(() => SD.checkSize({ length: SD.MAX_RAW + 1, toString() { return "x".repeat(SD.MAX_RAW + 1); } }), (e) => e.code === "too-big" && SD.classify(e) === "skip");
   ["rate", "auth", "no", "timeout", "network", "offline", "nopass", "connect", undefined].forEach((c) => assert.equal(SD.classify({ code: c }), "stop", String(c)));
   assert.ok(SD.isRate({ code: "rate" }));
   assert.ok(SD.isRate({ code: "no", msg: "452 4.5.3 Daily sending quota exceeded" }));
