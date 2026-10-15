@@ -1,6 +1,10 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.42.00
+- Contacts: the new Pictures button sets every contact to initials or an 8-bit avatar at once, with Undo.
+- Installed orOS apps update again: since 2.26.00 they could show the update notice but keep running older code. Open each app once to get its latest version.
+
 ## Version 2.41.00
 - Eleven more apps import from other apps: Pixel Avatar (Aseprite, Piskel, palettes), Photo Lab (Krita), Slides (Impress, Markdown decks), Stock (Shopify, Square), Timesheet (Kimai, Tempo, Toggl/Clockify/Harvest Excel), Storage (Homebox, Sortly), Newsletter (Substack, Buttondown), Travel (Polarsteps, TripIt), Crossword (.puz, .ipuz), Sudoku and Assistant (ChatGPT and Claude exports), with a preview and Undo.
 
