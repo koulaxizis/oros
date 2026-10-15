@@ -271,21 +271,25 @@
 
   function exportDialog(toPictures) {
     var d = st.doc;
-    var fmt = select([["png", "PNG"], ["jpg", "JPG"], ["webp", "WebP"], ["psd", t("fmt.psd")], ["ora", t("fmt.ora")]], pr().exportFmt);
+    var fmts = [["png", "PNG"], ["jpg", "JPG"], ["webp", "WebP"], ["psd", t("fmt.psd")], ["ora", t("fmt.ora")]];
+    // The whole project as an orOS file (not for the Pictures folder).
+    if (!toPictures && PL.io.canPackage()) fmts.push(["oros", t("fmt.oros")]);
+    var fmt = select(fmts, toPictures && pr().exportFmt === "oros" ? "png" : pr().exportFmt);
     var q = range(t("f.quality"), pr().exportQ, 10, 100);
     var scale = numIn(100, 1, 400), scaleF = field(t("f.scalePct"), scale);
-    var size = el("p", "hint"), jpg = hint(t("hint.jpg")), layered = hint(t("hint.layered"));
+    var size = el("p", "hint"), jpg = hint(t("hint.jpg")), layered = hint(t("hint.layered")), oros = hint(t("hint.oros"));
     function upd() {
-      var lay = fmt.value === "psd" || fmt.value === "ora";
+      var lay = fmt.value === "psd" || fmt.value === "ora" || fmt.value === "oros";
       q.hidden = fmt.value === "png" || lay;
       scaleF.hidden = lay;
       jpg.hidden = fmt.value !== "jpg";
-      layered.hidden = !lay;
+      layered.hidden = !lay || fmt.value === "oros";
+      oros.hidden = fmt.value !== "oros";
       var k = lay ? 1 : Math.max(1, +scale.value || 100) / 100;
       size.textContent = t("export.size", { w: Math.max(1, Math.round(d.w * k)), h: Math.max(1, Math.round(d.h * k)) });
     }
     fmt.addEventListener("change", upd); scale.addEventListener("input", upd); upd();
-    var body = [field(t("f.format"), fmt), q, scaleF, size, jpg, layered];
+    var body = [field(t("f.format"), fmt), q, scaleF, size, jpg, layered, oros];
     PL.dialog({
       title: t(toPictures ? "dlg.toPictures" : "dlg.export"), ok: t(toPictures ? "btn.save" : "btn.export"), body: body,
       onOk: function () {
@@ -592,11 +596,13 @@
     { id: "file", items: [
       { id: "new", k: "Alt+N", run: newDialog },
       { id: "open", k: "Ctrl+O", run: function () { PL.io.openPicture(false); } },
+      { id: "openFolder", run: function () { PL.io.openPackageFolder(); }, on: function () { return PL.io.canPackage(); } },
       { id: "place", run: function () { PL.io.openPicture(true); }, on: has },
       { id: "projects", run: function () { PL.closeProject(); } , on: has },
       "-",
       { id: "rename", run: renameDialog, on: has },
       { id: "export", k: "Ctrl+Shift+S", run: function () { exportDialog(false); }, on: has },
+      { id: "exportOros", run: function () { PL.io.exportImage("oros"); }, on: function () { return has() && PL.io.canPackage(); } },
       { id: "toPictures", run: function () { exportDialog(true); }, on: has },
       { id: "batch", run: function () { PL.batch.open(); } },
       { id: "wallpaper", run: function () { PL.io.setWallpaper(); }, on: function () { return has() && PL.io.canWallpaper(); } }

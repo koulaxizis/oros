@@ -87,6 +87,13 @@
       gb.addEventListener("click", fromGooglePhotos);
       $("home-batch").parentNode.insertBefore(gb, $("home-batch").nextSibling);
     }
+    // An .orosphoto that was unzipped (io.js openPackageFolder).
+    if (PL.io.canPackage() && !$("home-folder")) {
+      var fb = el("button", "btn ghost", t("menu.openFolder"));
+      fb.type = "button"; fb.id = "home-folder";
+      fb.addEventListener("click", function () { PL.io.openPackageFolder(); });
+      $("home-batch").parentNode.appendChild(fb);
+    }
     $("drop-hint").textContent = t("home.drop");
     PL.on("index", function () { if (!st.doc) render(); });
   }
