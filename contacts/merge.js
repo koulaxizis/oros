@@ -8,7 +8,7 @@
 // number added on the laptop and a note changed on the phone at the
 // same time lost one of the two. Now each field carries its own
 // stamp (CT-PF, the To-Do TD-3 / Mood MO-3 pattern):
-//   c.fm = { given, middle, …, photo, keep, seen, log }  (stamps)
+//   c.fm = { given, middle, …, avatar, keep, seen, log }  (stamps)
 //   c.mtime = the newest of them; it still decides life against a
 //   tombstone, exactly as before.
 // Old copies (no fm) merge whole-object as before. A contact whose
@@ -28,7 +28,7 @@
 
   var OLD_FIELDS = ["given", "middle", "family", "nickname", "org", "jobTitle",
     "phones", "emails", "addresses", "websites", "im", "events", "relations",
-    "labelIds", "starred", "note", "photo"];
+    "labelIds", "starred", "note", "avatar"];
   var NEW_FIELDS = ["keep", "seen"];
   var FIELDS = OLD_FIELDS.concat(NEW_FIELDS);
   var STAMPS = FIELDS.concat(["log"]);

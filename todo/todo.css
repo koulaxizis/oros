@@ -1277,12 +1277,12 @@ dialog .import-btn { width: 100%; margin-top: 12px; }
 #todo-plat menu button.primary { background: var(--accent); color: var(--bg); }
 #todo-plat menu button:disabled { opacity: 0.5; cursor: default; }
 dialog .import-btn + .import-btn { margin-top: 6px; }
-#todo-gtasks .plat-msg { margin-top: 10px; font-size: 13.5px; overflow-wrap: anywhere; }
-#todo-gtasks .plat-msg p { margin: 6px 0; }
-#todo-gtasks .gt-pick { margin-top: 8px; max-height: 45vh; overflow-y: auto; }
-#todo-gtasks .gt-row { display: flex; align-items: flex-start; gap: 10px; min-height: 36px; padding: 4px 0; }
-#todo-gtasks .gt-row input { flex: none; margin-top: 2px; }
-#todo-gtasks .gt-txt { display: flex; flex-direction: column; min-width: 0; overflow-wrap: anywhere; }
-#todo-gtasks .gt-txt small { opacity: 0.7; }
-#todo-gtasks menu button.primary { background: var(--accent); color: var(--bg); }
-#todo-gtasks menu button:disabled { opacity: 0.5; cursor: default; }
+#todo-gtasks .plat-msg, #todo-fimp .plat-msg { margin-top: 10px; font-size: 13.5px; overflow-wrap: anywhere; }
+#todo-gtasks .plat-msg p, #todo-fimp .plat-msg p { margin: 6px 0; }
+#todo-gtasks .gt-pick, #todo-fimp .gt-pick { margin-top: 8px; max-height: 45vh; overflow-y: auto; }
+#todo-gtasks .gt-row, #todo-fimp .gt-row { display: flex; align-items: flex-start; gap: 10px; min-height: 36px; padding: 4px 0; }
+#todo-gtasks .gt-row input, #todo-fimp .gt-row input { flex: none; margin-top: 2px; }
+#todo-gtasks .gt-txt, #todo-fimp .gt-txt { display: flex; flex-direction: column; min-width: 0; overflow-wrap: anywhere; }
+#todo-gtasks .gt-txt small, #todo-fimp .gt-txt small { opacity: 0.7; }
+#todo-gtasks menu button.primary, #todo-fimp menu button.primary { background: var(--accent); color: var(--bg); }
+#todo-gtasks menu button:disabled, #todo-fimp menu button:disabled { opacity: 0.5; cursor: default; }

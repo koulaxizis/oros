@@ -491,6 +491,12 @@ sup.ref a { color: var(--accent); text-decoration: none; }
 .io-row { display: flex; align-items: flex-start; gap: 12px; }
 .io-row .chip { flex: 0 0 auto; min-width: 11em; justify-content: flex-start; }
 .io-row .hint { margin: 4px 0 0; flex: 1 1 auto; }
+/* wave 4: import preview */
+.imp-info { margin: 10px 0 6px; padding-left: 1.2em; font-size: 14px; line-height: 1.45; }
+.imp-info li { margin: 3px 0; overflow-wrap: anywhere; }
+.imp-info .imp-strong { font-weight: 600; }
+.imp-info .imp-warn { color: var(--danger); }
+.imp-prev select { max-width: 100%; }
 .wp-sugg { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .wp-sugg .lbl { flex-basis: 100%; }
 .ed-wp { align-self: flex-start; margin: -4px 0 8px; }

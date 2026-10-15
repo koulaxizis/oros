@@ -3835,6 +3835,27 @@
     }
   }
 
+  // Import an export file of another task app (import.js): Todoist
+  // CSV / backup ZIP, TickTick, Google Takeout, todo.txt, .ics VTODO,
+  // Remember The Milk. The same plan shape, one write and Undo
+  // (importApply); works inside the shell and on its own. The file
+  // picker opens inside this click.
+  var FI = window.OrosTodoImport || null;
+  if (FI) {
+    FI.init({ lang: LANG, data: function () { return state; }, apply: importApply });
+    var fBtn = $("l-fimport");
+    if (fBtn && FI.has()) {
+      fBtn.textContent = FI.label();
+      fBtn.hidden = false;
+      fBtn.addEventListener("click", function () {
+        if (editingListId !== null) saveListDialog();
+        editingListId = null;
+        $("dlg-list").close();
+        FI.open();
+      });
+    }
+  }
+
   // ---------- Boot ----------
   load();
   loadView();

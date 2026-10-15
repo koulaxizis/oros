@@ -260,7 +260,7 @@ test("Google: nothing is dropped — extra fields go to the note, custom labels 
     "Organization: Side Co, Advisor", "Relation (Mother): Μαρία", "ΑΦΜ: 123456789"]) {
     assert.ok(c.note.includes(line), line);
   }
-  assert.equal(c.photoUrl, "https://lh3.googleusercontent.com/a/x=s100");
-  // a default (letter) avatar is not a photo
-  assert.equal(A.fromGoogle({ names: [{ givenName: "A" }], photos: [{ url: "u", default: true }] }, {}).photoUrl, undefined);
+  // CT-NP: photos are never imported
+  assert.equal(c.photoUrl, undefined);
+  assert.equal(c.photo, undefined);
 });

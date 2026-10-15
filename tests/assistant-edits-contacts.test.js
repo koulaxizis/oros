@@ -23,7 +23,7 @@ const mergeContacts = (function () {
 const NOW = 1760000000000;
 const ok = (args) => { const r = E.normArgs(args); assert.equal(r.ok, true, r.err); return r; };
 const KEYS = ["id", "given", "middle", "family", "nickname", "org", "jobTitle", "phones", "emails", "addresses",
-  "websites", "im", "events", "relations", "labelIds", "starred", "note", "photo", "mtime"];
+  "websites", "im", "events", "relations", "labelIds", "starred", "note", "avatar", "mtime"];
 
 function data() {
   return {
@@ -33,14 +33,14 @@ function data() {
         phones: [{ v: "+30 691 234 5678", type: "mobile" }], emails: [{ v: "Anna@Example.com", type: "home" }],
         addresses: [], websites: [], im: [],
         events: [{ day: "05-01", year: null, type: "anniversary", label: "" }],
-        relations: [], labelIds: [], starred: false, note: "old", photo: "data:image/jpeg;base64,AAAA",
+        relations: [], labelIds: [], starred: false, note: "old", avatar: "px:abcd1234",
         mtime: 1000,
         fm: { given: 900, middle: 900, family: 900, nickname: 900, org: 900, jobTitle: 900, phones: 1000, emails: 900,
-              addresses: 900, websites: 900, im: 900, events: 900, relations: 900, labelIds: 900, starred: 900, note: 900, photo: 900 } },
+              addresses: 900, websites: 900, im: 900, events: 900, relations: 900, labelIds: 900, starred: 900, note: 900, avatar: 900 } },
       // an old copy: no fm (whole-object stamps)
       { id: "c2", given: "", middle: "", family: "", nickname: "", org: "Bakery", jobTitle: "",
         phones: [], emails: [], addresses: [], websites: [], im: [], events: [], relations: [], labelIds: [],
-        starred: false, note: "", photo: null, mtime: 500 }
+        starred: false, note: "", avatar: null, mtime: 500 }
     ],
     deleted: [{ id: "zz", mtime: 3 }]
   };
@@ -79,8 +79,8 @@ test("update: name, org, note, birthday; stamps only the changed fields, newer t
   assert.equal(c.mtime, NOW);
   for (const f of ["given", "family", "org", "note", "events"]) assert.equal(c.fm[f], NOW, f);
   assert.equal(c.fm.middle, 900);  // unchanged ("" → "")
-  assert.equal(c.fm.phones, 1000); assert.equal(c.fm.photo, 900);
-  assert.equal(c.photo, "data:image/jpeg;base64,AAAA");
+  assert.equal(c.fm.phones, 1000); assert.equal(c.fm.avatar, 900);
+  assert.equal(c.avatar, "px:abcd1234");
   assert.deepEqual(Object.keys(c), KEYS.concat(["fm"]));      // key order kept
   assert.deepEqual(find(data(), "c1"), find(d, "c1"));         // plan/apply never touch the input
 });
@@ -184,7 +184,7 @@ test("delete: tombstone wins the app's merge over the other device's copy; undo 
   assert.equal(u.ok, true, u.err);
   const back = find(u.data, "c1");
   assert.equal(u.data.contacts.indexOf(back), 0);
-  assert.equal(back.photo, "data:image/jpeg;base64,AAAA");
+  assert.equal(back.avatar, "px:abcd1234");
   assert.equal(back.mtime, NOW + 10);
   assert.ok(Object.values(back.fm).every((s) => s === NOW + 10));
   assert.equal(u.data.deleted.find((x) => x.id === "c1"), undefined);
