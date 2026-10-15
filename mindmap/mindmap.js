@@ -83,7 +83,9 @@
       "col.red": "Red", "col.orange": "Orange", "col.yellow": "Yellow", "col.green": "Green", "col.teal": "Teal",
       "col.violet": "Violet", "col.pink": "Pink", "col.grey": "Grey",
       "menu.new": "New map", "menu.maps": "Your maps…", "menu.paste": "Paste a list…", "menu.export": "Export…",
-      "menu.copy": "Copy map as text", "menu.import": "Import (FreeMind, XMind, SimpleMind, MindManager, OPML, Markdown, text, JSON)…",
+      "menu.copy": "Copy map as text", "menu.import": "Import (orOS, FreeMind, XMind, SimpleMind, MindManager, OPML, Markdown, text, JSON)…",
+      "menu.folder": "Unzipped orOS folder…", "exp.oros": "orOS file (.orosmind)",
+      "imp.err.newer": "This file was made by a newer orOS. Update orOS to open it.",
       "menu.backup": "Back up all maps (JSON)", "menu.present": "Present", "menu.layout": "Layout…",
       "menu.unfoldAll": "Unfold all", "menu.foldAll": "Fold main branches",
       "menu.keys": "Keyboard shortcuts",
@@ -177,7 +179,9 @@
       "col.red": "Κόκκινο", "col.orange": "Πορτοκαλί", "col.yellow": "Κίτρινο", "col.green": "Πράσινο", "col.teal": "Γαλαζοπράσινο",
       "col.violet": "Μωβ", "col.pink": "Ροζ", "col.grey": "Γκρι",
       "menu.new": "Νέος χάρτης", "menu.maps": "Οι χάρτες σου…", "menu.paste": "Επικόλληση λίστας…", "menu.export": "Εξαγωγή…",
-      "menu.copy": "Αντιγραφή χάρτη ως κείμενο", "menu.import": "Εισαγωγή (FreeMind, XMind, SimpleMind, MindManager, OPML, Markdown, κείμενο, JSON)…",
+      "menu.copy": "Αντιγραφή χάρτη ως κείμενο", "menu.import": "Εισαγωγή (orOS, FreeMind, XMind, SimpleMind, MindManager, OPML, Markdown, κείμενο, JSON)…",
+      "menu.folder": "Αποσυμπιεσμένος φάκελος orOS…", "exp.oros": "Αρχείο orOS (.orosmind)",
+      "imp.err.newer": "Το αρχείο φτιάχτηκε από νεότερο orOS. Ενημέρωσε το orOS για να το ανοίξεις.",
       "menu.backup": "Αντίγραφο όλων των χαρτών (JSON)", "menu.present": "Προβολή κλαδί-κλαδί", "menu.layout": "Διάταξη…",
       "menu.unfoldAll": "Ανάπτυξη όλων", "menu.foldAll": "Σύμπτυξη κύριων κλαδιών",
       "menu.keys": "Συντομεύσεις πληκτρολογίου",
@@ -417,7 +421,7 @@
       view: p.view === "outline" ? "outline" : "map",
       fold: fd,
       exp: {
-        fmt: ["png", "svg", "md", "opml", "json"].indexOf(exp.fmt) !== -1 ? exp.fmt : "png",
+        fmt: ["png", "svg", "md", "opml", "json", "oros"].indexOf(exp.fmt) !== -1 ? exp.fmt : "png",
         dark: exp.dark === true, transparent: exp.transparent === true
       }
     };
@@ -2761,7 +2765,8 @@
     svg:  { ext: ".svg",  mime: "image/svg+xml", desc: "SVG" },
     md:   { ext: ".md",   mime: "text/markdown", desc: "Markdown" },
     opml: { ext: ".opml", mime: "text/x-opml", desc: "OPML" },
-    json: { ext: ".json", mime: "application/json", desc: "JSON" }
+    json: { ext: ".json", mime: "application/json", desc: "JSON" },
+    oros: { ext: ".orosmind", mime: "application/x-oros-mind", desc: "orOS Mind Map" }
   };
   // The export always draws the map unfolded.
   function buildSvg(rootId, o) {
@@ -2776,6 +2781,9 @@
     if (fmt === "md") return Promise.resolve({ blob: new Blob([M.toOutline(r)], { type: FMT.md.mime }), name: name });
     if (fmt === "opml") return Promise.resolve({ blob: new Blob([M.toOpml(r, null, new Date().toISOString())], { type: FMT.opml.mime }), name: name });
     if (fmt === "json") return Promise.resolve({ blob: new Blob([M.exportData(canonical(), R.root.map, new Date().toISOString())], { type: FMT.json.mime }), name: name });
+    if (fmt === "oros") return buildBundle(R.root.map).then(function (bytes) {
+      return bytes ? { blob: new Blob([bytes], { type: FMT.oros.mime }), name: fileBase(label(R.root, 60)) } : null;
+    });
     var b = buildSvg(rootId, o);
     if (fmt === "svg") return Promise.resolve({ blob: new Blob([b.svg], { type: FMT.svg.mime }), name: name });
     return toPng(b).then(function (blob) { return blob ? { blob: blob, name: name } : null; });
@@ -2784,6 +2792,7 @@
   function openExport(branchId) {
     if (!R) return;
     var o = prefs.exp;
+    if (o.fmt === "oros" && !window.OrosBundle) o.fmt = "json";
     var scope = branchId && branchId !== R.root.id ? branchId : null;
     var dlg = makeDialog("mm-export", t("exp.title"));
     function seg(lbl, opts, val, set) {
@@ -2806,7 +2815,8 @@
     var selBranch = sel && sel !== R.root.id ? sel : null;
     dlg.appendChild(seg(t("exp.scope"), [[null, t("exp.whole")], ["b", t("exp.branch"), !selBranch && !scope]],
       scope ? "b" : null, function (v) { scope = v ? (scope || selBranch) : null; }));
-    dlg.appendChild(seg(t("exp.format"), [["png", "PNG"], ["svg", "SVG"], ["md", "Markdown"], ["opml", "OPML"], ["json", "JSON"]],
+    dlg.appendChild(seg(t("exp.format"), [["png", "PNG"], ["svg", "SVG"], ["md", "Markdown"], ["opml", "OPML"], ["json", "JSON"]].concat(
+      window.OrosBundle ? [["oros", t("exp.oros")]] : []),
       o.fmt, function (v) { o.fmt = v; savePrefs(); }));
     var themeF = seg(t("exp.theme"), [[false, t("exp.light")], [true, t("exp.dark")]], o.dark, function (v) { o.dark = v; savePrefs(); });
     dlg.appendChild(themeF);
@@ -2853,6 +2863,88 @@
     dlg.appendChild(close);
     showDialog(dlg);
   }
+  // ---------- 11a. orOS file (.orosmind, ../bundle.js) ----------
+  // One map = one bundle: content.json is mm-core's packBundle (the
+  // map's JSON export, pictures moved to media/<sha256>.<ext>),
+  // preview/ holds the outline as Markdown and OPML plus a thumbnail
+  // of the map. Opening one always makes a NEW map (fresh ids).
+  function buildBundle(mapId) {
+    var rid = M.rootId(mapId);
+    return M.packBundle(canonical(), mapId, OrosBundle.sha256, new Date().toISOString()).then(function (p) {
+      if (!p) return null;
+      return thumbPng(rid).then(function (thumb) {
+        return OrosBundle.write({
+          mime: FMT.oros.mime, app: "mindmap", schema: "mindmap/1", content: p.content, media: p.media,
+          meta: { title: p.title, created: p.created || undefined, modified: p.modified || undefined, id: mapId,
+                  language: appLang() === "el" ? "el" : "en", generator: "orOS Mind Map" },
+          thumbnail: thumb,
+          preview: [{ name: "map.md", data: p.outline, type: "text/markdown" },
+                    { name: "map.opml", data: p.opml, type: "text/x-opml" }],
+          date: new Date()
+        });
+      });
+    }).catch(function (e) { console.error("[orOS] mindmap: .orosmind failed", e); showToast(t("imp.err.read")); return null; });
+  }
+  // The map drawn light, at most 512 px a side; null when it cannot be drawn.
+  function thumbPng(rid) {
+    if (!R || !R.N[rid]) return Promise.resolve(null);
+    var b = buildSvg(rid, { dark: false, transparent: false });
+    var scale = Math.min(1, 512 / b.w, 512 / b.h);
+    return svgImage(b.svg).then(function (x) {
+      if (!x) return null;
+      return new Promise(function (resolve) {
+        try {
+          var cv = document.createElement("canvas");
+          cv.width = Math.max(1, Math.round(b.w * scale));
+          cv.height = Math.max(1, Math.round(b.h * scale));
+          cv.getContext("2d").drawImage(x.im, 0, 0, cv.width, cv.height);
+          URL.revokeObjectURL(x.url);
+          cv.toBlob(function (bl) {
+            if (!bl) { resolve(null); return; }
+            bl.arrayBuffer().then(function (ab) { resolve(new Uint8Array(ab)); }, function () { resolve(null); });
+          }, "image/png");
+        } catch (e) { URL.revokeObjectURL(x.url); resolve(null); }
+      });
+    });
+  }
+  // job: Promise of a bundle.js read result (a .orosmind or its folder)
+  function openBundle(job) {
+    return job.then(function (r) {
+      var u = M.unpackBundle(r.content, r.media, newId, Date.now());
+      if (!u.ok) { showToast(t("imp.err." + u.err)); return; }
+      applyBundle(u);
+    }, function (e) {
+      console.error("[orOS] mindmap: .orosmind not opened", e);
+      showToast(t(e && e.code === "newer" ? "imp.err.newer" : "imp.err.format"));
+    });
+  }
+  function applyBundle(u) {
+    commitEdit();
+    flushOutline();
+    var d = u.data;
+    begin("");
+    d.maps.forEach(putMap);
+    d.nodes.forEach(putNode);
+    d.links.forEach(putLink);
+    d.pos.forEach(putPos);
+    d.imgs.forEach(putImg);
+    d.styles.forEach(putStyle);
+    d.frames.forEach(putFrame);
+    d.layouts.forEach(putLayout);
+    prefs.map = u.map;
+    savePrefs();
+    sel = null;
+    camFor = null;
+    commit();
+    undoToast(t("imp.newMap"), function () { undo(); });
+  }
+  function importFolder() {
+    if (!window.OrosBundle) return;
+    OrosBundle.pickFolder().then(function (files) {
+      if (files) openBundle(OrosBundle.readFolder(files, { mime: FMT.oros.mime }));
+    });
+  }
+
   function makeAccept(f) { var a = {}; a[f.mime] = [f.ext]; return a; }   // R37: no computed keys
 
   function svgImage(svg) {
@@ -2914,7 +3006,7 @@
       [{ description: "JSON", accept: { "application/json": [".json"] } }]);
   }
 
-  var IMPORT_ACCEPT = ".json,.opml,.xml,.md,.markdown,.txt,.mm,.xmind,.smmx,.mmap,application/json,text/x-opml,text/xml," +
+  var IMPORT_ACCEPT = ".orosmind,application/x-oros-mind,.json,.opml,.xml,.md,.markdown,.txt,.mm,.xmind,.smmx,.mmap,application/json,text/x-opml,text/xml," +
     "text/markdown,text/plain,application/zip";
   var ZIP_MAX = 30 * 1024 * 1024;               // a whole .xmind / .smmx / .mmap (pictures inside count)
   function importErr(err) { showToast(t("imp.err." + (err === "empty" || err === "size" || err === "zip" ? err : "format"))); }
@@ -2935,6 +3027,8 @@
       return file.arrayBuffer().then(function (buf) {
         var bytes = new Uint8Array(buf), base = String(file.name || "").replace(/\.[^.]+$/, "");
         var X = window.MMImport;
+        // an orOS file (a ZIP whose first entry names its type); other ZIPs go on to MMImport
+        if (window.OrosBundle && OrosBundle.sniff(bytes.subarray(0, 128))) return openBundle(OrosBundle.read(bytes, { mime: FMT.oros.mime }));
         if (X && X.sniff(bytes) === "zip") return X.parseArchive(bytes, base).then(importTree);
         if (bytes.length > M.IMPORT_MAX) { showToast(t("imp.err.size")); return; }
         var s = new TextDecoder("utf-8").decode(bytes).replace(/^\ufeff/, "").trim();
@@ -3097,6 +3191,7 @@
       ["menu.slides", function () { sendToSlides(R.root.id); }, null, !R || !(R.kids[R.root.id] || []).length],
       ["menu.notes", function () { sendToNotes(R.root.id); }, null, !R],
       ["menu.import", importFile],
+      ["menu.folder", importFolder, null, !window.OrosBundle],
       ["menu.backup", backupAll, null, !Object.keys(MAPS).length]
     ];
     if (mp) {

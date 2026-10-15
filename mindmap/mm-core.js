@@ -14,6 +14,7 @@
 //  10. Scene + SVG serializer (export) — no user text is markup
 //  11. Example map (deterministic ids, R16)
 //  12. Wave 27: navigation per layout, presentation steps + framing
+//  13. orOS file (.orosmind): pack / unpack a map for bundle.js
 // Data MINDMAP v1 (oros-mindmap-data):
 //   { ver: 1,
 //     maps:  [{ id, m, sides }],
@@ -1522,7 +1523,134 @@
     return { x: x0 - P, y: y0 - P, w: x1 - x0 + 2 * P, h: y1 - y0 + 2 * P };
   }
 
+  // ---------- 13. orOS file (.orosmind, bundle.js) ----------
+  // One map = one bundle. content.json is
+  //   { kind: "oros-mindmap-package", ver: 1, map: <map id>,
+  //     data: <exportData of that one map> }
+  // except that each picture's data URI leaves its imgs row for
+  // media/<sha256>.<ext>: the row keeps every other field and says
+  // src: "", media: "<key>". DOM-free: sha256 comes in as `hash`
+  // (bytes → Promise<hex>), base64 is atob/btoa (browser and Node).
+  var PKG_KIND = "oros-mindmap-package", PKG_VER = 1;
+  var PIC_EXT = { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp" };
+  function b64Bytes(b64) {
+    var bin = atob(b64), u = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+    return u;
+  }
+  function bytesB64(u) {
+    var s = "";
+    for (var i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000));
+    return btoa(s);
+  }
+  // → Promise<{ content, media { key: bytes }, title, created, modified,
+  //   outline (Markdown), opml }>; null when the map is not there.
+  function packBundle(data, mapId, hash, nowIso) {
+    var obj = JSON.parse(exportData(data, mapId, nowIso));
+    if (!obj.maps.length) return Promise.resolve(null);
+    var media = dict(), jobs = [];
+    obj.imgs.forEach(function (row) {
+      var m = /^data:(image\/(?:png|jpeg|webp));base64,(.*)$/.exec(row.src || "");
+      if (!m) { row.src = ""; return; }
+      var bytes = b64Bytes(m[2]);
+      jobs.push(hash(bytes).then(function (h) {
+        var key = h + "." + PIC_EXT[m[1]];
+        media[key] = bytes;
+        row.src = "";
+        row.media = key;
+      }));
+    });
+    var R = resolve(obj, mapId), lo = Infinity, hi = 0;
+    obj.nodes.forEach(function (n) { lo = Math.min(lo, n.m); hi = Math.max(hi, n.m); });
+    obj.maps.forEach(function (mp) { lo = Math.min(lo, mp.m); hi = Math.max(hi, mp.m); });
+    return Promise.all(jobs).then(function () {
+      return {
+        content: { kind: PKG_KIND, ver: PKG_VER, map: mapId, data: obj },
+        media: media,
+        title: title(R.root.text, 200),
+        created: lo === Infinity ? 0 : lo, modified: hi,
+        outline: toOutline(R),
+        opml: toOpml(R, null, nowIso)
+      };
+    });
+  }
+  // A bundle's content + media → rows for NEW maps: fresh map, node,
+  // link and frame ids, m = now, every row through parseImport's
+  // normalisers (the same as a JSON import). media: { key: { bytes,
+  // type } } (bundle.js read result). newId() → a fresh id.
+  // → { ok: true, data, map (first new map id), stats } or
+  //   { ok: false, err: "format" | "size" | "json" | "toolarge" | "empty" }
+  function unpackBundle(content, media, newId, now) {
+    if (!content || typeof content !== "object" || content.kind !== PKG_KIND ||
+        !content.data || typeof content.data !== "object") return { ok: false, err: "format" };
+    var raw = content.data;
+    media = media || {};
+    if (Array.isArray(raw.imgs)) raw.imgs = raw.imgs.map(function (row) {
+      if (!row || typeof row !== "object") return row;
+      var key = typeof row.media === "string" ? row.media : "", f = key && own(media, key) ? media[key] : null;
+      var c = {};
+      Object.keys(row).forEach(function (k) { if (k !== "media") c[k] = row[k]; });
+      if (f && f.bytes && own(PIC_EXT, f.type)) c.src = "data:" + f.type + ";base64," + bytesB64(f.bytes);
+      return c;
+    });
+    raw.tombs = {};
+    var r;
+    try { r = parseImport(JSON.stringify(raw), null); } catch (e) { return { ok: false, err: "format" }; }
+    if (!r.ok) return r;
+    var d = r.data;
+    if (!d.maps.length) return { ok: false, err: "empty" };
+    var mapOf = dict(), idOf = dict(), out = emptyData();
+    d.maps.forEach(function (mp) {
+      var nid = newId();
+      mapOf[mp.id] = nid;
+      idOf[rootId(mp.id)] = rootId(nid);
+      out.maps.push({ id: nid, m: now, sides: mp.sides });
+    });
+    d.nodes.forEach(function (n) { if (!own(idOf, n.id)) idOf[n.id] = newId(); });
+    d.nodes.forEach(function (n) {
+      var c = {};
+      Object.keys(n).forEach(function (k) { c[k] = n[k]; });
+      c.id = idOf[n.id]; c.map = mapOf[n.map]; c.m = now;
+      c.parent = n.parent && own(idOf, n.parent) ? idOf[n.parent] : "";
+      out.nodes.push(c);
+    });
+    // a map whose centre was missing gets an empty one (as duplicate does)
+    d.maps.forEach(function (mp) {
+      var rid = rootId(mapOf[mp.id]);
+      if (!out.nodes.some(function (n) { return n.id === rid; }))
+        out.nodes.push(normNode({ id: rid, m: now, map: mapOf[mp.id], parent: "", text: "" }));
+    });
+    function same(x) { return own(idOf, x.id) && own(mapOf, x.map); }
+    function moved(x, extra) {
+      var c = {};
+      Object.keys(x).forEach(function (k) { c[k] = x[k]; });
+      c.m = now; c.map = mapOf[x.map];
+      Object.keys(extra).forEach(function (k) { c[k] = extra[k]; });
+      return c;
+    }
+    d.links.forEach(function (l) {
+      if (own(mapOf, l.map) && own(idOf, l.from) && own(idOf, l.to))
+        out.links.push(moved(l, { id: newId(), from: idOf[l.from], to: idOf[l.to] }));
+    });
+    d.pos.forEach(function (x) { if (same(x)) out.pos.push(moved(x, { id: idOf[x.id] })); });
+    d.imgs.forEach(function (x) { if (same(x) && x.src) out.imgs.push(moved(x, { id: idOf[x.id] })); });
+    d.styles.forEach(function (x) { if (same(x)) out.styles.push(moved(x, { id: idOf[x.id] })); });
+    d.frames.forEach(function (f) {
+      if (!own(mapOf, f.map)) return;
+      var ids = f.nodes.filter(function (x) { return own(idOf, x); }).map(function (x) { return idOf[x]; });
+      var row = normFrame(moved(f, { id: newId(), nodes: ids }));
+      if (row) out.frames.push(row);
+    });
+    d.layouts.forEach(function (x) {
+      if (own(mapOf, x.id)) out.layouts.push({ id: mapOf[x.id], m: now, map: mapOf[x.id], kind: x.kind });
+    });
+    // the first map of the file (content.map when it names one)
+    var first = own(mapOf, content.map) ? mapOf[content.map] : out.maps[0].id;
+    return { ok: true, data: out, map: first, stats: r.stats };
+  }
+
   var api = {
+    PKG_KIND: PKG_KIND, packBundle: packBundle, unpackBundle: unpackBundle,
     VER: VER, FORMAT: FORMAT, TEXT_LEN: TEXT_LEN, NOTE_LEN: NOTE_LEN, URL_LEN: URL_LEN, MAX_NODES: MAX_NODES,
     IMPORT_MAX: IMPORT_MAX, COLORS: COLORS, COLOR_KEYS: COLOR_KEYS, AUTO: AUTO, SIDES: SIDES, THEMES: THEMES,
     TAGS: TAGS, ATTRS: ATTRS, COLOR_RE: COLOR_RE, EXAMPLE_ID: EXAMPLE_ID,
