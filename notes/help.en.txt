@@ -9,7 +9,7 @@ Above the text sits a small toolbar: bold, italic, heading, list, checkbox, link
 On a phone the tree is hidden while you write. Tap the ☰ button (`Show tree`) next to the title to bring it back; picking a page closes it again. On a wider screen you can drag the divider between the tree and the page to make the tree wider or narrower.
 
 ## Pages and the tree
-Right-click a page in the tree, or long-press it on a touch screen, to open its menu:
+Right-click a page in the tree, long-press it on a touch screen, or tap the ⋮ button at the top right of the open page, to open its menu:
 - `New sub-page` adds a page inside this one.
 - `Rename`, `Move up`, `Move down`.
 - `Move to…` lets you pick another parent page, or `Top level`.
