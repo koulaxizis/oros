@@ -2697,18 +2697,20 @@ document.addEventListener("keydown", function (e) {
   // ===== AVATAR (CT-NP, 2026-10-15) =====
   // No photos: they filled local storage and stopped sync (Chris,
   // 2026-10-15: "Πλήρης αφαίρεση φωτογραφιών"). A contact shows its
-  // initials, or an 8-bit avatar: a 12×12 pixel face drawn from a short
-  // random seed kept as "px:<seed>" (a few bytes, synced like any
-  // field). Left half drawn, right half mirrored; hair styles, skin and
-  // colours mix freely, so the faces are unisex.
+  // initials, or an 8-bit avatar drawn from a short random seed kept as
+  // "px:<seed>" (a few bytes, synced like any field). The avatar is a
+  // 12×12 pixel robot (Chris 13:27: avatars must be gender-neutral; orOS
+  // never guesses anyone's gender from a name): head, eye, body and
+  // background colours, eyes, mouth, antennas and ears vary. Left half
+  // drawn, right half mirrored.
   var PX_BG = ["#5b8def", "#e8735a", "#46b39d", "#a974d8", "#e0b23f", "#e86a9b", "#5fb85a", "#4fb3d9"];
-  var PX_SKIN = ["#f6d5b8", "#eac096", "#d29e6f", "#a8754b", "#7a5235"];
-  var PX_HAIR = ["#2b1d14", "#5a3825", "#a0622d", "#d8b25c", "#b8b8b8", "#c0392b", "#3b5bdb", "#7d3c98"];
-  var PX_SHIRT = ["#2d3a4f", "#e9ecef", "#c0392b", "#1f7a5c", "#f39c12", "#34495e", "#8e44ad"];
-  var PX_INK = { e: "#1d1d1d", m: "#8c3b3b", g: "#1d1d1d" };
-  // . background  s skin  h hair  e eye  m mouth  g glasses  c shirt
-  var PX_BASE = ["......", "...hhh", "..hhhh", "..hsss", "..ssss", "..sess",
-    "..ssss", "...sss", "...smm", "....ss", "..cccc", ".ccccc"];
+  var PX_HEAD = ["#c9d1d9", "#9aa5b1", "#f2c14e", "#7fc8a9", "#f28f6b", "#8fb8ff", "#d7a6f5", "#e6e6e6"];
+  var PX_EYE = ["#ff4757", "#2ed573", "#1e90ff", "#ffa502", "#00d2d3", "#ffffff"];
+  var PX_BODY = ["#2d3a4f", "#57606f", "#c0392b", "#1f7a5c", "#f39c12", "#34495e", "#8e44ad"];
+  var PX_INK = { m: "#1d1d1d", n: "#3d3d3d", k: "#555555", a: "#3d3d3d", t: "#ff4757" };
+  // . background  h head  e eye  m mouth  n neck  b body  a antenna  t antenna tip  k ear
+  var PX_BASE = ["......", "......", "..hhhh", ".hhhhh", ".hheeh", ".hheeh",
+    ".hhhhh", ".hhmmm", "..hhhh", "....nn", ".bbbbb", "bbbbbb"];
   var pxCache = {};
   function pxRand(seed) {
     var h = 2166136261;
@@ -2724,14 +2726,18 @@ document.addEventListener("keydown", function (e) {
   function pxSrc(seed) {
     if (pxCache[seed]) return pxCache[seed];
     var r = pxRand(seed);
-    var col = { ".": pxPick(r, PX_BG), s: pxPick(r, PX_SKIN), h: pxPick(r, PX_HAIR), c: pxPick(r, PX_SHIRT) };
+    var col = { ".": pxPick(r, PX_BG), h: pxPick(r, PX_HEAD), e: pxPick(r, PX_EYE), b: pxPick(r, PX_BODY) };
     var g = PX_BASE.map(function (row) { return row.split(""); });
-    var style = Math.floor(r() * 4);
-    if (style === 1) { g[3][3] = "h"; g[3][4] = "h"; }                       // fringe
-    if (style === 2) { for (var y = 3; y <= 9; y++) g[y][1] = "h"; g[9][2] = "h"; }   // long
-    if (style === 3) { g[0][4] = "h"; g[0][5] = "h"; g[1][2] = "h"; }          // bun
-    if (r() < 0.25) { g[5][2] = "g"; g[5][4] = "g"; g[5][5] = "g"; }           // glasses
-    if (r() < 0.5) g[8][4] = "s";                                            // small smile
+    var eyes = Math.floor(r() * 3);
+    if (eyes === 1) { g[4][2] = "e"; g[5][2] = "e"; g[4][5] = "e"; g[5][5] = "e"; g[4][3] = "e"; g[4][4] = "e"; g[5][3] = "e"; g[5][4] = "e"; }   // visor
+    if (eyes === 2) { g[4][4] = "h"; g[5][4] = "h"; g[4][3] = "e"; g[5][3] = "h"; }                        // dots
+    var mouth = Math.floor(r() * 3);
+    if (mouth === 1) { g[7][3] = "m"; g[7][4] = "h"; g[7][5] = "m"; }   // grille
+    if (mouth === 2) { g[7][3] = "h"; g[7][4] = "h"; }                  // small
+    var ant = Math.floor(r() * 3);
+    if (ant === 1) { g[0][5] = "t"; g[1][5] = "a"; }                    // one antenna
+    if (ant === 2) { g[0][2] = "t"; g[1][2] = "a"; }                    // two antennas
+    if (r() < 0.5) { g[4][0] = "k"; g[5][0] = "k"; }                    // ears
     var out = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" shape-rendering="crispEdges">';
     g.forEach(function (row, y) {
       var full = row.concat(row.slice().reverse());
