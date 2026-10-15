@@ -111,7 +111,31 @@ var STRINGS = {
     "wake.linkBtn":   "Use",
     "wake.note":      "The station plays, softly at first, when the alarm rings while orOS is open. Alarms live in the Time app.",
     "wake.noalarms":  "Alarms are not available here.",
-    "close":          "Close"
+    "close":          "Close",
+    "imp.btn":        "Import stations",
+    "imp.tip":        "Add favourites from an M3U, PLS, XSPF or CSV list (RadioDroid exports too)",
+    "imp.title":      "Import stations",
+    "imp.src":        "From: {s}",
+    "imp.csv":        "a CSV list",
+    "imp.count":      "Stations in the file: {n} · new: {a} · already in your favourites: {h}",
+    "imp.skipped":    "Skipped: {n}",
+    "imp.why.http":   "http only: orOS plays encrypted (https) streams only",
+    "imp.why.bad":    "not a stream address",
+    "imp.why.playlist":"a link to another playlist, not a stream",
+    "imp.why.have":   "already in your favourites",
+    "imp.why.dup":    "listed twice in the file",
+    "imp.more":       "… and {n} more",
+    "imp.upgrade":    "Try the http-only stations ({n}) over https (many servers answer both; those that don't won't play)",
+    "imp.keep":       "Imported stations join your favourites; nothing you have changes.",
+    "imp.priv":       "The file is read on this device only and is never uploaded.",
+    "imp.none":       "Nothing new to import.",
+    "imp.go":         "Import",
+    "imp.cancel":     "Cancel",
+    "imp.done":       "Imported {n} stations",
+    "imp.undone":     "Import undone",
+    "imp.bad":        "Radio can't read this file. Use an M3U, M3U8, PLS, XSPF or CSV station list.",
+    "imp.big":        "This file is too large to import.",
+    "imp.empty":      "No stations found in this file."
   },
   el: {
     "tab.countries":  "Χώρες",
@@ -191,7 +215,31 @@ var STRINGS = {
     "wake.linkBtn":   "Χρήση",
     "wake.note":      "Ο σταθμός παίζει, απαλά στην αρχή, όταν χτυπά το ξυπνητήρι ενώ το orOS είναι ανοιχτό. Τα ξυπνητήρια βρίσκονται στην εφαρμογή Ώρα.",
     "wake.noalarms":  "Τα ξυπνητήρια δεν είναι διαθέσιμα εδώ.",
-    "close":          "Κλείσιμο"
+    "close":          "Κλείσιμο",
+    "imp.btn":        "Εισαγωγή σταθμών",
+    "imp.tip":        "Πρόσθεσε αγαπημένα από λίστα M3U, PLS, XSPF ή CSV (και από εξαγωγή του RadioDroid)",
+    "imp.title":      "Εισαγωγή σταθμών",
+    "imp.src":        "Από: {s}",
+    "imp.csv":        "λίστα CSV",
+    "imp.count":      "Σταθμοί στο αρχείο: {n} · νέοι: {a} · ήδη στα αγαπημένα σου: {h}",
+    "imp.skipped":    "Παραλείπονται: {n}",
+    "imp.why.http":   "μόνο http: το orOS παίζει μόνο κρυπτογραφημένα (https) streams",
+    "imp.why.bad":    "δεν είναι διεύθυνση stream",
+    "imp.why.playlist":"σύνδεσμος σε άλλη λίστα, όχι stream",
+    "imp.why.have":   "υπάρχει ήδη στα αγαπημένα σου",
+    "imp.why.dup":    "υπάρχει δύο φορές στο αρχείο",
+    "imp.more":       "… και άλλοι {n}",
+    "imp.upgrade":    "Δοκίμασε μέσω https τους σταθμούς που έχουν μόνο http ({n}) (πολλοί διακομιστές απαντούν και στα δύο· όσοι όχι, δεν θα παίζουν)",
+    "imp.keep":       "Οι σταθμοί μπαίνουν στα αγαπημένα σου· ό,τι έχεις ήδη μένει ως έχει.",
+    "imp.priv":       "Το αρχείο διαβάζεται μόνο σε αυτή τη συσκευή και δεν ανεβαίνει πουθενά.",
+    "imp.none":       "Δεν υπάρχει κάτι νέο για εισαγωγή.",
+    "imp.go":         "Εισαγωγή",
+    "imp.cancel":     "Άκυρο",
+    "imp.done":       "Εισήχθησαν {n} σταθμοί",
+    "imp.undone":     "Η εισαγωγή αναιρέθηκε",
+    "imp.bad":        "Το Ραδιόφωνο δεν μπορεί να διαβάσει αυτό το αρχείο. Χρησιμοποίησε λίστα σταθμών M3U, M3U8, PLS, XSPF ή CSV.",
+    "imp.big":        "Το αρχείο είναι πολύ μεγάλο για εισαγωγή.",
+    "imp.empty":      "Δεν βρέθηκαν σταθμοί σε αυτό το αρχείο."
   }
 };
 
@@ -1006,6 +1054,189 @@ function favoriteToggle(station){
   commitLocal();
 }
 
+/* ===== IMPORT STATIONS (M3U / PLS / XSPF / CSV) ===== */
+// Parsing and the plan are pure (import.js, OrosRadioImport); here:
+// pick → preview → ONE write + one sync mark → toast with Undo.
+// Nothing from the file is ever inserted as HTML (textContent only).
+var IMP_ACCEPT = ".m3u,.m3u8,.pls,.xspf,.csv,.txt,audio/x-mpegurl,audio/mpegurl,application/vnd.apple.mpegurl,audio/x-scpls,application/xspf+xml,text/csv,text/plain";
+var IMP_SRC = { m3u: "M3U", radiodroid: "RadioDroid (M3U)", pls: "PLS", xspf: "XSPF" };
+var IMP_SHOW = 60;     // skipped rows listed in the preview
+
+function localPickFile(accept){
+  return new Promise(function(resolve){
+    var i = document.createElement("input");
+    i.type = "file";
+    i.accept = accept;
+    i.addEventListener("change", function(){ resolve(i.files && i.files[0] ? i.files[0] : null); });
+    i.click();
+  });
+}
+
+function startImport(){
+  var I = window.OrosRadioImport, KIT = window.OrosImportKit;
+  if(!I || !KIT) return;
+  var dlg = null;
+  try{ dlg = window.parent && window.parent !== window ? window.parent.orosDialog : null; }catch(e){}
+  var pick = dlg && typeof dlg.openFile === "function" ? dlg.openFile(IMP_ACCEPT) : localPickFile(IMP_ACCEPT);
+  Promise.resolve(pick).then(function(file){
+    if(!file) return null;                  // cancel = silent exit
+    return KIT.readFile(file, I.MAX_FILE).then(function(f){ return I.readBytes(f.bytes, f.name); });
+  }).then(function(res){
+    if(!res) return;
+    if(res.error){ transientNote(t(res.error === "big" ? "imp.big" : (res.error === "empty" ? "imp.empty" : "imp.bad"))); return; }
+    showImportPreview(res);
+  }).catch(function(e){
+    transientNote(t(e && e.message === "toobig" ? "imp.big" : "imp.bad"));
+  });
+}
+
+function showImportPreview(res){
+  var I = window.OrosRadioImport;
+  var old = $("rx-imp-dlg");
+  if(old) old.remove();
+  var dlg = document.createElement("dialog");
+  dlg.id = "rx-imp-dlg";
+  var box = document.createElement("div");
+  box.className = "rx-sleep-content rx-imp";
+  dlg.appendChild(box);
+  var upgrade = false;
+  function para(text, cls){
+    var p = document.createElement("p");
+    p.className = cls || "";
+    p.textContent = text;
+    box.appendChild(p);
+    return p;
+  }
+  // http stations counted once, without the upgrade (for the checkbox)
+  var httpN = I.plan(res, sliceGet()).stats.http;
+  function draw(){
+    var pl = I.plan(res, sliceGet(), { upgrade: upgrade }), st = pl.stats;
+    box.textContent = "";
+    var h = document.createElement("h3");
+    h.textContent = t("imp.title");
+    box.appendChild(h);
+    para(t("imp.src").replace("{s}", IMP_SRC[res.source] || t("imp.csv")), "rx-imp-src");
+    para(t("imp.count").replace("{n}", st.found).replace("{a}", pl.add.length).replace("{h}", st.have));
+    if(httpN){
+      var lab = document.createElement("label");
+      lab.className = "rx-imp-up";
+      var cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.id = "rx-imp-up";
+      cb.checked = upgrade;
+      cb.addEventListener("change", function(){ upgrade = cb.checked; draw(); });
+      lab.appendChild(cb);
+      lab.appendChild(document.createTextNode(" " + t("imp.upgrade").replace("{n}", httpN)));
+      box.appendChild(lab);
+    }
+    if(pl.skip.length){
+      para(t("imp.skipped").replace("{n}", pl.skip.length), "rx-imp-sk");
+      var ul = document.createElement("ul");
+      ul.className = "rx-imp-list";
+      pl.skip.slice(0, IMP_SHOW).forEach(function(x){
+        var li = document.createElement("li");
+        var b = document.createElement("b");
+        b.textContent = x.name || x.url || "?";
+        li.appendChild(b);
+        li.appendChild(document.createTextNode(" — " + t("imp.why." + x.why)));
+        ul.appendChild(li);
+      });
+      if(pl.skip.length > IMP_SHOW){
+        var more = document.createElement("li");
+        more.textContent = t("imp.more").replace("{n}", pl.skip.length - IMP_SHOW);
+        ul.appendChild(more);
+      }
+      box.appendChild(ul);
+    }
+    para(pl.add.length ? t("imp.keep") : t("imp.none"));
+    para(t("imp.priv"), "rx-note");
+    var row = document.createElement("div");
+    row.className = "rx-imp-acts";
+    var c = document.createElement("button");
+    c.type = "button";
+    c.className = "rx-imp-btn";
+    c.textContent = t("imp.cancel");
+    c.addEventListener("click", function(){ dlg.close(); });
+    row.appendChild(c);
+    if(pl.add.length){
+      var go = document.createElement("button");
+      go.type = "button";
+      go.className = "rx-imp-btn rx-imp-go";
+      go.id = "rx-imp-go";
+      go.textContent = t("imp.go");
+      go.addEventListener("click", function(){
+        dlg.close();
+        // planned again on the data as it is NOW (a pull may have
+        // landed while the preview was open)
+        applyImport(I.plan(res, sliceGet(), { upgrade: upgrade }));
+      });
+      row.appendChild(go);
+    }
+    box.appendChild(row);
+  }
+  draw();
+  dlg.addEventListener("click", function(e){ if(e.target === dlg) dlg.close(); });
+  dlg.addEventListener("close", function(){ dlg.remove(); });
+  document.body.appendChild(dlg);
+  dlg.showModal();
+}
+
+// ONE write: the new favourites (stable ids), newest stamp for the
+// file's first station so the list keeps the file's order; stamps
+// above any old tombstone of the same id (a station removed before
+// comes back because the person imports it now). Then one sync mark.
+function applyImport(pl){
+  var payload = sliceGet(), now = Date.now(), ids = [];
+  var have = {};
+  payload.favorites.forEach(function(f){ have[f.stationuuid] = true; });
+  var list = pl.add.filter(function(r){ return !have[r.stationuuid]; });
+  if(!list.length){ transientNote(t("imp.none")); return; }
+  var base = now;
+  list.forEach(function(r){ base = Math.max(base, (payload.deleted[r.stationuuid] || 0) + 1); });
+  list.forEach(function(r, i){
+    var f = {
+      stationuuid: r.stationuuid,
+      name: r.name,
+      url_resolved: r.url_resolved,
+      country: "",
+      countrycode: "",
+      tags: [],
+      codec: "",
+      bitrate: 0,
+      homepage: "",
+      mtime: base + (list.length - 1 - i)
+    };
+    if(r.favicon) f.favicon = r.favicon;
+    payload.favorites.push(f);
+    ids.push({ id: f.stationuuid, m: f.mtime });
+  });
+  normalizeState(payload);
+  state.data = payload;
+  commitLocal();
+  renderMain();
+  localToast(t("imp.done").replace("{n}", ids.length), t("undo"), function(){ undoImport(ids); });
+}
+
+// Undo works on the CURRENT data (a sync pull may have landed): each
+// imported station still carrying its import stamp goes, with a newer
+// tombstone, so a device that already got it drops it too. A station
+// the person touched since (re-favourited) stays.
+function undoImport(ids){
+  var payload = sliceGet(), now = Date.now(), gone = {};
+  ids.forEach(function(x){
+    var f = payload.favorites.find(function(v){ return v.stationuuid === x.id; });
+    if(!f || f.mtime !== x.m) return;
+    gone[x.id] = true;
+    payload.deleted[x.id] = Math.max(now, f.mtime + 1, (payload.deleted[x.id] || 0) + 1);
+  });
+  payload.favorites = payload.favorites.filter(function(f){ return !gone[f.stationuuid]; });
+  normalizeState(payload);
+  state.data = payload;
+  commitLocal();
+  renderMain();
+  transientNote(t("imp.undone"));
+}
+
 /* ===== SLEEP TIMER UI ===== */
 
 function openSleepDialog(){
@@ -1326,6 +1557,18 @@ function getFlagEmoji(cc){
 }
 
 function renderFavorites(container){
+  // Import stations (M3U / PLS / XSPF / CSV): always on top of the view
+  var bar = document.createElement("div");
+  bar.className = "rx-fav-tools";
+  var imp = document.createElement("button");
+  imp.type = "button";
+  imp.className = "rx-chip";
+  imp.id = "rx-imp-open";
+  imp.textContent = t("imp.btn");
+  imp.title = t("imp.tip");
+  imp.addEventListener("click", startImport);
+  bar.appendChild(imp);
+  container.appendChild(bar);
   if(!state.data || !state.data.favorites || state.data.favorites.length === 0){
     return;
   }
@@ -1335,6 +1578,8 @@ function renderFavorites(container){
       stationuuid: fav.stationuuid,
       name: fav.name,
       url_resolved: fav.url_resolved,
+      // an imported station's logo (https only, from its list)
+      favicon: typeof fav.favicon === "string" && /^https:\/\//i.test(fav.favicon) ? fav.favicon : "",
       codec: fav.codec,
       bitrate: fav.bitrate,
       countrycode: fav.countrycode

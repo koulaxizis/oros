@@ -115,7 +115,7 @@ const STR = {
     "quick.add": "Paste a link — or link | title",
     "search.ph": "Search…",
     "search.clear": "Clear search",
-    "import.title": "Import bookmarks (browsers, Pocket, Raindrop: HTML or CSV)",
+    "import.title": "Import bookmarks (browsers, Pocket, Instapaper, wallabag, Raindrop…: HTML, CSV or JSON)",
     "export.title": "Export bookmarks (Netscape HTML)",
     "folder.settings": "Folder options",
     "folder.settings.dlg": "Folder settings",
@@ -152,6 +152,42 @@ const STR = {
     "import.picked": "Imported {n} bookmark(s), {f} folder(s)",
     "import.none": "No bookmarks found in this file",
     "import.have": "Nothing new: you already have the {n} bookmark(s) in this file",
+    "imp.dlg": "Import bookmarks",
+    "imp.src": "File: {s}",
+    "imp.k.netscape": "browser bookmarks (HTML)",
+    "imp.k.raindrop": "Raindrop.io (HTML)",
+    "imp.k.pocket": "Pocket",
+    "imp.k.csv": "CSV with addresses",
+    "imp.k.instapaper": "Instapaper (CSV)",
+    "imp.k.wallabag": "wallabag (JSON)",
+    "imp.k.linkwarden": "Linkwarden backup (JSON)",
+    "imp.k.linkding": "linkding (JSON)",
+    "imp.k.firefox": "Firefox bookmarks backup (JSON)",
+    "imp.k.chromium": "Chrome / Edge bookmarks file (JSON)",
+    "imp.new": "{n} new bookmark(s), {f} new folder(s)",
+    "imp.range": "Saved from {a} to {b}",
+    "imp.day": "Saved on {a}",
+    "imp.here": "{n} already here: skipped",
+    "imp.bad": "{n} not web addresses (http / https): skipped",
+    "imp.capped": "Only the first {n} bookmarks of the file were read.",
+    "imp.folders": "New folders: {l}",
+    "imp.content": "Only links and their details come in: no page content. Folders with the same name are used.",
+    "imp.map.netscape": "Folders keep their nesting; tags, descriptions, favourites and dates come along.",
+    "imp.map.pocket": "Links go into “Pocket” (archived ones into “Pocket › Archive”) with their tags.",
+    "imp.map.instapaper": "Links go into “Instapaper”: Archive into “Instapaper › Archive”, your own folders below “Instapaper”, Starred become favourites. The highlighted selection becomes the description.",
+    "imp.map.wallabag": "Entries go into “wallabag” (archived ones into “wallabag › Archive”); starred become favourites, tags come along.",
+    "imp.map.linkwarden": "Each collection becomes a folder (subcollections inside it); descriptions and tags come along.",
+    "imp.map.linkding": "Bookmarks go to Unsorted with their tags and descriptions.",
+    "imp.map.firefox": "The Bookmarks Menu goes to the top level, the toolbar and Other Bookmarks become folders; subfolders keep their nesting. Tags and descriptions come along.",
+    "imp.map.chromium": "The bookmarks bar becomes a folder, Other bookmarks go to the top level; subfolders keep their nesting.",
+    "imp.go": "Import",
+    "imp.toobig": "This file is too big to import (over 60 MB).",
+    "imp.lz4": "Firefox's automatic .jsonlz4 backups are compressed: in Firefox use Library › Import and Backup › Backup… to save a .json file.",
+    "imp.f.fftoolbar": "Bookmarks Toolbar",
+    "imp.f.ffother": "Other Bookmarks",
+    "imp.f.ffmobile": "Mobile Bookmarks",
+    "imp.f.crbar": "Bookmarks bar",
+    "imp.f.crmobile": "Mobile bookmarks",
     "exported": "Exported {n} bookmark(s)",
     "ctx.open": "Open",
   "ctx.open_maps": "Open in Maps",
@@ -277,7 +313,7 @@ const STR = {
     "quick.add": "Κόλλησε σύνδεσμο — ή σύνδεσμος | τίτλος",
     "search.ph": "Αναζήτηση…",
     "search.clear": "Καθαρισμός",
-    "import.title": "Εισαγωγή σελιδοδεικτών (browsers, Pocket, Raindrop: HTML ή CSV)",
+    "import.title": "Εισαγωγή σελιδοδεικτών (browsers, Pocket, Instapaper, wallabag, Raindrop…: HTML, CSV ή JSON)",
     "export.title": "Εξαγωγή σελιδοδεικτών (Netscape HTML)",
     "folder.settings": "Επιλογές φακέλου",
     "folder.settings.dlg": "Ρυθμίσεις φακέλου",
@@ -314,6 +350,42 @@ const STR = {
     "import.picked": "Εισήχθησαν {n} συντόμευση(εις), {f} φάκελος(οι)",
     "import.none": "Δεν βρέθηκαν συντομεύσεις σε αυτό το αρχείο",
     "import.have": "Τίποτα καινούργιο: έχεις ήδη τους {n} σελιδοδείκτες αυτού του αρχείου",
+    "imp.dlg": "Εισαγωγή σελιδοδεικτών",
+    "imp.src": "Αρχείο: {s}",
+    "imp.k.netscape": "σελιδοδείκτες browser (HTML)",
+    "imp.k.raindrop": "Raindrop.io (HTML)",
+    "imp.k.pocket": "Pocket",
+    "imp.k.csv": "CSV με διευθύνσεις",
+    "imp.k.instapaper": "Instapaper (CSV)",
+    "imp.k.wallabag": "wallabag (JSON)",
+    "imp.k.linkwarden": "αντίγραφο Linkwarden (JSON)",
+    "imp.k.linkding": "linkding (JSON)",
+    "imp.k.firefox": "αντίγραφο σελιδοδεικτών Firefox (JSON)",
+    "imp.k.chromium": "αρχείο σελιδοδεικτών Chrome / Edge (JSON)",
+    "imp.new": "{n} νέοι σελιδοδείκτες, {f} νέοι φάκελοι",
+    "imp.range": "Αποθηκευμένοι από {a} έως {b}",
+    "imp.day": "Αποθηκευμένοι στις {a}",
+    "imp.here": "{n} υπάρχουν ήδη εδώ: παραλείπονται",
+    "imp.bad": "{n} δεν είναι διευθύνσεις ιστού (http / https): παραλείπονται",
+    "imp.capped": "Διαβάστηκαν μόνο οι πρώτοι {n} σελιδοδείκτες του αρχείου.",
+    "imp.folders": "Νέοι φάκελοι: {l}",
+    "imp.content": "Έρχονται μόνο οι σύνδεσμοι και τα στοιχεία τους, όχι το περιεχόμενο των σελίδων. Φάκελοι με το ίδιο όνομα ξαναχρησιμοποιούνται.",
+    "imp.map.netscape": "Οι φάκελοι κρατούν την ιεραρχία τους· έρχονται ετικέτες, περιγραφές, αγαπημένα και ημερομηνίες.",
+    "imp.map.pocket": "Οι σύνδεσμοι μπαίνουν στο «Pocket» (όσοι είναι στο αρχείο, στο «Pocket › Αρχείο») με τις ετικέτες τους.",
+    "imp.map.instapaper": "Οι σύνδεσμοι μπαίνουν στο «Instapaper»: το Archive στο «Instapaper › Αρχείο», οι δικοί σου φάκελοι κάτω από το «Instapaper», τα Starred γίνονται αγαπημένα. Το επισημασμένο απόσπασμα γίνεται περιγραφή.",
+    "imp.map.wallabag": "Τα άρθρα μπαίνουν στο «wallabag» (όσα είναι αρχειοθετημένα, στο «wallabag › Αρχείο»)· τα starred γίνονται αγαπημένα, έρχονται και οι ετικέτες.",
+    "imp.map.linkwarden": "Κάθε συλλογή γίνεται φάκελος (οι υποσυλλογές μέσα του)· έρχονται περιγραφές και ετικέτες.",
+    "imp.map.linkding": "Οι σελιδοδείκτες μπαίνουν στα Αταξινόμητα με τις ετικέτες και τις περιγραφές τους.",
+    "imp.map.firefox": "Το μενού σελιδοδεικτών πάει στο πάνω επίπεδο, η γραμμή εργαλείων και οι «Άλλοι σελιδοδείκτες» γίνονται φάκελοι· οι υποφάκελοι κρατούν την ιεραρχία τους. Έρχονται ετικέτες και περιγραφές.",
+    "imp.map.chromium": "Η γραμμή σελιδοδεικτών γίνεται φάκελος, οι «Άλλοι σελιδοδείκτες» πάνε στο πάνω επίπεδο· οι υποφάκελοι κρατούν την ιεραρχία τους.",
+    "imp.go": "Εισαγωγή",
+    "imp.toobig": "Το αρχείο είναι πολύ μεγάλο για εισαγωγή (πάνω από 60 MB).",
+    "imp.lz4": "Τα αυτόματα αντίγραφα .jsonlz4 του Firefox είναι συμπιεσμένα: στο Firefox, Βιβλιοθήκη › Εισαγωγή και αντίγραφα ασφαλείας › Αντίγραφο ασφαλείας… για να αποθηκεύσεις αρχείο .json.",
+    "imp.f.fftoolbar": "Γραμμή εργαλείων σελιδοδεικτών",
+    "imp.f.ffother": "Άλλοι σελιδοδείκτες",
+    "imp.f.ffmobile": "Σελιδοδείκτες κινητού",
+    "imp.f.crbar": "Γραμμή σελιδοδεικτών",
+    "imp.f.crmobile": "Σελιδοδείκτες κινητού",
     "exported": "Εξήχθησαν {n} συντόμευση(εις)",
     "ctx.open": "Άνοιγμα",
     "ctx.open_maps": "Άνοιγμα στον χάρτη",
@@ -2836,7 +2908,11 @@ function deleteFolderNow() {
    column. Folders nest by path; tags, descriptions, favourites and
    the created date come along; links already here are skipped. */
 function importNames() {
-  return { pocket: "Pocket", archive: LANG === "el" ? "Αρχείο" : "Archive" };
+  return {
+    pocket: "Pocket", archive: LANG === "el" ? "Αρχείο" : "Archive",
+    "ff.toolbar": t("imp.f.fftoolbar"), "ff.other": t("imp.f.ffother"), "ff.mobile": t("imp.f.ffmobile"),
+    "cr.bar": t("imp.f.crbar"), "cr.mobile": t("imp.f.crmobile")
+  };
 }
 
 /* The folder at path [a, b, …] under the top level: an existing
@@ -2868,31 +2944,108 @@ function importFolder(path, made, back, now) {
   return fid;
 }
 
-function applyImport(res) {
-  const entries = (res && res.entries) || [];
+/* Wave 5 (import from other apps): bookmarks/import.js reads the
+   file (Instapaper, wallabag, Linkwarden, linkding, Firefox and
+   Chromium JSON, plus everything core.parseImport knows) and makes
+   the plan; a preview says what comes in, then ONE write. Ids are
+   stable ("imp-…"), so importing the same file again adds only what
+   is missing; links already here are never touched. Undo is
+   platformUndo: tombstones newer than the import. */
+const IMPORT_MAX_BYTES = 60 * 1024 * 1024;
+
+function importPlan(res) {
+  return window.OrosBookmarksImport.plan(state, res, {
+    unsorted: ["unsorted", t("folder.unsorted").toLowerCase()]
+  });
+}
+
+function importDate(ms) {
+  return new Date(ms).toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB",
+    { year: "numeric", month: "short", day: "numeric" });
+}
+
+function openImportPreview(res) {
+  const pl = importPlan(res);
+  const stale = document.getElementById("bm-imp");
+  if (stale) stale.remove();
+  const el = (tag, cls, text) => {
+    const n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text !== undefined) n.textContent = text;
+    return n;
+  };
+  const dlg = el("dialog");
+  dlg.id = "bm-imp";
+  const form = el("form");
+  form.method = "dialog";
+  dlg.appendChild(form);
+  form.appendChild(el("h3", "", t("imp.dlg")));
+  const kind = pl.kind || "csv";
+  form.appendChild(el("p", "imp-src", t("imp.src", { s: t("imp.k." + kind) })));
+  const box = el("div", "plat-msg");
+  if (pl.items.length) box.appendChild(el("p", "imp-big", t("imp.new", { n: pl.items.length, f: pl.folders.length })));
+  else box.appendChild(el("p", "", t("import.have", { n: pl.here })));
+  if (pl.from && pl.to) {
+    box.appendChild(el("p", "hint", pl.from === pl.to ? t("imp.day", { a: importDate(pl.from) })
+      : t("imp.range", { a: importDate(pl.from), b: importDate(pl.to) })));
+  }
+  if (pl.items.length && pl.here) box.appendChild(el("p", "hint", t("imp.here", { n: pl.here })));
+  if (pl.bad) box.appendChild(el("p", "hint", t("imp.bad", { n: pl.bad })));
+  if (pl.total >= window.OrosBookmarksImport.MAX_ENTRIES) box.appendChild(el("p", "hint", t("imp.capped", { n: pl.total })));
+  form.appendChild(box);
+  form.appendChild(el("p", "hint", t("imp.map." + (STR.en["imp.map." + kind] ? kind : "netscape"))));
+  if (pl.folders.length) {
+    const names = pl.folders.slice(0, 6).map((f) => f.name).join(", ") + (pl.folders.length > 6 ? ", …" : "");
+    form.appendChild(el("p", "hint imp-folders", t("imp.folders", { l: names })));
+  }
+  form.appendChild(el("p", "hint", t("imp.content")));
+  const menu = el("menu");
+  const cancel = el("button", "", t("cancel"));
+  cancel.type = "button";
+  cancel.addEventListener("click", () => dlg.close());
+  const go = el("button", "primary", t("imp.go"));
+  go.type = "button";
+  go.setAttribute("data-k", "bimp.go");
+  go.disabled = !pl.items.length;
+  go.addEventListener("click", () => {
+    dlg.close();
+    importApply(res);
+  });
+  menu.appendChild(cancel);
+  menu.appendChild(el("span", "spacer"));
+  menu.appendChild(go);
+  form.appendChild(menu);
+  document.body.appendChild(dlg);
+  dlg.addEventListener("close", () => dlg.remove());
+  dlg.showModal();
+  (pl.items.length ? go : cancel).focus();
+}
+
+/* The one write. The plan is made again here, from the data as it is
+   now (a sync may have landed while the preview was open). */
+function importApply(res) {
+  const pl = importPlan(res);
   const now = Date.now();
   const back = { items: [], folders: [], upd: [] };
-  const have = new Set(Object.keys(state.items).map((id) => dupeKey(state.items[id].url)));
-  const made = {};
-  entries.forEach((entry) => {
-    const norm = normalizeUrl(entry.url);
-    if (!norm) return;
-    const key = dupeKey(norm);
-    if (have.has(key)) return;                 // dedup against existing (and the file itself)
-    const fid = importFolder(entry.path, made, back, now);
-    const it = sanitizeItem({
-      url: norm, title: entry.title, note: entry.note, tags: entry.tags, fav: entry.fav === true,
-      folderId: fid, added: entry.added || now, modified: now
-    });
+  let pos = nextFolderPos();
+  pl.folders.forEach((x) => {
+    if (state.folders[x.id]) return;
+    const f = sanitizeFolder({ id: x.id, name: x.name, pos: pos++, parent: x.parent || undefined, modified: now }, x.id);
+    if (!f) return;
+    state.folders[f.id] = f;
+    delete state.deleted[f.id];
+    back.folders.push(f.id);
+  });
+  pl.items.forEach((x) => {
+    if (state.items[x.id]) return;
+    const it = sanitizeItem({ id: x.id, url: x.url, title: x.title, note: x.note, tags: x.tags, fav: x.fav === true,
+                              folderId: x.folderId, added: x.added || now, modified: now }, x.id);
     if (!it) return;
     state.items[it.id] = it;
-    have.add(key);
+    delete state.deleted[it.id];
     back.items.push(it.id);
   });
-  if (!back.items.length) {
-    transientNote(entries.length ? t("import.have", { n: entries.length }) : t("import.none"));
-    return;
-  }
+  if (!back.items.length) { transientNote(t("import.have", { n: pl.here })); return; }
   save();
   renderAll();
   showToast(t("import.picked", { n: back.items.length, f: back.folders.length }), {
@@ -3627,20 +3780,24 @@ function wire() {
   $("#import-btn").addEventListener("click", async () => {
     const dlg = dialogHost();
     let file = null;
-    const accept = ".html,.htm,.csv,text/html,text/csv";
+    const accept = ".html,.htm,.csv,.json,.jsonlz4,text/html,text/csv,application/json";
     if (dlg && typeof dlg.openFile === "function") {
       file = await dlg.openFile(accept);
     } else {
       file = await localPickFile(accept);
     }
     if (!file) return;                // cancel — silent exit
+    if (file.size > IMPORT_MAX_BYTES) { transientNote(t("imp.toobig")); return; }
+    if (/\.jsonlz4$/i.test(file.name || "")) { transientNote(t("imp.lz4")); return; }
+    let res = null;
     try {
-      /* Wave 35: browsers, Linkding, Pinboard, Pocket (HTML / CSV),
-         Raindrop (HTML / CSV): core.parseImport tells them apart. */
-      applyImport(K.parseImport(await file.text(), file.name || "", importNames()));
-    } catch (err) {
-      transientNote(t("import.none"));
-    }
+      /* Wave 35 + wave 5: browsers (HTML, Firefox / Chromium JSON),
+         Linkding, Pinboard, Pocket, Raindrop, Instapaper, wallabag,
+         Linkwarden: import.js tells them apart. */
+      res = window.OrosBookmarksImport.parse(await file.text(), file.name || "", importNames());
+    } catch (err) { res = null; }
+    if (!res || !res.entries.length) { transientNote(t("import.none")); return; }
+    openImportPreview(res);
   });
 
   /* Export */

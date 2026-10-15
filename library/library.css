@@ -626,3 +626,12 @@ button.cat-open:hover, button.cat-item:hover { background: var(--accent-soft); }
 @media (max-width: 480px) {
   .cat-thumb { width: 40px; height: 60px; }
 }
+
+/* ---------- Import highlights (hlimport.js) ---------- */
+.hi-body p { margin: 0 0 10px; overflow-wrap: anywhere; }
+.hi-body .hi-src { color: var(--text); font-weight: 700; }
+.hi-h { font-size: 14px; font-weight: 800; margin: 14px 0 6px; }
+.hi-list { list-style: none; margin: 0 0 10px; padding: 4px 10px; max-height: 220px; overflow-y: auto; border: 1px solid var(--border); border-radius: 10px; }
+.hi-list li { padding: 6px 0; font-size: 13px; line-height: 1.4; overflow-wrap: anywhere; display: flex; flex-direction: column; gap: 2px; }
+.hi-list li + li { border-top: 1px solid var(--border); }
+.hi-list .hi-meta { color: var(--text-dim); font-size: 12px; }

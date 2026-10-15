@@ -46,6 +46,16 @@ Select some text and pick one of four colours to highlight it. From the same bar
 
 `Notes and highlights` lists them all, with filters, and `Export notes` saves them as Markdown text to the disk, as a download or to the clipboard. The file starts with the title, the author, how many highlights and notes there are and the date, then lists each highlight as a quote under its chapter, with its place in the book and your note below it, ready for Obsidian or any Markdown app. From the same window, `Send to Notes` makes a page of your highlights and notes in [Notes](app:notes), in the same Markdown.
 
+### Import highlights from another reader
+`More` › `Import highlights…` adds the highlights, notes and bookmarks you made in another reader to the same books in your library:
+- **Kindle**: connect the Kindle to a computer and take `My Clippings.txt` from its `documents` folder.
+- **KOReader**: open a book, then the menu › Export highlights, as JSON or Markdown (one book or all books).
+- **Readwise**: on readwise.io, Export › CSV.
+
+A book is recognised by its title, and by its author when both sides have one; accents and capitals don't matter. Each highlight is placed by finding its words in the book, so the book's file must be on this device. A note that Kindle keeps separately joins its highlight. In a PDF, a highlight whose words can't be found, and a bookmark, become a bookmark of its page with the quote and the note.
+
+The preview lists, for each book, what will be added, what is already there and what is skipped: highlights whose words aren't in this edition, and books that aren't in your library yet (add them first, then import again). `Import` adds everything at once, with `Undo` for a few seconds. Importing the same file again adds only what's missing.
+
 ## Sync and backup
 With orOS sync on, your library list, reading place, highlights, notes, bookmarks and reading time follow you to every device. The book files travel through the orOS disk sync. If a book was added elsewhere and its file hasn't arrived yet, it shows as not on this device; adding the same file here keeps your place, because the library knows a book by its content. Reading settings and the reading-aloud speed stay on each device.
 
