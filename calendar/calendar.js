@@ -599,6 +599,51 @@
       "pr.none": "Τίποτα προγραμματισμένο"
     }
   });
+  // One-time import from Google Calendar (gcal.js + /google-import.js).
+  (function (more) {
+    ["en", "el"].forEach(function (l) {
+      Object.keys(more[l]).forEach(function (k) { STR[l][k] = more[l][k]; });
+    });
+  })({
+    en: {
+      "mm.google": "Import from Google Calendar…",
+      "gi.title": "Import from Google Calendar",
+      "gi.text": "Sign in to Google once: orOS reads your calendars, you choose which ones come in, and the access is given back right away. Nothing is kept, nothing changes at Google.",
+      "gi.wait": "Waiting for the Google sign-in window…",
+      "gi.read": "Reading events… {n}",
+      "gi.pick": "Calendars to import",
+      "gi.row": "{new} new · {same} already here",
+      "gi.sum": "{n} event(s) to import",
+      "gi.dup": "{n} event(s) appear on more than one calendar: they come in once.",
+      "gi.lbl": "Each calendar becomes a label with its name (an existing label with the same name is used).",
+      "gi.none": "No events in this Google account.",
+      "gi.nothing": "Nothing new: the Calendar already has these events.",
+      "gi.done": "{n} event(s) imported from Google",
+      "gi.undone": "Import undone",
+      "gi.own": "To use your own Google app id, set it in Contacts › From an account.",
+      "gi.cancel": "Cancel",
+      "gi.close": "Close"
+    },
+    el: {
+      "mm.google": "Εισαγωγή από Google Calendar…",
+      "gi.title": "Εισαγωγή από Google Calendar",
+      "gi.text": "Συνδέεσαι μία φορά στη Google: το orOS διαβάζει τα ημερολόγιά σου, διαλέγεις ποια θα έρθουν και η πρόσβαση επιστρέφεται αμέσως. Δεν κρατιέται τίποτα και δεν αλλάζει τίποτα στη Google.",
+      "gi.wait": "Αναμονή για το παράθυρο σύνδεσης της Google…",
+      "gi.read": "Ανάγνωση συμβάντων… {n}",
+      "gi.pick": "Ημερολόγια για εισαγωγή",
+      "gi.row": "{new} νέα · {same} υπάρχουν ήδη",
+      "gi.sum": "{n} συμβάν/τα για εισαγωγή",
+      "gi.dup": "{n} συμβάν/τα υπάρχουν σε περισσότερα από ένα ημερολόγια: έρχονται μία φορά.",
+      "gi.lbl": "Κάθε ημερολόγιο γίνεται ετικέτα με το όνομά του (αν υπάρχει ήδη ετικέτα με το ίδιο όνομα, χρησιμοποιείται αυτή).",
+      "gi.none": "Δεν υπάρχουν συμβάντα σε αυτόν τον λογαριασμό Google.",
+      "gi.nothing": "Τίποτα νέο: το Ημερολόγιο έχει ήδη αυτά τα συμβάντα.",
+      "gi.done": "Εισήχθησαν {n} συμβάν/τα από τη Google",
+      "gi.undone": "Η εισαγωγή αναιρέθηκε",
+      "gi.own": "Για δικό σου αναγνωριστικό εφαρμογής Google, όρισέ το στις Επαφές › Από λογαριασμό.",
+      "gi.cancel": "Άκυρο",
+      "gi.close": "Κλείσιμο"
+    }
+  });
   function t(k) {
     return (STR[LANG] && STR[LANG][k] !== undefined) ? STR[LANG][k]
          : (STR.en[k] !== undefined ? STR.en[k] : k);
@@ -5176,6 +5221,188 @@ function transientNote(title, body) {
     $("imp-go").addEventListener("click", commitIcsImport);
     $("imp-no").addEventListener("click", function () { impPending = null; $("imp-dlg").close(); });
     $("imp-dlg").addEventListener("close", function () { impPending = null; });
+  }
+
+  /* ---------- 7e3. One-time import from Google Calendar ----------
+     /google-import.js signs in (token flow, read-only scope), gcal.js
+     reads and turns Google's events into the ICS parser's events (same
+     ids as an .ics import of the same calendar). Here: the dialog —
+     wait, progress, a checkbox per calendar with its counts — then ONE
+     write and a toast with Undo. Only what is missing comes in: an
+     event already here (same id) is left exactly as it is. Each
+     calendar becomes a label of its name (an existing one is reused).
+     Undo takes out what came in (tombstones newer than the import)
+     and the labels it made. */
+  var GI = window.OrosGoogleImport || null, GCAL = window.OrosGcal || null;
+  var giBusy = false, giCals = null;
+  function giStat(text) { $("gi-stat").textContent = text || ""; }
+  function giShow(phase) {
+    $("gi-pick").hidden = phase !== "pick";
+    $("gi-go").hidden = phase !== "pick";
+    $("gi-no").textContent = t(phase === "wait" ? "gi.cancel" : "gi.close");
+  }
+  function giLabelFor(name) {
+    var low = String(name).toLowerCase();
+    for (var i = 0; i < state.labels.length; i++) {
+      if (String(state.labels[i].name).toLowerCase() === low) return state.labels[i].id;
+    }
+    return null;
+  }
+  // What the ticked calendars bring: new events only, first calendar wins.
+  function giPlan() {
+    var have = {}, seen = {}, out = { add: [], dup: 0, simpl: 0, more: false, cals: [] };
+    state.events.forEach(function (e) { have[e.id] = 1; });
+    (giCals || []).forEach(function (c, i) {
+      var box = $("gi-list").querySelector('input[data-i="' + i + '"]');
+      if (!box || !box.checked) return;
+      var n = 0;
+      c.events.forEach(function (pe) {
+        if (have[pe.id]) return;
+        if (seen[pe.id]) { out.dup++; return; }
+        seen[pe.id] = 1;
+        out.add.push({ cal: c, pe: pe });
+        n++;
+      });
+      if (n) out.cals.push(c);
+      out.simpl += c.simplified;
+      if (c.more) out.more = true;
+    });
+    return out;
+  }
+  function giSync() {
+    var p = giPlan();
+    var notes = [t("gi.sum").replace("{n}", p.add.length)];
+    if (p.dup) notes.push(t("gi.dup").replace("{n}", p.dup));
+    if (p.simpl) notes.push(t("imp.simpl").replace("{n}", p.simpl));
+    if (p.more) notes.push(t("imp.more").replace("{n}", GCAL.MAX_EVENTS));
+    giStat(notes.join(" "));
+    $("gi-go").disabled = !p.add.length;
+  }
+  function giPreview(cals) {
+    giCals = cals;
+    var list = $("gi-list"), have = {};
+    state.events.forEach(function (e) { have[e.id] = 1; });
+    list.textContent = "";
+    cals.forEach(function (c, i) {
+      var nw = 0, same = 0;
+      c.events.forEach(function (pe) { if (have[pe.id]) same++; else nw++; });
+      var lab = document.createElement("label"), cb = document.createElement("input");
+      var txt = document.createElement("span"), nm = document.createElement("span"), meta = document.createElement("span");
+      lab.className = "gi-row";
+      cb.type = "checkbox";
+      cb.setAttribute("data-i", String(i));
+      cb.checked = c.on && nw > 0;
+      cb.disabled = !nw;
+      nm.className = "gi-name";
+      nm.textContent = c.name;
+      meta.className = "gi-meta";
+      meta.textContent = t("gi.row").replace("{new}", nw).replace("{same}", same);
+      txt.appendChild(nm);
+      txt.appendChild(meta);
+      lab.appendChild(cb);
+      lab.appendChild(txt);
+      list.appendChild(lab);
+    });
+    giShow("pick");
+    giSync();
+  }
+  function giCommit() {
+    var p = giPlan();
+    if (!p.add.length) return;
+    var now = Date.now(), back = { events: [], labels: [] }, lblOf = {};
+    p.cals.forEach(function (c) {
+      var lid = giLabelFor(c.name);
+      if (!lid) {
+        lid = "lbl-g" + GI.hash("gcal|" + c.id).slice(0, 12);
+        if (!labelById(lid)) {
+          state.labels.push({ id: lid, name: c.name.slice(0, 40), color: nextFreeColor(), mtime: now });
+          state.deleted = state.deleted.filter(function (d) { return d.id !== lid; });
+          back.labels.push(lid);
+        }
+      }
+      lblOf[c.id] = lid;
+    });
+    var ids = {};
+    p.add.forEach(function (x) {
+      var pe = x.pe;
+      var ev = sanitizeEvent({
+        id: pe.id, date: pe.date, dateEnd: pe.dateEnd, start: pe.start, end: pe.end,
+        title: pe.title, note: pe.note, location: pe.location, labelId: lblOf[x.cal.id] || null,
+        recur: pe.recur, remindMin: pe.remindMin, tz: pe.tz || null, mtime: now
+      });
+      if (!ev) return;
+      state.events.push(ev);
+      ids[ev.id] = 1;
+      back.events.push(ev.id);
+    });
+    state.deleted = state.deleted.filter(function (d) { return !ids[d.id]; });
+    saveState();                                   // one write, one dirty mark
+    $("gi-dlg").close();
+    renderChips();
+    renderAll();
+    renderDay();
+    var used = false;
+    toast(t("gi.done").replace("{n}", back.events.length), t("undo"), function () {
+      if (used) return;
+      used = true;
+      giUndo(back);
+    });
+  }
+  // Tombstones newer than the import, so the events stay gone on every
+  // device; the labels it made go the same way.
+  function giUndo(back) {
+    var t0 = Date.now(), gone = {};
+    back.events.concat(back.labels).forEach(function (id) { gone[id] = 1; });
+    state.events = state.events.filter(function (e) { return !gone[e.id]; });
+    state.labels = state.labels.filter(function (l) { return !gone[l.id]; });
+    state.deleted = state.deleted.filter(function (d) { return !gone[d.id]; });
+    Object.keys(gone).forEach(function (id) { state.deleted.push({ id: id, mtime: t0 }); });
+    saveState();
+    renderChips();
+    renderAll();
+    renderDay();
+    transientNote(t("gi.undone"));
+  }
+  // Inside the click: the sign-in window must open right here.
+  function giStart() {
+    if (giBusy || !GI || !GCAL || !window.OrosIcs) return;
+    giCals = null;
+    $("gi-list").textContent = "";
+    giShow("wait");
+    giStat(t("gi.wait"));
+    if (!$("gi-dlg").open) $("gi-dlg").showModal();
+    giBusy = true;
+    GI.run({
+      scope: GI.SCOPES.calendar,
+      progress: function (n) { giStat(t("gi.read").replace("{n}", n)); },
+      read: function (token, api) {
+        return GCAL.read(api, function (n) { giStat(t("gi.read").replace("{n}", n)); });
+      }
+    }).then(function (res) {
+      giBusy = false;
+      var cals = GCAL.build(res.data, window.OrosIcs).filter(function (c) { return c.events.length; });
+      if (!cals.length) { giShow("none"); giStat(t("gi.none")); return; }
+      var nw = 0, have = {};
+      state.events.forEach(function (e) { have[e.id] = 1; });
+      cals.forEach(function (c) { c.events.forEach(function (pe) { if (!have[pe.id]) nw++; }); });
+      if (!nw) { giShow("none"); giStat(t("gi.nothing")); return; }
+      giPreview(cals);
+    }, function (e) {
+      giBusy = false;
+      console.warn("calendar: Google import failed:", e && e.code);
+      giShow("none");
+      giStat(GI.message(e, LANG));
+    });
+  }
+  if ($("mm-google") && $("gi-dlg")) {
+    $("mm-google").hidden = !(GI && GCAL && window.OrosIcs && GI.ready());
+    $("mm-google").addEventListener("click", function () { setMore(false); giStart(); });
+    $("gi-list").addEventListener("change", giSync);
+    $("gi-go").addEventListener("click", giCommit);
+    $("gi-no").addEventListener("click", function () { $("gi-dlg").close(); });
+    // Closing the dialog while signing in stops the wait (the token,
+    // if one arrives later, is never used).
+    $("gi-dlg").addEventListener("close", function () { if (giBusy && GI) GI.cancel(); giCals = null; });
   }
 
   // Generic shell deep link (one receiver per app). BR-FILE-IMPORT:

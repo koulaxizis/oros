@@ -18,7 +18,10 @@
 //               endpoint (scope Contacts.Read); Graph /me/contacts
 //               and every contact folder.
 // Both answer to contacts/oauth-callback.html, which only passes the
-// answer back (BroadcastChannel, localStorage fallback).
+// answer back (BroadcastChannel, localStorage fallback). The same page
+// serves the one-time Google imports of Calendar, To-Do, Feeds and
+// Shelf (/google-import.js), which use the same Google client id and
+// the same "Use my own app id" setting kept here.
 //
 // Client ids: an OAuth client id is not a secret. orOS's own ids go
 // in CLIENT below once registered (redirect URI
@@ -33,7 +36,7 @@
   "use strict";
 
   var CLIENT = {
-    google: "97712435228-us9qmufgtniombc9ducde9gsvt5hj98h.apps.googleusercontent.com",   // Chris, 2026-10-14 (Google Cloud › OAuth client, Web application)
+    google: "97712435228-us9qmufgtniombc9ducde9gsvt5hj98h.apps.googleusercontent.com",   // Chris, 2026-10-14 (Google Cloud › OAuth client, Web application); also BUILTIN in /google-import.js
     microsoft: ""     // Microsoft Entra › App registrations (SPA, personal + work accounts)
   };
   var PREFS_KEY = "oros-contacts-oauth";

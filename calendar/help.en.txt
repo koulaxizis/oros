@@ -75,6 +75,11 @@ Free times are worked out on this device from your own events with a time and fr
 ## Print
 `More` › `Print…` prints the view you're looking at, `Day`, `Week`, `Month`, `Year` or `Agenda`, on a clean white page: the month as a table with times and titles, the week and agenda as lists per day, the year as 12 small months with days that have events in bold. To make a PDF, pick "Save as PDF" as the printer.
 
+## Import from Google Calendar
+`More` › `Import from Google Calendar…` copies your events from Google once. Sign in to Google in the small window; orOS reads your calendars (read only), lists them with how many events are new or already here, and gives the access back to Google right away: nothing is kept, no password and no access, and nothing changes at Google. Your own calendars start ticked; holidays, birthdays and other people's calendars start unticked. Press `Import` to save the ticked ones in one go; the message that follows has `Undo`.
+
+Events come in the way an .ics import brings them: times and time zones, all-day and multi-day events, repeats (with skipped and moved dates), places, notes and the first reminder that matches the Calendar's choices. Each calendar becomes a label of its name, or uses your label with the same name. Importing again adds only what is missing; events already here are left as they are. Google must have this enabled for orOS; if it answers 403, the service is not switched on yet. To use your own Google app id, set it in [Contacts](app:contacts) › `From an account` › `Use my own app id`.
+
 ## Search and statistics
 The search box looks through the title, note and location of your own events and lists every match by date. `Stats` shows how many events you have, how many fall in the next 30 days, how many repeat, and a breakdown by label.
 

@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "2.33.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "2.34.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -5733,6 +5733,9 @@
         { name: "Google People API · Microsoft Graph", url: "https://developers.google.com/people",
           by: "Google LLC; Microsoft Corporation; your own account", lic: { en: "Their terms, one sign-in per import, nothing kept", el: "Οι όροι τους, μία σύνδεση ανά εισαγωγή, τίποτα δεν κρατιέται" },
           en: "One-time contacts import (Contacts › From an account)", el: "Εισαγωγή επαφών μία φορά (Επαφές › Από λογαριασμό)" },
+        { name: "Google Calendar · Tasks · YouTube Data · Books APIs", url: "https://developers.google.com/calendar",
+          by: "Google LLC; your own account", lic: { en: "Their terms, one sign-in per import, nothing kept", el: "Οι όροι τους, μία σύνδεση ανά εισαγωγή, τίποτα δεν κρατιέται" },
+          en: "One-time imports from Google (Calendar, To-Do, Reader, Media Shelf)", el: "Εισαγωγή από Google μία φορά (Ημερολόγιο, Εργασίες, Αναγνώστης, Το ράφι μου)" },
         { name: "Gravatar · Libravatar", url: "https://www.libravatar.org/",
           by: "Automattic Inc.; the Libravatar project", lic: { en: "Their terms; only a hashed e-mail is sent, on request", el: "Οι όροι τους· στέλνεται μόνο κωδικοποιημένο email, όταν το ζητήσεις" },
           en: "Profile pictures for contacts (Contacts › Find photos)", el: "Φωτογραφίες προφίλ για επαφές (Επαφές › Εύρεση φωτογραφιών)" },

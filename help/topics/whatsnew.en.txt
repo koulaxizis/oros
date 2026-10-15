@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.34.00
+- Calendar, To-Do, Reader and Media Shelf can import once from your Google account: events, tasks, YouTube subscriptions and Google Books shelves. Nothing stays connected.
+
 ## Version 2.33.00
 - Passwords: import from Proton Pass, 1Password, LastPass, Dashlane, NordPass, Enpass and Apple Passwords, plus two-factor codes from Aegis, 2FAS and Google Authenticator, with a preview and Undo.
 
