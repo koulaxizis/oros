@@ -522,10 +522,130 @@
   // inApp: the page runs in the orOS Android app (its phone bridge is
   // connected). An intent to Chrome from there comes back to the app,
   // so the app's own activity opens the page in Chrome.
-  function installUrl(id, ua, origin, inApp) {
+  // inTab: the caller runs in a browser tab (display-mode browser). That
+  // browser can install the page itself and no app catches the link, so
+  // the plain address is used: an intent to Chrome does nothing in a
+  // browser that blocks intents (Brave) or on a phone without Chrome.
+  // Android package of a single app (android/solo-apps.json builds one per
+  // app; CI publishes it as oros-<id>.apk on the "android-apks" release).
+  // On Android an installed orOS claims every page of this site, so the
+  // browser cannot install a single app next to it: the APK can.
+  var APK_BASE = "https://github.com/koulaxizis/oros/releases/download/android-apks/";
+  function apkUrl(id) { return has(id) ? APK_BASE + "oros-" + id + ".apk" : ""; }
+  // The link an APK button uses. Inside an installed app on Android (the
+  // orOS app, a Chrome-installed orOS or single app) a link to GitHub
+  // opens in the browser's in-app tab, where an APK download stops at
+  // 100% and never finishes (Chris 2026-10-15, Brave; a plain browser
+  // tab works in every browser). There the link asks Chrome for a real
+  // tab; without Chrome the in-app tab opens as before.
+  function apkHref(id, ua, inWindow) {
+    var u = id === "oros" ? APK_BASE + "oros.apk" : apkUrl(id);
+    if (!u || !inWindow || !/Android/i.test(String(ua || ""))) return u;
+    return "intent://" + u.replace(/^https:\/\//, "") + "#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=" +
+      encodeURIComponent(u) + ";end";
+  }
+
+  // App updates for the APKs (FDROID-1): CI (.github/workflows/fdroid.yml)
+  // publishes them as an F-Droid repository on koulaxizis/oros-fdroid's
+  // GitHub Pages whenever the Android shell changes. F-Droid, Droid-ify
+  // and Obtainium then update them; versions.json next to it lets the
+  // app itself say once that a newer APK is out. The APK's start
+  // address carries its versionCode (android/tools/gen.js: ?apk=<code>).
+  var REPO_SITE = "https://koulaxizis.github.io/oros-fdroid";
+  var REPO = REPO_SITE + "/repo";
+  var REPO_FP = "2A066758DF27F6AFDF6D96F72D575E3E04844B9F85A22A54B7F2C03905A11846";
+  var MAIN_PKG = "online.useoros.twa";
+  // Packages whose last word is not the app id (android/solo-apps.json)
+  var PKG_WORD = { feeds: "reader", fitness: "workouts", gamecenter: "games" };
+  function pkgOf(id) {
+    if (id === "oros") return MAIN_PKG;
+    return has(id) ? "online.useoros." + (PKG_WORD[id] || id) : "";
+  }
+  // Opens F-Droid or Droid-ify with the orOS repository ready to add
+  function repoLink() { return "fdroidrepos://" + REPO.replace(/^https:\/\//, "") + "?fingerprint=" + REPO_FP; }
+  function obtainiumLink(id) { var p = pkgOf(id); return p ? "obtainium://add/" + REPO + "?appId=" + p : ""; }
+  function apkCode(search) {
+    var v = "";
+    try { v = new URLSearchParams(String(search || "")).get("apk") || ""; } catch (e) { v = ""; }
+    return /^\d{1,10}$/.test(v) ? Number(v) : 0;
+  }
+
+  var APK_TEXT = {
+    en: { note: "A new version of the {n} app is out. Update it where you installed it from (F-Droid, Droid-ify or Obtainium), or download the APK.", get: "Download", close: "Close" },
+    el: { note: "Βγήκε νέα έκδοση της εφαρμογής {n}. Ενημέρωσέ τη από εκεί που την εγκατέστησες (F-Droid, Droid-ify ή Obtainium) ή κατέβασε το APK.", get: "Λήψη", close: "Κλείσιμο" }
+  };
+  var APK_KEY = "oros-apk";           // { installed: {pkg: code}, seen: {pkg: code}, repo: {at, v} }
+  var DAY = 864e5;
+  // Remembers the installed versionCode (when the launch carried it) and,
+  // at most once a day, asks the repo for the published one. A newer one
+  // is told once per version, in a bar that closes for good.
+  function apkNotice(win, id, code) {
+    var pkg = pkgOf(id), st = {}, ls = null;
+    if (!pkg) return;
+    try { ls = win.localStorage; st = JSON.parse(ls.getItem(APK_KEY) || "{}") || {}; } catch (e) { return; }
+    st.installed = st.installed || {};
+    st.seen = st.seen || {};
+    if (code) st.installed[pkg] = code;
+    function save() { try { ls.setItem(APK_KEY, JSON.stringify(st)); } catch (e) {} }
+    save();
+    var have = st.installed[pkg];
+    if (!have) return;              // not the APK (a browser-installed app)
+    function check(v) {
+      var pub = v && Number(v[pkg]);
+      if (!pub || pub <= have || st.seen[pkg] === pub) return;
+      st.seen[pkg] = pub;
+      save();
+      showApkBar(win, id);
+    }
+    var r = st.repo;
+    if (r && r.v && Date.now() - r.at < DAY) { check(r.v); return; }
+    if (typeof win.fetch !== "function") return;
+    win.fetch(REPO_SITE + "/versions.json", { cache: "no-store" }).then(function (res) {
+      return res.ok ? res.json() : null;
+    }).then(function (v) {
+      if (!v || typeof v !== "object") return;
+      st.repo = { at: Date.now(), v: v };
+      save();
+      check(v);
+    }, function () {});
+  }
+  function showApkBar(win, id) {
+    var doc = win.document, lng = "en";
+    try { lng = lang(win.localStorage.getItem("oros-lang")); } catch (e) {}
+    var T = APK_TEXT[lng];
+    var bar = doc.createElement("div");
+    bar.id = "solo-apk";
+    bar.setAttribute("role", "status");
+    bar.style.cssText = "position:fixed;left:8px;right:8px;bottom:8px;z-index:2147483000;display:flex;gap:8px;align-items:center;" +
+      "padding:10px 12px;border-radius:12px;background:#2a2721;color:#f2ead8;font:14px/1.35 system-ui,sans-serif;" +
+      "box-shadow:0 4px 18px rgba(0,0,0,.45)";
+    var txt = doc.createElement("span");
+    txt.style.flex = "1";
+    txt.textContent = T.note.replace("{n}", id === "oros" ? "orOS" : nameOf(id, lng));
+    bar.appendChild(txt);
+    var a = doc.createElement("a");
+    a.href = apkHref(id, win.navigator.userAgent, true);
+    a.rel = "noopener";
+    a.textContent = T.get;
+    a.style.cssText = "border-radius:8px;padding:8px 14px;background:#c8a96e;color:#1b1a18;font-weight:600;text-decoration:none;white-space:nowrap";
+    bar.appendChild(a);
+    var x = doc.createElement("button");
+    x.type = "button";
+    x.textContent = "×";
+    x.setAttribute("aria-label", T.close);
+    x.style.cssText = "border:0;background:none;color:inherit;font-size:22px;line-height:1;padding:2px 6px";
+    function close() { bar.remove(); }
+    x.addEventListener("click", close);
+    a.addEventListener("click", close);
+    bar.appendChild(x);
+    doc.body.appendChild(bar);
+  }
+
+  function installUrl(id, ua, origin, inApp, inTab) {
     if (!has(id)) return "";
     if (inApp) return "intent://install/" + id + "#Intent;scheme=oros-permission;package=online.useoros.twa;end";
     var page = "/" + id + "/solo.html?install";
+    if (inTab) return page;
     var m = /^https:\/\/([^\/?#]+)$/.exec(String(origin || ""));
     if (!/Android/i.test(String(ua || "")) || !m) return page;
     return "intent://" + m[1] + page + "#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=" +
@@ -537,15 +657,21 @@
   // bar's button shows it. Without one (another browser, or not yet
   // offered) a page opened with "?install" says where the browser keeps
   // its Install item. Gone in the installed app (display-mode not
-  // "browser") and once installed.
+  // "browser") and once installed. A "?install" link that opened in an
+  // app window instead (on Android the installed orOS or the orOS app
+  // takes every link to this site) says so, with an "Open in Chrome"
+  // button on Android.
   var BAR_TEXT = {
-    en: { ask: "Install {n} on this device", btn: "Install", how: "To install {n}: open the browser menu (⋮) and choose Install app or Add to Home screen.", close: "Close" },
-    el: { ask: "Εγκατάσταση του {n} σε αυτή τη συσκευή", btn: "Εγκατάσταση", how: "Για να εγκαταστήσεις το {n}: άνοιξε το μενού του browser (⋮) και πάτησε Εγκατάσταση εφαρμογής ή Προσθήκη στην αρχική οθόνη.", close: "Κλείσιμο" }
+    en: { ask: "Install {n} on this device", btn: "Install", how: "To install {n}: open the browser menu (⋮) and choose Install app or Add to Home screen.", close: "Close",
+          win: "{n} opened inside an installed app, where it can't be installed. If it isn't installed yet, open this page in Chrome or Edge.", chrome: "Open in Chrome", apk: "Download the app (APK)" },
+    el: { ask: "Εγκατάσταση του {n} σε αυτή τη συσκευή", btn: "Εγκατάσταση", how: "Για να εγκαταστήσεις το {n}: άνοιξε το μενού του browser (⋮) και πάτησε Εγκατάσταση εφαρμογής ή Προσθήκη στην αρχική οθόνη.", close: "Κλείσιμο",
+          win: "Το {n} άνοιξε μέσα σε εγκατεστημένη εφαρμογή, όπου δεν γίνεται εγκατάσταση. Αν δεν το έχεις ήδη εγκαταστήσει, άνοιξε αυτή τη σελίδα στο Chrome ή στο Edge.", chrome: "Άνοιγμα στο Chrome", apk: "Λήψη της εφαρμογής (APK)" }
   };
   function installBar(win, id, asked) {
-    var doc = win.document, bar = null, deferred = null, lng = "en";
+    var doc = win.document, bar = null, deferred = null, lng = "en", inWindow = false;
     try { lng = lang(win.localStorage.getItem("oros-lang")); } catch (e) {}
-    try { if (!win.matchMedia("(display-mode: browser)").matches) return; } catch (e) { return; }
+    try { inWindow = !win.matchMedia("(display-mode: browser)").matches; } catch (e) { return; }
+    if (inWindow && !asked) return;
     var T = BAR_TEXT[lng], name = nameOf(id, lng);
     function close() { if (bar) { bar.remove(); bar = null; } }
     function show(withButton) {
@@ -558,9 +684,32 @@
         "box-shadow:0 4px 18px rgba(0,0,0,.45)";
       var txt = doc.createElement("span");
       txt.style.flex = "1";
-      txt.textContent = (withButton ? T.ask : T.how).replace("{n}", name);
+      txt.textContent = (withButton === "win" ? T.win : withButton ? T.ask : T.how).replace("{n}", name);
       bar.appendChild(txt);
-      if (withButton) {
+      // Only the orOS Android app (TWA) can hand the page to Chrome: in
+      // Chrome's own installed orOS an intent to Chrome comes straight
+      // back to the same app window, so there the text alone is shown.
+      var inApp = false;
+      if (withButton === "win" && /Android/i.test(win.navigator.userAgent || "")) {
+        try {
+          var fw = doc.getElementById("solo-frame").contentWindow;
+          inApp = !!(fw.orosPhone && fw.orosPhone.available());
+        } catch (e) {}
+      }
+      if (inApp) {
+        var a = doc.createElement("a");
+        a.href = installUrl(id, win.navigator.userAgent, win.location.origin, inApp);
+        a.textContent = T.chrome;
+        a.style.cssText = "border-radius:8px;padding:8px 14px;background:#c8a96e;color:#1b1a18;font-weight:600;text-decoration:none;white-space:nowrap";
+        bar.appendChild(a);
+      } else if (withButton === "win" && /Android/i.test(win.navigator.userAgent || "")) {
+        // Chrome's installed orOS took the link: the APK installs it
+        var k = doc.createElement("a");
+        k.href = apkHref(id, win.navigator.userAgent, true);
+        k.textContent = T.apk;
+        k.style.cssText = "border-radius:8px;padding:8px 14px;background:#c8a96e;color:#1b1a18;font-weight:600;text-decoration:none;white-space:nowrap";
+        bar.appendChild(k);
+      } else if (withButton === true) {
         var b = doc.createElement("button");
         b.type = "button";
         b.textContent = T.btn;
@@ -583,6 +732,7 @@
       bar.appendChild(x);
       doc.body.appendChild(bar);
     }
+    if (inWindow) { setTimeout(function () { show("win"); }, 1500); return; }
     win.addEventListener("beforeinstallprompt", function (e) {
       e.preventDefault();
       deferred = e;
@@ -597,6 +747,7 @@
     var id = idFromPath(win.location.pathname);
     if (!id) { win.location.replace("/"); return; }
     var asked = /(^|[?&])install(=|&|$)/.test(win.location.search);
+    var code = apkCode(win.location.search);
     var src = frameSrc(id, win.location.search);
     // The launch parameters are one-shots: out of the address bar, so
     // a reload of this window is a plain start.
@@ -609,6 +760,7 @@
     frame.src = src;
     doc.body.appendChild(frame);
     installBar(win, id, asked);
+    setTimeout(function () { apkNotice(win, id, code); }, 3000);
     // Keyboard focus into the app, unless the app already took it
     // (a shortcut that focuses an input): focusing the frame again
     // would blur that input.
@@ -687,6 +839,13 @@
     pageFor: pageFor,
     hostBoot: host,
     installUrl: installUrl,
+    apkUrl: apkUrl,
+    apkHref: apkHref,
+    pkgOf: pkgOf,
+    repoLink: repoLink,
+    repoPage: REPO,
+    obtainiumLink: obtainiumLink,
+    apkCode: apkCode,
     id: "",
     share: null,
     word: ""
@@ -704,6 +863,21 @@
         if (api.share) ["share-url", "share-title", "share-text"].forEach(function (k) { u.searchParams.delete(k); });
         root.history.replaceState(root.history.state, "", u.pathname + u.search + u.hash);
       } catch (e) {}
+    }
+    // The orOS Android app itself (not a single app): its launch
+    // address carries ?apk=<versionCode> too.
+    else if (root.top === root && root.location.pathname === "/") {
+      var mainCode = apkCode(root.location.search);
+      if (mainCode) {
+        try {
+          var mu = new URL(root.location.href);
+          mu.searchParams.delete("apk");
+          root.history.replaceState(root.history.state, "", mu.pathname + mu.search + mu.hash);
+        } catch (e) {}
+      }
+      var later = function () { setTimeout(function () { apkNotice(root, "oros", mainCode); }, 5000); };
+      if (root.document.readyState === "complete") later();
+      else root.addEventListener("load", later);
     }
     // The host page that framed us (same origin), if any.
     api.host = function () {

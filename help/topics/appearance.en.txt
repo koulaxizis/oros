@@ -1,5 +1,5 @@
 # Appearance
-Make orOS look the way you like: language, light or dark theme, colour skin, wallpaper, a screen pet and the weather in the top bar. Most of these are in the [Settings](app:settings) app, under `Appearance`: open the menu and choose `Settings`. The top-bar weather is set in the Weather app.
+Make orOS look the way you like: language, light or dark theme, colour skin, wallpaper, seasonal decorations, a screen pet and the weather in the top bar. Most of these are in the [Settings](app:settings) app, under `Appearance`: open the menu and choose `Settings`. The top-bar weather is set in the Weather app.
 
 ## Language
 orOS speaks English and Greek. The `EL` / `EN` button in the top bar switches to the other language, and so does [[Ctrl+Alt+Shift+L]].
@@ -25,6 +25,45 @@ The first tile, `Mine`, is a wallpaper you make yourself.
 
 Each device draws your wallpaper to fit its own screen, so it stays sharp on a phone and on a big monitor.
 
+## Seasonal decorations
+At some times of the year your desktop dresses up on its own: snow, a string of lights and a tree at Christmas, gold sparkles and a pomegranate at New Year (with fireworks from 23:55 to 00:10 on New Year's Eve), pumpkins, bats and a spider's web at Halloween.
+
+The Greek holidays have their own:
+- `Epiphany` (5-6 January): a gold cross over the sea.
+- `Valentine's Day` (13-14 February): hearts floating up.
+- `Carnival` (from Tsiknopempti to the Sunday before Clean Monday): confetti, coloured flags and a mask.
+- `Clean Monday`: kites in the sky.
+- `25 March` and `28 October` (and the day before each): blue and white flags and the Greek flag.
+- `Easter` (Holy Thursday to Easter Monday): red eggs, an Easter candle, flowers and butterflies.
+- `May Day` (30 April - 1 May): a flower wreath and falling petals.
+
+Carnival, Clean Monday and Easter move every year; orOS works out their dates from the Orthodox Easter. When two events fall on the same day, one wins: 28 October over Halloween, Valentine's Day over Carnival, Easter over May Day.
+
+### Extras you can turn on
+These are off until you choose them:
+- `My birthday`: balloons, flags and confetti on your birthday. Pick the day and month under the event; nothing shows until you do. It wins over any other event that day.
+- `Seasons`: petals and tulips in `Spring`, the sun and waves in `Summer`, falling leaves in `Autumn`, light snow in `Winter`. A holiday always wins over its season.
+- `Easter date`: `Orthodox` (the default) or `Western`, for those who keep Easter on the Western date. It moves only Easter; Carnival and Clean Monday stay Orthodox.
+
+The decorations sit behind your desktop icons, never take a click and stop moving while an app is open.
+
+They are on from the start. In `Settings`, under `Appearance` › `Seasonal decorations`:
+- `Decorate the desktop in season` turns them all off or on again.
+- `Motion`: `Moving`, or `Still only` for the decorations without snow or anything that moves.
+- `Amount`: `A little`, `Normal` or `Lots` of snowflakes and sparkles.
+- `At Christmas`: a `Tree` or the Greek Christmas `Boat`.
+- `Hide for today` appears while an event is on; `Show again` brings it back.
+- Under `Events`, each event shows its next dates and has its own switch. The list starts with what is on now or comes next.
+
+### Try one before its time
+Press `Try it now` next to an event. Settings closes and the decoration appears on your desktop with a small bar:
+1. `Keep it` keeps it until the event's period ends (for Halloween, until 31 October).
+2. `Stop` takes it away, and your desktop follows the calendar again.
+
+A kept decoration shows in `Settings` with its own `Stop` button.
+
+If your device asks for less motion, or the battery is low, only the still pieces show. Slow devices get fewer snowflakes on their own.
+
 ## Screen pet
 In `Settings`, under `Appearance`, the `Screen pet` switch turns on a tiny companion that lives on your desktop. Feed it, pet it and let it sleep. It never dies: if you forget it for a while, it just gets grumpy. You can do more with your pet in [Pet World](app:petworld).
 
@@ -49,4 +88,4 @@ The Dock is a bar of your favourite apps along the bottom of the desktop. Add an
 ## What follows you to other devices
 With [sync](help:t/sync) on, your language, theme, skin, wallpaper (including `Mine`) and the pinned weather city go to your other devices too.
 
-The Dock and its settings stay on this device.
+The seasonal decoration settings go too. The Dock and its settings, a decoration you are trying or kept, and `Hide for today` stay on this device.

@@ -26,6 +26,7 @@
 | VIII | Release pipeline, checklists A–E, runtime test harness |
 | IX | Decisions log + doctrinal exemptions |
 | X | Open items, audit queue, lessons (closed incidents) |
+| X-B | Troubleshooting: known symptoms → cause → fix |
 | XI | Session handoff template |
 | XII | Changelog (the only one — `CHANGELOG.md` is retired) |
 
@@ -157,7 +158,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 
 ### Script order (shell `index.html`, classic scripts)
 
-**Verified 2026-10-05 (`index.html`, `?v=0.39.05`):** `translations.js` → `sync.js` → `vault.js` → `pet.js` → `fs.js` → `dialogs.js` → `shell.js` → `notifications.js`. (0.49.00: `launcher.js` loads right before `shell.js`.) (2026-10-09: `wallpaper/art.js` sits before `shell.js`, and `search.js` right before `shell.js`.) Eight classic scripts at the end of `<body>`, all `?v=`-stamped, after two inline scripts (splash, update broker). `storage-adapters.js` is gone. `translations.js` stays synchronous at top level and contains ONLY shell-consumed keys (`app.<id>`, `category.*`). App strings live in each app's inline `STRINGS`.
+**Verified 2026-10-05 (`index.html`, `?v=0.39.05`):** `translations.js` → `sync.js` → `vault.js` → `pet.js` → `fs.js` → `dialogs.js` → `shell.js` → `notifications.js`. (0.49.00: `launcher.js` loads right before `shell.js`; 2.23.00: `seasonal.js` between them.) (2026-10-09: `wallpaper/art.js` sits before `shell.js`, and `search.js` right before `shell.js`.) Eight classic scripts at the end of `<body>`, all `?v=`-stamped, after two inline scripts (splash, update broker). `storage-adapters.js` is gone. `translations.js` stays synchronous at top level and contains ONLY shell-consumed keys (`app.<id>`, `category.*`). App strings live in each app's inline `STRINGS`.
 
 `vault.js` and `pet.js` load BEFORE `fs.js`, `dialogs.js` and `shell.js`, so neither may touch those modules at parse time (A24).
 
@@ -194,6 +195,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 | `__orosRadioHost` | radio.js, set on the shell window | **[log]** shell-hosted audio host; `api.getState()` feeds `radioTrayTick()` |
 | `orosPet` | pet.js | screen pet component |
 | `orosLauncher` | launcher.js | favourites: `attach(host)`, `refresh()`, `menuRow(btn, app)`, `renderSettings(menu)`, `prefs()` + `setPref(k, v)` (Dock settings for the Settings app), `model` (pure) |
+| `orosSeasonal` | seasonal.js | seasonal desktop decorations: `attach(host)`, `refresh()`, `snapshot()`, `set(k, v)`, `preview(id)`, `keep()`, `stop()`, `hideToday(on)`, `model` (pure) |
 | `orosSettings` | shell.js | `{ v:1, get(), set(name, value), act(name, arg), onChange(fn), open(section) }` for the Settings app; calls the same setters the menu used (no slice, no migration); snapshot `sync.msg` carries `state.syncMsg` or the SY-L2 `state.syncAutoErr` |
 | `__orosOpen<App>` | shell.js | deep-link bridges; full table under `shell.js` below (verified 2026-10-05) |
 
@@ -248,8 +250,8 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
   - **Shell in solo mode** (`?solo=<id>` stays in the frame address so the update reload comes back the same): `body.solo-mode` hides desktop, menu, Dock, pet, clock and tray chips (`style.css`); the bar button carries the app's name and opens `#solo-menu` (Sync and cloud → Settings › Sync, Settings, Help, Open the whole orOS); another app opened from there shows Back, and `returnToDesktop()` / Back return to the single app (`soloHome`). `soloStart()` (after `apps.json`): a share (`shareTarget`: link → Bookmarks add dialog, text → Notes new page / To-Do add dialog / Calendar New event on today; wave 2: Contacts `{ cardText }` → card reader → New contact form, Writer `{ newDoc }`, Spreadsheet `{ newSheet }` (lines → rows, tab or comma cells; the one share that writes at once), Kanban `{ asNew }`, Mind Map `{ pasteText }` → paste dialog, Wiki `{ newArt }` → editor, Slides `{ outline }` → "from an outline" dialog; shortcuts: `newContact`, `newBlank` (Writer, Spreadsheet), `quickAdd` (Kanban), `newMap`, `newArt`, `newDeck`; wave 3 shares: Passwords `{ newEntry: { title, url } }` (a link only; `PmApp.addEntry`, after unlock), Budget `{ newTx: { n } }`, Habits `{ asNew }`, Workouts `{ asNew: { note } }`; shortcuts: Passwords `gen`/`newEntry`, Budget `newTx`, Habits `add`, Water `sip`, Diary `write` (the writing day, focused), Mood `checkin` (new `__orosOpenAt` + boot take), Workouts `logNew`, Health `add: kind` (bp, wt), Cycle `today`; an app with no share kind and no file types gets no `share_target`; wave 4 shares: Maps `{ asNew }` (a `geo:` pair → pin, else a search of the title / first line), Reader and Podcasts `{ add: { url } }`, Mail `{ compose: { subject, body } }`, Photo Lab pictures through its file types; shortcuts: Calculator `mode`, Time `pane` (astro.js → `__orosTimeOpen`), Weather `addCity` (new receiver + boot take), Maps `locate` / `park`, Reader `addBlank`, Mail `compose`, Files `newFolder`, Podcasts `find`, Radio `play: "last"` (new receiver + boot take), Photo Lab `newPic`; wave 5 shares: Invoices `{ newDoc: "inv", notes }` (a new invoice, text as its notes), CRM `{ asNew: { name, email, phone, note } }` (first line = name, e-mail / phone found in the text); shortcuts: Invoices `newDoc: "inv" | "rcpt"`, CRM `newCust`, Timesheet `toggle` (= `__orosTimesheetToggle`) / `newEntry`; wave 6: Games (`gamecenter`) shortcuts `{ play, daily? }` (Wordle, Crossword, Sudoku Daily, Chess) → Game Center's `openGame`; an APPS entry's `files: [<app>]` adds those apps' file types to its manifest (Games opens .pgn, which fileopen.js still routes to Chess); no shortcut opens a file picker, which needs a tap inside the page) or a shortcut (`shortcut`) opens first, else the app. Notifications: only `ns` = the app or `system` (orOS keeps raising all). To-Do's icon badge = `OrosTodoCore.dueSummary().count`. No tour.
   - **Files and shares:** `fileopen.js` gives a single app the files of its own types with no chooser (`soloApp()`); other types follow the usual choice. `sw.js` answers a share POST to `/<id>/solo.html?share-target` back on that page, never caches a `solo=` navigation, and serves the shell page to a solo frame offline (SWK-3 keeps refusing every other frame).
   - **Sync:** the solo shell runs the normal engine on the shared storage: on a device with orOS too, both see the same data at once; elsewhere, Settings › Sync connects the same Dropbox + passphrase. Dropbox refuses to be framed, so `startOAuth()` navigates the TOP window and stores `oros-solo-return` (session); the shell page that takes the code (or `?error=`) returns to that `/<id>/solo.html` only. **SY-W1:** automatic rounds (`reconcile`, the hide push) take turns across windows through the Web Lock `oros-sync-round` (`ifAvailable`); a window whose turn is taken skips and, with unsent work, retries in 3 s. Uploads stay conditional (SY-D1), so this saves traffic, not correctness.
-  - **Install (Android):** a link to `/<id>/solo.html` on this origin is captured by the orOS TWA / installed orOS, which shows the app inside orOS with nothing to install. Settings › Single apps › Install therefore uses `installUrl()`: on Android an `intent://…#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=…;end` to a Chrome tab, elsewhere a new tab; `?install` on the page. The host page in a browser tab (`display-mode: browser`) shows an Install bar on `beforeinstallprompt` (prompt on press), or, with `?install` and no prompt after 4 s, where the browser menu keeps Install.
-  - **Play packages (wave 7):** `android/solo-apps.json` (app id → package, e.g. notes → `online.useoros.notes`, gamecenter → `online.useoros.games`) makes each listed single app a product flavour of `android/` (flavour `oros` = the orOS app, unchanged). `android/tools/gen.js` writes `app/solo-gen/<id>/` from `/<id>/manifest.webmanifest`: a manifest overlay that removes the phone bridge (account, sync adapters, Contacts / Calendar / Health permissions, reminders, Add to orOS, orOS widgets, orOS file handlers) and replaces LauncherActivity (start `/<id>/solo.html`, the app's share target, file types and shortcuts, links only under `/<id>/`), plus resources and the solo icon. Every package has its statement in `.well-known/assetlinks.json`. CI artifacts: `oros-android` (orOS), `oros-single-apps`. First batch: Notes, Calendar, To-Do, Passwords, Budget, Games. Wave 7b: each package has its own widget (`SoloWidget`, only in single-app flavours): the app icon plus up to three of its `APPS` shortcuts (labels EN/EL from `solo.js`), a tap opens `/<id>/solo.html?do=<word>`; data-free, nothing stored natively.
+  - **Install (Android):** a link to `/<id>/solo.html` on this origin is captured by the orOS TWA / installed orOS, which shows the app inside orOS with nothing to install. Settings › Single apps › Install therefore uses `installUrl()`: on Android an `intent://…#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=…;end` to a Chrome tab, elsewhere a new tab; `?install` on the page. The host page in a browser tab (`display-mode: browser`) shows an Install bar on `beforeinstallprompt` (prompt on press), or, with `?install` and no prompt after 4 s, where the browser menu keeps Install. A `?install` page that opened in an app window instead (display-mode not `browser`: a link taken by the installed orOS or the orOS app) says after 1.5 s that it can't be installed there; only in the orOS Android app (`orosPhone` of the framed shell) with an "Open in Chrome" link (`installUrl()` with `inApp`), because in Chrome's installed orOS (WebAPK) an intent to Chrome comes back to the same window (2.25.05). Without `?install` an app window shows nothing (the installed single app itself). The download page uses `installUrl()` for its single-app tiles too. `installUrl(id, ua, origin, inApp, inTab)`: `inTab` (caller in `display-mode: browser`; Settings checks `window.top`) returns the plain `?install` address, because that browser installs it itself and Brave ignores intents to Chrome (2.25.04).
+  - **Play packages (wave 7):** `android/solo-apps.json` (app id → package, e.g. notes → `online.useoros.notes`, gamecenter → `online.useoros.games`) makes each listed single app a product flavour of `android/` (flavour `oros` = the orOS app, unchanged). `android/tools/gen.js` writes `app/solo-gen/<id>/` from `/<id>/manifest.webmanifest`: a manifest overlay that removes the phone bridge (account, sync adapters, Contacts / Calendar / Health permissions, reminders, Add to orOS, orOS widgets, orOS file handlers) and replaces LauncherActivity (start `/<id>/solo.html`, the app's share target, file types and shortcuts, links only under `/<id>/`), plus resources and the solo icon. Every package has its statement in `.well-known/assetlinks.json`. CI artifacts: `oros-android` (orOS), `oros-single-apps`; on main the signed APKs also go to the GitHub prerelease `android-apks` as `oros.apk` / `oros-<id>.apk` (fixed links for the download page). Every single app has a package (Chris 2026-10-15): on Android a Chrome-installed orOS claims every page of the site, so the browser cannot install a single app next to it, while the APK can; `solo.apkUrl(id)` is that link, shown as an APK button beside Install in Settings › Single apps on Android and in the solo page's "opened inside an installed app" bar on Android. Google Play listings: first batch Notes, Calendar, To-Do, Passwords, Budget, Games; the others only as APK downloads until Chris lists them. **APK updates (FDROID-1, Chris 2026-10-15):** `.github/workflows/fdroid.yml` publishes the `android-apks` APKs as an F-Droid repository on `koulaxizis/oros-fdroid` (GitHub Pages, https://koulaxizis.github.io/oros-fdroid/repo, one force-pushed commit so APKs never pile up), after each main Android build but only when the Android shell changed (hash of `android/`, the web manifests, solo icons, `phone.js`; `force` input to publish anyway): the apps' content updates from the web, so a version bump alone must not send every phone an update. Index signed with its own repository key (alias `orosrepo`, secrets `FDROID_KEYSTORE_BASE64` / `FDROID_KEYSTORE_PASSWORD`, fingerprint `solo.js` `REPO_FP`; a new key means every phone re-adds the repo), pushed with `FDROID_DEPLOY_TOKEN`. Metadata (EN/EL name, summary, description, icon, MIT, Ko-fi) from `tools/fdroid-metadata.js`. F-Droid and Droid-ify add it from `solo.repoLink()` (`fdroidrepos://…?fingerprint=`), Obtainium from `solo.obtainiumLink(id)` (F-Droid third-party repo, `?appId=`); Settings › Single apps has an "Updates for the Android apps" card. `android/tools/gen.js` appends `apk=<versionCode>` to each start address; `solo.js apkNotice` keeps the installed code (localStorage `oros-apk`, not synced), reads `versions.json` from the repo site at most once a day and tells once per new version, in a closable bar with a Download link (no repeats; inside an installed window on Android every APK button goes through `solo.apkHref`, an intent to Chrome, because the in-app tab never finishes an APK download, free-forever rule: no nag messages). Wave 7b: each package has its own widget (`SoloWidget`, only in single-app flavours): the app icon plus up to three of its `APPS` shortcuts (labels EN/EL from `solo.js`), a tap opens `/<id>/solo.html?do=<word>`; data-free, nothing stored natively.
   - **Update broker:** in solo mode the "an app is open" rule gives way while the window is hidden (the app is always open).
   - **Adding an app:** an `APPS` entry, its receivers for the targets, `node tools/solo-manifests.js`, `node tools/solo-icons.js` (the shell icon in gold on the orOS square with the orOS mark), and the new files in `sw.js` precache. `tests/solo.test.js` fails when a page, manifest or icon is missing or stale.
 - **Deep-link bridges** (live push into `#app-frame` when that app runs, otherwise a sessionStorage staging key + `openAppById`):
@@ -597,6 +599,17 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 - While the Dock is shown and not auto-hidden it sets `--tb-h` on `<html>`: the pet layer (`pet.css`, the old hook) and the desktop grid rise above it; with "over open apps", `html.ld-push` ends `#oros-running` above the Dock. Without "over open apps" a CSS sibling rule hides the Dock while an app runs.
 - Styles are injected once (`#ld-css`) and use only skin variables.
 - **Menu apps (1.3.0):** `menuHidden(id)`, `menuHiddenIds()`, `setMenuHidden(ids, hidden)`; host option `menuChanged()` (shell passes `renderMenu`) runs after a user change or a pull that changed the list. Schema MENU APPS v1 (Part IV). In `renderAppList` a hidden app is skipped unless a query is typed; category counts count shown apps; with apps hidden a row "n hidden apps · Choose apps" (`.menu-hidden-row`) opens Settings › Menu; with every app hidden the list says so.
+
+### `seasonal.js` (Seasonal desktop decorations, shell component) [2.23.00]
+
+- Chris 2026-10-15: the desktop decorates itself in season, ON by default, can be turned off and on, and any event can be tried early. Plan and waves: /mnt/project-files/seasonal/seasonal-plan.md (wave 1 = engine + Christmas, New Year, Halloween; wave 2 = Greek feasts incl. Orthodox-Easter-based ones; wave 3 = optional seasons, birthday, Western Easter).
+- Loads after `launcher.js`, before `shell.js`. `shell.js` calls `orosSeasonal.attach({ desktop, running, lang, changed })` after `applyLang()` at boot, NOT in single apps (`!SOLO`), and `refresh()` in `openApp` / `returnToDesktop`. Every call is guarded.
+- Layer `#ssn-layer` inside `#oros-desktop`, z-index -1 (over the wallpaper and `#wp-live`, under icons), `pointer-events:none`, `aria-hidden`. Still pieces are the file's own constant SVG (tree / Greek boat, string of lights, pomegranate, pumpkins, web + spider); moving ones are one canvas (snow, gold sparkles, fireworks 23:55-00:10 on 31 Dec or the first 25 s of a New Year preview, bats). Colours do not follow the theme (the wallpaper may be dark in the light theme); every piece has a rim or shadow.
+- Performance: ≤ 30 fps, rAF stops while an app runs or the tab is hidden; reduced motion, `motion: still`, a low battery (`getBattery`, < 20 % not charging) or a frame time that stays above 55 ms (particles halve, then still) leave only still pieces; `deviceMemory`/`hardwareConcurrency` ≤ 2 = half the particles; count scales with screen area and Amount; a 20 s tick follows the date.
+- Preview: Settings › "Try it now" → `act("seasonal.preview", id)` shows it and returns to the desktop; bar `#ssn-bar` (z 960) Keep it · Stop. Kept = device-local until the event's period ends; a preview not kept is memory only. Both win over the main switch.
+- 1.1.0 (2.24.00, wave 2): Greek feasts. Movable ones from Orthodox Easter (`ez(y, from, to)`): Carnival −59…−49, Clean Monday −48, Easter −3…+1. Fixed: Epiphany 5-6 Jan, Valentine 13-14 Feb, 25 March (24-25), May Day 30 Apr-1 May, 28 October (27-28). Priorities: Clean Monday / Easter / Valentine 4, New Year 3, Epiphany / Carnival / 25 Mar / 28 Oct 3, Christmas / Halloween / May Day 2 (so 28 Oct beats Halloween, Valentine beats Carnival, Easter beats May Day; no ties on any day, tested 2026-2040). Scenes add bunting / flower wreath top strings, cross, hearts, mask, kite, Greek flag, eggs + candle, and canvas confetti, petals, hearts, butterflies, kites. Settings list sorts events soonest first.
+- 1.2.0 (2.25.00, wave 3): `win(y, opt)` takes `optOf(data)` = { western, bday }. Western Easter option (anonymous Gregorian computus) moves only the `easter` event. `birthday` (prio 5, def on but no window until `bday` is set; 29 Feb → 28 Feb in common years). Seasons `spring` 20 Mar-20 Jun, `summer` 21 Jun-22 Sep, `autumn` 23 Sep-30 Nov, `winter` 1 Jan-19 Mar: prio 1, def OFF, listed apart in Settings. New pieces: balloons, tulips, sun (top right), waves strip (`.ssn-bottom`, above the Dock). Plan COMPLETE.
+- Data: SEASONAL v1 (Part IV).
 
 ### Sticky Notes (`stickies/`, shell side `stickies/host.js`) [1.02.00]
 - `stickies/core.js` (UMD `StickiesCore`, pure) + `stickies/host.js` load in `index.html` right after `today/host.js` (so after `notifications.js`). Inert until `apps.json` lists `stickies` (`orosStickiesEnv.registered()`).
@@ -1527,6 +1540,16 @@ oros-television-data = { ver, favorites[], deleted{}, sources[]?, srcDel{}? }
 - Deep-link payload `{ channelId }`; notification deep link `television:channel:<id>`.
 
 ---
+
+**SEASONAL v1** (`seasonal.js`, slice `seasonal`, key `oros-seasonal`, since 2.23.00):
+
+```
+oros-seasonal = { ver:1, f:{ <field>: { v, t } } }   fields sorted
+fields: on (bool, default true) · motion auto|still · amount low|mid|high · xmas tree|boat · easter orthodox|western (2.25.00) · bday "MM-DD"|"" (2.25.00) · ev.<id> (bool, default per event)
+oros-seasonal-local (device, never synced) = { keep: { id, until: YYYY-MM-DD } | null, hide: YYYY-MM-DD | null }
+```
+
+- Per-field LWW: `t` moves only at the user's change, always forward (`max(now, t + 1)`); merge = higher `t`, tie → greater JSON; symmetric, idempotent, associative (fuzz in tests/seasonal.test.js). Unknown fields from a newer bundle (small primitives, `/^[a-z][a-z0-9]{0,15}(\.[a-z0-9]{1,24})?$/`, max 120) are kept. A fresh device stores nothing; nothing is written because of the date.
 
 **LAUNCHER v1** (`launcher.js`, slice `launcher`, key `oros-launcher-data`, since 0.49.00):
 
@@ -3153,6 +3176,146 @@ Rebuild this in any session where code is delivered.
 - Quote: reminders treat Sent/Accepted quotes with no due date as due (empty date compares early); PDF fallback prints US dates in EN.
 - Calculator: Troll-mode wrong answers saved/synced with no visible mark (`lied` stored, not shown).
 - Gomoku records vs-computer games after undo, Chess does not; Sudoku EL "Ρυθμίσεις" vs Wordle "Επιλογές" for Options.
+
+## Part X-B — Troubleshooting (known symptoms → cause → fix)
+
+Started 2026-10-15 (Chris: "note similar issues in the Bible for future troubleshooting"), collected from the project threads, team memory and Part XII. Each entry: **Symptom** (what the person sees) / **Cause** ("inferred" when not proven) / **Fix or workaround** / **Ref** (PR, version, date or source). **Rule:** when a reported problem is solved, add or update its entry here in the same PR as the fix; check this Part first when someone reports a problem.
+
+### T1. Android install: TWA, WebAPK, APK
+
+**Symptom:** Install buttons on Android (in the APK or on the web) only open the app inside orOS. **Cause:** the TWA / installed orOS captures same-origin links. **Fix:** `installUrl()` sends an intent to Chrome; solo.html shows an install bar (beforeinstallprompt). **Ref:** #354, 2.09.00, 2026-10-14.
+
+**Symptom:** Install from inside the orOS APK does nothing; the same link in a browser works. **Cause:** a Chrome intent fired from the TWA comes back to the TWA. **Fix:** PermissionActivity host `install` opens the default browser (needs the new APK). Chrome, Edge, Brave and Samsung install; Firefox only offers Add to Home screen. **Ref:** #371, 2.21.02.
+
+**Symptom:** Download-page tiles open the app without an install prompt. **Cause:** links open inside the installed orOS (display-mode standalone). **Fix:** install-bar message plus "Open in Chrome". **Ref:** #382, 2.25.02.
+
+**Symptom:** In Brave, download-page tiles do nothing. **Cause:** Brave ignores a Chrome intent from a plain tab. **Fix:** in a plain tab (`inTab`) open `?install` in the same browser. **Ref:** #384, 2.25.04.
+
+**Symptom:** The download page opens inside the installed orOS (Chrome WebAPK) and the tiles are dead. **Cause:** an intent from the WebAPK loops back into it. **Fix:** a notice plus Copy link; in an app window, tiles use the plain address. **Ref:** #385, 2.25.05.
+
+**Symptom:** APK links open the GitHub app and never finish. **Cause:** GitHub release links are captured by the GitHub app. **Fix:** intent to the same browser package (Brave via `navigator.brave`, Edge `EdgA/`, Samsung, Chrome); Firefox keeps a plain link. **Ref:** #385, 2.25.05.
+
+**Symptom:** Single apps cannot be installed from the browser; a fresh Chrome tab gives no install prompt. **Cause:** the orOS WebAPK has scope "/" and claims every useoros.online page (inferred). **Fix:** ship APKs for all 34 single apps on the `android-apks` release. **Ref:** #387, 2.25.07.
+
+**Symptom:** APK download from an installed app's in-app tab (Brave) stops at 100%; the direct link in a normal browser tab works in every browser. **Cause:** unclear. The bytes do arrive; suspected hidden "dangerous file" confirmation or VPN (inferred). **Fix:** `solo.apkHref(id, ua, inWindow)` sends an intent to Chrome with a GitHub fallback. Workaround: ⋮ › Downloads › Keep, or "Open in Brave". **Ref:** #389, 2.26.00, 2026-10-15.
+
+**Symptom:** APK section of the download page returns 404. **Cause:** the links go live only after the first main-branch Android build after #380. **Fix:** wait for (or dispatch) that build. **Ref:** #380, 2.25.01, 2026-10-15.
+
+**Symptom:** A Play install and a sideloaded APK don't update each other. **Cause:** they are signed with different keys (Play App Signing vs our keystore). **Fix:** uninstall, then install the other build; sync restores the data. TODO: mark Play builds so they skip the F-Droid notice. **Ref:** oros-store-packaging memory.
+
+**Symptom:** The TWA shows a browser address bar. **Cause:** assetlinks.json is not live yet, the Play App Signing SHA-256 is missing, or Pages hid `.well-known` (no `.nojekyll`). **Fix:** publish assetlinks with both fingerprints and `.nojekyll`. If the bar persists, uninstall and reinstall. **Ref:** #215, 1.12.01, 2026-10-12.
+
+**Symptom:** Play Console rejects the upload. **Cause:** Play wants an AAB, not an APK. **Fix:** upload the AAB from the PWABuilder zip, and keep `signing.keystore` safe (every update needs it). **Ref:** 2026-10-12, oros-store-packaging.
+
+**Symptom:** New share targets or file types (.fb2/.cbz, pictures) don't appear in the Android app. **Cause:** the TWA package was built from the old manifest (before #195). **Fix:** regenerate the package after any manifest change. **Ref:** #195.
+
+**Symptom:** Splash logo is too big and runs off screen. **Cause:** missing high-density splash asset (inferred). **Fix:** add a drawable-xxxhdpi splash. **Ref:** 2026-10-13.
+
+**Symptom:** Users can't download the APK from GitHub Actions. **Cause:** Actions artifacts need a GitHub login and expire after 14 days. **Fix:** publish to the `android-apks` release, which has fixed public URLs. **Ref:** #380.
+
+**Symptom:** PowerShell `[IO.File]::ReadAllBytes("signing.keystore")` can't find a file that is in the current folder. **Cause:** .NET resolves against the process working directory, not the PowerShell location. **Fix:** `[IO.File]::ReadAllBytes((Resolve-Path ".\signing.keystore"))`. **Ref:** 2026-10-13.
+
+### T2. Phone bridge (TWA postMessage)
+
+**Symptom:** The "On this phone" button is missing after an update. **Cause:** the old version is still running. **Fix:** close the app fully, reopen it, and check the version in What's new. **Ref:** phone contacts/calendar thread.
+
+**Symptom:** Bridge never connects; `validateRelationship` returns false; the channel is re-requested in a loop. **Cause:** Chromium needs `warmup()` first; the app process gets frozen; the page dropped ports with an empty or other origin (Brave). **Fix:** PostMessageService keeps the app awake (#310, 1.82.02); accept a source-less port from any origin (#313, 1.83.01). Diagnose with long-press icon › Bridge diagnostics. **Ref:** #310, #313.
+
+**Symptom:** App crashes after the user grants the permission; no account appears. **Cause:** missing `WRITE_SYNC_SETTINGS` permission. **Fix:** add it to the manifest. **Ref:** #314.
+
+**Symptom:** After installing the TWA the user starts signed out, or it opens in Brave even with Firefox as default. **Cause:** the TWA runs in a specific browser with its own storage; the Firefox default being ignored is unexplained. **Fix:** sign in to sync to restore the data. **Ref:** phone contacts/calendar thread.
+
+**Symptom:** Phone calendar syncs forever with 0 events. **Cause:** only the user's own events were sent. **Fix:** include feeds and holidays (#314, 1.84.00); colours (#315, 1.84.01). Google Calendar needs the calendar toggled off/on; Fossify needs Settings › CalDAV sync on to see "orOS". **Ref:** #314, #315.
+
+**Symptom:** An event is added 3 times; contact edits don't sync. **Cause:** resends, and pre-v2 contacts were read-only. **Fix:** dedupe resends; make contacts writable. **Ref:** #322, 1.88.03.
+
+### T3. Service worker, cache, updates
+
+**Symptom:** Devices get no updates; CACHE_VERSION stuck at 0.45.15 while the app is 0.46.00. **Cause:** the G2 precache guard failed (app folders missing from precache), and a failed bump run stamps nothing. **Fix:** G2 checks only apps.json. **Ref:** #51, #57, 2026-10-09.
+
+**Symptom:** The PWA is slow or never opens on a bad connection. **Cause:** network-first with no timeout; an `isAppsList` bug sent shell.js/vault.js network-first; a half-downloaded update deleted the old version. **Fix:** 3 s timeout, 30 s "slow spell", PARTIAL_MARK resume. Test with a server that never answers; the DevTools offline switch doesn't reach the SW. **Ref:** #184, 0.86.01, 2026-10-11.
+
+**Symptom:** After a release, old and new code run mixed. **Cause:** the release had no version step, so `?v=` and the cache name didn't change. **Fix:** let the version bot (`chore: sync orOS assets`, about 1 min after merge) rewrite `?v`; never ship without a bump. **Ref:** oros-version-collisions / G2 memory.
+
+**Symptom:** SW install fails completely after a release. **Cause:** a duplicate URL in the precache list makes `cache.addAll` reject. **Fix:** dedupe the precache list. **Ref:** bulk release 0.47.
+
+**Symptom:** Clicking a notice doesn't close the notification panel; a system notification only focuses the tab. **Cause:** missing close / navigate handling. **Fix:** #299 (1.74.01) and #306 (1.79.01). A later "does nothing" report was a stale cache, fixed by Ctrl+Shift+R. If the target app is already open, nothing visibly changes. **Ref:** #299, #306.
+
+**Symptom:** The download or privacy page shows an old version right after a merge. **Cause:** these pages are not precached and the browser HTTP cache serves the old copy (inferred). **Fix:** hard refresh. **Ref:** sales/download page thread.
+
+### T4. Sync and storage
+
+**Symptom:** Sync is permanently "failed". **Cause:** (a) the Podcasts normQueue re-upload loop; (b) the real cause, "Browser storage is full", from the legacy `oros-auto-snapshots` key in localStorage. **Fix:** SY-L1/SY-L2 (#123, 0.48.02); snapshots moved to IndexedDB (#128, 0.52.02, 7.0 MB → 2.0 MB). First ask for Device info › Space per app; storage-full means localStorage, not Cache Storage. **Ref:** oros-sync-hotfix-0-48-02.
+
+**Symptom:** The language toggle (or any setting) silently does nothing. **Cause:** localStorage is full (5 MB); `markDirty` throws QuotaExceededError. **Fix:** catch quota errors (SY-Q1). **Ref:** SY-Q1, oros-sync-tests.
+
+**Symptom:** Spreadsheet XLSX import turns Greek text into garbage. **Cause:** `vendor/xlsx.full.min.js` is stored double-encoded. **Fix:** not fixed yet; re-vendor the file as clean UTF-8. **Ref:** oros-budget memory.
+
+**Symptom:** Saving a file from an app produces an EMPTY file. **Cause:** a Blob made in an app iframe fails `instanceof Blob` in the shell (cross-realm). **Fix:** duck-type the Blob in dialogs.js. **Ref:** #35.
+
+**Symptom:** Downloads fail in browsers that ask where to save. **Cause:** the blob URL was revoked after 1 s, before the user answered. **Fix:** revoke after 40 s. **Ref:** dialogs/Files memory.
+
+**Symptom:** Writing files fails on Safari. **Cause:** Safari exposes OPFS but not the write method used. **Fix:** detect the method itself, not "OPFS available". **Ref:** oros-files-dropbox memory.
+
+**Symptom:** Universal search is broken: "failed to load search.js". **Cause:** an apps.json entry pointed at a missing file. **Fix:** fix the entry plus a test that every referenced file exists. **Ref:** #101, 0.48.01.
+
+### T5. Dropbox, Google, OAuth
+
+**Symptom:** Files can't see the whole Dropbox. **Cause:** the sync Dropbox app is "App folder", and the access type can't be changed. **Fix:** a second app, "orOS Files" (Full Dropbox), with redirect `https://useoros.online/files/dropbox-callback.html`. **Ref:** #331/#339, 2.00.00.
+
+**Symptom:** Dropbox sign-in fails in Portable (localhost:47800). **Cause:** the redirect URI is not registered. **Fix:** add `http://localhost:47800/` and `http://localhost:47800/files/dropbox-callback.html` in both Dropbox apps; Dropbox allows http only for localhost. **Ref:** 2026-10-14.
+
+**Symptom:** Dropbox sign-in from a single (solo) app fails, or a second handler gets an invalid code. **Cause:** Dropbox refuses to be framed; two OAuth handlers raced for one one-shot code. **Fix:** navigate the top window (`oros-solo-return`), and keep one handler per code. **Ref:** R34 lesson.
+
+**Symptom:** Google contacts sign-in fails for most users. **Cause:** the OAuth app is in "Testing", so only listed test users can sign in; it also needs a privacy page and the People API enabled. **Fix:** add test users or publish the app; privacy.html (#320, 1.88.01); People API (#321, 1.88.02). **Ref:** Google contacts import thread.
+
+**Symptom:** Contact counts differ (Google 437 vs orOS 421-431). **Cause:** loose dedupe; exact duplicates inside Google that Google's Merge misses; " ::: "-joined fields from an old CSV import; re-import created duplicates; photos and type labels were lost. **Fix:** #356 (2.10.01), #369 (2.20.01), #372 (2.21.01). **Ref:** Google contacts import thread.
+
+### T6. Network, mixed content, browser quirks
+
+**Symptom:** Playing an http radio stream makes the installed app show the browser bar. **Cause:** mixed content on an https page. **Fix:** https only; upgrade http→https, otherwise show a message. Podcasts over http likely hit the same issue (unverified). **Ref:** #358, 2.11.01.
+
+**Symptom:** Assistant can't reach a local AI server (`http://192.168…`) from a phone, or a provider fails. **Cause:** an https page can't call plain http on the LAN; every local server needs CORS enabled; some providers block browser calls. **Fix:** use the per-server CORS step and Connection test. WebGPU on some Linux GPUs needs `chrome://flags/#enable-unsafe-webgpu` (inferred). **Ref:** #366, #367.
+
+**Symptom:** A user's Claude Pro/Max plan doesn't work as an API key. **Cause:** subscriptions don't include API usage. **Fix:** create a separately billed API key in the Console. **Ref:** Assistant Claude thread.
+
+**Symptom:** Battery shows 100% while unplugged. **Cause:** Brave always reports level 1 and charging (privacy); this is also the Chromium spec default. **Fix:** treat 1 + charging as "unknown". **Ref:** #187, 0.86.02.
+
+**Symptom:** Agent live checks of useoros.online, workers.dev, dropbox.com, wikidata or eff.org fail with 403. **Cause:** the cloud container proxy blocks them. **Fix:** Chris runs live checks on a real device. **Ref:** multiple threads.
+
+### T7. CI and GitHub
+
+**Symptom:** A red "Cloudflare oros-mail-relay" check appears on PRs. **Cause:** a Workers Builds check outside our repo's CI. **Fix:** ignore it for merge decisions. **Ref:** oros-mail-app memory.
+
+**Symptom:** The sync-nullfx workflow can't open its PR. **Cause:** Actions isn't allowed to create PRs. **Fix:** Settings › Actions › General › "Allow GitHub Actions to create and approve pull requests", or open the PR by hand from `auto/nullfx-sync`. **Ref:** #311.
+
+**Symptom:** android.yml doesn't run on PR pushes; tests.yml skips release-only pushes. **Cause:** trigger and paths filters don't match. **Fix:** run them with workflow_dispatch. **Ref:** oros-companion-apps memory.
+
+**Symptom:** The agent can't create a repo (403) or a commit is blocked. **Cause:** no repo-create permission; the auto-mode classifier blocks commits touching workflows or assetlinks. **Fix:** Chris creates repos and approves those commits. **Ref:** oros-companion-apps memory.
+
+**Symptom:** A workflow breaks on a commit message containing a quote. **Cause:** inputs were pasted into the script, so a quote broke the loop guard. **Fix:** always pass inputs through `env:`. **Ref:** oros-merge-queue memory.
+
+**Symptom:** F-Droid repo stops updating, or the first publish isn't reachable. **Cause:** the deploy token expires about 2027-10; Pages on oros-fdroid must be enabled after the first publish. **Fix:** renew the token; enable Pages. **Ref:** oros-store-packaging memory.
+
+### T8. Merges and versions
+
+**Symptom:** Scripts load twice and conflict-marker text shows on the page. **Cause:** conflict markers were merged into index.html. **Fix:** remove them; tests/conflict-markers.test.js; always grep for markers and diff index.html. **Ref:** #276, 1.57.01, 2026-10-13.
+
+**Symptom:** Two releases share one version number, or script lines are misordered. **Cause:** parallel PRs took the same APP_VERSION (e.g. #342/#345, both 2.02.00); htmlres.py can reorder script lines. **Fix:** the merge-queue rule (one version bump at a time, rebase before bump); check script order. **Ref:** #147; oros-version-collisions.
+
+### T9. Test harness (E2E)
+
+**Symptom:** Greek OPFS file names fail with TypeMismatchError → EISDIR in headless Chromium. **Cause:** the harness locale isn't UTF-8. **Fix:** run with `LANG=C.UTF-8`; not an orOS bug. **Ref:** oros-headless-chromium-locale, 2026-10-12.
+
+**Symptom:** The Today calendar-reminder E2E fails under Europe/Athens. **Cause:** the browser was pinned to UTC while Node used local TZ. **Fix:** set `timezoneId` to the process TZ. **Ref:** oros-today-summary memory.
+
+**Symptom:** An app page opened top-level in a harness redirects away; a UMD library breaks; an audio tail is cut off. **Cause:** the DL-1 redirect to the shell; an element `id="exports"` shadows UMD `exports`; Chromium drops a DelayNode tail once its source ends. **Fix:** add `?standalone`; rename the element; keep the source alive. **Ref:** #260; QR and Studio memories.
+
+### T10. Portable and bootable USB
+
+**Symptom:** Portable data "vanishes", or features are missing. **Cause:** another port is another origin; file:// has no SW or OPFS; Lite uses the host browser, and an older browser may not open the profile. **Fix:** always use the fixed port 47800; Windows SmartScreen: More info → Run. Stick: 64 GB recommended, 32 GB minimum. **Ref:** oros-portable-usb memory.
+
+**Symptom:** The bootable ISO hangs at GRUB; the `oros` user doesn't exist; ISO upload fails; the clock is off. **Cause:** GRUB had no timeout; live-config needs the user-setup package; GitHub Pages has a 100 MB limit; the clock is UTC. **Fix:** 3 s GRUB timeout; create the user in a chroot hook; publish ISOs to Releases. **Ref:** Bootable USB thread.
 
 ## Part XI — Session handoff template
 
@@ -6706,3 +6869,63 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Calendar: built-in labels now show in Greek on event chips, in Statistics and in the event view (they used the stored English name).
 - Files: `notes/notes.css`, `notes/notes.js`, `calendar/calendar.js` (`lblName`).
   - Tests: full suite green. Found by the single-app store screenshots. Not tested: real phones (checked by the owner in the shell at phone width).
+
+### 2026-10-15 — Seasonal desktop decorations, wave 1 — 2.23.00
+- New shell component `seasonal.js`: in season the desktop gets snow, a string of lights and a tree (or the Greek Christmas boat) at Christmas (1-30 Dec), gold sparkles, a pomegranate and midnight fireworks at New Year (31 Dec - 2 Jan), pumpkins, bats and a spider's web at Halloween (25-31 Oct). ON by default, behind the icons, no clicks, our own drawings (no assets, nothing from the net, nothing for the credits).
+- Settings › Appearance › Seasonal decorations: main switch, Motion (moving / still only), Amount, Christmas tree or boat, Hide for today, and per event dates + switch + "Try it now" (bar on the desktop: Keep it until the period ends · Stop). Settings search finds it.
+- Sync: slice `seasonal` (SEASONAL v1, per-field LWW); preview, kept preview and hide-for-today stay on the device.
+- Files: `seasonal.js`, `index.html`, `sw.js` precache, `shell.js` (attach, refresh, Settings bridge `seasonal:*`, `seasonal.*` acts), `settings/settings.js`, `settings/core.js`, `settings/settings.css`, `settings/search.js`, help (appearance, settings), `tests/seasonal.test.js`, `tests/settings.test.js`.
+  - Tests: full suite green; real shell in Chromium at 1280 and 360 px, dark and light, reduced motion, fixed dates (24 Dec, 31 Dec 23:57, 28 Oct, today), preview → keep → reload → stop. Not tested: a real phone, Safari, the battery rule on a real device.
+
+### 2026-10-15 — Seasonal decorations, wave 2: Greek holidays — 2.24.00
+- `seasonal.js` 1.1.0: Epiphany (cross over the sea, blue sparkles), Valentine's Day (hearts), Carnival from Tsiknopempti to Cheesefare Sunday (confetti, pennants, mask), Clean Monday (kites), 25 March and 28 October with their eves (blue and white bunting, Greek flag), Easter Holy Thursday to Easter Monday (red eggs, candle, flower wreath, butterflies), May Day (flower wreath, petals). Movable dates from Orthodox Easter; overlap priorities: 28 Oct > Halloween, Valentine > Carnival, Easter > May Day. Settings list now soonest first; help, What's new, Settings search words updated.
+- Files: `seasonal.js`, `settings/core.js`, `settings/search.js`, help (appearance, whatsnew), `tests/seasonal.test.js`.
+  - Tests: full suite green (new: movable dates, overlaps and no ties 2026-2040); real shell in Chromium at 1280 and 360 px on each feast's date, reduced motion. Not tested: a real phone, Safari.
+
+### 2026-10-15 — Seasonal decorations, wave 3: extras — 2.25.00
+- `seasonal.js` 1.2.0: My birthday (day + month picked in Settings, synced field `bday`; balloons, bunting, confetti; wins over every event), the four seasons OFF by default (tulips + petals, sun + waves, falling leaves, light snow; any holiday wins), and Settings › Easter date Orthodox / Western (Western computus, moves only Easter). Seasons listed under their own heading. Seasonal decorations plan COMPLETE.
+- No "Me" card exists in Contacts, so the birthday date lives in the decoration settings (plan said "from the Me contact").
+- Files: `seasonal.js`, `settings/settings.js`, `settings/core.js`, help (appearance, whatsnew), `tests/seasonal.test.js`, `tests/settings.test.js`.
+  - Tests: full suite green (new: Western Easter dates, birthday incl. 29 Feb, seasons lose to holidays); real shell in Chromium at 1280 and 360 px, birthday picker saves and shows at once. Not tested: a real phone, Safari.
+
+### 2026-10-15 — Privacy policy linked, download page preview — 2.25.01
+- privacy.html: linked from the Info window footer (`sc.info.privacy`, next to Source code) and from the Privacy help topic (EN/EL). New sections: orOS Portable and the bootable orOS USB (data stays on the stick, ungoogled-chromium, update only on request), and Orders from the orOS shop (Ko-fi + PayPal/Stripe take payment; name, e-mail, shipping address used only to ship, answer and issue the legal receipt; shared only with the carrier; kept as long as Greek tax law requires; rights via Ko-fi message, complaint to dpa.gr). Date 15 October 2026.
+- download-preview/index.html: standalone "Get orOS" page (EN/EL toggle like privacy.html) with every way to get orOS and a status badge each: browser, install as app, orOS Portable full vs lite table (same text as oros-portable RELEASE-NOTES.md), orOS Live USB (beta, copy from the bootable USB thread; ISO will be `koulaxizis/oros-usb` release v0.1.0), ready-made stick on Ko-fi, the 34 single apps (`/<id>/solo.html?install`), Android APKs (copy from the Companion apps thread; fixed links `koulaxizis/oros/releases/download/android-apks/oros.apk`, `oros-<id>.apk` for notes, calendar, todo, passwords, budget, gamecenter, live once that thread's workflow publishes them), Microsoft Store, "Send to orOS" add-on. Owner: thread "orOS συσκευές και USB προς πώληση"; other threads send their cards there. Preview only (Chris, 2026-10-15): not linked from anywhere, `<meta name="robots" content="noindex, nofollow, noarchive">`, no robots.txt entry (it would advertise the path). The repo is public, so the path is not secret. Not an app, not precached. When published, move it to its final address, drop the robots meta and link it from the site.
+  - Tests: full suite green; both pages in Chromium at 360 and 1280 px (no horizontal page scroll, no script errors). Not tested: a real phone, Safari.
+
+### 2026-10-15 — Single-app install links from app windows — 2.25.02
+- Chris: the download page's single-app tiles opened the apps with no install prompt. On Android a link to this site opens in the installed orOS / orOS app (display-mode standalone), where the Install bar never ran. `solo.js` `installBar()`: with `?install` in an app window it now says the app can't be installed there and, on Android, offers "Open in Chrome" (`installUrl()`; `inApp` read from the framed shell's `orosPhone`). download-preview/index.html loads `/solo.js` and rewrites its tiles with `installUrl()` (Chrome intent on Android over https; `inApp` when the referrer is `android-app://online.useoros.twa`, kept in sessionStorage). Support e-mail added to privacy.html and the download page (#381, no stamp). Android APK card now "Available": the android-apks release is live (#380).
+  - Tests: full suite green; Chromium: browser tab still shows the menu hint after 4 s; emulated standalone + Android UA shows the new bar with the button at 360 px; without `?install` nothing. Not tested: a real Android phone (intent hand-off to Chrome), Safari.
+
+### 2026-10-15 — Download page published — 2.25.03
+- Chris published the download page: `download-preview/` moved to `download/` (useoros.online/download/), robots meta dropped, `<meta name="description">` + canonical added. `download-preview/index.html` is now a noindex meta-refresh to `/download/` for old links. Linked from the Info window footer (`sc.info.download` "Get orOS" / "Λήψη orOS", before the privacy link), Help › Install (EN/EL, `?lang=el` for Greek) and README. Still not an app and not precached (it lists online downloads). Page source is generated (owner thread "orOS συσκευές και USB προς πώληση"); other threads send it their card changes.
+  - Tests: full suite green; Info footer in Chromium EN/EL shows both links; /download/ and the redirect load with no script errors at 360 px. Not tested: a real phone, Safari.
+
+### 2026-10-15 — Single-app install from a browser tab, APK download tip — 2.25.04
+- Chris (Brave on Android): the download page's single-app tiles did nothing and APK downloads never finished. Tiles and Settings › Single apps › Install used a Chrome intent even in a plain browser tab, which Brave ignores. `installUrl()` gets `inTab`: a browser tab opens the plain `/<id>/solo.html?install` in the same browser; the Chrome intent stays only for app windows (installed orOS / orOS app). APKs: GitHub serves them correctly (302 to the asset with `application/vnd.android.package-archive`); the stall is in the browser, so the APK card now says to try another browser or the release page (`releases/tag/android-apks`).
+  - Tests: full suite green (new `inTab` case); download page at 360 px with an Android UA keeps plain tile links, no script errors. Not tested: Brave on a real phone.
+
+### 2026-10-15 — Download page in the installed app, APKs past the GitHub app — 2.25.05
+- Chris (Chrome on Android with orOS installed): the download page opened inside the installed orOS, where the tiles did nothing; APK links opened the GitHub app, which never finished the download. download/: in an app window that isn't the orOS Android app (display-mode not `browser`, no TWA referrer) a notice says to open useoros.online/download in a browser tab, with Copy link; tiles always use the plain address there (a Chrome intent from Chrome's WebAPK loops back). APK links on Android become `intent://github.com/…apk#Intent;scheme=https;package=<this browser>;S.browser_fallback_url=…;end` (Brave via `navigator.brave`, Edge `EdgA/`, Samsung, Chrome; Firefox keeps the plain link). solo.js: the "Open in Chrome" button only in the orOS Android app.
+  - Tests: full suite green; Chromium with an Android UA at 360 px: tab hides the notice, emulated standalone shows it, APK links rewritten, no script errors. Not tested: a real phone (intents, GitHub app, WebAPK capture).
+
+### 2026-10-15 — Get orOS in the menu — 2.25.06
+- Chris: the Info footer link was too easy to miss. `renderGetRow()` adds a permanent menu row under the install row, "Get orOS: USB, Android, single apps" (`menu.getOros`, download icon), opening `download/` (`?lang=el` in Greek) in a new tab; not in single apps (SOLO). The tour's last step (`tour.done.body`) and Help › Getting started mention it. Plain links only, no popup or reminder (free-forever rule: no nag messages).
+  - Tests: full suite green; Chromium EN/EL: the menu row shows and opens /download/. Not tested: a real phone, Safari.
+
+### 2026-10-15 — An Android APK for every single app (#387) — 2.25.07
+- Chris (Android, orOS installed from Chrome): a single app's page offered no install. Chrome treats every useoros.online page as part of the installed orOS (inferred, matches the reports), so no web page can install a second app there. Chris approved APKs for all single apps (07:52): `android/solo-apps.json` now lists all 34 (package `online.useoros.<id>`, feeds → `reader`, fitness → `workouts`), each with its `.well-known/assetlinks.json` statement; CI publishes them on main as `oros-<id>.apk` to the `android-apks` release (#380).
+- `solo.apkUrl(id)`; Settings › Single apps shows an APK button beside Install on Android, and the solo page's "opened inside an installed app" bar offers "Download the app (APK)" on Android. Help text (EN/EL) explains PWA vs APK and the Play signing-key difference. Google Play: Notes, Calendar, To-Do, Passwords, Budget, Games first.
+- Files: `android/solo-apps.json`, `.well-known/assetlinks.json`, `solo.js`, `settings/settings.js`, `settings/core.js`, `settings/settings.css`, `android/README.md`, Bible SOLO-1.
+  - Tests: full suite green (new: every solo id has a unique package, an assetlinks entry and an APK link); Chromium with an Android UA: 34 APK buttons, Greek text, no errors. Phone thread approved android/. Not tested: installing the new APKs on a real phone.
+
+### 2026-10-15 — Updates for the Android apps: orOS F-Droid repository — 2.26.00
+- Chris (08:22): combine an own F-Droid repository, Obtainium and an in-app notice so the APKs (orOS + 34 single apps) get updates outside Google Play; a native "hub" app not now (another app to maintain, not allowed on Play, needs the same install permission; Droid-ify already does it). FDROID-1 in Part II: `.github/workflows/fdroid.yml` publishes to `koulaxizis/oros-fdroid` (Pages) only when the Android shell changed; `tools/fdroid-metadata.js`; `solo.js` `repoLink` / `obtainiumLink` / `pkgOf` / `apkCode` / `apkNotice`; `android/tools/gen.js` `?apk=<versionCode>` on the start address; Settings › Single apps card "Updates for the Android apps".
+- Chris (09:09): new Part X-B "Troubleshooting" (47 known symptoms → cause → fix, from the threads, team memory and Part XII), with the rule to add each solved problem there in the fix's PR.
+- Chris (09:06): an APK download from inside an installed app (the browser's in-app tab, Brave) stops at 100% and never finishes; a plain browser tab works in every browser. `solo.apkHref(id, ua, inWindow)`: inside an installed window on Android the APK buttons (Settings, the solo bar, the update notice) use an intent to Chrome (real tab), with the GitHub link as fallback.
+  - Tests: full suite green (new: `apkHref` in and out of an installed window; packages and links for every APK, launch version, metadata for exactly the published APKs, start address with `apk=`); `fdroid update` 2.4.5 run locally on 4 real APKs from the release with the generated metadata (signed index, EN/EL names, icons, categories). Not tested: the workflow on GitHub (needs the three secrets and Pages on oros-fdroid), the Chrome intent on a real phone, adding the repo in F-Droid / Droid-ify / Obtainium on a real phone, the notice bar on a phone.
+
+### 2026-10-15 — Notes: delete a page from a phone (#391) — 2.26.01
+- Notes: a ⋮ "Page actions" button at the top right of the open page opens the page menu (new sub-page, rename, move, delete…), which before was reachable only by right-click or long-press in the tree. On phones the menu scrolls inside itself, so its last items (Delete) stay reachable.
+- Files: `notes/notes.js` (`#btn-page-menu`, `page.actions`), `notes/notes.css` (`.node-menu` max-height + scroll), Notes help.
+  - Tests: full suite green. Not tested: real phones.

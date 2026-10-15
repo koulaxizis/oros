@@ -210,6 +210,8 @@ button:focus-visible, select:focus-visible, input:focus-visible, .page-title:foc
 .row-label { font-weight: 700; font-size: 15px; }
 .row > .hint { grid-column: 1 / -1; grid-row: 2; }
 .row-ctl { grid-column: 2; grid-row: 1; display: flex; justify-content: flex-end; min-width: 0; }
+.row-ctl > .btn + .btn { margin-left: 8px; }
+a.btn { text-decoration: none; color: inherit; display: inline-flex; align-items: center; }
 .row > .folder, .row > .actions, .row > .hint.warn, .row > .seg { grid-column: 1 / -1; }
 
 .scope {
@@ -225,6 +227,7 @@ button:focus-visible, select:focus-visible, input:focus-visible, .page-title:foc
 
 /* ---------- 5. Controls ---------- */
 .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.card h4.sub { margin: 14px 0 2px; font-size: 13px; font-weight: 700; color: var(--text-dim); text-transform: none; }
 .btn {
   min-height: 44px;
   padding: 0 16px;

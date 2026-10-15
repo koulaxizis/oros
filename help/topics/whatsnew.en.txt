@@ -1,6 +1,41 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.26.00
+- Your Android apps can now update themselves. Add the orOS repository to F-Droid or Droid-ify, or use Obtainium: Settings › Single apps › Updates for the Android apps. orOS also tells you once when a newer APK is out. The apps' content still updates by itself, so a new APK is only needed now and then.
+- Inside an installed app on Android, the APK buttons now open the download in Chrome. The app's own browser tab never finished APK downloads.
+- Notes: a ⋮ button on the open page opens its menu, so you can rename, move or delete a page from a phone.
+
+## Version 2.25.07
+- Every single app now has an Android app (APK). On Android, Settings › Single apps shows an APK button next to Install. Use it when orOS is installed from Chrome, because Chrome then offers no install for single apps. Notes, Calendar, To-Do, Passwords, Budget and Games come to Google Play first.
+
+## Version 2.25.06
+- The menu has a new row, Get orOS: USB, Android, single apps. It opens the download page with every way to get orOS. The end of the welcome tour and Help › Getting started point to it too.
+
+## Version 2.25.05
+- Download page: inside the installed orOS app it says to open the page in a browser tab instead, and on Android the APK downloads stay in your browser instead of opening the GitHub app.
+
+## Version 2.25.04
+- Installing a single app from a browser tab on Android (Brave, Firefox, Chrome) now opens it in that same browser, which offers Install. Before, it tried to open Chrome and did nothing in Brave.
+
+## Version 2.25.03
+- New download page, useoros.online/download, with every way to get orOS: in the browser, as an app, orOS Portable, the bootable orOS USB, single apps and Android APKs. Linked from the orOS Info window and Help › Install.
+
+## Version 2.25.02
+- Installing a single app from a link: if the link opens inside an installed app, where nothing can be installed, the page now says so and, on Android, offers Open in Chrome.
+
+## Version 2.25.01
+- The privacy policy now has a link in the orOS Info window and in Help › Privacy, and it also covers orOS Portable, the bootable orOS USB and orders from the orOS shop on Ko-fi.
+
+## Version 2.25.00
+- Seasonal decorations extras, off until you turn them on: balloons on your birthday (pick the day in Settings), the four seasons (tulips and petals, sun and waves, falling leaves, light snow), and Easter on the Western date for those who keep it.
+
+## Version 2.24.00
+- Seasonal decorations for the Greek holidays: a cross over the sea at Epiphany, hearts on Valentine's Day, confetti and a mask at Carnival, kites on Clean Monday, flags on 25 March and 28 October, red eggs, a candle and butterflies at Easter, a flower wreath on May Day. Carnival, Clean Monday and Easter follow the Orthodox Easter each year.
+
+## Version 2.23.00
+- Seasonal decorations: in season your desktop dresses up on its own, with snow, lights and a tree (or the Greek Christmas boat) at Christmas, sparkles and midnight fireworks at New Year, pumpkins and bats at Halloween. They are on from the start; in Settings › Appearance you can turn them off, keep them still, or try any of them early with `Try it now`.
+
 ## Version 2.22.00
 - Contacts can find photos online: only a hashed e-mail is sent to Gravatar or Libravatar, you tick which pictures to keep, and Undo puts things back.
 - Notes on phones: the page list opens as a drawer over the editor. Calendar shows its built-in labels in Greek everywhere.

@@ -192,6 +192,12 @@ body {
   box-shadow: 0 12px 32px var(--shadow);
   padding: 4px;
   user-select: none;
+  /* The page menu is taller than a phone screen: scroll inside it so the
+     last items (Delete) stay reachable. */
+  max-height: calc(100vh - 12px);
+  max-height: calc(100dvh - 12px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 .node-menu-item {
   display: block;

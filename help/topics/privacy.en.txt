@@ -1,6 +1,8 @@
 # Privacy and offline use
 orOS is built to keep your data yours. It has no accounts, no cookies and no tracking, and it keeps working when you lose your connection.
 
+The full privacy policy is on the web: [useoros.online/privacy.html](https://useoros.online/privacy.html).
+
 ## Your data stays in your browser
 Everything you create in orOS is saved in this browser, on this device. There is no orOS server that collects it. orOS uses no cookies and no tracking or analytics of any kind.
 

@@ -10,6 +10,12 @@ name: Android app
 # key as the PWABuilder package:
 #   OROS_KEYSTORE_BASE64   base64 of signing.keystore
 #   OROS_KEYSTORE_PASSWORD, OROS_KEY_ALIAS, OROS_KEY_PASSWORD
+#
+# On main, the signed APKs are also published to the GitHub release
+# "android-apks" with fixed file names, so the download page can link
+# to them directly (no GitHub account needed), e.g.
+#   https://github.com/koulaxizis/oros/releases/download/android-apks/oros.apk
+#   https://github.com/koulaxizis/oros/releases/download/android-apks/oros-notes.apk
 
 on:
   push:
@@ -30,6 +36,13 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write   # only the "Publish APKs" step uses it (main only)
+    # One build per branch at a time, so two quick main pushes cannot
+    # upload their APKs out of order.
+    concurrency:
+      group: android-${{ github.ref }}
+      cancel-in-progress: false
     env:
       OROS_DIAG: ${{ inputs.diag && '1' || '0' }}
     steps:
@@ -90,3 +103,31 @@ jobs:
             !android/app/build/outputs/apk/oros/**
             !android/app/build/outputs/bundle/orosRelease/**
           if-no-files-found: error
+
+      # Direct downloads for people who do not use a store (and until
+      # the store listings exist). Only signed APKs, only from main.
+      - name: Publish APKs to the android-apks release
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && !inputs.diag
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          out=android/app/build/outputs/apk
+          mkdir -p "$RUNNER_TEMP/apks"
+          for f in "$out"/*/release/app-*-release.apk; do
+            [ -e "$f" ] || continue
+            flavour=$(basename "$(dirname "$(dirname "$f")")")
+            if [ "$flavour" = "oros" ]; then name=oros.apk; else name="oros-$flavour.apk"; fi
+            cp "$f" "$RUNNER_TEMP/apks/$name"
+          done
+          if [ -z "$(ls -A "$RUNNER_TEMP/apks")" ]; then
+            echo "::notice::No signed APKs: nothing published."
+            exit 0
+          fi
+          ver=$(sed -n 's/.*var APP_VERSION = "\([0-9.]*\)".*/\1/p' shell.js)
+          notes="orOS Android apps, built from main at orOS $ver ($(date -u +%Y-%m-%d)). Install: open the .apk on the phone and allow installing from this source. An APK from here and the Google Play version are signed with different keys: to switch, uninstall first (sync brings your data back)."
+          if ! gh release view android-apks >/dev/null 2>&1; then
+            gh release create android-apks --target "$GITHUB_SHA" --prerelease --latest=false --title "orOS Android apps" --notes "$notes"
+          fi
+          gh release upload android-apks "$RUNNER_TEMP"/apks/*.apk --clobber
+          gh release edit android-apks --title "orOS Android apps $ver" --notes "$notes"
+          ls -l "$RUNNER_TEMP/apks"
