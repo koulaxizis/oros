@@ -10,6 +10,7 @@
 //   2b. Merge engine (union + LWW mtime + tombstone resurrection)
 //   3. Views: Browse + Stats (+ streak helper)
 //   4. Settings modal
+//   4b. The .orosscript file (save / open / unzipped folder / Open with)
 //   5. Sync slice + wiring & boot
 // Data:
 //   slice "oros-prompter-data" → travels (favorites + completed + customs)
@@ -94,7 +95,16 @@
       "editor.cancel":        "Cancel",
       "custom.saved":         "Custom prompt saved",
       "custom.deleted":       "Custom prompt deleted",
-      "editor.errEmpty":      "Both language fields are required"
+      "editor.errEmpty":      "Both language fields are required",
+      "io.save":              "orOS file (.orosscript)",
+      "io.files":             "Files",
+      "io.open":              "Open an orOS file (.orosscript)…",
+      "io.folder":            "Unzipped orOS folder…",
+      "io.opened":            "Opened as a new prompt",
+      "io.bad":               "Could not read this file",
+      "io.newer":             "This file was made by a newer orOS. Update orOS to open it.",
+      "io.saved":             "Saved",
+      "io.saveFail":          "Could not save the file"
     },
     el: {
       "app.title":           "Γεννήτρια θεμάτων",
@@ -161,7 +171,16 @@
       "editor.cancel":        "Ακύρωση",
       "custom.saved":         "Το θέμα αποθηκεύτηκε",
       "custom.deleted":       "Το θέμα διαγράφηκε",
-      "editor.errEmpty":      "Χρειάζονται και οι δύο γλώσσες"
+      "editor.errEmpty":      "Χρειάζονται και οι δύο γλώσσες",
+      "io.save":              "Αρχείο orOS (.orosscript)",
+      "io.files":             "Αρχεία",
+      "io.open":              "Άνοιγμα αρχείου orOS (.orosscript)…",
+      "io.folder":            "Αποσυμπιεσμένος φάκελος orOS…",
+      "io.opened":            "Άνοιξε ως νέο θέμα",
+      "io.bad":               "Δεν ήταν δυνατή η ανάγνωση του αρχείου",
+      "io.newer":             "Το αρχείο φτιάχτηκε από νεότερο orOS. Ενημέρωσε το orOS για να το ανοίξεις.",
+      "io.saved":             "Αποθηκεύτηκε",
+      "io.saveFail":          "Δεν σώθηκε το αρχείο"
     }
   };
 
@@ -1301,6 +1320,14 @@ document.body.appendChild(loader);
         dlBtn.textContent=t("custom.delete");
         dlBtn.addEventListener("click", function(){ confirmCustomDelete(p.id); });
         acts.appendChild(dlBtn);
+        if(window.OrosBundle && window.PrompterIO){
+          var fiBtn=document.createElement("button");
+          fiBtn.type="button";
+          fiBtn.className="file-btn";
+          fiBtn.textContent=t("io.save");
+          fiBtn.addEventListener("click", function(){ saveScript(p.id); });
+          acts.appendChild(fiBtn);
+        }
       }
 
       card.appendChild(acts);
@@ -1459,7 +1486,27 @@ document.body.appendChild(loader);
     if(settingsModal) return;
     settingsModal=document.createElement("dialog");
     settingsModal.className="settings-dlg";
-    settingsModal.innerHTML="<h3>"+esc(t("settings.title"))+"</h3><p style='margin:12px 0'>"+esc(t("rst.body"))+"</p>";
+    settingsModal.innerHTML="<h3>"+esc(t("settings.title"))+"</h3>";
+    if(window.OrosBundle && window.PrompterIO){
+      // Files: open a .orosscript (or an unzipped one) as a new prompt
+      var fs=document.createElement("div");
+      fs.className="file-sec";
+      var fh=document.createElement("h4");
+      fh.textContent=t("io.files");
+      fs.appendChild(fh);
+      var ob=document.createElement("button");
+      ob.type="button"; ob.id="io-open"; ob.textContent=t("io.open");
+      ob.addEventListener("click", pickScript);
+      var fb=document.createElement("button");
+      fb.type="button"; fb.id="io-folder"; fb.textContent=t("io.folder");
+      fb.addEventListener("click", pickScriptFolder);
+      fs.appendChild(ob); fs.appendChild(fb);
+      settingsModal.appendChild(fs);
+    }
+    var rp=document.createElement("p");
+    rp.style.margin="12px 0";
+    rp.textContent=t("rst.body");
+    settingsModal.appendChild(rp);
     var c=document.createElement("button");
     c.type="button"; c.className="ghost"; c.textContent=t("rst.cancel");
     c.addEventListener("click", function(){ settingsModal.close(); settingsModal.remove(); settingsModal=null; });
@@ -1492,6 +1539,98 @@ document.body.appendChild(loader);
     renderAll();
     if(settingsModal){ settingsModal.close(); settingsModal.remove(); settingsModal=null; }
     notifyTransient(t("rst.done"));
+  }
+
+  // ---------- 4b. The .orosscript file (io.js + bundle.js) ----------
+  // One custom prompt per file. Saving keeps its text, variations,
+  // tags and its star / done marks; opening always adds a NEW custom
+  // prompt (fresh id, the editor's rules in PrompterIO.fromContent),
+  // never touching an existing one.
+  function dialogHost(){
+    try { return window.orosDialog || (window.parent && window.parent.orosDialog) || null; }
+    catch(e){ return window.orosDialog || null; }
+  }
+  function saveBlob(blob, name, mime, desc, ext){
+    var dlg=dialogHost();
+    if(dlg && typeof dlg.saveFile==="function"){
+      var acc={}; acc[mime]=[ext];
+      dlg.saveFile({ blob:blob, filename:name, mime:mime, types:[{ description:desc, accept:acc }] })
+        .then(function(r){ if(r && r.ok) notifyTransient(t("io.saved")); });
+      return;                       // cancel (ok=false) = silent exit
+    }
+    var url=URL.createObjectURL(blob), a=document.createElement("a");
+    a.href=url; a.download=name;
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); }, 1000);
+    notifyTransient(t("io.saved"));
+  }
+  function saveScript(id){
+    var p=promptById(id), IO=window.PrompterIO;
+    if(!p || !isCustom(id) || !IO || !window.OrosBundle) return;
+    var opts=IO.bundleOpts(p, state, { lang:LANG, date:new Date() });
+    window.OrosBundle.write(opts).then(function(bytes){
+      saveBlob(new Blob([bytes], { type:IO.MIME }), IO.fileName(opts.meta.title, "orosscript"), IO.MIME, t("io.save"), ".orosscript");
+    }, function(){ showToast(t("io.saveFail")); });
+  }
+  // A bundle result → a new custom prompt, shown under "Mine"
+  function scriptFromBundle(r){
+    var maxPos=-1;
+    state.customs.forEach(function(c){ if((c.pos||0)>maxPos) maxPos=c.pos||0; });
+    var now=Date.now();
+    var got=window.PrompterIO.fromContent(r && r.content, { id:"c"+uid(), now:now, pos:maxPos+1 });
+    if(!got){ showToast(t("io.bad")); return; }
+    var id=got.prompt.id;
+    state.customs.push(got.prompt);
+    if(got.favorite) state.favorites[id]=now;
+    if(got.completed) state.completed[id]=got.completed;
+    state.sm=now; save();
+    if(settingsModal){ settingsModal.close(); settingsModal.remove(); settingsModal=null; }
+    renderAll();
+    openSearchTarget({ prompt:id });
+    notifyTransient(t("io.opened"));
+  }
+  function scriptFail(e){
+    if(!(e && e.code==="notbundle")){ try{ console.error("[orOS] prompter: .orosscript not read:", e && (e.code || e.message)); }catch(er){} }
+    showToast(e && e.code==="newer"? t("io.newer") : t("io.bad"));
+  }
+  // A picked or handed-over file: only an orOS bundle is a script file
+  function readScriptFile(f){
+    var B=window.OrosBundle;
+    if(!f || !B || !window.PrompterIO) return;
+    if(f.size>32*1024*1024){ showToast(t("io.bad")); return; }
+    f.slice(0, 128).arrayBuffer().then(function(head){
+      if(B.sniff(new Uint8Array(head))===null){ var e=new Error("notbundle"); e.code="notbundle"; throw e; }
+      return f.arrayBuffer();
+    }).then(function(ab){ return B.read(new Uint8Array(ab), { mime:window.PrompterIO.MIME }); })
+      .then(scriptFromBundle, scriptFail);
+  }
+  function pickScript(){
+    var inp=document.createElement("input");
+    inp.type="file";
+    inp.accept=".orosscript,application/x-oros-script";
+    inp.style.display="none";
+    inp.addEventListener("change", function(){ var f=inp.files && inp.files[0]; inp.remove(); readScriptFile(f); });
+    (settingsModal || document.body).appendChild(inp);
+    inp.click();
+  }
+  // An unzipped .orosscript folder (maybe changed by hand)
+  function pickScriptFolder(){
+    var B=window.OrosBundle;
+    if(!B || !window.PrompterIO) return;
+    B.pickFolder().then(function(files){
+      if(!files) return;
+      return B.readFolder(files, { mime:window.PrompterIO.MIME }).then(scriptFromBundle, scriptFail);
+    });
+  }
+  // "Open with" (shell fileopen.js): { openFile: { token } }, the File
+  // taken once with window.parent.__orosTakeFile(token).
+  function openFileTarget(tg){
+    var f=null;
+    try{
+      var pw=window.parent;
+      if(pw && pw!==window && typeof pw.__orosTakeFile==="function") f=pw.__orosTakeFile(tg.openFile.token);
+    }catch(e){ f=null; }
+    if(f) readScriptFile(f);
   }
 
   // ---------- 5. Wiring & boot ----------
@@ -1594,11 +1733,17 @@ document.body.appendChild(loader);
     try{ card.scrollIntoView({ block:"center" }); }catch(e){}
     try{ card.focus({ preventScroll:true }); }catch(e){}
   }
-  window.__orosOpenAt=openSearchTarget;
+  // One receiver for both deep links: { prompt } (search) and
+  // { openFile: { token } } (the system's "Open with").
+  function openTarget(tg){
+    if(tg && typeof tg==="object" && tg.openFile && typeof tg.openFile.token==="string"){ openFileTarget(tg); return; }
+    openSearchTarget(tg);
+  }
+  window.__orosOpenAt=openTarget;
   try{
     if(window.parent && window.parent!==window && typeof window.parent.__orosTakeTarget==="function"){
       var pendingTarget=window.parent.__orosTakeTarget("prompter");
-      if(pendingTarget) openSearchTarget(pendingTarget);
+      if(pendingTarget) openTarget(pendingTarget);
     }
   }catch(e){}
 
