@@ -1466,7 +1466,9 @@
     state.labels.forEach(function (l) { if (l.pos > lPos) lPos = l.pos; if (l.nb === pl.nb) lCount++; });
     pl.labels.forEach(function (l, i) {
       if (labelById(l.id)) return;
-      state.labels.push({ id: l.id, nb: pl.nb, name: l.name, color: LABEL_COLORS[(lCount + i) % LABEL_COLORS.length],
+      // a label from an .orosnotes keeps its colour; imports from other apps rotate
+      var col = l.color && LABEL_COLORS.indexOf(l.color) >= 0 ? l.color : LABEL_COLORS[(lCount + i) % LABEL_COLORS.length];
+      state.labels.push({ id: l.id, nb: pl.nb, name: l.name, color: col,
                           mtime: now, pos: lPos + 1 + i });
       delete state.tombs["lbl:" + l.id];
       back.labels.push(l.id);
@@ -1576,7 +1578,7 @@
       inp.multiple = true;
       inp.hidden = true;
       if (dir) { inp.setAttribute("webkitdirectory", ""); inp.setAttribute("directory", ""); }
-      else inp.accept = ".md,.markdown,.txt,.json,.zip,.enex,.jex,.tar,text/markdown,text/plain,application/json,application/zip";
+      else inp.accept = ".md,.markdown,.txt,.json,.zip,.enex,.jex,.tar,.orosnotes,text/markdown,text/plain,application/json,application/zip,application/x-oros-notes";
       inp.addEventListener("change", function () { read(inp.files); inp.value = ""; });
       form.appendChild(inp);
       return inp;
@@ -1584,6 +1586,11 @@
     var dirInp = picker(true), fileInp = picker(false);
     if ("webkitdirectory" in dirInp) pick.appendChild(button(t("imp.folder"), "", function () { dirInp.click(); }));
     pick.appendChild(button(t("imp.files"), "", function () { fileInp.click(); }));
+    // an .orosnotes that was unzipped (maybe edited by hand)
+    if (bundleReady()) pick.appendChild(button(t("imp.orosFolder"), "", function () {
+      if (busy) return;
+      openBundleFolder().then(function (ok) { if (ok) dlg.close(); });
+    }));
     form.appendChild(pick);
     var updW = el("label", "radio"), updBox = el("input");
     updBox.type = "checkbox";
@@ -1610,6 +1617,19 @@
     function read(list) {
       var files = Array.prototype.slice.call(list || []);
       if (!files.length || busy) return;
+      // one orOS bundle (.orosnotes) → straight in as a new notebook
+      if (files.length === 1 && !files[0].webkitRelativePath) {
+        busy = true;
+        isBundleFile(files[0]).then(function (zip) {
+          busy = false;
+          if (!zip) { readNotes(files); return; }
+          openBundleFile(files[0]).then(function (ok) { if (ok) dlg.close(); });
+        });
+        return;
+      }
+      readNotes(files);
+    }
+    function readNotes(files) {
       busy = true;
       go.disabled = true;
       parsed = plan = null;
@@ -2206,6 +2226,81 @@
     downloadBlob(writeZip(entries), "notes-" + stamp + (md ? "-md" : "") + ".zip",
       "application/zip",
       [{ description: "ZIP archive", accept: { "application/zip": [".zip"] } }]);
+  }
+
+  // ---------- 6c'. .orosnotes = one notebook as an orOS bundle ----------
+  // (../bundle.js, docs/oros-bundle.md; the model ↔ content.json
+  // mapping lives in package.js). Saving writes the current notebook;
+  // opening one ALWAYS makes a new notebook with fresh ids, through
+  // the same write as "Import notes" (importApply → normalizeState),
+  // with Undo. Notes has no pictures, so a notebook has no media/.
+  var PKG = window.OrosNotesPackage || null;
+  var BUNDLE_MIME = "application/x-oros-notes";
+  STRINGS.en["menu.exportOros"] = "orOS file (.orosnotes)";
+  STRINGS.el["menu.exportOros"] = "Αρχείο orOS (.orosnotes)";
+  STRINGS.en["imp.orosFolder"] = "Unzipped orOS folder…";
+  STRINGS.el["imp.orosFolder"] = "Αποσυμπιεσμένος φάκελος orOS…";
+  STRINGS.en["oros.bad"] = "This orOS file could not be opened.";
+  STRINGS.el["oros.bad"] = "Δεν ήταν δυνατό να ανοίξει αυτό το αρχείο orOS.";
+  STRINGS.en["oros.newer"] = "This file was made by a newer orOS. Update orOS to open it.";
+  STRINGS.el["oros.newer"] = "Το αρχείο φτιάχτηκε από νεότερο orOS. Ενημέρωσε το orOS για να το ανοίξεις.";
+  STRINGS.en["oros.saveFail"] = "The orOS file could not be made.";
+  STRINGS.el["oros.saveFail"] = "Δεν ήταν δυνατό να φτιαχτεί το αρχείο orOS.";
+
+  function bundleReady() { return !!(PKG && window.OrosBundle); }
+
+  function exportNotebookBundle(nbId) {
+    if (!bundleReady()) return;
+    flushSave();
+    var built;
+    try { built = PKG.build(state, nbId || currentNbId()); } catch (e) { notifyTransient(t("oros.saveFail")); return; }
+    if (!built.content.pages.length) { notifyTransient(t("toast.emptyExport")); return; }
+    OrosBundle.write({
+      mime: BUNDLE_MIME, app: "notes", schema: "notes/1", content: built.content,
+      meta: { title: built.title, created: built.created || undefined, modified: built.modified || undefined,
+              id: built.content.notebook.id, language: LANG, generator: "orOS Notes" },
+      media: {}, preview: built.preview, date: new Date()
+    }).then(function (bytes) {
+      downloadBlob(new Blob([bytes], { type: BUNDLE_MIME }), sanitizeFilename(built.title) + ".orosnotes",
+        BUNDLE_MIME, [{ description: "orOS Notes", accept: { "application/x-oros-notes": [".orosnotes"] } }]);
+    }, function (e) {
+      console.error("[orOS] notes bundle failed:", e);
+      notifyTransient(t("oros.saveFail"));
+    });
+  }
+
+  // A read bundle (zip or folder) → a new notebook. false = not ours.
+  function applyBundle(r) {
+    var pl = PKG.parse(r && r.content, { uid: uid, colors: LABEL_COLORS, name: t("book.default"), untitled: t("page.untitled") });
+    if (!pl.pages.add.length) { notifyTransient(t("oros.bad")); return false; }
+    return importApply(pl);
+  }
+  function bundleFail(e) {
+    console.error("[orOS] notes bundle open failed:", e);
+    notifyTransient(e && e.code === "newer" ? t("oros.newer") : t("oros.bad"));
+  }
+  // The first bytes say whether a file is a bundle (PK + "mimetype").
+  // Another ZIP (an Obsidian vault…) or text goes the old way, unless
+  // it is named .orosnotes: then the bundle reader says what is wrong.
+  function isBundleFile(f) {
+    if (!bundleReady() || !f || typeof f.slice !== "function") return Promise.resolve(false);
+    var named = /\.orosnotes$/i.test(String(f.name || ""));
+    return f.slice(0, 128).arrayBuffer().then(function (ab) {
+      return !!OrosBundle.sniff(new Uint8Array(ab)) || named;
+    }, function () { return named; });
+  }
+  function openBundleFile(f) {
+    return f.arrayBuffer()
+      .then(function (ab) { return OrosBundle.read(new Uint8Array(ab), { mime: BUNDLE_MIME }); })
+      .then(applyBundle)
+      .then(null, function (e) { bundleFail(e); return false; });
+  }
+  function openBundleFolder() {
+    if (!bundleReady()) return Promise.resolve(false);
+    return OrosBundle.pickFolder().then(function (files) {
+      if (!files) return false;
+      return OrosBundle.readFolder(files, { mime: BUNDLE_MIME }).then(applyBundle);
+    }).then(null, function (e) { bundleFail(e); return false; });
   }
   
     // ---------- 6d. Search (Ctrl+K) + Tags aggregation panel ----------
@@ -2971,8 +3066,10 @@
       [t("menu.exportPageMd"),     function () { exportPageMd(page); }],
       [t("menu.exportNotebook"),   function () { exportNotebookZip(true); }],
       [t("menu.exportNotebookMd"), function () { exportNotebookZip(true, true); }],
+      [t("menu.exportOros"),       function () { exportNotebookBundle(page.nb); }],
       [t("page.delete"),   function () { deletePage(page.id); }]
     ];
+    if (!bundleReady()) actions = actions.filter(function (a) { return a[0] !== t("menu.exportOros"); });
     if (shareApi()) actions.splice(actions.length - 1, 0, [t("page.share"), function () { sharePage(page); }]);
     actions.forEach(function (pair) {
       var b = document.createElement("button");
@@ -3748,6 +3845,7 @@
         var menu = document.createElement("div");
         menu.id = "node-menu";
         var choices = [["menu.exportCurrent", true, false], ["menu.exportCurrentMd", true, true]];
+        if (bundleReady()) choices.push(["menu.exportOros", "oros", false]);
         if (state.notebooks.length > 1) choices.push(["menu.exportAll", false, false], ["menu.exportAllMd", false, true]);
         var curPage = pageById(prefs.current);
         if (curPage) choices.push(["menu.exportPage", null, false], ["menu.exportPageMd", null, true]);
@@ -3758,7 +3856,8 @@
           b.addEventListener("click", function (ev) {
             ev.stopPropagation();
             closeMenus();
-            if (pair[1] === null) { if (pair[2]) exportPageMd(curPage); else exportPageTxt(curPage); }
+            if (pair[1] === "oros") exportNotebookBundle();
+            else if (pair[1] === null) { if (pair[2]) exportPageMd(curPage); else exportPageTxt(curPage); }
             else exportNotebookZip(pair[1], pair[2]);
           });
           menu.appendChild(b);
@@ -3982,7 +4081,8 @@
   // Target { openFile: { token } }: a .txt / .md file from the
   // system's "Open with" or Android's Share (shell fileopen.js), taken
   // once from the shell: a new page titled after the file, its text
-  // as is (plain text, never markup).
+  // as is (plain text, never markup). An .orosnotes bundle becomes a
+  // new notebook instead (exportNotebookBundle / applyBundle).
   var FILE_MAX = 200000;
   function openFileTarget(o) {
     var f = null;
@@ -3992,6 +4092,13 @@
         f = w.__orosTakeFile(o.token);
     } catch (e) { f = null; }
     if (!f) return;
+    // an .orosnotes (or any orOS bundle) → a new notebook; else text
+    isBundleFile(f).then(function (zip) {
+      if (zip) openBundleFile(f);
+      else openTextFile(f);
+    });
+  }
+  function openTextFile(f) {
     if (f.size > FILE_MAX * 4) { notifyTransient(t("toast.fileBig")); return; }
     f.text().then(function (txt) {
       txt = String(txt).replace(/^\ufeff/, "").replace(/\r\n?/g, "\n");
