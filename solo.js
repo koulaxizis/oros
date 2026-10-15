@@ -571,13 +571,17 @@
       txt.style.flex = "1";
       txt.textContent = (withButton === "win" ? T.win : withButton ? T.ask : T.how).replace("{n}", name);
       bar.appendChild(txt);
-      var android = withButton === "win" && /Android/i.test(win.navigator.userAgent || "");
-      if (android) {
-        var inApp = false;
+      // Only the orOS Android app (TWA) can hand the page to Chrome: in
+      // Chrome's own installed orOS an intent to Chrome comes straight
+      // back to the same app window, so there the text alone is shown.
+      var inApp = false;
+      if (withButton === "win" && /Android/i.test(win.navigator.userAgent || "")) {
         try {
           var fw = doc.getElementById("solo-frame").contentWindow;
           inApp = !!(fw.orosPhone && fw.orosPhone.available());
         } catch (e) {}
+      }
+      if (inApp) {
         var a = doc.createElement("a");
         a.href = installUrl(id, win.navigator.userAgent, win.location.origin, inApp);
         a.textContent = T.chrome;
