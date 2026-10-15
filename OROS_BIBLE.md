@@ -7073,3 +7073,9 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Chris before it works: enable Drive API, Google Picker API and Photos Picker API; add the two scopes; create a browser API key restricted to the Picker API and useoros.online (entered per person under Contacts › own app id; not in the code). Until then the Drive button stays hidden.
 - Files: new `files/gmedia.js` (precached); Files, Photo Lab; credits for the Google Drive, Picker and Photos Picker APIs.
   - Tests: full suite green; real shell with mocked Google endpoints (two-device sync, Undo, token revoked). Not tested: real Google, including whether Photos allows direct browser downloads.
+
+### 2026-10-15 — Open orOS file format, phase 1: Writer, Slides, Atelier and Layout save ZIP bundles (#413) — 2.44.00
+- `.orosdoc`, `.orosslides`, `.orosdesign` and `.oroslayout` are now open ZIP bundles (OBF 1.0): `content.json`, `media/`, `meta.xml`, `META-INF/manifest.xml` with sha256 per file, a thumbnail and `README.txt`; Writer adds `preview/document.html` that opens in any browser and now keeps pictures. Each app also opens an unzipped bundle folder; older JSON files still open.
+- New root `bundle.js` (`OrosBundle`, own ZIP code via `CompressionStream`) treats every opened file as hostile: unsafe paths, encrypted entries and DOCTYPE/ENTITY refused; entry count, sizes and compression ratio capped; hashes checked against the manifest; media types sniffed from bytes. Spec `docs/oros-bundle.md`; Bible section "orOS file format (OBF 1.0)".
+- Files: `bundle.js` (precached), Writer, Slides, Atelier, Layout.
+  - Tests: new `tests/bundle.test.js` (12 tests); full suite green; real shell in all four apps; `unzip -t`, Python `zipfile` and `file` read a bundle. Not tested: a real phone, Safari, Firefox, OS "Open with".
