@@ -6955,6 +6955,6 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
   - Tests: new `tests/layout-sla-shapes.test.js`; full suite green; real shell in Chromium at 1280 and 360 px. Not tested: files saved by Scribus itself, a real phone, Safari.
 
 ### 2026-10-15 — Notes: import from Evernote, Google Keep, Simplenote and Joplin (#395) — 2.30.00
-- Notes › Import notes… now also reads Evernote `.enex` exports, Google Keep notes from Google Takeout (JSON), Simplenote exports and Joplin exports (JEX/RAW Markdown). Note bodies become Markdown (headings, bold, links, checklists), notebooks/tags/labels carry over as parent pages and labels, Keep links are kept as Markdown links; attachments and images are not imported. Same rules as wave 1: stable ids, re-import adds only what is new, Undo.
+- Notes › Import notes… now also reads Evernote `.enex` exports, Google Keep notes from Google Takeout (JSON), Simplenote exports and Joplin `.jex` exports. Note bodies become Markdown (headings, bold, links, checklists), notebooks/tags/labels carry over as parent pages and labels, Keep links are kept as Markdown links; attachments and images are not imported (pictures show by file name), trash is left out. Same rules as wave 1: stable ids, re-import adds only what is new, Undo.
 - Files: `notes/import.js` (new parsers), `notes/notes.js`, help, Bible NOTES-IMP.
   - Tests: `tests/notes-import.test.js` extended; full suite green. Not tested: real exports from these apps on Chris's devices.
