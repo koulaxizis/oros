@@ -945,3 +945,37 @@ button.prim.danger:hover { background: rgba(224, 108, 117, 0.22); }
   outline: none;
 }
 #ent-search:focus { border-color: var(--accent); }
+/* ---------- 12. Import from another app ---------- */
+.ins-top { flex-wrap: wrap; }
+@media (max-width: 480px) { .ins-ranges { flex: 1 1 100%; } }
+.imp-dlg {
+  width: min(460px, calc(100vw - 16px));
+  max-height: calc(100dvh - 24px);
+  padding: 14px 12px 12px;
+  display: none;
+  flex-direction: column;
+}
+.imp-dlg[open] { display: flex; }
+.imp-dlg h3 { color: var(--text); margin-bottom: 8px; }
+.imp-body { overflow-y: auto; min-height: 0; flex: 1 1 auto; padding-right: 2px; }
+.imp-dlg p { margin-bottom: 8px; overflow-wrap: anywhere; }
+.imp-src { color: var(--text); font-weight: 600; }
+.imp-dlg .col-lab { margin-top: 6px; }
+.imp-hint { font-size: 12px; }
+.imp-map { list-style: none; display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+.imp-map li {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px;
+  padding: 6px 8px; border: 1px solid var(--border); border-radius: 8px;
+}
+.imp-map li.unk { border-style: dashed; }
+.imp-mood { flex: 1 1 120px; min-width: 0; font-size: 13px; overflow-wrap: anywhere; }
+.imp-map select {
+  flex: 0 1 auto; max-width: 100%; font: inherit; font-size: 13px;
+  min-height: 36px; padding: 4px 6px; border-radius: 6px;
+  background: var(--bg); color: var(--text); border: 1px solid var(--border);
+}
+.imp-unk { flex-basis: 100%; font-size: 12px; color: var(--text-dim); }
+.imp-notes p { font-size: 12px; }
+.imp-foot { display: flex; justify-content: flex-end; gap: 8px; padding-top: 10px; flex-wrap: wrap; }
+.imp-foot button { margin: 0; }
+.imp-foot button:disabled { opacity: 0.5; cursor: default; }

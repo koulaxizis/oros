@@ -1,0 +1,12 @@
+[
+  {"day":"2026-05-02","period":"medium","pain":["period_cramps"],"mood":["happy"]},
+  {"day":"2026-05-03","period":"heavy","tags":["took_medication"]},
+  {"day":"2026-05-04","period":"light"},
+  {"day":"2026-05-05","period":"spotting"},
+  {"day":"2026-05-15","discharge":["egg_white"]},
+  {"day":"2026-05-30","period":"light"},
+  {"day":"2026-05-31","period":"medium"},
+  {"day":"2026-06-01","period":"medium"},
+  {"day":"2026-06-02","period":"light","bbt":36.6},
+  {"day":"2026-06-10","period":"spotting"}
+]

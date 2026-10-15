@@ -475,6 +475,14 @@ button.ghost:hover { color: var(--accent); border-color: var(--accent); }
   margin-bottom: 14px;
 }
 .rst-dlg button { margin: 0 4px; }
+/* import preview (same card as the reset dialog, not red) */
+.imp-dlg { width: min(420px, calc(100vw - 32px)); }
+.imp-dlg h3 { color: var(--text); }
+.imp-dlg p { margin-bottom: 8px; overflow-wrap: anywhere; }
+.imp-dlg .imp-src { color: var(--text); font-weight: 700; }
+.imp-dlg .imp-priv { font-size: 12px; margin-top: 4px; margin-bottom: 14px; }
+.imp-acts { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.imp-acts button { margin: 0; min-height: 36px; }
 
 /* ---------- 6. Logged days list ---------- */
 #dayslist ul {
@@ -642,6 +650,8 @@ button.ghost:hover { color: var(--accent); border-color: var(--accent); }
 
 .ins-top {
   display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
   justify-content: flex-start;
   margin-bottom: 12px;
 }
