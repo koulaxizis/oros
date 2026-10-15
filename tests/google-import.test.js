@@ -34,10 +34,14 @@ global.fetch = (url, opts) => {
   for (const k of Object.keys(routes)) {
     if (u.indexOf(k) === 0) {
       const r = routes[k](u, opts);
+      if (r && r.fail) return Promise.reject(new TypeError("Failed to fetch"));
       const status = r.status || 200, body = r.body !== undefined ? r.body : r;
+      const hdrs = r.headers || {};
       return Promise.resolve({
         status, ok: status >= 200 && status < 300,
-        json: () => Promise.resolve(body), text: () => Promise.resolve(typeof body === "string" ? body : JSON.stringify(body))
+        headers: { get: (k) => (hdrs[k] !== undefined ? String(hdrs[k]) : null) },
+        json: () => Promise.resolve(body), text: () => Promise.resolve(typeof body === "string" ? body : JSON.stringify(body)),
+        blob: () => Promise.resolve(new Blob([typeof body === "string" ? body : JSON.stringify(body)], { type: r.type || "" }))
       });
     }
   }
@@ -50,6 +54,7 @@ const ICS = require(path.join(ROOT, "calendar/ics.js"));
 const GT = require(path.join(ROOT, "todo/gtasks.js"));
 const YT = require(path.join(ROOT, "feeds/youtube.js"));
 const GB = require(path.join(ROOT, "shelf/gbooks.js"));
+const GM = require(path.join(ROOT, "files/gmedia.js"));
 
 // A sign-in window whose "Google" answers like the callback page does.
 function fakePopup(answer) {
@@ -110,6 +115,8 @@ test("no token kept, no offline access, revoke present; the callback page speaks
   assert.deepEqual(Object.values(GI.SCOPES).sort(), [
     "https://www.googleapis.com/auth/books",
     "https://www.googleapis.com/auth/calendar.readonly",
+    "https://www.googleapis.com/auth/drive.file",
+    "https://www.googleapis.com/auth/photospicker.mediaitems.readonly",
     "https://www.googleapis.com/auth/tasks.readonly",
     "https://www.googleapis.com/auth/youtube.readonly"
   ]);
@@ -423,4 +430,216 @@ test("Shelf: read() pages by startIndex up to totalItems", async () => {
   assert.equal(shelves.length, 1, "browsing history is not read");
   assert.equal(shelves[0].volumes.length, 3);
   assert.ok(urls.some((u) => /bookshelves\/2\/volumes\?maxResults=40&startIndex=2/.test(u)));
+});
+
+// ---------- Files / Photo Lab: Google Drive and Google Photos ----------
+test("Drive needs the person's own API key; none is built in, and Google's script loads only on demand", () => {
+  reset();
+  assert.equal(GI.apiKey(), "");
+  assert.equal(GI.driveReady(), false);
+  assert.equal(GI.appId(), "97712435228");
+  localStorage.setItem("oros-contacts-oauth", JSON.stringify({ googleKey: "AIzaSyA-fake_key_0123456789abcdefghij" }));
+  assert.equal(GI.apiKey(), "AIzaSyA-fake_key_0123456789abcdefghij");
+  assert.equal(GI.driveReady(), true);
+  localStorage.setItem("oros-contacts-oauth", JSON.stringify({ googleKey: "<script>", google: "555666777-x.apps.googleusercontent.com" }));
+  assert.equal(GI.apiKey(), "");
+  assert.equal(GI.appId(), "555666777", "an own client id brings its own project");
+  const src = fs.readFileSync(path.join(ROOT, "google-import.js"), "utf8");
+  assert.ok(!/AIza[0-9A-Za-z_-]{20,}/.test(src), "no API key in the code");
+  for (const f of ["files/index.html", "photolab/index.html"]) {
+    assert.ok(!/apis\.google\.com/.test(fs.readFileSync(path.join(ROOT, f), "utf8")), f + " does not load Google's script");
+  }
+});
+
+test("gmedia: names, durations, export formats, folders", () => {
+  assert.equal(GM.safeName("a/b\\c:d*?.jpg"), "a_b_c_d__.jpg");
+  assert.equal(GM.safeName("..", "x.jpg"), "x.jpg");
+  assert.equal(GM.safeName(".trash", "x"), "x");
+  assert.equal(GM.safeName("\u0000\n", "f"), "f");
+  const long = GM.safeName("n".repeat(300) + ".jpeg");
+  assert.equal(long.length, 180);
+  assert.ok(long.endsWith(".jpeg"));
+  assert.equal(GM.duration("5s"), 5000);
+  assert.equal(GM.duration("1.5s"), 1500);
+  assert.ok(isNaN(GM.duration("5m")));
+  assert.equal(GM.exportFor("application/vnd.google-apps.document").ext, ".docx");
+  assert.equal(GM.exportFor("application/vnd.google-apps.spreadsheet").ext, ".xlsx");
+  assert.equal(GM.exportFor("application/vnd.google-apps.presentation").ext, ".pptx");
+  assert.equal(GM.exportFor("application/vnd.google-apps.drawing").ext, ".png");
+  assert.equal(GM.exportFor("image/png"), null);
+  assert.equal(GM.driveName({ id: "d1", name: "Budget", mimeType: "application/vnd.google-apps.spreadsheet" }), "Budget.xlsx");
+  assert.equal(GM.driveName({ id: "d1", name: "Plan.docx", mimeType: "application/vnd.google-apps.document" }), "Plan.docx");
+  assert.equal(GM.folderFor("drive", [], "en"), "Imported from Google Drive");
+  assert.equal(GM.folderFor("photos", [], "el"), "Εισαγωγή από το Google Photos");
+  assert.equal(GM.folderFor("photos", ["Imported from Google Photos"], "el"), "Imported from Google Photos", "an existing folder wins");
+  assert.equal(GM.photoItem({ id: "p1", mediaFile: { baseUrl: "https://evil.example/x", filename: "a.jpg" } }), null);
+  const v = GM.photoItem({ id: "v1", type: "VIDEO", mediaFile: { baseUrl: "https://lh3.googleusercontent.com/v", mimeType: "video/mp4",
+    mediaFileMetadata: { videoMetadata: { processingStatus: "PROCESSING" } } } });
+  assert.equal(v.name, "video-v1.mp4");
+  assert.equal(v.url, "https://lh3.googleusercontent.com/v=dv");
+  assert.equal(v.ready, false);
+});
+
+test("gmedia: plan() leaves out what is already there (name or name (n), same size), makes the rest unique", () => {
+  const found = [
+    { key: "gp:a", name: "IMG_1.jpg", size: 100 },
+    { key: "gp:b", name: "IMG_1.jpg", size: 200 },
+    { key: "gp:c", name: "IMG_2.jpg", size: 300 },
+    { key: "gp:c", name: "IMG_2.jpg", size: 300 },
+    { key: "gp:d", name: "notes.txt", size: 5 }
+  ];
+  const first = GM.plan(found, []);
+  assert.deepEqual(first.add.map((a) => a.name), ["IMG_1.jpg", "IMG_1 (1).jpg", "IMG_2.jpg", "notes.txt"]);
+  // after that import, the same pick again: nothing new
+  const there = first.add.map((a) => ({ name: a.name, size: a.item.size }));
+  const again = GM.plan(found, there);
+  assert.equal(again.add.length, 0);
+  assert.equal(again.dup.length, 4);
+  // the person's own file of the same name but another size is kept apart
+  const mine = GM.plan([{ key: "gd:x", name: "notes.txt", size: 9 }], [{ name: "notes.txt", size: 5 }, { name: "notes (1).txt", dir: true }]);
+  assert.deepEqual(mine.add.map((a) => a.name), ["notes (2).txt"]);
+  assert.ok(GM.sameName("a (12).jpg", "a.jpg"));
+  assert.ok(!GM.sameName("a (x).jpg", "a.jpg"));
+  assert.ok(!GM.sameName("ab.jpg", "a.jpg"));
+});
+
+const PP = "https://photospicker.googleapis.com/v1/";
+function photosRoutes(opts) {
+  opts = opts || {};
+  let polls = 0;
+  routes["https://oauth2.googleapis.com/revoke"] = () => ({});
+  routes[PP + "sessions/S1"] = (u, o) => {
+    if (o.method === "DELETE") return { status: 204, body: "" };
+    polls++;
+    return { id: "S1", mediaItemsSet: polls >= 2, pollingConfig: { pollInterval: "1s", timeoutIn: "600s" } };
+  };
+  routes[PP + "sessions"] = (u, o) => (opts.s403 ? { status: 403, body: { error: { message: "Photos Picker API has not been used in project 1 before or it is disabled.", details: [{ reason: "SERVICE_DISABLED" }] } } }
+    : { id: "S1", pickerUri: "https://photos.google.com/picker/S1", pollingConfig: { pollInterval: "2s", timeoutIn: "600s" } });
+  routes[PP + "mediaItems"] = (u) => (/pageToken=n2/.test(u)
+    ? { mediaItems: [
+        { id: "m3", type: "VIDEO", mediaFile: { baseUrl: "https://lh3.googleusercontent.com/m3", mimeType: "video/mp4", filename: "clip.mp4" } },
+        { id: "m4", type: "PHOTO", mediaFile: { baseUrl: "https://lh3.googleusercontent.com/m4", mimeType: "image/jpeg", filename: "big.jpg" } },
+        { id: "m5", type: "PHOTO", mediaFile: { baseUrl: "https://lh3.googleusercontent.com/m5", mimeType: "image/jpeg", filename: "cors.jpg" } }
+      ] }
+    : { mediaItems: [
+        { id: "m1", createTime: "2026-01-01T10:00:00Z", type: "PHOTO", mediaFile: { baseUrl: "https://lh3.googleusercontent.com/m1", mimeType: "image/jpeg", filename: "IMG_0001.JPG" } },
+        { id: "m2", type: "PHOTO", mediaFile: { baseUrl: "https://lh3.googleusercontent.com/m2", mimeType: "image/png", filename: "" } },
+        { id: "bad", mediaFile: { baseUrl: "javascript:alert(1)" } }
+      ], nextPageToken: "n2" });
+  routes["https://lh3.googleusercontent.com/m1=d"] = () => ({ body: "JPEGDATA", type: "image/jpeg" });
+  routes["https://lh3.googleusercontent.com/m2=d"] = () => ({ body: "PNG", type: "image/png" });
+  routes["https://lh3.googleusercontent.com/m3=dv"] = () => ({ body: "MP4DATA!", type: "video/mp4" });
+  routes["https://lh3.googleusercontent.com/m4=d"] = () => ({ body: "x", headers: { "Content-Length": 999999999 } });
+  routes["https://lh3.googleusercontent.com/m5=d"] = () => ({ fail: true });
+  return () => polls;
+}
+
+test("Photos: session → picker window → poll → list (paged) → download with the token → session ended → revoked", async () => {
+  reset();
+  popup = fakePopup(() => ({ token: "tok-p" }));
+  const polls = photosRoutes();
+  let opened = "", waits = [];
+  const res = await GI.run({
+    scope: GI.SCOPES.photos,
+    read: (tk, api) => GM.readPhotos(api, {
+      open: (uri) => { opened = uri; return Promise.resolve(); },
+      sleep: (ms) => { waits.push(ms); return Promise.resolve(); }
+    }, { count: 10, file: 1000, total: 5000 })
+  });
+  assert.equal(opened, "https://photos.google.com/picker/S1/autoclose");
+  assert.equal(polls(), 2);
+  assert.deepEqual(waits, [1000], "Google's poll interval, from the last answer");
+  const d = res.data;
+  assert.deepEqual(d.items.map((i) => i.name + ":" + i.size), ["IMG_0001.JPG:8", "photo-m2.png:3", "clip.mp4:8"]);
+  assert.deepEqual(d.items.map((i) => i.key), ["gp:m1", "gp:m2", "gp:m3"]);
+  assert.deepEqual(d.skipped.map((s) => s.name + ":" + s.why), ["?:bad", "big.jpg:big", "cors.jpg:fail"]);
+  const post = calls.find((c) => c.url === PP + "sessions");
+  assert.equal(post.opts.method, "POST");
+  assert.deepEqual(JSON.parse(post.opts.body), { pickingConfig: { maxItemCount: "10" } });
+  const google = calls.filter((c) => /googleapis\.com\/v1|googleusercontent/.test(c.url));
+  assert.ok(google.every((c) => c.opts.headers.Authorization === "Bearer tok-p"), "every call carries the token");
+  assert.ok(google.every((c) => c.opts.credentials === "omit"));
+  assert.ok(calls.some((c) => /mediaItems\?sessionId=S1&pageSize=100&pageToken=n2/.test(c.url)));
+  const del = calls.filter((c) => c.opts.method === "DELETE");
+  assert.equal(del.length, 1);
+  assert.equal(del[0].url, PP + "sessions/S1");
+  assert.equal(revokes().length, 1);
+  assert.equal(revokes()[0].opts.body, "token=tok-p");
+});
+
+test("Photos: caps on count and total; a 403 on the session is 'not enabled'; giving up ends the session", async () => {
+  reset();
+  popup = fakePopup(() => ({ token: "tok-q" }));
+  photosRoutes();
+  const res = await GI.run({ scope: GI.SCOPES.photos,
+    read: (tk, api) => GM.readPhotos(api, { open: () => Promise.resolve(), sleep: () => Promise.resolve() }, { count: 1, file: 1000, total: 5000 }) });
+  assert.deepEqual(res.data.items.map((i) => i.name), ["IMG_0001.JPG"]);
+  assert.ok(res.data.skipped.some((s) => s.why === "count"));
+  reset();
+  popup = fakePopup(() => ({ token: "tok-r" }));
+  photosRoutes();
+  const tot = await GI.run({ scope: GI.SCOPES.photos,
+    read: (tk, api) => GM.readPhotos(api, { open: () => Promise.resolve(), sleep: () => Promise.resolve() }, { count: 10, file: 1000, total: 10 }) });
+  assert.deepEqual(tot.data.items.map((i) => i.name), ["IMG_0001.JPG"]);
+  assert.ok(tot.data.skipped.some((s) => s.name === "photo-m2.png" && s.why === "total"));
+
+  reset();
+  popup = fakePopup(() => ({ token: "tok-s" }));
+  photosRoutes({ s403: true });
+  await assert.rejects(GI.run({ scope: GI.SCOPES.photos, read: (tk, api) => GM.readPhotos(api, { open: () => Promise.resolve() }) }),
+    (e) => e.code === "notenabled" && GI.message(e, "en").indexOf("403") !== -1);
+  assert.equal(revokes().length, 1);
+
+  reset();
+  popup = fakePopup(() => ({ token: "tok-t" }));
+  photosRoutes();
+  await assert.rejects(GI.run({ scope: GI.SCOPES.photos,
+    read: (tk, api) => GM.readPhotos(api, { open: () => Promise.reject(Object.assign(new Error("c"), { code: "cancelled" })) }) }),
+    (e) => e.code === "cancelled");
+  assert.equal(calls.filter((c) => c.opts.method === "DELETE").length, 1, "the session is ended");
+  assert.equal(revokes().length, 1);
+  assert.equal(calls.filter((c) => /googleusercontent/.test(c.url)).length, 0);
+});
+
+test("Drive: picked files only — download, export of Google formats, skips; then revoked", async () => {
+  reset();
+  popup = fakePopup(() => ({ token: "tok-d" }));
+  const D = "https://www.googleapis.com/drive/v3/files/";
+  routes["https://oauth2.googleapis.com/revoke"] = () => ({});
+  const META = {
+    f1: { id: "f1", name: "report.pdf", mimeType: "application/pdf", size: "7" },
+    f2: { id: "f2", name: "Budget", mimeType: "application/vnd.google-apps.spreadsheet" },
+    f3: { id: "f3", name: "Folder", mimeType: "application/vnd.google-apps.folder" },
+    f4: { id: "f4", name: "huge.iso", mimeType: "application/octet-stream", size: "99999999" },
+    f5: { id: "f5", name: "Slides", mimeType: "application/vnd.google-apps.presentation" }
+  };
+  routes[D] = (u) => {
+    const m = /files\/([^/?]+)(\/export)?\?(.*)$/.exec(u);
+    if (m[2]) return { body: "EXPORT:" + new URLSearchParams(m[3]).get("mimeType").slice(-5) };
+    if (/alt=media/.test(u)) return { body: "PDFDATA" };
+    return META[m[1]];
+  };
+  let pickedWith = "";
+  const res = await GI.run({ scope: GI.SCOPES.drive,
+    read: (tk, api) => GM.readDrive(api, tk, { pick: (t) => { pickedWith = t; return Promise.resolve(["f1", "f2", "f3", "f4", "f5", "../x"].map((id) => ({ id }))); } },
+      { count: 10, file: 1000, total: 5000 }) });
+  assert.equal(pickedWith, "tok-d", "the picker gets the same short-lived token");
+  const d = res.data;
+  assert.deepEqual(d.items.map((i) => i.name), ["report.pdf", "Budget.xlsx", "Slides.pptx"]);
+  assert.deepEqual(d.items.map((i) => i.key), ["gd:f1", "gd:f2", "gd:f5"]);
+  assert.deepEqual(d.skipped.map((s) => s.name + ":" + s.why), ["Folder:unsupported", "huge.iso:big"]);
+  assert.ok(calls.some((c) => c.url === D + "f1?alt=media&supportsAllDrives=true"));
+  assert.ok(calls.some((c) => c.url === D + "f2/export?mimeType=" + encodeURIComponent("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")));
+  assert.ok(!calls.some((c) => /f4\?alt=media/.test(c.url)), "a file over the cap is not downloaded");
+  assert.ok(!calls.some((c) => /x\?/.test(c.url) && /\.\./.test(c.url)));
+  assert.ok(calls.filter((c) => c.url.indexOf(D) === 0).every((c) => !c.opts.method && c.opts.headers.Authorization === "Bearer tok-d"), "GET only, with the token");
+  assert.equal(revokes().length, 1);
+  // nothing picked → nothing read
+  reset();
+  popup = fakePopup(() => ({ token: "tok-e" }));
+  routes["https://oauth2.googleapis.com/revoke"] = () => ({});
+  const none = await GI.run({ scope: GI.SCOPES.drive, read: (tk, api) => GM.readDrive(api, tk, { pick: () => Promise.resolve([]) }) });
+  assert.equal(none.data.items.length, 0);
+  assert.equal(none.data.picked, 0);
+  assert.equal(revokes().length, 1);
 });

@@ -168,6 +168,7 @@
       "ac.own.save": "Save",
       "ac.own.saved": "Saved on this device",
       "ac.own.bad": "That doesn't look like a client id",
+      "ac.own.key": "Google API key (only for picking files in Google Drive, in Files)",
       "rv.title": "Review import",
       "rv.sum": "{new} new · {diff} with other details · {same} already here",
       "rv.folded": "{n} listed twice in the import, combined",
@@ -446,6 +447,7 @@
       "ac.own.save": "Αποθήκευση",
       "ac.own.saved": "Αποθηκεύτηκε σε αυτή τη συσκευή",
       "ac.own.bad": "Αυτό δεν μοιάζει με client id",
+      "ac.own.key": "Κλειδί Google API (μόνο για την επιλογή αρχείων από το Google Drive, στα Αρχεία)",
       "rv.title": "Έλεγχος εισαγωγής",
       "rv.sum": "{new} νέες · {diff} με άλλα στοιχεία · {same} υπάρχουν ήδη",
       "rv.folded": "{n} υπήρχαν δύο φορές στην εισαγωγή και ενώθηκαν",
@@ -4597,6 +4599,7 @@ document.addEventListener("keydown", function (e) {
       $("ac-" + p).hidden = !ACC.ready(p);
       $("ac-id-" + p).value = ACC.ownId(p);
     });
+    $("ac-key-google").value = ACC.ownId("googleKey");
     $("ac-uri").textContent = ACC.redirectUri();
     if (!ACC.ready("google") && !ACC.ready("microsoft")) $("ac-own").open = true;
   }
@@ -4643,7 +4646,8 @@ document.addEventListener("keydown", function (e) {
     });
     $("ac-id-save").addEventListener("click", function () {
       var ok = ACC.setOwnId("google", $("ac-id-google").value) &&
-               ACC.setOwnId("microsoft", $("ac-id-microsoft").value);
+               ACC.setOwnId("microsoft", $("ac-id-microsoft").value) &&
+               ACC.setOwnId("googleKey", $("ac-key-google").value);
       acStat(ok ? t("ac.own.saved") : t("ac.own.bad"));
       if (ok) acRender();
     });

@@ -264,7 +264,44 @@
       "err.reserved":  "This name is reserved for the Trash.",
       "name.newFolder": "New folder",
       "name.newFile":   "New file.txt",
-	  "act.import": "Import files"
+	  "act.import": "Import files",
+      "gi.device":     "From this device",
+      "gi.drive":      "From Google Drive",
+      "gi.photos":     "From Google Photos",
+      "gi.titleDrive": "Import from Google Drive",
+      "gi.titlePhotos":"Import from Google Photos",
+      "gi.signin":     "Sign in to Google in the window that opened. orOS only reads what you pick, once, and lets go of the sign-in right after.",
+      "gi.pickPhotos": "Signed in. Open Google Photos and pick the photos and videos to bring in.",
+      "gi.openPhotos": "Open Google Photos",
+      "gi.waitPhotos": "Waiting for your choice in Google Photos… Press Done there when you have picked.",
+      "gi.pickDrive":  "Pick the files in Google Drive's window.",
+      "gi.list":       "Reading what you picked…",
+      "gi.get":        "Downloading {n} of {m}…",
+      "gi.none":       "Nothing was picked.",
+      "gi.nothingNew": "Nothing new: everything you picked is already in \"{f}\".",
+      "gi.sum":        "{n} files, {s} in all, into \"{f}\".",
+      "gi.dupSum":     "{n} already there (same name and size): left out.",
+      "gi.skipSum":    "{n} not brought in:",
+      "gi.why.big":    "too big (over {s})",
+      "gi.why.total":  "over the {s} limit for one import",
+      "gi.why.count":  "over {n} files for one import",
+      "gi.why.fail":   "could not be downloaded",
+      "gi.why.unsupported": "a Google file with nothing to download (folder, form, site or map)",
+      "gi.why.notready": "Google is still processing this video",
+      "gi.why.bad":    "unreadable answer from Google",
+      "gi.dup":        "already there",
+      "gi.go":         "Import {n}",
+      "gi.close":      "Close",
+      "gi.cancel":     "Cancel",
+      "gi.writing":    "Saving {n} of {m}…",
+      "gi.done":       "{n} files imported into \"{f}\"",
+      "gi.doneFail":   "{n} imported, {m} could not be saved",
+      "gi.undo":       "Undo",
+      "gi.undone":     "Import undone",
+      "gi.hintPhotos": "The Google Photos Picker API has to be turned on in the Google Cloud project of the app id in use. See Help.",
+      "gi.hintDrive":  "The Google Drive API and the Google Picker API have to be turned on in the Google Cloud project of the app id in use. See Help.",
+      "gi.noPicker":   "Google's file picker could not be loaded. Check the connection, or allow apis.google.com.",
+      "gi.popup":      "The window was blocked. Allow pop-ups for orOS and press the button again."
     },
     el: {
       "aria.path": "Διαδρομή",
@@ -447,7 +484,44 @@
       "err.reserved":  "Αυτό το όνομα είναι δεσμευμένο για τον Κάδο.",
       "name.newFolder": "Νέος φάκελος",
       "name.newFile":   "Νέο αρχείο.txt",
-	  "act.import": "Εισαγωγή αρχείων"
+	  "act.import": "Εισαγωγή αρχείων",
+      "gi.device":     "Από αυτή τη συσκευή",
+      "gi.drive":      "Από το Google Drive",
+      "gi.photos":     "Από το Google Photos",
+      "gi.titleDrive": "Εισαγωγή από το Google Drive",
+      "gi.titlePhotos":"Εισαγωγή από το Google Photos",
+      "gi.signin":     "Συνδέσου στη Google στο παράθυρο που άνοιξε. Το orOS διαβάζει μόνο ό,τι διαλέξεις, μία φορά, και αφήνει τη σύνδεση αμέσως μετά.",
+      "gi.pickPhotos": "Συνδέθηκες. Άνοιξε το Google Photos και διάλεξε τις φωτογραφίες και τα βίντεο που θέλεις να φέρεις.",
+      "gi.openPhotos": "Άνοιγμα Google Photos",
+      "gi.waitPhotos": "Περιμένω την επιλογή σου στο Google Photos… Πάτα «Τέλος» εκεί όταν διαλέξεις.",
+      "gi.pickDrive":  "Διάλεξε τα αρχεία στο παράθυρο του Google Drive.",
+      "gi.list":       "Διαβάζω ό,τι διάλεξες…",
+      "gi.get":        "Λήψη {n} από {m}…",
+      "gi.none":       "Δεν διάλεξες τίποτα.",
+      "gi.nothingNew": "Τίποτα νέο: ό,τι διάλεξες υπάρχει ήδη στο «{f}».",
+      "gi.sum":        "{n} αρχεία, {s} συνολικά, στον φάκελο «{f}».",
+      "gi.dupSum":     "{n} υπάρχουν ήδη (ίδιο όνομα και μέγεθος): παραλείπονται.",
+      "gi.skipSum":    "{n} δεν θα έρθουν:",
+      "gi.why.big":    "πολύ μεγάλο (πάνω από {s})",
+      "gi.why.total":  "πάνω από το όριο των {s} ανά εισαγωγή",
+      "gi.why.count":  "πάνω από {n} αρχεία ανά εισαγωγή",
+      "gi.why.fail":   "η λήψη απέτυχε",
+      "gi.why.unsupported": "αρχείο Google χωρίς περιεχόμενο για λήψη (φάκελος, φόρμα, ιστότοπος ή χάρτης)",
+      "gi.why.notready": "η Google επεξεργάζεται ακόμα αυτό το βίντεο",
+      "gi.why.bad":    "ακατανόητη απάντηση από τη Google",
+      "gi.dup":        "υπάρχει ήδη",
+      "gi.go":         "Εισαγωγή {n}",
+      "gi.close":      "Κλείσιμο",
+      "gi.cancel":     "Ακύρωση",
+      "gi.writing":    "Αποθήκευση {n} από {m}…",
+      "gi.done":       "{n} αρχεία μπήκαν στο «{f}»",
+      "gi.doneFail":   "Μπήκαν {n}, {m} δεν αποθηκεύτηκαν",
+      "gi.undo":       "Αναίρεση",
+      "gi.undone":     "Η εισαγωγή αναιρέθηκε",
+      "gi.hintPhotos": "Πρέπει να ενεργοποιηθεί το Google Photos Picker API στο έργο Google Cloud του αναγνωριστικού εφαρμογής που χρησιμοποιείται. Δες τη Βοήθεια.",
+      "gi.hintDrive":  "Πρέπει να ενεργοποιηθούν το Google Drive API και το Google Picker API στο έργο Google Cloud του αναγνωριστικού εφαρμογής που χρησιμοποιείται. Δες τη Βοήθεια.",
+      "gi.noPicker":   "Δεν φορτώθηκε το παράθυρο επιλογής αρχείων της Google. Έλεγξε τη σύνδεση ή επίτρεψε το apis.google.com.",
+      "gi.popup":      "Το παράθυρο μπλοκαρίστηκε. Επίτρεψε τα αναδυόμενα για το orOS και πάτα ξανά το κουμπί."
     }
   };
 
@@ -2118,6 +2192,342 @@
       importFilesList(files, cwd);
     });
     input.click();
+  }
+
+  // ---------- 9b. One-time import from Google Drive / Google Photos ----------
+  // The Import button opens a small menu when this orOS can sign in to
+  // Google (../google-import.js: a client id; Drive also needs the
+  // person's own browser API key). The reading is files/gmedia.js's:
+  // the person picks in Google's own picker, orOS downloads exactly
+  // that while the one-scope token lives, then revokes it. The
+  // preview lists names, sizes, the total and what is left out; then
+  // ONE write pass into "Imported from Google Drive / Photos" (the
+  // same fs.js write as any import, so Vault Drive syncs it file by
+  // file), and a toast whose Undo removes exactly the files added.
+  // Files keeps no metadata of its own: a file is "already there"
+  // when the folder has the same name (or it made unique) and size.
+
+  var GI_IMAGE_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>';
+
+  function recentsDrop(path) {
+    var r = recentsRead(), keep = r.filter(function (e) { return e.p !== path; });
+    if (keep.length !== r.length) { try { localStorage.setItem(RECENTS_KEY, JSON.stringify(keep)); } catch (e) {} }
+  }
+
+  function gImp() { return window.OrosGoogleImport || null; }
+  function gMedia() { return window.OrosGoogleMedia || null; }
+  function googleOffer() {
+    var GI = gImp();
+    if (!GI || !gMedia() || typeof GI.ready !== "function") return { drive: false, photos: false };
+    return { photos: GI.ready(), drive: typeof GI.driveReady === "function" && GI.driveReady() };
+  }
+
+  function openImportMenu(ev) {
+    var g = googleOffer();
+    if (!g.drive && !g.photos) { openFilePicker(); return; }
+    if (ev) ev.stopPropagation();
+    if (ctxMenu) { ctxMenu.remove(); ctxMenu = null; return; }
+    ctxMenu = document.createElement("div");
+    ctxMenu.id = "context-menu";
+    ctxMenu.className = "gi-menu";
+    function item(svg, key, fn) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.id = "gi-m-" + key.split(".")[1];
+      b.innerHTML = svg + '<span class="cm-label"></span>';
+      b.querySelector(".cm-label").textContent = t(key);
+      b.addEventListener("click", function () { close(); fn(); });
+      ctxMenu.appendChild(b);
+    }
+    function close() {
+      if (ctxMenu) { ctxMenu.remove(); ctxMenu = null; }
+      document.removeEventListener("click", outside);
+    }
+    function outside(e) { if (ctxMenu && !ctxMenu.contains(e.target)) close(); }
+    item(IMPORT_SVG, "gi.device", openFilePicker);
+    if (g.drive) item(FILE_SVG, "gi.drive", function () { startGoogle("drive"); });
+    if (g.photos) item(GI_IMAGE_SVG, "gi.photos", function () { startGoogle("photos"); });
+    document.body.appendChild(ctxMenu);
+    var r = $("pick-files").getBoundingClientRect();
+    var mw = ctxMenu.offsetWidth || 200;
+    ctxMenu.style.left = Math.max(8, Math.min(r.left, window.innerWidth - mw - 8)) + "px";
+    ctxMenu.style.top = (r.bottom + 4) + "px";
+    setTimeout(function () { document.addEventListener("click", outside); }, 0);
+  }
+
+  var gi = null;            // the import under way: { kind, stopped, … }
+
+  function giDialog() {
+    var d = $("dlg-gimport");
+    if (d) return d;
+    d = document.createElement("dialog");
+    d.id = "dlg-gimport";
+    d.className = "gi-dlg";
+    d.innerHTML = '<h3 id="gi-title"></h3><p id="gi-stat" aria-live="polite"></p>' +
+      '<p id="gi-hint" class="hint" hidden></p><ul id="gi-list" class="gi-list" hidden></ul>' +
+      '<menu><button type="button" id="gi-cancel"></button><span class="spacer"></span>' +
+      '<button type="submit" id="gi-act" hidden></button></menu>';
+    document.body.appendChild(d);
+    $("gi-cancel").addEventListener("click", function () { d.close(); });
+    $("gi-act").addEventListener("click", function () { if (gi && gi.act) gi.act(); });
+    d.addEventListener("cancel", function (e) { if (gi && gi.writing) e.preventDefault(); });
+    d.addEventListener("close", function () {
+      if (!gi || gi.hidden) return;
+      var g = gi;
+      if (g.writing) return;
+      gi = null;
+      g.stopped = true;
+      if (g.reject) g.reject(Object.assign(new Error("cancelled"), { code: "cancelled" }));
+      var GI = gImp();
+      if (GI && !g.read) GI.cancel();
+    });
+    return d;
+  }
+  function giStat(text) { $("gi-stat").textContent = text || ""; }
+  function giHint(text) { var h = $("gi-hint"); h.textContent = text || ""; h.hidden = !text; }
+  function giAct(label, fn) {
+    var b = $("gi-act");
+    b.hidden = !label;
+    b.textContent = label || "";
+    if (gi) gi.act = fn || null;
+  }
+
+  // Must run inside the click: the sign-in window opens synchronously.
+  function startGoogle(kind) {
+    var GI = gImp(), GM = gMedia();
+    if (!GI || !GM) return;
+    var d = giDialog();
+    if (gi) { var old = gi; gi = null; old.stopped = true; }
+    var me = { kind: kind, stopped: false, read: false };
+    if (kind === "drive") GM.loadPicker().catch(function () {});   // Google's script: on this click, not before
+    var hooks = {
+      stopped: function () { return me.stopped; },
+      progress: function (phase, n, m) {
+        if (gi !== me) return;
+        if (phase === "list") giStat(t("gi.list"));
+        else if (phase === "get") giStat(tfmt("gi.get", { n: n, m: m }));
+      },
+      open: function (uri) {
+        return new Promise(function (resolve, reject) {
+          me.reject = reject;
+          giStat(t("gi.pickPhotos"));
+          giAct(t("gi.openPhotos"), function () {
+            var w = null;
+            try { w = window.open(uri, "oros-gphotos-" + Date.now(), "popup,width=1000,height=760"); } catch (e) { w = null; }
+            if (!w) { giStat(t("gi.popup")); return; }
+            try { w.opener = null; } catch (e) {}
+            me.reject = null;
+            giAct(null);
+            giStat(t("gi.waitPhotos"));
+            resolve();
+          });
+        });
+      },
+      // Google's picker is a layer of this page: our modal dialog
+      // would sit above it, so it steps aside meanwhile.
+      pick: function (token) {
+        me.hidden = true;
+        if (d.open) d.close();
+        function back() {
+          me.hidden = false;
+          if (gi === me && !d.open) d.showModal();
+        }
+        giStat(t("gi.pickDrive"));
+        return GM.showPicker(token, { key: GI.apiKey(), appId: GI.appId(), lang: LANG, max: GM.CAPS.count })
+          .then(function (docs) { back(); return docs; }, function (e) { back(); throw e; });
+      }
+    };
+    var run = GI.run({
+      scope: GI.SCOPES[kind],
+      read: function (token, api) {
+        me.read = true;
+        return kind === "photos" ? GM.readPhotos(api, hooks, GM.CAPS) : GM.readDrive(api, token, hooks, GM.CAPS);
+      }
+    });
+    gi = me;
+    $("gi-title").textContent = t(kind === "drive" ? "gi.titleDrive" : "gi.titlePhotos");
+    $("gi-cancel").textContent = t("gi.cancel");
+    $("gi-list").hidden = true;
+    giHint("");
+    giAct(null);
+    giStat(t("gi.signin"));
+    if (!d.open) d.showModal();
+    run.then(function (res) {
+      if (gi !== me) return;
+      return giPreview(me, res.data);
+    }).catch(function (e) {
+      if (gi !== me) return;
+      console.warn("files: Google import failed:", e);
+      $("gi-cancel").textContent = t("gi.close");
+      giAct(null);
+      if (e && e.code === "network" && e.detail === "picker") giStat(t("gi.noPicker"));
+      else giStat(GI.message(e, LANG));
+      giHint(e && e.code === "notenabled" ? t(kind === "drive" ? "gi.hintDrive" : "gi.hintPhotos") : "");
+    });
+  }
+
+  // Sizes of what the folder holds now (names + sizes).
+  function giExisting(dir) {
+    return fsList(dir, true).then(function (list) {
+      var out = [];
+      return list.slice(0, 3000).reduce(function (p, e) {
+        return p.then(function () {
+          if (e.dir) { out.push({ name: e.name, dir: true }); return; }
+          return FS().stat(join(dir, e.name)).then(function (st) {
+            out.push({ name: e.name, size: st ? (st.size || st.bytes || 0) : 0 });
+          }, function () { out.push({ name: e.name, size: -1 }); });
+        });
+      }, Promise.resolve()).then(function () { return out; });
+    }, function () { return []; });
+  }
+  function giWhy(s) {
+    var C = gMedia().CAPS;
+    if (s.why === "big") return tfmt("gi.why.big", { s: fmtKB(C.file) });
+    if (s.why === "total") return tfmt("gi.why.total", { s: fmtKB(C.total) });
+    if (s.why === "count") return tfmt("gi.why.count", { n: C.count });
+    return t("gi.why." + s.why) || s.why;
+  }
+  function giRow(name, right, cls) {
+    var li = document.createElement("li");
+    li.className = "gi-row" + (cls ? " " + cls : "");
+    var n = document.createElement("span");
+    n.className = "gi-name";
+    n.textContent = name;
+    var r = document.createElement("span");
+    r.className = "gi-size";
+    r.textContent = right;
+    li.appendChild(n);
+    li.appendChild(r);
+    return li;
+  }
+
+  function giPreview(me, data) {
+    var GM = gMedia();
+    data = data || { items: [], skipped: [] };
+    $("gi-cancel").textContent = t("gi.cancel");
+    if (!data.items.length && !data.skipped.length) {
+      giStat(t("gi.none"));
+      $("gi-cancel").textContent = t("gi.close");
+      return;
+    }
+    return fsList(ROOT).then(function (rootList) {
+      var folder = GM.folderFor(me.kind, rootList.map(function (e) { return e.name; }), LANG);
+      var dir = join(ROOT, folder);
+      var existed = rootList.some(function (e) { return e.name === folder && e.dir; });
+      return (existed ? giExisting(dir) : Promise.resolve([])).then(function (have) {
+        if (gi !== me) return;
+        var pl = GM.plan(data.items, have);
+        me.dir = dir; me.folder = folder; me.existed = existed; me.data = data;
+        var ul = $("gi-list");
+        ul.textContent = "";
+        var total = 0;
+        pl.add.forEach(function (a) {
+          total += a.item.size;
+          ul.appendChild(giRow(a.name, fmtKB(a.item.size)));
+        });
+        pl.dup.forEach(function (it) { ul.appendChild(giRow(it.name, t("gi.dup"), "gi-dup")); });
+        data.skipped.slice(0, 200).forEach(function (s) { ul.appendChild(giRow(s.name, giWhy(s), "gi-skip")); });
+        ul.hidden = false;
+        var lines = [];
+        if (pl.add.length) lines.push(tfmt("gi.sum", { n: pl.add.length, s: fmtKB(total), f: folder }));
+        else if (pl.dup.length) lines.push(tfmt("gi.nothingNew", { f: folder }));
+        else lines.push(t("gi.none"));
+        if (pl.add.length && pl.dup.length) lines.push(tfmt("gi.dupSum", { n: pl.dup.length }));
+        if (data.skipped.length) lines.push(tfmt("gi.skipSum", { n: data.skipped.length }));
+        giStat(lines.join(" "));
+        giHint("");
+        if (!pl.add.length) { $("gi-cancel").textContent = t("gi.close"); giAct(null); return; }
+        giAct(tfmt("gi.go", { n: pl.add.length }), function () { giWrite(me); });
+      });
+    });
+  }
+
+  // ONE pass of writes, names made unique against the folder as it is
+  // now; then the toast with Undo.
+  function giWrite(me) {
+    var GM = gMedia();
+    if (me.writing) return;
+    me.writing = true;
+    giAct(null);
+    $("gi-cancel").disabled = true;
+    var added = [];
+    var existed = false;
+    fsList(ROOT).then(function (rootList) {
+      existed = rootList.some(function (e) { return e.name === me.folder && e.dir; });
+      return existed ? giExisting(me.dir) : [];
+    }).then(function (have) {
+      var pl = GM.plan(me.data.items, have);
+      var fail = 0;
+      return pl.add.reduce(function (p, a, i) {
+        return p.then(function () {
+          giStat(tfmt("gi.writing", { n: i + 1, m: pl.add.length }));
+          var path = join(me.dir, a.name);
+          return writeFileDst(a.item.blob, path).then(function (ok) {
+            if (ok) added.push(path); else fail++;
+          });
+        });
+      }, Promise.resolve()).then(function () { return fail; });
+    }).then(function (fail) {
+      me.writing = false;
+      $("gi-cancel").disabled = false;
+      gi = null;
+      var d = $("dlg-gimport");
+      if (d.open) d.close();
+      if (added.length) {
+        forceStorageRecalc();
+        markDirty();
+        var paths = added.slice(), dir = me.dir, made = !existed;
+        var text = fail ? tfmt("gi.doneFail", { n: added.length, m: fail }) : tfmt("gi.done", { n: added.length, f: me.folder });
+        undoToast(text, function () { giUndo(paths, dir, made); });
+        navigate(dir);
+      } else {
+        transientNote(t("toast.importFail"));
+        refresh();
+      }
+    });
+  }
+
+  // Exactly the files this import added; the folder too when the
+  // import made it and nothing else came into it meanwhile.
+  function giUndo(paths, dir, made) {
+    paths.slice().reverse().reduce(function (p, path) {
+      return p.then(function () {
+        return FS().rm(path).catch(function () {});
+      });
+    }, Promise.resolve()).then(function () {
+      if (!made) return;
+      return FS().ls(dir).then(function (left) {
+        if (!left || !left.length) return FS().rm(dir).catch(function () {});
+      }, function () {});
+    }).then(function () {
+      paths.forEach(function (p) { recentsDrop(p); });
+      forceStorageRecalc();
+      markDirty();
+      if (made && cwd === dir) navigate(ROOT); else refresh();
+      transientNote(t("gi.undone"));
+    });
+  }
+
+  // A toast with one action (the shell's, or this page's own).
+  function undoToast(text, fn) {
+    var api = null;
+    try { api = window.parent.orosNotifs; } catch (e) {}
+    if (!api && window.orosNotifs) api = window.orosNotifs;
+    if (api && typeof api.transient === "function" &&
+        api.transient({ ns: "files", title: text, body: "", action: { label: t("gi.undo"), fn: fn } })) return;
+    var el = $("toast");
+    el.textContent = text + " ";
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "toast-btn";
+    b.textContent = t("gi.undo");
+    b.addEventListener("click", function () { el.classList.remove("show"); fn(); });
+    el.appendChild(b);
+    el.classList.remove("show");
+    void el.offsetWidth;
+    el.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { el.classList.remove("show"); }, 8000);
   }
 
   // ---------- 10. Download / Clipboard ----------
@@ -4326,7 +4736,7 @@
       pick.title = t("act.import");
       pick.setAttribute("aria-label", t("act.import"));
       pick.innerHTML = IMPORT_SVG;
-      pick.addEventListener("click", openFilePicker);
+      pick.addEventListener("click", openImportMenu);
       var actions = $("actions");
       if (actions) actions.insertBefore(pick, actions.firstChild);
     }
