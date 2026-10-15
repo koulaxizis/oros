@@ -20,7 +20,7 @@
 // GitHub Action should stamp just the version number; we prepend
 // the oros-v prefix here for cache namespace separation.
 
-var CACHE_VERSION = "oros-v2.46.00";
+var CACHE_VERSION = "oros-v2.48.00";
 var SHELL_CACHE   = "oros-shell-" + CACHE_VERSION;
 var RUNTIME_CACHE = "oros-runtime-" + CACHE_VERSION;
 // WebLLM's library (vendor/webllm, about 7 MB, loaded only when the
@@ -520,6 +520,7 @@ var PRECACHE_URLS = [
   "certificates/core.js",
   "certificates/dk.js",
   "certificates/certificates.js",
+  "certificates/package.js",
   "certificates/search.js",
   "certificates/badges.js",
   "certificates/send.js",
@@ -684,6 +685,8 @@ var PRECACHE_URLS = [
   "writer/index.html",
   "writer/writer.css",
   "writer/writer.js",
+  "writer/io.js",
+  "writer/convert.js",
   "layout/",
   "layout/index.html",
   "layout/search.js",
@@ -1234,6 +1237,14 @@ var PRECACHE_URLS = [
   "importkit.js",
   "bundle.js",
   "recordpkg.js",
+  "converter/",
+  "converter/index.html",
+  "converter/converter.css",
+  "converter/registry.js",
+  "converter/core.js",
+  "converter/converter.js",
+  "converter/help.en.txt",
+  "converter/help.el.txt",
   "google-import.js",
   "enrich.js",
   "enrichui.js",
@@ -1262,6 +1273,8 @@ var PRECACHE_URLS = [
   "spreadsheet/search.js",
   "spreadsheet/spreadsheet.css",
   "spreadsheet/spreadsheet.js",
+  "spreadsheet/sheetimport.js",
+  "spreadsheet/convert.js",
   "spreadsheet/platforms.js",
   "podcasts/",
   "podcasts/index.html",
@@ -1409,6 +1422,8 @@ var PRECACHE_URLS = [
   "maps/maps.js",
   "maps/import.js",
   "maps/import-ui.js",
+  "maps/package.js",
+  "maps/package-ui.js",
   "maps/osm.js",
   "maps/osm-api.js",
   "maps/notes.js",
@@ -1702,6 +1717,7 @@ var PRECACHE_URLS = [
   "travel/search.js",
   "travel/travel.css",
   "travel/travel.js",
+  "travel/package.js",
   "travel/import.js",
   "travel/core.js",
   "assistant/edits.js",

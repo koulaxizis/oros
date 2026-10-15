@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <!-- DL-1: a direct link to this app opens it inside the orOS shell -->
+  <script>if (window.top === window.self && !/[?&]standalone\b/.test(location.search)) location.replace("../?open=converter" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>orOS Converter · orOS</title>
+
+  <link rel="stylesheet" href="converter.css?v=2.48.00">
+
+</head>
+<body>
+
+  <header id="toolbar">
+    <div class="title">
+      <span id="title-main" class="title-main" data-i18n="app.name">orOS Converter</span>
+      <span id="title-sub" class="title-sub" data-i18n="app.sub"></span>
+    </div>
+    <span class="spacer"></span>
+    <button type="button" id="clear-btn" class="icon-btn" hidden></button>
+  </header>
+
+  <main id="main">
+    <div class="wrap">
+
+      <section id="drop" class="drop" tabindex="-1">
+        <p class="drop-title" data-i18n="drop.title">Drop files or a folder here</p>
+        <p class="drop-hint hint small" id="drop-hint"></p>
+        <div class="drop-btns">
+          <button type="button" id="add-files" class="btn primary" data-i18n="btn.files">Add files</button>
+          <button type="button" id="add-folder" class="btn" data-i18n="btn.folder">Add a folder</button>
+        </div>
+      </section>
+
+      <section id="out" class="card" aria-labelledby="out-title">
+        <h2 id="out-title" data-i18n="out.title">Where the orOS files go</h2>
+        <div class="seg" role="radiogroup" aria-labelledby="out-title">
+          <label class="opt"><input type="radio" name="out" value="zip"><span class="opt-t" data-i18n="out.zip">Download all as .zip</span></label>
+          <label class="opt"><input type="radio" name="out" value="folder"><span class="opt-t" data-i18n="out.folder">Save to a folder in Files</span></label>
+          <label class="opt"><input type="radio" name="out" value="each"><span class="opt-t" data-i18n="out.each">Save each file</span></label>
+        </div>
+        <p id="out-hint" class="hint small"></p>
+      </section>
+
+      <section id="list-sec" hidden>
+        <div class="sec-head">
+          <h2 data-i18n="list.title">Files</h2>
+          <span class="spacer"></span>
+          <span id="skipped" class="hint small" hidden></span>
+        </div>
+        <ul id="list" class="rows"></ul>
+      </section>
+
+    </div>
+  </main>
+
+  <footer id="foot" hidden>
+    <div id="foot-info" class="foot-info" aria-live="polite"></div>
+    <div class="foot-btns">
+      <button type="button" id="stop-btn" class="btn" data-i18n="btn.stop" hidden>Stop</button>
+      <button type="button" id="alt-btn" class="btn" hidden></button>
+      <button type="button" id="go-btn" class="btn primary"></button>
+    </div>
+  </footer>
+
+  <div id="drag-veil" hidden><span data-i18n="drop.veil">Drop to add</span></div>
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="registry.js?v=2.48.00"></script>
+  <script src="core.js?v=2.48.00"></script>
+  <script src="../bundle.js?v=2.48.00"></script>
+  <script src="converter.js?v=2.48.00"></script>
+
+</body>
+</html>

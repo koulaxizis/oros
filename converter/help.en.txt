@@ -1,0 +1,43 @@
+# orOS Converter
+Turn many documents and spreadsheets into orOS files at once. A Word or OpenDocument text becomes an `.orosdoc` that opens in Writer; an Excel, OpenDocument or CSV sheet becomes an `.orossheet` that opens in Spreadsheet. The result is the same file the app itself makes when you export to an orOS file, so nothing is lost. Your original files are never changed.
+
+## Getting started
+1. Drop files, or a whole folder, on the app, or press `Add files` or `Add a folder`.
+2. Each file gets a row: its name, its size and what it becomes (`→ .orosdoc`, `→ .orossheet`), or `Not supported`.
+3. Choose where the orOS files go (see below).
+4. Press `Convert`. The files are converted one after the other; each row shows its progress, then `Done` or what went wrong.
+5. `Open` on a finished row opens the new file in its app.
+
+## What it converts
+- Documents → `.orosdoc` (Writer): .docx, .odt, .rtf, .html, .htm, .md, .markdown and .txt.
+- Spreadsheets → `.orossheet` (Spreadsheet): .xlsx, .xls, .ods and .csv.
+More kinds of files (slides, designs, mind maps, boards) come in later versions.
+
+## Where the files go
+- `Download all as .zip`: one .zip with every converted file, downloaded when the list is done. `Download .zip` gets it again.
+- `Save to a folder in Files`: each file goes into Files › Converted › the date of today, as soon as it is ready. A name that is already there gets a number, such as "Report (2).orosdoc". `Show in Files` opens the folder.
+- `Save each file`: every finished row gets a `Save` button; `Save all` saves them one after the other.
+Folders you add keep their sub-folders in the .zip and in Files.
+The app remembers your choice on this device.
+
+## From Files
+Select one or more documents or spreadsheets in Files and choose `Convert to orOS` in the menu or in the selection bar. The Converter opens with those files in the list.
+
+## When a file is not converted
+- `Not supported`: the Converter does not know this kind of file. Files in an added folder that it can't convert are left out; the list says how many.
+- `The file could not be read`: the file is damaged, or its name says .docx or .xlsx when it is something else.
+- `This is already an orOS file`: there is nothing to convert.
+- `This file is too big to convert`: the file is bigger than its app can open.
+- Some files convert with notes (for example a feature the app does not have). Open the notes under the row to read them.
+- `Try again` puts a failed row back in the list; `Stop` stops after the file being converted.
+
+## Keyboard shortcuts
+- [[Ctrl+O]]: add files.
+- [[Ctrl+Enter]]: the button at the bottom (`Convert`, `Download .zip`, …).
+
+## Privacy and sync
+Everything happens on your device; no file is sent anywhere. The Converter keeps no data of its own and has nothing to sync: the orOS files you save to Files are synced like the rest of Files when Vault Drive is on. Only your output choice is kept, on this device.
+
+## Limits
+- Files are converted one at a time, so a long list takes a while; keep the app open until it is done.
+- Password-protected documents and spreadsheets can't be converted. Open them in their own program and save them without a password first.
