@@ -23,12 +23,22 @@ Put the secret a website gives you for an authenticator app into `Two-factor sec
 Codes from a counter (HOTP) are not supported.
 
 ## Import and export
-`⋯` then `Import` brings entries from another manager. Entries that are already in the vault (same title, username, password and first website) are skipped, and you see how many are new before you import them.
-- `Bitwarden (.json, not encrypted)`: in Bitwarden, export as `.json`. Folders become tags; cards, identities and hidden fields become fields.
-- `KeePass / KeePassXC (.kdbx)`: type the file's password and, if it has one, choose its key file. Groups become tags. Attachments and the recycle bin are left out.
-- `CSV`: exports of Bitwarden, Chrome, Edge, Firefox, KeePassXC and 1Password.
+`⋯` then `Import` brings entries and two-factor codes from another app. Press `Choose file`: the app is recognised by itself. Entries that are already in the vault (same title, username, password and first website) are skipped, and you see what was found and how many are new before you import. `Undo` in the message after the import takes it all back.
+- Bitwarden: export as `.json` (not the encrypted kind). Folders become tags; cards, identities and hidden fields become fields.
+- KeePass / KeePassXC (`.kdbx`): type the file's password and, if it has one, choose its key file. Groups become tags. Attachments and the recycle bin are left out.
+- 1Password: File › Export, as `.1pux` (or CSV). Vaults and tags become tags; sections become fields.
+- Proton Pass: Settings › Export, without encryption (a ZIP or CSV). Encrypted (PGP) exports can't be read. Vaults become tags; cards, aliases and identities come too.
+- LastPass: Advanced Options › Export, a CSV. Secure notes become entries with notes, folders become tags.
+- Dashlane: Settings › Export data, as CSV (a ZIP; `credentials.csv` alone works too). The encrypted `.dash` file can't be read.
+- NordPass: Settings › Export items, a CSV. Enpass: File › Export, as `.json`. Apple Passwords (Mac): File › Export All Passwords, a CSV with the two-factor codes.
+- Chrome, Edge, Firefox, KeePassXC: their CSV export.
 
-Delete an export that is not encrypted as soon as you have imported it.
+Two-factor apps: each code goes to the one entry with the same site and account that has no code yet; otherwise it becomes an entry of its own. A code whose secret is already in the vault is skipped. Only time-based codes (TOTP) come; counter-based (HOTP) and Steam codes are left out.
+- Aegis: Settings › Import & Export › Export, with encryption turned off (plain `.json`).
+- 2FAS: Settings › 2FAS Backup › Export to file, without a password (`.2fas`).
+- Google Authenticator: Transfer accounts › Export accounts shows one or more QR codes. Under `Google Authenticator` choose a screenshot of each, scan it with `Use the camera`, or paste its `otpauth-migration://` link and press `Read`. Add them one after another, then import.
+
+Delete an export that is not encrypted, and any picture of those QR codes, as soon as you have imported it. Nothing leaves your device while importing.
 
 `⋯` then `Export` saves every entry with your master password as a check.
 - `KeePass (.kdbx 4, encrypted)`: the file opens in KeePass and KeePassXC with the password you choose for it.
