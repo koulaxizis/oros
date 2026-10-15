@@ -9,7 +9,7 @@ Your documents appear as cards on the home screen, where you can search, rename,
 ## Place things on the page
 Pick a tool on the left and drag on the page: `Text frame (T)`, `Image frame (F)`, `Rectangle (R)`, `Ellipse (E)` or `Line (L)`. `Select (V)` moves and resizes objects; `Hand (H)` moves the view.
 
-With something selected, the `Properties` panel sets position and size, `Rotation`, `Opacity`, `Fill`, `Stroke`, `Arrange`, `Align`, `Group` and `Lock position`. Right-click (or long-press) an object for a quick menu. `Hide` hides an object; with nothing selected, the page panel has `Show hidden objects`.
+With something selected, the `Properties` panel sets position and size, `Rotation`, `Opacity`, `Fill`, `Gradient` (for shapes: `Linear` or `Radial`, start and end colour, angle), `Stroke`, `Arrange`, `Align`, `Group` and `Lock position`. Right-click (or long-press) an object for a quick menu. `Hide` hides an object; with nothing selected, the page panel has `Show hidden objects`.
 
 Drag from a ruler to add a guide, and drag a guide back onto the ruler to remove it. The `Zoom` menu has `Fit page`, `Fit spread`, 50, 100 and 200 %.
 
@@ -46,11 +46,11 @@ Make many name cards, labels, badges or certificates from one design and a CSV f
 
 ## Bring work from other programs
 `Open file` on the home screen also opens, as a new document:
-- Scribus `.sla` files: pages, masters, styles, colours, threaded text, shapes and embedded images.
+- Scribus `.sla` and compressed `.sla.gz` files: pages, masters, styles, colours, threaded text, shapes and free shapes (polygons, curves, arcs, spirals), linear and radial gradients, layers (their order; objects on hidden layers come in hidden, on locked layers locked) and embedded images.
 - InDesign `.idml` files (in InDesign: File, Save As, InDesign Markup): pages, masters, paragraph and character styles, colours, threaded text frames, shapes, lines, groups and embedded images.
 - PDF files, for example from Affinity Publisher: the text becomes editable frames, and pictures, drawings and backgrounds become one locked picture per page behind the text.
 
-Images that were only linked come in as empty frames with their file name; put them back with `Place image…`. Tables and free shapes become simple boxes; the message after opening says how many.
+Images that were only linked come in as empty frames with their file name; put them back with `Place image…`. Tables, text on a path and mesh or pattern fills become simple boxes or plain colours; the message after opening says how many.
 
 ## Sync and backup
 Your documents sync between your devices through [orOS sync](help:t/sync). Images are stored on the orOS disk and sync as separate files, so on another device a picture may show `Syncing…` for a while. The open document and zoom stay on each device. For a full copy with images, save a package; see also [backup](help:t/backup).
