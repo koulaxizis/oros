@@ -1304,3 +1304,42 @@ body.dbx-mode #status { display: none; }
    "#empty { display: flex }" kept the "This folder is empty" block on
    screen under a full file list. KEEP THIS THE LAST RULE OF THE FILE. */
 [hidden] { display: none !important; }
+
+/* ---------- One-time import from Google Drive / Photos (G2) ---------- */
+.gi-dlg { width: 480px; box-sizing: border-box; }
+.gi-dlg[open] { display: flex; flex-direction: column; }
+.gi-list {
+  list-style: none;
+  margin: 0 0 12px 0;
+  padding: 0;
+  overflow-y: auto;
+  min-height: 0;
+  flex: 1 1 auto;
+  border: 1px solid var(--border, #2c2b31);
+  border-radius: 6px;
+}
+.gi-row {
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  padding: 6px 10px;
+  font-size: 13px;
+  border-bottom: 1px solid var(--border, #2c2b31);
+}
+.gi-row:last-child { border-bottom: 0; }
+.gi-name { min-width: 0; overflow-wrap: anywhere; }
+.gi-size { flex-shrink: 0; color: var(--text-dim, #999); text-align: right; max-width: 50%; }
+.gi-dup .gi-name, .gi-skip .gi-name { color: var(--text-dim, #999); }
+.gi-skip .gi-size { color: var(--danger, #e66); }
+#toast .toast-btn {
+  background: none;
+  border: 0;
+  color: var(--accent, #6d4aff);
+  font-weight: 700;
+  cursor: pointer;
+  padding: 4px 0 4px 8px;
+  pointer-events: auto;
+}
+@media (max-width: 420px) {
+  .gi-dlg { min-width: 0; width: 100%; }
+}
