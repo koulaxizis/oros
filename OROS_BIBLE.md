@@ -7085,3 +7085,9 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - The 8-bit avatar is now a gender-neutral pixel robot (Chris 13:27; orOS never guesses gender from a name). Existing `px:<seed>` values draw a robot from the same seed, so no data changes. Varies head/eye/body/background colours, eyes (big, visor, dots), mouth (wide, grille, small), antennas (0-2) and ears (CT-NP).
 - Files: `contacts/contacts.js` (`pxSrc`), Bible CT-NP.
   - Tests: full suite green; Chromium with 14 contacts. Not tested: a phone.
+
+### 2026-10-15 — Open orOS file format, phase 2: Spreadsheet, Mind map, Notes, Wiki, Kanban, Prompter and Ringtones save bundles (#416) — 2.45.00
+- Seven more apps save open ZIP bundles (OBF 1.0): `.orossheet` (every sheet with formulas, formats, charts, rules; CSV per sheet), `.orosmind` (one map, node pictures, outline as Markdown and OPML), `.orosnotes` (one notebook, Markdown per page), `.oroswiki` (one wiki with full revision history and pictures), `.orosboard` (one board with card attachments; Markdown and CSV), `.orosscript` (one custom prompt; plain text), `.orostone` (one melody; `.rtttl`, plus `.wav` up to 60 s).
+- Each app reopens its bundle as a new item with fresh ids and opens an unzipped bundle folder. System "Open with" hands these files to the right app; Wiki, Kanban and Prompter get a file receiver for the first time. Spreadsheet adds sheets to the open workbook, renaming clashes to "X (2)" and rewriting formulas that point to them.
+- Files: new `notes/package.js`, `prompter/io.js` (precached); `bundle.js`, `fileopen.js`, manifests, the seven apps; spec `docs/oros-bundle.md`, Bible OBF-4b.
+  - Tests: 7 new bundle suites; full suite green; real Chromium per app in EN and EL. Not tested: a real phone, Safari, Firefox, OS double-click, bundles near the size caps.
