@@ -1,9 +1,10 @@
 // ============================================================
-// orOS designkit — pdf.js (v1.0.0)
+// orOS designkit — pdf.js (v1.1.0)
 // Vector PDF export with jsPDF (vendor/jspdf.umd.min.js): text as
 // real, selectable text in the embedded Noto fonts, placed glyph run
 // by glyph run from the SAME layout the screen draws (render.js),
-// shapes as paths, images cropped to their frames, CMYK swatches as
+// shapes as paths (free paths too, even-odd or non-zero), linear and
+// radial gradients as PDF shadings (stop opacity is left out), images cropped to their frames, CMYK swatches as
 // CMYK, rotation and opacity, bleed, TrimBox/BleedBox and crop marks,
 // single pages or spreads.
 // Needs orosDK.model + orosDK.text + orosDK.render (Node: require).
@@ -54,6 +55,54 @@
     pdf.internal.write([f4(a), f4(b), f4(c), f4(d), f4(e), f4(f), "cm"].join(" "));
   }
 
+  // Path commands (page points, see render.pathCmds) offset by ox, oy.
+  function pathOf(pdf, cmds, ox, oy) {
+    cmds.forEach(function (c) {
+      if (c[0] === "M") pdf.moveTo(ox + c[1], oy + c[2]);
+      else if (c[0] === "L") pdf.lineTo(ox + c[1], oy + c[2]);
+      else if (c[0] === "C") pdf.curveTo(ox + c[1], oy + c[2], ox + c[3], oy + c[4], ox + c[5], oy + c[6]);
+      else pdf.close();
+    });
+  }
+  // Any outline as commands: rect (rounded), ellipse, path.
+  var KAPPA = 0.5522847498;
+  function outlineCmds(it) {
+    if (it.t === "path") return R.pathCmds(it);
+    var x = it.x, y = it.y, w = it.w, h = it.h;
+    if (it.t === "ell") {
+      var rx = w / 2, ry = h / 2, cx = x + rx, cy = y + ry, kx = rx * KAPPA, ky = ry * KAPPA;
+      return [["M", cx + rx, cy], ["C", cx + rx, cy + ky, cx + kx, cy + ry, cx, cy + ry], ["C", cx - kx, cy + ry, cx - rx, cy + ky, cx - rx, cy],
+        ["C", cx - rx, cy - ky, cx - kx, cy - ry, cx, cy - ry], ["C", cx + kx, cy - ry, cx + rx, cy - ky, cx + rx, cy], ["Z"]];
+    }
+    var r = Math.max(0, Math.min(it.r || 0, w / 2, h / 2)), k = r * (1 - KAPPA);
+    if (!r) return [["M", x, y], ["L", x + w, y], ["L", x + w, y + h], ["L", x, y + h], ["Z"]];
+    return [["M", x + r, y], ["L", x + w - r, y], ["C", x + w - k, y, x + w, y + k, x + w, y + r], ["L", x + w, y + h - r],
+      ["C", x + w, y + h - k, x + w - k, y + h, x + w - r, y + h], ["L", x + r, y + h], ["C", x + k, y + h, x, y + h - k, x, y + h - r],
+      ["L", x, y + r], ["C", x, y + k, x + k, y, x + r, y], ["Z"]];
+  }
+  // A gradient fill: jsPDF clips to the outline and paints the shading
+  // in the current user space, so rotation applies to it as well.
+  function gradFill(pdf, doc, it, ox, oy) {
+    var g = R.gradGeom(it), colors = [];
+    it.gr.st.forEach(function (s) {
+      var c = M.swatchColor(doc, s[1]);
+      colors.push({ offset: s[0], color: c ? c.rgb.slice() : [0, 0, 0] });
+    });
+    pdf.__dkGrad = (pdf.__dkGrad || 0) + 1;
+    var key = "dkg" + pdf.__dkGrad;
+    pdf.saveGraphicsState();
+    pdf.advancedAPI(function (p) {
+      var sp = g.k === "r"
+        ? new p.ShadingPattern("radial", [ox + g.x1, oy + g.y1, 0, ox + g.x1, oy + g.y1, g.r], colors)
+        : new p.ShadingPattern("axial", [ox + g.x1, oy + g.y1, ox + g.x2, oy + g.y2], colors);
+      p.addShadingPattern(key, sp);
+      pathOf(p, outlineCmds(it), ox, oy);
+      var pat = { key: key, matrix: p.unitMatrix };
+      if (it.eo) p.fillEvenOdd(pat); else p.fill(pat);
+    });
+    pdf.restoreGraphicsState();
+  }
+
   function style(fill, stroke) { return fill && stroke ? "FD" : fill ? "F" : stroke ? "S" : null; }
 
   function drawItem(pdf, doc, it, ox, oy, lines, images, gstates) {
@@ -76,13 +125,18 @@
       pdf.restoreGraphicsState();
       return;
     }
-    var hasFill = !!it.fill && setColor(pdf, doc, it.fill, "fill");
+    var hasFill = !it.gr && !!it.fill && setColor(pdf, doc, it.fill, "fill");
     var r = Math.max(0, Math.min(it.r || 0, it.w / 2, it.h / 2));
     function shape(st) {
-      if (it.t === "ell") pdf.ellipse(x + it.w / 2, y + it.h / 2, it.w / 2, it.h / 2, st);
+      if (it.t === "path") {
+        pathOf(pdf, R.pathCmds(it), ox, oy);
+        if (st === "F") { if (it.eo) pdf.fillEvenOdd(); else pdf.fill(); }
+        else if (st === "S") pdf.stroke();
+      } else if (it.t === "ell") pdf.ellipse(x + it.w / 2, y + it.h / 2, it.w / 2, it.h / 2, st);
       else if (r) pdf.roundedRect(x, y, it.w, it.h, r, r, st);
       else pdf.rect(x, y, it.w, it.h, st);
     }
+    if (it.gr) gradFill(pdf, doc, it, ox, oy);
     if (hasFill) shape("F");
     if (it.t === "img") {
       var im = images[it.id];

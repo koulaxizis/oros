@@ -13,6 +13,7 @@
 //   3. Capture flow (L1–L4) + chip menu (rename/delete)
 //   3b. Insights view (distributions, calendar, streak,
 //       habits, breakdowns — ALL render-time derived)
+//   3c. Import from another app (Daylio, Bearable, eMoods, CSV)
 //   4. Sync slice + palette
 //   5. Wiring & boot
 // Data:
@@ -4317,6 +4318,13 @@ function mergeMoodStates(A, B) {
     pdf.textContent = t("exp.btn");
     pdf.addEventListener("click", exportPdf);
     top.appendChild(pdf);
+    var imp = document.createElement("button");
+    imp.type = "button";
+    imp.className = "chip ghost";
+    imp.id = "imp-btn";
+    imp.textContent = t("imp.btn");
+    imp.addEventListener("click", startImport);
+    top.appendChild(imp);
     host.appendChild(top);
 
     var es = entriesInRange();
@@ -4446,6 +4454,332 @@ function mergeMoodStates(A, B) {
     // factory reset — far corner, away from accidental thumbs
     appendResetLink(host);
   }
+
+  // ---------- 3c. Import from another app (mood/import.js) ----------
+  // Daylio (CSV or .daylio backup), Bearable, eMoods or any CSV with a
+  // date and a mood. Flow: pick a file → read + detect → preview (how
+  // each mood name maps, new activities, dates) → ONE write + one sync
+  // mark → toast with Undo. Imported entries are new entries with stable
+  // ids ("imp-…"): a second import of the same file adds only what is
+  // new, and nothing the user already has is ever changed. File content
+  // is shown with textContent only.
+  STRINGS.en["imp.btn"]      = "Import…";
+  STRINGS.en["imp.title"]    = "Import from another app";
+  STRINGS.en["imp.bad"]      = "This file couldn't be read. Use a Daylio CSV or backup, a Bearable or eMoods CSV, or a CSV with a date and a mood column.";
+  STRINGS.en["imp.big"]      = "This file is too large to import.";
+  STRINGS.en["imp.src.daylio"]    = "Daylio (CSV)";
+  STRINGS.en["imp.src.daylio-bk"] = "Daylio (backup)";
+  STRINGS.en["imp.src.bearable"]  = "Bearable";
+  STRINGS.en["imp.src.emoods"]    = "eMoods";
+  STRINGS.en["imp.src.generic"]   = "CSV file";
+  STRINGS.en["imp.count"]    = "Entries: {n}";
+  STRINGS.en["imp.map"]      = "How moods map";
+  STRINGS.en["imp.map.hint"] = "Mood records feelings, not a score: each mood becomes one feeling with a strength. Change any of them here.";
+  STRINGS.en["imp.map.em"]   = "Feelings come from the depression, elevation, irritability and anxiety ratings (0–3); a day with all four at 0 becomes Calm. Sleep and the other columns go into the note.";
+  STRINGS.en["imp.skip"]     = "Skip";
+  STRINGS.en["imp.unknown"]  = "Unknown mood: pick a feeling or it will be skipped.";
+  STRINGS.en["imp.hab"]      = "Marked in your habits: {list}";
+  STRINGS.en["imp.newAct"]   = "New activities: {list}";
+  STRINGS.en["imp.newEmo"]   = "New feelings: {list}";
+  STRINGS.en["imp.have"]     = "Already in Mood (left as they are): {n}";
+  STRINGS.en["imp.skipped"]  = "Rows skipped (no date or no mood): {n}";
+  STRINGS.en["imp.capped"]   = "Only the latest {max} entries are imported; {n} older ones are left out.";
+  STRINGS.en["imp.nothing"]  = "Nothing new to import.";
+  STRINGS.en["imp.go"]       = "Import {n}";
+  STRINGS.en["imp.cancel"]   = "Cancel";
+  STRINGS.en["imp.done"]     = "Entries imported: {n}";
+  STRINGS.en["imp.undo"]     = "Undo";
+  STRINGS.en["imp.undone"]   = "Import undone";
+  STRINGS.en["imp.full"]     = "Not enough storage on this device for this import. Nothing was changed.";
+  STRINGS.en["imp.w.dep"]    = "Depressed";
+  STRINGS.en["imp.w.ele"]    = "Elevated";
+  STRINGS.en["imp.w.irr"]    = "Irritable";
+  STRINGS.en["imp.w.anx"]    = "Anxiety";
+  STRINGS.en["imp.w.slp"]    = "Sleep";
+  STRINGS.en["imp.w.more"]   = "More activities";
+  STRINGS.el["imp.btn"]      = "Εισαγωγή…";
+  STRINGS.el["imp.title"]    = "Εισαγωγή από άλλη εφαρμογή";
+  STRINGS.el["imp.bad"]      = "Δεν ήταν δυνατό να διαβαστεί αυτό το αρχείο. Χρησιμοποίησε CSV ή αντίγραφο ασφαλείας του Daylio, CSV του Bearable ή του eMoods, ή ένα CSV με στήλη ημερομηνίας και διάθεσης.";
+  STRINGS.el["imp.big"]      = "Το αρχείο είναι πολύ μεγάλο για εισαγωγή.";
+  STRINGS.el["imp.src.daylio"]    = "Daylio (CSV)";
+  STRINGS.el["imp.src.daylio-bk"] = "Daylio (αντίγραφο ασφαλείας)";
+  STRINGS.el["imp.src.bearable"]  = "Bearable";
+  STRINGS.el["imp.src.emoods"]    = "eMoods";
+  STRINGS.el["imp.src.generic"]   = "Αρχείο CSV";
+  STRINGS.el["imp.count"]    = "Καταχωρήσεις: {n}";
+  STRINGS.el["imp.map"]      = "Πώς μεταφέρονται οι διαθέσεις";
+  STRINGS.el["imp.map.hint"] = "Το Mood καταγράφει συναισθήματα, όχι βαθμό: κάθε διάθεση γίνεται ένα συναίσθημα με ένταση. Μπορείς να αλλάξεις οποιαδήποτε εδώ.";
+  STRINGS.el["imp.map.em"]   = "Τα συναισθήματα βγαίνουν από τις βαθμολογίες κατάθλιψης, ανεβασμένης διάθεσης, ευερεθιστότητας και άγχους (0–3)· μια μέρα με όλες στο 0 γίνεται Ήρεμος. Ο ύπνος και οι υπόλοιπες στήλες μπαίνουν στη σημείωση.";
+  STRINGS.el["imp.skip"]     = "Παράλειψη";
+  STRINGS.el["imp.unknown"]  = "Άγνωστη διάθεση: διάλεξε συναίσθημα, αλλιώς θα παραλειφθεί.";
+  STRINGS.el["imp.hab"]      = "Σημειώνονται στις συνήθειές σου: {list}";
+  STRINGS.el["imp.newAct"]   = "Νέες δραστηριότητες: {list}";
+  STRINGS.el["imp.newEmo"]   = "Νέα συναισθήματα: {list}";
+  STRINGS.el["imp.have"]     = "Υπάρχουν ήδη στο Mood (μένουν όπως είναι): {n}";
+  STRINGS.el["imp.skipped"]  = "Γραμμές που παραλείπονται (χωρίς ημερομηνία ή διάθεση): {n}";
+  STRINGS.el["imp.capped"]   = "Εισάγονται μόνο οι {max} πιο πρόσφατες καταχωρήσεις· {n} παλαιότερες μένουν έξω.";
+  STRINGS.el["imp.nothing"]  = "Δεν υπάρχει κάτι νέο για εισαγωγή.";
+  STRINGS.el["imp.go"]       = "Εισαγωγή {n}";
+  STRINGS.el["imp.cancel"]   = "Άκυρο";
+  STRINGS.el["imp.done"]     = "Καταχωρήσεις που εισήχθησαν: {n}";
+  STRINGS.el["imp.undo"]     = "Αναίρεση";
+  STRINGS.el["imp.undone"]   = "Η εισαγωγή αναιρέθηκε";
+  STRINGS.el["imp.full"]     = "Δεν υπάρχει αρκετός χώρος στη συσκευή για αυτή την εισαγωγή. Δεν άλλαξε τίποτα.";
+  STRINGS.el["imp.w.dep"]    = "Κατάθλιψη";
+  STRINGS.el["imp.w.ele"]    = "Ανεβασμένη διάθεση";
+  STRINGS.el["imp.w.irr"]    = "Ευερεθιστότητα";
+  STRINGS.el["imp.w.anx"]    = "Άγχος";
+  STRINGS.el["imp.w.slp"]    = "Ύπνος";
+  STRINGS.el["imp.w.more"]   = "Άλλες δραστηριότητες";
+
+  var IMP_ACCEPT = ".csv,.tsv,.txt,.daylio,.zip,.json,text/csv,text/plain,application/zip,application/octet-stream";
+  var IMP_LIST_MAX = 24;                  // names shown per preview line
+
+  function impWords() {
+    return { depressed: t("imp.w.dep"), elevated: t("imp.w.ele"), irritable: t("imp.w.irr"),
+             anxiety: t("imp.w.anx"), sleep: t("imp.w.slp"), more: t("imp.w.more") };
+  }
+  // What Mood knows now, for prepare(): feelings (current labels plus
+  // the English and Greek names of the built-ins), own activities and
+  // both sides of every built-in pair in both languages.
+  function impCtx(steps) {
+    var emos = [], habits = [];
+    EMOTIONS.forEach(function (x) { emos.push({ k: x.k, label: x.label }); });
+    BUILTIN_EMOS.forEach(function (b) {
+      emos.push({ k: b.k, label: STRINGS.en[b.i18n] });
+      emos.push({ k: b.k, label: STRINGS.el[b.i18n] });
+    });
+    HABITS.forEach(function (h) {
+      habits.push({ f: h.f, yes: STRINGS.en[h.yes], no: STRINGS.en[h.no] });
+      habits.push({ f: h.f, yes: STRINGS.el[h.yes], no: STRINGS.el[h.no] });
+      habits.push({ f: h.f, yes: habLbl(h, "yes"), no: habLbl(h, "no") });
+    });
+    return {
+      steps: steps, emos: emos, habits: habits,
+      acts: CUST_ACTS.map(function (a) { return { id: a.id, label: a.label }; }),
+      habitFields: BUILTIN_HABITS.map(function (h) { return h.f; }),
+      colors: V.CUSTOM_COLORS,
+      nCustomEmo: EMOTIONS.filter(function (x) { return !x.builtin; }).length,
+      lab: impWords()
+    };
+  }
+
+  function localPickFile(accept) {
+    return new Promise(function (resolve) {
+      var i = document.createElement("input");
+      i.type = "file"; i.accept = accept;
+      i.addEventListener("change", function () { resolve(i.files && i.files[0] ? i.files[0] : null); });
+      i.click();
+    });
+  }
+  function startImport() {
+    var dlg = dialogHost();
+    var pick = dlg && typeof dlg.openFile === "function" ? dlg.openFile(IMP_ACCEPT) : localPickFile(IMP_ACCEPT);
+    Promise.resolve(pick).then(function (file) {
+      if (file) importFile(file);            // cancel = silent exit
+    }).catch(function () {});
+  }
+  // Also the entry point for tests / the harness: a File (or Blob with
+  // a name). Resolves once the preview is open (or the error shown).
+  function importFile(file) {
+    var I = window.OrosMoodImport, KIT = window.OrosImportKit;
+    if (!I || !KIT) { showToast(t("imp.bad")); return Promise.resolve(); }
+    return KIT.readFile(file, I.MAX_FILE).then(function (f) {
+      return I.read(f.name, f.bytes, impWords()).then(function (parsed) {
+        openImportPreview(parsed, f.name);
+      });
+    }).catch(function (err) {
+      showToast(err && err.message === "toobig" ? t("imp.big") : t("imp.bad"));
+    });
+  }
+
+  function fmtImpDay(ts) {
+    return new Date(ts).toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB",
+      { day: "numeric", month: "short", year: "numeric" });
+  }
+  function nameList(arr) {
+    var out = arr.slice(0, IMP_LIST_MAX).join(", ");
+    return arr.length > IMP_LIST_MAX ? out + ", … (+" + (arr.length - IMP_LIST_MAX) + ")" : out;
+  }
+  function stepText(g) {
+    var s = window.OrosMoodImport.STEPS[g];
+    return s ? emoLabel(s.k) + " · " + s.i + "/5" : t("imp.skip");
+  }
+
+  var impDlg = null;
+  function openImportPreview(parsed, fileName) {
+    var I = window.OrosMoodImport;
+    if (impDlg) { try { impDlg.close(); } catch (e) {} }
+    var steps = {};
+    parsed.moods.forEach(function (m) { steps[m.label] = m.g || 0; });
+    var prep = null, fresh = 0;
+
+    var d = document.createElement("dialog");
+    d.className = "rst-dlg imp-dlg";
+    d.setAttribute("aria-label", t("imp.title"));
+    d.addEventListener("close", function () { d.remove(); if (impDlg === d) impDlg = null; });
+    impDlg = d;
+    var h = document.createElement("h3");
+    h.textContent = t("imp.title");
+    d.appendChild(h);
+    var body = document.createElement("div");
+    body.className = "imp-body";
+    d.appendChild(body);
+
+    var src = document.createElement("p");
+    src.className = "imp-src";
+    src.textContent = t("imp.src." + parsed.source) + " · " + KITclean(fileName);
+    body.appendChild(src);
+    var sum = document.createElement("p");
+    sum.className = "imp-sum";
+    body.appendChild(sum);
+
+    if (parsed.moods.length || parsed.source === "emoods") {
+      var mh = document.createElement("div");
+      mh.className = "col-lab";
+      mh.textContent = t("imp.map");
+      body.appendChild(mh);
+      var hint = document.createElement("p");
+      hint.className = "imp-hint";
+      hint.textContent = parsed.moods.length ? t("imp.map.hint") : t("imp.map.em");
+      body.appendChild(hint);
+    }
+    if (parsed.moods.length) {
+      var ul = document.createElement("ul");
+      ul.className = "imp-map";
+      parsed.moods.forEach(function (m, idx) {
+        var li = document.createElement("li");
+        var lab = document.createElement("label");
+        lab.className = "imp-mood";
+        lab.setAttribute("for", "imp-step-" + idx);
+        lab.textContent = m.label + " (" + m.n + ")";
+        li.appendChild(lab);
+        var sel = document.createElement("select");
+        sel.id = "imp-step-" + idx;
+        [1, 2, 3, 4, 5, 0].forEach(function (g) {
+          var o = document.createElement("option");
+          o.value = String(g);
+          o.textContent = stepText(g);
+          sel.appendChild(o);
+        });
+        sel.value = String(steps[m.label] || 0);
+        sel.addEventListener("change", function () {
+          steps[m.label] = +sel.value;
+          li.classList.toggle("unk", !steps[m.label]);
+          recompute();
+        });
+        li.appendChild(sel);
+        if (!m.g) {
+          li.classList.add("unk");
+          var u = document.createElement("div");
+          u.className = "imp-unk";
+          u.textContent = t("imp.unknown");
+          li.appendChild(u);
+        }
+        ul.appendChild(li);
+      });
+      body.appendChild(ul);
+    }
+    var notes = document.createElement("div");
+    notes.className = "imp-notes";
+    body.appendChild(notes);
+
+    var foot = document.createElement("div");
+    foot.className = "imp-foot";
+    var cb = document.createElement("button");
+    cb.type = "button";
+    cb.className = "ghost";
+    cb.textContent = t("imp.cancel");
+    cb.addEventListener("click", function () { d.close(); });
+    var go = document.createElement("button");
+    go.type = "button";
+    go.className = "prim";
+    go.id = "imp-go";
+    go.addEventListener("click", function () {
+      if (!prep || !fresh) return;
+      d.close();
+      commitImport(prep);
+    });
+    foot.appendChild(cb);
+    foot.appendChild(go);
+    d.appendChild(foot);
+
+    function line(text) {
+      var p = document.createElement("p");
+      p.textContent = text;
+      notes.appendChild(p);
+    }
+    function recompute() {
+      prep = I.prepare(parsed, impCtx(steps));
+      var have = {};
+      state.entries.forEach(function (e) { have[e.id] = 1; });
+      fresh = prep.entries.filter(function (e) { return !have[e.id]; }).length;
+      var st = prep.stats;
+      sum.textContent = t("imp.count").replace("{n}", st.n) +
+        (st.n ? " · " + fmtImpDay(st.from) + (fmtImpDay(st.to) !== fmtImpDay(st.from) ? " – " + fmtImpDay(st.to) : "") : "");
+      notes.textContent = "";
+      if (st.habits.length) {
+        line(t("imp.hab").replace("{list}", nameList(st.habits.map(function (x) {
+          var hb = null;
+          HABITS.forEach(function (hh) { if (hh.f === x.f) hb = hh; });
+          return x.name + " → " + (hb ? habLbl(hb, x.side) : x.f);
+        }))));
+      }
+      if (prep.defs.act.length) line(t("imp.newAct").replace("{list}", nameList(prep.defs.act.map(function (x) { return x.lab; }))));
+      if (prep.defs.emo.length) line(t("imp.newEmo").replace("{list}", nameList(prep.defs.emo.map(function (x) { return x.lab; }))));
+      if (st.n - fresh > 0) line(t("imp.have").replace("{n}", st.n - fresh));
+      if (st.skipped) line(t("imp.skipped").replace("{n}", st.skipped));
+      if (st.capped) line(t("imp.capped").replace("{max}", I.MAX_ITEMS).replace("{n}", st.capped));
+      if (!fresh) line(t("imp.nothing"));
+      go.textContent = t("imp.go").replace("{n}", fresh);
+      go.disabled = !fresh;
+    }
+    recompute();
+    document.body.appendChild(d);
+    d.showModal();
+  }
+  function KITclean(s) { return window.OrosImportKit.clean(s, 80); }
+
+  // ONE write (checked: a full storage changes nothing) + one sync mark.
+  function commitImport(prep) {
+    var I = window.OrosMoodImport;
+    var prevJson = JSON.stringify(state);
+    var res = I.apply(state, prep, Date.now());
+    if (!res.added.length) { transientNote(t("imp.nothing")); return; }
+    var next = res.state;
+    var nv = V.mergeVocab(next.vocab, null);
+    if (nv) next.vocab = nv; else delete next.vocab;
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(next)); }
+    catch (e) {
+      try { localStorage.setItem(STORAGE_KEY, prevJson); } catch (e2) {}
+      showToast(t("imp.full"));
+      return;
+    }
+    state = next;
+    if (window.__orosSyncApi) window.__orosSyncApi.dirty();
+    refreshVocab();
+    renderAll();
+    if (viewMode === "insights") renderInsights();
+    var postJson = JSON.stringify(state);
+    showToast(t("imp.done").replace("{n}", res.added.length), t("imp.undo"), function () {
+      // Untouched since → back to the exact old data; moved on (a pull,
+      // an edit) → only the import leaves. Either way the imported ids
+      // get tombstones and the new activities / feelings are hidden, so
+      // a copy that already synced goes too.
+      var prev = JSON.parse(prevJson);
+      var base = JSON.stringify(state) === postJson ? prev : state;
+      var s = I.undo(base, prev, res, Date.now());
+      var uv = V.mergeVocab(s.vocab, null);
+      if (uv) s.vocab = uv; else delete s.vocab;
+      state = s;
+      save();
+      refreshVocab();
+      renderAll();
+      if (viewMode === "insights") renderInsights();
+      transientNote(t("imp.undone"));
+    });
+  }
+  window.__orosMoodImportFile = importFile;
 
   // ---------- 4. Sync slice + palette ----------
   var PAL_VARS = ["--bg", "--bg-desktop", "--bar-bg", "--text", "--text-dim",

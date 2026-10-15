@@ -1,17 +1,23 @@
 // ============================================================
-// orOS Layout — Scribus .sla import (v1.0.0)
+// orOS Layout — Scribus .sla import (v1.1.0)
 // Reads a Scribus document (1.4, 1.5, 1.6 XML) into a NEW Layout
 // document: pages, master pages, margins, columns, bleed, colours,
-// paragraph styles, text frames with their threads, images, shapes
-// and lines. The XML is read by a small tokenizer here (no DOM, no
+// paragraph styles, text frames with their threads, images, shapes,
+// lines, free shapes (polygons, polylines, Bézier paths, regular
+// polygons, arcs, spirals → path items), linear and radial gradients,
+// and layers (stacking order; hidden or non-printing layers → hidden
+// objects, locked layers → locked objects). The XML is read by a small tokenizer here (no DOM, no
 // scripts, no external entities); every value then goes through the
 // model's normalizers like any other document.
 //   - Images embedded in the file (Scribus "inline images") come back
 //     as data for io.js to store; linked images become empty image
 //     frames that keep the file name, ready for Place image.
-//   - Not imported (counted in stats.skipped): tables, polygons and
-//     Bézier paths (their box becomes a rectangle), text on a path
-//     (a plain text frame), layers, gradients, hyphenation settings.
+//   - Not imported (counted in stats.skipped): tables, text on a path
+//     (a plain text frame), mesh / pattern / diamond / conical fills
+//     (plain colour), LaTeX and other render frames, hyphenation
+//     settings. Image and text frames keep their box, not a free
+//     outline.
+//   - A compressed .sla.gz is unpacked by io.js before it comes here.
 // Exposes LY_SLA (browser) or module.exports (Node tests).
 // ============================================================
 (function (root) {
@@ -185,6 +191,66 @@
     it.rot = ((rot % 360) + 540) % 360 - 180;
   }
 
+  // SVG path data (Scribus "path" attribute, frame coordinates) →
+  // absolute M / L / C / Z commands. Quadratic and smooth segments
+  // become cubics; arcs (Scribus writes none) become straight lines.
+  function svgPath(d) {
+    var tok = String(d || "").match(/[MmLlHhVvCcSsQqTtAaZz]|[-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?/g) || [];
+    var out = [], i = 0, cmd = "", x = 0, y = 0, sx = 0, sy = 0, lc = null, lq = null;
+    function n() { var v = parseFloat(tok[i++]); return isFinite(v) ? v : NaN; }
+    var ARGS = { M: 2, L: 2, H: 1, V: 1, C: 6, S: 4, Q: 4, T: 2, A: 7, Z: 0 };
+    while (i < tok.length && out.length < 8000) {
+      if (/^[A-Za-z]$/.test(tok[i])) cmd = tok[i++];
+      else if (!cmd) return out;
+      var C = cmd.toUpperCase(), rel = cmd !== C, a = [];
+      for (var k = 0; k < ARGS[C]; k++) a.push(n());
+      if (a.some(function (v) { return !isFinite(v); })) return out;
+      var ox = rel ? x : 0, oy = rel ? y : 0, c2 = null, q1 = null;
+      if (C === "M") { x = a[0] + ox; y = a[1] + oy; sx = x; sy = y; out.push(["M", x, y]); cmd = rel ? "l" : "L"; }
+      else if (C === "L") { x = a[0] + ox; y = a[1] + oy; out.push(["L", x, y]); }
+      else if (C === "H") { x = a[0] + (rel ? x : 0); out.push(["L", x, y]); }
+      else if (C === "V") { y = a[0] + (rel ? y : 0); out.push(["L", x, y]); }
+      else if (C === "C") { c2 = [a[2] + ox, a[3] + oy]; out.push(["C", a[0] + ox, a[1] + oy, c2[0], c2[1], a[4] + ox, a[5] + oy]); x = a[4] + ox; y = a[5] + oy; }
+      else if (C === "S") {
+        var r1 = lc ? [2 * x - lc[0], 2 * y - lc[1]] : [x, y];
+        c2 = [a[0] + ox, a[1] + oy]; out.push(["C", r1[0], r1[1], c2[0], c2[1], a[2] + ox, a[3] + oy]); x = a[2] + ox; y = a[3] + oy;
+      } else if (C === "Q" || C === "T") {
+        q1 = C === "Q" ? [a[0] + ox, a[1] + oy] : lq ? [2 * x - lq[0], 2 * y - lq[1]] : [x, y];
+        var ex = (C === "Q" ? a[2] : a[0]) + ox, ey = (C === "Q" ? a[3] : a[1]) + oy;
+        out.push(["C", x + 2 / 3 * (q1[0] - x), y + 2 / 3 * (q1[1] - y), ex + 2 / 3 * (q1[0] - ex), ey + 2 / 3 * (q1[1] - ey), ex, ey]);
+        x = ex; y = ey;
+      } else if (C === "A") { x = a[5] + ox; y = a[6] + oy; out.push(["L", x, y]); }
+      else if (C === "Z") { out.push(["Z"]); x = sx; y = sy; }
+      lc = c2; lq = q1;
+    }
+    return out;
+  }
+  // Scribus 1.4 point lists (POCOOR): groups of four points per
+  // segment, start, its control, end, its control; 999999 starts a
+  // new sub-path.
+  function poCoor(v) {
+    var nums = String(v || "").trim().split(/\s+/).map(Number), out = [], open = false, last = null;
+    for (var i = 0; i + 7 < nums.length && out.length < 8000; i += 8) {
+      var q = nums.slice(i, i + 8);
+      if (q.some(function (x) { return !isFinite(x); })) break;
+      if (q[0] >= 999999) { if (open) out.push(["Z"]); open = false; last = null; continue; }
+      if (!open || !last || Math.abs(last[0] - q[0]) > 1e-6 || Math.abs(last[1] - q[1]) > 1e-6) out.push(["M", q[0], q[1]]);
+      out.push(["C", q[2], q[3], q[6], q[7], q[4], q[5]]);
+      open = true; last = [q[4], q[5]];
+    }
+    return out;
+  }
+  // Commands in frame points → model path text in fractions of w × h.
+  function pathData(cmds, w, h) {
+    if (!cmds.length || cmds[0][0] !== "M") return "";
+    var d = cmds.map(function (c) {
+      var o = c[0];
+      for (var i = 1; i < c.length; i += 2) o += (i > 1 ? " " : "") + (Math.round(c[i] / w * 10000) / 10000) + " " + (Math.round(c[i + 1] / h * 10000) / 10000);
+      return o;
+    }).join("");
+    return M.parsePath(d) ? d : "";
+  }
+
   // ---------- 4. Convert ----------
   // opts: { now, name }. Result: { doc, images: [{ item, name, data }],
   // linked: n, stats: { pages, items, skipped } } or null.
@@ -210,6 +276,36 @@
     var cols = colours(D, now, used);
     cols.list.forEach(function (s) { doc.swatches.push(s); });
     var colour = tinter(doc, cols.map, now, used);
+
+    // named gradients (1.5+): name → its CSTOP list
+    var gradBy = {};
+    kids(D, "Gradient").forEach(function (g) { if (g.a.Name) gradBy[g.a.Name] = kids(g, "CSTOP"); });
+    // GRTYP: 1 horizontal, 2 vertical, 3 diagonal, 4 cross diagonal,
+    // 5 radial (fixed directions, 1.4), 6 linear, 7 radial (free)
+    var GRAD_DEF = { 1: ["l", 0, 0.5, 1, 0.5], 2: ["l", 0.5, 0, 0.5, 1], 3: ["l", 0, 0, 1, 1], 4: ["l", 0, 1, 1, 0], 5: ["r", 0.5, 0.5, 1, 1], 6: ["l", 0, 0.5, 1, 0.5], 7: ["r", 0.5, 0.5, 1, 1] };
+    function gradOf(node, w, h) {
+      var a = node.a, typ = parseInt(a.GRTYP, 10), def = GRAD_DEF[typ];
+      if (!def) return null;
+      var stops = kids(node, "CSTOP");
+      if (!stops.length && a.GRNAME && gradBy[a.GRNAME]) stops = gradBy[a.GRNAME];
+      var st = stops.slice(0, 16).map(function (c) {
+        var id = colour(c.a.NAME, c.a.SHADE);
+        return [Math.min(1, Math.max(0, num(c.a.RAMP, 0))), id || "sw-paper", id ? Math.round(100 * Math.min(1, Math.max(0, num(c.a.TRANS, 1)))) : 0];
+      });
+      if (st.length < 2) return null;
+      var g = { k: def[0], x1: def[1], y1: def[2], x2: def[3], y2: def[4], st: st };
+      if (a.GRSTARTX !== undefined && a.GRENDX !== undefined && (typ === 6 || typ === 7 || num(a.GRSTARTX, 0) || num(a.GRENDX, 0) || num(a.GRSTARTY, 0) || num(a.GRENDY, 0))) {
+        g.x1 = num(a.GRSTARTX, 0) / w; g.y1 = num(a.GRSTARTY, 0) / h; g.x2 = num(a.GRENDX, w) / w; g.y2 = num(a.GRENDY, 0) / h;
+      }
+      return M.normGrad(g);
+    }
+
+    // layers: stacking order by LEVEL; hidden / non-printing → hidden
+    // objects, not editable → locked
+    var layerBy = {};
+    kids(D, "LAYERS").forEach(function (l) {
+      layerBy[l.a.NUMMER] = { level: num(l.a.LEVEL, 0), hide: l.a.SICHTBAR === "0" || l.a.DRUCKEN === "0", lock: l.a.EDIT === "0" };
+    });
 
     // masters: one Layout master per Scribus master page
     doc.masters = [];
@@ -353,10 +449,10 @@
     }
 
     var z = 0;
-    function addObject(node, gx, gy) {
+    function addObject(node, gx, gy, gLayer) {
       var a = node.a, typ = parseInt(a.PTYPE, 10);
       if (typ === 12) {    // group: its members
-        kids(node).forEach(function (ch) { if (ch.n === "PAGEOBJECT" || ch.n === "MASTEROBJECT" || ch.n === "ITEM") addObject(ch, num(a.XPOS, 0), num(a.YPOS, 0)); });
+        kids(node).forEach(function (ch) { if (ch.n === "PAGEOBJECT" || ch.n === "MASTEROBJECT" || ch.n === "ITEM") addObject(ch, num(a.XPOS, 0), num(a.YPOS, 0), a.LAYER !== undefined ? a.LAYER : gLayer); });
         return;
       }
       if (typ === 9 || typ === 10 || typ === 11 || typ === 17) { stats.skipped++; return; }
@@ -366,13 +462,15 @@
       var x = (a.XPOS !== undefined ? num(a.XPOS, 0) : (gx || 0) + num(a.gXpos, 0)) - own.x;
       var y = (a.YPOS !== undefined ? num(a.YPOS, 0) : (gy || 0) + num(a.gYpos, 0)) - own.y;
       var w = Math.max(0.5, num(a.WIDTH, 10)), h = Math.max(0.5, num(a.HEIGHT, 10)), rot = num(a.ROT, 0);
-      var it = { id: M.newId("it"), m: now, pg: own.id, z: (++z) * 16 };
+      var lay = layerBy[a.LAYER] || layerBy[gLayer] || { level: 0 };
+      var it = { id: M.newId("it"), m: now, pg: own.id, z: (Math.max(0, Math.min(999, lay.level)) * 1e6 + (++z)) * 16 };
+      if (lay.hide) it.hide = 1;
       it.fill = colour(a.PCOLOR, a.SHADE);
       it.stroke = colour(a.PCOLOR2, a.SHADE2);
       it.sw = num(a.PWIDTH, 1);
       if (!it.stroke || !(it.sw > 0)) { it.stroke = ""; }
       it.op = Math.round(100 * (1 - Math.min(1, Math.max(0, num(a.TransValue, 0)))));
-      if (a.LOCK === "1") it.lock = 1;
+      if (a.LOCK === "1" || lay.lock) it.lock = 1;
       if (a.TEXTFLOWMODE && a.TEXTFLOWMODE !== "0") it.wrap = a.FRTYPE === "1" ? "ell" : "box";
       if (a.DASHS || (a.PLINEART && a.PLINEART !== "1")) it.dash = 1;
       if (typ === 5) {    // line: length along the rotation
@@ -396,12 +494,27 @@
           else if (a.PFILE) linked++;
         } else {
           // shapes are polygons (6) whose FRTYPE says rectangle (0),
-          // ellipse (1), rounded rectangle (2) or a free shape (3)
-          it.t = a.FRTYPE === "1" ? "ell" : "rect";
-          if (a.FRTYPE === "2" && num(a.RADRECT, 0) > 0) it.r = num(a.RADRECT, 0);
-          if (typ !== 6 || a.FRTYPE === "3") stats.skipped++;     // drawn as its box
-          if (typ === 7) { it.fill = ""; it.stroke = it.stroke || "sw-black"; }
-          if (typ === 16) { it.fill = ""; it.stroke = "sw-black"; it.sw = 0.5; }
+          // ellipse (1), rounded rectangle (2) or a free shape (3);
+          // polylines (7), regular polygons (13), arcs (14) and spirals
+          // (15) are free shapes too
+          var free = (typ === 6 && a.FRTYPE === "3") || typ === 7 || typ === 13 || typ === 14 || typ === 15;
+          var d = free ? pathData(a.path ? svgPath(a.path) : poCoor(a.POCOOR), w, h) : "";
+          if (d) {
+            it.t = "path"; it.d = d;
+            if (a.fillRule !== "0") it.eo = 1;
+            if (typ === 7 || typ === 15) it.stroke = it.stroke || "sw-black";
+          } else {
+            it.t = a.FRTYPE === "1" ? "ell" : "rect";
+            if (a.FRTYPE === "2" && num(a.RADRECT, 0) > 0) it.r = num(a.RADRECT, 0);
+            if (typ !== 6 || a.FRTYPE === "3") stats.skipped++;     // drawn as its box
+            if (typ === 7) { it.fill = ""; it.stroke = it.stroke || "sw-black"; }
+            if (typ === 16) { it.fill = ""; it.stroke = "sw-black"; it.sw = 0.5; }
+          }
+          if (a.GRTYP !== undefined && a.GRTYP !== "0" && typ !== 16) {
+            var gr = gradOf(node, w, h);
+            if (gr) { it.gr = gr; it.fill = it.fill || gr.st[0][1]; }
+            else stats.skipped++;
+          }
         }
       }
       items.push({ it: it, node: node });
@@ -459,7 +572,27 @@
     }, function () { return null; });
   }
 
-  var api = { parseXml: parseXml, convert: convert, inlineImage: inlineImage, fontOf: fontOf, slug: slug };
+  // A .sla.gz (gzip) → the XML text, at most `max` bytes unpacked.
+  // Promise of a string, or null.
+  function gunzip(buf, max) {
+    var u = new Uint8Array(buf);
+    max = max || 200 * 1024 * 1024;
+    if (!(u.length > 18 && u[0] === 0x1f && u[1] === 0x8b)) return Promise.resolve(null);
+    if (typeof DecompressionStream === "undefined") return Promise.resolve(null);
+    var rd = new Blob([u]).stream().pipeThrough(new DecompressionStream("gzip")).getReader(), parts = [], size = 0;
+    function pump() {
+      return rd.read().then(function (r) {
+        if (r.done) return new Blob(parts).text();
+        size += r.value.length;
+        if (size > max) { try { rd.cancel(); } catch (e) {} return null; }
+        parts.push(r.value);
+        return pump();
+      });
+    }
+    return pump().then(null, function () { return null; });
+  }
+
+  var api = { parseXml: parseXml, convert: convert, inlineImage: inlineImage, gunzip: gunzip, svgPath: svgPath, poCoor: poCoor, fontOf: fontOf, slug: slug };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.LY_SLA = api;
 })(typeof window !== "undefined" ? window : this);

@@ -140,7 +140,8 @@
       "inbox.hint": "Pick a category for each one. Next time a rule can do it for you.",
       "inbox.run": "Apply rules", "inbox.rule": "Rule…", "inbox.done": "Category set",
       "inbox.empty": "Every imported entry has a category.", "inbox.cat": "Category for {x}",
-      "tag.bank": "Imported from the bank",
+      "tag.bank": "Imported from the bank", "tag.app": "Imported from another app",
+      "menu.apps": "Import from another app",
       "tab.plan": "Plan", "f.cur": "Currency", "f.inMain": "In {c}", "f.inMain.hint": "What it cost in {c}: filled in from the rate, change it to what your bank charged.",
       "fx.of": "ECB rate of {d}.", "fx.off": "ECB rate of {d}: offline, the last saved.", "fx.none": "No exchange rates on this device yet (offline): type the amount in {c} yourself.",
       "fx.loading": "Getting the exchange rates…", "fx.rate": "1 {a} = {r} {b}",
@@ -234,7 +235,8 @@
       "inbox.hint": "Διάλεξε κατηγορία για την καθεμία. Την επόμενη φορά μπορεί να το κάνει ένας κανόνας.",
       "inbox.run": "Εφαρμογή κανόνων", "inbox.rule": "Κανόνας…", "inbox.done": "Η κατηγορία μπήκε",
       "inbox.empty": "Όλες οι εισαγόμενες κινήσεις έχουν κατηγορία.", "inbox.cat": "Κατηγορία για {x}",
-      "tag.bank": "Από την τράπεζα",
+      "tag.bank": "Από την τράπεζα", "tag.app": "Από άλλη εφαρμογή",
+      "menu.apps": "Εισαγωγή από άλλη εφαρμογή",
       "tab.plan": "Πλάνο", "f.cur": "Νόμισμα", "f.inMain": "Σε {c}", "f.inMain.hint": "Πόσο κόστισε σε {c}: συμπληρώνεται από την ισοτιμία, άλλαξέ το σε ό,τι χρέωσε η τράπεζά σου.",
       "fx.of": "Ισοτιμία ΕΚΤ της {d}.", "fx.off": "Ισοτιμία ΕΚΤ της {d}: εκτός σύνδεσης, η τελευταία αποθηκευμένη.", "fx.none": "Δεν υπάρχουν ακόμα ισοτιμίες σε αυτή τη συσκευή (εκτός σύνδεσης): γράψε μόνος σου το ποσό σε {c}.",
       "fx.loading": "Λήψη ισοτιμιών…", "fx.rate": "1 {a} = {r} {b}",
@@ -1160,7 +1162,7 @@
   }
 
   // Imported from a bank and still without a category (the "inbox").
-  function inInbox(x) { return x.src === "bank" && !x.c; }
+  function inInbox(x) { return (x.src === "bank" || x.src === "imp") && !x.c; }
   function inboxCount() { var n = 0; data.tx.forEach(function (x) { if (inInbox(x)) n++; }); return n; }
   function matches(x) {
     if (filter === "inbox" && !inInbox(x)) return false;
@@ -1307,11 +1309,11 @@
       rcI.setAttribute("aria-label", t("rc.title"));
       b.appendChild(rcI);
     }
-    if (x.src === "bank") {
+    if (x.src === "bank" || x.src === "imp") {
       var bk = el("span", "tx-rec");
       bk.innerHTML = UI.bank;
-      bk.title = t("tag.bank");
-      bk.setAttribute("aria-label", t("tag.bank"));
+      bk.title = t(x.src === "imp" ? "tag.app" : "tag.bank");
+      bk.setAttribute("aria-label", bk.title);
       b.appendChild(bk);
     }
     if (x.id.charAt(0) === "r" && /-\d{8}$/.test(x.id)) {
@@ -2335,6 +2337,62 @@
       renderAll();
     });
   }
+  // Categories for matching an app's names: the live ones, the ready
+  // ones also by their name in the other language.
+  function importCats() {
+    return cats().map(function (c) {
+      var o = { id: c.id, k: c.k, name: c.name };
+      if (c.seed) o.alt = [SEED_NAMES.en[c.id], SEED_NAMES.el[c.id]];
+      return o;
+    });
+  }
+  // An app's export (budget/import.js): new categories, new accounts
+  // and the entries in ONE write. Undo removes exactly those, with
+  // tombstones newer than what was written (sync-safe), so every
+  // device ends up as before the import.
+  function importApp(pkg, doneText) {
+    var ids = [], catIds = [], accIds = [];
+    (pkg.cats || []).forEach(function (c) {
+      if (findIn(data.cats, c.id) || cats().length >= MAX_CATS) return;
+      var obj = normCat({ id: c.id, m: stamp(data.tombs["cat:" + c.id] || 0), k: c.k, name: c.name, col: c.col });
+      if (!obj) return;
+      untomb("cat", c.id);
+      data.cats.push(obj);
+      catIds.push(c.id);
+    });
+    (pkg.accs || []).forEach(function (a) {
+      if (findIn(data.acc, a.id) || data.acc.length >= MAX_ACC) return;
+      var x = { id: a.id, m: stamp(data.tombs["acc:" + a.id] || 0), n: a.n, o: 0, col: 8 };
+      if (a.cur) x.cur = a.cur;
+      var obj = normAcc(x);
+      if (!obj) return;
+      untomb("acc", a.id);
+      data.acc.push(obj);
+      accIds.push(a.id);
+    });
+    (pkg.tx || []).forEach(function (r) {
+      if (findIn(data.tx, r.id)) return;
+      var x = normTx(Object.assign({}, r, { m: stamp(data.tombs["tx:" + r.id] || 0) }));
+      if (!x) return;
+      if (x.c && !catById(x.c)) x.c = "";
+      if (x.ac && !findIn(data.acc, x.ac)) delete x.ac;
+      data.tx.push(x);
+      ids.push(r.id);
+    });
+    if (!ids.length && !catIds.length && !accIds.length) return;
+    commit();
+    renderAll();
+    undoToast(doneText, function () {
+      data.tx = data.tx.filter(function (y) { return ids.indexOf(y.id) < 0; });
+      ids.forEach(function (id) { tombstone("tx", id); });
+      data.cats = data.cats.filter(function (y) { return catIds.indexOf(y.id) < 0; });
+      catIds.forEach(function (id) { tombstone("cat", id); });
+      data.acc = data.acc.filter(function (y) { return accIds.indexOf(y.id) < 0; });
+      accIds.forEach(function (id) { tombstone("acc", id); });
+      commit();
+      renderAll();
+    });
+  }
   function pickFile(accept) {
     var dh = dialogHost();
     return dh && typeof dh.openFile === "function" ? dh.openFile(accept) : localPick(accept);
@@ -2349,7 +2407,11 @@
       data: function () { return data; }, cur: cur, catName: catName, catCol: catCol, money: money,
       dateShort: dateShort, centsToInput: function (c) { return centsToInput(c, LANG); },
       parseAmount: parseAmount, normText: normText, pickFile: pickFile, showToast: showToast,
-      addEntries: addEntries, saveRule: saveRule, deleteRule: deleteRule, saveProf: saveProf, applyChanges: applyChanges
+      addEntries: addEntries, saveRule: saveRule, deleteRule: deleteRule, saveProf: saveProf, applyChanges: applyChanges,
+      // exports of other apps (budget/import.js)
+      xlsx: function (done) { loadLib("xlsx.full.min.js", function () { done(window.XLSX); }); },
+      importCats: importCats, accs: accs, accName: accName, fx: fx, maxCats: MAX_CATS, maxAcc: MAX_ACC,
+      importApp: importApp
     });
   }
 
@@ -3622,11 +3684,13 @@
     $("flt").addEventListener("change", function () { filter = $("flt").value; renderList(); });
     var acts = { accounts: accountsDialog, cats: catsDialog, export: exportDialog, backup: backup, restore: restore, currency: currencyDialog,
                  stripe: function () { if (PAY) PAY.open(); },
-                 bank: function () { if (BANKUI) BANKUI.open(); }, rules: function () { if (BANKUI) BANKUI.rules(); } };
+                 bank: function () { if (BANKUI) BANKUI.open(); }, apps: function () { if (BANKUI) BANKUI.open(); }, rules: function () { if (BANKUI) BANKUI.rules(); } };
     ["bank", "rules"].forEach(function (k) {
       var mb = document.querySelector('#menu [data-act="' + k + '"]');
       if (mb) mb.hidden = !BANKUI;
     });
+    var appBtn = document.querySelector('#menu [data-act="apps"]');
+    if (appBtn) appBtn.hidden = !(BANKUI && window.OrosBudgetImport);
     var payBtn = document.querySelector('#menu [data-act="stripe"]');
     if (payBtn) { payBtn.hidden = !(PAY && PAY.has()); if (PAY) payBtn.textContent = PAY.label(); }
     [].forEach.call(document.querySelectorAll("#menu [data-act]"), function (b) {

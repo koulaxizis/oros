@@ -175,7 +175,25 @@
       "rep.disc":     "Self-tracked data, informational only — not a medical diagnosis or advice.",
       "exp.done":     "PDF exported",
       "exp.err":      "PDF library not found (vendor/jspdf missing).",
-      "exp.font.err":  "Greek font not found (vendor/NotoSans-Regular.ttf) — Greek text may not render in the PDF."
+      "exp.font.err":  "Greek font not found (vendor/NotoSans-Regular.ttf) — Greek text may not render in the PDF.",
+      "imp.btn":      "Import",
+      "imp.title":    "Import from another app",
+      "imp.tip":      "Import periods from drip., Clue, Flo or a CSV file",
+      "imp.src":      "From: {s}",
+      "imp.csv":      "a CSV file",
+      "imp.periods":  "Periods in the file: {n} · new: {a} · already in Cycle: {o}",
+      "imp.range":    "Dates: {a} – {b}",
+      "imp.days":     "Days to fill in: flow {f} · temperature {t} · mucus {m} · notes {n}",
+      "imp.guess":    "{n} of them had no end date: they get your average length ({d} days).",
+      "imp.keep":     "What you have logged stays as it is: overlapping periods are skipped, your own day entries win.",
+      "imp.priv":     "The file is read on this device only and is never uploaded.",
+      "imp.none":     "Nothing new to import: it's all in Cycle already.",
+      "imp.go":       "Import",
+      "imp.done":     "Imported {p} periods and {d} days",
+      "imp.undone":   "Import undone",
+      "imp.bad":      "Cycle can't read this file. Use an export from drip., Clue or Flo, or a CSV file.",
+      "imp.big":      "This file is too large to import.",
+      "imp.empty":    "No period data found in this file."
     },
     el: {
       "app.title":     "Κύκλος",
@@ -315,7 +333,25 @@
       "rep.disc":      "Δεδομένα αυτο-καταγραφής, μόνο ενημερωτικά — όχι ιατρική διάγνωση ή συμβουλή.",
       "exp.done":      "Το PDF εξήχθη",
       "exp.err":       "Δεν βρέθηκε η βιβλιοθήκη PDF (λείπει το vendor/jspdf).",
-      "exp.font.err":  "Δεν βρέθηκε η ελληνική γραμματοσειρά (vendor/NotoSans-Regular.ttf) — τα ελληνικά μπορεί να μη φανούν στο PDF."
+      "exp.font.err":  "Δεν βρέθηκε η ελληνική γραμματοσειρά (vendor/NotoSans-Regular.ttf) — τα ελληνικά μπορεί να μη φανούν στο PDF.",
+      "imp.btn":       "Εισαγωγή",
+      "imp.title":     "Εισαγωγή από άλλη εφαρμογή",
+      "imp.tip":       "Εισαγωγή περιόδων από drip., Clue, Flo ή αρχείο CSV",
+      "imp.src":       "Από: {s}",
+      "imp.csv":       "αρχείο CSV",
+      "imp.periods":   "Περίοδοι στο αρχείο: {n} · νέες: {a} · ήδη στον Κύκλο: {o}",
+      "imp.range":     "Ημερομηνίες: {a} – {b}",
+      "imp.days":      "Ημέρες που συμπληρώνονται: ροή {f} · θερμοκρασία {t} · βλέννα {m} · σημειώσεις {n}",
+      "imp.guess":     "{n} από αυτές δεν είχαν ημερομηνία λήξης: παίρνουν τη μέση διάρκειά σου ({d} ημέρες).",
+      "imp.keep":      "Όσα έχεις ήδη καταγράψει μένουν όπως είναι: οι περίοδοι που επικαλύπτονται παραλείπονται και οι δικές σου καταγραφές ημερών υπερισχύουν.",
+      "imp.priv":      "Το αρχείο διαβάζεται μόνο σε αυτή τη συσκευή και δεν ανεβαίνει πουθενά.",
+      "imp.none":      "Δεν υπάρχει κάτι καινούργιο για εισαγωγή: όλα είναι ήδη στον Κύκλο.",
+      "imp.go":        "Εισαγωγή",
+      "imp.done":      "Εισήχθησαν {p} περίοδοι και {d} ημέρες",
+      "imp.undone":    "Η εισαγωγή αναιρέθηκε",
+      "imp.bad":       "Ο Κύκλος δεν μπορεί να διαβάσει αυτό το αρχείο. Χρησιμοποίησε εξαγωγή από το drip., το Clue ή το Flo, ή ένα αρχείο CSV.",
+      "imp.big":       "Το αρχείο είναι πολύ μεγάλο για εισαγωγή.",
+      "imp.empty":     "Δεν βρέθηκαν δεδομένα περιόδου σε αυτό το αρχείο."
     }
   };
 
@@ -2453,6 +2489,15 @@
     pdf.textContent = t("rep.btn");
     pdf.addEventListener("click", exportDoctorReport);
     top.appendChild(pdf);
+    var imp = document.createElement("button");
+    imp.type = "button";
+    imp.className = "chip ghost";
+    imp.id = "imp-btn";
+    imp.textContent = t("imp.btn");
+    imp.title = t("imp.tip");
+    imp.setAttribute("aria-label", t("imp.title"));
+    imp.addEventListener("click", startImport);
+    top.appendChild(imp);
     host.appendChild(top);
 
     if (!state.periods.length && !state.days.length) {
@@ -2935,6 +2980,158 @@
     rst.textContent = t("rst.btn");
     rst.addEventListener("click", askReset);
     host.appendChild(rst);
+  }
+
+  // ---------- Import from another app ----------
+  // drip. / Clue / Flo / CSV → periods + day flow, BBT, mucus, notes.
+  // Parsing and the plan are pure (import.js, OrosCycleImport); here:
+  // pick → preview → ONE write + one sync mark → toast with Undo.
+  // Nothing from the file is ever inserted as HTML (textContent only).
+  var IMP_ACCEPT = ".csv,.json,.cluedata,.zip,.txt,text/csv,application/json,application/zip";
+  var IMP_SRC = { drip: "drip.", clue: "Clue", flo: "Flo" };
+  function localPickFile(accept) {
+    return new Promise(function (resolve) {
+      var i = document.createElement("input");
+      i.type = "file";
+      i.accept = accept;
+      i.addEventListener("change", function () { resolve(i.files && i.files[0] ? i.files[0] : null); });
+      i.click();
+    });
+  }
+  function startImport() {
+    var I = window.OrosCycleImport, KIT = window.OrosImportKit;
+    if (!I || !KIT) return;
+    var dlg = dialogHost();
+    var pick = dlg && typeof dlg.openFile === "function" ? dlg.openFile(IMP_ACCEPT) : localPickFile(IMP_ACCEPT);
+    Promise.resolve(pick).then(function (file) {
+      if (!file) return null;                  // cancel = silent exit
+      return KIT.readFile(file, I.MAX_FILE).then(function (f) { return I.readBytes(f.bytes, f.name); });
+    }).then(function (res) {
+      if (!res) return;
+      if (res.error) { transientNote(t(res.error === "big" ? "imp.big" : (res.error === "empty" ? "imp.empty" : "imp.bad"))); return; }
+      var pl = I.plan(res, state, { today: dayKey(todayTs()) });
+      showImportPreview(res, pl);
+    }).catch(function (e) {
+      transientNote(t(e && e.message === "toobig" ? "imp.big" : "imp.bad"));
+    });
+  }
+  function showImportPreview(res, pl) {
+    var dOpt = { day: "numeric", month: "short", year: "numeric" };
+    var ds = function (k) { return new Date(dayTsFromKey(k)).toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB", dOpt); };
+    var st = pl.stats;
+    var dlg = document.createElement("dialog");
+    dlg.className = "rst-dlg imp-dlg";
+    var h = document.createElement("h3");
+    h.textContent = t("imp.title");
+    dlg.appendChild(h);
+    function para(text, cls) {
+      var p = document.createElement("p");
+      if (cls) p.className = cls;
+      p.textContent = text;
+      dlg.appendChild(p);
+    }
+    para(t("imp.src").replace("{s}", IMP_SRC[res.source] || t("imp.csv")), "imp-src");
+    para(t("imp.periods").replace("{n}", st.found).replace("{a}", pl.add.length).replace("{o}", pl.overlap));
+    if (st.from) para(t("imp.range").replace("{a}", ds(st.from)).replace("{b}", ds(st.to)));
+    para(t("imp.days").replace("{f}", st.fl).replace("{t}", st.bbt).replace("{m}", st.cm).replace("{n}", st.note));
+    if (pl.guessed) para(t("imp.guess").replace("{n}", pl.guessed).replace("{d}", pl.avg));
+    var empty = !pl.add.length && !pl.fills.length;
+    para(empty ? t("imp.none") : t("imp.keep"));
+    para(t("imp.priv"), "imp-priv");
+    var row = document.createElement("div");
+    row.className = "imp-acts";
+    var c = document.createElement("button");
+    c.type = "button";
+    c.className = "ghost";
+    c.textContent = t("rst.cancel");
+    c.addEventListener("click", function () { dlg.close(); dlg.remove(); });
+    row.appendChild(c);
+    if (!empty) {
+      var go = document.createElement("button");
+      go.type = "button";
+      go.className = "prim";
+      go.id = "imp-go";
+      go.textContent = t("imp.go");
+      go.addEventListener("click", function () {
+        dlg.close(); dlg.remove();
+        // planned again on the data as it is NOW (a pull may have
+        // landed while the preview was open)
+        applyImport(window.OrosCycleImport.plan(res, state, { today: dayKey(todayTs()) }));
+      });
+      row.appendChild(go);
+    }
+    dlg.appendChild(row);
+    dlg.addEventListener("cancel", function () { dlg.remove(); });
+    document.body.appendChild(dlg);
+    dlg.showModal();
+  }
+  // ONE write: new periods (stable ids), day fields filled with their
+  // own stamps (touchDay) — the person's values were already left out
+  // by the plan; then a single save() = one sync mark.
+  function applyImport(pl) {
+    var now = Date.now(), undo = { periods: [], days: [] };
+    pl.add.forEach(function (p) {
+      if (periodById(p.id)) return;            // already back (a pull)
+      state.periods.push({ id: p.id, start: p.start, end: p.end, flow: p.flow, mtime: now });
+      delete state.deleted[p.id];
+      undo.periods.push(p.id);
+    });
+    pl.fills.forEach(function (x) {
+      var rec = dayById(x.id), before = {};
+      if (!rec) {
+        rec = newDayRec(x.id, x.day);
+        state.days.push(rec);
+      }
+      var o = {};
+      Object.keys(x.set).forEach(function (k) {
+        before[k] = k === "note" ? (rec.note || "") : rec[k];
+        rec[k] = x.set[k];
+        o[k] = true;
+      });
+      touchDay(rec, o);
+      undo.days.push({ id: x.id, before: before });
+    });
+    if (!undo.periods.length && !undo.days.length) { transientNote(t("imp.none")); return; }
+    state.periods.sort(function (a, b) { return b.start - a.start; });
+    state.days.sort(function (a, b) { return a.day - b.day; });
+    state.sm = now;
+    save();
+    openDay = null;
+    renderAll();
+    transientNote(t("imp.done").replace("{p}", undo.periods.length).replace("{d}", undo.days.length),
+      t("del.undo"), function () { undoImport(undo); });
+  }
+  // Undo works on the CURRENT data (a sync pull may have landed):
+  // imported periods go (tombstoned, so a device that already got
+  // them drops them too), each filled day field goes back to what it
+  // was, re-stamped so the old value wins the merge; a day the import
+  // created is empty again and prunes itself (tombstone).
+  function undoImport(u) {
+    var now = Date.now();
+    u.periods.forEach(function (id) {
+      if (!periodById(id)) return;
+      state.periods = state.periods.filter(function (p) { return p.id !== id; });
+      state.deleted[id] = now;
+    });
+    u.days.forEach(function (x) {
+      var rec = dayById(x.id);
+      if (!rec) return;
+      var o = {};
+      Object.keys(x.before).forEach(function (k) {
+        var v = x.before[k];
+        if (k === "note") rec.note = v;
+        else if (v === undefined) delete rec[k];
+        else rec[k] = v;
+        o[k] = true;
+      });
+      touchDay(rec, o);
+      pruneIfEmpty(rec);
+    });
+    state.sm = now;
+    save();
+    openDay = null;
+    renderAll();
+    transientNote(t("imp.undone"));
   }
 
   // ---------- Doctor Report PDF (Wave 2.3) ----------

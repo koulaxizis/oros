@@ -1,0 +1,9 @@
+{"data":[
+  {"day":"2025-11-01","type":"period","value":"heavy"},
+  {"day":"2025-11-02","type":"period","value":"medium"},
+  {"day":"2025-11-02","type":"tags","value":["cramps"]},
+  {"day":"2025-11-03","type":"period","value":"light"},
+  {"day":"2025-11-10","type":"bbt","value":97.7},
+  {"day":"2025-11-28","type":"period","value":"medium"},
+  {"day":"2025-11-29","type":"period","value":"heavy"}
+]}

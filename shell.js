@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "2.27.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "2.31.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -2743,7 +2743,16 @@
     row.innerHTML = DOWNLOAD_ICON_SVG + "<span>" + escapeHtml(window.t("menu.getOros")) + "</span>";
     row.addEventListener("click", function () {
       closeMenu();
-      window.open("download/" + (window.orosLang === "el" ? "?lang=el" : ""), "_blank", "noopener");
+      var page = "download/" + (window.orosLang === "el" ? "?lang=el" : "");
+      // In the orOS Android app: the default browser, a normal tab (its
+      // APK downloads never finish in the app's in-app tab, and a new
+      // window from the app closed it; Chris 2026-10-15). Older apps
+      // without BrowserActivity open the page in the app instead.
+      var S = window.orosSolo;
+      var pkg = S && S.apkPkgOf ? S.apkPkgOf(window, "oros") : "";
+      if (!pkg && window.orosPhone && window.orosPhone.available && window.orosPhone.available()) pkg = "online.useoros.twa";
+      if (pkg && S && S.browserHref && /Android/i.test(navigator.userAgent || "")) { location.href = S.browserHref("https://useoros.online/" + page, pkg); return; }
+      window.open(page, "_blank", "noopener");
     });
     section.appendChild(row);
     host.appendChild(section);

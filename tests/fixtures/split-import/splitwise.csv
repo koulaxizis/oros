@@ -1,0 +1,13 @@
+Date,Description,Category,Cost,Currency,Anna,Bob,Chris
+
+2026-05-01,Dinner at Taverna,Dining out,90.00,EUR,60.00,-30.00,-30.00
+2026-05-02,Taxi to airport,Taxi,30.00,EUR,-10.00,20.00,-10.00
+2026-05-02,Hotel,Hotel,300.00,EUR,100.00,100.00,-200.00
+2026-05-03,Coffee,Food and drink,9.00,EUR,0.00,0.00,0.00
+2026-05-03,Souvenir <b>,General,20.00,USD,10.00,-10.00,0.00
+2026-05-04,Bob paid Anna,Payment,20.00,EUR,-20.00,20.00,0.00
+2026-05-05,Groceries,Groceries,45.50,EUR,-15.17,30.33,-15.16
+2026-05-05,Groceries,Groceries,45.50,EUR,-15.17,30.33,-15.16
+
+2026-05-06,Total balance, , ,EUR,99.66,170.66,-270.32
+2026-05-06,Total balance, , ,USD,10.00,-10.00,0.00

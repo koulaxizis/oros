@@ -158,6 +158,25 @@
       "rc.missing": "Not on this device", "rc.missingLong": "This photo is not on this device yet. It arrives with Vault Drive sync.",
       "rc.where": "Kept in Files, folder Garage/Receipts.", "rc.remove": "Remove photo", "rc.close": "Close",
       "rc.bad": "That image could not be read", "rc.noDisk": "The photo could not be saved",
+      "imp.btn": "Import from another app", "imp.title": "Import from another app",
+      "imp.from": "From: {s}", "imp.csv": "a CSV file", "imp.fileV": "Vehicle in the file", "imp.into": "Add to",
+      "imp.newV": "New vehicle: {name}", "imp.newName": "Imported vehicle",
+      "imp.dist": "Distance in the file", "imp.vol": "Fuel in the file",
+      "imp.km": "Kilometres", "imp.mi": "Miles", "imp.l": "Litres", "imp.usgal": "US gallons", "imp.ukgal": "UK gallons",
+      "imp.unitsSure": "Units as the file states them. Garage keeps km and litres.",
+      "imp.unitsCheck": "The file does not say which units it uses: check them. Garage keeps km and litres.",
+      "imp.fuel": "Fuel and charging fills: {n} ({full} full, {partial} partial, {missed} after a missed fill)",
+      "imp.service": "Service entries: {n}", "imp.costs": "Expenses: {n}", "imp.range": "Dates: {a} – {b}",
+      "imp.dup": "Already in Garage (same date, odometer and amount): {n}",
+      "imp.skip": "Skipped: {n}", "imp.skip.noKm": "no odometer", "imp.skip.noQty": "no quantity",
+      "imp.skip.zero": "no amount", "imp.skip.income": "income", "imp.skip.bad": "unreadable",
+      "imp.skip.noFuel": "the vehicle takes no fuel", "imp.skip.twice": "repeated in the file",
+      "imp.addV": "The vehicle {name} will be added.",
+      "imp.keep": "Nothing you already have is changed: the import only adds what is missing.",
+      "imp.none": "Nothing new to import: it is all in Garage already.", "imp.go": "Import",
+      "imp.done": "Imported {n} entries", "imp.undone": "Import undone",
+      "imp.bad": "This file could not be read as a vehicle log", "imp.empty": "No entries found in this file",
+      "imp.big": "This file is too large to import",
       "live.added": "{what} added"
     },
     el: {
@@ -263,6 +282,25 @@
       "rc.missing": "Όχι σε αυτή τη συσκευή", "rc.missingLong": "Η φωτογραφία δεν έχει έρθει ακόμα σε αυτή τη συσκευή. Έρχεται με τον συγχρονισμό του Vault Drive.",
       "rc.where": "Φυλάσσεται στα Αρχεία, φάκελος Garage/Receipts.", "rc.remove": "Αφαίρεση", "rc.close": "Κλείσιμο",
       "rc.bad": "Δεν ήταν δυνατό να διαβαστεί η εικόνα", "rc.noDisk": "Δεν ήταν δυνατό να αποθηκευτεί η φωτογραφία",
+      "imp.btn": "Εισαγωγή από άλλη εφαρμογή", "imp.title": "Εισαγωγή από άλλη εφαρμογή",
+      "imp.from": "Από: {s}", "imp.csv": "αρχείο CSV", "imp.fileV": "Όχημα στο αρχείο", "imp.into": "Προσθήκη στο",
+      "imp.newV": "Νέο όχημα: {name}", "imp.newName": "Εισαγόμενο όχημα",
+      "imp.dist": "Απόσταση στο αρχείο", "imp.vol": "Καύσιμο στο αρχείο",
+      "imp.km": "Χιλιόμετρα", "imp.mi": "Μίλια", "imp.l": "Λίτρα", "imp.usgal": "Γαλόνια ΗΠΑ", "imp.ukgal": "Γαλόνια ΗΒ",
+      "imp.unitsSure": "Μονάδες όπως τις δηλώνει το αρχείο. Το Γκαράζ κρατά χιλιόμετρα και λίτρα.",
+      "imp.unitsCheck": "Το αρχείο δεν λέει ποιες μονάδες χρησιμοποιεί: έλεγξέ τες. Το Γκαράζ κρατά χιλιόμετρα και λίτρα.",
+      "imp.fuel": "Ανεφοδιασμοί και φορτίσεις: {n} ({full} πλήρεις, {partial} μερικοί, {missed} μετά από ξεχασμένο)",
+      "imp.service": "Σέρβις: {n}", "imp.costs": "Έξοδα: {n}", "imp.range": "Ημερομηνίες: {a} – {b}",
+      "imp.dup": "Υπάρχουν ήδη στο Γκαράζ (ίδια ημερομηνία, χιλιόμετρα και ποσό): {n}",
+      "imp.skip": "Παραλείπονται: {n}", "imp.skip.noKm": "χωρίς χιλιόμετρα", "imp.skip.noQty": "χωρίς ποσότητα",
+      "imp.skip.zero": "χωρίς ποσό", "imp.skip.income": "έσοδα", "imp.skip.bad": "δεν διαβάζονται",
+      "imp.skip.noFuel": "το όχημα δεν παίρνει καύσιμο", "imp.skip.twice": "διπλές μέσα στο αρχείο",
+      "imp.addV": "Θα προστεθεί το όχημα {name}.",
+      "imp.keep": "Δεν αλλάζει τίποτα από όσα ήδη έχεις: η εισαγωγή προσθέτει μόνο ό,τι λείπει.",
+      "imp.none": "Δεν υπάρχει κάτι νέο για εισαγωγή: είναι ήδη όλα στο Γκαράζ.", "imp.go": "Εισαγωγή",
+      "imp.done": "Εισήχθησαν {n} εγγραφές", "imp.undone": "Η εισαγωγή αναιρέθηκε",
+      "imp.bad": "Το αρχείο δεν διαβάζεται ως ημερολόγιο οχήματος", "imp.empty": "Δεν βρέθηκαν εγγραφές στο αρχείο",
+      "imp.big": "Το αρχείο είναι πολύ μεγάλο για εισαγωγή",
       "live.added": "Προστέθηκε: {what}"
     }
   };
@@ -2581,6 +2619,7 @@
     io.appendChild(button(t("set.csv"), "", exportCsv));
     io.appendChild(button(t("set.json"), "", exportData));
     io.appendChild(button(t("set.import"), "", importData));
+    io.appendChild(button(t("imp.btn"), "", function () { dlg.close(); startImport(); }));
     if (curVehicle()) io.appendChild(button(t("lb.set"), "", function () { dlg.close(); logbookDialog(curVehicle()); }));
     dlg.appendChild(io);
     var acts = el("div", "dlg-actions");
@@ -2667,6 +2706,166 @@
         showToast(t("toast.imported", { n: clean.vehicles.length }));
       });
     }).catch(function () { showToast(t("toast.badFile")); });
+  }
+
+  // ----- Import from another app (Fuelio, Drivvo, Fuelly, aCar, LubeLogger) -----
+  // Parsing and the plan are pure (import.js, OrosGarageImport); here:
+  // pick → preview (vehicle, units, counts) → ONE write + one sync
+  // mark → toast with Undo. File text only ever reaches the page
+  // through textContent (el()).
+  var IMP_ACCEPT = ".csv,.zip,.txt,text/csv,application/zip";
+  var IMP_SRC = { fuelio: "Fuelio", drivvo: "Drivvo", fuelly: "Fuelly", acar: "aCar", lubelogger: "LubeLogger" };
+  function startImport() {
+    var I = window.OrosGarageImport, KIT = window.OrosImportKit;
+    if (!I || !KIT) return;
+    var host = dialogHost();
+    var pick = host && typeof host.openFile === "function" ? host.openFile(IMP_ACCEPT) : localPickFile(IMP_ACCEPT);
+    Promise.resolve(pick).then(function (file) {
+      if (!file) return null;                  // cancel = silent exit
+      return KIT.readFile(file, I.MAX_FILE).then(function (f) { return I.readBytes(f.bytes, f.name); });
+    }).then(function (res) {
+      if (!res) return;
+      if (res.error) { showToast(t(res.error === "big" ? "imp.big" : (res.error === "empty" ? "imp.empty" : "imp.bad"))); return; }
+      importPreview(res);
+    }).catch(function (e) {
+      showToast(t(e && e.message === "toobig" ? "imp.big" : "imp.bad"));
+    });
+  }
+  function importPreview(res) {
+    var I = window.OrosGarageImport;
+    var dlg = makeDialog("gr-imp");
+    dlg.appendChild(el("div", "dlg-title", t("imp.title")));
+    dlg.appendChild(el("p", "dlg-sub", t("imp.from", { s: IMP_SRC[res.source] || t("imp.csv") })));
+    var vk = res.vehicles[0].key;
+    // the file's vehicles (Fuelly can hold several)
+    var fileSel = null;
+    if (res.vehicles.length > 1) {
+      fileSel = selectInput(res.vehicles.map(function (v) { return [v.key, v.name || v.key || "—"]; }), vk);
+      dlg.appendChild(field(t("imp.fileV"), fileSel, "gr-imp-fv"));
+    }
+    var into = el("select");
+    dlg.appendChild(field(t("imp.into"), into, "gr-imp-into"));
+    var r1 = el("div", "fld-row");
+    var dist = selectInput([["km", t("imp.km")], ["mi", t("imp.mi")]], res.units.dist);
+    var vol = selectInput([["l", t("imp.l")], ["usgal", t("imp.usgal")], ["ukgal", t("imp.ukgal")]], res.units.vol);
+    r1.appendChild(field(t("imp.dist"), dist, "gr-imp-dist"));
+    r1.appendChild(field(t("imp.vol"), vol, "gr-imp-vol"));
+    dlg.appendChild(r1);
+    dlg.appendChild(el("p", "dlg-sub", t(res.units.sure ? "imp.unitsSure" : "imp.unitsCheck")));
+    var sum = el("ul", "imp-sum");
+    dlg.appendChild(sum);
+    dlg.appendChild(el("p", "dlg-sub", t("imp.keep")));
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("ed.cancel"), "", function () { dlg.close(); }));
+    var go = button(t("imp.go"), "primary", function () {
+      dlg.close();
+      // planned again on the data as it is NOW (a pull may have
+      // landed while the preview was open)
+      applyImport(res, opts());
+    });
+    go.id = "gr-imp-go";
+    acts.appendChild(go);
+    dlg.appendChild(acts);
+
+    function srcVehicle() {
+      for (var i = 0; i < res.vehicles.length; i++) if (res.vehicles[i].key === vk) return res.vehicles[i];
+      return res.vehicles[0];
+    }
+    function fillInto() {
+      var sv = srcVehicle(), newId = I.newVehicleId(res, vk);
+      var guess = I.guessVehicle(res, vk, data) || (sv.name ? "" : (curVehicle() ? curVehicle().id : ""));
+      into.innerHTML = "";
+      var exists = !!byId("vehicles", newId);
+      if (!exists && data.vehicles.length < C.MAX_VEHICLES) {
+        var o = el("option", "", t("imp.newV", { name: sv.name || [sv.make, sv.model].filter(Boolean).join(" ") || t("imp.newName") }));
+        o.value = "";
+        into.appendChild(o);
+      }
+      sortedVehicles(data.vehicles).forEach(function (v) {
+        var op = el("option", "", vIcon(v) + " " + v.name);
+        op.value = v.id;
+        into.appendChild(op);
+      });
+      into.value = guess;
+      if (into.value !== guess) into.selectedIndex = 0;
+    }
+    function opts() {
+      return { vk: vk, vid: into.value, dist: dist.value, vol: vol.value, lang: LANG, newName: t("imp.newName") };
+    }
+    function paint() {
+      var pl = I.plan(res, data, opts()), st = pl.stats;
+      sum.innerHTML = "";
+      function li(text) { if (text) sum.appendChild(el("li", "", text)); }
+      if (pl.vehicle) li(t("imp.addV", { name: pl.vehicle.name }));
+      if (st.fuel) li(t("imp.fuel", { n: st.fuel, full: st.full, partial: st.partial, missed: st.missed }));
+      if (st.service) li(t("imp.service", { n: st.service }));
+      if (st.costs) {
+        li(t("imp.costs", { n: st.costs }) + " (" + Object.keys(st.cats).map(function (c) { return t("cat." + c) + " " + st.cats[c]; }).join(" · ") + ")");
+      }
+      if (st.from) li(t("imp.range", { a: fmtDay(st.from, true), b: fmtDay(st.to, true) }));
+      if (st.dup) li(t("imp.dup", { n: st.dup }));
+      var sk = st.skipped, why = [], nSk = 0;
+      ["twice", "noKm", "noQty", "zero", "income", "noFuel", "bad"].forEach(function (k) {
+        if (sk[k]) { nSk += sk[k]; why.push(t("imp.skip." + k) + " " + sk[k]); }
+      });
+      if (nSk) li(t("imp.skip", { n: nSk }) + " (" + why.join(", ") + ")");
+      var n = pl.fuel.length + pl.service.length + pl.costs.length;
+      if (!n) li(t("imp.none"));
+      go.disabled = !n;
+    }
+    if (fileSel) fileSel.addEventListener("change", function () { vk = fileSel.value; fillInto(); paint(); });
+    [into, dist, vol].forEach(function (x) { x.addEventListener("change", paint); });
+    fillInto();
+    paint();
+    showDialog(dlg);
+  }
+  // ONE write: a new vehicle (when picked) and every new row, stamped
+  // now (above any tombstone a previous Undo left), then one save().
+  function applyImport(res, o) {
+    var pl = window.OrosGarageImport.plan(res, data, o);
+    var now = Date.now(), u = { rows: [], vehicle: null, vid: prefs.vid };
+    function stampNew(row) { row.m = Math.max(now, (data.tombs[row.id] || 0) + 1); return row; }
+    if (pl.vehicle && !byId("vehicles", pl.vid)) {
+      if (data.vehicles.length >= C.MAX_VEHICLES) { showToast(t("toast.max", { n: C.MAX_VEHICLES })); return; }
+      data.vehicles.push(stampNew(pl.vehicle));
+      u.vehicle = pl.vid;
+    }
+    ["fuel", "service", "costs"].forEach(function (k) {
+      pl[k].forEach(function (row) {
+        if (byId(k, row.id)) return;           // already back (a pull)
+        data[k].push(stampNew(row));
+        u.rows.push([k, row.id]);
+      });
+    });
+    if (!u.rows.length && !u.vehicle) { showToast(t("imp.none")); return; }
+    prefs.vid = pl.vid;
+    savePrefs();
+    save();
+    render();
+    undoToast(t("imp.done", { n: u.rows.length }), function () { undoImport(u); });
+  }
+  // Undo on the CURRENT data: every imported row goes with a tombstone
+  // at or above its stamp (a device that already has it drops it too);
+  // a vehicle the import made goes as well, unless rows were added to
+  // it since.
+  function undoImport(u) {
+    var now = Date.now();
+    u.rows.forEach(function (x) {
+      var row = byId(x[0], x[1]);
+      if (!row) return;
+      data.tombs[row.id] = Math.max(now, row.m);
+      data[x[0]] = data[x[0]].filter(function (y) { return y.id !== row.id; });
+    });
+    var v = u.vehicle ? byId("vehicles", u.vehicle) : null;
+    if (v && !C.LIST_KEYS.some(function (k) { return rowsOf(k, v.id).length; })) {
+      data.tombs[v.id] = Math.max(now, v.m);
+      data.vehicles = data.vehicles.filter(function (x) { return x.id !== v.id; });
+    }
+    prefs.vid = u.vid;
+    savePrefs();
+    save();
+    render();
+    showToast(t("imp.undone"));
   }
 
   // ---------- 9. Dialogs + toasts ----------
