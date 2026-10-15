@@ -21,10 +21,10 @@
   var PL = window.PL, C = PL.C, st = PL.st;
   var MAX_FILE = 50 * 1024 * 1024;
   var PICTURES = "/internal/Pictures";
-  var IMG_EXT = /\.(png|jpe?g|webp|gif|bmp|avif|svg|ico|psd|ora|dng|cr2|cr3|crw|nef|nrw|arw|srf|sr2|orf|raf|rw2|rwl|pef|srw|x3f|3fr|fff|iiq|erf|kdc|dcr|mrw|mos|mef)$/i;
+  var IMG_EXT = /\.(png|jpe?g|webp|gif|bmp|avif|svg|ico|psd|ora|kra|dng|cr2|cr3|crw|nef|nrw|arw|srf|sr2|orf|raf|rw2|rwl|pef|srw|x3f|3fr|fff|iiq|erf|kdc|dcr|mrw|mos|mef)$/i;
   var RAW_ACCEPT = ".dng,.cr2,.cr3,.crw,.nef,.nrw,.arw,.srf,.sr2,.orf,.raf,.rw2,.rwl,.pef,.srw,.x3f,.3fr,.fff,.iiq,.erf,.kdc,.dcr,.mrw,.mos,.mef";
   var RAW_MAX = 300 * 1024 * 1024;
-  var LAYERED_MAX = 300 * 1024 * 1024;              // a PSD or OpenRaster file
+  var LAYERED_MAX = 300 * 1024 * 1024;              // a PSD, OpenRaster or Krita file
   function t(k, p) { return PL.t(k, p); }
 
   function dialogHost() {
@@ -72,6 +72,7 @@
     var n = String(file && file.name || "");
     if (/\.psd$/i.test(n) || /photoshop/i.test(file.type || "")) return "psd";
     if (/\.ora$/i.test(n) || /openraster/i.test(file.type || "")) return "ora";
+    if (/\.kra$/i.test(n) || /x-krita/i.test(file.type || "")) return "kra";
     if (PL.RAW.isRaw(n)) return "raw";
     return "";
   }
@@ -92,7 +93,7 @@
   }
   function openPicture(asLayer) {
     var dlg = dialogHost();
-    var p = dlg && typeof dlg.openFile === "function" ? dlg.openFile("image/*,.psd,.ora," + RAW_ACCEPT) : Promise.resolve(null);
+    var p = dlg && typeof dlg.openFile === "function" ? dlg.openFile("image/*,.psd,.ora,.kra," + RAW_ACCEPT) : Promise.resolve(null);
     if (!dlg) PL.toast(t("msg.noDialogs"));
     return p.then(function (f) { if (f) return openPictureFile(f, asLayer); });
   }
@@ -207,7 +208,10 @@
     }).catch(function () { PL.busy(false); PL.toast(t("msg.exportFail")); return false; });
   }
 
-  // ---------- Layered files (PSD, OpenRaster) ----------
+  // ---------- Layered files (PSD, OpenRaster, Krita) ----------
+  // Krita (.kra, ora.js readKra): 8-bit RGBA paint layers come as
+  // pixels; anything else opens as the file's merged picture, one
+  // layer, with a notice.
   // Always a new project. Too big for this device: every layer is
   // scaled with the canvas (one notice). Over the layer limit: the
   // lowest layers are merged into one, so the picture looks the same.
@@ -217,6 +221,7 @@
     return file.arrayBuffer().then(function (buf) {
       var bytes = new Uint8Array(buf);
       if (kind === "psd") return PL.job("psd", { bytes: bytes, o: { maxPixels: PL.phone ? PL.limits.area * 2 : 120e6 } });
+      if (kind === "kra") return PL.ORA.readKra(bytes, window.AtelierZip, { maxPixels: PL.phone ? PL.limits.area * 2 : 120e6 }).then(oraPixels);
       return PL.ORA.read(bytes, window.AtelierZip).then(oraPixels);
     }).then(function (r) {
       var layers = r.layers;
@@ -230,9 +235,13 @@
         PL.newFromLayers(fit.w, fit.h, baseName(file.name), layers);
         var notes = [];
         if (fit.scaled) notes.push(t("msg.scaled", { w: fit.w, h: fit.h }));
-        if (r.skipped && (r.skipped.groups || r.skipped.masks)) notes.push(t("msg.layeredFlat"));
-        if (r.skipped && (r.skipped.empty || r.skipped.missing)) notes.push(t("msg.layeredSkipped"));
-        if (r.skipped && r.skipped.blends) notes.push(t("msg.layeredBlend"));
+        var sk = r.skipped || {};
+        if (sk.flat) notes.push(t("msg.kraFlat"));           // a Krita file opened flat: nothing else to say
+        else {
+          if (sk.groups || sk.masks) notes.push(t("msg.layeredFlat"));
+          if (sk.empty || sk.missing || sk.other) notes.push(t("msg.layeredSkipped"));
+        }
+        if (sk.blends) notes.push(t("msg.layeredBlend"));
         if (layers.capped) notes.push(t("msg.layeredMerged", { n: C.MAX_LAYERS }));
         if (notes.length) PL.toast(notes.join(" "));
       });
@@ -243,10 +252,16 @@
     });
   }
   // OpenRaster layers are PNGs: decoded by the browser, one by one.
+  // Krita layers come as pixels already (L.img).
   function oraPixels(r) {
     var out = [], chain = Promise.resolve();
     r.layers.forEach(function (L) {
       chain = chain.then(function () {
+        if (L.img) {
+          if (L.img.w * L.img.h > PL.limits.area) throw new Error("psd-big");
+          out.push({ name: L.name, x: L.x, y: L.y, op: L.op, bl: L.bl, vis: L.vis, img: L.img });
+          return;
+        }
         return source(new Blob([L.png], { type: "image/png" })).then(function (s) {
           if (s.w * s.h > PL.limits.area) { s.done(); throw new Error("psd-big"); }
           out.push({ name: L.name, x: L.x, y: L.y, op: L.op, bl: L.bl, vis: L.vis, img: pixelsOf(s) });

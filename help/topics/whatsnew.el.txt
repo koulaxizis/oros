@@ -1,6 +1,9 @@
 # Τι νέο υπάρχει στο orOS
 Οι πιο πρόσφατες αλλαγές είναι πρώτες. Όταν το orOS ενημερώνεται, η ειδοποίηση ενημέρωσης ανοίγει αυτή τη σελίδα.
 
+## Έκδοση 2.41.00
+- Άλλες έντεκα εφαρμογές κάνουν εισαγωγή από άλλες εφαρμογές: Pixel Avatar (Aseprite, Piskel, παλέτες), Εργαστήριο εικόνας (Krita), Παρουσιάσεις (Impress, Markdown), Απόθεμα (Shopify, Square), Ώρες εργασίας (Kimai, Tempo, Excel από Toggl/Clockify/Harvest), Αποθήκη (Homebox, Sortly), Ενημερωτικό δελτίο (Substack, Buttondown), Ταξίδια (Polarsteps, TripIt), Σταυρόλεξο (.puz, .ipuz), Σουντόκου και Βοηθός (εξαγωγές ChatGPT και Claude), με προεπισκόπηση και Αναίρεση.
+
 ## Έκδοση 2.40.00
 - Συνταγές & Μενού, Προπόνηση, Μωρό, Μίκρο-Ζεν, Μετρητής πόντων και Οικογενειακό δέντρο κάνουν εισαγωγή από άλλες εφαρμογές: Mela, Recipe Keeper, Cooklang, Strong, Hevy, FitNotes, αρχεία δραστηριοτήτων Garmin και Strava, Huckleberry, Baby Buddy, Insight Timer, BG Stats και Gramps, με προεπισκόπηση και Αναίρεση.
 

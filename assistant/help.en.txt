@@ -130,6 +130,15 @@ Turn off `Keep conversations on this device` to keep none on this device, or use
 
 Keys stay on each device unless you tick `Sync API keys to my other devices`. They then travel inside your encrypted sync, sealed with your sync passphrase: anyone who knows that passphrase can use them. Removing a key while this is on removes it on every device.
 
+## Import conversations
+Bring your history from another AI chat. In the Assistant's settings, under `This device`, press `Import conversations` and pick the file.
+- ChatGPT: in ChatGPT open Settings › Data controls › Export data. You get an e-mail with a link to a `.zip`; pick that file (or the `conversations.json` inside it).
+- Claude: on claude.ai open Settings › Privacy › Export data. The e-mail brings a `.zip` with `conversations.json`; pick either.
+- You first see how many conversations and messages the file has, from which dates, and a list to choose from (`Select all`). Conversations that are already here are greyed out and never come in twice.
+- Your messages and the answers come in as text, with their bold, lists and code. System messages, tool calls and the model's thinking are left out; pictures and files show as [image] and [file: name]. For ChatGPT, the version of each conversation you last saw is kept (not the edited-away branches).
+- An imported conversation is marked with ChatGPT or Claude in the list and keeps its own date. You can read it, and go on with it using the assistant you have set up.
+- `Undo` on the message removes what came in; a conversation you have continued meanwhile stays. The file is read on this device only.
+
 ## Keyboard shortcuts
 - [[Enter]] sends, [[Shift+Enter]] starts a new line.
 - [[Esc]] stops an answer that is still coming.

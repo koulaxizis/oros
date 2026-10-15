@@ -11,6 +11,11 @@
 //   - PowerPoint (.pptx): written and read by pptx.js (ZIP by
 //     atelier/zip.js); an opened file is a NEW deck, its pictures
 //     stored on the orOS disk like any picture added here
+//   - LibreOffice Impress (.odp, flat .fodp: odp.js) and Markdown
+//     decks (Marp, reveal.js, plain Markdown: mdimport.js): read into
+//     the same plan as a .pptx, shown in a preview first, then built
+//     by pptx.js build() as a NEW deck in one write; Undo removes it
+//     again (tombstones, so every device drops it)
 //   - pictures: designkit/assets.js (one file per picture, R30)
 // All file I/O goes through orosDialog (R33).
 // ============================================================
@@ -279,17 +284,29 @@
   }
   SL.readPackage = readPackage;
 
+  var OPEN_ACCEPT = ".orosslides,.pptx,.odp,.fodp,.md,.markdown,.html,.htm,application/json,.json,text/markdown," +
+    "application/vnd.oasis.opendocument.presentation,";
   function importPackage() {
-    pickFile(".orosslides,.pptx,application/json,.json," + X().MIME).then(openFile, function () { SL.toast(t("imp.bad")); });
+    pickFile(OPEN_ACCEPT + X().MIME).then(openFile, function () { SL.toast(t("imp.bad")); });
   }
   // Also the way in for a file from the system's "Open with" (shell fileopen.js).
-  // A .pptx (a ZIP) goes to openPptx, anything else is read as a package.
+  // A ZIP is a .pptx (openPptx) or an .odp (openOdp); a text file is a
+  // flat .fodp, a Markdown deck or a package.
+  var MD_NAME = /\.(md|markdown|mdown|mkd)$/i;
   function openFile(f) {
     return Promise.resolve(f).then(function (f) {
       if (!f) return;
       if (f.size > PKG_MAX) { SL.toast(t("imp.bad")); return; }
-      return f.slice(0, 4).arrayBuffer().then(function (head) {
-        if (X().isZip(new Uint8Array(head)) || /\.pptx$/i.test(f.name || "")) return openPptx(f);
+      return f.slice(0, 8).arrayBuffer().then(function (head) {
+        if (X().isZip(new Uint8Array(head))) {          // (isZip wants more than 4 bytes)
+          if (/\.pptx$/i.test(f.name || "")) return openPptx(f);
+          return f.arrayBuffer().then(function (ab) {
+            var zip = window.AtelierZip.open(new Uint8Array(ab));
+            if (window.OrosOdp && window.OrosOdp.isOdp(zip)) return openOdp(zip, f.name);
+            return openPptx(f);
+          });
+        }
+        if (/\.pptx$/i.test(f.name || "")) return openPptx(f);
         return openPackageFile(f);
       });
     }).then(null, function () { SL.toast(t("imp.bad")); });
@@ -297,8 +314,14 @@
   function openPackageFile(f) {
     return Promise.resolve(f).then(function (f) {
       return f.text().then(function (txt) {
+        var name = String(f.name || "");
+        // a flat LibreOffice file, a Markdown deck (or a reveal.js page)
+        if (/\.fodp$/i.test(name) || /^\s*(<\?xml[^>]*>\s*)?<office:document[\s>]/.test(txt)) return openFlatOdp(txt, name);
+        var MD = window.OrosSlidesMd;
+        if (MD && (MD_NAME.test(name) || /<section[^>]*data-markdown/i.test(txt))) return openMd(txt, name);
         var pkg = null;
         try { pkg = JSON.parse(txt); } catch (e) {}
+        if (!pkg && MD && MD.looks(txt)) return openMd(txt, name);
         var probe = pkg ? readPackage(pkg, SL.now(), SL.newId) : null;
         if (!probe) { SL.toast(t("imp.bad")); return; }
         var assets = pkg.assets && typeof pkg.assets === "object" ? pkg.assets : {};
@@ -425,6 +448,102 @@
     });
   }
 
+  // ---------- LibreOffice Impress, Markdown decks ----------
+  // Read → preview (what comes in, what stays out) → the pictures on
+  // the orOS disk → ONE write (a NEW deck, pptx.js build) → toast with
+  // Undo. Nothing from the file is ever shown as HTML (textContent).
+  var planBusy = false;
+  function labels() {
+    return { chart: t("note.chart"), table: t("note.table"), diagram: t("note.diagram"), media: t("note.media"), object: t("note.object"),
+      pic: t("note.pic") };
+  }
+  function openOdp(zip, name) {
+    return window.OrosOdp.read(zip, { labels: labels() }).then(function (plan) { previewPlan(plan, name); });
+  }
+  function openFlatOdp(text, name) {
+    previewPlan(window.OrosOdp.readFlat(text, { labels: labels() }), name);
+  }
+  function openMd(text, name) {
+    previewPlan(window.OrosSlidesMd.parse(text, { name: name, labels: labels() }), name);
+  }
+  function previewPlan(plan, name) {
+    if (!plan.title) plan.title = String(name || "").replace(/\.[a-z0-9]{1,8}$/i, "");
+    if (!plan.slides.length) { SL.toast(t("mi.empty")); return; }
+    var el = SL.el, cn = plan.count, pics = Object.keys(plan.media).length, notes = 0;
+    plan.slides.forEach(function (s) { if (s.n) notes++; });
+    var links = (cn.remote || 0) + (cn.local || 0);
+    var out = cn.skipped + cn.unknown;
+    SL.openDialog(t("mi.title"), function (body, close) {
+      body.className += " mi-body";
+      body.appendChild(el("p", "mi-src", t("mi.from", { s: t("mi.src." + plan.source), t: plan.title || t("deck.untitled") })));
+      body.appendChild(el("p", "", t("mi.count", { n: plan.slides.length, p: pics, o: notes })));
+      body.appendChild(el("p", "hint", t(plan.source === "odp" ? "mi.mapOdp" : "mi.mapMd")));
+      if (out) body.appendChild(el("p", "hint", t("mi.out", { n: out })));
+      if (links) body.appendChild(el("p", "hint", t("mi.links", { n: links })));
+      if (cn.slides > plan.slides.length) body.appendChild(el("p", "hint warn", t("mi.cap", { n: plan.slides.length, all: cn.slides })));
+      body.appendChild(el("p", "hint", t("mi.new")));
+      var act = el("div", "dlg-actions");
+      var c = el("button", "btn small", t("btn.cancel"));
+      c.type = "button";
+      c.addEventListener("click", close);
+      var go = el("button", "btn small primary", t("mi.go"));
+      go.type = "button";
+      go.id = "mi-go";
+      go.addEventListener("click", function () { close(); importPlan(plan); });
+      act.appendChild(c);
+      act.appendChild(go);
+      body.appendChild(act);
+    });
+  }
+  function importPlan(plan) {
+    if (planBusy) return;
+    planBusy = true;
+    SL.toast(t("imp.pptxWorking"));
+    var assets = {}, failed = 0, nofs = false, chain = Promise.resolve();
+    Object.keys(plan.media).forEach(function (p) {
+      chain = chain.then(function () {
+        if (nofs) { failed++; return; }
+        return plan.get(p).then(function (b) {
+          if (!b) { failed++; return; }
+          var file = new File([b], (p.split("/").pop() || "picture").slice(0, 80), { type: X().mediaType(p) || "image/png" });
+          return A.importFile(file).then(function (r) { assets[p] = r; });
+        }).then(null, function (e) { if (e && e.message === "nofs") nofs = true; failed++; });
+      });
+    });
+    return chain.then(function () {
+      var lost = 0;
+      var id = SL.addDeckData(function (dt, nw, newId) {
+        var r = X().build(plan, assets, nw, newId);
+        if (plan.source !== "odp" && window.OrosSlidesMd) r = window.OrosSlidesMd.tidy(plan, r);
+        if (!r.deck || !r.slides.length) return null;
+        dt.decks[r.deck.id] = r.deck;
+        r.slides.forEach(function (s) { dt.slides[s.id] = s; });
+        r.items.forEach(function (it) { dt.items[it.id] = it; });
+        lost = plan.count.skipped + plan.count.unknown + r.missing;
+        return r.deck.id;
+      });
+      planBusy = false;
+      if (!id) { SL.toast(t("imp.bad")); return; }
+      SL.openDeck(id);
+      var msg = nofs ? t("img.nofs") : lost ? t("imp.pptxPartial", { n: lost }) : t("imp.done");
+      SL.toast(msg, t("btn.undo"), function () { undoPlan(id); });
+    }).then(null, function (e) {
+      planBusy = false;
+      try { console.error("[orOS] slides: import failed", e); } catch (x) {}
+      SL.toast(t("imp.bad"));
+    });
+  }
+  // Undo: the new deck goes again, tombstoned newer than it, so a
+  // device that already got it drops it too; nothing else changes.
+  function undoPlan(id) {
+    if (!SL.data().decks[id]) return;
+    if (SL.deck === id) SL.goHome();
+    SL.addDeckData(function (dt, nw) { C.deleteDeck(dt, id, nw); });
+    if (SL.prefs.deck === id) { SL.prefs.deck = null; SL.savePrefs(); }
+    SL.renderHome();
+    SL.toast(t("mi.undone"));
+  }
+
   // ---------- Pictures ----------
   // Into an image item (placeholder or replace), or a new picture
   // centred on the slide.
@@ -463,6 +582,6 @@
   SL.io = {
     present: present, exportPdf: exportPdf, exportPng: exportPng,
     exportPackage: exportPackage, importPackage: importPackage, openFile: openFile, placeImage: placeImage,
-    exportPptx: exportPptx
+    exportPptx: exportPptx, previewPlan: previewPlan
   };
 })();

@@ -318,7 +318,7 @@ button:disabled { cursor: default; opacity: 0.4; }
   padding: 6px 0;
   cursor: pointer;
 }
-.consent-item input, .consent-always input, .dlg-check input {
+.consent-item input, .consent-always input, .dlg-check input, .imp-row input {
   flex-shrink: 0;
   width: 20px;
   height: 20px;
@@ -622,3 +622,45 @@ dialog.as-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 .ws-box { margin-top: 8px; }
 .tool-src { margin: -2px 0 8px 28px; }
 .web-src .web-link { color: var(--accent); }
+
+/* Import conversations (import.js) */
+.imp-list {
+  max-height: 38vh;
+  overflow-y: auto;
+  margin-top: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.imp-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  min-width: 0;
+}
+.imp-row:last-child { border-bottom: 0; }
+.imp-row.have { opacity: 0.55; cursor: default; }
+.imp-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.imp-name { font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
+.imp-meta { font-size: 12px; color: var(--text-dim); }
+.imp-src { font-weight: 700; }
+.imp-note { font-size: 12px; color: var(--text-dim); text-align: center; margin: 4px 0 12px; overflow-wrap: anywhere; }
+.chat-src {
+  margin-left: 6px;
+  padding: 0 5px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 10px;
+}
+#toast.act { pointer-events: auto; display: flex; align-items: center; gap: 10px; }
+.toast-btn {
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  font-weight: 800;
+  font-size: 13px;
+  min-height: 32px;
+  padding: 0 4px;
+}

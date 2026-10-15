@@ -65,8 +65,16 @@ Scan a label with your phone's camera and orOS opens Storage at that place. Wher
 ## Reminders
 `⋯` › `Settings…` › `Reminders on this device` turns on reminders from the hour you choose. Storage then tells you 30 days and 7 days before a warranty ends and on the day, and on the return-by date of something you lent. Reminders are off until you turn them on, separately on each device; they arrive like any other [notification](help:t/notifications).
 
+## Import from another app
+`⋯` › `Import (Homebox, Sortly, CSV)…` brings in a home inventory:
+- Homebox: `Tools` › `Export inventory` gives a CSV. Labels become tags; purchase price, purchase date and warranty end are kept; description, notes, maker, serial number and shop go into the note. Sold items are left out.
+- Sortly: `Export` (or `Reports` › export as CSV). The folder path becomes the place; variant, unit, minimum level and barcode go into the note.
+- Any other CSV: a column for the name, and if you have them location, quantity and notes. The preview shows which columns were used.
+
+Storage always has Space › Room › Furniture › Position. A location such as `Garage/Shelf 1/Box 3` fills these from the top, under the space you choose in `Put the places under`; deeper parts join the position's name, and missing levels become a place called General. Places with the same name are reused. The import only adds: what's already here stays as it is, and the same file twice adds nothing. The message after it has `Undo`.
+
 ## Sync and backup
-Everything you add syncs between your devices through [orOS sync](help:t/sync). Storage has no import or export of its own; the orOS [backup](help:t/backup) keeps a copy.
+Everything you add syncs between your devices through [orOS sync](help:t/sync). Storage has no export of its own; the orOS [backup](help:t/backup) keeps a copy.
 
 ## Keyboard shortcuts
 - [[Enter]] on a selected card opens it.
