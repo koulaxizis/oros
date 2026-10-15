@@ -2,7 +2,7 @@
 orOS is a small operating system that runs in your web browser. It has its own desktop, a menu full of apps, and your settings, and it works on phones, tablets and computers, even without a connection.
 
 ## What orOS is
-Everything in orOS runs inside the browser: there is nothing to sign up for and no account to make. Your apps and data stay on this device unless you choose to sync them. You can also [install orOS as an app](help:t/install) so it opens in its own window.
+Everything in orOS runs inside the browser: there is nothing to sign up for and no account to make. Your apps and data stay on this device unless you choose to sync them. You can also [install orOS as an app](help:t/install) so it opens in its own window. For orOS on a USB stick, on Android or as single apps, open the menu and choose **Get orOS**, or go to [useoros.online/download](https://useoros.online/download/).
 
 ## The top bar
 The bar at the top is always there:
