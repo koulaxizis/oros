@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.25.06
+- The menu has a new row, Get orOS: USB, Android, single apps. It opens the download page with every way to get orOS. The end of the welcome tour and Help › Getting started point to it too.
+
 ## Version 2.25.05
 - Download page: inside the installed orOS app it says to open the page in a browser tab instead, and on Android the APK downloads stay in your browser instead of opening the GitHub app.
 

@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "2.25.05";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "2.25.06";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -2730,6 +2730,25 @@
     host.appendChild(section);
   }
 
+  // Download page (Chris 2026-10-15): every way to get orOS (Portable,
+  // bootable USB, single apps, APKs). A plain menu row, always there,
+  // never a popup (free-forever rule: no nag messages). Not in a
+  // single app's window.
+  function renderGetRow(host) {
+    if (SOLO) return;
+    var section = document.createElement("div");
+    section.className = "install-section";
+    var row = document.createElement("button");
+    row.className = "menu-item install-row";
+    row.innerHTML = DOWNLOAD_ICON_SVG + "<span>" + escapeHtml(window.t("menu.getOros")) + "</span>";
+    row.addEventListener("click", function () {
+      closeMenu();
+      window.open("download/" + (window.orosLang === "el" ? "?lang=el" : ""), "_blank", "noopener");
+    });
+    section.appendChild(row);
+    host.appendChild(section);
+  }
+
   // ---------- 8. Apps loading & menu ----------
   function loadApps() {
     fetch("apps.json")
@@ -3662,6 +3681,7 @@
       window.orosLauncher.renderSettings(menu);
     }
     renderInstallRow(menu);
+    renderGetRow(menu);
     if (window.orosLauncher) window.orosLauncher.refresh();   // desktop shortcuts follow apps + language
 
     // Settings row: every system setting lives in the Settings app.
