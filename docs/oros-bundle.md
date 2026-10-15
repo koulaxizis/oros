@@ -98,6 +98,10 @@ Video and sound projects (Montage, Studio) can hold files of several GB. `bundle
 | Kanban | `{ kind: "oros-kanban-package", ver: 1, board }`; `card.att[].file` is a media key | card attachments by `<sha256>.<ext>`; `preview/board.md`, `preview/board.csv` |
 | Prompter | `{ kind: "oros-prompter-package", ver: 1, prompt: { id, cat, en, el, var_en, var_el, tags, mtime, pos }, favorite, completed }` | no media; `preview/script.txt` |
 | Ringtones | `{ kind: "oros-ringtones-package", ver: 1, melody: { id, m, name, bpm, voice, notes } }` | no media; `preview/tone.rtttl`, `preview/tone.wav` (melodies up to 60 s) |
+| Studio | `{ kind: "oros-studio-package", ver: 1, project { id, name, bpm, sig, vol, loop, fx }, tracks [{ id, name, color, vol, pan, mute, solo, ord, fx, inst?, auto? }], sources [{ id, name, dur, ch, media }], clips [{ id, t, s?, at, off, len, gain, fi, fo, name?, n? }] }`; effect file sliders are `{ media, name }` | audio and impulse responses by `<sha256>.<ext>`; `preview/tracks.txt`, `preview/song.mid` + timeline thumbnail |
+| Montage | `{ kind: "oros-montage-package", ver: 1, project: { id, name, ar, fps, bg, vs, m, items } }`; `item.src`, `lut`, `na` are media keys | videos, pictures and sounds by `<sha256>.<ext>` (the app's own ids); poster thumbnail, `preview/timeline.txt`, `preview/captions.srt` |
+| Photo Lab | `{ kind: "oros-photolab-package", ver: 1, doc: { name, w, h, m, layers: [{ id, k, name, vis, lock, op, bl, x, y, px?, tx?, sh?, aj?, fx?, mk? }], gd?, sels? } }`; `px = { key, x, y, w, h }` | one lossless PNG per raster layer, mask and selection; `preview/image.png` (flattened) + thumbnail |
+| Pixel | `{ kind: "oros-pixel-package", ver: 1, item: { id, m, name, f }, colors, grid }` | no media; `preview/face.png`, `preview/face.svg` + thumbnail |
 
 The models are the ones each app syncs (OROS_BIBLE.md Part IV).
 
