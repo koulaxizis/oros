@@ -54,5 +54,34 @@
         }
       ]
     }
-  ]
+  ],
+  "file_handlers": [
+    {
+      "action": "/water/solo.html?file-open=water",
+      "accept": {
+        "application/x-oros-water": [
+          ".oroswater"
+        ]
+      }
+    }
+  ],
+  "share_target": {
+    "action": "/water/solo.html?share-target",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        {
+          "name": "files",
+          "accept": [
+            "application/x-oros-water",
+            ".oroswater"
+          ]
+        }
+      ]
+    }
+  }
 }

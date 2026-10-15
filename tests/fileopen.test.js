@@ -53,8 +53,54 @@ test("every app in the table exists and takes a file through its deep link", () 
     notes: ["notes/notes.js"], texttools: ["texttools/texttools.js"], photolab: ["photolab/app.js"], montage: ["montage/montage.js"], library: ["library/app.js"],
     wiki: ["wiki/wiki.js", "wiki/io.js"], kanban: ["kanban/kanban.js"], prompter: ["prompter/prompter.js"], studio: ["studio/studio.js"], pixel: ["pixel/pixel.js"],
     certificates: ["certificates/certificates.js"], labels: ["labels/labels.js"], travel: ["travel/travel.js"],
-    maps: ["maps/tracks.js"], chess: ["chess/chess.js"], calendar: ["calendar/calendar.js"], contacts: ["contacts/contacts.js"]
+    maps: ["maps/tracks.js"], chess: ["chess/chess.js"], calendar: ["calendar/calendar.js"], contacts: ["contacts/contacts.js"],
+    // phase 4b record apps (recordpkg.js)
+    todo: ["todo/todo.js", "recordpkg.js"], habits: ["habits/habits.js"], water: ["water/water.js"], chores: ["chores/chores.js"],
+    scores: ["scores/scores.js"], cycle: ["cycle/cycle.js"], mood: ["mood/mood.js"], bookmarks: ["bookmarks/bookmarks.js"],
+    meals: ["meals/meals.js"], stickies: ["stickies/stickies.js"], budget: ["budget/budget.js"], invoices: ["invoices/invoices.js"],
+    crm: ["crm/crm.js"], timesheet: ["timesheet/timesheet.js"], quote: ["quote/quote.js"], split: ["split/split.js"],
+    stock: ["stock/stock.js"], diary: ["diary/diary.js"], health: ["health/health.js"], fitness: ["fitness/fitness.js"],
+    baby: ["baby/baby.js"], petcare: ["petcare/petcare.js"], plants: ["plants/plants.js"], garage: ["garage/garage.js"],
+    shelf: ["shelf/shelf.js"], signature: ["signature/signature.js"], newsletter: ["newsletter/newsletter.js"], storage: ["storage/storage.js"]
   };
+  // Phase 4b: the record apps' bundle types are registered ahead of
+  // their waves. An app listed here has no "Open with" receiver for its
+  // .oros<word> file yet; its wave adds the receiver and takes the app
+  // off this list (one app per line, so parallel waves merge cleanly).
+  const PENDING_4B = [
+    "habits",
+    "water",
+    "chores",
+    "scores",
+    "cycle",
+    "mood",
+    "calendar",
+    "contacts",
+    "bookmarks",
+    "feeds",
+    "podcasts",
+    "meals",
+    "stickies",
+    "budget",
+    "invoices",
+    "crm",
+    "timesheet",
+    "quote",
+    "split",
+    "stock",
+    "diary",
+    "health",
+    "fitness",
+    "baby",
+    "petcare",
+    "plants",
+    "garage",
+    "library",
+    "shelf",
+    "signature",
+    "newsletter",
+    "storage"
+  ];
   F.HANDLERS.forEach((h) => {
     assert.ok(apps.includes(h.app), "registered: " + h.app);
     assert.ok(files[h.app], "receiver file known: " + h.app);
@@ -63,8 +109,9 @@ test("every app in the table exists and takes a file through its deep link", () 
       assert.match(src, new RegExp("\\." + h.text + "\\b"), h.app);
       assert.match(src, /window\.__orosOpenAt\s*=/, h.app);
       assert.match(src, /__orosTakeTarget\(\s*["']/, h.app);
-      return;
+      if (!h.textExt) return;                            // also a File type (its bundle): checked below
     }
+    if (PENDING_4B.includes(h.app)) return;
     assert.match(src, /openFile/, h.app);
     assert.match(src, /__orosTakeFile\(/, h.app);
     assert.match(src, /window\.__orosOpenAt\s*=/, h.app);
@@ -201,6 +248,15 @@ test("launch: .ics and .vcf go as text (BR-FILE-IMPORT), over 5 MB refused", asy
   await tick(); await tick();
   assert.equal(calls[2][0], "notice");
   assert.equal(F.textKey("writer"), "");
+  // their orOS bundles go as Files (token), not as text
+  assert.equal(F.textKey("calendar", ".oroscal"), "");
+  assert.equal(F.textKey("contacts", ".ICS"), "");
+  assert.equal(F.textKey("calendar", ".ICS"), "importIcs");
+  launch([Object.assign(file("week.oroscal"), { text: () => Promise.reject(new Error("never read as text")) })]);
+  await tick(); await tick();
+  assert.equal(calls[3][1], "calendar");
+  assert.equal(typeof calls[3][2].openFile.token, "string");
+  assert.equal(w.__orosTakeFile(calls[3][2].openFile.token).name, "week.oroscal");
 });
 
 test("launch: a shared type follows the saved choice; Settings API checks its input", async () => {

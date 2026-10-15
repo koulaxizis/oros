@@ -28,8 +28,41 @@ The format is free and open (MIT, like orOS). Reader and writer: [`bundle.js`](.
 | `.oroslabels` | Label Maker | `application/x-oros-labels` |
 | `.orostrip` | Travel | `application/x-oros-trip` |
 | `.orosmap` | Maps | `application/x-oros-map` |
+| `.orostasks` | To-Do | `application/x-oros-tasks` |
+| `.oroshabits` | Habits | `application/x-oros-habits` |
+| `.oroswater` | Water | `application/x-oros-water` |
+| `.oroschores` | Chores | `application/x-oros-chores` |
+| `.orosscores` | Scores | `application/x-oros-scores` |
+| `.oroscycle` | Cycle | `application/x-oros-cycle` |
+| `.orosmood` | Mood | `application/x-oros-mood` |
+| `.oroscal` | Calendar | `application/x-oros-cal` |
+| `.oroscontacts` | Contacts | `application/x-oros-contacts` |
+| `.orosbookmarks` | Bookmarks | `application/x-oros-bookmarks` |
+| `.orosfeeds` | Feeds | `application/x-oros-feeds` |
+| `.orospodcasts` | Podcasts | `application/x-oros-podcasts` |
+| `.orosmeals` | Meals | `application/x-oros-meals` |
+| `.orosstickies` | Stickies | `application/x-oros-stickies` |
+| `.orosbudget` | Budget | `application/x-oros-budget` |
+| `.orosinvoices` | Invoices | `application/x-oros-invoices` |
+| `.oroscrm` | CRM | `application/x-oros-crm` |
+| `.oroshours` | Timesheet | `application/x-oros-hours` |
+| `.orosquote` | Quote | `application/x-oros-quote` |
+| `.orossplit` | Split | `application/x-oros-split` |
+| `.orosstock` | Stock | `application/x-oros-stock` |
+| `.orosdiary` | Diary | `application/x-oros-diary` |
+| `.oroshealth` | Health | `application/x-oros-health` |
+| `.orosworkouts` | Fitness | `application/x-oros-workouts` |
+| `.orosbaby` | Baby | `application/x-oros-baby` |
+| `.orospet` | Pet care | `application/x-oros-pet` |
+| `.orosplants` | Plants | `application/x-oros-plants` |
+| `.orosgarage` | Garage | `application/x-oros-garage` |
+| `.oroslibrary` | Library | `application/x-oros-library` |
+| `.orosshelf` | Shelf | `application/x-oros-shelf` |
+| `.orossignature` | Signature | `application/x-oros-signature` |
+| `.orosnewsletter` | Newsletter | `application/x-oros-newsletter` |
+| `.orosinventory` | Storage | `application/x-oros-inventory` |
 
-More apps follow; each gets its own extension (`.oros` + one short English word) and MIME type `application/x-oros-<word>`.
+The record apps (To-Do to Storage) follow the rules in "Record apps" below. More apps follow; each gets its own extension (`.oros` + one short English word) and MIME type `application/x-oros-<word>`.
 
 ## Layout of the archive
 
@@ -115,6 +148,29 @@ Video and sound projects (Montage, Studio) can hold files of several GB. `bundle
 
 The models are the ones each app syncs (OROS_BIBLE.md Part IV).
 
+## Record apps
+
+Apps that keep many small records (tasks, habits, transactions, diary entries …) save ALL of them as one file with the app's own extension, through the shared kit [`recordpkg.js`](../recordpkg.js) (tests: [`tests/recordpkg.test.js`](../tests/recordpkg.test.js)).
+
+content.json:
+
+```json
+{ "kind": "oros-<app>-package", "ver": 1, "data": { … } }
+```
+
+`data` is the app's sync slice (OROS_BIBLE.md Part IV) with its tombstones and device-only fields removed. Files on the orOS disk the records point at (receipts, photos) go in `media/`; `preview/` holds a copy other programs open where the app already has an exporter (CSV, Markdown, ICS, VCF, OPML, HTML bookmarks). meta.xml has the title, the oldest and newest record stamps as created / modified, the language and `generator` "orOS <App>".
+
+Opening a record app's file is an **add-only merge**. This replaces rule 8 above ("fresh ids") for these apps only:
+
+1. The kind must be the app's own; the app's normaliser cleans the data. Tombstones in the file are ignored: a file never deletes anything.
+2. Every record the device lacks is added **with its id**, so opening the same file again adds nothing.
+3. A record whose id is already on the device, live or deleted, is kept as it is: a file never overwrites. A record of a list the device already has (a task of a known list) goes into the device's copy of that list.
+4. The dialog shows how many records are new, already here and newer in the file. With **Update with newer versions** ticked (for moving your own data between devices), a live record takes the file's copy when the file's stamp is newer; a deleted one stays deleted.
+5. Stamps in the file are clamped to at most now + 5 minutes, so a file cannot make its records win every later sync.
+6. The result goes through the app's own save and sync path (its merge), never `orosSync.importData`. `Undo` removes the added records the app's own way.
+
+Quote and Meals also offer "Open as copy" (fresh ids), as they work like templates. Record files are not encrypted; Save says so in one line.
+
 ## Versions
 
 - Container minor versions only add optional files or attributes; readers ignore what they do not know. A newer major version is refused with "update orOS".
@@ -131,7 +187,7 @@ A file from outside is treated as hostile.
 5. Every file is hashed and compared with the manifest. A mismatch does not refuse the file (people may edit an unzipped folder) but is reported. A hash-named media file whose bytes changed gets its real hash as its key, and content.json follows it.
 6. Media types are read from the bytes, never the name.
 7. content.json goes through the app's own normaliser and sanitiser, exactly like any import. Nothing in a bundle is ever run: no scripts, no HTML from `preview/`.
-8. Opening always makes a new item with fresh ids; it never overwrites one.
+8. Opening always makes a new item with fresh ids; it never overwrites one. Record apps instead add the records they lack with their ids and never overwrite or delete by default (see "Record apps").
 
 ## Unzipped folders
 
