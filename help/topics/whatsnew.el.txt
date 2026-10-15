@@ -1,6 +1,9 @@
 # Τι νέο υπάρχει στο orOS
 Οι πιο πρόσφατες αλλαγές είναι πρώτες. Όταν το orOS ενημερώνεται, η ειδοποίηση ενημέρωσης ανοίγει αυτή τη σελίδα.
 
+## Έκδοση 2.40.00
+- Συνταγές & Μενού, Προπόνηση, Μωρό, Μίκρο-Ζεν, Μετρητής πόντων και Οικογενειακό δέντρο κάνουν εισαγωγή από άλλες εφαρμογές: Mela, Recipe Keeper, Cooklang, Strong, Hevy, FitNotes, αρχεία δραστηριοτήτων Garmin και Strava, Huckleberry, Baby Buddy, Insight Timer, BG Stats και Gramps, με προεπισκόπηση και Αναίρεση.
+
 ## Έκδοση 2.39.00
 - Το ράφι μου, Σελιδοδείκτες, Χάρτες, Ραδιόφωνο και Βιβλιοθήκη κάνουν εισαγωγή από άλλες εφαρμογές: StoryGraph, IMDb, Trakt, MyAnimeList, Discogs, BoardGameGeek, Instapaper, wallabag, σελιδοδείκτες browser, KMZ, μέρη και Timeline από Google Takeout, TCX, FIT, λίστες M3U/PLS, Kindle clippings, KOReader και Readwise, με προεπισκόπηση και Αναίρεση.
 

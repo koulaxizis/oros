@@ -7036,3 +7036,9 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Every import: preview, one write, Undo; stable ids, so a re-import adds only what is missing.
 - Files: new `shelf/import.js`, `bookmarks/import.js`, `maps/import.js`, `maps/import-ui.js`, `radio/import.js`, `library/import.js`, `library/hlimport.js` (precached); help EN/EL.
   - Tests: new import tests; full suite green; real shell per app (preview, two-device sync, Undo, 360px). Not tested: real export files from these services.
+
+### 2026-10-15 — Import from other apps, wave 6: Meals, Workouts, Baby, Zen, Scores, Family tree (#409) — 2.40.00
+- Meal Planner: Mela, Recipe Keeper, Nextcloud Cookbook, Cooklang, Crouton, MyCookbook; several recipes in one batch with Undo (Paprika, Mealie, Tandoor and web lists now use the same batch). Workouts: Strong/Hevy, FitNotes, JEFIT, FIT/TCX/GPX one at a time or a bulk ZIP (Garmin/Strava); routes thinned; activities within 60 s of an existing workout skipped. Baby: Huckleberry, Baby Buddy, Baby Tracker (Nighp) into the selected child. Micro-Zen: Insight Timer or any date + minutes CSV, never counted twice. Score Keeper: BG Stats plays as finished matches, players matched by name. Family Tree: Gramps XML through the GEDCOM preview, merge and Undo.
+- Every import: preview, one write, Undo; stable ids.
+- Files: new `fitness/import.js`, `baby/import.js`, `zen/import.js`, `scores/import.js`, `familytree/gramps.js` (precached); `meals/import.js` extended; `ft-core.js` exports `checkRows`; help EN/EL.
+  - Tests: new import tests; full suite green; real shell per app. Not tested: real export files from these services.
