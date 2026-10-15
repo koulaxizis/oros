@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Preview of the orOS download page. Not linked from the site and kept
+       out of search engines on purpose (Chris, 2026-10-15): open it only
+       by direct link until it is published. -->
+  <meta name="robots" content="noindex, nofollow, noarchive">
+  <title>Get orOS</title>
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <style>
+    :root { --bg: #14120d; --panel: #1d1a14; --text: #f0ead9; --dim: #b9b09a; --accent: #d4af37; --border: #3a3428;
+      --ok: #7fbf7f; --soon: #d4af37; --test: #8fb3e0; }
+    @media (prefers-color-scheme: light) {
+      :root { --bg: #faf7ef; --panel: #ffffff; --text: #241f14; --dim: #5d5544; --accent: #8a6d12; --border: #e2dac6;
+        --ok: #2f7a2f; --soon: #8a6d12; --test: #2c5f99; }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; }
+    main { max-width: 1040px; margin: 0 auto; padding: 24px 16px 48px; }
+    header { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand img { width: 44px; height: 44px; }
+    h1 { font-size: 26px; margin: 0; }
+    .lede { color: var(--dim); margin: 8px 0 20px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 460px), 1fr)); gap: 16px; align-items: start; }
+    .card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+    .ch { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; }
+    h2 { font-size: 19px; margin: 0; color: var(--accent); }
+    p { margin: 6px 0; }
+    .dim { color: var(--dim); font-size: 14px; }
+    a { color: var(--accent); }
+    code { font-size: 13px; background: var(--bg); padding: 1px 5px; border-radius: 4px; }
+    .badge { font-size: 12px; font-weight: 600; border: 1px solid currentColor; border-radius: 999px; padding: 2px 10px; white-space: nowrap; }
+    .badge.ok { color: var(--ok); } .badge.soon { color: var(--soon); } .badge.test { color: var(--test); }
+    .btn { align-self: flex-start; margin-top: auto; display: inline-flex; align-items: center; min-height: 40px; padding: 8px 16px;
+      border-radius: 8px; background: var(--accent); color: var(--bg); font-weight: 600; text-decoration: none; }
+    .btn.soft { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+    .tw { overflow-x: auto; margin: 6px 0; }
+    table { border-collapse: collapse; width: 100%; min-width: 460px; font-size: 14px; }
+    th, td { border-top: 1px solid var(--border); padding: 6px 8px; text-align: left; vertical-align: top; }
+    thead th { border-top: 0; }
+    tbody th { color: var(--dim); font-weight: 600; white-space: nowrap; }
+    .apps { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; margin-top: 8px; }
+    .app { display: flex; align-items: center; gap: 10px; padding: 8px; border: 1px solid var(--border); border-radius: 10px;
+      color: var(--text); text-decoration: none; min-height: 52px; font-size: 14px; line-height: 1.25; }
+    .app:hover, .app:focus-visible { border-color: var(--accent); }
+    .app img { flex: none; border-radius: 8px; }
+    .lang button { background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 8px;
+      font: inherit; font-size: 14px; padding: 6px 12px; cursor: pointer; min-height: 36px; }
+    .lang button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+    .foot { color: var(--dim); font-size: 14px; margin-top: 28px; text-align: center; }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="brand"><img src="/icon.svg" alt=""><h1 id="t">Get orOS</h1></div>
+    <div class="lang" role="group" aria-label="Language">
+      <button type="button" data-l="en" aria-pressed="true">English</button>
+      <button type="button" data-l="el" aria-pressed="false">Ελληνικά</button>
+    </div>
+  </header>
+
+  <article lang="en" id="en">
+    <p class="lede">Every way to get orOS. orOS is free forever (MIT): every download here costs nothing.</p>
+    <div class="grid">
+      <section class="card">
+        <div class="ch"><h2>Use it in your browser</h2><span class="badge ok">Available</span></div>
+        <p>Open orOS and start. Nothing to download, works offline after the first visit, your data stays on your device.</p>
+        <a class="btn" href="/" target="_blank" rel="noopener">Open useoros.online</a>
+      </section>
+      <section class="card">
+        <div class="ch"><h2>Install it as an app</h2><span class="badge ok">Available</span></div>
+        <p>Windows, Linux, Chromebook, Android: open useoros.online in Chrome, Edge or Brave and choose <b>Install orOS</b> in the address bar or the browser menu. orOS then gets its own window and icon, and can open your files.</p>
+        
+      </section>
+      <section class="card">
+        <div class="ch"><h2>orOS Portable (USB stick)</h2><span class="badge soon">Coming soon</span></div>
+        <p>Run orOS from a USB stick on any Windows or Linux PC, with or without internet. Your data stays on the stick.</p>
+        <div class="tw"><table><thead><tr><th></th><th><b>Full</b> (orOS-Portable)</th><th><b>Lite</b> (orOS-Portable-lite)</th></tr></thead><tbody><tr><th scope="row">Size</th><td>about 455 MB download, 1–1.5 GB on the stick</td><td>about 36 MB</td></tr><tr><th scope="row">Browser</th><td>its own private browser (ungoogled-chromium), for Windows and Linux</td><td>none: uses one installed on the PC (Chromium, Brave, Edge or Chrome)</td></tr><tr><th scope="row">Works on</th><td>any Windows 10/11 or 64-bit Linux PC, the same everywhere</td><td>Windows (Edge is always there); Linux only with a Chromium-family browser</td></tr><tr><th scope="row">Google / Microsoft</th><td>none</td><td>often runs inside Edge or Chrome</td></tr><tr><th scope="row">Watch out</th><td>—</td><td>a PC with an older browser than the last one used may not open your profile</td></tr></tbody></table></div>
+        <p><b>Not sure? Take the full edition.</b> Pick lite only for a small download or a small stick.</p>
+        <p class="dim"><b>Stick:</b> 32 GB or more recommended (64 GB is ideal and usually faster), 8 GB minimum. Format it as <b>exFAT</b>, unzip, copy everything inside the <code>orOS-Portable</code> folder to the stick, then double-click <code>orOS.exe</code> (Windows) or run <code>./orOS</code> (Linux). Optional: <code>orOS-sticktest</code> checks whether a stick is fast enough.</p>
+        <p class="dim">The first release is being prepared; the files appear on this link when it is out.</p>
+        <a class="btn" href="https://github.com/koulaxizis/oros-portable/releases/latest" target="_blank" rel="noopener">Downloads on GitHub</a>
+      </section>
+      <section class="card">
+        <div class="ch"><h2>Bootable orOS USB</h2><span class="badge test">In testing</span></div>
+        <p>Start a computer straight into orOS from a USB stick, without touching what is installed on it. A 1.2 GB image (Debian with a locked-down orOS window) that you write to a stick of 8 GB or more; your data is kept on the stick.</p>
+        <a class="btn soft" href="https://github.com/koulaxizis/oros-usb" target="_blank" rel="noopener">Project on GitHub</a>
+      </section>
+      <section class="card">
+        <div class="ch"><h2>Ready-made orOS USB stick</h2><span class="badge soon">Coming soon</span></div>
+        <p>A fast 64 GB stick with orOS Portable already on it, tested file by file, with a printed quick-start card. Buying one supports orOS.</p>
+        <a class="btn soft" href="https://ko-fi.com/koulaxizis/shop" target="_blank" rel="noopener">orOS shop on Ko-fi</a>
+      </section>
+      <section class="card">
+        <div class="ch"><h2>Single apps</h2><span class="badge ok">Available</span></div>
+        <p>Install just one orOS app with its own icon and window. They share your data with orOS on the same device. Tap an app, then <b>Install</b>.</p>
+        <div class="apps">
+        <a class="app" href="/bookmarks/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/bookmarks.svg" alt="" width="36" height="36"><span>Bookmarks</span></a>
+        <a class="app" href="/budget/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/budget.svg" alt="" width="36" height="36"><span>Budget</span></a>
+        <a class="app" href="/calculator/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/calculator.svg" alt="" width="36" height="36"><span>Calculator</span></a>
+        <a class="app" href="/calendar/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/calendar.svg" alt="" width="36" height="36"><span>Calendar</span></a>
+        <a class="app" href="/contacts/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/contacts.svg" alt="" width="36" height="36"><span>Contacts</span></a>
+        <a class="app" href="/crm/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/crm.svg" alt="" width="36" height="36"><span>CRM</span></a>
+        <a class="app" href="/cycle/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/cycle.svg" alt="" width="36" height="36"><span>Cycle</span></a>
+        <a class="app" href="/diary/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/diary.svg" alt="" width="36" height="36"><span>One-Sentence Diary</span></a>
+        <a class="app" href="/feeds/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/feeds.svg" alt="" width="36" height="36"><span>Reader</span></a>
+        <a class="app" href="/files/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/files.svg" alt="" width="36" height="36"><span>Files</span></a>
+        <a class="app" href="/fitness/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/fitness.svg" alt="" width="36" height="36"><span>Workouts</span></a>
+        <a class="app" href="/gamecenter/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/gamecenter.svg" alt="" width="36" height="36"><span>Game Center</span></a>
+        <a class="app" href="/habits/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/habits.svg" alt="" width="36" height="36"><span>Habits</span></a>
+        <a class="app" href="/health/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/health.svg" alt="" width="36" height="36"><span>Health</span></a>
+        <a class="app" href="/invoices/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/invoices.svg" alt="" width="36" height="36"><span>Invoices</span></a>
+        <a class="app" href="/kanban/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/kanban.svg" alt="" width="36" height="36"><span>Kanban</span></a>
+        <a class="app" href="/mail/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/mail.svg" alt="" width="36" height="36"><span>Mail</span></a>
+        <a class="app" href="/maps/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/maps.svg" alt="" width="36" height="36"><span>Maps</span></a>
+        <a class="app" href="/mindmap/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/mindmap.svg" alt="" width="36" height="36"><span>Mind Map</span></a>
+        <a class="app" href="/mood/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/mood.svg" alt="" width="36" height="36"><span>Mood</span></a>
+        <a class="app" href="/notes/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/notes.svg" alt="" width="36" height="36"><span>Notes</span></a>
+        <a class="app" href="/passwords/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/passwords.svg" alt="" width="36" height="36"><span>Passwords</span></a>
+        <a class="app" href="/photolab/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/photolab.svg" alt="" width="36" height="36"><span>Photo Lab</span></a>
+        <a class="app" href="/podcasts/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/podcasts.svg" alt="" width="36" height="36"><span>Podcasts</span></a>
+        <a class="app" href="/radio/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/radio.svg" alt="" width="36" height="36"><span>Radio</span></a>
+        <a class="app" href="/slides/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/slides.svg" alt="" width="36" height="36"><span>Slides</span></a>
+        <a class="app" href="/spreadsheet/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/spreadsheet.svg" alt="" width="36" height="36"><span>Spreadsheet</span></a>
+        <a class="app" href="/time/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/time.svg" alt="" width="36" height="36"><span>Time</span></a>
+        <a class="app" href="/timesheet/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/timesheet.svg" alt="" width="36" height="36"><span>Timesheet</span></a>
+        <a class="app" href="/todo/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/todo.svg" alt="" width="36" height="36"><span>To-Do</span></a>
+        <a class="app" href="/water/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/water.svg" alt="" width="36" height="36"><span>Water</span></a>
+        <a class="app" href="/weather/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/weather.svg" alt="" width="36" height="36"><span>Weather</span></a>
+        <a class="app" href="/wiki/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/wiki.svg" alt="" width="36" height="36"><span>Wiki</span></a>
+        <a class="app" href="/writer/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/writer.svg" alt="" width="36" height="36"><span>Writer</span></a>
+        </div>
+        
+      </section>
+      <section class="card">
+        <div class="ch"><h2>Android app</h2><span class="badge soon">Coming soon</span></div>
+        <p>orOS for Android with extras: contacts and events in the phone's own apps, Health Connect, home-screen widgets. Until it is on Google Play, install orOS from Chrome (see above).</p>
+        
+      </section>
+      <section class="card">
+        <div class="ch"><h2>Microsoft Store</h2><span class="badge soon">Coming soon</span></div>
+        <p>orOS from the Microsoft Store for Windows 10/11. Until then, install it from Edge (see above).</p>
+        
+      </section>
+      <section class="card">
+        <div class="ch"><h2>“Send to orOS” browser add-on</h2><span class="badge soon">Coming soon</span></div>
+        <p>Save the page you are on to orOS Bookmarks, or search orOS from the address bar. For Chrome, Edge, Brave and Firefox.</p>
+        <a class="btn soft" href="https://github.com/koulaxizis/oros/tree/main/extension" target="_blank" rel="noopener">Add-on source</a>
+      </section>
+    </div>
+    <p class="foot">Free forever, MIT licence. Support orOS on <a href="https://ko-fi.com/koulaxizis">Ko-fi</a>. <a href="/privacy.html">Privacy policy</a> · <a href="https://github.com/koulaxizis/oros">Source code</a></p>
+  </article>
+
+  <article lang="el" id="el" hidden>
+    <p class="lede">Όλοι οι τρόποι να αποκτήσεις το orOS. Το orOS είναι δωρεάν για πάντα (MIT): καμία λήψη εδώ δεν κοστίζει.</p>
+    <div class="grid">
+      <section class="card">
+        <div class="ch"><h2>Χρησιμοποίησέ το στον browser</h2><span class="badge ok">Διαθέσιμο</span></div>
+        <p>Ανοίγεις το orOS και ξεκινάς. Χωρίς λήψη, δουλεύει χωρίς internet μετά την πρώτη επίσκεψη, τα δεδομένα σου μένουν στη συσκευή σου.</p>
+        <a class="btn" href="/" target="_blank" rel="noopener">Άνοιξε το useoros.online</a>
+      </section>
+      <section class="card">
+        <div class="ch"><h2>Εγκατάστασέ το σαν εφαρμογή</h2><span class="badge ok">Διαθέσιμο</span></div>
+        <p>Windows, Linux, Chromebook, Android: άνοιξε το useoros.online σε Chrome, Edge ή Brave και διάλεξε <b>Εγκατάσταση orOS</b> στη γραμμή διευθύνσεων ή στο μενού του browser. Το orOS αποκτά δικό του παράθυρο και εικονίδιο, και μπορεί να ανοίγει τα αρχεία σου.</p>
+        
+      </section>
+      <section class="card">
+        <div class="ch"><h2>orOS Portable (USB stick)</h2><span class="badge soon">Σύντομα</span></div>
+        <p>Τρέχεις το orOS από ένα USB stick σε οποιονδήποτε υπολογιστή με Windows ή Linux, με ή χωρίς internet. Τα δεδομένα σου μένουν στο stick.</p>
+        <div class="tw"><table><thead><tr><th></th><th><b>Πλήρες</b> (orOS-Portable)</th><th><b>Lite</b> (orOS-Portable-lite)</th></tr></thead><tbody><tr><th scope="row">Μέγεθος</th><td>περίπου 455 MB λήψη, 1–1,5 GB στο stick</td><td>περίπου 36 MB</td></tr><tr><th scope="row">Browser</th><td>δικός του ιδιωτικός browser (ungoogled-chromium), για Windows και Linux</td><td>κανένας: χρησιμοποιεί όποιον είναι εγκατεστημένος (Chromium, Brave, Edge ή Chrome)</td></tr><tr><th scope="row">Δουλεύει σε</th><td>κάθε υπολογιστή με Windows 10/11 ή Linux 64-bit, ίδιο παντού</td><td>Windows (ο Edge υπάρχει πάντα)· σε Linux μόνο με browser τύπου Chromium</td></tr><tr><th scope="row">Google / Microsoft</th><td>καθόλου</td><td>συχνά τρέχει μέσα σε Edge ή Chrome</td></tr><tr><th scope="row">Προσοχή</th><td>—</td><td>σε υπολογιστή με παλιότερο browser από τον τελευταίο που χρησιμοποίησες, το προφίλ μπορεί να μην ανοίξει</td></tr></tbody></table></div>
+        <p><b>Δεν είσαι σίγουρος; Πάρε το πλήρες.</b> Το lite μόνο για μικρή λήψη ή μικρό stick.</p>
+        <p class="dim"><b>Stick:</b> προτείνονται 32 GB ή περισσότερα (τα 64 GB είναι ιδανικά και συνήθως ταχύτερα), ελάχιστο 8 GB. Κάνε format σε <b>exFAT</b>, αποσυμπίεσε, αντέγραψε ό,τι είναι μέσα στον φάκελο <code>orOS-Portable</code> στο stick, και μετά διπλό κλικ στο <code>orOS.exe</code> (Windows) ή <code>./orOS</code> (Linux). Προαιρετικά: το <code>orOS-sticktest</code> ελέγχει αν ένα stick είναι αρκετά γρήγορο.</p>
+        <p class="dim">Ετοιμάζεται η πρώτη έκδοση· τα αρχεία θα εμφανιστούν σε αυτόν τον σύνδεσμο μόλις βγει.</p>
+        <a class="btn" href="https://github.com/koulaxizis/oros-portable/releases/latest" target="_blank" rel="noopener">Λήψεις στο GitHub</a>
+      </section>
+      <section class="card">
+        <div class="ch"><h2>Bootable orOS USB</h2><span class="badge test">Σε δοκιμή</span></div>
+        <p>Ξεκινάς έναν υπολογιστή κατευθείαν στο orOS από ένα USB stick, χωρίς να αγγίξεις ό,τι έχει εγκατεστημένο. Ένα image 1,2 GB (Debian με κλειδωμένο παράθυρο orOS) που γράφεις σε stick 8 GB ή μεγαλύτερο· τα δεδομένα σου μένουν στο stick.</p>
+        <a class="btn soft" href="https://github.com/koulaxizis/oros-usb" target="_blank" rel="noopener">Το project στο GitHub</a>
+      </section>
+      <section class="card">
+        <div class="ch"><h2>Έτοιμο USB stick με orOS</h2><span class="badge soon">Σύντομα</span></div>
+        <p>Γρήγορο stick 64 GB με το orOS Portable ήδη μέσα, ελεγμένο αρχείο προς αρχείο, με τυπωμένη κάρτα γρήγορης εκκίνησης. Αγοράζοντάς το στηρίζεις το orOS.</p>
+        <a class="btn soft" href="https://ko-fi.com/koulaxizis/shop" target="_blank" rel="noopener">Το κατάστημα του orOS στο Ko-fi</a>
+      </section>
+      <section class="card">
+        <div class="ch"><h2>Μεμονωμένες εφαρμογές</h2><span class="badge ok">Διαθέσιμο</span></div>
+        <p>Εγκαθιστάς μόνο μία εφαρμογή του orOS με δικό της εικονίδιο και παράθυρο. Μοιράζονται τα δεδομένα σου με το orOS στην ίδια συσκευή. Πάτα μια εφαρμογή και μετά <b>Εγκατάσταση</b>.</p>
+        <div class="apps">
+        <a class="app" href="/bookmarks/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/bookmarks.svg" alt="" width="36" height="36"><span>Σελιδοδείκτες</span></a>
+        <a class="app" href="/budget/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/budget.svg" alt="" width="36" height="36"><span>Έσοδα &amp; Έξοδα</span></a>
+        <a class="app" href="/calculator/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/calculator.svg" alt="" width="36" height="36"><span>Αριθμομηχανή</span></a>
+        <a class="app" href="/calendar/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/calendar.svg" alt="" width="36" height="36"><span>Ημερολόγιο</span></a>
+        <a class="app" href="/contacts/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/contacts.svg" alt="" width="36" height="36"><span>Επαφές</span></a>
+        <a class="app" href="/crm/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/crm.svg" alt="" width="36" height="36"><span>Πελάτες</span></a>
+        <a class="app" href="/cycle/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/cycle.svg" alt="" width="36" height="36"><span>Κύκλος</span></a>
+        <a class="app" href="/diary/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/diary.svg" alt="" width="36" height="36"><span>Ημερολόγιο μιας πρότασης</span></a>
+        <a class="app" href="/feeds/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/feeds.svg" alt="" width="36" height="36"><span>Αναγνώστης</span></a>
+        <a class="app" href="/files/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/files.svg" alt="" width="36" height="36"><span>Αρχεία</span></a>
+        <a class="app" href="/fitness/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/fitness.svg" alt="" width="36" height="36"><span>Προπόνηση</span></a>
+        <a class="app" href="/gamecenter/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/gamecenter.svg" alt="" width="36" height="36"><span>Κέντρο παιχνιδιών</span></a>
+        <a class="app" href="/habits/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/habits.svg" alt="" width="36" height="36"><span>Συνήθειες</span></a>
+        <a class="app" href="/health/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/health.svg" alt="" width="36" height="36"><span>Υγεία</span></a>
+        <a class="app" href="/invoices/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/invoices.svg" alt="" width="36" height="36"><span>Τιμολόγια</span></a>
+        <a class="app" href="/kanban/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/kanban.svg" alt="" width="36" height="36"><span>Πίνακες Kanban</span></a>
+        <a class="app" href="/mail/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/mail.svg" alt="" width="36" height="36"><span>Αλληλογραφία</span></a>
+        <a class="app" href="/maps/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/maps.svg" alt="" width="36" height="36"><span>Χάρτες</span></a>
+        <a class="app" href="/mindmap/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/mindmap.svg" alt="" width="36" height="36"><span>Νοητικός χάρτης</span></a>
+        <a class="app" href="/mood/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/mood.svg" alt="" width="36" height="36"><span>Διάθεση</span></a>
+        <a class="app" href="/notes/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/notes.svg" alt="" width="36" height="36"><span>Σημειώσεις</span></a>
+        <a class="app" href="/passwords/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/passwords.svg" alt="" width="36" height="36"><span>Κωδικοί</span></a>
+        <a class="app" href="/photolab/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/photolab.svg" alt="" width="36" height="36"><span>Εργαστήριο εικόνας</span></a>
+        <a class="app" href="/podcasts/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/podcasts.svg" alt="" width="36" height="36"><span>Podcasts</span></a>
+        <a class="app" href="/radio/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/radio.svg" alt="" width="36" height="36"><span>Ραδιόφωνο</span></a>
+        <a class="app" href="/slides/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/slides.svg" alt="" width="36" height="36"><span>Παρουσιάσεις</span></a>
+        <a class="app" href="/spreadsheet/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/spreadsheet.svg" alt="" width="36" height="36"><span>Υπολογιστικά φύλλα</span></a>
+        <a class="app" href="/time/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/time.svg" alt="" width="36" height="36"><span>Ώρα</span></a>
+        <a class="app" href="/timesheet/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/timesheet.svg" alt="" width="36" height="36"><span>Ώρες εργασίας</span></a>
+        <a class="app" href="/todo/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/todo.svg" alt="" width="36" height="36"><span>Εργασίες</span></a>
+        <a class="app" href="/water/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/water.svg" alt="" width="36" height="36"><span>Νερό</span></a>
+        <a class="app" href="/weather/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/weather.svg" alt="" width="36" height="36"><span>Καιρός</span></a>
+        <a class="app" href="/wiki/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/wiki.svg" alt="" width="36" height="36"><span>Wiki</span></a>
+        <a class="app" href="/writer/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/writer.svg" alt="" width="36" height="36"><span>Κειμενογράφος</span></a>
+        </div>
+        
+      </section>
+      <section class="card">
+        <div class="ch"><h2>Εφαρμογή για Android</h2><span class="badge soon">Σύντομα</span></div>
+        <p>Το orOS για Android με επιπλέον δυνατότητες: επαφές και γεγονότα στις εφαρμογές του κινητού, Health Connect, widgets στην αρχική οθόνη. Μέχρι να μπει στο Google Play, εγκατέστησε το orOS από τον Chrome (δες παραπάνω).</p>
+        
+      </section>
+      <section class="card">
+        <div class="ch"><h2>Microsoft Store</h2><span class="badge soon">Σύντομα</span></div>
+        <p>Το orOS από το Microsoft Store για Windows 10/11. Μέχρι τότε, εγκατέστησέ το από τον Edge (δες παραπάνω).</p>
+        
+      </section>
+      <section class="card">
+        <div class="ch"><h2>Πρόσθετο browser «Send to orOS»</h2><span class="badge soon">Σύντομα</span></div>
+        <p>Αποθηκεύεις τη σελίδα που βλέπεις στους Σελιδοδείκτες του orOS, ή ψάχνεις στο orOS από τη γραμμή διευθύνσεων. Για Chrome, Edge, Brave και Firefox.</p>
+        <a class="btn soft" href="https://github.com/koulaxizis/oros/tree/main/extension" target="_blank" rel="noopener">Ο κώδικας του πρόσθετου</a>
+      </section>
+    </div>
+    <p class="foot">Δωρεάν για πάντα, άδεια MIT. Στήριξε το orOS στο <a href="https://ko-fi.com/koulaxizis">Ko-fi</a>. <a href="/privacy.html">Πολιτική απορρήτου</a> · <a href="https://github.com/koulaxizis/oros">Πηγαίος κώδικας</a></p>
+  </article>
+</main>
+<script>
+(function () {
+  "use strict";
+  var TITLE = { en: "Get orOS", el: "Απόκτησε το orOS" };
+  function set(l) {
+    if (l !== "el") l = "en";
+    document.documentElement.lang = l;
+    document.getElementById("en").hidden = l !== "en";
+    document.getElementById("el").hidden = l !== "el";
+    document.getElementById("t").textContent = TITLE[l];
+    document.title = TITLE[l];
+    [].forEach.call(document.querySelectorAll(".lang button"), function (b) {
+      b.setAttribute("aria-pressed", String(b.getAttribute("data-l") === l));
+    });
+  }
+  var start = /[?&]lang=el\b/.test(location.search) || location.hash === "#el" ? "el" : "en";
+  if (start === "en" && !/[?&]lang=en\b/.test(location.search)) {
+    try { if (localStorage.getItem("oros-lang") === "el") start = "el"; } catch (e) {}
+  }
+  set(start);
+  [].forEach.call(document.querySelectorAll(".lang button"), function (b) {
+    b.addEventListener("click", function () { set(b.getAttribute("data-l")); });
+  });
+})();
+</script>
+</body>
+</html>

@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "2.25.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "2.25.01";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -5841,7 +5841,8 @@
         rows +
         '<div class="sc-reset-wrap" id="sc-reset-wrap"></div>' +
         '<div class="sc-foot"><span>' + escapeHtml(window.t("sc.info.repo")) + ': <a href="https://github.com/koulaxizis/oros" ' +
-          'target="_blank" rel="noopener">koulaxizis/oros</a></span>' +
+          'target="_blank" rel="noopener">koulaxizis/oros</a> · <a href="privacy.html" target="_blank" rel="noopener">' +
+          escapeHtml(window.t("sc.info.privacy")) + '</a></span>' +
           '<div class="sc-cred" id="sc-cred"></div></div>' +
       '</div>';
 
