@@ -1118,6 +1118,8 @@
       var nm = document.createElement("span");
       nm.textContent = lb.name;
       chip.appendChild(nm);
+      chip.title = lb.name;
+      chip.setAttribute("aria-label", lb.name);
       chip.addEventListener("click", function (e) {
         e.stopPropagation();
         var r = chip.getBoundingClientRect();
@@ -1160,6 +1162,8 @@
     renderAll();
     notifyTransient(t("toast.created"));
     if (init) return;
+    // Phones: close the page-list drawer so the new title is in view
+    document.getElementById("notes-app").classList.remove("tree-open");
     var titleEl = document.getElementById("page-title");
     if (titleEl) { titleEl.focus(); titleEl.select(); }
   }
@@ -3389,6 +3393,17 @@
       showTree.addEventListener("click", function () {
         document.getElementById("notes-app").classList.toggle("tree-open");
       });
+    }
+    // Phones: a tap on the editor beside the open page-list drawer closes it
+    var edPane = document.getElementById("editor-pane");
+    if (edPane) {
+      edPane.addEventListener("click", function (e) {
+        var app = document.getElementById("notes-app");
+        if (!app.classList.contains("tree-open") || window.innerWidth >= 720) return;
+        app.classList.remove("tree-open");
+        e.preventDefault();
+        e.stopPropagation();
+      }, true);
     }
 
     var newBtn = document.getElementById("btn-new-page");

@@ -3603,7 +3603,7 @@ function transientNote(title, body) {
       var tag = document.createElement("span");
       tag.className = "ev-label";
       tag.style.background = lb.color;
-      tag.textContent = (lb.name !== undefined) ? lb.name : feedLabelName(lb);
+      tag.textContent = (lb.name !== undefined) ? lblName(lb) : feedLabelName(lb);
       title.appendChild(tag);
     }
     main.appendChild(title);
@@ -5254,7 +5254,7 @@ function transientNote(title, body) {
         var nm = document.createElement("span");
         nm.className = "stat-lbl-name";
         var lb = en.id ? labelById(en.id) : null;
-        nm.textContent = lb ? lb.name : t("lbl.none");
+        nm.textContent = lb ? lblName(lb) : t("lbl.none");
         var wrap = document.createElement("div");
         wrap.className = "stat-bar-wrap";
         var bar = document.createElement("div");
@@ -5813,7 +5813,7 @@ function transientNote(title, body) {
     $("sv-where").hidden = !ev.location;
     $("sv-note").textContent = ev.note || "";
     $("sv-note").hidden = !ev.note;
-    $("sv-src").textContent = t("sv.from").replace("{name}", lb ? lb.name : "");
+    $("sv-src").textContent = t("sv.from").replace("{name}", lb ? lblName(lb) : "");
     $("sv-dlg").showModal();
   }
   if ($("sv-dlg")) {

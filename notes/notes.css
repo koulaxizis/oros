@@ -319,6 +319,21 @@ body {
   #pane-splitter { display: block; }
 }
 
+/* Phones: the page list opens as a drawer over the editor (the
+   splitter's inline flex-basis used to squeeze both panes side by side);
+   a tap on the editor strip next to it closes it. */
+@media (max-width: 719px) {
+  #notes-app { position: relative; }
+  #notes-app.tree-open #tree-pane {
+    position: absolute;
+    top: 0; bottom: 0; left: 0;
+    z-index: 30;
+    width: min(320px, calc(100% - 56px));
+    flex-basis: auto !important;
+    box-shadow: 0 0 24px rgba(0, 0, 0, 0.45);
+  }
+}
+
 /* While dragging the splitter, kill text selection */
 body.resizing { user-select: none; cursor: col-resize; }
 body.resizing #tree-pane, body.resizing #editor-pane { pointer-events: none; }
@@ -509,6 +524,13 @@ body.resizing #tree-pane, body.resizing #editor-pane { pointer-events: none; }
   flex-shrink: 0;
 }
 .page-chip:hover { border-color: var(--accent); }
+/* Phones: label chips shrink to their colour dots so the title keeps its room */
+@media (max-width: 480px) {
+  #page-chips { max-width: 30%; gap: 2px; }
+  .page-chip { padding: 0; width: 32px; height: 32px; justify-content: center; }
+  .page-chip > span:not(.page-chip-dot) { display: none; }
+  .page-chip-dot { width: 10px; height: 10px; }
+}
 .page-chip-dot {
   width: 8px;
   height: 8px;
