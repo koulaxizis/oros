@@ -1,6 +1,10 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.26.00
+- Your Android apps can now update themselves. Add the orOS repository to F-Droid or Droid-ify, or use Obtainium: Settings › Single apps › Updates for the Android apps. orOS also tells you once when a newer APK is out. The apps' content still updates by itself, so a new APK is only needed now and then.
+- Inside an installed app on Android, the APK buttons now open the download in Chrome. The app's own browser tab never finished APK downloads.
+
 ## Version 2.25.07
 - Every single app now has an Android app (APK). On Android, Settings › Single apps shows an APK button next to Install. Use it when orOS is installed from Chrome, because Chrome then offers no install for single apps. Notes, Calendar, To-Do, Passwords, Budget and Games come to Google Play first.
 

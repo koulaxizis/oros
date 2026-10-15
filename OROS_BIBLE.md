@@ -26,6 +26,7 @@
 | VIII | Release pipeline, checklists A–E, runtime test harness |
 | IX | Decisions log + doctrinal exemptions |
 | X | Open items, audit queue, lessons (closed incidents) |
+| X-B | Troubleshooting: known symptoms → cause → fix |
 | XI | Session handoff template |
 | XII | Changelog (the only one — `CHANGELOG.md` is retired) |
 
@@ -250,7 +251,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
   - **Files and shares:** `fileopen.js` gives a single app the files of its own types with no chooser (`soloApp()`); other types follow the usual choice. `sw.js` answers a share POST to `/<id>/solo.html?share-target` back on that page, never caches a `solo=` navigation, and serves the shell page to a solo frame offline (SWK-3 keeps refusing every other frame).
   - **Sync:** the solo shell runs the normal engine on the shared storage: on a device with orOS too, both see the same data at once; elsewhere, Settings › Sync connects the same Dropbox + passphrase. Dropbox refuses to be framed, so `startOAuth()` navigates the TOP window and stores `oros-solo-return` (session); the shell page that takes the code (or `?error=`) returns to that `/<id>/solo.html` only. **SY-W1:** automatic rounds (`reconcile`, the hide push) take turns across windows through the Web Lock `oros-sync-round` (`ifAvailable`); a window whose turn is taken skips and, with unsent work, retries in 3 s. Uploads stay conditional (SY-D1), so this saves traffic, not correctness.
   - **Install (Android):** a link to `/<id>/solo.html` on this origin is captured by the orOS TWA / installed orOS, which shows the app inside orOS with nothing to install. Settings › Single apps › Install therefore uses `installUrl()`: on Android an `intent://…#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=…;end` to a Chrome tab, elsewhere a new tab; `?install` on the page. The host page in a browser tab (`display-mode: browser`) shows an Install bar on `beforeinstallprompt` (prompt on press), or, with `?install` and no prompt after 4 s, where the browser menu keeps Install. A `?install` page that opened in an app window instead (display-mode not `browser`: a link taken by the installed orOS or the orOS app) says after 1.5 s that it can't be installed there; only in the orOS Android app (`orosPhone` of the framed shell) with an "Open in Chrome" link (`installUrl()` with `inApp`), because in Chrome's installed orOS (WebAPK) an intent to Chrome comes back to the same window (2.25.05). Without `?install` an app window shows nothing (the installed single app itself). The download page uses `installUrl()` for its single-app tiles too. `installUrl(id, ua, origin, inApp, inTab)`: `inTab` (caller in `display-mode: browser`; Settings checks `window.top`) returns the plain `?install` address, because that browser installs it itself and Brave ignores intents to Chrome (2.25.04).
-  - **Play packages (wave 7):** `android/solo-apps.json` (app id → package, e.g. notes → `online.useoros.notes`, gamecenter → `online.useoros.games`) makes each listed single app a product flavour of `android/` (flavour `oros` = the orOS app, unchanged). `android/tools/gen.js` writes `app/solo-gen/<id>/` from `/<id>/manifest.webmanifest`: a manifest overlay that removes the phone bridge (account, sync adapters, Contacts / Calendar / Health permissions, reminders, Add to orOS, orOS widgets, orOS file handlers) and replaces LauncherActivity (start `/<id>/solo.html`, the app's share target, file types and shortcuts, links only under `/<id>/`), plus resources and the solo icon. Every package has its statement in `.well-known/assetlinks.json`. CI artifacts: `oros-android` (orOS), `oros-single-apps`; on main the signed APKs also go to the GitHub prerelease `android-apks` as `oros.apk` / `oros-<id>.apk` (fixed links for the download page). Every single app has a package (Chris 2026-10-15): on Android a Chrome-installed orOS claims every page of the site, so the browser cannot install a single app next to it, while the APK can; `solo.apkUrl(id)` is that link, shown as an APK button beside Install in Settings › Single apps on Android and in the solo page's "opened inside an installed app" bar on Android. Google Play listings: first batch Notes, Calendar, To-Do, Passwords, Budget, Games; the others only as APK downloads until Chris lists them. Wave 7b: each package has its own widget (`SoloWidget`, only in single-app flavours): the app icon plus up to three of its `APPS` shortcuts (labels EN/EL from `solo.js`), a tap opens `/<id>/solo.html?do=<word>`; data-free, nothing stored natively.
+  - **Play packages (wave 7):** `android/solo-apps.json` (app id → package, e.g. notes → `online.useoros.notes`, gamecenter → `online.useoros.games`) makes each listed single app a product flavour of `android/` (flavour `oros` = the orOS app, unchanged). `android/tools/gen.js` writes `app/solo-gen/<id>/` from `/<id>/manifest.webmanifest`: a manifest overlay that removes the phone bridge (account, sync adapters, Contacts / Calendar / Health permissions, reminders, Add to orOS, orOS widgets, orOS file handlers) and replaces LauncherActivity (start `/<id>/solo.html`, the app's share target, file types and shortcuts, links only under `/<id>/`), plus resources and the solo icon. Every package has its statement in `.well-known/assetlinks.json`. CI artifacts: `oros-android` (orOS), `oros-single-apps`; on main the signed APKs also go to the GitHub prerelease `android-apks` as `oros.apk` / `oros-<id>.apk` (fixed links for the download page). Every single app has a package (Chris 2026-10-15): on Android a Chrome-installed orOS claims every page of the site, so the browser cannot install a single app next to it, while the APK can; `solo.apkUrl(id)` is that link, shown as an APK button beside Install in Settings › Single apps on Android and in the solo page's "opened inside an installed app" bar on Android. Google Play listings: first batch Notes, Calendar, To-Do, Passwords, Budget, Games; the others only as APK downloads until Chris lists them. **APK updates (FDROID-1, Chris 2026-10-15):** `.github/workflows/fdroid.yml` publishes the `android-apks` APKs as an F-Droid repository on `koulaxizis/oros-fdroid` (GitHub Pages, https://koulaxizis.github.io/oros-fdroid/repo, one force-pushed commit so APKs never pile up), after each main Android build but only when the Android shell changed (hash of `android/`, the web manifests, solo icons, `phone.js`; `force` input to publish anyway): the apps' content updates from the web, so a version bump alone must not send every phone an update. Index signed with its own repository key (alias `orosrepo`, secrets `FDROID_KEYSTORE_BASE64` / `FDROID_KEYSTORE_PASSWORD`, fingerprint `solo.js` `REPO_FP`; a new key means every phone re-adds the repo), pushed with `FDROID_DEPLOY_TOKEN`. Metadata (EN/EL name, summary, description, icon, MIT, Ko-fi) from `tools/fdroid-metadata.js`. F-Droid and Droid-ify add it from `solo.repoLink()` (`fdroidrepos://…?fingerprint=`), Obtainium from `solo.obtainiumLink(id)` (F-Droid third-party repo, `?appId=`); Settings › Single apps has an "Updates for the Android apps" card. `android/tools/gen.js` appends `apk=<versionCode>` to each start address; `solo.js apkNotice` keeps the installed code (localStorage `oros-apk`, not synced), reads `versions.json` from the repo site at most once a day and tells once per new version, in a closable bar with a Download link (no repeats; inside an installed window on Android every APK button goes through `solo.apkHref`, an intent to Chrome, because the in-app tab never finishes an APK download, free-forever rule: no nag messages). Wave 7b: each package has its own widget (`SoloWidget`, only in single-app flavours): the app icon plus up to three of its `APPS` shortcuts (labels EN/EL from `solo.js`), a tap opens `/<id>/solo.html?do=<word>`; data-free, nothing stored natively.
   - **Update broker:** in solo mode the "an app is open" rule gives way while the window is hidden (the app is always open).
   - **Adding an app:** an `APPS` entry, its receivers for the targets, `node tools/solo-manifests.js`, `node tools/solo-icons.js` (the shell icon in gold on the orOS square with the orOS mark), and the new files in `sw.js` precache. `tests/solo.test.js` fails when a page, manifest or icon is missing or stale.
 - **Deep-link bridges** (live push into `#app-frame` when that app runs, otherwise a sessionStorage staging key + `openAppById`):
@@ -3174,6 +3175,146 @@ Rebuild this in any session where code is delivered.
 - Quote: reminders treat Sent/Accepted quotes with no due date as due (empty date compares early); PDF fallback prints US dates in EN.
 - Calculator: Troll-mode wrong answers saved/synced with no visible mark (`lied` stored, not shown).
 - Gomoku records vs-computer games after undo, Chess does not; Sudoku EL "Ρυθμίσεις" vs Wordle "Επιλογές" for Options.
+
+## Part X-B — Troubleshooting (known symptoms → cause → fix)
+
+Started 2026-10-15 (Chris: "note similar issues in the Bible for future troubleshooting"), collected from the project threads, team memory and Part XII. Each entry: **Symptom** (what the person sees) / **Cause** ("inferred" when not proven) / **Fix or workaround** / **Ref** (PR, version, date or source). **Rule:** when a reported problem is solved, add or update its entry here in the same PR as the fix; check this Part first when someone reports a problem.
+
+### T1. Android install: TWA, WebAPK, APK
+
+**Symptom:** Install buttons on Android (in the APK or on the web) only open the app inside orOS. **Cause:** the TWA / installed orOS captures same-origin links. **Fix:** `installUrl()` sends an intent to Chrome; solo.html shows an install bar (beforeinstallprompt). **Ref:** #354, 2.09.00, 2026-10-14.
+
+**Symptom:** Install from inside the orOS APK does nothing; the same link in a browser works. **Cause:** a Chrome intent fired from the TWA comes back to the TWA. **Fix:** PermissionActivity host `install` opens the default browser (needs the new APK). Chrome, Edge, Brave and Samsung install; Firefox only offers Add to Home screen. **Ref:** #371, 2.21.02.
+
+**Symptom:** Download-page tiles open the app without an install prompt. **Cause:** links open inside the installed orOS (display-mode standalone). **Fix:** install-bar message plus "Open in Chrome". **Ref:** #382, 2.25.02.
+
+**Symptom:** In Brave, download-page tiles do nothing. **Cause:** Brave ignores a Chrome intent from a plain tab. **Fix:** in a plain tab (`inTab`) open `?install` in the same browser. **Ref:** #384, 2.25.04.
+
+**Symptom:** The download page opens inside the installed orOS (Chrome WebAPK) and the tiles are dead. **Cause:** an intent from the WebAPK loops back into it. **Fix:** a notice plus Copy link; in an app window, tiles use the plain address. **Ref:** #385, 2.25.05.
+
+**Symptom:** APK links open the GitHub app and never finish. **Cause:** GitHub release links are captured by the GitHub app. **Fix:** intent to the same browser package (Brave via `navigator.brave`, Edge `EdgA/`, Samsung, Chrome); Firefox keeps a plain link. **Ref:** #385, 2.25.05.
+
+**Symptom:** Single apps cannot be installed from the browser; a fresh Chrome tab gives no install prompt. **Cause:** the orOS WebAPK has scope "/" and claims every useoros.online page (inferred). **Fix:** ship APKs for all 34 single apps on the `android-apks` release. **Ref:** #387, 2.25.07.
+
+**Symptom:** APK download from an installed app's in-app tab (Brave) stops at 100%; the direct link in a normal browser tab works in every browser. **Cause:** unclear. The bytes do arrive; suspected hidden "dangerous file" confirmation or VPN (inferred). **Fix:** `solo.apkHref(id, ua, inWindow)` sends an intent to Chrome with a GitHub fallback. Workaround: ⋮ › Downloads › Keep, or "Open in Brave". **Ref:** #389, 2.26.00, 2026-10-15.
+
+**Symptom:** APK section of the download page returns 404. **Cause:** the links go live only after the first main-branch Android build after #380. **Fix:** wait for (or dispatch) that build. **Ref:** #380, 2.25.01, 2026-10-15.
+
+**Symptom:** A Play install and a sideloaded APK don't update each other. **Cause:** they are signed with different keys (Play App Signing vs our keystore). **Fix:** uninstall, then install the other build; sync restores the data. TODO: mark Play builds so they skip the F-Droid notice. **Ref:** oros-store-packaging memory.
+
+**Symptom:** The TWA shows a browser address bar. **Cause:** assetlinks.json is not live yet, the Play App Signing SHA-256 is missing, or Pages hid `.well-known` (no `.nojekyll`). **Fix:** publish assetlinks with both fingerprints and `.nojekyll`. If the bar persists, uninstall and reinstall. **Ref:** #215, 1.12.01, 2026-10-12.
+
+**Symptom:** Play Console rejects the upload. **Cause:** Play wants an AAB, not an APK. **Fix:** upload the AAB from the PWABuilder zip, and keep `signing.keystore` safe (every update needs it). **Ref:** 2026-10-12, oros-store-packaging.
+
+**Symptom:** New share targets or file types (.fb2/.cbz, pictures) don't appear in the Android app. **Cause:** the TWA package was built from the old manifest (before #195). **Fix:** regenerate the package after any manifest change. **Ref:** #195.
+
+**Symptom:** Splash logo is too big and runs off screen. **Cause:** missing high-density splash asset (inferred). **Fix:** add a drawable-xxxhdpi splash. **Ref:** 2026-10-13.
+
+**Symptom:** Users can't download the APK from GitHub Actions. **Cause:** Actions artifacts need a GitHub login and expire after 14 days. **Fix:** publish to the `android-apks` release, which has fixed public URLs. **Ref:** #380.
+
+**Symptom:** PowerShell `[IO.File]::ReadAllBytes("signing.keystore")` can't find a file that is in the current folder. **Cause:** .NET resolves against the process working directory, not the PowerShell location. **Fix:** `[IO.File]::ReadAllBytes((Resolve-Path ".\signing.keystore"))`. **Ref:** 2026-10-13.
+
+### T2. Phone bridge (TWA postMessage)
+
+**Symptom:** The "On this phone" button is missing after an update. **Cause:** the old version is still running. **Fix:** close the app fully, reopen it, and check the version in What's new. **Ref:** phone contacts/calendar thread.
+
+**Symptom:** Bridge never connects; `validateRelationship` returns false; the channel is re-requested in a loop. **Cause:** Chromium needs `warmup()` first; the app process gets frozen; the page dropped ports with an empty or other origin (Brave). **Fix:** PostMessageService keeps the app awake (#310, 1.82.02); accept a source-less port from any origin (#313, 1.83.01). Diagnose with long-press icon › Bridge diagnostics. **Ref:** #310, #313.
+
+**Symptom:** App crashes after the user grants the permission; no account appears. **Cause:** missing `WRITE_SYNC_SETTINGS` permission. **Fix:** add it to the manifest. **Ref:** #314.
+
+**Symptom:** After installing the TWA the user starts signed out, or it opens in Brave even with Firefox as default. **Cause:** the TWA runs in a specific browser with its own storage; the Firefox default being ignored is unexplained. **Fix:** sign in to sync to restore the data. **Ref:** phone contacts/calendar thread.
+
+**Symptom:** Phone calendar syncs forever with 0 events. **Cause:** only the user's own events were sent. **Fix:** include feeds and holidays (#314, 1.84.00); colours (#315, 1.84.01). Google Calendar needs the calendar toggled off/on; Fossify needs Settings › CalDAV sync on to see "orOS". **Ref:** #314, #315.
+
+**Symptom:** An event is added 3 times; contact edits don't sync. **Cause:** resends, and pre-v2 contacts were read-only. **Fix:** dedupe resends; make contacts writable. **Ref:** #322, 1.88.03.
+
+### T3. Service worker, cache, updates
+
+**Symptom:** Devices get no updates; CACHE_VERSION stuck at 0.45.15 while the app is 0.46.00. **Cause:** the G2 precache guard failed (app folders missing from precache), and a failed bump run stamps nothing. **Fix:** G2 checks only apps.json. **Ref:** #51, #57, 2026-10-09.
+
+**Symptom:** The PWA is slow or never opens on a bad connection. **Cause:** network-first with no timeout; an `isAppsList` bug sent shell.js/vault.js network-first; a half-downloaded update deleted the old version. **Fix:** 3 s timeout, 30 s "slow spell", PARTIAL_MARK resume. Test with a server that never answers; the DevTools offline switch doesn't reach the SW. **Ref:** #184, 0.86.01, 2026-10-11.
+
+**Symptom:** After a release, old and new code run mixed. **Cause:** the release had no version step, so `?v=` and the cache name didn't change. **Fix:** let the version bot (`chore: sync orOS assets`, about 1 min after merge) rewrite `?v`; never ship without a bump. **Ref:** oros-version-collisions / G2 memory.
+
+**Symptom:** SW install fails completely after a release. **Cause:** a duplicate URL in the precache list makes `cache.addAll` reject. **Fix:** dedupe the precache list. **Ref:** bulk release 0.47.
+
+**Symptom:** Clicking a notice doesn't close the notification panel; a system notification only focuses the tab. **Cause:** missing close / navigate handling. **Fix:** #299 (1.74.01) and #306 (1.79.01). A later "does nothing" report was a stale cache, fixed by Ctrl+Shift+R. If the target app is already open, nothing visibly changes. **Ref:** #299, #306.
+
+**Symptom:** The download or privacy page shows an old version right after a merge. **Cause:** these pages are not precached and the browser HTTP cache serves the old copy (inferred). **Fix:** hard refresh. **Ref:** sales/download page thread.
+
+### T4. Sync and storage
+
+**Symptom:** Sync is permanently "failed". **Cause:** (a) the Podcasts normQueue re-upload loop; (b) the real cause, "Browser storage is full", from the legacy `oros-auto-snapshots` key in localStorage. **Fix:** SY-L1/SY-L2 (#123, 0.48.02); snapshots moved to IndexedDB (#128, 0.52.02, 7.0 MB → 2.0 MB). First ask for Device info › Space per app; storage-full means localStorage, not Cache Storage. **Ref:** oros-sync-hotfix-0-48-02.
+
+**Symptom:** The language toggle (or any setting) silently does nothing. **Cause:** localStorage is full (5 MB); `markDirty` throws QuotaExceededError. **Fix:** catch quota errors (SY-Q1). **Ref:** SY-Q1, oros-sync-tests.
+
+**Symptom:** Spreadsheet XLSX import turns Greek text into garbage. **Cause:** `vendor/xlsx.full.min.js` is stored double-encoded. **Fix:** not fixed yet; re-vendor the file as clean UTF-8. **Ref:** oros-budget memory.
+
+**Symptom:** Saving a file from an app produces an EMPTY file. **Cause:** a Blob made in an app iframe fails `instanceof Blob` in the shell (cross-realm). **Fix:** duck-type the Blob in dialogs.js. **Ref:** #35.
+
+**Symptom:** Downloads fail in browsers that ask where to save. **Cause:** the blob URL was revoked after 1 s, before the user answered. **Fix:** revoke after 40 s. **Ref:** dialogs/Files memory.
+
+**Symptom:** Writing files fails on Safari. **Cause:** Safari exposes OPFS but not the write method used. **Fix:** detect the method itself, not "OPFS available". **Ref:** oros-files-dropbox memory.
+
+**Symptom:** Universal search is broken: "failed to load search.js". **Cause:** an apps.json entry pointed at a missing file. **Fix:** fix the entry plus a test that every referenced file exists. **Ref:** #101, 0.48.01.
+
+### T5. Dropbox, Google, OAuth
+
+**Symptom:** Files can't see the whole Dropbox. **Cause:** the sync Dropbox app is "App folder", and the access type can't be changed. **Fix:** a second app, "orOS Files" (Full Dropbox), with redirect `https://useoros.online/files/dropbox-callback.html`. **Ref:** #331/#339, 2.00.00.
+
+**Symptom:** Dropbox sign-in fails in Portable (localhost:47800). **Cause:** the redirect URI is not registered. **Fix:** add `http://localhost:47800/` and `http://localhost:47800/files/dropbox-callback.html` in both Dropbox apps; Dropbox allows http only for localhost. **Ref:** 2026-10-14.
+
+**Symptom:** Dropbox sign-in from a single (solo) app fails, or a second handler gets an invalid code. **Cause:** Dropbox refuses to be framed; two OAuth handlers raced for one one-shot code. **Fix:** navigate the top window (`oros-solo-return`), and keep one handler per code. **Ref:** R34 lesson.
+
+**Symptom:** Google contacts sign-in fails for most users. **Cause:** the OAuth app is in "Testing", so only listed test users can sign in; it also needs a privacy page and the People API enabled. **Fix:** add test users or publish the app; privacy.html (#320, 1.88.01); People API (#321, 1.88.02). **Ref:** Google contacts import thread.
+
+**Symptom:** Contact counts differ (Google 437 vs orOS 421-431). **Cause:** loose dedupe; exact duplicates inside Google that Google's Merge misses; " ::: "-joined fields from an old CSV import; re-import created duplicates; photos and type labels were lost. **Fix:** #356 (2.10.01), #369 (2.20.01), #372 (2.21.01). **Ref:** Google contacts import thread.
+
+### T6. Network, mixed content, browser quirks
+
+**Symptom:** Playing an http radio stream makes the installed app show the browser bar. **Cause:** mixed content on an https page. **Fix:** https only; upgrade http→https, otherwise show a message. Podcasts over http likely hit the same issue (unverified). **Ref:** #358, 2.11.01.
+
+**Symptom:** Assistant can't reach a local AI server (`http://192.168…`) from a phone, or a provider fails. **Cause:** an https page can't call plain http on the LAN; every local server needs CORS enabled; some providers block browser calls. **Fix:** use the per-server CORS step and Connection test. WebGPU on some Linux GPUs needs `chrome://flags/#enable-unsafe-webgpu` (inferred). **Ref:** #366, #367.
+
+**Symptom:** A user's Claude Pro/Max plan doesn't work as an API key. **Cause:** subscriptions don't include API usage. **Fix:** create a separately billed API key in the Console. **Ref:** Assistant Claude thread.
+
+**Symptom:** Battery shows 100% while unplugged. **Cause:** Brave always reports level 1 and charging (privacy); this is also the Chromium spec default. **Fix:** treat 1 + charging as "unknown". **Ref:** #187, 0.86.02.
+
+**Symptom:** Agent live checks of useoros.online, workers.dev, dropbox.com, wikidata or eff.org fail with 403. **Cause:** the cloud container proxy blocks them. **Fix:** Chris runs live checks on a real device. **Ref:** multiple threads.
+
+### T7. CI and GitHub
+
+**Symptom:** A red "Cloudflare oros-mail-relay" check appears on PRs. **Cause:** a Workers Builds check outside our repo's CI. **Fix:** ignore it for merge decisions. **Ref:** oros-mail-app memory.
+
+**Symptom:** The sync-nullfx workflow can't open its PR. **Cause:** Actions isn't allowed to create PRs. **Fix:** Settings › Actions › General › "Allow GitHub Actions to create and approve pull requests", or open the PR by hand from `auto/nullfx-sync`. **Ref:** #311.
+
+**Symptom:** android.yml doesn't run on PR pushes; tests.yml skips release-only pushes. **Cause:** trigger and paths filters don't match. **Fix:** run them with workflow_dispatch. **Ref:** oros-companion-apps memory.
+
+**Symptom:** The agent can't create a repo (403) or a commit is blocked. **Cause:** no repo-create permission; the auto-mode classifier blocks commits touching workflows or assetlinks. **Fix:** Chris creates repos and approves those commits. **Ref:** oros-companion-apps memory.
+
+**Symptom:** A workflow breaks on a commit message containing a quote. **Cause:** inputs were pasted into the script, so a quote broke the loop guard. **Fix:** always pass inputs through `env:`. **Ref:** oros-merge-queue memory.
+
+**Symptom:** F-Droid repo stops updating, or the first publish isn't reachable. **Cause:** the deploy token expires about 2027-10; Pages on oros-fdroid must be enabled after the first publish. **Fix:** renew the token; enable Pages. **Ref:** oros-store-packaging memory.
+
+### T8. Merges and versions
+
+**Symptom:** Scripts load twice and conflict-marker text shows on the page. **Cause:** conflict markers were merged into index.html. **Fix:** remove them; tests/conflict-markers.test.js; always grep for markers and diff index.html. **Ref:** #276, 1.57.01, 2026-10-13.
+
+**Symptom:** Two releases share one version number, or script lines are misordered. **Cause:** parallel PRs took the same APP_VERSION (e.g. #342/#345, both 2.02.00); htmlres.py can reorder script lines. **Fix:** the merge-queue rule (one version bump at a time, rebase before bump); check script order. **Ref:** #147; oros-version-collisions.
+
+### T9. Test harness (E2E)
+
+**Symptom:** Greek OPFS file names fail with TypeMismatchError → EISDIR in headless Chromium. **Cause:** the harness locale isn't UTF-8. **Fix:** run with `LANG=C.UTF-8`; not an orOS bug. **Ref:** oros-headless-chromium-locale, 2026-10-12.
+
+**Symptom:** The Today calendar-reminder E2E fails under Europe/Athens. **Cause:** the browser was pinned to UTC while Node used local TZ. **Fix:** set `timezoneId` to the process TZ. **Ref:** oros-today-summary memory.
+
+**Symptom:** An app page opened top-level in a harness redirects away; a UMD library breaks; an audio tail is cut off. **Cause:** the DL-1 redirect to the shell; an element `id="exports"` shadows UMD `exports`; Chromium drops a DelayNode tail once its source ends. **Fix:** add `?standalone`; rename the element; keep the source alive. **Ref:** #260; QR and Studio memories.
+
+### T10. Portable and bootable USB
+
+**Symptom:** Portable data "vanishes", or features are missing. **Cause:** another port is another origin; file:// has no SW or OPFS; Lite uses the host browser, and an older browser may not open the profile. **Fix:** always use the fixed port 47800; Windows SmartScreen: More info → Run. Stick: 64 GB recommended, 32 GB minimum. **Ref:** oros-portable-usb memory.
+
+**Symptom:** The bootable ISO hangs at GRUB; the `oros` user doesn't exist; ISO upload fails; the clock is off. **Cause:** GRUB had no timeout; live-config needs the user-setup package; GitHub Pages has a 100 MB limit; the clock is UTC. **Fix:** 3 s GRUB timeout; create the user in a chroot hook; publish ISOs to Releases. **Ref:** Bootable USB thread.
 
 ## Part XI — Session handoff template
 
@@ -6777,3 +6918,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Files: `android/solo-apps.json`, `.well-known/assetlinks.json`, `solo.js`, `settings/settings.js`, `settings/core.js`, `settings/settings.css`, `android/README.md`, Bible SOLO-1.
   - Tests: full suite green (new: every solo id has a unique package, an assetlinks entry and an APK link); Chromium with an Android UA: 34 APK buttons, Greek text, no errors. Phone thread approved android/. Not tested: installing the new APKs on a real phone.
 
+### 2026-10-15 — Updates for the Android apps: orOS F-Droid repository — 2.26.00
+- Chris (08:22): combine an own F-Droid repository, Obtainium and an in-app notice so the APKs (orOS + 34 single apps) get updates outside Google Play; a native "hub" app not now (another app to maintain, not allowed on Play, needs the same install permission; Droid-ify already does it). FDROID-1 in Part II: `.github/workflows/fdroid.yml` publishes to `koulaxizis/oros-fdroid` (Pages) only when the Android shell changed; `tools/fdroid-metadata.js`; `solo.js` `repoLink` / `obtainiumLink` / `pkgOf` / `apkCode` / `apkNotice`; `android/tools/gen.js` `?apk=<versionCode>` on the start address; Settings › Single apps card "Updates for the Android apps".
+- Chris (09:09): new Part X-B "Troubleshooting" (47 known symptoms → cause → fix, from the threads, team memory and Part XII), with the rule to add each solved problem there in the fix's PR.
+- Chris (09:06): an APK download from inside an installed app (the browser's in-app tab, Brave) stops at 100% and never finishes; a plain browser tab works in every browser. `solo.apkHref(id, ua, inWindow)`: inside an installed window on Android the APK buttons (Settings, the solo bar, the update notice) use an intent to Chrome (real tab), with the GitHub link as fallback.
+  - Tests: full suite green (new: `apkHref` in and out of an installed window; packages and links for every APK, launch version, metadata for exactly the published APKs, start address with `apk=`); `fdroid update` 2.4.5 run locally on 4 real APKs from the release with the generated metadata (signed index, EN/EL names, icons, categories). Not tested: the workflow on GitHub (needs the three secrets and Pages on oros-fdroid), the Chrome intent on a real phone, adding the repo in F-Droid / Droid-ify / Obtainium on a real phone, the notice bar on a phone.

@@ -282,5 +282,48 @@ test("Android APKs: every single app has a package, an assetlinks entry and an A
   assert.equal(new Set(Object.values(pk)).size, Object.keys(pk).length);
   assert.equal(S.apkUrl("nope"), "");
   assert.match(read("settings/settings.js"), /S\.apkUrl && \/Android\/i\.test\(navigator\.userAgent\)/);
-  assert.match(read("solo.js"), /k\.href = apkUrl\(id\)/);
+  assert.match(read("settings/settings.js"), /S\.apkHref\(id, navigator\.userAgent, !inBrowserTab\(\)\)/);
+  assert.match(read("solo.js"), /k\.href = apkHref\(id, win\.navigator\.userAgent, true\)/);
+  // In an installed app on Android the link asks Chrome for a real tab:
+  // the in-app tab never finishes an APK download (Chris 2026-10-15)
+  const and = "Mozilla/5.0 (Linux; Android 14) Chrome/140 Mobile";
+  const u = S.apkUrl("notes");
+  assert.equal(S.apkHref("notes", and, false), u);
+  assert.equal(S.apkHref("notes", "Mozilla/5.0 (Windows NT 10.0)", true), u);
+  assert.equal(S.apkHref("notes", and, true),
+    "intent://github.com/koulaxizis/oros/releases/download/android-apks/oros-notes.apk#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=" + encodeURIComponent(u) + ";end");
+  assert.match(S.apkHref("oros", and, true), /^intent:\/\/github\.com\/.+\/oros\.apk#Intent;/);
+  assert.equal(S.apkHref("nope", and, true), "");
+});
+
+test("F-Droid repo (FDROID-1): packages, links, launch version and metadata for every APK", () => {
+  const pk = JSON.parse(read("android/solo-apps.json")).apps;
+  Object.keys(pk).forEach((id) => {
+    assert.equal(S.pkgOf(id), pk[id], id);
+    assert.equal(S.obtainiumLink(id), "obtainium://add/https://koulaxizis.github.io/oros-fdroid/repo?appId=" + pk[id]);
+  });
+  assert.equal(S.pkgOf("oros"), "online.useoros.twa");
+  assert.equal(S.pkgOf("nope"), "");
+  assert.match(S.repoLink(), /^fdroidrepos:\/\/koulaxizis\.github\.io\/oros-fdroid\/repo\?fingerprint=[0-9A-F]{64}$/);
+  assert.equal(S.apkCode("?apk=2025007"), 2025007);
+  assert.equal(S.apkCode("?source=pwa&apk=2025007"), 2025007);
+  assert.equal(S.apkCode("?apk=x1"), 0);
+  assert.equal(S.apkCode(""), 0);
+  // The metadata tool covers exactly the APKs the android workflow publishes
+  const M = require(path.join(ROOT, "tools", "fdroid-metadata.js"));
+  const l = M.list();
+  assert.deepEqual(l.map((a) => a.apk).sort(), ["oros.apk"].concat(Object.keys(pk).map((id) => "oros-" + id + ".apk")).sort());
+  l.forEach((a) => {
+    assert.ok(fs.existsSync(a.icon), a.icon);
+    ["en", "el"].forEach((lg) => {
+      const t = M.texts(a, lg);
+      assert.ok(t.name && t.summary.length <= 80 && t.description, a.id + " " + lg);
+    });
+  });
+  // Settings shows the repo links; the workflow uses the same key alias and address
+  assert.match(read("settings/settings.js"), /S\.repoLink\(\)/);
+  const wf = read(".github/workflows/fdroid.yml");
+  assert.match(wf, /repo_keyalias: orosrepo/);
+  assert.match(wf, /SITE: https:\/\/koulaxizis\.github\.io\/oros-fdroid/);
+  assert.match(wf, /versions\.json/);
 });
