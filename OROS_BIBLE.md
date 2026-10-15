@@ -7079,3 +7079,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - New root `bundle.js` (`OrosBundle`, own ZIP code via `CompressionStream`) treats every opened file as hostile: unsafe paths, encrypted entries and DOCTYPE/ENTITY refused; entry count, sizes and compression ratio capped; hashes checked against the manifest; media types sniffed from bytes. Spec `docs/oros-bundle.md`; Bible section "orOS file format (OBF 1.0)".
 - Files: `bundle.js` (precached), Writer, Slides, Atelier, Layout.
   - Tests: new `tests/bundle.test.js` (12 tests); full suite green; real shell in all four apps; `unzip -t`, Python `zipfile` and `file` read a bundle. Not tested: a real phone, Safari, Firefox, OS "Open with".
+
+### 2026-10-15 — Contacts: 8-bit avatars are pixel robots (#415) — 2.44.01
+- The 8-bit avatar is now a gender-neutral pixel robot (Chris 13:27; orOS never guesses gender from a name). Existing `px:<seed>` values draw a robot from the same seed, so no data changes. Varies head/eye/body/background colours, eyes (big, visor, dots), mouth (wide, grille, small), antennas (0-2) and ears (CT-NP).
+- Files: `contacts/contacts.js` (`pxSrc`), Bible CT-NP.
+  - Tests: full suite green; Chromium with 14 contacts. Not tested: a phone.
