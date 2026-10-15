@@ -149,7 +149,7 @@
         <a class="app" href="https://github.com/koulaxizis/oros/releases/download/android-apks/oros-budget.apk"><img src="/icons/solo/budget.svg" alt="" width="36" height="36"><span>Budget</span></a>
         <a class="app" href="https://github.com/koulaxizis/oros/releases/download/android-apks/oros-gamecenter.apk"><img src="/icons/solo/gamecenter.svg" alt="" width="36" height="36"><span>Games</span></a>
         </div>
-        <p class="dim">Install: open the .apk on the phone and allow installing from this source. An APK from this page and the Play Store version use different signing keys, so one doesn't update the other: to switch, uninstall first; sync brings your data back.</p>
+        <p class="dim">Install: open the .apk on the phone and allow installing from this source. An APK from this page and the Play Store version use different signing keys, so one doesn't update the other: to switch, uninstall first; sync brings your data back. If a download never finishes in your browser, try another browser (Chrome or Firefox) or the <a href="https://github.com/koulaxizis/oros/releases/tag/android-apks">release page on GitHub</a>.</p>
         
       </section>
       <section class="card">
@@ -251,7 +251,7 @@
         <a class="app" href="https://github.com/koulaxizis/oros/releases/download/android-apks/oros-budget.apk"><img src="/icons/solo/budget.svg" alt="" width="36" height="36"><span>Έσοδα &amp; Έξοδα</span></a>
         <a class="app" href="https://github.com/koulaxizis/oros/releases/download/android-apks/oros-gamecenter.apk"><img src="/icons/solo/gamecenter.svg" alt="" width="36" height="36"><span>Παιχνίδια</span></a>
         </div>
-        <p class="dim">Εγκατάσταση: άνοιξε το .apk στο κινητό και επίτρεψε την εγκατάσταση από αυτή την πηγή. Ένα APK από αυτή τη σελίδα και η έκδοση του Play Store χρησιμοποιούν διαφορετικά κλειδιά υπογραφής, οπότε το ένα δεν ενημερώνει το άλλο: για να αλλάξεις, απεγκατάστησε πρώτα· ο συγχρονισμός φέρνει πίσω τα δεδομένα σου.</p>
+        <p class="dim">Εγκατάσταση: άνοιξε το .apk στο κινητό και επίτρεψε την εγκατάσταση από αυτή την πηγή. Ένα APK από αυτή τη σελίδα και η έκδοση του Play Store χρησιμοποιούν διαφορετικά κλειδιά υπογραφής, οπότε το ένα δεν ενημερώνει το άλλο: για να αλλάξεις, απεγκατάστησε πρώτα· ο συγχρονισμός φέρνει πίσω τα δεδομένα σου. Αν η λήψη δεν ολοκληρώνεται στον browser σου, δοκίμασε άλλον (Chrome ή Firefox) ή τη <a href="https://github.com/koulaxizis/oros/releases/tag/android-apks">σελίδα της έκδοσης στο GitHub</a>.</p>
         
       </section>
       <section class="card">
@@ -276,7 +276,8 @@
   // installed orOS app (or the orOS Android app), where nothing can be
   // installed. solo.js's installUrl() gives the Chrome intent instead
   // (the same address Settings › Single apps › Install uses).
-  var S = window.orosSolo, inApp = false;
+  var S = window.orosSolo, inApp = false, inTab = false;
+  try { inTab = matchMedia("(display-mode: browser)").matches; } catch (e) {}
   try {
     inApp = /^android-app:\/\/online\.useoros\.twa/.test(document.referrer) || sessionStorage.getItem("oros-dl-twa") === "1";
     if (inApp) sessionStorage.setItem("oros-dl-twa", "1");
@@ -284,7 +285,7 @@
   if (S && S.installUrl) {
     [].forEach.call(document.querySelectorAll("a.app"), function (a) {
       var m = /^\/([a-z0-9-]+)\/solo\.html/.exec(a.getAttribute("href"));
-      var u = m && S.installUrl(m[1], navigator.userAgent, location.origin, inApp);
+      var u = m && S.installUrl(m[1], navigator.userAgent, location.origin, inApp, inTab);
       if (!u || u === a.getAttribute("href")) return;
       a.setAttribute("href", u);
       a.removeAttribute("target");

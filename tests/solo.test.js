@@ -184,12 +184,14 @@ test("Install: Android goes through an intent to Chrome (the orOS app would catc
   assert.equal(S.installUrl("notes", "Android", "http://127.0.0.1:8080"), "/notes/solo.html?install");
   assert.equal(S.installUrl("notes", "Android", "https://a.b/c"), "/notes/solo.html?install");
   assert.equal(S.installUrl("chess", "Android", "https://useoros.online"), "");
+  // In a browser tab (Brave, Firefox, Chrome): the same browser installs it.
+  assert.equal(S.installUrl("notes", "Android", "https://useoros.online", false, true), "/notes/solo.html?install");
   // In the orOS Android app: its own activity opens Chrome.
   assert.equal(S.installUrl("notes", "Android", "https://useoros.online", true),
     "intent://install/notes#Intent;scheme=oros-permission;package=online.useoros.twa;end");
   assert.equal(S.installUrl("chess", "Android", "https://useoros.online", true), "");
   assert.match(read("android/app/src/main/java/online/useoros/twa/PermissionActivity.java"), /"install"\.equals\(kind\)/);
-  assert.match(read("settings/settings.js"), /S\.installUrl\(id, navigator\.userAgent, location\.origin, !!phone\(\)\)/);
+  assert.match(read("settings/settings.js"), /S\.installUrl\(id, navigator\.userAgent, location\.origin, !!phone\(\), inBrowserTab\(\)\)/);
   const src = read("solo.js");
   assert.match(src, /addEventListener\("beforeinstallprompt"/);
   assert.match(src, /installBar\(win, id, asked\)/);

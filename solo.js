@@ -522,10 +522,15 @@
   // inApp: the page runs in the orOS Android app (its phone bridge is
   // connected). An intent to Chrome from there comes back to the app,
   // so the app's own activity opens the page in Chrome.
-  function installUrl(id, ua, origin, inApp) {
+  // inTab: the caller runs in a browser tab (display-mode browser). That
+  // browser can install the page itself and no app catches the link, so
+  // the plain address is used: an intent to Chrome does nothing in a
+  // browser that blocks intents (Brave) or on a phone without Chrome.
+  function installUrl(id, ua, origin, inApp, inTab) {
     if (!has(id)) return "";
     if (inApp) return "intent://install/" + id + "#Intent;scheme=oros-permission;package=online.useoros.twa;end";
     var page = "/" + id + "/solo.html?install";
+    if (inTab) return page;
     var m = /^https:\/\/([^\/?#]+)$/.exec(String(origin || ""));
     if (!/Android/i.test(String(ua || "")) || !m) return page;
     return "intent://" + m[1] + page + "#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=" +
