@@ -49,6 +49,16 @@ From the `More` menu in a group:
 - `Export (CSV, PDF)`: a CSV for Greek Excel or other apps, or a PDF summary.
 - `Group and people`, `Archive the group` and `Delete the group`.
 
+## Import from Splitwise, Tricount or Settle Up
+`Import from Splitwise, Tricount, Settle Up…` is in the `More` menu, on the home screen and in a group. Pick the file you exported:
+- Splitwise: open the group, then the settings (gear) and `Export as spreadsheet`. You get a CSV with each person's net amount per expense; payments come in as payments.
+- Tricount: in the tricount, open the settings or the `…` menu and choose export to Excel (or CSV). Expenses, money transfers and income come in, with each person's share.
+- Settle Up: in the group, open the menu and export the transactions (CSV or Excel). Who paid, for whom with weights, transfers and the exchange rate are read.
+
+Before anything is saved you see the source, the group name (you can change it), how many expenses and payments it adds, the dates, and what is left out. Under `People` you can rename someone, or give two people the same name to merge them. Split then checks that the balances come out as in the other app and warns you if they differ by more than 0.01. `Import` makes a new group in one step, and `Undo` takes it all back.
+
+Exporting again later and importing the new file into the same group adds only the rows that are missing; an expense you deleted here stays deleted. Rows in a currency other than the group's are imported only when the file has an exchange rate.
+
 ## Sync and backup
 All groups, people, expenses, payments and repeating expenses sync between your own devices through [orOS sync](help:t/sync). The open group, tab and CSV format stay on each device. The home screen's menu has `Backup (JSON)` and `Restore from backup`, which merges with what's here; the orOS [backup](help:t/backup) covers Split too.
 

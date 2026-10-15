@@ -1,0 +1,14 @@
+##Refuelling
+Date;Odometer;Fuel;Price/L;Total cost;Full tank;Gas station;Notes
+05/03/2026 10:30;45000;Diesel;1,659;66,36;Yes;Aegean;
+20/03/2026 09:00;45620;Diesel;1,649;49,47;No;BP;half
+##Expense
+Date;Odometer;Expense type;Total cost;Notes
+06/03/2026;45010;Parking;3,50;
+07/03/2026;45020;Toll;2,40;Egnatia
+##Service
+Date;Odometer;Service type;Total cost;Place;Notes
+15/03/2026;45500;Timing belt;420,00;Garage Nikos;
+##Income
+Date;Odometer;Income type;Total
+16/03/2026;45510;Ride share;30

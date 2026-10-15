@@ -35,6 +35,14 @@ From the same menu you can add a renewal, a service plan item, a tyre set or ano
 ## Logbook report
 `Logbook` on the vehicle card (or `Logbook report` in `Settings`) puts the whole history of the vehicle on one page: the vehicle, a summary, every service, renewals and tyres. Tick `Fuel and charging fills` or `Other costs` to add them, and untick `Show the amounts paid` to leave out the prices, for example when you sell the car. `Print or save as PDF` opens the print window (pick "Save as PDF" as the printer for a PDF); `Save as HTML` saves one file you can open in any browser.
 
+## Import from another app
+In `Settings`, `Import from another app` reads the export of another vehicle log. Pick the file (a .csv, or a .zip of several), then check the preview: which vehicle in the file, `Add to` an existing vehicle or a new one (named from the file when it has a name), and the units of the file. Garage keeps km and litres, so miles and gallons are converted. Fills become fuel entries (full, partial, after a missed fill), services become service entries and other costs become expenses by category. An entry that is already there (same date, odometer and amount) is skipped, and importing the same file again adds nothing. `Undo` on the message takes the whole import back.
+- Fuelio: Settings, Backup & sync (or Dropbox / Google Drive sync) saves `vehicle-1-sync.csv`, one file per vehicle, with fills and costs.
+- Drivvo: Menu, Export (or Settings, Export data) to a CSV file with refuelling, expenses and services. Income is left out.
+- Fuelly: on the Fuelly website, open your account, Export, and download the CSV. Its miles and US gallons are converted; pick UK gallons if your car logged imperial ones.
+- aCar: Menu, Backup & Restore, Export to CSV, and pick the fill-up records (or the service records) file.
+- LubeLogger: on a vehicle, open Gas, Service, Repair, Upgrade or Tax records and use Export to CSV; import one file at a time into the same vehicle.
+
 ## Sync and backup
 Vehicles, entries, renewals, plans, tyres and your currency sync between your devices through [orOS sync](help:t/sync). Receipt photos travel separately, with Vault Drive sync; until they arrive, a photo shows `Not on this device`. The reminder hour, consumption unit, tyre limits and open tab stay on each device.
 

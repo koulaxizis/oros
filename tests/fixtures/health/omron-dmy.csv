@@ -1,0 +1,4 @@
+Date,Time,Systolic (mmHg),Diastolic (mmHg),Pulse (bpm),Irregular heartbeat detected,Body movement,Notes
+15/10/2026,07:45,135,85,68,No,No,
+16/10/2026,7:50 PM,142,91,75,Yes,No,"stressed, coffee"
+01/10/2026,08:00,128,80,,No,Yes,

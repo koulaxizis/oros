@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE HealthData [
+<!ELEMENT HealthData (ExportDate,Me,(Record|Correlation|Workout|ActivitySummary|ClinicalRecord)*)>
+]>
+<HealthData locale="en_US">
+ <ExportDate value="2026-10-01 10:00:00 +0300"/>
+ <Me HKCharacteristicTypeIdentifierDateOfBirth="1980-01-01"/>
+ <Record type="HKQuantityTypeIdentifierHeight" sourceName="Health" unit="cm" creationDate="2026-01-01 10:00:00 +0200" startDate="2026-01-01 10:00:00 +0200" endDate="2026-01-01 10:00:00 +0200" value="178"/>
+ <Record type="HKQuantityTypeIdentifierBodyMass" sourceName="Withings" unit="lb" creationDate="2026-06-01 07:00:00 +0300" startDate="2026-06-01 07:00:00 +0300" endDate="2026-06-01 07:00:00 +0300" value="165.3"/>
+ <Record type="HKQuantityTypeIdentifierBodyMass" sourceName="Health" unit="kg" creationDate="2026-06-02 07:00:00 +0300" startDate="2026-06-02 07:00:00 +0300" endDate="2026-06-02 07:00:00 +0300" value="75">
+  <MetadataEntry key="HKWasUserEntered" value="1"/>
+ </Record>
+ <Record type="HKQuantityTypeIdentifierStepCount" sourceName="iPhone" unit="count" creationDate="2026-06-02 07:00:00 +0300" startDate="2026-06-02 07:00:00 +0300" endDate="2026-06-02 07:10:00 +0300" value="500"/>
+ <Correlation type="HKCorrelationTypeIdentifierBloodPressure" sourceName="Omron" creationDate="2026-06-03 08:00:00 +0300" startDate="2026-06-03 08:00:00 +0300" endDate="2026-06-03 08:00:00 +0300">
+  <Record type="HKQuantityTypeIdentifierBloodPressureDiastolic" sourceName="Omron" unit="mmHg" creationDate="2026-06-03 08:00:00 +0300" startDate="2026-06-03 08:00:00 +0300" endDate="2026-06-03 08:00:00 +0300" value="81"/>
+  <Record type="HKQuantityTypeIdentifierBloodPressureSystolic" sourceName="Omron" unit="mmHg" creationDate="2026-06-03 08:00:00 +0300" startDate="2026-06-03 08:00:00 +0300" endDate="2026-06-03 08:00:00 +0300" value="131"/>
+ </Correlation>
+ <Record type="HKQuantityTypeIdentifierBloodPressureSystolic" sourceName="Omron" unit="mmHg" creationDate="2026-06-04 08:00:00 +0300" startDate="2026-06-04 08:00:00 +0300" endDate="2026-06-04 08:00:00 +0300" value="125"/>
+ <Record type="HKQuantityTypeIdentifierHeartRate" sourceName="Watch" unit="count/min" creationDate="2026-06-03 09:00:00 +0300" startDate="2026-06-03 09:00:00 +0300" endDate="2026-06-03 09:00:00 +0300" value="88"/>
+ <Record type="HKQuantityTypeIdentifierHeartRate" sourceName="Watch" unit="count/min" creationDate="2026-06-03 03:00:00 +0300" startDate="2026-06-03 03:00:00 +0300" endDate="2026-06-03 03:00:00 +0300" value="52"/>
+ <Record type="HKQuantityTypeIdentifierRestingHeartRate" sourceName="Watch" unit="count/min" creationDate="2026-06-03 23:00:00 +0300" startDate="2026-06-03 00:00:00 +0300" endDate="2026-06-03 23:59:00 +0300" value="57"/>
+ <Record type="HKQuantityTypeIdentifierBloodGlucose" sourceName="OneTouch" unit="mmol&lt;180.1558800000541&gt;/L" creationDate="2026-06-05 07:00:00 +0300" startDate="2026-06-05 07:00:00 +0300" endDate="2026-06-05 07:00:00 +0300" value="5.4"/>
+ <Record type="HKQuantityTypeIdentifierBloodGlucose" sourceName="Contour" unit="mg/dL" creationDate="2026-06-05 13:00:00 +0300" startDate="2026-06-05 13:00:00 +0300" endDate="2026-06-05 13:00:00 +0300" value="132"/>
+ <Record type="HKQuantityTypeIdentifierOxygenSaturation" sourceName="Watch" unit="%" creationDate="2026-06-06 03:00:00 +0300" startDate="2026-06-06 03:00:00 +0300" endDate="2026-06-06 03:00:00 +0300" value="0.97"/>
+ <Record type="HKQuantityTypeIdentifierBodyTemperature" sourceName="Health" unit="degF" creationDate="2026-06-07 09:00:00 +0300" startDate="2026-06-07 09:00:00 +0300" endDate="2026-06-07 09:00:00 +0300" value="99.5"/>
+ <Record type="HKQuantityTypeIdentifierBodyMass" sourceName="Withings" unit="lb" creationDate="2026-06-01 07:00:00 +0300" startDate="2026-06-01 07:00:00 +0300" endDate="2026-06-01 07:00:00 +0300" value="165.3"/>
+</HealthData>

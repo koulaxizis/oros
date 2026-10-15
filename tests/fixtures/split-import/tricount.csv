@@ -1,0 +1,6 @@
+Title;Amount;Currency;Date;Paid by;Impacted to Anna;Impacted to Bob;Impacted to Chris;Category;Transaction type
+Dinner;90,00;EUR;01/05/2026;Anna;30,00;30,00;30,00;Restaurants & bars;Expense
+Museum;25,00;EUR;13/05/2026;Bob;12,50;12,50;0;Entertainment;Expense
+Refund;30,00;EUR;14/05/2026;Chris;30,00;0;0;;Money transfer
+Deposit back;40,00;EUR;15/05/2026;Anna;20,00;20,00;0;;Income
+NYC cab;20,00;USD;16/05/2026;Bob;10,00;10,00;0;Transport;Expense

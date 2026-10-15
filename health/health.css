@@ -736,3 +736,9 @@ dialog.hl-dlg.mid-full:not([open]) { display: none; }
 }
 
 [hidden] { display: none !important; }
+
+/* Import from another app (preview list, progress) */
+.imp-list { margin: 8px 0 0; padding-left: 18px; font-size: 14px; line-height: 1.5; overflow-wrap: anywhere; }
+.imp-list.dim { color: var(--text-dim); font-size: 13px; }
+.imp-src { font-weight: 700; overflow-wrap: anywhere; }
+.imp-prog { width: 100%; margin-top: 10px; accent-color: var(--accent); }

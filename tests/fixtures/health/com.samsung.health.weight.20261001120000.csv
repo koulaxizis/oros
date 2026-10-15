@@ -1,0 +1,4 @@
+com.samsung.health.weight,6315001,3
+start_time,weight,body_fat,skeletal_muscle,time_offset,comment,update_time,datauuid,
+2026-05-01 05:30:00.000,72.5,18.2,,UTC+0300,,2026-05-01 05:30:10.000,aaa,
+2026-05-02 05:31:00.000,72.3,,,UTC+0300,morning,2026-05-02 05:31:00.000,bbb,
