@@ -50,8 +50,12 @@ var STRINGS = {
     "redo.empty": "Nothing to redo",
     "clip.empty": "Clipboard is empty",
     "fmt.cleared": "Formatting cleared",
-    "xl.imp":      "Import Excel / Calc (.xlsx, .ods, .xls)",
-    "xl.exp":      "Export Excel / Calc",
+    "xl.imp":      "Import Excel / Calc / orOS (.xlsx, .ods, .xls, .orossheet)",
+    "xl.exp":      "Export Excel / Calc / orOS",
+    "bk.exp":      "orOS file (.orossheet)",
+    "bk.open":     "Open a file (.xlsx, .ods, .xls, .orossheet)…",
+    "bk.folder":   "Unzipped orOS folder…",
+    "bk.newer":    "This file was made by a newer orOS. Update orOS to open it.",
     "xl.xlsx":     "Excel (.xlsx)",
     "xl.ods":      "LibreOffice Calc (.ods)",
     "xl.imported": "Imported — {n} sheet(s)",
@@ -146,8 +150,12 @@ var STRINGS = {
     "redo.empty": "Τίποτα προς επανάληψη",
     "clip.empty": "Το πρόχειρο είναι κενό",
     "fmt.cleared": "Η μορφοποίηση καθαρίστηκε",
-    "xl.imp":      "Εισαγωγή Excel / Calc (.xlsx, .ods, .xls)",
-    "xl.exp":      "Εξαγωγή Excel / Calc",
+    "xl.imp":      "Εισαγωγή Excel / Calc / orOS (.xlsx, .ods, .xls, .orossheet)",
+    "xl.exp":      "Εξαγωγή Excel / Calc / orOS",
+    "bk.exp":      "Αρχείο orOS (.orossheet)",
+    "bk.open":     "Άνοιγμα αρχείου (.xlsx, .ods, .xls, .orossheet)…",
+    "bk.folder":   "Αποσυμπιεσμένος φάκελος orOS…",
+    "bk.newer":    "Το αρχείο φτιάχτηκε από νεότερο orOS. Ενημέρωσε το orOS για να το ανοίξεις.",
     "xl.xlsx":     "Excel (.xlsx)",
     "xl.ods":      "LibreOffice Calc (.ods)",
     "xl.imported": "Εισήχθησαν — {n} φύλλα",
@@ -3255,23 +3263,212 @@ function xlExport(bookType) {
   });
 }
 
+/* ===== SECTION 3g2: THE .orossheet FILE (orOS bundle) =====
+   bundle.js (OrosBundle) + docs/oros-bundle.md. The whole workbook is
+   one file: content.json = { kind: "oros-spreadsheet-package", ver: 1,
+   workbook: { ver, sheets, cells, charts?, cf? } } (the synced model,
+   tombstones left out; sheetkit.js bookContent), preview/NN-<name>.csv
+   = each sheet's shown values, preview/thumbnail.png = the first
+   sheet's top-left corner. No media: the app keeps no pictures.
+   Opening one ADDS its sheets (fresh ids, normalizeState first), like
+   the Excel import; an .xlsx / .ods / .xls still goes to xlImport. */
+var BOOK_MIME = "application/x-oros-sheet";
+
+/* a cell as text for the CSV preview: formulas by their result */
+function bookCellText(sid, r, c, cel) {
+  var v = cel ? cel.v : "";
+  if (!v) return "";
+  if (v.charAt(0) === "=") {
+    var res = evalCell(sid, r, c);
+    if (typeof res === "number" && isFinite(res)) return String(+res.toPrecision(15));
+    return FX.display(res, "en");
+  }
+  return v.charAt(0) === "'" ? v.slice(1) : v;
+}
+
+/* the first sheet's top-left corner as a PNG (≤ 512 px), or null */
+function bookThumb(sh) {
+  return new Promise(function (resolve) {
+    try {
+      var W = 512, H = 320, RH = 20, CWD = 84, HW = 28, rows = Math.floor((H - RH) / RH), cols = Math.ceil((W - HW) / CWD);
+      var cv = document.createElement("canvas");
+      cv.width = W; cv.height = H;
+      var g = cv.getContext("2d");
+      if (!g || !cv.toBlob) { resolve(null); return; }
+      g.fillStyle = "#ffffff"; g.fillRect(0, 0, W, H);
+      g.fillStyle = "#eef0f3"; g.fillRect(0, 0, W, RH); g.fillRect(0, 0, HW, H);
+      g.strokeStyle = "#d5d9df"; g.lineWidth = 1;
+      var r, c, x, y;
+      for (r = 0; r <= rows; r++) { y = RH + r * RH + 0.5; g.beginPath(); g.moveTo(0, y); g.lineTo(W, y); g.stroke(); }
+      for (c = 0; c <= cols; c++) { x = HW + c * CWD + 0.5; g.beginPath(); g.moveTo(x, 0); g.lineTo(x, H); g.stroke(); }
+      g.font = "11px sans-serif"; g.textBaseline = "middle"; g.fillStyle = "#6b7280";
+      for (c = 0; c < cols; c++) g.fillText(colName(c), HW + c * CWD + CWD / 2 - 4, RH / 2);
+      for (r = 0; r < rows; r++) g.fillText(String(r + 1), 4, RH + r * RH + RH / 2);
+      for (r = 0; r < rows; r++) for (c = 0; c < cols; c++) {
+        var cel = state.cells[cellKey(sh.id, r, c)];
+        if (!cel || (!cel.v && !(cel.f && cel.f.bg))) continue;
+        x = HW + c * CWD; y = RH + r * RH;
+        if (cel.f && cel.f.bg) { g.fillStyle = cel.f.bg; g.fillRect(x + 1, y + 1, CWD - 1, RH - 1); }
+        var txt = bookCellText(sh.id, r, c, cel);
+        if (!txt) continue;
+        g.font = (cel.f && cel.f.i ? "italic " : "") + (cel.f && cel.f.b ? "bold " : "") + "12px sans-serif";
+        g.fillStyle = (cel.f && cel.f.co) || "#1f2328";
+        g.save(); g.beginPath(); g.rect(x + 1, y, CWD - 2, RH); g.clip();
+        g.fillText(txt, x + 4, y + RH / 2); g.restore();
+      }
+      cv.toBlob(function (b) { resolve(b || null); }, "image/png");
+    } catch (e) { resolve(null); }
+  });
+}
+
+function bookSave() {
+  if (!window.OrosBundle) { notifyTransient(t("xl.readerr")); return; }
+  if (editing) commitEdit(0, 0);
+  freshEval();
+  var canon = canonSS(state), content = KIT.bookContent(canon);
+  var preview = [];
+  canon.sheets.forEach(function (sh, i) {
+    var csv = KIT.sheetCSV(sh.id, canon.cells, bookCellText);
+    if (csv !== null) preview.push({ name: KIT.csvName(i, displayName(sh)), data: csv, type: "text/csv" });
+  });
+  var title = t("title") + " " + xlStamp();
+  bookThumb(canon.sheets[0]).then(function (thumb) {
+    return OrosBundle.write({
+      mime: BOOK_MIME, app: "spreadsheet", schema: "spreadsheet/1", content: content,
+      meta: { title: title, created: Math.min.apply(null, canon.sheets.map(function (sh) { return sh.mtime || now(); })),
+              modified: now(), language: LANG === "el" ? "el" : "en", generator: "orOS Spreadsheet" },
+      settings: { active: actSID },
+      thumbnail: thumb || undefined, preview: preview, date: new Date()
+    });
+  }).then(function (bytes) {
+    var fname = title + ".orossheet";
+    var blob = new Blob([bytes], { type: BOOK_MIME });
+    var done = function () { notifyTransient(t("xl.exported").replace("{f}", ".orossheet")); };
+    var dlg = dialogHost();
+    if (dlg && typeof dlg.saveFile === "function") {
+      dlg.saveFile({ blob: blob, filename: fname, mime: BOOK_MIME,
+        types: [{ description: t("bk.exp"), accept: { "application/x-oros-sheet": [".orossheet"] } }] })
+        .then(function (r) { if (r && r.ok) done(); });
+      return;
+    }
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = fname;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+    done();
+  }).catch(function (e) {
+    console.error("[SS] .orossheet export failed:", e);
+    notifyTransient(t("xl.readerr"));
+  });
+}
+
+/* a read bundle (zip or unzipped folder) -> new sheets */
+function bookApply(r) {
+  var wb = KIT.bookWorkbook(r && r.content);
+  var tmp = normalizeState(clone(wb));
+  if (!tmp) throw new Error("notbook");
+  var taken = [];
+  state.sheets.forEach(function (sh) {
+    if (sh.name !== null && sh.name !== undefined) taken.push(sh.name);
+    else if (sh.bi) { taken.push(sh.bi.en); taken.push(sh.bi.el); }
+  });
+  var imp = KIT.importBook(tmp, { taken: taken, uid: uid, now: now(), pos: maxPos() + 1,
+    mapRefs: FX.mapRefs, lang: LANG });
+  if (!imp.sheets.length) throw new Error("notbook");
+  if (editing) commitEdit(0, 0);
+  imp.sheets.forEach(function (sh) { state.sheets.push(sh); });
+  var k;
+  for (k in imp.cells) state.cells[k] = imp.cells[k];
+  state.charts = state.charts || {}; state.cf = state.cf || {};
+  for (k in imp.charts) state.charts[k] = imp.charts[k];
+  for (k in imp.cf) state.cf[k] = imp.cf[k];
+  /* the tab that was open when it was saved, else the first */
+  var act = r.settings && imp.ids[r.settings.active];
+  markDirty();
+  invalidateEval();
+  switchTo(act || imp.sheets[0].id);
+  notifyTransient(t("xl.imported").replace("{n}", imp.sheets.length));
+}
+function bookFail(e) {
+  console.error("[SS] .orossheet import failed:", e);
+  notifyTransient(t(e && e.code === "newer" ? "bk.newer" : "xl.readerr"));
+}
+/* a picked / shared file: an orOS bundle by its first bytes, else the
+   Excel / Calc import as before */
+function bookOrXlImport(f) {
+  if (!window.OrosBundle || !f || typeof f.slice !== "function") { xlImport(f); return; }
+  f.slice(0, 256).arrayBuffer().then(function (head) {
+    var kind = OrosBundle.sniff(new Uint8Array(head));
+    if (kind === null || kind === "") {
+      if (/\.orossheet$/i.test(f.name || "")) throw new Error("notbook");
+      xlImport(f);
+      return;
+    }
+    return f.arrayBuffer()
+      .then(function (ab) { return OrosBundle.read(new Uint8Array(ab), { mime: BOOK_MIME }); })
+      .then(bookApply);
+  }).catch(bookFail);
+}
+function bookPickFolder() {
+  if (!window.OrosBundle) return;
+  OrosBundle.pickFolder().then(function (files) {
+    if (!files) return;
+    return OrosBundle.readFolder(files, { mime: BOOK_MIME }).then(bookApply);
+  }).catch(bookFail);
+}
+
 /* ---- toolbar buttons (JS-injected — zero dependence on
    unseen spreadsheet.html markup) ---- */
 var xlMenu = null;
 function closeXlMenu() { if (xlMenu) { xlMenu.remove(); xlMenu = null; } }
 
 function toggleXlExportMenu(btn) {
+  var items = [["xlsx", t("xl.xlsx")], ["ods", t("xl.ods")]];
+  if (window.OrosBundle) items.push(["oros", t("bk.exp")]);
+  toggleXlMenu(btn, items.map(function (o) {
+    return [o[1], function () { if (o[0] === "oros") bookSave(); else xlExport(o[0]); }];
+  }));
+}
+/* the import button: a file (Excel / Calc / orOS) or an unzipped
+   orOS folder */
+function toggleXlImportMenu(btn) {
+  var items = [[t("bk.open"), xlPickFile]];
+  if (window.OrosBundle) items.push([t("bk.folder"), bookPickFolder]);
+  toggleXlMenu(btn, items);
+}
+function xlPickFile() {
+  var dlg = dialogHost(), acc = ".xlsx,.xls,.ods,.orossheet";
+  if (dlg && typeof dlg.openFile === "function") {
+    dlg.openFile(acc).then(function (f) {
+      if (f) bookOrXlImport(f);   // cancel (null) = silent exit
+    });
+    return;
+  }
+  var inp = document.createElement("input");
+  inp.type = "file";
+  inp.accept = acc;
+  inp.addEventListener("change", function () {
+    if (inp.files && inp.files[0]) bookOrXlImport(inp.files[0]);
+  });
+  inp.click();
+}
+/* items: [[label, fn]] */
+function toggleXlMenu(btn, items) {
   if (xlMenu) { closeXlMenu(); return; }
   var m = document.createElement("div");
   m.style.cssText =
     "position:fixed;z-index:1100;background:var(--panel-bg,#22242a);" +
     "border:1px solid var(--border,#333);border-radius:8px;" +
     "box-shadow:0 6px 20px rgba(0,0,0,.35);padding:4px;" +
-    "display:flex;flex-direction:column;gap:2px;min-width:175px;";
-  [["xlsx", t("xl.xlsx")], ["ods", t("xl.ods")]].forEach(function (o) {
+    "display:flex;flex-direction:column;gap:2px;min-width:175px;max-width:calc(100vw - 8px);";
+  m.setAttribute("role", "menu");
+  items.forEach(function (o) {
     var b = document.createElement("button");
     b.type = "button";
-    b.textContent = o[1];
+    b.setAttribute("role", "menuitem");
+    b.textContent = o[0];
     b.style.cssText =
       "text-align:left;padding:7px 12px;font:inherit;font-size:12.5px;" +
       "background:transparent;color:var(--text,#eee);border:none;" +
@@ -3282,13 +3479,13 @@ function toggleXlExportMenu(btn) {
     b.addEventListener("mouseleave", function () {
       b.style.background = "transparent";
     });
-    b.addEventListener("click", function () { closeXlMenu(); xlExport(o[0]); });
+    b.addEventListener("click", function () { closeXlMenu(); o[1](); });
     m.appendChild(b);
   });
   var br = btn.getBoundingClientRect();
   document.body.appendChild(m);
   void m.offsetWidth;
-  m.style.left = Math.max(4, Math.min(br.left, window.innerWidth - 195)) + "px";
+  m.style.left = Math.max(4, Math.min(br.left, window.innerWidth - m.offsetWidth - 4)) + "px";
   /* SS-9: the button sits in the footer — the menu opened below it,
      outside the window, and could not be reached. Open upwards when
      there is no room below. */
@@ -3310,22 +3507,8 @@ function injectXlButtons() {
   imp.className = host.className;
   imp.title = t("xl.imp");
   imp.innerHTML = ICONS["csv-imp"] + "XLS";
-  imp.addEventListener("click", function () {
-    var dlg = dialogHost();
-    if (dlg && typeof dlg.openFile === "function") {
-      dlg.openFile(".xlsx,.xls,.ods").then(function (f) {
-        if (f) xlImport(f);       // cancel (null) = silent exit
-      });
-      return;
-    }
-    var inp = document.createElement("input");
-    inp.type = "file";
-    inp.accept = ".xlsx,.xls,.ods";
-    inp.addEventListener("change", function () {
-      if (inp.files && inp.files[0]) xlImport(inp.files[0]);
-    });
-    inp.click();
-  });
+  imp.setAttribute("aria-haspopup", "menu");
+  imp.addEventListener("click", function () { toggleXlImportMenu(imp); });
 
   var exp = document.createElement("button");
   exp.type = "button";
@@ -3338,12 +3521,13 @@ function injectXlButtons() {
   host.parentElement.insertBefore(imp, host.nextSibling);
   host.parentElement.insertBefore(exp, imp.nextSibling);
 
-  /* close the export menu on outside click (swatch pattern) */
+  /* close the import / export menu on outside click (swatch pattern) */
   document.addEventListener("click", function (e) {
     if (!xlMenu) return;
     if (xlMenu.contains(e.target)) return;
-    var be = $("btn-xl-exp");
+    var be = $("btn-xl-exp"), bi = $("btn-xl-imp");
     if (be && be.contains(e.target)) return;
+    if (bi && bi.contains(e.target)) return;
     closeXlMenu();
   });
 }
@@ -5353,7 +5537,7 @@ function openSharedFile(o) {
   } catch (e) { f = null; }
   if (!f) return;
   var nm = String(f.name || "").toLowerCase();
-  if (/\.(xlsx|xls|ods)$/.test(nm)) xlImport(f);
+  if (/\.(xlsx|xls|ods|orossheet)$/.test(nm)) bookOrXlImport(f);
   else if (/\.csv$/.test(nm)) csvImport(f);
 }
 window.__orosOpenAt = openTarget;
