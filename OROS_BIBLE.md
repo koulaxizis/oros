@@ -6946,3 +6946,10 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Every importer shows a preview, writes once, keeps your own entries, adds only what is missing on a re-import, and offers Undo. Only files you export yourself; nothing is sent anywhere.
 - Files: `importkit.js`, `habits/import.js`, `mood/import.js`, `diary/import.js`, `cycle/import.js` (all precached), the four apps' UI and help, Bible decision IMP-1.
   - Tests: new importkit, habits, mood, diary and cycle import tests with fixtures; full suite green. Not tested: real exports from these apps on Chris's devices.
+
+### 2026-10-15 — Layout: Scribus free shapes, gradients, layers and .sla.gz (#394) — 2.29.00
+- Layout's Scribus import: polygons, curves, arcs and spirals come in as real outlines (they were rectangles), linear and radial gradients keep their colours, and layers set the stacking order (hidden layers come in hidden, locked layers locked). Compressed `.sla.gz` files open like `.sla` (unpacked in the browser, 200 MB cap).
+- New Gradient section in Properties for rectangles, ellipses and shapes; gradients export to PDF as real shadings (stop opacity is not carried into the PDF).
+- designkit: new `path` item type (M/L/C/Z in fractions of the item box) and an optional `gr` gradient on rect, ellipse and path items, normalized and capped. Older app copies skip path items when reading but the union merge keeps them, so nothing is deleted; an imported gradient also sets `fill` to its first colour as a fallback.
+- Files: `designkit/model.js`, `designkit/render.js`, `designkit/pdf.js`, `layout/sla.js` 1.1, `layout/panels.js`, `layout/io.js`, `layout/layout.js`, `layout/editor.js`, help.
+  - Tests: new `tests/layout-sla-shapes.test.js`; full suite green; real shell in Chromium at 1280 and 360 px. Not tested: files saved by Scribus itself, a real phone, Safari.
