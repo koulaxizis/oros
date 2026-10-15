@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "2.42.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "2.43.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -5736,6 +5736,9 @@
         { name: "Google Calendar · Tasks · YouTube Data · Books APIs", url: "https://developers.google.com/calendar",
           by: "Google LLC; your own account", lic: { en: "Their terms, one sign-in per import, nothing kept", el: "Οι όροι τους, μία σύνδεση ανά εισαγωγή, τίποτα δεν κρατιέται" },
           en: "One-time imports from Google (Calendar, To-Do, Reader, Media Shelf)", el: "Εισαγωγή από Google μία φορά (Ημερολόγιο, Εργασίες, Αναγνώστης, Το ράφι μου)" },
+        { name: "Google Drive · Picker · Photos Picker APIs", url: "https://developers.google.com/drive/picker",
+          by: "Google LLC; your own account", lic: { en: "Their terms, one sign-in per import, nothing kept", el: "Οι όροι τους, μία σύνδεση ανά εισαγωγή, τίποτα δεν κρατιέται" },
+          en: "One-time imports from Google Drive and Google Photos (Files, Photo Lab)", el: "Εισαγωγή μία φορά από Google Drive και Google Photos (Αρχεία, Εργαστήριο εικόνας)" },
         { name: "Gravatar", url: "https://gravatar.com/",
           by: "Automattic Inc.", lic: { en: "Their terms; only a hashed e-mail is sent, on request", el: "Οι όροι τους· στέλνεται μόνο κωδικοποιημένο email, όταν το ζητήσεις" },
           en: "Public profiles (Contacts, CRM and Newsletter › Update online)", el: "Δημόσια προφίλ (Επαφές, Πελάτες και Ενημερωτικό δελτίο › Ενημέρωση online)" },

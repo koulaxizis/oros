@@ -47,6 +47,10 @@ On a phone all menus are under the menu button.
 - Both look at the whole visible picture. Move the `Edge` slider to keep more or less around the subject, then `Apply`. One `Undo` takes it back.
 - They use the same on-device tool as Atelier's background remover. The first time, it needs a download of about 16 MB; after that it works offline, and the picture never leaves your device. If Atelier downloaded it already, there is nothing to download.
 
+## From Google Photos
+- On the projects screen, `From Google Photos`: sign in to Google, press `Open Google Photos`, pick one picture and press `Done`. It opens here as a new project.
+- orOS reads only that picture, once, and lets go of the sign-in right away. Videos don't open here.
+
 ## Camera RAW files
 - `Open picture`, drag and drop and `Batch process…` take RAW files from most cameras: DNG, CR2, CR3, CRW, NEF, NRW, ARW, SR2, ORF, RAF, RW2, PEF, SRW, X3F, 3FR, IIQ, ERF and more.
 - Photo Lab develops the RAW data itself (with the camera's white balance), then it opens like any photo. This can take several seconds for a big file. On a phone, RAW files are developed at half size to save memory.

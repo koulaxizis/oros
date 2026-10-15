@@ -674,6 +674,7 @@ var PRECACHE_URLS = [
   "files/search.js",
   "files/dropbox-core.js",
   "files/dropbox.js",
+  "files/gmedia.js",
   "files/dropbox-callback.html",
   "files/dropbox-callback.js",
   "writer/",
