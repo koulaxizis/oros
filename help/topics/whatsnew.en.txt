@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.25.00
+- Seasonal decorations extras, off until you turn them on: balloons on your birthday (pick the day in Settings), the four seasons (tulips and petals, sun and waves, falling leaves, light snow), and Easter on the Western date for those who keep it.
+
 ## Version 2.24.00
 - Seasonal decorations for the Greek holidays: a cross over the sea at Epiphany, hearts on Valentine's Day, confetti and a mask at Carnival, kites on Clean Monday, flags on 25 March and 28 October, red eggs, a candle and butterflies at Easter, a flower wreath on May Day. Carnival, Clean Monday and Easter follow the Orthodox Easter each year.
 

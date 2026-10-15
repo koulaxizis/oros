@@ -1,5 +1,5 @@
 // ============================================================
-// orOS — seasonal.js (seasonal desktop decorations, v1.1.0)
+// orOS — seasonal.js (seasonal desktop decorations, v1.2.0)
 // ------------------------------------------------------------
 // A shell component, like pet.js and launcher.js: it runs IN the
 // shell document, keeps its own storage and registers its own sync
@@ -12,7 +12,9 @@
 //     pumpkins, bats and a web at Halloween (1.0.0); the Greek feasts
 //     (1.1.0): Epiphany, Valentine's Day, Carnival, Clean Monday,
 //     25 March, Easter, May Day, 28 October. Movable ones count from
-//     Orthodox Easter, computed here. ON by default.
+//     Orthodox Easter, computed here. ON by default. 1.2.0: the four
+//     seasons (OFF by default), my birthday (once its date is set) and
+//     Easter on the Western date for those who keep it.
 //   • It sits over the wallpaper and UNDER the desktop's icons
 //     (z-index -1 inside #oros-desktop, like the live wallpaper)
 //     and never takes a click (pointer-events: none).
@@ -25,7 +27,8 @@
 // Data (synced, slice "seasonal", key oros-seasonal):
 //   { ver:1, f:{ <field>: { v, t } } }   fields sorted by name
 //   • on, motion ("auto"|"still"), amount ("low"|"mid"|"high"),
-//     xmas ("tree"|"boat"), "ev.<id>" (event switch, boolean);
+//     xmas ("tree"|"boat"), easter ("orthodox"|"western"),
+//     bday ("MM-DD" or ""), "ev.<id>" (event switch, boolean);
 //   • t = ms of the user's change to THAT field (stamped at the
 //     mutation site only). Merge: per field the higher t wins, a tie
 //     goes to the greater JSON. A field this bundle does not know
@@ -49,7 +52,7 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.1.0";
+  var VER = "1.2.0";
   var DATA_KEY = "oros-seasonal";
   var LOCAL_KEY = "oros-seasonal-local";
   var YMD_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -80,11 +83,32 @@
     return addDays(year + "-" + pad(month) + "-" + pad(day), 13);
   }
 
+  // Western (Gregorian) Easter, the anonymous Gregorian algorithm.
+  function westernEaster(year) {
+    var a = year % 19, b = Math.floor(year / 100), c = year % 100;
+    var d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25), g = Math.floor((b - f + 1) / 3);
+    var h = (19 * a + b - d - g + 15) % 30, i = Math.floor(c / 4), k = c % 4;
+    var l = (32 + 2 * e + 2 * i - h - k) % 7, m = Math.floor((a + 11 * h + 22 * l) / 451);
+    var month = Math.floor((h + l - 7 * m + 114) / 31), day = ((h + l - 7 * m + 114) % 31) + 1;
+    return year + "-" + pad(month) + "-" + pad(day);
+  }
+  function isLeap(y) { return (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0; }
+  // "MM-DD" of a real day (29 Feb allowed), or "" = not set.
+  function bdayOk(v) {
+    if (v === "") return true;
+    if (typeof v !== "string" || !/^\d\d-\d\d$/.test(v)) return false;
+    var m = +v.slice(0, 2), d = +v.slice(3);
+    return m >= 1 && m <= 12 && d >= 1 && d <= [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][m - 1];
+  }
+
   // ---------- 2. Events (pure) ----------
-  // win(year) = [first, last] day (inclusive) of the period that
-  // STARTS in that year. prio: the higher wins when two overlap.
-  // Movable feasts count from Orthodox Easter (ez). Wave 3 adds the
-  // optional ones (seasons, birthday, Western Easter).
+  // win(year, opt) = [first, last] day (inclusive) of the period that
+  // STARTS in that year, or null (a birthday not set). opt = the user's
+  // choices that move dates: { western, bday } (see optOf).
+  // prio: the higher wins when two overlap.
+  // Movable feasts count from Orthodox Easter (ez); Easter itself can
+  // follow the Western date (1.2.0). Seasons, OFF by default, lose to
+  // every feast; a birthday wins over everything.
   function ez(y, from, to) {
     var e = orthodoxEaster(y);
     return [addDays(e, from), addDays(e, to)];
@@ -101,7 +125,10 @@
     { id: "mar25", en: "25 March", el: "25η Μαρτίου", prio: 3, def: true,
       win: function (y) { return [y + "-03-24", y + "-03-25"]; } },
     { id: "easter", en: "Easter", el: "Πάσχα", prio: 4, def: true,
-      win: function (y) { return ez(y, -3, 1); } },             // Holy Thursday to Easter Monday
+      win: function (y, opt) {                                   // Holy Thursday to Easter Monday
+        if (opt && opt.western) { var e = westernEaster(y); return [addDays(e, -3), addDays(e, 1)]; }
+        return ez(y, -3, 1);
+      } },
     { id: "mayday", en: "May Day", el: "Πρωτομαγιά", prio: 2, def: true,
       win: function (y) { return [y + "-04-30", y + "-05-01"]; } },
     { id: "xmas", en: "Christmas", el: "Χριστούγεννα", prio: 2, def: true,
@@ -111,7 +138,22 @@
     { id: "halloween", en: "Halloween", el: "Halloween", prio: 2, def: true,
       win: function (y) { return [y + "-10-25", y + "-10-31"]; } },
     { id: "oct28", en: "28 October", el: "28η Οκτωβρίου", prio: 3, def: true,
-      win: function (y) { return [y + "-10-27", y + "-10-28"]; } }
+      win: function (y) { return [y + "-10-27", y + "-10-28"]; } },
+    { id: "birthday", en: "My birthday", el: "Τα γενέθλιά μου", prio: 5, def: true,
+      win: function (y, opt) {
+        var b = opt && opt.bday;
+        if (!b) return null;
+        if (b === "02-29" && !isLeap(y)) b = "02-28";
+        return [y + "-" + b, y + "-" + b];
+      } },
+    { id: "spring", en: "Spring", el: "Άνοιξη", prio: 1, def: false, season: true,
+      win: function (y) { return [y + "-03-20", y + "-06-20"]; } },
+    { id: "summer", en: "Summer", el: "Καλοκαίρι", prio: 1, def: false, season: true,
+      win: function (y) { return [y + "-06-21", y + "-09-22"]; } },
+    { id: "autumn", en: "Autumn", el: "Φθινόπωρο", prio: 1, def: false, season: true,
+      win: function (y) { return [y + "-09-23", y + "-11-30"]; } },
+    { id: "winter", en: "Winter", el: "Χειμώνας", prio: 1, def: false, season: true,
+      win: function (y) { return [y + "-01-01", y + "-03-19"]; } }
   ];
 
   function eventById(id) {
@@ -120,31 +162,32 @@
   }
 
   // The period of `ev` that contains day `s`, or null.
-  function windowAt(ev, s) {
+  function windowAt(ev, s, opt) {
     var y = +s.slice(0, 4);
     for (var k = y; k >= y - 1; k--) {
-      var w = ev.win(k);
-      if (s >= w[0] && s <= w[1]) return w;
+      var w = ev.win(k, opt);
+      if (w && s >= w[0] && s <= w[1]) return w;
     }
     return null;
   }
 
-  // The period that contains `s`, else the next one to start.
-  function nextWindow(ev, s) {
-    var at = windowAt(ev, s);
+  // The period that contains `s`, else the next one to start (null
+  // when the event has no date, like a birthday not set).
+  function nextWindow(ev, s, opt) {
+    var at = windowAt(ev, s, opt);
     if (at) return at;
     var y = +s.slice(0, 4);
     for (var k = y; k <= y + 1; k++) {
-      var w = ev.win(k);
-      if (w[0] > s) return w;
+      var w = ev.win(k, opt);
+      if (w && w[0] > s) return w;
     }
-    return ev.win(y + 1);
+    return ev.win(y + 1, opt);
   }
 
   // Events on day `s` that `enabled(id)` allows, highest priority first.
-  function activeOn(s, enabled) {
+  function activeOn(s, enabled, opt) {
     return EVENTS.filter(function (ev) {
-      return windowAt(ev, s) && (!enabled || enabled(ev.id));
+      return windowAt(ev, s, opt) && (!enabled || enabled(ev.id));
     }).sort(function (a, b) { return b.prio - a.prio || (a.id < b.id ? -1 : 1); });
   }
 
@@ -153,7 +196,9 @@
     on:     { def: true,   ok: function (v) { return typeof v === "boolean"; } },
     motion: { def: "auto", ok: function (v) { return v === "auto" || v === "still"; } },
     amount: { def: "mid",  ok: function (v) { return v === "low" || v === "mid" || v === "high"; } },
-    xmas:   { def: "tree", ok: function (v) { return v === "tree" || v === "boat"; } }
+    xmas:   { def: "tree", ok: function (v) { return v === "tree" || v === "boat"; } },
+    easter: { def: "orthodox", ok: function (v) { return v === "orthodox" || v === "western"; } },
+    bday:   { def: "", ok: bdayOk }
   };
   function fieldSpec(key) {
     if (Object.prototype.hasOwnProperty.call(FIELDS, key)) return FIELDS[key];
@@ -224,17 +269,22 @@
     return { keep: keep, hide: isYmd(x.hide) ? x.hide : null };
   }
 
+  // The choices that move dates.
+  function optOf(data) {
+    return { western: get(data, "easter") === "western", bday: get(data, "bday") };
+  }
+
   // What shows on day `s`: { id, mode: "preview"|"kept"|"auto" } or null.
   function pick(data, local, s, preview) {
     if (preview && eventById(preview)) return { id: preview, mode: "preview" };
     if (local.keep && s <= local.keep.until) return { id: local.keep.id, mode: "kept" };
     if (!get(data, "on") || local.hide === s) return null;
-    var list = activeOn(s, function (id) { return get(data, "ev." + id) === true; });
+    var list = activeOn(s, function (id) { return get(data, "ev." + id) === true; }, optOf(data));
     return list.length ? { id: list[0].id, mode: "auto" } : null;
   }
 
   var model = {
-    EVENTS: EVENTS, orthodoxEaster: orthodoxEaster, addDays: addDays,
+    EVENTS: EVENTS, orthodoxEaster: orthodoxEaster, westernEaster: westernEaster, addDays: addDays, optOf: optOf,
     windowAt: windowAt, nextWindow: nextWindow, activeOn: activeOn,
     normalize: normalize, get: get, setField: setField, merge: merge,
     normLocal: normLocal, pick: pick, eventById: eventById
@@ -429,6 +479,44 @@
     '<ellipse cx="38" cy="86" rx="4" ry="7" fill="#fff" opacity=".35"/><ellipse cx="24" cy="98" rx="4" ry="7" fill="#fff" opacity=".3"/>' +
     '<path d="M6 126 Q40 116 76 126 Z" fill="#7cb342"/>' +
     '</svg>';
+  // Balloons (my birthday).
+  var BALLOONS = '<svg ' + SVG_NS + ' viewBox="0 0 120 150" aria-hidden="true">' +
+    '<path d="M30 70 Q36 110 58 148 M60 60 Q60 110 58 148 M92 74 Q80 112 58 148" fill="none" stroke="#9e9e9e" stroke-width="1.2"/>' +
+    '<g class="ssn-float"><ellipse cx="30" cy="44" rx="22" ry="27" fill="#e53935"/><path d="M27 70 h6 l-3 5 Z" fill="#e53935"/>' +
+    '<ellipse cx="22" cy="34" rx="5" ry="9" fill="#fff" opacity=".35"/></g>' +
+    '<g class="ssn-float ssn-late"><ellipse cx="60" cy="32" rx="22" ry="27" fill="#fdd835"/><path d="M57 58 h6 l-3 5 Z" fill="#fdd835"/>' +
+    '<ellipse cx="52" cy="22" rx="5" ry="9" fill="#fff" opacity=".4"/></g>' +
+    '<g class="ssn-float"><ellipse cx="92" cy="48" rx="22" ry="27" fill="#1e88e5"/><path d="M89 74 h6 l-3 5 Z" fill="#1e88e5"/>' +
+    '<ellipse cx="84" cy="38" rx="5" ry="9" fill="#fff" opacity=".35"/></g>' +
+    '</svg>';
+  // Tulips (spring).
+  var TULIPS = '<svg ' + SVG_NS + ' viewBox="0 0 120 110" aria-hidden="true">' +
+    '<path d="M30 50 Q32 80 40 106 M60 40 Q60 80 60 106 M90 52 Q86 80 80 106" fill="none" stroke="#43a047" stroke-width="3"/>' +
+    '<path d="M46 96 Q30 70 22 80 Q34 86 44 104 Z M74 98 Q92 72 100 82 Q88 88 76 104 Z" fill="#66bb6a"/>' +
+    '<g class="ssn-sway2"><path d="M18 30 Q20 52 30 54 Q40 52 42 30 L36 38 L30 28 L24 38 Z" fill="#e53935"/></g>' +
+    '<g class="ssn-sway2 ssn-late"><path d="M48 20 Q50 42 60 44 Q70 42 72 20 L66 28 L60 18 L54 28 Z" fill="#f06292"/></g>' +
+    '<g class="ssn-sway2"><path d="M78 32 Q80 54 90 56 Q100 54 102 32 L96 40 L90 30 L84 40 Z" fill="#fdd835"/></g>' +
+    '</svg>';
+  // The sun (summer), in the top right corner.
+  var SUN = (function () {
+    var s = '<svg ' + SVG_NS + ' viewBox="0 0 120 120" aria-hidden="true"><g class="ssn-spin">';
+    for (var i = 0; i < 12; i++) {
+      var a = i * Math.PI / 6;
+      s += '<path d="M' + (60 + Math.cos(a) * 34).toFixed(1) + ' ' + (60 + Math.sin(a) * 34).toFixed(1) + ' L' +
+        (60 + Math.cos(a) * 52).toFixed(1) + ' ' + (60 + Math.sin(a) * 52).toFixed(1) + '" stroke="#ffb300" stroke-width="5" stroke-linecap="round"/>';
+    }
+    return s + '</g><circle cx="60" cy="60" r="27" fill="#ffca28" stroke="#ff8f00" stroke-width="2"/></svg>';
+  })();
+  // Waves along the bottom edge (summer); 80 px period, drifting.
+  function waves(w) {
+    var W = Math.ceil(w / 80) * 80 + 160, d = function (y, c, o) {
+      var p = "M0 " + y;
+      for (var x = 0; x < W; x += 80) p += " q20 -9 40 0 t40 0";
+      return '<path d="' + p + ' V44 H0 Z" fill="' + c + '" opacity="' + o + '"/>';
+    };
+    return '<svg ' + SVG_NS + ' viewBox="0 0 ' + W + ' 44" width="' + W + '" height="44" aria-hidden="true"><g class="ssn-drift">' +
+      d(16, "#4fc3f7", ".55") + d(26, "#0288d1", ".6") + d(36, "#01579b", ".7") + '</g></svg>';
+  }
   // Bunting: small pennants along a string (flags, carnival).
   function bunting(w, colors) {
     var n = Math.max(8, Math.round(w / 34)), step = w / n, s = "";
@@ -735,7 +823,7 @@
                    return out;
                  } };
       case "halloween":
-        return { corner: PUMPKINS, cornerW: 1.3, web: web("rgba(235,235,245,.7)"),
+        return { corner: PUMPKINS, cornerW: 1.3, tr: web("rgba(235,235,245,.7)"), trW: 0.9,
                  moving: function () { return [{ sys: new Bats("#1d1626"), n: 60 }]; } };
       case "epiphany":
         return { corner: CROSS, cornerW: 0.85,
@@ -756,6 +844,19 @@
       case "easter":
         return { corner: EASTER, cornerW: 1.15, top: function (w) { return wreath(w); },
                  moving: function () { return [{ sys: new Butterflies(), n: 50 }]; } };
+      case "birthday":
+        return { corner: BALLOONS, cornerW: 0.95, top: function (w) { return bunting(w, CONFETTI); },
+                 moving: function () { return [{ sys: new Confetti(CONFETTI, false), n: 55 }]; } };
+      case "spring":
+        return { corner: TULIPS, cornerW: 0.85,
+                 moving: function () { return [{ sys: new Confetti(["#f8bbd0", "#ffffff", "#f48fb1"], true), n: 16 }]; } };
+      case "summer":
+        return { tr: SUN, trW: 0.7, bottom: function (w) { return waves(w); },
+                 moving: function () { return []; } };
+      case "autumn":
+        return { moving: function () { return [{ sys: new Confetti(["#e65100", "#bf360c", "#f9a825", "#8d6e63", "#d84315"], true), n: 22 }]; } };
+      case "winter":
+        return { moving: function () { return [{ sys: new Snow("#ffffff", false), n: 35 }]; } };
       case "mayday":
         return { corner: null, top: function (w) { return wreath(w); },
                  moving: function () { return [{ sys: new Confetti(["#f8bbd0", "#ffffff", "#fff59d", "#f48fb1"], true), n: 40 }]; } };
@@ -802,7 +903,14 @@
     "#ssn-layer .ssn-beat{transform-box:fill-box;transform-origin:center;animation:ssn-beat 1.6s ease-in-out infinite}" +
     "#ssn-layer .ssn-late{animation-delay:.4s}" +
     "#ssn-layer .ssn-flutter{animation:ssn-flutter 3s ease-in-out infinite alternate}" +
+    "#ssn-layer .ssn-bottom{position:absolute;left:0;right:0;bottom:var(--tb-h,0px);height:44px;overflow:hidden;opacity:.85}" +
+    "#ssn-layer .ssn-drift{animation:ssn-drift 6s linear infinite}" +
+    "#ssn-layer .ssn-spin{transform-box:fill-box;transform-origin:center;animation:ssn-spin 40s linear infinite}" +
+    "#ssn-layer .ssn-float{animation:ssn-bob 3.5s ease-in-out infinite alternate}" +
+    "#ssn-layer .ssn-sway2{transform-box:fill-box;transform-origin:bottom center;animation:ssn-sway 3s ease-in-out infinite alternate}" +
     "#ssn-layer.ssn-still *{animation:none!important}" +
+    "@keyframes ssn-drift{from{transform:translateX(0)}to{transform:translateX(-80px)}}" +
+    "@keyframes ssn-spin{to{transform:rotate(360deg)}}" +
     "@keyframes ssn-wave{from{transform:skewY(0)}to{transform:skewY(-4deg) scaleX(.96)}}" +
     "@keyframes ssn-flutter{from{transform:translateY(0)}to{transform:translateY(2px)}}" +
     "@keyframes ssn-sway{from{transform:rotate(-5deg)}to{transform:rotate(5deg)}}" +
@@ -877,12 +985,18 @@
       top.innerHTML = sc.top(sz.w);
       layer.appendChild(top);
     }
-    if (sc.web) {
+    if (sc.tr) {                                  // top right: web, sun
       var wb = document.createElement("div");
       wb.className = "ssn-web";
-      wb.style.width = Math.round(base * 0.9) + "px";
-      wb.innerHTML = sc.web;
+      wb.style.width = Math.round(base * sc.trW) + "px";
+      wb.innerHTML = sc.tr;
       layer.appendChild(wb);
+    }
+    if (sc.bottom) {
+      var bt = document.createElement("div");
+      bt.className = "ssn-bottom";
+      bt.innerHTML = sc.bottom(sz.w);
+      layer.appendChild(bt);
     }
     if (sc.corner) {
       var c = document.createElement("div");
@@ -1010,7 +1124,8 @@
     var ev = eventById(id);
     if (!ev) return false;
     var l = loadLocal();
-    l.keep = { id: id, until: nextWindow(ev, today())[1] };
+    var w = nextWindow(ev, today(), optOf(load()));
+    l.keep = { id: id, until: w ? w[1] : today() };             // a birthday not set: today only
     storeLocal(l);
     preview = null;
     update(); changed();
@@ -1040,15 +1155,20 @@
   }
   function snapshot() {
     var d = load(), l = loadLocal(), s = today(), p = current();
-    var auto = get(d, "on") ? activeOn(s, function (id) { return get(d, "ev." + id) === true; }) : [];
+    var opt = optOf(d);
+    var auto = get(d, "on") ? activeOn(s, function (id) { return get(d, "ev." + id) === true; }, opt) : [];
     return {
       on: get(d, "on"), motion: get(d, "motion"), amount: get(d, "amount"), xmas: get(d, "xmas"),
+      easter: get(d, "easter"), bday: get(d, "bday"),
       reduced: reduced(), lowBattery: lowBattery,
       // Soonest first: what is on now, then what comes next.
+      // A birthday not set has no dates and goes last; seasons are
+      // marked so Settings can list them apart.
       events: EVENTS.map(function (ev) {
-        var w = nextWindow(ev, s);
-        return { id: ev.id, name: name(ev), from: fmtDay(w[0]), to: fmtDay(w[1]), at: w[0],
-                 on: get(d, "ev." + ev.id) === true, now: !!windowAt(ev, s) };
+        var w = nextWindow(ev, s, opt);
+        return { id: ev.id, name: name(ev), from: w ? fmtDay(w[0]) : "", to: w ? fmtDay(w[1]) : "",
+                 at: w ? w[0] : "9999", season: !!ev.season, one: !!(w && w[0] === w[1]),
+                 on: get(d, "ev." + ev.id) === true, now: !!windowAt(ev, s, opt) };
       }).sort(function (a, b) { return a.at < b.at ? -1 : a.at > b.at ? 1 : 0; }),
       showing: p ? { id: p.id, name: name(eventById(p.id)), mode: p.mode,
                      until: p.mode === "kept" ? fmtDay(l.keep.until) : null } : null,

@@ -39,6 +39,12 @@ The Greek holidays have their own:
 
 Carnival, Clean Monday and Easter move every year; orOS works out their dates from the Orthodox Easter. When two events fall on the same day, one wins: 28 October over Halloween, Valentine's Day over Carnival, Easter over May Day.
 
+### Extras you can turn on
+These are off until you choose them:
+- `My birthday`: balloons, flags and confetti on your birthday. Pick the day and month under the event; nothing shows until you do. It wins over any other event that day.
+- `Seasons`: petals and tulips in `Spring`, the sun and waves in `Summer`, falling leaves in `Autumn`, light snow in `Winter`. A holiday always wins over its season.
+- `Easter date`: `Orthodox` (the default) or `Western`, for those who keep Easter on the Western date. It moves only Easter; Carnival and Clean Monday stay Orthodox.
+
 The decorations sit behind your desktop icons, never take a click and stop moving while an app is open.
 
 They are on from the start. In `Settings`, under `Appearance` › `Seasonal decorations`:

@@ -606,6 +606,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 - Performance: ≤ 30 fps, rAF stops while an app runs or the tab is hidden; reduced motion, `motion: still`, a low battery (`getBattery`, < 20 % not charging) or a frame time that stays above 55 ms (particles halve, then still) leave only still pieces; `deviceMemory`/`hardwareConcurrency` ≤ 2 = half the particles; count scales with screen area and Amount; a 20 s tick follows the date.
 - Preview: Settings › "Try it now" → `act("seasonal.preview", id)` shows it and returns to the desktop; bar `#ssn-bar` (z 960) Keep it · Stop. Kept = device-local until the event's period ends; a preview not kept is memory only. Both win over the main switch.
 - 1.1.0 (2.24.00, wave 2): Greek feasts. Movable ones from Orthodox Easter (`ez(y, from, to)`): Carnival −59…−49, Clean Monday −48, Easter −3…+1. Fixed: Epiphany 5-6 Jan, Valentine 13-14 Feb, 25 March (24-25), May Day 30 Apr-1 May, 28 October (27-28). Priorities: Clean Monday / Easter / Valentine 4, New Year 3, Epiphany / Carnival / 25 Mar / 28 Oct 3, Christmas / Halloween / May Day 2 (so 28 Oct beats Halloween, Valentine beats Carnival, Easter beats May Day; no ties on any day, tested 2026-2040). Scenes add bunting / flower wreath top strings, cross, hearts, mask, kite, Greek flag, eggs + candle, and canvas confetti, petals, hearts, butterflies, kites. Settings list sorts events soonest first.
+- 1.2.0 (2.25.00, wave 3): `win(y, opt)` takes `optOf(data)` = { western, bday }. Western Easter option (anonymous Gregorian computus) moves only the `easter` event. `birthday` (prio 5, def on but no window until `bday` is set; 29 Feb → 28 Feb in common years). Seasons `spring` 20 Mar-20 Jun, `summer` 21 Jun-22 Sep, `autumn` 23 Sep-30 Nov, `winter` 1 Jan-19 Mar: prio 1, def OFF, listed apart in Settings. New pieces: balloons, tulips, sun (top right), waves strip (`.ssn-bottom`, above the Dock). Plan COMPLETE.
 - Data: SEASONAL v1 (Part IV).
 
 ### Sticky Notes (`stickies/`, shell side `stickies/host.js`) [1.02.00]
@@ -1542,7 +1543,7 @@ oros-television-data = { ver, favorites[], deleted{}, sources[]?, srcDel{}? }
 
 ```
 oros-seasonal = { ver:1, f:{ <field>: { v, t } } }   fields sorted
-fields: on (bool, default true) · motion auto|still · amount low|mid|high · xmas tree|boat · ev.<id> (bool, default per event)
+fields: on (bool, default true) · motion auto|still · amount low|mid|high · xmas tree|boat · easter orthodox|western (2.25.00) · bday "MM-DD"|"" (2.25.00) · ev.<id> (bool, default per event)
 oros-seasonal-local (device, never synced) = { keep: { id, until: YYYY-MM-DD } | null, hide: YYYY-MM-DD | null }
 ```
 
@@ -6738,3 +6739,9 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - `seasonal.js` 1.1.0: Epiphany (cross over the sea, blue sparkles), Valentine's Day (hearts), Carnival from Tsiknopempti to Cheesefare Sunday (confetti, pennants, mask), Clean Monday (kites), 25 March and 28 October with their eves (blue and white bunting, Greek flag), Easter Holy Thursday to Easter Monday (red eggs, candle, flower wreath, butterflies), May Day (flower wreath, petals). Movable dates from Orthodox Easter; overlap priorities: 28 Oct > Halloween, Valentine > Carnival, Easter > May Day. Settings list now soonest first; help, What's new, Settings search words updated.
 - Files: `seasonal.js`, `settings/core.js`, `settings/search.js`, help (appearance, whatsnew), `tests/seasonal.test.js`.
   - Tests: full suite green (new: movable dates, overlaps and no ties 2026-2040); real shell in Chromium at 1280 and 360 px on each feast's date, reduced motion. Not tested: a real phone, Safari.
+
+### 2026-10-15 — Seasonal decorations, wave 3: extras — 2.25.00
+- `seasonal.js` 1.2.0: My birthday (day + month picked in Settings, synced field `bday`; balloons, bunting, confetti; wins over every event), the four seasons OFF by default (tulips + petals, sun + waves, falling leaves, light snow; any holiday wins), and Settings › Easter date Orthodox / Western (Western computus, moves only Easter). Seasons listed under their own heading. Seasonal decorations plan COMPLETE.
+- No "Me" card exists in Contacts, so the birthday date lives in the decoration settings (plan said "from the Me contact").
+- Files: `seasonal.js`, `settings/settings.js`, `settings/core.js`, help (appearance, whatsnew), `tests/seasonal.test.js`, `tests/settings.test.js`.
+  - Tests: full suite green (new: Western Easter dates, birthday incl. 29 Feb, seasons lose to holidays); real shell in Chromium at 1280 and 360 px, birthday picker saves and shows at once. Not tested: a real phone, Safari.
