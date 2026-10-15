@@ -98,9 +98,22 @@
       "scan.denied": "The camera is not available.", "scan.found": "Two-factor code read.",
       "m.import": "Import", "m.export": "Export", "m.changePw": "Change master password",
       "m.newRk": "New recovery key", "m.settings": "Lock settings", "m.delete": "Delete vault", "m.lock": "Lock now",
-      "imp.title": "Import passwords", "imp.text": "Bring your passwords from another manager. Entries already in your vault are skipped.",
-      "imp.bw": "Bitwarden (.json, not encrypted)", "imp.kdbx": "KeePass / KeePassXC (.kdbx)",
-      "imp.csv": "CSV (Bitwarden, Chrome, Firefox, KeePassXC, 1Password)",
+      "imp.title": "Import passwords", "imp.text": "Bring your passwords and two-factor codes from another app. Entries already in your vault are skipped.",
+      "imp.sources": "Choose the export file of Bitwarden, KeePass (.kdbx), 1Password (.1pux or CSV), Proton Pass, LastPass, Dashlane, NordPass, Enpass, Apple Passwords, Chrome, Edge, Firefox or KeePassXC, or a backup of Aegis or 2FAS. Apart from KeePass, the file must not be encrypted.",
+      "imp.ga": "Google Authenticator",
+      "imp.gaHint": "In Google Authenticator use Transfer accounts, then Export accounts. Choose a screenshot of each QR code, scan it with the camera, or paste its otpauth-migration:// link. Add the QR codes one after another, then import.",
+      "imp.link": "Link of the QR code", "imp.read": "Read",
+      "imp.from": "Read from {s}.", "imp.src.csv": "a CSV file", "imp.src.otp": "a two-factor link",
+      "imp.found": "Found: {list}.",
+      "imp.k.login": "{n} logins", "imp.k.note": "{n} notes", "imp.k.card": "{n} cards", "imp.k.identity": "{n} identities",
+      "imp.k.alias": "{n} aliases", "imp.k.other": "{n} other items", "imp.k.code": "{n} two-factor codes",
+      "imp.k1.login": "1 login", "imp.k1.note": "1 note", "imp.k1.card": "1 card", "imp.k1.identity": "1 identity",
+      "imp.k1.alias": "1 alias", "imp.k1.other": "1 other item", "imp.k1.code": "1 two-factor code",
+      "imp.codes": "Two-factor codes: {a} go to entries you already have (same site and account), {c} become entries of their own.",
+      "imp.unsupported": "{u} codes are left out: only time-based codes (TOTP) with SHA-1, SHA-256 or SHA-512 are supported.",
+      "imp.trash": "{r} items in the trash or the archive are left out.",
+      "imp.batch": "QR code {i} of {n} read. Add the next one, or import now.",
+      "imp.deleteQr": "Delete the pictures of the QR codes now: anyone who has them can make your codes.",
       "imp.pick": "Choose file", "imp.kdbxPw": "Password of the KeePass file", "imp.keyFile": "Key file (if it has one)",
       "imp.keyPick": "Choose key file", "imp.keyNone": "No key file", "imp.open": "Open",
       "imp.reading": "Reading the file…",
@@ -118,6 +131,11 @@
       "err.badFile": "The file is damaged.", "err.noKey": "Type the password or choose the key file.",
       "err.storage": "Could not save: the device storage is full. Nothing has been lost yet; free some space.",
       "err.generic": "Something went wrong.",
+      "err.encProton": "This Proton Pass export is encrypted (PGP). Export again from Proton Pass without encryption, import that file, then delete it.",
+      "err.encAegis": "This Aegis backup is encrypted. Export again from Aegis with encryption turned off, import that file, then delete it.",
+      "err.enc2fas": "This 2FAS backup has a password. Export again from 2FAS without a password, import that file, then delete it.",
+      "err.encDashlane": "This Dashlane file (.dash) is encrypted. Export from Dashlane as CSV, import the ZIP, then delete it.",
+      "err.toobig": "This file is too large.",
       "exp.title": "Export passwords", "exp.kdbx": "KeePass (.kdbx 4, encrypted) — recommended",
       "exp.bw": "Bitwarden (.json, NOT encrypted)",
       "exp.kdbxPw": "Password for the file", "exp.kdbxHint": "KeePass and KeePassXC open the file with this password. It can be your master password or a new one.",
@@ -198,9 +216,22 @@
       "scan.denied": "Η κάμερα δεν είναι διαθέσιμη.", "scan.found": "Ο κωδικός δύο βημάτων διαβάστηκε.",
       "m.import": "Εισαγωγή", "m.export": "Εξαγωγή", "m.changePw": "Αλλαγή κύριου κωδικού",
       "m.newRk": "Νέο κλειδί ανάκτησης", "m.settings": "Ρυθμίσεις κλειδώματος", "m.delete": "Διαγραφή κρύπτης", "m.lock": "Κλείδωμα τώρα",
-      "imp.title": "Εισαγωγή κωδικών", "imp.text": "Φέρε τους κωδικούς σου από άλλη εφαρμογή. Όσες εγγραφές υπάρχουν ήδη παραλείπονται.",
-      "imp.bw": "Bitwarden (.json, μη κρυπτογραφημένο)", "imp.kdbx": "KeePass / KeePassXC (.kdbx)",
-      "imp.csv": "CSV (Bitwarden, Chrome, Firefox, KeePassXC, 1Password)",
+      "imp.title": "Εισαγωγή κωδικών", "imp.text": "Φέρε τους κωδικούς σου και τους κωδικούς δύο βημάτων από άλλη εφαρμογή. Όσες εγγραφές υπάρχουν ήδη παραλείπονται.",
+      "imp.sources": "Διάλεξε το αρχείο εξαγωγής από Bitwarden, KeePass (.kdbx), 1Password (.1pux ή CSV), Proton Pass, LastPass, Dashlane, NordPass, Enpass, Apple Passwords, Chrome, Edge, Firefox ή KeePassXC, ή ένα αντίγραφο ασφαλείας του Aegis ή του 2FAS. Εκτός από το KeePass, το αρχείο δεν πρέπει να είναι κρυπτογραφημένο.",
+      "imp.ga": "Google Authenticator",
+      "imp.gaHint": "Στο Google Authenticator πήγαινε στη Μεταφορά λογαριασμών και μετά στην Εξαγωγή λογαριασμών. Διάλεξε ένα στιγμιότυπο οθόνης κάθε κωδικού QR, σάρωσέ τον με την κάμερα ή επικόλλησε τον σύνδεσμο otpauth-migration://. Πρόσθεσε τους κωδικούς QR τον έναν μετά τον άλλον και μετά κάνε την εισαγωγή.",
+      "imp.link": "Σύνδεσμος του κωδικού QR", "imp.read": "Ανάγνωση",
+      "imp.from": "Διαβάστηκε από {s}.", "imp.src.csv": "αρχείο CSV", "imp.src.otp": "σύνδεσμο δύο βημάτων",
+      "imp.found": "Βρέθηκαν: {list}.",
+      "imp.k.login": "{n} συνδέσεις", "imp.k.note": "{n} σημειώσεις", "imp.k.card": "{n} κάρτες", "imp.k.identity": "{n} ταυτότητες",
+      "imp.k.alias": "{n} ψευδώνυμα", "imp.k.other": "{n} άλλα στοιχεία", "imp.k.code": "{n} κωδικοί δύο βημάτων",
+      "imp.k1.login": "1 σύνδεση", "imp.k1.note": "1 σημείωση", "imp.k1.card": "1 κάρτα", "imp.k1.identity": "1 ταυτότητα",
+      "imp.k1.alias": "1 ψευδώνυμο", "imp.k1.other": "1 άλλο στοιχείο", "imp.k1.code": "1 κωδικός δύο βημάτων",
+      "imp.codes": "Κωδικοί δύο βημάτων: {a} μπαίνουν σε εγγραφές που ήδη έχεις (ίδιος ιστότοπος και λογαριασμός), {c} γίνονται δικές τους εγγραφές.",
+      "imp.unsupported": "{u} κωδικοί μένουν έξω: υποστηρίζονται μόνο χρονικοί κωδικοί (TOTP) με SHA-1, SHA-256 ή SHA-512.",
+      "imp.trash": "{r} στοιχεία του κάδου ή του αρχείου μένουν έξω.",
+      "imp.batch": "Διαβάστηκε ο κωδικός QR {i} από {n}. Πρόσθεσε τον επόμενο ή κάνε τώρα την εισαγωγή.",
+      "imp.deleteQr": "Διάγραψε τώρα τις εικόνες των κωδικών QR: όποιος τις έχει μπορεί να βγάζει τους κωδικούς σου.",
       "imp.pick": "Επιλογή αρχείου", "imp.kdbxPw": "Κωδικός του αρχείου KeePass", "imp.keyFile": "Αρχείο κλειδιού (αν έχει)",
       "imp.keyPick": "Επιλογή αρχείου κλειδιού", "imp.keyNone": "Χωρίς αρχείο κλειδιού", "imp.open": "Άνοιγμα",
       "imp.reading": "Ανάγνωση του αρχείου…",
@@ -218,6 +249,11 @@
       "err.badFile": "Το αρχείο είναι κατεστραμμένο.", "err.noKey": "Γράψε τον κωδικό ή διάλεξε το αρχείο κλειδιού.",
       "err.storage": "Η αποθήκευση απέτυχε: ο χώρος της συσκευής γέμισε. Τίποτα δεν χάθηκε ακόμα· ελευθέρωσε λίγο χώρο.",
       "err.generic": "Κάτι πήγε στραβά.",
+      "err.encProton": "Αυτή η εξαγωγή του Proton Pass είναι κρυπτογραφημένη (PGP). Κάνε ξανά εξαγωγή από το Proton Pass χωρίς κρυπτογράφηση, εισήγαγε εκείνο το αρχείο και μετά διάγραψέ το.",
+      "err.encAegis": "Αυτό το αντίγραφο του Aegis είναι κρυπτογραφημένο. Κάνε ξανά εξαγωγή από το Aegis με την κρυπτογράφηση κλειστή, εισήγαγε εκείνο το αρχείο και μετά διάγραψέ το.",
+      "err.enc2fas": "Αυτό το αντίγραφο του 2FAS έχει κωδικό. Κάνε ξανά εξαγωγή από το 2FAS χωρίς κωδικό, εισήγαγε εκείνο το αρχείο και μετά διάγραψέ το.",
+      "err.encDashlane": "Αυτό το αρχείο του Dashlane (.dash) είναι κρυπτογραφημένο. Κάνε εξαγωγή από το Dashlane ως CSV, εισήγαγε το ZIP και μετά διάγραψέ το.",
+      "err.toobig": "Αυτό το αρχείο είναι πολύ μεγάλο.",
       "exp.title": "Εξαγωγή κωδικών", "exp.kdbx": "KeePass (.kdbx 4, κρυπτογραφημένο) — προτείνεται",
       "exp.bw": "Bitwarden (.json, ΜΗ κρυπτογραφημένο)",
       "exp.kdbxPw": "Κωδικός για το αρχείο", "exp.kdbxHint": "Το KeePass και το KeePassXC ανοίγουν το αρχείο με αυτόν τον κωδικό. Μπορεί να είναι ο κύριος κωδικός σου ή καινούργιος.",
@@ -325,7 +361,9 @@
                 "twofish": "err.twofish", "kdf-params": "err.kdfParams", "kdf-unknown": "err.kdfParams",
                 "bad-file": "err.badFile", "bad-xml": "err.badFile", "no-key": "err.noKey", "cipher-unknown": "err.badFile",
                 "storage-full": "err.storage", "no-wasm": "lock.noWasm", "no-argon2": "lock.noWasm",
-                "bad-kdf": "lock.newer", "future": "lock.newer" };
+                "bad-kdf": "lock.newer", "future": "lock.newer",
+                "encrypted-proton": "err.encProton", "encrypted-aegis": "err.encAegis", "encrypted-2fas": "err.enc2fas",
+                "encrypted-dashlane": "err.encDashlane", "hotp": "e.hotp", "toobig": "err.toobig" };
     return t(map[m] || "err.generic");
   }
 
@@ -1165,7 +1203,9 @@
       });
     });
   }
-  function scanDialog(onText) {
+  // check(text) → "" when the text is wanted, else the message to show
+  // (default: an otpauth://totp/ link for the editor).
+  function scanDialog(onText, check) {
     var d = dialog(t("scan.title"));
     var v = el("video", "pv-cam"); v.muted = true; v.setAttribute("playsinline", ""); v.hidden = true;
     d.body.appendChild(v);
@@ -1179,10 +1219,8 @@
       v.hidden = true; cam.textContent = t("scan.camera");
     }
     function found(text) {
-      if (!/^otpauth:\/\/totp\//i.test(text)) {
-        msg.textContent = /^otpauth:\/\/hotp\//i.test(text) ? t("e.hotp") : t("scan.notOtp");
-        return false;
-      }
+      var bad = check ? check(text) : !/^otpauth:\/\/totp\//i.test(text) ? (/^otpauth:\/\/hotp\//i.test(text) ? t("e.hotp") : t("scan.notOtp")) : "";
+      if (bad) { msg.textContent = bad; return false; }
       stop();
       onText(text);
       toast(t("scan.found"));
@@ -1247,23 +1285,26 @@
     var first = list.querySelector("button"); if (first) first.focus();
   }
 
+  // Import: one "Choose file" for every source (import.js detects it;
+  // KeePass asks for its password), plus Google Authenticator transfer
+  // QR codes (picture, camera or the pasted link, several in a row).
+  // Preview → one save → a toast with Undo (newer stamps, sync-safe).
+  var SRC_NAMES = { proton: "Proton Pass", "1pux": "1Password (.1pux)", lastpass: "LastPass", dashlane: "Dashlane",
+                    nordpass: "NordPass", enpass: "Enpass", apple: "Apple Passwords", aegis: "Aegis", "2fas": "2FAS",
+                    gauth: "Google Authenticator", bitwarden: "Bitwarden", keepass: "KeePass", chrome: "Chrome / Edge",
+                    firefox: "Firefox", keepassxc: "KeePassXC" };
+  var IMPORT_ACCEPT = ".json,.csv,.zip,.1pux,.kdbx,.2fas,.txt,.pgp,.dash,application/json,text/csv,application/zip";
+  var IMPORT_MAX = 50 * 1024 * 1024;
   function importDialog() {
+    var OI = window.OrosPasswordsImport, K = window.OrosImportKit;
     var d = dialog(t("imp.title"));
     d.body.appendChild(el("p", "hint", t("imp.text")));
-    var kind = "bw";
-    var opts = el("div", "pv-radios");
-    [["bw", "imp.bw"], ["kdbx", "imp.kdbx"], ["csv", "imp.csv"]].forEach(function (o, i) {
-      var l = el("label", "pv-check");
-      var r = el("input"); r.type = "radio"; r.name = "pv-imp"; r.value = o[0]; r.checked = i === 0;
-      r.addEventListener("change", function () { kind = o[0]; kx.hidden = kind !== "kdbx"; });
-      l.appendChild(r); l.appendChild(el("span", "", t(o[1])));
-      opts.appendChild(l);
-    });
-    d.body.appendChild(opts);
+    d.body.appendChild(el("p", "hint", t("imp.sources")));
+    // KeePass: its password and key file, shown once a .kdbx is chosen
     var kx = el("div", "pv-kx"); kx.hidden = true;
     var kpw = secretInput(null, "off");
     kx.appendChild(labelled(t("imp.kdbxPw"), showable(kpw)));
-    var keyFile = null;
+    var keyFile = null, kdbxBytes = null;
     var kfRow = el("div", "pv-row");
     var kfName = el("span", "hint", t("imp.keyNone"));
     kfRow.appendChild(btn(t("imp.keyPick"), "act small", function () {
@@ -1276,42 +1317,136 @@
     kx.appendChild(el("span", "fld-label", t("imp.keyFile")));
     kx.appendChild(kfRow);
     d.body.appendChild(kx);
-    var status = el("p", "hint"); status.setAttribute("aria-live", "polite"); d.body.appendChild(status);
+    // Google Authenticator "Transfer accounts" QR codes
+    var qr = el("div", "pv-imp-qr");
+    qr.appendChild(el("span", "fld-label", t("imp.ga")));
+    qr.appendChild(el("p", "hint", t("imp.gaHint")));
+    var qrRow = el("div", "pv-row");
+    qrRow.appendChild(btn(t("scan.file"), "act small", function () {
+      pickFile("image/*").then(function (f) {
+        if (!f) return;
+        var url = URL.createObjectURL(f), img = new Image();
+        function fail() { URL.revokeObjectURL(url); err(t("scan.none")); }
+        img.onload = function () {
+          detectIn(img, img.naturalWidth, img.naturalHeight).then(function (text) {
+            URL.revokeObjectURL(url); img.src = "";
+            if (!text) { err(t("scan.none")); return; }
+            fromText(text);
+          }, fail);
+        };
+        img.onerror = fail;
+        img.src = url;
+      });
+    }));
+    qrRow.appendChild(btn(t("scan.camera"), "act small", function () {
+      scanDialog(fromText, function (text) { return /^otpauth(-migration)?:\/\//i.test(text) ? "" : t("scan.notOtp"); });
+    }));
+    qr.appendChild(qrRow);
+    var link = secretInput(null, "off"); link.placeholder = "otpauth-migration://offline?data=…";
+    var linkRow = el("div", "pw-row");
+    linkRow.appendChild(link);
+    linkRow.appendChild(btn(t("imp.read"), "act small", function () {
+      var v = link.value.trim(); link.value = "";
+      if (v) fromText(v);
+    }));
+    qr.appendChild(labelled(t("imp.link"), linkRow));
+    d.body.appendChild(qr);
+    var status = el("div", "pv-imp-sum"); status.setAttribute("aria-live", "polite"); d.body.appendChild(status);
+    var warn = el("p", "warn"); warn.hidden = true; d.body.appendChild(warn);
     var err = d.error();
-    var found = null;
+    var res = null;                // what was read so far (QR batches add up)
+    function forget() {
+      if (kdbxBytes) { kdbxBytes.fill(0); kdbxBytes = null; }
+      if (keyFile) { keyFile.fill(0); keyFile = null; }
+      res = null;
+    }
+    d.onClose(forget);
+    function fromText(text) {
+      if (!/^otpauth(-migration)?:\/\//i.test(String(text).trim())) { err(t("scan.notOtp")); return; }
+      take(OI.parseText(text));
+    }
+    function take(r) {
+      if (!r || r.error) { err(errText(new Error(r ? r.error : "format"))); return; }
+      err("");
+      // QR batches add up; another file starts over
+      var qrSrc = function (x) { return !!x && (x.source === "gauth" || x.source === "otpauth"); };
+      res = qrSrc(res) && qrSrc(r) ? OI.mergeResults(res, r) : r;
+      preview();
+    }
+    function line(text, cls) { status.appendChild(el("p", cls || "hint", text)); }
+    function preview() {
+      clear(status);
+      if (!res) return;
+      var pv = OI.apply(snap || PC.emptySnap(), res, { now: Date.now() });
+      line(t("imp.from", { s: SRC_NAMES[res.source] || t(res.source === "otpauth" ? "imp.src.otp" : "imp.src.csv") }));
+      var kinds = [];
+      ["login", "note", "card", "identity", "alias", "other"].forEach(function (k) {
+        if (res.types[k]) kinds.push(t((res.types[k] === 1 ? "imp.k1." : "imp.k.") + k, { n: res.types[k] }));
+      });
+      if (res.codes.length) kinds.push(t(res.codes.length === 1 ? "imp.k1.code" : "imp.k.code", { n: res.codes.length }));
+      if (kinds.length) line(t("imp.found", { list: kinds.join(", ") }));
+      line(t("imp.summary", { n: pv.added, d: pv.duplicates, s: res.skipped || 0 }));
+      if (res.codes.length) line(t("imp.codes", { a: pv.attached, c: pv.codesNew }));
+      if (res.unsupported) line(t("imp.unsupported", { u: res.unsupported }));
+      if (res.trashed) line(t("imp.trash", { r: res.trashed }));
+      if (res.attachments) line(t("imp.attach", { a: res.attachments }));
+      if (res.recycled) line(t("imp.recycle", { r: res.recycled }));
+      if (res.batch && res.batch.size > 1) line(t("imp.batch", { i: (res.batches || [res.batch]).length, n: res.batch.size }));
+      warn.hidden = !res.plain;
+      warn.textContent = res.plain ? t(res.source === "gauth" || res.source === "otpauth" ? "imp.deleteQr" : "imp.delete") : "";
+      var total = pv.added + pv.codesNew + pv.attached;
+      kx.hidden = true;
+      go.textContent = t("imp.go", { n: total });
+      go.disabled = !total;
+    }
     var go = d.actions(t("d.cancel"), t("imp.pick"), function (done) {
-      if (found) {
-        var list = found;
-        save(function (s) { var x = s; list.forEach(function (e) { x = PC.upsert(x, e); }); return x; }).then(function () {
+      if (res && !kdbxBytes) {
+        var r = res, info = null, n = 0;
+        save(function (s) {
+          var o = OI.apply(s, r, { now: Date.now() });
+          info = o.undo; n = o.added + o.codesNew + o.attached;
+          return o.snap;
+        }).then(function () {
           done(true);
-          toast(t("imp.done", { n: list.length }) + (kind !== "kdbx" ? " " + t("imp.delete") : ""));
+          var msg = t("imp.done", { n: n }) + (r.plain ? " " + t(r.source === "gauth" || r.source === "otpauth" ? "imp.deleteQr" : "imp.delete") : "");
+          if (app() && n) app().undoToast(msg, t("v.undo"), function () {
+            var u = info; info = null;
+            if (u) save(function (s) { return OI.undo(s, u, Date.now()); }).then(noop, noop);
+          });
+          else toast(msg);
         }, function () { done(false); });
         return;
       }
-      var accept = kind === "bw" ? ".json,application/json" : kind === "csv" ? ".csv,text/csv" : ".kdbx";
-      pickFile(accept).then(function (f) {
+      if (kdbxBytes) {
+        status.textContent = t("imp.reading");
+        var b = kdbxBytes;
+        KX.read(b, { password: kpw.value, keyFile: keyFile }).then(function (r) {
+          kpw.value = ""; b.fill(0); kdbxBytes = null;
+          if (keyFile) { keyFile.fill(0); keyFile = null; }
+          take(OI.fromEntries("keepass", r));
+          done(false);
+        }).catch(function (e) { status.textContent = ""; err(errText(e)); done(false); });
+        return;
+      }
+      pickFile(IMPORT_ACCEPT).then(function (f) {
         if (!f) return done(false);
         status.textContent = t("imp.reading");
-        var p = kind === "kdbx"
-          ? f.arrayBuffer().then(function (b) {
-              return KX.read(new Uint8Array(b), { password: kpw.value, keyFile: keyFile });
-            })
-          : f.text().then(function (txt) {
-              var r = kind === "bw" ? PC.fromBitwarden(txt) : PC.fromCsv(txt);
-              if (r.error) throw new Error(r.error);
-              return r;
-            });
-        return p.then(function (r) {
-          kpw.value = ""; keyFile = null;
-          var dd = PC.dedupe(entries(), r.entries);
-          var lines = [t("imp.summary", { n: dd.entries.length, d: dd.duplicates, s: r.skipped || 0 })];
-          if (r.attachments) lines.push(t("imp.attach", { a: r.attachments }));
-          if (r.recycled) lines.push(t("imp.recycle", { r: r.recycled }));
-          status.textContent = lines.join(" ");
-          found = dd.entries;
-          opts.hidden = true; kx.hidden = true;
-          go.textContent = t("imp.go", { n: found.length });
-          go.disabled = !found.length;
+        var x = null;
+        return K.readFile(f, IMPORT_MAX).then(function (got) {
+          x = got;
+          return OI.parse(x);   // wipes the bytes once read (not a .kdbx)
+        }).then(function (r) {
+          status.textContent = "";
+          if (r && r.kdbx) {
+            res = null; kdbxBytes = x.bytes; x = null;
+            kx.hidden = false; qr.hidden = true;
+            go.textContent = t("imp.open");
+            done(false);
+            try { kpw.focus(); } catch (e) {}
+            return;
+          }
+          x = null;
+          take(r);
           done(false);
         });
       }).catch(function (e) { status.textContent = ""; err(errText(e)); done(false); });

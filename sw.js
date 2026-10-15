@@ -1731,6 +1731,7 @@ var PRECACHE_URLS = [
   "passwords/pmapp.js",
   "passwords/pmcore.js",
   "passwords/pmcrypto.js",
+  "passwords/import.js",
   "photolab/batch.js",
   "photolab/batchcore.js",
   "photolab/raw.js",
