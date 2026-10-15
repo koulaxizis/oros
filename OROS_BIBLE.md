@@ -6993,3 +6993,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Contacts: a contact photo is stored as a 128×128 JPEG (CT-PS). Once per start, every photo bigger than 16,000 characters is redrawn centre-cropped at quality 0.75, and the smaller copy syncs to the other devices. Google import now fetches 128 px photos. Fixes "Browser storage is full — sync paused" when many big photos were stored.
 - Files: `contacts/contacts.js`, `contacts/accounts.js`; Bible CT-PS + T4 Troubleshooting entry.
   - Tests: `tests/contacts-photos.test.js`; full suite green; Chromium check 1.33 MB → 0.33 MB with 30 large photos. Not tested: Chris's real data and the sync round trip on his phone.
+
+### 2026-10-15 — Passwords: import from other password managers + 2FA codes (#401) — 2.33.00
+- Passwords: one Import button detects the file and shows a preview with Undo. New sources: Proton Pass (ZIP/CSV), 1Password `.1pux`, LastPass, Dashlane, NordPass, Enpass, Apple Passwords. Two-factor codes come in from Aegis, 2FAS and Google Authenticator transfer QR codes (picture, camera or pasted link). Encrypted exports are refused with "export again without encryption"; file bytes are zeroed after reading and every unencrypted source shows "delete the file now". Stable ids, so a re-import adds only what is missing.
+- Files: new `passwords/import.js` (precached), Passwords app, help EN/EL, Bible decision entry.
+  - Tests: new import tests; full suite green; real shell with Proton ZIP, Aegis, Google Authenticator link + QR picture, KeePass. Not tested: real export files from these apps, the camera path, a real phone, Safari.
