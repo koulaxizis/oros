@@ -203,9 +203,27 @@
   }
 
   // Open a file: a .oroslayout package, a Scribus .sla, an InDesign
-  // .idml or a PDF (Affinity and others).
+  // .idml, a PDF or SVG pages (Affinity and others). Several SVG files
+  // at once become one document, a page each (by file name); other
+  // files picked together open one after another.
+  var OPEN_ACCEPT = ".oroslayout,.sla,.gz,.idml,.pdf,.svg,application/json,.json,application/xml,text/xml,application/vnd.adobe.indesign-idml-package,application/pdf,image/svg+xml";
+  function isSvg(f) { return /\.svg$/i.test(f.name || "") || f.type === "image/svg+xml"; }
   function importPackage() {
-    pickFile(".oroslayout,.sla,.gz,.idml,.pdf,application/json,.json,application/xml,text/xml,application/vnd.adobe.indesign-idml-package,application/pdf").then(openFile, function () { LY.toast(t("imp.bad")); });
+    var dlg = LY.dialogHost();
+    var pick = dlg && typeof dlg.openFiles === "function" ? dlg.openFiles(OPEN_ACCEPT) : new Promise(function (resolve) {
+      var inp = document.createElement("input");
+      inp.type = "file"; inp.accept = OPEN_ACCEPT; inp.multiple = true;
+      inp.addEventListener("change", function () { resolve(inp.files ? Array.prototype.slice.call(inp.files) : null); });
+      inp.click();
+    });
+    pick.then(function (files) {
+      files = (Array.isArray(files) ? files : files ? [files] : []).filter(Boolean);
+      if (!files.length) return;
+      if (files.every(isSvg)) return importSvg(files);
+      var chain = Promise.resolve();
+      files.forEach(function (f) { chain = chain.then(function () { return openFile(f); }); });
+      return chain;
+    }, function () { LY.toast(t("imp.bad")); });
   }
   // Also the way in for a file from the system's "Open with" (shell fileopen.js).
   function openFile(f) {
@@ -214,6 +232,7 @@
       if (/\.sla(\.gz)?$/i.test(f.name || "")) return importSla(f);
       if (/\.idml$/i.test(f.name || "")) return importIdml(f);
       if (/\.pdf$/i.test(f.name || "") || f.type === "application/pdf") return importPdf(f);
+      if (isSvg(f)) return importSvg([f]);
       if (f.size > PKG_MAX) { LY.toast(t("imp.bad")); return; }
       return f.text().then(function (txt) {
         var pkg = null;
@@ -283,14 +302,35 @@
     }).then(function (res) {
       if (!res) { LY.toast(t("pdf.bad")); return; }
       LY.addDoc(res.doc);
-      var msg = t("pdf.done", { p: res.stats.pages, n: res.stats.frames });
+      var msg = t("pdf.done", { p: res.stats.pages, n: res.stats.frames, i: res.stats.pictures || 0 });
       if (res.stats.cut) msg += " " + t("pdf.cut", { n: res.stats.pages, t: res.stats.total });
       LY.toast(msg);
     }).then(null, function () { LY.toast(t("pdf.bad")); });
   }
+  // SVG pages (Affinity: File › Export › SVG, text not as curves)
+  function importSvg(files) {
+    var S = window.LY_SVGIN;
+    if (!S || files.some(function (f) { return f.size > S.MAX_FILE; })) { LY.toast(t("svg.bad")); return; }
+    LY.toast(t("svg.working"));
+    files = files.slice().sort(function (a, b) { return String(a.name).localeCompare(String(b.name), undefined, { numeric: true }); });
+    var parsed = [], chain = Promise.resolve();
+    files.forEach(function (f) {
+      chain = chain.then(function () { return f.text(); }).then(function (txt) {
+        var p = null;
+        try { p = S.parse(txt); } catch (e) { p = null; }
+        if (p) parsed.push(p);
+      });
+    });
+    return chain.then(function () {
+      var res = null;
+      try { res = parsed.length ? S.convert(parsed, { now: LY.now(), name: baseName(files[0], /\.svg$/i) }) : null; } catch (e) { res = null; }
+      if (!res) { LY.toast(t("svg.bad")); return; }
+      return addForeign(res, function (im) { return Promise.resolve(S.imageBlob(im)); }, t("svg.done", { p: res.stats.pages, n: res.stats.items }), "svg.skipped");
+    }).then(null, function () { LY.toast(t("svg.bad")); });
+  }
   // res: { doc, images, linked, stats }; blobOf(image) → Promise of a
   // Blob or null
-  function addForeign(res, blobOf, done) {
+  function addForeign(res, blobOf, done, skipKey) {
     var doc = res.doc, failed = 0, chain = Promise.resolve();
     res.images.forEach(function (im) {
       chain = chain.then(function () { return blobOf(im); }).then(function (blob) {
@@ -307,7 +347,7 @@
       LY.addDoc(M.normDoc(doc));
       var parts = [done];
       if (res.linked + failed) parts.push(t("sla.linked", { n: res.linked + failed }));
-      if (res.stats.skipped) parts.push(t("sla.skipped", { n: res.stats.skipped }));
+      if (res.stats.skipped) parts.push(t(skipKey || "sla.skipped", { n: res.stats.skipped }));
       LY.toast(parts.join(" "));
     });
   }

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="100%" height="100%" viewBox="0 0 2480 3508" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <rect id="Page-1" serif:id="Page 1" x="0" y="0" width="2480" height="3508" style="fill:none;"/>
+  <script>alert(1)</script>
+  <g transform="matrix(4.16667,0,0,4.16667,0,0)">
+    <rect x="50" y="50" width="200" height="100" style="fill:url(#_Linear1);"/>
+    <circle cx="400" cy="100" r="50" style="fill:rgb(235,40,40);stroke:black;stroke-width:2px;"/>
+    <g transform="matrix(0.866,0.5,-0.5,0.866,300,300)"><rect x="0" y="0" width="100" height="40" rx="5" style="fill:#2a6;"/></g>
+    <path d="M50,300L150,300L100,380Z" style="fill:#123456;fill-opacity:0.5;"/>
+    <g transform="matrix(1,0,0,1,50,450)"><text x="0px" y="0px" style="font-family:'Georgia-Bold', 'Georgia';font-weight:700;font-size:24px;fill:rgb(20,20,20);">Hello <tspan x="0px 13px" y="30px 30px">world, a second line.</tspan></text></g>
+    <text x="300" y="450" style="font-family:'Helvetica';font-size:12px;" text-anchor="middle">Centred</text>
+    <use xlink:href="#_Image2" x="50" y="600" width="100" height="50" transform="matrix(1,0,0,1,0,0)"/>
+    <image x="200" y="600" width="80" height="40" xlink:href="photos/cat.jpg"/>
+    <line x1="10" y1="700" x2="500" y2="700" stroke="blue" stroke-dasharray="4 2"/>
+    <foreignObject><div onload="x()">no</div></foreignObject>
+  </g>
+  <defs>
+    <linearGradient id="_Linear1" x1="0" y1="0" x2="1" y2="0" gradientUnits="userSpaceOnUse" gradientTransform="matrix(200,0,0,200,50,100)"><stop offset="0" style="stop-color:rgb(255,0,0);stop-opacity:1"/><stop offset="1" style="stop-color:rgb(0,0,255);stop-opacity:0.5"/></linearGradient>
+    <image id="_Image2" width="100px" height="50px" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="/>
+  </defs>
+</svg>

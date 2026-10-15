@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.32.00
+- Layout opens SVG files (for example from Affinity), several at once as pages, and pictures in an opened PDF become their own frames.
+
 ## Version 2.31.00
 - Budget, Split, Garage and Health can import from other apps (YNAB, Wallet, Splitwise, Tricount, Fuelio, Drivvo, Withings, Samsung Health, Apple Health and more), with a preview and Undo.
 - Android app: reopening orOS from a link no longer crashes it, and each contact appears only once on the phone. Install the new APK for this.
