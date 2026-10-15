@@ -13,6 +13,7 @@
 //   9. Contacts bridge (read-only: plan + build from relations)
 //  10. GEDCOM import (5.5.1 / 7.0, into a new tree) / export (5.5.1)
 //  11. Calendar feed (death anniversaries; read by calendar.js)
+//  12. orOS file (.orostree): pack / unpack content.json
 // Data FAMTREE v1 (oros-familytree-data):
 //   { ver: 1,
 //     trees:  [{ id, m, name, home }],
@@ -1345,6 +1346,121 @@
     return rows;
   }
 
+  // ---------- 12. orOS file (.orostree, bundle.js) ----------
+  // content.json = { kind: "oros-familytree-package", ver: 1,
+  //   tree { id, m, name, home }, people [as stored, photo = a media
+  //   key or ""], unions [as stored], focus (person id or "") }.
+  // Photos ride in media/<sha256>.<ext> as the bytes of the stored
+  // JPEG/PNG; content.json never holds base64.
+  var PKG_KIND = "oros-familytree-package";
+  var PKG_VER  = 1;
+
+  // A stored photo (data URI) → { bytes, ext, type }, or null.
+  function photoToBytes(uri) {
+    if (!validPhoto(uri)) return null;
+    var m = /^data:image\/(jpeg|png);base64,(.*)$/.exec(uri);
+    var bin;
+    try { bin = atob(m[2]); } catch (e) { return null; }
+    var u8 = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+    return { bytes: u8, ext: m[1] === "png" ? "png" : "jpg", type: "image/" + m[1] };
+  }
+  // The photos of one tree, in person-id order: [{ pid, bytes, ext, type }]
+  function treePhotos(data, treeId) {
+    var out = [];
+    merge(data, data).people.forEach(function (p) {
+      if (p.tree !== treeId || !p.photo) return;
+      var b = photoToBytes(p.photo);
+      if (b) { b.pid = p.id; out.push(b); }
+    });
+    return out;
+  }
+  // One tree → content.json. keys: { personId: media key }.
+  function packTree(data, treeId, keys, focus) {
+    var d = merge(data, data);
+    keys = keys || {};
+    var tree = null;
+    d.trees.forEach(function (t) { if (t.id === treeId) tree = t; });
+    if (!tree) return null;
+    var people = d.people.filter(function (p) { return p.tree === treeId; }).map(function (p) {
+      var o = JSON.parse(JSON.stringify(p));
+      o.photo = own(keys, p.id) && typeof keys[p.id] === "string" ? keys[p.id] : "";
+      return o;
+    });
+    var unions = d.unions.filter(function (u) { return u.tree === treeId; });
+    var f = isId(focus) && people.some(function (p) { return p.id === focus; }) ? focus : "";
+    return { kind: PKG_KIND, ver: PKG_VER, tree: JSON.parse(JSON.stringify(tree)),
+             people: people, unions: JSON.parse(JSON.stringify(unions)), focus: f };
+  }
+  function isPackage(c) {
+    return !!(c && typeof c === "object" && !Array.isArray(c) && c.kind === PKG_KIND &&
+              c.tree && typeof c.tree === "object" && Array.isArray(c.people) && Array.isArray(c.unions));
+  }
+  // content.json + the bundle's media ({ key: { bytes, type } }) → a
+  // NEW tree with fresh ids, through the same normalizers and checks
+  // as every import (checkRows):
+  //   { ok: false, err: "format" | "newer" | "toolarge" }
+  //   { ok: true, data, stats, focus, photos { newPersonId: { bytes, type } } }
+  // Photos come back as bytes (the app redraws them; a picture swapped
+  // in an unzipped folder may be any size); person.photo is "".
+  // opts: { now, newId, name (fallback tree name) }
+  function unpackTree(content, media, local, opts) {
+    opts = opts || {};
+    if (!isPackage(content)) return { ok: false, err: "format" };
+    if (typeof content.ver === "number" && content.ver > PKG_VER) return { ok: false, err: "newer" };
+    if (content.people.length > MAX_PEOPLE || content.unions.length > MAX_UNIONS) return { ok: false, err: "toolarge" };
+    media = media && typeof media === "object" ? media : {};
+    var now = isTs(opts.now) ? opts.now : Date.now();
+    var mk = typeof opts.newId === "function" ? opts.newId : null;
+    if (!mk) return { ok: false, err: "format" };
+    var st = { trees: 0, people: 0, unions: 0, dropped: 0, refs: 0, cycles: 0 };
+    var oldTree = isId(content.tree.id) ? content.tree.id : "";
+    var treeId = mk();
+    var map = dict();                        // old person/union id → new id
+    function stamped(x) { var o = JSON.parse(JSON.stringify(x)); o.m = now; return o; }
+    var people = [], unions = [], photos = {};
+    content.people.forEach(function (raw) {
+      var p = raw && typeof raw === "object" ? normPerson(stamped(raw)) : null;
+      if (!p || p.tree !== oldTree || own(map, p.id)) { st.dropped++; return; }
+      map[p.id] = mk();
+      var key = typeof raw.photo === "string" ? raw.photo : "";
+      var m = key && own(media, key) ? media[key] : null;
+      if (m && m.bytes && typeof m.bytes.length === "number" && /^image\/(jpeg|png|webp|gif)$/.test(String(m.type || ""))) {
+        photos[map[p.id]] = { bytes: m.bytes, type: m.type };
+      }
+      people.push(p);
+    });
+    content.unions.forEach(function (raw) {
+      var u = raw && typeof raw === "object" ? normUnion(stamped(raw)) : null;
+      if (!u || u.tree !== oldTree || own(map, u.id)) { st.dropped++; return; }
+      map[u.id] = mk();
+      unions.push(u);
+    });
+    function to(id) { return id && own(map, id) ? map[id] : ""; }
+    people.forEach(function (p) {
+      p.id = map[p.id];
+      p.tree = treeId;
+      p.photo = "";
+      p.parents = p.parents.filter(function (r) {
+        if (own(map, r.u)) { r.u = map[r.u]; return true; }
+        st.refs++;
+        return false;
+      });
+    });
+    unions.forEach(function (u) {
+      u.id = map[u.id];
+      u.tree = treeId;
+      ["a", "b"].forEach(function (k) { if (u[k]) { var n = to(u[k]); if (!n) st.refs++; u[k] = n; } });
+      if (!u.a && u.b) { u.a = u.b; u.b = ""; }
+    });
+    var tree = normTree({ id: treeId, m: now, name: line(content.tree.name, TREE_LEN) || line(opts.name, TREE_LEN) || "Family",
+                          home: to(content.tree.home) });
+    var r = checkRows([tree], people, unions, {}, local, st);
+    r.focus = to(content.focus);
+    r.photos = photos;
+    return r;
+  }
+
   var api = {
     VER: VER, FORMAT: FORMAT, CW: CW, CH: CH, NAME_LEN: NAME_LEN, PLACE_LEN: PLACE_LEN, TREE_LEN: TREE_LEN,
     NOTE_LEN: NOTE_LEN, PHOTO_MAX: PHOTO_MAX, PHOTO_BUDGET: PHOTO_BUDGET, IMPORT_MAX: IMPORT_MAX,
@@ -1361,7 +1477,9 @@
     contactsIndex: contactsIndex, contactName: contactName, planFromContacts: planFromContacts,
     buildFromContacts: buildFromContacts,
     GED_MAX: GED_MAX, decodeGedcom: decodeGedcom, gedDate: gedDate, parseGedcom: parseGedcom,
-    exportGedcom: exportGedcom, deathDays: deathDays, deathAnniversaries: deathAnniversaries
+    exportGedcom: exportGedcom, deathDays: deathDays, deathAnniversaries: deathAnniversaries,
+    PKG_KIND: PKG_KIND, photoToBytes: photoToBytes, treePhotos: treePhotos, packTree: packTree,
+    isPackage: isPackage, unpackTree: unpackTree
   };
   if (typeof module === "object" && module.exports) module.exports = api;
   else root.FTCore = api;

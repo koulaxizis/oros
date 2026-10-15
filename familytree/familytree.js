@@ -64,7 +64,7 @@
       "trees.newTitle": "New tree", "trees.renameTitle": "Rename tree",
       "menu.exportImg": "Export image (SVG, PNG, print)…", "menu.exportJson": "Back up this tree (JSON)",
       "menu.exportAll": "Back up all trees (JSON)", "menu.import": "Import JSON…",
-      "menu.gedImport": "Import GEDCOM or Gramps…", "menu.gedExport": "Export GEDCOM…",
+      "menu.gedImport": "Import GEDCOM, Gramps or .orostree…", "menu.gedExport": "Export GEDCOM…",
       "menu.contacts": "Build from Contacts…", "menu.gens": "Generations…", "menu.add": "Add a person",
       "card.close": "Close", "card.edit": "Edit", "card.focus": "Centre here", "card.contact": "Open in Contacts",
       "card.refresh": "Fill in from the contact", "card.del": "Delete",
@@ -112,6 +112,10 @@
       "ged.download": "Download", "ged.newTree": "It comes in as a new tree: “{name}”.",
       "ged.err.size": "The file is too big (15 MB at most)", "ged.err.format": "This is not a GEDCOM file",
       "ged.err.empty": "There are no people in this GEDCOM file",
+      "menu.oros": "orOS file (.orostree)", "menu.folder": "Unzipped orOS folder…",
+      "oros.err": "Could not read this orOS file", "oros.wrong": "This is not a Family Tree file",
+      "oros.newer": "This file was made by a newer orOS. Update orOS to open it.",
+      "oros.saveErr": "Could not save the orOS file",
       "imp.have": "{n} people already here stay as they are",
       "gramps.into": "It goes into the tree “{name}”, where this file came in before.",
       "gramps.err.format": "This is not a Gramps XML file", "gramps.err.gzip": "This Gramps file could not be unpacked",
@@ -139,7 +143,7 @@
       "trees.newTitle": "Νέο δέντρο", "trees.renameTitle": "Μετονομασία δέντρου",
       "menu.exportImg": "Εξαγωγή εικόνας (SVG, PNG, εκτύπωση)…", "menu.exportJson": "Αντίγραφο αυτού του δέντρου (JSON)",
       "menu.exportAll": "Αντίγραφο όλων των δέντρων (JSON)", "menu.import": "Εισαγωγή JSON…",
-      "menu.gedImport": "Εισαγωγή GEDCOM ή Gramps…", "menu.gedExport": "Εξαγωγή GEDCOM…",
+      "menu.gedImport": "Εισαγωγή GEDCOM, Gramps ή .orostree…", "menu.gedExport": "Εξαγωγή GEDCOM…",
       "menu.contacts": "Χτίσιμο από τις Επαφές…", "menu.gens": "Γενιές…", "menu.add": "Προσθήκη προσώπου",
       "card.close": "Κλείσιμο", "card.edit": "Επεξεργασία", "card.focus": "Κέντρο εδώ", "card.contact": "Άνοιγμα στις Επαφές",
       "card.refresh": "Συμπλήρωση από την επαφή", "card.del": "Διαγραφή",
@@ -187,6 +191,10 @@
       "ged.download": "Λήψη", "ged.newTree": "Θα μπει ως νέο δέντρο: «{name}».",
       "ged.err.size": "Το αρχείο είναι πολύ μεγάλο (έως 15 MB)", "ged.err.format": "Δεν είναι αρχείο GEDCOM",
       "ged.err.empty": "Το αρχείο GEDCOM δεν έχει πρόσωπα",
+      "menu.oros": "Αρχείο orOS (.orostree)", "menu.folder": "Αποσυμπιεσμένος φάκελος orOS…",
+      "oros.err": "Δεν ήταν δυνατή η ανάγνωση του αρχείου orOS", "oros.wrong": "Δεν είναι αρχείο Οικογενειακού δέντρου",
+      "oros.newer": "Το αρχείο φτιάχτηκε από νεότερο orOS. Ενημέρωσε το orOS για να το ανοίξεις.",
+      "oros.saveErr": "Δεν ήταν δυνατή η αποθήκευση του αρχείου orOS",
       "imp.have": "{n} πρόσωπα που υπάρχουν ήδη μένουν όπως είναι",
       "gramps.into": "Θα μπει στο δέντρο «{name}», όπου είχε μπει και πριν αυτό το αρχείο.",
       "gramps.err.format": "Δεν είναι αρχείο Gramps XML", "gramps.err.gzip": "Το αρχείο Gramps δεν αποσυμπιέστηκε",
@@ -1666,10 +1674,18 @@
   }
 
   function importJson() {
-    var dlg = dialogHost();
-    var pick = dlg && typeof dlg.openFile === "function" ? dlg.openFile(".json,application/json") : localPickFile(".json,application/json");
+    var dlg = dialogHost(), accept = ".json,.orostree,application/json," + TREE_MIME;
+    var pick = dlg && typeof dlg.openFile === "function" ? dlg.openFile(accept) : localPickFile(accept);
     pick.then(function (file) {
       if (!file) return;                        // cancel — silent exit
+      return isTreeBundle(file).then(function (yes) {
+        if (yes) return treeFromBundleFile(file);
+        return jsonFromFile(file);
+      });
+    }).catch(function () { showToast(t("imp.err.json")); });
+  }
+  function jsonFromFile(file) {
+    return Promise.resolve().then(function () {
       if (file.size > FT.IMPORT_MAX) { showToast(t("imp.err.size")); return; }
       return file.text().then(function (text) {
         var r = FT.parseImport(text, data);
@@ -1682,7 +1698,7 @@
         });
         return chain.then(function () { previewImport(r); });
       });
-    }).catch(function () { showToast(t("imp.err.json")); });
+    });
   }
   function previewImport(r, ged) {
     var dlg = makeDialog("ft-import", t("imp.title"));
@@ -1695,11 +1711,11 @@
     dlg.appendChild(el("p", "dlg-sub", ged ? t(r.into ? "gramps.into" : "ged.newTree", { name: r.data.trees[0].name }) : t("imp.merge")));
     var acts = el("div", "dlg-actions");
     acts.appendChild(textBtn("dlg-btn", t("ed.cancel"), function () { dlg.close(); }));
-    acts.appendChild(textBtn("dlg-btn primary", t("imp.go"), function () { dlg.close(); applyImport(r.data, ged); }));
+    acts.appendChild(textBtn("dlg-btn primary", t("imp.go"), function () { dlg.close(); applyImport(r.data, ged, r.focus); }));
     dlg.appendChild(acts);
     showDialog(dlg);
   }
-  function applyImport(imp, ged) {
+  function applyImport(imp, ged, focus) {
     // Photo budget: imported photos that do not fit are left out.
     var used = FT.photoBytes(data);
     imp.people.forEach(function (p) {
@@ -1722,6 +1738,7 @@
       if (JSON.stringify(now || null) === JSON.stringify(before[id])) delete before[id];
     });
     if ((ged || !curTree()) && imp.trees.length) prefs.tree = imp.trees[0].id;
+    if (focus && FT.isId(focus) && imp.trees.length && findIn(data.people, focus)) prefs.focus[imp.trees[0].id] = focus;
     savePrefs();
     centerOnFocus = true;
     commit();
@@ -1733,14 +1750,24 @@
   // takes the same preview / merge / Undo; its ids are stable, so a
   // second import goes into the same tree and adds only what is new.
   function importGedcom() {
-    var dlg = dialogHost(), accept = ".ged,.gedcom,.gramps,.xml";
+    var dlg = dialogHost(), accept = ".ged,.gedcom,.gramps,.xml,.orostree";
     var pick = dlg && typeof dlg.openFile === "function" ? dlg.openFile(accept) : localPickFile(accept);
     gedcomFromFile(pick);
   }
-  // Also the way in for a file from the system's "Open with" (shell fileopen.js).
+  // Also the way in for a file from the system's "Open with" (shell
+  // fileopen.js). An .orostree (sniffed by its first bytes) goes to
+  // treeFromBundleFile; everything else is GEDCOM or Gramps as before.
   function gedcomFromFile(file) {
     Promise.resolve(file).then(function (file) {
       if (!file) return;
+      return isTreeBundle(file).then(function (yes) {
+        if (yes) return treeFromBundleFile(file);
+        return gedcomBytes(file);
+      });
+    }).catch(function () { showToast(t("ged.err.format")); });
+  }
+  function gedcomBytes(file) {
+    return Promise.resolve().then(function () {
       if (file.size > FT.GED_MAX) { showToast(t("ged.err.size")); return; }
       return file.arrayBuffer().then(function (buf) {
         var G = window.OrosGramps;
@@ -1808,6 +1835,127 @@
     showDialog(dlg);
   }
 
+  // ---------- 10b. orOS file (.orostree, bundle.js) ----------
+  // One tree = one file named after it: content.json (FT.packTree:
+  // the tree, its people and families as stored), media/<sha256>.jpg
+  // or .png (the photos), preview/tree.ged (GEDCOM 5.5.1, for other
+  // genealogy programs) and preview/thumbnail.png (the chart). Opening
+  // one always makes a NEW tree with fresh ids (FT.unpackTree), through
+  // the same preview / merge / Undo as a GEDCOM import.
+  var TREE_MIME = "application/x-oros-tree";
+  var TREE_MAX = 64 * 1024 * 1024;        // photos are small (1 MB budget); room for hand-swapped ones
+  function treeThumb(tr) {
+    var f = focusId();
+    if (!tr || !f) return Promise.resolve(null);
+    try {
+      var l = FT.layout(data, tr.id, f, layoutOpts());
+      var sc = FT.scene(l, data, tr.id, { lang: LANG, photos: true, dates: true, hideLiving: false, unknown: t("unknown") });
+      var svg = FT.toSvg(sc, { theme: "light", title: tr.name });
+      var scale = Math.min(1, 512 / l.w, 512 / l.h);
+      if (!(scale > 0)) return Promise.resolve(null);
+      return svgImage(svg).then(function (x) {
+        if (!x) return null;
+        return new Promise(function (resolve) {
+          try {
+            var cv = document.createElement("canvas");
+            cv.width = Math.max(1, Math.round(l.w * scale));
+            cv.height = Math.max(1, Math.round(l.h * scale));
+            var g = cv.getContext("2d");
+            g.fillStyle = "#ffffff";
+            g.fillRect(0, 0, cv.width, cv.height);
+            g.drawImage(x.im, 0, 0, cv.width, cv.height);
+            URL.revokeObjectURL(x.url);
+            cv.toBlob(function (b) { resolve(b || null); }, "image/png");
+          } catch (e) { URL.revokeObjectURL(x.url); resolve(null); }
+        });
+      });
+    } catch (e) { return Promise.resolve(null); }
+  }
+  function exportOros() {
+    var tr = curTree(), B = window.OrosBundle;
+    if (!tr) { showToast(t("toast.noTree")); return; }
+    if (!B) return;
+    var keys = {}, media = {}, chain = Promise.resolve();
+    FT.treePhotos(data, tr.id).forEach(function (ph) {
+      chain = chain.then(function () {
+        return B.sha256(ph.bytes).then(function (h) {
+          var k = h + "." + ph.ext;
+          keys[ph.pid] = k;
+          media[k] = ph.bytes;
+        });
+      });
+    });
+    var modified = tr.m;
+    data.people.concat(data.unions).forEach(function (x) { if (x.tree === tr.id && x.m > modified) modified = x.m; });
+    chain.then(function () { return treeThumb(tr); }).then(function (thumb) {
+      return B.write({
+        mime: TREE_MIME, app: "familytree", schema: "familytree/1",
+        content: FT.packTree(data, tr.id, keys, focusId()),
+        meta: { title: tr.name, modified: modified, id: tr.id, language: LANG, generator: "orOS Family Tree" },
+        media: media,
+        thumbnail: thumb || null,
+        preview: [{ name: "tree.ged", data: FT.exportGedcom(data, tr.id, {}), type: "text/plain" }],
+        date: new Date()
+      });
+    }).then(function (bytes) {
+      downloadBlob(new Blob([bytes], { type: TREE_MIME }), fileBase(tr.name) + ".orostree", TREE_MIME,
+                   [{ description: "orOS Family Tree", accept: { "application/x-oros-tree": [".orostree"] } }]);
+    }).catch(function () { showToast(t("oros.saveErr")); });
+  }
+  // A picked or "Open with" file: an .orostree is sniffed by its first
+  // bytes (a ZIP with our mimetype, or any ZIP named .orostree).
+  function isTreeBundle(file) {
+    var B = window.OrosBundle;
+    if (!B || !file || typeof file.slice !== "function") return Promise.resolve(false);
+    return file.slice(0, 128).arrayBuffer().then(function (ab) {
+      var kind = B.sniff(new Uint8Array(ab));
+      return kind !== null && (kind === TREE_MIME || /\.orostree$/i.test(file.name || ""));
+    }, function () { return false; });
+  }
+  function bundleFail(e) {
+    var c = e && e.code;
+    showToast(t(c === "newer" ? "oros.newer" :
+                (c === "wrongtype" || c === "notbundle" || c === "nocontent" || c === "content") ? "oros.wrong" : "oros.err"));
+  }
+  function treeFromBundleFile(file) {
+    if (file.size > TREE_MAX) { showToast(t("ged.err.size")); return Promise.resolve(); }
+    return file.arrayBuffer().then(function (ab) {
+      return window.OrosBundle.read(new Uint8Array(ab), { mime: TREE_MIME });
+    }).then(function (r) { return treeFromBundle(r, file.name); }, bundleFail);
+  }
+  function openTreeFolder() {
+    var B = window.OrosBundle;
+    if (!B) return;
+    B.pickFolder().then(function (files) {
+      if (!files || !files.length) return;
+      return B.readFolder(files, { mime: TREE_MIME }).then(function (r) { return treeFromBundle(r, ""); }, bundleFail);
+    }).catch(function () { showToast(t("oros.err")); });
+  }
+  // A read bundle → the import preview (a new tree; photos redrawn
+  // by reencode, as for every imported picture).
+  function treeFromBundle(r, fileName) {
+    var name = String(fileName || "").replace(/\.orostree$/i, "") || (r && r.meta && r.meta.title) || "";
+    var u = FT.unpackTree(r && r.content, r && r.media, data, { now: stamp(0), newId: newId, name: name });
+    if (!u.ok) {
+      showToast(t(u.err === "newer" ? "oros.newer" : u.err === "toolarge" ? "imp.err.toolarge" : "oros.wrong"));
+      return Promise.resolve();
+    }
+    if (data.trees.length >= FT.MAX_TREES) { showToast(t("toast.maxTrees", { n: FT.MAX_TREES })); return Promise.resolve(); }
+    if (data.people.length + u.data.people.length > FT.MAX_PEOPLE) {
+      showToast(t("toast.maxPeople", { n: FT.MAX_PEOPLE }));
+      return Promise.resolve();
+    }
+    var chain = Promise.resolve();
+    u.data.people.forEach(function (p) {
+      var ph = u.photos[p.id];
+      if (!ph) return;
+      chain = chain.then(function () {
+        return reencode(new Blob([ph.bytes], { type: ph.type })).then(function (uri) { p.photo = uri || ""; });
+      });
+    });
+    return chain.then(function () { previewImport(u, true); });
+  }
+
   // ---------- 11. Menus, dialogs, toasts ----------
   var menuCtl = null;
   function openMenu() {
@@ -1827,6 +1975,8 @@
       ["menu.gedExport", exportGedcom],
       ["menu.gedImport", importGedcom]
     ];
+    if (window.OrosBundle) items.splice(items.length - 2, 0, ["menu.oros", exportOros]);
+    if (window.OrosBundle) items.push(["menu.folder", openTreeFolder]);
     items.forEach(function (it) {
       var b = textBtn("menu-item", t(it[0]), function () { closeMenu(); it[1](); });
       b.setAttribute("role", "menuitem");
