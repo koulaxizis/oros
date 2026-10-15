@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.44.01
+- Contacts: the 8-bit avatars are now little pixel robots, the same for everyone.
+
 ## Version 2.44.00
 - Writer, Slides, Atelier and Layout now save open orOS files: a ZIP you can unzip to find the content, the pictures and a readable summary (Writer adds a page that opens in any browser). Each app can also open an unzipped folder, and older files still open.
 
