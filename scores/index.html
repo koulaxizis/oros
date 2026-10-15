@@ -7,7 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Score Keeper · orOS</title>
 
-  <link rel="stylesheet" href="scores.css?v=2.25.00">
+  <link rel="stylesheet" href="scores.css?v=2.40.00">
 
 </head>
 <body>
@@ -38,6 +38,7 @@
       <div id="pane-hist" class="pane" role="tabpanel" hidden>
         <div class="pane-head">
           <span class="spacer"></span>
+          <button type="button" class="link-btn" id="imp-btn"></button>
           <button type="button" class="link-btn" id="csv-all"></button>
         </div>
         <div id="hist-list" class="cards"></div>
@@ -77,7 +78,10 @@
   <div id="live" class="sr-only" aria-live="polite"></div>
   <div id="toast" role="status"></div>
 
-  <script src="scores.js?v=2.25.00"></script>
+  <script src="../atelier/zip.js?v=2.40.00"></script>
+  <script src="../importkit.js?v=2.40.00"></script>
+  <script src="import.js?v=2.40.00"></script>
+  <script src="scores.js?v=2.40.00"></script>
 
 </body>
 </html>

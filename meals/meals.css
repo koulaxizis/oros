@@ -549,6 +549,7 @@ legend { padding: 0; }
 .paste-in { min-height: 160px; font-size: 13px; margin-top: 6px; }
 /* Import (wave 2) */
 .im-status { font-size: 13px; margin: 8px 0 2px; color: var(--text-dim); }
+.im-sum { font-size: 14px; font-weight: 600; margin: 4px 0 2px; overflow-wrap: anywhere; }
 label.dlg-lbl[for="ml-im-text"] { margin-top: 16px; }
 .im-status.bad { color: var(--warn); }
 .im-file { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 10px; }

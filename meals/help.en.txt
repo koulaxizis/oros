@@ -2,7 +2,7 @@
 Meal Planner keeps your recipes, plans the week's meals and makes the shopping list from them. It also knows what you have at home (the pantry), suggests what you can cook with it, estimates nutrition per serving and has a cooking mode that walks you through a recipe step by step.
 
 ## Getting started
-There are four tabs: `Recipes`, `Week`, `Shopping` and `Pantry`. You start with a few ready recipes. Add your own with `New recipe`, or bring them in with `Import`: from a recipe site's address, from text you copied, or from a Paprika, Mealie or Tandoor export. The ingredients and steps are found for you, and you check them before saving.
+There are four tabs: `Recipes`, `Week`, `Shopping` and `Pantry`. You start with a few ready recipes. Add your own with `New recipe`, or bring them in with `Import`: from a recipe site's address, from text you copied, or from an export of another recipe app (Paprika, Mela, Recipe Keeper, Crouton and more). The ingredients and steps are found for you, and you check them before saving.
 
 Open `Settings` (the gear) to set `Our diet`, the `Meals of the day`, when the `Week starts on` and what's `Always in the house`.
 
@@ -20,9 +20,23 @@ The search box finds recipes by name. Type ingredients separated by commas (like
 
 - `Web address of a recipe`: type or paste the page's address and press `Fetch`. Most recipe sites describe their recipes in a standard way (schema.org), and that description is read: title, servings, times, ingredients, steps, tags and the link to the photo. Sites that don't let apps read them go through the orOS relay you set up in [Mail](app:mail) or [Reader](app:feeds); without one, copy the recipe's text instead.
 - `Paste the recipe`: text from anywhere is split into ingredients and steps. You can also paste a page's source (HTML) or its JSON.
-- `Open a file…`: a Paprika export (.paprikarecipes or .paprikarecipe), a Mealie or Tandoor export (.json or .zip), a saved web page (.html) or JSON.
+- `Open a file…`: an export from another recipe app (see below), a saved web page (.html) or JSON.
 
 One recipe opens in the editor so you can check it before `Save`. Several open in a list: tick the ones you want and press `Add`; titles you already have start unticked. The page itself is never shown or run: only its recipe data is read. Photos stay on their site, as a `Photo` link under `Source`.
+
+## Import from other recipe apps
+Export from the other app, then open the file here with `Import` → `Open a file…`. A file with several recipes opens a list that says where they come from, how many there are and which are already here; tick the ones you want and press `Add`. They are added in one go, and `Undo` on the message takes them all out again. Importing the same file again adds only what is missing: a recipe you already imported is never changed or added twice. Photos are not brought in (a web link to a photo is kept).
+
+- Paprika: on the recipe list, select the recipes and use Export (or File > Export on a computer); you get a .paprikarecipes file.
+- Mela: select recipes, then Share or Export; you get .melarecipe (one) or .melarecipes (several).
+- Recipe Keeper: Settings > Export (or Backup), choose the HTML/ZIP export; open the .zip as it is.
+- Nextcloud Cookbook: in Nextcloud Files, download the Recipes folder (it comes as a .zip with a recipe.json in each recipe's folder).
+- Cooklang: open one .cook file, or put several in a .zip.
+- Crouton: share a recipe or export your recipes; you get .crumb files (several can go in a .zip).
+- MyCookbook: Settings > Export, or a backup; you get an .mcb file.
+- Mealie: on a recipe, Download as JSON, or the data export (.zip). Tandoor: the export as Default/JSON (.zip).
+
+Menus differ between versions; look for Export, Share or Backup.
 
 ## Cooking mode
 `Cook` shows one step at a time. Change the servings and the units at the top; the ingredient list follows. When a step mentions a time, a timer button appears for it. The screen stays on while you cook. On the last step, `Cooked` takes what you used from the pantry.

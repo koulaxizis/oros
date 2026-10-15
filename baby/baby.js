@@ -130,7 +130,20 @@
       "toast.kidDel": "{x} deleted", "toast.restored": "Restored: {n} changes", "toast.same": "Nothing new in that backup",
       "toast.badFile": "Not an orOS Baby backup", "toast.noKid": "Add a child first",
       "toast.running": "A feed is already running", "toast.nothing": "Nothing to export yet",
-      "live.timer": "{x} running"
+      "live.timer": "{x} running",
+      "set.import": "Import from another app", "imp.title": "Import from another app",
+      "imp.src": "From: {s}", "imp.to": "For: {x}", "imp.baby": "Baby in the file", "imp.noName": "(no name)",
+      "imp.range": "{a} to {b}", "imp.row": "{x}: {n} to import", "imp.rowDup": "{x}: {n} to import, already here: {d}",
+      "t.growth": "Measurements", "imp.skipped": "Baby doesn't keep these, so they stay out: {x}",
+      "imp.left": "Also left out: {x}", "imp.r.noamount": "without an amount: {n}", "imp.r.noend": "without an end time: {n}",
+      "imp.r.dry": "dry nappies: {n}", "imp.r.future": "in the future: {n}", "imp.r.long": "longer than a day: {n}",
+      "imp.r.bad": "unreadable: {n}", "imp.units": "Values without a unit are read as {x}.",
+      "imp.keep": "Your own entries stay as they are, and nothing already here is added twice.",
+      "imp.priv": "The file is read on this device only.",
+      "imp.nothing": "Nothing new to import: it's all in Baby already.", "imp.go": "Import {n}",
+      "imp.done": "Entries imported for {x}: {n}", "imp.undone": "Import undone",
+      "imp.bad": "Couldn't read this file. Pick an export from Huckleberry, Baby Buddy or Baby Tracker.",
+      "imp.empty": "No entries found in this file.", "imp.big": "This file is too large to import."
     },
     el: {
       "app": "Μωρό", "settings": "Ρυθμίσεις", "night.on": "Νυχτερινή όψη: ναι", "night.off": "Νυχτερινή όψη: όχι",
@@ -208,7 +221,20 @@
       "toast.kidDel": "Διαγράφηκε: {x}", "toast.restored": "Επαναφορά: {n} αλλαγές", "toast.same": "Τίποτα καινούργιο σε αυτό το αντίγραφο",
       "toast.badFile": "Δεν είναι αντίγραφο του Μωρό", "toast.noKid": "Πρόσθεσε πρώτα ένα παιδί",
       "toast.running": "Ήδη τρέχει θηλασμός", "toast.nothing": "Δεν υπάρχει τίποτα για εξαγωγή ακόμα",
-      "live.timer": "Τρέχει: {x}"
+      "live.timer": "Τρέχει: {x}",
+      "set.import": "Εισαγωγή από άλλη εφαρμογή", "imp.title": "Εισαγωγή από άλλη εφαρμογή",
+      "imp.src": "Από: {s}", "imp.to": "Για: {x}", "imp.baby": "Μωρό στο αρχείο", "imp.noName": "(χωρίς όνομα)",
+      "imp.range": "{a} έως {b}", "imp.row": "{x}: {n} για εισαγωγή", "imp.rowDup": "{x}: {n} για εισαγωγή, ήδη εδώ: {d}",
+      "t.growth": "Μετρήσεις", "imp.skipped": "Αυτά δεν τα κρατά το Μωρό, οπότε μένουν έξω: {x}",
+      "imp.left": "Μένουν επίσης έξω: {x}", "imp.r.noamount": "χωρίς ποσότητα: {n}", "imp.r.noend": "χωρίς ώρα λήξης: {n}",
+      "imp.r.dry": "στεγνές πάνες: {n}", "imp.r.future": "στο μέλλον: {n}", "imp.r.long": "πάνω από μία μέρα: {n}",
+      "imp.r.bad": "δεν διαβάζονται: {n}", "imp.units": "Οι τιμές χωρίς μονάδα διαβάζονται σε {x}.",
+      "imp.keep": "Οι δικές σου καταγραφές μένουν όπως είναι και τίποτα από όσα υπάρχουν ήδη δεν μπαίνει δεύτερη φορά.",
+      "imp.priv": "Το αρχείο διαβάζεται μόνο σε αυτή τη συσκευή.",
+      "imp.nothing": "Τίποτα καινούργιο για εισαγωγή: όλα υπάρχουν ήδη στο Μωρό.", "imp.go": "Εισαγωγή {n}",
+      "imp.done": "Καταγραφές που εισήχθησαν για {x}: {n}", "imp.undone": "Η εισαγωγή αναιρέθηκε",
+      "imp.bad": "Δεν ήταν δυνατό να διαβαστεί το αρχείο. Διάλεξε εξαγωγή από το Huckleberry, το Baby Buddy ή το Baby Tracker.",
+      "imp.empty": "Δεν βρέθηκαν καταγραφές σε αυτό το αρχείο.", "imp.big": "Το αρχείο είναι πολύ μεγάλο για εισαγωγή."
     }
   };
 
@@ -1883,6 +1909,7 @@
     form.appendChild(button(t("set.gcsv"), "block", function () { exportText(C.growthCsv(data), "growth", "csv"); }));
     form.appendChild(button(t("set.backup"), "block", backup));
     form.appendChild(button(t("set.restore"), "block", function () { dlg.close(); restore(); }));
+    form.appendChild(button(t("set.import"), "block", function () { dlg.close(); startImport(); }));
     form.appendChild(el("p", "hint", t("set.restoreNote")));
     form.appendChild(el("p", "hint note", t("set.note")));
     actions(form, dlg, t("dlg.save"), null);
@@ -1969,6 +1996,132 @@
       };
       fr.readAsText(file);
     });
+  }
+
+  // ---------- 11b. Import from another app ----------
+  // Huckleberry / Baby Buddy / Baby Tracker → this child's entries.
+  // Parsing and the plan are pure (import.js, OrosBabyImport); here:
+  // pick → preview → ONE write + one sync mark → toast with Undo.
+  // Nothing from the file is ever inserted as HTML (textContent only).
+  var IMP_ACCEPT = ".csv,.json,.zip,.txt,text/csv,application/json,application/zip";
+  var IMP_SRC = { huckleberry: "Huckleberry", babybuddy: "Baby Buddy", babytracker: "Baby Tracker" };
+  var IMP_KINDS = ["feed", "bottle", "solid", "sleep", "diaper", "pump", "med", "temp", "bath", "tummy", "note", "growth"];
+  var IMP_REASONS = ["noamount", "noend", "dry", "long", "future", "bad"];
+  function startImport() {
+    var I = window.OrosBabyImport, KIT = window.OrosImportKit;
+    if (!I || !KIT) return;
+    if (!kid()) { showToast(t("toast.noKid")); return; }
+    var host = dialogHost();
+    var pick = host && typeof host.openFile === "function" ? host.openFile(IMP_ACCEPT) : localPick(IMP_ACCEPT);
+    Promise.resolve(pick).then(function (file) {
+      if (!file) return null;                  // cancel = silent exit
+      return KIT.readFile(file, I.MAX_FILE).then(function (f) { return I.readBytes(f.bytes, f.name, { prefs: data.prefs }); });
+    }).then(function (res) {
+      if (!res) return;
+      if (res.error) { showToast(t(res.error === "big" ? "imp.big" : (res.error === "empty" ? "imp.empty" : "imp.bad"))); return; }
+      importPreview(res);
+    }).catch(function (e) {
+      showToast(t(e && e.message === "toobig" ? "imp.big" : "imp.bad"));
+    });
+  }
+  function impPlan(res, baby) {
+    return window.OrosBabyImport.plan(res, data, { kid: kidId(), baby: baby, now: Date.now() });
+  }
+  function importPreview(res) {
+    var I = window.OrosBabyImport, k = kid();
+    var names = Object.keys(res.babies || {});
+    var baby = I.pickBaby(res, k.n);
+    var dlg = makeDialog("bb-imp", t("imp.title"));
+    dlg.classList.add("wide");
+    dlg.appendChild(el("p", "imp-line", t("imp.src", { s: IMP_SRC[res.source] || res.source })));
+    dlg.appendChild(el("p", "imp-line imp-to", t("imp.to", { x: k.n })));
+    if (names.length > 1) {
+      var sel = el("select");
+      names.sort().forEach(function (n) {
+        var o = el("option", "", (n || t("imp.noName")) + " (" + res.babies[n] + ")");
+        o.value = n;
+        if (n === baby) o.selected = true;
+        sel.appendChild(o);
+      });
+      sel.addEventListener("change", function () { baby = sel.value; paint(); });
+      dlg.appendChild(field(t("imp.baby"), sel));
+    }
+    var body = el("div", "imp-body");
+    dlg.appendChild(body);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); }));
+    var go = button(t("imp.go", { n: "" }), "primary", function () {
+      dlg.close();
+      // planned again on the data as it is NOW (a pull may have
+      // landed while the preview was open)
+      applyImport(impPlan(res, baby));
+    });
+    go.id = "imp-go";
+    acts.appendChild(go);
+    dlg.appendChild(acts);
+    function paint() {
+      var pl = impPlan(res, baby), n = pl.ev.length + pl.gr.length;
+      body.innerHTML = "";
+      if (pl.from) body.appendChild(el("p", "imp-line", t("imp.range", { a: dateText(C.dayKeyOf(pl.from)), b: dateText(C.dayKeyOf(pl.to)) })));
+      var ul = el("ul", "imp-list");
+      IMP_KINDS.forEach(function (kd) {
+        var c = pl.kinds[kd];
+        if (!c) return;
+        ul.appendChild(el("li", "", t(c.dup ? "imp.rowDup" : "imp.row", { x: t("t." + kd), n: c.add, d: c.dup })));
+      });
+      if (ul.children.length) body.appendChild(ul);
+      var other = [], why = [];
+      Object.keys(pl.skip).forEach(function (key) {
+        if (IMP_REASONS.indexOf(key) >= 0) why.push(t("imp.r." + key, { n: pl.skip[key] }));
+        else other.push(key + " (" + pl.skip[key] + ")");
+      });
+      if (other.length) body.appendChild(el("p", "hint", t("imp.skipped", { x: other.join(", ") })));
+      if (why.length) body.appendChild(el("p", "hint", t("imp.left", { x: why.join(", ") })));
+      var u = res.units || {}, ul2 = ["w", "l", "v"].filter(function (x) { return u[x]; }).map(function (x) { return u[x]; });
+      if (ul2.length) body.appendChild(el("p", "hint", t("imp.units", { x: ul2.join(", ") })));
+      body.appendChild(el("p", "hint", n ? t("imp.keep") : t("imp.nothing")));
+      body.appendChild(el("p", "hint", t("imp.priv")));
+      go.textContent = t("imp.go", { n: n });
+      go.hidden = !n;
+    }
+    paint();
+    openDialog(dlg, null);
+  }
+  // ONE write: new events and measurements (stable ids, stamped now),
+  // then a single saveNow() = one sync mark.
+  function applyImport(pl) {
+    var k = kid(), ids = { ev: [], gr: [] };
+    pl.ev.forEach(function (rec) {
+      var cur = findEv(rec.id);
+      if (cur && !cur.del) return;             // already back (a pull)
+      put(data.ev, rec);
+      ids.ev.push(rec.id);
+    });
+    pl.gr.forEach(function (rec) {
+      var cur = C.findIn(data.gr, rec.id);
+      if (cur && !cur.del) return;
+      put(data.gr, rec);
+      ids.gr.push(rec.id);
+    });
+    var n = ids.ev.length + ids.gr.length;
+    if (!n) { showToast(t("imp.nothing")); return; }
+    saveNow();
+    renderAll();
+    undoToast(t("imp.done", { n: n, x: k ? k.n : "" }), function () { undoImport(ids); });
+  }
+  // Undo works on the CURRENT data: each imported record becomes a
+  // newer-stamped tombstone (so a device that already got it drops it
+  // too); the person's own records were never touched.
+  function undoImport(ids) {
+    ["ev", "gr"].forEach(function (f) {
+      ids[f].forEach(function (id) {
+        var cur = C.findIn(data[f], id);
+        if (cur && !cur.del) put(data[f], { id: id, m: stamp(cur.m), del: 1 });
+      });
+    });
+    saveNow();
+    renderAll();
+    showToast(t("imp.undone"));
   }
 
   function summaryDialog() {
