@@ -541,7 +541,7 @@
   // apkPkg: the orOS Android package this window runs in (the orOS app or
   // a single app's APK), when known: its BrowserActivity opens the link in
   // the person's default browser, in a normal tab (APKs built before
-  // 2.29.01 lack it, and the link then opens as before). Otherwise
+  // 2.30.01 lack it, and the link then opens as before). Otherwise
   // (Chrome's installed orOS) an intent asks Chrome for a real tab.
   function apkHref(id, ua, inWindow, apkPkg) {
     var u = id === "oros" ? APK_BASE + "oros.apk" : apkUrl(id);

@@ -1367,7 +1367,8 @@
   var PLAT = window.OrosNotesPlatforms || null;
 
   // ---------- Import notes from other apps (notes/import.js) ----------
-  // Obsidian vault (folder or .zip), any folder / .zip of .md / .txt,
+  // Obsidian vault (folder or .zip), Evernote .enex, Google Keep
+  // Takeout, Simplenote, Joplin .jex, any folder / .zip of .md / .txt,
   // a Standard Notes backup. import.js reads and plans; this is the
   // one write: the notebook (once), its new labels, the new pages,
   // the replaced texts. Undo takes all of it out again.
@@ -1376,8 +1377,8 @@
   STRINGS.el["imp.btn"] = "Εισαγωγή σημειώσεων…";
   STRINGS.en["imp.title"] = "Import notes";
   STRINGS.el["imp.title"] = "Εισαγωγή σημειώσεων";
-  STRINGS.en["imp.intro"] = "Bring notes from Obsidian (the vault folder or a .zip of it), Standard Notes (a backup file, exported decrypted) or any folder or .zip of Markdown / text files (Bear, Logseq, Joplin, Notion, Typora…). Folders become pages with sub-pages, tags become labels, [[links]] keep working. They go into a new notebook; nothing leaves this device.";
-  STRINGS.el["imp.intro"] = "Φέρε σημειώσεις από το Obsidian (τον φάκελο του vault ή ένα .zip του), το Standard Notes (αρχείο backup, εξαγωγή χωρίς κρυπτογράφηση) ή οποιονδήποτε φάκελο ή .zip με αρχεία Markdown / κειμένου (Bear, Logseq, Joplin, Notion, Typora…). Οι φάκελοι γίνονται σελίδες με υποσελίδες, τα tags γίνονται ετικέτες, τα [[links]] συνεχίζουν να δουλεύουν. Μπαίνουν σε νέο σημειωματάριο· τίποτα δεν φεύγει από τη συσκευή.";
+  STRINGS.en["imp.intro"] = "Bring notes from Obsidian (the vault folder or a .zip of it), Evernote (.enex), Google Keep (the Takeout .zip), Simplenote (its export .zip), Joplin (.jex), Standard Notes (a backup file, exported decrypted) or any folder or .zip of Markdown / text files (Bear, Logseq, Notion, Typora…). Folders become pages with sub-pages, tags become labels, [[links]] keep working. They go into a new notebook; nothing leaves this device.";
+  STRINGS.el["imp.intro"] = "Φέρε σημειώσεις από το Obsidian (τον φάκελο του vault ή ένα .zip του), το Evernote (.enex), το Google Keep (το .zip του Takeout), το Simplenote (το .zip της εξαγωγής του), το Joplin (.jex), το Standard Notes (αρχείο backup, εξαγωγή χωρίς κρυπτογράφηση) ή οποιονδήποτε φάκελο ή .zip με αρχεία Markdown / κειμένου (Bear, Logseq, Notion, Typora…). Οι φάκελοι γίνονται σελίδες με υποσελίδες, τα tags γίνονται ετικέτες, τα [[links]] συνεχίζουν να δουλεύουν. Μπαίνουν σε νέο σημειωματάριο· τίποτα δεν φεύγει από τη συσκευή.";
   STRINGS.en["imp.folder"] = "Choose folder…";
   STRINGS.el["imp.folder"] = "Επιλογή φακέλου…";
   STRINGS.en["imp.files"] = "Choose files…";
@@ -1388,6 +1389,14 @@
   STRINGS.el["imp.src.obsidian"] = "Vault του Obsidian";
   STRINGS.en["imp.src.standardnotes"] = "Standard Notes backup";
   STRINGS.el["imp.src.standardnotes"] = "Backup του Standard Notes";
+  STRINGS.en["imp.src.evernote"] = "Evernote export";
+  STRINGS.el["imp.src.evernote"] = "Εξαγωγή του Evernote";
+  STRINGS.en["imp.src.keep"] = "Google Keep (Takeout)";
+  STRINGS.el["imp.src.keep"] = "Google Keep (Takeout)";
+  STRINGS.en["imp.src.simplenote"] = "Simplenote export";
+  STRINGS.el["imp.src.simplenote"] = "Εξαγωγή του Simplenote";
+  STRINGS.en["imp.src.joplin"] = "Joplin export";
+  STRINGS.el["imp.src.joplin"] = "Εξαγωγή του Joplin";
   STRINGS.en["imp.src.markdown"] = "Markdown / text files";
   STRINGS.el["imp.src.markdown"] = "Αρχεία Markdown / κειμένου";
   STRINGS.en["imp.plan"] = "{src}: {a} new pages, {u} to update, {s} already here.";
@@ -1418,8 +1427,8 @@
   STRINGS.el["imp.tooBig"] = "{n} αρχεία ήταν πολύ μεγάλα (πάνω από 200 MB συνολικά) ή δεν διαβάστηκαν.";
   STRINGS.en["imp.heavy"] = "This is a lot of text ({mb} MB): syncing it to your other devices takes a while.";
   STRINGS.el["imp.heavy"] = "Είναι πολύ κείμενο ({mb} MB): ο συγχρονισμός στις άλλες συσκευές θα πάρει λίγο χρόνο.";
-  STRINGS.en["imp.none"] = "No notes found here. Choose an Obsidian vault folder, a .zip, a folder of .md / .txt files or a Standard Notes backup.";
-  STRINGS.el["imp.none"] = "Δεν βρέθηκαν σημειώσεις. Διάλεξε τον φάκελο ενός vault του Obsidian, ένα .zip, φάκελο με αρχεία .md / .txt ή backup του Standard Notes.";
+  STRINGS.en["imp.none"] = "No notes found here. Choose an Obsidian vault folder, an .enex, .jex or .zip file, a folder of .md / .txt files or a Standard Notes backup.";
+  STRINGS.el["imp.none"] = "Δεν βρέθηκαν σημειώσεις. Διάλεξε τον φάκελο ενός vault του Obsidian, ένα αρχείο .enex, .jex ή .zip, φάκελο με αρχεία .md / .txt ή backup του Standard Notes.";
   STRINGS.en["imp.nothing"] = "Nothing new: Notes already has all of it.";
   STRINGS.el["imp.nothing"] = "Τίποτα νέο: οι Σημειώσεις τα έχουν ήδη όλα.";
   STRINGS.en["imp.go"] = "Import";
@@ -1567,7 +1576,7 @@
       inp.multiple = true;
       inp.hidden = true;
       if (dir) { inp.setAttribute("webkitdirectory", ""); inp.setAttribute("directory", ""); }
-      else inp.accept = ".md,.markdown,.txt,.json,.zip,text/markdown,text/plain,application/json,application/zip";
+      else inp.accept = ".md,.markdown,.txt,.json,.zip,.enex,.jex,.tar,text/markdown,text/plain,application/json,application/zip";
       inp.addEventListener("change", function () { read(inp.files); inp.value = ""; });
       form.appendChild(inp);
       return inp;
@@ -1606,7 +1615,7 @@
       parsed = plan = null;
       msg.textContent = tf("imp.reading", { n: files.length });
       // skip what can never be a note before reading it (pictures, PDFs…)
-      var want = /\.(md|markdown|mdown|mkd|txt|text|json|zip)$/i;
+      var want = /\.(md|markdown|mdown|mkd|txt|text|json|zip|enex|jex|tar)$/i;
       Promise.all(files.map(function (f) {
         var p = f.webkitRelativePath || f.name;
         if (!want.test(f.name) || /(^|\/)\./.test(p) && !/(^|\/)\.obsidian(\/|$)/.test(p)) return { path: p, bytes: new Uint8Array(0) };
