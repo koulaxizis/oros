@@ -8,7 +8,8 @@
 //   · swimlanes (by label or by the card's lane), table sorting,
 //     timeline range;
 //   · board export (JSON, CSV), import of that JSON, templates
-//     (save a board as one, new board from one, built-ins EN/EL).
+//     (save a board as one, new board from one, built-ins EN/EL);
+//   · the .orosboard bundle's content.json and board.md preview.
 // Imported data is only ever read as data: every string is checked
 // and capped, ids are made fresh, nothing is executed.
 // ============================================================
@@ -358,6 +359,75 @@
     return "﻿" + rows.join("\r\n") + "\r\n";
   }
 
+  // ---------- .orosboard bundle (bundle.js, docs/oros-bundle.md) ----------
+  // content.json = { kind: "oros-kanban-package", ver: 1, board }: the
+  // board as the JSON export holds it (no tombstones), every card
+  // attachment's file renamed to its media key (<sha256>.<ext>), so
+  // media/<key> holds the bytes. keys: disk file name → media key; an
+  // attachment whose file could not be read keeps its name (no bytes).
+  var PKG_KIND = "oros-kanban-package", PKG_VER = 1;
+  function packBoard(board, keys) {
+    var b = JSON.parse(JSON.stringify(board || {}));
+    delete b.deleted;
+    keys = keys || {};
+    arr(b.columns).forEach(function (col) {
+      arr(col && col.cards).forEach(function (c) {
+        arr(c && c.att).forEach(function (x) {
+          if (x && Object.prototype.hasOwnProperty.call(keys, x.file)) x.file = keys[x.file];
+        });
+      });
+    });
+    return { kind: PKG_KIND, ver: PKG_VER, board: b };
+  }
+  function isPackage(c) {
+    return !!(c && typeof c === "object" && c.kind === PKG_KIND && c.board && typeof c.board === "object" && Array.isArray(c.board.columns));
+  }
+  // content.json + the bundle's media ({ key: { bytes } }) → { board,
+  // files: [{ file, bytes }] } with fresh ids (rebuild, as an import of
+  // the JSON export), or null.
+  function parsePackage(content, media, uid, now) {
+    if (!isPackage(content)) return null;
+    var fileMap = {};
+    var board = rebuild(content.board, { uid: uid, now: now, keepDue: true, keepAtt: true }, fileMap);
+    var files = [];
+    media = media && typeof media === "object" ? media : {};
+    Object.keys(fileMap).forEach(function (old) {
+      var m = Object.prototype.hasOwnProperty.call(media, old) ? media[old] : null;
+      if (m && m.bytes && typeof m.bytes.length === "number") files.push({ file: fileMap[old], bytes: m.bytes });
+    });
+    return { board: board, files: files };
+  }
+  // The board as Markdown (preview/board.md): a heading per column, a
+  // list item per card with its due date, labels, lane, subtasks,
+  // notes and attachment names. words: { due, labels, lane, att }.
+  function mdLine(v) { return String(v == null ? "" : v).replace(/[\r\n]+/g, " ").trim(); }
+  function boardMd(board, words) {
+    words = words || {};
+    var lab = labelIds(board), out = ["# " + (mdLine(board && board.name) || "Board"), ""];
+    arr(board && board.columns).forEach(function (col) {
+      out.push("## " + (mdLine(col.name) || "—"), "");
+      arr(col.cards).forEach(function (c, i, all) {
+        out.push("- **" + mdLine(c.text) + "**");
+        var bits = [];
+        if (c.due) bits.push((words.due || "Due") + ": " + c.due);
+        var ls = arr(c.labels).map(function (id) { return lab[id] ? mdLine(lab[id].name) : ""; }).filter(Boolean);
+        if (ls.length) bits.push((words.labels || "Labels") + ": " + ls.join(", "));
+        if (c.lane) bits.push((words.lane || "Lane") + ": " + mdLine(c.lane));
+        if (bits.length) out.push("  " + bits.join(" · "));
+        arr(c.subtasks).forEach(function (s) { if (s) out.push("  - [" + (s.completed ? "x" : " ") + "] " + mdLine(s.text)); });
+        arr(c.info).forEach(function (f) {
+          var l = [mdLine(f && f.label), mdLine(f && f.value)].filter(Boolean).join(": ");
+          if (l) out.push("  - " + l);
+        });
+        var att = arr(c.att).map(function (x) { return x ? mdLine(x.name) : ""; }).filter(Boolean);
+        if (att.length) out.push("  - " + (words.att || "Attachments") + ": " + att.join(", "));
+        String(c.notes || "").replace(/\r\n?/g, "\n").split("\n").forEach(function (l) { if (l.trim()) out.push("  > " + l); });
+        if (i === all.length - 1) out.push("");
+      });
+    });
+    return out.join("\n");
+  }
+
   // ---------- templates ----------
   function templateFromBoard(board, uid, now, name) {
     return rebuild(board, { uid: uid, now: now, name: name, id: "tpl-" + uid(), archived: true, untick: true, keepAtt: false, keepDue: false });
@@ -463,7 +533,8 @@
     applyArrival: applyArrival, hasRules: hasRules, overdueLabel: overdueLabel, applyOverdue: applyOverdue,
     laneKey: laneKey, lanes: lanes, setLane: setLane, sortRows: sortRows, timelineRange: timelineRange,
     rebuild: rebuild, counter: counter, exportBoard: exportBoard, isExport: isExport, parseExport: parseExport,
-    boardCsv: boardCsv, csvCell: csvCell, templateFromBoard: templateFromBoard, boardFromTemplate: boardFromTemplate,
+    boardCsv: boardCsv, csvCell: csvCell, packBoard: packBoard, isPackage: isPackage, parsePackage: parsePackage, boardMd: boardMd,
+    PKG_KIND: PKG_KIND, templateFromBoard: templateFromBoard, boardFromTemplate: boardFromTemplate,
     builtinList: builtinList, builtinBoard: builtinBoard, usedFiles: usedFiles, asNew: asNew
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
