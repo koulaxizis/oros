@@ -52,6 +52,11 @@ Before anything is added, a preview shows how many titles were found per type an
 
 What comes in: Goodreads shelves become the status (`read`, `currently-reading`, `to-read`; a shelf such as `did-not-finish` becomes dropped), with your rating, review, pages, format, the date you finished, and your other shelves as tags. From Letterboxd you get the watchlist, every logged watch with its date (rewatches count), your rating, review and tags. Right after an import, `Undo` takes it all back.
 
+## Import from Google Books
+`More` › `Import from Google Books` copies the books on your Google Books shelves once. Sign in to Google in the small window; orOS reads your shelves and gives the access back to Google right away: nothing is kept, and nothing changes at Google. Google Books has no read-only permission, so Google asks to "manage" your books; orOS only reads them. The same preview as the Goodreads import shows what comes in and what is already on your shelf; `Import` saves it, with `Undo`.
+
+`Have read` becomes Read, `Reading now` Reading and `To read` Want; `Favorites` gives the ♥, `My eBooks` marks the format as e-book, and your own shelves become tags. Each book comes with its title, authors, year and page count; covers and ISBNs are not kept. A book already on your shelf (same title and author) is skipped, so importing again adds only what is missing. Google must have this enabled for orOS; if it answers 403, the service is not switched on yet. To use your own Google app id, set it in [Contacts](app:contacts) › `From an account` › `Use my own app id`.
+
 ## Sync and backup
 Your titles, progress, ratings, reviews and goals sync between your devices through [orOS sync](help:t/sync). Covers and their credits sync with the title. The open tab, type filter, sort and your TMDB key stay on each device.
 
