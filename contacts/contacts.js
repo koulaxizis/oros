@@ -31,8 +31,9 @@
 // birthdays) — feeds the Calendar birthday feed (Wave 2) and the
 // vCard BDAY round-trip ("--MM-DD" form) with zero ambiguity.
 // id + mtime exist from day one for the merge sync (Part 5).
-// photo: base64 JPEG data URI (≤50KB, 128×128), set via the
-// dialog avatar uploader; round-trips as vCard PHOTO.
+// avatar: null (initials) | "px:<seed>" (an 8-bit avatar drawn from
+// the seed). No photos (CT-NP, 2026-10-15); round-trips as vCard
+// X-OROS-AVATAR.
 // ============================================================
 (function () {
   "use strict";
@@ -144,17 +145,11 @@
       "ph.last": "Sent {t}: {n} {what}.",
       "ph.err": "Last attempt failed: {e}",
       "ph.close": "Close",
-      "pf.btn": "Find photos",
-      "pf.title": "Find photos online",
-      "pf.text": "For contacts without a photo, orOS looks for the profile picture the person set for their own e-mail address on Gravatar and Libravatar. Only a coded fingerprint of each address is sent, never names or numbers. An address that several of your contacts share (an office e-mail) is skipped, so a photo always belongs to that one contact. Nothing changes until you pick the photos to keep.",
-      "pf.go": "Search",
-      "pf.apply": "Use the ticked photos",
-      "pf.none": "No contact without a photo has an e-mail address to look up.",
-      "pf.busy": "Looking up {i} of {n}…",
-      "pf.found": "{n} photo(s) found for {m} contact(s) looked up. Untick any that is not right.",
-      "pf.nothing": "No photos found for the {m} contact(s) looked up.",
-      "pf.done": "{n} photo(s) added",
-      "pf.via": "via {s} · {e}",
+      "en.btn": "Update online",
+      "en.one": "Update from online sources",
+      "en.save": "Save your changes first.",
+      "en.empty": "No contact in this list has an e-mail address, phone or website to look up.",
+      "en.done": "{n} contact(s) updated",
       "ac.btn": "From an account",
       "ac.title": "Import from an account",
       "ac.text": "Sign in once: orOS reads your contacts, you review them, and the connection ends right away. No password or access is kept.",
@@ -239,11 +234,11 @@
       "dup.undo": "Undo",
       "dup.sect.def": "Definitive matches",
       "dup.sect.pos": "Possible matches",
-      "ct.avatar": "Photo",
-      "ct.avatar.up": "Upload photo",
-      "ct.avatar.rem": "Remove",
+      "ct.avatar": "Picture",
+      "ct.avatar.ini": "Initials",
+      "ct.avatar.px": "8-bit avatar",
+      "ct.avatar.new": "Another one",
       "ct.avatar.bad": "Could not read that image",
-      "ct.avatar.big": "Image too large after compression — try another one",
       "ct.field.relations": "Relations",
       "ct.add.relation": "＋ Relation",
       "ct.rel.pick": "— contact —",
@@ -422,17 +417,11 @@
       "ph.last": "Στάλθηκαν {t}: {n} {what}.",
       "ph.err": "Η τελευταία προσπάθεια απέτυχε: {e}",
       "ph.close": "Κλείσιμο",
-      "pf.btn": "Εύρεση φωτογραφιών",
-      "pf.title": "Εύρεση φωτογραφιών online",
-      "pf.text": "Για τις επαφές χωρίς φωτογραφία, το orOS ψάχνει την εικόνα προφίλ που έχει βάλει ο ίδιος ο άνθρωπος για το email του στο Gravatar και στο Libravatar. Στέλνεται μόνο ένα κωδικοποιημένο αποτύπωμα κάθε διεύθυνσης, ποτέ ονόματα ή τηλέφωνα. Ένα email που το έχουν πολλές επαφές σου (π.χ. ενός γραφείου) παραλείπεται, ώστε η φωτογραφία να ανήκει πάντα σε αυτή τη μία επαφή. Τίποτα δεν αλλάζει μέχρι να διαλέξεις ποιες φωτογραφίες κρατάς.",
-      "pf.go": "Αναζήτηση",
-      "pf.apply": "Χρήση των επιλεγμένων",
-      "pf.none": "Καμία επαφή χωρίς φωτογραφία δεν έχει email για αναζήτηση.",
-      "pf.busy": "Αναζήτηση {i} από {n}…",
-      "pf.found": "Βρέθηκαν {n} φωτογραφίες για {m} επαφές που ελέγχθηκαν. Ξετσέκαρε όποια δεν είναι σωστή.",
-      "pf.nothing": "Δεν βρέθηκαν φωτογραφίες για τις {m} επαφές που ελέγχθηκαν.",
-      "pf.done": "Προστέθηκαν {n} φωτογραφίες",
-      "pf.via": "από {s} · {e}",
+      "en.btn": "Ενημέρωση online",
+      "en.one": "Ενημέρωση από online πηγές",
+      "en.save": "Αποθήκευσε πρώτα τις αλλαγές σου.",
+      "en.empty": "Καμία επαφή αυτής της λίστας δεν έχει email, τηλέφωνο ή ιστοσελίδα για αναζήτηση.",
+      "en.done": "Ενημερώθηκαν {n} επαφές",
       "ac.btn": "Από λογαριασμό",
       "ac.title": "Εισαγωγή από λογαριασμό",
       "ac.text": "Συνδέεσαι μία φορά: το orOS διαβάζει τις επαφές σου, τις ελέγχεις και η σύνδεση κλείνει αμέσως. Δεν κρατιέται κωδικός ούτε πρόσβαση.",
@@ -517,11 +506,11 @@
       "dup.undo": "Αναίρεση",
       "dup.sect.def": "Βέβαια ταιριάσματα",
       "dup.sect.pos": "Πιθανά ταιριάσματα",
-      "ct.avatar": "Φωτογραφία",
-      "ct.avatar.up": "Μεταφόρτωση φωτογραφίας",
-      "ct.avatar.rem": "Αφαίρεση",
+      "ct.avatar": "Εικόνα",
+      "ct.avatar.ini": "Αρχικά",
+      "ct.avatar.px": "8-bit avatar",
+      "ct.avatar.new": "Άλλο ένα",
       "ct.avatar.bad": "Η εικόνα δεν μπόρεσε να διαβαστεί",
-      "ct.avatar.big": "Η εικόνα είναι πολύ μεγάλη μετά τη συμπίεση — δοκίμασε άλλη",
       "ct.field.relations": "Σχέσεις",
       "ct.add.relation": "＋ Σχέση",
       "ct.rel.pick": "— επαφή —",
@@ -706,6 +695,7 @@
 
   /* ---------- 2. State + schemas ---------- */
   var DATA_KEY = "oros-contacts-data";
+  var PX_RE = /^px:[a-z0-9]{1,12}$/;   // CT-NP 8-bit avatar seed
   var MG = window.OrosContactsMerge || null;     // contacts/merge.js (per-field merge, log)
   var KP = window.OrosContactsKeep || null;      // contacts/keep.js (keep in touch)
   var state = { ver: 1, labels: [], contacts: [], deleted: [] };
@@ -927,7 +917,7 @@
       labelIds:  lids,
       starred:   c.starred === true,
       note:      (typeof c.note === "string" ? c.note : "").slice(0, 500),
-      photo:     (typeof c.photo === "string" && /^data:image\/(jpeg|png);base64,/.test(c.photo)) ? c.photo.slice(0, 50000) : null,
+      avatar:    (typeof c.avatar === "string" && PX_RE.test(c.avatar)) ? c.avatar : null,   // CT-NP: photos are dropped
       mtime:     (typeof c.mtime === "number" && isFinite(c.mtime)) ? c.mtime : Date.now()
     };
     // CT-PF / keep in touch: keep, seen, log, logDel, fm — present
@@ -947,6 +937,7 @@
     };
   }
 
+  var hadPhotos = false;
   function loadState() {
     var rawText = null;
     try {
@@ -958,6 +949,7 @@
       if (rawText && (!d || typeof d !== "object" || !Array.isArray(d.contacts))) rescueRaw(rawText);
       if (d && typeof d === "object" && Array.isArray(d.contacts)) {
         state.contacts = d.contacts.map(sanitizeContact).filter(Boolean);
+        hadPhotos = d.contacts.some(function (c) { return c && c.photo; });   // CT-NP
       }
       if (d && Array.isArray(d.deleted)) {
         state.deleted = d.deleted.map(sanitizeTomb).filter(Boolean);
@@ -1405,6 +1397,7 @@
   })();
 
   /* ---------- 4. List render ---------- */
+  var listShown = [];   // ids in the list right now (search / filters applied)
   function renderList() {
     var ul = $("ct-list");
     ul.textContent = "";
@@ -1439,7 +1432,9 @@
         if (c.emails[j].v.toLowerCase().indexOf(q) !== -1) return true;
       }
       return false;
-    }).sort(function (a, b) {
+    });
+    listShown = hits.map(function (c) { return c.id; });
+    hits.sort(function (a, b) {
       // Reach out: who has waited longest comes first
       if (reach && due[a.id].due !== due[b.id].due) return due[a.id].due < due[b.id].due ? -1 : 1;
       if (a.starred !== b.starred) return a.starred ? -1 : 1;
@@ -1705,7 +1700,7 @@ function shareText(c) {
 }
 
 // "Send to someone" (shell share/, kind "contact"): the card's own
-// fields only. Photo, labels, star and relations stay at home.
+// fields only. Avatar, labels, star and relations stay at home.
 function sharePayload(c) {
   var vt = function (r) { return { v: r.v, ty: r.type }; };
   return {
@@ -2642,7 +2637,7 @@ document.addEventListener("keydown", function (e) {
   /* ---------- 5b. Dialog open/save/delete ---------- */
   var editingId = null;
   var dlgLabelIds = [];      // working copy of the contact's labels
-  var editingPhoto = null;   // working copy of the contact's photo (data URI | null)
+  var editingAvatar = null;  // working copy of the contact's avatar ("px:<seed>" | null)
 
   function renderDlgLabels() {
     var row = $("ct-label-row");
@@ -2678,21 +2673,68 @@ document.addEventListener("keydown", function (e) {
     }
   }
 
-  // ===== AVATAR HANDLING (Wave 2.3) =====
-  // Upload → center-crop to square → 128×128 JPEG (quality 0.85,
-  // typically 8–20KB) → data URI stored on the contact. Hard cap
-  // 50000 chars (sanitizeContract's photo slot) protects
-  // localStorage + sync payload.
-  var AVATAR_SIZE = 128;
+  // ===== AVATAR (CT-NP, 2026-10-15) =====
+  // No photos: they filled local storage and stopped sync (Chris,
+  // 2026-10-15: "Πλήρης αφαίρεση φωτογραφιών"). A contact shows its
+  // initials, or an 8-bit avatar: a 12×12 pixel face drawn from a short
+  // random seed kept as "px:<seed>" (a few bytes, synced like any
+  // field). Left half drawn, right half mirrored; hair styles, skin and
+  // colours mix freely, so the faces are unisex.
+  var PX_BG = ["#5b8def", "#e8735a", "#46b39d", "#a974d8", "#e0b23f", "#e86a9b", "#5fb85a", "#4fb3d9"];
+  var PX_SKIN = ["#f6d5b8", "#eac096", "#d29e6f", "#a8754b", "#7a5235"];
+  var PX_HAIR = ["#2b1d14", "#5a3825", "#a0622d", "#d8b25c", "#b8b8b8", "#c0392b", "#3b5bdb", "#7d3c98"];
+  var PX_SHIRT = ["#2d3a4f", "#e9ecef", "#c0392b", "#1f7a5c", "#f39c12", "#34495e", "#8e44ad"];
+  var PX_INK = { e: "#1d1d1d", m: "#8c3b3b", g: "#1d1d1d" };
+  // . background  s skin  h hair  e eye  m mouth  g glasses  c shirt
+  var PX_BASE = ["......", "...hhh", "..hhhh", "..hsss", "..ssss", "..sess",
+    "..ssss", "...sss", "...smm", "....ss", "..cccc", ".ccccc"];
+  var pxCache = {};
+  function pxRand(seed) {
+    var h = 2166136261;
+    for (var i = 0; i < seed.length; i++) { h ^= seed.charCodeAt(i); h = Math.imul(h, 16777619); }
+    return function () {
+      h = (h + 0x6D2B79F5) | 0;
+      var x = Math.imul(h ^ (h >>> 15), h | 1);
+      x ^= x + Math.imul(x ^ (x >>> 7), x | 61);
+      return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function pxPick(r, a) { return a[Math.floor(r() * a.length)]; }
+  function pxSrc(seed) {
+    if (pxCache[seed]) return pxCache[seed];
+    var r = pxRand(seed);
+    var col = { ".": pxPick(r, PX_BG), s: pxPick(r, PX_SKIN), h: pxPick(r, PX_HAIR), c: pxPick(r, PX_SHIRT) };
+    var g = PX_BASE.map(function (row) { return row.split(""); });
+    var style = Math.floor(r() * 4);
+    if (style === 1) { g[3][3] = "h"; g[3][4] = "h"; }                       // fringe
+    if (style === 2) { for (var y = 3; y <= 9; y++) g[y][1] = "h"; g[9][2] = "h"; }   // long
+    if (style === 3) { g[0][4] = "h"; g[0][5] = "h"; g[1][2] = "h"; }          // bun
+    if (r() < 0.25) { g[5][2] = "g"; g[5][4] = "g"; g[5][5] = "g"; }           // glasses
+    if (r() < 0.5) g[8][4] = "s";                                            // small smile
+    var out = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" shape-rendering="crispEdges">';
+    g.forEach(function (row, y) {
+      var full = row.concat(row.slice().reverse());
+      full.forEach(function (k, x) { out += '<rect x="' + x + '" y="' + y + '" width="1" height="1" fill="' + (PX_INK[k] || col[k]) + '"/>'; });
+    });
+    out += "</svg>";
+    return (pxCache[seed] = "data:image/svg+xml," + encodeURIComponent(out));
+  }
+  function pxNew() {
+    var a = "abcdefghijklmnopqrstuvwxyz0123456789", s = "px:";
+    var b = new Uint8Array(8);
+    (window.crypto || {}).getRandomValues ? crypto.getRandomValues(b) : b.forEach(function (v, i) { b[i] = Math.random() * 256; });
+    for (var i = 0; i < 8; i++) s += a[b[i] % a.length];
+    return s;
+  }
 
-  // Shared avatar element: photo if present, initials otherwise.
+  // Shared avatar element: 8-bit avatar if picked, initials otherwise.
   // Used by BOTH the contact list and the dedup member rows.
   function mkAvatarEl(c) {
-    if (c.photo) {
+    if (c.avatar && PX_RE.test(c.avatar)) {
       var im = document.createElement("img");
-      im.className = "ct-avatar ct-avatar-img";
+      im.className = "ct-avatar ct-avatar-img ct-avatar-px";
       im.alt = "";
-      im.src = c.photo;
+      im.src = pxSrc(c.avatar.slice(3));
       return im;
     }
     var sp = document.createElement("span");
@@ -2701,56 +2743,17 @@ document.addEventListener("keydown", function (e) {
     return sp;
   }
 
-  // Dialog preview painter: draws the current data URI onto the
-  // 64×64 canvas (scaled by CSS) and toggles the Remove button.
-  function paintAvatarPreview(uri) {
-    var cv = $("avatar-preview");
-    var rmBtn = $("ct-avatar-remove");
-    if (!cv) return;
-    if (rmBtn) rmBtn.hidden = !uri;
-    if (!uri) { cv.hidden = true; return; }
-    var ctx = cv.getContext("2d");
-    var img = new Image();
-    img.onload = function () {
-      cv.width = img.width;
-      cv.height = img.height;
-      cv.hidden = false;
-      ctx.clearRect(0, 0, cv.width, cv.height);
-      ctx.drawImage(img, 0, 0);
-    };
-    img.onerror = function () { cv.hidden = true; };
-    img.src = uri;
-  }
-
-  function readAvatarFile(file) {
-    if (!file) return;
-    if (!/^image\/(jpeg|png)$/.test(file.type)) { notifyTransient(t("ct.avatar.bad")); return; }
-    var fr = new FileReader();
-    fr.onload = function () {
-      var img = new Image();
-      img.onload = function () {
-        // Center-crop to square, then scale down to AVATAR_SIZE.
-        var side = Math.min(img.width, img.height);
-        var sx = (img.width - side) / 2, sy = (img.height - side) / 2;
-        var cv = document.createElement("canvas");
-        cv.width = AVATAR_SIZE; cv.height = AVATAR_SIZE;
-        var ctx = cv.getContext("2d");
-        ctx.imageSmoothingEnabled = true;
-        ctx.drawImage(img, sx, sy, side, side, 0, 0, AVATAR_SIZE, AVATAR_SIZE);
-        try {
-          var uri = cv.toDataURL("image/jpeg", 0.85);
-          if (uri.length > 50000) { notifyTransient(t("ct.avatar.big")); return; }
-          editingPhoto = uri;
-          paintAvatarPreview(editingPhoto);
-        } catch (e) {
-          notifyTransient(t("ct.avatar.bad"));
-        }
-      };
-      img.onerror = function () { notifyTransient(t("ct.avatar.bad")); };
-      img.src = fr.result;
-    };
-    fr.onerror = function () { notifyTransient(t("ct.avatar.bad")); };
-    fr.readAsDataURL(file);
+  // Editor: preview + the Initials / 8-bit choice; "Another one" draws
+  // a new seed.
+  function paintAvatarPreview() {
+    var box = $("avatar-preview");
+    if (!box) return;
+    box.textContent = "";
+    box.appendChild(mkAvatarEl({ given: $("ct-given").value.trim(), family: $("ct-family").value.trim(),
+      nickname: $("ct-nickname").value.trim(), org: $("ct-org").value.trim(), avatar: editingAvatar }));
+    if ($("ct-av-px")) $("ct-av-px").checked = !!editingAvatar;
+    if ($("ct-av-ini")) $("ct-av-ini").checked = !editingAvatar;
+    if ($("ct-av-new")) $("ct-av-new").hidden = !editingAvatar;
   }
 
   function openDlg(existing) {
@@ -2764,8 +2767,7 @@ document.addEventListener("keydown", function (e) {
     $("ct-jobtitle").value = existing ? existing.jobTitle : "";
     $("ct-note").value     = existing ? existing.note : "";
     $("ct-starred").checked = existing ? existing.starred : false;
-    editingPhoto = (existing && existing.photo) ? existing.photo : null;
-    paintAvatarPreview(editingPhoto);
+    editingAvatar = (existing && existing.avatar) ? existing.avatar : null;
 
     fillHolder($("ct-phones"),    existing ? existing.phones    : [], function (h, r) { buildValRow(h, r && r.v, r && r.type, PHONE_TYPES, "+30 69…", 40, "ph"); });
     fillHolder($("ct-emails"),    existing ? existing.emails    : [], function (h, r) { buildValRow(h, r && r.v, r && r.type, EMAIL_TYPES, "name@example.com", 120, "em"); });
@@ -2775,6 +2777,7 @@ document.addEventListener("keydown", function (e) {
     fillHolder($("ct-events"),    existing ? existing.events    : [], buildEvtRow);
     fillHolder($("ct-relations"), existing ? existing.relations : [], buildRelRow);
     renderDlgIncoming(existing);
+    paintAvatarPreview();
 
     dlgLabelIds = existing ? existing.labelIds.slice() : [];
     renderDlgLabels();
@@ -2794,7 +2797,7 @@ document.addEventListener("keydown", function (e) {
   // Every editable field of the dialog, as Save reads it.
   var DLG_FIELDS = ["given", "middle", "family", "nickname", "org", "jobTitle",
     "phones", "emails", "addresses", "websites", "im", "events", "relations",
-    "labelIds", "starred", "note", "photo", "keep"];
+    "labelIds", "starred", "note", "avatar", "keep"];
   if ($("ct-keep-u")) {
     $("ct-keep-u").addEventListener("change", function () { $("ct-keep-n").disabled = !this.value; });
   }
@@ -2825,7 +2828,7 @@ document.addEventListener("keydown", function (e) {
       labelIds: dlgLabelIds.slice().sort(),
       starred: $("ct-starred").checked,
       note: $("ct-note").value.trim(),
-      photo: editingPhoto,
+      avatar: editingAvatar,
       keep: readKeep()
     };
   }
@@ -2863,30 +2866,13 @@ document.addEventListener("keydown", function (e) {
 
   $("ct-add").addEventListener("click", function () { openDlg(null); });
 
-  // Avatar wiring: upload button opens the picker, the hidden file
-  // input feeds readAvatarFile, remove clears both state + preview.
-  if ($("ct-avatar-upload")) {
-    $("ct-avatar-upload").addEventListener("click", function () {
-      var dlg = dialogHost();
-      if (dlg && typeof dlg.openFile === "function") {
-        dlg.openFile("image/jpeg,image/png,.jpg,.jpeg,.png")
-          .then(function (f) { if (f) readAvatarFile(f); });
-        return;                     // cancel (null) = silent exit
-      }
-      $("ct-avatar-input").value = "";            // allow re-pick of same file
-      $("ct-avatar-input").click();
-    });
-  }
-  if ($("ct-avatar-input")) {
-    $("ct-avatar-input").addEventListener("change", function () {
-      var f = this.files && this.files[0];
-      if (f) readAvatarFile(f);
-    });
-  }
-  if ($("ct-avatar-remove")) {
-    $("ct-avatar-remove").addEventListener("click", function () {
-      editingPhoto = null;
-      paintAvatarPreview(null);
+  // Avatar choice wiring (CT-NP)
+  if ($("ct-av-ini")) {
+    $("ct-av-ini").addEventListener("change", function () { editingAvatar = null; paintAvatarPreview(); });
+    $("ct-av-px").addEventListener("change", function () { if (!editingAvatar) editingAvatar = pxNew(); paintAvatarPreview(); });
+    $("ct-av-new").addEventListener("click", function () { editingAvatar = pxNew(); paintAvatarPreview(); });
+    ["ct-given", "ct-family", "ct-nickname", "ct-org"].forEach(function (id) {
+      $(id).addEventListener("input", function () { if (!editingAvatar) paintAvatarPreview(); });
     });
   }
 
@@ -3122,7 +3108,7 @@ document.addEventListener("keydown", function (e) {
     preview.mtime = Date.now();
 
     // Scalar fields: keep primary unless empty, then take first non-empty.
-    ["given", "middle", "family", "nickname", "org", "jobTitle", "note", "photo"].forEach(function (f) {
+    ["given", "middle", "family", "nickname", "org", "jobTitle", "note", "avatar"].forEach(function (f) {
       if (!preview[f]) {
         for (var i = 0; i < members.length; i++) {
           if (members[i][f]) { preview[f] = members[i][f]; break; }
@@ -3655,7 +3641,7 @@ document.addEventListener("keydown", function (e) {
       given: "", middle: "", family: "", nickname: "",
       org: "", jobTitle: "",
       phones: [], emails: [], addresses: [], websites: [], im: [],
-      events: [], cats: [], note: "", photo: null, starred: false
+      events: [], cats: [], note: "", avatar: null, starred: false
     };
     lines.forEach(function (line) {
       if (!line) return;
@@ -3750,20 +3736,10 @@ document.addEventListener("keydown", function (e) {
           break;
         }
         case "NOTE": c.note = vcfUnesc(p.value).trim().slice(0, 500); break;
-        case "PHOTO": {
-          // Accepted forms: our own data URI ("data:image/…;base64,…")
-          // or raw base64 with an explicit TYPE=JPEG|PNG param.
-          // http(s) URLs are NOT fetched (static OS, no network
-          // dependency in imports) — silently skipped.
-          var pv = p.value.trim();
-          if (/^data:image\/(jpeg|png);base64,/.test(pv)) {
-            // CT-8: a cut data URI is a broken image; skip oversize photos
-            if (pv.length <= 50000) c.photo = pv;
-          } else if (/(?:JPEG|JPG|PNG)/i.test(ty) &&
-                     pv.length > 64 && pv.length <= 50000 &&
-                     /^[A-Za-z0-9+/=]+$/.test(pv)) {
-            c.photo = "data:image/" + (/PNG/i.test(ty) ? "png" : "jpeg") + ";base64," + pv;
-          }
+        case "PHOTO": break;   // CT-NP: photos are not kept
+        case "X-OROS-AVATAR": {
+          var av = p.value.trim();
+          if (PX_RE.test(av)) c.avatar = av;
           break;
         }
         case "X-OROS-STARRED":
@@ -3831,7 +3807,7 @@ document.addEventListener("keydown", function (e) {
     nickname: "ct.field.nickname", org: "ct.field.org", jobTitle: "ct.field.jobtitle",
     note: "ct.field.note", phones: "ct.field.phones", emails: "ct.field.emails",
     addresses: "ct.field.addresses", websites: "ct.field.websites", im: "ct.field.im",
-    events: "ct.field.events", photo: "ct.avatar", starred: "ct.starred",
+    events: "ct.field.events", avatar: "ct.avatar", starred: "ct.starred",
     labels: "ct.lbl.filter", birthday: "rv.birthday"
   };
   function incName(inc) {
@@ -3930,7 +3906,7 @@ document.addEventListener("keydown", function (e) {
       websites: inc.websites, im: inc.im, events: inc.events,
       labelIds: resolveCats(inc.cats),
       starred: inc.starred === true, note: inc.note,
-      photo: inc.photo || null,
+      avatar: inc.avatar || null,
       relations: [],
       mtime: Date.now()
     });
@@ -4153,7 +4129,7 @@ document.addEventListener("keydown", function (e) {
       jobTitle: pick(CSV_H.title).slice(0, 80),
       phones: [], emails: [], addresses: [], websites: [], im: [],
       events: [], cats: [], note: pick(CSV_H.note).slice(0, 500),
-      photo: null, starred: false
+      avatar: null, starred: false
     };
     // FN-style fallback: "Name" split when parts are missing.
     if (!pc.given && !pc.family && !pc.org && !pc.nickname) {
@@ -4454,7 +4430,7 @@ document.addEventListener("keydown", function (e) {
     var pc = {
       given: "", middle: "", family: "", nickname: "", org: "", jobTitle: "",
       phones: [], emails: [], addresses: [], websites: [], im: [],
-      events: [], cats: [], note: "", photo: null, starred: false
+      events: [], cats: [], note: "", avatar: null, starred: false
     };
     pc.family = (words.length > 1 ? words.pop() : "").slice(0, 60);
     pc.given = words.join(" ").slice(0, 60);
@@ -4628,20 +4604,26 @@ document.addEventListener("keydown", function (e) {
     $("ct-acct").hidden = true;
   }
 
-  // ---- Find photos online (Gravatar, Libravatar) ----
-  // Only contacts without a photo, only by their own e-mail: an address
-  // two or more contacts share is skipped (that is the cross-check: the
-  // picture someone set for an address belongs to that address's one
-  // contact). The address goes out as its SHA-256 hash, lower-cased and
-  // trimmed, exactly what both services index by; d=404 means "no
-  // picture" instead of a generated one. Nothing is written until the
-  // person ticks what to keep; Undo puts the contacts back.
-  var PF_SOURCES = [
-    { name: "Gravatar", url: function (h) { return "https://gravatar.com/avatar/" + h + "?d=404&s=256"; } },
-    { name: "Libravatar", url: function (h) { return "https://seccdn.libravatar.org/avatar/" + h + "?d=404&s=256"; } }
-  ];
-  var pfBusy = false, pfFound = [];
-  function pfCandidates() {
+  // ---- Update from online sources (../enrich.js + ../enrichui.js) ----
+  // The contacts in the list right now (search and filters applied),
+  // or the one open in the editor. Only their own e-mail, phone and
+  // websites are used as keys; an address two contacts share is not.
+  // Suggestions are reviewed in the shared dialog; one write, Undo.
+  function enRecord(c, owners) {
+    var shared = {};
+    c.emails.forEach(function (e) { var k = normalizeEmail(e.v); if (owners[k] > 1) shared[k] = 1; });
+    return {
+      names: [displayName(c), c.nickname, c.org].filter(Boolean),
+      emails: c.emails.map(function (e) { return normalizeEmail(e.v); }),
+      phones: c.phones.map(function (p) { return p.v; }),
+      sites: c.websites.map(function (w) { return w.v; }),
+      shared: shared,
+      has: { photo: true, birthday: c.events.some(function (e) { return e.type === "birthday"; }),
+             job: !!c.jobTitle, org: !!c.org, address: c.addresses.length > 0, name: true },
+      kind: (c.given || c.family) ? "person" : (c.org ? "org" : "")
+    };
+  }
+  function enOwners() {
     var owners = {};
     state.contacts.forEach(function (c) {
       var seen = {};
@@ -4652,166 +4634,47 @@ document.addEventListener("keydown", function (e) {
         owners[k] = (owners[k] || 0) + 1;
       });
     });
-    var out = [];
-    state.contacts.forEach(function (c) {
-      if (c.photo) return;
-      var mails = c.emails.map(function (e) { return normalizeEmail(e.v); })
-        .filter(function (k, i, a) { return k && /@/.test(k) && owners[k] === 1 && a.indexOf(k) === i; });
-      if (mails.length) out.push({ id: c.id, mails: mails.slice(0, 3) });
-    });
-    return out;
+    return owners;
   }
-  function pfHash(mail) {
-    return crypto.subtle.digest("SHA-256", new TextEncoder().encode(mail)).then(function (buf) {
-      return Array.prototype.map.call(new Uint8Array(buf), function (b) { return (b < 16 ? "0" : "") + b.toString(16); }).join("");
+  function enLoadUI() {
+    if (window.OrosEnrichUI) return Promise.resolve();
+    return new Promise(function (ok, fail) {
+      var s = document.createElement("script");
+      s.src = "../enrichui.js";
+      s.onload = ok;
+      s.onerror = fail;
+      document.head.appendChild(s);
     });
   }
-  // Fetched picture → the same 128×128 centre-cropped JPEG an upload gets.
-  function pfAvatar(blob) {
-    return createImageBitmap(blob).then(function (bmp) {
-      var side = Math.min(bmp.width, bmp.height);
-      var cv = document.createElement("canvas");
-      cv.width = AVATAR_SIZE; cv.height = AVATAR_SIZE;
-      var ctx = cv.getContext("2d");
-      ctx.imageSmoothingEnabled = true;
-      ctx.drawImage(bmp, (bmp.width - side) / 2, (bmp.height - side) / 2, side, side, 0, 0, AVATAR_SIZE, AVATAR_SIZE);
-      var uri = cv.toDataURL("image/jpeg", 0.85);
-      return uri.length <= 50000 ? uri : null;
-    });
-  }
-  // CT-PS (2026-10-15): photos stay small. A contact picture is shown
-  // at 128 px at most, but Google imports and vCards kept up to 50,000
-  // characters each, and a few hundred of them filled the browser's
-  // local storage (sync stopped with "storage full", SY-Q1). Once per
-  // start, every bigger photo is redrawn as a 128×128 JPEG, the size
-  // an upload gets; one that comes out no smaller stays as it is.
-  var PHOTO_SMALL = 16000;
-  function shrinkPhoto(uri) {
-    return fetch(uri).then(function (r) { return r.blob(); }).then(createImageBitmap).then(function (bmp) {
-      var side = Math.min(bmp.width, bmp.height);
-      var cv = document.createElement("canvas");
-      cv.width = AVATAR_SIZE; cv.height = AVATAR_SIZE;
-      var ctx = cv.getContext("2d");
-      ctx.imageSmoothingEnabled = true;
-      ctx.drawImage(bmp, (bmp.width - side) / 2, (bmp.height - side) / 2, side, side, 0, 0, AVATAR_SIZE, AVATAR_SIZE);
-      return cv.toDataURL("image/jpeg", 0.75);
-    });
-  }
-  function shrinkPhotos() {
-    if (typeof createImageBitmap !== "function" || typeof fetch !== "function") return Promise.resolve(0);
-    var todo = state.contacts.filter(function (c) { return c.photo && c.photo.length > PHOTO_SMALL; })
-      .map(function (c) { return { id: c.id, photo: c.photo }; });
-    var done = 0;
-    function next(i) {
-      if (i >= todo.length) return Promise.resolve();
-      var it = todo[i];
-      return shrinkPhoto(it.photo).then(function (out) {
-        var c = contactById(it.id);
-        // only if the photo didn't change meanwhile, and it got clearly smaller
-        if (c && c.photo === it.photo && out && out.length < it.photo.length * 0.75) { c.photo = out; done++; }
-      }, function () {}).then(function () { return next(i + 1); });
-    }
-    return next(0).then(function () {
-      if (done) { saveState(); renderList(); }
-      return done;
-    });
-  }
-  function pfLookup(mail) {
-    return pfHash(mail).then(function (h) {
-      var i = 0;
-      function next() {
-        if (i >= PF_SOURCES.length) return null;
-        var src = PF_SOURCES[i++];
-        return fetch(src.url(h), { credentials: "omit", cache: "no-store", referrerPolicy: "no-referrer" })
-          .then(function (r) {
-            if (!r.ok || !/^image\//.test(r.headers.get("Content-Type") || "")) return next();
-            return r.blob().then(pfAvatar).then(function (uri) { return uri ? { photo: uri, source: src.name, mail: mail } : next(); });
-          }, function () { return next(); });
-      }
-      return next();
-    });
-  }
-  function pfRender() {
-    var box = $("pf-list");
-    box.textContent = "";
-    pfFound.forEach(function (f) {
-      var c = contactById(f.id);
-      if (!c) return;
-      var row = document.createElement("label");
-      row.className = "pf-row";
-      var cb = document.createElement("input");
-      cb.type = "checkbox";
-      cb.checked = f.on;
-      cb.addEventListener("change", function () { f.on = cb.checked; });
-      var im = document.createElement("img");
-      im.className = "ct-avatar ct-avatar-img";
-      im.alt = "";
-      im.src = f.photo;
-      var tx = document.createElement("span");
-      tx.className = "pf-txt";
-      var nm = document.createElement("b");
-      nm.textContent = displayName(c);
-      var via = document.createElement("small");
-      via.textContent = t("pf.via").replace("{s}", f.source).replace("{e}", f.mail);
-      tx.appendChild(nm);
-      tx.appendChild(via);
-      row.appendChild(cb);
-      row.appendChild(im);
-      row.appendChild(tx);
-      box.appendChild(row);
-    });
-    $("pf-apply").hidden = !pfFound.length;
-    $("pf-go").hidden = !!pfFound.length;
-  }
-  function pfSearch() {
-    if (pfBusy) return;
-    var list = pfCandidates();
-    pfFound = [];
-    pfRender();
-    if (!list.length) { $("pf-stat").textContent = t("pf.none"); return; }
-    pfBusy = true;
-    $("pf-go").disabled = true;
-    var done = 0, k = 0;
-    function show() { $("pf-stat").textContent = t("pf.busy").replace("{i}", String(done)).replace("{n}", String(list.length)); }
-    show();
-    function worker() {
-      if (!pfBusy || k >= list.length) return Promise.resolve();
-      var item = list[k++], j = 0;
-      function tryMail() {
-        if (j >= item.mails.length) return null;
-        return pfLookup(item.mails[j++]).then(function (r) { return r || tryMail(); });
-      }
-      return Promise.resolve(tryMail()).then(function (r) {
-        if (r) { pfFound.push({ id: item.id, photo: r.photo, source: r.source, mail: r.mail, on: true }); pfRender(); }
-      }, function () {}).then(function () { done++; show(); return worker(); });
-    }
-    Promise.all([worker(), worker(), worker(), worker()]).then(function () {
-      var stopped = !pfBusy;
-      pfBusy = false;
-      $("pf-go").disabled = false;
-      if (stopped) return;
-      $("pf-stat").textContent = pfFound.length
-        ? t("pf.found").replace("{n}", String(pfFound.length)).replace("{m}", String(list.length))
-        : t("pf.nothing").replace("{m}", String(list.length));
-    });
-  }
-  function pfApply() {
+  function enApply(picks) {
     var before = [], n = 0, now = Date.now();
-    pfFound.forEach(function (f) {
-      if (!f.on) return;
-      var c = contactById(f.id);
-      if (!c || c.photo) return;   // never replaces a photo
+    picks.forEach(function (p) {
+      var c = contactById(p.id);
+      if (!c) return;
+      var d = JSON.parse(JSON.stringify(c)), changed = false;
+      function hasVal(list, v, norm) { return list.some(function (r) { return norm(r.v) === norm(v); }); }
+      function low(v) { return String(v).trim().toLowerCase(); }
+      p.list.forEach(function (s) {
+        if (s.k === "link" && !hasVal(d.websites, s.v, function (v) { return low(v).replace(/^https?:\/\/(www\.)?/, "").replace(/\/+$/, ""); })) { d.websites.push({ v: s.v, type: "other" }); changed = true; }
+        else if (s.k === "phone" && !hasVal(d.phones, s.v, phoneDigits)) { d.phones.push({ v: s.v, type: "other" }); changed = true; }
+        else if (s.k === "email" && !hasVal(d.emails, s.v, low)) { d.emails.push({ v: s.v, type: "other" }); changed = true; }
+        else if (s.k === "birthday" && !d.events.some(function (e) { return e.type === "birthday"; })) { d.events.push({ day: s.v.day, year: s.v.year, type: "birthday", label: "" }); changed = true; }
+        else if (s.k === "job" && !d.jobTitle) { d.jobTitle = s.v; changed = true; }
+        else if (s.k === "org" && !d.org) { d.org = s.v; changed = true; }
+        else if (s.k === "address" && !d.addresses.length) { d.addresses.push({ street: String(s.v).slice(0, 120), city: "", zip: "", region: "", country: "", type: "work" }); changed = true; }
+      });
+      if (!changed) return;
+      d.mtime = now;
+      var clean = sanitizeContact(d);
+      if (!clean) return;
       before.push(JSON.parse(JSON.stringify(c)));
-      c.photo = f.photo;
-      c.mtime = now;
+      state.contacts[state.contacts.indexOf(c)] = clean;
       n++;
     });
-    pfFound = [];
-    $("pf-dlg").close();
-    if (!n) return;
+    if (!n) return 0;
     saveState();
     renderList();
-    toast(t("pf.done").replace("{n}", String(n)), t("undo"), function () {
+    toast(t("en.done").replace("{n}", String(n)), t("undo"), function () {
       var t2 = Date.now();
       before.forEach(function (old) {
         var cur = contactById(old.id);
@@ -4822,20 +4685,33 @@ document.addEventListener("keydown", function (e) {
       saveState();
       renderList();
     });
+    return n;
   }
-  if ($("pf-dlg") && window.crypto && crypto.subtle && window.createImageBitmap) {
-    $("ct-pf").addEventListener("click", function () {
-      pfFound = [];
-      pfRender();
-      $("pf-stat").textContent = "";
-      $("pf-dlg").showModal();
+  function enOpen(ids) {
+    var owners = enOwners();
+    var items = ids.map(contactById).filter(function (c) {
+      return c && (c.emails.length || c.phones.length || c.websites.length);
+    }).map(function (c) { return { id: c.id, name: displayName(c), rec: enRecord(c, owners) }; });
+    if (!items.length) { notifyTransient(t("en.empty")); return; }
+    enLoadUI().then(function () {
+      window.OrosEnrichUI.open({ lang: LANG === "el" ? "el" : "en", items: items, apply: enApply,
+        kinds: ["link", "phone", "email", "birthday", "job", "org", "address"] });
+    }, function () { notifyTransient(t("en.empty")); });
+  }
+  if ($("ct-enrich") && window.Promise && window.crypto && crypto.subtle) {
+    $("ct-enrich").addEventListener("click", function () { enOpen(listShown.slice()); });
+    $("ct-enrich-one").addEventListener("click", function () {
+      if (!editingId) return;
+      var form = readDlgDraft();
+      var dirty = dlgSnap && DLG_FIELDS.some(function (f) { return JSON.stringify(form[f]) !== JSON.stringify(dlgSnap[f]); });
+      if (dirty) { notifyTransient(t("en.save")); return; }
+      var id = editingId;
+      $("ct-dlg").close();
+      enOpen([id]);
     });
-    $("pf-go").addEventListener("click", pfSearch);
-    $("pf-apply").addEventListener("click", pfApply);
-    $("pf-close").addEventListener("click", function () { $("pf-dlg").close(); });
-    $("pf-dlg").addEventListener("close", function () { pfBusy = false; });
-  } else if ($("ct-pf")) {
-    $("ct-pf").hidden = true;
+  } else {
+    if ($("ct-enrich")) $("ct-enrich").hidden = true;
+    if ($("ct-enrich-one")) $("ct-enrich-one").hidden = true;
   }
 
   // ---- Import wiring ----
@@ -5092,7 +4968,7 @@ document.addEventListener("keydown", function (e) {
     // Round-trippable starred flag (X-ABShowAs was never parsed back
     // — favorite status silently died on vCard re-import).
     if (c.starred) L.push("X-OROS-STARRED:TRUE");
-    if (c.photo) L.push("PHOTO:" + c.photo);
+    if (c.avatar) L.push("X-OROS-AVATAR:" + c.avatar);
     L.push("REV:" + new Date(c.mtime).toISOString());
     L.push("END:VCARD");
     return L;
@@ -5428,7 +5304,10 @@ document.addEventListener("keydown", function (e) {
   applyI18n();
   renderChips();
   renderList();
-  setTimeout(shrinkPhotos, 1500);   // CT-PS
+  // CT-NP: stored photos are dropped once (the sanitizer already left
+  // them out); the save also marks sync dirty, so the cloud copy and
+  // the other devices lose them too.
+  if (hadPhotos) saveState();
 
   // Wave 2.1 — the shell staged a contact deep-link while we were
   // closed (sessionStorage, one-shot take). Runs AFTER render so the

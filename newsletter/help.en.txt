@@ -80,6 +80,9 @@ Lists, subscribers and issues sync through orOS sync, and pictures through the o
 - [[Esc]]: back to the list.
 - [[Ctrl+Z]]: undo the last delete.
 
+## Names from online profiles
+`Fill in names online` in Subscribers looks up the subscribers shown that have no name, using the public Gravatar profile each person set for their own e-mail (only a coded fingerprint of the address is sent). You see every name found, tick the right ones and tap `Apply selected`; `Undo` takes them away again.
+
 ## Tips
 > Send a test to your own phone and a Gmail address before each big send.
 
