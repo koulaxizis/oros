@@ -44,7 +44,16 @@ The prediction comes from your own averages. It's an estimate, not medical advic
 ## Sync and backup
 Periods, day logs (with flow, temperature and mucus), your symptoms and medications, and the reminder and temperature settings sync between your devices through [orOS sync](help:t/sync). Cycle makes no other network calls. Your periods also appear in [Calendar](app:calendar) under the `Cycle` label; tapping one opens it here.
 
-There's no import or export apart from the PDF report; use the orOS [backup](help:t/backup) to keep a copy.
+Apart from the PDF report and the import below, there's no export; use the orOS [backup](help:t/backup) to keep a copy.
+
+## Import from another app
+In `Insights`, tap `Import` and pick a file you exported from another app. Cycle shows what it found (periods, dates, days with flow, temperature, mucus and notes, and how many periods you already have) before anything is saved. The file is read on this device only and is never uploaded.
+- drip.: in drip., open Settings › Data › Export data. The CSV brings bleeding (as flow and periods), temperature, cervical mucus and notes; excluded values and spotting are skipped.
+- Clue: in Clue, open Settings › Export data and pick the `.cluedata` file (or the ZIP it comes in). Period days become flow and periods; spotting and tags are skipped.
+- Flo: ask Flo for a copy of your data (Settings › Privacy settings › Request data) and pick the JSON file (or the ZIP) it sends. Your periods and period days are read; predictions are skipped.
+- A CSV file: one row per period, with `start` and optional `end` columns, or one row per bleeding day, with a `date` column and optional `flow` (light, medium, heavy), `temperature`, `mucus` and `note` columns. Bleeding days at most two days apart make one period.
+
+What you've already logged stays as it is: a period that overlaps one of yours is skipped, and your own entries for a day win. A period with no end date gets your average length. Importing the same file again adds nothing. `Undo` in the message after the import takes it all back.
 
 ## Keyboard shortcuts
 - [[Enter]] in `New symptom…` or `New medication…` adds it.

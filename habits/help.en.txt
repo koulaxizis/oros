@@ -56,8 +56,20 @@ Some apps can add an automatic row, marked `Auto`, that ticks itself:
 
 These rows are read-only and aren't counted in `Stats`. Tap one to open its app.
 
+## Import from another app
+Bring your habits and their history over from another habit tracker. Press the gear button at the top, then `Import from another app`, and pick the file you exported. Habits recognises the app, then shows its name, how many habits and check-ins it found, and a list of the habits with a tick box each (archived habits start unticked). Press `Import`; a message tells you how many were added, and its `Undo` button takes the import back.
+
+How to export from each app:
+- **Loop Habit Tracker** (Android): `Settings` › `Export as CSV`. Pick the ZIP file as it is. Habits keeps each habit's frequency (every day, X times a week or a month), colour, amount and target; done and skipped days come over, Loop's automatic ticks don't.
+- **Habitica**: on the website, `Settings` › `Site Data` › `Export Data`, and choose user data as JSON (or the task history as CSV). Dailies and positive habits come over with their history; a daily keeps its weekdays.
+- **Streaks** (iPhone): export your data as CSV from the app's settings. Completed and skipped days come over.
+- **Habitify**: export your data as CSV. Completed and skipped days come over; habits with values become `Amount` habits.
+- **Any CSV**: a date column with a habit name column (and an optional status or value), or one row per date with a column per habit. A cell like `yes`, `x`, `done` or a number above 0 counts as done; `skip` counts as skipped.
+
+Importing the same file again adds only what's new and never makes a second copy. Days you've already filled in, or unticked, stay as you left them, and your own habits are never changed. The file is read on your device; nothing is uploaded anywhere except through your own sync.
+
 ## Sync and backup
-Your habits, check-offs, amounts, skipped days, notes and the steps setting sync between your devices through [orOS sync](help:t/sync). The open view and period stay on this device. Habits has no import or export; use the orOS [backup](help:t/backup).
+Your habits, check-offs, amounts, skipped days, notes and the steps setting sync between your devices through [orOS sync](help:t/sync). The open view and period stay on this device. Habits has no export of its own; use the orOS [backup](help:t/backup). To bring in habits from another app, see the section above.
 
 ## Keyboard shortcuts
 - [[N]] opens `Add habit` (when you're not typing in a field).
