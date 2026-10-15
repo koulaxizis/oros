@@ -301,6 +301,22 @@ ${aliases}
             android:label="Bridge diagnostics"
             android:theme="@android:style/Theme.Material.Light" />
 
+        <!-- Opened by the page ("intent://open?u=…#Intent;scheme=oros-browser;…"):
+             orOS's APK downloads and download page in the default browser,
+             in a normal tab (the in-app tab never finishes an APK). Every flavour. -->
+        <activity android:name=".BrowserActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="oros-browser" />
+            </intent-filter>
+        </activity>
+
         <activity android:name=".PermissionActivity"
             android:exported="true"
             android:excludeFromRecents="true"

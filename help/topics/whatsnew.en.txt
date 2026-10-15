@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.27.01
+- Android app: APK downloads and Get orOS now open in your default browser, in a normal tab, where the download finishes. Install the new APK once for this.
+
 ## Version 2.27.00
 - Notes can import from Obsidian, Standard Notes and any folder of Markdown files; importing again adds only what is new, and Undo removes it.
 
