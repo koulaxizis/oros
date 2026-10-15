@@ -533,6 +533,102 @@
   var APK_BASE = "https://github.com/koulaxizis/oros/releases/download/android-apks/";
   function apkUrl(id) { return has(id) ? APK_BASE + "oros-" + id + ".apk" : ""; }
 
+  // App updates for the APKs (FDROID-1): CI (.github/workflows/fdroid.yml)
+  // publishes them as an F-Droid repository on koulaxizis/oros-fdroid's
+  // GitHub Pages whenever the Android shell changes. F-Droid, Droid-ify
+  // and Obtainium then update them; versions.json next to it lets the
+  // app itself say once that a newer APK is out. The APK's start
+  // address carries its versionCode (android/tools/gen.js: ?apk=<code>).
+  var REPO_SITE = "https://koulaxizis.github.io/oros-fdroid";
+  var REPO = REPO_SITE + "/repo";
+  var REPO_FP = "2A066758DF27F6AFDF6D96F72D575E3E04844B9F85A22A54B7F2C03905A11846";
+  var MAIN_PKG = "online.useoros.twa";
+  // Packages whose last word is not the app id (android/solo-apps.json)
+  var PKG_WORD = { feeds: "reader", fitness: "workouts", gamecenter: "games" };
+  function pkgOf(id) {
+    if (id === "oros") return MAIN_PKG;
+    return has(id) ? "online.useoros." + (PKG_WORD[id] || id) : "";
+  }
+  // Opens F-Droid or Droid-ify with the orOS repository ready to add
+  function repoLink() { return "fdroidrepos://" + REPO.replace(/^https:\/\//, "") + "?fingerprint=" + REPO_FP; }
+  function obtainiumLink(id) { var p = pkgOf(id); return p ? "obtainium://add/" + REPO + "?appId=" + p : ""; }
+  function apkCode(search) {
+    var v = "";
+    try { v = new URLSearchParams(String(search || "")).get("apk") || ""; } catch (e) { v = ""; }
+    return /^\d{1,10}$/.test(v) ? Number(v) : 0;
+  }
+
+  var APK_TEXT = {
+    en: { note: "A new version of the {n} app is out. Update it where you installed it from (F-Droid, Droid-ify or Obtainium), or download the APK.", get: "Download", close: "Close" },
+    el: { note: "Βγήκε νέα έκδοση της εφαρμογής {n}. Ενημέρωσέ τη από εκεί που την εγκατέστησες (F-Droid, Droid-ify ή Obtainium) ή κατέβασε το APK.", get: "Λήψη", close: "Κλείσιμο" }
+  };
+  var APK_KEY = "oros-apk";           // { installed: {pkg: code}, seen: {pkg: code}, repo: {at, v} }
+  var DAY = 864e5;
+  // Remembers the installed versionCode (when the launch carried it) and,
+  // at most once a day, asks the repo for the published one. A newer one
+  // is told once per version, in a bar that closes for good.
+  function apkNotice(win, id, code) {
+    var pkg = pkgOf(id), st = {}, ls = null;
+    if (!pkg) return;
+    try { ls = win.localStorage; st = JSON.parse(ls.getItem(APK_KEY) || "{}") || {}; } catch (e) { return; }
+    st.installed = st.installed || {};
+    st.seen = st.seen || {};
+    if (code) st.installed[pkg] = code;
+    function save() { try { ls.setItem(APK_KEY, JSON.stringify(st)); } catch (e) {} }
+    save();
+    var have = st.installed[pkg];
+    if (!have) return;              // not the APK (a browser-installed app)
+    function check(v) {
+      var pub = v && Number(v[pkg]);
+      if (!pub || pub <= have || st.seen[pkg] === pub) return;
+      st.seen[pkg] = pub;
+      save();
+      showApkBar(win, id);
+    }
+    var r = st.repo;
+    if (r && r.v && Date.now() - r.at < DAY) { check(r.v); return; }
+    if (typeof win.fetch !== "function") return;
+    win.fetch(REPO_SITE + "/versions.json", { cache: "no-store" }).then(function (res) {
+      return res.ok ? res.json() : null;
+    }).then(function (v) {
+      if (!v || typeof v !== "object") return;
+      st.repo = { at: Date.now(), v: v };
+      save();
+      check(v);
+    }, function () {});
+  }
+  function showApkBar(win, id) {
+    var doc = win.document, lng = "en";
+    try { lng = lang(win.localStorage.getItem("oros-lang")); } catch (e) {}
+    var T = APK_TEXT[lng];
+    var bar = doc.createElement("div");
+    bar.id = "solo-apk";
+    bar.setAttribute("role", "status");
+    bar.style.cssText = "position:fixed;left:8px;right:8px;bottom:8px;z-index:2147483000;display:flex;gap:8px;align-items:center;" +
+      "padding:10px 12px;border-radius:12px;background:#2a2721;color:#f2ead8;font:14px/1.35 system-ui,sans-serif;" +
+      "box-shadow:0 4px 18px rgba(0,0,0,.45)";
+    var txt = doc.createElement("span");
+    txt.style.flex = "1";
+    txt.textContent = T.note.replace("{n}", id === "oros" ? "orOS" : nameOf(id, lng));
+    bar.appendChild(txt);
+    var a = doc.createElement("a");
+    a.href = id === "oros" ? APK_BASE + "oros.apk" : apkUrl(id);
+    a.rel = "noopener";
+    a.textContent = T.get;
+    a.style.cssText = "border-radius:8px;padding:8px 14px;background:#c8a96e;color:#1b1a18;font-weight:600;text-decoration:none;white-space:nowrap";
+    bar.appendChild(a);
+    var x = doc.createElement("button");
+    x.type = "button";
+    x.textContent = "×";
+    x.setAttribute("aria-label", T.close);
+    x.style.cssText = "border:0;background:none;color:inherit;font-size:22px;line-height:1;padding:2px 6px";
+    function close() { bar.remove(); }
+    x.addEventListener("click", close);
+    a.addEventListener("click", close);
+    bar.appendChild(x);
+    doc.body.appendChild(bar);
+  }
+
   function installUrl(id, ua, origin, inApp, inTab) {
     if (!has(id)) return "";
     if (inApp) return "intent://install/" + id + "#Intent;scheme=oros-permission;package=online.useoros.twa;end";
@@ -639,6 +735,7 @@
     var id = idFromPath(win.location.pathname);
     if (!id) { win.location.replace("/"); return; }
     var asked = /(^|[?&])install(=|&|$)/.test(win.location.search);
+    var code = apkCode(win.location.search);
     var src = frameSrc(id, win.location.search);
     // The launch parameters are one-shots: out of the address bar, so
     // a reload of this window is a plain start.
@@ -651,6 +748,7 @@
     frame.src = src;
     doc.body.appendChild(frame);
     installBar(win, id, asked);
+    setTimeout(function () { apkNotice(win, id, code); }, 3000);
     // Keyboard focus into the app, unless the app already took it
     // (a shortcut that focuses an input): focusing the frame again
     // would blur that input.
@@ -730,6 +828,11 @@
     hostBoot: host,
     installUrl: installUrl,
     apkUrl: apkUrl,
+    pkgOf: pkgOf,
+    repoLink: repoLink,
+    repoPage: REPO,
+    obtainiumLink: obtainiumLink,
+    apkCode: apkCode,
     id: "",
     share: null,
     word: ""
@@ -747,6 +850,21 @@
         if (api.share) ["share-url", "share-title", "share-text"].forEach(function (k) { u.searchParams.delete(k); });
         root.history.replaceState(root.history.state, "", u.pathname + u.search + u.hash);
       } catch (e) {}
+    }
+    // The orOS Android app itself (not a single app): its launch
+    // address carries ?apk=<versionCode> too.
+    else if (root.top === root && root.location.pathname === "/") {
+      var mainCode = apkCode(root.location.search);
+      if (mainCode) {
+        try {
+          var mu = new URL(root.location.href);
+          mu.searchParams.delete("apk");
+          root.history.replaceState(root.history.state, "", mu.pathname + mu.search + mu.hash);
+        } catch (e) {}
+      }
+      var later = function () { setTimeout(function () { apkNotice(root, "oros", mainCode); }, 5000); };
+      if (root.document.readyState === "complete") later();
+      else root.addEventListener("load", later);
     }
     // The host page that framed us (same origin), if any.
     api.host = function () {
