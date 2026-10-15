@@ -1,0 +1,137 @@
+// Seasonal decorations (seasonal.js): dates, event periods, what
+// shows on a day, and the merge of the "seasonal" slice (R26 / R27).
+"use strict";
+
+const test = require("node:test");
+const assert = require("node:assert/strict");
+const path = require("path");
+const fs = require("fs");
+
+const ROOT = path.join(__dirname, "..");
+const S = require(path.join(ROOT, "seasonal.js"));
+const N = require(path.join(ROOT, "calendar", "namedays.js"));
+const J = (x) => JSON.stringify(x);
+const ev = (id) => S.eventById(id);
+const local = S.normLocal(null);
+
+test("Orthodox Easter: known dates and the same as the Calendar", () => {
+  assert.equal(S.orthodoxEaster(2024), "2024-05-05");
+  assert.equal(S.orthodoxEaster(2025), "2025-04-20");
+  assert.equal(S.orthodoxEaster(2026), "2026-04-12");
+  assert.equal(S.orthodoxEaster(2027), "2027-05-02");
+  for (let y = 1990; y <= 2099; y++) assert.equal(S.orthodoxEaster(y), N.easter(y), String(y));
+});
+
+test("periods: inside, edges and New Year across the year end", () => {
+  assert.deepEqual(S.windowAt(ev("xmas"), "2026-12-01"), ["2026-12-01", "2026-12-30"]);
+  assert.equal(S.windowAt(ev("xmas"), "2026-11-30"), null);
+  assert.equal(S.windowAt(ev("xmas"), "2026-12-31"), null);
+  assert.deepEqual(S.windowAt(ev("newyear"), "2026-12-31"), ["2026-12-31", "2027-01-02"]);
+  assert.deepEqual(S.windowAt(ev("newyear"), "2027-01-02"), ["2026-12-31", "2027-01-02"]);
+  assert.equal(S.windowAt(ev("newyear"), "2027-01-03"), null);
+  assert.deepEqual(S.windowAt(ev("halloween"), "2026-10-25"), ["2026-10-25", "2026-10-31"]);
+  assert.equal(S.windowAt(ev("halloween"), "2026-11-01"), null);
+});
+
+test("nextWindow: the current period, else the next one", () => {
+  assert.deepEqual(S.nextWindow(ev("halloween"), "2026-10-15"), ["2026-10-25", "2026-10-31"]);
+  assert.deepEqual(S.nextWindow(ev("halloween"), "2026-11-02"), ["2027-10-25", "2027-10-31"]);
+  assert.deepEqual(S.nextWindow(ev("newyear"), "2027-01-01"), ["2026-12-31", "2027-01-02"]);
+  assert.deepEqual(S.nextWindow(ev("newyear"), "2027-01-05"), ["2027-12-31", "2028-01-02"]);
+});
+
+test("every day of a year has at most one event per priority, none overlap badly", () => {
+  for (let d = "2026-01-01"; d <= "2026-12-31"; d = S.addDays(d, 1)) {
+    const list = S.activeOn(d);
+    assert.ok(list.length <= 1, d + " " + list.map((e) => e.id));
+  }
+});
+
+test("pick: defaults ON, master switch, event switch, hide for today", () => {
+  const empty = S.normalize(null);
+  assert.equal(S.pick(empty, local, "2026-10-15", null), null);
+  assert.deepEqual(S.pick(empty, local, "2026-10-28", null), { id: "halloween", mode: "auto" });
+  assert.deepEqual(S.pick(empty, local, "2026-12-24", null), { id: "xmas", mode: "auto" });
+  assert.deepEqual(S.pick(empty, local, "2027-01-01", null), { id: "newyear", mode: "auto" });
+  const off = S.setField(empty, "on", false, 10);
+  assert.equal(S.pick(off, local, "2026-12-24", null), null);
+  const noX = S.setField(empty, "ev.xmas", false, 10);
+  assert.equal(S.pick(noX, local, "2026-12-24", null), null);
+  assert.deepEqual(S.pick(noX, local, "2026-12-31", null), { id: "newyear", mode: "auto" });
+  const hid = S.normLocal({ hide: "2026-12-24" });
+  assert.equal(S.pick(empty, hid, "2026-12-24", null), null);
+  assert.deepEqual(S.pick(empty, hid, "2026-12-25", null), { id: "xmas", mode: "auto" });
+});
+
+test("pick: a preview or a kept preview wins, even with the switch off", () => {
+  const off = S.setField(S.normalize(null), "on", false, 10);
+  assert.deepEqual(S.pick(off, local, "2026-10-15", "xmas"), { id: "xmas", mode: "preview" });
+  assert.equal(S.pick(off, local, "2026-10-15", "nope"), null);
+  const kept = S.normLocal({ keep: { id: "halloween", until: "2026-10-31" } });
+  assert.deepEqual(S.pick(off, kept, "2026-10-15", null), { id: "halloween", mode: "kept" });
+  assert.deepEqual(S.pick(off, kept, "2026-10-31", null), { id: "halloween", mode: "kept" });
+  assert.equal(S.pick(off, kept, "2026-11-01", null), null);
+  assert.deepEqual(S.normLocal({ keep: { id: "x", until: "2026-10-31" }, hide: "bad" }), { keep: null, hide: null });
+});
+
+test("fields: defaults, validation, stamps only on a real change", () => {
+  const d = S.normalize(null);
+  assert.equal(S.get(d, "on"), true);
+  assert.equal(S.get(d, "motion"), "auto");
+  assert.equal(S.get(d, "amount"), "mid");
+  assert.equal(S.get(d, "xmas"), "tree");
+  assert.equal(S.get(d, "ev.halloween"), true);
+  assert.equal(S.setField(d, "motion", "fast", 5), d);
+  assert.equal(S.setField(d, "nope", true, 5), d);
+  const a = S.setField(d, "motion", "still", 5);
+  assert.equal(J(a), J({ ver: 1, f: { motion: { v: "still", t: 5 } } }));
+  assert.equal(S.setField(a, "motion", "still", 9), a);
+  const b = S.setField(a, "motion", "auto", 3);     // clock behind: still moves forward
+  assert.equal(b.f.motion.t, 6);
+});
+
+test("normalize: junk out, unknown events from a newer bundle kept, sorted", () => {
+  const n = S.normalize({ f: {
+    "ev.easter": { v: true, t: 4 }, on: { v: "yes", t: 1 }, motion: { v: "still", t: -2 },
+    "BAD KEY": { v: true, t: 1 }, "ev.future": { v: { x: 1 }, t: 2 }, amount: null,
+  } });
+  assert.equal(J(n), J({ ver: 1, f: { "ev.easter": { v: true, t: 4 }, motion: { v: "still", t: 0 } } }));
+});
+
+test("merge: per field newer wins, symmetric, idempotent (fuzz)", () => {
+  const a = { ver: 1, f: { on: { v: false, t: 10 }, amount: { v: "low", t: 3 } } };
+  const b = { ver: 1, f: { on: { v: true, t: 12 }, xmas: { v: "boat", t: 1 } } };
+  const m = S.merge(a, b);
+  assert.equal(J(m), J({ ver: 1, f: { amount: { v: "low", t: 3 }, on: { v: true, t: 12 }, xmas: { v: "boat", t: 1 } } }));
+  const keys = ["on", "motion", "amount", "xmas", "ev.xmas", "ev.halloween", "ev.easter"];
+  const vals = { on: [true, false], motion: ["auto", "still"], amount: ["low", "mid", "high"], xmas: ["tree", "boat"] };
+  const rand = (n) => Math.floor(Math.random() * n);
+  const side = () => {
+    const f = {};
+    keys.forEach((k) => {
+      if (rand(2)) return;
+      const opts = vals[k] || [true, false];
+      f[k] = { v: opts[rand(opts.length)], t: rand(5) };
+    });
+    return { ver: 1, f };
+  };
+  for (let i = 0; i < 400; i++) {
+    const x = side(), y = side(), z = side();
+    const xy = S.merge(x, y);
+    assert.equal(J(xy), J(S.merge(y, x)), "symmetric");
+    assert.equal(J(S.merge(xy, xy)), J(xy), "idempotent");
+    assert.equal(J(S.merge(S.merge(x, y), z)), J(S.merge(x, S.merge(y, z))), "associative");
+  }
+});
+
+test("shell: loaded before shell.js, attached outside single apps, precached", () => {
+  const html = fs.readFileSync(path.join(ROOT, "index.html"), "utf8");
+  const a = html.indexOf('src="seasonal.js?v='), b = html.indexOf('src="shell.js?v=');
+  assert.ok(a > 0 && a < b);
+  const shell = fs.readFileSync(path.join(ROOT, "shell.js"), "utf8");
+  assert.match(shell, /if \(window\.orosSeasonal && !SOLO\) \{\n\s+window\.orosSeasonal\.attach\(/);
+  assert.match(fs.readFileSync(path.join(ROOT, "sw.js"), "utf8"), /"\.\/seasonal\.js"/);
+  const src = fs.readFileSync(path.join(ROOT, "seasonal.js"), "utf8");
+  assert.doesNotMatch(src, /https?:\/\/(?!www\.w3\.org)/, "nothing from the net");
+  assert.match(src, /prefers-reduced-motion/);
+});

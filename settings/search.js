@@ -17,6 +17,8 @@
                    "Χρώμα συστήματος", "χρώμα χρώματα παλέτα skin"],
     ["appearance", "Wallpaper", "background desktop picture",
                    "Ταπετσαρία", "φόντο επιφάνεια εργασίας εικόνα"],
+    ["appearance", "Seasonal decorations", "christmas snow tree lights new year fireworks halloween pumpkin holiday festive",
+                   "Θεματική διακόσμηση", "χριστούγεννα χιόνι δέντρο λαμπάκια καραβάκι πρωτοχρονιά πυροτεχνήματα halloween κολοκύθα γιορτές"],
     ["appearance", "Screen pet", "companion pet",
                    "Συντροφάκι", "κατοικίδιο σύντροφος"],
     ["menu", "Apps in the menu", "hide show hidden choose menu apps list",

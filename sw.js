@@ -180,6 +180,7 @@ var PRECACHE_URLS = [
   "./pet.css",
   "./pet.js",
   "./launcher.js",
+  "./seasonal.js",
   "./fileopen.js",
   "./phone.js",
   "./vault.js",

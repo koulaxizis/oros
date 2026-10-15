@@ -119,6 +119,11 @@ test("bridge: every set() and act() name the app uses exists in the shell", () =
       assert.match(n, /^dock:(on|size|magnify|autohide|over|style|hover)$/, n);
       return;
     }
+    if (/^seasonal:/.test(n)) {                  // passed on to seasonal.js by prefix
+      assert.match(BRIDGE, /\/\^seasonal:\//);
+      assert.match(n, /^seasonal:(on|motion|amount|xmas)$/, n);
+      return;
+    }
     assert.ok(BRIDGE.includes('case "' + n + '":'), "set " + n);
   });
   // set("search:<id>") is matched by prefix in the shell
