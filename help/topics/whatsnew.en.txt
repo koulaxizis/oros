@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.24.00
+- Seasonal decorations for the Greek holidays: a cross over the sea at Epiphany, hearts on Valentine's Day, confetti and a mask at Carnival, kites on Clean Monday, flags on 25 March and 28 October, red eggs, a candle and butterflies at Easter, a flower wreath on May Day. Carnival, Clean Monday and Easter follow the Orthodox Easter each year.
+
 ## Version 2.23.00
 - Seasonal decorations: in season your desktop dresses up on its own, with snow, lights and a tree (or the Greek Christmas boat) at Christmas, sparkles and midnight fireworks at New Year, pumpkins and bats at Halloween. They are on from the start; in Settings › Appearance you can turn them off, keep them still, or try any of them early with `Try it now`.
 
