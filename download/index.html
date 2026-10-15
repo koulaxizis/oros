@@ -369,6 +369,13 @@
   (function () {
     var ua = navigator.userAgent || "", pkg = "";
     if (!/Android/i.test(ua)) return;
+    var links = document.querySelectorAll('a[href^="https://github.com/"][href$=".apk"]');
+    // In the orOS Android app (TWA) a download never finishes either; its
+    // own BrowserActivity hands the link to the default browser.
+    if (inApp && S && S.browserHref) {
+      [].forEach.call(links, function (a) { a.setAttribute("href", S.browserHref(a.getAttribute("href"), "online.useoros.twa")); });
+      return;
+    }
     if (!inTab && !inApp) pkg = "com.android.chrome";
     else if (navigator.brave) pkg = "com.brave.browser";
     else if (/EdgA\//.test(ua)) pkg = "com.microsoft.emmx";
@@ -376,7 +383,7 @@
     else if (/Firefox\//.test(ua)) return;
     else if (/Chrome\//.test(ua)) pkg = "com.android.chrome";
     if (!pkg) return;
-    [].forEach.call(document.querySelectorAll('a[href^="https://github.com/"][href$=".apk"]'), function (a) {
+    [].forEach.call(links, function (a) {
       var h = a.getAttribute("href");
       a.setAttribute("href", "intent://" + h.slice(8) + "#Intent;scheme=https;package=" + pkg +
         ";S.browser_fallback_url=" + encodeURIComponent(h) + ";end");
