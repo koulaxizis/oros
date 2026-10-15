@@ -50,6 +50,8 @@
     .lang button { background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 8px;
       font: inherit; font-size: 14px; padding: 6px 12px; cursor: pointer; min-height: 36px; }
     .lang button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+    .appwin { border: 1px solid var(--accent); border-radius: 12px; padding: 12px 14px; }
+    .appwin .copy { margin-left: 6px; font: inherit; padding: 4px 10px; border-radius: 8px; border: 1px solid var(--accent); background: none; color: var(--accent); }
     .foot { color: var(--dim); font-size: 14px; margin-top: 28px; text-align: center; }
     [hidden] { display: none !important; }
   </style>
@@ -66,6 +68,7 @@
 
   <article lang="en" id="en">
     <p class="lede">Every way to get orOS. orOS is free forever (MIT): every download here costs nothing.</p>
+    <p class="appwin" hidden>You are inside the installed orOS app, where nothing can be installed. Single apps and APKs install from a browser tab: open <b>useoros.online/download</b> in Chrome or your usual browser. <button type="button" class="copy" data-done="Copied">Copy link</button></p>
     <div class="grid">
       <section class="card">
         <div class="ch"><h2>Use it in your browser</h2><span class="badge ok">Available</span></div>
@@ -168,6 +171,7 @@
 
   <article lang="el" id="el" hidden>
     <p class="lede">Όλοι οι τρόποι να αποκτήσεις το orOS. Το orOS είναι δωρεάν για πάντα (MIT): καμία λήψη εδώ δεν κοστίζει.</p>
+    <p class="appwin" hidden>Είσαι μέσα στην εγκατεστημένη εφαρμογή orOS, όπου δεν γίνεται εγκατάσταση. Οι μεμονωμένες εφαρμογές και τα APK εγκαθίστανται από καρτέλα browser: άνοιξε το <b>useoros.online/download</b> στο Chrome ή στον browser που χρησιμοποιείς. <button type="button" class="copy" data-done="Αντιγράφηκε">Αντιγραφή συνδέσμου</button></p>
     <div class="grid">
       <section class="card">
         <div class="ch"><h2>Χρησιμοποίησέ το στον browser</h2><span class="badge ok">Διαθέσιμο</span></div>
@@ -272,11 +276,11 @@
 <script>
 (function () {
   "use strict";
-  // Single-app tiles: on Android an https link to this site opens in the
-  // installed orOS app (or the orOS Android app), where nothing can be
-  // installed. solo.js's installUrl() gives the Chrome intent instead
-  // (the same address Settings › Single apps › Install uses).
-  var S = window.orosSolo, inApp = false, inTab = false;
+  // Single-app tiles: in a browser tab the plain address (that browser
+  // installs it). In the orOS Android app (TWA) installUrl() gives the
+  // app's own intent, which opens Chrome. Inside an installed orOS
+  // (Chrome's WebAPK) nothing can escape to a tab, so the page says so.
+  var S = window.orosSolo, inApp = false, inTab = true;
   try { inTab = matchMedia("(display-mode: browser)").matches; } catch (e) {}
   try {
     inApp = /^android-app:\/\/online\.useoros\.twa/.test(document.referrer) || sessionStorage.getItem("oros-dl-twa") === "1";
@@ -285,12 +289,39 @@
   if (S && S.installUrl) {
     [].forEach.call(document.querySelectorAll("a.app"), function (a) {
       var m = /^\/([a-z0-9-]+)\/solo\.html/.exec(a.getAttribute("href"));
-      var u = m && S.installUrl(m[1], navigator.userAgent, location.origin, inApp, inTab);
+      var u = m && S.installUrl(m[1], navigator.userAgent, location.origin, inApp, true);
       if (!u || u === a.getAttribute("href")) return;
       a.setAttribute("href", u);
       a.removeAttribute("target");
     });
   }
+  if (!inTab && !inApp) {
+    [].forEach.call(document.querySelectorAll(".appwin"), function (p) { p.hidden = false; });
+  }
+  [].forEach.call(document.querySelectorAll(".appwin .copy"), function (b) {
+    b.addEventListener("click", function () {
+      var url = "https://useoros.online/download/" + (document.documentElement.lang === "el" ? "?lang=el" : "");
+      try { navigator.clipboard.writeText(url).then(function () { b.textContent = b.getAttribute("data-done"); }); } catch (e) {}
+    });
+  });
+  // APKs: on Android a github.com link is caught by the GitHub app, which
+  // can't download them. An intent addressed to the browser itself keeps
+  // the download in the browser (fallback: the plain link).
+  (function () {
+    var ua = navigator.userAgent || "", pkg = "";
+    if (!/Android/i.test(ua)) return;
+    if (navigator.brave) pkg = "com.brave.browser";
+    else if (/EdgA\//.test(ua)) pkg = "com.microsoft.emmx";
+    else if (/SamsungBrowser\//.test(ua)) pkg = "com.sec.android.app.sbrowser";
+    else if (/Firefox\//.test(ua)) return;
+    else if (/Chrome\//.test(ua)) pkg = "com.android.chrome";
+    if (!pkg) return;
+    [].forEach.call(document.querySelectorAll('a[href^="https://github.com/"][href$=".apk"]'), function (a) {
+      var h = a.getAttribute("href");
+      a.setAttribute("href", "intent://" + h.slice(8) + "#Intent;scheme=https;package=" + pkg +
+        ";S.browser_fallback_url=" + encodeURIComponent(h) + ";end");
+    });
+  })();
   var TITLE = { en: "Get orOS", el: "Απόκτησε το orOS" };
   function set(l) {
     if (l !== "el") l = "en";
