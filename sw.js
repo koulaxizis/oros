@@ -20,7 +20,7 @@
 // GitHub Action should stamp just the version number; we prepend
 // the oros-v prefix here for cache namespace separation.
 
-var CACHE_VERSION = "oros-v2.22.01";
+var CACHE_VERSION = "oros-v2.25.00";
 var SHELL_CACHE   = "oros-shell-" + CACHE_VERSION;
 var RUNTIME_CACHE = "oros-runtime-" + CACHE_VERSION;
 // WebLLM's library (vendor/webllm, about 7 MB, loaded only when the
@@ -180,6 +180,7 @@ var PRECACHE_URLS = [
   "./pet.css",
   "./pet.js",
   "./launcher.js",
+  "./seasonal.js",
   "./fileopen.js",
   "./phone.js",
   "./vault.js",
@@ -440,12 +441,14 @@ var PRECACHE_URLS = [
   "mood/search.js",
   "mood/mood.css",
   "mood/mood.js",
+  "mood/import.js",
   "diary/",
   "diary/index.html",
   "diary/search.js",
   "diary/diary.css",
   "diary/core.js",
   "diary/diary.js",
+  "diary/import.js",
   "time/",
   "time/index.html",
   "time/time.css",
@@ -623,6 +626,7 @@ var PRECACHE_URLS = [
   "habits/search.js",
   "habits/habits.css",
   "habits/habits.js",
+  "habits/import.js",
   "meals/",
   "meals/index.html",
   "meals/search.js",
@@ -980,6 +984,7 @@ var PRECACHE_URLS = [
   "cycle/search.js",
   "cycle/cycle.css",
   "cycle/cycle.js",
+  "cycle/import.js",
   "contacts/",
   "contacts/index.html",
   "contacts/contacts.css",
@@ -1198,6 +1203,7 @@ var PRECACHE_URLS = [
   "atelier/gif.js",
   "atelier/motion.js",
   "atelier/zip.js",
+  "importkit.js",
   "atelier/pptx.js",
   "atelier/pptxout.js",
   "atelier/canva.js",
@@ -1715,6 +1721,7 @@ var PRECACHE_URLS = [
   "montage/reframe.js",
   "mood/vocab.js",
   "notes/md.js",
+  "notes/import.js",
   "passwords/kdbx.js",
   "passwords/pmapp.js",
   "passwords/pmcore.js",

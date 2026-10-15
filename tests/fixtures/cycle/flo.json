@@ -1,0 +1,17 @@
+{
+  "operationalData": {
+    "cycles": [
+      {"period_start_date": "2026-03-01", "period_end_date": "2026-03-05", "cycle_length": 29},
+      {"period_start_date": "2026-03-30", "period_end_date": "2026-04-03"},
+      {"period_start_date": "2026-04-27 00:00:00", "period_end_date": "2026-05-01 00:00:00"}
+    ],
+    "predictions": {"cycles": [{"period_start_date": "2026-05-25", "period_end_date": "2026-05-29"}]}
+  },
+  "point_events_manual_v2": [
+    {"category": "Period", "subcategory": "Heavy", "date": "2026-03-02"},
+    {"category": "Period", "subcategory": "Light", "date": "2026-03-05"},
+    {"category": "Period", "subcategory": "Medium", "date": "2026-05-24"},
+    {"category": "Period", "subcategory": "Medium", "date": "2026-05-25"},
+    {"category": "Mood", "subcategory": "Happy", "date": "2026-03-03"}
+  ]
+}

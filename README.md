@@ -1,7 +1,9 @@
 # orOS
 
 **A static operating system in your browser.** Live at
-[useoros.online](https://useoros.online).
+[useoros.online](https://useoros.online). Every way to get it (browser,
+app, orOS Portable, bootable USB, single apps, Android APKs) is on
+[useoros.online/download](https://useoros.online/download/).
 
 orOS is a desktop in a web page: a menu, a taskbar, notifications and a
 growing set of apps (notes, calendar, to-do, writer, spreadsheet, maps,

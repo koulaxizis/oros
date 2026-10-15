@@ -89,5 +89,369 @@
         "21:44:1E:31:A6:0A:89:70:8C:6C:EC:E6:49:39:0C:18:63:EC:8C:A1:47:F0:8D:A7:39:9A:E7:64:6E:02:EE:4E"
       ]
     }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.use_as_origin"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "online.useoros.bookmarks",
+      "sha256_cert_fingerprints": [
+        "21:44:1E:31:A6:0A:89:70:8C:6C:EC:E6:49:39:0C:18:63:EC:8C:A1:47:F0:8D:A7:39:9A:E7:64:6E:02:EE:4E"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.use_as_origin"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "online.useoros.contacts",
+      "sha256_cert_fingerprints": [
+        "21:44:1E:31:A6:0A:89:70:8C:6C:EC:E6:49:39:0C:18:63:EC:8C:A1:47:F0:8D:A7:39:9A:E7:64:6E:02:EE:4E"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.use_as_origin"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "online.useoros.writer",
+      "sha256_cert_fingerprints": [
+        "21:44:1E:31:A6:0A:89:70:8C:6C:EC:E6:49:39:0C:18:63:EC:8C:A1:47:F0:8D:A7:39:9A:E7:64:6E:02:EE:4E"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.use_as_origin"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "online.useoros.spreadsheet",
+      "sha256_cert_fingerprints": [
+        "21:44:1E:31:A6:0A:89:70:8C:6C:EC:E6:49:39:0C:18:63:EC:8C:A1:47:F0:8D:A7:39:9A:E7:64:6E:02:EE:4E"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.use_as_origin"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "online.useoros.kanban",
+      "sha256_cert_fingerprints": [
+        "21:44:1E:31:A6:0A:89:70:8C:6C:EC:E6:49:39:0C:18:63:EC:8C:A1:47:F0:8D:A7:39:9A:E7:64:6E:02:EE:4E"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.use_as_origin"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "online.useoros.mindmap",
+      "sha256_cert_fingerprints": [
+        "21:44:1E:31:A6:0A:89:70:8C:6C:EC:E6:49:39:0C:18:63:EC:8C:A1:47:F0:8D:A7:39:9A:E7:64:6E:02:EE:4E"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.use_as_origin"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "online.useoros.wiki",
+      "sha256_cert_fingerprints": [
+        "21:44:1E:31:A6:0A:89:70:8C:6C:EC:E6:49:39:0C:18:63:EC:8C:A1:47:F0:8D:A7:39:9A:E7:64:6E:02:EE:4E"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.use_as_origin"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "online.useoros.slides",
+      "sha256_cert_fingerprints": [
+        "21:44:1E:31:A6:0A:89:70:8C:6C:EC:E6:49:39:0C:18:63:EC:8C:A1:47:F0:8D:A7:39:9A:E7:64:6E:02:EE:4E"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.use_as_origin"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "online.useoros.habits",
+      "sha256_cert_fingerprints": [
+        "21:44:1E:31:A6:0A:89:70:8C:6C:EC:E6:49:39:0C:18:63:EC:8C:A1:47:F0:8D:A7:39:9A:E7:64:6E:02:EE:4E"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.use_as_origin"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "online.useoros.water",
+      "sha256_cert_fingerprints": [
+        "21:44:1E:31:A6:0A:89:70:8C:6C:EC:E6:49:39:0C:18:63:EC:8C:A1:47:F0:8D:A7:39:9A:E7:64:6E:02:EE:4E"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.use_as_origin"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "online.useoros.diary",
+      "sha256_cert_fingerprints": [
+        "21:44:1E:31:A6:0A:89:70:8C:6C:EC:E6:49:39:0C:18:63:EC:8C:A1:47:F0:8D:A7:39:9A:E7:64:6E:02:EE:4E"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.use_as_origin"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "online.useoros.mood",
+      "sha256_cert_fingerprints": [
+        "21:44:1E:31:A6:0A:89:70:8C:6C:EC:E6:49:39:0C:18:63:EC:8C:A1:47:F0:8D:A7:39:9A:E7:64:6E:02:EE:4E"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.use_as_origin"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "online.useoros.workouts",
+      "sha256_cert_fingerprints": [
+        "21:44:1E:31:A6:0A:89:70:8C:6C:EC:E6:49:39:0C:18:63:EC:8C:A1:47:F0:8D:A7:39:9A:E7:64:6E:02:EE:4E"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.use_as_origin"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "online.useoros.health",
+      "sha256_cert_fingerprints": [
+        "21:44:1E:31:A6:0A:89:70:8C:6C:EC:E6:49:39:0C:18:63:EC:8C:A1:47:F0:8D:A7:39:9A:E7:64:6E:02:EE:4E"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.use_as_origin"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "online.useoros.cycle",
+      "sha256_cert_fingerprints": [
+        "21:44:1E:31:A6:0A:89:70:8C:6C:EC:E6:49:39:0C:18:63:EC:8C:A1:47:F0:8D:A7:39:9A:E7:64:6E:02:EE:4E"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.use_as_origin"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "online.useoros.calculator",
+      "sha256_cert_fingerprints": [
+        "21:44:1E:31:A6:0A:89:70:8C:6C:EC:E6:49:39:0C:18:63:EC:8C:A1:47:F0:8D:A7:39:9A:E7:64:6E:02:EE:4E"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.use_as_origin"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "online.useoros.time",
+      "sha256_cert_fingerprints": [
+        "21:44:1E:31:A6:0A:89:70:8C:6C:EC:E6:49:39:0C:18:63:EC:8C:A1:47:F0:8D:A7:39:9A:E7:64:6E:02:EE:4E"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.use_as_origin"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "online.useoros.weather",
+      "sha256_cert_fingerprints": [
+        "21:44:1E:31:A6:0A:89:70:8C:6C:EC:E6:49:39:0C:18:63:EC:8C:A1:47:F0:8D:A7:39:9A:E7:64:6E:02:EE:4E"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.use_as_origin"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "online.useoros.maps",
+      "sha256_cert_fingerprints": [
+        "21:44:1E:31:A6:0A:89:70:8C:6C:EC:E6:49:39:0C:18:63:EC:8C:A1:47:F0:8D:A7:39:9A:E7:64:6E:02:EE:4E"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.use_as_origin"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "online.useoros.reader",
+      "sha256_cert_fingerprints": [
+        "21:44:1E:31:A6:0A:89:70:8C:6C:EC:E6:49:39:0C:18:63:EC:8C:A1:47:F0:8D:A7:39:9A:E7:64:6E:02:EE:4E"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.use_as_origin"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "online.useoros.mail",
+      "sha256_cert_fingerprints": [
+        "21:44:1E:31:A6:0A:89:70:8C:6C:EC:E6:49:39:0C:18:63:EC:8C:A1:47:F0:8D:A7:39:9A:E7:64:6E:02:EE:4E"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.use_as_origin"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "online.useoros.files",
+      "sha256_cert_fingerprints": [
+        "21:44:1E:31:A6:0A:89:70:8C:6C:EC:E6:49:39:0C:18:63:EC:8C:A1:47:F0:8D:A7:39:9A:E7:64:6E:02:EE:4E"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.use_as_origin"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "online.useoros.podcasts",
+      "sha256_cert_fingerprints": [
+        "21:44:1E:31:A6:0A:89:70:8C:6C:EC:E6:49:39:0C:18:63:EC:8C:A1:47:F0:8D:A7:39:9A:E7:64:6E:02:EE:4E"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.use_as_origin"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "online.useoros.radio",
+      "sha256_cert_fingerprints": [
+        "21:44:1E:31:A6:0A:89:70:8C:6C:EC:E6:49:39:0C:18:63:EC:8C:A1:47:F0:8D:A7:39:9A:E7:64:6E:02:EE:4E"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.use_as_origin"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "online.useoros.photolab",
+      "sha256_cert_fingerprints": [
+        "21:44:1E:31:A6:0A:89:70:8C:6C:EC:E6:49:39:0C:18:63:EC:8C:A1:47:F0:8D:A7:39:9A:E7:64:6E:02:EE:4E"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.use_as_origin"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "online.useoros.invoices",
+      "sha256_cert_fingerprints": [
+        "21:44:1E:31:A6:0A:89:70:8C:6C:EC:E6:49:39:0C:18:63:EC:8C:A1:47:F0:8D:A7:39:9A:E7:64:6E:02:EE:4E"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.use_as_origin"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "online.useoros.crm",
+      "sha256_cert_fingerprints": [
+        "21:44:1E:31:A6:0A:89:70:8C:6C:EC:E6:49:39:0C:18:63:EC:8C:A1:47:F0:8D:A7:39:9A:E7:64:6E:02:EE:4E"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.use_as_origin"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "online.useoros.timesheet",
+      "sha256_cert_fingerprints": [
+        "21:44:1E:31:A6:0A:89:70:8C:6C:EC:E6:49:39:0C:18:63:EC:8C:A1:47:F0:8D:A7:39:9A:E7:64:6E:02:EE:4E"
+      ]
+    }
   }
 ]

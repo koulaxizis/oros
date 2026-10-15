@@ -19,6 +19,18 @@ const ROOT = path.join(__dirname, "..", "..");
 const APP = path.join(__dirname, "..", "app", "src", "main");
 const HOST = "useoros.online";
 
+// The app's versionCode (as app/build.gradle derives it from shell.js
+// APP_VERSION) rides on the start address as ?apk=<code>, so orOS can
+// tell once that the F-Droid repo has a newer APK (solo.js FDROID-1).
+function versionCode() {
+  const m = /APP_VERSION\s*=\s*"(\d+)\.(\d+)\.(\d+)"/.exec(fs.readFileSync(path.join(ROOT, "shell.js"), "utf8"));
+  if (!m) throw new Error("APP_VERSION not found in shell.js");
+  return Number(m[1]) * 1000000 + Number(m[2]) * 1000 + Number(m[3]);
+}
+function withApk(url) {
+  return url + (url.indexOf("?") < 0 ? "?" : "&") + "apk=" + versionCode();
+}
+
 function esc(s) {
   return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
@@ -40,7 +52,7 @@ function build(manifest) {
   v.push("<resources>");
   v.push(`    <string name="appName">${resStr(manifest.name)}</string>`);
   v.push(`    <string name="launcherName">${resStr(manifest.short_name || manifest.name)}</string>`);
-  v.push(`    <string name="launchUrl">https://${HOST}${esc(manifest.start_url || "/")}</string>`);
+  v.push(`    <string name="launchUrl">https://${HOST}${esc(withApk(manifest.start_url || "/"))}</string>`);
   v.push(`    <string name="hostName">${HOST}</string>`);
   v.push(`    <color name="colorPrimary">${manifest.theme_color}</color>`);
   v.push(`    <color name="colorPrimaryDark">${manifest.theme_color}</color>`);

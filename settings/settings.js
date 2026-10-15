@@ -289,6 +289,8 @@
     c3.appendChild(grid);
     host.appendChild(c3);
 
+    if (s.seasonal) secSeasonal(host, s.seasonal);
+
     if (s.dock) {
       var d = s.dock;
       var c5 = card(t("k.dock"), "dock");
@@ -327,6 +329,95 @@
         { scope: "pet", hint: t("a.pet.hint") }));
       host.appendChild(c4);
     }
+  }
+
+  // Seasonal decorations (seasonal.js through the shell): a main
+  // switch, motion, amount, the Christmas piece, and per event a
+  // switch and "Try it now" (which closes Settings to show it).
+  function segRow(label, seg, opts) {    // like the Dock's Size row
+    var r = row(label, null, opts);
+    r.appendChild(seg);
+    return r;
+  }
+  function secSeasonal(host, z) {
+    var c = card(t("z.title"), "seasonal");
+    c.appendChild(row(t("z.on"), switchBtn(z.on, "seasonal:on", function (v) { set("seasonal:on", v); }, t("z.on")),
+      { hint: t("z.hint") }));
+    if (z.showing && z.showing.mode !== "auto") {
+      var msg = z.showing.mode === "kept" ? t("z.kept", { name: z.showing.name, until: z.showing.until })
+                                          : t("z.previewing", { name: z.showing.name });
+      var pr = row(msg, actions(
+        z.showing.mode === "preview" ? button(t("z.keep"), "seasonal.keep", function () { act("seasonal.keep"); }, "primary") : null,
+        button(t("z.stop"), "seasonal.stop", function () { act("seasonal.stop"); })), { stack: true });
+      c.appendChild(pr);
+    }
+    if (z.on) {
+      c.appendChild(segRow(t("z.motion"), segmented([
+        { value: "auto", label: t("z.motion.auto") }, { value: "still", label: t("z.motion.still") }
+      ], z.motion, "seasonal:motion", function (v) { set("seasonal:motion", v); }, t("z.motion")),
+        { hint: z.reduced ? t("z.reduced") : (z.lowBattery ? t("z.battery") : null) }));
+      c.appendChild(segRow(t("z.amount"), segmented(["low", "mid", "high"].map(function (k) {
+        return { value: k, label: t("z.amount." + k) };
+      }), z.amount, "seasonal:amount", function (v) { set("seasonal:amount", v); }, t("z.amount"))));
+      c.appendChild(segRow(t("z.xmas"), segmented([
+        { value: "tree", label: t("z.xmas.tree") }, { value: "boat", label: t("z.xmas.boat") }
+      ], z.xmas, "seasonal:xmas", function (v) { set("seasonal:xmas", v); }, t("z.xmas"))));
+      if (z.easter) {
+        c.appendChild(segRow(t("z.easter"), segmented([
+          { value: "orthodox", label: t("z.easter.orthodox") }, { value: "western", label: t("z.easter.western") }
+        ], z.easter, "seasonal:easter", function (v) { set("seasonal:easter", v); }, t("z.easter"))));
+      }
+      if (z.todayEvent) {
+        c.appendChild(row(z.hidden ? t("z.hidden") : t("z.today", { name: z.todayEvent.name }), actions(
+          button(z.hidden ? t("z.showToday") : t("z.hideToday"), "seasonal.hide",
+            function () { act("seasonal.hide", !z.hidden); }))));
+      }
+    }
+    function evRow(ev) {
+      var when = ev.id === "birthday" && !ev.from ? t("z.bday.unset")
+               : (ev.one ? ev.from : ev.from + " – " + ev.to);
+      var r = row(ev.name, switchBtn(ev.on, "seasonal:ev." + ev.id, function (v) { set("seasonal:ev." + ev.id, v); }, ev.name),
+        { hint: when + (ev.now ? " · " + t("z.now") : "") });
+      if (ev.id === "birthday" && z.bday !== undefined) r.appendChild(bdayPicker(z.bday));
+      r.appendChild(actions(button(t("z.try"), "seasonal.preview:" + ev.id, function () { act("seasonal.preview", ev.id); })));
+      c.appendChild(r);
+    }
+    c.appendChild(el("h4", "sub", t("z.events")));
+    z.events.filter(function (ev) { return !ev.season; }).forEach(evRow);
+    var seasons = z.events.filter(function (ev) { return ev.season; });
+    if (seasons.length) {
+      c.appendChild(el("h4", "sub", t("z.seasons")));
+      c.appendChild(el("p", "hint", t("z.seasons.hint")));
+      seasons.forEach(evRow);
+    }
+    host.appendChild(c);
+  }
+
+  // Day + month of the birthday ("MM-DD", no year). Saved once both
+  // are picked; both empty clears it. The day is clamped to the month.
+  var MONTH_DAYS = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  function bdayPicker(cur) {
+    var wrap = el("div", "actions");
+    var m0 = cur ? +cur.slice(0, 2) : 0, d0 = cur ? +cur.slice(3) : 0;
+    var day = select([{ value: "", label: t("z.bday.day") }].concat(Array.apply(null, Array(31)).map(function (x, i) {
+      return { value: String(i + 1), label: String(i + 1) };
+    })), d0 ? String(d0) : "", "seasonal:bday:d", save);
+    var months = t("z.months").split(",");
+    var mon = select([{ value: "", label: t("z.bday.month") }].concat(months.map(function (n, i) {
+      return { value: String(i + 1), label: n };
+    })), m0 ? String(m0) : "", "seasonal:bday:m", save);
+    day.setAttribute("aria-label", t("z.bday.day"));
+    mon.setAttribute("aria-label", t("z.bday.month"));
+    function save() {
+      var m = +mon.value, d = +day.value;
+      if (!m && !d) { set("seasonal:bday", ""); return; }
+      if (!m || !d) return;                        // wait for the other half
+      d = Math.min(d, MONTH_DAYS[m - 1]);
+      set("seasonal:bday", (m < 10 ? "0" : "") + m + "-" + (d < 10 ? "0" : "") + d);
+    }
+    wrap.appendChild(day);
+    wrap.appendChild(mon);
+    return wrap;
   }
 
   // ---------- 4b. Section: Menu (which apps the menu lists) ----------
@@ -496,6 +587,9 @@
   // In the orOS Android app only (BR-PHONE v3): the phone rings
   // Clock alarms, Water and To-Do reminders even when orOS is closed.
   var phoneOff = null;
+  function inBrowserTab() {
+    try { return (window.top || window).matchMedia("(display-mode: browser)").matches; } catch (e) { return false; }
+  }
   function phone() {
     var p = parentWin();
     try { return p && p.orosPhone && p.orosPhone.available() ? p.orosPhone : null; } catch (e) { return null; }
@@ -753,16 +847,48 @@
     c1.appendChild(el("p", "hint", t("so.intro")));
     S.ids().forEach(function (id) {
       var b = button(t("so.open"), "solo:" + id, function () {
-        var u = S.installUrl ? S.installUrl(id, navigator.userAgent, location.origin, !!phone()) : "/" + id + "/solo.html";
+        var u = S.installUrl ? S.installUrl(id, navigator.userAgent, location.origin, !!phone(), inBrowserTab()) : "/" + id + "/solo.html";
         // Android: an intent to Chrome, so the orOS app does not catch the
         // link; in the orOS app, the app itself opens Chrome.
         if (u.indexOf("intent:") === 0) { try { window.top.location.href = u; } catch (e) { location.href = u; } }
         else window.open(u, "_blank", "noopener");
       });
       b.title = t("so.open.title");
-      c1.appendChild(row(S.nameOf(id, LANG), b));
+      var r = row(S.nameOf(id, LANG), b);
+      // Android: the APK installs next to an installed orOS, which the
+      // browser's own install cannot (orOS claims every page of the site)
+      if (S.apkUrl && /Android/i.test(navigator.userAgent)) {
+        var k = el("a", "btn", t("so.apk"));
+        k.href = S.apkHref ? S.apkHref(id, navigator.userAgent, !inBrowserTab()) : S.apkUrl(id);
+        k.title = t("so.apk.title");
+        k.rel = "noopener";
+        b.parentNode.insertBefore(k, b.nextSibling);
+      }
+      c1.appendChild(r);
     });
     host.appendChild(c1);
+    // FDROID-1: updates for the APKs through the orOS F-Droid repository
+    if (S.repoLink) {
+      var cu = card(t("so.upd"));
+      cu.appendChild(el("p", "hint", t("so.upd.hint")));
+      var page = el("a", "btn", t("so.upd.page"));
+      page.href = S.repoPage;
+      page.target = "_blank";
+      page.rel = "noopener";
+      if (/Android/i.test(navigator.userAgent)) {
+        var fd = el("a", "btn", t("so.upd.fdroid"));
+        fd.href = S.repoLink();
+        fd.title = t("so.upd.fdroid.title");
+        var ob = el("a", "btn", t("so.upd.obtainium"));
+        ob.href = S.obtainiumLink("oros");
+        ob.title = t("so.upd.obtainium.title");
+        var r2 = row(t("so.upd.add"), fd);
+        fd.parentNode.appendChild(ob);
+        cu.appendChild(r2);
+      }
+      cu.appendChild(row(t("so.upd.addr"), page, { hint: S.repoPage }));
+      host.appendChild(cu);
+    }
     var c2 = card(t("so.how"));
     ["desktop", "android", "iphone"].forEach(function (k) {
       c2.appendChild(el("p", "hint", t("so.how." + k)));

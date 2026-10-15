@@ -11,7 +11,8 @@
 //   - Year: every line of a year on one page, printable
 //   - Settings: evening reminder (device-local, off by default; the
 //     shell fires it with the app closed), export TXT/CSV/JSON,
-//     import (fills empty days only)
+//     import (fills empty days only; also Day One, Journey, Diaro and
+//     Daylio exports through import.js, with a preview and Undo)
 // Data:
 //   - synced slice "diary" (oros-diary-data): LWW per day +
 //     tombstones (R5, R17, R26); clearing a line deletes the day
@@ -25,7 +26,7 @@
 //   4. On this day, stats, header
 //   5. My days: calendar, search
 //   6. Year
-//   7. Settings: reminder, export, import
+//   7. Settings: reminder, export, import (7c: from other apps)
 //   8. Tabs, toasts
 //   9. Keyboard (Contract Β)
 //  10. Sync slice + palette + deep link
@@ -84,7 +85,19 @@
       "rem.on": "Remind me when I have not written today", "rem.time": "At",
       "rem.hint": "Reminders appear while orOS is open (also with this app closed). With orOS closed they wait for the next time you open it. This setting stays on this device.",
       "sec.export": "Export", "sec.import": "Import",
-      "imp.hint": "A CSV, JSON or text file with a date and a line per day (like the exports). Days that already have a line keep it.",
+      "imp.hint": "A CSV, JSON or text file with a date and a line per day (like the exports), or an export of Day One, Journey, Diaro or Daylio. Days that already have text keep it.",
+      // Import from other journaling apps
+      "imp.title": "Import from {src}", "imp.range": "Dates", "imp.entries": "Entries", "imp.daysN": "Days",
+      "imp.new": "New days", "imp.append": "Days with a line: longer text added",
+      "imp.had": "Skipped: already have text", "imp.dup": "Already imported", "imp.photos": "Photos",
+      "imp.phOn": "Import the photos too (up to four a day)",
+      "imp.phNoDisk": "Photos need the orOS disk; the text is imported anyway.",
+      "imp.phNote": "Photos are drawn again as JPEG, without the camera data; any this browser cannot read (such as HEIC) are skipped.",
+      "imp.go": "Import", "imp.cancel": "Cancel",
+      "imp.nothing": "Nothing new to import: these days already have text.",
+      "imp.busy": "Reading the file…", "imp.phBusy": "Photos: {i} of {n}…", "imp.saving": "Importing…",
+      "toast.impDone": "Imported from {src} · new days {a} · longer texts {b} · photos {p}",
+      "toast.impUndone": "Import undone", "toast.impBig": "This file is too large",
       "toast.deleted": "Day deleted", "toast.undo": "Undo",
       "toast.saveFail": "Could not save: storage is full", "toast.file": "Saved",
       "toast.imported": "Added {a} days, {k} already had a line", "toast.impNone": "No days found in this file",
@@ -166,7 +179,19 @@
       "rem.on": "Υπενθύμισέ μου όταν δεν έχω γράψει σήμερα", "rem.time": "Στις",
       "rem.hint": "Οι υπενθυμίσεις εμφανίζονται όσο το orOS είναι ανοιχτό (και με κλειστή αυτή την εφαρμογή). Με κλειστό το orOS περιμένουν το επόμενο άνοιγμα. Η ρύθμιση μένει σε αυτή τη συσκευή.",
       "sec.export": "Εξαγωγή", "sec.import": "Εισαγωγή",
-      "imp.hint": "Αρχείο CSV, JSON ή κειμένου με ημερομηνία και φράση ανά μέρα (όπως οι εξαγωγές). Οι μέρες που έχουν ήδη φράση την κρατούν.",
+      "imp.hint": "Αρχείο CSV, JSON ή κειμένου με ημερομηνία και φράση ανά μέρα (όπως οι εξαγωγές) ή εξαγωγή από Day One, Journey, Diaro ή Daylio. Οι μέρες που έχουν ήδη κείμενο το κρατούν.",
+      // Εισαγωγή από άλλες εφαρμογές ημερολογίου
+      "imp.title": "Εισαγωγή από {src}", "imp.range": "Ημερομηνίες", "imp.entries": "Καταχωρίσεις", "imp.daysN": "Μέρες",
+      "imp.new": "Νέες μέρες", "imp.append": "Μέρες με φράση: προστίθεται μεγαλύτερο κείμενο",
+      "imp.had": "Παραλείπονται: έχουν ήδη κείμενο", "imp.dup": "Έχουν ήδη εισαχθεί", "imp.photos": "Φωτογραφίες",
+      "imp.phOn": "Εισαγωγή και των φωτογραφιών (έως τέσσερις τη μέρα)",
+      "imp.phNoDisk": "Οι φωτογραφίες θέλουν τον δίσκο του orOS· το κείμενο εισάγεται κανονικά.",
+      "imp.phNote": "Οι φωτογραφίες ξανασχεδιάζονται ως JPEG, χωρίς τα δεδομένα της κάμερας· όσες δεν διαβάζει αυτό το πρόγραμμα περιήγησης (π.χ. HEIC) παραλείπονται.",
+      "imp.go": "Εισαγωγή", "imp.cancel": "Άκυρο",
+      "imp.nothing": "Τίποτα καινούργιο για εισαγωγή: αυτές οι μέρες έχουν ήδη κείμενο.",
+      "imp.busy": "Διαβάζεται το αρχείο…", "imp.phBusy": "Φωτογραφίες: {i} από {n}…", "imp.saving": "Γίνεται η εισαγωγή…",
+      "toast.impDone": "Εισαγωγή από {src} · νέες μέρες {a} · μεγαλύτερα κείμενα {b} · φωτογραφίες {p}",
+      "toast.impUndone": "Η εισαγωγή αναιρέθηκε", "toast.impBig": "Το αρχείο είναι πολύ μεγάλο",
       "toast.deleted": "Η μέρα διαγράφηκε", "toast.undo": "Αναίρεση",
       "toast.saveFail": "Δεν αποθηκεύτηκε: ο χώρος είναι γεμάτος", "toast.file": "Αποθηκεύτηκε",
       "toast.imported": "Προστέθηκαν {a} μέρες, {k} είχαν ήδη φράση", "toast.impNone": "Δεν βρέθηκαν μέρες σε αυτό το αρχείο",
@@ -680,22 +705,159 @@
     if (kind === "csv") saveBlob(new Blob(["\ufeff" + C.toCSV(data)], { type: "text/csv" }), C.fileName("csv", today), "text/csv", "csv");
     if (kind === "json") saveBlob(new Blob([C.toJSON(data)], { type: "application/json" }), C.fileName("json", today), "application/json", "json");
   }
+  // Our own exports (and any date + line file): straight in, days
+  // with a line keep it.
+  function importOwn(text) {
+    var rows = C.parseImport(String(text || ""));
+    if (!rows.length) { showToast(t("toast.impNone")); return; }
+    flush();
+    var r = C.importInto(data, rows, Date.now());
+    data = r.data;
+    save();
+    calDirty = yearDirty = true;
+    renderDay();
+    showToast(t("toast.imported", { a: num(r.added), k: num(r.kept) }));
+  }
   function importFile(file) {
     if (!file) return;
-    var rd = new FileReader();
-    rd.onload = function () {
-      var rows = C.parseImport(String(rd.result || ""));
-      if (!rows.length) { showToast(t("toast.impNone")); return; }
-      flush();
-      var r = C.importInto(data, rows, Date.now());
+    var K = window.OrosImportKit, I = window.OrosDiaryImport;
+    if (!K || !I) {
+      var rd = new FileReader();
+      rd.onload = function () { importOwn(rd.result); };
+      rd.onerror = function () { showToast(t("toast.impFail")); };
+      rd.readAsText(file);
+      return;
+    }
+    if (file.size > I.MAX_FILE) { showToast(t("toast.impBig")); return; }
+    live(t("imp.busy"));
+    K.readFile(file, I.MAX_FILE).then(function (f) {
+      return I.read(f).then(function (res) {
+        if (res) { openImport(res); return; }
+        if (K.isZip(f.bytes)) { showToast(t("toast.impNone")); return; }
+        importOwn(K.text(f.bytes));
+      });
+    }).catch(function (e) { showToast(t(e && e.message === "toobig" ? "toast.impBig" : "toast.impFail")); });
+  }
+
+  // ---------- 7c. Import from other apps (Day One, Journey, Diaro, Daylio) ----------
+  // import.js reads the file; here: a preview (nothing written yet),
+  // then the photos (optional, through the same canvas re-draw as the
+  // app's own picker), then ONE write, one sync mark and an Undo.
+  var imp = null;            // { res, days, busy }
+  var impFocus = null;
+  function impRow(host, label, value) {
+    var row = el("div", "imp-row");
+    row.appendChild(el("dt", "", label));
+    row.appendChild(el("dd", "", value));
+    host.appendChild(row);
+  }
+  function renderImport() {
+    var I = window.OrosDiaryImport, pl = I.plan(data, imp.days), host = $("imp-rows");
+    $("imp-title").textContent = t("imp.title", { src: imp.res.name });
+    host.innerHTML = "";
+    impRow(host, t("imp.range"), pl.from === pl.to ? shortDate(pl.from) : shortDate(pl.from) + " – " + shortDate(pl.to));
+    impRow(host, t("imp.entries"), num(pl.entries));
+    impRow(host, t("imp.daysN"), num(pl.days));
+    impRow(host, t("imp.new"), num(pl.add));
+    impRow(host, t("imp.append"), num(pl.append));
+    if (pl.had) impRow(host, t("imp.had"), num(pl.had));
+    if (pl.dup) impRow(host, t("imp.dup"), num(pl.dup));
+    if (imp.res.photos) impRow(host, t("imp.photos"), num(pl.photos));
+    var fs = fsApi(), canPh = !!(pl.photos && fs && imp.res.zip);
+    $("imp-ph-row").hidden = !pl.photos;
+    $("imp-ph").disabled = !canPh || imp.busy;
+    if (!canPh) $("imp-ph").checked = false;
+    $("imp-note").textContent = !pl.items.length ? t("imp.nothing") : (pl.photos ? (canPh ? t("imp.phNote") : t("imp.phNoDisk")) : "");
+    $("imp-go").disabled = !pl.items.length || imp.busy;
+    $("imp-cancel").disabled = imp.busy;
+    return pl;
+  }
+  function openImport(res) {
+    var I = window.OrosDiaryImport;
+    flush(); flushLong();
+    imp = { res: res, days: I.group(res.entries), busy: false };
+    if (!imp.days.length) { imp = null; showToast(t("toast.impNone")); return; }
+    impFocus = document.activeElement;
+    closeMore(true);
+    $("imp-ph").checked = !!fsApi();
+    renderImport();
+    $("imp-dlg").hidden = false; $("scrim").hidden = false;
+    ($("imp-go").disabled ? $("imp-cancel") : $("imp-go")).focus();
+  }
+  function closeImport() {
+    if ($("imp-dlg").hidden || (imp && imp.busy)) return;
+    $("imp-dlg").hidden = true;
+    if ($("more").hidden && $("ph-view").hidden) $("scrim").hidden = true;
+    imp = null;
+    if (impFocus && impFocus.focus && document.contains(impFocus)) impFocus.focus();
+    else if ($("more-btn")) $("more-btn").focus();
+  }
+  // The photos of the planned days → { ymd: [orOS names] } (written
+  // one at a time; a picture that cannot be read is skipped).
+  function importPhotos(pl, written) {
+    var I = window.OrosDiaryImport, fs = fsApi(), zip = imp.res.zip, out = {};
+    var jobs = [];
+    pl.items.forEach(function (it) { it.day.ph.slice(0, it.ph).forEach(function (n) { jobs.push({ ymd: it.ymd, n: n }); }); });
+    var chain = Promise.resolve(), i = 0;
+    jobs.forEach(function (j) {
+      chain = chain.then(function () {
+        i++;
+        $("imp-note").textContent = t("imp.phBusy", { i: num(i), n: num(jobs.length) });
+        return zip.bytes(j.n, I.MAX_PHOTO).then(function (b) {
+          return b ? encodePhoto(new Blob([b])) : null;
+        }).then(function (blob) {
+          var name = blob && C.photoName(j.ymd, randId());
+          if (!name) return;
+          return Promise.resolve(fs.writeBlob(C.photoPath(name), blob)).then(function () {
+            written.push(name);
+            (out[j.ymd] = out[j.ymd] || []).push(name);
+          });
+        }).catch(function () {});
+      });
+    });
+    return chain.then(function () { return out; });
+  }
+  function runImport() {
+    if (!imp || imp.busy) return;
+    var I = window.OrosDiaryImport, src = imp.res.name, days = imp.days;
+    flush(); flushLong();
+    var pl = I.plan(data, days);
+    if (!pl.items.length) { renderImport(); return; }
+    imp.busy = true;
+    renderImport();
+    $("imp-note").textContent = t("imp.saving");
+    var written = [], wantPh = $("imp-ph").checked && !!fsApi() && !!imp.res.zip && pl.photos > 0;
+    (wantPh ? importPhotos(pl, written) : Promise.resolve({})).then(function (phNames) {
+      flush(); flushLong();
+      var r = I.apply(data, I.plan(data, days), Date.now(), phNames);   // the diary as it is now
       data = r.data;
-      save();
+      save();                                  // one write, one sync mark
+      var used = C.photosOf(data);
+      written.forEach(function (n) { if (used.indexOf(n) < 0) rmPhoto(n); });
+      var nph = written.filter(function (n) { return used.indexOf(n) >= 0; });
+      imp.busy = false;
+      closeImport();
       calDirty = yearDirty = true;
       renderDay();
-      showToast(t("toast.imported", { a: num(r.added), k: num(r.kept) }));
-    };
-    rd.onerror = function () { showToast(t("toast.impFail")); };
-    rd.readAsText(file);
+      if (view === "days") renderSearch();
+      if (view === "year") renderYear();
+      undoToast(t("toast.impDone", { src: src, a: num(r.added), b: num(r.appended), p: num(nph.length) }), function () {
+        flush(); flushLong();
+        data = I.revert(data, r.undo, Date.now());
+        save();
+        var still = C.photosOf(data);
+        nph.forEach(function (n) { if (still.indexOf(n) < 0) rmPhoto(n); });
+        calDirty = yearDirty = true;
+        renderDay();
+        if (view === "days") renderSearch();
+        if (view === "year") renderYear();
+        showToast(t("toast.impUndone"));
+      });
+    }).catch(function () {
+      written.forEach(rmPhoto);
+      if (imp) { imp.busy = false; renderImport(); }
+      showToast(t("toast.impFail"));
+    });
   }
 
   function randomMemory() {
@@ -1200,7 +1362,7 @@
   }
   function writeFails(f) { try { if (f.n) localStorage.setItem(FAILS_KEY, JSON.stringify(f)); else localStorage.removeItem(FAILS_KEY); } catch (e) {} }
   function setInert(on) {
-    ["toolbar", "tabs", "main", "more", "ph-view", "toast"].forEach(function (id) {
+    ["toolbar", "tabs", "main", "more", "ph-view", "imp-dlg", "toast"].forEach(function (id) {
       var n = $(id);
       if (!n) return;
       if (on) { n.setAttribute("inert", ""); n.setAttribute("aria-hidden", "true"); }
@@ -1588,6 +1750,8 @@
     }, true);
     document.addEventListener("keydown", function (e) {
       if (locked) return;                      // the lock screen takes no shortcuts
+      if (e.key === "Escape" && !$("imp-dlg").hidden) { e.preventDefault(); closeImport(); return; }
+      if (!$("imp-dlg").hidden) return;
       if (e.key === "Escape" && !$("ph-view").hidden) { e.preventDefault(); closePhoto(); return; }
       if (e.key === "Escape" && !$("loc-edit").hidden && $("loc-edit").contains(e.target)) { e.preventDefault(); closeLocEdit(); return; }
       if (e.key === "Escape" && !$("more").hidden) { e.preventDefault(); closeMore(); return; }
@@ -1686,6 +1850,7 @@
     renderDay();                              // keeps a line being typed (see renderDay)
     if (view === "days") renderSearch();
     if (view === "year") renderYear();
+    if (imp && !imp.busy && !$("imp-dlg").hidden) renderImport();
     if (!$("more").hidden) {
       renderBookYears();
       var ae = document.activeElement;
@@ -1724,6 +1889,7 @@
     $("more-close").innerHTML = ICON.close; setLabel($("more-close"), t("btn.close"));
     $("q").placeholder = t("ph.search");
     $("ph-close").innerHTML = ICON.close; setLabel($("ph-close"), t("btn.close"));
+    $("imp-close").innerHTML = ICON.close; setLabel($("imp-close"), t("btn.close"));
     $("loc-name").placeholder = t("loc.ph");
     $("lock-pin").placeholder = t("lock.pin");
     $("lock").querySelector(".lock-ic").innerHTML = ICON.lock;
@@ -1745,7 +1911,13 @@
     $("rand-btn").addEventListener("click", randomMemory);
     $("more-btn").addEventListener("click", openMore);
     $("more-close").addEventListener("click", closeMore);
-    $("scrim").addEventListener("click", function () { if (!$("ph-view").hidden) closePhoto(); else closeMore(); });
+    $("scrim").addEventListener("click", function () {
+      if (!$("imp-dlg").hidden) closeImport();
+      else if (!$("ph-view").hidden) closePhoto(); else closeMore();
+    });
+    $("imp-close").addEventListener("click", closeImport);
+    $("imp-cancel").addEventListener("click", closeImport);
+    $("imp-go").addEventListener("click", runImport);
     // Wave 30: the long entry, photos, place and weather
     $("long-open").addEventListener("click", function () {
       longShown[day] = true;
@@ -1790,7 +1962,11 @@
     $("exp-csv").addEventListener("click", function () { exportAs("csv"); });
     $("exp-json").addEventListener("click", function () { exportAs("json"); });
     $("imp-btn").addEventListener("click", function () { $("imp-file").value = ""; $("imp-file").click(); });
-    $("imp-file").addEventListener("change", function () { importFile($("imp-file").files[0]); });
+    $("imp-file").addEventListener("change", function () {
+      var f = $("imp-file").files[0];
+      $("imp-file").value = "";               // the same file can be chosen again
+      importFile(f);
+    });
     VIEWS.forEach(function (v) { $("tab-" + v).addEventListener("click", function () { showView(v); }); });
     window.addEventListener("pagehide", flush);
     document.addEventListener("visibilitychange", function () {
