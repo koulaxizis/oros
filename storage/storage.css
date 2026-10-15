@@ -584,3 +584,5 @@ dialog .hint { white-space: normal; }
   cursor: pointer;
   padding: 6px 0;
 }
+.imp-list { margin: 0 0 8px; padding-left: 20px; line-height: 1.6; font-size: 14px; overflow-wrap: anywhere; }
+#imp-dialog .hint { overflow-wrap: anywhere; }

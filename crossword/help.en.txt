@@ -21,8 +21,15 @@ Keyboard:
 
 After the daily, `Share` sends your result without spoilers: your time and one square per word, green for a word you found alone and yellow for a word with a revealed letter. On a phone it opens the share sheet; elsewhere it copies the text. `All games` opens the [Game Center](help:a/gamecenter), when it's installed.
 
+## Imported crosswords
+The download-tray button in the toolbar opens `Imported crosswords`: clued crosswords you bring in from a file, played with numbered squares and Across / Down clues. `Import a file…` reads:
+- Across Lite `.puz` files, the format most newspaper and indie crossword sites offer as a download (look for "Across Lite" or ".puz" next to the puzzle). A puzzle that is locked (scrambled) in Across Lite has to be unlocked there and saved first.
+- `.ipuz` files, an open format exported by many crossword makers and sites (often under Download or Export).
+
+You see the title, author, size and clue count before anything is saved; `Import and play` adds it to the list and opens it, and `Undo` in the message that follows takes it out again. The same file twice is never added twice. The clue of the current word shows above the grid; tap a clue to jump to it. `Check and reveal` works against the file's solution. Squares with more than one letter (rebus) take the first letter and show the whole entry once solved; circled squares are marked. Each imported crossword keeps its own progress and best time and doesn't change the Daily or Free play records. `Free` or `Daily` takes you back.
+
 ## Sync
-Your daily results and free-play records sync between your devices through [orOS sync](help:t/sync). If you've already solved today's crossword on another device, you'll see its time. The puzzles in progress and your settings stay on this device.
+Your daily results, free-play records and imported crosswords sync between your devices through [orOS sync](help:t/sync). If you've already solved today's crossword on another device, you'll see its time. The puzzles in progress and your settings stay on this device.
 
 ## Tips
 - Start with lengths that have only one word.

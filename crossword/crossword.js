@@ -15,10 +15,15 @@
 //   - check letter / word / all; reveal a letter (no record then)
 //   - Daily: one puzzle a day, the same on every device (from the date,
 //     offline); Free play: as many as you like, records per size
+//   - Imported (import.js, window.OrosCrosswordImport): clued crosswords
+//     from Across Lite .puz / .ipuz files, played with numbers and clues
+//     (check / reveal against the file's solution; rebus squares take
+//     their first letter; circles shown); a list of them, synced
 // Data:
 //   - synced slice "crossword" (oros-crossword-data): every daily result
 //     per language (one per day: the better one wins), Free play records
-//     as per-device rows + a reset stamp br
+//     as per-device rows + a reset stamp br, and lib: the imported
+//     crosswords (each with its own best time; import.js holds its join)
 //   - device-local (R10): oros-crossword-prefs (word language, mode,
 //     size, theme), oros-crossword-session (the puzzles in progress),
 //     oros-crossword-device (row id)
@@ -191,7 +196,57 @@
       "toast.dailyOne": "Daily has one crossword a day: for more, switch to Free",
       "toast.dailyFixed": "The daily crossword is the same for everyone: size and words change in Free play",
       "toast.save": "Could not save: storage is full",
-      "toast.noWords": "The word list did not load"
+      "toast.noWords": "The word list did not load",
+      "btn.lib": "Imported crosswords: open or import a .puz / .ipuz file",
+      "lib.title": "Imported crosswords",
+      "lib.intro": "Clued crosswords from Across Lite (.puz) or ipuz (.ipuz) files. They sync like your records.",
+      "lib.file": "Import a file…",
+      "lib.empty": "No imported crosswords yet.",
+      "lib.size": "{w}×{h}",
+      "lib.best": "best {t}",
+      "lib.solved": "solved",
+      "lib.open": "Open",
+      "lib.openLabel": "Open {t}",
+      "lib.untitled": "Crossword {w}×{h}",
+      "lib.close": "Close",
+      "lib.short": "Imported",
+      "imp.title": "Import · {s}",
+      "imp.src.puz": "Across Lite (.puz)",
+      "imp.src.ipuz": "ipuz",
+      "imp.name": "Title",
+      "imp.author": "Author",
+      "imp.copy": "Copyright",
+      "imp.size": "Size",
+      "imp.clues": "Clues",
+      "imp.cluesN": "{a} across · {d} down",
+      "imp.lang": "Letters",
+      "imp.rebus": "{n} squares hold more than one letter (rebus): type the first letter; the whole entry shows when solved.",
+      "imp.circles": "{n} circled squares are marked.",
+      "imp.have": "Already in your imported crosswords.",
+      "imp.go": "Import and play",
+      "imp.open": "Open it",
+      "imp.cancel": "Cancel",
+      "imp.done": "Crossword imported",
+      "imp.undone": "Import undone",
+      "imp.full": "The list is full: {n} imported crosswords at most",
+      "imp.err.read": "Could not read this file",
+      "imp.err.big": "This file is too large to import",
+      "imp.err.unknown": "Not a crossword file: choose an Across Lite .puz or an .ipuz file",
+      "imp.err.scrambled": "This puzzle is locked (scrambled) in Across Lite: unlock it there, save, and import again",
+      "imp.err.nosol": "This file has no solution, so answers could not be checked",
+      "imp.err.size": "Grids from 2×2 to 30×30 only",
+      "imp.err.clues": "The clues do not match the grid",
+      "imp.err.kind": "This ipuz file is not a crossword",
+      "clues.label": "Clues",
+      "clues.a": "Across",
+      "clues.d": "Down",
+      "clues.none": "(no clue)",
+      "live.clue": "{n} {d}, {k} letters: {q}",
+      "toast.notYetI": "Every square is filled, but something is not right yet: try Check",
+      "toast.impFixed": "This crossword comes from a file: sizes and words are for Free play",
+      "res.titleI": "Imported crossword",
+      "res.lib": "Imported crosswords",
+      "res.bestI": "Best time"
     },
     el: {
       "btn.new": "Νέο σταυρόλεξο (Shift+N)",
@@ -294,7 +349,57 @@
       "toast.dailyOne": "Το Ημέρας έχει ένα σταυρόλεξο τη μέρα: για περισσότερα, πήγαινε στο Ελεύθερο",
       "toast.dailyFixed": "Το σταυρόλεξο της ημέρας είναι ίδιο για όλους: μέγεθος και λέξεις αλλάζουν στο Ελεύθερο",
       "toast.save": "Δεν αποθηκεύτηκε: ο χώρος είναι γεμάτος",
-      "toast.noWords": "Η λίστα λέξεων δεν φορτώθηκε"
+      "toast.noWords": "Η λίστα λέξεων δεν φορτώθηκε",
+      "btn.lib": "Σταυρόλεξα από εισαγωγή: άνοιγμα ή εισαγωγή αρχείου .puz / .ipuz",
+      "lib.title": "Σταυρόλεξα από εισαγωγή",
+      "lib.intro": "Σταυρόλεξα με ορισμούς από αρχεία Across Lite (.puz) ή ipuz (.ipuz). Συγχρονίζονται όπως τα ρεκόρ σου.",
+      "lib.file": "Εισαγωγή αρχείου…",
+      "lib.empty": "Δεν υπάρχουν ακόμα σταυρόλεξα από εισαγωγή.",
+      "lib.size": "{w}×{h}",
+      "lib.best": "ρεκόρ {t}",
+      "lib.solved": "λυμένο",
+      "lib.open": "Άνοιγμα",
+      "lib.openLabel": "Άνοιγμα: {t}",
+      "lib.untitled": "Σταυρόλεξο {w}×{h}",
+      "lib.close": "Κλείσιμο",
+      "lib.short": "Από εισαγωγή",
+      "imp.title": "Εισαγωγή · {s}",
+      "imp.src.puz": "Across Lite (.puz)",
+      "imp.src.ipuz": "ipuz",
+      "imp.name": "Τίτλος",
+      "imp.author": "Δημιουργός",
+      "imp.copy": "Πνευματικά δικαιώματα",
+      "imp.size": "Μέγεθος",
+      "imp.clues": "Ορισμοί",
+      "imp.cluesN": "{a} οριζόντια · {d} κάθετα",
+      "imp.lang": "Γράμματα",
+      "imp.rebus": "{n} τετράγωνα έχουν πάνω από ένα γράμμα (rebus): γράψε το πρώτο γράμμα· όλη η λέξη φαίνεται όταν λυθεί.",
+      "imp.circles": "{n} τετράγωνα με κύκλο είναι σημειωμένα.",
+      "imp.have": "Υπάρχει ήδη στα σταυρόλεξα από εισαγωγή.",
+      "imp.go": "Εισαγωγή και παιχνίδι",
+      "imp.open": "Άνοιγμα",
+      "imp.cancel": "Άκυρο",
+      "imp.done": "Το σταυρόλεξο εισήχθη",
+      "imp.undone": "Η εισαγωγή αναιρέθηκε",
+      "imp.full": "Η λίστα γέμισε: έως {n} σταυρόλεξα από εισαγωγή",
+      "imp.err.read": "Δεν ήταν δυνατή η ανάγνωση του αρχείου",
+      "imp.err.big": "Το αρχείο είναι πολύ μεγάλο για εισαγωγή",
+      "imp.err.unknown": "Δεν είναι αρχείο σταυρόλεξου: διάλεξε αρχείο Across Lite .puz ή .ipuz",
+      "imp.err.scrambled": "Το σταυρόλεξο είναι κλειδωμένο (scrambled) στο Across Lite: ξεκλείδωσέ το εκεί, αποθήκευσε και κάνε ξανά εισαγωγή",
+      "imp.err.nosol": "Το αρχείο δεν έχει λύση, οπότε οι απαντήσεις δεν μπορούν να ελεγχθούν",
+      "imp.err.size": "Μόνο πλέγματα από 2×2 έως 30×30",
+      "imp.err.clues": "Οι ορισμοί δεν ταιριάζουν με το πλέγμα",
+      "imp.err.kind": "Αυτό το αρχείο ipuz δεν είναι σταυρόλεξο",
+      "clues.label": "Ορισμοί",
+      "clues.a": "Οριζόντια",
+      "clues.d": "Κάθετα",
+      "clues.none": "(χωρίς ορισμό)",
+      "live.clue": "{n} {d}, {k} γράμματα: {q}",
+      "toast.notYetI": "Όλα τα τετράγωνα είναι γεμάτα, αλλά κάτι δεν είναι σωστό ακόμα: δοκίμασε τον Έλεγχο",
+      "toast.impFixed": "Αυτό το σταυρόλεξο είναι από αρχείο: μεγέθη και λέξεις αλλάζουν στο Ελεύθερο",
+      "res.titleI": "Σταυρόλεξο από εισαγωγή",
+      "res.lib": "Σταυρόλεξα από εισαγωγή",
+      "res.bestI": "Καλύτερος χρόνος"
     }
   };
 
@@ -707,8 +812,11 @@
   //   ver: 1,
   //   br: <reset stamp>,                                     // max-merged
   //   days: { "en:<day>"|"el:<day>": { b: <epoch>, t: seconds, h: 0|1 revealed } },
-  //   rows: { <deviceId>: { b: <epoch>, s: { "<lang>:<size>": { n, t, d } } } }
+  //   rows: { <deviceId>: { b: <epoch>, s: { "<lang>:<size>": { n, t, d } } } },
+  //   lib?: { "imp-…": { z: puzzle, b, x, s, t } }   // imported (import.js)
   // }
+  // lib is only present when it holds something; a records reset (br)
+  // leaves it alone.
   // Daily: one result per day and language; the newer epoch wins, equal
   // epochs keep the better result (no revealed letter first, then the
   // shorter time). Free play: each device only grows its own row: solved
@@ -791,7 +899,18 @@
     var sd = {}, sr = {};
     Object.keys(days).sort(cmpStr).forEach(function (k) { sd[k] = days[k]; });
     Object.keys(rows).sort(cmpStr).forEach(function (id) { sr[id] = rows[id]; });
-    return { ver: DATA_VER, br: br, days: sd, rows: sr };
+    var out = { ver: DATA_VER, br: br, days: sd, rows: sr };
+    var lib = libJoin(a.lib, b.lib);
+    if (lib) out.lib = lib;
+    return out;
+  }
+  // The imported crosswords' join (import.js). Without the module (it
+  // did not load) the library is carried over untouched, never dropped.
+  function libJoin(x, y) {
+    var m = typeof window !== "undefined" && window.OrosCrosswordImport;
+    if (m) return m.mergeLib(x, y);
+    var keep = x && typeof x === "object" ? x : (y && typeof y === "object" ? y : null);
+    return keep && Object.keys(keep).length ? keep : null;
   }
 
   // { day: result } for one language.
@@ -863,7 +982,13 @@
   function countGame(g, sec) {
     sec = Math.min(MAX_SEC, Math.max(1, Math.round(sec)));
     var record = false;
-    if (g.mode === "d") {
+    if (g.mode === "i") {
+      // imported: its own solved stamp and best time in the library
+      var e = data.lib && data.lib[g.id], IM = window.OrosCrosswordImport;
+      if (!e || !IM) return false;
+      record = !g.hinted && (!e.t || sec < e.t);
+      data.lib = IM.solved(data.lib, g.id, sec, g.hinted, Date.now()) || data.lib;
+    } else if (g.mode === "d") {
       var k = g.lang + ":" + g.day, o = data.days[k], v = { b: data.br, t: sec, h: g.hinted ? 1 : 0 };
       if (!o || o.b < data.br || betterDay(v, o)) data.days[k] = v;
     } else {
@@ -884,7 +1009,8 @@
   }
 
   // ---------- 4. Device-local prefs + session ----------
-  var prefs = { lang: LANG, mode: "d", size: "m", theme: "random" };
+  // mode "i" = an imported crossword (imp = its library id).
+  var prefs = { lang: LANG, mode: "d", size: "m", theme: "random", imp: "" };
 
   function themeOk(th) { return th === "random" || THEME_IDS.indexOf(th) >= 0; }
   function loadPrefs() {
@@ -895,6 +1021,7 @@
         if (MODES.indexOf(p.mode) >= 0) prefs.mode = p.mode;
         if (SIZES.indexOf(p.size) >= 0) prefs.size = p.size;
         if (typeof p.theme === "string" && themeOk(p.theme)) prefs.theme = p.theme;
+        if (p.mode === "i" && typeof p.imp === "string" && /^imp-[a-z0-9]{1,16}$/.test(p.imp)) { prefs.mode = "i"; prefs.imp = p.imp; }
       }
     } catch (e) {}
   }
@@ -902,7 +1029,9 @@
     try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); } catch (e) {}
   }
 
-  // One puzzle per language and mode:
+  // One puzzle per language and mode (key "<lang>:<mode>"), and per
+  // imported crossword (key "i:<id>", only the play state: the puzzle
+  // itself comes from the library, see impGame):
   // { lang, mode, day, size, theme, rows, cols, sol, words[{w,r,c,d}],
   //   giv[], uq, fill, bad[], rev[], cur, dir, hinted, ms, done, ext }
   // sol / fill: one character per cell ("." no cell, "-" empty in fill);
@@ -958,15 +1087,27 @@
     try {
       var s = JSON.parse(localStorage.getItem(SESSION_KEY) || "null");
       if (s && typeof s === "object") {
-        Object.keys(s).forEach(function (k) { if (validGame(s[k], k)) sessions[k] = s[k]; });
+        Object.keys(s).forEach(function (k) {
+          if (/^i:imp-[a-z0-9]{1,16}$/.test(k)) { if (s[k] && typeof s[k] === "object") sessions[k] = s[k]; }
+          else if (validGame(s[k], k)) sessions[k] = s[k];
+        });
       }
     } catch (e) {}
+  }
+  function sessKey(g) { return g.mode === "i" ? "i:" + g.id : g.lang + ":" + g.mode; }
+  // The play state of an imported crossword (what the session keeps).
+  function impState(g) {
+    return { id: g.id, fill: g.fill, bad: g.bad, rev: g.rev, cur: g.cur, dir: g.dir, hinted: g.hinted, ms: g.ms, done: g.done };
   }
   function saveSessions() {
     if (game) {
       foldTime();
-      sessions[game.lang + ":" + game.mode] = game;
+      sessions[sessKey(game)] = game.mode === "i" ? impState(game) : game;
     }
+    // imported states only while their crossword is in the list
+    Object.keys(sessions).forEach(function (k) {
+      if (k.indexOf("i:") === 0 && !libEntry(k.slice(2))) delete sessions[k];
+    });
     try { localStorage.setItem(SESSION_KEY, JSON.stringify(sessions)); } catch (e) {}
   }
 
@@ -1003,10 +1144,78 @@
     return g;
   }
 
+  // ---------- Imported crosswords (import.js) ----------
+  var IMPC = window.OrosCrosswordImport || null;
+
+  // The visible library entry of an id, or null.
+  function libEntry(id) {
+    var e = data && data.lib && data.lib[id];
+    return e && e.z && e.b > e.x ? e : null;
+  }
+
+  // An imported crossword as a game: the slots with their numbers and
+  // clues (across first, then down: the Tab order), squares whose
+  // solution cannot be typed (a digit, a symbol) are given. With a saved
+  // play state st (session) that state is restored when it fits.
+  function impGame(e, st) {
+    if (!IMPC || !e || !e.z) return null;
+    var z = e.z, letters = LETTERS[z.lg], acr = [], dn = [], ka = 0, kd = 0, i;
+    IMPC.slots(z).forEach(function (x) {
+      var w = "";
+      for (i = 0; i < x.len; i++) w += z.g[x.d ? (x.r + i) * z.w + x.c : x.r * z.w + x.c + i];
+      var p = { w: w, r: x.r, c: x.c, d: x.d, n: x.n, q: x.d ? z.cd[kd++] : z.ca[ka++] };
+      (x.d ? dn : acr).push(p);
+    });
+    var words = acr.concat(dn), giv = [];
+    for (i = 0; i < z.g.length; i++) if (z.g[i] !== BLOCK && letters.indexOf(z.g[i]) < 0) giv.push(i);
+    var rb = {};
+    (z.rb || []).forEach(function (x) { rb[x[0]] = x[1]; });
+    var g = { lang: z.lg, mode: "i", id: e.id, day: 0, size: "i", theme: "random", rows: z.h, cols: z.w,
+      sol: z.g, words: words, giv: giv, uq: true, fill: startFill(z.g, giv), bad: [], rev: [], cur: 0, dir: 0,
+      hinted: false, ms: 0, done: false, ext: false, ti: z.ti || "", au: z.au || "", ci: z.ci || [], rb: rb };
+    var cs = cellsOf(words[0], z.w);
+    g.dir = words[0].d;
+    g.cur = cs.filter(function (ix) { return g.fill[ix] === EMPTY; })[0];
+    if (g.cur === undefined) g.cur = cs[0];
+    if (st && validImpState(g, st)) {
+      g.fill = st.fill; g.bad = st.bad.slice(); g.rev = st.rev.slice(); g.cur = st.cur; g.dir = st.dir;
+      g.hinted = st.hinted; g.ms = st.ms; g.done = st.done;
+    }
+    return g;
+  }
+  // Does a saved play state fit the crossword g?
+  function validImpState(g, st) {
+    if (!st || typeof st !== "object" || st.id !== g.id || typeof st.fill !== "string" ||
+        st.fill.length !== g.sol.length || (st.dir !== 0 && st.dir !== 1) || typeof st.hinted !== "boolean" ||
+        !isInt(st.ms) || st.ms < 0 || typeof st.done !== "boolean" || !isInt(st.cur)) return false;
+    var letters = LETTERS[g.lang], size = g.sol.length, i;
+    for (i = 0; i < size; i++) {
+      var s0 = g.sol[i], f = st.fill[i];
+      if ((s0 === BLOCK) !== (f === BLOCK)) return false;
+      if (s0 !== BLOCK && f !== EMPTY && f !== s0 && letters.indexOf(f) < 0) return false;
+    }
+    for (i = 0; i < g.giv.length; i++) if (st.fill[g.giv[i]] !== g.sol[g.giv[i]]) return false;
+    var letterCell = function (ix) { return g.sol[ix] !== BLOCK; };
+    if (!idxList(st.rev, size, function (ix) { return letterCell(ix) && st.fill[ix] === g.sol[ix]; })) return false;
+    if (!idxList(st.bad, size, function (ix) { return letterCell(ix) && st.fill[ix] !== EMPTY; })) return false;
+    return st.cur >= 0 && st.cur < size && letterCell(st.cur);
+  }
+
   // The puzzle for the current language and mode: the saved one, unless
-  // it is an old daily puzzle; a new one otherwise.
+  // it is an old daily puzzle; a new one otherwise. Mode "i": the open
+  // imported crossword (Free play when it is gone from the list).
   function pickGame() {
     stopClock();
+    if (prefs.mode === "i") {
+      var ig = impGame(libEntry(prefs.imp) && { id: prefs.imp, z: libEntry(prefs.imp).z }, sessions["i:" + prefs.imp]);
+      if (ig) {
+        game = ig;
+        saveSessions();
+        startClock();
+        return;
+      }
+      prefs.mode = "f"; prefs.imp = ""; savePrefs();
+    }
     var key = prefs.lang + ":" + prefs.mode, g = sessions[key];
     if (g && g.mode === "d" && g.day !== today()) g = null;
     if (!g) g = freshGame(prefs.lang, prefs.mode, prefs.size, prefs.theme);
@@ -1089,7 +1298,13 @@
     if (ix === game.cur) toggleDir();
     else select(ix, game.dir);
     var p = game.words[curSlot()];
-    if (p) live(t("live.slot", { n: p.w.length, d: t("dir." + p.d) }));
+    if (p) live(slotText(p));
+  }
+  // What a screen reader hears for a word: its length and direction, or
+  // in an imported crossword its number and clue.
+  function slotText(p) {
+    if (game.mode === "i") return t("live.clue", { n: p.n, d: t("dir." + p.d), k: p.w.length, q: p.q || t("clues.none") });
+    return t("live.slot", { n: p.w.length, d: t("dir." + p.d) });
   }
   function toggleDir() {
     if (!game) return;
@@ -1117,7 +1332,7 @@
     game.bad = game.bad.filter(function (b) { return b !== ix; });
     var after = placedWords(game.fill, game.words, game.cols);
     var gained = after.filter(function (i) { return before.indexOf(i) < 0; });
-    if (gained.length) {
+    if (gained.length && game.mode !== "i") {           // clued: no hint that a word is right
       live(t("live.word", { w: game.words[gained[0]].w, f: after.length, k: game.words.length }));
       pulseWord(gained);
     }
@@ -1151,9 +1366,9 @@
 
   var notYetShown = false;
   function afterEdit() {
-    if (isSolved(game.fill, game.words, game.cols)) { finish(); renderAll(); return; }
+    if (game.mode === "i" ? game.fill === game.sol : isSolved(game.fill, game.words, game.cols)) { finish(); renderAll(); return; }
     if (game.fill.indexOf(EMPTY) < 0) {
-      if (!notYetShown) { notYetShown = true; showToast(t("toast.notYet")); }
+      if (!notYetShown) { notYetShown = true; showToast(t(game.mode === "i" ? "toast.notYetI" : "toast.notYet")); }
     } else notYetShown = false;
     saveSessions();
     renderGrid();
@@ -1174,7 +1389,7 @@
     var cs = cellsOf(p, game.cols), empty = cs.filter(function (ix) { return game.fill[ix] === EMPTY; });
     game.dir = p.d;
     select(empty.length ? empty[0] : cs[0], p.d);
-    live(t("live.slot", { n: p.w.length, d: t("dir." + p.d) }));
+    live(slotText(p));
   }
 
   // Check: mark wrong letters in the cell, the word or everywhere.
@@ -1229,6 +1444,7 @@
 
   // Free play: a new puzzle. One in progress is never lost silently (R14).
   function newPuzzle(size, theme) {
+    if (prefs.mode === "i") { libDialog(); return; }
     if (!game && !lists(prefs.lang)) { showToast(t("toast.noWords")); return; }
     if (prefs.mode === "d") { showToast(t(game && game.done ? "toast.dailyDone" : "toast.dailyOne")); return; }
     closeDialogs();
@@ -1258,7 +1474,8 @@
   }
 
   function setLangMode(lang, mode) {
-    if (game && lang === game.lang && mode === game.mode) return;   // visible active state
+    if (mode === "i") mode = "f";                                   // the language switch leaves an imported crossword
+    if (game && game.mode !== "i" && lang === game.lang && mode === game.mode) return;   // visible active state
     if (game) saveSessions();
     prefs.lang = lang; prefs.mode = mode; savePrefs();
     closeDialogs();
@@ -1268,11 +1485,13 @@
   }
 
   function setSize(size) {
+    if (prefs.mode === "i") { showToast(t("toast.impFixed")); return; }
     if (prefs.mode === "d") { showToast(t("toast.dailyFixed")); return; }
     if (game && game.size === size) return;
     newPuzzle(size, null);
   }
   function setTheme(theme) {
+    if (prefs.mode === "i") { showToast(t("toast.impFixed")); return; }
     if (prefs.mode === "d") { showToast(t("toast.dailyFixed")); return; }
     newPuzzle(null, theme);
   }
@@ -1314,8 +1533,8 @@
   }
 
   function renderToolbar() {
-    var size = game ? game.size : prefs.size;
-    [["#lang-seg", "data-lang", prefs.lang], ["#mode-seg", "data-mode", prefs.mode], ["#size-seg", "data-size", size]]
+    var size = game ? game.size : prefs.size, imp = prefs.mode === "i";
+    [["#lang-seg", "data-lang", imp ? "" : prefs.lang], ["#mode-seg", "data-mode", prefs.mode], ["#size-seg", "data-size", size]]
       .forEach(function (x) {
         [].forEach.call(document.querySelectorAll(x[0] + " .seg-btn"), function (b) {
           var on = b.getAttribute(x[1]) === x[2];
@@ -1323,20 +1542,22 @@
           b.setAttribute("aria-pressed", on ? "true" : "false");
         });
       });
-    $("size-seg").classList.toggle("fixed", prefs.mode === "d");
+    $("size-seg").classList.toggle("fixed", prefs.mode !== "f");
     var tb = $("theme-btn");
-    tb.lastChild.textContent = themeName(game);
+    tb.lastChild.textContent = imp ? t("lib.short") : themeName(game);
     tb.classList.toggle("fixed", prefs.mode === "d");
     $("new-btn").disabled = prefs.mode === "d";
+    $("lib-btn").classList.toggle("on", imp);
   }
 
   function renderStatus() {
     if (!game) { $("info").textContent = t("toast.noWords"); $("count").textContent = ""; return; }
     var s = t("sizeShort." + game.size);
     $("info").textContent = game.mode === "d" ? t("st.daily", { n: game.day + 1 })
-      : t("st.free", { th: themeName(game), s: s });
+      : game.mode === "i" ? impTitle(game) : t("st.free", { th: themeName(game), s: s });
     var r = game.ext ? dailyResult(game) : null;
-    var f = game.done ? game.words.length : placedWords(game.fill, game.words, game.cols).length;
+    var f = game.done ? game.words.length : game.mode === "i" ? filledWords().length
+      : placedWords(game.fill, game.words, game.cols).length;
     $("count").textContent = r ? t("st.elsewhere", { t: fmtTime(r.t) })
       : t("st.count", { f: f, k: game.words.length });
     $("count").className = game.done ? "done" : "";
@@ -1349,38 +1570,72 @@
     n.textContent = fmtTime(r ? r.t : elapsed() / 1000);
   }
 
-  // Grid: one div per square; letter cells hold the letter.
+  function impTitle(g) { return g.ti || t("lib.untitled", { w: g.cols, h: g.rows }); }
+  // Imported: words with every square filled (right or not: no hint).
+  function filledWords() {
+    var out = [];
+    game.words.forEach(function (p, i) {
+      if (cellsOf(p, game.cols).every(function (ix) { return game.fill[ix] !== EMPTY; })) out.push(i);
+    });
+    return out;
+  }
+
+  // Grid: one div per square; letter cells hold the letter. Imported
+  // crosswords add the clue number (span.num) and circles (.circ); the
+  // letter then sits in span.l.
   function buildGrid() {
     var el = $("grid");
     el.innerHTML = "";
     el.style.setProperty("--r", game.rows);
     el.style.setProperty("--c", game.cols);
     el.setAttribute("aria-label", t("grid.label"));
+    el.classList.toggle("clued", game.mode === "i");
+    var nums = {};
+    if (game.mode === "i") game.words.forEach(function (p) { nums[p.r * game.cols + p.c] = p.n; });
     for (var r = 0; r < game.rows; r++) {
       var row = document.createElement("div");
       row.className = "g-row";
       row.setAttribute("role", "row");
       for (var c = 0; c < game.cols; c++) {
         var ix = r * game.cols + c, cell = document.createElement("div");
-        if (game.sol[ix] === BLOCK) { cell.className = "blk"; cell.setAttribute("aria-hidden", "true"); }
-        else { cell.className = "cell"; cell.setAttribute("role", "gridcell"); cell.setAttribute("data-ix", ix); }
+        if (game.sol[ix] === BLOCK) { cell.className = "blk" + (game.mode === "i" ? " ib" : ""); cell.setAttribute("aria-hidden", "true"); }
+        else {
+          cell.className = "cell";
+          cell.setAttribute("role", "gridcell");
+          cell.setAttribute("data-ix", ix);
+          if (game.mode === "i") {
+            if (nums[ix]) {
+              var nm = document.createElement("span");      // (el is the grid here)
+              nm.className = "num";
+              nm.textContent = String(nums[ix]);
+              cell.appendChild(nm);
+            }
+            if (game.ci.indexOf(ix) >= 0) cell.classList.add("circ");
+            var lt = document.createElement("span");
+            lt.className = "l";
+            cell.appendChild(lt);
+          }
+        }
         row.appendChild(cell);
       }
       el.appendChild(row);
     }
-    el.setAttribute("data-key", game.sol);
+    el.setAttribute("data-key", (game.mode === "i" ? game.id + ":" : "") + game.sol);
   }
 
   function renderGrid() {
     var el = $("grid");
     if (!game) { el.innerHTML = ""; el.removeAttribute("data-key"); return; }
-    if (el.getAttribute("data-key") !== game.sol) buildGrid();
+    if (el.getAttribute("data-key") !== (game.mode === "i" ? game.id + ":" : "") + game.sol) buildGrid();
     var si = game.done ? -1 : curSlot(), inSlot = {};
     if (si >= 0) cellsOf(game.words[si], game.cols).forEach(function (ix) { inSlot[ix] = true; });
     var cells = el.querySelectorAll(".cell");
     for (var k = 0; k < cells.length; k++) {
       var cell = cells[k], ix = +cell.getAttribute("data-ix"), f = game.fill[ix], l = f === EMPTY ? "" : f;
-      if (cell.textContent !== l) cell.textContent = l;
+      var box = game.mode === "i" ? cell.lastChild : cell;
+      var shown = game.mode === "i" && game.done && game.rb[ix] ? game.rb[ix] : l;   // a solved rebus: the whole entry
+      if (box.textContent !== shown) box.textContent = shown;
+      if (game.mode === "i") box.classList.toggle("rb", shown.length > 1);
       cell.classList.toggle("giv", game.giv.indexOf(ix) >= 0);
       cell.classList.toggle("rev", game.rev.indexOf(ix) >= 0);
       cell.classList.toggle("bad", game.bad.indexOf(ix) >= 0);
@@ -1413,7 +1668,12 @@
   function renderWords() {
     var box = $("word-groups");
     box.innerHTML = "";
+    var clued = !!game && game.mode === "i";
+    $("words-intro").hidden = clued;
+    $("words").setAttribute("aria-label", t(clued ? "clues.label" : "words.label"));
+    renderClueBar();
     if (!game) return;
+    if (clued) { renderClues(box); return; }
     var got = game.done ? game.words.map(function (p, i) { return i; }) : placedWords(game.fill, game.words, game.cols);
     var si = game.done ? -1 : curSlot(), curLen = si >= 0 ? game.words[si].w.length : 0, groups = {};
     game.words.forEach(function (p, i) { (groups[p.w.length] = groups[p.w.length] || []).push(i); });
@@ -1428,6 +1688,56 @@
       g.appendChild(ul);
       box.appendChild(g);
     });
+  }
+
+  // Imported: the Across and Down clues; the current one lit (and kept
+  // in view), the crossing one marked, filled words dimmed.
+  function renderClues(box) {
+    var si = game.done ? -1 : curSlot(), cross = -1, filled = filledWords();
+    if (si >= 0) cross = slots()[game.cur][1 - game.words[si].d];
+    [0, 1].forEach(function (d) {
+      var g = el("div", "grp cl");
+      g.appendChild(el("div", "grp-h", t(d ? "clues.d" : "clues.a")));
+      var ol = el("ol", "cl-l");
+      game.words.forEach(function (p, i) {
+        if (p.d !== d) return;
+        var li = el("li", "cl-i" + (i === si ? " on" : i === cross ? " x" : "") + (filled.indexOf(i) >= 0 ? " fill" : ""));
+        li.setAttribute("data-w", String(i));
+        li.appendChild(el("b", "", String(p.n)));
+        li.appendChild(el("span", "", p.q || t("clues.none")));
+        ol.appendChild(li);
+      });
+      g.appendChild(ol);
+      box.appendChild(g);
+    });
+    var on = box.querySelector(".cl-i.on"), wrap = $("words");
+    if (on && wrap.getBoundingClientRect) {
+      var wr = wrap.getBoundingClientRect(), r = on.getBoundingClientRect();
+      if (r.top < wr.top || r.bottom > wr.bottom) wrap.scrollTop += r.top - wr.top - Math.max(0, (wr.height - r.height) / 3);
+    }
+  }
+  // The clue of the current word above the grid (imported only).
+  function renderClueBar() {
+    var bar = $("clue");
+    if (!bar) return;
+    var si = game && game.mode === "i" && !game.done ? curSlot() : -1;
+    bar.hidden = !(game && game.mode === "i");
+    bar.textContent = "";
+    if (bar.hidden) return;
+    if (si < 0) { bar.appendChild(el("span", "", impTitle(game) + (game.au ? " · " + game.au : ""))); return; }
+    var p = game.words[si];
+    bar.appendChild(el("b", "", p.n + (p.d ? "↓" : "→")));
+    bar.appendChild(el("span", "", p.q || t("clues.none")));
+  }
+  // A tap on a clue: its first empty square.
+  function tapClue(i) {
+    var p = game && game.words[i];
+    if (!p) return;
+    if (game.done) { gate(); return; }
+    var cs = cellsOf(p, game.cols), empty = cs.filter(function (ix) { return game.fill[ix] === EMPTY; });
+    game.dir = p.d;
+    select(empty.length ? empty[0] : cs[0], p.d);
+    live(slotText(p));
   }
 
   function renderKeyboard() {
@@ -1482,7 +1792,8 @@
     dlg.className = "mm-dlg";
     dlg.addEventListener("click", function (e) { if (e.target === dlg) dlg.close(); });
     dlg.addEventListener("close", function () {
-      parkToast();
+      var box = $("toast");
+      if (box && box.parentNode === dlg) parkToast();   // only its own: the next dialog may host it already
       setTimeout(function () { dlg.remove(); }, 0);
     });
     return dlg;
@@ -1519,6 +1830,7 @@
     closeDialogs();
     var d = today(), sec = Math.max(1, Math.round(elapsed() / 1000));   // as counted
     var dlg = makeDialog("cw-result");
+    if (game.mode === "i") { importedResult(dlg, sec, record); return; }
     var title = game.mode === "d" ? t("res.titleD", { n: game.day + 1 }) : t("res.titleF", { s: t("sizeShort." + game.size) });
     dlg.appendChild(el("div", "dlg-title", title + " · " + langName(game.lang)));
     dlg.appendChild(el("div", "dlg-hero", t("res.solved", { t: fmtTime(sec) })));
@@ -1542,6 +1854,25 @@
     var main = game.mode === "d"
       ? button(t("res.toFree"), "primary", function () { dlg.close(); setLangMode(game.lang, "f"); })
       : button(t("res.newPuzzle"), "primary", function () { dlg.close(); newPuzzle(null, null); });
+    acts.appendChild(main);
+    dlg.appendChild(acts);
+    hubLink(dlg);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    main.focus();
+  }
+
+  function importedResult(dlg, sec, record) {
+    var e = libEntry(game.id);
+    dlg.appendChild(el("div", "dlg-title", t("res.titleI")));
+    dlg.appendChild(el("div", "dlg-msg cw-center", impTitle(game)));
+    dlg.appendChild(el("div", "dlg-hero", t("res.solved", { t: fmtTime(sec) })));
+    if (record) dlg.appendChild(el("span", "dlg-badge", t("res.record")));
+    if (game.hinted) dlg.appendChild(el("div", "dlg-msg cw-center cw-dim", t("res.hinted")));
+    if (e && e.t) dlg.appendChild(row(t("res.bestI"), fmtTime(e.t)));
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("res.close"), "", function () { dlg.close(); }));
+    var main = button(t("res.lib"), "primary", function () { dlg.close(); libDialog(); });
     acts.appendChild(main);
     dlg.appendChild(acts);
     hubLink(dlg);
@@ -1618,6 +1949,7 @@
 
   // Word source picker (Free play): random words or a theme.
   function themesDialog() {
+    if (prefs.mode === "i") { libDialog(); return; }
     if (prefs.mode === "d") { showToast(t("toast.dailyFixed")); return; }
     var cur = game ? game.theme : prefs.theme;
     var dlg = makeDialog("cw-themes");
@@ -1695,6 +2027,174 @@
     showToast(t("toast.reset"));
   }
 
+  // ---------- Imported crosswords: list, picker, preview, import ----------
+  // The list button → the imported crosswords (open one) and "Import a
+  // file…" → picker → parse (OrosCrosswordImport, pure) → preview →
+  // ONE write (save(): one persist, one dirty mark) → the crossword
+  // opens → a toast with Undo (a newer tombstone; the game shown before
+  // comes back). The games in progress are never touched: each imported
+  // crossword keeps its own play state. Text from a file reaches the
+  // page through textContent only.
+  var IMP_SRC = { puz: "imp.src.puz", ipuz: "imp.src.ipuz" };
+
+  function libDialog() {
+    if (!IMPC || !window.OrosImportKit) return;
+    parkToast();                                // the toast may live in a dialog being replaced
+    var dlg = makeDialog("cw-lib");
+    dlg.classList.add("wide");
+    dlg.appendChild(el("div", "dlg-title", t("lib.title")));
+    dlg.appendChild(el("div", "dlg-msg cw-dim cw-small", t("lib.intro")));
+    var l = IMPC.list(data.lib);
+    if (!l.length) dlg.appendChild(el("div", "dlg-msg cw-dim", t("lib.empty")));
+    else {
+      var ul = el("ul", "lib-list");
+      l.forEach(function (e) {
+        var z = e.z, name = z.ti || t("lib.untitled", { w: z.w, h: z.h });
+        var li = el("li", "lib-row" + (game && game.mode === "i" && game.id === e.id ? " cur" : ""));
+        var txt = el("span", "lib-txt");
+        txt.appendChild(el("strong", "", name));
+        var bits = [t("lib.size", { w: z.w, h: z.h })];
+        if (z.au) bits.unshift(z.au);
+        if (e.s) bits.push(e.t ? t("lib.best", { t: fmtTime(e.t) }) : t("lib.solved"));
+        txt.appendChild(el("span", "lib-meta", bits.join(" · ")));
+        li.appendChild(txt);
+        var b = button(t("lib.open"), "lib-open", function () { dlg.close(); openImported(e.id); });
+        b.setAttribute("aria-label", t("lib.openLabel", { t: name }));
+        li.appendChild(b);
+        ul.appendChild(li);
+      });
+      dlg.appendChild(ul);
+    }
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("lib.close"), "", function () { dlg.close(); }));
+    var imp = button(t("lib.file"), "primary", function () {
+      dlg.close();
+      pickImportFile().then(function (f) { if (f) importFile(f); });
+    });
+    acts.appendChild(imp);
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    imp.focus();
+  }
+
+  // Play an imported crossword (its saved state, if any). The game shown
+  // before is saved first, so nothing is lost.
+  function openImported(id) {
+    var e = libEntry(id);
+    if (!e) return false;
+    if (game) saveSessions();
+    stopClock();
+    prefs.mode = "i"; prefs.imp = id; savePrefs();
+    pickGame();
+    renderAll();
+    if (game && game.words[curSlot()]) live(slotText(game.words[curSlot()]));
+    return true;
+  }
+
+  function pickImportFile() {
+    var host = null;
+    try { host = window.parent && window.parent !== window ? window.parent.orosDialog : null; } catch (e) { host = null; }
+    if (host && typeof host.openFile === "function") return host.openFile(IMPC.ACCEPT);
+    return new Promise(function (resolve) {        // standalone page
+      var inp = document.createElement("input");
+      inp.type = "file";
+      inp.accept = IMPC.ACCEPT;
+      inp.hidden = true;
+      inp.addEventListener("change", function () {
+        var f = inp.files && inp.files[0];
+        inp.remove();
+        resolve(f || null);
+      });
+      inp.addEventListener("cancel", function () { inp.remove(); resolve(null); });
+      document.body.appendChild(inp);
+      inp.click();
+    });
+  }
+  // A file → the preview (Promise<boolean>: a crossword was found). Also
+  // the handle for a file opened with orOS.
+  function importFile(file) {
+    var K = window.OrosImportKit;
+    if (!IMPC || !K) return Promise.resolve(false);
+    return K.readFile(file, IMPC.MAX_FILE)
+      .then(function (r) {
+        var res = IMPC.parse(r);
+        if (!res || res.error) {
+          var code = res && res.error;
+          showToast(t(code === "toobig" ? "imp.err.big" : STRINGS.en["imp.err." + code] ? "imp.err." + code : "imp.err.unknown"));
+          return false;
+        }
+        previewImport(res, K.clean(r.name || file.name || "", 80));
+        return true;
+      })
+      .catch(function (e) {
+        showToast(t(e && e.message === "toobig" ? "imp.err.big" : "imp.err.read"));
+        return false;
+      });
+  }
+
+  function previewImport(res, fileName) {
+    var z = res.z, id = IMPC.idOf(z), have = !!libEntry(id);
+    var dlg = makeDialog("cw-imp");
+    dlg.classList.add("wide");
+    dlg.appendChild(el("div", "dlg-title", t("imp.title", { s: t(IMP_SRC[res.source]) })));
+    if (fileName) dlg.appendChild(el("div", "dlg-msg cw-dim cw-small imp-file", fileName));
+    dlg.appendChild(row(t("imp.name"), z.ti || t("lib.untitled", { w: z.w, h: z.h })));
+    if (z.au) dlg.appendChild(row(t("imp.author"), z.au));
+    if (z.cp) dlg.appendChild(row(t("imp.copy"), z.cp));
+    dlg.appendChild(row(t("imp.size"), t("lib.size", { w: z.w, h: z.h })));
+    dlg.appendChild(row(t("imp.clues"), t("imp.cluesN", { a: z.ca.length, d: z.cd.length })));
+    dlg.appendChild(row(t("imp.lang"), langName(z.lg)));
+    if (z.rb) dlg.appendChild(el("div", "dlg-msg cw-dim cw-small", t("imp.rebus", { n: z.rb.length })));
+    if (z.ci) dlg.appendChild(el("div", "dlg-msg cw-dim cw-small", t("imp.circles", { n: z.ci.length })));
+    if (z.nt) dlg.appendChild(el("div", "dlg-msg cw-small imp-notes", z.nt.slice(0, 300)));
+    if (have) dlg.appendChild(el("div", "dlg-msg cw-small", t("imp.have")));
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("imp.cancel"), "", function () { dlg.close(); }));
+    var go = button(t(have ? "imp.open" : "imp.go"), "primary", function () {
+      dlg.close();
+      if (have) openImported(id); else runImport(z);
+    });
+    acts.appendChild(go);
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    go.focus();
+  }
+
+  function runImport(z) {
+    var r = IMPC.apply(data.lib, z, Date.now());
+    if (!r.added) {
+      if (r.full) showToast(t("imp.full", { n: IMPC.MAX_LIB }));
+      else if (r.id && libEntry(r.id)) openImported(r.id);
+      return r;
+    }
+    var before = { mode: prefs.mode, imp: prefs.imp };
+    data.lib = r.lib;
+    data = mergeCW(data, data);
+    save();                                    // one write, one dirty mark
+    openImported(r.id);
+    var info = r.undo, used = false;
+    undoToast(t("imp.done"), function () {
+      if (used) return;
+      used = true;
+      var lib = IMPC.undo(data.lib, info, Date.now());
+      if (lib) data.lib = lib; else delete data.lib;
+      data = mergeCW(data, data);
+      save();
+      if (game && game.mode === "i" && game.id === r.id) {
+        delete sessions["i:" + r.id];
+        game = null;
+        prefs.mode = before.mode; prefs.imp = before.imp; savePrefs();
+        pickGame();
+      }
+      closeDialogs();
+      renderAll();
+      showToast(t("imp.undone"));
+    });
+    return r;
+  }
+
   // ---------- 8. Toasts ----------
   function showToast(text) {
     try {
@@ -1748,6 +2248,7 @@
     theme: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>',
     clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
     back:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 5H9l-6 7 6 7h12z"/><path d="M17 9l-5 6M12 9l5 6"/></svg>',
+    lib:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v11M7.5 9.5 12 14l4.5-4.5"/><path d="M4 14v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/></svg>',
     dir:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h12M12 5l3 3-3 3"/><path d="M18 3v14M15 14l3 3 3-3"/></svg>'
   };
 
@@ -1887,6 +2388,8 @@
     }
     // a daily puzzle solved on another device (or a reset) shows here
     if (markElsewhere()) { saveSessions(); startClock(); }
+    // the open imported crossword was removed on another device (Undo)
+    if (prefs.mode === "i" && !libEntry(prefs.imp)) { game = null; pickGame(); }
     renderAll();
     // no toast on merge (sync feedback = taskbar dot)
   }
@@ -1909,7 +2412,7 @@
 
   function paintStatic() {
     [["check-btn", "check", "btn.check"], ["new-btn", "new", "btn.new"],
-     ["stats-btn", "stats", "btn.stats"]].forEach(function (x) {
+     ["stats-btn", "stats", "btn.stats"], ["lib-btn", "lib", "btn.lib"]].forEach(function (x) {
       var b = $(x[0]);
       b.innerHTML = UI_ICONS[x[1]];
       b.setAttribute("aria-label", t(x[2]));
@@ -1940,6 +2443,11 @@
     $("stats-btn").addEventListener("click", function () { statsDialog(); $("stats-btn").blur(); });
     wirePointer();
     wireScreenKeyboard();
+    $("word-groups").addEventListener("click", function (e) {
+      var li = e.target.closest && e.target.closest(".cl-i");
+      if (li) tapClue(+li.getAttribute("data-w"));
+    });
+    $("lib-btn").addEventListener("click", function () { libDialog(); $("lib-btn").blur(); });
     document.addEventListener("visibilitychange", function () {
       if (document.visibilityState === "hidden") { stopClock(); if (game) saveSessions(); return; }
       // A daily puzzle left open past midnight: a new one when the app comes back.

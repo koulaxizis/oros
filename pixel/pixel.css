@@ -443,3 +443,13 @@ dialog.mm-dlg input[type="text"]:focus-visible { outline: 2px solid var(--accent
 }
 
 [hidden] { display: none !important; }
+
+/* Import preview (import.js) */
+.pal[hidden] { display: none; }
+.imp-frame { display: block; width: 100%; margin-top: 4px; min-height: 36px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); font: inherit; padding: 0 8px; }
+.imp-view { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 12px 0 8px; }
+.imp-thumb { width: 128px; height: 128px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+.imp-thumb svg { display: block; width: 100%; height: 100%; }
+.imp-strip { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; }
+.imp-strip span { width: 22px; height: 22px; border-radius: 4px; border: 1px solid var(--border); }
+.imp-notes { margin: 0; padding-left: 18px; font-size: 12px; color: var(--text-dim); display: grid; gap: 4px; overflow-wrap: anywhere; }
