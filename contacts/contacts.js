@@ -239,6 +239,12 @@
       "ct.avatar.ini": "Initials",
       "ct.avatar.px": "8-bit avatar",
       "ct.avatar.new": "Another one",
+      "av.btn": "Pictures",
+      "av.title": "Picture for every contact",
+      "av.text": "Change all contacts at once. 8-bit avatar keeps the face a contact already has and gives a new one to the rest. You can still change any single contact in its editor.",
+      "av.ini": "Initials for all",
+      "av.px": "8-bit avatar for all",
+      "av.done": "{n} contact(s) changed",
       "ct.avatar.bad": "Could not read that image",
       "ct.field.relations": "Relations",
       "ct.add.relation": "＋ Relation",
@@ -512,6 +518,12 @@
       "ct.avatar.ini": "Αρχικά",
       "ct.avatar.px": "8-bit avatar",
       "ct.avatar.new": "Άλλο ένα",
+      "av.btn": "Εικόνες",
+      "av.title": "Εικόνα για όλες τις επαφές",
+      "av.text": "Αλλάζεις όλες τις επαφές μαζί. Το 8-bit avatar κρατά το πρόσωπο που έχει ήδη μια επαφή και δίνει νέο στις υπόλοιπες. Μπορείς πάντα να αλλάξεις μία επαφή από την επεξεργασία της.",
+      "av.ini": "Αρχικά για όλες",
+      "av.px": "8-bit avatar για όλες",
+      "av.done": "Άλλαξαν {n} επαφές",
       "ct.avatar.bad": "Η εικόνα δεν μπόρεσε να διαβαστεί",
       "ct.field.relations": "Σχέσεις",
       "ct.add.relation": "＋ Σχέση",
@@ -2876,6 +2888,35 @@ document.addEventListener("keydown", function (e) {
   }
 
   $("ct-add").addEventListener("click", function () { openDlg(null); });
+
+  // Global switch (CT-NP, Chris 2026-10-15 12:50): every contact to
+  // initials, or every contact to an 8-bit avatar (a face it already
+  // has is kept). One save, so it syncs like any edit; Undo restores.
+  function setAllAvatars(px) {
+    var before = [], n = 0;
+    state.contacts.forEach(function (c) {
+      var next = px ? (c.avatar || pxNew()) : null;
+      if (next === c.avatar) return;
+      before.push({ id: c.id, avatar: c.avatar });
+      c.avatar = next;
+      n++;
+    });
+    if (!n) return 0;
+    saveState();
+    renderList();
+    toast(t("av.done").replace("{n}", String(n)), t("undo"), function () {
+      before.forEach(function (b) { var c = contactById(b.id); if (c) c.avatar = b.avatar; });
+      saveState();
+      renderList();
+    });
+    return n;
+  }
+  if ($("av-dlg")) {
+    $("ct-avall").addEventListener("click", function () { $("av-dlg").showModal(); });
+    $("av-ini").addEventListener("click", function () { $("av-dlg").close(); setAllAvatars(false); });
+    $("av-px").addEventListener("click", function () { $("av-dlg").close(); setAllAvatars(true); });
+    $("av-close").addEventListener("click", function () { $("av-dlg").close(); });
+  }
 
   // Avatar choice wiring (CT-NP)
   if ($("ct-av-ini")) {
