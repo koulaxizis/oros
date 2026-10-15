@@ -38,7 +38,7 @@ The tool bar is on the left (at the bottom on a phone). The bar above the pictur
 - `View`: `Rulers`, `Guides`, `Grid` and `Snap` turn on and off; `New guide…`, `Clear guides` and `Grid size…`. Drag a guide out of a ruler; with the `Move` or `Hand` tool drag a guide to move it, or back onto the ruler to remove it. With `Snap` on, selections, crops, shapes and moved layers stick to guides, the grid and the canvas edges and centre.
 - `Adjust`: `Light and colour…`, `Looks…`, `Hue / saturation…`, `Levels…`, `Lightroom preset (.xmp)…`, `Invert`, `Black and white`, `Threshold…`, `Posterize…`. Dialogs show a live preview; with a selection, only the selected area changes.
 - `Filter`: `Gaussian blur…`, `Motion blur…`, `Lens blur…`, `Unsharp mask…` (sharpens), `Add noise…`, `Reduce noise…`, `Pixelate…`, `Emboss…`, `Find edges`, `Vignette…`. Blurs may spread past the layer's pixels; with a selection they stay inside it.
-- `File`: `Export…` saves a PNG, JPG, WebP, PSD or OpenRaster file to your device, `Save to Pictures…` saves it in the Pictures folder of the orOS disk, `Batch process…` works on many photos at once (see below), and `Use as wallpaper` makes it the wallpaper of this device.
+- `File`: `Export…` saves a PNG, JPG, WebP, PSD, OpenRaster or orOS (`.orosphoto`) file to your device, `Save to Pictures…` saves it in the Pictures folder of the orOS disk, `Batch process…` works on many photos at once (see below), and `Use as wallpaper` makes it the wallpaper of this device.
 On a phone all menus are under the menu button.
 
 ## Select subject and remove background
@@ -73,6 +73,11 @@ When Atelier sends a picture here to edit, a `Done` button appears at the top. I
 - Groups are flattened into the layer list (a hidden group hides its layers) and layer masks are applied to the layers' pixels. Text, smart objects and effects come in as the pixels the file saved for them.
 - Krita files (`.kra`) open too: just open the file you saved in Krita. Ordinary paint layers in 8-bit RGBA come in with their names, positions, opacity, blend modes and visibility; vector, file, filter and fill layers and masks are left out. When the layers use another colour depth (16-bit, float, CMYK, grey), the file opens as one layer from the picture Krita saves alongside them, and Photo Lab tells you so. For a sure result with any Krita file, use File › Export in Krita and pick OpenRaster (`.ora`).
 - `Export…` with `PSD (Photoshop, with layers)` or `OpenRaster (GIMP, Krita, with layers)` keeps your layers for Photoshop, Photopea, GIMP or Krita. Text, shapes, masks, styles and adjustment layers go as pixels.
+
+## orOS file (.orosphoto)
+- `File` › `orOS file (.orosphoto)…` (or `Export…` › `orOS file (.orosphoto)`) saves the whole project in one file: every layer with its masks, styles, blend mode and opacity, adjustment layers, text and shapes you can still edit, guides and saved selections. The pixels are kept exactly as they are.
+- An .orosphoto is an open ZIP file: unzip it and you find `content.json` (the project), `media` with one PNG per layer, mask or selection, and `preview/image.png`, the finished picture, which any picture viewer opens.
+- Open it with `Open picture`, by dropping it on the app, or from your device with “Open with” orOS: it always comes in as a new project. `File` › `Unzipped orOS folder…` opens an .orosphoto that was unzipped, even after you changed its files.
 
 ## Lightroom presets
 - `Adjust` › `Lightroom preset (.xmp)…` opens a preset saved from Lightroom (Classic or CC) or Camera Raw and adds it as adjustment layers above the current layer, named after the preset: exposure, whites and blacks as `Levels`, contrast, shadows, highlights and the tone curve as `Curves`, white balance, saturation and vibrance, and black and white.

@@ -109,6 +109,11 @@ Control Studio's mixer and transport from a tablet or phone while the sound play
 - The audio itself is kept as files on the orOS disk, in the `Studio` folder of the [Files](app:files) app. With sync on and [Vault Drive](help:t/sync) turned on, the files travel to your other devices too. Until a file arrives, its clips show that the audio is not on this device yet.
 - The zoom, the snap, the click, the sound card choices and the armed track stay on this device.
 
+## orOS file (.orosstudio)
+- `Save as orOS file (.orosstudio)` in `Projects` saves the open project as one open file named after it: tracks, clips, the notes of MIDI clips, effects with their settings, automation, tempo, the loop and the audio itself. It is a ZIP: unzip it and you find `content.json` (the project), `media` (the audio and the effects' files) and `preview/tracks.txt` (what is on each track), `preview/song.mid` (the instrument tracks) and `preview/thumbnail.png`. Big projects are fine: the audio is never loaded into memory whole, and a bar shows how far it is.
+- `Open orOS file…` opens one again as a new project, with its audio copied to the orOS disk; so does `Import audio` or dropping the file on the tracks, and opening the file with orOS from your system (`Open with`). Your existing projects never change. `Unzipped orOS folder…` brings back a .orosstudio that was unzipped, even after you changed a file in it.
+- Audio that is not on this device yet (still on its way with Vault Drive) is left out of the file, and Studio says so.
+
 ## Keyboard shortcuts
 - [[Space]] play and pause, [[R]] record, [[L]] loop, [[K]] click, [[Home]] back to the start. [[Space]] also plays while the effects window is open.
 - [[S]] split, [[D]] duplicate, [[Delete]] delete the selected clip, [[E]] or [[Enter]] edit the notes of a MIDI clip, [[Esc]] deselect.

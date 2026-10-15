@@ -18,6 +18,9 @@
 //   - device-local (R10): oros-montage-prefs (zoom, export size, keep,
 //     speech language)
 // Deep link: __orosOpenAt("montage", { project } | { openFile: path | { token } })
+//   (an .orosmontage file opens as a new project, section 9b)
+// orOS file: .orosmontage save / open / unzipped folder (section 9b,
+//   package.js, ../bundle.js)
 // Sections:
 //   1. Constants, i18n, helpers
 //   2. Storage, prefs, edits + undo
@@ -28,6 +31,7 @@
 //   7. Adding media, text, sound
 //   8. Project settings, media, relink
 //   9. Export
+//   9b. orOS file (.orosmontage)
 //  10. Keyboard (Contract Β)
 //  11. Sync slice + palette + deep link
 //  12. Wiring & boot
@@ -110,6 +114,12 @@
       "err.decode": "This browser cannot play this file.", "err.big": "This file is too big (4 GB at most).",
       "err.full": "Browser storage is full. Free some space and try again.", "err.fail": "The file could not be added.",
       "err.noweb": "This browser cannot edit video here (WebGL2 is missing).",
+      "btn.open": "Open file…", "oros.save": "orOS file (.orosmontage)", "oros.folder": "Unzipped orOS folder…",
+      "oros.saveHint": "orOS file (.orosmontage) saves the project as one file with its videos, pictures and sounds, for another device or a backup.",
+      "oros.packing": "Saving the project… {p}%", "oros.reading": "Reading the file… {p}%", "oros.storing": "Copying media {i} of {n}…",
+      "oros.opened": "Project opened", "oros.lost": "{n} media files are not on this device; the file was saved without them.",
+      "oros.skipped": "{n} media files in the file could not be used.", "oros.newer": "This file was made by a newer orOS. Update orOS to open it.",
+      "oros.bad": "This is not a Montage project file.", "oros.fail": "The project file could not be saved.",
       "kind.video": "Video", "kind.image": "Picture", "kind.audio": "Sound", "kind.title": "Text",
       "a11y.timeline": "Timeline. Scroll to move the playhead; tap a clip to select it.",
       "rec.title": "Record your voice", "rec.start": "Record", "rec.stop": "Stop", "rec.level": "Microphone level",
@@ -248,6 +258,12 @@
       "err.decode": "Αυτός ο browser δεν μπορεί να παίξει αυτό το αρχείο.", "err.big": "Το αρχείο είναι πολύ μεγάλο (έως 4 GB).",
       "err.full": "Ο χώρος του browser γέμισε. Ελευθέρωσε λίγο χώρο και ξαναδοκίμασε.", "err.fail": "Το αρχείο δεν μπόρεσε να προστεθεί.",
       "err.noweb": "Αυτός ο browser δεν μπορεί να επεξεργαστεί βίντεο εδώ (λείπει το WebGL2).",
+      "btn.open": "Άνοιγμα αρχείου…", "oros.save": "Αρχείο orOS (.orosmontage)", "oros.folder": "Αποσυμπιεσμένος φάκελος orOS…",
+      "oros.saveHint": "Το Αρχείο orOS (.orosmontage) αποθηκεύει το έργο ως ένα αρχείο μαζί με τα βίντεο, τις εικόνες και τους ήχους του, για άλλη συσκευή ή για αντίγραφο ασφαλείας.",
+      "oros.packing": "Αποθήκευση του έργου… {p}%", "oros.reading": "Ανάγνωση του αρχείου… {p}%", "oros.storing": "Αντιγραφή πολυμέσων {i} από {n}…",
+      "oros.opened": "Το έργο άνοιξε", "oros.lost": "{n} αρχεία πολυμέσων δεν υπάρχουν σε αυτή τη συσκευή· το αρχείο αποθηκεύτηκε χωρίς αυτά.",
+      "oros.skipped": "{n} αρχεία πολυμέσων του αρχείου δεν μπόρεσαν να χρησιμοποιηθούν.", "oros.newer": "Το αρχείο φτιάχτηκε από νεότερο orOS. Ενημέρωσε το orOS για να το ανοίξεις.",
+      "oros.bad": "Αυτό δεν είναι αρχείο έργου του Montage.", "oros.fail": "Το αρχείο του έργου δεν αποθηκεύτηκε.",
       "kind.video": "Βίντεο", "kind.image": "Φωτογραφία", "kind.audio": "Ήχος", "kind.title": "Κείμενο",
       "a11y.timeline": "Χρονολόγιο. Κύλισε για να μετακινήσεις την κεφαλή· πάτα ένα clip για να το επιλέξεις.",
       "rec.title": "Ηχογράφηση φωνής", "rec.start": "Ηχογράφηση", "rec.stop": "Διακοπή", "rec.level": "Ένταση μικροφώνου",
@@ -541,6 +557,10 @@
         save(); closeDialog(); renderHome();
       }]
     ]);
+    if (window.OrosBundle && window.MontagePackage) {
+      body.appendChild(el("p", "hint small", t("oros.saveHint")));
+      actions(body, [[t("oros.save"), "", function () { closeDialog(); saveOros(id); }]]);
+    }
   }
 
   // ---------- 4. Editor: player, transport, time ----------
@@ -1872,6 +1892,10 @@
         MM.dropProxies().then(function (n) { if (player) player.retry(); showToast(t("px.dropped", { n: n })); });
       }], [t("px.make"), "", function () { closeDialog(); makeLightCopies(); }]]);
     }
+    if (window.OrosBundle && window.MontagePackage) {
+      body.appendChild(el("p", "hint small", t("oros.saveHint")));
+      actions(body, [[t("oros.save"), "", function () { closeDialog(); saveOros(pid); }]]);
+    }
     body.appendChild(el("p", "hint small", t("set.cleanHint")));
     actions(body, [[t("btn.clean"), "", function () {
       var used = {};
@@ -2011,18 +2035,143 @@
       [t("btn.save"), "primary", function () { saveBlob(x.blob, x.name, x.mime, x.ext); }]
     ]);
   }
-  function saveBlob(blob, name, mime, ext) {
+  // → Promise<boolean> (true when saved; a download link counts as saved)
+  function saveBlob(blob, name, mime, ext, desc) {
     var dlg = dialogHost();
     if (dlg && typeof dlg.saveFile === "function") {
       var acc = {}; acc[mime] = ["." + ext];
-      dlg.saveFile({ blob: blob, filename: name, mime: mime, types: [{ description: ext.toUpperCase(), accept: acc }] })
-        .then(function (r) { if (r && r.ok) showToast(t("toast.saved")); });
-      return;
+      return Promise.resolve(dlg.saveFile({ blob: blob, filename: name, mime: mime, types: [{ description: desc || ext.toUpperCase(), accept: acc }] }))
+        .then(function (r) { if (r && r.ok) showToast(t("toast.saved")); return !!(r && r.ok); });
     }
     var url = URL.createObjectURL(blob), a = document.createElement("a");
     a.href = url; a.download = name;
     document.body.appendChild(a); a.click();
     setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 40000);
+    return Promise.resolve(true);
+  }
+
+  // ---------- 9b. orOS file (.orosmontage) ----------
+  // One project = one orOS bundle (../bundle.js, docs/oros-bundle.md):
+  // content.json = MontagePackage.build (every clip, track, effect,
+  // title and caption), media/<sha256>.<ext> = the project's files
+  // under their own ids, preview/thumbnail.png = a poster frame,
+  // preview/timeline.txt + captions.srt for other programs. Videos can
+  // be GBs: writeBlob keeps the device-store Files as Blobs and
+  // read(file, { big: true }) reads the file a piece at a time, so
+  // neither ever holds a whole video in memory.
+  var OROS_MIME = "application/x-oros-montage";
+  var OROS_ACCEPT = ".orosmontage," + OROS_MIME;
+  function orosReady() { return !!(window.OrosBundle && window.MontagePackage); }
+  function orosErrText(e) {
+    var c = e && (e.code || e.message);
+    if (c === "newer") return t("oros.newer");
+    if (c === "full") return t("err.full");
+    if (/^(wrongtype|notbundle|nocontent|content|notpackage|path|dup)$/.test(c || "")) return t("oros.bad");
+    return t("err.fail");
+  }
+  function pct(d, n) { return n > 0 ? Math.min(1, d / n) : 0; }
+  // Poster frame: the first video or picture of the main row, long side
+  // at most 512 px, as PNG bytes (null when there is none).
+  function posterPng(p) {
+    var first = null;
+    C.mainSeq(p).forEach(function (x) { if (!first && x.it.src) first = x.it; });
+    if (!first) return Promise.resolve(null);
+    var pic = first.k === "video" ? MM.frameAt(first.src, C.srcTime(first, 0)) : MM.get(first.src);
+    return pic.then(function (b) {
+      if (!b) return null;
+      return createImageBitmap(b).then(function (bmp) {
+        var k = Math.min(1, 512 / Math.max(bmp.width, bmp.height));
+        var c = document.createElement("canvas");
+        c.width = Math.max(1, Math.round(bmp.width * k)); c.height = Math.max(1, Math.round(bmp.height * k));
+        c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+        bmp.close && bmp.close();
+        return new Promise(function (resolve) { c.toBlob(resolve, "image/png"); });
+      });
+    }).then(function (png) {
+      return png ? png.arrayBuffer().then(function (ab) { return new Uint8Array(ab); }) : null;
+    }).then(null, function () { return null; });
+  }
+  function saveOros(id) {
+    var p = data.projects[id];
+    if (!p || !orosReady()) return;
+    if (player && player.playing()) player.pause();
+    var pkg;
+    try { pkg = window.MontagePackage.build(p); } catch (e) { showToast(t("oros.fail")); return; }
+    var media = {}, lost = 0;
+    busy(t("oros.packing", { p: 0 }), 0);
+    pkg.media.reduce(function (ch, mid) {
+      return ch.then(function () { return MM.get(mid).then(function (b) { if (b) media[mid] = b; else lost++; }); });
+    }, Promise.resolve()).then(function () {
+      return posterPng(p);
+    }).then(function (png) {
+      return window.OrosBundle.writeBlob({
+        mime: OROS_MIME, app: "montage", schema: "montage/1", content: pkg.content,
+        meta: { title: p.name, modified: C.lastEdit(p) || Date.now(), language: LANG, id: p.id, generator: "orOS Montage" },
+        generator: "orOS Montage", media: media, thumbnail: png || undefined, preview: pkg.preview,
+        onProgress: function (d, n) { busy(t("oros.packing", { p: Math.round(pct(d, n) * 100) }), pct(d, n)); }
+      });
+    }).then(function (blob) {
+      busy(null);
+      var name = C.exportName(p.name, "mp4").replace(/\.mp4$/, "") + ".orosmontage";
+      return saveBlob(blob, name, OROS_MIME, "orosmontage", "orOS Montage").then(function (ok) {
+        if (ok && lost) showToast(t("oros.lost", { n: lost }));
+      });
+    }).then(null, function (e) {
+      busy(null);
+      showToast(e && e.code === "full" ? t("err.full") : t("oros.fail"));
+    });
+  }
+  // job: Promise<OrosBundle result> → its media into the media store
+  // (ids this device has already are skipped), then a NEW project.
+  function openOros(job) {
+    var PK = window.MontagePackage, skipped = 0;
+    busy(t("oros.reading", { p: 0 }), 0);
+    return job.then(function (r) {
+      var keys = Object.keys(r.media || {}).sort();
+      return keys.reduce(function (ch, k, i) {
+        return ch.then(function () {
+          busy(t("oros.storing", { i: i + 1, n: keys.length }), pct(i, keys.length));
+          var m = r.media[k];
+          var blob = m.blob || new Blob([m.bytes], { type: MM.mimeOf(k) });
+          return blob.slice(0, 16).arrayBuffer().then(function (ab) {
+            if (!PK.mediaOk(k, new Uint8Array(ab), MM.sniff)) { skipped++; return; }
+            return MM.putById(k, blob);
+          });
+        });
+      }, Promise.resolve()).then(function () { return r; });
+    }).then(function (r) {
+      var np = PK.parse(r.content, { uid: uid, now: Date.now(), name: (r.meta && r.meta.title) || t("proj.untitled") });
+      var d = C.merge(data, null);
+      d.projects[np.id] = np;
+      data = C.merge(d, null);
+      if (!data.projects[np.id]) throw new Error("notpackage");
+      save();
+      busy(null);
+      missingCache = {}; thumbCache = {};
+      openProject(np.id);
+      if (np.vs) shareMedia();
+      showToast(skipped ? t("oros.skipped", { n: skipped }) : t("oros.opened"));
+      return np.id;
+    }).then(null, function (e) {
+      busy(null);
+      showToast(orosErrText(e));
+      return null;
+    });
+  }
+  function readOrosFile(file) {
+    return window.OrosBundle.read(file, { mime: OROS_MIME, big: true,
+      onProgress: function (d, n) { busy(t("oros.reading", { p: Math.round(pct(d, n) * 100) }), pct(d, n)); } });
+  }
+  function openOrosFolder() {
+    if (!orosReady()) return;
+    window.OrosBundle.pickFolder().then(function (files) {
+      if (files) openOros(Promise.resolve().then(function () { return window.OrosBundle.readFolder(files, { mime: OROS_MIME, big: true }); }));
+    });
+  }
+  function openOrosPicked() {
+    pickFiles(OROS_ACCEPT, false).then(function (files) {
+      if (files && files[0]) addOpenedFile(files[0]);
+    });
   }
 
   // ---------- dialogs, fields, busy, toasts ----------
@@ -2261,7 +2410,22 @@
       }, function () { showToast(t("err.fail")); });
     }
   }
+  // A file handed to Montage: an .orosmontage bundle (sniffed by its
+  // first bytes, never its name) opens as a new project; anything else
+  // is a video, picture or sound added to the open project.
   function addOpenedFile(file) {
+    var B = window.OrosBundle;
+    // A File from the shell window ("Open with") belongs to another
+    // realm, and Mediabunny's BlobSource refuses it (instanceof Blob):
+    // wrap it in one of ours (no copy, the new File points at it).
+    if (!(file instanceof Blob)) file = new File([file], String(file.name || ""), { type: file.type || "" });
+    (orosReady() ? file.slice(0, 128).arrayBuffer().then(function (ab) { return B.sniff(new Uint8Array(ab)); }, function () { return null; })
+      : Promise.resolve(null)).then(function (kind) {
+      if (kind !== null && (kind === OROS_MIME || /\.orosmontage$/i.test(file.name || ""))) openOros(readOrosFile(file));
+      else addMediaFile(file);
+    });
+  }
+  function addMediaFile(file) {
     if (view !== "editor" || !cur()) {
       var id = uid();
       data = C.newProject(data, { name: String(file.name || "").replace(/\.[^.]+$/, "") || t("proj.untitled") }, Date.now(), id);
@@ -2339,6 +2503,9 @@
   function wire() {
     $("back-btn").addEventListener("click", showHome);
     $("new-btn").addEventListener("click", newProjectDialog);
+    $("open-btn").hidden = $("folder-btn").hidden = !orosReady();
+    $("open-btn").addEventListener("click", openOrosPicked);
+    $("folder-btn").addEventListener("click", openOrosFolder);
     $("undo-btn").addEventListener("click", undo);
     $("redo-btn").addEventListener("click", redo);
     $("proj-btn").addEventListener("click", projectSettings);

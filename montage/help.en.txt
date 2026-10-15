@@ -86,6 +86,8 @@ In `Project settings` you can switch on `Sync this project's media`. Montage the
 
 `Free space` removes media that no project on this device uses.
 
+`orOS file (.orosmontage)`, in `Project settings` or in a project's `More` menu, saves the project as one open file named after it: every clip, track, effect, text and subtitle, together with the videos, pictures and sounds themselves, so it also works as a backup or for moving a project to another device. It is a ZIP: unzip it and you find `content.json` (the edit), `media` (the files under their own names), `preview/thumbnail.png` (a poster frame), `preview/timeline.txt` (the clips in order) and `preview/captions.srt` when the project has text. `Open file…` on the projects page opens it again as a new project, and so does opening the file with orOS from your system (`Open with`); media already on this device are not copied twice. `Unzipped orOS folder…` brings back a .orosmontage that was unzipped. Big projects are read and written a piece at a time, so a file of several GB works too.
+
 >! Clearing your browser's site data removes the media stored on this device. Keep the original files, or switch on media sync for projects that matter.
 
 ## Keyboard shortcuts

@@ -430,6 +430,9 @@ dialog input[type="range"] { width: 100%; min-height: 32px; }
 .chip.swatch { width: 34px; padding: 0; border: 2px solid transparent; }
 .chip.swatch.on { border-color: var(--text); }
 #proj-new { margin-bottom: 4px; }
+#oros-sec { margin-top: 14px; border-top: 1px solid var(--border); padding-top: 4px; }
+.oros-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.oros-row .chip { max-width: 100%; white-space: normal; text-align: start; }
 
 /* ---------- 7. Toast, busy, screen reader ---------- */
 #toast {

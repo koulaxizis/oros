@@ -15,7 +15,11 @@
 // pickFolder() touches the DOM.
 //
 //   write(opts)          → Promise<Uint8Array>
-//   read(bytes, opts)    → Promise<result>   (a .zip bundle)
+//   writeBlob(opts)      → Promise<Blob>: media Blobs stay Blobs, for
+//                          projects with big videos and sounds
+//   read(input, opts)    → Promise<result>   (a .zip bundle: bytes, or a
+//                          Blob/File read a piece at a time; opts.big
+//                          for media up to 16 GB, given as Blobs)
 //   readFolder(files)    → Promise<result>   (an unzipped bundle:
 //                          [{ path, file|bytes }] or a FileList with
 //                          webkitRelativePath)
@@ -23,6 +27,8 @@
 //                          ZIP, null when not a ZIP (head: the first
 //                          ≥ 128 bytes)
 //   sha256(bytes)        → Promise<hex>
+//   digest(bytes|Blob)   → Promise<{ sha, crc, size }>, big Blobs
+//                          streamed (ZIP64 is written past 4 GB)
 //   typeOf(bytes)        → MIME type from the first bytes ("" unknown)
 //   safePath(p)          → true for a path a bundle may carry
 //   TYPES                → extension → { app, mime }
@@ -58,7 +64,11 @@
     ".oroswiki": { app: "wiki", mime: "application/x-oros-wiki" },
     ".orosboard": { app: "kanban", mime: "application/x-oros-board" },
     ".orosscript": { app: "prompter", mime: "application/x-oros-script" },
-    ".orostone": { app: "ringtones", mime: "application/x-oros-tone" }
+    ".orostone": { app: "ringtones", mime: "application/x-oros-tone" },
+    ".orosstudio": { app: "studio", mime: "application/x-oros-studio" },
+    ".orosmontage": { app: "montage", mime: "application/x-oros-montage" },
+    ".orosphoto": { app: "photolab", mime: "application/x-oros-photo" },
+    ".orospixel": { app: "pixel", mime: "application/x-oros-pixel" }
   };
 
   var LIM = {
@@ -67,7 +77,11 @@
     total: 1024 * 1024 * 1024,     // the whole bundle, inflated
     ratio: 1000,                   // inflated : compressed, per entry
     xml: 4 * 1024 * 1024,          // manifest.xml, meta.xml
-    json: 128 * 1024 * 1024        // content.json
+    json: 128 * 1024 * 1024,       // content.json
+    // { big: true } (Montage, Studio): stored media may be this large;
+    // deflated entries keep the caps above, since they inflate in memory
+    bigEntry: 16 * 1024 * 1024 * 1024,
+    bigTotal: 64 * 1024 * 1024 * 1024
   };
   var MIME_RE = /^application\/x-oros-[a-z]{2,20}$/;
   var KEY_RE = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
@@ -188,9 +202,14 @@
   }
   var canDeflate = typeof CompressionStream === "function";
 
-  // ---------- ZIP writer (stored + deflated, no ZIP64) ----------
+  // ---------- CRC-32 and SHA-256, also a piece at a time ----------
+  // crypto.subtle.digest wants the whole file in memory; a 2 GB video
+  // would not fit. Blobs above SMALL are read in CHUNK pieces (the same
+  // SHA-256 as montage/hash.js).
+  var CHUNK = 4 * 1024 * 1024, SMALL = 64 * 1024 * 1024, M32 = 0xFFFFFFFF;
+  var Z64 = M32, Z64N = 0xFFFF;          // when ZIP64 starts (tests lower them)
   var CRC = null;
-  function crc32(b) {
+  function crcUpdate(x, b) {
     if (!CRC) {
       CRC = new Uint32Array(256);
       for (var n = 0; n < 256; n++) {
@@ -199,121 +218,314 @@
         CRC[n] = c >>> 0;
       }
     }
-    var x = 0xFFFFFFFF;
     for (var i = 0; i < b.length; i++) x = CRC[(x ^ b[i]) & 0xFF] ^ (x >>> 8);
-    return (x ^ 0xFFFFFFFF) >>> 0;
+    return x;
   }
-  // entries: [{ name, data: Uint8Array, deflate: bool }] in order
-  function zip(entries, date) {
+  function crc32(b) { return (crcUpdate(0xFFFFFFFF, b) ^ 0xFFFFFFFF) >>> 0; }
+  var K256 = [
+    0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+    0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+    0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+    0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+    0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+    0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+    0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+    0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
+  ];
+  function hasher() {
+    var H = new Int32Array([0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19]);
+    var W = new Int32Array(64), buf = new Uint8Array(64), used = 0, total = 0;
+    function block(b, off) {
+      var i, a, bb, c, d, e, f, g, h, t1, t2, x, y;
+      for (i = 0; i < 16; i++) W[i] = (b[off + 4 * i] << 24) | (b[off + 4 * i + 1] << 16) | (b[off + 4 * i + 2] << 8) | b[off + 4 * i + 3];
+      for (i = 16; i < 64; i++) {
+        x = W[i - 15]; y = W[i - 2];
+        W[i] = (((x >>> 7) | (x << 25)) ^ ((x >>> 18) | (x << 14)) ^ (x >>> 3)) + W[i - 7] +
+               (((y >>> 17) | (y << 15)) ^ ((y >>> 19) | (y << 13)) ^ (y >>> 10)) + W[i - 16] | 0;
+      }
+      a = H[0]; bb = H[1]; c = H[2]; d = H[3]; e = H[4]; f = H[5]; g = H[6]; h = H[7];
+      for (i = 0; i < 64; i++) {
+        t1 = h + (((e >>> 6) | (e << 26)) ^ ((e >>> 11) | (e << 21)) ^ ((e >>> 25) | (e << 7))) + ((e & f) ^ (~e & g)) + K256[i] + W[i] | 0;
+        t2 = (((a >>> 2) | (a << 30)) ^ ((a >>> 13) | (a << 19)) ^ ((a >>> 22) | (a << 10))) + ((a & bb) ^ (a & c) ^ (bb & c)) | 0;
+        h = g; g = f; f = e; e = d + t1 | 0; d = c; c = bb; bb = a; a = t1 + t2 | 0;
+      }
+      H[0] = H[0] + a | 0; H[1] = H[1] + bb | 0; H[2] = H[2] + c | 0; H[3] = H[3] + d | 0;
+      H[4] = H[4] + e | 0; H[5] = H[5] + f | 0; H[6] = H[6] + g | 0; H[7] = H[7] + h | 0;
+    }
+    function update(data) {
+      var i = 0, n = data.length;
+      total += n;
+      if (used) {
+        while (used < 64 && i < n) buf[used++] = data[i++];
+        if (used === 64) { block(buf, 0); used = 0; }
+      }
+      for (; i + 64 <= n; i += 64) block(data, i);
+      while (i < n) buf[used++] = data[i++];
+    }
+    function hexOut() {
+      var bits = total * 8, pad = new Uint8Array(used < 56 ? 64 - used : 128 - used);
+      pad[0] = 0x80;
+      var hi = Math.floor(bits / 0x100000000), lo = bits >>> 0, L = pad.length;
+      pad[L - 8] = hi >>> 24; pad[L - 7] = hi >>> 16 & 255; pad[L - 6] = hi >>> 8 & 255; pad[L - 5] = hi & 255;
+      pad[L - 4] = lo >>> 24; pad[L - 3] = lo >>> 16 & 255; pad[L - 2] = lo >>> 8 & 255; pad[L - 1] = lo & 255;
+      update(pad);
+      var s = "";
+      for (var j = 0; j < 8; j++) s += ("00000000" + (H[j] >>> 0).toString(16)).slice(-8);
+      return s;
+    }
+    return { update: update, hex: hexOut };
+  }
+  function isBlob(v) {
+    return !!v && !(v instanceof Uint8Array) && typeof v.slice === "function" && typeof v.size === "number" && typeof v.arrayBuffer === "function";
+  }
+  // { sha, crc, size, bytes? } of bytes or a Blob. A Blob up to SMALL is
+  // read whole (bytes set); a bigger one is streamed and stays a Blob.
+  // onBytes(n) after each piece (progress).
+  function digest(data, onBytes) {
+    if (!isBlob(data) || data.size <= SMALL) {
+      return toBytes(data).then(function (b) {
+        return sha256(b).then(function (h) {
+          if (onBytes) onBytes(b.length);
+          return { sha: h, crc: crc32(b), size: b.length, bytes: b };
+        });
+      });
+    }
+    var h = hasher(), c = 0xFFFFFFFF, pos = 0;
+    function step() {
+      if (pos >= data.size) return { sha: h.hex(), crc: (c ^ 0xFFFFFFFF) >>> 0, size: data.size };
+      var end = Math.min(data.size, pos + CHUNK);
+      return data.slice(pos, end).arrayBuffer().then(function (ab) {
+        var b = new Uint8Array(ab);
+        h.update(b); c = crcUpdate(c, b);
+        pos = end;
+        if (onBytes) onBytes(b.length);
+        return new Promise(function (r) { setTimeout(r, 0); }).then(step);
+      });
+    }
+    return Promise.resolve().then(step);
+  }
+  function concat(parts) {
+    if (parts.some(isBlob)) return new Blob(parts).arrayBuffer().then(function (ab) { return new Uint8Array(ab); });
+    var n = parts.reduce(function (s, p) { return s + p.length; }, 0), out = new Uint8Array(n), o = 0;
+    parts.forEach(function (p) { out.set(p, o); o += p.length; });
+    return Promise.resolve(out);
+  }
+
+  // ---------- ZIP writer (stored + deflated; ZIP64 only past 4 GB) ----------
+  // entries: [{ name, data: Uint8Array|Blob, crc?, deflate }] in order.
+  // A Blob is stored as it is and never read here (its crc comes from
+  // digest), so the bundle can be one Blob made of other Blobs.
+  // → Promise<parts[]> (Uint8Array and Blob pieces, in file order)
+  function zipParts(entries, date) {
     // default 1 Jan 2026, so the same input gives the same bytes
     var d = date instanceof Date && !isNaN(date) ? date : new Date(2026, 0, 1);
     var dosT = (d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1);
     var dosD = ((Math.max(1980, d.getFullYear()) - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate();
-    if (entries.length > 65535) return Promise.reject(bad("toomany"));
     var chain = Promise.resolve(), ready = [];
     entries.forEach(function (f) {
       chain = chain.then(function () {
-        var crc = crc32(f.data);
-        if (!f.deflate || !canDeflate || f.data.length < 64) { ready.push({ f: f, crc: crc, method: 0, out: f.data }); return; }
+        if (isBlob(f.data)) { ready.push({ f: f, crc: f.crc >>> 0, method: 0, out: f.data, size: f.data.size, csize: f.data.size }); return; }
+        var crc = f.crc != null ? f.crc >>> 0 : crc32(f.data), n = f.data.length;
+        if (!f.deflate || !canDeflate || n < 64) { ready.push({ f: f, crc: crc, method: 0, out: f.data, size: n, csize: n }); return; }
         return stream("c", "deflate-raw", f.data).then(function (z) {
-          if (z.length >= f.data.length) ready.push({ f: f, crc: crc, method: 0, out: f.data });
-          else ready.push({ f: f, crc: crc, method: 8, out: z });
-        }, function () { ready.push({ f: f, crc: crc, method: 0, out: f.data }); });
+          if (z.length >= n) ready.push({ f: f, crc: crc, method: 0, out: f.data, size: n, csize: n });
+          else ready.push({ f: f, crc: crc, method: 8, out: z, size: n, csize: z.length });
+        }, function () { ready.push({ f: f, crc: crc, method: 0, out: f.data, size: n, csize: n }); });
       });
     });
     return chain.then(function () {
-      var parts = [], central = [], off = 0;
-      function head(sig, len) { var v = new DataView(new ArrayBuffer(len)); v.setUint32(0, sig, true); return v; }
+      var parts = [], central = [], off = 0, cdSize = 0;
+      function view(len) { return new DataView(new ArrayBuffer(len)); }
+      function set64(v, at, n) { v.setUint32(at, n % 4294967296, true); v.setUint32(at + 4, Math.floor(n / 4294967296), true); }
       ready.forEach(function (r) {
-        var name = enc.encode(r.f.name), size = r.f.data.length, csize = r.out.length;
-        if (off + csize > 0xFFFFFFF0) throw bad("toobig");
-        var h = head(0x04034b50, 30);
-        h.setUint16(4, 20, true); h.setUint16(6, 0x0800, true); h.setUint16(8, r.method, true);
+        var name = enc.encode(r.f.name);
+        var big = r.size >= Z64 || r.csize >= Z64, far = off >= Z64;
+        // local header: ZIP64 extra { size, csize } when either is too big
+        var h = view(30 + (big ? 20 : 0));
+        h.setUint32(0, 0x04034b50, true);
+        h.setUint16(4, big ? 45 : 20, true); h.setUint16(6, 0x0800, true); h.setUint16(8, r.method, true);
         h.setUint16(10, dosT, true); h.setUint16(12, dosD, true);
-        h.setUint32(14, r.crc, true); h.setUint32(18, csize, true); h.setUint32(22, size, true);
-        h.setUint16(26, name.length, true); h.setUint16(28, 0, true);
-        parts.push(new Uint8Array(h.buffer), name, r.out);
-        var c = head(0x02014b50, 46);
-        c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint16(8, 0x0800, true); c.setUint16(10, r.method, true);
+        h.setUint32(14, r.crc, true);
+        h.setUint32(18, big ? M32 : r.csize, true); h.setUint32(22, big ? M32 : r.size, true);
+        h.setUint16(26, name.length, true); h.setUint16(28, big ? 20 : 0, true);
+        var lh = new Uint8Array(h.buffer);
+        if (big) {
+          var lx = view(20);
+          lx.setUint16(0, 1, true); lx.setUint16(2, 16, true); set64(lx, 4, r.size); set64(lx, 12, r.csize);
+          parts.push(lh.subarray(0, 30), name, new Uint8Array(lx.buffer), r.out);
+        } else parts.push(lh, name, r.out);
+        // central header: ZIP64 extra holds only the fields that do not fit
+        var xs = [];
+        if (r.size >= Z64) xs.push(r.size);
+        if (r.csize >= Z64) xs.push(r.csize);
+        if (far) xs.push(off);
+        var c = view(46);
+        c.setUint32(0, 0x02014b50, true);
+        c.setUint16(4, xs.length ? 45 : 20, true); c.setUint16(6, xs.length ? 45 : 20, true);
+        c.setUint16(8, 0x0800, true); c.setUint16(10, r.method, true);
         c.setUint16(12, dosT, true); c.setUint16(14, dosD, true);
-        c.setUint32(16, r.crc, true); c.setUint32(20, csize, true); c.setUint32(24, size, true);
-        c.setUint16(28, name.length, true); c.setUint32(42, off, true);
+        c.setUint32(16, r.crc, true);
+        c.setUint32(20, r.csize >= Z64 ? M32 : r.csize, true); c.setUint32(24, r.size >= Z64 ? M32 : r.size, true);
+        c.setUint16(28, name.length, true); c.setUint16(30, xs.length ? 4 + 8 * xs.length : 0, true);
+        c.setUint32(42, far ? M32 : off, true);
         central.push(new Uint8Array(c.buffer), name);
-        off += 30 + name.length + csize;
+        cdSize += 46 + name.length;
+        if (xs.length) {
+          var cx = view(4 + 8 * xs.length);
+          cx.setUint16(0, 1, true); cx.setUint16(2, 8 * xs.length, true);
+          xs.forEach(function (n, i) { set64(cx, 4 + 8 * i, n); });
+          central.push(new Uint8Array(cx.buffer));
+          cdSize += 4 + 8 * xs.length;
+        }
+        off += 30 + name.length + (big ? 20 : 0) + r.csize;
       });
-      var cdSize = central.reduce(function (n, p) { return n + p.length; }, 0);
-      var e = head(0x06054b50, 22);
-      e.setUint16(8, ready.length, true); e.setUint16(10, ready.length, true);
-      e.setUint32(12, cdSize, true); e.setUint32(16, off, true);
-      var all = parts.concat(central, [new Uint8Array(e.buffer)]);
-      var out = new Uint8Array(off + cdSize + 22), o = 0;
-      all.forEach(function (p) { out.set(p, o); o += p.length; });
-      return out;
+      var tail = [], count = ready.length;
+      if (count > Z64N || off >= Z64 || cdSize >= Z64) {
+        var z = view(56);                                    // ZIP64 end of central directory
+        z.setUint32(0, 0x06064b50, true); set64(z, 4, 44);
+        z.setUint16(12, 45, true); z.setUint16(14, 45, true);
+        set64(z, 24, count); set64(z, 32, count); set64(z, 40, cdSize); set64(z, 48, off);
+        var loc = view(20);                                  // ZIP64 locator
+        loc.setUint32(0, 0x07064b50, true); set64(loc, 8, off + cdSize); loc.setUint32(16, 1, true);
+        tail.push(new Uint8Array(z.buffer), new Uint8Array(loc.buffer));
+      }
+      var e = view(22);
+      e.setUint32(0, 0x06054b50, true);
+      e.setUint16(8, Math.min(count, 0xFFFF), true); e.setUint16(10, Math.min(count, 0xFFFF), true);
+      e.setUint32(12, cdSize >= Z64 ? M32 : cdSize, true); e.setUint32(16, off >= Z64 ? M32 : off, true);
+      tail.push(new Uint8Array(e.buffer));
+      return parts.concat(central, tail);
     });
   }
+  function zip(entries, date) { return zipParts(entries, date).then(concat); }
 
-  // ---------- ZIP reader → source { names, size(n), bytes(n, max) } ----------
+  // ---------- ZIP reader → source { names, size(n), bytes(n, max), blob(n) } ----------
+  // Over random access ("ra"): bytes in memory, or a Blob/File read a
+  // piece at a time, so a 3 GB bundle never has to fit in memory.
   function u16(b, o) { return b[o] | (b[o + 1] << 8); }
   function u32(b, o) { return (b[o] | (b[o + 1] << 8) | (b[o + 2] << 16)) + b[o + 3] * 16777216; }
-  function zipSource(bytes, lim) {
-    if (!(bytes instanceof Uint8Array) || bytes.length < 22) throw bad("notzip");
-    var eocd = -1, stop = Math.max(0, bytes.length - 22 - 65535);
-    for (var i = bytes.length - 22; i >= stop; i--) {
-      if (bytes[i] === 0x50 && bytes[i + 1] === 0x4b && bytes[i + 2] === 0x05 && bytes[i + 3] === 0x06) { eocd = i; break; }
-    }
-    if (eocd < 0) throw bad("notzip");
-    var count = u16(bytes, eocd + 10), cdOff = u32(bytes, eocd + 16);
-    if (count > lim.entries) throw bad("toomany");
-    if (cdOff >= bytes.length) throw bad("notzip");
-    var entries = {}, names = [], p = cdOff, declared = 0;
-    for (var n = 0; n < count; n++) {
-      if (p + 46 > bytes.length || u32(bytes, p) !== 0x02014b50) throw bad("notzip");
-      var flags = u16(bytes, p + 8), method = u16(bytes, p + 10);
-      var csize = u32(bytes, p + 20), size = u32(bytes, p + 24);
-      var nlen = u16(bytes, p + 28), xlen = u16(bytes, p + 30), clen = u16(bytes, p + 32), loc = u32(bytes, p + 42);
-      var raw = bytes.subarray(p + 46, p + 46 + nlen);
-      var name = utf8(raw);
-      p += 46 + nlen + xlen + clen;
-      if (flags & 1) throw bad("encrypted");
-      if (name.slice(-1) === "/") continue;                       // folder entries
-      if (name.indexOf("__MACOSX/") === 0 || /(^|\/)\.DS_Store$/.test(name)) continue;
-      if (!safePath(name)) throw bad("path");
-      if (Object.prototype.hasOwnProperty.call(entries, name)) throw bad("dup");
-      if (method !== 0 && method !== 8) throw bad("method");
-      if (size > lim.entry) throw bad("toobig");
-      if (method === 8 && size > Math.max(1024, csize * lim.ratio)) throw bad("ratio");
-      declared += size;
-      if (declared > lim.total) throw bad("toobig");
-      names.push(name);
-      entries[name] = { method: method, csize: csize, size: size, loc: loc, first: n === 0 };
-    }
-    function dataOf(e) {
-      var l = e.loc;
-      if (l + 30 > bytes.length || u32(bytes, l) !== 0x04034b50) throw bad("notzip");
-      var start = l + 30 + u16(bytes, l + 26) + u16(bytes, l + 28), end = start + e.csize;
-      if (end > bytes.length) throw bad("notzip");
-      return bytes.subarray(start, end);
-    }
+  function u64(b, o) { return u32(b, o) + u32(b, o + 4) * 4294967296; }
+  function bytesRA(b) {
     return {
-      names: names,
-      has: function (nm) { return Object.prototype.hasOwnProperty.call(entries, nm); },
-      size: function (nm) { return entries[nm] ? entries[nm].size : 0; },
-      firstName: function () { for (var k in entries) if (entries[k].first) return k; return names[0]; },
-      stored: function (nm) { return entries[nm] && entries[nm].method === 0; },
-      bytes: function (nm, max) {
-        var e = Object.prototype.hasOwnProperty.call(entries, nm) ? entries[nm] : null;
-        if (!e) return Promise.resolve(null);
-        max = Math.min(max || lim.entry, lim.entry, e.size);   // never more than it declared
-        try {
-          var data = dataOf(e);
-          if (e.method === 0) {
-            if (data.length > max) return Promise.reject(bad("toobig"));
-            return Promise.resolve(data.slice());
-          }
-          return stream("d", "deflate-raw", data, max);
-        } catch (err) { return Promise.reject(err); }
-      }
+      size: b.length,
+      get: function (o, n) { return Promise.resolve(b.subarray(Math.min(o, b.length), Math.min(b.length, o + n))); },
+      part: function (o, n) { return b.subarray(o, o + n); }
     };
+  }
+  function blobRA(bl) {
+    return {
+      size: bl.size,
+      get: function (o, n) {
+        return bl.slice(Math.min(o, bl.size), Math.min(bl.size, o + n)).arrayBuffer().then(function (ab) { return new Uint8Array(ab); });
+      },
+      part: function (o, n) { return bl.slice(o, o + n); }
+    };
+  }
+  function zipSource(ra, lim) {
+    if (ra.size < 22) return Promise.reject(bad("notzip"));
+    var tailAt = Math.max(0, ra.size - 22 - 65535 - 20);
+    var entries = {}, names = [];
+    return ra.get(tailAt, ra.size - tailAt).then(function (t) {
+      var eocd = -1;
+      for (var i = t.length - 22; i >= 0; i--) {
+        if (t[i] === 0x50 && t[i + 1] === 0x4b && t[i + 2] === 0x05 && t[i + 3] === 0x06) { eocd = i; break; }
+      }
+      if (eocd < 0) throw bad("notzip");
+      var info = { count: u16(t, eocd + 10), cdSize: u32(t, eocd + 12), cdOff: u32(t, eocd + 16) };
+      if (info.count !== 0xFFFF && info.cdSize !== M32 && info.cdOff !== M32) return info;
+      // ZIP64: the locator sits right before the end record
+      var l = eocd - 20;
+      if (l < 0 || u32(t, l) !== 0x07064b50) throw bad("notzip");
+      var at = u64(t, l + 8);
+      return ra.get(at, 56).then(function (z) {
+        if (z.length < 56 || u32(z, 0) !== 0x06064b50) throw bad("notzip");
+        return { count: u64(z, 32), cdSize: u64(z, 40), cdOff: u64(z, 48) };
+      });
+    }).then(function (info) {
+      if (info.count > lim.entries) throw bad("toomany");
+      if (info.cdOff + info.cdSize > ra.size || info.cdSize > info.count * (46 + 65535 * 3) + 46) throw bad("notzip");
+      return ra.get(info.cdOff, info.cdSize).then(function (cd) { return { cd: cd, count: info.count }; });
+    }).then(function (x) {
+      var cd = x.cd, p = 0, declared = 0;
+      for (var n = 0; n < x.count; n++) {
+        if (p + 46 > cd.length || u32(cd, p) !== 0x02014b50) throw bad("notzip");
+        var flags = u16(cd, p + 8), method = u16(cd, p + 10);
+        var csize = u32(cd, p + 20), size = u32(cd, p + 24);
+        var nlen = u16(cd, p + 28), xlen = u16(cd, p + 30), clen = u16(cd, p + 32), loc = u32(cd, p + 42);
+        var name = utf8(cd.subarray(p + 46, p + 46 + nlen));
+        if (size === M32 || csize === M32 || loc === M32) {
+          // ZIP64 extra: the fields that did not fit, in this order
+          var q = p + 46 + nlen, xe = q + xlen, found = false;
+          while (q + 4 <= xe) {
+            var id = u16(cd, q), len = u16(cd, q + 2), v = q + 4;
+            if (id === 1) {
+              found = true;
+              if (size === M32) { if (v + 8 > q + 4 + len) throw bad("notzip"); size = u64(cd, v); v += 8; }
+              if (csize === M32) { if (v + 8 > q + 4 + len) throw bad("notzip"); csize = u64(cd, v); v += 8; }
+              if (loc === M32) { if (v + 8 > q + 4 + len) throw bad("notzip"); loc = u64(cd, v); }
+              break;
+            }
+            q += 4 + len;
+          }
+          if (!found) throw bad("notzip");
+        }
+        p += 46 + nlen + xlen + clen;
+        if (flags & 1) throw bad("encrypted");
+        if (name.slice(-1) === "/") continue;                       // folder entries
+        if (name.indexOf("__MACOSX/") === 0 || /(^|\/)\.DS_Store$/.test(name)) continue;
+        if (!safePath(name)) throw bad("path");
+        if (Object.prototype.hasOwnProperty.call(entries, name)) throw bad("dup");
+        if (method !== 0 && method !== 8) throw bad("method");
+        if (size > (method === 0 ? lim.stored : lim.entry)) throw bad("toobig");
+        if (method === 0 && csize !== size) throw bad("notzip");
+        if (method === 8 && size > Math.max(1024, csize * lim.ratio)) throw bad("ratio");
+        declared += size;
+        if (declared > lim.total) throw bad("toobig");
+        names.push(name);
+        entries[name] = { method: method, csize: csize, size: size, loc: loc, first: n === 0 };
+      }
+      return source();
+    });
+    // where an entry's data starts: after its local header
+    function start(e) {
+      if (e.start != null) return Promise.resolve(e.start);
+      return ra.get(e.loc, 30).then(function (h) {
+        if (h.length < 30 || u32(h, 0) !== 0x04034b50) throw bad("notzip");
+        var s = e.loc + 30 + u16(h, 26) + u16(h, 28);
+        if (s + e.csize > ra.size) throw bad("notzip");
+        e.start = s;
+        return s;
+      });
+    }
+    function entry(nm) { return Object.prototype.hasOwnProperty.call(entries, nm) ? entries[nm] : null; }
+    function source() {
+      return {
+        names: names,
+        has: function (nm) { return !!entry(nm); },
+        size: function (nm) { var e = entry(nm); return e ? e.size : 0; },
+        firstName: function () { for (var k in entries) if (entries[k].first) return k; return names[0]; },
+        stored: function (nm) { var e = entry(nm); return !!e && e.method === 0; },
+        bytes: function (nm, max) {
+          var e = entry(nm);
+          if (!e) return Promise.resolve(null);
+          var cap = e.method === 0 ? lim.stored : lim.entry;
+          max = Math.min(max || cap, cap, e.size);               // never more than it declared
+          if (e.method === 0 && e.csize > max) return Promise.reject(bad("toobig"));
+          return start(e).then(function (s) { return ra.get(s, e.csize); }).then(function (data) {
+            if (data.length < e.csize) throw bad("notzip");
+            if (e.method === 0) return data.slice();
+            return stream("d", "deflate-raw", data, max);
+          });
+        },
+        // a stored entry as a Blob slice (or bytes), never read whole
+        blob: function (nm) {
+          var e = entry(nm);
+          if (!e) return Promise.resolve(null);
+          if (e.method !== 0) return this.bytes(nm);
+          return start(e).then(function (s) { return ra.part(s, e.csize); });
+        }
+      };
+    }
   }
 
   // An unzipped bundle picked as a folder: [{ path, file|bytes }] or a
@@ -344,7 +556,7 @@
       if (!safePath(name)) throw bad("path");
       if (entries[name]) throw bad("dup");
       var size = it.data.size != null ? it.data.size : it.data.length || 0;
-      if (size > lim.entry) throw bad("toobig");
+      if (size > lim.stored) throw bad("toobig");
       total += size;
       if (total > lim.total) throw bad("toobig");
       names.push(name);
@@ -360,12 +572,16 @@
       bytes: function (nm, max) {
         var e = Object.prototype.hasOwnProperty.call(entries, nm) ? entries[nm] : null;
         if (!e) return Promise.resolve(null);
-        max = Math.min(max || lim.entry, lim.entry);
+        max = Math.min(max || lim.stored, lim.stored);
         if (e.size > max) return Promise.reject(bad("toobig"));
         return toBytes(e.data).then(function (b) {
           if (b.length > max) throw bad("toobig");
           return b;
         });
+      },
+      blob: function (nm) {
+        var e = Object.prototype.hasOwnProperty.call(entries, nm) ? entries[nm] : null;
+        return Promise.resolve(e ? e.data : null);
       }
     };
   }
@@ -443,7 +659,7 @@
     var l = ['<?xml version="1.0" encoding="UTF-8"?>',
       '<manifest xmlns="' + NS + '" version="' + VERSION + '" app="' + escXml(app) + '" schema="' + escXml(schema) + '" min-reader="' + VERSION + '">'];
     files.forEach(function (f) {
-      l.push('  <file path="' + escXml(f.name) + '" type="' + escXml(f.type) + '" size="' + f.data.length + '" sha256="' + f.sha + '"/>');
+      l.push('  <file path="' + escXml(f.name) + '" type="' + escXml(f.type) + '" size="' + f.size + '" sha256="' + f.sha + '"/>');
     });
     l.push("</manifest>", "");
     return l.join("\n");
@@ -466,18 +682,27 @@
   // opts: { mime, app, schema, content (object), meta { title, creator,
   //   language, description, subjects[], created, modified, id },
   //   generator, media { key: Uint8Array|Blob }, thumbnail (PNG),
-  //   preview [{ name, data, type? }], settings (object), date }
-  function write(opts) {
+  //   preview [{ name, data, type? }], settings (object), date,
+  //   onProgress(done, total) (bytes of media hashed so far) }
+  // Media Blobs over 64 MB are hashed a piece at a time and stored as
+  // they are, never copied into memory (writeBlob keeps them as Blobs).
+  function pack(opts) {
     opts = opts || {};
     if (!MIME_RE.test(opts.mime || "")) return Promise.reject(bad("mime"));
     if (!/^[a-z][a-z0-9-]{1,30}$/.test(opts.app || "")) return Promise.reject(bad("app"));
     var schema = String(opts.schema || opts.app + "/1");
     var files = [], chain = Promise.resolve();
-    function add(name, data, type, deflate) {
-      chain = chain.then(function () { return toBytes(data); }).then(function (b) {
+    var media = opts.media || {}, done = 0, total = 0;
+    var prog = typeof opts.onProgress === "function" ? opts.onProgress : null;
+    Object.keys(media).forEach(function (k) { var v = media[k]; total += v ? (isBlob(v) ? v.size : v.length || v.byteLength || 0) : 0; });
+    function add(name, data, type, deflate, counted) {
+      chain = chain.then(function () {
         if (!safePath(name)) throw bad("path");
-        return sha256(b).then(function (h) {
-          files.push({ name: name, data: b, type: type || typeFor(name, b), deflate: deflate, sha: h });
+        return digest(data, counted && prog ? function (n) { done += n; prog(done, total); } : null);
+      }).then(function (d) {
+        var body = d.bytes || data;
+        return (d.bytes ? Promise.resolve(d.bytes) : body.slice(0, 64).arrayBuffer().then(function (ab) { return new Uint8Array(ab); })).then(function (head) {
+          files.push({ name: name, data: body, size: d.size, crc: d.crc, type: type || typeFor(name, head), deflate: deflate, sha: d.sha });
         });
       });
     }
@@ -489,14 +714,13 @@
     meta.generator = meta.generator || opts.generator || "orOS " + opts.app;
     add("meta.xml", metaXml(meta), "application/xml", true);
     if (opts.settings && typeof opts.settings === "object") add("settings.json", JSON.stringify(opts.settings, null, 1), "application/json", true);
-    var media = opts.media || {};
     Object.keys(media).sort().forEach(function (k) {
       if (!KEY_RE.test(k)) { chain = chain.then(function () { throw bad("key"); }); return; }
-      add("media/" + k, media[k], null, false);
+      add("media/" + k, media[k], null, false, true);
     });
     if (opts.thumbnail) add("preview/thumbnail.png", opts.thumbnail, "image/png", false);
     (Array.isArray(opts.preview) ? opts.preview : []).forEach(function (p) {
-      if (p && p.name) add("preview/" + p.name, p.data, p.type, !/\.(png|jpe?g|gif|webp|pdf)$/i.test(p.name));
+      if (p && p.name) add("preview/" + p.name, p.data, p.type, !/\.(png|jpe?g|gif|webp|pdf|mp4|webm|mp3|m4a|ogg|wav|flac)$/i.test(p.name));
     });
     add("README.txt", readme(opts.mime, mo.title), "text/plain", true);
     return chain.then(function () {
@@ -504,19 +728,46 @@
       var all = [{ name: "mimetype", data: enc.encode(opts.mime), deflate: false },
         { name: "META-INF/manifest.xml", data: enc.encode(mf), deflate: true }];
       // a stable order: the description files first, then media and previews
-      return zip(all.concat(files), opts.date);
+      return zipParts(all.concat(files), opts.date);
     });
+  }
+  // → Promise<Uint8Array> (the whole file in memory: fine below a few
+  // hundred MB)
+  function write(opts) { return pack(opts).then(concat); }
+  // → Promise<Blob> made of the pieces and the media Blobs themselves:
+  // for projects with big videos or sounds (Montage, Studio)
+  function writeBlob(opts) {
+    return pack(opts).then(function (parts) { return new Blob(parts, { type: opts.mime }); });
   }
 
   // ---------- read ----------
-  function lims(o) {
-    var l = {};
+  function lims(opts) {
+    var o = opts && opts.limits, l = {};
     Object.keys(LIM).forEach(function (k) { l[k] = o && typeof o[k] === "number" ? Math.min(o[k], LIM[k] * 4) : LIM[k]; });
+    l.big = !!(opts && opts.big);
+    l.stored = l.big ? l.bigEntry : l.entry;
+    if (l.big) l.total = Math.max(l.total, l.bigTotal);
     return l;
+  }
+  // sha256 of an entry; big stored entries are streamed, not read whole
+  function hashOf(src, name, onBytes, whole) {
+    if (whole || src.size(name) <= SMALL) return src.bytes(name).then(function (b) { return sha256(b).then(function (h) { return { sha: h, bytes: b, head: b }; }); });
+    return src.blob(name).then(function (bl) {
+      return digest(bl, onBytes).then(function (d) {
+        var head = d.bytes ? Promise.resolve(d.bytes) : bl.slice(0, 64).arrayBuffer().then(function (ab) { return new Uint8Array(ab); });
+        return head.then(function (h) { return { sha: d.sha, blob: bl, head: h }; });
+      });
+    });
   }
   // opts: { mime: "application/x-oros-…" | [..] (expected types),
   //   limits overrides }. Result: { mime, app, schema, version, meta,
-  //   content, media { key: { bytes, type, sha } }, settings, thumbnail,
+  //   content, media { key: { bytes, type, sha, size } }, settings, thumbnail,
+  //   changed [paths whose bytes no longer match the manifest],
+  //   missing [paths the manifest lists that are gone], rekeyed { old: new } }
+  // { big: true }: media up to LIM.bigEntry; each media item also has
+  //   blob (a slice of the file, never copied), and bytes only when it
+  //   is at most 64 MB. onProgress(done, total) while big media hash.
+  //
   //   changed [paths whose bytes no longer match the manifest],
   //   missing [paths the manifest lists that are gone], rekeyed { old: new } }
   function readSource(src, opts, l) {
@@ -551,8 +802,8 @@
       if (mf) Object.keys(mf.files).forEach(function (p) {
         if (!src.has(p)) { out.missing.push(p); return; }
         if (!mf.files[p].sha256 || /^media\//.test(p)) return;   // media are hashed below
-        chain = chain.then(function () { return src.bytes(p); }).then(function (x) {
-          return sha256(x).then(function (h) { if (h !== mf.files[p].sha256) out.changed.push(p); });
+        chain = chain.then(function () { return hashOf(src, p); }).then(function (x) {
+          if (x.sha !== mf.files[p].sha256) out.changed.push(p);
         });
       });
       return chain;
@@ -560,17 +811,24 @@
       // media: bytes, real type, real hash; a hash-named file whose
       // bytes changed outside orOS gets its real hash as its new key
       var chain = Promise.resolve();
-      src.names.filter(function (n) { return /^media\/[^/]+$/.test(n); }).forEach(function (n) {
+      var mnames = src.names.filter(function (n) { return /^media\/[^/]+$/.test(n) && KEY_RE.test(n.slice(6)); });
+      var prog = typeof opts.onProgress === "function" ? opts.onProgress : null, done = 0, total = 0;
+      mnames.forEach(function (n) { total += src.size(n); });
+      mnames.forEach(function (n) {
         var key = n.slice(6);
-        if (!KEY_RE.test(key)) return;
-        chain = chain.then(function () { return src.bytes(n); }).then(function (b) {
-          return sha256(b).then(function (h) {
-            var listed = mf && mf.files[n];
-            if (listed && listed.sha256 && listed.sha256 !== h) out.changed.push(n);
-            var m = HASHED_RE.exec(key), k = key;
-            if (m && m[1] !== h) { k = h + (m[2] || ""); out.rekeyed[key] = k; }
-            out.media[k] = { bytes: b, type: typeOf(b) || "application/octet-stream", sha: h };
-          });
+        chain = chain.then(function () {
+          return hashOf(src, n, prog ? function (k) { done += k; prog(done, total); } : null, !l.big);
+        }).then(function (x) {
+          var h = x.sha, listed = mf && mf.files[n];
+          if (listed && listed.sha256 && listed.sha256 !== h) out.changed.push(n);
+          var m = HASHED_RE.exec(key), k = key;
+          if (m && m[1] !== h) { k = h + (m[2] || ""); out.rekeyed[key] = k; }
+          var type = typeOf(x.head) || "application/octet-stream";
+          var item = { type: type, sha: h, size: src.size(n) };
+          if (x.bytes) item.bytes = x.bytes;
+          if (l.big) item.blob = x.blob || new Blob([x.bytes], { type: type });
+          out.media[k] = item;
+          if (x.bytes && prog) { done += x.bytes.length; prog(done, total); }
         });
       });
       return chain;
@@ -593,10 +851,12 @@
       return out;
     });
   }
-  function read(bytes, opts) {
-    var l = lims(opts && opts.limits);
-    return toBytes(bytes).then(function (b) {
-      var src = zipSource(b, l);
+  // input: bytes, an ArrayBuffer, or a Blob/File (read a piece at a time)
+  function read(input, opts) {
+    var l = lims(opts);
+    return Promise.resolve().then(function () {
+      return isBlob(input) ? blobRA(input) : toBytes(input).then(bytesRA);
+    }).then(function (ra) { return zipSource(ra, l); }).then(function (src) {
       // the type must be the first entry, uncompressed (ODF/EPUB rule),
       // so tools can tell the type from the bytes alone
       if (src.firstName() !== "mimetype" || !src.stored("mimetype")) throw bad("notbundle");
@@ -604,7 +864,7 @@
     });
   }
   function readFolder(list, opts) {
-    var l = lims(opts && opts.limits);
+    var l = lims(opts);
     return Promise.resolve().then(function () { return readSource(folderSource(list, l), opts, l); });
   }
 
@@ -639,9 +899,9 @@
 
   var api = {
     VERSION: VERSION, NS: NS, TYPES: TYPES, LIM: LIM,
-    write: write, read: read, readFolder: readFolder, sniff: sniff, pickFolder: pickFolder,
+    write: write, writeBlob: writeBlob, read: read, readFolder: readFolder, digest: digest, sniff: sniff, pickFolder: pickFolder,
     sha256: sha256, typeOf: typeOf, safePath: safePath, typeOfExt: typeOfExt,
-    _zip: zip, _parseManifest: parseManifest, _parseMeta: parseMeta
+    _zip: zip, _z64: function (bytes, count) { Z64 = bytes || M32; Z64N = count || 0xFFFF; }, _parseManifest: parseManifest, _parseMeta: parseMeta
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.OrosBundle = api;

@@ -98,6 +98,9 @@
       "imp.err.read": "Could not read this file. It may be damaged.",
       "imp.err.big": "This file is too large to import.", "imp.err.empty": "Nothing is drawn in this file.",
       "imp.err.zip": "This browser can't unpack the compressed pictures in this file.",
+      "btn.oros": "orOS file (.orospixel)", "toast.fileFail": "Could not make the file", "imp.folder": "Unzipped orOS folder…",
+      "imp.newer": "This file was made by a newer orOS. Update orOS to open it.",
+      "file.opened": "Opened “{name}” and saved it to the Museum",
       "live.new": "New face from seed {s}", "keys": "R new face · P next palette · D download PNG"
     },
     el: {
@@ -141,6 +144,9 @@
       "imp.err.read": "Δεν ήταν δυνατή η ανάγνωση του αρχείου. Ίσως είναι κατεστραμμένο.",
       "imp.err.big": "Το αρχείο είναι πολύ μεγάλο για εισαγωγή.", "imp.err.empty": "Δεν υπάρχει σχέδιο σε αυτό το αρχείο.",
       "imp.err.zip": "Αυτός ο browser δεν μπορεί να αποσυμπιέσει τις εικόνες του αρχείου.",
+      "btn.oros": "Αρχείο orOS (.orospixel)", "toast.fileFail": "Δεν ήταν δυνατή η δημιουργία του αρχείου", "imp.folder": "Αποσυμπιεσμένος φάκελος orOS…",
+      "imp.newer": "Το αρχείο φτιάχτηκε από νεότερο orOS. Ενημέρωσε το orOS για να το ανοίξεις.",
+      "file.opened": "Άνοιξε το «{name}» και αποθηκεύτηκε στο Μουσείο",
       "live.new": "Νέο πρόσωπο από τη λέξη {s}", "keys": "R νέο πρόσωπο · P επόμενη παλέτα · D λήψη PNG"
     }
   };
@@ -544,6 +550,31 @@
       for (var x = 0; x < N; x++) px += grid.charAt(src(y) * n + src(x));
     }
     return { c: colors.map(function (c) { return toHex(c) || "#808080"; }), px: px, t: f.b ? 1 : 0 };
+  }
+
+  // The orOS file (.orospixel, bundle.js): one face as a Museum item.
+  // content.json = { kind: "oros-pixel-package", ver: 1,
+  //   item: { id, m, name, f: face }  the record the Museum syncs,
+  //   colors: the 8 colours it showed (the orOS palette follows the
+  //           skin, so this is only what it looked like),
+  //   grid:   its n*n colour digits (also when px is "", as generated) }
+  // No media: a face is a recipe. The pictures are in preview/.
+  var PIXEL_MIME = "application/x-oros-pixel";
+  function facePackage(it, colors) {
+    var x = normItem(it);
+    if (!x) return null;
+    return { kind: "oros-pixel-package", ver: 1, item: x,
+             colors: (colors || []).map(function (c) { return toHex(c) || "#808080"; }),
+             grid: faceGrid(x.f) };
+  }
+  // content.json → a NEW Museum item (fresh id, m = now) through
+  // normFace / normItem like any synced item, or null.
+  function faceFromPackage(c, now) {
+    if (!c || typeof c !== "object" || c.kind !== "oros-pixel-package" ||
+        !c.item || typeof c.item !== "object") return null;
+    var f = normFace(c.item.f);
+    if (!f) return null;
+    return normItem({ id: newId(), m: isInt(now) && now >= 0 ? now : Date.now(), name: c.item.name, f: f });
   }
 
   // ---------- 7. Storage + prefs ----------
@@ -1001,6 +1032,46 @@
     var b = new Blob([faceSvg(f, exportPx(f.n, prefs.exp), colorsOf(f), true)], { type: "image/svg+xml;charset=utf-8" });
     downloadBlob(b, fileBase(f) + ".svg", "image/svg+xml", SVG_TYPES);
   }
+
+  // orOS file (.orospixel): the face on the desk as a Museum item (its
+  // Museum name when it is saved there, else the seed), named after
+  // that title. preview/face.png (crisp, ~512 px) + face.svg for any
+  // other program, preview/thumbnail.png (~256 px).
+  var OROS_TYPES = [{ description: "orOS Pixel Avatar", accept: { "application/x-oros-pixel": [".orospixel"] } }];
+  function deskItem() {
+    var f = prefs.face;
+    for (var i = 0; i < data.items.length; i++) {
+      if (sameFace(data.items[i].f, f)) return data.items[i];
+    }
+    return { id: newId(), m: Date.now(), name: f.s, f: f };
+  }
+  function fileTitle(s) {
+    return String(s || "").replace(/[\u0000-\u001f\u007f\/\\:*?"<>|]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 80) || "Pixel Avatar";
+  }
+  function blobBytes(b) { return b.arrayBuffer().then(function (ab) { return new Uint8Array(ab); }); }
+  function exportOros() {
+    var B = window.OrosBundle;
+    if (!B) return;
+    var f = prefs.face, cols = colorsOf(f), it = deskItem();
+    var content = facePackage(it, cols);
+    if (!content) return;
+    Promise.all([pngBlob(f, exportPx(f.n, 512)).then(blobBytes), pngBlob(f, exportPx(f.n, 256)).then(blobBytes)])
+      .then(function (png) {
+        return B.write({
+          mime: PIXEL_MIME, app: "pixel", schema: "pixel/1",
+          content: content,
+          meta: { title: content.item.name, modified: content.item.m, id: content.item.id,
+                  language: LANG, generator: "orOS Pixel Avatar" },
+          thumbnail: png[1],
+          preview: [{ name: "face.png", data: png[0], type: "image/png" },
+                    { name: "face.svg", data: faceSvg(f, exportPx(f.n, 512), cols, true), type: "image/svg+xml" }],
+          date: new Date()
+        });
+      })
+      .then(function (bytes) {
+        downloadBlob(new Blob([bytes], { type: PIXEL_MIME }), fileTitle(content.item.name) + ".orospixel", PIXEL_MIME, OROS_TYPES);
+      }, function () { showToast(t("toast.copyFail")); });
+  }
   function copyImage() {
     if (!(navigator.clipboard && navigator.clipboard.write && window.ClipboardItem)) {
       showToast(t("toast.copyFail"));
@@ -1104,13 +1175,14 @@
                   jasc: "JASC (Paint Shop Pro)", asef: "Adobe" };
   var MAX_SHEET = 16 * 1024 * 1024;           // pixels of one decoded Piskel sheet
 
+  function importAccept() { return (window.OrosBundle ? ".orospixel," : "") + IMP.ACCEPT; }
   function pickImportFile() {
     var host = dialogHost();
-    if (host && typeof host.openFile === "function") return host.openFile(IMP.ACCEPT);
+    if (host && typeof host.openFile === "function") return host.openFile(importAccept());
     return new Promise(function (resolve) {        // standalone page
       var inp = document.createElement("input");
       inp.type = "file";
-      inp.accept = IMP.ACCEPT;
+      inp.accept = importAccept();
       inp.hidden = true;
       inp.addEventListener("change", function () {
         var f = inp.files && inp.files[0];
@@ -1179,18 +1251,100 @@
     if (!pal) return Promise.reject(new Error("unknown"));
     return Promise.resolve({ kind: kind, name: name, colors: pal.colors });
   }
-  // Also the handle for tests / a file opened with orOS (Promise)
+  // Also the handle for tests / a file opened with orOS (Promise).
+  // An .orospixel bundle (sniffed by its first bytes) opens straight
+  // away (openBundle); anything else goes to the preview as before.
   function importFile(file) {
-    return window.OrosImportKit.readFile(file, IMP.MAX_FILE)
-      .then(readImport)
-      .then(function (res) { openImportPreview(res); return true; })
-      .catch(function (e) {
-        var m = e && e.message;
-        showToast(t(m === "toobig" || m === "big" ? "imp.err.big" : m === "unknown" ? "imp.err.unknown" :
-                    m === "zip" ? "imp.err.zip" : "imp.err.read"));
-        return false;
-      });
+    return readBundleFile(file)
+      .then(function (r) {
+        if (r) return openBundle(r);
+        if (!IMP || !window.OrosImportKit) throw new Error("unknown");
+        return window.OrosImportKit.readFile(file, IMP.MAX_FILE)
+          .then(readImport)
+          .then(function (res) { openImportPreview(res); return true; });
+      })
+      .catch(function (e) { importFail(e); return false; });
   }
+  function importFail(e) {
+    var m = e && (e.code || e.message);
+    showToast(t(m === "toobig" || m === "big" ? "imp.err.big" : m === "newer" ? "imp.newer" :
+                m === "unknown" || m === "wrongtype" || m === "notbundle" || m === "nocontent" || m === "content" ? "imp.err.unknown" :
+                m === "zip" ? "imp.err.zip" : "imp.err.read"));
+  }
+
+  // ---------- 11c. orOS file (.orospixel) ----------
+  // A File → the bundle read by bundle.js, or null when it is not one
+  // (then the sprite / palette import reads it). Sniffed from the
+  // first bytes, never the name; another ZIP only counts when it is
+  // named .orospixel (so its error is the bundle's, not "unknown").
+  var BUNDLE_MAX = 8 * 1024 * 1024;           // a face is a few KB, with its previews
+  function readBundleFile(file) {
+    var B = window.OrosBundle;
+    if (!B || !file || typeof file.slice !== "function") return Promise.resolve(null);
+    return file.slice(0, 128).arrayBuffer().then(function (head) {
+      var kind = B.sniff(new Uint8Array(head));
+      if (kind === null || (kind !== PIXEL_MIME && !/\.orospixel$/i.test(file.name || ""))) return null;
+      if (file.size > BUNDLE_MAX) throw new Error("big");
+      return file.arrayBuffer().then(function (ab) {
+        return B.read(new Uint8Array(ab), { mime: PIXEL_MIME });
+      });
+    });
+  }
+  // A read bundle → ALWAYS a new Museum item (fresh id; an identical
+  // face already there is not saved twice) and the face on the desk
+  // through commit(), so Undo brings the old face back; the toast's
+  // Undo also takes the new item out of the Museum again.
+  function openBundle(r) {
+    var it = faceFromPackage(r && r.content, Date.now());
+    if (!it) throw new Error("unknown");
+    var d = document.querySelector("dialog[open]");
+    if (d) d.close();
+    var changed = commit(JSON.parse(JSON.stringify(it.f)));
+    var applied = prefs.face, added = false, dup = false;
+    for (var i = 0; i < data.items.length; i++) if (sameFace(data.items[i].f, it.f)) dup = true;
+    if (!dup && data.items.length < MAX_ITEMS) {
+      data = mergePixel(data, { items: [it], tombs: {} });
+      save(); renderMuseum();
+      added = true;
+    }
+    if (!dup && !added) { showToast(t("toast.full", { n: MAX_ITEMS })); return true; }
+    var msg = added ? t("file.opened", { name: it.name }) : t("toast.opened", { name: it.name });
+    if (!changed && !added) { showToast(msg); return true; }
+    undoToast(msg, function () {
+      if (changed && sameFace(prefs.face, applied)) undo();
+      if (added) {
+        var tombs = {};
+        tombs[it.id] = Math.max(Date.now(), it.m);
+        data = mergePixel(data, { items: [], tombs: tombs });
+        save(); renderMuseum();
+      }
+    });
+    return true;
+  }
+  // "Unzipped orOS folder…": an .orospixel unzipped (maybe changed by hand)
+  function importFolder() {
+    var B = window.OrosBundle;
+    if (!B) return Promise.resolve(false);
+    return B.pickFolder().then(function (files) {
+      if (!files) return false;
+      return B.readFolder(files, { mime: PIXEL_MIME }).then(openBundle);
+    }).catch(function (e) { importFail(e); return false; });
+  }
+
+  // Deep link (shell __orosOpenAt / __orosTakeTarget): { openFile:
+  // { token } }, a file from the system's "Open with" (shell
+  // fileopen.js), taken once and read as the import reads one.
+  function openTarget(tg) {
+    if (!tg || typeof tg !== "object" || !tg.openFile || typeof tg.openFile.token !== "string") return;
+    var f = null;
+    try {
+      var p = window.parent;
+      if (p && p !== window && typeof p.__orosTakeFile === "function") f = p.__orosTakeFile(tg.openFile.token);
+    } catch (e) { f = null; }
+    if (!f) return;
+    return importFile(f);
+  }
+  window.__orosOpenAt = openTarget;
   // The face a sprite frame gives, or null (nothing drawn).
   function spriteFace(res, i) {
     var f = IMP.toFace(res.frame(i));
@@ -1424,6 +1578,10 @@
     var ib = $("imp-btn");
     if (IMP && window.OrosImportKit) ib.addEventListener("click", startImport);
     else ib.hidden = true;
+    $("oros-btn").hidden = !window.OrosBundle;
+    $("oros-btn").addEventListener("click", exportOros);
+    $("folder-btn").hidden = !window.OrosBundle;
+    $("folder-btn").addEventListener("click", importFolder);
     wireKeyboard();
   }
 
@@ -1438,6 +1596,13 @@
     watchPalette();
     renderAll();
     renderMuseum();
+    try {
+      if (window.parent && window.parent !== window &&
+          typeof window.parent.__orosTakeTarget === "function") {
+        var pending = window.parent.__orosTakeTarget("pixel");
+        if (pending) openTarget(pending);
+      }
+    } catch (e) {}
   }
 
   boot();

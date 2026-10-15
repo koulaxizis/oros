@@ -95,6 +95,12 @@ ul { list-style: none; }
 #home { overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
 .home-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .home-head h1 { font-size: 20px; }
+/* "Unzipped orOS folder…" under the projects */
+.link-btn {
+  align-self: flex-start; margin: -8px 0 -4px; min-height: 32px; padding: 6px 2px; font: inherit; font-size: 13px;
+  color: var(--accent); background: none; border: 0; text-decoration: underline; cursor: pointer;
+}
+.link-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
 .proj-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
 .proj {
   display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: 12px;

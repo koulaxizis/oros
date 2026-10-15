@@ -21,6 +21,9 @@
 //     instrument through the track's effects and automation, recorded
 //     from the keyboard, edited in the piano roll (roll.js, notes.js),
 //     imported and exported as .mid files; a loop library (loops.js)
+//   - a project as one orOS file (.orosstudio, ../bundle.js +
+//     package.js): saved with its audio, opened as a new project,
+//     also from an unzipped folder and from the system's "Open with"
 // Data:
 //   - synced slice "studio" (oros-studio-data): projects, tracks,
 //     audio sources and clips, one entity at a time (core.js); the
@@ -41,7 +44,7 @@
 //   6. Pointer: clips, ruler, lanes
 //   7. Engine: playback, loop, click, meter
 //   8. Recording
-//   9. Import, export
+//   9. Import, export (9b: the .orosstudio file)
 //  10. Dialogs: projects, names, track, settings
 //  11. Toasts
 //  12. Keyboard (Contract Β)
@@ -121,6 +124,14 @@
       "toast.noClip": "Select a clip first", "toast.noSplit": "Put the playhead inside the clip to split it",
       "toast.clipDeleted": "Clip deleted", "toast.trackDeleted": "Track deleted", "toast.projDeleted": "Project deleted",
       "toast.undo": "Undo", "toast.file": "Saved", "toast.missing": "Some audio is not on this device yet",
+      "oros.sec": "orOS file", "oros.save": "Save as orOS file (.orosstudio)", "oros.open": "Open orOS file…",
+      "oros.folder": "Unzipped orOS folder…", "oros.hint": "One file with the whole project: tracks, clips, notes, effects, automation and the audio.",
+      "oros.reading": "Reading the audio… {n}%", "oros.packing": "Packing the project… {n}%", "oros.opening": "Opening {name}… {n}%",
+      "oros.copying": "Copying the audio to the disk… {n} of {m}", "oros.opened": "Opened as a new project: {name}",
+      "oros.newer": "This file was made by a newer orOS. Update orOS to open it.", "oros.bad": "{name} is not a Studio project orOS can read",
+      "oros.missing": "{n} audio files are not on this device yet, so they were left out", "oros.fail": "The orOS file could not be made",
+      "oros.w.tempo": "Tempo", "oros.w.length": "Length", "oros.w.audio": "Audio", "oros.w.inst": "Instrument", "oros.w.clips": "clips",
+      "oros.w.notes": "notes", "oros.w.muted": "muted", "oros.w.solo": "solo",
       "toast.noMic": "No microphone or input could be opened", "toast.recMax": "A take is at most 30 minutes",
       "toast.recSaved": "Take saved on {name}", "toast.recFail": "The take could not be saved",
       "toast.armed": "Recording goes to {name}", "toast.noRec": "This browser cannot record here",
@@ -240,6 +251,14 @@
       "toast.noClip": "Διάλεξε πρώτα ένα clip", "toast.noSplit": "Βάλε τον δείκτη μέσα στο clip για να το κόψεις",
       "toast.clipDeleted": "Το clip διαγράφηκε", "toast.trackDeleted": "Το κανάλι διαγράφηκε", "toast.projDeleted": "Το έργο διαγράφηκε",
       "toast.undo": "Αναίρεση", "toast.file": "Αποθηκεύτηκε", "toast.missing": "Κάποιος ήχος δεν έχει φτάσει ακόμη σε αυτή τη συσκευή",
+      "oros.sec": "Αρχείο orOS", "oros.save": "Αποθήκευση ως αρχείο orOS (.orosstudio)", "oros.open": "Άνοιγμα αρχείου orOS…",
+      "oros.folder": "Αποσυμπιεσμένος φάκελος orOS…", "oros.hint": "Ένα αρχείο με όλο το έργο: κανάλια, clips, νότες, εφέ, αυτοματισμούς και τον ήχο.",
+      "oros.reading": "Διαβάζεται ο ήχος… {n}%", "oros.packing": "Πακετάρεται το έργο… {n}%", "oros.opening": "Ανοίγει το {name}… {n}%",
+      "oros.copying": "Ο ήχος αντιγράφεται στον δίσκο… {n} από {m}", "oros.opened": "Άνοιξε ως νέο έργο: {name}",
+      "oros.newer": "Το αρχείο φτιάχτηκε από νεότερο orOS. Ενημέρωσε το orOS για να το ανοίξεις.", "oros.bad": "Το {name} δεν είναι έργο Studio που διαβάζει το orOS",
+      "oros.missing": "{n} αρχεία ήχου δεν έχουν φτάσει ακόμη σε αυτή τη συσκευή, οπότε έμειναν έξω", "oros.fail": "Το αρχείο orOS δεν φτιάχτηκε",
+      "oros.w.tempo": "Ρυθμός", "oros.w.length": "Διάρκεια", "oros.w.audio": "Ήχος", "oros.w.inst": "Όργανο", "oros.w.clips": "clips",
+      "oros.w.notes": "νότες", "oros.w.muted": "σίγαση", "oros.w.solo": "σόλο",
       "toast.noMic": "Δεν άνοιξε μικρόφωνο ή είσοδος", "toast.recMax": "Μια λήψη κρατά έως 30 λεπτά",
       "toast.recSaved": "Η λήψη αποθηκεύτηκε στο {name}", "toast.recFail": "Η λήψη δεν αποθηκεύτηκε",
       "toast.armed": "Η ηχογράφηση πάει στο {name}", "toast.noRec": "Αυτός ο browser δεν ηχογραφεί εδώ",
@@ -2352,16 +2371,16 @@
     });
   }
   function pickAudio() {
-    var dlg = dialogHost(), accept = "audio/*,.wav,.mp3,.ogg,.oga,.opus,.flac,.m4a,.aac,.webm,.mid,.midi";
+    var dlg = dialogHost(), accept = "audio/*,.wav,.mp3,.ogg,.oga,.opus,.flac,.m4a,.aac,.webm,.mid,.midi,.orosstudio";
     var p = dlg && typeof dlg.openFiles === "function" ? dlg.openFiles(accept) : localPickFiles(accept);
-    Promise.resolve(p).then(function (files) { if (files && files.length) importFiles(files); });
+    Promise.resolve(p).then(function (files) { if (files && files.length) routeFiles(files); });
   }
   // audio files become clips on audio tracks, .mid files on instrument tracks (importMidi)
   function importFiles(files) {
-    if (!fsApi() && files.some(function (f) { return !isMidiFile(f); })) { showToast(t("toast.noDisk")); return; }
-    if (!ensureProject()) return;
+    if (!fsApi() && files.some(function (f) { return !isMidiFile(f); })) { showToast(t("toast.noDisk")); return Promise.resolve(); }
+    if (!ensureProject()) return Promise.resolve();
     var before = snapshot(), any = false;
-    files.reduce(function (p, f) {
+    return files.reduce(function (p, f) {
       return p.then(function () {
         if (f.size > MAX_FILE) { showToast(t("toast.tooBig", { name: f.name })); return; }
         if (projClips().length >= C.MAX_CLIPS) { showToast(t("toast.maxClips", { n: C.MAX_CLIPS })); return; }
@@ -2479,19 +2498,267 @@
     };
   }
   function saveBlob(blob, name, mime, desc, ext) {
+    saveFileP(blob, name, mime, desc, ext).then(function (ok) { if (ok) showToast(t("toast.file")); });   // cancel = silent exit
+  }
+  // → Promise<true when saved>. The shell's dialog takes any Blob, a
+  // multi-GB one too (written a piece at a time).
+  function saveFileP(blob, name, mime, desc, ext) {
     var dlg = dialogHost();
     if (dlg && typeof dlg.saveFile === "function") {
       var acc = {}; acc[mime] = [ext];
-      dlg.saveFile({ blob: blob, filename: name, mime: mime, types: [{ description: desc, accept: acc }] })
-        .then(function (res) { if (res && res.ok) showToast(t("toast.file")); });
-      return;                       // cancel (ok=false) = silent exit
+      return Promise.resolve(dlg.saveFile({ blob: blob, filename: name, mime: mime, types: [{ description: desc, accept: acc }] }))
+        .then(function (res) { return !!(res && res.ok); }, function () { return false; });
     }
     var url = URL.createObjectURL(blob), a = document.createElement("a");
     a.href = url; a.download = name;
     document.body.appendChild(a); a.click();
     setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 40000);
-    showToast(t("toast.file"));
+    return Promise.resolve(true);
   }
+
+  // ---------- 9b. orOS file (.orosstudio) ----------
+  // One project = one orOS bundle (../bundle.js, package.js):
+  // content.json is the project in core.js's model (tracks, clips,
+  // MIDI notes, effect chains with their settings, automation, tempo,
+  // loop), media/<sha256>.<ext> the audio its clips play and the
+  // effects' files (Convolution's IR), taken from the disk as Blobs and
+  // never read whole into memory (writeBlob; read(file, { big: true })
+  // to open), preview/tracks.txt + song.mid (the instrument tracks) +
+  // thumbnail.png (the timeline). Opening one always makes a NEW
+  // project with fresh ids; the audio is copied to the disk.
+  var OROS_MIME = "application/x-oros-studio", OROS_EXT = ".orosstudio";
+  function bundleApi() { return window.OrosBundle && window.StudioPackage ? window.OrosBundle : null; }
+  function pctOf(d, tot) { return tot > 0 ? Math.min(100, Math.floor(d * 100 / tot)) : 0; }
+  function pathExt(p) { var m = /\.([a-z0-9]{1,5})$/i.exec(p || ""); return m ? m[1].toLowerCase() : "wav"; }
+  // disk files the effect chains of a project use
+  function fxFilesOf(pid) {
+    var p = C.find(data, "projects", pid), out = [];
+    [p ? p.fx : []].concat(C.tracksOf(data, pid).map(function (tr) { return tr.fx; })).forEach(function (items) {
+      (items || []).forEach(function (x) {
+        Object.keys(x.f || {}).forEach(function (k) { if (out.indexOf(x.f[k]) < 0) out.push(x.f[k]); });
+      });
+    });
+    return out;
+  }
+  // preview/song.mid: every instrument track, in project time (type 1)
+  function songMidi(pid) {
+    var parts = [];
+    C.tracksOf(data, pid).forEach(function (tr) {
+      var notes = [];
+      clipsOf(tr.id).forEach(function (c) { C.clipNotes(c, 0, C.MAX_SEC).forEach(function (q) { notes.push([q.p, q.at, q.end - q.at, q.v]); }); });
+      if (notes.length && parts.length < 15) parts.push(midiPart(tr, notes));
+    });
+    if (!parts.length) return null;
+    try { return N.writeSmf({ bpm: proj.bpm, sig: proj.sig, name: proj.name || t("proj.untitled"), tracks: parts }, 1); } catch (e) { return null; }
+  }
+  // preview/thumbnail.png: the timeline, one row per track
+  function songThumb(pid) {
+    var trs = C.tracksOf(data, pid), end = Math.max(1, C.projectEnd(C.ofProject(data, "clips", pid)));
+    var W = 512, RH = 40, H = Math.max(64, 12 + trs.length * RH);
+    var cv = document.createElement("canvas"), g = cv.getContext && cv.getContext("2d");
+    if (!g || !cv.toBlob) return Promise.resolve(null);
+    cv.width = W; cv.height = H;
+    g.fillStyle = "#1c1d22"; g.fillRect(0, 0, W, H);
+    var k = (W - 12) / end;
+    trs.forEach(function (tr, i) {
+      var y = 6 + i * RH;
+      g.fillStyle = "rgba(255,255,255,0.04)"; g.fillRect(0, y, W, RH - 4);
+      clipsOf(tr.id).forEach(function (c) {
+        var x = 6 + c.at * k, w = Math.max(2, c.len * k), h = RH - 8;
+        g.globalAlpha = 0.85; g.fillStyle = tr.color; g.fillRect(x, y + 2, w, h);
+        g.globalAlpha = 1; g.fillStyle = "rgba(0,0,0,0.45)";
+        if (C.isMidi(c)) {
+          C.clipNotes(c, c.at, C.clipEnd(c)).forEach(function (q) {
+            g.fillRect(6 + q.at * k, y + 2 + h - (q.p / 127) * h, Math.max(2, (q.end - q.at) * k - 1), 3);
+          });
+        } else {
+          var pk = peakCache[c.s];
+          if (pk) {
+            for (var px = 0; px < w; px += 2) {
+              var b = Math.floor((c.off + px / k) * PEAKS_PER_S) * 2;
+              var v = Math.min(1, Math.max(Math.abs(pk[b] || 0), Math.abs(pk[b + 1] || 0)));
+              g.fillRect(x + px, y + 2 + h / 2 - v * h / 2, 1.5, Math.max(1, v * h));
+            }
+          }
+        }
+      });
+    });
+    return new Promise(function (res) {
+      cv.toBlob(function (b) {
+        if (!b) { res(null); return; }
+        b.arrayBuffer().then(function (ab) { res(new Uint8Array(ab)); }, function () { res(null); });
+      }, "image/png");
+    });
+  }
+  function fileTitle(s) {
+    return String(s || "").replace(/[\u0000-\u001f\u007f\/\\:*?"<>|]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 80) || "Studio";
+  }
+  function saveOros() {
+    var B = bundleApi(), SP = window.StudioPackage;
+    if (!B || !proj || recording) return;
+    flush();
+    hideDlg("proj-dlg");
+    var pid = proj.id, p0 = proj, fs = fsApi();
+    var used = {};
+    projClips().forEach(function (c) { if (c.s) used[c.s] = true; });
+    var items = C.ofProject(data, "sources", pid).filter(function (s) { return used[s.id]; })
+      .map(function (s) { return { src: s.id, path: s.path }; })
+      .concat(fxFilesOf(pid).map(function (path) { return { fx: path, path: path }; }));
+    var keys = { src: {}, fx: {} }, media = {}, missing = 0, total = 0, done = 0;
+    busy(t("oros.reading", { n: 0 }));
+    var chain = Promise.resolve();
+    items.forEach(function (it) {
+      chain = chain.then(function () {
+        if (!fs) return null;
+        return Promise.resolve(fs.readBlob(it.path)).then(function (b) { return b || null; }, function () { return null; });
+      }).then(function (b) { it.blob = b; if (b) total += b.size; });
+    });
+    items.forEach(function (it) {
+      chain = chain.then(function () {
+        if (!it.blob) { missing++; return; }
+        return B.digest(it.blob, function (n) { done += n; busy(t("oros.reading", { n: pctOf(done, total) })); }).then(function (d) {
+          var key = d.sha + "." + pathExt(it.path);
+          media[key] = it.blob;
+          if (it.src) keys.src[it.src] = key; else keys.fx[it.fx] = key;
+        });
+      });
+    });
+    var built = null;
+    chain.then(function () {
+      built = SP.build(data, pid, keys, {
+        fxName: function (id) { return FX.nameOf(id); },
+        instName: function (id) { return window.StudioMidi.PRESETS[id] ? t("snd." + id) : id; },
+        words: { untitled: t("proj.untitled"), tempo: t("oros.w.tempo"), length: t("oros.w.length"), master: t("f.master"), fx: t("fx.open"),
+                 audio: t("oros.w.audio"), inst: t("oros.w.inst"), clips: t("oros.w.clips"), notes: t("oros.w.notes"),
+                 mute: t("oros.w.muted"), solo: t("oros.w.solo"), midi: t("mi.clip") }
+      });
+      return songThumb(pid).catch(function () { return null; });
+    }).then(function (thumb) {
+      var preview = [{ name: "tracks.txt", data: built.tracksTxt, type: "text/plain" }];
+      var mid = songMidi(pid);
+      if (mid) preview.push({ name: "song.mid", data: mid, type: "audio/midi" });
+      busy(t("oros.packing", { n: 0 }));
+      return B.writeBlob({
+        mime: OROS_MIME, app: "studio", schema: "studio/1",
+        content: built.content,
+        meta: { title: p0.name || "", modified: new Date(p0.m || Date.now()).toISOString(), id: pid, language: LANG, generator: "orOS Studio" },
+        generator: "orOS Studio",
+        media: media, thumbnail: thumb, preview: preview, date: new Date(),
+        onProgress: function (d, tot) { busy(t("oros.packing", { n: pctOf(d, tot) })); }
+      });
+    }).then(function (blob) {
+      busy(null);
+      if (missing) showToast(t("oros.missing", { n: missing }));
+      return saveFileP(blob, fileTitle(p0.name || t("proj.untitled")) + OROS_EXT, OROS_MIME, "orOS Studio", OROS_EXT);
+    }).then(function (ok) {
+      if (ok && !missing) showToast(t("toast.file"));
+    }, function (e) {
+      busy(null);
+      try { console.error("[orOS] studio: .orosstudio", e); } catch (x) {}
+      showToast(t("oros.fail"));
+    });
+  }
+
+  // Picked or dropped files: .orosstudio bundles (by their first bytes;
+  // a ZIP named .orosstudio too, so a broken one gets a message) open as
+  // new projects, after the audio and MIDI files are imported.
+  function isOros(f) {
+    var B = bundleApi();
+    if (!B || isMidiFile(f) || typeof f.slice !== "function") return Promise.resolve(false);
+    return f.slice(0, 128).arrayBuffer().then(function (ab) {
+      var k = B.sniff(new Uint8Array(ab));
+      return k === OROS_MIME || (k !== null && /\.orosstudio$/i.test(f.name || ""));
+    }, function () { return false; });
+  }
+  function routeFiles(files) {
+    return Promise.all(files.map(isOros)).then(function (flags) {
+      var ours = files.filter(function (f, i) { return flags[i]; });
+      var rest = files.filter(function (f, i) { return !flags[i]; });
+      return Promise.resolve(rest.length ? importFiles(rest) : null).then(function () {
+        return ours.reduce(function (p, f) { return p.then(function () { return openOros(f); }); }, Promise.resolve());
+      });
+    });
+  }
+  function orosFail(name) {
+    return function (e) {
+      busy(null);
+      showToast(e && e.code === "newer" ? t("oros.newer") : t("oros.bad", { name: name }));
+    };
+  }
+  function openOros(f) {
+    var B = bundleApi(), name = f.name || OROS_EXT;
+    if (!B) return Promise.resolve();
+    busy(t("oros.opening", { name: name, n: 0 }));
+    return B.read(f, { mime: OROS_MIME, big: true, onProgress: function (d, tot) { busy(t("oros.opening", { name: name, n: pctOf(d, tot) })); } })
+      .then(function (r) { return addOros(r, name); }, orosFail(name));
+  }
+  function openOrosFolder() {
+    var B = bundleApi();
+    if (!B) return;
+    hideDlg("proj-dlg");
+    B.pickFolder().then(function (files) {
+      if (!files || !files.length) return;
+      var first = files[0], name = String(first.webkitRelativePath || first.name || "").split("/")[0] || OROS_EXT;
+      busy(t("oros.opening", { name: name, n: 0 }));
+      return B.readFolder(files, { mime: OROS_MIME, big: true, onProgress: function (d, tot) { busy(t("oros.opening", { name: name, n: pctOf(d, tot) })); } })
+        .then(function (r) { return addOros(r, name); }, orosFail(name));
+    });
+  }
+  function pickOros() {
+    hideDlg("proj-dlg");
+    pickFilesP(OROS_EXT + "," + OROS_MIME).then(function (files) { if (files && files.length) routeFiles(files); });
+  }
+  // A read bundle → a NEW project: its audio onto the disk first, then
+  // the project, tracks, sources and clips into the data.
+  function addOros(r, name) {
+    var SP = window.StudioPackage, parsed;
+    try {
+      parsed = SP.parse(r.content, { newId: function (k) { return C.newId(k, Math.random); }, now: Date.now(), title: r.meta && r.meta.title });
+    } catch (e) { orosFail(name)(e); return; }
+    if (data.projects.length >= C.MAX_PROJECTS) { busy(null); showToast(t("toast.maxProjects", { n: C.MAX_PROJECTS })); return; }
+    var fs = fsApi(), files = parsed.files.filter(function (x) { return r.media[x.key]; }), written = [];
+    if (files.length && !fs) { busy(null); showToast(t("toast.noDisk")); return; }
+    if (!parsed.project.name) parsed.project.name = t("proj.default", { n: data.projects.length + 1 });
+    return files.reduce(function (p, x, i) {
+      return p.then(function () {
+        busy(t("oros.copying", { n: i + 1, m: files.length }));
+        var m = r.media[x.key];
+        var blob = m.blob || new Blob([m.bytes], { type: m.type });
+        return Promise.resolve(fs.writeBlob(x.path, blob)).then(function () { written.push(x.path); });
+      });
+    }, Promise.resolve()).then(function () {
+      var part = C.emptyData();
+      part.projects = [parsed.project]; part.tracks = parsed.tracks; part.sources = parsed.sources; part.clips = parsed.clips;
+      data = C.mergeStudio(data, part);
+      save();
+      busy(null);
+      openProject(C.find(data, "projects", parsed.project.id));
+      if ($("proj-dlg").open) renderProjects();
+      showToast(t("oros.opened", { name: parsed.project.name }));
+    }, function () {
+      busy(null);
+      written.forEach(function (p) { try { Promise.resolve(fs.rm(p)).catch(function () {}); } catch (e) {} });
+      showToast(t("toast.writeFail"));
+    });
+  }
+
+  // Target { openFile: { token } }: an .orosstudio (or an audio or MIDI
+  // file) from the system's "Open with" (shell fileopen.js), taken once
+  // from the shell and opened as a picked file is.
+  function openFileTarget(o) {
+    var f = null;
+    try {
+      var w = window.parent;
+      if (o && typeof o.token === "string" && w && w !== window && typeof w.__orosTakeFile === "function")
+        f = w.__orosTakeFile(o.token);
+    } catch (e) { f = null; }
+    if (f) routeFiles([f]);
+  }
+  function openTarget(tg) {
+    if (!tg || typeof tg !== "object") return;
+    if (tg.openFile) openFileTarget(tg.openFile);
+  }
+  window.__orosOpenAt = openTarget;
 
   // ---------- Clip actions ----------
   function selectedClip() {
@@ -2561,6 +2828,7 @@
   function openProjects() { renderProjects(); showDlg("proj-dlg"); }
   function renderProjects() {
     var host = $("proj-list"), list = C.newestFirst(data.projects);
+    if ($("oros-save")) $("oros-save").disabled = !proj;
     host.innerHTML = "";
     $("proj-empty").hidden = list.length > 0;
     list.forEach(function (p) {
@@ -2991,7 +3259,7 @@
       e.preventDefault();
       var lane = e.target.closest && e.target.closest(".row.track");
       if (lane) selTrack = lane.getAttribute("data-t");
-      importFiles([].slice.call(fl));
+      routeFiles([].slice.call(fl));
     });
     // Clip bar
     $("split-btn").addEventListener("click", splitSel);
@@ -3004,6 +3272,12 @@
     // Dialogs
     $("proj-close").addEventListener("click", function () { hideDlg("proj-dlg"); });
     $("proj-new").addEventListener("click", newProject);
+    if (bundleApi()) {
+      $("oros-sec").hidden = false;
+      $("oros-save").addEventListener("click", saveOros);
+      $("oros-open").addEventListener("click", pickOros);
+      $("oros-folder").addEventListener("click", openOrosFolder);
+    }
     $("name-cancel").addEventListener("click", function () { nameDone = null; hideDlg("name-dlg"); });
     $("name-form").addEventListener("submit", function (e) {
       e.preventDefault();
@@ -3166,6 +3440,13 @@
     var start = (prefs.cur && C.find(data, "projects", prefs.cur)) || C.newestFirst(data.projects)[0] || null;
     openProject(start);
     drawMeter();
+    // a file from the system's "Open with" that arrived before Studio did
+    try {
+      if (window.parent && window.parent !== window && typeof window.parent.__orosTakeTarget === "function") {
+        var pending = window.parent.__orosTakeTarget("studio");
+        if (pending) openTarget(pending);
+      }
+    } catch (e) {}
     FX.loadCatalog().then(function () { if (proj && Object.keys(prefs.auto).length) renderRows(); }, function () {});
   }
 

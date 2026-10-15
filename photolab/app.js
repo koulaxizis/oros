@@ -21,6 +21,8 @@
 // { openFile: "/internal/…", back: { app, key } } also remembers who
 // asked (Atelier "Edit picture"): "Done" sends the result back as
 // __orosOpenAt(app, { editedPicture: { key, path, w, h } }).
+// An .orosphoto handed over the same ways opens as a new project
+// (io.js openPictureFile sniffs it).
 // ============================================================
 (function () {
   "use strict";
@@ -29,7 +31,7 @@
   var PL = window.PL = {
     C: NS.core, T: NS.tiles, H: NS.history, S: NS.select, P: NS.paint,
     R: NS.resample, A: NS.adjust, F: NS.filters, ST: NS.store, PSD: NS.psd, ORA: NS.ora, XMP: NS.xmp,
-    G: NS.guides, B: NS.batch, RAW: NS.raw,
+    G: NS.guides, B: NS.batch, RAW: NS.raw, PKG: NS.pkg,
     FX: window.orosDK && window.orosDK.fx
   };
   var C = PL.C, T = PL.T, H = PL.H;
@@ -466,6 +468,14 @@
       surfaces[L.id] = s;
       doc.layers.push(L);
     });
+    resetDoc(doc, surfaces);
+    PL.showEditor();
+    PL.changed();
+  };
+  // A project from an .orosphoto (io.js applyPackage): a normalised
+  // doc with fresh ids and its surfaces, every tile dirty, so the
+  // first save writes it all.
+  PL.newFromDoc = function (doc, surfaces) {
     resetDoc(doc, surfaces);
     PL.showEditor();
     PL.changed();

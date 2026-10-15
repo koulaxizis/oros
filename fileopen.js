@@ -83,7 +83,8 @@
       "image/bmp": [".bmp"],
       "image/avif": [".avif"],
       "image/vnd.adobe.photoshop": [".psd"],
-      "image/openraster": [".ora"] } },
+      "image/openraster": [".ora"],
+      "application/x-oros-photo": [".orosphoto"] } },
     { app: "library", accept: {
       "application/epub+zip": [".epub"],
       "application/pdf": [".pdf"],
@@ -93,7 +94,12 @@
     { app: "montage", max: 4096 * 1024 * 1024, accept: {
       "video/mp4": [".mp4", ".m4v"],
       "video/webm": [".webm"],
-      "video/quicktime": [".mov"] } },
+      "video/quicktime": [".mov"],
+      "application/x-oros-montage": [".orosmontage"] } },
+    { app: "studio", max: 4096 * 1024 * 1024, accept: {
+      "application/x-oros-studio": [".orosstudio"] } },
+    { app: "pixel", accept: {
+      "application/x-oros-pixel": [".orospixel"] } },
     { app: "notes", accept: {
       "text/plain": [".txt"],
       "text/markdown": [".md", ".markdown"],

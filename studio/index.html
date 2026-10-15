@@ -7,7 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Studio · orOS</title>
 
-  <link rel="stylesheet" href="studio.css?v=2.45.00">
+  <link rel="stylesheet" href="studio.css?v=2.46.00">
 
 </head>
 <body>
@@ -135,6 +135,16 @@
     <button type="button" id="proj-new" class="chip primary" data-i18n="btn.newProject">New project</button>
     <ul id="proj-list" class="list"></ul>
     <p id="proj-empty" class="hint" data-i18n="proj.empty">No projects yet.</p>
+    <!-- the open project as one .orosstudio file (bundle.js, package.js) -->
+    <section id="oros-sec" hidden>
+      <h3 data-i18n="oros.sec">orOS file</h3>
+      <p class="hint small" data-i18n="oros.hint"></p>
+      <div class="oros-row">
+        <button type="button" id="oros-save" class="chip" data-i18n="oros.save">Save as orOS file (.orosstudio)</button>
+        <button type="button" id="oros-open" class="chip" data-i18n="oros.open">Open orOS file…</button>
+        <button type="button" id="oros-folder" class="chip" data-i18n="oros.folder">Unzipped orOS folder…</button>
+      </div>
+    </section>
   </dialog>
 
   <!-- Name prompt (project or track) -->
@@ -439,7 +449,9 @@
   <div id="toast" role="status"></div>
 
   <script src="core.js?v=2.45.00"></script>
-  <script src="studio.js?v=2.45.00"></script>
+  <script src="../bundle.js?v=2.46.00"></script>
+  <script src="package.js?v=2.46.00"></script>
+  <script src="studio.js?v=2.46.00"></script>
 
 </body>
 </html>

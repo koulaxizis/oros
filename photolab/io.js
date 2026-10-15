@@ -14,6 +14,9 @@
 //   - project thumbnails for the home screen
 //   - camera RAW files (raw.js): developed by LibRaw where the
 //     browser allows it, else the JPEG preview stored in the file
+//   - the orOS file (.orosphoto, package.js + ../bundle.js): the
+//     whole project, every layer, mask and setting, in one open ZIP;
+//     also from an unzipped folder
 // ============================================================
 (function () {
   "use strict";
@@ -21,7 +24,7 @@
   var PL = window.PL, C = PL.C, st = PL.st;
   var MAX_FILE = 50 * 1024 * 1024;
   var PICTURES = "/internal/Pictures";
-  var IMG_EXT = /\.(png|jpe?g|webp|gif|bmp|avif|svg|ico|psd|ora|kra|dng|cr2|cr3|crw|nef|nrw|arw|srf|sr2|orf|raf|rw2|rwl|pef|srw|x3f|3fr|fff|iiq|erf|kdc|dcr|mrw|mos|mef)$/i;
+  var IMG_EXT = /\.(png|jpe?g|webp|gif|bmp|avif|svg|ico|psd|ora|kra|orosphoto|dng|cr2|cr3|crw|nef|nrw|arw|srf|sr2|orf|raf|rw2|rwl|pef|srw|x3f|3fr|fff|iiq|erf|kdc|dcr|mrw|mos|mef)$/i;
   var RAW_ACCEPT = ".dng,.cr2,.cr3,.crw,.nef,.nrw,.arw,.srf,.sr2,.orf,.raf,.rw2,.rwl,.pef,.srw,.x3f,.3fr,.fff,.iiq,.erf,.kdc,.dcr,.mrw,.mos,.mef";
   var RAW_MAX = 300 * 1024 * 1024;
   var LAYERED_MAX = 300 * 1024 * 1024;              // a PSD, OpenRaster or Krita file
@@ -76,7 +79,14 @@
     if (PL.RAW.isRaw(n)) return "raw";
     return "";
   }
+  // An .orosphoto (by its first bytes or its name) always opens as a
+  // new project; anything else goes the picture way.
   function openPictureFile(file, asLayer) {
+    return isPackageFile(file).then(function (yes) {
+      return yes ? openPackageFile(file) : openPictureOnly(file, asLayer);
+    });
+  }
+  function openPictureOnly(file, asLayer) {
     var kind = kindOf(file);
     if (kind === "raw") return openRaw(file, asLayer);
     if (kind) return openLayered(file, kind);
@@ -93,7 +103,7 @@
   }
   function openPicture(asLayer) {
     var dlg = dialogHost();
-    var p = dlg && typeof dlg.openFile === "function" ? dlg.openFile("image/*,.psd,.ora,.kra," + RAW_ACCEPT) : Promise.resolve(null);
+    var p = dlg && typeof dlg.openFile === "function" ? dlg.openFile("image/*,.psd,.ora,.kra,.orosphoto,application/x-oros-photo," + RAW_ACCEPT) : Promise.resolve(null);
     if (!dlg) PL.toast(t("msg.noDialogs"));
     return p.then(function (f) { if (f) return openPictureFile(f, asLayer); });
   }
@@ -359,8 +369,103 @@
     } else pasteOwn();
   }
 
+  // ---------- orOS file (.orosphoto) ----------
+  // The project as an orOS bundle (../bundle.js, docs/oros-bundle.md;
+  // the model ↔ content.json mapping is package.js): layers, masks,
+  // adjustment layers, text, shapes, styles, guides and saved
+  // selections as they are, each owner's pixels as a lossless PNG in
+  // media/, preview/image.png = the flattened picture, plus a
+  // thumbnail. Opening one ALWAYS makes a new project with fresh ids
+  // (core.js normDoc decides what is kept).
+  var PKG_MIME = "application/x-oros-photo";
+  function pkgReady() { return !!(window.OrosBundle && PL.PKG); }
+  function canvasPng(c) {
+    return new Promise(function (ok, fail) {
+      c.toBlob(function (b) {
+        c.width = c.height = 0;
+        if (!b) { fail(new Error("png")); return; }
+        b.arrayBuffer().then(function (x) { ok(new Uint8Array(x)); }, fail);
+      }, "image/png");
+    });
+  }
+  function renderPackage() {
+    var d = st.doc, built = null, image = null;
+    return PL.PKG.build(d, st.surfaces, PL.T, window.OrosBundle.sha256).then(function (b) {
+      built = b;
+      return canvasPng(PL.view.flatten(null, 1));
+    }).then(function (png) {
+      image = png;
+      var k = 512 / Math.max(d.w, d.h);
+      return k >= 1 ? png : canvasPng(PL.view.flatten(null, k));      // small pictures: the picture is the thumbnail
+    }).then(function (thumb) {
+      return window.OrosBundle.writeBlob({
+        mime: PKG_MIME, app: "photolab", schema: "photolab/1", content: built.content,
+        meta: { title: d.name, modified: d.m || undefined, id: d.id, language: PL.LANG, generator: "orOS Photo Lab" },
+        media: built.media, thumbnail: thumb, date: new Date(),
+        preview: [{ name: "image.png", data: image, type: "image/png" }]
+      });
+    });
+  }
+  function isPackageFile(f) {
+    if (!pkgReady() || !f || typeof f.slice !== "function") return Promise.resolve(false);
+    var named = /\.orosphoto$/i.test(String(f.name || ""));
+    return f.slice(0, 128).arrayBuffer().then(function (ab) {
+      return window.OrosBundle.sniff(new Uint8Array(ab)) === PKG_MIME || named;
+    }, function () { return named; });
+  }
+  function packageFail(e) {
+    PL.busy(false);
+    if (window.console) console.error("[orOS] photolab bundle open failed:", e);
+    PL.toast(t(e && e.code === "newer" ? "msg.orosNewer" : "msg.orosBad"));
+    return false;
+  }
+  // A read bundle (file or folder) → a new project.
+  function applyPackage(r) {
+    var res = PL.PKG.parse(r && r.content, C, { now: Date.now(), name: t("doc.untitled") });
+    var fit = C.fitSize(res.doc.w, res.doc.h, PL.limits);
+    if (fit.scaled) { PL.busy(false); PL.toast(t("msg.orosBig", { w: res.doc.w, h: res.doc.h })); return false; }
+    var surfaces = {}, missing = 0, chain = Promise.resolve();
+    res.pieces.forEach(function (p) {
+      chain = chain.then(function () {
+        var m = r.media && r.media[p.key];
+        if (!m) { missing++; return; }
+        return (m.bytes ? Promise.resolve(m.bytes) : m.blob.arrayBuffer().then(function (x) { return new Uint8Array(x); })).then(function (bytes) {
+          // Our own PNGs read exactly; another program's through the browser.
+          return PL.PKG.decodePng(bytes).catch(function () {
+            return source(new Blob([bytes], { type: "image/png" })).then(pixelsOf);
+          });
+        }).then(function (img) {
+          if (img.w !== p.w || img.h !== p.h) { missing++; return; }
+          var s = surfaces[p.sid] || (surfaces[p.sid] = PL.T.create());
+          PL.T.writeRect(s, p.x, p.y, img);
+        }, function () { missing++; });
+      });
+    });
+    return chain.then(function () {
+      return PL.closeProject(true);
+    }).then(function () {
+      PL.busy(false);
+      PL.newFromDoc(res.doc, surfaces);
+      if (missing) PL.toast(t("msg.orosMissing", { n: missing }));
+      return true;
+    });
+  }
+  function openPackageFile(f) {
+    PL.busy(true);
+    return window.OrosBundle.read(f, { mime: PKG_MIME, big: true })
+      .then(applyPackage).then(null, packageFail);
+  }
+  function openPackageFolder() {
+    if (!pkgReady()) return Promise.resolve(false);
+    return window.OrosBundle.pickFolder().then(function (files) {
+      if (!files) return false;
+      PL.busy(true);
+      return window.OrosBundle.readFolder(files, { mime: PKG_MIME }).then(applyPackage);
+    }).then(null, packageFail);
+  }
+
   // ---------- Export ----------
-  var MIME = { png: "image/png", jpg: "image/jpeg", webp: "image/webp", psd: "image/vnd.adobe.photoshop", ora: "image/openraster" };
+  var MIME = { png: "image/png", jpg: "image/jpeg", webp: "image/webp", psd: "image/vnd.adobe.photoshop", ora: "image/openraster", orosphoto: PKG_MIME };
   var LAYERED = { psd: 1, ora: 1 };
   function render(fmt, q, scale) {
     var c = PL.view.flatten(null, scale);
@@ -442,7 +547,8 @@
   function exportImage(fmt, q, scale, toPictures) {
     if (!st.doc) return;
     PL.busy(true);
-    (LAYERED[fmt] ? renderLayered(fmt) : render(fmt, q, scale)).then(function (blob) {
+    if (fmt === "oros") fmt = "orosphoto";
+    (fmt === "orosphoto" ? renderPackage() : LAYERED[fmt] ? renderLayered(fmt) : render(fmt, q, scale)).then(function (blob) {
       PL.busy(false);
       if (!blob) { PL.toast(t("msg.exportFail")); return; }
       if (fmt === "webp" && blob.type !== "image/webp") { PL.toast(t("msg.noWebp")); fmt = "png"; }
@@ -450,7 +556,8 @@
       var dlg = dialogHost();
       if (!dlg || typeof dlg.saveFile !== "function") { PL.toast(t("msg.noDialogs")); return; }
       var acc = {}; acc[MIME[fmt]] = ["." + fmt];
-      return dlg.saveFile({ blob: blob, filename: fileName(fmt), mime: MIME[fmt], types: [{ description: fmt.toUpperCase(), accept: acc }] })
+      var desc = fmt === "orosphoto" ? "orOS Photo Lab" : fmt.toUpperCase();
+      return dlg.saveFile({ blob: blob, filename: fileName(fmt), mime: MIME[fmt], types: [{ description: desc, accept: acc }] })
         .then(function (r) { if (r && r.ok) PL.toast(t("msg.exported")); });
     }, function () { PL.busy(false); PL.toast(t("msg.exportFail")); });
   }
@@ -538,6 +645,7 @@
     exportImage: exportImage, setWallpaper: setWallpaper, canWallpaper: function () { return !!wallApi(); },
     saveThumb: saveThumb, wire: wire, sendBack: sendBack, openLrPreset: openLrPreset,
     IMG_EXT: IMG_EXT, RAW_ACCEPT: RAW_ACCEPT, RAW_MAX: RAW_MAX, rawPixels: rawPixels, source: source,
-    dialogHost: dialogHost, saveToPictures: saveToPictures
+    dialogHost: dialogHost, saveToPictures: saveToPictures,
+    canPackage: pkgReady, openPackageFolder: openPackageFolder, isPackageFile: isPackageFile
   };
 })();

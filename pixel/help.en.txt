@@ -27,6 +27,9 @@ Pick an export size under `Export`, then:
 
 A clear background stays transparent in the PNG and SVG.
 
+## orOS file
+`orOS file (.orospixel)` under `Export` saves the face on the desk as one open file, named after its Museum name (or its seed): seed, size, palette and your painting. It is a ZIP: unzip it and you find `content.json` (the face), `preview/face.png` and `preview/face.svg`, which any image viewer opens, and `preview/thumbnail.png`. `Open a sprite or palette…` opens it again, and so does opening the file with orOS from your system (`Open with`); `Unzipped orOS folder…` under the face brings back an .orospixel that was unzipped, even after you changed a file in it. The face comes to the desk and is added to the Museum as a new face (unless the same face is already there); `Undo` in the message takes both back.
+
 ## Import from other apps
 `Open a sprite or palette…` under the face reads a file from another pixel-art app. A preview shows what's in the file and the face it gives before anything changes.
 - **Aseprite** (`.aseprite`, `.ase`): just open your sprite file, or use File › Save As. Layers are flattened (hidden ones left out, opacity kept); if there are several frames, you pick one.
@@ -39,7 +42,7 @@ A sprite becomes the face on the desk: up to 16×16 (cropped to the drawing and 
 `Save to the Museum` keeps the current face, palette and painting. Tap or click a face in the `Museum` to bring it back to the desk. Each one has `Rename` and `Delete` buttons; after a delete an `Undo` button stays for a few seconds.
 
 ## Sync and backup
-The Museum syncs between your devices through [orOS sync](help:t/sync). The face on the desk, the paint colour and the export size stay on this device. Use the orOS [backup](help:t/backup) to keep a copy; PNG and SVG are the way to take a face elsewhere.
+The Museum syncs between your devices through [orOS sync](help:t/sync). The face on the desk, the paint colour and the export size stay on this device. Use the orOS [backup](help:t/backup) to keep a copy; an orOS file keeps one face to share or move, and PNG and SVG are the way to take a face elsewhere.
 
 ## Keyboard shortcuts
 - [[R]] new face, [[P]] next palette, [[D]] save a PNG.

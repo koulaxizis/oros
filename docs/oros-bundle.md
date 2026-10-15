@@ -19,6 +19,10 @@ The format is free and open (MIT, like orOS). Reader and writer: [`bundle.js`](.
 | `.orosboard` | Kanban | `application/x-oros-board` |
 | `.orosscript` | Prompter | `application/x-oros-script` |
 | `.orostone` | Ringtones | `application/x-oros-tone` |
+| `.orosstudio` | Studio | `application/x-oros-studio` |
+| `.orosmontage` | Montage | `application/x-oros-montage` |
+| `.orosphoto` | Photo Lab | `application/x-oros-photo` |
+| `.orospixel` | Pixel | `application/x-oros-pixel` |
 
 More apps follow; each gets its own extension (`.oros` + one short English word) and MIME type `application/x-oros-<word>`.
 
@@ -41,7 +45,15 @@ Report.orosdoc
 - Paths are printable ASCII, `/`-separated, at most 200 characters, never absolute, never `.` or `..`, no `\` or `:`.
 - Media keys are `[A-Za-z0-9][A-Za-z0-9._-]{0,127}`. Apps that store pictures by hash use `<sha256>.<ext>`; content.json refers to media by key.
 - Text files are deflated; media are stored as they are (already compressed).
-- Encryption is never used. No ZIP64 in 1.0 (files under 4 GB).
+- Encryption is never used.
+- ZIP64 records are written only when they are needed: an entry or the whole file past 4 GB, or more than 65 535 entries. Smaller bundles are plain ZIP, byte for byte as before.
+
+### Big projects
+
+Video and sound projects (Montage, Studio) can hold files of several GB. `bundle.js` then never holds them in memory whole:
+
+- `writeBlob()` builds the bundle as one Blob made of small headers and the media Blobs themselves; SHA-256 and CRC-32 are computed a piece at a time (4 MB).
+- `read(file, { big: true })` reads a File a piece at a time: only the end of the file, the central directory and the small text files are loaded. Each media file comes back as a Blob slice of the bundle (`media[key].blob`), hashed while streaming. Stored media may then be up to 16 GB each and 64 GB in all; deflated entries keep the 512 MB cap, because they inflate in memory.
 
 ### META-INF/manifest.xml
 
@@ -86,6 +98,10 @@ Report.orosdoc
 | Kanban | `{ kind: "oros-kanban-package", ver: 1, board }`; `card.att[].file` is a media key | card attachments by `<sha256>.<ext>`; `preview/board.md`, `preview/board.csv` |
 | Prompter | `{ kind: "oros-prompter-package", ver: 1, prompt: { id, cat, en, el, var_en, var_el, tags, mtime, pos }, favorite, completed }` | no media; `preview/script.txt` |
 | Ringtones | `{ kind: "oros-ringtones-package", ver: 1, melody: { id, m, name, bpm, voice, notes } }` | no media; `preview/tone.rtttl`, `preview/tone.wav` (melodies up to 60 s) |
+| Studio | `{ kind: "oros-studio-package", ver: 1, project { id, name, bpm, sig, vol, loop, fx }, tracks [{ id, name, color, vol, pan, mute, solo, ord, fx, inst?, auto? }], sources [{ id, name, dur, ch, media }], clips [{ id, t, s?, at, off, len, gain, fi, fo, name?, n? }] }`; effect file sliders are `{ media, name }` | audio and impulse responses by `<sha256>.<ext>`; `preview/tracks.txt`, `preview/song.mid` + timeline thumbnail |
+| Montage | `{ kind: "oros-montage-package", ver: 1, project: { id, name, ar, fps, bg, vs, m, items } }`; `item.src`, `lut`, `na` are media keys | videos, pictures and sounds by `<sha256>.<ext>` (the app's own ids); poster thumbnail, `preview/timeline.txt`, `preview/captions.srt` |
+| Photo Lab | `{ kind: "oros-photolab-package", ver: 1, doc: { name, w, h, m, layers: [{ id, k, name, vis, lock, op, bl, x, y, px?, tx?, sh?, aj?, fx?, mk? }], gd?, sels? } }`; `px = { key, x, y, w, h }` | one lossless PNG per raster layer, mask and selection; `preview/image.png` (flattened) + thumbnail |
+| Pixel | `{ kind: "oros-pixel-package", ver: 1, item: { id, m, name, f }, colors, grid }` | no media; `preview/face.png`, `preview/face.svg` + thumbnail |
 
 The models are the ones each app syncs (OROS_BIBLE.md Part IV).
 
