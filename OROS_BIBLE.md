@@ -6978,3 +6978,9 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Contacts on the phone: each orOS contact becomes exactly one phone contact, even if the store holds a repeated row (`phone.js` `contactRows` and `ContactsWriter` skip a repeated id).
 - Files: `android/…/KeptTwaLauncher.java`, `android/…/ContactsWriter.java`, `phone.js`.
   - Tests: `tests/phone.test.js` extended; full suite green; Android build in CI. Not tested: on a real phone (needs the new APK).
+
+### 2026-10-15 — Layout: SVG import and PDF pictures as frames (#400) — 2.32.00
+- Layout › Open file accepts SVG (for example pages exported from Affinity Publisher or Designer): one SVG becomes a document, several SVGs picked together become one document with a page per file (ordered by file name). Shapes, gradients, editable text and embedded pictures come in; linked pictures become named empty frames; scripts, foreignObject, style sheets, filters, masks and clip paths are ignored. The SVG is read with the existing tokenizer, no DOM and no script execution.
+- PDF import: each picture of at least 12 pt becomes its own image frame (rotated ones too); only drawings and backgrounds stay in the locked page background.
+- Files: new `layout/svgin.js` (precached), `layout/pdfin.js`, `layout/io.js`, `layout/layout.js`, `layout/index.html`, help.
+  - Tests: new `tests/layout-svgin.test.js` (Affinity-style fixture and hostile input); full suite green; real shell in Chromium at 1280 and 360 px. Not tested: files exported by Affinity itself, a real phone, Safari.
