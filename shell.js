@@ -5735,7 +5735,7 @@
           en: "One-time contacts import (Contacts › From an account)", el: "Εισαγωγή επαφών μία φορά (Επαφές › Από λογαριασμό)" },
         { name: "Gravatar · Libravatar", url: "https://www.libravatar.org/",
           by: "Automattic Inc.; the Libravatar project", lic: { en: "Their terms; only a hashed e-mail is sent, on request", el: "Οι όροι τους· στέλνεται μόνο κωδικοποιημένο email, όταν το ζητήσεις" },
-          en: "Profile pictures for contacts (Contacts › Find photos)", el: "Φωτογραφίες προφίλ για επαφές (Επαφές › Εύρεση φωτογραφιών)" },
+          en: "Profile pictures and public profiles (Contacts › Find photos, Update online; CRM; Newsletter)", el: "Φωτογραφίες και δημόσια προφίλ (Επαφές › Εύρεση φωτογραφιών, Ενημέρωση online· Πελάτες· Ενημερωτικό δελτίο)" },
         { name: "timologisi.online", url: "https://www.timologisi.online/",
           by: "Novus Conceptus; your own account", lic: { en: "Your own account and key", el: "Ο δικός σου λογαριασμός και κλειδί" },
           en: "Connected services: send invoices to myDATA (Invoices)", el: "Συνδεδεμένες υπηρεσίες: αποστολή παραστατικών στο myDATA (Τιμολόγια)" },

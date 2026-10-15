@@ -155,6 +155,11 @@
       "pf.nothing": "No photos found for the {m} contact(s) looked up.",
       "pf.done": "{n} photo(s) added",
       "pf.via": "via {s} · {e}",
+      "en.btn": "Update online",
+      "en.one": "Update from online sources",
+      "en.save": "Save your changes first.",
+      "en.empty": "No contact in this list has an e-mail address, phone or website to look up.",
+      "en.done": "{n} contact(s) updated",
       "ac.btn": "From an account",
       "ac.title": "Import from an account",
       "ac.text": "Sign in once: orOS reads your contacts, you review them, and the connection ends right away. No password or access is kept.",
@@ -433,6 +438,11 @@
       "pf.nothing": "Δεν βρέθηκαν φωτογραφίες για τις {m} επαφές που ελέγχθηκαν.",
       "pf.done": "Προστέθηκαν {n} φωτογραφίες",
       "pf.via": "από {s} · {e}",
+      "en.btn": "Ενημέρωση online",
+      "en.one": "Ενημέρωση από online πηγές",
+      "en.save": "Αποθήκευσε πρώτα τις αλλαγές σου.",
+      "en.empty": "Καμία επαφή αυτής της λίστας δεν έχει email, τηλέφωνο ή ιστοσελίδα για αναζήτηση.",
+      "en.done": "Ενημερώθηκαν {n} επαφές",
       "ac.btn": "Από λογαριασμό",
       "ac.title": "Εισαγωγή από λογαριασμό",
       "ac.text": "Συνδέεσαι μία φορά: το orOS διαβάζει τις επαφές σου, τις ελέγχεις και η σύνδεση κλείνει αμέσως. Δεν κρατιέται κωδικός ούτε πρόσβαση.",
@@ -1405,6 +1415,7 @@
   })();
 
   /* ---------- 4. List render ---------- */
+  var listShown = [];   // ids in the list right now (search / filters applied)
   function renderList() {
     var ul = $("ct-list");
     ul.textContent = "";
@@ -1439,7 +1450,9 @@
         if (c.emails[j].v.toLowerCase().indexOf(q) !== -1) return true;
       }
       return false;
-    }).sort(function (a, b) {
+    });
+    listShown = hits.map(function (c) { return c.id; });
+    hits.sort(function (a, b) {
       // Reach out: who has waited longest comes first
       if (reach && due[a.id].due !== due[b.id].due) return due[a.id].due < due[b.id].due ? -1 : 1;
       if (a.starred !== b.starred) return a.starred ? -1 : 1;
@@ -4836,6 +4849,117 @@ document.addEventListener("keydown", function (e) {
     $("pf-dlg").addEventListener("close", function () { pfBusy = false; });
   } else if ($("ct-pf")) {
     $("ct-pf").hidden = true;
+  }
+
+  // ---- Update from online sources (../enrich.js + ../enrichui.js) ----
+  // The contacts in the list right now (search and filters applied),
+  // or the one open in the editor. Only their own e-mail, phone and
+  // websites are used as keys; an address two contacts share is not.
+  // Suggestions are reviewed in the shared dialog; one write, Undo.
+  function enRecord(c, owners) {
+    var shared = {};
+    c.emails.forEach(function (e) { var k = normalizeEmail(e.v); if (owners[k] > 1) shared[k] = 1; });
+    return {
+      names: [displayName(c), c.nickname, c.org].filter(Boolean),
+      emails: c.emails.map(function (e) { return normalizeEmail(e.v); }),
+      phones: c.phones.map(function (p) { return p.v; }),
+      sites: c.websites.map(function (w) { return w.v; }),
+      shared: shared,
+      has: { photo: !!c.photo, birthday: c.events.some(function (e) { return e.type === "birthday"; }),
+             job: !!c.jobTitle, org: !!c.org, address: c.addresses.length > 0, name: true },
+      kind: (c.given || c.family) ? "person" : (c.org ? "org" : "")
+    };
+  }
+  function enOwners() {
+    var owners = {};
+    state.contacts.forEach(function (c) {
+      var seen = {};
+      c.emails.forEach(function (e) {
+        var k = normalizeEmail(e.v);
+        if (!k || seen[k]) return;
+        seen[k] = 1;
+        owners[k] = (owners[k] || 0) + 1;
+      });
+    });
+    return owners;
+  }
+  function enLoadUI() {
+    if (window.OrosEnrichUI) return Promise.resolve();
+    return new Promise(function (ok, fail) {
+      var s = document.createElement("script");
+      s.src = "../enrichui.js";
+      s.onload = ok;
+      s.onerror = fail;
+      document.head.appendChild(s);
+    });
+  }
+  function enApply(picks) {
+    var before = [], n = 0, now = Date.now();
+    picks.forEach(function (p) {
+      var c = contactById(p.id);
+      if (!c) return;
+      var d = JSON.parse(JSON.stringify(c)), changed = false;
+      function hasVal(list, v, norm) { return list.some(function (r) { return norm(r.v) === norm(v); }); }
+      function low(v) { return String(v).trim().toLowerCase(); }
+      p.list.forEach(function (s) {
+        if (s.k === "photo" && !d.photo) { d.photo = s.v; changed = true; }
+        else if (s.k === "link" && !hasVal(d.websites, s.v, function (v) { return low(v).replace(/^https?:\/\/(www\.)?/, "").replace(/\/+$/, ""); })) { d.websites.push({ v: s.v, type: "other" }); changed = true; }
+        else if (s.k === "phone" && !hasVal(d.phones, s.v, phoneDigits)) { d.phones.push({ v: s.v, type: "other" }); changed = true; }
+        else if (s.k === "email" && !hasVal(d.emails, s.v, low)) { d.emails.push({ v: s.v, type: "other" }); changed = true; }
+        else if (s.k === "birthday" && !d.events.some(function (e) { return e.type === "birthday"; })) { d.events.push({ day: s.v.day, year: s.v.year, type: "birthday", label: "" }); changed = true; }
+        else if (s.k === "job" && !d.jobTitle) { d.jobTitle = s.v; changed = true; }
+        else if (s.k === "org" && !d.org) { d.org = s.v; changed = true; }
+        else if (s.k === "address" && !d.addresses.length) { d.addresses.push({ street: String(s.v).slice(0, 120), city: "", zip: "", region: "", country: "", type: "work" }); changed = true; }
+      });
+      if (!changed) return;
+      d.mtime = now;
+      var clean = sanitizeContact(d);
+      if (!clean) return;
+      before.push(JSON.parse(JSON.stringify(c)));
+      state.contacts[state.contacts.indexOf(c)] = clean;
+      n++;
+    });
+    if (!n) return 0;
+    saveState();
+    renderList();
+    toast(t("en.done").replace("{n}", String(n)), t("undo"), function () {
+      var t2 = Date.now();
+      before.forEach(function (old) {
+        var cur = contactById(old.id);
+        if (!cur) return;
+        old.mtime = t2;
+        state.contacts[state.contacts.indexOf(cur)] = old;
+      });
+      saveState();
+      renderList();
+    });
+    return n;
+  }
+  function enOpen(ids) {
+    var owners = enOwners();
+    var items = ids.map(contactById).filter(function (c) {
+      return c && (c.emails.length || c.phones.length || c.websites.length);
+    }).map(function (c) { return { id: c.id, name: displayName(c), rec: enRecord(c, owners) }; });
+    if (!items.length) { notifyTransient(t("en.empty")); return; }
+    enLoadUI().then(function () {
+      window.OrosEnrichUI.open({ lang: LANG === "el" ? "el" : "en", items: items, apply: enApply,
+        kinds: ["photo", "link", "phone", "email", "birthday", "job", "org", "address"] });
+    }, function () { notifyTransient(t("en.empty")); });
+  }
+  if ($("ct-enrich") && window.Promise && window.crypto && crypto.subtle) {
+    $("ct-enrich").addEventListener("click", function () { enOpen(listShown.slice()); });
+    $("ct-enrich-one").addEventListener("click", function () {
+      if (!editingId) return;
+      var form = readDlgDraft();
+      var dirty = dlgSnap && DLG_FIELDS.some(function (f) { return JSON.stringify(form[f]) !== JSON.stringify(dlgSnap[f]); });
+      if (dirty) { notifyTransient(t("en.save")); return; }
+      var id = editingId;
+      $("ct-dlg").close();
+      enOpen([id]);
+    });
+  } else {
+    if ($("ct-enrich")) $("ct-enrich").hidden = true;
+    if ($("ct-enrich-one")) $("ct-enrich-one").hidden = true;
   }
 
   // ---- Import wiring ----
