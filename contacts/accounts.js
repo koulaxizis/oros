@@ -368,22 +368,22 @@
       });
   }
   // Contact photos: Google serves them from its image host (public
-  // links, no token sent). Each becomes a small JPEG data URL (orOS
-  // keeps photos up to 50,000 characters); one that can't be read is
+  // links, no token sent). Each becomes a small JPEG data URL, at most
+  // 128 px (CT-PS: a contact photo is never shown bigger); one that can't be read is
   // simply left out, the contact still comes in.
   var PHOTO_MAX = 50000;
   function photoData(url) {
-    var u = /=s\d+(-c)?$/.test(url) ? url.replace(/=s\d+(-c)?$/, "=s256") : url + (url.indexOf("=") === -1 ? "=s256" : "");
+    var u = /=s\d+(-c)?$/.test(url) ? url.replace(/=s\d+(-c)?$/, "=s128") : url + (url.indexOf("=") === -1 ? "=s128" : "");
     return fetch(u, { cache: "no-store", credentials: "omit" }).then(function (r) {
       if (!r.ok) throw new Error("photo " + r.status);
       return r.blob();
     }).then(function (blob) { return createImageBitmap(blob); }).then(function (bmp) {
-      var side = Math.min(256, Math.max(bmp.width, bmp.height)), k = side / Math.max(bmp.width, bmp.height);
+      var side = Math.min(128, Math.max(bmp.width, bmp.height)), k = side / Math.max(bmp.width, bmp.height);
       var cv = document.createElement("canvas");
       cv.width = Math.max(1, Math.round(bmp.width * k));
       cv.height = Math.max(1, Math.round(bmp.height * k));
       cv.getContext("2d").drawImage(bmp, 0, 0, cv.width, cv.height);
-      var q = [0.85, 0.7, 0.5], out = "";
+      var q = [0.75, 0.6, 0.5], out = "";
       for (var i = 0; i < q.length; i++) {
         out = cv.toDataURL("image/jpeg", q[i]);
         if (out.length <= PHOTO_MAX) return out;

@@ -104,9 +104,12 @@
 
   function contactRows(blob) {
     var dead = tombIds(blob);
-    var rows = [];
+    var rows = [], seen = {};
     (Array.isArray(blob && blob.contacts) ? blob.contacts : []).forEach(function (c) {
       if (!c || typeof c.id !== "string" || !c.id || !alive(c, dead)) return;
+      // One phone contact per orOS id, even if the store holds a repeat.
+      if (seen[c.id.slice(0, 64)]) return;
+      seen[c.id.slice(0, 64)] = 1;
       var row = {
         id: c.id.slice(0, 64),
         given: str(c.given, 60), middle: str(c.middle, 60), family: str(c.family, 60),

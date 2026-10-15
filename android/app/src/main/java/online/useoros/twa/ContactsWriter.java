@@ -80,12 +80,13 @@ class ContactsWriter {
         }
 
         int added = 0, updated = 0, kept = 0;
+        Set<String> done = new HashSet<>();               // one raw contact per orOS id
         ArrayList<ContentProviderOperation> ops = new ArrayList<>();
         for (int i = 0; i < items.length(); i++) {
             JSONObject it = items.optJSONObject(i);
             if (it == null) continue;
             String id = it.optString("id");
-            if (id.isEmpty() || id.length() > 64) continue;
+            if (id.isEmpty() || id.length() > 64 || !done.add(id)) continue;
             String h = it.optString("h");
             if (pending.contains(id)) { rowId.remove(id); kept++; continue; }
             long[] have = rowId.remove(id);

@@ -48,7 +48,8 @@ Make many name cards, labels, badges or certificates from one design and a CSV f
 `Open file` on the home screen also opens, as a new document:
 - Scribus `.sla` and compressed `.sla.gz` files: pages, masters, styles, colours, threaded text, shapes and free shapes (polygons, curves, arcs, spirals), linear and radial gradients, layers (their order; objects on hidden layers come in hidden, on locked layers locked) and embedded images.
 - InDesign `.idml` files (in InDesign: File, Save As, InDesign Markup): pages, masters, paragraph and character styles, colours, threaded text frames, shapes, lines, groups and embedded images.
-- PDF files, for example from Affinity Publisher: the text becomes editable frames, and pictures, drawings and backgrounds become one locked picture per page behind the text.
+- PDF files, for example from Affinity Publisher: the text becomes editable frames, every picture becomes its own image frame, and drawings and backgrounds become one locked picture per page behind everything.
+- SVG files, for example from Affinity Publisher or Designer (File, Export, SVG; leave text as text, not curves): shapes, gradients, text and embedded pictures. Pick several SVG files at once to get one document with a page per file, in file-name order.
 
 Images that were only linked come in as empty frames with their file name; put them back with `Place image…`. Tables, text on a path and mesh or pattern fills become simple boxes or plain colours; the message after opening says how many.
 
