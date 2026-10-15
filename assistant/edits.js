@@ -648,7 +648,7 @@
   // is deleted in Contacts; Undo brings it back there too.
   var CT_OLD = ["given", "middle", "family", "nickname", "org", "jobTitle",
     "phones", "emails", "addresses", "websites", "im", "events", "relations",
-    "labelIds", "starred", "note", "photo"];
+    "labelIds", "starred", "note", "avatar"];
   var CT_NEW = ["keep", "seen"];
   var CT_FIELDS = CT_OLD.concat(CT_NEW);
   var CT_STAMPS = CT_FIELDS.concat(["log"]);

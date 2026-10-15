@@ -64,7 +64,6 @@
                    reminders: "intent://reminders#Intent;scheme=oros-permission;package=online.useoros.twa;end",
                    health: "intent://health#Intent;scheme=oros-permission;package=online.useoros.twa;end" };
   var HEALTH_KEYS = { water: "oros-water-data", fitness: "oros-fitness-data", health: "oros-health-data" };
-  var MAX_PHOTO = 70000;          // base64 characters
 
   /* ---------- pure helpers ---------- */
   function pad(n) { return (n < 10 ? "0" : "") + n; }
@@ -135,10 +134,8 @@
         }).filter(Boolean),
         note: str(c.note, 500),
         starred: c.starred === true,
-        photo: null
+        photo: null   // CT-NP: Contacts keeps no photos
       };
-      var m = typeof c.photo === "string" && c.photo.match(/^data:image\/(?:jpeg|png);base64,([A-Za-z0-9+\/=]+)$/);
-      if (m && m[1].length <= MAX_PHOTO) row.photo = m[1];
       if (!(row.given || row.family || row.nickname || row.org || row.phones.length || row.emails.length)) return;
       rows.push(withHash(row));
     });
@@ -437,8 +434,8 @@
 
   // Phone → orOS Contacts. Rows come in contactRows' shape (t for
   // type); fields only orOS has (labels, relations, IM, website
-  // types) are kept from the stored contact. A phone photo is taken
-  // only when orOS has none: the phone stores a re-encoded copy.
+  // types) are kept from the stored contact. Photos never come in
+  // (CT-NP, 2026-10-15).
   // Returns { blob, refs, ids }: ids gives a new contact's orOS id
   // by ref, which the app stores as the row's SOURCE_ID.
   var WEB_T = { home: 1, work: 1, blog: 1, other: 1 };
@@ -512,17 +509,14 @@
       var old = i !== -1 ? b.contacts[i] : null;
       var n = contactIn(c, old);
       if (!n) return;
-      // Contacts keeps photos up to 50000 characters as a data URL.
-      var m = typeof c.photo === "string" && /^[A-Za-z0-9+\/=]+$/.test(c.photo) && c.photo.length <= 49900
-        ? "data:image/" + (c.photo.slice(0, 5) === "iVBOR" ? "png" : "jpeg") + ";base64," + c.photo : null;
+      // CT-NP: a phone photo is never taken (Contacts keeps none)
       if (old) {
         b.contacts[i] = Object.assign({}, old, n, { mtime: now });
-        if (!old.photo && m) b.contacts[i].photo = m;
       } else {
         var id = newEventId(now);
         b.contacts.push(Object.assign({ id: id }, n, {
           im: [], relations: [], labelIds: [],
-          photo: m, mtime: now
+          avatar: null, mtime: now
         }));
         ids[c.ref] = id;
       }

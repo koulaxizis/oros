@@ -13,7 +13,7 @@ The contact window has:
 - `Events`: `Birthday`, `Anniversary` or `Custom` (give it a name, for example a nameday). Type the date as year-month-day, like `1975-03-17`, or just month-day, like `03-17`, if you don't know the year.
 - `Relations`: link to another contact as `Spouse`, `Parent`, `Friend`, `Colleague` and so on. The other contact shows the link too, under `Linked from other contacts`.
 - `Keep in touch`: every so many weeks or months (see below). Leave it on `Off` if you don't want reminding.
-- `Labels`, `Favorite`, a `Photo` (JPEG or PNG, made smaller automatically) and a `Note`.
+- `Labels`, `Favorite`, a `Picture` (the initials, or an `8-bit avatar`: tap `Another one` for a new face) and a `Note`. Contacts keeps no photos, so your address book stays small and syncs fast.
 
 `Delete contact` asks to confirm, and an `Undo` button appears for a few seconds afterwards.
 
@@ -62,9 +62,6 @@ iCloud, Yahoo and other services: export your contacts there as a .vcf file and 
 
 Microsoft (Outlook.com, Hotmail, Microsoft 365) is not offered by orOS for now. Under `Use my own app id` you can register your own OAuth app (Google or Microsoft) with the address shown there and paste its client id; it stays on this device and its button appears.
 
-## Find photos online
-`Find photos` looks for pictures for your contacts that have none. It uses the profile picture a person set for their own e-mail address on Gravatar or Libravatar, so it only finds people who did that, and it only sends a coded fingerprint of the address, never names or numbers. An e-mail that several of your contacts share (an office address) is skipped, so a picture always belongs to that one contact. Tap `Search`, untick any picture that is not right and tap `Use the ticked photos`; existing photos are never replaced, and `Undo` takes the new ones away again.
-
 ## On this phone (Android app)
 In the orOS Android app, `On this phone` puts your orOS contacts in the phone's own Contacts, so the dialer and incoming calls show their names. Turn on `Show on this phone` and tap `Allow access` (Android asks once). Contacts arrive in an "orOS" account and follow every change you make here. It works both ways: when you edit or delete one of them in the phone's contacts app, or save a new contact to the "orOS" account there, the change comes into orOS Contacts the next time you open orOS. Labels, relations and instant messaging stay as they are in orOS, and a photo from the phone is used only when the contact has none here. Some contacts apps (Fossify Contacts, for example) let you pick the "orOS" account for a new contact; others only offer their own account. Turning the switch off removes them from the phone again.
 
@@ -96,5 +93,5 @@ See also [backup](help:t/backup).
 - Business card reading works best with a sharp, straight, well-lit photo of a printed card. It doesn't read QR codes, and its guesses (which line is the name, which the company) can be wrong, so check the form before saving. Greek capital letters come without accents.
 - The `Reach out` reminder appears only while orOS is open (or when you open it later that day).
 - A device still on an older orOS version doesn't know `Keep in touch`: if you edit a contact there, it keeps working, but a cadence changed on that device at the same time may be lost.
-- `From an account` doesn't bring contact photos, and reads only your own contacts (not Google's "Other contacts" or a company directory).
+- Contacts keeps no photos: imports, the phone and old backups bring none in. `From an account` and reads only your own contacts (not Google's "Other contacts" or a company directory).
 - `From phone` appears only in Chrome on Android, because other browsers can't open the phone's contact list.
