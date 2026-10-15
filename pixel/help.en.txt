@@ -27,6 +27,14 @@ Pick an export size under `Export`, then:
 
 A clear background stays transparent in the PNG and SVG.
 
+## Import from other apps
+`Open a sprite or palette…` under the face reads a file from another pixel-art app. A preview shows what's in the file and the face it gives before anything changes.
+- **Aseprite** (`.aseprite`, `.ase`): just open your sprite file, or use File › Save As. Layers are flattened (hidden ones left out, opacity kept); if there are several frames, you pick one.
+- **Piskel** (`.piskel`): File › Save (or Export › Download .piskel file).
+- **Palettes**: GIMP (`.gpl`), Lospec (`.hex`, from the palette's Download menu), Paint.NET (`.txt`), JASC / Paint Shop Pro (`.pal`) and Adobe swatches (`.ase`, from Swatches › Save Swatches for Exchange).
+
+A sprite becomes the face on the desk: up to 16×16 (cropped to the drawing and scaled down if it's bigger) in 8 colours, with see-through pixels kept. A palette gives the current face its first 8 colours. The colours show as `Imported` under `Palette`; picking another palette replaces them. `Undo` brings the old face back, and `Save to the Museum` keeps the new one.
+
 ## Museum
 `Save to the Museum` keeps the current face, palette and painting. Tap or click a face in the `Museum` to bring it back to the desk. Each one has `Rename` and `Delete` buttons; after a delete an `Undo` button stays for a few seconds.
 

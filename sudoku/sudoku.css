@@ -452,6 +452,36 @@ dialog.mm-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 .dlg-btn.danger { color: var(--danger); border-color: var(--danger); }
 .dlg-btn.danger:hover { background: rgba(224, 108, 117, 0.15); }
 
+/* Import puzzles: paste box, file button, the imported list. */
+dialog.mm-dlg.wide { width: min(520px, calc(100vw - 32px)); }
+.imp-lab { display: block; font-size: 13px; line-height: 1.4; margin-bottom: 6px; }
+.imp-text {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 84px;
+  resize: vertical;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font: 13px/1.35 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  overflow-wrap: anywhere;
+}
+.imp-text:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.imp-note { font-size: 12px; line-height: 1.4; color: var(--text-dim); margin: 6px 0; }
+.imp-bar { margin-top: 8px; }
+.dlg-btn.imp-next { display: block; width: 100%; margin: 6px 0; }
+.imp-list { list-style: none; margin: 4px 0 0; padding: 0; }
+.imp-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+.imp-row.cur strong { color: var(--accent); }
+.imp-txt { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; font-size: 13px; }
+.imp-txt strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.imp-meta { font-size: 12px; color: var(--text-dim); }
+.dlg-btn.imp-play { flex: 0 0 auto; padding: 0 14px; }
+.imp-issues { margin: 10px 0 4px; padding-left: 18px; font-size: 12px; line-height: 1.45; color: var(--text-dim); overflow-wrap: anywhere; }
+
 /* ---------- 6. Toast + screen reader ---------- */
 #toast {
   position: fixed;
@@ -520,7 +550,7 @@ dialog.mm-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
   #status { padding: 6px 8px; }
   .stat { padding: 4px 4px; gap: 6px; }
   #turn { font-size: 12px; }
-  dialog.mm-dlg { width: calc(100vw - 20px); padding: 14px; }
+  dialog.mm-dlg, dialog.mm-dlg.wide { width: calc(100vw - 20px); padding: 14px; }
 }
 @media (max-width: 480px) {
   #board-wrap { padding: 8px; }

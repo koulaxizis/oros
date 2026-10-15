@@ -79,6 +79,25 @@
       "toast.copied": "Copied", "toast.copyFail": "Could not copy", "toast.exported": "Exported",
       "toast.reset": "Hand edits removed", "toast.saveFail": "Could not save: storage is full",
       "toast.opened": "Opened “{name}”",
+      "pal.custom": "Imported", "col.n": "Colour {n}",
+      "imp.btn": "Open a sprite or palette…",
+      "imp.title": "Import from {s}", "imp.palette": "{s} palette",
+      "imp.size": "{w}×{h} pixels", "imp.frames": "{n} frames", "imp.layers": "{n} layers",
+      "imp.frame": "Frame", "imp.frameN": "Frame {n} ({ms} ms)",
+      "imp.maps": "Becomes the face on the desk, {n}×{n} in 8 colours. Undo brings the old face back; save it to the Museum to keep it.",
+      "imp.oneFrame": "Pixel Avatar has no animation: the frame you pick becomes the face.",
+      "imp.flat": "Layers are flattened into one picture; hidden layers are left out.",
+      "imp.crop": "Cropped to the drawing.", "imp.scaled": "Scaled down to fit 16×16.",
+      "imp.reduced": "{n} colours reduced to 8.", "imp.clear": "See-through pixels stay see-through.",
+      "imp.blends": "Blend modes are drawn as normal.", "imp.tiles": "Tilemap layers are left out.",
+      "imp.colors": "{n} colours", "imp.first8": "The first 8 colours become the colours of the face; its pixels stay as they are. Undo brings the old colours back.",
+      "imp.fewer": "Only {n} colours: the face keeps its own for the rest. Undo brings the old colours back.",
+      "imp.open": "Open", "imp.use": "Use the colours",
+      "imp.done": "Imported “{name}”", "imp.donePal": "Colours imported",
+      "imp.err.unknown": "This file isn't a sprite or palette Pixel Avatar can read.",
+      "imp.err.read": "Could not read this file. It may be damaged.",
+      "imp.err.big": "This file is too large to import.", "imp.err.empty": "Nothing is drawn in this file.",
+      "imp.err.zip": "This browser can't unpack the compressed pictures in this file.",
       "live.new": "New face from seed {s}", "keys": "R new face · P next palette · D download PNG"
     },
     el: {
@@ -103,6 +122,25 @@
       "toast.copied": "Αντιγράφηκε", "toast.copyFail": "Δεν έγινε αντιγραφή", "toast.exported": "Η εξαγωγή έγινε",
       "toast.reset": "Οι διορθώσεις αφαιρέθηκαν", "toast.saveFail": "Δεν αποθηκεύτηκε: ο χώρος είναι γεμάτος",
       "toast.opened": "Άνοιξε το «{name}»",
+      "pal.custom": "Εισαγμένη", "col.n": "Χρώμα {n}",
+      "imp.btn": "Άνοιγμα sprite ή παλέτας…",
+      "imp.title": "Εισαγωγή από {s}", "imp.palette": "Παλέτα {s}",
+      "imp.size": "{w}×{h} pixel", "imp.frames": "{n} καρέ", "imp.layers": "{n} επίπεδα",
+      "imp.frame": "Καρέ", "imp.frameN": "Καρέ {n} ({ms} ms)",
+      "imp.maps": "Γίνεται το πρόσωπο στο γραφείο, {n}×{n} με 8 χρώματα. Η Αναίρεση φέρνει πίσω το παλιό πρόσωπο· αποθήκευσέ το στο Μουσείο για να το κρατήσεις.",
+      "imp.oneFrame": "Το Pixel Avatar δεν έχει κίνηση: το καρέ που διαλέγεις γίνεται το πρόσωπο.",
+      "imp.flat": "Τα επίπεδα ενώνονται σε μία εικόνα· τα κρυφά επίπεδα μένουν έξω.",
+      "imp.crop": "Περικόπηκε γύρω από το σχέδιο.", "imp.scaled": "Μικρύνθηκε για να χωρέσει στο 16×16.",
+      "imp.reduced": "Τα {n} χρώματα έγιναν 8.", "imp.clear": "Τα διάφανα pixel μένουν διάφανα.",
+      "imp.blends": "Οι λειτουργίες ανάμειξης σχεδιάζονται ως κανονικές.", "imp.tiles": "Τα επίπεδα πλακιδίων (tilemap) μένουν έξω.",
+      "imp.colors": "{n} χρώματα", "imp.first8": "Τα πρώτα 8 χρώματα γίνονται τα χρώματα του προσώπου· τα pixel του μένουν ίδια. Η Αναίρεση φέρνει πίσω τα παλιά χρώματα.",
+      "imp.fewer": "Μόνο {n} χρώματα: για τα υπόλοιπα το πρόσωπο κρατά τα δικά του. Η Αναίρεση φέρνει πίσω τα παλιά χρώματα.",
+      "imp.open": "Άνοιγμα", "imp.use": "Χρήση των χρωμάτων",
+      "imp.done": "Έγινε εισαγωγή του «{name}»", "imp.donePal": "Τα χρώματα εισήχθησαν",
+      "imp.err.unknown": "Αυτό το αρχείο δεν είναι sprite ή παλέτα που διαβάζει το Pixel Avatar.",
+      "imp.err.read": "Δεν ήταν δυνατή η ανάγνωση του αρχείου. Ίσως είναι κατεστραμμένο.",
+      "imp.err.big": "Το αρχείο είναι πολύ μεγάλο για εισαγωγή.", "imp.err.empty": "Δεν υπάρχει σχέδιο σε αυτό το αρχείο.",
+      "imp.err.zip": "Αυτός ο browser δεν μπορεί να αποσυμπιέσει τις εικόνες του αρχείου.",
       "live.new": "Νέο πρόσωπο από τη λέξη {s}", "keys": "R νέο πρόσωπο · P επόμενη παλέτα · D λήψη PNG"
     }
   };
@@ -395,14 +433,23 @@
 
   // ---------- 5. Faces: normalise, grid, colours, SVG ----------
   // face = { s: seed (1–40), n: 8|12|16, p: palette id, b: 0 colour | 1 clear,
-  //          px: "" (as generated) | n*n digits 0–7 (painted) }
+  //          px: "" (as generated) | n*n digits 0–7 (painted),
+  //          c: 8 colours "#rrggbb", only with p "custom" (an imported
+  //          sprite or palette, import.js) }
+  var HEX6 = /^#[0-9a-f]{6}$/;
+  function customColors(c) {
+    return Array.isArray(c) && c.length === NCOL && c.every(function (x) { return typeof x === "string" && HEX6.test(x); }) ? c.slice() : null;
+  }
   function normFace(f) {
     if (!f || typeof f !== "object") return null;
     var s = clip(f.s, MAX_SEED);
     if (!s || SIZES.indexOf(f.n) < 0) return null;
     var px = (typeof f.px === "string" && f.px.length === f.n * f.n && /^[0-7]+$/.test(f.px)) ? f.px : "";
     if (px && px === genFace(s, f.n)) px = "";                  // canonical: unedited
-    return { s: s, n: f.n, p: PAL_IDS.indexOf(f.p) >= 0 ? f.p : "classic", b: f.b === 1 ? 1 : 0, px: px };
+    var c = f.p === "custom" ? customColors(f.c) : null;
+    var out = { s: s, n: f.n, p: c ? "custom" : (PAL_IDS.indexOf(f.p) >= 0 ? f.p : "classic"), b: f.b === 1 ? 1 : 0, px: px };
+    if (c) out.c = c;
+    return out;
   }
   function faceGrid(f) { return f.px || genFace(f.s, f.n); }
   function sameFace(a, b) { return JSON.stringify(a) === JSON.stringify(b); }
@@ -619,7 +666,9 @@
     try { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
     catch (e) { return ""; }
   }
-  function colorsOf(f) { return faceColors(f.s, f.p, cssVar); }
+  function colorsOf(f) { return f.p === "custom" && f.c ? f.c.slice() : faceColors(f.s, f.p, cssVar); }
+  // Colour names: the roles of a seed face, "Colour 3" for imported colours.
+  function colName(f, k) { return f.p === "custom" ? t("col.n", { n: k + 1 }) : t("col" + k); }
 
   // --- the grid (one button per pixel, roving tabindex) ---
   var gridN = 0, focusI = 0, painting = false, strokeStarted = false;
@@ -649,7 +698,7 @@
       b.style.background = clear ? "" : cols[c];
       b.classList.toggle("clear", clear);
       b.tabIndex = i === focusI ? 0 : -1;
-      b.setAttribute("aria-label", t("px", { r: Math.floor(i / n) + 1, c: i % n + 1, col: t("col" + c) }));
+      b.setAttribute("aria-label", t("px", { r: Math.floor(i / n) + 1, c: i % n + 1, col: colName(f, c) }));
     }
   }
 
@@ -729,6 +778,16 @@
       b.addEventListener("click", function () { commit(withFace({ p: id })); });
       pals.appendChild(b);
     });
+    // the colours of an imported sprite or palette: shown while the
+    // face on the desk has them (another palette replaces them; Undo)
+    var cb = el("button", "pal pal-custom");
+    cb.type = "button";
+    cb.setAttribute("role", "radio");
+    cb.setAttribute("data-p", "custom");
+    cb.appendChild(el("span", "pal-strip"));
+    cb.appendChild(el("span", "pal-name", t("pal.custom")));
+    cb.hidden = true;
+    pals.appendChild(cb);
     var paint = $("paint");
     for (var k = 0; k < NCOL; k++) {
       (function (k) {
@@ -763,16 +822,21 @@
       b.classList.toggle("on", on); b.setAttribute("aria-checked", on ? "true" : "false");
     });
     [].forEach.call(document.querySelectorAll(".pal"), function (b) {
-      var id = b.getAttribute("data-p"), on = id === f.p;
+      var id = b.getAttribute("data-p"), on = id === f.p, custom = id === "custom";
       b.classList.toggle("on", on); b.setAttribute("aria-checked", on ? "true" : "false");
-      var c = faceColors(f.s, id, cssVar), strip = b.querySelector(".pal-strip");
-      strip.style.background = "linear-gradient(90deg," + [c[0], c[1], c[3], c[6], c[7]].map(function (x, i) {
-        return x + " " + (i * 20) + "% " + ((i + 1) * 20) + "%";
+      if (custom) b.hidden = !on;
+      if (custom && !on) return;
+      var c = custom ? f.c : faceColors(f.s, id, cssVar), strip = b.querySelector(".pal-strip");
+      var five = custom ? c : [c[0], c[1], c[3], c[6], c[7]], k = 100 / five.length;
+      strip.style.background = "linear-gradient(90deg," + five.map(function (x, i) {
+        return x + " " + (i * k) + "% " + ((i + 1) * k) + "%";
       }).join(",") + ")";
     });
     [].forEach.call(document.querySelectorAll(".sw"), function (s) {
       var k = +s.getAttribute("data-c"), on = k === prefs.col;
       var clear = k === 0 && f.b === 1;
+      s.title = colName(f, k);
+      s.setAttribute("aria-label", s.title);
       s.style.background = clear ? "" : cols[k];
       s.classList.toggle("clear", clear);
       s.classList.toggle("on", on); s.setAttribute("aria-checked", on ? "true" : "false");
@@ -1028,6 +1092,192 @@
     setTimeout(function () { n.textContent = msg; }, 30);
   }
 
+  // ---------- 11b. Import (import.js) ----------
+  // File → detect + parse (OrosPixelImport, pure) → preview (what the
+  // file has, what becomes of it, the face it gives) → ONE change of
+  // the face on the desk through commit(), so Undo / Redo and the
+  // toast's Undo bring the old face back. Nothing synced is written:
+  // the Museum only changes when the user saves. Text from the file
+  // reaches the page through textContent only.
+  var IMP = window.OrosPixelImport;
+  var IMP_SRC = { aseprite: "Aseprite", piskel: "Piskel", gpl: "GIMP", hex: "Lospec", paintnet: "Paint.NET",
+                  jasc: "JASC (Paint Shop Pro)", asef: "Adobe" };
+  var MAX_SHEET = 16 * 1024 * 1024;           // pixels of one decoded Piskel sheet
+
+  function pickImportFile() {
+    var host = dialogHost();
+    if (host && typeof host.openFile === "function") return host.openFile(IMP.ACCEPT);
+    return new Promise(function (resolve) {        // standalone page
+      var inp = document.createElement("input");
+      inp.type = "file";
+      inp.accept = IMP.ACCEPT;
+      inp.hidden = true;
+      inp.addEventListener("change", function () {
+        var f = inp.files && inp.files[0];
+        inp.remove();
+        resolve(f || null);
+      });
+      inp.addEventListener("cancel", function () { inp.remove(); resolve(null); });
+      document.body.appendChild(inp);
+      inp.click();
+    });
+  }
+  function startImport() {
+    if (!IMP || !window.OrosImportKit) return;
+    pickImportFile().then(function (file) { if (file) importFile(file); });
+  }
+  // A PNG (bytes) → { w, h, data } through the browser's decoder.
+  function decodePng(bytes) {
+    var blob = new Blob([bytes], { type: "image/png" });
+    var p = typeof createImageBitmap === "function" ? createImageBitmap(blob) : new Promise(function (ok, fail) {
+      var url = URL.createObjectURL(blob), img = new Image();
+      img.onload = function () { URL.revokeObjectURL(url); ok(img); };
+      img.onerror = function () { URL.revokeObjectURL(url); fail(new Error("bad")); };
+      img.src = url;
+    });
+    return p.then(function (im) {
+      var w = im.width || im.naturalWidth, h = im.height || im.naturalHeight;
+      if (!w || !h || w * h > MAX_SHEET) throw new Error("big");
+      var cv = document.createElement("canvas");
+      cv.width = w; cv.height = h;
+      var g = cv.getContext("2d");
+      g.drawImage(im, 0, 0);
+      if (im.close) try { im.close(); } catch (e) {}
+      var d = g.getImageData(0, 0, w, h).data;
+      cv.width = cv.height = 0;
+      return { w: w, h: h, data: d };
+    }, function () { throw new Error("bad"); });
+  }
+  // → Promise<{ kind, name, ... }> for the preview.
+  function readImport(r) {
+    var kind = IMP.detect(r.name, r.bytes), name = IMP.baseName(r.name);
+    if (!kind) return Promise.reject(new Error("unknown"));
+    if (kind === "aseprite") {
+      return IMP.parseAseprite(r.bytes).then(function (doc) {
+        return { kind: kind, name: name, w: doc.w, h: doc.h, sprite: true,
+                 frames: doc.frames.map(function (f) { return f.dur; }),
+                 layers: doc.layers.filter(function (l) { return !l.group; }).length,
+                 skipped: doc.skipped, frame: function (i) { return IMP.frameRgba(doc, i); } };
+      });
+    }
+    if (kind === "piskel") {
+      var doc = IMP.parsePiskel(r.bytes), sheets = [], chain = Promise.resolve();
+      doc.layers.forEach(function (L, li) {
+        sheets[li] = [];
+        L.chunks.forEach(function (ch, ci) {
+          chain = chain.then(function () { return decodePng(ch.png).then(function (img) { sheets[li][ci] = img; }); });
+        });
+      });
+      return chain.then(function () {
+        var fr = [];
+        for (var i = 0; i < doc.count; i++) fr.push(Math.round(1000 / doc.fps));
+        return { kind: kind, name: doc.name || name, w: doc.w, h: doc.h, sprite: true, frames: fr,
+                 layers: doc.layers.length, skipped: {}, frame: function (i) { return IMP.piskelFrame(doc, sheets, i); } };
+      });
+    }
+    var pal = IMP.parsePalette(r.bytes, kind);
+    if (!pal) return Promise.reject(new Error("unknown"));
+    return Promise.resolve({ kind: kind, name: name, colors: pal.colors });
+  }
+  // Also the handle for tests / a file opened with orOS (Promise)
+  function importFile(file) {
+    return window.OrosImportKit.readFile(file, IMP.MAX_FILE)
+      .then(readImport)
+      .then(function (res) { openImportPreview(res); return true; })
+      .catch(function (e) {
+        var m = e && e.message;
+        showToast(t(m === "toobig" || m === "big" ? "imp.err.big" : m === "unknown" ? "imp.err.unknown" :
+                    m === "zip" ? "imp.err.zip" : "imp.err.read"));
+        return false;
+      });
+  }
+  // The face a sprite frame gives, or null (nothing drawn).
+  function spriteFace(res, i) {
+    var f = IMP.toFace(res.frame(i));
+    if (!f) return null;
+    return { info: f, face: normFace({ s: clip(res.name, MAX_SEED) || "import", n: f.n, p: "custom", c: f.c, b: f.b, px: f.px }) };
+  }
+  function openImportPreview(res) {
+    var dlg = makeDialog("pixel-import");
+    var src = IMP_SRC[res.kind] || res.kind;
+    dlg.appendChild(el("div", "dlg-title", res.sprite ? t("imp.title", { s: src }) : t("imp.palette", { s: src })));
+    var sub = [res.name];
+    if (res.sprite) {
+      sub.push(t("imp.size", { w: res.w, h: res.h }));
+      if (res.frames.length > 1) sub.push(t("imp.frames", { n: res.frames.length }));
+      if (res.layers > 1) sub.push(t("imp.layers", { n: res.layers }));
+    } else sub.push(t("imp.colors", { n: res.colors.length }));
+    dlg.appendChild(el("div", "dlg-sub", sub.join(" · ")));
+
+    var sel = null;
+    if (res.sprite && res.frames.length > 1) {
+      var lab = el("label", "dlg-lbl", t("imp.frame"));
+      sel = el("select", "imp-frame");
+      res.frames.forEach(function (ms, i) {
+        var o = el("option", "", t("imp.frameN", { n: i + 1, ms: ms }));
+        o.value = String(i);
+        sel.appendChild(o);
+      });
+      lab.appendChild(sel);
+      dlg.appendChild(lab);
+    }
+    var view = el("div", "imp-view");
+    dlg.appendChild(view);
+    var notes = el("ul", "imp-notes");
+    dlg.appendChild(notes);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("cancel"), "", function () { dlg.close(); }));
+    var go = button(res.sprite ? t("imp.open") : t("imp.use"), "primary", null);
+    acts.appendChild(go);
+    dlg.appendChild(acts);
+
+    var next = null, info = null;
+    function note(text) { notes.appendChild(el("li", "", text)); }
+    function show() {
+      notes.innerHTML = "";
+      view.innerHTML = "";
+      if (res.sprite) {
+        var r = spriteFace(res, sel ? +sel.value : 0);
+        next = r && r.face; info = r && r.info;
+        if (!next) { note(t("imp.err.empty")); go.disabled = true; return; }
+        go.disabled = false;
+        note(t("imp.maps", { n: next.n }));
+        if (res.frames.length > 1) note(t("imp.oneFrame"));
+        if (res.layers > 1) note(t("imp.flat"));
+        if (info.crop) note(t("imp.crop"));
+        if (info.scaled) note(t("imp.scaled"));
+        if (info.reduced) note(t("imp.reduced", { n: info.colors }));
+        if (next.b) note(t("imp.clear"));
+        if (res.skipped && res.skipped.blends) note(t("imp.blends"));
+        if (res.skipped && res.skipped.tilemaps) note(t("imp.tiles"));
+      } else {
+        var pc = IMP.paletteColors(res.colors, colorsOf(prefs.face));
+        next = normFace(withFace({ p: "custom", c: pc.c }));
+        note(pc.used < NCOL ? t("imp.fewer", { n: pc.used }) : t("imp.first8"));
+      }
+      // our own SVG: numbers and checked "#rrggbb" colours only
+      var thumb = el("div", "thumb imp-thumb" + (next.b ? " clear" : ""));
+      thumb.innerHTML = faceSvg(next, 128, colorsOf(next), false);
+      view.appendChild(thumb);
+      var strip = el("div", "imp-strip");
+      colorsOf(next).forEach(function (c) { var sw = el("span", ""); sw.style.background = c; strip.appendChild(sw); });
+      view.appendChild(strip);
+    }
+    if (sel) sel.addEventListener("change", show);
+    go.addEventListener("click", function () {
+      var f = next;
+      dlg.close();
+      if (!f || !commit(f)) return;              // the one change (Undo-able)
+      var applied = prefs.face;
+      undoToast(res.sprite ? t("imp.done", { name: res.name }) : t("imp.donePal"), function () {
+        if (sameFace(prefs.face, applied)) undo();
+      });
+    });
+    show();
+    document.body.appendChild(dlg);
+    dlg.showModal();
+  }
+
   // ---------- 12. Keyboard ----------
   function wireKeyboard() {
     // Contract Β: forward Ctrl+Alt+Shift shortcuts to the shell (capture)
@@ -1171,6 +1421,9 @@
     $("netizen-btn").hidden = !shellWin();
     $("netizen-btn").addEventListener("click", sendToNetizen);
     $("save-btn").addEventListener("click", saveCurrent);
+    var ib = $("imp-btn");
+    if (IMP && window.OrosImportKit) ib.addEventListener("click", startImport);
+    else ib.hidden = true;
     wireKeyboard();
   }
 
@@ -1188,4 +1441,5 @@
   }
 
   boot();
+  window.__pixelImport = { importFile: importFile };   // tests / files opened with orOS
 })();

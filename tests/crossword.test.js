@@ -30,7 +30,7 @@ const C = (() => {
   ["cmpStr", "normWord", "hashStr", "seeded", "shuffled", "cellsOf", "canPlace", "spots", "layout", "crop",
    "solve", "solLetters", "chooseGivens", "randomPool", "buildPuzzle", "dayIndex", "dailyPuzzle", "slotMap",
    "readSlot", "placedWords", "isSolved", "wrongCells", "nextCell", "fmtTime", "streaks", "normDayRes",
-   "dayKeyOk", "betterDay", "statKeyOk", "joinStat", "normRow", "joinRows", "mergeCW", "themeOk", "idxList",
+   "dayKeyOk", "betterDay", "statKeyOk", "joinStat", "normRow", "joinRows", "mergeCW", "libJoin", "themeOk", "idxList",
    "validGame", "startFill"].forEach((name) => {
     const i = SRC.indexOf("  function " + name + "(");
     if (i < 0) throw new Error("missing function " + name);

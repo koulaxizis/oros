@@ -673,3 +673,6 @@ body.rm-on > section { visibility: hidden; }
 }
 
 [hidden] { display: none !important; }
+
+/* Open a LibreOffice Impress or Markdown deck: the preview */
+.mi-body .mi-src { font-weight: 700; overflow-wrap: anywhere; }

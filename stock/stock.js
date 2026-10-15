@@ -149,6 +149,19 @@
       "imp.setQty": "Set the quantities from the file (saved as a stock count)", "imp.qtyN": "{n} quantities change",
       "imp.go": "Import", "imp.bad": "No product columns found. The first row must name the columns (Name or SKU at least).",
       "imp.done": "Imported: {a} new, {u} updated",
+      "set.impCsv2": "Import products (CSV, Shopify, Square)",
+      "imp2.title": "Import from {s}", "imp2.found": "Products in the file: {n}",
+      "imp2.new": "New products: {n}", "imp2.back": "Deleted here before, coming back: {n}",
+      "imp2.same": "Already here, kept as they are: {n}", "imp2.skip": "Rows skipped (no name, or a repeat): {n}",
+      "imp2.cats": "New categories: {n}", "imp2.sups": "New suppliers: {n}", "imp2.locs": "Quantities of {n} locations are added together.",
+      "imp2.map.shopify": "Title and options → name (one product per variant) · Variant SKU, Barcode, Price, Cost per item · Type → category · Vendor → supplier · description (as plain text), tags and image link → note.",
+      "imp2.map.square": "Item and variation name → name · SKU, GTIN → barcode · Price, Default Unit Cost · Category · Default Vendor Name → supplier · Stock Alert Count → minimum · Description → note.",
+      "imp2.qty": "Set the quantities of the new products ({n}) with a stock count",
+      "imp2.qtyHint": "If you undo after importing quantities, the products stay archived with their voided count.",
+      "imp2.hint": "Importing only adds products. Products already here are not changed; the same file twice adds nothing.",
+      "imp2.none": "Nothing new to import", "imp2.done": "Products imported: {n}", "imp2.undone": "Import undone",
+      "imp2.lib": "The Excel reader is missing. Save the sheet as CSV and import that.",
+      "imp2.tags": "Tags", "imp2.image": "Image",
       "toast.saved": "Saved", "toast.added": "Added", "toast.deleted": "Deleted", "toast.undo": "Undo",
       "toast.save": "Couldn't save: the browser storage is full.", "toast.exported": "Exported",
       "toast.badFile": "That file can't be read.", "toast.imported": "Backup merged: {n} products",
@@ -306,6 +319,19 @@
       "imp.setQty": "Ορισμός ποσοτήτων από το αρχείο (ως απογραφή)", "imp.qtyN": "Αλλάζουν {n} ποσότητες",
       "imp.go": "Εισαγωγή", "imp.bad": "Δεν βρέθηκαν στήλες προϊόντων. Η πρώτη γραμμή πρέπει να έχει τα ονόματα των στηλών (τουλάχιστον Όνομα ή SKU).",
       "imp.done": "Εισαγωγή: {a} νέα, {u} ενημερωμένα",
+      "set.impCsv2": "Εισαγωγή προϊόντων (CSV, Shopify, Square)",
+      "imp2.title": "Εισαγωγή από {s}", "imp2.found": "Προϊόντα στο αρχείο: {n}",
+      "imp2.new": "Νέα προϊόντα: {n}", "imp2.back": "Είχαν διαγραφεί εδώ και επιστρέφουν: {n}",
+      "imp2.same": "Υπάρχουν ήδη και μένουν όπως είναι: {n}", "imp2.skip": "Γραμμές που παραλείφθηκαν (χωρίς όνομα ή επανάληψη): {n}",
+      "imp2.cats": "Νέες κατηγορίες: {n}", "imp2.sups": "Νέοι προμηθευτές: {n}", "imp2.locs": "Οι ποσότητες {n} καταστημάτων αθροίζονται.",
+      "imp2.map.shopify": "Τίτλος και επιλογές → όνομα (ένα προϊόν ανά παραλλαγή) · Variant SKU, Barcode, τιμή, κόστος · Type → κατηγορία · Vendor → προμηθευτής · περιγραφή (ως απλό κείμενο), ετικέτες και σύνδεσμος εικόνας → σημείωση.",
+      "imp2.map.square": "Όνομα είδους και παραλλαγής → όνομα · SKU, GTIN → barcode · τιμή, κόστος μονάδας · κατηγορία · προμηθευτής · Stock Alert Count → ελάχιστο · περιγραφή → σημείωση.",
+      "imp2.qty": "Ορισμός ποσοτήτων για τα νέα προϊόντα ({n}) με απογραφή",
+      "imp2.qtyHint": "Αν αναιρέσεις μια εισαγωγή με ποσότητες, τα προϊόντα μένουν στο αρχείο με την απογραφή τους ακυρωμένη.",
+      "imp2.hint": "Η εισαγωγή μόνο προσθέτει προϊόντα. Όσα υπάρχουν ήδη δεν αλλάζουν· το ίδιο αρχείο δεύτερη φορά δεν προσθέτει τίποτα.",
+      "imp2.none": "Δεν υπάρχει κάτι νέο για εισαγωγή", "imp2.done": "Προϊόντα που μπήκαν: {n}", "imp2.undone": "Η εισαγωγή αναιρέθηκε",
+      "imp2.lib": "Λείπει το πρόγραμμα ανάγνωσης Excel. Αποθήκευσε το φύλλο ως CSV και κάνε εισαγωγή αυτό.",
+      "imp2.tags": "Ετικέτες", "imp2.image": "Εικόνα",
       "toast.saved": "Αποθηκεύτηκε", "toast.added": "Προστέθηκε", "toast.deleted": "Διαγράφηκε", "toast.undo": "Αναίρεση",
       "toast.save": "Δεν αποθηκεύτηκε: ο χώρος του browser γέμισε.", "toast.exported": "Έγινε εξαγωγή",
       "toast.badFile": "Αυτό το αρχείο δεν διαβάζεται.", "toast.imported": "Το αντίγραφο ενώθηκε: {n} προϊόντα",
@@ -3269,7 +3295,7 @@
     dlg.appendChild(el("div", "dlg-lbl", t("set.data")));
     var io = el("div", "dlg-actions tight wrap");
     if (shopReady()) io.appendChild(button("🛍️ " + t("add.shop"), "", function () { dlg.close(); openShop(); }));
-    io.appendChild(button(t("set.impCsv"), "", function () { dlg.close(); importCsv(); }));
+    io.appendChild(button(window.OrosStockImport ? t("set.impCsv2") : t("set.impCsv"), "", function () { dlg.close(); importCsv(); }));
     io.appendChild(button(t("set.expCsv"), "", exportProducts));
     io.appendChild(button(t("set.expMoves"), "", exportMoves));
     io.appendChild(button(t("set.json"), "", exportData));
@@ -3380,12 +3406,109 @@
       });
     }).catch(function () { showToast(t("toast.badFile")); });
   }
+  // One entry point for every product file: Shopify / Square exports
+  // (stock/import.js, its own preview and Undo), anything else goes to
+  // the CSV import below (own export, WooCommerce, any Name / SKU
+  // sheet). An .xlsx is read with the vendored SheetJS, loaded only
+  // when one is picked.
   function importCsv() {
-    pickFile(".csv,.tsv,.txt,text/csv,text/plain").then(function (file) {
+    var I = window.OrosStockImport, K = window.OrosImportKit;
+    if (!I || !K) {
+      pickFile(".csv,.tsv,.txt,text/csv,text/plain").then(function (file) {
+        if (!file) return;
+        if (file.size > 20 * 1024 * 1024) { showToast(t("toast.badFile")); return; }
+        return file.text().then(function (txt) { importCsvDialog(txt); });
+      }).catch(function () { showToast(t("toast.badFile")); });
+      return;
+    }
+    pickFile(I.ACCEPT).then(function (file) {
       if (!file) return;
-      if (file.size > 20 * 1024 * 1024) { showToast(t("toast.badFile")); return; }
-      return file.text().then(function (txt) { importCsvDialog(txt); });
+      return importFile(file);
     }).catch(function () { showToast(t("toast.badFile")); });
+  }
+  // Also the handle for tests / a file opened with orOS (Promise)
+  function importFile(file) {
+    var I = window.OrosStockImport, K = window.OrosImportKit;
+    return K.readFile(file, I.MAX_FILE).then(function (f) {
+      return I.readBytes(f.bytes, f.name, getXlsx);
+    }).then(function (r) {
+      if (r.error) { showToast(t(r.error === "lib" ? "imp2.lib" : "toast.badFile")); return false; }
+      var res = I.parseRows(r.rows, { tags: t("imp2.tags"), image: t("imp2.image") });
+      if (res) { importOtherDialog(res); return true; }
+      importCsvDialog(typeof r.text === "string" ? r.text : I.toCsv(r.rows));
+      return true;
+    }, function () { showToast(t("toast.badFile")); return false; });
+  }
+  window.__orosStockImport = importFile;
+  var XLSX_V = (/v=([\d.]+)/.exec((document.currentScript && document.currentScript.src) || "") || [])[1] || "";
+  var xlsxWait = null;
+  function getXlsx() {
+    if (window.XLSX && window.XLSX.utils) return Promise.resolve(window.XLSX);
+    if (xlsxWait) return xlsxWait;
+    xlsxWait = new Promise(function (res, rej) {
+      var s = document.createElement("script");
+      s.src = "../vendor/xlsx.full.min.js" + (XLSX_V ? "?v=" + XLSX_V : "");
+      s.onload = function () { if (window.XLSX && window.XLSX.utils) res(window.XLSX); else rej(new Error("lib")); };
+      s.onerror = function () { s.remove(); xlsxWait = null; rej(new Error("lib")); };
+      document.head.appendChild(s);
+    });
+    return xlsxWait;
+  }
+  // Preview of a Shopify / Square file: counts, what maps where, the
+  // quantities choice; Import = ONE write (save: one persist, one
+  // dirty mark) and a toast with Undo. File text only via textContent.
+  function importOtherDialog(res) {
+    var I = window.OrosStockImport;
+    var opts = { now: Date.now(), today: todayYmd(), setQty: true, ref: I.SRC_NAME[res.source] };
+    var p = I.plan(data, res, opts);
+    var dlg = makeDialog("st-imp2");
+    dlg.appendChild(el("div", "dlg-title", t("imp2.title", { s: I.SRC_NAME[res.source] })));
+    var ul = el("ul", "imp2-list");
+    function li(text) { ul.appendChild(el("li", "", text)); }
+    li(t("imp2.found", { n: res.items.length }));
+    li(t("imp2.new", { n: p.stats.added + p.stats.back }));
+    if (p.stats.back) li(t("imp2.back", { n: p.stats.back }));
+    if (p.stats.same) li(t("imp2.same", { n: p.stats.same }));
+    if (p.stats.skipped) li(t("imp2.skip", { n: p.stats.skipped }));
+    if (p.cats.length) li(t("imp2.cats", { n: p.cats.length }));
+    if (p.sups.length) li(t("imp2.sups", { n: p.sups.length }));
+    dlg.appendChild(ul);
+    dlg.appendChild(el("p", "hint", t("imp2.map." + res.source)));
+    if (res.locs > 1) dlg.appendChild(el("p", "hint", t("imp2.locs", { n: res.locs })));
+    var qrow = null;
+    if (p.stats.withQty) {
+      qrow = checkRow(t("imp2.qty", { n: p.stats.withQty }), true);
+      dlg.appendChild(qrow);
+      dlg.appendChild(el("p", "hint", t("imp2.qtyHint")));
+    }
+    dlg.appendChild(el("p", "hint", t("imp2.hint")));
+    var fresh = p.items.length;
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("ed.cancel"), "", function () { dlg.close(); }));
+    var go = button(fresh ? t("imp.go") : t("imp2.none"), "primary", function () {
+      // a fresh plan against the data as it is now (a pull may have landed)
+      opts.now = Date.now();
+      opts.setQty = !!(qrow && qrow.querySelector("input").checked);
+      var fin = I.plan(data, res, opts);
+      dlg.close();
+      if (!fin.items.length) { showToast(t("imp2.none")); return; }
+      data = I.apply(data, fin);
+      save();
+      render();
+      var info = fin.undo, used = false;
+      actionToast(t("imp2.done", { n: fin.items.length }), null, null, function () {
+        if (used) return;
+        used = true;
+        data = I.undo(data, info, Date.now());
+        save();
+        render();
+        showToast(t("imp2.undone"));
+      });
+    });
+    go.disabled = !fresh;
+    acts.appendChild(go);
+    dlg.appendChild(acts);
+    showDialog(dlg);
   }
   function importCsvDialog(text) {
     var opts = { lang: LANG, newId: newId, now: Date.now(), today: todayYmd(), setQty: false };

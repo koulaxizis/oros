@@ -16,7 +16,26 @@
 //   thumb }) → Uint8Array (stored ZIP, layers bottom → top).
 // parseStack(xml) and zip(entries) are exposed for the tests.
 //
-// UMD: module.exports in Node (tests), window.PhotoLab.ora in the app.
+// Krita .kra is a ZIP too, but not OpenRaster: maindoc.xml lists the
+// layers (top first, groups nested in <layers>), each paint layer's
+// pixels are in "<image name>/layers/<filename>" as Krita's tiled
+// format (64×64 tiles, LZF, channel planes, BGRA). readKra() decodes
+// 8-bit RGBA paint layers itself (no PNG in between); a file with
+// anything it can't read (16-bit / float / CMYK / grey colour spaces,
+// an old tile version, over the size limit) opens as one layer from
+// mergedimage.png instead, with skipped.flat set so the app says so
+// (damaged layer data too, when the file has a merged picture).
+// Vector, file, clone, filter and fill layers and masks are left out
+// (counted).
+// readKra(bytes, Zip, o) → Promise<{ w, h, layers: [{ name, x, y, op,
+//   bl, vis, img: { w, h, data } }], merged: png | null, skipped:
+//   { groups, other (left-out layers and masks), flat } }>; o.maxPixels
+//   caps the layers.
+//   Rejects with Error("ora"). parseKraDoc(xml), kraTiles(bytes, o)
+//   and lzf(src, out) are exposed for the tests.
+//
+// UMD: module.exports in Node (tests), window.PhotoLab.ora (and
+// window.OrosOra) in the app.
 // ============================================================
 (function (root) {
   "use strict";
@@ -115,6 +134,187 @@
     }).catch(function (e) { throw new Error(e && /^ora/.test(e.message) ? e.message : "ora"); });
   }
 
+  // ---------- Krita .kra ----------
+  // Krita compositeop ids → Photo Lab blend ids.
+  var KOPS = {
+    normal: "normal", multiply: "multiply", screen: "screen", overlay: "overlay", darken: "darken",
+    lighten: "lighten", dodge: "dodge", burn: "burn", hard_light: "hard", soft_light: "soft",
+    soft_light_svg: "soft", diff: "difference", exclusion: "exclusion", hue: "hue",
+    saturation: "saturation", color: "color", luminize: "luminosity"
+  };
+  var KRA_TILE_MAX = 1 << 20;                        // tiles in one layer
+
+  // maindoc.xml → { w, h, name, layers: [{ name, file, x, y, op, bl,
+  // vis, cs }] bottom → top, groups, masks, other }. Throws Error("ora").
+  function parseKraDoc(xml) {
+    var re = /<(\/?)(IMAGE|layer|mask)\b([^>]*?)(\/?)>/g, m;
+    var img = null, out = [], groups = 0, masks = 0, other = 0;
+    var ctx = [{ vis: 1, op: 1 }], open = [];          // groups open around us
+    while ((m = re.exec(xml))) {
+      var close = m[1] === "/", tag = m[2], a = attrs(m[3]), empty = m[4] === "/";
+      if (tag === "IMAGE") {
+        if (!close && !img) img = { w: Math.round(num(a.width, 0)), h: Math.round(num(a.height, 0)), name: a.name || "" };
+        continue;
+      }
+      if (tag === "mask") { if (!close) masks++; continue; }
+      if (close) {                                    // </layer>: the end of a group
+        if (open.length && open.pop()) ctx.pop();
+        continue;
+      }
+      var top = ctx[ctx.length - 1];
+      var vis = top.vis && a.visible !== "0" ? 1 : 0;
+      var op = top.op * Math.max(0, Math.min(1, num(a.opacity, 255) / 255));
+      var type = a.nodetype || "paintlayer";
+      if (type === "grouplayer") {
+        groups++;
+        if (ctx.length > MAX_DEPTH) throw new Error("ora");
+        if (!empty) { ctx.push({ vis: vis, op: op }); open.push(true); }
+        continue;
+      }
+      if (!empty) open.push(false);                  // e.g. a layer with masks inside
+      if (type !== "paintlayer") { other++; continue; }
+      if (out.length >= MAX_LAYERS) throw new Error("ora");
+      var file = String(a.filename || "");
+      if (!file || /[\/\\]|\.\./.test(file)) { other++; continue; }
+      out.push({ name: cleanText(a.name) || "Layer", file: file, x: Math.round(num(a.x, 0)), y: Math.round(num(a.y, 0)),
+                 op: Math.round(op * 100), bl: KOPS[a.compositeop] || "normal", vis: vis,
+                 cs: String(a.colorspacename || "RGBA") });
+    }
+    if (!img || !img.w || !img.h) throw new Error("ora");
+    return { w: img.w, h: img.h, name: img.name, layers: out.reverse(), groups: groups, masks: masks, other: other };
+  }
+
+  // LZF (as Krita writes it) from src into out; → bytes written.
+  function lzf(src, out) {
+    var ip = 0, op = 0, end = src.length;
+    while (ip < end) {
+      var ctrl = src[ip++];
+      if (ctrl < 32) {                                 // ctrl + 1 literal bytes
+        ctrl++;
+        if (op + ctrl > out.length || ip + ctrl > end) throw new Error("ora");
+        while (ctrl--) out[op++] = src[ip++];
+      } else {                                         // back reference
+        var len = ctrl >> 5, ref = op - ((ctrl & 31) << 8) - 1;
+        if (len === 7) { if (ip >= end) throw new Error("ora"); len += src[ip++]; }
+        if (ip >= end) throw new Error("ora");
+        ref -= src[ip++];
+        len += 2;
+        if (ref < 0 || op + len > out.length) throw new Error("ora");
+        while (len--) out[op++] = out[ref++];
+      }
+    }
+    return op;
+  }
+
+  // A layer's tiled data → { x, y, w, h, data } (RGBA, layer pixel
+  // coordinates; w = 0 when empty). Only 8-bit RGBA (PIXELSIZE 4) —
+  // anything else throws Error("kra-cs"); damaged data Error("ora").
+  function kraTiles(bytes, o) {
+    var maxPixels = (o && o.maxPixels) || 120e6, p = 0, head = {};
+    function line() {
+      var s = p;
+      while (p < bytes.length && bytes[p] !== 10) p++;
+      if (p >= bytes.length || p - s > 200) throw new Error("ora");
+      var t = String.fromCharCode.apply(null, bytes.subarray(s, p));
+      p++;
+      return t;
+    }
+    for (var i = 0; i < 5; i++) {
+      var kv = /^([A-Z]+) (\d+)$/.exec(line());
+      if (!kv) throw new Error("ora");
+      head[kv[1]] = +kv[2];
+    }
+    if (head.VERSION !== 2) throw new Error("kra-cs");
+    var tw = head.TILEWIDTH, th = head.TILEHEIGHT, ps = head.PIXELSIZE, n = head.DATA;
+    if (ps !== 4) throw new Error("kra-cs");
+    if (!(tw > 0 && th > 0 && tw <= 1024 && th <= 1024) || n > KRA_TILE_MAX) throw new Error("ora");
+    var tiles = [], x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    for (var k = 0; k < n; k++) {
+      var hm = /^(-?\d+),(-?\d+),(\w+),(\d+)$/.exec(line());
+      if (!hm || hm[3] !== "LZF") throw new Error("ora");
+      var size = +hm[4];
+      if (p + size > bytes.length || size < 1) throw new Error("ora");
+      var t = { x: +hm[1], y: +hm[2], at: p, size: size };
+      p += size;
+      tiles.push(t);
+      x0 = Math.min(x0, t.x); y0 = Math.min(y0, t.y);
+      x1 = Math.max(x1, t.x + tw); y1 = Math.max(y1, t.y + th);
+    }
+    if (!tiles.length) return { x: 0, y: 0, w: 0, h: 0, data: new Uint8ClampedArray(0) };
+    var W = x1 - x0, H = y1 - y0;
+    if (W * H > maxPixels) throw new Error("kra-big");
+    var out = new Uint8ClampedArray(W * H * 4), npx = tw * th, raw = new Uint8Array(npx * 4);
+    tiles.forEach(function (t) {
+      var flag = bytes[t.at], body = bytes.subarray(t.at + 1, t.at + t.size), inter;
+      if (flag === 1) {                                // LZF of channel planes
+        if (lzf(body, raw) !== npx * 4) throw new Error("ora");
+        inter = false;
+      } else if (flag === 0) {                         // stored, pixels as they are
+        if (body.length < npx * 4) throw new Error("ora");
+        raw.set(body.subarray(0, npx * 4));
+        inter = true;
+      } else throw new Error("ora");
+      var ox = t.x - x0, oy = t.y - y0;
+      for (var yy = 0; yy < th; yy++) {
+        var row = ((oy + yy) * W + ox) * 4;
+        for (var xx = 0; xx < tw; xx++) {
+          var j = yy * tw + xx, d = row + xx * 4, b, g, r, a;
+          if (inter) { b = raw[j * 4]; g = raw[j * 4 + 1]; r = raw[j * 4 + 2]; a = raw[j * 4 + 3]; }
+          else { b = raw[j]; g = raw[npx + j]; r = raw[2 * npx + j]; a = raw[3 * npx + j]; }
+          out[d] = r; out[d + 1] = g; out[d + 2] = b; out[d + 3] = a;
+        }
+      }
+    });
+    return { x: x0, y: y0, w: W, h: H, data: out };
+  }
+
+  function readKra(bytes, Zip, o) {
+    var z, maxPixels = (o && o.maxPixels) || 120e6;
+    try { z = Zip.open(bytes); } catch (e) { return Promise.reject(new Error("ora")); }
+    if (!z.has("maindoc.xml")) return Promise.reject(new Error("ora"));
+    function merged() { return z.has("mergedimage.png") ? z.bytes("mergedimage.png", MAX_PNG) : Promise.resolve(null); }
+    return z.text("maindoc.xml", MAX_XML).then(function (xml) {
+      var doc = parseKraDoc(xml), skipped = { groups: doc.groups, other: doc.other + doc.masks, flat: 0 };   // masks are left out
+      var layers = [], total = 0, chain = Promise.resolve();
+      function path(file) {
+        var want = doc.name + "/layers/" + file;
+        if (z.has(want)) return want;
+        var hit = null;                                // a renamed folder: the one entry that ends so
+        z.names.forEach(function (n) { if (!hit && n.slice(-(file.length + 8)) === "/layers/" + file) hit = n; });
+        return hit;
+      }
+      doc.layers.forEach(function (L) {
+        chain = chain.then(function () {
+          if (!/^RGBA$/i.test(L.cs)) throw new Error("kra-cs");
+          var at = path(L.file);
+          if (!at) throw new Error("kra-cs");
+          return z.bytes(at, MAX_PNG).then(function (b) {
+            var t = kraTiles(b, { maxPixels: maxPixels - total });
+            total += t.w * t.h;
+            if (!t.w) return;                          // an empty layer
+            layers.push({ name: L.name, x: L.x + t.x, y: L.y + t.y, op: L.op, bl: L.bl, vis: L.vis,
+                          img: { w: t.w, h: t.h, data: t.data } });
+          });
+        });
+      });
+      return chain.then(function () {
+        if (layers.length) return { w: doc.w, h: doc.h, layers: layers, merged: null, skipped: skipped };
+        return merged().then(function (png) {
+          if (!png) throw new Error("ora");
+          return { w: doc.w, h: doc.h, layers: [], merged: png, skipped: skipped };
+        });
+      }, function (e) {
+        // What we can't read layer by layer (or damaged layer data)
+        // opens as the flat picture, when the file has one.
+        return merged().then(function (png) {
+          if (!png) throw new Error("ora");
+          skipped.flat = 1;
+          return { w: doc.w, h: doc.h, layers: [], merged: png, skipped: skipped };
+        });
+      });
+    }).catch(function (e) { throw new Error("ora"); });
+  }
+
   // ---------- Writing ----------
   var CRC = (function () {
     var t = new Uint32Array(256);
@@ -175,7 +375,8 @@
     return zip(entries);
   }
 
-  var API = { read: read, write: write, parseStack: parseStack, zip: zip, crc32: crc32, OPS: OPS, MIME: MIME };
+  var API = { read: read, write: write, parseStack: parseStack, zip: zip, crc32: crc32, OPS: OPS, MIME: MIME,
+              readKra: readKra, parseKraDoc: parseKraDoc, kraTiles: kraTiles, lzf: lzf, KOPS: KOPS };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
-  else { root.PhotoLab = root.PhotoLab || {}; root.PhotoLab.ora = API; }
+  else { root.PhotoLab = root.PhotoLab || {}; root.PhotoLab.ora = API; root.OrosOra = API; }
 })(typeof window !== "undefined" ? window : this);

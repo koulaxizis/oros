@@ -452,7 +452,7 @@
     PL.showEditor();
     PL.changed();
   };
-  // A project from a layered file (PSD, OpenRaster): layers bottom →
+  // A project from a layered file (PSD, OpenRaster, Krita): layers bottom →
   // top, each { name, x, y, img, op, bl, vis }, already within limits.
   PL.newFromLayers = function (w, h, name, layers) {
     var doc = C.newDoc({ w: w, h: h, name: name, now: Date.now(), layerName: PL.t("layer.bg") });

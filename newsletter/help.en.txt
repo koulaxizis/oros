@@ -61,6 +61,12 @@ Choose `Make a draft for me to check` and you get a draft and a notice, or `Send
 ## Past issues from another service
 `Settings` › `Import past issues…` brings in what you sent with Buttondown, MailerLite or another service: their .zip export, or Markdown, HTML, CSV or JSON files. Import them as past issues, which show among your issues as already sent (to save as a web page or `Duplicate`) without anyone getting an e-mail, or as drafts to send again. Text, headings, links and pictures come over; scripts and tracking pixels are dropped, and pictures stay at their web address. Importing the same file twice adds nothing new.
 
+Moving from Substack or Buttondown: both `Import CSV` and `Import past issues…` read their exports and show one preview with the subscribers and the past issues, side by side; untick what you don't want.
+- Substack: `Settings` › `Exports` › `Create new export`, then download the .zip. Readers whose e-mail is disabled or whose subscription has ended stay out; a paid plan becomes a tag. Only published posts come over, with their subtitle as the preview line.
+- Buttondown: `Subscribers` › `Export` for the CSV, and `Emails` › `Export` (CSV, or the .zip of Markdown files) for the archive. Only regular, premium and gifted subscribers come over; drafts and scheduled e-mails stay out.
+
+Subscribers follow the same rules as any import (nobody who left is brought back), and `Undo` on the message right after removes everything that import added.
+
 ## Subscribe and unsubscribe by e-mail
 Every issue has an unsubscribe link that opens a ready e-mail. `Subscribe link` gives a link and HTML for your site that does the same for new subscribers. Newsletter reads these e-mails from the Inbox of the list's account (`Check Inbox`, every few minutes while orOS is open, and before each send), applies them, and files them in a folder called Newsletter. Delivery-failure reports mark addresses as bounced.
 

@@ -213,7 +213,16 @@
       "jr.noTrack": "No track", "jr.noTracks": "No tracks in Maps yet. Record or import one in Maps › My tracks.",
       "jr.trackGone": "This track is no longer in Maps", "jr.showTrack": "Show in Maps", "jr.plan": "Planned",
       "jr.photoN": "Photo {n}", "jr.photoBad": "Some files were not photos and were skipped", "toast.jrDel": "Journal day cleared",
-      "jr.clear": "Clear the day", "menu.gpx": "Export the itinerary (GPX)", "menu.split": "Share with Split"
+      "jr.clear": "Clear the day", "menu.gpx": "Export the itinerary (GPX)", "menu.split": "Share with Split",
+      "menu.importOther": "Import from Polarsteps or TripIt", "impx.title": "Import from {s}",
+      "impx.hintPs": "Each trip comes with its steps as itinerary entries (with their place on the map) and the step texts in the journal. Photos and the recorded route stay in Polarsteps.",
+      "impx.hintTi": "The whole-trip event becomes the trip; flights, hotels, trains, car hire and restaurants become itinerary entries, and anything else an \u201cOther\u201d entry with its text as a note.",
+      "impx.row": "{n} entries and {j} journal days to add", "impx.have": "already here: {n}", "impx.over": "no room for {n}",
+      "impx.left": "Left out: {list}.", "impx.photos": "{n} photos and videos", "impx.points": "{n} route points",
+      "impx.outside": "{n} events outside any trip", "impx.cancelled": "{n} cancelled",
+      "impx.do": "Import", "impx.pick": "Pick at least one trip", "impx.nothing": "Everything in this file is already here",
+      "impx.done": "Imported: trips {t}, entries {e}, journal days {j}",
+      "impx.none": "No Polarsteps or TripIt trip found in this file", "impx.big": "This file is too big to import"
     },
     el: {
       "app": "Ταξίδια", "btn.new": "Νέο ταξίδι", "btn.tpls": "Πρότυπα", "btn.back": "Πίσω", "btn.more": "Περισσότερα",
@@ -346,7 +355,16 @@
       "jr.noTrack": "Χωρίς διαδρομή", "jr.noTracks": "Δεν υπάρχουν ακόμα διαδρομές στους Χάρτες. Κατέγραψε ή εισήγαγε μία στους Χάρτες › Οι διαδρομές μου.",
       "jr.trackGone": "Αυτή η διαδρομή δεν υπάρχει πια στους Χάρτες", "jr.showTrack": "Εμφάνιση στους Χάρτες", "jr.plan": "Στο πρόγραμμα",
       "jr.photoN": "Φωτογραφία {n}", "jr.photoBad": "Κάποια αρχεία δεν ήταν φωτογραφίες και παραλείφθηκαν", "toast.jrDel": "Η μέρα του ημερολογίου καθαρίστηκε",
-      "jr.clear": "Καθάρισμα της μέρας", "menu.gpx": "Εξαγωγή προγράμματος (GPX)", "menu.split": "Κοινοποίηση στη Μοιρασιά"
+      "jr.clear": "Καθάρισμα της μέρας", "menu.gpx": "Εξαγωγή προγράμματος (GPX)", "menu.split": "Κοινοποίηση στη Μοιρασιά",
+      "menu.importOther": "Εισαγωγή από Polarsteps ή TripIt", "impx.title": "Εισαγωγή από {s}",
+      "impx.hintPs": "Κάθε ταξίδι έρχεται με τις στάσεις του ως καταχωρίσεις στο πρόγραμμα (με το σημείο τους στον χάρτη) και τα κείμενα των στάσεων στο ημερολόγιο. Οι φωτογραφίες και η καταγεγραμμένη διαδρομή μένουν στο Polarsteps.",
+      "impx.hintTi": "Το γεγονός όλου του ταξιδιού γίνεται το ταξίδι· πτήσεις, ξενοδοχεία, τρένα, ενοικιάσεις αυτοκινήτων και εστιατόρια γίνονται καταχωρίσεις στο πρόγραμμα, και όλα τα άλλα καταχωρίσεις «Άλλο» με το κείμενό τους ως σημείωση.",
+      "impx.row": "{n} καταχωρίσεις και {j} μέρες ημερολογίου για προσθήκη", "impx.have": "υπάρχουν ήδη: {n}", "impx.over": "δεν χωράνε {n}",
+      "impx.left": "Έμειναν έξω: {list}.", "impx.photos": "{n} φωτογραφίες και βίντεο", "impx.points": "{n} σημεία διαδρομής",
+      "impx.outside": "{n} γεγονότα εκτός ταξιδιού", "impx.cancelled": "{n} ακυρωμένα",
+      "impx.do": "Εισαγωγή", "impx.pick": "Διάλεξε τουλάχιστον ένα ταξίδι", "impx.nothing": "Όλα όσα έχει αυτό το αρχείο υπάρχουν ήδη",
+      "impx.done": "Εισαγωγή: ταξίδια {t}, καταχωρίσεις {e}, μέρες ημερολογίου {j}",
+      "impx.none": "Δεν βρέθηκε ταξίδι Polarsteps ή TripIt σε αυτό το αρχείο", "impx.big": "Αυτό το αρχείο είναι πολύ μεγάλο για εισαγωγή"
     }
   };
 
@@ -3697,6 +3715,7 @@
       openMenu(btn, [
         { label: t("menu.export"), fn: exportAll },
         { label: t("menu.import"), fn: importFlow },
+        window.OrosTravelImport ? { label: t("menu.importOther"), fn: importOther } : null,
         { label: t(prefs.rem ? "menu.remOff" : "menu.remOn"), fn: function () {
           prefs.rem = prefs.rem ? 0 : 1;
           savePrefsNow();
@@ -3834,6 +3853,128 @@
     });
     dlg.appendChild(form);
     show(dlg, null);
+  }
+
+  // ----- Trips from other apps (import.js: Polarsteps, TripIt) -----
+  // File → OrosTravelImport.read (pure) → preview with a checkbox per
+  // trip (what is new, what is already here, what is left out) → ONE
+  // commit (one write, one dirty mark) → a toast with Undo. Undo writes
+  // tombstones newer than what the import made, so other devices drop
+  // it too. Ids are stable ("imp-…"): a second import adds only what is
+  // missing, and nothing of an existing trip is changed.
+  var IMPX_SRC = { polarsteps: "Polarsteps", tripit: "TripIt" };
+  function importOther() {
+    var X = window.OrosTravelImport, K = window.OrosImportKit;
+    if (!X || !K) return;
+    var host = dialogHost();
+    var pick = host && typeof host.openFile === "function" ? host.openFile(X.ACCEPT) : localPickFile(X.ACCEPT);
+    Promise.resolve(pick).then(function (file) {
+      if (!file) return null;
+      return K.readFile(file, X.MAX_FILE).then(function (r) { return X.read(r.name, r.bytes); }).then(function (res) {
+        if (!res || !res.trips.length) { showToast(t("impx.none")); return; }
+        importOtherPreview(res);
+      });
+    }).catch(function (e) { showToast(t(e && e.message === "toobig" ? "impx.big" : "impx.none")); });
+  }
+  function importOtherPreview(res) {
+    commitNotes();
+    var plans = window.OrosTravelImport.plan(data, res);
+    var dlg = makeDialog("tr-impx", true);
+    dlg.appendChild(el("div", "dlg-title", t("impx.title", { s: IMPX_SRC[res.source] || "" })));
+    var form = el("form");
+    form.method = "dialog";
+    form.appendChild(el("p", "hint", t(res.source === "polarsteps" ? "impx.hintPs" : "impx.hintTi")));
+    var ul = el("ul", "imp-list"), rows = [];
+    plans.forEach(function (p) {
+      var tr = p.trip, li = el("li", "imp-row"), lab = el("label", "imp-lab"), cb = el("input");
+      cb.type = "checkbox";
+      cb.checked = !p.cur || p.add.length > 0 || p.jrnl.length > 0;
+      lab.appendChild(cb);
+      var tx = el("span", "er-txt");
+      tx.appendChild(el("span", "er-title", tr.name));
+      tx.appendChild(el("span", "er-sub", [fmtRange(tr), tr.dest].filter(Boolean).join(" · ")));
+      var bits = [t("impx.row", { n: p.add.length, j: p.jrnl.length })];
+      if (p.cur) bits.push(t("impx.have", { n: p.have }));
+      if (p.over) bits.push(t("impx.over", { n: p.over }));
+      tx.appendChild(el("span", "er-sub", bits.join(" · ")));
+      lab.appendChild(tx);
+      li.appendChild(lab);
+      ul.appendChild(li);
+      rows.push({ cb: cb, p: p });
+    });
+    form.appendChild(ul);
+    var sk = res.skip || {}, left = [];
+    if (sk.photos) left.push(t("impx.photos", { n: sk.photos }));
+    if (sk.points) left.push(t("impx.points", { n: sk.points }));
+    if (sk.outside) left.push(t("impx.outside", { n: sk.outside }));
+    if (sk.cancelled) left.push(t("impx.cancelled", { n: sk.cancelled }));
+    if (left.length) form.appendChild(el("p", "hint", t("impx.left", { list: left.join(", ") })));
+    var acts = actions(dlg, t("impx.do"));
+    if (plans.every(function (p) { return p.cur && !p.add.length && !p.jrnl.length; })) {
+      form.appendChild(el("p", "dlg-text", t("impx.nothing")));
+      acts.querySelector('button[type="submit"]').disabled = true;
+    }
+    form.appendChild(acts);
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var picked = rows.filter(function (x) { return x.cb.checked; }).map(function (x) { return x.p; });
+      if (!picked.length) { showToast(t("impx.pick")); return; }
+      dlg.close();
+      importOtherApply(picked);
+    });
+    dlg.appendChild(form);
+    show(dlg, null);
+  }
+  function importOtherApply(picked) {
+    var undo = { trips: [], ents: [] }, nT = 0, nE = 0, nJ = 0, last = null;
+    picked.forEach(function (p) {
+      var T = p.trip, tr = findTrip(T.id);
+      if (!tr) {
+        if (data.trips.length >= MAX_TRIPS) return;
+        tr = newTrip({ name: T.name, dest: T.dest, start: T.start, end: T.end, people: [], notes: T.notes,
+                       cur: "", bplan: {}, geo: null });
+        tr.id = T.id;
+        data.trips.push(tr);
+        undo.trips.push(tr.id);
+        nT++;
+      }
+      last = tr;
+      p.add.forEach(function (x) {
+        if (tr.plan.length >= MAX_PLAN || findIn(tr.plan, x.id)) return;
+        var vals = {};
+        PLAN_F.forEach(function (k) { vals[k] = x[k]; });
+        vals.pos = nextPos(tr, x.day);
+        vals.geo0 = null;
+        tr.plan.push(newEntry(vals, x.id));
+        undo.ents.push([tr.id, x.id]);
+        nE++;
+      });
+      p.jrnl.forEach(function (j) {
+        if (jrnlOf(tr, j.day)) return;
+        var x = newEnt(JRNL_F, NORM.jrnl, { day: j.day, text: j.text, trk: "" });
+        x.id = jrnlId(tr.id, j.day);
+        tr.jrnl.push(x);
+        undo.ents.push([tr.id, x.id]);
+        nJ++;
+      });
+    });
+    if (!nT && !nE && !nJ) { showToast(t("impx.nothing")); return; }
+    commit(true);
+    if (picked.length === 1 && last) openTrip(last.id); else render();
+    undoToast(t("impx.done", { t: nT, e: nE, j: nJ }), function () { importOtherUndo(undo); });
+  }
+  function importOtherUndo(u) {
+    var now = Date.now();
+    u.ents.forEach(function (pair) {
+      var tr = findTrip(pair[0]), x = tr ? (findIn(tr.plan, pair[1]) || findIn(tr.jrnl, pair[1])) : null;
+      if (x) data.tombs[pair[1]] = Math.max(now, life(x));
+    });
+    u.trips.forEach(function (id) {
+      var tr = findTrip(id);
+      if (tr) data.tombs[id] = Math.max(now, life(tr));
+    });
+    if (prefs.view === "trip" && u.trips.indexOf(prefs.trip) >= 0) { prefs.view = "list"; savePrefs(); }
+    commit();
   }
 
   // Mobile → share sheet; desktop → clipboard (the Contacts rule).
