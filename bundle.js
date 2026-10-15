@@ -68,7 +68,12 @@
     ".orosstudio": { app: "studio", mime: "application/x-oros-studio" },
     ".orosmontage": { app: "montage", mime: "application/x-oros-montage" },
     ".orosphoto": { app: "photolab", mime: "application/x-oros-photo" },
-    ".orospixel": { app: "pixel", mime: "application/x-oros-pixel" }
+    ".orospixel": { app: "pixel", mime: "application/x-oros-pixel" },
+    ".orostree": { app: "familytree", mime: "application/x-oros-tree" },
+    ".oroscert": { app: "certificates", mime: "application/x-oros-cert" },
+    ".oroslabels": { app: "labels", mime: "application/x-oros-labels" },
+    ".orostrip": { app: "travel", mime: "application/x-oros-trip" },
+    ".orosmap": { app: "maps", mime: "application/x-oros-map" }
   };
 
   var LIM = {

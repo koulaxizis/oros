@@ -79,6 +79,9 @@
         ],
         "application/geo+json": [
           ".geojson"
+        ],
+        "application/x-oros-map": [
+          ".orosmap"
         ]
       }
     }
@@ -100,7 +103,9 @@
             "application/vnd.google-earth.kml+xml",
             ".kml",
             "application/geo+json",
-            ".geojson"
+            ".geojson",
+            "application/x-oros-map",
+            ".orosmap"
           ]
         }
       ]
