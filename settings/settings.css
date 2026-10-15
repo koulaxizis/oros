@@ -225,6 +225,7 @@ button:focus-visible, select:focus-visible, input:focus-visible, .page-title:foc
 
 /* ---------- 5. Controls ---------- */
 .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.card h4.sub { margin: 14px 0 2px; font-size: 13px; font-weight: 700; color: var(--text-dim); text-transform: none; }
 .btn {
   min-height: 44px;
   padding: 0 16px;

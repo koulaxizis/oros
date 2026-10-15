@@ -157,7 +157,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 
 ### Script order (shell `index.html`, classic scripts)
 
-**Verified 2026-10-05 (`index.html`, `?v=0.39.05`):** `translations.js` → `sync.js` → `vault.js` → `pet.js` → `fs.js` → `dialogs.js` → `shell.js` → `notifications.js`. (0.49.00: `launcher.js` loads right before `shell.js`.) (2026-10-09: `wallpaper/art.js` sits before `shell.js`, and `search.js` right before `shell.js`.) Eight classic scripts at the end of `<body>`, all `?v=`-stamped, after two inline scripts (splash, update broker). `storage-adapters.js` is gone. `translations.js` stays synchronous at top level and contains ONLY shell-consumed keys (`app.<id>`, `category.*`). App strings live in each app's inline `STRINGS`.
+**Verified 2026-10-05 (`index.html`, `?v=0.39.05`):** `translations.js` → `sync.js` → `vault.js` → `pet.js` → `fs.js` → `dialogs.js` → `shell.js` → `notifications.js`. (0.49.00: `launcher.js` loads right before `shell.js`; 2.23.00: `seasonal.js` between them.) (2026-10-09: `wallpaper/art.js` sits before `shell.js`, and `search.js` right before `shell.js`.) Eight classic scripts at the end of `<body>`, all `?v=`-stamped, after two inline scripts (splash, update broker). `storage-adapters.js` is gone. `translations.js` stays synchronous at top level and contains ONLY shell-consumed keys (`app.<id>`, `category.*`). App strings live in each app's inline `STRINGS`.
 
 `vault.js` and `pet.js` load BEFORE `fs.js`, `dialogs.js` and `shell.js`, so neither may touch those modules at parse time (A24).
 
@@ -194,6 +194,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 | `__orosRadioHost` | radio.js, set on the shell window | **[log]** shell-hosted audio host; `api.getState()` feeds `radioTrayTick()` |
 | `orosPet` | pet.js | screen pet component |
 | `orosLauncher` | launcher.js | favourites: `attach(host)`, `refresh()`, `menuRow(btn, app)`, `renderSettings(menu)`, `prefs()` + `setPref(k, v)` (Dock settings for the Settings app), `model` (pure) |
+| `orosSeasonal` | seasonal.js | seasonal desktop decorations: `attach(host)`, `refresh()`, `snapshot()`, `set(k, v)`, `preview(id)`, `keep()`, `stop()`, `hideToday(on)`, `model` (pure) |
 | `orosSettings` | shell.js | `{ v:1, get(), set(name, value), act(name, arg), onChange(fn), open(section) }` for the Settings app; calls the same setters the menu used (no slice, no migration); snapshot `sync.msg` carries `state.syncMsg` or the SY-L2 `state.syncAutoErr` |
 | `__orosOpen<App>` | shell.js | deep-link bridges; full table under `shell.js` below (verified 2026-10-05) |
 
@@ -596,6 +597,15 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 - While the Dock is shown and not auto-hidden it sets `--tb-h` on `<html>`: the pet layer (`pet.css`, the old hook) and the desktop grid rise above it; with "over open apps", `html.ld-push` ends `#oros-running` above the Dock. Without "over open apps" a CSS sibling rule hides the Dock while an app runs.
 - Styles are injected once (`#ld-css`) and use only skin variables.
 - **Menu apps (1.3.0):** `menuHidden(id)`, `menuHiddenIds()`, `setMenuHidden(ids, hidden)`; host option `menuChanged()` (shell passes `renderMenu`) runs after a user change or a pull that changed the list. Schema MENU APPS v1 (Part IV). In `renderAppList` a hidden app is skipped unless a query is typed; category counts count shown apps; with apps hidden a row "n hidden apps · Choose apps" (`.menu-hidden-row`) opens Settings › Menu; with every app hidden the list says so.
+
+### `seasonal.js` (Seasonal desktop decorations, shell component) [2.23.00]
+
+- Chris 2026-10-15: the desktop decorates itself in season, ON by default, can be turned off and on, and any event can be tried early. Plan and waves: /mnt/project-files/seasonal/seasonal-plan.md (wave 1 = engine + Christmas, New Year, Halloween; wave 2 = Greek feasts incl. Orthodox-Easter-based ones; wave 3 = optional seasons, birthday, Western Easter).
+- Loads after `launcher.js`, before `shell.js`. `shell.js` calls `orosSeasonal.attach({ desktop, running, lang, changed })` after `applyLang()` at boot, NOT in single apps (`!SOLO`), and `refresh()` in `openApp` / `returnToDesktop`. Every call is guarded.
+- Layer `#ssn-layer` inside `#oros-desktop`, z-index -1 (over the wallpaper and `#wp-live`, under icons), `pointer-events:none`, `aria-hidden`. Still pieces are the file's own constant SVG (tree / Greek boat, string of lights, pomegranate, pumpkins, web + spider); moving ones are one canvas (snow, gold sparkles, fireworks 23:55-00:10 on 31 Dec or the first 25 s of a New Year preview, bats). Colours do not follow the theme (the wallpaper may be dark in the light theme); every piece has a rim or shadow.
+- Performance: ≤ 30 fps, rAF stops while an app runs or the tab is hidden; reduced motion, `motion: still`, a low battery (`getBattery`, < 20 % not charging) or a frame time that stays above 55 ms (particles halve, then still) leave only still pieces; `deviceMemory`/`hardwareConcurrency` ≤ 2 = half the particles; count scales with screen area and Amount; a 20 s tick follows the date.
+- Preview: Settings › "Try it now" → `act("seasonal.preview", id)` shows it and returns to the desktop; bar `#ssn-bar` (z 960) Keep it · Stop. Kept = device-local until the event's period ends; a preview not kept is memory only. Both win over the main switch.
+- Data: SEASONAL v1 (Part IV).
 
 ### Sticky Notes (`stickies/`, shell side `stickies/host.js`) [1.02.00]
 - `stickies/core.js` (UMD `StickiesCore`, pure) + `stickies/host.js` load in `index.html` right after `today/host.js` (so after `notifications.js`). Inert until `apps.json` lists `stickies` (`orosStickiesEnv.registered()`).
@@ -1526,6 +1536,16 @@ oros-television-data = { ver, favorites[], deleted{}, sources[]?, srcDel{}? }
 - Deep-link payload `{ channelId }`; notification deep link `television:channel:<id>`.
 
 ---
+
+**SEASONAL v1** (`seasonal.js`, slice `seasonal`, key `oros-seasonal`, since 2.23.00):
+
+```
+oros-seasonal = { ver:1, f:{ <field>: { v, t } } }   fields sorted
+fields: on (bool, default true) · motion auto|still · amount low|mid|high · xmas tree|boat · ev.<id> (bool, default per event)
+oros-seasonal-local (device, never synced) = { keep: { id, until: YYYY-MM-DD } | null, hide: YYYY-MM-DD | null }
+```
+
+- Per-field LWW: `t` moves only at the user's change, always forward (`max(now, t + 1)`); merge = higher `t`, tie → greater JSON; symmetric, idempotent, associative (fuzz in tests/seasonal.test.js). Unknown fields from a newer bundle (small primitives, `/^[a-z][a-z0-9]{0,15}(\.[a-z0-9]{1,24})?$/`, max 120) are kept. A fresh device stores nothing; nothing is written because of the date.
 
 **LAUNCHER v1** (`launcher.js`, slice `launcher`, key `oros-launcher-data`, since 0.49.00):
 
@@ -6705,3 +6725,10 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Calendar: built-in labels now show in Greek on event chips, in Statistics and in the event view (they used the stored English name).
 - Files: `notes/notes.css`, `notes/notes.js`, `calendar/calendar.js` (`lblName`).
   - Tests: full suite green. Found by the single-app store screenshots. Not tested: real phones (checked by the owner in the shell at phone width).
+
+### 2026-10-15 — Seasonal desktop decorations, wave 1 — 2.23.00
+- New shell component `seasonal.js`: in season the desktop gets snow, a string of lights and a tree (or the Greek Christmas boat) at Christmas (1-30 Dec), gold sparkles, a pomegranate and midnight fireworks at New Year (31 Dec - 2 Jan), pumpkins, bats and a spider's web at Halloween (25-31 Oct). ON by default, behind the icons, no clicks, our own drawings (no assets, nothing from the net, nothing for the credits).
+- Settings › Appearance › Seasonal decorations: main switch, Motion (moving / still only), Amount, Christmas tree or boat, Hide for today, and per event dates + switch + "Try it now" (bar on the desktop: Keep it until the period ends · Stop). Settings search finds it.
+- Sync: slice `seasonal` (SEASONAL v1, per-field LWW); preview, kept preview and hide-for-today stay on the device.
+- Files: `seasonal.js`, `index.html`, `sw.js` precache, `shell.js` (attach, refresh, Settings bridge `seasonal:*`, `seasonal.*` acts), `settings/settings.js`, `settings/core.js`, `settings/settings.css`, `settings/search.js`, help (appearance, settings), `tests/seasonal.test.js`, `tests/settings.test.js`.
+  - Tests: full suite green; real shell in Chromium at 1280 and 360 px, dark and light, reduced motion, fixed dates (24 Dec, 31 Dec 23:57, 28 Oct, today), preview → keep → reload → stop. Not tested: a real phone, Safari, the battery rule on a real device.

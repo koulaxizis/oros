@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "2.22.01";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "2.23.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -8276,6 +8276,17 @@
     } catch (e) { return null; }
   }
 
+  // Seasonal decorations (seasonal.js): only on the full desktop.
+  function settingsSeasonalL() {
+    var S = window.orosSeasonal;
+    return (S && !SOLO && typeof S.snapshot === "function" && typeof S.set === "function") ? S : null;
+  }
+  function settingsSeasonal() {
+    var S = settingsSeasonalL();
+    if (!S) return null;
+    try { return S.snapshot(); } catch (e) { return null; }
+  }
+
   // Menu apps (launcher.js 1.3.0): which apps the menu lists. Only
   // when the launcher offers it; an older bundle shows no section.
   function settingsMenuL() {
@@ -8362,6 +8373,7 @@
       }),
       install: !!state.deferredPrompt,
       dock: settingsDock(),
+      seasonal: settingsSeasonal(),
       menu: settingsMenuApps(),
       apps: state.apps.filter(function (a) { return a && a.type === "internal"; })
         .map(function (a) { return a.id; }),
@@ -8396,6 +8408,11 @@
     if (/^dock:(on|size|magnify|autohide|over|style|hover)$/.test(name)) {
       var L = settingsLauncher();
       if (L) { L.setPref(name.slice(5), value); settingsNotify(); }
+      return;
+    }
+    if (/^seasonal:/.test(name)) {
+      var SS = settingsSeasonalL();
+      if (SS) SS.set(name.slice(9), value);
       return;
     }
     if (/^menu:/.test(name)) {
@@ -8446,6 +8463,13 @@
       case "updates":         scCheckUpdates(); return;
       case "info":            showInfoModal(); return;
       case "openApp":         if (typeof arg === "string") openAppById(arg); return;
+      // Seasonal decorations: "Try it now" shows the desktop at once.
+      case "seasonal.preview":
+        if (settingsSeasonalL() && settingsSeasonalL().preview(String(arg || ""))) returnToDesktop();
+        return;
+      case "seasonal.keep":   if (settingsSeasonalL()) settingsSeasonalL().keep(); return;
+      case "seasonal.stop":   if (settingsSeasonalL()) settingsSeasonalL().stop(); return;
+      case "seasonal.hide":   if (settingsSeasonalL()) settingsSeasonalL().hideToday(!!arg); return;
       // Menu apps: show or hide every app at once (one change, one push).
       case "menu.showAll":    if (settingsMenuL()) settingsMenuL().setMenuHidden(settingsMenuIds(), false); return;
       case "menu.hideAll":    if (settingsMenuL()) settingsMenuL().setMenuHidden(settingsMenuIds(), true); return;
@@ -8644,6 +8668,7 @@
     var nk = "app." + app.id, tv = window.t(nk);
     document.title = ((tv === nk) ? app.name : tv) + " · orOS";   // #4: title follows the running app (translated)
     if (SOLO) { soloMenuClose(); soloPaint(); }
+    if (window.orosSeasonal) window.orosSeasonal.refresh();   // decorations pause under an app
   }
 
   function returnToDesktop() {
@@ -8659,6 +8684,7 @@
     mb.setAttribute("data-i18n-title", "bar.menu");
     mb.setAttribute("title", window.t("bar.menu"));   // paint NOW — don't wait for applyLang()
     document.title = "orOS";                 // v0.18.2: back to the bare OS title
+    if (window.orosSeasonal) window.orosSeasonal.refresh();   // decorations move again
     tourMaybe();   // a first-run tour put off by a launch-param app
   }
 
@@ -9795,6 +9821,17 @@
   applyWallpaper();
   applyTheme();
   applyLang();
+  // Seasonal decorations (seasonal.js, a shell component like pet.js):
+  // snow, lights, pumpkins… over the wallpaper in the right season.
+  // A single app has no desktop, so it gets none.
+  if (window.orosSeasonal && !SOLO) {
+    window.orosSeasonal.attach({
+      desktop: document.getElementById("oros-desktop"),
+      running: function () { return !!state.running; },
+      lang: function () { return state.lang; },
+      changed: function () { settingsNotify(); }
+    });
+  }
   loadApps();
   setupInstallFlow();
   initSyncIntegration();

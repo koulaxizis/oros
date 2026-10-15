@@ -289,6 +289,8 @@
     c3.appendChild(grid);
     host.appendChild(c3);
 
+    if (s.seasonal) secSeasonal(host, s.seasonal);
+
     if (s.dock) {
       var d = s.dock;
       var c5 = card(t("k.dock"), "dock");
@@ -327,6 +329,53 @@
         { scope: "pet", hint: t("a.pet.hint") }));
       host.appendChild(c4);
     }
+  }
+
+  // Seasonal decorations (seasonal.js through the shell): a main
+  // switch, motion, amount, the Christmas piece, and per event a
+  // switch and "Try it now" (which closes Settings to show it).
+  function segRow(label, seg, opts) {    // like the Dock's Size row
+    var r = row(label, null, opts);
+    r.appendChild(seg);
+    return r;
+  }
+  function secSeasonal(host, z) {
+    var c = card(t("z.title"), "seasonal");
+    c.appendChild(row(t("z.on"), switchBtn(z.on, "seasonal:on", function (v) { set("seasonal:on", v); }, t("z.on")),
+      { hint: t("z.hint") }));
+    if (z.showing && z.showing.mode !== "auto") {
+      var msg = z.showing.mode === "kept" ? t("z.kept", { name: z.showing.name, until: z.showing.until })
+                                          : t("z.previewing", { name: z.showing.name });
+      var pr = row(msg, actions(
+        z.showing.mode === "preview" ? button(t("z.keep"), "seasonal.keep", function () { act("seasonal.keep"); }, "primary") : null,
+        button(t("z.stop"), "seasonal.stop", function () { act("seasonal.stop"); })), { stack: true });
+      c.appendChild(pr);
+    }
+    if (z.on) {
+      c.appendChild(segRow(t("z.motion"), segmented([
+        { value: "auto", label: t("z.motion.auto") }, { value: "still", label: t("z.motion.still") }
+      ], z.motion, "seasonal:motion", function (v) { set("seasonal:motion", v); }, t("z.motion")),
+        { hint: z.reduced ? t("z.reduced") : (z.lowBattery ? t("z.battery") : null) }));
+      c.appendChild(segRow(t("z.amount"), segmented(["low", "mid", "high"].map(function (k) {
+        return { value: k, label: t("z.amount." + k) };
+      }), z.amount, "seasonal:amount", function (v) { set("seasonal:amount", v); }, t("z.amount"))));
+      c.appendChild(segRow(t("z.xmas"), segmented([
+        { value: "tree", label: t("z.xmas.tree") }, { value: "boat", label: t("z.xmas.boat") }
+      ], z.xmas, "seasonal:xmas", function (v) { set("seasonal:xmas", v); }, t("z.xmas"))));
+      if (z.todayEvent) {
+        c.appendChild(row(z.hidden ? t("z.hidden") : t("z.today", { name: z.todayEvent.name }), actions(
+          button(z.hidden ? t("z.showToday") : t("z.hideToday"), "seasonal.hide",
+            function () { act("seasonal.hide", !z.hidden); }))));
+      }
+    }
+    c.appendChild(el("h4", "sub", t("z.events")));
+    z.events.forEach(function (ev) {
+      var r = row(ev.name, switchBtn(ev.on, "seasonal:ev." + ev.id, function (v) { set("seasonal:ev." + ev.id, v); }, ev.name),
+        { hint: ev.from + " – " + ev.to + (ev.now ? " · " + t("z.now") : "") });
+      r.appendChild(actions(button(t("z.try"), "seasonal.preview:" + ev.id, function () { act("seasonal.preview", ev.id); })));
+      c.appendChild(r);
+    });
+    host.appendChild(c);
   }
 
   // ---------- 4b. Section: Menu (which apps the menu lists) ----------

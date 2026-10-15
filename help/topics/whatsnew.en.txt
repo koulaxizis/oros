@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.23.00
+- Seasonal decorations: in season your desktop dresses up on its own, with snow, lights and a tree (or the Greek Christmas boat) at Christmas, sparkles and midnight fireworks at New Year, pumpkins and bats at Halloween. They are on from the start; in Settings › Appearance you can turn them off, keep them still, or try any of them early with `Try it now`.
+
 ## Version 2.22.00
 - Contacts can find photos online: only a hashed e-mail is sent to Gravatar or Libravatar, you tick which pictures to keep, and Undo puts things back.
 - Notes on phones: the page list opens as a drawer over the editor. Calendar shows its built-in labels in Greek everywhere.
