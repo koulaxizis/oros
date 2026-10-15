@@ -138,7 +138,7 @@
         
       </section>
       <section class="card">
-        <div class="ch"><h2>Android apps (APK)</h2><span class="badge soon">Coming soon</span></div>
+        <div class="ch"><h2>Android apps (APK)</h2><span class="badge ok">Available</span></div>
         <p>orOS for Android with extras: contacts and events in the phone's own apps, Health Connect, home-screen widgets, plus single apps. Until they are on Google Play, and for anyone who prefers not to use a store, download the APK:</p>
         <div class="apps">
         <a class="app" href="https://github.com/koulaxizis/oros/releases/download/android-apks/oros.apk"><img src="/icon.svg" alt="" width="36" height="36"><span>orOS (the whole system)</span></a>
@@ -149,7 +149,7 @@
         <a class="app" href="https://github.com/koulaxizis/oros/releases/download/android-apks/oros-budget.apk"><img src="/icons/solo/budget.svg" alt="" width="36" height="36"><span>Budget</span></a>
         <a class="app" href="https://github.com/koulaxizis/oros/releases/download/android-apks/oros-gamecenter.apk"><img src="/icons/solo/gamecenter.svg" alt="" width="36" height="36"><span>Games</span></a>
         </div>
-        <p class="dim">Install: open the .apk on the phone and allow installing from this source. An APK from this page and the Play Store version use different signing keys, so one doesn't update the other: to switch, uninstall first; sync brings your data back. The links work once the first build is published.</p>
+        <p class="dim">Install: open the .apk on the phone and allow installing from this source. An APK from this page and the Play Store version use different signing keys, so one doesn't update the other: to switch, uninstall first; sync brings your data back.</p>
         
       </section>
       <section class="card">
@@ -240,7 +240,7 @@
         
       </section>
       <section class="card">
-        <div class="ch"><h2>Εφαρμογές για Android (APK)</h2><span class="badge soon">Σύντομα</span></div>
+        <div class="ch"><h2>Εφαρμογές για Android (APK)</h2><span class="badge ok">Διαθέσιμο</span></div>
         <p>Το orOS για Android με επιπλέον δυνατότητες: επαφές και γεγονότα στις εφαρμογές του κινητού, Health Connect, widgets στην αρχική οθόνη, και μεμονωμένες εφαρμογές. Μέχρι να μπουν στο Google Play, και για όποιον δεν θέλει να χρησιμοποιεί store, κατέβασε το APK:</p>
         <div class="apps">
         <a class="app" href="https://github.com/koulaxizis/oros/releases/download/android-apks/oros.apk"><img src="/icon.svg" alt="" width="36" height="36"><span>orOS (όλο το σύστημα)</span></a>
@@ -251,7 +251,7 @@
         <a class="app" href="https://github.com/koulaxizis/oros/releases/download/android-apks/oros-budget.apk"><img src="/icons/solo/budget.svg" alt="" width="36" height="36"><span>Έσοδα &amp; Έξοδα</span></a>
         <a class="app" href="https://github.com/koulaxizis/oros/releases/download/android-apks/oros-gamecenter.apk"><img src="/icons/solo/gamecenter.svg" alt="" width="36" height="36"><span>Παιχνίδια</span></a>
         </div>
-        <p class="dim">Εγκατάσταση: άνοιξε το .apk στο κινητό και επίτρεψε την εγκατάσταση από αυτή την πηγή. Ένα APK από αυτή τη σελίδα και η έκδοση του Play Store χρησιμοποιούν διαφορετικά κλειδιά υπογραφής, οπότε το ένα δεν ενημερώνει το άλλο: για να αλλάξεις, απεγκατάστησε πρώτα· ο συγχρονισμός φέρνει πίσω τα δεδομένα σου. Οι σύνδεσμοι δουλεύουν μόλις δημοσιευτεί η πρώτη έκδοση.</p>
+        <p class="dim">Εγκατάσταση: άνοιξε το .apk στο κινητό και επίτρεψε την εγκατάσταση από αυτή την πηγή. Ένα APK από αυτή τη σελίδα και η έκδοση του Play Store χρησιμοποιούν διαφορετικά κλειδιά υπογραφής, οπότε το ένα δεν ενημερώνει το άλλο: για να αλλάξεις, απεγκατάστησε πρώτα· ο συγχρονισμός φέρνει πίσω τα δεδομένα σου.</p>
         
       </section>
       <section class="card">
@@ -268,9 +268,28 @@
     <p class="foot">Δωρεάν για πάντα, άδεια MIT. Στήριξε το orOS στο <a href="https://ko-fi.com/koulaxizis">Ko-fi</a>. <a href="/privacy.html">Πολιτική απορρήτου</a> · <a href="https://github.com/koulaxizis/oros">Πηγαίος κώδικας</a><br>Email υποστήριξης: <a href="mailto:koulaxizis@glarolykoi.net">koulaxizis@glarolykoi.net</a></p>
   </article>
 </main>
+<script src="/solo.js"></script>
 <script>
 (function () {
   "use strict";
+  // Single-app tiles: on Android an https link to this site opens in the
+  // installed orOS app (or the orOS Android app), where nothing can be
+  // installed. solo.js's installUrl() gives the Chrome intent instead
+  // (the same address Settings › Single apps › Install uses).
+  var S = window.orosSolo, inApp = false;
+  try {
+    inApp = /^android-app:\/\/online\.useoros\.twa/.test(document.referrer) || sessionStorage.getItem("oros-dl-twa") === "1";
+    if (inApp) sessionStorage.setItem("oros-dl-twa", "1");
+  } catch (e) {}
+  if (S && S.installUrl) {
+    [].forEach.call(document.querySelectorAll("a.app"), function (a) {
+      var m = /^\/([a-z0-9-]+)\/solo\.html/.exec(a.getAttribute("href"));
+      var u = m && S.installUrl(m[1], navigator.userAgent, location.origin, inApp);
+      if (!u || u === a.getAttribute("href")) return;
+      a.setAttribute("href", u);
+      a.removeAttribute("target");
+    });
+  }
   var TITLE = { en: "Get orOS", el: "Απόκτησε το orOS" };
   function set(l) {
     if (l !== "el") l = "en";

@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.25.02
+- Installing a single app from a link: if the link opens inside an installed app, where nothing can be installed, the page now says so and, on Android, offers Open in Chrome.
+
 ## Version 2.25.01
 - The privacy policy now has a link in the orOS Info window and in Help › Privacy, and it also covers orOS Portable, the bootable orOS USB and orders from the orOS shop on Ko-fi.
 
