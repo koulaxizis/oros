@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.30.01
+- Android app: APK downloads and Get orOS now open in your default browser, in a normal tab, where the download finishes. Install the new APK once for this.
+
 ## Version 2.30.00
 - Notes can now also import from Evernote, Google Keep, Simplenote and Joplin, with a preview and Undo.
 
