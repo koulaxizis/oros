@@ -80,7 +80,7 @@
   var SEMI = 180 / 2147483648;        // semicircles → degrees
   var ACCEPT = ".kmz,.kml,.gpx,.geojson,.json,.csv,.tcx,.fit,.zip," +
     "application/vnd.google-earth.kmz,application/vnd.google-earth.kml+xml,application/gpx+xml," +
-    "application/geo+json,application/json,text/csv,application/zip";
+    "application/geo+json,application/json,text/csv,application/zip,.orosmap,application/x-oros-map";
 
   // ---------- small helpers ----------
   function pad(n) { return (n < 10 ? "0" : "") + n; }

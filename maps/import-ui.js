@@ -4,7 +4,8 @@
 // orOS) come here: picker → read → import.js (pure) → a preview →
 // Import → the writes → a toast with Undo.
 //   - GPX, KML and GeoJSON files go back to their old path (the
-//     caller's plain handler); everything else is read by import.js.
+//     caller's plain handler); an orOS bundle (.orosmap) goes to
+//     package-ui.js; everything else is read by import.js.
 //   - Preview: the source, what goes where (My tracks and its folder,
 //     Saved places and a group per list), how many are there already,
 //     the dates, what is skipped (no coordinates) and the limits.
@@ -175,10 +176,13 @@
   // Returns a Promise (for "Open with" and the tests).
   function files(list, plainFn) {
     list = Array.prototype.slice.call(list || []).filter(Boolean).slice(0, 200);
-    var plain = [], results = [], err = "";
+    var plain = [], results = [], bundles = [], err = "";
     return list.reduce(function (p, f) {
       return p.then(function () {
         return K.readFile(f, IMP.MAX_FILE).then(function (r) {
+          // an orOS bundle (.orosmap): package-ui.js opens it
+          var PK = window.__orosMapsPackage;
+          if (PK && PK.isBundle(r.name, r.bytes)) { bundles.push(r.bytes); return; }
           var kind = IMP.kind(r.name, r.bytes);
           if (kind !== "new") { plain.push(f); return; }
           return IMP.parse(r).then(function (res) {
@@ -188,6 +192,7 @@
       });
     }, Promise.resolve()).then(function () {
       var chain = plain.length && typeof plainFn === "function" ? Promise.resolve(plainFn(plain)) : Promise.resolve();
+      bundles.forEach(function (b) { chain = chain.then(function () { return window.__orosMapsPackage.openBytes(b); }); });
       return chain.then(function () {
         var res = IMP.merge(results);
         if (!res) { if (err) toast(t(err)); return null; }

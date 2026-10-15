@@ -435,6 +435,39 @@
     if (n) saveData();
   }
   function pinRoom() { return FC.LIM.pins - Object.keys(data.pins).length; }
+  // An .orosmap (package-ui.js): its groups always come in as NEW
+  // groups (fresh ids; a name the user has already gets " (2)"…), with
+  // their colour, and the given places (the ones the file added) get
+  // their pin. list: [{ name, color, pids }]. Returns what undoPins
+  // needs; a group that does not fit leaves its places ungrouped.
+  function importGroups(list) {
+    var undo = { groups: [], pins: {} }, used = {};
+    Object.keys(data.groups).forEach(function (k) { used[data.groups[k].color] = 1; });
+    (list || []).forEach(function (x) {
+      var base = FC.cleanName(x && x.name);
+      if (!base || !x.pids || !x.pids.length || Object.keys(data.groups).length >= FC.LIM.groups) return;
+      var name = base, n = 2;
+      while (FC.findByName(data, name, LANG) && n < 1000) {
+        var tail = " (" + n++ + ")";
+        name = base.slice(0, FC.LIM.name - tail.length).trim() + tail;
+      }
+      var gid = FC.newId();
+      while (data.groups[gid] || data.tombs[gid]) gid = FC.newId();
+      var color = FC.COLORS.indexOf(x.color) >= 0 ? x.color
+        : (FC.COLORS.filter(function (c) { return !used[c]; })[0] || FC.COLORS[undo.groups.length % FC.COLORS.length]);
+      used[color] = 1;
+      data.groups[gid] = stamp({ name: name, color: color, m: 0 });
+      undo.groups.push(gid);
+      x.pids.forEach(function (pid) {
+        if (!FC.PID_RE.test(pid) || undo.pins[pid] !== undefined) return;
+        var cur = data.pins[pid];
+        undo.pins[pid] = cur ? cur.g : null;
+        data.pins[pid] = stamp({ g: gid, m: cur ? cur.m : 0 });
+      });
+    });
+    if (undo.groups.length) saveData();
+    return undo;
+  }
 
   var fileIn = el("input", "");
   fileIn.type = "file";
@@ -543,7 +576,7 @@
     header: header, groupButton: groupButton, pick: pick,
     // hooks for tracks.js and the tests
     importWpts: importWpts, manage: manage, editGroup: editGroup,
-    importPins: importPins, undoPins: undoPins, pinRoom: pinRoom, groupRoom: function () { return FC.LIM.groups - Object.keys(data.groups).length; },
+    importPins: importPins, importGroups: importGroups, undoPins: undoPins, pinRoom: pinRoom, groupRoom: function () { return FC.LIM.groups - Object.keys(data.groups).length; },
     assign: assign, makeGroup: makeGroup, deleteGroup: deleteGroup, exportGroup: exportGroup,
     data: function () { return FC.normalize(data); }, prefs: function () { return JSON.parse(JSON.stringify(prefs)); }
   };
