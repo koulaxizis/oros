@@ -6929,3 +6929,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Notes: a ⋮ "Page actions" button at the top right of the open page opens the page menu (new sub-page, rename, move, delete…), which before was reachable only by right-click or long-press in the tree. On phones the menu scrolls inside itself, so its last items (Delete) stay reachable.
 - Files: `notes/notes.js` (`#btn-page-menu`, `page.actions`), `notes/notes.css` (`.node-menu` max-height + scroll), Notes help.
   - Tests: full suite green. Not tested: real phones.
+
+### 2026-10-15 — Notes: import from Obsidian, Standard Notes and Markdown folders (#392) — 2.27.00
+- Notes › Import notes… (footer upload button or notebook menu): pick an Obsidian vault or any folder of Markdown/text files (folder picker where the browser has it), single .md/.txt files, a .zip, or a decrypted Standard Notes backup (.json). Folders become parent pages, front-matter tags and `#tags` become labels, wiki links are kept, Standard Notes tags/pinned/archived carry over and Super notes are converted to Markdown. Importing the same source again adds only what is new; Undo removes the import. Only text is imported, rendered escaped as always.
+- Files: new `notes/import.js` (`OrosNotesImport`: collect, parse, plan; precached), `notes/notes.js` (`#nt-imp` dialog, `importApply`, Undo), `notes/index.html` (loads `atelier/zip.js` + `import.js`), `notes/notes.css`, help, Bible NOTES-IMP.
+  - Tests: new `tests/notes-import.test.js`; full suite green. Not tested: real Obsidian and Standard Notes exports from Chris's devices, and browsers without folder picking (file picker fallback).
