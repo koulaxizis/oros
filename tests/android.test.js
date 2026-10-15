@@ -56,6 +56,10 @@ test("android: single-app flavours (wave 7) keep orOS untouched and drop the pho
   const gradle = fs.readFileSync(path.join(ROOT, "android", "app", "build.gradle"), "utf8");
   assert.match(gradle, /oros \{\s*dimension 'app'\s*\}/);   // orOS keeps defaultConfig's package
   const links = JSON.parse(fs.readFileSync(path.join(ROOT, ".well-known", "assetlinks.json"), "utf8"));
+  // FDROID-1: the start address carries the versionCode build.gradle derives from APP_VERSION
+  const v = /APP_VERSION\s*=\s*"(\d+)\.(\d+)\.(\d+)"/.exec(fs.readFileSync(path.join(ROOT, "shell.js"), "utf8"));
+  const code = Number(v[1]) * 1000000 + Number(v[2]) * 1000 + Number(v[3]);
+  assert.ok(build(web)["res/values/web_manifest.xml"].includes(`<string name="launchUrl">https://useoros.online/?source=pwa&amp;apk=${code}</string>`));
   for (const [id, pkg] of Object.entries(apps)) {
     assert.ok(S.has(id), id);
     assert.ok(links.some((s) => s.target.package_name === pkg && s.relation.includes("delegate_permission/common.use_as_origin")), pkg);
@@ -69,7 +73,7 @@ test("android: single-app flavours (wave 7) keep orOS untouched and drop the pho
     (web.file_handlers || []).forEach((h, i) => assert.ok(x.includes(`android:name="FileHandlingActivity${i}" tools:node="remove"`)));
     assert.match(x, /<activity android:name="\.LauncherActivity"\n\s+tools:node="replace"/);
     assert.ok(x.includes(`android:pathPrefix="/${id}/"`), id + " links");
-    assert.ok(o["res/values/web_manifest.xml"].includes(`<string name="launchUrl">https://useoros.online/${id}/solo.html</string>`));
+    assert.ok(o["res/values/web_manifest.xml"].includes(`<string name="launchUrl">https://useoros.online/${id}/solo.html?apk=${code}</string>`));
     assert.equal((o["res/xml/shortcuts.xml"].match(/targetPackage="([^"]+)"/g) || []).every((t) => t.includes(pkg)), true);
     assert.ok(!/online\.useoros\.twa"/.test(o["res/xml/shortcuts.xml"]));
     assert.ok(fs.existsSync(path.join(ROOT, "icons", "solo", id + "-192.png")));

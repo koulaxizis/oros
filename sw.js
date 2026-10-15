@@ -1716,6 +1716,7 @@ var PRECACHE_URLS = [
   "montage/reframe.js",
   "mood/vocab.js",
   "notes/md.js",
+  "notes/import.js",
   "passwords/kdbx.js",
   "passwords/pmapp.js",
   "passwords/pmcore.js",

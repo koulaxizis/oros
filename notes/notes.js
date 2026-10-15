@@ -457,6 +457,7 @@
       "preview.empty": "Nothing here yet. Switch to Edit to write.",
       "daily.btn": "Today",
       "daily.title": "Today's note",
+      "page.actions": "Page actions",
       "daily.parent": "Daily",
       "daily.tpl": "# {{date}}\n\n## Tasks\n- [ ] \n\n## Notes\n",
       "tpl.parent": "Templates",
@@ -492,6 +493,7 @@
       "preview.empty": "Δεν υπάρχει τίποτα ακόμη. Πάτα Επεξεργασία για να γράψεις.",
       "daily.btn": "Σήμερα",
       "daily.title": "Η σημερινή σελίδα",
+      "page.actions": "Ενέργειες σελίδας",
       "daily.parent": "Ημερήσιες",
       "daily.tpl": "# {{date}}\n\n## Εργασίες\n- [ ] \n\n## Σημειώσεις\n",
       "tpl.parent": "Πρότυπα",
@@ -1084,6 +1086,8 @@
     text.disabled  = !page;
     var shareBtn = document.getElementById("btn-share-page");
     if (shareBtn) shareBtn.hidden = !page || !shareApi();
+    var pageMenuBtn = document.getElementById("btn-page-menu");
+    if (pageMenuBtn) pageMenuBtn.hidden = !page;
     title.value = page ? page.title : "";
     text.value  = page ? page.text : "";
     renderChips(page);
@@ -1361,6 +1365,298 @@
     toast(text);
   }
   var PLAT = window.OrosNotesPlatforms || null;
+
+  // ---------- Import notes from other apps (notes/import.js) ----------
+  // Obsidian vault (folder or .zip), any folder / .zip of .md / .txt,
+  // a Standard Notes backup. import.js reads and plans; this is the
+  // one write: the notebook (once), its new labels, the new pages,
+  // the replaced texts. Undo takes all of it out again.
+  var IMP = window.OrosNotesImport || null;
+  STRINGS.en["imp.btn"] = "Import notes…";
+  STRINGS.el["imp.btn"] = "Εισαγωγή σημειώσεων…";
+  STRINGS.en["imp.title"] = "Import notes";
+  STRINGS.el["imp.title"] = "Εισαγωγή σημειώσεων";
+  STRINGS.en["imp.intro"] = "Bring notes from Obsidian (the vault folder or a .zip of it), Standard Notes (a backup file, exported decrypted) or any folder or .zip of Markdown / text files (Bear, Logseq, Joplin, Notion, Typora…). Folders become pages with sub-pages, tags become labels, [[links]] keep working. They go into a new notebook; nothing leaves this device.";
+  STRINGS.el["imp.intro"] = "Φέρε σημειώσεις από το Obsidian (τον φάκελο του vault ή ένα .zip του), το Standard Notes (αρχείο backup, εξαγωγή χωρίς κρυπτογράφηση) ή οποιονδήποτε φάκελο ή .zip με αρχεία Markdown / κειμένου (Bear, Logseq, Joplin, Notion, Typora…). Οι φάκελοι γίνονται σελίδες με υποσελίδες, τα tags γίνονται ετικέτες, τα [[links]] συνεχίζουν να δουλεύουν. Μπαίνουν σε νέο σημειωματάριο· τίποτα δεν φεύγει από τη συσκευή.";
+  STRINGS.en["imp.folder"] = "Choose folder…";
+  STRINGS.el["imp.folder"] = "Επιλογή φακέλου…";
+  STRINGS.en["imp.files"] = "Choose files…";
+  STRINGS.el["imp.files"] = "Επιλογή αρχείων…";
+  STRINGS.en["imp.reading"] = "Reading {n} files…";
+  STRINGS.el["imp.reading"] = "Διαβάζω {n} αρχεία…";
+  STRINGS.en["imp.src.obsidian"] = "Obsidian vault";
+  STRINGS.el["imp.src.obsidian"] = "Vault του Obsidian";
+  STRINGS.en["imp.src.standardnotes"] = "Standard Notes backup";
+  STRINGS.el["imp.src.standardnotes"] = "Backup του Standard Notes";
+  STRINGS.en["imp.src.markdown"] = "Markdown / text files";
+  STRINGS.el["imp.src.markdown"] = "Αρχεία Markdown / κειμένου";
+  STRINGS.en["imp.plan"] = "{src}: {a} new pages, {u} to update, {s} already here.";
+  STRINGS.el["imp.plan"] = "{src}: {a} νέες σελίδες, {u} για ενημέρωση, {s} υπάρχουν ήδη.";
+  STRINGS.en["imp.nb"] = "Into the new notebook “{name}”.";
+  STRINGS.el["imp.nb"] = "Στο νέο σημειωματάριο «{name}».";
+  STRINGS.en["imp.nbOld"] = "Into the notebook of the earlier import.";
+  STRINGS.el["imp.nbOld"] = "Στο σημειωματάριο της προηγούμενης εισαγωγής.";
+  STRINGS.en["imp.labels"] = "{n} new labels from the tags.";
+  STRINGS.el["imp.labels"] = "{n} νέες ετικέτες από τα tags.";
+  STRINGS.en["imp.upd"] = "Replace the text of pages imported before, where it changed in the source";
+  STRINGS.el["imp.upd"] = "Αντικατάσταση του κειμένου όσων σελίδων ήρθαν παλιότερα, όπου άλλαξε στην πηγή";
+  STRINGS.en["imp.updHint"] = "Off: what you changed here stays as it is.";
+  STRINGS.el["imp.updHint"] = "Κλειστό: ό,τι άλλαξες εδώ μένει όπως είναι.";
+  STRINGS.en["imp.att"] = "{n} pictures and other files stay out: only the text comes in.";
+  STRINGS.el["imp.att"] = "{n} εικόνες και άλλα αρχεία μένουν έξω: έρχεται μόνο το κείμενο.";
+  STRINGS.en["imp.trashed"] = "{n} notes in the trash are left out.";
+  STRINGS.el["imp.trashed"] = "{n} σημειώσεις του κάδου μένουν έξω.";
+  STRINGS.en["imp.encrypted"] = "{n} notes are encrypted. In Standard Notes use Preferences › Backups › Download backup and choose Decrypted.";
+  STRINGS.el["imp.encrypted"] = "{n} σημειώσεις είναι κρυπτογραφημένες. Στο Standard Notes: Preferences › Backups › Download backup, με επιλογή Decrypted.";
+  STRINGS.en["imp.cut"] = "{n} very long pages were cut to 1 MB of text.";
+  STRINGS.el["imp.cut"] = "{n} πολύ μεγάλες σελίδες κόπηκαν στο 1 MB κειμένου.";
+  STRINGS.en["imp.capped"] = "Only the first 5,000 pages come in; {n} more stay out.";
+  STRINGS.el["imp.capped"] = "Μπαίνουν μόνο οι πρώτες 5.000 σελίδες· άλλες {n} μένουν έξω.";
+  STRINGS.en["imp.gone"] = "{n} were deleted here before: they don't come back.";
+  STRINGS.el["imp.gone"] = "{n} διαγράφηκαν εδώ παλιότερα: δεν επανέρχονται.";
+  STRINGS.en["imp.tooBig"] = "{n} files were too big to read (over 200 MB in total) or could not be read.";
+  STRINGS.el["imp.tooBig"] = "{n} αρχεία ήταν πολύ μεγάλα (πάνω από 200 MB συνολικά) ή δεν διαβάστηκαν.";
+  STRINGS.en["imp.heavy"] = "This is a lot of text ({mb} MB): syncing it to your other devices takes a while.";
+  STRINGS.el["imp.heavy"] = "Είναι πολύ κείμενο ({mb} MB): ο συγχρονισμός στις άλλες συσκευές θα πάρει λίγο χρόνο.";
+  STRINGS.en["imp.none"] = "No notes found here. Choose an Obsidian vault folder, a .zip, a folder of .md / .txt files or a Standard Notes backup.";
+  STRINGS.el["imp.none"] = "Δεν βρέθηκαν σημειώσεις. Διάλεξε τον φάκελο ενός vault του Obsidian, ένα .zip, φάκελο με αρχεία .md / .txt ή backup του Standard Notes.";
+  STRINGS.en["imp.nothing"] = "Nothing new: Notes already has all of it.";
+  STRINGS.el["imp.nothing"] = "Τίποτα νέο: οι Σημειώσεις τα έχουν ήδη όλα.";
+  STRINGS.en["imp.go"] = "Import";
+  STRINGS.el["imp.go"] = "Εισαγωγή";
+  STRINGS.en["imp.close"] = "Close";
+  STRINGS.el["imp.close"] = "Κλείσιμο";
+  STRINGS.en["imp.done"] = "Notes imported: {a} new, {u} updated";
+  STRINGS.el["imp.done"] = "Εισαγωγή σημειώσεων: {a} νέες, {u} ενημερώθηκαν";
+  STRINGS.en["imp.undo"] = "Undo";
+  STRINGS.el["imp.undo"] = "Αναίρεση";
+  STRINGS.en["imp.undone"] = "Import undone";
+  STRINGS.el["imp.undone"] = "Η εισαγωγή αναιρέθηκε";
+  STRINGS.en["imp.archive"] = "Archive";
+  STRINGS.el["imp.archive"] = "Αρχείο";
+  STRINGS.en["imp.notebook"] = "Imported notes";
+  STRINGS.el["imp.notebook"] = "Εισαγόμενες σημειώσεις";
+  STRINGS.en["imp.err"] = "These files could not be read.";
+  STRINGS.el["imp.err"] = "Δεν ήταν δυνατή η ανάγνωση αυτών των αρχείων.";
+
+  function tf(key, params) {
+    return t(key).replace(/\{(\w+)\}/g, function (m, n) { return params && params[n] !== undefined ? String(params[n]) : m; });
+  }
+
+  function importApply(pl) {
+    var now = Date.now(), back = { pages: [], upd: [], nb: null, labels: [] };
+    if (pl.notebook && !state.notebooks.some(function (n) { return n.id === pl.notebook.id; })) {
+      var maxPos = 0;
+      state.notebooks.forEach(function (n) { if (n.pos > maxPos) maxPos = n.pos; });
+      state.notebooks.push({ id: pl.notebook.id, name: pl.notebook.name, mtime: now, pos: maxPos + 1 });
+      delete state.tombs["nb:" + pl.notebook.id];
+      back.nb = pl.notebook.id;
+    }
+    if (!state.notebooks.some(function (n) { return n.id === pl.nb; })) return false;
+    var lPos = 0, lCount = 0;
+    state.labels.forEach(function (l) { if (l.pos > lPos) lPos = l.pos; if (l.nb === pl.nb) lCount++; });
+    pl.labels.forEach(function (l, i) {
+      if (labelById(l.id)) return;
+      state.labels.push({ id: l.id, nb: pl.nb, name: l.name, color: LABEL_COLORS[(lCount + i) % LABEL_COLORS.length],
+                          mtime: now, pos: lPos + 1 + i });
+      delete state.tombs["lbl:" + l.id];
+      back.labels.push(l.id);
+    });
+    var added = {};
+    pl.pages.add.forEach(function (x) {
+      if (pageById(x.id)) return;
+      state.pages.push({ id: x.id, nb: pl.nb, parent: x.parent, title: x.title, text: x.text,
+                         mtime: now, pos: x.pos, labels: x.labels.filter(function (id) { return !!labelById(id); }),
+                         pinned: !!x.pinned, ct: now, st: now });
+      delete state.tombs[x.id];
+      added[x.id] = 1;
+      back.pages.push(x.id);
+    });
+    // parents can come after their children in the list (archive)
+    state.pages.forEach(function (p) {
+      if (added[p.id] && p.parent && !pageById(p.parent)) p.parent = null;
+    });
+    pl.pages.upd.forEach(function (x) {
+      var pg = pageById(x.id);
+      if (!pg) return;
+      back.upd.push({ id: x.id, title: pg.title, text: pg.text });
+      pg.title = x.title;
+      pg.text = x.text;
+      touchContent(pg);
+    });
+    prefs.currentNb = pl.nb;
+    savePrefs();
+    saveNow();
+    markSyncDirty();
+    renderAll();
+    var n = IMP.count(pl);
+    notifyUndoText(tf("imp.done", { a: n.add, u: n.upd }), t("imp.undo"), function () { importUndo(back); });
+    return true;
+  }
+  function importUndo(back) {
+    var now = Date.now(), gone = {};
+    back.pages.forEach(function (id) { gone[id] = 1; state.tombs[id] = now; });
+    state.pages = state.pages.filter(function (p) { return !gone[p.id]; });
+    state.pages.forEach(function (p) { if (p.parent && gone[p.parent]) { p.parent = null; touchStruct(p); } });
+    back.upd.forEach(function (u) {
+      var pg = pageById(u.id);
+      if (!pg) return;
+      pg.title = u.title;
+      pg.text = u.text;
+      touchContent(pg);
+    });
+    var lgone = {};
+    back.labels.forEach(function (id) {
+      if (state.pages.some(function (p) { return (p.labels || []).indexOf(id) >= 0; })) return;
+      lgone[id] = 1;
+      state.tombs["lbl:" + id] = now;
+    });
+    state.labels = state.labels.filter(function (l) { return !lgone[l.id]; });
+    if (back.nb && state.notebooks.length > 1 && !state.pages.some(function (p) { return p.nb === back.nb; })) {
+      state.notebooks = state.notebooks.filter(function (n) { return n.id !== back.nb; });
+      state.tombs["nb:" + back.nb] = now;
+      if (prefs.currentNb === back.nb) prefs.currentNb = state.notebooks[0].id;
+    }
+    if (prefs.current && gone[prefs.current]) prefs.current = null;
+    savePrefs();
+    saveNow();
+    markSyncDirty();
+    renderAll();
+    notifyTransient(t("imp.undone"));
+  }
+  // Undo notice: the shell's notifications, else a local bar with a button.
+  function notifyUndoText(text, label, fn) {
+    try {
+      var N = (window.parent && window.parent.orosNotifs) || window.orosNotifs || null;
+      if (N && typeof N.transient === "function") {
+        N.transient({ ns: "notes", title: text, body: "", action: { label: label, fn: fn } });
+        return;
+      }
+    } catch (e) { /* cross-origin guard */ }
+    uiDlg(text, null, [{ label: label, fn: fn }, { label: t("dlg.ok"), primary: true }], null);
+  }
+
+  function openImport() {
+    if (!IMP) return;
+    closeMenus();
+    var stale = document.getElementById("nt-imp");
+    if (stale) stale.remove();
+    function el(tag, cls, text) {
+      var n = document.createElement(tag);
+      if (cls) n.className = cls;
+      if (text !== undefined) n.textContent = text;
+      return n;
+    }
+    function button(text, cls, fn) {
+      var b = el("button", cls || "", text);
+      b.type = "button";
+      b.addEventListener("click", fn);
+      return b;
+    }
+    var dlg = el("dialog");
+    dlg.id = "nt-imp";
+    var form = el("form");
+    form.method = "dialog";
+    dlg.appendChild(form);
+    form.appendChild(el("h3", "", t("imp.title")));
+    form.appendChild(el("p", "hint", t("imp.intro")));
+    var pick = el("div", "imp-pick");
+    function picker(dir) {
+      var inp = el("input");
+      inp.type = "file";
+      inp.multiple = true;
+      inp.hidden = true;
+      if (dir) { inp.setAttribute("webkitdirectory", ""); inp.setAttribute("directory", ""); }
+      else inp.accept = ".md,.markdown,.txt,.json,.zip,text/markdown,text/plain,application/json,application/zip";
+      inp.addEventListener("change", function () { read(inp.files); inp.value = ""; });
+      form.appendChild(inp);
+      return inp;
+    }
+    var dirInp = picker(true), fileInp = picker(false);
+    if ("webkitdirectory" in dirInp) pick.appendChild(button(t("imp.folder"), "", function () { dirInp.click(); }));
+    pick.appendChild(button(t("imp.files"), "", function () { fileInp.click(); }));
+    form.appendChild(pick);
+    var updW = el("label", "radio"), updBox = el("input");
+    updBox.type = "checkbox";
+    updW.appendChild(updBox);
+    updW.appendChild(el("span", "", t("imp.upd")));
+    var updHint = el("p", "hint", t("imp.updHint"));
+    updW.hidden = updHint.hidden = true;
+    form.appendChild(updW);
+    form.appendChild(updHint);
+    var msg = el("div", "plat-msg");
+    msg.setAttribute("aria-live", "polite");
+    form.appendChild(msg);
+    var menu = el("menu");
+    var go = button(t("imp.go"), "primary", apply);
+    go.disabled = true;
+    menu.appendChild(button(t("imp.close"), "", function () { dlg.close(); }));
+    menu.appendChild(el("span", "spacer"));
+    menu.appendChild(go);
+    form.appendChild(menu);
+    var parsed = null, plan = null, busy = false;
+    updBox.addEventListener("change", function () { if (parsed && !busy) compute(); });
+
+    function line(text, strong) { msg.appendChild(el("p", strong ? "" : "hint", text)); }
+    function read(list) {
+      var files = Array.prototype.slice.call(list || []);
+      if (!files.length || busy) return;
+      busy = true;
+      go.disabled = true;
+      parsed = plan = null;
+      msg.textContent = tf("imp.reading", { n: files.length });
+      // skip what can never be a note before reading it (pictures, PDFs…)
+      var want = /\.(md|markdown|mdown|mkd|txt|text|json|zip)$/i;
+      Promise.all(files.map(function (f) {
+        var p = f.webkitRelativePath || f.name;
+        if (!want.test(f.name) || /(^|\/)\./.test(p) && !/(^|\/)\.obsidian(\/|$)/.test(p)) return { path: p, bytes: new Uint8Array(0) };
+        return f.arrayBuffer().then(function (b) { return { path: p, bytes: new Uint8Array(b) }; });
+      })).then(function (inputs) {
+        return IMP.collect(inputs, window.AtelierZip || null);
+      }).then(function (col) {
+        busy = false;
+        parsed = IMP.parse(col, { untitled: t("page.untitled"), archiveTitle: t("imp.archive") });
+        compute();
+      }, function () {
+        busy = false;
+        msg.textContent = t("imp.err");
+      });
+    }
+    function compute() {
+      msg.textContent = "";
+      if (!parsed.notes.length) { line(t("imp.none"), true); updW.hidden = updHint.hidden = true; go.disabled = true; return; }
+      plan = IMP.plan(state, parsed, { upd: updBox.checked, imported: t("imp.notebook") });
+      var n = IMP.count(plan), sk = parsed.skipped;
+      var have = plan.same + n.upd;
+      updW.hidden = updHint.hidden = !have;
+      line(tf("imp.plan", { src: t("imp.src." + parsed.source), a: n.add, u: n.upd, s: plan.same }), true);
+      if (!n.add && !n.upd) line(t("imp.nothing"));
+      else if (plan.notebook) line(tf("imp.nb", { name: plan.notebook.name }));
+      else line(t("imp.nbOld"));
+      if (n.labels) line(tf("imp.labels", { n: n.labels }));
+      if (sk.attachments) line(tf("imp.att", { n: sk.attachments }));
+      if (sk.trashed) line(tf("imp.trashed", { n: sk.trashed }));
+      if (sk.encrypted) line(tf("imp.encrypted", { n: sk.encrypted }));
+      if (sk.cut) line(tf("imp.cut", { n: sk.cut }));
+      if (plan.capped) line(tf("imp.capped", { n: plan.capped }));
+      if (plan.gone) line(tf("imp.gone", { n: plan.gone }));
+      if ((sk.tooBig || 0) + (sk.unreadable || 0)) line(tf("imp.tooBig", { n: (sk.tooBig || 0) + (sk.unreadable || 0) }));
+      var chars = 0;
+      plan.pages.add.forEach(function (p) { chars += p.text.length; });
+      plan.pages.upd.forEach(function (p) { chars += p.text.length; });
+      if (chars > 5 * 1024 * 1024) line(tf("imp.heavy", { mb: Math.round(chars / 1048576) }));
+      go.disabled = !n.add && !n.upd;
+    }
+    function apply() {
+      if (busy || !plan) return;
+      var n = IMP.count(plan);
+      if (!n.add && !n.upd) return;
+      if (importApply(plan)) dlg.close();
+    }
+    document.body.appendChild(dlg);
+    dlg.addEventListener("close", function () { dlg.remove(); });
+    dlg.showModal();
+  }
 
   function renameNotebook(id, newName) {
     var nb = state.notebooks.find(function (n) { return n.id === id; });
@@ -3319,6 +3615,7 @@
             deleteNotebook(nb.id);
           }]
         ];
+        if (IMP) actions.push([t("imp.btn"), openImport]);
         
         actions.forEach(function (pair) {
           if (pair[1] === null) {
@@ -3463,6 +3760,19 @@
       });
       newBtn.parentNode.insertBefore(exBtn, newBtn.nextSibling);
 
+      // Import notes from other apps, right after export
+      if (IMP) {
+        var imBtn = document.createElement("button");
+        imBtn.id = "btn-import-notes";
+        imBtn.type = "button";
+        imBtn.className = "icon-btn";
+        imBtn.title = t("imp.btn");
+        imBtn.setAttribute("aria-label", t("imp.btn"));
+        imBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>';
+        imBtn.addEventListener("click", function (e) { e.stopPropagation(); openImport(); });
+        newBtn.parentNode.insertBefore(imBtn, exBtn.nextSibling);
+      }
+
       // New page from template (Markdown wave), right after +
       var tpBtn = document.createElement("button");
       tpBtn.id = "btn-template";
@@ -3564,6 +3874,29 @@
       todayBtn.addEventListener("click", function (e) { e.stopPropagation(); openToday(); });
       var shareRef = document.getElementById("btn-share-page");
       header.insertBefore(todayBtn, shareRef || null);
+    }
+    // Page actions (⋮) in the editor header: the tree menu (rename, move,
+    // delete…) is otherwise reachable only by right-click or long-press in
+    // the drawer, which phones hide and draggable rows can swallow.
+    if (header && !document.getElementById("btn-page-menu")) {
+      var pmBtn = document.createElement("button");
+      pmBtn.id = "btn-page-menu";
+      pmBtn.type = "button";
+      pmBtn.className = "icon-btn";
+      pmBtn.title = t("page.actions");
+      pmBtn.setAttribute("aria-label", t("page.actions"));
+      pmBtn.setAttribute("aria-haspopup", "menu");
+      pmBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>';
+      pmBtn.hidden = !pageById(prefs.current);
+      pmBtn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        var page = pageById(prefs.current);
+        if (!page) return;
+        if (document.getElementById("node-menu")) { closeMenus(); return; }
+        var r = pmBtn.getBoundingClientRect();
+        openNodeMenu(page, r.right, r.bottom);
+      });
+      header.appendChild(pmBtn);
     }
     buildToolbar();
     wirePreview();

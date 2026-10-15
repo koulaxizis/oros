@@ -859,7 +859,7 @@
       // browser's own install cannot (orOS claims every page of the site)
       if (S.apkUrl && /Android/i.test(navigator.userAgent)) {
         var k = el("a", "btn", t("so.apk"));
-        k.href = S.apkUrl(id);
+        k.href = S.apkHref ? S.apkHref(id, navigator.userAgent, !inBrowserTab()) : S.apkUrl(id);
         k.title = t("so.apk.title");
         k.rel = "noopener";
         b.parentNode.insertBefore(k, b.nextSibling);
@@ -867,6 +867,28 @@
       c1.appendChild(r);
     });
     host.appendChild(c1);
+    // FDROID-1: updates for the APKs through the orOS F-Droid repository
+    if (S.repoLink) {
+      var cu = card(t("so.upd"));
+      cu.appendChild(el("p", "hint", t("so.upd.hint")));
+      var page = el("a", "btn", t("so.upd.page"));
+      page.href = S.repoPage;
+      page.target = "_blank";
+      page.rel = "noopener";
+      if (/Android/i.test(navigator.userAgent)) {
+        var fd = el("a", "btn", t("so.upd.fdroid"));
+        fd.href = S.repoLink();
+        fd.title = t("so.upd.fdroid.title");
+        var ob = el("a", "btn", t("so.upd.obtainium"));
+        ob.href = S.obtainiumLink("oros");
+        ob.title = t("so.upd.obtainium.title");
+        var r2 = row(t("so.upd.add"), fd);
+        fd.parentNode.appendChild(ob);
+        cu.appendChild(r2);
+      }
+      cu.appendChild(row(t("so.upd.addr"), page, { hint: S.repoPage }));
+      host.appendChild(cu);
+    }
     var c2 = card(t("so.how"));
     ["desktop", "android", "iphone"].forEach(function (k) {
       c2.appendChild(el("p", "hint", t("so.how." + k)));
