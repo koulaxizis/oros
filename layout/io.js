@@ -7,7 +7,7 @@
 //     one JSON file; opened as a NEW document, every image checked
 //     against its hash and decoded as an image before it is stored.
 //   - PNG / JPG of one page (72, 150 or 300 dpi, at most 16 MP).
-//   - Scribus .sla import (layout/sla.js) into a new document.
+//   - Scribus .sla / .sla.gz import (layout/sla.js) into a new document.
 //   - Place image, import plain text.
 // All file I/O goes through orosDialog (R33).
 // ============================================================
@@ -205,13 +205,13 @@
   // Open a file: a .oroslayout package, a Scribus .sla, an InDesign
   // .idml or a PDF (Affinity and others).
   function importPackage() {
-    pickFile(".oroslayout,.sla,.idml,.pdf,application/json,.json,application/xml,text/xml,application/vnd.adobe.indesign-idml-package,application/pdf").then(openFile, function () { LY.toast(t("imp.bad")); });
+    pickFile(".oroslayout,.sla,.gz,.idml,.pdf,application/json,.json,application/xml,text/xml,application/vnd.adobe.indesign-idml-package,application/pdf").then(openFile, function () { LY.toast(t("imp.bad")); });
   }
   // Also the way in for a file from the system's "Open with" (shell fileopen.js).
   function openFile(f) {
     return Promise.resolve(f).then(function (f) {
       if (!f) return;
-      if (/\.sla$/i.test(f.name || "")) return importSla(f);
+      if (/\.sla(\.gz)?$/i.test(f.name || "")) return importSla(f);
       if (/\.idml$/i.test(f.name || "")) return importIdml(f);
       if (/\.pdf$/i.test(f.name || "") || f.type === "application/pdf") return importPdf(f);
       if (f.size > PKG_MAX) { LY.toast(t("imp.bad")); return; }
@@ -250,9 +250,14 @@
   function importSla(f) {
     if (f.size > FOREIGN_MAX || !window.LY_SLA) { LY.toast(t("sla.bad")); return; }
     LY.toast(t("sla.working"));
-    return f.text().then(function (txt) {
+    // a compressed .sla.gz is unpacked first (gzip magic, not the name)
+    return f.arrayBuffer().then(function (buf) {
+      var u = new Uint8Array(buf, 0, Math.min(2, buf.byteLength));
+      return u[0] === 0x1f && u[1] === 0x8b ? window.LY_SLA.gunzip(buf) : new TextDecoder().decode(buf);
+    }).then(function (txt) {
       var res = null;
-      try { res = window.LY_SLA.convert(txt, { now: LY.now(), name: baseName(f, /\.sla$/i) }); } catch (e) { res = null; }
+      if (typeof txt !== "string") { LY.toast(t("sla.bad")); return; }
+      try { res = window.LY_SLA.convert(txt, { now: LY.now(), name: baseName(f, /\.sla(\.gz)?$/i) }); } catch (e) { res = null; }
       if (!res) { LY.toast(t("sla.bad")); return; }
       return addForeign(res, window.LY_SLA.inlineImage, t("sla.done", { p: res.stats.pages, n: res.stats.items }));
     }).then(null, function () { LY.toast(t("sla.bad")); });
