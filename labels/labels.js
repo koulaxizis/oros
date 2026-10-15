@@ -15,7 +15,8 @@
 //   - device-local (R10): oros-labels-prefs (mode, sound, tape,
 //     width, ends, margin, wheel set, copies, recent, side panel)
 // Deep link: __orosOpenAt("labels", { text }) starts a new label with
-// that text (Storage's "Label" button).
+// that text (Storage's "Label" button); { openFile: { token } } opens
+// an .oroslabels file from the system's "Open with".
 // Sections:
 //   1. Constants, i18n, helpers
 //   2. Storage + prefs
@@ -26,6 +27,7 @@
 //   7. Options (tape, width, ends, margin)
 //   8. My labels + recent
 //   9. PNG, copy, print
+//   9b. The .oroslabels file (save, open, unzipped folder)
 //  10. Toasts
 //  11. Keyboard (Contract Β) + panel
 //  12. Sync slice + palette + deep link
@@ -98,7 +100,14 @@
       "toast.skipped": "Left out what the tape cannot print",
       "toast.mineFull": "You have {n} labels, the most there can be",
       "toast.saveFail": "Could not save: storage is full", "toast.file": "Saved",
-      "toast.dup": "Copy made", "toast.from": "Label ready: {text}"
+      "toast.dup": "Copy made", "toast.from": "Label ready: {text}",
+      "btn.oros": "orOS file (.oroslabels)", "sec.file": "orOS file",
+      "file.open": "Open an orOS file…", "file.folder": "Unzipped orOS folder…",
+      "file.hint": "Saves the labels you ticked, or the label on the tape. Opening a file adds its labels to My labels.",
+      "toast.opened": "{n} labels added", "toast.opened1": "Label added",
+      "toast.openedSome": "{n} labels added; the rest did not fit ({max} at most)",
+      "toast.bad": "This is not a Label Maker file", "toast.newer": "This file was made by a newer orOS. Update orOS to open it.",
+      "csv.text": "Text"
     },
     el: {
       "app.name": "Ετικετογράφος",
@@ -134,7 +143,14 @@
       "toast.skipped": "Έμειναν έξω όσα δεν τυπώνει η ταινία",
       "toast.mineFull": "Έχεις {n} ετικέτες, όσες χωράνε",
       "toast.saveFail": "Δεν αποθηκεύτηκε: ο χώρος είναι γεμάτος", "toast.file": "Αποθηκεύτηκε",
-      "toast.dup": "Έγινε αντίγραφο", "toast.from": "Έτοιμη ετικέτα: {text}"
+      "toast.dup": "Έγινε αντίγραφο", "toast.from": "Έτοιμη ετικέτα: {text}",
+      "btn.oros": "Αρχείο orOS (.oroslabels)", "sec.file": "Αρχείο orOS",
+      "file.open": "Άνοιγμα αρχείου orOS…", "file.folder": "Αποσυμπιεσμένος φάκελος orOS…",
+      "file.hint": "Αποθηκεύει τις ετικέτες που τσέκαρες ή την ετικέτα της ταινίας. Όταν ανοίγεις ένα αρχείο, οι ετικέτες του προστίθενται στις ετικέτες σου.",
+      "toast.opened": "Προστέθηκαν {n} ετικέτες", "toast.opened1": "Προστέθηκε η ετικέτα",
+      "toast.openedSome": "Προστέθηκαν {n} ετικέτες· οι υπόλοιπες δεν χωρούσαν (έως {max})",
+      "toast.bad": "Αυτό δεν είναι αρχείο του Ετικετογράφου", "toast.newer": "Το αρχείο φτιάχτηκε από νεότερο orOS. Ενημέρωσε το orOS για να το ανοίξεις.",
+      "csv.text": "Κείμενο"
     }
   };
 
@@ -904,6 +920,120 @@
     setTimeout(function () { try { window.print(); } catch (e) {} }, 60);
   }
 
+  // ---------- 9b. The .oroslabels file (bundle.js) ----------
+  // Saves what Print would print (the ticked labels, or the label on
+  // the tape) with the copies count. Opening one always adds NEW saved
+  // labels (fresh ids, cleaned as typed text is), ticks them for the
+  // print sheet and opens the first; nothing is overwritten.
+  var FILE_MAX = 8 * 1024 * 1024;        // labels are text: a real file is a few KB
+  var THUMB_MAX = 512, THUMB_ROWS = 8;
+
+  // preview/thumbnail.png: the first labels one under the other.
+  function thumbBlob(list, cb) {
+    try {
+      var shown = list.slice(0, THUMB_ROWS), gap = 2, maxLen = 0, totalH = 0;
+      shown.forEach(function (l) { var g = C.geometry(l); maxLen = Math.max(maxLen, g.len); totalH += g.w + gap; });
+      totalH += gap;
+      var k = Math.min(THUMB_MAX / (maxLen + 2 * gap), THUMB_MAX / totalH, 12);
+      var cv = document.createElement("canvas");
+      cv.width = Math.max(1, Math.ceil((maxLen + 2 * gap) * k));
+      cv.height = Math.max(1, Math.ceil(totalH * k));
+      var ctx = cv.getContext("2d"), y = gap;
+      shown.forEach(function (l) {
+        var g = C.geometry(l);
+        ctx.save();
+        ctx.translate((cv.width - g.len * k) / 2, y * k);
+        drawTape(ctx, l, k, null);
+        ctx.restore();
+        y += g.w + gap;
+      });
+      if (!cv.toBlob) { cb(null); return; }
+      cv.toBlob(function (b) {
+        if (!b) { cb(null); return; }
+        b.arrayBuffer().then(function (ab) { cb(new Uint8Array(ab)); }, function () { cb(null); });
+      }, "image/png");
+    } catch (e) { cb(null); }
+  }
+  function csvName(kind, v) {
+    if (kind === "tape") return t("tape." + v);
+    if (kind === "width") return t("width." + v);
+    if (kind === "cut") return t("cut." + v);
+    return t("margin." + v);
+  }
+  function saveOros() {
+    var B = window.OrosBundle, list = printList();
+    if (!list.length) { showToast(t("toast.empty")); return; }
+    if (!B) { showToast(t("toast.saveFail")); return; }
+    flush();
+    var opts = C.labelsBundle(list, { copies: prefs.copies, lang: LANG, date: new Date(), name: csvName,
+      csvHead: [t("csv.text"), t("sec.tape"), t("sec.width"), t("sec.cut"), t("sec.margin")] });
+    if (!opts) { showToast(t("toast.empty")); return; }
+    thumbBlob(opts.content.labels, function (png) {
+      if (png) opts.thumbnail = png;
+      B.write(opts).then(function (bytes) {
+        var blob = new Blob([bytes], { type: C.LABELS_MIME }), name = C.sheetFileName(list[0].text), dlg = dialogHost();
+        if (dlg && typeof dlg.saveFile === "function") {
+          dlg.saveFile({ blob: blob, filename: name, mime: C.LABELS_MIME,
+                         types: [{ description: t("btn.oros"), accept: { "application/x-oros-labels": [".oroslabels"] } }] })
+            .then(function (r) { if (r && r.ok) showToast(t("toast.file")); });
+          return;                     // cancel (ok=false) = silent exit
+        }
+        var url = URL.createObjectURL(blob), a = document.createElement("a");
+        a.href = url; a.download = name;
+        document.body.appendChild(a); a.click();
+        setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 1000);
+        showToast(t("toast.file"));
+      }, function () { showToast(t("toast.saveFail")); });
+    });
+  }
+  function fromBundle(r) {
+    var room = C.MAX_LABELS - data.labels.length;
+    if (room <= 0) { showToast(t("toast.mineFull", { n: C.MAX_LABELS })); return; }
+    var got = C.labelsFromBundle(r && r.content, Math.random, Date.now(), room);
+    if (!got || !got.labels.length) { showToast(t("toast.bad")); return; }
+    var total = r.content.labels.length;
+    data = C.mergeLabels(data, { labels: got.labels, tombs: {} });
+    save();
+    prefs.copies = got.copies; savePrefs();
+    picked = {};
+    if (got.labels.length > 1) got.labels.forEach(function (l) { picked[l.id] = 1; });
+    openLabel(C.findLabel(data, got.labels[0].id), true);
+    var n = got.labels.length;
+    showToast(n < total ? t("toast.openedSome", { n: n, max: C.MAX_LABELS })
+                        : (n === 1 ? t("toast.opened1") : t("toast.opened", { n: n })));
+  }
+  function bundleFail(e) {
+    try { console.error("[orOS] labels: .oroslabels not read:", e && (e.code || e.message)); } catch (er) {}
+    showToast(e && e.code === "newer" ? t("toast.newer") : t("toast.bad"));
+  }
+  // A picked or handed-over file: only an .oroslabels bundle, sniffed
+  // from its first bytes ("PK…mimetype"), never trusted by its name.
+  function readFile(f) {
+    var B = window.OrosBundle;
+    if (!f || !B || !f.slice) return;
+    f.slice(0, 128).arrayBuffer().then(function (head) {
+      if (B.sniff(new Uint8Array(head)) === null || f.size > FILE_MAX) { showToast(t("toast.bad")); return; }
+      return f.arrayBuffer()
+        .then(function (ab) { return B.read(new Uint8Array(ab), { mime: C.LABELS_MIME }); })
+        .then(fromBundle, bundleFail);
+    }, function () { showToast(t("toast.bad")); });
+  }
+  function openOros() {
+    var inp = $("file-input");
+    inp.value = "";
+    inp.onchange = function () { readFile(inp.files && inp.files[0]); };
+    inp.click();
+  }
+  // An unzipped .oroslabels folder (maybe changed by hand)
+  function importFolder() {
+    var B = window.OrosBundle;
+    if (!B) return;
+    B.pickFolder().then(function (files) {
+      if (!files) return;
+      return B.readFolder(files, { mime: C.LABELS_MIME }).then(fromBundle, bundleFail);
+    });
+  }
+
   // ---------- 10. Toasts ----------
   function showToast(text) {
     try {
@@ -1058,8 +1188,19 @@
     renderHead(); renderMine();
   }
 
-  // Deep link (Storage's "Label" button): { text } starts a new label.
+  // Deep links: { text } (Storage's "Label" button) starts a new label;
+  // { openFile: { token } } is an .oroslabels from the system's "Open
+  // with" (shell fileopen.js), taken once and read as "Open" reads one.
   function openTarget(target) {
+    if (target && typeof target === "object" && target.openFile && typeof target.openFile.token === "string") {
+      var f = null;
+      try {
+        var p = window.parent;
+        if (p && p !== window && typeof p.__orosTakeFile === "function") f = p.__orosTakeFile(target.openFile.token);
+      } catch (e) { f = null; }
+      if (f) readFile(f);
+      return;
+    }
     if (!target || typeof target.text !== "string") return;
     var text = C.cleanText(target.text);
     startFrom({ tape: prefs.tape, width: prefs.width, cut: prefs.cut, margin: prefs.margin }, text);
@@ -1100,6 +1241,9 @@
     $("new-btn").insertAdjacentHTML("afterbegin", ICON.plus);
     $("dial").setAttribute("aria-label", t("wheel.dial"));
     $("copy-btn").hidden = !canCopyImage();
+    var hasBundle = !!window.OrosBundle;     // ../bundle.js (the .oroslabels file)
+    $("oros-btn").hidden = !hasBundle;
+    $("file-sec").hidden = !hasBundle;
   }
 
   function wire() {
@@ -1122,6 +1266,9 @@
     $("copy-btn").addEventListener("click", copyImage);
     $("print-btn").addEventListener("click", printSheet);
     $("print2-btn").addEventListener("click", printSheet);
+    $("oros-btn").addEventListener("click", saveOros);
+    $("file-open").addEventListener("click", openOros);
+    $("file-folder").addEventListener("click", importFolder);
     $("copies-in").addEventListener("input", onCopies);
     $("copies-in").addEventListener("change", renderPrintNote);
     var dial = $("dial");

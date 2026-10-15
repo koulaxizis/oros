@@ -85,6 +85,7 @@
           <button type="button" id="png-btn" class="chip" data-i18n="btn.png">Download PNG</button>
           <button type="button" id="copy-btn" class="chip" data-i18n="btn.copy" hidden>Copy image</button>
           <button type="button" id="print-btn" class="chip" data-i18n="btn.print">Print</button>
+          <button type="button" id="oros-btn" class="chip" data-i18n="btn.oros">orOS file (.oroslabels)</button>
         </div>
       </div>
     </section>
@@ -117,6 +118,16 @@
         <p id="print-note" class="hint small"></p>
         <button type="button" id="print2-btn" class="gen-btn ghost" data-i18n="btn.printSheet">Print A4 sheet</button>
       </div>
+
+      <div class="sec" id="file-sec">
+        <h2 data-i18n="sec.file">orOS file</h2>
+        <p class="hint small" data-i18n="file.hint"></p>
+        <div class="chips">
+          <button type="button" id="file-open" class="chip" data-i18n="file.open">Open an orOS file…</button>
+          <button type="button" id="file-folder" class="chip" data-i18n="file.folder">Unzipped orOS folder…</button>
+        </div>
+        <input type="file" id="file-input" accept=".oroslabels,application/x-oros-labels" hidden>
+      </div>
     </aside>
   </main>
 
@@ -126,8 +137,9 @@
   <div id="live" class="sr-only" aria-live="polite"></div>
   <div id="toast" role="status"></div>
 
-  <script src="core.js?v=2.46.00"></script>
-  <script src="labels.js?v=2.46.00"></script>
+  <script src="core.js?v=2.47.00"></script>
+  <script src="../bundle.js?v=2.47.00"></script>
+  <script src="labels.js?v=2.47.00"></script>
 
 </body>
 </html>
