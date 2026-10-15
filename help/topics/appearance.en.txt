@@ -26,7 +26,20 @@ The first tile, `Mine`, is a wallpaper you make yourself.
 Each device draws your wallpaper to fit its own screen, so it stays sharp on a phone and on a big monitor.
 
 ## Seasonal decorations
-At some times of the year your desktop dresses up on its own: snow, a string of lights and a tree at Christmas, gold sparkles and a pomegranate at New Year (with fireworks from 23:55 to 00:10 on New Year's Eve), pumpkins, bats and a spider's web at Halloween. The decorations sit behind your desktop icons, never take a click and stop moving while an app is open.
+At some times of the year your desktop dresses up on its own: snow, a string of lights and a tree at Christmas, gold sparkles and a pomegranate at New Year (with fireworks from 23:55 to 00:10 on New Year's Eve), pumpkins, bats and a spider's web at Halloween.
+
+The Greek holidays have their own:
+- `Epiphany` (5-6 January): a gold cross over the sea.
+- `Valentine's Day` (13-14 February): hearts floating up.
+- `Carnival` (from Tsiknopempti to the Sunday before Clean Monday): confetti, coloured flags and a mask.
+- `Clean Monday`: kites in the sky.
+- `25 March` and `28 October` (and the day before each): blue and white flags and the Greek flag.
+- `Easter` (Holy Thursday to Easter Monday): red eggs, an Easter candle, flowers and butterflies.
+- `May Day` (30 April - 1 May): a flower wreath and falling petals.
+
+Carnival, Clean Monday and Easter move every year; orOS works out their dates from the Orthodox Easter. When two events fall on the same day, one wins: 28 October over Halloween, Valentine's Day over Carnival, Easter over May Day.
+
+The decorations sit behind your desktop icons, never take a click and stop moving while an app is open.
 
 They are on from the start. In `Settings`, under `Appearance` › `Seasonal decorations`:
 - `Decorate the desktop in season` turns them all off or on again.
@@ -34,7 +47,7 @@ They are on from the start. In `Settings`, under `Appearance` › `Seasonal deco
 - `Amount`: `A little`, `Normal` or `Lots` of snowflakes and sparkles.
 - `At Christmas`: a `Tree` or the Greek Christmas `Boat`.
 - `Hide for today` appears while an event is on; `Show again` brings it back.
-- Under `Events`, each event shows its dates and has its own switch.
+- Under `Events`, each event shows its next dates and has its own switch. The list starts with what is on now or comes next.
 
 ### Try one before its time
 Press `Try it now` next to an event. Settings closes and the decoration appears on your desktop with a small bar:

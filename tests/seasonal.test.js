@@ -40,17 +40,42 @@ test("nextWindow: the current period, else the next one", () => {
   assert.deepEqual(S.nextWindow(ev("newyear"), "2027-01-05"), ["2027-12-31", "2028-01-02"]);
 });
 
-test("every day of a year has at most one event per priority, none overlap badly", () => {
-  for (let d = "2026-01-01"; d <= "2026-12-31"; d = S.addDays(d, 1)) {
-    const list = S.activeOn(d);
-    assert.ok(list.length <= 1, d + " " + list.map((e) => e.id));
+test("Greek feasts: known dates of the movable ones", () => {
+  const w = (id, d) => S.windowAt(ev(id), d);
+  assert.deepEqual(w("carnival", "2026-02-12"), ["2026-02-12", "2026-02-22"]);   // Tsiknopempti 2026
+  assert.deepEqual(w("cleanmon", "2026-02-23"), ["2026-02-23", "2026-02-23"]);
+  assert.deepEqual(w("cleanmon", "2027-03-15"), ["2027-03-15", "2027-03-15"]);
+  assert.deepEqual(w("easter", "2026-04-09"), ["2026-04-09", "2026-04-13"]);     // Holy Thursday to Easter Monday
+  assert.deepEqual(w("easter", "2027-05-03"), ["2027-04-29", "2027-05-03"]);
+  assert.equal(w("easter", "2026-04-14"), null);
+  assert.deepEqual(w("mar25", "2026-03-24"), ["2026-03-24", "2026-03-25"]);
+  assert.deepEqual(w("oct28", "2026-10-28"), ["2026-10-27", "2026-10-28"]);
+});
+
+test("overlaps: the higher priority wins, every event shows on some day", () => {
+  const top = (d) => (S.activeOn(d)[0] || {}).id;
+  assert.equal(top("2026-10-27"), "oct28");        // over Halloween
+  assert.equal(top("2026-10-29"), "halloween");
+  assert.equal(top("2026-02-14"), "valentine");    // over Carnival
+  assert.equal(top("2026-02-15"), "carnival");
+  assert.equal(top("2027-05-01"), "easter");       // over May Day
+  assert.equal(top("2026-05-01"), "mayday");
+  for (let y = 2026; y <= 2040; y++) {
+    const seen = new Set();
+    for (let d = y + "-01-01"; d <= y + "-12-31"; d = S.addDays(d, 1)) {
+      const t = top(d);
+      if (t) seen.add(t);
+      const list = S.activeOn(d);
+      for (let i = 1; i < list.length; i++) assert.ok(list[i - 1].prio > list[i].prio, d + " tie");
+    }
+    S.EVENTS.forEach((e) => assert.ok(seen.has(e.id) || (e.id === "mayday"), y + " " + e.id));
   }
 });
 
 test("pick: defaults ON, master switch, event switch, hide for today", () => {
   const empty = S.normalize(null);
   assert.equal(S.pick(empty, local, "2026-10-15", null), null);
-  assert.deepEqual(S.pick(empty, local, "2026-10-28", null), { id: "halloween", mode: "auto" });
+  assert.deepEqual(S.pick(empty, local, "2026-10-29", null), { id: "halloween", mode: "auto" });
   assert.deepEqual(S.pick(empty, local, "2026-12-24", null), { id: "xmas", mode: "auto" });
   assert.deepEqual(S.pick(empty, local, "2027-01-01", null), { id: "newyear", mode: "auto" });
   const off = S.setField(empty, "on", false, 10);

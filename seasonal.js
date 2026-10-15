@@ -1,5 +1,5 @@
 // ============================================================
-// orOS — seasonal.js (seasonal desktop decorations, v1.0.0)
+// orOS — seasonal.js (seasonal desktop decorations, v1.1.0)
 // ------------------------------------------------------------
 // A shell component, like pet.js and launcher.js: it runs IN the
 // shell document, keeps its own storage and registers its own sync
@@ -9,7 +9,10 @@
 //
 //   • In the right season the desktop gets a decoration: snow,
 //     lights and a tree at Christmas, fireworks at New Year,
-//     pumpkins, bats and a web at Halloween. ON by default.
+//     pumpkins, bats and a web at Halloween (1.0.0); the Greek feasts
+//     (1.1.0): Epiphany, Valentine's Day, Carnival, Clean Monday,
+//     25 March, Easter, May Day, 28 October. Movable ones count from
+//     Orthodox Easter, computed here. ON by default.
 //   • It sits over the wallpaper and UNDER the desktop's icons
 //     (z-index -1 inside #oros-desktop, like the live wallpaper)
 //     and never takes a click (pointer-events: none).
@@ -46,7 +49,7 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.0.0";
+  var VER = "1.1.0";
   var DATA_KEY = "oros-seasonal";
   var LOCAL_KEY = "oros-seasonal-local";
   var YMD_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -80,14 +83,35 @@
   // ---------- 2. Events (pure) ----------
   // win(year) = [first, last] day (inclusive) of the period that
   // STARTS in that year. prio: the higher wins when two overlap.
-  // Wave 2 adds the Greek feasts here, wave 3 the optional ones.
+  // Movable feasts count from Orthodox Easter (ez). Wave 3 adds the
+  // optional ones (seasons, birthday, Western Easter).
+  function ez(y, from, to) {
+    var e = orthodoxEaster(y);
+    return [addDays(e, from), addDays(e, to)];
+  }
   var EVENTS = [
+    { id: "epiphany", en: "Epiphany", el: "Θεοφάνια", prio: 3, def: true,
+      win: function (y) { return [y + "-01-05", y + "-01-06"]; } },
+    { id: "valentine", en: "Valentine's Day", el: "Αγίου Βαλεντίνου", prio: 4, def: true,   // its 2 days beat Carnival
+      win: function (y) { return [y + "-02-13", y + "-02-14"]; } },
+    { id: "carnival", en: "Carnival", el: "Απόκριες", prio: 3, def: true,
+      win: function (y) { return ez(y, -59, -49); } },          // Tsiknopempti to Cheesefare Sunday
+    { id: "cleanmon", en: "Clean Monday", el: "Καθαρά Δευτέρα", prio: 4, def: true,
+      win: function (y) { return ez(y, -48, -48); } },
+    { id: "mar25", en: "25 March", el: "25η Μαρτίου", prio: 3, def: true,
+      win: function (y) { return [y + "-03-24", y + "-03-25"]; } },
+    { id: "easter", en: "Easter", el: "Πάσχα", prio: 4, def: true,
+      win: function (y) { return ez(y, -3, 1); } },             // Holy Thursday to Easter Monday
+    { id: "mayday", en: "May Day", el: "Πρωτομαγιά", prio: 2, def: true,
+      win: function (y) { return [y + "-04-30", y + "-05-01"]; } },
     { id: "xmas", en: "Christmas", el: "Χριστούγεννα", prio: 2, def: true,
       win: function (y) { return [y + "-12-01", y + "-12-30"]; } },
     { id: "newyear", en: "New Year", el: "Πρωτοχρονιά", prio: 3, def: true,
       win: function (y) { return [y + "-12-31", (y + 1) + "-01-02"]; } },
     { id: "halloween", en: "Halloween", el: "Halloween", prio: 2, def: true,
-      win: function (y) { return [y + "-10-25", y + "-10-31"]; } }
+      win: function (y) { return [y + "-10-25", y + "-10-31"]; } },
+    { id: "oct28", en: "28 October", el: "28η Οκτωβρίου", prio: 3, def: true,
+      win: function (y) { return [y + "-10-27", y + "-10-28"]; } }
   ];
 
   function eventById(id) {
@@ -354,6 +378,87 @@
       '<path d="M81 58 l-7 -5 M81 61 l-8 0 M81 64 l-7 5 M91 58 l7 -5 M91 61 l8 0 M91 64 l7 5" stroke="#212121" stroke-width="1.4"/></g></svg>';
     return s;
   }
+  // The Epiphany: a gold cross over the sea.
+  var CROSS = '<svg ' + SVG_NS + ' viewBox="0 0 110 110" aria-hidden="true">' +
+    '<g class="ssn-tw"><circle cx="55" cy="36" r="30" fill="#fff8e1" opacity=".35"/></g>' +
+    '<path d="M51 8 h8 v16 h14 v8 h-14 v34 h-8 v-34 h-14 v-8 h14 Z" fill="#ffca28" stroke="#b28704" stroke-width="1.5"/>' +
+    '<path d="M0 74 Q14 66 28 74 T56 74 T84 74 T112 74 V110 H0 Z" fill="#1e88e5"/>' +
+    '<path d="M0 86 Q14 78 28 86 T56 86 T84 86 T112 86 V110 H0 Z" fill="#1565c0"/>' +
+    '<path d="M0 98 Q14 90 28 98 T56 98 T84 98 T112 98 V110 H0 Z" fill="#0d47a1"/>' +
+    '</svg>';
+  // Two hearts (Valentine's Day).
+  var HEARTS = '<svg ' + SVG_NS + ' viewBox="0 0 120 90" aria-hidden="true">' +
+    '<path class="ssn-beat" d="M40 82 C6 58 2 34 14 22 C26 10 40 18 40 30 C40 18 54 10 66 22 C78 34 74 58 40 82 Z" fill="#e53935"/>' +
+    '<path class="ssn-beat ssn-late" d="M86 70 C62 52 60 36 68 28 C76 20 86 26 86 34 C86 26 96 20 104 28 C112 36 110 52 86 70 Z" fill="#f06292"/>' +
+    '</svg>';
+  // A carnival mask with feathers.
+  var MASK = '<svg ' + SVG_NS + ' viewBox="0 0 130 100" aria-hidden="true">' +
+    '<path d="M56 34 Q50 4 62 0 Q60 20 64 32 Z" fill="#43a047"/><path d="M62 32 Q68 2 82 2 Q72 18 68 32 Z" fill="#fdd835"/>' +
+    '<path d="M68 34 Q86 8 98 12 Q82 22 72 36 Z" fill="#e53935"/>' +
+    '<path d="M8 46 Q20 30 50 36 Q65 40 80 36 Q110 30 122 46 Q120 74 92 76 Q76 76 65 62 Q54 76 38 76 Q10 74 8 46 Z" fill="#7b1fa2" stroke="#fdd835" stroke-width="3"/>' +
+    '<ellipse cx="38" cy="52" rx="12" ry="7" fill="#1a1022"/><ellipse cx="92" cy="52" rx="12" ry="7" fill="#1a1022"/>' +
+    '<g class="ssn-tw"><circle cx="65" cy="46" r="3" fill="#fdd835"/><circle cx="20" cy="62" r="2.5" fill="#4fc3f7"/>' +
+    '<circle cx="110" cy="62" r="2.5" fill="#4fc3f7"/></g>' +
+    '<path d="M122 46 L128 90" stroke="#8d6e63" stroke-width="3"/>' +
+    '</svg>';
+  // A kite with its tail (Clean Monday).
+  var KITE = '<svg ' + SVG_NS + ' viewBox="0 0 100 150" aria-hidden="true"><g class="ssn-sway">' +
+    '<path d="M50 4 L88 46 L50 96 L12 46 Z" fill="#e53935"/><path d="M50 4 L88 46 L50 46 Z" fill="#fdd835"/>' +
+    '<path d="M12 46 L50 46 L50 96 Z" fill="#1e88e5"/><path d="M50 4 V96 M12 46 H88" stroke="#5d4037" stroke-width="1.5"/>' +
+    '<path d="M50 96 Q38 112 54 122 T48 146" fill="none" stroke="#5d4037" stroke-width="1.2"/>' +
+    '<path d="M44 108 l12 -4 M46 122 l12 0 M44 136 l12 3" stroke="#43a047" stroke-width="4" stroke-linecap="round"/>' +
+    '</g></svg>';
+  // The Greek flag on a pole (25 March, 28 October).
+  var FLAG = (function () {
+    var s = '<svg ' + SVG_NS + ' viewBox="0 0 120 130" aria-hidden="true">' +
+      '<rect x="6" y="4" width="4" height="124" rx="2" fill="#9e9e9e"/><circle cx="8" cy="4" r="4" fill="#ffca28"/>' +
+      '<g class="ssn-wave"><rect x="10" y="8" width="104" height="72" fill="#fff"/>';
+    for (var i = 0; i < 9; i += 2) s += '<rect x="10" y="' + (8 + i * 8) + '" width="104" height="8" fill="#0d5eaf"/>';
+    s += '<rect x="10" y="8" width="40" height="40" fill="#0d5eaf"/><rect x="26" y="8" width="8" height="40" fill="#fff"/>' +
+      '<rect x="10" y="24" width="40" height="8" fill="#fff"/></g></svg>';
+    return s;
+  })();
+  // Red eggs and a lit Easter candle (lambada).
+  var EASTER = '<svg ' + SVG_NS + ' viewBox="0 0 130 130" aria-hidden="true">' +
+    '<g class="ssn-flame"><path d="M96 8 Q104 22 96 30 Q88 22 96 8 Z" fill="#ffb300"/><path d="M96 16 Q100 24 96 28 Q92 24 96 16 Z" fill="#fff59d"/></g>' +
+    '<rect x="92" y="30" width="8" height="90" rx="2" fill="#fafafa" stroke="#e0e0e0"/>' +
+    '<path d="M92 60 Q78 66 84 80 M100 60 Q114 66 108 80" stroke="#e53935" stroke-width="3" fill="none"/>' +
+    '<circle cx="96" cy="60" r="5" fill="#e53935"/>' +
+    '<ellipse cx="30" cy="104" rx="16" ry="21" fill="#c62828"/><ellipse cx="60" cy="110" rx="15" ry="19" fill="#d32f2f"/>' +
+    '<ellipse cx="44" cy="92" rx="14" ry="18" fill="#b71c1c"/>' +
+    '<ellipse cx="38" cy="86" rx="4" ry="7" fill="#fff" opacity=".35"/><ellipse cx="24" cy="98" rx="4" ry="7" fill="#fff" opacity=".3"/>' +
+    '<path d="M6 126 Q40 116 76 126 Z" fill="#7cb342"/>' +
+    '</svg>';
+  // Bunting: small pennants along a string (flags, carnival).
+  function bunting(w, colors) {
+    var n = Math.max(8, Math.round(w / 34)), step = w / n, s = "";
+    for (var i = 0; i < n; i++) {
+      var x = i * step, y = 4 + Math.sin((i / n) * Math.PI * 4) * 2;
+      s += '<path d="M' + (x + 2).toFixed(1) + ' ' + y.toFixed(1) + ' L' + (x + step - 2).toFixed(1) + ' ' + y.toFixed(1) +
+        ' L' + (x + step / 2).toFixed(1) + ' ' + (y + 22).toFixed(1) + ' Z" fill="' + colors[i % colors.length] + '" stroke="rgba(0,0,0,.25)" stroke-width=".8"/>';
+    }
+    return '<svg ' + SVG_NS + ' viewBox="0 0 ' + w.toFixed(0) + ' 34" width="' + w.toFixed(0) + '" height="34" aria-hidden="true">' +
+      '<path d="M0 4 Q' + (w / 2).toFixed(0) + ' 10 ' + w.toFixed(0) + ' 4" fill="none" stroke="#5d4037" stroke-width="1.2"/><g class="ssn-flutter">' + s + '</g></svg>';
+  }
+  // A May Day wreath: a green vine with flowers.
+  function wreath(w) {
+    var n = Math.max(6, Math.round(w / 46)), step = w / n, s = "", vine = "M0 8";
+    var cols = ["#e53935", "#fdd835", "#f06292", "#ffffff", "#ab47bc"];
+    for (var i = 0; i < n; i++) {
+      var x0 = i * step, cx = x0 + step / 2;
+      vine += " Q" + cx.toFixed(1) + " 20 " + (x0 + step).toFixed(1) + " 8";
+      var c = cols[i % cols.length], fy = 15;
+      s += '<g class="ssn-bulb" style="animation-delay:' + ((i % 3) * 0.6).toFixed(1) + 's">';
+      for (var k = 0; k < 5; k++) {
+        var a = k * 1.2566;
+        s += '<circle cx="' + (cx + Math.cos(a) * 5).toFixed(1) + '" cy="' + (fy + Math.sin(a) * 5).toFixed(1) + '" r="4" fill="' + c + '" stroke="rgba(0,0,0,.2)" stroke-width=".6"/>';
+      }
+      s += '<circle cx="' + cx.toFixed(1) + '" cy="' + fy + '" r="3" fill="#ffb300"/>' +
+        '<ellipse cx="' + (x0 + step * 0.2).toFixed(1) + '" cy="12" rx="6" ry="3" fill="#43a047" transform="rotate(-20 ' + (x0 + step * 0.2).toFixed(1) + ' 12)"/></g>';
+    }
+    return '<svg ' + SVG_NS + ' viewBox="0 0 ' + w.toFixed(0) + ' 34" width="' + w.toFixed(0) + '" height="34" aria-hidden="true">' +
+      '<path d="' + vine + '" fill="none" stroke="#2e7d32" stroke-width="2.4"/>' + s + '</svg>';
+  }
   // A string of bulbs along the top edge, as wide as the screen.
   function lights(w, colors) {
     var n = Math.max(6, Math.round(w / 52)), step = w / n, s = "", wire = "M0 6";
@@ -401,11 +506,11 @@
   };
 
   // Gold sparkles that drift down and twinkle (New Year).
-  function Sparkle() { this.list = []; }
+  function Sparkle(colors) { this.colors = colors || ["#ffd54f", "#fff3c4"]; this.list = []; }
   Sparkle.prototype.fit = Snow.prototype.fit;
   Sparkle.prototype.spawn = function (w, h, anywhere) {
     return { x: rnd(0, w), y: anywhere ? rnd(0, h) : -4, r: rnd(1, 2.4), vy: rnd(8, 20), ph: rnd(0, 6.3),
-             c: Math.random() < 0.5 ? "#ffd54f" : "#fff3c4" };
+             c: this.colors[Math.floor(Math.random() * this.colors.length)] };
   };
   Sparkle.prototype.step = function (dt, w, h, ctx) {
     for (var i = 0; i < this.list.length; i++) {
@@ -490,6 +595,126 @@
     }
   };
 
+  // Confetti or petals: small pieces that tumble down.
+  function Confetti(colors, petals) { this.colors = colors; this.petals = !!petals; this.list = []; }
+  Confetti.prototype.fit = Snow.prototype.fit;
+  Confetti.prototype.spawn = function (w, h, anywhere) {
+    return { x: rnd(0, w), y: anywhere ? rnd(0, h) : -8, s: rnd(4, 8), vy: rnd(this.petals ? 16 : 28, this.petals ? 30 : 55),
+             ph: rnd(0, 6.3), rot: rnd(0, 6.3), vr: rnd(-3, 3), sw: rnd(10, 30),
+             c: this.colors[Math.floor(Math.random() * this.colors.length)] };
+  };
+  Confetti.prototype.step = function (dt, w, h, ctx) {
+    ctx.strokeStyle = "rgba(0,0,0,.25)";
+    ctx.lineWidth = 0.8;
+    for (var i = 0; i < this.list.length; i++) {
+      var p = this.list[i];
+      p.y += p.vy * dt; p.ph += dt; p.rot += p.vr * dt;
+      if (p.y > h + 8) { this.list[i] = p = this.spawn(w, h, false); }
+      ctx.save();
+      ctx.translate(p.x + Math.sin(p.ph) * p.sw, p.y);
+      ctx.rotate(p.rot);
+      ctx.scale(1, Math.abs(Math.cos(p.rot * 1.3)) * 0.8 + 0.2);
+      ctx.fillStyle = p.c;
+      ctx.beginPath();
+      if (this.petals) ctx.ellipse(0, 0, p.s, p.s * 0.55, 0, 0, 6.2832);
+      else ctx.rect(-p.s / 2, -p.s / 3, p.s, p.s / 1.5);
+      ctx.fill(); ctx.stroke();
+      ctx.restore();
+    }
+  };
+
+  // Hearts that rise and sway (Valentine's Day).
+  function Hearts() { this.list = []; }
+  Hearts.prototype.fit = Snow.prototype.fit;
+  Hearts.prototype.spawn = function (w, h, anywhere) {
+    return { x: rnd(0, w), y: anywhere ? rnd(0, h) : h + 10, s: rnd(5, 11), vy: rnd(14, 30), ph: rnd(0, 6.3),
+             sw: rnd(8, 24), c: Math.random() < 0.5 ? "#e53935" : "#f06292" };
+  };
+  Hearts.prototype.step = function (dt, w, h, ctx) {
+    ctx.strokeStyle = "rgba(255,255,255,.55)";
+    ctx.lineWidth = 1;
+    for (var i = 0; i < this.list.length; i++) {
+      var p = this.list[i];
+      p.y -= p.vy * dt; p.ph += dt;
+      if (p.y < -12) { this.list[i] = p = this.spawn(w, h, false); }
+      var x = p.x + Math.sin(p.ph) * p.sw, y = p.y, s = p.s;
+      ctx.globalAlpha = Math.min(1, Math.max(0.15, p.y / h + 0.2));
+      ctx.fillStyle = p.c;
+      ctx.beginPath();
+      ctx.moveTo(x, y + s * 0.9);
+      ctx.bezierCurveTo(x - s * 1.4, y, x - s * 0.7, y - s, x, y - s * 0.35);
+      ctx.bezierCurveTo(x + s * 0.7, y - s, x + s * 1.4, y, x, y + s * 0.9);
+      ctx.fill(); ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  };
+
+  // Butterflies that wander (Easter).
+  var BF_COLORS = ["#ffb300", "#4fc3f7", "#f06292", "#ffffff", "#9ccc65"];
+  function Butterflies() { this.list = []; }
+  Butterflies.prototype.fit = function (w, h, n) {
+    n = Math.max(2, Math.min(8, Math.round(n / 10)));
+    while (this.list.length < n) {
+      this.list.push({ x: rnd(0, w), y: rnd(h * 0.2, h * 0.9), a: rnd(0, 6.3), v: rnd(30, 55), ph: rnd(0, 6.3),
+                       s: rnd(0.8, 1.3), c: BF_COLORS[this.list.length % BF_COLORS.length] });
+    }
+    this.list.length = n;
+  };
+  Butterflies.prototype.step = function (dt, w, h, ctx) {
+    ctx.strokeStyle = "rgba(0,0,0,.45)";
+    ctx.lineWidth = 1;
+    for (var i = 0; i < this.list.length; i++) {
+      var b = this.list[i];
+      b.a += rnd(-1.2, 1.2) * dt; b.ph += dt * 14;
+      b.x += Math.cos(b.a) * b.v * dt; b.y += Math.sin(b.a) * b.v * dt;
+      if (b.x < -20) b.x = w + 20; else if (b.x > w + 20) b.x = -20;
+      if (b.y < h * 0.1 || b.y > h - 20) b.a = -b.a;
+      var f = Math.abs(Math.sin(b.ph)) * 0.8 + 0.2, s = 11 * b.s;
+      ctx.save();
+      ctx.translate(b.x, b.y);
+      ctx.fillStyle = b.c;
+      ctx.beginPath();
+      ctx.ellipse(-s * 0.55 * f, -s * 0.3, s * 0.6 * f, s * 0.7, -0.4, 0, 6.2832);
+      ctx.ellipse(s * 0.55 * f, -s * 0.3, s * 0.6 * f, s * 0.7, 0.4, 0, 6.2832);
+      ctx.fill(); ctx.stroke();
+      ctx.fillStyle = "#3e2723";
+      ctx.fillRect(-1, -s * 0.8, 2, s * 1.3);
+      ctx.restore();
+    }
+  };
+
+  // Kites high up, swaying on their strings (Clean Monday).
+  var KITE_COLORS = [["#e53935", "#fdd835"], ["#1e88e5", "#ffffff"], ["#43a047", "#ff7043"], ["#8e24aa", "#ffca28"]];
+  function Kites() { this.list = []; }
+  Kites.prototype.fit = function (w, h, n) {
+    n = Math.max(1, Math.min(4, Math.round(n / 20)));
+    this.list = [];
+    for (var i = 0; i < n; i++) {
+      this.list.push({ ax: w * (i + 0.6) / (n + 0.4), ay: rnd(h * 0.12, h * 0.38), ph: rnd(0, 6.3), s: rnd(0.8, 1.2),
+                       c: KITE_COLORS[i % KITE_COLORS.length] });
+    }
+  };
+  Kites.prototype.step = function (dt, w, h, ctx) {
+    for (var i = 0; i < this.list.length; i++) {
+      var k = this.list[i];
+      k.ph += dt * 0.9;
+      var x = k.ax + Math.sin(k.ph) * 18, y = k.ay + Math.sin(k.ph * 1.7) * 8, s = 18 * k.s, tilt = Math.sin(k.ph) * 0.25;
+      ctx.strokeStyle = "rgba(90,70,60,.55)"; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(x, y + s * 1.2); ctx.quadraticCurveTo(x - 40, y + h * 0.4, k.ax - 60, h); ctx.stroke();
+      ctx.save(); ctx.translate(x, y); ctx.rotate(tilt);
+      ctx.fillStyle = k.c[0];
+      ctx.beginPath(); ctx.moveTo(0, -s); ctx.lineTo(s * 0.8, 0); ctx.lineTo(0, s * 1.2); ctx.lineTo(-s * 0.8, 0); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = k.c[1];
+      ctx.beginPath(); ctx.moveTo(0, -s); ctx.lineTo(s * 0.8, 0); ctx.lineTo(0, 0); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = "rgba(0,0,0,.35)"; ctx.stroke();
+      ctx.strokeStyle = k.c[0]; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(0, s * 1.2);
+      for (var t = 1; t <= 4; t++) ctx.lineTo(Math.sin(k.ph * 3 + t) * 6, s * 1.2 + t * 9);
+      ctx.stroke();
+      ctx.restore();
+    }
+  };
+
   // ---------- 8. Scenes ----------
   // Each scene: the still pieces (corner, top string, web) and the
   // moving ones (particle systems with a density per 1280×720).
@@ -500,10 +725,10 @@
     switch (id) {
       case "xmas":
         return { corner: get(d, "xmas") === "boat" ? BOAT : TREE, cornerW: get(d, "xmas") === "boat" ? 1.15 : 0.9,
-                 lights: ["#e53935", "#fdd835", "#43a047", "#1e88e5"],
+                 top: function (w) { return lights(w, ["#e53935", "#fdd835", "#43a047", "#1e88e5"]); },
                  moving: function () { return [{ sys: new Snow("#ffffff", true), n: 90 }]; } };
       case "newyear":
-        return { corner: POMEGRANATE, cornerW: 0.8, lights: ["#ffd54f", "#fff8e1", "#ffca28"],
+        return { corner: POMEGRANATE, cornerW: 0.8, top: function (w) { return lights(w, ["#ffd54f", "#fff8e1", "#ffca28"]); },
                  moving: function () {
                    var out = [{ sys: new Sparkle(), n: 50 }, { sys: new Snow("#ffffff", false), n: 35 }];
                    if (fireworksTime(nowDate)) out.push({ sys: new Fireworks(), n: 80 });
@@ -512,9 +737,33 @@
       case "halloween":
         return { corner: PUMPKINS, cornerW: 1.3, web: web("rgba(235,235,245,.7)"),
                  moving: function () { return [{ sys: new Bats("#1d1626"), n: 60 }]; } };
+      case "epiphany":
+        return { corner: CROSS, cornerW: 0.85,
+                 moving: function () { return [{ sys: new Sparkle(["#bbdefb", "#ffffff", "#ffe082"]), n: 45 }]; } };
+      case "valentine":
+        return { corner: HEARTS, cornerW: 0.9,
+                 moving: function () { return [{ sys: new Hearts(), n: 30 }]; } };
+      case "carnival":
+        return { corner: MASK, cornerW: 1.1, top: function (w) { return bunting(w, CONFETTI); },
+                 moving: function () { return [{ sys: new Confetti(CONFETTI, false), n: 70 }]; } };
+      case "cleanmon":
+        return { corner: KITE, cornerW: 0.7,
+                 moving: function () { return [{ sys: new Kites(), n: 60 }]; } };
+      case "mar25":
+      case "oct28":
+        return { corner: FLAG, cornerW: 0.95, top: function (w) { return bunting(w, ["#0d5eaf", "#ffffff"]); },
+                 moving: function () { return []; } };
+      case "easter":
+        return { corner: EASTER, cornerW: 1.15, top: function (w) { return wreath(w); },
+                 moving: function () { return [{ sys: new Butterflies(), n: 50 }]; } };
+      case "mayday":
+        return { corner: null, top: function (w) { return wreath(w); },
+                 moving: function () { return [{ sys: new Confetti(["#f8bbd0", "#ffffff", "#fff59d", "#f48fb1"], true), n: 40 }]; } };
     }
     return null;
   }
+
+  var CONFETTI = ["#e53935", "#fdd835", "#43a047", "#1e88e5", "#ab47bc", "#ff7043"];
 
   // Fireworks: New Year's Eve 23:55 to 00:10, or the first 25 s of a
   // New Year preview.
@@ -547,7 +796,18 @@
     "#ssn-layer .ssn-star{animation:ssn-blink 3s ease-in-out infinite alternate}" +
     "#ssn-layer .ssn-glow{animation:ssn-flicker 2.2s steps(6) infinite}" +
     "#ssn-layer .ssn-spider{animation:ssn-bob 5s ease-in-out infinite alternate}" +
+    "#ssn-layer .ssn-wave{transform-origin:10px 44px;animation:ssn-wave 3s ease-in-out infinite alternate}" +
+    "#ssn-layer .ssn-sway{transform-origin:50px 96px;animation:ssn-sway 4s ease-in-out infinite alternate}" +
+    "#ssn-layer .ssn-flame{transform-origin:96px 30px;animation:ssn-flame 1.2s ease-in-out infinite alternate}" +
+    "#ssn-layer .ssn-beat{transform-box:fill-box;transform-origin:center;animation:ssn-beat 1.6s ease-in-out infinite}" +
+    "#ssn-layer .ssn-late{animation-delay:.4s}" +
+    "#ssn-layer .ssn-flutter{animation:ssn-flutter 3s ease-in-out infinite alternate}" +
     "#ssn-layer.ssn-still *{animation:none!important}" +
+    "@keyframes ssn-wave{from{transform:skewY(0)}to{transform:skewY(-4deg) scaleX(.96)}}" +
+    "@keyframes ssn-flutter{from{transform:translateY(0)}to{transform:translateY(2px)}}" +
+    "@keyframes ssn-sway{from{transform:rotate(-5deg)}to{transform:rotate(5deg)}}" +
+    "@keyframes ssn-flame{from{transform:scale(1,1)}to{transform:scale(.85,1.12)}}" +
+    "@keyframes ssn-beat{0%,100%{transform:scale(1)}15%{transform:scale(1.08)}30%{transform:scale(.97)}}" +
     "@keyframes ssn-blink{from{opacity:1}to{opacity:.35}}" +
     "@keyframes ssn-flicker{0%,100%{opacity:1}30%{opacity:.7}55%{opacity:.95}80%{opacity:.6}}" +
     "@keyframes ssn-bob{from{transform:translateY(0)}to{transform:translateY(14px)}}" +
@@ -611,10 +871,10 @@
     var m = Math.min(sz.w, sz.h);
     var base = Math.max(70, Math.min(170, m * 0.24));
     // Static markup below is this file's own constant SVG, never data.
-    if (sc.lights) {
+    if (sc.top) {
       var top = document.createElement("div");
       top.className = "ssn-top";
-      top.innerHTML = lights(sz.w, sc.lights);
+      top.innerHTML = sc.top(sz.w);
       layer.appendChild(top);
     }
     if (sc.web) {
@@ -631,7 +891,8 @@
       c.innerHTML = sc.corner;
       layer.appendChild(c);
     }
-    if (!isStill) {
+    var moving = isStill ? [] : sc.moving();
+    if (moving.length) {
       canvas = document.createElement("canvas");
       var dpr = Math.min(2, root.devicePixelRatio || 1);
       canvas.width = Math.round(sz.w * dpr);
@@ -640,7 +901,7 @@
       if (ctx) {
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         var area = (sz.w * sz.h) / (1280 * 720), f = amountFactor();
-        systems = sc.moving().map(function (s) {
+        systems = moving.map(function (s) {
           var n = Math.max(6, Math.min(400, Math.round(s.n * Math.sqrt(area) * f)));
           s.sys.fit(sz.w, sz.h, n);
           return s.sys;
@@ -783,11 +1044,12 @@
     return {
       on: get(d, "on"), motion: get(d, "motion"), amount: get(d, "amount"), xmas: get(d, "xmas"),
       reduced: reduced(), lowBattery: lowBattery,
+      // Soonest first: what is on now, then what comes next.
       events: EVENTS.map(function (ev) {
         var w = nextWindow(ev, s);
-        return { id: ev.id, name: name(ev), from: fmtDay(w[0]), to: fmtDay(w[1]),
+        return { id: ev.id, name: name(ev), from: fmtDay(w[0]), to: fmtDay(w[1]), at: w[0],
                  on: get(d, "ev." + ev.id) === true, now: !!windowAt(ev, s) };
-      }),
+      }).sort(function (a, b) { return a.at < b.at ? -1 : a.at > b.at ? 1 : 0; }),
       showing: p ? { id: p.id, name: name(eventById(p.id)), mode: p.mode,
                      until: p.mode === "kept" ? fmtDay(l.keep.until) : null } : null,
       todayEvent: auto.length ? { id: auto[0].id, name: name(auto[0]) } : null,
