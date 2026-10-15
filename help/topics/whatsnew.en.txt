@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.28.00
+- Habits, Mood, One-Sentence Diary and Cycle can import from other apps (Loop, Habitica, Daylio, Bearable, Day One, Journey, Diaro, drip., Clue, Flo and more), with a preview and Undo.
+
 ## Version 2.27.00
 - Notes can import from Obsidian, Standard Notes and any folder of Markdown files; importing again adds only what is new, and Undo removes it.
 
