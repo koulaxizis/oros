@@ -6699,3 +6699,9 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Credits: Gravatar and Libravatar added to CREDITS.md, the Credits screen and Bible Part VIII; privacy page and help updated.
 - Files: `contacts/contacts.js` (`#ct-pf`, `#pf-dlg`), `contacts/index.html`, `contacts/contacts.css`, help texts, `privacy.html`.
   - Tests: full suite green; real shell with mocked Gravatar/Libravatar. Not tested: the live Gravatar and Libravatar services from a real browser.
+
+### 2026-10-15 — Notes phone page list + Calendar Greek labels (#375) — 2.22.01
+- Notes on phones (under 720 px): the page list opens as a drawer over the editor instead of squeezing both panes side by side; a tap on the editor beside it, or creating a page, closes it. Under 480 px the label chips next to the title shrink to their colour dots (name kept as tooltip and accessible label).
+- Calendar: built-in labels now show in Greek on event chips, in Statistics and in the event view (they used the stored English name).
+- Files: `notes/notes.css`, `notes/notes.js`, `calendar/calendar.js` (`lblName`).
+  - Tests: full suite green. Found by the single-app store screenshots. Not tested: real phones (checked by the owner in the shell at phone width).
