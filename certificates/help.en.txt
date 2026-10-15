@@ -69,6 +69,8 @@ On a phone the preview sits above the form; on a wide screen it is on the right.
 ## Sync and backup
 - Your certificates and lists follow you to every device through orOS sync, encrypted, and are part of the orOS export.
 - Logos, signatures and seals stay on your orOS disk and travel with it.
+- [[⋯]] › `orOS file (.oroscert)` saves one set of certificates as an open file named after it: the design, the texts, the list of people with their numbers, and the logo, signatures and seal themselves. It is a ZIP: unzip it and you find `content.json` (the set), `media` (the pictures) and `preview`, with `thumbnail.png` (the design) and `people.csv` (the register, which any spreadsheet opens). The key that signs the check QR codes is never put in the file: certificates opened on another device sign with that device's key.
+- `Open an orOS file (.oroscert)…` on the first screen, or opening the file with orOS from your system (`Open with`), brings it in as new certificates; it never replaces the ones you have. `Unzipped orOS folder…` next to it brings back a .oroscert that was unzipped, even after you changed a file in it.
 - Nothing is sent anywhere unless you send an email yourself.
 
 ## Tips

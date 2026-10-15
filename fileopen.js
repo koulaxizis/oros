@@ -71,7 +71,8 @@
       "text/plain": [".txt"],
       "application/x-oros-mind": [".orosmind"] } },
     { app: "familytree", accept: {
-      "application/x-gedcom": [".ged", ".gedcom"] } },
+      "application/x-gedcom": [".ged", ".gedcom"],
+      "application/x-oros-tree": [".orostree"] } },
     { app: "ringtones", accept: {
       "audio/x-rtttl": [".rtttl", ".rtx"],
       "application/x-oros-tone": [".orostone"] } },
@@ -117,7 +118,14 @@
     { app: "maps", accept: {
       "application/gpx+xml": [".gpx"],
       "application/vnd.google-earth.kml+xml": [".kml"],
-      "application/geo+json": [".geojson"] } },
+      "application/geo+json": [".geojson"],
+      "application/x-oros-map": [".orosmap"] } },
+    { app: "certificates", accept: {
+      "application/x-oros-cert": [".oroscert"] } },
+    { app: "labels", accept: {
+      "application/x-oros-labels": [".oroslabels"] } },
+    { app: "travel", accept: {
+      "application/x-oros-trip": [".orostrip"] } },
     { app: "chess", accept: {
       "application/x-chess-pgn": [".pgn"] } },
     // BR-FILE-IMPORT (owned by Calendar / Contacts): these two take the

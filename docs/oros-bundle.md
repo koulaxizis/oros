@@ -23,6 +23,11 @@ The format is free and open (MIT, like orOS). Reader and writer: [`bundle.js`](.
 | `.orosmontage` | Montage | `application/x-oros-montage` |
 | `.orosphoto` | Photo Lab | `application/x-oros-photo` |
 | `.orospixel` | Pixel | `application/x-oros-pixel` |
+| `.orostree` | Family tree | `application/x-oros-tree` |
+| `.oroscert` | Certificates | `application/x-oros-cert` |
+| `.oroslabels` | Label Maker | `application/x-oros-labels` |
+| `.orostrip` | Travel | `application/x-oros-trip` |
+| `.orosmap` | Maps | `application/x-oros-map` |
 
 More apps follow; each gets its own extension (`.oros` + one short English word) and MIME type `application/x-oros-<word>`.
 
@@ -102,6 +107,11 @@ Video and sound projects (Montage, Studio) can hold files of several GB. `bundle
 | Montage | `{ kind: "oros-montage-package", ver: 1, project: { id, name, ar, fps, bg, vs, m, items } }`; `item.src`, `lut`, `na` are media keys | videos, pictures and sounds by `<sha256>.<ext>` (the app's own ids); poster thumbnail, `preview/timeline.txt`, `preview/captions.srt` |
 | Photo Lab | `{ kind: "oros-photolab-package", ver: 1, doc: { name, w, h, m, layers: [{ id, k, name, vis, lock, op, bl, x, y, px?, tx?, sh?, aj?, fx?, mk? }], gd?, sels? } }`; `px = { key, x, y, w, h }` | one lossless PNG per raster layer, mask and selection; `preview/image.png` (flattened) + thumbnail |
 | Pixel | `{ kind: "oros-pixel-package", ver: 1, item: { id, m, name, f }, colors, grid }` | no media; `preview/face.png`, `preview/face.svg` + thumbnail |
+| Family tree | `{ kind: "oros-familytree-package", ver: 1, tree: { id, m, name, home }, people, unions, focus }`; `person.photo` is a media key | photos by `<sha256>.<jpg|png>`; `preview/tree.ged` (GEDCOM) + chart thumbnail |
+| Certificates | `{ kind: "oros-certificates-package", ver: 1, ev, ppl }`: one event and its people; signing keys are never written | logo, seal and signature pictures by `<sha256>.<jpg|png>` (the design kit's ids); `preview/people.csv` + thumbnail |
+| Label Maker | `{ kind: "oros-labels-package", ver: 1, copies, labels: [{ id, m, text, tape, width, cut, margin }] }`: the sheet Print would print | no media; `preview/labels.csv` + thumbnail |
+| Travel | `{ kind: "oros-travel-package", ver: 1, trip: { id, name, dest, start, end, people, notes, cur, bplan, geo, f, pack, plan, docs, spend, jrnl } }`; `docs[].file` is a media key | tickets and journal photos by `<sha256>.<jpg|pdf>`; `preview/trip.md`, `preview/trip.ics`, `preview/places.gpx` |
+| Maps | `{ kind: "oros-maps-package", ver: 1, title, groups: [{ id, name, color }], places: [{ id, name, sub, lat, lon, mtime, group }], tracks: [{ id, name, color, folder, hidden, src, m, track: { name, segs, wpts, trace? } }] }`: the chosen place groups and tracks | no media; `preview/places.geojson`, `preview/tracks.gpx` |
 
 The models are the ones each app syncs (OROS_BIBLE.md Part IV).
 

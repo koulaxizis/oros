@@ -339,7 +339,8 @@
   // "Import from another app" (import-ui.js): tracks with stable ids
   // (import.js trackId). Each GPX file is written first, then the
   // index once (one write, one dirty mark). A track the user has
-  // already is skipped, never touched. list: [{ id, tr, name, folder }]
+  // already is skipped, never touched. list: [{ id, tr, name, folder,
+  // color?, hidden? }] (an .orosmap keeps the colour and the hidden flag)
   // → Promise<[ids added]>.
   function addImported(list) {
     var fs = fsApi();
@@ -351,8 +352,8 @@
         if (done.length >= room || !x || !T.ID_RE.test(x.id) || data.tracks[x.id] || ents[x.id]) return;
         return writeTrack(x.id, x.tr).then(function () {
           var m = Math.max(Date.now(), (data.tombs[x.id] || 0) + 1);
-          var e = T.entryFor(x.id, x.tr, { name: x.name, folder: x.folder, src: "import",
-            color: T.COLORS[(n0 + done.length) % T.COLORS.length] }, m);
+          var e = T.entryFor(x.id, x.tr, { name: x.name, folder: x.folder, src: "import", hidden: x.hidden,
+            color: x.color || T.COLORS[(n0 + done.length) % T.COLORS.length] }, m);
           if (e) { ents[x.id] = e; done.push(x.id); }
         }, function () {});
       });
@@ -769,6 +770,9 @@
       // Wave 10B: "Plan a track" (planner.js loads after this file).
       var PL = window.__orosMapsPlanner;
       if (PL) r0.appendChild(button(PL.label(), "osm-btn trk-plan", function () { PL.setMode(true); }));
+      // .orosmap: save places and tracks / open an unzipped folder (package-ui.js)
+      var PK = window.__orosMapsPackage;
+      if (PK) r0.appendChild(button(PK.label(), "osm-btn trk-oros", function () { PK.dialog(); }));
       card.appendChild(r0);
     }
     body.appendChild(card);
@@ -1553,6 +1557,7 @@
 
   window.__orosMapsTracks = {
     data: function () { return T.normalizeTracks(data); },
+    read: readTrack, nameOf: nameOf, newId: newId,
     setMode: setMode, open: open, importText: importText,
     addImported: addImported, removeImported: removeImported, importFiles: importFiles,
     feed: onFix,

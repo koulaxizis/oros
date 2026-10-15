@@ -158,7 +158,7 @@ Record where you walk, ride or drive, keep your tracks and follow them again, li
 2. You can close the panel: a red chip at the top shows the recording, tap it to come back.
 3. `Stop` asks for a name and saves the track. `Keep recording` goes back, `Discard` throws it away.
 4. Tap a track for its statistics and a chart of elevation or speed. `Show all` fits it on the map. `Follow` draws it thick and tells you how far you are from it and how much is left. `Export GPX` saves a copy anywhere. `Name, colour, folder` organises it, and the eye button shows or hides it on the map.
-5. `Import file` brings in GPX, KML or GeoJSON files, and KMZ, TCX, FIT and Google exports (see Import from another app below). On a computer with orOS installed, `Open with` › orOS works for .gpx, .kml and .geojson files too.
+5. `Import file` brings in GPX, KML or GeoJSON files, and KMZ, TCX, FIT and Google exports (see Import from another app below). On a computer with orOS installed, `Open with` › orOS works for .gpx, .kml, .geojson and .orosmap files too.
 
 > Keep the screen on while you record. With the screen off, or with orOS in the background, the browser stops GPS and the track gets a straight gap. Maps keeps the screen awake while it records. If the tab closes or the device restarts, nothing is lost: next time Maps offers `Continue`, `Save` or `Discard`.
 
@@ -216,6 +216,8 @@ How to export from each app:
 Your Timeline is personal. Maps reads it on this device and tells you so in the preview; it leaves the device only if you sync Maps data. Nothing is imported until you pick the days with `From` and `To` (at most 366 days at a time). You then get one track for each day, in the folder `Timeline`, and, if you want, the places you visited in the group `Timeline places`, most visited first.
 
 Importing the same file again adds only what's missing and never makes a second copy. Tracks and places you have already stay exactly as they are.
+
+`orOS file` (in `Saved places` and in `My tracks`) saves the lists and tracks you tick as one .orosmap file, to keep or to share: your groups with their places and colours, and your tracks with their names, colours and folders. No map images and no OpenStreetMap sign-in go in it. An .orosmap is an open ZIP file: unzip it and you find `content.json` (your data) and `preview`, with `places.geojson` and `tracks.gpx`, which other map apps open. Open it with `Import` or `Import file`, or from your device with “Open with” orOS: its tracks and groups always come in as new ones next to yours, the places you have already stay as they are, and `Undo` in the message takes it all out again. `Unzipped orOS folder…` in the same window brings back an .orosmap that was unzipped, even after you changed its files.
 
 ## Offline maps
 

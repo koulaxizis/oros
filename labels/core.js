@@ -8,6 +8,8 @@
 // Saved labels (sync slice "labels"):
 //   { ver: 1, labels: [{ id, m, text, tape, width, cut, margin }],
 //     tombs: { id: deletedAt } }
+// The .oroslabels file (labelsBundle / labelsFromBundle, below):
+//   { kind: "oros-labels-package", ver: 1, copies, labels: [...] }
 // ============================================================
 (function (root) {
   "use strict";
@@ -229,7 +231,90 @@
     return (base || "label") + ".png";
   }
 
+  // ---------- The .oroslabels file ----------
+  // One file = a sheet of labels (the ones ticked for printing, or the
+  // label on the tape) and how many copies of each:
+  //   content.json { kind: "oros-labels-package", ver: 1, copies,
+  //                  labels: [{ id, m, text, tape, width, cut, margin }] }
+  // The tape is drawn from the text, so there is no media; the app adds
+  // preview/thumbnail.png, and preview/labels.csv is built here.
+  var LABELS_MIME = "application/x-oros-labels";
+  var LABELS_KIND = "oros-labels-package";
+  var MAX_COPIES  = 60;
+
+  function csvCell(v) {
+    v = String(v === undefined || v === null ? "" : v);
+    return /[",\r\n;]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+  }
+  // head: 5 column titles; name(kind, value) → the word shown for a
+  // tape / width / cut / margin value (falls back to the raw value).
+  function sheetCsv(list, head, name) {
+    name = typeof name === "function" ? name : function (k, v) { return v; };
+    var rows = [(head || ["text", "tape", "width", "ends", "margin"]).map(csvCell).join(",")];
+    list.forEach(function (l) {
+      rows.push([l.text, name("tape", l.tape), name("width", l.width), name("cut", l.cut), name("margin", l.margin)]
+        .map(csvCell).join(","));
+    });
+    return "﻿" + rows.join("\r\n") + "\r\n";
+  }
+
+  // list: labels (saved ones or plain styles). o: { copies, lang, date,
+  // csvHead, name, now, rnd }. → options for OrosBundle.write, or null.
+  function labelsBundle(list, o) {
+    o = o || {};
+    var now = isInt(o.now) ? o.now : Date.now(), rnd = o.rnd || Math.random;
+    var out = [];
+    (Array.isArray(list) ? list : []).forEach(function (raw) {
+      if (out.length >= MAX_LABELS) return;
+      var l = normLabel(raw);
+      if (!l) {
+        var s = normStyle(raw);
+        if (!s.text) return;
+        l = { id: newId(rnd), m: now, text: s.text, tape: s.tape, width: s.width, cut: s.cut, margin: s.margin };
+      }
+      out.push(l);
+    });
+    if (!out.length) return null;
+    var copies = isInt(o.copies) && o.copies >= 1 ? Math.min(o.copies, MAX_COPIES) : 1;
+    var created = now, modified = 0;
+    out.forEach(function (l) { created = Math.min(created, l.m); modified = Math.max(modified, l.m); });
+    return {
+      mime: LABELS_MIME, app: "labels", schema: "labels/1",
+      content: { kind: LABELS_KIND, ver: 1, copies: copies, labels: out },
+      meta: { title: out[0].text, created: created, modified: modified || now,
+        language: o.lang === "el" ? "el" : "en", generator: "orOS Label Maker" },
+      preview: [{ name: "labels.csv", data: sheetCsv(out, o.csvHead, o.name), type: "text/csv" }],
+      date: o.date
+    };
+  }
+  // content.json → { labels: NEW labels (fresh ids, m = now, cleaned as
+  // typed text is), copies } or null. At most `room` labels are kept.
+  function labelsFromBundle(content, rnd, now, room) {
+    if (!content || typeof content !== "object" || content.kind !== LABELS_KIND ||
+        !Array.isArray(content.labels)) return null;
+    rnd = rnd || Math.random;
+    now = isInt(now) ? now : Date.now();
+    var max = isInt(room) ? Math.max(0, room) : MAX_LABELS, out = [], seen = {};
+    content.labels.forEach(function (raw) {
+      if (out.length >= max || !raw || typeof raw !== "object") return;
+      var s = normStyle(raw);
+      if (!s.text) return;
+      var id = newId(rnd);
+      while (seen[id]) id = newId(rnd);
+      seen[id] = 1;
+      out.push({ id: id, m: now, text: s.text, tape: s.tape, width: s.width, cut: s.cut, margin: s.margin });
+    });
+    var c = content.copies;
+    return { labels: out, copies: isInt(c) && c >= 1 ? Math.min(c, MAX_COPIES) : 1 };
+  }
+  // File name for the .oroslabels (after the first label).
+  function sheetFileName(text) {
+    return fileName(text).replace(/\.png$/, ".oroslabels");
+  }
+
   var api = {
+    LABELS_MIME: LABELS_MIME, MAX_COPIES: MAX_COPIES, labelsBundle: labelsBundle,
+    labelsFromBundle: labelsFromBundle, sheetCsv: sheetCsv, sheetFileName: sheetFileName,
     MAX_LEN: MAX_LEN, MAX_LABELS: MAX_LABELS, MAX_RECENT: MAX_RECENT, ID_RE: ID_RE,
     TAPES: TAPES, WIDTHS: WIDTHS, CUTS: CUTS, MARGINS: MARGINS, DEFAULT: DEFAULT,
     LATIN: LATIN, GREEK: GREEK, DIGITS: DIGITS, SYMBOLS: SYMBOLS, WHEEL: WHEEL, A4: A4,

@@ -1951,3 +1951,10 @@ body.trn-itin .route-alt { opacity: 0.25; }
 .imp-dates .osm-lab { flex: 1 1 130px; min-width: 0; margin: 4px 0 6px; }
 .imp-dates .osm-in { width: 100%; min-width: 0; }
 .imp-check span { min-width: 0; overflow-wrap: anywhere; }
+
+/* .orosmap (package-ui.js): the lists and tracks to save */
+.fav-bar { flex-wrap: wrap; }
+.pkg-list { max-height: 200px; overflow-y: auto; overflow-x: hidden; padding-left: 8px; }
+.pkg-all { font-weight: 600; }
+.pkg-dlg .osm-lab .osm-in { width: 100%; min-width: 0; box-sizing: border-box; }
+.pkg-more { margin-top: 8px; }
