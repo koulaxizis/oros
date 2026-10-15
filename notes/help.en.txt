@@ -57,6 +57,16 @@ The search button (or [[Ctrl+K]]) searches titles and text in the current notebo
 ## Notebooks
 Pick a notebook from the list at the top of the tree. The book button with a plus under the tree (`New notebook`) creates one. The ⋯ button next to the list (or a right-click on the list) has `Rename notebook` and `Delete notebook`. Deleting a notebook removes all its pages and labels.
 
+## Import from other note apps
+- The upload button under the tree (or `Import notes…` in the notebook menu `⋯`) brings notes from:
+  - **Obsidian**: `Choose folder…` and pick the vault folder, or `Choose files…` and pick a .zip of it.
+  - **Standard Notes**: in Standard Notes, Preferences › Backups › Download backup, choose Decrypted; then `Choose files…` and pick that file (or the .zip).
+  - **Any folder or .zip of .md / .txt files**: Bear, Logseq, Joplin (Markdown export), Notion (Markdown export), Typora, iA Writer, Zettlr, or an orOS .md export.
+- Before anything is written you see what will come: new pages, labels, and what stays out. `Import` puts it all in a new notebook named after the source; `Undo` in the notice takes it out again.
+- Folders become pages with sub-pages (a note named like its folder becomes that folder's page), tags (`#tag` and `tags:` at the top) become labels, `[[links]]` keep working, pinned notes stay pinned, archived Standard Notes notes go under `Archive`, the trash stays out.
+- Import the same source again whenever you like: new notes come in, nothing is doubled. Notes you changed there change here only if you tick `Replace the text of pages imported before`. Pages you deleted here don't come back.
+- Only text comes in: pictures and other attachments stay out (an embedded picture shows as its name). Everything is read on this device; nothing is uploaded.
+
 ## Import from Notion
 - In Notion, create an integration of your own (notion.so/profile/integrations › New integration, Internal, read content only), then share the pages you want with it: open a page, ••• › Connections › add the integration (its subpages come along).
 - Connect Notion in [Settings](app:settings) › `Connected services` with the integration's secret.
