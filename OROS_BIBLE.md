@@ -6987,3 +6987,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - PDF import: each picture of at least 12 pt becomes its own image frame (rotated ones too); only drawings and backgrounds stay in the locked page background.
 - Files: new `layout/svgin.js` (precached), `layout/pdfin.js`, `layout/io.js`, `layout/layout.js`, `layout/index.html`, help.
   - Tests: new `tests/layout-svgin.test.js` (Affinity-style fixture and hostile input); full suite green; real shell in Chromium at 1280 and 360 px. Not tested: files exported by Affinity itself, a real phone, Safari.
+
+### 2026-10-15 — Contacts: photos kept small so they no longer fill local storage (#402) — 2.32.01
+- Contacts: a contact photo is stored as a 128×128 JPEG (CT-PS). Once per start, every photo bigger than 16,000 characters is redrawn centre-cropped at quality 0.75, and the smaller copy syncs to the other devices. Google import now fetches 128 px photos. Fixes "Browser storage is full — sync paused" when many big photos were stored.
+- Files: `contacts/contacts.js`, `contacts/accounts.js`; Bible CT-PS + T4 Troubleshooting entry.
+  - Tests: `tests/contacts-photos.test.js`; full suite green; Chromium check 1.33 MB → 0.33 MB with 30 large photos. Not tested: Chris's real data and the sync round trip on his phone.
