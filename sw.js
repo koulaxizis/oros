@@ -683,6 +683,7 @@ var PRECACHE_URLS = [
   "layout/caret.js",
   "layout/inframe.js",
   "layout/sla.js",
+  "layout/svgin.js",
   "layout/idml.js",
   "layout/pdfin.js",
   "layout/io.js",
