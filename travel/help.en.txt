@@ -64,7 +64,9 @@ A trip's `More` menu has `Edit trip`, `Copy as text` (`Share as text` on a phone
 
 The same menu can send `Send “Before I leave” to To-Do` or `Send “Still to pack” to To-Do`: the open items become a new list in [To-Do](app:todo), which shows them before anything is added. It's a copy, so ticking in To-Do doesn't change the trip.
 
-On the trip list, `More` has `Export all (JSON)` and `Import (JSON)`. An import merges with your trips and overwrites nothing.
+On the trip list, `More` has `Export all (JSON)` and `Import (orOS file or JSON)`. A JSON import merges with your trips and overwrites nothing.
+
+A trip's `More` menu also has `orOS file (.orostrip)`: the whole trip in one file, with its packing list, itinerary, budget, expenses, journal, notes, attached tickets and journal photos. It is a ZIP: inside, `preview/trip.md` is the trip as readable text, `trip.ics` its dates for any calendar and `places.gpx` its map points. Open it with `Import (orOS file or JSON)`, or with the system's `Open with` › orOS; it always comes in as a new trip (`Undo` on the message removes it). `Unzipped orOS folder…` in the same menu opens such a file after it was unzipped, for example to swap a photo.
 
 `Import from Polarsteps or TripIt` (also in that menu) brings in trips from those apps and shows what it found first: per trip, the entries and journal days it adds and what is already here. Nothing you already have changes, importing the same file again adds only what is missing, and `Undo` on the message right after removes the whole import.
 - Polarsteps: in the app's account settings, ask for your data ("Download my data") and pick the .zip you get by e-mail. Each step becomes an itinerary entry with its place on the map, and the step texts go to the journal. Photos and the recorded route are not imported.

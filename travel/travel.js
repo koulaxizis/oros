@@ -136,9 +136,13 @@
       "tpl.hint": "A ready template can be edited or hidden; restoring brings it back as shipped.",
       "tpl.none": "No templates", "tpl.row": "Item {n}", "tpl.del": "Remove item {n}",
       "import.found": "In the file: trips {trips}, templates {tpls}. They are merged with yours; nothing is overwritten.",
-      "menu.export": "Export all (JSON)", "menu.import": "Import (JSON)", "menu.edit": "Edit trip",
+      "menu.export": "Export all (JSON)", "menu.import": "Import (orOS file or JSON)", "menu.edit": "Edit trip",
       "menu.text": "Copy as text", "menu.share": "Share as text", "menu.ics": "Export for a calendar (.ics)",
       "menu.print": "Print", "menu.dup": "Copy trip", "menu.tpl": "Save as template", "menu.del": "Delete trip",
+      "menu.oros": "orOS file (.orostrip)", "menu.folder": "Unzipped orOS folder…",
+      "toast.tripIn": "Trip added: {name}", "toast.newer": "This file was made by a newer orOS. Update orOS to open it.",
+      "toast.someFiles": "Some attachments could not be read and were left out", "toast.noDisk": "Attachments need the orOS disk; they were left out",
+      "md.files": "Attachments", "md.spend": "Expenses", "md.journal": "Journal",
       "toast.undo": "Undo", "toast.tripDel": "Trip deleted", "toast.itemDel": "Item deleted",
       "toast.planDel": "Entry deleted", "toast.tplDel": "Template deleted", "toast.tplHid": "Template hidden",
       "toast.unchecked": "Everything unchecked", "toast.copied": "Copied to clipboard", "toast.copyFail": "Could not copy",
@@ -278,9 +282,13 @@
       "tpl.hint": "Ένα έτοιμο πρότυπο αλλάζει ή κρύβεται· η επαναφορά το φέρνει όπως ήταν.",
       "tpl.none": "Κανένα πρότυπο", "tpl.row": "Είδος {n}", "tpl.del": "Αφαίρεση είδους {n}",
       "import.found": "Στο αρχείο: ταξίδια {trips}, πρότυπα {tpls}. Ενώνονται με τα δικά σου· τίποτα δεν αντικαθίσταται.",
-      "menu.export": "Εξαγωγή όλων (JSON)", "menu.import": "Εισαγωγή (JSON)", "menu.edit": "Επεξεργασία ταξιδιού",
+      "menu.export": "Εξαγωγή όλων (JSON)", "menu.import": "Εισαγωγή (αρχείο orOS ή JSON)", "menu.edit": "Επεξεργασία ταξιδιού",
       "menu.text": "Αντιγραφή ως κείμενο", "menu.share": "Κοινοποίηση ως κείμενο", "menu.ics": "Εξαγωγή για ημερολόγιο (.ics)",
       "menu.print": "Εκτύπωση", "menu.dup": "Αντίγραφο ταξιδιού", "menu.tpl": "Αποθήκευση ως πρότυπο", "menu.del": "Διαγραφή ταξιδιού",
+      "menu.oros": "Αρχείο orOS (.orostrip)", "menu.folder": "Αποσυμπιεσμένος φάκελος orOS…",
+      "toast.tripIn": "Προστέθηκε το ταξίδι: {name}", "toast.newer": "Το αρχείο φτιάχτηκε από νεότερο orOS. Ενημέρωσε το orOS για να το ανοίξεις.",
+      "toast.someFiles": "Κάποια συνημμένα δεν διαβάστηκαν και παραλείφθηκαν", "toast.noDisk": "Τα συνημμένα χρειάζονται τον δίσκο του orOS· παραλείφθηκαν",
+      "md.files": "Συνημμένα", "md.spend": "Έξοδα", "md.journal": "Ημερολόγιο",
       "toast.undo": "Αναίρεση", "toast.tripDel": "Το ταξίδι διαγράφηκε", "toast.itemDel": "Το είδος διαγράφηκε",
       "toast.planDel": "Το στοιχείο διαγράφηκε", "toast.tplDel": "Το πρότυπο διαγράφηκε", "toast.tplHid": "Το πρότυπο κρύφτηκε",
       "toast.unchecked": "Όλα ξετσεκαρίστηκαν", "toast.copied": "Αντιγράφηκε στο πρόχειρο", "toast.copyFail": "Η αντιγραφή απέτυχε",
@@ -1080,6 +1088,62 @@
       });
     }
     if (trip.notes.trim()) L.push("", t("txt.notes"), trip.notes.trim());
+    return L.join("\n") + "\n";
+  }
+  // preview/trip.md of an .orostrip: the whole trip, readable anywhere.
+  function mdEsc(s) { return String(s).replace(/([\\`*_\[\]<>#|])/g, "\\$1"); }
+  function tripMd(trip) {
+    var L = ["# " + mdEsc(trip.name || trip.dest || t("app")), ""];
+    var dates = [fmtRange(trip), nightsText(trip)].filter(Boolean).join(" · ");
+    if (dates) L.push(mdEsc(dates) + "  ");
+    if (trip.dest) L.push("**" + t("txt.dest") + ":** " + mdEsc(trip.dest) + "  ");
+    if (trip.people.length) L.push("**" + t("txt.people") + ":** " + mdEsc(trip.people.join(", ")) + "  ");
+    function files(owner) {
+      var d = docsOf(trip, owner);
+      if (d.length) L.push("  " + t("md.files") + ": " + mdEsc(d.map(function (x) { return x.name || x.file; }).join(", ")));
+    }
+    if (trip.plan.length) {
+      L.push("", "## " + t("tab.plan"));
+      planSections(trip).forEach(function (s) {
+        if (!s.items.length) return;
+        L.push("", "### " + mdEsc(s.label), "");
+        s.items.forEach(function (p) {
+          L.push("- " + mdEsc(entryLine(p)));
+          if (p.note) p.note.split("\n").forEach(function (n) { if (n.trim()) L.push("  " + mdEsc(n.trim())); });
+          files(p.id);
+        });
+      });
+    }
+    if (trip.pack.length) {
+      L.push("", "## " + t("tab.pack") + " (" + t("txt.packed", { d: trip.pack.filter(function (p) { return p.done; }).length, n: trip.pack.length }) + ")");
+      packGroups(trip.pack).forEach(function (g) {
+        L.push("", "### " + mdEsc(grpName(g.grp)), "");
+        g.items.forEach(function (p) {
+          L.push("- [" + (p.done ? "x" : " ") + "] " + mdEsc((p.qty > 1 ? p.qty + " × " : "") + p.name +
+                 (p.who ? " (" + p.who + ")" : "") + (p.note ? " · " + p.note : "")));
+        });
+      });
+    }
+    if (trip.spend.length) {
+      L.push("", "## " + t("md.spend"), "");
+      trip.spend.slice().sort(function (a, b) { return cmpStr(a.day, b.day) || cmpStr(a.id, b.id); }).forEach(function (x) {
+        L.push("- " + mdEsc([x.day ? fmtDate(x.day) : "", t("cat." + x.cat), x.what, x.who,
+                              fmtMoney(x.amt, x.cur || tripCur(trip))].filter(Boolean).join(" · ")));
+      });
+    }
+    var jr = trip.jrnl.filter(function (j) { return j.text.trim() || docsOf(trip, j.id).length; })
+      .sort(function (a, b) { return cmpStr(a.day, b.day); });
+    if (jr.length) {
+      L.push("", "## " + t("md.journal"));
+      jr.forEach(function (j) {
+        L.push("", "### " + mdEsc(j.day ? fmtDay(j.day) : t("plan.undated")), "");
+        if (j.text.trim()) L.push(mdEsc(j.text.trim()).replace(/\n/g, "  \n"));
+        files(j.id);
+      });
+    }
+    if (trip.notes.trim()) L.push("", "## " + t("tab.notes"), "", mdEsc(trip.notes.trim()).replace(/\n/g, "  \n"));
+    var own = docsOf(trip, trip.id);
+    if (own.length) { L.push(""); files(trip.id); }
     return L.join("\n") + "\n";
   }
   // Day sections for the itinerary: each trip day, then other dates, then no day.
@@ -3701,6 +3765,7 @@
         { label: t("menu.edit"), fn: function () { tripDialog(id); } },
         { label: t(shareOnMobile() ? "menu.share" : "menu.text"), fn: function () { shareTrip(id); } },
         { label: t("menu.ics"), fn: function () { exportIcs(id); } },
+        bundleReady() ? { label: t("menu.oros"), fn: function () { exportOros(id); } } : null,
         { label: t("menu.fuel"), fn: function () { fuelDialog(id); } },
         { label: t("menu.gpx"), fn: function () { exportGpx(id, ""); } },
         splitBridge() ? { label: t("menu.split"), fn: function () { sendToSplit(id); } } : null,
@@ -3715,6 +3780,7 @@
       openMenu(btn, [
         { label: t("menu.export"), fn: exportAll },
         { label: t("menu.import"), fn: importFlow },
+        bundleReady() ? { label: t("menu.folder"), fn: openBundleFolder } : null,
         window.OrosTravelImport ? { label: t("menu.importOther"), fn: importOther } : null,
         { label: t(prefs.rem ? "menu.remOff" : "menu.remOn"), fn: function () {
           prefs.rem = prefs.rem ? 0 : 1;
@@ -3812,12 +3878,177 @@
       "text/calendar", [{ description: "iCalendar", accept: { "text/calendar": [".ics"] } }]);
   }
 
-  // Import = merge through the sync merge (never an overwrite).
+  // ----- .orostrip: one trip as an orOS bundle (../bundle.js, package.js) -----
+  // content.json = package.js build (the trip as the sync slice holds
+  // it); media/<sha256>.<jpg|pdf> = its attachments and journal photos;
+  // preview/trip.md (readable), trip.ics (calendar), places.gpx (the
+  // points on the map, when there are any).
+  var BUNDLE_MIME = "application/x-oros-trip";
+  var BUNDLE_MAX = 512 * 1024 * 1024;
+  var PKG = window.OrosTravelPackage || null;
+  function bundleReady() { return !!(PKG && window.OrosBundle); }
+  function fileTitle(s) {
+    return String(s || "").replace(/[\u0000-\u001f\u007f\/\\:*?"<>|]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 80) || "Trip";
+  }
+  function exportOros(id) {
+    commitNotes();
+    var trip = findTrip(id), B = window.OrosBundle;
+    if (!trip || !bundleReady()) return;
+    var snap = clone(trip), fs = fsApi(), keys = {}, media = {}, chain = Promise.resolve();
+    snap.docs.forEach(function (d) {
+      chain = chain.then(function () {
+        var path = filePath(d.file);
+        if (keys[d.file] || !fs || !path) return;
+        return Promise.resolve(fs.readBlob(path)).then(function (b) {
+          if (!b) return;
+          return b.arrayBuffer().then(function (ab) {
+            var u8 = new Uint8Array(ab);
+            return B.sha256(u8).then(function (h) {
+              var k = h + "." + d.file.split(".").pop();
+              keys[d.file] = k;
+              media[k] = u8;
+            });
+          });
+        }).catch(function () {});
+      });
+    });
+    chain.then(function () {
+      var preview = [{ name: "trip.md", data: tripMd(snap), type: "text/markdown" }];
+      if (datesKnown(snap) || snap.plan.some(function (p) { return isYmd(p.day); }))
+        preview.push({ name: "trip.ics", data: tripIcs(snap, Date.now()), type: "text/calendar" });
+      var gpx = tripGpx(snap, "");
+      if (gpx) preview.push({ name: "places.gpx", data: gpx, type: "application/gpx+xml" });
+      var created = Infinity, modified = 0;
+      [snap].concat(snap.pack, snap.plan, snap.docs, snap.spend, snap.jrnl).forEach(function (e) {
+        Object.keys(e.f).forEach(function (k) {
+          if (e.f[k] > 0 && e.f[k] < created) created = e.f[k];
+          if (e.f[k] > modified) modified = e.f[k];
+        });
+      });
+      return B.write({
+        mime: BUNDLE_MIME, app: "travel", schema: "travel/1",
+        content: PKG.build(snap, keys),
+        meta: { title: snap.name || snap.dest || "", id: snap.id, language: LANG, generator: "orOS Travel",
+                created: isFinite(created) ? created : undefined, modified: modified || undefined,
+                description: snap.dest || undefined },
+        media: media,
+        preview: preview,
+        date: new Date()
+      });
+    }).then(function (bytes) {
+      downloadBlob(new Blob([bytes], { type: BUNDLE_MIME }), fileTitle(trip.name || trip.dest) + ".orostrip",
+        BUNDLE_MIME, [{ description: "orOS Travel", accept: { "application/x-oros-trip": [".orostrip"] } }]);
+    }, function (e) {
+      try { console.error("[orOS] travel bundle failed:", e); } catch (x) {}
+      showToast(t("toast.importBad"));
+    });
+  }
+  function bundleFail(e) {
+    try { console.error("[orOS] travel bundle open failed:", e); } catch (x) {}
+    showToast(t(e && e.code === "newer" ? "toast.newer" : "toast.importBad"));
+  }
+  // The first bytes say whether a file is a bundle (PK + "mimetype"); a
+  // ZIP named .orostrip goes to the reader too, which says what is wrong.
+  function isBundleFile(f) {
+    if (!bundleReady() || !f || typeof f.slice !== "function") return Promise.resolve(false);
+    return f.slice(0, 128).arrayBuffer().then(function (ab) {
+      var kind = window.OrosBundle.sniff(new Uint8Array(ab));
+      return kind === BUNDLE_MIME || (kind !== null && /\.orostrip$/i.test(f.name || ""));
+    }, function () { return false; });
+  }
+  function openBundleFile(f) {
+    if (f.size > BUNDLE_MAX) { showToast(t("toast.importBad")); return Promise.resolve(false); }
+    return f.arrayBuffer()
+      .then(function (ab) { return window.OrosBundle.read(new Uint8Array(ab), { mime: BUNDLE_MIME }); })
+      .then(applyBundle)
+      .then(null, function (e) { bundleFail(e); return false; });
+  }
+  function openBundleFolder() {
+    if (!bundleReady()) return Promise.resolve(false);
+    return window.OrosBundle.pickFolder().then(function (files) {
+      if (!files || !files.length) return false;
+      return window.OrosBundle.readFolder(files, { mime: BUNDLE_MIME }).then(applyBundle);
+    }).then(null, function (e) { bundleFail(e); return false; });
+  }
+  // The bytes of one attachment from the bundle → the orOS disk, through
+  // the same checks as attaching a file: a PDF must start with "%PDF-",
+  // a picture is re-drawn as a JPEG (no EXIF, no foreign bytes).
+  function storeMedia(item, docId) {
+    var fs = fsApi();
+    if (!fs || !item || !item.bytes) return Promise.resolve("");
+    var blob = new Blob([item.bytes], { type: item.type || "application/octet-stream" });
+    var enc = item.type === "application/pdf"
+      ? pdfMagic(blob).then(function (ok) { return ok ? { blob: blob.slice(0, blob.size, "application/pdf"), ext: "pdf" } : null; })
+      : (/^image\//.test(item.type || "") ? reencodePhoto(blob).then(function (b) { return b ? { blob: b, ext: "jpg" } : null; })
+                                          : Promise.resolve(null));
+    return enc.then(function (r) {
+      if (!r) return "";
+      var name = docId + "." + r.ext;
+      if (!FILE_RE.test(name)) return "";
+      return Promise.resolve(fs.writeBlob(FILE_DIR + "/" + name, r.blob)).then(function () { return name; });
+    }).catch(function () { return ""; });
+  }
+  // A read bundle (zip or folder) → ONE new trip (fresh ids, never an
+  // overwrite), through the sync merge's normaliser; Undo removes it.
+  function applyBundle(r) {
+    var res;
+    try { res = PKG.parse(r && r.content, { newId: newId, jrnlId: jrnlId, now: Date.now() }); }
+    catch (e) { showToast(t("toast.importBad")); return false; }
+    if (data.trips.length >= MAX_TRIPS) { showToast(t("toast.max", { n: MAX_TRIPS })); return false; }
+    var trip = res.trip, media = (r && r.media) || {}, lost = 0, noDisk = !fsApi() && res.files.length;
+    var chain = Promise.resolve();
+    res.files.forEach(function (x) {
+      chain = chain.then(function () {
+        var d = findIn(trip.docs, x.doc), key = (r.rekeyed && r.rekeyed[x.key]) || x.key;
+        if (!d) return;
+        return storeMedia(media[key], d.id).then(function (name) {
+          if (name) d.file = name; else lost++;
+        });
+      });
+    });
+    return chain.then(function () {
+      trip.docs = trip.docs.filter(function (d) { return !!d.file; });
+      var clean = mergeTravel({ trips: [trip] }, { trips: [trip] }).trips[0];
+      if (!clean) { showToast(t("toast.importBad")); return false; }
+      closeMenu();
+      commitNotes();
+      data.trips.push(clean);
+      commit(true);
+      openTrip(clean.id);
+      var msg = noDisk ? t("toast.noDisk") : lost ? t("toast.someFiles") : t("toast.tripIn", { name: clean.name || clean.dest });
+      undoToast(msg, function () {
+        var tr = findTrip(clean.id);
+        if (!tr) return;
+        var now = Date.now();
+        data.tombs[tr.id] = Math.max(now, life(tr));
+        dropFilesLater(tr.docs.map(function (d) { return d.file; }));
+        if (prefs.trip === tr.id) { prefs.view = "list"; prefs.trip = null; savePrefs(); }
+        commit();
+      });
+      return true;
+    });
+  }
+
+  // Import = merge through the sync merge (never an overwrite). An
+  // .orostrip goes in as one new trip (applyBundle).
+  var IMPORT_ACCEPT = ".orostrip,.json,application/x-oros-trip,application/json";
   function importFlow() {
     var dlgHost = dialogHost();
+    var accept = bundleReady() ? IMPORT_ACCEPT : ".json,application/json";
     var pick = dlgHost && typeof dlgHost.openFile === "function"
-      ? dlgHost.openFile(".json,application/json") : localPickFile(".json,application/json");
-    Promise.resolve(pick).then(function (file) {
+      ? dlgHost.openFile(accept) : localPickFile(accept);
+    Promise.resolve(pick).then(importFile);
+  }
+  // A File from the picker or "Open with": a bundle, else the JSON export.
+  function importFile(file) {
+    if (!file) return;
+    isBundleFile(file).then(function (zip) {
+      if (zip) { openBundleFile(file); return; }
+      importJsonFile(file);
+    });
+  }
+  function importJsonFile(file) {
+    Promise.resolve(file).then(function (file) {
       if (!file) return null;
       if (file.size > 5 * 1024 * 1024) { showToast(t("toast.importBad")); return null; }
       return file.text();
@@ -4324,6 +4555,7 @@
   function openSearchTarget(t) {
     if (document.querySelector("dialog[open]")) return;
     if (t && t.importMail) { closeMenu(); commitNotes(); importFromMail(t.importMail); return; }
+    if (t && t.openFile) { openFileTarget(t.openFile); return; }
     var trip = t && typeof t.trip === "string" ? findTrip(t.trip) : null;
     if (!trip) return;
     closeMenu();
@@ -4333,6 +4565,19 @@
     if (typeof t.item !== "string") return;
     if (t.tab === "pack" && findIn(trip.pack, t.item)) itemDialog(t.item);
     else if (t.tab === "plan" && findIn(trip.plan, t.item)) planDialog(t.item);
+  }
+  // Target { openFile: { token } }: an .orostrip from the system's
+  // "Open with" (shell fileopen.js), taken once from the shell and read
+  // as the Import reads one: always a NEW trip with fresh ids, with an
+  // Undo toast. A file it cannot read only shows a message.
+  function openFileTarget(o) {
+    var f = null;
+    try {
+      var w = window.parent;
+      if (o && typeof o.token === "string" && w && w !== window && typeof w.__orosTakeFile === "function")
+        f = w.__orosTakeFile(o.token);
+    } catch (e) { f = null; }
+    if (f) importFile(f);
   }
   window.__orosOpenAt = openSearchTarget;
 
