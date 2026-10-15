@@ -38,6 +38,11 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write   # only the "Publish APKs" step uses it (main only)
+    # One build per branch at a time, so two quick main pushes cannot
+    # upload their APKs out of order.
+    concurrency:
+      group: android-${{ github.ref }}
+      cancel-in-progress: false
     env:
       OROS_DIAG: ${{ inputs.diag && '1' || '0' }}
     steps:
@@ -102,7 +107,7 @@ jobs:
       # Direct downloads for people who do not use a store (and until
       # the store listings exist). Only signed APKs, only from main.
       - name: Publish APKs to the android-apks release
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && !inputs.diag
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
