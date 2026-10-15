@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.38.00
+- Update online in Contacts and CRM now also reads the GitHub, Bluesky and Mastodon profiles a contact links to, looks up businesses on OpenStreetMap and Wikidata, and offers search links when you check one contact.
+
 ## Version 2.37.00
 - To-Do, Kanban, Mind Map and Wiki import from other apps: Todoist, TickTick, Google Tasks, todo.txt, Asana, Jira, ClickUp, SimpleMind, MindManager, Markdown outlines, Notion, TiddlyWiki, MediaWiki and Confluence, with a preview and Undo.
 

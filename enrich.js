@@ -11,6 +11,17 @@
 //   - start only from what the record already holds: its own e-mail,
 //     its own website / link page, its phone number. Never a search
 //     by name alone, never a face search.
+//   - open networks (GitHub, Bluesky, Mastodon) are read through
+//     their public APIs, only from a profile link the record holds or
+//     a finding points at (wave 2).
+//   - businesses (org records) are looked up in OpenStreetMap by name
+//     + the place the record holds, or by its phone; Wikidata items
+//     are found by the record's own website or profile ids, never by
+//     a name (wave 3).
+//   - a search by name happens only on the user's own SearXNG server
+//     (set in the Assistant), for a few records at a time, and every
+//     result is "check"; the closed networks get search links the
+//     person opens themselves (DuckDuckGo, never Google) (wave 4).
 //   - closed networks (Facebook, Instagram, LinkedIn, X, TikTok…)
 //     are never read: their terms forbid it. Their links are kept
 //     as links, nothing more.
@@ -54,6 +65,7 @@
   var GRAVATAR_API = "https://api.gravatar.com/v3/profiles/";
   var MAX_PAGES = 4;          // pages read per record
   var MAX_LINKS = 12;         // link suggestions per record
+  var MAX_PROFILES = 3;       // GitHub / Bluesky / Mastodon profiles per record
   var CONF_RANK = { check: 0, likely: 1, sure: 2 };
 
   // ---------- small helpers ----------
@@ -185,8 +197,22 @@
       .replace(/[aeiouy]/g, "").replace(/(.)\1+/g, "$1");
     return out;
   }
+  // Whole Latin form with vowels, for name parts whose skeleton is too
+  // short to mean anything ("Άννα" → "ana", "Παππά" → "papa").
+  function latinForm(s) {
+    var f = String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+    var out = "";
+    for (var i = 0; i < f.length; i++) { var ch = f.charAt(i); out += GR[ch] !== undefined ? GR[ch] : ch; }
+    return out.replace(/[^a-z]/g, "").replace(/h/g, "").replace(/ou/g, "u").replace(/[eiy]/g, "i")
+      .replace(/c/g, "k").replace(/w/g, "v").replace(/b/g, "v").replace(/(.)\1+/g, "$1");
+  }
   function tokens(s) {
-    return String(s || "").split(/[\s,.'"’()\-_|@/]+/).map(skeleton).filter(function (t) { return t.length >= 2; });
+    return String(s || "").split(/[\s,.'"’()\-_|@/]+/).map(function (w) {
+      var k = skeleton(w);
+      if (k.length >= 2) return k;
+      var l = latinForm(w);
+      return l.length >= 3 ? "~" + l : "";
+    }).filter(Boolean);
   }
   function tokMatch(a, b) {
     if (a === b) return true;
@@ -446,9 +472,315 @@
       shared: rec.shared || {},
       phones: (rec.phones || []).filter(normPhone),
       sites: uniq((rec.sites || []).map(normUrl).filter(Boolean)),
+      place: str(rec.place, 160),
       has: { photo: !!has.photo, birthday: !!has.birthday, job: !!has.job, org: !!has.org, address: !!has.address, name: !!has.name },
       kind: rec.kind === "person" || rec.kind === "org" ? rec.kind : ""
     };
+  }
+
+  // ---------- open networks (public APIs, no sign-in) ----------
+  var GH_RESERVED = /^(orgs|features|topics|collections|sponsors|marketplace|explore|settings|login|join|about|pricing|enterprise|security|apps|search|notifications|pulls|issues|trending|events|site|contact)$/i;
+  // A profile link → its public API address, or null.
+  function profileApi(url) {
+    var c = classify(url);
+    if (!c || c.kind !== "social") return null;
+    var u;
+    try { u = new URL(url); } catch (e) { return null; }
+    var parts = u.pathname.split("/").filter(Boolean);
+    if (c.net === "github" && parts.length === 1 && /^[A-Za-z0-9-]{1,39}$/.test(parts[0]) && !GH_RESERVED.test(parts[0])) {
+      return { net: "github", api: "https://api.github.com/users/" + parts[0], label: "GitHub" };
+    }
+    if (c.net === "bluesky" && parts[0] === "profile" && parts[1] && /^[A-Za-z0-9.:-]{3,253}$/.test(parts[1])) {
+      return { net: "bluesky", api: "https://public.api.bsky.app/xrpc/app.bsky.actor.getProfile?actor=" + encodeURIComponent(parts[1]), label: "Bluesky" };
+    }
+    if (c.net === "fediverse" && parts.length === 1 && /^@[A-Za-z0-9_.-]{1,64}$/.test(parts[0])) {
+      return { net: "fediverse", api: u.protocol + "//" + u.host + "/api/v1/accounts/lookup?acct=" + encodeURIComponent(parts[0].slice(1)), label: "Mastodon" };
+    }
+    return null;
+  }
+  // Links written in plain text (a bio).
+  function textLinks(s) {
+    var out = [], re = /\bhttps?:\/\/[^\s<>"')\]]+/gi, m;
+    while ((m = re.exec(String(s || "")))) { var u = normUrl(m[0].replace(/[.,;:!?]+$/, "")); if (u) out.push(u); }
+    return out;
+  }
+  function blank(src) {
+    return { src: src, name: "", photo: "", links: [], phones: [], emails: [], birthday: null, job: "", org: "", address: "", personal: true };
+  }
+  function fromGitHub(j) {
+    if (!j || typeof j !== "object" || typeof j.login !== "string") return null;
+    var f = blank("GitHub");
+    f.name = str(j.name, 120);
+    if (j.blog) { var b = normUrl(j.blog); if (b) f.links.push({ url: b, verified: false }); }
+    if (j.twitter_username && /^[A-Za-z0-9_]{1,15}$/.test(j.twitter_username)) f.links.push({ url: "https://x.com/" + j.twitter_username, verified: false });
+    textLinks(j.bio).forEach(function (u) { f.links.push({ url: u, verified: false }); });
+    if (typeof j.email === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(j.email)) f.emails.push(j.email.trim().toLowerCase().slice(0, 120));
+    if (j.company) f.org = str(String(j.company).replace(/^@/, ""), 80);
+    return f;
+  }
+  function fromBluesky(j) {
+    if (!j || typeof j !== "object" || typeof j.handle !== "string") return null;
+    var f = blank("Bluesky");
+    f.name = str(j.displayName, 120);
+    textLinks(j.description).forEach(function (u) { f.links.push({ url: u, verified: false }); });
+    // a handle that is a domain was proven by its owner (DNS / well-known)
+    if (!/\.bsky\.social$/i.test(j.handle) && /\./.test(j.handle) && j.handle !== "handle.invalid") {
+      var d = normUrl("https://" + j.handle);
+      if (d) f.links.push({ url: d, verified: true });
+    }
+    return f;
+  }
+  function fromMastodon(j, base) {
+    if (!j || typeof j !== "object" || typeof j.acct !== "string") return null;
+    var f = blank("Mastodon");
+    f.name = str(String(j.display_name || "").replace(/:[a-z0-9_]+:/gi, ""), 120);
+    var note = parsePage(String(j.note || ""), base || "https://invalid.example/");
+    note.links.forEach(function (u) { f.links.push({ url: u, verified: false }); });
+    (Array.isArray(j.fields) ? j.fields : []).slice(0, 8).forEach(function (fl) {
+      if (!fl || typeof fl.value !== "string") return;
+      var p = parsePage(fl.value, base || "https://invalid.example/");
+      var urls = p.links.length ? p.links : textLinks(fl.value.replace(/<[^>]*>/g, " "));
+      urls.forEach(function (u) { f.links.push({ url: u, verified: !!fl.verified_at }); });
+      p.emails.forEach(function (e) { f.emails.push(e); });
+      p.phones.forEach(function (x) { f.phones.push(x); });
+    });
+    return f;
+  }
+  function profile(it, opts) {
+    return getText(it.a.api, opts).then(function (r) {
+      if (!r || r.status !== 200) return null;
+      var j = null;
+      try { j = JSON.parse(r.text); } catch (e) { return null; }
+      var f = it.a.net === "github" ? fromGitHub(j) : (it.a.net === "bluesky" ? fromBluesky(j) : fromMastodon(j, it.url));
+      if (f) f.base = it.base;
+      return f;
+    }, function () { return null; });
+  }
+
+  // ---------- businesses: OpenStreetMap (Photon + Overpass) ----------
+  var PHOTON = "https://photon.komoot.io/api/";
+  var OVERPASS = "https://overpass-api.de/api/interpreter";
+  // OSM tags → a finding (phone, website, e-mail, address, links).
+  function fromOsm(tags) {
+    if (!tags || typeof tags !== "object") return null;
+    var f = blank("OpenStreetMap");
+    f.personal = false;
+    f.name = str(tags.name, 120);
+    ["phone", "contact:phone", "contact:mobile", "mobile"].forEach(function (k) {
+      String(tags[k] || "").split(";").forEach(function (p) { if (normPhone(p)) f.phones.push(str(p, 40)); });
+    });
+    ["email", "contact:email"].forEach(function (k) {
+      var e = String(tags[k] || "").trim().toLowerCase();
+      if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) f.emails.push(e.slice(0, 120));
+    });
+    ["website", "contact:website", "url"].forEach(function (k) {
+      var u = normUrl(tags[k]);
+      if (u) f.links.push({ url: u, verified: false });
+    });
+    var SOC = { "contact:facebook": "https://facebook.com/", "contact:instagram": "https://instagram.com/",
+                "contact:twitter": "https://x.com/", "contact:tiktok": "https://tiktok.com/@", "contact:youtube": "https://youtube.com/" };
+    Object.keys(SOC).forEach(function (k) {
+      var v = String(tags[k] || "").trim();
+      if (!v) return;
+      var u = /^https?:\/\//i.test(v) ? normUrl(v) : (/^[A-Za-z0-9_.@-]{1,80}$/.test(v) ? normUrl(SOC[k] + v.replace(/^@/, "")) : "");
+      if (u) f.links.push({ url: u, verified: false });
+    });
+    var street = [tags["addr:street"], tags["addr:housenumber"]].filter(Boolean).join(" ");
+    var town = [tags["addr:postcode"], tags["addr:city"]].filter(Boolean).join(" ");
+    f.address = str([street, town].filter(Boolean).join(", "), 200);
+    return f;
+  }
+  // Overpass regex for a phone number written with any spacing.
+  function phoneRegex(p) {
+    var d = normPhone(p).slice(-10);
+    return d.length >= 8 ? d.split("").join("[^0-9]*") : "";
+  }
+  function overpass(q, opts) {
+    return getText(OVERPASS + "?data=" + encodeURIComponent(q), opts).then(function (r) {
+      if (!r || r.status !== 200) return [];
+      try { var j = JSON.parse(r.text); return Array.isArray(j.elements) ? j.elements.slice(0, 10) : []; } catch (e) { return []; }
+    }, function () { return []; });
+  }
+  // Photon finds the business by name (+ the place the record holds),
+  // Overpass brings its tags. A candidate stays only when it shares the
+  // record's phone ("sure") or agrees on the name ("likely"); with no
+  // place and no shared phone it is "check". deep: when nothing came
+  // back by name, look the record's phone up in OSM (Greek numbers).
+  function business(rec, opts) {
+    var name = rec.names[0];
+    if (!name || (!rec.place && !rec.phones.length)) return Promise.resolve([]);
+    var q = PHOTON + "?limit=5&q=" + encodeURIComponent((name + (rec.place ? ", " + rec.place : "")).slice(0, 200));
+    return getText(q, opts).then(function (r) {
+      var feats = [];
+      try { feats = r && r.status === 200 ? (JSON.parse(r.text).features || []) : []; } catch (e) { feats = []; }
+      var ids = { N: [], W: [], R: [] };
+      feats.forEach(function (ft) {
+        var p = ft && ft.properties;
+        if (p && ids[p.osm_type] && /^\d+$/.test(String(p.osm_id)) && nameAgree(rec.names, p.name) === 1) ids[p.osm_type].push(p.osm_id);
+      });
+      var parts = [];
+      if (ids.N.length) parts.push("node(id:" + ids.N.join(",") + ");");
+      if (ids.W.length) parts.push("way(id:" + ids.W.join(",") + ");");
+      if (ids.R.length) parts.push("rel(id:" + ids.R.join(",") + ");");
+      if (!parts.length) return [];
+      return overpass("[out:json][timeout:15];(" + parts.join("") + ");out tags;", opts);
+    }, function () { return []; }).then(function (els) {
+      if (els.length || !opts.deep || !rec.phones.length) return els;
+      var p = rec.phones.filter(function (x) { var d = normPhone(x); return /^(30)?[26]\d{9}$/.test(d) || /^30/.test(d); })[0];
+      var re = p && phoneRegex(p);
+      if (!re) return [];
+      return overpass("[out:json][timeout:20];area[\"ISO3166-1\"=\"GR\"][admin_level=2]->.a;(nwr(area.a)[\"phone\"~\"" + re + "\"];nwr(area.a)[\"contact:phone\"~\"" + re + "\"];);out tags 3;", opts);
+    }).then(function (els) {
+      var out = [];
+      els.forEach(function (el) {
+        var f = fromOsm(el && el.tags);
+        if (!f) return;
+        var shares = f.phones.some(function (p) { return rec.phones.some(function (q) { return samePhone(p, q); }); });
+        var agree = nameAgree(rec.names, f.name) === 1;
+        if (!shares && !agree) return;
+        f.base = shares ? "sure" : (rec.place ? "likely" : "check");
+        out.push(f);
+      });
+      return out.slice(0, 2);
+    });
+  }
+
+  // ---------- Wikidata: items that name the record's own links ----------
+  var WD_SPARQL = "https://query.wikidata.org/sparql";
+  // Property → how a profile link spells its id there.
+  var WD_IDS = [
+    { p: "P2037", net: "github", re: /^https:\/\/github\.com\/([A-Za-z0-9-]{1,39})$/, url: "https://github.com/" },
+    { p: "P2003", net: "instagram", re: /^https:\/\/instagram\.com\/([A-Za-z0-9_.]{1,30})$/, url: "https://instagram.com/" },
+    { p: "P2002", net: "x", re: /^https:\/\/(?:x|twitter)\.com\/([A-Za-z0-9_]{1,15})$/, url: "https://x.com/" },
+    { p: "P2013", net: "facebook", re: /^https:\/\/facebook\.com\/([A-Za-z0-9.]{1,80})$/, url: "https://facebook.com/" },
+    { p: "P6634", net: "linkedin", re: /^https:\/\/linkedin\.com\/in\/([A-Za-z0-9_-]{1,100})$/, url: "https://linkedin.com/in/" },
+    { p: "P4264", net: "linkedin", re: /^https:\/\/linkedin\.com\/company\/([A-Za-z0-9_-]{1,100})$/, url: "https://linkedin.com/company/" },
+    { p: "P7085", net: "tiktok", re: /^https:\/\/tiktok\.com\/@([A-Za-z0-9_.]{1,40})$/, url: "https://tiktok.com/@" },
+    { p: "P12361", net: "bluesky", re: /^https:\/\/bsky\.app\/profile\/([A-Za-z0-9.-]{3,253})$/, url: "https://bsky.app/profile/" }
+  ];
+  function wdKeys(urls) {
+    var webs = [], ids = [];
+    urls.forEach(function (u) {
+      var c = classify(u);
+      if (!c) return;
+      if (c.kind === "site") {
+        var h = hostOf(u), path = pathOf(u).replace(/\/+$/, "");
+        if (!/^[a-z0-9.-]+$/.test(h) || !/^[A-Za-z0-9\/._~-]*$/.test(path)) return;
+        ["https://", "http://"].forEach(function (pr) {
+          ["", "www."].forEach(function (w) { [path, path + "/"].forEach(function (pa) { webs.push("<" + pr + w + h + pa + ">"); }); });
+        });
+        return;
+      }
+      WD_IDS.forEach(function (d) {
+        var m = d.re.exec(u);
+        if (m) ids.push({ p: d.p, v: m[1] });
+      });
+    });
+    return { webs: uniq(webs).slice(0, 48), ids: ids.slice(0, 12) };
+  }
+  function wdQuery(keys) {
+    var u = [];
+    if (keys.webs.length) u.push("{ VALUES ?w { " + keys.webs.join(" ") + " } ?item wdt:P856 ?w . }");
+    keys.ids.forEach(function (k) { u.push("{ ?item wdt:" + k.p + " \"" + k.v + "\" . }"); });
+    if (!u.length) return "";
+    var opt = WD_IDS.map(function (d) { return "OPTIONAL { ?item wdt:" + d.p + " ?" + d.p + " . }"; }).join(" ");
+    return "SELECT ?item ?itemLabel ?birth ?web ?human " + WD_IDS.map(function (d) { return "?" + d.p; }).join(" ") +
+      " WHERE { " + u.join(" UNION ") + " OPTIONAL { ?item wdt:P569 ?birth . } OPTIONAL { ?item wdt:P856 ?web . } " + opt +
+      " BIND(EXISTS { ?item wdt:P31 wd:Q5 } AS ?human) SERVICE wikibase:label { bd:serviceParam wikibase:language \"el,en\". } } LIMIT 40";
+  }
+  // SPARQL JSON → one finding per item.
+  function fromWikidata(j) {
+    var rows = j && j.results && Array.isArray(j.results.bindings) ? j.results.bindings : [];
+    var items = {}, order = [];
+    function v(r, k) { return r[k] && typeof r[k].value === "string" ? r[k].value : ""; }
+    rows.forEach(function (r) {
+      var id = v(r, "item");
+      if (!/^http:\/\/www\.wikidata\.org\/entity\/Q\d+$/.test(id)) return;
+      var f = items[id];
+      if (!f) { f = items[id] = blank("Wikidata"); f.personal = v(r, "human") === "true"; f.name = str(v(r, "itemLabel"), 120); order.push(id); }
+      var web = normUrl(v(r, "web"));
+      if (web) f.links.push({ url: web, verified: false });
+      WD_IDS.forEach(function (d) {
+        var x = v(r, d.p);
+        if (x && /^[A-Za-z0-9_.@-]{1,253}$/.test(x)) { var u = normUrl(d.url + x); if (u) f.links.push({ url: u, verified: false }); }
+      });
+      if (f.personal && !f.birthday) { var b = ymd(v(r, "birth")); if (b && v(r, "birth").charAt(0) !== "-") f.birthday = validBirthday(b); }
+    });
+    return order.map(function (id) {
+      var f = items[id];
+      var seen = {};
+      f.links = f.links.filter(function (l) { if (seen[l.url]) return false; seen[l.url] = 1; return true; });
+      if (/^Q\d+$/.test(f.name)) f.name = "";
+      return f;
+    });
+  }
+  function wikidata(urls, base, opts) {
+    var q = wdQuery(wdKeys(urls));
+    if (!q) return Promise.resolve([]);
+    return getText(WD_SPARQL + "?format=json&query=" + encodeURIComponent(q), opts).then(function (r) {
+      if (!r || r.status !== 200) return [];
+      var j = null;
+      try { j = JSON.parse(r.text); } catch (e) { return []; }
+      var list = fromWikidata(j);
+      // more than one item answers: none of them is sure
+      list.forEach(function (f) { f.base = list.length > 1 ? "check" : base; });
+      return list.slice(0, 3);
+    }, function () { return []; });
+  }
+
+  // ---------- wave 4: search engines ----------
+  // Links the person opens in their own browser to search by hand: the
+  // closed networks are searched only this way. DuckDuckGo, not Google.
+  var SEARCH_SITES = [
+    { label: "Web", site: "" }, { label: "LinkedIn", site: "linkedin.com" }, { label: "Facebook", site: "facebook.com" },
+    { label: "Instagram", site: "instagram.com" }, { label: "X", site: "x.com" }, { label: "TikTok", site: "tiktok.com" }
+  ];
+  function searchLinks(recIn) {
+    var rec = normRec(recIn);
+    var name = rec.names[0];
+    if (!name) return [];
+    var q = "\"" + name.replace(/"/g, "") + "\"" + (rec.names[1] && rec.kind !== "org" ? " " + rec.names[1] : "");
+    return SEARCH_SITES.map(function (x) {
+      return { label: x.label, url: "https://duckduckgo.com/?q=" + encodeURIComponent((q + (x.site ? " site:" + x.site : "")).slice(0, 300)) };
+    });
+  }
+  // The user's own SearXNG server, when the Assistant is set to use one.
+  function searxBase() {
+    try {
+      var a = JSON.parse(root.localStorage.getItem("oros-assistant-data") || "null");
+      var b = a && a.set && a.set.wsBase;
+      if (typeof b === "string" && /^https:\/\/[^\s"<>]+$/.test(b)) return b.replace(/\/+$/, "");
+    } catch (e) {}
+    return "";
+  }
+  // A name search on the user's SearXNG: every result is only "check";
+  // a result page that shows the record's own phone or e-mail rises.
+  function webSearch(rec, opts) {
+    var base = opts.searx != null ? opts.searx : searxBase();
+    var name = rec.names[0];
+    if (!base || !name) return Promise.resolve([]);
+    var q = "\"" + name.replace(/"/g, "") + "\"" + (rec.place ? " " + rec.place.split(",").pop().trim() : "");
+    return getText(base + "/search?format=json&q=" + encodeURIComponent(q.slice(0, 200)), opts).then(function (r) {
+      var res = [];
+      try { res = r && r.status === 200 ? (JSON.parse(r.text).results || []) : []; } catch (e) { res = []; }
+      var f = blank("SearXNG");
+      f.base = "check";
+      f.personal = false;
+      var pages = [];
+      res.slice(0, 10).forEach(function (x) {
+        var u = x && normUrl(x.url);
+        if (!u || isNoise(u)) return;
+        f.links.push({ url: u, verified: false });
+        var c = classify(u);
+        if (c && c.fetch && c.kind !== "social" && pages.length < 2) pages.push(u);
+      });
+      var out = f.links.length ? [f] : [];
+      return pages.reduce(function (p, u) {
+        return p.then(function () { return page(u, "check", opts, rec, hostOf(u)); }).then(function (pf) {
+          if (pf && grade(rec, pf).hit) out.push(pf);
+        });
+      }, Promise.resolve()).then(function () { return out; });
+    }, function () { return []; });
   }
 
   // ---------- network ----------
@@ -523,7 +855,7 @@
     function readPage(url, base, label) {
       var c = classify(url);
       if (!c || !c.fetch || read[url] || Object.keys(read).length >= MAX_PAGES) return Promise.resolve();
-      if (c.kind === "social" && c.net !== "fediverse") return Promise.resolve();   // network APIs come in wave 2
+      if (c.kind === "social") return Promise.resolve();   // open networks go through their APIs below
       read[url] = 1;
       return page(url, base, opts, rec, label).then(function (f) { if (f) findings.push(f); });
     }
@@ -543,13 +875,60 @@
       });
       return uniq(next).reduce(function (p, u) { return p.then(function () { return readPage(u, "likely"); }); }, Promise.resolve());
     });
+    // open networks (GitHub, Bluesky, Mastodon) through their public
+    // APIs: the record's own profile links, or ones a finding that is
+    // not "check" points at (a verified link stays "sure")
+    chain = chain.then(function () {
+      var todo = [], seen = {};
+      function want(url, base) {
+        var a = profileApi(url);
+        if (!a || seen[a.api] || todo.length >= MAX_PROFILES) return;
+        seen[a.api] = 1;
+        todo.push({ a: a, base: base, url: url });
+      }
+      rec.sites.forEach(function (u) { want(u, "likely"); });
+      findings.forEach(function (f) {
+        var g = grade(rec, f);
+        if (g.conf === "check") return;
+        f.links.forEach(function (l) { want(l.url, l.verified ? "sure" : "likely"); });
+      });
+      return todo.reduce(function (p, it) {
+        return p.then(function () { return profile(it, opts); }).then(function (f) { if (f) findings.push(f); });
+      }, Promise.resolve());
+    });
+    // businesses in OpenStreetMap (an org record, by name + place or phone)
+    chain = chain.then(function () {
+      if (rec.kind !== "org") return;
+      return business(rec, opts).then(function (list) { findings = findings.concat(list); });
+    });
+    // Wikidata items that name the record's own website or profiles
+    chain = chain.then(function () {
+      var mine = rec.sites.slice(), more = [];
+      findings.forEach(function (f) {
+        if (grade(rec, f).conf === "check") return;
+        f.links.forEach(function (l) { more.push(l.url); });
+      });
+      more = uniq(more).filter(function (u) { return mine.indexOf(u) < 0; });
+      return wikidata(mine, "sure", opts).then(function (a) {
+        findings = findings.concat(a);
+        if (a.length || !more.length) return;
+        return wikidata(more, "likely", opts).then(function (b2) { findings = findings.concat(b2); });
+      });
+    });
+    // a name search on the user's own SearXNG (only for a few records)
+    chain = chain.then(function () {
+      if (!opts.deep) return;
+      return webSearch(rec, opts).then(function (list) { findings = findings.concat(list); });
+    });
     return chain.then(function () { return propose(recIn, findings); });
   }
 
   var api = {
     DEFAULT_RELAY: DEFAULT_RELAY, normPhone: normPhone, samePhone: samePhone, normUrl: normUrl, classify: classify,
     isNoise: isNoise, skeleton: skeleton, nameAgree: nameAgree, parsePage: parsePage, fromGravatar: fromGravatar,
-    fromPage: fromPage, grade: grade, propose: propose, lookup: lookup, getImage: getImage, sha256: sha256,
+    fromPage: fromPage, grade: grade, profileApi: profileApi, fromGitHub: fromGitHub, fromBluesky: fromBluesky,
+    fromMastodon: fromMastodon, fromOsm: fromOsm, phoneRegex: phoneRegex, wdKeys: wdKeys, wdQuery: wdQuery,
+    fromWikidata: fromWikidata, searchLinks: searchLinks, searxBase: searxBase, propose: propose, lookup: lookup, getImage: getImage, sha256: sha256,
     validBirthday: validBirthday
   };
   root.OrosEnrich = api;
