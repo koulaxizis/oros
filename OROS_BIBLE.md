@@ -6935,3 +6935,13 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Notes › Import notes… (footer upload button or notebook menu): pick an Obsidian vault or any folder of Markdown/text files (folder picker where the browser has it), single .md/.txt files, a .zip, or a decrypted Standard Notes backup (.json). Folders become parent pages, front-matter tags and `#tags` become labels, wiki links are kept, Standard Notes tags/pinned/archived carry over and Super notes are converted to Markdown. Importing the same source again adds only what is new; Undo removes the import. Only text is imported, rendered escaped as always.
 - Files: new `notes/import.js` (`OrosNotesImport`: collect, parse, plan; precached), `notes/notes.js` (`#nt-imp` dialog, `importApply`, Undo), `notes/index.html` (loads `atelier/zip.js` + `import.js`), `notes/notes.css`, help, Bible NOTES-IMP.
   - Tests: new `tests/notes-import.test.js`; full suite green. Not tested: real Obsidian and Standard Notes exports from Chris's devices, and browsers without folder picking (file picker fallback).
+
+### 2026-10-15 — Import from other apps, wave 0+1: Habits, Mood, Diary, Cycle (#393) — 2.28.00
+- New shared helper `importkit.js` (`OrosImportKit`: CSV with delimiter sniffing, header detection, tolerant dates and numbers, JSON, hashing, ZIP over `atelier/zip.js`, text cleaning); pure and Node-tested.
+- Habits › gear › Import: Loop (ZIP/CSV), Habitica (JSON/CSV), Streaks, Habitify and generic long/wide CSV.
+- Mood › Insights › Import: Daylio CSV and `.daylio` backup, Bearable, eMoods and generic CSV; each source mood maps to one of the five feeling steps, adjustable in the preview.
+- Diary › Import: Day One JSON ZIP, Journey ZIP, Diaro XML and Daylio notes; place, weather and up to four photos a day (opt-in) fill only empty fields.
+- Cycle › Insights › Import: drip. CSV, Clue `.cluedata`, Flo GDPR JSON and generic per-period or per-bleeding-day CSV; overlaps with your own periods and future dates are skipped.
+- Every importer shows a preview, writes once, keeps your own entries, adds only what is missing on a re-import, and offers Undo. Only files you export yourself; nothing is sent anywhere.
+- Files: `importkit.js`, `habits/import.js`, `mood/import.js`, `diary/import.js`, `cycle/import.js` (all precached), the four apps' UI and help, Bible decision IMP-1.
+  - Tests: new importkit, habits, mood, diary and cycle import tests with fixtures; full suite green. Not tested: real exports from these apps on Chris's devices.
