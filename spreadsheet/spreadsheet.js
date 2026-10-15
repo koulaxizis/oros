@@ -19,6 +19,7 @@ var ROWS = 100, COLS = 26;          /* a new sheet */
 var MAX_ROWS = 10000, MAX_COLS = 104; /* A..CZ; = functions.js limits */
 var VIEW_KEY = "oros-spreadsheet-view"; /* device-local filters, NEVER synced */
 var KIT = window.OrosSheetKit;        /* sheetkit.js: Wave 2 pure logic */
+var SI = window.OrosSheetImport;      /* sheetimport.js: file import + .orossheet pack */
 var LANG = "en";
 
 try {
@@ -2808,25 +2809,9 @@ function beginRename(tabEl, labelEl, sh) {
 
 /* ===== SECTION 3f: CSV IMPORT / EXPORT ===== */
 
-/* Encoding-safe decoder: BOM sniff first (UTF-8 / UTF-16 LE+BE),
-   then strict UTF-8 validation, then Greek ANSI (windows-1253).
-   Used by CSV + Excel import so Greek never turns to mojibake. */
-function sniffDecode(buf) {
-  var u = new Uint8Array(buf);
-  if (u.length >= 3 && u[0] === 0xEF && u[1] === 0xBB && u[2] === 0xBF)
-    return new TextDecoder("utf-8").decode(u.subarray(3));
-  if (u.length >= 2 && u[0] === 0xFF && u[1] === 0xFE)
-    return new TextDecoder("utf-16le").decode(u.subarray(2));
-  if (u.length >= 2 && u[0] === 0xFE && u[1] === 0xFF)
-    return new TextDecoder("utf-16be").decode(u.subarray(2));
-  try {
-    return new TextDecoder("utf-8", { fatal: true }).decode(u);
-  } catch (e) {}
-  try {
-    return new TextDecoder("windows-1253").decode(u);
-  } catch (e) {}
-  return new TextDecoder("utf-8").decode(u);
-}
+/* Encoding-safe decoder (sheetimport.js): BOM sniff, strict UTF-8,
+   then Greek ANSI (windows-1253). Used by CSV + Excel import. */
+function sniffDecode(buf) { return SI.sniffDecode(buf); }
 
 function csvEscape(v) {
   v = String(v);
@@ -2886,50 +2871,10 @@ function csvExport() {
   done();
 }
 
-/* SS-6: Greek / European Excel writes ';'-separated CSV. The
-   separator is the one of , ; TAB that occurs most in the first line
-   outside quotes. */
-function csvSniffSep(text) {
-  var line = text.split(/\r?\n/)[0] || "", n = { ",": 0, ";": 0, "\t": 0 };
-  var inQ = false, i, ch;
-  for (i = 0; i < line.length; i++) {
-    ch = line.charAt(i);
-    if (ch === '"') inQ = !inQ;
-    else if (!inQ && n.hasOwnProperty(ch)) n[ch]++;
-  }
-  if (n[";"] > n[","] && n[";"] >= n["\t"]) return ";";
-  if (n["\t"] > n[","] && n["\t"] > n[";"]) return "\t";
-  return ",";
-}
-
+/* SS-6: ',' ';' or TAB, capped at the normalizeState limits
+   (sheetimport.js csvParse) */
 function csvParse(text) {
-  var rows = [], row = [], field = "", inQ = false, i, ch;
-  var sep = csvSniffSep(text);
-  for (i = 0; i < text.length; i++) {
-    ch = text.charAt(i);
-    if (inQ) {
-      if (ch === '"') {
-        if (text.charAt(i + 1) === '"') { field += '"'; i++; }
-        else inQ = false;
-      } else field += ch;
-    } else {
-      if (ch === '"') { inQ = true; }
-      else if (ch === sep) { row.push(field); field = ""; }
-      else if (ch === "\n") { row.push(field); field = ""; rows.push(row); row = []; }
-      else if (ch === "\r") { }
-      else field += ch;
-    }
-  }
-  if (field !== "" || row.length) { row.push(field); rows.push(row); }
-  /* SS-6: hard cap at the normalizeState limits (XL_ROWS_CAP x
-     XL_COLS_CAP). It cut every row to 26 columns without a word. */
-  var cut = rows.length > XL_ROWS_CAP;
-  if (cut) rows.length = XL_ROWS_CAP;
-  for (var r = 0; r < rows.length; r++) {
-    if (rows[r].length > XL_COLS_CAP) { rows[r].length = XL_COLS_CAP; cut = true; }
-  }
-  rows.truncated = cut;
-  return rows;
+  return SI.csvParse(text, { rowsCap: XL_ROWS_CAP, colsCap: XL_COLS_CAP });
 }
 
 function csvImport(file) {
@@ -2939,28 +2884,11 @@ function csvImport(file) {
       var rows = csvParse(sniffDecode(reader.result));
       if (!rows.length) { notifyTransient(t("xl.readerr")); return; }
 
-      var n = nextSheetNumber();
-      var maxCols = 0, ii;
-      for (ii = 0; ii < rows.length; ii++)
-        if (rows[ii].length > maxCols) maxCols = rows[ii].length;
-
-      var sh = {
-        id: uid(),
-        name: null,
-        bi: { en: "Sheet" + n, el: "\u03A6\u03CD\u03BB\u03BB\u03BF" + n },
-        rows: Math.min(Math.max(ROWS, rows.length + 5), XL_ROWS_CAP),
-        cols: Math.min(Math.max(COLS, maxCols), XL_COLS_CAP),
-        cw: {},
-        pos: maxPos() + 1,
-        mtime: now()
-      };
+      var imp = SI.csvSheet(rows, { uid: uid, now: now(), n: nextSheetNumber(), pos: maxPos() + 1,
+        rows: ROWS, cols: COLS, rowsCap: XL_ROWS_CAP, colsCap: XL_COLS_CAP });
+      var sh = imp.sheets[0], k;
       state.sheets.push(sh);
-
-      var r, c, ts = now();
-      for (r = 0; r < rows.length; r++)
-        for (c = 0; c < rows[r].length; c++)
-          if (rows[r][c] !== "")
-            state.cells[cellKey(sh.id, r, c)] = { v: rows[r][c], mtime: ts };
+      for (k in imp.cells) state.cells[k] = imp.cells[k];
 
       markDirty();
       switchTo(sh.id);
@@ -3007,45 +2935,13 @@ function loadXlsxLib(done) {
 
 function xlPad(n) { return (n < 10 ? "0" : "") + n; }
 
-function xlDateStr(d) {
-  var s = d.getFullYear() + "-" + xlPad(d.getMonth() + 1) + "-" + xlPad(d.getDate());
-  if (d.getHours() || d.getMinutes() || d.getSeconds())
-    s += " " + xlPad(d.getHours()) + ":" + xlPad(d.getMinutes());
-  return s;
-}
-
 function xlStamp() {
   var d = new Date();
   return d.getFullYear() + "-" + xlPad(d.getMonth() + 1) + "-" + xlPad(d.getDate());
 }
 
 /* Excel sheet-name rules: no []:*?/\ , max 31 chars */
-function xlSafeName(nm) {
-  var s = String(nm).replace(/[\\\/\?\*\[\]:]/g, " ").slice(0, 31).trim();
-  return s || "Sheet";
-}
-
-/* worksheet cell -> our raw v string. Formulas ride through as
-   "=..." (our engine evaluates the ones it knows; unknown ones
-   show #NAME? but the text is preserved and round-trips).    */
-function xlCellToRaw(cell) {
-  if (cell.f) return "=" + String(cell.f);
-  if (cell.t === "n") return isFinite(cell.v) ? String(cell.v) : "";
-  if (cell.t === "b") return cell.v ? "TRUE" : "FALSE";
-  if (cell.t === "d") return xlDateStr(cell.v);
-  if (cell.v === null || cell.v === undefined) return "";
-  return String(cell.v);
-}
-
-/* Excel's own cached result for a formula cell — kept as `cv`
-   (additive field, rides whole-cell LWW, no DATA_VER bump).     */
-function xlCacheRaw(cell) {
-  if (cell.t === "n") return isFinite(cell.v) ? String(cell.v) : "";
-  if (cell.t === "b") return cell.v ? "TRUE" : "FALSE";
-  if (cell.t === "d") return xlDateStr(cell.v);
-  if (cell.v === null || cell.v === undefined) return "";
-  return String(cell.v);
-}
+function xlSafeName(nm) { return SI.xlSafeName(nm); }
 
 /* IMPORT — every worksheet becomes a NEW orOS sheet (never
    overwrites existing data; same contract as csvImport).     */
@@ -3055,77 +2951,14 @@ function xlImport(file) {
     reader.onload = function () {
       var made = 0, truncated = false, lastId = null;
       try {
-        /* Real .xlsx/.ods = ZIP (magic "PK") -> read as array.
-           Plain CSV/text disguised as .xls -> sniff decode, then
-           let SheetJS parse the STRING with correct encoding.  */
-        var u8 = new Uint8Array(reader.result);
-        var isZip = u8.length > 3 && u8[0] === 0x50 && u8[1] === 0x4B &&
-                    (u8[2] === 0x03 || u8[2] === 0x05 || u8[2] === 0x07);
-        var wb = isZip
-          ? window.XLSX.read(reader.result, { type: "array", cellDates: true, cellStyles: true })
-          : window.XLSX.read(sniffDecode(reader.result),
-              { type: "string", cellDates: true });
-        var X = window.XLSX.utils;
-        var ts = now();
-        for (var si = 0; si < wb.SheetNames.length; si++) {
-          var ws = wb.Sheets[wb.SheetNames[si]];
-          if (!ws || !ws["!ref"]) continue;
-          var rng = X.decode_range(ws["!ref"]);
-          var needRows = rng.e.r - rng.s.r + 1;
-          var needCols = rng.e.c - rng.s.c + 1;
-          if (needRows > XL_ROWS_CAP || needCols > XL_COLS_CAP) truncated = true;
-
-          var sh = {
-            id: uid(),
-            name: xlSafeName(wb.SheetNames[si]),
-            bi: undefined,
-            rows: Math.min(Math.max(ROWS, needRows + 5), XL_ROWS_CAP),
-            cols: Math.min(Math.max(COLS, needCols), XL_COLS_CAP),
-            cw: {},
-            pos: maxPos() + 1,
-            mtime: ts
-          };
-          state.sheets.push(sh);
-          lastId = sh.id;
-          made++;
-
-          for (var R = rng.s.r; R <= rng.e.r; R++) {
-            if (R - rng.s.r >= XL_ROWS_CAP) break;
-            for (var C = rng.s.c; C <= rng.e.c; C++) {
-              if (C - rng.s.c >= XL_COLS_CAP) break;
-              var cell = ws[X.encode_cell({ r: R, c: C })];
-              if (!cell) continue;
-              var v = xlCellToRaw(cell);
-              if (v === "") continue;
-              var rec = { v: v, mtime: ts };
-              if (cell.f) {
-                var cv = xlCacheRaw(cell);
-                if (cv !== "") rec.cv = cv;
-              }
-              state.cells[cellKey(sh.id, R - rng.s.r, C - rng.s.c)] = rec;
-            }
-          }
-          /* custom row heights come along */
-          (ws["!rows"] || []).forEach(function (ro, ri) {
-            var hp = ro && (ro.hpt ? ro.hpt * 4 / 3 : ro.hpx), rr = ri - rng.s.r;
-            if (!hp || ro.hidden || rr < 0 || rr >= sh.rows || Math.abs(hp - 20) < 3) return;
-            sh.rh = sh.rh || {};
-            sh.rh[rr] = Math.max(RH_MIN, Math.min(RH_MAX, Math.round(hp)));
-          });
-          /* merged cells come along (on the top-left cell, at most 500 rows) */
-          (ws["!merges"] || []).forEach(function (m) {
-            if (!m || !m.s || !m.e) return;
-            var r0 = m.s.r - rng.s.r, c0 = m.s.c - rng.s.c;
-            if (r0 < 0 || c0 < 0 || r0 >= sh.rows || c0 >= sh.cols) return;
-            var mr = Math.min(m.e.r - m.s.r + 1, 500, sh.rows - r0), mc = Math.min(m.e.c - m.s.c + 1, sh.cols - c0);
-            if (!(mr > 1 || mc > 1)) return;
-            var key = cellKey(sh.id, r0, c0), rec2 = state.cells[key] || { v: "", mtime: ts };
-            rec2.f = rec2.f || {};
-            if (mr > 1) rec2.f.mr = mr;
-            if (mc > 1) rec2.f.mc = mc;
-            state.cells[key] = rec2;
-          });
-        }
+        /* the workbook -> new sheets: sheetimport.js (the Converter
+           uses the same code) */
+        var wb = SI.readWorkbook(window.XLSX, reader.result);
+        var imp = SI.workbookSheets(wb, window.XLSX.utils, { uid: uid, now: now(), pos: maxPos() + 1,
+          rows: ROWS, cols: COLS, rowsCap: XL_ROWS_CAP, colsCap: XL_COLS_CAP, rhMin: RH_MIN, rhMax: RH_MAX });
+        imp.sheets.forEach(function (sh) { state.sheets.push(sh); });
+        for (var k in imp.cells) state.cells[k] = imp.cells[k];
+        made = imp.sheets.length; truncated = imp.truncated; lastId = imp.lastId;
         if (!made) { notifyTransient(t("xl.readerr")); return; }
         markDirty();
         invalidateEval();
@@ -3276,70 +3109,26 @@ var BOOK_MIME = "application/x-oros-sheet";
 
 /* a cell as text for the CSV preview: formulas by their result */
 function bookCellText(sid, r, c, cel) {
-  var v = cel ? cel.v : "";
-  if (!v) return "";
-  if (v.charAt(0) === "=") {
-    var res = evalCell(sid, r, c);
-    if (typeof res === "number" && isFinite(res)) return String(+res.toPrecision(15));
-    return FX.display(res, "en");
-  }
-  return v.charAt(0) === "'" ? v.slice(1) : v;
+  return SI.previewText(cel, function () { return evalCell(sid, r, c); }, FX);
 }
 
 /* the first sheet's top-left corner as a PNG (≤ 512 px), or null */
 function bookThumb(sh) {
-  return new Promise(function (resolve) {
-    try {
-      var W = 512, H = 320, RH = 20, CWD = 84, HW = 28, rows = Math.floor((H - RH) / RH), cols = Math.ceil((W - HW) / CWD);
-      var cv = document.createElement("canvas");
-      cv.width = W; cv.height = H;
-      var g = cv.getContext("2d");
-      if (!g || !cv.toBlob) { resolve(null); return; }
-      g.fillStyle = "#ffffff"; g.fillRect(0, 0, W, H);
-      g.fillStyle = "#eef0f3"; g.fillRect(0, 0, W, RH); g.fillRect(0, 0, HW, H);
-      g.strokeStyle = "#d5d9df"; g.lineWidth = 1;
-      var r, c, x, y;
-      for (r = 0; r <= rows; r++) { y = RH + r * RH + 0.5; g.beginPath(); g.moveTo(0, y); g.lineTo(W, y); g.stroke(); }
-      for (c = 0; c <= cols; c++) { x = HW + c * CWD + 0.5; g.beginPath(); g.moveTo(x, 0); g.lineTo(x, H); g.stroke(); }
-      g.font = "11px sans-serif"; g.textBaseline = "middle"; g.fillStyle = "#6b7280";
-      for (c = 0; c < cols; c++) g.fillText(colName(c), HW + c * CWD + CWD / 2 - 4, RH / 2);
-      for (r = 0; r < rows; r++) g.fillText(String(r + 1), 4, RH + r * RH + RH / 2);
-      for (r = 0; r < rows; r++) for (c = 0; c < cols; c++) {
-        var cel = state.cells[cellKey(sh.id, r, c)];
-        if (!cel || (!cel.v && !(cel.f && cel.f.bg))) continue;
-        x = HW + c * CWD; y = RH + r * RH;
-        if (cel.f && cel.f.bg) { g.fillStyle = cel.f.bg; g.fillRect(x + 1, y + 1, CWD - 1, RH - 1); }
-        var txt = bookCellText(sh.id, r, c, cel);
-        if (!txt) continue;
-        g.font = (cel.f && cel.f.i ? "italic " : "") + (cel.f && cel.f.b ? "bold " : "") + "12px sans-serif";
-        g.fillStyle = (cel.f && cel.f.co) || "#1f2328";
-        g.save(); g.beginPath(); g.rect(x + 1, y, CWD - 2, RH); g.clip();
-        g.fillText(txt, x + 4, y + RH / 2); g.restore();
-      }
-      cv.toBlob(function (b) { resolve(b || null); }, "image/png");
-    } catch (e) { resolve(null); }
-  });
+  return SI.thumbnail(function () { return document.createElement("canvas"); },
+    function (r, c) { return state.cells[cellKey(sh.id, r, c)]; },
+    function (r, c, cel) { return bookCellText(sh.id, r, c, cel); });
 }
 
 function bookSave() {
   if (!window.OrosBundle) { notifyTransient(t("xl.readerr")); return; }
   if (editing) commitEdit(0, 0);
   freshEval();
-  var canon = canonSS(state), content = KIT.bookContent(canon);
-  var preview = [];
-  canon.sheets.forEach(function (sh, i) {
-    var csv = KIT.sheetCSV(sh.id, canon.cells, bookCellText);
-    if (csv !== null) preview.push({ name: KIT.csvName(i, displayName(sh)), data: csv, type: "text/csv" });
-  });
+  var canon = canonSS(state);
+  var preview = SI.previewFiles(KIT, canon, bookCellText, displayName);
   var title = t("title") + " " + xlStamp();
   bookThumb(canon.sheets[0]).then(function (thumb) {
-    return OrosBundle.write({
-      mime: BOOK_MIME, app: "spreadsheet", schema: "spreadsheet/1", content: content,
-      meta: { title: title, created: Math.min.apply(null, canon.sheets.map(function (sh) { return sh.mtime || now(); })),
-              modified: now(), language: LANG === "el" ? "el" : "en", generator: "orOS Spreadsheet" },
-      settings: { active: actSID },
-      thumbnail: thumb || undefined, preview: preview, date: new Date()
-    });
+    return OrosBundle.write(SI.writeOpts({ KIT: KIT, canon: canon, title: title, lang: LANG,
+      active: actSID, now: now(), thumb: thumb, preview: preview }));
   }).then(function (bytes) {
     var fname = title + ".orossheet";
     var blob = new Blob([bytes], { type: BOOK_MIME });

@@ -239,6 +239,7 @@
       "search.skipped":       "{n} files were too big or unreadable and were skipped",
       "menu.zip":      "Compress to ZIP",
       "menu.extract":  "Extract here",
+      "menu.convert":  "Convert to orOS",
       "zip.archive":   "Archive",
       "zip.working":   "Compressing… {n} of {t}",
       "zip.done":      "Created \"{name}\"",
@@ -459,6 +460,7 @@
       "search.skipped":       "{n} αρχεία ήταν πολύ μεγάλα ή δεν διαβάστηκαν και παραλείφθηκαν",
       "menu.zip":      "Συμπίεση σε ZIP",
       "menu.extract":  "Αποσυμπίεση εδώ",
+      "menu.convert":  "Μετατροπή σε orOS",
       "zip.archive":   "Συμπιεσμένο",
       "zip.working":   "Συμπίεση… {n} από {t}",
       "zip.done":      "Δημιουργήθηκε το «{name}»",
@@ -584,6 +586,8 @@
     '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><polyline points="3 3 3 9 9 9"/></svg>';
   var ZIP_SVG =
     '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M10 4h2M10 7h2M10 10h2M10 13h2"/><rect x="9" y="15" width="4" height="4" rx="1"/></svg>';
+  var CONVERT_SVG =
+    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h13l-3-3M20 17H7l3 3"/></svg>';
   var UNZIP_SVG =
     '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/><path d="M12 10v6M9 13l3 3 3-3"/></svg>';
   var GRID_SVG =
@@ -748,6 +752,24 @@
   }
   function baseName(p) {
     return p.slice(p.lastIndexOf("/") + 1);
+  }
+  // "Convert to orOS": the selected files the orOS Converter takes
+  // (converter/registry.js), only when that app is installed.
+  function convertiblePaths() {
+    var reg = window.OrosConvertRegistry, env = null;
+    try { env = window.parent && window.parent !== window ? window.parent.orosTodayEnv : null; } catch (e) {}
+    if (!reg || !env || typeof env.apps !== "function" ||
+        !env.apps().some(function (a) { return a && a.id === "converter"; })) return [];
+    var dirs = {};
+    lastEntries.forEach(function (e) { if (e.dir) dirs[entryPath(e)] = true; });
+    return selectionPaths().filter(function (p) {
+      return !dirs[p] && !CORE.isTrashPath(p) && !!reg.forName(baseName(p));
+    });
+  }
+  function convertSelection() {
+    var paths = convertiblePaths();
+    if (!paths.length) return;
+    try { window.parent.__orosOpenAt("converter", { paths: paths }); } catch (e) {}
   }
   // Rows of the Recent and Trash views carry their own full path.
   function entryPath(e) { return e.path || join(cwd, e.name); }
@@ -3035,6 +3057,9 @@
         zipExtract(p.path);
       }));
     }
+    if (convertiblePaths().length) {
+      ctxMenu.appendChild(mkItem(CONVERT_SVG, "menu.convert", convertSelection));
+    }
     ctxMenu.appendChild(hr());
     ctxMenu.appendChild(mkItem("", "menu.copyName", function () {
       copyToClipboard(p, "name");
@@ -4378,6 +4403,7 @@
       if (p) favToggle(p.path, p.dir);
     }));
     bar.appendChild(selBtn("sb-zip", ZIP_SVG, "menu.zip", function () { zipCreate(selectionPaths()); }));
+    bar.appendChild(selBtn("sb-conv", CONVERT_SVG, "menu.convert", convertSelection));
     bar.appendChild(selBtn("sb-move", MV_SVG, "menu.moveTo", function () { openPickerDialog("move"); }));
     bar.appendChild(selBtn("sb-copy", CP_SVG, "menu.copyTo", function () { openPickerDialog("copy"); }));
     if (dbx() && dbx().exportFrom) {
@@ -4407,6 +4433,8 @@
     show("sb-restore", trash, n > 0);
     show("sb-fav", !trash && n === 1, n === 1);
     show("sb-zip", !trash, n > 0);
+    var conv = !trash && n > 0 && convertiblePaths().length > 0;
+    show("sb-conv", conv, conv);
     show("sb-move", !trash, n > 0);
     show("sb-copy", !trash, n > 0);
     show("sb-dbx", !trash, n > 0);
