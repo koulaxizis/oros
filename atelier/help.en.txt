@@ -62,7 +62,7 @@ The strip under the canvas shows the pages of your design. `+` adds a page; each
 - In the PDF, texts are real text in the embedded fonts (you can select, search and copy them) and shapes, lines and tables stay sharp at any zoom. Photos, icons, charts, gradients and text effects a PDF can't express (glow, blur) become pictures at the chosen 150 or 300 dpi, element by element; a text with a letter the fonts lack (an emoji, for example) also becomes a picture. Tick `Whole pages as pictures` for the old exact-look PDF.
 - `Video` (MP4 or WebM, whichever your browser records) and `GIF` turn the pages into a film with their animations and transitions. A video records in real time, so keep the tab open until it is saved.
 - `More` › `Resize…` makes the design in other sizes, for example a square post as a story and a banner. Tick one or more sizes (or a custom size): the elements are placed again for each one, so things at the edges stay at the edges, bars and photos across the page stretch, and nothing is distorted. With `Keep this design, make a copy in each size` on, each size becomes a new design next to this one (in the same folder); with it off, this design itself changes size (`Undo` brings it back).
-- `More` › `Save as package (.orosdesign)` makes one file with the design and its images.
+- `More` › `Save as package (.orosdesign)` makes one file with the design, its images and clips. It is an open ZIP file: unzip it and you find `content.json` (the design), `media` (its pictures and clips) and a thumbnail.
 
 ## AI
 - The `AI` tab writes for you. `Ideas for this page` gives three ideas with new words for every text box of the page (and new colours, if `New colours too` is ticked), keeping the layout: tell it what the design is about, then tap an idea to try it, or another one; `Undo` brings back your own.
@@ -71,7 +71,7 @@ The strip under the canvas shows the pages of your design. `+` adds a page; each
 - `Remove background` (on a selected photo, or in the `AI` tab) keeps the main subject and makes the rest transparent. It runs on this device and the picture is not sent anywhere. The first time it downloads the tool (about 16 MB), then works offline; `Keep more · keep less` adjusts the edge before you apply it. The original picture stays in `Uploads`, and `Undo` brings it back.
 
 ## Import from Canva and other files
-`Import` on the home screen offers `From a file (.pptx, picture, package)…` and `From your Canva account…`.
+`Import` on the home screen offers `From a file (.pptx, picture, package)…`, `From an unzipped package folder…` (a .orosdesign that was unzipped, even after you changed a picture in it) and `From your Canva account…`.
 
 With `From your Canva account…` you connect once (`Connect to Canva` opens a Canva window where you sign in and allow access), then tick the designs you want and tap `Import`. Each one is exported from Canva as PowerPoint and opens as a new design; designs already brought over show `imported`. Ticking `Replace designs imported before` swaps an earlier copy for the new one (changes made to that copy here are lost). If some designs fail, the message says why and `Try the failed ones again` retries just those; a design Canva cannot export as PowerPoint (some video designs and Docs) cannot come over this way. Your Canva sign-in stays on this device; `Disconnect` forgets it. This needs the internet and the orOS relay with its Canva connection set up.
 

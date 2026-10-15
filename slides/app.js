@@ -183,7 +183,7 @@
       "imp.pptxWorking": "Opening the presentation…", "imp.pptxPartial": "Presentation opened. {n} things could not be brought in; charts and videos are marked on their slides.",
       "note.chart": "Chart (not imported)", "note.table": "Table (not imported)", "note.diagram": "SmartArt (not imported)",
       "note.media": "Video or sound (not imported)", "note.object": "Embedded object (not imported)",
-      "imp.done": "Presentation opened", "imp.bad": "This file is not a Slides package or a PowerPoint presentation.",
+      "imp.done": "Presentation opened", "imp.file": "A file (.orosslides, .pptx)…", "imp.folder": "An unzipped package folder…", "imp.newer": "This file was made by a newer orOS. Update orOS to open it.", "imp.bad": "This file is not a Slides package or a PowerPoint presentation.",
       "imp.imgFail": "{n} pictures could not be restored.",
       "show.allHidden": "Every slide is hidden in the show.",
       "show.summary": "Show ended after {t}.",
@@ -316,7 +316,7 @@
       "imp.pptxWorking": "Άνοιγμα της παρουσίασης…", "imp.pptxPartial": "Η παρουσίαση άνοιξε. {n} στοιχεία δεν μεταφέρθηκαν· τα γραφήματα και τα βίντεο σημειώνονται στις διαφάνειές τους.",
       "note.chart": "Γράφημα (δεν μεταφέρθηκε)", "note.table": "Πίνακας (δεν μεταφέρθηκε)", "note.diagram": "SmartArt (δεν μεταφέρθηκε)",
       "note.media": "Βίντεο ή ήχος (δεν μεταφέρθηκε)", "note.object": "Ενσωματωμένο αντικείμενο (δεν μεταφέρθηκε)",
-      "imp.done": "Η παρουσίαση άνοιξε", "imp.bad": "Αυτό το αρχείο δεν είναι πακέτο Παρουσιάσεων ούτε παρουσίαση PowerPoint.",
+      "imp.done": "Η παρουσίαση άνοιξε", "imp.file": "Ένα αρχείο (.orosslides, .pptx)…", "imp.folder": "Έναν φάκελο αποσυμπιεσμένου πακέτου…", "imp.newer": "Το αρχείο φτιάχτηκε από νεότερο orOS. Ενημέρωσε το orOS για να το ανοίξεις.", "imp.bad": "Αυτό το αρχείο δεν είναι πακέτο Παρουσιάσεων ούτε παρουσίαση PowerPoint.",
       "imp.imgFail": "{n} εικόνες δεν επανήλθαν.",
       "show.allHidden": "Όλες οι διαφάνειες είναι κρυφές στην προβολή.",
       "show.summary": "Η προβολή κράτησε {t}.",
@@ -1036,7 +1036,12 @@
   function wireHome() {
     $("btn-new").addEventListener("click", function () { SL.dlg.newDeck(); });
     $("btn-new2").addEventListener("click", function () { SL.dlg.newDeck(); });
-    $("btn-import").addEventListener("click", function () { SL.io.importPackage(); });
+    $("btn-import").addEventListener("click", function () {
+      SL.menu($("btn-import"), [
+        { label: t("imp.file"), fn: function () { SL.io.importPackage(); } },
+        { label: t("imp.folder"), fn: function () { SL.io.importFolder(); } }
+      ]);
+    });
     $("home-search").addEventListener("input", renderHome);
     // Contract Β: forward Ctrl+Alt+Shift shortcuts to the shell (capture)
     document.addEventListener("keydown", function (e) {

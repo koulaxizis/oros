@@ -6,9 +6,12 @@
 //     drawn by draw.js at full resolution (what you see is what you
 //     get, effects and filters included); a PDF holds one image per
 //     page at 150 or 300 dpi (jsPDF, loaded on first use).
-//   - .orosdesign package: the design + its images (base64) in one
-//     JSON file; opened as a NEW design, every image checked against
-//     its hash and decoded as an image before it is stored.
+//   - .orosdesign package: an orOS bundle (bundle.js): a ZIP with the
+//     design (content.json), its pictures and clips (media/) and a
+//     thumbnail; older JSON packages (images as base64) still open.
+//     Opened as a NEW design, every image checked against its hash
+//     and decoded as an image before it is stored. An unzipped
+//     bundle opens too (Import › Unzipped folder).
 //   - Uploads: images go through designkit/assets.js (re-encoded,
 //     metadata dropped, stored once on the orOS disk).
 //   - Resize, credits, copy / paste, rename.
@@ -361,47 +364,87 @@
   }
 
   // ---------- Packages ----------
-  function blobToB64(blob) {
-    return new Promise(function (resolve, reject) {
-      var fr = new FileReader();
-      fr.onload = function () { var s = String(fr.result); resolve(s.slice(s.indexOf(",") + 1)); };
-      fr.onerror = function () { reject(fr.error); };
-      fr.readAsDataURL(blob);
-    });
-  }
   function b64ToBlob(b64, type) {
     var bin = atob(b64), n = bin.length, u = new Uint8Array(n);
     for (var i = 0; i < n; i++) u[i] = bin.charCodeAt(i);
     return new Blob([u], { type: type });
   }
 
+  // .orosdesign = an orOS bundle (bundle.js, docs/oros-bundle.md): a
+  // ZIP with content.json (the package without its assets), media/<id>
+  // (pictures, clips) and a thumbnail of the first page.
+  var BUNDLE_MIME = "application/x-oros-design";
+  function thumbOf(doc) {
+    var pg = M.pagesInOrder(doc)[0];
+    if (!pg) return Promise.resolve(null);
+    return prepare(doc, 1).then(function () {
+      return toBlob(renderForExport(doc, pg, 512 / Math.max(doc.setup.w, doc.setup.h), false), "image/png");
+    }).then(null, function () { return null; });
+  }
   function exportPackage(doc) {
     if (!doc) return;
     if (doc === AT.doc) ED.exitText();
     doc = AT.findDoc(doc.id) || doc;
-    var assets = {}, chain = Promise.resolve();
+    var media = {}, chain = Promise.resolve();
     AX.assetIds(doc).forEach(function (id) {
-      chain = chain.then(function () { return A.blob(id); }).then(function (b) {
-        if (b) return blobToB64(b).then(function (s) { assets[id] = s; });
-      });
+      chain = chain.then(function () { return A.blob(id); }).then(function (b) { if (b) media[id] = b; });
     });
     // videos and sounds travel the same way (video.js checks them back in)
     if (AT.video) AX.clipIds(doc).forEach(function (id) {
-      chain = chain.then(function () { return AT.video.blob(id); }).then(function (b) {
-        if (b) return blobToB64(b).then(function (s) { assets[id] = s; });
-      });
+      chain = chain.then(function () { return AT.video.blob(id); }).then(function (b) { if (b) media[id] = b; });
     });
-    chain.then(function () {
-      var pkg = { kind: PKG_KIND, ver: PKG_VER, doc: doc, assets: assets };
-      var blob = new Blob([JSON.stringify(pkg)], { type: "application/json" });
-      return saveBlob(blob, fileName(doc, ".orosdesign"), "application/json", "orOS Atelier", ".orosdesign");
+    chain.then(function () { return thumbOf(doc); }).then(function (thumb) {
+      return window.OrosBundle.write({
+        mime: BUNDLE_MIME, app: "atelier", schema: "atelier/" + PKG_VER,
+        content: { kind: PKG_KIND, ver: PKG_VER, doc: doc },
+        meta: { title: doc.name || "", modified: doc.m, id: doc.id, language: AT.LANG, generator: "orOS Atelier" },
+        media: media, thumbnail: thumb, date: new Date()
+      });
+    }).then(function (bytes) {
+      return saveBlob(new Blob([bytes], { type: BUNDLE_MIME }), fileName(doc, ".orosdesign"), BUNDLE_MIME, "orOS Atelier", ".orosdesign");
     }).then(function (ok) { if (ok) AT.toast(t("pkg.done")); }, function () { AT.toast(t("exp.fail")); });
   }
 
+  // A picture or clip from a package: base64 (older JSON packages) or bytes (bundles)
+  function isAsset(v) { return typeof v === "string" || v instanceof Uint8Array; }
+  function assetBlob(v, type) { return typeof v === "string" ? b64ToBlob(v, type) : new Blob([v], { type: type }); }
+  function bundleFail(e) { AT.toast(e && e.code === "newer" ? t("imp.newer") : t("imp.bad")); }
+  // A bundle (or an unzipped bundle folder) → the package object the
+  // JSON reader takes, with the media bytes as its assets.
+  function fromBundle(r) {
+    var pkg = r && r.content && typeof r.content === "object" ? r.content : null;
+    if (pkg) {
+      pkg.assets = {};
+      Object.keys(r.media).forEach(function (k) { pkg.assets[k] = r.media[k].bytes; });
+    }
+    return importPackageObj(pkg);
+  }
   function importPackageFile(f) {
-    return f.text().then(function (txt) {
-      var pkg = null;
-      try { pkg = JSON.parse(txt); } catch (e) {}
+    return f.slice(0, 4).arrayBuffer().then(function (head) {
+      if (window.OrosBundle.sniff(new Uint8Array(head)) !== null) {
+        return f.arrayBuffer().then(function (ab) {
+          return window.OrosBundle.read(new Uint8Array(ab), { mime: BUNDLE_MIME });
+        }).then(fromBundle, bundleFail);
+      }
+      return f.text().then(function (txt) {
+        var pkg = null;
+        try { pkg = JSON.parse(txt); } catch (e) {}
+        return importPackageObj(pkg);
+      });
+    });
+  }
+  // Home › Import › Unzipped folder: a .orosdesign someone unzipped
+  // (and maybe changed: a picture swapped, a text fixed by hand).
+  function importFolder() {
+    window.OrosBundle.pickFolder().then(function (files) {
+      if (!files) return;
+      AT.toast(t("imp.working"));
+      return window.OrosBundle.readFolder(files, { mime: BUNDLE_MIME }).then(fromBundle, bundleFail);
+    }).then(null, importFail);
+  }
+
+  function importPackageObj(pkg) {
+    return Promise.resolve().then(function () {
       var doc = pkg && pkg.kind === PKG_KIND && pkg.ver === PKG_VER && pkg.doc && typeof pkg.doc === "object" ? M.normDoc(pkg.doc) : null;
       if (!doc || !doc.pages.length) { AT.toast(t("imp.bad")); return; }
       // a NEW design: never overwrites or resurrects another one
@@ -414,16 +457,16 @@
       var failed = 0, chain = Promise.resolve();
       AX.assetIds(doc).forEach(function (id) {
         var b64 = assets[id];
-        if (typeof b64 !== "string" || !A.ID_RE.test(id)) { failed++; return; }
+        if (!isAsset(b64) || !A.ID_RE.test(id)) { failed++; return; }
         chain = chain.then(function () {
-          return A.put(id, b64ToBlob(b64, /\.png$/.test(id) ? "image/png" : "image/jpeg"));
+          return A.put(id, assetBlob(b64, /\.png$/.test(id) ? "image/png" : "image/jpeg"));
         }).then(null, function () { failed++; });
       });
       if (AT.video) AX.clipIds(doc).forEach(function (id) {
         var b64 = assets[id];
-        if (typeof b64 !== "string") { failed++; return; }
+        if (!isAsset(b64)) { failed++; return; }
         chain = chain.then(function () {
-          return AT.video.put(id, b64ToBlob(b64, window.AtelierClips.mimeOf(id)));
+          return AT.video.put(id, assetBlob(b64, window.AtelierClips.mimeOf(id)));
         }).then(null, function () { failed++; });
       });
       return chain.then(function () {
@@ -725,7 +768,7 @@
   AT.on("remote", refreshBar);
 
   AT.io = {
-    exportPackage: exportPackage, importAny: importAny, openFile: openFile, importPptx: importPptxFile, uploadImage: uploadImage,
+    exportPackage: exportPackage, importAny: importAny, importFolder: importFolder, openFile: openFile, importPptx: importPptxFile, uploadImage: uploadImage,
     placePhoto: placePhoto, pickFile: pickFile, saveBlob: saveBlob, exportDialog: exportDialog, resizeTo: resizeTo
   };
 })();

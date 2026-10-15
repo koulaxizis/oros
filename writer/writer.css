@@ -1665,6 +1665,21 @@ sup.fn-ref:hover { text-decoration: underline; }
 
 .file-pick-btn:hover { background: var(--accent-soft); }
 
+/* "Open an unzipped .orosdoc folder…" under the file picker */
+.io-link-btn {
+  display: block;
+  margin: 8px auto 0;
+  padding: 6px 8px;
+  background: none;
+  border: 0;
+  color: var(--accent);
+  font-family: var(--font-stack);
+  font-size: 12px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.io-link-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
 .file-pick-btn input[type="file"] {
   position: absolute;
   width: 1px;
