@@ -587,6 +587,9 @@
   // In the orOS Android app only (BR-PHONE v3): the phone rings
   // Clock alarms, Water and To-Do reminders even when orOS is closed.
   var phoneOff = null;
+  function inBrowserTab() {
+    try { return (window.top || window).matchMedia("(display-mode: browser)").matches; } catch (e) { return false; }
+  }
   function phone() {
     var p = parentWin();
     try { return p && p.orosPhone && p.orosPhone.available() ? p.orosPhone : null; } catch (e) { return null; }
@@ -844,7 +847,7 @@
     c1.appendChild(el("p", "hint", t("so.intro")));
     S.ids().forEach(function (id) {
       var b = button(t("so.open"), "solo:" + id, function () {
-        var u = S.installUrl ? S.installUrl(id, navigator.userAgent, location.origin, !!phone()) : "/" + id + "/solo.html";
+        var u = S.installUrl ? S.installUrl(id, navigator.userAgent, location.origin, !!phone(), inBrowserTab()) : "/" + id + "/solo.html";
         // Android: an intent to Chrome, so the orOS app does not catch the
         // link; in the orOS app, the app itself opens Chrome.
         if (u.indexOf("intent:") === 0) { try { window.top.location.href = u; } catch (e) { location.href = u; } }

@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.25.04
+- Installing a single app from a browser tab on Android (Brave, Firefox, Chrome) now opens it in that same browser, which offers Install. Before, it tried to open Chrome and did nothing in Brave.
+
 ## Version 2.25.03
 - New download page, useoros.online/download, with every way to get orOS: in the browser, as an app, orOS Portable, the bootable orOS USB, single apps and Android APKs. Linked from the orOS Info window and Help › Install.
 
