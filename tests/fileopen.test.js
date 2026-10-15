@@ -51,7 +51,7 @@ test("every app in the table exists and takes a file through its deep link", () 
     feeds: ["feeds/feeds.js"], podcasts: ["podcasts/podcasts.js"], mindmap: ["mindmap/mindmap.js"],
     familytree: ["familytree/familytree.js"], ringtones: ["ringtones/ringtones.js"],
     notes: ["notes/notes.js"], texttools: ["texttools/texttools.js"], photolab: ["photolab/app.js"], montage: ["montage/montage.js"], library: ["library/app.js"],
-    wiki: ["wiki/wiki.js", "wiki/io.js"], kanban: ["kanban/kanban.js"], prompter: ["prompter/prompter.js"],
+    wiki: ["wiki/wiki.js", "wiki/io.js"], kanban: ["kanban/kanban.js"], prompter: ["prompter/prompter.js"], studio: ["studio/studio.js"], pixel: ["pixel/pixel.js"],
     maps: ["maps/tracks.js"], chess: ["chess/chess.js"], calendar: ["calendar/calendar.js"], contacts: ["contacts/contacts.js"]
   };
   F.HANDLERS.forEach((h) => {

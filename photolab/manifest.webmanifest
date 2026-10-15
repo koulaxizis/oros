@@ -83,6 +83,9 @@
         ],
         "image/openraster": [
           ".ora"
+        ],
+        "application/x-oros-photo": [
+          ".orosphoto"
         ]
       }
     }
@@ -115,7 +118,9 @@
             "image/vnd.adobe.photoshop",
             ".psd",
             "image/openraster",
-            ".ora"
+            ".ora",
+            "application/x-oros-photo",
+            ".orosphoto"
           ]
         }
       ]

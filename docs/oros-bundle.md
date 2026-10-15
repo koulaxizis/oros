@@ -19,6 +19,10 @@ The format is free and open (MIT, like orOS). Reader and writer: [`bundle.js`](.
 | `.orosboard` | Kanban | `application/x-oros-board` |
 | `.orosscript` | Prompter | `application/x-oros-script` |
 | `.orostone` | Ringtones | `application/x-oros-tone` |
+| `.orosstudio` | Studio | `application/x-oros-studio` |
+| `.orosmontage` | Montage | `application/x-oros-montage` |
+| `.orosphoto` | Photo Lab | `application/x-oros-photo` |
+| `.orospixel` | Pixel | `application/x-oros-pixel` |
 
 More apps follow; each gets its own extension (`.oros` + one short English word) and MIME type `application/x-oros-<word>`.
 
@@ -41,7 +45,15 @@ Report.orosdoc
 - Paths are printable ASCII, `/`-separated, at most 200 characters, never absolute, never `.` or `..`, no `\` or `:`.
 - Media keys are `[A-Za-z0-9][A-Za-z0-9._-]{0,127}`. Apps that store pictures by hash use `<sha256>.<ext>`; content.json refers to media by key.
 - Text files are deflated; media are stored as they are (already compressed).
-- Encryption is never used. No ZIP64 in 1.0 (files under 4 GB).
+- Encryption is never used.
+- ZIP64 records are written only when they are needed: an entry or the whole file past 4 GB, or more than 65 535 entries. Smaller bundles are plain ZIP, byte for byte as before.
+
+### Big projects
+
+Video and sound projects (Montage, Studio) can hold files of several GB. `bundle.js` then never holds them in memory whole:
+
+- `writeBlob()` builds the bundle as one Blob made of small headers and the media Blobs themselves; SHA-256 and CRC-32 are computed a piece at a time (4 MB).
+- `read(file, { big: true })` reads a File a piece at a time: only the end of the file, the central directory and the small text files are loaded. Each media file comes back as a Blob slice of the bundle (`media[key].blob`), hashed while streaming. Stored media may then be up to 16 GB each and 64 GB in all; deflated entries keep the 512 MB cap, because they inflate in memory.
 
 ### META-INF/manifest.xml
 
