@@ -1,6 +1,15 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.30.01
+- Android app: APK downloads and Get orOS now open in your default browser, in a normal tab, where the download finishes. Install the new APK once for this.
+
+## Version 2.30.00
+- Notes can now also import from Evernote, Google Keep, Simplenote and Joplin, with a preview and Undo.
+
+## Version 2.29.00
+- Layout opens Scribus shapes, gradients and layers properly, reads .sla.gz files, and lets you give any shape a gradient.
+
 ## Version 2.28.00
 - Habits, Mood, One-Sentence Diary and Cycle can import from other apps (Loop, Habitica, Daylio, Bearable, Day One, Journey, Diaro, drip., Clue, Flo and more), with a preview and Undo.
 

@@ -61,7 +61,11 @@ Pick a notebook from the list at the top of the tree. The book button with a plu
 - The upload button under the tree (or `Import notes…` in the notebook menu `⋯`) brings notes from:
   - **Obsidian**: `Choose folder…` and pick the vault folder, or `Choose files…` and pick a .zip of it.
   - **Standard Notes**: in Standard Notes, Preferences › Backups › Download backup, choose Decrypted; then `Choose files…` and pick that file (or the .zip).
-  - **Any folder or .zip of .md / .txt files**: Bear, Logseq, Joplin (Markdown export), Notion (Markdown export), Typora, iA Writer, Zettlr, or an orOS .md export.
+  - **Evernote**: in Evernote, select the notes or a notebook › Export › .enex; then `Choose files…` and pick one or more .enex files (each file becomes a page with its notes under it).
+  - **Google Keep**: at takeout.google.com choose only Keep and download the .zip; then `Choose files…` and pick it. Lists become to-dos, labels become labels.
+  - **Simplenote**: Settings › Tools › Export notes; then pick the .zip.
+  - **Joplin**: File › Export all › JEX; then pick the .jex file. Notebooks keep their nesting, links between notes keep working.
+  - **Any folder or .zip of .md / .txt files**: Bear, Logseq, Notion (Markdown export), Typora, iA Writer, Zettlr, or an orOS .md export.
 - Before anything is written you see what will come: new pages, labels, and what stays out. `Import` puts it all in a new notebook named after the source; `Undo` in the notice takes it out again.
 - Folders become pages with sub-pages (a note named like its folder becomes that folder's page), tags (`#tag` and `tags:` at the top) become labels, `[[links]]` keep working, pinned notes stay pinned, archived Standard Notes notes go under `Archive`, the trash stays out.
 - Import the same source again whenever you like: new notes come in, nothing is doubled. Notes you changed there change here only if you tick `Replace the text of pages imported before`. Pages you deleted here don't come back.

@@ -709,7 +709,7 @@
     var loc = R.toLocal(it, lx, ly);
     if (loc[0] < -tol || loc[0] > it.w + tol || loc[1] < -tol || loc[1] > it.h + tol) return false;
     // an unfilled shape is hit on its outline only
-    if ((it.t === "rect" || it.t === "ell") && !it.fill) {
+    if ((it.t === "rect" || it.t === "ell" || it.t === "path") && !it.fill && !it.gr) {
       var edge = Math.max(tol * 2, it.sw);
       if (loc[0] > edge && loc[0] < it.w - edge && loc[1] > edge && loc[1] < it.h - edge) return false;
     }
