@@ -26,8 +26,9 @@ test("no photo source is left", () => {
   assert.doesNotMatch(src("contacts/contacts.js"), /gravatar|libravatar|toDataURL\("image\/jpeg", 0\.75\)/i);
   assert.doesNotMatch(src("contacts/accounts.js"), /photoUrl|withPhotos|"photos,/);
   assert.doesNotMatch(src("phone.js"), /row\.photo = /);
-  assert.doesNotMatch(src("shell.js"), /Gravatar/);
-  assert.doesNotMatch(src("CREDITS.md"), /Gravatar/);
+  // Find photos is gone from the credits (a profiles-only credit may stay)
+  assert.doesNotMatch(src("shell.js"), /Contacts › Find photos/);
+  assert.doesNotMatch(src("CREDITS.md"), /Contacts › Find photos/);
 });
 
 test("merge stamps follow the avatar field (Contacts and Assistant agree)", () => {
