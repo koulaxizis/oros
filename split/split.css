@@ -650,6 +650,17 @@ label.prow { cursor: pointer; }
   white-space: nowrap;
 }
 
+/* Import from another app (preview) */
+.imp-src { margin-bottom: 12px; overflow-wrap: anywhere; }
+.imp-people input { min-width: 0; }
+.imp-tag { flex: 0 0 auto; font-size: 12px; color: var(--text-dim); min-width: 64px; text-align: right; }
+.imp-sum { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
+.imp-sum p { margin: 0; overflow-wrap: anywhere; }
+.imp-adds { font-size: 14px; font-weight: 700; }
+.imp-ok { color: var(--pos-ink); }
+.imp-warn { border: 1px solid var(--neg-ink); border-radius: 8px; padding: 8px 10px; color: var(--neg-ink); font-size: 13px; overflow-wrap: anywhere; }
+.imp-warn ul { margin: 4px 0 0 18px; padding: 0; }
+
 /* ---------- 9. Mobile + touch ---------- */
 @media (max-width: 480px) {
   #toolbar { gap: 4px; padding-left: 8px; padding-right: 8px; }

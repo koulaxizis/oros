@@ -1,0 +1,6 @@
+Who paid,Amount,Currency,For whom,Split amounts,Purpose,Category,Date & time,Exchange rate,Converted amount,Type
+Anna,60,EUR,Anna;Bob;Chris,1;1;1,Groceries,🛒,2026-06-01 10:00,1,60,expense
+Bob,100,EUR,Anna;Bob,70;30,Boat trip,,2026-06-02 12:30,,,expense
+Chris,50,GBP,Anna;Bob;Chris,,Pub,,2026-06-03 21:00,1.17,58.5,expense
+Bob,20,EUR,Anna,,,,2026-06-04,,,transfer
+Anna;Bob,10;20,EUR,Chris (2);Anna,,Taxi,,2026-06-05,,,expense

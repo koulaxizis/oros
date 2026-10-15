@@ -282,7 +282,7 @@ test("Android APKs: every single app has a package, an assetlinks entry and an A
   assert.equal(new Set(Object.values(pk)).size, Object.keys(pk).length);
   assert.equal(S.apkUrl("nope"), "");
   assert.match(read("settings/settings.js"), /S\.apkUrl && \/Android\/i\.test\(navigator\.userAgent\)/);
-  assert.match(read("settings/settings.js"), /S\.apkHref\(id, navigator\.userAgent, !inBrowserTab\(\)\)/);
+  assert.match(read("settings/settings.js"), /S\.apkHref\(id, navigator\.userAgent, !inBrowserTab\(\), phone\(\) \? "online\.useoros\.twa" : ""\)/);
   assert.match(read("solo.js"), /k\.href = apkHref\(id, win\.navigator\.userAgent, true\)/);
   // In an installed app on Android the link asks Chrome for a real tab:
   // the in-app tab never finishes an APK download (Chris 2026-10-15)
@@ -326,4 +326,34 @@ test("F-Droid repo (FDROID-1): packages, links, launch version and metadata for 
   assert.match(wf, /repo_keyalias: orosrepo/);
   assert.match(wf, /SITE: https:\/\/koulaxizis\.github\.io\/oros-fdroid/);
   assert.match(wf, /versions\.json/);
+});
+
+test("APK links leave the Android app through BrowserActivity (default browser, normal tab)", () => {
+  const and = "Mozilla/5.0 (Linux; Android 14) Chrome/140 Mobile";
+  const u = S.apkUrl("notes");
+  const viaApp = "intent://open?u=" + encodeURIComponent(u) + "#Intent;scheme=oros-browser;package=online.useoros.notes;S.browser_fallback_url=" + encodeURIComponent(u) + ";end";
+  assert.equal(S.apkHref("notes", and, true, "online.useoros.notes"), viaApp);
+  assert.equal(S.apkHref("notes", and, false, "online.useoros.notes"), u);          // a browser tab: the plain link
+  assert.match(S.apkHref("notes", and, true, ""), /package=com\.android\.chrome/); // Chrome's installed orOS
+  assert.equal(S.browserHref("https://useoros.online/download/", "evil.pkg"), "https://useoros.online/download/");
+  // apkPkgOf: referrer of the TWA, or the remembered launch version; never in a browser tab
+  const win = (tab, ref, store) => ({
+    matchMedia: () => ({ matches: tab }),
+    document: { referrer: ref },
+    localStorage: { getItem: () => store }
+  });
+  assert.equal(S.apkPkgOf(win(false, "android-app://online.useoros.twa/", null), "oros"), "online.useoros.twa");
+  assert.equal(S.apkPkgOf(win(false, "", JSON.stringify({ installed: { "online.useoros.notes": 2026001 } })), "notes"), "online.useoros.notes");
+  assert.equal(S.apkPkgOf(win(true, "android-app://online.useoros.twa/", null), "oros"), "");
+  assert.equal(S.apkPkgOf(win(false, "", null), "notes"), "");
+  // The Android side: BrowserActivity in every flavour, accepting only orOS links
+  const ba = read("android/app/src/main/java/online/useoros/twa/BrowserActivity.java");
+  assert.match(ba, /oros\(-\[a-z0-9\]\{1,40\}\)\?\\\\\.apk/);
+  assert.match(ba, /https:\/\/useoros\\\\\.online\/download\//);
+  const gen = read("android/tools/gen.js");
+  assert.match(gen, /<activity android:name="\.BrowserActivity"/);
+  assert.match(gen, /<data android:scheme="oros-browser" \/>/);
+  assert.ok(!/\["activity", "\.BrowserActivity"\]/.test(gen), "single apps keep BrowserActivity");
+  // The menu's Get orOS row uses it in the orOS app
+  assert.match(read("shell.js"), /S\.browserHref\("https:\/\/useoros\.online\/" \+ page, pkg\)/);
 });

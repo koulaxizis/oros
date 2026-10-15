@@ -88,6 +88,15 @@ If you log body weight in [Workouts](app:fitness), those weights appear in Healt
 
 The same switch also brings readings that other apps and devices put in Health Connect: weight, resting heart rate, sleep, blood pressure, blood sugar and oxygen. Each one becomes a normal reading here, once; if you change or delete it in Health, it stays that way. orOS only reads these from Health Connect and never writes them there. If you allowed Health Connect before, open the switch once more to allow the new kinds. The same switch sends your [Water](app:water) drinks and [Workouts](app:fitness) to Health Connect, and brings back drinks and workouts from your other apps, for the last 30 days.
 
+## Import from another app
+In `Settings` → `Import` → `From another app…` pick an export from another health app. Health shows what it found first (how many readings of each kind, the dates, what is already here and what it leaves out) and imports only when you confirm. Your own readings are never changed, imported ones get the app's name as a tag, and importing the same file again adds only what is missing. `Undo` on the message right after removes the whole import.
+- **Withings**: in Health Mate, open your profile or Settings and choose `Download my data`; you get an email with a ZIP. Pick the ZIP, or just `weight.csv` or `bp.csv` from it.
+- **OMRON connect**: in the app's menu or Profile, look for `Export data` / `Share as CSV` and pick that CSV. Dates written as day/month or month/day are both understood.
+- **Samsung Health**: in Samsung Health › Settings, `Download personal data`; the phone saves a folder of CSV files (Internal storage › Download › Samsung Health). Zip the folder, or pick one file such as `com.samsung.health.weight….csv`.
+- **Apple Health**: in the Health app tap your picture, then `Export All Health Data`, and send `export.zip` to this device. Pick the ZIP, or the `export.xml` inside it. Large exports are read piece by piece, so they can take a minute.
+
+Health takes blood pressure, weight, blood sugar, resting heart rate, temperature and oxygen. Pounds become kilograms, mmol/L becomes mg/dL and °F becomes °C (you still see your own units). Body fat, muscle, water and height are not kept. When a file has only heart-rate samples, each day becomes one resting value: the day's lowest.
+
 ## Sync and backup
 Readings, your own kinds, targets, reminders, medicines, doses, refills, symptoms, your Medical ID, appointments, vaccinations, documents (without their files) and settings sync between your devices through [orOS sync](help:t/sync). Each dose is one entry, so if you mark the same dose on two devices, they agree on the later mark; refills from two devices both count. The open tab, chart choices, report options and whether the QR code is shown stay on this device.
 
@@ -108,5 +117,5 @@ In `Settings` → `Export` you can save `All readings (CSV)` or a `Backup (JSON)
 - The Medical ID lives in orOS: it is not on your phone's lock screen, so whoever helps you needs your phone unlocked, or the printed card.
 - Health has no medicine database: it does not know doses, interactions or side effects, and it does not check what you type.
 - The count of what's left is only as right as the doses you mark; check it against the box now and then.
-- Apart from what comes through Health Connect in the orOS Android app, readings are typed in by hand: no import from devices.
+- Apart from what comes through Health Connect in the orOS Android app, readings are typed in by hand or imported from another app's export: no direct link to devices.
 - The `Backup (JSON)` keeps the names of document files, not the files: copy the `Health` folder in Files, or use Vault Drive, to keep them.

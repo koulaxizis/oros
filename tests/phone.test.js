@@ -411,3 +411,11 @@ test("healthIn: water, workouts and steps from other apps, once, never over a de
   assert.equal(deleted.fitness, null, "a workout deleted in orOS is not brought back");
   assert.deepEqual(deleted.health.en.map((e) => e.id), ["hc-st-20261014"], "nor a deleted day of steps");
 });
+
+test("contacts: an orOS id stored twice becomes one phone contact", () => {
+  const rows = P.contactRows({ contacts: [contact({ id: "x", given: "Elena" }), contact({ id: "x", given: "Elena", family: "K" })] });
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].family, "P");
+  assert.match(require("fs").readFileSync(path.join(__dirname, "..", "android", "app", "src", "main", "java",
+    "online", "useoros", "twa", "ContactsWriter.java"), "utf8"), /!done\.add\(id\)/);
+});

@@ -605,3 +605,7 @@ dialog.pc-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
   #print-area .lb-none { color: #666; font-size: 10pt; }
   #print-area .lb-foot { margin-top: 6mm; font-size: 8pt; color: #666; }
 }
+
+/* Import from another app: the preview's summary */
+.imp-sum { margin: 10px 0 4px; padding-left: 18px; font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
+.imp-sum li { margin: 2px 0; }

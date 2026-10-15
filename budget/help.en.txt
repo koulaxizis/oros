@@ -71,6 +71,22 @@ From the `More` menu:
 - **Categories.** Pick a category on any row. After a correction, `Always do this` makes a rule from it, so the next import does it by itself.
 - `Import` adds them as normal entries, marked with a small bank icon. `Undo` takes back the whole import. The same file imported again, here or on another device, adds nothing twice.
 
+## Other budgeting apps
+`More` › `Import from another app` (or `Import bank statement`, it's the same picker) recognises the export of these apps by itself and brings in categories and accounts too, not only amounts:
+- **YNAB**: on the web, open an account or All Accounts and use `Export` (the register CSV; YNAB 4's register CSV works too). Transfers and the starting balance are left out; money into `Ready to Assign` comes in without a category.
+- **Wallet by BudgetBakers**: on the web app, `Records`, then `Export` as CSV. `Labels` go into the note as #tags.
+- **Spendee**: in the app's settings, `Export data` to CSV.
+- **Money Lover**: in the wallet's menu, `Export to CSV` (comma or semicolon, dd/mm/yyyy dates both work).
+- **Monefy**: `Settings` › `Data export` › CSV. Its converted amount is used when it is in Budget's currency.
+- **Money Manager** (Realbyte): `More` › `Backup` › `Export to Excel` (.xls or .xlsx), or send the file to yourself by email.
+- **Firefly III**: `Options` › `Export data` › all transactions (CSV). Withdrawals, deposits, categories and tags come in; transfers and opening balances are left out.
+
+In the preview:
+- **Accounts.** Each account of the file goes to a Budget account with the same name, a `New account` (when you already use accounts), or `No account`: then its name goes into the note.
+- **Categories.** Names are matched with yours (also the ready ones in English or Greek). `Make the categories that are missing` adds the rest, up to 60 categories; untick it to leave them without a category, where your rules can still help.
+- **Currencies.** A row in another currency keeps its own amount and gets the amount in Budget's currency: the app's own converted amount when the file has one, otherwise today's rate. Without a rate (offline, never fetched), those rows are left out and the window says which.
+- Duplicates, `Already imported` and `Deleted here earlier` work as for bank statements. Imported entries carry a small import icon; `Undo` takes back the entries and the new categories and accounts.
+
 ## Rules
 `More` › `Rules`: "if the description contains LIDL → Groceries". A rule can also look at an amount range (`Amount from`, `Amount to`), rename the entry (`Rename to`) and add a note. When several rules match, the one with the longest text wins. `Apply to uncategorised entries` runs them on what is already here; `Undo` puts it back.
 
@@ -99,5 +115,6 @@ When imported entries have no category, a bar above the list says how many. Tap 
 - Receipt text is not read from the photo itself: paste the text to fill in the total.
 - Subscription reminders come while orOS is open in a browser on that device; a closed orOS catches up when it opens.
 - Recurring entries are added only while Budget is open, and back-filled for up to two years.
+- Exports of other apps: up to 20,000 rows and 20 MB per file.
 - Bank files are read on this device only; orOS never connects to your bank. Up to 5,000 rows and 8 MB per file; the preview shows the first 300 rows.
 - Amounts in another currency than Budget's are left out, not converted. A bank transfer between two of your accounts comes in as an expense in one and income in the other: change them into a `Transfer` by hand if you want.

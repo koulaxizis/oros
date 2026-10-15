@@ -161,6 +161,25 @@
       "im.group": "Group “{g}” joined: {n} new or newer items", "im.same": "Group “{g}”: nothing new",
       "im.bad": "This is not an orOS Split group file or backup", "im.big": "The file is too big",
       "im.backup": "Backup merged: {n} new or newer items", "im.bsame": "Backup merged: nothing new",
+      "menu.fromApp": "Import from Splitwise, Tricount, Settle Up…",
+      "ia.title": "Import from another app", "ia.src": "From {s}: {f}", "ia.gname": "Group name",
+      "ia.into": "Import into", "ia.newGroup": "A new group", "ia.cur": "Currency: {c}",
+      "ia.found": "{n} rows in the file", "ia.adds": "To add: expenses {e}, payments {p}",
+      "ia.range": "From {a} to {b}", "ia.have": "Already in this group: {n}", "ia.gone": "Deleted here, they stay deleted: {n}",
+      "ia.skip": "Left out: {l}", "ia.sk.even": "rows that change no balance ({n})", "ia.sk.cur": "another currency without a rate ({n})",
+      "ia.sk.bad": "unreadable ({n})", "ia.sk.zero": "no amount ({n})", "ia.sk.self": "payments to the same person ({n})",
+      "ia.sk.cap": "over the limit of {m} per group ({n})",
+      "ia.people": "People", "ia.peopleHint": "Rename someone, or give two people the same name to merge them. Names already in the group are matched.",
+      "ia.newP": "new", "ia.inGroup": "in the group",
+      "ia.okTot": "Balances match {s}'s totals.", "ia.okRows": "Balances match the amounts in the file.",
+      "ia.warn": "Balances differ from {s} by more than 0.01:", "ia.warnRow": "{p}: {a} in {s}, {b} here",
+      "ia.curDiff": "This group is in {c}, so rows in {f} are left out.",
+      "ia.none": "Nothing new to import: it's all in Split already.", "ia.go": "Import",
+      "ia.done": "Imported into “{g}”: expenses {e}, payments {p}", "ia.undone": "Import undone",
+      "ia.bad": "Split could not read this file. Export a CSV or Excel file from Splitwise, Tricount or Settle Up.",
+      "ia.empty": "There is nothing to import in this file.", "ia.big": "The file is too big",
+      "ia.people.err": "Too many people: a group has at most {n}.", "ia.curErr": "Split has no {c} currency: this group can't be imported.",
+      "ia.lib": "The Excel reader is missing (vendor/xlsx.full.min.js)",
       "live.saved": "Saved", "live.group": "{g}", "live.home": "All groups",
       "bud.btn": "Add my share to Budget ({a})", "bud.note": "Split: {g} · {t}", "bud.fail": "Budget did not take it",
       "e.cur": "Currency paid in", "e.m.it": "Items", "e.rest": "Share the rest equally",
@@ -265,6 +284,25 @@
       "im.group": "Η ομάδα «{g}» ενώθηκε: {n} νέα ή νεότερα στοιχεία", "im.same": "Ομάδα «{g}»: τίποτα καινούργιο",
       "im.bad": "Αυτό δεν είναι αρχείο ομάδας ή αντίγραφο της Μοιρασιάς του orOS", "im.big": "Το αρχείο είναι πολύ μεγάλο",
       "im.backup": "Το αντίγραφο ενώθηκε: {n} νέα ή νεότερα στοιχεία", "im.bsame": "Το αντίγραφο ενώθηκε: τίποτα καινούργιο",
+      "menu.fromApp": "Εισαγωγή από Splitwise, Tricount, Settle Up…",
+      "ia.title": "Εισαγωγή από άλλη εφαρμογή", "ia.src": "Από {s}: {f}", "ia.gname": "Όνομα ομάδας",
+      "ia.into": "Εισαγωγή σε", "ia.newGroup": "Νέα ομάδα", "ia.cur": "Νόμισμα: {c}",
+      "ia.found": "{n} γραμμές στο αρχείο", "ia.adds": "Θα προστεθούν: έξοδα {e}, πληρωμές {p}",
+      "ia.range": "Από {a} έως {b}", "ia.have": "Υπάρχουν ήδη σε αυτή την ομάδα: {n}", "ia.gone": "Τα διέγραψες εδώ και μένουν διαγραμμένα: {n}",
+      "ia.skip": "Δεν μπαίνουν: {l}", "ia.sk.even": "γραμμές που δεν αλλάζουν κανένα υπόλοιπο ({n})", "ia.sk.cur": "άλλο νόμισμα χωρίς ισοτιμία ({n})",
+      "ia.sk.bad": "δεν διαβάζονται ({n})", "ia.sk.zero": "χωρίς ποσό ({n})", "ia.sk.self": "πληρωμές στο ίδιο πρόσωπο ({n})",
+      "ia.sk.cap": "πάνω από το όριο των {m} ανά ομάδα ({n})",
+      "ia.people": "Άτομα", "ia.peopleHint": "Άλλαξε ένα όνομα ή δώσε σε δύο άτομα το ίδιο όνομα για να ενωθούν. Όσα ονόματα υπάρχουν ήδη στην ομάδα ταιριάζουν αυτόματα.",
+      "ia.newP": "νέο", "ia.inGroup": "στην ομάδα",
+      "ia.okTot": "Τα υπόλοιπα συμφωνούν με τα σύνολα του {s}.", "ia.okRows": "Τα υπόλοιπα συμφωνούν με τα ποσά του αρχείου.",
+      "ia.warn": "Τα υπόλοιπα διαφέρουν από το {s} πάνω από 0,01:", "ia.warnRow": "{p}: {a} στο {s}, {b} εδώ",
+      "ia.curDiff": "Η ομάδα είναι σε {c}, οπότε οι γραμμές σε {f} δεν μπαίνουν.",
+      "ia.none": "Δεν υπάρχει κάτι νέο: όλα είναι ήδη στη Μοιρασιά.", "ia.go": "Εισαγωγή",
+      "ia.done": "Εισαγωγή στην ομάδα «{g}»: έξοδα {e}, πληρωμές {p}", "ia.undone": "Η εισαγωγή αναιρέθηκε",
+      "ia.bad": "Η Μοιρασιά δεν μπόρεσε να διαβάσει το αρχείο. Κάνε εξαγωγή σε CSV ή Excel από το Splitwise, το Tricount ή το Settle Up.",
+      "ia.empty": "Το αρχείο δεν έχει κάτι για εισαγωγή.", "ia.big": "Το αρχείο είναι πολύ μεγάλο",
+      "ia.people.err": "Πάρα πολλά άτομα: μια ομάδα έχει έως {n}.", "ia.curErr": "Η Μοιρασιά δεν έχει το νόμισμα {c}: η ομάδα δεν μπορεί να εισαχθεί.",
+      "ia.lib": "Λείπει το πρόγραμμα ανάγνωσης Excel (vendor/xlsx.full.min.js)",
       "live.saved": "Αποθηκεύτηκε", "live.group": "{g}", "live.home": "Όλες οι ομάδες",
       "bud.btn": "Το μερίδιό μου στα Έσοδα & Έξοδα ({a})", "bud.note": "Μοιρασιά: {g} · {t}", "bud.fail": "Τα Έσοδα & Έξοδα δεν το δέχτηκαν",
       "e.cur": "Νόμισμα πληρωμής", "e.m.it": "Είδη", "e.rest": "Μοίρασε ίσα τα υπόλοιπα",
@@ -3111,6 +3149,216 @@
     renderAll();
     showToast(t("im.backup", { n: n }));
   }
+  // ---------- 9b. Import from another app ----------
+  // Splitwise / Tricount / Settle Up exports → a new group (or more
+  // rows into the group an earlier import made). Parsing and the plan
+  // are pure (import.js, OrosSplitImport); here: pick → preview →
+  // ONE commit (one sync mark) → toast with Undo. Nothing from the
+  // file is ever inserted as HTML (textContent only). SheetJS is
+  // loaded only when an .xlsx / .xls is picked.
+  var IA_ACCEPT = ".csv,.xlsx,.xls,.txt,.zip,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel";
+  function getXlsx() {
+    return new Promise(function (res, rej) {
+      loadLib("xlsx.full.min.js", function () { if (window.XLSX && window.XLSX.utils) res(window.XLSX); else rej(new Error("lib")); },
+              function () { rej(new Error("lib")); });
+    });
+  }
+  function importOther(intoGid) {
+    var I = window.OrosSplitImport, KIT = window.OrosImportKit;
+    if (!I || !KIT) return;
+    var dlg = dialogHost();
+    var pick = dlg && typeof dlg.openFile === "function" ? dlg.openFile(IA_ACCEPT) : localPick(IA_ACCEPT);
+    Promise.resolve(pick).then(function (file) {
+      if (!file) return null;                        // cancel = silent exit
+      return KIT.readFile(file, I.MAX_FILE).then(function (f) {
+        return I.readBytes(f.bytes, f.name, getXlsx).then(function (res) { res.file = KIT.clean(f.name, 80); return res; });
+      });
+    }).then(function (res) {
+      if (!res) return;
+      if (res.error) { showToast(iaError(res)); return; }
+      importPreview(res, typeof intoGid === "string" ? intoGid : "");
+    }).catch(function (e) {
+      showToast(t(e && e.message === "toobig" ? "ia.big" : (e && e.message === "lib" ? "ia.lib" : "ia.bad")));
+    });
+  }
+  function iaError(r) {
+    if (r.error === "big") return t("ia.big");
+    if (r.error === "lib") return t("ia.lib");
+    if (r.error === "people") return t("ia.people.err", { n: MAX_PEOPLE });
+    if (r.error === "cur") return t("ia.curErr", { c: curText(r.cur) });
+    if (r.error === "empty" || r.error === "none") return t("ia.empty");
+    return t("ia.bad");
+  }
+  function curText(v) { return normText(String(v == null ? "" : v), 12); }
+
+  function importPreview(res, intoGid) {
+    var I = window.OrosSplitImport;
+    var srcName = I.SOURCES[res.source] || res.source;
+    var derived = I.groupIdFor(res);
+    var names = {};
+    var dlg = makeDialog("sp-imp", t("ia.title"));
+    dlg.classList.add("wide");
+    dlg.appendChild(el("p", "hint imp-src", t("ia.src", { s: srcName, f: res.file || "" })));
+
+    // where: a new group, the group this file made before, or (from a
+    // group's menu) that group
+    var into = el("select");
+    var addOpt = function (v, label) { var o = el("option", "", label); o.value = v; into.appendChild(o); };
+    addOpt("new", t("ia.newGroup"));
+    var seen = {};
+    data.groups.slice().sort(function (a, b) { return a.n.localeCompare(b.n); }).forEach(function (g) {
+      if ((g.id === derived || g.id === intoGid || g.id.indexOf("imp") === 0) && !seen[g.id]) { seen[g.id] = 1; addOpt(g.id, g.n); }
+    });
+    into.value = intoGid && seen[intoGid] ? intoGid : (seen[derived] ? derived : "new");
+    var gname = el("input");
+    gname.maxLength = NAME_LEN;
+    gname.autocomplete = "off";
+    gname.value = res.name || srcName;
+    var nameFld = field(t("ia.gname"), gname, "sp-imp-name");
+    dlg.appendChild(field(t("ia.into"), into, "sp-imp-into"));
+    dlg.appendChild(nameFld);
+
+    // people: rename / merge (same name = one person)
+    dlg.appendChild(el("span", "dlg-lbl", t("ia.people")));
+    dlg.appendChild(el("p", "hint tight", t("ia.peopleHint")));
+    var dl = el("datalist");
+    dl.id = "sp-imp-names";
+    dlg.appendChild(dl);
+    var ul = el("ul", "people imp-people");
+    var tags = [];
+    res.members.forEach(function (orig, i) {
+      var li = el("li");
+      var inp = el("input");
+      inp.value = orig;
+      inp.maxLength = PERSON_LEN;
+      inp.autocomplete = "off";
+      inp.setAttribute("list", "sp-imp-names");
+      inp.setAttribute("aria-label", t("gd.name") + " " + (i + 1) + ": " + orig);
+      inp.addEventListener("input", function () { names[orig.toLowerCase()] = inp.value; repaint(); });
+      var tag = el("span", "imp-tag");
+      tags.push(tag);
+      li.appendChild(inp);
+      li.appendChild(tag);
+      ul.appendChild(li);
+    });
+    dlg.appendChild(ul);
+
+    var sum = el("div", "imp-sum");
+    sum.setAttribute("aria-live", "polite");
+    dlg.appendChild(sum);
+    var err = errLine();
+    dlg.appendChild(err);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); }));
+    var go = button(t("ia.go"), "primary", function () {
+      var pl = makePlan();                  // planned again on the data as it is NOW
+      if (pl.error || !(pl.exp.length + pl.pay.length)) { repaint(); return; }
+      dlg.close();
+      applyImportOther(pl);
+    });
+    go.id = "sp-imp-go";
+    acts.appendChild(go);
+    dlg.appendChild(acts);
+
+    function target() { return into.value === "new" ? (seen[derived] ? "new" : "") : into.value; }
+    function makePlan() {
+      return I.plan(res, mergeSplit(data, data), { now: stamp(0), target: target(), gname: normText(gname.value, NAME_LEN) || res.name || srcName,
+                                                  col: data.groups.length % 8, names: names });
+    }
+    function line(txt, cls) { sum.appendChild(el("p", cls || "hint", txt)); }
+    function fillNames(gid) {
+      dl.innerHTML = "";
+      var list = peopleOf(data, gid).map(function (p) { return p.n; });
+      contactNames(readOther("oros-contacts-data")).slice(0, 500).forEach(function (n) { if (list.indexOf(n) < 0) list.push(n); });
+      list.forEach(function (n) { var o = el("option"); o.value = n; dl.appendChild(o); });
+    }
+    function repaint() {
+      var pl = makePlan();
+      sum.innerHTML = "";
+      err.hidden = true;
+      nameFld.hidden = into.value !== "new";
+      fillNames(pl.gid || "");
+      if (pl.error) {
+        showErr(err, t("ia.people.err", { n: MAX_PEOPLE }));
+        go.disabled = true;
+        return;
+      }
+      pl.members.forEach(function (m, i) { if (tags[i]) tags[i].textContent = t(m.isNew ? "ia.newP" : "ia.inGroup"); });
+      var mon = function (c) { return moneyIn(c, pl.cur); };
+      line(t("ia.cur", { c: pl.cur }) + " · " + t("ia.found", { n: res.found }));
+      if (pl.from) line(t("ia.range", { a: dateShort(pl.from), b: dateShort(pl.to) }));
+      var n = pl.exp.length + pl.pay.length;
+      line(n ? t("ia.adds", { e: pl.add.e, p: pl.add.p }) : t("ia.none"), n ? "imp-adds" : "hint");
+      if (pl.have) line(t("ia.have", { n: pl.have }));
+      if (pl.gone) line(t("ia.gone", { n: pl.gone }));
+      var sk = Object.keys(pl.skipped).filter(function (k) { return pl.skipped[k] > 0; }).map(function (k) {
+        return t("ia.sk." + (STRINGS.en["ia.sk." + k] ? k : "bad"), { n: pl.skipped[k], m: MAX_EXP });
+      });
+      if (sk.length) line(t("ia.skip", { l: sk.join(", ") }));
+      if (pl.cur !== res.cur) line(t("ia.curDiff", { c: pl.cur, f: res.cur }));
+      else if (pl.check.ok) line(t(pl.check.from === "totals" ? "ia.okTot" : "ia.okRows", { s: srcName }), "hint imp-ok");
+      else {
+        var w = el("div", "imp-warn");
+        w.setAttribute("role", "alert");
+        w.appendChild(el("p", "", t("ia.warn", { s: srcName })));
+        var wl = el("ul");
+        pl.check.diffs.slice(0, MAX_PEOPLE).forEach(function (d) {
+          wl.appendChild(el("li", "", t("ia.warnRow", { p: d.n, a: mon(d.want), b: mon(d.got), s: srcName })));
+        });
+        w.appendChild(wl);
+        sum.appendChild(w);
+      }
+      go.disabled = !n;
+    }
+    into.addEventListener("change", repaint);
+    repaint();
+    document.body.appendChild(dlg);
+    dlg.showModal();
+  }
+
+  // ONE write: the group (when new), new people, expenses, payments
+  // with their stable ids, then a single commit = one sync mark.
+  function applyImportOther(pl) {
+    if (pl.isNew && data.groups.length >= MAX_GROUPS) { showToast(t("err.groups", { n: MAX_GROUPS })); return; }
+    var undo = { gid: pl.gid, isNew: pl.isNew, people: [], exp: [], pay: [] };
+    if (pl.isNew) {
+      if (groupById(data, pl.gid)) return;
+      delete data.tombs["grp:" + pl.gid];
+      data.groups.push(pl.group);
+    }
+    pl.people.forEach(function (p) { if (!findIn(data.people, p.id)) { untomb("per", p.id); data.people.push(p); undo.people.push(p.id); } });
+    pl.exp.forEach(function (x) { if (!findIn(data.exp, x.id)) { untomb("exp", x.id); data.exp.push(x); undo.exp.push(x.id); } });
+    pl.pay.forEach(function (x) { if (!findIn(data.pay, x.id)) { untomb("pay", x.id); data.pay.push(x); undo.pay.push(x.id); } });
+    var before = data.exp.length + data.pay.length;
+    commit();
+    var kept = data.exp.length + data.pay.length;
+    if (kept < before) { try { console.warn("[orOS] split: " + (before - kept) + " imported rows were not valid"); } catch (e) {} }
+    var g = groupById(data, pl.gid);
+    prefs.tab = "exp";
+    openGroup(pl.gid);
+    undoToast(t("ia.done", { e: undo.exp.length, p: undo.pay.length, g: g ? g.n : "" }), function () { undoImportOther(undo); });
+  }
+  // Undo on the CURRENT data (a pull may have landed): a group the
+  // import made is deleted (tombstone: its children go with it on
+  // every device); otherwise each added row and person is removed
+  // and tombstoned.
+  function undoImportOther(u) {
+    if (u.isNew) {
+      data.groups = data.groups.filter(function (x) { return x.id !== u.gid; });
+      tombstone("grp", u.gid);
+      if (prefs.g === u.gid) { prefs.g = ""; savePrefs(); }
+    } else {
+      [["exp", "exp"], ["pay", "pay"], ["people", "per"]].forEach(function (k) {
+        var ids = {};
+        u[k[0]].forEach(function (id) { ids[id] = 1; tombstone(k[1], id); });
+        data[k[0]] = data[k[0]].filter(function (x) { return !ids[x.id]; });
+      });
+    }
+    commit();
+    renderAll();
+    showToast(t("ia.undone"));
+  }
+
   function localPick(accept) {
     return new Promise(function (res) {
       var inp = document.createElement("input");
@@ -3181,20 +3429,25 @@
 
   // Vendored libraries (never a CDN), loaded on first use.
   var libState = {};
-  function loadLib(file, done) {
-    if (window.jspdf && window.jspdf.jsPDF) { done(); return; }
-    var st = libState[file] || (libState[file] = { loading: false, q: [] });
+  function loadLib(file, done, fail) {
+    var ready = file.indexOf("xlsx") === 0 ? function () { return window.XLSX && window.XLSX.utils; }
+                                          : function () { return window.jspdf && window.jspdf.jsPDF; };
+    if (ready()) { done(); return; }
+    var st = libState[file] || (libState[file] = { loading: false, q: [], f: [] });
     st.q.push(done);
+    if (fail) st.f.push(fail);
     if (st.loading) return;
     st.loading = true;
     var s = document.createElement("script");
     s.src = "../vendor/" + file + (SCRIPT_V ? "?v=" + SCRIPT_V : "");
-    s.onload = function () { st.loading = false; st.q.splice(0).forEach(function (cb) { cb(); }); };
+    s.onload = function () { st.loading = false; st.f.splice(0); st.q.splice(0).forEach(function (cb) { cb(); }); };
     s.onerror = function () {
       st.loading = false;
+      var fails = st.f.splice(0);
       st.q.splice(0);
       s.remove();
-      showToast(t("exp.lib", { f: file }));
+      if (fails.length) fails.forEach(function (cb) { cb(); });
+      else showToast(t("exp.lib", { f: file }));
     };
     document.head.appendChild(s);
   }
@@ -3352,11 +3605,13 @@
   // Menu: built for the screen it is on; per-instance listeners.
   function menuItems() {
     var g = curGroup();
-    if (!g) return [["import", "menu.import", importFile], ["backup", "menu.backup", backup], ["restore", "menu.restore", importFile]];
+    if (!g) return [["import", "menu.import", importFile], ["fromapp", "menu.fromApp", importOther],
+                    ["backup", "menu.backup", backup], ["restore", "menu.restore", importFile]];
     return [["edit", "menu.edit", function () { groupDialog(g.id); }],
             ["share", "menu.share", shareSummary],
             ["file", "menu.file", sendGroupFile],
             ["export", "menu.export", exportDialog],
+            ["fromapp", "menu.fromApp", function () { importOther(g.id); }],
             ["arch", g.arch ? "menu.unarch" : "menu.arch", toggleArchive],
             ["del", "menu.del", deleteGroup]];
   }
