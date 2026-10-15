@@ -2751,7 +2751,7 @@
       var S = window.orosSolo;
       var pkg = S && S.apkPkgOf ? S.apkPkgOf(window, "oros") : "";
       if (!pkg && window.orosPhone && window.orosPhone.available && window.orosPhone.available()) pkg = "online.useoros.twa";
-      if (pkg && /Android/i.test(navigator.userAgent || "")) { location.href = S.browserHref("https://useoros.online/" + page, pkg); return; }
+      if (pkg && S && S.browserHref && /Android/i.test(navigator.userAgent || "")) { location.href = S.browserHref("https://useoros.online/" + page, pkg); return; }
       window.open(page, "_blank", "noopener");
     });
     section.appendChild(row);
