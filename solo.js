@@ -537,15 +537,21 @@
   // bar's button shows it. Without one (another browser, or not yet
   // offered) a page opened with "?install" says where the browser keeps
   // its Install item. Gone in the installed app (display-mode not
-  // "browser") and once installed.
+  // "browser") and once installed. A "?install" link that opened in an
+  // app window instead (on Android the installed orOS or the orOS app
+  // takes every link to this site) says so, with an "Open in Chrome"
+  // button on Android.
   var BAR_TEXT = {
-    en: { ask: "Install {n} on this device", btn: "Install", how: "To install {n}: open the browser menu (⋮) and choose Install app or Add to Home screen.", close: "Close" },
-    el: { ask: "Εγκατάσταση του {n} σε αυτή τη συσκευή", btn: "Εγκατάσταση", how: "Για να εγκαταστήσεις το {n}: άνοιξε το μενού του browser (⋮) και πάτησε Εγκατάσταση εφαρμογής ή Προσθήκη στην αρχική οθόνη.", close: "Κλείσιμο" }
+    en: { ask: "Install {n} on this device", btn: "Install", how: "To install {n}: open the browser menu (⋮) and choose Install app or Add to Home screen.", close: "Close",
+          win: "{n} opened inside an installed app, where it can't be installed. If it isn't installed yet, open this page in Chrome or Edge.", chrome: "Open in Chrome" },
+    el: { ask: "Εγκατάσταση του {n} σε αυτή τη συσκευή", btn: "Εγκατάσταση", how: "Για να εγκαταστήσεις το {n}: άνοιξε το μενού του browser (⋮) και πάτησε Εγκατάσταση εφαρμογής ή Προσθήκη στην αρχική οθόνη.", close: "Κλείσιμο",
+          win: "Το {n} άνοιξε μέσα σε εγκατεστημένη εφαρμογή, όπου δεν γίνεται εγκατάσταση. Αν δεν το έχεις ήδη εγκαταστήσει, άνοιξε αυτή τη σελίδα στο Chrome ή στο Edge.", chrome: "Άνοιγμα στο Chrome" }
   };
   function installBar(win, id, asked) {
-    var doc = win.document, bar = null, deferred = null, lng = "en";
+    var doc = win.document, bar = null, deferred = null, lng = "en", inWindow = false;
     try { lng = lang(win.localStorage.getItem("oros-lang")); } catch (e) {}
-    try { if (!win.matchMedia("(display-mode: browser)").matches) return; } catch (e) { return; }
+    try { inWindow = !win.matchMedia("(display-mode: browser)").matches; } catch (e) { return; }
+    if (inWindow && !asked) return;
     var T = BAR_TEXT[lng], name = nameOf(id, lng);
     function close() { if (bar) { bar.remove(); bar = null; } }
     function show(withButton) {
@@ -558,9 +564,21 @@
         "box-shadow:0 4px 18px rgba(0,0,0,.45)";
       var txt = doc.createElement("span");
       txt.style.flex = "1";
-      txt.textContent = (withButton ? T.ask : T.how).replace("{n}", name);
+      txt.textContent = (withButton === "win" ? T.win : withButton ? T.ask : T.how).replace("{n}", name);
       bar.appendChild(txt);
-      if (withButton) {
+      var android = withButton === "win" && /Android/i.test(win.navigator.userAgent || "");
+      if (android) {
+        var inApp = false;
+        try {
+          var fw = doc.getElementById("solo-frame").contentWindow;
+          inApp = !!(fw.orosPhone && fw.orosPhone.available());
+        } catch (e) {}
+        var a = doc.createElement("a");
+        a.href = installUrl(id, win.navigator.userAgent, win.location.origin, inApp);
+        a.textContent = T.chrome;
+        a.style.cssText = "border-radius:8px;padding:8px 14px;background:#c8a96e;color:#1b1a18;font-weight:600;text-decoration:none;white-space:nowrap";
+        bar.appendChild(a);
+      } else if (withButton === true) {
         var b = doc.createElement("button");
         b.type = "button";
         b.textContent = T.btn;
@@ -583,6 +601,7 @@
       bar.appendChild(x);
       doc.body.appendChild(bar);
     }
+    if (inWindow) { setTimeout(function () { show("win"); }, 1500); return; }
     win.addEventListener("beforeinstallprompt", function (e) {
       e.preventDefault();
       deferred = e;

@@ -268,9 +268,28 @@
     <p class="foot">Δωρεάν για πάντα, άδεια MIT. Στήριξε το orOS στο <a href="https://ko-fi.com/koulaxizis">Ko-fi</a>. <a href="/privacy.html">Πολιτική απορρήτου</a> · <a href="https://github.com/koulaxizis/oros">Πηγαίος κώδικας</a><br>Email υποστήριξης: <a href="mailto:koulaxizis@glarolykoi.net">koulaxizis@glarolykoi.net</a></p>
   </article>
 </main>
+<script src="/solo.js"></script>
 <script>
 (function () {
   "use strict";
+  // Single-app tiles: on Android an https link to this site opens in the
+  // installed orOS app (or the orOS Android app), where nothing can be
+  // installed. solo.js's installUrl() gives the Chrome intent instead
+  // (the same address Settings › Single apps › Install uses).
+  var S = window.orosSolo, inApp = false;
+  try {
+    inApp = /^android-app:\/\/online\.useoros\.twa/.test(document.referrer) || sessionStorage.getItem("oros-dl-twa") === "1";
+    if (inApp) sessionStorage.setItem("oros-dl-twa", "1");
+  } catch (e) {}
+  if (S && S.installUrl) {
+    [].forEach.call(document.querySelectorAll("a.app"), function (a) {
+      var m = /^\/([a-z0-9-]+)\/solo\.html/.exec(a.getAttribute("href"));
+      var u = m && S.installUrl(m[1], navigator.userAgent, location.origin, inApp);
+      if (!u || u === a.getAttribute("href")) return;
+      a.setAttribute("href", u);
+      a.removeAttribute("target");
+    });
+  }
   var TITLE = { en: "Get orOS", el: "Απόκτησε το orOS" };
   function set(l) {
     if (l !== "el") l = "en";
