@@ -70,6 +70,9 @@
         ],
         "text/csv": [
           ".csv"
+        ],
+        "application/x-oros-sheet": [
+          ".orossheet"
         ]
       }
     }
@@ -93,7 +96,9 @@
             "application/vnd.oasis.opendocument.spreadsheet",
             ".ods",
             "text/csv",
-            ".csv"
+            ".csv",
+            "application/x-oros-sheet",
+            ".orossheet"
           ]
         }
       ]

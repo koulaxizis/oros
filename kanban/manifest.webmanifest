@@ -55,6 +55,16 @@
       ]
     }
   ],
+  "file_handlers": [
+    {
+      "action": "/kanban/solo.html?file-open=kanban",
+      "accept": {
+        "application/x-oros-board": [
+          ".orosboard"
+        ]
+      }
+    }
+  ],
   "share_target": {
     "action": "/kanban/solo.html?share-target",
     "method": "POST",
@@ -62,7 +72,16 @@
     "params": {
       "title": "title",
       "text": "text",
-      "url": "url"
+      "url": "url",
+      "files": [
+        {
+          "name": "files",
+          "accept": [
+            "application/x-oros-board",
+            ".orosboard"
+          ]
+        }
+      ]
     }
   }
 }

@@ -51,7 +51,7 @@ test("each manifest is its own app: id, scope and every action stay inside /<id>
 
 test("file types: a single app opens exactly the types its app opens in orOS", () => {
   const notes = S.manifestFor("notes", F.table(), BASE).file_handlers[0];
-  assert.deepEqual(notes.accept, { "text/plain": [".txt"], "text/markdown": [".md", ".markdown"] });
+  assert.deepEqual(notes.accept, { "text/plain": [".txt"], "text/markdown": [".md", ".markdown"], "application/x-oros-notes": [".orosnotes"] });
   assert.equal(notes.action, "/notes/solo.html?file-open=notes");
   assert.deepEqual(S.manifestFor("calendar", F.table(), BASE).file_handlers[0].accept, { "text/calendar": [".ics"] });
   assert.equal(S.manifestFor("todo", F.table(), BASE).file_handlers, undefined);
