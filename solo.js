@@ -532,6 +532,18 @@
   // browser cannot install a single app next to it: the APK can.
   var APK_BASE = "https://github.com/koulaxizis/oros/releases/download/android-apks/";
   function apkUrl(id) { return has(id) ? APK_BASE + "oros-" + id + ".apk" : ""; }
+  // The link an APK button uses. Inside an installed app on Android (the
+  // orOS app, a Chrome-installed orOS or single app) a link to GitHub
+  // opens in the browser's in-app tab, where an APK download stops at
+  // 100% and never finishes (Chris 2026-10-15, Brave; a plain browser
+  // tab works in every browser). There the link asks Chrome for a real
+  // tab; without Chrome the in-app tab opens as before.
+  function apkHref(id, ua, inWindow) {
+    var u = id === "oros" ? APK_BASE + "oros.apk" : apkUrl(id);
+    if (!u || !inWindow || !/Android/i.test(String(ua || ""))) return u;
+    return "intent://" + u.replace(/^https:\/\//, "") + "#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=" +
+      encodeURIComponent(u) + ";end";
+  }
 
   // App updates for the APKs (FDROID-1): CI (.github/workflows/fdroid.yml)
   // publishes them as an F-Droid repository on koulaxizis/oros-fdroid's
@@ -612,7 +624,7 @@
     txt.textContent = T.note.replace("{n}", id === "oros" ? "orOS" : nameOf(id, lng));
     bar.appendChild(txt);
     var a = doc.createElement("a");
-    a.href = id === "oros" ? APK_BASE + "oros.apk" : apkUrl(id);
+    a.href = apkHref(id, win.navigator.userAgent, true);
     a.rel = "noopener";
     a.textContent = T.get;
     a.style.cssText = "border-radius:8px;padding:8px 14px;background:#c8a96e;color:#1b1a18;font-weight:600;text-decoration:none;white-space:nowrap";
@@ -693,7 +705,7 @@
       } else if (withButton === "win" && /Android/i.test(win.navigator.userAgent || "")) {
         // Chrome's installed orOS took the link: the APK installs it
         var k = doc.createElement("a");
-        k.href = apkUrl(id);
+        k.href = apkHref(id, win.navigator.userAgent, true);
         k.textContent = T.apk;
         k.style.cssText = "border-radius:8px;padding:8px 14px;background:#c8a96e;color:#1b1a18;font-weight:600;text-decoration:none;white-space:nowrap";
         bar.appendChild(k);
@@ -828,6 +840,7 @@
     hostBoot: host,
     installUrl: installUrl,
     apkUrl: apkUrl,
+    apkHref: apkHref,
     pkgOf: pkgOf,
     repoLink: repoLink,
     repoPage: REPO,

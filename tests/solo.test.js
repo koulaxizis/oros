@@ -282,7 +282,18 @@ test("Android APKs: every single app has a package, an assetlinks entry and an A
   assert.equal(new Set(Object.values(pk)).size, Object.keys(pk).length);
   assert.equal(S.apkUrl("nope"), "");
   assert.match(read("settings/settings.js"), /S\.apkUrl && \/Android\/i\.test\(navigator\.userAgent\)/);
-  assert.match(read("solo.js"), /k\.href = apkUrl\(id\)/);
+  assert.match(read("settings/settings.js"), /S\.apkHref\(id, navigator\.userAgent, !inBrowserTab\(\)\)/);
+  assert.match(read("solo.js"), /k\.href = apkHref\(id, win\.navigator\.userAgent, true\)/);
+  // In an installed app on Android the link asks Chrome for a real tab:
+  // the in-app tab never finishes an APK download (Chris 2026-10-15)
+  const and = "Mozilla/5.0 (Linux; Android 14) Chrome/140 Mobile";
+  const u = S.apkUrl("notes");
+  assert.equal(S.apkHref("notes", and, false), u);
+  assert.equal(S.apkHref("notes", "Mozilla/5.0 (Windows NT 10.0)", true), u);
+  assert.equal(S.apkHref("notes", and, true),
+    "intent://github.com/koulaxizis/oros/releases/download/android-apks/oros-notes.apk#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=" + encodeURIComponent(u) + ";end");
+  assert.match(S.apkHref("oros", and, true), /^intent:\/\/github\.com\/.+\/oros\.apk#Intent;/);
+  assert.equal(S.apkHref("nope", and, true), "");
 });
 
 test("F-Droid repo (FDROID-1): packages, links, launch version and metadata for every APK", () => {
