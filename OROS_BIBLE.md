@@ -6972,3 +6972,9 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Every importer shows a preview, writes once, adds only what is missing on a re-import, and offers Undo. Only files you export yourself; nothing is sent anywhere.
 - Files: `budget/import.js`, `split/import.js`, `garage/import.js`, `health/import.js` (all precached), the four apps' UI and help, Bible decision IMP-2.
   - Tests: new budget, split, garage and health import tests with fixtures; full suite green. Not tested: real exports from these apps on Chris's devices.
+
+### 2026-10-15 — Android: relaunch never crashes; one phone contact per orOS id (#399) — 2.31.01
+- Android app: when a link handed back by the browser relaunches orOS, releasing the old TWA launcher no longer crashes the app ("Service not registered" is caught); a safety net for the force-close that 2.30.01 addresses.
+- Contacts on the phone: each orOS contact becomes exactly one phone contact, even if the store holds a repeated row (`phone.js` `contactRows` and `ContactsWriter` skip a repeated id).
+- Files: `android/…/KeptTwaLauncher.java`, `android/…/ContactsWriter.java`, `phone.js`.
+  - Tests: `tests/phone.test.js` extended; full suite green; Android build in CI. Not tested: on a real phone (needs the new APK).

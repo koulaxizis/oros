@@ -28,7 +28,14 @@ class KeptTwaLauncher extends TwaLauncher {
     }
 
     void reallyDestroy() {
-        super.destroy();
+        // A relaunch (a link the browser hands back to the app) must never
+        // crash orOS: unbinding a connection Android already dropped
+        // throws "Service not registered".
+        try {
+            super.destroy();
+        } catch (RuntimeException e) {
+            // Already unbound; nothing left to release.
+        }
     }
 
     /** The browser package serving the TWA (for diagnostics). */
