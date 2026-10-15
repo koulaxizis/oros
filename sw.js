@@ -1211,6 +1211,8 @@ var PRECACHE_URLS = [
   "atelier/zip.js",
   "importkit.js",
   "google-import.js",
+  "enrich.js",
+  "enrichui.js",
   "atelier/pptx.js",
   "atelier/pptxout.js",
   "atelier/canva.js",
