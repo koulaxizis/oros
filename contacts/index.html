@@ -6,7 +6,7 @@
   <script>if (window.top === window.self && !/[?&]standalone\b/.test(location.search)) location.replace("../?open=contacts" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Contacts · orOS</title>
-  <link rel="stylesheet" href="contacts.css?v=2.32.01">
+  <link rel="stylesheet" href="contacts.css?v=2.35.00">
 </head>
 <body>
   <main id="cmain">
@@ -20,6 +20,7 @@
       <button id="ct-mirror" type="button" class="nav-mini" data-i18n="ph.btn" hidden></button>
       <button id="ct-dedup" type="button" class="nav-mini" data-i18n="dup.scan"></button>
       <button id="ct-pf" type="button" class="nav-mini" data-i18n="pf.btn"></button>
+      <button id="ct-enrich" type="button" class="nav-mini" data-i18n="en.btn"></button>
       <button id="ct-scan" type="button" class="nav-mini" data-i18n="sc.btn"></button>
       <h2 id="ct-title" data-i18n="app.contacts.self"></h2>
     </header>
@@ -154,6 +155,7 @@
       <button id="ct-cancel" type="button" class="btn" data-i18n="ct.cancel"></button>
     </div>
     <div class="dlg-row" id="ct-del-row">
+      <button id="ct-enrich-one" type="button" class="btn" data-i18n="en.one"></button>
       <button id="ct-delete" type="button" class="btn danger" data-i18n="ct.delete"></button>
     </div>
   </dialog>
@@ -338,12 +340,12 @@
     </div>
   </dialog>
 
-  <script src="merge.js?v=2.32.01"></script>
-  <script src="keep.js?v=2.32.01"></script>
-  <script src="csvmap.js?v=2.32.01"></script>
-  <script src="cardtext.js?v=2.32.01"></script>
-  <script src="importplan.js?v=2.32.01"></script>
-  <script src="accounts.js?v=2.32.01"></script>
-  <script src="contacts.js?v=2.32.01"></script>
+  <script src="merge.js?v=2.35.00"></script>
+  <script src="keep.js?v=2.35.00"></script>
+  <script src="csvmap.js?v=2.35.00"></script>
+  <script src="cardtext.js?v=2.35.00"></script>
+  <script src="importplan.js?v=2.35.00"></script>
+  <script src="accounts.js?v=2.35.00"></script>
+  <script src="contacts.js?v=2.35.00"></script>
 </body>
 </html>

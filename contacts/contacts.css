@@ -799,3 +799,4 @@ dialog h3 {
   font: inherit; font-size: 13.5px; padding: 7px 10px; border-radius: 8px; resize: vertical; margin-top: 4px;
 }
 [hidden] { display: none !important; }
+#ct-del-row { flex-wrap: wrap; gap: 8px; }

@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "2.34.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "2.35.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -5738,7 +5738,7 @@
           en: "One-time imports from Google (Calendar, To-Do, Reader, Media Shelf)", el: "Εισαγωγή από Google μία φορά (Ημερολόγιο, Εργασίες, Αναγνώστης, Το ράφι μου)" },
         { name: "Gravatar · Libravatar", url: "https://www.libravatar.org/",
           by: "Automattic Inc.; the Libravatar project", lic: { en: "Their terms; only a hashed e-mail is sent, on request", el: "Οι όροι τους· στέλνεται μόνο κωδικοποιημένο email, όταν το ζητήσεις" },
-          en: "Profile pictures for contacts (Contacts › Find photos)", el: "Φωτογραφίες προφίλ για επαφές (Επαφές › Εύρεση φωτογραφιών)" },
+          en: "Profile pictures and public profiles (Contacts › Find photos, Update online; CRM; Newsletter)", el: "Φωτογραφίες και δημόσια προφίλ (Επαφές › Εύρεση φωτογραφιών, Ενημέρωση online· Πελάτες· Ενημερωτικό δελτίο)" },
         { name: "timologisi.online", url: "https://www.timologisi.online/",
           by: "Novus Conceptus; your own account", lic: { en: "Your own account and key", el: "Ο δικός σου λογαριασμός και κλειδί" },
           en: "Connected services: send invoices to myDATA (Invoices)", el: "Συνδεδεμένες υπηρεσίες: αποστολή παραστατικών στο myDATA (Τιμολόγια)" },
