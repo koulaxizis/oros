@@ -12,6 +12,13 @@ The format is free and open (MIT, like orOS). Reader and writer: [`bundle.js`](.
 | `.orosslides` | Slides | `application/x-oros-slides` |
 | `.orosdesign` | Atelier | `application/x-oros-design` |
 | `.oroslayout` | Layout | `application/x-oros-layout` |
+| `.orossheet` | Spreadsheet | `application/x-oros-sheet` |
+| `.orosmind` | Mind map | `application/x-oros-mind` |
+| `.orosnotes` | Notes | `application/x-oros-notes` |
+| `.oroswiki` | Wiki | `application/x-oros-wiki` |
+| `.orosboard` | Kanban | `application/x-oros-board` |
+| `.orosscript` | Prompter | `application/x-oros-script` |
+| `.orostone` | Ringtones | `application/x-oros-tone` |
 
 More apps follow; each gets its own extension (`.oros` + one short English word) and MIME type `application/x-oros-<word>`.
 
