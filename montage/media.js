@@ -11,6 +11,8 @@
 //     files to the orOS disk, /internal/Assets/<id> (the Atelier
 //     folder), and Vault Drive syncs them from there (encrypted).
 //   get(id) looks in the device store, then on the orOS disk.
+//   putById(id, blob) stores a file that arrives with its id (an
+//   .orosmontage bundle), skipping ids this device has already.
 // Thumbnails (small JPEGs) are a device-local cache in IndexedDB
 // "oros-montage-thumbs"; they can always be made again.
 // Media are only decoded by the browser (Mediabunny / <video>), never
@@ -143,6 +145,25 @@
         if (!b) return false;
         return F.write(path, b).then(function () { return true; });
       });
+    });
+  }
+
+  // A file that arrives with its id already (an .orosmontage bundle,
+  // whose media/ keys are these ids): stored in the device store unless
+  // this device has it already (device store or orOS disk).
+  // → Promise<"have" | "added">; rejects with code "full" like import.
+  function has(id) {
+    return deviceGet(id).then(function (b) {
+      if (b) return true;
+      var F = osFS();
+      return F ? F.stat(ASSETS + "/" + id).then(function () { return true; }, function () { return false; }) : false;
+    });
+  }
+  function putById(id, blob) {
+    askPersist();
+    return has(id).then(function (y) {
+      if (y) return "have";
+      return devicePut(id, blob).then(function () { delete cache[id]; return "added"; });
     });
   }
 
@@ -427,7 +448,7 @@
   }
 
   root.MontageMedia = {
-    sniff: sniff, get: get, share: share, importFile: importFile, relink: relink,
+    sniff: sniff, get: get, share: share, has: has, putById: putById, importFile: importFile, relink: relink,
     thumb: thumb, frameAt: frameAt, proxy: proxy, makeProxy: makeProxy, dropProxies: dropProxies, peaks: peaks, PEAK_RATE: PEAK_RATE, cleanUnused: cleanUnused, usage: usage, mimeOf: mimeOf, MAX_FILE: MAX_FILE
   };
 })(typeof window !== "undefined" ? window : this);
