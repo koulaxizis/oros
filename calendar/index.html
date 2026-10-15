@@ -28,6 +28,7 @@
           <div id="more-menu" class="more-menu" hidden>
             <button id="mm-subs" type="button" data-i18n="mm.subs"></button>
             <button id="mm-free" type="button" data-i18n="mm.free"></button>
+            <button id="mm-google" type="button" data-i18n="mm.google" hidden></button>
             <button id="mm-print" type="button" data-i18n="mm.print"></button>
           </div>
         </div>
@@ -224,6 +225,23 @@
   </dialog>
   <input id="ics-file" type="file" accept=".ics,text/calendar" hidden>
 
+  <!-- One-time import from Google Calendar (gcal.js, ../google-import.js) -->
+  <dialog id="gi-dlg" aria-labelledby="gi-dlg-title">
+    <h3 id="gi-dlg-title" data-i18n="gi.title"></h3>
+    <p class="del-text" data-i18n="gi.text"></p>
+    <div id="gi-pick" hidden>
+      <p class="gi-head" data-i18n="gi.pick"></p>
+      <div id="gi-list" class="gi-list"></div>
+      <p class="del-text gi-small" data-i18n="gi.lbl"></p>
+    </div>
+    <p id="gi-stat" class="del-text" aria-live="polite"></p>
+    <p class="del-text gi-small" data-i18n="gi.own"></p>
+    <div class="dlg-row">
+      <button id="gi-go" type="button" class="btn prim" data-i18n="imp.go" hidden></button>
+      <button id="gi-no" type="button" class="btn" data-i18n="gi.close"></button>
+    </div>
+  </dialog>
+
   <!-- On this phone (BR-PHONE, Android app only) -->
   <dialog id="ph-dlg" aria-labelledby="ph-dlg-title">
     <h3 id="ph-dlg-title" data-i18n="ph.title"></h3>
@@ -355,6 +373,8 @@
   <script src="occur.js?v=2.25.00"></script>
   <script src="namedays.js?v=2.25.00"></script>
   <script src="ics.js?v=2.25.00"></script>
+  <script src="../google-import.js?v=2.25.00"></script>
+  <script src="gcal.js?v=2.25.00"></script>
   <script src="quickadd.js?v=2.25.00"></script>
   <script src="subs.js?v=2.25.00"></script>
   <script src="free.js?v=2.25.00"></script>

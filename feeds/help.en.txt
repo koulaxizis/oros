@@ -40,6 +40,11 @@ If your server does not allow this (a browser page needs it to send CORS headers
 ## Settings
 `Settings` sets how often to `Check for new articles`, the order, list style, text size and width, pictures, `Mark as read while scrolling the list`, `Show a story that two feeds carry only once`, and the `Relay address`.
 
+## YouTube subscriptions
+`Settings` › `YouTube subscriptions` brings the YouTube channels you subscribe to into the Reader, once. Sign in to Google in the small window; orOS reads your subscriptions (read only) and gives the access back to Google right away: nothing is kept, and nothing changes at YouTube. Tick the channels you want (all start ticked) and press `Subscribe`; with `Put them in a folder named “YouTube”` they go into that folder. The message that follows has `Undo`.
+
+Each channel becomes its public video feed, so new videos arrive like any article, with no Google account involved after the import. Channels you already follow here are left out. Google must have this enabled for orOS; if it answers 403, the service is not switched on yet. To use your own Google app id, set it in [Contacts](app:contacts) › `From an account` › `Use my own app id`.
+
 ## Sync and backup
 Your subscriptions (Mail folders included), folders, tags, rules, saved articles, read state and most settings sync between your devices through [orOS sync](help:t/sync). Downloaded articles stay on this device for 60 days (up to 200 per feed); text size, width and the open view stay here too. `Export OPML` and `Import OPML` in `Settings` move your feeds to or from other readers.
 

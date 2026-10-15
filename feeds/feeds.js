@@ -135,6 +135,14 @@
       "set.opml": "Move to or from another reader", "set.import": "Import OPML", "set.export": "Export OPML",
       "set.keep": "Articles stay on this device for 60 days (up to 200 per feed). Starred and Read later stay for ever, on every device.",
       "opml.none": "No feeds in this file.", "opml.bad": "This is not an OPML file.",
+      "yt.btn": "YouTube subscriptions", "yt.title": "Import YouTube subscriptions",
+      "yt.text": "Sign in to Google once: orOS reads the channels you subscribe to and the access is given back right away. Each channel becomes its public video feed here, no Google account needed after that. Nothing is kept, nothing changes at YouTube.",
+      "yt.wait": "Waiting for the Google sign-in window…", "yt.read": "Reading subscriptions… {n}",
+      "yt.pick": "Channels", "yt.sum": "{n} new · {have} already subscribed",
+      "yt.folder": "Put them in a folder named “YouTube”", "yt.all": "All", "yt.none": "None",
+      "yt.empty": "No subscriptions in this YouTube account.", "yt.nothing": "Nothing new: you already follow these channels here.",
+      "yt.own": "To use your own Google app id, set it in Contacts › From an account.",
+      "yt.go": "Subscribe ({n})", "yt.undone": "Import undone.",
       "dlg.save": "Save", "dlg.cancel": "Cancel", "dlg.close": "Close", "dlg.ok": "OK", "dlg.delete": "Delete",
       "toast.copied": "Link copied.", "toast.updated": "Up to date.", "toast.storage": "Storage is full: the change was not saved.",
       "toast.saveFail": "The file was not saved.", "toast.relayBad": "Not a valid relay address (https://…).",
@@ -264,6 +272,14 @@
       "set.opml": "Μεταφορά από ή προς άλλο πρόγραμμα", "set.import": "Εισαγωγή OPML", "set.export": "Εξαγωγή OPML",
       "set.keep": "Τα άρθρα μένουν σε αυτή τη συσκευή 60 ημέρες (έως 200 ανά feed). Όσα έχουν αστέρι ή είναι «Για αργότερα» μένουν για πάντα, σε κάθε συσκευή.",
       "opml.none": "Δεν υπάρχουν feeds σε αυτό το αρχείο.", "opml.bad": "Δεν είναι αρχείο OPML.",
+      "yt.btn": "Συνδρομές YouTube", "yt.title": "Εισαγωγή συνδρομών YouTube",
+      "yt.text": "Συνδέεσαι μία φορά στη Google: το orOS διαβάζει τα κανάλια στα οποία είσαι συνδρομητής και η πρόσβαση επιστρέφεται αμέσως. Κάθε κανάλι γίνεται εδώ το δημόσιο feed βίντεό του, χωρίς λογαριασμό Google από εκεί και πέρα. Δεν κρατιέται τίποτα και δεν αλλάζει τίποτα στο YouTube.",
+      "yt.wait": "Αναμονή για το παράθυρο σύνδεσης της Google…", "yt.read": "Ανάγνωση συνδρομών… {n}",
+      "yt.pick": "Κανάλια", "yt.sum": "{n} νέα · {have} ήδη στις συνδρομές",
+      "yt.folder": "Σε φάκελο με όνομα «YouTube»", "yt.all": "Όλα", "yt.none": "Κανένα",
+      "yt.empty": "Δεν υπάρχουν συνδρομές σε αυτόν τον λογαριασμό YouTube.", "yt.nothing": "Τίποτα νέο: ακολουθείς ήδη εδώ αυτά τα κανάλια.",
+      "yt.own": "Για δικό σου αναγνωριστικό εφαρμογής Google, όρισέ το στις Επαφές › Από λογαριασμό.",
+      "yt.go": "Εγγραφή ({n})", "yt.undone": "Η εισαγωγή αναιρέθηκε.",
       "dlg.save": "Αποθήκευση", "dlg.cancel": "Άκυρο", "dlg.close": "Κλείσιμο", "dlg.ok": "OK", "dlg.delete": "Διαγραφή",
       "toast.copied": "Ο σύνδεσμος αντιγράφηκε.", "toast.updated": "Όλα ενημερωμένα.", "toast.storage": "Ο χώρος γέμισε: η αλλαγή δεν αποθηκεύτηκε.",
       "toast.saveFail": "Το αρχείο δεν αποθηκεύτηκε.", "toast.relayBad": "Μη έγκυρη διεύθυνση relay (https://…).",
@@ -2384,6 +2400,11 @@
     io.appendChild(si);
     io.appendChild(button(t("imp.file"), "small", function () { dlg.close(); importStarred(); }));
     io.appendChild(button(t("mailf.btn"), "small", function () { dlg.close(); mailDialog(); }));
+    if (window.OrosGoogleImport && window.OrosFeedsYoutube && window.OrosGoogleImport.ready()) {
+      var yb = button(t("yt.btn"), "small", function () { dlg.close(); ytDialog(); });
+      yb.id = "set-youtube";
+      io.appendChild(yb);
+    }
     dlg.appendChild(io);
     dlg.appendChild(el("p", "dlg-hint", t("set.keep")));
     var acts = el("div", "dlg-actions");
@@ -2763,23 +2784,165 @@
         if (list === null) { showToast(t("opml.bad")); return; }
         list = list.filter(function (x) { return !C.feedById(data, C.feedId(x.url)); });
         if (!list.length) { showToast(t("opml.none")); return; }
-        var room = C.MAX_FEEDS - data.feeds.length;
-        if (room <= 0) { showToast(t("add.limit")); return; }
-        list = list.slice(0, room);
-        var t0 = now(), ids = [];
-        list.forEach(function (x) {
-          var id = C.feedId(x.url);
-          var folder = x.folder ? folderByName(x.folder, true) : "";
-          data.feeds.push({ id: id, url: x.url, title: x.title || C.siteOf(x.url), site: x.site, folder: folder, img: -1,
-                            m: Math.max(t0, (data.tombs["f:" + id] || 0) + 1) });
-          ids.push(id);
-        });
+        if (C.MAX_FEEDS - data.feeds.length <= 0) { showToast(t("add.limit")); return; }
+        var ids = addFeedList(list).ids;
         saveData();
         showToast(t("add.doneN", { n: ids.length }));
         renderAll();
         refresh(ids, false);
       });
     }).catch(function () {});
+  }
+  // The OPML import's way of adding feeds, also used by the YouTube
+  // import: [{ url, title, site, folder (a name) }] not yet here → new
+  // feeds (ids from the address; newer than an old tombstone), up to
+  // the limit. Returns { ids, folders: the folder ids it created }.
+  function addFeedList(list) {
+    var room = C.MAX_FEEDS - data.feeds.length, t0 = now(), ids = [], made = [];
+    list.slice(0, Math.max(0, room)).forEach(function (x) {
+      var id = C.feedId(x.url);
+      if (!id || C.feedById(data, id)) return;
+      var folder = "";
+      if (x.folder) {
+        folder = folderByName(x.folder, false);
+        if (!folder) { folder = folderByName(x.folder, true); made.push(folder); }
+      }
+      data.feeds.push({ id: id, url: x.url, title: x.title || C.siteOf(x.url), site: x.site, folder: folder, img: -1,
+                        m: Math.max(t0, (data.tombs["f:" + id] || 0) + 1) });
+      ids.push(id);
+    });
+    return { ids: ids, folders: made };
+  }
+
+  // ---------- 11c2. YouTube subscriptions (youtube.js, /google-import.js) ----------
+  // One-time and read-only: sign in to Google, read the subscribed
+  // channels, give the access back. Each ticked channel becomes its
+  // public feed (no account involved afterwards), added like an OPML
+  // import: one write, then Undo (the feeds and a folder it made go,
+  // tombstoned like an unsubscribe).
+  function ytDialog() {
+    var GI = window.OrosGoogleImport, YT = window.OrosFeedsYoutube;
+    if (!GI || !YT) return;
+    var dlg = makeDialog("yt-dlg");
+    dlg.classList.add("wide");
+    dlg.appendChild(el("h2", "dlg-title", t("yt.title")));
+    dlg.appendChild(el("p", "dlg-hint", t("yt.text")));
+    var status = el("p", "dlg-hint", t("yt.wait"));
+    status.setAttribute("aria-live", "polite");
+    dlg.appendChild(status);
+    var res = el("div", "found");
+    dlg.appendChild(res);
+    dlg.appendChild(el("p", "dlg-hint dim", t("yt.own")));
+    var acts = el("div", "dlg-actions");
+    var go = button(t("add.go"), "primary");
+    go.hidden = true;
+    var busy = true;
+    var cancelBtn = button(t("dlg.cancel"), "", function () { dlg.close(); });
+    acts.appendChild(cancelBtn);
+    acts.appendChild(go);
+    dlg.appendChild(acts);
+    dlg.addEventListener("close", function () { if (busy) GI.cancel(); });
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    // The sign-in window opens here, still inside the click.
+    GI.run({
+      scope: GI.SCOPES.youtube,
+      progress: function (n) { status.textContent = t("yt.read", { n: n }); },
+      read: function (token, api) { return YT.read(api, function (n) { status.textContent = t("yt.read", { n: n }); }); }
+    }).then(function (r) {
+      busy = false;
+      if (!dlg.open) return;
+      cancelBtn.textContent = t("dlg.close");
+      var chans = r.data || [];
+      if (!chans.length) { status.textContent = t("yt.empty"); return; }
+      var fresh = chans.filter(function (c) { return !C.feedById(data, C.feedId(c.url)); });
+      status.textContent = t("yt.sum", { n: fresh.length, have: chans.length - fresh.length });
+      if (!fresh.length) { status.textContent += " " + t("yt.nothing"); return; }
+      cancelBtn.textContent = t("dlg.cancel");
+      var bar = el("div", "inline mt");
+      bar.appendChild(el("div", "dlg-lbl", t("yt.pick")));
+      var ul = el("ul", "found-list");
+      function boxes() { return [].slice.call(ul.querySelectorAll("input[type=checkbox]")); }
+      function count() {
+        var n = boxes().filter(function (b) { return b.checked; }).length;
+        go.textContent = t("yt.go", { n: n });
+        go.disabled = !n;
+      }
+      bar.appendChild(button(t("yt.all"), "small", function () { boxes().forEach(function (b) { b.checked = true; }); count(); }));
+      bar.appendChild(button(t("yt.none"), "small", function () { boxes().forEach(function (b) { b.checked = false; }); count(); }));
+      res.appendChild(bar);
+      fresh.forEach(function (c, i) {
+        var li = el("li");
+        var lab = el("label", "found-row");
+        var cb = el("input");
+        cb.type = "checkbox";
+        cb.value = String(i);
+        cb.checked = true;
+        lab.appendChild(cb);
+        var tx = el("span", "found-tx");
+        tx.appendChild(el("span", "found-name", c.title));
+        tx.appendChild(el("span", "found-url", c.site));
+        lab.appendChild(tx);
+        li.appendChild(lab);
+        ul.appendChild(li);
+      });
+      ul.addEventListener("change", count);
+      res.appendChild(ul);
+      var fw = el("label", "found-row mt");
+      var inFolder = el("input");
+      inFolder.type = "checkbox";
+      inFolder.checked = true;
+      fw.appendChild(inFolder);
+      fw.appendChild(el("span", "found-tx", t("yt.folder")));
+      res.appendChild(fw);
+      go.hidden = false;
+      count();
+      go.onclick = function () {
+        var picks = boxes().filter(function (b) { return b.checked; }).map(function (b) { return fresh[+b.value]; });
+        if (!picks.length) return;
+        if (C.MAX_FEEDS - data.feeds.length <= 0) { showToast(t("add.limit")); return; }
+        var got = addFeedList(picks.map(function (c) {
+          return { url: c.url, title: c.title, site: c.site, folder: inFolder.checked ? "YouTube" : "" };
+        }));
+        saveData();                                  // one write, one dirty mark
+        dlg.close();
+        renderAll();
+        refresh(got.ids, false);
+        showUndo(t("add.doneN", { n: got.ids.length }), function () { ytUndo(got); });
+      };
+    }, function (e) {
+      busy = false;
+      if (!dlg.open) return;
+      cancelBtn.textContent = t("dlg.close");
+      status.textContent = GI.message(e, LANG);
+    });
+  }
+  // Undo: each feed goes the way an unsubscribe does (tombstone newer
+  // than the import), and a folder the import made, when left empty.
+  function ytUndo(got) {
+    var t0 = now(), gone = {};
+    got.ids.forEach(function (id) {
+      var f = C.feedById(data, id);
+      if (!f) return;
+      gone[id] = 1;
+      data.tombs["f:" + id] = Math.max(t0, f.m + 1);
+      delete fstate[id];
+    });
+    data.feeds = data.feeds.filter(function (f) { return !gone[f.id]; });
+    got.folders.forEach(function (fid) {
+      var d = C.folderById(data, fid);
+      if (!d || data.feeds.some(function (f) { return f.folder === fid; })) return;
+      data.folders = data.folders.filter(function (x) { return x.id !== fid; });
+      data.tombs["d:" + fid] = Math.max(t0, d.m + 1);
+    });
+    saveData();
+    saveState();
+    Promise.all(Object.keys(gone).map(dropFeedArticles)).then(function () {
+      if (openItem && gone[openItem.feed] && !C.savedById(data, openItem.id)) openItem = null;
+      if ((selKind() === "feed" && gone[selId()]) || (selKind() === "folder" && !C.folderById(data, selId()))) select("all");
+      renderAll();
+      showToast(t("yt.undone"));
+    });
   }
   function localOpen(accept) {
     return new Promise(function (resolve) {
