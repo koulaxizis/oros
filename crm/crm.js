@@ -2434,6 +2434,7 @@
     }
     return { names: names.filter(Boolean), emails: c.email ? [c.email] : [], phones: c.phone ? [c.phone] : [],
              sites: c.web ? [c.web] : [], shared: shared, kind: c.kind === "person" ? "person" : "org",
+             place: [c.addr, c.country].filter(Boolean).join(", "),
              has: { photo: true, birthday: true, job: c.kind !== "person" || !!c.job, org: true, address: !!c.addr, name: true } };
   }
   function enrichApply(picks) {

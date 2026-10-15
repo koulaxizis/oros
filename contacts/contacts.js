@@ -4867,7 +4867,8 @@ document.addEventListener("keydown", function (e) {
       shared: shared,
       has: { photo: !!c.photo, birthday: c.events.some(function (e) { return e.type === "birthday"; }),
              job: !!c.jobTitle, org: !!c.org, address: c.addresses.length > 0, name: true },
-      kind: (c.given || c.family) ? "person" : (c.org ? "org" : "")
+      kind: (c.given || c.family) ? "person" : (c.org ? "org" : ""),
+      place: c.addresses.length ? [c.addresses[0].street, c.addresses[0].city, c.addresses[0].country].filter(Boolean).join(", ") : ""
     };
   }
   function enOwners() {

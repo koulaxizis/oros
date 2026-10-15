@@ -170,3 +170,56 @@ test("wave 2: lookup reads the open profile a record links to, never a closed on
   assert.equal(s.find(x => x.v === "https://anna.gr").conf, "sure");      // own e-mail on the profile
   assert.equal(s.find(x => x.v === "https://other.example").conf, "check"); // another name
 });
+
+test("wave 3: OSM tags become a business finding", () => {
+  const f = E.fromOsm({ name: "Φούρνος Νίκος", phone: "+30 210 555 5555;+30 6971234567", website: "nikos.gr",
+    "contact:facebook": "nikosbakery", "addr:street": "Ερμού", "addr:housenumber": "5", "addr:postcode": "10563", "addr:city": "Αθήνα" });
+  assert.equal(f.phones.length, 2);
+  assert.ok(f.links.some(l => l.url === "https://nikos.gr"));
+  assert.ok(f.links.some(l => l.url === "https://facebook.com/nikosbakery"));
+  assert.equal(f.address, "Ερμού 5, 10563 Αθήνα");
+  assert.equal(E.phoneRegex("+30 210 5555555"), "2[^0-9]*1[^0-9]*0[^0-9]*5[^0-9]*5[^0-9]*5[^0-9]*5[^0-9]*5[^0-9]*5[^0-9]*5");
+});
+
+test("wave 3: business lookup keeps only candidates sharing the phone or the name", async () => {
+  const asked = [];
+  const opts = { sha256: () => Promise.resolve("h"), getText: (u) => {
+    asked.push(u);
+    if (u.startsWith("https://photon.komoot.io/")) return Promise.resolve({ status: 200, text: JSON.stringify({ features: [
+      { properties: { osm_type: "N", osm_id: 11, name: "Nikos Bakery" } },
+      { properties: { osm_type: "W", osm_id: 22, name: "Totally Different" } }] }) });
+    if (u.startsWith("https://overpass-api.de/")) {
+      assert.ok(decodeURIComponent(u).includes("node(id:11)"));
+      assert.ok(!decodeURIComponent(u).includes("22"));
+      return Promise.resolve({ status: 200, text: JSON.stringify({ elements: [{ tags: { name: "Nikos Bakery", phone: "+30 210 5555555", website: "https://nikos.gr" } }] }) });
+    }
+    return Promise.resolve({ status: 404, text: "" });
+  } };
+  const s = await E.lookup({ names: ["Φούρνος Νίκος", "Nikos Bakery"], phones: ["2105555555"], kind: "org", place: "Αθήνα",
+    has: { name: true, address: true } }, opts);
+  assert.equal(s.find(x => x.v === "https://nikos.gr").conf, "sure");
+  assert.ok(asked.some(u => u.startsWith("https://photon.komoot.io/")));
+  // a person record never goes to OSM
+  asked.length = 0;
+  await E.lookup({ names: ["Μαρία"], phones: ["2105555555"], kind: "person", place: "Αθήνα", has: {} }, opts);
+  assert.ok(!asked.some(u => /photon|overpass/.test(u)));
+});
+
+test("wave 3: Wikidata is asked by the record's own website and profile ids, never by name", () => {
+  const k = E.wdKeys(["https://anna.gr", "https://github.com/annap", "https://instagram.com/annap"]);
+  assert.ok(k.webs.includes("<https://www.anna.gr/>"));
+  assert.deepEqual(k.ids, [{ p: "P2037", v: "annap" }, { p: "P2003", v: "annap" }]);
+  const q = E.wdQuery(k);
+  assert.ok(q.includes("wdt:P856"));
+  assert.ok(!/Anna|Άννα/.test(q));
+  assert.equal(E.wdQuery({ webs: [], ids: [] }), "");
+  assert.deepEqual(E.wdKeys(["https://bad.gr/a b>"]).webs, []);
+  const f = E.fromWikidata({ results: { bindings: [
+    { item: { value: "http://www.wikidata.org/entity/Q1" }, itemLabel: { value: "Anna Pappa" }, human: { value: "true" },
+      birth: { value: "1980-02-29T00:00:00Z" }, P2002: { value: "annap" }, web: { value: "https://anna.gr/" } },
+    { item: { value: "http://www.wikidata.org/entity/Q1" }, itemLabel: { value: "Anna Pappa" }, human: { value: "true" },
+      P2037: { value: "annap" } }] } });
+  assert.equal(f.length, 1);
+  assert.deepEqual(f[0].birthday, { day: "02-29", year: 1980 });
+  assert.deepEqual(f[0].links.map(l => l.url).sort(), ["https://anna.gr", "https://github.com/annap", "https://x.com/annap"]);
+});
