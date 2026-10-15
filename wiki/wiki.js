@@ -17,6 +17,9 @@
 //   - wave 3 (io.js): import from Notes and Markdown (.md / .zip),
 //     export as Markdown or an offline website (.zip), Start from
 //     Wikipedia (CC BY-SA credit kept), Send to someone (kind "wiki")
+//   - wave 4 (import.js): import from Notion, TiddlyWiki, MediaWiki
+//     and Confluence exports (and Markdown) with a preview, stable
+//     ids (a new import updates untouched articles) and Undo
 // Data: synced slice "wiki" (oros-wiki-data, core.js); history files
 // /internal/Wiki/History/<article>/ on the orOS disk (Vault Drive).
 // Sections:
@@ -169,9 +172,9 @@
       "sum.new": "New article", "sum.restore": "Restored an older version",
       "sum.keep": "Kept this version (parallel edit)", "sum.useOther": "Took the version from another device",
       "nav.io": "Import and export…", "io.title": "Import and export", "io.import": "Bring in", "io.export": "Save this wiki",
-      "io.lead": "Imports only add articles: nothing in your wiki is changed or replaced.",
+      "io.lead": "Imports add articles. Importing the same file again updates only the articles it brought in that you haven't changed since; nothing else in your wiki is touched.",
       "io.notes": "From Notes…", "io.notesHint": "A notebook of orOS Notes: every page becomes an article; subpages and labels become categories.",
-      "io.md": "Markdown files…", "io.mdHint": "One or more .md files, or a .zip of them (from Notes, Obsidian or another wiki).",
+      "io.md": "From a file…", "io.mdHint": "Markdown (.md or a .zip), a Notion export (Markdown & CSV), TiddlyWiki (.json or the .html file), a MediaWiki dump (.xml) or a Confluence space export (HTML .zip).",
       "io.wp": "Start from Wikipedia…", "io.wpHint": "One Wikipedia article as a starting text, with its source and licence.",
       "io.mdOut": "Markdown (.zip)", "io.mdOutHint": "Every article as a .md file, with its pictures.",
       "io.site": "Website (.zip)", "io.siteHint": "This wiki as an offline website: unzip it and open index.html in any browser.",
@@ -181,6 +184,27 @@
       "imp.done": "{n} articles imported", "imp.done1": "1 article imported", "imp.none": "Nothing to import in these files.",
       "imp.cut": "Only {n} articles fit: a wiki holds up to 5,000.", "imp.busy": "Importing…", "imp.fail": "These files could not be read.",
       "imp.untitled": "Untitled", "imp.wiki": "Imported",
+      "ix.title": "Import from {s}", "ix.ok": "Import", "ix.big": "This file is too large to import.",
+      "ix.pages": "{n} pages in the file", "ix.pages1": "1 page in the file", "ix.range": "Written between {a} and {b}",
+      "ix.add": "{n} new articles", "ix.add1": "1 new article",
+      "ix.update": "{n} articles from an earlier import get the newer text", "ix.update1": "1 article from an earlier import gets the newer text",
+      "ix.same": "{n} articles are already here, unchanged", "ix.same1": "1 article is already here, unchanged",
+      "ix.edited": "{n} articles you changed since the last import stay as you left them", "ix.edited1": "1 article you changed since the last import stays as you left it",
+      "ix.renamed": "{n} titles are taken in this wiki: those articles get a number, like “Olives (2)”", "ix.renamed1": "1 title is taken in this wiki: that article gets a number, like “Olives (2)”",
+      "ix.cut": "{n} pages don't fit: a wiki holds up to 5,000 articles", "ix.cut1": "1 page doesn't fit: a wiki holds up to 5,000 articles",
+      "ix.pics": "{n} pictures go to the orOS disk", "ix.pics1": "1 picture goes to the orOS disk",
+      "ix.skipSystem": "{n} system tiddlers ($:/…) and drafts are left out", "ix.skipSystem1": "1 system tiddler ($:/…) or draft is left out",
+      "ix.skipType": "{n} tiddlers that aren't text (pictures, files) are left out", "ix.skipType1": "1 tiddler that isn't text (a picture or file) is left out",
+      "ix.skipNs": "{n} pages outside the main namespace (users, talk, templates…) are left out", "ix.skipNs1": "1 page outside the main namespace (users, talk, templates…) is left out",
+      "ix.skipCut": "Only the first 2,000 pages are read: {n} more are left out", "ix.skipCut1": "Only the first 2,000 pages are read: 1 more is left out",
+      "ix.empty": "{n} pages are empty", "ix.empty1": "1 page is empty",
+      "ix.nothing": "Everything in this file is already in the wiki.",
+      "ix.map.markdown": "Each file becomes an article; folders and tags become categories; links to other .md files become article links; pictures inside a .zip come along.",
+      "ix.map.notion": "Each page becomes an article, without Notion's long ids; subpages go in a category named after their page; a database becomes an article with a table; links between pages and pictures are kept.",
+      "ix.map.tiddlywiki": "Each tiddler becomes an article; tags become categories; WikiText formatting, lists, tables and links are converted; a transclusion becomes a link.",
+      "ix.map.mediawiki": "Each page becomes an article from its latest revision; categories and redirects are kept; templates are left out.",
+      "ix.map.confluence": "Each page becomes an article in a category named after its parent page; headings, lists, tables, code, links between pages and pictures are kept.",
+      "ix.doneU": "{n} new articles, {u} updated", "ix.undone": "Import undone", "sum.imp": "Imported from {s}",
       "exp.busy": "Making the file…", "exp.empty": "This wiki has no articles yet.", "exp.fail": "The file could not be made.",
       "wp.title": "Start from Wikipedia", "wp.lang": "Wikipedia in", "wp.q": "Article title or Wikipedia address", "wp.ph": "e.g. Olive",
       "wp.privacy": "The title you type goes to Wikipedia (Wikimedia Foundation) to fetch the article. Pictures are not copied.",
@@ -316,9 +340,9 @@
       "sum.new": "Νέο άρθρο", "sum.restore": "Επαναφορά παλιότερης εκδοχής",
       "sum.keep": "Κρατήθηκε αυτή η εκδοχή (παράλληλη αλλαγή)", "sum.useOther": "Πάρθηκε η εκδοχή άλλης συσκευής",
       "nav.io": "Εισαγωγή και εξαγωγή…", "io.title": "Εισαγωγή και εξαγωγή", "io.import": "Φέρε μέσα", "io.export": "Αποθήκευσε αυτό το wiki",
-      "io.lead": "Οι εισαγωγές μόνο προσθέτουν άρθρα: τίποτα στο wiki σου δεν αλλάζει ούτε αντικαθίσταται.",
+      "io.lead": "Οι εισαγωγές προσθέτουν άρθρα. Αν εισαγάγεις ξανά το ίδιο αρχείο, ενημερώνονται μόνο τα άρθρα που έφερε και δεν έχεις αλλάξει από τότε· τίποτε άλλο στο wiki σου δεν αγγίζεται.",
       "io.notes": "Από τις Σημειώσεις…", "io.notesHint": "Ένα σημειωματάριο των Σημειώσεων του orOS: κάθε σελίδα γίνεται άρθρο, οι υποσελίδες και οι ετικέτες γίνονται κατηγορίες.",
-      "io.md": "Αρχεία Markdown…", "io.mdHint": "Ένα ή περισσότερα αρχεία .md ή ένα .zip με αυτά (από τις Σημειώσεις, το Obsidian ή άλλο wiki).",
+      "io.md": "Από αρχείο…", "io.mdHint": "Markdown (.md ή .zip), εξαγωγή του Notion (Markdown & CSV), TiddlyWiki (.json ή το αρχείο .html), αντίγραφο MediaWiki (.xml) ή εξαγωγή χώρου του Confluence (.zip με HTML).",
       "io.wp": "Ξεκίνα από τη Βικιπαίδεια…", "io.wpHint": "Ένα άρθρο της Βικιπαίδειας ως κείμενο αφετηρίας, με την πηγή και την άδειά του.",
       "io.mdOut": "Markdown (.zip)", "io.mdOutHint": "Κάθε άρθρο ως αρχείο .md, μαζί με τις εικόνες του.",
       "io.site": "Ιστότοπος (.zip)", "io.siteHint": "Αυτό το wiki ως ιστότοπος χωρίς σύνδεση: αποσυμπίεσέ το και άνοιξε το index.html σε οποιονδήποτε browser.",
@@ -328,6 +352,27 @@
       "imp.done": "Μπήκαν {n} άρθρα", "imp.done1": "Μπήκε 1 άρθρο", "imp.none": "Δεν υπάρχει τίποτα για εισαγωγή σε αυτά τα αρχεία.",
       "imp.cut": "Χώρεσαν μόνο {n} άρθρα: ένα wiki έχει έως 5.000.", "imp.busy": "Εισαγωγή…", "imp.fail": "Δεν ήταν δυνατό να διαβαστούν αυτά τα αρχεία.",
       "imp.untitled": "Χωρίς τίτλο", "imp.wiki": "Εισαγωγή",
+      "ix.title": "Εισαγωγή από {s}", "ix.ok": "Εισαγωγή", "ix.big": "Το αρχείο είναι πολύ μεγάλο για εισαγωγή.",
+      "ix.pages": "{n} σελίδες στο αρχείο", "ix.pages1": "1 σελίδα στο αρχείο", "ix.range": "Γράφτηκαν από {a} έως {b}",
+      "ix.add": "{n} νέα άρθρα", "ix.add1": "1 νέο άρθρο",
+      "ix.update": "{n} άρθρα από προηγούμενη εισαγωγή παίρνουν το νεότερο κείμενο", "ix.update1": "1 άρθρο από προηγούμενη εισαγωγή παίρνει το νεότερο κείμενο",
+      "ix.same": "{n} άρθρα υπάρχουν ήδη, χωρίς αλλαγές", "ix.same1": "1 άρθρο υπάρχει ήδη, χωρίς αλλαγές",
+      "ix.edited": "{n} άρθρα που άλλαξες μετά την τελευταία εισαγωγή μένουν όπως τα άφησες", "ix.edited1": "1 άρθρο που άλλαξες μετά την τελευταία εισαγωγή μένει όπως το άφησες",
+      "ix.renamed": "{n} τίτλοι υπάρχουν ήδη σε αυτό το wiki: τα άρθρα αυτά παίρνουν αριθμό, π.χ. «Ελιές (2)»", "ix.renamed1": "1 τίτλος υπάρχει ήδη σε αυτό το wiki: το άρθρο παίρνει αριθμό, π.χ. «Ελιές (2)»",
+      "ix.cut": "{n} σελίδες δεν χωράνε: ένα wiki έχει έως 5.000 άρθρα", "ix.cut1": "1 σελίδα δεν χωράει: ένα wiki έχει έως 5.000 άρθρα",
+      "ix.pics": "{n} εικόνες πηγαίνουν στον δίσκο του orOS", "ix.pics1": "1 εικόνα πηγαίνει στον δίσκο του orOS",
+      "ix.skipSystem": "{n} tiddlers συστήματος ($:/…) και πρόχειρα μένουν έξω", "ix.skipSystem1": "1 tiddler συστήματος ($:/…) ή πρόχειρο μένει έξω",
+      "ix.skipType": "{n} tiddlers που δεν είναι κείμενο (εικόνες, αρχεία) μένουν έξω", "ix.skipType1": "1 tiddler που δεν είναι κείμενο (εικόνα ή αρχείο) μένει έξω",
+      "ix.skipNs": "{n} σελίδες εκτός του κύριου χώρου ονομάτων (χρήστες, συζητήσεις, πρότυπα…) μένουν έξω", "ix.skipNs1": "1 σελίδα εκτός του κύριου χώρου ονομάτων (χρήστες, συζητήσεις, πρότυπα…) μένει έξω",
+      "ix.skipCut": "Διαβάζονται μόνο οι πρώτες 2.000 σελίδες: άλλες {n} μένουν έξω", "ix.skipCut1": "Διαβάζονται μόνο οι πρώτες 2.000 σελίδες: άλλη 1 μένει έξω",
+      "ix.empty": "{n} σελίδες είναι άδειες", "ix.empty1": "1 σελίδα είναι άδεια",
+      "ix.nothing": "Όλα όσα έχει αυτό το αρχείο υπάρχουν ήδη στο wiki.",
+      "ix.map.markdown": "Κάθε αρχείο γίνεται άρθρο· οι φάκελοι και οι ετικέτες γίνονται κατηγορίες· οι σύνδεσμοι προς άλλα αρχεία .md γίνονται σύνδεσμοι άρθρων· οι εικόνες μέσα στο .zip έρχονται μαζί.",
+      "ix.map.notion": "Κάθε σελίδα γίνεται άρθρο, χωρίς τους μακριούς κωδικούς του Notion· οι υποσελίδες μπαίνουν σε κατηγορία με το όνομα της σελίδας τους· μια βάση δεδομένων γίνεται άρθρο με πίνακα· οι σύνδεσμοι ανάμεσα στις σελίδες και οι εικόνες μένουν.",
+      "ix.map.tiddlywiki": "Κάθε tiddler γίνεται άρθρο· οι ετικέτες γίνονται κατηγορίες· η μορφοποίηση WikiText, οι λίστες, οι πίνακες και οι σύνδεσμοι μετατρέπονται· μια ενσωμάτωση (transclusion) γίνεται σύνδεσμος.",
+      "ix.map.mediawiki": "Κάθε σελίδα γίνεται άρθρο από την πιο πρόσφατη αναθεώρησή της· οι κατηγορίες και οι ανακατευθύνσεις μένουν· τα πρότυπα μένουν έξω.",
+      "ix.map.confluence": "Κάθε σελίδα γίνεται άρθρο, σε κατηγορία με το όνομα της γονικής της σελίδας· οι επικεφαλίδες, οι λίστες, οι πίνακες, ο κώδικας, οι σύνδεσμοι ανάμεσα στις σελίδες και οι εικόνες μένουν.",
+      "ix.doneU": "{n} νέα άρθρα, {u} ενημερώθηκαν", "ix.undone": "Η εισαγωγή αναιρέθηκε", "sum.imp": "Εισαγωγή από {s}",
       "exp.busy": "Φτιάχνεται το αρχείο…", "exp.empty": "Αυτό το wiki δεν έχει ακόμα άρθρα.", "exp.fail": "Δεν ήταν δυνατό να γίνει το αρχείο.",
       "wp.title": "Ξεκίνα από τη Βικιπαίδεια", "wp.lang": "Βικιπαίδεια στα", "wp.q": "Τίτλος άρθρου ή διεύθυνση της Βικιπαίδειας", "wp.ph": "π.χ. Ελιά",
       "wp.privacy": "Ο τίτλος που γράφεις πηγαίνει στη Βικιπαίδεια (Wikimedia Foundation) για να έρθει το άρθρο. Οι εικόνες δεν αντιγράφονται.",
@@ -1700,7 +1745,7 @@
     }
     body.appendChild(el("h3", "io-h", t("io.import")));
     row(t("io.notes"), t("io.notesHint"), notesDialog);
-    row(t("io.md"), t("io.mdHint"), mdPick);
+    row(t("io.md"), t("io.mdHint"), filePick);
     row(t("io.wp"), t("io.wpHint"), function () { wpDialog("", false); }, !w);
     body.appendChild(el("h3", "io-h", t("io.export")));
     row(t("io.mdOut"), t("io.mdOutHint"), exportMd, !w);
@@ -1745,140 +1790,175 @@
     });
   }
 
-  // --- Markdown files / zip → wiki ---
-  function mdPick() {
+  // --- Files from other wikis → wiki (import.js, wave 4) ---
+  // Markdown, Notion, TiddlyWiki, MediaWiki, Confluence: read → detect
+  // + parse (pure) → preview → pictures to the orOS disk → ONE write
+  // (persist: one dirty mark) → a toast with Undo. Article ids come
+  // from the source, so importing again updates the articles still as
+  // imported and leaves alone the ones changed here since. Everything
+  // from a file reaches the page through textContent only.
+  function IMP() { return window.OrosWikiImport; }
+  var IMP_MAX = 60 * 1024 * 1024;
+  var IMP_SRC = { markdown: "Markdown", notion: "Notion", tiddlywiki: "TiddlyWiki", mediawiki: "MediaWiki", confluence: "Confluence" };
+  var impBusy = false;
+  function filePick() {
+    if (!IMP()) return;
+    var host = null;
+    try { host = shell() && shell().orosDialog; } catch (e) { host = null; }
+    if (host && typeof host.openFiles === "function") {
+      host.openFiles(IMP().ACCEPT).then(function (files) { if (files && files.length) fileImport([].slice.call(files)); });
+      return;
+    }
     var f = document.createElement("input");
     f.type = "file";
     f.multiple = true;
-    f.accept = ".md,.markdown,.txt,.zip,text/markdown,text/plain,application/zip";
-    f.addEventListener("change", function () { mdImport([].slice.call(f.files || [])); });
+    f.accept = IMP().ACCEPT;
+    f.addEventListener("change", function () { fileImport([].slice.call(f.files || [])); });
     f.click();
   }
-  var MD_EXT = /\.(md|markdown|txt)$/i, PIC_EXT = /\.(jpe?g|png|gif|webp|bmp|avif)$/i;
-  function normPath(p) {
-    var out = [];
-    String(p || "").replace(/\\/g, "/").split("/").forEach(function (s) {
-      if (!s || s === ".") return;
-      if (s === "..") out.pop(); else out.push(s);
-    });
-    return out.join("/");
-  }
-  // files → { docs: [{ path, text }], pics: { lower path: () → Promise<Blob> } }
-  function readImport(files) {
-    var docs = [], pics = {}, chain = Promise.resolve();
-    files.forEach(function (file) {
-      if (/\.zip$/i.test(file.name)) {
-        chain = chain.then(function () { return Promise.all([loadZip(), file.arrayBuffer()]); }).then(function (r) {
-          var z = r[0].open(new Uint8Array(r[1])), jobs = [];
-          z.names.forEach(function (n) {
-            var p = normPath(n);
-            if (/(^|\/)(__MACOSX|\.)/.test(p)) return;
-            if (MD_EXT.test(p) && docs.length < IO().MAX_IMPORT) {
-              jobs.push(z.text(n, 4 * 1024 * 1024).then(function (x) { if (x !== null) docs.push({ path: p, text: x }); }, function () {}));
-            } else if (PIC_EXT.test(p)) {
-              pics[p.toLowerCase()] = function () { return z.bytes(n, 40 * 1024 * 1024).then(function (b) { return new Blob([b]); }); };
-            }
-          });
-          return Promise.all(jobs);
-        });
-      } else if (MD_EXT.test(file.name)) {
-        chain = chain.then(function () { return file.text(); }).then(function (x) { docs.push({ path: file.name, text: x }); });
-      } else if (PIC_EXT.test(file.name)) {
-        pics[file.name.toLowerCase()] = function () { return Promise.resolve(file); };
-      }
+  // Also the handle for a file opened with orOS / tests (Promise<bool>)
+  function fileImport(files) {
+    var K = window.OrosImportKit;
+    if (!files.length || impBusy || !IMP() || !K) return Promise.resolve(false);
+    impBusy = true;
+    toast(t("imp.busy"));
+    var items = [], chain = Promise.resolve();
+    files.forEach(function (f) {
+      chain = chain.then(function () { return K.readFile(f, IMP_MAX); }).then(function (r) { items.push(r); });
     });
     return chain.then(function () {
-      docs.sort(function (a, b) { return a.path < b.path ? -1 : 1; });
-      return { docs: docs, pics: pics };
+      return items.some(function (it) { return K.isZip(it.bytes); }) ? loadZip() : null;
+    }).then(function (Zip) { return IMP().readBundle(items, Zip); }).then(function (b) {
+      var res = IMP().parse(b, { lang: LANG, untitled: t("imp.untitled") });
+      impBusy = false;
+      if (!res || !res.pages.length) { toast(t("imp.none")); return false; }
+      importPreview(res, b);
+      return true;
+    }).catch(function (e) {
+      impBusy = false;
+      try { console.error("[orOS wiki] import", e); } catch (x) {}
+      toast(t(e && e.message === "toobig" ? "ix.big" : "imp.fail"));
+      return false;
     });
   }
-  function mdImport(files) {
-    if (!files.length) return;
-    toast(t("imp.busy"));
-    readImport(files).then(function (got) {
-      if (!got.docs.length) { toast(t("imp.none")); return; }
-      var w = curWiki(), isNew = !w;
-      var taken = w ? takenTitles(w) : {};
-      // one shared top folder (a zipped vault) is not a category
-      var tops = {};
-      got.docs.forEach(function (d) { tops[d.path.indexOf("/") > 0 ? d.path.split("/")[0] : ""] = 1; });
-      var keys = Object.keys(tops), strip = keys.length === 1 && keys[0] ? keys[0] + "/" : "";
-      var first = got.docs.map(function (d) {
-        var name = d.path.split("/").pop();
-        return { d: d, a: IO().fromMarkdown(name, d.text, null) };
-      });
-      var byPath = {}, byName = {};
-      first.forEach(function (f) {
-        f.title = IO().uniqueTitle(f.a.t, taken, t("imp.untitled"));
-        byPath[f.d.path.toLowerCase()] = f.title;
-        var base = f.d.path.split("/").pop().toLowerCase();
-        if (!byName[base]) byName[base] = f.title;
-      });
-      var need = [], picIndex = {};
-      function picAt(dir, p) {
-        var path = normPath((dir ? dir + "/" : "") + p).toLowerCase();
-        if (got.pics[path]) return path;
-        var base = p.split("/").pop().toLowerCase();
-        var hit = Object.keys(got.pics).filter(function (k) { return k.split("/").pop() === base; })[0];
-        return hit || "";
-      }
-      var arts = first.map(function (f) {
-        var dir = f.d.path.split("/").slice(0, -1).join("/");
-        var ctx = {
-          img: function (p, alt, opts) {
-            var dec = p;
-            try { dec = decodeURIComponent(p); } catch (e) {}
-            var key = picAt(dir, dec);
-            if (!key) return "";
-            if (picIndex[key] === undefined) { picIndex[key] = need.length; need.push(key); }
-            return "\u0002" + picIndex[key] + "\u0002" + JSON.stringify([alt, opts]) + "\u0003";
-          },
-          page: function (p) {
-            var full = normPath((dir ? dir + "/" : "") + p).toLowerCase();
-            return byPath[full] || byName[p.split("/").pop().toLowerCase()] || "";
-          }
-        };
-        var a = IO().fromMarkdown(f.d.path.split("/").pop(), f.d.text, ctx);
-        var cats = a.cats.slice();
-        var rel = f.d.path.slice(f.d.path.indexOf(strip) === 0 ? strip.length : 0).split("/");
-        var folder = rel.length > 1 ? C.cleanTitle(rel[rel.length - 2]) : "";
-        if (folder && C.fold(folder) !== C.fold(f.a.t) && !/^(media|attachments|assets|images)$/i.test(folder)) cats.unshift(folder);
-        var x = a.x;
-        var seen = {};
-        cats = cats.filter(function (c) { var k = C.fold(c); if (!k || seen[k]) return false; seen[k] = 1; return true; });
-        if (cats.length) x += (x ? "\n\n" : "") + cats.map(function (c) { return "[[" + (LANG === "el" ? "Κατηγορία:" : "Category:") + c + "]]"; }).join("\n");
-        return { t: f.title, x: x };
-      });
-      // the pictures: same id when the file name is its hash (our export)
-      var ids = [], A = AS(), chain = Promise.resolve();
-      need.forEach(function (key, i) {
-        chain = chain.then(function () {
-          if (!A || !fsApi()) return null;
-          return got.pics[key]().then(function (blob) {
-            var name = key.split("/").pop();
-            if (C.IMG_RE.test(name)) return A.put(name, blob).catch(function () { return A.importFile(new File([blob], name)).then(function (r) { return r.id; }); });
-            return A.importFile(new File([blob], name)).then(function (r) { return r.id; });
-          });
-        }).then(function (id) { ids[i] = id || ""; }, function () { ids[i] = ""; });
-      });
-      return chain.then(function () {
-        arts.forEach(function (a) {
-          a.x = a.x.replace(/\u0002(\d+)\u0002([^\u0003]*)\u0003/g, function (m, n, j) {
-            var o = ["", ""];
-            try { o = JSON.parse(j); } catch (e) {}
-            var id = ids[Number(n)];
-            return id ? IO().mediaFile(id, o[0], o[1], LANG) : String(o[0] || "");
-          }).slice(0, C.MAX_TEXT);
-        });
-        if (isNew) w = newWikiObj(t("imp.wiki"));
-        if (!w) return;
-        var r = addArticles(w, arts, t("sum.md"), isNew);
-        if (r) importDone(w, r);
-      });
-    }).catch(function (e) {
-      try { console.error("[orOS wiki] import", e); } catch (x) {}
-      toast(t("imp.fail"));
+  function catWord() { return LANG === "el" ? "Κατηγορία" : "Category"; }
+  // Pictures the import will store: those of pages added or updated.
+  function picsFor(res, pl) {
+    var on = {}, out = [];
+    pl.items.forEach(function (it) {
+      if (it.act !== "add" && it.act !== "update") return;
+      it.page.x.replace(/\u0002(\d+)\u0002/g, function (m, n) { if (!on[n]) { on[n] = 1; out.push(Number(n)); } return m; });
     });
+    return out;
+  }
+  var SHORT = null;
+  function fmtShort(ms) {
+    try {
+      SHORT = SHORT || new Intl.DateTimeFormat(LANG === "el" ? "el-GR" : "en-GB", { dateStyle: "medium" });
+      return SHORT.format(new Date(ms));
+    } catch (e) { return new Date(ms).toISOString().slice(0, 10); }
+  }
+  function importPreview(res, b) {
+    var w = curWiki(), src = IMP_SRC[res.source] || res.source;
+    var newName = res.name || t("imp.wiki"), newId = C.uid("w");
+    var body = el("div", "form imp-prev");
+    var where = sel([["new", t("notes.new", { t: newName })]].concat(w ? [["cur", t("notes.cur", { t: wikiName(w) })]] : []), w ? "cur" : "new");
+    body.appendChild(field(t("notes.where"), where));
+    var info = el("ul", "imp-info");
+    body.appendChild(info);
+    var map = el("p", "hint small", t("ix.map." + res.source));
+    body.appendChild(map);
+    var pl = null;
+    function wid() { return where.value === "cur" && curWiki() ? curWiki().id : newId; }
+    function line(s, cls) { if (s) info.appendChild(el("li", cls || null, s)); }
+    function show() {
+      pl = IMP().plan(data, wid(), res, { untitled: t("imp.untitled") });
+      var n = pl.n, sk = res.skipped;
+      info.textContent = "";
+      line(tn("ix.pages", res.pages.length));
+      if (res.range) line(t("ix.range", { a: fmtShort(res.range[0]), b: fmtShort(res.range[1]) }));
+      if (n.add) line(tn("ix.add", n.add), "imp-strong");
+      if (n.update) line(tn("ix.update", n.update), "imp-strong");
+      if (n.same) line(tn("ix.same", n.same));
+      if (n.edited) line(tn("ix.edited", n.edited));
+      if (n.renamed) line(tn("ix.renamed", n.renamed));
+      if (n.cut) line(tn("ix.cut", n.cut), "imp-warn");
+      var np = picsFor(res, pl).length;
+      if (np) line(tn("ix.pics", np));
+      if (sk.system) line(tn("ix.skipSystem", sk.system));
+      if (sk.other) line(tn(res.source === "mediawiki" ? "ix.skipNs" : "ix.skipType", sk.other));
+      if (sk.empty) line(tn("ix.empty", sk.empty));
+      if (sk.cut) line(tn("ix.skipCut", sk.cut), "imp-warn");
+      if (!n.add && !n.update) line(t("ix.nothing"), "imp-strong");
+    }
+    where.addEventListener("change", show);
+    show();
+    openForm({
+      title: t("ix.title", { s: src }), body: body, ok: t("ix.ok"),
+      check: function () { show(); return pl.n.add || pl.n.update ? "" : t("ix.nothing"); },
+      done: function () { runImport(res, b, wid(), wid() === newId ? newName : "", src); }
+    });
+  }
+  function runImport(res, b, wid, newName, src) {
+    var isNew = !!newName && !C.wikiById(data, wid);
+    if (isNew && data.wikis.length >= C.MAX_WIKIS) { toast(t("err.wikis")); return; }
+    var opt = { untitled: t("imp.untitled") };
+    var pl = IMP().plan(data, wid, res, opt);
+    var need = picsFor(res, pl), ids = [], A = AS(), chain = Promise.resolve();
+    if (need.length) toast(t("toast.importing"));
+    need.forEach(function (i) {
+      chain = chain.then(function () {
+        var pic = b.pics[res.pics[i]];
+        if (!A || !fsApi() || !pic) return "";
+        return pic.load().then(function (bytes) {
+          if (!bytes) return "";
+          var name = pic.path.split("/").pop(), blob = new Blob([bytes]);
+          // our own Markdown export names pictures by their id
+          if (C.IMG_RE.test(name)) return A.put(name, blob).catch(function () { return A.importFile(new File([blob], name)).then(function (r) { return r.id; }); });
+          return A.importFile(new File([blob], name)).then(function (r) { return r.id; });
+        });
+      }).then(function (id) { ids[i] = id || ""; }, function () { ids[i] = ""; });
+    });
+    chain.then(function () {
+      // the data may have changed while the pictures were stored (sync)
+      pl = IMP().plan(data, wid, res, opt);
+      var r = IMP().apply(data, pl, res, {
+        now: now(), sum: t("sum.imp", { s: src }), lang: LANG, catWord: catWord(), picIds: ids,
+        newWiki: isNew ? { id: wid, n: newName } : null
+      });
+      if (!r.added.length && !r.updated.length) { toast(t("ix.nothing")); return; }
+      var before = data;
+      data = r.data;
+      if (!persist()) { data = before; renderSide(); return; }   // one write, one dirty mark
+      writeRevs(r.added.map(function (a) { return [a, ""]; }).concat(r.updated.map(function (u) { return [u.art, u.prev.r]; })));
+      prefs.w = wid; prefs.a = ""; savePrefs();
+      stack = [];
+      view = null;
+      go({ v: "all" });
+      var msg = r.updated.length ? t("ix.doneU", { n: r.added.length, u: r.updated.length }) : tn("imp.done", r.added.length);
+      var used = false;
+      toast(msg, t("btn.undo"), function () {
+        if (used) return;
+        used = true;
+        var prev = data;
+        data = C.merge(IMP().undo(data, r.info, now()), null);
+        if (!persist()) { data = prev; return; }
+        stack = [];
+        view = null;
+        if (C.wikiById(data, prefs.w)) go({ v: "all" }); else goMain();
+        toast(t("ix.undone"));
+      });
+    });
+  }
+  // History files for imported revisions, one after another.
+  function writeRevs(list) {
+    var F = fsApi(), chain = Promise.resolve(), bad = 0;
+    if (!F || typeof F.writeText !== "function") return;
+    list.forEach(function (p) {
+      chain = chain.then(function () { return F.writeText(C.revPath(p[0].id, p[0].m, p[0].r), JSON.stringify(C.revFile(p[0], p[1], ""))); })
+        .catch(function () { bad++; });
+    });
+    chain.then(function () { if (bad) toast(t("toast.histFail")); });
   }
 
   // --- this wiki → Markdown zip / website zip ---
@@ -2874,6 +2954,9 @@
     return true;
   }
   window.__orosOpenAt = openTarget;
+  // "Import from a file" without the picker: Files → the preview
+  // (Promise<boolean>: something to import was found)
+  window.__orosWikiImport = function (files) { return fileImport([].slice.call(files || [])); };
 
   // ---------- 11. Wiring & boot ----------
   function applyI18n() {
