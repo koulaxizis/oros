@@ -296,7 +296,7 @@ const STRINGS = {
     'io.html.name': 'HTML',
     'io.html.desc': 'Web-ready with full formatting.',
     'io.orosdoc.name': 'orOS Writer',
-    'io.orosdoc.desc': 'Round-trip archive: text, footnotes, comments, metadata.',
+    'io.orosdoc.desc': 'Round-trip archive: text, pictures, footnotes, comments, metadata. Unzip it to see the files.',
     'io.json.name': 'Database (JSON)',
     'io.json.desc': 'Complete slice — all tabs, settings, templates, autocorrect.',
     'io.busy': 'Preparing…',
@@ -311,6 +311,8 @@ const STRINGS = {
     'io.impReplace.d': 'Dupes current first into Version History.',
     'io.imported': 'Imported',
     'io.importfailed': 'Could not parse this file',
+    'io.pickFolder': 'Open an unzipped .orosdoc folder…',
+    'io.newer': 'This file was made by a newer orOS. Update orOS to open it.',
     'io.dbConfirm': 'Merge this Writer backup? Its documents, templates and settings come back; documents that exist only here are kept.',
     'io.dbKept': 'Backup merged. {n} document(s) differed: the newer text is kept, the other copy is in Version history.',
     'io.ddTitle': 'Drop to open',
@@ -643,7 +645,7 @@ const STRINGS = {
     'io.html.name': 'HTML',
     'io.html.desc': 'Έτοιμο για το web με πλήρη μορφοποίηση.',
     'io.orosdoc.name': 'orOS Writer',
-    'io.orosdoc.desc': 'Πλήρες αρχείο: κείμενο, υποσημειώσεις, σχόλια, μεταδεδομένα.',
+    'io.orosdoc.desc': 'Πλήρες αρχείο: κείμενο, εικόνες, υποσημειώσεις, σχόλια, μεταδεδομένα. Με αποσυμπίεση βλέπεις τα αρχεία του.',
     'io.json.name': 'Βάση δεδομένων (JSON)',
     'io.json.desc': 'Πλήρες slice — όλα τα tabs, ρυθμίσεις, πρότυπα, διορθώσεις.',
     'io.busy': 'Προετοιμασία…',
@@ -658,6 +660,8 @@ const STRINGS = {
     'io.impReplace.d': 'Το τρέχον αποθηκεύεται πρώτα στο Ιστορικό εκδόσεων.',
     'io.imported': 'Εισήχθη',
     'io.importfailed': 'Δεν ήταν δυνατή η ανάγνωση του αρχείου',
+    'io.pickFolder': 'Άνοιγμα αποσυμπιεσμένου φακέλου .orosdoc…',
+    'io.newer': 'Το αρχείο φτιάχτηκε από νεότερο orOS. Ενημέρωσε το orOS για να το ανοίξεις.',
     'io.dbConfirm': 'Συγχώνευση αυτού του αντιγράφου ασφαλείας; Τα έγγραφα, τα πρότυπα και οι ρυθμίσεις του επανέρχονται· όσα έγγραφα υπάρχουν μόνο εδώ διατηρούνται.',
     'io.dbKept': 'Το αντίγραφο συγχωνεύτηκε. {n} έγγραφα διέφεραν: κρατήθηκε το νεότερο κείμενο και το άλλο αντίγραφο μπήκε στο Ιστορικό εκδόσεων.',
     'io.ddTitle': 'Άφησε το αρχείο για άνοιγμα',
@@ -5903,8 +5907,67 @@ function ioExportMd(doc) {
 function ioExportHtml(doc) {
   downloadBlob(ioToStandaloneHTML(doc), ioBaseName(doc) + '.html', 'text/html');
 }
+/* ----- .orosdoc = an orOS bundle (bundle.js, docs/oros-bundle.md) -----
+   content.json holds the document; pictures leave the HTML for
+   media/<sha256>.<ext> (src="media/…" in content.json), and
+   preview/document.html is the standalone page with ../media/
+   pictures, so the unzipped folder reads in any browser. Older JSON
+   .orosdoc files still open. */
+const IO_BUNDLE_MIME = 'application/x-oros-doc';
+const IO_DATA_IMG = /(<img\b[^>]*?\bsrc=")data:image\/(png|jpe?g|gif|webp);base64,([A-Za-z0-9+/=\s]+)"/gi;
+function ioB64Bytes(b64) {
+  const bin = atob(String(b64).replace(/\s+/g, ''));
+  const u = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+  return u;
+}
+function ioBytesB64(u) {
+  let s = '';
+  for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000));
+  return btoa(s);
+}
+// data: pictures → media[<sha256>.<ext>] and src="<prefix><key>"
+function ioLiftImages(html, prefix, media) {
+  const keys = {}, jobs = [];
+  String(html).replace(IO_DATA_IMG, (m, head, sub, b64) => {
+    if (keys[b64] !== undefined) return m;
+    keys[b64] = null;
+    let bytes = null;
+    try { bytes = ioB64Bytes(b64); } catch (e) { return m; }
+    jobs.push(OrosBundle.sha256(bytes).then(h => {
+      const key = h + '.' + (sub.toLowerCase() === 'jpeg' ? 'jpg' : sub.toLowerCase());
+      keys[b64] = key;
+      media[key] = bytes;
+    }));
+    return m;
+  });
+  return Promise.all(jobs).then(() => String(html).replace(IO_DATA_IMG,
+    (m, head, sub, b64) => keys[b64] ? head + prefix + keys[b64] + '"' : m));
+}
+// src="media/<key>" → data: URL again (raster pictures only, typed by their bytes)
+function ioDropImages(html, media) {
+  return String(html).replace(/(<img\b[^>]*?\bsrc=")media\/([A-Za-z0-9][A-Za-z0-9._-]{0,127})"/gi, (m, head, key) => {
+    const f = Object.prototype.hasOwnProperty.call(media, key) ? media[key] : null;
+    if (!f || !/^image\/(png|jpeg|gif|webp)$/.test(f.type)) return head + '"';
+    return head + 'data:' + f.type + ';base64,' + ioBytesB64(f.bytes) + '"';
+  });
+}
 function ioExportOrosDoc(doc) {
-  downloadBlob(ioBuildOrosDoc(doc), ioBaseName(doc) + '.orosdoc', 'application/json');
+  const obj = JSON.parse(ioBuildOrosDoc(doc)), media = {};
+  return Promise.all([
+    ioLiftImages(obj.doc.html, 'media/', media),
+    ioLiftImages(ioToStandaloneHTML(doc), '../media/', media)
+  ]).then(([html, page]) => {
+    obj.doc.html = html;
+    return OrosBundle.write({
+      mime: IO_BUNDLE_MIME, app: 'writer', schema: 'writer/1', content: obj,
+      meta: { title: doc.title || '', creator: doc.author || '', subjects: doc.tags || [],
+        description: doc.category || '', created: doc.fm && doc.fm.c, modified: doc.mtime, id: doc.id,
+        language: window.orosLang === 'el' ? 'el' : 'en', generator: 'orOS Writer' },
+      media: media, preview: [{ name: 'document.html', data: page, type: 'text/html' }], date: new Date()
+    });
+  }).then(bytes => downloadBlob(bytes, ioBaseName(doc) + '.orosdoc', IO_BUNDLE_MIME),
+    () => showToast(t('io.exportfailed')));
 }
 function ioExportJSON() {
   flushSave();
@@ -7373,7 +7436,9 @@ function ioParseHtml(text) {
 
 /* ----- OROSDOC parser ----- */
 function ioParseOrosDoc(text) {
-  const obj = JSON.parse(text);
+  return ioParseOrosObj(JSON.parse(text));
+}
+function ioParseOrosObj(obj) {
   if (!obj || obj.orosWriter !== true || !obj.doc) throw new Error('not orosdoc');
   const d = obj.doc;
   return {
@@ -7391,6 +7456,23 @@ function ioParseOrosDoc(text) {
 function ioParseFile(file) {
   const extTop = (file.name.split('.').pop() || '').toLowerCase();
   if (extTop === 'docx' || extTop === 'odt') return ioParseZipDoc(file, extTop);
+  if (extTop === 'orosdoc' && window.OrosBundle) {
+    return file.slice(0, 4).arrayBuffer().then(head => {
+      if (OrosBundle.sniff(new Uint8Array(head)) === null) return ioParseText(file);
+      return file.arrayBuffer()
+        .then(ab => OrosBundle.read(new Uint8Array(ab), { mime: IO_BUNDLE_MIME }))
+        .then(ioFromBundle);
+    });
+  }
+  return ioParseText(file);
+}
+// A bundle (zip or unzipped folder) → the same payload as a JSON .orosdoc
+function ioFromBundle(r) {
+  const obj = r && r.content;
+  if (obj && obj.doc && typeof obj.doc.html === 'string') obj.doc.html = ioDropImages(obj.doc.html, r.media);
+  return Object.assign({ kind: 'doc' }, ioParseOrosObj(obj));
+}
+function ioParseText(file) {
   return new Promise((resolve, reject) => {
     const ext = (file.name.split('.').pop() || '').toLowerCase();
     const reader = new FileReader();
@@ -7661,6 +7743,13 @@ function openImportDialog(prefile) {
   const inp = pick.querySelector('input');
   body.appendChild(pick);
 
+  const folder = document.createElement('button');
+  folder.type = 'button';
+  folder.className = 'io-link-btn';
+  folder.textContent = t('io.pickFolder');
+  folder.addEventListener('click', ioPickFolder);
+  if (window.OrosBundle) body.appendChild(folder);
+
   const busy = document.createElement('div');
   busy.className = 'io-busy';
   busy.style.display = 'none';
@@ -7672,10 +7761,22 @@ function openImportDialog(prefile) {
   // shared pipeline — used by the file picker AND drag & drop
   function ioPickDropped(file) {
     fileBase = file.name.replace(/\.[^.]+$/, '');
+    ioParsing(ioParseFile(file));
+  }
+  // An unzipped .orosdoc folder (maybe changed by hand: a picture swapped)
+  function ioPickFolder() {
+    OrosBundle.pickFolder().then(files => {
+      if (!files) return;
+      fileBase = '';
+      ioParsing(OrosBundle.readFolder(files, { mime: IO_BUNDLE_MIME }).then(ioFromBundle));
+    });
+  }
+  function ioParsing(job) {
     busy.style.display = 'flex';
     pick.style.display = 'none';
+    folder.style.display = 'none';
 
-    ioParseFile(file)
+    job
       .then(res => {
         busy.style.display = 'none';
         if (res.kind === 'db') {
@@ -7687,6 +7788,7 @@ function openImportDialog(prefile) {
             } else {
               busy.style.display = 'none';
               pick.style.display = '';
+              folder.style.display = '';
               inp.value = '';
             }
           });
@@ -7699,8 +7801,9 @@ function openImportDialog(prefile) {
         console.error('[orOS] writer import failed:', err);
         busy.style.display = 'none';
         pick.style.display = '';
+        folder.style.display = '';
         inp.value = '';
-        showToast(t('io.importfailed'));
+        showToast(err && err.code === 'newer' ? t('io.newer') : t('io.importfailed'));
       });
   }
 

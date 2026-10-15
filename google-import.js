@@ -2,7 +2,9 @@
 // orOS — one-time import from a Google account (google-import.js)
 // ============================================================
 // Shared by Calendar (Google Calendar), To-Do (Google Tasks), Feeds
-// (YouTube subscriptions) and Shelf (Google Books). The same flow as
+// (YouTube subscriptions), Shelf (Google Books), Files (picked files
+// from Google Drive and Google Photos, files/gmedia.js) and Photo Lab
+// (one picture from Google Photos). The same flow as
 // Contacts' "From an account" (contacts/accounts.js):
 //   - the person signs in to Google in a small window opened in the
 //     click itself (popup blockers), OAuth 2.0 token flow
@@ -29,6 +31,14 @@
 //   message(err, lang)         → the person-facing text for an error
 //   hash(s)                    → 64-bit FNV-1a hex (stable ids)
 //   getJson(url, token), pages(token, urlFor, each, max), revoke(token)
+//   send(url, token, method, body) → POST / DELETE with a JSON body
+//     (only the Photos Picker needs it: it makes and ends a session)
+//   getBlob(url, token, maxBytes) → Blob; rejects { code: "big" } past
+//     maxBytes (the length header first, then the bytes read)
+//   apiKey() / driveReady() / APP_ID: Google Drive's file picker also
+//     wants a browser API key (the person's own, set next to the own
+//     client id in Contacts; none is built in) and the Cloud project
+//     number. api (in run) has send / getBlob too.
 // ============================================================
 (function (root) {
   "use strict";
@@ -47,8 +57,17 @@
     tasks: "https://www.googleapis.com/auth/tasks.readonly",
     youtube: "https://www.googleapis.com/auth/youtube.readonly",
     // Books has no read-only scope; orOS only sends GET requests.
-    books: "https://www.googleapis.com/auth/books"
+    books: "https://www.googleapis.com/auth/books",
+    // Google Photos Picker: only what the person picks in Google's own
+    // picker, read-only.
+    photos: "https://www.googleapis.com/auth/photospicker.mediaitems.readonly",
+    // Drive: only the files the person picks in the Google Picker (or
+    // that orOS made, which is none). orOS only reads them.
+    drive: "https://www.googleapis.com/auth/drive.file"
   };
+  // The Google Cloud project behind BUILTIN (its number, the Picker's
+  // "app id"); an own client id brings its own project, see appId().
+  var APP_ID = "97712435228";
 
   var S = {
     en: {
@@ -89,6 +108,18 @@
     return (typeof own === "string" && /^[A-Za-z0-9._-]{1,200}$/.test(own) ? own : "") || BUILTIN;
   }
   function ready() { return !!clientId(); }
+  // The Drive picker's browser API key: device-local, set in Contacts ›
+  // From an account › Use my own app id ("googleKey"). Never built in.
+  function apiKey() {
+    var k = prefs().googleKey;
+    return typeof k === "string" && /^[A-Za-z0-9_-]{20,120}$/.test(k) ? k : "";
+  }
+  function driveReady() { return ready() && !!apiKey(); }
+  // The project number: the leading digits of the client id in use.
+  function appId() {
+    var m = /^(\d{6,20})-/.exec(clientId());
+    return m ? m[1] : APP_ID;
+  }
 
   // The callback page sits next to Contacts, found from this file's
   // own address (orOS root), so every app frame uses the same one.
@@ -137,6 +168,37 @@
         return r.json().catch(function () { throw err("http", "json"); });
       }, function () { throw err("network"); });
   }
+  // POST / DELETE with a JSON body (the Photos Picker's session).
+  function send(url, token, method, body) {
+    var o = { method: method, headers: { Authorization: "Bearer " + token, Accept: "application/json" }, cache: "no-store", credentials: "omit" };
+    if (body !== undefined) { o.headers["Content-Type"] = "application/json"; o.body = JSON.stringify(body); }
+    return fetch(url, o).then(function (r) {
+      if (r.status === 401) throw err("auth", "401");
+      if (r.status === 403) return r.text().then(function (t) { throw err(why403(t), "403"); }, function () { throw err("notenabled", "403"); });
+      if (!r.ok) throw err("http", String(r.status));
+      if (r.status === 204) return {};
+      return r.text().then(function (t) { try { return t ? JSON.parse(t) : {}; } catch (e) { throw err("http", "json"); } });
+    }, function () { throw err("network"); });
+  }
+  // The bytes of one file, with the token; past maxBytes → "big"
+  // (the Content-Length first, so a large file is not read at all).
+  function getBlob(url, token, maxBytes) {
+    var ctl = typeof AbortController === "function" ? new AbortController() : null;
+    var o = { headers: { Authorization: "Bearer " + token }, cache: "no-store", credentials: "omit" };
+    if (ctl) o.signal = ctl.signal;
+    return fetch(url, o).then(function (r) {
+      if (r.status === 401) throw err("auth", "401");
+      if (r.status === 403) return r.text().then(function (t) { throw err(why403(t), "403"); }, function () { throw err("notenabled", "403"); });
+      if (!r.ok) throw err("http", String(r.status));
+      var len = Number(r.headers && r.headers.get ? r.headers.get("Content-Length") : NaN);
+      if (maxBytes && isFinite(len) && len > maxBytes) { try { if (ctl) ctl.abort(); } catch (e) {} throw err("big", String(len)); }
+      return r.blob().then(function (b) {
+        if (maxBytes && b.size > maxBytes) throw err("big", String(b.size));
+        return b;
+      });
+    }, function () { throw err("network"); });
+  }
+
   // Every page: urlFor(cursor) ("" first); each(data) returns the next
   // cursor ("" or nothing = the last page). Stops at max pages and on
   // a cursor that does not move.
@@ -235,6 +297,8 @@
     var api = {
       getJson: function (u) { return getJson(u, token); },
       pages: function (urlFor, each, max) { return pages(token, urlFor, each, max); },
+      send: function (u, method, body) { return send(u, token, method, body); },
+      getBlob: function (u, max) { return getBlob(u, token, max); },
       nextToken: nextToken
     };
     return waitAnswer(state).then(function (cb) {
@@ -259,8 +323,9 @@
   } catch (e) {}
 
   var api = {
-    BUILTIN: BUILTIN, SCOPES: SCOPES, PREFS_KEY: PREFS_KEY, CB_KEY: CB_KEY,
+    BUILTIN: BUILTIN, SCOPES: SCOPES, PREFS_KEY: PREFS_KEY, CB_KEY: CB_KEY, APP_ID: APP_ID,
     ready: ready, clientId: clientId, redirectUri: redirectUri,
+    apiKey: apiKey, driveReady: driveReady, appId: appId, send: send, getBlob: getBlob,
     run: run, cancel: cancel, message: message, hash: hash,
     getJson: getJson, pages: pages, nextToken: nextToken, revoke: revoke
   };

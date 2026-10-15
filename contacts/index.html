@@ -6,7 +6,7 @@
   <script>if (window.top === window.self && !/[?&]standalone\b/.test(location.search)) location.replace("../?open=contacts" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Contacts · orOS</title>
-  <link rel="stylesheet" href="contacts.css?v=2.42.00">
+  <link rel="stylesheet" href="contacts.css?v=2.44.00">
 </head>
 <body>
   <main id="cmain">
@@ -210,6 +210,8 @@
         <input id="ac-id-google" type="text" maxlength="200" autocomplete="off" spellcheck="false">
         <label for="ac-id-microsoft">Microsoft</label>
         <input id="ac-id-microsoft" type="text" maxlength="200" autocomplete="off" spellcheck="false">
+        <label for="ac-key-google" data-i18n="ac.own.key"></label>
+        <input id="ac-key-google" type="text" maxlength="120" autocomplete="off" spellcheck="false">
       </div>
       <div class="dlg-row">
         <button id="ac-id-save" type="button" class="mini" data-i18n="ac.own.save"></button>
@@ -338,12 +340,12 @@
     </div>
   </dialog>
 
-  <script src="merge.js?v=2.42.00"></script>
-  <script src="keep.js?v=2.42.00"></script>
-  <script src="csvmap.js?v=2.42.00"></script>
-  <script src="cardtext.js?v=2.42.00"></script>
-  <script src="importplan.js?v=2.42.00"></script>
-  <script src="accounts.js?v=2.42.00"></script>
-  <script src="contacts.js?v=2.42.00"></script>
+  <script src="merge.js?v=2.44.00"></script>
+  <script src="keep.js?v=2.44.00"></script>
+  <script src="csvmap.js?v=2.44.00"></script>
+  <script src="cardtext.js?v=2.44.00"></script>
+  <script src="importplan.js?v=2.44.00"></script>
+  <script src="accounts.js?v=2.44.00"></script>
+  <script src="contacts.js?v=2.44.00"></script>
 </body>
 </html>

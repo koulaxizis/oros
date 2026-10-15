@@ -31,7 +31,7 @@ Double-click an image frame, or use `Place image…`, to choose a picture. Pick 
 ## Preflight and export
 The `Preflight` badge in the status bar turns green, orange or red. Click it for the list of problems: `Overset text`, `Missing image`, low resolution, objects that reach the trim edge but not the bleed, text smaller than 6 pt and empty frames. Pick a problem to select its object.
 
-`Export` makes a PDF of all pages, the current page or a range, with optional `Spreads`, `Include bleed` and `Crop marks`, and images at `Print (300 ppi)` or `Screen (150 ppi)`. `Save as package (.oroslayout)` saves one file with the document and its images; `Open file` on the home screen opens it again.
+`Export` makes a PDF of all pages, the current page or a range, with optional `Spreads`, `Include bleed` and `Crop marks`, and images at `Print (300 ppi)` or `Screen (150 ppi)`. `Save as package (.oroslayout)` saves one file with the document and its images; `Open file` › `A file (.oroslayout, .sla, .idml, .pdf, .svg)…` on the home screen opens it again. The package is an open ZIP file: unzip it and you find `content.json` (the document), `media` (its images) and a thumbnail. `Open file` › `An unzipped package folder…` brings such a folder back, even after you changed an image in it.
 
 `Image (PNG / JPG)` exports one page as a picture at 72, 150 or 300 dpi (up to 16 megapixels).
 

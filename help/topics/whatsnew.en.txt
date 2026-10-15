@@ -1,6 +1,12 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.44.00
+- Writer, Slides, Atelier and Layout now save open orOS files: a ZIP you can unzip to find the content, the pictures and a readable summary (Writer adds a page that opens in any browser). Each app can also open an unzipped folder, and older files still open.
+
+## Version 2.43.00
+- Files can import once from Google Drive and Google Photos, and Photo Lab can open a picture from Google Photos. You pick the files in Google's own picker, see a preview, and Undo removes them again. Nothing stays connected.
+
 ## Version 2.42.00
 - Contacts: the new Pictures button sets every contact to initials or an 8-bit avatar at once, with Undo.
 - Installed orOS apps update again: since 2.26.00 they could show the update notice but keep running older code. Open each app once to get its latest version.

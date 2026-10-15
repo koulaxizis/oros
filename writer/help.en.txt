@@ -48,9 +48,9 @@ Just start typing; everything saves by itself.
 - `Writing goal` sets a target in words, characters, paragraphs, minutes or session words. A bar at the bottom shows your progress. With `Lock editing after goal`, typing stops once you reach it.
 
 ## Import and export
-- `Export` saves the document as plain text, Markdown, HTML, RTF, Word (.docx), PDF or an orOS Writer file (.orosdoc, which keeps footnotes, comments and metadata). `Database (JSON)` saves all your documents, templates and settings.
+- `Export` saves the document as plain text, Markdown, HTML, RTF, Word (.docx), PDF or an orOS Writer file (.orosdoc, which keeps pictures, footnotes, comments and metadata). An .orosdoc is an open ZIP file: unzip it and you find `content.json` (the document), `media` (its pictures) and `preview/document.html`, which opens in any browser. `Database (JSON)` saves all your documents, templates and settings.
 - The PDF keeps headings, bold, italic, underline, strikethrough, links, alignment, lists, quotes, code, tables and images, and uses the paper size, margins, header and footer from `Page settings`, with page numbers.
-- `Import` opens OROSDOC, DOCX, ODT, RTF, HTML, TXT and MD files. You choose `New tab (recommended)`, `Append to current` or `Replace current`. You can also drop a file onto Writer.
+- `Import` opens OROSDOC, DOCX, ODT, RTF, HTML, TXT and MD files. You choose `New tab (recommended)`, `Append to current` or `Replace current`. You can also drop a file onto Writer. `Open an unzipped .orosdoc folder…` brings back a .orosdoc that was unzipped, even after you changed a picture in it.
 - From [Typewriter](app:typewriter), `Send to Writer` opens a page here as a new document.
 - Importing a `Database (JSON)` file merges it. Documents that exist only here are kept, and if a document differs, the older text goes into `Version history`.
 
