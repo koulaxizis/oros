@@ -3,9 +3,11 @@
 //   - PDF export (designkit/pdf.js + jsPDF, loaded on first use):
 //     images are cut to their frames and resampled to the chosen
 //     resolution first, so the PDF carries only what shows.
-//   - .oroslayout package: the document + its images (base64) in
-//     one JSON file; opened as a NEW document, every image checked
-//     against its hash and decoded as an image before it is stored.
+//   - .oroslayout package: an orOS bundle (bundle.js): a ZIP with the
+//     document (content.json), its images (media/) and a thumbnail;
+//     older JSON packages (images as base64) still open, and so does
+//     an unzipped bundle folder. Opened as a NEW document, every image
+//     checked against its hash and decoded before it is stored.
 //   - PNG / JPG of one page (72, 150 or 300 dpi, at most 16 MP).
 //   - Scribus .sla / .sla.gz import (layout/sla.js) into a new document.
 //   - Place image, import plain text.
@@ -166,14 +168,6 @@
   }
 
   // ---------- Packages ----------
-  function blobToB64(blob) {
-    return new Promise(function (resolve, reject) {
-      var fr = new FileReader();
-      fr.onload = function () { var s = String(fr.result); resolve(s.slice(s.indexOf(",") + 1)); };
-      fr.onerror = function () { reject(fr.error); };
-      fr.readAsDataURL(blob);
-    });
-  }
   function b64ToBlob(b64, type) {
     var bin = atob(b64), n = bin.length, u = new Uint8Array(n);
     for (var i = 0; i < n; i++) u[i] = bin.charCodeAt(i);
@@ -185,21 +179,56 @@
     return Object.keys(ids).sort();
   }
 
+  // .oroslayout = an orOS bundle (bundle.js, docs/oros-bundle.md): a
+  // ZIP with content.json (the package without its assets), media/<id>
+  // (images) and a thumbnail of the first page (when the document is
+  // the open one: its text layout is at hand).
+  var BUNDLE_MIME = "application/x-oros-layout";
+  function thumbOf(doc) {
+    var page = M.pagesInOrder(doc)[0];
+    if (!page || doc !== LY.doc || !ED.L) return Promise.resolve(null);
+    var chain = Promise.resolve();
+    imageItems(doc, [page.id]).forEach(function (it) { chain = chain.then(function () { return A.load(it.a); }); });
+    return chain.then(function () {
+      var cv = LY.R.renderPage(doc, page, ED.L, 512 / Math.max(doc.setup.w, doc.setup.h), { getImage: A.get, background: "#fff" });
+      return toBlob(cv, "image/png");
+    }).then(null, function () { return null; });
+  }
   function exportPackage(doc) {
     if (!doc) return;
     if (doc === LY.doc && LY.flushStory) LY.flushStory();
     doc = LY.findDoc(doc.id) || doc;
-    var assets = {}, chain = Promise.resolve();
+    var media = {}, chain = Promise.resolve();
     assetIds(doc).forEach(function (id) {
-      chain = chain.then(function () { return A.blob(id); }).then(function (b) {
-        if (b) return blobToB64(b).then(function (s) { assets[id] = s; });
-      });
+      chain = chain.then(function () { return A.blob(id); }).then(function (b) { if (b) media[id] = b; });
     });
-    chain.then(function () {
-      var pkg = { kind: PKG_KIND, ver: PKG_VER, doc: doc, assets: assets };
-      var blob = new Blob([JSON.stringify(pkg)], { type: "application/json" });
-      return saveBlob(blob, fileName(doc, ".oroslayout"), "application/json", "orOS Layout", ".oroslayout");
+    chain.then(function () { return thumbOf(doc); }).then(function (thumb) {
+      return window.OrosBundle.write({
+        mime: BUNDLE_MIME, app: "layout", schema: "layout/" + PKG_VER,
+        content: { kind: PKG_KIND, ver: PKG_VER, doc: doc },
+        meta: { title: doc.name || "", modified: doc.m, id: doc.id, language: LY.LANG, generator: "orOS Layout" },
+        media: media, thumbnail: thumb, date: new Date()
+      });
+    }).then(function (bytes) {
+      return saveBlob(new Blob([bytes], { type: BUNDLE_MIME }), fileName(doc, ".oroslayout"), BUNDLE_MIME, "orOS Layout", ".oroslayout");
     }).then(function (ok) { if (ok) LY.toast(t("exp.pkgDone")); }, function () { LY.toast(t("exp.fail")); });
+  }
+  function bundleFail(e) { LY.toast(e && e.code === "newer" ? t("imp.newer") : t("imp.bad")); }
+  function fromBundle(r) {
+    var pkg = r && r.content && typeof r.content === "object" ? r.content : null;
+    if (pkg) {
+      pkg.assets = {};
+      Object.keys(r.media).forEach(function (k) { pkg.assets[k] = r.media[k].bytes; });
+    }
+    return openPackage(pkg);
+  }
+  // Home › Open › Unzipped folder: a .oroslayout someone unzipped
+  // (and maybe changed: an image swapped, a text fixed by hand).
+  function importFolder() {
+    window.OrosBundle.pickFolder().then(function (files) {
+      if (!files) return;
+      return window.OrosBundle.readFolder(files, { mime: BUNDLE_MIME }).then(fromBundle, bundleFail);
+    }).then(null, function () { LY.toast(t("imp.bad")); });
   }
 
   // Open a file: a .oroslayout package, a Scribus .sla, an InDesign
@@ -234,27 +263,41 @@
       if (/\.pdf$/i.test(f.name || "") || f.type === "application/pdf") return importPdf(f);
       if (isSvg(f)) return importSvg([f]);
       if (f.size > PKG_MAX) { LY.toast(t("imp.bad")); return; }
-      return f.text().then(function (txt) {
-        var pkg = null;
-        try { pkg = JSON.parse(txt); } catch (e) {}
-        var doc = pkg && pkg.kind === PKG_KIND && pkg.ver === PKG_VER ? M.normDoc(pkg.doc) : null;
-        if (!doc) { LY.toast(t("imp.bad")); return; }
-        // a NEW document: never overwrites or resurrects another one
-        doc.id = M.newId("doc");
-        doc.m = LY.now();
-        var assets = pkg.assets && typeof pkg.assets === "object" ? pkg.assets : {};
-        var failed = 0, chain = Promise.resolve();
-        assetIds(doc).forEach(function (id) {
-          var b64 = assets[id];
-          if (typeof b64 !== "string" || !A.ID_RE.test(id)) { failed++; return; }
-          chain = chain.then(function () {
-            return A.put(id, b64ToBlob(b64, /\.png$/.test(id) ? "image/png" : "image/jpeg"));
-          }).then(null, function () { failed++; });
+      return f.slice(0, 4).arrayBuffer().then(function (head) {
+        if (window.OrosBundle.sniff(new Uint8Array(head)) !== null) {
+          return f.arrayBuffer().then(function (ab) {
+            return window.OrosBundle.read(new Uint8Array(ab), { mime: BUNDLE_MIME });
+          }).then(fromBundle, bundleFail);
+        }
+        return f.text().then(function (txt) {
+          var pkg = null;
+          try { pkg = JSON.parse(txt); } catch (e) {}
+          return openPackage(pkg);
         });
-        return chain.then(function () {
-          LY.addDoc(doc);
-          LY.toast(failed ? t("imp.imgFail", { n: failed }) : t("imp.done"));
-        });
+      });
+    }).then(null, function () { LY.toast(t("imp.bad")); });
+  }
+  // pkg.assets: base64 (older JSON packages) or bytes (bundles)
+  function openPackage(pkg) {
+    return Promise.resolve().then(function () {
+      var doc = pkg && pkg.kind === PKG_KIND && pkg.ver === PKG_VER ? M.normDoc(pkg.doc) : null;
+      if (!doc) { LY.toast(t("imp.bad")); return; }
+      // a NEW document: never overwrites or resurrects another one
+      doc.id = M.newId("doc");
+      doc.m = LY.now();
+      var assets = pkg.assets && typeof pkg.assets === "object" ? pkg.assets : {};
+      var failed = 0, chain = Promise.resolve();
+      assetIds(doc).forEach(function (id) {
+        var b64 = assets[id];
+        if (!(typeof b64 === "string" || b64 instanceof Uint8Array) || !A.ID_RE.test(id)) { failed++; return; }
+        chain = chain.then(function () {
+          var type = /\.png$/.test(id) ? "image/png" : "image/jpeg";
+          return A.put(id, typeof b64 === "string" ? b64ToBlob(b64, type) : new Blob([b64], { type: type }));
+        }).then(null, function () { failed++; });
+      });
+      return chain.then(function () {
+        LY.addDoc(doc);
+        LY.toast(failed ? t("imp.imgFail", { n: failed }) : t("imp.done"));
       });
     }).then(null, function () { LY.toast(t("imp.bad")); });
   }
@@ -412,7 +455,7 @@
   }
 
   LY.io = {
-    exportPdf: exportPdf, exportImage: exportImage, exportPackage: exportPackage, importPackage: importPackage, openFile: openFile,
+    exportPdf: exportPdf, exportImage: exportImage, exportPackage: exportPackage, importPackage: importPackage, importFolder: importFolder, openFile: openFile,
     placeImage: placeImage, importText: importText,
     // for the data merge (mergeui.js)
     saveBlob: saveBlob, pickFile: pickFile, loadJsPDF: loadJsPDF, fileName: fileName

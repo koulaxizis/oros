@@ -5,9 +5,11 @@
 //   - PDF (designkit/pdf.js + jsPDF, loaded on first use): one slide
 //     per page, vector text; or A4 pages with the speaker notes
 //   - PNG of one slide
-//   - .orosslides package: the deck + its pictures (base64) in one
-//     JSON file; opened as a NEW deck (fresh ids), every picture
-//     checked against its hash and decoded as an image first
+//   - .orosslides package: an orOS bundle (bundle.js): a ZIP with the
+//     deck (content.json), its pictures (media/) and a thumbnail;
+//     older JSON packages (pictures as base64) still open, and so does
+//     an unzipped bundle folder. Opened as a NEW deck (fresh ids),
+//     every picture checked against its hash and decoded first
 //   - PowerPoint (.pptx): written and read by pptx.js (ZIP by
 //     atelier/zip.js); an opened file is a NEW deck, its pictures
 //     stored on the orOS disk like any picture added here
@@ -216,36 +218,46 @@
   }
 
   // ---------- Packages ----------
-  function blobToB64(blob) {
-    return new Promise(function (resolve, reject) {
-      var fr = new FileReader();
-      fr.onload = function () { var s = String(fr.result); resolve(s.slice(s.indexOf(",") + 1)); };
-      fr.onerror = function () { reject(fr.error); };
-      fr.readAsDataURL(blob);
-    });
-  }
   function b64ToBlob(b64, type) {
     var bin = atob(b64), n = bin.length, u = new Uint8Array(n);
     for (var i = 0; i < n; i++) u[i] = bin.charCodeAt(i);
     return new Blob([u], { type: type });
   }
 
+  // .orosslides = an orOS bundle (bundle.js, docs/oros-bundle.md): a
+  // ZIP with content.json (the package without its assets), media/<id>
+  // (pictures) and a thumbnail of the first slide.
+  var BUNDLE_MIME = "application/x-oros-slides";
+  function thumbOf(data, slides) {
+    var s = slides[0];
+    if (!s || !SL.renderSlide) return Promise.resolve(null);
+    var waits = [];
+    C.slideItems(data, s.id).forEach(function (it) { if (it.k === "image" && it.img) waits.push(A.load(it.img.a)); });
+    var b = SL.D.slideDoc(data, s.id, { lang: SL.LANG });
+    SL.charts.register(b);
+    Object.keys(b.charts || {}).forEach(function (k) { waits.push(SL.charts.load(k)); });
+    return Promise.all(waits).then(function () { return toBlob(SL.renderSlide(s.id, 512), "image/png"); })
+      .then(null, function () { return null; });
+  }
   function exportPackage(deckId) {
     if (SL.deck === deckId) SL.emit("flush");
     var data = SL.data(), d = data.decks[deckId];
     if (!d) return;
     var slides = C.deckSlides(data, deckId), items = [];
     slides.forEach(function (s) { items = items.concat(C.slideItems(data, s.id)); });
-    var assets = {}, chain = Promise.resolve();
+    var media = {}, chain = Promise.resolve();
     assetIds(data, deckId).forEach(function (id) {
-      chain = chain.then(function () { return A.blob(id); }).then(function (b) {
-        if (b) return blobToB64(b).then(function (s) { assets[id] = s; });
-      });
+      chain = chain.then(function () { return A.blob(id); }).then(function (b) { if (b) media[id] = b; });
     });
-    chain.then(function () {
-      var pkg = { kind: PKG_KIND, ver: PKG_VER, deck: d, slides: slides, items: items, assets: assets };
-      var blob = new Blob([JSON.stringify(pkg)], { type: "application/json" });
-      return saveBlob(blob, deckName(d) + ".orosslides", "application/json", "orOS Slides", ".orosslides");
+    chain.then(function () { return thumbOf(data, slides); }).then(function (thumb) {
+      return window.OrosBundle.write({
+        mime: BUNDLE_MIME, app: "slides", schema: "slides/" + PKG_VER,
+        content: { kind: PKG_KIND, ver: PKG_VER, deck: d, slides: slides, items: items },
+        meta: { title: d.t || "", created: d.c, modified: d.m, id: d.id, language: SL.LANG, generator: "orOS Slides" },
+        media: media, thumbnail: thumb, date: new Date()
+      });
+    }).then(function (bytes) {
+      return saveBlob(new Blob([bytes], { type: BUNDLE_MIME }), deckName(d) + ".orosslides", BUNDLE_MIME, "orOS Slides", ".orosslides");
     }).then(function (ok) { if (ok) SL.toast(t("exp.pkgDone")); }, function () { SL.toast(t("exp.fail")); });
   }
 
@@ -289,6 +301,23 @@
   function importPackage() {
     pickFile(OPEN_ACCEPT + X().MIME).then(openFile, function () { SL.toast(t("imp.bad")); });
   }
+  // Home › Open › Unzipped folder: a .orosslides someone unzipped
+  // (and maybe changed: a picture swapped, a text fixed by hand).
+  function importFolder() {
+    window.OrosBundle.pickFolder().then(function (files) {
+      if (!files) return;
+      return window.OrosBundle.readFolder(files, { mime: BUNDLE_MIME }).then(fromBundle, bundleFail);
+    }).then(null, function () { SL.toast(t("imp.bad")); });
+  }
+  function bundleFail(e) { SL.toast(e && e.code === "newer" ? t("imp.newer") : t("imp.bad")); }
+  function fromBundle(r) {
+    var pkg = r && r.content && typeof r.content === "object" ? r.content : null;
+    if (pkg) {
+      pkg.assets = {};
+      Object.keys(r.media).forEach(function (k) { pkg.assets[k] = r.media[k].bytes; });
+    }
+    return openPackage(pkg);
+  }
   // Also the way in for a file from the system's "Open with" (shell fileopen.js).
   // A ZIP is a .pptx (openPptx) or an .odp (openOdp); a text file is a
   // flat .fodp, a Markdown deck or a package.
@@ -297,7 +326,13 @@
     return Promise.resolve(f).then(function (f) {
       if (!f) return;
       if (f.size > PKG_MAX) { SL.toast(t("imp.bad")); return; }
-      return f.slice(0, 8).arrayBuffer().then(function (head) {
+      return f.slice(0, 128).arrayBuffer().then(function (head) {
+        var kind = window.OrosBundle.sniff(new Uint8Array(head));
+        if (kind === BUNDLE_MIME || /\.orosslides$/i.test(f.name || "") && kind !== null) {
+          return f.arrayBuffer().then(function (ab) {
+            return window.OrosBundle.read(new Uint8Array(ab), { mime: BUNDLE_MIME });
+          }).then(fromBundle, bundleFail);
+        }
         if (X().isZip(new Uint8Array(head))) {          // (isZip wants more than 4 bytes)
           if (/\.pptx$/i.test(f.name || "")) return openPptx(f);
           return f.arrayBuffer().then(function (ab) {
@@ -322,33 +357,40 @@
         var pkg = null;
         try { pkg = JSON.parse(txt); } catch (e) {}
         if (!pkg && MD && MD.looks(txt)) return openMd(txt, name);
-        var probe = pkg ? readPackage(pkg, SL.now(), SL.newId) : null;
-        if (!probe) { SL.toast(t("imp.bad")); return; }
-        var assets = pkg.assets && typeof pkg.assets === "object" ? pkg.assets : {};
-        var want = {};
-        probe.items.forEach(function (it) { if (it.k === "image" && it.img) want[it.img.a] = 1; });
-        var failed = 0, chain = Promise.resolve();
-        Object.keys(want).forEach(function (id) {
-          var b64 = assets[id];
-          if (typeof b64 !== "string" || !A.ID_RE.test(id)) { failed++; return; }
-          chain = chain.then(function () {
-            return A.put(id, b64ToBlob(b64, /\.png$/.test(id) ? "image/png" : "image/jpeg"));
-          }).then(null, function () { failed++; });
+        return openPackage(pkg);
+      });
+    }).then(null, function () { SL.toast(t("imp.bad")); });
+  }
+  // pkg.assets: base64 (older JSON packages) or bytes (bundles)
+  function openPackage(pkg) {
+    return Promise.resolve().then(function () {
+      var probe = pkg ? readPackage(pkg, SL.now(), SL.newId) : null;
+      if (!probe) { SL.toast(t("imp.bad")); return; }
+      var assets = pkg.assets && typeof pkg.assets === "object" ? pkg.assets : {};
+      var want = {};
+      probe.items.forEach(function (it) { if (it.k === "image" && it.img) want[it.img.a] = 1; });
+      var failed = 0, chain = Promise.resolve();
+      Object.keys(want).forEach(function (id) {
+        var b64 = assets[id];
+        if (!(typeof b64 === "string" || b64 instanceof Uint8Array) || !A.ID_RE.test(id)) { failed++; return; }
+        chain = chain.then(function () {
+          var type = /\.png$/.test(id) ? "image/png" : "image/jpeg";
+          return A.put(id, typeof b64 === "string" ? b64ToBlob(b64, type) : new Blob([b64], { type: type }));
+        }).then(null, function () { failed++; });
+      });
+      return chain.then(function () {
+        var id = SL.addDeckData(function (dt, nw) {
+          var p = readPackage(pkg, nw, SL.newId);
+          if (!p) return null;
+          dt.decks[p.deck.id] = p.deck;
+          p.slides.forEach(function (s) { dt.slides[s.id] = s; });
+          p.items.forEach(function (it) { dt.items[it.id] = it; });
+          return p.deck.id;
         });
-        return chain.then(function () {
-          var id = SL.addDeckData(function (dt, nw) {
-            var p = readPackage(pkg, nw, SL.newId);
-            if (!p) return null;
-            dt.decks[p.deck.id] = p.deck;
-            p.slides.forEach(function (s) { dt.slides[s.id] = s; });
-            p.items.forEach(function (it) { dt.items[it.id] = it; });
-            return p.deck.id;
-          });
-          if (id) {
-            SL.openDeck(id);
-            SL.toast(failed ? t("imp.imgFail", { n: failed }) : t("imp.done"));
-          }
-        });
+        if (id) {
+          SL.openDeck(id);
+          SL.toast(failed ? t("imp.imgFail", { n: failed }) : t("imp.done"));
+        }
       });
     }).then(null, function () { SL.toast(t("imp.bad")); });
   }
@@ -581,7 +623,7 @@
 
   SL.io = {
     present: present, exportPdf: exportPdf, exportPng: exportPng,
-    exportPackage: exportPackage, importPackage: importPackage, openFile: openFile, placeImage: placeImage,
+    exportPackage: exportPackage, importFolder: importFolder, importPackage: importPackage, openFile: openFile, placeImage: placeImage,
     exportPptx: exportPptx, previewPlan: previewPlan
   };
 })();

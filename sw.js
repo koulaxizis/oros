@@ -1228,6 +1228,7 @@ var PRECACHE_URLS = [
   "atelier/motion.js",
   "atelier/zip.js",
   "importkit.js",
+  "bundle.js",
   "google-import.js",
   "enrich.js",
   "enrichui.js",
