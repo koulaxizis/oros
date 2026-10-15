@@ -1,5 +1,5 @@
 // ============================================================
-// orOS designkit — render.js (v1.0.0)
+// orOS designkit — render.js (v1.1.0)
 // Lays out every story of a document (threads, master pages, page
 // numbers, text wrap) and draws pages on a canvas: the editor view,
 // thumbnails and image exports all go through drawPage(), and the
@@ -203,7 +203,7 @@
         }
       }
       // touches the trim edge without running into the bleed
-      var paints = it.t === "img" ? !!it.a : it.t === "line" ? false : !!it.fill;
+      var paints = it.t === "img" ? !!it.a : it.t === "line" ? false : !!(it.fill || it.gr);
       if (paints && bleed > 0 && order[it.pg] < 100000) {
         var b = itemBox(it), e = 0.5, side = M.sideOf(doc, order[it.pg]);
         var left = !(facing && side === "R"), right = !(facing && side === "L");
@@ -257,6 +257,44 @@
     ctx.closePath();
   }
 
+  // A path item's commands in page points (see model.parsePath).
+  function pathCmds(it) {
+    var cmds = M.parsePath(it.d) || [], x = it.x, y = it.y, w = it.w, h = it.h;
+    return cmds.map(function (c) {
+      var o = [c[0]];
+      for (var i = 1; i < c.length; i += 2) o.push(x + c[i] * w, y + c[i + 1] * h);
+      return o;
+    });
+  }
+  // The current path = the item's outline (rect, rounded rect, ellipse
+  // or path).
+  function outline(ctx, it) {
+    if (it.t === "ell") {
+      ctx.beginPath();
+      ctx.ellipse(it.x + it.w / 2, it.y + it.h / 2, Math.abs(it.w / 2), Math.abs(it.h / 2), 0, 0, Math.PI * 2);
+    } else if (it.t === "path") {
+      ctx.beginPath();
+      pathCmds(it).forEach(function (c) {
+        if (c[0] === "M") ctx.moveTo(c[1], c[2]);
+        else if (c[0] === "L") ctx.lineTo(c[1], c[2]);
+        else if (c[0] === "C") ctx.bezierCurveTo(c[1], c[2], c[3], c[4], c[5], c[6]);
+        else ctx.closePath();
+      });
+    } else roundRectPath(ctx, it.x, it.y, it.w, it.h, it.r);
+  }
+  // Gradient end points in page points: linear (x1,y1) → (x2,y2);
+  // radial centre (x1,y1), radius = distance to (x2,y2).
+  function gradGeom(it) {
+    var g = it.gr, x1 = it.x + g.x1 * it.w, y1 = it.y + g.y1 * it.h, x2 = it.x + g.x2 * it.w, y2 = it.y + g.y2 * it.h;
+    return { k: g.k, x1: x1, y1: y1, x2: x2, y2: y2, r: Math.max(0.01, Math.sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1))) };
+  }
+  function gradient(ctx, doc, it) {
+    var g = gradGeom(it), grad;
+    grad = g.k === "r" ? ctx.createRadialGradient(g.x1, g.y1, 0, g.x1, g.y1, g.r) : ctx.createLinearGradient(g.x1, g.y1, g.x2, g.y2);
+    it.gr.st.forEach(function (s) { grad.addColorStop(s[0], rgba(doc, s[1], s[2] / 100) || "rgba(0,0,0,0)"); });
+    return grad;
+  }
+
   function strokeStyle(ctx, doc, it) {
     if (!it.stroke || !(it.sw > 0)) return false;
     ctx.strokeStyle = rgba(doc, it.stroke);
@@ -304,11 +342,9 @@
       ctx.restore();
       return;
     }
-    if (it.t === "ell") {
-      ctx.beginPath();
-      ctx.ellipse(it.x + it.w / 2, it.y + it.h / 2, Math.abs(it.w / 2), Math.abs(it.h / 2), 0, 0, Math.PI * 2);
-    } else roundRectPath(ctx, it.x, it.y, it.w, it.h, it.r);
-    if (it.fill) { ctx.fillStyle = rgba(doc, it.fill) || "transparent"; ctx.fill(); }
+    outline(ctx, it);
+    var paint = it.gr ? gradient(ctx, doc, it) : it.fill ? rgba(doc, it.fill) : null;
+    if (paint) { ctx.fillStyle = paint; ctx.fill(it.eo ? "evenodd" : "nonzero"); }
     if (it.t === "img") drawImageItem(ctx, doc, it, opts);
     if (it.t === "text") {
       ctx.save();
@@ -317,10 +353,7 @@
       ctx.restore();
     }
     if (strokeStyle(ctx, doc, it)) {
-      if (it.t === "ell") {
-        ctx.beginPath();
-        ctx.ellipse(it.x + it.w / 2, it.y + it.h / 2, Math.abs(it.w / 2), Math.abs(it.h / 2), 0, 0, Math.PI * 2);
-      } else roundRectPath(ctx, it.x, it.y, it.w, it.h, it.r);
+      outline(ctx, it);
       ctx.stroke();
     }
     ctx.restore();
@@ -402,7 +435,7 @@
   var api = {
     corners: corners, bbox: bbox, itemBox: itemBox, toLocal: toLocal, imageRect: imageRect, effectivePpi: effectivePpi,
     computeLayout: computeLayout, computeMasterLayout: computeMasterLayout, preflight: preflight,
-    drawItem: drawItem, drawPage: drawPage, drawMaster: drawMaster, renderPage: renderPage, roundRectPath: roundRectPath
+    drawItem: drawItem, drawPage: drawPage, pathCmds: pathCmds, gradGeom: gradGeom, drawMaster: drawMaster, renderPage: renderPage, roundRectPath: roundRectPath
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else { root.orosDK = root.orosDK || {}; root.orosDK.render = api; }

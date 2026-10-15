@@ -40,8 +40,18 @@ Pick `7 days`, `30 days` or `All`. You get a `Weekly recap`, your `Goals`, `Patt
 
 `Export PDF` saves a PDF report of the range and filters you've chosen.
 
+## Import from another app
+`Import…`, next to `Export PDF` at the top of `Insights`, reads a file you exported from another mood app. Mood shows what it found before anything changes: the app, how many entries and which dates, how each mood maps to a feeling, and which activities are new. Pick another feeling for any mood (or `Skip`) and press `Import`. A toast then offers `Undo`.
+
+- **Daylio:** a CSV (in Daylio, `More` → `Export entries` → CSV; needs Premium) or a backup file ending in `.daylio` (`More` → `Backup & restore` → export). Activities you already have in Mood, or that match a built-in pair such as reading or bad sleep, are marked; the rest become your own activities.
+- **Bearable:** the CSV from Bearable's data export. Mood rows become entries; the `Emotions` rows become feelings, and notes join the entry.
+- **eMoods:** the CSV export. The depression, elevation, irritability and anxiety ratings become Sad, Excited, Angry and Anxious; sleep and the other columns go into the note.
+- **Any CSV:** a date (and a time, if you have one), a mood as a number from 1 to 5 or 1 to 10 or a word, and optionally a note and tags or activities.
+
+Mood records feelings, not a score, so each mood becomes one feeling: the best is `Happy` 5/5, then `Happy` 3/5, `Numb` 2/5 for a middle mood, `Sad` 3/5 and `Sad` 5/5. Importing the same file again adds only entries that aren't in Mood yet, and never changes your own.
+
 ## Sync and backup
-Your entries, your own locations, people and triggers, your feelings and activities (names, emoji, order, hidden) and your goals sync through [orOS sync](help:t/sync), encrypted. The open tab, search and filters stay on this device. Besides the PDF report there's no import or export; use the orOS [backup](help:t/backup).
+Your entries, your own locations, people and triggers, your feelings and activities (names, emoji, order, hidden) and your goals sync through [orOS sync](help:t/sync), encrypted. The open tab, search and filters stay on this device. Besides the PDF report and the import above, there's no export; use the orOS [backup](help:t/backup).
 
 ## Keyboard shortcuts
 - [[Enter]] in a `New value…` box adds the value.
