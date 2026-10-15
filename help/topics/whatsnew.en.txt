@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.39.00
+- Media Shelf, Bookmarks, Maps, Radio and Library import from other apps: StoryGraph, IMDb, Trakt, MyAnimeList, Discogs, BoardGameGeek, Instapaper, wallabag, browser bookmarks, KMZ, Google Takeout places and Timeline, TCX, FIT, M3U/PLS playlists, Kindle clippings, KOReader and Readwise, with a preview and Undo.
+
 ## Version 2.38.00
 - Update online in Contacts and CRM now also reads the GitHub, Bluesky and Mastodon profiles a contact links to, looks up businesses on OpenStreetMap and Wikidata, and offers search links when you check one contact.
 

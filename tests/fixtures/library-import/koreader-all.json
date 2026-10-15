@@ -1,0 +1,7 @@
+{ "documents": [
+  { "title": "Report", "author": "Ann Author", "annotations": [
+    { "chapter": "Intro", "datetime": "2024-02-01 09:00:00", "pageno": 2, "text": "the quick brown fox", "note": "" },
+    { "chapter": "Intro", "datetime": "2024-02-02 09:00:00", "pageno": 2, "text": "", "note": "a loose note" }
+  ] },
+  { "title": "Elsewhere", "author": "Nobody", "entries": [ { "page": 3, "text": "x y z" } ] }
+] }

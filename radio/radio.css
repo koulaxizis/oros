@@ -709,3 +709,88 @@ body {
 .rx-ac-item[hidden] { display: none !important; }
 
 [hidden] { display: none !important; }
+/* ===== Import stations (favourites view + preview dialog) ===== */
+.rx-fav-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  grid-column: 1 / -1;
+  margin: 0 0 4px;
+}
+
+#rx-imp-dlg {
+  margin: auto;
+  max-height: calc(100vh - 32px);
+  max-width: calc(100vw - 24px);
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  overflow: visible;
+}
+
+#rx-imp-dlg::backdrop { background: rgba(0, 0, 0, .55); }
+
+.rx-imp {
+  width: 440px;
+  max-width: calc(100vw - 24px);
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.rx-imp p { font-size: 13px; line-height: 1.45; margin: 0 0 10px; overflow-wrap: anywhere; }
+.rx-imp .rx-imp-src { font-weight: 700; }
+.rx-imp .rx-imp-sk { font-weight: 700; color: var(--warn, #e0a44c); margin-bottom: 4px; }
+
+.rx-imp-up {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  font-size: 13px;
+  line-height: 1.45;
+  margin: 0 0 10px;
+  cursor: pointer;
+}
+
+.rx-imp-up input { margin-top: 3px; flex: 0 0 auto; width: 18px; height: 18px; }
+
+.rx-imp-list {
+  list-style: none;
+  margin: 0 0 10px;
+  padding: 6px 10px;
+  max-height: 160px;
+  overflow-y: auto;
+  border: 1px solid var(--line, #2e2c28);
+  border-radius: 10px;
+  font-size: 12px;
+  color: var(--muted, #9aa4b0);
+}
+
+.rx-imp-list li { padding: 3px 0; overflow-wrap: anywhere; }
+.rx-imp-list b { color: var(--fg, #e8e6e3); font-weight: 700; }
+
+.rx-imp-acts { display: flex; gap: 8px; margin-top: 12px; }
+
+.rx-imp-btn {
+  flex: 1 1 0;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--fg, #e8e6e3);
+  background: transparent;
+  border: 1px solid var(--line, #2e2c28);
+  border-radius: 10px;
+  padding: 10px 16px;
+  min-height: 44px;
+  cursor: pointer;
+}
+
+.rx-imp-btn:hover { border-color: var(--accent, #6d4aff); }
+
+.rx-imp-btn.rx-imp-go {
+  color: #fff;
+  background: var(--accent, #6d4aff);
+  border-color: var(--accent, #6d4aff);
+}

@@ -10,7 +10,9 @@
 //   - Groups button: make, rename, recolour, delete (places stay
 //     saved, without a group). Import: the waypoints of a GPX, KML or
 //     GeoJSON file become saved places in a group (also when such a
-//     file without a track is opened in My tracks).
+//     file without a track is opened in My tracks); KMZ and Google
+//     Takeout lists go through import-ui.js, which puts the new places
+//     in a group per list with importPins (Undo: undoPins).
 //   Groups and pins sync in the slice "mapsfav" (fav-core.js). Which
 //   groups are hidden or folded is device-local ("oros-maps-fav-prefs").
 //
@@ -384,22 +386,87 @@
     d.show();
     return true;
   }
+  // "Import from another app" (import-ui.js): the lists of the file
+  // become groups (an existing group with the same name is reused) and
+  // the NEW places get their pin, in one write. byList: { list name:
+  // [place ids] } ("" = no group). Returns what undoPins needs.
+  function importPins(byList) {
+    var undo = { groups: [], pins: {} }, used = {};
+    Object.keys(data.groups).forEach(function (k) { used[data.groups[k].color] = 1; });
+    Object.keys(byList || {}).forEach(function (name) {
+      var gid = name ? FC.findByName(data, name, LANG) : "";
+      if (name && !gid && Object.keys(data.groups).length < FC.LIM.groups) {
+        gid = FC.newId();
+        while (data.groups[gid] || data.tombs[gid]) gid = FC.newId();
+        var color = FC.COLORS.filter(function (c) { return !used[c]; })[0] || FC.COLORS[undo.groups.length % FC.COLORS.length];
+        used[color] = 1;
+        data.groups[gid] = stamp({ name: FC.cleanName(name), color: color, m: 0 });
+        undo.groups.push(gid);
+      }
+      if (!gid) return;
+      byList[name].forEach(function (pid) {
+        if (!FC.PID_RE.test(pid) || undo.pins[pid] !== undefined) return;
+        var cur = data.pins[pid];
+        undo.pins[pid] = cur ? cur.g : null;
+        data.pins[pid] = stamp({ g: gid, m: cur ? cur.m : 0 });
+      });
+    });
+    if (undo.groups.length || Object.keys(undo.pins).length) saveData();
+    return undo;
+  }
+  // Undo of importPins: new groups get a tombstone, each pin its old
+  // group back (newer stamps, so a sync that has the import loses).
+  function undoPins(undo) {
+    if (!undo) return;
+    var n = 0;
+    (undo.groups || []).forEach(function (gid) {
+      var g = data.groups[gid];
+      if (!g) return;
+      delete data.groups[gid];
+      data.tombs[gid] = Math.max(Date.now(), g.m + 1);
+      n++;
+    });
+    Object.keys(undo.pins || {}).forEach(function (pid) {
+      var cur = data.pins[pid];
+      if (!cur) return;
+      data.pins[pid] = stamp({ g: undo.pins[pid] || "", m: cur.m });
+      n++;
+    });
+    if (n) saveData();
+  }
+  function pinRoom() { return FC.LIM.pins - Object.keys(data.pins).length; }
+
   var fileIn = el("input", "");
   fileIn.type = "file";
-  fileIn.accept = ".gpx,.kml,.geojson,.json,application/gpx+xml,application/vnd.google-earth.kml+xml,application/geo+json";
+  fileIn.accept = ".gpx,.kml,.geojson,.json,.kmz,.csv,.zip,application/gpx+xml,application/vnd.google-earth.kml+xml,application/geo+json";
   fileIn.hidden = true;
   fileIn.id = "fav-file";
   fileIn.addEventListener("change", function () {
     var f = fileIn.files && fileIn.files[0];
     fileIn.value = "";
-    if (!f || !T) return;
-    if (f.size > T.LIM.chars) { toast(t("imp.big")); return; }
-    f.text().then(function (txt) {
+    if (f) importFile([f]);
+  });
+  // Google Takeout, KMZ… → the preview of import-ui.js; a GPX, KML or
+  // GeoJSON file → its waypoints, as before.
+  function importFile(files) {
+    var UI = window.__orosMapsImport;
+    if (UI) return UI.files(files, plainFile);
+    return plainFile(files);
+  }
+  function plainFile(files) {
+    var f = files && files[0];
+    if (!f || !T) return Promise.resolve();
+    if (f.size > T.LIM.chars) { toast(t("imp.big")); return Promise.resolve(); }
+    return f.text().then(function (txt) {
       var tr = T.parseAny(txt, f.name);
       if (!tr) { toast(t("imp.bad")); return; }
       importWpts(tr, f.name);
     }, function () { toast(t("imp.bad")); });
-  });
+  }
+  function pickImport() {
+    var UI = window.__orosMapsImport;
+    if (UI) UI.pick(importFile); else fileIn.click();
+  }
 
   // ---------- pieces for maps.js (renderSavedLayer / renderPlacesList) ----------
   function header(gid, places) {
@@ -457,7 +524,7 @@
       gb.innerHTML = ICON;
       gb.appendChild(el("span", "", t("groups")));
       bar.appendChild(gb);
-      bar.appendChild(button(t("import"), "osm-btn fav-import", function () { fileIn.click(); }));
+      bar.appendChild(button(t("import"), "osm-btn fav-import", pickImport));
       aside.insertBefore(bar, list);
     }
     var api = syncApi();
@@ -476,6 +543,7 @@
     header: header, groupButton: groupButton, pick: pick,
     // hooks for tracks.js and the tests
     importWpts: importWpts, manage: manage, editGroup: editGroup,
+    importPins: importPins, undoPins: undoPins, pinRoom: pinRoom, groupRoom: function () { return FC.LIM.groups - Object.keys(data.groups).length; },
     assign: assign, makeGroup: makeGroup, deleteGroup: deleteGroup, exportGroup: exportGroup,
     data: function () { return FC.normalize(data); }, prefs: function () { return JSON.parse(JSON.stringify(prefs)); }
   };

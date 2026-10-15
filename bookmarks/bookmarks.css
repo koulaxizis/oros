@@ -1058,19 +1058,24 @@ dialog menu button.danger:hover {
   cursor: pointer;
 }
 #bm-plat .radio input { width: auto; accent-color: var(--accent); }
-#bm-plat .plat-msg { margin-top: 6px; font-size: 13.5px; overflow-wrap: anywhere; }
-#bm-plat .plat-msg p { margin: 6px 0; }
-#bm-plat menu .spacer { flex: 1; }
-#bm-plat menu button {
+#bm-plat .plat-msg, #bm-imp .plat-msg { margin-top: 6px; font-size: 13.5px; overflow-wrap: anywhere; }
+#bm-plat .plat-msg p, #bm-imp .plat-msg p { margin: 6px 0; }
+#bm-plat menu .spacer, #bm-imp menu .spacer { flex: 1; }
+#bm-plat menu button, #bm-imp menu button {
   padding: 9px 14px;
   font-size: 13px;
   font-weight: 600;
   color: var(--text);
   border-radius: 8px;
 }
-#bm-plat menu button.primary { font-weight: 700; color: var(--bg); background: var(--accent); }
-#bm-plat menu button.primary:hover { background: var(--accent-hover); }
-#bm-plat menu button:disabled { opacity: 0.5; cursor: default; }
+#bm-plat menu button.primary, #bm-imp menu button.primary { font-weight: 700; color: var(--bg); background: var(--accent); }
+#bm-plat menu button.primary:hover, #bm-imp menu button.primary:hover { background: var(--accent-hover); }
+#bm-plat menu button:disabled, #bm-imp menu button:disabled { opacity: 0.5; cursor: default; }
+
+/* Import from a file (wave 5, import.js): the preview */
+#bm-imp .imp-src { margin: 0 0 4px; font-size: 13.5px; color: var(--text-dim, var(--text)); overflow-wrap: anywhere; }
+#bm-imp .imp-big { font-weight: 600; }
+#bm-imp .hint { overflow-wrap: anywhere; }
 
 /* ---------- 20. Wave 35: nested folders strip ---------- */
 #crumbs {

@@ -275,7 +275,8 @@
   function moreMenu(anchor) {
     menu(anchor, [
       { label: t("more.stats"), icon: UI.stats, fn: function () { LIB.stats.show(); } },
-      { label: t("more.rescan"), icon: UI.refresh, fn: function () { scan(true); } }
+      { label: t("more.rescan"), icon: UI.refresh, fn: function () { scan(true); } },
+      { label: t("more.import"), icon: UI.notes, fn: function () { if (LIB.hlImport) LIB.hlImport.start(); } }
     ]);
   }
 
