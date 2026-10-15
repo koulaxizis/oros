@@ -7029,3 +7029,9 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Wave 4: checking one record offers DuckDuckGo search links the person opens themselves; with few records and the user's own SearXNG server set in Assistant, the record is searched there (results start as "check"). Contact card gets an Update from online sources button. Short Greek names compare by their Latin form. Closed networks are never read; nothing uses Google.
 - Files: `enrich.js`, `enrichui.js`, Contacts, CRM, help EN/EL; credits for the GitHub/Bluesky/Mastodon APIs, Photon/Overpass/Wikidata rows extended.
   - Tests: 8 new enrich tests; full suite green; real shell with mocked services. Not tested: the real services, a real SearXNG server, a real phone, Safari, Dropbox sync.
+
+### 2026-10-15 — Import from other apps, wave 5: Shelf, Bookmarks, Maps, Radio, Library (#408) — 2.39.00
+- Media Shelf: StoryGraph, IMDb ratings/watchlist, Trakt, TV Time, MyAnimeList, Discogs, BoardGameGeek. Bookmarks: Instapaper, wallabag, Linkwarden, linkding, Firefox and Chromium bookmark files (earlier formats now also get preview, stable ids and Undo). Maps: KMZ, Google Takeout saved places and Timeline (one track per chosen day), TCX, FIT. Radio (Favorites › Import stations): M3U/M3U8, PLS, XSPF, CSV, https streams only. Library (More › Import highlights): Kindle My Clippings, KOReader, Readwise, each quote anchored in the book's own text.
+- Every import: preview, one write, Undo; stable ids, so a re-import adds only what is missing.
+- Files: new `shelf/import.js`, `bookmarks/import.js`, `maps/import.js`, `maps/import-ui.js`, `radio/import.js`, `library/import.js`, `library/hlimport.js` (precached); help EN/EL.
+  - Tests: new import tests; full suite green; real shell per app (preview, two-device sync, Undo, 360px). Not tested: real export files from these services.
