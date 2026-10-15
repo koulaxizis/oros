@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.37.00
+- To-Do, Kanban, Mind Map and Wiki import from other apps: Todoist, TickTick, Google Tasks, todo.txt, Asana, Jira, ClickUp, SimpleMind, MindManager, Markdown outlines, Notion, TiddlyWiki, MediaWiki and Confluence, with a preview and Undo.
+
 ## Version 2.36.00
 - Contacts no longer keeps photos, so they can't fill your storage or stop sync. Each contact shows its initials or a random 8-bit avatar (Picture › 8-bit avatar, Another one for a new face).
 
