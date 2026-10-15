@@ -31,7 +31,7 @@
 //   { given, middle, family, nickname, org, jobTitle, phones[{v,type}],
 //     emails[], addresses[{street,city,region,zip,country,type}],
 //     websites[], im[], events[{day:"MM-DD",year,type,label}],
-//     cats["label name"], note, photo, starred }
+//     cats["label name"], note, avatar, starred }
 // ============================================================
 (function (root) {
   "use strict";
@@ -183,7 +183,6 @@
     if (bl && bi && bl.day !== bi.day) {
       conflicts.push({ f: "birthday", mine: bl.day, theirs: bi.day });
     }
-    if (inc.photo && !local.photo) { add.photo = 1; n++; }
     if (inc.starred && !local.starred) { add.starred = 1; n++; }
     var lblNames = {};
     (labels || []).forEach(function (l) { lblNames[l.id] = fold(l.name); });
@@ -275,7 +274,6 @@
         }
       });
     });
-    if (inc.photo && !c.photo) { c.photo = inc.photo; changed = true; }
     if (inc.starred && !c.starred) { c.starred = true; changed = true; }
     if (Array.isArray(labelIds)) {
       c.labelIds = list(c, "labelIds").slice();

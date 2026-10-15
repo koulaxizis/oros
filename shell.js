@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "2.35.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "2.36.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -5736,9 +5736,9 @@
         { name: "Google Calendar · Tasks · YouTube Data · Books APIs", url: "https://developers.google.com/calendar",
           by: "Google LLC; your own account", lic: { en: "Their terms, one sign-in per import, nothing kept", el: "Οι όροι τους, μία σύνδεση ανά εισαγωγή, τίποτα δεν κρατιέται" },
           en: "One-time imports from Google (Calendar, To-Do, Reader, Media Shelf)", el: "Εισαγωγή από Google μία φορά (Ημερολόγιο, Εργασίες, Αναγνώστης, Το ράφι μου)" },
-        { name: "Gravatar · Libravatar", url: "https://www.libravatar.org/",
-          by: "Automattic Inc.; the Libravatar project", lic: { en: "Their terms; only a hashed e-mail is sent, on request", el: "Οι όροι τους· στέλνεται μόνο κωδικοποιημένο email, όταν το ζητήσεις" },
-          en: "Profile pictures and public profiles (Contacts › Find photos, Update online; CRM; Newsletter)", el: "Φωτογραφίες και δημόσια προφίλ (Επαφές › Εύρεση φωτογραφιών, Ενημέρωση online· Πελάτες· Ενημερωτικό δελτίο)" },
+        { name: "Gravatar", url: "https://gravatar.com/",
+          by: "Automattic Inc.", lic: { en: "Their terms; only a hashed e-mail is sent, on request", el: "Οι όροι τους· στέλνεται μόνο κωδικοποιημένο email, όταν το ζητήσεις" },
+          en: "Public profiles (Contacts, CRM and Newsletter › Update online)", el: "Δημόσια προφίλ (Επαφές, Πελάτες και Ενημερωτικό δελτίο › Ενημέρωση online)" },
         { name: "timologisi.online", url: "https://www.timologisi.online/",
           by: "Novus Conceptus; your own account", lic: { en: "Your own account and key", el: "Ο δικός σου λογαριασμός και κλειδί" },
           en: "Connected services: send invoices to myDATA (Invoices)", el: "Συνδεδεμένες υπηρεσίες: αποστολή παραστατικών στο myDATA (Τιμολόγια)" },

@@ -6,7 +6,7 @@
   <script>if (window.top === window.self && !/[?&]standalone\b/.test(location.search)) location.replace("../?open=contacts" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Contacts · orOS</title>
-  <link rel="stylesheet" href="contacts.css?v=2.35.00">
+  <link rel="stylesheet" href="contacts.css?v=2.36.00">
 </head>
 <body>
   <main id="cmain">
@@ -19,7 +19,6 @@
       <button id="ct-acct" type="button" class="nav-mini" data-i18n="ac.btn"></button>
       <button id="ct-mirror" type="button" class="nav-mini" data-i18n="ph.btn" hidden></button>
       <button id="ct-dedup" type="button" class="nav-mini" data-i18n="dup.scan"></button>
-      <button id="ct-pf" type="button" class="nav-mini" data-i18n="pf.btn"></button>
       <button id="ct-enrich" type="button" class="nav-mini" data-i18n="en.btn"></button>
       <button id="ct-scan" type="button" class="nav-mini" data-i18n="sc.btn"></button>
       <h2 id="ct-title" data-i18n="app.contacts.self"></h2>
@@ -140,11 +139,11 @@
       </label>
 
       <label data-i18n="ct.avatar"></label>
-      <div class="avatar-uploader">
-        <canvas id="avatar-preview" width="64" height="64" hidden></canvas>
-        <button id="ct-avatar-upload" type="button" class="mini" data-i18n="ct.avatar.up"></button>
-        <button id="ct-avatar-remove" type="button" class="mini" hidden data-i18n="ct.avatar.rem"></button>
-        <input id="ct-avatar-input" type="file" accept="image/jpeg,image/png" hidden>
+      <div class="avatar-pick">
+        <span id="avatar-preview" class="avatar-preview"></span>
+        <label><input id="ct-av-ini" type="radio" name="ct-av"> <span data-i18n="ct.avatar.ini"></span></label>
+        <label><input id="ct-av-px" type="radio" name="ct-av"> <span data-i18n="ct.avatar.px"></span></label>
+        <button id="ct-av-new" type="button" class="mini" hidden data-i18n="ct.avatar.new"></button>
       </div>
 
       <label for="ct-note" data-i18n="ct.field.note"></label>
@@ -217,19 +216,6 @@
     </details>
     <div class="dlg-row">
       <button id="ac-close" type="button" class="btn" data-i18n="ph.close"></button>
-    </div>
-  </dialog>
-
-  <!-- Find photos online (Gravatar / Libravatar by e-mail) -->
-  <dialog id="pf-dlg" aria-labelledby="pf-dlg-title">
-    <h3 id="pf-dlg-title" data-i18n="pf.title"></h3>
-    <p class="del-text" data-i18n="pf.text"></p>
-    <p id="pf-stat" class="del-text" aria-live="polite"></p>
-    <div id="pf-list" class="pf-list"></div>
-    <div class="dlg-row">
-      <button id="pf-go" type="button" class="btn prim" data-i18n="pf.go"></button>
-      <button id="pf-apply" type="button" class="btn prim" data-i18n="pf.apply" hidden></button>
-      <button id="pf-close" type="button" class="btn" data-i18n="ph.close"></button>
     </div>
   </dialog>
 
@@ -340,12 +326,12 @@
     </div>
   </dialog>
 
-  <script src="merge.js?v=2.35.00"></script>
-  <script src="keep.js?v=2.35.00"></script>
-  <script src="csvmap.js?v=2.35.00"></script>
-  <script src="cardtext.js?v=2.35.00"></script>
-  <script src="importplan.js?v=2.35.00"></script>
-  <script src="accounts.js?v=2.35.00"></script>
-  <script src="contacts.js?v=2.35.00"></script>
+  <script src="merge.js?v=2.36.00"></script>
+  <script src="keep.js?v=2.36.00"></script>
+  <script src="csvmap.js?v=2.36.00"></script>
+  <script src="cardtext.js?v=2.36.00"></script>
+  <script src="importplan.js?v=2.36.00"></script>
+  <script src="accounts.js?v=2.36.00"></script>
+  <script src="contacts.js?v=2.36.00"></script>
 </body>
 </html>

@@ -436,19 +436,17 @@ dialog h3 {
   border-color: var(--accent);
 }
 
-.avatar-uploader {
+.avatar-pick {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  gap: 8px 14px;
   margin-top: 6px;
 }
-.avatar-uploader canvas {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  border: 1px solid var(--border);
-  background: var(--bg);
-}
+.avatar-pick label { display: flex; align-items: center; gap: 6px; min-height: 44px; }
+.avatar-preview .ct-avatar { width: 48px; height: 48px; font-size: 16px; }
+/* CT-NP: 8-bit avatars keep hard pixel edges */
+.ct-avatar-px { image-rendering: pixelated; }
 .ct-avatar-img {
   object-fit: cover;
 }
@@ -692,14 +690,6 @@ dialog h3 {
   #lbl-chips .chip { min-height: 44px; }
   .nav-mini { min-height: 44px; }
 }
-
-/* Find photos online */
-.pf-list { display: flex; flex-direction: column; gap: 6px; max-height: 50vh; overflow-y: auto; margin: 8px 0; }
-.pf-row { display: flex; align-items: center; gap: 10px; min-height: 44px; cursor: pointer; }
-.pf-txt { display: flex; flex-direction: column; min-width: 0; }
-.pf-txt b, .pf-txt small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.pf-txt small { opacity: .75; }
-#pf-dlg .dlg-row { flex-wrap: wrap; }
 
 /* CT-6: [hidden] must ALWAYS win — last rule of the file (Part II).
    It was missing: an element with a display rule ignored `hidden`. */
