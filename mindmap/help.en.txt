@@ -53,8 +53,19 @@ Tap the map name at the top left for `Your maps`. There you can open, rename, du
 With [orOS sync](help:t/sync), your maps and every node reach your other devices, with their styles, boundaries, summaries and layout. Which map is open, the view and which branches are folded stay on this device.
 
 - `Export…` makes a picture (PNG or SVG), Markdown, OPML or JSON of the whole map or one branch. You can save it, save it to [Files](app:files), print it or copy it as text.
-- `Import (FreeMind, XMind, OPML, Markdown, text, JSON)…` brings in maps from FreeMind, Freeplane and XMind (only the first sheet), and outlines from other apps, as a new map. Their arrows become links. A JSON backup is merged into your maps: newer changes are kept and nothing you deleted comes back.
+- `Import (FreeMind, XMind, SimpleMind, MindManager, OPML, Markdown, text, JSON)…` brings in maps from FreeMind, Freeplane, XMind (only the first sheet), SimpleMind and MindManager, and outlines from other apps, as a new map (see below). Their arrows become links. A JSON backup is merged into your maps: newer changes are kept and nothing you deleted comes back.
 - `Back up all maps (JSON)` saves everything in one file. Your maps are also part of orOS [backups](help:t/backup).
+
+## Import from other apps
+Every import makes a new map and opens it; your other maps are not touched. The message that follows has an `Undo` button, which removes the new map again.
+
+- **FreeMind / Freeplane** (.mm): save the map as usual and import the .mm file.
+- **XMind** (.xmind): import the .xmind file as it is. Only the first sheet comes in.
+- **SimpleMind** (.smmx): in SimpleMind, share or export the mind map as a SimpleMind file (.smmx), or use the file from its storage folder. Ideas, notes, links, ticks and cross-links come in.
+- **MindManager** (.mmap): save the map as a .mmap file (the usual format). Topics, notes, links, colours, finished tasks and relationships come in; floating topics don't.
+- **Markdown** (.md): files from Markmap, Obsidian, Logseq and other Markdown notes. Headings and nested lists become branches; the first heading becomes the centre (or the file name, if there are several). Links, bold and other formatting become plain text (a node's first web link is kept as its link), and Logseq properties such as "collapsed:: true" are left out. In Logseq, use `Export page` and choose text, or take the .md file from the pages folder.
+- **Text** (.txt): one idea per line, with tabs or spaces for the levels. You can also paste such a list with `Paste a list…`.
+- **OPML** (.opml): the outline export of most outliners.
 
 ## Keyboard shortcuts
 - [[Tab]] adds a child, [[Enter]] adds a sibling, [[F2]] or simply typing edits the selected node.
@@ -73,7 +84,7 @@ With [orOS sync](help:t/sync), your maps and every node reach your other devices
 - Nodes you place yourself can overlap other nodes; `Tidy up (all back in place)` sorts that out.
 - Links, pictures, styles, boundaries and summaries don't show in the `Outline` view, and Markdown and OPML exports leave them out (JSON keeps everything; PNG and SVG show them).
 - A boundary covers everything between the first and the last idea you ticked, even an idea in between that you left out.
-- Shapes, boundaries and summaries in FreeMind and XMind files are not imported (the ideas, notes, links and colours are).
+- Shapes, boundaries, summaries and pictures in FreeMind, XMind, SimpleMind and MindManager files are not imported (the ideas, notes, links and colours are). A very large MindManager map may not fit within the import limits.
 - A device still on an older version of orOS shows these maps in the classic look until it updates; nothing is lost.
 - If two devices move nodes at the same time in a way that conflicts, a node may come back under the centre with a dashed line. Drag it where it belongs, or choose `Keep it here`.
 - A very large map may be too big for PNG; export SVG instead.

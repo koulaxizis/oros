@@ -102,6 +102,8 @@
       "subs.empty": "No subscribers yet.", "subs.emptyHint": "Add them one by one, paste a list, import a CSV file or pick them from Contacts.",
       "subs.search": "Search address, name, tag…", "subs.allSt": "Every status", "subs.allTags": "Every tag",
       "subs.add": "Add", "subs.paste": "Paste addresses", "subs.csv": "Import CSV", "subs.contacts": "From Contacts",
+      "subs.enrich": "Fill in names online", "en.none": "Every subscriber shown already has a name.",
+      "en.done": "Names added: {n}",
       "subs.export": "Export CSV", "subs.inbox": "Check Inbox", "subs.invite": "Send confirmation requests ({n})",
       "subs.more": "Showing {a} of {b}. Search to find the others.", "subs.none": "Nothing matches.",
       "inbox.never": "The Inbox has not been checked on this device yet.",
@@ -292,6 +294,8 @@
       "subs.empty": "Δεν υπάρχουν συνδρομητές ακόμα.", "subs.emptyHint": "Πρόσθεσέ τους έναν έναν, επικόλλησε μια λίστα, φέρε ένα αρχείο CSV ή διάλεξέ τους από τις Επαφές.",
       "subs.search": "Αναζήτηση διεύθυνσης, ονόματος, ετικέτας…", "subs.allSt": "Κάθε κατάσταση", "subs.allTags": "Κάθε ετικέτα",
       "subs.add": "Προσθήκη", "subs.paste": "Επικόλληση διευθύνσεων", "subs.csv": "Εισαγωγή CSV", "subs.contacts": "Από τις Επαφές",
+      "subs.enrich": "Συμπλήρωση ονομάτων online", "en.none": "Όλοι οι συνδρομητές της λίστας έχουν ήδη όνομα.",
+      "en.done": "Προστέθηκαν ονόματα: {n}",
       "subs.export": "Εξαγωγή CSV", "subs.inbox": "Έλεγχος Εισερχομένων", "subs.invite": "Αποστολή αιτημάτων επιβεβαίωσης ({n})",
       "subs.more": "Φαίνονται {a} από {b}. Αναζήτησε για τους υπόλοιπους.", "subs.none": "Δεν ταιριάζει κανείς.",
       "inbox.never": "Τα Εισερχόμενα δεν έχουν ελεγχθεί ακόμα σε αυτή τη συσκευή.",
@@ -689,6 +693,7 @@
     acts.appendChild(mini(t("subs.contacts"), contactsDialog));
     if (crmPeople()) acts.appendChild(mini(t("subs.crm"), crmDialog));
     if (P && P.has()) acts.appendChild(mini(P.label(), P.open));
+    acts.appendChild(mini(t("subs.enrich"), function () { enrichNames(shownSubs); }));
     acts.appendChild(mini(t("subs.export"), exportCsv));
     var ch = C.chan(data, l.chan), inbox = inboxAccount(ch);
     if (inbox) acts.appendChild(mini(t("subs.inbox"), inboxNow));
@@ -706,6 +711,7 @@
       if (q && C.fold(s.email + " " + s.name + " " + s.tags.join(" ")).indexOf(q) < 0) return false;
       return true;
     }).sort(function (a, b) { return a.email < b.email ? -1 : 1; });
+    shownSubs = rows;
     var ol = $("subs");
     rows.slice(0, SUB_ROWS).forEach(function (s) {
       var li = el("li");
@@ -729,6 +735,44 @@
     }
     $("subs-empty").hidden = !!all.length;
     if (all.length && !rows.length) { $("subs-more").hidden = false; $("subs-more").textContent = t("subs.none"); }
+  }
+  // Fill in missing names from the profile people set for their own
+  // e-mail on Gravatar (../enrich.js + ../enrichui.js): only the
+  // subscribers shown that have no name; reviewed, one write, Undo.
+  var shownSubs = [];
+  function enrichNames(subs) {
+    var items = subs.filter(function (s) { return !s.name; }).map(function (s) {
+      return { id: s.id, name: s.email, rec: { names: [], emails: [s.email], phones: [], sites: [],
+        has: { photo: true, birthday: true, job: true, org: true, address: true, name: false } } };
+    });
+    if (!items.length) { localToast(t("en.none")); return; }
+    function go() {
+      window.OrosEnrichUI.open({ lang: LANG === "el" ? "el" : "en", items: items, kinds: ["name"], apply: function (picks) {
+        var before = [];
+        picks.forEach(function (p) {
+          var cur = null;
+          data.subs.forEach(function (x) { if (x.id === p.id && !x.del) cur = x; });
+          var nm = p.list[0] && String(p.list[0].v).slice(0, 120);
+          if (!cur || cur.name || !nm) return;
+          before.push(copy(cur));
+          var r = copy(cur);
+          r.name = nm;
+          put("subs", r);
+        });
+        if (!before.length) return 0;
+        renderAll();
+        undoToast(t("en.done", { n: before.length }), function () {
+          before.forEach(function (b) { restore("subs", b); });
+          renderAll();
+        });
+        return before.length;
+      } });
+    }
+    if (window.OrosEnrichUI) { go(); return; }
+    var sc = document.createElement("script");
+    sc.src = "../enrichui.js";
+    sc.onload = go;
+    document.head.appendChild(sc);
   }
   function mini(label, fn) {
     var b = el("button", "mini-btn", label);

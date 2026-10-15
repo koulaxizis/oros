@@ -86,10 +86,26 @@ The search box looks through every list: task text, notes, extra info, subtasks 
 - Import again to bring in newly assigned issues; with `Update what was imported before` the title, text and due date follow GitHub's. An issue closed on GitHub stays as it is here: tick it yourself. The same rules for deleted tasks and duplicates apply as for Todoist.
 - orOS only reads GitHub: nothing there changes.
 
+## Import from Google Tasks
+In a list's window (the pencil on its tab), `Import from Google Tasks…` copies your tasks from Google once. Sign in to Google in the small window; orOS reads your task lists (read only), shows them with how many tasks are new or already here, and gives the access back to Google right away: nothing is kept, and nothing changes at Google. Tick the lists you want and whether completed tasks come too, then press `Import`; the message that follows has `Undo`.
+
+Each Google list becomes a list (one with the same name here is used), each task a task with its notes and due date, ticked if it was completed there. Subtasks become subtasks of their task; a subtask's own notes and due date are added to its task's notes. Importing again adds only what is missing, and a new open task whose text is already open in the same list is skipped. Google must have this enabled for orOS; if it answers 403, the service is not switched on yet. To use your own Google app id, set it in [Contacts](app:contacts) › `From an account` › `Use my own app id`.
+
+## Import a file from another app
+In a list's window (the pencil on its tab), `Import a file…` reads an export file from another task app, here on the desktop or in To-Do on its own; nothing is sent anywhere. The window says what it found, how it maps, which lists are new or already here and the range of due dates; tick the lists you want and whether completed tasks come too, then `Import`. The message that follows has `Undo`.
+- **Todoist**: open a project › ⋯ › `Export as CSV` (one project), or Settings › Backups › download a backup (a ZIP with a CSV per project). Each project becomes a list; indented tasks become subtasks, comments go into the notes, @labels become labels, sections go into the task's extra info and P1–P4 stay the same. A date that is not a plain date (like "every monday") goes into the notes.
+- **TickTick**: Settings › Account › `Generate backup` (a CSV). Each list becomes a list; checklist items and child tasks become subtasks, tags become labels, and high / medium / low priority become P1 / P2 / P3.
+- **Google Tasks**: at takeout.google.com choose only `Tasks`; open the ZIP or its `Tasks.json`. It maps like `Import from Google Tasks…`, and the two know each other's tasks.
+- **todo.txt** and **done.txt**: the first +project of a line becomes its list (no project: a list named after the file), @contexts become labels, (A) (B) (C) become P1 P2 P3, `due:` the due date, and lines starting with `x` come ticked.
+- **iCalendar (.ics)** from a calendar or task app (Apple Reminders through a CalDAV app, Thunderbird, Nextcloud Tasks…): each to-do becomes a task in a list named after the calendar, with its description, due date, priority and categories as labels; a to-do linked to another becomes its subtask, and cancelled ones are skipped.
+- **Remember The Milk**: Settings › Account › `Export your data` (JSON). Lists, tags, notes, subtasks, due dates and P1–P3 come along; deleted tasks stay out.
+
+Importing the same file again adds only what is missing. A task you deleted here stays deleted, a list or label with the same name here is used, and a new open task whose text is already open in the same list is skipped. Repeating tasks come once, with their date only.
+
 ## Sync and backup
 Your lists, tasks (with priorities and subtasks), labels and saved filters sync between your devices through [orOS sync](help:t/sync). Two devices ticking different subtasks of one task both keep their ticks, and a task moved on one device ends up in its new list on all of them. The open tab, the sort of each view and `Hide completed` stay on each device, and search, filters, the open subtask checklists and a selection reset when you close the app.
 
-To-Do has no import or export of its own; use the orOS [backup](help:t/backup) to keep a copy.
+To-Do has no export of its own; use the orOS [backup](help:t/backup) to keep a copy.
 
 ## Keyboard shortcuts
 - [[Enter]] in the add box adds the task; in `New subtask…` it adds the step.

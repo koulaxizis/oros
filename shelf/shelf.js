@@ -11,6 +11,9 @@
 //   - JSON export / import (import merges, never replaces)
 //   - Goodreads / Letterboxd CSV import with a preview; titles already
 //     on the shelf are skipped; Undo takes an import back (1.1.0)
+//   - "Import from another app" (1.6.0, import.js): StoryGraph, IMDb,
+//     Trakt, TV Time, MyAnimeList, Discogs, BoardGameGeek take the
+//     same road (planImport kind "ext": preview, one write, Undo)
 //   - Library link (1.4.0, BR-LIB-SHELF): Library's "Add to Media Shelf"
 //     makes a linked book; its progress follows Library's place and
 //     "Read in Library" opens it there
@@ -135,13 +138,29 @@
       "goal.ahead": "{n} ahead of schedule", "goal.behind": "{n} behind schedule", "goal.on": "On schedule",
       "goal.done": "Goal reached!", "goal.hint": "Leave 0 for no goal.", "goal.none": "No goals for {y}.",
       "menu.export": "Export (JSON)", "menu.import": "Import (JSON)",
-      "menu.csv": "Import from Goodreads / Letterboxd (CSV)",
-      "csv.title": "Import from Goodreads / Letterboxd", "csv.found": "Found {n} titles.",
+      "menu.csv": "Import from another app",
+      "csv.title": "Import from another app", "csv.found": "Found {n} titles.",
       "csv.dup": "{n} already on your shelf: skipped.", "csv.none": "Nothing new to import.",
-      "csv.unknown": "Not a Goodreads or Letterboxd export: {f}",
+      "csv.unknown": "Not an export this import knows: {f}",
       "csv.line": "{type}: {n} ({parts})", "csv.go": "Import {n}",
-      "csv.hint": "Goodreads: My Books → Import and export → Export library. Letterboxd: Settings → Data → Export your data, unzip, then pick the CSV files (you can pick several).",
+      "csv.hint": "Goodreads, StoryGraph, Letterboxd, IMDb, Trakt, TV Time, MyAnimeList, Discogs or BoardGameGeek: pick the export file (CSV, JSON, XML or the ZIP; you can pick several). Help has the steps for each.",
+      "imp.from": "From: {s}", "imp.range": "Dates: {a} to {b}",
+      "imp.skip": "Left out: {n} (episodes, seasons, rows with no title or no status).",
+      "imp.board": "Board game", "imp.err": "Could not read this file.",
+      "imp.map.storygraph": "StoryGraph: read → Read, currently reading → Reading, to read → Want, did not finish → Dropped; your dates, stars, review and tags.",
+      "imp.map.imdb": "IMDb: rated titles → Watched on the day you rated them (your 1–10 becomes half stars), the watchlist → Want; films, series, video games and podcasts, no episodes.",
+      "imp.map.trakt": "Trakt: watched films → Watched, shows with watched episodes → Watching with the count, ratings → stars, watchlist → Want.",
+      "imp.map.tvtime": "TV Time: followed shows → Want, shows with seen episodes → Watching with the count, watched films → Watched.",
+      "imp.map.mal": "MyAnimeList: Completed → Watched / Read, Watching / Reading / On-Hold → Watching / Reading, Plan to… → Want, Dropped → Dropped; anime as series or films, manga as books.",
+      "imp.map.discogs": "Discogs: your collection → Music, Listened (on the day it joined the collection); a wantlist → Want; rating and format.",
+      "imp.map.bgg": "BoardGameGeek: played or rated games → Finished, owned, wishlist or want-to-play → Want; your rating.",
       "toast.csv": "Imported {n} titles", "toast.csvMax": "Only {n} more titles fit on your shelf",
+      "menu.gbooks": "Import from Google Books", "gb.title": "Import from Google Books",
+      "gb.text": "Sign in to Google once: orOS reads the books on your Google Books shelves and the access is given back right away. Nothing is kept, nothing changes at Google (Google Books has no read-only permission, so it asks for more; orOS only reads).",
+      "gb.wait": "Waiting for the Google sign-in window…", "gb.read": "Reading your shelves… {n}",
+      "gb.hint": "Have read → Read, Reading now → Reading, To read → Want, Favorites → ♥, My eBooks → e-book; your own shelves become tags.",
+      "gb.own": "To use your own Google app id, set it in Contacts › From an account.",
+      "gb.none": "No books on your Google Books shelves.",
       "f.rel": "Release date (optional)", "it.rel": "Out {d}",
       "menu.rem": "Reading reminder", "rem.title": "Reading reminder", "rem.on": "Remind me once a day",
       "rem.at": "From", "rem.done": "Done",
@@ -243,13 +262,29 @@
       "goal.ahead": "{n} μπροστά από το πρόγραμμα", "goal.behind": "{n} πίσω από το πρόγραμμα", "goal.on": "Στο πρόγραμμα",
       "goal.done": "Ο στόχος επιτεύχθηκε!", "goal.hint": "Άφησε 0 για κανέναν στόχο.", "goal.none": "Κανένας στόχος για το {y}.",
       "menu.export": "Εξαγωγή (JSON)", "menu.import": "Εισαγωγή (JSON)",
-      "menu.csv": "Εισαγωγή από Goodreads / Letterboxd (CSV)",
-      "csv.title": "Εισαγωγή από Goodreads / Letterboxd", "csv.found": "Βρέθηκαν {n} τίτλοι.",
+      "menu.csv": "Εισαγωγή από άλλη εφαρμογή",
+      "csv.title": "Εισαγωγή από άλλη εφαρμογή", "csv.found": "Βρέθηκαν {n} τίτλοι.",
       "csv.dup": "{n} υπάρχουν ήδη στο ράφι σου: παραλείπονται.", "csv.none": "Τίποτα καινούργιο για εισαγωγή.",
-      "csv.unknown": "Δεν είναι εξαγωγή Goodreads ή Letterboxd: {f}",
+      "csv.unknown": "Δεν είναι εξαγωγή που αναγνωρίζει η εισαγωγή: {f}",
       "csv.line": "{type}: {n} ({parts})", "csv.go": "Εισαγωγή {n}",
-      "csv.hint": "Goodreads: My Books → Import and export → Export library. Letterboxd: Settings → Data → Export your data, αποσυμπίεσε και διάλεξε τα αρχεία CSV (μπορείς πολλά μαζί).",
+      "csv.hint": "Goodreads, StoryGraph, Letterboxd, IMDb, Trakt, TV Time, MyAnimeList, Discogs ή BoardGameGeek: διάλεξε το αρχείο εξαγωγής (CSV, JSON, XML ή το ZIP· μπορείς πολλά μαζί). Η Βοήθεια έχει τα βήματα για την καθεμία.",
+      "imp.from": "Από: {s}", "imp.range": "Ημερομηνίες: {a} έως {b}",
+      "imp.skip": "Μένουν έξω: {n} (επεισόδια, σεζόν, γραμμές χωρίς τίτλο ή κατάσταση).",
+      "imp.board": "Επιτραπέζιο", "imp.err": "Δεν ήταν δυνατή η ανάγνωση του αρχείου.",
+      "imp.map.storygraph": "StoryGraph: read → Διαβάστηκε, currently reading → Διαβάζω, to read → Θέλω, did not finish → Το παράτησα· οι ημερομηνίες, τα αστέρια, η κριτική και οι ετικέτες σου.",
+      "imp.map.imdb": "IMDb: ό,τι βαθμολόγησες → Το είδα, τη μέρα της βαθμολογίας (το 1–10 γίνεται μισά αστέρια), η watchlist → Θέλω· ταινίες, σειρές, βιντεοπαιχνίδια και podcast, όχι επεισόδια.",
+      "imp.map.trakt": "Trakt: ταινίες που είδες → Το είδα, σειρές με επεισόδια που είδες → Βλέπω (με το πλήθος τους), βαθμολογίες → αστέρια, watchlist → Θέλω.",
+      "imp.map.tvtime": "TV Time: σειρές που ακολουθείς → Θέλω, σειρές με επεισόδια που είδες → Βλέπω (με το πλήθος τους), ταινίες που είδες → Το είδα.",
+      "imp.map.mal": "MyAnimeList: Completed → Το είδα / Διαβάστηκε, Watching / Reading / On-Hold → Βλέπω / Διαβάζω, Plan to… → Θέλω, Dropped → Το παράτησα· τα anime ως σειρές ή ταινίες, τα manga ως βιβλία.",
+      "imp.map.discogs": "Discogs: η συλλογή σου → Μουσική, Το άκουσα (τη μέρα που μπήκε στη συλλογή)· μια wantlist → Θέλω· βαθμολογία και μορφή.",
+      "imp.map.bgg": "BoardGameGeek: παιχνίδια που έπαιξες ή βαθμολόγησες → Τερματίστηκε, όσα έχεις, θέλεις ή θέλεις να παίξεις → Θέλω· η βαθμολογία σου.",
       "toast.csv": "Εισήχθησαν {n} τίτλοι", "toast.csvMax": "Χωράνε μόνο {n} ακόμα τίτλοι στο ράφι σου",
+      "menu.gbooks": "Εισαγωγή από Google Books", "gb.title": "Εισαγωγή από Google Books",
+      "gb.text": "Συνδέεσαι μία φορά στη Google: το orOS διαβάζει τα βιβλία στα ράφια σου στο Google Books και η πρόσβαση επιστρέφεται αμέσως. Δεν κρατιέται τίποτα και δεν αλλάζει τίποτα στη Google (το Google Books δεν έχει άδεια μόνο για ανάγνωση, γι' αυτό ζητά περισσότερα· το orOS μόνο διαβάζει).",
+      "gb.wait": "Αναμονή για το παράθυρο σύνδεσης της Google…", "gb.read": "Ανάγνωση των ραφιών σου… {n}",
+      "gb.hint": "Have read → Διαβάστηκε, Reading now → Διαβάζω, To read → Θέλω, Favorites → ♥, My eBooks → e-book· τα δικά σου ράφια γίνονται ετικέτες.",
+      "gb.own": "Για δικό σου αναγνωριστικό εφαρμογής Google, όρισέ το στις Επαφές › Από λογαριασμό.",
+      "gb.none": "Δεν υπάρχουν βιβλία στα ράφια σου στο Google Books.",
       "f.rel": "Ημερομηνία κυκλοφορίας (προαιρετικά)", "it.rel": "Κυκλοφορεί {d}",
       "menu.rem": "Υπενθύμιση ανάγνωσης", "rem.title": "Υπενθύμιση ανάγνωσης", "rem.on": "Θύμισέ μου μία φορά τη μέρα",
       "rem.at": "Από", "rem.done": "Έτοιμο",
@@ -744,13 +779,18 @@
     return type + "\u0001" + fold(clipLine(title, TITLE_LEN)) + "\u0001" +
       (type === "film" ? String(year || "") : fold(clipLine(by, BY_LEN)));
   }
+  function tyKey(type, title, year) { return type + "\u0001" + fold(clipLine(title, TITLE_LEN)) + "\u0001" + year; }
   var GR_SHELVES = ["read", "currently-reading", "to-read"];
   var DROP_RE = /dnf|did-?not-?finish|abandon|dropped|gave-?up|παρατ/i;
 
   function planImport(files, D, opts) {
     var now0 = opts.now, today0 = opts.today;
-    var have = {};
-    D.items.forEach(function (it) { have[dupKey(it.type, it.title, it.by, it.year)] = 1; });
+    var have = {}, haveId = {}, haveTy = {};
+    D.items.forEach(function (it) {
+      have[dupKey(it.type, it.title, it.by, it.year)] = 1;
+      haveId[it.id] = 1;
+      if (it.year) haveTy[tyKey(it.type, it.title, it.year)] = 1;
+    });
     var out = { items: [], sess: [], counts: {}, dup: 0, unknown: [], found: 0 };
     var seen = {}, m = now0;
     function stamp() { return m++; }
@@ -759,14 +799,18 @@
       if (seen[k]) return;
       seen[k] = 1;
       out.found++;
-      if (have[k]) { out.dup++; return; }
-      it.id = newId();
+      // Another app (import.js): also the same id (imported before,
+      // perhaps edited since) or, for a film or series, the same
+      // title and year whoever the creator is
+      if (have[k] || (it.id && haveId[it.id]) || (it.ty && it.year && haveTy[tyKey(it.type, it.title, it.year)])) { out.dup++; return; }
+      delete it.ty;
+      it.id = it.id || newId();          // Google Books, another app: a stable id
       it.m = stamp();
       var x = normItem(it);
       if (!x) return;
       out.items.push(x);
       sessList.forEach(function (s) {
-        var y = normSess({ id: newId(), m: stamp(), it: x.id, k: s.k, d: s.d, v: s.v });
+        var y = normSess({ id: s.id || newId(), m: stamp(), it: x.id, k: s.k, d: s.d, v: s.v });
         if (y) out.sess.push(y);
       });
       var c = out.counts[x.type] || (out.counts[x.type] = { want: 0, now: 0, done: 0, drop: 0 });
@@ -780,8 +824,10 @@
       if (!lb[k]) { lb[k] = { name: o.Name, year: o.Year, want: false, watched: "", diary: [], rate: 0, logRate: 0, logAt: "", rev: "", tags: [], added: "" }; lbOrder.push(k); }
       return lb[k];
     }
-    var rank = { "lb-watchlist": 0, "lb-watched": 1, "lb-ratings": 2, "lb-diary": 3, "lb-reviews": 4, gr: 5 };
+    var rank = { "lb-watchlist": 0, "lb-watched": 1, "lb-ratings": 2, "lb-diary": 3, "lb-reviews": 4, gr: 5, gb: 6, ext: 7 };
     var parsed = files.map(function (f) {
+      // Google Books (gbooks.js), another app (import.js): rows already read, not a file
+      if ((f.kind === "gb" || f.kind === "ext") && Array.isArray(f.list)) return { name: f.name, kind: f.kind, list: f.list };
       var o = csvObjects(parseCsv(f.text));
       return { name: f.name, kind: csvKind(o.head, f.name), list: o.list };
     });
@@ -790,6 +836,35 @@
       .sort(function (a, b) { return rank[a.kind] - rank[b.kind]; })
       .forEach(function (p) {
         p.list.forEach(function (o) {
+          if (p.kind === "ext") {
+            // import.js has mapped the status and its history entries
+            if (!o || TYPES.indexOf(o.type) < 0) return;
+            var xadd = isYmd(o.added) ? o.added : "";
+            add({
+              id: typeof o.id === "string" && ID_RE.test(o.id) ? o.id : "", ty: o.type === "film" || o.type === "series",
+              a: xadd ? ymdNoon(xadd) : now0, type: o.type, title: o.title, by: o.by, year: o.year, size: o.size,
+              fmt: o.fmt, plat: o.plat, st: STATES.indexOf(o.st) >= 0 ? o.st : "want", rate: o.rate, fav: o.fav,
+              tags: Array.isArray(o.tags) ? o.tags : [], rev: o.rev, rel: o.rel, col: colorFor(String(o.title || ""))
+            }, (Array.isArray(o.sess) ? o.sess : []).filter(function (s) { return s && typeof s === "object"; }).map(function (s) {
+              return { id: typeof s.id === "string" && ID_RE.test(s.id) ? s.id : "", k: s.k, d: s.d, v: s.v };
+            }));
+            return;
+          }
+          if (p.kind === "gb") {
+            // the same states and history entries as a Goodreads shelf
+            var gst = STATES.indexOf(o.st) >= 0 && o.st !== "drop" ? o.st : "want";
+            var gadd = isYmd(o.added) ? o.added : "";
+            var gsl = [];
+            if (gst === "now") gsl.push({ id: o.sid && o.sid.s, k: "s", d: gadd || today0 });
+            if (gst === "done") gsl.push({ id: o.sid && o.sid.d, k: "d", d: gadd || today0 });
+            add({
+              id: typeof o.id === "string" && ID_RE.test(o.id) ? o.id : "",
+              a: gadd ? ymdNoon(gadd) : now0, type: "book", title: o.title, by: o.by,
+              year: o.year, size: o.size, fmt: o.fmt === "e" ? "e" : "p", st: gst, fav: o.fav === 1 ? 1 : 0,
+              tags: Array.isArray(o.tags) ? o.tags : [], col: colorFor(String(o.title || ""))
+            }, gsl);
+            return;
+          }
           if (p.kind === "gr") {
             var sh = String(o["Exclusive Shelf"] || "").trim().toLowerCase();
             var st = sh === "read" ? "done" : sh === "currently-reading" ? "now" :
@@ -2782,19 +2857,35 @@
     });
   }
 
-  // Goodreads / Letterboxd: pick one or more CSV files, preview, confirm.
+  // Another app: pick one or more export files (CSV, JSON, XML, ZIP,
+  // .gz), preview, confirm. import.js reads StoryGraph, IMDb, Trakt,
+  // TV Time, MyAnimeList, Discogs and BoardGameGeek into rows and
+  // hands Goodreads / Letterboxd CSVs on as text; planImport does the
+  // rest, the same road for all (preview → applyPlan: one write, Undo).
+  var IMP_MAX = 40 * 1024 * 1024;
   function importCsv() {
-    var dlg = dialogHost(), accept = ".csv,text/csv";
+    var dlg = dialogHost(), IMP = window.OrosShelfImport, KIT = window.OrosImportKit;
+    var accept = IMP && KIT ? IMP.ACCEPT : ".csv,text/csv";
     var pick = dlg && typeof dlg.openFiles === "function" ? dlg.openFiles(accept) : localPickFiles(accept);
     Promise.resolve(pick).then(function (list) {
       if (!list || !list.length) return;
-      list = [].slice.call(list);
-      if (list.some(function (f) { return f.size > 8 * 1024 * 1024; })) { showToast(t("toast.big")); return; }
-      Promise.all(list.map(function (f) {
-        return f.text().then(function (txt) { return { name: f.name || "", text: txt }; });
-      })).then(function (files) {
-        csvPreview(planImport(files, data, { now: now(), today: today() }));
-      });
+      list = [].slice.call(list, 0, 30);
+      if (list.some(function (f) { return f.size > (IMP && KIT ? IMP_MAX : 8 * 1024 * 1024); })) { showToast(t("toast.big")); return; }
+      if (!IMP || !KIT) {
+        Promise.all(list.map(function (f) {
+          return f.text().then(function (txt) { return { name: f.name || "", text: txt }; });
+        })).then(function (files) {
+          csvPreview(planImport(files, data, { now: now(), today: today() }));
+        });
+        return;
+      }
+      Promise.all(list.map(function (f) { return KIT.readFile(f, IMP_MAX); }))
+        .then(function (rs) { return IMP.parse(rs, { today: today(), board: t("imp.board") }); })
+        .then(function (res) {
+          var plan = planImport(res.files, data, { now: now(), today: today() });
+          plan.unknown = plan.unknown.concat(res.unknown);
+          csvPreview(plan, { sources: res.sources, skipped: res.skipped });
+        }, function () { showToast(t("imp.err")); });
     });
   }
   function localPickFiles(accept) {
@@ -2815,10 +2906,17 @@
     });
   }
 
-  function csvPreview(plan) {
+  // opts (Google Books): { title, hint } in place of the CSV ones;
+  // (another app) { sources: [import.js ids], skipped: n }
+  function csvPreview(plan, opts) {
+    opts = opts || {};
     var dlg = makeDialog("sh-csv", "");
-    dlg.appendChild(el("div", "dlg-title", t("csv.title")));
-    plan.unknown.forEach(function (f) { dlg.appendChild(el("p", "hint warn", t("csv.unknown", { f: f || "?" }))); });
+    dlg.appendChild(el("div", "dlg-title", opts.title || t("csv.title")));
+    var srcs = (opts.sources || []).map(function (s) {
+      return window.OrosShelfImport && window.OrosShelfImport.NAMES[s] || "";
+    }).filter(Boolean);
+    if (srcs.length) dlg.appendChild(el("p", "csv-p", t("imp.from", { s: srcs.join(", ") })));
+    plan.unknown.slice(0, 8).forEach(function (f) { dlg.appendChild(el("p", "hint warn", t("csv.unknown", { f: f || "?" }))); });
     var room = Math.max(0, MAX_ITEMS - data.items.length);
     var n = Math.min(plan.items.length, room);
     if (plan.found) dlg.appendChild(el("p", "csv-p", t("csv.found", { n: fmtNum(plan.found) })));
@@ -2833,10 +2931,17 @@
         n: fmtNum(c.want + c.now + c.done + c.drop), parts: parts })));
     });
     if (ul.children.length) dlg.appendChild(ul);
+    // the span of the dates that come in (finishes, starts, drops)
+    var lo = "", hi = "";
+    plan.sess.forEach(function (s) { if (!lo || s.d < lo) lo = s.d; if (s.d > hi) hi = s.d; });
+    if (lo) dlg.appendChild(el("p", "csv-p", t("imp.range", { a: fmtDate(lo), b: fmtDate(hi) })));
     if (plan.dup) dlg.appendChild(el("p", "hint", t("csv.dup", { n: fmtNum(plan.dup) })));
+    if (opts.skipped) dlg.appendChild(el("p", "hint", t("imp.skip", { n: fmtNum(opts.skipped) })));
     if (n < plan.items.length) dlg.appendChild(el("p", "hint warn", t("toast.csvMax", { n: fmtNum(room) })));
     if (!plan.items.length) dlg.appendChild(el("p", "csv-p", t("csv.none")));
-    dlg.appendChild(el("p", "hint", t("csv.hint")));
+    if (srcs.length) {
+      (opts.sources || []).forEach(function (s) { if (STRINGS.en["imp.map." + s]) dlg.appendChild(el("p", "hint", t("imp.map." + s))); });
+    } else dlg.appendChild(el("p", "hint", opts.hint || t("csv.hint")));
     var acts = el("div", "dlg-actions");
     acts.appendChild(button(t("f.cancel"), "", function () { dlg.close(); }));
     if (n) {
@@ -2870,6 +2975,47 @@
     });
   }
 
+  // Google Books (gbooks.js, /google-import.js): one-time, read only.
+  // The sign-in window opens inside the menu tap; the books then take
+  // the Goodreads import's road (planImport kind "gb" → the same
+  // preview → applyPlan: one write, Undo).
+  function importGbooks() {
+    var GI = window.OrosGoogleImport, GB = window.OrosShelfGbooks;
+    if (!GI || !GB) return;
+    var dlg = makeDialog("sh-gb", "");
+    dlg.appendChild(el("div", "dlg-title", t("gb.title")));
+    dlg.appendChild(el("p", "csv-p", t("gb.text")));
+    var stat = el("p", "csv-p", t("gb.wait"));
+    stat.setAttribute("aria-live", "polite");
+    dlg.appendChild(stat);
+    dlg.appendChild(el("p", "hint", t("gb.own")));
+    var acts = el("div", "dlg-actions");
+    var busy = true;
+    var cancelBtn = button(t("f.cancel"), "", function () { dlg.close(); });
+    acts.appendChild(cancelBtn);
+    dlg.appendChild(acts);
+    dlg.addEventListener("close", function () { if (busy) GI.cancel(); });
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    GI.run({
+      scope: GI.SCOPES.books,
+      progress: function (n) { stat.textContent = t("gb.read", { n: fmtNum(n) }); },
+      read: function (token, api) { return GB.read(api, function (n) { stat.textContent = t("gb.read", { n: fmtNum(n) }); }); }
+    }).then(function (res) {
+      busy = false;
+      if (!dlg.open) return;
+      var rows = GB.records(res.data);
+      if (!rows.length) { stat.textContent = t("gb.none"); return; }
+      dlg.close();
+      csvPreview(planImport([{ name: "Google Books", kind: "gb", list: rows }], data, { now: now(), today: today() }),
+        { title: t("gb.title"), hint: t("gb.hint") });
+    }, function (e) {
+      busy = false;
+      if (!dlg.open) return;
+      stat.textContent = GI.message(e, LANG);
+    });
+  }
+
   function moreMenu() {
     var dlg = makeDialog("sh-more", "menu-dlg");
     dlg.appendChild(el("div", "dlg-title", t("btn.more")));
@@ -2877,6 +3023,9 @@
     col.appendChild(button(t("menu.export"), "", function () { dlg.close(); exportJson(); }));
     col.appendChild(button(t("menu.import"), "", function () { dlg.close(); importJson(); }));
     col.appendChild(button(t("menu.csv"), "", function () { dlg.close(); importCsv(); }));
+    if (window.OrosGoogleImport && window.OrosShelfGbooks && window.OrosGoogleImport.ready()) {
+      col.appendChild(button(t("menu.gbooks"), "", function () { dlg.close(); importGbooks(); }));
+    }
     col.appendChild(button(t("menu.rem"), "", function () { dlg.close(); remDialog(); }));
     col.appendChild(button(t("menu.tmdb"), "", function () { dlg.close(); tmdbDialog(); }));
     col.appendChild(button(t("f.cancel"), "", function () { dlg.close(); }));

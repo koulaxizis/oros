@@ -135,7 +135,22 @@
       "meta.columns":     "columns",
       "meta.cards":       "cards",
       "import.title":     "Import from other apps",
-      "import.hint":      "Supported: a board exported from orOS Kanban (JSON), and Kanri and Trello JSON exports. New boards are created — existing data is never touched.",
+      "import.hint":      "Supported: a board exported from orOS Kanban (JSON), Kanri and Trello JSON exports, Asana (CSV or JSON), Jira (CSV), ClickUp (CSV), WeKan and Planka (JSON). Each file becomes its own board; reading it again only adds what is missing.",
+      "import.big":       "This file is too large (40 MB at most).",
+      "import.done":      "Done",
+      "import.nosec":     "No section",
+      "import.newBoard":  "New board:",
+      "import.into":      "Adds to the board:",
+      "import.known":     "Already here:",
+      "import.knownHint": "kept as they are",
+      "import.skipped":   "Left out (archived, empty or repeated):",
+      "import.checks":    "Subtasks:",
+      "import.dates":     "Due dates:",
+      "import.map.asana":   "Sections → columns, completed tasks → Done, subtasks → subtasks, tags → labels, assignee and dates → extra info.",
+      "import.map.jira":    "Status → columns, \"KEY-12 Summary\" → card, description → notes, labels → labels, type, priority, assignee and sprint → extra info.",
+      "import.map.clickup": "Status → columns, task content → notes, tags → labels, checklists and subtasks → subtasks, assignees and priority → extra info.",
+      "import.map.wekan":   "Lists → columns, cards with their labels, due dates and checklists. Archived lists and cards are left out.",
+      "import.map.planka":  "Lists → columns, cards with their labels, due dates and tasks (as subtasks).",
       "import.detected":  "Detected source:",
       "import.unknown":   "Unknown file — no Kanban data found.",
       "import.err":       "Could not read the file.",
@@ -333,7 +348,22 @@
       "meta.columns":     "στήλες",
       "meta.cards":       "κάρτες",
       "import.title":     "Εισαγωγή από άλλες εφαρμογές",
-      "import.hint":      "Υποστηρίζονται: πίνακας που εξήχθη από το orOS Kanban (JSON), και εξαγωγές JSON από Kanri και Trello. Δημιουργούνται νέοι πίνακες — τα υπάρχοντα δεδομένα δεν αγγίζονται.",
+      "import.hint":      "Υποστηρίζονται: πίνακας που εξήχθη από το orOS Kanban (JSON), εξαγωγές JSON από Kanri και Trello, Asana (CSV ή JSON), Jira (CSV), ClickUp (CSV), WeKan και Planka (JSON). Κάθε αρχείο γίνεται δικός του πίνακας· αν το διαβάσεις ξανά, προστίθεται μόνο ό,τι λείπει.",
+      "import.big":       "Το αρχείο είναι πολύ μεγάλο (έως 40 MB).",
+      "import.done":      "Ολοκληρωμένα",
+      "import.nosec":     "Χωρίς ενότητα",
+      "import.newBoard":  "Νέος πίνακας:",
+      "import.into":      "Προσθήκη στον πίνακα:",
+      "import.known":     "Υπάρχουν ήδη:",
+      "import.knownHint": "μένουν όπως είναι",
+      "import.skipped":   "Παραλείπονται (αρχειοθετημένα, κενά ή διπλά):",
+      "import.checks":    "Υποεργασίες:",
+      "import.dates":     "Προθεσμίες:",
+      "import.map.asana":   "Ενότητες → στήλες, ολοκληρωμένες εργασίες → Ολοκληρωμένα, υποεργασίες → υποεργασίες, tags → ετικέτες, υπεύθυνος και ημερομηνίες → επιπλέον στοιχεία.",
+      "import.map.jira":    "Κατάσταση → στήλες, «KEY-12 Τίτλος» → κάρτα, περιγραφή → σημειώσεις, labels → ετικέτες, τύπος, προτεραιότητα, υπεύθυνος και sprint → επιπλέον στοιχεία.",
+      "import.map.clickup": "Κατάσταση → στήλες, περιεχόμενο εργασίας → σημειώσεις, tags → ετικέτες, checklists και υποεργασίες → υποεργασίες, υπεύθυνοι και προτεραιότητα → επιπλέον στοιχεία.",
+      "import.map.wekan":   "Λίστες → στήλες, κάρτες με τις ετικέτες, τις προθεσμίες και τις λίστες ελέγχου τους. Οι αρχειοθετημένες λίστες και κάρτες παραλείπονται.",
+      "import.map.planka":  "Λίστες → στήλες, κάρτες με τις ετικέτες, τις προθεσμίες και τις εργασίες τους (ως υποεργασίες).",
       "import.detected":  "Αναγνωρίστηκε προέλευση:",
       "import.unknown":   "Άγνωστο αρχείο — δεν βρέθηκαν δεδομένα Kanban.",
       "import.err":       "Δεν ήταν δυνατή η ανάγνωση του αρχείου.",
@@ -3879,7 +3909,29 @@
   //   · Trello: lists→στήλες, cards→κάρτες, desc→notes, due→card.due,
   //     labels→labels, checklists→subtasks. Closed lists/cards → skip.
 
-  var IMPORT_SOURCE_NAMES = { kanri: "Kanri", trello: "Trello", github: "GitHub", notion: "Notion", oros: "orOS Kanban" };
+  var IMPORT_SOURCE_NAMES = { kanri: "Kanri", trello: "Trello", github: "GitHub", notion: "Notion", oros: "orOS Kanban",
+                              asana: "Asana", jira: "Jira", wekan: "WeKan", planka: "Planka", clickup: "ClickUp" };
+  var IMPORT_ACCEPT = ".json,.csv,application/json,text/csv";
+  var IMPORT_MAX_BYTES = 40 * 1024 * 1024;
+
+  // A file from Asana, Jira, WeKan, Planka or ClickUp (kanban/import.js)
+  // → Trello-export-shaped boards → trelloAdapter, so it lands through
+  // the same idempotent merge as a Trello file.
+  function fileSourceAdapter(text, json, fileName) {
+    var I = window.OrosKanbanImport;
+    if (!I) return null;
+    var names = { done: t("import.done"), none: t("import.nosec") };
+    var r = json !== null ? I.parseJson(json, fileName, names) : I.parseText(text, fileName, names);
+    if (!r) return null;
+    var boards = [];
+    r.exports.forEach(function (ex) {
+      var a = trelloAdapter(ex);
+      if (a) boards.push(a.boards[0]);
+    });
+    if (!boards.length) return null;
+    return { source: r.source, boards: boards, stats: countImport(boards),
+             skipped: r.skipped, checks: r.checks, from: r.from, to: r.to };
+  }
 
   // Kanri Tailwind color classes → orOS swatch + i18n όνομα
   var KANRI_COLORS = {
@@ -4015,6 +4067,18 @@
     return { source: "kanri", boards: boards, stats: countImport(boards) };
   }
 
+  // Extra fields of a card from kanban/import.js (Asana, Jira…):
+  // [{ label, value }] → the card's "Extra info" rows. A Trello export
+  // has no such key.
+  function importInfo(c) {
+    if (!Array.isArray(c.info)) return [];
+    return c.info.slice(0, 12).filter(function (f) {
+      return f && typeof f.label === "string" && typeof f.value === "string" && f.label && f.value;
+    }).map(function (f, i) {
+      return { id: "imp-t-" + c.id + "-x" + i, label: f.label.slice(0, 200), value: f.value.slice(0, 200) };
+    });
+  }
+
   function trelloAdapter(data) {
     if (!data || !Array.isArray(data.lists) || !Array.isArray(data.cards)) return null;
 
@@ -4065,7 +4129,7 @@
           due: importIsoDate(c.due),
           labels: cardLabels,
           subtasks: subtasks,
-          info: [],
+          info: importInfo(c),
           mtime: Date.now(),
           pos: cards.length
         });
@@ -4287,7 +4351,7 @@
 
     var file = document.createElement("input");
     file.type = "file";
-    file.accept = ".json,application/json";
+    file.accept = IMPORT_ACCEPT;
     file.className = "imp-file";
 
     var preview = document.createElement("div");
@@ -4328,11 +4392,36 @@
     document.body.appendChild(dlg);
     function showParsed(res) {
       preview.classList.remove("imp-error");
-      preview.textContent = t("import.detected") + " " +
+      preview.textContent = "";
+      function ln(text, cls) {
+        var d = document.createElement("div");
+        if (cls) d.className = cls;
+        d.textContent = text;
+        preview.appendChild(d);
+      }
+      ln(t("import.detected") + " " +
         IMPORT_SOURCE_NAMES[res.source] + " — " +
         String(res.stats.boards) + " " + t("import.boards") + ", " +
         String(res.stats.cards) + " " + t("meta.cards") + ", " +
-        String(res.stats.labels) + " " + t("import.labels");
+        String(res.stats.labels) + " " + t("import.labels"));
+      // Which board it lands in, and what is already here (re-import).
+      var known = 0;
+      res.boards.forEach(function (nb) {
+        var ex = boardByIdIn(state.boards, nb.id);
+        ln((ex ? t("import.into") : t("import.newBoard")) + " " + (ex ? ex.name : nb.name), "imp-sub");
+        if (!ex) return;
+        var have = {};
+        ex.columns.forEach(function (col) { col.cards.forEach(function (c) { have[c.id] = true; }); });
+        nb.columns.forEach(function (col) {
+          col.cards.forEach(function (c) { if (have[c.id] || (ex.deleted && ex.deleted[c.id])) known++; });
+        });
+      });
+      var map = STRINGS.en["import.map." + res.source] ? t("import.map." + res.source) : "";
+      if (map) ln(map, "imp-sub");
+      if (res.checks) ln(t("import.checks") + " " + String(res.checks), "imp-sub");
+      if (res.from) ln(t("import.dates") + " " + res.from + (res.to && res.to !== res.from ? " – " + res.to : ""), "imp-sub");
+      if (known) ln(t("import.known") + " " + String(known) + " — " + t("import.knownHint"), "imp-sub");
+      if (res.skipped) ln(t("import.skipped") + " " + String(res.skipped), "imp-sub");
     }
 
     dlg.addEventListener("close", function () { dlg.remove(); });
@@ -4348,13 +4437,22 @@
       preview.hidden = false;
       preview.textContent = "";
 
+      if (f.size > IMPORT_MAX_BYTES) {
+        preview.classList.add("imp-error");
+        preview.textContent = t("import.big");
+        return;
+      }
       var fr = new FileReader();
       fr.onload = function (ev) {
+        var text = String(ev.target.result || "");
         var json = null;
-        try { json = JSON.parse(ev.target.result); } catch (e) { /* not JSON */ }
+        try { json = JSON.parse(text.replace(/^\ufeff/, "")); } catch (e) { /* not JSON */ }
 
+        // WeKan / Planka / Asana before Trello: a WeKan board also has
+        // lists[] and cards[], which trelloAdapter would read as empty.
         parsed = (json && orosAdapter(json)) ||
                  (json && kanriAdapter(json)) ||
+                 fileSourceAdapter(text, json, f.name) ||
                  (json && trelloAdapter(json)) || null;
 
         if (!parsed) {
@@ -4362,12 +4460,7 @@
           preview.textContent = t("import.unknown");
           return;
         }
-        preview.classList.remove("imp-error");
-        preview.textContent = t("import.detected") + " " +
-          IMPORT_SOURCE_NAMES[parsed.source] + " — " +
-          String(parsed.stats.boards) + " " + t("import.boards") + ", " +
-          String(parsed.stats.cards) + " " + t("meta.cards") + ", " +
-          String(parsed.stats.labels) + " " + t("import.labels");
+        showParsed(parsed);
         go.disabled = false;
       };
       fr.onerror = function () {
@@ -4384,7 +4477,7 @@
       var dlg = dialogHost();
       if (!(dlg && typeof dlg.openFile === "function")) return;   // standalone → default input
       ev.preventDefault();                    // suppress the fallback input
-      dlg.openFile(".json,application/json").then(function (f) {
+      dlg.openFile(IMPORT_ACCEPT).then(function (f) {
         if (f) readImportFile(f);             // cancel (null) = silent exit
       });
     });

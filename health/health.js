@@ -117,6 +117,25 @@
       "set.export": "Export", "set.csv": "All readings (CSV)", "set.json": "Backup (JSON)", "set.restore": "Restore from backup (merge)",
       "set.restored": "Backup merged: {n} readings", "set.badFile": "This is not a Health backup.",
       "feed.gone": "That measurement no longer exists.",
+      "imp.head": "Import", "imp.btn": "From another app…",
+      "imp.hint": "Withings, OMRON connect, Samsung Health or Apple Health exports (ZIP, CSV or export.xml).",
+      "imp.title": "Import from another app", "imp.reading": "Reading the file…", "imp.from": "From: {s}",
+      "imp.range": "Readings from {a} to {b}", "imp.row": "{k}: {n} found, {a} new",
+      "imp.have": "Already in Health: {n}", "imp.conv": "Converted for Health: {l}",
+      "imp.conv.lb": "lb → kg", "imp.conv.mmol": "mmol/L → mg/dL", "imp.conv.f": "°F → °C", "imp.conv.frac": "SpO2 fraction → %",
+      "imp.skipT": "Not imported",
+      "imp.sk.comp": "Body fat, muscle, bone, water (Health keeps the weight only): {n}",
+      "imp.sk.height": "Height (set it in Settings): {n}",
+      "imp.sk.hrsDay": "Heart-rate samples: {n}, kept as {d} daily resting values (the day's lowest)",
+      "imp.sk.hrs": "Heart-rate samples (the file's resting heart rate is used): {n}",
+      "imp.sk.bad": "Out of range or unreadable: {n}", "imp.sk.dup": "Duplicates in the file: {n}",
+      "imp.sk.half": "Blood pressure values without their pair: {n}", "imp.sk.other": "Over the limits: {n}",
+      "imp.cut": "Only the newest {n} readings are imported; {c} older ones are left out.",
+      "imp.keep": "Your own readings are never changed. Imported ones get the tag “{g}”.",
+      "imp.none": "Nothing new to import: it's all in Health already.",
+      "imp.go": "Import {n}", "imp.done": "Readings imported: {n}", "imp.undone": "Import undone",
+      "imp.bad": "This file isn't an export Health can read.", "imp.empty": "No measurements Health can keep in this file.",
+      "imp.big": "This file is too large to import.", "imp.ihb": "Irregular heartbeat", "imp.mv": "Body movement",
       "day.0": "Mon", "day.1": "Tue", "day.2": "Wed", "day.3": "Thu", "day.4": "Fri", "day.5": "Sat", "day.6": "Sun"
     },
     el: {
@@ -184,6 +203,25 @@
       "set.export": "Εξαγωγή", "set.csv": "Όλες οι μετρήσεις (CSV)", "set.json": "Αντίγραφο (JSON)", "set.restore": "Επαναφορά αντιγράφου (συγχώνευση)",
       "set.restored": "Το αντίγραφο συγχωνεύτηκε: {n} μετρήσεις", "set.badFile": "Αυτό δεν είναι αντίγραφο της Υγείας.",
       "feed.gone": "Αυτή η μέτρηση δεν υπάρχει πια.",
+      "imp.head": "Εισαγωγή", "imp.btn": "Από άλλη εφαρμογή…",
+      "imp.hint": "Εξαγωγές από Withings, OMRON connect, Samsung Health ή Apple Health (ZIP, CSV ή export.xml).",
+      "imp.title": "Εισαγωγή από άλλη εφαρμογή", "imp.reading": "Διαβάζεται το αρχείο…", "imp.from": "Από: {s}",
+      "imp.range": "Μετρήσεις από {a} έως {b}", "imp.row": "{k}: βρέθηκαν {n}, νέες {a}",
+      "imp.have": "Υπάρχουν ήδη στην Υγεία: {n}", "imp.conv": "Μετατράπηκαν για την Υγεία: {l}",
+      "imp.conv.lb": "lb → kg", "imp.conv.mmol": "mmol/L → mg/dL", "imp.conv.f": "°F → °C", "imp.conv.frac": "κλάσμα SpO2 → %",
+      "imp.skipT": "Δεν εισάγονται",
+      "imp.sk.comp": "Λίπος, μύες, οστά, νερό (η Υγεία κρατά μόνο το βάρος): {n}",
+      "imp.sk.height": "Ύψος (όρισέ το στις Ρυθμίσεις): {n}",
+      "imp.sk.hrsDay": "Μετρήσεις παλμών: {n}, κρατιούνται ως {d} ημερήσιες τιμές ηρεμίας (η χαμηλότερη της ημέρας)",
+      "imp.sk.hrs": "Μετρήσεις παλμών (χρησιμοποιούνται οι παλμοί ηρεμίας του αρχείου): {n}",
+      "imp.sk.bad": "Εκτός ορίων ή δυσανάγνωστες: {n}", "imp.sk.dup": "Διπλές μέσα στο αρχείο: {n}",
+      "imp.sk.half": "Τιμές πίεσης χωρίς το ζευγάρι τους: {n}", "imp.sk.other": "Πέρα από τα όρια: {n}",
+      "imp.cut": "Εισάγονται μόνο οι {n} πιο πρόσφατες μετρήσεις· {c} παλαιότερες μένουν έξω.",
+      "imp.keep": "Οι δικές σου μετρήσεις δεν αλλάζουν ποτέ. Όσες εισάγονται παίρνουν την ετικέτα «{g}».",
+      "imp.none": "Τίποτα νέο για εισαγωγή: όλα υπάρχουν ήδη στην Υγεία.",
+      "imp.go": "Εισαγωγή {n}", "imp.done": "Μετρήσεις που εισήχθησαν: {n}", "imp.undone": "Η εισαγωγή αναιρέθηκε",
+      "imp.bad": "Αυτό το αρχείο δεν είναι εξαγωγή που διαβάζει η Υγεία.", "imp.empty": "Δεν υπάρχουν σε αυτό το αρχείο μετρήσεις που κρατά η Υγεία.",
+      "imp.big": "Το αρχείο είναι πολύ μεγάλο για εισαγωγή.", "imp.ihb": "Αρρυθμία", "imp.mv": "Κίνηση σώματος",
       "day.0": "Δευ", "day.1": "Τρί", "day.2": "Τετ", "day.3": "Πέμ", "day.4": "Παρ", "day.5": "Σάβ", "day.6": "Κυρ"
     }
   };
@@ -3915,6 +3953,124 @@
     });
   }
 
+  // ---------- Import from another app ----------
+  // Withings / OMRON / Samsung Health / Apple Health → readings.
+  // Parsing and the plan are pure (import.js, OrosHealthImport); here:
+  // pick → (progress) → preview → ONE write + one sync mark → toast
+  // with Undo. Nothing from the file is inserted as HTML (el() sets
+  // textContent). Apple's export.xml is streamed, never read whole.
+  var IMP_ACCEPT = ".zip,.csv,.xml,.txt,application/zip,text/csv,text/xml,application/xml";
+  var IMP_MAX_ADD = 25000;             // readings one import may add (localStorage)
+  function startImport() {
+    var I = window.OrosHealthImport;
+    if (!I) return;
+    var prog = null;
+    Promise.resolve(pickFile(IMP_ACCEPT)).then(function (file) {
+      if (!file) return null;                  // cancel = silent exit
+      var bar = null;
+      if (file.size > 4 * 1024 * 1024) {
+        prog = makeDialog("hl-imp-prog", t("imp.title"));
+        prog.appendChild(el("p", "dlg-text", t("imp.reading")));
+        bar = el("progress", "imp-prog");
+        bar.max = 1;
+        prog.appendChild(bar);
+        prog.addEventListener("cancel", function (e) { e.preventDefault(); });
+        openDialog(prog);
+      }
+      return I.readBlob(file, String(file.name || ""), function (f) { if (bar) bar.value = f; });
+    }).then(function (res) {
+      if (prog) { prog.close(); prog = null; }
+      if (!res) return;
+      if (res.error) { showToast(t("imp." + (res.error === "big" || res.error === "empty" ? res.error : "bad"))); return; }
+      importPreview(res);
+    }).catch(function () {
+      if (prog) prog.close();
+      showToast(t("imp.bad"));
+    });
+  }
+  function importPreview(res) {
+    var I = window.OrosHealthImport;
+    var pl = I.plan(res, data, IMP_MAX_ADD);
+    var dlg = makeDialog("hl-imp", t("imp.title"));
+    dlg.classList.add("wide");
+    var tag = I.SRC_TAG[res.source] || res.source;
+    dlg.appendChild(el("p", "dlg-text imp-src", t("imp.from", { s: tag })));
+    if (pl.from) dlg.appendChild(hint(t("imp.range", { a: fmtDate(pl.from, false), b: fmtDate(pl.to, false) })));
+    var ul = el("ul", "imp-list");
+    C.BUILTIN.forEach(function (tid) {
+      var p = pl.per[tid];
+      if (p) ul.appendChild(el("li", "", t("imp.row", { k: typeName(tid), n: p.n, a: p.add })));
+    });
+    if (pl.have) ul.appendChild(el("li", "", t("imp.have", { n: pl.have })));
+    dlg.appendChild(ul);
+    var conv = ["lb", "mmol", "f", "frac"].filter(function (k) { return res.conv[k]; })
+      .map(function (k) { return t("imp.conv." + k); });
+    if (conv.length) dlg.appendChild(hint(t("imp.conv", { l: conv.join(", ") })));
+    var sk = res.skip, skl = [];
+    if (sk.comp) skl.push(t("imp.sk.comp", { n: sk.comp }));
+    if (sk.height) skl.push(t("imp.sk.height", { n: sk.height }));
+    if (sk.hrs) skl.push(res.hrDays ? t("imp.sk.hrsDay", { n: sk.hrs, d: res.hrDays }) : t("imp.sk.hrs", { n: sk.hrs }));
+    ["half", "dup", "bad", "other"].forEach(function (k) { if (sk[k]) skl.push(t("imp.sk." + k, { n: sk[k] })); });
+    if (skl.length) {
+      dlg.appendChild(el("div", "dlg-sub", t("imp.skipT")));
+      var su = el("ul", "imp-list dim");
+      skl.forEach(function (s) { su.appendChild(el("li", "", s)); });
+      dlg.appendChild(su);
+    }
+    if (pl.cut) dlg.appendChild(hint(t("imp.cut", { n: pl.add.length, c: pl.cut })));
+    dlg.appendChild(hint(pl.add.length ? t("imp.keep", { g: tag }) : t("imp.none")));
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); }));
+    if (pl.add.length) {
+      var go = button(t("imp.go", { n: pl.add.length }), "primary", function () {
+        dlg.close();
+        // planned again on the data as it is NOW (a pull may have landed)
+        applyImport(I.plan(res, data, IMP_MAX_ADD));
+      });
+      go.id = "hl-imp-go";
+      acts.appendChild(go);
+    }
+    dlg.appendChild(acts);
+    openDialog(dlg);
+  }
+  // ONE write: new rows stamped past any tombstone of the same id (an
+  // undone import can be imported again), then one saveNow() = one
+  // sync mark.
+  function applyImport(pl) {
+    var now = Date.now(), have = {}, ids = [];
+    data.en.forEach(function (e) { have[e.id] = 1; });
+    pl.add.forEach(function (x) {
+      if (have[x.id]) return;
+      var fl = (x.fl || []).map(function (f) { return t("imp." + f); }).join(", ");
+      var row = C.normEntry({ id: x.id, m: Math.max(now, (data.tombs["en:" + x.id] || 0) + 1), t: x.t, at: x.at, v: x.v,
+        c: x.c, a: x.a, p: x.p, n: x.n && fl ? x.n + " · " + fl : (x.n || fl), g: x.g });
+      if (!row) return;
+      have[x.id] = 1;
+      data.en.push(row);
+      ids.push(x.id);
+    });
+    if (!ids.length) { showToast(t("imp.none")); return; }
+    data.en.sort(function (a, b) { return cmpStr(a.id, b.id); });
+    saveNow();
+    render();
+    undoToast(t("imp.done", { n: ids.length }), function () { undoImport(ids); });
+  }
+  // Undo on the CURRENT data: every imported row goes, tombstoned at
+  // least as new as the row (a device that already pulled it drops it).
+  function undoImport(ids) {
+    var gone = {}, now = Date.now();
+    ids.forEach(function (id) { gone[id] = 1; });
+    data.en = data.en.filter(function (e) {
+      if (!gone[e.id]) return true;
+      var k = "en:" + e.id;
+      data.tombs[k] = Math.max(now, e.m, data.tombs[k] || 0);
+      return false;
+    });
+    saveNow();
+    render();
+    showToast(t("imp.undone"));
+  }
+
   function settingsDialog() {
     var set = settings();
     var dlg = makeDialog("hl-set", t("set.title"));
@@ -4001,6 +4157,15 @@
     ex.appendChild(button(t("set.json"), "", exportJson));
     ex.appendChild(button(t("set.restore"), "", restoreJson));
     dlg.appendChild(ex);
+    if (window.OrosHealthImport && window.OrosImportKit) {
+      dlg.appendChild(el("div", "dlg-sub", t("imp.head")));
+      var im = el("div", "btn-col");
+      var ib = button(t("imp.btn"), "", function () { dlg.close(); startImport(); });
+      ib.id = "hl-imp-btn";
+      im.appendChild(ib);
+      dlg.appendChild(im);
+      dlg.appendChild(hint(t("imp.hint")));
+    }
     var acts = el("div", "dlg-actions");
     acts.appendChild(button(t("dlg.close"), "primary", function () { dlg.close(); render(); }));
     dlg.appendChild(acts);

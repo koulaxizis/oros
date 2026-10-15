@@ -4,6 +4,10 @@
 // any bank, OFX / QFX, QIF, CAMT.053), map the columns, choose the
 // Budget account, see what is new / a duplicate / skipped, correct
 // categories (and turn a correction into a rule), import with Undo.
+// The same picker recognises the export of a personal-finance app
+// (YNAB, Wallet, Spendee, Money Lover, Monefy, Money Manager, Firefly
+// III; budget/import.js) and shows its own preview: accounts mapped,
+// categories matched or made, currencies converted.
 // Rules manager: list, edit, apply to uncategorised entries.
 // Everything the app owns (data, writes, Undo, dialogs, selects)
 // comes in through init(api); this file stores nothing itself.
@@ -53,7 +57,23 @@
       saved: "Rule saved", deleted: "Rule deleted",
       ruleTxt: "contains “{q}”", ruleAmt: "{a}", ruleFrom: "from {a}", ruleTo: "up to {a}",
       save: "Save", cancel: "Cancel", del: "Delete", close: "Close",
-      fmt_csv: "CSV", fmt_ofx: "OFX", fmt_qif: "QIF", fmt_camt: "CAMT.053"
+      fmt_csv: "CSV", fmt_ofx: "OFX", fmt_qif: "QIF", fmt_camt: "CAMT.053",
+      // exports of personal-finance apps (budget/import.js)
+      appTitle: "Import from {app}", appFile: "{f} · {app} · {n} rows",
+      appRange: "From {a} to {b}", appBig: "The file is too big (up to 20 MB).",
+      appNoXls: "This spreadsheet isn't an export Budget knows.",
+      appAccs: "Accounts", appAccHint: "Where the entries of each account in the file go.",
+      appAccNew: "New account “{n}”", appAccNote: "No account (name in the note)",
+      appAccN: "{a} · {n} entries",
+      appMk: "Make the categories that are missing", appCats: "Categories: {m} match yours.",
+      appNew: "New: {l}", appNoCat: "{n} rows stay without a category.",
+      appFull: "{n} rows stay without a category: up to {max} categories.",
+      appConv: "Converted to {b}: {l}. Where the file has its own converted amount, that one is used; otherwise today's rate.",
+      appRate: "No exchange rate for {l}: those rows are left out. Open Budget online once and try again.",
+      appCurNone: "{c} (no rate)",
+      why_xfer: "transfer between accounts", why_open: "opening balance", why_rate: "no rate for {c}",
+      catNone: "No category", catNew: "New category: {c}",
+      appDone: "Imported {n} entries from {app}", appDoneC: "Imported {n} entries from {app} · new categories: {c}"
     },
     el: {
       title: "Εισαγωγή κίνησης λογαριασμού", pick: "Επιλογή αρχείου",
@@ -90,7 +110,22 @@
       saved: "Ο κανόνας αποθηκεύτηκε", deleted: "Ο κανόνας διαγράφηκε",
       ruleTxt: "περιέχει «{q}»", ruleAmt: "{a}", ruleFrom: "από {a}", ruleTo: "έως {a}",
       save: "Αποθήκευση", cancel: "Άκυρο", del: "Διαγραφή", close: "Κλείσιμο",
-      fmt_csv: "CSV", fmt_ofx: "OFX", fmt_qif: "QIF", fmt_camt: "CAMT.053"
+      fmt_csv: "CSV", fmt_ofx: "OFX", fmt_qif: "QIF", fmt_camt: "CAMT.053",
+      appTitle: "Εισαγωγή από {app}", appFile: "{f} · {app} · {n} γραμμές",
+      appRange: "Από {a} έως {b}", appBig: "Το αρχείο είναι πολύ μεγάλο (έως 20 MB).",
+      appNoXls: "Αυτό το υπολογιστικό φύλλο δεν είναι εξαγωγή που αναγνωρίζει η εφαρμογή.",
+      appAccs: "Λογαριασμοί", appAccHint: "Πού πηγαίνουν οι κινήσεις κάθε λογαριασμού του αρχείου.",
+      appAccNew: "Νέος λογαριασμός «{n}»", appAccNote: "Χωρίς λογαριασμό (το όνομα στη σημείωση)",
+      appAccN: "{a} · {n} κινήσεις",
+      appMk: "Δημιουργία των κατηγοριών που λείπουν", appCats: "Κατηγορίες: {m} ταιριάζουν με τις δικές σου.",
+      appNew: "Νέες: {l}", appNoCat: "{n} γραμμές μένουν χωρίς κατηγορία.",
+      appFull: "{n} γραμμές μένουν χωρίς κατηγορία: έως {max} κατηγορίες.",
+      appConv: "Μετατροπή σε {b}: {l}. Όπου το αρχείο έχει δικό του ποσό μετατροπής, χρησιμοποιείται αυτό· αλλιώς η σημερινή ισοτιμία.",
+      appRate: "Δεν υπάρχει ισοτιμία για {l}: αυτές οι γραμμές μένουν έξω. Άνοιξε την εφαρμογή με σύνδεση στο διαδίκτυο και δοκίμασε ξανά.",
+      appCurNone: "{c} (χωρίς ισοτιμία)",
+      why_xfer: "μεταφορά μεταξύ λογαριασμών", why_open: "αρχικό υπόλοιπο", why_rate: "χωρίς ισοτιμία για {c}",
+      catNone: "Χωρίς κατηγορία", catNew: "Νέα κατηγορία: {c}",
+      appDone: "Εισήχθησαν {n} κινήσεις από {app}", appDoneC: "Εισήχθησαν {n} κινήσεις από {app} · νέες κατηγορίες: {c}"
     }
   };
   function t(k, p) {
@@ -120,19 +155,222 @@
   function signed(a, k) { return (k === "i" ? "+" : "−") + A.money(a); }
 
   // ---------- Import ----------
+  // One picker for both: a bank statement, or the export of a
+  // personal-finance app (budget/import.js), recognised by its header
+  // row; an .xls / .xlsx is read with the vendored SheetJS.
+  var IMP = root.OrosBudgetImport || null;
+  var APP_MAX = 20 * 1024 * 1024;
+  function isSheet(b) {
+    return b.length > 4 && ((b[0] === 0x50 && b[1] === 0x4b && b[2] === 3 && b[3] === 4) ||
+                            (b[0] === 0xd0 && b[1] === 0xcf && b[2] === 0x11 && b[3] === 0xe0));
+  }
   function open() {
-    A.pickFile(".csv,.txt,.tsv,.ofx,.qfx,.qif,.xml,.053,text/csv,text/plain,application/xml,text/xml,application/x-ofx").then(function (file) {
+    A.pickFile(".csv,.txt,.tsv,.ofx,.qfx,.qif,.xml,.053,.xls,.xlsx,text/csv,text/plain,application/xml,text/xml,application/x-ofx," +
+               "application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet").then(function (file) {
       if (!file) return;
-      if (file.size > MAX_FILE) { A.showToast(t("big")); return; }
+      if (file.size > (IMP ? APP_MAX : MAX_FILE)) { A.showToast(t(IMP ? "appBig" : "big")); return; }
       var read = typeof file.arrayBuffer === "function" ? file.arrayBuffer() : new Promise(function (res, rej) {
         var fr = new FileReader();
         fr.onload = function () { res(fr.result); };
         fr.onerror = rej;
         fr.readAsArrayBuffer(file);
       });
-      read.then(function (buf) { preview(String(file.name || "statement"), new Uint8Array(buf)); },
+      read.then(function (buf) { route(String(file.name || "statement"), new Uint8Array(buf)); },
                 function () { A.showToast(t("bad")); });
     });
+  }
+  function route(name, bytes) {
+    if (IMP && isSheet(bytes)) {
+      A.xlsx(function (X) {
+        var table = null, csv = "";
+        try {
+          var wb = X.read(bytes, { type: "array", cellDates: true, sheetRows: IMP.MAX_ROWS + 20 });
+          (wb.SheetNames || []).some(function (sn) {
+            var ws = wb.Sheets[sn];
+            var tb = IMP.sheetTable(X.utils.sheet_to_json(ws, { header: 1, raw: true, defval: "" }));
+            if (IMP.detect(tb.head)) { table = tb; return true; }
+            if (!csv) csv = X.utils.sheet_to_csv(ws);
+            return false;
+          });
+        } catch (e) { A.showToast(t("bad")); return; }
+        if (table) { appOpen(name, IMP.parse(table)); return; }
+        // Not an app's export: a bank's statement saved as a sheet.
+        if (!csv || csv.length > MAX_FILE) { A.showToast(t(csv ? "big" : "appNoXls")); return; }
+        preview(name, new TextEncoder().encode(csv));
+      });
+      return;
+    }
+    if (IMP) {
+      try {
+        var text = B.decode(bytes, "auto").text;
+        if (B.detectFormat(text, name) === "csv") {
+          var tb = IMP.csvTable(text);
+          if (IMP.detect(tb.head)) { appOpen(name, IMP.parse(tb)); return; }
+        }
+      } catch (e) {}
+    }
+    if (bytes.length > MAX_FILE) { A.showToast(t("big")); return; }
+    preview(name, bytes);
+  }
+  function appOpen(name, parsed) {
+    if (!parsed || !parsed.items.length) { A.showToast(t("empty")); return; }
+    try { appPreview(name, parsed); } catch (e) { A.showToast(t("bad")); }
+  }
+
+  // ---------- Import from a personal-finance app ----------
+  function appPreview(name, parsed) {
+    var app = parsed.name;
+    var srcAccs = IMP.accounts(parsed);
+    var st = { accMap: IMP.defaultAccMap(parsed, ctx()), mkCats: true, res: null, over: {}, uniq: 0 };
+    var dlg = A.makeDialog("bd-app", t("appTitle", { app: app }));
+    dlg.classList.add("wide", "bk-dlg");
+    var info = el("div", "bk-file");
+    var infoTxt = el("span", "bk-file-t");
+    info.appendChild(infoTxt);
+    info.appendChild(A.button(t("other"), "bk-other", function () { dlg.close(); open(); }));
+    dlg.appendChild(info);
+    var range = el("p", "hint bk-hint");
+    dlg.appendChild(range);
+
+    // The app's accounts → Budget accounts / a new one / the note.
+    if (srcAccs.length) {
+      var det = el("details", "bk-cols");
+      det.open = A.hasAccounts();
+      det.appendChild(el("summary", "", t("appAccs")));
+      var box = el("div", "bk-cols-body");
+      box.appendChild(el("p", "hint", t("appAccHint")));
+      srcAccs.forEach(function (a) {
+        var key = B.fold(a.name);
+        var s = el("select");
+        A.accs().forEach(function (x) { opt(s, x.id, x.n); });
+        opt(s, "new", t("appAccNew", { n: a.name }));
+        opt(s, "", t("appAccNote"));
+        s.value = st.accMap[key] || "";
+        if (s.value !== (st.accMap[key] || "")) s.value = "";
+        s.addEventListener("change", function () { st.accMap[key] = s.value; st.over = {}; refresh(); });
+        box.appendChild(A.field(t("appAccN", { a: a.name, n: a.n }), s, "ap-ac" + (++st.uniq)));
+      });
+      det.appendChild(box);
+      dlg.appendChild(det);
+    }
+    var mk = check(t("appMk"), true, "ap-mk");
+    mk.box.addEventListener("change", function () { st.mkCats = mk.box.checked; refresh(); });
+    dlg.appendChild(mk);
+    var catP = el("p", "hint bk-hint");
+    dlg.appendChild(catP);
+    var warn = el("p", "bk-warn");
+    warn.hidden = true;
+    dlg.appendChild(warn);
+    var conv = el("p", "hint");
+    conv.hidden = true;
+    dlg.appendChild(conv);
+    var sum = el("p", "bk-sum");
+    sum.setAttribute("aria-live", "polite");
+    dlg.appendChild(sum);
+    var list = el("ul", "bk-list");
+    dlg.appendChild(list);
+    var moreP = el("p", "hint");
+    moreP.hidden = true;
+    dlg.appendChild(moreP);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(A.button(t("cancel"), "", function () { dlg.close(); }));
+    var go = A.button(t("go0"), "primary", doImport);
+    go.setAttribute("data-k", "ap.go");
+    acts.appendChild(go);
+    dlg.appendChild(acts);
+
+    function ctx() {
+      var D = A.data();
+      return { tx: D.tx, tombs: D.tombs, rules: D.rule, cur: A.cur(), cats: A.importCats(), accs: D.acc,
+               fx: A.fx, maxCats: A.maxCats, maxAcc: A.maxAcc };
+    }
+    function curList(m) {
+      return Object.keys(m).sort().map(function (c) { return c + " (" + m[c] + ")"; }).join(", ");
+    }
+    function refresh() {
+      st.res = IMP.plan(parsed, ctx(), { acc: st.accMap, mkCats: st.mkCats });
+      st.res.rows.forEach(function (r) {
+        var o = r.id && st.over[r.id];
+        if (o && o.on !== undefined && r.st !== "same" && r.st !== "skip") r.on = o.on;
+      });
+      var inf = st.res.info;
+      infoTxt.textContent = t("appFile", { f: B.clean(name, 60), app: app, n: parsed.items.length });
+      range.textContent = inf.from ? t("appRange", { a: A.dateShort(inf.from), b: A.dateShort(inf.to) }) : "";
+      var lines = [t("appCats", { m: inf.matched })];
+      if (st.res.newCats.length) lines.push(t("appNew", { l: st.res.newCats.map(function (c) { return c.name; }).join(", ") }));
+      if (inf.nocat) lines.push(t("appNoCat", { n: inf.nocat }));
+      if (inf.full) lines.push(t("appFull", { n: inf.full, max: A.maxCats }));
+      catP.textContent = lines.join(" ");
+      var noRate = Object.keys(inf.rate);
+      warn.hidden = !noRate.length;
+      warn.textContent = noRate.length ? t("appRate", { l: curList(inf.rate) }) : "";
+      var cv = Object.keys(inf.conv);
+      conv.hidden = !cv.length;
+      conv.textContent = cv.length ? t("appConv", { b: A.cur(), l: curList(inf.conv) }) : "";
+      draw();
+    }
+    function count() {
+      var c = B.counts(st.res.rows);
+      go.textContent = c.on ? t("go", { n: c.on }) : t("go0");
+      go.disabled = !c.on;
+      return c;
+    }
+    function draw() {
+      var c = count();
+      sum.textContent = t("sum", { "new": c["new"], dup: c.dup + c.same + c.gone, skip: c.skip });
+      list.innerHTML = "";
+      st.res.rows.slice(0, SHOW_ROWS).forEach(function (r) { list.appendChild(rowEl(r)); });
+      moreP.hidden = st.res.rows.length <= SHOW_ROWS;
+      moreP.textContent = t("more", { s: SHOW_ROWS, n: st.res.rows.length });
+    }
+    function catText(r) {
+      if (r.st === "skip") return "";
+      if (r.newCat) return t("catNew", { c: r.cat });
+      return r.c ? A.catName(r.c) : t("catNone");
+    }
+    function rowEl(r) {
+      var li = el("li", "bk-row bk-" + r.st + (r.on ? " on" : ""));
+      var top = el("div", "bk-top");
+      var box = el("input");
+      box.type = "checkbox";
+      box.checked = r.on;
+      box.disabled = r.st === "same" || r.st === "skip";
+      box.id = "ap-r" + (++st.uniq);
+      box.setAttribute("aria-label", t("tick", { t: (r.d ? A.dateShort(r.d) + ", " : "") + (r.text || "") }));
+      box.addEventListener("change", function () {
+        r.on = box.checked;
+        (st.over[r.id] = st.over[r.id] || {}).on = r.on;
+        li.classList.toggle("on", r.on);
+        count();
+      });
+      top.appendChild(box);
+      var mid = el("label", "bk-mid");
+      mid.setAttribute("for", box.id);
+      mid.appendChild(el("span", "bk-text", r.text || r.cat || "—"));
+      var st0 = r.st === "skip" ? t("st_skip") + ": " + t("why_" + r.why, { c: r.cur || "" }) : t("st_" + r.st);
+      var acn = r.ac ? (A.accName(r.ac) || r.acName) : "";
+      mid.appendChild(el("span", "bk-meta", [r.d ? A.dateShort(r.d) : "", st0, catText(r), acn || ""].filter(Boolean).join(" · ")));
+      top.appendChild(mid);
+      var amt = r.a ? (r.k === "i" ? "+" : "−") + (r.why === "rate" ? A.money(r.a, r.cur) : A.money(r.a)) : "";
+      top.appendChild(el("span", "bk-amt " + (r.k === "i" ? "in" : "out"), amt));
+      li.appendChild(top);
+      if (r.oc && r.oa && r.st !== "skip") {
+        var bot = el("div", "bk-bot");
+        bot.appendChild(el("span", "bk-rule", A.money(r.oa, r.oc)));
+        li.appendChild(bot);
+      }
+      return li;
+    }
+    function doImport() {
+      var pkg = IMP.entries(st.res);
+      if (!pkg.tx.length) return;
+      dlg.close();
+      A.importApp(pkg, pkg.cats.length ? t("appDoneC", { n: pkg.tx.length, app: app, c: pkg.cats.length })
+                                       : t("appDone", { n: pkg.tx.length, app: app }));
+    }
+    refresh();
+    A.showDialog(dlg);
+    go.focus();
   }
 
   function profiles() {
@@ -625,6 +863,7 @@
   root.OrosBudgetBankUI = {
     init: function (api) { A = api; },
     open: open,
+    route: route,
     rules: rulesDialog,
     ruleFor: function (x) { ruleDialog(null, { k: x.k, c: x.c || "", q: B.suggestQ(x.ot || x.n || "") }, null); },
     rerun: function () { return applyAll([]); },

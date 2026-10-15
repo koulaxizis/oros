@@ -3709,6 +3709,12 @@
       it.info = x.info.map(function (f) { return { id: f.id, label: f.label, value: f.value }; });
       stampItemNewest(it, now);
       if (x.prio === 1 || x.prio === 2 || x.prio === 3) { it.prio = x.prio; it.xf = { prio: now }; }
+      // Google Tasks (gtasks.js): a task completed there, and its subtasks
+      if (x.done === true) it.done = true;
+      if (Array.isArray(x.subs) && x.subs.length) {
+        var subs = Mdl.cleanSubs(x.subs.map(function (sb) { return { id: sb.id, text: sb.text, done: !!sb.done, mtime: now }; }));
+        if (subs.length) { it.subs = subs; touchXf(it, "subs", now); }
+      }
       l.items.push(it);
       delete state.deleted[x.id];
       back.items.push(x.id);
@@ -3806,6 +3812,46 @@
         editingListId = null;
         $("dlg-list").close();
         TP.open();
+      });
+    }
+  }
+
+  // One-time import from Google Tasks (gtasks.js, /google-import.js):
+  // the same plan shape and the same one write + Undo (importApply).
+  // The sign-in window opens inside this click.
+  var GT = window.OrosTodoGtasks || null;
+  if (GT) {
+    GT.init({ lang: LANG, data: function () { return state; }, apply: importApply });
+    var gBtn = $("l-gimport");
+    if (gBtn && GT.has()) {
+      gBtn.textContent = GT.label();
+      gBtn.hidden = false;
+      gBtn.addEventListener("click", function () {
+        if (editingListId !== null) saveListDialog();
+        editingListId = null;
+        $("dlg-list").close();
+        GT.open();
+      });
+    }
+  }
+
+  // Import an export file of another task app (import.js): Todoist
+  // CSV / backup ZIP, TickTick, Google Takeout, todo.txt, .ics VTODO,
+  // Remember The Milk. The same plan shape, one write and Undo
+  // (importApply); works inside the shell and on its own. The file
+  // picker opens inside this click.
+  var FI = window.OrosTodoImport || null;
+  if (FI) {
+    FI.init({ lang: LANG, data: function () { return state; }, apply: importApply });
+    var fBtn = $("l-fimport");
+    if (fBtn && FI.has()) {
+      fBtn.textContent = FI.label();
+      fBtn.hidden = false;
+      fBtn.addEventListener("click", function () {
+        if (editingListId !== null) saveListDialog();
+        editingListId = null;
+        $("dlg-list").close();
+        FI.open();
       });
     }
   }

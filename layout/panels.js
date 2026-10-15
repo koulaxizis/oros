@@ -222,7 +222,7 @@
     var s2 = section();
     if (!items.every(function (it) { return it.t === "line"; })) {
       s2.appendChild(el("span", "fld-lbl", t("props.fill")));
-      s2.appendChild(swatchPicker(common(items, "fill"), function (id) { editSel(function (it) { if (it.t === "line") return false; it.fill = id; }); }));
+      s2.appendChild(swatchPicker(common(items, "fill"), function (id) { editSel(function (it) { if (it.t === "line") return false; it.fill = id; delete it.gr; }); }));
     }
     s2.appendChild(el("span", "fld-lbl", t("props.stroke")));
     s2.appendChild(swatchPicker(common(items, "stroke"), function (id) { editSel(function (it) { it.stroke = id; if (id && !(it.sw > 0)) it.sw = 1; }); }));
@@ -232,13 +232,14 @@
     }, { unit: "raw", min: 0, max: 200, step: 0.25 })));
     if (items.some(function (it) { return it.t === "rect" || it.t === "img" || it.t === "text"; })) {
       g3.appendChild(field(t("props.r"), numInput(common(items, "r"), function (v) {
-        editSel(function (it) { if (it.t === "ell" || it.t === "line") return false; it.r = Math.max(0, v); });
+        editSel(function (it) { if (it.t === "ell" || it.t === "line" || it.t === "path") return false; it.r = Math.max(0, v); });
       }, { min: 0 })));
     }
     s2.appendChild(g3);
     s2.appendChild(check(t("props.dash"), common(items, "dash"), function (v) { editSel(function (it) { it.dash = v; }); }));
     body.appendChild(s2);
 
+    if (one && (one.t === "rect" || one.t === "ell" || one.t === "path")) body.appendChild(gradSection(one));
     if (one && one.t === "text") body.appendChild(textSection(one));
     if (one && one.t === "img") body.appendChild(imageSection(one));
 
@@ -289,7 +290,47 @@
   }
 
   function typeName(it) {
-    return t(it.t === "text" ? "props.text" : it.t === "img" ? "props.image" : it.t === "rect" ? "tool.rect" : it.t === "ell" ? "tool.ell" : "tool.line").replace(/ \(.\)$/, "");
+    return t(it.t === "text" ? "props.text" : it.t === "img" ? "props.image" : it.t === "rect" ? "tool.rect" : it.t === "ell" ? "tool.ell" : it.t === "path" ? "props.path" : "tool.line").replace(/ \(.\)$/, "");
+  }
+
+  // Gradient fill of a rect / ellipse / path: kind, first and last
+  // colour, and the angle of a linear one (stops in between are kept).
+  var GRAD_GEOM = { l: { x1: 0, y1: 0.5, x2: 1, y2: 0.5 }, r: { x1: 0.5, y1: 0.5, x2: 1, y2: 1 } };
+  function gradSection(it) {
+    var s = section(t("props.grad")), g = it.gr;
+    s.appendChild(seg([["", t("props.none2")], ["l", t("props.grad.l")], ["r", t("props.grad.r")]], g ? g.k : "", function (k) {
+      editSel(function (x) {
+        if (!k) { if (!x.gr) return false; x.fill = x.gr.st[0][1]; delete x.gr; return; }
+        var st = x.gr ? x.gr.st : [[0, x.fill || "sw-black", 100], [1, "sw-paper", 100]], G = GRAD_GEOM[k];
+        x.gr = { k: k, x1: G.x1, y1: G.y1, x2: G.x2, y2: G.y2, st: st };
+      });
+    }));
+    if (!g) return s;
+    function setStop(i, id) {
+      editSel(function (x) {
+        if (!x.gr) return false;
+        var st = x.gr.st.map(function (q) { return q.slice(); });
+        st[i < 0 ? st.length - 1 : i][1] = id;
+        x.gr = { k: x.gr.k, x1: x.gr.x1, y1: x.gr.y1, x2: x.gr.x2, y2: x.gr.y2, st: st };
+      });
+    }
+    s.appendChild(el("span", "fld-lbl", t("props.grad.from")));
+    s.appendChild(swatchPicker(g.st[0][1], function (id) { setStop(0, id); }, false));
+    s.appendChild(el("span", "fld-lbl", t("props.grad.to")));
+    s.appendChild(swatchPicker(g.st[g.st.length - 1][1], function (id) { setStop(-1, id); }, false));
+    if (g.k === "l") {
+      var ang = Math.round(Math.atan2((g.y2 - g.y1) * it.h, (g.x2 - g.x1) * it.w) * 180 / Math.PI);
+      s.appendChild(field(t("props.grad.ang"), numInput(ang, function (v) {
+        editSel(function (x) {
+          if (!x.gr || x.gr.k !== "l") return false;
+          var a = v * Math.PI / 180, c = Math.cos(a), n = Math.sin(a);
+          var half = (Math.abs(x.w * c) + Math.abs(x.h * n)) / 2;
+          var dx = c * half / Math.max(0.5, x.w), dy = n * half / Math.max(0.5, x.h);
+          x.gr = { k: "l", x1: 0.5 - dx, y1: 0.5 - dy, x2: 0.5 + dx, y2: 0.5 + dy, st: x.gr.st };
+        });
+      }, { unit: "raw", min: -360, max: 360, step: 15 })));
+    }
+    return s;
   }
 
   function textSection(it) {

@@ -3854,6 +3854,35 @@
       return n && save() ? n : 0;
     },
     refreshPlaces: function () { renderSavedLayer(); renderPlacesList(); },
+    // "Import from another app" (import-ui.js): adds only the places
+    // that are not saved now (a saved one stays as the user has it),
+    // one save; Undo tombstones exactly those, newer than their mtime,
+    // so a sync that already took them cannot bring them back.
+    importPlaces: function (list) {
+      var now = Date.now(), ids = [];
+      (list || []).forEach(function (pl) {
+        if (!pl || !isFinite(pl.lat) || !isFinite(pl.lon)) return;
+        var id = placeId(pl.lat, pl.lon);
+        if (placeById(id) || ids.indexOf(id) >= 0) return;
+        var m = Math.max(now, (state.deleted[id] || 0) + 1);
+        state.places.push({ id: id, name: String(pl.name || "?").slice(0, 120), sub: String(pl.sub || "").slice(0, 200),
+                            lat: pl.lat, lon: pl.lon, mtime: m });
+        ids.push(id);
+      });
+      return ids.length && save() ? ids : [];
+    },
+    unimportPlaces: function (ids) {
+      var n = 0, now = Date.now();
+      (ids || []).forEach(function (id) {
+        var p = placeById(id);
+        if (!p) return;
+        state.places = state.places.filter(function (x) { return x.id !== id; });
+        state.deleted[id] = Math.max(now, (p.mtime || 0) + 1);
+        n++;
+      });
+      if (n) save();
+      return n;
+    },
     // Wave 51 (offline.js): a base layer of its own in the layer
     // switcher, which base layer is on, switching it, the saved choice,
     // and the search over the downloaded packs (set by offline.js).

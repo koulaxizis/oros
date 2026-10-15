@@ -169,7 +169,27 @@
       "dot.tip": "Click to tick · right-click or long-press for skip and note",
       "dot.tip.num": "Click to enter the value, skip or add a note",
       "less": "Less",
-      "more": "More"
+      "more": "More",
+      "imp.btn": "Import from another app",
+      "imp.hint": "Loop Habit Tracker, Habitica, Streaks, Habitify or any CSV with dates and habit names. The file stays on this device.",
+      "imp.title": "Import from {s}",
+      "imp.src.generic": "a CSV file",
+      "imp.summary": "{h} habits · {c} check-ins",
+      "imp.pick": "Habits to import",
+      "imp.all": "All",
+      "imp.none": "None",
+      "imp.row": "{c} check-ins",
+      "imp.again": "imported before: only new days are added",
+      "imp.archived": "archived",
+      "imp.note": "Days you have already filled in stay as they are.",
+      "imp.go": "Import",
+      "imp.done": "Imported {h} habits and {c} check-ins",
+      "imp.nothing": "Nothing new to import",
+      "imp.undo": "Undo",
+      "imp.undone": "Import undone",
+      "imp.err.read": "This file couldn't be read.",
+      "imp.err.big": "This file is too large to import.",
+      "imp.err.unknown": "This file doesn't look like a habit export from Loop, Habitica, Streaks, Habitify or a CSV with dates."
     },
     el: {
       "app.name":        "Συνήθειες",
@@ -293,7 +313,27 @@
       "dot.tip": "Πάτα για τσεκάρισμα · δεξί κλικ ή παρατεταμένο πάτημα για παράλειψη και σημείωση",
       "dot.tip.num": "Πάτα για τιμή, παράλειψη ή σημείωση",
       "less": "Λιγότερο",
-      "more": "Περισσότερο"
+      "more": "Περισσότερο",
+      "imp.btn": "Εισαγωγή από άλλη εφαρμογή",
+      "imp.hint": "Loop Habit Tracker, Habitica, Streaks, Habitify ή οποιοδήποτε CSV με ημερομηνίες και ονόματα συνηθειών. Το αρχείο δεν φεύγει από αυτή τη συσκευή.",
+      "imp.title": "Εισαγωγή από {s}",
+      "imp.src.generic": "αρχείο CSV",
+      "imp.summary": "{h} συνήθειες · {c} καταγραφές",
+      "imp.pick": "Συνήθειες για εισαγωγή",
+      "imp.all": "Όλες",
+      "imp.none": "Καμία",
+      "imp.row": "{c} καταγραφές",
+      "imp.again": "έχει ήδη εισαχθεί: προστίθενται μόνο οι νέες μέρες",
+      "imp.archived": "αρχειοθετημένη",
+      "imp.note": "Οι μέρες που έχεις ήδη συμπληρώσει μένουν όπως είναι.",
+      "imp.go": "Εισαγωγή",
+      "imp.done": "Εισήχθησαν {h} συνήθειες και {c} καταγραφές",
+      "imp.nothing": "Δεν υπάρχει κάτι νέο για εισαγωγή",
+      "imp.undo": "Αναίρεση",
+      "imp.undone": "Η εισαγωγή αναιρέθηκε",
+      "imp.err.read": "Δεν ήταν δυνατό να διαβαστεί το αρχείο.",
+      "imp.err.big": "Το αρχείο είναι πολύ μεγάλο για εισαγωγή.",
+      "imp.err.unknown": "Το αρχείο δεν μοιάζει με εξαγωγή συνηθειών από Loop, Habitica, Streaks, Habitify ή με CSV που έχει ημερομηνίες."
     }
   };
 
@@ -2002,12 +2042,15 @@
           '<div class="field"><label id="sf-goall" for="sf-goal"></label>' +
             '<input type="number" id="sf-goal" min="100" max="200000" step="100" inputmode="numeric"></div>' +
           '<div class="field-hint" id="sf-none"></div>' +
+          '<div class="field sf-imp"><button type="button" class="btn ghost" id="sf-imp"></button>' +
+            '<div class="field-hint" id="sf-imphint"></div></div>' +
         "</div>" +
         '<div class="dialog-actions"><span style="flex:1"></span>' +
           '<button type="button" class="btn ghost" id="sf-cancel"></button>' +
           '<button type="button" class="btn prim" id="sf-save"></button></div>';
       document.body.appendChild(dlgSet);
       document.getElementById("sf-cancel").addEventListener("click", function () { dlgSet.close(); });
+      document.getElementById("sf-imp").addEventListener("click", function () { dlgSet.close(); startImport(); });
       document.getElementById("sf-save").addEventListener("click", function () {
         var cur = M.settingsOf(db);
         var on = document.getElementById("sf-steps").checked;
@@ -2040,7 +2083,189 @@
     document.getElementById("sf-none").textContent = has ? "" : t("set.steps.none");
     document.getElementById("sf-cancel").textContent = t("cancel");
     document.getElementById("sf-save").textContent = t("save");
+    document.getElementById("sf-imp").textContent = t("imp.btn");
+    document.getElementById("sf-imphint").textContent = t("imp.hint");
     dlgSet.showModal();
+  }
+
+  // ===== IMPORT FROM ANOTHER APP (import.js) =====
+  // File → detect + parse (OrosHabitsImport, pure) → preview with a
+  // checkbox per habit → ONE write (save(): one persist, one dirty
+  // mark) → a toast with Undo. Everything from the file reaches the
+  // page through textContent only. Merge rules in import.js: stable
+  // "imp-" ids, the user's days are never overwritten.
+  var IMP = window.OrosHabitsImport;
+  var IMP_MAX = 40 * 1024 * 1024;
+  var IMP_SRC = { loop: "Loop Habit Tracker", habitica: "Habitica", streaks: "Streaks", habitify: "Habitify" };
+  var dlgImp = null, impRes = null;
+
+  function pickImportFile() {
+    var host = null;
+    try { host = window.parent && window.parent !== window ? window.parent.orosDialog : null; } catch (e) { host = null; }
+    if (host && typeof host.openFile === "function") return host.openFile(IMP.ACCEPT);
+    return new Promise(function (resolve) {        // standalone page
+      var inp = document.createElement("input");
+      inp.type = "file";
+      inp.accept = IMP.ACCEPT;
+      inp.hidden = true;
+      inp.addEventListener("change", function () {
+        var f = inp.files && inp.files[0];
+        inp.remove();
+        resolve(f || null);
+      });
+      inp.addEventListener("cancel", function () { inp.remove(); resolve(null); });
+      document.body.appendChild(inp);
+      inp.click();
+    });
+  }
+  function startImport() {
+    if (!IMP || !window.OrosImportKit) return;
+    pickImportFile().then(function (file) { if (file) importFile(file); });
+  }
+  // Also the handle for tests / a file opened with orOS (Promise)
+  function importFile(file) {
+    return window.OrosImportKit.readFile(file, IMP_MAX)
+      .then(function (r) { return IMP.parse(r); })
+      .then(function (res) {
+        if (!res || !res.habits.length) { transientNote(t("imp.err.unknown")); return false; }
+        openImportPreview(res);
+        return true;
+      })
+      .catch(function (e) {
+        transientNote(t(e && e.message === "toobig" ? "imp.err.big" : "imp.err.read"));
+        return false;
+      });
+  }
+  function impCount(h) { return Object.keys(h.checks).length; }
+  function impSelected() {
+    if (!dlgImp) return [];
+    return [].map.call(dlgImp.querySelectorAll("#if-list input:checked"), function (cb) { return cb.value; });
+  }
+  function impSync() {
+    var keys = impSelected(), on = {}, c = 0;
+    keys.forEach(function (k) { on[k] = true; });
+    impRes.habits.forEach(function (h) { if (on[h.key]) c += impCount(h); });
+    document.getElementById("if-sum").textContent = tpl("imp.summary", { h: fmtNum(keys.length), c: fmtNum(c) });
+    document.getElementById("if-go").disabled = !keys.length;
+  }
+  function openImportPreview(res) {
+    impRes = res;
+    if (!dlgImp) {
+      dlgImp = document.createElement("dialog");
+      dlgImp.className = "dlg-imp";
+      dlgImp.innerHTML =
+        '<h3 id="if-title"></h3>' +
+        '<p class="df-sub imp-sum" id="if-sum"></p>' +
+        '<div class="imp-bar"><span id="if-pickl"></span>' +
+          '<button type="button" class="btn ghost" id="if-all"></button>' +
+          '<button type="button" class="btn ghost" id="if-none"></button></div>' +
+        '<div class="dialog-form imp-list" id="if-list"></div>' +
+        '<div class="field-hint" id="if-note"></div>' +
+        '<div class="dialog-actions"><span style="flex:1"></span>' +
+          '<button type="button" class="btn ghost" id="if-cancel"></button>' +
+          '<button type="button" class="btn prim" id="if-go"></button></div>';
+      document.body.appendChild(dlgImp);
+      document.getElementById("if-cancel").addEventListener("click", function () { dlgImp.close(); });
+      document.getElementById("if-list").addEventListener("change", impSync);
+      document.getElementById("if-all").addEventListener("click", function () { impSetAll(true); });
+      document.getElementById("if-none").addEventListener("click", function () { impSetAll(false); });
+      document.getElementById("if-go").addEventListener("click", function () {
+        var keys = impSelected();
+        dlgImp.close();
+        if (keys.length && impRes) runImport(impRes, keys);
+      });
+    }
+    var src = IMP_SRC[res.source] || t("imp.src.generic");
+    document.getElementById("if-title").textContent = tpl("imp.title", { s: src });
+    document.getElementById("if-pickl").textContent = t("imp.pick");
+    document.getElementById("if-all").textContent = t("imp.all");
+    document.getElementById("if-none").textContent = t("imp.none");
+    document.getElementById("if-note").textContent = t("imp.note");
+    document.getElementById("if-cancel").textContent = t("cancel");
+    document.getElementById("if-go").textContent = t("imp.go");
+    var list = document.getElementById("if-list");
+    list.textContent = "";
+    res.habits.forEach(function (h) {
+      var lab = document.createElement("label"), cb = document.createElement("input");
+      var txt = document.createElement("span"), nm = document.createElement("span"), meta = document.createElement("span");
+      lab.className = "check imp-row";
+      cb.type = "checkbox";
+      cb.value = h.key;
+      cb.checked = !h.archived;
+      nm.className = "imp-name";
+      nm.textContent = h.name;
+      meta.className = "imp-meta";
+      var bits = [tpl("imp.row", { c: fmtNum(impCount(h)) })];
+      var old = habitById(IMP.idOf(res.source, h.key));
+      if (old && !old.del) bits.push(t("imp.again"));
+      if (h.archived) bits.push(t("imp.archived"));
+      meta.textContent = bits.join(" · ");
+      txt.className = "imp-txt";
+      txt.appendChild(nm);
+      txt.appendChild(meta);
+      lab.appendChild(cb);
+      lab.appendChild(txt);
+      list.appendChild(lab);
+    });
+    impSync();
+    dlgImp.showModal();
+  }
+  function impSetAll(on) {
+    [].forEach.call(dlgImp.querySelectorAll("#if-list input"), function (cb) { cb.checked = on; });
+    impSync();
+  }
+  function runImport(res, keys) {
+    var r = IMP.apply(db, res, { keys: keys, now: Date.now() });
+    if (!Object.keys(r.undo.habits).length && !Object.keys(r.undo.comps).length) {
+      transientNote(t("imp.nothing"));
+      return r;
+    }
+    db = M.normalize(r.data) || db;
+    save();                                    // one write, one dirty mark
+    render();
+    var info = r.undo, used = false;
+    noteWithAction(tpl("imp.done", { h: fmtNum(r.added + r.updated), c: fmtNum(r.comps) }), t("imp.undo"), function () {
+      if (used) return;
+      used = true;
+      db = M.normalize(IMP.undo(db, info, Date.now())) || db;
+      save();
+      render();
+      refreshOpenDialogs();
+      transientNote(t("imp.undone"));
+    });
+    return r;
+  }
+  // A toast with one action button (the shell's undo pattern); the
+  // local toast when Habits runs on its own.
+  function noteWithAction(text, label, fn) {
+    var api = null;
+    try { api = window.parent.orosNotifs; } catch (e) {}
+    if (!api && window.orosNotifs) api = window.orosNotifs;
+    if (api && typeof api.transient === "function") {
+      api.transient({ ns: "habits", title: text, body: "", action: { label: label, fn: fn } });
+      return;
+    }
+    if (!els.toast) return;
+    els.toast.textContent = "";
+    var sp = document.createElement("span"), b = document.createElement("button");
+    sp.textContent = text;
+    b.type = "button";
+    b.className = "btn ghost toast-act";
+    b.textContent = label;
+    b.addEventListener("click", function () {
+      fn();
+      els.toast.classList.remove("show");
+      els.toast.hidden = true;
+    });
+    els.toast.appendChild(sp);
+    els.toast.appendChild(b);
+    els.toast.hidden = false;
+    requestAnimationFrame(function () { els.toast.classList.add("show"); });
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () {
+      els.toast.classList.remove("show");
+      setTimeout(function () { els.toast.hidden = true; }, 250);
+    }, 8000);
   }
 
   // ===== CONFIRM DELETE DIALOG =====
@@ -2315,6 +2540,9 @@
       period = anchor;
       render();
     },
+    // "Import from another app" without the picker: a File → the
+    // preview dialog (Promise<boolean>: a habit export was found)
+    importFile: function (file) { return importFile(file); },
     stats: function () {
       return {
         habits: livingHabits().length,

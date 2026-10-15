@@ -538,11 +538,40 @@
   // 100% and never finishes (Chris 2026-10-15, Brave; a plain browser
   // tab works in every browser). There the link asks Chrome for a real
   // tab; without Chrome the in-app tab opens as before.
-  function apkHref(id, ua, inWindow) {
+  // apkPkg: the orOS Android package this window runs in (the orOS app or
+  // a single app's APK), when known: its BrowserActivity opens the link in
+  // the person's default browser, in a normal tab (APKs built before
+  // 2.30.01 lack it, and the link then opens as before). Otherwise
+  // (Chrome's installed orOS) an intent asks Chrome for a real tab.
+  function apkHref(id, ua, inWindow, apkPkg) {
     var u = id === "oros" ? APK_BASE + "oros.apk" : apkUrl(id);
     if (!u || !inWindow || !/Android/i.test(String(ua || ""))) return u;
+    if (apkPkg) return browserHref(u, apkPkg);
     return "intent://" + u.replace(/^https:\/\//, "") + "#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=" +
       encodeURIComponent(u) + ";end";
+  }
+
+  // An orOS link (APK, download page, F-Droid repo) opened through the
+  // app's BrowserActivity: the default browser, a normal tab. Fallback:
+  // the link itself (an APK without BrowserActivity, or none installed).
+  function browserHref(url, pkg) {
+    if (!/^online\.useoros\.[a-z]+$/.test(String(pkg || ""))) return url;
+    return "intent://open?u=" + encodeURIComponent(url) + "#Intent;scheme=oros-browser;package=" + pkg +
+      ";S.browser_fallback_url=" + encodeURIComponent(url) + ";end";
+  }
+  // The orOS Android package this top window runs in, or "": the start
+  // address told it (?apk=, remembered in "oros-apk") or the TWA's
+  // referrer says so, and the window is not a browser tab.
+  function apkPkgOf(win, id) {
+    var pkg = pkgOf(id);
+    if (!pkg) return "";
+    try { if (win.matchMedia("(display-mode: browser)").matches) return ""; } catch (e) { return ""; }
+    try { if (String(win.document.referrer || "").indexOf("android-app://" + pkg) === 0) return pkg; } catch (e) {}
+    try {
+      var st = JSON.parse(win.localStorage.getItem("oros-apk") || "{}") || {};
+      if (st.installed && st.installed[pkg]) return pkg;
+    } catch (e) {}
+    return "";
   }
 
   // App updates for the APKs (FDROID-1): CI (.github/workflows/fdroid.yml)
@@ -624,7 +653,7 @@
     txt.textContent = T.note.replace("{n}", id === "oros" ? "orOS" : nameOf(id, lng));
     bar.appendChild(txt);
     var a = doc.createElement("a");
-    a.href = apkHref(id, win.navigator.userAgent, true);
+    a.href = apkHref(id, win.navigator.userAgent, true, pkgOf(id));
     a.rel = "noopener";
     a.textContent = T.get;
     a.style.cssText = "border-radius:8px;padding:8px 14px;background:#c8a96e;color:#1b1a18;font-weight:600;text-decoration:none;white-space:nowrap";
@@ -841,6 +870,8 @@
     installUrl: installUrl,
     apkUrl: apkUrl,
     apkHref: apkHref,
+    browserHref: browserHref,
+    apkPkgOf: apkPkgOf,
     pkgOf: pkgOf,
     repoLink: repoLink,
     repoPage: REPO,

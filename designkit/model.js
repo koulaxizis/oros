@@ -1,5 +1,5 @@
 // ============================================================
-// orOS designkit — model.js (v1.0.0)
+// orOS designkit — model.js (v1.1.0)
 // The document model shared by Layout and Atelier: page presets and
 // units, new documents with seeds, strict normalization (the same
 // code cleans storage, sync pulls and imported packages), and the
@@ -22,6 +22,11 @@
 // ≤ 50). When the losing copy's m is not in the winner's history,
 // the two were edited apart: the loser's text is kept in rec[]
 // ("Recovered text") so nothing typed is ever lost.
+// Items: text, img, rect, ell, line, path (outline in `d`, see
+// parsePath); rect / ell / path may carry a gradient fill `gr`. Older
+// copies of the app drop path items they do not know when they read a
+// document, but the merge is a union, so the items come back from
+// any newer copy: nothing is deleted.
 // Units: points. Exposes orosDK.model (browser) or module.exports.
 // ============================================================
 (function (root) {
@@ -119,7 +124,54 @@
     return { id: p.id, m: stamp(p.m), name: nameOf(p.name, 60), pre: pre };
   }
 
-  var ITEM_TYPES = ["text", "img", "rect", "ell", "line"];
+  var ITEM_TYPES = ["text", "img", "rect", "ell", "line", "path"];
+
+  // ---------- Paths and gradients (imported shapes) ----------
+  // A "path" item keeps its outline in `d`: M / L / C / Z commands whose
+  // coordinates are fractions of the item's box (0..1, control points
+  // may go a little outside), so moving or resizing the box moves and
+  // scales the outline. `eo` = even-odd fill. Canonical text form:
+  // "M0 0L1 0L1 1Z", numbers rounded to 4 decimals.
+  var MAX_PATH_CMDS = 8000, PATH_LO = -4, PATH_HI = 5;
+  var PATH_ARGS = { M: 2, L: 2, C: 6, Z: 0 };
+  function fmt4(n) { return String(Math.round(n * 10000) / 10000); }
+  // → [["M", x, y], ["C", x1, y1, x2, y2, x, y], ["Z"], …] or null
+  function parsePath(d) {
+    if (typeof d !== "string" || d.length > MAX_PATH_CMDS * 60) return null;
+    var tok = d.match(/[MLCZ]|-?(?:\d+\.?\d*|\.\d+)(?:e-?\d+)?/g) || [], out = [], i = 0, open = false;
+    while (i < tok.length && out.length < MAX_PATH_CMDS) {
+      var c = tok[i++], n = PATH_ARGS[c];
+      if (n === undefined) return null;
+      if (!open && c !== "M") return null;
+      var cmd = [c];
+      for (var k = 0; k < n; k++) {
+        var v = parseFloat(tok[i++]);
+        if (!isFinite(v)) return null;
+        cmd.push(Math.min(PATH_HI, Math.max(PATH_LO, Math.round(v * 10000) / 10000)));
+      }
+      out.push(cmd);
+      open = c !== "Z";
+    }
+    return out.length ? out : null;
+  }
+  function pathText(cmds) {
+    return cmds.map(function (c) { return c[0] + c.slice(1).map(fmt4).join(" "); }).join("");
+  }
+  // gradient { k: "l" linear | "r" radial, x1, y1, x2, y2 (fractions of
+  // the box; radial: centre → a point on the outer circle), st: [[pos
+  // 0..1, swatch id, opacity 0..100], …] (2..16 stops, by position) }
+  function normGrad(g) {
+    if (!g || typeof g !== "object") return null;
+    var k = oneOf(g.k, ["l", "r"], "");
+    if (!k) return null;
+    var st = [];
+    (Array.isArray(g.st) ? g.st : []).slice(0, 16).forEach(function (s) {
+      if (Array.isArray(s) && isId(s[1])) st.push([num(s[0], 0, 1, 0), s[1], int(s[2], 0, 100, 100)]);
+    });
+    if (st.length < 2) return null;
+    st.sort(function (a, b) { return a[0] - b[0]; });
+    return { k: k, x1: num(g.x1, -10, 10, 0), y1: num(g.y1, -10, 10, 0.5), x2: num(g.x2, -10, 10, 1), y2: num(g.y2, -10, 10, 0.5), st: st };
+  }
 
   // Per-app item extras. An app that needs fields of its own on
   // items (Atelier: shapes, icons, effects, filters…) registers ONE
@@ -161,6 +213,16 @@
       // picture (only when set, so older documents stay as they were)
       var mf = str(it.mf, 60).replace(/[{}\n\r\t]/g, "").trim();
       if (mf) o.mf = mf;
+    }
+    if (it.t === "path") {
+      var cmds = parsePath(it.d);
+      if (!cmds) return null;
+      o.d = pathText(cmds);
+      if (bit(it.eo)) o.eo = 1;
+    }
+    if (it.t === "rect" || it.t === "ell" || it.t === "path") {
+      var gr = normGrad(it.gr);
+      if (gr) o.gr = gr;
     }
     // a page's own copy of a master item ("detached here"): the
     // master item stops showing on that page
@@ -510,7 +572,7 @@
   var api = {
     DATA_VER: DATA_VER, PT_PER: PT_PER, PRESETS: PRESETS, MAX_ITEMS: MAX_ITEMS, MAX_PAGES: MAX_PAGES,
     preset: preset, toUnit: toUnit, fromUnit: fromUnit, label: label, nameOf: nameOf,
-    newId: newId, touch: touch, isId: isId, cmpStr: cmpStr, setItemExt: setItemExt,
+    newId: newId, touch: touch, isId: isId, cmpStr: cmpStr, setItemExt: setItemExt, parsePath: parsePath, pathText: pathText, normGrad: normGrad,
     normSetup: normSetup, normItem: normItem, normStory: normStory, normPs: normPs, normCs: normCs,
     normSwatch: normSwatch, normPage: normPage, normMaster: normMaster, normGuide: normGuide, normPara: normPara,
     normDoc: normDoc, copyDoc: copyDoc, normData: normData, mergeDoc: mergeDoc, mergeData: mergeData, maxM: maxM,

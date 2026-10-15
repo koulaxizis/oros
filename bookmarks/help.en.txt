@@ -51,11 +51,23 @@ Starred bookmarks show up as tiles under `Favorites` at the top of the list. `Op
 - `Select bookmarks` (the checkbox button) lets you tick several rows and use `Move to…`, `Send…` (all of them in one link) or `Delete` on all of them. `Done` ends selection. It's off while you search or filter.
 - Deleting, moving, merging and importing show a message with `Undo` for a few seconds.
 
+## Import from other apps
+
+`Import bookmarks` (the arrow-down button) also reads the files of read-later apps and browser backups. It works out what the file is by itself and first shows a preview: where the file comes from, how many bookmarks and folders are new, the dates they were saved, and how many are already here or aren't web addresses (both skipped). Only the links and their details come in, never the saved pages. Import the same file again whenever you like: only what's missing comes in. `Undo` in the message takes the import back.
+
+- **Instapaper**: on the website, Settings › Export › `Download .CSV file`. Links go to an `Instapaper` folder, Archive to `Instapaper` › `Archive`, your own folders inside `Instapaper`; Starred become favourites and the highlighted selection becomes the description.
+- **wallabag**: in wallabag, open a list (for example All entries), then the export menu › `JSON`. Entries go to `wallabag` (archived ones to `wallabag` › `Archive`), starred ones become favourites, tags come along. The saved article text isn't imported.
+- **Linkwarden**: Settings › Data › `Export data` (a JSON backup). Each collection becomes a folder, subcollections nest; descriptions and tags come along.
+- **linkding**: Settings › Export gives an HTML file (read like any browser file); a JSON list from its API (`results` with `tag_names`) works too and goes to `Unsorted`.
+- **Firefox**: Bookmarks › Manage bookmarks (Library) › Import and Backup › `Backup…` saves a `.json` file. The menu's bookmarks go to the top level, the toolbar and Other Bookmarks become folders, subfolders keep their nesting; tags and descriptions come along. Smart folders and separators are skipped. The automatic `.jsonlz4` backups are compressed and can't be read: use `Backup…` or the HTML export.
+- **Chrome, Edge, Brave, Vivaldi**: the bookmark manager's ⋮ › `Export bookmarks` gives an HTML file. The browser's own `Bookmarks` file (in its profile folder) works too: the bookmarks bar becomes a folder, Other bookmarks go to the top level.
+- **Safari**: File › Export › `Bookmarks…` gives an HTML file.
+
 ## Sync and backup
 
 Bookmarks, folders and their nesting, tags, favourites, link checks and which bookmarks have a saved copy sync through [orOS sync](help:t/sync). A link check never overwrites an edit made on another device. The copies themselves are files (see `Readable copy`). Your sort choice and the `Keep pictures` choice stay on this device.
 
-- **Import**: `Import bookmarks` reads the bookmarks HTML file of a browser, Raindrop, Pinboard or Linkding, Pocket's export (the HTML file or the CSV) and Raindrop's CSV. Folders keep their nesting and are matched by name or created; tags, descriptions, favourites and the date each link was saved come along. Pocket links go to a `Pocket` folder, archived ones to `Pocket` › `Archive`. Addresses you already have are skipped. `Undo` in the message takes the whole import back.
+- **Import**: `Import bookmarks` reads the bookmarks HTML file of a browser, Raindrop, Pinboard or Linkding, Pocket's export (the HTML file or the CSV), Raindrop's CSV and the files in `Import from other apps`. Folders keep their nesting and are matched by name or created; tags, descriptions, favourites and the date each link was saved come along. Pocket links go to a `Pocket` folder, archived ones to `Pocket` › `Archive`. Addresses you already have are skipped. `Undo` in the message takes the whole import back.
 - **From Raindrop.io**: connect Raindrop.io in [Settings](app:settings) › `Connected services` with a test token, then the cloud button `Import from Raindrop.io…` › `Read the account` shows what will come in, and `Import` brings it (`Undo` in the message takes it back). Each collection becomes a folder (a folder with the same name is used, nested collections become folders of their own), with titles, notes (or the page excerpt), tags and favourites; links you already have are skipped. Import again whenever you like: only new bookmarks come in, and with `Update what was imported before` the title and note follow Raindrop's and new tags are added. Deleted bookmarks don't come back unless you tick `Bring back what was deleted here`. orOS only reads Raindrop: nothing there changes.
 - **Export**: `Export bookmarks (Netscape HTML)` saves `oros-bookmarks.html` with the whole folder tree, tags, descriptions and dates, for a browser, Raindrop, Pinboard, Linkding or orOS.
 

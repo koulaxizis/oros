@@ -16,6 +16,15 @@ Each station shows its bitrate, format and country code where known.
 ## Favourites and recent stations
 While a station plays, tap the heart in the player bar to add it to `Favorites`; tap it again to remove it. `Recent` keeps the last 20 stations you played. The ✕ button in that view clears them, with `Undo` for a few seconds.
 
+### Import stations
+`Import stations` at the top of `Favorites` adds stations from a list file made by another player:
+- **M3U / M3U8**: most players and radio sites (VLC: Media › Save Playlist to File; many stations offer a "listen" link as .m3u).
+- **RadioDroid**: Settings › Backup / restore or the favourites menu › Save (export) as M3U.
+- **PLS** and **XSPF** playlists (Winamp, foobar2000, VLC, Clementine…).
+- **CSV**: one station per line, `name,url` (a header line is optional).
+
+Before anything changes, a preview shows how many stations are new, which are already in your favourites and what is skipped and why: a station listed twice, an address that isn't a stream, or one that only streams over plain http. orOS plays https streams only; tick `Try the http-only stations (…) over https` to add those anyway, since many servers answer both. `Import` adds them all at once, with `Undo` for a few seconds. Importing the same file again adds only what's missing.
+
 ## Playing in the background
 Playback runs in orOS itself, so it keeps going when you close the app. A chip in the taskbar shows the station; tap or click it for play/pause, stop, favourite, volume and `Open Radio`. Your device's media controls (lock screen, headset buttons) can also play and pause.
 
@@ -37,7 +46,7 @@ Recordings are for your own personal use only. Radio programmes are protected by
 Under `Wake up to this station`, choose a `Time` and whether it repeats (`Once` or `Every day`), then `Set alarm`. The alarm appears in [Time](app:time), and when it rings the station starts playing, softly at first. You can also pick an existing alarm from Time and press `Use`. `Remove` takes a station off an alarm.
 
 ## Sync and backup
-Your favourites and wake-up stations sync between your devices through [orOS sync](help:t/sync). Song history, recent stations and the temporarily kept station lists stay on this device. There's no import or export; favourites are part of the orOS [backup](help:t/backup).
+Your favourites and wake-up stations sync between your devices through [orOS sync](help:t/sync). Song history, recent stations and the temporarily kept station lists stay on this device. Stations can be imported (see `Import stations` above), not exported; favourites are part of the orOS [backup](help:t/backup).
 
 ## Keyboard shortcuts
 - In the search box: [[Enter]] searches or plays the highlighted suggestion, [[↑]] / [[↓]] move through suggestions, [[Esc]] closes them.
@@ -48,7 +57,7 @@ Your favourites and wake-up stations sync between your devices through [orOS syn
 
 ## Limits
 - Stations come from the free community directory radio-browser.info, so names, logos and genres are only as good as that directory. If it can't be reached (no connection, or a content blocker), the lists stay empty.
-- Favourites can only be added from the player bar or the taskbar chip, not from the station list.
+- Favourites can only be added from the player bar, the taskbar chip or `Import stations`, not from the station list.
 - Song titles and recording need a station that lets web pages read its stream (CORS). Many don't: then `This station does not say what it plays.` shows, or recording explains it isn't allowed. The station directory itself has no song information.
 - Recording downloads the stream a second time while it runs, so it uses double the data. Playlist-style streams (HLS) can't be recorded.
 - A wake-up station only plays if orOS is open when the alarm rings, and the browser may keep the sound muted until you touch the page.

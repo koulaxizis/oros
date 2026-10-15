@@ -1,0 +1,5 @@
+car_name,model,mpg,odometer,miles,gallons,price,fuelup_date,date_added,tags,notes,missed_fuelup,partial_fuelup,latitude,longitude,brand
+Civic,Honda Civic,,10000,,10,3.50,2026-03-01,2026-03-01,,,0,0,,,Shell
+Civic,Honda Civic,30,10300,300,10,3.60,2026-03-10,2026-03-10,commute,Highway trip,0,0,,,Chevron
+Civic,Honda Civic,,,150,5,3.55,2026-03-15,2026-03-15,,,0,1,,,Shell
+Truck,Ford F-150,18,50000,,20,3.40,2026-03-02,2026-03-02,,,1,0,,,Exxon

@@ -18,7 +18,10 @@
 //               endpoint (scope Contacts.Read); Graph /me/contacts
 //               and every contact folder.
 // Both answer to contacts/oauth-callback.html, which only passes the
-// answer back (BroadcastChannel, localStorage fallback).
+// answer back (BroadcastChannel, localStorage fallback). The same page
+// serves the one-time Google imports of Calendar, To-Do, Feeds and
+// Shelf (/google-import.js), which use the same Google client id and
+// the same "Use my own app id" setting kept here.
 //
 // Client ids: an OAuth client id is not a secret. orOS's own ids go
 // in CLIENT below once registered (redirect URI
@@ -33,7 +36,7 @@
   "use strict";
 
   var CLIENT = {
-    google: "97712435228-us9qmufgtniombc9ducde9gsvt5hj98h.apps.googleusercontent.com",   // Chris, 2026-10-14 (Google Cloud › OAuth client, Web application)
+    google: "97712435228-us9qmufgtniombc9ducde9gsvt5hj98h.apps.googleusercontent.com",   // Chris, 2026-10-14 (Google Cloud › OAuth client, Web application); also BUILTIN in /google-import.js
     microsoft: ""     // Microsoft Entra › App registrations (SPA, personal + work accounts)
   };
   var PREFS_KEY = "oros-contacts-oauth";
@@ -62,7 +65,7 @@
     return {
       given: "", middle: "", family: "", nickname: "", org: "", jobTitle: "",
       phones: [], emails: [], addresses: [], websites: [], im: [],
-      events: [], cats: [], note: "", photo: null, starred: false
+      events: [], cats: [], note: "", avatar: null, starred: false
     };
   }
   function pick(arr) {
@@ -199,10 +202,7 @@
     var note = bio ? s(bio.value, 500) : "";
     if (extra.length) note = (note ? note + "\n\n" : "") + extra.join("\n");
     c.note = note.slice(0, 500);
-    // the person's own photo (not Google's letter avatar): fetched by
-    // readGoogle, never by this pure mapper
-    var ph = (p.photos || []).filter(function (x) { return x && x.url && !x.default; });
-    if (ph.length) c.photoUrl = String(ph[0].url);
+    // CT-NP: photos are not imported (Contacts keeps none)
     (p.memberships || []).forEach(function (m) {
       var rn = m && m.contactGroupMembership && m.contactGroupMembership.contactGroupResourceName;
       if (!rn) return;
@@ -352,7 +352,7 @@
       .then(function () {
         var out = [], pages = 0;
         var fields = "names,nicknames,emailAddresses,phoneNumbers,addresses,organizations,birthdays,events,urls,imClients,biographies,memberships," +
-          "photos,relations,userDefined,sipAddresses,calendarUrls,occupations,interests,skills,locations,genders,miscKeywords,externalIds";
+          "relations,userDefined,sipAddresses,calendarUrls,occupations,interests,skills,locations,genders,miscKeywords,externalIds";
         function page(tok) {
           var url = P.api + "people/me/connections?pageSize=1000&personFields=" + fields +
             (tok ? "&pageToken=" + encodeURIComponent(tok) : "");
@@ -364,43 +364,8 @@
             return out;
           });
         }
-        return page("").then(function (list) { return withPhotos(list, progress); });
+        return page("");
       });
-  }
-  // Contact photos: Google serves them from its image host (public
-  // links, no token sent). Each becomes a small JPEG data URL (orOS
-  // keeps photos up to 50,000 characters); one that can't be read is
-  // simply left out, the contact still comes in.
-  var PHOTO_MAX = 50000;
-  function photoData(url) {
-    var u = /=s\d+(-c)?$/.test(url) ? url.replace(/=s\d+(-c)?$/, "=s256") : url + (url.indexOf("=") === -1 ? "=s256" : "");
-    return fetch(u, { cache: "no-store", credentials: "omit" }).then(function (r) {
-      if (!r.ok) throw new Error("photo " + r.status);
-      return r.blob();
-    }).then(function (blob) { return createImageBitmap(blob); }).then(function (bmp) {
-      var side = Math.min(256, Math.max(bmp.width, bmp.height)), k = side / Math.max(bmp.width, bmp.height);
-      var cv = document.createElement("canvas");
-      cv.width = Math.max(1, Math.round(bmp.width * k));
-      cv.height = Math.max(1, Math.round(bmp.height * k));
-      cv.getContext("2d").drawImage(bmp, 0, 0, cv.width, cv.height);
-      var q = [0.85, 0.7, 0.5], out = "";
-      for (var i = 0; i < q.length; i++) {
-        out = cv.toDataURL("image/jpeg", q[i]);
-        if (out.length <= PHOTO_MAX) return out;
-      }
-      return null;
-    });
-  }
-  function withPhotos(list, progress) {
-    var todo = list.filter(function (c) { return c.photoUrl; }), i = 0;
-    function worker() {
-      if (i >= todo.length) return Promise.resolve();
-      var c = todo[i++];
-      return photoData(c.photoUrl).then(function (d) { if (d) c.photo = d; }, function () {})
-        .then(function () { delete c.photoUrl; return worker(); });
-    }
-    if (!todo.length) return Promise.resolve(list);
-    return Promise.all([worker(), worker(), worker(), worker()]).then(function () { return list; });
   }
   function revokeGoogle(token) {
     return fetch("https://oauth2.googleapis.com/revoke", {

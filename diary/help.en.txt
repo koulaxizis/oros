@@ -64,6 +64,17 @@ In `Diary settings` (the button at the top right) tick `Remind me when I have no
 - `Text`, `CSV` and `JSON` in `Diary settings` download every line.
 - `Choose a file` reads a CSV, JSON or text file with a date and a line per day, like the exports. Dates can be 2026-10-11 or 11/10/2026. Days that already have a line keep it.
 
+## Import from other diary apps
+`Choose a file` also reads the exports of four journaling apps. A preview shows the dates, the entries and what will happen before anything is written; `Undo` in the message takes the whole import back.
+- Day One: in Day One's settings, `Import/Export` › `Export` › `JSON`. Choose the ZIP (with its photos) or the `Journal.json` inside it.
+- Journey: in Journey's settings, export the journal as a ZIP. Choose the ZIP.
+- Diaro: in Diaro's settings, `Backup & Restore` › make a backup (ZIP or XML). Choose the ZIP or `DiaroBackup.xml`.
+- Daylio: in Daylio, `More` › `Export entries` › `CSV`. Only the note title and the note come in; the moods belong to [Mood](app:mood).
+- The first sentence of each day becomes the day's line (at most 280 characters) and the whole text goes into the longer entry. Several entries on one day are joined in time order, with a line between them.
+- Place and weather come along when the file has them and the day has none. With `Import the photos too` up to four photos a day are saved in Files › `Diary` › `Photos`, drawn again without their camera data; pictures this browser cannot read (such as HEIC) are skipped.
+- Your own text always wins: a day with a line keeps it and gets the imported text only when its longer entry is empty; a day whose longer entry has text is skipped. Importing the same file again adds nothing.
+- Formatting is turned into plain text and the diary's simple formatting; nothing from the file is ever run.
+
 ## Sync and privacy
 - Your lines follow you to all your devices through orOS sync, encrypted like the rest of your data. So do the longer entries, places, weather and your own questions; each part of a day syncs on its own, so writing the text on one device and adding a place on another keeps both.
 - The PIN and the reminder stay on each device.

@@ -36,7 +36,7 @@
     return {
       given: "", middle: "", family: "", nickname: "", org: "", jobTitle: "",
       phones: [], emails: [], addresses: [], websites: [], im: [],
-      events: [], cats: [], note: "", photo: null, starred: false
+      events: [], cats: [], note: "", avatar: null, starred: false
     };
   }
   function fold(s) {

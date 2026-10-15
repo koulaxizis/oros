@@ -43,14 +43,34 @@ In [Calendar](app:calendar), the `Media Shelf` chip shows the day you finished e
 ## Reading reminder
 `More` → `Reading reminder` turns on one gentle nudge a day, from the hour you pick (20:00 to start with). It comes only when something is in `Now` and you haven't logged anything that day, and it names the title you were on with your progress, such as "Dune · page 212 of 604". Tap it to open that title. It's off until you turn it on, it's set per device, and it arrives while orOS is open; quiet hours and the `Media Shelf` switch in the notification settings still apply.
 
-## Import from Goodreads or Letterboxd
-Bring your existing library in with `More` → `Import from Goodreads / Letterboxd (CSV)`.
-- **Goodreads:** on the Goodreads website, open My Books → Import and export → Export library, and pick the CSV file it gives you.
-- **Letterboxd:** on the Letterboxd website, open Settings → Data → Export your data. Unzip the file and pick its CSV files; you can pick several at once (`watchlist`, `watched`, `ratings`, `diary`, `reviews`).
+## Import from another app
+Bring your existing lists in with `More` → `Import from another app`. Pick the export file; you can pick several at once, and a ZIP works as it is.
+- **Goodreads:** on the Goodreads website, My Books → Import and export → Export library; pick the CSV.
+- **Letterboxd:** on the Letterboxd website, Settings → Data → Export your data; pick the ZIP, or its CSV files (`watchlist`, `watched`, `ratings`, `diary`, `reviews`).
+- **StoryGraph:** on the StoryGraph website, your profile menu → Manage account → Export StoryGraph library; pick the CSV.
+- **IMDb:** on IMDb, open Your ratings or your Watchlist, then the ⋯ menu → Export; pick `ratings.csv` and / or `watchlist.csv`.
+- **Trakt:** on the Trakt website, Settings → Data → Export your data; pick the ZIP or its JSON files (`watched-movies`, `watched-shows`, `ratings-…`, `watchlist-…`, `history-…`).
+- **TV Time:** TV Time has no export button; ask for your data (a GDPR request from the app's settings or its support) and pick the CSV files you get, or their ZIP.
+- **MyAnimeList:** on MyAnimeList, Profile → Export (or Import / Export) → Export My List, for the anime list and the manga list; pick the `.xml` or the `.xml.gz` file.
+- **Discogs:** on Discogs, your Collection (or Wantlist) → Export; pick the CSV it emails or downloads.
+- **BoardGameGeek:** on BoardGameGeek, your Collection → Export (the CSV download at the bottom of the collection page); pick the CSV.
 
-Before anything is added, a preview shows how many titles were found per type and status, and how many are already on your shelf. Those are skipped, so importing the same file twice adds nothing. Press the import button to add the rest, or `Cancel`.
+Before anything is added, a preview shows where the titles come from, how many were found per type and status, the span of the dates, what is left out and how many are already on your shelf. Titles already there are skipped (same title and creator, for films and series also same title and year, or imported before), so importing the same file twice adds nothing, and nothing of yours is changed. Press the import button to add the rest, or `Cancel`. Right after an import, `Undo` takes it all back.
 
-What comes in: Goodreads shelves become the status (`read`, `currently-reading`, `to-read`; a shelf such as `did-not-finish` becomes dropped), with your rating, review, pages, format, the date you finished, and your other shelves as tags. From Letterboxd you get the watchlist, every logged watch with its date (rewatches count), your rating, review and tags. Right after an import, `Undo` takes it all back.
+What comes in:
+- Goodreads shelves become the status (`read`, `currently-reading`, `to-read`; a shelf such as `did-not-finish` becomes dropped), with your rating, review, pages, format, the date you finished and your other shelves as tags. From Letterboxd you get the watchlist, every logged watch with its date (rewatches count), your rating, review and tags.
+- StoryGraph: read → Read, currently reading → Reading, to read → Want, did not finish → Dropped, with the dates of each read, your stars (quarter stars round to half stars), format, review and tags.
+- IMDb: what you rated becomes Watched on the day you rated it, your 1–10 as half stars (8 = four stars); the watchlist becomes Want. Films, series, video games and podcasts come in; single episodes are left out.
+- Trakt: watched films become Watched; a show with watched episodes is in progress with the number seen (Watched when every aired episode is seen); ratings become stars; the watchlist becomes Want. A film rated on IMDb and Trakt is one title.
+- TV Time: followed shows become Want, shows with seen episodes are in progress with the number seen, watched films become Watched.
+- MyAnimeList: Completed → done, Watching / Reading / On-Hold → in progress, Plan to Watch / Read → Want, Dropped → dropped. Anime films become films, other anime series (with episodes), manga books; they get the tag `anime` or `manga` and your MAL tags.
+- Discogs: your collection becomes Music, listened on the day it joined the collection, with your rating and the format (Vinyl, CD…) as a tag; a wantlist becomes Want.
+- BoardGameGeek: games you played or rated become finished games with the platform `Board game`; owned, wishlist and want-to-play games become Want.
+
+## Import from Google Books
+`More` › `Import from Google Books` copies the books on your Google Books shelves once. Sign in to Google in the small window; orOS reads your shelves and gives the access back to Google right away: nothing is kept, and nothing changes at Google. Google Books has no read-only permission, so Google asks to "manage" your books; orOS only reads them. The same preview as the Goodreads import shows what comes in and what is already on your shelf; `Import` saves it, with `Undo`.
+
+`Have read` becomes Read, `Reading now` Reading and `To read` Want; `Favorites` gives the ♥, `My eBooks` marks the format as e-book, and your own shelves become tags. Each book comes with its title, authors, year and page count; covers and ISBNs are not kept. A book already on your shelf (same title and author) is skipped, so importing again adds only what is missing. Google must have this enabled for orOS; if it answers 403, the service is not switched on yet. To use your own Google app id, set it in [Contacts](app:contacts) › `From an account` › `Use my own app id`.
 
 ## Sync and backup
 Your titles, progress, ratings, reviews and goals sync between your devices through [orOS sync](help:t/sync). Covers and their credits sync with the title. The open tab, type filter, sort and your TMDB key stay on each device.

@@ -532,6 +532,8 @@ input, textarea, select {
   border-radius: 8px;
 }
 .imp-preview.imp-error { color: var(--danger); }
+.imp-preview { overflow-wrap: anywhere; }
+.imp-preview .imp-sub { margin-top: 4px; color: var(--text-dim); }
 
 /* Import from a connected account (wave 6B) */
 .imp-acct {

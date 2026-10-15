@@ -5,6 +5,8 @@
 // namespaces); the .xmind files are zipped here by a tiny ZIP writer.
 // Hostile files: entities never expand, deep nesting, broken zips,
 // entries that inflate past the cap.
+// Wave 4: Markdown / Logseq / Obsidian / text outlines, SimpleMind
+// .smmx (document/mindmap.xml) and MindManager .mmap (Document.xml).
 // Run: node --test tests/
 
 "use strict";
@@ -527,4 +529,190 @@ test("sniff", () => {
   assert.equal(I.sniff(new Uint8Array(0)), "");
   assert.equal(I.sniff(null), "");
   assert.equal(I.sniff(new Uint8Array([0x50, 0x4b, 0x03, 0x04]).buffer), "zip");
+});
+
+// ---------- Markdown / Logseq / Obsidian / text ----------
+test("markdown: headings, lists, inline markdown, front matter", () => {
+  const md = [
+    "---", 'title: "Front"', "markmap:", "  colorFreezeLevel: 2", "---",
+    "# Project **Alpha**",
+    "## Links",
+    "- [Orós site](https://example.org/a) and more",
+    "- See <https://x.org/p>",
+    "- \\*not italic\\* and *italic* and snake_case_word and `code`",
+    "  - [[Page|Alias]] and [[Other]] ((64f0a1b2-1111-2222-3333-444455556666))",
+    "  - ![pic](data:image/png;base64,AAAA) caption",
+    "## Tasks",
+    "1. DONE ship it",
+    "2. TODO later",
+    "- [x] checked ^abc123",
+    "+ [javascript](javascript:alert(1))",
+    "```", "- not a node", "```"
+  ].join("\n");
+  const r = I.parseMarkdown(md, "file");
+  assert.equal(r.ok, true);
+  const t = r.tree;
+  assert.equal(t.text, "Project Alpha");
+  assert.deepEqual(t.kids.map(k => k.text), ["Links", "Tasks"]);
+  const links = t.kids[0].kids;
+  assert.equal(links[0].text, "Orós site and more");
+  assert.equal(links[0].url, "https://example.org/a");
+  assert.equal(links[1].text, "See https://x.org/p");
+  assert.equal(links[1].url, "https://x.org/p");
+  assert.equal(links[2].text, "*not italic* and italic and snake_case_word and code");
+  assert.equal(links[2].kids[0].text, "Alias and Other");
+  assert.equal(links[2].kids[1].text, "pic caption");
+  const tasks = t.kids[1].kids;
+  assert.deepEqual(tasks.map(k => [k.text, k.done]), [["ship it", true], ["later", false], ["checked", true], ["javascript", false]]);
+  assert.equal(tasks[3].url, "");                      // only web links
+  all(t).forEach(n => { assert.equal(typeof n.color, "string"); assert.equal(typeof n.emoji, "string"); });
+});
+
+test("markdown: Logseq page — properties dropped, tabs, title:: as root", () => {
+  const md = "title:: My page\ntags:: x, y\n\n- Block one\n  id:: 64f0a1b2-1111-2222-3333-444455556666\n" +
+    "\t- child ~~old~~ ==hi==\n\t  collapsed:: true\n\t\t- NOW [#A] deep\n\t\t- [#B] DONE deeper\n- Block two\n";
+  const r = I.parseMarkdown(md, "logseq-file");
+  assert.equal(r.ok, true);
+  assert.equal(r.tree.text, "My page");
+  assert.deepEqual(r.tree.kids.map(k => k.text), ["Block one", "Block two"]);
+  assert.equal(r.tree.kids[0].kids[0].text, "child old hi");
+  assert.equal(r.tree.kids[0].kids[0].kids[0].text, "deep");
+  assert.deepEqual([r.tree.kids[0].kids[0].kids[1].text, r.tree.kids[0].kids[0].kids[1].done], ["deeper", true]);
+  assert.equal(all(r.tree).some(n => /::/.test(n.text)), false);
+});
+
+test("markdown: plain indented text, file name root, several H1s", () => {
+  let r = I.parseMarkdown("Root\n\tA\n\t\tA1\n\tB\n", "t");
+  assert.equal(r.tree.text, "Root");
+  assert.deepEqual(r.tree.kids.map(k => k.text), ["A", "B"]);
+  assert.equal(r.tree.kids[0].kids[0].text, "A1");
+  r = I.parseMarkdown("a\n    b\nc\n  d\n", "notes");
+  assert.equal(r.tree.text, "notes");
+  assert.deepEqual(r.tree.kids.map(k => k.text), ["a", "c"]);
+  r = I.parseMarkdown("# One\n- x\n# Two\n- y\n", "file");
+  assert.equal(r.tree.text, "file");
+  assert.deepEqual(r.tree.kids.map(k => k.text), ["One", "Two"]);
+  assert.equal(r.tree.fallback, true);                 // paste-under uses its children
+  assert.deepEqual(I.parseMarkdown("\n  \n", "x"), { ok: false, err: "empty" });
+  assert.deepEqual(I.parseMarkdown("title:: only\n", "x"), { ok: false, err: "empty" });
+  assert.deepEqual(I.parseMarkdown("x".repeat(M.IMPORT_MAX + 1), "x"), { ok: false, err: "size" });
+  // caps: depth and node count come from mm-core
+  const deep = Array.from({ length: 300 }, (_, i) => " ".repeat(i * 2) + "- n" + i).join("\n");
+  assert.ok(depth(I.parseMarkdown(deep, "d").tree) <= 101);
+  // rows: the map is built by mm-core, text stays plain
+  const rows = M.treeToRows(I.parseMarkdown("# R\n- [a](https://a.org) **b**\n", "f").tree, () => "id" + (++seq), 1);
+  assert.equal(rows.nodes[1].text, "a b");
+  assert.equal(rows.nodes[1].url, "https://a.org");
+});
+
+// ---------- SimpleMind ----------
+function smmx(topics, extra) {
+  return '<?xml version="1.0" encoding="utf-8"?>\n<!DOCTYPE simplemind-mindmaps>\n' +
+    '<simplemind-mindmaps generator="SimpleMind" gen-version="2.4.0" doc-version="3" doc-version-min="3">' +
+    '<mindmap><meta><guid guid="x"/><title text="Holiday plan"/><style key="system.soft-colors"/></meta>' +
+    "<topics>" + topics + "</topics>" + (extra || "") + "</mindmap></simplemind-mindmaps>";
+}
+const SM_TOPICS =
+  '<topic id="0" parent="-1" x="1000.00" y="1000.00" text="Trip\\NSummer" palette="1" colorinfo="1"/>' +
+  '<topic id="2" parent="0" x="1200.00" y="900.00" text="Packing" palette="2" colorinfo="2">' +
+  '<note>Bring &amp; check\nlist</note><link urllink="https://pack.example.com/l"/></topic>' +
+  '<topic id="1" parent="0" x="800.00" y="900.00" text="Tickets" palette="3" colorinfo="3"><style fillcolor="#e53935"/></topic>' +
+  '<topic id="3" parent="2" x="1300.00" y="850.00" text="Sun cream"><checkbox checked="true"/></topic>' +
+  '<topic id="7" parent="8" text="cycle a"/><topic id="8" parent="7" text="cycle b"/>' +
+  '<topic id="9" parent="0" text="&lt;b onclick=x&gt;" />';
+
+test("SimpleMind: tree from parent ids, \\N, notes, links, colours, relations", async () => {
+  const xml = smmx(SM_TOPICS, '<relations><relation source="1" target="3" text="needs"/><relation source="1" target="99"/></relations>');
+  const r = await I.parseArchive(zip([{ name: "document/mindmap.xml", data: xml }, { name: "images/a.png", data: "x", store: true }]), "f");
+  assert.equal(r.ok, true);
+  const t = r.tree;
+  assert.equal(t.text, "Trip\nSummer");
+  assert.deepEqual(t.kids.map(k => k.text), ["Packing", "Tickets", "<b onclick=x>"]);  // file order, plain text
+  const pack = byRef(t, "2");
+  assert.equal(pack.note, "Bring & check\nlist");
+  assert.equal(pack.url, "https://pack.example.com/l");
+  assert.equal(byRef(t, "1").color, "red");
+  assert.equal(byRef(t, "3").done, true);
+  assert.equal(byRef(t, "7"), undefined);              // a cycle never reaches the root
+  assert.deepEqual(t.links, [{ from: "1", to: "3", label: "needs" }]);
+  const rows = M.treeToRows(t, () => "id" + (++seq), 1);
+  assert.equal(rows.links.length, 1);
+  // bare mindmap.xml, and two roots → under the map title
+  const two = await I.parseArchive(new Uint8Array(Buffer.from(smmx('<topic id="1" parent="-1" text="A"/><topic id="2" parent="-1" text="B"/><topic id="3" parent="2" text="B1"/>'))), "f");
+  assert.equal(two.tree.text, "Holiday plan");
+  assert.deepEqual(two.tree.kids.map(k => k.text), ["A", "B"]);
+  assert.equal(two.tree.kids[1].kids[0].text, "B1");
+  assert.deepEqual(I.parseSimpleMind(smmx(""), "f"), { ok: false, err: "empty" });
+  assert.deepEqual(I.parseSimpleMind("<simplemind-mindmaps>", "f"), { ok: false, err: "format" });
+});
+
+test("SimpleMind: deep chains are capped", () => {
+  let s = '<topic id="0" parent="-1" text="r"/>';
+  for (let i = 1; i < 400; i++) s += '<topic id="' + i + '" parent="' + (i - 1) + '" text="n' + i + '"/>';
+  const r = I.parseSimpleMind(smmx(s), "f");
+  assert.equal(r.ok, true);
+  assert.ok(depth(r.tree) <= 101);
+});
+
+// ---------- MindManager ----------
+function mmapDoc(body, rels) {
+  return '<?xml version="1.0" encoding="UTF-8" standalone="no"?>' +
+    '<ap:Map xmlns:ap="http://schemas.mindjet.com/MindManager/Application/2003" OId="m1" Gen="0000" dIndex="1">' +
+    "<ap:OneTopic>" + body + "</ap:OneTopic>" + (rels || "") + "</ap:Map>";
+}
+const MM_BODY =
+  '<ap:Topic OId="t0"><ap:SubTopics>' +
+    '<ap:Topic OId="t1"><ap:Text PlainText="Budget" ReadOnly="false"><ap:Font/></ap:Text>' +
+      '<ap:Hyperlink Url="https://budget.example.com/"/>' +
+      '<ap:NotesGroup><ap:NotesXhtmlData PreviewPlainText="Check Q3 numbers"><xhtml:html xmlns:xhtml="http://www.w3.org/1999/xhtml"><xhtml:p>Check <xhtml:b>Q3</xhtml:b> numbers</xhtml:p></xhtml:html></ap:NotesXhtmlData></ap:NotesGroup>' +
+      '<ap:Color FillColor="ff43a047" LineColor="ff000000"/>' +
+      '<ap:SubTopics><ap:Topic OId="t3"><ap:Text PlainText="Invoices"/><ap:Task TaskPercentage="100"/></ap:Topic></ap:SubTopics>' +
+    "</ap:Topic>" +
+    '<ap:Topic OId="t2"><ap:Text PlainText="Team"/>' +
+      '<ap:NotesGroup><ap:NotesXhtmlData><html xmlns="http://www.w3.org/1999/xhtml"><p>Hire <b>two</b> people</p><p>soon</p></html></ap:NotesXhtmlData></ap:NotesGroup>' +
+      '<ap:IconsGroup><ap:Icons><ap:Icon IconType="urn:mindjet:TaskPercentage100" xsi:type="ap:StockIcon"/></ap:Icons></ap:IconsGroup>' +
+    "</ap:Topic>" +
+  '</ap:SubTopics><ap:Text PlainText="Plan 2026"/><ap:TopicViewGroup ViewIndex="0"/></ap:Topic>';
+const MM_RELS =
+  '<ap:Relationships><ap:Relationship OId="r1">' +
+  '<ap:ConnectionGroup Index="0"><ap:Connection><ap:ObjectReference OIdRef="t3"/></ap:Connection></ap:ConnectionGroup>' +
+  '<ap:ConnectionGroup Index="1"><ap:Connection><ap:ObjectReference OIdRef="t2"/></ap:Connection></ap:ConnectionGroup>' +
+  "</ap:Relationship></ap:Relationships>";
+
+test("MindManager: topics, notes, links, colours, tasks, relationships", async () => {
+  const r = await I.parseArchive(zip([{ name: "Document.xml", data: mmapDoc(MM_BODY, MM_RELS) },
+                                      { name: "bin/thumb.png", data: "x", store: true }]), "f");
+  assert.equal(r.ok, true);
+  const t = r.tree;
+  assert.equal(t.text, "Plan 2026");
+  assert.deepEqual(t.kids.map(k => k.text), ["Budget", "Team"]);
+  const b = byRef(t, "t1");
+  assert.equal(b.url, "https://budget.example.com/");
+  assert.equal(b.note, "Check Q3 numbers");
+  assert.equal(b.color, "green");
+  assert.equal(byRef(t, "t3").done, true);
+  assert.equal(byRef(t, "t2").done, true);
+  assert.equal(byRef(t, "t2").note, "Hire two people\nsoon");   // inline tags keep the word order
+  assert.deepEqual(t.links, [{ from: "t3", to: "t2", label: "" }]);
+  // a bare Document.xml, other namespace prefix
+  const other = mmapDoc(MM_BODY).replace(/ap:/g, "mm:").replace("xmlns:mm=", "xmlns:mm=");
+  const r2 = await I.parseArchive(new Uint8Array(Buffer.from(other)), "f");
+  assert.equal(r2.ok, true);
+  assert.equal(r2.tree.kids.length, 2);
+  assert.deepEqual(I.parseMindManager(mmapDoc(""), "f"), { ok: false, err: "empty" });
+  assert.deepEqual(I.parseMindManager("<ap:Map>", "f"), { ok: false, err: "format" });
+  // entities never expand
+  const ent = '<!DOCTYPE x [<!ENTITY a "AAAA">]>' + mmapDoc('<ap:Topic OId="t"><ap:Text PlainText="&a;&a;"/></ap:Topic>');
+  assert.equal(I.parseMindManager(ent, "f").tree.text, "f");
+});
+
+test("parseArchive picks the reader from zip entries; XMind still first", async () => {
+  const both = zip([{ name: "content.json", data: JSON.stringify(zenSheets()) }, { name: "Document.xml", data: mmapDoc(MM_BODY) }]);
+  const r = await I.parseArchive(both, "f");
+  assert.equal(r.ok, true);
+  assert.equal(r.tree.sheets >= 1, true);
+  assert.deepEqual(await I.parseArchive(zip([{ name: "document/other.xml", data: "<x/>" }]), "f"), { ok: false, err: "format" });
+  const big = Buffer.alloc(M.IMPORT_MAX * 3, 0x20);
+  assert.deepEqual(await I.parseArchive(zip([{ name: "document/mindmap.xml", data: big, sizeField: 10 }]), "f"), { ok: false, err: "size" });
+  assert.equal(I.parseXMind, I.parseArchive);
 });

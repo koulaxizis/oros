@@ -859,7 +859,7 @@
       // browser's own install cannot (orOS claims every page of the site)
       if (S.apkUrl && /Android/i.test(navigator.userAgent)) {
         var k = el("a", "btn", t("so.apk"));
-        k.href = S.apkHref ? S.apkHref(id, navigator.userAgent, !inBrowserTab()) : S.apkUrl(id);
+        k.href = S.apkHref ? S.apkHref(id, navigator.userAgent, !inBrowserTab(), phone() ? "online.useoros.twa" : "") : S.apkUrl(id);
         k.title = t("so.apk.title");
         k.rel = "noopener";
         b.parentNode.insertBefore(k, b.nextSibling);

@@ -1,0 +1,11 @@
+{
+  "title": "Η Οδύσσεια",
+  "author": "Όμηρος",
+  "file": "/mnt/onboard/Books/odysseia.epub",
+  "number_of_pages": 300,
+  "entries": [
+    { "chapter": "Ραψωδία α", "page": "/body/DocFragment[2]/body/p[1]/text().0", "pageno": 3, "time": 1704103200, "sort": "highlight", "drawer": "lighten", "color": "green", "text": "Άνδρα μοι έννεπε, Μούσα, πολύτροπον", "note": "Η αρχή" },
+    { "chapter": "Ραψωδία β", "page": "/body/DocFragment[3]/body/p[1]/text().0", "pageno": 20, "time": 1704189600, "sort": "bookmark" }
+  ],
+  "exported": { "datetime": "2024-01-03 10:00:00", "version": "koreader" }
+}

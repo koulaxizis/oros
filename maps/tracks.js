@@ -19,7 +19,10 @@
 //   - A track: statistics, elevation or speed chart, Fit, Follow (the
 //     line + your distance from it and the distance left), export GPX,
 //     rename / colour / folder, delete.
-//   - Import GPX, KML or GeoJSON (Import button, or "Open with" orOS).
+//   - Import GPX, KML or GeoJSON (Import button, or "Open with" orOS);
+//     KMZ, TCX, FIT and Google Takeout / Timeline go through the preview
+//     of import-ui.js, which adds tracks here with addImported (stable
+//     ids, one index write, Undo with removeImported).
 //
 // Safety: names from files go on the page with textContent only;
 // files are read by the strict scanner in tracks-core.js (no DOM, no
@@ -331,6 +334,58 @@
       paint();
       return e;
     });
+  }
+
+  // "Import from another app" (import-ui.js): tracks with stable ids
+  // (import.js trackId). Each GPX file is written first, then the
+  // index once (one write, one dirty mark). A track the user has
+  // already is skipped, never touched. list: [{ id, tr, name, folder }]
+  // → Promise<[ids added]>.
+  function addImported(list) {
+    var fs = fsApi();
+    if (!fs) return Promise.reject(new Error("nofs"));
+    var room = T.LIM.tracks - Object.keys(data.tracks).length, done = [], ents = {};
+    var n0 = Object.keys(data.tracks).length;
+    return (list || []).reduce(function (p, x) {
+      return p.then(function () {
+        if (done.length >= room || !x || !T.ID_RE.test(x.id) || data.tracks[x.id] || ents[x.id]) return;
+        return writeTrack(x.id, x.tr).then(function () {
+          var m = Math.max(Date.now(), (data.tombs[x.id] || 0) + 1);
+          var e = T.entryFor(x.id, x.tr, { name: x.name, folder: x.folder, src: "import",
+            color: T.COLORS[(n0 + done.length) % T.COLORS.length] }, m);
+          if (e) { ents[x.id] = e; done.push(x.id); }
+        }, function () {});
+      });
+    }, Promise.resolve()).then(function () {
+      if (!done.length) return done;
+      done.forEach(function (id) { data.tracks[id] = ents[id]; });
+      saveData();
+      paint();
+      if (panelOpen()) render();
+      return done;
+    });
+  }
+  // Undo: tombstones newer than the entries, the files go too.
+  function removeImported(ids) {
+    var fs = fsApi(), n = 0;
+    (ids || []).forEach(function (id) {
+      var e = data.tracks[id];
+      if (!e) return;
+      if (following && following.id === id) followStop();
+      if (edit && edit.id === id) edit = null;
+      delete data.tracks[id];
+      data.tombs[id] = Math.max(Date.now(), e.m + 1);
+      delete full[id];
+      n++;
+      var path = T.pathOf(id);
+      if (fs && path && typeof fs.rm === "function") Promise.resolve(fs.rm(path)).catch(function () {});
+    });
+    if (!n) return 0;
+    saveData();
+    if (route.id && !data.tracks[route.id]) route = { v: "list" };
+    paint();
+    if (panelOpen()) render();
+    return n;
   }
 
   // ---------- map layers ----------
@@ -709,7 +764,7 @@
       live = null;
       var r0 = el("div", "osm-actions");
       r0.appendChild(button(t("rec.start"), "osm-btn primary", function () { recStart(false); }));
-      var imp = button(t("import"), "osm-btn", function () { fileIn.click(); });
+      var imp = button(t("import"), "osm-btn", pickImport);
       r0.appendChild(imp);
       // Wave 10B: "Plan a track" (planner.js loads after this file).
       var PL = window.__orosMapsPlanner;
@@ -794,7 +849,7 @@
     body.appendChild(ul);
     if (rec) {
       var r2 = el("div", "osm-actions");
-      r2.appendChild(button(t("import"), "osm-btn", function () { fileIn.click(); }));
+      r2.appendChild(button(t("import"), "osm-btn", pickImport));
       body.appendChild(r2);
     }
     panel.appendChild(body);
@@ -1366,7 +1421,7 @@
   // ---------- import ----------
   var fileIn = el("input", "");
   fileIn.type = "file";
-  fileIn.accept = ".gpx,.kml,.geojson,.json,application/gpx+xml,application/vnd.google-earth.kml+xml,application/geo+json";
+  fileIn.accept = ".gpx,.kml,.geojson,.json,.kmz,.tcx,.fit,.csv,.zip,application/gpx+xml,application/vnd.google-earth.kml+xml,application/geo+json";
   fileIn.multiple = true;
   fileIn.hidden = true;
   fileIn.addEventListener("change", function () {
@@ -1374,8 +1429,19 @@
     fileIn.value = "";
     importFiles(files);
   });
+  // KMZ, Google Takeout / Timeline, TCX and FIT go to the preview of
+  // import-ui.js ("Import from another app"); GPX, KML and GeoJSON
+  // stay on the path below.
   function importFiles(files) {
     if (!fsApi()) { toast(t("nofs")); return Promise.resolve(); }
+    var UI = window.__orosMapsImport;
+    return UI ? UI.files(files, importPlain) : importPlain(files);
+  }
+  function pickImport() {
+    var UI = window.__orosMapsImport;
+    if (UI) UI.pick(importFiles); else fileIn.click();
+  }
+  function importPlain(files) {
     var done = [], lastId = null;
     return files.reduce(function (p, f) {
       return p.then(function () {
@@ -1488,6 +1554,7 @@
   window.__orosMapsTracks = {
     data: function () { return T.normalizeTracks(data); },
     setMode: setMode, open: open, importText: importText,
+    addImported: addImported, removeImported: removeImported, importFiles: importFiles,
     feed: onFix,
     rec: { start: recStart, pause: recPause, finish: recFinish, end: recEnd, state: function () { return rec; } },
     follow: function () { return following; },

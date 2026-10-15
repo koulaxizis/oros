@@ -44,14 +44,14 @@ test("contacts: fields, types, dedupe, tombstones, sort, hash", () => {
   assert.notEqual(P.contactRows({ contacts: [contact({ id: "a", note: "x" })] })[0].h, rows[0].h);
 });
 
-test("contacts: a contact newer than its tombstone is alive; photos only as small JPEG/PNG", () => {
+test("contacts: a contact newer than its tombstone is alive; photos never go to the phone (CT-NP)", () => {
   const rows = P.contactRows({
     contacts: [contact({ id: "r", mtime: 20, photo: "data:image/jpeg;base64,AAAA" }),
       contact({ id: "s", photo: "data:image/svg+xml;base64,AAAA" }),
       contact({ id: "t", photo: "data:image/png;base64," + "A".repeat(80000) })],
     deleted: [{ id: "r", mtime: 15 }]
   });
-  assert.deepEqual(rows.map((r) => [r.id, r.photo]), [["r", "AAAA"], ["s", null], ["t", null]]);
+  assert.deepEqual(rows.map((r) => [r.id, r.photo]), [["r", null], ["s", null], ["t", null]]);
   assert.deepEqual(P.contactRows(null), []);
 });
 
@@ -247,7 +247,7 @@ test("phone → orOS: new, edited and deleted contacts (v2)", () => {
   assert.deepEqual(a.im, [{ v: "anna", type: "home" }], "orOS-only fields kept");
   assert.deepEqual(a.labelIds, ["lbl-x"]);
   assert.equal(a.relations.length, 1);
-  assert.equal(a.photo, "data:image/jpeg;base64,AAAA", "orOS photo wins");
+  assert.equal(a.photo, "data:image/jpeg;base64,AAAA", "stored fields orOS has stay as they are");
   assert.equal(a.mtime, 500);
 
   assert.ok(!res.blob.contacts.some((c) => c.id === "c2"));
@@ -258,7 +258,8 @@ test("phone → orOS: new, edited and deleted contacts (v2)", () => {
   const n = res.blob.contacts.find((c) => c.id === id);
   assert.deepEqual(n.phones, [{ v: "6944", type: "mobile" }]);
   assert.deepEqual(n.events, [{ day: "11-03", year: 1985, type: "birthday", label: "" }]);
-  assert.equal(n.photo, "data:image/png;base64,iVBORw0K");
+  assert.equal(n.photo, undefined, "CT-NP: a phone photo never comes in");
+  assert.equal(n.avatar, null);
   assert.deepEqual([n.im, n.relations, n.labelIds], [[], [], []]);
   assert.equal(res.blob.contacts.length, 2);
 });
@@ -410,4 +411,12 @@ test("healthIn: water, workouts and steps from other apps, once, never over a de
     health: { en: [], tombs: { "en:hc-st-20261013": now } } }, inc, now, names);
   assert.equal(deleted.fitness, null, "a workout deleted in orOS is not brought back");
   assert.deepEqual(deleted.health.en.map((e) => e.id), ["hc-st-20261014"], "nor a deleted day of steps");
+});
+
+test("contacts: an orOS id stored twice becomes one phone contact", () => {
+  const rows = P.contactRows({ contacts: [contact({ id: "x", given: "Elena" }), contact({ id: "x", given: "Elena", family: "K" })] });
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].family, "P");
+  assert.match(require("fs").readFileSync(path.join(__dirname, "..", "android", "app", "src", "main", "java",
+    "online", "useoros", "twa", "ContactsWriter.java"), "utf8"), /!done\.add\(id\)/);
 });

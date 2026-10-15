@@ -504,6 +504,12 @@ select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .pin-area, .pin-form { display: flex; flex-direction: column; gap: 8px; }
 .pin-in { max-width: 240px; letter-spacing: 0.2em; }
 .ph-view { width: min(720px, calc(100vw - 24px)); }
+/* Import from other apps: the preview */
+.imp-rows { margin: 0; display: flex; flex-direction: column; }
+.imp-row { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 12px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+.imp-row dt { font-size: 14px; color: var(--text-dim); min-width: 0; overflow-wrap: anywhere; }
+.imp-row dd { margin: 0; font-size: 14px; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+#imp-title { overflow-wrap: anywhere; }
 .ph-img { display: flex; justify-content: center; }
 .ph-img img { max-width: 100%; max-height: calc(100dvh - 160px); border-radius: 10px; object-fit: contain; }
 .lock {

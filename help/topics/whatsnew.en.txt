@@ -1,6 +1,47 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.39.00
+- Media Shelf, Bookmarks, Maps, Radio and Library import from other apps: StoryGraph, IMDb, Trakt, MyAnimeList, Discogs, BoardGameGeek, Instapaper, wallabag, browser bookmarks, KMZ, Google Takeout places and Timeline, TCX, FIT, M3U/PLS playlists, Kindle clippings, KOReader and Readwise, with a preview and Undo.
+
+## Version 2.38.00
+- Update online in Contacts and CRM now also reads the GitHub, Bluesky and Mastodon profiles a contact links to, looks up businesses on OpenStreetMap and Wikidata, and offers search links when you check one contact.
+
+## Version 2.37.00
+- To-Do, Kanban, Mind Map and Wiki import from other apps: Todoist, TickTick, Google Tasks, todo.txt, Asana, Jira, ClickUp, SimpleMind, MindManager, Markdown outlines, Notion, TiddlyWiki, MediaWiki and Confluence, with a preview and Undo.
+
+## Version 2.36.00
+- Contacts no longer keeps photos, so they can't fill your storage or stop sync. Each contact shows its initials or a random 8-bit avatar (Picture › 8-bit avatar, Another one for a new face).
+
+## Version 2.35.00
+- Contacts, CRM and Newsletter can fill in missing details from online sources (Gravatar and the person's own website or link page). You review every suggestion with its source before anything is saved, and Undo puts it back.
+
+## Version 2.34.00
+- Calendar, To-Do, Reader and Media Shelf can import once from your Google account: events, tasks, YouTube subscriptions and Google Books shelves. Nothing stays connected.
+
+## Version 2.33.00
+- Passwords: import from Proton Pass, 1Password, LastPass, Dashlane, NordPass, Enpass and Apple Passwords, plus two-factor codes from Aegis, 2FAS and Google Authenticator, with a preview and Undo.
+
+## Version 2.32.00
+- Layout opens SVG files (for example from Affinity), several at once as pages, and pictures in an opened PDF become their own frames.
+- Contacts: photos are kept small (128 px), so many contact photos no longer fill the browser storage and pause sync.
+
+## Version 2.31.00
+- Budget, Split, Garage and Health can import from other apps (YNAB, Wallet, Splitwise, Tricount, Fuelio, Drivvo, Withings, Samsung Health, Apple Health and more), with a preview and Undo.
+- Android app: reopening orOS from a link no longer crashes it, and each contact appears only once on the phone. Install the new APK for this.
+
+## Version 2.30.01
+- Android app: APK downloads and Get orOS now open in your default browser, in a normal tab, where the download finishes. Install the new APK once for this.
+
+## Version 2.30.00
+- Notes can now also import from Evernote, Google Keep, Simplenote and Joplin, with a preview and Undo.
+
+## Version 2.29.00
+- Layout opens Scribus shapes, gradients and layers properly, reads .sla.gz files, and lets you give any shape a gradient.
+
+## Version 2.28.00
+- Habits, Mood, One-Sentence Diary and Cycle can import from other apps (Loop, Habitica, Daylio, Bearable, Day One, Journey, Diaro, drip., Clue, Flo and more), with a preview and Undo.
+
 ## Version 2.27.00
 - Notes can import from Obsidian, Standard Notes and any folder of Markdown files; importing again adds only what is new, and Undo removes it.
 

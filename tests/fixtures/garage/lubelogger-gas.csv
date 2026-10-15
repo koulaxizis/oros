@@ -1,0 +1,4 @@
+Date,Odometer,FuelConsumed,Cost,FuelEconomy,IsFillToFull,MissedFuelUp,Notes,Tags
+4/1/2026,20000,12.5,45.00,0,True,False,,
+4/15/2026,20375,12.5,46.00,30.00,True,False,Road trip,trip
+4/28/2026,20650,9.0,33.00,0,False,False,,

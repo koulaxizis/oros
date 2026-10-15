@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "2.27.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "2.39.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -2743,7 +2743,16 @@
     row.innerHTML = DOWNLOAD_ICON_SVG + "<span>" + escapeHtml(window.t("menu.getOros")) + "</span>";
     row.addEventListener("click", function () {
       closeMenu();
-      window.open("download/" + (window.orosLang === "el" ? "?lang=el" : ""), "_blank", "noopener");
+      var page = "download/" + (window.orosLang === "el" ? "?lang=el" : "");
+      // In the orOS Android app: the default browser, a normal tab (its
+      // APK downloads never finish in the app's in-app tab, and a new
+      // window from the app closed it; Chris 2026-10-15). Older apps
+      // without BrowserActivity open the page in the app instead.
+      var S = window.orosSolo;
+      var pkg = S && S.apkPkgOf ? S.apkPkgOf(window, "oros") : "";
+      if (!pkg && window.orosPhone && window.orosPhone.available && window.orosPhone.available()) pkg = "online.useoros.twa";
+      if (pkg && S && S.browserHref && /Android/i.test(navigator.userAgent || "")) { location.href = S.browserHref("https://useoros.online/" + page, pkg); return; }
+      window.open(page, "_blank", "noopener");
     });
     section.appendChild(row);
     host.appendChild(section);
@@ -5573,7 +5582,7 @@
           en: "Open street-level photos in Discover (Maps)", el: "Ανοιχτές φωτογραφίες δρόμου στην Ανακάλυψη (Χάρτες)" },
         { name: "Photon", url: "https://photon.komoot.io/",
           by: "komoot", lic: "Apache-2.0 (software), ODbL (data)",
-          en: "Place search (Maps)", el: "Αναζήτηση τοποθεσιών (Χάρτες)" },
+          en: "Place search (Maps); businesses in Update online (Contacts, CRM)", el: "Αναζήτηση τοποθεσιών (Χάρτες)· επιχειρήσεις στην Ενημέρωση online (Επαφές, Πελάτες)" },
         { name: "OSRM", url: "https://project-osrm.org/",
           by: "Project OSRM contributors", lic: "BSD-2-Clause (software)",
           en: "Car routes, demo server (Maps)", el: "Διαδρομές με αυτοκίνητο, δοκιμαστικός server (Χάρτες)" },
@@ -5588,7 +5597,7 @@
           en: "Notes, sign-in, place edits and GPS trace uploads (Maps)", el: "Σημειώσεις, σύνδεση, διορθώσεις μερών και ανέβασμα GPS traces (Χάρτες)" },
         { name: "Overpass API", url: "https://overpass-api.de/",
           by: "Roland Olbricht & the Overpass community; data by OpenStreetMap contributors", lic: "ODbL (data)",
-          en: "Places and quests around you, speed limits while driving (Maps)", el: "Μέρη και ερωτήσεις γύρω σου, όρια ταχύτητας στην οδήγηση (Χάρτες)" },
+          en: "Places and quests around you, speed limits while driving (Maps); business details in Update online (Contacts, CRM)", el: "Μέρη και ερωτήσεις γύρω σου, όρια ταχύτητας στην οδήγηση (Χάρτες)· στοιχεία επιχειρήσεων στην Ενημέρωση online (Επαφές, Πελάτες)" },
         { name: "Radio Browser", url: "https://www.radio-browser.info/",
           by: "Alex Segler & the community", lic: { en: "Free community API", el: "Δωρεάν κοινοτικό API" },
           en: "Station directory (Radio)", el: "Κατάλογος σταθμών (Ραδιόφωνο)" },
@@ -5597,7 +5606,7 @@
           en: "Channel directory (Television)", el: "Κατάλογος καναλιών (Τηλεόραση)" },
         { name: "Wikidata", url: "https://www.wikidata.org/",
           by: "Wikidata editors, Wikimedia Foundation", lic: "CC0 (data)",
-          en: "Authors and works (Public Domain); books, films, series and games (Media Shelf)", el: "Δημιουργοί και έργα (Κοινό κτήμα)· βιβλία, ταινίες, σειρές και παιχνίδια (Το ράφι μου)" },
+          en: "Authors and works (Public Domain); books, films, series and games (Media Shelf); Update online (Contacts, CRM)", el: "Δημιουργοί και έργα (Κοινό κτήμα)· βιβλία, ταινίες, σειρές και παιχνίδια (Το ράφι μου)· Ενημέρωση online (Επαφές, Πελάτες)" },
         { name: "Frankfurter", url: "https://frankfurter.dev/",
           by: "Hakan Ensari; rates: European Central Bank", lic: { en: "MIT (software), ECB reference rates (data)", el: "MIT (λογισμικό), ισοτιμίες αναφοράς ΕΚΤ (δεδομένα)" },
           en: "Exchange rates (Unit Converter, Budget)", el: "Ισοτιμίες (Μετατροπέας μονάδων, Έσοδα & Έξοδα)" },
@@ -5724,9 +5733,15 @@
         { name: "Google People API · Microsoft Graph", url: "https://developers.google.com/people",
           by: "Google LLC; Microsoft Corporation; your own account", lic: { en: "Their terms, one sign-in per import, nothing kept", el: "Οι όροι τους, μία σύνδεση ανά εισαγωγή, τίποτα δεν κρατιέται" },
           en: "One-time contacts import (Contacts › From an account)", el: "Εισαγωγή επαφών μία φορά (Επαφές › Από λογαριασμό)" },
-        { name: "Gravatar · Libravatar", url: "https://www.libravatar.org/",
-          by: "Automattic Inc.; the Libravatar project", lic: { en: "Their terms; only a hashed e-mail is sent, on request", el: "Οι όροι τους· στέλνεται μόνο κωδικοποιημένο email, όταν το ζητήσεις" },
-          en: "Profile pictures for contacts (Contacts › Find photos)", el: "Φωτογραφίες προφίλ για επαφές (Επαφές › Εύρεση φωτογραφιών)" },
+        { name: "Google Calendar · Tasks · YouTube Data · Books APIs", url: "https://developers.google.com/calendar",
+          by: "Google LLC; your own account", lic: { en: "Their terms, one sign-in per import, nothing kept", el: "Οι όροι τους, μία σύνδεση ανά εισαγωγή, τίποτα δεν κρατιέται" },
+          en: "One-time imports from Google (Calendar, To-Do, Reader, Media Shelf)", el: "Εισαγωγή από Google μία φορά (Ημερολόγιο, Εργασίες, Αναγνώστης, Το ράφι μου)" },
+        { name: "Gravatar", url: "https://gravatar.com/",
+          by: "Automattic Inc.", lic: { en: "Their terms; only a hashed e-mail is sent, on request", el: "Οι όροι τους· στέλνεται μόνο κωδικοποιημένο email, όταν το ζητήσεις" },
+          en: "Public profiles (Contacts, CRM and Newsletter › Update online)", el: "Δημόσια προφίλ (Επαφές, Πελάτες και Ενημερωτικό δελτίο › Ενημέρωση online)" },
+        { name: "GitHub · Bluesky · Mastodon public APIs", url: "https://docs.bsky.app/",
+          by: "GitHub, Inc.; Bluesky Social PBC; each Mastodon server", lic: { en: "Their terms; public profiles only, no sign-in, on request", el: "Οι όροι τους· μόνο δημόσια προφίλ, χωρίς σύνδεση, όταν το ζητήσεις" },
+          en: "Update from online sources (Contacts, CRM)", el: "Ενημέρωση από online πηγές (Επαφές, Πελάτες)" },
         { name: "timologisi.online", url: "https://www.timologisi.online/",
           by: "Novus Conceptus; your own account", lic: { en: "Your own account and key", el: "Ο δικός σου λογαριασμός και κλειδί" },
           en: "Connected services: send invoices to myDATA (Invoices)", el: "Συνδεδεμένες υπηρεσίες: αποστολή παραστατικών στο myDATA (Τιμολόγια)" },

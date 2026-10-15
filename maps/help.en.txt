@@ -20,7 +20,7 @@ Type a place or address in `Search a place…`. Suggestions appear from the thir
 - Put saved places in groups, as in OsmAnd: the folder button next to a place, or `Group` in a saved place's popup, picks a group or makes a `New group` with a name and a colour. The pin on the map takes the group's colour.
 - The list shows each group with its places, then `No group`. Next to a group: the arrow folds it, the eye hides its pins from the map, the pencil edits it and the arrow down exports it as a GPX file.
 - `Groups` at the top lists every group with how many places it has; tap one to rename it, change its colour or delete it. Deleting a group keeps its places, without a group.
-- `Import` reads the waypoints of a GPX, KML or GeoJSON file (for example favourites exported from OsmAnd) as saved places, into a new group named after the file, a group you have, or none. A file with only waypoints opened in `My tracks` goes the same way.
+- `Import` reads the waypoints of a GPX, KML or GeoJSON file (for example favourites exported from OsmAnd) as saved places, into a new group named after the file, a group you have, or none. A file with only waypoints opened in `My tracks` goes the same way. KMZ files and Google saved places and lists come in too, a group for each list (see Import from another app).
 
 ## Discover
 
@@ -158,7 +158,7 @@ Record where you walk, ride or drive, keep your tracks and follow them again, li
 2. You can close the panel: a red chip at the top shows the recording, tap it to come back.
 3. `Stop` asks for a name and saves the track. `Keep recording` goes back, `Discard` throws it away.
 4. Tap a track for its statistics and a chart of elevation or speed. `Show all` fits it on the map. `Follow` draws it thick and tells you how far you are from it and how much is left. `Export GPX` saves a copy anywhere. `Name, colour, folder` organises it, and the eye button shows or hides it on the map.
-5. `Import file` brings in GPX, KML or GeoJSON files. On a computer with orOS installed, `Open with` › orOS works for .gpx, .kml and .geojson files too.
+5. `Import file` brings in GPX, KML or GeoJSON files, and KMZ, TCX, FIT and Google exports (see Import from another app below). On a computer with orOS installed, `Open with` › orOS works for .gpx, .kml and .geojson files too.
 
 > Keep the screen on while you record. With the screen off, or with orOS in the background, the browser stops GPS and the track gets a straight gap. Maps keeps the screen awake while it records. If the tab closes or the device restarts, nothing is lost: next time Maps offers `Continue`, `Save` or `Discard`.
 
@@ -201,6 +201,21 @@ Offline, new parts are straight lines and there is no elevation. The plan stays 
 The heatmap is drawn on your device from your GPX files. A track whose file hasn't arrived yet counts with its simplified line.
 
 Each track is a GPX file in Files › Maps › Tracks, so Vault Drive backs it up and brings it to your other devices. Until the file arrives, another device shows a simplified line and the statistics.
+
+## Import from another app
+
+Bring your tracks and saved places over from another maps or sports app. Press `Import file` in `My tracks` or `Import` in `Saved places` and pick one or more files. Maps recognises them and shows what it found before anything is saved: how many tracks and places, where they go (My tracks and its folder, or Saved places with a group for each list), the dates, what you have already and what is skipped. Press `Import`; the message that follows has `Undo`.
+
+How to export from each app:
+- **Organic Maps**, **OsmAnd**: share or export a list or a track as KMZ (or KML, GPX). Tracks go to My tracks, places to a group named after the list.
+- **Google My Maps**: the map's menu › `Export to KML/KMZ`. **Google Earth**: right-click a folder or place › `Save Place As` (KMZ). Pictures in the file are ignored.
+- **Google Maps saved places**: Google Takeout (takeout.google.com), choose `Maps (your places)` and `Saved`. Pick the downloaded ZIP as it is, or `Saved Places.json` and the list files (`Want to go.csv`, `Favourite places.csv`…). Each list becomes a group. Google keeps only a link for many places in lists, without coordinates; those are counted as skipped (Maps does not look them up online).
+- **Google Timeline**: on your phone, Google Maps › your picture › `Your Timeline` › the menu › `Location and privacy settings` › `Export Timeline data`; this gives `Timeline.json`. Older Takeout exports with `Records.json` or the monthly files of `Semantic Location History` work too.
+- **Garmin**: in Garmin Connect, open an activity › the gear › `Export to TCX` or `Export Original` (a FIT file, sometimes in a ZIP). Other watches and apps that save TCX or FIT files work the same way.
+
+Your Timeline is personal. Maps reads it on this device and tells you so in the preview; it leaves the device only if you sync Maps data. Nothing is imported until you pick the days with `From` and `To` (at most 366 days at a time). You then get one track for each day, in the folder `Timeline`, and, if you want, the places you visited in the group `Timeline places`, most visited first.
+
+Importing the same file again adds only what's missing and never makes a second copy. Tracks and places you have already stay exactly as they are.
 
 ## Offline maps
 

@@ -1,0 +1,15 @@
+#EXTM3U
+#EXTINF:-1 tvg-logo="https://img.example.org/fip.png" group-title="Music",FIP
+https://icecast.radiofrance.fr/fip-hifi.aac
+#EXTINF:-1 tvg-logo="http://img.example.org/old.png",Old Station, with comma
+http://stream.example.com:8000/live
+#EXTVLCOPT:network-caching=1000
+#EXTINF:-1,Duplicate FIP
+https://icecast.radiofrance.fr/fip-hifi.aac/
+#EXTINF:-1,A playlist link
+https://example.net/listen.pls
+#EXTINF:-1,Broken
+javascript:alert(1)
+#EXTINF:-1,<img src=x onerror=alert(1)>
+https://evil.example/stream.mp3
+https://bare.example.org/radio.mp3

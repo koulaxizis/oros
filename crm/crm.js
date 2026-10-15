@@ -102,6 +102,9 @@
       "toast.noInv": "The Invoices app is not available.", "toast.noQuote": "The Quote app is not available.",
       "toast.quoteCur": "Quote works in EUR or USD. Change the currency in CRM settings, or create the quote in Quote.",
       "set.import": "Import customers (CSV)",
+      "en.all": "Update customers from online sources", "en.one": "Update online",
+      "en.empty": "No customer has an e-mail address, phone or website to look up.",
+      "en.done": "{n} customer(s) updated", "en.link": "Link",
       "imp.title": "Import customers", "imp.new": "New customers: {n}", "imp.dup": "Already in CRM (skipped): {n}",
       "imp.noName": "Rows without a name (skipped): {n}", "imp.over": "Over the limit of {max} customers (skipped): {n}",
       "imp.tags": "New tags: {n}", "imp.more": "and {n} more", "imp.go": "Import {n}", "imp.none": "There is nothing new to import.",
@@ -215,6 +218,9 @@
       "toast.noInv": "Η εφαρμογή Τιμολόγια δεν είναι διαθέσιμη.", "toast.noQuote": "Η εφαρμογή Προσφορές δεν είναι διαθέσιμη.",
       "toast.quoteCur": "Οι Προσφορές δουλεύουν σε EUR ή USD. Άλλαξε το νόμισμα στις ρυθμίσεις του CRM ή φτιάξε την προσφορά στις Προσφορές.",
       "set.import": "Εισαγωγή πελατών (CSV)",
+      "en.all": "Ενημέρωση πελατών από online πηγές", "en.one": "Ενημέρωση online",
+      "en.empty": "Κανένας πελάτης δεν έχει email, τηλέφωνο ή ιστοσελίδα για αναζήτηση.",
+      "en.done": "Ενημερώθηκαν {n} πελάτες", "en.link": "Σύνδεσμος",
       "imp.title": "Εισαγωγή πελατών", "imp.new": "Νέοι πελάτες: {n}", "imp.dup": "Υπάρχουν ήδη (παραλείπονται): {n}",
       "imp.noName": "Γραμμές χωρίς όνομα (παραλείπονται): {n}", "imp.over": "Πάνω από το όριο των {max} πελατών (παραλείπονται): {n}",
       "imp.tags": "Νέες ετικέτες: {n}", "imp.more": "και άλλοι {n}", "imp.go": "Εισαγωγή {n}", "imp.none": "Δεν υπάρχει κάτι νέο για εισαγωγή.",
@@ -825,6 +831,7 @@
     acts.appendChild(txtBtn("deal", t("act.deal"), function () { dealEditor(null, c.id); }));
     if (canInvoice()) acts.appendChild(txtBtn("doc", t("act.inv"), function () { newInvoice(c, null); }));
     if (canQuote()) acts.appendChild(txtBtn("doc", t("act.quote"), function () { newQuote(c, null); }));
+    if (c.email || c.phone || c.web) acts.appendChild(txtBtn("", t("en.one"), function () { enrichOpen([c]); }));
     box.appendChild(acts);
 
     // details
@@ -2073,6 +2080,7 @@
     list.appendChild(button(t("set.stages"), "sheet-btn", stagesEditor));
     list.appendChild(button(t("set.tags"), "sheet-btn", function () { tagManager(null); }));
     list.appendChild(button(t("set.import"), "sheet-btn", function () { dlg.close(); importCsv(); }));
+    list.appendChild(button(t("en.all"), "sheet-btn", function () { dlg.close(); enrichOpen(data.cust); }));
     if (PL && PL.has()) list.appendChild(button(PL.label(), "sheet-btn", function () { dlg.close(); PL.open(); }));
     if (WF) list.appendChild(button(WF.label(), "sheet-btn", function () { dlg.close(); WF.open(); }));
     list.appendChild(button(t("set.export"), "sheet-btn", exportCsv));
@@ -2411,6 +2419,58 @@
       commit();
     });
     return true;
+  }
+  // Update from online sources (../enrich.js + ../enrichui.js): the
+  // customer's own e-mail, phone and website are the keys. A field
+  // that is empty is filled; anything else found goes into the note
+  // as "Label: value", so nothing the user typed is replaced.
+  function enrichRec(c) {
+    var names = [c.name, c.alias || ""];
+    (c.people || []).forEach(function (p) { if (p.n) names.push(p.n); });
+    var shared = {};
+    if (c.email) {
+      var mail = c.email.trim().toLowerCase();
+      if (data.cust.filter(function (x) { return x.email && x.email.trim().toLowerCase() === mail; }).length > 1) shared[mail] = 1;
+    }
+    return { names: names.filter(Boolean), emails: c.email ? [c.email] : [], phones: c.phone ? [c.phone] : [],
+             sites: c.web ? [c.web] : [], shared: shared, kind: c.kind === "person" ? "person" : "org",
+             place: [c.addr, c.country].filter(Boolean).join(", "),
+             has: { photo: true, birthday: true, job: c.kind !== "person" || !!c.job, org: true, address: !!c.addr, name: true } };
+  }
+  function enrichApply(picks) {
+    var upds = [];
+    picks.forEach(function (p) {
+      var c = C.byId(data.cust, p.id);
+      if (!c) return;
+      var r = Object.assign({}, c), extra = [];
+      p.list.forEach(function (s) {
+        var v = String(s.v);
+        if (s.k === "link") { if (!r.web) r.web = v; else if (r.web !== v) extra.push((s.label || t("en.link")) + ": " + v); }
+        else if (s.k === "phone") { if (!r.phone) r.phone = v; else extra.push(t("fact.phone") + ": " + v); }
+        else if (s.k === "email") { if (!r.email) r.email = v; else extra.push(t("fact.email") + ": " + v); }
+        else if (s.k === "address" && !r.addr) r.addr = v;
+        else if (s.k === "job" && !r.job) r.job = v;
+      });
+      extra = extra.filter(function (line) { return (r.note || "").indexOf(line) < 0; });
+      if (extra.length) r.note = ((r.note ? r.note + "\n" : "") + extra.join("\n")).slice(0, 2000);
+      if (JSON.stringify(r) !== JSON.stringify(c)) upds.push({ k: "cust", row: r });
+    });
+    if (!upds.length) return 0;
+    return applyRows({}, upds, t("en.done", { n: upds.length })) ? upds.length : 0;
+  }
+  function enrichOpen(custs) {
+    var items = custs.filter(function (c) { return c.email || c.phone || c.web; })
+      .map(function (c) { return { id: c.id, name: c.name, rec: enrichRec(c) }; });
+    if (!items.length) { showToast(t("en.empty")); return; }
+    var go = function () {
+      window.OrosEnrichUI.open({ lang: LANG, items: items, apply: enrichApply, kinds: ["link", "phone", "email", "address", "job"] });
+    };
+    if (window.OrosEnrichUI) { go(); return; }
+    var s = document.createElement("script");
+    s.src = "../enrichui.js";
+    s.onload = go;
+    s.onerror = function () { showToast(t("en.empty")); };
+    document.head.appendChild(s);
   }
   // The web form (crm/webform.js): its dialog, checks and data.wf.
   var WF = window.OrosCrmWebForm || null;
