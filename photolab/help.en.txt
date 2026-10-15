@@ -2,7 +2,7 @@
 Edit photos and pictures with layers, selections, brushes, retouch tools, filters and adjustments, in the spirit of Photoshop, GIMP and Photopea. Everything works offline.
 
 ## Getting started
-- `New picture` starts an empty picture: pick a size and a background. `Open picture` opens a photo from your device (also a camera RAW file, or a Photoshop or OpenRaster file with its layers), and `Paste` opens a picture you copied. You can also drop a picture file anywhere on the app.
+- `New picture` starts an empty picture: pick a size and a background. `Open picture` opens a photo from your device (also a camera RAW file, or a Photoshop, OpenRaster or Krita file with its layers), and `Paste` opens a picture you copied. You can also drop a picture file anywhere on the app.
 - Your pictures are under `Projects`. Tap or click one to open it; the pencil renames it and the bin deletes it (`Undo` in the message brings it back).
 - In the editor, the button at the top left goes back to `Projects`. Your work is saved as you go.
 
@@ -67,6 +67,7 @@ When Atelier sends a picture here to edit, a `Done` button appears at the top. I
 ## Photoshop and OpenRaster files
 - Photoshop files (`.psd`) and OpenRaster files (`.ora`, from GIMP, Krita and MyPaint) open with their layers: names, positions, opacity, blend modes and visibility.
 - Groups are flattened into the layer list (a hidden group hides its layers) and layer masks are applied to the layers' pixels. Text, smart objects and effects come in as the pixels the file saved for them.
+- Krita files (`.kra`) open too: just open the file you saved in Krita. Ordinary paint layers in 8-bit RGBA come in with their names, positions, opacity, blend modes and visibility; vector, file, filter and fill layers and masks are left out. When the layers use another colour depth (16-bit, float, CMYK, grey), the file opens as one layer from the picture Krita saves alongside them, and Photo Lab tells you so. For a sure result with any Krita file, use File › Export in Krita and pick OpenRaster (`.ora`).
 - `Export…` with `PSD (Photoshop, with layers)` or `OpenRaster (GIMP, Krita, with layers)` keeps your layers for Photoshop, Photopea, GIMP or Krita. Text, shapes, masks, styles and adjustment layers go as pixels.
 
 ## Lightroom presets

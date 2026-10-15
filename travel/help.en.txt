@@ -66,6 +66,10 @@ The same menu can send `Send “Before I leave” to To-Do` or `Send “Still to
 
 On the trip list, `More` has `Export all (JSON)` and `Import (JSON)`. An import merges with your trips and overwrites nothing.
 
+`Import from Polarsteps or TripIt` (also in that menu) brings in trips from those apps and shows what it found first: per trip, the entries and journal days it adds and what is already here. Nothing you already have changes, importing the same file again adds only what is missing, and `Undo` on the message right after removes the whole import.
+- Polarsteps: in the app's account settings, ask for your data ("Download my data") and pick the .zip you get by e-mail. Each step becomes an itinerary entry with its place on the map, and the step texts go to the journal. Photos and the recorded route are not imported.
+- TripIt: in TripIt's settings, open the calendar feed and save it as an .ics file (or export a trip to a calendar). The whole-trip event becomes the trip; flights, hotels (check-in to check-out), trains, car hire and restaurants become entries, and anything else an `Other` entry with its text as a note. Times in UTC show in this device's time zone.
+
 ## Sync and backup
 Trips, packing lists, itineraries, map points, budgets, expenses, journal texts and your templates sync between your devices through [orOS sync](help:t/sync). A tick on your phone and a change on your computer both survive. Attached files and journal photos are on the orOS disk and reach your other devices through Vault Drive; until then they show `Not on this device yet`. The open trip, tab, map day and filters stay on each device. Besides the JSON export, the orOS [backup](help:t/backup) keeps a copy.
 

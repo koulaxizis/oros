@@ -121,6 +121,13 @@
       "imp.hint": "Importing adds entries and never changes what is here. The same file twice adds nothing. Entries you delete stay deleted if you import again.",
       "imp.go": "Import", "imp.none": "Nothing new to import", "imp.bad1": "Not a Toggl, Clockify or Harvest CSV export",
       "toast.imported": "Imported: {n} entries", "toast.imported1": "Imported: 1 entry",
+      "set.import2": "Import from another app (Toggl, Clockify, Harvest, Kimai, Tempo)",
+      "imp.bad2": "Not an export this app can read (Toggl, Clockify, Harvest, Kimai, Jira Tempo; CSV or Excel)",
+      "imp.lib": "The Excel reader is missing. Save the sheet as CSV and import that.",
+      "imp.user": "Whose entries", "imp.allUsers": "Everyone in the file ({n})", "imp.other": "Other people's entries, left out: {n}",
+      "imp.kimai": "Customer → client · Project · Activity → task · Description · Tags · Hourly rate → rate of a new project · Exported → invoiced.",
+      "imp.tempo": "Project Name → project · Account Customer → client · issue key and summary → task · Work Description → description. A work date without a time is placed from 09:00, one entry after another.",
+      "imp.undone": "Import undone",
       "toast.save": "Could not save: storage is full", "toast.started": "Started: {p}",
       "toast.stopped": "Stopped: {p}, {d}", "toast.started": "Started: {p}", "toast.added": "Added {d}", "toast.deleted": "Entry deleted",
       "toast.saved": "Saved", "toast.undo": "Undo", "toast.badTime": "The end must be after the start",
@@ -211,6 +218,13 @@
       "imp.hint": "Η εισαγωγή μόνο προσθέτει καταγραφές και δεν αλλάζει ό,τι υπάρχει. Το ίδιο αρχείο δεύτερη φορά δεν προσθέτει τίποτα. Όσες διαγράψεις μένουν διαγραμμένες σε νέα εισαγωγή.",
       "imp.go": "Εισαγωγή", "imp.none": "Δεν υπάρχει κάτι νέο για εισαγωγή", "imp.bad1": "Δεν είναι εξαγωγή CSV από Toggl, Clockify ή Harvest",
       "toast.imported": "Εισαγωγή: {n} καταγραφές", "toast.imported1": "Εισαγωγή: 1 καταγραφή",
+      "set.import2": "Εισαγωγή από άλλη εφαρμογή (Toggl, Clockify, Harvest, Kimai, Tempo)",
+      "imp.bad2": "Δεν είναι εξαγωγή που διαβάζει η εφαρμογή (Toggl, Clockify, Harvest, Kimai, Jira Tempo· CSV ή Excel)",
+      "imp.lib": "Λείπει το πρόγραμμα ανάγνωσης Excel. Αποθήκευσε το φύλλο ως CSV και κάνε εισαγωγή αυτό.",
+      "imp.user": "Ποιανού οι καταγραφές", "imp.allUsers": "Όλων όσων είναι στο αρχείο ({n})", "imp.other": "Καταγραφές άλλων, εκτός εισαγωγής: {n}",
+      "imp.kimai": "Customer → πελάτης · Project → έργο · Activity → εργασία · Description → περιγραφή · ετικέτες · ωριαία χρέωση → χρέωση νέου έργου · Exported → τιμολογημένη.",
+      "imp.tempo": "Project Name → έργο · Account Customer → πελάτης · κλειδί και τίτλος θέματος → εργασία · Work Description → περιγραφή. Μια μέρα χωρίς ώρα μπαίνει από τις 09:00, η μία καταγραφή μετά την άλλη.",
+      "imp.undone": "Η εισαγωγή αναιρέθηκε",
       "toast.save": "Η αποθήκευση απέτυχε: ο χώρος γέμισε", "toast.started": "Ξεκίνησε: {p}",
       "toast.stopped": "Σταμάτησε: {p}, {d}", "toast.started": "Ξεκίνησε: {p}", "toast.added": "Προστέθηκε {d}", "toast.deleted": "Η καταγραφή διαγράφηκε",
       "toast.saved": "Αποθηκεύτηκε", "toast.undo": "Αναίρεση", "toast.badTime": "Η λήξη πρέπει να είναι μετά την έναρξη",
@@ -1628,7 +1642,7 @@
     var rs = button(t("set.restore"), "block", function () { dlg.close(); restoreBackup(); });
     form.appendChild(rs);
     form.appendChild(el("p", "hint", t("set.restoreHint")));
-    form.appendChild(button(t("set.import"), "block", function () { dlg.close(); importCsv(); }));
+    form.appendChild(button(window.OrosTimesheetImport ? t("set.import2") : t("set.import"), "block", function () { dlg.close(); importCsv(); }));
 
     actions(form, [], t("dlg.save"));
     form.addEventListener("submit", function (ev) {
@@ -1759,39 +1773,79 @@
   // plan (core.importPlan, nothing changed yet); a preview shows what
   // would be added and, when the dates could be read both ways, asks
   // for their order. Import = one merge of the plan into the data.
+  // Wave 7 (import.js): Kimai and Jira Tempo too, and Excel files (the
+  // vendored SheetJS, loaded only when an .xlsx is picked). The same
+  // preview; the toast now has Undo (tombstones, see import.js).
   var IMPORT_MAX_BYTES = 10 * 1024 * 1024;
-  var SOURCES = { toggl: "Toggl Track", clockify: "Clockify", harvest: "Harvest" };
+  var SOURCES = { toggl: "Toggl Track", clockify: "Clockify", harvest: "Harvest", kimai: "Kimai", tempo: "Jira Tempo" };
+  var IMPX = window.OrosTimesheetImport;
   function importCsv() {
-    var host = dialogHost(), acc = ".csv,text/csv,text/plain";
+    var host = dialogHost(), acc = IMPX ? IMPX.ACCEPT : ".csv,text/csv,text/plain";
     var pick = host && typeof host.openFile === "function" ? host.openFile(acc) : localPickFile(acc);
-    pick.then(function (file) {
+    Promise.resolve(pick).then(function (file) {
       if (!file) return;
-      if (file.size > IMPORT_MAX_BYTES) { showToast(t("imp.bad1")); return; }
-      return file.text().then(function (text) {
-        var order = LANG === "el" ? "dmy" : "mdy";
-        var plan = C.importPlan(text, data, order);
-        if (!plan) { showToast(t("imp.bad1")); return; }
-        importPreview(text, plan);
-      });
-    }).catch(function () { showToast(t("imp.bad1")); });
+      return importFile(file);
+    }).catch(function () { showToast(t(IMPX ? "imp.bad2" : "imp.bad1")); });
   }
-  function importPreview(text, plan) {
-    var dlg = makeDialog("ts-import", t("imp.title", { src: SOURCES[plan.source] }));
+  // Also the handle for tests / a file opened with orOS (Promise)
+  function importFile(file) {
+    if (file.size > IMPORT_MAX_BYTES) { showToast(t(IMPX ? "imp.bad2" : "imp.bad1")); return Promise.resolve(false); }
+    var order = LANG === "el" ? "dmy" : "mdy";
+    if (!IMPX || !window.OrosImportKit) {
+      return file.text().then(function (text) {
+        var plan = C.importPlan(text, data, order);
+        if (!plan) { showToast(t("imp.bad1")); return false; }
+        importPreview(function (o) { return C.importPlan(text, data, o); }, plan);
+        return true;
+      });
+    }
+    return window.OrosImportKit.readFile(file, IMPORT_MAX_BYTES).then(function (f) {
+      return IMPX.readBytes(f.bytes, f.name, getXlsx);
+    }).then(function (r) {
+      if (r.error) { showToast(t(r.error === "lib" ? "imp.lib" : "imp.bad2")); return false; }
+      var plan = IMPX.planAny(r, data, order, "");
+      if (!plan) { showToast(t("imp.bad2")); return false; }
+      importPreview(function (o, u) { return IMPX.planAny(r, data, o, u); }, plan);
+      return true;
+    });
+  }
+  var XLSX_V = (/v=([\d.]+)/.exec((document.currentScript && document.currentScript.src) || "") || [])[1] || "";
+  var xlsxWait = null;
+  function getXlsx() {
+    if (window.XLSX && window.XLSX.utils) return Promise.resolve(window.XLSX);
+    if (xlsxWait) return xlsxWait;
+    xlsxWait = new Promise(function (res, rej) {
+      var sc = document.createElement("script");
+      sc.src = "../vendor/xlsx.full.min.js" + (XLSX_V ? "?v=" + XLSX_V : "");
+      sc.onload = function () { if (window.XLSX && window.XLSX.utils) res(window.XLSX); else rej(new Error("lib")); };
+      sc.onerror = function () { sc.remove(); xlsxWait = null; rej(new Error("lib")); };
+      document.head.appendChild(sc);
+    });
+    return xlsxWait;
+  }
+  // replan(order, user) → a fresh plan against the data as it is now
+  function importPreview(replan, plan) {
+    var dlg = makeDialog("ts-import", t("imp.title", { src: SOURCES[plan.source] || plan.source }));
     var form = el("form");
     form.method = "dialog";
     var box = el("div", "imp-sum");
     form.appendChild(box);
-    var sel = null;
+    var sel = null, usel = null;
+    function again() { plan = replan(sel ? sel.value : plan.order, usel ? usel.value : ""); paint(); }
     if (plan.ambiguous) {
       sel = el("select");
       fillSelect(sel, [["dmy", t("imp.dmy")], ["mdy", t("imp.mdy")]], plan.order);
       form.appendChild(field(t("imp.order"), sel));
-      sel.addEventListener("change", function () {
-        plan = C.importPlan(text, data, sel.value);
-        paint();
-      });
+      sel.addEventListener("change", again);
+    }
+    if (plan.users && plan.users.length > 1) {
+      usel = el("select");
+      fillSelect(usel, [["", t("imp.allUsers", { n: plan.users.length })]].concat(plan.users.slice(0, 200).map(function (u) { return [u, u]; })), "");
+      form.appendChild(field(t("imp.user"), usel));
+      usel.addEventListener("change", again);
     }
     if (plan.source === "harvest") form.appendChild(el("p", "hint", t("imp.harvest")));
+    if (plan.source === "kimai" || plan.source === "tempo") form.appendChild(el("p", "hint", t("imp." + plan.source)));
     form.appendChild(el("p", "hint", t("imp.hint")));
     actions(form, [], t("imp.go"));
     var go = form.querySelector("button[type=submit]");
@@ -1804,6 +1858,7 @@
       if (plan.dup) ul.appendChild(el("li", "", t("imp.dup", { n: plan.dup })));
       if (plan.add.projects.length) ul.appendChild(el("li", "", t("imp.projects", { n: plan.add.projects.length })));
       if (plan.add.clients.length) ul.appendChild(el("li", "", t("imp.clients", { n: plan.add.clients.length })));
+      if (plan.other) ul.appendChild(el("li", "", t("imp.other", { n: plan.other })));
       if (plan.bad) ul.appendChild(el("li", "", t("imp.bad", { n: plan.bad })));
       box.appendChild(ul);
       go.disabled = !plan.fresh;
@@ -1815,17 +1870,26 @@
       ev.preventDefault();
       if (!plan.fresh) return;
       // Fresh plan against the data as it is now (a pull may have landed).
-      var final = C.importPlan(text, data, sel ? sel.value : plan.order);
+      var final = replan(sel ? sel.value : plan.order, usel ? usel.value : "");
       dlg.close();
       if (!final || !final.fresh) { showToast(t("imp.none")); return; }
       data = C.mergeTimesheet(data, final.add);
-      saveNow();
+      saveNow();                                   // one write, one dirty mark
       renderAll();
-      showToast(final.fresh === 1 ? t("toast.imported1") : t("toast.imported", { n: final.fresh }));
+      var msg = final.fresh === 1 ? t("toast.imported1") : t("toast.imported", { n: final.fresh });
+      if (!IMPX) { showToast(msg); return; }
+      var info = IMPX.undoInfo(final);
+      undoToast(msg, function () {
+        data = IMPX.undo(data, info, Date.now());
+        saveNow();
+        renderAll();
+        showToast(t("imp.undone"));
+      });
     });
     dlg.appendChild(form);
     openDialog(dlg, null);
   }
+  window.__orosTimesheetImport = importFile;
 
   // ---------- 10. Toasts ----------
   function showToast(text) {

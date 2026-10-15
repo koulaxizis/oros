@@ -41,8 +41,16 @@ Solve it on days in a row to build a streak. When it's solved you see your time,
 
 `All games` (in `Records` and after a daily) opens the [Game Center](help:a/gamecenter), when it's installed.
 
+## Import puzzles
+The download-tray button in the toolbar opens `Imported puzzles`. Paste puzzles into the box and press `Check`, or use `Open a file…`. It reads:
+- one puzzle per line, 81 characters: digits 1–9 for the givens and `0`, `.` or `-` for blanks (spaces, `|` and `+` are ignored, and anything after the 81st cell, such as a name or rating, too). Collections from puzzle sites and forums usually come like this, up to 500 at a time.
+- a 9×9 grid over nine lines, with or without separator lines such as `---+---+---`: Simple Sudoku `.ss` files and printed grids.
+- SadMan Sudoku `.sdk` files (the `#D` description becomes the puzzle's name).
+
+The preview says how many puzzles were found, how many are new, already imported or repeated, and which ones were skipped and why: the same digit twice in a row, column or box, or no solution. A puzzle with more than one solution is kept and marked (it "has N solutions"); there any valid filling counts as solved. `Import` saves them, and `Undo` in the message that follows takes them out again. Each one is listed with its givens and best time; `Play` or `Next unsolved` starts it, and the puzzle you leave gets the usual `Undo`. Imported puzzles keep their own best time and don't change the level records.
+
 ## Sync
-Your records and daily results sync between your devices through [orOS sync](help:t/sync). `Reset records` in `Records` deletes them on every device, after you confirm. The level, options, the puzzle in progress and the sound button stay on this device.
+Your records, daily results and imported puzzles sync between your devices through [orOS sync](help:t/sync). `Reset records` in `Records` deletes them on every device, after you confirm. The level, options, the puzzle in progress and the sound button stay on this device.
 
 ## Tips
 - Use notes on harder levels: pencil in the candidates for a box, then look for the cell with only one left.

@@ -512,6 +512,8 @@ dialog.mm-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 .dlg-lbl { display: block; font-size: 12px; font-weight: 700; color: var(--text-dim); margin-bottom: 6px; }
 .check { display: flex; align-items: center; gap: 10px; min-height: 38px; font-size: 14px; cursor: pointer; }
 .check input { width: 20px; min-height: 20px; height: 20px; accent-color: var(--accent); flex-shrink: 0; }
+.i2-part { font-weight: 600; margin-top: 6px; }
+.i2-sum { white-space: pre-line; }
 .dlg-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
 .dlg-actions .spacer { flex: 1 1 0; }
 .dlg-btn {

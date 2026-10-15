@@ -292,6 +292,83 @@ button { cursor: pointer; }
 }
 .wd.got { color: var(--text-dim); text-decoration: line-through; text-decoration-thickness: 2px; }
 
+/* Imported (clued) crosswords: dark blocks, clue numbers, circles,
+   the clue bar and the Across / Down lists. */
+.blk.ib { margin: 0.5px; border-radius: calc(var(--cs) * 0.08); background: var(--border); }
+#grid.clued .cell { border-radius: calc(var(--cs) * 0.08); }
+.cell .num {
+  position: absolute;
+  top: 1px;
+  left: 2px;
+  font-size: max(7px, calc(var(--cs) * 0.27));
+  font-weight: 700;
+  line-height: 1;
+  color: var(--text-dim);
+  pointer-events: none;
+}
+.cell .l { line-height: 1; padding-top: calc(var(--cs) * 0.12); }
+.cell .l.rb { font-size: calc(var(--cs) * 0.24); letter-spacing: -0.02em; overflow: hidden; max-width: 100%; }
+.cell.circ::before {
+  content: "";
+  position: absolute;
+  inset: 2px;
+  border: 1px solid var(--text-dim);
+  border-radius: 50%;
+  pointer-events: none;
+}
+#clue {
+  flex-shrink: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-height: 2.6em;
+  padding: 6px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--accent-soft);
+  font-size: 14px;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+#clue b { flex-shrink: 0; color: var(--accent); font-weight: 800; }
+#clue span {
+  min-width: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.grp.cl + .grp.cl { margin-top: 8px; }
+.cl-l { list-style: none; margin: 0; padding: 0; }
+.cl-i {
+  display: flex;
+  gap: 6px;
+  padding: 3px 6px;
+  border-radius: 6px;
+  font-size: 13px;
+  line-height: 1.35;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+.cl-i b { flex: 0 0 auto; min-width: 1.6em; text-align: right; color: var(--text-dim); }
+.cl-i span { min-width: 0; }
+.cl-i.fill { color: var(--text-dim); }
+.cl-i.on { background: var(--accent-soft); color: var(--text); box-shadow: inset 0 0 0 1px var(--accent); }
+.cl-i.on b { color: var(--accent); }
+.cl-i.x { background: var(--accent-soft); }
+@media (hover: hover) { .cl-i:hover { background: var(--accent-soft); } }
+
+/* Imported crosswords dialog */
+.lib-list { list-style: none; margin: 4px 0 0; padding: 0; max-height: 50vh; overflow-y: auto; }
+.lib-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+.lib-row.cur strong { color: var(--accent); }
+.lib-txt { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; font-size: 13px; }
+.lib-txt strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lib-meta { font-size: 12px; color: var(--text-dim); overflow-wrap: anywhere; }
+.dlg-btn.lib-open { flex: 0 0 auto; padding: 0 14px; }
+.imp-file, .imp-notes { overflow-wrap: anywhere; white-space: pre-line; }
+.dlg-row strong { min-width: 0; overflow-wrap: anywhere; }
+.icon-btn.on { color: var(--accent); border-color: var(--accent); }
+
 /* Narrow or portrait: the list goes under the grid. */
 @media (max-width: 760px), (max-aspect-ratio: 1/1) {
   #play { flex-direction: column; gap: 8px; padding: 8px 10px 6px; }
@@ -301,6 +378,8 @@ button { cursor: pointer; }
   .grp-h { flex-shrink: 0; margin: 0; min-width: 5.5em; }
   .grp-l { gap: 2px 8px; }
   .wd { font-size: 13px; }
+  .grp.cl { display: block; }
+  #clue { padding: 5px 10px; font-size: 13px; }
 }
 
 /* ---------- 5. On-screen keyboard ---------- */

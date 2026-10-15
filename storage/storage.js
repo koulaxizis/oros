@@ -165,6 +165,35 @@
       "scan.wait":        "Starting the camera…",
       "scan.denied":      "The camera is not available or permission was refused.",
       "scan.unknown":     "That code is not a Storage label on this device.",
+      // import from another app (import.js)
+      "imp.menu":         "Import (Homebox, Sortly, CSV)…",
+      "imp.title":        "Import from {s}",
+      "imp.src.generic":  "a CSV file",
+      "imp.items":        "New items: {n}",
+      "imp.places":       "New places: {n}",
+      "imp.back":         "Deleted here before, coming back: {n}",
+      "imp.same":         "Already here, left as they are: {n}",
+      "imp.sold":         "Sold, left out: {n}",
+      "imp.skip":         "Rows skipped (no name, or a repeat): {n}",
+      "imp.dates":        "Purchase and warranty dates: {a} to {b}",
+      "imp.under":        "Put the places under",
+      "imp.own":          "Their own spaces (first part of each path)",
+      "imp.map":          "Each location fills Space › Room › Furniture › Position from the top; deeper parts join the position name, missing levels become “General”. Places with the same name are reused.",
+      "imp.map.homebox":  "Name, quantity, labels → tags, purchase price → value, purchase date, warranty end; description, notes, maker, serial and shop → note.",
+      "imp.map.sortly":   "Entry name and variant → name, quantity, tags, price (or value ÷ quantity) → value; notes, unit, min level and barcode → note.",
+      "imp.cols":         "Columns used: {c}",
+      "imp.col.name":     "name", "imp.col.loc": "location", "imp.col.room": "room", "imp.col.furn": "furniture",
+      "imp.col.box":      "position", "imp.col.qty": "quantity", "imp.col.note": "note", "imp.col.tags": "tags", "imp.col.val": "value",
+      "imp.hint":         "Importing only adds. Nothing here is changed; the same file twice adds nothing.",
+      "imp.go":           "Import",
+      "imp.none":         "Nothing new to import",
+      "imp.done":         "Items imported: {n}",
+      "imp.undone":       "Import undone",
+      "imp.bad":          "That file can't be read as an inventory (CSV with a name column).",
+      "imp.big":          "This file is too large to import.",
+      "imp.l.qty":        "Quantity", "imp.l.maker": "Make", "imp.l.serial": "Serial no.", "imp.l.from": "Bought from",
+      "imp.l.lifetime":   "Lifetime warranty", "imp.l.warranty": "Warranty", "imp.l.insured": "Insured",
+      "imp.l.min":        "Min level", "imp.l.code": "Barcode",
       // settings
       "settings":         "Settings",
       "set.cur":          "Currency",
@@ -288,6 +317,34 @@
       "scan.wait":        "Ξεκινά η κάμερα…",
       "scan.denied":      "Η κάμερα δεν είναι διαθέσιμη ή δεν δόθηκε άδεια.",
       "scan.unknown":     "Αυτός ο κωδικός δεν είναι ετικέτα της Αποθήκης σε αυτή τη συσκευή.",
+      "imp.menu":         "Εισαγωγή (Homebox, Sortly, CSV)…",
+      "imp.title":        "Εισαγωγή από {s}",
+      "imp.src.generic":  "αρχείο CSV",
+      "imp.items":        "Νέα αντικείμενα: {n}",
+      "imp.places":       "Νέες θέσεις: {n}",
+      "imp.back":         "Είχαν διαγραφεί εδώ και επιστρέφουν: {n}",
+      "imp.same":         "Υπάρχουν ήδη και μένουν όπως είναι: {n}",
+      "imp.sold":         "Πουλημένα, εκτός εισαγωγής: {n}",
+      "imp.skip":         "Γραμμές που παραλείφθηκαν (χωρίς όνομα ή επανάληψη): {n}",
+      "imp.dates":        "Ημερομηνίες αγοράς και εγγύησης: {a} έως {b}",
+      "imp.under":        "Οι θέσεις μπαίνουν στο",
+      "imp.own":          "Δικούς τους χώρους (το πρώτο μέρος κάθε διαδρομής)",
+      "imp.map":          "Κάθε τοποθεσία γεμίζει Χώρο › Δωμάτιο › Έπιπλο › Θέση από πάνω· τα βαθύτερα μέρη μπαίνουν στο όνομα της θέσης και τα επίπεδα που λείπουν γίνονται «Γενικά». Θέσεις με το ίδιο όνομα ξαναχρησιμοποιούνται.",
+      "imp.map.homebox":  "Όνομα, ποσότητα, labels → ετικέτες, τιμή αγοράς → αξία, ημερομηνία αγοράς, λήξη εγγύησης· περιγραφή, σημειώσεις, κατασκευαστής, σειριακός και κατάστημα → σημείωση.",
+      "imp.map.sortly":   "Όνομα και παραλλαγή → όνομα, ποσότητα, ετικέτες, τιμή (ή αξία ÷ ποσότητα) → αξία· σημειώσεις, μονάδα, ελάχιστο και barcode → σημείωση.",
+      "imp.cols":         "Στήλες που χρησιμοποιούνται: {c}",
+      "imp.col.name":     "όνομα", "imp.col.loc": "τοποθεσία", "imp.col.room": "δωμάτιο", "imp.col.furn": "έπιπλο",
+      "imp.col.box":      "θέση", "imp.col.qty": "ποσότητα", "imp.col.note": "σημείωση", "imp.col.tags": "ετικέτες", "imp.col.val": "αξία",
+      "imp.hint":         "Η εισαγωγή μόνο προσθέτει. Τίποτα από όσα υπάρχουν δεν αλλάζει· το ίδιο αρχείο δεύτερη φορά δεν προσθέτει τίποτα.",
+      "imp.go":           "Εισαγωγή",
+      "imp.none":         "Δεν υπάρχει κάτι νέο για εισαγωγή",
+      "imp.done":         "Αντικείμενα που μπήκαν: {n}",
+      "imp.undone":       "Η εισαγωγή αναιρέθηκε",
+      "imp.bad":          "Αυτό το αρχείο δεν διαβάζεται ως απογραφή (CSV με στήλη ονόματος).",
+      "imp.big":          "Το αρχείο είναι πολύ μεγάλο για εισαγωγή.",
+      "imp.l.qty":        "Ποσότητα", "imp.l.maker": "Κατασκευαστής", "imp.l.serial": "Σειριακός αριθμός", "imp.l.from": "Αγορά από",
+      "imp.l.lifetime":   "Εγγύηση εφ' όρου ζωής", "imp.l.warranty": "Εγγύηση", "imp.l.insured": "Ασφαλισμένο",
+      "imp.l.min":        "Ελάχιστο", "imp.l.code": "Barcode",
       "settings":         "Ρυθμίσεις",
       "set.cur":          "Νόμισμα",
       "set.remind":       "Υπενθυμίσεις σε αυτή τη συσκευή",
@@ -1215,6 +1272,7 @@
     add(ICO.hand, t("lent.menu", { n: C.lentList(db.ents, LANG).length }), openLent);
     add(ICO.qr, t("qr.title") + "…", function () { openQrDialog(null); });
     if (camOk()) add(ICO.cam, t("scan"), openScan);
+    if (window.OrosStorageImport && window.OrosImportKit) add(ICO.item, t("imp.menu"), startImport);
     add(ICO.gear, t("settings") + "…", openSettings);
     dlg.appendChild(list);
     var acts = el("div", "dialog-actions");
@@ -2069,6 +2127,120 @@
     dlg.appendChild(form);
     showDlg(dlg);
   }
+
+  // ===== IMPORT FROM ANOTHER APP (import.js) =====
+  // File → detect + parse (OrosStorageImport, pure) → preview (counts,
+  // where the places go, what maps where) → ONE write (save(): one
+  // persist, one dirty mark) → a toast with Undo (tombstones newer
+  // than the rows). Text from the file reaches the page through
+  // textContent only.
+  function pickImportFile(accept) {
+    var host = null;
+    try { host = window.parent && window.parent !== window ? window.parent.orosDialog : null; } catch (e) { host = null; }
+    if (host && typeof host.openFile === "function") return Promise.resolve(host.openFile(accept));
+    return new Promise(function (resolve) {        // standalone page
+      var inp = document.createElement("input");
+      inp.type = "file";
+      inp.accept = accept;
+      inp.hidden = true;
+      inp.addEventListener("change", function () { var f = inp.files && inp.files[0]; inp.remove(); resolve(f || null); });
+      inp.addEventListener("cancel", function () { inp.remove(); resolve(null); });
+      document.body.appendChild(inp);
+      inp.click();
+    });
+  }
+  function startImport() {
+    var IM = window.OrosStorageImport;
+    pickImportFile(IM.ACCEPT).then(function (file) { if (file) importFile(file); });
+  }
+  // Also the handle for tests / a file opened with orOS (Promise)
+  function importFile(file) {
+    var IM = window.OrosStorageImport, K = window.OrosImportKit;
+    return K.readFile(file, IM.MAX_FILE).then(function (f) {
+      var lab = {};
+      ["qty", "maker", "serial", "from", "lifetime", "warranty", "insured", "min", "code"].forEach(function (k) { lab[k] = t("imp.l." + k); });
+      var res = IM.parseText(K.text(f.bytes), lab);
+      if (!res) { notifyTransient(t("imp.bad")); return false; }
+      openImportPreview(res);
+      return true;
+    }).catch(function (e) {
+      notifyTransient(t(e && e.message === "toobig" ? "imp.big" : "imp.bad"));
+      return false;
+    });
+  }
+  function openImportPreview(res) {
+    var IM = window.OrosStorageImport;
+    var src = IM.SRC_NAME[res.source] || t("imp.src.generic");
+    var dlg = mkDialog("imp-dialog", t("imp.title", { s: src }));
+    dlg.classList.add("wide");
+    var form = el("form", "dialog-form");
+    var sum = el("ul", "imp-list");
+    form.appendChild(sum);
+    var spaces = children("space", null);
+    var under = IM.defaultUnder(db, res);
+    var w = el("div", "field"), lab = el("label", "", t("imp.under")), sel = el("select");
+    sel.id = "imp-under";
+    lab.htmlFor = sel.id;
+    spaces.forEach(function (sp) { var o = el("option", "", nameOf(sp)); o.value = sp.id; sel.appendChild(o); });
+    var own = el("option", "", t("imp.own"));
+    own.value = "";
+    sel.appendChild(own);
+    sel.value = under;
+    w.appendChild(lab);
+    w.appendChild(sel);
+    form.appendChild(w);
+    form.appendChild(el("p", "hint", t("imp.map")));
+    if (res.source === "homebox" || res.source === "sortly") form.appendChild(el("p", "hint", t("imp.map." + res.source)));
+    if (res.cols) {
+      var used = Object.keys(res.cols).map(function (k) { return t("imp.col." + k) + " ← " + res.cols[k]; });
+      form.appendChild(el("p", "hint", t("imp.cols", { c: used.join(" · ") })));
+    }
+    form.appendChild(el("p", "hint", t("imp.hint")));
+    var acts = el("div", "dialog-actions");
+    acts.appendChild(btn(t("cancel"), "ghost", function () { dlg.close(); }));
+    var go = el("button", "btn prim", t("imp.go"));
+    go.type = "submit";
+    acts.appendChild(go);
+    form.appendChild(acts);
+    function paint() {
+      var p = IM.plan(db, res, { now: Date.now(), under: sel.value });
+      var st = p.stats;
+      sum.textContent = "";
+      function li(text) { sum.appendChild(el("li", "", text)); }
+      li(t("imp.items", { n: st.items }));
+      if (st.places) li(t("imp.places", { n: st.places }));
+      if (st.back) li(t("imp.back", { n: st.back }));
+      if (st.same) li(t("imp.same", { n: st.same }));
+      if (st.sold) li(t("imp.sold", { n: st.sold }));
+      if (st.skipped) li(t("imp.skip", { n: st.skipped }));
+      if (st.from) li(t("imp.dates", { a: fmtDate(st.from), b: fmtDate(st.to) }));
+      go.disabled = !p.rows.length;
+      go.textContent = p.rows.length ? t("imp.go") : t("imp.none");
+    }
+    sel.addEventListener("change", paint);
+    paint();
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      // a fresh plan against the data as it is now (a pull may have landed)
+      var p = IM.plan(db, res, { now: Date.now(), under: sel.value });
+      dlg.close();
+      if (!p.rows.length) { notifyTransient(t("imp.none")); return; }
+      db = normalize(IM.apply(db, p)) || db;
+      save();                                    // one write, one dirty mark
+      render();
+      var info = p.undo;
+      actionToast(t("imp.done", { n: p.stats.items }), function () {
+        db = normalize(IM.undo(db, info, Date.now())) || db;
+        save();
+        sanitizeNav();
+        render();
+        notifyTransient(t("imp.undone"));
+      });
+    });
+    dlg.appendChild(form);
+    showDlg(dlg);
+  }
+  window.__orosStorageImport = importFile;
 
   // ===== DELETE (styled confirm dialog, cascade tombstones) =====
 

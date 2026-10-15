@@ -23,6 +23,9 @@
 //   - optional (switch "cs" in the slice): every conversation also as
 //     a file in /internal/Assistant/Chats on the orOS disk, carried
 //     to the other devices, encrypted, by Vault Drive (section 7b)
+//   - Import conversations (section 7d, import.js): a ChatGPT or
+//     Claude data export becomes chats of this device (stable ids,
+//     one write, Undo), drawn like any other chat
 // Sections:
 //   1. Constants, i18n, helpers
 //   2. Data + prefs
@@ -48,7 +51,7 @@
   var STORAGE_KEY = "oros-assistant-data";
   var PREFS_KEY   = "oros-assistant-prefs";
   var DB_NAME     = "oros-assistant";
-  var MAX_CHATS   = 200;
+  var MAX_CHATS   = 2000;          // room for an imported history (import.js MAX_CONVS)
   var MAX_INPUT   = 20000;
 
   // ---------- 1. Constants, i18n, helpers ----------
@@ -265,6 +268,23 @@
       "open.gone": "That item is no longer there",
       "chat.untitled": "New conversation", "time.today": "Today", "time.yesterday": "Yesterday",
       "you": "You",
+      "imp.btn": "Import conversations", "imp.title": "Import conversations",
+      "imp.tip": "Bring in your history from a ChatGPT or Claude data export",
+      "imp.src": "From {s}: {n} conversations, {m} messages", "imp.range": "From {a} to {b}",
+      "imp.have": "{n} are already here and stay as they are.",
+      "imp.map": "Your messages and the assistant's answers come in as text; system and tool messages are left out, pictures and files are marked [image] / [file]. You can go on with an imported conversation using the assistant you have set up.",
+      "imp.cut": "{n} conversations were very long and are shortened.",
+      "imp.room": "The Assistant keeps up to {max} conversations: {n} more fit.",
+      "imp.full": "Choose at most {n}.",
+      "imp.all": "Select all", "imp.msgs": "{n} messages", "imp.go": "Import {n}",
+      "imp.priv": "The file is read on this device only.",
+      "imp.done": "Imported {n} conversations", "imp.undone": "Import undone",
+      "imp.none": "Nothing new to import: these conversations are already here.",
+      "imp.bad": "This is not a ChatGPT or Claude data export (conversations.json).",
+      "imp.empty": "No conversations were found in this file.",
+      "imp.big": "This file is too large to import.",
+      "imp.keepOff": "Turn on “Keep conversations on this device” first.",
+      "imp.from": "Imported from {s} · {d}", "imp.badge": "{s}",
       "entry.invoice": "New invoice · {app}",
       "tool.sum": "Summary of {app}", "tool.sumNo": "You kept the summary of {app} back",
       "sum.title": "Share this summary of {app} with {name}?",
@@ -496,6 +516,23 @@
       "open.gone": "Αυτό το στοιχείο δεν υπάρχει πια",
       "chat.untitled": "Νέα συζήτηση", "time.today": "Σήμερα", "time.yesterday": "Χθες",
       "you": "Εσύ",
+      "imp.btn": "Εισαγωγή συζητήσεων", "imp.title": "Εισαγωγή συζητήσεων",
+      "imp.tip": "Φέρε το ιστορικό σου από την εξαγωγή δεδομένων του ChatGPT ή του Claude",
+      "imp.src": "Από {s}: {n} συζητήσεις, {m} μηνύματα", "imp.range": "Από {a} έως {b}",
+      "imp.have": "{n} υπάρχουν ήδη εδώ και μένουν όπως είναι.",
+      "imp.map": "Τα μηνύματά σου και οι απαντήσεις του βοηθού έρχονται ως κείμενο· τα μηνύματα συστήματος και εργαλείων παραλείπονται, οι εικόνες και τα αρχεία σημειώνονται ως [image] / [file]. Μπορείς να συνεχίσεις μια συζήτηση που έφερες με τον βοηθό που έχεις ρυθμίσει.",
+      "imp.cut": "{n} συζητήσεις ήταν πολύ μεγάλες και συντομεύτηκαν.",
+      "imp.room": "Ο Βοηθός κρατά έως {max} συζητήσεις: χωρούν ακόμη {n}.",
+      "imp.full": "Διάλεξε το πολύ {n}.",
+      "imp.all": "Επιλογή όλων", "imp.msgs": "{n} μηνύματα", "imp.go": "Εισαγωγή {n}",
+      "imp.priv": "Το αρχείο διαβάζεται μόνο σε αυτή τη συσκευή.",
+      "imp.done": "Ήρθαν {n} συζητήσεις", "imp.undone": "Η εισαγωγή αναιρέθηκε",
+      "imp.none": "Τίποτα καινούργιο: αυτές οι συζητήσεις υπάρχουν ήδη.",
+      "imp.bad": "Αυτό δεν είναι εξαγωγή δεδομένων του ChatGPT ή του Claude (conversations.json).",
+      "imp.empty": "Δεν βρέθηκαν συζητήσεις σε αυτό το αρχείο.",
+      "imp.big": "Το αρχείο είναι πολύ μεγάλο για εισαγωγή.",
+      "imp.keepOff": "Άνοιξε πρώτα το «Να κρατιούνται οι συζητήσεις σε αυτή τη συσκευή».",
+      "imp.from": "Ήρθε από {s} · {d}", "imp.badge": "{s}",
       "entry.invoice": "Νέο τιμολόγιο · {app}",
       "tool.sum": "Σύνοψη: {app}", "tool.sumNo": "Κράτησες τη σύνοψη ({app})",
       "sum.title": "Να δει το {name} αυτή τη σύνοψη ({app});",
@@ -1189,6 +1226,188 @@
       renderAll();
       showToast(t("toast.deleted"));
     });
+  }
+
+  // ---------- 7d. Import conversations (import.js) ----------
+  // A ChatGPT or Claude data export → pick → read → preview (source,
+  // counts, dates, a checklist) → ONE write (one IndexedDB
+  // transaction; with chat sync on, each chat also queued as its file)
+  // → toast with Undo. Ids are stable ("cimp…"), so a conversation
+  // already here is never imported twice, and nothing the person has
+  // is changed. Text is drawn by drawMd / textContent only.
+  var IMP_ACCEPT = ".zip,.json,application/zip,application/json";
+  var IMP_NAME = { chatgpt: "ChatGPT", claude: "Claude" };
+  function impSource(c) { var I = window.OrosAssistantImport; return I ? I.sourceOf(c) : ""; }
+  function impAt(c) { var m = c.msgs[0]; return typeof m.at === "number" && m.at > 0 ? m.at : c.m; }
+  function fullDate(ms) {
+    try { return new Date(ms).toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB", { day: "numeric", month: "short", year: "numeric" }); }
+    catch (e) { return C.ymd(ms); }
+  }
+  function pickFile(accept) {
+    var dh = null;
+    try { dh = window.parent && window.parent !== window ? window.parent.orosDialog : null; } catch (e) {}
+    if (dh && typeof dh.openFile === "function") return Promise.resolve(dh.openFile(accept));
+    return new Promise(function (resolve) {
+      var i = document.createElement("input");
+      i.type = "file";
+      i.accept = accept;
+      i.addEventListener("change", function () { resolve(i.files && i.files[0] ? i.files[0] : null); });
+      i.click();
+    });
+  }
+  function startImport() {
+    var I = window.OrosAssistantImport, KIT = window.OrosImportKit;
+    if (!I || !KIT || busy) return;
+    if (!prefs.keep) { showToast(t("imp.keepOff")); return; }
+    pickFile(IMP_ACCEPT).then(function (file) {
+      if (!file) return null;                  // cancel = silent exit
+      return KIT.readFile(file, I.MAX_FILE).then(function (f) { return I.readBytes(f.bytes, f.name); });
+    }).then(function (res) {
+      if (!res) return;
+      if (res.error) { showToast(t(res.error === "big" ? "imp.big" : res.error === "empty" ? "imp.empty" : "imp.bad")); return; }
+      importPreview(res);
+    }).catch(function (e) {
+      showToast(t(e && e.message === "toobig" ? "imp.big" : "imp.bad"));
+    });
+  }
+  function haveIds() {
+    var o = {};
+    chats.forEach(function (c) { o[c.id] = true; });
+    return o;
+  }
+  function importPreview(res) {
+    var I = window.OrosAssistantImport;
+    var pl = I.plan(res, haveIds(), MAX_CHATS - chats.length);
+    var st = pl.stats;
+    if (!st.fresh) { showToast(t("imp.none")); return; }
+    var dlg = makeDialog("as-imp-dlg");
+    dlg.classList.add("wide");
+    dlg.appendChild(el("div", "dlg-title", t("imp.title")));
+    dlg.appendChild(el("p", "dlg-text imp-src", t("imp.src", { s: IMP_NAME[res.source], n: st.convs, m: st.msgs })));
+    if (st.from) dlg.appendChild(el("p", "dlg-hint", t("imp.range", { a: fullDate(st.from), b: fullDate(st.to) })));
+    if (st.have) dlg.appendChild(el("p", "dlg-hint", t("imp.have", { n: st.have })));
+    if (st.cut) dlg.appendChild(el("p", "dlg-hint", t("imp.cut", { n: st.cut })));
+    dlg.appendChild(el("p", "dlg-hint", t("imp.map")));
+    var room = el("p", "dlg-hint", t("imp.room", { max: MAX_CHATS, n: pl.room }));
+    dlg.appendChild(room);
+    // the checklist: what is new is chosen (as many as fit), newest first
+    var pickedN = 0, boxes = [];
+    var all = checkbox(dlg, "as-imp-all", t("imp.all"), false, function (on) {
+      boxes.forEach(function (b) { if (!b.disabled) b.checked = on; });
+      count();
+    });
+    var list = el("div", "imp-list");
+    list.setAttribute("role", "group");
+    list.setAttribute("aria-label", t("imp.title"));
+    pl.list.forEach(function (c) {
+      var row = el("label", "imp-row" + (c.have ? " have" : ""));
+      var cb = el("input");
+      cb.type = "checkbox";
+      cb.disabled = c.have;
+      cb.checked = !c.have && pickedN < pl.room;
+      if (cb.checked) pickedN++;
+      cb.addEventListener("change", count);
+      row.appendChild(cb);
+      var txt = el("span", "imp-txt");
+      txt.appendChild(el("span", "imp-name", c.title || t("chat.untitled")));
+      txt.appendChild(el("span", "imp-meta", fullDate(c.to || c.from) + " · " + t("imp.msgs", { n: c.msgs.length })));
+      row.appendChild(txt);
+      list.appendChild(row);
+      boxes.push(cb);
+    });
+    dlg.appendChild(list);
+    dlg.appendChild(el("p", "dlg-hint", t("imp.priv")));
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("btn.cancel"), "", function () { dlg.close(); }));
+    var go = button("", "primary", function () {
+      var pick = [];
+      boxes.forEach(function (b, i) { if (b.checked && !b.disabled) pick.push(pl.list[i]); });
+      dlg.close();
+      applyImport(pick);
+    });
+    go.id = "as-imp-go";
+    acts.appendChild(go);
+    dlg.appendChild(acts);
+    function count() {
+      var n = 0, open = 0;
+      boxes.forEach(function (b) { if (!b.disabled) { open++; if (b.checked) n++; } });
+      all.checked = open > 0 && n === open;
+      go.textContent = t("imp.go", { n: n });
+      go.disabled = !n || n > pl.room;
+      room.textContent = t("imp.room", { max: MAX_CHATS, n: pl.room }) + (n > pl.room ? " " + t("imp.full", { n: pl.room }) : "");
+      room.className = "dlg-hint" + (n > pl.room ? " err" : "");
+    }
+    count();
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    go.focus();
+  }
+  // With chat sync on, a conversation imported, then undone (its file
+  // a tombstone) and imported again must be newer than that tombstone.
+  function tombstones(ids) {
+    var fs = fsApi(), out = {};
+    if (!chatSyncOn() || !ids.length) return Promise.resolve(out);
+    var want = {};
+    ids.forEach(function (id) { want[id + ".json"] = id; });
+    return Promise.resolve(fs.ls(C.CHAT_DIR)).catch(function () { return []; }).then(function (list) {
+      var reads = (list || []).filter(function (en) { return en && !en.dir && want[en.name]; }).map(function (en) {
+        return Promise.resolve(fs.readText(C.CHAT_DIR + "/" + en.name)).then(function (text) {
+          var ch = C.parseChatFile(text);
+          if (ch) out[ch.id] = ch.m;
+        }, function () {});
+      });
+      return Promise.all(reads).then(function () { return out; });
+    });
+  }
+  function applyImport(pick) {
+    var I = window.OrosAssistantImport;
+    var have = haveIds();
+    pick = pick.filter(function (c) { return !have[c.id]; }).slice(0, Math.max(0, MAX_CHATS - chats.length));
+    if (!pick.length) { showToast(t("imp.none")); return; }
+    var now = Date.now();
+    tombstones(pick.map(function (c) { return c.id; })).then(function (tomb) {
+      have = haveIds();                         // a reconcile may have landed meanwhile
+      var add = [];
+      pick.forEach(function (c) {
+        if (have[c.id]) return;
+        // listed by its own date; never newer than now, never older than a tombstone of it
+        var m = Math.min(now, c.to || c.from || now);
+        if (tomb[c.id] && tomb[c.id] >= m) m = tomb[c.id] + 1;
+        add.push(I.toChat(c, m));
+      });
+      if (!add.length) { showToast(t("imp.none")); return; }
+      add.forEach(function (c) { chats.push(c); });
+      chats.sort(function (a, b) { return b.m - a.m; });
+      // ONE write: every new chat in a single transaction
+      idb("chats", "readwrite", function (st) { add.forEach(function (c) { st.put(c, c.id); }); })
+        .catch(function () { showToast(t("toast.storage")); });
+      add.forEach(function (c) { queueChatFile(c.id); });
+      renderAll();
+      var undo = add.map(function (c) { return { id: c.id, n: c.msgs.length }; });
+      showToast(t("imp.done", { n: add.length }), t("chg.undo"), function () { undoImport(undo); });
+    });
+  }
+  // Undo works on the chats as they are NOW: an imported chat goes
+  // (a newer tombstone file when chat sync is on, so other devices
+  // drop it too); one that was continued meanwhile is the person's
+  // and stays.
+  function undoImport(list) {
+    var gone = [];
+    list.forEach(function (x) {
+      var c = findChat(x.id);
+      if (!c || c.msgs.length > x.n || (busy && busy.chat === c)) return;
+      gone.push(x.id);
+    });
+    if (gone.length) {
+      var g = {};
+      gone.forEach(function (id) { g[id] = 1; });
+      chats = chats.filter(function (c) { return !g[c.id]; });
+      if (chat && g[chat.id]) { chat = null; prefs.open = ""; savePrefs(); }
+      idb("chats", "readwrite", function (st) { gone.forEach(function (id) { st.delete(id); }); }).catch(function () {});
+      gone.forEach(dropChatFile);
+      renderAll();
+    }
+    showToast(t("imp.undone"));
   }
 
   // ---------- 7c. Attachments (phase 4 wave 3) ----------
@@ -2608,7 +2827,10 @@
       var b = el("button", "chat-open");
       b.type = "button";
       b.appendChild(el("span", "chat-title", c.title || t("chat.untitled")));
-      b.appendChild(el("span", "chat-date", dayLabel(c.m)));
+      var src = impSource(c);
+      var dl = el("span", "chat-date", dayLabel(src ? impAt(c) : c.m));
+      if (src) dl.appendChild(el("span", "chat-src", IMP_NAME[src]));
+      b.appendChild(dl);
       b.addEventListener("click", function () { openChat(c.id); });
       var del = el("button", "icon-btn small chat-del");
       del.type = "button";
@@ -2701,6 +2923,7 @@
     } else {
       $("welcome").hidden = true;
     }
+    if (chat && impSource(chat)) host.appendChild(el("p", "imp-note", t("imp.from", { s: IMP_NAME[impSource(chat)], d: fullDate(impAt(chat)) })));
     (chat ? chat.msgs : []).forEach(function (m) { drawMsg(host, m, chat); });
     if (busy && busy.chat === chat) {
       if (busy.card) host.appendChild(busy.card);
@@ -3576,6 +3799,10 @@
     });
     keep.parentNode.classList.add("check");
     var wrow = el("div", "row");
+    var ib = button(t("imp.btn"), "small", function () { dlg.close(); startImport(); });
+    ib.id = "as-imp";
+    ib.title = t("imp.tip");
+    wrow.appendChild(ib);
     wrow.appendChild(button(t("set.wipe"), "small danger", function () {
       confirmDialog(t("set.wipe"), chatSyncOn() ? t("set.wipeQAll") : t("set.wipeQ"), t("btn.delete"), function () {
         if (busy) stop();
@@ -3664,25 +3891,35 @@
     dlg.showModal();
   }
 
-  function showToast(text) {
+  // actionLabel + actionFn: a button on the toast (Undo)
+  function showToast(text, actionLabel, actionFn) {
+    var act = actionLabel && typeof actionFn === "function";
     try {
       var n = (window.parent && window.parent !== window && window.parent.orosNotifs) || null;
-      if (n && typeof n.transient === "function" &&
-          n.transient({ ns: "assistant", title: String(text) })) return;
+      var cand = { ns: "assistant", title: String(text) };
+      if (act) cand.action = { label: actionLabel, fn: actionFn };
+      if (n && typeof n.transient === "function" && n.transient(cand)) return;
     } catch (e) {}
-    localToast(text);
+    localToast(text, act ? actionLabel : "", actionFn);
   }
   var toastTimer = null;
-  function localToast(text) {
+  function localToast(text, actionLabel, actionFn) {
     var box = $("toast");
     if (!box) return;
     hostToast();
     box.textContent = text;
+    box.classList.toggle("act", !!actionLabel);
+    if (actionLabel) {
+      var b = el("button", "toast-btn", actionLabel);
+      b.type = "button";
+      b.addEventListener("click", function () { box.classList.remove("show"); actionFn(); });
+      box.appendChild(b);
+    }
     box.classList.remove("show");
     void box.offsetWidth;
     box.classList.add("show");
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(function () { box.classList.remove("show"); }, 4000);
+    toastTimer = setTimeout(function () { box.classList.remove("show"); }, actionLabel ? 8000 : 4000);
   }
   function hostToast() {
     var box = $("toast"), d = document.querySelector("dialog[open]");
