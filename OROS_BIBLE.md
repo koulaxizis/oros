@@ -6770,3 +6770,10 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 ### 2026-10-15 — Get orOS in the menu — 2.25.06
 - Chris: the Info footer link was too easy to miss. `renderGetRow()` adds a permanent menu row under the install row, "Get orOS: USB, Android, single apps" (`menu.getOros`, download icon), opening `download/` (`?lang=el` in Greek) in a new tab; not in single apps (SOLO). The tour's last step (`tour.done.body`) and Help › Getting started mention it. Plain links only, no popup or reminder (free-forever rule: no nag messages).
   - Tests: full suite green; Chromium EN/EL: the menu row shows and opens /download/. Not tested: a real phone, Safari.
+
+### 2026-10-15 — An Android APK for every single app (#387) — 2.25.07
+- Chris (Android, orOS installed from Chrome): a single app's page offered no install. Chrome treats every useoros.online page as part of the installed orOS (inferred, matches the reports), so no web page can install a second app there. Chris approved APKs for all single apps (07:52): `android/solo-apps.json` now lists all 34 (package `online.useoros.<id>`, feeds → `reader`, fitness → `workouts`), each with its `.well-known/assetlinks.json` statement; CI publishes them on main as `oros-<id>.apk` to the `android-apks` release (#380).
+- `solo.apkUrl(id)`; Settings › Single apps shows an APK button beside Install on Android, and the solo page's "opened inside an installed app" bar offers "Download the app (APK)" on Android. Help text (EN/EL) explains PWA vs APK and the Play signing-key difference. Google Play: Notes, Calendar, To-Do, Passwords, Budget, Games first.
+- Files: `android/solo-apps.json`, `.well-known/assetlinks.json`, `solo.js`, `settings/settings.js`, `settings/core.js`, `settings/settings.css`, `android/README.md`, Bible SOLO-1.
+  - Tests: full suite green (new: every solo id has a unique package, an assetlinks entry and an APK link); Chromium with an Android UA: 34 APK buttons, Greek text, no errors. Phone thread approved android/. Not tested: installing the new APKs on a real phone.
+

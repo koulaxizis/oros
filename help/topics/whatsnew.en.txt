@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.25.07
+- Every single app now has an Android app (APK). On Android, Settings › Single apps shows an APK button next to Install. Use it when orOS is installed from Chrome, because Chrome then offers no install for single apps. Notes, Calendar, To-Do, Passwords, Budget and Games come to Google Play first.
+
 ## Version 2.25.06
 - The menu has a new row, Get orOS: USB, Android, single apps. It opens the download page with every way to get orOS. The end of the welcome tour and Help › Getting started point to it too.
 
