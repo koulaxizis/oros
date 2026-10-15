@@ -1,6 +1,11 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.46.00
+- Studio, Montage, Photo Lab and Pixel Avatar now save their own open orOS file with all the audio, video and pictures inside, and open it again.
+- Big projects of several GB save and open without filling the memory.
+- Montage: "Open with" on a video file now really adds the video.
+
 ## Version 2.45.00
 - Spreadsheet, Mind Map, Notes, Wiki, Kanban, Prompter and Ringtone Composer now save their own open orOS file (a ZIP you can unpack), with pictures and attachments inside, and open it again.
 - "Open with" on your computer now sends these files to the right app.
