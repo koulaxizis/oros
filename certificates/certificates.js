@@ -109,6 +109,10 @@
       "sample.name": "Maria Smith",
       "more.title": "These certificates", "btn.dup": "Duplicate (design only)", "btn.clear": "Clear the list of people",
       "btn.del": "Delete these certificates",
+      "btn.orosSave": "orOS file (.oroscert)", "btn.orosOpen": "Open an orOS file (.oroscert)…", "btn.orosFolder": "Unzipped orOS folder…",
+      "oros.done": "Opened as new certificates.", "oros.imgFail": "Opened as new certificates. {n} pictures could not be brought in.",
+      "oros.bad": "This orOS file could not be opened.", "oros.newer": "This file was made by a newer orOS. Update orOS to open it.",
+      "oros.saveFail": "The orOS file could not be made.",
       "more.hint": "Your certificates and lists follow you to every device through orOS sync, encrypted. Their pictures travel with your orOS disk.",
       "new.title": "New certificates", "btn.create": "Create",
       "draw.title": "Sign here", "draw.hint": "Sign with a finger, a pen or the mouse.", "btn.clearPad": "Clear", "btn.useSig": "Use this signature",
@@ -229,6 +233,10 @@
       "sample.name": "Μαρία Παπαδοπούλου",
       "more.title": "Αυτά τα πιστοποιητικά", "btn.dup": "Αντίγραφο (μόνο το σχέδιο)", "btn.clear": "Άδειασμα της λίστας ατόμων",
       "btn.del": "Διαγραφή αυτών των πιστοποιητικών",
+      "btn.orosSave": "Αρχείο orOS (.oroscert)", "btn.orosOpen": "Άνοιγμα αρχείου orOS (.oroscert)…", "btn.orosFolder": "Αποσυμπιεσμένος φάκελος orOS…",
+      "oros.done": "Άνοιξαν ως νέα πιστοποιητικά.", "oros.imgFail": "Άνοιξαν ως νέα πιστοποιητικά. Δεν ήταν δυνατό να έρθουν {n} εικόνες.",
+      "oros.bad": "Δεν ήταν δυνατό να ανοίξει αυτό το αρχείο orOS.", "oros.newer": "Το αρχείο φτιάχτηκε από νεότερο orOS. Ενημέρωσε το orOS για να το ανοίξεις.",
+      "oros.saveFail": "Δεν ήταν δυνατό να φτιαχτεί το αρχείο orOS.",
       "more.hint": "Τα πιστοποιητικά και οι λίστες σου σε ακολουθούν σε κάθε συσκευή μέσω του συγχρονισμού του orOS, κρυπτογραφημένα. Οι εικόνες τους ταξιδεύουν με τον δίσκο του orOS.",
       "new.title": "Νέα πιστοποιητικά", "btn.create": "Δημιουργία",
       "draw.title": "Υπόγραψε εδώ", "draw.hint": "Υπόγραψε με το δάχτυλο, μια γραφίδα ή το ποντίκι.", "btn.clearPad": "Καθαρισμός", "btn.useSig": "Χρήση αυτής της υπογραφής",
@@ -1177,10 +1185,17 @@
   // A CSV / TSV / text file, or a spreadsheet (SheetJS, loaded on first use).
   function openList() {
     var xl = loadXlsx();          // pre-warm while the file dialog is open (R33)
-    openFile(".csv,.tsv,.txt,.xlsx,.xls,.ods,text/csv,text/plain").then(function (f) {
+    openFile(".csv,.tsv,.txt,.xlsx,.xls,.ods,.oroscert,text/csv,text/plain").then(function (f) {
       if (!f) return;
-      if (f.size > 15 * 1024 * 1024) { toast(t("toast.fileBig")); return; }
       var name = String(f.name || "").toLowerCase();
+      // an .oroscert opens as new certificates (an .xlsx is a ZIP too, but not a bundle)
+      return isBundleFile(f).then(function (b) { return b ? openBundleFile(f) : listFile(f, name); });
+    }).catch(function () { toast(t("toast.fileFail")); });
+  }
+  function listFile(f, name) {
+    var xl = loadXlsx();
+    return Promise.resolve().then(function () {
+      if (f.size > 15 * 1024 * 1024) { toast(t("toast.fileBig")); return; }
       if (/\.(xlsx|xls|ods)$/.test(name)) {
         return Promise.all([xl, f.arrayBuffer()]).then(function (r) {
           var X = r[0];
@@ -1834,6 +1849,127 @@
       toast(t("toast.deleted"));
     });
   }
+  // ---------- 10b. .oroscert = one set of certificates as an orOS bundle ----------
+  // (../bundle.js, docs/oros-bundle.md; the model ↔ content.json
+  // mapping lives in package.js). Saving writes the open event with
+  // its people, its pictures in media/, a thumbnail of the design and
+  // the register as preview/people.csv. The signing keys of the check
+  // QR codes are never written: certificates opened elsewhere sign
+  // with that device's own key. Opening ALWAYS makes new certificates
+  // with fresh ids, through the same normalisers as sync (core.js).
+  var PKG = window.CertPackage || null;
+  var BUNDLE_MIME = "application/x-oros-cert";
+  function bundleReady() { return !!(PKG && window.OrosBundle); }
+
+  // The design as a PNG, the longer side 512 px (fonts are loaded and
+  // the pictures are fetched first, so it is the real design).
+  function bundleThumb(e, first, ids) {
+    if (!fontsReady) return Promise.resolve(null);
+    var chain = Promise.resolve();
+    ids.forEach(function (id) { chain = chain.then(function () { return A.load(id); }).then(null, function () {}); });
+    return chain.then(function () {
+      var s = D.build(e, [], { sample: sampleOf(e) }).doc.setup;
+      var cv = drawPage(e, first, Math.max(1, Math.round(512 * s.w / Math.max(s.w, s.h))));
+      return toBlob(cv, "image/png");
+    }).then(null, function () { return null; });
+  }
+  function saveBundle() {
+    hideDlg();
+    if (!ev || !bundleReady() || busy) return;
+    if (saveTimer) saveNow();
+    var e = C.eventById(data, ev.id), built;
+    try { built = PKG.build(data, e.id, LANG); } catch (x) { toast(t("oros.saveFail")); return; }
+    var media = {}, chain = Promise.resolve();
+    built.assets.forEach(function (id) {
+      chain = chain.then(function () { return A.blob(id); }).then(function (b) { if (b) media[id] = b; }, function () {});
+    });
+    runBusy(chain.then(function () {
+      return bundleThumb(e, built.content.ppl[0] || null, built.assets);
+    }).then(function (thumb) {
+      return window.OrosBundle.write({
+        mime: BUNDLE_MIME, app: "certificates", schema: "certificates/" + PKG.VER, content: built.content,
+        meta: { title: built.title || evTitle(e), modified: built.modified || undefined, id: e.id, language: LANG, generator: "orOS Certificates" },
+        media: media, thumbnail: thumb, preview: built.preview, date: new Date()
+      });
+    }).then(function (bytes) {
+      return saveFile(new Blob([bytes], { type: BUNDLE_MIME }), C.fileStem(evTitle(e), "certificates") + ".oroscert", BUNDLE_MIME, "oroscert");
+    }, function (x) {
+      console.error("[orOS] certificates bundle failed:", x);
+      toast(t("oros.saveFail"));
+    }));
+  }
+
+  // A read bundle (zip or folder) → new certificates.
+  function applyBundle(r) {
+    var res;
+    try { res = PKG.parse(r && r.content, { now: now() }); } catch (x) { toast(t("oros.bad")); return false; }
+    if (data.evs.length >= C.LIM.events) { toast(t("toast.full")); return false; }
+    var media = r.media || {}, failed = {}, chain = Promise.resolve();
+    res.assets.forEach(function (id) {
+      var m = media[id];
+      chain = chain.then(function () {
+        if (m && m.bytes) return A.put(id, new Blob([m.bytes], { type: /\.png$/.test(id) ? "image/png" : "image/jpeg" }));
+        // not in the file: fine only when this device has it already
+        return A.blob(id).then(function (b) { if (!b) throw new Error("missing"); });
+      }).then(null, function () { failed[id] = 1; });
+    });
+    return chain.then(function () {
+      var e = res.ev, n = Object.keys(failed).length;
+      // a picture that did not arrive is left out, not shown as missing
+      if (n) {
+        if (e.logo && failed[e.logo.a]) e.logo = null;
+        if (e.seal && failed[e.seal.a]) e.seal = null;
+        e.sigs = e.sigs.map(function (s) { return s.a && failed[s.a] ? { n: s.n, r: s.r } : s; });
+      }
+      if (saveTimer) saveNow();
+      var r1 = C.putEvent(data, e, now());
+      if (!r1.ok) { toast(t(r1.why === "full" ? "toast.full" : "oros.bad")); return false; }
+      var r2 = C.putPeople(r1.data, res.ppl, now());
+      data = r2.data;
+      storeData();
+      hideDlg();
+      openEvent(r1.ev.id, "design");
+      toast(r2.over ? t("toast.over", { n: r2.over }) : n ? t("oros.imgFail", { n: n }) : t("oros.done"));
+      return true;
+    });
+  }
+  function bundleFail(e) {
+    console.error("[orOS] certificates bundle open failed:", e);
+    toast(e && e.code === "newer" ? t("oros.newer") : t("oros.bad"));
+  }
+  // The first bytes say whether a file is a bundle (PK + "mimetype").
+  function isBundleFile(f) {
+    if (!bundleReady() || !f || typeof f.slice !== "function") return Promise.resolve(false);
+    var named = /\.oroscert$/i.test(String(f.name || ""));
+    return f.slice(0, 128).arrayBuffer().then(function (ab) {
+      return !!window.OrosBundle.sniff(new Uint8Array(ab)) || named;
+    }, function () { return named; });
+  }
+  function openBundleFile(f) {
+    if (f.size > 200 * 1024 * 1024) { toast(t("toast.fileBig")); return Promise.resolve(false); }
+    return f.arrayBuffer()
+      .then(function (ab) { return window.OrosBundle.read(new Uint8Array(ab), { mime: BUNDLE_MIME }); })
+      .then(applyBundle)
+      .then(null, function (e) { bundleFail(e); return false; });
+  }
+  function openBundlePick() {
+    if (!bundleReady()) return;
+    openFile(".oroscert," + BUNDLE_MIME).then(function (f) {
+      if (!f) return;
+      return isBundleFile(f).then(function (zip) {
+        if (zip) return openBundleFile(f);
+        toast(t("oros.bad"));
+      });
+    }).then(null, function (e) { bundleFail(e); });
+  }
+  function openBundleFolder() {
+    if (!bundleReady()) return Promise.resolve(false);
+    return window.OrosBundle.pickFolder().then(function (files) {
+      if (!files) return false;
+      return window.OrosBundle.readFolder(files, { mime: BUNDLE_MIME }).then(applyBundle);
+    }).then(null, function (e) { bundleFail(e); return false; });
+  }
+
   var toastTimer = 0;
   function toast(msg) {
     var n = $("toast");
@@ -1906,8 +2042,29 @@
     } else if (!$("home").hidden) renderHome();
   }
   // Deep link (search hit): { ev, p } opens the certificates (and the person).
+  // { openFile: { token } }: an .oroscert from the system's "Open with"
+  // (shell fileopen.js), taken once from the shell → new certificates.
   var pending = null;
+  function openFileTarget(o) {
+    var f = null;
+    try {
+      var w = window.parent;
+      if (o && typeof o.token === "string" && w && w !== window && typeof w.__orosTakeFile === "function")
+        f = w.__orosTakeFile(o.token);
+    } catch (e) { f = null; }
+    if (!f) return false;
+    isBundleFile(f).then(function (zip) {
+      if (zip) openBundleFile(f);
+      else toast(t("oros.bad"));
+    });
+    return true;
+  }
   function openTarget(tg) {
+    if (tg && typeof tg === "object" && tg.openFile && typeof tg.openFile === "object") {
+      // the file is taken now (its token is one-shot); it opens once the fonts are in
+      if (!fontsReady) { pending = tg; return true; }
+      return openFileTarget(tg.openFile);
+    }
     if (!tg || typeof tg !== "object" || typeof tg.ev !== "string") return false;
     if (!fontsReady) { pending = tg; return true; }
     if (!C.eventById(data, tg.ev)) return false;
@@ -2040,6 +2197,11 @@
     $("dup-btn").addEventListener("click", duplicate);
     $("clear-btn").addEventListener("click", clearList);
     $("del-btn").addEventListener("click", delEvent);
+    $("oros-save").hidden = !bundleReady();
+    $("home-open").hidden = !bundleReady();
+    $("oros-save").addEventListener("click", saveBundle);
+    $("oros-open").addEventListener("click", openBundlePick);
+    $("oros-folder").addEventListener("click", function () { openBundleFolder(); });
     $("pick-q").addEventListener("input", renderPick);
     $("ask-no").addEventListener("click", function () { var f = askNo; askYes = askNo = null; hideDlg(); if (f) f(); });
     $("ask-yes").addEventListener("click", function () { var f = askYes; askYes = askNo = null; hideDlg(); if (f) f(); });
@@ -2077,7 +2239,7 @@
       var s = shell();
       if (!tg && s && typeof s.__orosTakeTarget === "function") tg = s.__orosTakeTarget("certificates");
     } catch (e) {}
-    if (tg) opened = openTarget(tg);
+    if (tg) opened = openTarget(tg) && !tg.openFile;     // a file opens over the usual view
     if (!opened) {
       if (prefs.cur && C.eventById(data, prefs.cur)) openEvent(prefs.cur);
       else showHome();

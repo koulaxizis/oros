@@ -34,6 +34,10 @@
       </div>
       <input type="search" id="home-q" autocomplete="off" hidden>
       <div id="evs" class="evs"></div>
+      <div id="home-open" class="actions" hidden>
+        <button type="button" id="oros-open" class="chip small" data-i18n="btn.orosOpen">Open an orOS file (.oroscert)…</button>
+        <button type="button" id="oros-folder" class="chip small" data-i18n="btn.orosFolder">Unzipped orOS folder…</button>
+      </div>
     </div>
   </main>
 
@@ -227,6 +231,7 @@
       <button type="button" class="icon-btn dlg-close"></button>
     </div>
     <div class="menu">
+      <button type="button" id="oros-save" class="menu-item" data-i18n="btn.orosSave" hidden>orOS file (.oroscert)</button>
       <button type="button" id="dup-btn" class="menu-item" data-i18n="btn.dup">Duplicate (design only)</button>
       <button type="button" id="clear-btn" class="menu-item danger" data-i18n="btn.clear">Clear the list of people</button>
       <button type="button" id="del-btn" class="menu-item danger" data-i18n="btn.del">Delete these certificates</button>
@@ -370,7 +375,9 @@
   <script src="badges.js?v=2.46.00"></script>
   <script src="send.js?v=2.46.00"></script>
   <script src="sign.js?v=2.46.00"></script>
-  <script src="certificates.js?v=2.46.00"></script>
+  <script src="../bundle.js?v=2.47.00"></script>
+  <script src="package.js?v=2.47.00"></script>
+  <script src="certificates.js?v=2.47.00"></script>
 
 </body>
 </html>
