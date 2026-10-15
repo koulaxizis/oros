@@ -4679,6 +4679,43 @@ document.addEventListener("keydown", function (e) {
       return uri.length <= 50000 ? uri : null;
     });
   }
+  // CT-PS (2026-10-15): photos stay small. A contact picture is shown
+  // at 128 px at most, but Google imports and vCards kept up to 50,000
+  // characters each, and a few hundred of them filled the browser's
+  // local storage (sync stopped with "storage full", SY-Q1). Once per
+  // start, every bigger photo is redrawn as a 128×128 JPEG, the size
+  // an upload gets; one that comes out no smaller stays as it is.
+  var PHOTO_SMALL = 16000;
+  function shrinkPhoto(uri) {
+    return fetch(uri).then(function (r) { return r.blob(); }).then(createImageBitmap).then(function (bmp) {
+      var side = Math.min(bmp.width, bmp.height);
+      var cv = document.createElement("canvas");
+      cv.width = AVATAR_SIZE; cv.height = AVATAR_SIZE;
+      var ctx = cv.getContext("2d");
+      ctx.imageSmoothingEnabled = true;
+      ctx.drawImage(bmp, (bmp.width - side) / 2, (bmp.height - side) / 2, side, side, 0, 0, AVATAR_SIZE, AVATAR_SIZE);
+      return cv.toDataURL("image/jpeg", 0.75);
+    });
+  }
+  function shrinkPhotos() {
+    if (typeof createImageBitmap !== "function" || typeof fetch !== "function") return Promise.resolve(0);
+    var todo = state.contacts.filter(function (c) { return c.photo && c.photo.length > PHOTO_SMALL; })
+      .map(function (c) { return { id: c.id, photo: c.photo }; });
+    var done = 0;
+    function next(i) {
+      if (i >= todo.length) return Promise.resolve();
+      var it = todo[i];
+      return shrinkPhoto(it.photo).then(function (out) {
+        var c = contactById(it.id);
+        // only if the photo didn't change meanwhile, and it got clearly smaller
+        if (c && c.photo === it.photo && out && out.length < it.photo.length * 0.75) { c.photo = out; done++; }
+      }, function () {}).then(function () { return next(i + 1); });
+    }
+    return next(0).then(function () {
+      if (done) { saveState(); renderList(); }
+      return done;
+    });
+  }
   function pfLookup(mail) {
     return pfHash(mail).then(function (h) {
       var i = 0;
@@ -5391,6 +5428,7 @@ document.addEventListener("keydown", function (e) {
   applyI18n();
   renderChips();
   renderList();
+  setTimeout(shrinkPhotos, 1500);   // CT-PS
 
   // Wave 2.1 — the shell staged a contact deep-link while we were
   // closed (sessionStorage, one-shot take). Runs AFTER render so the

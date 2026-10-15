@@ -3,6 +3,7 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 ## Version 2.32.00
 - Layout opens SVG files (for example from Affinity), several at once as pages, and pictures in an opened PDF become their own frames.
+- Contacts: photos are kept small (128 px), so many contact photos no longer fill the browser storage and pause sync.
 
 ## Version 2.31.00
 - Budget, Split, Garage and Health can import from other apps (YNAB, Wallet, Splitwise, Tricount, Fuelio, Drivvo, Withings, Samsung Health, Apple Health and more), with a preview and Undo.
