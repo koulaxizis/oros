@@ -55,7 +55,7 @@
   var MAX_INNER_ZIP = 120 * 1024 * 1024;  // a ZIP inside a ZIP
   var MAX_ROWS = 1000, MAX_COLS = 30;     // one Notion database table
   var MAX_NODES = 200000;                 // HTML elements in one page
-  var ACCEPT = ".md,.markdown,.txt,.zip,.json,.html,.htm,.xml,.tid,.csv,text/markdown,text/plain,text/html,application/json,application/xml,text/xml,application/zip";
+  var ACCEPT = ".oroswiki,.md,.markdown,.txt,.zip,.json,.html,.htm,.xml,.tid,.csv,text/markdown,text/plain,text/html,application/json,application/xml,text/xml,application/zip,application/x-oros-wiki";
 
   var TEXT_EXT = /\.(md|markdown|txt|csv|html?|json|xml|tid)$/i;
   var MD_EXT = /\.(md|markdown|txt)$/i;
