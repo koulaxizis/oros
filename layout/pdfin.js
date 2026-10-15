@@ -1,13 +1,16 @@
 // ============================================================
-// orOS Layout — PDF import (v1.0.0)
+// orOS Layout — PDF import (v1.1.0)
 // Opens a PDF (for example one exported from Affinity Publisher) as a
 // NEW Layout document you can go on working in:
 //   - every page becomes a page of the same size;
 //   - its text becomes editable text frames: pieces on one baseline
 //     join into lines, lines that stack like a paragraph join into one
 //     frame (alignment, leading, size, family, bold / italic, colour);
-//   - everything else (pictures, drawings, backgrounds) becomes one
-//     locked picture per page behind the text, drawn without the text.
+//   - every picture (an image the PDF places, rotated or not) becomes
+//     its own image frame you can move, crop or replace;
+//   - the rest (drawings, backgrounds, very small or masked images)
+//     becomes one locked picture per page behind everything, drawn
+//     without the text and without the pictures taken out.
 // The PDF is read by PDF.js (vendor/pdfjs, Mozilla, Apache-2.0), loaded
 // only when a PDF is opened, with eval off; the file's own scripts,
 // forms and links are never run. Text colours are measured by drawing
@@ -123,8 +126,11 @@
   function most(o) { return Object.keys(o).sort(function (x, y) { return o[y] - o[x]; })[0]; }
   function famLabel(f) { return f === "serif" ? "Serif" : f === "mono" ? "Mono" : "Sans"; }
   function hex(c) { return "#" + c.map(function (v) { return ("0" + Math.max(0, Math.min(255, Math.round(v))).toString(16)).slice(-2); }).join(""); }
-  // pages: [{ w, h, blocks, bg: { a, iw, ih } | null }]; opts: { now,
-  // name }. → { doc, stats: { pages, items, frames } }
+  // pages: [{ w, h, blocks, bg: { a, iw, ih } | null, shapes: [item
+  // with colours as [r, g, b]: fill, stroke, gr.st[k][1]] }]; opts:
+  // { now, name }. Order on a page: background, shapes (in their own
+  // order), text frames. → { doc, stats: { pages, items, frames },
+  // shapeIds: [[item id per shape] per page] }
   function buildDoc(pages, opts) {
     opts = opts || {};
     var now = opts.now || 1;
@@ -176,13 +182,28 @@
       csBy[key] = id;
       return id;
     }
-    var order = M.pagesInOrder(doc);
+    var order = M.pagesInOrder(doc), shapeIds = [];
     pages.forEach(function (pg, k) {
       var pid = order[k].id;
       if (pg.bg && pg.bg.a) {
         doc.items.push({ id: M.newId("it"), m: now, t: "img", pg: pid, x: 0, y: 0, w: pg.w, h: pg.h, z: (++z) * 16,
                          a: pg.bg.a, iw: pg.bg.iw, ih: pg.bg.ih, fit: "fill", lock: 1, sw: 0, nm: "PDF " + (k + 1) });
       }
+      shapeIds.push((pg.shapes || []).map(function (sh) {
+        if (doc.items.length >= M.MAX_ITEMS) return "";
+        var it = {}, id = M.newId("it");
+        Object.keys(sh).forEach(function (key) { it[key] = sh[key]; });
+        it.id = id; it.m = now; it.pg = pid; it.z = (++z) * 16;
+        it.fill = sh.fill ? swatch(sh.fill) : "";
+        it.stroke = sh.stroke ? swatch(sh.stroke) : "";
+        if (!it.stroke) it.sw = 0;
+        if (sh.gr) {
+          it.gr = { k: sh.gr.k, x1: sh.gr.x1, y1: sh.gr.y1, x2: sh.gr.x2, y2: sh.gr.y2, st: sh.gr.st.map(function (q) { return [q[0], swatch(q[1]), q[2]]; }) };
+          if (!it.fill) it.fill = it.gr.st[0][1];
+        }
+        doc.items.push(it);
+        return id;
+      }));
       (pg.blocks || []).forEach(function (b) {
         // the block's family and colour by character count
         var famN = {}, colN = {};
@@ -228,7 +249,9 @@
     });
     if (doc.items.length > M.MAX_ITEMS) doc.items.length = M.MAX_ITEMS;
     var out = M.normDoc(doc);
-    return { doc: out, stats: { pages: pages.length, items: out.items.length, frames: frames } };
+    var pictures = 0;
+    shapeIds.forEach(function (ids, k) { ids.forEach(function (id, n) { if (id && pages[k].shapes[n].t === "img" && pages[k].shapes[n].a) pictures++; }); });
+    return { doc: out, stats: { pages: pages.length, items: out.items.length, frames: frames, pictures: pictures }, shapeIds: shapeIds };
   }
 
   // ---------- 4. Browser: PDF.js ----------
@@ -253,6 +276,69 @@
     return { fam: f && f.isSerifFont && !/sans/i.test(nm) ? "serif" : st.font,
              b: st.b || /^b/.test(suf) ? 1 : 0, i: st.i || /i/.test(suf) ? 1 : 0 };
   }
+  // ---------- 3b. Pictures ----------
+  // Walk the operator list keeping the current matrix (save / restore,
+  // transform, form XObjects) and return each image paint: { i (op
+  // index), id, m (PDF user space → unit square matrix) }.
+  var MAX_PICS = 200;
+  function mulM(m, n) {
+    return [m[0] * n[0] + m[2] * n[1], m[1] * n[0] + m[3] * n[1], m[0] * n[2] + m[2] * n[3], m[1] * n[2] + m[3] * n[3],
+      m[0] * n[4] + m[2] * n[5] + m[4], m[1] * n[4] + m[3] * n[5] + m[5]];
+  }
+  function imagePaints(lib, ops) {
+    var O = lib.OPS, m = [1, 0, 0, 1, 0, 0], stack = [], out = [];
+    for (var i = 0; i < ops.fnArray.length && out.length < MAX_PICS; i++) {
+      var fn = ops.fnArray[i], a = ops.argsArray[i];
+      if (fn === O.save) stack.push(m);
+      else if (fn === O.restore) m = stack.pop() || [1, 0, 0, 1, 0, 0];
+      else if (fn === O.transform && a) m = mulM(m, a);
+      else if (fn === O.paintFormXObjectBegin) { stack.push(m); if (a && Array.isArray(a[0]) && a[0].length === 6) m = mulM(m, a[0]); }
+      else if (fn === O.paintFormXObjectEnd) m = stack.pop() || [1, 0, 0, 1, 0, 0];
+      else if (fn === O.paintImageXObject && a && typeof a[0] === "string") out.push({ i: i, id: a[0], m: m });
+      else if (fn === O.paintInlineImageXObject && a && a[0]) out.push({ i: i, img: a[0], m: m });
+    }
+    return out;
+  }
+  // Placement of the unit square under matrix mm (top-down page pt):
+  // the picture's top-left is (0, 1) in image space.
+  function placement(mm) {
+    function ap(x, y) { return [mm[0] * x + mm[2] * y + mm[4], mm[1] * x + mm[3] * y + mm[5]]; }
+    var o = ap(0, 1), ex = ap(1, 1), ey = ap(0, 0), c = ap(0.5, 0.5);
+    var w = Math.hypot(ex[0] - o[0], ex[1] - o[1]), h = Math.hypot(ey[0] - o[0], ey[1] - o[1]);
+    var rot = Math.atan2(ex[1] - o[1], ex[0] - o[0]) * 180 / Math.PI;
+    rot = Math.round(rot * 100) / 100;
+    if (Math.abs(rot) < 0.01) rot = 0;
+    return { x: c[0] - w / 2, y: c[1] - h / 2, w: w, h: h, rot: rot };
+  }
+  // PDF.js image object → canvas (bitmap, or raw data by kind:
+  // 1 = 1 bit grey, 2 = RGB, 3 = RGBA)
+  function imageCanvas(img) {
+    if (!img || !(img.width > 0) || !(img.height > 0) || img.width * img.height > 40e6) return null;
+    var c = canvas(img.width, img.height), x = c.getContext("2d");
+    if (img.bitmap) { x.drawImage(img.bitmap, 0, 0); return c; }
+    var d = img.data;
+    if (!d) return null;
+    var out = x.createImageData(img.width, img.height), o = out.data, n = img.width * img.height;
+    if (img.kind === 3 && d.length >= n * 4) o.set(d.subarray ? d.subarray(0, n * 4) : d.slice(0, n * 4));
+    else if (img.kind === 2 && d.length >= n * 3) for (var k = 0, j = 0; k < n; k++, j += 3) { o[k * 4] = d[j]; o[k * 4 + 1] = d[j + 1]; o[k * 4 + 2] = d[j + 2]; o[k * 4 + 3] = 255; }
+    else if (img.kind === 1) {
+      var row = (img.width + 7) >> 3;
+      for (var yy = 0; yy < img.height; yy++) for (var xx = 0; xx < img.width; xx++) {
+        var v = (d[yy * row + (xx >> 3)] >> (7 - (xx & 7))) & 1 ? 255 : 0, q = (yy * img.width + xx) * 4;
+        o[q] = o[q + 1] = o[q + 2] = v; o[q + 3] = 255;
+      }
+    } else return null;
+    x.putImageData(out, 0, 0);
+    return c;
+  }
+  function getObj(page, id) {
+    try {
+      if (page.objs.has(id)) return page.objs.get(id);
+      if (page.commonObjs.has(id)) return page.commonObjs.get(id);
+    } catch (e) {}
+    return null;
+  }
+
   function canvas(w, h) { var c = document.createElement("canvas"); c.width = w; c.height = h; return c; }
   function blank(d) {
     for (var i = 0; i < d.length; i += 16) if (d[i] < 250 || d[i + 1] < 250 || d[i + 2] < 250) return false;
@@ -284,12 +370,23 @@
             var sc = Math.min(150 / 72, 3500 / Math.max(W0, H0)), vp = page.getViewport({ scale: sc });
             var cw = Math.max(1, Math.round(vp.width)), ch = Math.max(1, Math.round(vp.height));
             var cA = canvas(cw, ch), cB = canvas(cw, ch), xA = cA.getContext("2d"), xB = cB.getContext("2d", { willReadFrequently: true });
-            var text, ops;
+            var text, ops, pics = [];
             return Promise.all([page.getTextContent(), page.getOperatorList()]).then(function (r) {
               text = r[0]; ops = r[1];
               return page.render({ canvasContext: xA, viewport: vp, background: "#ffffff" }).promise;
             }).then(function () {
-              return page.render({ canvasContext: xB, viewport: vp, background: "#ffffff", operationsFilter: function (i) { return !TEXT_OPS[ops.fnArray[i]]; } }).promise;
+              // the pictures large enough to be worth their own frame
+              pics = imagePaints(lib, ops).map(function (p) {
+                var pl = placement(mulM(vp1.transform, p.m));
+                if (pl.w < 12 || pl.h < 12) return null;
+                var cv = imageCanvas(p.img || getObj(page, p.id));
+                if (!cv) return null;
+                pl.canvas = cv; pl.i = p.i;
+                return pl;
+              }).filter(Boolean);
+              var out = {};
+              pics.forEach(function (p) { out[p.i] = 1; });
+              return page.render({ canvasContext: xB, viewport: vp, background: "#ffffff", operationsFilter: function (i) { return !TEXT_OPS[ops.fnArray[i]] && !out[i]; } }).promise;
             }).then(function () {
               var full = xA.getImageData(0, 0, cw, ch).data, bare = xB.getImageData(0, 0, cw, ch).data;
               var pieces = text.items.map(function (it) {
@@ -308,7 +405,22 @@
                 blob.name = "pdf-page-" + k + ".jpg";
                 return store(blob).then(function (r) { return { a: r.id, iw: r.w, ih: r.h }; }, function () { return null; });
               }).then(function (bgRes) {
-                pages.push({ w: W0, h: H0, blocks: toBlocks(toLines(pieces)), bg: bgRes });
+                // each picture → the asset store → an image frame
+                var shapes = [], pc = Promise.resolve();
+                pics.forEach(function (p, n) {
+                  pc = pc.then(function () {
+                    return new Promise(function (res) { p.canvas.toBlob(res, "image/png"); });
+                  }).then(function (blob) {
+                    if (!blob) return;
+                    blob.name = "pdf-" + k + "-" + (n + 1) + ".png";
+                    return store(blob).then(function (r) {
+                      shapes.push({ t: "img", a: r.id, iw: r.w, ih: r.h, x: p.x, y: p.y, w: p.w, h: p.h, rot: p.rot, fit: "fill", sw: 0, nm: blob.name });
+                    });
+                  }).then(null, function () {});
+                });
+                return pc.then(function () { return { bg: bgRes, shapes: shapes }; });
+              }).then(function (r) {
+                pages.push({ w: W0, h: H0, blocks: toBlocks(toLines(pieces)), bg: r.bg, shapes: r.shapes });
                 page.cleanup();
                 if (progress) progress(k, n);
               });
@@ -325,7 +437,7 @@
     }).then(null, function () { return null; });
   }
 
-  var api = { toLines: toLines, toBlocks: toBlocks, buildDoc: buildDoc, open: open, MAX_PAGES: MAX_PAGES };
+  var api = { toLines: toLines, toBlocks: toBlocks, buildDoc: buildDoc, open: open, placement: placement, mulM: mulM, MAX_PAGES: MAX_PAGES };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.LY_PDFIN = api;
 })(typeof window !== "undefined" ? window : this);
