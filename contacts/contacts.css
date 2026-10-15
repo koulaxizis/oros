@@ -691,6 +691,8 @@ dialog h3 {
   .nav-mini { min-height: 44px; }
 }
 
+#av-dlg .dlg-row { flex-wrap: wrap; }
+
 /* CT-6: [hidden] must ALWAYS win — last rule of the file (Part II).
    It was missing: an element with a display rule ignored `hidden`. */
 [hidden] { display: none !important; }

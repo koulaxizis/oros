@@ -7051,3 +7051,9 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Changed behaviour: Assistant `MAX_CHATS` 200 → 2000; Undo after a Stock import with quantities archives those products; an older `pixel.js` drops custom colours from Museum items (update devices together); Slides `io.js` checks 8 bytes for the ZIP signature.
 - Files: new `pixel/import.js`, `slides/odp.js`, `slides/mdimport.js`, `stock/import.js`, `timesheet/import.js`, `storage/import.js`, `newsletter/import2.js`, `travel/import.js`, `crossword/import.js`, `sudoku/import.js`, `assistant/import.js` (precached); Krita reader in `photolab/ora.js`; help EN/EL.
   - Tests: new import tests; full suite green; real shell per app (preview, two-device sync, Undo, 360px). Not tested: real export files from these services.
+
+### 2026-10-15 — Contacts: one switch for every contact's picture (#411); release stamps fixed (#412) — 2.42.00
+- Contacts: a Pictures button at the top opens Initials for all / 8-bit avatar for all (Chris 12:50); the 8-bit option keeps faces contacts already have and gives new ones to the rest; one save, Undo restores each previous value (CT-NP).
+- #412 (merged without its own stamp): "Bump orOS version" failed on every push to main from 2.26.00 to 2.41.00 because guard G3 checked the standalone `download/` page, so sw.js CACHE_VERSION stayed at 2.25.00 and app pages kept old `?v=`. G3 now checks only registered apps; the stamp script lives in `.github/scripts/stamp-assets.js` and `tests/release-guards.test.js` runs every guard on each PR (Bible Part X-B T8).
+- Files: `contacts/` (dialog `#av-dlg`, `setAllAvatars`), help EN/EL.
+  - Tests: new case in `tests/contacts-avatar.test.js`; full suite green; Chromium with 6 contacts. Not tested: a phone, Chris's data.
