@@ -83,7 +83,7 @@
       "col.red": "Red", "col.orange": "Orange", "col.yellow": "Yellow", "col.green": "Green", "col.teal": "Teal",
       "col.violet": "Violet", "col.pink": "Pink", "col.grey": "Grey",
       "menu.new": "New map", "menu.maps": "Your maps…", "menu.paste": "Paste a list…", "menu.export": "Export…",
-      "menu.copy": "Copy map as text", "menu.import": "Import (FreeMind, XMind, OPML, Markdown, text, JSON)…",
+      "menu.copy": "Copy map as text", "menu.import": "Import (FreeMind, XMind, SimpleMind, MindManager, OPML, Markdown, text, JSON)…",
       "menu.backup": "Back up all maps (JSON)", "menu.present": "Present", "menu.layout": "Layout…",
       "menu.unfoldAll": "Unfold all", "menu.foldAll": "Fold main branches",
       "menu.keys": "Keyboard shortcuts",
@@ -101,7 +101,7 @@
       "imp.err.size": "The file is too big (max 5 MB)", "imp.err.json": "This is not a valid JSON file",
       "imp.err.format": "This file is not a mind map, outline or list", "imp.err.toolarge": "Too many maps or nodes in this file",
       "imp.err.empty": "Nothing to import in this file", "imp.err.read": "The file could not be read",
-      "imp.err.zip": "This file is damaged or not an XMind map", "imp.sheets": "Only the first of {n} sheets was imported",
+      "imp.err.zip": "This file is damaged or not a mind map from XMind, SimpleMind or MindManager", "imp.sheets": "Only the first of {n} sheets was imported",
       "keys.title": "Keyboard shortcuts",
       "keys.list": "Tab|Add a child\nEnter|Add a sibling\nF2 or type|Edit the selected node\nShift+Enter|New line while editing\nDelete|Delete the branch\nSpace|Fold or unfold\nArrows|Move around the map\nAlt+↑ / Alt+↓|Move the node up / down\nCtrl+Z / Ctrl+Y|Undo / redo\nCtrl+C / Ctrl+V|Copy a branch as text / paste a list\nCtrl+F|Find\n+ / − / Home|Zoom in / out / fit\n→ / ← (presenting)|Next / back; Esc ends",
       "ol.indent": "Indent", "ol.outdent": "Outdent", "ol.up": "Move up", "ol.down": "Move down", "ol.new": "New line",
@@ -177,7 +177,7 @@
       "col.red": "Κόκκινο", "col.orange": "Πορτοκαλί", "col.yellow": "Κίτρινο", "col.green": "Πράσινο", "col.teal": "Γαλαζοπράσινο",
       "col.violet": "Μωβ", "col.pink": "Ροζ", "col.grey": "Γκρι",
       "menu.new": "Νέος χάρτης", "menu.maps": "Οι χάρτες σου…", "menu.paste": "Επικόλληση λίστας…", "menu.export": "Εξαγωγή…",
-      "menu.copy": "Αντιγραφή χάρτη ως κείμενο", "menu.import": "Εισαγωγή (FreeMind, XMind, OPML, Markdown, κείμενο, JSON)…",
+      "menu.copy": "Αντιγραφή χάρτη ως κείμενο", "menu.import": "Εισαγωγή (FreeMind, XMind, SimpleMind, MindManager, OPML, Markdown, κείμενο, JSON)…",
       "menu.backup": "Αντίγραφο όλων των χαρτών (JSON)", "menu.present": "Προβολή κλαδί-κλαδί", "menu.layout": "Διάταξη…",
       "menu.unfoldAll": "Ανάπτυξη όλων", "menu.foldAll": "Σύμπτυξη κύριων κλαδιών",
       "menu.keys": "Συντομεύσεις πληκτρολογίου",
@@ -195,7 +195,7 @@
       "imp.err.size": "Το αρχείο είναι πολύ μεγάλο (έως 5 MB)", "imp.err.json": "Δεν είναι έγκυρο αρχείο JSON",
       "imp.err.format": "Το αρχείο δεν είναι νοητικός χάρτης, περίγραμμα ή λίστα", "imp.err.toolarge": "Πάρα πολλοί χάρτες ή κόμβοι σε αυτό το αρχείο",
       "imp.err.empty": "Δεν υπάρχει κάτι για εισαγωγή σε αυτό το αρχείο", "imp.err.read": "Το αρχείο δεν διαβάστηκε",
-      "imp.err.zip": "Το αρχείο είναι κατεστραμμένο ή δεν είναι χάρτης XMind", "imp.sheets": "Εισήχθη μόνο το πρώτο από {n} φύλλα",
+      "imp.err.zip": "Το αρχείο είναι κατεστραμμένο ή δεν είναι χάρτης XMind, SimpleMind ή MindManager", "imp.sheets": "Εισήχθη μόνο το πρώτο από {n} φύλλα",
       "keys.title": "Συντομεύσεις πληκτρολογίου",
       "keys.list": "Tab|Νέο παιδί\nEnter|Νέος αδελφός\nF2 ή πληκτρολόγηση|Επεξεργασία του επιλεγμένου\nShift+Enter|Νέα γραμμή στην επεξεργασία\nDelete|Διαγραφή κλαδιού\nSpace|Σύμπτυξη ή ανάπτυξη\nΒελάκια|Κίνηση στον χάρτη\nAlt+↑ / Alt+↓|Μετακίνηση πάνω / κάτω\nCtrl+Z / Ctrl+Y|Αναίρεση / επανάληψη\nCtrl+C / Ctrl+V|Αντιγραφή κλαδιού ως κείμενο / επικόλληση λίστας\nCtrl+F|Εύρεση\n+ / − / Home|Μεγέθυνση / σμίκρυνση / προσαρμογή\n→ / ← (στην προβολή)|Επόμενο / πίσω· Esc για τέλος",
       "ol.indent": "Εσοχή", "ol.outdent": "Αφαίρεση εσοχής", "ol.up": "Πάνω", "ol.down": "Κάτω", "ol.new": "Νέα γραμμή",
@@ -2616,8 +2616,14 @@
     showDialog(dlg);
     ta.focus();
   }
+  // Markdown / text: mm-import's reader (front matter, Logseq
+  // properties and inline Markdown cleaned), mm-core's as fallback.
+  function readOutline(text, fallback) {
+    var X = window.MMImport;
+    return X && X.parseMarkdown ? X.parseMarkdown(text, fallback) : M.parseOutline(text, fallback);
+  }
   function pasteList(text, underId) {
-    var p = M.parseOutline(text, "");
+    var p = readOutline(text, "");
     if (!p.ok) { showToast(t("imp.err.empty")); return; }
     var tops = M.topsOf(p.tree);
     if (R.count + 1 >= M.MAX_NODES) { showToast(t("toast.tooMany")); return; }
@@ -2633,8 +2639,8 @@
     commit();
   }
   function importOutlineText(text, fallback) {
-    var p = M.parseOutline(text, fallback);
-    if (!p.ok) { showToast(t("imp.err.empty")); return; }
+    var p = readOutline(text, fallback);
+    if (!p.ok) { showToast(t(p.err === "size" ? "imp.err.size" : "imp.err.empty")); return; }
     addTreeAsMap(p.tree);
   }
   function addTreeAsMap(tree, msg) {
@@ -2908,9 +2914,9 @@
       [{ description: "JSON", accept: { "application/json": [".json"] } }]);
   }
 
-  var IMPORT_ACCEPT = ".json,.opml,.xml,.md,.markdown,.txt,.mm,.xmind,application/json,text/x-opml,text/xml," +
+  var IMPORT_ACCEPT = ".json,.opml,.xml,.md,.markdown,.txt,.mm,.xmind,.smmx,.mmap,application/json,text/x-opml,text/xml," +
     "text/markdown,text/plain,application/zip";
-  var ZIP_MAX = 30 * 1024 * 1024;               // a whole .xmind (pictures inside count)
+  var ZIP_MAX = 30 * 1024 * 1024;               // a whole .xmind / .smmx / .mmap (pictures inside count)
   function importErr(err) { showToast(t("imp.err." + (err === "empty" || err === "size" || err === "zip" ? err : "format"))); }
   function importTree(r) {
     if (!r.ok) { importErr(r.err); return; }
@@ -2929,7 +2935,7 @@
       return file.arrayBuffer().then(function (buf) {
         var bytes = new Uint8Array(buf), base = String(file.name || "").replace(/\.[^.]+$/, "");
         var X = window.MMImport;
-        if (X && X.sniff(bytes) === "zip") return X.parseXMind(bytes, base).then(importTree);
+        if (X && X.sniff(bytes) === "zip") return X.parseArchive(bytes, base).then(importTree);
         if (bytes.length > M.IMPORT_MAX) { showToast(t("imp.err.size")); return; }
         var s = new TextDecoder("utf-8").decode(bytes).replace(/^\ufeff/, "").trim();
         if (s.charAt(0) === "{") {
@@ -2939,7 +2945,8 @@
         } else if (s.charAt(0) === "<") {
           var head = s.slice(0, 4000);
           if (X && /<map[\s>]/.test(head) && !/<opml[\s>]/.test(head)) importTree(X.parseFreeMind(s, base));
-          else if (X && /<xmap-content[\s>]/.test(head)) return X.parseXMind(bytes, base).then(importTree);
+          else if (X && (/<xmap-content[\s>]/.test(head) || /<simplemind-mindmaps[\s>]/.test(head) ||
+                         (/<(?:\w+:)?Map[\s>]/.test(head) && /mindjet/i.test(head)))) return X.parseArchive(bytes, base).then(importTree);
           else importTree(M.parseOpml(s, base));
         } else importOutlineText(s, base);
       });

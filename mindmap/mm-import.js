@@ -1,11 +1,15 @@
 // ============================================================
-// orOS Mind Map — import of other apps' files (v1.0.0)
+// orOS Mind Map — import of other apps' files (v1.1.0)
 // DOM-free, so the browser app and `node --test` run the same code.
 //   1. Helpers (links, colours, icons)
 //   2. FreeMind / Freeplane (.mm, XML)
 //   3. A tiny read-only ZIP reader
 //   4. XMind (.xmind: Zen/2020+ content.json, XMind 8 content.xml)
 //   5. sniff (zip / xml)
+//   6. Markdown / text outlines (Markmap, Logseq, Obsidian, .txt)
+//   7. SimpleMind (.smmx: document/mindmap.xml)
+//   8. MindManager (.mmap: Document.xml, ap: namespace)
+//   9. parseArchive: any zip or XML map file → the right reader
 // Every XML file goes through MMCore.readXml: one reader for the
 // whole app, and it never expands entities (no billion laughs, no
 // external entities). Nothing here builds markup.
@@ -127,9 +131,9 @@
   // marker characters; block tags (<p>, <li>…) stay and become line
   // breaks. A node that is only a picture gets a picture emoji.
   var ATTRS = "(?:\\s+[A-Za-z_][\\w:.-]*\\s*=\\s*(?:\"[^\"]*\"|'[^']*'))*";
-  var INLINE_RE = new RegExp("<\\/?(?:a|abbr|b|big|cite|code|em|font|i|kbd|mark|q|s|samp|small|span|strike|strong|sub|sup|tt|u|var)" + ATTRS + "\\s*\\/?>", "gi");
-  var BR_RE = new RegExp("<br" + ATTRS + "\\s*\\/?>|<\\/br\\s*>", "gi");
-  var IMG_RE = new RegExp("<img" + ATTRS + "\\s*\\/?>", "gi");
+  var INLINE_RE = new RegExp("<\\/?(?:[A-Za-z_][\\w.-]*:)?(?:a|abbr|b|big|cite|code|em|font|i|kbd|mark|q|s|samp|small|span|strike|strong|sub|sup|tt|u|var)" + ATTRS + "\\s*\\/?>", "gi");
+  var BR_RE = new RegExp("<(?:[A-Za-z_][\\w.-]*:)?br" + ATTRS + "\\s*\\/?>|<\\/(?:[A-Za-z_][\\w.-]*:)?br\\s*>", "gi");
+  var IMG_RE = new RegExp("<(?:[A-Za-z_][\\w.-]*:)?img" + ATTRS + "\\s*\\/?>", "gi");
   var BR = "\u0001", BLOCK = "\u0002", IMG = "\u0003";
   var MARKS = /[\u0001-\u0003]/g;
   var BLOCKS = { p: 1, div: 1, li: 1, ul: 1, ol: 1, dl: 1, dt: 1, dd: 1, tr: 1, table: 1, blockquote: 1, pre: 1,
@@ -138,13 +142,16 @@
 
   // Linear scan (a lazy regex over a file full of unclosed
   // <richcontent> tags would be quadratic).
-  function prepRich(text) {
+  // (Also used for MindManager's <ap:NotesXhtmlData> blocks.)
+  function prepRich(text, open, close) {
+    open = open || "<richcontent";
+    close = close || "</richcontent";
     text = text.replace(MARKS, "");
     var out = [], pos = 0;
     for (;;) {
-      var s = text.indexOf("<richcontent", pos);
+      var s = text.indexOf(open, pos);
       if (s < 0) break;
-      var e = text.indexOf("</richcontent", s);
+      var e = text.indexOf(close, s);
       if (e < 0) break;
       out.push(text.slice(pos, s),
         text.slice(s, e).replace(/&nbsp;/g, "&#160;").replace(INLINE_RE, "").replace(BR_RE, BR).replace(IMG_RE, IMG));
@@ -316,6 +323,7 @@
     }
     return {
       has: function (name) { return !!entries[name]; },
+      names: function () { return Object.keys(entries); },
       text: function (name, max) { return getBytes(name, max).then(function (b) { return b ? utf8(b) : null; }); }
     };
   }
@@ -443,30 +451,6 @@
     return null;
   }
 
-  // bytes: the whole .xmind file. A bare content.xml (some tools
-  // write one) is read as XMind 8.
-  function parseXMind(bytes, fallbackTitle) {
-    return Promise.resolve().then(function () {
-      var b = asBytes(bytes);
-      if (!b) return fail("format");
-      if (b.length > FILE_MAX) return fail("size");
-      var kind = sniff(b);
-      if (kind === "xml") return b.length > IMPORT_MAX ? fail("size") : fromXml8(utf8(b), fallbackTitle);
-      if (kind !== "zip") return fail("zip");
-      var z;
-      try { z = openZip(b); } catch (e) { return fail("zip"); }
-      // Zen files also hold a content.xml that only says "open me
-      // with a newer XMind": content.json wins.
-      var name = z.has("content.json") ? "content.json" : (z.has("content.xml") ? "content.xml" : "");
-      if (!name) return fail("format");
-      return z.text(name, IMPORT_MAX).then(function (t) {
-        return name === "content.json" ? fromZen(t, fallbackTitle) : fromXml8(t, fallbackTitle);
-      }, function (e) {
-        return fail(e && e.message === "toobig" ? "size" : "zip");
-      });
-    });
-  }
-
   // ---------- 5. sniff ----------
   function sniff(bytes) {
     var b = asBytes(bytes);
@@ -477,9 +461,278 @@
     return b[i] === 0x3c ? "xml" : "";
   }
 
+  // ---------- 6. Markdown / text outlines ----------
+  // Markmap, Obsidian and Logseq pages, plain Markdown and indented
+  // text (tabs or spaces). mm-core's parseOutline builds the tree
+  // (headings, "-", "*", "+", "1." lists, "- [x]" tasks, indents);
+  // before that, YAML front matter and Logseq / Dataview property
+  // lines ("key:: value") are dropped; after it, inline Markdown
+  // becomes plain text: [label](url) → label (a node's first web
+  // link becomes its link), **bold**, _em_, `code`, ~~del~~,
+  // ==mark==, [[wiki|alias]], Logseq ((block refs)), Obsidian ^ids.
+  // Logseq TODO/DONE markers: DONE ticks the node, the word goes.
+  // The root: a lone top heading or item, else front-matter title,
+  // else the file name.
+  var PROP_RE = /^\s*(?:[-*+]\s+)?[^\s:`\[\]()]{1,64}::(?:\s|$)/;
+  var MD_IMG = /!\[([^\]\n]{0,500})\]\([^)\n]{0,2000}\)/g;
+  var MD_LINK = /\[([^\]\n]{0,500})\]\(\s*<?((?:[^()\s>]|\([^()\s]{0,200}\)){0,2000})>?(?:\s+(?:"[^"\n]*"|'[^'\n]*'))?\s*\)/g;
+  var AUTO_LINK = /<((?:https?:\/\/|www\.)[^\s<>]{1,2000})>/gi;
+  var BARE_URL = /(?:^|\s)((?:https?:\/\/|www\.)[^\s<>]{3,2000})/i;
+  var MARKER_RE = /^(TODO|DOING|NOW|LATER|WAIT|WAITING|IN-PROGRESS|DONE|CANCELED|CANCELLED)\s+/;
+  // "\*" and friends are kept literal: swapped for private-use
+  // characters while the patterns run, swapped back after.
+  var ESC_RE = /\\([\\`*_{}\[\]()#+\-.!~=|<>])/g;
+  var PUA_RE = /[-]/g;
+
+  function mdInline(s, t) {
+    var url = "";
+    function keep(u) { if (!url) url = webUrl(u); }
+    s = s.replace(PUA_RE, "").replace(ESC_RE, function (a, c) { return String.fromCharCode(0xE000 + c.charCodeAt(0)); });
+    s = s.replace(/^\[#[A-C]\]\s*/, "");                                  // Logseq priority
+    var mk = MARKER_RE.exec(s);
+    if (mk) { if (mk[1] === "DONE") t.done = true; s = s.slice(mk[0].length); }
+    s = s.replace(/^\[#[A-C]\]\s*/, "")
+      .replace(MD_IMG, function (a, alt) { return alt; })
+      .replace(MD_LINK, function (a, label, u) { keep(u); return label || u; })
+      .replace(AUTO_LINK, function (a, u) { keep(u); return u; })
+      .replace(/\[\[([^\]|\n]{1,500})\|([^\]\n]{1,500})\]\]/g, "$2")
+      .replace(/\[\[([^\]\n]{1,500})\]\]/g, "$1")
+      .replace(/\(\([0-9a-f-]{8,40}\)\)/gi, "")
+      .replace(/`([^`\n]+)`/g, "$1")
+      .replace(/(\*\*|__)(?=\S)([^\n]*?\S)\1/g, "$2")
+      .replace(/(~~|==)(?=\S)([^\n]*?\S)\1/g, "$2")
+      .replace(/\*(?=[^\s*])([^*\n]*?[^\s*])\*/g, "$1")
+      .replace(/(^|[^\w])_(?=[^\s_])([^_\n]*?[^\s_])_(?![\w])/g, "$1$2")
+      .replace(/\s+\^[A-Za-z0-9-]{1,64}\s*$/, "");                       // Obsidian block id
+    if (!url) { var b = BARE_URL.exec(s); if (b) keep(b[1]); }
+    if (url) t.url = url;
+    return C.line(s.replace(PUA_RE, function (c) { return String.fromCharCode(c.charCodeAt(0) - 0xE000); }), TEXT_LEN);
+  }
+
+  function parseMarkdown(text, fallbackTitle) {
+    if (typeof text !== "string" || text.length > IMPORT_MAX) return fail("size");
+    var lines = text.replace(/^﻿/, "").replace(/\r\n?/g, "\n").split("\n"), from = 0, title = "", m;
+    if (/^---\s*$/.test(lines[0] || "")) {                                // YAML front matter
+      for (var j = 1; j < lines.length && j < 1000; j++) {
+        if (/^(?:---|\.\.\.)\s*$/.test(lines[j])) { from = j + 1; break; }
+        if ((m = /^title:\s*(.+)$/i.exec(lines[j]))) title = m[1].replace(/^(["'])(.*)\1$/, "$2");
+      }
+    }
+    var keep = [];
+    for (var i = from; i < lines.length; i++) {
+      var l = lines[i];
+      if (PROP_RE.test(l)) {
+        if (!title && i < from + 20 && (m = /^\s*(?:[-*+]\s+)?title::\s*(.+)$/i.exec(l))) title = m[1];
+        continue;
+      }
+      keep.push(l);
+    }
+    var p = C.parseOutline(keep.join("\n"), C.line(title, 200) || fallbackTitle);
+    if (!p.ok) return fail("empty");
+    // Iterative clean-up of every node's text (and xnode's fields).
+    var stack = [p.tree];
+    while (stack.length) {
+      var t = stack.pop();
+      t.url = t.url || ""; t.color = ""; t.emoji = ""; t.ref = "";
+      if (!(p.tree.fallback && t === p.tree)) t.text = mdInline(t.text, t);
+      for (var k = 0; k < t.kids.length; k++) stack.push(t.kids[k]);
+    }
+    if (!C.line(p.tree.text, TEXT_LEN)) p.tree.text = C.line(fallbackTitle, 200) || "Mind map";
+    return { ok: true, tree: p.tree };
+  }
+
+  // Hex colour in "#rrggbb", "rrggbb", "#aarrggbb" or "aarrggbb"
+  // (MindManager, SimpleMind) → "#rrggbb", or "".
+  function hexColor(v) {
+    var s = C.line(str(v), 16).replace(/^#|^0x/i, "");
+    if (/^[0-9a-f]{8}$/i.test(s)) s = s.slice(2);
+    return /^[0-9a-f]{6}$/i.test(s) ? "#" + s : "";
+  }
+
+  // ---------- 7. SimpleMind (.smmx) ----------
+  // document/mindmap.xml: <simplemind-mindmaps><mindmap><meta>
+  // <title text/></meta><topics><topic id parent text x y palette
+  // colorinfo><note>…</note><link urllink/><style … color/></topic>
+  // …</topics><relations><relation source target/></relations>.
+  // Topics are a flat list: the tree is built from parent ids
+  // (parent "-1" = a root; more than one root → under the title).
+  // In text, "\N" is a line break. Iterative; cycles never reach a
+  // root, so they are skipped.
+  function smText(v) { return str(v).replace(/\\N/g, "\n").replace(/\\r/g, ""); }
+  function fromSimpleMind(text, fallbackTitle) {
+    if (typeof text !== "string" || text.length > IMPORT_MAX) return fail("size");
+    var doc = C.readXml(text);
+    var mm = first(first(doc, "simplemind-mindmaps"), "mindmap");
+    if (!mm) return fail("format");
+    var topics = kidsNamed(first(mm, "topics"), "topic");
+    if (!topics.length) return fail("empty");
+    var byId = dict(), kids = dict(), roots = [], ids = [];
+    topics.forEach(function (el) {
+      var id = ref(el.attrs.id);
+      if (!id || byId[id]) return;
+      byId[id] = el; kids[id] = []; ids.push(id);
+    });
+    ids.forEach(function (id) {
+      var p = ref(byId[id].attrs.parent);
+      if (p && p !== id && byId[p]) kids[p].push(id); else roots.push(id);
+    });
+    if (!roots.length) return fail("empty");
+    var count = 0, refs = dict();
+    function conv(el, id) {
+      var a = el.attrs, t = xnode(C.para(smText(a.text), TEXT_LEN));
+      count++;
+      t.ref = id; refs[id] = true;
+      var nt = first(el, "note");
+      if (nt) t.note = C.para(smText(nt._text), NOTE_LEN);
+      var lk = first(el, "link");
+      if (lk) t.url = webUrl(lk.attrs.urllink || lk.attrs.url);
+      var st = first(el, "style");
+      t.color = nearestColor(hexColor(a.color || a.customcolor)) ||
+        (st ? nearestColor(hexColor(st.attrs.fillcolor || st.attrs.color || st.attrs.strokecolor)) : "");
+      var cb = first(el, "checkbox");
+      if (cb && /^(?:true|checked|1|yes)$/i.test(str(cb.attrs.checked || cb.attrs.state || cb.attrs.value))) t.done = true;
+      if (!C.line(t.text, TEXT_LEN) && first(el, "image")) t.emoji = PICTURE;
+      return t;
+    }
+    var title = C.line(str((first(first(mm, "meta"), "title") || { attrs: {} }).attrs.text), 200);
+    // stack: [source id, parent node, depth]; children are pushed in
+    // reverse so they come out in file order.
+    var seen = dict(), tree, stack = [], i;
+    function pushKids(id, node, depth) {
+      if (depth >= DEPTH) return;
+      var ks = kids[id];
+      for (var j = ks.length - 1; j >= 0; j--) if (!seen[ks[j]]) stack.push([ks[j], node, depth + 1]);
+    }
+    if (roots.length === 1) {
+      tree = conv(byId[roots[0]], roots[0]);
+      seen[roots[0]] = true;
+      pushKids(roots[0], tree, 0);
+    } else {
+      tree = xnode(title || C.line(fallbackTitle, 200) || "Mind map");
+      for (i = roots.length - 1; i >= 0; i--) stack.push([roots[i], tree, 1]);
+    }
+    while (stack.length && count < MAX_NODES) {
+      var e = stack.pop();
+      if (seen[e[0]]) continue;
+      seen[e[0]] = true;
+      var node = conv(byId[e[0]], e[0]);
+      e[1].kids.push(node);
+      pushKids(e[0], node, e[2]);
+    }
+    if (!C.line(tree.text, TEXT_LEN)) tree.text = title || C.line(fallbackTitle, 200) || "Mind map";
+    var links = kidsNamed(first(mm, "relations"), "relation").map(function (r) {
+      return { from: ref(r.attrs.source), to: ref(r.attrs.target), label: C.line(smText(r.attrs.text || r.attrs.label), LABEL_LEN) };
+    });
+    tree.links = keepLinks(links, refs);
+    return { ok: true, tree: tree };
+  }
+
+  // ---------- 8. MindManager (.mmap) ----------
+  // Document.xml: <ap:Map><ap:OneTopic><ap:Topic OId><ap:Text
+  // PlainText/><ap:SubTopics><ap:Topic>…</ap:SubTopics>
+  // <ap:NotesGroup><ap:NotesXhtmlData PreviewPlainText><html>…
+  // <ap:Hyperlink Url/> <ap:Color FillColor="aarrggbb"/> <ap:Task
+  // TaskPercentage/> <ap:IconsGroup><ap:Icons><ap:Icon IconType/>
+  // and <ap:Relationships><ap:Relationship><ap:ConnectionGroup>
+  // <ap:Connection><ap:ObjectReference OIdRef/>. Names are matched
+  // without their prefix. Floating topics are not imported.
+  // Recursion is bounded by readXml's nesting limit.
+  function fromMindManager(text, fallbackTitle) {
+    if (typeof text !== "string" || text.length > IMPORT_MAX) return fail("size");
+    var doc = C.readXml(prepRich(text, "<ap:NotesXhtmlData", "</ap:NotesXhtmlData"));
+    var map = first(doc, "Map");
+    if (!map) return fail("format");
+    var top = first(first(map, "OneTopic"), "Topic");
+    if (!top) return fail("empty");
+    var count = 0, refs = dict();
+    function conv(el) {
+      count++;
+      var tx = first(el, "Text");
+      var t = xnode(C.para(tx ? (tx.attrs.PlainText !== undefined ? tx.attrs.PlainText : tx._text) : "", TEXT_LEN));
+      t.ref = ref(el.attrs.OId);
+      if (t.ref && !refs[t.ref]) refs[t.ref] = true;
+      var hl = first(el, "Hyperlink");
+      if (hl) t.url = webUrl(hl.attrs.Url);
+      var nx = first(first(el, "NotesGroup"), "NotesXhtmlData");
+      if (nx) t.note = nx.attrs.PreviewPlainText ? C.para(nx.attrs.PreviewPlainText, NOTE_LEN) : htmlText(nx, NOTE_LEN).text;
+      var co = first(el, "Color");
+      if (co) t.color = nearestColor(hexColor(co.attrs.FillColor)) || nearestColor(hexColor(co.attrs.LineColor));
+      var tk = first(el, "Task");
+      if (tk && str(tk.attrs.TaskPercentage) === "100") t.done = true;
+      kidsNamed(first(first(el, "IconsGroup"), "Icons"), "Icon").forEach(function (ic) {
+        var ty = str(ic.attrs.IconType);
+        if (/TaskPercentage100|task-?done|TaskDone/i.test(ty)) t.done = true;
+        else if (!t.emoji && /flag/i.test(ty)) t.emoji = "🚩";
+        else if (!t.emoji && /Priority([1-9])/i.test(ty)) t.emoji = /Priority([1-9])/i.exec(ty)[1] + "️⃣";
+      });
+      if (!C.line(t.text, TEXT_LEN) && first(el, "Image")) t.emoji = t.emoji || PICTURE;
+      kidsNamed(first(el, "SubTopics"), "Topic").forEach(function (k) { if (count < MAX_NODES) t.kids.push(conv(k)); });
+      return t;
+    }
+    var tree = conv(top);
+    if (!C.line(tree.text, TEXT_LEN)) tree.text = C.line(fallbackTitle, 200) || "Mind map";
+    var links = [];
+    kidsNamed(first(map, "Relationships"), "Relationship").forEach(function (r) {
+      var ends = kidsNamed(r, "ConnectionGroup").map(function (g) {
+        var o = first(first(g, "Connection"), "ObjectReference");
+        return o ? ref(o.attrs.OIdRef) : "";
+      });
+      if (ends.length >= 2) links.push({ from: ends[0], to: ends[1], label: "" });
+    });
+    tree.links = keepLinks(links, refs);
+    return { ok: true, tree: tree };
+  }
+
+  // ---------- 9. parseArchive ----------
+  // bytes: a whole .xmind / .smmx / .mmap file, or one of their bare
+  // XML documents (content.xml, mindmap.xml, Document.xml). Picks
+  // the reader from the zip's entries or the XML's root element.
+  function whichXml(head) {
+    if (/<simplemind-mindmaps[\s>]/.test(head)) return "sm";
+    if (/<(?:[A-Za-z_][\w.-]*:)?Map[\s>]/.test(head) && /mindjet/i.test(head)) return "mm";
+    return "x8";
+  }
+  function byKind(kind, text, fallbackTitle) {
+    if (kind === "sm") return fromSimpleMind(text, fallbackTitle);
+    if (kind === "mm") return fromMindManager(text, fallbackTitle);
+    if (kind === "zen") return fromZen(text, fallbackTitle);
+    return fromXml8(text, fallbackTitle);
+  }
+  function parseArchive(bytes, fallbackTitle) {
+    return Promise.resolve().then(function () {
+      var b = asBytes(bytes);
+      if (!b) return fail("format");
+      if (b.length > FILE_MAX) return fail("size");
+      var kind = sniff(b);
+      if (kind === "xml") {
+        if (b.length > IMPORT_MAX) return fail("size");
+        var s = utf8(b);
+        return byKind(whichXml(s.slice(0, 4000)), s, fallbackTitle);
+      }
+      if (kind !== "zip") return fail("zip");
+      var z;
+      try { z = openZip(b); } catch (e) { return fail("zip"); }
+      // XMind Zen files also hold a content.xml that only says "open
+      // me with a newer XMind": content.json wins.
+      var names = z.names(), name = "", how = "";
+      function find(re) { for (var i = 0; i < names.length; i++) if (re.test(names[i])) return names[i]; return ""; }
+      if (z.has("content.json")) { name = "content.json"; how = "zen"; }
+      else if (z.has("content.xml")) { name = "content.xml"; how = "x8"; }
+      else if ((name = find(/^document\/mindmap\.xml$/i) || find(/(^|\/)mindmap\.xml$/i))) how = "sm";
+      else if ((name = find(/^Document\.xml$/i))) how = "mm";
+      if (!name) return fail("format");
+      return z.text(name, IMPORT_MAX).then(function (t) {
+        return byKind(how, t, fallbackTitle);
+      }, function (e) {
+        return fail(e && e.message === "toobig" ? "size" : "zip");
+      });
+    });
+  }
+
   var api = {
-    parseFreeMind: parseFreeMind, parseXMind: parseXMind, sniff: sniff,
-    nearestColor: nearestColor, webUrl: webUrl
+    parseFreeMind: parseFreeMind, parseXMind: parseArchive, parseArchive: parseArchive,
+    parseMarkdown: parseMarkdown, parseSimpleMind: fromSimpleMind, parseMindManager: fromMindManager,
+    sniff: sniff, nearestColor: nearestColor, webUrl: webUrl
   };
   if (typeof module === "object" && module.exports) module.exports = api;
   else root.MMImport = api;

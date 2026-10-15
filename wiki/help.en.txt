@@ -74,11 +74,19 @@ Wiki articles also show up in the orOS [quick search](help:t/menu#quick-search).
 `Print` prints the article as you read it, without the buttons around it. `Save as PDF` makes a PDF file of the article with its pictures, infobox, tables and references, and saves it where you choose.
 
 ## Import and export
-`Import and export…` in the menu brings articles in and saves your wiki as files. Imports only add articles: nothing already in your wiki changes. When a title is taken, the new article gets a number, like `Olives (2)`.
+`Import and export…` in the menu brings articles in and saves your wiki as files. Imports add articles. Importing the same file again updates the articles it brought in, but only those you haven't changed since; nothing else in your wiki changes. When a title is taken, the new article gets a number, like `Olives (2)`.
 - `From Notes…` takes one notebook of [Notes](app:notes) on this device, into a new wiki or the open one. Every page becomes an article; a page with subpages becomes a category for them, and labels become categories too. Links between pages keep working, and `- [ ]` tasks become ☐ and ☑.
-- `Markdown files…` takes .md files, or a .zip of them, from Notes, Obsidian or another wiki. A title comes from the first `# Heading` line or the file name; a folder becomes a category; pictures inside the .zip come along, and links to other .md files become article links.
+- `From a file…` takes .md files, or a .zip of them, from Notes, Obsidian or another wiki, and also exports of Notion, TiddlyWiki, MediaWiki and Confluence (see below). For Markdown, a title comes from the first `# Heading` line or the file name; a folder becomes a category; pictures inside the .zip come along, and links to other .md files become article links.
 - `Markdown (.zip)` saves every article of the open wiki as a .md file, with its pictures in a `media` folder. Import that file again and pictures keep their place and size.
 - `Website (.zip)` saves the open wiki as an offline website: unzip it and open `index.html` in any browser, with no internet and nothing to install. Links, categories, the contents box, references and pictures all work.
+
+## Import from other wikis
+`From a file…` in `Import and export…` recognises the file by itself and first shows what will happen: how many articles are new, which ones an earlier import brought in and now get the newer text, which ones you changed since and stay as you left them, and what is left out. Press `Import` to bring them in with one step; `Undo` in the message that follows takes the whole import back.
+- **Notion**: in Notion open `Settings` (or the `•••` menu of a page) › `Export`, choose `Markdown & CSV` with subpages, and pick the .zip it gives you (a .zip inside a .zip works too). The long ids leave the titles, subpages go in a category named after their page, a database becomes an article with a table, and links and pictures are kept.
+- **TiddlyWiki**: pick the wiki's .html file itself, or export tiddlers as JSON (the `Export all` button in `Tools` or in the `More` sidebar tab) or as .tid files. System tiddlers (`$:/…`) are left out; tags become categories and WikiText formatting, lists, tables and links are converted.
+- **MediaWiki**: on the wiki open `Special:Export`, list the pages (or a category), keep only the current revision and save the .xml file. Pages of the main namespace come in from their latest revision, with their categories and redirects; templates are left out.
+- **Confluence**: in the space open `Space settings` › `Export space`, choose `HTML` and pick the .zip. Every page becomes an article in a category named after its parent page, with its headings, lists, tables, code, links and pictures.
+- Nothing in an imported file can run: its text is converted, never shown as a page of its own.
 
 ## Start from Wikipedia
 `Start from Wikipedia…` (in `Import and export…`, or under the title of a new article) copies one Wikipedia article as the text to start from. Pick the language, type the title (or paste the article's address) and press `Fetch`. The article opens in the editor with its text, links, infobox facts, tables and references; pictures and Wikipedia's categories are left out. Check it and press `Save`.
