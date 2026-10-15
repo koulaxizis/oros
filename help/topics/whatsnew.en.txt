@@ -3,6 +3,7 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 ## Version 2.22.00
 - Contacts can find photos online: only a hashed e-mail is sent to Gravatar or Libravatar, you tick which pictures to keep, and Undo puts things back.
+- Notes on phones: the page list opens as a drawer over the editor. Calendar shows its built-in labels in Greek everywhere.
 
 ## Version 2.21.00
 - The Assistant's on-device models (the browser's own model, the in-browser model, and local models that can't use tools) now answer from your data too. orOS searches your apps before your message goes, asks you what to share with the same card, and sends only that. They can also do the Briefing and read photos and PDFs as text.
