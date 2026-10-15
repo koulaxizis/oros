@@ -142,6 +142,12 @@
       "csv.line": "{type}: {n} ({parts})", "csv.go": "Import {n}",
       "csv.hint": "Goodreads: My Books → Import and export → Export library. Letterboxd: Settings → Data → Export your data, unzip, then pick the CSV files (you can pick several).",
       "toast.csv": "Imported {n} titles", "toast.csvMax": "Only {n} more titles fit on your shelf",
+      "menu.gbooks": "Import from Google Books", "gb.title": "Import from Google Books",
+      "gb.text": "Sign in to Google once: orOS reads the books on your Google Books shelves and the access is given back right away. Nothing is kept, nothing changes at Google (Google Books has no read-only permission, so it asks for more; orOS only reads).",
+      "gb.wait": "Waiting for the Google sign-in window…", "gb.read": "Reading your shelves… {n}",
+      "gb.hint": "Have read → Read, Reading now → Reading, To read → Want, Favorites → ♥, My eBooks → e-book; your own shelves become tags.",
+      "gb.own": "To use your own Google app id, set it in Contacts › From an account.",
+      "gb.none": "No books on your Google Books shelves.",
       "f.rel": "Release date (optional)", "it.rel": "Out {d}",
       "menu.rem": "Reading reminder", "rem.title": "Reading reminder", "rem.on": "Remind me once a day",
       "rem.at": "From", "rem.done": "Done",
@@ -250,6 +256,12 @@
       "csv.line": "{type}: {n} ({parts})", "csv.go": "Εισαγωγή {n}",
       "csv.hint": "Goodreads: My Books → Import and export → Export library. Letterboxd: Settings → Data → Export your data, αποσυμπίεσε και διάλεξε τα αρχεία CSV (μπορείς πολλά μαζί).",
       "toast.csv": "Εισήχθησαν {n} τίτλοι", "toast.csvMax": "Χωράνε μόνο {n} ακόμα τίτλοι στο ράφι σου",
+      "menu.gbooks": "Εισαγωγή από Google Books", "gb.title": "Εισαγωγή από Google Books",
+      "gb.text": "Συνδέεσαι μία φορά στη Google: το orOS διαβάζει τα βιβλία στα ράφια σου στο Google Books και η πρόσβαση επιστρέφεται αμέσως. Δεν κρατιέται τίποτα και δεν αλλάζει τίποτα στη Google (το Google Books δεν έχει άδεια μόνο για ανάγνωση, γι' αυτό ζητά περισσότερα· το orOS μόνο διαβάζει).",
+      "gb.wait": "Αναμονή για το παράθυρο σύνδεσης της Google…", "gb.read": "Ανάγνωση των ραφιών σου… {n}",
+      "gb.hint": "Have read → Διαβάστηκε, Reading now → Διαβάζω, To read → Θέλω, Favorites → ♥, My eBooks → e-book· τα δικά σου ράφια γίνονται ετικέτες.",
+      "gb.own": "Για δικό σου αναγνωριστικό εφαρμογής Google, όρισέ το στις Επαφές › Από λογαριασμό.",
+      "gb.none": "Δεν υπάρχουν βιβλία στα ράφια σου στο Google Books.",
       "f.rel": "Ημερομηνία κυκλοφορίας (προαιρετικά)", "it.rel": "Κυκλοφορεί {d}",
       "menu.rem": "Υπενθύμιση ανάγνωσης", "rem.title": "Υπενθύμιση ανάγνωσης", "rem.on": "Θύμισέ μου μία φορά τη μέρα",
       "rem.at": "Από", "rem.done": "Έτοιμο",
@@ -760,13 +772,13 @@
       seen[k] = 1;
       out.found++;
       if (have[k]) { out.dup++; return; }
-      it.id = newId();
+      it.id = it.id || newId();          // Google Books: a stable id (gbooks.js)
       it.m = stamp();
       var x = normItem(it);
       if (!x) return;
       out.items.push(x);
       sessList.forEach(function (s) {
-        var y = normSess({ id: newId(), m: stamp(), it: x.id, k: s.k, d: s.d, v: s.v });
+        var y = normSess({ id: s.id || newId(), m: stamp(), it: x.id, k: s.k, d: s.d, v: s.v });
         if (y) out.sess.push(y);
       });
       var c = out.counts[x.type] || (out.counts[x.type] = { want: 0, now: 0, done: 0, drop: 0 });
@@ -780,8 +792,10 @@
       if (!lb[k]) { lb[k] = { name: o.Name, year: o.Year, want: false, watched: "", diary: [], rate: 0, logRate: 0, logAt: "", rev: "", tags: [], added: "" }; lbOrder.push(k); }
       return lb[k];
     }
-    var rank = { "lb-watchlist": 0, "lb-watched": 1, "lb-ratings": 2, "lb-diary": 3, "lb-reviews": 4, gr: 5 };
+    var rank = { "lb-watchlist": 0, "lb-watched": 1, "lb-ratings": 2, "lb-diary": 3, "lb-reviews": 4, gr: 5, gb: 6 };
     var parsed = files.map(function (f) {
+      // Google Books (gbooks.js): rows already read, not a file
+      if (f.kind === "gb" && Array.isArray(f.list)) return { name: f.name, kind: "gb", list: f.list };
       var o = csvObjects(parseCsv(f.text));
       return { name: f.name, kind: csvKind(o.head, f.name), list: o.list };
     });
@@ -790,6 +804,21 @@
       .sort(function (a, b) { return rank[a.kind] - rank[b.kind]; })
       .forEach(function (p) {
         p.list.forEach(function (o) {
+          if (p.kind === "gb") {
+            // the same states and history entries as a Goodreads shelf
+            var gst = STATES.indexOf(o.st) >= 0 && o.st !== "drop" ? o.st : "want";
+            var gadd = isYmd(o.added) ? o.added : "";
+            var gsl = [];
+            if (gst === "now") gsl.push({ id: o.sid && o.sid.s, k: "s", d: gadd || today0 });
+            if (gst === "done") gsl.push({ id: o.sid && o.sid.d, k: "d", d: gadd || today0 });
+            add({
+              id: typeof o.id === "string" && ID_RE.test(o.id) ? o.id : "",
+              a: gadd ? ymdNoon(gadd) : now0, type: "book", title: o.title, by: o.by,
+              year: o.year, size: o.size, fmt: o.fmt === "e" ? "e" : "p", st: gst, fav: o.fav === 1 ? 1 : 0,
+              tags: Array.isArray(o.tags) ? o.tags : [], col: colorFor(String(o.title || ""))
+            }, gsl);
+            return;
+          }
           if (p.kind === "gr") {
             var sh = String(o["Exclusive Shelf"] || "").trim().toLowerCase();
             var st = sh === "read" ? "done" : sh === "currently-reading" ? "now" :
@@ -2815,9 +2844,11 @@
     });
   }
 
-  function csvPreview(plan) {
+  // opts (Google Books): { title, hint } in place of the CSV ones
+  function csvPreview(plan, opts) {
+    opts = opts || {};
     var dlg = makeDialog("sh-csv", "");
-    dlg.appendChild(el("div", "dlg-title", t("csv.title")));
+    dlg.appendChild(el("div", "dlg-title", opts.title || t("csv.title")));
     plan.unknown.forEach(function (f) { dlg.appendChild(el("p", "hint warn", t("csv.unknown", { f: f || "?" }))); });
     var room = Math.max(0, MAX_ITEMS - data.items.length);
     var n = Math.min(plan.items.length, room);
@@ -2836,7 +2867,7 @@
     if (plan.dup) dlg.appendChild(el("p", "hint", t("csv.dup", { n: fmtNum(plan.dup) })));
     if (n < plan.items.length) dlg.appendChild(el("p", "hint warn", t("toast.csvMax", { n: fmtNum(room) })));
     if (!plan.items.length) dlg.appendChild(el("p", "csv-p", t("csv.none")));
-    dlg.appendChild(el("p", "hint", t("csv.hint")));
+    dlg.appendChild(el("p", "hint", opts.hint || t("csv.hint")));
     var acts = el("div", "dlg-actions");
     acts.appendChild(button(t("f.cancel"), "", function () { dlg.close(); }));
     if (n) {
@@ -2870,6 +2901,47 @@
     });
   }
 
+  // Google Books (gbooks.js, /google-import.js): one-time, read only.
+  // The sign-in window opens inside the menu tap; the books then take
+  // the Goodreads import's road (planImport kind "gb" → the same
+  // preview → applyPlan: one write, Undo).
+  function importGbooks() {
+    var GI = window.OrosGoogleImport, GB = window.OrosShelfGbooks;
+    if (!GI || !GB) return;
+    var dlg = makeDialog("sh-gb", "");
+    dlg.appendChild(el("div", "dlg-title", t("gb.title")));
+    dlg.appendChild(el("p", "csv-p", t("gb.text")));
+    var stat = el("p", "csv-p", t("gb.wait"));
+    stat.setAttribute("aria-live", "polite");
+    dlg.appendChild(stat);
+    dlg.appendChild(el("p", "hint", t("gb.own")));
+    var acts = el("div", "dlg-actions");
+    var busy = true;
+    var cancelBtn = button(t("f.cancel"), "", function () { dlg.close(); });
+    acts.appendChild(cancelBtn);
+    dlg.appendChild(acts);
+    dlg.addEventListener("close", function () { if (busy) GI.cancel(); });
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    GI.run({
+      scope: GI.SCOPES.books,
+      progress: function (n) { stat.textContent = t("gb.read", { n: fmtNum(n) }); },
+      read: function (token, api) { return GB.read(api, function (n) { stat.textContent = t("gb.read", { n: fmtNum(n) }); }); }
+    }).then(function (res) {
+      busy = false;
+      if (!dlg.open) return;
+      var rows = GB.records(res.data);
+      if (!rows.length) { stat.textContent = t("gb.none"); return; }
+      dlg.close();
+      csvPreview(planImport([{ name: "Google Books", kind: "gb", list: rows }], data, { now: now(), today: today() }),
+        { title: t("gb.title"), hint: t("gb.hint") });
+    }, function (e) {
+      busy = false;
+      if (!dlg.open) return;
+      stat.textContent = GI.message(e, LANG);
+    });
+  }
+
   function moreMenu() {
     var dlg = makeDialog("sh-more", "menu-dlg");
     dlg.appendChild(el("div", "dlg-title", t("btn.more")));
@@ -2877,6 +2949,9 @@
     col.appendChild(button(t("menu.export"), "", function () { dlg.close(); exportJson(); }));
     col.appendChild(button(t("menu.import"), "", function () { dlg.close(); importJson(); }));
     col.appendChild(button(t("menu.csv"), "", function () { dlg.close(); importCsv(); }));
+    if (window.OrosGoogleImport && window.OrosShelfGbooks && window.OrosGoogleImport.ready()) {
+      col.appendChild(button(t("menu.gbooks"), "", function () { dlg.close(); importGbooks(); }));
+    }
     col.appendChild(button(t("menu.rem"), "", function () { dlg.close(); remDialog(); }));
     col.appendChild(button(t("menu.tmdb"), "", function () { dlg.close(); tmdbDialog(); }));
     col.appendChild(button(t("f.cancel"), "", function () { dlg.close(); }));
