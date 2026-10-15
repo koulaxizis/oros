@@ -269,3 +269,18 @@ test("wave 6: orOS Games — every game in one app, Daily shortcuts, .pgn throug
   assert.match(read("gamecenter/gamecenter.js"), /typeof tg\.play === "string" && CORE\.GAMES\.indexOf\(tg\.play\) >= 0/);
   assert.match(read("gamecenter/gamecenter.js"), /openTarget\(DK \? DK\.takeTarget\("gamecenter"\) : null\)/);
 });
+
+test("Android APKs: every single app has a package, an assetlinks entry and an APK link", () => {
+  const pk = JSON.parse(read("android/solo-apps.json")).apps;
+  const links = JSON.parse(read(".well-known/assetlinks.json")).map((x) => x.target.package_name);
+  assert.deepEqual(Object.keys(pk).sort(), S.ids().slice().sort());
+  Object.keys(pk).forEach((id) => {
+    assert.match(pk[id], /^online\.useoros\.[a-z]+$/, id);
+    assert.ok(links.includes(pk[id]), "assetlinks: " + pk[id]);
+    assert.equal(S.apkUrl(id), "https://github.com/koulaxizis/oros/releases/download/android-apks/oros-" + id + ".apk");
+  });
+  assert.equal(new Set(Object.values(pk)).size, Object.keys(pk).length);
+  assert.equal(S.apkUrl("nope"), "");
+  assert.match(read("settings/settings.js"), /S\.apkUrl && \/Android\/i\.test\(navigator\.userAgent\)/);
+  assert.match(read("solo.js"), /k\.href = apkUrl\(id\)/);
+});
