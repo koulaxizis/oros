@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.25.03
+- New download page, useoros.online/download, with every way to get orOS: in the browser, as an app, orOS Portable, the bootable orOS USB, single apps and Android APKs. Linked from the orOS Info window and Help › Install.
+
 ## Version 2.25.02
 - Installing a single app from a link: if the link opens inside an installed app, where nothing can be installed, the page now says so and, on Android, offers Open in Chrome.
 

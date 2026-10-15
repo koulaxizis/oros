@@ -1,6 +1,8 @@
 # Install orOS as an app
 You can use orOS in a normal browser tab, but you can also install it. Installed, orOS gets its own icon and opens in its own window, without the browser's address bar. It works offline either way.
 
+Every other way to get orOS (orOS Portable on a USB stick, the bootable orOS USB, single apps, Android APKs) is on [useoros.online/download](https://useoros.online/download/).
+
 ## Android
 In Chrome on Android:
 1. Open orOS and tap `orOS` to open the menu.
