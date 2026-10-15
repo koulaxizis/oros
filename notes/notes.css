@@ -705,7 +705,7 @@ body.resizing #tree-pane, body.resizing #editor-pane { pointer-events: none; }
 }
 
 /* ---------- Import from Notion (integrations wave 6D, platforms.js) ---------- */
-#nt-plat {
+:is(#nt-plat, #nt-imp) {
   width: min(440px, calc(100vw - 32px));
   padding: 0;
   color: var(--text);
@@ -714,12 +714,12 @@ body.resizing #tree-pane, body.resizing #editor-pane { pointer-events: none; }
   border-radius: 14px;
   box-shadow: 0 16px 48px var(--shadow);
 }
-#nt-plat::backdrop { background: rgba(0, 0, 0, 0.55); }
-#nt-plat form { display: flex; flex-direction: column; gap: 6px; padding: 16px; }
-#nt-plat h3 { margin: 0 0 6px; font-size: 15px; font-weight: 700; }
-#nt-plat .hint { margin: 2px 0 6px; font-size: 12px; color: var(--text-dim); }
-#nt-plat label { font-size: 12px; font-weight: 600; color: var(--text-dim); }
-#nt-plat select {
+:is(#nt-plat, #nt-imp)::backdrop { background: rgba(0, 0, 0, 0.55); }
+:is(#nt-plat, #nt-imp) form { display: flex; flex-direction: column; gap: 6px; padding: 16px; }
+:is(#nt-plat, #nt-imp) h3 { margin: 0 0 6px; font-size: 15px; font-weight: 700; }
+:is(#nt-plat, #nt-imp) .hint { margin: 2px 0 6px; font-size: 12px; color: var(--text-dim); }
+:is(#nt-plat, #nt-imp) label { font-size: 12px; font-weight: 600; color: var(--text-dim); }
+:is(#nt-plat, #nt-imp) select {
   width: 100%;
   min-height: 38px;
   padding: 6px 10px;
@@ -729,7 +729,7 @@ body.resizing #tree-pane, body.resizing #editor-pane { pointer-events: none; }
   border: 1px solid var(--border);
   border-radius: 8px;
 }
-#nt-plat .radio {
+:is(#nt-plat, #nt-imp) .radio {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -739,12 +739,12 @@ body.resizing #tree-pane, body.resizing #editor-pane { pointer-events: none; }
   color: var(--text);
   cursor: pointer;
 }
-#nt-plat .radio input { accent-color: var(--accent); }
-#nt-plat .plat-msg { margin-top: 6px; font-size: 13.5px; overflow-wrap: anywhere; }
-#nt-plat .plat-msg p { margin: 6px 0; }
-#nt-plat menu { display: flex; align-items: center; gap: 8px; margin: 12px 0 0; padding: 0; }
-#nt-plat menu .spacer { flex: 1; }
-#nt-plat menu button {
+:is(#nt-plat, #nt-imp) .radio input { accent-color: var(--accent); }
+:is(#nt-plat, #nt-imp) .plat-msg { margin-top: 6px; font-size: 13.5px; overflow-wrap: anywhere; }
+:is(#nt-plat, #nt-imp) .plat-msg p { margin: 6px 0; }
+:is(#nt-plat, #nt-imp) menu { display: flex; align-items: center; gap: 8px; margin: 12px 0 0; padding: 0; }
+:is(#nt-plat, #nt-imp) menu .spacer { flex: 1; }
+:is(#nt-plat, #nt-imp) menu button {
   padding: 9px 14px;
   font-size: 13px;
   font-weight: 600;
@@ -754,8 +754,22 @@ body.resizing #tree-pane, body.resizing #editor-pane { pointer-events: none; }
   border-radius: 8px;
   cursor: pointer;
 }
-#nt-plat menu button.primary { font-weight: 700; color: var(--bg); background: var(--accent); border-color: var(--accent); }
-#nt-plat menu button:disabled { opacity: 0.5; cursor: default; }
+:is(#nt-plat, #nt-imp) menu button.primary { font-weight: 700; color: var(--bg); background: var(--accent); border-color: var(--accent); }
+:is(#nt-plat, #nt-imp) menu button:disabled { opacity: 0.5; cursor: default; }
+/* Import notes: the two pickers */
+#nt-imp .imp-pick { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0; }
+#nt-imp .imp-pick button {
+  flex: 1 1 140px;
+  min-height: 40px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+}
 
 /* ---------- Markdown wave: toolbar, Edit / Preview / Side by side ----------
    The page stays plain text; #page-preview shows md.js's rendering.
