@@ -123,3 +123,50 @@ test("names for a record without one, only from its own e-mail", () => {
   const s = E.propose({ names: [], emails: ["e@x.gr"], has: { name: false } }, [f]);
   assert.equal(s.find(x => x.k === "name").v, "Eleni");
 });
+
+test("wave 2: profile links map to their public APIs", () => {
+  assert.equal(E.profileApi("https://github.com/koulaxizis").api, "https://api.github.com/users/koulaxizis");
+  assert.equal(E.profileApi("https://github.com/orgs"), null);
+  assert.equal(E.profileApi("https://github.com/a/b"), null);
+  assert.equal(E.profileApi("https://bsky.app/profile/anna.gr").api,
+    "https://public.api.bsky.app/xrpc/app.bsky.actor.getProfile?actor=anna.gr");
+  assert.equal(E.profileApi("https://mastodon.social/@maria").api, "https://mastodon.social/api/v1/accounts/lookup?acct=maria");
+  assert.equal(E.profileApi("https://instagram.com/maria"), null);
+  assert.equal(E.profileApi("https://anna.gr"), null);
+});
+
+test("wave 2: GitHub, Bluesky and Mastodon answers become findings", () => {
+  const g = E.fromGitHub({ login: "mk", name: "Maria K", blog: "maria.gr", twitter_username: "mariak", company: "@acme",
+    email: "M@maria.gr", bio: "see https://linktr.ee/mariak." });
+  assert.deepEqual(g.links.map(l => l.url), ["https://maria.gr", "https://x.com/mariak", "https://linktr.ee/mariak"]);
+  assert.deepEqual(g.emails, ["m@maria.gr"]);
+  assert.equal(g.org, "acme");
+  const b = E.fromBluesky({ handle: "maria.gr", displayName: "Maria", description: "shop https://shop.gr" });
+  assert.ok(b.links.some(l => l.url === "https://maria.gr" && l.verified));
+  assert.ok(b.links.some(l => l.url === "https://shop.gr" && !l.verified));
+  assert.ok(!E.fromBluesky({ handle: "x.bsky.social" }).links.length);
+  const m = E.fromMastodon({ acct: "maria", display_name: "Maria :blob:", note: '<p>Hi <a href="https://maria.gr/blog">blog</a></p>',
+    fields: [{ name: "Web", value: '<a href="https://maria.gr" rel="me">maria.gr</a>', verified_at: "2024-01-01" },
+             { name: "Mail", value: "maria@maria.gr" }] }, "https://mastodon.social/@maria");
+  assert.equal(m.name, "Maria");
+  assert.ok(m.links.some(l => l.url === "https://maria.gr" && l.verified));
+  assert.ok(m.links.some(l => l.url === "https://maria.gr/blog"));
+});
+
+test("wave 2: lookup reads the open profile a record links to, never a closed one", async () => {
+  const asked = [];
+  const pages = {
+    "https://api.github.com/users/annap": { status: 200, text: JSON.stringify({ login: "annap", name: "Anna Pappa", blog: "https://anna.gr", email: "anna@x.gr" }) },
+    "https://mastodon.social/api/v1/accounts/lookup?acct=anna": { status: 200, text: JSON.stringify({ acct: "anna", display_name: "Someone Else",
+      fields: [{ value: '<a href="https://other.example">o</a>' }] }) }
+  };
+  const opts = { sha256: () => Promise.resolve("h"), getText: (u) => { asked.push(u); return Promise.resolve(pages[u] || { status: 404, text: "" }); } };
+  const rec = { names: ["Άννα Παππά"], emails: ["anna@x.gr"], phones: [], has: { name: true },
+    sites: ["https://github.com/annap", "https://mastodon.social/@anna", "https://instagram.com/annap"] };
+  const s = await E.lookup(rec, opts);
+  assert.ok(asked.includes("https://api.github.com/users/annap"));
+  assert.ok(!asked.some(u => /instagram/.test(u)));
+  assert.ok(!asked.includes("https://github.com/annap"), "profile pages are read through the API only");
+  assert.equal(s.find(x => x.v === "https://anna.gr").conf, "sure");      // own e-mail on the profile
+  assert.equal(s.find(x => x.v === "https://other.example").conf, "check"); // another name
+});

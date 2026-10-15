@@ -11,6 +11,9 @@
 //   - start only from what the record already holds: its own e-mail,
 //     its own website / link page, its phone number. Never a search
 //     by name alone, never a face search.
+//   - open networks (GitHub, Bluesky, Mastodon) are read through
+//     their public APIs, only from a profile link the record holds or
+//     a finding points at (wave 2).
 //   - closed networks (Facebook, Instagram, LinkedIn, X, TikTok…)
 //     are never read: their terms forbid it. Their links are kept
 //     as links, nothing more.
@@ -54,6 +57,7 @@
   var GRAVATAR_API = "https://api.gravatar.com/v3/profiles/";
   var MAX_PAGES = 4;          // pages read per record
   var MAX_LINKS = 12;         // link suggestions per record
+  var MAX_PROFILES = 3;       // GitHub / Bluesky / Mastodon profiles per record
   var CONF_RANK = { check: 0, likely: 1, sure: 2 };
 
   // ---------- small helpers ----------
@@ -185,8 +189,22 @@
       .replace(/[aeiouy]/g, "").replace(/(.)\1+/g, "$1");
     return out;
   }
+  // Whole Latin form with vowels, for name parts whose skeleton is too
+  // short to mean anything ("Άννα" → "ana", "Παππά" → "papa").
+  function latinForm(s) {
+    var f = String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+    var out = "";
+    for (var i = 0; i < f.length; i++) { var ch = f.charAt(i); out += GR[ch] !== undefined ? GR[ch] : ch; }
+    return out.replace(/[^a-z]/g, "").replace(/h/g, "").replace(/ou/g, "u").replace(/[eiy]/g, "i")
+      .replace(/c/g, "k").replace(/w/g, "v").replace(/b/g, "v").replace(/(.)\1+/g, "$1");
+  }
   function tokens(s) {
-    return String(s || "").split(/[\s,.'"’()\-_|@/]+/).map(skeleton).filter(function (t) { return t.length >= 2; });
+    return String(s || "").split(/[\s,.'"’()\-_|@/]+/).map(function (w) {
+      var k = skeleton(w);
+      if (k.length >= 2) return k;
+      var l = latinForm(w);
+      return l.length >= 3 ? "~" + l : "";
+    }).filter(Boolean);
   }
   function tokMatch(a, b) {
     if (a === b) return true;
@@ -451,6 +469,85 @@
     };
   }
 
+  // ---------- open networks (public APIs, no sign-in) ----------
+  var GH_RESERVED = /^(orgs|features|topics|collections|sponsors|marketplace|explore|settings|login|join|about|pricing|enterprise|security|apps|search|notifications|pulls|issues|trending|events|site|contact)$/i;
+  // A profile link → its public API address, or null.
+  function profileApi(url) {
+    var c = classify(url);
+    if (!c || c.kind !== "social") return null;
+    var u;
+    try { u = new URL(url); } catch (e) { return null; }
+    var parts = u.pathname.split("/").filter(Boolean);
+    if (c.net === "github" && parts.length === 1 && /^[A-Za-z0-9-]{1,39}$/.test(parts[0]) && !GH_RESERVED.test(parts[0])) {
+      return { net: "github", api: "https://api.github.com/users/" + parts[0], label: "GitHub" };
+    }
+    if (c.net === "bluesky" && parts[0] === "profile" && parts[1] && /^[A-Za-z0-9.:-]{3,253}$/.test(parts[1])) {
+      return { net: "bluesky", api: "https://public.api.bsky.app/xrpc/app.bsky.actor.getProfile?actor=" + encodeURIComponent(parts[1]), label: "Bluesky" };
+    }
+    if (c.net === "fediverse" && parts.length === 1 && /^@[A-Za-z0-9_.-]{1,64}$/.test(parts[0])) {
+      return { net: "fediverse", api: u.protocol + "//" + u.host + "/api/v1/accounts/lookup?acct=" + encodeURIComponent(parts[0].slice(1)), label: "Mastodon" };
+    }
+    return null;
+  }
+  // Links written in plain text (a bio).
+  function textLinks(s) {
+    var out = [], re = /\bhttps?:\/\/[^\s<>"')\]]+/gi, m;
+    while ((m = re.exec(String(s || "")))) { var u = normUrl(m[0].replace(/[.,;:!?]+$/, "")); if (u) out.push(u); }
+    return out;
+  }
+  function blank(src) {
+    return { src: src, name: "", photo: "", links: [], phones: [], emails: [], birthday: null, job: "", org: "", address: "", personal: true };
+  }
+  function fromGitHub(j) {
+    if (!j || typeof j !== "object" || typeof j.login !== "string") return null;
+    var f = blank("GitHub");
+    f.name = str(j.name, 120);
+    if (j.blog) { var b = normUrl(j.blog); if (b) f.links.push({ url: b, verified: false }); }
+    if (j.twitter_username && /^[A-Za-z0-9_]{1,15}$/.test(j.twitter_username)) f.links.push({ url: "https://x.com/" + j.twitter_username, verified: false });
+    textLinks(j.bio).forEach(function (u) { f.links.push({ url: u, verified: false }); });
+    if (typeof j.email === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(j.email)) f.emails.push(j.email.trim().toLowerCase().slice(0, 120));
+    if (j.company) f.org = str(String(j.company).replace(/^@/, ""), 80);
+    return f;
+  }
+  function fromBluesky(j) {
+    if (!j || typeof j !== "object" || typeof j.handle !== "string") return null;
+    var f = blank("Bluesky");
+    f.name = str(j.displayName, 120);
+    textLinks(j.description).forEach(function (u) { f.links.push({ url: u, verified: false }); });
+    // a handle that is a domain was proven by its owner (DNS / well-known)
+    if (!/\.bsky\.social$/i.test(j.handle) && /\./.test(j.handle) && j.handle !== "handle.invalid") {
+      var d = normUrl("https://" + j.handle);
+      if (d) f.links.push({ url: d, verified: true });
+    }
+    return f;
+  }
+  function fromMastodon(j, base) {
+    if (!j || typeof j !== "object" || typeof j.acct !== "string") return null;
+    var f = blank("Mastodon");
+    f.name = str(String(j.display_name || "").replace(/:[a-z0-9_]+:/gi, ""), 120);
+    var note = parsePage(String(j.note || ""), base || "https://invalid.example/");
+    note.links.forEach(function (u) { f.links.push({ url: u, verified: false }); });
+    (Array.isArray(j.fields) ? j.fields : []).slice(0, 8).forEach(function (fl) {
+      if (!fl || typeof fl.value !== "string") return;
+      var p = parsePage(fl.value, base || "https://invalid.example/");
+      var urls = p.links.length ? p.links : textLinks(fl.value.replace(/<[^>]*>/g, " "));
+      urls.forEach(function (u) { f.links.push({ url: u, verified: !!fl.verified_at }); });
+      p.emails.forEach(function (e) { f.emails.push(e); });
+      p.phones.forEach(function (x) { f.phones.push(x); });
+    });
+    return f;
+  }
+  function profile(it, opts) {
+    return getText(it.a.api, opts).then(function (r) {
+      if (!r || r.status !== 200) return null;
+      var j = null;
+      try { j = JSON.parse(r.text); } catch (e) { return null; }
+      var f = it.a.net === "github" ? fromGitHub(j) : (it.a.net === "bluesky" ? fromBluesky(j) : fromMastodon(j, it.url));
+      if (f) f.base = it.base;
+      return f;
+    }, function () { return null; });
+  }
+
   // ---------- network ----------
   function sha256(s) {
     var c = root.crypto && root.crypto.subtle;
@@ -523,7 +620,7 @@
     function readPage(url, base, label) {
       var c = classify(url);
       if (!c || !c.fetch || read[url] || Object.keys(read).length >= MAX_PAGES) return Promise.resolve();
-      if (c.kind === "social" && c.net !== "fediverse") return Promise.resolve();   // network APIs come in wave 2
+      if (c.kind === "social") return Promise.resolve();   // open networks go through their APIs below
       read[url] = 1;
       return page(url, base, opts, rec, label).then(function (f) { if (f) findings.push(f); });
     }
@@ -543,13 +640,35 @@
       });
       return uniq(next).reduce(function (p, u) { return p.then(function () { return readPage(u, "likely"); }); }, Promise.resolve());
     });
+    // open networks (GitHub, Bluesky, Mastodon) through their public
+    // APIs: the record's own profile links, or ones a finding that is
+    // not "check" points at (a verified link stays "sure")
+    chain = chain.then(function () {
+      var todo = [], seen = {};
+      function want(url, base) {
+        var a = profileApi(url);
+        if (!a || seen[a.api] || todo.length >= MAX_PROFILES) return;
+        seen[a.api] = 1;
+        todo.push({ a: a, base: base, url: url });
+      }
+      rec.sites.forEach(function (u) { want(u, "likely"); });
+      findings.forEach(function (f) {
+        var g = grade(rec, f);
+        if (g.conf === "check") return;
+        f.links.forEach(function (l) { want(l.url, l.verified ? "sure" : "likely"); });
+      });
+      return todo.reduce(function (p, it) {
+        return p.then(function () { return profile(it, opts); }).then(function (f) { if (f) findings.push(f); });
+      }, Promise.resolve());
+    });
     return chain.then(function () { return propose(recIn, findings); });
   }
 
   var api = {
     DEFAULT_RELAY: DEFAULT_RELAY, normPhone: normPhone, samePhone: samePhone, normUrl: normUrl, classify: classify,
     isNoise: isNoise, skeleton: skeleton, nameAgree: nameAgree, parsePage: parsePage, fromGravatar: fromGravatar,
-    fromPage: fromPage, grade: grade, propose: propose, lookup: lookup, getImage: getImage, sha256: sha256,
+    fromPage: fromPage, grade: grade, profileApi: profileApi, fromGitHub: fromGitHub, fromBluesky: fromBluesky,
+    fromMastodon: fromMastodon, propose: propose, lookup: lookup, getImage: getImage, sha256: sha256,
     validBirthday: validBirthday
   };
   root.OrosEnrich = api;

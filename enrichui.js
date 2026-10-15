@@ -29,7 +29,7 @@
   var S = {
     en: {
       title: "Update from online sources",
-      text: "orOS looks only where these records already point: the profile people set for their own e-mail on Gravatar (only a coded fingerprint of the address is sent), and the website or link page (Linktree and similar) saved in the record, read once like a visitor would. Facebook, Instagram, LinkedIn, X and TikTok are never read. Nothing changes until you tick what to keep.",
+      text: "orOS looks only where these records already point: the profile people set for their own e-mail on Gravatar (only a coded fingerprint of the address is sent), the website or link page (Linktree and similar) saved in the record, read once like a visitor would, and the public GitHub, Bluesky or Mastodon profiles these point to. Facebook, Instagram, LinkedIn, X and TikTok are never read. Nothing changes until you tick what to keep.",
       count: "Records to check: {n}",
       go: "Search", stop: "Stop", apply: "Apply selected", close: "Close",
       busy: "Checking {i} of {n}…", none: "Nothing new was found.",
@@ -43,7 +43,7 @@
     },
     el: {
       title: "Ενημέρωση από online πηγές",
-      text: "Το orOS ψάχνει μόνο εκεί που ήδη δείχνουν αυτές οι εγγραφές: στο προφίλ που έχει βάλει ο ίδιος ο άνθρωπος για το email του στο Gravatar (στέλνεται μόνο ένα κωδικοποιημένο αποτύπωμα της διεύθυνσης) και στην ιστοσελίδα ή στο link page (Linktree κ.ά.) που είναι αποθηκευμένα στην εγγραφή, με μία ανάγνωση όπως θα την έκανε ένας επισκέπτης. Facebook, Instagram, LinkedIn, X και TikTok δεν διαβάζονται ποτέ. Τίποτα δεν αλλάζει μέχρι να τσεκάρεις τι κρατάς.",
+      text: "Το orOS ψάχνει μόνο εκεί που ήδη δείχνουν αυτές οι εγγραφές: στο προφίλ που έχει βάλει ο ίδιος ο άνθρωπος για το email του στο Gravatar (στέλνεται μόνο ένα κωδικοποιημένο αποτύπωμα της διεύθυνσης) στην ιστοσελίδα ή στο link page (Linktree κ.ά.) που είναι αποθηκευμένα στην εγγραφή, με μία ανάγνωση όπως θα την έκανε ένας επισκέπτης, και στα δημόσια προφίλ GitHub, Bluesky ή Mastodon στα οποία αυτά οδηγούν. Facebook, Instagram, LinkedIn, X και TikTok δεν διαβάζονται ποτέ. Τίποτα δεν αλλάζει μέχρι να τσεκάρεις τι κρατάς.",
       count: "Εγγραφές για έλεγχο: {n}",
       go: "Αναζήτηση", stop: "Διακοπή", apply: "Εφαρμογή επιλεγμένων", close: "Κλείσιμο",
       busy: "Έλεγχος {i} από {n}…", none: "Δεν βρέθηκε κάτι νέο.",
