@@ -79,7 +79,16 @@
       "dlg.save": "Save", "dlg.cancel": "Cancel", "dlg.delete": "Delete",
       "toast.patSaved": "Pattern saved", "toast.patDeleted": "Pattern deleted", "toast.undo": "Undo",
       "toast.needName": "Give the pattern a name", "toast.maxPats": "Up to {n} patterns of your own",
-      "hb.on": "Show in Habits", "hb.hint": "Days with a finished session get a tick in the Habits app, on all your devices."
+      "hb.on": "Show in Habits", "hb.hint": "Days with a finished session get a tick in the Habits app, on all your devices.",
+      "imp.btn": "Import sessions", "imp.title": "Import sessions", "imp.src": "From: {s}", "imp.csv": "a CSV file",
+      "imp.found": "Sessions: {n} · days: {d} · {m} in all", "imp.range": "{a} to {b}", "imp.acts": "Activities to count",
+      "imp.noAct": "(none)", "imp.dup": "Days already here: {n}.", "imp.left": "Left out (no usable date or length): {n}.",
+      "imp.future": "Left out (in the future): {n}.",
+      "imp.note": "Imported minutes count in your stats and streak, and in Habits if Micro-Zen shows there. Breaths aren't counted.",
+      "imp.priv": "The file is read on this device only.", "imp.nothing": "Nothing new to import: these sessions are already counted.",
+      "imp.go": "Import", "imp.done": "Sessions imported: {n} ({m})", "imp.undone": "Import undone",
+      "imp.bad": "Couldn't read this file. Pick the sessions CSV from Insight Timer, or a CSV with a date and minutes.",
+      "imp.empty": "No sessions found in this file.", "imp.big": "This file is too large to import."
     },
     el: {
       "pat.box": "Κουτί", "pat.relax": "Χαλάρωση", "pat.coherent": "Σταθερή",
@@ -106,7 +115,16 @@
       "dlg.save": "Αποθήκευση", "dlg.cancel": "Άκυρο", "dlg.delete": "Διαγραφή",
       "toast.patSaved": "Το μοτίβο αποθηκεύτηκε", "toast.patDeleted": "Το μοτίβο διαγράφηκε", "toast.undo": "Αναίρεση",
       "toast.needName": "Δώσε όνομα στο μοτίβο", "toast.maxPats": "Έως {n} δικά σου μοτίβα",
-      "hb.on": "Εμφάνιση στις Συνήθειες", "hb.hint": "Οι μέρες με ολοκληρωμένη συνεδρία τσεκάρονται στην εφαρμογή Συνήθειες, σε όλες τις συσκευές σου."
+      "hb.on": "Εμφάνιση στις Συνήθειες", "hb.hint": "Οι μέρες με ολοκληρωμένη συνεδρία τσεκάρονται στην εφαρμογή Συνήθειες, σε όλες τις συσκευές σου.",
+      "imp.btn": "Εισαγωγή συνεδριών", "imp.title": "Εισαγωγή συνεδριών", "imp.src": "Από: {s}", "imp.csv": "αρχείο CSV",
+      "imp.found": "Συνεδρίες: {n} · μέρες: {d} · {m} συνολικά", "imp.range": "{a} έως {b}", "imp.acts": "Δραστηριότητες που μετράνε",
+      "imp.noAct": "(χωρίς)", "imp.dup": "Μέρες που υπάρχουν ήδη: {n}.", "imp.left": "Μένουν έξω (χωρίς σωστή ημερομηνία ή διάρκεια): {n}.",
+      "imp.future": "Μένουν έξω (στο μέλλον): {n}.",
+      "imp.note": "Τα λεπτά που εισάγεις μετράνε στα στατιστικά και στο σερί σου, και στις Συνήθειες αν εμφανίζεται εκεί το Μίκρο-Ζεν. Οι ανάσες δεν μετράνε.",
+      "imp.priv": "Το αρχείο διαβάζεται μόνο σε αυτή τη συσκευή.", "imp.nothing": "Τίποτα καινούργιο για εισαγωγή: αυτές οι συνεδρίες έχουν ήδη μετρηθεί.",
+      "imp.go": "Εισαγωγή", "imp.done": "Συνεδρίες που εισήχθησαν: {n} ({m})", "imp.undone": "Η εισαγωγή αναιρέθηκε",
+      "imp.bad": "Δεν ήταν δυνατό να διαβαστεί το αρχείο. Διάλεξε το CSV συνεδριών από το Insight Timer ή ένα CSV με ημερομηνία και λεπτά.",
+      "imp.empty": "Δεν βρέθηκαν συνεδρίες σε αυτό το αρχείο.", "imp.big": "Το αρχείο είναι πολύ μεγάλο για εισαγωγή."
     }
   };
 
@@ -871,6 +889,121 @@
     showToast(t("toast.reset"));
   }
 
+  // ---------- 9b. Import sessions ----------
+  // Insight Timer / any CSV → per-day totals in the import's own rows.
+  // Parsing, the plan and the rows are pure (import.js, OrosZenImport);
+  // here: pick → preview → ONE write + one sync mark → toast with Undo.
+  // Nothing from the file is ever inserted as HTML (textContent only).
+  var IMP_ACCEPT = ".csv,.txt,text/csv";
+  function dialogHost() {
+    if (window.orosDialog) return window.orosDialog;
+    try { return window.parent.orosDialog || null; } catch (e) { return null; }
+  }
+  function localPick(accept) {
+    return new Promise(function (res) {
+      var inp = document.createElement("input");
+      inp.type = "file";
+      inp.accept = accept;
+      inp.addEventListener("change", function () { res(inp.files && inp.files[0] || null); });
+      inp.addEventListener("cancel", function () { res(null); });
+      inp.click();
+    });
+  }
+  function startImport() {
+    var I = window.OrosZenImport, KIT = window.OrosImportKit;
+    if (!I || !KIT) return;
+    if (busy()) { showToast(t("toast.locked")); return; }
+    var host = dialogHost();
+    var pick = host && typeof host.openFile === "function" ? host.openFile(IMP_ACCEPT) : localPick(IMP_ACCEPT);
+    Promise.resolve(pick).then(function (file) {
+      if (!file) return null;                  // cancel = silent exit
+      return KIT.readFile(file, I.MAX_FILE).then(function (f) { return I.readBytes(f.bytes, f.name); });
+    }).then(function (res) {
+      if (!res) return;
+      if (res.error) { showToast(t(res.error === "big" ? "imp.big" : (res.error === "empty" ? "imp.empty" : "imp.bad"))); return; }
+      importPreview(res);
+    }).catch(function (e) {
+      showToast(t(e && e.message === "toobig" ? "imp.big" : "imp.bad"));
+    });
+  }
+  function impDate(k) {
+    var p = k.split("-");
+    try {
+      return new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB", { day: "numeric", month: "short", year: "numeric" });
+    } catch (e) { return k; }
+  }
+  function importPreview(res) {
+    var I = window.OrosZenImport, acts = {};
+    var dlg = makeDialog("zen-imp");
+    dlg.classList.add("imp-dlg");
+    dlg.appendChild(el("div", "dlg-title", t("imp.title")));
+    dlg.appendChild(el("p", "imp-line", t("imp.src", { s: res.source === "insight" ? "Insight Timer" : t("imp.csv") })));
+    var body = el("div", "imp-body");
+    var names = Object.keys(res.acts).sort();
+    if (names.length > 1 || (names.length === 1 && names[0])) {
+      var box = el("div", "imp-acts");
+      box.appendChild(el("div", "dlg-lbl", t("imp.acts")));
+      names.forEach(function (n) {
+        var lab = el("label", "check");
+        var cb = el("input");
+        cb.type = "checkbox";
+        cb.checked = true;
+        cb.addEventListener("change", function () { acts[n] = cb.checked; paint(); });
+        lab.appendChild(cb);
+        lab.appendChild(el("span", "", (n || t("imp.noAct")) + " (" + res.acts[n] + ")"));
+        box.appendChild(lab);
+      });
+      dlg.appendChild(box);
+    }
+    dlg.appendChild(body);
+    var row = el("div", "dlg-actions");
+    row.appendChild(button(t("confirm.no"), "", function () { dlg.close(); }));
+    var go = button(t("imp.go"), "primary", function () {
+      dlg.close();
+      // planned again on the data as it is NOW (a pull may have
+      // landed while the preview was open)
+      applyImport(I.plan(res, data, { acts: acts, now: Date.now() }));
+    });
+    go.id = "imp-go";
+    row.appendChild(go);
+    dlg.appendChild(row);
+    function paint() {
+      var pl = I.plan(res, data, { acts: acts, now: Date.now() });
+      body.innerHTML = "";
+      body.appendChild(el("p", "imp-line", t("imp.found", { n: pl.sessions, d: pl.days.length, m: minutesText(pl.sec) })));
+      if (pl.from) body.appendChild(el("p", "imp-line", t("imp.range", { a: impDate(pl.from), b: impDate(pl.to) })));
+      if (pl.dup) body.appendChild(el("p", "hint", t("imp.dup", { n: pl.dup })));
+      if (res.skip) body.appendChild(el("p", "hint", t("imp.left", { n: res.skip })));
+      if (pl.future) body.appendChild(el("p", "hint", t("imp.future", { n: pl.future })));
+      body.appendChild(el("p", "hint", pl.add ? t("imp.note") : t("imp.nothing")));
+      body.appendChild(el("p", "hint", t("imp.priv")));
+      go.hidden = !pl.add;
+    }
+    paint();
+    document.body.appendChild(dlg);
+    dlg.showModal();
+  }
+  // ONE write: the import's rows merged in (counters only grow), then
+  // a single save() = one sync mark.
+  function applyImport(pl) {
+    var I = window.OrosZenImport;
+    var a = I.apply(data, pl);
+    if (!a.undo.length) { showToast(t("imp.nothing")); return; }
+    data = mergeZen(data, { ver: DATA_VER, br: data.br, rows: a.rows });
+    save();
+    renderStats();
+    undoToast(t("imp.done", { n: a.sessions, m: minutesText(a.sec) }), function () { undoImport(a.undo); });
+  }
+  // Undo on the CURRENT data: the touched days back as they were,
+  // under a newer epoch so every device takes them.
+  function undoImport(undo) {
+    var rows = window.OrosZenImport.revert(data, undo, Date.now());
+    data = mergeZen(data, { ver: DATA_VER, br: data.br, rows: rows });
+    save();
+    renderStats();
+    showToast(t("imp.undone"));
+  }
+
   function showToast(text) {
     try {
       var n = (window.parent && window.parent !== window && window.parent.orosNotifs) || null;
@@ -1044,6 +1177,7 @@
     vb.setAttribute("aria-label", t("btn.vibe"));
     vb.title = t("btn.vibe");
     $("reset-btn").textContent = t("st.reset");
+    $("imp-btn").textContent = t("imp.btn");
     $("new-pat").textContent = "+ " + t("btn.newPat");
     $("edit-pat").textContent = t("btn.editPat");
   }
@@ -1065,6 +1199,7 @@
       render();
     });
     $("reset-btn").addEventListener("click", confirmReset);
+    $("imp-btn").addEventListener("click", startImport);
     $("new-pat").addEventListener("click", function () { if (!busy()) patDialog(null); });
     $("edit-pat").addEventListener("click", function () {
       var c = prefs.pat.indexOf("c:") === 0 ? patById(prefs.pat.slice(2)) : null;

@@ -13,6 +13,8 @@
 //     (plan-core.js), outdoor walk / run / ride with GPS, splits and
 //     GPX (gps-core.js over maps/tracks-core.js), exercise pictures
 //     from wger.de on request (wger.js); section 7b
+//   - import: Strong / Hevy CSV (section 4b), FitNotes, JEFIT, FIT,
+//     TCX, GPX and bulk zips (import.js); preview, one write, Undo
 // Data:
 //   - synced slice "fitness" (oros-fitness-data): exercises,
 //     programs, workouts, body entries LWW by m + tombstones,
@@ -141,8 +143,16 @@
       "set.json": "Backup (JSON)", "set.restore": "Restore from backup", "set.lib": "Exercise library",
       "set.metric": "Metric (kg, km, cm)", "set.imperial": "Imperial (lb, mi, in)",
       "set.restored": "Backup restored: {n} workouts", "set.badFile": "This file is not a Workouts backup",
-      "set.import": "Import from Strong or Hevy (CSV)",
-      "imp.title": "Import workouts", "imp.bad": "This file is not a Strong or Hevy export",
+      "set.import": "Import workouts (Strong, Hevy, FitNotes, JEFIT, FIT, TCX, GPX)",
+      "imp.title": "Import workouts", "imp.bad": "This file is not a workout or activity export that can be read here",
+      "imp.big": "This file is too large to import", "imp.undone": "Import undone",
+      "imp.revive": "Also bring back {n} workouts deleted after an earlier import",
+      "imp.actSum": "{src} · Activities to import: {n}", "imp.actDone": "Activities imported: {n}", "imp.files": "{n} files",
+      "imp.k.run": "Runs: {n}", "imp.k.walk": "Walks: {n}", "imp.k.ride": "Rides: {n}", "imp.k.swim": "Swims: {n}", "imp.k.other": "Other: {n}",
+      "imp.routes": "With a route: {n}", "imp.noRoute": "Without a route, to keep sync light: {n}",
+      "imp.other": "Other sports come in with their time and a note, without exercises.",
+      "imp.skipAct": "Already here, skipped: {n}", "imp.badFiles": "Files that could not be read: {n}",
+      "imp.kcal": "{n} kcal", "imp.hr": "average heart rate {n}",
       "imp.summary": "{src} export · Workouts: {n} · Sets: {sets}", "imp.range": "{from} to {to}",
       "imp.ex": "Exercises already here: {m} · New exercises: {k}", "imp.newList": "New: {list}",
       "imp.skip": "Workouts already here, skipped: {n}",
@@ -266,8 +276,16 @@
       "set.json": "Αντίγραφο ασφαλείας (JSON)", "set.restore": "Επαναφορά από αντίγραφο", "set.lib": "Βιβλιοθήκη ασκήσεων",
       "set.metric": "Μετρικό (kg, km, cm)", "set.imperial": "Αγγλοσαξονικό (lb, mi, in)",
       "set.restored": "Έγινε επαναφορά: {n} προπονήσεις", "set.badFile": "Αυτό το αρχείο δεν είναι αντίγραφο της Προπόνησης",
-      "set.import": "Εισαγωγή από Strong ή Hevy (CSV)",
-      "imp.title": "Εισαγωγή προπονήσεων", "imp.bad": "Αυτό το αρχείο δεν είναι εξαγωγή του Strong ή του Hevy",
+      "set.import": "Εισαγωγή προπονήσεων (Strong, Hevy, FitNotes, JEFIT, FIT, TCX, GPX)",
+      "imp.title": "Εισαγωγή προπονήσεων", "imp.bad": "Αυτό το αρχείο δεν είναι εξαγωγή προπονήσεων ή δραστηριοτήτων που διαβάζεται εδώ",
+      "imp.big": "Το αρχείο είναι πολύ μεγάλο για εισαγωγή", "imp.undone": "Η εισαγωγή αναιρέθηκε",
+      "imp.revive": "Επανέφερε και {n} προπονήσεις που διαγράφηκαν μετά από προηγούμενη εισαγωγή",
+      "imp.actSum": "{src} · Δραστηριότητες για εισαγωγή: {n}", "imp.actDone": "Δραστηριότητες που μπήκαν: {n}", "imp.files": "{n} αρχεία",
+      "imp.k.run": "Τρέξιμο: {n}", "imp.k.walk": "Περπάτημα: {n}", "imp.k.ride": "Ποδήλατο: {n}", "imp.k.swim": "Κολύμπι: {n}", "imp.k.other": "Άλλα: {n}",
+      "imp.routes": "Με διαδρομή: {n}", "imp.noRoute": "Χωρίς διαδρομή, για να μένει ελαφρύς ο συγχρονισμός: {n}",
+      "imp.other": "Τα άλλα αθλήματα μπαίνουν με τον χρόνο τους και μια σημείωση, χωρίς ασκήσεις.",
+      "imp.skipAct": "Υπάρχουν ήδη και παραλείπονται: {n}", "imp.badFiles": "Αρχεία που δεν διαβάστηκαν: {n}",
+      "imp.kcal": "{n} θερμίδες", "imp.hr": "μέσος καρδιακός ρυθμός {n}",
       "imp.summary": "Εξαγωγή {src} · Προπονήσεις: {n} · Σετ: {sets}", "imp.range": "{from} έως {to}",
       "imp.ex": "Ασκήσεις που υπάρχουν ήδη: {m} · Νέες ασκήσεις: {k}", "imp.newList": "Νέες: {list}",
       "imp.skip": "Προπονήσεις που υπάρχουν ήδη και παραλείπονται: {n}",
@@ -1067,7 +1085,19 @@
     "standing calf raise": "x-calf", "seated calf raise machine": "x-calf", "hip thrust barbell": "x-hipthrust",
     "ab wheel": "x-abwheel", "running treadmill": "x-run", "running outdoor": "x-run",
     "cycling indoor": "x-bike", "rowing machine": "x-rowerg", "row machine": "x-rowerg",
-    "kettlebell swing kettlebell": "x-kbswing", "power clean barbell": "x-clean", "burpees": "x-burpee"
+    "kettlebell swing kettlebell": "x-kbswing", "power clean barbell": "x-clean", "burpees": "x-burpee",
+    // FitNotes and JEFIT write the equipment first
+    "flat barbell bench press": "x-bench", "barbell bench press": "x-bench", "incline barbell bench press": "x-incline",
+    "barbell incline bench press": "x-incline", "flat dumbbell bench press": "x-dbbench", "dumbbell bench press": "x-dbbench",
+    "flat dumbbell fly": "x-dbfly", "barbell squat": "x-squat", "barbell front squat": "x-frontsquat",
+    "barbell deadlift": "x-deadlift", "barbell romanian deadlift": "x-rdl", "barbell row": "x-row",
+    "barbell bent over row": "x-row", "bent over barbell row": "x-row", "one arm dumbbell row": "x-dbrow",
+    "overhead press": "x-ohp", "barbell shoulder press": "x-ohp", "standing barbell military press": "x-ohp",
+    "seated dumbbell press": "x-dbshoulder", "dumbbell shoulder press": "x-dbshoulder",
+    "dumbbell lateral raise": "x-latraise", "lateral dumbbell raise": "x-latraise", "wide grip lat pulldown": "x-pulldown",
+    "dumbbell hammer curl": "x-hammer", "ez bar curl": "x-curl", "rope push down": "x-pushdown",
+    "lying leg curl": "x-legcurl", "machine leg press": "x-legpress",
+    "barbell hip thrust": "x-hipthrust", "pull ups": "x-pullup", "push ups": "x-pushup"
   };
   // A bracketed equipment name that does not change the lift here.
   var IMP_PLAIN = /\s(barbell|bodyweight|machine|cable)$/;
@@ -1220,7 +1250,10 @@
 
   // Parsed file → rows to merge plus a summary for the preview.
   // unit: "kg" or "lb", only used where the file has no unit.
-  function buildImport(d, parsed, unit, now) {
+  // revive: workouts deleted here after an earlier import come back
+  // (one step newer than their tombstone); otherwise they stay away.
+  // Also used for FitNotes and JEFIT (import.js gives the same rows).
+  function buildImport(d, parsed, unit, now, revive) {
     var wuF = function (s) { return wFactor((s.wu || unit) === "lb" ? "lb" : "kg"); };
     var duF = function (s) { var u = s.du || (unit === "lb" ? "mi" : "km"); return u === "m" ? 1 : dFactor(u); };
     var byName = {}, order = [];
@@ -1236,18 +1269,19 @@
       id = "ix-" + impHash(impKey(name) + "|" + kind);
       exId[name] = id;
       newNames.push(name);
-      if (!findIn(d.ex, id)) exRows.push({ id: id, m: now, n: name, g: impGroup(impKey(name)), k: kind, h: 0 });
+      if (!findIn(d.ex, id)) exRows.push({ id: id, m: Math.max(now, ((d.tombs || {})["ex:" + id] || 0) + 1), n: name, g: impGroup(impKey(name)), k: kind, h: 0 });
     });
     var groups = {}, keys = [];
     parsed.rows.forEach(function (s) {
       if (!groups[s.key]) { groups[s.key] = []; keys.push(s.key); }
       groups[s.key].push(s);
     });
-    var wos = [], skipped = 0, sets = 0, from = Infinity, to = 0;
+    var wos = [], skipped = 0, gone = 0, sets = 0, from = Infinity, to = 0, tombs = d.tombs || {};
     keys.forEach(function (k) {
       var rows = groups[k], first = rows[0];
       var id = "i-" + impHash(k);
-      if (findIn(d.wo, id) || ("wo:" + id) in (d.tombs || {})) { skipped++; return; }
+      if (findIn(d.wo, id)) { skipped++; return; }
+      if (("wo:" + id) in tombs) { gone++; if (!revive) return; }
       var x = [], notes = [], seenNote = {};
       if (first.note) notes.push(first.note);
       rows.forEach(function (s) {
@@ -1266,10 +1300,10 @@
       x.forEach(function (e) { sets += e.s.length; delete e.name; });
       from = Math.min(from, first.start);
       to = Math.max(to, first.start);
-      wos.push({ id: id, m: now, d: ymd(new Date(first.start)), st: first.start, en: Math.max(first.start, end),
+      wos.push({ id: id, m: Math.max(now, (tombs["wo:" + id] || 0) + 1), d: ymd(new Date(first.start)), st: first.start, en: Math.max(first.start, end),
                  ti: first.title, p: "", pd: "", n: notes.join("\n"), x: x });
     });
-    return { src: parsed.src, unitKnown: parsed.unitKnown, wo: wos, ex: exRows, skipped: skipped, sets: sets,
+    return { src: parsed.src, unitKnown: parsed.unitKnown, wo: wos, ex: exRows, skipped: skipped, gone: gone, sets: sets,
              matched: matched, newNames: newNames, from: wos.length ? ymd(new Date(from)) : "", to: wos.length ? ymd(new Date(to)) : "" };
   }
   function findIn(list, id) {
@@ -3876,39 +3910,78 @@
     });
   }
 
-  // Strong / Hevy: read, preview, then merge (section 4b).
+  // Import workouts: one entry point for every source. Strong / Hevy
+  // (section 4b), FitNotes and JEFIT give sets; FIT, TCX, GPX and a
+  // zip of them (import.js) give activities. Read → detect → preview
+  // → ONE merge + ONE save (one dirty mark) → a toast with Undo.
+  // Undo puts newer tombstones on exactly the rows this import added,
+  // so a sync that already carried them cannot bring them back.
+  var IMP_SRC = { strong: "Strong", hevy: "Hevy", fitnotes: "FitNotes", jefit: "JEFIT",
+                  fit: "Garmin FIT", tcx: "TCX", gpx: "GPX", zip: "ZIP" };
+  function impApi() { return window.OrosFitnessImport && window.OrosImportKit ? window.OrosFitnessImport : null; }
   function importCsv() {
-    pickFile(".csv,text/csv").then(function (file) {
-      if (!file) return;
-      if (file.size > IMP_MAX) { showToast(t("imp.bad")); return; }
-      var rd = new FileReader();
-      rd.onload = function () {
-        var parsed = null;
-        try { parsed = parseImport(String(rd.result)); } catch (e) {}
-        if (!parsed) { showToast(t("imp.bad")); return; }
+    var X = impApi();
+    if (!X) return;
+    pickFile(X.ACCEPT).then(function (file) { if (file) importFile(file); });
+  }
+  // Also the handle for tests (Promise<bool>)
+  function importFile(file) {
+    var X = impApi();
+    return window.OrosImportKit.readFile(file, X.MAX_FILE)
+      .then(function (r) { return X.parse(r, { sets: parseImport }); })
+      .then(function (res) {
+        if (!res) { showToast(t("imp.bad")); return false; }
         var d = $("fit-set");
         if (d) d.close();
-        importDialog(parsed);
-      };
-      rd.readAsText(file);
+        if (res.kind === "sets") importDialog(res.parsed);
+        else actsDialog(res);
+        return true;
+      }, function (e) {
+        showToast(t(e && e.message === "toobig" ? "imp.big" : "imp.bad"));
+        return false;
+      });
+  }
+  function impRevive(gone, onChange) {
+    var w = el("label", "chk"), c = el("input");
+    c.type = "checkbox";
+    c.addEventListener("change", function () { onChange(c.checked); });
+    w.appendChild(c);
+    w.appendChild(el("span", "", t("imp.revive", { n: gone })));
+    return w;
+  }
+  // One merge, one save; the toast's Undo removes what was added.
+  function impCommit(plan, msg) {
+    data = mergeFit(data, { wo: plan.wo, ex: plan.ex });
+    saveNow(false);
+    render();
+    var added = plan.wo.map(function (w) { return ["wo", w.id, w.m]; })
+      .concat(plan.ex.map(function (x) { return ["ex", x.id, x.m]; }));
+    var used = false;
+    undoToast(msg, function () {
+      if (used) return;
+      used = true;
+      added.forEach(function (r) {
+        var row = findRow(r[0], r[1]);
+        if (row && row.m === r[2]) removeRow(r[0], r[1]);     // edited since: the user's now
+      });
+      saveNow(false);
+      render();
+      showToast(t("imp.undone"));
     });
   }
   function importDialog(parsed) {
     var dlg = makeDialog("fit-imp", t("imp.title"));
-    var unit = settings().wu, plan = null;
-    var body = el("div", "imp-body");
+    var unit = settings().wu, plan = null, revive = false;
+    var body = el("div", "imp-body"), extra = el("div");
     var go = button(t("imp.go"), "primary", function () {
       if (!plan || !plan.wo.length) return;
-      data = mergeFit(data, { wo: plan.wo, ex: plan.ex });
-      saveNow(false);
       dlg.close();
-      render();
-      showToast(t("imp.done", { n: plan.wo.length }));
+      impCommit(plan, t("imp.done", { n: plan.wo.length }));
     });
     function paint() {
-      plan = buildImport(data, parsed, unit, Date.now());
+      plan = buildImport(data, parsed, unit, Date.now(), revive);
       body.innerHTML = "";
-      var src = parsed.src === "hevy" ? "Hevy" : "Strong";
+      var src = IMP_SRC[parsed.src] || "CSV";
       if (plan.wo.length) {
         body.appendChild(el("p", "", t("imp.summary", { src: src, n: plan.wo.length, sets: plan.sets })));
         body.appendChild(el("p", "", plan.from === plan.to ? fmtDate(plan.from)
@@ -3918,7 +3991,7 @@
           var list = plan.newNames.slice(0, 12).join(", ") + (plan.newNames.length > 12 ? ", …" : "");
           body.appendChild(hint(t("imp.newList", { list: list })));
         }
-      } else body.appendChild(el("p", "", t("imp.none")));
+      } else if (!plan.gone) body.appendChild(el("p", "", t("imp.none")));
       if (plan.skipped && plan.wo.length) body.appendChild(hint(t("imp.skip", { n: plan.skipped })));
       if (plan.newNames.length && plan.wo.length) body.appendChild(hint(t("imp.tip")));
       go.disabled = !plan.wo.length;
@@ -3934,6 +4007,56 @@
     }
     dlg.appendChild(body);
     paint();
+    if (plan.gone) extra.appendChild(impRevive(plan.gone, function (v) { revive = v; paint(); }));
+    dlg.appendChild(extra);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); }));
+    acts.appendChild(go);
+    dlg.appendChild(acts);
+    openDialog(dlg);
+  }
+  // Activities (runs, rides, walks, swims…) from FIT / TCX / GPX / zip.
+  function actNote(a) {
+    var bits = [IMP_SRC[a.src] || ""];
+    if (a.sport && a.ex) bits.push(a.sport);
+    if (a.cal) bits.push(t("imp.kcal", { n: a.cal }));
+    if (a.hr) bits.push(t("imp.hr", { n: a.hr }));
+    return bits.filter(Boolean).join(" · ");
+  }
+  function actsDialog(res) {
+    var X = impApi();
+    var dlg = makeDialog("fit-imp", t("imp.title"));
+    var plan = null, revive = false;
+    var body = el("div", "imp-body"), extra = el("div");
+    var go = button(t("imp.go"), "primary", function () {
+      if (!plan || !plan.wo.length) return;
+      dlg.close();
+      impCommit({ wo: plan.wo, ex: [] }, t("imp.actDone", { n: plan.wo.length }));
+    });
+    function paint() {
+      plan = X.buildActs(data, res.acts, { now: Date.now(), revive: revive, label: t, note: actNote });
+      body.innerHTML = "";
+      var src = IMP_SRC[res.src] || "";
+      if (res.src === "zip") src += " · " + t("imp.files", { n: res.files });
+      body.appendChild(el("p", "", t("imp.actSum", { src: src, n: plan.wo.length })));
+      if (plan.wo.length) {
+        body.appendChild(el("p", "", plan.from === plan.to ? fmtDate(plan.from)
+          : t("imp.range", { from: fmtDate(plan.from), to: fmtDate(plan.to) })));
+        var kinds = ["run", "walk", "ride", "swim", "other"].filter(function (k) { return plan.kinds[k]; })
+          .map(function (k) { return t("imp.k." + k, { n: plan.kinds[k] }); });
+        body.appendChild(el("p", "", kinds.join(" · ")));
+        if (plan.routes) body.appendChild(hint(t("imp.routes", { n: plan.routes })));
+        if (plan.noRoute) body.appendChild(hint(t("imp.noRoute", { n: plan.noRoute })));
+        if (plan.kinds.other) body.appendChild(hint(t("imp.other")));
+      } else if (!plan.gone) body.appendChild(el("p", "", t("imp.none")));
+      if (plan.skipped) body.appendChild(hint(t("imp.skipAct", { n: plan.skipped })));
+      if (res.bad) body.appendChild(hint(t("imp.badFiles", { n: res.bad })));
+      go.disabled = !plan.wo.length;
+    }
+    dlg.appendChild(body);
+    paint();
+    if (plan.gone) extra.appendChild(impRevive(plan.gone, function (v) { revive = v; paint(); }));
+    dlg.appendChild(extra);
     var acts = el("div", "dlg-actions");
     acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); }));
     acts.appendChild(go);

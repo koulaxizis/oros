@@ -103,7 +103,23 @@
       "csv.round": "Round", "csv.yes": "yes", "csv.no": "no", "csv.file": "scores",
       "tpl.tavli": "Backgammon", "tpl.prefa": "Prefa", "tpl.xeri": "Xeri", "tpl.biriba": "Biriba",
       "tpl.poker": "Poker (chips)", "tpl.free": "Free scoring",
-      "seat.default": "Player {n}"
+      "seat.default": "Player {n}",
+      "imp.btn": "Import", "imp.tip": "Import plays from BG Stats",
+      "imp.title": "Import from another app", "imp.src": "From: {s}",
+      "imp.plays": "{n} plays in the file: {a} new, {h} already here",
+      "imp.range": "From {a} to {b}", "imp.games": "{g} games · {p} new players · {k} players you already have",
+      "imp.map": "Each play becomes a finished match with one round of the final scores; without scores, the winners get 1 point.",
+      "imp.solo": "{n} solo plays left out (a match needs 2 to 8 players)",
+      "imp.many": "{n} plays with more than 8 players left out",
+      "imp.ignored": "{n} plays marked “ignored” in BG Stats left out",
+      "imp.bad": "{n} unreadable plays left out",
+      "imp.full": "{n} older plays do not fit (up to {m} matches)",
+      "imp.skip": "Not kept: locations, comments, durations, teams.",
+      "imp.keep": "Nothing you already have is changed.",
+      "imp.none": "Nothing new to import: it's all in Score Keeper already.",
+      "imp.go": "Import", "imp.done": "Imported {n} matches", "imp.undone": "Import undone",
+      "imp.big": "This file is too large to import.", "imp.badfile": "This file could not be read. Pick a BG Stats export (.bgsplay or .json).",
+      "imp.empty": "There are no plays in this file."
     },
     el: {
       "app": "Μετρητής πόντων",
@@ -148,7 +164,23 @@
       "csv.round": "Γύρος", "csv.yes": "ναι", "csv.no": "όχι", "csv.file": "pontoi",
       "tpl.tavli": "Τάβλι", "tpl.prefa": "Πρέφα", "tpl.xeri": "Ξερή", "tpl.biriba": "Μπιρίμπα",
       "tpl.poker": "Πόκα (μάρκες)", "tpl.free": "Ελεύθερο",
-      "seat.default": "Παίκτης {n}"
+      "seat.default": "Παίκτης {n}",
+      "imp.btn": "Εισαγωγή", "imp.tip": "Εισαγωγή παρτίδων από το BG Stats",
+      "imp.title": "Εισαγωγή από άλλη εφαρμογή", "imp.src": "Από: {s}",
+      "imp.plays": "{n} παρτίδες στο αρχείο: {a} νέες, {h} υπάρχουν ήδη",
+      "imp.range": "Από {a} έως {b}", "imp.games": "{g} παιχνίδια · {p} νέοι παίκτες · {k} παίκτες που έχεις ήδη",
+      "imp.map": "Κάθε παρτίδα μπαίνει ως τελειωμένη, με έναν γύρο με τους τελικούς πόντους· αν δεν έχει πόντους, οι νικητές παίρνουν 1 πόντο.",
+      "imp.solo": "{n} παρτίδες με έναν παίκτη δεν μπαίνουν (μια παρτίδα θέλει 2 έως 8 παίκτες)",
+      "imp.many": "{n} παρτίδες με πάνω από 8 παίκτες δεν μπαίνουν",
+      "imp.ignored": "{n} παρτίδες σημειωμένες ως «αγνοημένες» στο BG Stats δεν μπαίνουν",
+      "imp.bad": "{n} παρτίδες που δεν διαβάζονται δεν μπαίνουν",
+      "imp.full": "{n} παλιότερες παρτίδες δεν χωράνε (έως {m} παρτίδες)",
+      "imp.skip": "Δεν κρατιούνται: τοποθεσίες, σχόλια, διάρκειες, ομάδες.",
+      "imp.keep": "Τίποτα από όσα έχεις ήδη δεν αλλάζει.",
+      "imp.none": "Τίποτα νέο για εισαγωγή: όλα υπάρχουν ήδη στον Μετρητή πόντων.",
+      "imp.go": "Εισαγωγή", "imp.done": "Μπήκαν {n} παρτίδες", "imp.undone": "Η εισαγωγή αναιρέθηκε",
+      "imp.big": "Το αρχείο είναι πολύ μεγάλο για εισαγωγή.", "imp.badfile": "Το αρχείο δεν διαβάστηκε. Διάλεξε μια εξαγωγή του BG Stats (.bgsplay ή .json).",
+      "imp.empty": "Το αρχείο δεν έχει παρτίδες."
     }
   };
 
@@ -1431,6 +1463,107 @@
     });
   }
 
+  // ---------- 8b. Import from another app ----------
+  // BG Stats → finished matches (one round of final scores), players.
+  // Parsing and the plan are pure (import.js, OrosScoresImport); here:
+  // pick → preview → ONE write + one sync mark → toast with Undo.
+  // Nothing from the file is ever inserted as HTML (textContent only).
+  var IMP_ACCEPT = ".bgsplay,.json,.zip,application/json,application/zip";
+  var IMP_SRC = { bgstats: "BG Stats" };
+  function localPickFile(accept) {
+    return new Promise(function (resolve) {
+      var i = document.createElement("input");
+      i.type = "file";
+      i.accept = accept;
+      i.addEventListener("change", function () { resolve(i.files && i.files[0] ? i.files[0] : null); });
+      i.click();
+    });
+  }
+  function impPlan(res) {
+    return window.OrosScoresImport.plan(res, data, { now: Date.now(), anon: t("seat.default") });
+  }
+  function startImport() {
+    var I = window.OrosScoresImport, KIT = window.OrosImportKit;
+    if (!I || !KIT) return;
+    var dlg = dialogHost();
+    var pick = dlg && typeof dlg.openFile === "function" ? dlg.openFile(IMP_ACCEPT) : localPickFile(IMP_ACCEPT);
+    Promise.resolve(pick).then(function (file) {
+      if (!file) return null;                  // cancel = silent exit
+      return KIT.readFile(file, I.MAX_FILE).then(function (f) { return I.readBytes(f.bytes, f.name); });
+    }).then(function (res) {
+      if (!res) return;
+      if (res.error) { showToast(t(res.error === "big" ? "imp.big" : (res.error === "empty" ? "imp.empty" : "imp.badfile"))); return; }
+      importPreview(res, impPlan(res));
+    }).catch(function (e) {
+      showToast(t(e && e.message === "toobig" ? "imp.big" : "imp.badfile"));
+    });
+  }
+  function importPreview(res, pl) {
+    var st = pl.stats;
+    var dlg = makeDialog("sk-import", t("imp.title"));
+    dlg.classList.add("wide");
+    var body = el("div", "imp-body");
+    function para(text, cls) { body.appendChild(el("p", cls || "imp-p", text)); }
+    var ds = function (k) {
+      var p = k.split("-");
+      return new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB",
+        { day: "numeric", month: "short", year: "numeric" });
+    };
+    para(t("imp.src", { s: IMP_SRC[res.source] || res.source }), "imp-p imp-src");
+    para(t("imp.plays", { n: st.found, a: pl.matches.length, h: st.have }));
+    if (pl.matches.length) {
+      para(t("imp.range", { a: ds(st.from), b: ds(st.to) }));
+      para(t("imp.games", { g: st.games, p: st.newp, k: st.known }));
+      para(t("imp.map"), "imp-p dim");
+    }
+    ["solo", "many", "ignored", "bad"].forEach(function (k) { if (st[k]) para(t("imp." + k, { n: st[k] }), "imp-p dim"); });
+    if (st.full) para(t("imp.full", { n: st.full, m: MAX_MATCHES }), "imp-p dim");
+    var empty = !pl.matches.length;
+    if (!empty) para(t("imp.skip"), "imp-p dim");
+    para(empty ? t("imp.none") : t("imp.keep"));
+    dlg.appendChild(body);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); }));
+    if (!empty) {
+      var go = button(t("imp.go"), "primary", function () {
+        dlg.close();
+        // planned again on the data as it is NOW (a pull may have
+        // landed while the preview was open)
+        applyImport(impPlan(res));
+      });
+      go.id = "imp-go";
+      acts.appendChild(go);
+    }
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+  }
+  // ONE write: new matches, rounds and players (stable ids, stamped
+  // past any old tombstone), then a single commit() = one sync mark.
+  function applyImport(pl) {
+    var undo = [];
+    var fresh = function (x) { x.m = Math.max(x.m, (data.tombs[x.id] || 0) + 1); undo.push(x.id); return x; };
+    pl.matches.forEach(function (x) { if (!findIn(data.matches, x.id)) data.matches.push(fresh(x)); });
+    pl.rounds.forEach(function (x) { if (!findIn(data.rounds, x.id)) data.rounds.push(fresh(x)); });
+    pl.players.forEach(function (x) { if (!playerByName(x.name)) data.players.push(fresh(x)); });
+    var n = pl.matches.filter(function (x) { return undo.indexOf(x.id) >= 0; }).length;
+    if (!n) { showToast(t("imp.none")); return; }
+    if (prefs.tab !== "hist") { prefs.tab = "hist"; savePrefs(); }
+    commit();
+    undoToast(t("imp.done", { n: n }), function () { undoImport(undo); });
+  }
+  // Undo works on the CURRENT data (a sync pull may have landed):
+  // everything the import added gets a newer tombstone, so a device
+  // that already has it drops it too.
+  function undoImport(ids) {
+    ids.forEach(function (id) {
+      var x = findIn(data.matches, id) || findIn(data.rounds, id) || findIn(data.players, id);
+      tomb(id, x ? x.m : 0);
+    });
+    commit();
+    showToast(t("imp.undone"));
+  }
+
   // ---------- 9. Toasts, export ----------
   function showToast(text) {
     try {
@@ -1647,6 +1780,9 @@
     $("new-btn").setAttribute("aria-label", t("btn.new"));
     $("empty-new").textContent = t("btn.new");
     $("csv-all").textContent = t("hist.csv");
+    $("imp-btn").textContent = t("imp.btn");
+    $("imp-btn").title = t("imp.tip");
+    $("imp-btn").setAttribute("aria-label", t("imp.tip"));
     [["back-btn", UI.back, "btn.back"], ["menu-btn", UI.menu, "btn.menu"], ["timer-btn", UI.timer, "btn.timer"],
      ["timer-reset", UI.reset, "timer.reset"]].forEach(function (x) {
       var b = $(x[0]);
@@ -1664,6 +1800,7 @@
     $("menu-btn").addEventListener("click", menuDialog);
     $("add-round").addEventListener("click", addRound);
     $("csv-all").addEventListener("click", exportHistory);
+    $("imp-btn").addEventListener("click", startImport);
     ["play", "hist", "stats"].forEach(function (k) {
       $("tab-" + k).addEventListener("click", function () { setTab(k); });
     });

@@ -34,7 +34,17 @@ Tick `Save as my template` when you start a match to keep its settings. If you k
 ## Sync and backup
 Matches, rounds, your templates and player names sync between your devices through [orOS sync](help:t/sync). The open tab, an unsent round you've started typing and the round timer stay on this device.
 
-`Export CSV` saves one match (from its menu) or your whole history (from `History`) as a spreadsheet file. There's no import; the orOS [backup](help:t/backup) keeps everything.
+`Export CSV` saves one match (from its menu) or your whole history (from `History`) as a spreadsheet file. The orOS [backup](help:t/backup) keeps everything.
+
+## Import from BG Stats
+`Import` (in `History`) reads your plays from BG Stats. In BG Stats, export a backup or your plays (look under Settings, Backup or Export) as a `.bgsplay` or `.json` file, then pick it here; a `.zip` with that file in it works too.
+
+You first see a preview: how many plays are new, the dates they span, how many players are new, and what's left out. Each play becomes a finished match named after the game, with one round holding the final scores. If a play has no scores, the winners get 1 point and everyone else 0, so `Stats` still counts the wins. Games where the lowest score wins stay that way.
+
+- Players are matched by name to the ones you already have (upper or lower case doesn't matter); new names become suggestions.
+- Plays with only one player or more than 8, and plays marked as ignored in BG Stats, are left out. Locations, comments, durations and teams aren't kept.
+- Importing the same file again adds only plays you don't have yet; nothing you already have changes.
+- Right after the import, `Undo` takes it all back, on every synced device.
 
 ## Keyboard shortcuts
 - [[Enter]] in a points box goes to the next player, then adds the round.

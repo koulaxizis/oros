@@ -33,7 +33,14 @@ Your trees, people, relationships and photos sync between your devices through [
 From the `More` menu:
 - `Export image (SVG, PNG, print)…` exports `This view` or the `Whole family`, in light or dark colours, with or without dates and photos. `Hide details of the living` keeps living people's dates and photos out. Save as `SVG`, `PNG`, `Print`, or `Save to Files` (into the `Family Tree` folder in [Files](app:files)).
 - `Back up this tree (JSON)` or `Back up all trees (JSON)`, and `Import JSON…`. An import merges with what you have.
-- `Export GEDCOM…` saves this tree as a .ged file (GEDCOM 5.5.1) for other genealogy programs, with `Download` or `Save to Files`, and can hide the details of the living. `Import GEDCOM…` brings a .ged file (up to 15 MB) in as a new tree, after a preview, and you can undo it.
+- `Export GEDCOM…` saves this tree as a .ged file (GEDCOM 5.5.1) for other genealogy programs, with `Download` or `Save to Files`, and can hide the details of the living. `Import GEDCOM or Gramps…` brings a .ged file (up to 15 MB) in as a new tree, after a preview, and you can undo it.
+
+## Import from Gramps
+`Import GEDCOM or Gramps…` also reads a Gramps family tree. In Gramps, open the tree and use Family Trees, then Export…, and choose "Gramps XML" (a `.gramps` file); an uncompressed `.xml` export works too. Pick the file here (up to 15 MB) and check the preview.
+
+- It brings in people (names, sex, birth, death, places and notes), couples (married, partners, divorced, with their dates) and children (birth, adopted, step, foster). Sources, media, other events and family notes are left out.
+- The first import makes a new tree named after the file. Importing a newer export of the same Gramps tree later goes into that same tree and adds only the people and families you don't have yet; the ones already here stay as you left them.
+- Right after the import, `Undo` takes it all back.
 
 ## Keyboard shortcuts
 - [[+]] and [[-]] zoom, [[0]] fits the tree to the screen.

@@ -1356,7 +1356,7 @@
     normTree: normTree, normPerson: normPerson, normUnion: normUnion, emptyData: emptyData, merge: merge,
     index: index, primaryUnion: primaryUnion, wouldCycle: wouldCycle, soloUnion: soloUnion, findUnion: findUnion,
     partnerOf: partnerOf, displayName: displayName, photoBytes: photoBytes,
-    exportData: exportData, parseImport: parseImport,
+    exportData: exportData, parseImport: parseImport, checkRows: checkRows,
     layout: layout, scene: scene, toSvg: toSvg, escXml: escXml,
     contactsIndex: contactsIndex, contactName: contactName, planFromContacts: planFromContacts,
     buildFromContacts: buildFromContacts,

@@ -558,3 +558,9 @@ dialog.mm-dlg.wide { width: min(460px, calc(100vw - 32px)); }
 }
 
 [hidden] { display: none !important; }
+
+/* Import from another app (preview) */
+.imp-body { overflow-wrap: anywhere; }
+.imp-p { margin: 0 0 8px; font-size: 14px; line-height: 1.45; }
+.imp-p.imp-src { font-weight: 700; }
+.imp-p.dim { font-size: 12px; color: var(--text-dim); }

@@ -7,6 +7,11 @@
 //     durations; recipeYield; the picture's address kept as a link
 //   - Paprika (.paprikarecipes = a ZIP of gzipped JSON, or one
 //     .paprikarecipe), Mealie and Tandoor JSON (also their ZIPs)
+//   - wave 6: Mela (.melarecipe JSON, .melarecipes ZIP), Recipe Keeper
+//     (ZIP with recipes.html, schema.org microdata), Nextcloud Cookbook
+//     (ZIP of folders with recipe.json: the schema.org path), Cooklang
+//     (.cook text or a ZIP of them), Crouton (.crumb JSON or a ZIP),
+//     MyCookbook (.mcb = ZIP with a <cookbook> XML)
 // Nothing from a page is ever run or put into the document: the HTML
 // is parsed by DOMParser into an inert document (scripts never run
 // there) and only the text of the ld+json scripts is read; without
@@ -21,7 +26,11 @@
 //   1. Text: entities, tags, times, yield
 //   2. JSON-LD: blocks in a page, Recipe nodes
 //   3. Drafts: schema.org, Paprika, Mealie, Tandoor
-//   4. Detect + read (text, files, ZIP, gzip)
+//   4. Wave 6 sources: Mela, Crouton, Recipe Keeper, MyCookbook,
+//      Cooklang; stable ids for a batch
+//   5. Detect + read (text, files, ZIP, gzip)
+// Every draft also says where it came from in `fmt` (a FORMATS key);
+// normRecipe drops it when a recipe is stored.
 // ============================================================
 (function (root) {
   "use strict";
@@ -366,39 +375,390 @@
   // Mealie, Tandoor, also as arrays or { recipes: [...] }).
   function fromJson(v, pageUrl) {
     var out = [];
-    recipeNodes(v).forEach(function (n) { out.push(fromSchema(n, pageUrl)); });
+    recipeNodes(v).forEach(function (n) { out.push(tag(fromSchema(n, pageUrl), "schema")); });
     if (out.length) return out.filter(useful);
     var items = Array.isArray(v) ? v : (v && typeof v === "object" && Array.isArray(v.recipes) ? v.recipes : (v && typeof v === "object" && Array.isArray(v.items) ? v.items : [v]));
     items.slice(0, MAX_RECIPES).forEach(function (o) {
-      if (isPaprika(o)) out.push(fromPaprika(o));
-      else if (isMealie(o)) out.push(fromMealie(o));
-      else if (isTandoor(o)) out.push(fromTandoor(o));
+      if (isPaprika(o)) out.push(tag(fromPaprika(o), "paprika"));
+      else if (isMela(o)) out.push(tag(fromMela(o), "mela"));
+      else if (isCrouton(o)) out.push(tag(fromCrouton(o), "crouton"));
+      else if (isMealie(o)) out.push(tag(fromMealie(o), "mealie"));
+      else if (isTandoor(o)) out.push(tag(fromTandoor(o), "tandoor"));
     });
     return out.filter(useful);
   }
+  function tag(d, fmt) { d.fmt = fmt; return d; }
   function useful(d) { return !!(d.t && (d.ig.length || d.st.length)); }
 
-  // ---------- 4. Detect + read ----------
+  // ---------- 4. Wave 6 sources ----------
+  // Display names of the sources (not translated: they are names).
+  var FORMATS = {
+    schema: "schema.org", paprika: "Paprika", mealie: "Mealie", tandoor: "Tandoor", mela: "Mela",
+    recipekeeper: "Recipe Keeper", nextcloud: "Nextcloud Cookbook", cooklang: "Cooklang",
+    crouton: "Crouton", mycookbook: "MyCookbook"
+  };
+  // Light Markdown (Mela, Cooklang notes) → plain: **b**, __b__, *i*,
+  // [text](url) → text.
+  function unmark(s) {
+    return String(s || "").replace(/\[([^\]\n]{0,300})\]\([^)\s]{0,2000}\)/g, "$1")
+      .replace(/(\*\*|__)(\S(?:[^\n]*?\S)?)\1/g, "$2").replace(/(^|[\s(])\*(\S(?:[^*\n]*?\S)?)\*/g, "$1$2");
+  }
+  // Steps from lines where "# Heading" starts a section: its name goes
+  // in front of the section's first step (as for Mealie, Tandoor).
+  function sectionSteps(lines) {
+    var st = [], head = "";
+    lines.forEach(function (raw) {
+      var line = unmark(txt(raw, true));
+      var h = line.match(/^#+\s*(.+)$/);
+      if (h) { head = C.clean(h[1], 60); return; }
+      stepLines(line).forEach(function (x) {
+        if (st.length >= C.LIM.steps) return;
+        st.push(head ? head + ": " + x : x);
+        head = "";
+      });
+    });
+    return st.map(function (x) { return C.clean(x, C.LIM.step); }).filter(Boolean);
+  }
+
+  // Mela (.melarecipe): { id, title, text, ingredients, instructions,
+  // notes, yield, prepTime, cookTime, totalTime, categories, link,
+  // images (base64: never kept), nutrition }. Ingredients and steps are
+  // newline text where "# Dough" starts a group / section.
+  function isMela(o) {
+    return o && typeof o === "object" && !Array.isArray(o) && typeof o.title === "string" && o.name === undefined &&
+      (typeof o.ingredients === "string" || typeof o.instructions === "string");
+  }
+  function fromMela(o) {
+    var tm = times(o.prepTime, o.cookTime, o.totalTime);
+    var cats = names(o.categories);
+    var ings = txt(o.ingredients, true).split("\n").map(function (l) {
+      var h = l.match(/^#+\s*(.+)$/);
+      return h ? { group: unmark(h[1]) } : unmark(l);
+    });
+    var link = urlOf(o.link);
+    return draft({
+      t: txt(o.title), c: courseOf(cats), sv: servings(o.yield), pt: tm.pt, ct: tm.ct,
+      tg: cats.filter(function (w) { return w.length <= C.LIM.tag; }),
+      ig: ingLines(ings), st: sectionSteps(txt(o.instructions, true).split("\n")),
+      no: [unmark(txt(o.text, true)), unmark(txt(o.notes, true))].filter(Boolean).join("\n\n"),
+      src: link || txt(o.link)
+    });
+  }
+
+  // Crouton (.crumb): { name, serves, duration, cookingDuration (both
+  // minutes), ingredients [{ order, quantity { amount, quantityType },
+  // ingredient { name } }], steps [{ order, step, isSection }], notes,
+  // sourceName, webLink, tags, images (base64: never kept) }.
+  var CROUTON_UNITS = {
+    ITEM: "", CUP: "cup", CUPS: "cup", TABLESPOON: "tbsp", TEASPOON: "tsp", GRAMS: "g", GRAM: "g", KGS: "kg",
+    KILOGRAMS: "kg", OUNCE: "oz", OUNCES: "oz", POUND: "lb", POUNDS: "lb", MILLS: "ml", MILLILITRES: "ml",
+    MILLILITERS: "ml", LITRES: "l", LITERS: "l", FLUID_OUNCE: "fl oz", PINCH: "pinch", CAN: "can", BUNCH: "bunch",
+    PACKET: "packet", CLOVE: "clove", SLICE: "slice", HANDFUL: "handful", RECIPE: "", SECTION: ""
+  };
+  function byOrder(a) {
+    return list(a).filter(function (x) { return x && typeof x === "object"; }).map(function (x, i) { return { x: x, i: i }; })
+      .sort(function (p, q) {
+        var a1 = typeof p.x.order === "number" ? p.x.order : p.i, b1 = typeof q.x.order === "number" ? q.x.order : q.i;
+        return a1 - b1 || p.i - q.i;
+      }).map(function (p) { return p.x; });
+  }
+  function isCrouton(o) {
+    return o && typeof o === "object" && typeof o.name === "string" && !o["@type"] &&
+      (list(o.ingredients).some(function (x) { return x && typeof x === "object" && x.ingredient && typeof x.ingredient === "object"; }) ||
+       list(o.steps).some(function (x) { return x && typeof x === "object" && typeof x.step === "string"; }));
+  }
+  function croutonMinutes(v) {
+    if (typeof v !== "number" || !isFinite(v) || v <= 0) return 0;
+    if (v > 1440 && v % 60 === 0) v = v / 60;        // an export in seconds
+    return Math.min(Math.round(v), C.LIM.minutes);
+  }
+  function fromCrouton(o) {
+    var ings = [];
+    byOrder(o.ingredients).forEach(function (x) {
+      var n = nm(x.ingredient);
+      var q = x.quantity && typeof x.quantity === "object" ? x.quantity : {};
+      if (q.quantityType === "SECTION" || x.isSection) { if (n) ings.push({ group: n }); return; }
+      if (!n) return;
+      var amt = typeof q.amount === "number" && isFinite(q.amount) && q.amount > 0 ? String(Math.round(q.amount * 1000) / 1000) : "";
+      var qt = typeof q.quantityType === "string" ? q.quantityType.toUpperCase() : "";
+      var u = qt in CROUTON_UNITS ? CROUTON_UNITS[qt] : txt(qt).toLowerCase().replace(/_/g, " ");
+      ings.push([amt, amt ? u : "", n].filter(Boolean).join(" "));
+    });
+    var st = [], head = "";
+    byOrder(o.steps).forEach(function (x) {
+      var s = txt(x.step, true);
+      if (!s) return;
+      if (x.isSection) { head = C.clean(s, 60); return; }
+      stepLines(s).forEach(function (line) { st.push(head ? head + ": " + line : line); head = ""; });
+    });
+    var link = urlOf(o.webLink);
+    return draft({
+      t: txt(o.name), sv: servings(o.serves), pt: croutonMinutes(o.duration), ct: croutonMinutes(o.cookingDuration),
+      tg: names(o.tags).filter(function (w) { return w.length <= C.LIM.tag; }),
+      ig: ingLines(ings), st: st, no: txt(o.notes, true), src: link || txt(o.sourceName)
+    });
+  }
+
+  // Recipe Keeper (recipes.html in its export ZIP): one
+  // <div class="recipe-details"> per recipe with schema.org microdata:
+  // itemprop name, recipeIngredients / recipeIngredient,
+  // recipeDirections / recipeInstructions, recipeYield, prepTime,
+  // cookTime, totalTime, recipeCourse, recipeCategory, recipeNotes,
+  // recipeSource. Photos (local files) are not kept. In the browser the
+  // page goes through DOMParser into an inert document; in Node (tests)
+  // a text scan does the same.
+  var MICRO_RE = /itemprop\s*=\s*["']?(recipeIngredients?|recipeDirections|recipeInstructions)\b/i;
+  var MAX_PROPS = 4000;
+  function addProp(map, k, v) {
+    if (!k || typeof v !== "string") return;
+    (map[k] = map[k] || []).push(v);
+  }
+  // [{ prop: [values] }] for each recipe in a page.
+  function microRecipes(html) {
+    var out = [];
+    if (typeof root.DOMParser === "function") {
+      try {
+        var doc = new root.DOMParser().parseFromString(html, "text/html");
+        var scopes = doc.querySelectorAll(".recipe-details");
+        if (!scopes.length) scopes = doc.querySelectorAll("[itemscope][itemtype*='Recipe'], [itemscope][itemtype*='recipe']");
+        if (!scopes.length && doc.body) scopes = [doc.body];
+        for (var i = 0; i < scopes.length && out.length < MAX_RECIPES; i++) {
+          var map = {}, els = scopes[i].querySelectorAll("[itemprop]");
+          for (var k = 0; k < els.length && k < MAX_PROPS; k++) {
+            var e = els[k], tagName = e.tagName.toLowerCase(), v;
+            if (tagName === "meta") v = e.getAttribute("content") || "";
+            else if (tagName === "img" || tagName === "link") continue;
+            else v = txt(e.innerHTML, true);   // the markup of an inert node, made plain text
+            addProp(map, (e.getAttribute("itemprop") || "").trim(), v);
+          }
+          out.push(map);
+        }
+        return out;
+      } catch (e2) { out = []; }
+    }
+    var parts = html.split(/<div\b[^>]*\bclass\s*=\s*["'][^"']*\brecipe-details\b[^"']*["'][^>]*>/i);
+    if (parts.length > 1) parts.shift();
+    parts.slice(0, MAX_RECIPES).forEach(function (chunk) {
+      var map = {}, re = /<([a-z][a-z0-9]*)\b([^>]*?\bitemprop\s*=\s*["']?([\w-]+)[^>]*)>/gi, m, n = 0;
+      while ((m = re.exec(chunk)) && n++ < MAX_PROPS) {
+        var tagName = m[1].toLowerCase(), attrs = m[2], prop = m[3];
+        if (tagName === "img" || tagName === "link") continue;
+        if (tagName === "meta") {
+          var c = attrs.match(/\bcontent\s*=\s*("([^"]*)"|'([^']*)'|([^\s>]+))/i);
+          addProp(map, prop, c ? txt(c[2] !== undefined ? c[2] : (c[3] !== undefined ? c[3] : c[4])) : "");
+          continue;
+        }
+        // The element's end: the same tag counted in and out.
+        var depth = 1, tre = new RegExp("<(/?)" + tagName + "\\b[^>]*>", "gi"), t2, end = chunk.length;
+        tre.lastIndex = re.lastIndex;
+        while ((t2 = tre.exec(chunk))) {
+          depth += t2[1] ? -1 : 1;
+          if (!depth) { end = t2.index; break; }
+        }
+        addProp(map, prop, txt(chunk.slice(re.lastIndex, end), true));
+      }
+      out.push(map);
+    });
+    return out;
+  }
+  function fromMicro(p) {
+    function one(k) { return (p[k] || [])[0] || ""; }
+    function lines(keys) {
+      var out = [];
+      keys.forEach(function (k) { (p[k] || []).forEach(function (v) { v.split("\n").forEach(function (l) { if (l.trim()) out.push(l); }); }); });
+      return out;
+    }
+    var tm = times(one("prepTime"), one("cookTime"), one("totalTime"));
+    var cats = names((p.recipeCourse || []).concat(p.recipeCategory || []));
+    var src = one("recipeSource") || one("url");
+    return draft({
+      t: txt(one("name")), c: courseOf(cats), sv: servings(one("recipeYield") || one("recipeServings")), pt: tm.pt, ct: tm.ct,
+      tg: (p.recipeCategory ? names(p.recipeCategory) : []).filter(function (w) { return w.length <= C.LIM.tag; }),
+      ig: ingLines(lines(["recipeIngredients", "recipeIngredient"])),
+      st: sectionSteps(lines(["recipeDirections", "recipeInstructions"])),
+      no: [one("description"), (p.recipeNotes || []).join("\n\n")].filter(Boolean).join("\n\n"),
+      src: urlOf(src) || txt(src)
+    });
+  }
+  function fromMicrodata(html) {
+    if (typeof html !== "string") return [];
+    if (html.length > MAX_TEXT) html = html.slice(0, MAX_TEXT);
+    var fmt = /recipe-details|itemprop\s*=\s*["']?recipeDirections/i.test(html) ? "recipekeeper" : "schema";
+    return microRecipes(html).map(function (p) { return tag(fromMicro(p), fmt); }).filter(useful);
+  }
+
+  // MyCookbook (.mcb = a ZIP with an XML file): <cookbook><recipe>
+  // <title/> <preptime/> <cooktime/> <totaltime/> <quantity/>
+  // <ingredient><li/>…</ingredient> <recipetext><li/>…</recipetext>
+  // <comments/> <description/> <url/> <source/> <category/>…
+  // <imagepath/> (not kept) </recipe></cookbook>. Read by a text scan:
+  // nothing in it is ever treated as markup.
+  function xmlKids(x, tagName) {
+    var out = [], re = new RegExp("<" + tagName + "\\b[^>]*>([\\s\\S]*?)</" + tagName + "\\s*>", "gi"), m;
+    while ((m = re.exec(x)) && out.length < 2000) out.push(m[1]);
+    return out;
+  }
+  function xmlLines(x, tagName) {
+    var out = [];
+    xmlKids(x, tagName).forEach(function (inner) {
+      var li = xmlKids(inner, "li");
+      (li.length ? li : [inner]).forEach(function (v) { txt(v, true).split("\n").forEach(function (l) { if (l.trim()) out.push(l); }); });
+    });
+    return out;
+  }
+  function fromMcb(xml) {
+    if (typeof xml !== "string") return [];
+    if (xml.length > MAX_TEXT) xml = xml.slice(0, MAX_TEXT);
+    xml = xml.replace(/<!--[\s\S]*?-->/g, "").replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, function (m0, c) {
+      return c.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    });
+    return xmlKids(xml, "recipe").slice(0, MAX_RECIPES).map(function (r) {
+      function one(k) { return txt(xmlKids(r, k)[0] || ""); }
+      var tm = times(one("preptime"), one("cooktime"), one("totaltime"));
+      var cats = [];
+      xmlKids(r, "category").forEach(function (c) { names(txt(c)).forEach(function (w) { cats.push(w); }); });
+      var src = one("url") || one("source");
+      return tag(draft({
+        t: one("title"), c: courseOf(cats), sv: servings(one("quantity")), pt: tm.pt, ct: tm.ct,
+        tg: cats.filter(function (w) { return w.length <= C.LIM.tag; }),
+        ig: ingLines(xmlLines(r, "ingredient")), st: sectionSteps(xmlLines(r, "recipetext")),
+        no: [xmlLines(r, "description").join("\n"), xmlLines(r, "comments").join("\n")].filter(Boolean).join("\n\n"),
+        src: urlOf(src) || src
+      }), "mycookbook");
+    }).filter(useful);
+  }
+
+  // Cooklang (.cook): ">> key: value" metadata (or a YAML front matter
+  // between --- lines), steps are paragraphs (blank lines between),
+  // "= Section" lines, @ingredient / @two words{qty%unit}(note),
+  // #cookware{}, ~timer{qty%unit}, "-- comment", "[- block -]".
+  var CL_ING = /@([^@#~{}\n]+?)\{([^}\n]*)\}(?:\(([^)\n]*)\))?|@([^\s@#~{}()\[\],.;:!?]+)(?:\(([^)\n]*)\))?/g;
+  var CL_TOOL = /#([^@#~{}\n]+?)\{[^}\n]*\}|#([^\s@#~{}()\[\],.;:!?]+)/g;
+  var CL_TIMER = /~([^@#~{}\n]*?)\{([^}\n]*)\}|~([^\s@#~{}()\[\],.;:!?]+)/g;
+  function isCooklang(s) {
+    s = String(s || "");
+    return !/^[\[{<]/.test(s.trim()) && (/(^|\n)\s*>>\s*[\w ]+:/.test(s) || /@[^@#~{}\n]{1,60}\{[^}\n]*\}/.test(s) || /~[^~{}\n]{0,40}\{\d[^}\n]*%[^}\n]*\}/.test(s));
+  }
+  function fromCooklang(text, name) {
+    var s = String(text || "").replace(/\r\n?/g, "\n").replace(/^﻿/, "");
+    var meta = {};
+    function setMeta(k, v) { k = C.fold(String(k).trim()).replace(/[\s_-]+/g, " "); if (k && !(k in meta)) meta[k] = String(v).trim(); }
+    var fm = s.match(/^---\n([\s\S]*?)\n---[ \t]*(\n|$)/);
+    if (fm) {
+      var lastKey = "";
+      fm[1].split("\n").forEach(function (l) {
+        var kv = l.match(/^([\w][\w .-]*):\s*(.*)$/), it = l.match(/^\s+-\s+(.+)$/), sub = l.match(/^\s+(\w+):\s*(.+)$/);
+        if (kv) { lastKey = kv[1]; if (kv[2]) setMeta(kv[1], kv[2].replace(/^["']|["']$/g, "")); }
+        else if (it && lastKey) { var k2 = C.fold(lastKey); meta[k2] = (meta[k2] ? meta[k2] + ", " : "") + it[1].replace(/^["']|["']$/g, ""); }
+        else if (sub && lastKey) setMeta(lastKey + " " + sub[1], sub[2].replace(/^["']|["']$/g, ""));
+      });
+      s = s.slice(fm[0].length);
+    }
+    s = s.replace(/\[-[\s\S]*?-\]/g, "");
+    var ings = [], st = [], section = "", seen = {}, para = [];
+    function flush() {
+      if (!para.length) return;
+      var step = para.join(" ");
+      para = [];
+      step = step.replace(CL_ING, function (m0, n1, q, note1, n2, note2) {
+        var n = C.clean(n1 || n2 || "", 80), note = note1 || note2 || "", qty = "", unit = "";
+        if (q) {
+          var qp = q.split("%");
+          qty = qp[0].replace(/^\s*=\s*/, "").trim();
+          unit = (qp[1] || "").trim();
+        }
+        var line = [qty, unit, n].filter(Boolean).join(" ") + (note ? ", " + note : "");
+        var key = C.fold(section + "|" + line);
+        if (n && !seen[key]) { seen[key] = 1; ings.push(section && !seen["g|" + section] ? (seen["g|" + section] = 1, { group: section }) : null); ings.push(line); }
+        return n;
+      }).replace(CL_TOOL, function (m0, n1, n2) { return n1 || n2 || ""; })
+        .replace(CL_TIMER, function (m0, n1, q, n2) {
+          if (q) { var qp = q.split("%"); return [qp[0].trim(), (qp[1] || "").trim()].filter(Boolean).join(" "); }
+          return n1 || n2 || "";
+        });
+      step = unmark(step).replace(/\s+/g, " ").trim();
+      if (step && st.length < C.LIM.steps) st.push(C.clean((section && !seen["s|" + section] ? (seen["s|" + section] = 1, section + ": ") : "") + step, C.LIM.step));
+    }
+    s.split("\n").forEach(function (line) {
+      line = line.replace(/(^|\s)--.*$/, "");
+      var mt = line.match(/^\s*>>\s*([^:]+):\s*(.*)$/);
+      if (mt) { setMeta(mt[1], mt[2]); return; }
+      var sec = line.match(/^\s*=+\s*(.*?)\s*=*\s*$/);
+      if (sec) { flush(); section = C.clean(sec[1], 60); return; }
+      if (!line.trim()) { flush(); return; }
+      para.push(line.trim());
+    });
+    flush();
+    function m(keys) { for (var i = 0; i < keys.length; i++) if (meta[keys[i]]) return meta[keys[i]]; return ""; }
+    var title = m(["title", "name"]) || String(name || "").replace(/^.*\//, "").replace(/\.cook$/i, "").replace(/[_]+/g, " ");
+    var tm = times(m(["prep time", "prep", "preparation"]), m(["cook time", "cook", "cooking time"]), m(["time", "total time", "duration", "time required"]));
+    var cats = names(m(["course", "category", "categories"]));
+    var src = m(["source", "source url", "url", "link"]);
+    return tag(draft({
+      t: txt(title), c: courseOf(cats), sv: servings(m(["servings", "serves", "yield"])), pt: tm.pt, ct: tm.ct,
+      tg: names(m(["tags", "tag"])).concat(cats).filter(function (w) { return w.length <= C.LIM.tag; }),
+      ig: ingLines(ings.filter(Boolean)), st: st,
+      no: unmark(txt(m(["description", "introduction", "notes"]), true)),
+      src: urlOf(src) || txt(src)
+    }), "cooklang");
+  }
+
+  // Stable ids: "imp-" + a hash of the source and the folded title, so
+  // the same file imported twice adds nothing new (the same FNV-1a as
+  // OrosImportKit.hash, which is used when it is there).
+  function fnv(str) {
+    var h = 0x811c9dc5, s = String(str);
+    for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+    return h.toString(36);
+  }
+  function idFor(d) {
+    var K = root.OrosImportKit, key = (d.fmt || "") + "\n" + C.fold(d.t || "");
+    return "imp-" + (K && typeof K.hash === "function" ? K.hash(key) : fnv(key));
+  }
+  // drafts → [{ id, d, stored }]: one entry per id (the first wins),
+  // `stored` when that id is already among the user's recipes (it is
+  // then never written again).
+  function prepareBatch(drafts, storedIds) {
+    var have = {}, seen = {}, out = [];
+    list(storedIds).forEach(function (id) { have[id] = 1; });
+    list(drafts).forEach(function (d) {
+      if (!d || !d.t || out.length >= MAX_RECIPES) return;
+      var id = idFor(d);
+      if (seen[id]) return;
+      seen[id] = 1;
+      out.push({ id: id, d: d, stored: !!have[id] });
+    });
+    return out;
+  }
+
+  // ---------- 5. Detect + read ----------
   // Text the user pasted, or a file read as text: JSON, or a page
   // (its JSON-LD). [] when it holds no recipe data.
-  function fromText(text, pageUrl) {
+  // `name` (a file's name, optional) picks Cooklang by its .cook.
+  function fromText(text, pageUrl, name) {
     if (typeof text !== "string") return [];
     var s = text.length > MAX_TEXT ? text.slice(0, MAX_TEXT) : text;
     var tr = s.replace(/^﻿/, "").trim();
+    if (/\.cook$/i.test(name || "")) return [fromCooklang(s, name)].filter(useful);
     if (/^[\[{]/.test(tr)) {
       var j = parseJson(tr);
       if (j !== null) return fromJson(j, pageUrl);
     }
+    if (/^(<\?xml[^>]*>\s*)?(<!--[\s\S]*?-->\s*)*<cookbook[\s>]/i.test(tr)) return fromMcb(s);
     var out = [];
     ldBlocks(s).forEach(function (b) {
       var j2 = parseJson(b);
       if (j2 !== null) fromJson(j2, pageUrl).forEach(function (d) { if (out.length < MAX_RECIPES) out.push(d); });
     });
+    if (!out.length && MICRO_RE.test(s)) out = fromMicrodata(s);
+    // Pasted Cooklang may have no title: the editor asks for one.
+    if (!out.length && !/^</.test(tr) && isCooklang(tr)) out = [fromCooklang(s, "")].filter(function (d) { return d.ig.length || d.st.length; });
     return out;
   }
   function looksLikeData(text) {
     var tr = String(text || "").trim();
-    return /^[\[{]/.test(tr) || /<script\b[^>]*application\/ld\+json/i.test(tr) || /^<(!doctype|html|head|body)\b/i.test(tr);
+    return /^[\[{]/.test(tr) || /<script\b[^>]*application\/ld\+json/i.test(tr) || /^<(!doctype|html|head|body|\?xml|cookbook)\b/i.test(tr) ||
+      MICRO_RE.test(tr) || isCooklang(tr);
   }
 
   function streamAll(stream, max) {
@@ -445,7 +805,7 @@
       if (!Zip || depth > 1) return Promise.reject(new Error("zip"));
       var z, out = [];
       try { z = Zip.open(bytes); } catch (e) { return Promise.reject(e); }
-      var wanted = z.names.filter(function (n) { return /\.(paprikarecipe|json|zip|html?)$/i.test(n) && !/(^|\/)(__MACOSX|\.)/.test(n); });
+      var wanted = z.names.filter(function (n) { return /\.(paprikarecipe|melarecipe|crumb|cook|xml|json|zip|html?)$/i.test(n) && !/(^|\/)(__MACOSX|\.)/.test(n); });
       return wanted.reduce(function (p, n) {
         return p.then(function () {
           if (out.length >= MAX_RECIPES) return;
@@ -459,13 +819,18 @@
     }
     var text;
     try { text = utf8(bytes.length > MAX_TEXT ? bytes.subarray(0, MAX_TEXT) : bytes); } catch (e) { return Promise.resolve([]); }
-    return Promise.resolve(fromText(text, ""));
+    var list = fromText(text, "", name);
+    // Nextcloud Cookbook: one folder per recipe with a schema.org recipe.json.
+    if (/(^|\/)recipe\.json$/i.test(name || "")) list.forEach(function (d) { if (d.fmt === "schema" || d.fmt === "mealie") d.fmt = "nextcloud"; });
+    return Promise.resolve(list);
   }
 
   root.OrosMealsImport = {
     decodeEntities: decodeEntities, txt: txt, minutes: minutes, servings: servings,
     ldBlocks: ldBlocks, recipeNodes: recipeNodes, instructions: instructions,
     fromSchema: fromSchema, fromPaprika: fromPaprika, fromMealie: fromMealie, fromTandoor: fromTandoor,
-    fromJson: fromJson, fromText: fromText, fromBytes: fromBytes, gunzip: gunzip, looksLikeData: looksLikeData
+    fromJson: fromJson, fromText: fromText, fromBytes: fromBytes, gunzip: gunzip, looksLikeData: looksLikeData,
+    fromMela: fromMela, fromCrouton: fromCrouton, fromMicrodata: fromMicrodata, fromMcb: fromMcb,
+    fromCooklang: fromCooklang, isCooklang: isCooklang, FORMATS: FORMATS, idFor: idFor, prepareBatch: prepareBatch
   };
 })(typeof window !== "undefined" ? window : this);

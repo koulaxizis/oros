@@ -161,7 +161,7 @@ input.bad { border-color: var(--danger); box-shadow: 0 0 0 3px rgba(224, 108, 11
 .fld { display: block; margin-bottom: 10px; }
 .fld-lbl { display: block; font-size: 12px; font-weight: 700; color: var(--text-dim); margin-bottom: 5px; }
 .chk { display: flex; align-items: center; gap: 10px; min-height: 40px; font-size: 14px; }
-.chk input { width: 20px; min-height: 20px; height: 20px; accent-color: var(--accent); }
+.chk input { flex: none; width: 20px; min-height: 20px; height: 20px; accent-color: var(--accent); }
 
 .mini {
   display: inline-flex;

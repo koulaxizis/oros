@@ -45,6 +45,16 @@ Reminders come from orOS on this device only, and only while orOS is open; the B
 
 [Calendar](app:calendar) can show milestones, vaccines, doctor visits and your child's age each month (up to 2 years, then birthdays) under the `Baby` chip. Tapping one opens Baby.
 
+## Import from another app
+Bring your log over from another baby tracker. Pick the child at the top first, then in `Settings` press `Import from another app` and choose the file you exported. Baby recognises the app and shows what it found: how many feeds, sleeps, nappies and measurements are new, how many are already here, the dates they cover, and anything it leaves out. Press `Import`; a message tells you how many entries were added, and its `Undo` button takes the whole import back.
+
+How to export from each app:
+- **Huckleberry**: in the app's settings, look for exporting your data as CSV (on the website it's under your account). Feeds (breast with left and right times, or bottles with their amount), sleep, nappies, pumping, growth, medicine, solids, temperature, baths and tummy time come over.
+- **Baby Buddy**: in the admin pages, open a list such as Feedings, Sleep, Diaper changes, Weight, Height, Head circumference, Temperature, Tummy time, Pumping or Notes, and use `Export` (CSV or JSON). Import each file in turn. A full JSON dump of the database works too. Baby Buddy keeps no units, so values are read in the units you chose in `Settings`.
+- **Baby Tracker** (Nighp): in the app's settings, export your data as CSV. You get one file per activity (Nursing, Formula, Pumped, Pump, Sleep, Diaper, Growth, Medicine and more); pick the ZIP with all of them, or one file. If the file has more than one baby, choose which one goes to this child.
+
+Entries the child already has at the same minute are not added twice, and importing the same file again adds only what's new. Your own entries are never changed. Kinds that Baby doesn't keep, like potty or play time, are listed and left out. The file is read on your device; nothing is uploaded anywhere except through your own sync.
+
 ## Sync and backup
 Children, every entry, growth, milestones, the milk stash and units sync between your devices through [orOS sync](help:t/sync). A running timer syncs too, so one parent can stop a timer the other started. Night view and the open tab stay on each device.
 

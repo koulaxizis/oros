@@ -327,7 +327,13 @@ body.session .pat:not(.on), body.session #lengths .chip:not(.on) { opacity: 0.45
 }
 .link-btn:hover { text-decoration: underline; }
 
-#reset-btn { margin-top: 10px; }
+.data-acts { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 10px; }
+
+/* import preview (file text only through textContent) */
+.imp-line { margin: 0 0 6px; font-size: 14px; overflow-wrap: anywhere; }
+.imp-acts { margin: 6px 0 10px; }
+.imp-acts .check { margin-top: 2px; overflow-wrap: anywhere; }
+.imp-body .hint { overflow-wrap: anywhere; }
 
 /* ---------- 7. Dialogs (R32: margin auto, scroll inside) ---------- */
 dialog.mm-dlg {
