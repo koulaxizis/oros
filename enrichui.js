@@ -29,7 +29,7 @@
   var S = {
     en: {
       title: "Update from online sources",
-      text: "orOS looks only where these records already point: the profile people set for their own e-mail on Gravatar (only a coded fingerprint of the address is sent), the website or link page (Linktree and similar) saved in the record, read once like a visitor would, the public GitHub, Bluesky or Mastodon profiles these point to, Wikidata entries that name them, and, for businesses, OpenStreetMap by name and place or phone. Facebook, Instagram, LinkedIn, X and TikTok are never read. Nothing changes until you tick what to keep.",
+      text: "orOS looks only where these records already point: the profile people set for their own e-mail on Gravatar (only a coded fingerprint of the address is sent), the website or link page (Linktree and similar) saved in the record, read once like a visitor would, the public GitHub, Bluesky or Mastodon profiles these point to, Wikidata entries that name them, and, for businesses, OpenStreetMap by name and place or phone. Facebook, Instagram, LinkedIn, X and TikTok are never read. A search by name happens only on your own SearXNG server (set in the Assistant), and its results start unticked. Nothing changes until you tick what to keep.",
       count: "Records to check: {n}",
       go: "Search", stop: "Stop", apply: "Apply selected", close: "Close",
       busy: "Checking {i} of {n}…", none: "Nothing new was found.",
@@ -39,11 +39,12 @@
       "k.photo": "Photo", "k.link": "Link", "k.phone": "Phone", "k.email": "E-mail address", "k.birthday": "Birthday",
       "k.job": "Job title", "k.org": "Company", "k.address": "Address", "k.name": "Name",
       "c.sure": "sure", "c.likely": "likely", "c.check": "check it",
-      via: "from {s}"
+      via: "from {s}",
+      self: "Search it yourself:", web: "Web"
     },
     el: {
       title: "Ενημέρωση από online πηγές",
-      text: "Το orOS ψάχνει μόνο εκεί που ήδη δείχνουν αυτές οι εγγραφές: στο προφίλ που έχει βάλει ο ίδιος ο άνθρωπος για το email του στο Gravatar (στέλνεται μόνο ένα κωδικοποιημένο αποτύπωμα της διεύθυνσης) στην ιστοσελίδα ή στο link page (Linktree κ.ά.) που είναι αποθηκευμένα στην εγγραφή, με μία ανάγνωση όπως θα την έκανε ένας επισκέπτης, στα δημόσια προφίλ GitHub, Bluesky ή Mastodon στα οποία αυτά οδηγούν, στις καταχωρίσεις του Wikidata που τα αναφέρουν και, για επιχειρήσεις, στο OpenStreetMap με επωνυμία και τόπο ή τηλέφωνο. Facebook, Instagram, LinkedIn, X και TikTok δεν διαβάζονται ποτέ. Τίποτα δεν αλλάζει μέχρι να τσεκάρεις τι κρατάς.",
+      text: "Το orOS ψάχνει μόνο εκεί που ήδη δείχνουν αυτές οι εγγραφές: στο προφίλ που έχει βάλει ο ίδιος ο άνθρωπος για το email του στο Gravatar (στέλνεται μόνο ένα κωδικοποιημένο αποτύπωμα της διεύθυνσης) στην ιστοσελίδα ή στο link page (Linktree κ.ά.) που είναι αποθηκευμένα στην εγγραφή, με μία ανάγνωση όπως θα την έκανε ένας επισκέπτης, στα δημόσια προφίλ GitHub, Bluesky ή Mastodon στα οποία αυτά οδηγούν, στις καταχωρίσεις του Wikidata που τα αναφέρουν και, για επιχειρήσεις, στο OpenStreetMap με επωνυμία και τόπο ή τηλέφωνο. Facebook, Instagram, LinkedIn, X και TikTok δεν διαβάζονται ποτέ. Αναζήτηση με το όνομα γίνεται μόνο στον δικό σου server SearXNG (ρυθμίζεται στον Βοηθό) και τα αποτελέσματά της ξεκινούν ξετσεκαρισμένα. Τίποτα δεν αλλάζει μέχρι να τσεκάρεις τι κρατάς.",
       count: "Εγγραφές για έλεγχο: {n}",
       go: "Αναζήτηση", stop: "Διακοπή", apply: "Εφαρμογή επιλεγμένων", close: "Κλείσιμο",
       busy: "Έλεγχος {i} από {n}…", none: "Δεν βρέθηκε κάτι νέο.",
@@ -53,7 +54,8 @@
       "k.photo": "Φωτογραφία", "k.link": "Σύνδεσμος", "k.phone": "Τηλέφωνο", "k.email": "Διεύθυνση email", "k.birthday": "Γενέθλια",
       "k.job": "Θέση εργασίας", "k.org": "Εταιρεία", "k.address": "Διεύθυνση", "k.name": "Ονοματεπώνυμο",
       "c.sure": "σίγουρο", "c.likely": "πιθανό", "c.check": "έλεγξέ το",
-      via: "από {s}"
+      via: "από {s}",
+      self: "Ψάξε το μόνος σου:", web: "Διαδίκτυο"
     }
   };
 
@@ -78,7 +80,9 @@
     ".oe-btns{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;margin-top:8px}",
     ".oe-btns button{min-height:40px;padding:0 14px;border-radius:8px;border:1px solid var(--border,#2c3038);background:transparent;color:inherit;font:inherit;cursor:pointer}",
     ".oe-btns button.prim{background:var(--accent,#d4af37);color:#14120d;border-color:transparent}",
-    ".oe-btns .oe-left{margin-right:auto}"
+    ".oe-btns .oe-left{margin-right:auto}",
+    ".oe-self{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:.85em;margin:4px 0}",
+    ".oe-self a{color:inherit;border:1px solid var(--border,#2c3038);border-radius:12px;padding:4px 10px;text-decoration:none;min-height:32px;display:inline-flex;align-items:center}"
   ].join("\n");
 
   var loading = null;
@@ -155,6 +159,23 @@
     stat.setAttribute("aria-live", "polite");
     stat.textContent = fmt(L.count, { n: items.length });
     dlg.appendChild(stat);
+    // one record: links to search by hand (closed networks included)
+    if (items.length === 1) {
+      ready().then(function () {
+        var links = root.OrosEnrich.searchLinks(items[0].rec);
+        if (!links.length) return;
+        var row = el("div", "oe-self");
+        row.appendChild(el("span", "", L.self));
+        links.forEach(function (x) {
+          var a = el("a", "", x.label === "Web" ? L.web : x.label);
+          a.href = x.url;
+          a.target = "_blank";
+          a.rel = "noopener noreferrer";
+          row.appendChild(a);
+        });
+        dlg.insertBefore(row, stat);
+      }, function () {});
+    }
     var list = el("div", "oe-list");
     dlg.appendChild(list);
     var btns = el("div", "oe-btns");

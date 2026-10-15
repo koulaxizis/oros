@@ -2255,6 +2255,15 @@ function openViewCard(c) {
       shell.__orosOpenAt("qr", { from: "contacts", id: c.id });
     });
     foot.appendChild(qr);
+    // Update from online sources, for this contact only.
+    if ($("ct-enrich") && !$("ct-enrich").hidden && (c.emails.length || c.phones.length || c.websites.length || c.org)) {
+      var en = document.createElement("button");
+      en.type = "button";
+      en.className = "ct-view-share";
+      en.textContent = t("en.one");
+      en.addEventListener("click", function () { closeViewCard(); enOpen([c.id]); });
+      foot.appendChild(en);
+    }
     // CRM (read-only): each customer that lists this contact as a
     // person (at most 3) opens there. The shell's OrosCrmCore reads
     // the same oros-crm-data the app writes; no CRM data → no button.
@@ -4939,7 +4948,7 @@ document.addEventListener("keydown", function (e) {
   function enOpen(ids) {
     var owners = enOwners();
     var items = ids.map(contactById).filter(function (c) {
-      return c && (c.emails.length || c.phones.length || c.websites.length);
+      return c && (c.emails.length || c.phones.length || c.websites.length || c.org);
     }).map(function (c) { return { id: c.id, name: displayName(c), rec: enRecord(c, owners) }; });
     if (!items.length) { notifyTransient(t("en.empty")); return; }
     enLoadUI().then(function () {

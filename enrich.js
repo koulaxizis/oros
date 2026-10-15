@@ -18,6 +18,10 @@
 //     + the place the record holds, or by its phone; Wikidata items
 //     are found by the record's own website or profile ids, never by
 //     a name (wave 3).
+//   - a search by name happens only on the user's own SearXNG server
+//     (set in the Assistant), for a few records at a time, and every
+//     result is "check"; the closed networks get search links the
+//     person opens themselves (DuckDuckGo, never Google) (wave 4).
 //   - closed networks (Facebook, Instagram, LinkedIn, X, TikTok…)
 //     are never read: their terms forbid it. Their links are kept
 //     as links, nothing more.
@@ -724,6 +728,61 @@
     }, function () { return []; });
   }
 
+  // ---------- wave 4: search engines ----------
+  // Links the person opens in their own browser to search by hand: the
+  // closed networks are searched only this way. DuckDuckGo, not Google.
+  var SEARCH_SITES = [
+    { label: "Web", site: "" }, { label: "LinkedIn", site: "linkedin.com" }, { label: "Facebook", site: "facebook.com" },
+    { label: "Instagram", site: "instagram.com" }, { label: "X", site: "x.com" }, { label: "TikTok", site: "tiktok.com" }
+  ];
+  function searchLinks(recIn) {
+    var rec = normRec(recIn);
+    var name = rec.names[0];
+    if (!name) return [];
+    var q = "\"" + name.replace(/"/g, "") + "\"" + (rec.names[1] && rec.kind !== "org" ? " " + rec.names[1] : "");
+    return SEARCH_SITES.map(function (x) {
+      return { label: x.label, url: "https://duckduckgo.com/?q=" + encodeURIComponent((q + (x.site ? " site:" + x.site : "")).slice(0, 300)) };
+    });
+  }
+  // The user's own SearXNG server, when the Assistant is set to use one.
+  function searxBase() {
+    try {
+      var a = JSON.parse(root.localStorage.getItem("oros-assistant-data") || "null");
+      var b = a && a.set && a.set.wsBase;
+      if (typeof b === "string" && /^https:\/\/[^\s"<>]+$/.test(b)) return b.replace(/\/+$/, "");
+    } catch (e) {}
+    return "";
+  }
+  // A name search on the user's SearXNG: every result is only "check";
+  // a result page that shows the record's own phone or e-mail rises.
+  function webSearch(rec, opts) {
+    var base = opts.searx != null ? opts.searx : searxBase();
+    var name = rec.names[0];
+    if (!base || !name) return Promise.resolve([]);
+    var q = "\"" + name.replace(/"/g, "") + "\"" + (rec.place ? " " + rec.place.split(",").pop().trim() : "");
+    return getText(base + "/search?format=json&q=" + encodeURIComponent(q.slice(0, 200)), opts).then(function (r) {
+      var res = [];
+      try { res = r && r.status === 200 ? (JSON.parse(r.text).results || []) : []; } catch (e) { res = []; }
+      var f = blank("SearXNG");
+      f.base = "check";
+      f.personal = false;
+      var pages = [];
+      res.slice(0, 10).forEach(function (x) {
+        var u = x && normUrl(x.url);
+        if (!u || isNoise(u)) return;
+        f.links.push({ url: u, verified: false });
+        var c = classify(u);
+        if (c && c.fetch && c.kind !== "social" && pages.length < 2) pages.push(u);
+      });
+      var out = f.links.length ? [f] : [];
+      return pages.reduce(function (p, u) {
+        return p.then(function () { return page(u, "check", opts, rec, hostOf(u)); }).then(function (pf) {
+          if (pf && grade(rec, pf).hit) out.push(pf);
+        });
+      }, Promise.resolve()).then(function () { return out; });
+    }, function () { return []; });
+  }
+
   // ---------- network ----------
   function sha256(s) {
     var c = root.crypto && root.crypto.subtle;
@@ -856,6 +915,11 @@
         return wikidata(more, "likely", opts).then(function (b2) { findings = findings.concat(b2); });
       });
     });
+    // a name search on the user's own SearXNG (only for a few records)
+    chain = chain.then(function () {
+      if (!opts.deep) return;
+      return webSearch(rec, opts).then(function (list) { findings = findings.concat(list); });
+    });
     return chain.then(function () { return propose(recIn, findings); });
   }
 
@@ -864,7 +928,7 @@
     isNoise: isNoise, skeleton: skeleton, nameAgree: nameAgree, parsePage: parsePage, fromGravatar: fromGravatar,
     fromPage: fromPage, grade: grade, profileApi: profileApi, fromGitHub: fromGitHub, fromBluesky: fromBluesky,
     fromMastodon: fromMastodon, fromOsm: fromOsm, phoneRegex: phoneRegex, wdKeys: wdKeys, wdQuery: wdQuery,
-    fromWikidata: fromWikidata, propose: propose, lookup: lookup, getImage: getImage, sha256: sha256,
+    fromWikidata: fromWikidata, searchLinks: searchLinks, searxBase: searxBase, propose: propose, lookup: lookup, getImage: getImage, sha256: sha256,
     validBirthday: validBirthday
   };
   root.OrosEnrich = api;

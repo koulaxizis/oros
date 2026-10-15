@@ -223,3 +223,32 @@ test("wave 3: Wikidata is asked by the record's own website and profile ids, nev
   assert.deepEqual(f[0].birthday, { day: "02-29", year: 1980 });
   assert.deepEqual(f[0].links.map(l => l.url).sort(), ["https://anna.gr", "https://github.com/annap", "https://x.com/annap"]);
 });
+
+test("wave 4: search-it-yourself links use DuckDuckGo, never Google", () => {
+  const l = E.searchLinks({ names: ["Άννα Παππά", "Studio A"], kind: "person" });
+  assert.equal(l.length, 6);
+  assert.ok(l.every(x => x.url.startsWith("https://duckduckgo.com/?q=")));
+  assert.ok(decodeURIComponent(l[1].url).includes("site:linkedin.com"));
+  assert.ok(!l.some(x => /google/.test(x.url)));
+  assert.deepEqual(E.searchLinks({ names: [] }), []);
+});
+
+test("wave 4: a SearXNG name search runs only when deep, and its results stay 'check' unless a page shows the phone", async () => {
+  const asked = [];
+  const opts = { deep: true, searx: "https://sx.example", sha256: () => Promise.resolve("h"), getText: (u) => {
+    asked.push(u);
+    if (u.startsWith("https://sx.example/search")) return Promise.resolve({ status: 200, text: JSON.stringify({ results: [
+      { url: "https://annap.example/" }, { url: "https://instagram.com/annap" }, { url: "https://random.example/x" }] }) });
+    if (u === "https://annap.example") return Promise.resolve({ status: 200, type: "text/html", text: '<a href="tel:+306971234567">t</a><a href="https://linktr.ee/annap">l</a>' });
+    return Promise.resolve({ status: 404, text: "" });
+  } };
+  const rec = { names: ["Άννα Παππά"], phones: ["6971234567"], has: { name: true } };
+  const s = await E.lookup(rec, opts);
+  assert.ok(asked.some(u => u.startsWith("https://sx.example/search")));
+  assert.ok(!asked.some(u => /instagram/.test(u)));
+  assert.equal(s.find(x => x.v === "https://random.example/x").conf, "check");
+  assert.equal(s.find(x => x.v === "https://linktr.ee/annap").conf, "likely");   // the page shows her phone
+  asked.length = 0;
+  await E.lookup(rec, Object.assign({}, opts, { deep: false }));
+  assert.ok(!asked.some(u => u.startsWith("https://sx.example")));
+});
