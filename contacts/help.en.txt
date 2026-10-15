@@ -13,7 +13,7 @@ The contact window has:
 - `Events`: `Birthday`, `Anniversary` or `Custom` (give it a name, for example a nameday). Type the date as year-month-day, like `1975-03-17`, or just month-day, like `03-17`, if you don't know the year.
 - `Relations`: link to another contact as `Spouse`, `Parent`, `Friend`, `Colleague` and so on. The other contact shows the link too, under `Linked from other contacts`.
 - `Keep in touch`: every so many weeks or months (see below). Leave it on `Off` if you don't want reminding.
-- `Labels`, `Favorite`, a `Picture` (the initials, or an `8-bit avatar`: tap `Another one` for a new face) and a `Note`. Contacts keeps no photos, so your address book stays small and syncs fast.
+- `Labels`, `Favorite`, a `Picture` (the initials, or an `8-bit avatar`: tap `Another one` for a new face) and a `Note`. `Pictures` at the top switches every contact at once: `Initials for all` or `8-bit avatar for all` (a face a contact already has stays), with `Undo`. Contacts keeps no photos, so your address book stays small and syncs fast.
 
 `Delete contact` asks to confirm, and an `Undo` button appears for a few seconds afterwards.
 
