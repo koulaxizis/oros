@@ -68,8 +68,52 @@ test("overlaps: the higher priority wins, every event shows on some day", () => 
       const list = S.activeOn(d);
       for (let i = 1; i < list.length; i++) assert.ok(list[i - 1].prio > list[i].prio, d + " tie");
     }
-    S.EVENTS.forEach((e) => assert.ok(seen.has(e.id) || (e.id === "mayday"), y + " " + e.id));
+    S.EVENTS.forEach((e) => assert.ok(seen.has(e.id) || e.id === "mayday" || e.id === "birthday", y + " " + e.id));
   }
+});
+
+test("Western Easter: known dates; the option moves only Easter", () => {
+  assert.equal(S.westernEaster(2024), "2024-03-31");
+  assert.equal(S.westernEaster(2025), "2025-04-20");
+  assert.equal(S.westernEaster(2026), "2026-04-05");
+  assert.equal(S.westernEaster(2027), "2027-03-28");
+  assert.equal(S.westernEaster(2038), "2038-04-25");
+  const west = S.setField(S.normalize(null), "easter", "western", 5);
+  const opt = S.optOf(west);
+  assert.deepEqual(S.windowAt(ev("easter"), "2026-04-02", opt), ["2026-04-02", "2026-04-06"]);
+  assert.equal(S.windowAt(ev("easter"), "2026-04-12", opt), null);
+  assert.deepEqual(S.pick(west, local, "2026-04-05", null), { id: "easter", mode: "auto" });
+  assert.deepEqual(S.windowAt(ev("cleanmon"), "2026-02-23", opt), ["2026-02-23", "2026-02-23"]);
+});
+
+test("birthday: only once set, wins over everything, 29 Feb on 28 Feb", () => {
+  const d0 = S.normalize(null);
+  assert.equal(S.get(d0, "bday"), "");
+  assert.equal(S.nextWindow(ev("birthday"), "2026-10-15", S.optOf(d0)), null);
+  assert.equal(S.setField(d0, "bday", "02-30", 1), d0);
+  assert.equal(S.setField(d0, "bday", "13-01", 1), d0);
+  const d = S.setField(d0, "bday", "12-25", 1);
+  assert.deepEqual(S.pick(d, local, "2026-12-25", null), { id: "birthday", mode: "auto" });
+  assert.deepEqual(S.pick(d, local, "2026-12-24", null), { id: "xmas", mode: "auto" });
+  const off = S.setField(d, "ev.birthday", false, 2);
+  assert.deepEqual(S.pick(off, local, "2026-12-25", null), { id: "xmas", mode: "auto" });
+  const leap = S.setField(d0, "bday", "02-29", 1), o = S.optOf(leap);
+  assert.deepEqual(S.windowAt(ev("birthday"), "2027-02-28", o), ["2027-02-28", "2027-02-28"]);
+  assert.deepEqual(S.windowAt(ev("birthday"), "2028-02-29", o), ["2028-02-29", "2028-02-29"]);
+  assert.equal(S.windowAt(ev("birthday"), "2028-02-28", o), null);
+});
+
+test("seasons: off by default, lose to every holiday when on", () => {
+  const d0 = S.normalize(null);
+  assert.equal(S.pick(d0, local, "2026-07-15", null), null);
+  const sum = S.setField(d0, "ev.summer", true, 1);
+  assert.deepEqual(S.pick(sum, local, "2026-07-15", null), { id: "summer", mode: "auto" });
+  const aut = S.setField(d0, "ev.autumn", true, 1);
+  assert.deepEqual(S.pick(aut, local, "2026-10-26", null), { id: "halloween", mode: "auto" });
+  assert.deepEqual(S.pick(aut, local, "2026-11-05", null), { id: "autumn", mode: "auto" });
+  const win = S.setField(d0, "ev.winter", true, 1);
+  assert.deepEqual(S.pick(win, local, "2027-01-06", null), { id: "epiphany", mode: "auto" });
+  assert.deepEqual(S.pick(win, local, "2027-01-20", null), { id: "winter", mode: "auto" });
 });
 
 test("pick: defaults ON, master switch, event switch, hide for today", () => {

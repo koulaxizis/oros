@@ -121,7 +121,7 @@ test("bridge: every set() and act() name the app uses exists in the shell", () =
     }
     if (/^seasonal:/.test(n)) {                  // passed on to seasonal.js by prefix
       assert.match(BRIDGE, /\/\^seasonal:\//);
-      assert.match(n, /^seasonal:(on|motion|amount|xmas)$/, n);
+      assert.match(n, /^seasonal:(on|motion|amount|xmas|easter|bday)$/, n);
       return;
     }
     assert.ok(BRIDGE.includes('case "' + n + '":'), "set " + n);

@@ -362,20 +362,62 @@
       c.appendChild(segRow(t("z.xmas"), segmented([
         { value: "tree", label: t("z.xmas.tree") }, { value: "boat", label: t("z.xmas.boat") }
       ], z.xmas, "seasonal:xmas", function (v) { set("seasonal:xmas", v); }, t("z.xmas"))));
+      if (z.easter) {
+        c.appendChild(segRow(t("z.easter"), segmented([
+          { value: "orthodox", label: t("z.easter.orthodox") }, { value: "western", label: t("z.easter.western") }
+        ], z.easter, "seasonal:easter", function (v) { set("seasonal:easter", v); }, t("z.easter"))));
+      }
       if (z.todayEvent) {
         c.appendChild(row(z.hidden ? t("z.hidden") : t("z.today", { name: z.todayEvent.name }), actions(
           button(z.hidden ? t("z.showToday") : t("z.hideToday"), "seasonal.hide",
             function () { act("seasonal.hide", !z.hidden); }))));
       }
     }
-    c.appendChild(el("h4", "sub", t("z.events")));
-    z.events.forEach(function (ev) {
+    function evRow(ev) {
+      var when = ev.id === "birthday" && !ev.from ? t("z.bday.unset")
+               : (ev.one ? ev.from : ev.from + " – " + ev.to);
       var r = row(ev.name, switchBtn(ev.on, "seasonal:ev." + ev.id, function (v) { set("seasonal:ev." + ev.id, v); }, ev.name),
-        { hint: ev.from + " – " + ev.to + (ev.now ? " · " + t("z.now") : "") });
+        { hint: when + (ev.now ? " · " + t("z.now") : "") });
+      if (ev.id === "birthday" && z.bday !== undefined) r.appendChild(bdayPicker(z.bday));
       r.appendChild(actions(button(t("z.try"), "seasonal.preview:" + ev.id, function () { act("seasonal.preview", ev.id); })));
       c.appendChild(r);
-    });
+    }
+    c.appendChild(el("h4", "sub", t("z.events")));
+    z.events.filter(function (ev) { return !ev.season; }).forEach(evRow);
+    var seasons = z.events.filter(function (ev) { return ev.season; });
+    if (seasons.length) {
+      c.appendChild(el("h4", "sub", t("z.seasons")));
+      c.appendChild(el("p", "hint", t("z.seasons.hint")));
+      seasons.forEach(evRow);
+    }
     host.appendChild(c);
+  }
+
+  // Day + month of the birthday ("MM-DD", no year). Saved once both
+  // are picked; both empty clears it. The day is clamped to the month.
+  var MONTH_DAYS = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  function bdayPicker(cur) {
+    var wrap = el("div", "actions");
+    var m0 = cur ? +cur.slice(0, 2) : 0, d0 = cur ? +cur.slice(3) : 0;
+    var day = select([{ value: "", label: t("z.bday.day") }].concat(Array.apply(null, Array(31)).map(function (x, i) {
+      return { value: String(i + 1), label: String(i + 1) };
+    })), d0 ? String(d0) : "", "seasonal:bday:d", save);
+    var months = t("z.months").split(",");
+    var mon = select([{ value: "", label: t("z.bday.month") }].concat(months.map(function (n, i) {
+      return { value: String(i + 1), label: n };
+    })), m0 ? String(m0) : "", "seasonal:bday:m", save);
+    day.setAttribute("aria-label", t("z.bday.day"));
+    mon.setAttribute("aria-label", t("z.bday.month"));
+    function save() {
+      var m = +mon.value, d = +day.value;
+      if (!m && !d) { set("seasonal:bday", ""); return; }
+      if (!m || !d) return;                        // wait for the other half
+      d = Math.min(d, MONTH_DAYS[m - 1]);
+      set("seasonal:bday", (m < 10 ? "0" : "") + m + "-" + (d < 10 ? "0" : "") + d);
+    }
+    wrap.appendChild(day);
+    wrap.appendChild(mon);
+    return wrap;
   }
 
   // ---------- 4b. Section: Menu (which apps the menu lists) ----------
