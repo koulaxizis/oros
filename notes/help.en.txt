@@ -85,6 +85,8 @@ If the same page is edited on two devices before they sync, both versions are ke
 
 The download button under the tree exports the notebook as a .zip of files, with folders for pages that have sub-pages: `Current notebook (.txt, .zip)` for plain text or `Current notebook (.md, .zip)` for Markdown files that other apps such as Obsidian open. With more than one notebook it also offers `All notebooks`, and with a page open, that page alone. For a full copy of orOS, see [backup](help:t/backup).
 
+`orOS file (.orosnotes)` (in the same menu, and in a page's `⋯` menu) saves the current notebook as one file: its pages, sub-pages, labels and pins. An .orosnotes is an open ZIP file: unzip it and you find `content.json` (the notebook) and `preview`, with `index.md` (the outline) and one .md file per page that any Markdown app opens. Open it with `Import notes…` › `Choose files…`, or from your device with “Open with” orOS: it always comes in as a new notebook, and `Undo` in the notice takes it out again. `Unzipped orOS folder…` in the same window brings back an .orosnotes that was unzipped, even after you changed its files.
+
 ## Keyboard shortcuts
 - [[Ctrl+K]] opens search ([[Cmd+K]] on a Mac).
 - [[Enter]] in search opens the first result.

@@ -23,11 +23,16 @@ Tap or click `＋ New prompt`. Pick a `Category`, fill in `English text` and `Gr
 
 Your own prompts have `Edit` and `Delete` buttons. Deleting asks first and can't be undone.
 
+## Save a prompt as a file
+Your own prompts also have `orOS file (.orosscript)`: it saves the prompt with both languages, variations, tags and its star and done marks. An .orosscript is an open ZIP file: unzip it and you find `content.json` (the prompt) and `preview/script.txt`, which any text editor opens.
+
+To open one, go to `Settings` and choose `Open an orOS file (.orosscript)…`, or `Unzipped orOS folder…` for one that was unzipped. You can also open an .orosscript with orOS from your computer. It always comes in as a new prompt under `✦ Mine`; nothing you already have is changed.
+
 ## Statistics
 `Statistics` shows the total number of prompts, how many you've completed, starred and written yourself, your streak of days in a row with at least one prompt done, your progress through the built-in prompts and a breakdown by category.
 
 ## Sync and backup
-Your favourites, done marks and own prompts sync between your devices through [orOS sync](help:t/sync). Search, filters and shown variations reset when you close the app. There's no import or export; use the orOS [backup](help:t/backup) to keep a copy.
+Your favourites, done marks and own prompts sync between your devices through [orOS sync](help:t/sync). Search, filters and shown variations reset when you close the app. For a copy of everything, use the orOS [backup](help:t/backup).
 
 >! `Settings` has `Factory reset`: it erases all your own prompts, favourites and done marks on every synced device, with no undo.
 

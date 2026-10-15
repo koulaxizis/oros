@@ -47,7 +47,8 @@
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"],
       "application/vnd.ms-excel": [".xls"],
       "application/vnd.oasis.opendocument.spreadsheet": [".ods"],
-      "text/csv": [".csv"] } },
+      "text/csv": [".csv"],
+      "application/x-oros-sheet": [".orossheet"] } },
     { app: "atelier", accept: {
       "application/vnd.openxmlformats-officedocument.presentationml.presentation": [".pptx"],
       "application/x-oros-design": [".orosdesign"] } },
@@ -67,11 +68,13 @@
       "application/vnd.xmind.workbook": [".xmind"],
       "text/x-opml": [".opml"],
       "text/markdown": [".md", ".markdown"],
-      "text/plain": [".txt"] } },
+      "text/plain": [".txt"],
+      "application/x-oros-mind": [".orosmind"] } },
     { app: "familytree", accept: {
       "application/x-gedcom": [".ged", ".gedcom"] } },
     { app: "ringtones", accept: {
-      "audio/x-rtttl": [".rtttl", ".rtx"] } },
+      "audio/x-rtttl": [".rtttl", ".rtx"],
+      "application/x-oros-tone": [".orostone"] } },
     { app: "photolab", accept: {
       "image/png": [".png"],
       "image/jpeg": [".jpg", ".jpeg"],
@@ -93,7 +96,14 @@
       "video/quicktime": [".mov"] } },
     { app: "notes", accept: {
       "text/plain": [".txt"],
-      "text/markdown": [".md", ".markdown"] } },
+      "text/markdown": [".md", ".markdown"],
+      "application/x-oros-notes": [".orosnotes"] } },
+    { app: "wiki", accept: {
+      "application/x-oros-wiki": [".oroswiki"] } },
+    { app: "kanban", accept: {
+      "application/x-oros-board": [".orosboard"] } },
+    { app: "prompter", accept: {
+      "application/x-oros-script": [".orosscript"] } },
     { app: "texttools", accept: {
       "text/plain": [".txt"],
       "text/csv": [".csv"],

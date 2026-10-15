@@ -135,7 +135,7 @@
       "meta.columns":     "columns",
       "meta.cards":       "cards",
       "import.title":     "Import from other apps",
-      "import.hint":      "Supported: a board exported from orOS Kanban (JSON), Kanri and Trello JSON exports, Asana (CSV or JSON), Jira (CSV), ClickUp (CSV), WeKan and Planka (JSON). Each file becomes its own board; reading it again only adds what is missing.",
+      "import.hint":      "Supported: an orOS file (.orosboard) or a board exported from orOS Kanban (JSON), Kanri and Trello JSON exports, Asana (CSV or JSON), Jira (CSV), ClickUp (CSV), WeKan and Planka (JSON). Each file becomes its own board; reading it again only adds what is missing.",
       "import.big":       "This file is too large (40 MB at most).",
       "import.done":      "Done",
       "import.nosec":     "No section",
@@ -154,6 +154,8 @@
       "import.detected":  "Detected source:",
       "import.unknown":   "Unknown file — no Kanban data found.",
       "import.err":       "Could not read the file.",
+      "import.folder":    "Unzipped orOS folder…",
+      "import.newer":     "This file was made by a newer orOS. Update orOS to open it.",
       "import.run":       "Import",
       "toast.imported":   "Import completed",
       "import.boards":    "boards",
@@ -232,6 +234,7 @@
       "auto.edit":        "Edit",
       "auto.ran":         "Automation ran in “{col}”",
       "auto.badge":       "This column has automations",
+      "export.oros":      "orOS file (.orosboard)",
       "export.json":      "Export board (JSON)",
       "export.csv":       "Export cards (CSV)",
       "export.done":      "Exported",
@@ -348,7 +351,7 @@
       "meta.columns":     "στήλες",
       "meta.cards":       "κάρτες",
       "import.title":     "Εισαγωγή από άλλες εφαρμογές",
-      "import.hint":      "Υποστηρίζονται: πίνακας που εξήχθη από το orOS Kanban (JSON), εξαγωγές JSON από Kanri και Trello, Asana (CSV ή JSON), Jira (CSV), ClickUp (CSV), WeKan και Planka (JSON). Κάθε αρχείο γίνεται δικός του πίνακας· αν το διαβάσεις ξανά, προστίθεται μόνο ό,τι λείπει.",
+      "import.hint":      "Υποστηρίζονται: αρχείο orOS (.orosboard) ή πίνακας που εξήχθη από το orOS Kanban (JSON), εξαγωγές JSON από Kanri και Trello, Asana (CSV ή JSON), Jira (CSV), ClickUp (CSV), WeKan και Planka (JSON). Κάθε αρχείο γίνεται δικός του πίνακας· αν το διαβάσεις ξανά, προστίθεται μόνο ό,τι λείπει.",
       "import.big":       "Το αρχείο είναι πολύ μεγάλο (έως 40 MB).",
       "import.done":      "Ολοκληρωμένα",
       "import.nosec":     "Χωρίς ενότητα",
@@ -367,6 +370,8 @@
       "import.detected":  "Αναγνωρίστηκε προέλευση:",
       "import.unknown":   "Άγνωστο αρχείο — δεν βρέθηκαν δεδομένα Kanban.",
       "import.err":       "Δεν ήταν δυνατή η ανάγνωση του αρχείου.",
+      "import.folder":    "Αποσυμπιεσμένος φάκελος orOS…",
+      "import.newer":     "Το αρχείο φτιάχτηκε από νεότερο orOS. Ενημέρωσε το orOS για να το ανοίξεις.",
       "import.run":       "Εισαγωγή",
       "toast.imported":   "Η εισαγωγή ολοκληρώθηκε",
       "import.boards":    "πίνακες",
@@ -445,6 +450,7 @@
       "auto.edit":        "Αλλαγή",
       "auto.ran":         "Εκτελέστηκε αυτοματισμός στη στήλη «{col}»",
       "auto.badge":       "Η στήλη έχει αυτοματισμούς",
+      "export.oros":      "Αρχείο orOS (.orosboard)",
       "export.json":      "Εξαγωγή πίνακα (JSON)",
       "export.csv":       "Εξαγωγή καρτών (CSV)",
       "export.done":      "Η εξαγωγή έγινε",
@@ -3911,7 +3917,7 @@
 
   var IMPORT_SOURCE_NAMES = { kanri: "Kanri", trello: "Trello", github: "GitHub", notion: "Notion", oros: "orOS Kanban",
                               asana: "Asana", jira: "Jira", wekan: "WeKan", planka: "Planka", clickup: "ClickUp" };
-  var IMPORT_ACCEPT = ".json,.csv,application/json,text/csv";
+  var IMPORT_ACCEPT = ".orosboard,.json,.csv,application/x-oros-board,application/json,text/csv";
   var IMPORT_MAX_BYTES = 40 * 1024 * 1024;
 
   // A file from Asana, Jira, WeKan, Planka or ClickUp (kanban/import.js)
@@ -4354,6 +4360,13 @@
     file.accept = IMPORT_ACCEPT;
     file.className = "imp-file";
 
+    // An unzipped .orosboard (maybe changed by hand: a picture swapped)
+    var folderBtn = document.createElement("button");
+    folderBtn.type = "button";
+    folderBtn.className = "imp-folder";
+    folderBtn.setAttribute("data-k", "kimp.folder");
+    folderBtn.textContent = t("import.folder");
+
     var preview = document.createElement("div");
     preview.className = "imp-preview";
     preview.hidden = true;
@@ -4374,6 +4387,7 @@
     dlg.appendChild(h3);
     dlg.appendChild(hint);
     dlg.appendChild(file);
+    if (window.OrosBundle) dlg.appendChild(folderBtn);
     var acct = accountSection(function (res) {          // wave 6B: from a connected account
       parsed = res;
       go.disabled = !res;
@@ -4429,32 +4443,19 @@
       if (e.target === dlg) dlg.close();
     });
 
-    // Single reader — shared by the orosDialog native picker and the
-    // hidden-input standalone fallback. Byte-for-byte the old logic.
+    // Single reader — shared by the orosDialog native picker, the
+    // hidden-input standalone fallback and the unzipped-folder button
+    // (parseBoardFile / parseBoardFolder below).
     function readImportFile(f) {
+      readImport(parseBoardFile(f));
+    }
+    function readImport(job) {
       parsed = null;
       go.disabled = true;
       preview.hidden = false;
       preview.textContent = "";
-
-      if (f.size > IMPORT_MAX_BYTES) {
-        preview.classList.add("imp-error");
-        preview.textContent = t("import.big");
-        return;
-      }
-      var fr = new FileReader();
-      fr.onload = function (ev) {
-        var text = String(ev.target.result || "");
-        var json = null;
-        try { json = JSON.parse(text.replace(/^\ufeff/, "")); } catch (e) { /* not JSON */ }
-
-        // WeKan / Planka / Asana before Trello: a WeKan board also has
-        // lists[] and cards[], which trelloAdapter would read as empty.
-        parsed = (json && orosAdapter(json)) ||
-                 (json && kanriAdapter(json)) ||
-                 fileSourceAdapter(text, json, f.name) ||
-                 (json && trelloAdapter(json)) || null;
-
+      job.then(function (res) {
+        parsed = res;
         if (!parsed) {
           preview.classList.add("imp-error");
           preview.textContent = t("import.unknown");
@@ -4462,13 +4463,17 @@
         }
         showParsed(parsed);
         go.disabled = false;
-      };
-      fr.onerror = function () {
+      }, function (e) {
+        parsed = null;
         preview.classList.add("imp-error");
-        preview.textContent = t("import.err");
-      };
-      fr.readAsText(f);
+        preview.textContent = t(importErrKey(e));
+      });
     }
+    folderBtn.addEventListener("click", function () {
+      window.OrosBundle.pickFolder().then(function (files) {
+        if (files) readImport(parseBoardFolder(files));
+      });
+    });
 
     // orosDialog first (native picker on Chromium). The visible file
     // input remains the standalone fallback (no shell present) —
@@ -4491,34 +4496,90 @@
     go.addEventListener("click", function () {
       if (!parsed || !parsed.boards || parsed.boards.length === 0) return;
 
-      pushUndo("toast.imported");     // real undo — snapshot ΠΡΙΝ τη μετάλλαξη
-
-      // KN-11: idempotent re-import WITHOUT replacing anything: a board
-      // that is already here only receives the labels, columns and
-      // cards it does not have yet (and not the ones the user deleted).
-      // The old code swapped the whole board for the file's copy, so
-      // every edit made since the first import was lost.
-      parsed.boards.forEach(function (nb) {
-        var ex = boardByIdIn(state.boards, nb.id);
-        if (!ex) {
-          state.boards.push(nb);
-          if (state.boardDeleted) delete state.boardDeleted[nb.id];
-        } else {
-          importInto(ex, nb);
-        }
-      });
-      state.om = Date.now();
-      state.activeBoardId = parsed.boards[0].id;
-      if (parsed.files) writeImportedFiles(parsed.files);   // K1: attachments inside an orOS export
-
-      resetSessionView();
-      save();
-      renderAll();
+      addParsed(parsed);
       dlg.close();                    // η pushUndo κρατά το toast+Undo ζωντανό
     });
 
     dlg.showModal();
     setTimeout(function () { file.focus(); }, 50);
+  }
+
+  // A parsed import → the boards (KN-11: a board that is already here
+  // only receives what it does not have yet; an .orosboard or orOS
+  // JSON board always has fresh ids, so it is always a new board).
+  function addParsed(parsed) {
+    pushUndo("toast.imported");     // real undo — snapshot ΠΡΙΝ τη μετάλλαξη
+
+    // KN-11: idempotent re-import WITHOUT replacing anything: a board
+    // that is already here only receives the labels, columns and
+    // cards it does not have yet (and not the ones the user deleted).
+    // The old code swapped the whole board for the file's copy, so
+    // every edit made since the first import was lost.
+    parsed.boards.forEach(function (nb) {
+      var ex = boardByIdIn(state.boards, nb.id);
+      if (!ex) {
+        state.boards.push(nb);
+        if (state.boardDeleted) delete state.boardDeleted[nb.id];
+      } else {
+        importInto(ex, nb);
+      }
+    });
+    state.om = Date.now();
+    state.activeBoardId = parsed.boards[0].id;
+    if (parsed.files) writeImportedFiles(parsed.files);   // K1: attachments inside an orOS export
+
+    resetSessionView();
+    save();
+    renderAll();
+  }
+
+  // ---------- .orosboard (orOS bundle, bundle.js) ----------
+  // A File from the picker, a drop or "Open with": an .orosboard bundle
+  // (sniffed by its first bytes, never its name) or any text file the
+  // import adapters know (orOS JSON export, Kanri, Trello, Asana, …).
+  // → Promise<parsed | null>; rejects with { code } ("big", "newer", …).
+  var BUNDLE_MIME = "application/x-oros-board";
+  var BUNDLE_MAX = 512 * 1024 * 1024;     // attachments ride inside; text imports stay at IMPORT_MAX_BYTES
+  function ioErr(code) { var e = new Error(code); e.code = code; return e; }
+  function importErrKey(e) {
+    var c = e && e.code;
+    return c === "big" ? "import.big" : c === "newer" ? "import.newer" : c === "wrongtype" || c === "notbundle" || c === "nocontent" || c === "content" ? "import.unknown" : "import.err";
+  }
+  function fromBundle(r) {
+    var p = T.parsePackage(r && r.content, r && r.media, uid, Date.now());
+    return p ? { source: "oros", boards: [p.board], files: p.files, stats: countImport([p.board]) } : null;
+  }
+  function parseBoardFolder(files) {
+    return window.OrosBundle.readFolder(files, { mime: BUNDLE_MIME }).then(fromBundle);
+  }
+  function parseBoardFile(f) {
+    var B = window.OrosBundle;
+    return Promise.resolve(B ? f.slice(0, 128).arrayBuffer() : null).then(function (head) {
+      var kind = head ? B.sniff(new Uint8Array(head)) : null;
+      if (kind !== null && (kind === BUNDLE_MIME || /\.orosboard$/i.test(f.name || ""))) {
+        if (f.size > BUNDLE_MAX) throw ioErr("big");
+        return f.arrayBuffer().then(function (ab) {
+          return B.read(new Uint8Array(ab), { mime: BUNDLE_MIME });
+        }).then(fromBundle);
+      }
+      if (f.size > IMPORT_MAX_BYTES) throw ioErr("big");
+      return new Promise(function (resolve, reject) {
+        var fr = new FileReader();
+        fr.onload = function (ev) {
+          var text = String(ev.target.result || "");
+          var json = null;
+          try { json = JSON.parse(text.replace(/^\ufeff/, "")); } catch (e) { /* not JSON */ }
+          // WeKan / Planka / Asana before Trello: a WeKan board also has
+          // lists[] and cards[], which trelloAdapter would read as empty.
+          resolve((json && orosAdapter(json)) ||
+                  (json && kanriAdapter(json)) ||
+                  fileSourceAdapter(text, json, f.name) ||
+                  (json && trelloAdapter(json)) || null);
+        };
+        fr.onerror = function () { reject(ioErr("read")); };
+        fr.readAsText(f);
+      });
+    });
   }
 
   // ---------- 9c. Views, board menu, automations, export, templates (K1) ----------
@@ -4586,6 +4647,7 @@
     sep.className = "dropdown-sep";
     pop.appendChild(sep);
     item(t("auto.menu"), "mp.auto", openAutoDlg);
+    if (window.OrosBundle) item(t("export.oros"), "mp.oros", exportOros);
     item(t("export.json"), "mp.json", exportJson);
     item(t("export.csv"), "mp.csv", exportCsv);
     item(t("tpl.save"), "mp.tplsave", saveTemplateDlg);
@@ -5033,6 +5095,74 @@
       if (ok) notifyTransient(t(skipped ? "export.skipped" : "export.done"));
     });
   }
+  // orOS file (.orosboard): an orOS bundle (bundle.js) named after the
+  // board. content.json = tools.js packBoard (the board as the JSON
+  // export holds it), media/<sha256>.<ext> = the card attachments,
+  // preview/board.md + board.csv for any other program.
+  function fileTitle(s) {
+    return String(s || "").replace(/[\u0000-\u001f\u007f\/\\:*?"<>|]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 80) || "Board";
+  }
+  function saveBytes(bytes, filename, mime, ext) {
+    var host = dialogHost(), blob = new Blob([bytes], { type: mime });
+    if (host && typeof host.saveFile === "function") {
+      var ty = {};
+      ty[mime] = [ext];
+      return Promise.resolve(host.saveFile({ blob: blob, filename: filename, mime: mime,
+        types: [{ description: "orOS Kanban", accept: ty }] })).then(function (r) { return !!(r && r.ok); });
+    }
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 40000);
+    return Promise.resolve(true);
+  }
+  function exportOros() {
+    var board = currentBoard(), B = window.OrosBundle;
+    if (!board || !B) return;
+    var snap = canonState({ boards: [board] }).boards[0];
+    var keys = {}, media = {}, chain = Promise.resolve();
+    snap.columns.forEach(function (col) {
+      col.cards.forEach(function (c) {
+        (c.att || []).forEach(function (x) {
+          chain = chain.then(function () {
+            if (keys[x.file]) return;
+            return readAtt(x.file).then(function (b) {
+              if (!b) return;
+              return b.arrayBuffer().then(function (ab) {
+                var u8 = new Uint8Array(ab);
+                return B.sha256(u8).then(function (h) {
+                  var k = h + "." + String(x.file).split(".").pop();
+                  keys[x.file] = k;
+                  media[k] = u8;
+                });
+              });
+            });
+          });
+        });
+      });
+    });
+    chain.then(function () {
+      var words = { due: t("tbl.due"), labels: t("tbl.labels"), lane: t("tbl.lane"), att: t("card.att") };
+      var csv = T.boardCsv(snap, [t("csv.board"), t("tbl.col"), t("tbl.card"), t("csv.notes"), t("tbl.due"), t("tbl.labels"),
+                                  t("tbl.sub"), t("tbl.lane"), t("csv.info"), t("card.att")]);
+      return B.write({
+        mime: BUNDLE_MIME, app: "kanban", schema: "kanban/1",
+        content: T.packBoard(snap, keys),
+        meta: { title: snap.name || "", modified: snap.mtime, id: snap.id, language: LANG, generator: "orOS Kanban" },
+        media: media,
+        preview: [{ name: "board.md", data: T.boardMd(snap, words), type: "text/markdown" },
+                  { name: "board.csv", data: csv, type: "text/csv" }],
+        date: new Date()
+      });
+    }).then(function (bytes) {
+      return saveBytes(bytes, fileTitle(board.name) + ".orosboard", BUNDLE_MIME, ".orosboard");
+    }).then(function (ok) {
+      if (ok) notifyTransient(t("export.done"));
+    }, function () { notifyTransient(t("import.err")); });
+  }
   function exportCsv() {
     var board = currentBoard();
     if (!board) return;
@@ -5042,15 +5172,19 @@
       if (ok) notifyTransient(t("export.done"));
     });
   }
-  // Attachments that came inside an imported board file → the disk.
+  // Attachments that came inside an imported board file → the disk:
+  // { file, data (base64, JSON export) } or { file, bytes (.orosboard) }.
   function writeImportedFiles(list) {
     var fs = fsApi();
     if (!fs || !list || !list.length) return;
     list.forEach(function (f) {
       try {
-        var bin = atob(f.data.replace(/\s+/g, ""));
-        var u8 = new Uint8Array(bin.length);
-        for (var i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+        var u8 = f.bytes;
+        if (!(u8 instanceof Uint8Array)) {
+          var bin = atob(f.data.replace(/\s+/g, ""));
+          u8 = new Uint8Array(bin.length);
+          for (var i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+        }
         var path = T.attPath(f.file);
         if (path) Promise.resolve(fs.writeBlob(path, new Blob([u8], { type: "application/octet-stream" }))).then(function () { scheduleRender(); }, function () {});
       } catch (e) { /* a broken file is left out */ }
@@ -5349,8 +5483,27 @@
     q.focus();
     try { q.scrollIntoView({ block: "nearest", inline: "nearest" }); } catch (e) {}
   }
+  // Target { openFile: { token } }: an .orosboard from the system's
+  // "Open with" (shell fileopen.js), taken once from the shell and read
+  // as the import reads one: always a NEW board with fresh ids, with
+  // an Undo toast. A file it cannot read only shows a message.
+  function openFileTarget(o) {
+    var f = null;
+    try {
+      var w = window.parent;
+      if (o && typeof o.token === "string" && w && w !== window && typeof w.__orosTakeFile === "function")
+        f = w.__orosTakeFile(o.token);
+    } catch (e) { f = null; }
+    if (!f) return;
+    return parseBoardFile(f).then(function (res) {
+      if (!res || !res.boards || !res.boards.length) { notifyTransient(t("import.unknown")); return; }
+      if ($("import-dlg") && $("import-dlg").open) $("import-dlg").close();
+      addParsed(res);
+    }, function (e) { notifyTransient(t(importErrKey(e))); });
+  }
   function openSearchTarget(tg) {
     if (!tg || typeof tg !== "object" || !state) return;
+    if (tg.openFile) { openFileTarget(tg.openFile); return; }
     if (tg.asNew) { newCardFrom(tg.asNew); return; }
     if (tg.quickAdd === true) { quickAddFirst(); return; }
     if (typeof tg.board === "string" && typeof tg.col === "string" && typeof tg.card === "string") {

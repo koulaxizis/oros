@@ -174,10 +174,15 @@
       "nav.io": "Import and export…", "io.title": "Import and export", "io.import": "Bring in", "io.export": "Save this wiki",
       "io.lead": "Imports add articles. Importing the same file again updates only the articles it brought in that you haven't changed since; nothing else in your wiki is touched.",
       "io.notes": "From Notes…", "io.notesHint": "A notebook of orOS Notes: every page becomes an article; subpages and labels become categories.",
-      "io.md": "From a file…", "io.mdHint": "Markdown (.md or a .zip), a Notion export (Markdown & CSV), TiddlyWiki (.json or the .html file), a MediaWiki dump (.xml) or a Confluence space export (HTML .zip).",
+      "io.md": "From a file…", "io.mdHint": "An orOS file (.oroswiki), Markdown (.md or a .zip), a Notion export (Markdown & CSV), TiddlyWiki (.json or the .html file), a MediaWiki dump (.xml) or a Confluence space export (HTML .zip).",
       "io.wp": "Start from Wikipedia…", "io.wpHint": "One Wikipedia article as a starting text, with its source and licence.",
       "io.mdOut": "Markdown (.zip)", "io.mdOutHint": "Every article as a .md file, with its pictures.",
       "io.site": "Website (.zip)", "io.siteHint": "This wiki as an offline website: unzip it and open index.html in any browser.",
+      "io.pkg": "orOS file (.oroswiki)", "io.pkgHint": "The whole wiki with its pictures and the history of every article. It opens in orOS as a new wiki; unzip it to find content.json, the pictures in media and every article as a .md file in preview.",
+      "io.folder": "Unzipped orOS folder…", "io.folderHint": "A .oroswiki that was unzipped, even after you changed a picture in it. It opens as a new wiki.",
+      "pkg.done": "Opened as a new wiki: {n} articles", "pkg.done1": "Opened as a new wiki: 1 article",
+      "pkg.newer": "This file was made by a newer orOS. Update orOS to open it.", "pkg.fail": "This orOS file could not be opened.",
+      "pkg.cut": "Only {n} articles fit: a wiki holds up to 5,000.",
       "notes.title": "Import from Notes", "notes.book": "Notebook", "notes.pages": "{t} ({n} pages)", "notes.pages1": "{t} (1 page)",
       "notes.where": "Put the articles in", "notes.new": "A new wiki called “{t}”", "notes.cur": "This wiki (“{t}”)",
       "notes.none": "Notes has no pages on this device yet.", "notes.ok": "Import",
@@ -342,10 +347,15 @@
       "nav.io": "Εισαγωγή και εξαγωγή…", "io.title": "Εισαγωγή και εξαγωγή", "io.import": "Φέρε μέσα", "io.export": "Αποθήκευσε αυτό το wiki",
       "io.lead": "Οι εισαγωγές προσθέτουν άρθρα. Αν εισαγάγεις ξανά το ίδιο αρχείο, ενημερώνονται μόνο τα άρθρα που έφερε και δεν έχεις αλλάξει από τότε· τίποτε άλλο στο wiki σου δεν αγγίζεται.",
       "io.notes": "Από τις Σημειώσεις…", "io.notesHint": "Ένα σημειωματάριο των Σημειώσεων του orOS: κάθε σελίδα γίνεται άρθρο, οι υποσελίδες και οι ετικέτες γίνονται κατηγορίες.",
-      "io.md": "Από αρχείο…", "io.mdHint": "Markdown (.md ή .zip), εξαγωγή του Notion (Markdown & CSV), TiddlyWiki (.json ή το αρχείο .html), αντίγραφο MediaWiki (.xml) ή εξαγωγή χώρου του Confluence (.zip με HTML).",
+      "io.md": "Από αρχείο…", "io.mdHint": "Αρχείο orOS (.oroswiki), Markdown (.md ή .zip), εξαγωγή του Notion (Markdown & CSV), TiddlyWiki (.json ή το αρχείο .html), αντίγραφο MediaWiki (.xml) ή εξαγωγή χώρου του Confluence (.zip με HTML).",
       "io.wp": "Ξεκίνα από τη Βικιπαίδεια…", "io.wpHint": "Ένα άρθρο της Βικιπαίδειας ως κείμενο αφετηρίας, με την πηγή και την άδειά του.",
       "io.mdOut": "Markdown (.zip)", "io.mdOutHint": "Κάθε άρθρο ως αρχείο .md, μαζί με τις εικόνες του.",
       "io.site": "Ιστότοπος (.zip)", "io.siteHint": "Αυτό το wiki ως ιστότοπος χωρίς σύνδεση: αποσυμπίεσέ το και άνοιξε το index.html σε οποιονδήποτε browser.",
+      "io.pkg": "Αρχείο orOS (.oroswiki)", "io.pkgHint": "Όλο το wiki με τις εικόνες του και το ιστορικό κάθε άρθρου. Ανοίγει στο orOS ως νέο wiki· με αποσυμπίεση βρίσκεις το content.json, τις εικόνες στον φάκελο media και κάθε άρθρο ως αρχείο .md στον φάκελο preview.",
+      "io.folder": "Αποσυμπιεσμένος φάκελος orOS…", "io.folderHint": "Ένα .oroswiki που αποσυμπιέστηκε, ακόμη κι αν άλλαξες μια εικόνα του. Ανοίγει ως νέο wiki.",
+      "pkg.done": "Άνοιξε ως νέο wiki: {n} άρθρα", "pkg.done1": "Άνοιξε ως νέο wiki: 1 άρθρο",
+      "pkg.newer": "Το αρχείο φτιάχτηκε από νεότερο orOS. Ενημέρωσε το orOS για να το ανοίξεις.", "pkg.fail": "Δεν ήταν δυνατό να ανοίξει αυτό το αρχείο orOS.",
+      "pkg.cut": "Χώρεσαν μόνο {n} άρθρα: ένα wiki έχει έως 5.000.",
       "notes.title": "Εισαγωγή από τις Σημειώσεις", "notes.book": "Σημειωματάριο", "notes.pages": "{t} ({n} σελίδες)", "notes.pages1": "{t} (1 σελίδα)",
       "notes.where": "Βάλε τα άρθρα", "notes.new": "Σε νέο wiki με όνομα «{t}»", "notes.cur": "Σε αυτό το wiki («{t}»)",
       "notes.none": "Οι Σημειώσεις δεν έχουν ακόμα σελίδες σε αυτή τη συσκευή.", "notes.ok": "Εισαγωγή",
@@ -1746,8 +1756,10 @@
     body.appendChild(el("h3", "io-h", t("io.import")));
     row(t("io.notes"), t("io.notesHint"), notesDialog);
     row(t("io.md"), t("io.mdHint"), filePick);
+    if (window.OrosBundle) row(t("io.folder"), t("io.folderHint"), pkgFolder);
     row(t("io.wp"), t("io.wpHint"), function () { wpDialog("", false); }, !w);
     body.appendChild(el("h3", "io-h", t("io.export")));
+    if (window.OrosBundle) row(t("io.pkg"), t("io.pkgHint"), exportPkg, !w);
     row(t("io.mdOut"), t("io.mdOutHint"), exportMd, !w);
     row(t("io.site"), t("io.siteHint"), exportSite, !w);
     openForm({ title: t("io.title"), body: body, cancel: t("btn.close") });
@@ -1820,6 +1832,21 @@
   function fileImport(files) {
     var K = window.OrosImportKit;
     if (!files.length || impBusy || !IMP() || !K) return Promise.resolve(false);
+    if (files.length === 1 && window.OrosBundle) {
+      // an orOS file (.oroswiki): sniffed by its first bytes, never its name
+      var one = files[0];
+      return Promise.resolve(one.slice(0, 128).arrayBuffer()).then(function (ab) {
+        if (OrosBundle.sniff(new Uint8Array(ab)) !== PKG_MIME) return fileImportAll(files);
+        if (one.size > IMP_MAX) { toast(t("ix.big")); return false; }
+        return pkgOpen(Promise.resolve(one.arrayBuffer()).then(function (b) {
+          return OrosBundle.read(new Uint8Array(b), { mime: PKG_MIME });
+        }));
+      }, function () { return fileImportAll(files); });
+    }
+    return fileImportAll(files);
+  }
+  function fileImportAll(files) {
+    var K = window.OrosImportKit;
     impBusy = true;
     toast(t("imp.busy"));
     var items = [], chain = Promise.resolve();
@@ -1959,6 +1986,128 @@
         .catch(function () { bad++; });
     });
     chain.then(function () { if (bad) toast(t("toast.histFail")); });
+  }
+
+  // --- orOS file (.oroswiki): bundle.js, docs/oros-bundle.md ---
+  // Saving packs this wiki (articles, parallel edits, every revision
+  // file on the orOS disk, pictures); opening always makes a NEW wiki
+  // with fresh ids (io.js toPackage / fromPackage), never touching an
+  // existing one.
+  var PKG_MIME = "application/x-oros-wiki";
+  var pkgBusy = false;
+  // Every revision file of these articles (missing disk → none).
+  function allRevs(arts) {
+    var out = [], chain = Promise.resolve();
+    arts.forEach(function (a) {
+      chain = chain.then(function () { return listRevs(a.id); }).then(function (list) {
+        var c2 = Promise.resolve();
+        list.forEach(function (rv) {
+          c2 = c2.then(function () { return readRev(rv.path); }).then(function (r) {
+            if (r) out.push({ v: 1, a: a.id, w: a.w, r: r.r, p: r.p, m: r.m, t: r.t, x: r.x, s: r.s, dev: r.dev });
+          }, function () {});
+        });
+        return c2;
+      }, function () {});
+    });
+    return chain.then(function () { return out; });
+  }
+  function exportPkg() {
+    var w = curWiki();
+    if (!w || pkgBusy || !window.OrosBundle) return;
+    pkgBusy = true;
+    toast(t("exp.busy"));
+    var arts = C.live(data, w.id);
+    allRevs(arts).then(function (revs) {
+      var pkg = IO().toPackage(data, w.id, revs);
+      return mediaFiles(pkg.images).then(function (list) {
+        var media = {}, made = 0, first = 0, live = pkg.content.arts;
+        list.forEach(function (f) { media[f.id] = f.data; });
+        live.forEach(function (a) {
+          made = Math.max(made, a.m || 0);
+          if (a.c && (!first || a.c < first)) first = a.c;
+        });
+        return OrosBundle.write({
+          mime: PKG_MIME, app: "wiki", schema: "wiki/1", content: pkg.content,
+          meta: { title: wikiName(w), created: first || w.m, modified: Math.max(made, w.m), id: w.id,
+            language: LANG === "el" ? "el" : "en", generator: "orOS Wiki" },
+          media: media, preview: IO().previewPages(live), date: new Date()
+        });
+      });
+    }).then(function (bytes) {
+      saveBlob(new Blob([bytes], { type: PKG_MIME }), IO().fileStem(wikiName(w)) + ".oroswiki", PKG_MIME, "oroswiki");
+    }).catch(function (e) {
+      try { console.error("[orOS wiki] oroswiki", e); } catch (x) {}
+      toast(t("exp.fail"));
+    }).then(function () { pkgBusy = false; });
+  }
+  // "Unzipped orOS folder…" (maybe changed by hand: a picture swapped)
+  function pkgFolder() {
+    OrosBundle.pickFolder().then(function (files) {
+      if (files) pkgOpen(OrosBundle.readFolder(files, { mime: PKG_MIME }));
+    });
+  }
+  // job: Promise of an OrosBundle.read / readFolder result.
+  // → Promise<bool> (a wiki was made)
+  function pkgOpen(job) {
+    if (impBusy) return Promise.resolve(false);
+    impBusy = true;
+    toast(t("imp.busy"));
+    var r = null;
+    return job.then(function (res) {
+      r = res;
+      if (!r || !r.content || r.content.kind !== IO().PKG_KIND) throw new Error("content");
+      if (typeof r.content.ver === "number" && r.content.ver > 1) { var e = new Error("newer"); e.code = "newer"; throw e; }
+      if (data.wikis.length >= C.MAX_WIKIS) { var e2 = new Error("wikis"); e2.code = "wikis"; throw e2; }
+      // pictures to the orOS disk: under their own id (the hash), or a
+      // new id when the disk refuses it (then the text follows)
+      var A = AS(), pics = {}, chain = Promise.resolve();
+      Object.keys(r.media || {}).forEach(function (key) {
+        if (!C.IMG_RE.test(key) || !A || !fsApi()) return;
+        var blob = new Blob([r.media[key].bytes], { type: r.media[key].type });
+        chain = chain.then(function () {
+          return A.put(key, blob).catch(function () {
+            return A.importFile(new File([blob], key)).then(function (x) { pics[key] = x.id; });
+          });
+        }).catch(function () {});
+      });
+      return chain.then(function () { return pics; });
+    }).then(function (pics) {
+      var p = IO().fromPackage(r.content, { pics: pics, now: now(), max: C.MAX_ARTS });
+      if (!p.wiki.n) p.wiki.n = String((r.meta && r.meta.title) || "").replace(/\s+/g, " ").trim().slice(0, 80) || t("imp.wiki");
+      if (!p.wiki.main && p.arts.length) p.wiki.main = p.arts[0].id;
+      var before = data;
+      data = C.normData({ ver: 1, wikis: data.wikis.concat([p.wiki]), arts: data.arts.concat(p.arts), tombs: data.tombs });
+      if (!persist()) { data = before; throw new Error("persist"); }
+      // history files: the package's, plus the current text of any
+      // article whose own revision file did not travel
+      var has = {}, files = p.revs.slice();
+      p.revs.forEach(function (v) { has[v.a + "/" + v.r] = 1; });
+      p.arts.forEach(function (a) { if (!has[a.id + "/" + a.r]) files.push(C.revFile(a, a.anc[0] || "", "")); });
+      var F = fsApi(), c2 = Promise.resolve(), bad = 0;
+      if (F && typeof F.writeText === "function") {
+        files.forEach(function (v) {
+          c2 = c2.then(function () { return F.writeText(C.revPath(v.a, v.m, v.r), JSON.stringify(v)); }).catch(function () { bad++; });
+        });
+        c2.then(function () { if (bad) toast(t("toast.histFail")); });
+      }
+      impBusy = false;
+      renderSide();
+      if (!(view && view.v === "edit" && ed && ed.dirty())) {
+        prefs.w = p.wiki.id; prefs.a = ""; savePrefs();
+        stack = [];
+        view = null;
+        goMain();
+      }
+      if (p.cut) toast(t("pkg.cut", { n: p.arts.length }));
+      else toast(p.arts.length === 1 ? t("pkg.done1") : t("pkg.done", { n: p.arts.length }));
+      return true;
+    }).catch(function (e) {
+      impBusy = false;
+      try { console.error("[orOS wiki] open .oroswiki", e); } catch (x) {}
+      var code = e && (e.code || e.message);
+      toast(code === "newer" ? t("pkg.newer") : code === "wikis" ? t("err.wikis") : t("pkg.fail"));
+      return false;
+    });
   }
 
   // --- this wiki → Markdown zip / website zip ---
@@ -2927,8 +3076,25 @@
     $("main").scrollTop = keep;
   }
   // Deep link (search hit): { a } opens that article (and its wiki).
+  // { openFile: { token } }: a file from the system's "Open with"
+  // (shell fileopen.js), taken once from the shell: an orOS file
+  // (.oroswiki) becomes a new wiki, any other file goes through
+  // "Import from a file" (same checks as the Import button).
+  function openFileTarget(o) {
+    var f = null;
+    try {
+      var p = window.parent;
+      if (o && typeof o.token === "string" && p && p !== window && typeof p.__orosTakeFile === "function")
+        f = p.__orosTakeFile(o.token);
+    } catch (e) { f = null; }
+    if (!f) return;
+    if (f.size > IMP_MAX) { toast(t("ix.big")); return; }
+    fileImport([f]);
+  }
   function openTarget(target) {
     if (!target || typeof target !== "object") return false;
+    // async: the page underneath renders as usual meanwhile
+    if (target.openFile && typeof target.openFile === "object") { openFileTarget(target.openFile); return false; }
     // Single app (solo.js): { newArt: { title?, text? } } → a new
     // article in the editor (icon shortcut, or a share).
     var na = target.newArt;

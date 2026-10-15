@@ -35,6 +35,7 @@ Press a key on the phone keypad and the note is written and played. The melody s
 - `Download WAV` saves the melody as a sound file you can set as a ringtone on your phone.
 - `Download RTTTL` and `Copy RTTTL` give the melody as RTTTL text, the format of old phones.
 - `Import RTTTL` reads a ringtone in RTTTL text, pasted or from a .txt or .rtttl file.
+- `orOS file (.orostone)` saves the melody with its name, tempo and sound. An .orostone is an open ZIP file: unzip it and you find `content.json` (the melody), `preview/tone.rtttl` (RTTTL text) and, for a melody up to a minute long, `preview/tone.wav`. Open one with `Open a file` in `Import RTTTL`, or bring back an unzipped one with `Unzipped orOS folder…`; it is added to `My melodies` as a new melody.
 
 ## Sync and backup
 - `My melodies` follow you to all your devices through orOS sync.

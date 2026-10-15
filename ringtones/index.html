@@ -89,6 +89,7 @@
           <button type="button" id="new-btn" class="gen-btn ghost" data-i18n="btn.new">New melody</button>
           <button type="button" id="wav-btn" class="chip" data-i18n="btn.wav">Download WAV</button>
           <button type="button" id="rtttl-btn" class="chip" data-i18n="btn.rtttl">Download RTTTL</button>
+          <button type="button" id="tone-btn" class="chip" data-i18n="btn.tone">orOS file (.orostone)</button>
           <button type="button" id="copy-btn" class="chip" data-i18n="btn.copy">Copy RTTTL</button>
           <button type="button" id="import-btn" class="chip" data-i18n="btn.import">Import RTTTL</button>
         </div>
@@ -130,19 +131,21 @@
       <p id="import-err" class="err" role="alert"></p>
       <div class="dlg-btns">
         <button type="button" id="import-file" class="chip" data-i18n="import.file">Open a file</button>
+        <button type="button" id="import-folder" class="chip" data-i18n="import.folder">Unzipped orOS folder…</button>
         <span class="spacer"></span>
         <button type="button" id="import-cancel" class="chip" data-i18n="btn.cancel">Cancel</button>
         <button type="submit" id="import-ok" class="gen-btn small" data-i18n="import.ok">Import</button>
       </div>
-      <input type="file" id="import-input" accept=".txt,.rtttl,.rtx,text/plain" hidden>
+      <input type="file" id="import-input" accept=".txt,.rtttl,.rtx,.orostone,text/plain,application/x-oros-tone" hidden>
     </form>
   </dialog>
 
   <div id="live" class="sr-only" aria-live="polite"></div>
   <div id="toast" role="status"></div>
 
-  <script src="core.js?v=2.44.01"></script>
-  <script src="ringtones.js?v=2.44.01"></script>
+  <script src="core.js?v=2.45.00"></script>
+  <script src="../bundle.js?v=2.45.00"></script>
+  <script src="ringtones.js?v=2.45.00"></script>
 
 </body>
 </html>

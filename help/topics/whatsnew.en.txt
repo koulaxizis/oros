@@ -1,6 +1,10 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.45.00
+- Spreadsheet, Mind Map, Notes, Wiki, Kanban, Prompter and Ringtone Composer now save their own open orOS file (a ZIP you can unpack), with pictures and attachments inside, and open it again.
+- "Open with" on your computer now sends these files to the right app.
+
 ## Version 2.44.01
 - Contacts: the 8-bit avatars are now little pixel robots, the same for everyone.
 

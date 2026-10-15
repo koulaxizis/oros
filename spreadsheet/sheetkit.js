@@ -841,6 +841,179 @@ function pieSlices(s, cats, otherWord) {
   return sl;
 }
 
+/* ===== the .orossheet file (an orOS bundle, docs/oros-bundle.md) =====
+   One workbook = one file. content.json = { kind, ver, workbook } where
+   workbook is the app's own synced model (sheets, cells, charts, cf)
+   without the tombstones. Opening it ADDS its sheets to the workbook
+   on screen, with fresh ids, like the Excel import: nothing existing
+   is ever overwritten. */
+var BOOK_KIND = "oros-spreadsheet-package", BOOK_VER = 1;
+
+/* st: the canonical state (canonSS) -> content.json */
+function bookContent(st) {
+  st = st || {};
+  var sheets = (Array.isArray(st.sheets) ? st.sheets : []).map(function (sh) { return JSON.parse(JSON.stringify(sh)); });
+  var sids = {};
+  sheets.forEach(function (sh) { sids[sh.id] = 1; });
+  var cells = {};
+  Object.keys(st.cells || {}).sort().forEach(function (k) {
+    if (sids[k.split("|")[0]]) cells[k] = JSON.parse(JSON.stringify(st.cells[k]));
+  });
+  var wb = { ver: st.ver || 2, sheets: sheets, cells: cells };
+  ["charts", "cf"].forEach(function (f) {
+    var m = st[f] || {}, o = {}, any = false;
+    Object.keys(m).sort().forEach(function (id) {
+      if (m[id] && sids[m[id].sid]) { o[id] = JSON.parse(JSON.stringify(m[id])); any = true; }
+    });
+    if (any) wb[f] = o;
+  });
+  return { kind: BOOK_KIND, ver: BOOK_VER, workbook: wb };
+}
+
+/* content.json -> the workbook (still to be normalised by the app);
+   throws "notbook" for anything else, "newer" for a later version */
+function bookWorkbook(content) {
+  function bad(code) { var e = new Error(code); e.code = code; return e; }
+  if (!content || typeof content !== "object" || content.kind !== BOOK_KIND) throw bad("notbook");
+  if ((parseInt(content.ver, 10) || 0) > BOOK_VER) throw bad("newer");
+  var wb = content.workbook;
+  if (!wb || typeof wb !== "object" || !Array.isArray(wb.sheets)) throw bad("notbook");
+  return wb;
+}
+
+/* the name key the formula engine matches sheet names by
+   (spreadsheet.js findSheetByName) */
+function nameKey(s) { return String(s || "").toLowerCase().replace(/[^a-z0-9α-ω]/g, ""); }
+function sheetNames(sh) {
+  if (!sh) return [];
+  if (sh.name !== null && sh.name !== undefined) return [String(sh.name)];
+  var bi = sh.bi || {};
+  return [bi.en, bi.el].filter(function (x) { return typeof x === "string" && x; });
+}
+
+/* A normalised workbook -> new records for the open one.
+   o: { taken: [names already in the workbook], uid: fn -> id,
+        now: stamp, pos: first tab position, mapRefs: FX.mapRefs,
+        lang: "en"|"el" }
+   -> { sheets: [], cells: {}, charts: {}, cf: {}, ids: { old: new },
+        renamed: { oldName: newName } }
+   Every id is new, every stamp is `now`; a sheet whose name is taken
+   gets " (2)", " (3)"… and the formulas of the opened book that name
+   it follow. */
+function importBook(wb, o) {
+  o = o || {};
+  var ts = o.now || Date.now(), lang = o.lang === "el" ? "el" : "en";
+  var used = {};
+  (o.taken || []).forEach(function (n) { var k = nameKey(n); if (k) used[k] = 1; });
+  var srcSheets = (wb.sheets || []).slice().sort(function (a, b) {
+    var d = (a.pos || 0) - (b.pos || 0);
+    return d !== 0 ? d : (a.id < b.id ? -1 : (a.id > b.id ? 1 : 0));
+  });
+  var out = { sheets: [], cells: {}, charts: {}, cf: {}, ids: {}, renamed: {} };
+  var byKey = {}, dims = {};
+  srcSheets.forEach(function (sh, i) {
+    var nid = o.uid();
+    out.ids[sh.id] = nid;
+    var ns = JSON.parse(JSON.stringify(sh));
+    ns.id = nid; ns.pos = (o.pos || 0) + i; ns.mtime = ts;
+    var names = sheetNames(sh), clash = names.some(function (n) { return used[nameKey(n)]; });
+    if (clash) {
+      var base = names.length ? (sh.name !== null && sh.name !== undefined ? String(sh.name) : (sh.bi[lang] || names[0])) : "Sheet";
+      base = base.slice(0, 20);
+      for (var n = 2; ; n++) {
+        var cand = base + " (" + n + ")";
+        if (!used[nameKey(cand)]) break;
+      }
+      ns.name = cand; delete ns.bi;
+      names.forEach(function (nm) { byKey[nameKey(nm)] = cand; out.renamed[nm] = cand; });
+    }
+    sheetNames(ns).forEach(function (nm) { used[nameKey(nm)] = 1; });
+    dims[sh.id] = { rows: sh.rows || 0, cols: sh.cols || 0 };
+    out.sheets.push(ns);
+  });
+  function quote(nm) { return "'" + String(nm).replace(/'/g, "''") + "'!"; }
+  function fixRefs(v) {
+    if (typeof v !== "string" || v.charAt(0) !== "=" || !o.mapRefs) return v;
+    var any = false, k;
+    for (k in byKey) { any = true; break; }
+    if (!any) return v;
+    return o.mapRefs(v, function (ref) {
+      if (ref.sheet === null || ref.sheet === undefined) return null;
+      var to = byKey[nameKey(ref.sheet)];
+      if (!to) return null;
+      function one(q, colOnly) {
+        return (q.ac ? "$" : "") + colName(q.c) + (colOnly ? "" : (q.ar ? "$" : "") + (q.r + 1));
+      }
+      if (ref.cols) return quote(to) + one(ref.a, true) + ":" + one(ref.b, true);
+      return quote(to) + one(ref.a) + (ref.b ? ":" + one(ref.b) : "");
+    });
+  }
+  Object.keys(wb.cells || {}).sort().forEach(function (k) {
+    var p = k.split("|"), nid = out.ids[p[0]], d = dims[p[0]];
+    if (!nid || p.length !== 3) return;
+    var r = +p[1], c = +p[2];
+    if (!(r >= 0 && c >= 0 && r < d.rows && c < d.cols)) return;
+    var cel = JSON.parse(JSON.stringify(wb.cells[k]));
+    delete cel.fm;                 /* one fresh stamp speaks for both fields */
+    cel.mtime = ts;
+    cel.v = fixRefs(cel.v);
+    out.cells[nid + "|" + r + "|" + c] = cel;
+  });
+  ["charts", "cf"].forEach(function (f) {
+    var m = wb[f] || {};
+    Object.keys(m).sort().forEach(function (id) {
+      var x = m[id], sid = x && out.ids[x.sid];
+      if (!sid) return;
+      var y = JSON.parse(JSON.stringify(x)), nid = o.uid();
+      y.id = nid; y.sid = sid; y.mtime = ts;
+      out[f][nid] = y;
+    });
+  });
+  return out;
+}
+
+/* one CSV per sheet for preview/: values as shown by the engine
+   (valueOf(sid, r, c) -> string), UTF-8 with a BOM so Excel reads
+   Greek; null for an empty sheet */
+function csvField(v) {
+  v = String(v);
+  return /[",;\r\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+}
+function sheetCSV(sid, cells, valueOf) {
+  var maxR = -1, maxC = -1, pref = sid + "|", k, p;
+  for (k in cells) {
+    if (k.indexOf(pref) !== 0) continue;
+    p = k.split("|");
+    if (+p[1] > maxR) maxR = +p[1];
+    if (+p[2] > maxC) maxC = +p[2];
+  }
+  if (maxR < 0) return null;
+  var lines = [];
+  for (var r = 0; r <= maxR; r++) {
+    var row = [];
+    for (var c = 0; c <= maxC; c++) {
+      var cel = cells[pref + r + "|" + c];
+      row.push(cel ? csvField(valueOf ? valueOf(sid, r, c, cel) : cel.v) : "");
+    }
+    lines.push(row.join(","));
+  }
+  return "﻿" + lines.join("\r\n") + "\r\n";
+}
+/* the preview file name of the i-th sheet: ASCII only (bundle paths) */
+var GR_LAT = { "α": "a", "β": "v", "γ": "g", "δ": "d", "ε": "e", "ζ": "z", "η": "i", "θ": "th", "ι": "i", "κ": "k",
+  "λ": "l", "μ": "m", "ν": "n", "ξ": "x", "ο": "o", "π": "p", "ρ": "r", "σ": "s", "ς": "s", "τ": "t", "υ": "y",
+  "φ": "f", "χ": "ch", "ψ": "ps", "ω": "o" };
+function csvName(i, name) {
+  /* Greek letters by their Latin look-alikes, accents dropped */
+  var s = String(name || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/\u03bf\u03c5/g, "ou").replace(/\u039f[\u03c5\u03a5]/g, "Ou").replace(/[\u0370-\u03ff]/g, function (ch) {
+    var lo = ch.toLowerCase(), l = GR_LAT[lo] || "";
+    return l && ch !== lo ? l.charAt(0).toUpperCase() + l.slice(1) : l;
+  }).replace(/[^A-Za-z0-9 _-]+/g, "_").replace(/_+/g, "_").replace(/^[\s_]+|[\s_]+$/g, "").slice(0, 40).trim();
+  if (!/[A-Za-z]/.test(s)) s = "sheet";
+  return (i < 9 ? "0" : "") + (i + 1) + "-" + s + ".csv";
+}
+
 var API = {
   MAX_ROWS: MAX_ROWS, MAX_COLS: MAX_COLS, MAX_POINTS: MAX_POINTS, MAX_SERIES: MAX_SERIES,
   colName: colName, colFromName: colFromName, esc: esc, hex: hex, mix: mix, inkOn: inkOn, rgba: rgba, luminance: luminance,
@@ -850,7 +1023,9 @@ var API = {
   CF_KINDS: CF_KINDS, cfStats: cfStats, cfStyle: cfStyle,
   CHART_TYPES: CHART_TYPES, normChart: normChart, normCf: normCf,
   chartModel: chartModel, chartSVG: chartSVG, niceScale: niceScale, fmtNum: fmtNum, seriesColors: seriesColors, pieSlices: pieSlices,
-  SERIES: SERIES
+  SERIES: SERIES,
+  BOOK_KIND: BOOK_KIND, bookContent: bookContent, bookWorkbook: bookWorkbook, importBook: importBook,
+  sheetCSV: sheetCSV, csvName: csvName, nameKey: nameKey
 };
 root.OrosSheetKit = API;
 if (typeof module !== "undefined" && module.exports) module.exports = API;

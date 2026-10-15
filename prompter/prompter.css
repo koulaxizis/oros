@@ -608,3 +608,22 @@ input, textarea, select {
 
 /* ---------- X. [hidden] must ALWAYS win ---------- */
 [hidden] { display: none !important; }
+/* Settings → Files: open a .orosscript or an unzipped one */
+.settings-dlg .file-sec {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 12px;
+  margin-bottom: 4px;
+}
+.settings-dlg .file-sec h4 {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.settings-dlg .file-sec button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  margin-top: 8px;
+}

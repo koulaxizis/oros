@@ -12,6 +12,13 @@ The format is free and open (MIT, like orOS). Reader and writer: [`bundle.js`](.
 | `.orosslides` | Slides | `application/x-oros-slides` |
 | `.orosdesign` | Atelier | `application/x-oros-design` |
 | `.oroslayout` | Layout | `application/x-oros-layout` |
+| `.orossheet` | Spreadsheet | `application/x-oros-sheet` |
+| `.orosmind` | Mind map | `application/x-oros-mind` |
+| `.orosnotes` | Notes | `application/x-oros-notes` |
+| `.oroswiki` | Wiki | `application/x-oros-wiki` |
+| `.orosboard` | Kanban | `application/x-oros-board` |
+| `.orosscript` | Prompter | `application/x-oros-script` |
+| `.orostone` | Ringtones | `application/x-oros-tone` |
 
 More apps follow; each gets its own extension (`.oros` + one short English word) and MIME type `application/x-oros-<word>`.
 
@@ -72,6 +79,13 @@ Report.orosdoc
 | Slides | `{ kind: "oros-slides-package", ver: 1, deck, slides, items }` | pictures by `<sha256>.<jpg|png>` |
 | Atelier | `{ kind: "oros-atelier-package", ver: 1, doc }` | pictures and clips by id |
 | Layout | `{ kind: "oros-layout-package", ver: 1, doc }` | images by `<sha256>.<jpg|png>` |
+| Spreadsheet | `{ kind: "oros-spreadsheet-package", ver: 1, workbook: { ver: 2, sheets, cells: { "sid|r|c": { v, f?, fm?, cv? } }, charts?, cf? } }`; `settings.json` `{ active }` | no media; `preview/NN-<sheet>.csv` per sheet (values as shown) + thumbnail |
+| Mind map | `{ kind: "oros-mindmap-package", ver: 1, map, data: { app: "mindmap", format: 1, maps, nodes, links, pos, imgs, styles, frames, layouts } }`; `imgs[].media` is a media key | node pictures by `<sha256>.<ext>`; `preview/map.md`, `preview/map.opml` + thumbnail |
+| Notes | `{ kind: "oros-notes-package", ver: 1, notebook: { id, name, mtime, pos }, labels, pages: [{ id, parent, title, text, mtime, pos, labels, pinned }] }`; `text` is Markdown | no media; `preview/index.md` + `preview/pages/NNN-<slug>.md` |
+| Wiki | `{ kind: "oros-wiki-package", ver: 1, wiki: { id, m, n, main }, arts, revs }`; `revs` is the whole history | pictures by `<sha256>.<jpg|png>` (the wiki's own ids); `preview/<page>.md` per article |
+| Kanban | `{ kind: "oros-kanban-package", ver: 1, board }`; `card.att[].file` is a media key | card attachments by `<sha256>.<ext>`; `preview/board.md`, `preview/board.csv` |
+| Prompter | `{ kind: "oros-prompter-package", ver: 1, prompt: { id, cat, en, el, var_en, var_el, tags, mtime, pos }, favorite, completed }` | no media; `preview/script.txt` |
+| Ringtones | `{ kind: "oros-ringtones-package", ver: 1, melody: { id, m, name, bpm, voice, notes } }` | no media; `preview/tone.rtttl`, `preview/tone.wav` (melodies up to 60 s) |
 
 The models are the ones each app syncs (OROS_BIBLE.md Part IV).
 

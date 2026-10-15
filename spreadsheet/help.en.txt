@@ -112,8 +112,9 @@ These stay on this device: which sheet is open, filters, the copy clipboard and 
 Import and export (buttons at the bottom right):
 - `Import CSV` adds the file as a new sheet. Commas, semicolons and tabs are detected by themselves.
 - `Export CSV` saves the open sheet, with each cell as you typed it (formulas stay formulas).
-- `Import Excel / Calc (.xlsx, .ods, .xls)` adds every sheet of the file as a new sheet.
-- `Export Excel / Calc` saves all sheets as `Excel (.xlsx)` or `LibreOffice Calc (.ods)`, with column widths, row heights and merged cells.
+- `Import Excel / Calc / orOS`, then `Open a file (.xlsx, .ods, .xls, .orossheet)…`, adds every sheet of the file as a new sheet. Nothing already here is replaced.
+- `Export Excel / Calc / orOS` saves all sheets as `Excel (.xlsx)`, `LibreOffice Calc (.ods)` or `orOS file (.orossheet)`. Excel and Calc get column widths, row heights and merged cells.
+- The .orossheet file keeps everything: formulas, formatting, charts, conditional formatting and every sheet. It is an open ZIP file: unzip it and you find `content.json` (the workbook) and in `preview` one CSV per sheet with the values shown, which any spreadsheet program opens. `Unzipped orOS folder…` brings back a .orossheet that was unzipped.
 
 ## Import from Notion
 The `Notion` button (cloud) next to them brings in the Notion databases you shared with your Notion integration, one sheet per database. Connect Notion first in [Settings](app:settings) › `Connected services`, then in Notion open each database, ••• › `Connections`, and add your integration.
@@ -144,7 +145,7 @@ See also [Backup](help:t/backup).
 ## Limits
 - A sheet holds at most 10,000 rows × 104 columns (A to CZ); imports are capped there.
 - A chart shows up to 8 series and 1,000 points; a pie or donut puts slices after the 8th into Other.
-- Charts, fills, borders, wrapping and conditional formatting are not saved in Excel, Calc or CSV files (merged cells, column widths and row heights are). From Excel, Sheets and LibreOffice, a paste brings fills, colours and bold, but not borders or rules.
+- Charts, fills, borders, wrapping and conditional formatting are not saved in Excel, Calc or CSV files (an .orossheet keeps them) (merged cells, column widths and row heights are). From Excel, Sheets and LibreOffice, a paste brings fills, colours and bold, but not borders or rules.
 - Merged cells don't grow when you insert rows or columns inside them; the merge keeps its size.
 - Wrapped rows grow to fit when you turn wrapping on; a row whose text you change later keeps its height until you wrap it again or drag its edge.
 - While one of your devices still runs an older orOS, it doesn't show charts, rules, row heights, fills, borders, wrapping or merged cells, and the two devices may send the workbook back and forth a few times until both are updated. The updated device keeps them, except where the older one changed the same thing: setting a format on a cell there drops that cell's fill, borders, wrapping and merge, and changing a sheet there (its name, a column width) drops its row heights.

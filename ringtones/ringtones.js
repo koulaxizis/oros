@@ -7,6 +7,7 @@
 //   - tempo, three sounds (phone beep, soft, bell), play again and again
 //   - my melodies (synced), ready tunes (public domain), undo/redo
 //   - WAV download, RTTTL download / copy / import
+//   - the .orostone file (orOS bundle): save, open, unzipped folder
 // Data:
 //   - synced slice "ringtones" (oros-ringtones-data): melodies, LWW per
 //     melody + tombstones (R5, R17, R26)
@@ -20,7 +21,7 @@
 //   5. Keypad, piano, next-note options
 //   6. Sound (Web Audio)
 //   7. My melodies + ready tunes
-//   8. WAV, RTTTL
+//   8. WAV, RTTTL (8b. the .orostone file)
 //   9. Toasts
 //  10. Keyboard (Contract Β) + panel
 //  11. Sync slice + palette
@@ -68,13 +69,15 @@
       "mode.piano": "Piano: on", "mode.keys": "Piano: off (phone keypad)",
       "btn.save": "Save melody", "btn.saved": "Saved", "btn.new": "New melody",
       "btn.wav": "Download WAV", "btn.rtttl": "Download RTTTL", "btn.copy": "Copy RTTTL", "btn.import": "Import RTTTL",
+      "btn.tone": "orOS file (.orostone)",
       "btn.list": "My melodies", "btn.closePanel": "Close", "btn.cancel": "Cancel",
       "sec.mine": "My melodies", "sec.ready": "Ready tunes", "sec.names": "Note names",
       "names.letters": "C D E", "names.solfege": "Do Re Mi", "f.volume": "Volume",
       "mine.empty": "Melodies you save appear here. They follow you to all your devices.",
       "item.open": "Open", "item.play": "Play", "item.dup": "Duplicate", "item.delete": "Delete melody",
-      "import.title": "Import RTTTL", "import.hint": "Paste a ringtone in RTTTL text, the format of old phones, or open a .txt or .rtttl file.",
-      "import.file": "Open a file", "import.ok": "Import", "import.bad": "This does not look like RTTTL text.",
+      "import.title": "Import RTTTL", "import.hint": "Paste a ringtone in RTTTL text, the format of old phones, or open a .txt, .rtttl or .orostone file.",
+      "import.file": "Open a file", "import.folder": "Unzipped orOS folder…",
+      "import.newer": "This file was made by a newer orOS. Update orOS to open it.", "import.ok": "Import", "import.bad": "This does not look like RTTTL text.",
       "toast.saved": "Melody saved", "toast.deleted": "Melody deleted", "toast.undo": "Undo",
       "toast.copied": "RTTTL copied", "toast.copyFail": "Could not copy", "toast.file": "Saved",
       "toast.empty": "Write a few notes first", "toast.full": "A melody takes up to {n} notes",
@@ -103,13 +106,15 @@
       "mode.piano": "Πιάνο: ανοιχτό", "mode.keys": "Πιάνο: κλειστό (πληκτρολόγιο κινητού)",
       "btn.save": "Αποθήκευση", "btn.saved": "Αποθηκεύτηκε", "btn.new": "Νέα μελωδία",
       "btn.wav": "Λήψη WAV", "btn.rtttl": "Λήψη RTTTL", "btn.copy": "Αντιγραφή RTTTL", "btn.import": "Εισαγωγή RTTTL",
+      "btn.tone": "Αρχείο orOS (.orostone)",
       "btn.list": "Οι μελωδίες μου", "btn.closePanel": "Κλείσιμο", "btn.cancel": "Άκυρο",
       "sec.mine": "Οι μελωδίες μου", "sec.ready": "Έτοιμες μελωδίες", "sec.names": "Ονόματα νοτών",
       "names.letters": "C D E", "names.solfege": "Ντο Ρε Μι", "f.volume": "Ένταση",
       "mine.empty": "Οι μελωδίες που αποθηκεύεις εμφανίζονται εδώ. Σε ακολουθούν σε όλες τις συσκευές σου.",
       "item.open": "Άνοιγμα", "item.play": "Αναπαραγωγή", "item.dup": "Διπλασιασμός", "item.delete": "Διαγραφή μελωδίας",
-      "import.title": "Εισαγωγή RTTTL", "import.hint": "Επικόλλησε έναν ήχο κλήσης σε κείμενο RTTTL, τη μορφή των παλιών κινητών, ή άνοιξε αρχείο .txt ή .rtttl.",
-      "import.file": "Άνοιγμα αρχείου", "import.ok": "Εισαγωγή", "import.bad": "Αυτό δεν μοιάζει με κείμενο RTTTL.",
+      "import.title": "Εισαγωγή RTTTL", "import.hint": "Επικόλλησε έναν ήχο κλήσης σε κείμενο RTTTL, τη μορφή των παλιών κινητών, ή άνοιξε αρχείο .txt, .rtttl ή .orostone.",
+      "import.file": "Άνοιγμα αρχείου", "import.folder": "Αποσυμπιεσμένος φάκελος orOS…",
+      "import.newer": "Το αρχείο φτιάχτηκε από νεότερο orOS. Ενημέρωσε το orOS για να το ανοίξεις.", "import.ok": "Εισαγωγή", "import.bad": "Αυτό δεν μοιάζει με κείμενο RTTTL.",
       "toast.saved": "Η μελωδία αποθηκεύτηκε", "toast.deleted": "Η μελωδία διαγράφηκε", "toast.undo": "Αναίρεση",
       "toast.copied": "Το RTTTL αντιγράφηκε", "toast.copyFail": "Δεν έγινε αντιγραφή", "toast.file": "Αποθηκεύτηκε",
       "toast.empty": "Γράψε πρώτα μερικές νότες", "toast.full": "Μια μελωδία χωράει έως {n} νότες",
@@ -852,12 +857,63 @@
     inp.onchange = function () { readImport(inp.files && inp.files[0]); };
     inp.click();
   }
+  // A picked or handed-over file: an .orostone bundle (sniffed from
+  // the first bytes, "PK…mimetype") or RTTTL text, as before.
   function readImport(f) {
     if (!f) return;
+    var B = window.OrosBundle;
+    if (B && f.size > 4 && f.slice) {
+      f.slice(0, 128).arrayBuffer().then(function (head) {
+        if (B.sniff(new Uint8Array(head)) === null) { readText(f); return; }
+        if (f.size > 32 * 1024 * 1024) { $("import-err").textContent = t("import.bad"); return; }
+        f.arrayBuffer()
+          .then(function (ab) { return B.read(new Uint8Array(ab), { mime: C.TONE_MIME }); })
+          .then(fromBundle, bundleFail);
+      }, function () { readText(f); });
+      return;
+    }
+    readText(f);
+  }
+  function readText(f) {
     if (f.size > 64 * 1024) { $("import-err").textContent = t("import.bad"); return; }
     var rd = new FileReader();
     rd.onload = function () { $("import-text").value = String(rd.result || ""); doImport(null); };
     rd.readAsText(f);
+  }
+
+  // ---------- 8b. The .orostone file (bundle.js) ----------
+  // One melody per file; opening one always adds a NEW melody (fresh
+  // id, normMelody) to My melodies and opens it, never overwriting.
+  function saveTone() {
+    if (!song.notes.length) { showToast(t("toast.empty")); return; }
+    var B = window.OrosBundle;
+    var x = cur ? cur : { id: C.newId(Math.random), m: Date.now(), name: song.name, bpm: song.bpm, voice: song.voice, notes: C.notesText(song.notes) };
+    var opts = C.toneBundle(x, { title: songTitle(), lang: LANG, rate: WAV_RATE,
+      gain: Math.pow(prefs.vol / 100, 0.5) || 0.5, date: new Date() });
+    if (!B || !opts) { showToast(t("toast.saveFail")); return; }
+    B.write(opts).then(function (bytes) {
+      saveBlob(new Blob([bytes], { type: C.TONE_MIME }), C.fileName(songTitle(), "orostone"), C.TONE_MIME, t("btn.tone"), ".orostone");
+    }, function () { showToast(t("toast.saveFail")); });
+  }
+  function fromBundle(r) {
+    var x = C.toneFromBundle(r && r.content, Math.random, Date.now());
+    if (!x) { $("import-err").textContent = t("import.bad"); return; }
+    closeImport();
+    startFrom(x.name, x.bpm, C.parseNotes(x.notes), x.voice);
+    saveMelody();                 // a new item in My melodies (or a toast: full)
+  }
+  function bundleFail(e) {
+    try { console.error("[orOS] ringtones: .orostone not read:", e && (e.code || e.message)); } catch (er) {}
+    $("import-err").textContent = e && e.code === "newer" ? t("import.newer") : t("import.bad");
+  }
+  // An unzipped .orostone folder (maybe changed by hand)
+  function importFolder() {
+    var B = window.OrosBundle;
+    if (!B) return;
+    B.pickFolder().then(function (files) {
+      if (!files) return;
+      return B.readFolder(files, { mime: C.TONE_MIME }).then(fromBundle, bundleFail);
+    });
   }
 
   // Deep link (shell __orosOpenAt / __orosTakeTarget): { openFile:
@@ -1134,6 +1190,8 @@
     $("import-form").addEventListener("submit", doImport);
     $("import-cancel").addEventListener("click", closeImport);
     $("import-file").addEventListener("click", importFile);
+    $("import-folder").addEventListener("click", importFolder);
+    $("tone-btn").addEventListener("click", saveTone);
     var rz = null;
     window.addEventListener("resize", function () { clearTimeout(rz); rz = setTimeout(renderStaff, 80); });
     window.addEventListener("pagehide", function () { flush(); stop(); });

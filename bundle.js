@@ -51,7 +51,14 @@
     ".orosdoc": { app: "writer", mime: "application/x-oros-doc" },
     ".orosslides": { app: "slides", mime: "application/x-oros-slides" },
     ".orosdesign": { app: "atelier", mime: "application/x-oros-design" },
-    ".oroslayout": { app: "layout", mime: "application/x-oros-layout" }
+    ".oroslayout": { app: "layout", mime: "application/x-oros-layout" },
+    ".orossheet": { app: "spreadsheet", mime: "application/x-oros-sheet" },
+    ".orosmind": { app: "mindmap", mime: "application/x-oros-mind" },
+    ".orosnotes": { app: "notes", mime: "application/x-oros-notes" },
+    ".oroswiki": { app: "wiki", mime: "application/x-oros-wiki" },
+    ".orosboard": { app: "kanban", mime: "application/x-oros-board" },
+    ".orosscript": { app: "prompter", mime: "application/x-oros-script" },
+    ".orostone": { app: "ringtones", mime: "application/x-oros-tone" }
   };
 
   var LIM = {

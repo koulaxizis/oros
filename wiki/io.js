@@ -9,6 +9,7 @@
 //   5. Wikipedia: API URLs, wikitext → our markup, CC BY-SA credit
 //   6. "Send to someone": text without pictures
 //   7. Static website pages (HTML strings with every value escaped)
+//   8. orOS file (.oroswiki): content.json in and out, fresh ids
 // Everything imported is plain text converted to our markup; no HTML
 // from a file or from Wikipedia is ever kept, so nothing imported
 // can run. Exposes window.WikiIO (browser) / module.exports (Node).
@@ -766,8 +767,112 @@
     }).join("") + "</ul>";
   }
 
+  // ---------- 8. orOS file (.oroswiki) ----------
+  // One wiki = one bundle (bundle.js, docs/oros-bundle.md). content.json:
+  //   { kind: "oros-wiki-package", ver: 1, wiki: { id, m, n, main },
+  //     arts: [art, as the slice holds it: r, anc, alt, s, c],
+  //     revs: [revision file { v, a, w, r, p, m, t, x, s, dev }] }
+  // Pictures travel in media/<asset id> (the asset id IS <sha256>.<ext>),
+  // the text keeps [[File:<asset id>|…]] as it is.
+  var PKG_KIND = "oros-wiki-package", PKG_VER = 1;
+  var MAX_PKG_REVS = 100000;
+  // data: the slice, wid: the wiki, revs: revision files read from the
+  // orOS disk (any order; ones of other articles are left out).
+  // → { content, images: [asset id] } or null (no such wiki)
+  function toPackage(data, wid, revs) {
+    var w = C.wikiById(data, wid);
+    if (!w) return null;
+    var arts = C.live(data, wid).slice().sort(C.byTitle).map(function (a) { return C.normArt(a); });
+    var on = {}, seen = {}, list = [];
+    arts.forEach(function (a) { on[a.id] = 1; });
+    (Array.isArray(revs) ? revs : []).forEach(function (raw) {
+      var v = C.parseRevFile(raw);
+      if (!v || !on[v.a] || seen[v.a + "/" + v.r]) return;
+      seen[v.a + "/" + v.r] = 1;
+      list.push({ v: 1, a: v.a, w: wid, r: v.r, p: v.p, m: v.m, t: v.t, x: v.x, s: v.s, dev: v.dev });
+    });
+    list.sort(function (a, b) { return a.a < b.a ? -1 : a.a > b.a ? 1 : a.m - b.m || (a.r < b.r ? -1 : 1); });
+    var imgs = {}, out = [];
+    function scan(x) {
+      C.images(C.parseDoc(x)).forEach(function (id) { if (!imgs[id]) { imgs[id] = 1; out.push(id); } });
+    }
+    arts.forEach(function (a) { scan(a.x); a.alt.forEach(function (v) { scan(v.x); }); });
+    list.forEach(function (v) { scan(v.x); });
+    return {
+      content: { kind: PKG_KIND, ver: PKG_VER, wiki: { id: w.id, m: w.m, n: w.n, main: w.main }, arts: arts, revs: list },
+      images: out
+    };
+  }
+  // A content.json back to a NEW wiki: fresh wiki, article and revision
+  // ids, everything run through the core's normalisers. o: { uid(prefix),
+  // now (ms), pics: { old asset id: new } for pictures stored under
+  // another id, max: articles that fit }. Throws "newer" for a later
+  // version, "content" for something that is not a wiki.
+  // → { wiki: { id, m, n, main }, arts: [art], revs: [revision file], cut }
+  function fromPackage(c, o) {
+    o = o || {};
+    var mk = typeof o.uid === "function" ? o.uid : C.uid;
+    function fail(code) { var e = new Error(code); e.code = code; return e; }
+    if (!isObj(c) || c.kind !== PKG_KIND) throw fail("content");
+    if (typeof c.ver === "number" && c.ver > PKG_VER) throw fail("newer");
+    var pics = isObj(o.pics) ? o.pics : {};
+    var pk = Object.keys(pics).filter(function (k) { return C.IMG_RE.test(k) && C.IMG_RE.test(str(pics[k])) && pics[k] !== k; });
+    function px(x) {
+      x = str(x);
+      pk.forEach(function (k) { x = x.split(k).join(pics[k]); });
+      return x;
+    }
+    var w0 = isObj(c.wiki) ? c.wiki : {};
+    var wid = mk("w"), now = Number(o.now) || Date.now();
+    var aMap = {}, rMap = {};
+    function rid(r) { if (!rMap[r]) rMap[r] = mk("r"); return rMap[r]; }
+    var arts = [], max = typeof o.max === "number" ? Math.max(0, o.max) : C.MAX_ARTS, cut = 0;
+    (Array.isArray(c.arts) ? c.arts : []).forEach(function (raw) {
+      if (!isObj(raw) || typeof raw.id !== "string" || aMap[raw.id]) return;
+      var a = C.normArt(Object.assign({}, raw, { w: wid }));
+      if (!a) return;
+      if (arts.length >= max) { cut++; return; }
+      aMap[raw.id] = mk("a");
+      var b = { id: aMap[raw.id], m: a.m || now, w: wid, t: a.t, x: px(a.x), r: rid(a.r),
+        anc: a.anc.map(rid), alt: a.alt.map(function (v) { return { r: rid(v.r), m: v.m, t: v.t, x: px(v.x) }; }) };
+      if (a.s) b.s = a.s;
+      if (a.c) b.c = a.c;
+      b = C.normArt(b);
+      if (b) arts.push(b);
+    });
+    var revs = [], seen = {};
+    (Array.isArray(c.revs) ? c.revs : []).slice(0, MAX_PKG_REVS).forEach(function (raw) {
+      var v = C.parseRevFile(raw);
+      if (!v || !aMap[v.a]) return;
+      var r = rid(v.r);
+      if (seen[aMap[v.a] + "/" + r]) return;
+      seen[aMap[v.a] + "/" + r] = 1;
+      revs.push({ v: 1, a: aMap[v.a], w: wid, r: r, p: v.p ? rid(v.p) : "", m: v.m, t: v.t, x: px(v.x), s: v.s, dev: v.dev });
+    });
+    var wiki = C.normWiki({ id: wid, m: now, n: str(w0.n), main: aMap[str(w0.main)] || "" });
+    return { wiki: wiki, arts: arts, revs: revs, cut: cut };
+  }
+  // A file name other programs and every zip tool accept: ASCII only
+  // (a bundle's paths are), Greek spelled in Latin letters.
+  var GR = { "α": "a", "β": "v", "γ": "g", "δ": "d", "ε": "e", "ζ": "z", "η": "i", "θ": "th", "ι": "i", "κ": "k", "λ": "l",
+    "μ": "m", "ν": "n", "ξ": "x", "ο": "o", "π": "p", "ρ": "r", "σ": "s", "τ": "t", "υ": "y", "φ": "f", "χ": "ch", "ψ": "ps", "ω": "o" };
+  function asciiStem(t) {
+    var s = C.fold(t).replace(/[α-ω]/g, function (ch) { return GR[ch] || ""; })
+      .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80).replace(/-+$/, "");
+    return s || "article";
+  }
+  // preview/<name>.md for every article: pictures point at ../media/.
+  function previewPages(arts) {
+    var used = {};
+    return arts.map(function (a) {
+      return { name: uniqueFile(asciiStem(a.t), ".md", used),
+        data: toMarkdown(a).replace(/\]\(media\/([0-9a-f]{64}\.(?:jpg|png))/g, "](../media/$1"), type: "text/markdown" };
+    });
+  }
+
   var API = {
     VERSION: VERSION, MAX_IMPORT: MAX_IMPORT,
+    PKG_KIND: PKG_KIND, toPackage: toPackage, fromPackage: fromPackage, asciiStem: asciiStem, previewPages: previewPages,
     uniqueTitle: uniqueTitle, fileStem: fileStem, uniqueFile: uniqueFile,
     notesBooks: notesBooks, notesText: notesText, fromNotes: fromNotes,
     frontMatter: frontMatter, mdBody: mdBody, fromMarkdown: fromMarkdown, toMarkdown: toMarkdown, mediaFile: mediaFile,

@@ -52,8 +52,9 @@ Tap the map name at the top left for `Your maps`. There you can open, rename, du
 ## Sync and backup
 With [orOS sync](help:t/sync), your maps and every node reach your other devices, with their styles, boundaries, summaries and layout. Which map is open, the view and which branches are folded stay on this device.
 
-- `Export…` makes a picture (PNG or SVG), Markdown, OPML or JSON of the whole map or one branch. You can save it, save it to [Files](app:files), print it or copy it as text.
-- `Import (FreeMind, XMind, SimpleMind, MindManager, OPML, Markdown, text, JSON)…` brings in maps from FreeMind, Freeplane, XMind (only the first sheet), SimpleMind and MindManager, and outlines from other apps, as a new map (see below). Their arrows become links. A JSON backup is merged into your maps: newer changes are kept and nothing you deleted comes back.
+- `Export…` makes a picture (PNG or SVG), Markdown, OPML, JSON or an `orOS file (.orosmind)` of the whole map or one branch. You can save it, save it to [Files](app:files), print it or copy it as text.
+- An `orOS file (.orosmind)` holds one whole map with everything in it: links, pictures, styles, boundaries, summaries and layout. It is an open ZIP file: unzip it and you find `content.json` (the map), `media` (its pictures) and `preview/map.md` and `preview/map.opml`, the outline for other programs. Opening it makes a new map; your other maps are not touched. `Unzipped orOS folder…` in the `More` menu opens such a file after it was unzipped, even if you changed a picture in it.
+- `Import (orOS, FreeMind, XMind, SimpleMind, MindManager, OPML, Markdown, text, JSON)…` brings in maps from FreeMind, Freeplane, XMind (only the first sheet), SimpleMind and MindManager, and outlines from other apps, as a new map (see below). Their arrows become links. A JSON backup is merged into your maps: newer changes are kept and nothing you deleted comes back.
 - `Back up all maps (JSON)` saves everything in one file. Your maps are also part of orOS [backups](help:t/backup).
 
 ## Import from other apps

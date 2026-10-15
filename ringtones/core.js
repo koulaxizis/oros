@@ -14,6 +14,14 @@
 // Melodies (sync slice "ringtones"):
 //   { ver: 1, melodies: [{ id, m, name, bpm, voice, notes }],
 //     tombs: { id: deletedAt } }
+//
+// The .orostone file (an orOS bundle, bundle.js, docs/oros-bundle.md):
+//   content.json { kind: "oros-ringtones-package", ver: 1,
+//                  melody: { id, m, name, bpm, voice, notes } }
+//   preview/tone.rtttl, and preview/tone.wav when the melody is short
+// toneBundle() builds the options for OrosBundle.write; toneFromBundle()
+// reads content.json back as a NEW melody (fresh id, through
+// normMelody), or null.
 // ============================================================
 (function (root) {
   "use strict";
@@ -314,7 +322,43 @@
     return (base || "ringtone") + "." + ext;
   }
 
+  // ---------- The .orostone file ----------
+  var TONE_MIME = "application/x-oros-tone";
+  var TONE_KIND = "oros-ringtones-package";
+  var WAV_PREVIEW_MS = 60000;      // a longer melody gets no WAV preview (size)
+  // x: a melody as the slice holds it. o: { title, lang, rate, gain, date }.
+  function toneBundle(x, o) {
+    o = o || {};
+    var mel = normMelody(x);
+    if (!mel) return null;
+    var notes = parseNotes(mel.notes), title = mel.name || o.title || "";
+    var preview = [{ name: "tone.rtttl", data: toRTTTL(title, mel.bpm, notes) + "\r\n", type: "audio/x-rtttl" }];
+    var rate = o.rate || 22050;
+    if (totalMs(notes, mel.bpm) <= WAV_PREVIEW_MS) {
+      var smp = renderSamples(notes, mel.bpm, mel.voice, rate), g = typeof o.gain === "number" ? o.gain : 1;
+      if (g !== 1) for (var i = 0; i < smp.length; i++) smp[i] *= g;
+      preview.push({ name: "tone.wav", data: wavBytes(smp, rate), type: "audio/wav" });
+    }
+    return {
+      mime: TONE_MIME, app: "ringtones", schema: "ringtones/1",
+      content: { kind: TONE_KIND, ver: 1, melody: mel },
+      meta: { title: title, created: mel.m, modified: mel.m, id: mel.id,
+        language: o.lang === "el" ? "el" : "en", generator: "orOS Ringtones" },
+      preview: preview, date: o.date
+    };
+  }
+  // content.json → a new melody { id, m, name, bpm, voice, notes } or null.
+  function toneFromBundle(content, rnd, now) {
+    if (!content || typeof content !== "object" || content.kind !== TONE_KIND) return null;
+    var src = content.melody;
+    if (!src || typeof src !== "object") return null;
+    var x = normMelody({ id: newId(rnd || Math.random), m: isInt(now) ? now : Date.now(),
+      name: src.name, bpm: src.bpm, voice: src.voice, notes: src.notes });
+    return x;
+  }
+
   var api = {
+    TONE_MIME: TONE_MIME, toneBundle: toneBundle, toneFromBundle: toneFromBundle,
     MAX_NOTES: MAX_NOTES, MAX_MELODIES: MAX_MELODIES, MAX_NAME: MAX_NAME, MIN_BPM: MIN_BPM, MAX_BPM: MAX_BPM,
     ID_RE: ID_RE, LENGTHS: LENGTHS, OCTAVES: OCTAVES, VOICES: VOICES, DEFAULT: DEFAULT,
     LETTERS: LETTERS, SOLFEGE: SOLFEGE, NATURALS: NATURALS, PRESETS: PRESETS,

@@ -74,6 +74,9 @@
         ],
         "text/plain": [
           ".txt"
+        ],
+        "application/x-oros-mind": [
+          ".orosmind"
         ]
       }
     }
@@ -100,7 +103,9 @@
             ".md",
             ".markdown",
             "text/plain",
-            ".txt"
+            ".txt",
+            "application/x-oros-mind",
+            ".orosmind"
           ]
         }
       ]
