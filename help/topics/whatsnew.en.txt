@@ -1,6 +1,10 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.47.00
+- New app orOS Converter: turn many Word, OpenDocument, Excel, CSV, Markdown and web-page files at once into orOS files, as one .zip, into a folder in Files, or one by one. Files has "Convert to orOS" for the files it can take.
+- Spreadsheet, Budget and Certificates: Greek letters in Excel and OpenDocument files now come in correctly, and Spreadsheet opens old binary .xls files.
+
 ## Version 2.46.00
 - Studio, Montage, Photo Lab and Pixel Avatar now save their own open orOS file with all the audio, video and pictures inside, and open it again.
 - Big projects of several GB save and open without filling the memory.

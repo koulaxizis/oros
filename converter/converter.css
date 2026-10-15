@@ -152,7 +152,7 @@ h2 { font-size: 13px; font-weight: 800; letter-spacing: 0.02em; color: var(--tex
   cursor: pointer;
   font-size: 13.5px;
 }
-.opt input { accent-color: var(--accent); flex-shrink: 0; width: 16px; height: 16px; }
+.opt input { accent-color: var(--accent); flex-shrink: 0; width: 24px; height: 24px; margin: 0; }
 .opt:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
 .opt:has(input:disabled) { opacity: 0.45; cursor: default; }
 .opt:focus-within { outline: 2px solid var(--accent); outline-offset: 1px; }

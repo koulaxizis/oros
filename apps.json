@@ -259,6 +259,14 @@
       "type": "internal"
     },
     {
+      "id": "converter",
+      "name": "orOS Converter",
+      "category": "Office",
+      "icon": "converter",
+      "url": "converter/",
+      "type": "internal"
+    },
+    {
       "id": "quote",
       "name": "Quote",
       "category": "Business",
