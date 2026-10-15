@@ -467,6 +467,11 @@ dialog.mm-dlg {
 }
 dialog.mm-dlg.wide { width: min(460px, calc(100vw - 32px)); }
 dialog.mm-dlg::backdrop { background: rgba(0, 0, 0, 0.55); }
+/* import preview (file text only through textContent) */
+.imp-line { margin: 0 0 6px; font-size: 14px; overflow-wrap: anywhere; }
+.imp-to { font-weight: 800; }
+.imp-list { margin: 8px 0 6px 18px; padding: 0; font-size: 14px; line-height: 1.55; overflow-wrap: anywhere; }
+.imp-body .hint { overflow-wrap: anywhere; }
 .dlg-title {
   font-size: 13px;
   font-weight: 800;

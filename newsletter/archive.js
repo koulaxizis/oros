@@ -204,7 +204,9 @@
     }).filter(Boolean);
   }
 
-  var api = { htmlToMd: htmlToMd, parseFile: parseFile, supported: supported, toIssues: toIssues, date: date };
+  // One issue's text → { subj, date, md } (or null): the same reading
+  // and cleaning every format here uses (import2.js reuses it).
+  var api = { htmlToMd: htmlToMd, parseFile: parseFile, supported: supported, toIssues: toIssues, date: date, item: item };
   root.OrosNewsletterArchive = api;
   if (typeof module === "object" && module.exports) module.exports = api;
 })(typeof window !== "undefined" ? window : globalThis);

@@ -142,12 +142,17 @@
       "rss.made": "Draft made from the feed", "rss.fail": "Couldn't read the feed ({e})", "rss.full": "You have the most feeds allowed",
       "rss.badUrl": "Type a feed address that starts with https://", "rss.next": "next {t}", "rss.off": "off", "rss.otherDev": "runs on another device",
       "wd.0": "Sunday", "wd.1": "Monday", "wd.2": "Tuesday", "wd.3": "Wednesday", "wd.4": "Thursday", "wd.5": "Friday", "wd.6": "Saturday",
-      "set.archive": "Past issues", "set.archiveText": "Bring in the issues you sent with Buttondown, MailerLite or another service: a .zip export, or Markdown, HTML, CSV or JSON files. Pictures stay at their web address.",
+      "set.archive": "Past issues", "set.archiveText": "Bring in the issues you sent with Substack, Buttondown, MailerLite or another service: a .zip export, or Markdown, HTML, CSV or JSON files. Pictures stay at their web address.",
       "set.archiveBtn": "Import past issues…",
       "arc.title": "Import past issues", "arc.none": "No issues found in this file.", "arc.found": "Found {n} issues.", "arc.list": "Into list",
       "arc.mode": "Import as", "arc.modeHint": "Past issues show among the issues as already sent, ready to save as a web page or copy; nobody gets an e-mail.",
       "arc.archive": "Past issues (already sent)", "arc.drafts": "Drafts", "arc.do": "Import {n}", "arc.done": "Imported {n} issues",
       "arc.full": "Imported {n} issues: there is no room for more", "arc.bad": "This file can't be read",
+      "i2.title": "Import from {s}", "i2.hint": "Subscribers join the list you pick, with the basis you choose. Posts become past issues (already sent, nobody gets an e-mail) or drafts; pictures stay at their web address.",
+      "i2.subs": "Subscribers: {n}", "i2.pSkip": "{n} left out: unsubscribed, not confirmed or no longer active there.",
+      "i2.iss": "Past issues: {n}", "i2.iSkip": "{n} drafts or unpublished posts left out", "i2.iNoBody": "{n} without text",
+      "i2.issSum": "{n} new issues · {h} already here", "i2.full": "no room for the rest",
+      "i2.do": "Import", "i2.done": "Imported {s} subscribers and {i} issues",
       "iss.imported": "imported", "vw.imported": "Imported from another service; sent {t}.",
       "err.nofeed": "it isn't a feed", "err.nofeeds": "the feed reader isn't loaded",
       "vw.started": "Started {t}", "vw.done": "Finished {t}", "vw.sent": "Sent", "vw.failed": "Failed", "vw.left": "Left",
@@ -334,12 +339,17 @@
       "rss.made": "Έγινε πρόχειρο από τη ροή", "rss.fail": "Δεν διαβάστηκε η ροή ({e})", "rss.full": "Έχεις τις περισσότερες ροές που επιτρέπονται",
       "rss.badUrl": "Γράψε διεύθυνση ροής που αρχίζει με https://", "rss.next": "επόμενο {t}", "rss.off": "ανενεργό", "rss.otherDev": "τρέχει σε άλλη συσκευή",
       "wd.0": "Κυριακή", "wd.1": "Δευτέρα", "wd.2": "Τρίτη", "wd.3": "Τετάρτη", "wd.4": "Πέμπτη", "wd.5": "Παρασκευή", "wd.6": "Σάββατο",
-      "set.archive": "Παλιά τεύχη", "set.archiveText": "Φέρε τα τεύχη που έστειλες με το Buttondown, το MailerLite ή άλλη υπηρεσία: ένα .zip εξαγωγής ή αρχεία Markdown, HTML, CSV ή JSON. Οι εικόνες μένουν στη διεύθυνσή τους στο διαδίκτυο.",
+      "set.archive": "Παλιά τεύχη", "set.archiveText": "Φέρε τα τεύχη που έστειλες με το Substack, το Buttondown, το MailerLite ή άλλη υπηρεσία: ένα .zip εξαγωγής ή αρχεία Markdown, HTML, CSV ή JSON. Οι εικόνες μένουν στη διεύθυνσή τους στο διαδίκτυο.",
       "set.archiveBtn": "Εισαγωγή παλιών τευχών…",
       "arc.title": "Εισαγωγή παλιών τευχών", "arc.none": "Δεν βρέθηκαν τεύχη σε αυτό το αρχείο.", "arc.found": "Βρέθηκαν {n} τεύχη.", "arc.list": "Στη λίστα",
       "arc.mode": "Εισαγωγή ως", "arc.modeHint": "Τα παλιά τεύχη φαίνονται στα τεύχη ως ήδη σταλμένα, έτοιμα για αποθήκευση ως ιστοσελίδα ή αντιγραφή· δεν στέλνεται κανένα email.",
       "arc.archive": "Παλιά τεύχη (ήδη σταλμένα)", "arc.drafts": "Πρόχειρα", "arc.do": "Εισαγωγή {n}", "arc.done": "Εισήχθησαν {n} τεύχη",
       "arc.full": "Εισήχθησαν {n} τεύχη: δεν χωράνε άλλα", "arc.bad": "Αυτό το αρχείο δεν διαβάζεται",
+      "i2.title": "Εισαγωγή από {s}", "i2.hint": "Οι συνδρομητές μπαίνουν στη λίστα που διαλέγεις, με τη βάση που ορίζεις. Οι αναρτήσεις γίνονται παλιά τεύχη (ήδη σταλμένα, δεν φεύγει κανένα email) ή πρόχειρα· οι εικόνες μένουν στη διεύθυνσή τους στο διαδίκτυο.",
+      "i2.subs": "Συνδρομητές: {n}", "i2.pSkip": "{n} έμειναν έξω: διαγράφηκαν, δεν επιβεβαίωσαν ή δεν είναι πια ενεργοί εκεί.",
+      "i2.iss": "Παλιά τεύχη: {n}", "i2.iSkip": "{n} πρόχειρα ή αδημοσίευτα έμειναν έξω", "i2.iNoBody": "{n} χωρίς κείμενο",
+      "i2.issSum": "{n} νέα τεύχη · {h} υπάρχουν ήδη", "i2.full": "δεν χωράνε τα υπόλοιπα",
+      "i2.do": "Εισαγωγή", "i2.done": "Εισήχθησαν {s} συνδρομητές και {i} τεύχη",
       "iss.imported": "εισαγωγή", "vw.imported": "Εισαγωγή από άλλη υπηρεσία· στάλθηκε {t}.",
       "err.nofeed": "δεν είναι ροή", "err.nofeeds": "ο αναγνώστης ροών δεν φορτώθηκε",
       "vw.started": "Ξεκίνησε {t}", "vw.done": "Ολοκληρώθηκε {t}", "vw.sent": "Στάλθηκαν", "vw.failed": "Απέτυχαν", "vw.left": "Απομένουν",
@@ -2437,14 +2447,18 @@
              "oros-newsletter-" + C.slug(l.name) + ".csv", "text/csv", ".csv", "CSV");
   }
   function importCsv() {
-    var host = dialogHost(), acc = ".csv,text/csv,text/plain";
+    var host = dialogHost(), acc = ".csv,.zip,text/csv,text/plain,application/zip";
     var pick = host && typeof host.openFile === "function" ? host.openFile(acc) : localPickFile(acc);
     pick.then(function (file) {
       if (!file) return;
-      if (file.size > 5 * 1024 * 1024) { showToast(t("toast.noCsv")); return; }
-      return file.text().then(function (text) {
-        var r = C.peopleFromRows(C.parseCsv(text));
-        importDialog(r.people, r.bad, "csv", "consent");
+      // a Substack / Buttondown export first (import2.js), else a plain CSV
+      return tryImport2(file, "subs").then(function (done) {
+        if (done) return;
+        if (file.size > 5 * 1024 * 1024 || /\.zip$/i.test(file.name || "")) { showToast(t("toast.noCsv")); return; }
+        return file.text().then(function (text) {
+          var r = C.peopleFromRows(C.parseCsv(text));
+          importDialog(r.people, r.bad, "csv", "consent");
+        });
       });
     })["catch"](function () { showToast(t("toast.noCsv")); });
   }
@@ -2691,24 +2705,27 @@
     pick.then(function (file) {
       if (!file) return;
       if (file.size > 60 * 1024 * 1024) throw new Error("big");
-      var A = window.OrosNewsletterArchive;
-      if (/\.zip$/i.test(file.name)) {
-        return file.arrayBuffer().then(function (buf) {
-          var z = window.AtelierZip.open(new Uint8Array(buf));
-          var names = z.names.filter(A.supported).slice(0, 2000);
-          var items = [];
-          return names.reduce(function (p, n) {
-            return p.then(function () { return z.text(n, 5 * 1024 * 1024); }).then(function (txt) {
-              items = items.concat(A.parseFile(n, txt));
-            }, function () {});
-          }, Promise.resolve()).then(function () { return items; });
-        });
-      }
-      if (!A.supported(file.name) || file.size > 5 * 1024 * 1024) throw new Error("type");
-      return file.text().then(function (txt) { return A.parseFile(file.name, txt); });
+      return tryImport2(file, "issues").then(function (done) { return done ? null : readArchive(file); });
     }).then(function (items) {
       if (items) archiveDialog(items);
     })["catch"](function () { showToast(t("arc.bad")); });
+  }
+  function readArchive(file) {
+    var A = window.OrosNewsletterArchive;
+    if (/\.zip$/i.test(file.name)) {
+      return file.arrayBuffer().then(function (buf) {
+        var z = window.AtelierZip.open(new Uint8Array(buf));
+        var names = z.names.filter(A.supported).slice(0, 2000);
+        var items = [];
+        return names.reduce(function (p, n) {
+          return p.then(function () { return z.text(n, 5 * 1024 * 1024); }).then(function (txt) {
+            items = items.concat(A.parseFile(n, txt));
+          }, function () {});
+        }, Promise.resolve()).then(function () { return items; });
+      });
+    }
+    if (!A.supported(file.name) || file.size > 5 * 1024 * 1024) throw new Error("type");
+    return file.text().then(function (txt) { return A.parseFile(file.name, txt); });
   }
   function archiveDialog(items) {
     var dlg = makeDialog("nl-archive", t("arc.title"), true);
@@ -2753,6 +2770,112 @@
       showToast(t(full ? "arc.full" : "arc.done", { n: xs.length }));
     });
     openDialog(dlg, listSel);
+  }
+
+  // ---------- 15d. Substack and Buttondown exports (import2.js) ----------
+  // Both "Import CSV" and "Import past issues…" try these first: a file
+  // import2.js claims opens one preview (subscribers and past issues
+  // side by side); anything else goes the old way. Subscribers pass
+  // through core.planImport, the same rules as every other import.
+  // ONE write (saveNow: one merge, one dirty mark) and an Undo that
+  // writes newer tombstones, so another device drops them too.
+  var I2_SRC = { substack: "Substack", buttondown: "Buttondown" };
+  function tryImport2(file) {
+    var I2 = window.OrosNewsletterImport, K = window.OrosImportKit;
+    if (!I2 || !K || !file) return Promise.resolve(false);
+    return K.readFile(file, I2.MAX_FILE).then(function (r) { return I2.read(r.name, r.bytes); }).then(function (res) {
+      if (!res) return false;
+      import2Dialog(res);
+      return true;
+    });
+  }
+  function import2Dialog(res) {
+    var I2 = window.OrosNewsletterImport;
+    var lists = C.live(data.lists);
+    if (!lists.length) { showToast(t("lists.none")); return; }
+    var dlg = makeDialog("nl-import2", t("i2.title", { s: I2_SRC[res.source] || "" }), true);
+    dlg.appendChild(el("p", "hint", t("i2.hint")));
+    var f = {};
+    f.list = sel(lists.map(function (l) { return [l.id, l.name]; }), (curList() || lists[0]).id);
+    dlg.appendChild(field(t("arc.list"), f.list));
+    function part(on, show, label) {
+      var w = el("label", "check i2-part");
+      var cb = el("input");
+      cb.type = "checkbox";
+      cb.checked = on;
+      cb.disabled = !on;
+      w.appendChild(cb);
+      w.appendChild(el("span", "", label));
+      w.hidden = !show;
+      dlg.appendChild(w);
+      return cb;
+    }
+    // subscribers
+    f.subs = part(res.people.length > 0, res.people.length + res.pSkip + res.pBad > 0, t("i2.subs", { n: res.people.length }));
+    if (res.pSkip) dlg.appendChild(el("p", "hint", t("i2.pSkip", { n: res.pSkip })));
+    f.basis = sel(C.BASES.map(function (b) { return [b, t("basis." + b)]; }), "consent");
+    var bh = el("p", "hint", "");
+    var bw = field(t("imp.basis"), f.basis);
+    bw.appendChild(bh);
+    bw.hidden = !res.people.length;
+    dlg.appendChild(bw);
+    // past issues
+    var rg = I2.range(res.items);
+    var day = function (ms) { try { return new Date(ms).toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB"); } catch (e) { return ""; } };
+    var span = rg.from ? " · " + day(rg.from) + (day(rg.to) !== day(rg.from) ? " – " + day(rg.to) : "") : "";
+    f.iss = part(res.items.length > 0, res.items.length + res.iSkip + res.iNoBody > 0, t("i2.iss", { n: res.items.length }) + span);
+    var gone = [];
+    if (res.iSkip) gone.push(t("i2.iSkip", { n: res.iSkip }));
+    if (res.iNoBody) gone.push(t("i2.iNoBody", { n: res.iNoBody }));
+    if (gone.length) dlg.appendChild(el("p", "hint", gone.join(" · ")));
+    f.mode = sel([["archive", t("arc.archive")], ["draft", t("arc.drafts")]], "archive");
+    var mw = field(t("arc.mode"), f.mode, t("arc.modeHint"));
+    mw.hidden = !res.items.length;
+    dlg.appendChild(mw);
+    var sum = el("p", "dlg-text i2-sum");
+    dlg.appendChild(sum);
+    var plan = null, okBtn = null;
+    var update = function () {
+      bh.textContent = t("basis." + f.basis.value + "Hint");
+      plan = I2.plan(data, f.list.value, res, { basis: f.basis.value, mode: f.mode.value, subs: f.subs.checked, issues: f.iss.checked });
+      var lines = [];
+      if (f.subs.checked) {
+        var p = plan.subs;
+        lines.push(t("imp.sum", { a: p.add.length, d: p.dup, l: p.left, s: p.supp, b: p.bad, o: p.over }));
+      }
+      if (f.iss.checked) lines.push(t("i2.issSum", { n: plan.issues.length, h: plan.have }) + (plan.full ? " · " + t("i2.full") : ""));
+      sum.textContent = lines.join("\n");
+      if (okBtn) okBtn.disabled = !plan.subs.add.length && !plan.issues.length;
+    };
+    [f.list, f.basis, f.mode, f.subs, f.iss].forEach(function (c) { c.addEventListener("change", update); });
+    var acts = actionsRow(dlg, [], t("i2.do"), function () {
+      update();
+      if (!plan.subs.add.length && !plan.issues.length) return;
+      var sIds = [], iIds = [];
+      plan.subs.add.forEach(function (x) { sIds.push(x.id); replaceIn(data.subs, x); });
+      plan.issues.forEach(function (x) { x.m = stamp(0); iIds.push(x.id); replaceIn(data.issues, x); });
+      saveNow();
+      dlg.close();
+      prefs.list = f.list.value;
+      savePrefs();
+      renderAll();
+      undoToast(t("i2.done", { s: sIds.length, i: iIds.length }), function () { import2Undo(sIds, iIds); });
+      if (sIds.length && f.basis.value === "optin") kick();
+    });
+    okBtn = acts.lastChild;
+    update();
+    openDialog(dlg, f.list);
+  }
+  function import2Undo(sIds, iIds) {
+    [["subs", sIds], ["issues", iIds]].forEach(function (pr) {
+      pr[1].forEach(function (id) {
+        var cur = null;
+        data[pr[0]].forEach(function (x) { if (x.id === id) cur = x; });
+        if (cur && !cur.del) replaceIn(data[pr[0]], { id: id, m: stamp(cur.m), del: 1 });
+      });
+    });
+    saveNow();
+    renderAll();
   }
 
   // ---------- 16. Settings ----------

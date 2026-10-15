@@ -7,7 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Crossword · orOS</title>
 
-  <link rel="stylesheet" href="crossword.css?v=2.25.00">
+  <link rel="stylesheet" href="crossword.css?v=2.42.00">
 
 </head>
 <body>
@@ -32,6 +32,7 @@
     <div class="tb-row" id="tb-b">
       <button type="button" class="txt-btn" id="theme-btn"></button>
       <span class="spacer"></span>
+      <button type="button" class="icon-btn" id="lib-btn"></button>
       <button type="button" class="icon-btn" id="check-btn"></button>
       <button type="button" class="icon-btn" id="new-btn"></button>
       <button type="button" class="icon-btn" id="stats-btn"></button>
@@ -44,6 +45,9 @@
     <span id="count"></span>
     <span id="clock"><span id="clock-ico"></span><strong id="time">0:00</strong></span>
   </div>
+
+  <!-- Imported crosswords: the clue of the current word -->
+  <div id="clue" hidden></div>
 
   <main id="play">
     <div id="grid-wrap">
@@ -61,10 +65,12 @@
   <div id="toast" role="status"></div>
 
   <!-- Word lists are shared with Word Search (precached there) -->
-  <script src="../wordsearch/words-en.js?v=2.25.00"></script>
-  <script src="../wordsearch/words-el.js?v=2.25.00"></script>
-  <script src="../gamekit/daily.js?v=2.25.00"></script>
-  <script src="crossword.js?v=2.25.00"></script>
+  <script src="../wordsearch/words-en.js?v=2.42.00"></script>
+  <script src="../wordsearch/words-el.js?v=2.42.00"></script>
+  <script src="../gamekit/daily.js?v=2.42.00"></script>
+  <script src="../importkit.js?v=2.42.00"></script>
+  <script src="import.js?v=2.42.00"></script>
+  <script src="crossword.js?v=2.42.00"></script>
 
 </body>
 </html>

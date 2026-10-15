@@ -28,7 +28,7 @@ const S = (() => {
   ["cmpStr", "shuffled", "solveGrid", "emptyGrid", "fullGrid", "carve", "candidates", "logicTier",
    "levelDistance", "generate", "hintCell", "killerTables", "cageAllowed", "solveKiller", "makeCages",
    "makeKiller", "normDay", "dayKeyOk", "dayBetter", "normCell", "normRow", "joinCell", "joinRows",
-   "mergeSudoku", "validCages"].forEach((name) => {
+   "mergeSudoku", "libJoin", "validCages"].forEach((name) => {
     const i = SRC.indexOf("  function " + name + "(");
     if (i < 0) throw new Error("missing function " + name);
     parts.push(SRC.slice(i, SRC.indexOf("\n  }\n", i) + 4));

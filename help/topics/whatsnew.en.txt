@@ -1,6 +1,16 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.42.00
+- Contacts: the new Pictures button sets every contact to initials or an 8-bit avatar at once, with Undo.
+- Installed orOS apps update again: since 2.26.00 they could show the update notice but keep running older code. Open each app once to get its latest version.
+
+## Version 2.41.00
+- Eleven more apps import from other apps: Pixel Avatar (Aseprite, Piskel, palettes), Photo Lab (Krita), Slides (Impress, Markdown decks), Stock (Shopify, Square), Timesheet (Kimai, Tempo, Toggl/Clockify/Harvest Excel), Storage (Homebox, Sortly), Newsletter (Substack, Buttondown), Travel (Polarsteps, TripIt), Crossword (.puz, .ipuz), Sudoku and Assistant (ChatGPT and Claude exports), with a preview and Undo.
+
+## Version 2.40.00
+- Meal Planner, Workouts, Baby, Micro-Zen, Score Keeper and Family Tree import from other apps: Mela, Recipe Keeper, Cooklang, Strong, Hevy, FitNotes, Garmin and Strava activity files, Huckleberry, Baby Buddy, Insight Timer, BG Stats and Gramps, with a preview and Undo.
+
 ## Version 2.39.00
 - Media Shelf, Bookmarks, Maps, Radio and Library import from other apps: StoryGraph, IMDb, Trakt, MyAnimeList, Discogs, BoardGameGeek, Instapaper, wallabag, browser bookmarks, KMZ, Google Takeout places and Timeline, TCX, FIT, M3U/PLS playlists, Kindle clippings, KOReader and Readwise, with a preview and Undo.
 

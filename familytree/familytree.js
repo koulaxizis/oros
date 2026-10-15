@@ -64,7 +64,7 @@
       "trees.newTitle": "New tree", "trees.renameTitle": "Rename tree",
       "menu.exportImg": "Export image (SVG, PNG, print)…", "menu.exportJson": "Back up this tree (JSON)",
       "menu.exportAll": "Back up all trees (JSON)", "menu.import": "Import JSON…",
-      "menu.gedImport": "Import GEDCOM…", "menu.gedExport": "Export GEDCOM…",
+      "menu.gedImport": "Import GEDCOM or Gramps…", "menu.gedExport": "Export GEDCOM…",
       "menu.contacts": "Build from Contacts…", "menu.gens": "Generations…", "menu.add": "Add a person",
       "card.close": "Close", "card.edit": "Edit", "card.focus": "Centre here", "card.contact": "Open in Contacts",
       "card.refresh": "Fill in from the contact", "card.del": "Delete",
@@ -112,6 +112,10 @@
       "ged.download": "Download", "ged.newTree": "It comes in as a new tree: “{name}”.",
       "ged.err.size": "The file is too big (15 MB at most)", "ged.err.format": "This is not a GEDCOM file",
       "ged.err.empty": "There are no people in this GEDCOM file",
+      "imp.have": "{n} people already here stay as they are",
+      "gramps.into": "It goes into the tree “{name}”, where this file came in before.",
+      "gramps.err.format": "This is not a Gramps XML file", "gramps.err.gzip": "This Gramps file could not be unpacked",
+      "gramps.err.empty": "There are no people in this Gramps file",
       "toast.undo": "Undo", "toast.deleted": "{name} deleted", "toast.treeDeleted": "Tree “{name}” deleted",
       "toast.save": "Could not save: storage is full", "toast.exported": "Exported", "toast.saved": "Saved to Files",
       "toast.noFiles": "Files is not available here", "toast.twoParents": "{name} already has two parents",
@@ -135,7 +139,7 @@
       "trees.newTitle": "Νέο δέντρο", "trees.renameTitle": "Μετονομασία δέντρου",
       "menu.exportImg": "Εξαγωγή εικόνας (SVG, PNG, εκτύπωση)…", "menu.exportJson": "Αντίγραφο αυτού του δέντρου (JSON)",
       "menu.exportAll": "Αντίγραφο όλων των δέντρων (JSON)", "menu.import": "Εισαγωγή JSON…",
-      "menu.gedImport": "Εισαγωγή GEDCOM…", "menu.gedExport": "Εξαγωγή GEDCOM…",
+      "menu.gedImport": "Εισαγωγή GEDCOM ή Gramps…", "menu.gedExport": "Εξαγωγή GEDCOM…",
       "menu.contacts": "Χτίσιμο από τις Επαφές…", "menu.gens": "Γενιές…", "menu.add": "Προσθήκη προσώπου",
       "card.close": "Κλείσιμο", "card.edit": "Επεξεργασία", "card.focus": "Κέντρο εδώ", "card.contact": "Άνοιγμα στις Επαφές",
       "card.refresh": "Συμπλήρωση από την επαφή", "card.del": "Διαγραφή",
@@ -183,6 +187,10 @@
       "ged.download": "Λήψη", "ged.newTree": "Θα μπει ως νέο δέντρο: «{name}».",
       "ged.err.size": "Το αρχείο είναι πολύ μεγάλο (έως 15 MB)", "ged.err.format": "Δεν είναι αρχείο GEDCOM",
       "ged.err.empty": "Το αρχείο GEDCOM δεν έχει πρόσωπα",
+      "imp.have": "{n} πρόσωπα που υπάρχουν ήδη μένουν όπως είναι",
+      "gramps.into": "Θα μπει στο δέντρο «{name}», όπου είχε μπει και πριν αυτό το αρχείο.",
+      "gramps.err.format": "Δεν είναι αρχείο Gramps XML", "gramps.err.gzip": "Το αρχείο Gramps δεν αποσυμπιέστηκε",
+      "gramps.err.empty": "Το αρχείο Gramps δεν έχει πρόσωπα",
       "toast.undo": "Αναίρεση", "toast.deleted": "Διαγράφηκε: {name}", "toast.treeDeleted": "Το δέντρο «{name}» διαγράφηκε",
       "toast.save": "Δεν αποθηκεύτηκε: ο χώρος είναι γεμάτος", "toast.exported": "Η εξαγωγή έγινε", "toast.saved": "Αποθηκεύτηκε στα Αρχεία",
       "toast.noFiles": "Τα Αρχεία δεν είναι διαθέσιμα εδώ", "toast.twoParents": "Ο/η {name} έχει ήδη δύο γονείς",
@@ -1683,7 +1691,8 @@
     if (s.dropped) dlg.appendChild(el("p", "dlg-sub", t("imp.dropped", { n: s.dropped })));
     if (s.refs) dlg.appendChild(el("p", "dlg-sub", t("imp.refs", { n: s.refs })));
     if (s.cycles) dlg.appendChild(el("p", "dlg-sub", t("imp.cycles", { n: s.cycles })));
-    dlg.appendChild(el("p", "dlg-sub", ged ? t("ged.newTree", { name: r.data.trees[0].name }) : t("imp.merge")));
+    if (s.have) dlg.appendChild(el("p", "dlg-sub", t("imp.have", { n: s.have })));
+    dlg.appendChild(el("p", "dlg-sub", ged ? t(r.into ? "gramps.into" : "ged.newTree", { name: r.data.trees[0].name }) : t("imp.merge")));
     var acts = el("div", "dlg-actions");
     acts.appendChild(textBtn("dlg-btn", t("ed.cancel"), function () { dlg.close(); }));
     acts.appendChild(textBtn("dlg-btn primary", t("imp.go"), function () { dlg.close(); applyImport(r.data, ged); }));
@@ -1720,8 +1729,11 @@
   }
 
   // GEDCOM: a file always comes in as a new tree (no photos in it).
+  // Gramps XML (.gramps = gzipped, or .xml; gramps.js, OrosGramps)
+  // takes the same preview / merge / Undo; its ids are stable, so a
+  // second import goes into the same tree and adds only what is new.
   function importGedcom() {
-    var dlg = dialogHost(), accept = ".ged,.gedcom";
+    var dlg = dialogHost(), accept = ".ged,.gedcom,.gramps,.xml";
     var pick = dlg && typeof dlg.openFile === "function" ? dlg.openFile(accept) : localPickFile(accept);
     gedcomFromFile(pick);
   }
@@ -1731,6 +1743,8 @@
       if (!file) return;
       if (file.size > FT.GED_MAX) { showToast(t("ged.err.size")); return; }
       return file.arrayBuffer().then(function (buf) {
+        var G = window.OrosGramps;
+        if (G && G.sniff(new Uint8Array(buf), file.name)) return grampsFromBytes(new Uint8Array(buf), file.name);
         var name = String(file.name || "").replace(/\.(ged|gedcom)$/i, "");
         var r = FT.parseGedcom(FT.decodeGedcom(buf), data, { name: name, now: stamp(0), newId: newId });
         if (!r.ok) { showToast(t(r.err === "toolarge" ? "imp.err.toolarge" : "ged.err." + r.err)); return; }
@@ -1742,6 +1756,26 @@
         previewImport(r, true);
       });
     }).catch(function () { showToast(t("ged.err.format")); });
+  }
+  function grampsFromBytes(bytes, fileName) {
+    var G = window.OrosGramps;
+    return G.decode(bytes).then(function (text) {
+      var name = String(fileName || "").replace(/\.(gramps|xml)$/i, "");
+      var r = G.parse(text, data, { name: name, now: stamp(0), newId: newId });
+      if (!r.ok) {
+        showToast(t(r.err === "toolarge" ? "imp.err.toolarge" : (r.err === "size" ? "ged.err.size" : "gramps.err." + r.err)));
+        return;
+      }
+      if (!r.data.people.length && !r.data.unions.length) { showToast(t("imp.nothing")); return; }
+      if (!r.into && data.trees.length >= FT.MAX_TREES) { showToast(t("toast.maxTrees", { n: FT.MAX_TREES })); return; }
+      if (data.people.length + r.data.people.length > FT.MAX_PEOPLE) {
+        showToast(t("toast.maxPeople", { n: FT.MAX_PEOPLE }));
+        return;
+      }
+      previewImport(r, true);
+    }, function (e) {
+      showToast(t(e && e.message === "toobig" ? "ged.err.size" : "gramps.err.gzip"));
+    });
   }
   function exportGedcom() {
     var tr = curTree();

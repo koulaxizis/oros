@@ -19,6 +19,10 @@
 //     time (puzzles without hints only, and when), puzzles solved and
 //     puzzles solved without hints, as per-device rows (each device
 //     only grows its own row; merge = per-row join) + a reset stamp br
+//   - imported puzzles (import.js, window.OrosSudokuImport): data.lib in
+//     the same slice, one entry per puzzle with its own best time; a
+//     tombstone stamp hides one (Undo of an import). An imported puzzle
+//     plays like any other but never touches the level records.
 //   - device-local (R10): oros-sudoku-prefs (level, options),
 //     oros-sudoku-session (the puzzle in progress), oros-sudoku-device
 //     (row id), oros-sudoku-sfx (sound on/off)
@@ -190,7 +194,52 @@
       "toast.done": "Solved: start a new puzzle",
       "toast.hint": "Hint used: this puzzle sets no time record",
       "toast.making": "Still making the puzzle…",
-      "toast.save": "Could not save: storage is full"
+      "toast.save": "Could not save: storage is full",
+      "btn.imp": "Import puzzles",
+      "lv.i": "Imported",
+      "turn.imp": "Imported: {n} cells to go",
+      "lib.title": "Imported puzzles",
+      "lib.paste": "Paste one or more puzzles: 81 digits each (0 or . for a blank), or a 9×9 grid",
+      "lib.check": "Check",
+      "lib.file": "Open a file…",
+      "lib.formats": "Plain text, .sdk (SadMan) and .ss (Simple Sudoku) files: up to 500 puzzles at a time.",
+      "lib.empty": "No imported puzzles yet.",
+      "lib.list": "Your imported puzzles ({n})",
+      "lib.row": "{g} givens",
+      "lib.best": "best {t}",
+      "lib.solved": "solved",
+      "lib.play": "Play",
+      "lib.playLabel": "Play puzzle {k}",
+      "lib.next": "Next unsolved",
+      "lib.close": "Close",
+      "imp.title": "Import · {s}",
+      "imp.pasted": "Pasted text",
+      "imp.found": "Puzzles found",
+      "imp.new": "To import",
+      "imp.multi": "Of these, not unique",
+      "imp.have": "Already imported",
+      "imp.dup": "Repeated in this text",
+      "imp.bad": "Skipped: not valid",
+      "imp.more": "Only the first {n} puzzles are read.",
+      "imp.st.multi": "Puzzle {k} (line {l}): has {n} solutions: imported, any valid filling counts",
+      "imp.st.multiPlus": "Puzzle {k} (line {l}): has at least {n} solutions: imported, any valid filling counts",
+      "imp.st.conflict": "Puzzle {k} (line {l}): the same digit twice in a row, column or box",
+      "imp.st.none": "Puzzle {k} (line {l}): has no solution",
+      "imp.st.slow": "Puzzle {k} (line {l}): too hard to check, skipped",
+      "imp.st.moreIssues": "…and {n} more",
+      "imp.note": "Imported puzzles keep their own best time and do not change the level records.",
+      "imp.go": "Import {n}",
+      "imp.cancel": "Cancel",
+      "imp.done": "Imported {n} puzzles",
+      "imp.done1": "Imported 1 puzzle",
+      "imp.undone": "Import undone",
+      "imp.nothing": "No puzzle found: paste 81 digits or a 9×9 grid",
+      "imp.noneNew": "Nothing new to import",
+      "imp.err.read": "Could not read this file",
+      "imp.err.big": "This file is too large to import",
+      "imp.full": "The list is full: {n} imported puzzles at most",
+      "res.nextImp": "Next imported",
+      "lib.broken": "This puzzle cannot be solved"
     },
     el: {
       "lv.e": "Εύκολο", "lv.m": "Μέτριο", "lv.h": "Δύσκολο", "lv.x": "Πολύ δύσκολο", "lv.k": "Κίλερ",
@@ -274,7 +323,52 @@
       "toast.done": "Λύθηκε: ξεκίνα νέο σουντόκου",
       "toast.hint": "Πήρες βοήθεια: αυτό το σουντόκου δεν γράφει ρεκόρ χρόνου",
       "toast.making": "Το σουντόκου φτιάχνεται ακόμα…",
-      "toast.save": "Δεν αποθηκεύτηκε: ο χώρος είναι γεμάτος"
+      "toast.save": "Δεν αποθηκεύτηκε: ο χώρος είναι γεμάτος",
+      "btn.imp": "Εισαγωγή σουντόκου",
+      "lv.i": "Από εισαγωγή",
+      "turn.imp": "Από εισαγωγή: μένουν {n} κελιά",
+      "lib.title": "Σουντόκου από εισαγωγή",
+      "lib.paste": "Επικόλλησε ένα ή περισσότερα σουντόκου: 81 ψηφία το καθένα (0 ή . για κενό), ή πλέγμα 9×9",
+      "lib.check": "Έλεγχος",
+      "lib.file": "Άνοιγμα αρχείου…",
+      "lib.formats": "Απλό κείμενο, αρχεία .sdk (SadMan) και .ss (Simple Sudoku): έως 500 σουντόκου τη φορά.",
+      "lib.empty": "Δεν υπάρχουν ακόμα σουντόκου από εισαγωγή.",
+      "lib.list": "Τα σουντόκου σου από εισαγωγή ({n})",
+      "lib.row": "{g} δοσμένα",
+      "lib.best": "ρεκόρ {t}",
+      "lib.solved": "λυμένο",
+      "lib.play": "Παίξε",
+      "lib.playLabel": "Παίξε το σουντόκου {k}",
+      "lib.next": "Επόμενο άλυτο",
+      "lib.close": "Κλείσιμο",
+      "imp.title": "Εισαγωγή · {s}",
+      "imp.pasted": "Επικολλημένο κείμενο",
+      "imp.found": "Σουντόκου που βρέθηκαν",
+      "imp.new": "Για εισαγωγή",
+      "imp.multi": "Από αυτά, με πολλές λύσεις",
+      "imp.have": "Υπάρχουν ήδη",
+      "imp.dup": "Επαναλαμβάνονται στο κείμενο",
+      "imp.bad": "Παραλείπονται: άκυρα",
+      "imp.more": "Διαβάζονται μόνο τα πρώτα {n} σουντόκου.",
+      "imp.st.multi": "Σουντόκου {k} (γραμμή {l}): έχει {n} λύσεις: εισάγεται, μετράει κάθε σωστή συμπλήρωση",
+      "imp.st.multiPlus": "Σουντόκου {k} (γραμμή {l}): έχει τουλάχιστον {n} λύσεις: εισάγεται, μετράει κάθε σωστή συμπλήρωση",
+      "imp.st.conflict": "Σουντόκου {k} (γραμμή {l}): το ίδιο ψηφίο δύο φορές σε γραμμή, στήλη ή κουτί",
+      "imp.st.none": "Σουντόκου {k} (γραμμή {l}): δεν έχει λύση",
+      "imp.st.slow": "Σουντόκου {k} (γραμμή {l}): πολύ δύσκολο για έλεγχο, παραλείπεται",
+      "imp.st.moreIssues": "…και άλλα {n}",
+      "imp.note": "Τα σουντόκου από εισαγωγή κρατούν δικό τους καλύτερο χρόνο και δεν αλλάζουν τα ρεκόρ των επιπέδων.",
+      "imp.go": "Εισαγωγή {n}",
+      "imp.cancel": "Άκυρο",
+      "imp.done": "Εισήχθησαν {n} σουντόκου",
+      "imp.done1": "Εισήχθη 1 σουντόκου",
+      "imp.undone": "Η εισαγωγή αναιρέθηκε",
+      "imp.nothing": "Δεν βρέθηκε σουντόκου: επικόλλησε 81 ψηφία ή πλέγμα 9×9",
+      "imp.noneNew": "Τίποτα νέο για εισαγωγή",
+      "imp.err.read": "Δεν ήταν δυνατή η ανάγνωση του αρχείου",
+      "imp.err.big": "Το αρχείο είναι πολύ μεγάλο για εισαγωγή",
+      "imp.full": "Η λίστα γέμισε: έως {n} σουντόκου από εισαγωγή",
+      "res.nextImp": "Επόμενο από εισαγωγή",
+      "lib.broken": "Αυτό το σουντόκου δεν λύνεται"
     }
   };
 
@@ -808,8 +902,11 @@
   //   rows: { <deviceId>: { b: <epoch>,
   //                         s: { e|m|h|x|k: { t: best ms (0 = none), ts: when,
   //                                           n: solved, c: solved without hints } } } },
-  //   days: { "<day>": { b: <epoch>, t: ms, h: hints, m: boxes with a hint (9 bits) } }
+  //   days: { "<day>": { b: <epoch>, t: ms, h: hints, m: boxes with a hint (9 bits) } },
+  //   lib?: { "imp-…": { p, nm?, b, x, s, t } }     // imported puzzles (import.js)
   // }
+  // lib is only present when it holds something; its join lives in
+  // import.js (mergeLib) and ignores br (a reset clears records only).
   // days (since 1.0 of Wave 49; older data has none): one daily result
   // per calendar day (day 0 = 1 Jan 2026, gamekit/daily.js). A daily
   // puzzle is solved once overall: the newer epoch wins; equal epochs
@@ -905,7 +1002,18 @@
     });
     var sd = {};
     Object.keys(days).sort(function (x, y) { return x - y; }).forEach(function (k) { sd[k] = days[k]; });
-    return { ver: DATA_VER, br: br, rows: sorted, days: sd };
+    var out = { ver: DATA_VER, br: br, rows: sorted, days: sd };
+    var lib = libJoin(a.lib, b.lib);
+    if (lib) out.lib = lib;
+    return out;
+  }
+  // The imported puzzles' join (import.js). Without the module (it did
+  // not load) the library is carried over untouched, never dropped.
+  function libJoin(x, y) {
+    var m = typeof window !== "undefined" && window.OrosSudokuImport;
+    if (m) return m.mergeLib(x, y);
+    var keep = x && typeof x === "object" ? x : (y && typeof y === "object" ? y : null);
+    return keep && Object.keys(keep).length ? keep : null;
   }
 
   // Best time, solved and clean solves for a level, across every device.
@@ -1012,7 +1120,9 @@
   //          nt: [81 note masks], ms, hints, done, sel, notes (mode),
   //          hist: [[change…]…], fut: [[change…]…],
   //          day?: the daily puzzle's day number, hb?: boxes a hint filled
-  //          (9 bits, for the shared result), cg?, cs?: Killer cages }
+  //          (9 bits, for the shared result), cg?, cs?: Killer cages,
+  //          imp?: the library id of an imported puzzle, mu?: it has more
+  //          than one solution (any valid filling counts) }
   // change = [cell, old digit, old notes, new digit, new notes]
   var game = null;
 
@@ -1051,6 +1161,9 @@
     var check = solveGrid(sol, 1, null);
     if (check.n !== 1) return false;
     if (g.day !== undefined && (!isInt(g.day) || g.day < 0 || g.day > MAX_DAY || g.lv !== DAILY_LV)) return false;
+    if (g.imp !== undefined && (typeof g.imp !== "string" || !/^imp-[a-z0-9]{1,16}$/.test(g.imp) ||
+        g.day !== undefined || g.lv === "k")) return false;
+    if (g.mu !== undefined && (typeof g.mu !== "boolean" || g.imp === undefined)) return false;
     if (g.lv === "k") return validCages(g.cg, g.cs, sol);
     return true;
   }
@@ -1155,6 +1268,18 @@
     if (p.cg) { g.cg = p.cg; g.cs = p.cs; }
     return g;
   }
+  // An imported puzzle (a library entry of import.js) as a new game: its
+  // first solution, mu when it has more (or was not proven unique); lv
+  // = the level its techniques match, a label only (no records).
+  function freshImported(e) {
+    var r = IMPS ? IMPS.countSolutions(e.p, 2) : null;
+    if (!r || !r.sol) return null;
+    var v = [], nt = [], lt = logicTier(digitsOf(e.p));
+    for (var i = 0; i < 81; i++) { v.push(0); nt.push(0); }
+    return { lv: lt.solved ? ["e", "e", "m", "h", "x", "x"][Math.min(5, lt.tier)] : "x", puz: e.p, sol: r.sol,
+             v: v, nt: nt, ms: 0, hints: 0, done: false, sel: -1, notes: false, hist: [], fut: [], hb: 0,
+             imp: e.id, mu: r.n > 1 || r.cut };
+  }
   function filledCount() {
     var n = 0;
     for (var i = 0; i < 81; i++) if (PUZ[i] || game.v[i]) n++;
@@ -1170,16 +1295,19 @@
 
   // A puzzle in progress is never lost silently: Undo toast (R14). The
   // new puzzle is made after a paint, so "Making a puzzle…" shows.
-  function newGame(lv, day) {
+  // imp: a library entry { id, p } to play instead of a made puzzle.
+  function newGame(lv, day, imp) {
     if (making) { showToast(t("toast.making")); return; }
+    var ig = imp ? freshImported(imp) : null;
+    if (imp && !ig) { showToast(t("lib.broken")); return; }
     closeDialogs();
     var prev = inProgress() ? (saveSession(), copy(game)) : null;
-    if (day === undefined) { prefs.lv = lv; savePrefs(); }
+    if (day === undefined && !imp) { prefs.lv = lv; savePrefs(); }
     making = true;
     syncClock();
     renderAll();
     setTimeout(function () {
-      setGame(fresh(lv, day));
+      setGame(ig || fresh(lv, day));
       making = false;
       saveSession();
       syncClock();
@@ -1187,7 +1315,7 @@
       if (prev) {
         undoToast(t("toast.newgame"), function () {
           runFrom = 0;
-          if (prev.day === undefined) { prefs.lv = prev.lv; savePrefs(); }
+          if (prev.day === undefined && prev.imp === undefined) { prefs.lv = prev.lv; savePrefs(); }
           setGame(prev);
           saveSession();
           syncClock();
@@ -1306,9 +1434,23 @@
     renderAll();
   }
 
+  // Solved: the solution, or for a puzzle with more than one (mu) any
+  // full grid without a clash.
   function solved() {
-    for (var i = 0; i < 81; i++) if ((PUZ[i] || game.v[i]) !== SOL[i]) return false;
+    var i;
+    if (game.mu) {
+      for (i = 0; i < 81; i++) if (!(PUZ[i] || game.v[i]) || clashes(i)) return false;
+      return true;
+    }
+    for (i = 0; i < 81; i++) if ((PUZ[i] || game.v[i]) !== SOL[i]) return false;
     return true;
+  }
+  // Does cell i hold the same digit as one of its peers?
+  function clashes(i) {
+    var v = PUZ[i] || game.v[i];
+    if (!v) return false;
+    for (var j = 0; j < PEERS[i].length; j++) if ((PUZ[PEERS[i][j]] || game.v[PEERS[i][j]]) === v) return true;
+    return false;
   }
 
   function afterEdit() {
@@ -1322,7 +1464,8 @@
     game.done = true;
     game.notes = false;
     syncClock();
-    var rec = countSolve(game.lv, game.ms, game.hints > 0);
+    var rec = game.imp !== undefined ? countImported(game.imp, game.ms, game.hints > 0)
+      : countSolve(game.lv, game.ms, game.hints > 0);
     if (game.day !== undefined) countDaily(game.day, game.ms, game.hints, game.hb || 0);
     saveSession();
     renderAll();
@@ -1359,7 +1502,7 @@
   }
 
   function renderToolbar() {
-    var cur = game && !making ? (game.day !== undefined ? "" : game.lv) : prefs.lv;
+    var cur = game && !making ? (game.day !== undefined || game.imp !== undefined ? "" : game.lv) : prefs.lv;
     var db = $("daily-btn");
     if (db) {
       var due = !!DK && !data.days[today()];
@@ -1382,6 +1525,7 @@
   function renderStatus() {
     renderClock();
     var lv = making ? prefs.lv : game.lv, s = totals(lv);
+    if (!making && game.imp !== undefined) s = { t: impEntry(game.imp).t || 0 };
     $("best").textContent = s.t ? fmtTime(s.t) : "–";
     var msg, cls = "";
     if (making) msg = t("turn.making");
@@ -1390,6 +1534,7 @@
     else if (game.hints) { msg = t("turn.hinted"); cls = "warn"; }
     else if (filledCount() === countGivens()) msg = game.day !== undefined ? t("res.titleD", { n: game.day + 1 }) : t("turn.start");
     else if (game.day !== undefined) msg = t("turn.daily", { n: game.day + 1, k: 81 - filledCount() });
+    else if (game.imp !== undefined) msg = t("turn.imp", { n: 81 - filledCount() });
     else msg = t("turn.play", { l: t("lv." + game.lv), n: 81 - filledCount() });
     $("turn").textContent = msg;
     $("turn").className = cls;
@@ -1457,7 +1602,7 @@
       var c = cellEls[i], v = PUZ[i] || game.v[i], cls = "cell" + (KCLS[i] || "");
       if (PUZ[i]) cls += " given";
       else if (v) cls += " user";
-      if (v && prefs.mist && !PUZ[i] && v !== SOL[i]) cls += " bad";
+      if (v && prefs.mist && !PUZ[i] && (game.mu ? clashes(i) : v !== SOL[i])) cls += " bad";
       if (i === sel) cls += " sel";
       else if (sel >= 0 && IS_PEER[sel * 81 + i]) cls += " peer";
       if (sd && v === sd && i !== sel) cls += " same";
@@ -1595,7 +1740,8 @@
     dlg.className = "mm-dlg";
     dlg.addEventListener("click", function (e) { if (e.target === dlg) dlg.close(); });
     dlg.addEventListener("close", function () {
-      parkToast();
+      var box = $("toast");
+      if (box && box.parentNode === dlg) parkToast();   // only its own: the next dialog may host it already
       setTimeout(function () { dlg.remove(); }, 0);
     });
     return dlg;
@@ -1622,6 +1768,7 @@
   function resultDialog(rec) {
     if (!game || !game.done) return;            // replaced meanwhile
     if (game.day !== undefined && data.days[game.day]) { dailyDialog(game.day, rec); return; }
+    if (game.imp !== undefined) { importedResult(rec); return; }
     closeDialogs();
     var s = totals(game.lv);
     var dlg = makeDialog("sudoku-result");
@@ -1794,6 +1941,225 @@
     showToast(t("toast.reset"));
   }
 
+  // ---------- Imported puzzles (import.js) ----------
+  // "Import puzzles" (toolbar): a paste box and a file button → analyze
+  // (OrosSudokuImport, pure) → a preview with the counts and the issues
+  // → ONE write (save(): one persist, one dirty mark) → a toast with
+  // Undo. The list below the paste box plays any imported puzzle (the
+  // game in progress gets the usual Undo toast). Text from a file only
+  // reaches the page through textContent / a textarea value.
+  var IMPS = window.OrosSudokuImport || null;
+  var IMP_MAX = 4 * 1024 * 1024;              // bytes read from a file
+
+  function impEntry(id) {
+    var e = data.lib && data.lib[id];
+    return e || { t: 0, s: 0 };
+  }
+  function impList() { return IMPS ? IMPS.list(data.lib) : []; }
+
+  // A solved imported puzzle: solved stamp and its own best time in the
+  // library; the level records stay as they are. True = a new best.
+  function countImported(id, ms, hinted) {
+    if (!IMPS || !data.lib || !data.lib[id]) return false;
+    var before = data.lib[id].t || 0;
+    data.lib = IMPS.solved(data.lib, id, ms, hinted, Date.now()) || data.lib;
+    data = mergeSudoku(data, data);
+    save();
+    return !hinted && (!before || ms < before);
+  }
+
+  // The first unsolved imported puzzle after `id` (wrapping), or null.
+  function nextUnsolved(id) {
+    var l = impList(), k = -1, i;
+    for (i = 0; i < l.length; i++) if (l[i].id === id) k = i;
+    for (i = 1; i <= l.length; i++) {
+      var e = l[(k + i + l.length) % l.length];
+      if (!e.s && e.id !== id) return e;
+    }
+    return null;
+  }
+
+  function importedResult(rec) {
+    closeDialogs();
+    var e = impEntry(game.imp), nx = nextUnsolved(game.imp);
+    var dlg = makeDialog("sudoku-result");
+    dlg.appendChild(el("div", "dlg-title", t("res.title") + " · " + t("lv.i") + " · " + t("lv." + game.lv)));
+    dlg.appendChild(el("div", "dlg-hero", fmtTime(game.ms)));
+    if (rec) dlg.appendChild(el("div", "dlg-badge", t("res.rec")));
+    dlg.appendChild(row(t("res.hints"), String(game.hints)));
+    dlg.appendChild(row(t("res.best"), e.t ? fmtTime(e.t) : "–"));
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("res.close"), "", function () { dlg.close(); }));
+    var again = nx
+      ? button(t("res.nextImp"), "primary", function () { dlg.close(); newGame(prefs.lv, undefined, nx); })
+      : button(t("res.again"), "primary", function () { dlg.close(); newGame(prefs.lv); });
+    acts.appendChild(again);
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    again.focus();
+  }
+
+  // The import dialog: paste box, file button, the imported list.
+  function libDialog(draft) {
+    if (!IMPS || !window.OrosImportKit) return;
+    if (making) { showToast(t("toast.making")); return; }
+    parkToast();                                // the toast may live in the dialog being replaced
+    var dlg = makeDialog("sudoku-lib");
+    dlg.classList.add("wide");
+    dlg.appendChild(el("div", "dlg-title", t("lib.title")));
+    var lab = el("label", "imp-lab", t("lib.paste"));
+    lab.setAttribute("for", "imp-text");
+    dlg.appendChild(lab);
+    var ta = el("textarea", "imp-text");
+    ta.id = "imp-text";
+    ta.rows = 4;
+    ta.spellcheck = false;
+    ta.autocomplete = "off";
+    ta.setAttribute("autocapitalize", "off");
+    ta.placeholder = "4.....8.5.3..........7......2.....6.....8.4......1.......6.3.7.5..2.....1.4......";
+    if (draft) ta.value = draft;
+    dlg.appendChild(ta);
+    dlg.appendChild(el("div", "imp-note", t("lib.formats")));
+    var bar = el("div", "dlg-actions imp-bar");
+    bar.appendChild(button(t("lib.file"), "", function () {
+      pickImportFile().then(function (f) { if (f) importFile(f); });
+    }));
+    var chk = button(t("lib.check"), "primary", function () {
+      var text = ta.value;
+      if (!text.trim()) { ta.focus(); return; }
+      previewImport(IMPS.analyze(text, data.lib), t("imp.pasted"), text);
+    });
+    bar.appendChild(chk);
+    dlg.appendChild(bar);
+    var l = impList();
+    dlg.appendChild(el("div", "dlg-sub", t("lib.list", { n: l.length })));
+    if (!l.length) dlg.appendChild(el("div", "imp-note", t("lib.empty")));
+    else {
+      var nx = nextUnsolved(game && game.imp !== undefined ? game.imp : "");
+      if (nx) {
+        var nb = button(t("lib.next"), "imp-next", function () { dlg.close(); newGame(prefs.lv, undefined, nx); });
+        dlg.appendChild(nb);
+      }
+      var ul = el("ul", "imp-list");
+      l.forEach(function (e, k) {
+        var li = el("li", "imp-row" + (game && game.imp === e.id ? " cur" : ""));
+        var txt = el("span", "imp-txt");
+        txt.appendChild(el("strong", "", "#" + (k + 1) + (e.nm ? " · " + e.nm : "")));
+        var bits = [t("lib.row", { g: IMPS.givens(e.p) })];
+        if (e.s) bits.push(e.t ? t("lib.best", { t: fmtTime(e.t) }) : t("lib.solved"));
+        txt.appendChild(el("span", "imp-meta", bits.join(" · ")));
+        li.appendChild(txt);
+        var pb = button(t("lib.play"), "imp-play", function () { dlg.close(); newGame(prefs.lv, undefined, e); });
+        pb.setAttribute("aria-label", t("lib.playLabel", { k: k + 1 }));
+        li.appendChild(pb);
+        ul.appendChild(li);
+      });
+      dlg.appendChild(ul);
+    }
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("lib.close"), "", function () { dlg.close(); }));
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    ta.focus();
+  }
+
+  function pickImportFile() {
+    var host = null;
+    try { host = window.parent && window.parent !== window ? window.parent.orosDialog : null; } catch (e) { host = null; }
+    if (host && typeof host.openFile === "function") return host.openFile(IMPS.ACCEPT);
+    return new Promise(function (resolve) {        // standalone page
+      var inp = document.createElement("input");
+      inp.type = "file";
+      inp.accept = IMPS.ACCEPT;
+      inp.hidden = true;
+      inp.addEventListener("change", function () {
+        var f = inp.files && inp.files[0];
+        inp.remove();
+        resolve(f || null);
+      });
+      inp.addEventListener("cancel", function () { inp.remove(); resolve(null); });
+      document.body.appendChild(inp);
+      inp.click();
+    });
+  }
+  // A file → the preview (Promise<boolean>: puzzles were found).
+  function importFile(file) {
+    var K = window.OrosImportKit;
+    return K.readFile(file, IMP_MAX)
+      .then(function (r) {
+        var text = K.text(r.bytes), res = IMPS.analyze(text, data.lib);
+        if (!res.items.length) { showToast(t("imp.nothing")); return false; }
+        previewImport(res, K.clean(r.name || file.name || "", 80) || t("imp.pasted"), "");
+        return true;
+      })
+      .catch(function (e) {
+        showToast(t(e && e.message === "toobig" ? "imp.err.big" : "imp.err.read"));
+        return false;
+      });
+  }
+
+  // Preview: counts, up to 8 issues, then Import (or back to the paste box).
+  function previewImport(res, srcName, draft) {
+    var c = res.counts;
+    if (!c.found) { showToast(t("imp.nothing")); return; }
+    var add = c.ok + c.multi, bad = c.conflict + c.none + c.slow;
+    var dlg = makeDialog("sudoku-imp");
+    dlg.classList.add("wide");
+    dlg.appendChild(el("div", "dlg-title", t("imp.title", { s: srcName })));
+    dlg.appendChild(row(t("imp.found"), String(c.found)));
+    dlg.appendChild(row(t("imp.new"), String(add)));
+    if (c.multi) dlg.appendChild(row(t("imp.multi"), String(c.multi)));
+    if (c.have) dlg.appendChild(row(t("imp.have"), String(c.have)));
+    if (c.dup) dlg.appendChild(row(t("imp.dup"), String(c.dup)));
+    if (bad) dlg.appendChild(row(t("imp.bad"), String(bad)));
+    var issues = [];
+    res.items.forEach(function (it, k) {
+      var p = { k: k + 1, l: it.at, n: it.n };
+      if (it.st === "multi") issues.push(t(it.cut ? "imp.st.multiPlus" : "imp.st.multi", p));
+      else if (it.st === "conflict" || it.st === "none" || it.st === "slow") issues.push(t("imp.st." + it.st, p));
+    });
+    if (issues.length) {
+      var ul = el("ul", "imp-issues");
+      issues.slice(0, 8).forEach(function (x) { ul.appendChild(el("li", "", x)); });
+      if (issues.length > 8) ul.appendChild(el("li", "", t("imp.st.moreIssues", { n: issues.length - 8 })));
+      dlg.appendChild(ul);
+    }
+    if (c.more) dlg.appendChild(el("div", "imp-note", t("imp.more", { n: IMPS.MAX_PUZZLES })));
+    dlg.appendChild(el("div", "imp-note", t("imp.note")));
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("imp.cancel"), "", function () { dlg.close(); if (draft) setTimeout(function () { libDialog(draft); }, 0); }));
+    var go = button(t("imp.go", { n: add }), "primary", function () { dlg.close(); runImport(res); });
+    go.disabled = !add;
+    acts.appendChild(go);
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    (add ? go : acts.firstChild).focus();
+  }
+
+  function runImport(res) {
+    var r = IMPS.apply(data.lib, res.items, Date.now());
+    if (!r.ids.length) { showToast(t(r.full ? "imp.full" : "imp.noneNew", { n: IMPS.MAX_LIB })); return; }
+    if (r.lib) data.lib = r.lib;
+    data = mergeSudoku(data, data);
+    save();                                    // one write, one dirty mark
+    libDialog();
+    var info = r.undo, used = false;
+    undoToast(r.ids.length === 1 ? t("imp.done1") : t("imp.done", { n: r.ids.length }), function () {
+      if (used) return;
+      used = true;
+      var lib = IMPS.undo(data.lib, info, Date.now());
+      if (lib) data.lib = lib; else delete data.lib;
+      data = mergeSudoku(data, data);
+      save();
+      if (document.getElementById("sudoku-lib")) libDialog();
+      renderStatus();
+      showToast(t("imp.undone"));
+    });
+  }
+
   // ---------- 8. Toasts ----------
   function showToast(text) {
     try {
@@ -1881,6 +2247,7 @@
     hint:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1V17h6v-.2c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2z"/></svg>',
     stats: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg>',
     daily: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/><path d="m12 13 1 2 2 .3-1.5 1.4.4 2.1-1.9-1-1.9 1 .4-2.1L9 15.3l2-.3z"/></svg>',
+    imp:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg>',
     opts:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>',
     sfxOn: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>',
     sfxOff:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M22 9l-6 6M16 9l6 6"/></svg>'
@@ -2017,7 +2384,7 @@
 
   function paintStatic() {
     [["new-btn", "new", "btn.new"], ["stats-btn", "stats", "btn.stats"],
-     ["opts-btn", "opts", "btn.opts"], ["daily-btn", "daily", "btn.daily"]].forEach(function (x) {
+     ["opts-btn", "opts", "btn.opts"], ["daily-btn", "daily", "btn.daily"], ["imp-btn", "imp", "btn.imp"]].forEach(function (x) {
       var b = $(x[0]);
       b.innerHTML = UI_ICONS[x[1]];
       b.setAttribute("aria-label", t(x[2]));
@@ -2030,12 +2397,12 @@
     [].forEach.call(document.querySelectorAll("#lv-seg .seg-btn"), function (b) {
       b.addEventListener("click", function () {
         var lv = b.getAttribute("data-lv");
-        if (game && lv === game.lv && game.day === undefined && !game.done && !making) return;   // visible active state
+        if (game && lv === game.lv && game.day === undefined && game.imp === undefined && !game.done && !making) return;   // visible active state
         newGame(lv);
       });
     });
     $("new-btn").addEventListener("click", function () {
-      newGame(game && !making && game.day === undefined ? game.lv : prefs.lv);
+      newGame(game && !making && game.day === undefined && game.imp === undefined ? game.lv : prefs.lv);
       $("new-btn").blur();
     });
     $("daily-btn").addEventListener("click", openDaily);
@@ -2043,6 +2410,7 @@
     window.__orosOpenAt = function (tg) { if (tg && tg.daily) openDaily(); };
     $("stats-btn").addEventListener("click", statsDialog);
     $("opts-btn").addEventListener("click", optsDialog);
+    $("imp-btn").addEventListener("click", function () { libDialog(""); $("imp-btn").blur(); });
     $("sfx-btn").addEventListener("click", function () {
       try { localStorage.setItem(SFX_KEY, sfxOn() ? "0" : "1"); } catch (e) {}
       paintSfxBtn();

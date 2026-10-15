@@ -28,8 +28,17 @@ When the session ends you see `Well done` with your breaths and time. `Again` st
 
 With `Show in Habits` ticked (at first it is), [Habits](app:habits) shows a `Micro-Zen` row that ticks itself on each day with a finished session. Untick it to hide the row on all your devices.
 
+## Import sessions
+Bring your meditation time over from another app. Under `Your quiet`, press `Import sessions` and pick the file. Micro-Zen shows how many sessions it found, on how many days, the dates they cover and how many days are already here. If the file has activities (Meditation, Yoga…), untick the ones you don't want counted. Press `Import`; a message tells you how many sessions were added, and its `Undo` button takes the import back on all your devices.
+
+How to export:
+- **Insight Timer**: on the website or in the app, open your profile settings and look for exporting your sessions as CSV. The file has `Started At`, `Duration`, `Preset` and `Activity`; day-first and month-first dates are both understood.
+- **Any CSV**: a date (or date and time) column and a minutes column, like `date,minutes`. A `seconds` column, or a length like `0:10:00`, works too.
+
+Imported time counts in `Today`, `This week`, the streak and `Sessions`, and in Habits if Micro-Zen shows there; breaths aren't counted. Importing the same file again, even on another device, never counts a session twice, and a newer export only adds what's new. `Reset stats` clears imported time too. The file is read on your device; nothing is uploaded anywhere except through your own sync.
+
 ## Sync and backup
-Your stats sync through [orOS sync](help:t/sync) and add up across all your devices, and a reset clears them everywhere. Your own patterns and `Show in Habits` sync too. The chosen pattern, length, tones and vibration stay on each device. Micro-Zen has no import or export; your stats are part of the orOS [backup](help:t/backup).
+Your stats sync through [orOS sync](help:t/sync) and add up across all your devices, and a reset clears them everywhere. Your own patterns and `Show in Habits` sync too. The chosen pattern, length, tones and vibration stay on each device. Micro-Zen has no export of its own; your stats are part of the orOS [backup](help:t/backup). To bring in sessions from another app, see the section above.
 
 ## Keyboard shortcuts
 - [[Space]] starts, pauses or resumes.

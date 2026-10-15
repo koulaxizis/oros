@@ -12,6 +12,9 @@
 //   - Wave 2: import from a web address (JSON-LD, through the Reader's
 //     network layer and the orOS relay), pasted page source / JSON, or
 //     Paprika / Mealie / Tandoor files (import.js, loaded on demand);
+//     wave 6 adds Mela, Recipe Keeper, Nextcloud Cookbook, Cooklang,
+//     Crouton and MyCookbook, and a batch import (stable ids, one
+//     write, Undo);
 //     servings and units (as written / metric / US, per device) in the
 //     recipe and in cooking mode; a Household section
 //   - Wave 3: a Pantry tab (what is at home: amount, fridge / freezer /
@@ -115,7 +118,7 @@
       "p.go": "Continue", "p.empty": "Type a web address, or paste some text first", "p.paste": "Paste the recipe",
       "im.url": "Web address of a recipe", "im.fetch": "Fetch",
       "im.urlHint": "Works with most recipe sites. Sites that don't let apps read them go through the orOS relay set up in Mail or Reader.",
-      "im.file": "Open a file…", "im.fileHint": "Paprika (.paprikarecipes), Mealie or Tandoor exports, a saved page (.html) or JSON.",
+      "im.file": "Open a file…", "im.fileHint": "Exports from Paprika, Mela, Recipe Keeper, Crouton, MyCookbook, Mealie, Tandoor or Nextcloud Cookbook, Cooklang (.cook) files, a saved page (.html) or JSON.",
       "im.loading": "Fetching the page…", "im.reading": "Reading the file…",
       "im.none": "No recipe found there. Copy the recipe's text and paste it below.",
       "im.noneFile": "No recipes found in this file.", "im.badUrl": "Type a web address (https://…)",
@@ -126,6 +129,9 @@
       "im.err.file": "Could not read this file.",
       "im.many": "{n} recipes found", "im.manyHint": "Tick the ones to add. Ones you already have (same title) start unticked.",
       "im.have": "already in your recipes", "im.add": "Add {n}", "im.all": "All", "im.noneSel": "None",
+      "im.from": "From {src}", "im.sum": "{n} recipes", "im.sumHave": "{n} recipes, {k} already imported",
+      "im.stored": "already imported", "im.counts": "{i} ingredients, {s} steps",
+      "im.photos": "Photos are not brought in; a web link to a photo is kept.",
       "v.photo": "Photo (opens the site)",
       "un.label": "Units", "un.": "As written", "un.metric": "Metric", "un.us": "US",
       "s.units": "Units on this device", "s.unitsHint": "Recipes, cooking mode and the shopping list show quantities and oven temperatures in these units.",
@@ -234,7 +240,7 @@
       "p.go": "Συνέχεια", "p.empty": "Γράψε μια διεύθυνση ή επικόλλησε πρώτα κείμενο", "p.paste": "Επικόλληση συνταγής",
       "im.url": "Διεύθυνση (link) μιας συνταγής", "im.fetch": "Φέρε τη",
       "im.urlHint": "Δουλεύει με τα περισσότερα sites συνταγών. Όσα δεν αφήνουν τις εφαρμογές να τα διαβάσουν περνούν από το relay του orOS που έχεις ορίσει στην Αλληλογραφία ή στον Αναγνώστη.",
-      "im.file": "Άνοιγμα αρχείου…", "im.fileHint": "Εξαγωγές από Paprika (.paprikarecipes), Mealie ή Tandoor, μια αποθηκευμένη σελίδα (.html) ή JSON.",
+      "im.file": "Άνοιγμα αρχείου…", "im.fileHint": "Εξαγωγές από Paprika, Mela, Recipe Keeper, Crouton, MyCookbook, Mealie, Tandoor ή Nextcloud Cookbook, αρχεία Cooklang (.cook), μια αποθηκευμένη σελίδα (.html) ή JSON.",
       "im.loading": "Φέρνω τη σελίδα…", "im.reading": "Διαβάζω το αρχείο…",
       "im.none": "Δεν βρέθηκε συνταγή εκεί. Αντέγραψε το κείμενο της συνταγής και επικόλλησέ το παρακάτω.",
       "im.noneFile": "Δεν βρέθηκαν συνταγές σε αυτό το αρχείο.", "im.badUrl": "Γράψε μια διεύθυνση (https://…)",
@@ -245,6 +251,9 @@
       "im.err.file": "Το αρχείο δεν διαβάστηκε.",
       "im.many": "Βρέθηκαν {n} συνταγές", "im.manyHint": "Τσέκαρε όσες θέλεις να μπουν. Όσες έχεις ήδη (ίδιος τίτλος) ξεκινούν ατσεκάριστες.",
       "im.have": "την έχεις ήδη", "im.add": "Προσθήκη {n}", "im.all": "Όλες", "im.noneSel": "Καμία",
+      "im.from": "Από {src}", "im.sum": "{n} συνταγές", "im.sumHave": "{n} συνταγές, οι {k} έχουν ήδη εισαχθεί",
+      "im.stored": "έχει ήδη εισαχθεί", "im.counts": "{i} υλικά, {s} βήματα",
+      "im.photos": "Οι φωτογραφίες δεν μεταφέρονται· κρατιέται μόνο ο σύνδεσμος μιας φωτογραφίας στο διαδίκτυο.",
       "v.photo": "Φωτογραφία (ανοίγει το site)",
       "un.label": "Μονάδες", "un.": "Όπως γράφτηκαν", "un.metric": "Μετρικές", "un.us": "ΗΠΑ",
       "s.units": "Μονάδες σε αυτή τη συσκευή", "s.unitsHint": "Οι συνταγές, το μαγείρεμα και η λίστα για ψώνια δείχνουν ποσότητες και θερμοκρασίες φούρνου σε αυτές τις μονάδες.",
@@ -1344,7 +1353,7 @@
       e.preventDefault();
       var g = gather();
       if (!g.t) { showToast(t("e.needTitle")); fTitle.focus(); return; }
-      var id = isNew ? newId("r") : src.id;
+      var id = isNew ? (src.impId && !storedRecipe(src.impId) ? src.impId : newId("r")) : src.id;
       var saved = putRecipe(Object.assign({ id: id }, g));
       if (!saved) return;
       dlg.close();
@@ -1466,13 +1475,17 @@
       fetchBtn.disabled = on;
       uin.disabled = on;
     }
-    function done(list, emptyMsg) {
+    // One recipe opens in the editor (with its stable id, so saving it
+    // twice from the same file is not possible); several, or one already
+    // imported, open the list.
+    function done(list, emptyMsg, I) {
       lock(false);
       if (!dlg.open) return;
       if (!list.length) { say(emptyMsg, true); return; }
       dlg.close();
-      if (list.length === 1) openEditor(list[0]);
-      else openImportList(list);
+      var one = list.length === 1 && I && list[0].t ? I.prepareBatch(list, [])[0] : null;
+      if (list.length === 1 && !(one && storedRecipe(one.id))) openEditor(one ? Object.assign({ impId: one.id }, list[0]) : list[0]);
+      else openImportList(list, I);
     }
     function goUrl(raw) {
       if (busy) return;
@@ -1489,7 +1502,7 @@
             if (r.status < 200 || r.status >= 300) { lock(false); say(t("im.err.status", { n: r.status }), true); return; }
             var list = I.fromText(r.text || "", r.finalUrl || url);
             list.forEach(function (d) { if (!d.src) d.src = r.finalUrl || url; });
-            done(list, t("im.none"));
+            done(list, t("im.none"), I);
           });
       }).catch(function (e) {
         lock(false);
@@ -1508,7 +1521,7 @@
       }
       if (/^\s*https?:\/\/\S+\s*$/i.test(v)) { goUrl(v); return; }
       needImport().then(function (I) {
-        if (I.looksLikeData(v)) { done(I.fromText(v, ""), t("im.none")); return; }
+        if (I.looksLikeData(v)) { done(I.fromText(v, ""), t("im.none"), I); return; }
         var d = C.parseRecipeText(v);
         dlg.close();
         openEditor({ t: d.t, sv: d.sv || 4, pt: d.pt || 0, ct: d.ct || 0, ig: d.ig, st: d.st, no: d.no, dt: [], tg: [] });
@@ -1516,7 +1529,7 @@
     }
     function pickFile() {
       if (busy) return;
-      var accept = ".paprikarecipes,.paprikarecipe,.zip,.json,.html,.htm,application/json,application/zip,text/html";
+      var accept = ".paprikarecipes,.paprikarecipe,.melarecipes,.melarecipe,.crumb,.cook,.mcb,.xml,.zip,.json,.html,.htm,application/json,application/zip,text/html";
       var host = dialogHost();
       var pick = host && typeof host.openFile === "function" ? host.openFile(accept) : localPickFile(accept);
       Promise.resolve(pick).then(function (file) {
@@ -1528,34 +1541,54 @@
           var zip = bytes.length > 3 && bytes[0] === 0x50 && bytes[1] === 0x4b;
           return (zip ? needZip() : Promise.resolve(null)).then(function (Z) {
             return I.fromBytes(bytes, file.name || "", Z);
-          });
-        }).then(function (list) { done(list, t("im.noneFile")); });
+          }).then(function (list) { done(list, t("im.noneFile"), I); });
+        });
       }).catch(function () { lock(false); say(t("im.err.file"), true); });
     }
   }
 
-  // Several recipes (a Paprika or Mealie export, a page with many):
-  // tick the ones to add; titles you already have start unticked.
-  function openImportList(list) {
+  // Several recipes (an export from Paprika, Mela, Recipe Keeper…, a
+  // page with many): a preview of where they come from and what is
+  // already here, then tick the ones to add. Each gets a stable id
+  // ("imp-" + hash of source and title, import.js): one already
+  // imported cannot be ticked, titles you already have start unticked.
+  // Add = ONE write and ONE sync mark, with Undo.
+  function openImportList(list, I) {
+    var items = I.prepareBatch(list, data.rc.map(function (r) { return r.id; }));
     var dlg = makeDialog("ml-implist", "wide");
-    dlg.appendChild(el("div", "dlg-title", t("im.many", { n: list.length })));
-    dlg.appendChild(el("p", "hint", t("im.manyHint")));
+    dlg.appendChild(el("div", "dlg-title", t("im.many", { n: items.length })));
+    var srcs = [];
+    items.forEach(function (it) {
+      var nmx = I.FORMATS[it.d.fmt] || "";
+      if (nmx && srcs.indexOf(nmx) < 0) srcs.push(nmx);
+    });
+    var nStored = items.filter(function (it) { return it.stored; }).length;
+    var sum = el("p", "im-sum");
+    if (srcs.length) sum.textContent = t("im.from", { src: srcs.join(", ") }) + " · ";
+    sum.textContent += t(nStored ? "im.sumHave" : "im.sum", { n: items.length, k: nStored });
+    dlg.appendChild(sum);
+    dlg.appendChild(el("p", "hint", t("im.manyHint") + " " + t("im.photos")));
     var have = {};
     recipes().forEach(function (r) { have[C.fold(r.t)] = 1; });
     var boxes = [];
     var sel = el("div", "chips");
     var ul = el("ul", "im-list");
-    list.forEach(function (d) {
+    items.forEach(function (it) {
+      var d = it.d;
       var li = el("li", "");
       var lab = el("label", "check");
       var cb = el("input");
       cb.type = "checkbox";
       var dup = !!have[C.fold(d.t)];
-      cb.checked = !dup;
+      cb.checked = !dup && !it.stored;
+      cb.disabled = it.stored;
       cb.addEventListener("change", count);
       lab.appendChild(cb);
       var sp = el("span", "", d.t);
-      if (dup) sp.appendChild(el("span", "hint", " · " + t("im.have")));
+      var meta = t("im.counts", { i: d.ig.length, s: d.st.length });
+      if (it.stored) meta += " · " + t("im.stored");
+      else if (dup) meta += " · " + t("im.have");
+      sp.appendChild(el("span", "hint", " · " + meta));
       lab.appendChild(sp);
       li.appendChild(lab);
       ul.appendChild(li);
@@ -1563,7 +1596,7 @@
     });
     var all = el("button", "chip small", t("im.all"));
     all.type = "button";
-    all.addEventListener("click", function () { boxes.forEach(function (b) { b.checked = true; }); count(); });
+    all.addEventListener("click", function () { boxes.forEach(function (b) { if (!b.disabled) b.checked = true; }); count(); });
     var none = el("button", "chip small", t("im.noneSel"));
     none.type = "button";
     none.addEventListener("click", function () { boxes.forEach(function (b) { b.checked = false; }); count(); });
@@ -1573,25 +1606,50 @@
     var acts = el("div", "dlg-actions");
     acts.appendChild(button(t("e.cancel"), "", function () { dlg.close(); }));
     var ok = button("", "primary", function () {
-      var added = 0;
-      for (var i = 0; i < list.length; i++) {
-        if (!boxes[i].checked) continue;
-        if (data.rc.length >= C.LIM.recipes) { showToast(t("e.max", { n: C.LIM.recipes })); break; }
-        if (putRecipe(Object.assign({ id: newId("r"), fv: 0 }, list[i]))) added++;
-      }
+      var pick = items.filter(function (it, i) { return boxes[i].checked && !it.stored; });
       dlg.close();
-      renderAll();
-      showToast(t("toast.imported", { n: added }));
+      importBatch(pick);
     });
     acts.appendChild(ok);
     dlg.appendChild(acts);
     function count() {
-      var n = boxes.filter(function (b) { return b.checked; }).length;
+      var n = boxes.filter(function (b) { return b.checked && !b.disabled; }).length;
       ok.textContent = t("im.add", { n: n });
       ok.disabled = !n;
     }
     count();
     showDialog(dlg);
+  }
+  // [{ id, d }] → stored in one commit. A recipe already stored under
+  // that id is never touched; one deleted before (a tomb) comes back
+  // newer than its tomb (R17). Undo: newer tombs for exactly the added
+  // ids, so another device that already pulled them drops them too.
+  function importBatch(items) {
+    var added = [], ts = now(), full = false;
+    items.forEach(function (it) {
+      if (storedRecipe(it.id)) return;
+      if (data.rc.length >= C.LIM.recipes) { full = true; return; }
+      var x = C.normRecipe(Object.assign({}, it.d, { id: it.id, fv: 0, m: 0 }));
+      if (!x) return;
+      x.m = Math.max(ts, (data.tombs[it.id] || 0) + 1);
+      data.rc.push(x);
+      added.push(it.id);
+    });
+    if (full) showToast(t("e.max", { n: C.LIM.recipes }));
+    if (!added.length) return 0;
+    commit();
+    renderAll();
+    undoToast(t("toast.imported", { n: added.length }), function () {
+      var t2 = now();
+      added.forEach(function (id) {
+        var r = storedRecipe(id);
+        if (r) data.tombs[id] = Math.max(data.tombs[id] || 0, t2, r.m);
+      });
+      data.rc = data.rc.filter(function (r) { return added.indexOf(r.id) < 0; });
+      commit();
+      renderAll();
+    });
+    return added.length;
   }
 
   // ---------- 9. Plan dialogs ----------

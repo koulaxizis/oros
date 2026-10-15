@@ -112,6 +112,8 @@ Nothing is sent to the shop without a button, and nothing is saved here or in an
 ## Import and export
 In Settings:
 - `Import products (CSV)` reads your own export, your e-shop's product export (WooCommerce works) or any sheet whose first row names the columns, such as Name, SKU, Price, Stock. Existing products are matched by SKU, then by name. Tick `Set the quantities from the file` to save the file's quantities as one stock count.
+- The same button also reads a Shopify product export (`Products` › `Export`, CSV) and a Square item library (`Items` › `Item library` › `Actions` › `Export library`, Excel or CSV). Each Shopify variant becomes its own product, named with its options; the description comes in as plain text, tags and the picture's link go into the note. Square quantities of all locations are added together. You first see how many products are new and how many are already here; products already here are never changed. Leave `Set the quantities` ticked to bring the quantities in as one stock count. The message after the import has `Undo`; if quantities came in, the products stay archived with their count voided.
+- An Excel sheet (.xlsx) works too; if the Excel reader is missing, save the sheet as CSV.
 - `Products (CSV)` and `Movements (CSV)` open in any spreadsheet.
 - `Backup (JSON)` saves everything; `Restore backup` merges a backup in, it never wipes what you have.
 

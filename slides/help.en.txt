@@ -52,6 +52,12 @@ Presentations sync with orOS sync. Pictures are stored once as files on the orOS
 - `Open file` on the home screen opens a `.pptx` as a new presentation. Its pictures are stored on the orOS disk like pictures you add yourself. Text keeps its paragraphs and formatting, also when it comes from the slide layout or master; tables stay tables, groups stay groups (one level), entrance animations come along (others become `Fade in`), other shapes become the nearest rectangle or ellipse, and slides of another size fit into 16:9 or 4:3.
 - Charts, SmartArt, video, sound and embedded objects are not brought in: a dashed box with their name marks the spot.
 
+## LibreOffice Impress and Markdown
+- `Open file` also opens a LibreOffice Impress presentation (`.odp`, or a flat `.fodp`). In LibreOffice use File › Save As and keep the ODF Presentation type. Slides, titles, text boxes with their lists and formatting, pictures, rectangles, ellipses, lines, tables, backgrounds, hidden slides and speaker notes come in; charts and embedded objects are marked with a dashed box.
+- It opens Markdown decks too (`.md`): Marp (front matter `marp: true`; in VS Code or Marp CLI it is the `.md` file itself), reveal.js Markdown (the `.md` file, or the reveal.js page that holds it) and plain Markdown with `---` between slides. Headings become slide titles, lists become bullets with their levels, tables become tables, HTML comments and `Note:` lines become speaker notes, and a Marp picture marked `bg` is the slide background.
+- Pictures come in only when they are inside the file (in the `.odp`, or written into the Markdown as data). Slides does not download pictures from the web or read other files; their addresses go into the speaker notes.
+- First you see what the file holds and what stays out; `Open` makes a new presentation and `Undo` on the message takes it away again. Nothing you already have changes.
+
 ## Keyboard shortcuts
 - [[Ctrl+Z]] / [[Ctrl+Y]]: undo / redo
 - [[Ctrl+M]]: new slide
