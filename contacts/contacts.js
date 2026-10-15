@@ -4943,7 +4943,7 @@ document.addEventListener("keydown", function (e) {
     if (!items.length) { notifyTransient(t("en.empty")); return; }
     enLoadUI().then(function () {
       window.OrosEnrichUI.open({ lang: LANG === "el" ? "el" : "en", items: items, apply: enApply,
-        kinds: ["photo", "link", "phone", "email", "birthday", "job", "org", "address"] });
+        kinds: ["link", "phone", "email", "birthday", "job", "org", "address"] });
     }, function () { notifyTransient(t("en.empty")); });
   }
   if ($("ct-enrich") && window.Promise && window.crypto && crypto.subtle) {
