@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.31.00
+- Budget, Split, Garage and Health can import from other apps (YNAB, Wallet, Splitwise, Tricount, Fuelio, Drivvo, Withings, Samsung Health, Apple Health and more), with a preview and Undo.
+
 ## Version 2.30.01
 - Android app: APK downloads and Get orOS now open in your default browser, in a normal tab, where the download finishes. Install the new APK once for this.
 
