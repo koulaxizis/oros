@@ -457,6 +457,7 @@
       "preview.empty": "Nothing here yet. Switch to Edit to write.",
       "daily.btn": "Today",
       "daily.title": "Today's note",
+      "page.actions": "Page actions",
       "daily.parent": "Daily",
       "daily.tpl": "# {{date}}\n\n## Tasks\n- [ ] \n\n## Notes\n",
       "tpl.parent": "Templates",
@@ -492,6 +493,7 @@
       "preview.empty": "Δεν υπάρχει τίποτα ακόμη. Πάτα Επεξεργασία για να γράψεις.",
       "daily.btn": "Σήμερα",
       "daily.title": "Η σημερινή σελίδα",
+      "page.actions": "Ενέργειες σελίδας",
       "daily.parent": "Ημερήσιες",
       "daily.tpl": "# {{date}}\n\n## Εργασίες\n- [ ] \n\n## Σημειώσεις\n",
       "tpl.parent": "Πρότυπα",
@@ -1084,6 +1086,8 @@
     text.disabled  = !page;
     var shareBtn = document.getElementById("btn-share-page");
     if (shareBtn) shareBtn.hidden = !page || !shareApi();
+    var pageMenuBtn = document.getElementById("btn-page-menu");
+    if (pageMenuBtn) pageMenuBtn.hidden = !page;
     title.value = page ? page.title : "";
     text.value  = page ? page.text : "";
     renderChips(page);
@@ -3564,6 +3568,29 @@
       todayBtn.addEventListener("click", function (e) { e.stopPropagation(); openToday(); });
       var shareRef = document.getElementById("btn-share-page");
       header.insertBefore(todayBtn, shareRef || null);
+    }
+    // Page actions (⋮) in the editor header: the tree menu (rename, move,
+    // delete…) is otherwise reachable only by right-click or long-press in
+    // the drawer, which phones hide and draggable rows can swallow.
+    if (header && !document.getElementById("btn-page-menu")) {
+      var pmBtn = document.createElement("button");
+      pmBtn.id = "btn-page-menu";
+      pmBtn.type = "button";
+      pmBtn.className = "icon-btn";
+      pmBtn.title = t("page.actions");
+      pmBtn.setAttribute("aria-label", t("page.actions"));
+      pmBtn.setAttribute("aria-haspopup", "menu");
+      pmBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>';
+      pmBtn.hidden = !pageById(prefs.current);
+      pmBtn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        var page = pageById(prefs.current);
+        if (!page) return;
+        if (document.getElementById("node-menu")) { closeMenus(); return; }
+        var r = pmBtn.getBoundingClientRect();
+        openNodeMenu(page, r.right, r.bottom);
+      });
+      header.appendChild(pmBtn);
     }
     buildToolbar();
     wirePreview();

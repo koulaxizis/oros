@@ -6923,3 +6923,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Chris (09:09): new Part X-B "Troubleshooting" (47 known symptoms → cause → fix, from the threads, team memory and Part XII), with the rule to add each solved problem there in the fix's PR.
 - Chris (09:06): an APK download from inside an installed app (the browser's in-app tab, Brave) stops at 100% and never finishes; a plain browser tab works in every browser. `solo.apkHref(id, ua, inWindow)`: inside an installed window on Android the APK buttons (Settings, the solo bar, the update notice) use an intent to Chrome (real tab), with the GitHub link as fallback.
   - Tests: full suite green (new: `apkHref` in and out of an installed window; packages and links for every APK, launch version, metadata for exactly the published APKs, start address with `apk=`); `fdroid update` 2.4.5 run locally on 4 real APKs from the release with the generated metadata (signed index, EN/EL names, icons, categories). Not tested: the workflow on GitHub (needs the three secrets and Pages on oros-fdroid), the Chrome intent on a real phone, adding the repo in F-Droid / Droid-ify / Obtainium on a real phone, the notice bar on a phone.
+
+### 2026-10-15 — Notes: delete a page from a phone (#391) — 2.26.01
+- Notes: a ⋮ "Page actions" button at the top right of the open page opens the page menu (new sub-page, rename, move, delete…), which before was reachable only by right-click or long-press in the tree. On phones the menu scrolls inside itself, so its last items (Delete) stay reachable.
+- Files: `notes/notes.js` (`#btn-page-menu`, `page.actions`), `notes/notes.css` (`.node-menu` max-height + scroll), Notes help.
+  - Tests: full suite green. Not tested: real phones.
