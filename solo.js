@@ -526,6 +526,13 @@
   // browser can install the page itself and no app catches the link, so
   // the plain address is used: an intent to Chrome does nothing in a
   // browser that blocks intents (Brave) or on a phone without Chrome.
+  // Android package of a single app (android/solo-apps.json builds one per
+  // app; CI publishes it as oros-<id>.apk on the "android-apks" release).
+  // On Android an installed orOS claims every page of this site, so the
+  // browser cannot install a single app next to it: the APK can.
+  var APK_BASE = "https://github.com/koulaxizis/oros/releases/download/android-apks/";
+  function apkUrl(id) { return has(id) ? APK_BASE + "oros-" + id + ".apk" : ""; }
+
   function installUrl(id, ua, origin, inApp, inTab) {
     if (!has(id)) return "";
     if (inApp) return "intent://install/" + id + "#Intent;scheme=oros-permission;package=online.useoros.twa;end";
@@ -548,9 +555,9 @@
   // button on Android.
   var BAR_TEXT = {
     en: { ask: "Install {n} on this device", btn: "Install", how: "To install {n}: open the browser menu (⋮) and choose Install app or Add to Home screen.", close: "Close",
-          win: "{n} opened inside an installed app, where it can't be installed. If it isn't installed yet, open this page in Chrome or Edge.", chrome: "Open in Chrome" },
+          win: "{n} opened inside an installed app, where it can't be installed. If it isn't installed yet, open this page in Chrome or Edge.", chrome: "Open in Chrome", apk: "Download the app (APK)" },
     el: { ask: "Εγκατάσταση του {n} σε αυτή τη συσκευή", btn: "Εγκατάσταση", how: "Για να εγκαταστήσεις το {n}: άνοιξε το μενού του browser (⋮) και πάτησε Εγκατάσταση εφαρμογής ή Προσθήκη στην αρχική οθόνη.", close: "Κλείσιμο",
-          win: "Το {n} άνοιξε μέσα σε εγκατεστημένη εφαρμογή, όπου δεν γίνεται εγκατάσταση. Αν δεν το έχεις ήδη εγκαταστήσει, άνοιξε αυτή τη σελίδα στο Chrome ή στο Edge.", chrome: "Άνοιγμα στο Chrome" }
+          win: "Το {n} άνοιξε μέσα σε εγκατεστημένη εφαρμογή, όπου δεν γίνεται εγκατάσταση. Αν δεν το έχεις ήδη εγκαταστήσει, άνοιξε αυτή τη σελίδα στο Chrome ή στο Edge.", chrome: "Άνοιγμα στο Chrome", apk: "Λήψη της εφαρμογής (APK)" }
   };
   function installBar(win, id, asked) {
     var doc = win.document, bar = null, deferred = null, lng = "en", inWindow = false;
@@ -587,6 +594,13 @@
         a.textContent = T.chrome;
         a.style.cssText = "border-radius:8px;padding:8px 14px;background:#c8a96e;color:#1b1a18;font-weight:600;text-decoration:none;white-space:nowrap";
         bar.appendChild(a);
+      } else if (withButton === "win" && /Android/i.test(win.navigator.userAgent || "")) {
+        // Chrome's installed orOS took the link: the APK installs it
+        var k = doc.createElement("a");
+        k.href = apkUrl(id);
+        k.textContent = T.apk;
+        k.style.cssText = "border-radius:8px;padding:8px 14px;background:#c8a96e;color:#1b1a18;font-weight:600;text-decoration:none;white-space:nowrap";
+        bar.appendChild(k);
       } else if (withButton === true) {
         var b = doc.createElement("button");
         b.type = "button";
@@ -715,6 +729,7 @@
     pageFor: pageFor,
     hostBoot: host,
     installUrl: installUrl,
+    apkUrl: apkUrl,
     id: "",
     share: null,
     word: ""

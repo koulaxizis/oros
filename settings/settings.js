@@ -854,7 +854,17 @@
         else window.open(u, "_blank", "noopener");
       });
       b.title = t("so.open.title");
-      c1.appendChild(row(S.nameOf(id, LANG), b));
+      var r = row(S.nameOf(id, LANG), b);
+      // Android: the APK installs next to an installed orOS, which the
+      // browser's own install cannot (orOS claims every page of the site)
+      if (S.apkUrl && /Android/i.test(navigator.userAgent)) {
+        var k = el("a", "btn", t("so.apk"));
+        k.href = S.apkUrl(id);
+        k.title = t("so.apk.title");
+        k.rel = "noopener";
+        b.parentNode.insertBefore(k, b.nextSibling);
+      }
+      c1.appendChild(r);
     });
     host.appendChild(c1);
     var c2 = card(t("so.how"));

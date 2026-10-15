@@ -28,8 +28,8 @@ gradle -p android assembleDebug
 
 ## Single apps (wave 7)
 
-The same project also builds some orOS single apps (SOLO-1) as their
-own Play packages, listed in `android/solo-apps.json` (app id →
+The same project also builds every orOS single app (SOLO-1) as its
+own package, listed in `android/solo-apps.json` (app id →
 package). Each is a product flavour: `oros` is the orOS app itself
 (`online.useoros.twa`, unchanged), the others start at
 `https://useoros.online/<id>/solo.html`, carry that app's name, icon,

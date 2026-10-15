@@ -167,7 +167,9 @@
       "so.open.title": "Opens the app's page in a new tab, ready to install",
       "so.how": "How to install",
       "so.how.desktop": "Windows and Linux: in the new tab, choose Install in the address bar of Chrome or Edge. The app then appears in your Start menu or app list.",
-      "so.how.android": "Android: Install opens the app in Chrome; from the orOS app, in your default browser (Chrome if none is set). Press Install on the bar at the bottom, or open the browser menu and choose Add to Home screen › Install.",
+      "so.how.android": "Android: APK downloads the app itself; open the file and allow installing from this source. This always works, also next to an installed orOS. Install opens the app in the browser instead, where Chrome offers Install only if orOS is not installed from Chrome. An APK and the Google Play version use different signing keys: to switch, uninstall first (sync brings your data back).",
+      "so.apk": "APK",
+      "so.apk.title": "Download the Android app (APK)",
       "so.how.iphone": "iPhone: in Safari, Share › Add to Home Screen.",
       "so.none": "Single apps are not available in this orOS version.",
 
@@ -409,7 +411,9 @@
       "so.open.title": "Ανοίγει τη σελίδα της εφαρμογής σε νέα καρτέλα, έτοιμη για εγκατάσταση",
       "so.how": "Πώς εγκαθίσταται",
       "so.how.desktop": "Windows και Linux: στη νέα καρτέλα, πάτησε Εγκατάσταση στη γραμμή διευθύνσεων του Chrome ή του Edge. Η εφαρμογή εμφανίζεται μετά στο μενού Έναρξη ή στη λίστα εφαρμογών.",
-      "so.how.android": "Android: η Εγκατάσταση ανοίγει την εφαρμογή στο Chrome· από την εφαρμογή orOS, στον προεπιλεγμένο σου browser (στο Chrome αν δεν έχεις ορίσει). Πάτησε Εγκατάσταση στη γραμμή κάτω, ή άνοιξε το μενού του browser και πάτησε Προσθήκη στην αρχική οθόνη › Εγκατάσταση.",
+      "so.how.android": "Android: το APK κατεβάζει την ίδια την εφαρμογή· άνοιξε το αρχείο και επίτρεψε την εγκατάσταση από αυτή την πηγή. Δουλεύει πάντα, και δίπλα σε εγκατεστημένο orOS. Η Εγκατάσταση ανοίγει την εφαρμογή στον browser, όπου ο Chrome προσφέρει εγκατάσταση μόνο αν το orOS δεν είναι εγκατεστημένο από τον Chrome. Το APK και η έκδοση του Google Play έχουν διαφορετικά κλειδιά υπογραφής: για να αλλάξεις, απεγκατάστησε πρώτα (ο συγχρονισμός φέρνει πίσω τα δεδομένα σου).",
+      "so.apk": "APK",
+      "so.apk.title": "Λήψη της εφαρμογής Android (APK)",
       "so.how.iphone": "iPhone: στο Safari, Κοινοποίηση › Προσθήκη στην οθόνη Αφετηρίας.",
       "so.none": "Οι μεμονωμένες εφαρμογές δεν υπάρχουν σε αυτή την έκδοση του orOS.",
 
