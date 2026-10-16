@@ -168,7 +168,7 @@
       "ac.own.save": "Save",
       "ac.own.saved": "Saved on this device",
       "ac.own.bad": "That doesn't look like a client id",
-      "ac.own.key": "Google API key (only for picking files in Google Drive, in Files)",
+      "ac.own.key": "Own Google API key (optional; only with your own app id, for picking files in Google Drive)",
       "rv.title": "Review import",
       "rv.sum": "{new} new · {diff} with other details · {same} already here",
       "rv.folded": "{n} listed twice in the import, combined",
@@ -353,6 +353,9 @@
       "sc.done": "Check the text, then press “Fill in a new contact”.",
       "sc.nofill": "Type or read some text first",
       "sc.check": "Check the details, then press Save",
+      "oros.save": "orOS file (.oroscontacts)",
+      "oros.open": "Open orOS file…",
+      "oros.folder": "Unzipped orOS folder…",
     },
     el: {
       "app.contacts.self": "Επαφές",
@@ -447,7 +450,7 @@
       "ac.own.save": "Αποθήκευση",
       "ac.own.saved": "Αποθηκεύτηκε σε αυτή τη συσκευή",
       "ac.own.bad": "Αυτό δεν μοιάζει με client id",
-      "ac.own.key": "Κλειδί Google API (μόνο για την επιλογή αρχείων από το Google Drive, στα Αρχεία)",
+      "ac.own.key": "Δικό σου κλειδί Google API (προαιρετικό· μόνο με δικό σου αναγνωριστικό, για επιλογή αρχείων από το Google Drive)",
       "rv.title": "Έλεγχος εισαγωγής",
       "rv.sum": "{new} νέες · {diff} με άλλα στοιχεία · {same} υπάρχουν ήδη",
       "rv.folded": "{n} υπήρχαν δύο φορές στην εισαγωγή και ενώθηκαν",
@@ -631,7 +634,10 @@
       "sc.empty": "Δεν βρέθηκε κείμενο. Δοκίμασε πιο καθαρή φωτογραφία με καλό φως ή πληκτρολόγησε το κείμενο παρακάτω.",
       "sc.done": "Έλεγξε το κείμενο και πάτησε «Συμπλήρωση νέας επαφής».",
       "sc.nofill": "Γράψε ή διάβασε πρώτα κάποιο κείμενο",
-      "sc.check": "Έλεγξε τα στοιχεία και πάτησε Αποθήκευση"
+      "sc.check": "Έλεγξε τα στοιχεία και πάτησε Αποθήκευση",
+      "oros.save": "Αρχείο orOS (.oroscontacts)",
+      "oros.open": "Άνοιγμα αρχείου orOS…",
+      "oros.folder": "Αποσυμπιεσμένος φάκελος orOS…"
     }
   };
   function t(k) {
@@ -3017,6 +3023,10 @@ document.addEventListener("keydown", function (e) {
   // dialog (icon shortcut); { cardText: { text } } → a shared text read
   // like a business card (cardtext.js), prefilling a NEW contact.
   window.__orosOpenAt = function (target) {
+    // "Open with" an .oroscontacts file (fileopen.js): { openFile: { token } },
+    // the File taken once with window.parent.__orosTakeFile(token). A .vcf
+    // still comes as text ({ importVcf }, below).
+    if (target && typeof target === "object" && target.openFile) { if (recFile) recFile.openTarget(target.openFile); return; }
     if (target && typeof target === "object" && (target.newContact === true || target.cardText)) {
       if ($("ct-dlg").open) return;
       try { closeViewCard(); } catch (e) {}
@@ -5198,6 +5208,80 @@ document.addEventListener("keydown", function (e) {
     // Anchor: AFTER the Export JSON button (jsonBtn) — final order
     // [Export] [Export JSON] [Import JSON].
     $("ct-export").parentNode.insertBefore(jsonImpBtn, jsonBtn.nextSibling);
+  }
+
+  // ---- orOS file (.oroscontacts, ../recordpkg.js + package.js) ----
+  // Every contact (with its interactions) and label as one orOS file,
+  // for moving them without sync or keeping a copy. Opening ADDS what
+  // this device lacks, with its ids; a contact already here (or deleted
+  // here) is kept as it is unless "Update with newer versions" is
+  // ticked. The result goes through the sanitizer + saveState (field
+  // stamps, sync dirty); Undo deletes the added contacts with
+  // tombstones, like a delete, and the added labels nobody uses.
+  // No photos in the file (CT-NP), nothing of the account import.
+  var RP = window.OrosRecordPkg || null, CPK = window.OrosContactsPackage || null;
+  var recFile = RP && CPK && window.OrosBundle ? RP.ui(CPK.DESC, {
+    lang: function () { return LANG === "el" ? "el" : "en"; },
+    get: function () { return canonContacts(JSON.parse(JSON.stringify(state))); },
+    title: function () { return t("app.contacts.self"); },
+    set: function (next) {
+      if (!next || typeof next !== "object" || !Array.isArray(next.contacts)) return;
+      state.contacts = next.contacts.map(sanitizeContact).filter(Boolean);
+      var sl = (Array.isArray(next.labels) ? next.labels : []).map(sanitizeLabel).filter(Boolean);
+      if (sl.length) state.labels = sl;
+      state.deleted = (Array.isArray(next.deleted) ? next.deleted : []).map(sanitizeTomb).filter(Boolean);
+      saveState();                       // field stamps + markDirty → sync carries it
+      renderChips();
+      renderList();
+    },
+    deleteIds: function (ids) {
+      var want = {}, now = Date.now(), any = false;
+      ids.forEach(function (id) { want[id] = 1; });
+      state.contacts = state.contacts.filter(function (c) {
+        if (!want[c.id]) return true;
+        state.deleted.push({ id: c.id, mtime: now });   // shared tombstone, as a delete
+        any = true;
+        return false;
+      });
+      state.labels = state.labels.filter(function (l) {
+        if (!want[l.id] || labelInUse(l.id)) return true;
+        state.deleted.push({ id: l.id, mtime: now });
+        delete labelVis[l.id];
+        any = true;
+        return false;
+      });
+      if (!any) return;
+      if (viewCardId && !contactById(viewCardId)) closeViewCard();
+      saveState();
+      renderChips();
+      renderList();
+      notifyTransient(recFile.text("undone"));
+    },
+    // a .vcf or .csv picked here goes to the usual import (Review import)
+    notBundle: function (f) {
+      if (f && /\.(vcf|csv)$/i.test(f.name || "")) { importFileText(f); return true; }
+      notifyTransient(recFile.text("wrong", { app: t("app.contacts.self") }));
+      return false;
+    },
+    toast: function (text, undo) {
+      if (undo) toast(text, t("undo"), undo);
+      else notifyTransient(text);
+    }
+  }) : null;
+  if (recFile && $("ct-export")) {
+    var recAt = jsonImpBtn ? jsonImpBtn.nextSibling : $("ct-export").nextSibling;
+    [["ct-osave", "oros.save", "save", function () { recFile.save(); }],
+     ["ct-oopen", "oros.open", "open", function () { recFile.open(); }],
+     ["ct-ofolder", "oros.folder", "folder", function () { recFile.openFolder(); }]].forEach(function (b) {
+      var ob = document.createElement("button");
+      ob.type = "button";
+      ob.className = $("ct-export").className;
+      ob.id = b[0];
+      ob.textContent = t(b[1]);
+      ob.title = recFile.text(b[2]);
+      ob.addEventListener("click", b[3]);
+      $("ct-export").parentNode.insertBefore(ob, recAt);
+    });
   }
 
 // ===== SYNC =====

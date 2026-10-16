@@ -180,6 +180,13 @@ Quote and Meals also offer "Open as copy" (fresh ids), as they work like templat
 | Score Keeper | `{ ver: 1, matches, rounds, tpls, players }` | `history.csv` (= the app's Export CSV), `rounds.csv` |
 | Cycle | `{ ver: 1, periods, days: [{ id: "d-YYYY-MM-DD", … }], cols: { sym, med } }` (reminders and views stay on the device) | `cycle.md`, `periods.csv`, `days.csv` |
 | Mood | `{ ver: 3, entries, cols: { loc, trig, person }, vocab?, goals? }` (a value with the same name as one on the device is folded into it) | `mood.md`, `mood.csv` |
+| Calendar | `{ ver: 1, labels, events }` (subscription links are never written: they work like keys) | `calendar.ics` |
+| Contacts | `{ ver: 1, labels, contacts }` (no photos; nothing from account imports) | `contacts.vcf` |
+| Bookmarks | `{ ver: 1, folders: { id: … }, items: { id: … } }` (saved readable copies stay on the device) | `bookmarks.html` |
+| Reader | `{ ver: 1, feeds, folders, items (saved articles), tags, rules }` (settings, read state, downloaded articles stay on the device) | `feeds.opml`, `saved.md` |
+| Podcasts | `{ ver: 1, shows: [{ …, eps: [progress] }] }` (never the gpodder key, the queue or audio) | `podcasts.opml` |
+| Meal Planner | `{ ver, rc (recipes), pl (plan), ck, mn, pa (pantry), pn }`; also "Open as copy" (recipes with fresh ids) | `recipes.md`, `shopping.txt` |
+| Sticky Notes | `{ ver: 1, notes }` (positions on the screen stay on the device) | `notes.txt` |
 
 ## Versions
 

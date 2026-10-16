@@ -68,13 +68,6 @@ test("every app in the table exists and takes a file through its deep link", () 
   // .oros<word> file yet; its wave adds the receiver and takes the app
   // off this list (one app per line, so parallel waves merge cleanly).
   const PENDING_4B = [
-    "calendar",
-    "contacts",
-    "bookmarks",
-    "feeds",
-    "podcasts",
-    "meals",
-    "stickies",
     "budget",
     "invoices",
     "crm",
@@ -349,4 +342,13 @@ test("sw share target: a single app's share goes back to its own page (solo.js)"
   const odd = form({ url: "https://example.com/x" });
   odd.url = "https://useoros.online/x/y/solo.html?share-target";
   assert.equal((await sb.shareTargetPost(odd)).redirect, "https://useoros.online/?share-url=https%3A%2F%2Fexample.com%2Fx");
+});
+
+test("every registered type routes by file name, long .oros words included", () => {
+  F.extensions().forEach((x) => {
+    const c = F.choose("file" + x, {});
+    assert.ok(c && (c.app || c.ask), x);
+  });
+  assert.equal(F.choose("x.orosnewsletter", {}).app, "newsletter");
+  assert.equal(F.choose("x.orosbookmarks", {}).app, "bookmarks");
 });

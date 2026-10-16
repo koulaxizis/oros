@@ -147,6 +147,9 @@
       "s.slots": "Meals of the day", "s.week": "Week starts on", "s.mon": "Monday", "s.sun": "Sunday",
       "s.pantry": "Always in the house (left out of the shopping list)", "s.pantryAdd": "Add…",
       "s.pantryDel": "Remove {name}", "s.backup": "Backup", "s.export": "Export (JSON)", "s.import": "Import (JSON)",
+      "s.file": "Save and open", "file.save": "orOS file (.orosmeals)", "file.open": "Open orOS file…",
+      "file.copy": "Open as copy…", "file.folder": "Unzipped orOS folder…",
+      "file.copyHint": "“Open as copy” adds the file's recipes as new ones, even recipes you already have.",
       "s.close": "Close", "s.slotName": "Name for {slot}",
       "toast.saved": "Recipe saved", "toast.deleted": "“{t}” deleted", "toast.copied": "Copied",
       "toast.save": "Could not save: storage is full", "toast.imported": "Imported: {n} recipes", "toast.importBad": "That file is not a Meal Planner backup",
@@ -269,6 +272,9 @@
       "s.slots": "Γεύματα της ημέρας", "s.week": "Η εβδομάδα ξεκινά", "s.mon": "Δευτέρα", "s.sun": "Κυριακή",
       "s.pantry": "Υπάρχουν πάντα στο σπίτι (δεν μπαίνουν στη λίστα)", "s.pantryAdd": "Πρόσθεσε…",
       "s.pantryDel": "Αφαίρεση: {name}", "s.backup": "Αντίγραφο ασφαλείας", "s.export": "Εξαγωγή (JSON)", "s.import": "Εισαγωγή (JSON)",
+      "s.file": "Αποθήκευση και άνοιγμα", "file.save": "Αρχείο orOS (.orosmeals)", "file.open": "Άνοιγμα αρχείου orOS…",
+      "file.copy": "Άνοιγμα ως αντίγραφο…", "file.folder": "Αποσυμπιεσμένος φάκελος orOS…",
+      "file.copyHint": "Το «Άνοιγμα ως αντίγραφο» προσθέτει τις συνταγές του αρχείου ως νέες, ακόμη κι αυτές που έχεις ήδη.",
       "s.close": "Κλείσιμο", "s.slotName": "Όνομα για: {slot}",
       "toast.saved": "Η συνταγή αποθηκεύτηκε", "toast.deleted": "Διαγράφηκε: «{t}»", "toast.copied": "Αντιγράφηκε",
       "toast.save": "Δεν αποθηκεύτηκε: ο χώρος είναι γεμάτος", "toast.imported": "Εισήχθησαν: {n} συνταγές", "toast.importBad": "Αυτό το αρχείο δεν είναι αντίγραφο του Meal Planner",
@@ -3010,8 +3016,97 @@
     brow.appendChild(button(t("s.import"), "", importBackup));
     bk.appendChild(brow);
     dlg.appendChild(bk);
+
+    // .orosmeals (OBF-4e): save / open an orOS file, open as a copy
+    if (recFile) {
+      var of = el("fieldset", "");
+      of.id = "s-ofile";
+      of.appendChild(el("legend", "dlg-lbl", t("s.file")));
+      var orow = el("div", "dlg-actions wrap");
+      [["s-osave", "file.save", function () { recFile.save(); }],
+       ["s-oopen", "file.open", function () { recFile.open(); }],
+       ["s-ocopy", "file.copy", function () { if (recCopy) recCopy.open(); }],
+       ["s-ofolder", "file.folder", function () { recFile.openFolder(); }]].forEach(function (b) {
+        var btn = button(t(b[1]), "", function () { dlg.close(); b[2](); });
+        btn.id = b[0];
+        orow.appendChild(btn);
+      });
+      of.appendChild(orow);
+      of.appendChild(el("p", "hint", t("file.copyHint")));
+      dlg.appendChild(of);
+    }
     showDialog(dlg);
   }
+
+  // .orosmeals (OBF-4e): the recipes, the plan, the shopping ticks and
+  // own items, the pantry and the "always at home" choices as one orOS
+  // file (../recordpkg.js + package.js). Opening ADDS what this device
+  // lacks, with its ids; a record already here (or deleted here) is
+  // kept as it is unless "Update with newer versions" is ticked. The
+  // result goes through commit() (mergeMeals + save + sync dirty);
+  // Undo takes the added records back the app's own way: tombstones for
+  // recipes, own items and pantry items, a newer empty cell for a plan
+  // cell, a newer "off" for a tick or an "always at home" choice.
+  // "Open as copy" (recCopy) adds the file's recipes under fresh ids:
+  // recipes work like templates, so a recipe already here comes in as
+  // a second one. Previews: recipes.md (recipeText) and shopping.txt
+  // (shopAsText, the week on screen).
+  var RP = window.OrosRecordPkg || null, MPK = window.OrosMealsPackage || null;
+  var recAdded = null;                     // { rc: [ids], pl: [keys] … } of the last open
+  var recFmt = {
+    recipe: function (r) { return recipeText(r, r.sv); },
+    shop: function () { return shopAsText(); }
+  };
+  function recHooks() {
+    return {
+      lang: function () { return LANG; },
+      get: function () { return C.mergeMeals(data, data); },
+      title: function () { return t("app.name"); },
+      set: function (next, info) {
+        if (!next || typeof next !== "object" || !Array.isArray(next.rc)) return;
+        var before = C.mergeMeals(data, data);
+        data = C.mergeMeals(next, next);
+        commit();
+        recAdded = MPK.addedByColl(before, data, info && info.addedIds);
+        renderAll();
+      },
+      deleteIds: function (ids) {
+        var want = {}, by = recAdded || {}, ts = now();
+        ids.forEach(function (id) { want[id] = 1; });
+        function each(k, fn) { (by[k] || []).forEach(function (id) { if (want[id]) fn(id); }); }
+        each("rc", function (id) {
+          var r = storedRecipe(id);
+          if (!r) return;
+          data.tombs[id] = Math.max(data.tombs[id] || 0, ts, r.m);
+          data.rc = data.rc.filter(function (x) { return x.id !== id; });
+        });
+        each("mn", function (id) {
+          var x = null;
+          data.mn.forEach(function (m) { if (m.id === id) x = m; });
+          if (!x) return;
+          data.tombs[id] = Math.max(data.tombs[id] || 0, ts, x.m);
+          data.mn = data.mn.filter(function (m) { return m.id !== id; });
+        });
+        each("pa", dropPantryRaw);
+        each("pl", function (k) { if (data.pl[k]) setCellRaw(k, []); });
+        each("ck", function (k) { var c = data.ck[k]; if (c && c.v) data.ck[k] = { v: 0, m: bump(c.m) }; });
+        each("pn", function (k) {
+          var c = data.pn[k];
+          if (!c || !c.v) return;
+          var x = { v: 0, m: bump(c.m) };
+          if (c.n) x.n = c.n;
+          data.pn[k] = x;
+        });
+        recAdded = null;
+        commit();
+        renderAll();
+        showToast(RP.str(LANG, "undone"));
+      },
+      toast: function (text, undo) { if (undo) undoToast(text, undo); else showToast(text); }
+    };
+  }
+  var recFile = RP && MPK && window.OrosBundle ? RP.ui(MPK.forLocal(function () { return data; }, recFmt), recHooks()) : null;
+  var recCopy = recFile ? RP.ui(MPK.asCopy(function () { return data; }, recFmt, function () { return newId("r"); }), recHooks()) : null;
 
   function dialogHost() {
     if (window.orosDialog) return window.orosDialog;
@@ -3417,6 +3512,9 @@
   // Target { addRecipe: {…} } ("Add to my orOS" from a shared link):
   // the recipe opens in the editor as a NEW draft, saved only on Save.
   function openSearchTarget(t) {
+    // "Open with" an .orosmeals file (fileopen.js): { openFile: { token } },
+    // the File taken once with window.parent.__orosTakeFile(token)
+    if (t && t.openFile) { if (recFile) recFile.openTarget(t.openFile); return; }
     if (!t || document.querySelector("dialog[open]")) return;
     if (t.addRecipe && typeof t.addRecipe === "object") {
       var rx = C.normRecipe(Object.assign({}, t.addRecipe, { id: "shared-draft", m: 0 }));
