@@ -67,6 +67,16 @@
       ]
     }
   ],
+  "file_handlers": [
+    {
+      "action": "/invoices/solo.html?file-open=invoices",
+      "accept": {
+        "application/x-oros-invoices": [
+          ".orosinvoices"
+        ]
+      }
+    }
+  ],
   "share_target": {
     "action": "/invoices/solo.html?share-target",
     "method": "POST",
@@ -74,7 +84,16 @@
     "params": {
       "title": "title",
       "text": "text",
-      "url": "url"
+      "url": "url",
+      "files": [
+        {
+          "name": "files",
+          "accept": [
+            "application/x-oros-invoices",
+            ".orosinvoices"
+          ]
+        }
+      ]
     }
   }
 }
