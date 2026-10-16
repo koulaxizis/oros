@@ -62,7 +62,7 @@ Press `Try it now` next to an event. Settings closes and the decoration appears 
 
 A kept decoration shows in `Settings` with its own `Stop` button.
 
-If your device asks for less motion, or the battery is low, only the still pieces show. Slow devices get fewer snowflakes on their own.
+If your device asks for less motion, or the battery is low, only the still pieces show. Autumn and Winter are made only of falling leaves and snow, so they then show as a still picture of them. Slow devices get fewer snowflakes on their own; a device that stays too slow shows still pieces, and changing `Motion` or `Amount` tries moving again.
 
 ## Screen pet
 In `Settings`, under `Appearance`, the `Screen pet` switch turns on a tiny companion that lives on your desktop. Feed it, pet it and let it sleep. It never dies: if you forget it for a while, it just gets grumpy. You can do more with your pet in [Pet World](app:petworld).

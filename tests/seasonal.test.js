@@ -204,3 +204,15 @@ test("shell: loaded before shell.js, attached outside single apps, precached", (
   assert.doesNotMatch(src, /https?:\/\/(?!www\.w3\.org)/, "nothing from the net");
   assert.match(src, /prefers-reduced-motion/);
 });
+
+// Autumn and winter are only moving things: when still they must
+// draw one frozen frame, never an empty layer (Chris 2026-10-16).
+test("still: scenes without still pieces get a frozen frame", () => {
+  const src = fs.readFileSync(path.join(ROOT, "seasonal.js"), "utf8");
+  assert.match(src, /var frozen = isStill && !sc\.top && !sc\.tr && !sc\.bottom && !sc\.corner;/);
+  assert.match(src, /var moving = isStill && !frozen \? \[\] : sc\.moving\(\);/);
+  assert.match(src, /if \(frozen\) \{[^}]*step\(0, sz\.w, sz\.h, ctx\)[^}]*systems = \[\];/);
+  assert.match(src, /slow: degraded/);
+  const core = fs.readFileSync(path.join(ROOT, "settings", "core.js"), "utf8");
+  assert.equal((core.match(/"z\.slow":/g) || []).length, 2, "EN + EL");
+});
