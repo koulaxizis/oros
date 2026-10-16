@@ -52,7 +52,7 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.2.0";
+  var VER = "1.2.1";
   var DATA_KEY = "oros-seasonal";
   var LOCAL_KEY = "oros-seasonal-local";
   var YMD_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -1005,7 +1005,10 @@
       c.innerHTML = sc.corner;
       layer.appendChild(c);
     }
-    var moving = isStill ? [] : sc.moving();
+    // A scene made only of moving things (autumn leaves, winter snow)
+    // would be empty when still, so it gets one frozen frame instead.
+    var frozen = isStill && !sc.top && !sc.tr && !sc.bottom && !sc.corner;
+    var moving = isStill && !frozen ? [] : sc.moving();
     if (moving.length) {
       canvas = document.createElement("canvas");
       var dpr = Math.min(2, root.devicePixelRatio || 1);
@@ -1021,6 +1024,10 @@
           return s.sys;
         });
         layer.insertBefore(canvas, layer.firstChild);
+        if (frozen) {                             // draw once, no loop
+          for (var i = 0; i < systems.length; i++) systems[i].step(0, sz.w, sz.h, ctx);
+          systems = [];
+        }
       } else canvas = null;
     }
     desk.appendChild(layer);
@@ -1100,6 +1107,8 @@
     var cur = load(), next = setField(cur, key, v, Date.now());
     if (next === cur) return false;
     store(next);
+    // A new motion or amount choice gives a slow device another try.
+    if (key === "motion" || key === "amount") { degraded = false; scale = 1; ema = 33; slowFrames = 0; }
     var api = root.orosSync;
     if (api && typeof api.markDirty === "function") api.markDirty();
     shown = "";
@@ -1160,7 +1169,7 @@
     return {
       on: get(d, "on"), motion: get(d, "motion"), amount: get(d, "amount"), xmas: get(d, "xmas"),
       easter: get(d, "easter"), bday: get(d, "bday"),
-      reduced: reduced(), lowBattery: lowBattery,
+      reduced: reduced(), lowBattery: lowBattery, slow: degraded,
       // Soonest first: what is on now, then what comes next.
       // A birthday not set has no dates and goes last; seasons are
       // marked so Settings can list them apart.

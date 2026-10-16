@@ -355,7 +355,7 @@
       c.appendChild(segRow(t("z.motion"), segmented([
         { value: "auto", label: t("z.motion.auto") }, { value: "still", label: t("z.motion.still") }
       ], z.motion, "seasonal:motion", function (v) { set("seasonal:motion", v); }, t("z.motion")),
-        { hint: z.reduced ? t("z.reduced") : (z.lowBattery ? t("z.battery") : null) }));
+        { hint: z.reduced ? t("z.reduced") : (z.lowBattery ? t("z.battery") : (z.slow ? t("z.slow") : null)) }));
       c.appendChild(segRow(t("z.amount"), segmented(["low", "mid", "high"].map(function (k) {
         return { value: k, label: t("z.amount." + k) };
       }), z.amount, "seasonal:amount", function (v) { set("seasonal:amount", v); }, t("z.amount"))));

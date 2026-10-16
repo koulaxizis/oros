@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.62.01
+- Seasonal decorations: Autumn leaves and Winter snow no longer vanish when the decorations stand still (low battery, less motion, Still only, or a device that was slow to draw them). They now show as a still picture, and Settings says when a slow device stopped the movement.
+
 ## Version 2.62.00
 - Mockups: a new Print tab makes the cover sheet for the printer from your book's numbers: trim, bleed (or the wrap round a hardcover's boards), spine, hinges, flaps, safe zone and a barcode spot. Save it as a 300 dpi PNG or PDF, with the guides or as your finished cover with its bleed, or design on it in Atelier.
 
