@@ -71,6 +71,11 @@ In the orOS Android app, `On this phone` puts your orOS contacts in the phone's 
 
 Other apps can send contacts to orOS too. When a phone app offers "Add contact" or "Create contact" (after a call from a number you don't have, from Viber or another messenger) or opens a .vcf file, pick orOS. The contact opens in `Review import`, and nothing is saved until you confirm. The button doesn't appear in a browser, only in the Android app, and the choice is kept on this phone only.
 
+## Save and open an orOS file
+`orOS file (.oroscontacts)` in the top bar saves every contact (with its interactions) and every label as one `.oroscontacts` file, for example to move them to another device without sync or to keep a copy. The file is a plain ZIP: unzipped it holds the contacts as `content.json` plus `preview/contacts.vcf`, which other address books open. It has no photos (Contacts keeps none) and nothing of `From an account`. It is not encrypted and holds personal details, so keep it somewhere safe.
+
+`Open orOS file…` (or `Unzipped orOS folder…`, or "Open with" orOS on the computer) shows how many contacts and labels are new and how many are already here, then `Add` adds only the new ones, with their own ids: opening the same file again adds nothing. A contact already here is kept as it is, and one you deleted here stays deleted; a file never deletes anything. Tick `Update with newer versions` to let contacts that were changed later in the file replace your copy. `Undo` in the message removes what was added. To bring in contacts from another address book, use `Import` with a .vcf or CSV file instead.
+
 ## Sync and backup
 Your contacts and labels sync between your devices through [orOS sync](help:t/sync). Each detail of a contact syncs on its own: if you add a phone number on your computer and change the note on your phone at the same time, both changes are kept. The interactions you log sync one by one too, and one deleted on a device is deleted on the others. Which labels you've hidden, and the reach-out reminder switch, are not synced.
 

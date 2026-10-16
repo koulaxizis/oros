@@ -163,6 +163,8 @@
       "fx.probing": "Checking whether this audio can be processed…", "fx.unsupported": "This browser cannot process audio.",
       "st.silence": "Saved by skipping silence: {t}",
       "g.open": "Sync with gpodder…", "g.title": "gpodder sync",
+      "file.save": "orOS file (.orospodcasts)", "file.open": "Open orOS file…", "file.folder": "Unzipped orOS folder…",
+      "file.hint": "Every subscription with its settings and listening progress as one file. Opening one adds only what this device lacks; the file is not encrypted. Downloads and the gpodder login stay here.",
       "g.intro": "Keep your subscriptions and listening progress in step with other podcast apps (AntennaPod, Kasts, gPodder…) through your own gpodder.net account or your Nextcloud with the GPodder Sync app.",
       "g.kind": "Service", "g.kind.gpodder": "gpodder.net (or a compatible server)", "g.kind.nextcloud": "Nextcloud (GPodder Sync app)",
       "g.server": "Server address", "g.user": "Username", "g.pass": "Password", "g.device": "Device name",
@@ -264,6 +266,8 @@
       "fx.probing": "Ελέγχεται αν ο ήχος μπορεί να επεξεργαστεί…", "fx.unsupported": "Αυτός ο browser δεν μπορεί να επεξεργαστεί ήχο.",
       "st.silence": "Κέρδος από την παράλειψη σιωπής: {t}",
       "g.open": "Συγχρονισμός με gpodder…", "g.title": "Συγχρονισμός gpodder",
+      "file.save": "Αρχείο orOS (.orospodcasts)", "file.open": "Άνοιγμα αρχείου orOS…", "file.folder": "Αποσυμπιεσμένος φάκελος orOS…",
+      "file.hint": "Όλες οι συνδρομές με τις ρυθμίσεις τους και την πρόοδο ακρόασης σε ένα αρχείο. Όταν ανοίγεις ένα, προστίθενται μόνο όσα λείπουν από αυτή τη συσκευή· το αρχείο δεν είναι κρυπτογραφημένο. Οι λήψεις και η σύνδεση gpodder μένουν εδώ.",
       "g.intro": "Κράτα τις συνδρομές και την πρόοδο ακρόασης ίδιες με άλλες εφαρμογές podcast (AntennaPod, Kasts, gPodder…) μέσα από τον δικό σου λογαριασμό στο gpodder.net ή το δικό σου Nextcloud με την εφαρμογή GPodder Sync.",
       "g.kind": "Υπηρεσία", "g.kind.gpodder": "gpodder.net (ή συμβατός διακομιστής)", "g.kind.nextcloud": "Nextcloud (εφαρμογή GPodder Sync)",
       "g.server": "Διεύθυνση διακομιστή", "g.user": "Όνομα χρήστη", "g.pass": "Κωδικός", "g.device": "Όνομα συσκευής",
@@ -1625,7 +1629,8 @@
     // { find: true }: the single app's "Find a podcast" shortcut.
     if (x && typeof x === "object" && x.find === true) { setTab("find"); return; }
     // { openFile: { token } }: a file from the system's "Open with"
-    // (shell fileopen.js), taken once, then the OPML import.
+    // (shell fileopen.js), taken once: an .orospodcasts bundle goes to
+    // the orOS file flow (recFile), anything else to the OPML import.
     if (x && typeof x === "object" && x.openFile) {
       if (!H || document.querySelector("dialog[open]")) return;
       var f = null;
@@ -1634,7 +1639,8 @@
         if (typeof x.openFile.token === "string" && p && p !== window && typeof p.__orosTakeFile === "function")
           f = p.__orosTakeFile(x.openFile.token);
       } catch (e) { f = null; }
-      if (f) opmlFromFile(f);
+      if (f && recFile) recFile.openFile(f);
+      else if (f) opmlFromFile(f);
       return;
     }
     // { show } / { show, ep }: universal search hit.
@@ -2177,7 +2183,7 @@
   function exportOpml() {
     var shows = D().shows;
     var text = "";
-    try { text = FC.buildOpml(shows.map(function (s) { return { url: s.url, title: s.title, site: "" }; }), []); } catch (e) { text = ""; }
+    try { text = PK ? PK.opml(shows, "orOS Podcasts", now()) : ""; } catch (e) { text = ""; }
     if (!text) return;
     var name = "oros-podcasts-" + new Date().toISOString().slice(0, 10) + ".opml";
     var done = function () { showToast(t("toast.opmlOut", { n: shows.length })); };
@@ -2191,6 +2197,75 @@
     a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
     setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
     done();
+  }
+
+  // .orospodcasts (OBF-4e): every subscription, its settings, floor
+  // and episode progress as one orOS file (../recordpkg.js +
+  // package.js). Opening ADDS what this device lacks, with its ids; a
+  // show already here (or unsubscribed here) keeps its local values
+  // unless "Update with newer versions" is ticked. The result goes
+  // through the host's mutate (canonical + sync); Undo unsubscribes
+  // the added shows and drops the added progress rows. A file that is
+  // not a bundle (an .opml from "Open with") goes to the OPML import.
+  // Never in the file: the gpodder login, downloads, the feed cache.
+  var RP = window.OrosRecordPkg || null, PK = window.OrosPodcastsPackage || null;
+  var recFile = RP && PK && window.OrosBundle ? RP.ui(PK.DESC, {
+    lang: function () { return LANG; },
+    get: function () { return PK.nest(D(), true); },
+    title: function () { return "Podcasts"; },
+    set: function (next) {
+      var x = PK.fold(next);
+      mutate(function (d) {
+        var o = JSON.parse(JSON.stringify(d)), had = {};
+        o.shows.forEach(function (sh) { had[sh.id] = 1; });
+        // the subscription limit: added shows past it stay out
+        var room = C.LIM.shows - o.shows.length;
+        o.shows = x.shows.filter(function (sh) { return had[sh.id] || room-- > 0; });
+        o.eps = x.eps;
+        o.floors = x.floors;
+        return o;
+      });
+      renderAll();
+      refresh(false);
+    },
+    deleteIds: function (ids) {
+      var now0 = now(), cur = D(), shows = {}, eps = {};
+      ids.forEach(function (id) {
+        var k = PK.kindOf(id, cur);
+        if (k === "show") shows[id] = 1; else if (k === "ep") eps[id] = 1;
+      });
+      mutate(function (d, n) {
+        Object.keys(shows).forEach(function (id) { d = C.unsubscribe(d, id, n || now0); });
+        var o = JSON.parse(JSON.stringify(d));
+        o.eps = o.eps.filter(function (e) { return !eps[e.id]; });   // a progress row has no tombstone
+        return o;
+      });
+      Object.keys(shows).forEach(function (id) { delete feeds[id]; ST.delFeed(id); });
+      renderAll();
+      showToast(RP.str(LANG, "undone"));
+    },
+    toast: function (text, undo) {
+      if (undo) undoToast(text, undo);
+      else showToast(text);
+    },
+    notBundle: function (f) { opmlFromFile(f); return true; }
+  }) : null;
+  // A toast with an Undo button: the shell's transient, else the local one.
+  function undoToast(text, fn) {
+    var used = false, go = function () { if (!used) { used = true; fn(); } };
+    try {
+      var n = (window.parent && window.parent !== window && window.parent.orosNotifs) || null;
+      if (n && typeof n.transient === "function" &&
+          n.transient({ ns: "podcasts", title: String(text), body: "", action: { label: t("toast.undo"), fn: go } })) return;
+    } catch (e) {}
+    localToast(text);
+    var box = $("toast");
+    if (!box) return;
+    var b = button(t("toast.undo"), "txt-btn", function () { box.classList.remove("show"); go(); });
+    b.style.marginLeft = "10px";
+    box.appendChild(b);
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { box.classList.remove("show"); }, 8000);
   }
 
   // ---------- 12. Settings ----------
@@ -2220,6 +2295,17 @@
     form.appendChild(el("p", "dim small", t("fx.note")));
     form.appendChild(el("p", "dim small", NET.relayAvailable() ? t("s.relay") : t("s.noRelay")));
     if (G) form.appendChild(button(t("g.open"), "txt-btn", function () { dlg.close(); gpodderDlg(); }));
+    if (recFile) {
+      // .orospodcasts: the orOS file of every subscription and its progress
+      var frow = el("div", "row-btns");
+      [["file.save", "save"], ["file.open", "open"], ["file.folder", "openFolder"]].forEach(function (b) {
+        var bt = button(t(b[0]), "txt-btn", function () { dlg.close(); recFile[b[1]](); });
+        bt.id = "pc-o" + b[1].toLowerCase();
+        frow.appendChild(bt);
+      });
+      form.appendChild(frow);
+      form.appendChild(el("p", "dim small", t("file.hint")));
+    }
     dlg.appendChild(form);
     var row = el("div", "dlg-btns");
     row.appendChild(button(t("set.cancel"), "txt-btn", function () { dlg.close(); }));

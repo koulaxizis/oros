@@ -50,6 +50,11 @@ The password stays sealed on this device and is never synced, so enter it once o
 
 Without a server, move subscriptions with `Export OPML` and `Import OPML`, and listening progress with `Export listening progress` and `Import listening progress` (gpodder episode actions as a JSON file).
 
+## Save and open an orOS file
+In `Settings`, `orOS file (.orospodcasts)` saves every subscription with its own settings, its played marks and listening progress as one `.orospodcasts` file, for example to move them to another device without sync or to keep a copy. The file is a plain ZIP: unzipped it holds the podcasts as `content.json` plus `preview/podcasts.opml`, which any podcast app can import. It is not encrypted, so keep it somewhere safe. Downloads, the queue, the player settings and your gpodder login are never in it.
+
+`Open orOS file…` (or `Unzipped orOS folder…`, or "Open with" orOS on the computer) shows how many podcasts and progress records are new and how many are already here, then `Add` adds only the new ones: opening the same file again adds nothing. A podcast already here keeps its settings and progress, and one you unsubscribed here stays unsubscribed; a file never deletes anything. Tick `Update with newer versions` to let records that were changed later in the file replace yours. `Undo` in the message removes what was added. An `.opml` file opened with Podcasts is imported as before.
+
 ## Sync and backup
 Your podcasts, episode progress, played marks, queue and settings sync between your devices through [orOS sync](help:t/sync). Downloads, cached episode lists and exact positions stay on this device. `Export OPML` and `Import OPML` in `Discover` move your subscriptions to or from other podcast apps. See also [Backup](help:t/backup).
 

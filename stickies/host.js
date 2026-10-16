@@ -1223,6 +1223,28 @@
     notify(T("deleted"), { label: T("undo"), fn: function () { commit(C.revive(cur(), copy, Date.now())); } });
   }
 
+  // .orosstickies (stickies/package.js, the app's "Open orOS file…"):
+  // the notes a file adds, merged in with C.merge (never a replace, so
+  // nothing here is lost; no position: render() finds each a free spot).
+  // A creation time later than now + 5 min is pulled back (ordering).
+  function addFromFile(next) {
+    if (!next || typeof next !== "object" || !Array.isArray(next.notes)) return false;
+    var lim = Date.now() + 5 * 60000;
+    var notes = next.notes.map(function (n) {
+      var c = clone(n);
+      if (c && typeof c.ct === "number" && c.ct > lim) c.ct = lim;
+      return c;
+    });
+    return commit(C.merge(cur(), { notes: notes }));
+  }
+  // Undo of a file open: the added notes go the way Delete goes
+  // (tombstones, so the removal syncs); no message per note.
+  function removeAdded(ids) {
+    var d = cur(), now = Date.now();
+    (Array.isArray(ids) ? ids : []).forEach(function (id) { d = C.remove(d, String(id || ""), now); });
+    return commit(d);
+  }
+
   // A new note: on the desktop (typing at once), or in the editor on a
   // phone, with the app open, or with the notes hidden on this device.
   function newNote(at) {
@@ -1376,6 +1398,14 @@
     testSound: function (kind) { play(validSound(kind) ? kind : prefs().sound); },
     melodies: melodies,
     exportText: function () { flushText(); return C.toText(cur()); },
+    addFromFile: addFromFile,
+    removeAdded: removeAdded,
+    // the message after a file open; Undo runs here in the shell, so it
+    // still works once the app is closed
+    fileAdded: function (text, ids) {
+      ids = Array.isArray(ids) ? ids.map(String) : [];
+      notify(String(text || ""), ids.length ? { label: T("undo"), fn: function () { removeAdded(ids); } } : null);
+    },
     onChange: function (fn) {
       if (typeof fn !== "function") return function () {};
       listeners.push(fn);

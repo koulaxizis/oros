@@ -1,4 +1,5 @@
-// orOS Calendar — iCalendar (.ics) import parser, RFC 5545 subset.
+// orOS Calendar — iCalendar (.ics) import parser and export builder,
+// RFC 5545 subset.
 //
 // Pure: text in, plain event objects out (the Calendar's own event
 // shape, see sanitizeEvent in calendar.js). No DOM, no storage, no
@@ -375,7 +376,92 @@
     return res;
   }
 
-  var api = { parse: parse, parseDt: parseDt, durMin: durMin, hashId: hashId, MAX_EVENTS: MAX_EVENTS };
+  // ---------- export (the text builder) ----------
+  // RFC 5545 subset: VEVENT with UID/DTSTAMP/DTSTART/DTEND/SUMMARY/
+  // DESCRIPTION/LOCATION/RRULE/EXDATE/CATEGORIES/VALARM. All-day →
+  // VALUE=DATE; timed → floating local datetimes, or TZID=<IANA> for
+  // an event with its own time zone (no VTIMEZONE block: calendar
+  // apps know the IANA names). RRULE from occur.js toRrule. Pure:
+  // used by the Calendar's Export and by the .oroscal file's
+  // preview/calendar.ics (calendar/package.js).
+  //   build(events, { label(id) → name | null, untitled }) → text (CRLF)
+  function icsEsc(s) {
+    return String(s == null ? "" : s)
+      .replace(/\\/g, "\\\\")
+      .replace(/;/g, "\\;")
+      .replace(/,/g, "\\,")
+      .replace(/\r?\n/g, "\\n");
+  }
+  function icsDt(dateYmd, hm) {
+    var d = dateYmd.replace(/-/g, "");
+    if (!hm) return d;                       // VALUE=DATE form
+    return d + "T" + hm.replace(":", "") + "00";
+  }
+  function icsUtc(ms) {
+    return new Date(ms).toISOString().replace(/[-:]/g, "").replace(/\.\d+/, "");
+  }
+  // One stored event → its VEVENT lines.
+  function eventLines(e, opts) {
+    var L = [], untitled = opts.untitled || "";
+    L.push("BEGIN:VEVENT");
+    L.push("UID:" + icsEsc(e.id) + "@oros.calendar");
+    // 2000-01-01 fallback mtime as a stable STAMP source
+    L.push("DTSTAMP:" + icsUtc(e.mtime || 946684800000));
+    var tz = e.start && e.tz && OCC.tzValid(e.tz) ? e.tz : "";
+    var tzp = tz ? ";TZID=" + tz : "";
+    if (!e.start) {
+      // all-day: DTEND is exclusive in RFC 5545 → +1 day
+      var endDate = OCC.addDays(e.dateEnd || e.date, 1);
+      L.push("DTSTART;VALUE=DATE:" + icsDt(e.date));
+      L.push("DTEND;VALUE=DATE:" + icsDt(endDate));
+    } else {
+      L.push("DTSTART" + tzp + ":" + icsDt(e.date, e.start));
+      L.push("DTEND" + tzp + ":" + icsDt(e.dateEnd || e.date, e.end || e.start));
+    }
+    L.push("SUMMARY:" + icsEsc(e.title || untitled));
+    if (e.note) L.push("DESCRIPTION:" + icsEsc(e.note));
+    if (e.location) L.push("LOCATION:" + icsEsc(e.location));
+    if (OCC.validRecur(e.recur)) {
+      L.push("RRULE:" + OCC.toRrule(e, {
+        until: function (u) {
+          if (!e.start) return u.replace(/-/g, "");
+          // UNTIL matches DTSTART: UTC with a zone, local otherwise.
+          return tz ? icsUtc(OCC.wallToMs(u, "23:59", tz) + 59000) : u.replace(/-/g, "") + "T235959";
+        }
+      }));
+      var ex = Array.isArray(e.recur.exdates) ? e.recur.exdates : [];
+      if (ex.length) {
+        if (e.start) {
+          L.push("EXDATE" + tzp + ":" + ex.map(function (d) { return icsDt(d, e.start); }).join(","));
+        } else {
+          L.push("EXDATE;VALUE=DATE:" + ex.map(function (d) { return icsDt(d); }).join(","));
+        }
+      }
+    }
+    var cat = e.labelId && typeof opts.label === "function" ? opts.label(e.labelId) : null;
+    if (cat != null) L.push("CATEGORIES:" + icsEsc(cat));
+    if (typeof e.remindMin === "number" && e.remindMin > 0) {
+      L.push("BEGIN:VALARM");
+      L.push("ACTION:DISPLAY");
+      L.push("TRIGGER:-PT" + e.remindMin + "M");
+      L.push("DESCRIPTION:" + icsEsc(e.title || untitled));
+      L.push("END:VALARM");
+    }
+    L.push("END:VEVENT");
+    return L;
+  }
+  function build(events, opts) {
+    opts = opts || {};
+    var L = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//orOS//Calendar//EN", "CALSCALE:GREGORIAN"];
+    (Array.isArray(events) ? events : []).forEach(function (e) {
+      if (e && typeof e.id === "string" && typeof e.date === "string") L = L.concat(eventLines(e, opts));
+    });
+    L.push("END:VCALENDAR");
+    return L.join("\r\n");
+  }
+
+  var api = { parse: parse, parseDt: parseDt, durMin: durMin, hashId: hashId, MAX_EVENTS: MAX_EVENTS,
+              build: build, esc: icsEsc };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root) root.OrosIcs = api;
 })(typeof window !== "undefined" ? window : null);
