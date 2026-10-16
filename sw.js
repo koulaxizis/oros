@@ -1235,6 +1235,7 @@ var PRECACHE_URLS = [
   "atelier/editpic.js",
   "atelier/magic.js",
   "atelier/imagine.js",
+  "atelier/magicai.js",
   "atelier/bulk.js",
   "atelier/clips.js",
   "atelier/video.js",

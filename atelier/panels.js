@@ -1139,6 +1139,10 @@
     if (AT.magic && !it.ax.vid) {
       bar.appendChild(tool("erase", t("ai.erase"), function () { AT.magic.erase(it.id); }));
       bar.appendChild(tool("grab", t("ai.grab"), function () { AT.magic.grab(it.id); }));
+      if (AT.magic.edit) {
+        bar.appendChild(tool("medit", t("ai.edit"), function () { AT.magic.edit(it.id); }));
+        bar.appendChild(tool("mexpand", t("ai.expand"), function () { AT.magic.expand(it.id); }));
+      }
     }
     if (AT.editPic && AT.editPic.can(it)) bar.appendChild(tool("editpic", t("ctx.editPic"), function () { AT.editPic.open(it.id); }));
     if (it.ax.vid) bar.insertBefore(btn("ctx-txt" + (view === "video" ? " on" : ""), t("ctx.video"), function () { openView("video"); }), bar.firstChild);

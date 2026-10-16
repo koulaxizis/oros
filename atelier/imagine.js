@@ -219,5 +219,5 @@
     host.appendChild(s);
   }
 
-  AT.imagine = { open: open, section: section, make: make, choice: choice };
+  AT.imagine = { open: open, section: section, make: make, choice: choice, errText: errText };
 })();

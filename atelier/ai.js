@@ -650,6 +650,10 @@
       if (AT.magic) {
         s3.appendChild(button("btn block", t("ai.erase"), function () { AT.magic.erase(one.id); }));
         s3.appendChild(button("btn block", t("ai.grab"), function () { AT.magic.grab(one.id); }));
+        if (AT.magic.edit) {
+          s3.appendChild(button("btn block", t("ai.edit"), function () { AT.magic.edit(one.id); }));
+          s3.appendChild(button("btn block", t("ai.expand"), function () { AT.magic.expand(one.id); }));
+        }
       }
     } else s3.appendChild(el("p", "hint", t("ai.cutHint")));
     var st = el("p", "hint");

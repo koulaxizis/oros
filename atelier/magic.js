@@ -79,6 +79,63 @@
   }
   function baseName(it) { return (it.nm || "picture").replace(/\.[a-z0-9]+$/i, ""); }
 
+  // The picture with a paint layer on top (pointer: mouse, pen,
+  // finger) and a brush size. → { show(cv), painted(), clear(),
+  // mask(w, h) → Uint8 (255 = painted, grown a little), busy(on) }
+  function painter(body, work) {
+    var stage = el("div", "mg-stage ai-checker");
+    var maxW = Math.min(560, (window.innerWidth || 400) - 64), maxH = Math.min(440, (window.innerHeight || 600) * 0.45);
+    var k = Math.min(maxW / work.width, maxH / work.height, 1);
+    var vw = Math.max(1, Math.round(work.width * k)), vh = Math.max(1, Math.round(work.height * k));
+    var view = el("canvas", "mg-view"), paint = el("canvas", "mg-paint");
+    view.width = paint.width = vw; view.height = paint.height = vh;
+    stage.style.width = vw + "px"; stage.style.aspectRatio = vw + " / " + vh;
+    stage.appendChild(view); stage.appendChild(paint);
+    body.appendChild(stage);
+    function show(cv) { var g = view.getContext("2d"); g.clearRect(0, 0, vw, vh); g.drawImage(cv, 0, 0, vw, vh); }
+    show(work);
+    var size = Math.max(6, Math.round(Math.min(vw, vh) / 14));
+    var bl = el("label", "fld mg-brush");
+    bl.appendChild(el("span", "fld-lbl", t("mg.brush")));
+    var rng = el("input", "rng"); rng.type = "range"; rng.min = "4"; rng.max = String(Math.max(20, Math.round(Math.min(vw, vh) / 4))); rng.value = String(size);
+    rng.setAttribute("aria-label", t("mg.brush"));
+    rng.addEventListener("input", function () { size = Number(rng.value); });
+    bl.appendChild(rng);
+    body.appendChild(bl);
+    var pg = paint.getContext("2d"), down = false, last = null, painted = false, busy = false;
+    pg.fillStyle = pg.strokeStyle = "rgba(255,64,96,0.55)"; pg.lineCap = pg.lineJoin = "round";
+    function pos(e) { var b = paint.getBoundingClientRect(); return { x: (e.clientX - b.left) * vw / b.width, y: (e.clientY - b.top) * vh / b.height }; }
+    function dot(p) {
+      pg.lineWidth = size;
+      pg.beginPath();
+      if (last) { pg.moveTo(last.x, last.y); pg.lineTo(p.x, p.y); pg.stroke(); }
+      pg.beginPath(); pg.arc(p.x, p.y, size / 2, 0, Math.PI * 2); pg.fill();
+      last = p; painted = true;
+    }
+    paint.addEventListener("pointerdown", function (e) {
+      if (busy) return;
+      down = true; last = null; paint.setPointerCapture(e.pointerId); dot(pos(e)); e.preventDefault();
+    });
+    paint.addEventListener("pointermove", function (e) { if (down) { dot(pos(e)); e.preventDefault(); } });
+    function up() { down = false; last = null; }
+    paint.addEventListener("pointerup", up); paint.addEventListener("pointercancel", up);
+    return {
+      show: show,
+      painted: function () { return painted; },
+      clear: function () { pg.clearRect(0, 0, vw, vh); painted = false; },
+      busy: function (on) { busy = !!on; },
+      // the painted strokes at w × h → the mask
+      mask: function (w, h) {
+        var mc = document.createElement("canvas"); mc.width = w; mc.height = h;
+        var mg = mc.getContext("2d", { willReadFrequently: true });
+        mg.drawImage(paint, 0, 0, w, h);
+        var md = mg.getImageData(0, 0, w, h).data, hole = new Uint8ClampedArray(w * h);
+        for (var i = 0; i < hole.length; i++) hole[i] = md[i * 4 + 3] > 20 ? 255 : 0;
+        return INP.grow(hole, w, h, Math.max(2, Math.round(Math.max(w, h) / 300)));
+      }
+    };
+  }
+
   // ---------- Magic eraser ----------
   function erase(id) {
     var it = photo(id);
@@ -91,25 +148,7 @@
       AT.openDialog(t("ai.erase"), function (body, close) {
         body.appendChild(el("p", "hint", t("mg.eraseHint")));
         var needP = have ? null : body.appendChild(el("p", "hint", t("mg.need", { mb: INP.APPROX_MB })));
-        var stage = el("div", "mg-stage ai-checker");
-        var maxW = Math.min(560, (window.innerWidth || 400) - 64), maxH = Math.min(440, (window.innerHeight || 600) * 0.45);
-        var k = Math.min(maxW / work.width, maxH / work.height, 1);
-        var vw = Math.max(1, Math.round(work.width * k)), vh = Math.max(1, Math.round(work.height * k));
-        var view = el("canvas", "mg-view"), paint = el("canvas", "mg-paint");
-        view.width = paint.width = vw; view.height = paint.height = vh;
-        stage.style.width = vw + "px"; stage.style.aspectRatio = vw + " / " + vh;
-        stage.appendChild(view); stage.appendChild(paint);
-        body.appendChild(stage);
-        function show() { var g = view.getContext("2d"); g.clearRect(0, 0, vw, vh); g.drawImage(work, 0, 0, vw, vh); }
-        show();
-        var size = Math.max(6, Math.round(Math.min(vw, vh) / 14));
-        var bl = el("label", "fld mg-brush");
-        bl.appendChild(el("span", "fld-lbl", t("mg.brush")));
-        var rng = el("input", "rng"); rng.type = "range"; rng.min = "4"; rng.max = String(Math.max(20, Math.round(Math.min(vw, vh) / 4))); rng.value = String(size);
-        rng.setAttribute("aria-label", t("mg.brush"));
-        rng.addEventListener("input", function () { size = Number(rng.value); });
-        bl.appendChild(rng);
-        body.appendChild(bl);
+        var pt = painter(body, work);
         var stat = el("p", "hint ai-stat");
         body.appendChild(stat);
         var act = el("div", "dlg-actions");
@@ -120,37 +159,12 @@
         act.appendChild(c); act.appendChild(clr); act.appendChild(go); act.appendChild(use);
         body.appendChild(act);
         c.addEventListener("click", close);
-
-        // painting (pointer: mouse, pen, finger)
-        var pg = paint.getContext("2d"), down = false, last = null, painted = false, busy = false;
-        pg.fillStyle = pg.strokeStyle = "rgba(255,64,96,0.55)"; pg.lineCap = pg.lineJoin = "round";
-        function pos(e) { var b = paint.getBoundingClientRect(); return { x: (e.clientX - b.left) * vw / b.width, y: (e.clientY - b.top) * vh / b.height }; }
-        function dot(p) {
-          pg.lineWidth = size;
-          pg.beginPath();
-          if (last) { pg.moveTo(last.x, last.y); pg.lineTo(p.x, p.y); pg.stroke(); }
-          pg.beginPath(); pg.arc(p.x, p.y, size / 2, 0, Math.PI * 2); pg.fill();
-          last = p; painted = true;
-        }
-        paint.addEventListener("pointerdown", function (e) {
-          if (busy) return;
-          down = true; last = null; paint.setPointerCapture(e.pointerId); dot(pos(e)); e.preventDefault();
-        });
-        paint.addEventListener("pointermove", function (e) { if (down) { dot(pos(e)); e.preventDefault(); } });
-        function up() { down = false; last = null; }
-        paint.addEventListener("pointerup", up); paint.addEventListener("pointercancel", up);
-        clr.addEventListener("click", function () { pg.clearRect(0, 0, vw, vh); painted = false; stat.textContent = ""; });
+        clr.addEventListener("click", function () { pt.clear(); stat.textContent = ""; });
 
         go.addEventListener("click", function () {
-          if (!painted) { stat.textContent = t("mg.paint"); return; }
-          // the painted strokes at the working size → the hole mask
-          var mc = document.createElement("canvas"); mc.width = work.width; mc.height = work.height;
-          var mg = mc.getContext("2d", { willReadFrequently: true });
-          mg.drawImage(paint, 0, 0, work.width, work.height);
-          var md = mg.getImageData(0, 0, work.width, work.height).data, hole = new Uint8ClampedArray(work.width * work.height);
-          for (var i = 0; i < hole.length; i++) hole[i] = md[i * 4 + 3] > 20 ? 255 : 0;
-          hole = INP.grow(hole, work.width, work.height, Math.max(2, Math.round(Math.max(work.width, work.height) / 300)));
-          busy = true; go.disabled = clr.disabled = use.disabled = true;
+          if (!pt.painted()) { stat.textContent = t("mg.paint"); return; }
+          var hole = pt.mask(work.width, work.height);
+          pt.busy(true); go.disabled = clr.disabled = use.disabled = true;
           stat.textContent = have ? t("mg.run") : t("mg.load", { p: 0 });
           INP.fill(work, hole, {
             signal: ctl.signal,
@@ -159,12 +173,12 @@
           }).then(function (out) {
             if (ctl.signal.aborted) return;
             have = true; if (needP) needP.hidden = true;
-            work = out; changed = true; show();
-            pg.clearRect(0, 0, vw, vh); painted = false;
+            work = out; changed = true; pt.show(work);
+            pt.clear();
             stat.textContent = "";
           }, function (e) {
             if (!ctl.signal.aborted) stat.textContent = t("mg.fail", { why: why(e) });
-          }).then(function () { busy = false; go.disabled = clr.disabled = false; use.disabled = !changed; });
+          }).then(function () { pt.busy(false); go.disabled = clr.disabled = false; use.disabled = !changed; });
         });
 
         use.addEventListener("click", function () {
@@ -274,5 +288,6 @@
     });
   }
 
-  AT.magic = { erase: erase, grab: grab, placeOf: placeOf };
+  AT.magic = { erase: erase, grab: grab, placeOf: placeOf,
+    painter: painter, photo: photo, canvasOf: canvasOf, hasAlpha: hasAlpha, store: store, baseName: baseName, why: why };
 })();
