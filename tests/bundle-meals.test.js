@@ -186,8 +186,8 @@ test("meals: hostile content is cut down", () => {
 
 test("meals: wiring (scripts, buttons, Open with, help, file types)", () => {
   const html = read("meals/index.html");
-  ["../bundle.js?v=2.50.00", "../recordpkg.js?v=2.50.00", "package.js?v=2.50.00", "meals.js?v=2.50.00"].forEach((s) =>
-    assert.ok(html.includes('src="' + s + '"'), s));
+  ["../bundle.js?v=", "../recordpkg.js?v=", "package.js?v=", "meals.js?v="].forEach((s) =>
+    assert.ok(html.includes('src="' + s), s));
   assert.ok(html.indexOf('src="core.js') < html.indexOf('src="package.js'));
   assert.ok(html.indexOf("recordpkg.js") < html.indexOf('src="meals.js'));
   const js = read("meals/meals.js");

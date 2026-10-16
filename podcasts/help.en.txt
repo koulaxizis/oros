@@ -9,7 +9,7 @@ The tabs:
 - `New`: episodes from the last 30 days you haven't started yet.
 - `Library`: your podcasts, with a badge for new episodes. Tap one to open its page. `Search all episodes` finds an episode in any of your podcasts, and `Statistics` shows how long you listened (counted on this device).
 - `Downloads`: episodes saved on this device.
-- `Discover`: search, `Popular podcasts` (popular in Greece when orOS is in Greek), add by address and OPML.
+- `Discover`: search, add by address and OPML, and browsing like the Radio: `Popular` (the top 100 of a country, with sub-genre chips), `Genres`, `Countries` and `Surprise me` (a random popular podcast starts playing). Tap a podcast's name to try it before you subscribe: its episodes play, but nothing is saved or synced until you press `Subscribe`. The lists come from the Apple Podcasts charts.
 
 ## Listen
 Press the play button on any episode. The player bar at the bottom has skip back, play/pause and skip forward; tap the episode's name there to open the full player with `Playback speed`, `Sleep timer`, chapters, `Show notes`, `Next in queue` and `Stop`. The sleep timer stops after 5 to 60 minutes or at the `End of episode`.

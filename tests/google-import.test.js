@@ -433,19 +433,19 @@ test("Shelf: read() pages by startIndex up to totalItems", async () => {
 });
 
 // ---------- Files / Photo Lab: Google Drive and Google Photos ----------
-test("Drive needs the person's own API key; none is built in, and Google's script loads only on demand", () => {
+test("Drive uses the built-in key with the built-in app, an own key when set; Google's script loads only on demand", () => {
   reset();
-  assert.equal(GI.apiKey(), "");
-  assert.equal(GI.driveReady(), false);
+  assert.equal(GI.apiKey(), GI.BUILTIN_KEY);
+  assert.ok(/^AIza[0-9A-Za-z_-]{30,}$/.test(GI.BUILTIN_KEY));
+  assert.equal(GI.driveReady(), true);
   assert.equal(GI.appId(), "97712435228");
   localStorage.setItem("oros-contacts-oauth", JSON.stringify({ googleKey: "AIzaSyA-fake_key_0123456789abcdefghij" }));
   assert.equal(GI.apiKey(), "AIzaSyA-fake_key_0123456789abcdefghij");
   assert.equal(GI.driveReady(), true);
   localStorage.setItem("oros-contacts-oauth", JSON.stringify({ googleKey: "<script>", google: "555666777-x.apps.googleusercontent.com" }));
-  assert.equal(GI.apiKey(), "");
+  assert.equal(GI.apiKey(), "", "the built-in key does not fit an own project");
+  assert.equal(GI.driveReady(), false);
   assert.equal(GI.appId(), "555666777", "an own client id brings its own project");
-  const src = fs.readFileSync(path.join(ROOT, "google-import.js"), "utf8");
-  assert.ok(!/AIza[0-9A-Za-z_-]{20,}/.test(src), "no API key in the code");
   for (const f of ["files/index.html", "photolab/index.html"]) {
     assert.ok(!/apis\.google\.com/.test(fs.readFileSync(path.join(ROOT, f), "utf8")), f + " does not load Google's script");
   }

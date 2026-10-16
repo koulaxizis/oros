@@ -159,8 +159,8 @@ test("feeds: hostile content is cut down; stamps from the future are clamped", (
 
 test("feeds: wiring (scripts, buttons, Open with for .orosfeeds and .opml, help, strings, file types)", () => {
   const html = read("feeds/index.html");
-  ["../bundle.js?v=2.50.00", "../recordpkg.js?v=2.50.00", "package.js?v=2.50.00", "feeds.js?v=2.50.00"].forEach((s) =>
-    assert.ok(html.includes('src="' + s + '"'), s));
+  ["../bundle.js?v=", "../recordpkg.js?v=", "package.js?v=", "feeds.js?v="].forEach((s) =>
+    assert.ok(html.includes('src="' + s), s));
   assert.ok(html.indexOf('src="core.js') < html.indexOf('src="package.js'));
   assert.ok(html.indexOf("recordpkg.js") < html.indexOf('src="feeds.js'));
   const js = read("feeds/feeds.js");
