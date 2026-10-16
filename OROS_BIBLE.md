@@ -7127,3 +7127,9 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - With orOS's own Google app (the default), Files and Photo Lab › Google Drive work for everyone with no setup: `google-import.js` ships orOS's public Picker browser key (`BUILTIN_KEY`), which Google accepts only from useoros.online and only for the Picker API (Chris approved). Someone using their own Google app id still adds their own key, and the option appears only then.
 - Files: `google-import.js`, Contacts account label, Files help (EN/EL).
   - Tests: full suite green; test covers default key, own-key override and own app without a key. Not tested: a real Picker run against Google.
+
+### 2026-10-16 — Podcasts: browse like Radio (#422) — 2.50.00
+- Discover browses like the Radio app: Popular (top 100 for any country, with sub-genre chips), Genres (19 Apple genres), Countries (171 storefronts with flags and a filter) and Surprise me (plays a random popular podcast). Tapping a show opens a preview whose episodes play without subscribing; nothing is saved or synced until Subscribe.
+- Lists come from Apple's public iTunes chart JSON and `lookup` (no key, no Google), with fallbacks to `rss.applemarketingtools.com` and a genre-limited catalog search. Previews stay in memory only; `host.js` writes no position for a show that isn't subscribed. Cache `oros-podcasts-top` is now `{v:2, lists}` (max 12 lists, 12 h).
+- Files: `podcasts/core.js` (§15), `podcasts/podcasts.js`, `podcasts/host.js`, CSS, help EN/EL, Bible; credits row for Apple Podcasts now covers charts and lookup.
+  - Tests: 4 new tests in `tests/podcasts.test.js`; full suite green; real shell with mocked Apple/feeds in EL (phone) and EN (desktop). Not tested: live Apple answers, a real phone, Safari.
