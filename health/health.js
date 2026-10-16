@@ -115,6 +115,7 @@
       "set.height": "Height ({u})", "set.heightHint": "Only used for the BMI.", "set.fit": "Show body weights from Workouts",
       "set.kinds": "Measurements", "set.hidden": "hidden", "set.edit": "Edit", "set.show": "Show", "set.hideKind": "Hide",
       "set.export": "Export", "set.csv": "All readings (CSV)", "set.json": "Backup (JSON)", "set.restore": "Restore from backup (merge)",
+      "set.osave": "orOS file (.oroshealth)", "set.oopen": "Open orOS file…", "set.ofolder": "Unzipped orOS folder…",
       "set.restored": "Backup merged: {n} readings", "set.badFile": "This is not a Health backup.",
       "feed.gone": "That measurement no longer exists.",
       "imp.head": "Import", "imp.btn": "From another app…",
@@ -201,6 +202,7 @@
       "set.height": "Ύψος ({u})", "set.heightHint": "Χρειάζεται μόνο για τον ΔΜΣ.", "set.fit": "Εμφάνιση των βαρών από την Προπόνηση",
       "set.kinds": "Μετρήσεις", "set.hidden": "κρυφό", "set.edit": "Επεξεργασία", "set.show": "Εμφάνιση", "set.hideKind": "Απόκρυψη",
       "set.export": "Εξαγωγή", "set.csv": "Όλες οι μετρήσεις (CSV)", "set.json": "Αντίγραφο (JSON)", "set.restore": "Επαναφορά αντιγράφου (συγχώνευση)",
+      "set.osave": "Αρχείο orOS (.oroshealth)", "set.oopen": "Άνοιγμα αρχείου orOS…", "set.ofolder": "Αποσυμπιεσμένος φάκελος orOS…",
       "set.restored": "Το αντίγραφο συγχωνεύτηκε: {n} μετρήσεις", "set.badFile": "Αυτό δεν είναι αντίγραφο της Υγείας.",
       "feed.gone": "Αυτή η μέτρηση δεν υπάρχει πια.",
       "imp.head": "Εισαγωγή", "imp.btn": "Από άλλη εφαρμογή…",
@@ -3953,6 +3955,137 @@
     });
   }
 
+  // ---------- .oroshealth (OBF-4e) ----------
+  // Every record as one orOS file (../recordpkg.js + package.js), the
+  // documents' photos and PDFs in media/ by <sha256>.<jpg|pdf>. Opening
+  // ADDS what this device lacks, with its ids; a record already here (or
+  // deleted here) is kept as it is unless "Update with newer versions"
+  // is ticked. Settings and the Medical ID here stay as they are;
+  // reminders come in off. The result goes through C.merge + saveNow
+  // (sync dirty); Undo removes the added records with tombstones, as
+  // undoImport does, and puts back the copies an update replaced.
+  var RP = window.OrosRecordPkg || null, HPK = window.OrosHealthPackage || null;
+  var fileUndo = null;
+  // One document file of the bundle → Files › Health, only when that
+  // name is not on the disk yet, through the checks of attaching one
+  // (encodeAttachment: a PDF must start with "%PDF-", a picture is
+  // re-drawn as a JPEG, no EXIF). → Promise<true when the file is there>
+  function storeDocFile(name, key, media) {
+    var fs = fsApi(), path = C.atPath(name);
+    if (!fs || !path) return Promise.resolve(false);
+    return Promise.resolve().then(function () { return fs.readBlob(path); })
+      .then(function (b) { return !!b; }, function () { return false; })
+      .then(function (there) {
+        if (there) return true;
+        var item = key && Object.prototype.hasOwnProperty.call(media, key) ? media[key] : null;
+        if (!item || !(item.blob || item.bytes)) return false;
+        var type = /\.pdf$/.test(name) ? "application/pdf" : "image/jpeg";
+        var blob = item.blob ? item.blob.slice(0, item.blob.size, type) : new Blob([item.bytes], { type: type });
+        return encodeAttachment(blob).then(function (enc) {
+          if (!enc || enc.ext !== name.split(".").pop()) return false;
+          return Promise.resolve(fs.writeBlob(path, enc.blob)).then(function () { return true; });
+        });
+      }).catch(function () { return false; });
+  }
+  var recFile = RP && HPK && window.OrosBundle ? RP.ui(HPK.DESC, {
+    lang: function () { return LANG; },
+    get: function () { return sliceGet(); },
+    title: function () { return t("app"); },
+    // media/: every file the documents name, read from the orOS disk;
+    // state.ats = { "<file name>": "<media key>" } goes into content.json
+    files: function (state) {
+      var fs = fsApi(), B = window.OrosBundle, out = [], ats = {}, chain = Promise.resolve();
+      if (!fs) return out;
+      (state.dc || []).forEach(function (d) {
+        HPK.atsOf(d).forEach(function (name) {
+          chain = chain.then(function () {
+            if (ats[name]) return;
+            return Promise.resolve(fs.readBlob(C.atPath(name))).then(function (blob) {
+              if (!blob || !blob.size) return;
+              return B.digest(blob).then(function (dg) {
+                var key = dg.sha + "." + name.split(".").pop();
+                ats[name] = key;
+                if (!out.some(function (f) { return f.key === key; }))
+                  out.push({ key: key, blob: blob, type: /\.pdf$/.test(name) ? "application/pdf" : "image/jpeg" });
+              });
+            }).catch(function () {});
+          });
+        });
+      });
+      return chain.then(function () { state.ats = ats; return out; });
+    },
+    // the files of the documents this open adds (or updates); a name
+    // whose file could not be stored leaves the document
+    media: function (read, res) {
+      var next = res.next, src = read && read.content && read.content.data;
+      var ats = src && src.ats && typeof src.ats === "object" ? src.ats : {}, media = (read && read.media) || {};
+      var want = {}, chain = Promise.resolve();
+      res.addedIds.concat(res.updatedIds).forEach(function (id) { want[id] = 1; });
+      (next.dc || []).forEach(function (d) {
+        if (!want[d.id] || !d.sc) return;
+        var kept = [];
+        HPK.atsOf(d).forEach(function (name) {
+          chain = chain.then(function () {
+            return storeDocFile(name, typeof ats[name] === "string" ? ats[name] : "", media);
+          }).then(function (ok) { if (ok) kept.push(name); });
+        });
+        chain = chain.then(function () { if (kept.length) d.sc = kept.sort(cmpStr); else delete d.sc; });
+      });
+      return chain.then(function () { return next; });
+    },
+    set: function (next, info) {
+      var before = {}, prev = {}, upd = {};
+      ((info && info.updatedIds) || []).forEach(function (id) { upd[id] = 1; });
+      HPK.COLLS.forEach(function (c) {
+        before[c] = {};
+        data[c].forEach(function (x) {
+          before[c][x.id] = 1;
+          if (upd[x.id]) (prev[c] = prev[c] || []).push(JSON.parse(JSON.stringify(x)));
+        });
+      });
+      data = C.merge(next, next);
+      saveNow();
+      var added = {};
+      HPK.COLLS.forEach(function (c) {
+        added[c] = data[c].filter(function (x) { return !before[c][x.id]; }).map(function (x) { return x.id; });
+      });
+      fileUndo = { added: added, prev: prev };
+      var d = $("hl-set");
+      if (d && d.open) d.close();
+      render();
+    },
+    // Undo: what this open added goes again, with tombstones; a record
+    // an update replaced gets its old copy back (stamped newer, so sync
+    // carries it); files no document names any more leave the disk later.
+    deleteIds: function () {
+      var u = fileUndo, now = Date.now(), names = [];
+      fileUndo = null;
+      if (!u) return;
+      HPK.COLLS.forEach(function (c) {
+        var gone = {};
+        (u.added[c] || []).forEach(function (id) { gone[id] = 1; });
+        data[c] = data[c].filter(function (x) {
+          if (!gone[x.id]) return true;
+          var k = c + ":" + x.id;
+          data.tombs[k] = Math.max(now, x.m, data.tombs[k] || 0);
+          if (c === "dc") names = names.concat(x.sc || []);
+          return false;
+        });
+        (u.prev[c] || []).forEach(function (row) {
+          var cur = findRow(c, row.id);
+          if (cur && c === "dc") names = names.concat(cur.sc || []);
+          row.m = nextM(c, row.id);
+          putRow(c, row);
+        });
+      });
+      saveNow();
+      render();
+      dropFilesLater(names);
+      showToast(recFile ? recFile.text("undone") : t("imp.undone"));
+    },
+    toast: function (text, undo) { if (undo) undoToast(text, undo); else showToast(text); }
+  }) : null;
+
   // ---------- Import from another app ----------
   // Withings / OMRON / Samsung Health / Apple Health → readings.
   // Parsing and the plan are pure (import.js, OrosHealthImport); here:
@@ -4156,6 +4289,14 @@
     ex.appendChild(button(t("set.csv"), "", exportCsv));
     ex.appendChild(button(t("set.json"), "", exportJson));
     ex.appendChild(button(t("set.restore"), "", restoreJson));
+    if (recFile) {                       // .oroshealth (the record kit)
+      [["osave", function () { recFile.save(); }], ["oopen", function () { recFile.open(); }],
+       ["ofolder", function () { recFile.openFolder(); }]].forEach(function (o) {
+        var b = button(t("set." + o[0]), "", function () { dlg.close(); o[1](); });
+        b.id = "hl-" + o[0];
+        ex.appendChild(b);
+      });
+    }
     dlg.appendChild(ex);
     if (window.OrosHealthImport && window.OrosImportKit) {
       dlg.appendChild(el("div", "dlg-sub", t("imp.head")));
@@ -4312,6 +4453,9 @@
     return true;
   }
   function openSearchTarget(t) {
+    // "Open with" an .oroshealth file (fileopen.js): { openFile: { token } },
+    // the File taken once with window.parent.__orosTakeFile(token)
+    if (t && t.openFile) { if (recFile) recFile.openTarget(t.openFile); return; }
     // Single app (solo.js) icon shortcuts: { add: kind } → a new
     // reading of that kind, as its reminder opens it.
     if (t && typeof t === "object" && typeof t.add === "string") { window.__orosHealthOpen(t.add); return; }
