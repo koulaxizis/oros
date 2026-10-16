@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "2.62.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "2.65.01";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -5616,6 +5616,15 @@
         { name: "Jamendo", url: "https://www.jamendo.com/",
           by: "Jamendo S.A.; each track by its artist", lic: { en: "Per track (Creative Commons); API for non-commercial use, streaming only", el: "Ανά κομμάτι (Creative Commons)· API για μη εμπορική χρήση, μόνο streaming" },
           en: "Songs, albums, moods and radios (Music)", el: "Τραγούδια, άλμπουμ, διαθέσεις και ραδιόφωνα (Μουσική)" },
+        { name: "OpenSubsonic API", url: "https://opensubsonic.netlify.app/",
+          by: "Subsonic API by Sindre Mehus; OpenSubsonic by its contributors", lic: { en: "Open API specification; your own server", el: "Ανοιχτή προδιαγραφή API· ο δικός σου server" },
+          en: "Navidrome, Airsonic, Gonic and other Subsonic servers (Music)", el: "Navidrome, Airsonic, Gonic και άλλοι servers Subsonic (Μουσική)" },
+        { name: "Jellyfin", url: "https://jellyfin.org/",
+          by: "The Jellyfin project", lic: { en: "GPL-2.0 (server); your own server", el: "GPL-2.0 (server)· ο δικός σου server" },
+          en: "Your Jellyfin music library (Music)", el: "Η μουσική βιβλιοθήκη σου στο Jellyfin (Μουσική)" },
+        { name: "Funkwhale", url: "https://www.funkwhale.audio/",
+          by: "The Funkwhale collective", lic: { en: "AGPL-3.0 (server); public pods or your own", el: "AGPL-3.0 (server)· δημόσια pods ή το δικό σου" },
+          en: "Federated music libraries (Music)", el: "Ομοσπονδιακές μουσικές βιβλιοθήκες (Μουσική)" },
         { name: "iptv-org", url: "https://github.com/iptv-org/iptv",
           by: "iptv-org contributors", lic: "Unlicense (public domain)",
           en: "Channel directory (Television)", el: "Κατάλογος καναλιών (Τηλεόραση)" },

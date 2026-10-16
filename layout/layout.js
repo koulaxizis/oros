@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Layout — core (v1.0.0)
+// orOS Layout — core (v1.3.0)
 // Desktop publishing in the browser: pages and spreads, master
 // pages, threaded text frames with paragraph / character styles,
 // image frames, shapes, swatches (RGB + CMYK), text wrap, vector
@@ -61,7 +61,7 @@
       "home.empty.title": "No documents yet",
       "home.empty.sub": "Flyers, newsletters, posters, cards, booklets: start with a page size.",
       "home.count": "{n} documents", "home.count1": "1 document",
-      "home.pages": "{n} pages", "home.pages1": "1 page", "home.none": "No document matches.",
+      "home.pages": "{n} pages", "home.pages1": "1 page", "unk.item": "Needs a newer orOS", "unk.doc": "This document needs a newer orOS. Update orOS to open it.", "home.none": "No document matches.",
       "doc.untitled": "Untitled", "doc.copy": "{name} (copy)",
       "card.open": "Open", "card.rename": "Rename", "card.dup": "Duplicate", "card.pkg": "Save as package", "card.del": "Delete",
       "ed.back": "Documents", "ed.undo": "Undo", "ed.redo": "Redo", "ed.zin": "Zoom in", "ed.zout": "Zoom out",
@@ -186,7 +186,7 @@
       "home.empty.title": "Δεν υπάρχουν έγγραφα ακόμα",
       "home.empty.sub": "Φυλλάδια, ενημερωτικά, αφίσες, κάρτες, βιβλιαράκια: ξεκίνα διαλέγοντας μέγεθος σελίδας.",
       "home.count": "{n} έγγραφα", "home.count1": "1 έγγραφο",
-      "home.pages": "{n} σελίδες", "home.pages1": "1 σελίδα", "home.none": "Κανένα έγγραφο δεν ταιριάζει.",
+      "home.pages": "{n} σελίδες", "home.pages1": "1 σελίδα", "unk.item": "Χρειάζεται νεότερο orOS", "unk.doc": "Αυτό το έγγραφο χρειάζεται νεότερο orOS. Ενημέρωσε το orOS για να το ανοίξεις.", "home.none": "Κανένα έγγραφο δεν ταιριάζει.",
       "doc.untitled": "Χωρίς τίτλο", "doc.copy": "{name} (αντίγραφο)",
       "card.open": "Άνοιγμα", "card.rename": "Μετονομασία", "card.dup": "Διπλασιασμός", "card.pkg": "Αποθήκευση ως πακέτο", "card.del": "Διαγραφή",
       "ed.back": "Έγγραφα", "ed.undo": "Αναίρεση", "ed.redo": "Επανάληψη", "ed.zin": "Μεγέθυνση", "ed.zout": "Σμίκρυνση",
@@ -317,7 +317,7 @@
   LY.label = function (name) { return M.label(name, LANG); };
 
   // BOOT MARKER
-  try { console.log("[orOS] layout app v1.0.0 booted"); } catch (e) {}
+  try { console.log("[orOS] layout app v1.3.0 booted"); } catch (e) {}
 
   // ---------- 2. Helpers + toasts ----------
   function $(id) { return document.getElementById(id); }
@@ -646,6 +646,7 @@
       meta.appendChild(el("span", "doc-title", docTitle(d)));
       var n = d.pages.length;
       meta.appendChild(el("span", "doc-sub", (n === 1 ? t("home.pages1") : t("home.pages", { n: n })) + " · " + fmtDate(M.maxM(d))));
+      if (M.needsNewer(d)) meta.appendChild(el("span", "doc-sub", t("unk.item")));
       card.appendChild(meta);
       var more = iconBtn("more", t("ed.more"), "doc-more");
       more.addEventListener("click", function (e) { e.stopPropagation(); cardMenu(d, more); });
@@ -734,6 +735,8 @@
   function openDoc(id) {
     var d = findDoc(id);
     if (!d) return;
+    // A newer model level (setup.x.mv): never opened, so never written here.
+    if (M.needsNewer(d)) { toast(t("unk.doc")); return; }
     LY.doc = d;
     undoStack = []; redoStack = []; gesture = null;
     LY.prefs.doc = id; savePrefs();
