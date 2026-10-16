@@ -36,8 +36,13 @@ In `Home`, pick yourself under `Who are you on this device?`, then choose an hou
 ## Stats
 For `This week`, `This month` or `12 months`, each member's points, chores done and missed, and their streak, with a mark for their fair share. `History (90 days)` lists what was done.
 
+## Save and open an orOS file
+In `Home`, under `Save and open`, `orOS file (.oroschores)` saves every member, chore and everything ticked, skipped or handed over as one `.oroschores` file, for example to move them to another device without sync or to keep a copy. The file is a plain ZIP: unzipped it holds the data as `content.json` plus `preview/chores.md`, `preview/chores.csv` and `preview/history.csv` for other programs. It is not encrypted, so keep it somewhere safe.
+
+`Open orOS file…` (or `Unzipped orOS folder…`, or "Open with" orOS on the computer) shows how many records are new and how many are already here, then `Add` adds only the new ones, with their own ids: opening the same file again adds nothing. A member or chore already here is kept as it is, and one you deleted here stays deleted; a file never deletes anything. Tick `Update with newer versions` to let members and chores that were changed later in the file replace your copy. `Undo` in the message removes what was added.
+
 ## Sync and backup
-Members, chores and everything ticked, skipped or handed over sync between your devices through [orOS sync](help:t/sync), so the whole household can use it on their own phones. Who you are on this device, the open tab and `Only mine` stay on each device. There's no import or export; use the orOS [backup](help:t/backup) to keep a copy.
+Members, chores and everything ticked, skipped or handed over sync between your devices through [orOS sync](help:t/sync), so the whole household can use it on their own phones. Who you are on this device, the open tab and `Only mine` stay on each device. To keep a copy, save an orOS file (above) or use the orOS [backup](help:t/backup).
 
 ## Keyboard shortcuts
 - [[←]] and [[→]]: turn the wheel or change the week.
