@@ -11,7 +11,8 @@
      6. Player bar
      7. Dialogs — centered (R32): menus, forms, full player, queue
      8. Toast, drop zone
-     9. Phone (from 360px) + reduced motion
+     9. Open catalogues (licence badge, offline mark, credit)
+    10. Phone (from 360px) + reduced motion
    ============================================================ */
 
 /* ---------- 1. Palette fallback + reset ---------- */
@@ -311,7 +312,23 @@ dialog::backdrop { background: rgba(0, 0, 0, 0.55); }
   font-size: 20px; font-weight: 800; color: #fff; pointer-events: none; padding: 20px;
 }
 
-/* ---------- 9. Phone (from 360px) + reduced motion ---------- */
+/* ---------- 9. Open catalogues (wave 2) ---------- */
+.lic { display: inline-block; font-size: 10.5px; font-weight: 800; letter-spacing: 0.02em; line-height: 1; padding: 3px 5px;
+  border: 1px solid var(--border); border-radius: 4px; margin-right: 6px; vertical-align: 1px; color: var(--text-dim); }
+.ph-sub .lic { margin: 0; }
+.off-ic { display: inline-flex; width: 13px; height: 13px; margin-right: 5px; vertical-align: -2px; color: var(--accent); }
+.off-ic svg { width: 100%; height: 100%; }
+.o-note { padding: 6px 2px 12px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.sec-note { margin: -4px 0 10px; }
+.chips.wrap { flex-wrap: wrap; overflow: visible; }
+.fp-lic { display: block; margin: -2px 0 8px; min-height: 32px; text-align: left; }
+.credit-line { font-size: 13px; line-height: 1.5; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px;
+  overflow-wrap: anywhere; user-select: text; margin: 4px 0 12px; }
+label.check { display: flex; gap: 10px; align-items: center; min-height: 40px; cursor: pointer; }
+label.check input { width: 20px; height: 20px; accent-color: var(--accent); flex: none; }
+dl.info dd { overflow-wrap: anywhere; }
+
+/* ---------- 10. Phone (from 360px) + reduced motion ---------- */
 @media (max-width: 700px) {
   #tabs { order: 10; border-bottom: none; border-top: 1px solid var(--border); padding: 4px 4px calc(4px + env(safe-area-inset-bottom)); justify-content: space-around; }
   #tabs button { flex-direction: column; gap: 2px; font-size: 11px; padding: 4px 6px; min-height: 52px; border-radius: 10px; flex: 1 1 0; min-width: 0; }
