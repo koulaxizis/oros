@@ -870,6 +870,8 @@
   function navigate(path) {
     var d = dbx();
     if (d && d.isActive()) d.leave();
+    var dv = drv();
+    if (dv && dv.isActive()) dv.leave();
     view = "files";
     cwd = path;
     if (selectMode) setSelectMode(false);
@@ -918,6 +920,8 @@
     host.innerHTML = "";
     host.appendChild(makeQuickSection());
     host.appendChild(makeTreeNode(ROOT, t("tree.root"), 0, token));
+    var dv = drv();
+    if (dv) host.appendChild(dv.treeNode());
     host.appendChild(makeSpecialNode("trash", t("tree.trash"), TRASH_SVG));
     var d = dbx();
     if (d) host.appendChild(d.treeNode());
@@ -930,6 +934,34 @@
     return (d && typeof d.treeNode === "function") ? d : null;
   }
   function dbxActive() { var d = dbx(); return !!(d && d.isActive()); }
+
+  // orOS Drive folders, on demand (files/drive.js, vault.js VD-OD).
+  function drv() {
+    var d = window.OrosFilesDrive;
+    return (d && typeof d.treeNode === "function") ? d : null;
+  }
+  // Another place (Dropbox, orOS Drive) is shown instead of the disk.
+  function placeActive() { var dv = drv(); return dbxActive() || !!(dv && dv.isActive()); }
+
+  function initDrive() {
+    var dv = drv();
+    if (!dv) return;
+    dv.init({
+      toast: transientNote,
+      closeDrawer: closeTreeDrawer,
+      onEnter: function () {
+        var d = dbx();
+        if (d && d.isActive()) d.leave();
+        view = "files"; setSelectMode(false); clearSelection();
+      },
+      afterEnter: renderTree,
+      fs: FS,
+      vault: vaultApi,
+      fmtKB: fmtKB,
+      openFile: openFileAt,
+      onDiskChanged: forceStorageRecalc
+    });
+  }
 
   // Wave 3: plain copies of the selection into a Dropbox folder.
   function sendToDropbox() {
@@ -945,7 +977,11 @@
       toast: transientNote,
       dialogHost: dialogHost,
       closeDrawer: closeTreeDrawer,
-      onEnter: function () { view = "files"; setSelectMode(false); clearSelection(); renderTree(); },
+      onEnter: function () {
+        var dv = drv();
+        if (dv && dv.isActive()) dv.leave();
+        view = "files"; setSelectMode(false); clearSelection(); renderTree();
+      },
       fmtKB: fmtKB,
       fs: FS,
       vault: vaultApi,
@@ -962,7 +998,7 @@
     var wrap = document.createElement("div");
 
     var node = document.createElement("div");
-    node.className = "tnode" + (path === cwd && view === "files" && !dbxActive() ? " selected" : "");
+    node.className = "tnode" + (path === cwd && view === "files" && !placeActive() ? " selected" : "");
     node.style.paddingLeft = (6 + depth * 14) + "px";
     node.dataset.path = path;
 
@@ -3740,6 +3776,8 @@
   function openView(kind) {
     var d = dbx();
     if (d && d.isActive()) d.leave();
+    var dv = drv();
+    if (dv && dv.isActive()) dv.leave();
     if (searchQuery !== null) {
       if (searchDebounce) { clearTimeout(searchDebounce); searchDebounce = null; }
       searchQuery = null; searchDir = null; search = null;
@@ -3820,7 +3858,7 @@
 
   function makeSpecialNode(kind, label, svg) {
     var node = document.createElement("div");
-    node.className = "tnode special" + (view === kind && !dbxActive() ? " selected" : "");
+    node.className = "tnode special" + (view === kind && !placeActive() ? " selected" : "");
     node.style.paddingLeft = "6px";
     node.tabIndex = 0;
     node.setAttribute("role", "button");
@@ -3863,7 +3901,7 @@
 
   function makeFavNode(f) {
     var node = document.createElement("div");
-    node.className = "tnode fav" + (f.dir && view === "files" && cwd === f.p && !dbxActive() ? " selected" : "");
+    node.className = "tnode fav" + (f.dir && view === "files" && cwd === f.p && !placeActive() ? " selected" : "");
     node.style.paddingLeft = "6px";
     node.tabIndex = 0;
     node.setAttribute("role", "button");
@@ -4419,7 +4457,7 @@
   function renderSelBar() {
     var bar = ensureSelBar();
     if (!bar) return;
-    bar.hidden = !selectMode || dbxActive();
+    bar.hidden = !selectMode || placeActive();
     if (bar.hidden) return;
     var n = selectionCount();
     $("sel-count").textContent = n === 1 ? t("sel.one") : n ? tfmt("sel.count", { n: n }) : t("sel.none");
@@ -4924,6 +4962,7 @@
     setTimeout(trashSweepMaybe, 4000);  // auto-empty: older than 30 days
 
     initDropbox();
+    initDrive();
 
     console.log("[orOS] files.js v" + APP_VER + " booted (backend: " +
       (FS().mode ? FS().mode() : "unknown") + ")");
