@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.64.01
+- Seasonal decorations: Autumn leaves and Winter snow no longer vanish when the decorations stand still (low battery, less motion, Still only, slow device). Settings says when a slow device stopped the movement.
+
 ## Version 2.64.00
 - Layout and Atelier: designs keep details added by a newer orOS when an older device syncs them, so nothing is lost while your devices update at different times. A design that needs a newer orOS says so and waits instead of opening.
 
