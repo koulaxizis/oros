@@ -1,0 +1,11 @@
+{
+  "category": "Time",
+  "en": {
+    "summary": "A private calendar that works offline",
+    "description": "Plan events with day, week, month and agenda views, repeating events, reminders, name days and holidays. Opens .ics files.\n\nOptional encrypted sync with your own Dropbox. Share text to orOS Calendar to turn it into a new event.\n\nWorks offline, with no account, no ads, no cookies and no tracking. Sync is optional and end-to-end encrypted, using your own Dropbox.\n\nThe app's content updates by itself from useoros.online; a new APK only comes when the Android shell changes. Free and open source (MIT), free forever."
+  },
+  "el": {
+    "summary": "Ιδιωτικό ημερολόγιο που δουλεύει χωρίς σύνδεση",
+    "description": "Οργάνωσε συμβάντα σε προβολές ημέρας, εβδομάδας, μήνα και λίστας, με επαναλαμβανόμενα συμβάντα, υπενθυμίσεις, ονομαστικές εορτές και αργίες. Ανοίγει αρχεία .ics.\n\nΠροαιρετικός κρυπτογραφημένος συγχρονισμός με το δικό σου Dropbox. Κοινοποίησε κείμενο στο orOS Calendar και γίνεται νέο συμβάν.\n\nΔουλεύει χωρίς σύνδεση, χωρίς λογαριασμό, διαφημίσεις, cookies ή παρακολούθηση. Ο συγχρονισμός είναι προαιρετικός και κρυπτογραφημένος από άκρο σε άκρο, μέσω του δικού σου Dropbox.\n\nΤο περιεχόμενο της εφαρμογής ενημερώνεται μόνο του από το useoros.online· νέο APK βγαίνει μόνο όταν αλλάζει το κέλυφος Android. Δωρεάν και ανοιχτού κώδικα (MIT), δωρεάν για πάντα."
+  }
+}
