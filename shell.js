@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "2.58.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "2.60.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -5613,6 +5613,9 @@
         { name: "ccMixter", url: "https://ccmixter.org/",
           by: "ArtisTech Media; each upload by its artist", lic: { en: "Per item (Creative Commons)", el: "Ανά έργο (Creative Commons)" },
           en: "Remixes and instrumentals (Music)", el: "Remix και ορχηστρικά (Μουσική)" },
+        { name: "Jamendo", url: "https://www.jamendo.com/",
+          by: "Jamendo S.A.; each track by its artist", lic: { en: "Per track (Creative Commons); API for non-commercial use, streaming only", el: "Ανά κομμάτι (Creative Commons)· API για μη εμπορική χρήση, μόνο streaming" },
+          en: "Songs, albums, moods and radios (Music)", el: "Τραγούδια, άλμπουμ, διαθέσεις και ραδιόφωνα (Μουσική)" },
         { name: "iptv-org", url: "https://github.com/iptv-org/iptv",
           by: "iptv-org contributors", lic: "Unlicense (public domain)",
           en: "Channel directory (Television)", el: "Κατάλογος καναλιών (Τηλεόραση)" },

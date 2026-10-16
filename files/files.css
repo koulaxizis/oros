@@ -1343,3 +1343,38 @@ body.dbx-mode #status { display: none; }
 @media (max-width: 420px) {
   .gi-dlg { min-width: 0; width: 100%; }
 }
+
+/* ---------- orOS Drive folders, on demand (files/drive.js) ---------- */
+
+#drv-bar, .drv-panel { display: none; }
+body.drv-mode #drv-bar { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; }
+body.drv-mode .drv-panel {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+body.drv-mode #up,
+body.drv-mode #storage-bar,
+body.drv-mode #crumbs,
+body.drv-mode #bar #actions,
+body.drv-mode #bar > .spacer,
+body.drv-mode #search-bar,
+body.drv-mode #list-wrap,
+body.drv-mode #status { display: none; }
+.drv-tree { border-top: 0; margin-top: 2px; padding-top: 0; }
+.drv-tree .tnode .glyph { color: var(--accent, #6d4aff); }
+.drv-tree .tnode.selected .glyph { color: #fff; }
+.drv-list .entry { grid-template-columns: 8px 22px 1fr 90px 84px; }
+#drv-head { grid-template-columns: 8px 22px 1fr 90px 84px; }
+#drv-head .col-th[data-field="name"] { grid-column: 3; justify-self: start; }
+#drv-head .col-th[data-field="size"] { grid-column: 4; justify-self: end; }
+#drv-head .col-th[data-field="date"] { grid-column: 5; justify-self: end; }
+.drv-cloud .glyph, .drv-cloud .col-size, .drv-cloud .col-date { opacity: .7; }
+.drv-badge { display: inline-flex; vertical-align: -3px; margin-left: 6px; color: var(--text-dim, #999); }
+.drv-bar .tool.on { color: var(--accent, #6d4aff); }
+@media (max-width: 720px) {
+  .drv-list .entry, #drv-head { grid-template-columns: 8px 22px 1fr 70px; }
+  .drv-list .col-date, #drv-head .col-th[data-field="date"] { display: none; }
+}

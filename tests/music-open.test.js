@@ -218,3 +218,65 @@ test("songs from open catalogues travel in likes and playlists with where they p
   const h = C.addPlay(null, C.itemOf(ov), 5);
   assert.equal(h.r[0].s, "ov");
 });
+
+// ---------- Jamendo (wave 3) ----------
+const JM_TRACK = { id: "1532771", name: "Ταξίδι στη θάλασσα", duration: 213, artist_id: "7907", artist_name: "Nikos Sea", album_name: "Blue",
+  album_id: "198765", album_image: "https://usercontent.jamendo.com?type=album&id=198765&width=300", position: 2,
+  audio: "https://prod-1.storage.jamendo.com/?trackid=1532771&format=mp32", license_ccurl: "http://creativecommons.org/licenses/by-nc-nd/3.0/",
+  shareurl: "https://www.jamendo.com/track/1532771", audiodownload_allowed: true };
+
+test("Jamendo addresses carry orOS's public client id and clean parameters", () => {
+  assert.equal(O.JM_CLIENT, "e04c6e83");
+  assert.equal(O.jmTracksUrl({ q: "piano & <b>", page: 2 }),
+    "https://api.jamendo.com/v3.0/tracks/?client_id=e04c6e83&format=json&limit=20&offset=20&audioformat=mp32&imagesize=300&search=piano%20b");
+  assert.match(O.jmTracksUrl({ tags: "rock" }), /&tags=rock&order=popularity_total$/);
+  assert.match(O.jmTracksUrl({ mood: "happy", order: "popularity_week; drop" }), /&fuzzytags=happy&order=popularity_weekdrop$/);
+  assert.match(O.jmTracksUrl({ artist: "7907" }), /&artist_id=7907/);
+  assert.doesNotMatch(O.jmTracksUrl({ artist: "7907&x=1" }), /artist_id/);
+  assert.match(O.jmAlbumsUrl({ order: "releasedate_desc" }), /\/albums\/\?client_id=e04c6e83&format=json&limit=20&offset=0&imagesize=300&order=releasedate_desc$/);
+  assert.equal(O.jmAlbumTracksUrl("198765"), "https://api.jamendo.com/v3.0/albums/tracks/?client_id=e04c6e83&format=json&id=198765&audioformat=mp32&imagesize=300");
+  assert.equal(O.jmRadioStreamUrl("3"), "https://api.jamendo.com/v3.0/radios/stream/?client_id=e04c6e83&format=json&id=3");
+});
+
+test("Jamendo tracks: stream only, link back, album and artist ids", () => {
+  const r = O.jmParseTracks({ headers: { status: "success", code: 0, results_count: 2 }, results: [JM_TRACK, { id: "x", name: "bad" }] });
+  assert.equal(r.tracks.length, 1);
+  assert.equal(r.more, false);
+  const a = r.tracks[0];
+  assert.equal(a.s, "jm"); assert.match(a.k, /^jm:[0-9a-z]+$/);
+  assert.equal(a.t, "Ταξίδι στη θάλασσα"); assert.equal(a.a, "Nikos Sea"); assert.equal(a.al, "Blue"); assert.equal(a.d, 213);
+  assert.equal(a.li, "by-nc-nd 3.0"); assert.equal(a.pg, "https://www.jamendo.com/track/1532771");
+  assert.equal(a.ai, "198765"); assert.equal(a.ri, "7907");
+  assert.equal(a.off, undefined);   // Jamendo: never offline
+  assert.equal(O.sourceName(a), "Jamendo");
+  assert.match(O.credit(a, "en"), /, from Jamendo: https:\/\/www\.jamendo\.com\/track\/1532771$/);
+  assert.throws(() => O.jmParseTracks({ headers: { status: "failed", code: 5 }, results: [] }), (e) => e.code === "busy");
+  assert.throws(() => O.jmParseTracks({}), (e) => e.code === "http");
+});
+
+test("Jamendo album, albums and radios", () => {
+  const alb = O.jmParseAlbum({ headers: { status: "success" }, results: [{ id: "198765", name: "Blue", artist_id: "7907", artist_name: "Nikos Sea",
+    releasedate: "2021-05-04", image: "https://usercontent.jamendo.com?type=album&id=198765", shareurl: "https://www.jamendo.com/album/198765",
+    tracks: [Object.assign({}, JM_TRACK, { artist_name: undefined, album_name: undefined, album_id: undefined, artist_id: undefined, album_image: undefined }),
+      { id: "1532770", name: "Πρώτο", position: "1", duration: 100, audio: "https://prod-1.storage.jamendo.com/?trackid=1532770&format=mp32", license_ccurl: "http://creativecommons.org/licenses/by/3.0/" }] }] });
+  assert.equal(alb.album.n, "Blue"); assert.equal(alb.album.y, "2021"); assert.equal(alb.album.ri, "7907");
+  assert.deepEqual(alb.tracks.map((x) => x.t), ["Πρώτο", "Ταξίδι στη θάλασσα"]);
+  assert.equal(alb.tracks[1].a, "Nikos Sea"); assert.equal(alb.tracks[1].ai, "198765"); assert.equal(alb.tracks[0].pg, "https://www.jamendo.com/track/1532770");
+  assert.match(alb.tracks[0].art, /usercontent\.jamendo\.com/);
+  const al = O.jmParseAlbums({ headers: { status: "success" }, results: Array.from({ length: 20 }, (_, i) => ({ id: String(i + 1), name: "A" + i })) });
+  assert.equal(al.albums.length, 20); assert.equal(al.more, true); assert.equal(al.albums[0].s, "jm");
+  const ra = O.jmParseRadios({ headers: { status: "success" }, results: [{ id: 3, name: "jampop", dispname: "Pop", image: "https://imgjam.com/radios/pop.png" }, { id: "x" }] });
+  assert.deepEqual(ra.radios, [{ s: "jm", id: "3", n: "Pop", art: "https://imgjam.com/radios/pop.png" }]);
+  const it = O.jmRadioItem({ headers: { status: "success" }, results: [{ id: 3, dispname: "Pop", stream: "https://streaming.jamendo.com/JamPop" }] }, ra.radios[0]);
+  assert.equal(it.u, "https://streaming.jamendo.com/JamPop"); assert.equal(it.s, "jm"); assert.equal(it.a, "Jamendo Radio"); assert.equal(it.off, undefined);
+  assert.equal(O.moodOf("happy").el, "Χαρούμενη");
+});
+
+test("Jamendo songs keep their album and artist ids through the sync slice", () => {
+  const a = O.jmParseTracks({ headers: { status: "success" }, results: [JM_TRACK] }).tracks[0];
+  let d = C.setLike(C.emptyData(), a, true, 10);
+  assert.equal(d.likes[0].ai, "198765");
+  assert.equal(d.likes[0].ri, "7907");
+  assert.equal(C.normRef(Object.assign({}, a, { ai: "../x", ri: "a b" })).ai, undefined);
+  assert.deepEqual(C.mergeMusic(d, C.canon(JSON.parse(JSON.stringify(d)))), d);
+});
