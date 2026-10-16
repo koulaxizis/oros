@@ -3047,6 +3047,64 @@
       });
     }
   };
+  // "Send to…" (send/, BR-SEND): one app hands an item to another app
+  // of this orOS. send/core.js + send/sheet.js load on first use, never
+  // at boot. Apps call window.parent.orosSend.open({ kind, data }) with
+  // kind text | link | items | table (+ share: the item for "Send to
+  // someone", which stays window.orosShare); the sheet lists the
+  // installed apps that take it and calls __orosOpenAt with that app's
+  // own prefill target. Nothing is stored or synced.
+  var sendLoad = null;
+  function sendModule() {
+    if (window.__orosSendImpl) return Promise.resolve(window.__orosSendImpl);
+    if (!sendLoad) {
+      var load = function (src) {
+        return new Promise(function (resolve, reject) {
+          var s = document.createElement("script");
+          s.src = src + "?v=" + APP_VERSION;
+          s.onload = resolve;
+          s.onerror = reject;
+          document.head.appendChild(s);
+        });
+      };
+      sendLoad = load("send/core.js").then(function () { return load("send/sheet.js"); })
+        .then(function () {
+          if (!window.__orosSendImpl) throw new Error("send module missing");
+          return window.__orosSendImpl;
+        });
+      sendLoad.catch(function () { sendLoad = null; });
+    }
+    return sendLoad;
+  }
+  window.orosSend = {
+    open: function (opts) {
+      var self = state.running ? state.running.id : "";
+      var apps = window.orosAssistInstalled();
+      var from = "";
+      apps.forEach(function (a) { if (a.id === self) from = a.name; });
+      sendModule().then(function (m) {
+        m.open(opts, {
+          apps: apps, self: self, from: from, openAt: window.__orosOpenAt,
+          share: function (item) { window.orosShare.open(item); },
+          icon: function (id) {
+            for (var i = 0; i < state.apps.length; i++) {
+              var a = state.apps[i];
+              if (a.id === id && ICONS[a.icon]) {
+                var sp = document.createElement("span");
+                sp.innerHTML = ICONS[a.icon];          // static shell icon, not data
+                return sp.firstChild;
+              }
+            }
+            return null;
+          }
+        });
+      }, function () {
+        notifySys("dim", window.orosLang === "el"
+          ? "Η αποστολή δεν φορτώθηκε. Έλεγξε τη σύνδεση και δοκίμασε ξανά."
+          : "Sending could not load. Check your connection and try again.");
+      });
+    }
+  };
   var pendingShareIn = false;
   (function () {
     try {

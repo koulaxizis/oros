@@ -103,7 +103,7 @@
       "read.markUnread": "Mark as unread", "read.markRead": "Mark as read", "read.open": "Open the original",
       "read.copy": "Copy the link", "read.send": "Send to…",
       "send.title": "Send this article", "send.bookmarks": "Save to Bookmarks", "send.notes": "Save as a note",
-      "send.todo": "Make a task", "send.mail": "Send by email", "send.share": "Share…", "send.from": "From {feed}",
+      "send.todo": "Make a task", "send.mail": "Send by email", "send.share": "Share…", "send.other": "Another app…", "send.from": "From {feed}",
       "rule.notify": "Notify me about new articles", "rule.notified": "notifies", "feed.notify": "Notify me about new articles", "read.by": "by {who}", "read.listen": "Listen", "read.watch": "Watch",
       "read.download": "Download ({size})",
       "img.blocked": "Pictures are off, so the site cannot tell you opened this.",
@@ -241,7 +241,7 @@
       "read.markUnread": "Σήμανση ως αδιάβαστο", "read.markRead": "Σήμανση ως διαβασμένο", "read.open": "Άνοιγμα του πρωτοτύπου",
       "read.copy": "Αντιγραφή συνδέσμου", "read.send": "Αποστολή σε…",
       "send.title": "Αποστολή του άρθρου", "send.bookmarks": "Στους Σελιδοδείκτες", "send.notes": "Ως σημείωση",
-      "send.todo": "Ως εργασία στο To-Do", "send.mail": "Με email", "send.share": "Κοινοποίηση…", "send.from": "Από {feed}",
+      "send.todo": "Ως εργασία στο To-Do", "send.mail": "Με email", "send.share": "Κοινοποίηση…", "send.other": "Άλλη εφαρμογή…", "send.from": "Από {feed}",
       "rule.notify": "Ειδοποίηση για νέα άρθρα", "rule.notified": "ειδοποιεί", "feed.notify": "Ειδοποίηση για νέα άρθρα", "read.by": "από {who}", "read.listen": "Ακρόαση", "read.watch": "Προβολή",
       "read.download": "Λήψη ({size})",
       "img.blocked": "Οι εικόνες είναι κλειστές, για να μη μαθαίνει το site ότι το άνοιξες.",
@@ -3403,6 +3403,14 @@
       a.click();
       a.remove();
     });
+    // "Send to an app" (shell send/, BR-SEND): Writer, Wiki, Assistant…
+    var sendApi = null;
+    try { sendApi = window.parent !== window && window.parent.orosSend ? window.parent.orosSend : null; } catch (e) { sendApi = null; }
+    if (sendApi && typeof sendApi.open === "function") {
+      opt("send.other", function () {
+        sendApi.open({ kind: "link", data: { url: it.link, title: it.title || "", note: articleText(it, feed) } });
+      });
+    }
     if (navigator.share) {
       opt("send.share", function () {
         try { navigator.share({ title: it.title || "", url: it.link }).catch(function () {}); } catch (e) {}
