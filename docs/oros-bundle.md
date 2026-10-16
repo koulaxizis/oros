@@ -171,6 +171,16 @@ Opening a record app's file is an **add-only merge**. This replaces rule 8 above
 
 Quote and Meals also offer "Open as copy" (fresh ids), as they work like templates. Record files are not encrypted; Save says so in one line.
 
+| App | `data` | previews |
+|---|---|---|
+| To-Do | `{ labels, lists: [{ …, items: [{ …, subs }] }] }` | `tasks.md`, `tasks.csv` |
+| Habits | `{ ver: 2, habits, comps: [{ id: "<habit>|<date>", habitId, date, mtime, v?, sk?, nt? }] }` (the Steps setting stays on the device) | `habits.md`, `checkins.csv` |
+| Water | `{ ver: 1, sips: [{ id, ts, ml, m }], goals: [{ id: "YYYY-MM-DD", ml, m }] }` (glass sizes, unit and reminders stay on the device) | `drinks.csv` |
+| Chore Wheel | `{ ver: 1, members, tasks, done: { "<task>|<date>": [state, by, m] }, set: { "<task>|<date>": [member, m] } }` | `chores.md`, `chores.csv`, `history.csv` |
+| Score Keeper | `{ ver: 1, matches, rounds, tpls, players }` | `history.csv` (= the app's Export CSV), `rounds.csv` |
+| Cycle | `{ ver: 1, periods, days: [{ id: "d-YYYY-MM-DD", … }], cols: { sym, med } }` (reminders and views stay on the device) | `cycle.md`, `periods.csv`, `days.csv` |
+| Mood | `{ ver: 3, entries, cols: { loc, trig, person }, vocab?, goals? }` (a value with the same name as one on the device is folded into it) | `mood.md`, `mood.csv` |
+
 ## Versions
 
 - Container minor versions only add optional files or attributes; readers ignore what they do not know. A newer major version is refused with "update orOS".
