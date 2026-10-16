@@ -7,7 +7,8 @@
 // applyToCanvas() touches a real canvas.
 //
 // Text effects never measure text: text.js lays the glyphs out
-// (canvas measureText, fontKerning "none", same as the PDF) and
+// (advances from the font's own tables, never canvas measureText;
+// canvas draws with fontKerning "none", same as the PDF) and
 // fx.js only says how to paint those glyph positions (passes) or
 // where to move them (curveGlyphs).
 //
