@@ -9,7 +9,7 @@ Songs you put in the Music folder with [Files](app:files) appear as well: Music 
 The tabs:
 - `Home`: your playlists and Liked songs, `Jump back in`, `Recently added`, `Your most played` and your artists.
 - `Search`: songs, albums, artists and playlists; with an empty field, `Browse by genre`.
-- `Your library`: `Playlists`, `Songs`, `Albums`, `Artists`, `Genres`, `Folders` and `Offline`.
+- `Your library`: `Playlists`, `Songs`, `Albums`, `Artists`, `Genres`, `Folders`, `Offline` and `Servers`.
 
 ## Listen
 Tap a song to play it, with the rest of its album or list after it. The big play button plays a whole album, artist, playlist or genre, and `Shuffle` plays it in random order.
@@ -39,6 +39,23 @@ On `Home`, `Free music` has shelves such as `Popular this week`, `Jamendo radios
 Every song shows its licence (for example `CC BY-SA`). Its ⋯ menu has `Copy credit`, the line that names the song, the artist, the licence and the source, ready to paste wherever you use the song; `Details` shows it too, and so does the licence line under the song in the full player. `Open on …` opens the song's page at its source.
 
 Songs from the catalogues go into `Liked songs` and playlists like your own, and play on your other devices too. `Save for offline` (on a song, or the arrow on an album) keeps a copy on this device, only where the licence and the source allow it: songs that Openverse lists from Jamendo always stream. Saved songs are under `Offline` in `Your library`, with the arrow mark; `Remove offline copy` or `Delete all offline copies` in the settings frees the space. To turn the catalogues off, untick `Free music online` in the settings.
+
+## Your own servers
+If your music lives on a server of your own, Music plays it from there. Press **+** and `Connect a server`, or go to `Your library › Servers`:
+- **Subsonic / Navidrome**: Navidrome, Airsonic, Gonic, Ampache and other servers with the Subsonic (OpenSubsonic) API. Enter the address, your user name and password. Music keeps a salted token, not the password itself.
+- **Jellyfin**: the address, user name and password. Music signs in once and keeps only the access token.
+- **Funkwhale**: the address of a pod. Public pods work without a login; for your own library, create a token in Funkwhale under `Settings › Applications` (read access) and paste it.
+- **WebDAV / Nextcloud**: the WebDAV address (Nextcloud shows it in `Files › Settings`), your user name and an app password, and an optional start folder. The server has to allow requests from orOS (CORS); on Nextcloud this needs an app or a setting by its admin.
+- **Dropbox**: a folder of your Dropbox, through the connection you made in [Files](app:files) (`Files › Dropbox`).
+
+Use an `https://` address: browsers block plain `http://` addresses in orOS, except a server on the same computer. The address and the login stay on this device, sealed with a key that never leaves the browser, and are never synced. A server's page has its albums, artists and playlists (or its folders), and `Shuffle the server`. Its ⋯ button has `Rename` and `Remove from this device`. `Home` shows `New on …` for your servers, and `Search` asks them too once you stop typing.
+
+Songs from a server go into `Liked songs` and your playlists like any other. They play on your other devices once you connect the same server there too; until then they show as `From a server not connected here`.
+
+## Playlist files and music feeds
+`Import a playlist (M3U, PLS, XSPF)` makes a new playlist from a playlist file or its address. Each entry becomes the song with the same file name (or title and artist) on this device, the song at an `https://` address, or, for a file kept on a WebDAV or Dropbox server, the song next to it on that server. Entries that cannot be found are left out, and Music says how many. Playlist files inside a server's folders open the same way.
+
+`Add a music feed (RSS)` adds a feed with songs, for example a Podcasting 2.0 music feed (Wavlake and others) or any RSS or Atom feed with audio. The feed's page lists its songs; its ⋯ button has `Add to playlist`, `Open website` and `Remove feed`. Feeds are kept on this device.
 
 ## Keys
 Space plays or pauses, ← and → move 10 seconds, Shift+← and Shift+→ go to the previous or next song, S turns shuffle on or off, R changes repeat and L likes the song.

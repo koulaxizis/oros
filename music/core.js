@@ -511,11 +511,30 @@
   //     offline, ai? / ri? the source's album / artist id (Jamendo,
   //     since wave 3) }. Its key starts with its source ("ia:", "ov:",
   //     "cc:", "jm:").
-  var SRC_RE = /^(ia|ov|cc|jm)$/;
+  //   Since wave 4 (servers.js): "ln" is a public link from a playlist
+  //   file or a music feed (same fields, no licence); a song of the
+  //   user's own server is { k "sv:…", s "sv", sh server id, ii item id
+  //   on that server, ai? / ri? album / artist id, ca? cover id }: no
+  //   address (it needs the login, which stays on the device).
+  var SRC_RE = /^(ia|ov|cc|jm|ln)$/;
+  var SH_RE = /^[0-9a-z]{6,14}$/;
   var SID_RE = /^[A-Za-z0-9._-]{1,100}$/;
   var LI_RE = /^(cc0|pdm|lma|by(-nc)?(-sa|-nd)?|(nc-)?sampling\+)( \d\.\d)?$/;
   function httpsUrl(u) { return typeof u === "string" && u.length <= 1000 && /^https:\/\/[^\s"'<>]+$/i.test(u) ? u : ""; }
+  function svId(v, max) {
+    // eslint-disable-next-line no-control-regex
+    return typeof v === "string" && v.length > 0 && v.length <= max && !/[\u0000-\u001f\u007f]/.test(v);
+  }
+  function server(r, o) {
+    if (r.k.slice(0, 3) !== "sv:" || !SH_RE.test(r.sh) || !svId(r.ii, 1000)) return o;
+    o.s = "sv"; o.sh = r.sh; o.ii = r.ii;
+    if (svId(r.ai, 200)) o.ai = r.ai;
+    if (svId(r.ri, 200)) o.ri = r.ri;
+    if (svId(r.ca, 500)) o.ca = r.ca;
+    return o;
+  }
   function remote(r, o) {
+    if (r.s === "sv") return server(r, o);
     if (!SRC_RE.test(r.s) || r.k.slice(0, 3) !== r.s + ":" || !httpsUrl(r.u)) return o;
     o.s = r.s; o.u = r.u;
     if (httpsUrl(r.pg)) o.pg = r.pg;
@@ -854,8 +873,11 @@
     if (r.al) o.al = r.al; if (r.d) o.d = r.d;
     return r.s && typeof r.k === "string" ? remote(r, o) : o;
   }
-  function itemOf(r) { var o = refOf(r); if (r.p) o.p = r.p; if (r.u) o.u = r.u; if (r.art) o.art = r.art; return o; }
+  // A server song's cover address carries its login: it is made on
+  // screen (servers.js coverUrl), never kept in the queue.
+  function itemOf(r) { var o = refOf(r); if (r.p) o.p = r.p; if (r.u && r.s !== "sv") o.u = r.u; if (r.art && r.s !== "sv") o.art = r.art; return o; }
   function isRemote(r) { return !!(r && r.s && SRC_RE.test(r.s) && httpsUrl(r.u)); }
+  function isServer(r) { return !!(r && r.s === "sv" && SH_RE.test(r.sh) && svId(r.ii, 1000)); }
   // Listening history on this device: { c: {k: plays}, r: [item] recent, l: {k: last ms} }
   function addPlay(h, item, now) {
     h = h && typeof h === "object" ? h : {};
@@ -878,7 +900,7 @@
   }
 
   var api = {
-    VERSION: "1.2.0", DATA_VER: DATA_VER, LIM: LIM, GENRES: GENRES, REPEAT: REPEAT, AUDIO_EXT: AUDIO_EXT,
+    VERSION: "1.3.0", DATA_VER: DATA_VER, LIM: LIM, GENRES: GENRES, REPEAT: REPEAT, AUDIO_EXT: AUDIO_EXT,
     clean: clean, fold: fold, hash: hash, newId: newId, decodeLegacy: decodeLegacy, looksGreek: looksGreek, utf16: utf16,
     sniffImage: sniffImage, genreName: genreName, fromName: fromName, stem: stem,
     id3Size: id3Size, parseId3v2: parseId3v2, parseId3v1: parseId3v1, mp3Duration: mp3Duration,
@@ -891,7 +913,7 @@
     qRepeat: qRepeat, qCycleRepeat: qCycleRepeat, qAddNext: qAddNext, qAddLast: qAddLast, qRemoveUp: qRemoveUp,
     qClearUp: qClearUp, qJump: qJump, qUpcoming: qUpcoming,
     albums: albums, artists: artists, genres: genres, folderView: folderView, sortTracks: sortTracks, search: search,
-    words: words, matches: matches, resolver: resolver, refOf: refOf, itemOf: itemOf, isRemote: isRemote, addPlay: addPlay, fmtTime: fmtTime,
+    words: words, matches: matches, resolver: resolver, refOf: refOf, itemOf: itemOf, isRemote: isRemote, isServer: isServer, addPlay: addPlay, fmtTime: fmtTime,
     byTrackNo: byTrackNo, collator: collator
   };
   root.OrosMusicCore = api;

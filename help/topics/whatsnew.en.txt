@@ -1,6 +1,13 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.64.00
+- Layout and Atelier: designs keep details added by a newer orOS when an older device syncs them, so nothing is lost while your devices update at different times. A design that needs a newer orOS says so and waits instead of opening.
+
+## Version 2.63.00
+- Music: play from your own servers. Connect Navidrome and other Subsonic servers, Jellyfin, Funkwhale, Nextcloud or any WebDAV server, or a Dropbox folder (Your library › Servers). Their albums, artists and playlists show in Music, on Home and in Search. The login stays on this device, sealed.
+- Music: import playlists from M3U, PLS and XSPF files, and add music feeds (RSS, Podcasting 2.0 music feeds such as Wavlake).
+
 ## Version 2.62.00
 - Mockups: a new Print tab makes the cover sheet for the printer from your book's numbers: trim, bleed (or the wrap round a hardcover's boards), spine, hinges, flaps, safe zone and a barcode spot. Save it as a 300 dpi PNG or PDF, with the guides or as your finished cover with its bleed, or design on it in Atelier.
 
