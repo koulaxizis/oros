@@ -180,6 +180,20 @@ Quote and Meals also offer "Open as copy" (fresh ids), as they work like templat
 | Score Keeper | `{ ver: 1, matches, rounds, tpls, players }` | `history.csv` (= the app's Export CSV), `rounds.csv` |
 | Cycle | `{ ver: 1, periods, days: [{ id: "d-YYYY-MM-DD", … }], cols: { sym, med } }` (reminders and views stay on the device) | `cycle.md`, `periods.csv`, `days.csv` |
 | Mood | `{ ver: 3, entries, cols: { loc, trig, person }, vocab?, goals? }` (a value with the same name as one on the device is folded into it) | `mood.md`, `mood.csv` |
+| Calendar | `{ ver: 1, labels, events }` (subscription links are never written: they work like keys) | `calendar.ics` |
+| Contacts | `{ ver: 1, labels, contacts }` (no photos; nothing from account imports) | `contacts.vcf` |
+| Bookmarks | `{ ver: 1, folders: { id: … }, items: { id: … } }` (saved readable copies stay on the device) | `bookmarks.html` |
+| Reader | `{ ver: 1, feeds, folders, items (saved articles), tags, rules }` (settings, read state, downloaded articles stay on the device) | `feeds.opml`, `saved.md` |
+| Podcasts | `{ ver: 1, shows: [{ …, eps: [progress] }] }` (never the gpodder key, the queue or audio) | `podcasts.opml` |
+| Meal Planner | `{ ver, rc (recipes), pl (plan), ck, mn, pa (pantry), pn }`; also "Open as copy" (recipes with fresh ids) | `recipes.md`, `shopping.txt` |
+| Sticky Notes | `{ ver: 1, notes }` (positions on the screen stay on the device) | `notes.txt` |
+| CRM | `{ cust, deals, acts, fups, tags, stg }` (never the web-form key, workflows or built-in stages) | `customers.csv` |
+| Quote Builder | `{ quotes, clients, templates }` (never accept-link tokens or bank presets); also "Open as copy" | `quotes.md` |
+| Timesheet | `{ ver: 1, clients, projects, entries (finished only), prefs }` (a running timer and device prefs stay on the device) | `hours.csv` |
+| Stock | `{ ver: 1, settings, items, cats, units, sups, pos, pics: [{ …, key? }], whs, moves, sales?, pls?, zs? }` (no shop keys; a closed period travels as opening movements; product photos in `media/`) | `products.csv`, `movements.csv` |
+| Budget | `{ ver: 1, tx, cats, bud, rec, acc, xfer, asg, goal, rule, set, rcs? }` (bank profiles stay on the device; receipts in `media/` as `<sha256>.<jpg\|pdf>`) | `entries.csv` |
+| Invoices | `{ ver: 1, prof, series, clients, docs, pays, tpls, profs?, media? }` (no provider keys; issued numbers never change; the device's business profile is kept; PDFs and scans in `media/`) | `documents.csv`, `payments.csv` |
+| Split | `{ ver: 1, groups, people, exp, pay, rec?, receipts? }` (never "who am I"; one group or all; receipt photos in `media/`) | `NN-<group>.csv` per group (= the app's Export CSV) |
 
 ## Versions
 

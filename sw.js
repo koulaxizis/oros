@@ -20,7 +20,7 @@
 // GitHub Action should stamp just the version number; we prepend
 // the oros-v prefix here for cache namespace separation.
 
-var CACHE_VERSION = "oros-v2.51.00";
+var CACHE_VERSION = "oros-v2.55.00";
 var SHELL_CACHE   = "oros-shell-" + CACHE_VERSION;
 var RUNTIME_CACHE = "oros-runtime-" + CACHE_VERSION;
 // WebLLM's library (vendor/webllm, about 7 MB, loaded only when the
@@ -899,6 +899,8 @@ var PRECACHE_URLS = [
   "plants/help.el.txt",
   "podcasts/help.en.txt",
   "podcasts/help.el.txt",
+  "music/help.en.txt",
+  "music/help.el.txt",
   "pong/help.en.txt",
   "pong/help.el.txt",
   "prompter/help.en.txt",
@@ -1254,6 +1256,20 @@ var PRECACHE_URLS = [
   "scores/package.js",
   "cycle/package.js",
   "mood/package.js",
+  "calendar/package.js",
+  "contacts/package.js",
+  "bookmarks/package.js",
+  "feeds/package.js",
+  "podcasts/package.js",
+  "meals/package.js",
+  "stickies/package.js",
+  "crm/package.js",
+  "quote/package.js",
+  "timesheet/package.js",
+  "stock/package.js",
+  "budget/package.js",
+  "invoices/package.js",
+  "split/package.js",
   "converter/",
   "converter/index.html",
   "converter/converter.css",
@@ -1301,6 +1317,15 @@ var PRECACHE_URLS = [
   "podcasts/store.js",
   "podcasts/host.js",
   "podcasts/podcasts.js",
+  "music/",
+  "music/index.html",
+  "music/search.js",
+  "music/music.css",
+  "music/core.js",
+  "music/store.js",
+  "music/host.js",
+  "music/library.js",
+  "music/music.js",
   "radio/",
   "radio/index.html",
   "radio/search.js",

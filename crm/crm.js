@@ -164,6 +164,7 @@
       "stg.notEmpty": "{name} still has deals ({n}). Move them to another stage first.", "stg.last": "One open stage is needed.",
       "stg.hidden": "{name} hidden", "stg.deleted": "{name} deleted",
       "set.tags": "Tags", "set.export": "Export customers (CSV)", "set.backup": "Backup (JSON)", "set.restore": "Restore a backup",
+      "set.osave": "orOS file (.oroscrm)", "set.oopen": "Open orOS file…", "set.ofolder": "Unzipped orOS folder…",
       "set.restoreHint": "A backup is merged into what you have: nothing here is deleted or overwritten by older copies.",
       "set.usage": "This app uses {kb} KB of the browser storage that all orOS apps share.",
       "tags.title": "Tags", "tags.new": "New tag", "tags.none": "No tags yet.", "tags.namePh": "Tag name",
@@ -280,6 +281,7 @@
       "stg.notEmpty": "Το {name} έχει ακόμα ευκαιρίες ({n}). Μετακίνησέ τες πρώτα σε άλλο στάδιο.", "stg.last": "Χρειάζεται ένα ανοιχτό στάδιο.",
       "stg.hidden": "Κρύφτηκε: {name}", "stg.deleted": "Διαγράφηκε: {name}",
       "set.tags": "Ετικέτες", "set.export": "Εξαγωγή πελατών (CSV)", "set.backup": "Αντίγραφο (JSON)", "set.restore": "Επαναφορά αντιγράφου",
+      "set.osave": "Αρχείο orOS (.oroscrm)", "set.oopen": "Άνοιγμα αρχείου orOS…", "set.ofolder": "Αποσυμπιεσμένος φάκελος orOS…",
       "set.restoreHint": "Το αντίγραφο συγχωνεύεται με ό,τι έχεις: τίποτα δεν σβήνεται και κανένα παλιότερο αντίγραφο δεν γράφει πάνω σε νεότερο.",
       "set.usage": "Η εφαρμογή χρησιμοποιεί {kb} KB από τον χώρο του browser που μοιράζονται όλες οι εφαρμογές του orOS.",
       "tags.title": "Ετικέτες", "tags.new": "Νέα ετικέτα", "tags.none": "Καμία ετικέτα ακόμη.", "tags.namePh": "Όνομα ετικέτας",
@@ -2086,6 +2088,17 @@
     list.appendChild(button(t("set.export"), "sheet-btn", exportCsv));
     list.appendChild(button(t("set.backup"), "sheet-btn", exportJson));
     list.appendChild(button(t("set.restore"), "sheet-btn", function () { dlg.close(); importJson(); }));
+    // .oroscrm: Save keeps the dialog open (like Export CSV); Open and
+    // the folder close it first, since they change the data
+    if (recFile) {
+      [["crm-osave", "set.osave", false, function () { recFile.save(); }],
+       ["crm-oopen", "set.oopen", true, function () { recFile.open(); }],
+       ["crm-ofolder", "set.ofolder", true, function () { recFile.openFolder(); }]].forEach(function (o) {
+        var b = button(t(o[1]), "sheet-btn", function () { if (o[2]) dlg.close(); o[3](); });
+        b.id = o[0];
+        list.appendChild(b);
+      });
+    }
     dlg.appendChild(list);
     dlg.appendChild(el("p", "hint", t("set.restoreHint")));
     var raw = "";
@@ -2341,6 +2354,44 @@
       fr.readAsText(file);
     }).catch(function () {});
   }
+
+  // .oroscrm (OBF-4e): every customer, deal, history entry,
+  // follow-up, tag and own pipeline stage as one orOS file
+  // (../recordpkg.js + package.js). Opening ADDS what this device
+  // lacks, with its ids; a record already here (or deleted here) is
+  // kept as it is unless "Update with newer versions" is ticked. The
+  // file never holds the prefs or the web form (its keys); the merge
+  // (core.js) keeps this device's own. The result goes through commit
+  // (so sync carries it); Undo tombstones the added records the way
+  // removeRow does (a customer's tomb also hides its deals etc.).
+  var RP = window.OrosRecordPkg || null, CPK = window.OrosCrmPackage || null;
+  var recFile = RP && CPK && window.OrosBundle ? RP.ui(CPK.DESC, {
+    lang: function () { return LANG; },
+    get: function () { return C.norm(data); },
+    title: function () { return t("app"); },
+    set: function (next) {
+      var n = C.norm(next);
+      if (!n || !Array.isArray(n.cust)) return;
+      n.prefs = data.prefs;            // settings and the web form stay this device's
+      if (data.wf) n.wf = data.wf; else delete n.wf;
+      data = n;
+      commit();
+    },
+    deleteIds: function (ids) {
+      var any = false;
+      ids.forEach(function (id) {
+        var k = CPK.kindOf(id, data);
+        if (!k || !C.ID_RE.test(id)) return;
+        data.tombs[id] = stamp(C.byId(data[k], id));    // after its m, even a clamped future one
+        any = true;
+      });
+      if (any) commit();
+    },
+    toast: function (text, undo) {
+      if (undo) undoToast(text, undo);
+      else showToast(text);
+    }
+  }) : null;
 
   // CSV of customers from another program: preview, then one write
   // (Undo removes them all again).
@@ -2636,6 +2687,9 @@
   // follow-up's editor (inbox reminders, search), { act } the history
   // entry. A dialog open (maybe with unsaved edits) wins: no-op.
   function openTarget(x) {
+    // "Open with" an .oroscrm file (fileopen.js): { openFile: { token } },
+    // the File taken once with window.parent.__orosTakeFile(token)
+    if (x && typeof x === "object" && x.openFile) { if (recFile) recFile.openTarget(x.openFile); return !!recFile; }
     if (!x || typeof x !== "object" || document.querySelector("dialog[open]")) return false;
     var id = function (v) { return typeof v === "string" && C.ID_RE.test(v) ? v : ""; };
     // Today's "Done" tick: the same code as the Agenda's tick (Undo,

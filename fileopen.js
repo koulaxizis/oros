@@ -202,7 +202,7 @@
 
   // ---------- Pure model ----------
   function extOf(name) {
-    var m = /\.([a-z0-9]{1,12})$/i.exec(String(name || ""));
+    var m = /\.([a-z0-9]{1,24})$/i.exec(String(name || ""));
     return m ? "." + m[1].toLowerCase() : "";
   }
 

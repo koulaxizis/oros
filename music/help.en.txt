@@ -1,0 +1,33 @@
+# Music
+Music plays the songs on your device, in the way you know from the big streaming apps: Home, Search, Your library, albums, artists, playlists, Liked songs and a queue with shuffle and repeat. The player keeps going after you close the app.
+
+## Getting started
+Press **+** at the top (`Add music`) and choose `Add songs` or `Add a folder`, or drop music files on the window. The files are copied to `Files › Music` on the orOS disk, so they play without a connection. With Vault Drive on, they reach your other devices too. Music reads MP3, M4A/AAC, FLAC, Ogg/Opus, WAV and WebM files.
+
+Songs you put in the Music folder with [Files](app:files) appear as well: Music reads the folder each time it opens. `Read the music folder again` in the settings does it on request.
+
+The tabs:
+- `Home`: your playlists and Liked songs, `Jump back in`, `Recently added`, `Your most played` and your artists.
+- `Search`: songs, albums, artists and playlists; with an empty field, `Browse by genre`.
+- `Your library`: `Playlists`, `Songs`, `Albums`, `Artists`, `Genres` and `Folders`.
+
+## Listen
+Tap a song to play it, with the rest of its album or list after it. The big play button plays a whole album, artist, playlist or genre, and `Shuffle` plays it in random order.
+
+The player bar at the bottom shows the song, a heart and play/pause and next. Tap the song's name for the full player: position, `Previous`, `Next`, `Shuffle`, `Repeat` (all, then one), volume and `Queue`. Your device's media controls (lock screen, headset, media keys) work too. Radio and Podcasts pause when music starts, and the other way round.
+
+## Queue
+`Queue` in the full player shows `Now playing`, `Next up` (songs you added by hand) and what follows from the list you started. Tap a song there to jump to it, or press × to take it out of `Next up`. The ⋯ button on any song offers `Play next` and `Add to queue`.
+
+## Liked songs and playlists
+The heart saves a song to `Liked songs`. `New playlist` in `Your library` (or under **+**) makes a list; `Add to playlist` on a song's ⋯ menu, or on an album page, adds songs to it. On a playlist page, a song's ⋯ menu has `Move up`, `Move down` and `Remove from this playlist`; the playlist's own ⋯ button has `Rename` and `Delete playlist`.
+
+Liked songs and playlists sync to your other devices. A song that is not on a device shows as `Not on this device` there until its file arrives.
+
+## Your files
+A song's ⋯ menu has `Details` (file, format, size, length) and `Delete from this device`, which deletes the file from `Files › Music`. Old tags in Greek written with the Windows code page are recognised automatically; if names look wrong, choose `Always Greek` or `Always Western` under `Old tags` in the settings.
+
+> Free music from open catalogues comes in the next update.
+
+## Keys
+Space plays or pauses, ← and → move 10 seconds, Shift+← and Shift+→ go to the previous or next song, S turns shuffle on or off, R changes repeat and L likes the song.

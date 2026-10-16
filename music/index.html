@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <!-- DL-1: a direct link to this app opens it inside the orOS shell -->
+  <script>if (window.top === window.self && !/[?&]standalone\b/.test(location.search)) location.replace("../?open=music" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Music · orOS</title>
+
+  <link rel="stylesheet" href="music.css?v=2.55.00">
+
+</head>
+<body>
+
+  <header id="toolbar">
+    <button type="button" class="icon-btn" id="back-btn" hidden></button>
+    <span id="app-name" class="app-name"></span>
+    <span class="spacer"></span>
+    <button type="button" class="icon-btn" id="add-btn"></button>
+    <button type="button" class="icon-btn" id="more-btn"></button>
+  </header>
+
+  <nav id="tabs" role="tablist">
+    <button type="button" role="tab" data-tab="home"><span class="tab-ic" data-ic="home"></span><span data-i18n="tab.home">Home</span></button>
+    <button type="button" role="tab" data-tab="search"><span class="tab-ic" data-ic="search"></span><span data-i18n="tab.search">Search</span></button>
+    <button type="button" role="tab" data-tab="lib"><span class="tab-ic" data-ic="lib"></span><span data-i18n="tab.lib">Your library</span></button>
+  </nav>
+
+  <main id="main"></main>
+
+  <div id="player" hidden>
+    <div class="pl-prog"><div id="pl-prog"></div></div>
+    <button type="button" id="pl-open" class="pl-open">
+      <span id="pl-art" class="pl-art"></span>
+      <span class="pl-text"><span id="pl-title" class="pl-title"></span><span id="pl-sub" class="pl-sub"></span></span>
+    </button>
+    <button type="button" class="icon-btn" id="pl-like"></button>
+    <button type="button" class="icon-btn play" id="pl-play"></button>
+    <button type="button" class="icon-btn" id="pl-next"></button>
+  </div>
+
+  <div id="drop" hidden><span data-i18n="drop">Drop music files to add them</span></div>
+  <div id="toast" role="status"></div>
+
+  <script src="core.js?v=2.55.00"></script>
+  <script src="store.js?v=2.55.00"></script>
+  <script src="library.js?v=2.55.00"></script>
+  <script src="music.js?v=2.55.00"></script>
+
+</body>
+</html>

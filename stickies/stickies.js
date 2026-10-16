@@ -8,7 +8,8 @@
 //   - Settings: show the notes on this desktop, ring sound (a chime
 //     or a Ringtone Composer melody), a sound
 //     when a note fades, colour of new notes (all device-local);
-//     tidy up the desktop, export as text
+//     tidy up the desktop, export as text, save / open an orOS file
+//     (.orosstickies, ../recordpkg.js + package.js)
 // The app never writes the data itself: every change goes through
 // window.parent.orosStickies, the single writer of the synced slice
 // "stickies" (oros-stickies-data).
@@ -67,6 +68,7 @@
       "toast.full": "60 notes are on the desktop. Delete one first.",
       "toast.restored": "Back on the desktop", "toast.file": "Saved", "toast.tidyPhone": "On a phone the notes are a row of cards, already tidy.",
       "toast.nothing": "No notes to export",
+      "file.save": "orOS file (.orosstickies)", "file.open": "Open orOS file…", "file.folder": "Unzipped orOS folder…",
       "aria.note": "Note: {text}"
     },
     el: {
@@ -98,6 +100,7 @@
       "toast.full": "Στην επιφάνεια υπάρχουν 60 post-it. Διάγραψε πρώτα ένα.",
       "toast.restored": "Ξανά στην επιφάνεια", "toast.file": "Αποθηκεύτηκε", "toast.tidyPhone": "Στο κινητό τα post-it είναι μια σειρά από καρτέλες, ήδη τακτοποιημένες.",
       "toast.nothing": "Δεν υπάρχουν post-it για εξαγωγή",
+      "file.save": "Αρχείο orOS (.orosstickies)", "file.open": "Άνοιγμα αρχείου orOS…", "file.folder": "Αποσυμπιεσμένος φάκελος orOS…",
       "aria.note": "Post-it: {text}"
     }
   };
@@ -316,6 +319,31 @@
     showToast(t("toast.file"));
   }
 
+  // .orosstickies (OBF-4e): every note on the desktop as one orOS file
+  // (../recordpkg.js + package.js). Opening ADDS the notes this device
+  // lacks, with their ids; a note already here (or deleted here) is
+  // kept as it is unless "Update with newer versions" is ticked. The
+  // app still never writes: the shell's host.js merges the result in
+  // (H.addFromFile → its commit, so sync carries it), and Undo removes
+  // the added notes there like Delete (H.removeAdded, tombstones).
+  // Positions stay device-local: an added note gets a free spot.
+  var RP = window.OrosRecordPkg || null, SPK = window.OrosStickiesPackage || null;
+  var lastAdded = [];
+  var recFile = H && RP && SPK && window.OrosBundle ? RP.ui(SPK.DESC, {
+    lang: function () { return LANG; },
+    get: function () { return SPK.stamped(data()); },
+    title: function () { return t("app.name"); },
+    set: function (next, info) {
+      lastAdded = (info && info.addedIds || []).slice();
+      H.addFromFile(next);
+    },
+    deleteIds: function (ids) { H.removeAdded(ids); },
+    toast: function (text, undo) {
+      if (undo && typeof H.fileAdded === "function") H.fileAdded(text, lastAdded);
+      else showToast(text);
+    }
+  }) : null;
+
   // ---------- 5. Tabs, toasts, keyboard ----------
   var view = "notes";
   function showView(v) {
@@ -395,9 +423,13 @@
     $("q").placeholder = t("ph.search");
   }
 
-  // Deep link: { note } opens that note's editor.
+  // Deep link: { note } opens that note's editor. "Open with" an
+  // .orosstickies file (fileopen.js): { openFile: { token } }, the File
+  // taken once with window.parent.__orosTakeFile(token) (recFile).
   window.__orosOpenAt = function (target) {
-    if (H && target && typeof target === "object" && typeof target.note === "string") H.edit(target.note);
+    if (!H || !target || typeof target !== "object") return;
+    if (target.openFile) { if (recFile) recFile.openTarget(target.openFile); return; }
+    if (typeof target.note === "string") H.edit(target.note);
   };
 
   function boot() {
@@ -420,6 +452,15 @@
     $("pop-on").addEventListener("change", function () { H.setPref("pop", $("pop-on").checked); });
     $("tidy-btn").addEventListener("click", function () { if (!H.tidy()) showToast(t("toast.tidyPhone")); });
     $("exp-btn").addEventListener("click", exportText);
+    [["file-save", "file.save", function () { recFile.save(); }],
+     ["file-open", "file.open", function () { recFile.open(); }],
+     ["file-folder", "file.folder", function () { recFile.openFolder(); }]].forEach(function (b) {
+      var btn = $(b[0]);
+      if (!btn || !recFile) return;
+      btn.textContent = t(b[1]);
+      btn.hidden = false;
+      btn.addEventListener("click", function () { closeMore(); b[2](); });
+    });
     var qt = null;
     $("q").addEventListener("input", function () { clearTimeout(qt); qt = setTimeout(renderNotes, 150); });
     VIEWS.forEach(function (v) { $("tab-" + v).addEventListener("click", function () { showView(v); }); });

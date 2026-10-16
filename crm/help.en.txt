@@ -38,6 +38,11 @@ In `Settings`: `Import customers (CSV)`, `Export customers (CSV)`, `Backup (JSON
 
 `Import customers (CSV)` reads a list from Excel, HubSpot, another program or CRM's own export. The first row must name the columns (for example Name or Company, VAT ID, Email, Phone, Address, City, Status, Tags). You see how many customers are new before anything is added; customers you already have (same VAT ID or name) are skipped, and `Undo` removes the whole import.
 
+## Save and open an orOS file
+In `Settings`, `orOS file (.oroscrm)` saves every customer with its people, history, follow-ups and deals, your tags and your own pipeline stages as one `.oroscrm` file, for example to move them to another device without sync or to keep a copy. Your settings (currency, `"Not contacted" after`, the names of the built-in stages) and the web form with its keys stay on each device, and no account of a connected service is ever in the file. The file is a plain ZIP: unzipped it holds the records as `content.json` plus `preview/customers.csv` (the same list as `Export customers (CSV)`) for other programs. It holds other people's details and is not encrypted, so keep it somewhere safe.
+
+`Open orOS file…` (or `Unzipped orOS folder…`, or "Open with" orOS on the computer) shows how many records are new and how many are already here, then `Add` adds only the new ones, with their own ids: opening the same file again adds nothing. A record already here is kept as it is, one you deleted here stays deleted, and a file never deletes anything. Tick `Update with newer versions` to let records that were changed later in the file replace your copy. `Undo` in the message takes back what was added.
+
 ## HubSpot, Pipedrive, Invoice Ninja and Odoo
 `Settings` › `Import from HubSpot, Pipedrive, Invoice Ninja or Odoo` brings in an account you connected in [Settings](app:settings) › `Connected services`. Pick the account and `Read the account`: you see how many customers, deals and follow-ups are new and how many changed there since the last time, before anything is added.
 

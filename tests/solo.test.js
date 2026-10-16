@@ -337,6 +337,43 @@ test("F-Droid repo (FDROID-1): packages, links, launch version and metadata for 
   assert.match(wf, /versions\.json/);
 });
 
+test("F-Droid store listing (FDROID-2): texts, categories, pictures and front page", () => {
+  const M = require(path.join(ROOT, "tools", "fdroid-metadata.js"));
+  const CATS = ["Connectivity", "Development", "Games", "Graphics", "Internet", "Money", "Multimedia", "Navigation", "Phone & SMS",
+    "Reading", "Science & Education", "Security", "Sports & Health", "System", "Theming", "Time", "Writing", "Office"];
+  const dir = path.join(ROOT, "tools", "fdroid");
+  const ids = new Set(M.list().map((a) => a.id));
+  fs.readdirSync(dir).forEach((id) => {
+    assert.ok(ids.has(id), "tools/fdroid/" + id + " is not a published app");
+    const t = JSON.parse(fs.readFileSync(path.join(dir, id, "texts.json"), "utf8"));
+    assert.ok(CATS.includes(t.category), id + " category " + t.category);
+    ["en", "el"].forEach((l) => {
+      assert.ok(t[l].summary.length <= 80 && !/\.$/.test(t[l].summary), id + " " + l + " summary");
+      assert.ok(t[l].description.length > 200 && t[l].description.length < 4000, id + " " + l + " description");
+      assert.ok(!/google/i.test(t[l].summary + t[l].description), id + " mentions Google");
+      assert.ok(M.shots(id, l).length >= 2, id + " " + l + " screenshots");
+    });
+    assert.ok(M.feature(id), id + " feature.jpg");
+  });
+  // Metadata and front page land where fdroid and Pages expect them
+  const tmp = fs.mkdtempSync(path.join(require("os").tmpdir(), "fd-"));
+  M.write(tmp);
+  const m = path.join(tmp, "metadata", "online.useoros.notes");
+  assert.match(fs.readFileSync(m + ".yml", "utf8"), /Categories:\n {2}- Writing\n/);
+  assert.ok(fs.existsSync(path.join(m, "en-US", "featureGraphic.jpg")));
+  assert.ok(fs.existsSync(path.join(m, "el", "phoneScreenshots", "1.jpg")));
+  const html = fs.readFileSync(path.join(tmp, "site", "index.html"), "utf8");
+  assert.ok(html.includes("https://fdroid.link/#https://koulaxizis.github.io/oros-fdroid/repo?fingerprint="));
+  assert.ok(html.includes('src="repo/index.png"'));
+  M.list().forEach((a) => assert.ok(fs.existsSync(path.join(tmp, "site", "icons", a.pkg + ".png")), a.pkg));
+  fs.rmSync(tmp, { recursive: true, force: true });
+  // Store-only changes republish the repository
+  const wf = read(".github/workflows/fdroid.yml");
+  assert.match(wf, /paths: \['tools\/fdroid-metadata\.js', 'tools\/fdroid\/\*\*'\]/);
+  assert.match(wf, /tools\/fdroid-metadata\.js tools\/fdroid \|/);
+  assert.match(wf, /cp -r "\$fd\/site\/\." "\$site\/"/);
+});
+
 test("APK links leave the Android app through BrowserActivity (default browser, normal tab)", () => {
   const and = "Mozilla/5.0 (Linux; Android 14) Chrome/140 Mobile";
   const u = S.apkUrl("notes");

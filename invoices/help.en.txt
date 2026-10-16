@@ -76,6 +76,11 @@ On `Clients`, add a `New client` with name, profession, ΑΦΜ, ΔΟΥ, address,
 ## Settings
 The gear button opens `Settings`: your business details and logo, the defaults for new documents (currency, VAT %, payment days, withholding, PDF language, payment terms, footer), the numbering series, and your templates.
 
+## Save and open an orOS file
+In `Settings`, under `Data`, `orOS file (.orosinvoices)` saves every document, payment, client, numbering series, template and business profile as one `.orosinvoices` file, for example to move them to another device without sync or to give your accountant a copy. Attached official PDFs and scans in `/internal/Invoices/` go into the file too. Accounts and keys of connected services (myDATA through timologisi.online, payment providers) are never saved in it. The file is a plain ZIP: unzipped it holds everything as `content.json`, the PDFs in `media/`, and `preview/documents.csv` and `preview/payments.csv` (the same columns as `Export documents (CSV)` and `Export payments (CSV)`, all dates) for other programs. It is not encrypted, so keep it somewhere safe.
+
+`Open orOS file…` (or `Unzipped orOS folder…`, or "Open with" orOS on the computer) shows how many records are new and how many are already here, then `Add` adds only the new ones, with their own ids and numbers: opening the same file again adds nothing. A record already here is kept as it is, one you deleted here stays deleted, and a file never deletes anything. A document that is already issued, cancelled or recorded here never changes, and numbers are never changed: a document whose number is already taken here by another document, or an invoice already recorded here with the same number and ΑΦΜ, stays out. `Update with newer versions` lets drafts, clients, payments and other records that were changed later in the file replace your copy. An attached PDF is written to `/internal/Invoices/` only when it is not there yet. `Undo` in the message takes back what was added.
+
 ## Sync and backup
 Documents, payments, clients, series, templates and your business details sync between your devices through [orOS sync](help:t/sync). The filters and the series you use on each device stay on that device; an unsaved draft is kept on the device until you save it.
 

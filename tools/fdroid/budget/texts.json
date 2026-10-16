@@ -1,0 +1,11 @@
+{
+  "category": "Money",
+  "en": {
+    "summary": "Income and expenses, offline and private",
+    "description": "Record income and expenses by category, set monthly budgets and see where the money goes, with CSV import and export. Nothing leaves your device unless you turn on encrypted sync with your own Dropbox.\n\nShare text to orOS Budget to start a new expense.\n\nWorks offline, with no account, no ads, no cookies and no tracking. Sync is optional and end-to-end encrypted, using your own Dropbox.\n\nThe app's content updates by itself from useoros.online; a new APK only comes when the Android shell changes. Free and open source (MIT), free forever."
+  },
+  "el": {
+    "summary": "Έσοδα και έξοδα, χωρίς σύνδεση και ιδιωτικά",
+    "description": "Κατέγραψε έσοδα και έξοδα ανά κατηγορία, όρισε μηνιαίους προϋπολογισμούς και δες πού πάνε τα χρήματα, με εισαγωγή και εξαγωγή CSV. Τίποτα δεν φεύγει από τη συσκευή σου, εκτός αν ανοίξεις τον κρυπτογραφημένο συγχρονισμό με το δικό σου Dropbox.\n\nΚοινοποίησε κείμενο στο orOS Budget και ξεκινά νέο έξοδο.\n\nΔουλεύει χωρίς σύνδεση, χωρίς λογαριασμό, διαφημίσεις, cookies ή παρακολούθηση. Ο συγχρονισμός είναι προαιρετικός και κρυπτογραφημένος από άκρο σε άκρο, μέσω του δικού σου Dropbox.\n\nΤο περιεχόμενο της εφαρμογής ενημερώνεται μόνο του από το useoros.online· νέο APK βγαίνει μόνο όταν αλλάζει το κέλυφος Android. Δωρεάν και ανοιχτού κώδικα (MIT), δωρεάν για πάντα."
+  }
+}
