@@ -98,6 +98,8 @@
     if (!k || !it || BASE[k] !== it.t) return null;
     var o = { k: k };
     if ((k === "shape" || k === "photo") && bit(a.bg)) o.bg = 1;
+    // guides of a cover template (Mockups): seen in the editor only
+    if (k === "photo" && bit(a.tg)) o.tg = 1;
     var fc = col(a.fc), sc = col(a.sc);
     if (k !== "photo" && k !== "line" && fc) o.fc = fc;
     if ((k === "shape" || k === "icon" || k === "line" || k === "table") && sc) o.sc = sc;

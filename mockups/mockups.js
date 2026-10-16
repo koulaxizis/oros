@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Mockups — App logic (v1.1.0)
+// orOS Mockups — App logic (v1.2.0)
 // 3D book mockups: give the book's size, pages, paper and binding
 // (paperback or hardcover, flaps / dust jacket, rounded spine,
 // headband, ribbon), add the cover (front, back, spine, flaps or one
@@ -11,6 +11,10 @@
 // designkit/media.js), every ready angle at once (ZIP or Pictures),
 // and a turntable as MP4 / WebM (vendored Mediabunny) or GIF
 // (atelier/gif.js); both libraries load only when asked for.
+// Wave 3: the Print tab, the cover sheet for the printer
+// (MockCore.template drawn by print.js: live flat preview, 300 dpi
+// PNG / PDF with or without the guides, Pictures, a new Atelier
+// design of the right size, BR-MK-TPL).
 // Data: synced slice "mockups" (oros-mockups-data, core.js);
 // pictures on the orOS disk through designkit/assets.js (R30);
 // project thumbnails cached on this device only (IndexedDB
@@ -24,6 +28,7 @@
 //   4. Stage (3D view), pictures, camera drag
 //   5. The form (book, cover, scene, save)
 //   6. Save the picture, Pictures, Atelier, all angles, turntable
+//   6b. Cover sheet for the printer (Print tab)
 //   7. Dialogs: more, ask
 //   8. Sync slice, palette, deep link
 //   9. Wiring & boot
@@ -122,7 +127,26 @@
       "mo.done": "{kind} ready: {size}, made in {sec} s.", "mo.making": "Making the video… {pc}%",
       "toast.noVideo": "This browser cannot make videos (it has no video encoder). Try GIF, or Chrome, Edge or Firefox.",
       "toast.moFail": "The video could not be made on this device.", "toast.moStop": "Stopped",
-      "toast.videos": "Saved in Videos as {name}", "btn.moMakeGif": "Make the GIF", "dir.angles": "{name} (angles)"
+      "toast.videos": "Saved in Videos as {name}", "btn.moMakeGif": "Make the GIF", "dir.angles": "{name} (angles)",
+      "tab.print": "Print",
+      "tpl.hint": "The cover sheet for the printer, made from this book's numbers: size, pages, paper, binding and flaps. Use it to lay out your cover, or save your finished cover with the right bleed.",
+      "tpl.kind.pb": "Paperback cover", "tpl.kind.case": "Hardcover case (wraps round the boards)", "tpl.kind.jacket": "Dust jacket",
+      "tpl.info": "Sheet {w} × {h}, bleed included. Trim {tw} × {th}. Spine {s}.",
+      "tpl.spine": "Spine for the printer: {s} ({pages} pages × {cal} mm).", "tpl.spineHand": "Spine for the printer: {s} (the page block plus the two boards).",
+      "tpl.spinePb": "Spine for the printer: {s} (typed by hand).",
+      "slot.hingeB": "Hinge", "slot.hingeF": "Hinge",
+      "f.tbleed": "Bleed (mm)", "f.twrap": "Wrap round the boards (mm)", "f.safe": "Safe zone (mm)",
+      "f.tbar": "Barcode spot on the back", "f.tart": "With my cover pictures", "f.tgd": "Show the guides",
+      "tpl.gdHint": "With the guides off, the file is your finished cover with its bleed, ready for the printer.",
+      "lg.bleed": "Bleed, cut away", "lg.wrap": "Wraps round the boards", "lg.trim": "Trim", "lg.fold": "Fold", "lg.hinge": "Hinge", "lg.safe": "Keep text inside",
+      "tpl.bar": "Barcode", "tpl.canvasInfo": "{kind} · trim {tw} × {th} · spine {s} · {pages} pages · bleed {b}",
+      "warn.thin": "The spine is thinner than 5 mm: most printers print no text on it.",
+      "warn.nobar": "The back cover is too small for a barcode spot.",
+      "btn.tplPng": "Save PNG", "btn.tplPdf": "Save PDF", "btn.tplPics": "Save to Pictures", "btn.tplAtelier": "Design it in Atelier",
+      "tpl.printer": "Your printer's template wins. If they give another spine width, type it in Book › Set the spine width by hand; the bleed is above. The sheet is 300 dpi.",
+      "toast.tplAtelier": "Opened in Atelier as a new design of the cover size.", "toast.tplFail": "The template could not be made on this device.",
+      "file.tpl": "{name} · cover template", "file.cover": "{name} · cover for print",
+      "toast.wrapBook": "Cover from Atelier, on the book \"{name}\" of the same size."
     },
     el: {
       "app.name": "Μακέτες", "btn.new": "Νέα μακέτα", "btn.more": "Περισσότερα", "btn.back": "Όλες οι μακέτες",
@@ -203,7 +227,26 @@
       "mo.done": "Έτοιμο {kind}: {size}, έγινε σε {sec} δευτ.", "mo.making": "Φτιάχνω το βίντεο… {pc}%",
       "toast.noVideo": "Αυτός ο browser δεν φτιάχνει βίντεο (δεν έχει κωδικοποιητή). Δοκίμασε GIF ή Chrome, Edge, Firefox.",
       "toast.moFail": "Το βίντεο δεν μπόρεσε να γίνει σε αυτή τη συσκευή.", "toast.moStop": "Σταμάτησε",
-      "toast.videos": "Αποθηκεύτηκε στα Βίντεο ως {name}", "btn.moMakeGif": "Φτιάξε το GIF", "dir.angles": "{name} (γωνίες)"
+      "toast.videos": "Αποθηκεύτηκε στα Βίντεο ως {name}", "btn.moMakeGif": "Φτιάξε το GIF", "dir.angles": "{name} (γωνίες)",
+      "tab.print": "Εκτύπωση",
+      "tpl.hint": "Το φύλλο του εξωφύλλου για το τυπογραφείο, από τα νούμερα αυτού του βιβλίου: μέγεθος, σελίδες, χαρτί, δέσιμο και αυτιά. Στήσε πάνω του το εξώφυλλό σου ή αποθήκευσε το έτοιμο εξώφυλλο με το σωστό bleed.",
+      "tpl.kind.pb": "Εξώφυλλο χαρτόδετου", "tpl.kind.case": "Θήκη σκληρόδετου (τυλίγει τα χαρτόνια)", "tpl.kind.jacket": "Κουβερτούρα (dust jacket)",
+      "tpl.info": "Φύλλο {w} × {h} μαζί με το bleed. Τελικό μέγεθος {tw} × {th}. Ράχη {s}.",
+      "tpl.spine": "Ράχη για το τυπογραφείο: {s} ({pages} σελίδες × {cal} mm).", "tpl.spineHand": "Ράχη για το τυπογραφείο: {s} (το σώμα των σελίδων μαζί με τα δύο χαρτόνια).",
+      "tpl.spinePb": "Ράχη για το τυπογραφείο: {s} (γραμμένη με το χέρι).",
+      "slot.hingeB": "Άρθρωση", "slot.hingeF": "Άρθρωση",
+      "f.tbleed": "Bleed (mm)", "f.twrap": "Τύλιγμα γύρω από τα χαρτόνια (mm)", "f.safe": "Ζώνη ασφαλείας (mm)",
+      "f.tbar": "Θέση για barcode στο οπισθόφυλλο", "f.tart": "Με τις εικόνες του εξωφύλλου μου", "f.tgd": "Δείξε τους οδηγούς",
+      "tpl.gdHint": "Χωρίς τους οδηγούς, το αρχείο είναι το έτοιμο εξώφυλλό σου με το bleed του, για το τυπογραφείο.",
+      "lg.bleed": "Bleed, κόβεται", "lg.wrap": "Τυλίγει τα χαρτόνια", "lg.trim": "Κοπή", "lg.fold": "Δίπλωμα", "lg.hinge": "Άρθρωση", "lg.safe": "Κείμενα μέσα από εδώ",
+      "tpl.bar": "Barcode", "tpl.canvasInfo": "{kind} · τελικό {tw} × {th} · ράχη {s} · {pages} σελίδες · bleed {b}",
+      "warn.thin": "Η ράχη είναι λεπτότερη από 5 mm: τα περισσότερα τυπογραφεία δεν τυπώνουν κείμενο πάνω της.",
+      "warn.nobar": "Το οπισθόφυλλο είναι πολύ μικρό για θέση barcode.",
+      "btn.tplPng": "Αποθήκευση PNG", "btn.tplPdf": "Αποθήκευση PDF", "btn.tplPics": "Αποθήκευση στις Εικόνες", "btn.tplAtelier": "Σχεδίασέ το στο Ατελιέ",
+      "tpl.printer": "Μετράει το πρότυπο του τυπογραφείου σου. Αν δίνει άλλο πλάτος ράχης, γράψ' το στο Βιβλίο › Ορίζω το πάχος της ράχης με το χέρι· το bleed είναι πιο πάνω. Το φύλλο είναι 300 dpi.",
+      "toast.tplAtelier": "Άνοιξε στο Ατελιέ ως νέο σχέδιο στο μέγεθος του εξωφύλλου.", "toast.tplFail": "Το πρότυπο δεν μπόρεσε να γίνει σε αυτή τη συσκευή.",
+      "file.tpl": "{name} · πρότυπο εξωφύλλου", "file.cover": "{name} · εξώφυλλο για εκτύπωση",
+      "toast.wrapBook": "Εξώφυλλο από το Ατελιέ, στο βιβλίο «{name}» του ίδιου μεγέθους."
     }
   };
   function t(k, vars) {
@@ -525,7 +568,7 @@
     loadImg(sc.bg.img).then(function (bg) { if (stage && cur) stage.scene(sc, bg, false); });
   }
   if (AS && typeof AS.onChange === "function") AS.onChange(function () {
-    if (cur) { renderSlots(); renderVols(); pushAll(); }
+    if (cur) { renderSlots(); renderVols(); pushAll(); drawFlat(); }
   });
 
   // Drag to orbit, pinch / wheel to zoom, arrows on the keyboard.
@@ -619,7 +662,7 @@
   }
 
   // ---------- 5. The form ----------
-  var tabs = ["book", "cover", "scene", "out"];
+  var tabs = ["book", "cover", "scene", "print", "out"];
   function showTab(k) {
     if (tabs.indexOf(k) < 0) k = "book";
     tabs.forEach(function (x) {
@@ -630,6 +673,11 @@
       $("tab-" + x).tabIndex = on ? 0 : -1;
     });
     if (prefs.tab !== k) { prefs.tab = k; savePrefs(); }
+    var flat = k === "print";
+    if ($("flat-box").hidden === flat) {
+      $("flat-box").hidden = !flat;
+      if (flat) drawFlat(); else if (stage) { layoutStage(); stage.render(); }
+    }
   }
   function setVal(id, v) { var n = $(id); if (n && document.activeElement !== n && n.value !== String(v)) n.value = v; }
   function setChk(id, v) { var n = $(id); if (n) n.checked = !!v; }
@@ -680,7 +728,7 @@
     // cover
     setSeg("mode", a.mode);
     $("wrap-box").hidden = a.mode !== "wrap";
-    setVal("f-bleed", a.bleed >= 0 ? a.bleed : d.bleed);
+    setVal("f-bleed", C.bleedOf(b, a));
     setVal("f-coverC", a.c); setVal("f-spTC", a.spTC); setVal("f-spT", a.spT);
     renderSlots();
     renderWrapInfo();
@@ -713,6 +761,7 @@
     setVal("f-str", s.light.str); out("str-out", Math.round(s.light.str * 100) + "%");
     setVal("f-soft", s.light.soft); out("soft-out", Math.round(s.light.soft * 100) + "%");
     setVal("f-warm", s.light.warm); out("warm-out", (s.light.warm > 0 ? "+" : "") + Math.round(s.light.warm * 100));
+    renderTpl();
     // out
     setVal("f-nm", cur.nm);
     $("f-nm").placeholder = t("untitled");
@@ -746,12 +795,13 @@
     out("mo-info", ml.join(" "));
     $("mo-make").textContent = t(cur.out.mo.fmt === "gif" ? "btn.moMakeGif" : "btn.moMake");
   }
+  // The wrap picture is the printer's sheet (Print tab).
   function renderWrapInfo() {
-    var L = C.layout(cur.bk), d = C.dims(cur.bk), bl = cur.art.bleed >= 0 ? cur.art.bleed : d.bleed;
+    var T = C.template(cur.bk, cur.art), bl = T.bleed;
     var parts = [t("wrap.bleed", { mm: fmtNum(bl, 1) })];
-    L.panels.forEach(function (p) { parts.push(t("wrap.part", { name: t("slot." + p.k), mm: fmtNum(p.w, 1) })); });
+    T.parts.forEach(function (p) { parts.push(t("wrap.part", { name: t("slot." + p.k), mm: fmtNum(p.w, 2) })); });
     parts.push(t("wrap.bleed", { mm: fmtNum(bl, 1) }));
-    out("wrap-info", t("wrap.info", { w: fmtNum(L.total + 2 * bl, 1), h: fmtNum(L.h + 2 * bl, 1), parts: parts.join(" · ") }));
+    out("wrap-info", t("wrap.info", { w: fmtNum(T.sheet.w, 2), h: fmtNum(T.sheet.h, 2), parts: parts.join(" · ") }));
   }
 
   // Picture slots (cover tab).
@@ -855,8 +905,7 @@
   function setSlot(k, id, w, h) {
     change("art", function (p) { p.art[k] = id; });
     if (k === "wrap" && id && w && h) {
-      var L = C.layout(cur.bk), d = C.dims(cur.bk), bl = cur.art.bleed >= 0 ? cur.art.bleed : d.bleed;
-      var want = (L.total + 2 * bl) / (L.h + 2 * bl), got = w / h;
+      var T = C.template(cur.bk, cur.art), want = T.sheet.w / T.sheet.h, got = w / h;
       if (Math.abs(got / want - 1) > 0.04) toast(t("toast.wrapShape"));
     }
   }
@@ -918,6 +967,7 @@
     else if (kind === "scene") pushScene(false);
     else if (kind === "out") layoutStage();
     if (kind === "scene" || kind === "out") renderOutInfo();
+    if (kind === "book" || kind === "art" || kind === "tpl" || kind === "name") drawFlat();
     saveSoon();
   }
 
@@ -1208,7 +1258,8 @@
   function setBusy(on) {
     busy = on;
     $("panel").classList.toggle("busy", on);
-    ["save-btn", "pics-btn", "atelier-btn", "angles-zip", "angles-pics", "mo-make", "more-btn", "back-btn", "new-btn"].forEach(function (id) { $(id).disabled = on; });
+    ["save-btn", "pics-btn", "atelier-btn", "angles-zip", "angles-pics", "mo-make", "more-btn", "back-btn", "new-btn",
+     "tpl-png", "tpl-pdf", "tpl-pics", "tpl-atelier"].forEach(function (id) { $(id).disabled = on; });
     if (!on && stage) stage.render();
   }
 
@@ -1456,6 +1507,175 @@
     });
   }
 
+  // ---------- 6b. Cover sheet for the printer (Print tab) ----------
+  // MockCore.template() gives the numbers, MockPrint draws them: a
+  // live flat preview over the 3D view, a 300 dpi PNG or PDF (with
+  // the guides, or the finished cover with its bleed), Pictures, or
+  // a new Atelier design of the sheet's size (BR-MK-TPL).
+  var MP = window.MockPrint;
+  function tplLen(mm) { return cur && cur.unit === "in" ? fmtNum(mm / C.MM_PER_IN, 3) + "″" : fmtNum(mm, 2) + " mm"; }
+  function tplOf(p) { return C.template(p.bk, p.art, p.tpl); }
+  function tplLabels(p, T) {
+    return {
+      name: function (k) { return t("slot." + k); }, len: tplLen, bar: t("tpl.bar"),
+      info: t("tpl.canvasInfo", { kind: t("tpl.kind." + T.kind), tw: tplLen(T.W), th: tplLen(T.H), s: tplLen(T.spine), pages: p.bk.pages, b: tplLen(T.bleed) })
+    };
+  }
+  var legendKind = "";
+  function renderTpl() {
+    var T = tplOf(cur), b = cur.bk, o = cur.tpl;
+    out("tpl-kind", t("tpl.kind." + T.kind));
+    out("tpl-info", t("tpl.info", { w: tplLen(T.sheet.w), h: tplLen(T.sheet.h), tw: tplLen(T.W), th: tplLen(T.H), s: tplLen(T.spine) }));
+    var ul = $("tpl-parts");
+    ul.textContent = "";
+    T.parts.forEach(function (p) { ul.appendChild(el("li", null, t("slot." + p.k) + " " + tplLen(p.w))); });
+    var cal = b.paper === "custom" ? b.cal : C.paperOf(b.paper).c;
+    out("tpl-spine", T.kind !== "pb" ? t("tpl.spineHand", { s: tplLen(T.spine) })
+      : b.spine ? t("tpl.spinePb", { s: tplLen(T.spine) }) : t("tpl.spine", { s: tplLen(T.spine), pages: b.pages, cal: fmtNum(cal, 4) }));
+    var w = T.warn.filter(function (k) { return k !== "nobar" || o.bar; }).map(function (k) { return t("warn." + k); });
+    $("tpl-warn").hidden = !w.length;
+    out("tpl-warn", w.join(" "));
+    $("tbleed-lbl").textContent = t(T.kind === "case" ? "f.twrap" : "f.tbleed");
+    setVal("f-tbleed", T.bleed);
+    setVal("f-safe", o.safe);
+    setChk("f-tbar", o.bar); setChk("f-tart", o.art); setChk("f-tgd", o.gd);
+    if (legendKind !== T.kind) {
+      legendKind = T.kind;
+      var lg = $("legend"), K = MP ? MP.COL : {};
+      lg.textContent = "";
+      [["bleed", T.kind === "case" ? "lg.wrap" : "lg.bleed", ""], ["trim", "lg.trim", "solid"], ["fold", "lg.fold", "line"],
+       ["hinge", "lg.hinge", "line"], ["safe", "lg.safe", "line"]].forEach(function (x) {
+        if (x[0] === "hinge" && T.kind !== "case") return;
+        var li = el("li"), i = el("i", x[2] === "line" ? "line" : null);
+        if (x[2] === "line") i.style.color = K[x[0]]; else if (x[2] === "solid") { i.style.height = "0"; i.style.borderTop = "2px solid " + K[x[0]]; } else i.style.background = K[x[0]];
+        li.appendChild(i); li.appendChild(el("span", null, t(x[1])));
+        lg.appendChild(li);
+      });
+    }
+  }
+  // Pictures of the first book: slot → picture.
+  function slotPics(p) {
+    var pics = {};
+    return Promise.all(C.SLOTS.map(function (k) {
+      return loadImg(p.art[k]).then(function (img) { if (img) pics[k] = img; });
+    })).then(function () { return pics; });
+  }
+  var flatRaf = 0, flatSeq = 0;
+  function drawFlat() {
+    if (!cur || !MP || $("flat-box").hidden || flatRaf) return;
+    flatRaf = requestAnimationFrame(function () {
+      flatRaf = 0;
+      if (!cur) return;
+      var p = clone(cur), seq = ++flatSeq;
+      slotPics(p).then(function (pics) {
+        if (seq !== flatSeq || !cur) return;
+        var box = $("flat-box"), T = tplOf(p);
+        var bw = box.clientWidth - 24, bh = box.clientHeight - 24;
+        if (bw < 20 || bh < 20) return;
+        var dpr = Math.min(2, window.devicePixelRatio || 1), k = Math.min(bw / T.sheet.w, bh / T.sheet.h);
+        var cv = MP.render(T, p.art, pics, k * dpr, { art: !!p.tpl.art, guides: !!p.tpl.gd, white: true, L: tplLabels(p, T) });
+        var fl = $("flat");
+        fl.width = cv.width; fl.height = cv.height;
+        fl.getContext("2d").drawImage(cv, 0, 0);
+        fl.style.width = Math.round(T.sheet.w * k) + "px"; fl.style.height = Math.round(T.sheet.h * k) + "px";
+        fl.setAttribute("aria-label", t("tpl.kind." + T.kind) + ", " + tplLen(T.sheet.w) + " × " + tplLen(T.sheet.h));
+      });
+    });
+  }
+  function canvasBlob(cv, mime, q) {
+    return new Promise(function (res, rej) { cv.toBlob(function (b) { if (b) res(b); else rej(new Error("encode")); }, mime, q); });
+  }
+  function tplName() {
+    return t(cur.tpl.gd ? "file.tpl" : "file.cover", { name: fileBase() }).replace(/[\\/:*?"<>|]+/g, " ").slice(0, 120);
+  }
+  // kind: "png" | "pdf" | "pics" (PNG in Pictures)
+  function tplSave(kind) {
+    if (!cur || busy || !MP) return;
+    if (saveTimer) saveNow();
+    var F = fsApi();
+    if (kind === "pics" && !F) { toast(t("toast.nofs")); return; }
+    var p = clone(cur), T = tplOf(p), name = tplName();
+    toast(t("toast.making"));
+    setBusy(true);
+    var job = slotPics(p).then(function (pics) {
+      return MP.render(T, p.art, pics, MP.ppmFor(T, 300), { art: !!p.tpl.art, guides: !!p.tpl.gd, white: true, L: tplLabels(p, T) });
+    });
+    if (kind === "pdf") {
+      job = Promise.all([job, loadScript("../vendor/jspdf.umd.min.js")]).then(function (r) {
+        var J = window.jspdf && window.jspdf.jsPDF;
+        if (!J) throw new Error("jspdf");
+        return MP.pdf(J, r[0], T, name).output("blob");
+      });
+    } else job = job.then(function (cv) { return canvasBlob(cv, "image/png"); });
+    job.then(function (blob) {
+      if (kind === "pics") {
+        return freePath("/internal/Pictures", name, ".png").then(function (path) {
+          return F.write(path, blob).then(function () { toast(t("toast.pics", { name: path.split("/").pop() })); });
+        });
+      }
+      return saveBlob(blob, name + "." + (kind === "pdf" ? "pdf" : "png"), kind === "pdf" ? "application/pdf" : "image/png");
+    }).catch(function (e) {
+      console.warn("[orOS Mockups] template", e);
+      toast(t("toast.tplFail"));
+    }).then(function () { setBusy(false); });
+  }
+  function importCanvas(cv, base) {
+    return canvasBlob(cv, "image/png").then(function (blob) {
+      var f;
+      try { f = new File([blob], base + ".png", { type: "image/png" }); } catch (e) { f = blob; f.name = base + ".png"; }
+      return AS.importFile(f).then(function (r) { return r.id; });
+    });
+  }
+  // A new Atelier design of the sheet's trim with its bleed: the
+  // cover picture (when "With my cover pictures" is on) and the
+  // guides on top, seen only in Atelier's editor.
+  function tplAtelier() {
+    var s = shell();
+    if (!cur || busy || !MP) return;
+    if (!s || typeof s.__orosOpenAt !== "function") { toast(t("standalone")); return; }
+    if (!AS || !fsApi()) { toast(t("toast.nofs")); return; }
+    if (saveTimer) saveNow();
+    var p = clone(cur), T = tplOf(p);
+    toast(t("toast.making"));
+    setBusy(true);
+    slotPics(p).then(function (pics) {
+      var ppm = MP.ppmFor(T, 300), base = fileBase();
+      return importCanvas(MP.render(T, p.art, pics, ppm, { guides: true, L: tplLabels(p, T) }), base + " guides").then(function (g) {
+        if (!p.tpl.art) return [g, ""];
+        return importCanvas(MP.render(T, p.art, pics, ppm, { art: true }), base + " cover").then(function (a) { return [g, a]; });
+      });
+    }).then(function (r) {
+      s.__orosOpenAt("atelier", { newTemplate: {
+        guides: AS.FOLDER + "/" + r[0], art: r[1] ? AS.FOLDER + "/" + r[1] : "",
+        w: T.W, h: T.H, bleed: T.bleed, name: label(p)
+      } });
+      toast(t("toast.tplAtelier"));
+    }).catch(function (e) {
+      console.warn("[orOS Mockups] template to Atelier", e);
+      toast(t("toast.tplFail"));
+    }).then(function () { setBusy(false); });
+  }
+  function wireTpl() {
+    $("f-tbleed").addEventListener("change", function () {
+      var v = parseNum($("f-tbleed").value);
+      if (!(v >= 0)) { renderTpl(); return; }
+      change("art", function (p) { p.art.bleed = Math.min(25, v); });
+    });
+    $("f-safe").addEventListener("change", function () {
+      var v = parseNum($("f-safe").value);
+      if (!(v >= 0)) { renderTpl(); return; }
+      change("tpl", function (p) { p.tpl.safe = Math.min(20, v); });
+    });
+    [["f-tbar", "bar"], ["f-tart", "art"], ["f-tgd", "gd"]].forEach(function (x) {
+      $(x[0]).addEventListener("change", function () { var on = $(x[0]).checked ? 1 : 0; change("tpl", function (p) { p.tpl[x[1]] = on; }); });
+    });
+    $("tpl-png").addEventListener("click", function () { tplSave("png"); });
+    $("tpl-pdf").addEventListener("click", function () { tplSave("pdf"); });
+    $("tpl-pics").addEventListener("click", function () { tplSave("pics"); });
+    $("tpl-atelier").addEventListener("click", tplAtelier);
+    if (typeof ResizeObserver === "function") new ResizeObserver(function () { drawFlat(); }).observe($("flat-box"));
+  }
+
   // ---------- 7. Dialogs ----------
   var openDlg = null, lastFocus = null, askYes = null;
   function showDlg(id) {
@@ -1486,7 +1706,7 @@
     if (saveTimer) saveNow();
     var src = clone(cur);
     newPrj(function (p) {
-      p.bk = src.bk; p.art = src.art; p.sc = src.sc; p.out = src.out; p.unit = src.unit; p.set = src.set;
+      p.bk = src.bk; p.art = src.art; p.sc = src.sc; p.out = src.out; p.unit = src.unit; p.set = src.set; p.tpl = src.tpl;
       p.nm = (label(src) + " " + t("copyOf")).slice(0, 80);
     });
     toast(t("toast.dup"));
@@ -1568,6 +1788,17 @@
       if (p.m !== cur.m) { cur = clone(p); renderForm(); pushAll(); }
     } else if (!cur) renderHome();
   }
+  // A full wrap from Atelier with its trim size (ww × wh mm): the
+  // newest mockup whose cover sheet has that trim (it was most likely
+  // made from that mockup's template), else null.
+  function wrapTwin(ww, wh) {
+    var list = data.prj.slice().sort(function (a, b) { return b.m - a.m; });
+    for (var i = 0; i < list.length; i++) {
+      var T = C.template(list[i].bk, list[i].art, list[i].tpl);
+      if (Math.abs(T.W - ww) <= 1 && Math.abs(T.H - wh) <= 1) return list[i];
+    }
+    return null;
+  }
   // Deep links: { id } opens a mockup (search); { cover: {front, back,
   // spine, wrap, name, w, h} } makes a new one (Atelier, BR-AT-MK).
   function openTarget(target) {
@@ -1577,14 +1808,21 @@
       if (!c) return false;
       hideDlg();
       if (cur && saveTimer) saveNow();
+      var twin = c.wrap && c.ww ? wrapTwin(c.ww, c.wh) : null;
       newPrj(function (p) {
         p.nm = c.name;
+        if (twin) {
+          p.bk = clone(twin.bk); p.sc = clone(twin.sc); p.out = clone(twin.out); p.set = clone(twin.set);
+          p.tpl = clone(twin.tpl); p.unit = twin.unit;
+          p.art.c = twin.art.c; p.art.spT = twin.art.spT; p.art.spTC = twin.art.spTC;
+          p.nm = c.name || twin.nm;
+        }
         if (c.w && c.h) { p.bk.w = c.w; p.bk.h = c.h; p.bk.trim = "custom"; }
         if (c.wrap) { p.art.mode = "wrap"; p.art.wrap = c.wrap; p.art.bleed = 0; }
         else { p.art.front = c.front; p.art.back = c.back; p.art.spine = c.spine; }
       });
-      showTab("book");
-      toast(t("toast.fromAtelier"));
+      showTab(twin ? "scene" : "book");
+      toast(twin ? t("toast.wrapBook", { name: label(twin) }) : t("toast.fromAtelier"));
       return true;
     }
     if (typeof target.id !== "string" || !C.byId(data, target.id)) return false;
@@ -1622,6 +1860,7 @@
       showTab(tabs[i]); $("tab-" + tabs[i]).focus();
     });
     wireForm();
+    wireTpl();
     wireStage();
     $("dup-btn").addEventListener("click", duplicate);
     $("del-btn").addEventListener("click", delPrj);
