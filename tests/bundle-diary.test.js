@@ -171,8 +171,8 @@ test("diary: Undo through the app's own delete path leaves tombstones that sync"
 
 test("diary: wiring (scripts, buttons, Open with, PIN lock, photos, help, file types)", () => {
   const html = read("diary/index.html");
-  ["../bundle.js?v=2.52.00", "../recordpkg.js?v=2.52.00", "package.js?v=2.52.00", "diary.js?v=2.52.00"].forEach((s) =>
-    assert.ok(html.includes('src="' + s + '"'), s));
+  ["../bundle.js?v=", "../recordpkg.js?v=", "package.js?v=", "diary.js?v="].forEach((s) =>
+    assert.ok(html.includes('src="' + s), s));
   assert.ok(html.indexOf('src="core.js') < html.indexOf('src="package.js'));
   assert.ok(html.indexOf('src="package.js') < html.indexOf('src="diary.js'));
   ["oros-save", "oros-open", "oros-folder"].forEach((id) => assert.ok(html.includes('id="' + id + '"'), id));

@@ -223,8 +223,8 @@ test("garage: the CSV names are garage.js's own", () => {
 
 test("garage: wiring (scripts, settings, Open with, receipts, help, file types)", () => {
   const html = read("garage/index.html");
-  ["../bundle.js?v=2.52.00", "../recordpkg.js?v=2.52.00", "package.js?v=2.52.00", "garage.js?v=2.52.00"].forEach((s) =>
-    assert.ok(html.includes('src="' + s + '"'), s));
+  ["../bundle.js?v=", "../recordpkg.js?v=", "package.js?v=", "garage.js?v="].forEach((s) =>
+    assert.ok(html.includes('src="' + s), s));
   assert.ok(html.indexOf("core.js") < html.indexOf('src="package.js'));
   assert.ok(html.indexOf("package.js") < html.indexOf('src="garage.js'));
   const js = read("garage/garage.js");

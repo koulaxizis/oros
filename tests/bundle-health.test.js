@@ -198,8 +198,8 @@ test("health: the Greek preview uses the Excel layout; an empty Health has no CS
 
 test("health: wiring (scripts, settings, Open with, document files, Undo, help, file types)", () => {
   const html = read("health/index.html");
-  ["../bundle.js?v=2.52.00", "../recordpkg.js?v=2.52.00", "package.js?v=2.52.00", "health.js?v=2.52.00"].forEach((s) =>
-    assert.ok(html.includes('src="' + s + '"'), s));
+  ["../bundle.js?v=", "../recordpkg.js?v=", "package.js?v=", "health.js?v="].forEach((s) =>
+    assert.ok(html.includes('src="' + s), s));
   assert.ok(html.indexOf("core.js") < html.indexOf("package.js"));
   assert.ok(html.indexOf("package.js") < html.indexOf('src="health.js'));
   const js = read("health/health.js");

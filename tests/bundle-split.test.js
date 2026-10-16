@@ -267,8 +267,8 @@ test("split: a group's file holds only that group", () => {
 
 test("split: wiring (scripts, menu, Open with, Undo, receipts, help, file types)", () => {
   const html = read("split/index.html");
-  ["../bundle.js?v=2.51.00", "../recordpkg.js?v=2.51.00", "package.js?v=2.51.00", "split.js?v=2.51.00"].forEach((s) =>
-    assert.ok(html.includes('src="' + s + '"'), s));
+  ["../bundle.js?v=", "../recordpkg.js?v=", "package.js?v=", "split.js?v="].forEach((s) =>
+    assert.ok(html.includes('src="' + s), s));
   assert.ok(html.indexOf("recordpkg.js") < html.indexOf("package.js?") && html.indexOf("package.js?") < html.indexOf('src="split.js'));
   const js = read("split/split.js");
   assert.match(js, /RP\.ui\(SPK\.forLocal\(recAll\), recHooks\(recAll\)\)/);

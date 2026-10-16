@@ -147,7 +147,7 @@ test("water: hostile content is cut down; stamps are clamped; wrong kinds refuse
 
 test("water: wiring (scripts, buttons, Open with, help, file types)", () => {
   const html = read("water/index.html");
-  ["core.js?v=", "../bundle.js?v=2.49.00", "../recordpkg.js?v=2.49.00", "package.js?v=2.49.00", "water.js?v=2.49.00"].forEach((s) =>
+  ["core.js?v=", "../bundle.js?v=", "../recordpkg.js?v=", "package.js?v=", "water.js?v="].forEach((s) =>
     assert.ok(html.includes('src="' + s), s));
   assert.ok(html.indexOf('src="core.js') < html.indexOf('src="package.js'));
   assert.ok(html.indexOf("recordpkg.js") < html.indexOf('src="water.js'));

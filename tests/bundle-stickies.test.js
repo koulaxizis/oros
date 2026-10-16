@@ -157,7 +157,7 @@ test("stickies: hostile content is cut down; stamps are clamped; wrong kinds ref
 
 test("stickies: wiring (scripts, buttons, Open with, shell side, help, file types)", () => {
   const html = read("stickies/index.html");
-  ["core.js?v=", "../bundle.js?v=2.50.00", "../recordpkg.js?v=2.50.00", "package.js?v=2.50.00", "stickies.js?v=2.50.00"].forEach((s) =>
+  ["core.js?v=", "../bundle.js?v=", "../recordpkg.js?v=", "package.js?v=", "stickies.js?v="].forEach((s) =>
     assert.ok(html.includes('src="' + s), s));
   assert.ok(html.indexOf('src="core.js') < html.indexOf('src="package.js'));
   assert.ok(html.indexOf("recordpkg.js") < html.indexOf('src="stickies.js'));

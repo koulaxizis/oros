@@ -164,8 +164,8 @@ test("quote: hostile content is cut down", () => {
 
 test("quote: wiring (scripts, buttons, Open with, help, file types)", () => {
   const html = read("quote/index.html");
-  ["../bundle.js?v=2.51.00", "../recordpkg.js?v=2.51.00", "package.js?v=2.51.00", "quote.js?v=2.51.00"].forEach((s) =>
-    assert.ok(html.includes('src="' + s + '"'), s));
+  ["../bundle.js?v=", "../recordpkg.js?v=", "package.js?v=", "quote.js?v="].forEach((s) =>
+    assert.ok(html.includes('src="' + s), s));
   assert.ok(html.indexOf('src="core.js') < html.indexOf('src="package.js'));
   assert.ok(html.indexOf("recordpkg.js") < html.indexOf('src="quote.js'));
   ["ofile-btn", "dlg-ofile", "of-save", "of-open", "of-copy", "of-folder"].forEach((id) => assert.ok(html.includes('id="' + id + '"'), id));

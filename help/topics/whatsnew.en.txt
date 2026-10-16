@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.50.00
+- Calendar, Contacts, Bookmarks, Reader, Podcasts, Meal Planner and Sticky Notes can save all their records as one open orOS file and open it again, also from an unzipped folder or with "Open with". Opening only adds what you don't have and can be undone. Calendar still opens .ics and Contacts .vcf; Meal Planner can also open a file as a copy. Contacts never put photos in the file, and Podcasts never the sync key.
+
 ## Version 2.49.00
 - To-Do, Habits, Water, Chore Wheel, Score Keeper, Cycle and Mood can save all their records as one open orOS file and open it again, for example to move them to another device or share them. Opening only adds what you don't have, never changes or deletes your own records, and can be undone.
 

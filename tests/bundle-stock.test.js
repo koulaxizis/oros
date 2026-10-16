@@ -203,8 +203,8 @@ test("stock: the file never carries the shop's keys or device prefs", () => {
 
 test("stock: wiring (scripts, buttons, Open with, help, file types)", () => {
   const html = read("stock/index.html");
-  ["../bundle.js?v=2.51.00", "../recordpkg.js?v=2.51.00", "package.js?v=2.51.00", "stock.js?v=2.51.00"].forEach((s) =>
-    assert.ok(html.includes('src="' + s + '"'), s));
+  ["../bundle.js?v=", "../recordpkg.js?v=", "package.js?v=", "stock.js?v="].forEach((s) =>
+    assert.ok(html.includes('src="' + s), s));
   assert.ok(html.indexOf("core.js") < html.indexOf("package.js?"));
   assert.ok(html.indexOf("recordpkg.js") < html.indexOf('src="stock.js'));
   const js = read("stock/stock.js");

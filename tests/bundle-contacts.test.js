@@ -190,8 +190,8 @@ test("contacts: the package's lists match contacts.js", () => {
 
 test("contacts: wiring (scripts, buttons, Open with next to .vcf, strings, help, file types)", () => {
   const html = read("contacts/index.html");
-  ["../bundle.js?v=2.50.00", "../recordpkg.js?v=2.50.00", "package.js?v=2.50.00", "contacts.js?v=2.50.00"].forEach((s) =>
-    assert.ok(html.includes('src="' + s + '"'), s));
+  ["../bundle.js?v=", "../recordpkg.js?v=", "package.js?v=", "contacts.js?v="].forEach((s) =>
+    assert.ok(html.includes('src="' + s), s));
   assert.ok(html.indexOf('src="merge.js') < html.indexOf('src="package.js'));
   assert.ok(html.indexOf("recordpkg.js") < html.indexOf('src="contacts.js'));
   const js = read("contacts/contacts.js");

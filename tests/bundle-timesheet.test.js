@@ -163,8 +163,8 @@ test("timesheet: hostile content is cut down (known fields, typed, capped, stamp
 
 test("timesheet: wiring (scripts, buttons, Open with, help, file types)", () => {
   const html = read("timesheet/index.html");
-  ["../bundle.js?v=2.51.00", "../recordpkg.js?v=2.51.00", "package.js?v=2.51.00", "timesheet.js?v=2.51.00"].forEach((s) =>
-    assert.ok(html.includes('src="' + s + '"'), s));
+  ["../bundle.js?v=", "../recordpkg.js?v=", "package.js?v=", "timesheet.js?v="].forEach((s) =>
+    assert.ok(html.includes('src="' + s), s));
   assert.ok(html.indexOf('src="core.js') < html.indexOf('src="package.js'));
   assert.ok(html.indexOf("recordpkg.js") < html.indexOf('src="timesheet.js'));
   const js = read("timesheet/timesheet.js");

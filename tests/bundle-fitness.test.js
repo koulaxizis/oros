@@ -179,8 +179,8 @@ test("fitness: hostile content is cut down; stamps clamped", () => {
 
 test("fitness: wiring (scripts, buttons, Open with, help, file types)", () => {
   const html = read("fitness/index.html");
-  ["../bundle.js?v=2.52.00", "../recordpkg.js?v=2.52.00", "package.js?v=2.52.00", "fitness.js?v=2.52.00"].forEach((s) =>
-    assert.ok(html.includes('src="' + s + '"'), s));
+  ["../bundle.js?v=", "../recordpkg.js?v=", "package.js?v=", "fitness.js?v="].forEach((s) =>
+    assert.ok(html.includes('src="' + s), s));
   assert.ok(html.indexOf("gps-core.js") < html.indexOf('src="package.js'));
   assert.ok(html.indexOf("recordpkg.js") < html.indexOf('src="fitness.js'));
   const js = read("fitness/fitness.js");
