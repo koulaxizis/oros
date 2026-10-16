@@ -667,3 +667,6 @@ a.txt-btn { text-decoration: none; }
 }
 
 [hidden] { display: none !important; }
+/* orOS file buttons (Settings): a second row that wraps on a phone */
+.dlg-actions.wrap { flex-wrap: wrap; margin-top: 8px; }
+.dlg-actions.wrap .dlg-btn { flex: 1 1 40%; }
