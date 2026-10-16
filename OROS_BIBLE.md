@@ -7121,3 +7121,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - New shared kit `recordpkg.js` (OrosRecordPkg) and all 33 record-app types registered at once (bundle.js TYPES, fileopen.js HANDLERS with `textExt` for Calendar .ics / Contacts .vcf, root and single-app manifests); Bible OBF-4e, spec "Record apps".
 - Files: new `recordpkg.js`, `{todo,habits,water,chores,scores,cycle,mood}/package.js` (precached).
   - Tests: new `tests/recordpkg.test.js` and seven `tests/bundle-<app>.test.js`; full suite green; real Chromium per app (save, unzip check, open on a second device with its own data, Undo, reopen = "Nothing to add", unzipped folder, Open with, 360 px); To-Do also synced between two devices. Not tested: a real OS double-click, phones, files near the record caps.
+
+### 2026-10-16 — Google Drive import works without your own API key (#421) — 2.49.01
+- With orOS's own Google app (the default), Files and Photo Lab › Google Drive work for everyone with no setup: `google-import.js` ships orOS's public Picker browser key (`BUILTIN_KEY`), which Google accepts only from useoros.online and only for the Picker API (Chris approved). Someone using their own Google app id still adds their own key, and the option appears only then.
+- Files: `google-import.js`, Contacts account label, Files help (EN/EL).
+  - Tests: full suite green; test covers default key, own-key override and own app without a key. Not tested: a real Picker run against Google.

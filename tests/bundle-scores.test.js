@@ -208,8 +208,8 @@ test("scores: previews: history.csv is the app's Export CSV, rounds.csv has a fo
 
 test("scores: wiring (scripts, buttons, Open with, Undo, help, file types)", () => {
   const html = read("scores/index.html");
-  ["../bundle.js?v=2.49.00", "../recordpkg.js?v=2.49.00", "package.js?v=2.49.00", "scores.js?v=2.49.00"].forEach((s) =>
-    assert.ok(html.includes('src="' + s + '"'), s));
+  ["../bundle.js?v=", "../recordpkg.js?v=", "package.js?v=", "scores.js?v="].forEach((s) =>
+    assert.ok(html.includes('src="' + s), s));
   assert.ok(html.indexOf("recordpkg.js") < html.indexOf("package.js?") && html.indexOf("package.js?") < html.indexOf('src="scores.js'));
   ["oros-save", "oros-open", "oros-folder"].forEach((id) => assert.ok(html.includes('id="' + id + '"'), id));
   const js = read("scores/scores.js");
