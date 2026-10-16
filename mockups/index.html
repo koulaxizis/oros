@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <!-- DL-1: a direct link to this app opens it inside the orOS shell -->
+  <script>if (window.top === window.self && !/[?&]standalone\b/.test(location.search)) location.replace("../?open=mockups" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Mockups · orOS</title>
+
+  <link rel="stylesheet" href="mockups.css?v=2.51.00">
+
+</head>
+<body>
+
+  <header id="toolbar">
+    <button type="button" id="back-btn" class="icon-btn" hidden></button>
+    <div class="title">
+      <span id="title-main" class="title-main" data-i18n="app.name">Mockups</span>
+      <span id="title-sub" class="title-sub"></span>
+    </div>
+    <span class="spacer"></span>
+    <button type="button" id="new-btn" class="icon-btn"></button>
+    <button type="button" id="more-btn" class="icon-btn" aria-haspopup="dialog" hidden></button>
+  </header>
+
+  <!-- ========== Home: projects ========== -->
+  <main id="home">
+    <div class="home-in">
+      <div id="empty-box" class="card" hidden>
+        <p class="hint" data-i18n="empty">No mockup yet. Make a 3D picture of your book: give its size and pages, add the cover, pick the angle and the background, and save it.</p>
+        <button type="button" id="first-btn" class="chip primary" data-i18n="btn.first">Make a book mockup</button>
+      </div>
+      <ul id="grid" class="grid-prj"></ul>
+    </div>
+  </main>
+
+  <!-- ========== Editor ========== -->
+  <main id="editor" hidden>
+    <section id="stage-box">
+      <div id="stage" role="img" aria-roledescription="3D" tabindex="0"></div>
+      <div id="stage-msg" class="stage-msg" hidden></div>
+      <div id="views" class="views" role="group"></div>
+    </section>
+
+    <section id="panel">
+      <nav id="tabs" role="tablist">
+        <button type="button" role="tab" id="tab-book" data-tab="book" data-i18n="tab.book">Book</button>
+        <button type="button" role="tab" id="tab-cover" data-tab="cover" data-i18n="tab.cover">Cover</button>
+        <button type="button" role="tab" id="tab-scene" data-tab="scene" data-i18n="tab.scene">Scene</button>
+        <button type="button" role="tab" id="tab-out" data-tab="out" data-i18n="tab.out">Save</button>
+      </nav>
+      <div id="panes">
+
+        <!-- Book -->
+        <div class="pane" id="pane-book" role="tabpanel" aria-labelledby="tab-book">
+          <div class="grp">
+            <span class="lbl" id="bind-lbl" data-i18n="f.bind">Binding</span>
+            <div class="seg" id="bind" role="radiogroup" aria-labelledby="bind-lbl">
+              <button type="button" role="radio" data-v="pb" data-i18n="bind.pb">Paperback</button>
+              <button type="button" role="radio" data-v="hc" data-i18n="bind.hc">Hardcover</button>
+            </div>
+          </div>
+          <div class="grid2">
+            <label class="fld wide"><span data-i18n="f.trim">Size</span><select id="f-trim"></select></label>
+            <label class="fld"><span id="w-lbl" data-i18n="f.w">Width</span><input id="f-w" type="number" inputmode="decimal" step="any"></label>
+            <label class="fld"><span id="h-lbl" data-i18n="f.h">Height</span><input id="f-h" type="number" inputmode="decimal" step="any"></label>
+            <label class="fld"><span data-i18n="f.unit">Unit</span>
+              <select id="f-unit"><option value="mm">mm</option><option value="in" data-i18n="unit.in">inches</option></select></label>
+            <label class="fld"><span data-i18n="f.pages">Pages</span><input id="f-pages" type="number" inputmode="numeric" min="4" max="2000" step="2"></label>
+          </div>
+          <div class="range"><input id="r-pages" type="range" min="4" max="1200" step="2" aria-labelledby="pages-out"><output id="pages-out"></output></div>
+          <div class="grid2">
+            <label class="fld"><span data-i18n="f.paper">Paper</span><select id="f-paper"></select></label>
+            <label class="fld" id="cal-box"><span data-i18n="f.cal">One page (mm)</span><input id="f-cal" type="number" inputmode="decimal" step="0.001" min="0.02" max="0.3"></label>
+          </div>
+          <p class="spine-info"><span data-i18n="f.spineIs">Spine</span> <b id="spine-out"></b> <span id="spine-sub" class="hint small"></span></p>
+          <label class="check"><input type="checkbox" id="f-spineOn"><span data-i18n="f.spineOn">Set the spine width by hand</span></label>
+          <label class="fld" id="spine-box" hidden><span data-i18n="f.spine">Spine width (mm)</span><input id="f-spine" type="number" inputmode="decimal" step="0.1" min="1" max="150"></label>
+
+          <label class="check"><input type="checkbox" id="f-flaps"><span id="flaps-lbl" data-i18n="f.flaps">Flaps (French flaps)</span></label>
+          <div class="range" id="flapw-box" hidden><span class="rl" data-i18n="f.flapW">Flap width</span><input id="f-flapW" type="range" min="30" max="200" step="1"><output id="flapw-out"></output></div>
+
+          <div id="hc-box" class="sub" hidden>
+            <label class="check"><input type="checkbox" id="f-round"><span data-i18n="f.round">Rounded spine</span></label>
+            <div class="row"><label class="check"><input type="checkbox" id="f-band"><span data-i18n="f.band">Headband</span></label><input type="color" id="f-bandC" class="sw" aria-label="Headband colour"></div>
+            <div class="row"><label class="check"><input type="checkbox" id="f-ribbon"><span data-i18n="f.ribbon">Ribbon bookmark</span></label><input type="color" id="f-ribC" class="sw" aria-label="Ribbon colour"></div>
+            <label class="fld" id="cloth-box" hidden><span data-i18n="f.cloth">Cover under the jacket</span><input type="color" id="f-clothC"></label>
+          </div>
+
+          <div class="grid2">
+            <label class="fld"><span data-i18n="f.fin">Finish</span>
+              <select id="f-fin"><option value="matte" data-i18n="fin.matte">Matte</option><option value="gloss" data-i18n="fin.gloss">Gloss</option><option value="soft" data-i18n="fin.soft">Soft-touch</option></select></label>
+            <label class="fld"><span data-i18n="f.edge">Page edges</span>
+              <select id="f-edge"><option value="white" data-i18n="edge.white">White</option><option value="cream" data-i18n="edge.cream">Cream</option><option value="color" data-i18n="edge.color">Coloured (sprayed)</option></select></label>
+            <label class="fld" id="edgec-box" hidden><span data-i18n="f.edgeC">Edge colour</span><input type="color" id="f-edgeC"></label>
+            <label class="fld"><span data-i18n="f.inC">Inside of the cover</span><input type="color" id="f-inC"></label>
+          </div>
+        </div>
+
+        <!-- Cover -->
+        <div class="pane" id="pane-cover" role="tabpanel" aria-labelledby="tab-cover" hidden>
+          <div class="grp">
+            <span class="lbl" id="mode-lbl" data-i18n="f.mode">Cover pictures</span>
+            <div class="seg" id="mode" role="radiogroup" aria-labelledby="mode-lbl">
+              <button type="button" role="radio" data-v="parts" data-i18n="mode.parts">Front, back, spine</button>
+              <button type="button" role="radio" data-v="wrap" data-i18n="mode.wrap">One full wrap</button>
+            </div>
+          </div>
+          <ul id="slots" class="slots"></ul>
+          <div id="wrap-box" class="sub" hidden>
+            <p id="wrap-info" class="hint small"></p>
+            <label class="fld"><span data-i18n="f.bleed">Bleed around the wrap (mm)</span><input id="f-bleed" type="number" inputmode="decimal" step="0.1" min="0" max="25"></label>
+          </div>
+          <div class="grid2">
+            <label class="fld"><span data-i18n="f.coverC">Colour where there is no picture</span><input type="color" id="f-coverC"></label>
+            <label class="fld"><span data-i18n="f.spTC">Spine text colour</span><input type="color" id="f-spTC"></label>
+            <label class="fld wide"><span data-i18n="f.spT">Spine text (when there is no spine picture)</span><input id="f-spT" maxlength="80" autocomplete="off"></label>
+          </div>
+          <p class="hint small" data-i18n="cover.atelier">Made your cover in Atelier? There, open More › Make a book mockup, and it comes here with its pages.</p>
+        </div>
+
+        <!-- Scene -->
+        <div class="pane" id="pane-scene" role="tabpanel" aria-labelledby="tab-scene" hidden>
+          <div class="grp">
+            <span class="lbl" id="place-lbl" data-i18n="f.place">Placement</span>
+            <div class="seg" id="place" role="radiogroup" aria-labelledby="place-lbl">
+              <button type="button" role="radio" data-v="stand" data-i18n="place.stand">Standing</button>
+              <button type="button" role="radio" data-v="lie" data-i18n="place.lie">Lying</button>
+              <button type="button" role="radio" data-v="lean" data-i18n="place.lean">Leaning</button>
+            </div>
+          </div>
+          <div class="range"><span class="rl" data-i18n="f.turn">Turn</span><input id="f-turn" type="range" min="-180" max="180" step="1"><output id="turn-out"></output></div>
+          <div class="range"><span class="rl" data-i18n="f.open">Open the cover</span><input id="f-open" type="range" min="0" max="160" step="1"><output id="open-out"></output></div>
+
+          <span class="lbl" data-i18n="sec.cam">Camera</span>
+          <p class="hint small" data-i18n="cam.hint">Drag the picture to turn around the book; pinch or use the wheel to come closer.</p>
+          <div class="range"><span class="rl" data-i18n="f.fov">Perspective</span><input id="f-fov" type="range" min="8" max="70" step="1"><output id="fov-out"></output></div>
+          <div class="range"><span class="rl" data-i18n="f.zoom">Size in the picture</span><input id="f-zoom" type="range" min="0.5" max="3" step="0.01"><output id="zoom-out"></output></div>
+          <div class="range"><span class="rl" data-i18n="f.dx">Move left / right</span><input id="f-dx" type="range" min="-1" max="1" step="0.01"><output id="dx-out"></output></div>
+          <div class="range"><span class="rl" data-i18n="f.dy">Move up / down</span><input id="f-dy" type="range" min="-1" max="1" step="0.01"><output id="dy-out"></output></div>
+
+          <span class="lbl" id="bg-lbl" data-i18n="sec.bg">Background</span>
+          <div class="seg" id="bgk" role="radiogroup" aria-labelledby="bg-lbl">
+            <button type="button" role="radio" data-v="none" data-i18n="bg.none">See-through</button>
+            <button type="button" role="radio" data-v="solid" data-i18n="bg.solid">Colour</button>
+            <button type="button" role="radio" data-v="grad" data-i18n="bg.grad">Gradient</button>
+            <button type="button" role="radio" data-v="photo" data-i18n="bg.photo">Photo</button>
+          </div>
+          <div class="grid2" id="bgc-box">
+            <label class="fld" id="c1-box"><span data-i18n="f.c1">Colour</span><input type="color" id="f-c1"></label>
+            <label class="fld" id="c2-box"><span data-i18n="f.c2">Second colour</span><input type="color" id="f-c2"></label>
+          </div>
+          <div class="range" id="ang-box"><span class="rl" data-i18n="f.ang">Direction</span><input id="f-ang" type="range" min="0" max="359" step="1"><output id="ang-out"></output></div>
+          <div id="photo-box" class="row" hidden>
+            <span id="photo-thumb" class="thumb"></span>
+            <button type="button" id="photo-pick" class="chip small" data-i18n="btn.choose">Choose a picture</button>
+            <button type="button" id="photo-del" class="chip small" data-i18n="btn.remove">Remove</button>
+          </div>
+          <div id="swatches" class="swatches" role="group"></div>
+          <div class="range"><span class="rl" data-i18n="f.shadow">Shadow</span><input id="f-shadow" type="range" min="0" max="1" step="0.01"><output id="shadow-out"></output></div>
+
+          <span class="lbl" data-i18n="sec.light">Light</span>
+          <div class="range"><span class="rl" data-i18n="f.az">From where</span><input id="f-az" type="range" min="-180" max="180" step="1"><output id="az-out"></output></div>
+          <div class="range"><span class="rl" data-i18n="f.el">Height</span><input id="f-el" type="range" min="10" max="85" step="1"><output id="el-out"></output></div>
+          <div class="range"><span class="rl" data-i18n="f.str">Strength</span><input id="f-str" type="range" min="0" max="2" step="0.01"><output id="str-out"></output></div>
+          <div class="range"><span class="rl" data-i18n="f.soft">Softness</span><input id="f-soft" type="range" min="0" max="1" step="0.01"><output id="soft-out"></output></div>
+          <div class="range"><span class="rl" data-i18n="f.warm">Cool / warm</span><input id="f-warm" type="range" min="-1" max="1" step="0.01"><output id="warm-out"></output></div>
+        </div>
+
+        <!-- Save -->
+        <div class="pane" id="pane-out" role="tabpanel" aria-labelledby="tab-out" hidden>
+          <label class="fld"><span data-i18n="f.nm">Name of this mockup</span><input id="f-nm" maxlength="80" autocomplete="off"></label>
+          <span class="lbl" id="ratio-lbl" data-i18n="f.ratio">Picture shape</span>
+          <div class="seg wrap" id="ratio" role="radiogroup" aria-labelledby="ratio-lbl"></div>
+          <div class="grid2">
+            <label class="fld"><span data-i18n="f.size">Size</span><select id="f-size"></select></label>
+            <label class="fld"><span data-i18n="f.fmt">Format</span>
+              <select id="f-fmt"><option value="png">PNG</option><option value="jpg">JPG</option><option value="webp">WebP</option></select></label>
+          </div>
+          <p id="out-info" class="hint small"></p>
+          <div class="actions">
+            <button type="button" id="save-btn" class="chip primary" data-i18n="btn.save">Save picture</button>
+            <button type="button" id="pics-btn" class="chip" data-i18n="btn.pics">Save to Pictures</button>
+            <button type="button" id="atelier-btn" class="chip" data-i18n="btn.atelier">Open in Atelier</button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <div id="scrim" hidden></div>
+
+  <!-- More -->
+  <div id="more" class="dialog" role="dialog" aria-modal="true" aria-labelledby="more-title" hidden>
+    <div class="dlg-head">
+      <h2 id="more-title" data-i18n="more.title">Mockup</h2>
+      <span class="spacer"></span>
+      <button type="button" class="icon-btn dlg-close"></button>
+    </div>
+    <div class="menu">
+      <button type="button" id="dup-btn" class="menu-item" data-i18n="btn.dup">Duplicate this mockup</button>
+      <button type="button" id="reset-cam" class="menu-item" data-i18n="btn.resetCam">Reset the camera and light</button>
+      <button type="button" id="del-btn" class="menu-item danger" data-i18n="btn.del">Delete this mockup</button>
+    </div>
+    <p class="hint small" data-i18n="more.hint">Your mockups follow you to every device through orOS sync, encrypted. Their pictures travel with your orOS disk.</p>
+  </div>
+
+  <!-- Confirm -->
+  <div id="ask" class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="ask-text" hidden>
+    <p id="ask-text"></p>
+    <div class="actions end">
+      <button type="button" id="ask-no" class="chip" data-i18n="btn.cancel">Cancel</button>
+      <button type="button" id="ask-yes" class="chip primary"></button>
+    </div>
+  </div>
+
+  <div id="toast" role="status"></div>
+  <input type="file" id="file-in" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml" hidden>
+
+  <script src="../designkit/assets.js?v=2.51.00"></script>
+  <script src="core.js?v=2.51.00"></script>
+  <script src="mockups.js?v=2.51.00"></script>
+
+</body>
+</html>

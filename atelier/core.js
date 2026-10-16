@@ -182,6 +182,8 @@
       "ctx.head.dot": "Dot", "ctx.filters": "Filters", "ctx.adjust": "Adjust", "ctx.crop": "Crop", "ctx.flip": "Flip",
       "ctx.flipH": "Flip horizontal", "ctx.flipV": "Flip vertical", "ctx.mask": "Shape", "ctx.replace": "Replace", "ctx.editPic": "Edit in Photo Lab",
       "ep.done": "Picture updated from Photo Lab", "ep.gone": "That picture is no longer in the design.", "ep.missing": "The edited picture could not be opened.",
+      "more.mockup": "Make a book mockup", "mk.making": "Sending the pages to Mockups…", "mk.fail": "The pages could not be sent to Mockups.",
+      "np.done": "New design made from the mockup.",
       "ctx.op": "Transparency", "ctx.position": "Position", "ctx.lock": "Lock", "ctx.unlock": "Unlock",
       "ctx.dup": "Duplicate", "ctx.del": "Delete", "ctx.bg": "Background", "ctx.hint": "Tap an element to edit it.",
       "ctx.n": "{n} selected", "ctx.done": "Done", "ctx.edit": "Edit text",
@@ -375,6 +377,8 @@
       "ctx.head.dot": "Τελεία", "ctx.filters": "Φίλτρα", "ctx.adjust": "Ρυθμίσεις", "ctx.crop": "Περικοπή", "ctx.flip": "Αναστροφή",
       "ctx.flipH": "Οριζόντια αναστροφή", "ctx.flipV": "Κάθετη αναστροφή", "ctx.mask": "Σχήμα", "ctx.replace": "Αντικατάσταση", "ctx.editPic": "Επεξεργασία στο Εργαστήριο εικόνας",
       "ep.done": "Η εικόνα ενημερώθηκε από το Εργαστήριο εικόνας", "ep.gone": "Αυτή η εικόνα δεν υπάρχει πια στο σχέδιο.", "ep.missing": "Η επεξεργασμένη εικόνα δεν άνοιξε.",
+      "more.mockup": "Φτιάξε μακέτα βιβλίου", "mk.making": "Στέλνω τις σελίδες στις Μακέτες…", "mk.fail": "Οι σελίδες δεν στάλθηκαν στις Μακέτες.",
+      "np.done": "Έγινε νέο σχέδιο από τη μακέτα.",
       "ctx.op": "Διαφάνεια", "ctx.position": "Θέση", "ctx.lock": "Κλείδωμα", "ctx.unlock": "Ξεκλείδωμα",
       "ctx.dup": "Διπλασιασμός", "ctx.del": "Διαγραφή", "ctx.bg": "Φόντο", "ctx.hint": "Πάτα ένα στοιχείο για να το αλλάξεις.",
       "ctx.n": "{n} επιλεγμένα", "ctx.done": "Τέλος", "ctx.edit": "Επεξεργασία κειμένου",
@@ -1549,6 +1553,12 @@
     // Lab ("Edit picture", BR-PL-EDIT, editpic.js)
     if (tg && tg.editedPicture) {
       if (AT.editPic) AT.editPic.back(tg.editedPicture);
+      return;
+    }
+    // { newPicture: { path, w, h, name } }: a picture from Mockups
+    // ("Open in Atelier", BR-MK-AT, editpic.js) becomes a new design
+    if (tg && tg.newPicture) {
+      if (AT.mockup) AT.mockup.fromPicture(tg.newPicture);
       return;
     }
     if (tg && tg.openFile) {

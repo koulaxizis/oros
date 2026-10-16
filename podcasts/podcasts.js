@@ -14,7 +14,7 @@
 //     none); OPML import / export through orosDialog (R33)
 //   - device-local: feed cache + downloads in IndexedDB (store.js),
 //     prefs "oros-podcasts-prefs" (tab, filters), the catalog's top
-//     list "oros-podcasts-top" (12 h cache)
+//     lists "oros-podcasts-top" (per country + genre, 12 h cache)
 //   - phase 2: chapters (podcast:chapters JSON, else "12:34 Title"
 //     lines in the notes), transcripts (podcast:transcript: SRT, VTT,
 //     JSON, HTML) with search and tap-to-jump, watching video
@@ -145,6 +145,13 @@
       "st.saved": "Saved by speed: {t}", "st.top": "Most listened", "st.note": "Counted on this device since {d}.", "st.empty": "Nothing counted yet. Statistics start with the next episode you play.",
       "st.h": "{h} h {m} min", "st.m": "{m} min",
       "top.title": "Popular podcasts", "top.titleGr": "Popular in Greece", "top.src": "From the Apple Podcasts charts.",
+      "br.top": "Popular", "br.genres": "Genres", "br.countries": "Countries", "br.surprise": "Surprise me",
+      "br.surpriseHint": "Play a random popular podcast", "br.popularIn": "Popular in", "br.allGenres": "All genres",
+      "br.pickCountry": "Choose a country", "br.pickGenre": "Choose a genre", "br.findCountry": "Find a country",
+      "br.empty": "Nothing to show here right now.", "br.playNewest": "Play the newest",
+      "br.previewNote": "You are trying this podcast. Subscribe to keep your place and get new episodes.",
+      "br.needApple": "Browsing by genre and country uses the Apple Podcasts catalog (Settings › Catalog search).",
+      "br.back": "Back to browsing",
       "set.notify": "Tell me about new episodes", "toast.ntfOn": "You will get a notice when a new episode comes out.",
       "ep.todo": "Listen later (To-Do)", "ep.noteAt": "Note at {t}", "ep.note": "Write a note", "show.reader": "Follow the site in Reader",
       "s.sil": "Skip silence", "s.vb": "Voice boost",
@@ -239,6 +246,13 @@
       "st.saved": "Κέρδος από την ταχύτητα: {t}", "st.top": "Τα πιο ακουσμένα", "st.note": "Μετριούνται σε αυτή τη συσκευή από {d}.", "st.empty": "Δεν έχει μετρηθεί τίποτα ακόμη. Τα στατιστικά ξεκινούν με το επόμενο επεισόδιο που θα ακούσεις.",
       "st.h": "{h} ώ. {m} λ.", "st.m": "{m} λεπτά",
       "top.title": "Δημοφιλή podcasts", "top.titleGr": "Δημοφιλή στην Ελλάδα", "top.src": "Από τα charts του Apple Podcasts.",
+      "br.top": "Δημοφιλή", "br.genres": "Είδη", "br.countries": "Χώρες", "br.surprise": "Έκπληξη",
+      "br.surpriseHint": "Παίξε ένα τυχαίο δημοφιλές podcast", "br.popularIn": "Δημοφιλή σε", "br.allGenres": "Όλα τα είδη",
+      "br.pickCountry": "Διάλεξε χώρα", "br.pickGenre": "Διάλεξε είδος", "br.findCountry": "Βρες χώρα",
+      "br.empty": "Δεν υπάρχει κάτι να δείξω εδώ αυτή τη στιγμή.", "br.playNewest": "Παίξε το νεότερο",
+      "br.previewNote": "Δοκιμάζεις αυτό το podcast. Κάνε εγγραφή για να κρατιέται η θέση σου και να έρχονται τα νέα επεισόδια.",
+      "br.needApple": "Η περιήγηση ανά είδος και χώρα χρησιμοποιεί τον κατάλογο του Apple Podcasts (Ρυθμίσεις › Αναζήτηση καταλόγου).",
+      "br.back": "Πίσω στην περιήγηση",
       "set.notify": "Ειδοποίηση για νέα επεισόδια", "toast.ntfOn": "Θα ειδοποιείσαι όταν βγαίνει νέο επεισόδιο.",
       "ep.todo": "Άκου αργότερα (To-Do)", "ep.noteAt": "Σημείωση στο {t}", "ep.note": "Σημείωση", "show.reader": "Ο ιστότοπος στον Αναγνώστη",
       "s.sil": "Παράλειψη σιωπής", "s.vb": "Ενίσχυση φωνής",
@@ -358,13 +372,19 @@
 
   // Device-local view prefs (R10): never synced.
   var prefs = (function () {
-    var p = { tab: "now", filter: "all", sortOld: {} };
+    var p = { tab: "now", filter: "all", sortOld: {}, br: { m: "top", cc: "", g: "", chip: "" } };
     try {
       var o = JSON.parse(localStorage.getItem(PREFS_KEY) || "null");
       if (o && typeof o === "object") {
         if (["now", "new", "lib", "dl", "find"].indexOf(o.tab) >= 0) p.tab = o.tab;
         if (["all", "unplayed", "progress", "played", "dl"].indexOf(o.filter) >= 0) p.filter = o.filter;
         if (o.sortOld && typeof o.sortOld === "object") p.sortOld = o.sortOld;
+        // Browse (2026-10-16): view, country, genre, sub-genre chip.
+        var b = o.br && typeof o.br === "object" ? o.br : {};
+        if (["top", "genres", "countries"].indexOf(b.m) >= 0) p.br.m = b.m;
+        if (C.isCountry(b.cc)) p.br.cc = b.cc;
+        if (C.genreOf(b.g)) p.br.g = String(b.g);
+        if (typeof b.chip === "string" && b.chip.length <= 60) p.br.chip = b.chip;
       }
     } catch (e) {}
     return p;
@@ -423,6 +443,8 @@
     var x = epIndex[id];
     if (!x) return null;
     var s = C.findShow(D(), x.sid), e = x.ep;
+    // A show being tried (Discover preview) is not in the slice.
+    if (!s && previews[x.sid] && previews[x.sid].rec) s = { title: previews[x.sid].rec.show.title, img: previews[x.sid].rec.show.img };
     return { id: e.id, s: x.sid, title: e.title, show: s ? s.title : "", img: e.img || (s && s.img) || "",
       audio: e.audio, pd: e.pub, dur: e.dur, video: e.video };
   }
@@ -650,9 +672,9 @@
   }
 
   // ---------- 6. UI: toolbar, tabs, views ----------
-  var view = { show: "", page: 1, q: "" };
+  var view = { show: "", page: 1, q: "", pv: null };
   function setTab(tab) {
-    prefs.tab = tab; view.show = ""; view.page = 1; view.q = "";
+    prefs.tab = tab; view.show = ""; view.page = 1; view.q = ""; view.pv = null;
     savePrefs();
     renderAll();
     $("main").scrollTop = 0;
@@ -676,6 +698,7 @@
     main.textContent = "";
     if (!H) return;
     if (view.show) { renderShow(main, view.show); paintPlayer(); return; }
+    if (view.pv) { renderPreview(main, view.pv); paintPlayer(); return; }
     ({ now: renderNow, "new": renderNew, lib: renderLib, dl: renderDl, find: renderFind })[prefs.tab](main);
     paintPlayer();
   }
@@ -796,6 +819,22 @@
     var ul = el("ul", "eps");
     ids.forEach(function (id) { ul.appendChild(epRow(id, { showName: true })); });
     main.appendChild(ul);
+    paintPreviewRows();
+  }
+  // Play / pause state of the preview rows (no full redraw).
+  function paintPreviewRows() {
+    var st = H.getState();
+    [].forEach.call(document.querySelectorAll("li.ep.pv[data-pv]"), function (li) {
+      var id = li.getAttribute("data-pv");
+      var isCur = !!(st.cur && st.cur.id === id), playing = isCur && st.playing;
+      li.classList.toggle("cur", isCur);
+      var b = li.querySelector(".play");
+      if (!b || b._on === playing) return;
+      b._on = playing;
+      b.innerHTML = playing ? UI.pause : UI.play;
+      b.title = playing ? t("ep.pause") : t("ep.play");
+      b.setAttribute("aria-label", b.title);
+    });
   }
 
   // ---------- 7. Episode rows + menus ----------
@@ -931,7 +970,7 @@
   }
 
   // ---------- 8. Show page + show settings ----------
-  function openShow(sid) { view.show = sid; view.page = 1; renderAll(); $("main").scrollTop = 0; }
+  function openShow(sid) { view.show = sid; view.pv = null; view.page = 1; renderAll(); $("main").scrollTop = 0; }
   function renderShow(main, sid) {
     var s = C.findShow(D(), sid);
     if (!s) { view.show = ""; renderAll(); return; }
@@ -1649,37 +1688,266 @@
     dlg.showModal();
   }
 
-  // Top list (Apple charts): only when catalog search uses Apple.
-  var TOP_KEY = "oros-podcasts-top", TOP_TTL = 12 * 3600000;
-  var topList = { cc: "", list: [], busy: false, failed: false };
-  // done() runs once the list arrived (or failed), to redraw only its box.
-  function loadTop(done) {
-    var mode = C.prefOf(D(), "search");
-    if (mode !== "both" && mode !== "apple") return;
-    var cc = C.topCountry(LANG, navigator.language);
-    if (topList.cc === cc && (topList.list.length || topList.busy || topList.failed)) return;
+  // Charts (Apple, no key): per storefront and genre, like Radio's
+  // countries and genres. Cache "oros-podcasts-top" = { v: 2, lists:
+  // { "cc:genre": { at, list } } }, 12 h, at most 12 lists (oldest
+  // dropped, expired swept on every write).
+  var TOP_KEY = "oros-podcasts-top", TOP_TTL = 12 * 3600000, TOP_MAX = 12;
+  var charts = {};           // "cc:genre" → { list, busy, failed }
+  function chartKey(cc, g) { return cc + ":" + (g || ""); }
+  function readCharts() {
     try {
       var o = JSON.parse(localStorage.getItem(TOP_KEY) || "null");
-      if (o && o.cc === cc && now() - o.at < TOP_TTL && Array.isArray(o.list)) {
-        topList = { cc: cc, list: o.list.filter(function (h) { return h && C.safeUrl(h.url); }), busy: false, failed: false };
-        if (topList.list.length) return;
-      }
-    } catch (e) {}
-    if (navigator.onLine === false) return;
-    topList = { cc: cc, list: [], busy: true, failed: false };
-    var ids = [];
-    NET.fetchOne(C.appleTopUrl(cc, 25)).then(function (r) {
-      ids = C.parseAppleTop(JSON.parse(r.text));
-      if (!ids.length) throw { code: "empty" };
-      return NET.fetchOne(C.appleLookupManyUrl(ids));
-    }).then(function (r) {
-      var json = JSON.parse(r.text);
-      var list = C.orderByIds(C.parseAppleResults(json), json, ids).slice(0, 25);
-      topList = { cc: cc, list: list, busy: false, failed: !list.length };
-      try { localStorage.setItem(TOP_KEY, JSON.stringify({ cc: cc, at: now(), list: list })); } catch (e) {}
-    }).catch(function () { topList = { cc: cc, list: [], busy: false, failed: true }; }).then(function () {
-      if (done) done();
+      return o && o.v === 2 && o.lists && typeof o.lists === "object" ? o.lists : {};
+    } catch (e) { return {}; }
+  }
+  function writeChart(key, list) {
+    var all = readCharts(), t0 = now();
+    all[key] = { at: t0, list: list };
+    var keys = Object.keys(all).filter(function (k) { return all[k] && t0 - all[k].at < TOP_TTL; })
+      .sort(function (x, y) { return all[y].at - all[x].at; }).slice(0, TOP_MAX);
+    var out = {};
+    keys.forEach(function (k) { out[k] = all[k]; });
+    try { localStorage.setItem(TOP_KEY, JSON.stringify({ v: 2, lists: out })); } catch (e) {}
+  }
+  function lookupAll(ids, cc) {
+    return Promise.all(C.idBatches(ids, 50).map(function (b) {
+      return NET.fetchOne(C.appleLookupManyUrl(b, cc)).then(function (r) { return JSON.parse(r.text); }).catch(function () { return { results: [] }; });
+    })).then(function (parts) {
+      var json = { results: [] };
+      parts.forEach(function (j) { if (j && Array.isArray(j.results)) json.results = json.results.concat(j.results); });
+      return C.orderByIds(C.parseAppleResults(json), json, ids);
     });
+  }
+  function fetchChart(cc, g) {
+    return NET.fetchOne(C.chartUrl(cc, g, 100)).then(function (r) { return C.parseChart(JSON.parse(r.text)); }).catch(function () { return []; })
+      .then(function (ids) {
+        if (ids.length) return lookupAll(ids, cc);
+        // The old chart answered nothing: the newer list (all genres),
+        // or a catalog search kept to the genre.
+        if (!g) return NET.fetchOne(C.appleTopUrl(cc, 50)).then(function (r) { return lookupAll(C.parseAppleTop(JSON.parse(r.text)), cc); });
+        return NET.fetchOne(C.genreSearchUrl(cc, g, LANG)).then(function (r) { return C.inGenre(C.parseAppleResults(JSON.parse(r.text)), g); });
+      });
+  }
+  // done() runs once the list arrived (or failed), to redraw only its box.
+  function loadChart(cc, g, done) {
+    var key = chartKey(cc, g), c = charts[key];
+    if (c && (c.list.length || c.busy || c.failed)) { if (!c.busy && done) done(); return c; }
+    var o = readCharts()[key];
+    if (o && now() - o.at < TOP_TTL && Array.isArray(o.list)) {
+      var list0 = o.list.filter(function (h) { return h && C.safeUrl(h.url); });
+      if (list0.length) { charts[key] = { list: list0, busy: false, failed: false }; if (done) done(); return charts[key]; }
+    }
+    if (navigator.onLine === false) { charts[key] = { list: [], busy: false, failed: true, off: true }; if (done) done(); return charts[key]; }
+    c = charts[key] = { list: [], busy: true, failed: false };
+    fetchChart(cc, g).then(function (list) {
+      list = (list || []).slice(0, 100);
+      charts[key] = { list: list, busy: false, failed: !list.length };
+      if (list.length) writeChart(key, list);
+    }).catch(function () { charts[key] = { list: [], busy: false, failed: true }; }).then(function () { if (done) done(); });
+    return c;
+  }
+  function countryName(cc) {
+    try {
+      countryName.dn = countryName.dn || new Intl.DisplayNames([LANG === "el" ? "el" : "en"], { type: "region" });
+      return countryName.dn.of(cc.toUpperCase()) || cc.toUpperCase();
+    } catch (e) { return cc.toUpperCase(); }
+  }
+  function browseCc() { return C.isCountry(prefs.br.cc) ? prefs.br.cc : C.topCountry(LANG, navigator.language); }
+
+  // Browse like Radio: Popular (per country, genre chips) · Genres ·
+  // Countries, and Surprise me.
+  function renderBrowse(main) {
+    var br = prefs.br, cc = browseCc();
+    var seg = el("div", "chips browse-seg");
+    [["top", t("br.top")], ["genres", t("br.genres")], ["countries", t("br.countries")]].forEach(function (x) {
+      var on = br.m === x[0];
+      var c = button(x[1], "chip" + (on ? " on" : ""), function () { br.m = x[0]; savePrefs(); renderAll(); });
+      c.setAttribute("aria-pressed", on ? "true" : "false");
+      seg.appendChild(c);
+    });
+    var sp = button(t("br.surprise"), "txt-btn primary surprise", surprise);
+    sp.title = t("br.surpriseHint");
+    seg.appendChild(sp);
+    main.appendChild(seg);
+    if (br.m === "genres") return renderGenres(main);
+    if (br.m === "countries") return renderCountries(main);
+    // Its own box: the list arriving never redraws the search field
+    // (a half-typed search stays as it is).
+    var box = el("div", "top-box");
+    main.appendChild(box);
+    var paint = function () {
+      if (!box.isConnected) return;
+      box.textContent = "";
+      var c = charts[chartKey(cc, br.g)] || { list: [] };
+      var head = el("div", "br-head");
+      var where = button(C.flag(cc) + " " + countryName(cc), "chip", function () { br.m = "countries"; savePrefs(); renderAll(); });
+      where.title = t("br.pickCountry");
+      var what = button(br.g ? (C.genreOf(br.g).ic + " " + C.genreName(br.g, LANG)) : t("br.allGenres"), "chip", function () { br.m = "genres"; savePrefs(); renderAll(); });
+      what.title = t("br.pickGenre");
+      head.appendChild(el("h2", "sec", t("br.popularIn")));
+      head.appendChild(where);
+      head.appendChild(what);
+      box.appendChild(head);
+      if (c.busy) { box.appendChild(el("p", "dim", t("find.searching"))); return; }
+      if (!c.list.length) {
+        box.appendChild(el("p", "dim", c.off ? t("toast.offline") : t("br.empty")));
+        if (!c.off) box.appendChild(button(t("btn.retry"), "txt-btn", function () { delete charts[chartKey(cc, br.g)]; paint(); loadChart(cc, br.g, paint); }));
+        return;
+      }
+      var chips = C.subChips(c.list, br.g ? C.genreOf(br.g).en : "", 12);
+      if (br.chip && chips.indexOf(br.chip) < 0) br.chip = "";
+      if (chips.length) {
+        var bar = el("div", "chips");
+        [""].concat(chips).forEach(function (name) {
+          var on = br.chip === name;
+          var b = button(name || t("f.all"), "chip" + (on ? " on" : ""), function () { br.chip = name; savePrefs(); paint(); });
+          b.setAttribute("aria-pressed", on ? "true" : "false");
+          bar.appendChild(b);
+        });
+        box.appendChild(bar);
+      }
+      var ul = el("ol", "hits ranked");
+      C.withChip(c.list, br.chip).forEach(function (h) { ul.appendChild(hitRow(h)); });
+      box.appendChild(ul);
+      box.appendChild(el("p", "dim small", t("top.src")));
+    };
+    loadChart(cc, br.g, paint);
+    paint();
+  }
+  function renderGenres(main) {
+    var br = prefs.br;
+    var grid = el("div", "g-grid");
+    var tile = function (id, ic, name) {
+      var b = button("", "g-tile" + ((br.g || "") === id ? " on" : ""), function () { br.g = id; br.chip = ""; br.m = "top"; savePrefs(); renderAll(); $("main").scrollTop = 0; });
+      b.appendChild(el("span", "g-ic", ic));
+      b.appendChild(el("span", "g-name", name));
+      grid.appendChild(b);
+    };
+    tile("", "⭐", t("br.allGenres"));
+    C.GENRES.forEach(function (g) { tile(g.id, g.ic, LANG === "el" ? g.el : g.en); });
+    main.appendChild(grid);
+  }
+  function renderCountries(main) {
+    var br = prefs.br, cc = browseCc();
+    var lab = el("label", "q-wrap");
+    var ic = el("span", "q-ic"); ic.innerHTML = UI.search; lab.appendChild(ic);
+    var q = el("input"); q.type = "search"; q.maxLength = 60; q.autocomplete = "off";
+    q.placeholder = t("br.findCountry"); q.setAttribute("aria-label", q.placeholder);
+    lab.appendChild(q);
+    main.appendChild(lab);
+    var ul = el("ul", "c-list");
+    main.appendChild(ul);
+    var order = C.sortCountries(countryName);
+    var home = C.topCountry(LANG, navigator.language);
+    order = [home].concat(order.filter(function (x) { return x !== home; }));
+    var fold = function (v) { return String(v || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase(); };
+    var paint = function () {
+      ul.textContent = "";
+      var f = fold(q.value.trim());
+      order.forEach(function (code) {
+        var name = countryName(code);
+        if (f && fold(name).indexOf(f) < 0 && code !== f) return;
+        var li = el("li");
+        var b = button("", "c-row" + (code === cc ? " on" : ""), function () { br.cc = code; br.chip = ""; br.m = "top"; savePrefs(); renderAll(); $("main").scrollTop = 0; });
+        b.appendChild(el("span", "c-flag", C.flag(code)));
+        b.appendChild(el("span", "c-name", name));
+        if (code === cc) b.setAttribute("aria-current", "true");
+        li.appendChild(b);
+        ul.appendChild(li);
+      });
+      if (!ul.children.length) ul.appendChild(el("li", "dim", t("find.none")));
+    };
+    q.addEventListener("input", paint);
+    paint();
+  }
+  // Surprise me: a random show from the list on screen (else this
+  // country's chart), opened and its newest episode playing.
+  function surprise() {
+    var br = prefs.br, cc = browseCc();
+    var go = function () {
+      var c = charts[chartKey(cc, br.g)];
+      var list = c ? C.withChip(c.list, br.m === "top" ? br.chip : "") : [];
+      var h = C.pickRandom(list, function (id) { return !!C.findShow(D(), id); });
+      if (!h) { showToast(c && c.off ? t("toast.offline") : t("br.empty")); return; }
+      openPreview(h, true);
+    };
+    var c = loadChart(cc, br.g, function () { if (wait) { wait = false; go(); } });
+    var wait = !!(c && c.busy);
+    if (wait) showToast(t("find.searching")); else go();
+  }
+
+  // Preview of a show not followed yet: its feed in memory only (never
+  // IndexedDB, never the slice), episodes playable; the host writes no
+  // position to the slice for a show that is not followed.
+  var previews = {};         // showId → { busy, rec, parsed, err }
+  function openPreview(h, autoplay) {
+    if (C.findShow(D(), h.id)) { openShow(h.id); if (autoplay) playNewest(h.id); return; }
+    view.pv = h;
+    renderAll();
+    $("main").scrollTop = 0;
+    var p = previews[h.id];
+    if (p && p.rec) { if (autoplay) playNewest(h.id); return; }
+    if (p && p.busy) return;
+    previews[h.id] = { busy: true };
+    NET.fetchOne(h.url).then(function (r) {
+      var parsed = parseText(r.text, r.finalUrl || h.url);
+      if (!parsed || !parsed.eps.length) throw { code: "notpod" };
+      var eps = parsed.eps.slice(0, 200).map(function (e) { var x = Object.assign({}, e); x.s = h.id; return x; });
+      var rec = { id: h.id, at: now(), show: parsed.show, eps: eps };
+      indexFeed(rec);
+      previews[h.id] = { rec: rec, parsed: parsed };
+      if (autoplay && view.pv && view.pv.id === h.id) playNewest(h.id);
+    }).catch(function (e) {
+      previews[h.id] = { err: (e && e.code) || "err" };
+    }).then(function () { if (view.pv && view.pv.id === h.id) renderAll(); });
+  }
+  function playNewest(sid) {
+    var rec = feeds[sid] || (previews[sid] && previews[sid].rec);
+    var e = rec && rec.eps.filter(function (x) { return x.kind !== "trailer"; })[0];
+    if (e) playEp(e.id);
+  }
+  function renderPreview(main, h) {
+    var p = previews[h.id] || {};
+    var rec = p.rec, sh = rec ? rec.show : {};
+    var head = el("div", "show-head");
+    head.appendChild(button(t("btn.back"), "icon-btn back", function () { view.pv = null; renderAll(); }, UI.left));
+    head.appendChild(img(sh.img || h.img, "art big"));
+    var info = el("div", "show-info");
+    info.appendChild(el("h2", "show-title", sh.title || h.title));
+    if (sh.by || h.by) info.appendChild(el("div", "dim", sh.by || h.by));
+    var meta = [h.genre, rec ? t("show.n", { n: rec.eps.length }) : ""].filter(Boolean);
+    if (meta.length) info.appendChild(el("div", "dim small", meta.join(" · ")));
+    var btns = el("div", "row-btns");
+    btns.appendChild(button(t("find.subscribe"), "txt-btn primary", function () {
+      var ok = subscribe(h, p.parsed || null);
+      if (ok === false) return;
+      view.pv = null;
+      if (p.parsed) afterFeed(h.id, feeds[h.id]);
+      openShow(h.id);
+    }));
+    if (rec) btns.appendChild(button(t("br.playNewest"), "txt-btn", function () { playNewest(h.id); }));
+    if (rec && rec.show.link) btns.appendChild(button(t("show.site"), "txt-btn", function () { openLink(rec.show.link); }));
+    info.appendChild(btns);
+    head.appendChild(info);
+    main.appendChild(head);
+    if (p.busy) { main.appendChild(el("p", "dim", t("find.searching"))); return; }
+    if (p.err) { main.appendChild(el("p", "dim", p.err === "notpod" ? t("toast.notPodcast") : p.err === "offline" ? t("toast.offline") : t("toast.noFeed"))); return; }
+    if (!rec) return;
+    if (rec.show.desc) main.appendChild(el("p", "show-desc", C.plain(rec.show.desc, 600)));
+    main.appendChild(el("p", "dim small", t("br.previewNote")));
+    var ul = el("ul", "eps");
+    rec.eps.slice(0, 30).forEach(function (e) {
+      var li = el("li", "ep pv");
+      li.setAttribute("data-pv", e.id);
+      li.appendChild(button(t("ep.play"), "icon-btn play", function () { playEp(e.id); paintPreviewRows(); }, UI.play));
+      var body = el("div", "ep-body");
+      body.appendChild(el("div", "ep-meta", [fmtDate(e.pub), e.dur ? C.fmtTime(e.dur) : ""].filter(Boolean).join(" · ")));
+      body.appendChild(el("div", "ep-title plain", e.title));
+      li.appendChild(body);
+      ul.appendChild(li);
+    });
+    main.appendChild(ul);
   }
 
   // ---------- 11. Discover: search, add by address, OPML ----------
@@ -1713,26 +1981,9 @@
     if (mode === "none") main.appendChild(el("p", "dim small", t("find.off")));
     if (!NET.relayAvailable()) main.appendChild(el("p", "dim small", t("s.noRelay")));
     if (found.busy) { main.appendChild(el("p", "dim", t("find.searching"))); return; }
-    if (!found.q && (mode === "both" || mode === "apple")) {
-      // Its own box: the list arriving never redraws the search field
-      // (a half-typed search stays as it is).
-      var box = el("div", "top-box");
-      main.appendChild(box);
-      var paintTop = function () {
-        if (!box.isConnected) return;
-        box.textContent = "";
-        if (topList.list.length) {
-          section(box, topList.cc === "gr" ? t("top.titleGr") : t("top.title"));
-          var tl = el("ul", "hits");
-          topList.list.forEach(function (h) { tl.appendChild(hitRow(h)); });
-          box.appendChild(tl);
-          box.appendChild(el("p", "dim small", t("top.src")));
-        } else if (topList.busy) box.appendChild(el("p", "dim", t("find.searching")));
-      };
-      loadTop(paintTop);
-      paintTop();
-      return;
-    }
+    if (!found.q && (mode === "both" || mode === "apple")) { renderBrowse(main); return; }
+    if (!found.q) { main.appendChild(el("p", "dim small", t("br.needApple"))); return; }
+    main.appendChild(button(t("br.back"), "txt-btn", function () { found = { q: "", list: [], busy: false, src: "" }; renderAll(); }));
     if (found.q && !found.list.length) { main.appendChild(el("p", "dim", t("find.none"))); return; }
     if (found.src) main.appendChild(el("p", "dim small", t("find.src", { s: found.src })));
     var ul = el("ul", "hits");
@@ -1742,7 +1993,10 @@
   function hitRow(h) {
     var li = el("li", "hit");
     li.appendChild(img(h.img, "art"));
-    var b = el("div", "ep-body");
+    // The name opens the show (followed) or a preview to try it.
+    var b = el("button", "ep-body hit-open");
+    b.type = "button";
+    b.addEventListener("click", function () { openPreview(h, false); });
     b.appendChild(el("div", "ep-title plain", h.title));
     var by = [h.by, h.genre, h.count ? t("show.n", { n: h.count }) : ""].filter(Boolean).join(" · ");
     if (by) b.appendChild(el("div", "ep-meta", by));
@@ -2394,6 +2648,7 @@
     paintPlayer();
     var c2 = H.getState().cur;
     if (c2) paintEp(c2.id);
+    if (view.pv) paintPreviewRows();
   }
   function renderKeepScroll() {
     var m = $("main"), y = m.scrollTop;

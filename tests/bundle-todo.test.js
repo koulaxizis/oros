@@ -116,8 +116,8 @@ test("todo: the normaliser keeps known fields only, typed and capped", () => {
 
 test("todo: wiring (scripts, buttons, Open with, precache, help, file types)", () => {
   const html = read("todo/index.html");
-  ["../bundle.js?v=", "../recordpkg.js?v=", "package.js?v=", "todo.js?v="].forEach((s) =>
-    assert.ok(html.includes('src="' + s), s));
+  ["../bundle.js", "../recordpkg.js", "package.js", "todo.js"].forEach((s) =>
+    assert.match(html, new RegExp('src="' + s.replace(/\./g, "\\.") + '\\?v=\\d+\\.\\d+\\.\\d+"'), s));
   assert.ok(html.indexOf("recordpkg.js") < html.indexOf('src="todo.js'));
   ["l-osave", "l-oopen", "l-ofolder"].forEach((id) => assert.ok(html.includes('id="' + id + '"'), id));
   const js = read("todo/todo.js");
