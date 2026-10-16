@@ -22,12 +22,16 @@ const HOST = "useoros.online";
 // The app's versionCode (as app/build.gradle derives it from shell.js
 // APP_VERSION) rides on the start address as ?apk=<code>, so orOS can
 // tell once that the F-Droid repo has a newer APK (solo.js FDROID-1).
+// `--no-apk` leaves it out, for builds that other stores sign and update
+// (official F-Droid, FDROID-3), where our repo's APKs can't replace them.
+const NO_APK = process.argv.includes("--no-apk");
 function versionCode() {
   const m = /APP_VERSION\s*=\s*"(\d+)\.(\d+)\.(\d+)"/.exec(fs.readFileSync(path.join(ROOT, "shell.js"), "utf8"));
   if (!m) throw new Error("APP_VERSION not found in shell.js");
   return Number(m[1]) * 1000000 + Number(m[2]) * 1000 + Number(m[3]);
 }
 function withApk(url) {
+  if (NO_APK) return url;
   return url + (url.indexOf("?") < 0 ? "?" : "&") + "apk=" + versionCode();
 }
 

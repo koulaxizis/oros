@@ -105,7 +105,39 @@
       "s.openHint": "Only when you browse or search. The requests go straight to those services, with no account and no tracking.",
       "s.offInfo": "Offline copies: {n} · {s}", "s.offClear": "Delete all offline copies",
       "s.offClearQ": "Delete all offline copies ({n})? The songs stay in your playlists and play online.",
-      "info.source": "Source", "info.licence": "Licence", "info.page": "Page", "info.credit": "Credit"
+      "info.source": "Source", "info.licence": "Licence", "info.page": "Page", "info.credit": "Credit",
+      "lib.servers": "Servers", "home.servers": "Your servers", "home.newOn": "New on {n}",
+      "sv.connect": "Connect a server", "sv.import": "Import a playlist (M3U, PLS, XSPF)", "sv.feedAdd": "Add a music feed (RSS)",
+      "sv.type": "Kind of server", "sv.name": "Name (shown in Music)", "sv.addr": "Address", "sv.user": "User name", "sv.pass": "Password",
+      "sv.tok": "Access token (optional)", "sv.dir": "Folder (optional)", "sv.go": "Connect", "sv.busy": "Connecting…",
+      "sv.h.subsonic": "Navidrome, Airsonic, Gonic, Ampache and other Subsonic servers. The password itself is not kept, only a salted token.",
+      "sv.h.jellyfin": "Signs in once and keeps only the access token the server gives back.",
+      "sv.h.funkwhale": "Public pods work without a login. For your own library, create a token in Funkwhale › Settings › Applications (read access).",
+      "sv.h.webdav": "For Nextcloud, copy the WebDAV address from Files › Settings and use an app password. The server must allow requests from orOS (CORS).",
+      "sv.h.dropbox": "Uses the Dropbox connection of the Files app: connect Dropbox there first.",
+      "sv.h.all": "The address and the login stay on this device, sealed, and are never synced.",
+      "sv.ok": "Connected to “{n}”.", "sv.kind": "Server", "sv.albums": "Albums", "sv.artists": "Artists", "sv.pls": "Playlists",
+      "sv.all": "Show all", "sv.random": "Shuffle the server", "sv.lists": "Playlist files",
+      "sv.rename": "Rename", "sv.remove": "Remove from this device", "sv.removed": "Removed.",
+      "sv.removeQ": "Remove “{n}” from this device? Its login is deleted. Its songs stay in your playlists and play again when you connect it again.",
+      "sv.none": "No servers yet. Connect Navidrome, Jellyfin, Funkwhale, Nextcloud (WebDAV) or a Dropbox folder.",
+      "sv.feeds": "Music feeds",
+      "sv.e.auth": "The server did not accept the login. Check the user name and the password (or token).",
+      "sv.e.net": "No answer from {s}. Check the address, and that the server allows requests from orOS (CORS).",
+      "sv.e.http": "Browsers block plain http:// addresses here. Use https:// (a server on this computer works with http).",
+      "sv.e.address": "This is not a web address.", "sv.e.login": "Fill in the user name and the password.",
+      "sv.e.dropbox": "Connect Dropbox in the Files app first (Files › Dropbox), then try again.",
+      "sv.e.notfound": "Nothing found there. Check the address and the folder.", "sv.e.format": "That address did not answer like a {s} server.",
+      "sv.e.version": "This server is too old for Music.", "sv.e.timeout": "{s} took too long to answer.",
+      "sv.e.seal": "This browser cannot keep the login safely (a private window?).", "sv.e.perm": "This user may not do that on the server.",
+      "sv.e.gone": "This server is not connected on this device.", "sv.openFiles": "Open Files",
+      "missing.sv": "From a server not connected here",
+      "missing.svToast": "This song is on a server that is not connected on this device. Connect it in Your library › Servers.",
+      "imp.file": "From a file", "imp.url": "From an address", "imp.urlPh": "Address of the playlist (https://…)", "imp.go": "Import",
+      "imp.done": "Playlist “{n}” created: {k}.", "imp.miss": "{n} entries were not found and were left out.", "imp.none": "None of the songs of this playlist could be found.",
+      "feed.ph": "Address of the feed (https://…)", "feed.add": "Add", "feed.none": "This feed has no songs.", "feed.err": "This address is not a feed.",
+      "feed.added": "Feed added.", "feed.kind": "Music feed", "feed.remove": "Remove feed", "feed.removed": "Feed removed.", "feed.site": "Open website",
+      "info.server": "Server", "m.page": "Open page"
     },
     el: {
       "app": "Μουσική",
@@ -174,7 +206,39 @@
       "s.openHint": "Μόνο όταν περιηγείσαι ή ψάχνεις. Τα αιτήματα πάνε κατευθείαν σε αυτές τις υπηρεσίες, χωρίς λογαριασμό και χωρίς παρακολούθηση.",
       "s.offInfo": "Αντίγραφα χωρίς σύνδεση: {n} · {s}", "s.offClear": "Διαγραφή όλων των αντιγράφων",
       "s.offClearQ": "Να διαγραφούν όλα τα αντίγραφα χωρίς σύνδεση ({n}); Τα τραγούδια μένουν στις λίστες σου και παίζουν online.",
-      "info.source": "Πηγή", "info.licence": "Άδεια", "info.page": "Σελίδα", "info.credit": "Αναφορά"
+      "info.source": "Πηγή", "info.licence": "Άδεια", "info.page": "Σελίδα", "info.credit": "Αναφορά",
+      "lib.servers": "Servers", "home.servers": "Οι servers σου", "home.newOn": "Νέα στο {n}",
+      "sv.connect": "Σύνδεση server", "sv.import": "Εισαγωγή λίστας (M3U, PLS, XSPF)", "sv.feedAdd": "Προσθήκη feed μουσικής (RSS)",
+      "sv.type": "Είδος server", "sv.name": "Όνομα (όπως φαίνεται στη Μουσική)", "sv.addr": "Διεύθυνση", "sv.user": "Όνομα χρήστη", "sv.pass": "Κωδικός",
+      "sv.tok": "Token πρόσβασης (προαιρετικό)", "sv.dir": "Φάκελος (προαιρετικό)", "sv.go": "Σύνδεση", "sv.busy": "Σύνδεση…",
+      "sv.h.subsonic": "Navidrome, Airsonic, Gonic, Ampache και άλλοι servers Subsonic. Ο ίδιος ο κωδικός δεν κρατιέται, μόνο ένα token με salt.",
+      "sv.h.jellyfin": "Συνδέεται μία φορά και κρατά μόνο το token πρόσβασης που δίνει ο server.",
+      "sv.h.funkwhale": "Τα δημόσια pods δουλεύουν χωρίς σύνδεση. Για τη δική σου βιβλιοθήκη, φτιάξε ένα token στο Funkwhale › Settings › Applications (πρόσβαση ανάγνωσης).",
+      "sv.h.webdav": "Για το Nextcloud, αντέγραψε τη διεύθυνση WebDAV από τα Files › Settings και χρησιμοποίησε κωδικό εφαρμογής. Ο server πρέπει να δέχεται αιτήματα από το orOS (CORS).",
+      "sv.h.dropbox": "Χρησιμοποιεί τη σύνδεση Dropbox της εφαρμογής Αρχεία: σύνδεσε πρώτα εκεί το Dropbox.",
+      "sv.h.all": "Η διεύθυνση και τα στοιχεία σύνδεσης μένουν σε αυτή τη συσκευή, κλειδωμένα, και δεν συγχρονίζονται ποτέ.",
+      "sv.ok": "Συνδέθηκε το «{n}».", "sv.kind": "Server", "sv.albums": "Άλμπουμ", "sv.artists": "Καλλιτέχνες", "sv.pls": "Λίστες",
+      "sv.all": "Δείξε όλα", "sv.random": "Τυχαία από τον server", "sv.lists": "Αρχεία λιστών",
+      "sv.rename": "Μετονομασία", "sv.remove": "Αφαίρεση από αυτή τη συσκευή", "sv.removed": "Αφαιρέθηκε.",
+      "sv.removeQ": "Να αφαιρεθεί το «{n}» από αυτή τη συσκευή; Τα στοιχεία σύνδεσης διαγράφονται. Τα τραγούδια του μένουν στις λίστες σου και ξαναπαίζουν όταν το συνδέσεις ξανά.",
+      "sv.none": "Δεν υπάρχουν servers ακόμα. Σύνδεσε Navidrome, Jellyfin, Funkwhale, Nextcloud (WebDAV) ή έναν φάκελο του Dropbox.",
+      "sv.feeds": "Feeds μουσικής",
+      "sv.e.auth": "Ο server δεν δέχτηκε τη σύνδεση. Έλεγξε το όνομα χρήστη και τον κωδικό (ή το token).",
+      "sv.e.net": "Δεν ήρθε απάντηση από {s}. Έλεγξε τη διεύθυνση και ότι ο server δέχεται αιτήματα από το orOS (CORS).",
+      "sv.e.http": "Οι browsers μπλοκάρουν εδώ τις διευθύνσεις http://. Χρησιμοποίησε https:// (ένας server σε αυτόν τον υπολογιστή δουλεύει και με http).",
+      "sv.e.address": "Αυτή δεν είναι διεύθυνση ιστού.", "sv.e.login": "Συμπλήρωσε το όνομα χρήστη και τον κωδικό.",
+      "sv.e.dropbox": "Σύνδεσε πρώτα το Dropbox στην εφαρμογή Αρχεία (Αρχεία › Dropbox) και δοκίμασε ξανά.",
+      "sv.e.notfound": "Δεν βρέθηκε τίποτα εκεί. Έλεγξε τη διεύθυνση και τον φάκελο.", "sv.e.format": "Αυτή η διεύθυνση δεν απάντησε σαν server {s}.",
+      "sv.e.version": "Αυτός ο server είναι πολύ παλιός για τη Μουσική.", "sv.e.timeout": "Το {s} άργησε πολύ να απαντήσει.",
+      "sv.e.seal": "Αυτός ο browser δεν μπορεί να κρατήσει τα στοιχεία σύνδεσης με ασφάλεια (ιδιωτικό παράθυρο;).", "sv.e.perm": "Αυτός ο χρήστης δεν έχει δικαίωμα για αυτό στον server.",
+      "sv.e.gone": "Αυτός ο server δεν είναι συνδεδεμένος σε αυτή τη συσκευή.", "sv.openFiles": "Άνοιγμα Αρχείων",
+      "missing.sv": "Από server που δεν είναι συνδεδεμένος εδώ",
+      "missing.svToast": "Αυτό το τραγούδι είναι σε server που δεν είναι συνδεδεμένος σε αυτή τη συσκευή. Σύνδεσέ τον από το «Η βιβλιοθήκη σου › Servers».",
+      "imp.file": "Από αρχείο", "imp.url": "Από διεύθυνση", "imp.urlPh": "Διεύθυνση της λίστας (https://…)", "imp.go": "Εισαγωγή",
+      "imp.done": "Δημιουργήθηκε η λίστα «{n}»: {k}.", "imp.miss": "{n} εγγραφές δεν βρέθηκαν και αφέθηκαν έξω.", "imp.none": "Δεν βρέθηκε κανένα τραγούδι αυτής της λίστας.",
+      "feed.ph": "Διεύθυνση του feed (https://…)", "feed.add": "Προσθήκη", "feed.none": "Αυτό το feed δεν έχει τραγούδια.", "feed.err": "Αυτή η διεύθυνση δεν είναι feed.",
+      "feed.added": "Το feed προστέθηκε.", "feed.kind": "Feed μουσικής", "feed.remove": "Αφαίρεση feed", "feed.removed": "Το feed αφαιρέθηκε.", "feed.site": "Άνοιγμα ιστότοπου",
+      "info.server": "Server", "m.page": "Άνοιγμα σελίδας"
     }
   };
   function t(k, v) {
@@ -238,6 +302,8 @@
     x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>',
     globe: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>',
     dl: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>',
+    server: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/></svg>',
+    rss: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a9 9 0 0 1 9 9M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1.5"/></svg>',
     grip: '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/></svg>'
   };
 
@@ -248,7 +314,7 @@
       var o = JSON.parse(localStorage.getItem(PREFS_KEY) || "null");
       if (o && typeof o === "object") {
         if (["home", "search", "lib"].indexOf(o.tab) >= 0) p.tab = o.tab;
-        if (["pl", "songs", "albums", "artists", "genres", "folders", "offline"].indexOf(o.lib) >= 0) p.lib = o.lib;
+        if (["pl", "songs", "albums", "artists", "genres", "folders", "offline", "servers"].indexOf(o.lib) >= 0) p.lib = o.lib;
         if (["title", "artist", "album", "added"].indexOf(o.sort) >= 0) p.sort = o.sort;
         if (["auto", "el", "latin"].indexOf(o.legacy) >= 0) p.legacy = o.legacy;
         if (o.open === false) p.open = false;
@@ -331,8 +397,11 @@
     if (x.p) return x;
     var r = resolve(x);
     if (r) return r;
+    if (C.isServer(x)) return svOn(x.sh) ? svShow(x) : null;
     return C.isRemote(x) ? x : null;
   }
+  // A song of the open catalogues (not a link, not a server).
+  function isOpen(r) { return !!(r && r.s && O && O.SOURCES[r.s]); }
   function srcName(s) { return O && O.SOURCES[s] ? O.SOURCES[s].name : ""; }
   // Offline copies on this device: key -> { k, sz, at, ref }.
   var offKeys = {};
@@ -389,19 +458,19 @@
     return code === "busy" ? t("o.busy", { s: s }) : code === "offline" ? t("o.offline") : code === "closed" ? t("o.closed") : t("o.err", { s: s });
   }
   // Loading / error / "show more" under a list of an open catalogue.
-  function feedStatus(box, key, s) {
+  function feedStatus(box, key, s, noMore) {
     var f = feeds[key];
     if (!f) return;
     if (f.busy) { box.appendChild(el("p", "dim small o-note", t("o.loading"))); return; }
     if (f.err) {
       var p = el("div", "o-note o-err");
-      p.appendChild(el("span", "dim small", errText(f.err, s)));
+      p.appendChild(el("span", "dim small", key.indexOf("sv|") === 0 ? svErr(f.err, s) : errText(f.err, s)));
       if (f.err !== "closed") p.appendChild(button(t("o.retry"), "pill small-pill", function () { f.more = true; feedMore(key); renderKeepScroll(); }));
       box.appendChild(p);
       return;
     }
     if (!f.list.length) { box.appendChild(el("p", "dim small o-note", t("o.none"))); return; }
-    if (f.more) box.appendChild(el("div", "o-note")).appendChild(button(t("o.more"), "pill small-pill", function () { feedMore(key); renderKeepScroll(); }));
+    if (f.more && !noMore) box.appendChild(el("div", "o-note")).appendChild(button(t("o.more"), "pill small-pill", function () { feedMore(key); renderKeepScroll(); }));
   }
   function oAlbumCard(a) {
     var sk = a.s === "jm" ? "jm" : "ia";
@@ -514,6 +583,444 @@
   }
   function offSize() { var n = 0; Object.keys(offKeys).forEach(function (k) { n += offKeys[k].sz || 0; }); return n; }
 
+  // ---------- 3c. My servers, playlist files, music feeds (servers.js, wave 4) ----------
+  var SV = window.OrosMusicServers || null;
+  var FEEDS_KEY = "oros-music-feeds";        // device-local list of music feeds
+  function svList() { return SV ? SV.servers() : []; }
+  function svOn(id) { return !!(SV && SV.has(id)); }
+  function svLib() { return svList().filter(function (x) { return SV.TYPES[x.ty].lib; }); }
+  // A server song on screen gets its cover address (it carries the login, so it is never stored).
+  function svShow(x) { var a = SV.coverUrl(x); return a ? Object.assign({}, x, { art: a }) : x; }
+  function artOf(c) { return c && c.s === "sv" ? (SV ? SV.coverUrl(c) : "") : c && c.art; }
+  function svName(id) { var x = SV && SV.get(id); return x ? x.n : ""; }
+  // The shell keeps its own copy of servers.js (the player): it reads the list again.
+  function svChanged() {
+    try { var w = shellWin(); if (w && w.OrosMusicServers && w.OrosMusicServers !== SV) w.OrosMusicServers.reload(); } catch (e) {}
+  }
+  function svForget(id) { Object.keys(feeds).forEach(function (k) { if (k.indexOf("sv|" + id + "|") === 0 && !feeds[k].busy) delete feeds[k]; }); }
+  var SV_ERR = { auth: "sv.e.auth", token: "sv.e.auth", "http-only": "sv.e.http", address: "sv.e.address", login: "sv.e.login",
+    dropbox: "sv.e.dropbox", notfound: "sv.e.notfound", format: "sv.e.format", version: "sv.e.version", timeout: "sv.e.timeout",
+    seal: "sv.e.seal", perm: "sv.e.perm", gone: "sv.e.gone", net: "sv.e.net" };
+  function svErr(code, s) { return SV_ERR[code] ? t(SV_ERR[code], { s: s }) : errText(code, s); }
+  // A list from a server, in the shape feed() keeps.
+  function fSv(id, what, arg) {
+    return function (page) {
+      return SV.call(id, what, arg === undefined ? page : arg).then(function (r) {
+        if (what === "album") return { list: r.tracks, more: false, extra: r.album };
+        if (what === "artist") return { list: r.albums, more: false, extra: r.artist };
+        if (what === "playlist") return { list: r.tracks, more: false, extra: r.pl };
+        if (what === "search") return { list: r.songs, more: false, extra: { albums: r.albums, artists: r.artists } };
+        if (what === "folder") return { list: r.songs, more: false, extra: { dirs: r.dirs, lists: r.lists } };
+        return { list: r.list, more: !!r.more };
+      });
+    };
+  }
+  function svPair(v) { var i = String(v.id).indexOf("|"); return i > 0 ? { sid: v.id.slice(0, i), x: v.id.slice(i + 1) } : { sid: v.id, x: "" }; }
+  function svAlbumCard(id, a) {
+    var v = { kind: "sva", id: id + "|" + a.id, n: a.n };
+    return card(cover(SV.albumCover(id, a.ca), a.n, ""), a.n, a.a || svName(id), function () { openView(v); }, function () {
+      SV.call(id, "album", a.id).then(function (r) { playRows(r.tracks, -1, { kind: "sva", id: v.id, n: a.n }, false); },
+        function (e) { showToast(svErr(e && e.code, svName(id))); });
+    });
+  }
+  function svArtistCard(id, a) {
+    return card(cover(SV.albumCover(id, a.ca), a.n, "round", I.user), a.n, t("kind.artist"), function () { openView({ kind: "svr", id: id + "|" + a.id, n: a.n }); });
+  }
+  function svPlCard(id, p) {
+    return card(cover(SV.albumCover(id, p.ca), p.n, "", I.queue), p.n, p.c ? nSongs(p.c) : t("kind.pl"), function () { openView({ kind: "svp", id: id + "|" + p.id, n: p.n }); });
+  }
+  function svCard(x) { return card(cover("", x.id, "", I.server), x.n, SV.TYPES[x.ty].name, function () { openView({ kind: "sv", id: x.id }); }); }
+  function svArtistLink(r, cls) {
+    var a = el("button", "link " + (cls || ""), r.a || t("unknown.artist"));
+    a.type = "button";
+    if (r.ri) a.addEventListener("click", function (e) { e.stopPropagation(); openView({ kind: "svr", id: r.sh + "|" + r.ri, n: r.a }); });
+    return a;
+  }
+  // Home: the servers, then the newest albums of the first three.
+  function serverSection(m) {
+    var l = svList();
+    if (!l.length) return;
+    var s0 = section(m, t("home.servers"));
+    var row = el("div", "cards");
+    l.forEach(function (x) { row.appendChild(svCard(x)); });
+    s0.appendChild(row);
+    svLib().slice(0, 3).forEach(function (x) {
+      var k = "sv|" + x.id + "|albums", f = feed(k, fSv(x.id, "albums"));
+      var sc = section(m, t("home.newOn", { n: x.n }), button(t("sv.all"), "txt-btn small", function () { openView({ kind: "svall", id: x.id }); }));
+      if (f.list.length) { var r2 = el("div", "cards"); f.list.slice(0, 16).forEach(function (a) { r2.appendChild(svAlbumCard(x.id, a)); }); sc.appendChild(r2); }
+      feedStatus(sc, k, x.n, true);
+    });
+  }
+  // Search: songs, albums and artists of each server (asked once the typing stops).
+  function serverResults(box, q) {
+    svLib().slice(0, 5).forEach(function (x) {
+      var sec = section(box, x.n);
+      if (onlineQ !== q) { sec.appendChild(el("p", "dim small o-note", t("o.wait"))); return; }
+      var k = "sv|" + x.id + "|s|" + q, f = feed(k, fSv(x.id, "search", q)), ex = f.extra || {};
+      var al = ex.albums || [], ar = ex.artists || [];
+      if (f.list.length) { sec.appendChild(el("h3", "sub-h", t("sec.songs"))); sec.appendChild(rowList(f.list, { src: { kind: "svsearch", id: x.id + "|" + q, n: q } })); }
+      if (al.length) { sec.appendChild(el("h3", "sub-h", t("sec.albums"))); var ca = el("div", "cards"); al.forEach(function (a) { ca.appendChild(svAlbumCard(x.id, a)); }); sec.appendChild(ca); }
+      if (ar.length) { sec.appendChild(el("h3", "sub-h", t("sec.artists"))); var cr = el("div", "cards"); ar.forEach(function (a) { cr.appendChild(svArtistCard(x.id, a)); }); sec.appendChild(cr); }
+      if (f.busy || f.err) feedStatus(sec, k, x.n, true);
+      else if (!f.list.length && !al.length && !ar.length) sec.appendChild(el("p", "dim small o-note", t("o.none")));
+    });
+  }
+  // Your library › Servers: the servers and the music feeds.
+  function renderServers(m) {
+    var l = svList();
+    var list = el("div", "lib-list");
+    l.forEach(function (x) { list.appendChild(libRow(cover("", x.id, "sm", I.server), x.n, SV.TYPES[x.ty].name, function () { openView({ kind: "sv", id: x.id }); })); });
+    list.appendChild(libRow(cover("", "+", "sm", I.plus), t("sv.connect"), "", function () { connectDlg(); }));
+    m.appendChild(list);
+    if (!l.length) m.appendChild(el("p", "dim small o-note", t("sv.none")));
+    m.appendChild(el("h2", "sub-h", t("sv.feeds")));
+    var lf = el("div", "lib-list");
+    feedList().forEach(function (fd) { lf.appendChild(libRow(cover(fd.art, fd.n, "sm", I.rss), fd.n, t("feed.kind"), function () { openView({ kind: "rss", id: fd.u, n: fd.n }); })); });
+    lf.appendChild(libRow(cover("", "+f", "sm", I.plus), t("sv.feedAdd"), "", feedDlg));
+    lf.appendChild(libRow(cover("", "+m", "sm", I.plus), t("sv.import"), "", importMenu));
+    m.appendChild(lf);
+  }
+  function cardRow(m, title, list, mk, more) {
+    if (!list.length) return null;
+    var sc = section(m, title, more);
+    var row = el("div", "cards");
+    list.forEach(function (x) { row.appendChild(mk(x)); });
+    sc.appendChild(row);
+    return sc;
+  }
+  function renderServer(m, v) {
+    var pr = svPair(v), x = SV.get(pr.sid), src, k, f;
+    if (!x) { m.appendChild(el("p", "empty", t("sv.e.gone"))); return; }
+    var kind = SV.TYPES[x.ty].name;
+    if (v.kind === "sv") {
+      src = { kind: "sv", id: x.id, n: x.n };
+      var more = button(t("more"), "icon-btn", function () { svMenu(x); }, I.more);
+      if (!SV.TYPES[x.ty].lib) {
+        pageHead(m, cover("", x.id, "big", I.server), t("sv.kind") + " · " + kind, x.n, el("div", "ph-sub dim", x.dir || "/"), null, src, [more]);
+        svFolder(m, x, x.dir || "/");
+        return;
+      }
+      var rnd = button(t("sv.random"), "icon-btn", function () {
+        SV.call(x.id, "random").then(function (r) { playRows(r.list, -1, { kind: "svrand", id: x.id, n: x.n }, true); }, function (e) { showToast(svErr(e && e.code, x.n)); });
+      }, I.shuffle);
+      pageHead(m, cover("", x.id, "big", I.server), t("sv.kind") + " · " + kind, x.n, el("div", "ph-sub dim", x.b.replace(/^https?:\/\//, "")), null, src, [rnd, more]);
+      var kA = "sv|" + x.id + "|albums", fA = feed(kA, fSv(x.id, "albums"));
+      var sA = section(m, t("sv.albums"), button(t("sv.all"), "txt-btn small", function () { openView({ kind: "svall", id: x.id }); }));
+      if (fA.list.length) { var ra = el("div", "cards"); fA.list.slice(0, 16).forEach(function (a) { ra.appendChild(svAlbumCard(x.id, a)); }); sA.appendChild(ra); }
+      feedStatus(sA, kA, x.n, true);
+      var fP = feed("sv|" + x.id + "|pls", fSv(x.id, "playlists"));
+      cardRow(m, t("sv.pls"), fP.list, function (p) { return svPlCard(x.id, p); });
+      var kR = "sv|" + x.id + "|artists", fR = feed(kR, fSv(x.id, "artists"));
+      cardRow(m, t("sv.artists"), fR.list.slice(0, 16), function (a) { return svArtistCard(x.id, a); },
+        button(t("sv.all"), "txt-btn small", function () { openView({ kind: "svar", id: x.id }); }));
+    } else if (v.kind === "svall" || v.kind === "svar") {
+      var arts = v.kind === "svar";
+      src = { kind: v.kind, id: x.id, n: x.n };
+      k = "sv|" + x.id + (arts ? "|artists" : "|albums");
+      f = feed(k, fSv(x.id, arts ? "artists" : "albums"));
+      pageHead(m, cover("", x.id, "big", I.server), x.n, arts ? t("sv.artists") : t("sv.albums"), null, null, src);
+      var g = el("div", arts ? "lib-list" : "grid");
+      f.list.forEach(function (a) {
+        g.appendChild(arts ? libRow(cover(SV.albumCover(x.id, a.ca), a.n, "sm round", I.user), a.n, t("kind.artist"), function () { openView({ kind: "svr", id: x.id + "|" + a.id, n: a.n }); })
+          : svAlbumCard(x.id, a));
+      });
+      m.appendChild(g);
+      feedStatus(m, k, x.n);
+    } else if (v.kind === "sva") {
+      k = "sv|" + x.id + "|a|" + pr.x;
+      f = feed(k, fSv(x.id, "album", pr.x));
+      var al = f.extra || { id: pr.x, n: v.n || "", a: "", ri: "", ca: "" };
+      src = { kind: "sva", id: v.id, n: al.n || v.n || "" };
+      var sub = el("div", "ph-sub");
+      if (al.a) sub.appendChild(svArtistLink({ sh: x.id, a: al.a, ri: al.ri }));
+      sub.appendChild(el("span", "dim", [al.y || "", f.list.length ? nSongs(f.list.length) : "", totalTime(f.list)].filter(Boolean).join(" · ")));
+      pageHead(m, cover(SV.albumCover(x.id, al.ca), al.n || v.n, "big"), t("kind.album") + " · " + x.n, al.n || v.n || "…", sub, f.list.length ? f.list : null, src,
+        f.list.length ? [button(t("m.addPl"), "icon-btn", function () { addToPlaylist(f.list.map(C.normRef).filter(Boolean)); }, I.plus)] : null);
+      if (f.list.length) m.appendChild(rowList(f.list, { src: src, numbers: true, noArt: true, noAlbum: true }));
+      feedStatus(m, k, x.n);
+    } else if (v.kind === "svr") {
+      k = "sv|" + x.id + "|r|" + pr.x;
+      f = feed(k, fSv(x.id, "artist", pr.x));
+      var an = (f.extra && f.extra.n) || v.n || "…";
+      src = { kind: "svr", id: v.id, n: an };
+      pageHead(m, cover(SV.albumCover(x.id, f.extra && f.extra.ca), an, "big round", I.user), t("kind.artist") + " · " + x.n, an,
+        f.list.length ? el("div", "ph-sub dim", nAlbums(f.list.length)) : null, null, src);
+      var ga = el("div", "grid");
+      f.list.forEach(function (a) { ga.appendChild(svAlbumCard(x.id, a)); });
+      m.appendChild(ga);
+      feedStatus(m, k, x.n);
+    } else if (v.kind === "svp") {
+      k = "sv|" + x.id + "|p|" + pr.x;
+      f = feed(k, fSv(x.id, "playlist", pr.x));
+      var pn = v.n || (f.extra && f.extra.n) || "…";
+      src = { kind: "svp", id: v.id, n: pn };
+      pageHead(m, collage(f.list, "big"), t("kind.pl") + " · " + x.n, pn, el("div", "ph-sub dim", [f.list.length ? nSongs(f.list.length) : "", totalTime(f.list)].filter(Boolean).join(" · ")),
+        f.list.length ? f.list : null, src, f.list.length ? [button(t("m.addPl"), "icon-btn", function () { addToPlaylist(f.list.map(C.normRef).filter(Boolean)); }, I.plus)] : null);
+      if (f.list.length) m.appendChild(rowList(f.list, { src: src }));
+      feedStatus(m, k, x.n);
+    } else if (v.kind === "svf") {
+      m.appendChild(el("div", "crumbs dim small", x.n + (pr.x === "/" ? "" : pr.x)));
+      svFolder(m, x, pr.x || "/");
+    }
+  }
+  // A folder of a WebDAV or Dropbox server: sub-folders, playlist files, songs.
+  function svFolder(m, x, dir) {
+    var k = "sv|" + x.id + "|f|" + dir, f = feed(k, fSv(x.id, "folder", dir)), ex = f.extra || { dirs: [], lists: [] };
+    var src = { kind: "svf", id: x.id + "|" + dir, n: dir === "/" ? x.n : dir.split("/").pop() };
+    var lf = el("div", "lib-list");
+    ex.dirs.forEach(function (d) { lf.appendChild(libRow(cover("", d.n, "sm", I.folder), d.n, "", function () { openView({ kind: "svf", id: x.id + "|" + d.p }); })); });
+    ex.lists.forEach(function (pf) { lf.appendChild(libRow(cover("", pf.n, "sm", I.queue), pf.n, t("sv.lists"), function () { importServerList(x, dir, pf); })); });
+    m.appendChild(lf);
+    if (f.list.length) { m.appendChild(playBar(f.list, src)); m.appendChild(rowList(f.list, { src: src })); }
+    if (f.busy || f.err) feedStatus(m, k, x.n, true);
+    else if (!ex.dirs.length && !ex.lists.length && !f.list.length) m.appendChild(el("p", "empty", t("lib.empty")));
+  }
+  function svMenu(x) {
+    menuDlg([
+      [t("sv.rename"), function () {
+        promptDlg(t("sv.rename"), t("sv.name"), x.n, t("pl.save"), function (n) { SV.rename(x.id, n); svChanged(); renderKeepScroll(); });
+      }],
+      [t("sv.remove"), function () {
+        confirmDlg(t("sv.removeQ", { n: x.n }), t("sv.remove"), function () {
+          SV.remove(x.id).then(function () { svChanged(); svForget(x.id); view = null; history = []; prefs.lib = "servers"; setTab("lib"); showToast(t("sv.removed")); });
+        });
+      }, true]
+    ], x.n, SV.TYPES[x.ty].name);
+  }
+  function openApp(id, target) {
+    try { var f = window.parent && window.parent.__orosOpenAt; if (typeof f === "function") f(id, target || {}); } catch (e) {}
+  }
+  function connectDlg(preTy) {
+    if (!SV) return;
+    var dlg = makeDialog("mu-connect", "menu-dlg");
+    var form = el("form", "");
+    form.method = "dialog";
+    form.appendChild(el("h2", "dlg-title", t("sv.connect")));
+    var field = function (label, inp) { var lab = el("label", "field"); lab.appendChild(el("span", "dim small", label)); lab.appendChild(inp); form.appendChild(lab); return lab; };
+    var sel = el("select");
+    Object.keys(SV.TYPES).forEach(function (k) { var o = el("option", "", SV.TYPES[k].name); o.value = k; sel.appendChild(o); });
+    sel.value = SV.TYPES[preTy] ? preTy : "subsonic";
+    field(t("sv.type"), sel);
+    var hint = el("p", "dim small");
+    form.appendChild(hint);
+    var mk = function (type, ac, max) {
+      var i = el("input");
+      i.type = type; i.autocomplete = ac || "off"; i.spellcheck = false; i.maxLength = max;
+      i.setAttribute("autocapitalize", "none");
+      return i;
+    };
+    var name = mk("text", "off", 60), addr = mk("text", "url", 500), user = mk("text", "username", 120), pass = mk("password", "current-password", 500),
+      tok = mk("password", "off", 2000), dir = mk("text", "off", 500);
+    addr.inputMode = "url";
+    field(t("sv.name"), name);
+    var fA = field(t("sv.addr"), addr), fU = field(t("sv.user"), user), fP = field(t("sv.pass"), pass), fT = field(t("sv.tok"), tok), fD = field(t("sv.dir"), dir);
+    form.appendChild(el("p", "dim small", t("sv.h.all")));
+    var msg = el("p", "sv-msg small");
+    msg.setAttribute("role", "status");
+    form.appendChild(msg);
+    var PH = { subsonic: "https://music.example.com", jellyfin: "https://jellyfin.example.com", funkwhale: "https://open.audio",
+      webdav: "https://cloud.example.com/remote.php/dav/files/me" };
+    var paint = function () {
+      var ty = sel.value, login = ty === "subsonic" || ty === "jellyfin" || ty === "webdav";
+      fA.hidden = ty === "dropbox"; addr.placeholder = PH[ty] || "";
+      fU.hidden = !login; fP.hidden = !login;
+      fT.hidden = ty !== "funkwhale";
+      fD.hidden = !(ty === "webdav" || ty === "dropbox"); dir.placeholder = ty === "dropbox" ? "/Music" : "/";
+      name.placeholder = SV.TYPES[ty].name;
+      hint.textContent = t("sv.h." + ty);
+      msg.textContent = "";
+    };
+    sel.addEventListener("change", paint);
+    form.addEventListener("input", function (e) { if (e.target !== sel) msg.textContent = ""; });
+    paint();
+    var row = el("div", "dlg-btns");
+    row.appendChild(button(t("cancel"), "txt-btn", function () { dlg.close(); }));
+    var ok = el("button", "txt-btn accent", t("sv.go"));
+    ok.type = "submit";
+    row.appendChild(ok);
+    form.appendChild(row);
+    var busy = false;
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      if (busy) return;
+      busy = true; ok.disabled = true;
+      msg.className = "sv-msg small dim"; msg.textContent = t("sv.busy");
+      var ty = sel.value;
+      SV.connect({ ty: ty, n: name.value, b: addr.value, us: user.value, pw: pass.value, tok: tok.value, dir: dir.value }).then(function (srv) {
+        busy = false;
+        pass.value = ""; tok.value = "";
+        svChanged();
+        svForget(srv.id);
+        dlg.close();
+        showToast(t("sv.ok", { n: srv.n }));
+        openView({ kind: "sv", id: srv.id });
+      }, function (err) {
+        busy = false; ok.disabled = false;
+        var c = err && err.code;
+        msg.className = "sv-msg small err";
+        msg.textContent = svErr(c, SV.TYPES[ty].name);
+        if (c === "dropbox") {
+          msg.appendChild(document.createTextNode(" "));
+          msg.appendChild(button(t("sv.openFiles"), "link", function () { dlg.close(); openApp("files"); }));
+        }
+      });
+    });
+    dlg.appendChild(form);
+    openDialog(dlg);
+    sel.focus();
+  }
+  // Where a server song or a link comes from.
+  function infoServer(r) {
+    var dlg = makeDialog("mu-info", "menu-dlg");
+    dlg.appendChild(el("h2", "dlg-title", r.t));
+    var dl = el("dl", "info");
+    var add = function (k2, node) { if (!node) return; dl.appendChild(el("dt", "dim", t(k2))); var dd = el("dd", ""); if (typeof node === "string") dd.textContent = node; else dd.appendChild(node); dl.appendChild(dd); };
+    if (r.s === "sv") { var x = SV && SV.get(r.sh); add("info.server", x ? x.n + " · " + SV.TYPES[x.ty].name : ""); if (x && !SV.TYPES[x.ty].lib) add("info.file", r.ii); }
+    else add("info.source", (/^https:\/\/([^/]+)/.exec(r.u || "") || [])[1] || "");
+    add("sec.albums", r.al || "");
+    add("info.length", r.d ? C.fmtTime(r.d) : "");
+    if (r.pg) { var b = el("button", "link", r.pg.replace(/^https:\/\//, "").slice(0, 60)); b.type = "button"; b.addEventListener("click", function () { openExt(r.pg); }); add("info.page", b); }
+    dlg.appendChild(dl);
+    var row = el("div", "dlg-btns");
+    row.appendChild(button(t("close"), "txt-btn", function () { dlg.close(); }));
+    dlg.appendChild(row);
+    openDialog(dlg);
+  }
+  // Playlist files (M3U, PLS, XSPF) → a new playlist. Entries match a
+  // song on this device (file name, else title + artist), a song on
+  // the server the file is on, or a public https address.
+  function joinPath(dir, rel) {
+    rel = String(rel || "").replace(/\\/g, "/");
+    if (/%[0-9a-f]{2}/i.test(rel)) { try { rel = decodeURIComponent(rel); } catch (e) {} }
+    var parts = (rel[0] === "/" ? [] : String(dir || "/").split("/")).concat(rel.split("/")), out = [];
+    parts.forEach(function (p) { if (!p || p === ".") return; if (p === "..") out.pop(); else out.push(p); });
+    return "/" + out.join("/");
+  }
+  function importEntries(parsed, name, ctx) {
+    var refs = [], miss = 0, byName = {}, here = null;
+    tracks.forEach(function (r) { var b = C.fold(r.p.split("/").pop()); if (!byName[b]) byName[b] = r; });
+    var lf = ctx && ctx.sid && feeds["sv|" + ctx.sid + "|f|" + (ctx.dir || "/")];
+    if (lf && !lf.busy && !lf.err && lf.page) { here = {}; lf.list.forEach(function (x) { here[x.ii] = 1; }); }
+    parsed.entries.forEach(function (e) {
+      var ref = null;
+      if (e.u) ref = SV.linkRef(e);
+      else if (e.path && ctx && ctx.sid) {
+        var p = joinPath(ctx.dir, e.path);
+        // In the folder the file is in, only the songs that are there.
+        var dirOf = p.slice(0, p.lastIndexOf("/")) || "/";
+        if (here && dirOf === (ctx.dir || "/") && !here[p]) { miss++; return; }
+        ref = SV.fileSong(ctx.sid, p, p.split("/").pop());
+        if (ref && e.t) { ref.t = C.clean(e.t); if (e.a) ref.a = C.clean(e.a); }
+      } else if (e.path) {
+        var hit = byName[C.fold(e.path.split("/").pop())] || (e.t ? resolve({ k: "x:000000", t: e.t, a: e.a || "" }) : null);
+        if (hit) ref = C.refOf(hit);
+      }
+      ref = ref ? C.normRef(ref) : null;
+      if (ref) refs.push(ref); else miss++;
+    });
+    if (!refs.length) { showToast(t("imp.none")); return; }
+    var title = C.clean(parsed.title, C.LIM.plName) || C.clean(C.stem(name), C.LIM.plName) || t("pl.my", { n: D().pls.length + 1 });
+    var id = null;
+    mutate(function (d, now) { var r = C.addPl(d, title, refs, now); id = r.id; return r.data; });
+    showToast(t("imp.done", { n: title, k: nSongs(refs.length) }) + (miss ? " " + t("imp.miss", { n: miss }) : ""));
+    if (id) { view = null; history = []; openView({ kind: "pl", id: id }); }
+  }
+  function importMenu() {
+    menuDlg([
+      [t("imp.file"), pickPlaylistFile],
+      [t("imp.url"), function () { promptDlg(t("sv.import"), t("imp.urlPh"), "https://", t("imp.go"), importUrl, 1000); }]
+    ], t("sv.import"));
+  }
+  function pickPlaylistFile() {
+    var inp = document.createElement("input");
+    inp.type = "file";
+    inp.accept = ".m3u,.m3u8,.pls,.xspf,audio/x-mpegurl,audio/mpegurl,audio/x-scpls,application/xspf+xml";
+    inp.style.display = "none";
+    inp.addEventListener("change", function () {
+      var f = (inp.files || [])[0];
+      inp.remove();
+      if (!f) return;
+      if (f.size > 5e6) { showToast(t("imp.none")); return; }
+      f.text().then(function (text) { importEntries(SV.parsePlaylist(text, f.name, ""), f.name, null); }, function () { showToast(t("imp.none")); });
+    });
+    inp.addEventListener("cancel", function () { inp.remove(); });
+    document.body.appendChild(inp);
+    inp.click();
+  }
+  function getText(u) {
+    var FF = window.orosFeedsFetch;
+    if (!FF || typeof FF.fetchOne !== "function") return Promise.reject({ code: "net" });
+    return FF.fetchOne(u, { accept: "application/rss+xml, application/xml, text/xml, audio/x-mpegurl, */*" }).then(function (r) {
+      if (!r.status || r.status >= 400) throw { code: "http" };
+      return r;
+    });
+  }
+  function importUrl(u) {
+    u = /^https?:\/\//i.test(u) ? u : "https://" + u;
+    getText(u).then(function (r) {
+      var nm = decodeURIComponent((u.split(/[?#]/)[0].split("/").pop() || "playlist"));
+      importEntries(SV.parsePlaylist(r.text, nm, r.finalUrl || u), nm, null);
+    }, function (e) { showToast(errText(e && e.code, (/^https?:\/\/([^/]+)/.exec(u) || [])[1] || u)); });
+  }
+  function importServerList(x, dir, pf) {
+    SV.fileText(x.id, pf.p).then(function (text) { importEntries(SV.parsePlaylist(text, pf.n, ""), pf.n, { sid: x.id, dir: dir }); },
+      function (e) { showToast(svErr(e && e.code, x.n)); });
+  }
+  // Music feeds (RSS / Atom with audio): kept on this device.
+  function feedList() {
+    try {
+      var a = JSON.parse(localStorage.getItem(FEEDS_KEY) || "[]");
+      return (Array.isArray(a) ? a : []).filter(function (f) { return f && typeof f.u === "string" && /^https?:\/\//i.test(f.u) && f.u.length <= 1000; })
+        .map(function (f) { return { u: f.u, n: C.clean(f.n) || f.u, art: /^https:\/\/[^\s"'<>]+$/i.test(f.art || "") ? f.art : "" }; }).slice(0, 50);
+    } catch (e) { return []; }
+  }
+  function saveFeeds(l) { try { localStorage.setItem(FEEDS_KEY, JSON.stringify(l.slice(0, 50))); } catch (e) {} }
+  function hostOf(u) { return (/^https?:\/\/([^/]+)/.exec(u || "") || [])[1] || ""; }
+  function loadFeed(u) {
+    var X = window.orosFeedsCore;
+    if (!X) return Promise.reject({ code: "net" });
+    return getText(u).then(function (r) {
+      var fd = X.parseFeed(r.text, r.finalUrl || u, Date.now());
+      if (!fd) throw { code: "feed" };
+      if (!fd.icon) { var im = /<itunes:image[^>]*href=["']([^"']+)["']/i.exec(r.text); if (im) fd.icon = im[1]; }
+      return { feed: fd, songs: SV.feedSongs(fd) };
+    });
+  }
+  function fRss(u) {
+    return function () {
+      return loadFeed(u).then(function (r) { return { list: r.songs, more: false, extra: { n: r.feed.title, art: r.feed.icon, site: r.feed.site } }; });
+    };
+  }
+  function feedDlg() {
+    promptDlg(t("sv.feedAdd"), t("feed.ph"), "https://", t("feed.add"), function (u) {
+      u = /^https?:\/\//i.test(u) ? u : "https://" + u;
+      loadFeed(u).then(function (r) {
+        if (!r.songs.length) { showToast(t("feed.none")); return; }
+        var n = C.clean(r.feed.title) || hostOf(u);
+        saveFeeds([{ u: u, n: n, art: /^https:\/\//i.test(r.feed.icon || "") ? r.feed.icon : "" }].concat(feedList().filter(function (f) { return f.u !== u; })));
+        delete feeds["rss|" + u];
+        showToast(t("feed.added"));
+        openView({ kind: "rss", id: u, n: n });
+      }, function (e) { showToast(e && e.code === "feed" ? t("feed.err") : errText(e && e.code, hostOf(u))); });
+    }, 1000);
+  }
+  function renderRss(m, v) {
+    var k = "rss|" + v.id, f = feed(k, fRss(v.id)), ex = f.extra || {}, host = hostOf(v.id);
+    var name = C.clean(ex.n) || v.n || host;
+    var src = { kind: "rss", id: v.id, n: name };
+    var saved = feedList().some(function (x) { return x.u === v.id; });
+    var more = button(t("more"), "icon-btn", function () {
+      var items = [];
+      if (f.list.length) items.push([t("m.addPl"), function () { addToPlaylist(f.list.map(C.normRef).filter(Boolean)); }]);
+      if (/^https:\/\//i.test(ex.site || "")) items.push([t("feed.site"), function () { openExt(ex.site); }]);
+      if (saved) items.push([t("feed.remove"), function () { saveFeeds(feedList().filter(function (x) { return x.u !== v.id; })); goBack(); showToast(t("feed.removed")); }, true]);
+      menuDlg(items, name, host);
+    }, I.more);
+    pageHead(m, cover(/^https:\/\//i.test(ex.art || "") ? ex.art : "", name, "big", I.rss), t("feed.kind"), name, el("div", "ph-sub dim", host), f.list.length ? f.list : null, src, [more]);
+    if (f.list.length) m.appendChild(rowList(f.list, { src: src }));
+    feedStatus(m, k, host);
+  }
+
   // Paths in the queue follow renamed/moved files (same song key).
   function relinkQueue() {
     if (!H || typeof H.relink !== "function") return;
@@ -547,7 +1054,7 @@
     var hue = parseInt(C.hash(C.fold(seed || "")).slice(0, 4), 36) % 360;
     box.style.setProperty("--hue", hue);
     box.innerHTML = icon || I.note;           // constant markup
-    if (artId && /^https:\/\//i.test(artId)) {
+    if (artId && /^https?:\/\//i.test(artId)) {
       // A cover of an open catalogue, straight from the source.
       var im = el("img");
       im.alt = ""; im.decoding = "async"; im.loading = "lazy"; im.referrerPolicy = "no-referrer";
@@ -667,7 +1174,7 @@
       [t("empty.files"), function () { pickFiles(false); }],
       [t("empty.folder"), function () { pickFiles(true); }],
       [t("lib.newPl"), function () { newPlaylist([], function (id) { openView({ kind: "pl", id: id }); }); }]
-    ]);
+    ].concat(SV ? [[t("sv.connect"), function () { connectDlg(); }], [t("sv.import"), importMenu], [t("sv.feedAdd"), feedDlg]] : []));
   }
   function openInFiles() {
     var F = LIB.fs();
@@ -757,7 +1264,7 @@
     return h < 12 && h >= 5 ? t("hello.m") : h < 18 && h >= 5 ? t("hello.a") : t("hello.e");
   }
   function renderHome(m) {
-    if (!tracks.length && !D().pls.length && !C.likedList(D()).length) { emptyHero(m); freeSection(m); return; }
+    if (!tracks.length && !D().pls.length && !C.likedList(D()).length && !svList().length) { emptyHero(m); freeSection(m); return; }
     m.appendChild(el("h1", "greet", greeting()));
     // Quick tiles: liked songs, playlists, shuffle all.
     var tiles = el("div", "tiles");
@@ -793,6 +1300,7 @@
       });
       s1.appendChild(rowR);
     }
+    serverSection(m);
     var added = albumsAll().slice().sort(function (a, b) { return b.add - a.add; }).slice(0, 12);
     if (added.length) {
       var s2 = section(m, t("home.added"));
@@ -893,7 +1401,7 @@
     var r = C.search(tracks, q, LANG);
     var w = C.words(q);
     var pls = D().pls.filter(function (p) { var f = C.fold(p.n); return w.every(function (x) { return f.indexOf(x) >= 0; }); });
-    if (!r.songs.length && !r.albums.length && !r.artists.length && !pls.length && !openOn()) { box.appendChild(el("p", "empty", t("search.none", { q: q }))); return; }
+    if (!r.songs.length && !r.albums.length && !r.artists.length && !pls.length && !openOn() && !svLib().length) { box.appendChild(el("p", "empty", t("search.none", { q: q }))); return; }
     if (r.songs.length) {
       box.appendChild(el("h2", "sub-h", t("sec.songs")));
       box.appendChild(rowList(r.songs.slice(0, 30), { src: { kind: "search", id: q, n: q } }));
@@ -910,6 +1418,7 @@
       box.appendChild(el("h2", "sub-h", t("sec.pls")));
       var cp = el("div", "cards"); pls.forEach(function (p) { cp.appendChild(plCard(p)); }); box.appendChild(cp);
     }
+    if (SV && q.length >= 2) serverResults(box, q);
     if (openOn() && q.length >= 2) onlineResults(box, q);
   }
   var onlineQ = "", onlineTimer = null;
@@ -942,7 +1451,7 @@
   }
   function renderLib(m) {
     var chips = el("div", "chips");
-    ["pl", "songs", "albums", "artists", "genres", "folders"].concat(O ? ["offline"] : []).forEach(function (k) {
+    ["pl", "songs", "albums", "artists", "genres", "folders"].concat(O ? ["offline"] : [], SV ? ["servers"] : []).forEach(function (k) {
       var b = button(t("lib." + k), "chip" + (prefs.lib === k ? " on" : ""), function () { prefs.lib = k; savePrefs(); renderAll(); });
       b.setAttribute("aria-pressed", prefs.lib === k ? "true" : "false");
       chips.appendChild(b);
@@ -959,6 +1468,7 @@
       m.appendChild(rowList(offL, { src: offSrc }));
       return;
     }
+    if (prefs.lib === "servers" && SV) { renderServers(m); return; }
     if (!tracks.length && prefs.lib !== "pl") { emptyHero(m); return; }
     if (prefs.lib === "pl") {
       var list = el("div", "lib-list");
@@ -1115,6 +1625,10 @@
       m.appendChild(rowList(gl, { src: src }));
     } else if (O && (v.kind === "browse" || v.kind === "ogenre" || v.kind === "omood" || v.kind === "ia" || v.kind === "jm" || v.kind === "oartist")) {
       renderOpen(m, v);
+    } else if (SV && /^(sv|svall|svar|sva|svr|svp|svf)$/.test(v.kind)) {
+      renderServer(m, v);
+    } else if (SV && v.kind === "rss") {
+      renderRss(m, v);
     } else if (v.kind === "folder") {
       var crumbs = el("div", "crumbs dim small", v.id.replace(LIB.ROOT, "Music"));
       m.appendChild(crumbs);
@@ -1233,7 +1747,7 @@
     var tx = el("span", "row-text");
     tx.appendChild(el("span", "row-t", r.t || "?"));
     var sub = [];
-    if (r._missing) sub.push(t("missing"));
+    if (r._missing) sub.push(r.s === "sv" ? t("missing.sv") : t("missing"));
     else {
       if (!opts.noArtist) sub.push(r.a || t("unknown.artist"));
       if (!opts.noAlbum && r.al) sub.push(r.al);
@@ -1249,7 +1763,7 @@
     tx.appendChild(subEl);
     main.appendChild(tx);
     main.addEventListener("click", function () {
-      if (r._missing) { showToast(t("missing.toast")); return; }
+      if (r._missing) { showToast(r.s === "sv" ? t("missing.svToast") : t("missing.toast")); return; }
       var st = H && H.getState();
       if (st && st.cur && st.cur.k === k && st.src && opts.src && st.src.kind === opts.src.kind && st.src.id === opts.src.id) { H.toggle(); return; }
       playRows(rows, i, opts.src, undefined);
@@ -1265,7 +1779,7 @@
   function songMenu(r, i, opts) {
     var items = [];
     var ref = C.normRef(r._ref || (r.p ? C.refOf(r) : r));
-    var item = r._missing ? null : (r.p || C.isRemote(r) ? C.itemOf(r) : null);
+    var item = r._missing ? null : (r.p || C.isRemote(r) || C.isServer(r) ? C.itemOf(r) : null);
     if (item) {
       items.push([t("m.playNext"), function () { H.addNext([item]); showToast(t("toast.next")); }]);
       items.push([t("m.addQueue"), function () { H.addLast([item]); showToast(t("toast.queued")); }]);
@@ -1281,7 +1795,18 @@
       if (i < p.it.length - 1) items.push([t("m.down"), function () { mutate(function (d, now) { return C.movePl(d, p.id, i, i + 1, now); }); }]);
       items.push([t("m.removePl"), function () { mutate(function (d, now) { return C.removeFromPl(d, p.id, i, now); }); }]);
     }
-    if (r.s && !r.p && O && !r._missing) {
+    if (r.s === "sv" && !r.p && !r._missing && SV) {
+      var sa = r.ai ? { kind: "sva", id: r.sh + "|" + r.ai, n: r.al } : null;
+      if (sa && !(view && view.kind === "sva" && view.id === sa.id)) items.push([t("m.album"), function () { openView(sa); }]);
+      var sr = r.ri ? { kind: "svr", id: r.sh + "|" + r.ri, n: r.a } : null;
+      if (sr && !(view && view.kind === "svr" && view.id === sr.id)) items.push([t("m.artist"), function () { openView(sr); }]);
+      items.push([t("m.info"), function () { infoServer(r); }]);
+    }
+    if (r.s === "ln" && !r.p && !r._missing) {
+      if (r.pg) items.push([t("m.page"), function () { openExt(r.pg); }]);
+      items.push([t("m.info"), function () { infoServer(r); }]);
+    }
+    if (isOpen(r) && !r.p && !r._missing) {
       var av = oAlbumView(r);
       if (av && !(view && view.kind === av.kind && view.id === av.id)) items.push([t("m.album"), function () { openView(av); }]);
       var oa = oArtistId(r);
@@ -1387,7 +1912,7 @@
     var key = c.k + "|" + (c.art || "");
     if (bar.getAttribute("data-k") !== key) {
       bar.setAttribute("data-k", key);
-      var a = $("pl-art"); a.textContent = ""; a.appendChild(cover(c.art, c.al || c.t, "xs"));
+      var a = $("pl-art"); a.textContent = ""; a.appendChild(cover(artOf(c), c.al || c.t, "xs"));
       $("pl-title").textContent = c.t || "";
       $("pl-sub").textContent = c.a || "";
     }
@@ -1445,7 +1970,7 @@
     dlg.appendChild(meta);
     var licLine = el("button", "link fp-lic dim small");
     licLine.type = "button";
-    licLine.addEventListener("click", function () { var c = H.getState().cur; if (c && c.s && O) infoRemote(c); });
+    licLine.addEventListener("click", function () { var c = H.getState().cur; if (isOpen(c)) infoRemote(c); });
     dlg.appendChild(licLine);
     var seek = el("input", "seek");
     seek.type = "range"; seek.min = "0"; seek.max = "1000"; seek.step = "1"; seek.value = "0";
@@ -1482,12 +2007,12 @@
       if (full || lastK !== c.k) {
         lastK = c.k;
         artBox.textContent = "";
-        artBox.appendChild(cover(c.art, c.al || c.t, "huge"));
+        artBox.appendChild(cover(artOf(c), c.al || c.t, "huge"));
         tt.textContent = c.t || "";
         ta.textContent = "";
-        ta.appendChild(c.s && O ? oArtistLink(c, "dim") : artistLink(c.a, "dim"));
-        licLine.hidden = !(c.s && O);
-        licLine.textContent = c.s && O ? [c.li ? O.licLabel(c.li, LANG) : "", O.sourceName(c)].filter(Boolean).join(" · ") : "";
+        ta.appendChild(c.s === "sv" ? svArtistLink(c, "dim") : isOpen(c) ? oArtistLink(c, "dim") : c.s ? el("span", "dim", c.a || "") : artistLink(c.a, "dim"));
+        licLine.hidden = !isOpen(c);
+        licLine.textContent = isOpen(c) ? [c.li ? O.licLabel(c.li, LANG) : "", O.sourceName(c)].filter(Boolean).join(" · ") : "";
         fromN.textContent = (st.src && st.src.n) || t("now.lib");
         var liked = C.isLiked(D(), c.k);
         like.innerHTML = liked ? I.heartOn : I.heart;
@@ -1546,7 +2071,7 @@
     var li = el("li", "row" + (isNow ? " now" : ""));
     var main = el("button", "row-main");
     main.type = "button";
-    main.appendChild(cover(it.art, it.al || it.t, "xs"));
+    main.appendChild(cover(artOf(it), it.al || it.t, "xs"));
     var tx = el("span", "row-text");
     tx.appendChild(el("span", "row-t", it.t || "?"));
     tx.appendChild(el("span", "row-s dim", it.a || ""));
@@ -1579,7 +2104,7 @@
     dlg.appendChild(col);
     openDialog(dlg);
   }
-  function promptDlg(title, label, value, okLabel, fn) {
+  function promptDlg(title, label, value, okLabel, fn, max) {
     var dlg = makeDialog("mu-prompt", "menu-dlg");
     var form = el("form", "");
     form.method = "dialog";
@@ -1587,7 +2112,9 @@
     var lab = el("label", "field");
     lab.appendChild(el("span", "dim small", label));
     var inp = el("input");
-    inp.type = "text"; inp.maxLength = C.LIM.plName; inp.value = value || "";
+    inp.type = "text"; inp.maxLength = max || C.LIM.plName; inp.value = value || "";
+    if (max) inp.inputMode = "url";
+    if (max) { inp.spellcheck = false; inp.setAttribute("autocapitalize", "none"); }
     lab.appendChild(inp);
     form.appendChild(lab);
     var row = el("div", "dlg-btns");
@@ -1598,7 +2125,7 @@
     form.appendChild(row);
     form.addEventListener("submit", function (e) {
       e.preventDefault();
-      var v = C.clean(inp.value, C.LIM.plName);
+      var v = C.clean(inp.value, max || C.LIM.plName);
       if (!v) { inp.focus(); return; }
       dlg.close();
       fn(v);
@@ -1820,7 +2347,7 @@
       H = api;
       unsub = H.subscribe(onHost);
       window.addEventListener("pagehide", function () { if (unsub) unsub(); });
-      return Promise.all([loadIndex(), loadOff().catch(function () {})]).then(function () {
+      return Promise.all([loadIndex(), loadOff().catch(function () {}), SV ? SV.ready().catch(function () {}) : null]).then(function () {
         renderAll();
         var tg = null;
         try {
