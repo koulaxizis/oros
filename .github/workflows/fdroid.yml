@@ -8,6 +8,8 @@ name: F-Droid repository
 # shell changed since the last publish (android/, the web manifests and
 # icons, phone.js): the apps' content updates from the web by itself, so
 # a version bump alone must not send every phone an update.
+# Store texts and pictures (tools/fdroid-metadata.js, tools/fdroid/)
+# are part of that hash too, and a push touching them republishes.
 # Run it by hand (Actions → F-Droid repository → Run workflow) with
 # "force" to publish anyway.
 #
@@ -25,6 +27,10 @@ on:
     workflows: ['Android app']
     types: [completed]
     branches: [main]
+  # New store texts or pictures (no new APKs needed)
+  push:
+    branches: [main]
+    paths: ['tools/fdroid-metadata.js', 'tools/fdroid/**']
   workflow_dispatch:
     inputs:
       force:
@@ -41,7 +47,7 @@ concurrency:
 
 jobs:
   publish:
-    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'push' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
     runs-on: ubuntu-latest
     env:
       SITE: https://koulaxizis.github.io/oros-fdroid
@@ -61,7 +67,7 @@ jobs:
             echo "::notice::No F-Droid secrets: nothing published."
             echo "go=0" >> "$GITHUB_OUTPUT"; exit 0
           fi
-          hash=$(git ls-files -s android phone.js manifest.webmanifest '*/manifest.webmanifest' icons/solo icons/icon-512.png | sha256sum | cut -d' ' -f1)
+          hash=$(git ls-files -s android phone.js manifest.webmanifest '*/manifest.webmanifest' icons/solo icons/icon-512.png tools/fdroid-metadata.js tools/fdroid | sha256sum | cut -d' ' -f1)
           echo "hash=$hash" >> "$GITHUB_OUTPUT"
           last=$(curl -fsSL "https://raw.githubusercontent.com/$DEST/main/shell-hash.txt" 2>/dev/null || true)
           if [ "$FORCE" != "1" ] && [ "$hash" = "$last" ]; then
@@ -92,7 +98,9 @@ jobs:
           fd="$RUNNER_TEMP/fd"
           mkdir -p "$fd/repo/icons"
           node tools/fdroid-metadata.js "$fd"
-          cp icons/icon-512.png "$fd/repo/icons/icon.png"
+          # fdroid reads repo_icon from its working directory and copies it
+          # into repo/icons/ (else it draws a placeholder)
+          cp icons/icon-512.png "$fd/icon.png"
           gh release download android-apks --pattern '*.apk' --dir "$fd/repo"
           # Every published APK must have its metadata, and the other way round
           node -e '
@@ -107,7 +115,7 @@ jobs:
           cat > "$fd/config.yml" <<EOF
           repo_url: $SITE/repo
           repo_name: orOS
-          repo_description: The orOS app and its single apps. Free and open source (MIT), free forever.
+          repo_description: "orOS and its single apps: notes, calendar, office, money, health, maps and more. Offline-first, no account, no ads, no tracking. Free and open source (MIT), free forever."
           repo_icon: icon.png
           archive_older: 0
           keystore: $RUNNER_TEMP/repo.keystore
@@ -146,7 +154,8 @@ jobs:
           cp "$fd/versions.json" "$site/"
           echo "$HASH" > "$site/shell-hash.txt"
           touch "$site/.nojekyll"
-          printf '%s\n' '<!doctype html><meta charset="utf-8"><title>orOS F-Droid repository</title><meta http-equiv="refresh" content="0; url=repo/"><a href="repo/">orOS F-Droid repository</a>' > "$site/index.html"
+          # Front page: how to add the repository, its QR code, the apps
+          cp -r "$fd/site/." "$site/"
           cat > "$site/README.md" <<EOF
           # orOS F-Droid repository
 
