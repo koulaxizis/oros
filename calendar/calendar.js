@@ -644,6 +644,23 @@
       "gi.close": "Κλείσιμο"
     }
   });
+  // .oroscal: the orOS file of every event and label (package.js).
+  (function (more) {
+    ["en", "el"].forEach(function (l) {
+      Object.keys(more[l]).forEach(function (k) { STR[l][k] = more[l][k]; });
+    });
+  })({
+    en: {
+      "mm.osave": "orOS file (.oroscal)",
+      "mm.oopen": "Open orOS file…",
+      "mm.ofolder": "Unzipped orOS folder…"
+    },
+    el: {
+      "mm.osave": "Αρχείο orOS (.oroscal)",
+      "mm.oopen": "Άνοιγμα αρχείου orOS…",
+      "mm.ofolder": "Αποσυμπιεσμένος φάκελος orOS…"
+    }
+  });
   function t(k) {
     return (STR[LANG] && STR[LANG][k] !== undefined) ? STR[LANG][k]
          : (STR.en[k] !== undefined ? STR.en[k] : k);
@@ -4930,89 +4947,20 @@ function transientNote(title, body) {
   }, true);
 
   /* ---------- 7e. ICS export ----------
-     RFC 5545 subset: VEVENT with UID/DTSTART/DTEND/SUMMARY/
-     DESCRIPTION/LOCATION/RRULE/EXDATE/CATEGORIES/VALARM. All-day →
-     VALUE=DATE; timed → floating local datetimes, or TZID=<IANA> for
-     an event with its own time zone (no VTIMEZONE block: calendar
-     apps know the IANA names). RRULE from occur.js toRrule (every N,
-     weekdays, Nth / last weekday, COUNT or UNTIL, month-end clamp as
-     BYMONTHDAY=28…31;BYSETPOS=-1). Text escaping per spec. */
-  function icsEsc(s) {
-    return String(s == null ? "" : s)
-      .replace(/\\/g, "\\\\")
-      .replace(/;/g, "\\;")
-      .replace(/,/g, "\\,")
-      .replace(/\r?\n/g, "\\n");
-  }
-  function icsDt(dateYmd, hm) {
-    var d = dateYmd.replace(/-/g, "");
-    if (!hm) return d;                       // VALUE=DATE form
-    return d + "T" + hm.replace(":", "") + "00";
-  }
-  function icsUtc(ms) {
-    return new Date(ms).toISOString().replace(/[-:]/g, "").replace(/\.\d+/, "");
-  }
-  // Pure: one stored event → its VEVENT lines.
-  function icsEventLines(e) {
-    var L = [];
-    L.push("BEGIN:VEVENT");
-    L.push("UID:" + icsEsc(e.id) + "@oros.calendar");
-    // 2000-01-01 fallback mtime as a stable STAMP source
-    L.push("DTSTAMP:" + icsUtc(e.mtime || 946684800000));
-    var tz = e.start && e.tz && OCC.tzValid(e.tz) ? e.tz : "";
-    var tzp = tz ? ";TZID=" + tz : "";
-    if (e.start === null) {
-      // all-day: DTEND is exclusive in RFC 5545 → +1 day
-      var endDate = e.dateEnd ? dAdd(e.dateEnd, 1) : dAdd(e.date, 1);
-      L.push("DTSTART;VALUE=DATE:" + icsDt(e.date));
-      L.push("DTEND;VALUE=DATE:" + icsDt(endDate));
-    } else {
-      L.push("DTSTART" + tzp + ":" + icsDt(e.date, e.start));
-      L.push("DTEND" + tzp + ":" + icsDt(e.dateEnd || e.date, e.end || e.start));
-    }
-    L.push("SUMMARY:" + icsEsc(e.title || t("ev.untitled")));
-    if (e.note) L.push("DESCRIPTION:" + icsEsc(e.note));
-    if (e.location) L.push("LOCATION:" + icsEsc(e.location));
-    if (validRecur(e.recur)) {
-      L.push("RRULE:" + OCC.toRrule(e, {
-        until: function (u) {
-          if (!e.start) return u.replace(/-/g, "");
-          // UNTIL matches DTSTART: UTC with a zone, local otherwise.
-          return tz ? icsUtc(OCC.wallToMs(u, "23:59", tz) + 59000) : u.replace(/-/g, "") + "T235959";
-        }
-      }));
-      if (e.recur.exdates.length) {
-        if (e.start) {
-          L.push("EXDATE" + tzp + ":" +
-            e.recur.exdates.map(function (d) { return icsDt(d, e.start); }).join(","));
-        } else {
-          L.push("EXDATE;VALUE=DATE:" +
-            e.recur.exdates.map(function (d) { return icsDt(d); }).join(","));
-        }
-      }
-    }
-    var lb = e.labelId ? labelById(e.labelId) : null;
-    if (lb) L.push("CATEGORIES:" + icsEsc(lb.name));
-    if (typeof e.remindMin === "number" && e.remindMin > 0) {
-      L.push("BEGIN:VALARM");
-      L.push("ACTION:DISPLAY");
-      L.push("TRIGGER:-PT" + e.remindMin + "M");
-      L.push("DESCRIPTION:" + icsEsc(e.title || t("ev.untitled")));
-      L.push("END:VALARM");
-    }
-    L.push("END:VEVENT");
-    return L;
+     The text comes from calendar/ics.js build() (pure, RFC 5545
+     subset; also the .oroscal file's preview/calendar.ics): VEVENT
+     with UID/DTSTART/DTEND/SUMMARY/DESCRIPTION/LOCATION/RRULE/EXDATE/
+     CATEGORIES/VALARM, all-day as VALUE=DATE, a zoned event with
+     TZID=<IANA>. Here: the label names and saving the file. */
+  function icsText(events) {
+    return window.OrosIcs.build(events, {
+      untitled: t("ev.untitled"),
+      label: function (id) { var lb = labelById(id); return lb ? String(lb.name || "") : null; }
+    });
   }
   function exportICS() {
-    var L = [];
-    L.push("BEGIN:VCALENDAR");
-    L.push("VERSION:2.0");
-    L.push("PRODID:-//orOS//Calendar//EN");
-    L.push("CALSCALE:GREGORIAN");
-    state.events.forEach(function (e) { L = L.concat(icsEventLines(e)); });
-    L.push("END:VCALENDAR");
-
-    var blob = new Blob([L.join("\r\n")], { type: "text/calendar;charset=utf-8" });
+    if (!window.OrosIcs || typeof window.OrosIcs.build !== "function") return;
+    var blob = new Blob([icsText(state.events)], { type: "text/calendar;charset=utf-8" });
     var done = function () { transientNote(t("exp.done")); };
     var dlg = dialogHost();
 
@@ -5351,8 +5299,14 @@ function transientNote(title, body) {
   // Tombstones newer than the import, so the events stay gone on every
   // device; the labels it made go the same way.
   function giUndo(back) {
+    dropAdded(back.events.concat(back.labels));
+    transientNote(t("gi.undone"));
+  }
+  // Undo of an import (Google, .oroscal): the events and labels it
+  // added go, each with a tombstone newer than the import.
+  function dropAdded(ids) {
     var t0 = Date.now(), gone = {};
-    back.events.concat(back.labels).forEach(function (id) { gone[id] = 1; });
+    ids.forEach(function (id) { gone[id] = 1; });
     state.events = state.events.filter(function (e) { return !gone[e.id]; });
     state.labels = state.labels.filter(function (l) { return !gone[l.id]; });
     state.deleted = state.deleted.filter(function (d) { return !gone[d.id]; });
@@ -5361,7 +5315,6 @@ function transientNote(title, body) {
     renderChips();
     renderAll();
     renderDay();
-    transientNote(t("gi.undone"));
   }
   // Inside the click: the sign-in window must open right here.
   function giStart() {
@@ -5405,9 +5358,63 @@ function transientNote(title, body) {
     $("gi-dlg").addEventListener("close", function () { if (giBusy && GI) GI.cancel(); giCals = null; });
   }
 
+  /* ---------- 7e4. The .oroscal file (OBF-4e) ----------
+     Every event and label as one orOS file (../recordpkg.js +
+     package.js). Opening ADDS what this device lacks, with its ids;
+     an event already here (or deleted here) is kept as it is unless
+     "Update with newer versions" is ticked. Subscriptions are not in
+     the file (their addresses can hold private keys), nor the Google
+     sign-in or any setting. The result goes through the sanitizers +
+     saveState (so sync carries it); Undo removes the added events and
+     labels the way the Google import's Undo does (tombstones). */
+  var RP = window.OrosRecordPkg || null, CPK = window.OrosCalPackage || null;
+  var recFile = RP && CPK && window.OrosBundle ? RP.ui(CPK.DESC, {
+    lang: function () { return LANG; },
+    get: function () { return mergeCalendars(state, null); },
+    title: function () { return "Calendar"; },
+    set: function (next) {
+      if (!next || !Array.isArray(next.events)) return;
+      state = {
+        ver: 1,
+        labels: (Array.isArray(next.labels) ? next.labels : []).map(sanitizeLabel).filter(Boolean),
+        events: next.events.map(sanitizeEvent).filter(Boolean),
+        deleted: (Array.isArray(next.deleted) ? next.deleted : []).map(sanitizeTomb).filter(Boolean),
+        subs: state.subs                // never from a file
+      };
+      saveState();
+      renderChips();
+      renderAll();
+      renderDay();
+    },
+    deleteIds: function (ids) { dropAdded(ids); },
+    // .ics picked in "Open orOS file…": the .ics import as usual
+    notBundle: function (f) { readIcsFile(f); return true; },
+    toast: function (text, undo) {
+      if (undo) {
+        var used = false;
+        toast(text, t("undo"), function () { if (used) return; used = true; undo(); });
+      } else transientNote(text);
+    }
+  }) : null;
+  [["mm-osave", "mm.osave", "save"], ["mm-oopen", "mm.oopen", "open"], ["mm-ofolder", "mm.ofolder", "openFolder"]]
+    .forEach(function (b) {
+      var el = $(b[0]);
+      if (!el) return;
+      el.textContent = t(b[1]);
+      el.hidden = !recFile;
+      el.addEventListener("click", function () {
+        setMore(false);
+        if (recFile) recFile[b[2]]();
+      });
+    });
+
   // Generic shell deep link (one receiver per app). BR-FILE-IMPORT:
-  // { importIcs: { name, text } }. Anything else just opens the app.
+  // { importIcs: { name, text } } (an .ics handed over as text) and
+  // { openFile: { token } } ("Open with" an .oroscal file, fileopen.js:
+  // the File taken once with window.parent.__orosTakeFile(token)).
+  // Anything else just opens the app.
   window.__orosOpenAt = function (target) {
+    if (target && target.openFile) { if (recFile) recFile.openTarget(target.openFile); return; }
     var f = target && typeof target === "object" ? target.importIcs : null;
     if (f && typeof f === "object" && typeof f.text === "string") {
       importIcsText(f.text, typeof f.name === "string" ? f.name : "");
