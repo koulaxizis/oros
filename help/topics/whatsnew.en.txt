@@ -1,6 +1,12 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.49.01
+- Files and Photo Lab: "Google Drive" import now works for everyone, with no API key to set up.
+
+## Version 2.49.00
+- To-Do, Habits, Water, Chore Wheel, Score Keeper, Cycle and Mood can save all their records as one open orOS file and open it again, for example to move them to another device or share them. Opening only adds what you don't have, never changes or deletes your own records, and can be undone.
+
 ## Version 2.48.00
 - Family Tree, Certificates, Label Maker, Travel and Maps now save their own open orOS file (a ZIP you can unpack) with photos, logos, tickets and tracks inside, and open it again, also from an unzipped folder or with "Open with". Certificates never put the signing keys in the file.
 

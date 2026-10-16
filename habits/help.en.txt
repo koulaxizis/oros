@@ -68,8 +68,13 @@ How to export from each app:
 
 Importing the same file again adds only what's new and never makes a second copy. Days you've already filled in, or unticked, stay as you left them, and your own habits are never changed. The file is read on your device; nothing is uploaded anywhere except through your own sync.
 
+## Save and open an orOS file
+Press the gear button at the top, then `orOS file (.oroshabits)`, to save every habit with all its days (ticks, amounts, skipped days and notes) as one `.oroshabits` file, for example to move them to another device without sync or to keep a copy. The file is a plain ZIP: unzipped it holds the habits as `content.json` plus `preview/habits.md` and `preview/checkins.csv` for other programs. It is not encrypted, so keep it somewhere safe. The steps setting stays on this device.
+
+`Open orOS file…` (or `Unzipped orOS folder…`, or "Open with" orOS on the computer) shows how many habits and days are new and how many are already here, then `Add` adds only the new ones, with their own ids: opening the same file again adds nothing. A habit or a day already here keeps what you entered here, and a habit you deleted here stays deleted, without its days; a file never deletes anything. Tick `Update with newer versions` to let habits and days that were changed later in the file take the file's copy. `Undo` in the message removes what was added.
+
 ## Sync and backup
-Your habits, check-offs, amounts, skipped days, notes and the steps setting sync between your devices through [orOS sync](help:t/sync). The open view and period stay on this device. Habits has no export of its own; use the orOS [backup](help:t/backup). To bring in habits from another app, see the section above.
+Your habits, check-offs, amounts, skipped days, notes and the steps setting sync between your devices through [orOS sync](help:t/sync). The open view and period stay on this device. To keep a copy of everything, use the orOS [backup](help:t/backup), or save an orOS file (see “Save and open an orOS file” above). To bring in habits from another app, see “Import from another app”.
 
 ## Keyboard shortcuts
 - [[N]] opens `Add habit` (when you're not typing in a field).

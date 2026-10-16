@@ -18,7 +18,8 @@
 //     window.parent.__orosTakeFile(token). Each app then runs its own
 //     import (same checks and sanitisers as its Import button).
 //     Calendar (.ics) and Contacts (.vcf) take the text instead
-//     (BR-FILE-IMPORT: ≤ 5 MB, { importIcs | importVcf: { name, text } }).
+//     (BR-FILE-IMPORT: ≤ 5 MB, { importIcs | importVcf: { name, text } });
+//     their .oroscal / .oroscontacts bundles go as Files (textExt).
 //   - never reads, stores or runs the file itself. Nothing is written
 //     back to the original file.
 // Device-local preference: localStorage "oros-file-open" (oros-
@@ -60,9 +61,11 @@
       "application/vnd.scribus": [".sla"],
       "application/vnd.adobe.indesign-idml-package": [".idml"] } },
     { app: "feeds", accept: {
-      "text/x-opml": [".opml"] } },
+      "text/x-opml": [".opml"],
+      "application/x-oros-feeds": [".orosfeeds"] } },
     { app: "podcasts", accept: {
-      "text/x-opml": [".opml"] } },
+      "text/x-opml": [".opml"],
+      "application/x-oros-podcasts": [".orospodcasts"] } },
     { app: "mindmap", accept: {
       "application/x-freemind": [".mm"],
       "application/vnd.xmind.workbook": [".xmind"],
@@ -91,7 +94,8 @@
       "application/pdf": [".pdf"],
       "application/x-fictionbook+xml": [".fb2"],
       "application/vnd.comicbook+zip": [".cbz"],
-      "application/vnd.comicbook-rar": [".cbr"] } },
+      "application/vnd.comicbook-rar": [".cbr"],
+      "application/x-oros-library": [".oroslibrary"] } },
     { app: "montage", max: 4096 * 1024 * 1024, accept: {
       "video/mp4": [".mp4", ".m4v"],
       "video/webm": [".webm"],
@@ -130,10 +134,44 @@
       "application/x-chess-pgn": [".pgn"] } },
     // BR-FILE-IMPORT (owned by Calendar / Contacts): these two take the
     // file's text, not a token: __orosOpenAt(app, { <key>: { name, text } }).
-    { app: "calendar", text: "importIcs", accept: {
-      "text/calendar": [".ics"] } },
-    { app: "contacts", text: "importVcf", accept: {
-      "text/vcard": [".vcf"] } }
+    // The .oroscal / .oroscontacts bundles are Files (token), like
+    // every other bundle: textExt names the types that go as text.
+    { app: "calendar", text: "importIcs", textExt: [".ics"], accept: {
+      "text/calendar": [".ics"],
+      "application/x-oros-cal": [".oroscal"] } },
+    { app: "contacts", text: "importVcf", textExt: [".vcf"], accept: {
+      "text/vcard": [".vcf"],
+      "application/x-oros-contacts": [".oroscontacts"] } },
+    // Phase 4b record apps (recordpkg.js): one bundle type each, taken
+    // as a File through { openFile: { token } }.
+    { app: "todo", accept: { "application/x-oros-tasks": [".orostasks"] } },
+    { app: "habits", accept: { "application/x-oros-habits": [".oroshabits"] } },
+    { app: "water", accept: { "application/x-oros-water": [".oroswater"] } },
+    { app: "chores", accept: { "application/x-oros-chores": [".oroschores"] } },
+    { app: "scores", accept: { "application/x-oros-scores": [".orosscores"] } },
+    { app: "cycle", accept: { "application/x-oros-cycle": [".oroscycle"] } },
+    { app: "mood", accept: { "application/x-oros-mood": [".orosmood"] } },
+    { app: "bookmarks", accept: { "application/x-oros-bookmarks": [".orosbookmarks"] } },
+    { app: "meals", accept: { "application/x-oros-meals": [".orosmeals"] } },
+    { app: "stickies", accept: { "application/x-oros-stickies": [".orosstickies"] } },
+    { app: "budget", accept: { "application/x-oros-budget": [".orosbudget"] } },
+    { app: "invoices", accept: { "application/x-oros-invoices": [".orosinvoices"] } },
+    { app: "crm", accept: { "application/x-oros-crm": [".oroscrm"] } },
+    { app: "timesheet", accept: { "application/x-oros-hours": [".oroshours"] } },
+    { app: "quote", accept: { "application/x-oros-quote": [".orosquote"] } },
+    { app: "split", accept: { "application/x-oros-split": [".orossplit"] } },
+    { app: "stock", accept: { "application/x-oros-stock": [".orosstock"] } },
+    { app: "diary", accept: { "application/x-oros-diary": [".orosdiary"] } },
+    { app: "health", accept: { "application/x-oros-health": [".oroshealth"] } },
+    { app: "fitness", accept: { "application/x-oros-workouts": [".orosworkouts"] } },
+    { app: "baby", accept: { "application/x-oros-baby": [".orosbaby"] } },
+    { app: "petcare", accept: { "application/x-oros-pet": [".orospet"] } },
+    { app: "plants", accept: { "application/x-oros-plants": [".orosplants"] } },
+    { app: "garage", accept: { "application/x-oros-garage": [".orosgarage"] } },
+    { app: "shelf", accept: { "application/x-oros-shelf": [".orosshelf"] } },
+    { app: "signature", accept: { "application/x-oros-signature": [".orossignature"] } },
+    { app: "newsletter", accept: { "application/x-oros-newsletter": [".orosnewsletter"] } },
+    { app: "storage", accept: { "application/x-oros-inventory": [".orosinventory"] } }
   ];
   var TEXT_MAX = 5 * 1024 * 1024;
 
@@ -231,8 +269,16 @@
   }
 
   // BR-FILE-IMPORT apps: the deep-link key that carries the text, else "".
-  function textKey(app) {
-    for (var i = 0; i < HANDLERS.length; i++) if (HANDLERS[i].app === app) return HANDLERS[i].text || "";
+  // With an extension: "" for the app's types that go as a File (its
+  // orOS bundle), when the handler limits the text to textExt.
+  function textKey(app, ext) {
+    for (var i = 0; i < HANDLERS.length; i++) {
+      var h = HANDLERS[i];
+      if (h.app !== app) continue;
+      if (!h.text) return "";
+      if (ext !== undefined && Array.isArray(h.textExt) && h.textExt.indexOf(String(ext).toLowerCase()) === -1) return "";
+      return h.text;
+    }
     return "";
   }
 
@@ -348,7 +394,7 @@
 
   function openWith(app, file) {
     if (typeof w.__orosOpenAt !== "function") return;
-    var name = String(file.name || "").slice(0, 255), key = textKey(app);
+    var name = String(file.name || "").slice(0, 255), key = textKey(app, extOf(name));
     if (key) {
       if (file.size > TEXT_MAX) { notice(T("big")); return; }
       Promise.resolve(file.text()).then(function (text) {

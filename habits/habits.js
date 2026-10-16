@@ -189,7 +189,11 @@
       "imp.undone": "Import undone",
       "imp.err.read": "This file couldn't be read.",
       "imp.err.big": "This file is too large to import.",
-      "imp.err.unknown": "This file doesn't look like a habit export from Loop, Habitica, Streaks, Habitify or a CSV with dates."
+      "imp.err.unknown": "This file doesn't look like a habit export from Loop, Habitica, Streaks, Habitify or a CSV with dates.",
+      "file.save": "orOS file (.oroshabits)",
+      "file.open": "Open orOS file…",
+      "file.folder": "Unzipped orOS folder…",
+      "file.hint": "Every habit and its days as one file. Opening one adds only what this device lacks; the file is not encrypted."
     },
     el: {
       "app.name":        "Συνήθειες",
@@ -333,7 +337,11 @@
       "imp.undone": "Η εισαγωγή αναιρέθηκε",
       "imp.err.read": "Δεν ήταν δυνατό να διαβαστεί το αρχείο.",
       "imp.err.big": "Το αρχείο είναι πολύ μεγάλο για εισαγωγή.",
-      "imp.err.unknown": "Το αρχείο δεν μοιάζει με εξαγωγή συνηθειών από Loop, Habitica, Streaks, Habitify ή με CSV που έχει ημερομηνίες."
+      "imp.err.unknown": "Το αρχείο δεν μοιάζει με εξαγωγή συνηθειών από Loop, Habitica, Streaks, Habitify ή με CSV που έχει ημερομηνίες.",
+      "file.save": "Αρχείο orOS (.oroshabits)",
+      "file.open": "Άνοιγμα αρχείου orOS…",
+      "file.folder": "Αποσυμπιεσμένος φάκελος orOS…",
+      "file.hint": "Όλες οι συνήθειες και οι μέρες τους σε ένα αρχείο. Το άνοιγμα προσθέτει μόνο όσα λείπουν από αυτή τη συσκευή· το αρχείο δεν είναι κρυπτογραφημένο."
     }
   };
 
@@ -2044,6 +2052,12 @@
           '<div class="field-hint" id="sf-none"></div>' +
           '<div class="field sf-imp"><button type="button" class="btn ghost" id="sf-imp"></button>' +
             '<div class="field-hint" id="sf-imphint"></div></div>' +
+          // .oroshabits: every habit and its days as one orOS file
+          '<div class="field sf-imp sf-file"><div class="sf-frow">' +
+            '<button type="button" class="btn ghost" id="sf-osave"></button>' +
+            '<button type="button" class="btn ghost" id="sf-oopen"></button>' +
+            '<button type="button" class="btn ghost" id="sf-ofolder"></button></div>' +
+            '<div class="field-hint" id="sf-filehint"></div></div>' +
         "</div>" +
         '<div class="dialog-actions"><span style="flex:1"></span>' +
           '<button type="button" class="btn ghost" id="sf-cancel"></button>' +
@@ -2051,6 +2065,12 @@
       document.body.appendChild(dlgSet);
       document.getElementById("sf-cancel").addEventListener("click", function () { dlgSet.close(); });
       document.getElementById("sf-imp").addEventListener("click", function () { dlgSet.close(); startImport(); });
+      [["sf-osave", "save"], ["sf-oopen", "open"], ["sf-ofolder", "openFolder"]].forEach(function (b) {
+        document.getElementById(b[0]).addEventListener("click", function () {
+          dlgSet.close();
+          if (recFile) recFile[b[1]]();
+        });
+      });
       document.getElementById("sf-save").addEventListener("click", function () {
         var cur = M.settingsOf(db);
         var on = document.getElementById("sf-steps").checked;
@@ -2085,6 +2105,11 @@
     document.getElementById("sf-save").textContent = t("save");
     document.getElementById("sf-imp").textContent = t("imp.btn");
     document.getElementById("sf-imphint").textContent = t("imp.hint");
+    document.getElementById("sf-osave").textContent = t("file.save");
+    document.getElementById("sf-oopen").textContent = t("file.open");
+    document.getElementById("sf-ofolder").textContent = t("file.folder");
+    document.getElementById("sf-filehint").textContent = t("file.hint");
+    dlgSet.querySelector(".sf-file").hidden = !recFile;
     dlgSet.showModal();
   }
 
@@ -2235,6 +2260,56 @@
     });
     return r;
   }
+  // .oroshabits (OBF-4e): every habit and its days as one orOS file
+  // (../recordpkg.js + package.js). Opening ADDS what this device
+  // lacks, with its ids; a habit or a day already here (or a habit
+  // deleted here) keeps its local values unless "Update with newer
+  // versions" is ticked. The result goes through normalize + save()
+  // (so sync carries it); Undo deletes the added habits with
+  // deleteHabit and clears the added days with the model's writes.
+  var RP = window.OrosRecordPkg || null, HPK = window.OrosHabitsPackage || null;
+  var recFile = RP && HPK && window.OrosBundle ? RP.ui(HPK.forLocal(function () { return M.canon(db); }), {
+    lang: function () { return LANG; },
+    get: function () { return M.canon(db); },
+    title: function () { return t("app.name"); },
+    set: function (next) {
+      var n = M.normalize(JSON.parse(JSON.stringify(next)));
+      if (!n) return;
+      db = n;
+      save();
+      render();
+      refreshOpenDialogs();
+    },
+    deleteIds: function (ids) {
+      var now = Date.now(), any = false;
+      ids.forEach(function (id) {
+        var k = HPK.kindOf(id, db);
+        if (k === "habit") {
+          var h = habitById(id);
+          if (h && !h.del) { deleteHabit(h); any = true; }
+        } else if (k === "comp") {
+          var c = null;
+          for (var i = 0; i < db.comps.length; i++) if (db.comps[i].id === id) { c = db.comps[i]; break; }
+          if (!c) return;
+          M.setTick(db, c.habitId, c.date, false, now);
+          if (c.sk && c.sk[0] === 1) M.setSkip(db, c.habitId, c.date, false, now);
+          if (c.nt && c.nt[0]) M.setNote(db, c.habitId, c.date, "", now);
+          delete c.v;                          // a value share has no tombstone
+          any = true;
+        }
+      });
+      if (any) save();
+      render();
+      refreshOpenDialogs();
+      transientNote(RP.str(LANG, "undone"));
+    },
+    toast: function (text, undo) {
+      var used = false;
+      if (undo) noteWithAction(text, t("imp.undo"), function () { if (!used) { used = true; undo(); } });
+      else transientNote(text);
+    }
+  }) : null;
+
   // A toast with one action button (the shell's undo pattern); the
   // local toast when Habits runs on its own.
   function noteWithAction(text, label, fn) {
@@ -2566,7 +2641,10 @@
   //   BR-W8-6 (Assistant entry card): { asNew: { name, days?, perWeek?,
   //   perMonth?, target?, unit?, cmp?, reminder? } } (M.asNew cleans
   //   it) opens the new-habit dialog prefilled; no name → no-op.
+  //   "Open with" an .oroshabits file (fileopen.js): { openFile: { token } },
+  //   the File taken once with window.parent.__orosTakeFile(token).
   function openSearchTarget(t) {
+    if (t && t.openFile) { if (recFile) recFile.openTarget(t.openFile); return; }
     // Single app (solo.js) icon shortcut { add: true }: a blank New habit.
     if (t && t.add === true) {
       if (!document.querySelector("dialog[open]")) openHabitDialog(null);
