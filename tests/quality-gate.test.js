@@ -56,5 +56,6 @@ test("English left in the Greek UI is spotted, names are not", () => {
   assert.ok(!QA.readsEnglish("Dropbox"));
   assert.ok(!QA.readsEnglish("orOS PDF"));
   assert.ok(!QA.readsEnglish("12:30"));
+  assert.ok(!QA.readsEnglish("en-US@posix"));   // one token of data, not a sentence
   assert.ok(!QA.readsEnglish("Σύνδεση με Dropbox account"));   // has Greek: a mixed label is not "missing"
 });

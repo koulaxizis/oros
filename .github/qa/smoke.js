@@ -139,14 +139,16 @@ function probeText() {
   return [...out].slice(0, 4000);
 }
 
-// Reads as English: at least two Latin words of 2+ letters that are not
-// names/formats, and no Greek letters at all.
+// Reads as English: at least two space-separated Latin words (2+ letters,
+// some lowercase) that are not names/formats, and no Greek letter at all.
+// Single tokens such as "en-US@posix" or "me@example.org" are data, not UI.
 function readsEnglish(t) {
-  if (/[Ͱ-Ͽἀ-῿]/.test(t)) return false;
+  if (/[\u0370-\u03ff\u1f00-\u1fff]/.test(t)) return false;
   if (t.length > 160) return false;   // long free text is usually sample content
-  const words = (t.match(/[A-Za-z][A-Za-z'’.-]*[A-Za-z]/g) || []).filter((w) => !KEEP.has(w.toLowerCase()));
-  const lower = words.filter((w) => /[a-z]/.test(w));
-  return lower.length >= 2;
+  const words = t.split(/\s+/)
+    .map((w) => w.replace(/^[("'“‘«]+|[)"'”’».,:;!?…]+$/g, ""))
+    .filter((w) => /^[A-Za-z][A-Za-z'’-]*[A-Za-z]$/.test(w) && /[a-z]/.test(w) && !KEEP.has(w.toLowerCase()));
+  return words.length >= 2;
 }
 
 // ---------- runner ----------
