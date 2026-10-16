@@ -26,14 +26,15 @@ node android/tools/gen.js        # manifest + resources from manifest.webmanifes
 gradle -p android assembleDebug
 ```
 
-The orOS flavour also needs `app/libs/orosdrive.aar`, orOS Drive's Go core
-(DRIVE-A). android.yml builds it from the koulaxizis/oros-drive commit it
-pins; locally (Go 1.24, Android NDK):
+orOS Drive on the phone (DRIVE-A) joins the orOS flavour only when
+`app/libs/orosdrive.aar` (its Go core) exists; without it the app builds
+without the Drive screen (F-Droid, a plain checkout). android.yml builds it
+from the koulaxizis/oros-drive commit it pins; locally (Go 1.24, Android NDK):
 
 ```
 cd ../oros-drive
 go install golang.org/x/mobile/cmd/gomobile golang.org/x/mobile/cmd/gobind
-gomobile bind -target=android -androidapi 24 -javapkg online.useoros.drive \
+gomobile bind -target=android/arm64,android/arm,android/amd64 -androidapi 24 -javapkg online.useoros.drive \
   -o ../oros/android/app/libs/orosdrive.aar ./mobile
 ```
 

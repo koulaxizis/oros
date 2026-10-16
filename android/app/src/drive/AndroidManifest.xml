@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- orOS flavour only (online.useoros.twa), merged over app/src/main:
+<!-- orOS flavour only (online.useoros.twa), merged over app/src/main when
+     libs/orosdrive.aar exists (build.gradle driveLib):
      orOS Drive on the phone (DRIVE-A). Opened from Files › orOS Drive
      through PermissionActivity ("intent://drive#Intent;scheme=oros-permission;…").
      WorkManager brings its own components and permissions. -->

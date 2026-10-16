@@ -10,16 +10,21 @@ const path = require("path");
 
 const ROOT = path.join(__dirname, "..");
 const read = (...p) => fs.readFileSync(path.join(ROOT, ...p), "utf8");
-const JAVA = ["android", "app", "src", "oros", "java", "online", "useoros", "twa"];
+const JAVA = ["android", "app", "src", "drive", "java", "online", "useoros", "twa"];
 const MAIN = ["android", "app", "src", "main", "java", "online", "useoros", "twa"];
 
-test("DriveActivity is declared in the orOS flavour only, not exported", () => {
-  const m = read("android", "app", "src", "oros", "AndroidManifest.xml");
+test("DriveActivity is declared in the orOS flavour only, not exported, and only with the library", () => {
+  const m = read("android", "app", "src", "drive", "AndroidManifest.xml");
   assert.match(m, /<activity android:name="\.DriveActivity"\s+android:exported="false"/);
   assert.ok(fs.existsSync(path.join(ROOT, ...JAVA, "DriveActivity.java")));
   assert.doesNotMatch(read("android", "tools", "gen.js"), /DriveActivity/);
   const g = read("android", "app", "build.gradle");
   assert.match(g, /orosImplementation files\('libs\/orosdrive\.aar'\)/);
+  // Optional: without the library (F-Droid) the app builds without Drive.
+  assert.match(g, /def driveLib = file\('libs\/orosdrive\.aar'\)\.exists\(\)/);
+  assert.match(g, /if \(driveLib\) \{\n\s+getByName\('oros'\) \{\n\s+manifest\.srcFile 'src\/drive\/AndroidManifest\.xml'/);
+  assert.match(g, /if \(driveLib\) \{\n\s+orosImplementation files/);
+  assert.ok(!fs.existsSync(path.join(ROOT, "android", "app", "src", "oros")), "src/oros would build without the library");
   assert.match(g, /orosImplementation 'androidx\.work:work-runtime:/);
 });
 
@@ -46,8 +51,8 @@ test("Files › orOS Drive: phone folders button, EN + EL", () => {
 
 test("every drive string the Java uses exists in English and Greek", () => {
   const keys = (x) => new Set([...x.matchAll(/<string name="(drive_[a-z0-9_]+)"/g)].map((m) => m[1]));
-  const en = keys(read("android", "app", "src", "oros", "res", "values", "drive_strings.xml"));
-  const el = keys(read("android", "app", "src", "oros", "res", "values-el", "drive_strings.xml"));
+  const en = keys(read("android", "app", "src", "drive", "res", "values", "drive_strings.xml"));
+  const el = keys(read("android", "app", "src", "drive", "res", "values-el", "drive_strings.xml"));
   assert.deepEqual([...en].sort(), [...el].sort());
   const used = new Set();
   for (const f of fs.readdirSync(path.join(ROOT, ...JAVA))) {
@@ -60,7 +65,8 @@ test("every drive string the Java uses exists in English and Greek", () => {
 test("android.yml builds the library from a pinned oros-drive commit", () => {
   const y = read(".github", "workflows", "android.yml");
   assert.match(y, /repository: koulaxizis\/oros-drive\n\s+ref: [0-9a-f]{40}\n/);
-  assert.match(y, /gomobile bind -target=android -androidapi 24 -javapkg online\.useoros\.drive -o \.\.\/android\/app\/libs\/orosdrive\.aar \.\/mobile/);
+  assert.match(y, /gomobile bind -target=android\/arm64,android\/arm,android\/amd64 -androidapi 24 -javapkg online\.useoros\.drive -o \.\.\/android\/app\/libs\/orosdrive\.aar \.\/mobile/);
+  assert.match(y, /test -s \.\.\/android\/app\/libs\/orosdrive\.aar/);
   assert.match(read("android", ".gitignore"), /^app\/libs\/orosdrive\.aar$/m);
   const pg = read("android", "app", "proguard-rules.pro");
   assert.match(pg, /-keep class go\.\*\* \{ \*; \}/);

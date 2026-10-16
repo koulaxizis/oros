@@ -62,6 +62,8 @@ jobs:
       # pinned commit, bound with gomobile into the library the orOS
       # flavour embeds (app/libs/orosdrive.aar, not committed). Moving
       # the pin is a deliberate change, like any dependency update.
+      # F-Droid and other builds without the library get the app
+      # without the Drive screen (build.gradle driveLib).
       - uses: actions/checkout@v4
         with:
           repository: koulaxizis/oros-drive
@@ -77,7 +79,10 @@ jobs:
           go install golang.org/x/mobile/cmd/gomobile golang.org/x/mobile/cmd/gobind
           export ANDROID_NDK_HOME="$ANDROID_NDK_LATEST_HOME"
           mkdir -p ../android/app/libs
-          gomobile bind -target=android -androidapi 24 -javapkg online.useoros.drive -o ../android/app/libs/orosdrive.aar ./mobile
+          # Phones (arm64, arm) and x86_64 Chromebooks; no 32-bit x86.
+          gomobile bind -target=android/arm64,android/arm,android/amd64 -androidapi 24 -javapkg online.useoros.drive -o ../android/app/libs/orosdrive.aar ./mobile
+          # Without it Gradle builds the app without Drive: never here.
+          test -s ../android/app/libs/orosdrive.aar
 
       # The runner image ships the Android SDK (ANDROID_HOME); Gradle
       # fetches a missing platform or build-tools on its own.
