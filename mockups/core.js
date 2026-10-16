@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Mockups — core.js (MockCore, v1.2.0)
+// orOS Mockups — core.js (MockCore, v1.3.0)
 // Pure model of the Mockups app. No DOM, no three.js: Node-tested
 // in tests/mockups.test.js.
 //   - book sizes in mm: trim presets, paper presets, spine width
@@ -26,6 +26,10 @@
 //     local printers ask for it; wrapMap() tells the 3D view which
 //     part of a full-wrap picture goes on which panel, so a cover
 //     drawn on the template sits exactly on the book
+//   - what to show: the closed book (and sets), the open book with
+//     its inside spread (openCurve(): the arched pages, dipping into
+//     the gutter) or the e-book on a tablet, phone or e-reader
+//     (device(): body and screen in mm)
 //   - the project model and its merge (synced slice "mockups")
 // Data (localStorage "oros-mockups-data"):
 //   { ver: 1, prj: [project], tombs: { id: m } }
@@ -38,7 +42,7 @@
 (function (root) {
   "use strict";
 
-  var VERSION = "1.2.0";
+  var VERSION = "1.3.0";
   var DATA_VER = 1;
   var DATA_KEY = "oros-mockups-data";
   var PREFS_KEY = "oros-mockups-prefs";
@@ -96,6 +100,10 @@
   var VFMTS = ["video", "gif"];
   var CR_SRC = ["openverse", "commons", "pixabay", "pexels"];
   // Stack: each book a little turned and pushed, so it looks laid by hand.
+  var SHOWS = ["book", "open", "ebook"];
+  var DEVICES = ["tablet", "phone", "reader"];
+  var DCOLS = ["black", "white", "silver"];
+  var IN_SLOTS = ["l", "r", "scr"];        // left page, right page, screen
   var STACK_YAW = [0, 7, -5, 9, -8, 4];
   var STACK_DX = [0, 4, -3, 5, -4, 2];
 
@@ -105,7 +113,7 @@
     turn: [-180, 180], open: [0, 160], th: [-180, 180], ph: [-10, 89],
     fov: [8, 70], zoom: [0.5, 3], dx: [-1, 1], dy: [-1, 1],
     az: [-180, 180], el: [10, 85], str: [0, 2], soft: [0, 1], warm: [-1, 1],
-    shadow: [0, 1], ang: [0, 359], n: [2, 6], gap: [0, 80], safe: [0, 20]
+    shadow: [0, 1], ang: [0, 359], n: [2, 6], gap: [0, 80], safe: [0, 20], curl: [0, 1], pdfp: [1, 9999]
   };
 
   // ---------- Helpers ----------
@@ -457,6 +465,57 @@
     return { panels: out, y0: bl / sh, y1: (bl + T.H) / sh };
   }
 
+  // ---------- Open book + e-book (wave 4) ----------
+  // ins: { l, r (left / right inside page), scr (the e-book's screen),
+  //        curl 0-1 (how much the pages arch), dev, dc (device and its
+  //        colour), pdfp (the PDF page the spread starts at, a hint) }
+  function normIns(i) {
+    i = i && typeof i === "object" ? i : {};
+    var o = {};
+    IN_SLOTS.forEach(function (k) { o[k] = asset(i[k]); });
+    o.curl = num(i.curl, LIMIT.curl, 0.5, 0.01);
+    o.dev = pick(i.dev, DEVICES, "tablet");
+    o.dc = pick(i.dc, DCOLS, "black");
+    o.pdfp = isInt(i.pdfp) ? Math.max(LIMIT.pdfp[0], Math.min(LIMIT.pdfp[1], i.pdfp)) : 1;
+    return o;
+  }
+  // The top of one half of the open page block, from the gutter (u = 0)
+  // to the fore-edge (u = 1): [[x, y]] in mm, x across the page, y the
+  // height over the open cover. Each half holds half the pages; the
+  // pages dip into the gutter and arch up by curl.
+  function openCurve(bk, curl, n) {
+    var b = normBook(bk), t = blockMm(b) / 2, W = b.w, H = b.h;
+    var c = typeof curl === "number" && isFinite(curl) ? Math.max(0, Math.min(1, curl)) : 0.5;
+    var N = n || 32, out = [];
+    var lift = c * Math.min(W, H) * 0.06;            // arch height at full curl
+    for (var i = 0; i <= N; i++) {
+      var u = i / N;
+      var rise = 1 - Math.pow(1 - Math.min(1, u / 0.16), 2);   // out of the gutter
+      var arch = Math.pow(Math.sin(Math.PI * Math.min(1, u * 0.92 + 0.04)), 0.7) * (1 - 0.35 * u);
+      var y = t * (0.12 + 0.88 * rise) + lift * arch * rise;
+      out.push([round3(u * W * (1 - 0.012 * c)), round3(y)]);
+    }
+    return out;
+  }
+  // A device in mm, standing, screen to +z: body w × h × d, corner
+  // radius r, screen sw × sh with its centre at (sx, sy) from the
+  // body's centre; ink = an e-ink screen (no glow, grey paper).
+  var DEVICE_MM = {
+    tablet: { w: 179.5, h: 247.6, d: 6.1, r: 12, sw: 163, sh: 228, sx: 0, sy: 0, ink: 0 },
+    phone: { w: 71.5, h: 147.6, d: 7.8, r: 10, sw: 65.6, sh: 141.7, sx: 0, sy: 0, ink: 0 },
+    reader: { w: 115.5, h: 174.2, d: 8.2, r: 6, sw: 90.6, sh: 122, sx: 0, sy: 14, ink: 1 }
+  };
+  function device(k) {
+    var d = DEVICE_MM[pick(k, DEVICES, "tablet")];
+    return Object.assign({ k: pick(k, DEVICES, "tablet") }, d);
+  }
+  // A picture inside a box (contain), centred: { x, y, w, h }.
+  function containIn(iw, ih, bw, bh) {
+    if (!(iw > 0 && ih > 0 && bw > 0 && bh > 0)) return { x: 0, y: 0, w: bw, h: bh };
+    var k = Math.min(bw / iw, bh / ih), w = iw * k, h = ih * k;
+    return { x: round3((bw - w) / 2), y: round3((bh - h) / 2), w: round3(w), h: round3(h) };
+  }
+
   // ---------- Scene + output ----------
   function normArt(a) {
     a = a && typeof a === "object" ? a : {};
@@ -630,6 +689,8 @@
       out: normOut(p.out),
       set: normSet(p.set),
       tpl: normTpl(p.tpl),
+      show: pick(p.show, SHOWS, "book"),
+      ins: normIns(p.ins),
       unit: p.unit === "in" ? "in" : "mm"
     };
   }
@@ -709,6 +770,7 @@
     if (!p) return out;
     SLOTS.forEach(function (k) { if (p.art && p.art[k]) out.push(p.art[k]); });
     if (p.sc && p.sc.bg && p.sc.bg.img) out.push(p.sc.bg.img);
+    if (p.ins) IN_SLOTS.forEach(function (k) { if (p.ins[k] && out.indexOf(p.ins[k]) < 0) out.push(p.ins[k]); });
     if (p.set && Array.isArray(p.set.vols)) p.set.vols.forEach(function (v) {
       VOL_SLOTS.forEach(function (k) { if (v && v[k] && out.indexOf(v[k]) < 0) out.push(v[k]); });
     });
@@ -746,6 +808,8 @@
     motionSize: motionSize, motionPlan: motionPlan,
     BAR: BAR, SPINE_SAFE: SPINE_SAFE, SPINE_TEXT_MIN: SPINE_TEXT_MIN, TPL_DEF: TPL_DEF,
     normTpl: normTpl, bleedOf: bleedOf, template: template, wrapMap: wrapMap,
+    SHOWS: SHOWS, DEVICES: DEVICES, DCOLS: DCOLS, IN_SLOTS: IN_SLOTS, DEVICE_MM: DEVICE_MM,
+    normIns: normIns, openCurve: openCurve, device: device, containIn: containIn,
     trimOf: trimOf, paperOf: paperOf, mmToIn: mmToIn, inToMm: inToMm,
     normBook: normBook, blockMm: blockMm, dims: dims, profile: profile, layout: layout,
     normArt: normArt, normScene: normScene, normOut: normOut, ratioOf: ratioOf, outSize: outSize,
