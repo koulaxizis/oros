@@ -56,6 +56,8 @@ var STRINGS = {
     "bk.exp":      "orOS file (.orossheet)",
     "bk.open":     "Open a file (.xlsx, .ods, .xls, .orossheet)…",
     "bk.folder":   "Unzipped orOS folder…",
+    "gd.from":     "From Google Sheets…",
+    "gd.wait":     "Sign in to Google, then pick one spreadsheet.",
     "bk.newer":    "This file was made by a newer orOS. Update orOS to open it.",
     "xl.xlsx":     "Excel (.xlsx)",
     "xl.ods":      "LibreOffice Calc (.ods)",
@@ -156,6 +158,8 @@ var STRINGS = {
     "bk.exp":      "Αρχείο orOS (.orossheet)",
     "bk.open":     "Άνοιγμα αρχείου (.xlsx, .ods, .xls, .orossheet)…",
     "bk.folder":   "Αποσυμπιεσμένος φάκελος orOS…",
+    "gd.from":     "Από το Google Sheets…",
+    "gd.wait":     "Συνδέσου στη Google και διάλεξε ένα υπολογιστικό φύλλο.",
     "bk.newer":    "Το αρχείο φτιάχτηκε από νεότερο orOS. Ενημέρωσε το orOS για να το ανοίξεις.",
     "xl.xlsx":     "Excel (.xlsx)",
     "xl.ods":      "LibreOffice Calc (.ods)",
@@ -3225,7 +3229,22 @@ function toggleXlExportMenu(btn) {
 function toggleXlImportMenu(btn) {
   var items = [[t("bk.open"), xlPickFile]];
   if (window.OrosBundle) items.push([t("bk.folder"), bookPickFolder]);
+  if (window.OrosGoogleMedia && OrosGoogleMedia.docReady()) items.push([t("gd.from"), xlFromGoogle]);
   toggleXlMenu(btn, items);
+}
+/* one Google Sheet (or an .xlsx / .ods in Drive), exported to .xlsx
+   by ../files/gmedia.js, then the usual Excel import. Runs inside the
+   menu click: Google's sign-in window needs it. */
+function xlFromGoogle() {
+  var GM = window.OrosGoogleMedia, lang = LANG === "el" ? "el" : "en";
+  var job = GM.pickDoc("spreadsheet", lang);
+  notifyTransient(t("gd.wait"));
+  job.then(function (f) {
+    if (f) bookOrXlImport(f);
+  }, function (e) {
+    var msg = GM.docMessage(e, lang);
+    if (msg) notifyTransient(msg);
+  });
 }
 function xlPickFile() {
   var dlg = dialogHost(), acc = ".xlsx,.xls,.ods,.orossheet";
