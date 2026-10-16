@@ -6,7 +6,7 @@
   <script>if (window.top === window.self && !/[?&]standalone\b/.test(location.search)) location.replace("../?open=quote" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Quote · orOS</title>
-  <link rel="stylesheet" href="quote.css?v=2.54.00">
+  <link rel="stylesheet" href="quote.css?v=2.55.00">
 </head>
 <body>
 
@@ -45,6 +45,12 @@
     <button id="export-btn" type="button" aria-label="Export PDF"
             data-i18n-title="actions.export_pdf" title="Export PDF" hidden>
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+    </button>
+
+    <!-- .orosquote: save / open every quote as one orOS file (../recordpkg.js, package.js) -->
+    <button id="ofile-btn" type="button" aria-label="Save and open"
+            data-i18n-title="file.title" title="Save and open" hidden>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
     </button>
 
     <button id="send-btn" type="button" aria-label="Send quote"
@@ -265,14 +271,34 @@
     </menu>
   </dialog>
 
+  <!-- .orosquote FILE DIALOG -->
+  <dialog id="dlg-ofile">
+    <h3 data-i18n="file.title">Save and open</h3>
+    <p class="ofile-hint" data-i18n="file.hint"></p>
+    <div class="ofile-btns">
+      <button type="button" id="of-save" data-i18n="file.save">orOS file (.orosquote)</button>
+      <button type="button" id="of-open" data-i18n="file.open">Open orOS file…</button>
+      <button type="button" id="of-copy" data-i18n="file.copy">Open as copy…</button>
+      <button type="button" id="of-folder" data-i18n="file.folder">Unzipped orOS folder…</button>
+    </div>
+    <p class="ofile-hint" data-i18n="file.copyHint"></p>
+    <menu>
+      <span class="spacer"></span>
+      <button type="button" id="ofile-close" data-i18n="close">Close</button>
+    </menu>
+  </dialog>
+
   <!-- TOAST -->
   <div id="toast" role="status"></div>
 
   <!-- JSPDF LIBRARY (vendored from Mood) -->
-  <script src="../vendor/jspdf.umd.min.js?v=2.54.00"></script>
-  <script src="core.js?v=2.54.00"></script>
-  <script src="accept-core.js?v=2.54.00"></script>
-  <script src="../units/core.js?v=2.54.00"></script>
-  <script src="quote.js?v=2.54.00"></script>
+  <script src="../vendor/jspdf.umd.min.js?v=2.55.00"></script>
+  <script src="core.js?v=2.55.00"></script>
+  <script src="accept-core.js?v=2.55.00"></script>
+  <script src="../units/core.js?v=2.55.00"></script>
+  <script src="../bundle.js?v=2.55.00"></script>
+  <script src="../recordpkg.js?v=2.55.00"></script>
+  <script src="package.js?v=2.55.00"></script>
+  <script src="quote.js?v=2.55.00"></script>
 </body>
 </html>

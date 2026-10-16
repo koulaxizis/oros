@@ -144,6 +144,8 @@
       "set.notify": "Low-stock notice on this device", "set.lists": "Lists", "set.cats": "Categories", "set.units": "Units",
       "set.data": "Data", "set.impCsv": "Import products (CSV)", "set.expCsv": "Products (CSV)", "set.expMoves": "Movements (CSV)",
       "set.json": "Backup (JSON)", "set.import": "Restore backup", "set.close": "Close",
+      "set.osave": "orOS file (.orosstock)", "set.oopen": "Open orOS file…", "set.ofolder": "Unzipped orOS folder…",
+      "pkg.undone": "Taken back",
       "set.negHint": "Two devices can sell the last piece at the same time; with this off, a sale that would go below zero is refused on this device.",
       "imp.title": "Import products", "imp.stats": "{a} new · {u} updated · {s} unchanged · {k} skipped",
       "imp.setQty": "Set the quantities from the file (saved as a stock count)", "imp.qtyN": "{n} quantities change",
@@ -314,6 +316,8 @@
       "set.notify": "Ειδοποίηση χαμηλού αποθέματος σε αυτή τη συσκευή", "set.lists": "Λίστες", "set.cats": "Κατηγορίες", "set.units": "Μονάδες",
       "set.data": "Δεδομένα", "set.impCsv": "Εισαγωγή προϊόντων (CSV)", "set.expCsv": "Προϊόντα (CSV)", "set.expMoves": "Κινήσεις (CSV)",
       "set.json": "Αντίγραφο (JSON)", "set.import": "Επαναφορά αντιγράφου", "set.close": "Κλείσιμο",
+      "set.osave": "Αρχείο orOS (.orosstock)", "set.oopen": "Άνοιγμα αρχείου orOS…", "set.ofolder": "Αποσυμπιεσμένος φάκελος orOS…",
+      "pkg.undone": "Αναιρέθηκε",
       "set.negHint": "Δύο συσκευές μπορεί να πουλήσουν το τελευταίο κομμάτι ταυτόχρονα· αν το κλείσεις, μια πώληση που θα έριχνε το απόθεμα κάτω από το μηδέν απορρίπτεται σε αυτή τη συσκευή.",
       "imp.title": "Εισαγωγή προϊόντων", "imp.stats": "{a} νέα · {u} ενημερωμένα · {s} ίδια · {k} παραλείφθηκαν",
       "imp.setQty": "Ορισμός ποσοτήτων από το αρχείο (ως απογραφή)", "imp.qtyN": "Αλλάζουν {n} ποσότητες",
@@ -3300,6 +3304,15 @@
     io.appendChild(button(t("set.expMoves"), "", exportMoves));
     io.appendChild(button(t("set.json"), "", exportData));
     io.appendChild(button(t("set.import"), "", importData));
+    if (recFile) {
+      [["st-osave", "set.osave", function () { recFile.save(); }],
+       ["st-oopen", "set.oopen", function () { recFile.open(); }],
+       ["st-ofolder", "set.ofolder", function () { recFile.openFolder(); }]].forEach(function (o) {
+        var b = button(t(o[1]), "", function () { dlg.close(); o[2](); });
+        b.id = o[0];
+        io.appendChild(b);
+      });
+    }
     dlg.appendChild(io);
     var acts = el("div", "dlg-actions");
     acts.appendChild(button(t("set.close"), "primary", function () { dlg.close(); }));
@@ -3406,6 +3419,94 @@
       });
     }).catch(function () { showToast(t("toast.badFile")); });
   }
+  // .orosstock (OBF-4e): products, suppliers, orders, warehouses,
+  // movements and the till's receipts as one orOS file
+  // (../recordpkg.js + package.js), product photos in media/. Opening
+  // ADDS what this device lacks, with its ids, through core.merge; a
+  // row already here (or deleted here) is kept as it is unless "Update
+  // with newer versions" is ticked. The result goes through save (so
+  // sync carries it). Undo the app's way (package.js undo): movements
+  // and receipts voided, a product with movements archived, the rest
+  // tombstoned. Photos are read from Files › Stock/Photos only (never
+  // the Archive folder) and, on open, re-drawn like an added photo.
+  var RP = window.OrosRecordPkg || null, SPK = window.OrosStockPackage || null;
+  var recFile = RP && SPK && window.OrosBundle ? RP.ui(SPK.DESC, {
+    lang: function () { return LANG; },
+    get: function () { return canonical(data); },
+    title: function () { return t("app"); },
+    // the photos' bytes: media/<sha256>.jpg, each row told its key
+    files: function (state) {
+      var fs = fsApi(), B = window.OrosBundle, out = [], seen = {}, chain = Promise.resolve();
+      (state.pics || []).forEach(function (p) {
+        if (!p.f) return;
+        chain = chain.then(function () {
+          var path = C.picPath(p.f);
+          if (!fs || !path) { p.drop = 1; return; }
+          return Promise.resolve(fs.readBlob(path)).then(function (b) {
+            if (!b || !b.size) throw new Error("ENOENT");
+            return B.digest(b).then(function (x) {
+              var k = x.sha + ".jpg";
+              p.key = k;
+              if (!seen[k]) { seen[k] = 1; out.push({ key: k, blob: b, type: "image/jpeg" }); }
+            });
+          }).catch(function () { p.drop = 1; });
+        });
+      });
+      return chain.then(function () {
+        state.pics = (state.pics || []).filter(function (p) { return !p.drop; });
+        return out;
+      });
+    },
+    // the photos of the rows this file adds (or updates) → Files, the
+    // way an added photo is stored (re-drawn as a JPEG); a file already
+    // there is not written again
+    media: function (read, res) {
+      var fs = fsApi(), inc = SPK.DESC.norm(read && read.content && read.content.data) || { pics: [] };
+      var next = JSON.parse(JSON.stringify(res.next)), want = {}, media = (read && read.media) || {};
+      res.addedIds.concat(res.updatedIds).forEach(function (id) { want[id] = 1; });
+      var chain = Promise.resolve();
+      inc.pics.forEach(function (fp) {
+        var row = null;
+        (next.pics || []).forEach(function (r) { if (r.id === fp.id) row = r; });
+        if (!want[fp.id] || !row || !row.f || row.f !== fp.f) return;   // a row of this device stays
+        chain = chain.then(function () {
+          var key = (read.rekeyed && read.rekeyed[fp.key]) || fp.key, item = key ? media[key] : null;
+          var name = fp.f.indexOf("-" + fp.id + "-") > 0 ? fp.f : C.picName(todayYmd(), fp.id, rnd6());
+          var path = C.picPath(name);
+          if (!fs || !path) { row.f = ""; return; }
+          return Promise.resolve(typeof fs.stat === "function" ? fs.stat(path) : null).then(function (st) { return !!st; }, function () { return false; })
+            .then(function (there) {
+              if (there) { row.f = name; return; }
+              if (!item || !item.bytes || !/^image\//.test(item.type || "")) { row.f = ""; return; }
+              return encodePic(new Blob([item.bytes], { type: item.type })).then(function (blob) {
+                if (!blob) { row.f = ""; return; }
+                return Promise.resolve(fs.writeBlob(path, blob)).then(function () { row.f = name; });
+              });
+            }).catch(function () { row.f = ""; });
+        });
+      });
+      return chain.then(function () { return next; });
+    },
+    set: function (next) {
+      if (!next || typeof next !== "object" || !Array.isArray(next.items)) return;
+      data = canonical(next);
+      save();
+      render();
+    },
+    deleteIds: function (ids) {
+      var r = SPK.undo(data, ids, Date.now());
+      data = r.data;
+      save();
+      render();
+      r.files.forEach(dropPicLater);
+      showToast(t("pkg.undone"));
+    },
+    toast: function (text, undo) {
+      if (undo) undoToast(text, undo);
+      else showToast(text);
+    }
+  }) : null;
+
   // One entry point for every product file: Shopify / Square exports
   // (stock/import.js, its own preview and Undo), anything else goes to
   // the CSV import below (own export, WooCommerce, any Name / SKU
@@ -3855,8 +3956,12 @@
   //   { out: req }  → a prefilled sale / return (BR-ST-OUT, core outRequest)
   //   { view: "shop" } → the shop (Settings › Connected services)
   // Unknown targets are ignored; an open dialog (unsaved edits) wins.
+  //   { openFile: { token } } → "Open with" an .orosstock file
+  //                   (fileopen.js): the File is taken once with
+  //                   window.parent.__orosTakeFile(token) (recordpkg.js)
   function openTarget(target) {
     if (!target || typeof target !== "object") return;
+    if (target.openFile) { if (recFile) recFile.openTarget(target.openFile); return; }
     if (document.querySelector("dialog[open]")) return;
     if (target.out && typeof target.out === "object") { openOut(target.out); return; }
     if (target.view === "reorder") { setTab("order"); return; }

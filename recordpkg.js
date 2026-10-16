@@ -344,7 +344,7 @@
       doneUpd: "{n} added, {u} updated from “{name}”",
       undone: "Undone",
       newer: "This file was made by a newer orOS. Update orOS to open it.",
-      wrong: "This is not a {app} file.",
+      wrong: "This is not an orOS {app} file.",
       bad: "This file could not be read.",
       big: "This file is too big."
     },
