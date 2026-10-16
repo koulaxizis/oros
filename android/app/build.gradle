@@ -114,4 +114,9 @@ dependencies {
     implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.7.4'
     // Health Connect (BR-PHONE v5): steps, water and workouts.
     implementation 'androidx.health.connect:connect-client:1.1.0'
+    // orOS Drive (DRIVE-A), orOS flavour only: the Go core of
+    // koulaxizis/oros-drive bound with gomobile (android.yml builds
+    // libs/orosdrive.aar first), synced in the background by WorkManager.
+    orosImplementation files('libs/orosdrive.aar')
+    orosImplementation 'androidx.work:work-runtime:2.10.1'
 }
