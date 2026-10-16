@@ -643,3 +643,97 @@ test("shell: notification deep link podcasts:ep:<id> opens the episode", () => {
   const src = fs.readFileSync(path.join(__dirname, "..", "notifications.js"), "utf8");
   assert.match(src, /podcasts: function \(id\) \{ if \(typeof window\.__orosOpenAt === 'function'\) window\.__orosOpenAt\('podcasts', \{ ep: id \}\); \}/);
 });
+
+// Browse like Radio (2026-10-16): genres, countries, charts, surprise.
+test("browse: genres, countries, flags", () => {
+  assert.equal(C.GENRES.length, 19);
+  assert.equal(new Set(C.GENRES.map((g) => g.id)).size, 19);
+  C.GENRES.forEach((g) => { assert.ok(g.en && g.el && g.ic); });
+  assert.equal(C.genreName("1318", "el"), "Τεχνολογία");
+  assert.equal(C.genreName("1318", "en"), "Technology");
+  assert.equal(C.genreName("9999", "en"), "");
+  assert.ok(C.isCountry("gr") && C.isCountry("us") && !C.isCountry("xx") && !C.isCountry("GR"));
+  assert.equal(new Set(C.COUNTRIES).size, C.COUNTRIES.length);
+  assert.equal(C.flag("gr"), "🇬🇷");
+  assert.equal(C.flag("../"), "");
+  const names = { gr: "Ελλάδα", al: "Αλβανία", at: "Αυστρία" };
+  const sorted = C.sortCountries((c) => names[c] || "Ω" + c);
+  assert.deepEqual(sorted.slice(0, 3), ["al", "at", "gr"]);
+});
+
+test("browse: chart and fallback addresses", () => {
+  assert.equal(C.chartUrl("gr", "1318", 100), "https://itunes.apple.com/gr/rss/toppodcasts/limit=100/genre=1318/json");
+  assert.equal(C.chartUrl("gr", "", 100), "https://itunes.apple.com/gr/rss/toppodcasts/limit=100/json");
+  assert.equal(C.chartUrl("x/../", "1;drop", 999), "https://itunes.apple.com/us/rss/toppodcasts/limit=100/json");
+  assert.equal(C.genreSearchUrl("gr", "1318"), "https://itunes.apple.com/search?media=podcast&entity=podcast&limit=100&country=gr&genreId=1318&term=Technology");
+  assert.equal(C.genreSearchUrl("gr", "nope"), "");
+  assert.equal(C.appleLookupManyUrl(["123", "456"], "gr"), "https://itunes.apple.com/lookup?entity=podcast&country=gr&id=123,456");
+  assert.equal(C.appleLookupManyUrl(["123"]), "https://itunes.apple.com/lookup?entity=podcast&id=123");
+  assert.deepEqual(C.idBatches([1, 2, 3, 4, 5], 2), [[1, 2], [3, 4], [5]]);
+});
+
+test("browse: chart parser (array, single entry, junk)", () => {
+  const e = (id) => ({ id: { attributes: { "im:id": id } } });
+  assert.deepEqual(C.parseChart({ feed: { entry: [e("111"), e("222"), e("111"), e("x"), null] } }), ["111", "222"]);
+  assert.deepEqual(C.parseChart({ feed: { entry: e("333") } }), ["333"]);
+  assert.deepEqual(C.parseChart({ feed: {} }), []);
+  assert.deepEqual(C.parseChart(null), []);
+});
+
+test("browse: genre filter, sub-genre chips, random pick", () => {
+  const json = { results: [
+    { collectionId: 1, feedUrl: "https://a.example/feed", collectionName: "A", primaryGenreName: "Technology", genres: ["Technology", "Podcasts", "Tech News"], genreIds: ["1318", "26", "1448"] },
+    { collectionId: 2, feedUrl: "https://b.example/feed", collectionName: "B", primaryGenreName: "Technology", genres: ["Technology", "Tech News", "Podcasts"], genreIds: ["1318", "1448", "26"] },
+    { collectionId: 3, feedUrl: "https://c.example/feed", collectionName: "C", primaryGenreName: "Comedy", genres: ["Comedy", "Podcasts"], genreIds: ["1303", "26"] }
+  ] };
+  const hits = C.parseAppleResults(json);
+  assert.deepEqual(hits[0].gs, ["Technology", "Podcasts", "Tech News"]);
+  assert.deepEqual(hits[0].gi, ["1318", "26", "1448"]);
+  assert.deepEqual(C.inGenre(hits, "1318").map((h) => h.title), ["A", "B"]);
+  assert.equal(C.inGenre(hits, "").length, 3);
+  assert.deepEqual(C.subChips(hits, "Technology"), ["Tech News"]);
+  assert.deepEqual(C.withChip(hits, "Tech News").map((h) => h.title), ["A", "B"]);
+  assert.equal(C.withChip(hits, "").length, 3);
+  // Prefers shows not followed yet; falls back to any.
+  const subA = (id) => id === hits[0].id || id === hits[1].id;
+  assert.equal(C.pickRandom(hits, subA, () => 0.99).title, "C");
+  assert.equal(C.pickRandom(hits, () => true, () => 0.5).title, "B");
+  assert.equal(C.pickRandom([], null), null);
+});
+
+// Browse wave 2: shuffle and the A–Z / Α–Ω index.
+test("shuffle: plan per show and for the whole library, queue front", () => {
+  let d = C.subscribe(C.emptyData(), { url: "https://a.gr/feed", title: "A" }, 100);
+  d = C.subscribe(d, { url: "https://b.gr/feed", title: "B" }, 100);
+  const sa = C.showId("https://a.gr/feed"), sb = C.showId("https://b.gr/feed");
+  const ep = (s, n, extra) => Object.assign({ id: C.episodeId(s, { guid: "g" + n }), s, pub: 1000 + n, audio: "https://m.gr/" + n + ".mp3" }, extra || {});
+  const cache = {
+    [sa]: [ep(sa, 1), ep(sa, 2), ep(sa, 3, { kind: "trailer" }), ep(sa, 4, { audio: "" })],
+    [sb]: [ep(sb, 5)]
+  };
+  d = C.setProgress(d, { id: cache[sa][1].id, s: sa, pd: 1002 }, 0, 60, 1, 200);   // played
+  const one = C.shufflePlan(d, cache, sa, () => 0);
+  assert.deepEqual(one.map((e) => e.id), [cache[sa][0].id], "only unplayed, playable, non-trailer");
+  const all = C.shufflePlan(d, cache, "", () => 0.99);
+  assert.equal(all.length, 2);
+  assert.deepEqual(all.map((e) => e.s).sort(), [sa, sb].sort());
+  assert.deepEqual(C.shufflePlan(d, {}, "", Math.random), []);
+  // Fisher-Yates keeps every item.
+  assert.deepEqual(C.shuffled([1, 2, 3, 4, 5], Math.random).sort(), [1, 2, 3, 4, 5]);
+  // Front of the queue, rest kept after, no duplicates.
+  const keep = cache[sb][0];
+  d = C.queueAdd(d, { id: keep.id, s: sb }, "end", 300);
+  d = C.queueAdd(d, { id: cache[sa][0].id, s: sa }, "end", 301);
+  const q = C.queueFront(d, [{ id: cache[sa][0].id, s: sa }], 400);
+  assert.deepEqual(q.queue.ids, [cache[sa][0].id, keep.id]);
+  assert.equal(q.queue.sh[cache[sa][0].id], sa);
+  assert.equal(C.queueFront(d, [], 500), d);
+});
+
+test("index: letters, order, sort", () => {
+  assert.deepEqual(["Ένας", "ώρα", "the x", "9 lives", "«Λόγος»", "ς", "Ü", "日本"].map(C.letterOf), ["Ε", "Ω", "T", "#", "Λ", "Σ", "U", "#"]);
+  assert.deepEqual(C.indexLetters(["b", "α", "1"], "el"), ["#", "Α", "B"]);
+  assert.deepEqual(C.indexLetters(["b", "α", "1"], "en"), ["#", "B", "Α"]);
+  assert.deepEqual(C.indexSort(["b", "Άλφα", "«Λόγος»", "1x", "a", "βήτα"], (x) => x, "el"), ["1x", "Άλφα", "βήτα", "«Λόγος»", "a", "b"]);
+  assert.deepEqual(C.indexSort(["b", "Άλφα", "a"], (x) => x, "en"), ["a", "b", "Άλφα"]);
+});

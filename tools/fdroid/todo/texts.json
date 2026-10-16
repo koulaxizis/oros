@@ -1,0 +1,11 @@
+{
+  "category": "Office",
+  "en": {
+    "summary": "Tasks and lists, offline and private",
+    "description": "Lists, due dates, repeating tasks, subtasks and reminders, plus an icon badge that counts what is due today. Optional encrypted sync with your own Dropbox.\n\nShare text to orOS To-Do to add it as a task.\n\nWorks offline, with no account, no ads, no cookies and no tracking. Sync is optional and end-to-end encrypted, using your own Dropbox.\n\nThe app's content updates by itself from useoros.online; a new APK only comes when the Android shell changes. Free and open source (MIT), free forever."
+  },
+  "el": {
+    "summary": "Εργασίες και λίστες, χωρίς σύνδεση και ιδιωτικά",
+    "description": "Λίστες, προθεσμίες, επαναλαμβανόμενες εργασίες, υποεργασίες και υπενθυμίσεις, με σήμα στο εικονίδιο που μετρά όσα λήγουν σήμερα. Προαιρετικός κρυπτογραφημένος συγχρονισμός με το δικό σου Dropbox.\n\nΚοινοποίησε κείμενο στο orOS To-Do και γίνεται εργασία.\n\nΔουλεύει χωρίς σύνδεση, χωρίς λογαριασμό, διαφημίσεις, cookies ή παρακολούθηση. Ο συγχρονισμός είναι προαιρετικός και κρυπτογραφημένος από άκρο σε άκρο, μέσω του δικού σου Dropbox.\n\nΤο περιεχόμενο της εφαρμογής ενημερώνεται μόνο του από το useoros.online· νέο APK βγαίνει μόνο όταν αλλάζει το κέλυφος Android. Δωρεάν και ανοιχτού κώδικα (MIT), δωρεάν για πάντα."
+  }
+}
