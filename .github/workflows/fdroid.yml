@@ -39,7 +39,8 @@ on:
         default: false
 
 permissions:
-  contents: read
+  # write: the android-v<version> tags official F-Droid builds from
+  contents: write
 
 concurrency:
   group: fdroid
@@ -173,3 +174,22 @@ jobs:
           # One commit, replaced each time: the APKs never pile up in history
           git push -q --force "https://x-access-token:$TOKEN@github.com/$DEST.git" main
           echo "Published $(ls repo/*.apk | wc -l) APKs to $SITE/repo"
+
+      # Official F-Droid (online.useoros.twa) builds from source and
+      # follows tags: each Android shell change on main gets one
+      # android-v<APP_VERSION> tag. Store-only and web-only changes don't.
+      - name: Tag the Android shell for F-Droid
+        if: steps.shell.outputs.go == '1'
+        run: |
+          set -e
+          git fetch -q --tags origin
+          last=$(git tag -l 'android-v*' --sort=-creatordate | head -1)
+          if [ -n "$last" ] && git diff --quiet "$last" HEAD -- android phone.js manifest.webmanifest icons/icon-512.png; then
+            echo "Android shell unchanged since $last"; exit 0
+          fi
+          v=$(sed -n 's/.*APP_VERSION = "\([0-9][0-9.]*\)".*/\1/p' shell.js | head -1)
+          [ -n "$v" ] || { echo "::error::APP_VERSION not found"; exit 1; }
+          if git rev-parse -q --verify "refs/tags/android-v$v" >/dev/null; then echo "android-v$v exists"; exit 0; fi
+          git tag "android-v$v" HEAD
+          git push -q origin "android-v$v"
+          echo "Tagged android-v$v"

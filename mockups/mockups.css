@@ -176,6 +176,7 @@ input[type="color"].sw { width: 52px; flex-shrink: 0; }
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .seg.wrap button { flex: 1 1 64px; }
+#setk button { flex: 1 1 30%; }
 .seg button[aria-checked="true"] { background: var(--accent-soft); color: var(--accent); }
 .seg button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 
@@ -197,6 +198,15 @@ input[type="color"].sw { width: 52px; flex-shrink: 0; }
 .actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .actions.end { justify-content: flex-end; }
 
+.lbl.sm { font-size: 11px; }
+.cr a { color: var(--accent); }
+.vol { display: flex; flex-direction: column; gap: 8px; padding: 8px 0 10px; border-top: 1px solid var(--border); }
+.vol:first-child { border-top: none; padding-top: 0; }
+.vol-name { font-size: 14px; font-weight: 800; }
+.mo-run { display: flex; align-items: center; gap: 10px; }
+.mo-run progress { flex: 1 1 auto; min-width: 0; height: 10px; accent-color: var(--accent); }
+#panel.busy #panes .pane > :not(#mo-run):not(.lbl) { pointer-events: none; opacity: 0.55; }
+
 /* ---------- 5. Chips, dialogs ---------- */
 .chip {
   min-height: 36px; padding: 4px 14px; border-radius: 999px; border: 1px solid var(--border); background: var(--panel-bg);
@@ -217,6 +227,18 @@ input[type="color"].sw { width: 52px; flex-shrink: 0; }
   box-shadow: 0 12px 40px var(--shadow); padding: 14px 18px 20px;
   display: flex; flex-direction: column; gap: 10px;
 }
+.dialog.wide { width: min(640px, calc(100vw - 24px)); }
+.find-form { display: flex; gap: 8px; }
+.find-form input { flex: 1 1 auto; }
+.find-form .chip { flex: none; }
+.find-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 6px; }
+.find-tile {
+  position: relative; aspect-ratio: 4 / 3; padding: 0; border-radius: 10px; overflow: hidden;
+  border: 2px solid var(--border); background: var(--bg); cursor: pointer;
+}
+.find-tile img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.find-tile:hover, .find-tile:focus-visible { border-color: var(--accent); outline: none; }
+.find-tile:disabled { opacity: 0.5; cursor: progress; }
 .dlg-head { display: flex; align-items: center; gap: 8px; }
 .dlg-head h2 { font-size: 15px; font-weight: 800; }
 .menu { display: flex; flex-direction: column; gap: 4px; }
@@ -259,6 +281,7 @@ input[type="color"].sw { width: 52px; flex-shrink: 0; }
 }
 @media (max-width: 400px) {
   .range .rl { flex-basis: 86px; font-size: 12px; }
+  .find-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .seg button { font-size: 12px; padding: 2px 4px; }
 }
 @media (pointer: coarse) {

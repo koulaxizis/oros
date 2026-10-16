@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Mockups — scene.js (v1.0.0, ES module)
+// orOS Mockups — scene.js (v1.1.0, ES module)
 // The 3D book and its scene, drawn with the vendored three.js
 // (vendor/three, MIT). Loaded by mockups.js with import() only
 // when the editor opens, so the app list stays light.
@@ -10,7 +10,13 @@
 //   - the cover picture is composed on a canvas laid along the arc
 //     of the cover (flap, back, spine, front, flap), or one full
 //     wrap picture split by the real spine width
-//   - floor shadow (shadow catcher + contact shadow), a wall when
+//   - sets: every book of MockCore.setList() is built (books that
+//     look the same share one texture), posed (standing, lying,
+//     leaning, its back to the camera), turned, and laid side by
+//     side or stacked; the whole set is framed and turned together
+//   - turntable frames: drawTo(ctx, w, h, clear, { spin, cam })
+//     draws one finished frame with the set turned a little more
+//   - floor shadow (shadow catcher + contact shadows), a wall when
 //     the book leans, key light + soft fill + a small studio
 //     environment for gloss
 //   - the background is drawn on a 2D canvas under the 3D canvas
@@ -37,8 +43,8 @@ function shade(hex, k) {
 }
 
 // The background (also used on export).
-export function drawBackground(ctx, w, h, bg, img) {
-  ctx.clearRect(0, 0, w, h);
+export function drawBackground(ctx, w, h, bg, img, keep) {
+  if (!keep) ctx.clearRect(0, 0, w, h);
   if (!bg || bg.k === "none") return;
   if (bg.k === "solid") { ctx.fillStyle = bg.c1; ctx.fillRect(0, 0, w, h); return; }
   if (bg.k === "photo") {
@@ -55,9 +61,10 @@ export function drawBackground(ctx, w, h, bg, img) {
 }
 
 // The printed sheet as one picture, laid along the cover's arc.
-export function composeCover(C, bk, art, imgs) {
-  var L = C.layout(bk), d = C.dims(bk);
-  var ppm = Math.min(10, 4096 / L.total, 4096 / L.h);
+// maxPx: the longest side of the texture (smaller for big sets).
+export function composeCover(C, bk, art, imgs, maxPx) {
+  var L = C.layout(bk), d = C.dims(bk), mx = maxPx || 4096;
+  var ppm = Math.min(10, mx / L.total, mx / L.h);
   var cv = canvas(Math.round(L.total * ppm), Math.round(L.h * ppm)), ctx = cv.getContext("2d");
   var H = cv.height;
   ctx.fillStyle = art.c; ctx.fillRect(0, 0, cv.width, H);
@@ -248,35 +255,36 @@ export function createStage(host, C) {
   floor.rotation.x = -Math.PI / 2;
   floor.receiveShadow = true;
   scene.add(floor);
-  var contactTex = new THREE.CanvasTexture(contactCanvas());
-  var contact = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: contactTex, transparent: true, depthWrite: false, opacity: 0.5 }));
-  contact.rotation.x = -Math.PI / 2;
-  contact.position.y = 0.0005;
-  contact.renderOrder = 1;
-  scene.add(contact);
-
-  var turnG = new THREE.Group(), placeG = new THREE.Group();
-  turnG.add(placeG); scene.add(turnG);
+  var turnG = new THREE.Group(), setG = new THREE.Group();
+  turnG.add(setG); scene.add(turnG);
   var wall = new THREE.Mesh(new THREE.PlaneGeometry(60, 30), new THREE.ShadowMaterial({ opacity: 0.4 }));
   wall.receiveShadow = true;
   wall.visible = false;
   turnG.add(wall);
+  var contactTex = new THREE.CanvasTexture(contactCanvas());
+  var contactMats = [];
 
-  var book = null, owned = [], coverTex = null;
-  var state = { bk: null, art: null, sc: null, imgs: {}, bgImg: null };
+  var built = false, owned = [], fronts = [];
+  // p: the project (bk, art, sc, set); pics: asset id → picture
+  var state = { p: null, sc: null, pics: {}, bgImg: null, spin: 0 };
   var frame = { R: 1, cy: 0.5 };
-  var dirty = false, raf = 0, w = 1, h = 1;
+  var raf = 0, w = 1, h = 1, sizeKey = "";
 
   function own(x) { owned.push(x); return x; }
-  function disposeBook() {
-    if (book) placeG.remove(book);
+  function disposeBooks() {
+    while (setG.children.length) setG.remove(setG.children[0]);
     owned.forEach(function (x) { try { x.dispose(); } catch (e) {} });
-    owned = []; book = null; coverTex = null;
+    owned = []; fronts = []; contactMats = []; built = false;
+  }
+  function picsOf(art) {
+    var o = {};
+    C.SLOTS.forEach(function (k) { if (art[k] && state.pics[art[k]]) o[k] = state.pics[art[k]]; });
+    return o;
   }
 
-  function materials(bk, art) {
-    var cv = composeCover(C, bk, art, state.imgs);
-    coverTex = own(new THREE.CanvasTexture(cv));
+  function materials(bk, art, maxPx) {
+    var cv = composeCover(C, bk, art, picsOf(art), maxPx);
+    var coverTex = own(new THREE.CanvasTexture(cv));
     coverTex.colorSpace = THREE.SRGBColorSpace;
     coverTex.anisotropy = ANISO;
     var fin = bk.fin;
@@ -300,10 +308,9 @@ export function createStage(host, C) {
     return { cover: cover, inside: inside, cloth: cloth, edgeA: edgeA, edgeB: edgeB, page: page };
   }
 
-  function buildBook() {
-    disposeBook();
-    var bk = state.bk, art = state.art, sc = state.sc;
-    var pr = C.profile(bk), d = pr.d, M = materials(bk, art);
+  // One book → { g, front } (front: the cover piece on the hinge).
+  function makeBook(bk, M, placeK) {
+    var pr = C.profile(bk), d = pr.d, sc = state.sc;
     var g = new THREE.Group();
     var front = new THREE.Group();
     front.position.set(pr.hinge[0] * S, 0, pr.hinge[1] * S);
@@ -348,7 +355,7 @@ export function createStage(host, C) {
     }
     if (d.hc && bk.ribbon) {
       var rx = d.block.x0 + bw * 0.32, yb = -d.H / 2;
-      var path = sc.place === "lie"
+      var path = placeK === "lie"
         ? [[yb + 6, 0], [yb - 6, 0.6], [yb - 26, 1.2]]
         : [[yb + 6, 0], [yb - 0.2, 0.1], [-d.Hc / 2 + 0.2, 1.8], [-d.Hc / 2 + 0.2, d.zF + 22]];
       var rm = own(new THREE.MeshStandardMaterial({ color: bk.ribC, roughness: 0.55, side: THREE.DoubleSide }));
@@ -357,40 +364,85 @@ export function createStage(host, C) {
       g.add(rib);
     }
     g.add(front);
-    book = g;
-    placeG.add(book);
+    return { g: g, front: front };
+  }
+  // Bounds of the books only (contact shadows left out).
+  function boxOf(o) {
+    o.updateMatrixWorld(true);
+    var box = new THREE.Box3(), tmp = new THREE.Box3();
+    o.traverse(function (x) {
+      if (!x.isMesh || x.userData.skip) return;
+      if (!x.geometry.boundingBox) x.geometry.computeBoundingBox();
+      tmp.copy(x.geometry.boundingBox).applyMatrix4(x.matrixWorld);
+      box.union(tmp);
+    });
+    return box;
+  }
+
+  // Every book of the set, posed and laid out.
+  function buildSet() {
+    disposeBooks();
+    var p = state.p, list = C.setList(p), maxPx = list.length > 2 ? 2048 : 4096, mats = {};
+    var gap = (p.set ? p.set.gap : 0) * S, kind = p.set ? p.set.k : "one", cursor = 0;
+    list.forEach(function (it, n) {
+      var v = C.volume(p, it.i), key = C.canon([v.bk, v.art]);
+      var M = mats[key] || (mats[key] = materials(v.bk, v.art, maxPx));
+      var b = makeBook(v.bk, M, it.place);
+      fronts.push(b.front);
+      if (it.back) b.g.rotation.y = Math.PI;
+      var pose = new THREE.Group();
+      pose.add(b.g);
+      if (it.place === "lie") pose.rotation.x = -Math.PI / 2;
+      else if (it.place === "lean") pose.rotation.x = -0.24;
+      var pb = boxOf(pose), pc = pb.getCenter(new THREE.Vector3()), ps = pb.getSize(new THREE.Vector3());
+      pose.position.set(-pc.x, -pb.min.y, -pc.z);
+      var slot = new THREE.Group();
+      slot.add(pose);
+      if (kind !== "stack" || n === 0) {
+        var cm = own(new THREE.MeshBasicMaterial({ map: contactTex, transparent: true, depthWrite: false, opacity: 0.5 }));
+        var ct = new THREE.Mesh(own(new THREE.PlaneGeometry(1, 1)), cm);
+        ct.rotation.x = -Math.PI / 2;
+        ct.position.y = 0.0005;
+        ct.scale.set(ps.x * 1.35, ps.z * 1.35 + (it.place === "lie" ? 0 : 0.12), 1);
+        ct.renderOrder = 1;
+        ct.userData.skip = true;
+        slot.add(ct);
+        contactMats.push(cm);
+      }
+      slot.rotation.y = it.yaw * Math.PI / 180;
+      var sb = boxOf(slot);
+      if (kind === "stack") {
+        slot.position.set(it.dx * S, cursor - sb.min.y, -(sb.min.z + sb.max.z) / 2);
+        cursor += sb.max.y - sb.min.y;
+      } else {
+        // side by side, fronts (or spines) in one line
+        slot.position.set(cursor - sb.min.x, 0, -sb.max.z);
+        cursor += sb.max.x - sb.min.x + gap;
+      }
+      setG.add(slot);
+    });
+    built = true;
     place();
   }
 
-  // Placement on the floor + framing.
+  // The set on the floor + framing.
   function place() {
-    if (!book) return;
+    if (!built) return;
     var sc = state.sc;
     turnG.rotation.y = 0;
-    placeG.rotation.set(0, 0, 0);
-    placeG.position.set(0, 0, 0);
-    if (sc.place === "lie") placeG.rotation.x = -Math.PI / 2;
-    else if (sc.place === "lean") placeG.rotation.x = -0.24;
-    placeG.updateMatrixWorld(true);
-    var box = new THREE.Box3().setFromObject(placeG);
-    var c = box.getCenter(new THREE.Vector3());
-    placeG.position.set(-c.x, -box.min.y, -c.z);
-    placeG.updateMatrixWorld(true);
-    box = new THREE.Box3().setFromObject(placeG);
-    wall.visible = sc.place === "lean";
+    setG.position.set(0, 0, 0);
+    var box = boxOf(setG), c = box.getCenter(new THREE.Vector3());
+    setG.position.set(-c.x, -box.min.y, -c.z);
+    box = boxOf(setG);
+    wall.visible = C.setList(state.p).some(function (it) { return it.place === "lean"; });
     wall.position.set(0, 15, box.min.z - 0.0002);
     var size = box.getSize(new THREE.Vector3());
-    contact.scale.set(size.x * 1.35, size.z * 1.35 + (sc.place === "lie" ? 0 : 0.12), 1);
-    contact.position.set(0, 0.0005, (box.min.z + box.max.z) / 2);
-    turnG.rotation.y = sc.turn * Math.PI / 180;
-    contact.rotation.z = turnG.rotation.y;
-    var cz = (box.min.z + box.max.z) / 2;
-    contact.position.x = Math.sin(turnG.rotation.y) * cz;
-    contact.position.z = Math.cos(turnG.rotation.y) * cz;
     frame.R = Math.max(size.x, size.y, size.z) * 0.56 + 0.03;
     frame.cy = (box.min.y + box.max.y) / 2;
+    turn();
     lights();
   }
+  function turn() { turnG.rotation.y = (state.sc.turn + state.spin) * Math.PI / 180; }
 
   function lights() {
     var li = state.sc.light, R = frame.R;
@@ -409,11 +461,11 @@ export function createStage(host, C) {
     key.shadow.blurSamples = 16;
     floor.material.opacity = state.sc.shadow * (0.9 - li.soft * 0.35);
     wall.material.opacity = state.sc.shadow * 0.7;
-    contact.material.opacity = state.sc.shadow * 0.85;
+    contactMats.forEach(function (m) { m.opacity = state.sc.shadow * 0.85; });
   }
 
-  function aimCamera(cw, ch) {
-    var cam = state.sc.cam, R = frame.R;
+  function aimCamera(cw, ch, camO) {
+    var cam = camO || state.sc.cam, R = frame.R;
     camera.fov = cam.fov;
     camera.aspect = cw / ch;
     var half = cam.fov * Math.PI / 360;
@@ -439,60 +491,85 @@ export function createStage(host, C) {
     drawBackground(cv.getContext("2d"), cw, ch, state.sc.bg, state.bgImg);
   }
 
+  function setSize(cw, ch, dpr) {
+    var k = cw + "x" + ch + "@" + dpr;
+    if (k === sizeKey) return;
+    sizeKey = k;
+    renderer.setPixelRatio(dpr);
+    renderer.setSize(cw, ch, false);
+  }
   function renderNow() {
     raf = 0;
-    if (!book) return;
+    if (!built) return;
     var dpr = Math.min(window.devicePixelRatio || 1, 2);
-    renderer.setPixelRatio(dpr);
-    renderer.setSize(w, h, false);
+    setSize(w, h, dpr);
     drawBg(bgCv, Math.round(w * dpr), Math.round(h * dpr));
     aimCamera(w, h);
     renderer.render(scene, camera);
   }
   function request() { if (!raf) raf = requestAnimationFrame(renderNow); }
+  // One finished frame into ctx (ow × oh, at most MAX): background +
+  // the set. o: { spin (degrees more turn), cam (another camera),
+  // under (a colour below a see-through background, for video) }.
+  function drawTo(ctx, ow, oh, clear, o) {
+    o = o || {};
+    if (o.under) { ctx.fillStyle = o.under; ctx.fillRect(0, 0, ow, oh); }
+    if (!clear) drawBackground(ctx, ow, oh, state.sc.bg, state.bgImg, !!o.under);
+    else if (!o.under) ctx.clearRect(0, 0, ow, oh);
+    if (!built) return;
+    var spin = state.spin;
+    state.spin = o.spin || 0;
+    turn();
+    setSize(ow, oh, 1);
+    aimCamera(ow, oh, o.cam);
+    renderer.render(scene, camera);
+    ctx.drawImage(glCv, 0, 0, ow, oh);
+    state.spin = spin;
+    turn();
+  }
 
   // ---------- Public ----------
   var stage = {
     MAX: MAX,
-    // Full update: book shape, pictures, scene.
-    set: function (p, imgs, bgImg) {
-      state.bk = p.bk; state.art = p.art; state.sc = p.sc;
-      state.imgs = imgs || {}; state.bgImg = bgImg || null;
-      buildBook();
+    // Full update: the set's shape, pictures, scene.
+    // pics: asset id → picture (every picture the project names).
+    set: function (p, pics, bgImg) {
+      state.p = p; state.sc = p.sc;
+      state.pics = pics || {}; state.bgImg = bgImg || null;
+      buildSet();
       request();
     },
     // Scene-only update (camera, light, background, turn, open, place).
     scene: function (sc, bgImg, rebuild) {
       var placeChanged = !state.sc || sc.place !== state.sc.place;
       state.sc = sc;
+      if (state.p) state.p = Object.assign({}, state.p, { sc: sc });
       if (bgImg !== undefined) state.bgImg = bgImg;
-      if (rebuild || placeChanged) { buildBook(); request(); return; }
-      if (book) book.children[book.children.length - 1].rotation.y = -sc.open * Math.PI / 180;
+      if (state.p && (rebuild || placeChanged)) { buildSet(); request(); return; }
+      fronts.forEach(function (f) { f.rotation.y = -sc.open * Math.PI / 180; });
       place();
       request();
     },
     resize: function (cw, ch) { w = Math.max(1, cw | 0); h = Math.max(1, ch | 0); request(); },
     render: request,
-    // A finished picture: background + book, width × height px.
-    snapshot: function (ow, oh, transparent) {
+    // The largest frame this device draws for ow × oh.
+    fit: function (ow, oh) {
       var k = Math.min(1, MAX / Math.max(ow, oh));
-      ow = Math.round(ow * k); oh = Math.round(oh * k);
-      var out = canvas(ow, oh), ctx = out.getContext("2d");
-      if (!transparent) drawBackground(ctx, ow, oh, state.sc.bg, state.bgImg);
-      if (book) {
-        renderer.setPixelRatio(1);
-        renderer.setSize(ow, oh, false);
-        aimCamera(ow, oh);
-        renderer.render(scene, camera);
-        ctx.drawImage(glCv, 0, 0, ow, oh);
-      }
-      renderNow();
-      return { canvas: out, scaled: k < 1 };
+      return { w: Math.round(ow * k), h: Math.round(oh * k), scaled: k < 1 };
     },
-    // The mm per screen pixel at the book (for drag speed).
+    drawTo: drawTo,
+    // A finished picture: background + the set, width × height px.
+    snapshot: function (ow, oh, transparent, o) {
+      var f = stage.fit(ow, oh);
+      var out = canvas(f.w, f.h);
+      drawTo(out.getContext("2d"), f.w, f.h, !!transparent, o);
+      renderNow();
+      return { canvas: out, scaled: f.scaled };
+    },
     radius: function () { return frame.R; },
     destroy: function () {
-      disposeBook();
+      disposeBooks();
+      try { contactTex.dispose(); } catch (e) {}
       try { scene.environment.dispose(); } catch (e) {}
       renderer.dispose();
       host.textContent = "";

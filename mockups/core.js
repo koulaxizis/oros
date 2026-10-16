@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Mockups — core.js (MockCore, v1.0.0)
+// orOS Mockups — core.js (MockCore, v1.1.0)
 // Pure model of the Mockups app. No DOM, no three.js: Node-tested
 // in tests/mockups.test.js.
 //   - book sizes in mm: trim presets, paper presets, spine width
@@ -14,6 +14,12 @@
 //     (back + spine + front, with flaps) is split by the real spine
 //   - layout(bk): the panels of that picture (flap, back, spine,
 //     front, flap) in mm, for composing separate pictures
+//   - sets: one book, a front + back pair, a series side by side,
+//     a shelf of spines or a stack; volume(p, i) gives book i of
+//     the set (its own pages and pictures, or the first book's),
+//     setList(p) how each one stands
+//   - motion settings (turntable video / GIF) and the credit of a
+//     background photo from an open library
 //   - the project model and its merge (synced slice "mockups")
 // Data (localStorage "oros-mockups-data"):
 //   { ver: 1, prj: [project], tombs: { id: m } }
@@ -26,7 +32,7 @@
 (function (root) {
   "use strict";
 
-  var VERSION = "1.0.0";
+  var VERSION = "1.1.0";
   var DATA_VER = 1;
   var DATA_KEY = "oros-mockups-data";
   var PREFS_KEY = "oros-mockups-prefs";
@@ -74,6 +80,18 @@
   var FMTS = ["png", "jpg", "webp"];
   var ART_MODES = ["parts", "wrap"];
   var SLOTS = ["front", "back", "spine", "flapF", "flapB", "wrap"];
+  var VOL_SLOTS = ["front", "back", "spine", "wrap"];
+  var SETS = ["one", "pair", "row", "shelf", "stack"];
+  var MAX_VOLS = 5;                     // books after the first one
+  var GAP_DEF = { one: 0, pair: 24, row: 14, shelf: 1, stack: 0 };
+  var MOTIONS = ["spin", "swing"];
+  var SECS = [4, 6, 8, 12];
+  var VSIZES = [720, 1080];
+  var VFMTS = ["video", "gif"];
+  var CR_SRC = ["openverse", "commons", "pixabay", "pexels"];
+  // Stack: each book a little turned and pushed, so it looks laid by hand.
+  var STACK_YAW = [0, 7, -5, 9, -8, 4];
+  var STACK_DX = [0, 4, -3, 5, -4, 2];
 
   var LIMIT = {
     w: [40, 600], h: [40, 600], pages: [4, 2000], cal: [0.02, 0.3],
@@ -81,7 +99,7 @@
     turn: [-180, 180], open: [0, 160], th: [-180, 180], ph: [-10, 89],
     fov: [8, 70], zoom: [0.5, 3], dx: [-1, 1], dy: [-1, 1],
     az: [-180, 180], el: [10, 85], str: [0, 2], soft: [0, 1], warm: [-1, 1],
-    shadow: [0, 1], ang: [0, 359]
+    shadow: [0, 1], ang: [0, 359], n: [2, 6], gap: [0, 80]
   };
 
   // ---------- Helpers ----------
@@ -346,6 +364,82 @@
     o.bleed = typeof a.bleed === "number" && isFinite(a.bleed) && a.bleed >= 0 ? num(a.bleed, LIMIT.bleed, 0, 0.1) : -1;
     return o;
   }
+  // Credit of a background photo from an open library (what
+  // designkit/media.js normCredit keeps), fields clipped.
+  function safeUrl(u) {
+    if (typeof u !== "string") return "";
+    var m = /^https:\/\/([a-z0-9.-]+)(\/[^\s"'<>\\]*)?$/i.exec(u.trim());
+    if (!m || /^[.-]|[.-]$|\.\./.test(m[1])) return "";
+    return "https://" + m[1].toLowerCase() + (m[2] || "/");
+  }
+  var CR_FIELDS = { src: 20, id: 160, kind: 8, title: 300, author: 300, authorUrl: 500, page: 500, lic: 12, licVer: 8, licUrl: 500 };
+  function normCr(c) {
+    if (!c || typeof c !== "object" || CR_SRC.indexOf(c.src) < 0 || typeof c.lic !== "string" || !c.lic) return null;
+    var o = {};
+    Object.keys(CR_FIELDS).forEach(function (k) {
+      var v = typeof c[k] === "string" ? c[k] : "";
+      o[k] = /url$|^page$/i.test(k) ? safeUrl(v).slice(0, CR_FIELDS[k]) : str(v, CR_FIELDS[k]);
+    });
+    if (o.id.indexOf(o.src + ":") !== 0) return null;
+    return o;
+  }
+  function normVol(v) {
+    v = v && typeof v === "object" ? v : {};
+    var o = {};
+    VOL_SLOTS.forEach(function (k) { o[k] = asset(v[k]); });
+    o.c = hex(v.c, "");                 // "" = the first book's colour
+    o.spT = str(v.spT, 80);             // "" = the first book's spine text
+    var pg = typeof v.pages === "number" && isFinite(v.pages) ? Math.round(v.pages) : 0;
+    if (pg) { pg = Math.max(LIMIT.pages[0], Math.min(LIMIT.pages[1], pg)); if (pg % 2) pg += 1; }
+    o.pages = pg;                       // 0 = the first book's pages
+    return o;
+  }
+  function normSet(s) {
+    s = s && typeof s === "object" ? s : {};
+    var k = pick(s.k, SETS, "one");
+    var n = typeof s.n === "number" && isFinite(s.n) ? Math.round(s.n) : 3;
+    return {
+      k: k,
+      n: Math.max(LIMIT.n[0], Math.min(LIMIT.n[1], n)),
+      gap: num(s.gap, LIMIT.gap, GAP_DEF[k], 0.5),
+      vols: (Array.isArray(s.vols) ? s.vols : []).slice(0, MAX_VOLS).map(normVol)
+    };
+  }
+  // How many books the set shows.
+  function count(p) {
+    var st = p && p.set ? p.set : normSet(null);
+    return st.k === "one" ? 1 : st.k === "pair" ? 2 : st.n;
+  }
+  // Book i of the set: { bk, art }. The first book is the project's;
+  // the others take their own pages and pictures where they have them
+  // (a pair is the same book twice).
+  function volume(p, i) {
+    var bk = Object.assign({}, p.bk), art = Object.assign({}, p.art), st = p.set || normSet(null);
+    var v = i > 0 && st.k !== "pair" && st.k !== "one" ? st.vols[i - 1] : null;
+    if (v) {
+      if (v.pages) { bk.pages = v.pages; bk.spine = 0; }
+      VOL_SLOTS.forEach(function (k) { if (v[k]) art[k] = v[k]; });
+      if (v.wrap && art.mode !== "wrap") art.mode = "wrap";
+      if (!v.wrap && (v.front || v.back || v.spine) && art.mode === "wrap") art.mode = "parts";
+      if (v.c) art.c = v.c;
+      if (v.spT) art.spT = v.spT;
+    }
+    return { bk: normBook(bk), art: normArt(art) };
+  }
+  // How every book stands: { i, back (shows its back), yaw (degrees),
+  // place, dx (mm, a hand-laid push) }.
+  function setList(p) {
+    var st = p.set || normSet(null), place = p.sc ? p.sc.place : "stand", out = [], n = count(p);
+    if (st.k === "one") return [{ i: 0, back: false, yaw: 0, place: place, dx: 0 }];
+    if (st.k === "pair") return [{ i: 0, back: false, yaw: 12, place: place, dx: 0 }, { i: 1, back: true, yaw: -12, place: place, dx: 0 }];
+    for (var i = 0; i < n; i++) {
+      if (st.k === "row") out.push({ i: i, back: false, yaw: 0, place: place, dx: 0 });
+      else if (st.k === "shelf") out.push({ i: i, back: false, yaw: 90, place: "stand", dx: 0 });
+      else out.push({ i: i, back: false, yaw: STACK_YAW[i % STACK_YAW.length], place: "lie", dx: STACK_DX[i % STACK_DX.length] });
+    }
+    return out;
+  }
+
   function normScene(s) {
     s = s && typeof s === "object" ? s : {};
     var cam = s.cam && typeof s.cam === "object" ? s.cam : {};
@@ -364,7 +458,8 @@
         k: pick(bg.k, BGS, "grad"),
         c1: hex(bg.c1, "#eef1f5"), c2: hex(bg.c2, "#c9d2de"),
         ang: num(bg.ang, LIMIT.ang, 180, 1),
-        img: asset(bg.img)
+        img: asset(bg.img),
+        cr: bg.img ? normCr(bg.cr) : null       // credit when the photo came from an open library
       },
       shadow: num(s.shadow, LIMIT.shadow, 0.45, 0.01),
       light: {
@@ -377,16 +472,43 @@
   function normOut(o) {
     o = o && typeof o === "object" ? o : {};
     var size = SIZES.indexOf(o.size) >= 0 ? o.size : 2048;
-    return { ratio: pick(o.ratio, RATIOS, "4:5"), size: size, fmt: pick(o.fmt, FMTS, "png") };
+    var mo = o.mo && typeof o.mo === "object" ? o.mo : {};
+    return {
+      ratio: pick(o.ratio, RATIOS, "4:5"), size: size, fmt: pick(o.fmt, FMTS, "png"),
+      // turntable: spin all round or swing to and fro, seconds, long side
+      mo: { k: pick(mo.k, MOTIONS, "spin"), sec: SECS.indexOf(mo.sec) >= 0 ? mo.sec : 6,
+            size: VSIZES.indexOf(mo.size) >= 0 ? mo.size : 1080, fmt: pick(mo.fmt, VFMTS, "video") }
+    };
   }
   function ratioOf(r) {
     var m = /^(\d+):(\d+)$/.exec(r || "") || [0, 4, 5];
     return (+m[1]) / (+m[2]);
   }
   // Export size in px for a ratio and the long side.
-  function outSize(out) {
-    var o = normOut(out), r = ratioOf(o.ratio);
-    return r >= 1 ? { w: o.size, h: Math.round(o.size / r) } : { w: Math.round(o.size * r), h: o.size };
+  function outSize(out, long) {
+    var o = normOut(out), r = ratioOf(o.ratio), L = long || o.size;
+    return r >= 1 ? { w: L, h: Math.round(L / r) } : { w: Math.round(L * r), h: L };
+  }
+  // Video / GIF frame size: even numbers (encoders want them); a GIF
+  // is kept small (480 px long side).
+  function motionSize(out) {
+    var o = normOut(out), sz = outSize(o, o.mo.fmt === "gif" ? 480 : o.mo.size);
+    return { w: sz.w - sz.w % 2, h: sz.h - sz.h % 2 };
+  }
+  // Frames of a turntable: { n, fps, turn(i) → degrees added to the
+  // book's turn }. Spin: once all round, the last frame one step
+  // short of the first (loops cleanly). Swing: 35° each way, eased.
+  function motionPlan(out) {
+    var o = normOut(out), gif = o.mo.fmt === "gif", fps = gif ? 15 : 30;
+    var n = Math.round((gif ? Math.min(8, o.mo.sec) : o.mo.sec) * fps);   // a GIF is at most 8 s
+    var spin = o.mo.k === "spin";
+    return {
+      n: n, fps: fps,
+      turn: function (i) {
+        var f = (i % n) / n;
+        return spin ? +(360 * f).toFixed(4) : +(35 * Math.sin(2 * Math.PI * f)).toFixed(4);
+      }
+    };
   }
 
   function normProject(p) {
@@ -401,6 +523,7 @@
       art: normArt(p.art),
       sc: normScene(p.sc),
       out: normOut(p.out),
+      set: normSet(p.set),
       unit: p.unit === "in" ? "in" : "mm"
     };
   }
@@ -480,6 +603,9 @@
     if (!p) return out;
     SLOTS.forEach(function (k) { if (p.art && p.art[k]) out.push(p.art[k]); });
     if (p.sc && p.sc.bg && p.sc.bg.img) out.push(p.sc.bg.img);
+    if (p.set && Array.isArray(p.set.vols)) p.set.vols.forEach(function (v) {
+      VOL_SLOTS.forEach(function (k) { if (v && v[k] && out.indexOf(v[k]) < 0) out.push(v[k]); });
+    });
     return out;
   }
 
@@ -504,6 +630,10 @@
     ID_RE: ID_RE, ASSET_RE: ASSET_RE, LIMIT: LIMIT,
     TRIMS: TRIMS, PAPERS: PAPERS, BINDS: BINDS, FINISH: FINISH, EDGES: EDGES, PLACES: PLACES, BGS: BGS,
     RATIOS: RATIOS, SIZES: SIZES, FMTS: FMTS, SLOTS: SLOTS, MM_PER_IN: MM_PER_IN,
+    VOL_SLOTS: VOL_SLOTS, SETS: SETS, MAX_VOLS: MAX_VOLS, GAP_DEF: GAP_DEF,
+    MOTIONS: MOTIONS, SECS: SECS, VSIZES: VSIZES, VFMTS: VFMTS,
+    normCr: normCr, normVol: normVol, normSet: normSet, count: count, volume: volume, setList: setList,
+    motionSize: motionSize, motionPlan: motionPlan,
     trimOf: trimOf, paperOf: paperOf, mmToIn: mmToIn, inToMm: inToMm,
     normBook: normBook, blockMm: blockMm, dims: dims, profile: profile, layout: layout,
     normArt: normArt, normScene: normScene, normOut: normOut, ratioOf: ratioOf, outSize: outSize,

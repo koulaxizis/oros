@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "2.55.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "2.57.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -5607,6 +5607,12 @@
         { name: "Radio Browser", url: "https://www.radio-browser.info/",
           by: "Alex Segler & the community", lic: { en: "Free community API", el: "Δωρεάν κοινοτικό API" },
           en: "Station directory (Radio)", el: "Κατάλογος σταθμών (Ραδιόφωνο)" },
+        { name: "Internet Archive", url: "https://archive.org/details/audio",
+          by: "Internet Archive; each recording by its artist", lic: { en: "Per item (CC / public domain; Live Music Archive: free non-commercial sharing)", el: "Ανά έργο (CC / κοινό κτήμα· Live Music Archive: ελεύθερη μη εμπορική διανομή)" },
+          en: "Free albums, live concerts, classical (Music)", el: "Ελεύθερα άλμπουμ, συναυλίες, κλασική (Μουσική)" },
+        { name: "ccMixter", url: "https://ccmixter.org/",
+          by: "ArtisTech Media; each upload by its artist", lic: { en: "Per item (Creative Commons)", el: "Ανά έργο (Creative Commons)" },
+          en: "Remixes and instrumentals (Music)", el: "Remix και ορχηστρικά (Μουσική)" },
         { name: "iptv-org", url: "https://github.com/iptv-org/iptv",
           by: "iptv-org contributors", lic: "Unlicense (public domain)",
           en: "Channel directory (Television)", el: "Κατάλογος καναλιών (Τηλεόραση)" },
@@ -5648,7 +5654,7 @@
           en: "Word meanings (Library look-up)", el: "Σημασίες λέξεων (Βιβλιοθήκη)" },
         { name: "Openverse", url: "https://openverse.org/",
           by: "WordPress.org, the creators of every work", lic: { en: "Per item (CC / public domain)", el: "Ανά έργο (CC / κοινό κτήμα)" },
-          en: "Photos, illustrations, sounds (Atelier)", el: "Φωτογραφίες, εικονογραφήσεις, ήχοι (Ατελιέ)" },
+          en: "Photos, illustrations, sounds (Atelier); free songs (Music)", el: "Φωτογραφίες, εικονογραφήσεις, ήχοι (Ατελιέ)· ελεύθερα τραγούδια (Μουσική)" },
         { name: "Wikimedia Commons", url: "https://commons.wikimedia.org/",
           by: "Commons contributors, Wikimedia Foundation", lic: { en: "Per item (free licences)", el: "Ανά έργο (ελεύθερες άδειες)" },
           en: "Photos, drawings, sounds, video (Atelier); covers (Media Shelf)", el: "Φωτογραφίες, σχέδια, ήχοι, βίντεο (Ατελιέ)· εξώφυλλα (Το ράφι μου)" },

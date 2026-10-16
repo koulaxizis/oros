@@ -1,11 +1,16 @@
 // ============================================================
-// orOS Mockups — App logic (v1.0.0)
+// orOS Mockups — App logic (v1.1.0)
 // 3D book mockups: give the book's size, pages, paper and binding
 // (paperback or hardcover, flaps / dust jacket, rounded spine,
 // headband, ribbon), add the cover (front, back, spine, flaps or one
 // full wrap), turn the camera, set placement, background and light,
 // and save the picture (PNG / JPG / WebP, to the device, to
-// Pictures, or into a new Atelier design).
+// Pictures, or into a new Atelier design). Wave 2: sets of books
+// (front + back pair, series, shelf of spines, stack), free
+// background photos (Openverse, Wikimedia Commons through
+// designkit/media.js), every ready angle at once (ZIP or Pictures),
+// and a turntable as MP4 / WebM (vendored Mediabunny) or GIF
+// (atelier/gif.js); both libraries load only when asked for.
 // Data: synced slice "mockups" (oros-mockups-data, core.js);
 // pictures on the orOS disk through designkit/assets.js (R30);
 // project thumbnails cached on this device only (IndexedDB
@@ -18,7 +23,7 @@
 //   3. Thumbnails (IndexedDB) + home
 //   4. Stage (3D view), pictures, camera drag
 //   5. The form (book, cover, scene, save)
-//   6. Save the picture, Pictures, Atelier
+//   6. Save the picture, Pictures, Atelier, all angles, turntable
 //   7. Dialogs: more, ask
 //   8. Sync slice, palette, deep link
 //   9. Wiring & boot
@@ -94,7 +99,30 @@
       "toast.fromAtelier": "Cover from Atelier: check the size and the pages.",
       "nogl": "The 3D view needs WebGL, which this browser or device has switched off.",
       "loading": "Loading the 3D view…",
-      "standalone": "Open Mockups inside orOS to keep pictures and sync."
+      "standalone": "Open Mockups inside orOS to keep pictures and sync.",
+      "f.set": "Books in the picture", "set.one": "One book", "set.pair": "Front + back", "set.row": "Series",
+      "set.shelf": "Shelf", "set.stack": "Stack", "f.n": "How many books", "f.gap": "Space between them",
+      "sec.vols": "The other books", "vols.hint": "Each book can have its own pictures, pages and spine text. Where it has none, it looks like the first book.",
+      "vol.n": "Book {n}", "vol.pages": "Pages", "vol.same": "as book 1", "vol.spT": "Spine text",
+      "btn.find": "Find free photos", "find.title": "Free photos", "find.ph": "desk, wood, café, shelf…", "find.go": "Search",
+      "find.more": "More", "find.hint": "From Openverse and Wikimedia Commons, only photos that allow commercial use. The photo is saved on your orOS disk with its credit; give that credit where you post the picture.",
+      "find.intro": "Type what the background should show, for example wooden table or bookshop.", "find.none": "Nothing found. Try other words.",
+      "find.busy": "Searching…", "find.offline": "No internet connection.", "find.err": "The photo library did not answer. Try again later.",
+      "find.rate": "Too many searches for now. Wait a minute.", "find.getting": "Getting the photo…", "find.fail": "Could not get that photo. Try another one.",
+      "find.big": "That photo is too big.", "find.added": "Background photo set", "photo.cr": "Photo: {cr}", "btn.copyCr": "Copy credit",
+      "sec.angles": "All angles at once", "angles.hint": "The seven ready views (front, ¾ both sides, spine, back, from above, low angle), each as a picture in the size and format above.",
+      "btn.anglesZip": "Save all angles (ZIP)", "btn.anglesPics": "All angles to Pictures",
+      "toast.angles": "Making {n} pictures…", "toast.anglesPics": "Saved {n} pictures in Pictures › {name}",
+      "sec.motion": "Turntable video", "f.mo": "Motion", "mo.spin": "All round", "mo.swing": "To and fro",
+      "f.vfmt": "Kind", "vfmt.video": "Video (MP4 or WebM)", "vfmt.gif": "GIF (small, loops)", "f.sec": "Length", "sec.s": "{n} seconds",
+      "f.vsize": "Size", "vsize.px": "{n} px (long side)",
+      "mo.info": "{w} × {h} px, {fps} pictures a second, {n} pictures.", "mo.gifmax": "A GIF is at most 8 seconds.",
+      "mo.clear": "A video has no see-through: the background turns white.",
+      "btn.moMake": "Make the video", "btn.moSave": "Save the video", "btn.moVideos": "Save to Videos", "btn.moPics": "Save to Pictures",
+      "mo.done": "{kind} ready: {size}, made in {sec} s.", "mo.making": "Making the video… {pc}%",
+      "toast.noVideo": "This browser cannot make videos (it has no video encoder). Try GIF, or Chrome, Edge or Firefox.",
+      "toast.moFail": "The video could not be made on this device.", "toast.moStop": "Stopped",
+      "toast.videos": "Saved in Videos as {name}", "btn.moMakeGif": "Make the GIF", "dir.angles": "{name} (angles)"
     },
     el: {
       "app.name": "Μακέτες", "btn.new": "Νέα μακέτα", "btn.more": "Περισσότερα", "btn.back": "Όλες οι μακέτες",
@@ -152,7 +180,30 @@
       "toast.fromAtelier": "Εξώφυλλο από το Ατελιέ: έλεγξε το μέγεθος και τις σελίδες.",
       "nogl": "Η τρισδιάστατη προβολή θέλει WebGL, που είναι κλειστό σε αυτόν τον browser ή τη συσκευή.",
       "loading": "Φορτώνει η τρισδιάστατη προβολή…",
-      "standalone": "Άνοιξε τις Μακέτες μέσα από το orOS για εικόνες και sync."
+      "standalone": "Άνοιξε τις Μακέτες μέσα από το orOS για εικόνες και sync.",
+      "f.set": "Βιβλία στην εικόνα", "set.one": "Ένα βιβλίο", "set.pair": "Μπρος + πίσω", "set.row": "Σειρά",
+      "set.shelf": "Ράφι", "set.stack": "Στοίβα", "f.n": "Πόσα βιβλία", "f.gap": "Απόσταση μεταξύ τους",
+      "sec.vols": "Τα άλλα βιβλία", "vols.hint": "Κάθε βιβλίο μπορεί να έχει δικές του εικόνες, σελίδες και κείμενο ράχης. Όπου δεν έχει, μοιάζει με το πρώτο βιβλίο.",
+      "vol.n": "Βιβλίο {n}", "vol.pages": "Σελίδες", "vol.same": "όπως το βιβλίο 1", "vol.spT": "Κείμενο ράχης",
+      "btn.find": "Δωρεάν φωτογραφίες", "find.title": "Δωρεάν φωτογραφίες", "find.ph": "γραφείο, ξύλο, καφέ, ράφι…", "find.go": "Αναζήτηση",
+      "find.more": "Περισσότερες", "find.hint": "Από το Openverse και το Wikimedia Commons, μόνο φωτογραφίες που επιτρέπουν εμπορική χρήση. Η φωτογραφία αποθηκεύεται στον δίσκο του orOS με την αναφορά της· γράψε αυτή την αναφορά όπου δημοσιεύεις την εικόνα.",
+      "find.intro": "Γράψε τι να δείχνει το φόντο, για παράδειγμα ξύλινο τραπέζι ή βιβλιοπωλείο.", "find.none": "Δεν βρέθηκε τίποτα. Δοκίμασε άλλες λέξεις.",
+      "find.busy": "Αναζήτηση…", "find.offline": "Δεν υπάρχει σύνδεση στο internet.", "find.err": "Η βιβλιοθήκη φωτογραφιών δεν απάντησε. Δοκίμασε αργότερα.",
+      "find.rate": "Πολλές αναζητήσεις για τώρα. Περίμενε ένα λεπτό.", "find.getting": "Φέρνω τη φωτογραφία…", "find.fail": "Δεν ήρθε αυτή η φωτογραφία. Δοκίμασε άλλη.",
+      "find.big": "Η φωτογραφία είναι πολύ μεγάλη.", "find.added": "Η φωτογραφία φόντου μπήκε", "photo.cr": "Φωτογραφία: {cr}", "btn.copyCr": "Αντιγραφή αναφοράς",
+      "sec.angles": "Όλες οι γωνίες μαζί", "angles.hint": "Οι επτά έτοιμες όψεις (μπροστά, ¾ και από τις δύο μεριές, ράχη, πίσω, από πάνω, χαμηλή γωνία), η καθεμία εικόνα στο μέγεθος και τη μορφή από πάνω.",
+      "btn.anglesZip": "Όλες οι γωνίες (ZIP)", "btn.anglesPics": "Όλες οι γωνίες στις Εικόνες",
+      "toast.angles": "Φτιάχνω {n} εικόνες…", "toast.anglesPics": "Αποθηκεύτηκαν {n} εικόνες στις Εικόνες › {name}",
+      "sec.motion": "Βίντεο περιστροφής", "f.mo": "Κίνηση", "mo.spin": "Ολόγυρα", "mo.swing": "Πέρα δώθε",
+      "f.vfmt": "Είδος", "vfmt.video": "Βίντεο (MP4 ή WebM)", "vfmt.gif": "GIF (μικρό, σε επανάληψη)", "f.sec": "Διάρκεια", "sec.s": "{n} δευτερόλεπτα",
+      "f.vsize": "Μέγεθος", "vsize.px": "{n} px (μεγάλη πλευρά)",
+      "mo.info": "{w} × {h} px, {fps} εικόνες το δευτερόλεπτο, {n} εικόνες.", "mo.gifmax": "Ένα GIF είναι έως 8 δευτερόλεπτα.",
+      "mo.clear": "Το βίντεο δεν έχει διαφάνεια: το φόντο γίνεται λευκό.",
+      "btn.moMake": "Φτιάξε το βίντεο", "btn.moSave": "Αποθήκευση βίντεο", "btn.moVideos": "Αποθήκευση στα Βίντεο", "btn.moPics": "Αποθήκευση στις Εικόνες",
+      "mo.done": "Έτοιμο {kind}: {size}, έγινε σε {sec} δευτ.", "mo.making": "Φτιάχνω το βίντεο… {pc}%",
+      "toast.noVideo": "Αυτός ο browser δεν φτιάχνει βίντεο (δεν έχει κωδικοποιητή). Δοκίμασε GIF ή Chrome, Edge, Firefox.",
+      "toast.moFail": "Το βίντεο δεν μπόρεσε να γίνει σε αυτή τη συσκευή.", "toast.moStop": "Σταμάτησε",
+      "toast.videos": "Αποθηκεύτηκε στα Βίντεο ως {name}", "btn.moMakeGif": "Φτιάξε το GIF", "dir.angles": "{name} (γωνίες)"
     }
   };
   function t(k, vars) {
@@ -364,7 +415,9 @@
   }
 
   function showHome() {
+    if (busy) return;
     if (cur) { if (saveTimer) saveNow(); makeThumb(); }
+    clearMotion();
     cur = null;
     prefs.cur = ""; savePrefs();
     $("home").hidden = false;
@@ -379,6 +432,7 @@
     var p = C.byId(data, id);
     if (!p) { showHome(); return; }
     if (cur && saveTimer) saveNow();
+    clearMotion();
     cur = clone(p);
     prefs.cur = id; savePrefs();
     $("home").hidden = true;
@@ -402,6 +456,7 @@
 
   // ---------- 4. Stage (3D view), pictures, camera drag ----------
   var AS = window.orosDK && window.orosDK.assets;
+  var MEDIA = window.orosDK && window.orosDK.media;
   var stage = null, stageP = null, sceneMod = null;
   function loadScene() {
     if (sceneMod) return Promise.resolve(sceneMod);
@@ -445,11 +500,12 @@
     if (!AS) return Promise.resolve(null);
     return AS.load(id).then(function (img) { if (img) imgCache[id] = img; return img || null; }, function () { return null; });
   }
+  // Every picture a project names: { imgs: asset id → picture, bg }.
   function picsFor(p) {
-    var imgs = {}, jobs = C.SLOTS.map(function (k) {
-      return loadImg(p.art[k]).then(function (img) { if (img) imgs[k] = img; });
+    var imgs = {}, bg = null;
+    var jobs = C.assetsOf(p).map(function (id) {
+      return loadImg(id).then(function (img) { if (img) imgs[id] = img; });
     });
-    var bg = null;
     jobs.push(loadImg(p.sc.bg.img).then(function (img) { bg = img; }));
     return Promise.all(jobs).then(function () { return { imgs: imgs, bg: bg }; });
   }
@@ -469,12 +525,13 @@
     loadImg(sc.bg.img).then(function (bg) { if (stage && cur) stage.scene(sc, bg, false); });
   }
   if (AS && typeof AS.onChange === "function") AS.onChange(function () {
-    if (cur) { renderSlots(); pushAll(); }
+    if (cur) { renderSlots(); renderVols(); pushAll(); }
   });
 
   // Drag to orbit, pinch / wheel to zoom, arrows on the keyboard.
   var ptrs = {}, pinch0 = 0, zoom0 = 1;
   function camChanged() {
+    if (busy) return;
     var c = cur.sc.cam;
     c.th = ((c.th + 540) % 360) - 180;
     cur.sc = C.normScene(cur.sc);
@@ -627,7 +684,15 @@
     setVal("f-coverC", a.c); setVal("f-spTC", a.spTC); setVal("f-spT", a.spT);
     renderSlots();
     renderWrapInfo();
+    renderVols();
     // scene
+    var st = cur.set;
+    setSeg("setk", st.k);
+    $("setn-box").hidden = !(st.k === "row" || st.k === "shelf" || st.k === "stack");
+    $("gap-box").hidden = st.k === "one" || st.k === "stack";
+    setVal("f-n", st.n); out("n-out", st.n);
+    setVal("f-gap", st.gap); out("gap-out", fmtNum(st.gap, 1) + " mm");
+    $("place-grp").hidden = st.k === "shelf" || st.k === "stack";
     setSeg("place", s.place);
     setVal("f-turn", s.turn); out("turn-out", s.turn + "°");
     setVal("f-open", s.open); out("open-out", s.open + "°");
@@ -641,6 +706,7 @@
     setVal("f-c1", s.bg.c1); setVal("f-c2", s.bg.c2);
     setVal("f-ang", s.bg.ang); out("ang-out", s.bg.ang + "°");
     renderPhotoThumb();
+    renderCredit();
     setVal("f-shadow", s.shadow); out("shadow-out", Math.round(s.shadow * 100) + "%");
     setVal("f-az", s.light.az); out("az-out", s.light.az + "°");
     setVal("f-el", s.light.el); out("el-out", s.light.el + "°");
@@ -653,6 +719,10 @@
     setSeg("ratio", cur.out.ratio);
     setVal("f-size", String(cur.out.size));
     setVal("f-fmt", cur.out.fmt);
+    var mo = cur.out.mo;
+    setSeg("mok", mo.k);
+    setVal("f-vfmt", mo.fmt); setVal("f-sec", String(mo.sec)); setVal("f-vsize", String(mo.size));
+    $("vsize-box").hidden = mo.fmt === "gif";
     renderOutInfo();
   }
   function renderCamFields() {
@@ -669,6 +739,12 @@
     if (k < 1) lines.push(t("out.max", { n: max }));
     if (cur.sc.bg.k === "none") lines.push(t(cur.out.fmt === "jpg" ? "out.jpgclear" : "out.clear"));
     out("out-info", lines.join(" "));
+    var ms = C.motionSize(cur.out), mp = C.motionPlan(cur.out), ml = [];
+    ml.push(t("mo.info", { w: ms.w, h: ms.h, fps: mp.fps, n: mp.n }));
+    if (cur.out.mo.fmt === "gif" && cur.out.mo.sec > 8) ml.push(t("mo.gifmax"));
+    if (cur.sc.bg.k === "none" && cur.out.mo.fmt === "video") ml.push(t("mo.clear"));
+    out("mo-info", ml.join(" "));
+    $("mo-make").textContent = t(cur.out.mo.fmt === "gif" ? "btn.moMakeGif" : "btn.moMake");
   }
   function renderWrapInfo() {
     var L = C.layout(cur.bk), d = C.dims(cur.bk), bl = cur.art.bleed >= 0 ? cur.art.bleed : d.bleed;
@@ -697,35 +773,83 @@
       box.appendChild(im);
     });
   }
+  // One picture slot: thumbnail, name, Choose / Remove, drop a file.
+  function slotRow(name, id, set) {
+    var li = el("li", "slot"), th = el("span", "thumb");
+    thumbInto(th, id);
+    li.appendChild(th);
+    li.appendChild(el("span", "slot-name", name));
+    var chips = el("span", "chips");
+    var pickB = el("button", "chip small", t("btn.choose"));
+    pickB.type = "button";
+    pickB.addEventListener("click", function () { pickPicture(set); });
+    chips.appendChild(pickB);
+    if (id) {
+      var del = el("button", "chip small", t("btn.remove"));
+      del.type = "button";
+      del.addEventListener("click", function () { set("", 0, 0); });
+      chips.appendChild(del);
+    }
+    li.appendChild(chips);
+    li.addEventListener("dragover", function (e) { e.preventDefault(); li.classList.add("drop"); });
+    li.addEventListener("dragleave", function () { li.classList.remove("drop"); });
+    li.addEventListener("drop", function (e) {
+      e.preventDefault(); li.classList.remove("drop");
+      var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+      if (f) importPicture(f, set);
+    });
+    return li;
+  }
   function renderSlots() {
     var ul = $("slots");
     ul.textContent = "";
     slotsShown().forEach(function (k) {
-      var li = el("li", "slot"), th = el("span", "thumb");
-      thumbInto(th, cur.art[k]);
-      li.appendChild(th);
-      li.appendChild(el("span", "slot-name", t("slot." + k)));
-      var chips = el("span", "chips");
-      var pickB = el("button", "chip small", t("btn.choose"));
-      pickB.type = "button";
-      pickB.addEventListener("click", function () { pickPicture(function (id, w, h) { setSlot(k, id, w, h); }); });
-      chips.appendChild(pickB);
-      if (cur.art[k]) {
-        var del = el("button", "chip small", t("btn.remove"));
-        del.type = "button";
-        del.addEventListener("click", function () { setSlot(k, "", 0, 0); });
-        chips.appendChild(del);
-      }
-      li.appendChild(chips);
-      // drop a picture file on the slot
-      li.addEventListener("dragover", function (e) { e.preventDefault(); li.classList.add("drop"); });
-      li.addEventListener("dragleave", function () { li.classList.remove("drop"); });
-      li.addEventListener("drop", function (e) {
-        e.preventDefault(); li.classList.remove("drop");
-        var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
-        if (f) importPicture(f, function (id, w, h) { setSlot(k, id, w, h); });
+      ul.appendChild(slotRow(t("slot." + k), cur.art[k], function (id, w, h) { setSlot(k, id, w, h); }));
+    });
+  }
+  // The other books of a series, shelf or stack (cover tab).
+  function renderVols() {
+    var st = cur.set, box = $("vols"), n = C.count(cur);
+    var on = st.k === "row" || st.k === "shelf" || st.k === "stack";
+    $("vols-box").hidden = !on;
+    box.textContent = "";
+    if (!on) return;
+    var keys = cur.art.mode === "wrap" ? ["wrap"] : ["front", "spine", "back"];
+    for (var i = 1; i < n; i++) (function (i) {
+      var v = st.vols[i - 1] || C.normVol(null), wrap = el("div", "vol");
+      wrap.appendChild(el("span", "vol-name", t("vol.n", { n: i + 1 })));
+      var ul = el("ul", "slots");
+      keys.forEach(function (k) {
+        ul.appendChild(slotRow(t("slot." + k), v[k], function (id) { setVol(i, function (x) { x[k] = id; }); }));
       });
-      ul.appendChild(li);
+      wrap.appendChild(ul);
+      var g = el("div", "grid2");
+      var f1 = el("label", "fld"), in1 = el("input");
+      f1.appendChild(el("span", null, t("vol.pages")));
+      in1.type = "number"; in1.inputMode = "numeric"; in1.min = "4"; in1.max = "2000"; in1.step = "2";
+      in1.placeholder = cur.bk.pages + " · " + t("vol.same");
+      in1.value = v.pages ? String(v.pages) : "";
+      in1.addEventListener("change", function () {
+        var nv = parseNum(in1.value);
+        setVol(i, function (x) { x.pages = isFinite(nv) && nv > 0 ? Math.round(nv) : 0; });
+      });
+      f1.appendChild(in1);
+      var f2 = el("label", "fld"), in2 = el("input");
+      f2.appendChild(el("span", null, t("vol.spT")));
+      in2.maxLength = 80; in2.autocomplete = "off";
+      in2.placeholder = cur.art.spT || t("vol.same");
+      in2.value = v.spT;
+      in2.addEventListener("change", function () { setVol(i, function (x) { x.spT = in2.value; }); });
+      f2.appendChild(in2);
+      g.appendChild(f1); g.appendChild(f2);
+      wrap.appendChild(g);
+      box.appendChild(wrap);
+    })(i);
+  }
+  function setVol(i, fn) {
+    change("book", function (p) {
+      while (p.set.vols.length < i) p.set.vols.push(C.normVol(null));
+      fn(p.set.vols[i - 1]);
     });
   }
   function setSlot(k, id, w, h) {
@@ -737,6 +861,30 @@
     }
   }
   function renderPhotoThumb() { thumbInto($("photo-thumb"), cur.sc.bg.img); $("photo-del").hidden = !cur.sc.bg.img; }
+  function creditLine(cr) {
+    if (!cr) return "";
+    if (MEDIA && typeof MEDIA.credit === "function") { var l = MEDIA.credit(cr, LANG); if (l) return l; }
+    return (cr.title || "") + (cr.author ? " · " + cr.author : "");
+  }
+  function renderCredit() {
+    var box = $("photo-cr"), cr = cur.sc.bg.k === "photo" ? cur.sc.bg.cr : null;
+    box.textContent = "";
+    box.hidden = !cr;
+    if (!cr) return;
+    var line = creditLine(cr);
+    if (cr.page) {
+      var a = el("a", null, t("photo.cr", { cr: line }));
+      a.href = cr.page; a.target = "_blank"; a.rel = "noopener noreferrer";
+      box.appendChild(a);
+    } else box.appendChild(document.createTextNode(t("photo.cr", { cr: line })));
+    box.appendChild(document.createTextNode(" "));
+    var cp = el("button", "chip small", t("btn.copyCr"));
+    cp.type = "button";
+    cp.addEventListener("click", function () {
+      try { navigator.clipboard.writeText(line).then(function () { toast(t("btn.copyCr") + " ✓"); }, function () {}); } catch (e) {}
+    });
+    box.appendChild(cp);
+  }
 
   // File → orOS disk → callback(id, w, h).
   function importPicture(f, done) {
@@ -760,7 +908,7 @@
 
   // One change to the open project. kind: book | art | scene | out | name
   function change(kind, fn) {
-    if (!cur) return;
+    if (!cur || busy) return;
     fn(cur);
     var n = C.normProject(cur);
     if (!n) return;
@@ -787,6 +935,10 @@
     });
     var sz = $("f-size");
     C.SIZES.forEach(function (n) { var o = el("option", null, t("size.px", { n: n })); o.value = String(n); sz.appendChild(o); });
+    var se = $("f-sec");
+    C.SECS.forEach(function (n) { var o = el("option", null, t("sec.s", { n: n })); o.value = String(n); se.appendChild(o); });
+    var vs = $("f-vsize");
+    C.VSIZES.forEach(function (n) { var o = el("option", null, t("vsize.px", { n: n })); o.value = String(n); vs.appendChild(o); });
     var ra = $("ratio");
     C.RATIOS.forEach(function (r) {
       var b = el("button", null, r); b.type = "button"; b.setAttribute("role", "radio"); b.setAttribute("data-v", r);
@@ -884,6 +1036,18 @@
     $("f-spTC").addEventListener("input", function () { change("art", function (p) { p.art.spTC = $("f-spTC").value; }); });
     $("f-spT").addEventListener("input", function () { change("art", function (p) { p.art.spT = $("f-spT").value; }); });
     // scene
+    wireSeg("setk", function (v) {
+      change("book", function (p) {
+        if (p.set.k !== v) {
+          p.set.gap = C.GAP_DEF[v];
+          // a shelf shows its spines best from the front
+          if (v === "shelf" && Math.abs(p.sc.cam.th) > 20) { p.sc.cam.th = -14; p.sc.cam.ph = 8; }
+        }
+        p.set.k = v;
+      });
+    });
+    $("f-n").addEventListener("input", function () { var v = +$("f-n").value; change("book", function (p) { p.set.n = v; }); });
+    $("f-gap").addEventListener("input", function () { var v = +$("f-gap").value; change("book", function (p) { p.set.gap = v; }); });
     wireSeg("place", function (v) {
       change("scene", function (p) {
         if (p.sc.place !== v && v === "lie" && p.sc.cam.ph < 35) p.sc.cam.ph = 55;
@@ -909,7 +1073,8 @@
     $("f-c1").addEventListener("input", function () { change("scene", function (p) { p.sc.bg.c1 = $("f-c1").value; }); });
     $("f-c2").addEventListener("input", function () { change("scene", function (p) { p.sc.bg.c2 = $("f-c2").value; }); });
     $("photo-pick").addEventListener("click", pickBgPhoto);
-    $("photo-del").addEventListener("click", function () { change("scene", function (p) { p.sc.bg.img = ""; }); });
+    $("photo-find").addEventListener("click", openFind);
+    $("photo-del").addEventListener("click", function () { change("scene", function (p) { p.sc.bg.img = ""; p.sc.bg.cr = null; }); });
     // out
     $("f-nm").addEventListener("input", function () { change("name", function (p) { p.nm = $("f-nm").value; }); });
     wireSeg("ratio", function (v) { change("out", function (p) { p.out.ratio = v; }); });
@@ -918,9 +1083,22 @@
     $("save-btn").addEventListener("click", savePicture);
     $("pics-btn").addEventListener("click", saveToPictures);
     $("atelier-btn").addEventListener("click", openInAtelier);
+    $("angles-zip").addEventListener("click", function () { allAngles(false); });
+    $("angles-pics").addEventListener("click", function () { allAngles(true); });
+    wireSeg("mok", function (v) { change("out", function (p) { p.out.mo.k = v; }); });
+    $("f-vfmt").addEventListener("change", function () { change("out", function (p) { p.out.mo.fmt = $("f-vfmt").value; }); clearMotion(); });
+    $("f-sec").addEventListener("change", function () { change("out", function (p) { p.out.mo.sec = +$("f-sec").value; }); });
+    $("f-vsize").addEventListener("change", function () { change("out", function (p) { p.out.mo.size = +$("f-vsize").value; }); });
+    $("mo-make").addEventListener("click", makeMotion);
+    $("mo-stop").addEventListener("click", function () { moStop = true; });
+    $("mo-save").addEventListener("click", saveMotion);
+    $("mo-keep").addEventListener("click", keepMotion);
+    // free photos
+    $("find-form").addEventListener("submit", function (e) { e.preventDefault(); findRun(false); });
+    $("find-more").addEventListener("click", function () { find.page++; findRun(true); });
   }
   function pickBgPhoto() {
-    pickPicture(function (id) { change("scene", function (p) { p.sc.bg.img = id; p.sc.bg.k = "photo"; }); });
+    pickPicture(function (id) { change("scene", function (p) { p.sc.bg.img = id; p.sc.bg.k = "photo"; p.sc.bg.cr = null; }); });
   }
 
   // ---------- 6. Save the picture, Pictures, Atelier ----------
@@ -929,14 +1107,14 @@
     var n = (cur.nm || t("untitled")).replace(/[\\/:*?"<>|\u0000-\u001f]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 80);
     return n || "mockup";
   }
-  // → Promise<Blob>
-  function makeBlob(fmt) {
+  // → Promise<Blob>. o: { cam } (another camera, for all angles)
+  function makeBlob(fmt, o) {
     if (!stage || !cur) return Promise.reject(new Error("nostage"));
     var sz = C.outSize(cur.out), clear = cur.sc.bg.k === "none";
     return new Promise(function (res, rej) {
       setTimeout(function () {
         try {
-          var cv = stage.snapshot(sz.w, sz.h, false).canvas;
+          var cv = stage.snapshot(sz.w, sz.h, false, o).canvas;
           if (fmt === "jpg" && clear) {
             var c2 = document.createElement("canvas"); c2.width = cv.width; c2.height = cv.height;
             var x = c2.getContext("2d"); x.fillStyle = "#ffffff"; x.fillRect(0, 0, c2.width, c2.height); x.drawImage(cv, 0, 0);
@@ -952,17 +1130,29 @@
     if (saveTimer) saveNow();
     var fmt = cur.out.fmt, name = fileBase() + "." + fmt;
     toast(t("toast.making"));
-    makeBlob(fmt).then(function (blob) {
-      var s = shell(), dlg = null;
-      try { dlg = s && s.orosDialog; } catch (e) {}
-      if (dlg && typeof dlg.saveFile === "function") {
-        return dlg.saveFile({ blob: blob, filename: name, mime: MIME[fmt] }).then(function (r) { if (r && r.ok) toast(t("toast.saved")); });
-      }
-      var a = document.createElement("a"), u = URL.createObjectURL(blob);
-      a.href = u; a.download = name; document.body.appendChild(a); a.click(); a.remove();
-      setTimeout(function () { URL.revokeObjectURL(u); }, 40000);
-      toast(t("toast.saved"));
-    }, function () { toast(t("toast.makeFail")); });
+    makeBlob(fmt).then(function (blob) { return saveBlob(blob, name, MIME[fmt]); }, function () { toast(t("toast.makeFail")); });
+  }
+  // The shell's save dialog, else a download.
+  function saveBlob(blob, name, mime) {
+    var s = shell(), dlg = null;
+    try { dlg = s && s.orosDialog; } catch (e) {}
+    if (dlg && typeof dlg.saveFile === "function") {
+      return dlg.saveFile({ blob: blob, filename: name, mime: mime }).then(function (r) { if (r && r.ok) toast(t("toast.saved")); });
+    }
+    var a = document.createElement("a"), u = URL.createObjectURL(blob);
+    a.href = u; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(u); }, 40000);
+    toast(t("toast.saved"));
+    return Promise.resolve();
+  }
+  // A free path in a folder of the orOS disk: "<base>.ext", "<base> (1).ext"…
+  function freePath(dir, base, ext) {
+    var F = fsApi();
+    function tryName(n) {
+      var p = dir + "/" + (n ? base + " (" + n + ")" : base) + ext;
+      return F.stat(p).then(function () { return n < 99 ? tryName(n + 1) : Promise.reject(new Error("name")); }, function () { return p; });
+    }
+    return tryName(0);
   }
   function saveToPictures() {
     if (!cur) return;
@@ -971,11 +1161,7 @@
     var fmt = cur.out.fmt, base = fileBase(), ext = "." + fmt;
     toast(t("toast.making"));
     makeBlob(fmt).then(function (blob) {
-      function tryName(n) {
-        var p = "/internal/Pictures/" + (n ? base + " (" + n + ")" : base) + ext;
-        return F.stat(p).then(function () { return n < 99 ? tryName(n + 1) : Promise.reject(new Error("name")); }, function () { return p; });
-      }
-      return tryName(0).then(function (p) {
+      return freePath("/internal/Pictures", base, ext).then(function (p) {
         return F.write(p, blob).then(function () { toast(t("toast.pics", { name: p.split("/").pop() })); });
       });
     }).catch(function () { toast(t("toast.picsFail")); });
@@ -997,6 +1183,277 @@
         toast(t("toast.atelier"));
       });
     }).catch(function () { toast(t("toast.makeFail")); });
+  }
+
+  // Libraries that load only when asked for (same ?v= as this file).
+  var VQ = (function () {
+    var sc = document.currentScript, m = sc && /\?v=[^&#]+/.exec(sc.src || "");
+    return m ? m[0] : "";
+  })();
+  var scriptP = {};
+  function loadScript(src) {
+    if (!scriptP[src]) scriptP[src] = new Promise(function (res, rej) {
+      var n = document.createElement("script");
+      n.src = src + VQ;
+      n.onload = res;
+      n.onerror = function () { delete scriptP[src]; n.remove(); rej(new Error("script")); };
+      document.head.appendChild(n);
+    });
+    return scriptP[src];
+  }
+  function pause() { return new Promise(function (r) { setTimeout(r, 0); }); }
+
+  // Long jobs (all angles, turntable): the form and the camera wait.
+  var busy = false;
+  function setBusy(on) {
+    busy = on;
+    $("panel").classList.toggle("busy", on);
+    ["save-btn", "pics-btn", "atelier-btn", "angles-zip", "angles-pics", "mo-make", "more-btn", "back-btn", "new-btn"].forEach(function (id) { $(id).disabled = on; });
+    if (!on && stage) stage.render();
+  }
+
+  // All seven ready views, in the picture's size and format.
+  function allAngles(toPics) {
+    if (!cur || !stage || busy) return;
+    if (saveTimer) saveNow();
+    var fmt = cur.out.fmt, base = fileBase(), F = fsApi(), files = [];
+    if (toPics && !F) { toast(t("toast.nofs")); return; }
+    toast(t("toast.angles", { n: VIEWS.length }));
+    setBusy(true);
+    var chain = Promise.resolve();
+    VIEWS.forEach(function (v, i) {
+      chain = chain.then(function () {
+        var c = cur.sc.cam;
+        var cam = Object.assign({}, c, { th: v.th, ph: v.ph, dx: 0, dy: 0, fov: v.fov || (c.fov > 40 ? 30 : c.fov) });
+        return makeBlob(fmt, { cam: cam }).then(function (b) {
+          files.push({ name: (i + 1) + " " + t("view." + v.k) + "." + fmt, blob: b });
+        });
+      });
+    });
+    chain.then(function () {
+      if (toPics) {
+        var dirName = t("dir.angles", { name: base });
+        return freePath("/internal/Pictures", dirName, "").then(function (dir) {
+          var w = Promise.resolve();
+          files.forEach(function (f) { w = w.then(function () { return F.write(dir + "/" + f.name, f.blob); }); });
+          return w.then(function () { toast(t("toast.anglesPics", { n: files.length, name: dir.split("/").pop() })); });
+        });
+      }
+      return loadScript("../atelier/zip.js").then(function () {
+        var Z = window.AtelierZip;
+        if (!Z) throw new Error("zip");
+        return Promise.all(files.map(function (f) {
+          return f.blob.arrayBuffer().then(function (ab) { return { name: f.name, data: new Uint8Array(ab) }; });
+        })).then(function (list) {
+          var zip = new Blob([Z.write(list, new Date())], { type: "application/zip" });
+          return saveBlob(zip, base + " · " + t("sec.angles") + ".zip", "application/zip");
+        });
+      });
+    }).catch(function () { toast(t("toast.makeFail")); }).then(function () { setBusy(false); });
+  }
+
+  // Turntable: the set turns (all round or to and fro) under the
+  // camera, frame by frame, into MP4 / WebM (Mediabunny, WebCodecs)
+  // or a GIF (atelier/gif.js). Nothing leaves the device.
+  var moStop = false, moResult = null;
+  function clearMotion() { moResult = null; $("mo-done").hidden = true; }
+  function pickVideo(M, w, h) {
+    return M.getFirstEncodableVideoCodec(["avc"], { width: w, height: h, bitrate: M.QUALITY_HIGH }).then(function (vc) {
+      if (vc) return { ext: "mp4", mime: "video/mp4", vc: vc };
+      return M.getFirstEncodableVideoCodec(["vp9", "vp8", "av1"], { width: w, height: h, bitrate: M.QUALITY_HIGH }).then(function (vc2) {
+        return vc2 ? { ext: "webm", mime: "video/webm", vc: vc2 } : null;
+      });
+    });
+  }
+  function makeMotion() {
+    if (!cur || !stage || busy) return;
+    if (saveTimer) saveNow();
+    clearMotion();
+    var mo = cur.out.mo, sz = C.motionSize(cur.out), plan = C.motionPlan(cur.out), f = stage.fit(sz.w, sz.h);
+    var w = f.w - f.w % 2, h = f.h - f.h % 2, gif = mo.fmt === "gif";
+    if (!gif && typeof window.VideoEncoder === "undefined") { toast(t("toast.noVideo")); return; }
+    var cv = document.createElement("canvas");
+    cv.width = w; cv.height = h;
+    var ctx = cv.getContext("2d", gif ? { willReadFrequently: true } : undefined);
+    var under = cur.sc.bg.k === "none" ? "#ffffff" : "";
+    function draw(i) { stage.drawTo(ctx, w, h, false, { spin: plan.turn(i), under: under }); }
+    function progress(k) { $("mo-prog").value = k; $("mo-prog").textContent = t("mo.making", { pc: Math.round(k * 100) }); }
+    moStop = false;
+    setBusy(true);
+    $("mo-run").hidden = false;
+    progress(0);
+    var t0 = performance.now(), job;
+    if (gif) {
+      job = loadScript("../atelier/gif.js").then(function () {
+        var G = window.AtelierGif, frames = [], i = 0;
+        if (!G) throw new Error("lib");
+        function next() {
+          if (moStop) throw new Error("stop");
+          if (i >= plan.n) {
+            var bytes = G.encode({ w: w, h: h, frames: frames, loop: 0 });
+            return { blob: new Blob([bytes], { type: "image/gif" }), ext: "gif", mime: "image/gif", gif: true };
+          }
+          draw(i);
+          frames.push({ idx: G.quantize(ctx.getImageData(0, 0, w, h).data, w, h), delay: 100 / plan.fps });
+          i++; progress(i / plan.n);
+          return pause().then(next);
+        }
+        return next();
+      });
+    } else {
+      job = loadScript("../vendor/mediabunny.min.js").then(function () {
+        var M = window.Mediabunny;
+        if (!M) throw new Error("lib");
+        return pickVideo(M, w, h).then(function (fmt) {
+          if (!fmt) throw new Error("novideo");
+          var target = new M.BufferTarget();
+          var output = new M.Output({ format: fmt.ext === "mp4" ? new M.Mp4OutputFormat({ fastStart: "in-memory" }) : new M.WebMOutputFormat(), target: target });
+          var src = new M.CanvasSource(cv, { codec: fmt.vc, bitrate: M.QUALITY_HIGH, keyFrameInterval: 2 });
+          output.addVideoTrack(src, { frameRate: plan.fps });
+          var i = 0;
+          function next() {
+            if (moStop) throw new Error("stop");
+            if (i >= plan.n) return output.finalize();
+            draw(i);
+            return src.add(i / plan.fps, 1 / plan.fps).then(function () {
+              i++; progress(i / plan.n);
+              return i % 4 ? next() : pause().then(next);
+            });
+          }
+          return output.start().then(next).then(function () {
+            return { blob: new Blob([target.buffer], { type: fmt.mime }), ext: fmt.ext, mime: fmt.mime, gif: false };
+          }, function (e) {
+            return Promise.resolve().then(function () { return output.cancel(); }).catch(function () {}).then(function () { throw e; });
+          });
+        });
+      });
+    }
+    job.then(function (r) {
+      r.name = fileBase() + "." + r.ext;
+      moResult = r;
+      var mb = r.blob.size / 1048576;
+      $("mo-done-info").textContent = t("mo.done", {
+        kind: r.gif ? "GIF" : r.ext.toUpperCase(),
+        size: (mb >= 1 ? fmtNum(mb, 1) + " MB" : Math.max(1, Math.round(r.blob.size / 1024)) + " KB"),
+        sec: fmtNum((performance.now() - t0) / 1000, 1)
+      });
+      $("mo-keep").textContent = t(r.gif ? "btn.moPics" : "btn.moVideos");
+      $("mo-save").textContent = t("btn.moSave");
+      $("mo-done").hidden = false;
+    }, function (e) {
+      var m = e && e.message;
+      toast(m === "stop" ? t("toast.moStop") : m === "novideo" ? t("toast.noVideo") : t("toast.moFail"));
+      if (m !== "stop") console.warn("[orOS Mockups] turntable", e);
+    }).then(function () {
+      $("mo-run").hidden = true;
+      setBusy(false);
+    });
+  }
+  function saveMotion() { if (moResult) saveBlob(moResult.blob, moResult.name, moResult.mime); }
+  function keepMotion() {
+    var r = moResult, F = fsApi();
+    if (!r) return;
+    if (!F) { toast(t("toast.nofs")); return; }
+    var dir = r.gif ? "/internal/Pictures" : "/internal/Videos";
+    freePath(dir, fileBase(), "." + r.ext).then(function (p) {
+      return F.write(p, r.blob).then(function () { toast(t(r.gif ? "toast.pics" : "toast.videos", { name: p.split("/").pop() })); });
+    }).catch(function () { toast(t("toast.picsFail")); });
+  }
+
+  // Free background photos (Openverse, Wikimedia Commons): searched
+  // from the browser, downloaded once onto the orOS disk with their
+  // credit, so the mockup works offline afterwards.
+  var find = { q: "", src: "", page: 1, items: [], more: false, busy: false, err: "", seq: 0 };
+  var findMem = {};
+  var findCache = {
+    get: function (k) { return Promise.resolve(findMem[k] || null); },
+    put: function (k, v) { findMem[k] = v; return Promise.resolve(); }
+  };
+  function findEnv() { return { fetch: window.fetch.bind(window), now: function () { return Date.now(); }, cache: findCache, keys: {} }; }
+  function findSources() { return MEDIA ? MEDIA.sourcesFor("photo", {}) : []; }
+  function openFind() {
+    if (!MEDIA) return;
+    if (!find.src) find.src = findSources()[0] || "";
+    showDlg("find");
+    renderFind();
+    setTimeout(function () { try { $("find-q").focus(); } catch (e) {} }, 0);
+  }
+  function renderFind() {
+    var srcs = $("find-srcs");
+    srcs.textContent = "";
+    findSources().forEach(function (id) {
+      var b = el("button", null, MEDIA.SOURCES[id].name);
+      b.type = "button"; b.setAttribute("role", "radio"); b.setAttribute("data-v", id);
+      b.addEventListener("click", function () { if (find.src !== id) { find.src = id; renderFind(); if (find.q) findRun(false); } });
+      srcs.appendChild(b);
+    });
+    setSeg("find-srcs", find.src);
+    var msg = !navigator.onLine ? t("find.offline")
+      : find.err ? t(find.err === "rate" ? "find.rate" : find.err === "offline" ? "find.offline" : "find.err")
+      : find.busy ? t("find.busy")
+      : !find.q ? t("find.intro")
+      : !find.items.length ? t("find.none") : "";
+    $("find-msg").textContent = msg;
+    $("find-msg").hidden = !msg;
+    var grid = $("find-grid");
+    grid.textContent = "";
+    find.items.forEach(function (it) {
+      var b = el("button", "find-tile");
+      b.type = "button";
+      var L = MEDIA.licenseOf(it.lic, it.licVer), lab = (it.title || "") + (it.author ? " · " + it.author : "") + (L ? " · " + L.label : "");
+      b.title = lab; b.setAttribute("aria-label", lab);
+      var img = el("img");
+      img.alt = ""; img.loading = "lazy"; img.decoding = "async"; img.referrerPolicy = "no-referrer";
+      img.src = it.thumb || it.full;
+      b.appendChild(img);
+      b.addEventListener("click", function () { placeFind(it, b); });
+      grid.appendChild(b);
+    });
+    $("find-more").hidden = !(find.more && !find.busy && find.items.length);
+  }
+  function findRun(more) {
+    var q = ($("find-q").value || "").trim().slice(0, 120);
+    if (!more) { find.q = q; find.page = 1; find.items = []; find.more = false; }
+    if (!find.q || !find.src || !MEDIA) { renderFind(); return; }
+    var my = ++find.seq;
+    find.busy = true; find.err = "";
+    renderFind();
+    MEDIA.search(find.src, "photo", find.q, { page: find.page, restricted: false, lang: LANG }, findEnv()).then(function (res) {
+      if (my !== find.seq) return;
+      find.busy = false;
+      find.err = res.error || "";
+      find.items = find.items.concat((res.items || []).filter(function (it) { return MEDIA.allowed(it, { restricted: false }); }));
+      find.more = !!res.more;
+      renderFind();
+    }, function () {
+      if (my !== find.seq) return;
+      find.busy = false; find.err = "server";
+      renderFind();
+    });
+  }
+  function placeFind(it, tile) {
+    if (!AS || !fsApi()) { toast(t("toast.nofs")); return; }
+    if (!navigator.onLine) { toast(t("find.offline")); return; }
+    tile.disabled = true;
+    toast(t("find.getting"));
+    var E = findEnv();
+    MEDIA.fetchMedia(it, E).then(null, function (e) {
+      // a library's full file may refuse CORS: the thumbnail is the fallback
+      if (it.thumb && it.thumb !== it.full && e && e.message === "offline") return MEDIA.fetchMedia(it, E, it.thumb);
+      throw e;
+    }).then(function (blob) {
+      var ext = blob.type === "image/png" ? ".png" : ".jpg";
+      return AS.importFile(new File([blob], (it.title || it.src).slice(0, 60) + ext, { type: blob.type }));
+    }).then(function (r) {
+      var cr = MEDIA.normCredit(it);
+      change("scene", function (p) { p.sc.bg.k = "photo"; p.sc.bg.img = r.id; p.sc.bg.cr = cr; });
+      hideDlg();
+      toast(t("find.added"));
+    }, function (e) {
+      var m = e && e.message;
+      tile.disabled = false;
+      toast(m === "nofs" ? t("toast.nofs") : m === "size" ? t("find.big") : m === "offline" ? t("find.offline") : t("find.fail"));
+    });
   }
 
   // ---------- 7. Dialogs ----------
@@ -1029,7 +1486,7 @@
     if (saveTimer) saveNow();
     var src = clone(cur);
     newPrj(function (p) {
-      p.bk = src.bk; p.art = src.art; p.sc = src.sc; p.out = src.out; p.unit = src.unit;
+      p.bk = src.bk; p.art = src.art; p.sc = src.sc; p.out = src.out; p.unit = src.unit; p.set = src.set;
       p.nm = (label(src) + " " + t("copyOf")).slice(0, 80);
     });
     toast(t("toast.dup"));
@@ -1141,6 +1598,7 @@
   function applyI18n() {
     document.documentElement.lang = LANG;
     [].forEach.call(document.querySelectorAll("[data-i18n]"), function (n) { n.textContent = t(n.getAttribute("data-i18n")); });
+    [].forEach.call(document.querySelectorAll("[data-i18n-ph]"), function (n) { n.placeholder = t(n.getAttribute("data-i18n-ph")); });
     document.title = t("app.name") + " · orOS";
     $("new-btn").innerHTML = ICON.plus; setLabel($("new-btn"), t("btn.new"));
     $("more-btn").innerHTML = ICON.more; setLabel($("more-btn"), t("btn.more"));

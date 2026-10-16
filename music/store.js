@@ -6,6 +6,9 @@
 //           art, add, fmt }
 //   art     keyPath "id": one small JPEG per album (or per song with
 //           no album) { id, blob }
+//   off     keyPath "k" (since 2.54, VER 2): offline copies of songs
+//           from open catalogues whose licence allows it
+//           { k, blob, sz, at, ref } (ref = the song, open.js shape)
 // The music files themselves live on the orOS disk (/internal/Music,
 // window.orosFS), where Files shows them and Vault Drive syncs them
 // like any other file. This index can always be rebuilt from them.
@@ -15,7 +18,7 @@
 (function (w) {
   "use strict";
   if (w.OrosMusicStore) return;
-  var NAME = "oros-music", VER = 1;
+  var NAME = "oros-music", VER = 2;
   var dbp = null;
 
   function open() {
@@ -29,6 +32,7 @@
         var db = rq.result;
         if (!db.objectStoreNames.contains("tracks")) db.createObjectStore("tracks", { keyPath: "p" });
         if (!db.objectStoreNames.contains("art")) db.createObjectStore("art", { keyPath: "id" });
+        if (!db.objectStoreNames.contains("off")) db.createObjectStore("off", { keyPath: "k" });
       };
       rq.onsuccess = function () {
         var db = rq.result;
@@ -83,6 +87,36 @@
     }).catch(function () { return false; });
   }
 
+  // Offline copies (open catalogues only).
+  function getOff(k) {
+    if (!k) return Promise.resolve(null);
+    return run("off", "readonly", function (os) { return os.get(k); }).then(function (r) { return r && r.blob ? r.blob : null; }, function () { return null; });
+  }
+  function putOff(rec) { return run("off", "readwrite", function (os) { os.put(rec); return true; }); }
+  function delOff(keys) {
+    if (!keys || !keys.length) return Promise.resolve(0);
+    return run("off", "readwrite", function (os) { keys.forEach(function (k) { os.delete(k); }); return keys.length; });
+  }
+  // [{ k, sz, at, ref }] without the audio.
+  function offList() {
+    return open().then(function (db) {
+      return new Promise(function (resolve) {
+        var out = [];
+        var tx = db.transaction("off", "readonly"), rq = tx.objectStore("off").openCursor();
+        rq.onsuccess = function () {
+          var c = rq.result;
+          if (!c) return;
+          var v = c.value || {};
+          out.push({ k: v.k, sz: v.sz || 0, at: v.at || 0, ref: v.ref || null });
+          c.continue();
+        };
+        tx.oncomplete = function () { resolve(out); };
+        tx.onerror = tx.onabort = function () { resolve(out); };
+      });
+    }).catch(function () { return []; });
+  }
+
   w.OrosMusicStore = { open: open, all: all, putTracks: putTracks, delTracks: delTracks, getTrack: getTrack, getArt: getArt,
-    hasArt: hasArt, putArt: putArt, artIds: artIds, delArt: delArt, setDuration: setDuration };
+    hasArt: hasArt, putArt: putArt, artIds: artIds, delArt: delArt, setDuration: setDuration,
+    getOff: getOff, putOff: putOff, delOff: delOff, offList: offList };
 })(window);
