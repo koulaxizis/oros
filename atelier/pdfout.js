@@ -104,7 +104,7 @@
     return "raster";                     // icons, charts
   }
   function pageItems(doc, pg) {
-    return doc.items.filter(function (it) { return it.pg === pg && it.ax && !it.hide; }).sort(M.byZ);
+    return doc.items.filter(function (it) { return it.pg === pg && it.ax && !it.hide && !it.ax.tg; }).sort(M.byZ);
   }
   // Extra room around an element drawn as a picture (pt).
   function padOf(it, kind) {
