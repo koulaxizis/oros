@@ -51,6 +51,12 @@
   var ABSENT_TTL_MS  = 60000;                     // absent-quiet window
   var DEBOUNCE_MS    = 3000;                      // auto-sync quiet period
   var MAX_SYNC_TRIES = 2;                         // conflict retry budget
+  // VD-OD: files under DRIVE_ROOT (folders mirrored from computers and
+  // phones by the orOS Drive app) stay in the cloud until opened, so a
+  // phone's browser does not fill up with a desktop's folders.
+  var DRIVE_ROOT     = "/internal/Drive";
+  var OD_KEY         = "oros-vault-ondemand";     // { path: entry } in the cloud, not on this device
+  var OFFLINE_KEY    = "oros-vault-offline";      // [folder] kept on this device (device-local)
 
   // ---------- Internal state ----------
   var syncInFlight   = false;
@@ -226,6 +232,27 @@
     else localStorage.removeItem(REV_KEY);
   }
   function getRev() { return localStorage.getItem(REV_KEY) || null; }
+
+  // ---------- VD-OD: on-demand paths ----------
+  function under(path, root) { return path === root || path.indexOf(root + "/") === 0; }
+  function getOnDemand() {
+    var m = readJson(OD_KEY);
+    return (m && typeof m === "object" && !Array.isArray(m)) ? m : {};
+  }
+  function setOnDemand(m) {
+    if (Object.keys(m).length) writeJson(OD_KEY, m);
+    else { try { localStorage.removeItem(OD_KEY); } catch (e) {} }
+  }
+  function offlineFolders() {
+    var l = readJson(OFFLINE_KEY);
+    return Array.isArray(l) ? l.filter(function (p) { return typeof p === "string" && under(p, DRIVE_ROOT); }) : [];
+  }
+  function keptOffline(path) {
+    return offlineFolders().some(function (f) { return under(path, f); });
+  }
+  function isOnDemand(path) {
+    return under(path, DRIVE_ROOT) && path !== DRIVE_ROOT && !keptOffline(path);
+  }
 
   // ---------- FS error kinds ----------
   // fs.js answers string codes; the DOMException name/number is
@@ -570,6 +597,10 @@
   function applyRemote(cloud, lm, stats) {
     var cf = cloud.manifest.files;
     var chain = Promise.resolve();
+    // VD-OD: rebuilt from a downloaded manifest; an idle check (the
+    // cloud did not move, `same`) lists only this device's files, so the
+    // cloud-only list stays as it was.
+    var od = cloud.same ? getOnDemand() : {};
 
     Object.keys(cf).forEach(function (path) {
       chain = chain.then(function () {
@@ -583,6 +614,13 @@
         }
         // The cloud has a version this device has not seen.
         return localState(path, cached, entry).then(function (state) {
+          // VD-OD: a Drive file this device never held stays in the
+          // cloud (listed, fetched when opened). One it holds is kept
+          // up to date like any other file.
+          if (state === "absent" && !cached && !queued && isOnDemand(path)) {
+            od[path] = entry;
+            return null;
+          }
           if (state === "remote") {                    // already identical
             lm.files[path] = entry;
             setLocalManifest(lm);
@@ -638,7 +676,12 @@
       });
     }
 
-    return chain.then(function () { return lm; });
+    return chain.then(function () {
+      // An entry the device now holds is no longer "in the cloud only".
+      Object.keys(od).forEach(function (p) { if (lm.files[p]) delete od[p]; });
+      setOnDemand(od);
+      return lm;
+    });
   }
 
   // ---------- Object upload (encrypt + content-address) ----------
@@ -679,6 +722,7 @@
       if (e && typeof e.h === "string" && e.v !== 1) cloudHashes[e.h] = true;
     });
     var legacyDone = [];                           // legacy hashes converted in this push
+    var gone = {};                                 // paths this push deletes
 
     // VD-KEY: nothing goes up before the vault key exists IN THE
     // CLOUD. No manifest there = the vault is being created or was
@@ -716,6 +760,7 @@
         }, function (e) {
           if (isMissing(e)) {                          // deleted locally
             if (lm.files[path]) { delete lm.files[path]; stats.deleted++; }
+            gone[path] = true;
             done[path] = snap[path];
             return null;
           }
@@ -733,7 +778,7 @@
       // is settled only AFTER it lands (SQ1), and only for what this
       // sync picked up (VD-5); a conflict re-runs attempt() with the
       // queue intact.
-      var plain = new TextEncoder().encode(JSON.stringify({ ver: 2, files: lm.files }));
+      var plain = new TextEncoder().encode(JSON.stringify({ ver: 2, files: manifestToWrite(lm, cloud, gone) }));
       return sealV2(plain.buffer).then(function (sealed) {
         return ST().putObject(MANIFEST_KEY, new Blob([sealed]), cloud.rev)
           .then(function (res) {
@@ -755,6 +800,24 @@
     });
   }
 
+  // VD-OD: the manifest written is what this device holds PLUS every
+  // cloud entry it did not apply: on-demand files it never downloaded,
+  // and files whose download failed in this sync. Writing only the
+  // local cache dropped those entries from the cloud, which every other
+  // device then read as a deletion.
+  // (An idle check hands over this device's own list as the "cloud"
+  // manifest, so the cloud-only list is added too.)
+  function manifestToWrite(lm, cloud, gone) {
+    var out = {}, cf = cloud.manifest.files, od = getOnDemand();
+    [od, cf].forEach(function (src) {
+      Object.keys(src).forEach(function (p) {
+        if (!lm.files[p] && !gone[p] && src[p] && typeof src[p].h === "string") out[p] = src[p];
+      });
+    });
+    Object.keys(lm.files).forEach(function (p) { out[p] = lm.files[p]; });
+    return out;
+  }
+
   // FILES-V: the first sync of a device queues its whole disk once.
   // Until now the disk travelled as one blob in the main sync file;
   // from here on the vault is the only channel, so every file this
@@ -769,6 +832,86 @@
   }
 
   var lastError = null, lastOkAt = 0;
+  var idle = Promise.resolve();                    // settles when no sync runs
+
+  // VD-OD: fetch / evict run between syncs, never inside one (both
+  // change the local manifest that a running sync holds in memory).
+  var odChain = Promise.resolve();
+  function betweenSyncs(fn) {
+    var run = odChain.then(function wait() {
+      return syncInFlight ? idle.then(wait) : fn();
+    });
+    odChain = run.catch(function () {});
+    return run;
+  }
+
+  // Download one on-demand file onto the disk; from then on it is an
+  // ordinary synced file of this device.
+  function fetchOnDemand(path) {
+    return betweenSyncs(function () {
+      var od = getOnDemand(), entry = od[path];
+      if (!entry) {
+        return FS().stat(path).then(function () { return path; }, function () {
+          throw new Error("not in the vault");
+        });
+      }
+      return downloadObject(entry).then(function (plain) {
+        return ownWrite(path, new Blob([plain], { type: entry.mime || "application/octet-stream" }));
+      }).then(function () {
+        var lm = getLocalManifest();
+        lm.files[path] = entry;
+        setLocalManifest(lm);
+        var od2 = getOnDemand();
+        delete od2[path];
+        setOnDemand(od2);
+        emit("fetched", path);
+        return path;
+      });
+    });
+  }
+
+  // Free space: Drive files under `folder` that are exactly what was
+  // synced (VD-4 "clean") leave the disk and go back to the cloud-only
+  // list. Anything edited or queued stays. Resolves the count removed.
+  function evictOnDemand(folder) {
+    return betweenSyncs(function () {
+      if (!under(folder, DRIVE_ROOT)) return 0;
+      var lm = getLocalManifest(), n = 0, chain = Promise.resolve();
+      Object.keys(lm.files).forEach(function (p) {
+        if (!under(p, folder) || queueHas(p) || keptOffline(p)) return;
+        chain = chain.then(function () {
+          var entry = lm.files[p];
+          return localState(p, entry, null).then(function (state) {
+            if (state !== "clean" && state !== "absent") return null;
+            return (state === "absent" ? Promise.resolve() : ownRemove(p)).then(function () {
+              var cur = getLocalManifest();
+              delete cur.files[p];
+              setLocalManifest(cur);
+              var od = getOnDemand();
+              od[p] = entry;
+              setOnDemand(od);
+              n++;
+            });
+          }).catch(function () {});
+        });
+      });
+      return chain.then(function () { return n; });
+    });
+  }
+
+  function setKeptOffline(folder, on) {
+    if (typeof folder !== "string" || !under(folder, DRIVE_ROOT)) return false;
+    var l = offlineFolders().filter(function (f) { return f !== folder; });
+    if (on) l.push(folder);
+    if (l.length) writeJson(OFFLINE_KEY, l); else { try { localStorage.removeItem(OFFLINE_KEY); } catch (e) {} }
+    if (on) {
+      // Its files are fetched by the next sync: forget the cached rev so
+      // an idle check does not skip the download.
+      setRev(null);
+      setTimeout(function () { sync("offline").catch(function () {}); }, 0);
+    }
+    return true;
+  }
 
   // ---------- Full sync (pull → apply → push-if-queued) ----------
   function sync(reason) {
@@ -776,6 +919,8 @@
     if (!usable())    return Promise.resolve({ ok: true, skipped: true });
     syncInFlight = true;
     emit("start", reason);
+    var release;
+    idle = new Promise(function (r) { release = r; });
 
     var stats = { downloaded: 0, uploaded: 0, deleted: 0, kept: 0, failed: 0, conflicts: 0 };
     var tries = 0;
@@ -791,6 +936,7 @@
         .then(function (c) {
           cloud = c;
           if (cloud.rev === null) {
+            setOnDemand({});                         // nothing is in the cloud
             // VD-1: no manifest in the cloud. Whatever this device
             // holds as "synced" is not there (any more) — it goes up
             // again; nothing local is touched.
@@ -843,6 +989,7 @@
     return attempt()
       .then(function () {
         syncInFlight = false;
+        release();
         lastError = null;
         lastOkAt = Date.now();
         // A conflict that has been pushed is over: forget the markers
@@ -863,6 +1010,7 @@
       })
       .catch(function (err) {
         syncInFlight = false;
+        release();
         lastError = (err && (err.message || err.name)) || "error";
         emit("fail", reason + " — " + (err && err.message));
         throw err;
@@ -959,7 +1107,30 @@
     },
     localPaths: function () {
       return Object.keys(getLocalManifest().files);
-    }
+    },
+
+    // VD-OD: orOS Drive folders, on demand.
+    driveRoot: DRIVE_ROOT,
+    // Files at or under `prefix` that are in the cloud only:
+    // [{ path, h, s, m, mime }] (no content on this device yet).
+    remoteOnly: function (prefix) {
+      var od = getOnDemand(), out = [];
+      Object.keys(od).forEach(function (p) {
+        if (!prefix || under(p, prefix)) {
+          var e = od[p];
+          out.push({ path: p, h: e.h, s: e.s, m: e.m, mime: e.mime });
+        }
+      });
+      return out;
+    },
+    isRemoteOnly: function (path) {
+      return Object.prototype.hasOwnProperty.call(getOnDemand(), path);
+    },
+    fetch: fetchOnDemand,
+    evict: evictOnDemand,
+    offlineFolders: offlineFolders,
+    isKeptOffline: keptOffline,
+    setKeptOffline: setKeptOffline
   };
 
   // ---------- Boot ----------
