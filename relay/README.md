@@ -473,10 +473,9 @@ hourly cron (`scheduled()` → `purgeShares`, in batches) and on every
 short expiry, the caps and the attachment/sandbox headers keep it from
 being a general file host.
 
-Turning it on (once): create a D1 database `oros-share` in the
-Cloudflare dashboard (Workers & Pages → D1 → Create), put its id in the
-`[[d1_databases]]` block for `SHR_DB` in `wrangler.toml`. The tables
-are created on first use. Without the binding the op and `/s/` answer
+Turning it on (once): a D1 database `oros-share` (Workers & Pages → D1
+→ Create), bound as `SHR_DB` in `wrangler.toml` (done for the orOS
+relay). The tables are created on first use. Without the binding the op and `/s/` answer
 503 `nostore`.
 
 Tests: `tests/share-relay.test.js` (an in-memory D1 that knows exactly
