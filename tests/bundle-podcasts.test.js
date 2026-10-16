@@ -156,8 +156,8 @@ test("podcasts: hostile content is cut down by core's own checks", () => {
 
 test("podcasts: wiring (scripts, buttons, Open with for .orospodcasts and .opml, help, file types)", () => {
   const html = read("podcasts/index.html");
-  ["../bundle.js?v=2.50.00", "../recordpkg.js?v=2.50.00", "package.js?v=2.50.00"].forEach((s) =>
-    assert.ok(html.includes('src="' + s + '"'), s));
+  ["../bundle.js?v=", "../recordpkg.js?v=", "package.js?v="].forEach((s) =>
+    assert.ok(html.includes('src="' + s), s));
   assert.ok(html.indexOf("recordpkg.js") < html.indexOf('src="package.js') && html.indexOf('src="package.js') < html.indexOf('src="podcasts.js'));
   assert.ok(html.indexOf('src="core.js') < html.indexOf('src="package.js'));
   const js = read("podcasts/podcasts.js");

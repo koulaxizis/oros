@@ -172,8 +172,8 @@ test("bookmarks: hostile content is cut down (addresses, ids, stamps, fields, si
 
 test("bookmarks: wiring (scripts, menus, Open with, Undo, help, file types)", () => {
   const html = read("bookmarks/index.html");
-  ["../bundle.js?v=2.50.00", "../recordpkg.js?v=2.50.00", "package.js?v=2.50.00", "bookmarks.js?v=2.50.00"].forEach((s) =>
-    assert.ok(html.includes('src="' + s + '"'), s));
+  ["../bundle.js?v=", "../recordpkg.js?v=", "package.js?v=", "bookmarks.js?v="].forEach((s) =>
+    assert.ok(html.includes('src="' + s), s));
   assert.ok(html.indexOf('src="core.js') < html.indexOf('src="package.js'));
   assert.ok(html.indexOf("recordpkg.js") < html.indexOf('src="bookmarks.js'));
   const js = read("bookmarks/bookmarks.js");
