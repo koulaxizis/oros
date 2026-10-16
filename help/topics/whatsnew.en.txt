@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.54.00
+- Podcasts: Shuffle all in Library plays one random unplayed episode of each podcast you follow, and Shuffle on a podcast's page plays its unplayed episodes in random order. A letter bar (A–Z, Α–Ω) in Library and in Discover › Countries jumps straight to a letter.
+
 ## Version 2.53.00
 - New app Music (Sound): your songs in the way you know from the big streaming apps. Home, Search, Your library with playlists, songs, albums, artists, genres and folders, Liked songs, a queue with Next up, shuffle and repeat, and a player that keeps going with the app closed, on the lock screen and with the media keys. Add songs or a whole folder; they stay in Files › Music, play offline, and liked songs and playlists sync to your other devices. Free music from open catalogues comes next.
 

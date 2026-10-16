@@ -152,6 +152,8 @@
       "br.previewNote": "You are trying this podcast. Subscribe to keep your place and get new episodes.",
       "br.needApple": "Browsing by genre and country uses the Apple Podcasts catalog (Settings › Catalog search).",
       "br.back": "Back to browsing",
+      "sh.show": "Shuffle", "sh.all": "Shuffle all", "sh.none": "No unplayed episodes to shuffle.",
+      "sh.done": "Playing in random order: {n} more in Up next.", "sh.one": "Playing a random episode.", "idx.label": "Jump to a letter",
       "set.notify": "Tell me about new episodes", "toast.ntfOn": "You will get a notice when a new episode comes out.",
       "ep.todo": "Listen later (To-Do)", "ep.noteAt": "Note at {t}", "ep.note": "Write a note", "show.reader": "Follow the site in Reader",
       "s.sil": "Skip silence", "s.vb": "Voice boost",
@@ -253,6 +255,8 @@
       "br.previewNote": "Δοκιμάζεις αυτό το podcast. Κάνε εγγραφή για να κρατιέται η θέση σου και να έρχονται τα νέα επεισόδια.",
       "br.needApple": "Η περιήγηση ανά είδος και χώρα χρησιμοποιεί τον κατάλογο του Apple Podcasts (Ρυθμίσεις › Αναζήτηση καταλόγου).",
       "br.back": "Πίσω στην περιήγηση",
+      "sh.show": "Τυχαία σειρά", "sh.all": "Τυχαία από όλα", "sh.none": "Δεν υπάρχουν μη ακουσμένα επεισόδια για τυχαία σειρά.",
+      "sh.done": "Παίζει σε τυχαία σειρά: άλλα {n} στο «Επόμενα».", "sh.one": "Παίζει ένα τυχαίο επεισόδιο.", "idx.label": "Μετάβαση σε γράμμα",
       "set.notify": "Ειδοποίηση για νέα επεισόδια", "toast.ntfOn": "Θα ειδοποιείσαι όταν βγαίνει νέο επεισόδιο.",
       "ep.todo": "Άκου αργότερα (To-Do)", "ep.noteAt": "Σημείωση στο {t}", "ep.note": "Σημείωση", "show.reader": "Ο ιστότοπος στον Αναγνώστη",
       "s.sil": "Παράλειψη σιωπής", "s.vb": "Ενίσχυση φωνής",
@@ -364,6 +368,7 @@
     prevCh: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 5.5v13a1 1 0 0 1-1.6.8L9 12.8a1 1 0 0 1 0-1.6l8.4-6.5A1 1 0 0 1 19 5.5z"/><rect x="5" y="5" width="3" height="14" rx="1"/></svg>',
     text:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 10h16M4 14h10M4 18h7"/></svg>',
     video: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="13" height="14" rx="2"/><path d="M16 10l5-3v10l-5-3z"/></svg>',
+    shuffle: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>',
     share: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>',
     stats: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>',
     pen: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
@@ -744,7 +749,7 @@
     main.appendChild(ul);
   }
   function renderLib(main) {
-    var shows = D().shows.slice().sort(function (a, b) { return C.fold(a.title) < C.fold(b.title) ? -1 : 1; });
+    var shows = C.indexSort(D().shows, function (s) { return s.title; }, LANG);
     if (!shows.length) { empty(main, t("empty.lib"), t("empty.libBtn"), function () { setTab("find"); }); return; }
     // Search in every cached episode (titles and notes). The input is
     // drawn once; only the result box below it is redrawn.
@@ -755,13 +760,21 @@
     q.value = view.q || "";
     lab.appendChild(q);
     main.appendChild(lab);
+    var tools = el("div", "row-btns lib-tools");
+    var shb = button(t("sh.all"), "txt-btn", function () { shuffle(""); });
+    shb.insertAdjacentHTML("afterbegin", UI.shuffle);
+    tools.appendChild(shb);
+    main.appendChild(tools);
     var res = el("div", "lib-res");
     main.appendChild(res);
     var grid = el("ul", "grid");
+    var bar = letterBar(shows.map(function (s) { return s.title; }), grid, shows.length >= 8);
+    if (bar) main.appendChild(bar);
     var paintRes = function () {
       res.textContent = "";
       var v = q.value.trim();
       grid.hidden = v.length >= 2;
+      if (bar) bar.hidden = grid.hidden;
       if (v.length < 2) return;
       var hits = C.searchEpisodes(D(), cacheView(), v, 200);
       res.appendChild(el("p", "dim small", hits.length ? t("lib.found", { n: hits.length }) : t("lib.none")));
@@ -777,6 +790,7 @@
     C.newEpisodes(d, cache, now()).forEach(function (x) { newBy[x.show.id] = (newBy[x.show.id] || 0) + 1; });
     shows.forEach(function (s) {
       var li = el("li", "tile");
+      li.setAttribute("data-letter", C.letterOf(s.title));
       var b = el("button", "tile-btn");
       b.type = "button";
       b.appendChild(img(s.img, "art big"));
@@ -987,6 +1001,7 @@
     var btns = el("div", "row-btns");
     btns.appendChild(button(t("btn.refresh"), "icon-btn", function () { refresh(true, sid); }, UI.refresh));
     btns.appendChild(button(t("show.settings"), "icon-btn", function () { showSettings(sid); }, UI.gear));
+    btns.appendChild(button(t("sh.show"), "icon-btn", function () { shuffle(sid); }, UI.shuffle));
     btns.appendChild(button(t("show.allPlayed"), "txt-btn", function () {
       if (!rec) return;
       mutate(function (d, n) { return C.markAllPlayed(d, sid, rec.eps.map(function (e) { return { id: e.id, s: sid, pd: e.pub }; }), n); });
@@ -1815,6 +1830,36 @@
     loadChart(cc, br.g, paint);
     paint();
   }
+  // A–Z / Α–Ω bar: each letter scrolls to the first item of the list
+  // whose data-letter is that letter (skip = rows before the index).
+  function letterBar(titles, list, show, skip) {
+    var letters = C.indexLetters(titles, LANG);
+    if (!show || letters.length < 2) return null;
+    var nav = el("nav", "idx-bar");
+    nav.setAttribute("aria-label", t("idx.label"));
+    letters.forEach(function (l) {
+      nav.appendChild(button(l, "idx-l", function () {
+        var rows = [].slice.call(list.querySelectorAll('[data-letter="' + l + '"]'), 0);
+        var row = rows.filter(function (r) { return [].indexOf.call(list.children, r) >= (skip || 0); })[0] || rows[0];
+        if (row) { row.scrollIntoView({ block: "start", behavior: "smooth" }); var f = row.querySelector("button"); if (f) f.focus({ preventScroll: true }); }
+      }));
+    });
+    return nav;
+  }
+  // Shuffle: sid = one show's unplayed episodes in a random order; ""
+  // = one random unplayed episode of every followed show. The first
+  // plays, the rest go to the front of Up next.
+  function shuffle(sid) {
+    var plan = C.shufflePlan(D(), cacheView(), sid);
+    if (!plan.length) { showToast(t("sh.none")); return; }
+    var metas = plan.map(function (e) { return metaOf(e.id); }).filter(Boolean);
+    H.remember(metas);
+    var rest = plan.slice(1);
+    if (rest.length) mutate(function (d, n) { return C.queueFront(d, rest, n); });
+    var first = metaOf(plan[0].id);
+    if (first) { H.play(first, undefined); rememberQueue(); }
+    showToast(rest.length ? t("sh.done", { n: rest.length }) : t("sh.one"));
+  }
   function renderGenres(main) {
     var br = prefs.br;
     var grid = el("div", "g-grid");
@@ -1837,6 +1882,7 @@
     lab.appendChild(q);
     main.appendChild(lab);
     var ul = el("ul", "c-list");
+    var cbar = null;
     main.appendChild(ul);
     var order = C.sortCountries(countryName);
     var home = C.topCountry(LANG, navigator.language);
@@ -1849,6 +1895,7 @@
         var name = countryName(code);
         if (f && fold(name).indexOf(f) < 0 && code !== f) return;
         var li = el("li");
+        li.setAttribute("data-letter", C.letterOf(name));
         var b = button("", "c-row" + (code === cc ? " on" : ""), function () { br.cc = code; br.chip = ""; br.m = "top"; savePrefs(); renderAll(); $("main").scrollTop = 0; });
         b.appendChild(el("span", "c-flag", C.flag(code)));
         b.appendChild(el("span", "c-name", name));
@@ -1858,8 +1905,10 @@
       });
       if (!ul.children.length) ul.appendChild(el("li", "dim", t("find.none")));
     };
-    q.addEventListener("input", paint);
+    q.addEventListener("input", function () { paint(); if (cbar) cbar.hidden = !!q.value.trim(); });
     paint();
+    cbar = letterBar(order.slice(1).map(countryName), ul, true, 1);
+    if (cbar) main.insertBefore(cbar, ul);
   }
   // Surprise me: a random show from the list on screen (else this
   // country's chart), opened and its newest episode playing.
@@ -2036,7 +2085,7 @@
     }) : Promise.resolve(url);
     found.busy = true; renderAll();
     p.then(function (u) {
-      if (C.findShow(D(), C.showId(u))) { found.busy = false; openShow(C.showId(u)); return null; }
+      if (C.findShow(D(), C.showId(u))) { found = { q: "", list: [], busy: false, src: "" }; openShow(C.showId(u)); return null; }
       return NET.fetchOne(u).then(function (r) {
         var parsed = parseText(r.text, r.finalUrl || u);
         if (parsed) return finishAdd(u, parsed);
@@ -2065,7 +2114,8 @@
     });
   }
   function finishAdd(u, parsed) {
-    found.busy = false;
+    // Added: Discover goes back to browsing (the address is no search).
+    found = { q: "", list: [], busy: false, src: "" };
     if (!parsed.eps.length) throw { code: "notpod" };
     var sh = parsed.show;
     subscribe({ url: u, title: sh.title || u, by: sh.by, img: sh.img }, parsed);
