@@ -171,6 +171,7 @@ input[type="checkbox"] { width: 20px; min-height: 20px; height: 20px; padding: 0
 }
 .pane-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; max-width: 900px; margin-left: auto; margin-right: auto; }
 .pane-head select { width: auto; max-width: 60%; }
+.pane-head.oros-row { flex-wrap: wrap; gap: 0 4px; margin-top: -6px; }
 .sel-lbl { font-size: 12px; font-weight: 700; color: var(--text-dim); }
 .cards {
   display: grid;

@@ -821,6 +821,7 @@ dialog.dlg-detail { width: min(680px, calc(100vw - 32px)); }
 /* ---------- Import from another app ---------- */
 .sf-imp { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border); }
 .sf-imp .btn { max-width: 100%; white-space: normal; text-align: left; }
+.sf-frow { display: flex; flex-wrap: wrap; gap: 6px; }
 dialog.dlg-imp { width: min(440px, calc(100vw - 32px)); }
 .imp-sum { margin: -4px 0 10px; }
 .imp-bar { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 12px; font-weight: 600; color: var(--text-dim); margin-bottom: 6px; }

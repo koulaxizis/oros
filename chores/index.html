@@ -7,7 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Chore Wheel · orOS</title>
 
-  <link rel="stylesheet" href="chores.css?v=2.48.00">
+  <link rel="stylesheet" href="chores.css?v=2.49.00">
 
 </head>
 <body>
@@ -128,6 +128,16 @@
         <h2 class="sec-title" data-i18n="home.sets">Ready sets</h2>
         <div id="sets" class="chips"></div>
       </section>
+
+      <!-- .oroschores: members, chores and events as one orOS file (../recordpkg.js, package.js) -->
+      <section class="sec" id="file-sec" hidden>
+        <h2 class="sec-title" data-i18n="home.file">Save and open</h2>
+        <div class="file-row">
+          <button type="button" class="txt-btn" id="o-save" data-i18n="file.save">orOS file (.oroschores)</button>
+          <button type="button" class="txt-btn" id="o-open" data-i18n="file.open">Open orOS file…</button>
+          <button type="button" class="txt-btn" id="o-folder" data-i18n="file.folder">Unzipped orOS folder…</button>
+        </div>
+      </section>
     </section>
   </main>
 
@@ -135,7 +145,10 @@
   <div id="toast" role="status"></div>
 
   <script src="core.js?v=2.48.00"></script>
-  <script src="chores.js?v=2.48.00"></script>
+  <script src="../bundle.js?v=2.49.00"></script>
+  <script src="../recordpkg.js?v=2.49.00"></script>
+  <script src="package.js?v=2.49.00"></script>
+  <script src="chores.js?v=2.49.00"></script>
 
 </body>
 </html>

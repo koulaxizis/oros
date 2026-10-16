@@ -7,7 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Score Keeper · orOS</title>
 
-  <link rel="stylesheet" href="scores.css?v=2.48.00">
+  <link rel="stylesheet" href="scores.css?v=2.49.00">
 
 </head>
 <body>
@@ -40,6 +40,13 @@
           <span class="spacer"></span>
           <button type="button" class="link-btn" id="imp-btn"></button>
           <button type="button" class="link-btn" id="csv-all"></button>
+        </div>
+        <!-- .orosscores: every match as one orOS file (../recordpkg.js, package.js) -->
+        <div class="pane-head oros-row">
+          <span class="spacer"></span>
+          <button type="button" class="link-btn" id="oros-save" hidden></button>
+          <button type="button" class="link-btn" id="oros-open" hidden></button>
+          <button type="button" class="link-btn" id="oros-folder" hidden></button>
         </div>
         <div id="hist-list" class="cards"></div>
         <p id="empty-hist" class="hint" data-i18n="hist.empty" hidden>Finished matches show up here.</p>
@@ -81,7 +88,10 @@
   <script src="../atelier/zip.js?v=2.48.00"></script>
   <script src="../importkit.js?v=2.48.00"></script>
   <script src="import.js?v=2.48.00"></script>
-  <script src="scores.js?v=2.48.00"></script>
+  <script src="../bundle.js?v=2.49.00"></script>
+  <script src="../recordpkg.js?v=2.49.00"></script>
+  <script src="package.js?v=2.49.00"></script>
+  <script src="scores.js?v=2.49.00"></script>
 
 </body>
 </html>

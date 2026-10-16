@@ -54,5 +54,34 @@
         }
       ]
     }
-  ]
+  ],
+  "file_handlers": [
+    {
+      "action": "/cycle/solo.html?file-open=cycle",
+      "accept": {
+        "application/x-oros-cycle": [
+          ".oroscycle"
+        ]
+      }
+    }
+  ],
+  "share_target": {
+    "action": "/cycle/solo.html?share-target",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        {
+          "name": "files",
+          "accept": [
+            "application/x-oros-cycle",
+            ".oroscycle"
+          ]
+        }
+      ]
+    }
+  }
 }

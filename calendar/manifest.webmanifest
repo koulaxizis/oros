@@ -61,6 +61,9 @@
       "accept": {
         "text/calendar": [
           ".ics"
+        ],
+        "application/x-oros-cal": [
+          ".oroscal"
         ]
       }
     }
@@ -78,7 +81,9 @@
           "name": "files",
           "accept": [
             "text/calendar",
-            ".ics"
+            ".ics",
+            "application/x-oros-cal",
+            ".oroscal"
           ]
         }
       ]

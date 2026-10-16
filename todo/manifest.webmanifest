@@ -55,6 +55,16 @@
       ]
     }
   ],
+  "file_handlers": [
+    {
+      "action": "/todo/solo.html?file-open=todo",
+      "accept": {
+        "application/x-oros-tasks": [
+          ".orostasks"
+        ]
+      }
+    }
+  ],
   "share_target": {
     "action": "/todo/solo.html?share-target",
     "method": "POST",
@@ -62,7 +72,16 @@
     "params": {
       "title": "title",
       "text": "text",
-      "url": "url"
+      "url": "url",
+      "files": [
+        {
+          "name": "files",
+          "accept": [
+            "application/x-oros-tasks",
+            ".orostasks"
+          ]
+        }
+      ]
     }
   }
 }
