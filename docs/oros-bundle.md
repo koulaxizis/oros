@@ -194,6 +194,13 @@ Quote and Meals also offer "Open as copy" (fresh ids), as they work like templat
 | Budget | `{ ver: 1, tx, cats, bud, rec, acc, xfer, asg, goal, rule, set, rcs? }` (bank profiles stay on the device; receipts in `media/` as `<sha256>.<jpg\|pdf>`) | `entries.csv` |
 | Invoices | `{ ver: 1, prof, series, clients, docs, pays, tpls, profs?, media? }` (no provider keys; issued numbers never change; the device's business profile is kept; PDFs and scans in `media/`) | `documents.csv`, `payments.csv` |
 | Split | `{ ver: 1, groups, people, exp, pay, rec?, receipts? }` (never "who am I"; one group or all; receipt photos in `media/`) | `NN-<group>.csv` per group (= the app's Export CSV) |
+| One-Sentence Diary | `{ ver: 1, days: { ymd: { t, e, m } }, long?, prompts?, phs? }` (PIN lock and reminder stay on the device; photos in `media/`; a file opened while the lock is up waits for unlock) | `diary.md`, `diary.csv` |
+| Health | `{ ver: 1, en, ty, md, dl, rf, sy, sk, al, cn, ec, vx, ap, dc, set, pf, ats? }` (no snoozes; reminders come in off; settings and Medical ID stay on the device; documents in `media/`) | `readings.csv`, `health.md` |
+| Workouts | `{ ver: 1, ex, pg, wo, bm, pl? }` (no settings, no running workout; GPS routes are part of a workout) | `workouts.md`, `workouts.csv` |
+| Baby | `{ ver: 1, kids, ev, gr, mk, st }` (no running timers, units stay on the device) | `log.csv`, `growth.csv` (= the app's exports) |
+| Pet Health Book | `{ ver: 1, pets, recs, ats? }` (attachments in `media/`; pet photos stay inline as small JPEG data URIs) | `pets.md`, `records.csv` |
+| Plant Care | `{ ver: 1, plants, log }` (never the Pl@ntNet key or reminders) | `plants.md`, `plants.csv`, `history.csv` |
+| Garage | `{ ver: 1, settings, vehicles, fuel, service, plans, tyres, renewals, costs, odo, rcs? }` (device prefs stay; receipt photos in `media/`; an added tyre set never unmounts this device's) | `log.csv` (= the app's Export CSV) |
 
 ## Versions
 

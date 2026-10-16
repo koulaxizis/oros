@@ -128,6 +128,7 @@
       "set.lead": "Warn me before vaccines, deworming and rechecks", "set.lead0": "Only on the day",
       "set.leadN": "{n} days before", "set.lead1": "1 day before",
       "set.data": "Your pets", "set.export": "Export", "set.import": "Import", "set.close": "Close",
+      "set.osave": "orOS file (.orospet)", "set.oopen": "Open orOS file…", "set.ofolder": "Unzipped orOS folder…",
       "toast.undo": "Undo", "toast.added": "{name} added", "toast.saved": "Saved", "toast.deleted": "{name} deleted",
       "toast.recAdded": "Added to the health book", "toast.recDeleted": "Entry removed", "toast.careDone": "{what}: {name}",
       "toast.bag": "New bag: {name}", "toast.save": "Could not save: storage is full",
@@ -227,6 +228,7 @@
       "set.lead": "Ειδοποίηση πριν από εμβόλια, αποπαρασιτώσεις και επανεξετάσεις", "set.lead0": "Μόνο την ίδια μέρα",
       "set.leadN": "{n} μέρες πριν", "set.lead1": "1 μέρα πριν",
       "set.data": "Τα ζώα σου", "set.export": "Εξαγωγή", "set.import": "Εισαγωγή", "set.close": "Κλείσιμο",
+      "set.osave": "Αρχείο orOS (.orospet)", "set.oopen": "Άνοιγμα αρχείου orOS…", "set.ofolder": "Αποσυμπιεσμένος φάκελος orOS…",
       "toast.undo": "Αναίρεση", "toast.added": "Προστέθηκε: {name}", "toast.saved": "Αποθηκεύτηκε", "toast.deleted": "Διαγράφηκε: {name}",
       "toast.recAdded": "Προστέθηκε στο βιβλιάριο", "toast.recDeleted": "Η εγγραφή αφαιρέθηκε", "toast.careDone": "{what}: {name}",
       "toast.bag": "Νέο σακί: {name}", "toast.save": "Δεν αποθηκεύτηκε: ο χώρος είναι γεμάτος",
@@ -2169,6 +2171,17 @@
     io.appendChild(button(t("set.export"), "", exportData));
     io.appendChild(button(t("set.import"), "", importData));
     dlg.appendChild(io);
+    if (recFile) {
+      var of = el("div", "dlg-actions tight wrap");
+      [["pc-osave", "set.osave", function () { recFile.save(); }],
+       ["pc-oopen", "set.oopen", function () { recFile.open(); }],
+       ["pc-ofolder", "set.ofolder", function () { recFile.openFolder(); }]].forEach(function (o) {
+        var b = button(t(o[1]), "", function () { dlg.close(); o[2](); });
+        b.id = o[0];
+        of.appendChild(b);
+      });
+      dlg.appendChild(of);
+    }
     var acts = el("div", "dlg-actions");
     acts.appendChild(button(t("set.close"), "primary", function () { dlg.close(); }));
     dlg.appendChild(acts);
@@ -2238,6 +2251,119 @@
       });
     }).catch(function () { showToast(t("toast.badFile")); });
   }
+
+  // .orospet (OBF-4e): every pet and health record as one orOS file
+  // (../recordpkg.js + package.js), the records' attachments in media/
+  // by <sha256>.<jpg|pdf>. The prefs (reminder hour, warnings, dose
+  // reminders, open tab) stay on the device. Opening ADDS what this
+  // device lacks, with its ids, through core.merge; a pet or record
+  // already here (or deleted here) is kept as it is unless "Update with
+  // newer versions" is ticked. The result goes through save (so sync
+  // carries it); Undo tombstones what was added, like a delete.
+  var RP = window.OrosRecordPkg || null, PPK = window.OrosPetcarePackage || null;
+  var fileAdded = null;
+  // One attachment of the file → Files › Pet Health Book, only when that
+  // name is not on the disk yet, through the checks of attaching one
+  // (encodeAttachment: a PDF must start with "%PDF-" and be ≤ 10 MB, a
+  // picture is re-drawn as a JPEG, no EXIF). → Promise<true when there>
+  function storeAttachment(name, key, media) {
+    var fs = fsApi(), path = C.atPath(name);
+    if (!fs || !path) return Promise.resolve(false);
+    return Promise.resolve().then(function () { return fs.readBlob(path); })
+      .then(function (b) { return !!b; }, function () { return false; })
+      .then(function (there) {
+        if (there) return true;
+        var item = key && Object.prototype.hasOwnProperty.call(media, key) ? media[key] : null;
+        if (!item || !(item.blob || item.bytes)) return false;
+        var file = new File([item.blob || item.bytes], name, { type: item.type || "" });
+        return encodeAttachment(file).then(function (enc) {
+          if (!enc || enc.ext !== name.split(".").pop()) return false;
+          return Promise.resolve(fs.writeBlob(path, enc.blob)).then(function () { return true; });
+        });
+      }).catch(function () { return false; });
+  }
+  var recFile = RP && PPK && window.OrosBundle ? RP.ui(PPK.forLocal(function () { return data; }), {
+    lang: function () { return LANG; },
+    get: function () { return canonical(data); },
+    title: function () { return t("app"); },
+    // media/: every attachment the records name, read from the orOS
+    // disk; state.ats = { "<file name>": "<media key>" } goes into
+    // content.json
+    files: function (state) {
+      var fs = fsApi(), B = window.OrosBundle, out = [], ats = {}, chain = Promise.resolve();
+      if (!fs) return out;
+      C.attachmentsOf(state).forEach(function (name) {
+        chain = chain.then(function () {
+          if (ats[name] || !C.atPath(name)) return;
+          return Promise.resolve(fs.readBlob(C.atPath(name))).then(function (blob) {
+            if (!blob || !blob.size) return;
+            return B.digest(blob).then(function (dg) {
+              var key = dg.sha + "." + name.split(".").pop();
+              ats[name] = key;
+              if (!out.some(function (f) { return f.key === key; }))
+                out.push({ key: key, blob: blob, type: /\.pdf$/.test(name) ? "application/pdf" : "image/jpeg" });
+            });
+          }).catch(function () {});
+        });
+      });
+      return chain.then(function () { state.ats = ats; return out; });
+    },
+    // the attachments of the records this open adds (or updates); a
+    // name whose file could not be stored leaves the record's sc
+    media: function (read, res) {
+      var next = JSON.parse(JSON.stringify(res.next)), src = PPK.DESC.norm(read && read.content && read.content.data);
+      var ats = (src && src.ats) || {}, media = (read && read.media) || {};
+      var want = {}, chain = Promise.resolve();
+      res.addedIds.concat(res.updatedIds).forEach(function (id) { want[id] = 1; });
+      (next.recs || []).forEach(function (r) {
+        if (!want[r.id] || !r.sc) return;
+        var kept = [];
+        r.sc.forEach(function (name) {
+          chain = chain.then(function () {
+            return storeAttachment(name, typeof ats[name] === "string" ? ats[name] : "", media);
+          }).then(function (ok) { if (ok) kept.push(name); });
+        });
+        chain = chain.then(function () { if (kept.length) r.sc = kept; else delete r.sc; });
+      });
+      return chain.then(function () { return next; });
+    },
+    set: function (next) {
+      if (!next || typeof next !== "object" || !Array.isArray(next.pets)) return;
+      var before = {};
+      data.pets.forEach(function (p) { before[p.id] = 1; });
+      data.recs.forEach(function (r) { before[r.id] = 1; });
+      data = canonical(next);
+      fileAdded = [];
+      data.pets.forEach(function (p) { if (!before[p.id]) fileAdded.push(p.id); });
+      data.recs.forEach(function (r) { if (!before[r.id]) fileAdded.push(r.id); });
+      save();
+      render();
+    },
+    // Undo: what this open added goes again, with tombstones (as a
+    // delete does, so sync carries it); files no record names any more
+    // leave the disk later
+    deleteIds: function (ids) {
+      var gone = {}, names = [], now = Date.now();
+      (fileAdded || ids || []).forEach(function (id) { gone[id] = 1; });
+      fileAdded = null;
+      data.pets.forEach(function (p) { if (gone[p.id]) data.tombs[p.id] = Math.max(now, p.m); });
+      data.recs.forEach(function (r) {
+        if (!gone[r.id] && !gone[r.p]) return;
+        data.tombs[r.id] = Math.max(now, r.m);
+        names = names.concat(r.sc || []);
+      });
+      data.pets = data.pets.filter(function (p) { return !gone[p.id]; });
+      if (prefs.pet && !petById(prefs.pet)) { prefs.pet = null; savePrefs(); }
+      save();
+      render();
+      dropFilesLater(names);
+      showToast(recFile.text("undone"));
+    },
+    toast: function (text, undo) {
+      if (undo) undoToast(text, undo);
+      else showToast(text);
+    }
+  }) : null;
 
   // ---------- 10. Dialogs + toasts ----------
   function button(label, cls, fn) {
@@ -2344,7 +2470,11 @@
   //   { asNew: {…} } (core asNewPrefill) → the Assistant's entry card:
   //   that pet's new-record editor prefilled, nothing saved until Save
   //   (BR-W8-6).
+  //   { openFile: { token } } → "Open with" an .orospet file
+  //   (fileopen.js): the File taken once with
+  //   window.parent.__orosTakeFile(token), then the kit's Add dialog.
   function openSearchTarget(t) {
+    if (t && t.openFile) { if (recFile) recFile.openTarget(t.openFile); return; }
     if (t && t.asNew) { if (!document.querySelector("dialog[open]")) newRecFrom(t.asNew); return; }
     var r = t && typeof t.rec === "string" ? recById(t.rec) : null;
     var p = r ? petById(r.p) : null;

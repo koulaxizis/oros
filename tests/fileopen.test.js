@@ -68,13 +68,6 @@ test("every app in the table exists and takes a file through its deep link", () 
   // .oros<word> file yet; its wave adds the receiver and takes the app
   // off this list (one app per line, so parallel waves merge cleanly).
   const PENDING_4B = [
-    "diary",
-    "health",
-    "fitness",
-    "baby",
-    "petcare",
-    "plants",
-    "garage",
     "library",
     "shelf",
     "signature",

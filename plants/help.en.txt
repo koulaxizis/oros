@@ -20,10 +20,15 @@ Tap a plant to see its details: the schedule with the next day for each task, ho
 ## Weather hints
 If you use [Weather](app:weather), Plant Care reads its latest forecast on this device for your outdoor plants. When rain is expected today you'll see a banner with `Skip outdoor watering`; on a very hot day it suggests checking them earlier. Plant Care makes no network calls of its own.
 
+## Save and open an orOS file
+In `Settings`, under `Your plants`, `orOS file (.orosplants)` saves every plant (schedule, room, notes) and its care history as one `.orosplants` file, for example to move them to another device without sync or to keep a copy. The reminder hour, hemisphere and your Pl@ntNet key stay on each device. The file is a plain ZIP: unzipped it holds the plants as `content.json` plus `preview/plants.md`, `preview/plants.csv` and `preview/history.csv` for other programs. It is not encrypted, so keep it somewhere safe.
+
+`Open orOS file…` (or `Unzipped orOS folder…`, or "Open with" orOS on the computer) shows how many plants and history entries are new and how many are already here, then `Add` adds only the new ones, with their own ids: opening the same file again adds nothing. A plant already here is kept as it is, and one you deleted here stays deleted; a file never deletes anything. Tick `Update with newer versions` to let plants that were changed later in the file replace your copy. `Undo` in the message takes back what was added.
+
 ## Sync and backup
 Your plants (with their scientific names), schedules and history sync between your devices through [orOS sync](help:t/sync). The reminder hour, hemisphere, chosen room and open tab stay on each device.
 
-In `Settings`, `Export` saves your plants to a file and `Import` merges a file with what you have.
+In `Settings`, `Export` saves your plants to a file and `Import` merges a file with what you have. An orOS file (see above) moves plants and history between devices.
 
 ## Keyboard shortcuts
 - [[Left]] / [[Right]] on the tabs switch between `Today` and `My plants`.

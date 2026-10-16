@@ -7,7 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>One-Sentence Diary · orOS</title>
 
-  <link rel="stylesheet" href="diary.css?v=2.57.00">
+  <link rel="stylesheet" href="diary.css?v=2.58.00">
 
 </head>
 <body>
@@ -184,6 +184,13 @@
       <button type="button" id="exp-csv" class="chip" data-i18n="btn.csv">CSV</button>
       <button type="button" id="exp-json" class="chip" data-i18n="btn.json">JSON</button>
     </div>
+    <h3 data-i18n="sec.oros">orOS file</h3>
+    <p class="hint small" data-i18n="oros.hint"></p>
+    <div class="actions">
+      <button type="button" id="oros-save" class="chip" data-i18n="oros.save" hidden>orOS file (.orosdiary)</button>
+      <button type="button" id="oros-open" class="chip" data-i18n="oros.open" hidden>Open orOS file…</button>
+      <button type="button" id="oros-folder" class="chip" data-i18n="oros.folder" hidden>Unzipped orOS folder…</button>
+    </div>
     <h3 data-i18n="sec.import">Import</h3>
     <p class="hint small" data-i18n="imp.hint"></p>
     <div class="actions">
@@ -261,12 +268,15 @@
   <div id="live" class="sr-only" aria-live="polite"></div>
   <div id="toast" role="status"></div>
 
-  <script src="../atelier/zip.js?v=2.57.00"></script>
-  <script src="../importkit.js?v=2.57.00"></script>
-  <script src="core.js?v=2.57.00"></script>
-  <script src="journal.js?v=2.57.00"></script>
-  <script src="import.js?v=2.57.00"></script>
-  <script src="diary.js?v=2.57.00"></script>
+  <script src="../atelier/zip.js?v=2.58.00"></script>
+  <script src="../importkit.js?v=2.58.00"></script>
+  <script src="core.js?v=2.58.00"></script>
+  <script src="journal.js?v=2.58.00"></script>
+  <script src="import.js?v=2.58.00"></script>
+  <script src="../bundle.js?v=2.58.00"></script>
+  <script src="../recordpkg.js?v=2.58.00"></script>
+  <script src="package.js?v=2.58.00"></script>
+  <script src="diary.js?v=2.58.00"></script>
 
 </body>
 </html>
