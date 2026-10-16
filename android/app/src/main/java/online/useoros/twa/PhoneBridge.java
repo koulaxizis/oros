@@ -8,6 +8,8 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.CalendarContract;
+import android.provider.ContactsContract;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -45,6 +47,8 @@ public class PhoneBridge {
     static final String PREFS = "oros-phone";
     private static final int MAX_MESSAGE = 32 * 1024 * 1024;
     private static final int MAX_ITEMS = 20000;
+    /** The page shows this when the person turned a kind off in Settings › Accounts › orOS. */
+    static final String SYNC_OFF = "sync is off in Android Settings › Accounts › orOS";
 
     static final String[] CONTACTS_PERMS = {Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS};
     static final String[] CALENDAR_PERMS = {Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR};
@@ -282,6 +286,7 @@ public class PhoneBridge {
     private void sendChanges(String what) {
         boolean contacts = "contacts".equals(what);
         if (!granted(contacts ? CONTACTS_PERMS : CALENDAR_PERMS)) return;
+        if (!OrosAccount.syncOn(app, contacts ? ContactsContract.AUTHORITY : CalendarContract.AUTHORITY)) return;
         try {
             JSONArray all = contacts ? new ContactsWriter(app).changes() : new CalendarWriter(app).changes();
             JSONArray ch = new JSONArray();
@@ -376,6 +381,8 @@ public class PhoneBridge {
                 case "calendar": {
                     JSONArray items = m.optJSONArray("items");
                     if (items == null || items.length() > MAX_ITEMS) throw new IllegalArgumentException("bad items");
+                    String authority = "contacts".equals(t) ? ContactsContract.AUTHORITY : CalendarContract.AUTHORITY;
+                    if (!OrosAccount.syncOn(app, authority)) throw new IllegalStateException(SYNC_OFF);
                     int[] n;
                     if ("contacts".equals(t)) {
                         if (!granted(CONTACTS_PERMS)) throw new SecurityException("no permission");
@@ -395,6 +402,7 @@ public class PhoneBridge {
                     done.put("removed", n[2]);
                     done.put("kept", n[3]);
                     diag(t + " written: +" + n[0] + " ~" + n[1] + " -" + n[2] + " =" + n[3]);
+                    OrosAccount.synced(app, authority);
                     send(done);
                     sendChanges(t);
                     return;
