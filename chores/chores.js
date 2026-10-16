@@ -115,6 +115,8 @@
       "toast.daysBad": "Pick at least one day",
       "live.spin": "{m} gets {t}",
       "set.kitchen": "Kitchen", "set.clean": "Weekly cleaning", "set.pet": "Pet", "set.home": "Around the house",
+      "home.file": "Save and open", "file.save": "orOS file (.oroschores)", "file.open": "Open orOS file…",
+      "file.folder": "Unzipped orOS folder…",
       "dow": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
       "months": ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
     },
@@ -173,6 +175,8 @@
       "toast.daysBad": "Διάλεξε τουλάχιστον μία μέρα",
       "live.spin": "{t}: την παίρνει {m}",
       "set.kitchen": "Κουζίνα", "set.clean": "Εβδομαδιαίο καθάρισμα", "set.pet": "Κατοικίδιο", "set.home": "Γύρω από το σπίτι",
+      "home.file": "Αποθήκευση και άνοιγμα", "file.save": "Αρχείο orOS (.oroschores)", "file.open": "Άνοιγμα αρχείου orOS…",
+      "file.folder": "Αποσυμπιεσμένος φάκελος orOS…",
       "dow": ["Δευ", "Τρί", "Τετ", "Πέμ", "Παρ", "Σάβ", "Κυρ"],
       "months": ["Ιανουάριος", "Φεβρουάριος", "Μάρτιος", "Απρίλιος", "Μάιος", "Ιούνιος", "Ιούλιος", "Αύγουστος", "Σεπτέμβριος", "Οκτώβριος", "Νοέμβριος", "Δεκέμβριος"]
     }
@@ -1617,6 +1621,59 @@
     else window.addEventListener("resize", resize);
   }
 
+  // .oroschores (OBF-4e): every member, chore and event as one orOS
+  // file (../recordpkg.js + package.js). Opening ADDS what this device
+  // lacks, with its ids; a member or chore already here (or deleted
+  // here) is kept as it is unless "Update with newer versions" is
+  // ticked. The result goes through commit() (canonical merge + save +
+  // sync dirty); Undo tombstones the added members and chores the way
+  // deleteEntity does and sets the added events back to "not done" /
+  // "back to the turn" (events have no tombstones, so a plain delete
+  // would come back with the next sync).
+  var RP = window.OrosRecordPkg || null, CPK = window.OrosChoresPackage || null;
+  var recFile = null;
+  function initRecFile() {
+    if (!RP || !CPK || !window.OrosBundle) return;
+    recFile = RP.ui(CPK.DESC, {
+      lang: function () { return LANG; },
+      get: function () { return sliceGet(); },
+      title: function () { return t("app"); },
+      set: function (next) {
+        if (!next || typeof next !== "object" || !Array.isArray(next.members)) return;
+        data = next;
+        commit();
+      },
+      deleteIds: function (ids) {
+        var now = Date.now(), gone = {};
+        ids.forEach(function (id) {
+          var k = CPK.kindOf(id, data);
+          if (k === "member" || k === "task") {
+            var x = k === "member" ? memberById(data, id) : taskById(data, id);
+            data.tombs[id] = Math.max(now, x.m, x.om || 0);
+            gone[id] = 1;
+          } else if (k === "event") {
+            if (data.done[id]) data.done[id] = [0, "", eventStamp(data.done[id], 2)];
+            if (data.set[id]) data.set[id] = ["", eventStamp(data.set[id], 1)];
+          }
+        });
+        data.members = data.members.filter(function (mb) { return !gone[mb.id]; });
+        data.tasks = data.tasks.filter(function (tk) { return !gone[tk.id]; });
+        if (prefs.me && gone[prefs.me]) { prefs.me = ""; savePrefs(); }
+        commit();
+      },
+      toast: function (text, undo) {
+        if (undo) undoToast(text, undo);
+        else showToast(text);
+      }
+    });
+    $("file-sec").hidden = false;
+    [["o-save", function () { recFile.save(); }],
+     ["o-open", function () { recFile.open(); }],
+     ["o-folder", function () { recFile.openFolder(); }]].forEach(function (b) {
+      $(b[0]).addEventListener("click", b[1]);
+    });
+  }
+
   // Deep links from the shell (reminder → "today", Calendar row → a
   // day "YYYY-MM-DD"): live push while open, staged one-shot at boot.
   var OPEN_KEY = "oros-chores-open";
@@ -1643,6 +1700,7 @@
     if (!prefs.tab) prefs.tab = data.members.length && data.tasks.length ? "today" : "home";   // first open: stays put while you set up
     applyI18n();
     wire();
+    initRecFile();
     wireKeyboard();
     renderAll();
     var staged = null;
@@ -1659,9 +1717,12 @@
   }
 
   // Universal search deep link (shell __orosOpenAt / __orosTakeTarget):
-  // target { task } or { member }. Home tab + that chore's or member's
+  // target { task } or { member }, or { openFile } (above). Home tab + that chore's or member's
   // dialog. Unknown id → no-op; an open dialog → no-op (unsaved edits win).
   function openSearchTarget(t) {
+    // "Open with" an .oroschores file (fileopen.js): { openFile: { token } },
+    // the File taken once with window.parent.__orosTakeFile(token)
+    if (t && t.openFile) { if (recFile) recFile.openTarget(t.openFile); return; }
     if (!t || document.querySelector("dialog[open]")) return;
     var tk = typeof t.task === "string" ? taskById(data, t.task) : null;
     var mb = !tk && typeof t.member === "string" ? memberById(data, t.member) : null;

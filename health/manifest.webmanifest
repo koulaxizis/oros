@@ -66,5 +66,34 @@
         }
       ]
     }
-  ]
+  ],
+  "file_handlers": [
+    {
+      "action": "/health/solo.html?file-open=health",
+      "accept": {
+        "application/x-oros-health": [
+          ".oroshealth"
+        ]
+      }
+    }
+  ],
+  "share_target": {
+    "action": "/health/solo.html?share-target",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        {
+          "name": "files",
+          "accept": [
+            "application/x-oros-health",
+            ".oroshealth"
+          ]
+        }
+      ]
+    }
+  }
 }

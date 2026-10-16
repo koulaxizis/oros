@@ -50,8 +50,13 @@ Pick `7 days`, `30 days` or `All`. You get a `Weekly recap`, your `Goals`, `Patt
 
 Mood records feelings, not a score, so each mood becomes one feeling: the best is `Happy` 5/5, then `Happy` 3/5, `Numb` 2/5 for a middle mood, `Sad` 3/5 and `Sad` 5/5. Importing the same file again adds only entries that aren't in Mood yet, and never changes your own.
 
+## Save and open an orOS file
+`orOS file (.orosmood)`, next to `Import…` at the top of `Insights`, saves every entry, your own locations, people and triggers, your feelings and activities and your goals as one `.orosmood` file, for example to move them to another device without sync or to keep a copy. The file is a plain ZIP: unzipped it holds the data as `content.json` plus `preview/mood.md` and `preview/mood.csv` for other programs. It is not encrypted, and mood data is personal, so keep it somewhere safe.
+
+`Open orOS file…` (or `Unzipped orOS folder…`, or "Open with" orOS on the computer) shows how many records are new and how many are already here, then `Add` adds only the new ones, with their own ids: opening the same file again adds nothing. An entry already here is kept as it is, and one you deleted here stays deleted; a file never deletes anything. A location, person or trigger whose name you already have uses yours. Tick `Update with newer versions` to let entries that were changed later in the file replace your copy. `Undo` in the message removes what was added.
+
 ## Sync and backup
-Your entries, your own locations, people and triggers, your feelings and activities (names, emoji, order, hidden) and your goals sync through [orOS sync](help:t/sync), encrypted. The open tab, search and filters stay on this device. Besides the PDF report and the import above, there's no export; use the orOS [backup](help:t/backup).
+Your entries, your own locations, people and triggers, your feelings and activities (names, emoji, order, hidden) and your goals sync through [orOS sync](help:t/sync), encrypted. The open tab, search and filters stay on this device. Besides the PDF report, the orOS file and the import above, use the orOS [backup](help:t/backup).
 
 ## Keyboard shortcuts
 - [[Enter]] in a `New value…` box adds the value.

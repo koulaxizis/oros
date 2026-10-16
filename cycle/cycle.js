@@ -193,7 +193,11 @@
       "imp.undone":   "Import undone",
       "imp.bad":      "Cycle can't read this file. Use an export from drip., Clue or Flo, or a CSV file.",
       "imp.big":      "This file is too large to import.",
-      "imp.empty":    "No period data found in this file."
+      "imp.empty":    "No period data found in this file.",
+      "pkg.save":     "orOS file (.oroscycle)",
+      "pkg.saveTip":  "Save every period, day, symptom and medication as one orOS file (not encrypted)",
+      "pkg.open":     "Open orOS file…",
+      "pkg.folder":   "Unzipped orOS folder…"
     },
     el: {
       "app.title":     "Κύκλος",
@@ -351,7 +355,11 @@
       "imp.undone":    "Η εισαγωγή αναιρέθηκε",
       "imp.bad":       "Ο Κύκλος δεν μπορεί να διαβάσει αυτό το αρχείο. Χρησιμοποίησε εξαγωγή από το drip., το Clue ή το Flo, ή ένα αρχείο CSV.",
       "imp.big":       "Το αρχείο είναι πολύ μεγάλο για εισαγωγή.",
-      "imp.empty":     "Δεν βρέθηκαν δεδομένα περιόδου σε αυτό το αρχείο."
+      "imp.empty":     "Δεν βρέθηκαν δεδομένα περιόδου σε αυτό το αρχείο.",
+      "pkg.save":      "Αρχείο orOS (.oroscycle)",
+      "pkg.saveTip":   "Αποθήκευση όλων των περιόδων, ημερών, συμπτωμάτων και φαρμάκων σε ένα αρχείο orOS (χωρίς κρυπτογράφηση)",
+      "pkg.open":      "Άνοιγμα αρχείου orOS…",
+      "pkg.folder":    "Αποσυμπιεσμένος φάκελος orOS…"
     }
   };
 
@@ -2498,6 +2506,21 @@
     imp.setAttribute("aria-label", t("imp.title"));
     imp.addEventListener("click", startImport);
     top.appendChild(imp);
+    // .oroscycle: save / open / unzipped folder (section "orOS file")
+    if (recFile) {
+      [["pkg-save", "pkg.save", function () { recFile.save(); }],
+       ["pkg-open", "pkg.open", function () { recFile.open(); }],
+       ["pkg-folder", "pkg.folder", function () { recFile.openFolder(); }]].forEach(function (x) {
+        var b = document.createElement("button");
+        b.type = "button";
+        b.className = "chip ghost";
+        b.id = x[0];
+        b.textContent = t(x[1]);
+        if (x[0] === "pkg-save") b.title = t("pkg.saveTip");
+        b.addEventListener("click", x[2]);
+        top.appendChild(b);
+      });
+    }
     host.appendChild(top);
 
     if (!state.periods.length && !state.days.length) {
@@ -3134,6 +3157,86 @@
     transientNote(t("imp.undone"));
   }
 
+  // ---------- orOS file (.oroscycle, OBF-4e) ----------
+  // Every period, logged day, symptom and medication as one orOS file
+  // (../recordpkg.js + package.js). Opening ADDS what this device
+  // lacks, with its ids; a day already logged here (its id is the
+  // date) or deleted here is kept as it is, unless "Update with newer
+  // versions" is ticked (then the app's own merge decides that day
+  // field by field). Device settings (reminders, the temperature
+  // view) never travel in the file. The result goes through the app's
+  // merge + migrate + save (so sync carries it); Undo removes the
+  // added records the app's own way (tombstones, so they sync).
+  var RP = window.OrosRecordPkg || null, CPK = window.OrosCyclePackage || null, recDropped = 0;
+  var recFile = RP && CPK && window.OrosBundle ? RP.ui(CPK.DESC, {
+    lang: function () { return LANG; },
+    get: function () { return mergeCycleStates(state, state); },
+    title: function () { return t("app.title"); },
+    set: function (next, info) {
+      var ids = info && info.addedIds, before = ids ? ids.length : 0;
+      var n = CPK.settle(state, JSON.parse(JSON.stringify(next)), ids);
+      recDropped = ids ? before - ids.length : 0;   // same-name symptoms / meds left out
+      var data = migrate(mergeCycleStates(state, n));
+      if (!data) return;
+      data.periods.sort(function (x, y) { return y.start - x.start; });
+      data.days.sort(function (x, y) { return x.day - y.day; });
+      data.cols.sym.forEach(function (v, i) { v.pos = i; });
+      data.cols.med.forEach(function (v, i) { v.pos = i; });
+      data.sm = Date.now();
+      state = data;
+      save();
+      openDay = null;
+      renderAll();
+    },
+    deleteIds: function (ids) {
+      var now = Date.now(), gone = { sym: {}, med: {} }, any = false;
+      ids.forEach(function (id) {
+        var k = CPK.kindOf(id, state);
+        if (!k) return;                       // already gone (a pull, a delete)
+        any = true;
+        if (k === "period") state.periods = state.periods.filter(function (p) { return p.id !== id; });
+        else if (k === "day") state.days = state.days.filter(function (d) { return d.id !== id; });
+        else {
+          state.cols[k] = state.cols[k].filter(function (v) { return v.id !== id; });
+          gone[k][id] = true;
+        }
+        state.deleted[id] = now;
+      });
+      if (!any) return;
+      // days still holding a removed value drop the reference
+      // (deleteColVal's rule: only the changed field is stamped)
+      state.days.forEach(function (d) {
+        var o = {}, ch = false;
+        var sym = (d.sym || []).filter(function (s) { return !gone.sym[s]; });
+        if (sym.length !== (d.sym || []).length) {
+          o.sym = (d.sym || []).filter(function (s) { return gone.sym[s]; });
+          d.sym = sym; ch = true;
+        }
+        var meds = (d.meds || []).filter(function (m) { return !gone.med[m.med]; });
+        if (meds.length !== (d.meds || []).length) { d.meds = meds; o.meds = true; ch = true; }
+        if (ch) touchDay(d, o);
+      });
+      state.sm = now;
+      save();
+      openDay = null;
+      renderAll();
+      transientNote(recFile.text("undone"));
+    },
+    toast: function (text, undo) {
+      // the kit counted what settle left out: the message says what
+      // was really added (the first number of "done" / "doneUpd")
+      var drop = recDropped;
+      recDropped = 0;
+      if (drop) {
+        var left = 0;
+        text = String(text).replace(/\d+/, function (m) { left = Math.max(0, +m - drop); return String(left); });
+        if (!left && !undo && text.indexOf(",") < 0) text = recFile.text("nothing");
+      }
+      if (undo) transientNote(text, t("del.undo"), undo);
+      else transientNote(text);
+    }
+  }) : null;
+
   // ---------- Doctor Report PDF (Wave 2.3) ----------
   // jsPDF VENDORED LOCALLY (vendor/jspdf.umd.min.js) — never a
   // CDN. Optional: if the file is absent, export degrades to a
@@ -3768,6 +3871,9 @@
   // Days list's edit button does. Unknown day → no-op; an open dialog
   // or an open day editor (unsaved edits) wins → no-op.
   function openSearchTarget(t) {
+    // "Open with" an .oroscycle file (fileopen.js): { openFile: { token } },
+    // the File taken once with window.parent.__orosTakeFile(token)
+    if (t && t.openFile) { if (recFile) recFile.openTarget(t.openFile); return; }
     // Single app (solo.js) icon shortcut { today: true }: today's day
     // editor, as the "+ Log" button opens it.
     if (t && t.today === true) {

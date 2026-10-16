@@ -3856,6 +3856,84 @@
     }
   }
 
+  // .orostasks (OBF-4e): every list, task, subtask and label as one
+  // orOS file (../recordpkg.js + package.js). Opening ADDS what this
+  // device lacks, with its ids; a task already here (or deleted here)
+  // is kept as it is unless "Update with newer versions" is ticked.
+  // The result goes through migrate + save (so sync carries it); Undo
+  // removes the added records the way importUndo does.
+  var RP = window.OrosRecordPkg || null, TPK = window.OrosTodoPackage || null;
+  var recFile = RP && TPK && window.OrosBundle ? RP.ui(TPK.DESC, {
+    lang: function () { return LANG; },
+    get: function () { return canonState(state); },
+    title: function () { return "To-Do"; },
+    set: function (next, info) {
+      var data = migrate(JSON.parse(JSON.stringify(next)));
+      if (!data || !Array.isArray(data.lists) || !data.lists.length) return;
+      var now = Date.now(), added = {};
+      (info && info.addedIds || []).forEach(function (id) { added[id] = 1; });
+      var listsAdded = false;
+      data.lists.forEach(function (l) {
+        if (added[l.id]) listsAdded = true;
+        if (l.items.some(function (it) { return added[it.id]; })) {
+          l.items.forEach(function (it, i) { it.pos = i; });
+          l.om = now;
+        }
+      });
+      if (listsAdded) { data.lists.forEach(function (l, i) { l.pos = i; }); data.om = now; }
+      if (data.labels.some(function (lb) { return added[lb.id]; })) data.labels.forEach(function (lb, i) { lb.pos = i; });
+      state = data;
+      pruneTombstones(state);
+      applyListCycles();
+      if (!listById(view.activeList)) setActiveList(state.lists[0].id);
+      save(); renderAll();
+    },
+    deleteIds: function (ids) {
+      var back = { items: [], upd: [], names: [], lists: [], labels: [] }, subs = {};
+      ids.forEach(function (id) {
+        var k = TPK.kindOf(id, state);
+        if (k === "item") back.items.push(id);
+        else if (k === "list") back.lists.push(id);
+        else if (k === "label") back.labels.push(id);
+        else if (k === "sub") subs[id] = 1;
+      });
+      if (Object.keys(subs).length) {
+        state.lists.forEach(function (l) {
+          l.items.forEach(function (it) {
+            if (!it.subs || !it.subs.some(function (sb) { return subs[sb.id]; })) return;
+            it.subs = it.subs.filter(function (sb) { return !subs[sb.id]; });
+            if (!it.subs.length) delete it.subs;
+            touchXf(it, "subs");
+          });
+        });
+        Object.keys(subs).forEach(tombstone);
+      }
+      importUndo(back);
+    },
+    toast: function (text, undo) {
+      if (undo) {
+        undoSnapshot = null;
+        undoFn = undo;
+        undoViewList = view.activeList;
+      }
+      showToast(text, !!undo);
+    }
+  }) : null;
+  [["l-osave", "save", function () { recFile.save(); }],
+   ["l-oopen", "open", function () { recFile.open(); }],
+   ["l-ofolder", "folder", function () { recFile.openFolder(); }]].forEach(function (b) {
+    var el = $(b[0]);
+    if (!el || !recFile) return;
+    el.textContent = recFile.text(b[1]);
+    el.hidden = false;
+    el.addEventListener("click", function () {
+      if (editingListId !== null) saveListDialog();
+      editingListId = null;
+      $("dlg-list").close();
+      b[2]();
+    });
+  });
+
   // ---------- Boot ----------
   load();
   loadView();
@@ -4069,6 +4147,9 @@
   // dialog. Unknown ids, or a dialog already open → no-op.
   function openSearchTarget(t) {
     if (t && t.addItems) { openAddItems(t.addItems); return; }   // section 13
+    // "Open with" an .orostasks file (fileopen.js): { openFile: { token } },
+    // the File taken once with window.parent.__orosTakeFile(token)
+    if (t && t.openFile) { if (recFile) recFile.openTarget(t.openFile); return; }
     if (t && t.quickAdd) {                // the phone's home-screen widget: "+ Task"
       if (document.querySelector("dialog[open]")) return;
       var qa = $("quick-add");

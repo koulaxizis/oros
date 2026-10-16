@@ -6,7 +6,7 @@
   <script>if (window.top === window.self && !/[?&]standalone\b/.test(location.search)) location.replace("../?open=todo" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>To-Do · orOS</title>
-  <link rel="stylesheet" href="todo.css?v=2.48.00">
+  <link rel="stylesheet" href="todo.css?v=2.49.00">
 </head>
 <body>
 
@@ -216,6 +216,10 @@
       <button type="button" id="l-gimport" class="ghost import-btn" hidden></button>
       <!-- Import an export file of another task app (todo/import.js; also on its own) -->
       <button type="button" id="l-fimport" class="ghost import-btn" hidden></button>
+      <!-- .orostasks: every list as one orOS file (../recordpkg.js, package.js) -->
+      <button type="button" id="l-osave" class="ghost import-btn" hidden></button>
+      <button type="button" id="l-oopen" class="ghost import-btn" hidden></button>
+      <button type="button" id="l-ofolder" class="ghost import-btn" hidden></button>
 
       <menu>
         <button type="button" id="l-delete" class="danger" data-i18n="list.delete">Delete list</button>
@@ -269,15 +273,18 @@
   <!-- Undo / feedback toast -->
   <div id="toast" role="status"></div>
 
-  <script src="../links/core.js?v=2.48.00"></script>
-  <script src="../links/todo.js?v=2.48.00"></script>
-  <script src="platforms.js?v=2.48.00"></script>
-  <script src="../google-import.js?v=2.48.00"></script>
-  <script src="gtasks.js?v=2.48.00"></script>
-  <script src="../atelier/zip.js?v=2.48.00"></script>
-  <script src="../importkit.js?v=2.48.00"></script>
-  <script src="import.js?v=2.48.00"></script>
-  <script src="model.js?v=2.48.00"></script>
-  <script src="todo.js?v=2.48.00"></script>
+  <script src="../links/core.js?v=2.49.00"></script>
+  <script src="../links/todo.js?v=2.49.00"></script>
+  <script src="platforms.js?v=2.49.00"></script>
+  <script src="../google-import.js?v=2.49.00"></script>
+  <script src="gtasks.js?v=2.49.00"></script>
+  <script src="../atelier/zip.js?v=2.49.00"></script>
+  <script src="../importkit.js?v=2.49.00"></script>
+  <script src="import.js?v=2.49.00"></script>
+  <script src="model.js?v=2.49.00"></script>
+  <script src="../bundle.js?v=2.49.00"></script>
+  <script src="../recordpkg.js?v=2.49.00"></script>
+  <script src="package.js?v=2.49.00"></script>
+  <script src="todo.js?v=2.49.00"></script>
 </body>
 </html>
