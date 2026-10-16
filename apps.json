@@ -398,6 +398,15 @@
       "type": "internal"
     },
     {
+      "id": "mockups",
+      "name": "Mockups",
+      "category": "Creativity",
+      "icon": "mockups",
+      "url": "mockups/",
+      "search": "search.js",
+      "type": "internal"
+    },
+    {
       "id": "photolab",
       "name": "Photo Lab",
       "category": "Image",
@@ -708,6 +717,15 @@
       "category": "Sound",
       "icon": "podcasts",
       "url": "podcasts/",
+      "search": "search.js",
+      "type": "internal"
+    },
+    {
+      "id": "music",
+      "name": "Music",
+      "category": "Sound",
+      "icon": "music",
+      "url": "music/",
       "search": "search.js",
       "type": "internal"
     },

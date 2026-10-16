@@ -29,6 +29,9 @@
 //  11. Queue
 //  12. Position sync throttle
 //  13. Views
+//  14. Skip silence + voice boost
+//  15. Browse like Radio (genres, countries, surprise)
+//  16. Shuffle + A–Z / Α–Ω index
 // ============================================================
 (function (root) {
   "use strict";
@@ -441,18 +444,22 @@
     term = clean(term, 100);
     return term ? "https://api.fyyd.de/0.2/search/podcast?count=30&title=" + encodeURIComponent(term) : "";
   }
-  function hit(url, title, by, img, genre, count, src) {
+  function hit(url, title, by, img, genre, count, src, gs, gi) {
     var u = safeUrl(url);
     if (!u) return null;
-    return { url: u, id: showId(u), title: clean(title, LIM.title) || u, by: clean(by, LIM.by), img: safeUrl(img),
+    var h = { url: u, id: showId(u), title: clean(title, LIM.title) || u, by: clean(by, LIM.by), img: safeUrl(img),
       genre: clean(genre, 60), count: isInt(+count) && +count > 0 ? +count : 0, src: src };
+    // Apple only: genre names and ids (browse chips + genre filter).
+    if (Array.isArray(gs)) h.gs = gs.map(function (g) { return clean(g, 60); }).filter(Boolean).slice(0, 8);
+    if (Array.isArray(gi)) h.gi = gi.map(String).filter(function (g) { return /^\d{2,6}$/.test(g); }).slice(0, 8);
+    return h;
   }
   function parseAppleResults(json) {
     var out = [];
     (json && Array.isArray(json.results) ? json.results : []).forEach(function (r) {
       if (!r || typeof r !== "object") return;
       var h = hit(r.feedUrl, r.collectionName || r.trackName, r.artistName, r.artworkUrl600 || r.artworkUrl100,
-        r.primaryGenreName, r.trackCount, "apple");
+        r.primaryGenreName, r.trackCount, "apple", r.genres, r.genreIds);
       if (h) out.push(h);
     });
     return out;
@@ -1033,9 +1040,12 @@
     res.forEach(function (r) { if (r && /^\d{3,15}$/.test(String(r.id)) && out.indexOf(String(r.id)) < 0) out.push(String(r.id)); });
     return out.slice(0, 50);
   }
-  function appleLookupManyUrl(ids) {
+  // country: the storefront the ids came from (a show only sold there
+  // is missing from the US lookup).
+  function appleLookupManyUrl(ids, country) {
     ids = (ids || []).filter(function (x) { return /^\d{3,15}$/.test(String(x)); }).slice(0, 50);
-    return ids.length ? "https://itunes.apple.com/lookup?entity=podcast&id=" + ids.join(",") : "";
+    var cc = /^[a-z]{2}$/.test(country || "") ? "&country=" + country : "";
+    return ids.length ? "https://itunes.apple.com/lookup?entity=podcast" + cc + "&id=" + ids.join(",") : "";
   }
   // Lookup results in the order of the top list.
   function orderByIds(hits, json, ids) {
@@ -1116,6 +1126,195 @@
     if (o.url) lines.push(o.url);
     lines.push("", "");
     return { title: (o.title + (pos > 0 ? " (" + fmtTime(pos) + ")" : "")).slice(0, 200), text: lines.join("\n") };
+  }
+
+  // ---------- 15. Browse like Radio: genres, countries, surprise (2026-10-16) ----------
+  // Apple's podcast genres (2019 taxonomy). No key, no Google.
+  var GENRES = [
+    { id: "1301", en: "Arts", el: "Τέχνες", ic: "🎨" },
+    { id: "1321", en: "Business", el: "Επιχειρήσεις", ic: "💼" },
+    { id: "1303", en: "Comedy", el: "Κωμωδία", ic: "😂" },
+    { id: "1304", en: "Education", el: "Εκπαίδευση", ic: "🎓" },
+    { id: "1483", en: "Fiction", el: "Μυθοπλασία", ic: "📖" },
+    { id: "1511", en: "Government", el: "Πολιτική & Δημόσιο", ic: "🏛️" },
+    { id: "1512", en: "Health & Fitness", el: "Υγεία & Άθληση", ic: "💪" },
+    { id: "1487", en: "History", el: "Ιστορία", ic: "🏺" },
+    { id: "1305", en: "Kids & Family", el: "Παιδιά & Οικογένεια", ic: "🧸" },
+    { id: "1502", en: "Leisure", el: "Ελεύθερος χρόνος", ic: "🎲" },
+    { id: "1310", en: "Music", el: "Μουσική", ic: "🎵" },
+    { id: "1489", en: "News", el: "Ειδήσεις", ic: "📰" },
+    { id: "1314", en: "Religion & Spirituality", el: "Θρησκεία & Πνευματικότητα", ic: "🕊️" },
+    { id: "1533", en: "Science", el: "Επιστήμη", ic: "🔬" },
+    { id: "1324", en: "Society & Culture", el: "Κοινωνία & Πολιτισμός", ic: "🌍" },
+    { id: "1545", en: "Sports", el: "Αθλητικά", ic: "⚽" },
+    { id: "1318", en: "Technology", el: "Τεχνολογία", ic: "💻" },
+    { id: "1488", en: "True Crime", el: "Αληθινά εγκλήματα", ic: "🔎" },
+    { id: "1309", en: "TV & Film", el: "Τηλεόραση & Κινηματογράφος", ic: "🎬" }
+  ];
+  // Apple Podcasts storefronts (ISO 3166 alpha-2, lower case).
+  var COUNTRIES = ("ae ag ai al am ao ar at au az ba bb be bf bg bh bj bm bn bo br bs bt bw by bz ca cg ch ci cl cm cn co cr cv cy cz " +
+    "de dk dm do dz ec ee eg es fi fj fm fr ga gb gd ge gh gm gr gt gw gy hk hn hr hu id ie il in iq is it jm jo jp ke kg kh kn kr kw ky kz " +
+    "la lb lc lk lr lt lu lv ly ma md me mg mk ml mm mn mo mr ms mt mu mv mw mx my mz na ne ng ni nl no np nz om pa pe pg ph pk pl pt pw py " +
+    "qa ro rs ru rw sa sb sc se sg si sk sl sn sr st sv sz tc td th tj tm tn to tr tt tw tz ua ug us uy uz vc ve vg vn vu ye za zm zw").split(" ");
+  function genreOf(id) {
+    for (var i = 0; i < GENRES.length; i++) if (GENRES[i].id === String(id)) return GENRES[i];
+    return null;
+  }
+  function genreName(id, lang) {
+    var g = genreOf(id);
+    return g ? (lang === "el" ? g.el : g.en) : "";
+  }
+  function isCountry(cc) { return COUNTRIES.indexOf(String(cc || "")) >= 0; }
+  // 🇬🇷 from "gr" (regional indicator letters).
+  function flag(cc) {
+    if (!/^[a-z]{2}$/.test(cc || "")) return "";
+    return String.fromCodePoint(0x1F1E6 + cc.charCodeAt(0) - 97, 0x1F1E6 + cc.charCodeAt(1) - 97);
+  }
+  // Apple's iTunes chart (top 100 per storefront, optionally per genre).
+  function chartUrl(country, genre, n) {
+    var cc = isCountry(country) ? country : "us";
+    n = Math.max(1, Math.min(100, +n || 100));
+    return "https://itunes.apple.com/" + cc + "/rss/toppodcasts/limit=" + n + (genreOf(genre) ? "/genre=" + genre : "") + "/json";
+  }
+  // feed.entry is an array, or one object when there is one entry.
+  function parseChart(json) {
+    var e = json && json.feed && json.feed.entry;
+    if (e && !Array.isArray(e)) e = [e];
+    var out = [];
+    (Array.isArray(e) ? e : []).forEach(function (r) {
+      var id = r && r.id && r.id.attributes && r.id.attributes["im:id"];
+      if (/^\d{3,15}$/.test(String(id)) && out.indexOf(String(id)) < 0) out.push(String(id));
+    });
+    return out.slice(0, 100);
+  }
+  // Fallback when the genre chart answers nothing: a catalog search on
+  // the genre's name in that storefront, kept to that genre.
+  function genreSearchUrl(country, genre, lang) {
+    var g = genreOf(genre);
+    if (!g) return "";
+    var cc = isCountry(country) ? country : "us";
+    return "https://itunes.apple.com/search?media=podcast&entity=podcast&limit=100&country=" + cc +
+      "&genreId=" + g.id + "&term=" + encodeURIComponent(g.en);
+  }
+  function inGenre(hits, genre) {
+    var g = genreOf(genre);
+    if (!g) return hits || [];
+    return (hits || []).filter(function (h) { return h && ((h.gi && h.gi.indexOf(g.id) >= 0) || h.genre === g.en); });
+  }
+  // Ids in batches for the lookup call (50 per call).
+  function idBatches(ids, size) {
+    size = size || 50;
+    var out = [];
+    for (var i = 0; i < (ids || []).length; i += size) out.push(ids.slice(i, i + size));
+    return out;
+  }
+  // Sub-genre chips for a list: names on at least two shows, most
+  // common first, never "Podcasts" or the genre being shown.
+  function subChips(hits, mainName, max) {
+    var n = {};
+    (hits || []).forEach(function (h) {
+      var seen = {};
+      (h && h.gs || []).forEach(function (g) {
+        if (g === "Podcasts" || g === mainName || seen[g]) return;
+        seen[g] = 1;
+        n[g] = (n[g] || 0) + 1;
+      });
+    });
+    return Object.keys(n).filter(function (k) { return n[k] >= 2; })
+      .sort(function (a, b) { return n[b] - n[a] || (a < b ? -1 : 1); }).slice(0, max || 12);
+  }
+  function withChip(hits, chip) {
+    if (!chip) return hits || [];
+    return (hits || []).filter(function (h) { return h && h.gs && h.gs.indexOf(chip) >= 0; });
+  }
+  // A random hit, preferring shows the person does not follow yet.
+  function pickRandom(hits, isSub, rnd) {
+    rnd = rnd || Math.random;
+    var list = (hits || []).filter(Boolean);
+    var fresh = list.filter(function (h) { return !(isSub && isSub(h.id)); });
+    var from = fresh.length ? fresh : list;
+    return from.length ? from[Math.min(from.length - 1, Math.floor(rnd() * from.length))] : null;
+  }
+  // Countries sorted by their name in the app language (accent-free).
+  function sortCountries(names) {
+    var key = function (s) { return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase(); };
+    return COUNTRIES.slice().sort(function (a, b) {
+      var x = key(names(a)), y = key(names(b));
+      return x < y ? -1 : x > y ? 1 : 0;
+    });
+  }
+
+  // ---------- 16. Shuffle + A–Z / Α–Ω index (browse wave 2) ----------
+  function shuffled(list, rnd) {
+    rnd = rnd || Math.random;
+    var a = (list || []).slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.min(i, Math.floor(rnd() * (i + 1)));
+      var x = a[i]; a[i] = a[j]; a[j] = x;
+    }
+    return a;
+  }
+  // Unplayed, playable (audio, not a trailer) episodes of one show.
+  function unplayedOf(data, sid, eps) {
+    return (eps || []).filter(function (e) {
+      return e && EP_RE.test(e.id) && e.audio && e.kind !== "trailer" && !stateOf(data, { id: e.id, s: sid, pd: e.pub }).x;
+    });
+  }
+  // What a shuffle plays, as [{id, s}] (first plays, the rest go to the
+  // front of Up next). sid given: that show's unplayed episodes in a
+  // random order. No sid: one random unplayed episode per followed
+  // show, shows in a random order. At most max (default 50).
+  function shufflePlan(data, cache, sid, rnd, max) {
+    max = max || 50;
+    var out = [];
+    if (sid) {
+      shuffled(unplayedOf(data, sid, cache[sid]), rnd).forEach(function (e) { out.push({ id: e.id, s: sid }); });
+    } else {
+      shuffled(data.shows, rnd).forEach(function (s) {
+        var u = unplayedOf(data, s.id, cache[s.id]);
+        if (u.length) { var e = u[Math.min(u.length - 1, Math.floor((rnd || Math.random)() * u.length))]; out.push({ id: e.id, s: s.id }); }
+      });
+    }
+    return out.slice(0, max);
+  }
+  // eps go to the front of Up next, in order; the rest of the queue
+  // follows (no duplicates, capped by the queue limit in normQueue).
+  function queueFront(data, eps, now) {
+    var front = (eps || []).filter(function (e) { return e && EP_RE.test(e.id) && SHOW_RE.test(e.s); });
+    if (!front.length) return data;
+    var ids = front.map(function (e) { return e.id; });
+    var sh = Object.assign({}, data.queue.sh);
+    front.forEach(function (e) { sh[e.id] = e.s; });
+    data.queue.ids.forEach(function (id) { if (ids.indexOf(id) < 0) ids.push(id); });
+    return setQueue(data, ids.slice(0, LIM.queue), sh, now);
+  }
+  // Index letter of a title: A–Z, Α–Ω (accents and final sigma folded),
+  // "#" for digits, symbols and other scripts. Leading articles stay.
+  function letterOf(title) {
+    var c = fold(String(title || "").replace(/^[\s\p{P}\p{S}]+/u, "")).charAt(0);
+    if (/[a-z]/.test(c)) return c.toUpperCase();
+    if (/[α-ω]/.test(c)) return c.toUpperCase();
+    return "#";
+  }
+  // Letters present, in index order: "#", A–Z, then Α–Ω (Greek first
+  // when the app is in Greek).
+  function indexLetters(titles, lang) {
+    var seen = {};
+    (titles || []).forEach(function (tl) { seen[letterOf(tl)] = 1; });
+    var latin = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split(""), greek = "ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ".split("");
+    var order = ["#"].concat(lang === "el" ? greek.concat(latin) : latin.concat(greek));
+    return order.filter(function (l) { return seen[l]; });
+  }
+  // Items in index order (the letter bar's order), then by folded title.
+  function indexSort(items, titleOf, lang) {
+    var order = indexLetters(["#"], lang).concat(lang === "el" ? "ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩABCDEFGHIJKLMNOPQRSTUVWXYZ".split("") : "ABCDEFGHIJKLMNOPQRSTUVWXYZΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ".split(""));
+    var key = function (x) {
+      var tl = titleOf(x);
+      return [order.indexOf(letterOf(tl)), fold(String(tl || "").replace(/^[\s\p{P}\p{S}]+/u, ""))];
+    };
+    return (items || []).map(function (x) { return { x: x, k: key(x) }; }).sort(function (a, b) {
+      return a.k[0] - b.k[0] || (a.k[1] < b.k[1] ? -1 : a.k[1] > b.k[1] ? 1 : 0);
+    }).map(function (o) { return o.x; });
   }
 
   // ---------- 14. Skip silence + voice boost (wave 42) ----------
@@ -1239,6 +1438,10 @@
     noteChapters: noteChapters, searchEpisodes: searchEpisodes, dayKey: dayKey, addListen: addListen, statsSummary: statsSummary,
     appleTopUrl: appleTopUrl, parseAppleTop: parseAppleTop, appleLookupManyUrl: appleLookupManyUrl, orderByIds: orderByIds,
     topCountry: topCountry, shareText: shareText,
+    GENRES: GENRES, COUNTRIES: COUNTRIES, genreOf: genreOf, genreName: genreName, isCountry: isCountry, flag: flag,
+    chartUrl: chartUrl, parseChart: parseChart, genreSearchUrl: genreSearchUrl, inGenre: inGenre, idBatches: idBatches,
+    subChips: subChips, withChip: withChip, pickRandom: pickRandom, sortCountries: sortCountries,
+    shuffled: shuffled, unplayedOf: unplayedOf, shufflePlan: shufflePlan, queueFront: queueFront, letterOf: letterOf, indexLetters: indexLetters, indexSort: indexSort,
     freshEpisodes: freshEpisodes, parseTarget: parseTarget, todoItem: todoItem, noteAt: noteAt,
     FX: FX, rms: rms, allZero: allZero, silenceStep: silenceStep, silenceRate: silenceRate, silenceSaved: silenceSaved,
     addSaved: addSaved, mediaOrigin: mediaOrigin, fxRoute: fxRoute, fxRemember: fxRemember, zeroWatch: zeroWatch

@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "2.50.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "2.58.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -185,6 +185,7 @@
     aura: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18c3-1 4-5 7-7s6-1 9-5"/><path d="M4 13c2 0 3-2 5-3" opacity=".55"/><circle cx="18" cy="17" r="1.2"/><circle cx="14" cy="20" r=".8"/><circle cx="20.5" cy="12.5" r=".8"/></svg>',
     photolab: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="14" height="14" rx="2"/><path d="M3 15l4-4 4 4 2-2 4 4"/><path d="M14 3l7 7"/><path d="M19 3l2 2-6 6-3 1 1-3z"/></svg>',
     atelier: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21a9 9 0 0 1 0-18c4.97 0 9 3.58 9 8 0 2.5-2 4-4.5 4H14a1.5 1.5 0 0 0-1 2.6A1.5 1.5 0 0 1 12 21z"/><circle cx="7.5" cy="10.5" r="1"/><circle cx="11.5" cy="7.5" r="1"/><circle cx="16.5" cy="9.5" r="1"/></svg>',
+    mockups: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3l11-1v17L6 21z"/><path d="M6 3L3 5v17l3-1"/><path d="M17 2l2 2v17l-2-2"/><path d="M9 8h5M9 11h4"/></svg>',
     netizen: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><rect x="5.5" y="8.5" width="5" height="6" rx="1"/><path d="M13.5 9.5h5M13.5 13h3.5M5.5 16.5h13"/></svg>',
     stock: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M4 21V9l8-5 8 5v12"/><rect x="8" y="13" width="4" height="4"/><rect x="12" y="13" width="4" height="4"/><rect x="10" y="9" width="4" height="4"/></svg>',
     garage: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17H3.5a1 1 0 0 1-1-1v-3.2a2 2 0 0 1 .6-1.4L5 9.5l1.6-3.6A2 2 0 0 1 8.4 4.7h7.2a2 2 0 0 1 1.8 1.2L19 9.5l1.9 1.9a2 2 0 0 1 .6 1.4V16a1 1 0 0 1-1 1H19"/><path d="M5 9.5h14"/><circle cx="7.5" cy="17" r="2"/><circle cx="16.5" cy="17" r="2"/><path d="M9.5 17h5"/></svg>',
@@ -250,6 +251,7 @@
     split: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="7" r="4"/><circle cx="17" cy="17" r="4"/><path d="M14 4h4a2 2 0 0 1 2 2v3"/><path d="M18 7l2 2 2-2"/><path d="M10 20H6a2 2 0 0 1-2-2v-3"/><path d="M6 17l-2-2-2 2"/></svg>',
     radio: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="11" r="2"/><path d="M7.5 13.5a6.5 6.5 0 0 1 0-5"/><path d="M16.5 8.5a6.5 6.5 0 0 1 0 5"/><path d="M5 16a10 10 0 0 1 0-10"/><path d="M19 6a10 10 0 0 1 0 10"/><line x1="12" y1="13" x2="12" y2="21"/></svg>',
     podcasts: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="11" r="2"/><path d="M12 13v8"/><path d="M8.5 15.5a5 5 0 1 1 7 0"/><path d="M5.6 18.4a9 9 0 1 1 12.8 0"/></svg>',
+    music: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>',
     mixer: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="3" x2="6" y2="21"/><line x1="12" y1="3" x2="12" y2="21"/><line x1="18" y1="3" x2="18" y2="21"/><rect x="4" y="13" width="4" height="3" rx="1"/><rect x="10" y="6" width="4" height="3" rx="1"/><rect x="16" y="10" width="4" height="3" rx="1"/></svg>',
     ringtones: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 15V8l4-1v6"/><circle cx="10" cy="15" r="1.5"/><circle cx="14" cy="13" r="1.5"/></svg>',
     studio: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V14"/><path d="M4 10V3"/><path d="M12 21v-9"/><path d="M12 8V3"/><path d="M20 21v-5"/><path d="M20 12V3"/><path d="M1 14h6"/><path d="M9 8h6"/><path d="M17 16h6"/></svg>',
@@ -5432,6 +5434,9 @@
         { name: "PDF.js 5.4.394", url: "https://mozilla.github.io/pdf.js/",
           by: "Mozilla Foundation & contributors", lic: "Apache-2.0",
           en: "Opening PDF files (Layout); reading PDF text on the device (Assistant)", el: "Άνοιγμα αρχείων PDF (Σελιδοποίηση)· ανάγνωση κειμένου PDF στη συσκευή (Βοηθός)" },
+        { name: "three.js r180", url: "https://threejs.org/",
+          by: "three.js authors", lic: "MIT",
+          en: "3D book mockups (Mockups)", el: "Τρισδιάστατες μακέτες βιβλίων (Μακέτες)" },
         { name: "Mediabunny 1.60.0", url: "https://mediabunny.dev/",
           by: "Vanilagy & contributors", lic: "MPL-2.0",
           en: "Reading and writing video files (Montage)", el: "Ανάγνωση και εγγραφή αρχείων βίντεο (Μοντάζ)" },
@@ -5602,6 +5607,12 @@
         { name: "Radio Browser", url: "https://www.radio-browser.info/",
           by: "Alex Segler & the community", lic: { en: "Free community API", el: "Δωρεάν κοινοτικό API" },
           en: "Station directory (Radio)", el: "Κατάλογος σταθμών (Ραδιόφωνο)" },
+        { name: "Internet Archive", url: "https://archive.org/details/audio",
+          by: "Internet Archive; each recording by its artist", lic: { en: "Per item (CC / public domain; Live Music Archive: free non-commercial sharing)", el: "Ανά έργο (CC / κοινό κτήμα· Live Music Archive: ελεύθερη μη εμπορική διανομή)" },
+          en: "Free albums, live concerts, classical (Music)", el: "Ελεύθερα άλμπουμ, συναυλίες, κλασική (Μουσική)" },
+        { name: "ccMixter", url: "https://ccmixter.org/",
+          by: "ArtisTech Media; each upload by its artist", lic: { en: "Per item (Creative Commons)", el: "Ανά έργο (Creative Commons)" },
+          en: "Remixes and instrumentals (Music)", el: "Remix και ορχηστρικά (Μουσική)" },
         { name: "iptv-org", url: "https://github.com/iptv-org/iptv",
           by: "iptv-org contributors", lic: "Unlicense (public domain)",
           en: "Channel directory (Television)", el: "Κατάλογος καναλιών (Τηλεόραση)" },
@@ -5643,7 +5654,7 @@
           en: "Word meanings (Library look-up)", el: "Σημασίες λέξεων (Βιβλιοθήκη)" },
         { name: "Openverse", url: "https://openverse.org/",
           by: "WordPress.org, the creators of every work", lic: { en: "Per item (CC / public domain)", el: "Ανά έργο (CC / κοινό κτήμα)" },
-          en: "Photos, illustrations, sounds (Atelier)", el: "Φωτογραφίες, εικονογραφήσεις, ήχοι (Ατελιέ)" },
+          en: "Photos, illustrations, sounds (Atelier); free songs (Music)", el: "Φωτογραφίες, εικονογραφήσεις, ήχοι (Ατελιέ)· ελεύθερα τραγούδια (Μουσική)" },
         { name: "Wikimedia Commons", url: "https://commons.wikimedia.org/",
           by: "Commons contributors, Wikimedia Foundation", lic: { en: "Per item (free licences)", el: "Ανά έργο (ελεύθερες άδειες)" },
           en: "Photos, drawings, sounds, video (Atelier); covers (Media Shelf)", el: "Φωτογραφίες, σχέδια, ήχοι, βίντεο (Ατελιέ)· εξώφυλλα (Το ράφι μου)" },
@@ -6080,7 +6091,7 @@
       reloaded = true;
       location.reload();
     }
-    ["oros-vault", "oros-fs", "oros-ofs", "oros-wallpaper", "oros-mail", "oros-feeds", "oros-museum", "oros-jigsaw", "oros-montage-media", "oros-montage-thumbs", "oros-maps-rec", "oros-links", "oros-chess", "oros-files-dbx", "oros-time-stage", "oros-podcasts", "oros-podcasts-sync", "oros-assistant", "oros-legacy"].forEach(function (name) {
+    ["oros-vault", "oros-fs", "oros-ofs", "oros-wallpaper", "oros-mail", "oros-feeds", "oros-museum", "oros-jigsaw", "oros-montage-media", "oros-montage-thumbs", "oros-maps-rec", "oros-links", "oros-chess", "oros-files-dbx", "oros-time-stage", "oros-podcasts", "oros-podcasts-sync", "oros-music", "oros-assistant", "oros-legacy"].forEach(function (name) {
       try {
         var req = indexedDB.deleteDatabase(name);
         req.onsuccess = function () { setTimeout(bail, 50); };

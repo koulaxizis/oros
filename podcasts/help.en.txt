@@ -9,12 +9,14 @@ The tabs:
 - `New`: episodes from the last 30 days you haven't started yet.
 - `Library`: your podcasts, with a badge for new episodes. Tap one to open its page. `Search all episodes` finds an episode in any of your podcasts, and `Statistics` shows how long you listened (counted on this device).
 - `Downloads`: episodes saved on this device.
-- `Discover`: search, `Popular podcasts` (popular in Greece when orOS is in Greek), add by address and OPML.
+- `Discover`: search, add by address and OPML, and browsing like the Radio: `Popular` (the top 100 of a country, with sub-genre chips), `Genres`, `Countries` and `Surprise me` (a random popular podcast starts playing). Tap a podcast's name to try it before you subscribe: its episodes play, but nothing is saved or synced until you press `Subscribe`. The lists come from the Apple Podcasts charts.
 
 ## Listen
 Press the play button on any episode. The player bar at the bottom has skip back, play/pause and skip forward; tap the episode's name there to open the full player with `Playback speed`, `Sleep timer`, chapters, `Show notes`, `Next in queue` and `Stop`. The sleep timer stops after 5 to 60 minutes or at the `End of episode`.
 
 Tap an episode's title to read its notes; times in the notes appear under `Jump to`. The ⋯ button (`More actions`) offers `Play next`, `Add to queue`, `Mark as played`, `Download`, `Show notes` and `Open the episode page`.
+
+`Shuffle all` in `Library` plays one random unplayed episode of each podcast you follow, and `Shuffle` on a podcast's page plays its unplayed episodes in a random order. The first one plays and the rest go to the top of `Up next`. When you follow many podcasts, the letter bar (A–Z, Α–Ω) in `Library` jumps to a letter, and `Countries` in `Discover` has one too.
 
 In `Up next`, the arrows move episodes up or down. Your device's media controls (lock screen, headset) work too.
 
