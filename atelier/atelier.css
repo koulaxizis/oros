@@ -716,3 +716,10 @@ input[type="color"] { width: 44px; height: 34px; padding: 2px; border: 1px solid
 .im-card { display: flex; flex-direction: column; gap: 6px; border: 1px solid var(--border); border-radius: 8px; padding: 6px; }
 .im-card img { width: 100%; height: auto; max-height: 260px; object-fit: contain; border-radius: 4px; background: var(--border); }
 .im-bar { display: flex; flex-wrap: wrap; gap: 6px; }
+/* Design from a description (magicdesign.js) */
+.home-magic { margin: 4px 0 18px; }
+.md-bar { display: flex; gap: 8px; max-width: 760px; }
+.md-bar .inp { flex: 1; min-width: 0; }
+.md-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; margin-top: 8px; }
+.md-card { display: flex; flex-direction: column; gap: 6px; padding: 6px; font: inherit; color: inherit; text-align: left; background: transparent; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; }
+.md-card:hover, .md-card:focus-visible { border-color: var(--accent); }

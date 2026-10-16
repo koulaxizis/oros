@@ -684,5 +684,6 @@
   }
   AT.registerView("ai", view);
 
-  AT.ai = { textMenu: textMenu, rewriteText: rewriteText, newText: newText, cutout: cutout, conf: conf, readKey: readKey };
+  AT.ai = { textMenu: textMenu, rewriteText: rewriteText, newText: newText, cutout: cutout, conf: conf, readKey: readKey,
+    need: need, ask: ask, errText: errText, openAssistant: openAssistant };
 })();
