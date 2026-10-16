@@ -504,19 +504,36 @@
   //          the newer state, pruned after a year)
   //   pl   = { id "p…", m, n (name), it: [ref] }
   //   ref  = { k, t, a, al?, d? }              (what a playlist lists)
+  //   A song from an open catalogue (open.js, since wave 2) also keeps
+  //   where it plays from, so it works on every device:
+  //   { s "ia"|"ov"|"cc", u https audio, pg? https page, art? https
+  //     cover, li? licence, vi? Openverse source, off? 1 = may be saved
+  //     offline }. Its key starts with its source ("ia:", "ov:", "cc:").
+  var SRC_RE = /^(ia|ov|cc)$/;
+  var LI_RE = /^(cc0|pdm|lma|by(-nc)?(-sa|-nd)?|(nc-)?sampling\+)( \d\.\d)?$/;
+  function httpsUrl(u) { return typeof u === "string" && u.length <= 1000 && /^https:\/\/[^\s"'<>]+$/i.test(u) ? u : ""; }
+  function remote(r, o) {
+    if (!SRC_RE.test(r.s) || r.k.slice(0, 3) !== r.s + ":" || !httpsUrl(r.u)) return o;
+    o.s = r.s; o.u = r.u;
+    if (httpsUrl(r.pg)) o.pg = r.pg;
+    if (httpsUrl(r.art)) o.art = r.art;
+    if (typeof r.li === "string" && LI_RE.test(r.li)) o.li = r.li;
+    if (typeof r.vi === "string" && /^[a-z_]{1,30}$/.test(r.vi)) o.vi = r.vi;
+    if (r.off === 1) o.off = 1;
+    return o;
+  }
   function normRef(r) {
     if (!r || typeof r !== "object" || typeof r.k !== "string" || !KEY_RE.test(r.k)) return null;
     var o = { k: r.k, t: clean(r.t) || "?", a: clean(r.a) };
     if (clean(r.al)) o.al = clean(r.al);
     if (+r.d > 0 && +r.d < 360000) o.d = Math.round(+r.d);
-    return o;
+    return remote(r, o);
   }
   function normLike(r) {
     var ref = normRef(r);
     if (!ref || !isStamp(r.m)) return null;
-    var o = { k: ref.k, m: r.m, on: r.on === 0 ? 0 : 1, t: ref.t, a: ref.a };
-    if (ref.al) o.al = ref.al;
-    if (ref.d) o.d = ref.d;
+    var o = { k: ref.k, m: r.m, on: r.on === 0 ? 0 : 1 };
+    Object.keys(ref).forEach(function (f) { if (f !== "k") o[f] = ref[f]; });
     return o;
   }
   function normPl(r) {
@@ -576,10 +593,7 @@
     if (!r) return d;
     var c = copy(d);
     c.likes = c.likes.filter(function (l) { return l.k !== r.k; });
-    var l = { k: r.k, m: now, on: on ? 1 : 0, t: r.t, a: r.a };
-    if (r.al) l.al = r.al;
-    if (r.d) l.d = r.d;
-    c.likes.push(l);
+    c.likes.push(normLike(Object.assign({}, r, { m: now, on: on ? 1 : 0 })));
     return canon(c);
   }
   function findPl(d, id) { return (d.pls || []).filter(function (p) { return p.id === id; })[0] || null; }
@@ -830,8 +844,13 @@
     });
     return function (ref) { return (ref && (byK[ref.k] || byTA[fold(ref.t) + "|" + fold(ref.a)])) || null; };
   }
-  function refOf(r) { var o = { k: r.k, t: r.t || "?", a: r.a || "" }; if (r.al) o.al = r.al; if (r.d) o.d = r.d; return o; }
+  function refOf(r) {
+    var o = { k: r.k, t: r.t || "?", a: r.a || "" };
+    if (r.al) o.al = r.al; if (r.d) o.d = r.d;
+    return r.s && typeof r.k === "string" ? remote(r, o) : o;
+  }
   function itemOf(r) { var o = refOf(r); if (r.p) o.p = r.p; if (r.u) o.u = r.u; if (r.art) o.art = r.art; return o; }
+  function isRemote(r) { return !!(r && r.s && SRC_RE.test(r.s) && httpsUrl(r.u)); }
   // Listening history on this device: { c: {k: plays}, r: [item] recent, l: {k: last ms} }
   function addPlay(h, item, now) {
     h = h && typeof h === "object" ? h : {};
@@ -854,7 +873,7 @@
   }
 
   var api = {
-    VERSION: "1.0.0", DATA_VER: DATA_VER, LIM: LIM, GENRES: GENRES, REPEAT: REPEAT, AUDIO_EXT: AUDIO_EXT,
+    VERSION: "1.1.0", DATA_VER: DATA_VER, LIM: LIM, GENRES: GENRES, REPEAT: REPEAT, AUDIO_EXT: AUDIO_EXT,
     clean: clean, fold: fold, hash: hash, newId: newId, decodeLegacy: decodeLegacy, looksGreek: looksGreek, utf16: utf16,
     sniffImage: sniffImage, genreName: genreName, fromName: fromName, stem: stem,
     id3Size: id3Size, parseId3v2: parseId3v2, parseId3v1: parseId3v1, mp3Duration: mp3Duration,
@@ -867,7 +886,7 @@
     qRepeat: qRepeat, qCycleRepeat: qCycleRepeat, qAddNext: qAddNext, qAddLast: qAddLast, qRemoveUp: qRemoveUp,
     qClearUp: qClearUp, qJump: qJump, qUpcoming: qUpcoming,
     albums: albums, artists: artists, genres: genres, folderView: folderView, sortTracks: sortTracks, search: search,
-    words: words, matches: matches, resolver: resolver, refOf: refOf, itemOf: itemOf, addPlay: addPlay, fmtTime: fmtTime,
+    words: words, matches: matches, resolver: resolver, refOf: refOf, itemOf: itemOf, isRemote: isRemote, addPlay: addPlay, fmtTime: fmtTime,
     byTrackNo: byTrackNo, collator: collator
   };
   root.OrosMusicCore = api;
