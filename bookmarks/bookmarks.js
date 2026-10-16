@@ -117,6 +117,11 @@ const STR = {
     "search.clear": "Clear search",
     "import.title": "Import bookmarks (browsers, Pocket, Instapaper, wallabag, Raindrop…: HTML, CSV or JSON)",
     "export.title": "Export bookmarks (Netscape HTML)",
+    "imp.menu.app": "From a browser or app (HTML, CSV, JSON)…",
+    "exp.menu.html": "Bookmarks HTML (.html)",
+    "file.save": "orOS file (.orosbookmarks)",
+    "file.open": "Open orOS file…",
+    "file.folder": "Unzipped orOS folder…",
     "folder.settings": "Folder options",
     "folder.settings.dlg": "Folder settings",
     "folder.name": "Name",
@@ -315,6 +320,11 @@ const STR = {
     "search.clear": "Καθαρισμός",
     "import.title": "Εισαγωγή σελιδοδεικτών (browsers, Pocket, Instapaper, wallabag, Raindrop…: HTML, CSV ή JSON)",
     "export.title": "Εξαγωγή σελιδοδεικτών (Netscape HTML)",
+    "imp.menu.app": "Από browser ή εφαρμογή (HTML, CSV, JSON)…",
+    "exp.menu.html": "Σελιδοδείκτες HTML (.html)",
+    "file.save": "Αρχείο orOS (.orosbookmarks)",
+    "file.open": "Άνοιγμα αρχείου orOS…",
+    "file.folder": "Αποσυμπιεσμένος φάκελος orOS…",
     "folder.settings": "Επιλογές φακέλου",
     "folder.settings.dlg": "Ρυθμίσεις φακέλου",
     "folder.name": "Όνομα",
@@ -3181,6 +3191,97 @@ function exportNetscape() {
   done();
 }
 
+/* Import (file picker in — fully offline, orosDialog first) */
+async function importPick() {
+  const dlg = dialogHost();
+  let file = null;
+  const accept = ".html,.htm,.csv,.json,.jsonlz4,text/html,text/csv,application/json";
+  if (dlg && typeof dlg.openFile === "function") {
+    file = await dlg.openFile(accept);
+  } else {
+    file = await localPickFile(accept);
+  }
+  if (!file) return;                // cancel — silent exit
+  await importFile(file);
+}
+
+async function importFile(file) {
+  if (file.size > IMPORT_MAX_BYTES) { transientNote(t("imp.toobig")); return; }
+  if (/\.jsonlz4$/i.test(file.name || "")) { transientNote(t("imp.lz4")); return; }
+  let res = null;
+  try {
+    /* Wave 35 + wave 5: browsers (HTML, Firefox / Chromium JSON),
+       Linkding, Pinboard, Pocket, Raindrop, Instapaper, wallabag,
+       Linkwarden: import.js tells them apart. */
+    res = window.OrosBookmarksImport.parse(await file.text(), file.name || "", importNames());
+  } catch (err) { res = null; }
+  if (!res || !res.entries.length) { transientNote(t("import.none")); return; }
+  openImportPreview(res);
+}
+
+/* ===== 9c. orOS FILE (.orosbookmarks, OBF-4e) =====
+   Every bookmark and folder as one orOS file (../recordpkg.js +
+   package.js). Opening ADDS what this device lacks, with its ids; a
+   bookmark already here (or deleted here) is kept as it is unless
+   "Update with newer versions" is ticked. The result goes through
+   settle + canonState + save (so sync carries it); Undo takes the
+   added records out the way an import's Undo does (platformUndo:
+   tombstones, folders only while empty). The saved copies in
+   /internal/Bookmarks/Archive are not in the file for now. */
+const RP = window.OrosRecordPkg || null, BPK = window.OrosBookmarksPackage || null;
+const recFile = RP && BPK && window.OrosBundle ? RP.ui(BPK.DESC, {
+  lang: () => LANG,
+  get: () => canonState(state),
+  title: () => t("app.name"),
+  set: (next, info) => {
+    const n = BPK.settle(canonState(state), JSON.parse(JSON.stringify(next)),
+                         (info && info.addedIds) || [], (info && info.updatedIds) || [], Date.now());
+    state = canonState(n);
+    save();
+    renderAll();
+  },
+  deleteIds: (ids) => {
+    const back = { items: [], folders: [], upd: [] };
+    ids.forEach((id) => {
+      const k = BPK.kindOf(id, state);
+      if (k === "item") back.items.push(id);
+      else if (k === "folder") back.folders.push(id);
+    });
+    /* parents first: platformUndo empties the inner folders first */
+    back.folders.sort((a, b) => K.pathIds(state.folders, a).length - K.pathIds(state.folders, b).length);
+    platformUndo(back);
+    showToast(RP.str(LANG, "undone"));
+  },
+  /* a browser's or app's file picked here goes to the usual import */
+  notBundle: (file) => importFile(file),
+  toast: (text, undo) => {
+    showToast(text, undo ? { action: { label: t("undo"), fn: undo } } : null);
+  }
+}) : null;
+
+/* The import / export menu (same look as the tidy-up menu). */
+function fileMenu(sel, rows) {
+  closeCtxMenu();
+  const btn = $(sel);
+  const m = document.createElement("div");
+  m.id = "ctx-menu";
+  rows.forEach((r) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.textContent = r[0];
+    b.addEventListener("click", () => { closeCtxMenu(); r[1](); });
+    m.appendChild(b);
+  });
+  document.body.appendChild(m);
+  const br = btn.getBoundingClientRect(), mr = m.getBoundingClientRect();
+  m.style.left = Math.max(8, Math.min(br.left, innerWidth - mr.width - 8)) + "px";
+  m.style.top = Math.max(8, Math.min(br.bottom + 4, innerHeight - mr.height - 8)) + "px";
+  setTimeout(() => {
+    document.addEventListener("click", closeCtxMenu, true);
+    window.addEventListener("scroll", closeCtxMenu, true);
+  }, 0);
+}
+
 /* ===== 9b. SAVED COPY, LINK CHECK, TIDY-UP MENU (wave 35) ===== */
 
 /* The Reader's network and article pipeline, loaded on first use
@@ -3776,32 +3877,20 @@ function wire() {
     if (selectionMode) exitSelectionMode();
   });
 
-  /* Import (file picker in — fully offline, orosDialog first) */
-  $("#import-btn").addEventListener("click", async () => {
-    const dlg = dialogHost();
-    let file = null;
-    const accept = ".html,.htm,.csv,.json,.jsonlz4,text/html,text/csv,application/json";
-    if (dlg && typeof dlg.openFile === "function") {
-      file = await dlg.openFile(accept);
-    } else {
-      file = await localPickFile(accept);
-    }
-    if (!file) return;                // cancel — silent exit
-    if (file.size > IMPORT_MAX_BYTES) { transientNote(t("imp.toobig")); return; }
-    if (/\.jsonlz4$/i.test(file.name || "")) { transientNote(t("imp.lz4")); return; }
-    let res = null;
-    try {
-      /* Wave 35 + wave 5: browsers (HTML, Firefox / Chromium JSON),
-         Linkding, Pinboard, Pocket, Raindrop, Instapaper, wallabag,
-         Linkwarden: import.js tells them apart. */
-      res = window.OrosBookmarksImport.parse(await file.text(), file.name || "", importNames());
-    } catch (err) { res = null; }
-    if (!res || !res.entries.length) { transientNote(t("import.none")); return; }
-    openImportPreview(res);
+  /* Import and export. With the orOS file (section 9c) each button
+     opens a small menu: the browsers' and apps' files, or the
+     .orosbookmarks file; without it, the button acts directly. */
+  $("#import-btn").addEventListener("click", () => {
+    if (!recFile) { importPick(); return; }
+    fileMenu("#import-btn", [[t("imp.menu.app"), importPick],
+                             [t("file.open"), () => recFile.open()],
+                             [t("file.folder"), () => recFile.openFolder()]]);
   });
-
-  /* Export */
-  $("#export-btn").addEventListener("click", exportNetscape);
+  $("#export-btn").addEventListener("click", () => {
+    if (!recFile) { exportNetscape(); return; }
+    fileMenu("#export-btn", [[t("exp.menu.html"), exportNetscape],
+                             [t("file.save"), () => recFile.save()]]);
+  });
 
   /* Import from Raindrop.io (wave 6C): only inside the orOS shell */
   wirePlatforms();
@@ -3924,6 +4013,9 @@ function boot() {
    to its row and opens its dialog. Unknown id, or a dialog already
    open (maybe with unsaved edits) → no-op. */
 function openSearchTarget(t) {
+  /* "Open with" an .orosbookmarks file (fileopen.js): { openFile: { token } },
+     the File taken once with window.parent.__orosTakeFile(token) */
+  if (t && t.openFile) { if (recFile) recFile.openTarget(t.openFile); return; }
   if (t && !document.querySelector("dialog[open]")) closeReader();
   if (t && t.quickAdd) {               // "Add a bookmark" on the single app's icon (solo.js)
     const qa = $("#quick-add");
