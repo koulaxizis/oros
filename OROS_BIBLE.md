@@ -7252,3 +7252,9 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Atelier AI now also uses the in-browser model chosen in the Assistant (WebLLM); it says when the model is not downloaded yet or WebGPU is missing.
 - Files: `atelier/ai.js`, Bible.
   - Tests: full suite green; real Chromium 1280/360 EN/EL with a fake WebLLM engine. Not tested: a real GPU with a real downloaded model, Safari, phones.
+
+### 2026-10-16 — orOS Drive on the phone: mirror phone folders from the orOS Android app (DRIVE-A) (#442) — 2.66.00
+- The orOS Android app (oros flavour) gets a Drive screen that mirrors chosen phone folders into the Vault under `/internal/Drive` with the oros-drive engine (gomobile AAR, arm64/arm/x86_64): WorkManager every 15 minutes, Wi-Fi only by default; secrets AES-GCM under an Android Keystore key, allowBackup=false. Files shows the phone's state (`state.drive`).
+- Drive is optional in the build: sources in `android/app/src/drive`, added with the AAR and work-runtime only when `libs/orosdrive.aar` exists, so the official F-Droid build ships without Drive (`state.drive` false); `android.yml` builds the AAR from koulaxizis/oros-drive at a fixed pin and fails if it is missing, so the GitHub APK always includes Drive.
+- Files: `android/` (DriveActivity, DriveCore, DriveWorker, PermissionActivity, PhoneBridge, manifest, strings EN/EL, build.gradle, proguard), `.github/workflows/android.yml`, `phone.js`, `files/drive.js`, Files help EN/EL, Bible. Phone-app thread reviewed the android/ side.
+  - Tests: new `tests/drive-android.test.js`; full suite green; Android CI build green with the AAR; Chromium Files check. Not tested: a real phone, the F-Droid build without Drive, real Dropbox.
