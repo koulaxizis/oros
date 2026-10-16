@@ -118,6 +118,17 @@
             <label class="fld"><span data-i18n="f.spTC">Spine text colour</span><input type="color" id="f-spTC"></label>
             <label class="fld wide"><span data-i18n="f.spT">Spine text (when there is no spine picture)</span><input id="f-spT" maxlength="80" autocomplete="off"></label>
           </div>
+          <div id="ins-box" class="sub" hidden>
+            <span class="lbl" id="ins-lbl" data-i18n="sec.ins">Inside pages</span>
+            <p id="ins-hint" class="hint small"></p>
+            <ul id="ins-slots" class="slots"></ul>
+            <div class="row pdf-row">
+              <button type="button" id="pdf-pick" class="chip small" data-i18n="btn.pdf">Pages from a PDF</button>
+              <label class="fld pdf-p"><span data-i18n="f.pdfp">Page</span><input id="f-pdfp" type="number" inputmode="numeric" min="1" max="9999" step="1"></label>
+            </div>
+            <p id="pdf-info" class="hint small"></p>
+            <div class="range" id="curl-box"><span class="rl" data-i18n="f.curl">Page curve</span><input id="f-curl" type="range" min="0" max="1" step="0.01"><output id="curl-out"></output></div>
+          </div>
           <div id="vols-box" class="sub" hidden>
             <span class="lbl" data-i18n="sec.vols">The other books</span>
             <p class="hint small" data-i18n="vols.hint">Each book can have its own pictures, pages and spine text. Where it has none, it looks like the first book.</p>
@@ -129,6 +140,28 @@
         <!-- Scene -->
         <div class="pane" id="pane-scene" role="tabpanel" aria-labelledby="tab-scene" hidden>
           <div class="grp">
+            <span class="lbl" id="show-lbl" data-i18n="f.show">What to show</span>
+            <div class="seg" id="showk" role="radiogroup" aria-labelledby="show-lbl">
+              <button type="button" role="radio" data-v="book" data-i18n="show.book">The book</button>
+              <button type="button" role="radio" data-v="open" data-i18n="show.open">Open book</button>
+              <button type="button" role="radio" data-v="ebook" data-i18n="show.ebook">E-book</button>
+            </div>
+          </div>
+          <div id="dev-box" class="grp" hidden>
+            <span class="lbl sm" id="dev-lbl" data-i18n="f.dev">Device</span>
+            <div class="seg" id="devk" role="radiogroup" aria-labelledby="dev-lbl">
+              <button type="button" role="radio" data-v="tablet" data-i18n="dev.tablet">Tablet</button>
+              <button type="button" role="radio" data-v="phone" data-i18n="dev.phone">Phone</button>
+              <button type="button" role="radio" data-v="reader" data-i18n="dev.reader">E-reader</button>
+            </div>
+            <span class="lbl sm" id="dc-lbl" data-i18n="f.dc">Device colour</span>
+            <div class="seg" id="dck" role="radiogroup" aria-labelledby="dc-lbl">
+              <button type="button" role="radio" data-v="black" data-i18n="dc.black">Black</button>
+              <button type="button" role="radio" data-v="white" data-i18n="dc.white">White</button>
+              <button type="button" role="radio" data-v="silver" data-i18n="dc.silver">Silver</button>
+            </div>
+          </div>
+          <div class="grp" id="set-grp">
             <span class="lbl" id="set-lbl" data-i18n="f.set">Books in the picture</span>
             <div class="seg wrap" id="setk" role="radiogroup" aria-labelledby="set-lbl">
               <button type="button" role="radio" data-v="one" data-i18n="set.one">One book</button>
@@ -149,7 +182,7 @@
             </div>
           </div>
           <div class="range"><span class="rl" data-i18n="f.turn">Turn</span><input id="f-turn" type="range" min="-180" max="180" step="1"><output id="turn-out"></output></div>
-          <div class="range"><span class="rl" data-i18n="f.open">Open the cover</span><input id="f-open" type="range" min="0" max="160" step="1"><output id="open-out"></output></div>
+          <div class="range" id="open-box"><span class="rl" data-i18n="f.open">Open the cover</span><input id="f-open" type="range" min="0" max="160" step="1"><output id="open-out"></output></div>
 
           <span class="lbl" data-i18n="sec.cam">Camera</span>
           <p class="hint small" data-i18n="cam.hint">Drag the picture to turn around the book; pinch or use the wheel to come closer.</p>
@@ -321,6 +354,7 @@
 
   <div id="toast" role="status"></div>
   <input type="file" id="file-in" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml" hidden>
+  <input type="file" id="pdf-in" accept="application/pdf,.pdf" hidden>
 
   <script src="../designkit/assets.js?v=2.62.00"></script>
   <script src="../designkit/media.js?v=2.62.00"></script>
