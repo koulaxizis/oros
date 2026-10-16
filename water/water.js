@@ -71,6 +71,7 @@
       "every.n": "{n} min", "every.h": "{n} hours", "every.h1": "1 hour",
       "set.habits": "Show in Habits", "set.habitsNote": "A read-only “Water” row, ticked on the days you reach your goal.",
       "set.export": "Export CSV", "set.data": "Data",
+      "set.osave": "orOS file (.oroswater)", "set.oopen": "Open orOS file…", "set.ofolder": "Unzipped orOS folder…",
       "toast.added": "+{a}", "toast.undo": "Undo", "toast.deleted": "Entry deleted",
       "toast.saved": "Saved", "toast.save": "Could not save: storage is full",
       "toast.bad": "Enter {min}–{max} ml", "toast.badGoal": "The goal must be {min}–{max} ml",
@@ -105,6 +106,7 @@
       "every.n": "{n} λεπτά", "every.h": "{n} ώρες", "every.h1": "1 ώρα",
       "set.habits": "Εμφάνιση στις Συνήθειες", "set.habitsNote": "Μια γραμμή «Νερό» μόνο για ανάγνωση, τσεκαρισμένη τις μέρες που πιάνεις τον στόχο.",
       "set.export": "Εξαγωγή CSV", "set.data": "Δεδομένα",
+      "set.osave": "Αρχείο orOS (.oroswater)", "set.oopen": "Άνοιγμα αρχείου orOS…", "set.ofolder": "Αποσυμπιεσμένος φάκελος orOS…",
       "toast.added": "+{a}", "toast.undo": "Αναίρεση", "toast.deleted": "Η καταγραφή διαγράφηκε",
       "toast.saved": "Αποθηκεύτηκε", "toast.save": "Δεν αποθηκεύτηκε: ο χώρος είναι γεμάτος",
       "toast.bad": "Γράψε {min}–{max} ml", "toast.badGoal": "Ο στόχος πρέπει να είναι {min}–{max} ml",
@@ -744,6 +746,18 @@
     var exp = button(t("set.export"), "", exportCsv);
     exp.classList.add("block");
     form.appendChild(exp);
+    // .oroswater: Save keeps the dialog open (like Export CSV); Open
+    // and the folder close it first, since they change the data
+    if (recFile) {
+      [["wt-osave", "set.osave", false, function () { recFile.save(); }],
+       ["wt-oopen", "set.oopen", true, function () { recFile.open(); }],
+       ["wt-ofolder", "set.ofolder", true, function () { recFile.openFolder(); }]].forEach(function (o) {
+        var b = button(t(o[1]), "", function () { if (o[2]) dlg.close(); o[3](); });
+        b.id = o[0];
+        b.classList.add("block");
+        form.appendChild(b);
+      });
+    }
 
     var acts = el("div", "dlg-actions");
     acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); }));
@@ -810,6 +824,61 @@
     a.remove();
     setTimeout(function () { URL.revokeObjectURL(url); }, 40000);
   }
+
+  // .oroswater (OBF-4e): every drink and daily goal as one orOS file
+  // (../recordpkg.js + package.js). Opening ADDS what this device
+  // lacks, with its ids; a drink or a day's goal already here (or a
+  // drink deleted here) is kept as it is unless "Update with newer
+  // versions" is ticked. The result goes through saveNow (so sync
+  // carries it); Undo tombstones the added drinks the way removeSip
+  // does, and turns each added goal into the goal that was in force
+  // on its day without it (goals have no tombstones: a removed one
+  // would come back with the next sync).
+  var RP = window.OrosRecordPkg || null, WPK = window.OrosWaterPackage || null;
+  var recFile = RP && WPK && window.OrosBundle ? RP.ui(WPK.DESC, {
+    lang: function () { return LANG; },
+    get: function () { return C.normalize(data); },
+    title: function () { return t("app"); },
+    set: function (next) {
+      var n = C.normalize(next);
+      if (!n || !Array.isArray(n.sips)) return;
+      n.prefs = data.prefs;            // settings stay this device's
+      n.pm = data.pm;
+      data = n;
+      saveNow();
+      renderAll();
+    },
+    deleteIds: function (ids) {
+      var now = Date.now(), goals = {}, any = false;
+      ids.forEach(function (id) {
+        var k = WPK.kindOf(id, data);
+        if (k === "goal") { goals[id] = 1; return; }
+        if (k !== "sip") return;
+        var s = findSip(id);
+        if (!s || s.del) return;
+        s.del = 1;
+        s.m = Math.max(now, s.m + 1);
+        delete s.ts; delete s.ml;
+        any = true;
+      });
+      if (Object.keys(goals).length) {
+        var base = { goals: data.goals.filter(function (g) { return !goals[g.id]; }) };
+        data.goals.forEach(function (g) {
+          if (!goals[g.id]) return;
+          g.ml = C.goalFor(base, g.id);
+          g.m = Math.max(now, g.m + 1);
+          any = true;
+        });
+      }
+      if (!any) return;
+      saveNow();
+      renderAll();
+    },
+    toast: function (text, undo) {
+      if (undo) undoToast(text, undo);
+      else showToast(text);
+    }
+  }) : null;
 
   // ---------- 7. Toasts + celebration ----------
   function showToast(text) {
@@ -1039,7 +1108,10 @@
     } catch (e) {}
   }
 
+  // "Open with" an .oroswater file (fileopen.js): { openFile: { token } },
+  // the File taken once with window.parent.__orosTakeFile(token)
   function openTarget(tg) {
+    if (tg && tg.openFile) { if (recFile) recFile.openTarget(tg.openFile); return; }
     if (!tg || tg.sip !== "glass") return;
     if (dayKey !== todayKey()) { dayKey = monthKey = todayKey(); renderAll(); }
     addSip(data.prefs.glass);
