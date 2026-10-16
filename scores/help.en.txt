@@ -36,6 +36,11 @@ Matches, rounds, your templates and player names sync between your devices throu
 
 `Export CSV` saves one match (from its menu) or your whole history (from `History`) as a spreadsheet file. The orOS [backup](help:t/backup) keeps everything.
 
+## Save and open an orOS file
+In `History`, `orOS file (.orosscores)` saves every match (open and finished, with all its rounds), your own templates and the player names as one `.orosscores` file, for example to move them to another device without sync or to keep a copy. The file is a plain ZIP: unzipped it holds the data as `content.json` plus `preview/history.csv` (the same as `Export CSV`) and `preview/rounds.csv` (every round of every match) for other programs. It is not encrypted, so keep it somewhere safe.
+
+`Open orOS file…` (or `Unzipped orOS folder…`, or "Open with" orOS on the computer) shows how many records are new and how many are already here, then `Add` adds only the new ones, with their own ids: opening the same file again adds nothing. A match already here is kept as it is, and one you deleted here stays deleted; a file never deletes anything. Tick `Update with newer versions` to let records that were changed later in the file replace your copy. A player whose name you already have is not added twice. `Undo` in the message removes what was added.
+
 ## Import from BG Stats
 `Import` (in `History`) reads your plays from BG Stats. In BG Stats, export a backup or your plays (look under Settings, Backup or Export) as a `.bgsplay` or `.json` file, then pick it here; a `.zip` with that file in it works too.
 

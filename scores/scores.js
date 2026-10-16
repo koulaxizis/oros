@@ -119,7 +119,8 @@
       "imp.none": "Nothing new to import: it's all in Score Keeper already.",
       "imp.go": "Import", "imp.done": "Imported {n} matches", "imp.undone": "Import undone",
       "imp.big": "This file is too large to import.", "imp.badfile": "This file could not be read. Pick a BG Stats export (.bgsplay or .json).",
-      "imp.empty": "There are no plays in this file."
+      "imp.empty": "There are no plays in this file.",
+      "oros.save": "orOS file (.orosscores)", "oros.open": "Open orOS file…", "oros.folder": "Unzipped orOS folder…"
     },
     el: {
       "app": "Μετρητής πόντων",
@@ -180,7 +181,8 @@
       "imp.none": "Τίποτα νέο για εισαγωγή: όλα υπάρχουν ήδη στον Μετρητή πόντων.",
       "imp.go": "Εισαγωγή", "imp.done": "Μπήκαν {n} παρτίδες", "imp.undone": "Η εισαγωγή αναιρέθηκε",
       "imp.big": "Το αρχείο είναι πολύ μεγάλο για εισαγωγή.", "imp.badfile": "Το αρχείο δεν διαβάστηκε. Διάλεξε μια εξαγωγή του BG Stats (.bgsplay ή .json).",
-      "imp.empty": "Το αρχείο δεν έχει παρτίδες."
+      "imp.empty": "Το αρχείο δεν έχει παρτίδες.",
+      "oros.save": "Αρχείο orOS (.orosscores)", "oros.open": "Άνοιγμα αρχείου orOS…", "oros.folder": "Αποσυμπιεσμένος φάκελος orOS…"
     }
   };
 
@@ -1564,6 +1566,50 @@
     showToast(t("imp.undone"));
   }
 
+  // ---------- 8c. The .orosscores file (OBF-4e) ----------
+  // Every match, round, template and player as one orOS file
+  // (../recordpkg.js + package.js). Opening ADDS what this device
+  // lacks, with its ids; a record already here (or deleted here) is
+  // kept as it is unless "Update with newer versions" is ticked. The
+  // result goes through mergeScores + commit (one sync mark); Undo
+  // tombstones the added records the way undoImport does.
+  var RP = window.OrosRecordPkg || null, SPK = window.OrosScoresPackage || null;
+  var recFile = null;
+  function initRecFile() {
+    if (!RP || !SPK || !window.OrosBundle) return;
+    recFile = RP.ui(SPK.DESC, {
+      lang: function () { return LANG; },
+      get: function () { return mergeScores(data, data); },
+      title: function () { return t("app"); },
+      set: function (next, info) {
+        var added = {};
+        ((info && info.addedIds) || []).forEach(function (id) { added[id] = 1; });
+        // a player the file adds under a name already remembered here
+        // stays out (the suggestions and colours go by name)
+        var names = {};
+        data.players.forEach(function (p) { names[nameKey(p.name)] = 1; });
+        if (next && Array.isArray(next.players)) {
+          next.players = next.players.filter(function (p) { return !(p && added[p.id] && names[nameKey(p.name)]); });
+        }
+        data = mergeScores(next, next);
+        if (prefs.tab !== "hist" && data.matches.some(function (x) { return added[x.id] && x.done; }) &&
+            !data.matches.some(function (x) { return added[x.id] && !x.done; })) {
+          prefs.tab = "hist"; savePrefs();
+        }
+        commit();
+      },
+      deleteIds: function (ids) {
+        ids.forEach(function (id) {
+          var x = findIn(data.matches, id) || findIn(data.rounds, id) || findIn(data.tpls, id) || findIn(data.players, id);
+          if (x) tomb(id, x.m);
+        });
+        commit();
+        showToast(recFile.text("undone"));
+      },
+      toast: function (text, undo) { if (undo) undoToast(text, undo); else showToast(text); }
+    });
+  }
+
   // ---------- 9. Toasts, export ----------
   function showToast(text) {
     try {
@@ -1783,6 +1829,9 @@
     $("imp-btn").textContent = t("imp.btn");
     $("imp-btn").title = t("imp.tip");
     $("imp-btn").setAttribute("aria-label", t("imp.tip"));
+    $("oros-save").textContent = t("oros.save");
+    $("oros-open").textContent = t("oros.open");
+    $("oros-folder").textContent = t("oros.folder");
     [["back-btn", UI.back, "btn.back"], ["menu-btn", UI.menu, "btn.menu"], ["timer-btn", UI.timer, "btn.timer"],
      ["timer-reset", UI.reset, "timer.reset"]].forEach(function (x) {
       var b = $(x[0]);
@@ -1801,6 +1850,11 @@
     $("add-round").addEventListener("click", addRound);
     $("csv-all").addEventListener("click", exportHistory);
     $("imp-btn").addEventListener("click", startImport);
+    [["oros-save", "save"], ["oros-open", "open"], ["oros-folder", "openFolder"]].forEach(function (x) {
+      var b = $(x[0]);
+      b.hidden = !recFile;
+      b.addEventListener("click", function () { if (recFile) recFile[x[1]](); });
+    });
     ["play", "hist", "stats"].forEach(function (k) {
       $("tab-" + k).addEventListener("click", function () { setTab(k); });
     });
@@ -1840,6 +1894,7 @@
     loadPrefs();
     applyI18n();
     buildTimerLens();
+    initRecFile();
     wire();
     registerSync();
     inheritPalette();
@@ -1859,6 +1914,9 @@
   // open match is left through Home first (its timer stops). Unknown
   // id → no-op; nothing happens while a dialog is open.
   function openSearchTarget(tg) {
+    // "Open with" an .orosscores file (fileopen.js): { openFile: { token } },
+    // the File taken once with window.parent.__orosTakeFile(token)
+    if (tg && tg.openFile) { if (recFile) recFile.openTarget(tg.openFile); return; }
     var id = tg && typeof tg.match === "string" ? tg.match : null;
     if (!id || !findIn(data.matches, id)) return;
     if (document.querySelector("dialog[open]")) return;
