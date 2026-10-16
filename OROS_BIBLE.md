@@ -7154,3 +7154,9 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Shell: `music/{core,store,host}.js` loaded by `index.html` after Podcasts; `safeToReload` waits while music plays; factory reset deletes IndexedDB `oros-music`.
 - Files: new `music/{index.html, music.css, core.js, store.js, library.js, host.js, music.js, search.js, help.en.txt, help.el.txt}` (all precached); registration in `apps.json`, `shell.js` ICONS, `translations.js`, `sw.js`; Bible Part III row (PR #427). No third-party code or service (credits unchanged).
   - Tests: new `tests/music.test.js` (tags of every format built byte by byte, Greek legacy tags, keys, merge, queue, library views); full suite green; real Chromium in the shell at 360 px Greek and desktop. Not tested: real phones (lock screen, headset buttons), Safari, Firefox, very large libraries, a real Vault Drive round trip of the files.
+
+### 2026-10-16 — Podcasts: shuffle and A-Z / Α-Ω index, browse wave 2 (#428) — 2.54.00
+- `Shuffle all` in Library plays one random unplayed episode of each followed podcast; `Shuffle` on a podcast's page plays its unplayed episodes in random order. The first plays, the rest go to the front of Up next (`queueFront`, one queue write).
+- Letter bar A–Z and Α–Ω (accents and final sigma folded, digits and other scripts under "#", Greek first when the app is in Greek) in Library and in Discover › Countries; Library is sorted in that order.
+- Files: `podcasts/core.js` (§16), `podcasts/podcasts.js`, CSS, help EN/EL, Bible. No new service (credits unchanged).
+  - Tests: new tests in `tests/podcasts.test.js`; full suite green. Not tested: a real phone, Safari, live Apple answers.
