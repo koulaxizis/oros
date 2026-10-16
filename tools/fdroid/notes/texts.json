@@ -1,0 +1,11 @@
+{
+  "category": "Writing",
+  "en": {
+    "summary": "Private notes that work offline",
+    "description": "Write pages and checklists and keep them in notebooks, with search, pinning and Markdown. Everything stays on your device.\n\nTurn on encrypted sync with your own Dropbox to see the same notes on every device. Share any text to orOS Notes to save it as a new page.\n\nPart of orOS, the free, open-source system that runs in your browser.\n\nWorks offline, with no account, no ads, no cookies and no tracking. Sync is optional and end-to-end encrypted, using your own Dropbox.\n\nThe app's content updates by itself from useoros.online; a new APK only comes when the Android shell changes. Free and open source (MIT), free forever."
+  },
+  "el": {
+    "summary": "Ιδιωτικές σημειώσεις που δουλεύουν χωρίς σύνδεση",
+    "description": "Γράψε σελίδες και λίστες και οργάνωσέ τες σε σημειωματάρια, με αναζήτηση, καρφίτσωμα και Markdown. Όλα μένουν στη συσκευή σου.\n\nΆνοιξε τον κρυπτογραφημένο συγχρονισμό με το δικό σου Dropbox για να βλέπεις τις ίδιες σημειώσεις παντού. Κοινοποίησε οποιοδήποτε κείμενο στο orOS Notes για να γίνει νέα σελίδα.\n\nΜέρος του orOS, του δωρεάν συστήματος ανοιχτού κώδικα που τρέχει στον browser.\n\nΔουλεύει χωρίς σύνδεση, χωρίς λογαριασμό, διαφημίσεις, cookies ή παρακολούθηση. Ο συγχρονισμός είναι προαιρετικός και κρυπτογραφημένος από άκρο σε άκρο, μέσω του δικού σου Dropbox.\n\nΤο περιεχόμενο της εφαρμογής ενημερώνεται μόνο του από το useoros.online· νέο APK βγαίνει μόνο όταν αλλάζει το κέλυφος Android. Δωρεάν και ανοιχτού κώδικα (MIT), δωρεάν για πάντα."
+  }
+}
