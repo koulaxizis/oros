@@ -220,7 +220,8 @@
       "imp.offline": "You are offline.",
       "imp.file": "Import starred articles (JSON)", "imp.badFile": "This is not a starred-articles file (Google Reader JSON or Miniflux).",
       "imp.fileDone": "{n} starred articles imported.", "imp.fileNone": "No new starred articles in this file.",
-      "wel.mail": "Newsletters from Mail", "wel.server": "Import from FreshRSS or Miniflux"
+      "wel.mail": "Newsletters from Mail", "wel.server": "Import from FreshRSS or Miniflux",
+      "set.osave": "orOS file (.orosfeeds)", "set.oopen": "Open orOS file…", "set.ofolder": "Unzipped orOS folder…"
     },
     el: {
       "app": "Αναγνώστης", "nav.side": "Συνδρομές", "nav.back": "Πίσω", "btn.refresh": "Ανανέωση",
@@ -357,7 +358,8 @@
       "imp.offline": "Δεν υπάρχει σύνδεση.",
       "imp.file": "Εισαγωγή άρθρων με αστέρι (JSON)", "imp.badFile": "Δεν είναι αρχείο άρθρων με αστέρι (Google Reader JSON ή Miniflux).",
       "imp.fileDone": "Εισήχθησαν {n} άρθρα με αστέρι.", "imp.fileNone": "Δεν υπάρχουν νέα άρθρα με αστέρι σε αυτό το αρχείο.",
-      "wel.mail": "Ενημερωτικά από την Αλληλογραφία", "wel.server": "Εισαγωγή από FreshRSS ή Miniflux"
+      "wel.mail": "Ενημερωτικά από την Αλληλογραφία", "wel.server": "Εισαγωγή από FreshRSS ή Miniflux",
+      "set.osave": "Αρχείο orOS (.orosfeeds)", "set.oopen": "Άνοιγμα αρχείου orOS…", "set.ofolder": "Αποσυμπιεσμένος φάκελος orOS…"
     }
   };
 
@@ -2406,6 +2408,21 @@
       io.appendChild(yb);
     }
     dlg.appendChild(io);
+    if (recFile) {
+      // .orosfeeds (11c3): save everything as one orOS file, open one
+      // (adds what is missing) or its unzipped folder
+      var oio = el("div", "inline");
+      oio.style.marginTop = "8px";
+      [["set-osave", "set.osave", "save", function () { recFile.save(); }],
+       ["set-oopen", "set.oopen", "open", function () { recFile.open(); }],
+       ["set-ofolder", "set.ofolder", "folder", function () { recFile.openFolder(); }]].forEach(function (r) {
+        var ob = button(t(r[1]), "small", function () { dlg.close(); r[3](); });
+        ob.id = r[0];
+        ob.title = recFile.text(r[2]);
+        oio.appendChild(ob);
+      });
+      dlg.appendChild(oio);
+    }
     dlg.appendChild(el("p", "dlg-hint", t("set.keep")));
     var acts = el("div", "dlg-actions");
     acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); }));
@@ -2975,6 +2992,89 @@
     setTimeout(function () { URL.revokeObjectURL(url); }, 40000);
   }
 
+  // ---------- 11c3. orOS file (.orosfeeds, ../recordpkg.js + package.js) ----------
+  // Every subscription, folder, saved article, tag and rule as one
+  // orOS file (no settings, no read state, no downloaded articles).
+  // Opening ADDS what this device lacks, with its ids; a record already
+  // here (or deleted here) is kept as it is unless "Update with newer
+  // versions" is ticked. The result goes through saveData (canonical
+  // merge + the sync mark), new feeds are fetched; Undo removes the
+  // added records the app's own way (tombstones, so the delete syncs).
+  // A file that is not a bundle (an .opml from "Open with") goes to
+  // the OPML import.
+  var RP = window.OrosRecordPkg || null, FPK = window.OrosFeedsPackage || null;
+  var recFile = RP && FPK && window.OrosBundle ? RP.ui(FPK.DESC, {
+    lang: function () { return LANG; },
+    get: function () { return C.merge(data, null); },
+    title: function () { return t("app"); },
+    set: function (next, info) {
+      if (!next || typeof next !== "object" || !Array.isArray(next.feeds)) return;
+      var had = {}, fresh = [];
+      data.feeds.forEach(function (f) { had[f.id] = 1; });
+      data = C.merge(next, null);
+      saveData();
+      data.feeds.forEach(function (f) { if (!had[f.id]) fresh.push(f.id); });
+      renderAll();
+      if (fresh.length) refresh(fresh, false);
+    },
+    deleteIds: function (ids) { recUndo(ids); },
+    toast: function (text, undoFn) {
+      if (undoFn) showUndo(text, undoFn); else showToast(text);
+    },
+    notBundle: function (file) { return opmlFromFile(file); }
+  }) : null;
+  // Undo of an open: each added record goes the way the app deletes it
+  // (unsubscribe, delete folder / tag / rule, unsave), in one write.
+  function recUndo(ids) {
+    var t0 = now(), want = {}, gone = {};
+    ids.forEach(function (id) { want[id] = FPK.kindOf(id, data); });
+    data.rules = data.rules.filter(function (r) {
+      if (want[r.id] !== "rule") return true;
+      data.tombs["r:" + r.id] = Math.max(t0, r.m + 1);
+      return false;
+    });
+    data.items = data.items.filter(function (x) {
+      if (want[x.id] !== "item") return true;
+      data.tombs["i:" + x.id] = Math.max(t0, x.m + 1);
+      return false;
+    });
+    data.tags = data.tags.filter(function (g) {
+      if (want[g.id] !== "tag") return true;
+      data.tombs["t:" + g.id] = Math.max(t0, g.m + 1);
+      data.items.forEach(function (x) {
+        if (x.tags.indexOf(g.id) < 0) return;
+        x.tags = x.tags.filter(function (y) { return y !== g.id; });
+        x.m = Math.max(t0, x.m + 1);
+        if (!x.star && !x.later && !x.tags.length) data.tombs["i:" + x.id] = x.m;
+      });
+      data.items = data.items.filter(function (x) { return x.star || x.later || x.tags.length; });
+      return false;
+    });
+    data.feeds = data.feeds.filter(function (f) {
+      if (want[f.id] !== "feed") return true;
+      gone[f.id] = 1;
+      data.tombs["f:" + f.id] = Math.max(t0, f.m + 1);
+      delete fstate[f.id];
+      return false;
+    });
+    data.folders = data.folders.filter(function (d) {
+      if (want[d.id] !== "folder") return true;
+      data.feeds.forEach(function (f) { if (f.folder === d.id) { f.folder = ""; f.m = Math.max(t0, f.m + 1); } });
+      data.tombs["d:" + d.id] = Math.max(t0, d.m + 1);
+      return false;
+    });
+    saveData();
+    saveState();
+    Promise.all(Object.keys(gone).map(dropFeedArticles)).then(function () {
+      if (openItem && !C.feedById(data, openItem.feed) && !C.savedById(data, openItem.id)) openItem = null;
+      var k = selKind(), sid = selId();
+      if ((k === "feed" && !C.feedById(data, sid)) || (k === "folder" && !C.folderById(data, sid)) ||
+          (k === "tag" && !tagById(sid)) || (k === "watch" && !ruleById(sid))) select("all");
+      renderAll();
+      showToast(recFile.text("undone"));
+    });
+  }
+
   // ---------- 11d. Newsletters from Mail ----------
   function mailDialog() {
     var dlg = makeDialog("mail-dlg");
@@ -3321,7 +3421,8 @@
   //   { item: id }      a notification: open that article
   //   { feed } / { item, feed }  universal search (openSearchTarget)
   //   { openFile: { token } }  a file from the system's "Open with"
-  //                    (shell fileopen.js): the OPML import
+  //                    (shell fileopen.js): an .orosfeeds file (11c3)
+  //                    or the OPML import
   function openTarget(x) {
     if (!x || typeof x !== "object" || document.querySelector("dialog[open]")) return;
     if (x.addBlank === true) { addDialog(""); return; }   // single app "Add a feed" shortcut
@@ -3332,7 +3433,10 @@
         if (typeof x.openFile.token === "string" && p && p !== window && typeof p.__orosTakeFile === "function")
           f = p.__orosTakeFile(x.openFile.token);
       } catch (e) { f = null; }
-      if (f) opmlFromFile(f).catch(function () {});
+      // an .orosfeeds bundle → the orOS file dialog; anything else (an
+      // .opml) → the OPML import (recFile hands a non-ZIP to notBundle)
+      if (f && recFile) recFile.openFile(f);
+      else if (f) opmlFromFile(f).catch(function () {});
       return;
     }
     if (x.add && typeof x.add === "object" && typeof x.add.url === "string") {

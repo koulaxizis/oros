@@ -255,4 +255,9 @@ ul { list-style: none; }
   #toast { transition: none !important; }
 }
 
+/* The .orosstickies open dialog (../recordpkg.js): the reset above
+   took the browser's centring margin away */
+#recordpkg-dialog { margin: auto; }
+#recordpkg-dialog::backdrop { background: rgba(0, 0, 0, 0.5); }
+
 [hidden] { display: none !important; }
