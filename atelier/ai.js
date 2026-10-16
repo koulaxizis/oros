@@ -640,6 +640,9 @@
     if (one && one.ax.k === "text") s2.appendChild(button("btn block", t("ai.menu") + "…", function (e) { textMenu(e.currentTarget, one); }));
     body.appendChild(s2);
 
+    // a picture from a description (imagine.js)
+    if (AT.imagine) AT.imagine.section(body);
+
     // picture tools: background, Magic eraser, Magic grab
     var s3 = sec(t("ai.pics"));
     if (one && one.ax.k === "photo" && !one.ax.vid) {
