@@ -7246,3 +7246,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Mockups (MockCore v1.3.0, MockScene v1.3.0): Scene › What to show: The book, Open book or E-book. The open book lies at an inside spread with curved pages (`openCurve`, Page curve slider), boards in the cover's colour or the hardcover cloth; the e-book is a tablet, phone or e-reader (black, white, silver) with the page fitted on its screen.
 - Cover › Inside pages / On the screen: pictures, or Pages from a PDF (vendored PDF.js loaded as a module only when asked; page n and n + 1 become disk pictures; Page picks the spread) (PR #444).
   - Tests: `tests/mockups.test.js` (normIns, openCurve shape, device sizes, containIn, show/ins kept in the project, assets and merge, wiring, help); full suite green; real Chromium in the shell (desktop + 360 px Greek): open book with pictures (left/right in the saved PNG), a 4-page PDF onto the spread and the next spread, curve, all three devices and colours, e-ink grey, back to the book, sync to a second device with no extra uploads, no sideways scroll. Not tested: big real PDFs, Safari, real phones.
+
+### 2026-10-16 — Atelier AI works with the Assistant's in-browser model (WebLLM) (#445) — 2.65.01
+- Atelier AI now also uses the in-browser model chosen in the Assistant (WebLLM); it says when the model is not downloaded yet or WebGPU is missing.
+- Files: `atelier/ai.js`, Bible.
+  - Tests: full suite green; real Chromium 1280/360 EN/EL with a fake WebLLM engine. Not tested: a real GPU with a real downloaded model, Safari, phones.
