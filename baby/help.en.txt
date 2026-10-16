@@ -55,6 +55,11 @@ How to export from each app:
 
 Entries the child already has at the same minute are not added twice, and importing the same file again adds only what's new. Your own entries are never changed. Kinds that Baby doesn't keep, like potty or play time, are listed and left out. The file is read on your device; nothing is uploaded anywhere except through your own sync.
 
+## Save and open an orOS file
+In `Settings`, under `Data`, `orOS file (.orosbaby)` saves your children with every entry, measurement, milestone, vaccine, doctor visit and milk-stash bag as one `.orosbaby` file, for example to move them to another device without sync or to keep a copy. Your units and reminders stay on each device, and a timer that is running right now is left out. The file is a plain ZIP: unzipped it holds the data as `content.json` plus `preview/log.csv` and `preview/growth.csv` (the same as the CSV exports) for other programs. It is not encrypted and holds your child's health details, so keep it somewhere safe.
+
+`Open orOS file…` (or `Unzipped orOS folder…`, or "Open with" orOS on the computer) shows how many records are new and how many are already here, then `Add` adds only the new ones, with their own ids: opening the same file again adds nothing. A record already here is kept as it is, one you deleted here stays deleted, and a milestone already ticked here keeps its date; a file never deletes anything. Tick `Update with newer versions` to let records that were changed later in the file replace your copy. `Undo` in the message takes back what was added.
+
 ## Sync and backup
 Children, every entry, growth, milestones, the milk stash and units sync between your devices through [orOS sync](help:t/sync). A running timer syncs too, so one parent can stop a timer the other started. Night view and the open tab stay on each device.
 

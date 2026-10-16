@@ -63,6 +63,8 @@
       "btn.mprev": "Month before", "btn.mnext": "Month after",
       "btn.delete": "Delete this day", "btn.print": "Print",
       "btn.txt": "Text", "btn.csv": "CSV", "btn.json": "JSON", "btn.import": "Choose a file",
+      "sec.oros": "orOS file", "oros.hint": "Every day, longer entry, photo and question in one file. Opening one adds the days this device lacks. The file is not encrypted.",
+      "oros.save": "orOS file (.orosdiary)", "oros.open": "Open orOS file…", "oros.folder": "Unzipped orOS folder…",
       "rel.today": "Today", "rel.yesterday": "Yesterday", "rel.ago": "{n} days ago",
       "late.q": "After midnight. This line is for:", "late.yesterday": "Yesterday", "late.today": "Today",
       "f.line": "One sentence about this day", "f.emoji": "Emoji of the day", "f.search": "Search your days",
@@ -157,6 +159,8 @@
       "btn.mprev": "Προηγούμενος μήνας", "btn.mnext": "Επόμενος μήνας",
       "btn.delete": "Διαγραφή μέρας", "btn.print": "Εκτύπωση",
       "btn.txt": "Κείμενο", "btn.csv": "CSV", "btn.json": "JSON", "btn.import": "Επιλογή αρχείου",
+      "sec.oros": "Αρχείο orOS", "oros.hint": "Κάθε μέρα, μεγαλύτερο κείμενο, φωτογραφία και ερώτηση σε ένα αρχείο. Το άνοιγμά του προσθέτει τις μέρες που λείπουν από αυτή τη συσκευή. Το αρχείο δεν είναι κρυπτογραφημένο.",
+      "oros.save": "Αρχείο orOS (.orosdiary)", "oros.open": "Άνοιγμα αρχείου orOS…", "oros.folder": "Αποσυμπιεσμένος φάκελος orOS…",
       "rel.today": "Σήμερα", "rel.yesterday": "Χθες", "rel.ago": "Πριν από {n} μέρες",
       "late.q": "Πέρασαν τα μεσάνυχτα. Η φράση είναι για:", "late.yesterday": "Χθες", "late.today": "Σήμερα",
       "f.line": "Μία φράση για αυτή τη μέρα", "f.emoji": "Emoji της μέρας", "f.search": "Αναζήτηση στις μέρες σου",
@@ -1388,6 +1392,7 @@
     document.body.classList.remove("is-locked");
     setInert(false);
     if (view === "today") $("line").focus();
+    runWaitingFile();
   }
   function tryUnlock(ev) {
     if (ev) ev.preventDefault();
@@ -1858,8 +1863,141 @@
     }
   }
 
+  // ---------- 10b. orOS file (.orosdiary, ../recordpkg.js + package.js) ----------
+  // Every day's line, longer entry and own daily question as one orOS
+  // file, the photos in media/ by <sha256>.jpg. The reminder, the PIN
+  // lock and the view stay on this device. Opening ADDS the days this
+  // device lacks, with their dates; a day already here (or deleted
+  // here) is kept as it is unless "Update with newer versions" is
+  // ticked. The result goes through mergeDiary + save (the sync mark);
+  // Undo deletes the added days the app's own way (tombstones, cleared
+  // long fields, deleted questions).
+  var RP = window.OrosRecordPkg || null, DPK = window.OrosDiaryPackage || null;
+  var fileAdded = null, fileWrote = [];
+  // One photo of the file → Diary/Photos, only when that name is not on
+  // the disk yet, through the picker's own checks (encodePhoto: re-drawn
+  // as a JPEG, no EXIF). → Promise<"there" | "bad" | "none">
+  function storePhoto(name, key, media) {
+    var fs = fsApi(), p = C.photoPath(name);
+    if (!fs || !p) return Promise.resolve("none");
+    return Promise.resolve().then(function () { return fs.readBlob(p); })
+      .then(function (b) { return !!b; }, function () { return false; })
+      .then(function (there) {
+        if (there) return "there";
+        var item = key && Object.prototype.hasOwnProperty.call(media, key) ? media[key] : null;
+        if (!item || !(item.blob || item.bytes)) return "none";
+        var blob = item.blob ? item.blob.slice(0, item.blob.size, item.type || "") : new Blob([item.bytes], { type: item.type || "" });
+        return encodePhoto(blob).then(function (enc) {
+          if (!enc) return "bad";
+          return Promise.resolve(fs.writeBlob(p, enc)).then(function () { fileWrote.push(name); return "there"; });
+        });
+      }).catch(function () { return "bad"; });
+  }
+  var recFile = RP && DPK && window.OrosBundle ? RP.ui(DPK.DESC, {
+    lang: function () { return LANG; },
+    get: function () { return DPK.forKit(sliceGet()); },
+    title: function () { return t("app.name"); },
+    // media/: every photo the long entries name, read from the orOS
+    // disk; state.phs = { "<photo name>": "<media key>" } goes into
+    // content.json
+    files: function (state) {
+      var fs = fsApi(), B = window.OrosBundle, out = [], phs = {}, chain = Promise.resolve();
+      if (!fs) return out;
+      C.photosOf(state).forEach(function (name) {
+        chain = chain.then(function () {
+          var p = C.photoPath(name);
+          if (!p || phs[name]) return;
+          return Promise.resolve(fs.readBlob(p)).then(function (blob) {
+            if (!blob || !blob.size) return;
+            return B.digest(blob).then(function (dg) {
+              var key = dg.sha + ".jpg";
+              phs[name] = key;
+              if (!out.some(function (f) { return f.key === key; })) out.push({ key: key, blob: blob, type: "image/jpeg" });
+            });
+          }).catch(function () {});
+        });
+      });
+      return chain.then(function () { state.phs = phs; return out; });
+    },
+    // the photos of the long entries this open adds (or updates); a
+    // photo whose bytes fail the checks leaves the entry; one the file
+    // has no bytes for stays a name ("Not on this device", as there)
+    media: function (read, res) {
+      var next = res.next, src = read && read.content && read.content.data;
+      var phs = src && src.phs && typeof src.phs === "object" ? src.phs : {}, media = (read && read.media) || {};
+      var chain = Promise.resolve();
+      fileWrote = [];
+      res.addedIds.concat(res.updatedIds).forEach(function (ymd) {
+        var L = next.long && next.long[ymd];
+        if (!L || !L.ph || !L.ph.v.length) return;
+        var kept = [];
+        L.ph.v.forEach(function (name) {
+          chain = chain.then(function () {
+            return storePhoto(name, typeof phs[name] === "string" ? phs[name] : "", media);
+          }).then(function (r) { if (r !== "bad") kept.push(name); });
+        });
+        chain = chain.then(function () { L.ph.v = kept; });
+      });
+      return chain.then(function () { return next; });
+    },
+    set: function (next) {
+      flush();
+      var before = data;
+      data = C.mergeDiary(next, next);
+      fileAdded = DPK.added(before, data);
+      save();
+      calDirty = yearDirty = true;
+      renderDay();
+      if (view === "days") renderSearch();
+      if (view === "year") renderYear();
+      if (!$("more").hidden) { renderBookYears(); renderPrompts(); }
+    },
+    // Undo: the added days, longer entries and questions go again the
+    // app's own way; photos no entry names any more leave the disk later.
+    deleteIds: function () {
+      var a = fileAdded, wrote = fileWrote.slice(), now = Date.now();
+      fileAdded = null;
+      if (!a) return;
+      flush();
+      a.days.forEach(function (ymd) { data = C.setDay(data, ymd, "", "", now); });
+      a.long.forEach(function (ymd) {
+        C.LONG_FIELDS.forEach(function (f) {
+          data = C.setLong(data, ymd, f, f === "md" ? "" : (f === "ph" ? [] : null), now);
+        });
+      });
+      a.prompts.forEach(function (id) { data = C.setPrompt(data, id, "", true, now); });
+      save();
+      calDirty = yearDirty = true;
+      renderDay();
+      if (view === "days") renderSearch();
+      if (view === "year") renderYear();
+      if (!$("more").hidden) { renderBookYears(); renderPrompts(); }
+      dropPhotosLater(wrote);
+    },
+    toast: function (text, undo) { if (undo) undoToast(text, undo); else showToast(text); }
+  }) : null;
+  // "Open with" while the PIN lock is up: the File is taken now (its
+  // token lasts minutes) and opened after the unlock
+  var fileWaiting = null, booted = false;
+  function openFileTarget(o) {
+    if (!recFile) return;
+    if (!(lockRec && (locked || !booted))) { recFile.openTarget(o); return; }
+    try {
+      var p = window.parent;
+      if (o && typeof o.token === "string" && p && p !== window && typeof p.__orosTakeFile === "function") fileWaiting = p.__orosTakeFile(o.token) || null;
+    } catch (e) { fileWaiting = null; }
+  }
+  function runWaitingFile() {
+    var f = fileWaiting;
+    fileWaiting = null;
+    if (f && recFile && !locked) recFile.openFile(f);
+  }
+
   // Deep link: { day } opens that day (reminder, universal search).
+  // "Open with" an .orosdiary file (fileopen.js): { openFile: { token } },
+  // the File taken once with window.parent.__orosTakeFile(token)
   function openTarget(target) {
+    if (target && typeof target === "object" && target.openFile) { openFileTarget(target.openFile); return; }
     if (!target || typeof target !== "object") { openDay(todayYmd()); return; }
     openDay(C.isYmd(target.day) ? target.day : C.writingDay(data, new Date()).day, true);
   }
@@ -1961,6 +2099,14 @@
     $("exp-txt").addEventListener("click", function () { exportAs("txt"); });
     $("exp-csv").addEventListener("click", function () { exportAs("csv"); });
     $("exp-json").addEventListener("click", function () { exportAs("json"); });
+    [["oros-save", function () { recFile.save(); }],
+     ["oros-open", function () { recFile.open(); }],
+     ["oros-folder", function () { recFile.openFolder(); }]].forEach(function (x) {
+      var b = $(x[0]);
+      if (!b || !recFile) return;
+      b.hidden = false;
+      b.addEventListener("click", function () { flush(); closeMore(true); x[1](); });
+    });
     $("imp-btn").addEventListener("click", function () { $("imp-file").value = ""; $("imp-file").click(); });
     $("imp-file").addEventListener("change", function () {
       var f = $("imp-file").files[0];
@@ -1998,6 +2144,7 @@
         if (pending) { openTarget(pending); opened = true; }
       }
     } catch (e) {}
+    booted = true;
     if (lockRec) { showLock(); return; }       // device-local privacy screen (7d)
     if (!opened && view === "today" && !lineOf(day)) $("line").focus();
   }

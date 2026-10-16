@@ -64,6 +64,11 @@ In `Diary settings` (the button at the top right) tick `Remind me when I have no
 - `Text`, `CSV` and `JSON` in `Diary settings` download every line.
 - `Choose a file` reads a CSV, JSON or text file with a date and a line per day, like the exports. Dates can be 2026-10-11 or 11/10/2026. Days that already have a line keep it.
 
+## Save and open an orOS file
+In `Diary settings`, `orOS file (.orosdiary)` saves every day's line, longer entry (with its place and weather), photo and own question as one `.orosdiary` file, for example to move your diary to another device without sync or to keep a copy. The file is a plain ZIP: unzipped it holds the diary as `content.json`, the photos in `media/`, plus `preview/diary.md` and `preview/diary.csv` for other programs. It is not encrypted, and the PIN lock does not cover it, so keep it somewhere safe. The reminder, the PIN and the view stay on this device.
+
+`Open orOS file…` (or `Unzipped orOS folder…`, or "Open with" orOS on the computer) shows how many days are new and how many are already here, then `Add` adds only the new ones: opening the same file again adds nothing. A day that already has a line or a longer entry here keeps it, and a day you deleted here stays deleted; a file never deletes anything. Tick `Update with newer versions` to let days that were changed later in the file replace your copy. The photos go to Files › `Diary` › `Photos` when they are not there yet. `Undo` in the message removes what was added. With the PIN lock on, a file opened from outside waits until you unlock.
+
 ## Import from other diary apps
 `Choose a file` also reads the exports of four journaling apps. A preview shows the dates, the entries and what will happen before anything is written; `Undo` in the message takes the whole import back.
 - Day One: in Day One's settings, `Import/Export` › `Export` › `JSON`. Choose the ZIP (with its photos) or the `Journal.json` inside it.

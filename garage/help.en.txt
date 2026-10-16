@@ -48,6 +48,11 @@ Vehicles, entries, renewals, plans, tyres and your currency sync between your de
 
 In `Settings`: `Export CSV`, `Export backup` (JSON) and `Import backup`. An import merges with what you have.
 
+## Save and open an orOS file
+In `Settings`, `orOS file (.orosgarage)` saves every vehicle, fuel and charging fill, service, service plan, tyre set, renewal, expense and km reading as one `.orosgarage` file, with the receipt photos inside: for example to move your vehicles to another device without sync, or to keep a copy. The reminder hour, consumption unit and tyre limits stay on this device. The file is a plain ZIP: unzipped it holds the records as `content.json`, the photos in `media/` and `preview/log.csv` (the same CSV as `Export CSV`) for other programs. It is not encrypted, so keep it somewhere safe.
+
+`Open orOS file…` (or `Unzipped orOS folder…`, or "Open with" orOS on the computer) shows how many records are new and how many are already here, then `Add` adds only the new ones, with their own ids: opening the same file again adds nothing. A record already here is kept as it is, and one you deleted here stays deleted; a file never deletes anything. Tick `Update with newer versions` to let records that were changed later in the file replace your copy. A tyre set from the file is not mounted on a vehicle that already has a mounted set here. Receipt photos go to Garage/Receipts only when they are not there yet, with the same checks as adding one by hand. `Undo` in the message removes what was added.
+
 ## Keyboard shortcuts
 - [[Left]] / [[Right]] on the tabs switch between `Overview`, `Log` and `Stats`.
 

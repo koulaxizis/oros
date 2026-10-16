@@ -49,7 +49,7 @@
       "empty.title": "Your music, on your device",
       "empty.body": "Add songs or a whole folder. They are kept in Files › Music, play without a connection and, with Vault Drive on, reach your other devices too.",
       "empty.files": "Add songs", "empty.folder": "Add a folder",
-      "empty.soon": "Free music from open catalogues comes next.",
+      "empty.soon": "Or listen to free music from open catalogues below.",
       "search.ph": "What do you want to listen to?", "search.none": "Nothing found for “{q}”.",
       "search.hint": "Search your songs, albums, artists and playlists.",
       "search.genres": "Browse by genre",
@@ -87,7 +87,25 @@
       "s.keys": "Keys: Space play/pause · ← → seek 10 s · Shift+← → previous/next · S shuffle · R repeat · L like",
       "info.file": "File", "info.format": "Format", "info.size": "Size", "info.genre": "Genre", "info.year": "Year", "info.track": "Track",
       "info.length": "Length",
-      "liked.empty": "Songs you like appear here. Tap the heart on any song."
+      "liked.empty": "Songs you like appear here. Tap the heart on any song.",
+      "home.free": "Free music", "home.freeSub": "Open catalogues: Jamendo, Internet Archive, Openverse and ccMixter. Every song shows its licence.",
+      "home.genres": "Free music by genre", "kind.free": "Free music", "home.moods": "Moods (Jamendo)", "kind.mood": "Mood",
+      "o.title": "Free music online", "o.all": "All", "o.loading": "Loading…", "o.more": "Show more", "o.none": "Nothing found here.",
+      "o.err": "No answer from {s}.", "o.busy": "Too many requests to {s}. Try again in a minute.", "o.offline": "You are offline.",
+      "o.retry": "Try again", "o.closed": "This item has no open licence, so Music does not play it.", "o.wait": "Searching online…",
+      "o.albums": "Albums · {s}", "o.songs": "Songs · {s}",
+      "m.credit": "Copy credit", "m.source": "Open on {s}", "m.saveOff": "Save for offline", "m.delOff": "Remove offline copy",
+      "m.saveAlbum": "Save album for offline",
+      "toast.copied": "Credit copied.", "toast.offSaving": "Saving {n} for offline…", "toast.offSaved": "{n} saved for offline.",
+      "toast.offFail": "{n} could not be saved: the source does not allow downloads from the browser.",
+      "toast.offNo": "The licence or the source does not allow an offline copy of this song.", "toast.offHave": "Already saved for offline.",
+      "toast.offDel": "Offline copy removed.", "toast.offDels": "Offline copies removed.",
+      "lib.offline": "Offline", "off.empty": "Songs from the free catalogues that you save for offline appear here.", "off.badge": "Saved for offline",
+      "s.open": "Free music online (Jamendo, Internet Archive, Openverse, ccMixter)",
+      "s.openHint": "Only when you browse or search. The requests go straight to those services, with no account and no tracking.",
+      "s.offInfo": "Offline copies: {n} · {s}", "s.offClear": "Delete all offline copies",
+      "s.offClearQ": "Delete all offline copies ({n})? The songs stay in your playlists and play online.",
+      "info.source": "Source", "info.licence": "Licence", "info.page": "Page", "info.credit": "Credit"
     },
     el: {
       "app": "Μουσική",
@@ -100,7 +118,7 @@
       "empty.title": "Η μουσική σου, στη συσκευή σου",
       "empty.body": "Πρόσθεσε τραγούδια ή έναν ολόκληρο φάκελο. Μένουν στα Αρχεία › Music, παίζουν χωρίς σύνδεση και, με το Vault Drive ανοιχτό, φτάνουν και στις άλλες συσκευές σου.",
       "empty.files": "Πρόσθεσε τραγούδια", "empty.folder": "Πρόσθεσε φάκελο",
-      "empty.soon": "Δωρεάν μουσική από ανοιχτούς καταλόγους έρχεται σύντομα.",
+      "empty.soon": "Ή άκου ελεύθερη μουσική από ανοιχτούς καταλόγους παρακάτω.",
       "search.ph": "Τι θέλεις να ακούσεις;", "search.none": "Δεν βρέθηκε τίποτα για «{q}».",
       "search.hint": "Ψάξε στα τραγούδια, τα άλμπουμ, τους καλλιτέχνες και τις λίστες σου.",
       "search.genres": "Περιήγηση ανά είδος",
@@ -138,7 +156,25 @@
       "s.keys": "Πλήκτρα: Space αναπαραγωγή/παύση · ← → 10 δ. πίσω/μπρος · Shift+← → προηγούμενο/επόμενο · S τυχαία · R επανάληψη · L αγαπημένο",
       "info.file": "Αρχείο", "info.format": "Μορφή", "info.size": "Μέγεθος", "info.genre": "Είδος", "info.year": "Έτος", "info.track": "Κομμάτι",
       "info.length": "Διάρκεια",
-      "liked.empty": "Τα τραγούδια που σου αρέσουν εμφανίζονται εδώ. Πάτησε την καρδιά σε οποιοδήποτε τραγούδι."
+      "liked.empty": "Τα τραγούδια που σου αρέσουν εμφανίζονται εδώ. Πάτησε την καρδιά σε οποιοδήποτε τραγούδι.",
+      "home.free": "Ελεύθερη μουσική", "home.freeSub": "Ανοιχτοί κατάλογοι: Jamendo, Internet Archive, Openverse και ccMixter. Κάθε τραγούδι δείχνει την άδειά του.",
+      "home.genres": "Ελεύθερη μουσική ανά είδος", "kind.free": "Ελεύθερη μουσική", "home.moods": "Διάθεση (Jamendo)", "kind.mood": "Διάθεση",
+      "o.title": "Ελεύθερη μουσική online", "o.all": "Όλα", "o.loading": "Φόρτωση…", "o.more": "Δείξε περισσότερα", "o.none": "Δεν βρέθηκε τίποτα εδώ.",
+      "o.err": "Δεν ήρθε απάντηση από {s}.", "o.busy": "Πολλά αιτήματα προς {s}. Δοκίμασε ξανά σε ένα λεπτό.", "o.offline": "Δεν υπάρχει σύνδεση.",
+      "o.retry": "Δοκίμασε ξανά", "o.closed": "Αυτό δεν έχει ανοιχτή άδεια, οπότε η Μουσική δεν το παίζει.", "o.wait": "Αναζήτηση online…",
+      "o.albums": "Άλμπουμ · {s}", "o.songs": "Τραγούδια · {s}",
+      "m.credit": "Αντιγραφή αναφοράς", "m.source": "Άνοιγμα στο {s}", "m.saveOff": "Αποθήκευση για χωρίς σύνδεση", "m.delOff": "Αφαίρεση αντιγράφου",
+      "m.saveAlbum": "Αποθήκευση άλμπουμ για χωρίς σύνδεση",
+      "toast.copied": "Η αναφορά αντιγράφηκε.", "toast.offSaving": "Αποθήκευση: {n} για χωρίς σύνδεση…", "toast.offSaved": "Αποθηκεύτηκαν για χωρίς σύνδεση: {n}.",
+      "toast.offFail": "Δεν αποθηκεύτηκαν {n}: η πηγή δεν επιτρέπει λήψη από τον browser.",
+      "toast.offNo": "Η άδεια ή η πηγή δεν επιτρέπει αντίγραφο χωρίς σύνδεση για αυτό το τραγούδι.", "toast.offHave": "Είναι ήδη αποθηκευμένο για χωρίς σύνδεση.",
+      "toast.offDel": "Το αντίγραφο αφαιρέθηκε.", "toast.offDels": "Τα αντίγραφα αφαιρέθηκαν.",
+      "lib.offline": "Χωρίς σύνδεση", "off.empty": "Εδώ εμφανίζονται τα τραγούδια από τους ελεύθερους καταλόγους που αποθηκεύεις για χωρίς σύνδεση.", "off.badge": "Αποθηκευμένο για χωρίς σύνδεση",
+      "s.open": "Ελεύθερη μουσική online (Jamendo, Internet Archive, Openverse, ccMixter)",
+      "s.openHint": "Μόνο όταν περιηγείσαι ή ψάχνεις. Τα αιτήματα πάνε κατευθείαν σε αυτές τις υπηρεσίες, χωρίς λογαριασμό και χωρίς παρακολούθηση.",
+      "s.offInfo": "Αντίγραφα χωρίς σύνδεση: {n} · {s}", "s.offClear": "Διαγραφή όλων των αντιγράφων",
+      "s.offClearQ": "Να διαγραφούν όλα τα αντίγραφα χωρίς σύνδεση ({n}); Τα τραγούδια μένουν στις λίστες σου και παίζουν online.",
+      "info.source": "Πηγή", "info.licence": "Άδεια", "info.page": "Σελίδα", "info.credit": "Αναφορά"
     }
   };
   function t(k, v) {
@@ -200,19 +236,23 @@
     user: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>',
     vol: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>',
     x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>',
+    globe: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>',
+    dl: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>',
     grip: '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/></svg>'
   };
 
   // Device-local view prefs (R10): never synced.
   var prefs = (function () {
-    var p = { tab: "home", lib: "pl", sort: "title", legacy: "auto" };
+    var p = { tab: "home", lib: "pl", sort: "title", legacy: "auto", open: true, osrc: "all" };
     try {
       var o = JSON.parse(localStorage.getItem(PREFS_KEY) || "null");
       if (o && typeof o === "object") {
         if (["home", "search", "lib"].indexOf(o.tab) >= 0) p.tab = o.tab;
-        if (["pl", "songs", "albums", "artists", "genres", "folders"].indexOf(o.lib) >= 0) p.lib = o.lib;
+        if (["pl", "songs", "albums", "artists", "genres", "folders", "offline"].indexOf(o.lib) >= 0) p.lib = o.lib;
         if (["title", "artist", "album", "added"].indexOf(o.sort) >= 0) p.sort = o.sort;
         if (["auto", "el", "latin"].indexOf(o.legacy) >= 0) p.legacy = o.legacy;
+        if (o.open === false) p.open = false;
+        if (["all", "jm", "ia", "ov", "cc"].indexOf(o.osrc) >= 0) p.osrc = o.osrc;
       }
     } catch (e) {}
     return p;
@@ -281,6 +321,199 @@
         if (force) showToast(t("scan.done"));
       }, function (e) { scanState.busy = false; paintScan(); showToast(t("toast.err", { c: (e && e.message) || "scan" })); });
   }
+  // ---------- 3b. Open catalogues (open.js, wave 2) ----------
+  var O = window.OrosMusicOpen || null;
+  function openOn() { return !!(O && prefs.open); }
+  // What plays for a row: the local file, else a song of an open
+  // catalogue (it carries its own address), else nothing.
+  function playable(x) {
+    if (!x) return null;
+    if (x.p) return x;
+    var r = resolve(x);
+    if (r) return r;
+    return C.isRemote(x) ? x : null;
+  }
+  function srcName(s) { return O && O.SOURCES[s] ? O.SOURCES[s].name : ""; }
+  // Offline copies on this device: key -> { k, sz, at, ref }.
+  var offKeys = {};
+  function loadOff() {
+    if (!ST || typeof ST.offList !== "function") return Promise.resolve();
+    return ST.offList().then(function (l) { offKeys = {}; l.forEach(function (x) { if (x && x.k) offKeys[x.k] = x; }); });
+  }
+  // Answers of the open catalogues, kept while the app is open so a
+  // re-render shows them at once: key -> { list, page, more, busy, err, extra }.
+  var feeds = {}, feedN = 0;
+  function feed(key, fetcher) {
+    var f = feeds[key];
+    if (!f) {
+      f = feeds[key] = { list: [], page: 0, more: true, busy: false, err: "", extra: null, fetcher: fetcher, n: ++feedN };
+      var ks = Object.keys(feeds);
+      if (ks.length > 60) ks.sort(function (a, b) { return feeds[a].n - feeds[b].n; }).slice(0, ks.length - 60).forEach(function (k) { if (!feeds[k].busy) delete feeds[k]; });
+      feedMore(key);
+    }
+    return f;
+  }
+  function feedMore(key) {
+    var f = feeds[key];
+    if (!f || f.busy || !f.more) return;
+    f.busy = true; f.err = "";
+    var page = f.page + 1;
+    f.fetcher(page).then(function (r) {
+      f.busy = false; f.page = page;
+      var seen = {}, got = (r && r.list) || [];
+      f.list.forEach(function (x) { seen[x.k || x.id] = 1; });
+      got.forEach(function (x) { var id = x.k || x.id; if (!seen[id]) { seen[id] = 1; f.list.push(x); } });
+      f.more = !!(r && r.more) && got.length > 0;
+      if (r && r.extra) f.extra = r.extra;
+      renderKeepScroll();
+    }, function (e) {
+      f.busy = false; f.err = (e && e.code) || "net";
+      renderKeepScroll();
+    });
+  }
+  function fIa(o) { return function (page) { return O.iaSearch(Object.assign({}, o, { page: page })).then(function (r) { return { list: r.albums, more: r.more }; }); }; }
+  function fOv(o) { return function (page) { return O.ovSearch(Object.assign({}, o, { page: page })).then(function (r) { return { list: r.tracks, more: r.more }; }); }; }
+  function fCc(o) { return function (page) { return O.ccSearch(Object.assign({}, o, { page: page })).then(function (r) { return { list: r.tracks, more: r.more }; }); }; }
+  function fJm(o) {
+    return function (page) {
+      var q = Object.assign({}, o, { page: page });
+      if (o.albums) return O.jmAlbums(q).then(function (r) { return { list: r.albums, more: r.more }; });
+      if (o.radios) return O.jmRadios().then(function (r) { return { list: r.radios, more: false }; });
+      return O.jmTracks(q).then(function (r) { return { list: r.tracks, more: r.more }; });
+    };
+  }
+  // An album page of Internet Archive (ia) or Jamendo (jm).
+  function albumOf(sk, id) { return sk === "jm" ? O.jmAlbum(id) : O.iaAlbum(id); }
+  function fAlbum(sk, id) { return function () { return albumOf(sk, id).then(function (r) { return { list: r.tracks, more: false, extra: r.album }; }); }; }
+  function errText(code, s) {
+    return code === "busy" ? t("o.busy", { s: s }) : code === "offline" ? t("o.offline") : code === "closed" ? t("o.closed") : t("o.err", { s: s });
+  }
+  // Loading / error / "show more" under a list of an open catalogue.
+  function feedStatus(box, key, s) {
+    var f = feeds[key];
+    if (!f) return;
+    if (f.busy) { box.appendChild(el("p", "dim small o-note", t("o.loading"))); return; }
+    if (f.err) {
+      var p = el("div", "o-note o-err");
+      p.appendChild(el("span", "dim small", errText(f.err, s)));
+      if (f.err !== "closed") p.appendChild(button(t("o.retry"), "pill small-pill", function () { f.more = true; feedMore(key); renderKeepScroll(); }));
+      box.appendChild(p);
+      return;
+    }
+    if (!f.list.length) { box.appendChild(el("p", "dim small o-note", t("o.none"))); return; }
+    if (f.more) box.appendChild(el("div", "o-note")).appendChild(button(t("o.more"), "pill small-pill", function () { feedMore(key); renderKeepScroll(); }));
+  }
+  function oAlbumCard(a) {
+    var sk = a.s === "jm" ? "jm" : "ia";
+    return card(cover(a.art, a.n, ""), a.n, a.a || srcName(sk), function () { openView({ kind: sk, id: a.id, n: a.n }); },
+      function () {
+        albumOf(sk, a.id).then(function (r) { playRows(r.tracks, -1, { kind: sk, id: a.id, n: r.album.n }, false); },
+          function (e) { showToast(errText(e && e.code, srcName(sk))); });
+      });
+  }
+  // A Jamendo radio: its stream address is asked for on play.
+  function radioCard(x) {
+    var go = function () {
+      O.jmRadio(x).then(function (it) { playRows([it], 0, { kind: "jmradio", id: x.id, n: it.t }, false); },
+        function (e) { showToast(errText(e && e.code, srcName("jm"))); });
+    };
+    return card(cover(x.art, x.n, ""), x.n, "Jamendo Radio", go, go);
+  }
+  // The album page of a song from an open catalogue, if it has one.
+  function oAlbumView(r) {
+    if (!r || !O) return null;
+    if (r.s === "ia") { var ia = O.iaIdFromPage(r.pg); return ia ? { kind: "ia", id: ia, n: r.al } : null; }
+    if (r.s === "jm" && r.ai) return { kind: "jm", id: r.ai, n: r.al };
+    return null;
+  }
+  function oArtistId(r) {
+    if (!r || !r.s) return "";
+    if (r.s === "cc") { var u = O.ccUserFromPage(r.pg); return u ? "cc|" + u : ""; }
+    if (r.s === "jm") return r.ri ? "jm|" + r.ri : "";
+    return r.a ? r.s + "|" + r.a : "";
+  }
+  function freeSection(m) {
+    if (!openOn()) return;
+    var s1 = section(m, t("home.free"));
+    s1.appendChild(el("p", "dim small sec-note", t("home.freeSub")));
+    var row = el("div", "cards");
+    O.BROWSE.forEach(function (b) {
+      var name = b[LANG] || b.en;
+      row.appendChild(card(cover("", b.id, "", I.globe), name, srcName(b.src), function () { openView({ kind: "browse", id: b.id }); }));
+    });
+    s1.appendChild(row);
+    var s2 = section(m, t("home.genres"));
+    var chips = el("div", "chips wrap");
+    O.OPEN_GENRES.forEach(function (g) { chips.appendChild(button(LANG === "el" ? g[2] : g[1], "chip", function () { openView({ kind: "ogenre", id: g[0] }); })); });
+    s2.appendChild(chips);
+    var s3 = section(m, t("home.moods"));
+    var mc = el("div", "chips wrap");
+    O.MOODS.forEach(function (g) { mc.appendChild(button(LANG === "el" ? g[2] : g[1], "chip", function () { openView({ kind: "omood", id: g[0] }); })); });
+    s3.appendChild(mc);
+  }
+  function copyText(text, ok) {
+    var legacy = function () {
+      var ta = el("textarea");
+      ta.value = text; ta.setAttribute("readonly", ""); ta.style.position = "fixed"; ta.style.opacity = "0";
+      (document.querySelector("dialog[open]") || document.body).appendChild(ta);
+      ta.select();
+      try { document.execCommand("copy"); ok(); } catch (e) {}
+      ta.remove();
+    };
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(text).then(ok, legacy); return; }
+    } catch (e) {}
+    legacy();
+  }
+  function copyCredit(r) { copyText(O.credit(r, LANG), function () { showToast(t("toast.copied")); }); }
+  function openExt(u) {
+    if (!/^https:\/\//i.test(u || "")) return;
+    var w = window.open(u, "_blank", "noopener,noreferrer");
+    if (w) { try { w.opener = null; } catch (e) {} }
+  }
+  // Offline copies: only songs whose licence and source allow it
+  // (off: 1), fetched straight from the source; one at a time.
+  var offBusy = false;
+  function saveOffline(list) {
+    var allowed = list.filter(function (r) { return r && r.off === 1 && C.isRemote(r); });
+    if (!allowed.length) { showToast(t("toast.offNo")); return; }
+    var todo = allowed.filter(function (r) { return !offKeys[r.k]; });
+    if (!todo.length) { showToast(t("toast.offHave")); return; }
+    if (offBusy || !ST || typeof ST.putOff !== "function") return;
+    offBusy = true;
+    try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(function () {}); } catch (e) {}
+    showToast(t("toast.offSaving", { n: nSongs(todo.length) }));
+    var ok = 0, bad = 0;
+    todo.reduce(function (p, r) {
+      return p.then(function () {
+        return fetch(r.u, { mode: "cors", credentials: "omit", referrerPolicy: "no-referrer" }).then(function (res) {
+          if (!res.ok) throw new Error("http");
+          return res.blob();
+        }).then(function (b) {
+          if (!b || !b.size || b.size > 300e6 || /^text\//i.test(b.type || "")) throw new Error("type");
+          return ST.putOff({ k: r.k, blob: b, sz: b.size, at: Date.now(), ref: C.normRef(r) });
+        }).then(function () { ok++; }, function () { bad++; });
+      });
+    }, Promise.resolve()).then(function () {
+      offBusy = false;
+      return loadOff();
+    }).then(function () {
+      renderKeepScroll();
+      var msg = ok ? t("toast.offSaved", { n: nSongs(ok) }) : "";
+      if (bad) msg = (msg ? msg + " " : "") + t("toast.offFail", { n: bad });
+      showToast(msg);
+    });
+  }
+  function delOffline(keys) {
+    if (!keys.length || !ST || typeof ST.delOff !== "function") return;
+    ST.delOff(keys).then(loadOff).then(function () { renderKeepScroll(); showToast(keys.length === 1 ? t("toast.offDel") : t("toast.offDels")); });
+  }
+  function offRows() {
+    return Object.keys(offKeys).map(function (k) { return offKeys[k]; }).filter(function (x) { return x.ref; })
+      .sort(function (a, b) { return b.at - a.at; }).map(function (x) { return x.ref; });
+  }
+  function offSize() { var n = 0; Object.keys(offKeys).forEach(function (k) { n += offKeys[k].sz || 0; }); return n; }
+
   // Paths in the queue follow renamed/moved files (same song key).
   function relinkQueue() {
     if (!H || typeof H.relink !== "function") return;
@@ -314,6 +547,17 @@
     var hue = parseInt(C.hash(C.fold(seed || "")).slice(0, 4), 36) % 360;
     box.style.setProperty("--hue", hue);
     box.innerHTML = icon || I.note;           // constant markup
+    if (artId && /^https:\/\//i.test(artId)) {
+      // A cover of an open catalogue, straight from the source.
+      var im = el("img");
+      im.alt = ""; im.decoding = "async"; im.loading = "lazy"; im.referrerPolicy = "no-referrer";
+      im.addEventListener("error", function () { im.remove(); box.classList.remove("has-img"); box.innerHTML = icon || I.note; });
+      im.src = artId;
+      box.textContent = "";
+      box.appendChild(im);
+      box.classList.add("has-img");
+      return box;
+    }
     if (artId) artUrl(artId).then(function (u) {
       if (!u) return;
       var img = el("img");
@@ -336,13 +580,13 @@
   // ---------- 4. Actions ----------
   // Rows of a list as playable items (refs without a file stay out).
   function itemsOf(list) {
-    return list.map(function (x) { var r = x && x.p ? x : resolve(x); return r ? C.itemOf(r) : null; }).filter(Boolean);
+    return list.map(function (x) { var r = playable(x); return r ? C.itemOf(r) : null; }).filter(Boolean);
   }
   function playRows(rows, idx, src, shuffle) {
     if (!H) return;
     var items = [], map = -1;
     rows.forEach(function (x, i) {
-      var r = x && x.p ? x : resolve(x);
+      var r = playable(x);
       if (!r) return;
       if (i === idx) map = items.length;
       items.push(C.itemOf(r));
@@ -354,7 +598,7 @@
     H.playList(items, idx >= 0 ? map : (shf ? -1 : 0), { shf: shf, src: src });
   }
   function toggleLike(x) {
-    var ref = C.normRef(x.p ? C.refOf(x) : x);
+    var ref = C.normRef(x.p || x.s ? C.refOf(x) : x);
     if (!ref) return;
     var on = !C.isLiked(D(), ref.k);
     mutate(function (d, now) { return C.setLike(d, ref, on, now); });
@@ -513,18 +757,18 @@
     return h < 12 && h >= 5 ? t("hello.m") : h < 18 && h >= 5 ? t("hello.a") : t("hello.e");
   }
   function renderHome(m) {
-    if (!tracks.length && !D().pls.length) { emptyHero(m); return; }
+    if (!tracks.length && !D().pls.length && !C.likedList(D()).length) { emptyHero(m); freeSection(m); return; }
     m.appendChild(el("h1", "greet", greeting()));
     // Quick tiles: liked songs, playlists, shuffle all.
     var tiles = el("div", "tiles");
     var liked = C.likedList(D());
     tiles.appendChild(tile(t("lib.liked"), likedCover(), function () { openView({ kind: "liked" }); }));
-    D().pls.slice(0, 5).forEach(function (p) { tiles.appendChild(tile(p.n, collage(p.it.map(function (r) { return resolve(r) || r; }), ""), function () { openView({ kind: "pl", id: p.id }); })); });
+    D().pls.slice(0, 5).forEach(function (p) { tiles.appendChild(tile(p.n, collage(p.it.map(function (r) { return playable(r) || r; }), ""), function () { openView({ kind: "pl", id: p.id }); })); });
     if (tracks.length) tiles.appendChild(tile(t("home.shuffleAll"), cover("", "shuffle", "", I.shuffle), function () { playRows(tracks, -1, { kind: "all", id: "", n: t("now.lib") }, true); }));
     m.appendChild(tiles);
     void liked;
     var hist = H ? H.history() : null;
-    var recent = (hist && hist.r ? hist.r : []).map(function (x) { return resolve(x); }).filter(Boolean);
+    var recent = (hist && hist.r ? hist.r : []).map(playable).filter(Boolean);
     if (recent.length) {
       var s1 = section(m, t("home.recent"));
       var rowR = el("div", "cards");
@@ -538,6 +782,13 @@
           var al = albumsAll().filter(function (a) { return a.k === ak; })[0];
           if (al) { rowR.appendChild(albumCard(al)); return; }
         }
+        var ov = oAlbumView(r);
+        if (ov) {
+          if (seenAl[ov.kind + "|" + ov.id]) return;
+          seenAl[ov.kind + "|" + ov.id] = 1;
+          rowR.appendChild(oAlbumCard({ s: ov.kind, id: ov.id, n: r.al || r.t, a: r.a, art: r.art }));
+          return;
+        }
         rowR.appendChild(songCard(r));
       });
       s1.appendChild(rowR);
@@ -550,7 +801,9 @@
       s2.appendChild(rowA);
     }
     if (hist && hist.c) {
-      var top = Object.keys(hist.c).sort(function (a, b) { return hist.c[b] - hist.c[a]; }).map(function (k) { return resolve({ k: k }); }).filter(Boolean).slice(0, 8);
+      var seenR = {};
+      (hist.r || []).forEach(function (x) { if (x && x.k) seenR[x.k] = x; });
+      var top = Object.keys(hist.c).sort(function (a, b) { return hist.c[b] - hist.c[a]; }).map(function (k) { return playable(seenR[k] || { k: k }); }).filter(Boolean).slice(0, 8);
       if (top.length >= 3) {
         var s3 = section(m, t("home.top"));
         s3.appendChild(rowList(top, { src: { kind: "top", id: "", n: t("home.top") } }));
@@ -563,6 +816,7 @@
       arts.forEach(function (a) { rowAr.appendChild(artistCard(a)); });
       s4.appendChild(rowAr);
     }
+    freeSection(m);
   }
   function tile(label, art, fn) {
     var b = el("button", "tile");
@@ -580,10 +834,19 @@
     inp.setAttribute("aria-label", t("search.ph"));
     inp.autocomplete = "off";
     var timer = null;
+    var refresh = function () { var r = $("search-res"); if (r) { r.textContent = ""; searchResults(r); } };
     inp.addEventListener("input", function () {
       searchQ = inp.value;
       clearTimeout(timer);
-      timer = setTimeout(function () { var r = $("search-res"); if (r) { r.textContent = ""; searchResults(r); } }, 150);
+      timer = setTimeout(refresh, 150);
+      // The open catalogues are asked only once the typing stops.
+      clearTimeout(onlineTimer);
+      onlineTimer = setTimeout(function () { if (onlineQ !== searchQ.trim()) { onlineQ = searchQ.trim(); refresh(); } }, 800);
+    });
+    inp.addEventListener("keydown", function (e) {
+      if (e.key !== "Enter") return;
+      clearTimeout(onlineTimer);
+      if (onlineQ !== searchQ.trim()) { onlineQ = searchQ.trim(); refresh(); }
     });
     bar.appendChild(inp);
     m.appendChild(bar);
@@ -595,7 +858,21 @@
   function searchResults(box) {
     var q = searchQ.trim();
     if (!q) {
-      if (!tracks.length) { box.appendChild(el("p", "empty", t("search.hint"))); return; }
+      if (openOn()) {
+        box.appendChild(el("h2", "sub-h", t("home.genres")));
+        var og = el("div", "genre-grid");
+        O.OPEN_GENRES.forEach(function (g) {
+          var b = el("button", "genre");
+          b.type = "button";
+          b.style.setProperty("--hue", parseInt(C.hash(g[0]).slice(0, 4), 36) % 360);
+          b.appendChild(el("span", "", LANG === "el" ? g[2] : g[1]));
+          b.appendChild(el("span", "dim small", t("kind.free")));
+          b.addEventListener("click", function () { openView({ kind: "ogenre", id: g[0] }); });
+          og.appendChild(b);
+        });
+        box.appendChild(og);
+      }
+      if (!tracks.length) { if (!openOn()) box.appendChild(el("p", "empty", t("search.hint"))); return; }
       var gs = genresAll();
       if (gs.length) {
         box.appendChild(el("h2", "sub-h", t("search.genres")));
@@ -616,7 +893,7 @@
     var r = C.search(tracks, q, LANG);
     var w = C.words(q);
     var pls = D().pls.filter(function (p) { var f = C.fold(p.n); return w.every(function (x) { return f.indexOf(x) >= 0; }); });
-    if (!r.songs.length && !r.albums.length && !r.artists.length && !pls.length) { box.appendChild(el("p", "empty", t("search.none", { q: q }))); return; }
+    if (!r.songs.length && !r.albums.length && !r.artists.length && !pls.length && !openOn()) { box.appendChild(el("p", "empty", t("search.none", { q: q }))); return; }
     if (r.songs.length) {
       box.appendChild(el("h2", "sub-h", t("sec.songs")));
       box.appendChild(rowList(r.songs.slice(0, 30), { src: { kind: "search", id: q, n: q } }));
@@ -633,25 +910,65 @@
       box.appendChild(el("h2", "sub-h", t("sec.pls")));
       var cp = el("div", "cards"); pls.forEach(function (p) { cp.appendChild(plCard(p)); }); box.appendChild(cp);
     }
+    if (openOn() && q.length >= 2) onlineResults(box, q);
+  }
+  var onlineQ = "", onlineTimer = null;
+  function onlineResults(box, q) {
+    var sec = section(box, t("o.title"));
+    var chips = el("div", "chips");
+    ["all", "jm", "ia", "ov", "cc"].forEach(function (k) {
+      var b = button(k === "all" ? t("o.all") : srcName(k), "chip" + (prefs.osrc === k ? " on" : ""), function () { prefs.osrc = k; savePrefs(); renderKeepScroll(); });
+      b.setAttribute("aria-pressed", prefs.osrc === k ? "true" : "false");
+      chips.appendChild(b);
+    });
+    sec.appendChild(chips);
+    if (onlineQ !== q) { sec.appendChild(el("p", "dim small o-note", t("o.wait"))); return; }
+    var all = prefs.osrc === "all", src = { kind: "osearch", id: q, n: q };
+    if (all || prefs.osrc === "ia") {
+      var kI = "s|ia|" + q, fi = feed(kI, fIa({ q: q }));
+      sec.appendChild(el("h3", "sub-h", t("o.albums", { s: srcName("ia") })));
+      var ci = el("div", all ? "cards" : "grid");
+      fi.list.forEach(function (a) { ci.appendChild(oAlbumCard(a)); });
+      if (fi.list.length) sec.appendChild(ci);
+      feedStatus(sec, kI, srcName("ia"));
+    }
+    ["jm", "ov", "cc"].forEach(function (sk) {
+      if (!all && prefs.osrc !== sk) return;
+      var k = "s|" + sk + "|" + q, f = feed(k, sk === "jm" ? fJm({ q: q }) : sk === "ov" ? fOv({ q: q }) : fCc({ q: q }));
+      sec.appendChild(el("h3", "sub-h", t("o.songs", { s: srcName(sk) })));
+      if (f.list.length) sec.appendChild(rowList(f.list, { src: src }));
+      feedStatus(sec, k, srcName(sk));
+    });
   }
   function renderLib(m) {
     var chips = el("div", "chips");
-    ["pl", "songs", "albums", "artists", "genres", "folders"].forEach(function (k) {
+    ["pl", "songs", "albums", "artists", "genres", "folders"].concat(O ? ["offline"] : []).forEach(function (k) {
       var b = button(t("lib." + k), "chip" + (prefs.lib === k ? " on" : ""), function () { prefs.lib = k; savePrefs(); renderAll(); });
       b.setAttribute("aria-pressed", prefs.lib === k ? "true" : "false");
       chips.appendChild(b);
     });
     m.appendChild(chips);
+    // The chosen chip stays in sight on a narrow screen.
+    var onChip = chips.querySelector(".chip.on");
+    if (onChip) requestAnimationFrame(function () { if (onChip.offsetLeft + onChip.offsetWidth > chips.clientWidth) chips.scrollLeft = onChip.offsetLeft - 12; });
+    if (prefs.lib === "offline") {
+      var offSrc = { kind: "offline", id: "", n: t("lib.offline") }, offL = offRows();
+      if (!offL.length) { m.appendChild(el("p", "empty", t("off.empty"))); return; }
+      m.appendChild(el("p", "dim small o-note", t("s.offInfo", { n: nSongs(offL.length), s: fmtSize(offSize()) })));
+      m.appendChild(playBar(offL, offSrc));
+      m.appendChild(rowList(offL, { src: offSrc }));
+      return;
+    }
     if (!tracks.length && prefs.lib !== "pl") { emptyHero(m); return; }
     if (prefs.lib === "pl") {
       var list = el("div", "lib-list");
       list.appendChild(libRow(likedCover("sm"), t("lib.liked"), t("kind.pl") + " · " + nSongs(C.likedList(D()).length), function () { openView({ kind: "liked" }); }));
       D().pls.slice().sort(function (a, b) { return b.m - a.m; }).forEach(function (p) {
-        list.appendChild(libRow(collage(p.it.map(function (r) { return resolve(r) || r; }), "sm"), p.n, t("kind.pl") + " · " + nSongs(p.it.length), function () { openView({ kind: "pl", id: p.id }); }));
+        list.appendChild(libRow(collage(p.it.map(function (r) { return playable(r) || r; }), "sm"), p.n, t("kind.pl") + " · " + nSongs(p.it.length), function () { openView({ kind: "pl", id: p.id }); }));
       });
       list.appendChild(libRow(cover("", "+", "sm", I.plus), t("lib.newPl"), "", function () { newPlaylist([], function (id) { openView({ kind: "pl", id: id }); }); }));
       m.appendChild(list);
-      if (!tracks.length) emptyHero(m);
+      if (!tracks.length) { emptyHero(m); freeSection(m); }
     } else if (prefs.lib === "songs") {
       var bar = el("div", "list-bar");
       bar.appendChild(el("span", "dim small", nSongs(tracks.length)));
@@ -720,7 +1037,8 @@
     if (sub) tx.appendChild(sub);
     h.appendChild(tx);
     m.appendChild(h);
-    m.appendChild(playBar(list, src, extra));
+    if (list) m.appendChild(playBar(list, src, extra));
+    else if (extra && extra.length) { var bar = el("div", "play-bar"); extra.forEach(function (x) { bar.appendChild(x); }); m.appendChild(bar); }
   }
   function playBar(list, src, extra) {
     var bar = el("div", "play-bar");
@@ -777,14 +1095,14 @@
       var p = C.findPl(D(), v.id);
       if (!p) { view = null; renderAll(); return; }
       src = { kind: "pl", id: p.id, n: p.n };
-      var rows = p.it.map(function (r) { return resolve(r) ? Object.assign({}, resolve(r), { _ref: r }) : Object.assign({ _missing: 1 }, r); });
+      var rows = p.it.map(function (r) { var x = playable(r); return x ? Object.assign({}, x, { _ref: r }) : Object.assign({ _missing: 1 }, r); });
       pageHead(m, collage(rows, "big"), t("kind.pl"), p.n, el("div", "ph-sub dim", [nSongs(p.it.length), totalTime(rows.filter(function (r) { return !r._missing; }))].filter(Boolean).join(" · ")),
         rows, src, [button(t("more"), "icon-btn", function () { plMenu(p); }, I.more)]);
       if (!rows.length) m.appendChild(el("p", "empty", t("pl.emptyRows")));
       m.appendChild(rowList(rows, { src: src, pl: p }));
     } else if (v.kind === "liked") {
       src = { kind: "liked", id: "", n: t("lib.liked") };
-      var lk = C.likedList(D()).map(function (l) { var r = resolve(l); return r || Object.assign({ _missing: 1 }, l); });
+      var lk = C.likedList(D()).map(function (l) { var r = playable(l); return r || Object.assign({ _missing: 1 }, l); });
       pageHead(m, likedCover("big"), t("kind.pl"), t("lib.liked"), el("div", "ph-sub dim", nSongs(lk.length)), lk, src);
       if (!lk.length) m.appendChild(el("p", "empty", t("liked.empty")));
       m.appendChild(rowList(lk, { src: src }));
@@ -795,11 +1113,105 @@
       var gl = C.sortTracks(g.list, "artist", LANG);
       pageHead(m, cover("", g.n, "big"), t("kind.genre"), g.n, el("div", "ph-sub dim", nSongs(g.list.length)), gl, src);
       m.appendChild(rowList(gl, { src: src }));
+    } else if (O && (v.kind === "browse" || v.kind === "ogenre" || v.kind === "omood" || v.kind === "ia" || v.kind === "jm" || v.kind === "oartist")) {
+      renderOpen(m, v);
     } else if (v.kind === "folder") {
       var crumbs = el("div", "crumbs dim small", v.id.replace(LIB.ROOT, "Music"));
       m.appendChild(crumbs);
       renderFolder(m, v.id);
     }
+  }
+
+  // Pages of the open catalogues: a shelf, a genre, an Internet
+  // Archive album, an artist.
+  function renderOpen(m, v) {
+    var src, f, k;
+    if (v.kind === "browse") {
+      var b = O.browseOf(v.id);
+      if (!b) { m.appendChild(el("p", "empty", t("lib.empty"))); return; }
+      var name = b[LANG] || b.en;
+      src = { kind: "browse", id: b.id, n: name };
+      k = "b|" + b.id;
+      f = feed(k, b.src === "ia" ? fIa(b.ia) : b.src === "cc" ? fCc(b.cc) : b.src === "jm" ? fJm(b.jm) : fOv(b.ov));
+      var cardsOnly = b.src === "ia" || (b.jm && (b.jm.albums || b.jm.radios));
+      pageHead(m, cover("", b.id, "big", I.globe), t("kind.free"), name, el("div", "ph-sub dim", srcName(b.src)), cardsOnly ? null : f.list, src);
+      if (cardsOnly) { var g = el("div", "grid"); f.list.forEach(function (a) { g.appendChild(b.jm && b.jm.radios ? radioCard(a) : oAlbumCard(a)); }); m.appendChild(g); }
+      else m.appendChild(rowList(f.list, { src: src }));
+      feedStatus(m, k, srcName(b.src));
+    } else if (v.kind === "ogenre") {
+      var gg = O.genreOf(v.id);
+      if (!gg) { m.appendChild(el("p", "empty", t("lib.empty"))); return; }
+      var gn = gg[LANG] || gg.en, word = gg.id === "hiphop" ? "hip hop" : gg.id;
+      src = { kind: "ogenre", id: gg.id, n: gn };
+      var ki = "g|ia|" + gg.id, ko = "g|ov|" + gg.id, kc = "g|cc|" + gg.id, kj = "g|jm|" + gg.id;
+      var fj = feed(kj, fJm({ tags: gg.id, order: "popularity_month" }));
+      var fi = feed(ki, fIa({ subject: word })), fo = feed(ko, fOv({ q: word })), fc = feed(kc, fCc({ tags: gg.id === "hiphop" ? "hip_hop" : gg.id }));
+      var songs = fj.list.concat(fo.list, fc.list);
+      pageHead(m, cover("", gg.id, "big", I.globe), t("kind.free"), gn, el("div", "ph-sub dim", t("home.freeSub")), songs, src);
+      m.appendChild(el("h2", "sub-h", t("o.albums", { s: srcName("ia") })));
+      var ci = el("div", "cards");
+      fi.list.forEach(function (a) { ci.appendChild(oAlbumCard(a)); });
+      if (fi.list.length) m.appendChild(ci);
+      feedStatus(m, ki, srcName("ia"));
+      [["jm", kj, fj], ["ov", ko, fo], ["cc", kc, fc]].forEach(function (x) {
+        m.appendChild(el("h2", "sub-h", t("o.songs", { s: srcName(x[0]) })));
+        if (x[2].list.length) m.appendChild(rowList(x[2].list, { src: src }));
+        feedStatus(m, x[1], srcName(x[0]));
+      });
+    } else if (v.kind === "omood") {
+      var mo = O.moodOf(v.id);
+      if (!mo) { m.appendChild(el("p", "empty", t("lib.empty"))); return; }
+      var mn = mo[LANG] || mo.en;
+      src = { kind: "omood", id: mo.id, n: mn };
+      k = "m|jm|" + mo.id;
+      f = feed(k, fJm({ mood: mo.id, order: "popularity_month" }));
+      pageHead(m, cover("", "mood" + mo.id, "big", I.globe), t("kind.mood"), mn, el("div", "ph-sub dim", srcName("jm")), f.list, src);
+      m.appendChild(rowList(f.list, { src: src }));
+      feedStatus(m, k, srcName("jm"));
+    } else if (v.kind === "ia" || v.kind === "jm") {
+      var sk0 = v.kind;
+      k = sk0 + "|" + v.id;
+      f = feed(k, fAlbum(sk0, v.id));
+      var al = f.extra || (sk0 === "ia" ? { id: v.id, n: v.n || v.id, a: "", art: "https://archive.org/services/img/" + encodeURIComponent(v.id), pg: "https://archive.org/details/" + encodeURIComponent(v.id) }
+        : { s: "jm", id: v.id, n: v.n || v.id, a: "", art: "", pg: "https://www.jamendo.com/album/" + encodeURIComponent(v.id) });
+      src = { kind: sk0, id: v.id, n: al.n };
+      var sub = el("div", "ph-sub");
+      if (al.a) sub.appendChild(oArtistLink({ s: sk0, a: al.a, ri: al.ri }));
+      sub.appendChild(el("span", "dim", [al.y || "", f.list.length ? nSongs(f.list.length) : "", totalTime(f.list)].filter(Boolean).join(" · ")));
+      if (al.li) sub.appendChild(el("span", "lic", O.licShort(al.li)));
+      var extra = [];
+      if (f.list.length) {
+        extra.push(button(t("m.addPl"), "icon-btn", function () { addToPlaylist(f.list.map(C.normRef).filter(Boolean)); }, I.plus));
+        if (al.off) extra.push(button(t("m.saveAlbum"), "icon-btn", function () { saveOffline(f.list); }, I.dl));
+      }
+      extra.push(button(t("more"), "icon-btn", function () {
+        var items = [[t("m.credit"), function () { copyCredit({ s: sk0, t: al.n, a: al.a, li: al.li, pg: al.pg }); }]];
+        if (al.pg) items.push([t("m.source", { s: srcName(sk0) }), function () { openExt(al.pg); }]);
+        if (al.li) items.push([t("info.licence") + ": " + O.licLabel(al.li, LANG), function () { openExt(O.licUrl(al.li)); }]);
+        menuDlg(items, al.n, al.a);
+      }, I.more));
+      pageHead(m, cover(al.art, al.n, "big"), t("kind.album") + " · " + srcName(sk0), al.n, sub, f.list.length ? f.list : null, src, extra);
+      if (f.list.length) m.appendChild(rowList(f.list, { src: src, numbers: true, noArt: true, noAlbum: true }));
+      feedStatus(m, k, srcName(sk0));
+    } else if (v.kind === "oartist") {
+      var i = v.id.indexOf("|"), sk = v.id.slice(0, i), who = v.id.slice(i + 1);
+      if (!O.SOURCES[sk] || !who) { m.appendChild(el("p", "empty", t("lib.empty"))); return; }
+      var an = v.n || who;
+      src = { kind: "oartist", id: v.id, n: an };
+      k = "a|" + v.id;
+      f = feed(k, sk === "ia" ? fIa({ creator: who }) : sk === "cc" ? fCc({ user: who }) : sk === "jm" ? fJm({ artist: who }) : fOv({ creator: who }));
+      pageHead(m, cover("", an, "big round", I.user), t("kind.artist") + " · " + srcName(sk), an, null, sk === "ia" ? null : f.list, src);
+      if (sk === "ia") { var ga = el("div", "grid"); f.list.forEach(function (a) { ga.appendChild(oAlbumCard(a)); }); m.appendChild(ga); }
+      else m.appendChild(rowList(f.list, { src: src, noArtist: true }));
+      feedStatus(m, k, srcName(sk));
+    }
+  }
+  function oArtistLink(r, cls) {
+    var id = oArtistId(r);
+    var a = el("button", "link " + (cls || ""), r.a || t("unknown.artist"));
+    a.type = "button";
+    if (id) a.addEventListener("click", function (e) { e.stopPropagation(); openView({ kind: "oartist", id: id, n: r.a }); });
+    return a;
   }
 
   // ---------- 6. Rows, cards, menus ----------
@@ -826,7 +1238,15 @@
       if (!opts.noArtist) sub.push(r.a || t("unknown.artist"));
       if (!opts.noAlbum && r.al) sub.push(r.al);
     }
-    tx.appendChild(el("span", "row-s dim", sub.join(" · ")));
+    var subEl = el("span", "row-s dim", sub.join(" · "));
+    if (r.s && !r._missing && O) {
+      if (offKeys[k]) {
+        var oi = el("span", "off-ic"); oi.innerHTML = I.dl; oi.title = t("off.badge"); oi.setAttribute("aria-label", t("off.badge"));
+        subEl.insertBefore(oi, subEl.firstChild);
+      }
+      if (r.li) { var lb0 = el("span", "lic", O.licShort(r.li)); lb0.title = O.licLabel(r.li, LANG); subEl.insertBefore(lb0, subEl.firstChild); }
+    }
+    tx.appendChild(subEl);
     main.appendChild(tx);
     main.addEventListener("click", function () {
       if (r._missing) { showToast(t("missing.toast")); return; }
@@ -845,7 +1265,7 @@
   function songMenu(r, i, opts) {
     var items = [];
     var ref = C.normRef(r._ref || (r.p ? C.refOf(r) : r));
-    var item = r._missing ? null : (r.p ? C.itemOf(r) : null);
+    var item = r._missing ? null : (r.p || C.isRemote(r) ? C.itemOf(r) : null);
     if (item) {
       items.push([t("m.playNext"), function () { H.addNext([item]); showToast(t("toast.next")); }]);
       items.push([t("m.addQueue"), function () { H.addLast([item]); showToast(t("toast.queued")); }]);
@@ -860,6 +1280,16 @@
       if (i > 0) items.push([t("m.up"), function () { mutate(function (d, now) { return C.movePl(d, p.id, i, i - 1, now); }); }]);
       if (i < p.it.length - 1) items.push([t("m.down"), function () { mutate(function (d, now) { return C.movePl(d, p.id, i, i + 1, now); }); }]);
       items.push([t("m.removePl"), function () { mutate(function (d, now) { return C.removeFromPl(d, p.id, i, now); }); }]);
+    }
+    if (r.s && !r.p && O && !r._missing) {
+      var av = oAlbumView(r);
+      if (av && !(view && view.kind === av.kind && view.id === av.id)) items.push([t("m.album"), function () { openView(av); }]);
+      var oa = oArtistId(r);
+      if (oa && !(view && view.kind === "oartist" && view.id === oa)) items.push([t("m.artist"), function () { openView({ kind: "oartist", id: oa, n: r.a }); }]);
+      if (r.off === 1) items.push(offKeys[r.k] ? [t("m.delOff"), function () { delOffline([r.k]); }] : [t("m.saveOff"), function () { saveOffline([r]); }]);
+      items.push([t("m.credit"), function () { copyCredit(r); }]);
+      if (r.pg) items.push([t("m.source", { s: O.sourceName(r) }), function () { openExt(r.pg); }]);
+      items.push([t("m.info"), function () { infoRemote(r); }]);
     }
     if (r.p) items.push([t("m.info"), function () { infoDlg(r); }]);
     if (r.p) items.push([t("m.delete"), function () { deleteSongs([r]); }, true]);
@@ -902,7 +1332,7 @@
     return card(cover(r.art, r.al || r.t, ""), r.t, r.a || t("kind.single"), function () { playRows([r], 0, { kind: "song", id: r.k, n: r.t }, false); });
   }
   function plCard(p) {
-    return card(collage(p.it.map(function (r) { return resolve(r) || r; }), ""), p.n, t("kind.pl"), function () { openView({ kind: "pl", id: p.id }); });
+    return card(collage(p.it.map(function (r) { return playable(r) || r; }), ""), p.n, t("kind.pl"), function () { openView({ kind: "pl", id: p.id }); });
   }
   function infoDlg(r) {
     var dlg = makeDialog("mu-info", "menu-dlg");
@@ -918,6 +1348,29 @@
     add("info.year", r.y);
     dlg.appendChild(dl);
     var row = el("div", "dlg-btns");
+    row.appendChild(button(t("close"), "txt-btn", function () { dlg.close(); }));
+    dlg.appendChild(row);
+    openDialog(dlg);
+  }
+
+  // Where a song of an open catalogue comes from, its licence and the
+  // credit line to copy.
+  function infoRemote(r) {
+    var dlg = makeDialog("mu-info", "menu-dlg");
+    dlg.appendChild(el("h2", "dlg-title", r.t));
+    var dl = el("dl", "info");
+    var add = function (k2, node) { if (!node) return; dl.appendChild(el("dt", "dim", t(k2))); var dd = el("dd", ""); if (typeof node === "string") dd.textContent = node; else dd.appendChild(node); dl.appendChild(dd); };
+    var lnk = function (label, url) { var b = el("button", "link", label); b.type = "button"; b.addEventListener("click", function () { openExt(url); }); return b; };
+    add("info.source", O.sourceName(r));
+    if (r.li) add("info.licence", lnk(O.licLabel(r.li, LANG), O.licUrl(r.li)));
+    if (r.pg) add("info.page", lnk(r.pg.replace(/^https:\/\//, "").slice(0, 60), r.pg));
+    add("info.length", r.d ? C.fmtTime(r.d) : "");
+    add("lib.offline", offKeys[r.k] ? fmtSize(offKeys[r.k].sz) : "");
+    dlg.appendChild(dl);
+    dlg.appendChild(el("p", "dim small", t("info.credit")));
+    dlg.appendChild(el("p", "credit-line", O.credit(r, LANG)));
+    var row = el("div", "dlg-btns");
+    row.appendChild(button(t("m.credit"), "txt-btn", function () { copyCredit(r); }));
     row.appendChild(button(t("close"), "txt-btn", function () { dlg.close(); }));
     dlg.appendChild(row);
     openDialog(dlg);
@@ -990,6 +1443,10 @@
     var like = button(t("like"), "icon-btn like", function () { var c = H.getState().cur; if (c) { toggleLike(c); dlg._paint(true); } }, I.heart);
     meta.appendChild(like);
     dlg.appendChild(meta);
+    var licLine = el("button", "link fp-lic dim small");
+    licLine.type = "button";
+    licLine.addEventListener("click", function () { var c = H.getState().cur; if (c && c.s && O) infoRemote(c); });
+    dlg.appendChild(licLine);
     var seek = el("input", "seek");
     seek.type = "range"; seek.min = "0"; seek.max = "1000"; seek.step = "1"; seek.value = "0";
     seek.setAttribute("aria-label", t("seek"));
@@ -1028,7 +1485,9 @@
         artBox.appendChild(cover(c.art, c.al || c.t, "huge"));
         tt.textContent = c.t || "";
         ta.textContent = "";
-        ta.appendChild(artistLink(c.a, "dim"));
+        ta.appendChild(c.s && O ? oArtistLink(c, "dim") : artistLink(c.a, "dim"));
+        licLine.hidden = !(c.s && O);
+        licLine.textContent = c.s && O ? [c.li ? O.licLabel(c.li, LANG) : "", O.sourceName(c)].filter(Boolean).join(" · ") : "";
         fromN.textContent = (st.src && st.src.n) || t("now.lib");
         var liked = C.isLiked(D(), c.k);
         like.innerHTML = liked ? I.heartOn : I.heart;
@@ -1170,6 +1629,24 @@
     sel.addEventListener("change", function () { prefs.legacy = sel.value; savePrefs(); dlg.close(); rescan(true); });
     lab.appendChild(sel);
     dlg.appendChild(lab);
+    if (O) {
+      var ol = el("label", "check");
+      var cb = el("input");
+      cb.type = "checkbox"; cb.checked = !!prefs.open;
+      cb.addEventListener("change", function () { prefs.open = cb.checked; savePrefs(); renderKeepScroll(); });
+      ol.appendChild(cb);
+      ol.appendChild(el("span", "", t("s.open")));
+      dlg.appendChild(ol);
+      dlg.appendChild(el("p", "dim small", t("s.openHint")));
+      var nOff = Object.keys(offKeys).length;
+      if (nOff) {
+        dlg.appendChild(el("p", "dim small", t("s.offInfo", { n: nSongs(nOff), s: fmtSize(offSize()) })));
+        dlg.appendChild(el("div", "menu-col")).appendChild(button(t("s.offClear"), "danger", function () {
+          dlg.close();
+          confirmDlg(t("s.offClearQ", { n: nOff }), t("s.offClear"), function () { delOffline(Object.keys(offKeys)); });
+        }));
+      }
+    }
     var col = el("div", "menu-col");
     col.appendChild(button(t("s.rescan"), "", function () { dlg.close(); rescan(true); }));
     col.appendChild(el("p", "dim small", t("s.rescanHint")));
@@ -1310,7 +1787,8 @@
     if (full && full.open && full._paint) full._paint(ev === "load" || ev === "queue" || ev === "data");
   }
   // Deep links (shell __orosOpenAt / __orosTakeTarget): { album } |
-  // { artist } | { pl } | { liked: 1 } | { track } (plays it).
+  // { artist } | { pl } | { liked: 1 } | { track } (plays it) |
+  // { ia } (an Internet Archive album) | { jm } (a Jamendo album).
   function openTarget(tg) {
     if (!H || !tg || typeof tg !== "object" || document.querySelector("dialog[open]")) return;
     view = null; history = [];
@@ -1318,6 +1796,8 @@
     else if (typeof tg.artist === "string") openView({ kind: "artist", id: tg.artist });
     else if (typeof tg.pl === "string" && C.findPl(D(), tg.pl)) openView({ kind: "pl", id: tg.pl });
     else if (tg.liked) openView({ kind: "liked" });
+    else if (typeof tg.ia === "string" && O) openView({ kind: "ia", id: tg.ia });
+    else if (typeof tg.jm === "string" && O) openView({ kind: "jm", id: tg.jm });
     else if (typeof tg.track === "string") {
       var r = resolve({ k: tg.track });
       if (r) {
@@ -1340,7 +1820,7 @@
       H = api;
       unsub = H.subscribe(onHost);
       window.addEventListener("pagehide", function () { if (unsub) unsub(); });
-      return loadIndex().then(function () {
+      return Promise.all([loadIndex(), loadOff().catch(function () {})]).then(function () {
         renderAll();
         var tg = null;
         try {

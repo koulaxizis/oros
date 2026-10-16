@@ -143,7 +143,17 @@
         return blobUrl;
       });
     }
-    if (item.u && /^https:\/\//i.test(item.u)) return Promise.resolve(item.u);
+    if (item.u && /^https:\/\//i.test(item.u)) {
+      // A song from an open catalogue: its offline copy when there is
+      // one, else it streams straight from the source.
+      if (!ST || typeof ST.getOff !== "function") return Promise.resolve(item.u);
+      return ST.getOff(item.k).then(function (blob) {
+        if (!blob) return item.u;
+        releaseBlob();
+        blobUrl = w.URL.createObjectURL(blob);
+        return blobUrl;
+      }, function () { return item.u; });
+    }
     return Promise.reject(new Error("nosrc"));
   }
   function load(item, start, autoplay) {
@@ -306,6 +316,8 @@
   // ---------- Media Session ----------
   function setArt(item) {
     var id = item && item.art;
+    // Covers of open-catalogue songs are https addresses.
+    if (id && /^https:\/\//i.test(id)) { artFor = ""; if (artUrl) { try { w.URL.revokeObjectURL(artUrl); } catch (e) {} artUrl = ""; } return Promise.resolve(id); }
     if (!id || !ST) { artFor = ""; if (artUrl) { try { w.URL.revokeObjectURL(artUrl); } catch (e) {} artUrl = ""; } return Promise.resolve(""); }
     if (id === artFor && artUrl) return Promise.resolve(artUrl);
     return ST.getArt(id).then(function (blob) {
@@ -323,7 +335,7 @@
       try {
         if (typeof w.MediaMetadata === "function") {
           ms.metadata = new w.MediaMetadata({ title: item.t || "", artist: item.a || "", album: item.al || "",
-            artwork: url ? [{ src: url, sizes: "300x300", type: "image/jpeg" }] : [] });
+            artwork: url ? [/^blob:/.test(url) ? { src: url, sizes: "300x300", type: "image/jpeg" } : { src: url }] : [] });
         }
       } catch (e) {}
     });

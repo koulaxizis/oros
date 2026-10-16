@@ -141,6 +141,7 @@
       "set.incL": "Step, lower body", "set.rest": "Default rest (s)", "set.sound": "Sound when rest ends",
       "set.vib": "Vibrate when rest ends", "set.habits": "Show workouts in Habits", "set.export": "Export", "set.csv": "All sets (CSV)",
       "set.json": "Backup (JSON)", "set.restore": "Restore from backup", "set.lib": "Exercise library",
+      "set.osave": "orOS file (.orosworkouts)", "set.oopen": "Open orOS file…", "set.ofolder": "Unzipped orOS folder…",
       "set.metric": "Metric (kg, km, cm)", "set.imperial": "Imperial (lb, mi, in)",
       "set.restored": "Backup restored: {n} workouts", "set.badFile": "This file is not a Workouts backup",
       "set.import": "Import workouts (Strong, Hevy, FitNotes, JEFIT, FIT, TCX, GPX)",
@@ -274,6 +275,7 @@
       "set.incL": "Βήμα, κάτω σώμα", "set.rest": "Προεπιλεγμένη ανάπαυση (δ)", "set.sound": "Ήχος στο τέλος της ανάπαυσης",
       "set.vib": "Δόνηση στο τέλος της ανάπαυσης", "set.habits": "Εμφάνιση των προπονήσεων στις Συνήθειες", "set.export": "Εξαγωγή", "set.csv": "Όλα τα σετ (CSV)",
       "set.json": "Αντίγραφο ασφαλείας (JSON)", "set.restore": "Επαναφορά από αντίγραφο", "set.lib": "Βιβλιοθήκη ασκήσεων",
+      "set.osave": "Αρχείο orOS (.orosworkouts)", "set.oopen": "Άνοιγμα αρχείου orOS…", "set.ofolder": "Αποσυμπιεσμένος φάκελος orOS…",
       "set.metric": "Μετρικό (kg, km, cm)", "set.imperial": "Αγγλοσαξονικό (lb, mi, in)",
       "set.restored": "Έγινε επαναφορά: {n} προπονήσεις", "set.badFile": "Αυτό το αρχείο δεν είναι αντίγραφο της Προπόνησης",
       "set.import": "Εισαγωγή προπονήσεων (Strong, Hevy, FitNotes, JEFIT, FIT, TCX, GPX)",
@@ -3910,6 +3912,42 @@
     });
   }
 
+  // .orosworkouts (OBF-4e): own exercises, programs, progression
+  // programs, finished workouts (with their routes) and body
+  // measurements as one orOS file (../recordpkg.js + package.js).
+  // Opening ADDS what this device lacks, with its ids; a record
+  // already here (or deleted here) is kept as it is unless "Update
+  // with newer versions" is ticked. The file never holds the settings
+  // or a running workout. The result goes through mergeFit + saveNow
+  // (so sync carries it); Undo deletes the added rows with removeRow,
+  // so their tombstones sync.
+  var RP = window.OrosRecordPkg || null, FPK = window.OrosFitnessPackage || null;
+  var recFile = RP && FPK && window.OrosBundle ? RP.ui(FPK.withNames(function (id) { return exInfo(data, id).name; }), {
+    lang: function () { return LANG; },
+    get: function () { return mergeFit(data, data); },
+    title: function () { return t("app"); },
+    set: function (next) {
+      if (!next || typeof next !== "object" || !Array.isArray(next.wo)) return;
+      data = mergeFit(next, next);
+      saveNow(false);
+      render();
+    },
+    deleteIds: function (ids) {
+      var any = false;
+      ids.forEach(function (id) {
+        var c = FPK.kindOf(id, data);
+        if (c && removeRow(c, id)) any = true;
+      });
+      if (any) saveNow(false);
+      render();
+      showToast(RP.str(LANG, "undone"));
+    },
+    toast: function (text, undo) {
+      if (undo) undoToast(text, undo);
+      else showToast(text);
+    }
+  }) : null;
+
   // Import workouts: one entry point for every source. Strong / Hevy
   // (section 4b), FitNotes and JEFIT give sets; FIT, TCX, GPX and a
   // zip of them (import.js) give activities. Read → detect → preview
@@ -4119,6 +4157,17 @@
     ex.appendChild(button(t("set.json"), "", exportJson));
     ex.appendChild(button(t("set.restore"), "", restoreJson));
     ex.appendChild(button(t("set.import"), "", importCsv));
+    // .orosworkouts: Save keeps the dialog open (like the exports); Open
+    // and the folder close it first, since they change the data
+    if (recFile) {
+      [["fit-osave", "set.osave", false, function () { recFile.save(); }],
+       ["fit-oopen", "set.oopen", true, function () { recFile.open(); }],
+       ["fit-ofolder", "set.ofolder", true, function () { recFile.openFolder(); }]].forEach(function (o) {
+        var b = button(t(o[1]), "", function () { if (o[2]) { dlg.close(); render(); } o[3](); });
+        b.id = o[0];
+        ex.appendChild(b);
+      });
+    }
     ex.appendChild(button(t("set.lib"), "", function () { dlg.close(); libraryDialog(); }));
     dlg.appendChild(ex);
     var acts = el("div", "dlg-actions");
@@ -4275,6 +4324,9 @@
   // prefilled (normAsNew); nothing usable, an open dialog or a program
   // in the editor → no-op.
   function openSearchTarget(t) {
+    // "Open with" an .orosworkouts file (fileopen.js): { openFile: { token } },
+    // the File taken once with window.parent.__orosTakeFile(token)
+    if (t && t.openFile) { if (recFile) recFile.openTarget(t.openFile); return; }
     // Single app (solo.js) icon shortcut { logNew: true }: a blank log.
     if (t && t.logNew === true) {
       if (!pgDraft && !document.querySelector("dialog[open]"))

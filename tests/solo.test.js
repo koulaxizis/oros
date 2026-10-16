@@ -374,6 +374,17 @@ test("F-Droid store listing (FDROID-2): texts, categories, pictures and front pa
   assert.match(wf, /cp -r "\$fd\/site\/\." "\$site\/"/);
 });
 
+test("Official F-Droid prerequisites (FDROID-3): Gradle version and android-v tags", () => {
+  const ci = read(".github/workflows/android.yml").match(/gradle-version: ([\d.]+)/)[1];
+  const wrap = read("android/gradle/wrapper/gradle-wrapper.properties");
+  assert.ok(wrap.includes("gradle-" + ci + "-bin.zip"), "wrapper and CI use the same Gradle");
+  assert.match(wrap, /distributionSha256Sum=[0-9a-f]{64}/);
+  const wf = read(".github/workflows/fdroid.yml");
+  assert.match(wf, /contents: write/);
+  assert.match(wf, /git tag "android-v\$v" HEAD/);
+  assert.match(wf, /git diff --quiet "\$last" HEAD -- android phone\.js/);
+});
+
 test("APK links leave the Android app through BrowserActivity (default browser, normal tab)", () => {
   const and = "Mozilla/5.0 (Linux; Android 14) Chrome/140 Mobile";
   const u = S.apkUrl("notes");

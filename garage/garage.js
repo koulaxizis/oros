@@ -9,7 +9,8 @@
 //   - other costs, odometer readings, stats with charts
 //   - "Send to Budget" (prefilled new expense, nothing written
 //     until you save it there; shown only when Budget offers the
-//     bridge), Calendar feed, CSV / JSON export, JSON import
+//     bridge), Calendar feed, CSV / JSON export, JSON import,
+//     .orosgarage orOS file (save / open, package.js)
 //   - reminders come from the shell engine (garageCheckTick),
 //     which uses core.js too
 // Data:
@@ -140,6 +141,7 @@
       "set.remindHint": "Reminders for renewals and service appear while orOS is open (also with this app closed). With orOS closed they wait for the next time you open it.",
       "set.tyreAge": "Tyres are old after (years)", "set.tread": "Tyres are worn below (mm)",
       "set.data": "Your data", "set.csv": "Export CSV", "set.json": "Export backup", "set.import": "Import backup", "set.close": "Close",
+      "set.osave": "orOS file (.orosgarage)", "set.oopen": "Open orOS file…", "set.ofolder": "Unzipped orOS folder…",
       "toast.added": "Added", "toast.saved": "Saved", "toast.deleted": "Deleted", "toast.undo": "Undo", "toast.budget": "Budget",
       "toast.save": "Could not save: storage is full", "toast.needName": "Give the vehicle a name",
       "toast.needKm": "Enter the odometer reading", "toast.needQty": "Enter the quantity", "toast.needItems": "Pick at least one item",
@@ -264,6 +266,7 @@
       "set.remindHint": "Οι υπενθυμίσεις για ανανεώσεις και σέρβις εμφανίζονται όσο το orOS είναι ανοιχτό (και με κλειστή αυτή την εφαρμογή). Με κλειστό το orOS περιμένουν το επόμενο άνοιγμα.",
       "set.tyreAge": "Λάστιχα παλιά μετά από (χρόνια)", "set.tread": "Λάστιχα φαγωμένα κάτω από (mm)",
       "set.data": "Τα δεδομένα σου", "set.csv": "Εξαγωγή CSV", "set.json": "Αντίγραφο ασφαλείας", "set.import": "Επαναφορά αντιγράφου", "set.close": "Κλείσιμο",
+      "set.osave": "Αρχείο orOS (.orosgarage)", "set.oopen": "Άνοιγμα αρχείου orOS…", "set.ofolder": "Αποσυμπιεσμένος φάκελος orOS…",
       "toast.added": "Προστέθηκε", "toast.saved": "Αποθηκεύτηκε", "toast.deleted": "Διαγράφηκε", "toast.undo": "Αναίρεση", "toast.budget": "Έσοδα & Έξοδα",
       "toast.save": "Δεν αποθηκεύτηκε: ο χώρος είναι γεμάτος", "toast.needName": "Δώσε ένα όνομα στο όχημα",
       "toast.needKm": "Γράψε τα χιλιόμετρα", "toast.needQty": "Γράψε την ποσότητα", "toast.needItems": "Διάλεξε τουλάχιστον μία εργασία",
@@ -2620,6 +2623,13 @@
     io.appendChild(button(t("set.json"), "", exportData));
     io.appendChild(button(t("set.import"), "", importData));
     io.appendChild(button(t("imp.btn"), "", function () { dlg.close(); startImport(); }));
+    if (recFile) {
+      [["set.osave", function () { recFile.save(); }],
+       ["set.oopen", function () { recFile.open(); }],
+       ["set.ofolder", function () { recFile.openFolder(); }]].forEach(function (o) {
+        io.appendChild(button(t(o[0]), "", function () { dlg.close(); o[1](); })).id = "gr-" + o[0].slice(4);
+      });
+    }
     if (curVehicle()) io.appendChild(button(t("lb.set"), "", function () { dlg.close(); logbookDialog(curVehicle()); }));
     dlg.appendChild(io);
     var acts = el("div", "dlg-actions");
@@ -2868,6 +2878,105 @@
     showToast(t("imp.undone"));
   }
 
+  // .orosgarage (OBF-4e): every vehicle, fill, service, plan, tyre
+  // set, renewal, expense and km reading as one orOS file
+  // (../recordpkg.js + package.js), the receipt photos in media/ by
+  // <sha256>.jpg. Device prefs (reminder hour, unit, tyre limits) stay
+  // on the device. Opening ADDS what this device lacks, with its ids;
+  // a row already here (or deleted here) is kept as it is unless
+  // "Update with newer versions" is ticked. The result goes through
+  // package.js settle (caps, the mounted tyre set) and save (core.merge
+  // + sync dirty); Undo deletes the added rows the app's way, with
+  // tombstones (package.js undo).
+  var RP = window.OrosRecordPkg || null, GPK = window.OrosGaragePackage || null;
+  var fileData = null;
+  // One receipt of the file → Garage/Receipts, only when that name is
+  // not on the disk yet, through the checks of attaching one
+  // (encodeReceipt: an image, re-drawn as a JPEG, no EXIF).
+  // → Promise<true when the file is there>
+  function storeReceipt(name, key, media) {
+    var fs = fsApi(), path = C.receiptPath(name);
+    if (!fs || !path) return Promise.resolve(false);
+    return Promise.resolve().then(function () { return fs.readBlob(path); })
+      .then(function (b) { return !!b; }, function () { return false; })
+      .then(function (there) {
+        if (there) return true;
+        var item = key && Object.prototype.hasOwnProperty.call(media, key) ? media[key] : null;
+        if (!item || !(item.blob || item.bytes) || !/^image\//.test(item.type || "")) return false;
+        var blob = item.blob ? item.blob.slice(0, item.blob.size, item.type) : new Blob([item.bytes], { type: item.type });
+        return encodeReceipt(blob).then(function (enc) {
+          if (!enc) return false;
+          return Promise.resolve(fs.writeBlob(path, enc)).then(function () { return true; });
+        });
+      }).catch(function () { return false; });
+  }
+  var recFile = RP && GPK && window.OrosBundle ? RP.ui(GPK.DESC, {
+    lang: function () { return LANG; },
+    get: function () { return canonical(data); },
+    title: function () { return t("app"); },
+    // media/: every receipt the rows name, read from the orOS disk;
+    // state.rcs = { "<file name>": "<media key>" } goes into content.json
+    files: function (state) {
+      var fs = fsApi(), B = window.OrosBundle, out = [], rcs = {}, chain = Promise.resolve();
+      if (!fs) return out;
+      C.receiptsOf(state).forEach(function (name) {
+        chain = chain.then(function () {
+          if (rcs[name] || !C.receiptPath(name)) return;
+          return Promise.resolve(fs.readBlob(C.receiptPath(name))).then(function (blob) {
+            if (!blob || !blob.size) return;
+            return B.digest(blob).then(function (dg) {
+              var key = dg.sha + ".jpg";
+              rcs[name] = key;
+              if (!out.some(function (f) { return f.key === key; })) out.push({ key: key, blob: blob, type: "image/jpeg" });
+            });
+          }).catch(function () {});
+        });
+      });
+      return chain.then(function () { state.rcs = rcs; return out; });
+    },
+    // the receipts of the rows this open adds (or updates); a name
+    // whose photo could not be stored leaves the row's rc
+    media: function (read, res) {
+      var next = res.next, src = read && read.content && read.content.data;
+      var rcs = src && src.rcs && typeof src.rcs === "object" ? src.rcs : {}, media = (read && read.media) || {};
+      var want = {}, chain = Promise.resolve();
+      fileData = src || null;
+      res.addedIds.concat(res.updatedIds).forEach(function (id) { want[id] = 1; });
+      GPK.RC_LISTS.forEach(function (k) {
+        (next[k] || []).forEach(function (x) {
+          if (!want[x.id] || !x.rc) return;
+          var kept = [];
+          x.rc.forEach(function (name) {
+            chain = chain.then(function () {
+              return storeReceipt(name, typeof rcs[name] === "string" ? rcs[name] : "", media);
+            }).then(function (ok) { if (ok) kept.push(name); });
+          });
+          chain = chain.then(function () { if (kept.length) x.rc = kept.sort(cmpStr); else delete x.rc; });
+        });
+      });
+      return chain.then(function () { return next; });
+    },
+    set: function (next, info) {
+      if (!next || typeof next !== "object" || !Array.isArray(next.vehicles)) return;
+      data = canonical(GPK.settle(next, data, info && info.addedIds, fileData, Date.now()));
+      fileData = null;
+      save();
+      render();
+    },
+    deleteIds: function (ids) {
+      var r = GPK.undo(data, ids, Date.now());
+      data = r.data;
+      save();
+      render();
+      dropReceiptsLater(r.files);
+      showToast(recFile.text("undone"));
+    },
+    toast: function (text, undo) {
+      if (undo) undoToast(text, undo);
+      else showToast(text);
+    }
+  }) : null;
+
   // ---------- 9. Dialogs + toasts ----------
   function button(label, cls, fn) {
     var b = el("button", "dlg-btn" + (cls ? " " + cls : ""), label);
@@ -2983,7 +3092,8 @@
       if (row) { prefs.vid = row.v; setTab("home"); map[i][1](row, row.v); return; }
     }
   };
-  // Assistant entry card (shell __orosOpenAt / __orosTakeTarget):
+  // Shell __orosOpenAt / __orosTakeTarget: { openFile: { token } }
+  // ("Open with" an .orosgarage file) or the Assistant entry card:
   //   { asNew: { type?, vehicle?, date?, title?, items?, km?, cost?,
   //   shop?, note?, due?, kind? } } opens the new service row
   //   (type "service") or the new renewal (type "reminder") prefilled;
@@ -2992,7 +3102,11 @@
   //   button does; no vehicle yet → the new-vehicle editor. An open
   //   dialog or nothing usable → no-op.
   function openTarget(tg) {
-    if (!tg || typeof tg !== "object" || document.querySelector("dialog[open]")) return;
+    if (!tg || typeof tg !== "object") return;
+    // "Open with" an .orosgarage file (fileopen.js): { openFile: { token } },
+    // the File taken once with window.parent.__orosTakeFile(token)
+    if (tg.openFile) { if (recFile) recFile.openTarget(tg.openFile); return; }
+    if (document.querySelector("dialog[open]")) return;
     if (!tg.asNew) return;
     var pf = C.asNewPrefill(tg.asNew, todayYmd());
     if (!pf) return;

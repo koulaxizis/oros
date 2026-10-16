@@ -73,8 +73,13 @@ Scan a label with your phone's camera and orOS opens Storage at that place. Wher
 
 Storage always has Space › Room › Furniture › Position. A location such as `Garage/Shelf 1/Box 3` fills these from the top, under the space you choose in `Put the places under`; deeper parts join the position's name, and missing levels become a place called General. Places with the same name are reused. The import only adds: what's already here stays as it is, and the same file twice adds nothing. The message after it has `Undo`.
 
+## Save and open an orOS file
+`⋯` › `orOS file (.orosinventory)` saves every space, room, furniture, position and item as one `.orosinventory` file, with the photos and receipts inside: for example to move your inventory to another device without sync, or to keep a copy. The currency and the reminder hour stay on this device. The file is a plain ZIP: unzipped it holds the records as `content.json`, the photos and receipts in `media/`, and `preview/inventory.csv` (columns Storage's own CSV import reads back) and `preview/inventory.md` for other programs. It is not encrypted, so keep it somewhere safe.
+
+`⋯` › `Open orOS file…` (or `Unzipped orOS folder…`, or "Open with" orOS on the computer) shows how many records are new and how many are already here, then `Add` adds only the new ones, with their own ids: opening the same file again adds nothing. A record already here is kept as it is, and one you deleted here stays deleted; a file never deletes anything. Tick `Update with newer versions` to let records that were changed later in the file replace your copy. Something whose place you deleted here is left out. Photos and receipts go to Files › Storage only when they are not there yet, with the same checks as adding one by hand. `Undo` in the message removes what was added.
+
 ## Sync and backup
-Everything you add syncs between your devices through [orOS sync](help:t/sync). Storage has no export of its own; the orOS [backup](help:t/backup) keeps a copy.
+Everything you add syncs between your devices through [orOS sync](help:t/sync). The orOS [backup](help:t/backup) keeps a copy; an orOS file (above) keeps one of Storage alone.
 
 ## Keyboard shortcuts
 - [[Enter]] on a selected card opens it.

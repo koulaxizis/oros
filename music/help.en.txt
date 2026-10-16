@@ -9,7 +9,7 @@ Songs you put in the Music folder with [Files](app:files) appear as well: Music 
 The tabs:
 - `Home`: your playlists and Liked songs, `Jump back in`, `Recently added`, `Your most played` and your artists.
 - `Search`: songs, albums, artists and playlists; with an empty field, `Browse by genre`.
-- `Your library`: `Playlists`, `Songs`, `Albums`, `Artists`, `Genres` and `Folders`.
+- `Your library`: `Playlists`, `Songs`, `Albums`, `Artists`, `Genres`, `Folders` and `Offline`.
 
 ## Listen
 Tap a song to play it, with the rest of its album or list after it. The big play button plays a whole album, artist, playlist or genre, and `Shuffle` plays it in random order.
@@ -27,7 +27,18 @@ Liked songs and playlists sync to your other devices. A song that is not on a de
 ## Your files
 A song's ⋯ menu has `Details` (file, format, size, length) and `Delete from this device`, which deletes the file from `Files › Music`. Old tags in Greek written with the Windows code page are recognised automatically; if names look wrong, choose `Always Greek` or `Always Western` under `Old tags` in the settings.
 
-> Free music from open catalogues comes in the next update.
+## Free music
+Besides your own songs, Music plays free and legal music from four open catalogues, with no account:
+- **Jamendo**: independent artists who share their music under Creative Commons. Popular this week, new albums, all-time favourites, moods and Jamendo's own radios. Jamendo songs always stream (Jamendo does not allow offline copies), and each one links back to its page on Jamendo.
+- **Internet Archive**: netlabel albums, classical recordings and the Live Music Archive (concert tapes of bands that allow free, non-commercial sharing). Only items with a Creative Commons or public-domain licence are shown.
+- **Openverse**: songs with Creative Commons or public-domain licences from Wikimedia Commons, Freesound, Jamendo and more.
+- **ccMixter**: Creative Commons remixes, instrumentals and a cappellas.
+
+On `Home`, `Free music` has shelves such as `Popular this week`, `Jamendo radios`, `Live concerts`, `Netlabel albums`, `Classical` and `Remixes`; `Free music by genre` has genres and `Moods (Jamendo)` has moods. In `Search`, `Free music online` adds results from the catalogues when you stop typing (or press Enter); the chips choose `All` or one catalogue. Nothing is asked of them until you open a shelf or search, and the requests go straight to them.
+
+Every song shows its licence (for example `CC BY-SA`). Its ⋯ menu has `Copy credit`, the line that names the song, the artist, the licence and the source, ready to paste wherever you use the song; `Details` shows it too, and so does the licence line under the song in the full player. `Open on …` opens the song's page at its source.
+
+Songs from the catalogues go into `Liked songs` and playlists like your own, and play on your other devices too. `Save for offline` (on a song, or the arrow on an album) keeps a copy on this device, only where the licence and the source allow it: songs that Openverse lists from Jamendo always stream. Saved songs are under `Offline` in `Your library`, with the arrow mark; `Remove offline copy` or `Delete all offline copies` in the settings frees the space. To turn the catalogues off, untick `Free music online` in the settings.
 
 ## Keys
 Space plays or pauses, ← and → move 10 seconds, Shift+← and Shift+→ go to the previous or next song, S turns shuffle on or off, R changes repeat and L likes the song.

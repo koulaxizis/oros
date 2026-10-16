@@ -84,6 +84,7 @@
       "sec.check": "Check", "sec.steps": "How to add it",
       "more.title": "Signatures", "btn.dup": "Duplicate this signature", "btn.team": "Signatures for a team (CSV)…",
       "btn.del": "Delete this signature",
+      "btn.osave": "orOS file (.orossignature)", "btn.oopen": "Open orOS file…", "btn.ofolder": "Unzipped orOS folder…",
       "more.hint": "Your signatures follow you to every device through orOS sync, encrypted. Their pictures travel with your orOS disk.",
       "team.title": "Signatures for a team",
       "team.hint": "One signature per person, with the look, company details and pictures of the signature open now. Paste a table (CSV) with a header row: name, title, department, email, phone, mobile, pronouns, photo (an https address).",
@@ -176,6 +177,7 @@
       "sec.check": "Έλεγχος", "sec.steps": "Πώς την προσθέτεις",
       "more.title": "Υπογραφές", "btn.dup": "Αντίγραφο αυτής της υπογραφής", "btn.team": "Υπογραφές για ομάδα (CSV)…",
       "btn.del": "Διαγραφή αυτής της υπογραφής",
+      "btn.osave": "Αρχείο orOS (.orossignature)", "btn.oopen": "Άνοιγμα αρχείου orOS…", "btn.ofolder": "Αποσυμπιεσμένος φάκελος orOS…",
       "more.hint": "Οι υπογραφές σου σε ακολουθούν σε κάθε συσκευή μέσω του sync του orOS, κρυπτογραφημένες. Οι εικόνες τους ταξιδεύουν με τον δίσκο του orOS.",
       "team.title": "Υπογραφές για ομάδα",
       "team.hint": "Μία υπογραφή για κάθε άτομο, με την εμφάνιση, τα στοιχεία της εταιρείας και τις εικόνες της υπογραφής που είναι ανοιχτή τώρα. Επικόλλησε έναν πίνακα (CSV) με γραμμή επικεφαλίδων: όνομα, θέση, τμήμα, email, τηλέφωνο, κινητό, αντωνυμίες, φωτογραφία (μια διεύθυνση https).",
@@ -1148,8 +1150,93 @@
     } else if (!sig && data.sigs.length) { select(prefs.cur || data.sigs[0].id); return; }
     fillSelect();
   }
+  // .orossignature (OBF-4e): every signature as one orOS file
+  // (../recordpkg.js + package.js), its pictures from the orOS disk in
+  // media/ (the asset id IS the media key: <sha256>.png|jpg). Opening
+  // ADDS the signatures this device lacks, with their ids; one already
+  // here (or deleted here) is kept as it is unless "Update with newer
+  // versions" is ticked. A picture goes back through the designkit's
+  // own package check (assets.put: the bytes must hash to its name and
+  // decode as an image) and is written only when it is not on the disk
+  // yet. Prefs stay on this device; the app holds no keys. Undo deletes
+  // the added signatures the way Delete does, so the tombstones sync.
+  var RP = window.OrosRecordPkg || null, SPK = window.OrosSignaturePackage || null;
+  var MEDIA_MAX = 20 * 1024 * 1024;
+  // true: stored or already there (or no bytes in the file: it stays a
+  // name, "Not on this device yet"); false: the bytes failed a check
+  function storeAsset(a, media) {
+    var item = Object.prototype.hasOwnProperty.call(media, a) ? media[a] : null;
+    if (!item || !(item.blob || item.bytes) || !AS || typeof AS.put !== "function") return Promise.resolve(true);
+    var type = /\.png$/.test(a) ? "image/png" : "image/jpeg";
+    var size = item.blob ? item.blob.size : item.bytes.length;
+    if (item.type !== type || size > MEDIA_MAX) return Promise.resolve(false);
+    var blob = item.blob ? item.blob.slice(0, item.blob.size, type) : new Blob([item.bytes], { type: type });
+    return AS.put(a, blob).then(function () { return true; }, function () { return false; });
+  }
+  var recFile = RP && SPK && window.OrosBundle ? RP.ui(SPK.DESC, {
+    lang: function () { return LANG; },
+    get: function () { if (saveTimer) saveNow(); return C.merge(data, null); },
+    title: function () { return t("app.name"); },
+    // media/: every picture the signatures name, read from the orOS disk
+    files: function (state) {
+      var out = [], chain = Promise.resolve();
+      if (!AS || typeof AS.blob !== "function") return out;
+      SPK.assetIds(state).forEach(function (a) {
+        chain = chain.then(function () { return AS.blob(a); }).then(function (b) {
+          if (b && b.size) out.push({ key: a, blob: b, type: /\.png$/.test(a) ? "image/png" : "image/jpeg" });
+        }, function () {});
+      });
+      return chain.then(function () { return out; });
+    },
+    // the pictures of the signatures this open adds (or updates)
+    media: function (read, res) {
+      var next = res.next, media = (read && read.media) || {}, ids = res.addedIds.concat(res.updatedIds), bad = [];
+      var chain = Promise.resolve();
+      SPK.assetIds(next, ids).forEach(function (a) {
+        chain = chain.then(function () { return storeAsset(a, media); }).then(function (ok) { if (!ok) bad.push(a); });
+      });
+      return chain.then(function () { return SPK.dropAssets(next, ids, bad); });
+    },
+    set: function (next, info) {
+      if (!next || typeof next !== "object" || !Array.isArray(next.sigs)) return;
+      if (saveTimer) saveNow();
+      data = C.merge(next, null);
+      storeData();
+      srcCache = filterCache();
+      var cur = sig ? C.byId(data, sig.id) : null;
+      if (!cur) {
+        var first = ((info && info.addedIds) || []).filter(function (id) { return C.byId(data, id); })[0];
+        sig = null;
+        select(first || (data.sigs[0] ? data.sigs[0].id : ""));
+        return;
+      }
+      if (cur.m !== sig.m) { sig = JSON.parse(JSON.stringify(cur)); renderForm(); }
+      fillSelect();
+      renderSoon(0);
+    },
+    deleteIds: function (ids) {
+      if (saveTimer) saveNow();
+      var now = Date.now(), any = false;
+      ids.forEach(function (id) { if (C.byId(data, id)) { data = C.remove(data, id, now); any = true; } });
+      if (!any) return;
+      storeData();
+      if (sig && !C.byId(data, sig.id)) { sig = null; select(data.sigs[0] ? data.sigs[0].id : ""); }
+      else fillSelect();
+      toast(recFile.text("undone"));
+    },
+    toast: function (text, undo) { toast(text, undo ? t("btn.undo") : null, undo || null); }
+  }) : null;
+
   // Deep link (search hit): { id } opens that signature.
+  // "Open with" an .orossignature file (fileopen.js): { openFile: { token } },
+  // the File taken once with window.parent.__orosTakeFile(token), then
+  // the kit's dialog (false: boot still opens the last signature)
   function openTarget(target) {
+    if (target && typeof target === "object" && target.openFile) {
+      hideDlg();
+      if (recFile) recFile.openTarget(target.openFile);
+      return false;
+    }
     if (!target || typeof target !== "object" || typeof target.id !== "string") return false;
     if (!C.byId(data, target.id)) return false;
     hideDlg();
@@ -1241,6 +1328,18 @@
     $("dup-btn").addEventListener("click", duplicate);
     $("del-btn").addEventListener("click", delSig);
     $("team-btn").addEventListener("click", openTeam);
+    // .orossignature: shown only when the kit loaded (Open also in the
+    // empty box, where the More menu is hidden: a new device starts there)
+    [["osave-btn", function () { recFile.save(); }],
+     ["oopen-btn", function () { recFile.open(); }],
+     ["ofolder-btn", function () { recFile.openFolder(); }],
+     ["oopen-first", function () { recFile.open(); }],
+     ["ofolder-first", function () { recFile.openFolder(); }]].forEach(function (b) {
+      var n = $(b[0]);
+      n.hidden = !recFile;
+      n.addEventListener("click", function () { hideDlg(); if (saveTimer) saveNow(); b[1](); });
+    });
+    $("empty-open").hidden = !recFile;
     $("team-csv").addEventListener("input", readTeam);
     $("team-open").addEventListener("click", openCsv);
     $("team-sample").addEventListener("click", saveSample);
