@@ -195,7 +195,15 @@
       "acc.mark":             "Mark as accepted",
       "acc.marked":           "Quote marked as accepted",
       "acc.to_invoice":       "Make an invoice from this quote now?",
-      "acc.info":             "Accepted by {n} on {d} (by link)"
+      "acc.info":             "Accepted by {n} on {d} (by link)",
+      "file.title":           "Save and open",
+      "file.save":            "orOS file (.orosquote)",
+      "file.open":            "Open orOS file…",
+      "file.copy":            "Open as copy…",
+      "file.folder":          "Unzipped orOS folder…",
+      "file.hint":            "Every quote, client and template in one file. Opening one adds only what this device lacks. The file is not encrypted.",
+      "file.copyHint":        "“Open as copy” adds the file's quotes and templates as new ones (new numbers, as drafts), even ones you already have.",
+      "undo":                 "Undo"
     },
     el: {
       "tab.create":            "Δημιουργία",
@@ -344,7 +352,15 @@
       "acc.mark":             "Σήμανση ως αποδεκτή",
       "acc.marked":           "Η προσφορά σημειώθηκε ως αποδεκτή",
       "acc.to_invoice":       "Να εκδοθεί τώρα τιμολόγιο από αυτή την προσφορά;",
-      "acc.info":             "Αποδεκτή από {n} στις {d} (με σύνδεσμο)"
+      "acc.info":             "Αποδεκτή από {n} στις {d} (με σύνδεσμο)",
+      "file.title":           "Αποθήκευση και άνοιγμα",
+      "file.save":            "Αρχείο orOS (.orosquote)",
+      "file.open":            "Άνοιγμα αρχείου orOS…",
+      "file.copy":            "Άνοιγμα ως αντίγραφο…",
+      "file.folder":          "Αποσυμπιεσμένος φάκελος orOS…",
+      "file.hint":            "Όλες οι προσφορές, οι πελάτες και τα πρότυπα σε ένα αρχείο. Το άνοιγμα προσθέτει μόνο όσα λείπουν από αυτή τη συσκευή. Το αρχείο δεν είναι κρυπτογραφημένο.",
+      "file.copyHint":        "Το «Άνοιγμα ως αντίγραφο» προσθέτει τις προσφορές και τα πρότυπα του αρχείου ως νέα (νέοι αριθμοί, ως πρόχειρες), ακόμη κι αυτά που έχεις ήδη.",
+      "undo":                 "Αναίρεση"
     }
   };
 
@@ -2035,15 +2051,28 @@
   // ---------- 11. Toast ----------
   var toastTimer = null;
 
-  function showToast(text) {
+  // action { label, fn }: an optional button (Undo of an opened file)
+  function showToast(text, action) {
     var el = $("toast");
     if (!el) return;
     el.textContent = text;
+    if (action && typeof action.fn === "function") {
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "toast-act";
+      btn.textContent = action.label;
+      btn.addEventListener("click", function () {
+        el.classList.remove("show");
+        action.fn();
+      });
+      el.appendChild(btn);
+    }
+    el.classList.toggle("has-act", !!action);
     el.classList.remove("show");
     void el.offsetWidth;
     el.classList.add("show");
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(function () { el.classList.remove("show"); }, 3500);
+    toastTimer = setTimeout(function () { el.classList.remove("show"); }, action ? 8000 : 3500);
   }
 
   function notifyTransient(text) {
@@ -2055,6 +2084,16 @@
       }
     } catch (e) { /* cross-origin / stale bundle */ }
     showToast(text);
+  }
+  // A message with an Undo button: the shell's transient toast with an
+  // action, else the app's own toast.
+  function notifyUndo(text, fn) {
+    var act = { label: t("undo"), fn: fn };
+    try {
+      var n = (window.parent && window.parent.orosNotifs) || window.orosNotifs;
+      if (n && typeof n.transient === "function" && n.transient({ ns: "quote", title: text, action: act })) return;
+    } catch (e) { /* cross-origin / stale bundle */ }
+    showToast(text, act);
   }
 
   // orosDialog lives in the parent shell (same-origin iframe).
@@ -2222,6 +2261,7 @@
     $("client-new").hidden = isList;
     $("export-btn").hidden = isList;
     $("send-btn").hidden = isList;
+    $("ofile-btn").hidden = !isList || !recFile;
 
     if (isList) { renderQuoteList(); updateFilterBtn(); }
   }
@@ -2286,7 +2326,81 @@
     notifyTransient(t("toast.deleted"));
   }
 
+  // .orosquote (OBF-4e): every quote, client and template as one orOS
+  // file (../recordpkg.js + package.js). Opening ADDS what this device
+  // lacks, with its ids; a record already here (or deleted here) is
+  // kept as it is unless "Update with newer versions" is ticked. The
+  // result goes through sliceSet (migrate, the open editor kept or
+  // reloaded) and save() (sync dirty); Undo deletes the added records
+  // the app's own way (tombstones). "Open as copy" (recCopy) adds the
+  // file's quotes and templates under fresh ids, each quote a draft
+  // with the next free number: quotes work like templates. Preview:
+  // quotes.md. The payment presets and the "Accept by link" token stay
+  // on the device (package.js strip).
+  var RP = window.OrosRecordPkg || null, QPK = window.OrosQuotePackage || null;
+  function recLocal() {
+    var s = JSON.parse(JSON.stringify(state));
+    delete s.activeQuoteId;
+    return s;
+  }
+  function recHooks() {
+    return {
+      lang: function () { return LANG; },
+      get: recLocal,
+      title: function () { return "Quote"; },
+      set: function (next) {
+        if (!next || !Array.isArray(next.quotes)) return;
+        sliceSet(next);
+        state.om = Date.now();
+        save();
+        renderAll();
+      },
+      deleteIds: function (ids) {
+        var ts = Date.now(), gone = {};
+        ids.forEach(function (id) { gone[id] = 1; });
+        var dropCur = !curIsDraft && cur && gone[cur.id];
+        ["quotes", "clients", "templates"].forEach(function (k) {
+          state[k] = state[k].filter(function (x) {
+            if (!gone[x.id]) return true;
+            state.deleted[x.id] = Math.max(state.deleted[x.id] || 0, ts, (x.mtime || 0) + 1);
+            return false;
+          });
+        });
+        if (state.activeQuoteId && gone[state.activeQuoteId]) state.activeQuoteId = null;
+        if (cur && cur.clientId && gone[cur.clientId] && !dropCur) {
+          cur.clientId = null;
+          renderClientDisplay();
+          if (!curIsDraft) touch(cur);
+        }
+        state.om = ts;
+        save();
+        if (dropCur) newDraft();
+        scheduleRender();
+        notifyTransient(RP.str(LANG, "undone"));
+      },
+      toast: function (text, undo) { if (undo) notifyUndo(text, undo); else notifyTransient(text); }
+    };
+  }
+  var recFile = RP && QPK && window.OrosBundle ? RP.ui(QPK.DESC, recHooks()) : null;
+  var recCopy = recFile ? RP.ui(QPK.asCopy(recLocal, uid), recHooks()) : null;
+  function openFileDialog() {
+    var dlg = $("dlg-ofile");
+    if (!dlg || !recFile) return;
+    dlg.showModal();
+  }
+
   function wire() {
+    if (recFile) {
+      $("ofile-btn").hidden = activeTab !== "list";
+      $("ofile-btn").addEventListener("click", openFileDialog);
+      [["of-save", function () { recFile.save(); }],
+       ["of-open", function () { recFile.open(); }],
+       ["of-copy", function () { recCopy.open(); }],
+       ["of-folder", function () { recFile.openFolder(); }]].forEach(function (b) {
+        $(b[0]).addEventListener("click", function () { $("dlg-ofile").close(); b[1](); });
+      });
+      $("ofile-close").addEventListener("click", function () { $("dlg-ofile").close(); });
+    }
     document.querySelectorAll("#quote-tabs .tab").forEach(function (b) {
       b.addEventListener("click", function () { switchTab(b.dataset.tab); });
     });
@@ -2882,6 +2996,25 @@
       $("c-name").value = wanted;
     }
   }
+
+  // Universal deep link (shell __orosOpenAt / __orosTakeTarget):
+  //   { openFile: { token } }  "Open with" an .orosquote file
+  //                            (fileopen.js), the File taken once with
+  //                            window.parent.__orosTakeFile(token)
+  //   "<quote id>" | { quote } opens that quote
+  function openTarget(tg) {
+    if (tg && tg.openFile) { if (recFile) recFile.openTarget(tg.openFile); return; }
+    var id = typeof tg === "string" ? tg : (tg && typeof tg.quote === "string" ? tg.quote : "");
+    if (id && quoteById(id)) window.__orosQuoteOpen(id);
+  }
+  window.__orosOpenAt = openTarget;
+  try {
+    if (window.parent && window.parent !== window &&
+        typeof window.parent.__orosTakeTarget === "function") {
+      var pendingTarget = window.parent.__orosTakeTarget("quote");
+      if (pendingTarget) openTarget(pendingTarget);
+    }
+  } catch (e) {}
 
   setTimeout(function () {
     try {
