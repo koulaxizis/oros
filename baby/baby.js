@@ -131,6 +131,7 @@
       "toast.badFile": "Not an orOS Baby backup", "toast.noKid": "Add a child first",
       "toast.running": "A feed is already running", "toast.nothing": "Nothing to export yet",
       "live.timer": "{x} running",
+      "set.osave": "orOS file (.orosbaby)", "set.oopen": "Open orOS file…", "set.ofolder": "Unzipped orOS folder…",
       "set.import": "Import from another app", "imp.title": "Import from another app",
       "imp.src": "From: {s}", "imp.to": "For: {x}", "imp.baby": "Baby in the file", "imp.noName": "(no name)",
       "imp.range": "{a} to {b}", "imp.row": "{x}: {n} to import", "imp.rowDup": "{x}: {n} to import, already here: {d}",
@@ -222,6 +223,7 @@
       "toast.badFile": "Δεν είναι αντίγραφο του Μωρό", "toast.noKid": "Πρόσθεσε πρώτα ένα παιδί",
       "toast.running": "Ήδη τρέχει θηλασμός", "toast.nothing": "Δεν υπάρχει τίποτα για εξαγωγή ακόμα",
       "live.timer": "Τρέχει: {x}",
+      "set.osave": "Αρχείο orOS (.orosbaby)", "set.oopen": "Άνοιγμα αρχείου orOS…", "set.ofolder": "Αποσυμπιεσμένος φάκελος orOS…",
       "set.import": "Εισαγωγή από άλλη εφαρμογή", "imp.title": "Εισαγωγή από άλλη εφαρμογή",
       "imp.src": "Από: {s}", "imp.to": "Για: {x}", "imp.baby": "Μωρό στο αρχείο", "imp.noName": "(χωρίς όνομα)",
       "imp.range": "{a} έως {b}", "imp.row": "{x}: {n} για εισαγωγή", "imp.rowDup": "{x}: {n} για εισαγωγή, ήδη εδώ: {d}",
@@ -1910,6 +1912,17 @@
     form.appendChild(button(t("set.backup"), "block", backup));
     form.appendChild(button(t("set.restore"), "block", function () { dlg.close(); restore(); }));
     form.appendChild(button(t("set.import"), "block", function () { dlg.close(); startImport(); }));
+    // .orosbaby: Save keeps the dialog open (like the CSV exports); Open
+    // and the folder close it first, since they change the data
+    if (recFile) {
+      [["bb-osave", "set.osave", false, function () { recFile.save(); }],
+       ["bb-oopen", "set.oopen", true, function () { recFile.open(); }],
+       ["bb-ofolder", "set.ofolder", true, function () { recFile.openFolder(); }]].forEach(function (o) {
+        var b = button(t(o[1]), "block", function () { if (o[2]) dlg.close(); o[3](); });
+        b.id = o[0];
+        form.appendChild(b);
+      });
+    }
     form.appendChild(el("p", "hint", t("set.restoreNote")));
     form.appendChild(el("p", "hint note", t("set.note")));
     actions(form, dlg, t("dlg.save"), null);
@@ -1997,6 +2010,48 @@
       fr.readAsText(file);
     });
   }
+
+  // ---------- 11a. orOS file (.orosbaby) ----------
+  // ../recordpkg.js + package.js. Opening ADDS what this device lacks,
+  // with its ids; a record already here (or deleted here) is kept as
+  // it is unless "Update with newer versions" is ticked. The result
+  // goes through normalize + saveNow (so sync carries it); the units
+  // stay this device's. Undo tombstones the added records, as a delete
+  // does, so the removal syncs too.
+  var RP = window.OrosRecordPkg || null, BPK = window.OrosBabyPackage || null;
+  var recFile = RP && BPK && window.OrosBundle ? RP.ui(BPK.DESC, {
+    lang: function () { return LANG; },
+    get: function () { return C.normalize(data); },
+    title: function () { return t("app"); },
+    set: function (next) {
+      var n = C.normalize(next);
+      if (!n || !Array.isArray(n.kids) || !Array.isArray(n.ev)) return;
+      n.prefs = data.prefs;            // units stay as they are here
+      n.pm = data.pm;
+      data = n;
+      saveNow();
+      renderAll();
+    },
+    deleteIds: function (ids) {
+      var lists = { kid: "kids", ev: "ev", gr: "gr", mk: "mk", st: "st" }, any = false;
+      ids.forEach(function (id) {
+        var f = lists[BPK.kindOf(id, data)];
+        if (!f) return;
+        var cur = C.findIn(data[f], id);
+        if (!cur || cur.del) return;
+        put(data[f], { id: id, m: stamp(cur.m), del: 1 });
+        any = true;
+      });
+      if (!any) return;
+      saveNow();
+      renderAll();
+      showToast(recFile.text("undone"));
+    },
+    toast: function (text, undo) {
+      if (undo) undoToast(text, undo);
+      else showToast(text);
+    }
+  }) : null;
 
   // ---------- 11b. Import from another app ----------
   // Huckleberry / Baby Buddy / Baby Tracker → this child's entries.
@@ -2389,6 +2444,9 @@
   // row click does. Unknown or deleted ids → no-op; an open dialog
   // (unsaved edits) wins → no-op.
   function openSearchTarget(t) {
+    // "Open with" an .orosbaby file (fileopen.js): { openFile: { token } },
+    // the File taken once with window.parent.__orosTakeFile(token)
+    if (t && t.openFile) { if (recFile) recFile.openTarget(t.openFile); return; }
     if (!t || typeof t.kid !== "string") return;
     var k = C.findIn(data.kids, t.kid);
     if (!k || k.del) return;
