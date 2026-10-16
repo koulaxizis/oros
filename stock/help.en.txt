@@ -117,6 +117,11 @@ In Settings:
 - `Products (CSV)` and `Movements (CSV)` open in any spreadsheet.
 - `Backup (JSON)` saves everything; `Restore backup` merges a backup in, it never wipes what you have.
 
+## orOS file
+In Settings, under `Data`, `orOS file (.orosstock)` saves your products, categories, units, suppliers, purchase orders, warehouses, movements, price lists, receipts and Z reports as one `.orosstock` file, with the product photos, for example to move them to another device without sync or to keep a copy. Your filters, the till's settings on this device and the shop connection are never in it. If you closed a period, the file carries its opening balance as corrections, not the archived movements. The file is a plain ZIP: unzipped it holds everything as `content.json`, the photos in `media/` and `preview/products.csv` and `preview/movements.csv` for spreadsheets. It is not encrypted, so keep it somewhere safe.
+
+`Open orOS file…` (or `Unzipped orOS folder…`, or "Open with" orOS on the computer) shows how many records are new and how many are already here, then `Add` adds only the new ones, with their own ids: opening the same file again adds nothing. A record already here is kept as it is and one you deleted here stays deleted; a file never deletes anything. Tick `Update with newer versions` to let records changed later in the file replace your copy. `Undo` in the message takes back what was added: movements and receipts are voided and products that have movements stay archived, as everywhere in Stock.
+
 ## Sync and backup
 Products, movements, suppliers, categories, units and settings sync between your devices through [orOS sync](help:t/sync). The low-stock notice switch and your filters stay on each device. The orOS [backup](help:t/backup) keeps a copy too.
 
