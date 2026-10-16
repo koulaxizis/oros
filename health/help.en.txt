@@ -102,6 +102,11 @@ Readings, your own kinds, targets, reminders, medicines, doses, refills, symptom
 
 In `Settings` → `Export` you can save `All readings (CSV)` or a `Backup (JSON)` (with medicines and symptoms too). `Restore from backup (merge)` merges a backup with what you already have. For a full copy of orOS, see [backup](help:t/backup).
 
+## orOS file (.oroshealth)
+In `Settings` → `Export`, `orOS file (.oroshealth)` saves all of Health as one file: readings, your own kinds and targets, medicines, doses, refills, symptoms, allergies, conditions, emergency contacts, vaccinations, appointments, documents with their photos and PDFs, your Medical ID and settings. Inside are also `readings.csv` for a spreadsheet and `health.md` to read. The file is not encrypted: it holds your health data, so keep it somewhere safe and send it only to people you trust.
+
+`Open orOS file…` (or a double click on the file in Files) adds what this device does not have yet, with nothing deleted: the dialog shows how many records are new. A record that is already here, or that you deleted here, stays as it is; tick `Update with newer versions` to take the file's newer copies when you move your own data between devices. Your settings and Medical ID here stay as they are. Reminders come in off: turn them on for the medicines, kinds, vaccines and appointments you want reminding about. `Undo` in the message takes the added records out again. Opening the same file twice adds nothing. `Unzipped orOS folder…` opens a file someone has unzipped.
+
 ## Keyboard shortcuts
 - [[1]] to [[6]] switch between the six tabs (not while typing).
 - [[Esc]] closes a dialog.

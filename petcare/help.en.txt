@@ -22,12 +22,17 @@ Open a pet from `My pets`. It has four parts:
 
 Suggested intervals are only a starting point. Your vet's advice always wins.
 
+## Save and open an orOS file
+In `Settings`, under `Your pets`, `orOS file (.orospet)` saves all your pets and their health books as one `.orospet` file, with the attachments, for example to move them to another device without sync or to keep a copy for the vet. Your reminder settings stay on this device and are never in it. The file is a plain ZIP: unzipped it holds everything as `content.json`, the attachments in `media/`, and `preview/pets.md` and `preview/records.csv` for other programs. It is not encrypted and holds your pets' health data, so keep it somewhere safe.
+
+`Open orOS file…` (or `Unzipped orOS folder…`, or "Open with" orOS on the computer) shows how many pets and entries are new and how many are already here, then `Add` adds only the new ones, with their own ids: opening the same file again adds nothing. A pet or entry already here is kept as it is and one you deleted here stays deleted; a file never deletes anything. Tick `Update with newer versions` to let pets and entries changed later in the file replace your copy. An attachment is written to Files only when it is not there yet, and goes through the same checks as one you add yourself. `Undo` in the message removes what was added.
+
 ## Sync and backup
 Your pets, photos and health records sync between your devices through [orOS sync](help:t/sync). Settings and the open tab stay on each device.
 
 In `Settings`, `Export` saves all your pets to a file, and `Import` merges a file back in without replacing what you have.
 
-Attachments are not part of the sync data or the export file. They are files in [Files](app:files), folder `Pet Health Book`, and reach your other devices with Vault Drive. Until then, another device shows `Not on this device`.
+Attachments are not part of the sync data or the `Export` file (the orOS file above does carry them). They are files in [Files](app:files), folder `Pet Health Book`, and reach your other devices with Vault Drive. Until then, another device shows `Not on this device`.
 
 ## Keyboard shortcuts
 - [[Left]] / [[Right]] on the tabs switches between `Upcoming` and `My pets`.

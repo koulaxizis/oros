@@ -93,6 +93,7 @@
       "set.hemi": "Hemisphere (for the winter interval)", "set.north": "Northern (winter Nov–Feb)",
       "set.south": "Southern (winter May–Aug)", "set.data": "Your plants", "set.export": "Export",
       "set.import": "Import", "set.close": "Close",
+      "set.osave": "orOS file (.orosplants)", "set.oopen": "Open orOS file…", "set.ofolder": "Unzipped orOS folder…",
       "set.pn": "Identify plants (Pl@ntNet)", "set.pnKey": "Your Pl@ntNet API key",
       "set.pnHint": "To identify a plant from a photo, make your own free key at my.plantnet.org (up to 500 identifications a day). In your account there, tick “expose my API key” and add this site's address under “Authorized domains”. The key stays on this device only. Leave it empty to turn identification off.",
       "set.pnSite": "Open my.plantnet.org", "set.pnBad": "This does not look like a Pl@ntNet key", "set.pnSaved": "Key saved on this device",
@@ -165,6 +166,7 @@
       "set.hemi": "Ημισφαίριο (για το χειμερινό διάστημα)", "set.north": "Βόρειο (χειμώνας Νοέ–Φεβ)",
       "set.south": "Νότιο (χειμώνας Μάι–Αύγ)", "set.data": "Τα φυτά σου", "set.export": "Εξαγωγή",
       "set.import": "Εισαγωγή", "set.close": "Κλείσιμο",
+      "set.osave": "Αρχείο orOS (.orosplants)", "set.oopen": "Άνοιγμα αρχείου orOS…", "set.ofolder": "Αποσυμπιεσμένος φάκελος orOS…",
       "set.pn": "Αναγνώριση φυτών (Pl@ntNet)", "set.pnKey": "Το κλειδί σου για το Pl@ntNet API",
       "set.pnHint": "Για να αναγνωρίζεις φυτά από φωτογραφία, φτιάξε το δικό σου δωρεάν κλειδί στο my.plantnet.org (έως 500 αναγνωρίσεις τη μέρα). Στον λογαριασμό σου εκεί, τσέκαρε το «expose my API key» και πρόσθεσε τη διεύθυνση αυτού του ιστότοπου στα «Authorized domains». Το κλειδί μένει μόνο σε αυτή τη συσκευή. Άφησέ το κενό για να κλείσει η αναγνώριση.",
       "set.pnSite": "Άνοιγμα του my.plantnet.org", "set.pnBad": "Αυτό δεν μοιάζει με κλειδί του Pl@ntNet", "set.pnSaved": "Το κλειδί αποθηκεύτηκε σε αυτή τη συσκευή",
@@ -1233,6 +1235,19 @@
     io.appendChild(button(t("set.export"), "", exportData));
     io.appendChild(button(t("set.import"), "", importData));
     dlg.appendChild(io);
+    // .orosplants: Save keeps the dialog open (like Export); Open and
+    // the folder close it first, since they change the data
+    if (recFile) {
+      var of = el("div", "dlg-actions stack");
+      [["pc-osave", "set.osave", false, function () { recFile.save(); }],
+       ["pc-oopen", "set.oopen", true, function () { recFile.open(); }],
+       ["pc-ofolder", "set.ofolder", true, function () { recFile.openFolder(); }]].forEach(function (o) {
+        var b = button(t(o[1]), "", function () { if (o[2]) dlg.close(); o[3](); });
+        b.id = o[0];
+        of.appendChild(b);
+      });
+      dlg.appendChild(of);
+    }
     var acts = el("div", "dlg-actions");
     acts.appendChild(button(t("set.close"), "primary", function () { dlg.close(); }));
     dlg.appendChild(acts);
@@ -1302,6 +1317,44 @@
       });
     }).catch(function () { showToast(t("toast.badFile")); });
   }
+
+  // ---------- 7b. The .orosplants file (recordpkg.js, package.js) ----------
+  // Opening ADDS the plants and history entries this device lacks,
+  // with their ids; a plant already here (or deleted here) is kept as
+  // it is unless "Update with newer versions" is ticked. The result
+  // goes through save() (so sync carries it); Undo tombstones what was
+  // added the way deletePlant / removeEntry do. Prefs (reminder hour,
+  // hemisphere, the Pl@ntNet key) are device-local and never in a file.
+  var RP = window.OrosRecordPkg || null, PPK = window.OrosPlantsPackage || null;
+  var recFile = RP && PPK && window.OrosBundle ? RP.ui(PPK.DESC, {
+    lang: function () { return LANG; },
+    get: function () { return canonical(data); },
+    title: function () { return LANG === "el" ? "Φροντίδα φυτών" : "Plant Care"; },
+    set: function (next) {
+      if (!next || typeof next !== "object" || !Array.isArray(next.plants)) return;
+      data = canonical(next);
+      save();
+      render();
+    },
+    deleteIds: function (ids) {
+      var now = Date.now(), any = false;
+      ids.forEach(function (id) {
+        var k = PPK.kindOf(id, data);
+        if (!k) return;
+        var x = k === "plant" ? plantById(id) : data.log.filter(function (y) { return y.id === id; })[0];
+        if (!x) return;
+        data.tombs[id] = Math.max(now, x.m);
+        any = true;
+      });
+      if (!any) return;
+      save();
+      render();
+    },
+    toast: function (text, undo) {
+      if (undo) undoToast(text, undo);
+      else showToast(text);
+    }
+  }) : null;
 
   // ---------- 8. Dialogs + toasts ----------
   function button(label, cls, fn) {
@@ -1420,7 +1473,11 @@
   //   { asNew: { name, species?, room?, waterDays?, note? } } → the
   //     Assistant's entry card: the new-plant editor prefilled; nothing
   //     is saved until Save (BR-W8-6). No name → no-op.
+  //   { openFile: { token } } → "Open with" an .orosplants file
+  //     (fileopen.js): the File taken once with
+  //     window.parent.__orosTakeFile(token), then the kit's dialog
   function openAt(tg) {
+    if (tg && tg.openFile) { if (recFile) recFile.openTarget(tg.openFile); return; }
     if (!tg || typeof tg !== "object" || document.querySelector("dialog[open]")) return;
     if (tg.asNew) {
       var pre = C.asNewPrefill(tg.asNew);
