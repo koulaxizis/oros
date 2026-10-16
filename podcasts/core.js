@@ -31,6 +31,7 @@
 //  13. Views
 //  14. Skip silence + voice boost
 //  15. Browse like Radio (genres, countries, surprise)
+//  16. Shuffle + A–Z / Α–Ω index
 // ============================================================
 (function (root) {
   "use strict";
@@ -1243,6 +1244,79 @@
     });
   }
 
+  // ---------- 16. Shuffle + A–Z / Α–Ω index (browse wave 2) ----------
+  function shuffled(list, rnd) {
+    rnd = rnd || Math.random;
+    var a = (list || []).slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.min(i, Math.floor(rnd() * (i + 1)));
+      var x = a[i]; a[i] = a[j]; a[j] = x;
+    }
+    return a;
+  }
+  // Unplayed, playable (audio, not a trailer) episodes of one show.
+  function unplayedOf(data, sid, eps) {
+    return (eps || []).filter(function (e) {
+      return e && EP_RE.test(e.id) && e.audio && e.kind !== "trailer" && !stateOf(data, { id: e.id, s: sid, pd: e.pub }).x;
+    });
+  }
+  // What a shuffle plays, as [{id, s}] (first plays, the rest go to the
+  // front of Up next). sid given: that show's unplayed episodes in a
+  // random order. No sid: one random unplayed episode per followed
+  // show, shows in a random order. At most max (default 50).
+  function shufflePlan(data, cache, sid, rnd, max) {
+    max = max || 50;
+    var out = [];
+    if (sid) {
+      shuffled(unplayedOf(data, sid, cache[sid]), rnd).forEach(function (e) { out.push({ id: e.id, s: sid }); });
+    } else {
+      shuffled(data.shows, rnd).forEach(function (s) {
+        var u = unplayedOf(data, s.id, cache[s.id]);
+        if (u.length) { var e = u[Math.min(u.length - 1, Math.floor((rnd || Math.random)() * u.length))]; out.push({ id: e.id, s: s.id }); }
+      });
+    }
+    return out.slice(0, max);
+  }
+  // eps go to the front of Up next, in order; the rest of the queue
+  // follows (no duplicates, capped by the queue limit in normQueue).
+  function queueFront(data, eps, now) {
+    var front = (eps || []).filter(function (e) { return e && EP_RE.test(e.id) && SHOW_RE.test(e.s); });
+    if (!front.length) return data;
+    var ids = front.map(function (e) { return e.id; });
+    var sh = Object.assign({}, data.queue.sh);
+    front.forEach(function (e) { sh[e.id] = e.s; });
+    data.queue.ids.forEach(function (id) { if (ids.indexOf(id) < 0) ids.push(id); });
+    return setQueue(data, ids.slice(0, LIM.queue), sh, now);
+  }
+  // Index letter of a title: A–Z, Α–Ω (accents and final sigma folded),
+  // "#" for digits, symbols and other scripts. Leading articles stay.
+  function letterOf(title) {
+    var c = fold(String(title || "").replace(/^[\s\p{P}\p{S}]+/u, "")).charAt(0);
+    if (/[a-z]/.test(c)) return c.toUpperCase();
+    if (/[α-ω]/.test(c)) return c.toUpperCase();
+    return "#";
+  }
+  // Letters present, in index order: "#", A–Z, then Α–Ω (Greek first
+  // when the app is in Greek).
+  function indexLetters(titles, lang) {
+    var seen = {};
+    (titles || []).forEach(function (tl) { seen[letterOf(tl)] = 1; });
+    var latin = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split(""), greek = "ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ".split("");
+    var order = ["#"].concat(lang === "el" ? greek.concat(latin) : latin.concat(greek));
+    return order.filter(function (l) { return seen[l]; });
+  }
+  // Items in index order (the letter bar's order), then by folded title.
+  function indexSort(items, titleOf, lang) {
+    var order = indexLetters(["#"], lang).concat(lang === "el" ? "ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩABCDEFGHIJKLMNOPQRSTUVWXYZ".split("") : "ABCDEFGHIJKLMNOPQRSTUVWXYZΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ".split(""));
+    var key = function (x) {
+      var tl = titleOf(x);
+      return [order.indexOf(letterOf(tl)), fold(String(tl || "").replace(/^[\s\p{P}\p{S}]+/u, ""))];
+    };
+    return (items || []).map(function (x) { return { x: x, k: key(x) }; }).sort(function (a, b) {
+      return a.k[0] - b.k[0] || (a.k[1] < b.k[1] ? -1 : a.k[1] > b.k[1] ? 1 : 0);
+    }).map(function (o) { return o.x; });
+  }
+
   // ---------- 14. Skip silence + voice boost (wave 42) ----------
   // The host taps the playing element through Web Audio (an
   // AnalyserNode) and plays quiet stretches faster; voice boost is a
@@ -1367,6 +1441,7 @@
     GENRES: GENRES, COUNTRIES: COUNTRIES, genreOf: genreOf, genreName: genreName, isCountry: isCountry, flag: flag,
     chartUrl: chartUrl, parseChart: parseChart, genreSearchUrl: genreSearchUrl, inGenre: inGenre, idBatches: idBatches,
     subChips: subChips, withChip: withChip, pickRandom: pickRandom, sortCountries: sortCountries,
+    shuffled: shuffled, unplayedOf: unplayedOf, shufflePlan: shufflePlan, queueFront: queueFront, letterOf: letterOf, indexLetters: indexLetters, indexSort: indexSort,
     freshEpisodes: freshEpisodes, parseTarget: parseTarget, todoItem: todoItem, noteAt: noteAt,
     FX: FX, rms: rms, allZero: allZero, silenceStep: silenceStep, silenceRate: silenceRate, silenceSaved: silenceSaved,
     addSaved: addSaved, mediaOrigin: mediaOrigin, fxRoute: fxRoute, fxRemember: fxRemember, zeroWatch: zeroWatch

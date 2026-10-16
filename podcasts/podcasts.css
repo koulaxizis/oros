@@ -217,6 +217,13 @@ button.ep-title:hover { color: var(--accent); }
 .c-flag { font-size: 20px; line-height: 1; }
 .c-name { min-width: 0; overflow-wrap: anywhere; }
 .ep.pv { display: flex; align-items: center; gap: 10px; }
+/* Browse wave 2: A–Z / Α–Ω index bar, shuffle */
+.idx-bar { display: flex; flex-wrap: wrap; gap: 2px; margin: 8px 0; }
+.idx-bar[hidden] { display: none; }
+.idx-l { min-width: 30px; min-height: 30px; padding: 0 6px; border-radius: 8px; border: 1px solid var(--border); background: var(--panel-bg); font-size: 12px; font-weight: 800; color: inherit; }
+.idx-l:hover, .idx-l:focus-visible { border-color: var(--accent); color: var(--accent); }
+.lib-tools { margin: 8px 0 0; }
+[data-letter] { scroll-margin-top: 8px; }
 .dl-head { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; font-size: 14px; }
 
 /* ---------- 7. Player bar ---------- */
