@@ -154,7 +154,37 @@
         return blobUrl;
       }, function () { return item.u; });
     }
+    if (item.s === "sv") {
+      // A song of the user's own server (servers.js knows the login).
+      return servers().then(function (SV) { return SV.source(item); }).then(function (src) {
+        if (typeof src === "string") return src;
+        releaseBlob();
+        blobUrl = w.URL.createObjectURL(src);
+        return blobUrl;
+      });
+    }
     return Promise.reject(new Error("nosrc"));
+  }
+  // servers.js, loaded into this window on the first server song,
+  // from next to this file (same ?v=).
+  var svWait = null;
+  var hostSrc = (function () {
+    var s = doc.currentScript && doc.currentScript.src;
+    if (s) return s;
+    var all = doc.querySelectorAll("script[src*='host.js']");
+    return all.length ? all[all.length - 1].src : "";
+  })();
+  function servers() {
+    if (w.OrosMusicServers) return Promise.resolve(w.OrosMusicServers);
+    if (svWait) return svWait;
+    svWait = new Promise(function (resolve, reject) {
+      var s = doc.createElement("script");
+      s.src = hostSrc ? hostSrc.replace(/host\.js(\?|$)/, "servers.js$1") : "music/servers.js";
+      s.onload = function () { if (w.OrosMusicServers) resolve(w.OrosMusicServers); else { svWait = null; reject(new Error("servers")); } };
+      s.onerror = function () { svWait = null; s.remove(); reject(new Error("servers")); };
+      doc.head.appendChild(s);
+    });
+    return svWait;
   }
   function load(item, start, autoplay) {
     if (!item) return Promise.resolve(false);
@@ -316,8 +346,9 @@
   // ---------- Media Session ----------
   function setArt(item) {
     var id = item && item.art;
+    if (item && item.s === "sv") id = w.OrosMusicServers ? w.OrosMusicServers.coverUrl(item) : "";
     // Covers of open-catalogue songs are https addresses.
-    if (id && /^https:\/\//i.test(id)) { artFor = ""; if (artUrl) { try { w.URL.revokeObjectURL(artUrl); } catch (e) {} artUrl = ""; } return Promise.resolve(id); }
+    if (id && /^https?:\/\//i.test(id)) { artFor = ""; if (artUrl) { try { w.URL.revokeObjectURL(artUrl); } catch (e) {} artUrl = ""; } return Promise.resolve(id); }
     if (!id || !ST) { artFor = ""; if (artUrl) { try { w.URL.revokeObjectURL(artUrl); } catch (e) {} artUrl = ""; } return Promise.resolve(""); }
     if (id === artFor && artUrl) return Promise.resolve(artUrl);
     return ST.getArt(id).then(function (blob) {

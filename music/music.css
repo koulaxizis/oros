@@ -108,7 +108,7 @@ svg { display: block; }
 .small-pill { min-height: 36px; font-size: 13px; padding: 0 16px; }
 .link { background: none; border: none; padding: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; }
 .link:hover { text-decoration: underline; }
-input[type="text"], input[type="search"], select {
+input[type="text"], input[type="search"], input[type="password"], select {
   background: var(--panel-bg); border: 1px solid var(--border); border-radius: 8px;
   min-height: 40px; padding: 0 10px; font-size: 15px; max-width: 100%;
 }
@@ -359,3 +359,8 @@ dl.info dd { overflow-wrap: anywhere; }
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; }
 }
+
+/* ---------- Servers (wave 4) ---------- */
+.sv-msg { margin: 6px 0; min-height: 1em; }
+.sv-msg.err { color: var(--danger); }
+.sv-msg .link { text-decoration: underline; color: var(--accent); }
