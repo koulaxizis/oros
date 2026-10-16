@@ -44,7 +44,7 @@ The prediction comes from your own averages. It's an estimate, not medical advic
 ## Sync and backup
 Periods, day logs (with flow, temperature and mucus), your symptoms and medications, and the reminder and temperature settings sync between your devices through [orOS sync](help:t/sync). Cycle makes no other network calls. Your periods also appear in [Calendar](app:calendar) under the `Cycle` label; tapping one opens it here.
 
-Apart from the PDF report and the import below, there's no export; use the orOS [backup](help:t/backup) to keep a copy.
+Apart from the PDF report and the orOS file below, there's no export; the orOS [backup](help:t/backup) also keeps a copy.
 
 ## Import from another app
 In `Insights`, tap `Import` and pick a file you exported from another app. Cycle shows what it found (periods, dates, days with flow, temperature, mucus and notes, and how many periods you already have) before anything is saved. The file is read on this device only and is never uploaded.
@@ -54,6 +54,11 @@ In `Insights`, tap `Import` and pick a file you exported from another app. Cycle
 - A CSV file: one row per period, with `start` and optional `end` columns, or one row per bleeding day, with a `date` column and optional `flow` (light, medium, heavy), `temperature`, `mucus` and `note` columns. Bleeding days at most two days apart make one period.
 
 What you've already logged stays as it is: a period that overlaps one of yours is skipped, and your own entries for a day win. A period with no end date gets your average length. Importing the same file again adds nothing. `Undo` in the message after the import takes it all back.
+
+## Save and open an orOS file
+In `Insights`, `orOS file (.oroscycle)` saves every period, logged day, symptom and medication as one `.oroscycle` file, for example to move them to another device without sync or to keep a copy. Your reminder and temperature settings stay on this device. The file is a plain ZIP: unzipped it holds the data as `content.json` plus `preview/cycle.md`, `preview/periods.csv` and `preview/days.csv` for other programs. It is not encrypted, so keep it somewhere safe.
+
+`Open orOS file…` (or `Unzipped orOS folder…`, or "Open with" orOS on the computer) shows how many entries are new and how many are already here, then `Add` adds only the new ones, with their own ids: opening the same file again adds nothing. A day you already logged here is kept as it is, and anything you deleted here stays deleted; a file never deletes anything. A symptom or medication with a name you already have uses yours. Tick `Update with newer versions` to let entries changed later in the file update yours (a day is then combined field by field). `Undo` in the message removes what was added.
 
 ## Keyboard shortcuts
 - [[Enter]] in `New symptom…` or `New medication…` adds it.

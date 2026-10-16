@@ -53,11 +53,15 @@ test("file types: a single app opens exactly the types its app opens in orOS", (
   const notes = S.manifestFor("notes", F.table(), BASE).file_handlers[0];
   assert.deepEqual(notes.accept, { "text/plain": [".txt"], "text/markdown": [".md", ".markdown"], "application/x-oros-notes": [".orosnotes"] });
   assert.equal(notes.action, "/notes/solo.html?file-open=notes");
-  assert.deepEqual(S.manifestFor("calendar", F.table(), BASE).file_handlers[0].accept, { "text/calendar": [".ics"] });
-  assert.equal(S.manifestFor("todo", F.table(), BASE).file_handlers, undefined);
-  assert.equal(S.manifestFor("bookmarks", F.table(), BASE).file_handlers, undefined);
-  assert.deepEqual(S.manifestFor("calendar", F.table(), BASE).share_target.params.files[0].accept, ["text/calendar", ".ics"]);
-  assert.equal(S.manifestFor("todo", F.table(), BASE).share_target.params.files, undefined);
+  assert.deepEqual(S.manifestFor("calendar", F.table(), BASE).file_handlers[0].accept,
+    { "text/calendar": [".ics"], "application/x-oros-cal": [".oroscal"] });
+  // phase 4b: a record app opens its own .oros<word> file
+  assert.deepEqual(S.manifestFor("todo", F.table(), BASE).file_handlers[0].accept, { "application/x-oros-tasks": [".orostasks"] });
+  assert.deepEqual(S.manifestFor("bookmarks", F.table(), BASE).file_handlers[0].accept, { "application/x-oros-bookmarks": [".orosbookmarks"] });
+  assert.equal(S.manifestFor("passwords", F.table(), BASE).file_handlers, undefined);
+  assert.deepEqual(S.manifestFor("calendar", F.table(), BASE).share_target.params.files[0].accept,
+    ["text/calendar", ".ics", "application/x-oros-cal", ".oroscal"]);
+  assert.deepEqual(S.manifestFor("todo", F.table(), BASE).share_target.params.files[0].accept, ["application/x-oros-tasks", ".orostasks"]);
 });
 
 test("ids come only from the table: paths and parameters cannot name anything else", () => {
@@ -208,9 +212,13 @@ test("wave 3: personal apps — shares only where a text means something, shortc
     { app: "habits", target: { asNew: { name: "Read 10 pages" } } });
   assert.deepEqual(S.shareTarget("fitness", { url: "", title: "", text: "Ran 5 km" }, now),
     { app: "fitness", target: { asNew: { note: "Ran 5 km" } } });
+  // no text share; the share target only carries the app's own file (phase 4b)
   ["water", "diary", "mood", "health", "cycle"].forEach((id) => {
     assert.equal(S.shareTarget(id, { url: "", title: "x", text: "y" }, now), null, id);
-    assert.equal(S.manifestFor(id, F.table(), BASE).share_target, undefined, id);
+    const st = S.manifestFor(id, F.table(), BASE).share_target;
+    assert.deepEqual(st.params.files[0].accept, F.table().filter((h) => h.app === id)
+      .flatMap((h) => Object.keys(h.accept).flatMap((m) => [m].concat(h.accept[m]))), id);
+    assert.ok(st.params.files[0].accept.every((x) => /^(application\/x-oros-[a-z]+|\.oros[a-z]+)$/.test(x)), id);
   });
   assert.ok(S.manifestFor("health", F.table(), BASE).shortcuts.length === 2);
   [["passwords/passwords.js", /tg\.gen === true/], ["passwords/pmapp.js", /addEntry: function/],
@@ -252,7 +260,8 @@ test("wave 5: business — invoice and customer shares; shortcuts reach their re
     { app: "crm", target: { asNew: { name: "Maria Papadopoulou", note: "Tel +30 210 123 4567\nMet at the fair", email: "maria@example.gr", phone: "+30 210 123 4567" } } });
   assert.deepEqual(S.shareTarget("crm", { url: "", title: "", text: "nikos@shop.example" }, now),
     { app: "crm", target: { asNew: { name: "nikos", note: "", email: "nikos@shop.example" } } });
-  assert.equal(S.manifestFor("timesheet", F.table(), BASE).share_target, undefined);
+  assert.deepEqual(S.manifestFor("timesheet", F.table(), BASE).share_target.params.files[0].accept,
+    ["application/x-oros-hours", ".oroshours"]);                // its own file only (phase 4b)
   assert.deepEqual(S.APPS.invoices.shortcuts.map((x) => x.target.newDoc), ["inv", "rcpt"]);
   [["invoices/invoices.js", /tg\.newDoc === "inv" \|\| tg\.newDoc === "rcpt"/], ["invoices/invoices.js", /x\.notes = notes/], ["crm/crm.js", /if \(x\.newCust\)/],
    ["timesheet/timesheet.js", /if \(t\.toggle\) \{ window\.__orosTimesheetToggle\(\)/], ["timesheet/timesheet.js", /if \(t\.newEntry\)/]

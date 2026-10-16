@@ -55,6 +55,16 @@
       ]
     }
   ],
+  "file_handlers": [
+    {
+      "action": "/fitness/solo.html?file-open=fitness",
+      "accept": {
+        "application/x-oros-workouts": [
+          ".orosworkouts"
+        ]
+      }
+    }
+  ],
   "share_target": {
     "action": "/fitness/solo.html?share-target",
     "method": "POST",
@@ -62,7 +72,16 @@
     "params": {
       "title": "title",
       "text": "text",
-      "url": "url"
+      "url": "url",
+      "files": [
+        {
+          "name": "files",
+          "accept": [
+            "application/x-oros-workouts",
+            ".orosworkouts"
+          ]
+        }
+      ]
     }
   }
 }

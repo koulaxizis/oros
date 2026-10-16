@@ -61,6 +61,9 @@
       "accept": {
         "text/x-opml": [
           ".opml"
+        ],
+        "application/x-oros-podcasts": [
+          ".orospodcasts"
         ]
       }
     }
@@ -78,7 +81,9 @@
           "name": "files",
           "accept": [
             "text/x-opml",
-            ".opml"
+            ".opml",
+            "application/x-oros-podcasts",
+            ".orospodcasts"
           ]
         }
       ]

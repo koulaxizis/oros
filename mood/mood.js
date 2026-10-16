@@ -4325,6 +4325,22 @@ function mergeMoodStates(A, B) {
     imp.textContent = t("imp.btn");
     imp.addEventListener("click", startImport);
     top.appendChild(imp);
+    // .orosmood (OBF-4e): save every record as one orOS file, open one
+    // (adds what is missing) or its unzipped folder
+    if (recFile) {
+      [["oros-save", "oros.save", "save", function () { recFile.save(); }],
+       ["oros-open", "oros.open", "open", function () { recFile.open(); }],
+       ["oros-folder", "oros.folder", "folder", function () { recFile.openFolder(); }]].forEach(function (b) {
+        var ob = document.createElement("button");
+        ob.type = "button";
+        ob.className = "chip ghost";
+        ob.id = b[0];
+        ob.textContent = t(b[1]);
+        ob.title = recFile.text(b[2]);
+        ob.addEventListener("click", b[3]);
+        top.appendChild(ob);
+      });
+    }
     host.appendChild(top);
 
     var es = entriesInRange();
@@ -4781,6 +4797,113 @@ function mergeMoodStates(A, B) {
   }
   window.__orosMoodImportFile = importFile;
 
+  // ---------- 3d. orOS file (.orosmood, ../recordpkg.js + package.js) ----------
+  // Every entry, own value, feeling / activity definition and goal as
+  // one orOS file. Opening ADDS what this device lacks, with its ids;
+  // a record already here (or deleted here) is kept as it is unless
+  // "Update with newer versions" is ticked. The result goes through
+  // migrate + one checked write + the sync mark; Undo removes the
+  // added records the app's own way (entries and own values get
+  // tombstones, feelings and activities are hidden, goals soft-deleted).
+  STRINGS.en["oros.save"]   = "orOS file (.orosmood)";
+  STRINGS.en["oros.open"]   = "Open orOS file…";
+  STRINGS.en["oros.folder"] = "Unzipped orOS folder…";
+  STRINGS.el["oros.save"]   = "Αρχείο orOS (.orosmood)";
+  STRINGS.el["oros.open"]   = "Άνοιγμα αρχείου orOS…";
+  STRINGS.el["oros.folder"] = "Αποσυμπιεσμένος φάκελος orOS…";
+
+  var RP = window.OrosRecordPkg || null, MPK = window.OrosMoodPackage || null;
+  var recAdded = null;                    // the last open's added ids, per collection
+  // Values of opened files that foldCols folded into one here, by id
+  // ({ fileId: localId }): this device only, so the same file opened
+  // again finds nothing new (package.js tombIds reads it).
+  var FOLD_KEY = "oros-mood-folded", FOLD_MAX = 2000;
+  function foldedMap() {
+    try {
+      var m = JSON.parse(localStorage.getItem(FOLD_KEY) || "{}");
+      return m && typeof m === "object" && !Array.isArray(m) ? m : {};
+    } catch (e) { return {}; }
+  }
+  function addFolded(map) {
+    var m = foldedMap(), ks;
+    Object.keys(map).forEach(function (k) { delete m[k]; m[k] = map[k]; });
+    ks = Object.keys(m);
+    ks.slice(0, Math.max(0, ks.length - FOLD_MAX)).forEach(function (k) { delete m[k]; });
+    try { localStorage.setItem(FOLD_KEY, JSON.stringify(m)); } catch (e) {}
+  }
+  function afterRecChange() {
+    refreshVocab();
+    renderAll();
+    if (viewMode === "insights") renderInsights();
+  }
+  var recFile = RP && MPK && window.OrosBundle ? RP.ui(MPK.DESC, {
+    lang: function () { return LANG; },
+    get: function () { var s = canonState(state); s.__folded = foldedMap(); return s; },
+    title: function () { return t("app.title"); },
+    set: function (next, info) {
+      var prev = canonState(state), ids = (info && info.addedIds) || [];
+      var data = migrate(JSON.parse(JSON.stringify(next)));
+      if (!data) return;
+      delete data.__folded;
+      var folded = MPK.foldCols(prev, data, ids).folded;   // a value whose name is here → the one here
+      var nv = V.mergeVocab(data.vocab, null);
+      if (nv) data.vocab = nv; else delete data.vocab;
+      var ng = V.mergeGoals(data.goals, null);
+      if (ng) data.goals = ng; else delete data.goals;
+      data.entries.sort(byTsDesc);
+      ["loc", "trig", "person"].forEach(function (c) { data.cols[c].forEach(function (v, i) { v.pos = i; }); });
+      data.sm = Date.now();
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+      catch (e) {
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e2) {}
+        showToast(t("imp.full"));
+        return;
+      }
+      state = data;
+      addFolded(folded);
+      recAdded = MPK.addedByColl(prev, state, ids);
+      if (window.__orosSyncApi) window.__orosSyncApi.dirty();
+      afterRecChange();
+    },
+    deleteIds: function (ids) {
+      var now = Date.now(), a = recAdded || MPK.addedByColl({}, canonState(state), ids), want = {};
+      ids.forEach(function (id) { want[id] = 1; });
+      function pick(list) { var o = {}; list.forEach(function (id) { if (want[id]) o[id] = 1; }); return o; }
+      var ge = pick(a.entries);
+      state.entries = state.entries.filter(function (e) { return !ge[e.id]; });
+      Object.keys(ge).forEach(function (id) { state.deleted[id] = Math.max(state.deleted[id] || 0, now); });
+      ["loc", "trig", "person"].forEach(function (c) {
+        var gv = pick(a[c]);
+        state.cols[c] = state.cols[c].filter(function (v) { return !gv[v.id]; });
+        Object.keys(gv).forEach(function (id) { state.deleted[id] = Math.max(state.deleted[id] || 0, now); });
+      });
+      // the vocabulary never shrinks: an added feeling / activity is hidden
+      ["emo", "act"].forEach(function (k) {
+        var gd = pick(a[k]);
+        ((state.vocab || {})[k] || []).forEach(function (d) {
+          if (!gd[d.id]) return;
+          d.hid = true;
+          d.mtime = Math.max(now, (d.mtime || 0) + 1);
+        });
+      });
+      var gg = pick(a.goals);
+      (state.goals || []).forEach(function (g) {
+        if (!gg[g.id]) return;
+        g.x = 1;
+        g.mtime = Math.max(now, (g.mtime || 0) + 1);
+      });
+      recAdded = null;
+      state.sm = now;
+      save();
+      afterRecChange();
+      transientNote(RP.str(LANG, "undone"));
+    },
+    toast: function (text, undo) {
+      if (undo) showToast(text, t("del.undo"), undo);
+      else showToast(text);
+    }
+  }) : null;
+
   // ---------- 4. Sync slice + palette ----------
   var PAL_VARS = ["--bg", "--bg-desktop", "--bar-bg", "--text", "--text-dim",
                   "--accent", "--accent-hover", "--accent-soft",
@@ -5013,7 +5136,10 @@ function mergeMoodStates(A, B) {
 
   // Single app (solo.js) icon shortcut { checkin: true }: the capture
   // tab, as the check-in reminder opens it.
+  // "Open with" an .orosmood file (fileopen.js): { openFile: { token } },
+  // the File taken once with window.parent.__orosTakeFile(token)
   window.__orosOpenAt = function (tg) {
+    if (tg && typeof tg === "object" && tg.openFile) { if (recFile) recFile.openTarget(tg.openFile); return; }
     if (tg && typeof tg === "object" && tg.checkin === true) __orosMoodOpen("checkin");
   };
   try {
