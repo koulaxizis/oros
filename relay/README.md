@@ -25,6 +25,7 @@ Mail app (browser) ──HTTPS/JSON──▶ relay (Worker) ──IMAP over TLS�
 | `ext.js` | Connected services' `ext` operation: a person's own shop (WooCommerce) when the browser can't reach it, timologisi.online (myDATA), the email platforms (MailerLite, Mailchimp, Brevo) the CRMs (HubSpot, Pipedrive, Odoo), Stripe, Invoice Ninja, Todoist, Trello, GitHub, Raindrop.io and Notion, all read-only; exact allowlist (see below) |
 | `newsletter.js` | Newsletter's public sign-up form and one-click unsubscribe, kept in D1 until the list's orOS pulls them (see below) |
 | `crmform.js` | CRM's public contact form (`/crm/f/<k>`) and op `crmf`, kept in the same D1 until the user's CRM picks the messages up (see below) |
+| `share.js` | "Send to someone" links with an expiry: op `shr` and `/s/<id>/<i>`, encrypted pieces kept in their own D1 until they expire or are revoked (see below) |
 | `remote.js` | Studio Remote's meeting rooms: a Durable Object that joins two WebSockets (see below) |
 | `wrangler.toml` | Worker name and `ALLOWED_ORIGINS` |
 
@@ -441,6 +442,45 @@ App operation `POST /v1 { op: "crmf", act, k (16 a-z0-9), sec (32 A-Za-z0-9) }`:
 
 Errors: `nostore` (503: no binding or a D1 failure), `auth` (403),
 `gone` (404), `full`, `bad-request`. Tests: `tests/crm-form-relay.test.js`.
+
+## Send to someone: links with an expiry (`/s/`, op `shr`)
+
+For items too big for a link, or when the sender wants an expiry and a
+way to take the link back. The sender's browser encrypts the item
+(AES-256-GCM, a random key that lives only in the link's `#fragment`)
+and splits it into pieces of at most 256 KiB. The relay only stores
+the pieces and never sees a key.
+
+In clear: the id (16 random bytes, base64url), the expiry, the
+declared size, the number of pieces, the time, SHA-256 of the upload
+token and SHA-256 of the sender's revoke secret. Nothing else, and no
+IP in the database.
+
+| Call | What |
+|---|---|
+| `POST /v1 {op:"shr", act:"new", id, delh, exp, n, size}` | Reserves the item. `delh` = SHA-256 hex of the revoke secret, `exp` ≤ now + 30 days, `n` 1–200, `size` ≤ 25 MB. Answers `{tok}` (32 random bytes, valid for one hour, kept only as SHA-256) |
+| `PUT /s/<id>/<i>` | One piece, `Authorization: Bearer <tok>`, only from `ALLOWED_ORIGINS`. `0 ≤ i < n`, each piece once (409), the total never above `size` (413) |
+| `POST /v1 {op:"shr", act:"fin", id, tok}` | Needs all `n` pieces and exactly `size` bytes; then the item can be read. Answers `{exp}` |
+| `GET /s/<id>/<i>` | One piece, `application/octet-stream`, `nosniff`, `Content-Disposition: attachment`, `Content-Security-Policy: sandbox`, `Cache-Control: no-store`; CORS only for `ALLOWED_ORIGINS`. The same 404 for missing, expired, revoked and not finished |
+| `POST /v1 {op:"shr", act:"del", id, del}` | Revoke: deletes everything when SHA-256(`del`) matches. Always `{ok:true}` |
+
+Limits: 25 MB per item, 400 MB in all (declared sizes, counted at
+`new`; answer 507 `full`), 20 items and 100 MB per client IP per day,
+300 PUT and 600 GET per client IP per minute (separate from `/v1`).
+Expired items and uploads unfinished after an hour are deleted by the
+hourly cron (`scheduled()` → `purgeShares`, in batches) and on every
+`new`. The relay cannot check what it stores (that is the point); the
+short expiry, the caps and the attachment/sandbox headers keep it from
+being a general file host.
+
+Turning it on (once): create a D1 database `oros-share` in the
+Cloudflare dashboard (Workers & Pages → D1 → Create), put its id in the
+`[[d1_databases]]` block for `SHR_DB` in `wrangler.toml`. The tables
+are created on first use. Without the binding the op and `/s/` answer
+503 `nostore`.
+
+Tests: `tests/share-relay.test.js` (an in-memory D1 that knows exactly
+the statements in `SHR_SQL`).
 
 ## Studio Remote: meeting rooms (`/rt/`)
 
