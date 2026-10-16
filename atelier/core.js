@@ -105,6 +105,9 @@
       "imp.file": "From a file (.pptx, picture, package)…", "imp.folder": "From an unzipped package folder…", "imp.canva": "From your Canva account…",
       "home.select": "Select", "home.picked": "{n} selected", "home.fromCanva": "From Canva ({n})", "home.delSel": "Delete ({n})",
       "home.delAsk": "Delete {n} designs?", "home.delOk": "Delete", "home.deleted": "{n} designs deleted.",
+      "del.one": "Delete “{name}”?", "del.files": "Also delete the files nothing else uses (pictures, videos, sounds): {n}",
+      "del.filesHint": "Files another design, Slides or Layout still uses are kept. Deleted files cannot be brought back, and Vault Drive deletes them on your other devices too.",
+      "del.done": "Deleted. Files deleted too: {n}.",
       "fo.all": "All", "fo.newShort": "New folder", "fo.new": "New folder", "fo.newMove": "New folder…", "fo.none": "No folder",
       "fo.move": "Move ({n})", "fo.moveOne": "Move to folder…", "fo.moved": "{n} moved to {f}.", "fo.movedOut": "{n} taken out of their folder.",
       "fo.rename": "Rename folder", "fo.delete": "Delete folder", "fo.options": "Folder options",
@@ -302,6 +305,9 @@
       "imp.file": "Από αρχείο (.pptx, εικόνα, πακέτο)…", "imp.folder": "Από φάκελο αποσυμπιεσμένου πακέτου…", "imp.canva": "Από τον λογαριασμό σου στο Canva…",
       "home.select": "Επιλογή", "home.picked": "{n} επιλεγμένα", "home.fromCanva": "Από το Canva ({n})", "home.delSel": "Διαγραφή ({n})",
       "home.delAsk": "Να διαγραφούν {n} σχέδια;", "home.delOk": "Διαγραφή", "home.deleted": "Διαγράφηκαν {n} σχέδια.",
+      "del.one": "Να διαγραφεί το «{name}»;", "del.files": "Διαγραφή και των αρχείων που δεν χρησιμοποιεί τίποτε άλλο (εικόνες, βίντεο, ήχοι): {n}",
+      "del.filesHint": "Όσα αρχεία χρησιμοποιεί ακόμη άλλο σχέδιο, οι Διαφάνειες ή η Σελιδοποίηση μένουν. Τα αρχεία που διαγράφονται δεν επανέρχονται και το Vault Drive τα διαγράφει και από τις άλλες σου συσκευές.",
+      "del.done": "Η διαγραφή έγινε. Διαγράφηκαν και αρχεία: {n}.",
       "fo.all": "Όλα", "fo.newShort": "Νέος φάκελος", "fo.new": "Νέος φάκελος", "fo.newMove": "Νέος φάκελος…", "fo.none": "Χωρίς φάκελο",
       "fo.move": "Μεταφορά ({n})", "fo.moveOne": "Μεταφορά σε φάκελο…", "fo.moved": "{n} μεταφέρθηκαν στο {f}.", "fo.movedOut": "{n} βγήκαν από τον φάκελό τους.",
       "fo.rename": "Μετονομασία φακέλου", "fo.delete": "Διαγραφή φακέλου", "fo.options": "Επιλογές φακέλου",
@@ -1086,29 +1092,63 @@
   function deleteMany(ids) {
     ids = ids.filter(function (id) { return findDoc(id); });
     if (!ids.length) return;
-    AT.confirm(t("home.delAsk", { n: ids.length }), t("home.delOk"), function () {
-      var nw = now(), keep = [];
-      ids.forEach(function (id) {
-        var d = findDoc(id);
-        keep.push(JSON.parse(JSON.stringify(d)));
-        data.dt[id] = Math.max(nw, M.maxM(d));
-        if (AT.prefs.doc === id) { AT.prefs.doc = null; savePrefs(); }
+    var title = t("home.delAsk", { n: ids.length });
+    var go = function (files) { pick = null; removeDocs(ids, files); };
+    if (!askFiles(ids, title, go)) AT.confirm(title, t("home.delOk"), function () { go(null); });
+  }
+
+  // Designs whose pictures, videos or sounds nothing else uses ask
+  // first, with an opt-in box to delete those files too. false: none.
+  function askFiles(ids, title, done) {
+    var files = AT.filesOnlyIn ? AT.filesOnlyIn(ids) : null;
+    if (!files || !files.length) return false;
+    AT.openDialog(title, function (body, close) {
+      var row = el("label", "chk-row");
+      var cb = el("input"); cb.type = "checkbox";
+      row.appendChild(cb);
+      row.appendChild(el("span", "", t("del.files", { n: files.length })));
+      body.appendChild(row);
+      body.appendChild(el("p", "hint", t("del.filesHint")));
+      var act = el("div", "dlg-actions");
+      var c = el("button", "btn", t("btn.cancel")); c.type = "button";
+      var o = el("button", "btn primary", t("home.delOk")); o.type = "button";
+      c.addEventListener("click", close);
+      o.addEventListener("click", function () { close(); done(cb.checked ? files : null); });
+      act.appendChild(c); act.appendChild(o);
+      body.appendChild(act);
+    });
+    return true;
+  }
+
+  // tombstones the designs; undo brings them all back, unless their
+  // files were deleted with them (those cannot come back)
+  function removeDocs(ids, files) {
+    var nw = now(), keep = [];
+    ids.forEach(function (id) {
+      var d = findDoc(id);
+      keep.push(JSON.parse(JSON.stringify(d)));
+      data.dt[id] = Math.max(nw, M.maxM(d));
+      if (AT.prefs.doc === id) { AT.prefs.doc = null; savePrefs(); }
+    });
+    data = M.normData(data);
+    save();
+    renderHome();
+    if (files) {
+      AT.flush();
+      AT.dropFiles(files).then(function (n) { toast(t("del.done", { n: n })); });
+      return;
+    }
+    toast(ids.length > 1 ? t("home.deleted", { n: ids.length }) : t("toast.docDeleted"), t("btn.undo"), function () {
+      // resurrect: every entity newer than the tombstone (R17)
+      var t1 = now();
+      keep.forEach(function (k) {
+        k.m = t1;
+        M.COLLECTIONS.forEach(function (c) { (k[c] || []).forEach(function (e) { e.m = t1; }); });
+        data.docs.push(M.normDoc(k));
       });
       data = M.normData(data);
       save();
-      pick = null;
       renderHome();
-      toast(t("home.deleted", { n: ids.length }), t("btn.undo"), function () {
-        var t1 = now();
-        keep.forEach(function (k) {
-          k.m = t1;
-          M.COLLECTIONS.forEach(function (c) { (k[c] || []).forEach(function (e) { e.m = t1; }); });
-          data.docs.push(M.normDoc(k));
-        });
-        data = M.normData(data);
-        save();
-        renderHome();
-      });
     });
   }
 
@@ -1189,23 +1229,8 @@
   function deleteDoc(id) {
     var d = findDoc(id);
     if (!d) return;
-    var nw = now();
-    var keep = JSON.parse(JSON.stringify(d));
-    data.dt[id] = Math.max(nw, M.maxM(d));
-    data = M.normData(data);
-    save();
-    if (AT.prefs.doc === id) { AT.prefs.doc = null; savePrefs(); }
-    renderHome();
-    toast(t("toast.docDeleted"), t("btn.undo"), function () {
-      // resurrect: every entity newer than the tombstone (R17)
-      var t1 = now();
-      keep.m = t1;
-      M.COLLECTIONS.forEach(function (c) { (keep[c] || []).forEach(function (e) { e.m = t1; }); });
-      data.docs.push(M.normDoc(keep));
-      data = M.normData(data);
-      save();
-      renderHome();
-    });
+    var go = function (files) { removeDocs([id], files); };
+    if (!askFiles([id], t("del.one", { name: docTitle(d) }), go)) go(null);
   }
 
   // removes a design without asking or offering undo (a Canva

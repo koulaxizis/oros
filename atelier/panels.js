@@ -528,6 +528,41 @@
   }
   AT.manageFiles = manageFiles;
 
+  // Files the given designs name and nothing else saved in this
+  // browser does (other designs, Slides, Layout): offered for deletion
+  // with those designs. null: cannot tell, so none is offered.
+  AT.filesOnlyIn = function (docIds) {
+    var CL = window.AtelierClips, mine = {}, used = {}, data = AT.data();
+    if (!fsApi()) return null;
+    try {
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        if (k !== AT.STORAGE_KEY && !BOOKKEEPING.test(k)) CL.idsIn(localStorage.getItem(k), used);
+      }
+    } catch (e) { return null; }
+    Object.keys(data).forEach(function (k) { if (k !== "docs") CL.idsIn(JSON.stringify(data[k]), used); });
+    data.docs.forEach(function (d) { CL.idsIn(JSON.stringify(d), docIds.indexOf(d.id) >= 0 ? mine : used); });
+    return Object.keys(mine).filter(function (id) { return !used[id] && CL.isFileId(id); });
+  };
+  // deletes them one by one after the designs are gone, checking
+  // again that nothing uses them; resolves with how many went
+  AT.dropFiles = function (ids) {
+    var F = fsApi(), used = usedFiles(), gone = 0;
+    if (!F || !used) return Promise.resolve(0);
+    return ids.filter(function (id) { return !used[id]; }).reduce(function (p, id) {
+      return p.then(function () {
+        return F.rm(A.FOLDER + "/" + id).then(function () {
+          gone++;
+          delete upThumbs[id];
+          sessionUploads = sessionUploads.filter(function (x) { return x !== id; });
+        }, function () {});
+      });
+    }, Promise.resolve()).then(function () {
+      if (view === "uploads") renderDrawer();
+      return gone;
+    });
+  };
+
   // --- Background ---
   function bgItem() { return AX.background(AT.doc, ED.pg); }
   function ensureBg(fn) {
