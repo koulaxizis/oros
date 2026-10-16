@@ -327,6 +327,8 @@ dialog.pc-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 .fld .dlg-lbl { margin-top: 10px; }
 .dlg-actions { display: flex; gap: 8px; margin-top: 16px; }
 .dlg-actions.tight { margin-top: 0; }
+.dlg-actions.stack { flex-direction: column; margin-top: 8px; }
+.dlg-actions.stack .dlg-btn { flex: none; }
 .dlg-btn {
   flex: 1;
   min-height: 40px;
