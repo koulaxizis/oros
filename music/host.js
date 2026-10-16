@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Music — host.js (player + data owner, v1.0.0)
+// orOS Music — host.js (player + data owner, v1.1.0)
 // Runs in the SHELL window (loaded by index.html after core.js and
 // store.js, or injected by the app on first open), so the music,
 // the queue and sync keep going while the Music window is closed.
@@ -7,7 +7,11 @@
 //   window.__orosMusicHost.api   (see the object at the end)
 //
 // It owns:
-//   - the one <audio data-oros-music> in the shell document;
+//   - the <audio data-oros-music> decks in the shell document (the
+//     song playing, the next one loaded early for gapless playback
+//     and crossfades), the equalizer (Web Audio, same-origin sources
+//     only), ReplayGain volume levelling and the sleep timer
+//     (device-local settings "oros-music-sound");
 //   - the sync slice "music" (oros-music-data: likes + playlists)
 //     WITH its merge, registered here and only here;
 //   - device-local state "oros-music-local": the queue (what was
@@ -113,57 +117,95 @@
     else if (!localTimer) localTimer = w.setTimeout(run, 4000);
   }
 
-  // ---------- Audio ----------
-  var audio = doc.querySelector("audio[data-oros-music]");
-  if (!audio) {
-    audio = doc.createElement("audio");
-    audio.setAttribute("data-oros-music", "1");
-    audio.preload = "auto";
-    audio.style.display = "none";
-    try { doc.body.appendChild(audio); } catch (e) {}
+  // ---------- Audio: decks ----------
+  // Up to four <audio data-oros-music> elements ("decks"): `audio` is
+  // the one playing; another holds the next song loaded early (gapless)
+  // or fading in (crossfade). A deck routed through Web Audio (the
+  // equalizer, a ReplayGain boost) only ever gets same-origin sources
+  // (blob: files and offline copies): a routed element plays a stream
+  // from another site without CORS as silence. Streams play on plain
+  // decks, where only volume changes apply.
+  var decks = [], evs = [];
+  function mkDeck() {
+    var el = doc.createElement("audio");
+    el.setAttribute("data-oros-music", "1");
+    el.preload = "auto";
+    el.style.display = "none";
+    el._blob = ""; el._same = false; el._rg = 1; el._fade = 1; el._node = null; el._gain = null;
+    try { doc.body.appendChild(el); } catch (e) {}
+    evs.forEach(function (x) { el.addEventListener(x[0], x[1]); });
+    decks.push(el);
+    return el;
   }
-  audio.volume = local.vol;
+  // Events count only from the deck that is playing now.
+  function on(type, fn) {
+    var h = function (e) { if (e.target === audio) fn(e); };
+    evs.push([type, h]);
+    decks.forEach(function (el) { el.addEventListener(type, h); });
+  }
+  var audio = mkDeck();
   var cur = null;            // item loaded
   var loadSeq = 0;           // a newer load wins
-  var blobUrl = "", artUrl = "", artFor = "";
+  var artUrl = "", artFor = "";
   var flags = { buffering: false, error: "" };
   var counted = false;       // this play is in the history already
   var fails = 0;             // songs in a row that could not play
   var wantPlay = false;      // the user asked for sound (an error then skips on)
 
   function fs() { return w.orosFS || null; }
-  function releaseBlob() { if (blobUrl) { try { w.URL.revokeObjectURL(blobUrl); } catch (e) {} blobUrl = ""; } }
+  function sameOrigin(u) { return /^blob:/.test(u) || u.indexOf(w.location.origin + "/") === 0; }
+  function revoke(u) { if (/^blob:/.test(u || "")) { try { w.URL.revokeObjectURL(u); } catch (e) {} } }
+  function setSrc(el, u) {
+    if (el._blob && el._blob !== u) revoke(el._blob);
+    el._blob = /^blob:/.test(u) ? u : "";
+    el._same = sameOrigin(u);
+    el.src = u;
+  }
+  function clearDeck(el) {
+    try { el.pause(); } catch (e) {}
+    try { el.removeAttribute("src"); el.load(); } catch (e) {}
+    revoke(el._blob); el._blob = ""; el._same = false; el._fade = 1;
+  }
+  function releaseBlob() { decks.forEach(function (el) { if (el !== audio) clearDeck(el); }); revoke(audio._blob); audio._blob = ""; }
+  // A deck that can take this source: `prefer` when it can, else a
+  // free one (never the one fading out), else a new one.
+  function deckFor(u, prefer) {
+    var ok = function (el) { return el !== fade.el && (!el._node || sameOrigin(u)); };
+    if (prefer && ok(prefer)) return prefer;
+    var free = decks.filter(function (el) { return el !== audio && ok(el) && (!nx || el !== nx.el); });
+    // Same-origin sources go to a routed deck first, so plain decks stay free for streams.
+    free.sort(function (a, b) { return (b._node ? 1 : 0) - (a._node ? 1 : 0); });
+    if (sameOrigin(u) && free.length) return free[0];
+    var plain = free.filter(function (el) { return !el._node; })[0];
+    if (plain) return plain;
+    if (decks.length < 4) return mkDeck();
+    return free[0] || prefer || audio;
+  }
+  // → Promise<address> (a blob: address belongs to the caller).
   function sourceFor(item) {
     if (item.p) {
       var F = fs();
       if (!F || typeof F.read !== "function") return Promise.reject(new Error("nofs"));
-      return F.read(item.p).then(function (blob) {
-        releaseBlob();
-        blobUrl = w.URL.createObjectURL(blob);
-        return blobUrl;
-      });
+      return F.read(item.p).then(function (blob) { return w.URL.createObjectURL(blob); });
     }
     if (item.u && /^https:\/\//i.test(item.u)) {
       // A song from an open catalogue: its offline copy when there is
       // one, else it streams straight from the source.
       if (!ST || typeof ST.getOff !== "function") return Promise.resolve(item.u);
-      return ST.getOff(item.k).then(function (blob) {
-        if (!blob) return item.u;
-        releaseBlob();
-        blobUrl = w.URL.createObjectURL(blob);
-        return blobUrl;
-      }, function () { return item.u; });
+      return ST.getOff(item.k).then(function (blob) { return blob ? w.URL.createObjectURL(blob) : item.u; }, function () { return item.u; });
     }
     if (item.s === "sv") {
       // A song of the user's own server (servers.js knows the login).
       return servers().then(function (SV) { return SV.source(item); }).then(function (src) {
-        if (typeof src === "string") return src;
-        releaseBlob();
-        blobUrl = w.URL.createObjectURL(src);
-        return blobUrl;
+        return typeof src === "string" ? src : w.URL.createObjectURL(src);
       });
     }
     return Promise.reject(new Error("nosrc"));
+  }
+  // ReplayGain tags of a song on this device (the index has them).
+  function rgFor(item) {
+    if (!item.p || !ST || typeof ST.getTrack !== "function") return Promise.resolve(null);
+    return ST.getTrack(item.p).then(function (r) { return (r && r.rg) || null; }, function () { return null; });
   }
   // servers.js, loaded into this window on the first server song,
   // from next to this file (same ?v=).
@@ -186,22 +228,218 @@
     });
     return svWait;
   }
+
+  // ---------- Sound: equalizer, ReplayGain, volume ----------
+  var SOUND_KEY = "oros-music-sound";
+  var sound = (function () { try { return C.normSound(JSON.parse(w.localStorage.getItem(SOUND_KEY) || "null")); } catch (e) { return C.normSound(null); } })();
+  var ctx = null, eqNodes = [], master = null;
+  function graph() {
+    if (ctx) return ctx;
+    var AC = w.AudioContext || w.webkitAudioContext;
+    if (!AC) return null;
+    try {
+      ctx = new AC();
+      master = ctx.createGain();
+      eqNodes = C.EQ_HZ.map(function (hz, i) {
+        var f = ctx.createBiquadFilter();
+        f.type = i === 0 ? "lowshelf" : i === C.EQ_HZ.length - 1 ? "highshelf" : "peaking";
+        f.frequency.value = hz;
+        f.Q.value = 1.1;
+        return f;
+      });
+      for (var i = 0; i < eqNodes.length - 1; i++) eqNodes[i].connect(eqNodes[i + 1]);
+      eqNodes[eqNodes.length - 1].connect(master);
+      master.connect(ctx.destination);
+      paintEq();
+    } catch (e) { ctx = null; }
+    return ctx;
+  }
+  function paintEq() {
+    if (!ctx) return;
+    var g = sound.eq.on ? sound.eq.g : [];
+    eqNodes.forEach(function (f, i) { f.gain.value = +g[i] || 0; });
+    master.gain.value = Math.pow(10, (sound.eq.on ? C.eqPreamp(sound.eq.g) : 0) / 20);
+  }
+  // Route a deck through the graph (once; it stays routed).
+  function route(el) {
+    if (el._node || !el._same || !graph()) return !!el._node;
+    if (ctx.state === "suspended") { try { ctx.resume(); } catch (e) {} }
+    try {
+      el._node = ctx.createMediaElementSource(el);
+      el._gain = ctx.createGain();
+      el._node.connect(el._gain);
+      el._gain.connect(eqNodes[0]);
+    } catch (e) { el._node = null; el._gain = null; }
+    return !!el._node;
+  }
+  function fromAlbum() { var q = C.normQueue(local.q); return !!(q.src && /^(album|ia|jm|sva)$/.test(q.src.kind)); }
+  // The ReplayGain factor of the deck's song, then the deck's volume.
+  function gainFor(el, rgd) {
+    el._rgd = rgd || null;
+    el._rg = C.rgFactor(el._rgd, sound.rg, fromAlbum(), sound.pre);
+    if ((sound.eq.on || el._rg > 1) && el._same) route(el);
+    vol(el);
+  }
+  function vol(el) {
+    var f = el._fade * sleepFade;
+    if (el._node && el._gain) { el._gain.gain.value = el._rg; el.volume = Math.max(0, Math.min(1, local.vol * f)); }
+    else el.volume = Math.max(0, Math.min(1, local.vol * Math.min(1, el._rg) * f));
+  }
+  function volAll() { decks.forEach(vol); }
+  function setSound(patch) {
+    var next = C.normSound(Object.assign({}, sound, own(patch) || {}));
+    if (patch && patch.eq) next.eq = C.normSound({ eq: Object.assign({}, sound.eq, own(patch.eq)) }).eq;
+    sound = next;
+    try { w.localStorage.setItem(SOUND_KEY, JSON.stringify(sound)); } catch (e) {}
+    paintEq();
+    decks.forEach(function (el) { if (el.getAttribute("src")) gainFor(el, el._rgd); });
+    if (!sound.xf && !sound.gap) dropNext();
+    host.notify("sound");
+  }
+
+  // ---------- Crossfade, gapless, sleep timer ----------
+  var nx = null;             // { el, item, seq, ready } the next song, loaded early
+  var nxSeq = 0;
+  var fade = { el: null, iv: 0 };
+  var sleep = { at: 0, end: 0 }, sleepFade = 1, sleepIv = 0;
+  function dropNext() {
+    if (!nx) return;
+    nxSeq++;
+    if (nx.el !== audio) clearDeck(nx.el);
+    nx = null;
+  }
+  function stopFade() {
+    if (!fade.el) return;
+    w.clearInterval(fade.iv);
+    var el = fade.el;
+    fade.el = null; fade.iv = 0;
+    if (el !== audio) clearDeck(el);
+    audio._fade = 1;
+    vol(audio);
+  }
+  function peekNext() {
+    var q = C.normQueue(local.q);
+    if (q.rep === "one" || sleep.end) return null;
+    return C.qNext(local.q, false).item;
+  }
+  // Load the next song on a free deck, paused, a little before the end.
+  function prepareNext() {
+    var item = peekNext();
+    if (!item || (nx && nx.item.k === item.k)) return;
+    dropNext();
+    var my = ++nxSeq;
+    nx = { el: null, item: item, seq: my, ready: false };
+    Promise.all([sourceFor(item), rgFor(item)]).then(function (r) {
+      if (!nx || nx.seq !== my) { revoke(r[0]); return; }
+      var el = deckFor(r[0], null);
+      if (el === audio || el === fade.el) { revoke(r[0]); nx = null; return; }
+      nx.el = el;
+      el._fade = sound.xf ? 0 : 1;
+      setSrc(el, r[0]);
+      gainFor(el, r[1]);
+      try { el.load(); } catch (e) {}
+      nx.ready = true;
+    }, function () { if (nx && nx.seq === my) nx = null; });
+  }
+  // Move on to the loaded next song: at once (gapless), or fading over
+  // `sec` seconds while the current one fades out. → false when the
+  // queue's next song is not the loaded one.
+  function useNext(sec) {
+    var n = nx;
+    if (!n || !n.ready) return false;
+    var r = C.qNext(local.q, false);
+    if (!r.item || r.item.k !== n.item.k) { dropNext(); return false; }
+    nx = null;
+    stopFade();
+    loadSeq++;
+    var old = audio;
+    audio = n.el;
+    setQueue(r.q);
+    cur = r.item;
+    counted = false;
+    fails = 0;
+    flags.error = ""; flags.buffering = false;
+    local.pos = 0;
+    if (sec > 0) {
+      fade.el = old;
+      var t0 = Date.now(), ms = sec * 1000;
+      audio._fade = 0; vol(audio);
+      fade.iv = w.setInterval(function () {
+        var x = (Date.now() - t0) / ms;
+        if (fade.el) { fade.el._fade = C.fadeOut(x); vol(fade.el); }
+        audio._fade = C.fadeIn(x); vol(audio);
+        if (x >= 1) stopFade();
+      }, 50);
+    } else {
+      clearDeck(old);
+      audio._fade = 1; vol(audio);
+    }
+    saveLocal(true);
+    media();
+    var p;
+    try { p = audio.play(); } catch (e) { p = null; }
+    Promise.resolve(p).catch(function (err) { flags.error = (err && err.name) || "play"; host.notify("error"); });
+    chip();
+    host.notify("load");
+    return true;
+  }
+  // Called on every time update of the playing deck.
+  function nearEnd() {
+    if (!wantPlay || audio.paused || fade.el) return;
+    var d = audio.duration;
+    if (!isFinite(d) || d <= 0) return;
+    var left = d - (audio.currentTime || 0), xf = sound.xf;
+    if ((sound.gap || xf) && left < Math.max(15, xf + 6)) prepareNext();
+    // No crossfade into or out of very short songs (jingles, intros).
+    if (xf && nx && nx.ready && left <= xf && d > xf * 2 + 5 && !sleep.end) useNext(Math.min(xf, left));
+  }
+  function sleepTick() {
+    if (!sleep.at) return;
+    var left = sleep.at - Date.now();
+    sleepFade = left < 10000 ? Math.max(0, left / 10000) : 1;
+    volAll();
+    if (left <= 0) sleepDone();
+  }
+  function sleepDone() {
+    sleepSet(0);
+    pause();
+    note(isEl() ? "Χρονοδιακόπτης ύπνου: η μουσική σταμάτησε." : "Sleep timer: the music stopped.");
+  }
+  // v: minutes, "end" (end of this song) or 0 (off).
+  function sleepSet(v) {
+    w.clearInterval(sleepIv); sleepIv = 0;
+    sleep = { at: 0, end: 0 };
+    if (v === "end") sleep.end = 1;
+    else if (+v > 0) { sleep.at = Date.now() + Math.min(600, +v) * 60000; sleepIv = w.setInterval(sleepTick, 1000); }
+    sleepFade = 1;
+    if (sleep.end) dropNext();
+    volAll();
+    host.notify("sleep");
+  }
+
   function load(item, start, autoplay) {
     if (!item) return Promise.resolve(false);
     var my = ++loadSeq;
+    stopFade();
+    dropNext();
     cur = item;
     counted = false;
     flags.error = ""; flags.buffering = true;
     try { audio.pause(); } catch (e) {}
     media();
     host.notify("load");
-    return sourceFor(item).then(function (src) {
-      if (my !== loadSeq) return false;
-      audio.src = src;
+    return Promise.all([sourceFor(item), rgFor(item)]).then(function (r) {
+      var src = r[0];
+      if (my !== loadSeq) { revoke(src); return false; }
+      var el = deckFor(src, audio);
+      if (el !== audio) { clearDeck(audio); audio = el; }
+      audio._fade = 1;
+      setSrc(audio, src);
+      gainFor(audio, r[1]);
       var at = +start > 0 ? +start : 0;
       if (at) {
-        var seek = function () { audio.removeEventListener("loadedmetadata", seek); if (!isFinite(audio.duration) || at < audio.duration - 2) { try { audio.currentTime = at; } catch (e) {} } };
-        audio.addEventListener("loadedmetadata", seek);
+        var a = audio, seek = function () { a.removeEventListener("loadedmetadata", seek); if (!isFinite(a.duration) || at < a.duration - 2) { try { a.currentTime = at; } catch (e) {} } };
+        a.addEventListener("loadedmetadata", seek);
       }
       saveLocal(true);
       return autoplay ? play() : true;
@@ -226,6 +464,7 @@
     if (!cur) return Promise.resolve(false);
     wantPlay = true;
     focusTake();
+    if (ctx && ctx.state === "suspended") { try { ctx.resume(); } catch (e) {} }
     var p;
     try { p = audio.play(); } catch (e) { p = null; }
     return Promise.resolve(p).then(function () { return true; }, function (err) {
@@ -234,9 +473,10 @@
       return false;
     });
   }
-  function pause() { wantPlay = false; try { audio.pause(); } catch (e) {} }
+  function pause() { wantPlay = false; stopFade(); try { audio.pause(); } catch (e) {} }
   function seekTo(t) {
     if (!cur) return;
+    stopFade();
     var d = isFinite(audio.duration) ? audio.duration : cur.d || 0;
     t = Math.max(0, d ? Math.min(t, d - 0.5) : t);
     try { audio.currentTime = t; } catch (e) {}
@@ -245,9 +485,10 @@
     posState();
     host.notify("time");
   }
-  function setQueue(q) { local.q = C.normQueue(q); saveLocal(); }
+  function setQueue(q) { dropNext(); local.q = C.normQueue(q); saveLocal(); }
   // Next song: manual = the Next button (moves on even on repeat one).
   function advance(manual, auto) {
+    if (!manual && (sound.gap || sound.xf) && useNext(0)) return;
     var r = C.qNext(local.q, manual);
     setQueue(r.q);
     if (!r.item) { stopAtEnd(); return; }
@@ -275,10 +516,23 @@
     chip();
     host.notify("end");
   }
+  // Sleep timer "end of this song": the next song waits, paused.
+  function sleepAtEnd() {
+    sleepSet(0);
+    var r = C.qNext(local.q, false);
+    setQueue(r.q);
+    wantPlay = false;
+    if (!r.item) { stopAtEnd(); return; }
+    local.pos = 0;
+    load(r.item, 0, false).then(chip);
+    note(isEl() ? "Χρονοδιακόπτης ύπνου: η μουσική σταμάτησε." : "Sleep timer: the music stopped.");
+  }
   function stop() {
     loadSeq++;
+    stopFade();
+    dropNext();
     pause();
-    try { audio.removeAttribute("src"); audio.load(); } catch (e) {}
+    clearDeck(audio);
     releaseBlob();
     cur = null;
     local.q = C.emptyQueue();
@@ -294,34 +548,38 @@
     local.hist = C.addPlay(local.hist, cur, Date.now());
     saveLocal();
   }
-  audio.addEventListener("timeupdate", function () {
+  on("timeupdate", function () {
     if (!cur) return;
     local.pos = audio.currentTime || 0;
     if (!counted && local.pos >= 30) countPlay();
     saveLocal();
     posState();
+    nearEnd();
     host.notify("time");
   });
-  audio.addEventListener("loadedmetadata", function () {
+  on("loadedmetadata", function () {
     if (cur && cur.p && !cur.d && isFinite(audio.duration) && audio.duration > 0 && ST) {
       cur.d = Math.round(audio.duration);
       ST.setDuration(cur.p, audio.duration).then(function (ch) { if (ch) host.notify("index"); });
     }
     posState();
   });
-  audio.addEventListener("pause", function () { saveLocal(true); chip(); host.notify("pause"); });
-  audio.addEventListener("playing", function () { flags.buffering = false; flags.error = ""; fails = 0; chip(); host.notify("play"); });
-  audio.addEventListener("play", hookOthers);
-  audio.addEventListener("waiting", function () { flags.buffering = true; host.notify("buffer"); });
-  audio.addEventListener("canplay", function () { flags.buffering = false; host.notify("buffer"); });
-  audio.addEventListener("volumechange", function () { local.vol = audio.volume; saveLocal(); host.notify("volume"); });
-  audio.addEventListener("error", function () {
+  on("pause", function () { saveLocal(true); chip(); host.notify("pause"); });
+  on("playing", function () { flags.buffering = false; flags.error = ""; fails = 0; chip(); host.notify("play"); });
+  on("play", function () { hookOthers(); });
+  on("waiting", function () { flags.buffering = true; host.notify("buffer"); });
+  on("canplay", function () { flags.buffering = false; host.notify("buffer"); });
+  on("error", function () {
     if (!cur || !audio.getAttribute("src")) return;
     flags.error = "media"; flags.buffering = false;
     chip(); host.notify("error");
     if (wantPlay) skipBroken();
   });
-  audio.addEventListener("ended", function () { countPlay(); advance(false); });
+  on("ended", function () {
+    countPlay();
+    if (sleep.end) { sleepAtEnd(); return; }
+    advance(false);
+  });
 
   // ---------- Audio focus (Radio, Podcasts ↔ Music) ----------
   var hooked = [];
@@ -390,7 +648,7 @@
     set("seekforward", function (d) { seekTo((audio.currentTime || 0) + ((d && d.seekOffset) || 10)); });
     set("seekto", function (d) { if (d && typeof d.seekTime === "number") seekTo(d.seekTime); });
   }
-  audio.addEventListener("play", handlers);
+  on("play", handlers);
 
   // ---------- Tray chip ----------
   var ICON = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" ' +
@@ -433,7 +691,7 @@
   var subs = [];
   var host = {
     v: 1,
-    audio: audio,
+    get audio() { return audio; },
     notify: function (ev, arg) {
       for (var i = subs.length - 1; i >= 0; i--) {
         try { subs[i](ev, arg); } catch (e) { subs.splice(i, 1); }   // dead frame
@@ -463,7 +721,10 @@
     seekBy: function (dt) { seekTo((audio.currentTime || 0) + dt); },
     setShuffle: function (on) { setQueue(C.qShuffle(local.q, !!on)); host.notify("queue"); },
     cycleRepeat: function () { setQueue(C.qCycleRepeat(local.q)); host.notify("queue"); },
-    setVolume: function (v) { v = +v; if (v >= 0 && v <= 1) audio.volume = v; },
+    setVolume: function (v) { v = +v; if (v >= 0 && v <= 1) { local.vol = v; volAll(); saveLocal(); host.notify("volume"); } },
+    sound: function () { return own(sound); },
+    setSound: setSound,
+    sleep: function (v) { sleepSet(v === "end" ? "end" : +v || 0); },
     addNext: function (items) { setQueue(C.qAddNext(local.q, own(items) || [])); host.notify("queue"); },
     addLast: function (items) { setQueue(C.qAddLast(local.q, own(items) || [])); host.notify("queue"); },
     removeUp: function (i) { setQueue(C.qRemoveUp(local.q, i)); host.notify("queue"); },
@@ -495,7 +756,8 @@
       return {
         cur: cur, playing: !!cur && !audio.paused, paused: audio.paused,
         pos: audio.currentTime || 0, dur: isFinite(audio.duration) && audio.duration ? audio.duration : (cur ? cur.d || 0 : 0),
-        buffering: flags.buffering, error: flags.error, shf: q.shf, rep: q.rep, vol: audio.volume, src: q.src,
+        buffering: flags.buffering, error: flags.error, shf: q.shf, rep: q.rep, vol: local.vol, src: q.src,
+        sleep: { at: sleep.at, end: sleep.end }, eq: sound.eq.on && !!audio._node,
         hasNext: !!(q.up.length || q.at + 1 < q.ctx.length || q.rep !== "off")
       };
     },
