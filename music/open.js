@@ -12,6 +12,10 @@
 //       only by design. Tracks it lists from Jamendo stream only
 //       (Jamendo's terms forbid offline copies).
 //   cc  ccMixter          query API, no key; every upload is CC.
+//   jm  Jamendo           API v3.0 with orOS's one public client id
+//       (since wave 3): tracks, albums, artists, radios. Streaming
+//       only (Jamendo's terms forbid offline copies); every song links
+//       back to its Jamendo page and credits Jamendo.
 // Audio always streams straight from the source (never through the
 // relay); JSON goes direct, the Mail relay's "web" op is only the
 // fallback when a site sends no CORS headers (../feeds/fetch.js).
@@ -27,13 +31,17 @@
   "use strict";
 
   var C = root.OrosMusicCore || (typeof require === "function" ? require("./core.js").OrosMusicCore : null);
-  var PAGE = { ia: 24, ov: 20, cc: 20 };
+  var PAGE = { ia: 24, ov: 20, cc: 20, jm: 20 };
+  // Registered by Chris at devportal.jamendo.com (2026-10-16); public,
+  // one for every orOS user, non-commercial use.
+  var JM_CLIENT = "e04c6e83";
   var CACHE_MS = 30 * 60 * 1000, CACHE_MAX = 80;
 
   var SOURCES = {
     ia: { name: "Internet Archive", home: "https://archive.org/details/audio" },
     ov: { name: "Openverse", home: "https://openverse.org/audio" },
-    cc: { name: "ccMixter", home: "https://ccmixter.org/" }
+    cc: { name: "ccMixter", home: "https://ccmixter.org/" },
+    jm: { name: "Jamendo", home: "https://www.jamendo.com/" }
   };
   // Openverse's own sources, for the credit line.
   var OV_VIA = { jamendo: "Jamendo", freesound: "Freesound", wikimedia_audio: "Wikimedia Commons", ccmixter: "ccMixter" };
@@ -271,6 +279,96 @@
   // The ccMixter user of a page link ("…/files/<user>/<id>").
   function ccUserFromPage(pg) { var m = /^https:\/\/ccmixter\.org\/files\/([A-Za-z0-9_.-]+)\//.exec(String(pg || "")); return m ? m[1] : ""; }
 
+  // ---------- 5b. Jamendo ----------
+  function jmUrl(path, p) {
+    var o = { client_id: JM_CLIENT, format: "json" };
+    Object.keys(p || {}).forEach(function (k) { o[k] = p[k]; });
+    return "https://api.jamendo.com/v3.0/" + path + "/?" + qs(o);
+  }
+  function jmId(v) { var s = v == null ? "" : String(v); return /^[0-9]{1,12}$/.test(s) ? s : ""; }
+  function jmWord(v, n) { return String(v || "").replace(/[^\p{L}\p{N} _+-]/gu, " ").replace(/\s+/g, " ").trim().slice(0, n || 80); }
+  // o: { q, tags, mood, artist, order, page }
+  function jmTracksUrl(o) {
+    o = o || {};
+    var p = { limit: PAGE.jm, offset: (Math.max(1, o.page || 1) - 1) * PAGE.jm, audioformat: "mp32", imagesize: 300 };
+    if (o.q) p.search = jmWord(o.q, 120);
+    if (o.tags) p.tags = jmWord(o.tags);
+    if (o.mood) p.fuzzytags = jmWord(o.mood);
+    if (jmId(o.artist)) p.artist_id = jmId(o.artist);
+    if (o.order) p.order = String(o.order).replace(/[^a-z_]/g, "");
+    else if (!o.q) p.order = "popularity_total";
+    return jmUrl("tracks", p);
+  }
+  function jmAlbumsUrl(o) {
+    o = o || {};
+    var p = { limit: PAGE.jm, offset: (Math.max(1, o.page || 1) - 1) * PAGE.jm, imagesize: 300, order: String(o.order || "popularity_total").replace(/[^a-z_]/g, "") };
+    if (o.q) p.namesearch = jmWord(o.q, 120);
+    if (jmId(o.artist)) p.artist_id = jmId(o.artist);
+    return jmUrl("albums", p);
+  }
+  function jmAlbumTracksUrl(id) { return jmUrl("albums/tracks", { id: jmId(id), audioformat: "mp32", imagesize: 300 }); }
+  function jmRadiosUrl() { return jmUrl("radios", { limit: 50, imagesize: 300 }); }
+  function jmRadioStreamUrl(id) { return jmUrl("radios/stream", { id: jmId(id) }); }
+  function jmResults(j) {
+    var h = j && j.headers;
+    if (!h || h.status !== "success" || !Array.isArray(j.results)) throw new OpenError(h && (h.code === 5 || h.code === 429) ? "busy" : "http");
+    return j.results;
+  }
+  // One song; p = the album it was listed under (albums/tracks).
+  function jmTrack(x, p) {
+    p = p || {};
+    var id = jmId(x && x.id), u = https(x && x.audio);
+    if (!id || !u) return null;
+    var o = { k: key("jm", id), t: str(x.name) || "?", a: str(x.artist_name || p.artist_name), d: secs(+x.duration || 0),
+      s: "jm", u: u, pg: https(x.shareurl) || "https://www.jamendo.com/track/" + id, art: https(x.album_image || x.image || p.image) };
+    var al = str(x.album_name || p.name);
+    if (al) o.al = al;
+    var li = licFromUrl(x.license_ccurl);
+    if (li) o.li = li;
+    var ai = jmId(x.album_id || p.id), ri = jmId(x.artist_id || p.artist_id);
+    if (ai) o.ai = ai;
+    if (ri) o.ri = ri;
+    var r = ref(o);
+    if (r && +x.position > 0) r.n = +x.position;
+    return r;
+  }
+  function jmParseTracks(j) {
+    var list = jmResults(j);
+    return { tracks: list.map(function (x) { return jmTrack(x); }).filter(Boolean), more: list.length >= PAGE.jm };
+  }
+  function jmAlbumCard(x) {
+    var id = jmId(x && x.id);
+    if (!id) return null;
+    return { s: "jm", id: id, n: str(x.name) || id, a: str(x.artist_name), y: (str(x.releasedate).match(/\d{4}/) || [""])[0],
+      art: https(x.image), pg: https(x.shareurl) || "https://www.jamendo.com/album/" + id, ri: jmId(x.artist_id) };
+  }
+  function jmParseAlbums(j) {
+    var list = jmResults(j);
+    return { albums: list.map(jmAlbumCard).filter(Boolean), more: list.length >= PAGE.jm };
+  }
+  function jmParseAlbum(j) {
+    var a = jmResults(j)[0];
+    if (!a) throw new OpenError("http");
+    var album = jmAlbumCard(a);
+    var tracks = (Array.isArray(a.tracks) ? a.tracks : []).map(function (x) { return jmTrack(x, a); }).filter(Boolean);
+    tracks.sort(function (x, y) { return (x.n || 1e9) - (y.n || 1e9); });
+    tracks.forEach(function (r, i) { if (!r.n) r.n = i + 1; });
+    return { album: album, tracks: tracks };
+  }
+  function jmParseRadios(j) {
+    return { radios: jmResults(j).map(function (x) {
+      var id = jmId(x && x.id);
+      return id ? { s: "jm", id: id, n: str(x.dispname || x.name) || id, art: https(x.image) } : null;
+    }).filter(Boolean), more: false };
+  }
+  // A radio as one endless "song".
+  function jmRadioItem(j, radio) {
+    var x = jmResults(j)[0], u = x && https(x.stream);
+    if (!u) throw new OpenError("http");
+    return ref({ k: key("jm", "radio/" + radio.id), t: str(x.dispname) || radio.n, a: "Jamendo Radio", s: "jm", u: u,
+      pg: "https://www.jamendo.com/radios", art: radio.art || "" });
+  }
+
   // ---------- 6. Browse shelves (Home) ----------
   var BROWSE = [
     { id: "live", src: "ia", en: "Live concerts", el: "Συναυλίες live", ia: { coll: "etree" } },
@@ -279,7 +377,16 @@
     { id: "classical", src: "ia", en: "Classical", el: "Κλασική", ia: { subject: "classical" } },
     { id: "remix", src: "cc", en: "Remixes", el: "Remix", cc: { tags: "remix" } },
     { id: "instr", src: "cc", en: "Instrumentals", el: "Ορχηστρικά", cc: { tags: "instrumental" } },
-    { id: "free", src: "ov", en: "Free songs (Openverse)", el: "Ελεύθερα τραγούδια (Openverse)", ov: {} }
+    { id: "free", src: "ov", en: "Free songs (Openverse)", el: "Ελεύθερα τραγούδια (Openverse)", ov: {} },
+    { id: "jmweek", src: "jm", en: "Popular this week", el: "Δημοφιλή της εβδομάδας", jm: { order: "popularity_week" } },
+    { id: "jmnew", src: "jm", en: "New albums", el: "Νέα άλμπουμ", jm: { albums: 1, order: "releasedate_desc" } },
+    { id: "jmtop", src: "jm", en: "All-time favourites", el: "Τα αγαπημένα όλων των εποχών", jm: { order: "popularity_total" } },
+    { id: "jmradio", src: "jm", en: "Jamendo radios", el: "Ραδιόφωνα Jamendo", jm: { radios: 1 } }
+  ];
+  // Moods (Jamendo's own tags).
+  var MOODS = [
+    ["relaxed", "Relaxed", "Χαλαρή"], ["happy", "Happy", "Χαρούμενη"], ["energetic", "Energetic", "Γεμάτη ενέργεια"],
+    ["romantic", "Romantic", "Ρομαντική"], ["sad", "Melancholic", "Μελαγχολική"], ["epic", "Epic", "Επική"], ["dark", "Dark", "Σκοτεινή"]
   ];
   var OPEN_GENRES = [
     ["rock", "Rock", "Ροκ"], ["jazz", "Jazz", "Τζαζ"], ["electronic", "Electronic", "Ηλεκτρονική"], ["hiphop", "Hip-hop", "Χιπ χοπ"],
@@ -287,6 +394,7 @@
     ["pop", "Pop", "Ποπ"], ["reggae", "Reggae", "Ρέγκε"], ["metal", "Metal", "Μέταλ"], ["world", "World", "Έθνικ"]
   ];
   function browseOf(id) { return BROWSE.filter(function (b) { return b.id === id; })[0] || null; }
+  function moodOf(id) { var g = MOODS.filter(function (x) { return x[0] === id; })[0]; return g ? { id: g[0], en: g[1], el: g[2] } : null; }
   function genreOf(id) { var g = OPEN_GENRES.filter(function (x) { return x[0] === id; })[0]; return g ? { id: g[0], en: g[1], el: g[2] } : null; }
 
   // ---------- 7. Credit line ----------
@@ -354,9 +462,21 @@
   }
   function ovSearch(o) { o = o || {}; return getJSON(ovUrl(o)).then(function (j) { return ovParse(j, o.page); }); }
   function ccSearch(o) { o = o || {}; return getJSON(ccUrl(o), { timeout: 25000 }).then(ccParse); }
+  function jmTracks(o) { return getJSON(jmTracksUrl(o)).then(jmParseTracks); }
+  function jmAlbums(o) { return getJSON(jmAlbumsUrl(o)).then(jmParseAlbums); }
+  function jmAlbum(id) {
+    if (!jmId(id)) return Promise.reject(new OpenError("id"));
+    return getJSON(jmAlbumTracksUrl(id)).then(jmParseAlbum);
+  }
+  function jmRadios() { return getJSON(jmRadiosUrl()).then(jmParseRadios); }
+  function jmRadio(radio) { return getJSON(jmRadioStreamUrl(radio.id)).then(function (j) { return jmRadioItem(j, radio); }); }
 
   var api = {
-    VERSION: "1.0.0", SOURCES: SOURCES, OV_VIA: OV_VIA, PAGE: PAGE, BROWSE: BROWSE, OPEN_GENRES: OPEN_GENRES, LI_RE: LI_RE,
+    VERSION: "1.1.0", SOURCES: SOURCES, OV_VIA: OV_VIA, PAGE: PAGE, BROWSE: BROWSE, OPEN_GENRES: OPEN_GENRES, MOODS: MOODS, LI_RE: LI_RE,
+    JM_CLIENT: JM_CLIENT, jmTracksUrl: jmTracksUrl, jmAlbumsUrl: jmAlbumsUrl, jmAlbumTracksUrl: jmAlbumTracksUrl, jmRadiosUrl: jmRadiosUrl,
+    jmRadioStreamUrl: jmRadioStreamUrl, jmParseTracks: jmParseTracks, jmParseAlbums: jmParseAlbums, jmParseAlbum: jmParseAlbum,
+    jmParseRadios: jmParseRadios, jmRadioItem: jmRadioItem, moodOf: moodOf,
+    jmTracks: jmTracks, jmAlbums: jmAlbums, jmAlbum: jmAlbum, jmRadios: jmRadios, jmRadio: jmRadio,
     licFromUrl: licFromUrl, licFromCode: licFromCode, licLabel: licLabel, licShort: licShort, licUrl: licUrl,
     secs: secs, https: https, iaWords: iaWords,
     iaSearchUrl: iaSearchUrl, iaParseSearch: iaParseSearch, iaMetaUrl: iaMetaUrl, iaParseMeta: iaParseMeta, iaIdFromPage: iaIdFromPage,
