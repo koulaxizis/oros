@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <!-- DL-1: a direct link to this app opens it inside the orOS shell -->
+  <script>if (window.top === window.self && !/[?&]standalone\b/.test(location.search)) location.replace("../?open=scanpdf" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Scanner &amp; PDF · orOS</title>
+
+  <link rel="stylesheet" href="scanpdf.css?v=2.64.01">
+
+</head>
+<body>
+
+  <header id="toolbar">
+    <div class="title">
+      <span id="title-main" class="title-main" data-i18n="app.name">Scanner &amp; PDF</span>
+      <span id="title-sub" class="title-sub" data-i18n="app.sub"></span>
+    </div>
+    <span class="spacer"></span>
+    <button type="button" id="undo-btn" class="icon-btn" disabled></button>
+    <button type="button" id="redo-btn" class="icon-btn" disabled></button>
+    <button type="button" id="add-btn" class="icon-btn"></button>
+    <button type="button" id="clear-btn" class="icon-btn" hidden></button>
+  </header>
+
+  <div id="selbar" hidden>
+    <span id="sel-info" class="sel-info" aria-live="polite"></span>
+    <span class="spacer"></span>
+    <div class="sel-btns" role="toolbar" id="sel-tools">
+      <button type="button" class="icon-btn" id="sel-all"></button>
+      <button type="button" class="icon-btn" id="sel-left"></button>
+      <button type="button" class="icon-btn" id="sel-right"></button>
+      <button type="button" class="icon-btn" id="sel-rotl"></button>
+      <button type="button" class="icon-btn" id="sel-rotr"></button>
+      <button type="button" class="icon-btn" id="sel-dup"></button>
+      <button type="button" class="icon-btn" id="sel-extract"></button>
+      <button type="button" class="icon-btn danger" id="sel-del"></button>
+    </div>
+  </div>
+
+  <main id="main">
+    <div class="wrap">
+
+      <section id="drop" class="drop">
+        <p class="drop-title" data-i18n="drop.title">Drop PDFs or pictures here</p>
+        <p class="drop-hint hint small" data-i18n="drop.hint"></p>
+        <div class="drop-btns">
+          <button type="button" id="add-files" class="btn primary" data-i18n="btn.add">Add PDFs or pictures</button>
+        </div>
+        <p class="hint small local" data-i18n="drop.local"></p>
+      </section>
+
+      <section id="pages-sec" hidden>
+        <p id="pages-hint" class="hint small" data-i18n="pages.hint"></p>
+        <ul id="grid" class="grid" aria-labelledby="title-main"></ul>
+        <div class="add-more">
+          <button type="button" id="add-more" class="btn" data-i18n="btn.addMore">Add more</button>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <footer id="foot" hidden>
+    <div id="foot-info" class="foot-info"></div>
+    <div class="foot-btns">
+      <button type="button" id="pic-btn" class="btn" hidden></button>
+      <button type="button" id="split-btn" class="btn" data-i18n="btn.split">Split</button>
+      <button type="button" id="save-btn" class="btn primary" data-i18n="btn.save">Save PDF</button>
+    </div>
+  </footer>
+
+  <div id="modal-veil" hidden>
+    <div id="modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <h2 id="modal-title"></h2>
+      <div id="modal-body"></div>
+      <div class="modal-btns">
+        <button type="button" id="modal-cancel" class="btn" data-i18n="btn.cancel">Cancel</button>
+        <button type="button" id="modal-ok" class="btn primary"></button>
+      </div>
+    </div>
+  </div>
+
+  <div id="busy" hidden><div class="busy-box"><span class="spin" aria-hidden="true"></span><span id="busy-text"></span></div></div>
+  <div id="drag-veil" hidden><span data-i18n="drop.veil">Drop to add</span></div>
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="../vendor/pdf-lib/pdf-lib.min.js?v=2.64.01"></script>
+  <script src="core.js?v=2.64.01"></script>
+  <script src="pdfops.js?v=2.64.01"></script>
+  <script src="../bundle.js?v=2.64.01"></script>
+  <script src="scanpdf.js?v=2.64.01"></script>
+
+</body>
+</html>
