@@ -32,7 +32,7 @@ Choose `Items` under `Split`. For each line of the receipt, type the item and it
 For rent, bills or subscriptions, pick `Every week`, `Every month` or `Every year` under `Repeat` when you add the expense, and an optional `Until` date. It appears in the list on its date each time, with the same split; a month-end date stays at the month's end. `Repeating` at the top of the list shows each series with its next date. Tap one to change it (changes count from the next time) or to `Stop repeating`; the ones already added stay. Deleting one occurrence never brings it back.
 
 ## Receipt photos
-`Add a photo` keeps a picture of the receipt with the expense. It is stored in [Files](app:files), folder Split/Receipts, and redrawn so that location and camera data are removed. It travels between your own devices with Vault Drive; friends you send the group file to don't get the photo. Deleting the expense deletes the photo too.
+`Add a photo` keeps a picture of the receipt with the expense. It is stored in [Files](app:files), folder Split/Receipts, and redrawn so that location and camera data are removed. It travels between your own devices with Vault Drive, and in an orOS file of the group (see below); friends you send the JSON group file to don't get the photo. Deleting the expense deletes the photo too.
 
 ## Find expenses
 The `Expenses` tab has `Search the expenses…` and filters for `Category`, `Involving` someone and `Payments only`.
@@ -48,6 +48,11 @@ From the `More` menu in a group:
 - `Send the group file`: a file your friends open in their own orOS with `Import a group file…` from the `More` menu on the home screen. Files sent back and forth join up and never count an expense twice. Each person picks who they are on their own device.
 - `Export (CSV, PDF)`: a CSV for Greek Excel or other apps, or a PDF summary.
 - `Group and people`, `Archive the group` and `Delete the group`.
+
+## Save and open an orOS file
+On the home screen, `orOS file (.orossplit)` in the `More` menu saves every group, with its people, expenses, payments, repeating expenses and receipt photos, as one `.orossplit` file. Inside a group, `This group as orOS file (.orossplit)` saves only that group: the file to send your friends. The file is a plain ZIP: unzipped it holds the groups as `content.json`, the photos in `media/` and one CSV per group in `preview/` (the same as `Export (CSV, PDF)`) for other programs. Who you are in a group is never in it. It is not encrypted, so keep it somewhere safe.
+
+`Open orOS file…` (or `Unzipped orOS folder…`, or "Open with" orOS on the computer) shows how many records are new and how many are already here, then `Add` adds only the new ones, with their own ids: opening the same file again adds nothing. An expense already here is kept as it is, and one you deleted here stays deleted; a file never deletes anything. When a friend sends the group again, tick `Update with newer versions` so the expenses, payments and names they changed later replace your copy. A receipt photo is saved to Files only when it is not there yet. `Undo` in the message removes what was added and puts back what was updated. A JSON group file or backup picked here opens as with `Import a group file…`.
 
 ## Import from Splitwise, Tricount or Settle Up
 `Import from Splitwise, Tricount, Settle Up…` is in the `More` menu, on the home screen and in a group. Pick the file you exported:
