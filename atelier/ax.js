@@ -6,7 +6,9 @@
 // storage, merge and imports by M.setItemExt(normAx):
 //   ax.k   "text" | "shape" | "icon" | "photo" | "line"
 //          (base item t: text/shape/icon → "rect", photo → "img",
-//          line → "line"; a mismatch drops the item's extras)
+//          line → "line"; a mismatch drops the item's extras; a kind
+//          this copy does not know is kept whole as `axu` and drawn as
+//          a locked "Needs a newer orOS" box, designkit wave L0)
 //   bg     1 = the page background (one per page, bottom, full page)
 //   fc/sc  fill / stroke colour "#rrggbb" ("" = none)
 //   g      gradient fill { a, b, ang } (shapes + backgrounds)
@@ -200,7 +202,7 @@
     return o;
   }
 
-  M.setItemExt(normAx);
+  M.setItemExt(normAx, function (k) { return KINDS.indexOf(k) >= 0; });
 
   // ---------- 2. Designs ----------
   // opts: { name, w, h (points; 1 px of a screen design = 1 pt),

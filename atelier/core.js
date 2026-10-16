@@ -185,7 +185,7 @@
       "more.mockup": "Make a book mockup", "mk.making": "Sending the pages to Mockups…", "mk.fail": "The pages could not be sent to Mockups.",
       "np.done": "New design made from the mockup.",
       "ctx.op": "Transparency", "ctx.position": "Position", "ctx.lock": "Lock", "ctx.unlock": "Unlock",
-      "ctx.dup": "Duplicate", "ctx.del": "Delete", "ctx.bg": "Background", "ctx.hint": "Tap an element to edit it.",
+      "ctx.dup": "Duplicate", "ctx.del": "Delete", "ctx.bg": "Background", "ctx.hint": "Tap an element to edit it.", "unk.item": "Needs a newer orOS", "unk.doc": "This document needs a newer orOS. Update orOS to open it.",
       "ctx.n": "{n} selected", "ctx.done": "Done", "ctx.edit": "Edit text",
       "pos.front": "Bring to front", "pos.fwd": "Bring forward", "pos.bwd": "Send backward", "pos.back": "Send to back",
       "pos.al": "Left", "pos.ac": "Centre", "pos.ar": "Right", "pos.at": "Top", "pos.am": "Middle", "pos.ab": "Bottom",
@@ -380,7 +380,7 @@
       "more.mockup": "Φτιάξε μακέτα βιβλίου", "mk.making": "Στέλνω τις σελίδες στις Μακέτες…", "mk.fail": "Οι σελίδες δεν στάλθηκαν στις Μακέτες.",
       "np.done": "Έγινε νέο σχέδιο από τη μακέτα.",
       "ctx.op": "Διαφάνεια", "ctx.position": "Θέση", "ctx.lock": "Κλείδωμα", "ctx.unlock": "Ξεκλείδωμα",
-      "ctx.dup": "Διπλασιασμός", "ctx.del": "Διαγραφή", "ctx.bg": "Φόντο", "ctx.hint": "Πάτα ένα στοιχείο για να το αλλάξεις.",
+      "ctx.dup": "Διπλασιασμός", "ctx.del": "Διαγραφή", "ctx.bg": "Φόντο", "ctx.hint": "Πάτα ένα στοιχείο για να το αλλάξεις.", "unk.item": "Χρειάζεται νεότερο orOS", "unk.doc": "Αυτό το έγγραφο χρειάζεται νεότερο orOS. Ενημέρωσε το orOS για να το ανοίξεις.",
       "ctx.n": "{n} επιλεγμένα", "ctx.done": "Τέλος", "ctx.edit": "Επεξεργασία κειμένου",
       "pos.front": "Μπροστά απ' όλα", "pos.fwd": "Ένα μπροστά", "pos.bwd": "Ένα πίσω", "pos.back": "Πίσω απ' όλα",
       "pos.al": "Αριστερά", "pos.ac": "Κέντρο", "pos.ar": "Δεξιά", "pos.at": "Πάνω", "pos.am": "Μέση", "pos.ab": "Κάτω",
@@ -1017,6 +1017,7 @@
       meta.appendChild(el("span", "doc-title", docTitle(d)));
       var n = d.pages.length;
       meta.appendChild(el("span", "doc-sub", (n === 1 ? t("home.pages1") : t("home.pages", { n: n })) + " · " + fmtDate(M.maxM(d))));
+      if (M.needsNewer(d)) meta.appendChild(el("span", "doc-sub", t("unk.item")));
       card.appendChild(meta);
       var more = iconBtn("more", t("ed.more"), "doc-more");
       more.addEventListener("click", function (e) { e.stopPropagation(); cardMenu(d, more); });
@@ -1230,6 +1231,8 @@
   function openDoc(id) {
     var d = findDoc(id);
     if (!d) return;
+    // A newer model level (setup.x.mv): never opened, so never written here.
+    if (M.needsNewer(d)) { toast(t("unk.doc")); return; }
     AT.doc = d;
     undoStack = []; redoStack = []; gesture = null;
     AT.prefs.doc = id; savePrefs();

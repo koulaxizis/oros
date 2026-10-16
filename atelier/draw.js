@@ -336,9 +336,35 @@
   // opts: { maxSide (photo work size, 0 = full), clean (no
   // placeholders: exports, thumbnails), media (it → playing <video>
   // or null: video elements while playing / filming) }
+  // An element of a kind this copy of orOS does not know (`axu`, kept
+  // for a newer copy): a grey placeholder in the editor only, never
+  // in thumbnails or exports.
+  function drawUnknown(ctx, it) {
+    ctx.save();
+    ctx.translate(it.x + it.w / 2, it.y + it.h / 2);
+    if (it.rot) ctx.rotate(rad(it.rot));
+    ctx.translate(-it.w / 2, -it.h / 2);
+    ctx.fillStyle = "rgba(235,235,235,0.85)";
+    ctx.fillRect(0, 0, it.w, it.h);
+    ctx.strokeStyle = "rgba(96,96,96,0.8)";
+    ctx.lineWidth = Math.max(1, Math.min(it.w, it.h) / 100);
+    ctx.setLineDash([6, 4]);
+    ctx.strokeRect(0, 0, it.w, it.h);
+    var fs = Math.max(8, Math.min(28, it.h / 4, it.w / 10));
+    ctx.fillStyle = "#333";
+    ctx.font = fs + "px sans-serif";
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText(AT.t("unk.item"), it.w / 2, it.h / 2, it.w - 4);
+    ctx.restore();
+  }
+
   function drawItem(ctx, doc, it, opts) {
     var ax = it.ax;
-    if (!ax || it.hide) return;
+    if (!ax) {
+      if (it.axu && !it.hide && opts && opts.unknown) drawUnknown(ctx, it);
+      return;
+    }
+    if (it.hide) return;
     opts = opts || {};
     ctx.save();
     ctx.globalAlpha = (it.op === undefined ? 100 : it.op) / 100;
@@ -387,7 +413,9 @@
   // animations (anim.js) for the preview and the video / GIF export.
   // Without it every element is drawn as it ends up.
   function drawPage(ctx, doc, page, opts) {
-    var list = itemsOf(doc, page.id);
+    var list = opts && opts.unknown
+      ? doc.items.filter(function (it) { return it.pg === page.id && (it.ax || it.axu); }).sort(M.byZ)
+      : itemsOf(doc, page.id);
     var Anim = window.AtelierAnim;
     var sc = opts && opts.time !== undefined && Anim ? Anim.schedule(list) : null;
     list.forEach(function (it) {
