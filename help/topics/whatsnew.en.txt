@@ -1,6 +1,12 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.59.00
+- Music: Jamendo joins the free catalogues. Popular this week, new albums, all-time favourites, moods and Jamendo radios on Home, Jamendo songs in Search and genres, album and artist pages. Jamendo songs stream and link back to Jamendo.
+
+## Version 2.58.00
+- One-Sentence Diary, Health, Workouts, Baby, Pet Health Book, Plant Care and Garage can save all their records as one open orOS file and open it again, also from an unzipped folder or with "Open with". Opening only adds what you don't have and can be undone. Photos, documents and receipts travel inside the file. The file is not encrypted, so keep it safe; Health reminders arrive turned off.
+
 ## Version 2.57.00
 - Music: free and legal music with no account, from Internet Archive (netlabel albums, live concerts, classical), Openverse and ccMixter (remixes, instrumentals). Shelves and genres on Home, results in Search, album and artist pages, the licence on every song, Copy credit, and Save for offline where the licence allows it. Free songs go into Liked songs and playlists and play on your other devices too.
 

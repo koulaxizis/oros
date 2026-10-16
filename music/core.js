@@ -508,8 +508,11 @@
   //   where it plays from, so it works on every device:
   //   { s "ia"|"ov"|"cc", u https audio, pg? https page, art? https
   //     cover, li? licence, vi? Openverse source, off? 1 = may be saved
-  //     offline }. Its key starts with its source ("ia:", "ov:", "cc:").
-  var SRC_RE = /^(ia|ov|cc)$/;
+  //     offline, ai? / ri? the source's album / artist id (Jamendo,
+  //     since wave 3) }. Its key starts with its source ("ia:", "ov:",
+  //     "cc:", "jm:").
+  var SRC_RE = /^(ia|ov|cc|jm)$/;
+  var SID_RE = /^[A-Za-z0-9._-]{1,100}$/;
   var LI_RE = /^(cc0|pdm|lma|by(-nc)?(-sa|-nd)?|(nc-)?sampling\+)( \d\.\d)?$/;
   function httpsUrl(u) { return typeof u === "string" && u.length <= 1000 && /^https:\/\/[^\s"'<>]+$/i.test(u) ? u : ""; }
   function remote(r, o) {
@@ -520,6 +523,8 @@
     if (typeof r.li === "string" && LI_RE.test(r.li)) o.li = r.li;
     if (typeof r.vi === "string" && /^[a-z_]{1,30}$/.test(r.vi)) o.vi = r.vi;
     if (r.off === 1) o.off = 1;
+    if (typeof r.ai === "string" && SID_RE.test(r.ai)) o.ai = r.ai;
+    if (typeof r.ri === "string" && SID_RE.test(r.ri)) o.ri = r.ri;
     return o;
   }
   function normRef(r) {
@@ -873,7 +878,7 @@
   }
 
   var api = {
-    VERSION: "1.1.0", DATA_VER: DATA_VER, LIM: LIM, GENRES: GENRES, REPEAT: REPEAT, AUDIO_EXT: AUDIO_EXT,
+    VERSION: "1.2.0", DATA_VER: DATA_VER, LIM: LIM, GENRES: GENRES, REPEAT: REPEAT, AUDIO_EXT: AUDIO_EXT,
     clean: clean, fold: fold, hash: hash, newId: newId, decodeLegacy: decodeLegacy, looksGreek: looksGreek, utf16: utf16,
     sniffImage: sniffImage, genreName: genreName, fromName: fromName, stem: stem,
     id3Size: id3Size, parseId3v2: parseId3v2, parseId3v1: parseId3v1, mp3Duration: mp3Duration,

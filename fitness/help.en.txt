@@ -65,6 +65,11 @@ Warm-up sets stay warm-up sets, notes come along, and records, charts, Calendar 
 ## Health Connect
 In the orOS Android app, switch on `Health Connect` in Settings › `Connected services`. Your finished workouts of the last 30 days then go to Health Connect as strength training, and workouts from your watch or other apps (a run, a ride, a swim) come in with their times and no exercises. A workout that came from another app and that you delete here doesn't come back.
 
+## Save and open an orOS file
+In `Settings`, `orOS file (.orosworkouts)` saves your own exercises, programs, progression programs, finished workouts (with their routes) and body measurements as one `.orosworkouts` file, for example to move them to another device without sync or to keep a copy. Your settings (units, weight steps, default rest, `Show workouts in Habits`) and a workout that is still running stay on this device, and nothing from Health Connect or another connected service is in the file. The file is a plain ZIP: unzipped it holds the records as `content.json` plus `preview/workouts.md` and `preview/workouts.csv` (one row per set, in kg and km) for other programs. It holds health data and routes and is not encrypted, so keep it somewhere safe.
+
+`Open orOS file…` (or `Unzipped orOS folder…`, or "Open with" orOS on the computer) shows how many records are new and how many are already here, then `Add` adds only the new ones, with their own ids: opening the same file again adds nothing. A record already here (a body measurement of the same day, too) is kept as it is, one you deleted here stays deleted, and a file never deletes anything. Tick `Update with newer versions` to let records that were changed later in the file replace your copy. `Undo` in the message takes back what was added.
+
 ## Sync and backup
 Your exercises, programs, progression programs, workouts (with their routes), body measurements and settings sync through [orOS sync](help:t/sync). A running workout reaches sync every few minutes, so you can finish it on another device. The open tab, chart choices, rest timer and exercise pictures stay on this device.
 
