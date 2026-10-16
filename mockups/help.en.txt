@@ -33,6 +33,12 @@ Make realistic 3D pictures of your book for a shop page, a post or a press kit. 
 - `Background`: see-through, a colour, a gradient or a photo. With `Photo`, `Choose a picture` takes one of yours and `Find free photos` searches Openverse and Wikimedia Commons (only photos that allow commercial use). A free photo is saved on your orOS disk with its credit, shown under it; `Copy credit` copies the line to give where you post the picture. `Shadow` sets how dark the floor shadow is.
 - `Light`: where it comes from, how high, how strong, how soft its shadows are, and cool or warm.
 
+## Open book and e-book
+`What to show` (on the `Scene` tab) changes what is in the picture: `The book`, an `Open book` lying on its back at an inside spread, or an `E-book` on a screen.
+- Open book: on the `Cover` tab, `Inside pages` takes a picture for the left and the right page. `Pages from a PDF` takes your book's PDF and puts two of its pages on the spread; `Page` is the left one, so change it to show other pages. The pages become pictures on your orOS disk; the PDF itself is not kept. `Page curve` sets how much the pages arch.
+- The thickness of the open book, its paper and its cover follow the `Book` tab.
+- E-book: choose `Tablet`, `Phone` or `E-reader`, and black, white or silver. The screen shows `Screen` (a picture or a PDF page), else the right page, else the front cover. An e-reader shows it in grey, like e-ink. Placement, camera, light, background, all angles and the video work as for the book.
+
 ## For the printer
 The `Print` tab makes the cover sheet your printer asks for, from this book's numbers. The picture above turns into the flat sheet.
 - A paperback sheet is back cover · spine · front cover (with the flaps at the ends), plus the `Bleed` all round, which is cut away. The spine is pages × the thickness of one page, as print-on-demand services count it.

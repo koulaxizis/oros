@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.65.00
+- Mockups: show your book open at an inside spread, with your own pictures or two pages of your book's PDF and a page curve you choose, or as an e-book on a tablet, phone or e-reader in black, white or silver.
+
 ## Version 2.64.01
 - Seasonal decorations: Autumn leaves and Winter snow no longer vanish when the decorations stand still (low battery, less motion, Still only, slow device). Settings says when a slow device stopped the movement.
 

@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Mockups — scene.js (v1.2.0, ES module)
+// orOS Mockups — scene.js (v1.3.0, ES module)
 // The 3D book and its scene, drawn with the vendored three.js
 // (vendor/three, MIT). Loaded by mockups.js with import() only
 // when the editor opens, so the app list stays light.
@@ -15,6 +15,11 @@
 //     look the same share one texture), posed (standing, lying,
 //     leaning, its back to the camera), turned, and laid side by
 //     side or stacked; the whole set is framed and turned together
+//   - the open book (wave 4): the cover laid open, two halves of the
+//     page block whose tops follow MockCore.openCurve() (dipping into
+//     the gutter, arching up), the inside pictures on them with a
+//     gutter shadow; the e-book: a tablet, phone or e-reader body with
+//     its screen showing a page (glowing, or grey e-ink)
 //   - turntable frames: drawTo(ctx, w, h, clear, { spin, cam })
 //     draws one finished frame with the set turned a little more
 //   - floor shadow (shadow catcher + contact shadows), a wall when
@@ -126,6 +131,56 @@ function contactCanvas() {
   g.addColorStop(0, "rgba(0,0,0,0.55)"); g.addColorStop(0.55, "rgba(0,0,0,0.22)"); g.addColorStop(1, "rgba(0,0,0,0)");
   ctx.fillStyle = g; ctx.fillRect(0, 0, 128, 128);
   return cv;
+}
+
+
+// One inside page: the picture filling the page, a shadow toward the
+// gutter. side "l": gutter on the right; "r": on the left.
+function pageCanvas(img, W, H, side, paper, maxPx) {
+  var k = Math.min(maxPx / H, maxPx / W, 8), cw = Math.round(W * k), ch = Math.round(H * k);
+  var cv = canvas(cw, ch), ctx = cv.getContext("2d");
+  ctx.fillStyle = paper; ctx.fillRect(0, 0, cw, ch);
+  if (img) coverFit(ctx, img, 0, 0, cw, ch);
+  var gx = side === "l" ? cw : 0, g = ctx.createLinearGradient(gx, 0, side === "l" ? cw * 0.82 : cw * 0.18, 0);
+  g.addColorStop(0, "rgba(40,30,20,0.34)"); g.addColorStop(0.35, "rgba(40,30,20,0.10)"); g.addColorStop(1, "rgba(40,30,20,0)");
+  ctx.fillStyle = g; ctx.fillRect(0, 0, cw, ch);
+  return cv;
+}
+// What the e-book's screen shows: the page inside the screen (contain).
+function screenCanvas(C, dv, img, fallback, maxPx) {
+  var k = Math.min(maxPx / dv.sh, maxPx / dv.sw), cw = Math.round(dv.sw * k), ch = Math.round(dv.sh * k);
+  var cv = canvas(cw, ch), ctx = cv.getContext("2d");
+  ctx.fillStyle = dv.ink ? "#e8e6df" : "#ffffff"; ctx.fillRect(0, 0, cw, ch);
+  var m = dv.ink ? Math.round(cw * 0.04) : 0;
+  if (img) {
+    var iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height, r = C.containIn(iw, ih, cw - 2 * m, ch - 2 * m);
+    if (dv.ink) ctx.filter = "grayscale(1) contrast(1.08)";
+    ctx.drawImage(img, m + r.x, m + r.y, r.w, r.h);
+    ctx.filter = "none";
+    if (dv.ink) { ctx.globalCompositeOperation = "multiply"; ctx.fillStyle = "#e8e6df"; ctx.fillRect(0, 0, cw, ch); ctx.globalCompositeOperation = "source-over"; }
+  } else if (fallback) {
+    ctx.fillStyle = dv.ink ? "#7a7a78" : fallback.c; ctx.fillRect(m, m, cw - 2 * m, ch - 2 * m);
+    if (fallback.t) {
+      ctx.fillStyle = "#ffffff"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      var fs = Math.round(cw * 0.09);
+      ctx.font = "700 " + fs + "px Nunito, 'Segoe UI', system-ui, sans-serif";
+      var t = fallback.t;
+      while (t.length > 1 && ctx.measureText(t).width > cw * 0.84) t = t.slice(0, -1);
+      ctx.fillText(t, cw / 2, ch * 0.42);
+    }
+  }
+  if (dv.k === "phone") { ctx.fillStyle = "#050505"; ctx.beginPath(); ctx.arc(cw / 2, ch * 0.025, cw * 0.022, 0, Math.PI * 2); ctx.fill(); }
+  return cv;
+}
+// A rounded rectangle shape, centred, mm → scene units.
+function roundRect(w, h, r) {
+  var x = -w / 2 * S, y = -h / 2 * S, W = w * S, H = h * S, R = Math.min(r, w / 2, h / 2) * S;
+  var sh = new THREE.Shape();
+  sh.moveTo(x + R, y); sh.lineTo(x + W - R, y); sh.quadraticCurveTo(x + W, y, x + W, y + R);
+  sh.lineTo(x + W, y + H - R); sh.quadraticCurveTo(x + W, y + H, x + W - R, y + H);
+  sh.lineTo(x + R, y + H); sh.quadraticCurveTo(x, y + H, x, y + H - R);
+  sh.lineTo(x, y + R); sh.quadraticCurveTo(x, y, x + R, y);
+  return sh;
 }
 
 // ---------- Geometry ----------
@@ -270,7 +325,7 @@ export function createStage(host, C) {
   var contactTex = new THREE.CanvasTexture(contactCanvas());
   var contactMats = [];
 
-  var built = false, owned = [], fronts = [];
+  var built = false, owned = [], fronts = [], leanNow = false;
   // p: the project (bk, art, sc, set); pics: asset id → picture
   var state = { p: null, sc: null, pics: {}, bgImg: null, spin: 0 };
   var frame = { R: 1, cy: 0.5 };
@@ -385,8 +440,132 @@ export function createStage(host, C) {
     return box;
   }
 
+
+  // The open book, lying open on the floor: tail toward +z.
+  function makeOpen(p) {
+    var bk = p.bk, d = C.dims(bk), ins = p.ins, W = bk.w, H = bk.h, g = new THREE.Group();
+    var M = materials(bk, p.art, 1024);
+    var paper = bk.edge === "cream" ? "#f3ead3" : "#fbfaf6";
+    var hc = d.hc, bt = hc ? d.b : d.c, bw = hc ? W + d.o - 1.5 : W, bh = hc ? H + 2 * d.o : H, gap = hc ? 1.5 : 0;
+    var coverC = own(new THREE.MeshStandardMaterial({ color: hc ? bk.clothC : p.art.c, roughness: 0.8 }));
+    // the open cover (boards), inside up
+    [-1, 1].forEach(function (sg) {
+      var b = new THREE.Mesh(own(new THREE.BoxGeometry(bw * S, bt * S, bh * S)), [coverC, coverC, M.inside, coverC, coverC, coverC]);
+      b.position.set(sg * (gap + bw / 2) * S, bt / 2 * S, 0);
+      b.castShadow = true; b.receiveShadow = true;
+      g.add(b);
+    });
+    if (hc) {
+      var sp = new THREE.Mesh(own(new THREE.BoxGeometry((2 * gap + 2) * S, 0.8 * S, bh * S)), coverC);
+      sp.position.set(0, 0.4 * S, 0); sp.receiveShadow = true;
+      g.add(sp);
+    }
+    // the two halves of the page block
+    var cur = C.openCurve(bk, ins.curl, 36), base = bt, n = cur.length;
+    var pics = state.pics;
+    function half(sg, img, side) {
+      var tex = own(new THREE.CanvasTexture(pageCanvas(img, W, H, side, paper, 2048)));
+      tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = ANISO;
+      var mat = own(new THREE.MeshStandardMaterial({ map: tex, roughness: 0.92, side: THREE.DoubleSide }));
+      var pos = [], uv = [], idx = [];
+      for (var i = 0; i < n; i++) {
+        var x = sg * cur[i][0] * S, y = (base + cur[i][1]) * S, u = i / (n - 1);
+        pos.push(x, y, -H / 2 * S, x, y, H / 2 * S);
+        var tu = sg > 0 ? u : 1 - u;
+        uv.push(tu, 1, tu, 0);
+        if (i) { var a = (i - 1) * 2; if (sg > 0) idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); else idx.push(a, a + 2, a + 1, a + 1, a + 2, a + 3); }
+      }
+      var geo = own(new THREE.BufferGeometry());
+      geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+      geo.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
+      geo.setIndex(idx); geo.computeVertexNormals();
+      var top = new THREE.Mesh(geo, mat);
+      top.castShadow = true; top.receiveShadow = true;
+      g.add(top);
+      // walls: head and tail follow the curve, the fore-edge is flat
+      var wp = [], wi = [];
+      [-1, 1].forEach(function (zs) {
+        var b0 = wp.length / 3;
+        for (var i = 0; i < n; i++) {
+          var x = sg * cur[i][0] * S;
+          wp.push(x, base * S, zs * H / 2 * S, x, (base + cur[i][1]) * S, zs * H / 2 * S);
+          if (i) { var a = b0 + (i - 1) * 2; wi.push(a, a + 2, a + 1, a + 1, a + 2, a + 3); }
+        }
+      });
+      var e = cur[n - 1], xe = sg * e[0] * S, b1 = wp.length / 3;
+      wp.push(xe, base * S, -H / 2 * S, xe, (base + e[1]) * S, -H / 2 * S, xe, base * S, H / 2 * S, xe, (base + e[1]) * S, H / 2 * S);
+      wi.push(b1, b1 + 2, b1 + 1, b1 + 1, b1 + 2, b1 + 3);
+      var wg = own(new THREE.BufferGeometry());
+      wg.setAttribute("position", new THREE.Float32BufferAttribute(wp, 3));
+      wg.setIndex(wi); wg.computeVertexNormals();
+      var wm = own(new THREE.MeshStandardMaterial({ color: paper, roughness: 0.95, side: THREE.DoubleSide }));
+      var wall = new THREE.Mesh(wg, wm);
+      wall.castShadow = true; wall.receiveShadow = true;
+      g.add(wall);
+    }
+    half(-1, pics[ins.l] || null, "l");
+    half(1, pics[ins.r] || null, "r");
+    return g;
+  }
+  // The e-book: a device standing, screen to +z.
+  function makeDevice(p) {
+    var ins = p.ins, dv = C.device(ins.dev), g = new THREE.Group();
+    var col = ins.dc === "white" ? "#eeeeec" : ins.dc === "silver" ? "#c4c7cc" : "#1c1d21";
+    var body = own(new THREE.MeshPhysicalMaterial({ color: col, roughness: ins.dc === "silver" ? 0.3 : 0.45,
+      metalness: ins.dc === "silver" ? 0.75 : 0.05, clearcoat: ins.dc === "silver" ? 0 : 0.4 }));
+    var bev = Math.min(1.4, dv.d * 0.2);
+    var geo = own(new THREE.ExtrudeGeometry(roundRect(dv.w - 2 * bev, dv.h - 2 * bev, dv.r - bev),
+      { depth: (dv.d - 2 * bev) * S, bevelEnabled: true, bevelThickness: bev * S, bevelSize: bev * S, bevelSegments: 4, curveSegments: 10 }));
+    geo.translate(0, 0, -(dv.d - 2 * bev) / 2 * S);
+    var m = new THREE.Mesh(geo, body);
+    m.castShadow = true; m.receiveShadow = true;
+    g.add(m);
+    var zf = dv.d / 2 * S;
+    var bez = own(new THREE.MeshPhysicalMaterial({ color: ins.dc === "white" ? "#f4f4f2" : "#0b0b0d", roughness: 0.2, clearcoat: 1, clearcoatRoughness: 0.05 }));
+    var face = new THREE.Mesh(own(new THREE.ShapeGeometry(roundRect(dv.w - 1.2, dv.h - 1.2, dv.r - 0.6), 10)), bez);
+    face.position.z = zf + 0.0004;
+    g.add(face);
+    var pics = state.pics, art = p.art;
+    var img = pics[ins.scr] || pics[ins.r] || (art.front && pics[art.front]) || null;
+    var tex = own(new THREE.CanvasTexture(screenCanvas(C, dv, img, { c: art.c, t: p.nm || art.spT }, 2048)));
+    tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = ANISO;
+    var smat = dv.ink
+      ? own(new THREE.MeshStandardMaterial({ map: tex, roughness: 0.95 }))
+      : own(new THREE.MeshPhysicalMaterial({ map: tex, emissive: 0xffffff, emissiveMap: tex, emissiveIntensity: 0.78, roughness: 0.12, clearcoat: 1, clearcoatRoughness: 0.04 }));
+    var scr = new THREE.Mesh(own(new THREE.PlaneGeometry(dv.sw * S, dv.sh * S)), smat);
+    scr.position.set(dv.sx * S, dv.sy * S, zf + 0.0008);
+    g.add(scr);
+    return g;
+  }
+  // One open book or device on the floor (no set).
+  function buildOne() {
+    disposeBooks();
+    var p = state.p, open = p.show === "open", placeK = open ? "flat" : p.sc.place;
+    var obj = open ? makeOpen(p) : makeDevice(p);
+    var pose = new THREE.Group();
+    pose.add(obj);
+    if (placeK === "lie") pose.rotation.x = -Math.PI / 2;
+    else if (placeK === "lean") pose.rotation.x = -0.24;
+    else if (placeK === "stand") pose.rotation.x = -0.12;     // a device on its stand
+    var pb = boxOf(pose), pc = pb.getCenter(new THREE.Vector3()), ps = pb.getSize(new THREE.Vector3());
+    pose.position.set(-pc.x, -pb.min.y, -pc.z);
+    var slot = new THREE.Group();
+    slot.add(pose);
+    var cm = own(new THREE.MeshBasicMaterial({ map: contactTex, transparent: true, depthWrite: false, opacity: 0.5 }));
+    var ct = new THREE.Mesh(own(new THREE.PlaneGeometry(1, 1)), cm);
+    ct.rotation.x = -Math.PI / 2; ct.position.y = 0.0005;
+    ct.scale.set(ps.x * 1.25, ps.z * 1.25 + (placeK === "lie" || placeK === "flat" ? 0 : 0.1), 1);
+    ct.renderOrder = 1; ct.userData.skip = true;
+    slot.add(ct); contactMats.push(cm);
+    setG.add(slot);
+    leanNow = placeK === "lean";
+    built = true;
+    place();
+  }
+
   // Every book of the set, posed and laid out.
   function buildSet() {
+    if (state.p.show === "open" || state.p.show === "ebook") { buildOne(); return; }
     disposeBooks();
     var p = state.p, list = C.setList(p), maxPx = list.length > 2 ? 2048 : 4096, mats = {};
     var gap = (p.set ? p.set.gap : 0) * S, kind = p.set ? p.set.k : "one", cursor = 0;
@@ -427,6 +606,7 @@ export function createStage(host, C) {
       }
       setG.add(slot);
     });
+    leanNow = list.some(function (it) { return it.place === "lean"; });
     built = true;
     place();
   }
@@ -440,7 +620,7 @@ export function createStage(host, C) {
     var box = boxOf(setG), c = box.getCenter(new THREE.Vector3());
     setG.position.set(-c.x, -box.min.y, -c.z);
     box = boxOf(setG);
-    wall.visible = C.setList(state.p).some(function (it) { return it.place === "lean"; });
+    wall.visible = leanNow;
     wall.position.set(0, 15, box.min.z - 0.0002);
     var size = box.getSize(new THREE.Vector3());
     frame.R = Math.max(size.x, size.y, size.z) * 0.56 + 0.03;
