@@ -77,6 +77,11 @@ With the form on, every issue also has a one-click unsubscribe link, and Gmail a
 
 >! Sign-ups are collected on one device, the one that set the form up. Use `Collect here` to change it. `Turn the form off` deletes what the relay holds, and the one-click links in issues already sent stop working; the e-mail way keeps working.
 
+## Save and open an orOS file
+In `Settings`, under `Data`, `orOS file (.orosnewsletter)` saves your lists, subscribers, issues (with their pictures), segments, templates, RSS feeds and sending accounts as one `.orosnewsletter` file, for example to move them to another device without sync or to keep a copy. Passwords, API keys, SMTP user names, the sign-up form's keys, the email-platform links and the sending progress stay on this device; an issue that was scheduled or going out is saved as a draft, and RSS feeds as off. The file is a plain ZIP: unzipped it holds everything as `content.json`, the pictures in `media/`, and `preview/issues.md` and one `preview/subscribers-….csv` per list for other programs. It holds your subscribers' e-mail addresses and is not encrypted, so keep it somewhere safe.
+
+`Open orOS file…` (or `Unzipped orOS folder…`, or "Open with" orOS on the computer) shows how many records are new and how many are already here, then `Add` adds only the new ones, with their own ids: opening the same file again adds nothing. A record already here is kept as it is, one you deleted here stays deleted, and an address you deleted for good is not brought back; a file never deletes anything. Tick `Update with newer versions` to let records that were changed later in the file replace your copy. Opening a file never sends anything: no confirmation requests, no issues. A list added from a file gets new unsubscribe and confirm codes (they are never in the file): unsubscribes answering issues sent earlier are handled on the device that sent them, and the list's sign-up form is set up again here. `Undo` in the message removes what was added.
+
 ## Sync and backup
 Lists, subscribers and issues sync through orOS sync, and pictures through the orOS disk. Passwords, the daily counter and when the Inbox was last read stay on each device. `Settings` has `Back up (JSON)` and `Restore from backup`, and `Export CSV` saves a list's subscribers.
 

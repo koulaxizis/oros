@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.61.00
+- Library, Media Shelf, Email Signature, Newsletter and Storage can save all their records as one open orOS file and open it again, also from an unzipped folder or with "Open with". Opening only adds what you don't have and can be undone, and a Newsletter file never sends anything. Now every app that keeps records has its own orOS file.
+
 ## Version 2.60.00
 - Files: a new orOS Drive place lists folders mirrored from your computer by the coming orOS Drive app. Files there download only when you open them or when their folder is set to Keep on this device, and Free up space removes the copies from this device only.
 - Vault: a file that failed to download on one device could be deleted from the cloud and then from every device. This no longer happens.

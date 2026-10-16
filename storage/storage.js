@@ -167,6 +167,9 @@
       "scan.unknown":     "That code is not a Storage label on this device.",
       // import from another app (import.js)
       "imp.menu":         "Import (Homebox, Sortly, CSV)…",
+      "pkg.save":         "orOS file (.orosinventory)",
+      "pkg.open":         "Open orOS file…",
+      "pkg.folder":       "Unzipped orOS folder…",
       "imp.title":        "Import from {s}",
       "imp.src.generic":  "a CSV file",
       "imp.items":        "New items: {n}",
@@ -318,6 +321,9 @@
       "scan.denied":      "Η κάμερα δεν είναι διαθέσιμη ή δεν δόθηκε άδεια.",
       "scan.unknown":     "Αυτός ο κωδικός δεν είναι ετικέτα της Αποθήκης σε αυτή τη συσκευή.",
       "imp.menu":         "Εισαγωγή (Homebox, Sortly, CSV)…",
+      "pkg.save":         "Αρχείο orOS (.orosinventory)",
+      "pkg.open":         "Άνοιγμα αρχείου orOS…",
+      "pkg.folder":       "Αποσυμπιεσμένος φάκελος orOS…",
       "imp.title":        "Εισαγωγή από {s}",
       "imp.src.generic":  "αρχείο CSV",
       "imp.items":        "Νέα αντικείμενα: {n}",
@@ -670,6 +676,7 @@
     dots:      '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>',
     move:      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
     qr:        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM20 14v.01M14 20h.01M17 20h4v-3"/></svg>',
+    file:      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/></svg>',
     hand:      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M21 3l-7 7"/><path d="M11 5H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6"/></svg>',
     cam:       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V4h3M21 7V4h-3M3 17v3h3M21 17v3h-3M7 12h10"/></svg>',
     gear:      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>'
@@ -1273,6 +1280,11 @@
     add(ICO.qr, t("qr.title") + "…", function () { openQrDialog(null); });
     if (camOk()) add(ICO.cam, t("scan"), openScan);
     if (window.OrosStorageImport && window.OrosImportKit) add(ICO.item, t("imp.menu"), startImport);
+    if (recFile) {
+      add(ICO.file, t("pkg.save"), function () { recFile.save(); });
+      add(ICO.file, t("pkg.open"), function () { recFile.open(); });
+      add(ICO.file, t("pkg.folder"), function () { recFile.openFolder(); });
+    }
     add(ICO.gear, t("settings") + "…", openSettings);
     dlg.appendChild(list);
     var acts = el("div", "dialog-actions");
@@ -2333,6 +2345,141 @@
     toast(text, act);
   }
 
+  // ===== .orosinventory (OBF-4e) =====
+  // Every space, room, furniture, position and item as one orOS file
+  // (../recordpkg.js + package.js), the photos and receipts in media/
+  // by <sha256>.jpg|pdf. Device prefs (reminder hour, currency) stay
+  // on the device. Opening ADDS what this device lacks, with its ids; a
+  // row already here (or deleted here) is kept as it is unless "Update
+  // with newer versions" is ticked. The result goes through package.js
+  // settle (rows that would hang under nothing here are left out) and
+  // normalize + save (one write, sync dirty); Undo deletes the added
+  // rows the app's way, with tombstones.
+  var RP = window.OrosRecordPkg || null, SPK = window.OrosStoragePackage || null;
+  // One photo / receipt of the file → Files › Storage, only when that
+  // name is not on the disk yet, through the checks of attaching one
+  // (a picture re-drawn as a JPEG, no EXIF; a PDF receipt as it is, up
+  // to PDF_MAX). → Promise<true when the file is there>
+  function storeFile(kind, name, key, read) {
+    var fs = fsApi(), path = filePath(kind, name);
+    var media = (read && read.media) || {}, rk = (read && read.rekeyed) || {};
+    if (!fs || !path) return Promise.resolve(false);
+    return Promise.resolve().then(function () { return typeof fs.stat === "function" ? fs.stat(path) : fs.readBlob(path); })
+      .then(function (x) { return !!x; }, function () { return false; })
+      .then(function (there) {
+        if (there) return true;
+        if (key && Object.prototype.hasOwnProperty.call(rk, key)) key = rk[key];
+        var item = key && Object.prototype.hasOwnProperty.call(media, key) ? media[key] : null;
+        if (!item || !(item.blob || item.bytes)) return false;
+        var type = item.type || "";
+        var blob = item.blob ? item.blob.slice(0, item.blob.size, type) : new Blob([item.bytes], { type: type });
+        var p = null;
+        if (/^image\//.test(type) && /\.jpg$/.test(name)) p = encodeImage(blob);
+        else if (kind === "rc" && type === "application/pdf" && /\.pdf$/.test(name)) p = Promise.resolve(blob.size <= PDF_MAX ? blob : null);
+        if (!p) return false;
+        return p.then(function (enc) {
+          if (!enc) return false;
+          return Promise.resolve(fs.writeBlob(path, enc)).then(function () { return true; });
+        });
+      }).catch(function () { return false; });
+  }
+  var recFile = RP && SPK && window.OrosBundle ? RP.ui(SPK.DESC, {
+    lang: function () { return LANG; },
+    get: function () { return JSON.parse(JSON.stringify(db)); },
+    title: function () { return LANG === "el" ? "Αποθήκη" : "Storage"; },
+    // media/: every photo and receipt the live rows name, read from the
+    // orOS disk; state.phs / state.rcs = { "<file name>": "<media key>" }
+    // go into content.json
+    files: function (state) {
+      var fs = fsApi(), B = window.OrosBundle, out = [], seen = {}, maps = { ph: {}, rc: {} }, chain = Promise.resolve();
+      if (!fs) return out;
+      function grab(kind, name) {
+        chain = chain.then(function () {
+          var path = filePath(kind, name);
+          if (maps[kind][name] || !path) return;
+          return Promise.resolve(fs.readBlob(path)).then(function (blob) {
+            if (!blob || !blob.size) return;
+            return B.digest(blob).then(function (dg) {
+              var pdf = /\.pdf$/.test(name), key = dg.sha + (pdf ? ".pdf" : ".jpg");
+              maps[kind][name] = key;
+              if (!seen[key]) { seen[key] = 1; out.push({ key: key, blob: blob, type: pdf ? "application/pdf" : "image/jpeg" }); }
+            });
+          }).catch(function () {});
+        });
+      }
+      (state.ents || []).forEach(function (e) {
+        if (!e || e.del || e.type !== "item") return;
+        (e.ph || []).forEach(function (n) { grab("ph", n); });
+        if (e.rc) grab("rc", e.rc);
+      });
+      return chain.then(function () { state.phs = maps.ph; state.rcs = maps.rc; return out; });
+    },
+    // the photos and receipts of the rows this open adds (or updates);
+    // a name whose file could not be stored leaves the row
+    media: function (read, res) {
+      var next = res.next, inc = SPK.DESC.norm(read && read.content && read.content.data) || {};
+      var phs = inc.phs || {}, rcs = inc.rcs || {}, want = {}, chain = Promise.resolve();
+      res.addedIds.concat(res.updatedIds).forEach(function (id) { want[id] = 1; });
+      (next.ents || []).forEach(function (row) {
+        if (!row || !want[row.id] || row.type !== "item" || (!row.ph && !row.rc)) return;
+        var ph = [], rc = "";
+        (row.ph || []).forEach(function (n) {
+          chain = chain.then(function () { return storeFile("ph", n, phs[n] || "", read); })
+            .then(function (ok) { if (ok) ph.push(n); });
+        });
+        if (row.rc) {
+          chain = chain.then(function () { return storeFile("rc", row.rc, rcs[row.rc] || "", read); })
+            .then(function (ok) { if (ok) rc = row.rc; });
+        }
+        chain = chain.then(function () {
+          if (ph.length) row.ph = ph; else delete row.ph;
+          if (rc) row.rc = rc; else delete row.rc;
+        });
+      });
+      return chain.then(function () { return next; });
+    },
+    set: function (next, info) {
+      if (!next || typeof next !== "object" || !Array.isArray(next.ents)) return;
+      var s = SPK.settle(next, db, info && info.addedIds, info && info.updatedIds);
+      db = normalize(s) || db;
+      save();                                    // one write, one dirty mark
+      sanitizeNav();
+      render();
+    },
+    // Undo: the added rows (and what is inside them) get tombstones newer
+    // than the row, the way a delete does; their files leave this disk
+    // once no live row points at them
+    deleteIds: function (ids) {
+      var files = [], now = Date.now(), n = 0;
+      function tomb(x) {
+        (x.ph || []).forEach(function (f) { files.push(["ph", f]); });
+        if (x.rc) files.push(["rc", x.rc]);
+        x.del = true;
+        x.mtime = Math.max(now, (x.mtime || 0) + 1);
+      }
+      function down(id) {
+        db.ents.forEach(function (c) { if (c.parentId === id && !c.del) { tomb(c); down(c.id); } });
+      }
+      ids.forEach(function (id) {
+        var e = byId(id);
+        if (!e || e.del) return;
+        tomb(e);
+        down(e.id);
+        n++;
+      });
+      if (!n) return;
+      save();
+      sanitizeNav();
+      render();
+      dropFilesLater(files, 1500);
+      notifyTransient(recFile.text("undone"));
+    },
+    toast: function (text, undo) {
+      if (undo) actionToast(text, undo);
+      else notifyTransient(text);
+    }
+  }) : null;
+
   // ===== PALETTE INHERITANCE (parent shell) =====
 
   // mood.js parity (v0.27.00): copy the parent's data-theme
@@ -2459,6 +2606,9 @@
   // anything else opens itself. Deleted/unknown ids or an open dialog
   // → no-op.
   function openSearchTarget(tg) {
+    // "Open with" an .orosinventory file (fileopen.js): { openFile: { token } },
+    // the File taken once with window.parent.__orosTakeFile(token)
+    if (tg && tg.openFile) { if (recFile) recFile.openTarget(tg.openFile); return; }
     if (!tg || document.querySelector("dialog[open]")) return;
     if (tg.view === "lent") { openLent(); return; }
     var id = typeof tg.id === "string" ? tg.id : (typeof tg.box === "string" ? tg.box : null);
