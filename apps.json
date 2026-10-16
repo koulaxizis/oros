@@ -721,6 +721,15 @@
       "type": "internal"
     },
     {
+      "id": "music",
+      "name": "Music",
+      "category": "Sound",
+      "icon": "music",
+      "url": "music/",
+      "search": "search.js",
+      "type": "internal"
+    },
+    {
       "id": "mixer",
       "name": "Sound Mixer",
       "category": "Sound",
