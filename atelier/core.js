@@ -184,6 +184,8 @@
       "ep.done": "Picture updated from Photo Lab", "ep.gone": "That picture is no longer in the design.", "ep.missing": "The edited picture could not be opened.",
       "more.mockup": "Make a book mockup", "mk.making": "Sending the pages to Mockups…", "mk.fail": "The pages could not be sent to Mockups.",
       "np.done": "New design made from the mockup.",
+      "nt.done": "New cover design from Mockups. The guides are seen only here: they never print or export.",
+      "nt.guides": "Guides (seen only here)",
       "ctx.op": "Transparency", "ctx.position": "Position", "ctx.lock": "Lock", "ctx.unlock": "Unlock",
       "ctx.dup": "Duplicate", "ctx.del": "Delete", "ctx.bg": "Background", "ctx.hint": "Tap an element to edit it.",
       "ctx.n": "{n} selected", "ctx.done": "Done", "ctx.edit": "Edit text",
@@ -379,6 +381,8 @@
       "ep.done": "Η εικόνα ενημερώθηκε από το Εργαστήριο εικόνας", "ep.gone": "Αυτή η εικόνα δεν υπάρχει πια στο σχέδιο.", "ep.missing": "Η επεξεργασμένη εικόνα δεν άνοιξε.",
       "more.mockup": "Φτιάξε μακέτα βιβλίου", "mk.making": "Στέλνω τις σελίδες στις Μακέτες…", "mk.fail": "Οι σελίδες δεν στάλθηκαν στις Μακέτες.",
       "np.done": "Έγινε νέο σχέδιο από τη μακέτα.",
+      "nt.done": "Νέο σχέδιο εξωφύλλου από τις Μακέτες. Οι οδηγοί φαίνονται μόνο εδώ: δεν τυπώνονται ούτε εξάγονται.",
+      "nt.guides": "Οδηγοί (φαίνονται μόνο εδώ)",
       "ctx.op": "Διαφάνεια", "ctx.position": "Θέση", "ctx.lock": "Κλείδωμα", "ctx.unlock": "Ξεκλείδωμα",
       "ctx.dup": "Διπλασιασμός", "ctx.del": "Διαγραφή", "ctx.bg": "Φόντο", "ctx.hint": "Πάτα ένα στοιχείο για να το αλλάξεις.",
       "ctx.n": "{n} επιλεγμένα", "ctx.done": "Τέλος", "ctx.edit": "Επεξεργασία κειμένου",
@@ -1559,6 +1563,12 @@
     // ("Open in Atelier", BR-MK-AT, editpic.js) becomes a new design
     if (tg && tg.newPicture) {
       if (AT.mockup) AT.mockup.fromPicture(tg.newPicture);
+      return;
+    }
+    // { newTemplate: { guides, art, w, h, bleed, name } }: the cover
+    // sheet from Mockups' Print tab (BR-MK-TPL, editpic.js)
+    if (tg && tg.newTemplate) {
+      if (AT.mockup && AT.mockup.fromTemplate) AT.mockup.fromTemplate(tg.newTemplate);
       return;
     }
     if (tg && tg.openFile) {

@@ -392,6 +392,7 @@
     var sc = opts && opts.time !== undefined && Anim ? Anim.schedule(list) : null;
     list.forEach(function (it) {
       if (opts && opts.skip && opts.skip[it.id]) return;
+      if (opts && opts.clean && it.ax && it.ax.tg) return;   // template guides: editor only
       var st = sc && sc[it.id] !== undefined ? Anim.stateAt(it, sc[it.id], opts.time, doc.setup.h) : null;
       if (st) drawAnimated(ctx, doc, it, st, opts);
       else drawItem(ctx, doc, it, opts);
