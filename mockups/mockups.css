@@ -124,6 +124,9 @@ ul { list-style: none; }
   border: 1px solid var(--border); background: var(--panel-bg); font-size: 13px; font-weight: 700; color: var(--text-dim);
 }
 .views button:hover, .views button:focus-visible { border-color: var(--accent); color: var(--accent); outline: none; }
+/* Print tab: the flat cover sheet instead of the 3D view */
+.flat-box { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 12px; background: var(--bg-desktop); }
+.flat-box canvas { display: block; max-width: 100%; max-height: 100%; box-shadow: 0 2px 14px var(--shadow); background: #ffffff; }
 
 #panel {
   flex: 0 0 360px; width: 360px; min-height: 0; display: flex; flex-direction: column;
@@ -144,6 +147,14 @@ ul { list-style: none; }
 .lbl { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-dim); }
 .hint { font-size: 13px; color: var(--text-dim); line-height: 1.5; }
 .hint.small { font-size: 12px; }
+.hint.warn { color: var(--warn, #c77700); font-weight: 700; }
+.tpl-kind { font-size: 14px; font-weight: 800; }
+.tpl-parts { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 6px; }
+.tpl-parts li { font-size: 12px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--border); background: var(--bg); white-space: nowrap; }
+.legend { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 10px; font-size: 12px; color: var(--text-dim); }
+.legend li { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.legend i { flex: 0 0 18px; height: 10px; border-radius: 2px; }
+.legend i.line { height: 0; border-top: 2px dashed currentColor; border-radius: 0; }
 .grp { display: flex; flex-direction: column; gap: 6px; }
 .sub { display: flex; flex-direction: column; gap: 6px; padding: 8px 10px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg); }
 .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 12px; }
@@ -280,6 +291,8 @@ input[type="color"].sw { width: 52px; flex-shrink: 0; }
   .grid-prj { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 }
 @media (max-width: 400px) {
+  #tabs { padding: 0 4px; gap: 0; }
+  #tabs button { flex: 1 1 auto; padding: 0 3px; font-size: 12.5px; }
   .range .rl { flex-basis: 86px; font-size: 12px; }
   .find-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .seg button { font-size: 12px; padding: 2px 4px; }

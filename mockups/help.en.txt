@@ -17,7 +17,7 @@ Make realistic 3D pictures of your book for a shop page, a post or a press kit. 
 
 ## The cover
 - `Front, back, spine`: one picture for each part, and one for each flap when there are flaps. A picture fills its part and is cut to fit.
-- `One full wrap`: the whole printed cover in one picture, as you send it to the printer (back, spine and front, flaps too). The app tells you its exact size and where each part starts, and cuts it by the spine of this book. `Bleed` is the extra edge around it.
+- `One full wrap`: the whole printed cover in one picture, as you send it to the printer (back, spine and front, flaps too). It is the sheet of the `Print` tab: the app tells you its exact size and where each part starts, and puts each part on its side of the book. `Bleed` is the extra edge around it.
 - Where there is no picture the book takes the `Colour where there is no picture`, and the spine shows the `Spine text`.
 - Pictures stay on your orOS disk and travel to your other devices with it.
 
@@ -32,6 +32,15 @@ Make realistic 3D pictures of your book for a shop page, a post or a press kit. 
 - `Perspective`: low values look flat like a catalogue picture, high values look close and dramatic. `Move left / right` and `Move up / down` place the book in the frame.
 - `Background`: see-through, a colour, a gradient or a photo. With `Photo`, `Choose a picture` takes one of yours and `Find free photos` searches Openverse and Wikimedia Commons (only photos that allow commercial use). A free photo is saved on your orOS disk with its credit, shown under it; `Copy credit` copies the line to give where you post the picture. `Shadow` sets how dark the floor shadow is.
 - `Light`: where it comes from, how high, how strong, how soft its shadows are, and cool or warm.
+
+## For the printer
+The `Print` tab makes the cover sheet your printer asks for, from this book's numbers. The picture above turns into the flat sheet.
+- A paperback sheet is back cover · spine · front cover (with the flaps at the ends), plus the `Bleed` all round, which is cut away. The spine is pages × the thickness of one page, as print-on-demand services count it.
+- A hardcover case has the boards, two hinges next to the spine, and 15 mm that wraps round the boards. With flaps it is a dust jacket.
+- The guides: red is the bleed (or the wrap), the red line is the trim, blue dashes are folds, purple dashes are hinges, and green dashes are the safe zone: keep text inside it. The white box on the back is the spot for the barcode.
+- `With my cover pictures` puts your front, back and spine (or the full wrap) on the sheet. With `Show the guides` off you get your finished cover with its bleed, ready to send.
+- `Save PNG` and `Save PDF` make it at 300 dpi; the PDF has the trim and bleed boxes print shops read. `Design it in Atelier` makes an Atelier design of the right size with the bleed; the guides show there while you work but never print or export. When it is ready, `More` › `Make a book mockup` in Atelier brings it back onto this book.
+- Your printer's own template wins. If it gives another spine width, type it in `Book` › `Set the spine width by hand`; set its bleed here.
 
 ## Saving
 - `Picture shape`: square, 4:5 (posts), 3:2, 4:3, 16:9 or 9:16 (stories). `Size` is the long side, up to 4096 px; some phones draw less, and the app tells you.

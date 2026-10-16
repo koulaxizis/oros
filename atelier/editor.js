@@ -281,7 +281,7 @@
     var list = items(), tol = (touch ? 14 : 6) / ED.zoom;
     for (var i = list.length - 1; i >= 0; i--) {
       var it = list[i];
-      if (it.hide || isBg(it)) continue;
+      if (it.hide || isBg(it) || (it.ax && it.ax.tg)) continue;   // template guides: clicked through
       if (it.t === "line") {
         if (segDist(px, py, it.x, it.y, it.x + it.w, it.y + it.h) <= Math.max(it.sw / 2, tol)) return it;
         continue;
@@ -313,7 +313,7 @@
   }
   ED.select = select;
   ED.selectAll = function () {
-    select(items().filter(function (it) { return !isBg(it) && !it.hide; }).map(function (it) { return it.id; }));
+    select(items().filter(function (it) { return !isBg(it) && !it.hide && !(it.ax && it.ax.tg); }).map(function (it) { return it.id; }));
   };
 
   function setPage(id) {

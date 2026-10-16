@@ -7,7 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Email Signature · orOS</title>
 
-  <link rel="stylesheet" href="signature.css?v=2.60.00">
+  <link rel="stylesheet" href="signature.css?v=2.62.00">
 
 </head>
 <body>
@@ -38,6 +38,10 @@
         <div id="empty-box" class="card" hidden>
           <p class="hint" data-i18n="empty">No signature yet. Make your first one: fill in your details, pick a look, and copy it into your mail.</p>
           <button type="button" id="first-btn" class="chip primary" data-i18n="btn.first">Make a signature</button>
+          <div id="empty-open" class="chips" hidden>
+            <button type="button" id="oopen-first" class="chip small" data-i18n="btn.oopen">Open orOS file…</button>
+            <button type="button" id="ofolder-first" class="chip small" data-i18n="btn.ofolder">Unzipped orOS folder…</button>
+          </div>
         </div>
 
         <div id="form" hidden>
@@ -197,6 +201,9 @@
     <div class="menu">
       <button type="button" id="dup-btn" class="menu-item" data-i18n="btn.dup">Duplicate this signature</button>
       <button type="button" id="team-btn" class="menu-item" data-i18n="btn.team">Signatures for a team (CSV)…</button>
+      <button type="button" id="osave-btn" class="menu-item" data-i18n="btn.osave" hidden>orOS file (.orossignature)</button>
+      <button type="button" id="oopen-btn" class="menu-item" data-i18n="btn.oopen" hidden>Open orOS file…</button>
+      <button type="button" id="ofolder-btn" class="menu-item" data-i18n="btn.ofolder" hidden>Unzipped orOS folder…</button>
       <button type="button" id="del-btn" class="menu-item danger" data-i18n="btn.del">Delete this signature</button>
     </div>
     <p class="hint small" data-i18n="more.hint">Your signatures follow you to every device through orOS sync, encrypted. Their pictures travel with your orOS disk.</p>
@@ -245,10 +252,13 @@
   <div id="toast" role="status"></div>
   <input type="file" id="file-in" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml" hidden>
 
-  <script src="../designkit/assets.js?v=2.60.00"></script>
-  <script src="../qr/qr-encode.js?v=2.60.00"></script>
-  <script src="core.js?v=2.60.00"></script>
-  <script src="signature.js?v=2.60.00"></script>
+  <script src="../designkit/assets.js?v=2.62.00"></script>
+  <script src="../qr/qr-encode.js?v=2.62.00"></script>
+  <script src="core.js?v=2.62.00"></script>
+  <script src="../bundle.js?v=2.62.00"></script>
+  <script src="../recordpkg.js?v=2.62.00"></script>
+  <script src="package.js?v=2.62.00"></script>
+  <script src="signature.js?v=2.62.00"></script>
 
 </body>
 </html>

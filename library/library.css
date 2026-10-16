@@ -487,6 +487,9 @@ dialog.lb-dlg {
 dialog.lb-dlg.small { width: min(420px, calc(100vw - 24px)); }
 dialog.lb-dlg.wide { width: min(640px, calc(100vw - 24px)); }
 dialog.lb-dlg::backdrop { background: rgba(0, 0, 0, 0.55); }
+/* the record kit's Open dialog (../recordpkg.js): centred despite the reset above */
+#recordpkg-dialog { margin: auto; max-height: calc(100dvh - 32px); overflow-y: auto; }
+#recordpkg-dialog::backdrop { background: rgba(0, 0, 0, 0.55); }
 .dlg-head { display: flex; align-items: center; gap: 8px; position: sticky; top: 0; background: var(--panel-bg); padding: 12px 0 8px; z-index: 1; }
 .dlg-title { flex: 1 1 auto; font-size: 17px; font-weight: 800; min-width: 0; }
 .dlg-text { line-height: 1.5; margin: 4px 0 14px; white-space: pre-line; overflow-wrap: anywhere; }

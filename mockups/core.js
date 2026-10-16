@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Mockups — core.js (MockCore, v1.1.0)
+// orOS Mockups — core.js (MockCore, v1.2.0)
 // Pure model of the Mockups app. No DOM, no three.js: Node-tested
 // in tests/mockups.test.js.
 //   - book sizes in mm: trim presets, paper presets, spine width
@@ -20,6 +20,12 @@
 //     setList(p) how each one stands
 //   - motion settings (turntable video / GIF) and the credit of a
 //     background photo from an open library
+//   - template(bk, art, tpl): the cover sheet for the printer
+//     (trim, bleed or hardcover wrap, spine, hinges, flaps, safe
+//     zone, barcode spot) in mm, as print-on-demand services and
+//     local printers ask for it; wrapMap() tells the 3D view which
+//     part of a full-wrap picture goes on which panel, so a cover
+//     drawn on the template sits exactly on the book
 //   - the project model and its merge (synced slice "mockups")
 // Data (localStorage "oros-mockups-data"):
 //   { ver: 1, prj: [project], tombs: { id: m } }
@@ -32,7 +38,7 @@
 (function (root) {
   "use strict";
 
-  var VERSION = "1.1.0";
+  var VERSION = "1.2.0";
   var DATA_VER = 1;
   var DATA_KEY = "oros-mockups-data";
   var PREFS_KEY = "oros-mockups-prefs";
@@ -99,7 +105,7 @@
     turn: [-180, 180], open: [0, 160], th: [-180, 180], ph: [-10, 89],
     fov: [8, 70], zoom: [0.5, 3], dx: [-1, 1], dy: [-1, 1],
     az: [-180, 180], el: [10, 85], str: [0, 2], soft: [0, 1], warm: [-1, 1],
-    shadow: [0, 1], ang: [0, 359], n: [2, 6], gap: [0, 80]
+    shadow: [0, 1], ang: [0, 359], n: [2, 6], gap: [0, 80], safe: [0, 20]
   };
 
   // ---------- Helpers ----------
@@ -208,7 +214,9 @@
     var gap = d.flaps ? (hc ? d.j + 0.05 : d.c + 0.05) : 0;
     d.block = { x0: -W / 2, x1: W / 2, z: T / 2 - gap, h: H };
     d.spineMm = +(hc ? T + 2 * d.b + 1 : T + 2 * d.c).toFixed(1);
-    d.bleed = hc ? 15 : 3.2;
+    // bleed of the printed sheet; a hardcover case wraps 15 mm round
+    // the boards (a dust jacket is a printed sheet like a paperback)
+    d.bleed = hc && !d.flaps ? 15 : 3.2;
     return d;
   }
 
@@ -350,6 +358,103 @@
       if (w > 0.01) out.push({ k: k, x: p[k][0], w: w });
     });
     return { panels: out, total: pr.total, h: pr.d.Hc };
+  }
+
+
+  // ---------- Print template ----------
+  // The cover sheet as the printer wants it, mm, x from the left
+  // trim edge (outside up: back on the left), y from the top trim.
+  //   paperback: [flap] back · spine · front [flap]; the spine is the
+  //     page block (pages × one page), as print-on-demand services
+  //     count it; bleed 3.2 mm (⅛″)
+  //   hardcover case: back board · hinge · spine · hinge · front
+  //     board, board = width − 3 mm (the joint), 8 mm hinges, the
+  //     case spine (block + boards), 15 mm wrap round the boards
+  //   dust jacket: flap · back · spine · front · flap, the panels
+  //     cover the boards and the joint (width + 5 mm)
+  // The printer's own numbers win: the spine width can be typed in
+  // the Book tab and the bleed in the Cover tab.
+  var BAR = { w: 50.8, h: 30.5 };        // barcode spot, 2 × 1.2″
+  var SPINE_SAFE = 1.6;                  // ¹⁄₁₆″ each side of the spine text
+  var SPINE_TEXT_MIN = 5;                // thinner spines: no text at most printers
+  var TPL_DEF = { safe: 6.35, bar: 1, gd: 1, art: 1 };
+  function onBit(v) { return v === 0 || v === false ? 0 : 1; }
+  function normTpl(t) {
+    t = t && typeof t === "object" ? t : {};
+    return { safe: num(t.safe, LIMIT.safe, TPL_DEF.safe, 0.01), bar: onBit(t.bar), gd: onBit(t.gd), art: onBit(t.art) };
+  }
+  function bleedOf(bk, art) {
+    var a = normArt(art);
+    return a.bleed >= 0 ? a.bleed : dims(bk).bleed;
+  }
+  function template(bk, art, tpl) {
+    var b = normBook(bk), d = dims(b), o = normTpl(tpl), W = b.w, fw = d.flaps ? d.flapW : 0;
+    var kind = d.hc ? (d.flaps ? "jacket" : "case") : "pb";
+    var parts = [], S, H;
+    function add(k, w) { parts.push({ k: k, x: 0, w: round3(w) }); }
+    if (kind === "pb") {
+      S = blockMm(b); H = b.h;
+      if (fw) add("flapB", fw);
+      add("back", W); add("spine", S); add("front", W);
+      if (fw) add("flapF", fw);
+    } else if (kind === "case") {
+      S = d.spineMm; H = d.Hc;
+      add("back", W - 3); add("hingeB", 8); add("spine", S); add("hingeF", 8); add("front", W - 3);
+    } else {
+      S = round3(d.spineMm + 1); H = d.Hc;
+      add("flapB", fw); add("back", W + 5); add("spine", S); add("front", W + 5); add("flapF", fw);
+    }
+    var x = 0;
+    parts.forEach(function (p) { p.x = round3(x); x += p.w; });
+    var tw = round3(x), bl = round3(bleedOf(b, art)), sf = o.safe, warn = [];
+    var folds = [];
+    for (var i = 1; i < parts.length; i++) {
+      var hinge = /^hinge/.test(parts[i].k) || /^hinge/.test(parts[i - 1].k);
+      folds.push({ x: parts[i].x, k: hinge ? "hinge" : "fold" });
+    }
+    var safe = [];
+    parts.forEach(function (p) {
+      if (/^hinge/.test(p.k)) return;
+      if (p.k === "spine") {
+        if (S < SPINE_TEXT_MIN) return;
+        safe.push({ k: p.k, x: round3(p.x + SPINE_SAFE), y: round3(sf), w: round3(p.w - 2 * SPINE_SAFE), h: round3(H - 2 * sf) });
+        return;
+      }
+      if (p.w - 2 * sf > 1) safe.push({ k: p.k, x: round3(p.x + sf), y: round3(sf), w: round3(p.w - 2 * sf), h: round3(H - 2 * sf) });
+    });
+    if (S < SPINE_TEXT_MIN) warn.push("thin");
+    var bar = null, back = parts.filter(function (p) { return p.k === "back"; })[0];
+    if (o.bar) {
+      if (back.w >= BAR.w + 2 * sf && H >= BAR.h + 2 * sf) {
+        bar = { x: round3(back.x + back.w - sf - BAR.w), y: round3(H - sf - BAR.h), w: BAR.w, h: BAR.h };
+      } else warn.push("nobar");
+    }
+    return {
+      kind: kind, W: tw, H: round3(H), bleed: bl, spine: round3(S),
+      sheet: { w: round3(tw + 2 * bl), h: round3(H + 2 * bl) },
+      parts: parts, folds: folds, safe: safe, bar: bar, warn: warn
+    };
+  }
+  // Which part of a full-wrap picture (the whole sheet, bleed
+  // included) goes on each panel of the 3D cover: [{ k, x0, x1 }] and
+  // y0, y1, as fractions of the picture. A hardcover's hinges go
+  // with the boards.
+  function wrapMap(bk, art) {
+    var T = template(bk, art), sw = T.sheet.w, sh = T.sheet.h, bl = T.bleed, out = [];
+    function span(keys) {
+      var ps = T.parts.filter(function (p) { return keys.indexOf(p.k) >= 0; });
+      if (!ps.length) return null;
+      var a = ps[0], z = ps[ps.length - 1];
+      return [(bl + a.x) / sw, (bl + z.x + z.w) / sw];
+    }
+    var map = T.kind === "case"
+      ? { back: ["back", "hingeB"], spine: ["spine"], front: ["hingeF", "front"] }
+      : { flapB: ["flapB"], back: ["back"], spine: ["spine"], front: ["front"], flapF: ["flapF"] };
+    layout(bk).panels.forEach(function (p) {
+      var s = map[p.k] && span(map[p.k]);
+      if (s) out.push({ k: p.k, x0: s[0], x1: s[1] });
+    });
+    return { panels: out, y0: bl / sh, y1: (bl + T.H) / sh };
   }
 
   // ---------- Scene + output ----------
@@ -524,6 +629,7 @@
       sc: normScene(p.sc),
       out: normOut(p.out),
       set: normSet(p.set),
+      tpl: normTpl(p.tpl),
       unit: p.unit === "in" ? "in" : "mm"
     };
   }
@@ -611,17 +717,21 @@
 
   function normPrefs(p) {
     p = p && typeof p === "object" ? p : {};
-    return { cur: typeof p.cur === "string" && ID_RE.test(p.cur) ? p.cur : "", tab: pick(p.tab, ["book", "cover", "scene", "out"], "book") };
+    return { cur: typeof p.cur === "string" && ID_RE.test(p.cur) ? p.cur : "", tab: pick(p.tab, ["book", "cover", "scene", "print", "out"], "book") };
   }
 
   // Deep link target from Atelier (or anyone): { cover: { front, back,
-  // spine, wrap, name, w, h (mm, optional) } } → clean object | null.
+  // spine, wrap, name, w, h (mm, optional), ww, wh (trim of a full
+  // wrap, mm, optional) } } → clean object | null.
   function parseCover(c) {
     if (!c || typeof c !== "object") return null;
     var o = { front: asset(c.front), back: asset(c.back), spine: asset(c.spine), wrap: asset(c.wrap), name: str(c.name, 80) };
     if (!o.front && !o.back && !o.spine && !o.wrap) return null;
     var w = typeof c.w === "number" && isFinite(c.w) ? c.w : 0, h = typeof c.h === "number" && isFinite(c.h) ? c.h : 0;
     if (w >= LIMIT.w[0] && w <= LIMIT.w[1] && h >= LIMIT.h[0] && h <= LIMIT.h[1]) { o.w = +w.toFixed(1); o.h = +h.toFixed(1); }
+    // trim size of a full wrap (Atelier sends it for mm / inch designs)
+    var ww = typeof c.ww === "number" && isFinite(c.ww) ? c.ww : 0, wh = typeof c.wh === "number" && isFinite(c.wh) ? c.wh : 0;
+    if (o.wrap && ww >= 20 && ww <= 2000 && wh >= 20 && wh <= 2000) { o.ww = +ww.toFixed(2); o.wh = +wh.toFixed(2); }
     return o;
   }
 
@@ -634,6 +744,8 @@
     MOTIONS: MOTIONS, SECS: SECS, VSIZES: VSIZES, VFMTS: VFMTS,
     normCr: normCr, normVol: normVol, normSet: normSet, count: count, volume: volume, setList: setList,
     motionSize: motionSize, motionPlan: motionPlan,
+    BAR: BAR, SPINE_SAFE: SPINE_SAFE, SPINE_TEXT_MIN: SPINE_TEXT_MIN, TPL_DEF: TPL_DEF,
+    normTpl: normTpl, bleedOf: bleedOf, template: template, wrapMap: wrapMap,
     trimOf: trimOf, paperOf: paperOf, mmToIn: mmToIn, inToMm: inToMm,
     normBook: normBook, blockMm: blockMm, dims: dims, profile: profile, layout: layout,
     normArt: normArt, normScene: normScene, normOut: normOut, ratioOf: ratioOf, outSize: outSize,
