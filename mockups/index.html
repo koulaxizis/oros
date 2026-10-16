@@ -7,7 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Mockups · orOS</title>
 
-  <link rel="stylesheet" href="mockups.css?v=2.60.00">
+  <link rel="stylesheet" href="mockups.css?v=2.62.00">
 
 </head>
 <body>
@@ -40,6 +40,7 @@
       <div id="stage" role="img" aria-roledescription="3D" tabindex="0"></div>
       <div id="stage-msg" class="stage-msg" hidden></div>
       <div id="views" class="views" role="group"></div>
+      <div id="flat-box" class="flat-box" hidden><canvas id="flat" role="img"></canvas></div>
     </section>
 
     <section id="panel">
@@ -47,6 +48,7 @@
         <button type="button" role="tab" id="tab-book" data-tab="book" data-i18n="tab.book">Book</button>
         <button type="button" role="tab" id="tab-cover" data-tab="cover" data-i18n="tab.cover">Cover</button>
         <button type="button" role="tab" id="tab-scene" data-tab="scene" data-i18n="tab.scene">Scene</button>
+        <button type="button" role="tab" id="tab-print" data-tab="print" data-i18n="tab.print">Print</button>
         <button type="button" role="tab" id="tab-out" data-tab="out" data-i18n="tab.out">Save</button>
       </nav>
       <div id="panes">
@@ -188,6 +190,32 @@
           <div class="range"><span class="rl" data-i18n="f.warm">Cool / warm</span><input id="f-warm" type="range" min="-1" max="1" step="0.01"><output id="warm-out"></output></div>
         </div>
 
+        <!-- Print: the cover sheet for the printer -->
+        <div class="pane" id="pane-print" role="tabpanel" aria-labelledby="tab-print" hidden>
+          <p class="hint small" data-i18n="tpl.hint">The cover sheet for the printer.</p>
+          <p id="tpl-kind" class="tpl-kind"></p>
+          <p id="tpl-info" class="hint small"></p>
+          <ul id="tpl-parts" class="tpl-parts"></ul>
+          <p id="tpl-spine" class="hint small"></p>
+          <p id="tpl-warn" class="hint small warn" hidden></p>
+          <div class="grid2">
+            <label class="fld"><span id="tbleed-lbl" data-i18n="f.tbleed">Bleed (mm)</span><input id="f-tbleed" type="number" inputmode="decimal" step="0.1" min="0" max="25"></label>
+            <label class="fld"><span data-i18n="f.safe">Safe zone (mm)</span><input id="f-safe" type="number" inputmode="decimal" step="0.1" min="0" max="20"></label>
+          </div>
+          <label class="check"><input type="checkbox" id="f-tbar"><span data-i18n="f.tbar">Barcode spot on the back</span></label>
+          <label class="check"><input type="checkbox" id="f-tart"><span data-i18n="f.tart">With my cover pictures</span></label>
+          <label class="check"><input type="checkbox" id="f-tgd"><span data-i18n="f.tgd">Show the guides</span></label>
+          <p class="hint small" data-i18n="tpl.gdHint">With the guides off, the file is your finished cover.</p>
+          <ul id="legend" class="legend"></ul>
+          <div class="actions">
+            <button type="button" id="tpl-png" class="chip primary" data-i18n="btn.tplPng">Save PNG</button>
+            <button type="button" id="tpl-pdf" class="chip" data-i18n="btn.tplPdf">Save PDF</button>
+            <button type="button" id="tpl-pics" class="chip" data-i18n="btn.tplPics">Save to Pictures</button>
+            <button type="button" id="tpl-atelier" class="chip" data-i18n="btn.tplAtelier">Design it in Atelier</button>
+          </div>
+          <p class="hint small" data-i18n="tpl.printer">Your printer's template wins.</p>
+        </div>
+
         <!-- Save -->
         <div class="pane" id="pane-out" role="tabpanel" aria-labelledby="tab-out" hidden>
           <label class="fld"><span data-i18n="f.nm">Name of this mockup</span><input id="f-nm" maxlength="80" autocomplete="off"></label>
@@ -294,10 +322,11 @@
   <div id="toast" role="status"></div>
   <input type="file" id="file-in" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml" hidden>
 
-  <script src="../designkit/assets.js?v=2.60.00"></script>
-  <script src="../designkit/media.js?v=2.60.00"></script>
-  <script src="core.js?v=2.60.00"></script>
-  <script src="mockups.js?v=2.60.00"></script>
+  <script src="../designkit/assets.js?v=2.62.00"></script>
+  <script src="../designkit/media.js?v=2.62.00"></script>
+  <script src="core.js?v=2.62.00"></script>
+  <script src="print.js?v=2.62.00"></script>
+  <script src="mockups.js?v=2.62.00"></script>
 
 </body>
 </html>

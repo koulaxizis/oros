@@ -445,6 +445,75 @@
     if (LIB.reader) LIB.reader.dataChanged();
   }
 
+  // ---------- .oroslibrary (OBF-4e) ----------
+  // The book records, reading places, highlights, notes, bookmarks and
+  // added catalogues as one orOS file (../recordpkg.js + package.js);
+  // never the book files themselves. Opening ADDS what this device
+  // lacks, with its ids; a record already here (or deleted here) is
+  // kept as it is unless "Update with newer versions" is ticked. The
+  // result goes through mergeLibrary + commit (so sync carries it);
+  // Undo tombstones the added books, marks and catalogues the way
+  // removeBook / delMark do, and drops an added reading place.
+  var RP = window.OrosRecordPkg || null, LPK = window.OrosLibraryPackage || null;
+  var recAdded = null;            // what the last open added: { books, marks, cats, pos } id → m
+  var recFile = RP && LPK && window.OrosBundle ? RP.ui(LPK.DESC, {
+    lang: function () { return LIB.LANG; },
+    get: function () { return sliceGet(); },
+    title: function () { return LIB.t("app.name"); },
+    set: function (next) {
+      if (!next || typeof next !== "object" || !Array.isArray(next.books)) return;
+      var before = { books: {}, marks: {}, cats: {}, pos: {} };
+      LIB.data.books.forEach(function (b) { before.books[b.id] = b.m; });
+      LIB.data.marks.forEach(function (k) { before.marks[k.id] = k.m; });
+      (LIB.data.cats || []).forEach(function (c) { before.cats[c.id] = c.m; });
+      Object.keys(LIB.data.pos).forEach(function (id) { before.pos[id] = LIB.data.pos[id].m; });
+      LIB.data = C.mergeLibrary(next, next);
+      recAdded = { books: {}, marks: {}, cats: {}, pos: {} };
+      LIB.data.books.forEach(function (b) { if (!(b.id in before.books)) recAdded.books[b.id] = b.m; });
+      LIB.data.marks.forEach(function (k) { if (!(k.id in before.marks)) recAdded.marks[k.id] = k.m; });
+      (LIB.data.cats || []).forEach(function (c) { if (!(c.id in before.cats)) recAdded.cats[c.id] = c.m; });
+      Object.keys(LIB.data.pos).forEach(function (id) { if (!(id in before.pos)) recAdded.pos[id] = LIB.data.pos[id].m; });
+      LIB.commit();
+      if (LIB.reader) LIB.reader.marksChanged();
+    },
+    deleteIds: function (ids) {
+      if (!recAdded) return;
+      var a = recAdded, any = false;
+      recAdded = null;
+      ids.forEach(function (id) {
+        // only what that open added and nobody changed since
+        var b = LIB.book(id), k = LIB.mark(id);
+        var c = (LIB.data.cats || []).filter(function (x) { return x.id === id; })[0];
+        var x = a.books[id] && b && b.m === a.books[id] ? b : a.marks[id] && k && k.m === a.marks[id] ? k :
+          a.cats[id] && c && c.m === a.cats[id] ? c : null;
+        if (x) { LIB.data.tombs[id] = LIB.now(Math.max(x.m, LIB.data.tombs[id] || 0)); any = true; }
+        var p = LIB.data.pos[id];
+        if (a.pos[id] && p && p.m === a.pos[id]) { delete LIB.data.pos[id]; any = true; }
+      });
+      if (!any) return;
+      LIB.commit();
+      if (LIB.reader) LIB.reader.marksChanged();
+      LIB.toast(recFile.text("undone"));
+    },
+    toast: function (text, undo) {
+      if (undo) LIB.undoToast(text, undo);
+      else LIB.toast(text);
+    }
+  }) : null;
+  LIB.recFile = recFile;
+  // An .oroslibrary file (by name or by its first bytes) → the record
+  // kit; anything else is a book file. → true when it was one.
+  LIB.takeRecordFile = function (f) {
+    if (!recFile || !f) return Promise.resolve(false);
+    if (/\.oroslibrary$/i.test(f.name || "")) { recFile.openFile(f); return Promise.resolve(true); }
+    if (typeof f.slice !== "function") return Promise.resolve(false);
+    return f.slice(0, 128).arrayBuffer().then(function (ab) {
+      if (window.OrosBundle.sniff(new Uint8Array(ab)) !== LPK.DESC.mime) return false;
+      recFile.openFile(f);
+      return true;
+    }, function () { return false; });
+  };
+
   // ---------- Keyboard (Contract Β) ----------
   function wireKeyboard() {
     document.addEventListener("keydown", LIB.forwardShortcut, true);
@@ -464,12 +533,15 @@
       LIB.openBook(target.book, typeof target.loc === "string" && C.LOC_RE.test(target.loc) ? target.loc : null);
       return;
     }
+    // "Open with" (fileopen.js): { openFile: { token } }, the File taken
+    // once with window.parent.__orosTakeFile(token): an .oroslibrary
+    // file goes to the record kit, a book file is added and opened.
     var f = target.openFile;
     if (f && typeof f === "object" && typeof f.token === "string") {
       var file = null;
       try { file = window.parent.__orosTakeFile(f.token); } catch (e) {}
-      if (file) LIB.home.importFiles([file], true);
-      else LIB.toast(LIB.t("msg.openFail"));
+      if (!file) { LIB.toast(LIB.t("msg.openFail")); return; }
+      LIB.takeRecordFile(file).then(function (rec) { if (!rec) LIB.home.importFiles([file], true); });
       return;
     }
     if (typeof target.path === "string" && /^\/internal\/./.test(target.path)) LIB.home.openPath(target.path);

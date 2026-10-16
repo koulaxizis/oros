@@ -77,6 +77,9 @@ Your titles, progress, ratings, reviews and goals sync between your devices thro
 
 In the `More` menu, `Export (JSON)` saves your shelf to a file and `Import (JSON)` merges a file in, without replacing anything.
 
+## orOS file (.orosshelf)
+In the `More` menu, `orOS file (.orosshelf)` saves every title (books, films, series, music, podcasts, games), its history (starts, progress, finishes, drops) and your yearly goals as one `.orosshelf` file, for example to move them to another device without sync or to keep a copy. `Open orOS file…` (or opening the file from Files with "Open with") adds only the titles, history entries and goals this device does not have yet: what is already here, or was deleted here, stays as it is, unless you tick "Update with newer versions". A window shows the counts first, and `Undo` takes the added records back. `Unzipped orOS folder…` opens the same file after it has been unzipped. Your tab, filter and sort, the reading reminder and your TMDB key stay on each device. The file is a plain ZIP: unzipped it holds the shelf as `content.json` plus `preview/shelf.md` and `preview/shelf.csv` for other programs. It is not encrypted, so keep it somewhere safe.
+
 ## Keyboard shortcuts
 - [[/]] jumps to the search box; [[Esc]] there clears it.
 - [[N]] adds a new title.

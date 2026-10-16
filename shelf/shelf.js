@@ -9,6 +9,9 @@
 //   - half-star ratings, favourites, a short review, tags
 //   - yearly goals and statistics, all derived (never stored)
 //   - JSON export / import (import merges, never replaces)
+//   - .orosshelf file (section 11b, package.js + ../recordpkg.js):
+//     Save, Open (adds only what is missing, with Undo), unzipped
+//     folder, "Open with"
 //   - Goodreads / Letterboxd CSV import with a preview; titles already
 //     on the shelf are skipped; Undo takes an import back (1.1.0)
 //   - "Import from another app" (1.6.0, import.js): StoryGraph, IMDb,
@@ -178,6 +181,7 @@
       "lk.cc0": "Details from Wikidata (CC0). Pictures from Wikimedia Commons, each under its own free licence.",
       "tmdb.notice": "This product uses the TMDB API but is not endorsed or certified by TMDB.",
       "menu.tmdb": "Film and series details (TMDB key)", "tmdb.title": "TMDB key (optional)",
+      "menu.osave": "orOS file (.orosshelf)", "menu.oopen": "Open orOS file…", "menu.ofolder": "Unzipped orOS folder…",
       "tmdb.text": "Films and series are looked up on Wikidata, with no key. If you have a free TMDB account you can also search TMDB, which has more posters: paste your own API key (v3) or API read access token here. It stays on this device and is sent only to api.themoviedb.org, only when you search.",
       "tmdb.key": "Your TMDB API key or read access token", "tmdb.get": "Get a key on themoviedb.org",
       "tmdb.bad": "That doesn't look like a TMDB key", "tmdb.saved": "TMDB key saved on this device",
@@ -302,6 +306,7 @@
       "lk.cc0": "Στοιχεία από το Wikidata (CC0). Εικόνες από τα Wikimedia Commons, η καθεμιά με τη δική της ελεύθερη άδεια.",
       "tmdb.notice": "Αυτό το προϊόν χρησιμοποιεί το TMDB API αλλά δεν είναι εγκεκριμένο ή πιστοποιημένο από το TMDB.",
       "menu.tmdb": "Στοιχεία ταινιών και σειρών (κλειδί TMDB)", "tmdb.title": "Κλειδί TMDB (προαιρετικό)",
+      "menu.osave": "Αρχείο orOS (.orosshelf)", "menu.oopen": "Άνοιγμα αρχείου orOS…", "menu.ofolder": "Αποσυμπιεσμένος φάκελος orOS…",
       "tmdb.text": "Οι ταινίες και οι σειρές αναζητούνται στο Wikidata, χωρίς κλειδί. Αν έχεις δωρεάν λογαριασμό στο TMDB, μπορείς να ψάχνεις και εκεί, που έχει περισσότερες αφίσες: επικόλλησε εδώ το δικό σου API key (v3) ή το read access token. Μένει σε αυτή τη συσκευή και στέλνεται μόνο στο api.themoviedb.org, μόνο όταν ψάχνεις.",
       "tmdb.key": "Το API key ή το read access token σου στο TMDB", "tmdb.get": "Πάρε κλειδί στο themoviedb.org",
       "tmdb.bad": "Αυτό δεν μοιάζει με κλειδί TMDB", "tmdb.saved": "Το κλειδί TMDB αποθηκεύτηκε σε αυτή τη συσκευή",
@@ -2857,6 +2862,58 @@
     });
   }
 
+  // ---------- 11b. The .orosshelf file (recordpkg.js, package.js) ----------
+  // Opening ADDS the titles, history entries and goals this device
+  // lacks, with their ids; one already here (or deleted here) is kept
+  // as it is unless "Update with newer versions" is ticked. The result
+  // goes through saveNow (mergeShelf + sync dirty); Undo tombstones the
+  // added titles and entries the way deleteItem / deleteSess do, and
+  // clears an added goal the way the goals dialog does (n = 0). Prefs,
+  // the reminder and the TMDB key are device-local, never in a file.
+  var RP = window.OrosRecordPkg || null, SPK = window.OrosShelfPackage || null;
+  var recFile = RP && SPK && window.OrosBundle ? RP.ui(SPK.DESC, {
+    lang: function () { return LANG; },
+    get: function () { return mergeShelf(data, data); },
+    title: function () { return t("app"); },
+    set: function (next, info) {
+      if (!next || typeof next !== "object" || !Array.isArray(next.items)) return;
+      // this device's tombstones stay; an added entry whose title is
+      // not here (deleted here) is left out
+      var live = {}, added = {};
+      next.items.forEach(function (it) { if (it && it.id) live[it.id] = 1; });
+      ((info && info.addedIds) || []).forEach(function (id) { added[id] = 1; });
+      next.sess = (Array.isArray(next.sess) ? next.sess : []).filter(function (s) { return s && (live[s.it] || !added[s.id]); });
+      data = mergeShelf(next, next);
+      saveNow();
+      renderAll();
+    },
+    deleteIds: function (ids) {
+      var ts = now(), any = false;
+      ids.forEach(function (id) {
+        var k = SPK.kindOf(id, data);
+        if (k === "goal") {
+          var g = data.goals[id];
+          data.goals[id] = { m: Math.max(ts, g.m + 1), n: 0 };
+          any = true;
+          return;
+        }
+        var x = k === "item" ? itemById(id) : k === "sess" ? data.sess.filter(function (y) { return y.id === id; })[0] : null;
+        if (!x) return;
+        // at least as new as the record (a file's stamp may be up to
+        // 5 minutes ahead), so the tombstone wins (R17)
+        data.tombs[id] = Math.max(ts, x.m, (data.tombs[id] || 0) + 1);
+        any = true;
+      });
+      if (!any) return;
+      saveNow();
+      renderAll();
+    },
+    toast: function (text, undo) {
+      if (undo) undoToast(text, undo);
+      else showToast(text);
+    }
+  }) : null;
+
   // Another app: pick one or more export files (CSV, JSON, XML, ZIP,
   // .gz), preview, confirm. import.js reads StoryGraph, IMDb, Trakt,
   // TV Time, MyAnimeList, Discogs and BoardGameGeek into rows and
@@ -3022,6 +3079,16 @@
     var col = el("div", "menu-col");
     col.appendChild(button(t("menu.export"), "", function () { dlg.close(); exportJson(); }));
     col.appendChild(button(t("menu.import"), "", function () { dlg.close(); importJson(); }));
+    // .orosshelf (section 11b)
+    if (recFile) {
+      [["sh-osave", "menu.osave", function () { recFile.save(); }],
+       ["sh-oopen", "menu.oopen", function () { recFile.open(); }],
+       ["sh-ofolder", "menu.ofolder", function () { recFile.openFolder(); }]].forEach(function (o) {
+        var b = button(t(o[1]), "", function () { dlg.close(); o[2](); });
+        b.id = o[0];
+        col.appendChild(b);
+      });
+    }
     col.appendChild(button(t("menu.csv"), "", function () { dlg.close(); importCsv(); }));
     if (window.OrosGoogleImport && window.OrosShelfGbooks && window.OrosGoogleImport.ready()) {
       col.appendChild(button(t("menu.gbooks"), "", function () { dlg.close(); importGbooks(); }));
@@ -3317,7 +3384,11 @@
   // asNew: { kind, title, by, year, status, platform, release, tags, src,
   // from } (the Assistant's entry card) opens the "New title" form
   // prefilled; nothing is saved until Save (BR-W8-6).
+  // "Open with" an .orosshelf file (fileopen.js): { openFile: { token } },
+  // the File taken once with window.parent.__orosTakeFile(token), then
+  // the kit's dialog (section 11b).
   function openSearchTarget(t) {
+    if (t && t.openFile) { if (recFile) recFile.openTarget(t.openFile); return; }
     if (!t || document.querySelector("dialog[open]")) return;
     if (t.asNew) { var pre = normAsNew(t.asNew); if (pre) editDialog(null, pre); return; }
     if (t.addBook && typeof t.addBook === "object") { libAdd(t.addBook); return; }

@@ -5,6 +5,9 @@
 // bridges (atelier/editpic.js plan / parseNew) and the app's wiring.
 // Wave 2: sets of books (volume, setList), background photo credits,
 // turntable plan and sizes, all angles.
+// Wave 3: the cover sheet for the printer (template, wrapMap,
+// normTpl, MockPrint.spans), the Atelier newTemplate receiver
+// (parseTpl) and the wrap's trim size coming back (parseCover ww/wh).
 // Run: node --test tests/*.test.js
 
 "use strict";
@@ -370,4 +373,142 @@ test("wave 2 wiring: libraries load only when asked for, from orOS itself", () =
   const sw = read("sw.js");
   ["mockups/core.js", "mockups/scene.js", "mockups/mockups.js", "designkit/media.js", "designkit/assets.js",
    "vendor/mediabunny.min.js", "atelier/gif.js", "atelier/zip.js"].forEach((f) => assert.ok(sw.includes('"' + f + '"'), f));
+});
+
+const MP = (require(path.join(ROOT, "mockups/print.js")), globalThis.MockPrint);
+const near = (a, b, eps, msg) => assert.ok(Math.abs(a - b) <= (eps || 0.01), (msg || "") + " " + a + " ≈ " + b);
+
+test("template: paperback sheet = bleed · back · spine (pages × paper) · front · bleed", () => {
+  // 6 × 9″, 240 white pages: print-on-demand formula 0.125 + 6 + 240 × 0.002252 + 6 + 0.125 inches
+  const T = C.template({ trim: "us6x9", w: 152.4, h: 228.6, pages: 240, paper: "white" }, {});
+  assert.equal(T.kind, "pb");
+  assert.deepEqual(T.parts.map((p) => p.k), ["back", "spine", "front"]);
+  near(T.spine, 240 * 0.0572);
+  near(T.sheet.w / 25.4, 0.125 + 6 + 240 * 0.002252 + 6 + 0.125, 0.01, "sheet width in inches");
+  near(T.sheet.h, 228.6 + 6.4);
+  assert.equal(T.bleed, 3.2);
+  assert.equal(T.parts[1].x, 152.4);
+  assert.deepEqual(T.folds.map((f) => f.k), ["fold", "fold"]);
+  // safe zones: 6.35 mm inside the trim and the folds, 1.6 mm each side of the spine
+  const sf = T.safe.find((r) => r.k === "front");
+  near(sf.x, 152.4 + T.spine + 6.35); near(sf.w, 152.4 - 12.7);
+  const ss = T.safe.find((r) => r.k === "spine");
+  near(ss.x, 152.4 + 1.6); near(ss.w, T.spine - 3.2);
+  // barcode spot: bottom right of the back cover, inside the safe zone
+  assert.deepEqual([T.bar.w, T.bar.h], [50.8, 30.5]);
+  near(T.bar.x + T.bar.w, 152.4 - 6.35); near(T.bar.y + T.bar.h, 228.6 - 6.35);
+  assert.deepEqual(T.warn, []);
+  // the spine typed by hand is the printer's
+  near(C.template({ w: 148, h: 210, spine: 17.5 }, {}).spine, 17.5);
+  // own bleed (the cover's bleed field)
+  assert.equal(C.template({ w: 148, h: 210 }, { bleed: 5 }).bleed, 5);
+  assert.equal(C.template({ w: 148, h: 210 }, { bleed: 0 }).sheet.h, 210);
+});
+
+test("template: flaps, hardcover case, dust jacket, warnings", () => {
+  const f = C.template({ w: 148, h: 210, pages: 200, flaps: 1, flapW: 90 }, {});
+  assert.deepEqual(f.parts.map((p) => p.k + ":" + p.w), ["flapB:90", "back:148", "spine:" + f.spine, "front:148", "flapF:90"]);
+  near(f.W, 90 * 2 + 148 * 2 + f.spine);
+  const cs = C.template({ w: 148, h: 210, pages: 240, bind: "hc" }, {});
+  assert.equal(cs.kind, "case");
+  assert.deepEqual(cs.parts.map((p) => p.k), ["back", "hingeB", "spine", "hingeF", "front"]);
+  assert.equal(cs.bleed, 15, "a case wraps 15 mm round the boards");
+  assert.equal(cs.H, 216, "boards are 3 mm larger top and bottom");
+  assert.equal(cs.spine, C.dims({ w: 148, h: 210, pages: 240, bind: "hc" }).spineMm);
+  assert.deepEqual(cs.folds.map((f) => f.k), ["hinge", "hinge", "hinge", "hinge"]);
+  assert.ok(!cs.safe.some((r) => /^hinge/.test(r.k)), "no safe zone on the hinges");
+  const jk = C.template({ w: 148, h: 210, pages: 240, bind: "hc", flaps: 1 }, {});
+  assert.equal(jk.kind, "jacket");
+  assert.equal(jk.bleed, 3.2, "a dust jacket is a printed sheet with a normal bleed");
+  assert.equal(C.dims({ bind: "hc", flaps: 1 }).bleed, 3.2);
+  assert.equal(C.dims({ bind: "hc" }).bleed, 15);
+  // thin spine, no barcode room, barcode off
+  assert.deepEqual(C.template({ w: 148, h: 210, pages: 40 }, {}).warn, ["thin"]);
+  const tiny = C.template({ w: 50, h: 70, pages: 40 }, {});
+  assert.ok(tiny.warn.includes("nobar")); assert.equal(tiny.bar, null);
+  assert.equal(C.template({ w: 148, h: 210 }, {}, { bar: 0 }).bar, null);
+  assert.ok(!C.template({ w: 50, h: 70 }, {}, { bar: 0 }).warn.includes("nobar"));
+});
+
+test("wrapMap: each 3D panel takes its own part of the printer's sheet", () => {
+  const bk = { w: 148, h: 210, pages: 240 }, T = C.template(bk, {}), m = C.wrapMap(bk, {});
+  assert.deepEqual(m.panels.map((p) => p.k), ["back", "spine", "front"]);
+  near(m.panels[0].x0, 3.2 / T.sheet.w, 1e-9); near(m.panels[2].x1, 1 - 3.2 / T.sheet.w, 1e-9);
+  near(m.panels[1].x0, (3.2 + 148) / T.sheet.w, 1e-9);
+  near(m.y0, 3.2 / T.sheet.h, 1e-9); near(m.y1, 1 - 3.2 / T.sheet.h, 1e-9);
+  // a case: the hinges go with the boards
+  const hc = { w: 148, h: 210, bind: "hc" }, Th = C.template(hc, {}), mh = C.wrapMap(hc, {});
+  near(mh.panels[0].x1, (15 + 145 + 8) / Th.sheet.w, 1e-9);
+  near(mh.panels[2].x0, (15 + 145 + 8 + Th.spine) / Th.sheet.w, 1e-9);
+  // a wrap from Atelier has no bleed: the picture is the trim
+  const m0 = C.wrapMap(bk, { bleed: 0 });
+  assert.equal(m0.panels[0].x0, 0); assert.equal(m0.y0, 0); assert.equal(m0.y1, 1);
+  // flaps map one to one
+  assert.deepEqual(C.wrapMap({ flaps: 1 }, {}).panels.map((p) => p.k), ["flapB", "back", "spine", "front", "flapF"]);
+});
+
+test("normTpl: defaults on, clipped safe zone, kept in the project", () => {
+  assert.deepEqual(C.normTpl(null), { safe: 6.35, bar: 1, gd: 1, art: 1 });
+  assert.deepEqual(C.normTpl({ safe: 99, bar: 0, gd: false, art: "x", evil: 1 }), { safe: 20, bar: 0, gd: 0, art: 1 });
+  assert.deepEqual(prj({ tpl: { safe: 3, art: 0 } }).tpl, { safe: 3, bar: 1, gd: 1, art: 0 });
+  assert.deepEqual(prj({}).tpl, C.TPL_DEF);
+  assert.equal(C.normPrefs({ tab: "print" }).tab, "print");
+});
+
+test("MockPrint.spans: pictures run into the bleed, hinges go with the boards", () => {
+  const T = C.template({ w: 148, h: 210, pages: 240 }, {}), sp = MP.spans(T);
+  assert.deepEqual(sp.back, [0, 3.2 + 148]);
+  assert.deepEqual(sp.front, [3.2 + 148 + T.spine, T.sheet.w]);
+  const Th = C.template({ w: 148, h: 210, bind: "hc" }, {}), sh = MP.spans(Th);
+  assert.deepEqual(Object.keys(sh).sort(), ["back", "front", "spine"]);
+  near(sh.back[1], 15 + 145 + 8);
+  // dpi kept inside the canvas limits
+  near(MP.ppmFor(T, 300), 300 / 25.4, 1e-9);
+  const big = C.template({ w: 600, h: 600, pages: 2000, flaps: 1, flapW: 200 }, {});
+  const k = MP.ppmFor(big, 300);
+  assert.ok(big.sheet.w * k <= 16000 && big.sheet.w * k * big.sheet.h * k <= 60e6 + 1);
+});
+
+test("Atelier newTemplate receiver: parseTpl keeps disk pictures and sane mm only", () => {
+  const g = "/internal/Assets/" + A1, a = "/internal/Assets/" + A2;
+  assert.deepEqual(EP.parseTpl({ guides: g, art: a, w: 316.1304, h: 216.4, bleed: 3.2, name: "My\u0001 book" }),
+                   { guides: A1, art: A2, w: 316.13, h: 216.4, bleed: 3.2, name: "My  book" });
+  assert.equal(EP.parseTpl({ guides: g, art: "", w: 316, h: 216, bleed: 0 }).art, "");
+  assert.equal(EP.parseTpl({ guides: "https://evil/" + A1, w: 316, h: 216, bleed: 3 }), null);
+  assert.equal(EP.parseTpl({ guides: g, art: "/internal/Assets/../x.png", w: 316, h: 216, bleed: 3 }), null);
+  assert.equal(EP.parseTpl({ guides: g, w: 316, h: 216, bleed: 40 }), null);
+  assert.equal(EP.parseTpl({ guides: g, w: 5, h: 216, bleed: 3 }), null);
+});
+
+test("a full wrap from Atelier brings its trim size (ww, wh)", () => {
+  const c = C.parseCover({ wrap: A1, ww: 309.7312, wh: 210, name: "B" });
+  assert.equal(c.ww, 309.73); assert.equal(c.wh, 210);
+  assert.equal(C.parseCover({ front: A1, ww: 300, wh: 200 }).ww, undefined, "only with a wrap");
+  assert.equal(C.parseCover({ wrap: A1, ww: "300", wh: 200 }).ww, undefined);
+});
+
+test("wave 3 wiring: Print tab, flat preview, PDF, Atelier guides never export", () => {
+  const js = read("mockups/mockups.js"), html = read("mockups/index.html");
+  assert.match(html, /id="tab-print"/); assert.match(html, /id="pane-print"/); assert.match(html, /id="flat"/);
+  assert.match(html, /src="print\.js\?v=/);
+  ["tpl-png", "tpl-pdf", "tpl-pics", "tpl-atelier", "f-tbleed", "f-safe", "f-tbar", "f-tart", "f-tgd"].forEach((id) => {
+    assert.match(html, new RegExp('id="' + id + '"'), id);
+    assert.ok(js.includes('"' + id + '"'), id);
+  });
+  assert.match(js, /loadScript\("\.\.\/vendor\/jspdf\.umd\.min\.js"\)/);
+  assert.match(js, /newTemplate: \{/);
+  assert.ok(read("sw.js").includes('"vendor/jspdf.umd.min.js"'));
+  // Atelier: the guides are a photo with ax.tg, kept by the normalizer, skipped by exports and clicks
+  assert.match(read("atelier/ax.js"), /k === "photo" && bit\(a\.tg\)\) o\.tg = 1/);
+  assert.match(read("atelier/draw.js"), /opts\.clean && it\.ax && it\.ax\.tg\) return/);
+  assert.match(read("atelier/pdfout.js"), /!it\.ax\.tg/);
+  assert.match(read("atelier/pptxout.js"), /!it\.ax\.tg/);
+  assert.match(read("atelier/editor.js"), /isBg\(it\) \|\| \(it\.ax && it\.ax\.tg\)\) continue/);
+  assert.match(read("atelier/core.js"), /tg\.newTemplate/);
+  // both languages for the new strings
+  ["tab.print", "tpl.hint", "tpl.kind.case", "slot.hingeB", "warn.thin", "btn.tplAtelier", "toast.wrapBook"].forEach((k) =>
+    assert.equal(js.split('"' + k + '":').length - 1, 2, k));
+  // help has a section for the printer in both languages
+  assert.match(read("mockups/help.en.txt"), /^## For the printer$/m);
+  assert.match(read("mockups/help.el.txt"), /^## Για το τυπογραφείο$/m);
 });

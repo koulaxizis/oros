@@ -201,6 +201,11 @@ Quote and Meals also offer "Open as copy" (fresh ids), as they work like templat
 | Pet Health Book | `{ ver: 1, pets, recs, ats? }` (attachments in `media/`; pet photos stay inline as small JPEG data URIs) | `pets.md`, `records.csv` |
 | Plant Care | `{ ver: 1, plants, log }` (never the Pl@ntNet key or reminders) | `plants.md`, `plants.csv`, `history.csv` |
 | Garage | `{ ver: 1, settings, vehicles, fuel, service, plans, tyres, renewals, costs, odo, rcs? }` (device prefs stay; receipt photos in `media/`; an added tyre set never unmounts this device's) | `log.csv` (= the app's Export CSV) |
+| Library | `{ ver: 1, books, pos, marks, cats? }` (records only: never book files, covers or reading stats; catalogue addresses with a login or key are left out) | `books.csv`, `notes.md` |
+| Media Shelf | `{ ver: 1, items, sess, goals }` (prefs, reminder and TMDB key stay on the device; covers stay links) | `shelf.md`, `shelf.csv` |
+| Email Signature | `{ ver: 1, sigs }` (prefs stay on the device; pictures in `media/<sha256>.png\|jpg`) | `signatures.md`, `signatures.html` |
+| Newsletter | `{ ver: 1, chans, lists, subs, issues, segs, tpls, rss, imgs? }` (never list salts, web-form keys, SMTP users, send state or suppressions; issues come in as drafts and feeds off, so opening never sends; pictures in `media/`) | `subscribers-<list>.csv`, `issues.md` |
+| Storage | `{ ver: 1, ents, phs?, rcs? }` (prefs and reminders stay on the device; photos and receipts in `media/`) | `inventory.csv`, `inventory.md` |
 
 ## Versions
 

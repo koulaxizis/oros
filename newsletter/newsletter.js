@@ -243,6 +243,8 @@
       "err.origin": "this page may not use the relay", "err.bad-request": "the relay refused the request",
       "err.apikey": "the provider refused the API key: check it and its permissions", "err.nodom": "the Mailgun domain is missing",
       "set.title": "Settings", "set.backup": "Back up (JSON)", "set.restore": "Restore from backup", "set.data": "Data",
+      "set.osave": "orOS file (.orosnewsletter)", "set.oopen": "Open orOS file…", "set.ofolder": "Unzipped orOS folder…",
+      "set.oText": "Lists, subscribers, issues and pictures in one file. Passwords, keys and the web form stay on this device.",
       "set.about": "About", "set.aboutText": "Newsletter sends one e-mail per subscriber through the orOS mail relay, from your own account or a provider's SMTP, while orOS is open. Nothing is tracked: no open or click counting. Subscribe, confirm and unsubscribe requests are e-mails it reads from your Inbox.",
       "set.dev": "Sent from this device today: {n}",
       "dom.title": "Domain check: {d}", "dom.spf": "SPF", "dom.dkim": "DKIM", "dom.dmarc": "DMARC",
@@ -440,6 +442,8 @@
       "err.origin": "αυτή η σελίδα δεν επιτρέπεται να χρησιμοποιεί το relay", "err.bad-request": "το relay απέρριψε το αίτημα",
       "err.apikey": "ο πάροχος απέρριψε το κλειδί API: έλεγξέ το και τα δικαιώματά του", "err.nodom": "λείπει το domain του Mailgun",
       "set.title": "Ρυθμίσεις", "set.backup": "Αντίγραφο ασφαλείας (JSON)", "set.restore": "Επαναφορά από αντίγραφο", "set.data": "Δεδομένα",
+      "set.osave": "Αρχείο orOS (.orosnewsletter)", "set.oopen": "Άνοιγμα αρχείου orOS…", "set.ofolder": "Αποσυμπιεσμένος φάκελος orOS…",
+      "set.oText": "Λίστες, συνδρομητές, τεύχη και εικόνες σε ένα αρχείο. Οι κωδικοί, τα κλειδιά και η φόρμα του ιστότοπου μένουν σε αυτή τη συσκευή.",
       "set.about": "Σχετικά", "set.aboutText": "Το Ενημερωτικό δελτίο στέλνει ένα email σε κάθε συνδρομητή μέσω του relay του orOS, από τον δικό σου λογαριασμό ή το SMTP ενός παρόχου, όσο το orOS είναι ανοιχτό. Δεν παρακολουθεί τίποτα: δεν μετρά ανοίγματα ή κλικ. Τα αιτήματα εγγραφής, επιβεβαίωσης και διαγραφής είναι email που διαβάζει από τα Εισερχόμενά σου.",
       "set.dev": "Στάλθηκαν από αυτή τη συσκευή σήμερα: {n}",
       "dom.title": "Έλεγχος domain: {d}", "dom.spf": "SPF", "dom.dkim": "DKIM", "dom.dmarc": "DMARC",
@@ -2489,6 +2493,161 @@
     })["catch"](function () { showToast(t("toast.badFile")); });
   }
 
+  // ---------- 15a. orOS file (.orosnewsletter, ../recordpkg.js + package.js) ----------
+  // Every list, subscriber, issue, segment, template, RSS feed and
+  // sending account as one orOS file, the pictures in media/ by
+  // <sha256>.jpg|png. Passwords, API keys, the web form's keys, the
+  // lists' salts (the unsubscribe and confirm codes), SMTP user names,
+  // the sending progress and the email-platform links never go in it.
+  // Opening ADDS what this device lacks, with its ids; a record already
+  // here (or deleted here) is kept as it is unless "Update with newer
+  // versions" is ticked. The result goes through saveNow (merge-on-write
+  // + the sync mark); Undo deletes the added records the way
+  // import2Undo does (tombstones, so the deletion syncs).
+  var RP = window.OrosRecordPkg || null, NPK = window.OrosNewsletterPackage || null;
+  var IMG_IN_MAX = 20 * 1024 * 1024;     // a picture in a file larger than this is skipped
+  var fileAdded = null, fileWrote = [];
+  // One picture of the file → /internal/Newsletter/, only when that
+  // path is not on the disk yet, through the picker's own checks
+  // (shrink: re-drawn as a JPEG, at most 1200 px wide).
+  // → Promise<"there" | "none" | "bad" | { f, w, h, b }>
+  function storeImg(path, key, media, memo) {
+    if (memo[path]) return memo[path];
+    var fs = orosFS();
+    memo[path] = Promise.resolve().then(function () { return fs.readBlob(path); })
+      .then(function (b) { return !!(b && b.size); }, function () { return false; })
+      .then(function (there) {
+        if (there) return "there";
+        var item = key && Object.prototype.hasOwnProperty.call(media, key) ? media[key] : null;
+        if (!item || !(item.blob || item.bytes)) return "none";
+        if (!/^image\/(jpeg|png)$/.test(item.type || "")) return "bad";
+        var blob = item.blob ? item.blob.slice(0, item.blob.size, item.type) : new Blob([item.bytes], { type: item.type });
+        if (blob.size > IMG_IN_MAX) return "bad";
+        return shrink(blob).then(function (r) {
+          var p = /\.jpg$/.test(path) ? path : "/internal/Newsletter/img-" + C.randomId("", null) + ".jpg";
+          return Promise.resolve(fs.write(p, r.blob)).then(function () {
+            fileWrote.push(p);
+            return { f: p, w: r.w, h: r.h, b: r.blob.size };
+          }, function () { return "none"; });
+        }, function () { return "bad"; });
+      })["catch"](function () { return "bad"; });
+    return memo[path];
+  }
+  var recFile = RP && NPK && window.OrosBundle ? RP.ui(NPK.DESC, {
+    lang: function () { return LANG; },
+    get: function () { return C.normalize(data); },
+    title: function () { return t("app"); },
+    // media/: every picture the issues and templates name, read from
+    // the orOS disk; state.imgs = { "<path>": "<media key>" } goes into
+    // content.json
+    files: function (state) {
+      var fs = orosFS(), B = window.OrosBundle, out = [], imgs = {}, chain = Promise.resolve();
+      if (!fs) return out;
+      NPK.imgPaths(state).forEach(function (p) {
+        chain = chain.then(function () {
+          return Promise.resolve(fs.readBlob(p)).then(function (blob) {
+            if (!blob || !blob.size) return;
+            return B.digest(blob).then(function (dg) {
+              var ext = p.slice(-3), key = dg.sha + "." + ext;
+              imgs[p] = key;
+              if (!out.some(function (f) { return f.key === key; })) out.push({ key: key, blob: blob, type: ext === "png" ? "image/png" : "image/jpeg" });
+            });
+          })["catch"](function () {});
+        });
+      });
+      return chain.then(function () { state.imgs = imgs; return out; });
+    },
+    // the pictures of the issues and templates this open adds (or
+    // updates); a picture whose bytes fail the checks leaves its block
+    // empty; one the file has no bytes for keeps its path ("missing")
+    media: function (read, res) {
+      var fs = orosFS(), next = res.next, src = read && read.content && read.content.data;
+      var imgs = NPK.normImgs(src && src.imgs), media = (read && read.media) || {}, memo = {}, ids = {};
+      var chain = Promise.resolve();
+      fileWrote = [];
+      if (!fs) return Promise.resolve(next);
+      res.addedIds.concat(res.updatedIds).forEach(function (id) { ids[id] = 1; });
+      function fix(blocks) {
+        (Array.isArray(blocks) ? blocks : []).forEach(function (b) {
+          if (!b || b.k !== "img" || !b.f) return;
+          chain = chain.then(function () { return storeImg(b.f, imgs[b.f] || "", media, memo); }).then(function (r) {
+            if (r === "bad") b.f = "";
+            else if (r && typeof r === "object") { b.f = r.f; b.w = r.w; b.h = r.h; b.b = r.b; }
+          });
+        });
+      }
+      (next.issues || []).concat(next.tpls || []).forEach(function (x) {
+        if (!x || x.del || !ids[x.id]) return;
+        fix(x.blocks);
+        if (x.l2) fix(x.l2.blocks);
+      });
+      return chain.then(function () { return next; });
+    },
+    set: function (next, info) {
+      if (!next || typeof next !== "object" || !Array.isArray(next.subs)) return;
+      flushIssue();
+      var n = copy(next), added = {}, upd = {}, got = [], supp = {};
+      (info && info.addedIds || []).forEach(function (id) { added[id] = 1; });
+      (info && info.updatedIds || []).forEach(function (id) { upd[id] = 1; });
+      // a list from a file gets a new salt of its own (new unsubscribe
+      // and confirm codes) and no web form; a list or account updated
+      // from a file keeps this device's salt, form and SMTP user
+      (n.lists || []).forEach(function (l) {
+        var o = C.list(data, l.id);
+        if (added[l.id]) { l.salt = C.randomId("", null); l.form = null; }
+        else if (upd[l.id] && o) { l.salt = o.salt; l.form = o.form; }
+      });
+      (n.chans || []).forEach(function (ch) {
+        var o = C.chan(data, ch.id);
+        if (upd[ch.id] && o) ch.user = o.user;
+      });
+      // an address deleted for good here stays out; the app's limits hold
+      (data.supp || []).forEach(function (h) { supp[h] = 1; });
+      NPK.COLLS.forEach(function (k) {
+        var room = (C.LIM[k] || 0) - C.live(data[k]).length;
+        n[k] = (n[k] || []).filter(function (x) {
+          if (!x || !added[x.id] || x.del) return true;
+          if (k === "subs" && supp[C.suppHash(x.email)]) return false;
+          if (room <= 0) return false;
+          room--;
+          got.push(x.id);
+          return true;
+        });
+      });
+      fileAdded = got;
+      data = n;
+      saveNow();
+      renderAll();
+    },
+    // Undo: the added records become tombstones (so the deletion
+    // syncs); pictures written for them leave the disk when nothing
+    // names them any more
+    deleteIds: function (ids) {
+      var mine = {}, wrote = fileWrote.slice(), any = false;
+      (fileAdded || []).forEach(function (id) { mine[id] = 1; });
+      fileAdded = null;
+      fileWrote = [];
+      flushIssue();
+      ids.forEach(function (id) {
+        var k = mine[id] ? NPK.kindOf(id, data) : "", cur = null;
+        if (!k) return;
+        data[k].forEach(function (x) { if (x.id === id) cur = x; });
+        if (!cur || cur.del) return;
+        replaceIn(data[k], { id: id, m: stamp(cur.m), del: 1 });
+        any = true;
+      });
+      if (!any) return;
+      saveNow();
+      renderAll();
+      var fs = orosFS(), still = {};
+      NPK.imgPaths(data).forEach(function (p) { still[p] = 1; });
+      if (fs && typeof fs.rm === "function") wrote.forEach(function (p) {
+        if (!still[p]) Promise.resolve().then(function () { return fs.rm(p); })["catch"](function () {});
+      });
+    },
+    toast: function (text, undo) { if (undo) undoToast(text, undo); else showToast(text); }
+  }) : null;
+
   var PUBLIC_MAIL = /^(gmail\.com|googlemail\.com|outlook\.com|hotmail\.com|live\.com|yahoo\.[a-z.]+|icloud\.com|me\.com|gmx\.[a-z]+|zoho\.com|proton\.me|protonmail\.com)$/i;
   var DKIM_SELECTORS = ["default", "mail", "dkim", "google", "selector1", "selector2", "k1", "k2", "s1", "s2", "smtp", "mx",
                         "mta", "sib", "mailjet", "pm", "mandrill", "smtpapi", "krs", "everlytickey1"];
@@ -2888,6 +3047,19 @@
     a1.appendChild(btn(t("set.backup"), "", exportBackup));
     a1.appendChild(btn(t("set.restore"), "", restoreBackup));
     c1.appendChild(a1);
+    // .orosnewsletter: Save, Open, unzipped folder (section 15a)
+    if (recFile) {
+      c1.appendChild(el("p", "hint", t("set.oText")));
+      var a4 = el("div", "acts");
+      [["nl-osave", "set.osave", function () { recFile.save(); }],
+       ["nl-oopen", "set.oopen", function () { recFile.open(); }],
+       ["nl-ofolder", "set.ofolder", function () { recFile.openFolder(); }]].forEach(function (o) {
+        var b4 = btn(t(o[1]), "", o[2]);
+        b4.id = o[0];
+        a4.appendChild(b4);
+      });
+      c1.appendChild(a4);
+    }
     var today = 0, k = dayKey(), used = E.devState().used;
     Object.keys(used).forEach(function (id) { if (used[id] && used[id].d === k) today += used[id].n; });
     c1.appendChild(el("p", "hint", t("set.dev", { n: today })));
@@ -3147,7 +3319,11 @@
   // Deep links (shell __orosOpenAt / __orosTakeTarget):
   //   { issue: id }   open that issue (universal search)
   //   { list: id }    show that list's issues
+  //   { openFile: { token } }  "Open with" an .orosnewsletter file
+  //                   (fileopen.js): the File taken once with
+  //                   window.parent.__orosTakeFile(token)
   function openTarget(tg) {
+    if (tg && tg.openFile) { if (recFile) recFile.openTarget(tg.openFile); return; }
     if (!tg || typeof tg !== "object" || document.querySelector("dialog[open]")) return;
     if (typeof tg.issue === "string" && C.issue(data, tg.issue)) {
       var x = C.issue(data, tg.issue);

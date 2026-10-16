@@ -277,7 +277,12 @@
       { label: t("more.stats"), icon: UI.stats, fn: function () { LIB.stats.show(); } },
       { label: t("more.rescan"), icon: UI.refresh, fn: function () { scan(true); } },
       { label: t("more.import"), icon: UI.notes, fn: function () { if (LIB.hlImport) LIB.hlImport.start(); } }
-    ]);
+    ].concat(LIB.recFile ? [
+      // .oroslibrary (app.js): the records as one orOS file, never the book files
+      { label: t("more.osave"), icon: UI.export, fn: function () { LIB.recFile.save(); } },
+      { label: t("more.oopen"), icon: UI.device, fn: function () { LIB.recFile.open(); } },
+      { label: t("more.ofolder"), icon: UI.disk, fn: function () { LIB.recFile.openFolder(); } }
+    ] : []));
   }
 
   // ---------- Adding ----------
@@ -302,6 +307,12 @@
   // Adds files; opens the book when there is one and openAfter.
   function importFiles(files, openAfter) {
     files = files.filter(Boolean);
+    // a dropped .oroslibrary file is records, not a book (app.js)
+    var rec = files.filter(function (f) { return /\.oroslibrary$/i.test(f.name || ""); });
+    if (rec.length && LIB.takeRecordFile) {
+      LIB.takeRecordFile(rec[0]);
+      files = files.filter(function (f) { return rec.indexOf(f) < 0; });
+    }
     if (!files.length) return Promise.resolve();
     var done = 0, added = 0, firstId = null, i = 0;
     LIB.busy(true, t("busy.adding"));

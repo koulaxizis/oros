@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Mockups — scene.js (v1.1.0, ES module)
+// orOS Mockups — scene.js (v1.2.0, ES module)
 // The 3D book and its scene, drawn with the vendored three.js
 // (vendor/three, MIT). Loaded by mockups.js with import() only
 // when the editor opens, so the app list stays light.
@@ -9,7 +9,8 @@
 //     flap change shows at once; the front piece turns on the hinge
 //   - the cover picture is composed on a canvas laid along the arc
 //     of the cover (flap, back, spine, front, flap), or one full
-//     wrap picture split by the real spine width
+//     wrap picture (the printer's sheet of MockCore.template) split
+//     panel by panel
 //   - sets: every book of MockCore.setList() is built (books that
 //     look the same share one texture), posed (standing, lying,
 //     leaning, its back to the camera), turned, and laid side by
@@ -63,16 +64,21 @@ export function drawBackground(ctx, w, h, bg, img, keep) {
 // The printed sheet as one picture, laid along the cover's arc.
 // maxPx: the longest side of the texture (smaller for big sets).
 export function composeCover(C, bk, art, imgs, maxPx) {
-  var L = C.layout(bk), d = C.dims(bk), mx = maxPx || 4096;
+  var L = C.layout(bk), mx = maxPx || 4096;
   var ppm = Math.min(10, mx / L.total, mx / L.h);
   var cv = canvas(Math.round(L.total * ppm), Math.round(L.h * ppm)), ctx = cv.getContext("2d");
   var H = cv.height;
   ctx.fillStyle = art.c; ctx.fillRect(0, 0, cv.width, H);
   if (art.mode === "wrap" && imgs.wrap) {
+    // the picture is the printer's sheet (MockCore.template): each
+    // panel takes its own part of it
     var im = imgs.wrap, iw = im.naturalWidth || im.width, ih = im.naturalHeight || im.height;
-    var bl = art.bleed >= 0 ? art.bleed : d.bleed;
-    var fx = bl / (L.total + 2 * bl), fy = bl / (L.h + 2 * bl);
-    ctx.drawImage(im, iw * fx, ih * fy, iw * (1 - 2 * fx), ih * (1 - 2 * fy), 0, 0, cv.width, H);
+    var wm = C.wrapMap(bk, art), sy = iw && ih ? ih * wm.y0 : 0, sh = ih * (wm.y1 - wm.y0);
+    wm.panels.forEach(function (m) {
+      var p = L.panels.filter(function (q) { return q.k === m.k; })[0];
+      if (!p || !(sh > 0)) return;
+      ctx.drawImage(im, iw * m.x0, sy, iw * (m.x1 - m.x0), sh, p.x * ppm, 0, p.w * ppm, H);
+    });
     return cv;
   }
   L.panels.forEach(function (p) {

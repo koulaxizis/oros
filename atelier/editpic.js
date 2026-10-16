@@ -18,8 +18,17 @@
 //   Mockups → Atelier ("Open in Atelier", BR-MK-AT):
 //     __orosOpenAt("atelier", { newPicture: { path, w, h, name } })
 //     → a new design of the picture's size holding it.
-// parse(), plan() and parseNew() are pure and unit-tested; the rest
-// needs the app.
+//   Mockups → Atelier (Print tab › "Design it in Atelier", BR-MK-TPL):
+//     __orosOpenAt("atelier", { newTemplate: { guides, art, w, h,
+//     bleed (mm, trim size of the whole cover sheet), name } }) → a
+//     new mm design of the sheet's trim with that bleed, the cover
+//     picture (art, optional) and the guides as a locked picture on
+//     top marked ax.tg: seen in the editor, clicked through, never
+//     drawn in exports (draw.js clean, pdfout.js, pptxout.js). Its
+//     "Make a book mockup" sends the wrap with its trim size (ww,
+//     wh), so Mockups finds the book it was made for.
+// parse(), plan(), parseNew() and parseTpl() are pure and
+// unit-tested; the rest needs the app.
 // ============================================================
 (function (root) {
   "use strict";
@@ -60,7 +69,20 @@
     return { asset: p[1], w: dim(np.w), h: dim(np.h), name: name };
   }
 
-  if (typeof module !== "undefined" && module.exports) { module.exports = { parse: parse, keyOf: keyOf, plan: plan, parseNew: parseNew }; return; }
+  // newTemplate → { guides, art (asset or ""), w, h, bleed (mm), name } | null
+  function parseTpl(nt) {
+    if (!nt || typeof nt !== "object") return null;
+    var g = typeof nt.guides === "string" ? PATH.exec(nt.guides) : null;
+    var a = typeof nt.art === "string" && nt.art ? PATH.exec(nt.art) : null;
+    if (!g || (nt.art && !a)) return null;
+    function mm(v, lo, hi) { return typeof v === "number" && isFinite(v) && v >= lo && v <= hi ? Math.round(v * 1000) / 1000 : -1; }
+    var w = mm(nt.w, 20, 2000), h = mm(nt.h, 20, 2000), b = mm(nt.bleed, 0, 25);
+    if (w < 0 || h < 0 || b < 0) return null;
+    var name = typeof nt.name === "string" ? nt.name.replace(/[\u0000-\u001f]/g, " ").trim().slice(0, 120) : "";
+    return { guides: g[1], art: a ? a[1] : "", w: w, h: h, bleed: b, name: name };
+  }
+
+  if (typeof module !== "undefined" && module.exports) { module.exports = { parse: parse, keyOf: keyOf, plan: plan, parseNew: parseNew, parseTpl: parseTpl }; return; }
 
   var AT = root.AT, t = AT.t, M = AT.M, A = AT.A, ED = AT.ed;
 
@@ -142,7 +164,9 @@
       var cover = { name: String(d.name || "").slice(0, 80) };
       pairs.forEach(function (x) { cover[x[0]] = x[1]; });
       var unit = s.unit === "mm" || s.unit === "in" ? s.unit : "";
-      if (unit && !pl.wrap) { cover.w = s.w / M.PT_PER.mm; cover.h = s.h / M.PT_PER.mm; }
+      var wrap = pl.wrap !== undefined;      // page index 0
+      if (unit && !wrap) { cover.w = s.w / M.PT_PER.mm; cover.h = s.h / M.PT_PER.mm; }
+      if (unit && wrap) { cover.ww = s.w / M.PT_PER.mm; cover.wh = s.h / M.PT_PER.mm; }
       p.__orosOpenAt("mockups", { cover: cover });
     }).catch(function () { AT.toast(t("mk.fail")); });
   }
@@ -164,7 +188,32 @@
     }, function () { AT.toast(t("ep.missing")); });
   }
 
+  function fromTemplate(nt) {
+    var r = parseTpl(nt);
+    if (!r) return;
+    Promise.all([A.load(r.guides), r.art ? A.load(r.art) : Promise.resolve(null)]).then(function (im) {
+      if (!im[0] || (r.art && !im[1])) { AT.toast(t("ep.missing")); return; }
+      if (document.querySelector("dialog[open]")) return;
+      var PT = M.PT_PER.mm, nw = AT.now();
+      var d = AX.newDesign({ name: r.name || "Cover", w: r.w * PT, h: r.h * PT, unit: "mm" }, nw);
+      d.setup.bleed = r.bleed * PT;
+      var pg = M.pagesInOrder(d)[0], b = r.bleed * PT, box = { x: -b, y: -b, w: (r.w + 2 * r.bleed) * PT, h: (r.h + 2 * r.bleed) * PT };
+      function size(img) { return { iw: img.naturalWidth || img.width, ih: img.naturalHeight || img.height }; }
+      if (r.art) {
+        var sa = size(im[1]);
+        AX.addItem(d, pg.id, Object.assign({ k: "photo", a: r.art, iw: sa.iw, ih: sa.ih, nm: r.name, fit: "fill" }, box), nw);
+        AT.noteUpload(r.art);
+      }
+      var sg = size(im[0]);
+      AX.addItem(d, pg.id, Object.assign({ k: "photo", a: r.guides, iw: sg.iw, ih: sg.ih, nm: t("nt.guides"), fit: "fill", lock: 1, tg: 1, z: 1e8 }, box), nw);
+      AT.noteUpload(r.guides);
+      if (AT.doc) AT.goHome();
+      AT.addDoc(M.normDoc(d));
+      AT.toast(t("nt.done"));
+    }, function () { AT.toast(t("ep.missing")); });
+  }
+
   var AX = AT.AX;
   AT.editPic = { can: can, open: open, back: back, parse: parse };
-  AT.mockup = { can: mockupsInstalled, open: toMockup, fromPicture: fromPicture };
+  AT.mockup = { can: mockupsInstalled, open: toMockup, fromPicture: fromPicture, fromTemplate: fromTemplate };
 })(typeof window !== "undefined" ? window : this);
