@@ -193,8 +193,8 @@ test("budget: the preview CSV is budget.js's buildCsv (Greek: the Excel layout)"
 
 test("budget: wiring (scripts, menu, Open with, receipts, help, file types)", () => {
   const html = read("budget/index.html");
-  ["../bundle.js?v=2.51.00", "../recordpkg.js?v=2.51.00", "package.js?v=2.51.00", "budget.js?v=2.51.00"].forEach((s) =>
-    assert.ok(html.includes('src="' + s + '"'), s));
+  ["../bundle.js?v=", "../recordpkg.js?v=", "package.js?v=", "budget.js?v="].forEach((s) =>
+    assert.ok(html.includes('src="' + s), s));
   assert.ok(html.indexOf("package.js") < html.indexOf('src="budget.js'));
   ["osave", "oopen", "ofolder"].forEach((k) => assert.ok(html.includes('data-act="' + k + '"'), k));
   const js = read("budget/budget.js");

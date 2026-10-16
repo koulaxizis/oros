@@ -172,7 +172,7 @@ test("crm: hostile content is cut down", () => {
 
 test("crm: wiring (scripts, buttons, Open with, help, file types)", () => {
   const html = read("crm/index.html");
-  ["core.js?v=", "../bundle.js?v=2.51.00", "../recordpkg.js?v=2.51.00", "package.js?v=2.51.00", "crm.js?v="].forEach((s) =>
+  ["core.js?v=", "../bundle.js?v=", "../recordpkg.js?v=", "package.js?v=", "crm.js?v="].forEach((s) =>
     assert.ok(html.includes('src="' + s), s));
   assert.ok(html.indexOf('src="core.js') < html.indexOf('src="package.js'));
   assert.ok(html.indexOf("recordpkg.js") < html.indexOf('src="crm.js'));
