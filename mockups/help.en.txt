@@ -21,17 +21,27 @@ Make realistic 3D pictures of your book for a shop page, a post or a press kit. 
 - Where there is no picture the book takes the `Colour where there is no picture`, and the spine shows the `Spine text`.
 - Pictures stay on your orOS disk and travel to your other devices with it.
 
+## Several books
+- `Books in the picture` (on the `Scene` tab): `One book`, `Front + back` (the same book twice, one showing its back), `Series` (side by side, fronts to the camera), `Shelf` (standing in a row, spines to the camera) or `Stack` (lying one on another).
+- For a series, a shelf or a stack, `How many books` goes from 2 to 6, and `Space between them` sets the gap.
+- On the `Cover` tab, `The other books` gives each book its own pictures, pages and spine text. A book without its own takes the first book's, so a stack of the same book needs nothing more.
+
 ## Scene and camera
 - Drag the picture to turn around the book. Pinch, or use the mouse wheel, to come closer. The buttons under the picture jump to ready angles.
 - `Placement`: standing, lying on its back or leaning on a wall. `Turn` turns the book on the floor; `Open the cover` opens it up to 160°.
 - `Perspective`: low values look flat like a catalogue picture, high values look close and dramatic. `Move left / right` and `Move up / down` place the book in the frame.
-- `Background`: see-through, a colour, a gradient or your own photo. `Shadow` sets how dark the floor shadow is.
+- `Background`: see-through, a colour, a gradient or a photo. With `Photo`, `Choose a picture` takes one of yours and `Find free photos` searches Openverse and Wikimedia Commons (only photos that allow commercial use). A free photo is saved on your orOS disk with its credit, shown under it; `Copy credit` copies the line to give where you post the picture. `Shadow` sets how dark the floor shadow is.
 - `Light`: where it comes from, how high, how strong, how soft its shadows are, and cool or warm.
 
 ## Saving
 - `Picture shape`: square, 4:5 (posts), 3:2, 4:3, 16:9 or 9:16 (stories). `Size` is the long side, up to 4096 px; some phones draw less, and the app tells you.
 - PNG and WebP keep a see-through background; JPG makes it white.
 - `Save to Pictures` puts it in the Pictures folder of Files. `Open in Atelier` makes a new Atelier design with the picture, to add text and more.
+
+## All angles and video
+- `Save all angles (ZIP)` makes the seven ready views (front, ¾ from both sides, spine, back, from above, low angle) in the size and format above, in one ZIP file. `All angles to Pictures` puts them in a new folder in Pictures.
+- `Turntable video`: the books turn `All round` or `To and fro` for 4 to 12 seconds. `Video` makes an MP4 (or WebM where the browser has no MP4 encoder) of 720 or 1080 px; `GIF` makes a small looping GIF (480 px, at most 8 seconds). `Cancel` stops it. When it is ready, save it, or keep it in Videos (a GIF goes to Pictures).
+- The video is made on your device, frame by frame; a long or large one takes a little while on a phone. A video has no see-through, so a see-through background turns white.
 
 ## Atelier
 In Atelier, `More` › `Make a book mockup` sends the design here: page 1 becomes the front, page 2 the back and page 3 the spine. One wide page is taken as a full wrap. A design made in mm also gives the book its size.

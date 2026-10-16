@@ -116,12 +116,29 @@
             <label class="fld"><span data-i18n="f.spTC">Spine text colour</span><input type="color" id="f-spTC"></label>
             <label class="fld wide"><span data-i18n="f.spT">Spine text (when there is no spine picture)</span><input id="f-spT" maxlength="80" autocomplete="off"></label>
           </div>
+          <div id="vols-box" class="sub" hidden>
+            <span class="lbl" data-i18n="sec.vols">The other books</span>
+            <p class="hint small" data-i18n="vols.hint">Each book can have its own pictures, pages and spine text. Where it has none, it looks like the first book.</p>
+            <div id="vols"></div>
+          </div>
           <p class="hint small" data-i18n="cover.atelier">Made your cover in Atelier? There, open More › Make a book mockup, and it comes here with its pages.</p>
         </div>
 
         <!-- Scene -->
         <div class="pane" id="pane-scene" role="tabpanel" aria-labelledby="tab-scene" hidden>
           <div class="grp">
+            <span class="lbl" id="set-lbl" data-i18n="f.set">Books in the picture</span>
+            <div class="seg wrap" id="setk" role="radiogroup" aria-labelledby="set-lbl">
+              <button type="button" role="radio" data-v="one" data-i18n="set.one">One book</button>
+              <button type="button" role="radio" data-v="pair" data-i18n="set.pair">Front + back</button>
+              <button type="button" role="radio" data-v="row" data-i18n="set.row">Series</button>
+              <button type="button" role="radio" data-v="shelf" data-i18n="set.shelf">Shelf</button>
+              <button type="button" role="radio" data-v="stack" data-i18n="set.stack">Stack</button>
+            </div>
+          </div>
+          <div id="setn-box" class="range"><span class="rl" data-i18n="f.n">How many books</span><input id="f-n" type="range" min="2" max="6" step="1"><output id="n-out"></output></div>
+          <div id="gap-box" class="range"><span class="rl" data-i18n="f.gap">Space between them</span><input id="f-gap" type="range" min="0" max="80" step="0.5"><output id="gap-out"></output></div>
+          <div class="grp" id="place-grp">
             <span class="lbl" id="place-lbl" data-i18n="f.place">Placement</span>
             <div class="seg" id="place" role="radiogroup" aria-labelledby="place-lbl">
               <button type="button" role="radio" data-v="stand" data-i18n="place.stand">Standing</button>
@@ -151,10 +168,14 @@
             <label class="fld" id="c2-box"><span data-i18n="f.c2">Second colour</span><input type="color" id="f-c2"></label>
           </div>
           <div class="range" id="ang-box"><span class="rl" data-i18n="f.ang">Direction</span><input id="f-ang" type="range" min="0" max="359" step="1"><output id="ang-out"></output></div>
-          <div id="photo-box" class="row" hidden>
-            <span id="photo-thumb" class="thumb"></span>
-            <button type="button" id="photo-pick" class="chip small" data-i18n="btn.choose">Choose a picture</button>
-            <button type="button" id="photo-del" class="chip small" data-i18n="btn.remove">Remove</button>
+          <div id="photo-box" class="sub" hidden>
+            <div class="row">
+              <span id="photo-thumb" class="thumb"></span>
+              <button type="button" id="photo-pick" class="chip small" data-i18n="btn.choose">Choose a picture</button>
+              <button type="button" id="photo-find" class="chip small" data-i18n="btn.find">Find free photos</button>
+              <button type="button" id="photo-del" class="chip small" data-i18n="btn.remove">Remove</button>
+            </div>
+            <p id="photo-cr" class="hint small cr" hidden></p>
           </div>
           <div id="swatches" class="swatches" role="group"></div>
           <div class="range"><span class="rl" data-i18n="f.shadow">Shadow</span><input id="f-shadow" type="range" min="0" max="1" step="0.01"><output id="shadow-out"></output></div>
@@ -183,6 +204,43 @@
             <button type="button" id="pics-btn" class="chip" data-i18n="btn.pics">Save to Pictures</button>
             <button type="button" id="atelier-btn" class="chip" data-i18n="btn.atelier">Open in Atelier</button>
           </div>
+
+          <span class="lbl" data-i18n="sec.angles">All angles at once</span>
+          <p class="hint small" data-i18n="angles.hint">The seven ready views (front, ¾ both sides, spine, back, from above, low angle), each as a picture in the size and format above.</p>
+          <div class="actions">
+            <button type="button" id="angles-zip" class="chip" data-i18n="btn.anglesZip">Save all angles (ZIP)</button>
+            <button type="button" id="angles-pics" class="chip" data-i18n="btn.anglesPics">All angles to Pictures</button>
+          </div>
+
+          <span class="lbl" data-i18n="sec.motion">Turntable video</span>
+          <div class="grp">
+            <span class="lbl sm" id="mo-lbl" data-i18n="f.mo">Motion</span>
+            <div class="seg" id="mok" role="radiogroup" aria-labelledby="mo-lbl">
+              <button type="button" role="radio" data-v="spin" data-i18n="mo.spin">All round</button>
+              <button type="button" role="radio" data-v="swing" data-i18n="mo.swing">To and fro</button>
+            </div>
+          </div>
+          <div class="grid2">
+            <label class="fld"><span data-i18n="f.vfmt">Kind</span>
+              <select id="f-vfmt"><option value="video" data-i18n="vfmt.video">Video (MP4 or WebM)</option><option value="gif" data-i18n="vfmt.gif">GIF (small, loops)</option></select></label>
+            <label class="fld"><span data-i18n="f.sec">Length</span><select id="f-sec"></select></label>
+            <label class="fld" id="vsize-box"><span data-i18n="f.vsize">Size</span><select id="f-vsize"></select></label>
+          </div>
+          <p id="mo-info" class="hint small"></p>
+          <div class="actions">
+            <button type="button" id="mo-make" class="chip primary" data-i18n="btn.moMake">Make the video</button>
+          </div>
+          <div id="mo-run" class="mo-run" hidden>
+            <progress id="mo-prog" max="1" value="0"></progress>
+            <button type="button" id="mo-stop" class="chip small" data-i18n="btn.cancel">Cancel</button>
+          </div>
+          <div id="mo-done" class="sub" hidden>
+            <p id="mo-done-info" class="hint small"></p>
+            <div class="actions">
+              <button type="button" id="mo-save" class="chip primary" data-i18n="btn.moSave">Save the video</button>
+              <button type="button" id="mo-keep" class="chip"></button>
+            </div>
+          </div>
         </div>
 
       </div>
@@ -206,6 +264,24 @@
     <p class="hint small" data-i18n="more.hint">Your mockups follow you to every device through orOS sync, encrypted. Their pictures travel with your orOS disk.</p>
   </div>
 
+  <!-- Free photos for the background -->
+  <div id="find" class="dialog wide" role="dialog" aria-modal="true" aria-labelledby="find-title" hidden>
+    <div class="dlg-head">
+      <h2 id="find-title" data-i18n="find.title">Free photos</h2>
+      <span class="spacer"></span>
+      <button type="button" class="icon-btn dlg-close"></button>
+    </div>
+    <form id="find-form" class="find-form" role="search">
+      <input id="find-q" type="search" maxlength="120" autocomplete="off" data-i18n-ph="find.ph">
+      <button type="submit" class="chip primary" data-i18n="find.go">Search</button>
+    </form>
+    <div id="find-srcs" class="seg" role="radiogroup" aria-label="Sources"></div>
+    <p id="find-msg" class="hint small"></p>
+    <div id="find-grid" class="find-grid"></div>
+    <button type="button" id="find-more" class="chip small" data-i18n="find.more" hidden>More</button>
+    <p class="hint small" data-i18n="find.hint">From Openverse and Wikimedia Commons, only photos that allow commercial use. The photo is saved on your orOS disk with its credit; give that credit where you post the picture.</p>
+  </div>
+
   <!-- Confirm -->
   <div id="ask" class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="ask-text" hidden>
     <p id="ask-text"></p>
@@ -219,6 +295,7 @@
   <input type="file" id="file-in" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml" hidden>
 
   <script src="../designkit/assets.js?v=2.51.00"></script>
+  <script src="../designkit/media.js?v=2.51.00"></script>
   <script src="core.js?v=2.51.00"></script>
   <script src="mockups.js?v=2.51.00"></script>
 
