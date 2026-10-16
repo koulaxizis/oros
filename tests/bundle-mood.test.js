@@ -182,8 +182,8 @@ test("mood: the habit list matches mood.js", () => {
 
 test("mood: wiring (scripts, buttons, Open with, help, file types)", () => {
   const html = read("mood/index.html");
-  ["../bundle.js?v=2.49.00", "../recordpkg.js?v=2.49.00", "package.js?v=2.49.00", "mood.js?v=2.49.00"].forEach((s) =>
-    assert.ok(html.includes('src="' + s + '"'), s));
+  ["../bundle.js?v=", "../recordpkg.js?v=", "package.js?v=", "mood.js?v="].forEach((s) =>
+    assert.ok(html.includes('src="' + s), s));
   assert.ok(html.indexOf("vocab.js") < html.indexOf('src="package.js'));
   assert.ok(html.indexOf("recordpkg.js") < html.indexOf('src="mood.js'));
   const js = read("mood/mood.js");

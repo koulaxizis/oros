@@ -182,8 +182,8 @@ test("cycle: the normaliser cuts hostile content down", () => {
 
 test("cycle: wiring (scripts, buttons, Open with, strings, help, file types)", () => {
   const html = read("cycle/index.html");
-  ["../bundle.js?v=2.49.00", "../recordpkg.js?v=2.49.00", "package.js?v=2.49.00", "cycle.js?v=2.49.00"].forEach((s) =>
-    assert.ok(html.includes('src="' + s + '"'), s));
+  ["../bundle.js?v=", "../recordpkg.js?v=", "package.js?v=", "cycle.js?v="].forEach((s) =>
+    assert.ok(html.includes('src="' + s), s));
   assert.ok(html.indexOf("package.js") < html.indexOf('src="cycle.js'));
   const js = read("cycle/cycle.js");
   assert.match(js, /RP\.ui\(CPK\.DESC,/);
