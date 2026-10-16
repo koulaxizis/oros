@@ -753,6 +753,7 @@
         { sep: true },
         { label: t("more.resize"), fn: resizeDialog },
         { label: t("more.bulk"), fn: function () { if (AT.bulk) AT.bulk.open(); } },
+        { label: t("more.mockup"), disabled: !(AT.mockup && AT.mockup.can()), fn: function () { AT.mockup.open(); } },
         { label: t("more.pkg"), fn: function () { exportPackage(AT.doc); } },
         { label: t("more.credits"), fn: creditsDialog },
         { sep: true },

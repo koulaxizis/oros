@@ -1,0 +1,42 @@
+# Mockups
+Make realistic 3D pictures of your book for a shop page, a post or a press kit. The book is built from its real measures, so the size, the page count and the binding change the picture at once.
+
+## Getting started
+1. Press `Make a book mockup` (or [[+]] at the top for another one).
+2. On the `Book` tab give the binding, the size and the pages.
+3. On the `Cover` tab choose the pictures of the front, the back and the spine.
+4. On the `Scene` tab drag the picture to turn the camera, and pick a placement and a background.
+5. On the `Save` tab pick the shape and the size of the picture and press `Save picture`.
+
+## The book
+- `Binding`: `Paperback` has a soft cover flush with the pages; `Hardcover` has boards a little larger than the pages, a groove next to the spine, and can have a `Rounded spine`, a `Headband` and a `Ribbon bookmark`.
+- `Size`: ready sizes (A5, B-format, 6 × 9″ and more) or your own width and height, in mm or inches.
+- `Pages` and `Paper` give the spine: pages × the thickness of one page. The white and cream papers use the figures print-on-demand services give. With `Set the spine width by hand` you type the spine your printer gave you.
+- `Flaps`: on a paperback they are French flaps folded inside the cover; on a hardcover they turn the cover into a dust jacket, and `Cover under the jacket` sets the colour of the boards. Open the cover a little on the `Scene` tab to see them.
+- `Finish`: matte, gloss (shines with the light) or soft-touch. `Page edges` can be white, cream or sprayed in a colour.
+
+## The cover
+- `Front, back, spine`: one picture for each part, and one for each flap when there are flaps. A picture fills its part and is cut to fit.
+- `One full wrap`: the whole printed cover in one picture, as you send it to the printer (back, spine and front, flaps too). The app tells you its exact size and where each part starts, and cuts it by the spine of this book. `Bleed` is the extra edge around it.
+- Where there is no picture the book takes the `Colour where there is no picture`, and the spine shows the `Spine text`.
+- Pictures stay on your orOS disk and travel to your other devices with it.
+
+## Scene and camera
+- Drag the picture to turn around the book. Pinch, or use the mouse wheel, to come closer. The buttons under the picture jump to ready angles.
+- `Placement`: standing, lying on its back or leaning on a wall. `Turn` turns the book on the floor; `Open the cover` opens it up to 160°.
+- `Perspective`: low values look flat like a catalogue picture, high values look close and dramatic. `Move left / right` and `Move up / down` place the book in the frame.
+- `Background`: see-through, a colour, a gradient or your own photo. `Shadow` sets how dark the floor shadow is.
+- `Light`: where it comes from, how high, how strong, how soft its shadows are, and cool or warm.
+
+## Saving
+- `Picture shape`: square, 4:5 (posts), 3:2, 4:3, 16:9 or 9:16 (stories). `Size` is the long side, up to 4096 px; some phones draw less, and the app tells you.
+- PNG and WebP keep a see-through background; JPG makes it white.
+- `Save to Pictures` puts it in the Pictures folder of Files. `Open in Atelier` makes a new Atelier design with the picture, to add text and more.
+
+## Atelier
+In Atelier, `More` › `Make a book mockup` sends the design here: page 1 becomes the front, page 2 the back and page 3 the spine. One wide page is taken as a full wrap. A design made in mm also gives the book its size.
+
+## Your mockups
+- Every mockup is kept with its settings and follows you to every device through orOS sync, encrypted.
+- `More` (the three dots) has `Duplicate this mockup`, `Reset the camera and light` and `Delete this mockup`.
+- Shortcut: Ctrl+Shift+S saves the picture. On the picture: arrow keys turn the camera, + and − come closer or move away.
