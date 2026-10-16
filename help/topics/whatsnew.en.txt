@@ -1,6 +1,10 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.51.00
+- New app Mockups (Creativity): 3D pictures of your book. Size, pages, paper, paperback or hardcover, flaps or a dust jacket, rounded spine, headband and ribbon change the book live; add front, back, spine and flaps or one full wrap, turn the camera, open the cover, pick placement, background and light, and save PNG, JPG or WebP up to 4096 px.
+- Atelier: More › Make a book mockup sends a design to Mockups as the cover, and Mockups' Open in Atelier brings the picture back as a new design.
+
 ## Version 2.50.00
 - Podcasts: Discover now browses like Radio, with popular shows for any country, genres, countries and "Surprise me". Tap a show to listen to its episodes before you subscribe.
 
