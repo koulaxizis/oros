@@ -162,6 +162,8 @@
       "im.bad": "This is not an orOS Split group file or backup", "im.big": "The file is too big",
       "im.backup": "Backup merged: {n} new or newer items", "im.bsame": "Backup merged: nothing new",
       "menu.fromApp": "Import from Splitwise, Tricount, Settle Up…",
+      "menu.osave": "orOS file (.orossplit)", "menu.osaveG": "This group as orOS file (.orossplit)",
+      "menu.oopen": "Open orOS file…", "menu.ofolder": "Unzipped orOS folder…",
       "ia.title": "Import from another app", "ia.src": "From {s}: {f}", "ia.gname": "Group name",
       "ia.into": "Import into", "ia.newGroup": "A new group", "ia.cur": "Currency: {c}",
       "ia.found": "{n} rows in the file", "ia.adds": "To add: expenses {e}, payments {p}",
@@ -206,7 +208,7 @@
       "err.rules": "Up to {n} repeating expenses per group",
       "ph.label": "Receipt photo", "ph.open": "Open the receipt photo", "ph.add": "Add a photo", "ph.remove": "Remove the photo",
       "ph.missing": "Not on this device", "ph.bad": "This picture could not be read", "ph.noDisk": "Could not save the photo",
-      "ph.missingLong": "This photo is not on this device. It arrives with Vault Drive sync on your own devices; friends you send the group file to don't get it.",
+      "ph.missingLong": "This photo is not on this device. It arrives with Vault Drive sync on your own devices, or in an orOS file (.orossplit) of the group; the JSON group file does not carry it.",
       "ph.where": "Kept in Files, folder Split/Receipts, without location data.",
       "row.rep": "repeats", "row.items": "itemised", "row.photo": "receipt photo",
       "col.orig": "Original amount", "col.ocur": "Original currency", "col.rate": "Rate"
@@ -285,6 +287,8 @@
       "im.bad": "Αυτό δεν είναι αρχείο ομάδας ή αντίγραφο της Μοιρασιάς του orOS", "im.big": "Το αρχείο είναι πολύ μεγάλο",
       "im.backup": "Το αντίγραφο ενώθηκε: {n} νέα ή νεότερα στοιχεία", "im.bsame": "Το αντίγραφο ενώθηκε: τίποτα καινούργιο",
       "menu.fromApp": "Εισαγωγή από Splitwise, Tricount, Settle Up…",
+      "menu.osave": "Αρχείο orOS (.orossplit)", "menu.osaveG": "Η ομάδα ως αρχείο orOS (.orossplit)",
+      "menu.oopen": "Άνοιγμα αρχείου orOS…", "menu.ofolder": "Αποσυμπιεσμένος φάκελος orOS…",
       "ia.title": "Εισαγωγή από άλλη εφαρμογή", "ia.src": "Από {s}: {f}", "ia.gname": "Όνομα ομάδας",
       "ia.into": "Εισαγωγή σε", "ia.newGroup": "Νέα ομάδα", "ia.cur": "Νόμισμα: {c}",
       "ia.found": "{n} γραμμές στο αρχείο", "ia.adds": "Θα προστεθούν: έξοδα {e}, πληρωμές {p}",
@@ -329,7 +333,7 @@
       "err.rules": "Έως {n} επαναλαμβανόμενα έξοδα ανά ομάδα",
       "ph.label": "Φωτογραφία απόδειξης", "ph.open": "Άνοιγμα της φωτογραφίας", "ph.add": "Προσθήκη φωτογραφίας", "ph.remove": "Αφαίρεση φωτογραφίας",
       "ph.missing": "Όχι σε αυτή τη συσκευή", "ph.bad": "Η εικόνα δεν διαβάστηκε", "ph.noDisk": "Η φωτογραφία δεν αποθηκεύτηκε",
-      "ph.missingLong": "Η φωτογραφία δεν είναι σε αυτή τη συσκευή. Έρχεται με τον συγχρονισμό του Vault Drive στις δικές σου συσκευές· οι φίλοι στους οποίους στέλνεις το αρχείο της ομάδας δεν τη λαμβάνουν.",
+      "ph.missingLong": "Η φωτογραφία δεν είναι σε αυτή τη συσκευή. Έρχεται με τον συγχρονισμό του Vault Drive στις δικές σου συσκευές ή μέσα σε ένα αρχείο orOS (.orossplit) της ομάδας· το αρχείο ομάδας JSON δεν τη μεταφέρει.",
       "ph.where": "Φυλάσσεται στα Αρχεία, φάκελος Split/Receipts, χωρίς στοιχεία τοποθεσίας.",
       "row.rep": "επαναλαμβάνεται", "row.items": "ανά είδος", "row.photo": "φωτογραφία απόδειξης",
       "col.orig": "Αρχικό ποσό", "col.ocur": "Αρχικό νόμισμα", "col.rate": "Ισοτιμία"
@@ -3105,20 +3109,22 @@
   function importFile() {
     var dlg = dialogHost();
     var pick = dlg && typeof dlg.openFile === "function" ? dlg.openFile(".json,application/json") : localPick(".json,application/json");
-    pick.then(function (file) {
-      if (!file) return;
-      if (file.size > MAX_FILE) { showToast(t("im.big")); return; }
-      var fr = new FileReader();
-      fr.onload = function () {
-        var obj = null;
-        try { obj = JSON.parse(String(fr.result)); } catch (e) {}
-        if (obj && obj.app === BACKUP_APP && obj.data && Array.isArray(obj.data.groups)) { mergeBackup(obj.data); return; }
-        var pk = unpackGroup(obj);
-        if (!pk) { showToast(t("im.bad")); return; }
-        joinGroup(pk);
-      };
-      fr.readAsText(file);
-    });
+    pick.then(function (file) { if (file) readJsonFile(file); });
+  }
+  // A JSON group file or backup (also what "Open orOS file" hands over
+  // when the picked file is not a ZIP).
+  function readJsonFile(file) {
+    if (file.size > MAX_FILE) { showToast(t("im.big")); return; }
+    var fr = new FileReader();
+    fr.onload = function () {
+      var obj = null;
+      try { obj = JSON.parse(String(fr.result)); } catch (e) {}
+      if (obj && obj.app === BACKUP_APP && obj.data && Array.isArray(obj.data.groups)) { mergeBackup(obj.data); return; }
+      var pk = unpackGroup(obj);
+      if (!pk) { showToast(t("im.bad")); return; }
+      joinGroup(pk);
+    };
+    fr.readAsText(file);
   }
   function joinGroup(pk) {
     var gid = pk.gid, incoming = pk.data.groups[0];
@@ -3149,6 +3155,143 @@
     renderAll();
     showToast(t("im.backup", { n: n }));
   }
+  // ---------- 9a. orOS file (.orossplit) ----------
+  // Groups as one orOS file (../recordpkg.js + package.js): on the home
+  // screen every group, inside a group only that one (the file you send
+  // your friends). Opening ADDS what this device lacks, with its ids; a
+  // record already here (or deleted here) is kept as it is, unless
+  // "Update with newer versions" is ticked: then a friend's newer copy
+  // (an edited expense, a renamed group) replaces the one here. A file
+  // never deletes anything (the JSON group file still carries deletes).
+  // Receipt photos travel in media/ and are written to Split/Receipts
+  // only when they are not there yet, re-drawn like a picked photo.
+  // The result goes through mergeSplit + commit (sync); Undo removes
+  // what was added (tombstones, so it syncs) and puts back the copies
+  // an update replaced. "Open with" hands over { openFile: { token } }
+  // (the File taken once with window.parent.__orosTakeFile(token)).
+  var RP = window.OrosRecordPkg || null, SPK = window.OrosSplitPackage || null;
+  var REC_COLL = { group: ["groups", "grp"], person: ["people", "per"], exp: ["exp", "exp"], pay: ["pay", "pay"], rec: ["rec", "rec"] };
+  var recLast = null, recWrote = [];
+  function recClone(x) { return JSON.parse(JSON.stringify(x)); }
+  // The receipt photos of the expenses in `state` → media/<sha256>.jpg;
+  // state.receipts says which file is which key (package.js strip keeps it).
+  function recFiles(state) {
+    var fs = fsApi(), B = window.OrosBundle, map = {}, out = [], have = {}, chain = Promise.resolve();
+    if (!fs || !B) return Promise.resolve([]);
+    (state.exp || []).forEach(function (x) {
+      var path = phPath(x.ph);
+      if (!path || map[x.ph]) return;
+      chain = chain.then(function () {
+        return Promise.resolve(fs.readBlob(path)).then(function (blob) {
+          if (!blob || !blob.size) return;
+          return B.digest(blob).then(function (d) {
+            var key = d.sha + ".jpg";
+            map[x.ph] = key;
+            if (!have[key]) { have[key] = 1; out.push({ key: key, blob: blob, type: "image/jpeg" }); }
+          });
+        }).catch(function () {});
+      });
+    });
+    return chain.then(function () { state.receipts = map; return out; });
+  }
+  // The file's receipt photos of the expenses this open adds or updates,
+  // onto the disk when missing (never over a file that is there).
+  function recMedia(read, res) {
+    var fs = fsApi(), map = SPK.receiptsOf(read && read.content && read.content.data);
+    var ids = {}, chain = Promise.resolve();
+    recWrote = [];
+    if (!fs) return chain;
+    res.addedIds.concat(res.updatedIds).forEach(function (id) { ids[id] = 1; });
+    var want = {};
+    ((res.next && res.next.exp) || []).forEach(function (x) {
+      if (x && ids[x.id] === 1 && phPath(x.ph) && map[x.ph]) want[x.ph] = map[x.ph];
+    });
+    Object.keys(want).forEach(function (name) {
+      var key = (read.rekeyed && read.rekeyed[want[name]]) || want[name], item = read.media && read.media[key];
+      if (!item || !/^image\//.test(item.type || "")) return;
+      var path = phPath(name);
+      chain = chain.then(function () {
+        var there = typeof fs.stat === "function"
+          ? Promise.resolve(fs.stat(path)).then(function (st) { return !!st && !st.dir; }, function () { return false; })
+          : Promise.resolve(fs.readBlob(path)).then(function (b) { return !!(b && b.size); }, function () { return false; });
+        return there.then(function (yes) {
+          if (yes) return;
+          return encodePhoto(item.blob || new Blob([item.bytes], { type: item.type })).then(function (jpg) {
+            if (!jpg) return;
+            return Promise.resolve(fs.writeBlob(path, jpg)).then(function () { recWrote.push(name); });
+          });
+        });
+      }).catch(function () {});
+    });
+    return chain;
+  }
+  function recSet(next, info) {
+    info = info || {};
+    var before = [], had = {}, groups = {};
+    (info.updatedIds || []).forEach(function (id) {
+      var c = REC_COLL[SPK.kindOf(id, data)], x = c ? findIn(data[c[0]] || [], id) : null;
+      if (x) before.push({ key: c[0], rec: recClone(x) });
+    });
+    data.exp.forEach(function (x) { had[x.id] = 1; });
+    var added = (info.addedIds || []).slice();
+    added.concat(info.updatedIds || []).forEach(function (id) { groups[groupOf(id)] = 1; });
+    added.forEach(function (id) { had[id] = 1; });
+    data = mergeSplit(next, next);
+    commit();
+    runRecurring();      // the dates a series from the file has reached here
+    data.exp.forEach(function (x) { if (!had[x.id]) added.push(x.id); });
+    recLast = { added: added, before: before, wrote: recWrote, fresh: true, done: false };
+    recWrote = [];
+    var gs = Object.keys(groups).filter(function (gid) { return !!groupById(data, gid); });
+    if (gs.length === 1 && prefs.g !== gs[0]) { prefs.tab = "exp"; openGroup(gs[0]); }
+    else renderAll();
+  }
+  // Undo of an open, on the data as it is now (a pull may have landed)
+  function recUndo(u) {
+    if (!u || u.done) return;
+    u.done = true;
+    u.before.forEach(function (b) {
+      var list = data[b.key] || (data[b.key] = []), cur = findIn(list, b.rec.id);
+      if (!cur) return;                          // deleted since: stays deleted
+      var back = recClone(b.rec);
+      back.m = stamp(cur.m);
+      list[list.indexOf(cur)] = back;
+    });
+    u.added.forEach(function (id) {
+      var c = REC_COLL[SPK.kindOf(id, data)];
+      if (!c) return;
+      data[c[0]] = data[c[0]].filter(function (x) { return x.id !== id; });
+      tombstone(c[1], id);                       // a group takes its children
+      if (c[0] === "groups" && prefs.g === id) { prefs.g = ""; savePrefs(); }
+    });
+    commit();
+    renderAll();
+    dropPhotosLater(u.wrote, 0);
+    showToast(recFile.text("undone"));
+  }
+  function recHooks(get) {
+    return {
+      lang: function () { return LANG; },
+      get: get,
+      title: function (st) { return st && st.groups && st.groups.length === 1 && get !== recAll ? st.groups[0].n : t("app"); },
+      files: recFiles,
+      media: recMedia,
+      set: recSet,
+      deleteIds: function (ids) { recUndo(recLast && !recLast.done ? recLast : { added: ids, before: [], wrote: [] }); },
+      notBundle: function (file) { readJsonFile(file); return true; },
+      toast: function (text, undo) {
+        var u = recLast && recLast.fresh ? recLast : null;
+        if (u) u.fresh = false;
+        if (u && (undo || u.before.length)) undoToast(text, function () { recUndo(u); });
+        else showToast(text);
+      }
+    };
+  }
+  function recAll() { return mergeSplit(data, data); }
+  var recFile = RP && SPK && window.OrosBundle ? RP.ui(SPK.forLocal(recAll), recHooks(recAll)) : null;
+  // Save inside a group: only that group (open goes through recFile)
+  var recGroup = recFile ? RP.ui(SPK.DESC, recHooks(function () { return SPK.groupSlice(data, prefs.g); })) : null;
+
   // ---------- 9b. Import from another app ----------
   // Splitwise / Tricount / Settle Up exports → a new group (or more
   // rows into the group an earlier import made). Parsing and the plan
@@ -3605,15 +3748,18 @@
   // Menu: built for the screen it is on; per-instance listeners.
   function menuItems() {
     var g = curGroup();
-    if (!g) return [["import", "menu.import", importFile], ["fromapp", "menu.fromApp", importOther],
-                    ["backup", "menu.backup", backup], ["restore", "menu.restore", importFile]];
+    var of = !recFile ? [] : g ? [["osave", "menu.osaveG", function () { recGroup.save(); }], ["oopen", "menu.oopen", function () { recFile.open(); }]]
+      : [["osave", "menu.osave", function () { recFile.save(); }], ["oopen", "menu.oopen", function () { recFile.open(); }],
+         ["ofolder", "menu.ofolder", function () { recFile.openFolder(); }]];
+    if (!g) return [["import", "menu.import", importFile], ["fromapp", "menu.fromApp", importOther]].concat(of)
+      .concat([["backup", "menu.backup", backup], ["restore", "menu.restore", importFile]]);
     return [["edit", "menu.edit", function () { groupDialog(g.id); }],
             ["share", "menu.share", shareSummary],
-            ["file", "menu.file", sendGroupFile],
+            ["file", "menu.file", sendGroupFile]].concat(of).concat([
             ["export", "menu.export", exportDialog],
             ["fromapp", "menu.fromApp", function () { importOther(g.id); }],
             ["arch", g.arch ? "menu.unarch" : "menu.arch", toggleArchive],
-            ["del", "menu.del", deleteGroup]];
+            ["del", "menu.del", deleteGroup]]);
   }
   function openMenu() {
     var menu = $("menu"), btn = $("menu-btn");
@@ -3849,7 +3995,10 @@
   //   asNew: { group, title, amount, paid_by, date, currency, note, from }
   //   (the Assistant's entry card) opens the new-expense dialog of the
   //   group with that name, prefilled; nothing is saved until Save (BR-W8-6).
+  //   openFile: { token } ("Open with" a .orossplit, section 9a).
   function openSearchTarget(tg) {
+    // "Open with" a .orossplit file (fileopen.js): { openFile: { token } }
+    if (tg && tg.openFile) { if (recFile) recFile.openTarget(tg.openFile); return; }
     if (tg && tg.asNew && !document.querySelector("dialog[open]")) { newExpenseFrom(tg.asNew); return; }
     if (tg && tg.newGroup && !document.querySelector("dialog[open]")) { newGroupFrom(tg.newGroup); return; }
     if (!tg || typeof tg.group !== "string" || document.querySelector("dialog[open]")) return;

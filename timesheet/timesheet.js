@@ -112,6 +112,7 @@
       "idle.kept": "Kept the time away", "idle.removed": "Took out {d}",
       "set.data": "Data", "set.backup": "Back up (JSON)", "set.restore": "Restore from backup",
       "set.restoreHint": "A restore merges with what is here: nothing is replaced or lost.",
+      "set.osave": "orOS file (.oroshours)", "set.oopen": "Open orOS file…", "set.ofolder": "Unzipped orOS folder…",
       "set.import": "Import from Toggl, Clockify or Harvest (CSV)",
       "imp.title": "Import from {src}", "imp.found": "{n} entries in the file, {from} to {to}.",
       "imp.new": "New: {n}", "imp.dup": "Already here or deleted earlier: {n}", "imp.bad": "Rows that could not be read: {n}",
@@ -209,6 +210,7 @@
       "idle.kept": "Ο χρόνος απουσίας κρατήθηκε", "idle.removed": "Αφαιρέθηκαν {d}",
       "set.data": "Δεδομένα", "set.backup": "Αντίγραφο ασφαλείας (JSON)", "set.restore": "Επαναφορά από αντίγραφο",
       "set.restoreHint": "Η επαναφορά ενώνεται με ό,τι υπάρχει: τίποτα δεν αντικαθίσταται ούτε χάνεται.",
+      "set.osave": "Αρχείο orOS (.oroshours)", "set.oopen": "Άνοιγμα αρχείου orOS…", "set.ofolder": "Αποσυμπιεσμένος φάκελος orOS…",
       "set.import": "Εισαγωγή από Toggl, Clockify ή Harvest (CSV)",
       "imp.title": "Εισαγωγή από {src}", "imp.found": "{n} καταγραφές στο αρχείο, από {from} έως {to}.",
       "imp.new": "Νέες: {n}", "imp.dup": "Υπάρχουν ήδη ή διαγράφηκαν παλιότερα: {n}", "imp.bad": "Γραμμές που δεν διαβάστηκαν: {n}",
@@ -1642,6 +1644,16 @@
     var rs = button(t("set.restore"), "block", function () { dlg.close(); restoreBackup(); });
     form.appendChild(rs);
     form.appendChild(el("p", "hint", t("set.restoreHint")));
+    // .oroshours (../recordpkg.js + package.js), see recFile below
+    if (recFile) {
+      [["set.osave", "o-save", function () { recFile.save(); }],
+       ["set.oopen", "o-open", function () { recFile.open(); }],
+       ["set.ofolder", "o-folder", function () { recFile.openFolder(); }]].forEach(function (b) {
+        var btn = button(t(b[0]), "block", function () { dlg.close(); b[2](); });
+        btn.id = b[1];
+        form.appendChild(btn);
+      });
+    }
     form.appendChild(button(window.OrosTimesheetImport ? t("set.import2") : t("set.import"), "block", function () { dlg.close(); importCsv(); }));
 
     actions(form, [], t("dlg.save"));
@@ -1768,6 +1780,44 @@
       });
     }).catch(function () { showToast(t("toast.badFile")); });
   }
+
+  // .oroshours (OBF-4e): every client, project and finished entry as
+  // one orOS file (../recordpkg.js + package.js). Opening ADDS what
+  // this device lacks, with its ids; a record already here (or deleted
+  // here) is kept as it is unless "Update with newer versions" is
+  // ticked. A running timer never travels in the file (package.js
+  // strip), and this device's own running timer, time away and
+  // preferences stay as they are. The result goes through saveNow
+  // (normalize + save + sync dirty); Undo tombstones the added records
+  // the way deleteEntry / deleteProject / deleteClient do, so the
+  // deletion syncs.
+  var RP = window.OrosRecordPkg || null, TPK = window.OrosTimesheetPackage || null;
+  var recFile = RP && TPK && window.OrosBundle ? RP.ui(TPK.DESC, {
+    lang: function () { return LANG; },
+    get: function () { return sliceGet(); },
+    title: function () { return t("app"); },
+    set: function (next) {
+      if (!next || typeof next !== "object" || !Array.isArray(next.entries)) return;
+      data = C.mergeTimesheet(data, next);
+      saveNow();
+      renderAll();
+    },
+    deleteIds: function (ids) {
+      var gone = {};
+      ids.forEach(function (id) { gone[id] = 1; });
+      [data.clients, data.projects, data.entries].forEach(function (list) {
+        list.slice().forEach(function (x) {
+          if (gone[x.id] && !x.del) replaceIn(list, { id: x.id, m: stamp(x.m), del: 1 });
+        });
+      });
+      saveNow();
+      renderAll();
+    },
+    toast: function (text, undo) {
+      if (undo) undoToast(text, undo);
+      else showToast(text);
+    }
+  }) : null;
 
   // Wave 5: Toggl / Clockify / Harvest CSV. The file is read into a
   // plan (core.importPlan, nothing changed yet); a preview shows what
@@ -2252,6 +2302,9 @@
   // tab on its day, then its dialog; a project or a client: the
   // Projects tab, then its dialog. Unknown ids or an open dialog → no-op.
   function openSearchTarget(t) {
+    // "Open with" an .oroshours file (fileopen.js): { openFile: { token } },
+    // the File taken once with window.parent.__orosTakeFile(token)
+    if (t && t.openFile) { if (recFile) recFile.openTarget(t.openFile); return; }
     if (!t || typeof t !== "object" || document.querySelector("dialog[open]")) return;
     // Single app icon shortcuts: start/stop the timer, a new entry.
     if (t.toggle) { window.__orosTimesheetToggle(); return; }

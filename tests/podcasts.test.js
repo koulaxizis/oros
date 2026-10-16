@@ -700,3 +700,40 @@ test("browse: genre filter, sub-genre chips, random pick", () => {
   assert.equal(C.pickRandom(hits, () => true, () => 0.5).title, "B");
   assert.equal(C.pickRandom([], null), null);
 });
+
+// Browse wave 2: shuffle and the A–Z / Α–Ω index.
+test("shuffle: plan per show and for the whole library, queue front", () => {
+  let d = C.subscribe(C.emptyData(), { url: "https://a.gr/feed", title: "A" }, 100);
+  d = C.subscribe(d, { url: "https://b.gr/feed", title: "B" }, 100);
+  const sa = C.showId("https://a.gr/feed"), sb = C.showId("https://b.gr/feed");
+  const ep = (s, n, extra) => Object.assign({ id: C.episodeId(s, { guid: "g" + n }), s, pub: 1000 + n, audio: "https://m.gr/" + n + ".mp3" }, extra || {});
+  const cache = {
+    [sa]: [ep(sa, 1), ep(sa, 2), ep(sa, 3, { kind: "trailer" }), ep(sa, 4, { audio: "" })],
+    [sb]: [ep(sb, 5)]
+  };
+  d = C.setProgress(d, { id: cache[sa][1].id, s: sa, pd: 1002 }, 0, 60, 1, 200);   // played
+  const one = C.shufflePlan(d, cache, sa, () => 0);
+  assert.deepEqual(one.map((e) => e.id), [cache[sa][0].id], "only unplayed, playable, non-trailer");
+  const all = C.shufflePlan(d, cache, "", () => 0.99);
+  assert.equal(all.length, 2);
+  assert.deepEqual(all.map((e) => e.s).sort(), [sa, sb].sort());
+  assert.deepEqual(C.shufflePlan(d, {}, "", Math.random), []);
+  // Fisher-Yates keeps every item.
+  assert.deepEqual(C.shuffled([1, 2, 3, 4, 5], Math.random).sort(), [1, 2, 3, 4, 5]);
+  // Front of the queue, rest kept after, no duplicates.
+  const keep = cache[sb][0];
+  d = C.queueAdd(d, { id: keep.id, s: sb }, "end", 300);
+  d = C.queueAdd(d, { id: cache[sa][0].id, s: sa }, "end", 301);
+  const q = C.queueFront(d, [{ id: cache[sa][0].id, s: sa }], 400);
+  assert.deepEqual(q.queue.ids, [cache[sa][0].id, keep.id]);
+  assert.equal(q.queue.sh[cache[sa][0].id], sa);
+  assert.equal(C.queueFront(d, [], 500), d);
+});
+
+test("index: letters, order, sort", () => {
+  assert.deepEqual(["Ένας", "ώρα", "the x", "9 lives", "«Λόγος»", "ς", "Ü", "日本"].map(C.letterOf), ["Ε", "Ω", "T", "#", "Λ", "Σ", "U", "#"]);
+  assert.deepEqual(C.indexLetters(["b", "α", "1"], "el"), ["#", "Α", "B"]);
+  assert.deepEqual(C.indexLetters(["b", "α", "1"], "en"), ["#", "B", "Α"]);
+  assert.deepEqual(C.indexSort(["b", "Άλφα", "«Λόγος»", "1x", "a", "βήτα"], (x) => x, "el"), ["1x", "Άλφα", "βήτα", "«Λόγος»", "a", "b"]);
+  assert.deepEqual(C.indexSort(["b", "Άλφα", "a"], (x) => x, "en"), ["a", "b", "Άλφα"]);
+});

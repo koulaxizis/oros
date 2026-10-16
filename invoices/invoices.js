@@ -166,6 +166,8 @@
       "set.serBusy": "This series has numbered documents and can't be deleted.",
       "set.tpls": "Templates", "set.noTpls": "No templates. Save one from an invoice you are writing.",
       "set.data": "Data", "set.backup": "Back up (JSON)", "set.restore": "Restore from backup",
+      "set.osave": "orOS file (.orosinvoices)", "set.oopen": "Open orOS file…", "set.ofolder": "Unzipped orOS folder…",
+      "set.ofileHint": "An orOS file adds only what is missing here; documents already issued here never change.",
       "set.restoreHint": "Restoring merges with what you have: nothing is replaced or lost.",
       "set.about": "orOS Invoices does not send anything to ΑΑΔΕ / myDATA. For Greek business-to-business invoices that must be issued electronically, issue them in myDATA or with your provider and record them here with New › Record an invoice issued elsewhere.",
       "dlg.cancel": "Cancel", "dlg.save": "Save", "dlg.ok": "OK", "dlg.close": "Close", "dlg.discard": "Discard",
@@ -312,6 +314,8 @@
       "set.serBusy": "Η σειρά έχει αριθμημένα παραστατικά και δεν διαγράφεται.",
       "set.tpls": "Πρότυπα", "set.noTpls": "Δεν υπάρχουν πρότυπα. Αποθήκευσε ένα από τιμολόγιο που γράφεις.",
       "set.data": "Δεδομένα", "set.backup": "Αντίγραφο ασφαλείας (JSON)", "set.restore": "Επαναφορά από αντίγραφο",
+      "set.osave": "Αρχείο orOS (.orosinvoices)", "set.oopen": "Άνοιγμα αρχείου orOS…", "set.ofolder": "Αποσυμπιεσμένος φάκελος orOS…",
+      "set.ofileHint": "Ένα αρχείο orOS προσθέτει μόνο όσα λείπουν εδώ· τα παραστατικά που έχουν ήδη εκδοθεί εδώ δεν αλλάζουν ποτέ.",
       "set.restoreHint": "Η επαναφορά ενώνεται με ό,τι υπάρχει: τίποτα δεν αντικαθίσταται ούτε χάνεται.",
       "set.about": "Τα Τιμολόγια του orOS δεν στέλνουν τίποτα στην ΑΑΔΕ / myDATA. Τα ελληνικά τιμολόγια προς επιχειρήσεις που πρέπει να εκδίδονται ηλεκτρονικά, έκδωσέ τα στο myDATA ή μέσω του παρόχου σου και κατέγραψέ τα εδώ με Νέο › Καταχώριση τιμολογίου που εκδόθηκε αλλού.",
       "dlg.cancel": "Άκυρο", "dlg.save": "Αποθήκευση", "dlg.ok": "OK", "dlg.close": "Κλείσιμο", "dlg.discard": "Απόρριψη",
@@ -2648,6 +2652,19 @@
     da.appendChild(btn(t("set.restore"), "", restoreBackup));
     dc.appendChild(da);
     dc.appendChild(el("p", "hint", t("set.restoreHint")));
+    if (recFile) {
+      // .orosinvoices (recordpkg.js + package.js)
+      var oa = el("div", "acts");
+      [["inv-osave", "set.osave", function () { recFile.save(); }],
+       ["inv-oopen", "set.oopen", function () { recFile.open(); }],
+       ["inv-ofolder", "set.ofolder", function () { recFile.openFolder(); }]].forEach(function (o) {
+        var b = btn(t(o[1]), "", o[2]);
+        b.id = o[0];
+        oa.appendChild(b);
+      });
+      dc.appendChild(oa);
+      dc.appendChild(el("p", "hint", t("set.ofileHint")));
+    }
     body.appendChild(dc);
     body.appendChild(el("p", "hint about", t("set.about")));
   }
@@ -3307,6 +3324,122 @@
     }).catch(function () { showToast(t("toast.badFile")); });
   }
 
+  // ----- .orosinvoices: every record as one orOS file -----
+  // (../recordpkg.js + package.js). Opening ADDS what this device lacks,
+  // with its ids; a record already here (or deleted here) is kept as it
+  // is, and a document already issued here is never changed, not even
+  // with "Update with newer versions" (package.js tombIds); a numbered
+  // document whose number is taken here by another one stays out
+  // (forLocal). Numbers are never changed. The result goes through
+  // normalize + saveNow (so sync carries it); Undo deletes the added
+  // records the app's own way (tombstones, so the deletion syncs).
+  // media/<sha256>.<pdf|png|jpg> = the official PDFs (and scans) of
+  // /internal/Invoices/; on open a file is written there only when it
+  // is not there yet, after the same checks as Attach (10 MB, PDF / PNG
+  // / JPEG by its bytes). Provider keys (myDATA, timologisi, Stripe)
+  // live in the shell's Connected services, never in the slice.
+  var RP = window.OrosRecordPkg || null, IPK = window.OrosInvoicesPackage || null;
+  var FILE_MAX = 10 * 1024 * 1024;
+  var recWrote = [];          // disk files the last open wrote (its Undo removes them)
+  function diskType(blob) {   // → "pdf" | "png" | "jpg" | "" (from the bytes, as Attach allows)
+    if (!blob || !blob.size || blob.size > FILE_MAX || !window.OrosBundle) return Promise.resolve("");
+    return blob.slice(0, 16).arrayBuffer().then(function (ab) {
+      var ty = window.OrosBundle.typeOf(new Uint8Array(ab));
+      return ty === "application/pdf" ? "pdf" : ty === "image/png" ? "png" : ty === "image/jpeg" ? "jpg" : "";
+    }, function () { return ""; });
+  }
+  var MEDIA_TYPE = { pdf: "application/pdf", png: "image/png", jpg: "image/jpeg" };
+  function recFiles(state) {
+    var fs = orosFS(), out = [], keys = {}, chain = Promise.resolve();
+    state.media = {};
+    if (!fs || typeof fs.readBlob !== "function") return Promise.resolve(out);
+    C.live(state.docs).forEach(function (d) {
+      var p = d.file;
+      if (!IPK.safePath(p)) return;
+      chain = chain.then(function () {
+        if (p in keys) { if (keys[p]) state.media[p] = keys[p]; return; }
+        keys[p] = "";
+        return Promise.resolve(fs.readBlob(p)).then(function (blob) {
+          return diskType(blob).then(function (ext) {
+            if (!ext) return;
+            return window.OrosBundle.digest(blob).then(function (x) {
+              var k = x.sha + "." + ext;
+              keys[p] = state.media[p] = k;
+              if (!out.some(function (f) { return f.key === k; })) out.push({ key: k, blob: blob, type: MEDIA_TYPE[ext] });
+            });
+          });
+        }).then(null, function () {});
+      });
+    });
+    return chain.then(function () { return out; });
+  }
+  // One file of the bundle → /internal/Invoices/: the path the document
+  // names when it is free (or holds the same bytes), else the same name
+  // with "-<8 hex>" added. → the path, or "" when the bytes fail a check.
+  function storeMedia(fs, path, key, item) {
+    var ext = key.split(".").pop(), sha = key.slice(0, 64);
+    if (!item || !item.bytes || item.type !== MEDIA_TYPE[ext] || item.bytes.length > FILE_MAX) return Promise.resolve("");
+    var B = window.OrosBundle, blob = new Blob([item.bytes], { type: item.type });
+    var alt = path.replace(/(\.[A-Za-z]+)$/, "-" + sha.slice(0, 8) + "$1");
+    function at(p) {
+      return Promise.resolve(fs.readBlob(p)).then(function (have) {
+        if (!have) return null;
+        return B.digest(have).then(function (x) { return x.sha === sha ? p : ""; });
+      }, function () { return null; }).then(function (r) {
+        if (r !== null) return r;                       // there: the same bytes (p) or others ("")
+        var write = typeof fs.writeBlob === "function" ? fs.writeBlob : fs.write;
+        return Promise.resolve(write.call(fs, p, blob)).then(function () { recWrote.push(p); return p; });
+      });
+    }
+    return at(path).then(function (p) { return p || (alt !== path ? at(alt) : ""); }).then(null, function () { return ""; });
+  }
+  function recMedia(read, res) {
+    var next = JSON.parse(JSON.stringify(res.next)), fs = orosFS(), chain = Promise.resolve(), touched = {};
+    var cd = read && read.content && read.content.data, media = (cd && cd.media) || {}, items = (read && read.media) || {};
+    recWrote = [];
+    res.addedIds.concat(res.updatedIds).forEach(function (id) { touched[id] = 1; });
+    (next.docs || []).forEach(function (d) {
+      if (d.del || !touched[d.id] || !d.file) return;
+      var mine = C.doc(data, d.id), keep = mine && mine.file === d.file ? d.file : "";
+      var key = IPK.safePath(d.file) && typeof media[d.file] === "string" && IPK.KEY_RE.test(media[d.file]) ? media[d.file] : "";
+      if (!key || !items[key] || !fs) { d.file = keep; return; }
+      chain = chain.then(function () { return storeMedia(fs, d.file, key, items[key]); })
+        .then(function (p) { d.file = p || keep; }, function () { d.file = keep; });
+    });
+    return chain.then(function () { return next; });
+  }
+  var recFile = RP && IPK && window.OrosBundle ? RP.ui(IPK.forLocal(function () { return C.normalize(data); }), {
+    lang: function () { return LANG; },
+    get: function () { return C.normalize(data); },
+    title: function () { return t("app"); },
+    files: recFiles,
+    media: recMedia,
+    set: function (next) {
+      var n = C.normalize(next);
+      if (!n || !Array.isArray(n.docs)) return;
+      data = n;
+      saveNow();
+      renderAll();
+    },
+    deleteIds: function (ids) {
+      var lists = { doc: "docs", pay: "pays", client: "clients", series: "series", tpl: "tpls", prof: "profs" };
+      ids.forEach(function (id) {
+        var k = IPK.kindOf(id, data), name = lists[k];
+        var rec = name ? C.byId(data[name], id) : null;
+        if (rec) replaceIn(name === "profs" ? profList() : data[name], tombOf(rec));
+      });
+      saveNow();
+      // the disk files that open wrote and nothing points at any more
+      var fs = orosFS(), wrote = recWrote.slice();
+      recWrote = [];
+      if (fs && typeof fs.rm === "function") wrote.forEach(function (p) {
+        if (!C.live(data.docs).some(function (d) { return d.file === p; })) Promise.resolve(fs.rm(p)).then(null, function () {});
+      });
+      renderAll();
+    },
+    toast: function (text, undo) { if (undo) undoToast(text, undo); else showToast(text); }
+  }) : null;
+
   // The official PDF of a record (or of an issued document): copied to
   // the orOS disk under /internal/Invoices/, the document keeps the path.
   function orosFS() {
@@ -3736,7 +3869,11 @@
   //                           when the user saves or issues it
   //   { invoice: id }         open that document (search, CRM Lite)
   //   { client: { id? | crm? | afm? | name? } }   that client's documents
+  //   { openFile: { token } } "Open with" an .orosinvoices file
+  //                           (fileopen.js): the File taken once with
+  //                           window.parent.__orosTakeFile(token)
   function openTarget(tg) {
+    if (tg && tg.openFile) { if (recFile) recFile.openTarget(tg.openFile); return; }
     if (!tg || typeof tg !== "object" || document.querySelector("dialog[open]")) return;
     if (tg["new"]) { prefillNew(tg["new"]); return; }
     // Single app: a blank invoice or receipt (icon shortcuts), or a

@@ -84,6 +84,9 @@ input, select {
 }
 input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
 input[type="date"] { min-width: 0; }
+/* the orOS file dialog (../recordpkg.js): its "Update with newer versions" box */
+#recordpkg-dialog input[type="checkbox"] { width: 20px; height: 20px; min-height: 0; padding: 0; margin: 0; flex-shrink: 0; accent-color: var(--accent); }
+#recordpkg-dialog::backdrop { background: rgba(0, 0, 0, 0.5); }
 button:focus-visible, [tabindex]:focus-visible, summary:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;

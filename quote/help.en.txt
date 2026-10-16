@@ -46,6 +46,13 @@ The whole quote travels inside the link (after the `#`, which browsers never sen
 ## Sync and backup
 Quotes, clients, templates and payment presets sync between your devices through [orOS sync](help:t/sync). An unsaved draft and the quote you had open stay on this device. The orOS [backup](help:t/backup) keeps a copy of everything.
 
+## Save and open an orOS file
+In the `Quotes` tab, the folder button opens `Save and open`. `orOS file (.orosquote)` saves every quote (with its lines and instalments), client and template as one `.orosquote` file, for example to move them to another device without sync or to give a colleague your quotes. The file is a plain ZIP: unzipped it holds the data as `content.json` plus `preview/quotes.md` (every quote and template as text, with totals). The payment presets and the acceptance-link codes stay on this device and are not in the file. It is not encrypted, so keep it somewhere safe.
+
+`Open orOS file…` (or `Unzipped orOS folder…`, or "Open with" orOS on the computer) shows how many records are new and how many are already here, then `Add` adds only the new ones, with their own ids: opening the same file again adds nothing. A quote already here is kept as it is, and one you deleted here stays deleted; a file never deletes anything. Tick `Update with newer versions` to let quotes that were changed later in the file replace your copy. `Undo` in the message removes what was added.
+
+`Open as copy…` adds the file's quotes and templates as new ones, even ones you already have: each quote gets a new number and starts as a `Draft`. Use it when a file is a set of quotes to start from. Clients come in as usual (only the ones you don't have). `Undo` removes the copies.
+
 ## Keyboard shortcuts
 - [[Alt+N]] starts a new quote (when you're not typing in a field).
 

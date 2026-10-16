@@ -1105,6 +1105,34 @@ dialog menu button.danger:hover { background: var(--danger-soft); }
   opacity: 1;
   transform: translateY(0);
 }
+#toast.has-act.show { pointer-events: auto; }
+#toast .toast-act {
+  margin-left: 12px;
+  padding: 4px 6px;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* --- .orosquote file dialog --- */
+.ofile-btns { display: flex; flex-direction: column; gap: 8px; }
+.ofile-btns button {
+  min-height: 40px;
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font-weight: 600;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+.ofile-btns button:hover { border-color: var(--accent); color: var(--accent); }
+.ofile-hint { margin: 0 0 12px; font-size: 12px; line-height: 1.5; color: var(--text-dim); }
+.ofile-btns + .ofile-hint { margin: 12px 0 0; }
 
 /* ============================================================
    PRINT — καθαρή εξαγωγή (fallback print της PDF διαδροχής)

@@ -70,6 +70,7 @@
       "btn.menu": "More", "btn.today": "This month",
       "menu.cats": "Categories", "menu.export": "Export", "menu.backup": "Backup (JSON)",
       "menu.restore": "Restore from backup", "menu.currency": "Currency",
+      "menu.osave": "orOS file (.orosbudget)", "menu.oopen": "Open orOS file…", "menu.ofolder": "Unzipped orOS folder…",
       "q.ph": "Search all entries…", "flt.all": "All entries", "flt.out": "Expenses only", "flt.in": "Income only",
       "list.empty": "No entries this month. Tap “New” to add one.", "list.none": "Nothing matches.",
       "list.found": "{n} found", "day.total": "Day total",
@@ -165,6 +166,7 @@
       "btn.menu": "Περισσότερα", "btn.today": "Τρέχων μήνας",
       "menu.cats": "Κατηγορίες", "menu.export": "Εξαγωγή", "menu.backup": "Αντίγραφο ασφαλείας (JSON)",
       "menu.restore": "Επαναφορά από αντίγραφο", "menu.currency": "Νόμισμα",
+      "menu.osave": "Αρχείο orOS (.orosbudget)", "menu.oopen": "Άνοιγμα αρχείου orOS…", "menu.ofolder": "Αποσυμπιεσμένος φάκελος orOS…",
       "q.ph": "Αναζήτηση σε όλες τις κινήσεις…", "flt.all": "Όλες οι κινήσεις", "flt.out": "Μόνο έξοδα", "flt.in": "Μόνο έσοδα",
       "list.empty": "Καμία κίνηση αυτόν τον μήνα. Πάτα «Νέα» για να προσθέσεις.", "list.none": "Δεν βρέθηκε τίποτα.",
       "list.found": "Βρέθηκαν {n}", "day.total": "Σύνολο ημέρας",
@@ -2393,6 +2395,145 @@
       renderAll();
     });
   }
+  // .orosbudget (OBF-4e): every entry, category, limit, recurring
+  // entry, account, transfer, envelope, goal and import rule as one
+  // orOS file (../recordpkg.js + package.js), the receipts in media/
+  // by <sha256>.<jpg|pdf>. Bank profiles (a bank's CSV layout, account
+  // number / IBAN) stay on the device. Opening ADDS what this device
+  // lacks, with its ids; an entry already here (or deleted here) is
+  // kept as it is unless "Update with newer versions" is ticked. The
+  // result goes through commit (mergeBudget + save + sync dirty); Undo
+  // removes the added records with tombstones, like importApp.
+  var RP = window.OrosRecordPkg || null, BPK = window.OrosBudgetPackage || null;
+  if (BPK) BPK.useCsv(buildCsv);              // entries.csv = the app's own CSV export
+  var TOMB_OF = { tx: "tx", cats: "cat", rec: "rec", acc: "acc", xfer: "xfer", asg: "asg", goal: "goal", rule: "rule" };
+  var fileAdded = null, fileCur = "";
+  // One receipt of the file → Budget/Receipts, only when that name is
+  // not on the disk yet, through the checks of attaching one
+  // (encodeReceipt: a PDF must start with "%PDF-", a picture is
+  // re-drawn as a JPEG, no EXIF). → Promise<true when the file is there>
+  function storeReceipt(name, key, media) {
+    var fs = fsApi(), path = PLAN ? PLAN.rcPath(name) : null;
+    if (!fs || !path) return Promise.resolve(false);
+    return Promise.resolve().then(function () { return fs.readBlob(path); })
+      .then(function (b) { return !!b; }, function () { return false; })
+      .then(function (there) {
+        if (there) return true;
+        var item = key && Object.prototype.hasOwnProperty.call(media, key) ? media[key] : null;
+        if (!item || !(item.blob || item.bytes)) return false;
+        var blob = item.blob ? item.blob.slice(0, item.blob.size, item.type || "") : new Blob([item.bytes], { type: item.type || "" });
+        return encodeReceipt(blob).then(function (enc) {
+          if (!enc || enc.ext !== name.split(".").pop()) return false;
+          return Promise.resolve(fs.writeBlob(path, enc.blob)).then(function () { return true; });
+        });
+      }).catch(function () { return false; });
+  }
+  // The added records over the app's caps (categories, accounts,
+  // recurring entries) are left out; what was here stays.
+  function capAdded(d, before) {
+    var drop = function (key, over) {
+      for (var i = d[key].length - 1; i >= 0 && over(); i--) if (!before[key][d[key][i].id]) d[key].splice(i, 1);
+    };
+    drop("cats", function () { return categoryList(d, SEED_NAMES.en).length > MAX_CATS; });
+    drop("acc", function () { return d.acc.length > MAX_ACC; });
+    drop("rec", function () { return d.rec.length > MAX_REC; });
+  }
+  var recFile = RP && BPK && window.OrosBundle ? RP.ui(BPK.DESC, {
+    lang: function () { return LANG; },
+    get: function () { return sliceGet(); },
+    title: function () { return t("app"); },
+    // media/: every receipt the entries name, read from the orOS disk;
+    // state.rcs = { "<file name>": "<media key>" } goes into content.json
+    files: function (state) {
+      var fs = fsApi(), B = window.OrosBundle, out = [], rcs = {}, chain = Promise.resolve();
+      if (!fs || !PLAN) return out;
+      PLAN.rcAll(state).forEach(function (name) {
+        chain = chain.then(function () {
+          if (rcs[name]) return;
+          return Promise.resolve(fs.readBlob(PLAN.rcPath(name))).then(function (blob) {
+            if (!blob || !blob.size) return;
+            return B.digest(blob).then(function (dg) {
+              var key = dg.sha + "." + name.split(".").pop();
+              rcs[name] = key;
+              if (!out.some(function (f) { return f.key === key; }))
+                out.push({ key: key, blob: blob, type: /\.pdf$/.test(name) ? "application/pdf" : "image/jpeg" });
+            });
+          }).catch(function () {});
+        });
+      });
+      return chain.then(function () { state.rcs = rcs; return out; });
+    },
+    // the receipts of the entries this open adds (or updates); a name
+    // whose file could not be stored leaves the entry's rc
+    media: function (read, res) {
+      var next = res.next, src = read && read.content && read.content.data;
+      var rcs = src && src.rcs && typeof src.rcs === "object" ? src.rcs : {}, media = (read && read.media) || {};
+      fileCur = src && src.set && typeof src.set.cur === "string" ? src.set.cur : "";
+      var want = {}, chain = Promise.resolve();
+      res.addedIds.concat(res.updatedIds).forEach(function (id) { want[id] = 1; });
+      (next.tx || []).forEach(function (x) {
+        if (!want[x.id] || !x.rc) return;
+        var kept = [];
+        BPK.rcOf(x.rc, x.id).forEach(function (name) {
+          chain = chain.then(function () {
+            return storeReceipt(name, typeof rcs[name] === "string" ? rcs[name] : "", media);
+          }).then(function (ok) { if (ok) kept.push(name); });
+        });
+        chain = chain.then(function () { if (kept.length) x.rc = PLAN.rcJoin(kept); else delete x.rc; });
+      });
+      return chain.then(function () { return next; });
+    },
+    set: function (next) {
+      var before = {};
+      BPK.COLLS.forEach(function (c) {
+        before[c] = {};
+        data[c].forEach(function (x) { before[c][x.id] = 1; });
+      });
+      var fresh = mergeBudget(next, next);
+      capAdded(fresh, before);
+      // a device that never chose a currency and has no entries takes the file's
+      if (fileCur && fresh.set.m === 0 && !data.tx.length && fileCur !== fresh.set.cur && CURRENCIES.indexOf(fileCur) >= 0)
+        fresh.set = Object.assign({}, fresh.set, { cur: fileCur, m: stamp(0) });
+      fileCur = "";
+      data = fresh;
+      commit();
+      materialize(false);      // due days of an added recurring entry
+      fileAdded = {};
+      BPK.COLLS.forEach(function (c) {
+        fileAdded[c] = data[c].filter(function (x) { return !before[c][x.id]; }).map(function (x) { return x.id; });
+      });
+      renderAll();
+    },
+    // Undo: what this open added (with the due days of an added
+    // recurring entry) goes again, with tombstones; a limit has none,
+    // so an added one becomes "no limit"; receipts no entry names any
+    // more leave the disk later.
+    deleteIds: function () {
+      var a = fileAdded;
+      fileAdded = null;
+      if (!a) return;
+      var names = [];
+      BPK.COLLS.forEach(function (c) {
+        var ids = a[c] || [];
+        if (!ids.length) return;
+        if (c === "bud") {
+          data.bud.forEach(function (b) { if (ids.indexOf(b.id) >= 0) { b.a = 0; b.m = stamp(b.m); } });
+          return;
+        }
+        data[c] = data[c].filter(function (y) {
+          if (ids.indexOf(y.id) < 0) return true;
+          if (c === "tx" && PLAN && y.rc) names = names.concat(PLAN.rcList(y.rc));
+          return false;
+        });
+        ids.forEach(function (id) { tombstone(TOMB_OF[c], id); });
+      });
+      commit();
+      renderAll();
+      dropReceiptsLater(names);
+    },
+    toast: function (text, undo) { if (undo) undoToast(text, undo); else showToast(text); }
+  }) : null;
+
   function pickFile(accept) {
     var dh = dialogHost();
     return dh && typeof dh.openFile === "function" ? dh.openFile(accept) : localPick(accept);
@@ -3684,7 +3825,13 @@
     $("flt").addEventListener("change", function () { filter = $("flt").value; renderList(); });
     var acts = { accounts: accountsDialog, cats: catsDialog, export: exportDialog, backup: backup, restore: restore, currency: currencyDialog,
                  stripe: function () { if (PAY) PAY.open(); },
-                 bank: function () { if (BANKUI) BANKUI.open(); }, apps: function () { if (BANKUI) BANKUI.open(); }, rules: function () { if (BANKUI) BANKUI.rules(); } };
+                 bank: function () { if (BANKUI) BANKUI.open(); }, apps: function () { if (BANKUI) BANKUI.open(); }, rules: function () { if (BANKUI) BANKUI.rules(); },
+                 osave: function () { if (recFile) recFile.save(); }, oopen: function () { if (recFile) recFile.open(); },
+                 ofolder: function () { if (recFile) recFile.openFolder(); } };
+    ["osave", "oopen", "ofolder"].forEach(function (k) {     // .orosbudget (the record kit)
+      var ob = document.querySelector('#menu [data-act="' + k + '"]');
+      if (ob) ob.hidden = !recFile;
+    });
     ["bank", "rules"].forEach(function (k) {
       var mb = document.querySelector('#menu [data-act="' + k + '"]');
       if (mb) mb.hidden = !BANKUI;
@@ -3737,6 +3884,9 @@
   // first; anything else is ignored.
   function openTarget(x) {
     if (!x || typeof x !== "object" || !data) return;
+    // "Open with" an .orosbudget file (fileopen.js): { openFile: { token } },
+    // the File taken once with window.parent.__orosTakeFile(token)
+    if (x.openFile) { if (recFile) recFile.openTarget(x.openFile); return; }
     // Single app (solo.js): { newTx: { n? } } → a new expense (icon
     // shortcut, or a shared text as its note); saved only on Save.
     if (x.newTx && typeof x.newTx === "object") {
