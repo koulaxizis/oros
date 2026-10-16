@@ -52,7 +52,7 @@ Folders are on the left, the current folder's contents on the right. On a phone,
 - The files go into the folder "Imported from Google Drive" or "Imported from Google Photos" and sync like any other file. `Undo` on the message removes exactly the files that came in.
 - Google Docs, Sheets, Slides and Drawings arrive as .docx, .xlsx, .pptx and .png. Folders, Forms, Sites and My Maps are left out.
 - Picking the same files again adds only what is missing: a file with the same name and size already in the folder is left out.
-- From Google Drive appears only when a Google API key is set in Contacts › From an account › Use my own app id. If Google answers 403, the Google Drive API and Google Picker API (or the Google Photos Picker API) are not turned on in that Google Cloud project yet.
+- From Google Drive works with orOS's own Google app. With your own app id (Contacts › From an account › Use my own app id), it appears only once you also add your own Google API key there. If Google answers 403, the Google Drive API and Google Picker API (or the Google Photos Picker API) are not turned on in that Google Cloud project yet.
 
 ## Search
 - Type in `Search in this folder…`. It looks through the current folder and all its subfolders. Capital letters and Greek accents don't matter.

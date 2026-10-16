@@ -68,6 +68,9 @@
   // The Google Cloud project behind BUILTIN (its number, the Picker's
   // "app id"); an own client id brings its own project, see appId().
   var APP_ID = "97712435228";
+  // The Picker's browser key for the same project. It is public by design:
+  // Google only accepts it from useoros.online and only for the Picker API.
+  var BUILTIN_KEY = "AIzaSyCe3dmRctmtxMdAJTImDFRdAKyV5Jj84m8";
 
   var S = {
     en: {
@@ -108,11 +111,13 @@
     return (typeof own === "string" && /^[A-Za-z0-9._-]{1,200}$/.test(own) ? own : "") || BUILTIN;
   }
   function ready() { return !!clientId(); }
-  // The Drive picker's browser API key: device-local, set in Contacts ›
-  // From an account › Use my own app id ("googleKey"). Never built in.
+  // The Drive picker's browser API key: an own one from Contacts › From an
+  // account › Use my own app id ("googleKey"), else the built-in one, which
+  // only fits the built-in client id's project.
   function apiKey() {
     var k = prefs().googleKey;
-    return typeof k === "string" && /^[A-Za-z0-9_-]{20,120}$/.test(k) ? k : "";
+    if (typeof k === "string" && /^[A-Za-z0-9_-]{20,120}$/.test(k)) return k;
+    return clientId() === BUILTIN ? BUILTIN_KEY : "";
   }
   function driveReady() { return ready() && !!apiKey(); }
   // The project number: the leading digits of the client id in use.
@@ -323,7 +328,7 @@
   } catch (e) {}
 
   var api = {
-    BUILTIN: BUILTIN, SCOPES: SCOPES, PREFS_KEY: PREFS_KEY, CB_KEY: CB_KEY, APP_ID: APP_ID,
+    BUILTIN: BUILTIN, BUILTIN_KEY: BUILTIN_KEY, SCOPES: SCOPES, PREFS_KEY: PREFS_KEY, CB_KEY: CB_KEY, APP_ID: APP_ID,
     ready: ready, clientId: clientId, redirectUri: redirectUri,
     apiKey: apiKey, driveReady: driveReady, appId: appId, send: send, getBlob: getBlob,
     run: run, cancel: cancel, message: message, hash: hash,

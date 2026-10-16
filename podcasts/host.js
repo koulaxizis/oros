@@ -265,10 +265,13 @@
     var nowSec = Math.floor(Date.now() / 1000);
     if (ev !== "ended" && !C.shouldCommit(ev, p, local.last, nowSec)) return;
     var m = cur;
+    local.last = { p: p, at: nowSec };
+    // A show only being tried (Discover preview) stays out of the slice:
+    // its place is kept on this device only.
+    if (!showOf(m.s)) { saveLocal(); return; }
     mutate(function (dt, now) {
       return C.setProgress(dt, { id: m.id, s: m.s, pd: m.pd }, p, d, ev === "ended" ? 1 : undefined, now);
     });
-    local.last = { p: p, at: nowSec };
     saveLocal();
   }
   function bindAudio() {
