@@ -2471,6 +2471,16 @@ Rebuild this in any session where code is delivered.
 - LibreOffice via `/mnt/skills/public/pptx/scripts/office/soffice.py` (convert DOCX/RTF/ODT).
 - `python-docx` to parse DOCX and to generate list/heading fixtures.
 
+### §G — Quality gate (`.github/workflows/quality.yml`, wave Q1)
+
+Every PR that touches app code, every push to main and every night, CI opens **every app of `apps.json`** with `?standalone` in Chromium (`LANG=C.UTF-8`, offline: every host but the local server is blocked), in a fresh context per visit, at 360 and 1280 px, EN and EL, plus the shell. 4 shards in parallel. Runner: `.github/qa/smoke.js`. Plan: `/mnt/project-files/quality-gate/plan.md` (Q2 sync convergence, Q3 axe + size budget, Q4-Q6 next).
+
+- **Fails on a NEW** `error` (console.error / uncaught), `overflow` (document wider than 360 px), `help` (help.en/el.txt missing), `greek` (a text shown the same in EN and EL that reads as English: two or more Latin words, no Greek letter, not a name in the KEEP list) or `csp` (securitypolicyviolation). A new problem is re-checked once in a fresh context; only a repeat counts.
+- **Baseline** `.github/qa/baseline.json` = problems that existed when the gate started (79 at 2.64.01: Greek text in Help, Notes, Radio, Television and others; Files throws when opened standalone). One line per problem, `app | kind | width | lang | detail` (numbers, ?v= and line:col normalised). **It may only shrink:** the job summary lists entries that no longer happen; delete them in the PR that fixes them. Adding a line is only for a problem that is intended, and the PR says why.
+- **Tooling never ships:** Playwright is installed by the workflow into `.github/qa/node_modules` (exact version pinned in `.github/qa/package.json`); nothing in sw.js, apps.json, the manifest or the shell names `.github/` (`tests/quality-gate.test.js`).
+- **Locally:** `npm install --prefix .github/qa && node .github/qa/smoke.js --only todo,notes` (or `QA_CHROMIUM=<chrome>` with a global Playwright). `--update-baseline` rewrites the baseline for the apps it ran.
+- A new app needs nothing: it is checked as soon as it is in `apps.json`.
+
 ---
 
 ## Part IX — Decisions log + doctrinal exemptions
