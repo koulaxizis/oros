@@ -88,6 +88,13 @@ The orOS disk is the encrypted place: with orOS sync on, every file on it is enc
 
 > Files go straight between this browser and Dropbox. The connection is kept on this device only and is not synced.
 
+## orOS Drive
+- `orOS Drive` in the folder list shows the folders you mirror from your computers and phones with the orOS Drive app.
+- They stay in the cloud until you open them, so this device does not fill up. A cloud mark next to a name means the file is not on this device yet.
+- Opening a file downloads it, and from then on it stays up to date here. Opening it from another place in Files works the same way once it is downloaded.
+- `Keep on this device` downloads the whole folder and keeps it. `Free up space` removes the downloaded copies of a folder from this device; nothing is deleted from your other devices or from the cloud. Files you changed here and haven't synced yet always stay.
+- Deleting a downloaded file in Files deletes it everywhere, including on the computer it came from.
+
 ## Sync and backup
 The disk lives in this browser. When [orOS sync](help:t/sync) is connected and unlocked, Vault Drive syncs it file by file, whether Files is open or not. Names and contents are encrypted before they leave your device.
 
