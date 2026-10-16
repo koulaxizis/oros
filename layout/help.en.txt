@@ -73,3 +73,4 @@ Text changed on two devices at once? The other version waits in `Recovered text`
 - A document can have up to 999 pages and 5,000 objects.
 - Data merge reads up to 1,000 rows (5 MB) and makes a PDF only: the merged cards are not kept as a document, and the CSV file is not saved with it. A text frame does not grow to fit a long value: the preview and the final message say when text does not fit.
 - `Several per sheet` uses one page per card (no backs) and cuts each card at its edge, so bleed is not printed.
+- A document made with a newer orOS shows `Needs a newer orOS` and does not open until this device updates. Syncing it is safe: nothing in it is lost.

@@ -383,6 +383,14 @@ test("Official F-Droid prerequisites (FDROID-3): Gradle version and android-v ta
   assert.match(wf, /contents: write/);
   assert.match(wf, /git tag "android-v\$v" HEAD/);
   assert.match(wf, /git diff --quiet "\$last" HEAD -- android phone\.js/);
+  // F-Droid signs its own build, so it must not point users at our APKs
+  const gen = path.join(ROOT, "android", "tools", "gen.js");
+  const launch = (args) => require("child_process").execFileSync(process.execPath, ["-e",
+    "const fs=require('fs');const {build}=require(" + JSON.stringify(gen) + ");" +
+    "const o=build(JSON.parse(fs.readFileSync(" + JSON.stringify(path.join(ROOT, "manifest.webmanifest")) + ",'utf8')));" +
+    "console.log(/<string name=\"launchUrl\">([^<]*)/.exec(o['res/values/web_manifest.xml'])[1])", "--"].concat(args), { encoding: "utf8" }).trim();
+  assert.match(launch([]), /[?;]apk=\d+$/);
+  assert.doesNotMatch(launch(["--no-apk"]), /apk=/);
 });
 
 test("APK links leave the Android app through BrowserActivity (default browser, normal tab)", () => {
