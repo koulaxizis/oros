@@ -41,13 +41,13 @@
       "ai.ideasBad": "The answer could not be read. Try again.", "ai.idea": "Idea {n}", "ai.applied": "Idea applied",
       "ai.newText": "Write a new text", "ai.newHint": "A new text box, written for you.",
       "ai.write": "Write",
-      "ai.cutHint": "Select a photo on the page, then remove its background.",
+      "ai.cutHint": "Select a photo on the page to remove its background, erase something from it or grab its subject.",
       "ai.cutNeed": "Runs on this device: the picture is not sent anywhere. The first time, Atelier downloads the tool (about {mb} MB); after that it works offline.",
       "ai.cutGo": "Download and remove", "ai.cutLoad": "Downloading the tool… {p}%", "ai.cutRun": "Removing the background…",
       "ai.cutEdge": "Keep more · keep less", "ai.cutDone": "Background removed", "ai.cutFail": "The background could not be removed ({why}).",
       "ai.cutVideo": "Not for videos.", "ai.cutLittle": "Hardly anything was left: try “Keep more”.",
-      "ai.cutReady": "The background tool is on this device ({mb} MB).", "ai.cutForget": "Remove the tool",
-      "ai.cutGone": "The tool was removed from this device.", "ai.cutMissing": "Downloads once (about {mb} MB) the first time you use it.",
+      "ai.cutReady": "The background tool is on this device ({mb} MB).", "ai.cutForget": "Remove the picture tools",
+      "ai.cutGone": "The picture tools were removed from this device.", "ai.cutMissing": "Downloads once (about {mb} MB) the first time you use it.",
       "ai.err": "{name} did not answer: {why}",
       "ai.wlName": "In-browser model", "ai.here": "Runs on this device: the text is not sent anywhere.",
       "ai.wlGet": "the model is not on this device yet: download it once in the Assistant (Settings › In-browser model)",
@@ -72,13 +72,13 @@
       "ai.ideasBad": "Η απάντηση δεν διαβάστηκε. Δοκίμασε ξανά.", "ai.idea": "Ιδέα {n}", "ai.applied": "Η ιδέα εφαρμόστηκε",
       "ai.newText": "Γράψε νέο κείμενο", "ai.newHint": "Ένα νέο πλαίσιο κειμένου, γραμμένο για σένα.",
       "ai.write": "Γράψε",
-      "ai.cutHint": "Διάλεξε μια φωτογραφία στη σελίδα και αφαίρεσε το φόντο της.",
+      "ai.cutHint": "Διάλεξε μια φωτογραφία στη σελίδα για να αφαιρέσεις το φόντο της, να σβήσεις κάτι ή να πιάσεις το θέμα της.",
       "ai.cutNeed": "Γίνεται σε αυτή τη συσκευή: η εικόνα δεν στέλνεται πουθενά. Την πρώτη φορά το Ατελιέ κατεβάζει το εργαλείο (περίπου {mb} MB)· μετά δουλεύει και χωρίς σύνδεση.",
       "ai.cutGo": "Λήψη και αφαίρεση", "ai.cutLoad": "Λήψη του εργαλείου… {p}%", "ai.cutRun": "Αφαιρώ το φόντο…",
       "ai.cutEdge": "Κράτα περισσότερο · λιγότερο", "ai.cutDone": "Το φόντο αφαιρέθηκε", "ai.cutFail": "Το φόντο δεν αφαιρέθηκε ({why}).",
       "ai.cutVideo": "Όχι για βίντεο.", "ai.cutLittle": "Δεν έμεινε σχεδόν τίποτα: δοκίμασε «Κράτα περισσότερο».",
-      "ai.cutReady": "Το εργαλείο φόντου είναι σε αυτή τη συσκευή ({mb} MB).", "ai.cutForget": "Αφαίρεση του εργαλείου",
-      "ai.cutGone": "Το εργαλείο αφαιρέθηκε από τη συσκευή.", "ai.cutMissing": "Κατεβαίνει μία φορά (περίπου {mb} MB) την πρώτη φορά που θα το χρησιμοποιήσεις.",
+      "ai.cutReady": "Το εργαλείο φόντου είναι σε αυτή τη συσκευή ({mb} MB).", "ai.cutForget": "Αφαίρεση των εργαλείων εικόνας",
+      "ai.cutGone": "Τα εργαλεία εικόνας αφαιρέθηκαν από τη συσκευή.", "ai.cutMissing": "Κατεβαίνει μία φορά (περίπου {mb} MB) την πρώτη φορά που θα το χρησιμοποιήσεις.",
       "ai.err": "Το {name} δεν απάντησε: {why}",
       "ai.wlName": "Μοντέλο μέσα στον browser", "ai.here": "Γίνεται σε αυτή τη συσκευή: το κείμενο δεν στέλνεται πουθενά.",
       "ai.wlGet": "το μοντέλο δεν είναι ακόμα σε αυτή τη συσκευή: κατέβασέ το μία φορά στον Βοηθό (Ρυθμίσεις › Μοντέλο μέσα στον browser)",
@@ -640,10 +640,15 @@
     if (one && one.ax.k === "text") s2.appendChild(button("btn block", t("ai.menu") + "…", function (e) { textMenu(e.currentTarget, one); }));
     body.appendChild(s2);
 
-    // background
-    var s3 = sec(t("ai.cut"));
-    if (one && one.ax.k === "photo" && !one.ax.vid) s3.appendChild(button("btn primary block", t("ai.cut"), function () { cutout(one.id); }));
-    else s3.appendChild(el("p", "hint", t("ai.cutHint")));
+    // picture tools: background, Magic eraser, Magic grab
+    var s3 = sec(t("ai.pics"));
+    if (one && one.ax.k === "photo" && !one.ax.vid) {
+      s3.appendChild(button("btn primary block", t("ai.cut"), function () { cutout(one.id); }));
+      if (AT.magic) {
+        s3.appendChild(button("btn block", t("ai.erase"), function () { AT.magic.erase(one.id); }));
+        s3.appendChild(button("btn block", t("ai.grab"), function () { AT.magic.grab(one.id); }));
+      }
+    } else s3.appendChild(el("p", "hint", t("ai.cutHint")));
     var st = el("p", "hint");
     s3.appendChild(st);
     function showHave() {

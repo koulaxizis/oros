@@ -1229,8 +1229,10 @@ var PRECACHE_URLS = [
   "atelier/relayout.js",
   "atelier/aitext.js",
   "atelier/cutout.js",
+  "atelier/inpaint.js",
   "atelier/ai.js",
   "atelier/editpic.js",
+  "atelier/magic.js",
   "atelier/bulk.js",
   "atelier/clips.js",
   "atelier/video.js",
@@ -2187,13 +2189,13 @@ self.addEventListener("fetch", function (event) {
   // this release's own precache copy (releaseCopy). Everything else
   // goes to the network; the loose ignoreSearch match across caches
   // stays in the network-FAILURE branch only (offline best effort).
-  // Atelier's background tool (vendor/ort + vendor/u2netp, about
-  // 16 MB) is fetched once and kept in Atelier's own IndexedDB
+  // Atelier's picture tools (vendor/ort + vendor/u2netp + vendor/migan,
+  // about 16 + 27 MB) are fetched once and kept in Atelier's own IndexedDB
   // (atelier/cutout.js): no second copy in the runtime cache. The same
   // for Writer's spelling dictionaries (vendor/hunspell, kept by
   // writer/spell-worker.js in IndexedDB). Other lazy vendor files
   // (tesseract, libarchive, libraw, rnnoise) use the runtime cache.
-  if (/\/vendor\/(ort|u2netp|hunspell)\//.test(url.pathname)) return;
+  if (/\/vendor\/(ort|u2netp|migan|hunspell)\//.test(url.pathname)) return;
   // WebLLM: cache-first in its own cache, matched without ?v=. The
   // file name carries the library version (web-llm-<version>.js), so
   // a new version is a cache miss; storing it drops the old copy.

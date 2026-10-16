@@ -704,3 +704,9 @@ input[type="color"] { width: 44px; height: 34px; padding: 2px; border: 1px solid
 .bk-row select { flex: 1; min-width: 0; }
 .bk-modes .rs-keep { font-weight: 400; }
 .bk-modes input { width: 20px; height: 20px; accent-color: var(--accent); }
+
+/* Magic eraser (magic.js) */
+.mg-stage { position: relative; margin: 8px auto; border-radius: 8px; overflow: hidden; max-width: 100%; }
+.mg-stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.mg-paint { touch-action: none; cursor: crosshair; }
+.mg-brush { margin: 6px 0; }
