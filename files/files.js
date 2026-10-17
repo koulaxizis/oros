@@ -180,6 +180,10 @@
       "pv.unsaved":      "Unsaved changes — close again to discard them",
       "pv.notUtf8":      "This file is not UTF-8 text. Editing it here would damage it — download it instead.",
       "pv.title":        "Preview",
+      "pv.openIn":       "Open in {app}",
+      "pv.openWith":     "Open with…",
+      "menu.openWith":   "Open with…",
+      "menu.sendApp":    "Send to an app…",
       "pv.edit":         "Edit",
       "pv.previewMd":    "Live preview",
       "pv.editSource":   "Source",
@@ -402,6 +406,10 @@
       "pv.unsaved":      "Υπάρχουν μη αποθηκευμένες αλλαγές — κλείσε ξανά για απόρριψη",
       "pv.notUtf8":      "Το αρχείο δεν είναι κείμενο UTF-8. Η επεξεργασία εδώ θα το αλλοίωνε — κατέβασέ το.",
       "pv.title":        "Προεπισκόπηση",
+      "pv.openIn":       "Άνοιγμα στο {app}",
+      "pv.openWith":     "Άνοιγμα με…",
+      "menu.openWith":   "Άνοιγμα με…",
+      "menu.sendApp":    "Στείλε σε εφαρμογή…",
       "pv.edit":         "Επεξεργασία",
       "pv.previewMd":    "Ζωντανή προεπισκόπηση",
       "pv.editSource":   "Πηγή",
@@ -775,6 +783,66 @@
     if (!paths.length) return;
     try { window.parent.__orosOpenAt("converter", { paths: paths }); } catch (e) {}
   }
+  // ---------- Open in an app / send to an app (app interop wave 2) ----------
+  // A file of the orOS disk opens in the app that reads its type
+  // (shell fileopen.js: the person's choice for the type, the only app,
+  // or the chooser; BR-FO-9). A song already under Music plays there.
+  var APP_SVG =
+    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3h7v7"/><path d="M21 3l-9 9"/><path d="M18 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h5"/></svg>';
+  var MUSIC_ROOT = "/internal/Music/";
+  var AUDIO_RE = /\.(mp3|m4a|m4b|aac|ogg|oga|opus|flac|wav|wave|weba)$/i;
+  function fileOpenApi() {
+    try {
+      var o = window.parent && window.parent !== window ? window.parent.orosFileOpen : null;
+      return o && typeof o.openInside === "function" && typeof o.insideFor === "function" ? o : null;
+    } catch (e) { return null; }
+  }
+  function appsForFile(name) {
+    var o = fileOpenApi(), m = /\.([a-z0-9]{1,24})$/i.exec(String(name || ""));
+    return o && m ? o.insideFor("." + m[1].toLowerCase()) : [];
+  }
+  function shellAppName(id) {
+    try {
+      var k = "app." + id, v = window.parent.t(k);
+      return v && v !== k ? v : id;
+    } catch (e) { return id; }
+  }
+  // Only what the preview cannot show well opens in an app on a double
+  // click / tap: text, pictures and zips keep the preview.
+  function opensInApp(name) {
+    return !isTextExt(name) && !isImageExt(name) && CORE.extOf(name) !== "zip" && appsForFile(name).length > 0;
+  }
+  function openInApp(path, ask) {
+    var o = fileOpenApi(), name = baseName(path);
+    if (!o) return;
+    var apps = appsForFile(name);
+    if (!apps.length) return;
+    recentsTouch(path);
+    if (AUDIO_RE.test(name) && path.indexOf(MUSIC_ROOT) === 0 && (!ask || apps.length === 1) && apps.indexOf("music") !== -1) {
+      try { window.parent.__orosOpenAt("music", { playPath: path }); } catch (e) {}
+      return;
+    }
+    FS().read(path).then(function (blob) {
+      if (!blob) { transientNote(t("pv.notFound")); return; }
+      var file = blob instanceof File && blob.name === name ? blob : new File([blob], name, { type: blob.type || mimeForExt(extOf(name)) });
+      o.openInside(file, !!ask);
+    }, function () { transientNote(t("pv.notFound")); });
+  }
+  function sendApi() {
+    try { return window.parent !== window && window.parent.orosSend ? window.parent.orosSend : null; }
+    catch (e) { return null; }
+  }
+  // Selected files to another app (today Mail, as attachments).
+  function sendSelection() {
+    var api = sendApi();
+    if (!api) return;
+    var dirs = {};
+    lastEntries.forEach(function (e) { if (e.dir) dirs[entryPath(e)] = true; });
+    var items = selectionPaths().filter(function (p) { return !dirs[p]; }).slice(0, 10)
+      .map(function (p) { return { path: p, name: baseName(p) }; });
+    if (items.length) api.open({ kind: "files", data: { items: items } });
+  }
+
   // "Open in Scanner & PDF": the selected PDFs and pictures (merge,
   // split, pictures to PDF), only when that app is installed.
   var PDFTOOLS_EXT = ["pdf", "jpg", "jpeg", "png", "webp", "gif", "bmp", "avif"];
@@ -1401,6 +1469,8 @@
     if (e.dir) {
       clearSelection();
       navigate(path);
+    } else if (opensInApp(e.name || baseName(path))) {
+      openInApp(path, false);
     } else {
       recentsTouch(path);
       openPreview(path);
@@ -3087,6 +3157,9 @@
         recentsTouch(p.path);
         openPreview(p.path);
       }));
+      if (!many && appsForFile(p.name).length) {
+        ctxMenu.appendChild(mkItem(APP_SVG, "menu.openWith", function () { openInApp(p.path, true); }));
+      }
     }
     if (!many) {
       var faved = CORE.favIs(favs, p.path);
@@ -3106,6 +3179,9 @@
     ctxMenu.appendChild(mkItem(CP_SVG, "menu.copyTo", function () {
       openPickerDialog("copy");
     }));
+    if (!p.dir && sendApi()) {
+      ctxMenu.appendChild(mkItem(APP_SVG, "menu.sendApp", sendSelection));
+    }
     if (dbx() && dbx().exportFrom) {
       ctxMenu.appendChild(mkItem(dbx().icon || "", "menu.toDropbox", function () {
         sendToDropbox();
@@ -3420,6 +3496,7 @@
         return;
       }
       buildPreviewShell(path, name, size, mtime);
+      injectOpenButton(path, name);
 
       if (CORE.extOf(name) === "zip") {
         renderZipPreview(path);
@@ -3619,6 +3696,21 @@
       .replace(/`([^`]+)`/g, "<code>$1</code>")
       .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
       .replace(/(^|\W)\*([^*]+)\*(?=\W|$)/g, "$1<em>$2</em>");
+  }
+
+  // "Open in Writer" (one app) / "Open with…" (several) in the preview.
+  function injectOpenButton(path, name) {
+    var acts = $("pv-actions"), apps = appsForFile(name);
+    if (!acts || acts.dataset.hasOpen || !apps.length) return;
+    acts.dataset.hasOpen = "1";
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "pv-btn";
+    b.id = "pv-open";
+    b.innerHTML = APP_SVG + "<span></span>";
+    b.querySelector("span").textContent = apps.length === 1 ? tfmt("pv.openIn", { app: shellAppName(apps[0]) }) : t("pv.openWith");
+    b.addEventListener("click", function () { closePreview(); openInApp(path, apps.length > 1); });
+    acts.insertBefore(b, acts.firstChild);
   }
 
   function injectEditButton(path, name) {

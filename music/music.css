@@ -392,3 +392,23 @@ dl.info dd { overflow-wrap: anywhere; }
 @media (max-width: 700px) {
   .ly-l { font-size: 18px; }
 }
+
+/* ---------- Mixes, my year, Spotify import (wave 5b) ---------- */
+.rc-big { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 14px 0 6px; }
+.rc-num { display: flex; flex-direction: column; gap: 2px; padding: 12px; border-radius: 12px; background: var(--panel-bg); border: 1px solid var(--border); min-width: 0; }
+.rc-n { font-size: 26px; font-weight: 900; line-height: 1.1; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.rc-line { font-weight: 800; margin: 10px 0 0; }
+.rc-artists { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 4px; }
+.rc-artists li { min-height: 32px; }
+.rc-artists .link { font-weight: 800; min-height: 32px; }
+.rc-bars { display: flex; align-items: stretch; gap: 4px; height: 140px; margin-top: 8px; }
+.rc-col { flex: 1 1 0; display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; }
+.rc-bw { flex: 1 1 auto; position: relative; width: 100%; }
+.rc-bar { position: absolute; left: 15%; right: 15%; bottom: 0; border-radius: 4px 4px 0 0; background: var(--text-dim); min-height: 2px; }
+.rc-bar.top { background: var(--accent); }
+.sp-miss { margin: 8px 0; }
+.sp-miss summary { cursor: pointer; min-height: 36px; display: flex; align-items: center; font-weight: 800; }
+.sp-miss ul { max-height: 220px; overflow-y: auto; margin: 4px 0; padding-left: 18px; }
+@media (max-width: 380px) {
+  .rc-n { font-size: 21px; }
+}

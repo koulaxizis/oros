@@ -51,6 +51,8 @@ public class DriveActivity extends Activity {
     private JSONObject status = new JSONObject();
     private boolean askCreate;
     private String unlockMsg = "";
+    private Boolean shown; // the Files app root was last told this
+    private long cacheBytes;
     private final Runnable poll = new Runnable() {
         @Override public void run() { refresh(); main.postDelayed(this, 3000); }
     };
@@ -131,7 +133,13 @@ public class DriveActivity extends Activity {
         io.execute(() -> {
             try {
                 JSONObject s = new JSONObject(drive.status());
-                main.post(() -> { status = s; render(); });
+                boolean ready = s.optBoolean("signedIn") && s.optBoolean("unlocked");
+                long cache = ready ? drive.diskCacheSize() : 0;
+                if (shown == null || shown != ready) {
+                    shown = ready;
+                    DriveProvider.rootsChanged(this);
+                }
+                main.post(() -> { status = s; cacheBytes = cache; render(); });
             } catch (Exception ignored) { }
         });
     }
@@ -160,6 +168,7 @@ public class DriveActivity extends Activity {
         }
         renderSync();
         renderFolders(settings);
+        renderFiles();
         renderOptions(settings);
         renderEvents();
     }
@@ -347,6 +356,15 @@ public class DriveActivity extends Activity {
                 })
                 .setNegativeButton(R.string.drive_cancel, null)
                 .show();
+    }
+
+    /** The disk in the Files app (DriveProvider) and its downloaded copies. */
+    private void renderFiles() {
+        body.addView(heading(R.string.drive_files_title));
+        body.addView(text(getString(R.string.drive_files_text), 14));
+        body.addView(text(getString(R.string.drive_cache,
+                android.text.format.Formatter.formatShortFileSize(this, cacheBytes)), 13));
+        if (cacheBytes > 0) body.addView(button(R.string.drive_clear_cache, v -> call(Drive::diskClearCache)));
     }
 
     private void renderOptions(JSONObject settings) {

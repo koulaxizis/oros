@@ -1,7 +1,8 @@
 // ============================================================
 // orOS "Send to someone" — share/view.js (the receiving page)
-// Opens the item inside the link (#1.… / #p1.…, see kinds.js) and
-// shows it. Works without orOS (copy, download); with orOS in this
+// Opens the item inside the link (#1.… / #p1.…, see kinds.js), or
+// fetches and decrypts a link with an expiry (#r1.… / #q1.…, see
+// relay.js: only ciphertext comes from the relay), and shows it. Works without orOS (copy, download); with orOS in this
 // browser "Add to my orOS" hands the item to the right app.
 // Hostile input: kinds.js normalizes everything, and this file only
 // ever writes text (textContent) and links it checked itself.
@@ -10,6 +11,7 @@
   "use strict";
 
   var K = window.OrosShareKinds;
+  var R = window.OrosShareRelay || null;
   var M = window.OrosMealsCore || null;
   var $ = function (id) { return document.getElementById(id); };
 
@@ -38,7 +40,11 @@
       slZone: "Times are in your time zone ({z}).", slPicked: "You picked",
       slMail: "Email {n} to confirm", slMailAnon: "Email to confirm", slNoMail: "No email address came with these times: let the sender know another way.",
       slIcs: "Add to calendar (.ics)", slOros: "Add to my orOS", slOther: "Pick another time",
-      slHint: "Nothing is booked until the sender gets your answer."
+      slHint: "Nothing is booked until the sender gets your answer.",
+      gone: "This link has expired or the sender took it back.",
+      net: "Could not reach the orOS server. Check your connection and try again.", retry: "Try again",
+      until: "Available until {d}",
+      privRelay: "This came encrypted from the orOS server and was opened here with the key in the link. The server cannot see what is inside."
     },
     el: {
       "top.sub": "Σου το έστειλαν", "state.loading": "Άνοιγμα…",
@@ -64,7 +70,11 @@
       slZone: "Οι ώρες είναι στη ζώνη ώρας σου ({z}).", slPicked: "Διάλεξες",
       slMail: "Email για επιβεβαίωση ({n})", slMailAnon: "Email για επιβεβαίωση", slNoMail: "Δεν ήρθε διεύθυνση email με τις ώρες: ενημέρωσε τον αποστολέα με άλλον τρόπο.",
       slIcs: "Προσθήκη σε ημερολόγιο (.ics)", slOros: "Πρόσθεσέ το στο orOS μου", slOther: "Άλλη ώρα",
-      slHint: "Τίποτα δεν κλείνεται μέχρι ο αποστολέας να πάρει την απάντησή σου."
+      slHint: "Τίποτα δεν κλείνεται μέχρι ο αποστολέας να πάρει την απάντησή σου.",
+      gone: "Ο σύνδεσμος έληξε ή ο αποστολέας τον ανακάλεσε.",
+      net: "Δεν ήταν δυνατή η σύνδεση με τον server του orOS. Έλεγξε τη σύνδεσή σου και δοκίμασε ξανά.", retry: "Δοκίμασε ξανά",
+      until: "Διαθέσιμο έως {d}",
+      privRelay: "Ήρθε κρυπτογραφημένο από τον server του orOS και άνοιξε εδώ με το κλειδί του συνδέσμου. Ο server δεν βλέπει τι έχει μέσα."
     }
   };
   var LANG = (function () {
@@ -395,11 +405,36 @@
 
   // ---------- Opening ----------
   function show(code, password) {
+    if (R && R.parse(code)) { showRelay(code, password); return; }
     K.decode(code, password).then(function (r) {
       if (r.env) { render(r.env); return; }
       if (r.error === "pass") { askPass(code, !!password); return; }
       stateMsg(r.error === "big" ? "big" : (r.error === "crypto" ? "crypto" : "bad"), true);
       if (r.error === "bad") fileOffer($("card"));
+    });
+  }
+  // A link with an expiry: the pieces come from the relay, the key
+  // from the link; what opens goes through the same normalizers.
+  function showRelay(code, password) {
+    var p = $("privacy");
+    if (p) p.textContent = t("privRelay");
+    R.open(code, { password: password }).then(function (r) {
+      if (r.error === "pass") { askPass(code, !!password); return; }
+      if (r.error) {
+        var c = stateMsg(r.error === "gone" ? "gone" : r.error === "net" ? "net" : r.error === "big" ? "big" : "bad", true);
+        if (r.error === "net") {
+          var acts = el("div", "acts");
+          acts.appendChild(btn(t("retry"), "prim", function () { stateMsg("state.loading"); showRelay(code, password); }));
+          c.appendChild(acts);
+        }
+        return;
+      }
+      var env = r.e && r.e.v === 1 && typeof r.e.k === "string" ? K.pack(r.e.k, r.e.d) : null;
+      if (!env) { stateMsg("bad", true); return; }
+      render(env);
+      var d = new Date(r.x);
+      $("card").appendChild(el("p", "hint", t("until").replace("{d}", d.toLocaleString(LANG === "el" ? "el-GR" : "en-GB",
+        { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }))));
     });
   }
   function askPass(code, wrong) {
@@ -439,7 +474,7 @@
       if (!f) return;
       if (f.size > 2 * 1024 * 1024) { toast(t("big")); return; }
       f.text().then(function (txt) {
-        var m = /\/share\/#((?:0|1|p1)\.[A-Za-z0-9_-]+)/.exec(txt);
+        var m = /\/share\/#((?:0|1|p1|r1|q1)\.[A-Za-z0-9_.-]+)/.exec(txt);
         if (!m) { toast(t("noFile")); return; }
         show(m[1]);
       }, function () { toast(t("noFile")); });
@@ -453,6 +488,10 @@
   }
   function route() {
     var code = K ? K.codeFromHash(location.hash) : "";
+    if (!code && R) {
+      var h = String(location.hash || "").replace(/^#/, "");
+      if (R.parse(h)) code = h;
+    }
     if (!K) { stateMsg("bad", true); return; }
     if (!code) {
       var c = stateMsg("empty");

@@ -22,6 +22,7 @@
 //   9. Library views
 //  10. Lyrics (.lrc, LRCLIB)
 //  11. Sound: equalizer, volume normalisation, settings
+//  12. Listening stats (recap, mixes)
 // ============================================================
 (function (root) {
   "use strict";
@@ -1068,8 +1069,60 @@
   function fadeOut(x) { x = Math.max(0, Math.min(1, x)); return Math.cos(x * Math.PI / 2); }
   function fadeIn(x) { x = Math.max(0, Math.min(1, x)); return Math.sin(x * Math.PI / 2); }
 
+  // ---------- 12. Listening stats (recap, mixes) ----------
+  // Device-local "oros-music-stats", written once per counted play:
+  // { last ms, y: { "YYYY": { n plays, s seconds, m [12] plays per
+  // month, k { key: plays }, i { key: ref }, a { artist fold:
+  // [name, plays] } } } }. The 600 most played songs and 300 artists
+  // are kept per year, for the last 5 years.
+  var STAT = { songs: 600, artists: 300, years: 5 };
+  function emptyYear() { return { n: 0, s: 0, m: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], k: {}, i: {}, a: {} }; }
+  function normStats(o) {
+    o = o && typeof o === "object" ? o : {};
+    var out = { last: isStamp(o.last) ? o.last : 0, y: {} };
+    var ys = o.y && typeof o.y === "object" ? o.y : {};
+    Object.keys(ys).filter(function (y) { return /^\d{4}$/.test(y); }).sort().slice(-STAT.years).forEach(function (y) {
+      var Y = ys[y] && typeof ys[y] === "object" ? ys[y] : {}, r = emptyYear();
+      r.n = Math.max(0, Math.round(+Y.n) || 0);
+      r.s = Math.max(0, Math.round(+Y.s) || 0);
+      if (Array.isArray(Y.m) && Y.m.length === 12) r.m = Y.m.map(function (x) { return Math.max(0, Math.round(+x) || 0); });
+      var k = Y.k && typeof Y.k === "object" ? Y.k : {}, i = Y.i && typeof Y.i === "object" ? Y.i : {};
+      Object.keys(k).forEach(function (key) { var ref = normRef(i[key]); if (ref && ref.k === key && +k[key] > 0) { r.k[key] = Math.round(+k[key]); r.i[key] = ref; } });
+      var a = Y.a && typeof Y.a === "object" ? Y.a : {};
+      Object.keys(a).forEach(function (f) { var x = a[f]; if (Array.isArray(x) && clean(x[0]) && +x[1] > 0) r.a[f] = [clean(x[0]), Math.round(+x[1])]; });
+      out.y[y] = r;
+    });
+    return out;
+  }
+  // One counted play of `item` (secs listened) at `now`.
+  function addStat(st, item, secs, now) {
+    st = st && st.y ? st : normStats(st);
+    var d = new Date(now), y = String(d.getFullYear());
+    var Y = st.y[y] || (st.y[y] = emptyYear());
+    var ref = normRef(refOf(item));
+    if (!ref) return st;
+    Y.n++;
+    Y.s += Math.max(0, Math.min(3600, Math.round(+secs || 0)));
+    Y.m[d.getMonth()]++;
+    Y.k[ref.k] = (Y.k[ref.k] || 0) + 1;
+    Y.i[ref.k] = ref;
+    var af = fold(ref.a);
+    if (af) Y.a[af] = [ref.a, ((Y.a[af] && Y.a[af][1]) || 0) + 1];
+    var trim = function (map, max, cnt, also) {
+      var keys = Object.keys(map);
+      if (keys.length <= max) return;
+      keys.sort(function (p, q) { return cnt(map[q]) - cnt(map[p]); }).slice(max).forEach(function (x) { delete map[x]; if (also) delete also[x]; });
+    };
+    trim(Y.k, STAT.songs, function (v) { return v; }, Y.i);
+    trim(Y.a, STAT.artists, function (v) { return v[1]; });
+    var years = Object.keys(st.y).sort();
+    while (years.length > STAT.years) delete st.y[years.shift()];
+    st.last = now;
+    return st;
+  }
+
   var api = {
-    VERSION: "1.4.0", DATA_VER: DATA_VER, LIM: LIM, GENRES: GENRES, REPEAT: REPEAT, AUDIO_EXT: AUDIO_EXT,
+    VERSION: "1.5.0", DATA_VER: DATA_VER, LIM: LIM, GENRES: GENRES, REPEAT: REPEAT, AUDIO_EXT: AUDIO_EXT,
     clean: clean, fold: fold, hash: hash, newId: newId, decodeLegacy: decodeLegacy, looksGreek: looksGreek, utf16: utf16,
     sniffImage: sniffImage, genreName: genreName, fromName: fromName, stem: stem,
     id3Size: id3Size, parseId3v2: parseId3v2, parseId3v1: parseId3v1, mp3Duration: mp3Duration,
@@ -1086,7 +1139,7 @@
     byTrackNo: byTrackNo, collator: collator,
     parseLrc: parseLrc, lrcAt: lrcAt, lrclibPick: lrclibPick,
     EQ_HZ: EQ_HZ, EQ_PRESETS: EQ_PRESETS, SLEEP_MIN: SLEEP_MIN, normSound: normSound, rgFactor: rgFactor, eqPreamp: eqPreamp,
-    fadeOut: fadeOut, fadeIn: fadeIn
+    fadeOut: fadeOut, fadeIn: fadeIn, normStats: normStats, addStat: addStat, STAT: STAT
   };
   root.OrosMusicCore = api;
   if (typeof module !== "undefined" && module.exports) module.exports = { OrosMusicCore: api };
