@@ -126,7 +126,10 @@ class MemoryStorage {
   get length() { return this.map.size; }
 }
 
-async function vaultDevice(dropbox, name) {
+// opts (WebDAV W4): seed = extra localStorage keys, fetch = this
+// device's fetch (e.g. one that reaches two clouds).
+async function vaultDevice(dropbox, name, opts) {
+  opts = opts || {};
   const localStorage = new MemoryStorage();
   if (dropbox.kind === "webdav") {
     for (const [k, v] of Object.entries(dropbox.seed(name))) localStorage.setItem(k, v);
@@ -136,6 +139,7 @@ async function vaultDevice(dropbox, name) {
     localStorage.setItem("oros-db-expiry", String(Date.now() + 864e5));
   }
   localStorage.setItem("oros-sync-interval", "0");
+  for (const [k, v] of Object.entries(opts.seed || {})) localStorage.setItem(k, v);
   const noop = () => {};
   const timers = [];
   const ctx = {
@@ -145,7 +149,7 @@ async function vaultDevice(dropbox, name) {
     location: { search: "", origin: "https://test.invalid", href: "" },
     history: { replaceState: noop },
     crypto: webcrypto,
-    fetch: dropbox.fetchFor(name),
+    fetch: opts.fetch || dropbox.fetchFor(name),
     console: { log: noop, info: noop, warn: noop, error: noop },
     setTimeout: (fn, ms) => { timers.push({ fn, ms }); return timers.length; },
     clearTimeout: noop, setInterval: () => 0, clearInterval: noop,

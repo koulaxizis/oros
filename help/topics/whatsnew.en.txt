@@ -1,6 +1,15 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.86.00
+- Sync: move your whole cloud between Dropbox and a WebDAV / Nextcloud server from Settings, Vault and Drive files included, still encrypted.
+
+## Version 2.85.01
+- Android widgets: a magnifier button opens the command bar (needs the new orOS Android app).
+
+## Version 2.85.00
+- Sync tells you when it needs you: a full storage or an expired sign-in puts one line a day in the bell, and Disconnect also cancels this device's access at Dropbox or Nextcloud.
+
 ## Version 2.84.00
 - Open in Spreadsheet in twelve more apps: Timesheet, Workouts, Health, Water, Mood, Garage, Invoices, CRM, Library, Media Shelf, Split and Meals open their data as a new sheet.
 

@@ -579,7 +579,13 @@
     chores:   function (target) { if (typeof window.__orosOpenChores === 'function') window.__orosOpenChores(target); },
     // "system:open:<appId>": plain open of an app (SY-D3 notice —
     // opening the app is what merges its waiting changes).
-    system:   function (id) { if (typeof window.__orosOpenApp === 'function') window.__orosOpenApp(id); },
+    // "system:open:settings/<section>": Settings at that section (A72
+    // sync notices: Backups for a full store, Sync for a sign-in).
+    system:   function (id) {
+      var m = /^settings\/([a-z]+)$/.exec(String(id));
+      if (m) { if (typeof window.__orosOpenAt === 'function') window.__orosOpenAt('settings', { section: m[1] }); return; }
+      if (typeof window.__orosOpenApp === 'function') window.__orosOpenApp(id);
+    },
     // Help — "help:<topicId>": the update notice opens "What's new".
     help:     function (topic) {
       if (window.orosHelp && typeof window.orosHelp.open === 'function' && /^[a-z0-9-]+$/.test(String(topic))) window.orosHelp.open('t/' + topic);
