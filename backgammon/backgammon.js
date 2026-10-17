@@ -63,6 +63,8 @@
 
   // ---------- 1. Constants, i18n, helpers ----------
   function appLang() {
+    // orosI18n (../i18n.js): the full language code, a pack language included.
+    if (window.orosI18n) return window.orosI18n.lang();
     try {
       var l = localStorage.getItem("oros-lang") ||
               (window.parent && window.parent.orosLang) || "en";
@@ -227,6 +229,7 @@
       "toast.pass": "{who}: καμία έγκυρη κίνηση, χάνει τη σειρά"
     }
   };
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "backgammon", LANG);
 
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;
@@ -2026,7 +2029,7 @@
   function netBoot() {
     if (!window.OrosRemotePlay || !window.OrosRemoteLink) { $("net-btn").hidden = true; return; }
     RP = window.OrosRemotePlay.create({
-      app: "backgammon", lang: LANG, game: t("game.name"),
+      app: "backgammon", lang: LANG === "el" ? "el" : "en", game: t("game.name"),
       dialog: { make: makeDialog, el: el, button: button },
       onPeer: netOnPeer, onMsg: netOnMsg, onEnd: netOnEnd,
       onLink: function () { if (game) renderStatus(); }

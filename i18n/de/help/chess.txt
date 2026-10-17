@@ -1,0 +1,92 @@
+# Schach
+Spiel Schach gegen den Computer auf drei Stufen oder gegen einen Freund am selben Gerät. Alle Regeln sind dabei: Rochade, en passant, Bauernumwandlung, Schach und jede Art von Remis.
+
+## So spielst du
+Wähl in der Werkzeugleiste `Computer` oder `2 Spieler`. Gegen den Computer wählst du außerdem eine Stufe und `Deine Figuren`: `Als Weiß`, `Als Schwarz` oder `Zufällig`. Jede Änderung startet eine neue Partie.
+
+Zum Ziehen tippst oder klickst du auf eine Figur und dann auf das Zielfeld. Punkte zeigen, wohin die Figur ziehen darf. Mit der Maus kannst du die Figur auch ziehen. Ist ein Zug nicht erlaubt, sagt dir eine Meldung warum, zum Beispiel wenn dein König danach im Schach stünde.
+
+Erreicht ein Bauer die letzte Reihe, wählst du unter `Umwandeln in`, welche Figur er wird.
+
+Die Partie endet durch Schachmatt oder als Remis durch Patt, die 50-Züge-Regel, dreifache Stellungswiederholung oder wenn zu wenig Material zum Mattsetzen übrig ist.
+
+## Bedienung
+- Tippen, klicken oder ziehen, um zu ziehen.
+- Mit den Pfeiltasten bewegst du dich über das Brett; [[Enter]] nimmt eine Figur auf und setzt sie ab. [[Esc]] lässt die gewählte Figur los.
+- [[U]] oder `Zug zurücknehmen (U)` nimmt einen Zug zurück. Gegen den Computer nimmt es deinen Zug und seine Antwort zurück.
+- [[F]] oder `Brett drehen (F)` dreht das Brett um. Spielst du Schwarz, ist das Brett schon für dich gedreht.
+- [[N]] oder `Neue Partie (N)` startet eine neue Partie. Verlässt du eine laufende Partie, erscheint kurz eine Schaltfläche `Rückgängig`, um sie zurückzuholen.
+
+Eine laufende Partie bleibt auf diesem Gerät und wartet beim nächsten Mal auf dich.
+
+## Stufen und Bilanz
+`Leicht` wählt manchmal absichtlich einen schwächeren Zug, `Mittel` denkt ein paar Züge voraus und `Schwer` rechnet am tiefsten. `Bilanz` (`Bilanz gegen Computer`) zeigt deine Siege, Remis und Niederlagen für jede Stufe.
+
+>! Partien mit Zugrücknahme und alle Partien mit `2 Spieler` werden nicht gezählt.
+
+## Partien als PGN
+PGN ist das Dateiformat, das jede Schachseite und jedes Schachprogramm für Partien nutzt. Öffne `Partie öffnen oder speichern (PGN)` in der Werkzeugleiste:
+- `Datei öffnen…` öffnet eine .pgn-Datei, oder füge eine Partie in das Feld ein und drück `Eingefügte öffnen`. Eine Datei mit vielen Partien listet sie auf, damit du eine wählst.
+- `Partie speichern (.pgn)` speichert die Partie auf dem Brett; `PGN kopieren` kopiert sie, zum Einfügen in Lichess, Chess.com oder ein anderes Programm.
+
+Auf einem Computer mit installiertem orOS öffnen sich .pgn-Dateien auch über „Öffnen mit“ des Systems in orOS. Die Züge in PGN-Dateien stehen in englischer Notation (K, Q, R, B, N), wie es der Standard verlangt.
+
+## Partie nachspielen
+Eine geöffnete Partie zeigt die Spieler, das Ergebnis und die Zugliste. Geh sie mit den Schaltflächen unter den Zügen durch, mit [[←]] [[→]] (und [[Home]] [[End]]) oder durch Tippen auf einen Zug in der Liste.
+- `Analyse` zeigt, wie der Computer jede Stellung sieht (die Stufe `Schwer`): die Bewertung aus Sicht von Weiß (+1.00 ist etwa ein Bauer Vorteil für Weiß, #3 ein Matt in drei) und den besten Zug, den er findet.
+- `Ab hier spielen` setzt die Partie ab der Stellung auf dem Brett fort: gegen den Computer mit der Seite am Zug oder zu zweit.
+
+>! Eine Partie, die ab einer Stellung weitergespielt wird, zählt nicht für die Bilanz.
+
+Eine Partie, die du gerade nachspielst, wartet beim nächsten Mal ebenfalls auf dich. Enthält eine PGN einen ungültigen Zug, öffnet sich die Partie bis zu diesem Zug und eine Meldung sagt, wo sie gestoppt hat.
+
+## Chess.com
+`Online-Konten` in der Werkzeugleiste verbindet Schach mit Chess.com und Lichess. Wähl `Chess.com`, gib deinen Chess.com-Benutzernamen ein und drück `Anzeigen`: Ein Passwort ist nicht nötig, weil Chess.com diese Daten öffentlich teilt.
+- Du siehst deine Wertungen (Schnellschach, Blitz, Bullet, Täglich und Aufgaben) mit deiner besten sowie deinen Siegen, Niederlagen und Remis.
+- `Meine Partien` listet deine Partien Monat für Monat. Tipp auf eine, um sie mit `Analyse` und `Ab hier spielen` nachzuspielen.
+- `Tagesaufgabe` öffnet die Aufgabe des Tages von Chess.com in ihrer Startstellung; geh vorwärts, um die Lösung zu sehen. Das geht auch ohne Benutzernamen.
+
+Chess.com aktualisiert diese Daten einige Male am Tag, daher kann eine gerade beendete Partie etwas später erscheinen. Der Benutzername bleibt auf diesem Gerät; `Vergessen` entfernt ihn. Auf Chess.com spielen geht von orOS aus nicht: Chess.com lässt andere Apps nicht spielen.
+
+## Lichess
+Wähl in `Online-Konten` `Lichess` und drück `Mit Lichess anmelden`. Ein Lichess-Fenster öffnet sich: Melde dich dort an und erlaube orOS den Zugriff. orOS sieht dein Passwort nie und bittet nur darum, dein öffentliches Profil zu lesen.
+- Du siehst deine Lichess-Wertungen (Bullet, Blitz, Schnellschach, Klassisch, Fernschach und Aufgaben) und wie viele Partien jede hat. Ein ? nach einer Wertung heißt, dass Lichess sie noch als vorläufig ansieht.
+- `Meine Partien` listet deine letzten 50 Partien. Tipp auf eine, um sie nachzuspielen.
+- `Tagesaufgabe` öffnet die Lichess-Aufgabe des Tages bei dem Zug, mit dem sie beginnt; geh vorwärts, um die Lösung zu sehen. Das geht auch ohne Anmeldung.
+- `Partie auf Lichess analysieren` (in `Online-Konten`) schickt die Partie auf dem Brett an lichess.org und öffnet sie dort in einem neuen Tab, mit der kostenlosen Computeranalyse von Lichess. Das geht auch ohne Anmeldung.
+
+Die Anmeldung bleibt versiegelt auf diesem Gerät und wird nicht synchronisiert: Melde dich auf jedem Gerät einmal an. `Abmelden` beendet sie auf diesem Gerät und bei Lichess. Blockiert dein Browser das Lichess-Fenster, wechselt die ganze Seite zu Lichess und kommt danach zu Schach zurück.
+
+## Auf Lichess spielen
+Bei Lichess angemeldet, drück `Spielen`. Beim ersten Mal fragt `Spielen erlauben` Lichess noch einmal, diesmal ob orOS mit deinem Konto spielen darf.
+- `Gegner suchen` sucht auf Lichess jemanden mit der Bedenkzeit, die du wählst: 10+0 heißt 10 Minuten pro Seite ohne Zusatzsekunden pro Zug, 15+10 gibt nach jedem Zug 10 Sekunden dazu. Lichess erlaubt Apps wie orOS hier Schnellschach und klassische Partien sowie Fernpartien mit 1, 3 oder 7 Tagen pro Zug.
+- `Freund herausfordern` schickt eine Herausforderung an einen Lichess-Benutzernamen, auch mit Blitz (3+2, 5+3), und du wählst deine Seite.
+- Herausforderungen an dich erscheinen unter `Herausforderungen an dich` und als Hinweis, solange Schach offen ist: `Annehmen` startet die Partie hier.
+- Hak `Gewertete Partien` an, um um deine Lichess-Wertung zu spielen; sonst sind Partien ungewertet.
+
+Eine Partie auf Lichess wird auf dem orOS-Brett gespielt, mit beiden Uhren neben den Namen. Unter den Zügen kannst du `Remis anbieten` (oder das Angebot deines Gegners annehmen), `Aufgeben` (`Abbrechen`, bevor beide Seiten gezogen haben) und die Partie `Auf lichess.org` öffnen. Verlässt dein Gegner die Partie, kannst du `Sieg beanspruchen`, sobald Lichess es erlaubt.
+
+>! Lichess verbietet Hilfe von außen, daher sind während dieser Partien die Analyse und `Partie auf Lichess analysieren` aus. Nach dem Ende öffnet `Partie nachspielen` sie mit Analyse.
+
+Während eine Partie mit Uhr läuft, behält Schach sie auf dem Brett: Beende sie oder gib auf, bevor du etwas anderes startest. Fernpartien warten auf Lichess: `Meine laufenden Partien` listet sie, markiert die, in denen du am Zug bist, und öffnet sie wieder. Wenn du Schach öffnest, sagt es dir, ob du in einer davon am Zug bist. Diese Partien zählen nicht für deine Bilanz gegen den Computer.
+
+## Aufgaben
+`Training` (die Zielscheibe in der Werkzeugleiste) öffnet deine Aufgaben und das Eröffnungstraining.
+- `Nächste Aufgabe` wählt eine Aufgabe nahe deiner Aufgabenwertung, zuerst solche, die du noch nicht versucht hast. `Thema` bleibt bei einer Art: Matt in 1, Matt in 2, Gabel, Grundreihenmatt, Material gewinnen und mehr.
+- Zuerst kommt der Zug des Gegners; dann findest du den besten Zug für deine Seite. Ein falscher Zug wird abgelehnt und die Aufgabe zählt als nicht gelöst, aber du kannst weiter probieren. `Tipp` nimmt die zu ziehende Figur auf; `Lösung` spielt den Rest, und die Aufgabe zählt als nicht gelöst.
+- Dein erster Versuch bei jeder Aufgabe bestimmt deine `Aufgabenwertung`. Sie startet bei 1500 und bewegt sich wie eine Lichess-Wertung (Glicko): anfangs stark, solange `vorläufig` dasteht, weniger, sobald sie sich einpendelt.
+- `Nicht gelöste wiederholen` holt die Aufgaben zurück, die du verfehlt hast; löst du eine später, wird sie als später gelöst markiert, deine Wertung ändert sich aber nicht. `Verlauf` listet jede Aufgabe mit ihrem Ergebnis und deiner Wertung danach; tipp auf eine, um sie noch einmal zu versuchen. `Aufgaben zurücksetzen` löscht nach einer Bestätigung den Verlauf und die Wertung auf allen Geräten.
+
+Die Aufgaben kommen mit orOS und funktionieren offline, ohne Konto. Etwa 3.000 stammen aus der Lichess-Aufgabendatenbank (frei nutzbar, CC0): gut getestete Aufgaben, die vielen Spielern gefallen haben, verteilt über alle Stufen vom Anfänger bis zum Meister und über alle Themen, mit ihren Lichess-Wertungen. Etwa 200 weitere hat die orOS-Engine aus eigenen Partien erstellt; ihre Wertungen sind Schätzungen. Das Fenster `Training` zeigt, wie viele von jeder Sorte auf diesem Gerät sind.
+
+## Eröffnungen
+Während du spielst oder eine Partie nachspielst, steht der Name der Eröffnung unter den Zügen, zum Beispiel `C60 · Ruy Lopez`. Er stammt aus der Lichess-Liste der Eröffnungen mit ihren ECO-Codes und wird über die Stellung gefunden, sodass auch Züge in anderer Reihenfolge den richtigen Namen bekommen. Die Eröffnungsnamen bleiben auf Englisch, wie in der Lichess-Liste. Bei einer Partie auf Lichess erscheint der Name erst nach dem Ende.
+
+`Eröffnungstraining` listet die Eröffnungen nach Familien. Such nach Name oder ECO-Code, wähl eine Variante und dann die Seite, die du spielst. Die App spielt die Züge der anderen Seite aus dem Buch. Ein Zug, der nicht zur Variante gehört, wird abgelehnt und gezählt, und die zu ziehende Figur wird für dich aufgenommen; verfehlst du denselben Zug zweimal, wird der Buchzug genannt. Am Ende wählst du `Nochmal`, `Gegen Computer weiterspielen` ab dieser Stellung oder `Andere Variante`. Trainingspartien zählen nicht für deine Bilanz.
+
+## Synchronisierung
+Deine Bilanz gegen den Computer und dein Aufgabenverlauf (also deine Aufgabenwertung) werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. `Bilanz zurücksetzen` löscht sie nach einer Bestätigung auf allen Geräten. Modus, Stufe, Seite, Brettdrehung, die laufende Partie und die Ton-Schaltfläche bleiben auf diesem Gerät.
+
+## Tipps
+- Fang zum Aufwärmen mit `Leicht` an; der Computer übersieht trotzdem nie ein Matt in einem Zug.
+- Dreh bei `2 Spieler` das Brett mit [[F]], wenn du das Gerät weitergibst.

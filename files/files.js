@@ -1098,6 +1098,9 @@
       vault: vaultApi,
       fmtKB: fmtKB,
       openFile: openFileAt,
+      trash: function (p) {
+        return moveToTrash(p).then(function () { dropExpandedPrefix(p); favDropPath(p); markDirty(); });
+      },
       onDiskChanged: forceStorageRecalc
     });
   }

@@ -17,8 +17,6 @@
  "certificates/core.js": 23,
  "characters/characters.js": 21,
  "characters/search.js": 1,
- "chess/chess.js": 1,
- "chess/lichess-callback.js": 4,
  "commands/core.js": 124,
  "contacts/contacts.js": 34,
  "contacts/oauth-callback.js": 4,

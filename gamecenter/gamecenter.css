@@ -95,7 +95,9 @@ button:disabled { cursor: default; opacity: 0.5; }
 }
 .day-card.solved { border-color: var(--gc-ok); }
 .day-top { display: flex; align-items: center; justify-content: space-between; gap: 6px; min-width: 0; }
-.day-name { font-weight: 800; min-width: 0; overflow-wrap: anywhere; }
+.day-name { font-weight: 800; min-width: 0; overflow-wrap: anywhere; -webkit-hyphens: auto; hyphens: auto; }
+.day-name.long { font-size: 0.9em; }
+.day-card.solved .day-name.long { font-size: 0.8em; }
 .day-ok { color: var(--gc-ok); display: inline-flex; flex: none; }
 .day-status { color: var(--text-dim); font-size: 0.88rem; }
 .day-card.solved .day-status { color: var(--gc-ok); font-weight: 700; }

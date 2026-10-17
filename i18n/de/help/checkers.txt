@@ -1,0 +1,32 @@
+# Dame
+Englische Dame auf den dunklen Feldern eines 8×8-Bretts. Spiel gegen den Computer in drei Stufen oder gegen jemanden am selben Gerät.
+
+## So wird gespielt
+- Steine ziehen ein Feld diagonal nach vorn.
+- Schlagen ist Pflicht: Spring über einen gegnerischen Stein auf das leere Feld dahinter und spring weiter, solange es geht. Steine schlagen nur nach vorn.
+- Ein Stein, der die gegenüberliegende Reihe erreicht, wird zur Dame gekrönt, und der Zug ist zu Ende. Damen ziehen und schlagen ein Feld in jede diagonale Richtung.
+- Hast du keinen gültigen Zug mehr, verlierst du. Unentschieden ist es nach 40 Zügen je Seite ohne Schlagen oder Krönen, oder wenn dieselbe Stellung dreimal vorkommt.
+
+Schwarz beginnt.
+
+## Steuerung
+Tippe oder klicke auf einen deiner Steine, um zu sehen, wohin er ziehen kann, und tippe dann auf ein Zielfeld. Ein Stein, der schlagen muss, ist hervorgehoben.
+
+- [[←]] [[↑]] [[→]] [[↓]] wechseln das Feld, [[Enter]] oder [[Space]] wählt einen Stein oder ein Ziel.
+- [[Esc]] lässt den gewählten Stein los.
+- [[Z]] (oder die Schaltfläche `Zug zurücknehmen (Z)`) nimmt einen Zug zurück. Gegen den Computer nimmt sie deinen Zug und seine Antwort zurück.
+- [[N]] startet ein neues Spiel.
+
+## Stufen und Wertung
+Wähle `Gegen Computer` oder `2 Spieler`. Gegen den Computer wählst du `Leicht`, `Mittel` oder `Schwer` und deine Seite mit `Du: Schwarz` oder `Du: Weiß`; spielst du Weiß, dreht sich das Brett.
+
+Bei `2 Spieler` zählt die Statusleiste den Spielstand der Serie mit. `Bilanz` zeigt deine Siege, Niederlagen und Unentschieden gegen den Computer für jede Stufe.
+
+## Synchronisierung
+Deine Bilanz gegen den Computer wird über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. `Bilanz zurücksetzen` löscht sie nach einer Bestätigung auf allen Geräten, zusammen mit der 2-Spieler-Serie dieses Geräts. Das laufende Spiel, Modus, Stufe und Farbe sowie die Toneinstellung bleiben auf diesem Gerät.
+
+## Tipps
+- Dein Spiel wird beim Spielen gespeichert; öffne die App erneut, um weiterzuspielen.
+- Versehentlich ein neues Spiel gestartet oder eine Einstellung geändert? Tippe in der Meldung auf `Rückgängig`.
+- Der Ton ist anfangs aus; schalte ihn mit der Ton-Schaltfläche ein.
+- Schlagen ist Pflicht, also kannst du einen Stein anbieten, um den Gegner auf ein Feld zu locken, von dem aus du zwei zurückschlägst.

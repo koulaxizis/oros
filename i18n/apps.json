@@ -27,6 +27,18 @@
    ]
   },
   {
+   "app": "backgammon",
+   "files": [
+    "backgammon/backgammon.js"
+   ]
+  },
+  {
+   "app": "battleship",
+   "files": [
+    "battleship/battleship.js"
+   ]
+  },
+  {
    "app": "budget",
    "files": [
     "budget/bankui.js",
@@ -57,6 +69,19 @@
    ]
   },
   {
+   "app": "checkers",
+   "files": [
+    "checkers/checkers.js"
+   ]
+  },
+  {
+   "app": "chess",
+   "files": [
+    "chess/chess.js",
+    "chess/lichess-callback.js"
+   ]
+  },
+  {
    "app": "chores",
    "files": [
     "chores/chores.js",
@@ -82,6 +107,12 @@
     "crm/platforms.js",
     "crm/search.js",
     "crm/webform.js"
+   ]
+  },
+  {
+   "app": "crossword",
+   "files": [
+    "crossword/crossword.js"
    ]
   },
   {
@@ -126,6 +157,18 @@
     "flashcards/app.js",
     "flashcards/convert.js",
     "flashcards/due.js"
+   ]
+  },
+  {
+   "app": "flow",
+   "files": [
+    "flow/flow.js"
+   ]
+  },
+  {
+   "app": "gamecenter",
+   "files": [
+    "gamecenter/gamecenter.js"
    ]
   },
   {
@@ -216,6 +259,12 @@
    ]
   },
   {
+   "app": "minesweeper",
+   "files": [
+    "minesweeper/minesweeper.js"
+   ]
+  },
+  {
    "app": "mockups",
    "files": [
     "mockups/mockups.js",
@@ -260,6 +309,12 @@
     "newsletter/runner.js",
     "newsletter/search.js",
     "newsletter/today.js"
+   ]
+  },
+  {
+   "app": "nonogram",
+   "files": [
+    "nonogram/nonogram.js"
    ]
   },
   {
@@ -343,6 +398,12 @@
    ]
   },
   {
+   "app": "solitaire",
+   "files": [
+    "solitaire/solitaire.js"
+   ]
+  },
+  {
    "app": "spreadsheet",
    "files": [
     "spreadsheet/convert.js",
@@ -374,6 +435,12 @@
    "app": "studio",
    "files": [
     "studio/studio.js"
+   ]
+  },
+  {
+   "app": "sudoku",
+   "files": [
+    "sudoku/sudoku.js"
    ]
   },
   {
@@ -413,12 +480,24 @@
    ]
   },
   {
+   "app": "wordle",
+   "files": [
+    "wordle/wordle.js"
+   ]
+  },
+  {
    "app": "writer",
    "files": [
     "writer/convert.js",
     "writer/search.js",
     "writer/spell-worker.js",
     "writer/writer.js"
+   ]
+  },
+  {
+   "app": "xeri",
+   "files": [
+    "xeri/xeri.js"
    ]
   }
  ]

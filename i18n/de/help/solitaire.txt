@@ -1,0 +1,27 @@
+# Solitär
+Vier klassische Kartenspiele für eine Person: Klondike, FreeCell, Spider und Pyramide. Wähle oben eines aus; jedes behält sein eigenes laufendes Spiel.
+
+## So wird gespielt
+- `Klondike`: Baue vier Zielstapel vom Ass bis zum König auf, einen pro Farbe. In den Spalten legst du Karten absteigend und abwechselnd rot und schwarz an. Tippe auf den Talon, um Karten zu ziehen, und dreh die Ablage um, wenn der Talon leer ist.
+- `FreeCell`: Alle Karten liegen offen. In den vier freien Zellen parkst du Karten, während du die Zielstapel aufbaust. Du kannst mehrere Karten auf einmal bewegen, so viele, wie deine freien Zellen und leeren Spalten erlauben.
+- `Spider`: Baue in den Spalten Reihen vom König bis zum Ass in derselben Farbe; eine vollständige Reihe verschwindet von selbst. Tippe auf den Talon, um eine neue Reihe auszuteilen, sobald jede Spalte eine Karte hat. Spider gibt es mit 1, 2 oder 4 Farben.
+- `Pyramide`: 28 Karten liegen in einer Pyramide aus sieben Reihen. Entferne Paare offener Karten, die zusammen 13 ergeben (Bube 11, Dame 12; ein König zählt 13 und geht allein); eine Karte ist offen, wenn keine Karte sie bedeckt. Dreh den Talon Karte für Karte um; auch die oberste Karte der Ablage bildet Paare. Du hast drei Durchgänge durch den Talon. Räume die Pyramide ab, um zu gewinnen.
+
+## Bedienung
+Zieh eine Karte (mit Maus, Finger oder Stift), um sie zu bewegen, oder tippe bzw. klicke sie an, dann geht sie an den besten möglichen Platz, zuerst auf einen Zielstapel. In der Symbolleiste:
+- `Spieloptionen`: für Klondike `1 ziehen` oder `3 ziehen` und `Klassische Punkte` oder `Ohne Punkte`; für Spider `1 Farbe`, `2 Farben` oder `4 Farben`; für FreeCell eine `Spielnummer (1–32000)`, um ein bestimmtes Spiel zu spielen. `Tisch` wechselt zwischen `Filz` und `Schlicht`. Wenn du eine Regel änderst, beginnt ein neues Spiel.
+- `Rückgängig (Ctrl+Z)` nimmt Züge zurück, so viele du willst.
+- `Tipp (H)` schlägt einen Zug vor.
+
+Sobald in Klondike oder FreeCell alle Karten offen liegen, beendet sich das Spiel von selbst. Wenn du mitten in einem Spiel ein neues beginnst, holst du das alte ein paar Sekunden lang mit der Taste `Rückgängig` zurück.
+
+Tastatur: [[Ctrl+Z]] Rückgängig, [[H]] Tipp, [[N]] neues Spiel; [[Enter]] oder [[Space]] auf einem ausgewählten Stapel wirkt wie Tippen.
+
+## Rekorde und Punkte
+`Rekorde` zeigt für jedes Spiel und jede Einstellung die gespielten und gewonnenen Spiele, deine beste Zeit, die wenigsten Züge, die höchste Punktzahl (Klondike mit `Klassische Punkte`) und deine Serie. `Rekorde zurücksetzen` löscht sie für alle Spiele. `Alle Spiele` öffnet das [Spielecenter](help:a/gamecenter), wenn es installiert ist. Die Spielnummern von FreeCell sind überall gleich.
+
+## Synchronisierung
+Deine Rekorde werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert, wobei die Spiele aller Geräte zusammengezählt werden; `Rekorde zurücksetzen` löscht sie überall. Die laufenden Spiele (eines pro Spiel), deine aktuellen Serien und deine Optionen bleiben auf diesem Gerät.
+
+## Tipps
+- In Klondike ist es meist wichtiger, verdeckte Karten in den Spalten aufzudecken, als früh Karten auf die Zielstapel zu legen.
