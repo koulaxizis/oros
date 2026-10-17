@@ -384,6 +384,8 @@ a.btn { text-decoration: none; color: inherit; display: inline-flex; align-items
 
 .pass { display: flex; flex-direction: column; gap: 8px; }
 .pass-row { display: flex; gap: 6px; }
+.dav-field { display: flex; flex-direction: column; gap: 4px; }
+.dav-field input,
 .pass-row input {
   flex: 1 1 auto;
   min-width: 0;

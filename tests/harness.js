@@ -111,14 +111,198 @@ class FakeDropbox {
   }
 }
 
+// ---------- In-memory WebDAV (WebDAV W2) ----------
+// The same surface as FakeDropbox for the tests (files keyed by the
+// path under the sync folder: "/orOS-data.json", "/vault/…"; put();
+// log; uploads(); beforeUpload(device, path, arg)) behind the WebDAV
+// wire protocol sync.js speaks: GET / HEAD with ETag, PUT with
+// If-Match / If-None-Match (refused → 412; logged with Dropbox's 409
+// so assertions read the same for both), 409 when the parent folder
+// is missing, MKCOL, PROPFIND Depth 0/1, COPY, recursive DELETE, and
+// Nextcloud's app-password delete (logged as "revoke").
+const DAV_URL = "https://dav.test/remote.php/dav/files/u";
+// Bytes as stored; .text for the sync tests, .data for the vault tests.
+class DavFile {
+  constructor(data, rev) { this.data = data; this.rev = rev; }
+  get text() { return this.data.toString("utf8"); }
+}
+async function davBytes(b) {
+  if (b == null) return Buffer.alloc(0);
+  if (typeof b === "string") return Buffer.from(b);
+  if (b instanceof ArrayBuffer) return Buffer.from(b);
+  if (ArrayBuffer.isView(b)) return Buffer.from(b.buffer, b.byteOffset, b.byteLength);
+  if (typeof b.arrayBuffer === "function") return Buffer.from(await b.arrayBuffer());
+  throw new Error("FakeWebDAV: unknown body");
+}
+const DAV_DIR = "/orOS";
+
+class FakeWebDAV {
+  constructor() {
+    this.files = new Map();     // "/rel" -> { text, rev }
+    this.dirs = new Set([""]);  // "" = the sync folder; "/vault", …
+    this.revCounter = 0;
+    this.log = [];
+    this.beforeUpload = null;
+    this.kind = "webdav";
+    this.user = "u";
+    this.pass = "app-pass";
+    // Broken-server switches for the connect probe tests.
+    this.ignoreConditions = false;  // If-Match / If-None-Match ignored
+    this.weakEtags = false;         // W/"…" ETags
+    this.hideEtag = false;          // ETag not readable (CORS without Expose-Headers)
+    this.staleEtags = false;        // ETag unchanged by an overwrite (size + whole seconds)
+  }
+
+  nextRev() { return (this.weakEtags ? "W/" : "") + '"e' + (++this.revCounter) + '"'; }
+
+  put(p, text) {
+    const old = this.files.get(p);
+    const rev = (this.staleEtags && old) ? old.rev : this.nextRev();
+    this.files.set(p, new DavFile(Buffer.isBuffer(text) ? text : Buffer.from(String(text)), rev));
+    const parts = p.split("/").slice(1, -1);
+    for (let i = 1; i <= parts.length; i++) this.dirs.add("/" + parts.slice(0, i).join("/"));
+    return rev;
+  }
+
+  seed(name) {
+    return {
+      "oros-sync-provider": "webdav",
+      "oros-dav-conf": JSON.stringify({ url: DAV_URL, user: this.user, dir: DAV_DIR }),
+      "oros-dav-pass": this.pass,
+      "oros-sync-cloud-id": "webdav:" + this.user + "@" + DAV_URL + DAV_DIR
+    };
+  }
+
+  fetchFor(device) {
+    return async (url, opts) => {
+      opts = opts || {};
+      const method = opts.method || "GET";
+      const h = opts.headers || {};
+      const u = String(url);
+      const want = "Basic " + Buffer.from(this.user + ":" + this.pass).toString("base64");
+      if (h.Authorization !== want) return textResponse(401, "");
+      if (u === "https://dav.test/ocs/v2.php/core/apppassword" && method === "DELETE") {
+        this.log.push({ device, op: "revoke", status: 200 });
+        return textResponse(200, "");
+      }
+      if (u.indexOf(DAV_URL) !== 0) throw new TypeError("Failed to fetch");
+      let p = decodeURIComponent(u.slice(DAV_URL.length)).replace(/\/+$/, "");
+      if (p === DAV_DIR.slice(0, p.length) && p.length < DAV_DIR.length) {      // the account root
+        if (method === "PROPFIND") return textResponse(207, this.multistatus(null, ""));
+        if (method === "MKCOL") return textResponse(405, "");
+      }
+      if (p !== DAV_DIR && p.indexOf(DAV_DIR + "/") !== 0) return textResponse(404, "");
+      p = p.slice(DAV_DIR.length);                       // "" or "/rel"
+      const parent = p.slice(0, p.lastIndexOf("/"));
+
+      if (method === "GET" || method === "HEAD") {
+        const f = this.files.get(p);
+        this.log.push({ device, op: "download", path: p, status: f ? 200 : 404, head: method === "HEAD" });
+        if (!f) return textResponse(404, "");
+        return textResponse(200, method === "HEAD" ? "" : f.data, this.hideEtag ? {} : { ETag: f.rev });
+      }
+      if (method === "PUT") {
+        const cur = this.files.get(p);
+        const arg = { ifMatch: h["If-Match"], ifNoneMatch: h["If-None-Match"] };
+        if (this.beforeUpload) this.beforeUpload(device, p, arg);
+        const now = this.files.get(p);
+        if (!this.dirs.has(parent)) return textResponse(409, "");
+        let refused = false;
+        if (this.ignoreConditions) refused = false;
+        else if (arg.ifNoneMatch === "*") refused = !!now;
+        else if (arg.ifMatch) refused = !now || now.rev !== arg.ifMatch;
+        if (refused) {
+          this.log.push({ device, op: "upload", path: p, status: 409, http: 412 });
+          return textResponse(412, "");
+        }
+        const rev = this.put(p, await davBytes(opts.body));
+        this.log.push({ device, op: "upload", path: p, status: 200, created: !cur });
+        return textResponse(cur ? 204 : 201, "", this.hideEtag ? {} : { ETag: rev });
+      }
+      if (method === "MKCOL") {
+        if (this.dirs.has(p) || this.files.has(p)) return textResponse(405, "");
+        if (p === "") { this.dirs.add(""); return textResponse(201, ""); }   // the sync folder
+        if (!this.dirs.has(parent)) return textResponse(409, "");
+        this.dirs.add(p);
+        return textResponse(201, "");
+      }
+      if (method === "PROPFIND") {
+        if (!this.dirs.has(p)) {
+          const f = this.files.get(p);
+          if (!f) return textResponse(404, "");
+        }
+        return textResponse(207, this.multistatus(p, h.Depth));
+      }
+      if (method === "COPY") {
+        const f = this.files.get(p);
+        if (!f) return textResponse(404, "");
+        const dest = decodeURIComponent(String(h.Destination).slice(DAV_URL.length + DAV_DIR.length));
+        if (h.Overwrite === "F" && this.files.has(dest)) return textResponse(412, "");
+        this.put(dest, f.data);
+        return textResponse(201, "");
+      }
+      if (method === "DELETE") {
+        let hit = false;
+        for (const k of [...this.files.keys()]) {
+          if (k === p || k.startsWith(p + "/")) { this.files.delete(k); hit = true; }
+        }
+        for (const d of [...this.dirs]) {
+          if (d && (d === p || d.startsWith(p + "/"))) { this.dirs.delete(d); hit = true; }
+        }
+        this.log.push({ device, op: "delete", path: p, status: hit ? 204 : 404 });
+        return textResponse(hit ? 204 : 404, "");
+      }
+      throw new Error("FakeWebDAV: unhandled " + method + " " + p);
+    };
+  }
+
+  // p null = the account root; else "" (the sync folder) or "/rel".
+  multistatus(p, depth) {
+    const base = "/remote.php/dav/files/u" + DAV_DIR;
+    const resp = (href, dir, f) => "<d:response><d:href>" + encodeURI(href) + (dir ? "/" : "") + "</d:href>" +
+      "<d:propstat><d:prop><d:resourcetype>" + (dir ? "<d:collection/>" : "") + "</d:resourcetype>" +
+      (f ? "<d:getcontentlength>" + f.data.length + "</d:getcontentlength>" +
+           "<d:getetag>" + f.rev + "</d:getetag>" : "") +
+      "</d:prop><d:status>HTTP/1.1 200 OK</d:status></d:propstat></d:response>";
+    let out = '<?xml version="1.0"?><d:multistatus xmlns:d="DAV:">';
+    if (p === null) out += resp("/remote.php/dav/files/u", true);
+    else if (this.files.has(p)) out += resp(base + p, false, this.files.get(p));
+    else {
+      out += resp(base + p, true);
+      if (depth === "1") {
+        for (const d of this.dirs) {
+          if (d && d.slice(0, d.lastIndexOf("/")) === p) out += resp(base + d, true);
+        }
+        for (const [k, f] of this.files) {
+          if (k.slice(0, k.lastIndexOf("/")) === p) out += resp(base + k, false, f);
+        }
+      }
+    }
+    return out + "</d:multistatus>";
+  }
+
+  uploads(device) {
+    return this.log.filter((e) => e.op === "upload" && (!device || e.device === device));
+  }
+
+  downloads(device, prefix) {
+    return this.log.filter((e) => e.op === "download" && e.device === device &&
+      e.path.startsWith(prefix || "") && e.status === 200 && !e.head).length;
+  }
+}
+
 function textResponse(status, text, headers) {
   const h = new Map(Object.entries(headers || {}).map(([k, v]) => [k.toLowerCase(), v]));
   return {
     status,
     ok: status >= 200 && status < 300,
     headers: { get: (k) => (h.has(k.toLowerCase()) ? h.get(k.toLowerCase()) : null) },
-    text: async () => text,
-    json: async () => JSON.parse(text)
+    text: async () => (Buffer.isBuffer(text) ? text.toString("utf8") : text),
+    json: async () => JSON.parse(Buffer.isBuffer(text) ? text.toString("utf8") : text),
+    arrayBuffer: async () => {
+      const b = Buffer.isBuffer(text) ? text : Buffer.from(typeof text === "string" ? text : "");
+      return b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength);
+    }
   };
 }
 function jsonResponse(status, obj) {
@@ -156,10 +340,16 @@ class MemoryStorage {
 // the OAuth token endpoint).
 async function createDevice(dropbox, name, seed, opts0) {
   const localStorage = new MemoryStorage();
-  localStorage.setItem("oros-db-access", "token-" + name);
-  localStorage.setItem("oros-db-refresh", "refresh-" + name);
-  localStorage.setItem("oros-db-expiry", String(Date.now() + 365 * 24 * 3600 * 1000));
+  const connect = !(opts0 && opts0.connect === false);      // false = nothing connected yet
+  if (connect && dropbox.kind !== "webdav") {
+    localStorage.setItem("oros-db-access", "token-" + name);
+    localStorage.setItem("oros-db-refresh", "refresh-" + name);
+    localStorage.setItem("oros-db-expiry", String(Date.now() + 365 * 24 * 3600 * 1000));
+  }
   localStorage.setItem("oros-sync-interval", "0");
+  if (connect && dropbox.kind === "webdav") {                // WebDAV W2: connected to the fake server
+    for (const [k, v] of Object.entries(dropbox.seed(name))) localStorage.setItem(k, v);
+  }
   for (const [k, v] of Object.entries(seed || {})) {        // a seed may override the defaults
     localStorage.setItem(k, typeof v === "string" ? v : JSON.stringify(v));
   }
@@ -187,7 +377,7 @@ async function createDevice(dropbox, name, seed, opts0) {
     setInterval: () => 0,
     clearInterval: () => {},
     addEventListener: () => {},
-    TextEncoder, TextDecoder, URLSearchParams, Uint8Array, ArrayBuffer,
+    TextEncoder, TextDecoder, URL, URLSearchParams, Uint8Array, ArrayBuffer, Blob,
     btoa, atob, Promise, JSON, Date, Math, Error, TypeError, Object, Array
   };
   ctx.window = ctx;
@@ -266,7 +456,11 @@ async function cloudPayload(dropbox, dev) {
   return dev.sync.vaultCrypto.decryptJson(f.text);
 }
 
+// OROS_CLOUD=webdav runs every harness test against FakeWebDAV
+// (tests/sync-webdav.test.js does that for the sync suites).
+const FakeCloud = process.env.OROS_CLOUD === "webdav" ? FakeWebDAV : FakeDropbox;
+
 module.exports = {
-  FakeDropbox, createDevice, reboot, registerLive, readKey, writeKey, edit,
+  FakeDropbox: FakeCloud, FakeWebDAV, RealFakeDropbox: FakeDropbox, createDevice, reboot, registerLive, readKey, writeKey, edit,
   lwwRecordMerge, cloudPayload
 };
