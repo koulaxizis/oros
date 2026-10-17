@@ -292,7 +292,17 @@ body.studying #toast { top: 12px; bottom: auto; }
 #br-more { margin-top: 10px; }
 #browse-btn .ic { display: none; font-size: 17px; line-height: 1; }
 
-@media (max-width: 480px) {
+/* ---------- Wave 3: import ---------- */
+.add-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.im-status { margin-top: 10px; min-height: 1.4em; color: var(--text-dim); }
+.im-area p { margin-top: 6px; }
+.im-area .two, .im-area .field { margin-top: 10px; }
+.im-preview { margin: 6px 0 4px; padding: 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel-bg); font-size: 13px; overflow: hidden; }
+.im-row { display: flex; flex-wrap: wrap; gap: 4px 14px; padding: 2px 0; }
+.im-row + .im-row { border-top: 1px solid var(--border); }
+.im-row span { overflow-wrap: anywhere; min-width: 0; }
+.empty .chip + .chip { margin-left: 6px; }
+
   .br-filters { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .br-filters input { grid-column: 1 / -1; }
   .br-acts { margin-left: 0; }
