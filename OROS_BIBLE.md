@@ -7681,6 +7681,6 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
   - Tests: full suite green; Chromium 360 de / el / en. Not tested: a German native reader's review, live Mail and Newsletter sending, Safari, phones.
 
 ### 2026-10-17 — Android app: Calendar reminders ring with orOS closed (#512) — 3.09.01
-- Android app: Calendar reminders now ring with orOS closed, also when your events are not copied to the phone's Calendar (`phone.js` hands the reminder schedule to the app bridge, `webpush.js`); no new APK needed.
+- Android app: Calendar reminders now ring with orOS closed, also when your events are not copied to the phone's Calendar (`phone.js` adds Calendar rows from `orosPush.calendarRows` (webpush.js) to the app's own reminder list while the events are not copied to the phone's Calendar, so nothing rings twice); no new APK needed.
 - Files: `phone.js`, `webpush.js`, `tests/webpush.test.js`.
   - Tests: full suite green; Chromium bridge check. Not tested: a real phone with orOS closed.
