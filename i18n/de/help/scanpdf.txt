@@ -1,0 +1,132 @@
+# Scanner & PDF
+Papierseiten mit der Kamera scannen, PDFs zusammenführen, auseinandernehmen und ihre Seiten ordnen, sie signieren, ihre Seiten nummerieren, sie verkleinern, den Text gescannter Seiten lesen, damit das PDF durchsuchbar ist, und aus Bildern ein PDF machen. Alles passiert auf deinem Gerät: Nichts wird hochgeladen, und deine eigenen Dateien werden nie verändert.
+
+## Erste Schritte
+1. Leg PDFs oder Bilder auf der App ab, oder drück `PDFs oder Bilder hinzufügen`.
+2. Jede Seite erscheint als Karte mit ihrer Nummer. Stammen die Seiten aus mehreren Dateien, unterscheidet eine farbige Linie oben die Dateien, und die Karte nennt ihre Datei.
+3. Ordne die Seiten so, wie du sie haben willst (siehe unten).
+4. Drück `PDF speichern`, um alle Seiten in dieser Reihenfolge als ein PDF zu speichern.
+
+## Mit der Kamera scannen
+Drück `Mit der Kamera scannen` (die Kamera-Schaltfläche oben oder auf dem leeren Bildschirm). Beim ersten Mal fragt der Browser, ob die App die Kamera verwenden darf.
+1. Leg die Seite auf eine dunklere Fläche, bei gutem Licht, und richte die Kamera darauf. Ein goldener Umriss zeigt die Seite, die die App gefunden hat.
+2. Ist `Auto` an, wird das Foto von selbst aufgenommen, sobald die Seite still gehalten wird. Ist es aus, drück die runde Schaltfläche.
+3. Die Seite wird begradigt und aufgeräumt. Wähle, wie sie aussieht:
+   - `Dokument`: weißes Papier und dunkle Tinte, Schatten entfernt. Die beste Wahl für die meisten Seiten.
+   - `Grau`, `Schwarz-Weiß` (schärfster Text, kleinste Datei) oder `Foto` (die Farben, wie sie sind).
+4. Dreh sie bei Bedarf mit den Pfeilen und drück dann `Seite behalten`. Die nächste Seite kannst du sofort scannen.
+- Findet die App die Seite nicht oder hat sie die falsche Form gefunden, drück `Ecken`: Zieh jede Ecke auf eine Ecke der Seite. Eine Lupe zeigt die Stelle unter deinem Finger. `Ganzes Bild` nimmt alles; `Neu aufnehmen` geht zurück zur Kamera.
+- Die bisher gescannten Seiten erscheinen unten in einer Reihe. Tippe auf eine, um ihren Look, ihre Ecken oder ihre Drehung zu ändern oder sie zu löschen.
+- Die Licht-Schaltfläche schaltet den Blitz des Handys ein, wenn es einen hat.
+- `Fotos auswählen` nimmt Seiten aus Fotos, die du schon hast, eins nach dem anderen, auf die gleiche Weise.
+- Ist die Kamera nicht erlaubt oder nicht vorhanden, sagt der Scanner das; du kannst trotzdem Fotos auswählen.
+Drück `… Seiten hinzufügen`, um sie hinter die vorhandenen Seiten in die Liste zu setzen. Eine gescannte Seite behält im PDF ihre eigene Form, ohne Rand. Schließ den Scanner mit dem Kreuz, um die gescannten Seiten zu verwerfen. Die Kamera geht aus, sobald du den Scanner oder die App verlässt.
+
+## Was die App liest
+- PDF-Dateien (.pdf).
+- Bilder: JPEG, PNG, WebP, GIF, BMP und AVIF. Jedes Bild wird eine Seite.
+Ein Foto, das das Handy seitlich gespeichert hat, wird zuerst aufrecht gedreht.
+
+## Seiten auswählen
+- Tippe auf eine Seite, um sie auszuwählen; tippe noch einmal, um sie abzuwählen. Das Häkchen in der Ecke zeigt es.
+- [[Shift]] und ein Klick wählen alle Seiten zwischen der zuletzt angetippten und dieser aus.
+- Die erste Schaltfläche in der Leiste über den Seiten wählt alle aus oder keine.
+Die Leiste zeigt, wie viele Seiten es gibt und wie viele ausgewählt sind.
+
+## Seiten ordnen
+Die Schaltflächen der Leiste wirken auf die ausgewählten Seiten:
+- `Nach vorne` und `Nach hinten` verschieben sie um eine Stelle.
+- `Nach links drehen` und `Nach rechts drehen` drehen sie um eine Vierteldrehung.
+- `Duplizieren` setzt direkt hinter jede eine Kopie.
+- `Ausgewählte Seiten als neues PDF speichern` speichert nur sie in einer neuen Datei.
+- `Löschen` nimmt sie aus der Liste.
+Um eine Seite zu ziehen, nimm sie mit der Maus, oder auf einem Touchscreen am Griff mit den sechs Punkten in ihrer Ecke. Ausgewählte Seiten bewegen sich gemeinsam, wenn du eine davon ziehst.
+`Rückgängig` und `Wiederholen` oben gehen durch jede Änderung zurück und vor.
+
+## Signieren und Text hinzufügen
+Jede Seite hat in ihrer Ecke eine Stift-Schaltfläche. Sie öffnet die Seite groß im Seiteneditor:
+- `Unterschrift` setzt deine Unterschrift auf die Seite. Beim ersten Mal erstellst du eine:
+  - `Zeichnen`: Unterschreib im Feld mit dem Finger, einem Stift oder der Maus.
+  - `Tippen`: Schreib deinen Namen, und er wird in einer handschriftähnlichen Schrift gesetzt.
+  - `Foto`: Wähle ein Foto deiner Unterschrift auf weißem Papier; das Papier wird durchsichtig und nur die Tinte bleibt.
+  Wähle schwarze oder blaue Tinte. Ist `Für das nächste Mal auf diesem Gerät behalten` angehakt, wird die Unterschrift für das nächste Dokument gespeichert (bis zu 6). Beim nächsten Mal zeigt `Unterschrift` sie zur Auswahl, und der Papierkorb an jeder löscht sie.
+- `Text` fügt eine Textzeile hinzu. Tippe sie in das Feld über der Seite und wähle Schwarz, Blau oder Rot.
+- `Datum` fügt das heutige Datum hinzu.
+Zieh das Hinzugefügte an seinen Platz. Zieh am runden Griff an seiner Ecke, um es größer oder kleiner zu machen. `Auf jede Seite setzen` kopiert es an dieselbe Stelle auf jeder anderen Seite (für Initialen auf jeder Seite). `Entfernen` nimmt es weg.
+Die Pfeile neben dem Titel gehen zur vorherigen und nächsten Seite. `Fertig` behält alles Hinzugefügte; das Kreuz oben verlässt den Editor, ohne es zu behalten. `Rückgängig` auf dem Hauptbildschirm nimmt alles zurück, was ein `Fertig` hinzugefügt hat.
+Eine Seite mit Ergänzungen hat eine ausgefüllte Stift-Schaltfläche. Ergänzungen drehen sich mit der Seite, wenn du sie später drehst.
+Text wird als echter Text ins PDF geschrieben (mit der Schrift Noto Sans, Griechisch inklusive); eine Unterschrift ist ein Bild.
+
+## Seitenzahlen, Wasserzeichen und Details
+Die Schaltfläche `Optionen` unten legt fest, was auf jede Seite der PDFs kommt, die du speicherst oder teilst:
+- `Seitenzahlen`: wo (unten oder oben, links, Mitte oder rechts), der Stil (3 oder 3 / 12) und die erste Nummer. Jeder Teil einer Teilung wird für sich nummeriert.
+- `Wasserzeichen`: ein oder zwei Wörter, groß und blass quer über jede Seite geschrieben, etwa KOPIE oder ENTWURF. Wähle, wie stark es ist.
+- `Dokumentdetails`: Titel und Autor, die in den Eigenschaften des PDFs angezeigt werden.
+Die Karten zeigen Seitenzahlen und Wasserzeichen so, wie sie werden. Diese Einstellungen gelten, bis du die App schließt; die Einstellungen für Bildseiten (unten) sind auch hier.
+
+## PDFs zusammenführen
+Füge zwei oder mehr PDFs hinzu (und Bilder, wenn du willst): Ihre Seiten werden hintereinander gesetzt. Ordne sie und drück dann `PDF speichern`. Text, Bilder und Links jeder Seite bleiben, wie sie waren. Lesezeichen und Formularfelder der Originaldateien kommen nicht mit ins neue PDF.
+
+## Ein PDF teilen
+Drück `Teilen` und wähle, wie:
+- `Jede Seite einzeln`: ein PDF pro Seite.
+- `Alle` 2, 3 oder mehr `Seiten`: alle paar Seiten ein neues PDF.
+- `Seitenbereiche`: Gib sie ein, etwa `1-3, 5, 8-`. `8-` heißt von Seite 8 bis zum Ende. Jeder Bereich wird ein eigenes PDF.
+Das Fenster zeigt, wie viele PDFs entstehen. Sie kommen in eine .zip auf deinem Gerät oder in einen Ordner in Dateien › PDF, benannt nach der Datei. Die Teilung folgt immer der Liste, wie sie gerade ist, du kannst die Seiten also vorher ordnen.
+
+## Bilder zu PDF
+Füge Bilder hinzu und drück `PDF speichern`. `Bildseiten` in `Optionen` legt fest, wie aus einem Bild eine Seite wird:
+- Seitengröße: A4, Letter oder die Form des Bildes (kein leerer Platz drumherum).
+- Ausrichtung: wie das Bild, Hochformat oder Querformat.
+- Rand: keiner, schmal oder normal.
+Das Bild wird in die Mitte gesetzt, so groß wie es passt. Die App merkt sich diese Einstellungen auf diesem Gerät.
+
+## Speichern
+`PDF speichern` fragt nach einem Dateinamen und wohin:
+- `Auf diesem Gerät`: das übliche Speicherfenster deines Browsers oder ein Download.
+- `In Dateien › PDF`: Das PDF kommt in Dateien. Ist der Name schon vergeben, bekommt es eine Nummer, etwa „Report (2).pdf“.
+
+## Ein PDF verkleinern
+`Verkleinern` im Speicherfenster macht ein PDF kleiner für E-Mails oder Upload-Formulare:
+- `Ein wenig (am schärfsten)`, `Mittel` oder `Stark (für E-Mail)`: Je stärker es schrumpft, desto weicher sehen die Seiten aus.
+Jede Seite wird ein Bild, ihr eigener Text lässt sich dann nicht mehr markieren. Ist `Durchsuchbar machen` angehakt, wird der Text zuerst gelesen und unter den Bildern behalten, sodass das kleinere PDF trotzdem durchsuchbar ist. Gescannte Seiten und Fotos schrumpfen am meisten. Wäre das Ergebnis nicht kleiner (ein PDF mit reinem Text ist es oft nicht), wird das PDF unverändert gespeichert und die App sagt es dir. Deine Wahl wird auf diesem Gerät gemerkt.
+
+## Text lesen: durchsuchbare PDFs
+Eine gescannte Seite oder ein Bild ist nur ein Bild von Wörtern: Du kannst es nicht durchsuchen und nichts daraus kopieren. Die App kann die Wörter auf dem Gerät lesen und sie als unsichtbaren Text unter jede Seite legen, so wie es Büroscanner tun.
+- `Text lesen` unten liest die Seiten und zeigt ihren Text, Seite für Seite. Wähle die Sprache (`Griechisch und Englisch`, `Griechisch` oder `Englisch`) und, wenn Seiten ausgewählt sind, ob nur diese gelesen werden.
+- `Text kopieren` legt ihn in die Zwischenablage; `An eine App senden` gibt ihn an Notizen, Writer oder eine andere orOS-App.
+- `Durchsuchbar machen` im Speicherfenster liest, was noch nicht gelesen ist, und legt den Text unter jede Seite. Es ist von selbst angehakt, wenn die Liste gescannte oder schon gelesene Seiten hat; die App merkt sich, wenn du es änderst.
+- Eine gelesene Seite zeigt ein kleines T neben ihrer Nummer.
+Das Lesen dauert ein paar Sekunden pro Seite. Ein Balken zeigt den Fortschritt; `Stopp` (oder [[Esc]]) beendet es und behält die bis dahin gelesenen Seiten. Seiten eines PDFs, das schon Text hat, werden nicht erneut gelesen: Ihr eigener Text wird verwendet.
+Beim ersten Mal wird die Texterkennung (Tesseract, etwa 7 MB mit Griechisch und Englisch) von der orOS-Website geladen; danach funktioniert sie offline. Die Bilder verlassen nie dein Gerät. Die Erkennung ist gut bei sauberen, geraden, gut beleuchteten Seiten und schwächer bei Handschrift, kleiner Schrift oder schräg aufgenommenen Fotos, prüf also, was wichtig ist.
+
+## Gespeicherte PDFs in der orOS-Suche finden
+PDFs, die du in Dateien › PDF speicherst, findest du in der orOS-Suche über ihren Namen und den aus ihnen gelesenen Text. Wählst du eins, öffnet es sich hier. Die Liste bleibt auf diesem Gerät (bis zu 100 PDFs) und wird nie synchronisiert; ein PDF, das du in Dateien löschst oder verschiebst, fällt heraus. `Vergessen` in `Optionen` leert sie.
+
+## Aus Dateien
+Wähle in Dateien ein oder mehrere PDFs oder mehrere Bilder aus und wähle `In Scanner & PDF öffnen` im Menü oder in der Auswahlleiste. Die App öffnet sich mit ihren Seiten, in der Reihenfolge der Auswahl.
+
+## Tastenkürzel
+- [[Ctrl+O]]: Dateien hinzufügen.
+- [[Ctrl+S]]: PDF speichern.
+- [[Ctrl+A]]: alle Seiten auswählen oder keine.
+- [[Ctrl+Z]] und [[Ctrl+Y]]: rückgängig und wiederholen.
+- [[Left]] und [[Right]]: zur Seite davor oder danach.
+- [[Ctrl+Left]] und [[Ctrl+Right]]: die Seite (oder die ausgewählten Seiten) um eine Stelle verschieben.
+- [[Space]]: die Seite auswählen; [[Delete]]: die ausgewählten Seiten löschen; [[Esc]]: keine auswählen.
+- [[E]]: den Seiteneditor für die Seite öffnen.
+Im Seiteneditor:
+- [[Tab]] geht von einer Ergänzung zur nächsten; [[Left]], [[Right]], [[Up]] und [[Down]] verschieben sie ([[Shift]] für größere Schritte); [[+]] und [[-]] machen sie größer oder kleiner; [[Delete]] entfernt sie.
+- [[PageUp]] und [[PageDown]]: die vorherige und nächste Seite. [[Esc]]: die Ergänzung loslassen oder den Editor verlassen.
+Im Scanner:
+- [[Tab]] geht durch die Schaltflächen; auf einer Ecke verschieben [[Left]], [[Right]], [[Up]] und [[Down]] sie ([[Shift]] für größere Schritte).
+- [[Esc]] geht einen Schritt zurück und verlässt bei der Kamera den Scanner.
+Während Text gelesen wird, stoppt [[Esc]] das Lesen.
+
+## Datenschutz und Synchronisierung
+Alles passiert auf deinem Gerät; keine Datei wird irgendwohin gesendet. Die App hat keine eigenen Daten und nichts zu synchronisieren: PDFs, die du in Dateien speicherst, werden wie der Rest von Dateien synchronisiert, wenn Vault Drive an ist. Nur deine Einstellungen (Bildseiten, Speicherort, wie viel kleiner, Auto im Scanner, die Lesesprache, Durchsuchbar machen), die Liste gespeicherter PDFs für die Suche und die Unterschriften, die du behältst, werden auf diesem Gerät gespeichert. Unterschriften werden absichtlich nie synchronisiert: Sie bleiben auf dem Gerät, auf dem du sie erstellt hast.
+
+## Grenzen
+- Mit einem Passwort geschützte PDFs lassen sich nicht ändern: Ihre Seiten können ohne das Passwort nicht kopiert werden.
+- Eine Datei darf bis zu 200 MB groß sein, und die Liste fasst bis zu 2.000 Seiten.
+- Große Dateien brauchen einen Moment zum Lesen und Speichern; lass die App offen, bis es fertig ist.
