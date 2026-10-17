@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.14.00
+- Game Center and its games are now in German: Solitaire, Xeri, Chess, Backgammon, Checkers, Battleship, Crossword, Wordle, Sudoku, Minesweeper, Nonogram and Flow Free.
+
 ## Version 3.13.02
 - The orOS licence file is now the plain MIT text. orOS stays free and open source.
 
