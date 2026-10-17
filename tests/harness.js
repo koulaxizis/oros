@@ -121,6 +121,7 @@ class FakeDropbox {
 // is missing, MKCOL, PROPFIND Depth 0/1, COPY, recursive DELETE, and
 // Nextcloud's app-password delete (logged as "revoke").
 const DAV_URL = "https://dav.test/remote.php/dav/files/u";
+const DAV_UPLOADS = "https://dav.test/remote.php/dav/uploads/u";
 // Bytes as stored; .text for the sync tests, .data for the vault tests.
 class DavFile {
   constructor(data, rev) { this.data = data; this.rev = rev; }
@@ -185,6 +186,7 @@ class FakeWebDAV {
         this.log.push({ device, op: "revoke", status: 200 });
         return textResponse(200, "");
       }
+      if (u.indexOf(DAV_UPLOADS + "/") === 0) return this.chunked(device, method, h, u.slice(DAV_UPLOADS.length + 1), opts.body);
       if (u.indexOf(DAV_URL) !== 0) throw new TypeError("Failed to fetch");
       let p = decodeURIComponent(u.slice(DAV_URL.length)).replace(/\/+$/, "");
       if (p === DAV_DIR.slice(0, p.length) && p.length < DAV_DIR.length) {      // the account root
@@ -254,6 +256,44 @@ class FakeWebDAV {
       }
       throw new Error("FakeWebDAV: unhandled " + method + " " + p);
     };
+  }
+
+  // Nextcloud chunked upload: MKCOL uploads/u/<id>, PUT <id>/<n>,
+  // MOVE <id>/.file → Destination (409 when its parent folder is
+  // missing), DELETE <id>. noChunking = a server that refuses it;
+  // chunkCors = one whose CORS lets no chunk request through.
+  async chunked(device, method, h, rest, body) {
+    if (this.chunkCors) throw new TypeError("Failed to fetch");
+    const [id, part] = rest.replace(/\/+$/, "").split("/");
+    this.chunkDirs = this.chunkDirs || new Map();
+    const dest = h.Destination && decodeURIComponent(String(h.Destination).slice(DAV_URL.length + DAV_DIR.length));
+    if (method === "MKCOL" && !part) {
+      if (this.noChunking) return textResponse(405, "");
+      this.chunkDirs.set(id, new Map());
+      this.log.push({ device, op: "chunk-start", path: dest, status: 201 });
+      return textResponse(201, "");
+    }
+    const parts = this.chunkDirs.get(id);
+    if (method === "DELETE" && !part) {
+      this.chunkDirs.delete(id);
+      return textResponse(parts ? 204 : 404, "");
+    }
+    if (!parts) return textResponse(404, "");
+    if (method === "PUT" && part) {
+      parts.set(part, await davBytes(body));
+      this.log.push({ device, op: "chunk", path: dest, part, size: parts.get(part).length, status: 201 });
+      return textResponse(201, "");
+    }
+    if (method === "MOVE" && part === ".file") {
+      if (!this.dirs.has(dest.slice(0, dest.lastIndexOf("/")))) return textResponse(409, "");
+      const data = Buffer.concat([...parts.keys()].sort().map((k) => parts.get(k)));
+      const cur = this.files.get(dest);
+      const rev = this.put(dest, data);
+      this.chunkDirs.delete(id);
+      this.log.push({ device, op: "upload", path: dest, status: 200, created: !cur, chunks: parts.size });
+      return textResponse(cur ? 204 : 201, "", { ETag: rev });
+    }
+    throw new Error("FakeWebDAV: unhandled chunk " + method + " " + rest);
   }
 
   // p null = the account root; else "" (the sync folder) or "/rel".

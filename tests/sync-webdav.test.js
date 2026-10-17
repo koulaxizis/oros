@@ -140,3 +140,38 @@ test("disconnect goes back to Dropbox as the default; reset on Nextcloud revokes
   assert.equal(r.revoked, true);
   assert.equal(dav.log.filter((e) => e.op === "revoke").length, 1);
 });
+
+test("big Vault files go up to Nextcloud in pieces; other servers get one PUT", async () => {
+  const MB = 1024 * 1024;
+  const bytes = Buffer.alloc(25 * MB);
+  for (let i = 0; i < bytes.length; i += 4096) bytes[i] = (i / 4096) & 0xff;
+  const big = () => new Blob([bytes]);
+
+  const dav = new FakeWebDAV();
+  const A = await blank(dav, "A");
+  await A.sync.connectWebdav(FORM);
+  const st = A.sync.storage;
+  await st.putObject("objects/ab/big", big());               // its folder does not exist yet
+  const chunks = dav.log.filter((e) => e.op === "chunk" && e.path === "/vault/objects/ab/big");
+  assert.deepEqual(chunks.map((e) => e.size), [10 * MB, 10 * MB, 5 * MB]);
+  assert.equal(dav.uploads().filter((e) => e.path === "/vault/objects/ab/big" && e.chunks === 3).length, 1);
+  assert.ok(Buffer.from(await st.getObject("objects/ab/big")).equals(bytes), "the pieces join up byte for byte");
+  assert.equal(dav.chunkDirs.size, 0, "no upload folder is left behind");
+
+  // A conditional write (the manifest) and a small file stay one PUT.
+  const before = dav.log.filter((e) => e.op === "chunk").length;
+  await st.putObject("objects/ab/big2", big(), null);
+  await st.putObject("objects/ab/small", new Blob([Buffer.alloc(MB)]));
+  assert.equal(dav.log.filter((e) => e.op === "chunk").length, before);
+
+  // A server that refuses chunks, or whose CORS blocks them, gets one PUT.
+  for (const flag of ["noChunking", "chunkCors"]) {
+    const d2 = new FakeWebDAV();
+    d2[flag] = true;
+    const B = await blank(d2, "B");
+    await B.sync.connectWebdav(FORM);
+    await B.sync.storage.putObject("objects/cd/big", big());
+    assert.ok(Buffer.from(await B.sync.storage.getObject("objects/cd/big")).equals(bytes), flag);
+    assert.equal(d2.log.filter((e) => e.op === "chunk").length, 0, flag);
+  }
+});

@@ -1164,6 +1164,56 @@
     });
   }
 
+  // Nextcloud chunked upload for big Vault objects: pieces go into
+  // remote.php/dav/uploads/<user>/<id>, then one MOVE of ".file" puts
+  // them together at the target (Nextcloud's v2, and v1 too). Only for
+  // plain overwrites (immutable objects): a conditional write stays one
+  // PUT, so If-Match keeps its meaning. Resolves null when this server
+  // takes no chunks (refused, or blocked by CORS): the caller then
+  // sends the single PUT.
+  var DAV_CHUNK = 10 * 1024 * 1024;
+  function davChunkBase(conf) {
+    var m = conf && /^(.*?\/remote\.php\/dav)\/files\/([^/]+)(?:\/|$)/.exec(conf.url);
+    return m ? m[1] + "/uploads/" + m[2] : null;
+  }
+  function davPutChunked(rel, blob) {
+    var dest = davUrl(davConf, rel);
+    var dir = davChunkBase(davConf) + "/oros-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    var hd = { "Destination": dest };
+    function fallback(err) {
+      if (!/^network error/.test(err && err.message)) throw err;
+      return null;
+    }
+    function cleanup(out) {
+      return davReq("DELETE", null, { abs: dir + "/" }).catch(function () {}).then(function () { return out; });
+    }
+    return davReq("MKCOL", null, { abs: dir, headers: hd }).then(function (res) {
+      if (res.status === 401 || res.status === 403) davOk(res, "upload");
+      if (!res.ok) return null;
+      var n = 0, offset = 0;
+      function next() {
+        if (offset >= blob.size) return Promise.resolve();
+        var piece = blob.slice(offset, offset + DAV_CHUNK);
+        n += 1;
+        return davReq("PUT", null, {
+          abs: dir + "/" + ("0000" + n).slice(-5),
+          headers: { "Destination": dest, "Content-Type": "application/octet-stream" },
+          body: piece
+        }).then(function (r) { davOk(r, "upload"); offset += piece.size; return next(); });
+      }
+      function move() { return davReq("MOVE", null, { abs: dir + "/.file", headers: hd }); }
+      return next().then(move).then(function (r) {
+        if (r.status !== 409 && r.status !== 404) return r;
+        return davMkcols(davConf, davPass, davParentOf(rel)).then(move);
+      }).then(function (r) {
+        if (r.ok) return r;
+        return cleanup(null).then(function () { return davOk(r, "upload"); });
+      }, function (err) {
+        return cleanup(null).then(function () { return fallback(err); });
+      });
+    }, fallback);
+  }
+
   function davGetText(rel) {
     return davReq("GET", rel).then(function (res) {
       if (res.status === 404) return null;
@@ -1250,7 +1300,12 @@
 
   var davStorage = {
     putObject: function (key, blob, knownRev) {
-      return davPut(davKey(key), blob, knownRev).then(function (res) {
+      var rel = davKey(key);
+      var big = knownRev === undefined && blob && blob.size > DAV_CHUNK && davChunkBase(davConf);
+      var sent = big ? davPutChunked(rel, blob).then(function (res) {
+        return res || davPut(rel, blob, knownRev);
+      }) : davPut(rel, blob, knownRev);
+      return sent.then(function (res) {
         if (res.status === 412 && knownRev !== undefined) throw new Error("storage-conflict");
         return davOk(res, "upload");
       });
