@@ -102,7 +102,7 @@
     en: {
       title: "Chore Wheel", members: "Members", chores: "Chores", away: "away",
       d: "Every day", n: "Every {n} days", w: "Every week", mo: "Every month",
-      dow: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+      "dow.0": "Mon", "dow.1": "Tue", "dow.2": "Wed", "dow.3": "Thu", "dow.4": "Fri", "dow.5": "Sat", "dow.6": "Sun",
       w1: "Easy", w2: "Medium", w3: "Heavy",
       rr: "In turn", bal: "Balanced", spin: "Spin", all: "everyone",
       st0: "not done", st1: "done", st2: "skipped",
@@ -111,7 +111,7 @@
     el: {
       title: "Τροχός δουλειών", members: "Μέλη", chores: "Δουλειές", away: "λείπει",
       d: "Κάθε μέρα", n: "Κάθε {n} μέρες", w: "Κάθε εβδομάδα", mo: "Κάθε μήνα",
-      dow: ["Δευ", "Τρί", "Τετ", "Πέμ", "Παρ", "Σάβ", "Κυρ"],
+      "dow.0": "Δευ", "dow.1": "Τρί", "dow.2": "Τετ", "dow.3": "Πέμ", "dow.4": "Παρ", "dow.5": "Σάβ", "dow.6": "Κυρ",
       w1: "Εύκολη", w2: "Μέτρια", w3: "Βαριά",
       rr: "Κυκλικά", bal: "Ισορροπημένα", spin: "Γύρισμα", all: "όλοι",
       st0: "δεν έγινε", st1: "έγινε", st2: "προσπεράστηκε",
@@ -121,7 +121,7 @@
   function freqText(f, W) {
     if (!f) return "";
     if (f.k === "n") return W.n.replace("{n}", f.n);
-    if (f.k === "wd") return (f.d || []).map(function (d) { return W.dow[d] || ""; }).join(" · ");
+    if (f.k === "wd") return (f.d || []).map(function (d) { return W["dow." + d] || ""; }).join(" · ");
     return W[f.k] || "";
   }
   function csvCell(v) {
@@ -132,7 +132,11 @@
   function mdText(s) { return String(s == null ? "" : s).replace(/([\\`*_\[\]<>#|])/g, "\\$1"); }
 
   function previews(state, lang) {
-    var W = WORDS[lang === "el" ? "el" : "en"], s = isObj(state) ? state : {};
+    // A pack language (orosI18n, ../i18n.js): English overlaid with the
+    // "chores" pack; in node (tests) en/el only.
+    var I = typeof window !== "undefined" && window.orosI18n;
+    var W = lang === "el" || lang === "en" || !I ? WORDS[lang === "el" ? "el" : "en"] : (WORDS[lang] || I.table(WORDS, "chores", lang));
+    var s = isObj(state) ? state : {};
     var members = Array.isArray(s.members) ? s.members.slice() : [];
     var tasks = Array.isArray(s.tasks) ? s.tasks.slice() : [];
     members.sort(function (x, y) { return (x.order || 0) - (y.order || 0) || (x.id < y.id ? -1 : 1); });
