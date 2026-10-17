@@ -1,5 +1,6 @@
 // ============================================================
 // calculator/core.js — orOS Calculator, pure logic (no DOM)
+// i18n-inline-ok: math symbols (π τ φ) and the Greek function names ημ συν εφ the parser accepts (data, no UI text)
 //   1. Expression engine (scientific + graphing): own tokenizer
 //      and recursive-descent parser (no eval / Function),
 //      operator precedence, implicit multiplication, functions,
