@@ -1,0 +1,75 @@
+# Stimmung
+Mit Stimmung hältst du in wenigen Sekunden fest, wie du dich fühlst, dazu, wo du bist, mit wem du zusammen bist und ein paar tägliche Gewohnheiten. Mit der Zeit zeigt dir Einblicke Muster.
+
+## Erste Schritte
+Die drei Buttons oben wechseln zwischen `Erfassen` (der Stift), `Einträge` (die Liste) und `Einblicke` (das Balkendiagramm). Unter der oberen Leiste zeigt eine Reihe farbiger Punkte deine letzten 7 Tage.
+
+Um eine Stimmung festzuhalten, öffne `Erfassen`, tippe oder klicke unter `Wie fühlst du dich?` auf ein oder mehrere Gefühle und drücke `Eintrag speichern`. Mehr ist nicht nötig.
+
+## Einen Eintrag erfassen
+- **Gefühle:** neun zum Start, von `Glücklich` bis `Leer`, plus alle, die du selbst hinzufügst. Jedes gewählte Gefühl bekommt einen Regler von 1 bis 5 für seine Stärke.
+- **`Wo & mit wem`:** Wähle einen `Ort` und eine `Person` oder `Keine Angabe`. Die App wählt den Wert vor, den du zu dieser Tageszeit am häufigsten nutzt.
+- **`Das Wichtigste` und `Rituale`:** Paare wie `Gut geschlafen` / `Zu wenig geschlafen` oder `Spazieren gegangen` / `Drinnen geblieben`. Tippe auf eine Seite; tippe noch einmal, um sie leer zu lassen.
+- **`Deine Aktivitäten`:** die Aktivitäten, die du selbst hinzugefügt hast (siehe unten). Tippe auf eine, um sie für diesen Eintrag zu markieren; tippe noch einmal, um die Markierung zu entfernen.
+- **`Was hat das ausgelöst?`:** Wähle einen Auslöser, zum Beispiel `Frist bei der Arbeit` oder `Gute Nachricht`.
+- **`Gedanken (optional)`:** eine kurze Notiz in freiem Text.
+
+`Letzten wiederholen` füllt das Formular mit deinem letzten Eintrag. Speicherst du innerhalb einer Stunde nach deinem letzten Eintrag, fragt Stimmung `Erfasst: … – aktualisieren?`: Wähle `Eintrag bearbeiten`, um die neue Auswahl in diesen Eintrag zu übernehmen, oder `Neuer Eintrag`, um beide zu behalten.
+
+### Deine eigenen Werte
+Tippe in ein Feld `Neuer Wert…` und drücke `Hinzufügen…` (oder [[Enter]]), um einen Ort, eine Person oder einen Auslöser hinzuzufügen. Zum Umbenennen oder Löschen drückst du lange auf den Chip oder klickst ihn mit rechts an, oder du tippst auf `Verwalten…` und dann auf den Chip. Nach dem Löschen erscheint für ein paar Sekunden ein Button `Rückgängig`.
+
+### Gefühle, Aktivitäten und Ziele
+`Stimmungen, Aktivitäten & Ziele…` unten in `Erfassen` öffnet drei Tabs:
+- **`Gefühle`:** Benenne jedes Gefühl um, gib ihm statt seines Gesichts ein Emoji, verschiebe es mit den Pfeilen oder blende es mit dem Auge aus. Füge eigene mit Emoji und Namen hinzu, wähle ihre Farbe und hake `Positiv` an, wenn sie in `Diese Woche vs. letzte` und `Wochenrückblick` als gutes Gefühl zählen sollen. Lösche einen Namen, um zum ursprünglichen zurückzukehren.
+- **`Aktivitäten`:** dasselbe für die Gewohnheitspaare (jede Seite hat ihren eigenen Namen) und für deine eigenen Aktivitäten.
+- **`Ziele`:** Wähle eine Aktivität und an wie vielen Tagen pro Woche (Montag bis Sonntag) oder pro Monat du sie markieren willst, zum Beispiel `Bewegt / Sport gemacht` 3-mal pro Woche.
+
+Ausgeblendetes verschwindet nur aus `Erfassen`: Einträge, die es schon nutzen, behalten es, und `Einblicke` zählt es weiter. Ein ausgeblendetes Gefühl oder eine ausgeblendete Aktivität erscheint wieder, während du einen Eintrag bearbeitest, der es enthält. Nichts, was du hinzufügst, lässt sich löschen, damit deine alten Einträge nie ihre Bedeutung verlieren; blende aus, was du nicht mehr nutzt.
+
+## Einträge
+`Einträge` listet alles auf, das Neueste zuerst. Mit `Einträge durchsuchen…` suchst du in Daten, Gefühlen, Orten, Menschen, Gewohnheiten, Auslösern und Notizen. Der Stift öffnet einen Eintrag in `Erfassen` zum Bearbeiten (`Verwerfen` bricht ab); der Papierkorb löscht ihn, mit `Rückgängig`.
+
+## Einblicke
+Wähle `7 Tage`, `30 Tage` oder `Alle`. Du bekommst einen `Wochenrückblick`, deine `Ziele`, `Muster` (Beobachtungen in einfachen Worten), `Wie du dich gefühlt hast`, deine Serie, `Diese Woche vs. letzte`, `Veränderte Stärke`, `Gewohnheiten`, `Rituale`, `Deine Aktivitäten`, einen Monats-`Kalender` (tippe auf einen Tag, um seine Einträge zu sehen), `Jahr in Pixeln`, `Orte`, `Menschen` und `Nach Wochentag`.
+
+- **`Ziele`:** wie weit du in dieser Woche oder diesem Monat bist und in wie vielen der letzten Wochen oder Monate du das Ziel erreicht hast. Ein Tag zählt einmal, egal wie viele Einträge er hat.
+- **`Jahr in Pixeln`:** ein Quadrat pro Tag des Jahres, gefärbt nach dem stärksten Gefühl dieses Tages. Tippe auf ein Quadrat, um die Einträge dieses Tages zu sehen; die Pfeile wechseln das Jahr.
+
+`Filter` grenzt das meiste davon auf einen Ort, eine Person oder eine Gewohnheit ein; `Filter löschen` setzt zurück. Nutzt du [Zyklus](app:cycle) auf diesem Gerät, kann dir `Muster` auch zeigen, wie du dich an Periodentagen fühlst.
+
+`PDF exportieren` speichert einen PDF-Bericht für den gewählten Zeitraum und die gewählten Filter. In orOS öffnet `In Tabelle öffnen` daneben dieselben Einträge als neues Blatt in [Tabelle](app:spreadsheet), eine Zeile pro Eintrag.
+
+## Aus einer anderen App importieren
+`Importieren…`, neben `PDF exportieren` oben in `Einblicke`, liest eine Datei, die du aus einer anderen Stimmungs-App exportiert hast. Stimmung zeigt, was es gefunden hat, bevor sich etwas ändert: die App, wie viele Einträge und welche Daten, wie jede Stimmung einem Gefühl zugeordnet wird und welche Aktivitäten neu sind. Wähle für jede Stimmung ein anderes Gefühl (oder `Überspringen`) und drücke `… importieren`. Danach bietet eine Meldung `Rückgängig` an.
+
+- **Daylio:** eine CSV (in Daylio `Mehr` → `Einträge exportieren` → CSV; braucht Premium) oder eine Sicherungsdatei mit der Endung `.daylio` (`Mehr` → `Backup & Wiederherstellung` → Export). Aktivitäten, die du in Stimmung schon hast oder die zu einem eingebauten Paar wie Lesen oder schlechtem Schlaf passen, werden markiert; die übrigen werden zu deinen eigenen Aktivitäten.
+- **Bearable:** die CSV aus dem Datenexport von Bearable. Die Stimmungszeilen werden zu Einträgen; die Zeilen `Emotions` werden zu Gefühlen, und Notizen kommen zum Eintrag dazu.
+- **eMoods:** der CSV-Export. Die Werte für Niedergeschlagenheit, gehobene Stimmung, Gereiztheit und Angst werden zu Traurig, Begeistert, Wütend und Ängstlich; Schlaf und die übrigen Spalten kommen in die Notiz.
+- **Jede CSV:** ein Datum (und eine Uhrzeit, falls vorhanden), eine Stimmung als Zahl von 1 bis 5 oder 1 bis 10 oder als Wort und wahlweise eine Notiz und Tags oder Aktivitäten.
+
+Stimmung erfasst Gefühle, keine Punktzahl, deshalb wird jede Stimmung zu einem Gefühl: die beste zu `Glücklich` 5/5, dann `Glücklich` 3/5, `Leer` 2/5 für eine mittlere Stimmung, `Traurig` 3/5 und `Traurig` 5/5. Importierst du dieselbe Datei noch einmal, kommen nur Einträge dazu, die noch nicht in Stimmung sind, und deine eigenen ändern sich nie.
+
+## Eine orOS-Datei speichern und öffnen
+`orOS-Datei (.orosmood)`, neben `Importieren…` oben in `Einblicke`, speichert alle Einträge, deine eigenen Orte, Menschen und Auslöser, deine Gefühle und Aktivitäten und deine Ziele als eine `.orosmood`-Datei, zum Beispiel, um sie ohne Synchronisierung auf ein anderes Gerät zu bringen oder eine Kopie aufzubewahren. Die Datei ist ein normales ZIP: Entpackt enthält sie die Daten als `content.json` plus `preview/mood.md` und `preview/mood.csv` für andere Programme. Sie ist nicht verschlüsselt, und Stimmungsdaten sind persönlich, also bewahre sie an einem sicheren Ort auf.
+
+`orOS-Datei öffnen…` (oder `Entpackter orOS-Ordner…`, oder „Öffnen mit“ orOS am Computer) zeigt, wie viele Datensätze neu und wie viele schon da sind; dann fügt `Hinzufügen` nur die neuen hinzu, mit ihren eigenen IDs: Dieselbe Datei noch einmal zu öffnen, fügt nichts hinzu. Ein schon vorhandener Eintrag bleibt, wie er ist, und einer, den du hier gelöscht hast, bleibt gelöscht; eine Datei löscht nie etwas. Ein Ort, eine Person oder ein Auslöser, dessen Namen du schon hast, nutzt deinen. Hake `Mit neueren Versionen aktualisieren` an, damit Einträge, die in der Datei später geändert wurden, deine Kopie ersetzen. `Rückgängig` in der Meldung entfernt das Hinzugefügte.
+
+## Synchronisierung und Sicherung
+Deine Einträge, deine eigenen Orte, Menschen und Auslöser, deine Gefühle und Aktivitäten (Namen, Emoji, Reihenfolge, ausgeblendet) und deine Ziele werden verschlüsselt über die [orOS-Synchronisierung](help:t/sync) abgeglichen. Der offene Tab, die Suche und die Filter bleiben auf diesem Gerät. Neben dem PDF-Bericht, der orOS-Datei und dem Import oben nutzt du die [Sicherung](help:t/backup) von orOS.
+
+## Tastenkürzel
+- [[Enter]] in einem Feld `Neuer Wert…` fügt den Wert hinzu.
+- [[Enter]] beim Umbenennen eines Chips speichert den Namen; [[Esc]] schließt das Menü.
+
+## Tipps
+- Deine Einträge erscheinen im [Kalender](app:calendar) an ihrem Tag; wenn du dort einen öffnest, kommst du hierher zurück, um ihn zu bearbeiten.
+- In `Einträge` öffnet der Buch-Button (`Darüber schreiben`) diesen Tag im [Ein-Satz-Tagebuch](app:diary), mit deinen Gefühlen und deiner Notiz ausgefüllt; dort wird nichts gespeichert, bis du es behältst.
+- Das Tagebuch zeigt die Gefühle jedes Tages unter seinem Datum; ein Tippen darauf bringt dich hierher zu den Einträgen dieses Tages (`Alle Tage zeigen` listet wieder alles auf).
+- Sobald du Einträge hast, erinnert dich orOS einmal am Tag, wenn du an diesem Tag noch nichts erfasst hast. Schalte das unter [Benachrichtigungen](help:t/notifications) aus.
+
+## Grenzen
+- Gefühle und Aktivitäten lassen sich ausblenden, aber nicht löschen. Deine eigenen Aktivitäten haben nur eine Seite (erledigt); die eingebauten Paare behalten ihre zwei Seiten.
+- Ziele zählen Tage, an denen eine Aktivität markiert ist; sie können keine „Nein“-Tage oder die Stärke eines Gefühls zählen.
+- Der [Kalender](app:calendar) zeigt deine eigenen Gefühle nur bei den neun eingebauten unter ihrem ursprünglichen Namen.
+- `Auf Werkseinstellungen zurücksetzen`, unten in `Einblicke`, löscht alle Einträge, deine eigenen Werte, deine Gefühle und Aktivitäten und deine Ziele auf jedem synchronisierten Gerät. Es fragt zweimal nach, und es gibt kein Rückgängig.

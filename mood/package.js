@@ -42,11 +42,14 @@
                 "journal", "chores", "bedtime", "outdoor"];
   var FIELDS = ["emotions", "loc", "person", "trig", "note"].concat(HABITS, ["acts"]);
   var COLS = ["loc", "trig", "person"];
+  // Preview words (keys as in mood.js: one "mood" pack).
   var EMO = {
-    en: { happy: "Happy", calm: "Calm", excited: "Excited", sad: "Sad", angry: "Angry",
-          anxious: "Anxious", tired: "Tired", stressed: "Stressed", numb: "Numb" },
-    el: { happy: "Χαρούμενος", calm: "Ήρεμος", excited: "Ενθουσιασμένος", sad: "Λυπημένος",
-          angry: "Θυμωμένος", anxious: "Αγχωμένος", tired: "Κουρασμένος", stressed: "Πιεσμένος", numb: "Άδειος" }
+    en: { "app.title": "Mood", "emo.happy": "Happy", "emo.calm": "Calm", "emo.excited": "Excited", "emo.sad": "Sad",
+          "emo.angry": "Angry", "emo.anxious": "Anxious", "emo.tired": "Tired", "emo.stressed": "Stressed",
+          "emo.numb": "Numb" },
+    el: { "app.title": "Διάθεση", "emo.happy": "Χαρούμενος", "emo.calm": "Ήρεμος", "emo.excited": "Ενθουσιασμένος",
+          "emo.sad": "Λυπημένος", "emo.angry": "Θυμωμένος", "emo.anxious": "Αγχωμένος",
+          "emo.tired": "Κουρασμένος", "emo.stressed": "Πιεσμένος", "emo.numb": "Άδειος" }
   };
 
   var hasOwn = Object.prototype.hasOwnProperty;
@@ -176,8 +179,8 @@
         cv[v.id] = v.bi && v.bi[el ? "el" : "en"] ? v.bi[el ? "el" : "en"] : v.label;
       });
     });
-    function emoName(k) { return emo[k] || L[k] || k; }
-    var md = ["# " + (el ? "Διάθεση" : "Mood"), ""];
+    function emoName(k) { return emo[k] || L["emo." + k] || k; }
+    var md = ["# " + L["app.title"], ""];
     var csv = [["date", "time", "feelings", "location", "with", "trigger", "habits", "activities", "note"].join(",")];
     var day = "";
     (state.entries || []).slice().sort(function (a, b) { return b.ts - a.ts || (a.id < b.id ? -1 : 1); }).forEach(function (e) {

@@ -15,17 +15,21 @@
 (function (root) {
   "use strict";
   var KEY = "oros-mood-data";
-  var EMO = {
-    happy:    { en: "Happy",    el: "Χαρούμενος" },
-    calm:     { en: "Calm",     el: "Ήρεμος" },
-    excited:  { en: "Excited",  el: "Ενθουσιασμένος" },
-    sad:      { en: "Sad",      el: "Λυπημένος" },
-    angry:    { en: "Angry",    el: "Θυμωμένος" },
-    anxious:  { en: "Anxious",  el: "Αγχωμένος" },
-    tired:    { en: "Tired",    el: "Κουρασμένος" },
-    stressed: { en: "Stressed", el: "Πιεσμένος" },
-    numb:     { en: "Numb",     el: "Άδειος" }
+  // Keys as in mood.js (one "mood" pack).
+  var W = {
+    en: { "search.entry": "Mood entry", "emo.happy": "Happy", "emo.calm": "Calm", "emo.excited": "Excited", "emo.sad": "Sad",
+          "emo.angry": "Angry", "emo.anxious": "Anxious", "emo.tired": "Tired", "emo.stressed": "Stressed",
+          "emo.numb": "Numb" },
+    el: { "search.entry": "Καταγραφή διάθεσης", "emo.happy": "Χαρούμενος", "emo.calm": "Ήρεμος", "emo.excited": "Ενθουσιασμένος",
+          "emo.sad": "Λυπημένος", "emo.angry": "Θυμωμένος", "emo.anxious": "Αγχωμένος",
+          "emo.tired": "Κουρασμένος", "emo.stressed": "Πιεσμένος", "emo.numb": "Άδειος" }
   };
+  // A pack language: English + the mood pack, when one is loaded.
+  function words(lang) {
+    var I = typeof window !== "undefined" && window.orosI18n;
+    if (I && lang && !W[lang]) I.table(W, "mood", lang);
+    return W[lang] || W.en;
+  }
 
   function str(v) { return typeof v === "string" ? v.trim() : ""; }
   function alive(x, tomb) {
@@ -39,7 +43,8 @@
     search: function (ctx) {
       var d = ctx.readJSON(KEY), out = [];
       if (!d || !Array.isArray(d.entries)) return out;
-      var lang = ctx.lang === "el" ? "el" : "en";
+      var w = words(ctx.lang);
+      var lang = ctx.lang === "el" ? "el" : "en";       // saved seeds carry bi { en, el }
       var tomb = d.deleted && typeof d.deleted === "object" ? d.deleted : {};
       var cols = d.cols && typeof d.cols === "object" ? d.cols : {};
       function label(col, id) {
@@ -66,10 +71,10 @@
         if (!e || typeof e.id !== "string" || !alive(e, tomb)) return;
         var feel = (Array.isArray(e.emotions) ? e.emotions : []).map(function (m) {
           if (!m) return "";
-          return own.emo[m.k] || (EMO[m.k] ? EMO[m.k][lang] : "");
+          return own.emo[m.k] || w["emo." + m.k] || "";
         }).filter(Boolean);
         var acts = (Array.isArray(e.acts) ? e.acts : []).map(function (id) { return own.act[id] || ""; }).filter(Boolean);
-        var title = feel.join(", ") || (lang === "el" ? "Καταγραφή διάθεσης" : "Mood entry");
+        var title = feel.join(", ") || w["search.entry"];
         out.push({
           id: e.id,
           title: title,

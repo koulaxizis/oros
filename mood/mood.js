@@ -30,7 +30,16 @@
   var DATA_VER    = 3;
 
   // ---------- 1. Constants, i18n, icons ----------
-  var LANG = localStorage.getItem("oros-lang") === "el" ? "el" : "en";
+  var LANG = window.orosI18n ? window.orosI18n.lang()
+           : (localStorage.getItem("oros-lang") === "el" ? "el" : "en");
+  // Dates and numbers in the active language (en-GB / el-GR / de-DE …)
+  function loc() { return window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB"); }
+  // One decimal for display: en / el keep "3.0" as before, a pack
+  // language gets its own decimal mark (German "3,0").
+  function fix1(n) {
+    if (LANG === "en" || LANG === "el") return n.toFixed(1);
+    return n.toLocaleString(loc(), { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  }
 
   var STRINGS = {
     en: {
@@ -216,7 +225,24 @@
       "px.title":       "Year in pixels",
       "px.prev":        "Previous year",
       "px.next":        "Next year",
-      "px.empty":       "No entries in this year."
+      "px.empty":       "No entries in this year.",
+      "seed.loc.0":     "At home",
+      "seed.loc.1":     "At work",
+      "seed.loc.2":     "Outdoors",
+      "seed.loc.3":     "Commute",
+      "seed.loc.4":     "Café & bars",
+      "seed.per.0":     "Alone",
+      "seed.per.1":     "Partner",
+      "seed.per.2":     "Kids",
+      "seed.per.3":     "Family",
+      "seed.per.4":     "Friends",
+      "seed.per.5":     "Colleagues",
+      "seed.trig.0":    "Work deadline",
+      "seed.trig.1":    "Argument",
+      "seed.trig.2":    "Good news",
+      "seed.trig.3":    "Exercise",
+      "seed.trig.4":    "Sick day",
+      "seed.trig.5":    "Late screens"
     },
     el: {
       "app.title":     "Διάθεση",
@@ -401,9 +427,28 @@
       "px.title":       "Η χρονιά σε pixel",
       "px.prev":        "Προηγούμενο έτος",
       "px.next":        "Επόμενο έτος",
-      "px.empty":       "Καμία καταχώρηση σε αυτό το έτος."
+      "px.empty":       "Καμία καταχώρηση σε αυτό το έτος.",
+      "seed.loc.0":     "Στο σπίτι",
+      "seed.loc.1":     "Στη δουλειά",
+      "seed.loc.2":     "Στη φύση",
+      "seed.loc.3":     "Μετακίνηση",
+      "seed.loc.4":     "Καφέ & μπάρες",
+      "seed.per.0":     "Μόνος",
+      "seed.per.1":     "Σύντροφος",
+      "seed.per.2":     "Παιδιά",
+      "seed.per.3":     "Οικογένεια",
+      "seed.per.4":     "Φίλοι",
+      "seed.per.5":     "Συνάδελφοι",
+      "seed.trig.0":    "Προθεσμία",
+      "seed.trig.1":    "Έριδα",
+      "seed.trig.2":    "Καλά νέα",
+      "seed.trig.3":    "Άσκηση",
+      "seed.trig.4":    "Μέρα αρρώστιας",
+      "seed.trig.5":    "Οθόνες αργά"
     }
   };
+
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "mood", LANG);
 
   function t(key) {
     var p = STRINGS[LANG] || STRINGS.en;
@@ -442,6 +487,7 @@
   STRINGS.el["emo.tired"]    = "Κουρασμένος";
   STRINGS.el["emo.stressed"] = "Πιεσμένος";
   STRINGS.el["emo.numb"]     = "Άδειος";
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "mood", LANG);
 
   // Triadic habits — shared by the capture L3 AND the insights
   // adherence view (one vocabulary, two consumers).
@@ -473,33 +519,24 @@
 
   // Seed values for the two custom columns (editable, deletable —
   // they live in STATE once seeded, not in this constant).
-  var LOC_SEED = [
-    { en: "At home",   el: "Στο σπίτι" },
-    { en: "At work",   el: "Στη δουλειά" },
-    { en: "Outdoors",  el: "Στη φύση" },
-    { en: "Commute",   el: "Μετακίνηση" },
-    { en: "Café & bars", el: "Καφέ & μπάρες" }
-  ];
-  var PERSON_SEED = [
-    { en: "Alone",     el: "Μόνος" },
-    { en: "Partner",   el: "Σύντροφος" },
-    { en: "Kids",      el: "Παιδιά" },
-    { en: "Family",    el: "Οικογένεια" },
-    { en: "Friends",   el: "Φίλοι" },
-    { en: "Colleagues", el: "Συνάδελφοι" }
-  ];
-  
-  // Factory triggers — σπέρνονται ΜΙΑ φορά σε άδεια λίστα
-  // (νέα στήλη = δεν είχε ποτέ στιγμή γέννησης). Η ελευθερία
-  // (note/προσθήκη custom) μένει στον χρήστη.
-  var TRIG_SEED = [
-    { en: "Work deadline",  el: "Προθεσμία" },
-    { en: "Argument",       el: "Έριδα" },
-    { en: "Good news",      el: "Καλά νέα" },
-    { en: "Exercise",       el: "Άσκηση" },
-    { en: "Sick day",       el: "Μέρα αρρώστιας" },
-    { en: "Late screens",   el: "Οθόνες αργά" }
-  ];
+  // The factory values live in STRINGS as seed.<col>.<i>; en / el are
+  // what saved seeds carry in bi (a pack language shows its own text
+  // through seedText, saved data is never rewritten).
+  function seedList(col, n) {
+    var out = [];
+    for (var i = 0; i < n; i++) {
+      var k = "seed." + col + "." + i;
+      out.push({ k: k, en: STRINGS.en[k], el: STRINGS.el[k] });
+    }
+    return out;
+  }
+  var LOC_SEED = seedList("loc", 5);
+  var PERSON_SEED = seedList("per", 6);
+  // Factory triggers: seeded ONCE into an empty list (a new column
+  // never had a birth moment). Notes and own values stay the user's.
+  var TRIG_SEED = seedList("trig", 6);
+  // A seed's label in the active language (birth text for new seeds).
+  function seedText(v) { return LANG === "el" ? v.el : LANG === "en" ? v.en : t(v.k); }
 
   // ---- Wave 30: custom feelings and activities (mood/vocab.js) ----
   // EMOTIONS / HABITS are now DERIVED from the built-ins plus the
@@ -608,7 +645,9 @@
   function $(id) { return document.getElementById(id); }
   function pad(n) { return (n < 10 ? "0" : "") + n; }
   function esc(s) {
-    return String(s).replace(/[&<>"']/g, function (c) {
+    // the two quotes as \u escapes: the i18n string scanner reads a
+    // bare quote in a regex as the start of a string
+    return String(s).replace(/[&<>\u0022\u0027]/g, function (c) {
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
     });
   }
@@ -645,15 +684,15 @@ function newState() {
   // #10: DETERMINISTIC seed ids — two fresh installs that sync
   // must NOT union into duplicate chips. Positional, stable.
   s.cols.loc  = LOC_SEED.map(function (v, i) {
-    return { id: "seed-loc-" + i, label: LANG === "el" ? v.el : v.en,
+    return { id: "seed-loc-" + i, label: seedText(v),
              bi: { en: v.en, el: v.el }, mtime: 0, pos: i };
   });
   s.cols.person = PERSON_SEED.map(function (v, i) {
-    return { id: "seed-per-" + i, label: LANG === "el" ? v.el : v.en,
+    return { id: "seed-per-" + i, label: seedText(v),
              bi: { en: v.en, el: v.el }, mtime: 0, pos: i };
   });
   s.cols.trig = TRIG_SEED.map(function (v, i) {
-    return { id: "seed-trig-" + i, label: LANG === "el" ? v.el : v.en,
+    return { id: "seed-trig-" + i, label: seedText(v),
              bi: { en: v.en, el: v.el }, mtime: 0, pos: i };
   });
   return s;
@@ -664,7 +703,7 @@ function newState() {
 // deletes μέσω Manage, πρόσθετες τιμές μέσω Add….
 function seedTriggers() {
   state.cols.trig = TRIG_SEED.map(function (v, i) {
-    return { id: "seed-trig-" + i, label: LANG === "el" ? v.el : v.en,
+    return { id: "seed-trig-" + i, label: seedText(v),
              bi: { en: v.en, el: v.el }, mtime: 0, pos: i };
   });
   state.trigSeeded = true;
@@ -824,9 +863,19 @@ function colValById(col, id) {
 // label is just the birth-time snapshot. Custom / renamed
 // values have no bi: the user's typed text is their only truth
 // (renaming a seed REMOVES bi in applyChipRename).
+// A bilingual seed's table key, from its saved English text.
+function seedKeyOf(en) {
+  var all = LOC_SEED.concat(PERSON_SEED, TRIG_SEED);
+  for (var i = 0; i < all.length; i++) if (all[i].en === en) return all[i].k;
+  return null;
+}
 function colLabel(v) {
   if (!v) return "";
   if (v.bi && v.bi[LANG]) return v.bi[LANG];
+  if (v.bi && LANG !== "en" && LANG !== "el") {
+    var sk = seedKeyOf(v.bi.en);
+    if (sk) return t(sk);
+  }
   return v.label;
 }
 
@@ -1169,6 +1218,7 @@ function mergeMoodStates(A, B) {
   STRINGS.el["day.none"] = "Καμία καταχώρηση αυτή τη μέρα.";
   STRINGS.el["wr.btn"]   = "Γράψε γι' αυτό";
   STRINGS.el["wr.head"]  = "Διάθεση: {m}";
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "mood", LANG);
 
   function relTime(ts) {
     var m = Math.floor((Date.now() - ts) / 60000);
@@ -2255,7 +2305,7 @@ function mergeMoodStates(A, B) {
       lb.className = "twd";
       var lbd = new Date();                    // DST-safe calendar step
       lbd.setDate(lbd.getDate() - (6 - idx));
-      lb.textContent = lbd.toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB",
+      lb.textContent = lbd.toLocaleDateString(loc(),
           { weekday: "narrow" });
       wrap.appendChild(lb);
       host.appendChild(wrap);
@@ -2267,7 +2317,7 @@ function mergeMoodStates(A, B) {
   function searchHaystack(e) {
     var bits = [];
     var d = new Date(e.ts);
-    bits.push(d.toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB",
+    bits.push(d.toLocaleDateString(loc(),
       { weekday: "short", day: "numeric", month: "short" }));
     (e.emotions || []).forEach(function (m) {
       var em = emoByK(m.k);
@@ -2304,7 +2354,7 @@ function mergeMoodStates(A, B) {
       when.className = "e-when";
       var d = new Date(e.ts);
       when.textContent =
-        d.toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB",
+        d.toLocaleDateString(loc(),
           { weekday: "short", day: "numeric", month: "short" }) +
         " · " + pad(d.getHours()) + ":" + pad(d.getMinutes());
       li.appendChild(when);
@@ -2410,7 +2460,7 @@ function mergeMoodStates(A, B) {
     lb.className = "ent-day-lbl";
     var p = dayFilter.split("-");
     lb.textContent = t("day.only").replace("{d}", new Date(+p[0], +p[1] - 1, +p[2])
-      .toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" }));
+      .toLocaleDateString(loc(), { weekday: "short", day: "numeric", month: "short", year: "numeric" }));
     bar.appendChild(lb);
     var all = document.createElement("button");
     all.type = "button";
@@ -2607,7 +2657,7 @@ function mergeMoodStates(A, B) {
       var val = document.createElement("span");
       val.className = "dist-val";
       val.textContent = String(r.n) + " · " +
-        t("ins.avg").replace("{n}", r.avg.toFixed(1));
+        t("ins.avg").replace("{n}", fix1(r.avg));
       if (bst) {
         var share = r.n / es.length * 100;
         var bshare = (bst.n[r.em.k] || 0) / baseEs.length * 100;
@@ -2743,7 +2793,7 @@ function mergeMoodStates(A, B) {
     var mt = document.createElement("span");
     mt.className = "cal-month";
     mt.textContent = base.toLocaleDateString(
-      LANG === "el" ? "el-GR" : "en-GB",
+      loc(),
       { month: "long", year: "numeric" });
     head.appendChild(mt);
     var next = document.createElement("button");
@@ -2776,7 +2826,7 @@ function mergeMoodStates(A, B) {
     for (var i = 0; i < 7; i++) {
       var wd = document.createElement("span");
       wd.textContent = new Date(2024, 0, 1 + i)  // Mon Jan 1, 2024 week
-        .toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB",
+        .toLocaleDateString(loc(),
           { weekday: "narrow" });
       wk.appendChild(wd);
     }
@@ -2849,7 +2899,7 @@ function mergeMoodStates(A, B) {
     dl.innerHTML = "";
     var dparts = dayK.split("-");              // "YYYY-MM-DD" → local Date
     var dstr = new Date(+dparts[0], +dparts[1] - 1, +dparts[2])
-      .toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB",
+      .toLocaleDateString(loc(),
         { weekday: "short", day: "numeric", month: "long", year: "numeric" });
     var title = document.createElement("div");
     title.className = "col-lab";
@@ -3235,7 +3285,7 @@ function mergeMoodStates(A, B) {
       var li = document.createElement("div");
       li.className = "tr-line";
       var wdName = new Date(2024, 0, 1 + ((r.wd + 6) % 7))   // Mon Jan 1 2024
-        .toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB",
+        .toLocaleDateString(loc(),
           { weekday: "long" });
       li.appendChild(document.createTextNode(wdName + ": "));
       var em = emoByK(r.k);
@@ -3429,10 +3479,10 @@ function mergeMoodStates(A, B) {
       row.appendChild(bar);
       var val = document.createElement("span");
       val.className = "dist-val";
-      val.textContent = r.r.toFixed(1) + "/5";
+      val.textContent = fix1(r.r) + "/5";
       var dv = document.createElement("span");
       dv.className = "dist-delta " + (r.d > 0 ? "up" : "down");
-      dv.textContent = (r.d > 0 ? "+" : "−") + Math.abs(r.d).toFixed(1);
+      dv.textContent = (r.d > 0 ? "+" : "−") + fix1(Math.abs(r.d));
       val.appendChild(dv);
       row.appendChild(val);
       host.appendChild(row);
@@ -3563,7 +3613,7 @@ function mergeMoodStates(A, B) {
       var mh = document.createElement("span");
       mh.className = "px-h";
       mh.textContent = new Date(2024, m - 1, 1).toLocaleDateString(
-        LANG === "el" ? "el-GR" : "en-GB", { month: "narrow" });
+        loc(), { month: "narrow" });
       grid.appendChild(mh);
     }
     var todayK = dayKey(Date.now()), used = {};
@@ -3583,7 +3633,7 @@ function mergeMoodStates(A, B) {
         var cell = document.createElement("button");
         cell.type = "button";
         cell.className = "px-cell" + (dk === todayK ? " today" : "");
-        var dl = new Date(y, mm - 1, d).toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB",
+        var dl = new Date(y, mm - 1, d).toLocaleDateString(loc(),
           { day: "numeric", month: "long" });
         if (px[dk]) {
           var em = emoByK(px[dk].k);
@@ -4193,7 +4243,7 @@ function mergeMoodStates(A, B) {
       doc.setFontSize(9); doc.setTextColor(130);
       y = M + 28;
       doc.text(rangeLbl + " · " +
-        new Date().toLocaleString(LANG === "el" ? "el-GR" : "en-GB"), M, y);
+        new Date().toLocaleString(loc()), M, y);
       y += 14;
       if (active) {
         doc.text(t("ins.showing")
@@ -4237,7 +4287,7 @@ function mergeMoodStates(A, B) {
           doc.setFont(FONT, "normal");
           doc.setTextColor(115);
           doc.text(r.c + "  ·  " + pct + "%  ·  " +
-            t("ins.avg").replace("{n}", r.avg.toFixed(1)),
+            t("ins.avg").replace("{n}", fix1(r.avg)),
             W - M - 8, y, { align: "right" });
           y += 15;
         });
@@ -4342,7 +4392,7 @@ function mergeMoodStates(A, B) {
           });
           wrows.forEach(function (r) {
             var wdName = new Date(2024, 0, 1 + ((r.wd + 6) % 7))
-              .toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB",
+              .toLocaleDateString(loc(),
                 { weekday: "long" });
             kv(wdName, emoLabel(r.k) + "  ·  +" + r.d + "pt");
           });
@@ -4678,6 +4728,7 @@ function mergeMoodStates(A, B) {
   STRINGS.el["imp.w.anx"]    = "Άγχος";
   STRINGS.el["imp.w.slp"]    = "Ύπνος";
   STRINGS.el["imp.w.more"]   = "Άλλες δραστηριότητες";
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "mood", LANG);
 
   var IMP_ACCEPT = ".csv,.tsv,.txt,.daylio,.zip,.json,text/csv,text/plain,application/zip,application/octet-stream";
   var IMP_LIST_MAX = 24;                  // names shown per preview line
@@ -4695,10 +4746,12 @@ function mergeMoodStates(A, B) {
     BUILTIN_EMOS.forEach(function (b) {
       emos.push({ k: b.k, label: STRINGS.en[b.i18n] });
       emos.push({ k: b.k, label: STRINGS.el[b.i18n] });
+      if (LANG !== "en" && LANG !== "el") emos.push({ k: b.k, label: t(b.i18n) });
     });
     HABITS.forEach(function (h) {
       habits.push({ f: h.f, yes: STRINGS.en[h.yes], no: STRINGS.en[h.no] });
       habits.push({ f: h.f, yes: STRINGS.el[h.yes], no: STRINGS.el[h.no] });
+      if (LANG !== "en" && LANG !== "el") habits.push({ f: h.f, yes: t(h.yes), no: t(h.no) });
       habits.push({ f: h.f, yes: habLbl(h, "yes"), no: habLbl(h, "no") });
     });
     return {
@@ -4741,7 +4794,7 @@ function mergeMoodStates(A, B) {
   }
 
   function fmtImpDay(ts) {
-    return new Date(ts).toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB",
+    return new Date(ts).toLocaleDateString(loc(),
       { day: "numeric", month: "short", year: "numeric" });
   }
   function nameList(arr) {
@@ -4942,6 +4995,7 @@ function mergeMoodStates(A, B) {
   STRINGS.el["oros.save"]   = "Αρχείο orOS (.orosmood)";
   STRINGS.el["oros.open"]   = "Άνοιγμα αρχείου orOS…";
   STRINGS.el["oros.folder"] = "Αποσυμπιεσμένος φάκελος orOS…";
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "mood", LANG);
 
   var RP = window.OrosRecordPkg || null, MPK = window.OrosMoodPackage || null;
   var recAdded = null;                    // the last open's added ids, per collection
@@ -4968,7 +5022,7 @@ function mergeMoodStates(A, B) {
     if (viewMode === "insights") renderInsights();
   }
   var recFile = RP && MPK && window.OrosBundle ? RP.ui(MPK.DESC, {
-    lang: function () { return LANG; },
+    lang: function () { return LANG === "el" ? "el" : "en"; },
     get: function () { var s = canonState(state); s.__folded = foldedMap(); return s; },
     title: function () { return t("app.title"); },
     set: function (next, info) {
@@ -5027,7 +5081,7 @@ function mergeMoodStates(A, B) {
       state.sm = now;
       save();
       afterRecChange();
-      transientNote(RP.str(LANG, "undone"));
+      transientNote(RP.str(LANG === "el" ? "el" : "en", "undone"));
     },
     toast: function (text, undo) {
       if (undo) showToast(text, t("del.undo"), undo);
