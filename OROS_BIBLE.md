@@ -7376,3 +7376,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - orOS Drive on the phone: the whole orOS disk appears as «orOS» in Android's Files app and every file picker (a DocumentsProvider in the orOS Android app; not in the F-Droid build).
 - Files: `android/app/src/drive/**` (DriveProvider, DriveActivity, manifest, strings EN/EL), `.github/workflows/android.yml` (oros-drive pin), Files help EN/EL, Bible.
   - Tests: full suite green; Android build green on GitHub. Not tested: a real phone (needs a new APK).
+
+### 2026-10-17 — First-run profiles: new users choose what the menu shows (#465) — 2.73.00
+- New users choose what the menu shows: Everything (first and chosen), or Home, Work, School, Creating, Games and any app by hand; later from Settings › Menu › Choose a profile.
+- Files: `profiles.js` (new, precached), `shell.js`, `launcher.js`, `settings/{settings,core}.js`, translations, help menu + Settings EN/EL, Bible.
+  - Tests: full suite green (new `tests/profiles.test.js`); real Chromium 360 EL / 1280 EN. Not tested: a real phone.
