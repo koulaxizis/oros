@@ -215,6 +215,16 @@ export async function handle(request, env, connectFn, now, fetchFn) {
     if (!okOrigin) return new Response(null, { status: 403 });
     return new Response(null, { status: 204, headers: corsHeaders(okOrigin) });
   }
+  if (url.pathname === "/__oasa_probe" && request.method === "GET") {   // TEMP probe, branch claude/oasa-probe only
+    const out = ["colo=" + ((request.cf && request.cf.colo) || "?")];
+    for (const u of ["https://telematics.oasa.gr/api/?act=getStopArrivals&p1=061260", "http://telematics.oasa.gr/api/?act=getStopArrivals&p1=061260", "https://telematics.oasa.gr/api/?act=getStopNameAndXY&p1=061260"]) {
+      try {
+        const r = await fetch(u, { redirect: "manual", signal: AbortSignal.timeout(8000) });
+        out.push(u + " -> " + r.status + " " + (r.headers.get("content-type") || "") + " :: " + (await r.text()).slice(0, 600));
+      } catch (e) { out.push(u + " -> ERR " + (e && e.name)); }
+    }
+    return new Response(out.join("\n\n"), { status: 200, headers: { "Content-Type": "text/plain; charset=utf-8" } });
+  }
   if (url.pathname === "/" && request.method === "GET") {
     return new Response("orOS mail relay\n", { status: 200, headers: { "Content-Type": "text/plain" } });
   }
