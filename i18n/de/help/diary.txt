@@ -1,0 +1,104 @@
+# Ein-Satz-Tagebuch
+Ein Satz pro Tag, geschrieben in zehn Sekunden. Unter der Zeile jedes Tages siehst du dasselbe Datum in den Vorjahren, so kommt der heutige Tag in einem Jahr zu dir zurück.
+
+## Heute schreiben
+Öffne die App und tippe. Die Zeile speichert sich beim Tippen selbst (darunter erscheint `Gespeichert`); [[Enter]] speichert sofort.
+- Eine Zeile kann bis zu 280 Zeichen lang sein, in einer Zeile. Der Zähler erscheint, wenn du dem Ende nahe kommst.
+- Wähle, wenn du magst, ein Emoji für den Tag: 😊 😐 😔 😴 🎉 ❤️. Tippe noch einmal auf dasselbe Emoji, um es zu entfernen.
+- Du schreibst nach Mitternacht? Bis 03:00 fragt die App, ob die Zeile zu `Gestern` oder `Heute` gehört.
+- Wenn du den Text leerst oder `Diesen Tag löschen` wählst, wird der Tag entfernt; `Rückgängig` in der Meldung holt ihn zurück.
+
+## Andere Tage
+- Die Pfeile neben dem Datum gehen zum Tag davor oder danach; `Zurück zu heute` kehrt zurück. Du kannst jeden vergangenen Tag schreiben oder korrigieren, aber keinen, der noch nicht gekommen ist.
+- Die Stern-Schaltfläche oben öffnet `Eine zufällige Erinnerung` aus deinem Tagebuch.
+
+## Mehr über einen Tag
+Unter der Zeile öffnet `✎ Mehr über diesen Tag schreiben` einen längeren Eintrag für denselben Tag. Der Satz bleibt das Herz des Tagebuchs; der längere Eintrag ist freiwillig.
+- Er speichert sich beim Tippen selbst. `Vorschau` zeigt ihn formatiert, `Schreiben` geht zurück zum Text.
+- Einfache Formatierung: `**fett**`, `*kursiv*`, `# Überschrift`, `- Liste`, `1. Liste`, `> Zitat`, `---` für eine Linie und `[Text](https://…)` für einen Link. Nur Web- und E-Mail-Links werden zu Links; alles andere (HTML, Skripte) bleibt reiner Text und wird nie ausgeführt.
+- `Längeren Eintrag leeren` entfernt Text, Fotos, Ort und Wetter dieses Tages; `Rückgängig` holt sie zurück.
+- In `Meine Tage` und `Jahr` markiert ein ✎ die Tage mit einem längeren Eintrag. Die Suche findet auch Wörter darin.
+
+## Fragen und Vorlagen
+- `Frage des Tages` bietet jeden Tag eine Frage (auf jedem Gerät dieselbe), in der Sprache von orOS. `Beantworten` setzt die Frage als Überschrift in den längeren Eintrag; `Andere Frage` zeigt die nächste.
+- `Vorlagen` fügen eine fertige Gliederung ein: Dankbarkeit, einen Tagesrückblick, eine Morgenseite.
+- Eigene Fragen: Füge in `Tagebuch-Einstellungen` › `Deine Fragen` jede Frage hinzu, die du magst. Sie kommen zur Frage des Tages dazu und werden mit deinen Tagen synchronisiert.
+
+## Fotos
+- Bis zu vier Fotos pro Tag. `+` wählt ein Bild; es wird mit höchstens 1600 Pixeln Breite neu gezeichnet und als JPEG gespeichert, daher bleiben die Kameradaten darin (EXIF, der Aufnahmeort) nicht erhalten.
+- Fotos sind Dateien auf dem orOS-Speicher, in Dateien › `Diary` › `Photos`. Der Eintrag behält nur ihre Namen. Die Synchronisierung überträgt die Bilder selbst nicht: Starte Vault Drive, um sie auf deine anderen Geräte zu bringen; bis dahin zeigen diese Geräte `Nicht auf diesem Gerät`.
+- Tippe auf ein Foto, um es groß zu sehen; `Dieses Foto entfernen` nimmt es aus dem Eintrag (mit `Rückgängig`), und die Datei verschwindet ein paar Sekunden später vom Speicher.
+
+## Ort und Wetter
+- `📍 Ort hinzufügen`: Gib einen Ortsnamen ein oder tippe einmal auf `Meine Position verwenden`. Die Position wird nur abgefragt, wenn du darauf tippst, und auf etwa 1 km gerundet gespeichert.
+- `⛅ Wetter des Tages hinzufügen` holt das Wetter dieses Tages von Open-Meteo (derselbe kostenlose Dienst wie in der Wetter-App): den Himmel sowie die höchste und tiefste Temperatur. Dafür braucht es einen Ort (ein eingegebener Name wird zuerst gesucht); ohne Ort nimmt es die Stadt der Wetter-App. Abgerufen wird nur, wenn du darauf tippst.
+- Die Temperaturen folgen den Einheiten der Wetter-App.
+
+## PDF-Buch
+Wähle in `Tagebuch-Einstellungen` › `PDF-Buch` ein Jahr (oder alle Jahre) und tippe auf `PDF-Buch erstellen`: ein PDF mit Datum, Zeile, längerem Eintrag, Ort, Wetter und Fotos jedes Tages. Es wird auf diesem Gerät erstellt, mit Schriften, die orOS mitbringt.
+
+## PIN-Sperre
+- Lege in `Tagebuch-Einstellungen` › `PIN-Sperre` eine PIN mit 4 bis 8 Ziffern fest. Das Tagebuch fragt dann beim Öffnen danach und erneut nach einer Minute im Hintergrund. `Jetzt sperren` sperrt sofort.
+- Gespeichert wird nur ein gesalzener Hash der PIN (PBKDF2), nur auf diesem Gerät; andere Geräte haben ihre eigene PIN oder keine.
+- Nach fünf falschen Versuchen wartest du vor jedem neuen Versuch etwas länger.
+- Es ist ein Sichtschutz, keine Verschlüsselung. Deine Tage bleiben im Speicher dieses Browsers lesbar, werden wie gewohnt mit deinen anderen Geräten synchronisiert, und das Tagebuch fehlt in der Menüsuche, solange eine PIN gesetzt ist. PIN vergessen? Wenn du die Websitedaten von orOS im Browser löschst, ist sie weg (mit allen anderen lokalen Einstellungen); mit Synchronisierung kommen deine Tage aus der Cloud zurück.
+
+## An diesem Tag
+Unter der Zeile zeigt `An diesem Tag`, was du am selben Datum in früheren Jahren geschrieben hast, das Neueste zuerst. Eine Zeile vom 29. Februar erscheint in Jahren ohne diesen Tag auch am 28. Februar. Tippe auf eine Zeile, um den Tag zu öffnen.
+
+## Meine Tage
+- Ein Monatskalender: Die Tage mit einer Zeile sind farbig und zeigen ihr Emoji. Tippe auf einen Tag, um ihn zu öffnen.
+- Unter dem Kalender stehen die Zeilen des Monats.
+- Das Suchfeld findet Tage in jedem Jahr. Jedes eingegebene Wort muss in der Zeile stehen; Groß- und Kleinschreibung und Akzente spielen keine Rolle.
+
+## Jahr
+`Jahr` zeigt alle Zeilen eines Jahres auf einer Seite, Monat für Monat. `Drucken` druckt sie oder speichert sie im Druckfenster als PDF.
+
+## Serie
+Die Kopfzeile und die Zeile unter `An diesem Tag` zeigen deine Serie: die Tage in Folge, an denen du geschrieben hast, bis heute (oder gestern, solange heute noch leer ist), und deine längste.
+
+## Abendliche Erinnerung
+Hake in `Tagebuch-Einstellungen` (die Schaltfläche oben rechts) `Erinnern, wenn ich heute noch nichts geschrieben habe` an und wähle die Uhrzeit (anfangs 21:30). Die Erinnerung kommt nur an Tagen ohne Zeile, auch wenn die App geschlossen ist, solange orOS offen ist. Tippe darauf, um zu schreiben. Sie ist anfangs aus und bleibt auf diesem Gerät.
+
+## Exportieren und importieren
+- `Text`, `CSV` und `JSON` in `Tagebuch-Einstellungen` laden alle Zeilen herunter.
+- `Datei auswählen` liest eine CSV-, JSON- oder Textdatei mit einem Datum und einer Zeile pro Tag, wie die Exporte. Datumsangaben können 2026-10-11 oder 11/10/2026 sein. Tage, die schon eine Zeile haben, behalten sie.
+
+## Eine orOS-Datei speichern und öffnen
+In `Tagebuch-Einstellungen` speichert `orOS-Datei (.orosdiary)` die Zeile, den längeren Eintrag (mit Ort und Wetter), die Fotos jedes Tages und die eigenen Fragen als eine `.orosdiary`-Datei, zum Beispiel um dein Tagebuch ohne Synchronisierung auf ein anderes Gerät zu bringen oder eine Kopie aufzubewahren. Die Datei ist ein einfaches ZIP: Entpackt enthält sie das Tagebuch als `content.json`, die Fotos in `media/` sowie `preview/diary.md` und `preview/diary.csv` für andere Programme. Sie ist nicht verschlüsselt, und die PIN-Sperre gilt nicht für sie, bewahre sie also sicher auf. Erinnerung, PIN und Ansicht bleiben auf diesem Gerät.
+
+`orOS-Datei öffnen…` (oder `Entpackter orOS-Ordner…` oder „Öffnen mit“ orOS am Computer) zeigt, wie viele Tage neu und wie viele schon da sind; dann fügt `Hinzufügen` nur die neuen hinzu: Dieselbe Datei erneut zu öffnen, fügt nichts hinzu. Ein Tag, der hier schon eine Zeile oder einen längeren Eintrag hat, behält ihn, und ein Tag, den du hier gelöscht hast, bleibt gelöscht; eine Datei löscht nie etwas. Hake `Mit neueren Versionen aktualisieren` an, damit Tage, die in der Datei später geändert wurden, deine Kopie ersetzen. Die Fotos kommen nach Dateien › `Diary` › `Photos`, wenn sie noch nicht dort sind. `Rückgängig` in der Meldung entfernt, was hinzugefügt wurde. Ist die PIN-Sperre an, wartet eine von außen geöffnete Datei, bis du entsperrst.
+
+## Aus anderen Tagebuch-Apps importieren
+`Datei auswählen` liest auch die Exporte von vier Tagebuch-Apps. Eine Vorschau zeigt die Daten, die Einträge und was passieren wird, bevor etwas geschrieben wird; `Rückgängig` in der Meldung nimmt den ganzen Import zurück.
+- Day One: in den Einstellungen von Day One `Import/Export` › `Export` › `JSON`. Wähle das ZIP (mit seinen Fotos) oder die `Journal.json` darin.
+- Journey: Exportiere in den Einstellungen von Journey das Tagebuch als ZIP. Wähle das ZIP.
+- Diaro: in den Einstellungen von Diaro `Backup & Restore` › eine Sicherung erstellen (ZIP oder XML). Wähle das ZIP oder `DiaroBackup.xml`.
+- Daylio: in Daylio `More` › `Export entries` › `CSV`. Nur Notiztitel und Notiz kommen herein; die Stimmungen gehören zu [Stimmung](app:mood).
+- Der erste Satz jedes Tages wird zur Zeile des Tages (höchstens 280 Zeichen), und der ganze Text kommt in den längeren Eintrag. Mehrere Einträge an einem Tag werden in zeitlicher Reihenfolge verbunden, mit einer Linie dazwischen.
+- Ort und Wetter kommen mit, wenn die Datei sie hat und der Tag keine hat. Mit `Auch die Fotos importieren` werden bis zu vier Fotos pro Tag in Dateien › `Diary` › `Photos` gespeichert, ohne ihre Kameradaten neu gezeichnet; Bilder, die dieser Browser nicht lesen kann (etwa HEIC), werden übersprungen.
+- Dein eigener Text gewinnt immer: Ein Tag mit einer Zeile behält sie und bekommt den importierten Text nur, wenn sein längerer Eintrag leer ist; ein Tag, dessen längerer Eintrag Text hat, wird übersprungen. Dieselbe Datei erneut zu importieren, fügt nichts hinzu.
+- Formatierungen werden zu reinem Text und der einfachen Formatierung des Tagebuchs; nichts aus der Datei wird je ausgeführt.
+
+## Synchronisierung und Datenschutz
+- Deine Zeilen folgen dir über die orOS-Synchronisierung auf alle deine Geräte, verschlüsselt wie deine übrigen Daten. Ebenso die längeren Einträge, Orte, das Wetter und deine eigenen Fragen; jeder Teil eines Tages wird einzeln synchronisiert, sodass beides bleibt, wenn du den Text auf einem Gerät schreibst und auf einem anderen einen Ort hinzufügst.
+- PIN und Erinnerung bleiben auf jedem Gerät.
+- Das Tagebuch ist persönlich, daher ist es anfangs nicht in der Menüsuche. Um deine Zeilen über das Menü zu finden, hake es in [Einstellungen](app:settings) › `Sprache & Suche` an. Die Sucheinstellungen bleiben auf jedem Gerät.
+- Wird derselbe Tag auf zwei Geräten geändert, bevor sie synchronisieren, gewinnt die neueste Änderung.
+
+## Tastenkürzel
+- [[←]] und [[→]]: der Tag davor oder danach. Beim Tippen in der Zeile [[Alt+←]] und [[Alt+→]].
+- [[Enter]] in der Zeile: speichern; an einem vergangenen Tag geht es auch zum nächsten Tag.
+- [[Esc]]: `Tagebuch-Einstellungen` oder das Foto schließen.
+
+## Grenzen
+- Der längere Eintrag kennt nur die einfache Formatierung oben: keine Tabellen, keine Bilder im Text, keine Farben. Bis zu 20.000 Zeichen pro Tag.
+- Fotos werden nur über Vault Drive synchronisiert (sie sind Dateien auf dem Speicher), und nur vier passen in einen Tag. Sehr große Bilder (über 40 MB) werden abgelehnt.
+- Das Wetter kommt von Open-Meteo und braucht Internet. Für lange zurückliegende Tage kommt es aus deren Archiv und kann fehlen.
+- Die PIN-Sperre ist ein Bildschirm, keine Verschlüsselung; wer den Speicher des Browsers oder deine anderen Geräte öffnen kann, kann das Tagebuch lesen.
+- Das PDF-Buch über viele Jahre mit vielen Fotos kann eine Weile dauern und auf dem Handy viel Speicher brauchen.
+
+## Tipps
+> Schreib das Erste, was dir einfällt. Ein ehrlicher Satz ist mehr wert als eine lange Seite, die du nie schreibst.
+- Unter dem Datum zeigt eine leise Zeile die Gefühle, die du an diesem Tag in [Stimmung](app:mood) eingetragen hast; tippe darauf, um sie dort zu sehen.
+- `Darüber schreiben` bei einem Eintrag in Stimmung öffnet hier dessen Tag mit ausgefülltem längerem Eintrag; gespeichert wird er erst, wenn du ihn bearbeitest oder auf `Behalten` tippst.
