@@ -1,0 +1,143 @@
+# Studio
+Ein kleines Mehrspur-Studio: Leg Audioclips auf Spuren, schreib Noten für eingebaute Instrumente in einer Pianorolle, starte mit fertigen Loops, nimm zum Klick auf, füge Effekte hinzu, zeichne Automation, spiel ein MIDI-Keyboard, misch und exportiere den Song als WAV, MP3 oder Opus.
+
+## Erste Schritte
+- `Audio importieren` oben (der Pfeil nach unten) holt Audiodateien herein: WAV, MP3, OGG, FLAC, M4A, alles, was dieser Browser abspielen kann. Du kannst Dateien auch von deinem Computer auf die Zeitleiste ziehen.
+- `+ Spur` fügt eine Spur hinzu: eine `Audiospur` für Aufnahmen und Audiodateien oder eine `Instrumentenspur`, die Noten mit einem eingebauten Klang spielt. Ein Projekt hat bis zu 8.
+- Der erste Import oder die erste Spur legt ein neues Projekt an. Tippe oder klicke oben auf den Projektnamen, um ihn zu ändern; die Menütaste oben links listet deine Projekte.
+
+## Abspielen und die Zeitleiste
+- `Abspielen` startet am weißen Abspielkopf und pausiert; `Stopp` hält an und geht zurück zu deinem Startpunkt; noch einmal gedrückt, geht es zum Anfang (oder zum Anfang des Loops).
+- Tippe oder klicke auf das Lineal, um den Abspielkopf zu verschieben. Ein Tipp auf eine leere Stelle einer Spur setzt ihn ebenfalls dorthin.
+- Zieh über das Lineal, um einen Loop zu markieren. `Loop` schaltet ihn ein und aus; gibt es noch keinen, legt es einen von vier Takten ab dem Abspielkopf an.
+- Tempo (BPM) und Schläge pro Takt stellst du neben der Uhr ein. `Klick` schaltet das Metronom ein.
+- Die Zoom-Tasten oder [[Ctrl]] mit dem Mausrad machen die Zeitleiste breiter oder schmaler.
+
+## Clips bearbeiten
+- Tippe oder klicke auf einen Clip, um ihn auszuwählen. Zieh ihn, um ihn zu verschieben, auch nach oben oder unten auf eine andere Spur.
+- Zieh den linken oder rechten Rand eines Clips, um ihn zu kürzen.
+- `Raster` lässt Verschieben und Kürzen auf einem Takt oder Schlag landen; `Frei` erlaubt jede Stelle.
+- Bei ausgewähltem Clip bietet die Leiste unten `Teilen` (am Abspielkopf), `Duplizieren` (eine Kopie direkt dahinter), `Löschen`, `Gain`, `Einblenden` und `Ausblenden`.
+- Rückgängig und Wiederholen sind oben.
+
+## Spuren und Mischen
+- `M` schaltet eine Spur stumm, `S` schaltet sie solo. Ist eine Spur solo, hörst du nur die Solo-Spuren.
+- Der Regler unter den Tasten einer Spur ist ihre Lautstärke. Die Punkte-Taste öffnet die Spureinstellungen: Name, Farbe, Lautstärke, Panorama, nach oben oder unten, löschen.
+- `Master` stellt die Lautstärke des ganzen Mixes ein, und die Anzeige daneben zeigt beim Abspielen den Pegel.
+
+## Effekte
+- `FX` auf einer Spur öffnet ihre Effekte; `FX` neben `Master` öffnet die Effekte des ganzen Mixes. Auf dem Handy liegen die Effekte einer Spur in ihren Einstellungen (die Punkte-Taste).
+- `+ Effekt` listet mehr als 70 Effekte (EQ, Kompressoren, Delays, Halls, Sättigung und mehr), gruppiert und durchsuchbar. Eine Kette hat bis zu 8, und sie spielen der Reihe nach, von oben nach unten.
+- Viele Effekte zeigen eine eigene Oberfläche: Zieh ihre Regler und Knöpfe oder nutze das Mausrad darüber. `Alle Regler` listet jede Einstellung als einfachen Regler, Liste oder Dateiauswahl.
+- Die Ein-Aus-Taste umgeht einen Effekt, die Pfeile ändern die Reihenfolge, und `×` entfernt ihn.
+- Die Abspieltaste im Effektfenster spielt den Song, während du einstellst. Änderungen hörst du sofort, und du kannst sie rückgängig machen.
+- Convolution kann deine eigene Impulsantwort nutzen: Setz `Source` auf `IR File` und wähle eine WAV-Datei (bis 20 MB). Sie liegt im Ordner `Studio/fx` und wird wie das übrige Audio synchronisiert.
+- Manche Effekte brauchen einen Moment Vorlauf. Studio verzögert die anderen Spuren passend, damit alles im Takt bleibt, auch im Export.
+- Die Effekte sind [NULL JSFX](https://nulljsfx.tech) (MIT-Lizenz) und laufen im Browser.
+
+## Sidechain
+- `Sidechain Ducker` senkt eine Spur ab, während eine andere spielt: das klassische pumpende Pad unter einer Kick oder Musik, die Platz für eine Stimme macht.
+- Füge ihn der Spur hinzu, die leiser werden soll, und wähle dann die andere Spur unter dem Effekt in `Key-Eingang (Sidechain)`. Seine Regler legen fest, wie laut der Key sein muss, wie weit die Spur absinkt und wie schnell sie zurückkommt.
+- Der Effekt hört die Key-Spur nach ihren Effekten und vor ihrem Fader. Du kannst die Key-Spur also stummschalten und trotzdem nutzen.
+- Eine Spur kann nicht Key einer Spur sein, die schon auf sie hört; solche Spuren fehlen in der Liste. Der Export duckt genau wie die Wiedergabe.
+
+## Automation
+- `A` auf einer Spur (auf dem Handy: `Automation` in ihren Einstellungen) öffnet eine Automationsspur unter der Spur. Wähle in der Liste, was sie steuert: `Lautstärke`, `Panorama` oder einen beliebigen Regler der Effekte der Spur.
+- Tippe oder klicke in die Automationsspur, um einen Punkt hinzuzufügen, zieh einen Punkt, um ihn zu verschieben, und doppelklicke ihn (oder wähle ihn aus und drück `×` oder [[Delete]]), um ihn zu entfernen. Die Pfeiltasten verschieben einen ausgewählten Punkt, mit [[Shift]] in feineren oder gröberen Schritten.
+- Zwischen zwei Punkten ändert sich der Wert geradlinig; vor dem ersten und nach dem letzten Punkt bleibt er gleich. Die Lautstärke ändert sich gleichmäßig in dB.
+- Solange eine Automationsspur Punkte hat, steuert sie diesen Regler: Der Fader der Spur wird bei einer Lautstärke-Automation blass, und ihn von Hand zu bewegen bewirkt nichts. Die Ein-Aus-Taste in der Automationsspur schaltet sie kurz ab, und die Papierkorb-Taste leert sie. Eine Spur hat bis zu 16 Automationsspuren.
+- Automation wird abgespielt, ist im Export zu hören und wird mit dem Projekt gespeichert und synchronisiert.
+
+## Aufnehmen
+- `R` auf einer Spur schaltet sie scharf: Neue Takes landen dort. Ist keine Spur scharf, nimmt Studio auf der ausgewählten auf.
+- Drück die rote Aufnahmetaste. Der Browser fragt einmal nach dem Mikrofon. Studio spielt ab dem Abspielkopf (mit Klick, wenn er an ist) und nimmt auf, bis du die Taste erneut drückst.
+- Der Take wird als WAV-Datei gespeichert und dort abgelegt, wo er gespielt wurde. Wenn Takes zu spät zum Klick liegen, erhöhe `Aufnahmeversatz` in den Einstellungen.
+- In den Einstellungen (die drei Punkte oben) wählst du den Eingang und, wo der Browser es erlaubt, den Ausgang deiner Soundkarte.
+
+## Tastatur und MIDI
+- `Tastatur` im Transportbereich öffnet eine Klaviatur mit eingebautem Synth: Klavier, E-Piano, Orgel, Streicher, Lead und Bass. Spiel sie mit der Maus oder mit den Fingern und gleite über die Tasten für ein Glissando.
+- `MIDI-Keyboard verbinden` fragt den Browser nach MIDI und spielt den Synth von jedem verbundenen Keyboard, mit Anschlag, Haltepedal und Pitch Bend. Studio fragt nur, wenn du darauf drückst, und verbindet sich beim nächsten Mal von selbst, sobald du es erlaubt hast.
+- Die Tastatur spielt den Klang der scharfen Instrumentenspur oder der ausgewählten; das Feld zeigt, welche. Wenn du dort `Klang` änderst, ändert sich das Instrument dieser Spur.
+- Auf einer Instrumentenspur nimmt die Aufnahmetaste auf, was du auf den Tasten oder einem MIDI-Keyboard spielst, in einen neuen MIDI-Clip, im Takt zum Klick, mit Anschlag und Haltepedal. Die Noten kannst du danach in der Pianorolle bearbeiten.
+- Auf einer Audiospur nimmt die Aufnahmetaste bei offener Tastatur den Synth als Audio-Take auf statt des Mikrofons.
+
+## Instrumentenspuren und MIDI
+- Eine Instrumentenspur enthält MIDI-Clips: Noten mit Tonhöhe, Start, Länge und Anschlag, gespielt von einem der eingebauten Klänge (Klavier, E-Piano, Orgel, Streicher, Lead, Bass oder Schlagzeug). Ihr Farbpunkt ist rund, und ihre Clips zeigen ihre Noten.
+- Doppelklicke oder doppeltippe auf eine leere Stelle einer Instrumentenspur, um dort einen neuen Clip von zwei Takten anzulegen; die Pianorolle öffnet sich darauf. `Neuer Clip` in den Spureinstellungen (die Punkte-Taste) macht dasselbe am Abspielkopf.
+- Den Klang änderst du mit `Instrument` in den Spureinstellungen. Die Noten bleiben, wie sie sind.
+- MIDI-Clips lassen sich verschieben, kürzen, teilen, duplizieren und löschen wie Audioclips, aber nur auf Instrumentenspuren. Effekte, Automation, Stumm, Solo und Sidechain der Spur funktionieren wie bei Audio, und jeder Export enthält die Noten.
+- Wenn du das Tempo änderst, behalten MIDI-Clips ihre Takte und Schläge; Audioclips bleiben, wo sie sind.
+- `Audio importieren` nimmt auch MIDI-Dateien an (.mid, .midi, Typ 0 und 1). Eine Datei mit einem Part kommt in die ausgewählte Instrumentenspur; sonst bekommt jeder Part eine eigene neue Spur, mit einem Klang nach seinem General-MIDI-Programm (Kanal 10 wird zum Schlagzeug). Ein leeres Projekt übernimmt das Tempo der Datei.
+- `MIDI exportieren` speichert eine Standard-MIDI-Datei: in der Pianorolle für einen Clip (Typ 0), in den Spureinstellungen für die ganze Spur (Typ 1, mit Tempo und Takten des Projekts).
+
+## Pianorolle
+- Wähle einen MIDI-Clip aus und drück `Noten bearbeiten` in der Leiste unten, doppelklicke den Clip oder drück [[E]]. Auf dem Handy füllt die Rolle den Bildschirm.
+- `Zeichnen`: Tippe oder klicke, um eine Note hinzuzufügen, und zieh beim Hinzufügen, um sie länger zu machen. `Auswählen`: Zieh einen Rahmen um Noten oder tippe sie an; mit [[Shift]] kommen sie zur Auswahl hinzu.
+- Zieh eine Note, um sie zu verschieben, und zieh ihr rechtes Ende, um sie länger oder kürzer zu machen. Doppelklicke oder doppeltippe eine Note, um sie zu löschen. Mit der Maus hältst du [[Alt]], um neben das Raster zu verschieben.
+- `Raster` legt den Schritt für Zeichnen, Verschieben und Quantisieren fest: 1/4 bis 1/32, Triolen oder `Frei`. `Quantisieren` setzt die ausgewählten Noten (oder alle, wenn keine ausgewählt ist) aufs Raster.
+- Der Regler `Anschlag` legt fest, wie stark die ausgewählten Noten spielen; die Leiste unter den Noten zeigt jede einzeln, und du kannst auch dort ziehen.
+- Kopieren, Einfügen, Löschen, Alle auswählen, Rückgängig und Wiederholen haben Tasten und die üblichen Tastenkürzel. Auf einem Touchscreen ziehst du eine leere Fläche zum Scrollen und Noten zum Verschieben.
+- `MIDI importieren` in der Rolle ersetzt die Noten des Clips durch die Noten einer MIDI-Datei.
+- Die Abspieltaste in der Rolle spielt ab dem Anfang des Clips. Jede Änderung hörst du sofort, und du kannst sie wie jede Änderung in Studio rückgängig machen.
+
+## Loops
+- `Loops` im Transportbereich öffnet die Loop-Bibliothek: 32 kurze Patterns aus Drums, Bass und Keys in acht Stilen, von Studio selbst gemacht und frei nutzbar für alles, was du machst.
+- Filtere sie nach Stil, Tempo und Art. Mit der Abspieltaste hörst du einen im Tempo des Projekts.
+- Zieh einen Loop an seinem Griff auf eine Spur oder drück `+`, um ihn am Abspielkopf einzufügen. Er landet auf der ausgewählten Instrumentenspur, wenn er passt (Drums auf einer Schlagzeugspur, Bass und Keys auf einer mit Tonhöhen), sonst auf einer neuen Instrumentenspur.
+- Ein Loop wird ein normaler MIDI-Clip: Bearbeite seine Noten, ändere seinen Klang oder wiederhole ihn mit `Duplizieren`. Er folgt dem Tempo des Projekts.
+
+## Fernsteuerung
+Steuere Mixer und Transport von Studio von einem Tablet oder Handy aus, während der Ton am PC spielt.
+1. Öffne am PC die Einstellungen (die drei Punkte oben) und drück `Tablet oder Handy verbinden`, dann `Code anzeigen`. Studio zeigt einen 6-stelligen Code und einen QR-Code.
+2. Scanne auf dem Tablet oder Handy den QR-Code mit der Kamera, oder öffne dort Studio, wähle in den Einstellungen `Studio auf anderem Gerät steuern` und gib den Code ein.
+3. Drück am PC `Erlauben`. Ist ein Gerät erlaubt, kann kein anderes mehr mit diesem Code beitreten.
+- Die Fernsteuerung zeigt Abspielen, Stopp, Aufnahme, Loop, Klick, Tempo und eine Positionsleiste, dazu pro Spur einen Streifen mit Fader, Panorama, `M` `S` `R`, Effekt an/aus und Pegelanzeige, plus den Master.
+- `FX` auf einem Streifen öffnet die Effekte dieser Spur wie am PC: die eigene Oberfläche des Effekts mit ihren Anzeigen, jeden Regler, an/aus, Reihenfolge, Hinzufügen und Entfernen. Dateien für Effekte (etwa die IR von Convolution) werden am PC gewählt.
+- Zieh einen Fader, um ihn von seiner Stelle aus zu bewegen; ein Doppeltipp setzt ihn auf 0 dB zurück. Jede Bewegung ist eine normale Änderung am PC, also macht [[Ctrl+Z]] sie dort rückgängig.
+- Im selben Netzwerk sprechen die beiden Geräte direkt miteinander. Über ein VPN oder in verschiedenen Netzwerken (etwa ein Handy im 4G-Netz) sprechen sie stattdessen über das orOS-Relay, mit etwas mehr Verzögerung. So oder so ist die Verbindung mit dem Code verschlüsselt, und das Relay leitet sie nur weiter.
+- `Trennen` am PC beendet die Verbindung sofort. Bricht die Verbindung ab, verbindet sich die Fernsteuerung von selbst neu, solange Studio am PC offen bleibt.
+>! Drück `Erlauben` nur, wenn dein eigenes Gerät fragt. Hast du nicht gerade irgendwo den Code eingegeben, drück `Ablehnen`.
+
+## Exportieren
+`Exportieren` (der Pfeil nach oben) mischt den Song in eine Stereodatei: den Loop, wenn er an ist, sonst alles vom Anfang bis zum Ende des letzten Clips. Instrumentenspuren, Effekte, Sidechain und Automation sind alle dabei.
+- `WAV`: 16 oder 24 Bit, 44,1 oder 48 kHz. Verlustfrei, die beste Wahl zum Weiterarbeiten.
+- `MP3`: 128 bis 320 kbit/s. Läuft überall; Studios eigener Encoder erstellt es auf diesem Gerät, und Player starten und beenden es ohne Lücke.
+- `Opus (OGG)`: eine kleinere Datei bei gleicher Qualität, immer 48 kHz. Angeboten, wo der Browser Opus kodieren kann (Chrome, Edge, Firefox).
+- `Zu Musik hinzufügen` erstellt dieselbe Datei im gewählten Format, legt sie in den Ordner Music auf der orOS-Disk und spielt sie in Musik ab.
+- `Klingelton machen` macht aus den Noten der Instrumentenspuren (ohne Schlagzeug) eine einstimmige Melodie und öffnet sie im Klingelton-Komponisten: Wo Noten sich überlappen, gewinnt die höchste, und du drückst dort `Importieren`, um sie zu behalten.
+
+## Synchronisierung und Sicherung
+- Projekte, Spuren und Clips, auch die Noten von MIDI-Clips, folgen dir über die orOS-Synchronisierung auf deine anderen Geräte.
+- Das Audio selbst liegt als Dateien auf der orOS-Disk, im Ordner `Studio` der App [Dateien](app:files). Mit eingeschalteter Synchronisierung und [Vault Drive](help:t/sync) reisen die Dateien auch auf deine anderen Geräte. Bis eine Datei ankommt, zeigen ihre Clips, dass das Audio noch nicht auf diesem Gerät ist.
+- Zoom, Raster, Klick, die Soundkarten-Auswahl und die scharfe Spur bleiben auf diesem Gerät.
+
+## orOS-Datei (.orosstudio)
+- `Als orOS-Datei speichern (.orosstudio)` in `Projekte` speichert das offene Projekt als eine offene Datei mit seinem Namen: Spuren, Clips, die Noten von MIDI-Clips, Effekte mit ihren Einstellungen, Automation, Tempo, den Loop und das Audio selbst. Es ist ein ZIP: Entpack es, und du findest `content.json` (das Projekt), `media` (das Audio und die Dateien der Effekte) sowie `preview/tracks.txt` (was auf jeder Spur liegt), `preview/song.mid` (die Instrumentenspuren) und `preview/thumbnail.png`. Große Projekte sind kein Problem: Das Audio wird nie ganz in den Speicher geladen, und eine Leiste zeigt den Fortschritt.
+- `orOS-Datei öffnen…` öffnet eine solche Datei wieder als neues Projekt, mit ihrem Audio auf die orOS-Disk kopiert; ebenso `Audio importieren`, das Ziehen der Datei auf die Spuren und das Öffnen der Datei mit orOS aus deinem System (`Öffnen mit`). Deine bestehenden Projekte ändern sich nie. `Entpackter orOS-Ordner…` holt eine entpackte .orosstudio zurück, auch wenn du darin eine Datei geändert hast.
+- Audio, das noch nicht auf diesem Gerät ist (noch unterwegs mit Vault Drive), fehlt in der Datei, und Studio sagt das.
+
+## Tastenkürzel
+- [[Space]] Abspielen und Pause, [[R]] Aufnahme, [[L]] Loop, [[K]] Klick, [[Home]] zurück zum Anfang. [[Space]] spielt auch bei offenem Effektfenster.
+- [[S]] Teilen, [[D]] Duplizieren, [[Delete]] ausgewählten Clip löschen, [[E]] oder [[Enter]] Noten eines MIDI-Clips bearbeiten, [[Esc]] Auswahl aufheben.
+- In der Pianorolle: [[B]] Zeichnen, [[V]] Auswählen, [[Q]] Quantisieren, [[Ctrl+A]] [[Ctrl+C]] [[Ctrl+X]] [[Ctrl+V]] [[Ctrl+D]] alle auswählen, kopieren, ausschneiden, einfügen, duplizieren, [[Delete]] löschen, die Pfeiltasten verschieben die ausgewählten Noten (mit [[Shift]] um einen Takt oder eine Oktave), [[Space]] abspielen, [[Esc]] schließen.
+- [[+]] und [[-]] zoomen, [[Ctrl+Z]] Rückgängig, [[Ctrl+Y]] Wiederholen.
+- Auf dem Lineal verschieben die Pfeiltasten den Abspielkopf um einen Schlag, mit [[Shift]] um einen Takt.
+
+## Tipps
+> Nimm mit Kopfhörern auf, damit Klick und andere Spuren nicht im Take landen.
+- Browser können keine ASIO-Treiber nutzen. Deine Soundkarte läuft über den eigenen Treiber des Systems, mit etwas mehr Verzögerung als in einer Desktop-Studio-App.
+
+## Grenzen
+- Bis zu 50 Projekte, 8 Spuren und 500 Clips pro Projekt, eine Stunde pro Projekt.
+- Eine importierte Datei darf bis zu 100 MB groß sein, ein Take bis zu 30 Minuten lang.
+- Eine Fernsteuerung gleichzeitig, und das Koppeln braucht Internet auf beiden Geräten.
+- Ein MIDI-Clip hat bis zu 2000 Noten. Die Instrumente sind einfache eingebaute Synths und ein synthetisches Schlagzeug; es gibt keine gesampelten Instrumente oder Soundfonts.
+- Während du live auf der Tastatur spielst, hörst du den Klang ohne die Effekte der Spur; der aufgenommene Clip spielt mit ihnen. Auch der als Audio aufgenommene Synth ist trocken, bis der Take spielt. Nur Sidechain Ducker nimmt einen Key-Eingang an.
+- Tempowechsel einer MIDI-Datei bleiben nicht erhalten: Studio nimmt ihr erstes Tempo. Andere Controller als das Haltepedal (Pitch Bend, Modulation) werden nicht in Clips aufgenommen.
+- Loops sind im 4/4-Takt. Audioclips dehnen sich nicht mit dem Tempo; nur MIDI-Clips folgen ihm.
+- Ein älteres Studio auf einem anderen Gerät zeigt keine MIDI-Clips, und wenn es eine Instrumentenspur speichert, spielt die Spur als Klavier, bis ihr Klang neu gewählt wird.
+- Automation kennt nur gerade Linien, und der Master hat keine Automationsspuren. Ein älteres Studio auf einem anderen Gerät verwirft Automationsspuren und Sidechain-Auswahl, wenn es diese Spur speichert.
+- Der MP3-Encoder ist einfach und hat eine konstante Bitrate: Bei 128 kbit/s klingt er weniger sauber als andere Encoder, wähle also 192 oder mehr.
+- Effekte werden beim Start der Wiedergabe zurückgesetzt, wie in einem Desktop-Studio.
+- Audio gelöschter Clips bleibt im Ordner `Studio`; beim Löschen eines Projekts werden seine Dateien entfernt.
+- Wird derselbe Clip auf zwei Geräten vor der Synchronisierung geändert, gewinnt die neueste Änderung.

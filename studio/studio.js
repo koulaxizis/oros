@@ -47,7 +47,7 @@
 //   9. Import, export (9b: the .orosstudio file)
 //  10. Dialogs: projects, names, track, settings
 //  11. Toasts
-//  12. Keyboard (Contract Β)
+//  12. Keyboard (Contract B)
 //  13. Sync slice + palette
 //  14. Wiring & boot
 // ============================================================
@@ -69,6 +69,7 @@
 
   // ---------- 1. Constants, i18n, helpers ----------
   function appLang() {
+    if (window.orosI18n) return window.orosI18n.lang();
     try {
       var l = localStorage.getItem("oros-lang") ||
               (window.parent && window.parent.orosLang) || "en";
@@ -338,6 +339,8 @@
     }
   };
 
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "studio", LANG);
+
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;
     var s = p[key] !== undefined ? p[key] : (STRINGS.en[key] !== undefined ? STRINGS.en[key] : key);
@@ -348,9 +351,14 @@
     }
     return s;
   }
+  // Decimal comma where the language writes one (Greek, German, …).
+  var DEC_COMMA = (function () {
+    if (!window.orosI18n) return LANG === "el";
+    try { return (1.5).toLocaleString(window.orosI18n.locale(LANG)).indexOf(",") >= 0; } catch (e) { return LANG === "el"; }
+  })();
   function numTxt(n, d) {
     var s = Number(n).toFixed(d);
-    return LANG === "el" ? s.replace(".", ",") : s;
+    return DEC_COMMA ? s.replace(".", ",") : s;
   }
 
   function $(id) { return document.getElementById(id); }
@@ -3110,7 +3118,7 @@
     if (playing && !recording) replayIfPlaying();
   }
   function wireKeyboard() {
-    // Contract Β: forward Ctrl+Alt+Shift shortcuts to the shell (capture)
+    // Contract B: forward Ctrl+Alt+Shift shortcuts to the shell (capture)
     document.addEventListener("keydown", function (e) {
       if (!(e.ctrlKey || e.metaKey) || !e.altKey || !e.shiftKey) return;
       var p = null;
