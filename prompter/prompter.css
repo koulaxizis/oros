@@ -398,6 +398,16 @@ input, textarea, select {
   border-color: #b0483f;
   color: #d97066;
 }
+/* Dialog button row (Cancel / Factory reset, Cancel / Delete):
+   created with no whitespace between them, so they need a gap */
+.settings-dlg .dlg-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 10px;
+}
+.settings-dlg .dlg-actions button { margin-top: 0; }
 .settings-dlg::backdrop {
   background: rgba(0, 0, 0, 0.55);
   backdrop-filter: blur(2px);

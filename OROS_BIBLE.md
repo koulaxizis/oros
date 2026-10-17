@@ -7273,3 +7273,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Sound (full player and settings): 10-band equalizer with 12 presets or a custom curve (Web Audio, only on same-origin sources: local files, offline copies, WebDAV/Dropbox blobs; streams stay unrouted so they never go silent), crossfade 0-12 s (equal power, skipped for short songs), gapless (next song preloaded on a second deck, default on), ReplayGain off/auto/track/album from the files' tags (attenuation through the element volume, boosts only through Web Audio, capped by the peak). Sleep timer: 5-90 minutes (last 10 s fade) or the end of the song (the next song waits, paused).
 - Files: `music/{core,host,library,music}.js` (core 1.4.0: TXXX/USLT/Vorbis/Opus R128/MP4 free-form ReplayGain + lyrics, LRC parser, LRCLIB match, sound settings), `music.css`, help EN/EL; credits: LRCLIB (CREDITS.md, shell CREDIT_GROUPS, Part VIII) (PR #448).
   - Tests: `tests/music-sound.test.js` (tags of every format, LRC, LRCLIB pick, settings, ReplayGain factor, crossfade curves); full suite green; real Chromium in the shell at 360 px Greek: .lrc and tag lyrics, LRCLIB mocked (ask → search → cached), equalizer on a local song, crossfade and gapless between two 20 s songs, sleep at end of song. Not tested: real LRCLIB (blocked from the cloud container), the sound of the equalizer by ear, real phones in the background.
+
+### 2026-10-17 — Prompter: Use opens the prompt in Writer; Cancel and Factory reset spaced apart (#449) — 2.68.01
+- Prompter: Use opens the prompt in Writer as a new document; Cancel and Factory reset no longer touch.
+- Files: `prompter/prompter.js`, `prompter/prompter.css`, Bible.
+  - Tests: full suite green; real Chromium 360 EN/EL. Not tested: phones.
