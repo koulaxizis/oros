@@ -34,7 +34,9 @@
       return l === "el" ? "el" : "en";
     } catch (e) { return "en"; }
   }
-  var LANG = appLang();
+  // orosI18n (../i18n.js): the full language code, a pack language included.
+  var LANG = window.orosI18n ? window.orosI18n.lang() : appLang();
+  function loc() { return window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB"); }
 
   var STRINGS = {
     en: {
@@ -158,6 +160,10 @@
       dots: "Τελείες & Κουτιά", tictactoe: "Τρίλιζα", mancala: "Μαγκάλα", backgammon: "Τάβλι (Πόρτες)",
       battleship: "Ναυμαχία", rps: "Πέτρα, ψαλίδι, χαρτί", xeri: "Ξερή" }
   };
+  if (window.orosI18n) {
+    window.orosI18n.table(STRINGS, "gamecenter", LANG);
+    window.orosI18n.table(NAMES, "gamecenter", LANG);
+  }
   // Puzzle games count "solved", the others "won".
   var SOLVES = { sudoku: 1, nonogram: 1, flow: 1, crossword: 1, wordsearch: 1, jigsaw: 1, spot: 1,
     hexagon: 1, slider: 1, lightsout: 1, mahjong: 1, memory: 1 };
@@ -175,7 +181,7 @@
     return n;
   }
   function num(n) {
-    try { return n.toLocaleString(LANG === "el" ? "el-GR" : "en-GB"); } catch (e) { return String(n); }
+    try { return n.toLocaleString(loc()); } catch (e) { return String(n); }
   }
   function fmtTime(ms) {
     if (DK) return DK.fmtTime(ms);
@@ -207,7 +213,7 @@
   }
   var APPS = null;
   function nameOf(id) {
-    return (APPS && APPS[id]) || NAMES[LANG][id] || NAMES.en[id] || id;
+    return (APPS && APPS[id]) || (NAMES[LANG] && NAMES[LANG][id]) || NAMES.en[id] || id;
   }
   function canOpen(id) { return !!(APPS && APPS[id]); }
   function openGame(id, target) {
@@ -237,7 +243,7 @@
   function renderHead(sum, day) {
     var date = "";
     try {
-      date = new Date().toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB",
+      date = new Date().toLocaleDateString(loc(),
         { weekday: "long", day: "numeric", month: "long" });
     } catch (e) { date = DK ? DK.dateStr(day) : ""; }
     var line = !sum.daily.days ? t("sub.none") :
@@ -254,7 +260,10 @@
       if (S.today === 1) done++;
       var card = el("div", "day-card" + (S.today === 1 ? " solved" : S.today === 2 ? " lost" : ""));
       var top = el("div", "day-top");
-      top.appendChild(el("span", "day-name", nameOf(id)));
+      // One long word (German "Kreuzworträtsel"): a little smaller, so
+      // it fits the card instead of breaking mid-word.
+      var nm = nameOf(id);
+      top.appendChild(el("span", "day-name" + (nm.length > 13 && !/\s/.test(nm) ? " long" : ""), nm));
       if (S.today === 1) {
         var ok = el("span", "day-ok");
         ok.innerHTML = UI_ICONS.check;
