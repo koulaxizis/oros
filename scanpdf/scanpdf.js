@@ -1,6 +1,6 @@
 // ============================================================
-// orOS Scanner & PDF — App logic (v1.2.0, waves 1-3: PDF tools,
-// signing, page numbers, watermark, compress, camera scan)
+// orOS Scanner & PDF — App logic (v1.3.0, waves 1-4: PDF tools,
+// signing, page numbers, watermark, compress, camera scan, OCR)
 // Everything happens on this device: nothing is uploaded.
 //   - Add PDFs and pictures (picker, drag and drop, Files › Open
 //     with, the shell's file-open). Every page shows as a card with
@@ -52,6 +52,7 @@
 
   var C = window.ScanPdfCore;
   var OPS = window.ScanPdfOps;
+  var O = window.ScanPdfOcr;
 
   // ---------- 1. Constants, i18n, helpers ----------
   var SCRIPT_V = (function () {
@@ -79,7 +80,7 @@
       "btn.dup": "Duplicate", "btn.extract": "Save the selected pages as a new PDF", "btn.del": "Delete",
       "btn.saveIt": "Save", "btn.splitIt": "Split", "btn.done": "Done", "btn.clearIt": "Clear",
       "drop.title": "Drop PDFs or pictures here",
-      "drop.hint": "Merge PDFs, split them, take pages out, put them in another order or turn them, sign them, number the pages, make them smaller, and make a PDF from pictures (JPEG, PNG, WebP, GIF, BMP, AVIF).",
+      "drop.hint": "Merge PDFs, split them, take pages out, put them in another order or turn them, sign them, number the pages, make them smaller, read the text of scans so they can be searched, and make a PDF from pictures (JPEG, PNG, WebP, GIF, BMP, AVIF).",
       "drop.local": "Everything happens on this device. Nothing is uploaded and your files are never changed.",
       "drop.veil": "Drop to add",
       "pages.hint": "Tap pages to select them, then use the buttons above. Drag a page to move it. The pen on a page signs it or adds text.",
@@ -152,7 +153,7 @@
       "wm.op": "Strength", "wm.light": "Light", "wm.medium": "Medium", "wm.strong": "Strong",
       "doc.title": "Document details", "doc.name": "Title", "doc.author": "Author", "doc.hint": "Shown in the PDF's properties.",
       "cmp.label": "Make it smaller", "cmp.off": "No", "cmp.light": "A little (sharpest)", "cmp.medium": "Medium", "cmp.strong": "A lot (for email)",
-      "cmp.hint": "Pages become pictures, so their text can no longer be selected or searched.",
+      "cmp.hint": "Pages become pictures, so their own text can no longer be selected. Text read by Make it searchable is kept.",
       "busy.compress": "Making it smaller: page {i} of {n}…", "busy.font": "Loading the font…",
       "toast.smaller": "Saved: {a} → {b}", "toast.smallerFiles": "Saved in Files › {dir}: {a} → {b}",
       "toast.notSmaller": "It was already small, so it was saved as it was.",
@@ -170,7 +171,26 @@
       "sc.f.color": "Document", "sc.f.gray": "Grey", "sc.f.bw": "Black & white", "sc.f.photo": "Photo", "sc.filter": "Look",
       "sc.page": "Scanned page {n}", "sc.name": "Scan {n}.jpg", "sc.working": "Straightening the page…",
       "sc.leaveTitle": "Leave the scanner?", "sc.leaveBody": "The pages scanned so far are let go.", "sc.leave": "Leave",
-      "sc.kept": "Page {n} kept", "sc.bad": "That picture could not be read."
+      "sc.kept": "Page {n} kept", "sc.bad": "That picture could not be read.",
+      "btn.read": "Read text", "card.txt": "text read", "btn.closeIt": "Close",
+      "ocr.title": "Read the text",
+      "ocr.hint": "The app reads the words on scanned pages and pictures, so the PDF you save can be searched and its text copied. Pages that already have text in the PDF are not read again.",
+      "ocr.dl": "The first time, the text recognition engine (Tesseract, about 7 MB with Greek and English) is downloaded from orOS's own site; after that it works offline. Nothing leaves this device.",
+      "ocr.lang": "Language", "ocr.both": "Greek and English", "ocr.ell": "Greek", "ocr.eng": "English",
+      "ocr.scope": "Pages", "ocr.all": "All {n} pages", "ocr.all.one": "The page", "ocr.sel": "The {n} selected pages", "ocr.sel.one": "The selected page",
+      "ocr.go": "Read", "ocr.stop": "Stop",
+      "ocr.load": "Loading the text recognition engine… {p}%", "ocr.page": "Reading page {i} of {n}… {p}%",
+      "ocr.stopped": "Stopped: {n} pages were read.", "ocr.stopped.one": "Stopped: 1 page was read.",
+      "ocr.err": "The text could not be read: the text recognition engine did not load.",
+      "ocr.errSave": "The text could not be read, so the PDF is saved without it.",
+      "ocr.notSaved": "Stopped, so nothing was saved.",
+      "ocr.none": "No text was found on these pages.",
+      "txt.title": "Text of the pages", "txt.page": "Page {n}", "txt.empty": "No text was found on this page.",
+      "txt.copy": "Copy the text", "txt.send": "Send to an app", "txt.copied": "Text copied", "txt.noCopy": "The text could not be copied here.",
+      "save.read": "Make it searchable", "save.readHint": "The text of scanned pages and pictures is read first and put under each page, so the PDF can be searched and copied.",
+      "idx.title": "Search", "idx.hint": "PDFs you save into Files can be found in orOS search by their name and text. This list stays on this device: {n} documents.",
+      "idx.hint.one": "PDFs you save into Files can be found in orOS search by their name and text. This list stays on this device: 1 document.",
+      "idx.forget": "Forget them", "idx.forgot": "The list for search is empty now."
     },
     el: {
       "app.name": "Σαρωτής & PDF",
@@ -182,7 +202,7 @@
       "btn.dup": "Διπλασιασμός", "btn.extract": "Αποθήκευση των επιλεγμένων σελίδων ως νέο PDF", "btn.del": "Διαγραφή",
       "btn.saveIt": "Αποθήκευση", "btn.splitIt": "Διαχωρισμός", "btn.done": "Εντάξει", "btn.clearIt": "Καθαρισμός",
       "drop.title": "Άφησε εδώ PDF ή εικόνες",
-      "drop.hint": "Ένωσε PDF, χώρισέ τα, βγάλε σελίδες, άλλαξε τη σειρά τους ή γύρισέ τες, υπόγραψέ τα, αρίθμησε τις σελίδες, κάνε τα μικρότερα, και φτιάξε PDF από εικόνες (JPEG, PNG, WebP, GIF, BMP, AVIF).",
+      "drop.hint": "Ένωσε PDF, χώρισέ τα, βγάλε σελίδες, άλλαξε τη σειρά τους ή γύρισέ τες, υπόγραψέ τα, αρίθμησε τις σελίδες, κάνε τα μικρότερα, διάβασε το κείμενο των σαρώσεων ώστε να βρίσκεται στην αναζήτηση, και φτιάξε PDF από εικόνες (JPEG, PNG, WebP, GIF, BMP, AVIF).",
       "drop.local": "Όλα γίνονται σε αυτή τη συσκευή. Τίποτα δεν ανεβαίνει και τα αρχεία σου δεν αλλάζουν ποτέ.",
       "drop.veil": "Άφησέ τα για προσθήκη",
       "pages.hint": "Πάτησε σελίδες για να τις επιλέξεις και μετά χρησιμοποίησε τα κουμπιά επάνω. Σύρε μια σελίδα για να τη μετακινήσεις. Η πένα σε μια σελίδα την υπογράφει ή προσθέτει κείμενο.",
@@ -255,7 +275,7 @@
       "wm.op": "Ένταση", "wm.light": "Αχνό", "wm.medium": "Μέτριο", "wm.strong": "Έντονο",
       "doc.title": "Στοιχεία εγγράφου", "doc.name": "Τίτλος", "doc.author": "Συγγραφέας", "doc.hint": "Φαίνονται στις ιδιότητες του PDF.",
       "cmp.label": "Μικρότερο αρχείο", "cmp.off": "Όχι", "cmp.light": "Λίγο (πιο καθαρό)", "cmp.medium": "Μέτρια", "cmp.strong": "Πολύ (για email)",
-      "cmp.hint": "Οι σελίδες γίνονται εικόνες, οπότε το κείμενό τους δεν επιλέγεται ούτε αναζητείται πια.",
+      "cmp.hint": "Οι σελίδες γίνονται εικόνες, οπότε το δικό τους κείμενο δεν επιλέγεται πια. Το κείμενο που διαβάστηκε με το «Να γίνει αναζητήσιμο» μένει.",
       "busy.compress": "Σμίκρυνση: σελίδα {i} από {n}…", "busy.font": "Φόρτωση της γραμματοσειράς…",
       "toast.smaller": "Αποθηκεύτηκε: {a} → {b}", "toast.smallerFiles": "Αποθηκεύτηκε στα Αρχεία › {dir}: {a} → {b}",
       "toast.notSmaller": "Ήταν ήδη μικρό, οπότε αποθηκεύτηκε όπως ήταν.",
@@ -273,7 +293,26 @@
       "sc.f.color": "Έγγραφο", "sc.f.gray": "Γκρι", "sc.f.bw": "Ασπρόμαυρο", "sc.f.photo": "Φωτογραφία", "sc.filter": "Εμφάνιση",
       "sc.page": "Σαρωμένη σελίδα {n}", "sc.name": "Σάρωση {n}.jpg", "sc.working": "Ίσιωμα της σελίδας…",
       "sc.leaveTitle": "Έξοδος από τον σαρωτή;", "sc.leaveBody": "Οι σελίδες που σάρωσες ως τώρα χάνονται.", "sc.leave": "Έξοδος",
-      "sc.kept": "Κρατήθηκε η σελίδα {n}", "sc.bad": "Αυτή η εικόνα δεν διαβάστηκε."
+      "sc.kept": "Κρατήθηκε η σελίδα {n}", "sc.bad": "Αυτή η εικόνα δεν διαβάστηκε.",
+      "btn.read": "Ανάγνωση κειμένου", "card.txt": "το κείμενο διαβάστηκε", "btn.closeIt": "Κλείσιμο",
+      "ocr.title": "Ανάγνωση του κειμένου",
+      "ocr.hint": "Η εφαρμογή διαβάζει τις λέξεις στις σαρωμένες σελίδες και τις εικόνες, ώστε στο PDF που αποθηκεύεις να γίνεται αναζήτηση και να αντιγράφεται το κείμενό του. Οι σελίδες που έχουν ήδη κείμενο στο PDF δεν διαβάζονται ξανά.",
+      "ocr.dl": "Την πρώτη φορά η μηχανή αναγνώρισης κειμένου (Tesseract, περίπου 7 MB με ελληνικά και αγγλικά) κατεβαίνει από τον δικό ιστότοπο του orOS· μετά δουλεύει και χωρίς σύνδεση. Τίποτα δεν φεύγει από αυτή τη συσκευή.",
+      "ocr.lang": "Γλώσσα", "ocr.both": "Ελληνικά και αγγλικά", "ocr.ell": "Ελληνικά", "ocr.eng": "Αγγλικά",
+      "ocr.scope": "Σελίδες", "ocr.all": "Και οι {n} σελίδες", "ocr.all.one": "Η σελίδα", "ocr.sel": "Οι {n} επιλεγμένες σελίδες", "ocr.sel.one": "Η επιλεγμένη σελίδα",
+      "ocr.go": "Ανάγνωση", "ocr.stop": "Διακοπή",
+      "ocr.load": "Φόρτωση της μηχανής αναγνώρισης κειμένου… {p}%", "ocr.page": "Ανάγνωση σελίδας {i} από {n}… {p}%",
+      "ocr.stopped": "Διακόπηκε: διαβάστηκαν {n} σελίδες.", "ocr.stopped.one": "Διακόπηκε: διαβάστηκε 1 σελίδα.",
+      "ocr.err": "Το κείμενο δεν διαβάστηκε: η μηχανή αναγνώρισης κειμένου δεν φόρτωσε.",
+      "ocr.errSave": "Το κείμενο δεν διαβάστηκε, οπότε το PDF αποθηκεύεται χωρίς αυτό.",
+      "ocr.notSaved": "Διακόπηκε, οπότε δεν αποθηκεύτηκε τίποτα.",
+      "ocr.none": "Δεν βρέθηκε κείμενο σε αυτές τις σελίδες.",
+      "txt.title": "Το κείμενο των σελίδων", "txt.page": "Σελίδα {n}", "txt.empty": "Δεν βρέθηκε κείμενο σε αυτή τη σελίδα.",
+      "txt.copy": "Αντιγραφή του κειμένου", "txt.send": "Αποστολή σε εφαρμογή", "txt.copied": "Το κείμενο αντιγράφηκε", "txt.noCopy": "Το κείμενο δεν αντιγράφηκε εδώ.",
+      "save.read": "Να γίνει αναζητήσιμο", "save.readHint": "Το κείμενο των σαρωμένων σελίδων και των εικόνων διαβάζεται πρώτα και μπαίνει κάτω από κάθε σελίδα, ώστε στο PDF να γίνεται αναζήτηση και αντιγραφή.",
+      "idx.title": "Αναζήτηση", "idx.hint": "Τα PDF που αποθηκεύεις στα Αρχεία βρίσκονται στην αναζήτηση του orOS με το όνομα και το κείμενό τους. Η λίστα μένει σε αυτή τη συσκευή: {n} έγγραφα.",
+      "idx.hint.one": "Τα PDF που αποθηκεύεις στα Αρχεία βρίσκονται στην αναζήτηση του orOS με το όνομα και το κείμενό τους. Η λίστα μένει σε αυτή τη συσκευή: 1 έγγραφο.",
+      "idx.forget": "Ξέχασέ τα", "idx.forgot": "Η λίστα για την αναζήτηση άδειασε."
     }
   };
 
@@ -723,6 +762,7 @@
                                     : t("card", { n: i + 1, file: src.name, p: p.idx + 1 }));
     if (p.rot) parts.push(t("card.rot", { deg: p.rot }));
     if (p.ov && p.ov.length) parts.push(tn("card.ov", p.ov.length));
+    if (hasText(p)) parts.push(t("card.txt"));
     return parts.join(", ");
   }
 
@@ -734,7 +774,7 @@
     var multi = Object.keys(C.usedSources(pages)).length > 1;
     pages.forEach(function (p, i) {
       var src = sources[p.src];
-      var li = el("li", "card" + (sel[p.key] ? " sel" : "") + (p.ov && p.ov.length ? " has-ov" : ""));
+      var li = el("li", "card" + (sel[p.key] ? " sel" : "") + (p.ov && p.ov.length ? " has-ov" : "") + (hasText(p) ? " has-txt" : ""));
       li.setAttribute("data-key", p.key);
       li.style.setProperty("--src-hue", String(src.hue));
       var b = el("button", "card-main");
@@ -753,6 +793,7 @@
       b.appendChild(tick);
       var cap = el("span", "cap");
       cap.appendChild(el("span", "num", String(i + 1)));
+      if (hasText(p)) { var tm = el("span", "txt-mark"); tm.innerHTML = ICON.text; cap.appendChild(tm); }
       if (multi || src.kind === "image") {
         var from = el("span", "from", src.kind === "image" ? src.name : src.name + " · " + (p.idx + 1));
         cap.appendChild(from);
@@ -968,13 +1009,16 @@
   }
   function needsFont(list) {
     return docOpts.num.on || docOpts.wm.on ||
-           list.some(function (p) { return (p.ov || []).some(function (o) { return o.t === "text"; }); });
+           list.some(function (p) {
+             var r = ocrBy[baseKey(p)];
+             return (r && r.words && r.words.length) || (p.ov || []).some(function (o) { return o.t === "text"; });
+           });
   }
 
   function buildPdf(list, title) {
     var f = needsFont(list) ? pdfFont() : Promise.resolve(null);
     return f.then(function (font) {
-      return OPS.build(window.PDFLib, sources, list, prefs, { title: title, opts: docOpts, font: font });
+      return OPS.build(window.PDFLib, sources, list, prefs, { title: title, opts: docOpts, font: font, ocr: ocrRecords() });
     }).then(function (bytes) {
       return new Blob([bytes], { type: "application/pdf" });
     });
@@ -982,9 +1026,13 @@
 
   // Make a PDF smaller: every page rendered (PDF.js) at the level's
   // resolution, saved as JPEG, and the JPEGs put into a new PDF.
-  function compressPdf(blob, level, title) {
-    var L = C.COMPRESS[level];
-    return Promise.all([pdfjs(), readBytes(blob)]).then(function (a) {
+  // The text read from the pages (wave 4) stays: it is put back on the
+  // pictures, so a smaller scan can still be searched.
+  function compressPdf(blob, level, title, src) {
+    var L = C.COMPRESS[level], recs = ocrRecords(true), font = null;
+    var keep = src.some(function (p) { return recs[baseKey(p)]; });
+    return Promise.all([pdfjs(), readBytes(blob), keep ? pdfFont() : null]).then(function (a) {
+      font = a[2];
       return a[0].getDocument({ data: a[1], isEvalSupported: false, enableXfa: false,
                                 disableAutoFetch: true, disableStream: true }).promise;
     }).then(function (doc) {
@@ -1006,7 +1054,8 @@
                   cv.toBlob(function (b) { b ? res(b) : rej(codeErr("build")); }, "image/jpeg", L.q);
                 });
               }).then(readBytes).then(function (bytes) {
-                list.push({ bytes: bytes, w: v1.width, h: v1.height });
+                var p = src[i - 1], words = p ? OPS.wordsFor(window.PDFLib, sources, p, prefs, recs[baseKey(p)] || null, true) : [];
+                list.push({ bytes: bytes, w: v1.width, h: v1.height, words: words });
                 cv.width = cv.height = 0;
                 try { pg.cleanup(); } catch (e) {}
               });
@@ -1016,7 +1065,7 @@
       }
       return chain.then(function () {
         try { doc.destroy(); } catch (e) {}
-        return OPS.fromImages(window.PDFLib, list, { title: title, opts: docOpts });
+        return OPS.fromImages(window.PDFLib, list, { title: title, opts: docOpts, font: font });
       });
     }).then(function (bytes) { return new Blob([bytes], { type: "application/pdf" }); });
   }
@@ -1059,21 +1108,29 @@
   }
   function shortDir(dir) { return dir.slice(C.ROOT.length + 1).split("/").join(" › "); }
 
-  function doSave(list, name, dest, cmp) {
-    showBusy(t(needsFont(list) && !fontP ? "busy.font" : "busy.build"));
-    var sizes = null;
-    return buildPdf(list, C.baseName(name)).then(function (blob) {
-      if (!C.COMPRESS[cmp]) return blob;
-      return compressPdf(blob, cmp, C.baseName(name)).then(function (small) {
+  function doSave(list, name, dest, cmp, read) {
+    var sizes = null, stopped = false;
+    var first = read ? readPages(list, prefs.ocr, !!C.COMPRESS[cmp]).then(function (r) { stopped = r.stopped; }, function () {
+      showToast(t("ocr.errSave"));
+    }) : Promise.resolve();
+    return first.then(function () {
+      if (stopped) return null;              // Stop: nothing is saved
+      showBusy(t(needsFont(list) && !fontP ? "busy.font" : "busy.build"));
+      return buildPdf(list, C.baseName(name));
+    }).then(function (blob) {
+      if (!blob || !C.COMPRESS[cmp]) return blob;
+      return compressPdf(blob, cmp, C.baseName(name), list).then(function (small) {
         // A PDF of text is often smaller than its pictures: keep it then
         if (small.size >= blob.size) { sizes = "same"; return blob; }
         sizes = { a: C.sizeLabel(blob.size, LANG), b: C.sizeLabel(small.size, LANG) };
         return small;
       });
     }).then(function (blob) {
+      if (!blob) { showToast(t("ocr.notSaved")); return; }
       showBusy(t("busy.save"));
       if (dest === "files") {
-        return writeToFiles(blob, C.diskDir(), name).then(function () {
+        return writeToFiles(blob, C.diskDir(), name).then(function (path) {
+          indexDoc(path, name, list);
           var dir = shortDir(C.diskDir());
           showToast(sizes && sizes.a ? t("toast.smallerFiles", { dir: dir, a: sizes.a, b: sizes.b })
                     : sizes ? t("toast.notSmaller") : t("toast.savedFiles", { dir: dir }));
@@ -1137,6 +1194,7 @@
     mb.textContent = "";
     mb.appendChild(body);
     var ok = $("modal-ok");
+    $("modal-cancel").textContent = t("btn.cancel");
     ok.textContent = okText;
     ok.classList.toggle("danger", !!danger);
     ok.disabled = false;
@@ -1195,11 +1253,25 @@
     function syncCmp() { cHint.hidden = cmp.value === "off"; }
     cmp.addEventListener("change", syncCmp);
     syncCmp();
+    // Make it searchable: read the text of the pages first (wave 4)
+    var read = check(t("save.read"), wantsRead(list)), lang = langChoice(prefs.ocr);
+    var rFields = el("div", "opt-fields");
+    rFields.appendChild(field(t("ocr.lang"), lang));
+    rFields.appendChild(el("p", "hint small", t("save.readHint")));
+    body.appendChild(read.row);
+    body.appendChild(rFields);
+    function syncRead() { rFields.hidden = !read.box.checked; }
+    read.box.addEventListener("change", syncRead);
+    syncRead();
     openModal(t(extract ? "save.extract" : "save.title"), body, t("btn.saveIt"), function () {
       var dest = radioVal(body, "dest") || "device";
-      prefs.dest = dest; prefs.cmp = C.readPrefs({ cmp: cmp.value }).cmp; savePrefs();
+      var P = C.readPrefs({ cmp: cmp.value, ocr: lang.value });
+      prefs.dest = dest; prefs.cmp = P.cmp; prefs.ocr = P.ocr;
+      // remember a choice that differs from what "auto" would pick
+      if (read.box.checked !== wantsRead(list) || prefs.read !== "auto") prefs.read = read.box.checked ? "on" : "off";
+      savePrefs();
       closeModal();
-      doSave(list, C.withPdf(name.value || defaultBase()), dest, prefs.cmp);
+      doSave(list, C.withPdf(name.value || defaultBase()), dest, prefs.cmp, read.box.checked);
     });
   }
   function whereChoice(nm, value, devKey, filesKey) {
@@ -1332,6 +1404,23 @@
     docSec.appendChild(field(t("doc.author"), author));
     body.appendChild(docSec);
 
+    // Universal search: the device-local list of PDFs saved into Files
+    var idxSec = el("section", "opt-sec"), idxN = indexCount();
+    idxSec.appendChild(el("h3", "", t("idx.title")));
+    var idxHint = el("p", "hint small", tn("idx.hint", idxN));
+    idxSec.appendChild(idxHint);
+    var forget = el("button", "btn", t("idx.forget"));
+    forget.type = "button";
+    forget.disabled = !idxN;
+    forget.addEventListener("click", function () {
+      try { localStorage.removeItem(O.INDEX_KEY); } catch (e) {}
+      idxHint.textContent = tn("idx.hint", 0);
+      forget.disabled = true;
+      say(t("idx.forgot"));
+    });
+    idxSec.appendChild(forget);
+    body.appendChild(idxSec);
+
     function syncOn() {
       numFields.hidden = !numOn.box.checked;
       wmFields.hidden = !wmOn.box.checked;
@@ -1341,7 +1430,7 @@
     syncOn();
 
     openModal(t("opt.title"), body, t("btn.done"), function () {
-      prefs = C.readPrefs({ size: size.value, orient: orient.value, margin: margin.value, dest: prefs.dest, cmp: prefs.cmp });
+      prefs = C.readPrefs(Object.assign({}, prefs, { size: size.value, orient: orient.value, margin: margin.value }));
       savePrefs();
       docOpts = C.readDocOpts({
         num: { on: numOn.box.checked, pos: pos.value, fmt: fmt.value, start: startIn.value },
@@ -1360,7 +1449,7 @@
       Object.keys(pjsDocs).forEach(function (id) {
         pjsDocs[id].then(function (d) { try { d.destroy(); } catch (e) {} }, function () {});
       });
-      sources = {}; srcOrder = []; pages = []; sel = {}; base = {}; pjsDocs = {}; queue = [];
+      sources = {}; srcOrder = []; pages = []; sel = {}; base = {}; pjsDocs = {}; queue = []; ocrBy = {};
       hist = C.history();
       renderAll();
       $("add-files").focus();
@@ -2467,6 +2556,307 @@
     window.addEventListener("pagehide", function () { if (sc) stopCamera(); });
   }
 
+  // ---------- 7e. Reading text (OCR) ----------
+  // Text recognition = Tesseract.js (Apache-2.0), vendored under
+  // vendor/tesseract/ with the Greek and English data (about 7 MB),
+  // loaded only when text is read; it runs in its own worker, so the
+  // page stays responsive, and nothing leaves this device. What it
+  // found is kept per page (src:idx) for this session: Save puts it
+  // under the page as invisible text (pdfops, ocr.js), Text shows it.
+  var OCR_BASE = "../vendor/tesseract/";
+  var OCR_IDLE = 120000;                     // the worker is let go after 2 minutes unused
+  var ocrBy = {};                            // "src:idx" -> ocr.record | { own: true, text }
+  var ocrLoad = null, ocrW = null, ocrWLang = "", ocrIdleT = null, ocrJob = null;
+  function ocrScript() {
+    if (window.Tesseract) return Promise.resolve(window.Tesseract);
+    if (ocrLoad) return ocrLoad;
+    ocrLoad = new Promise(function (res, rej) {
+      var s = document.createElement("script");
+      s.src = OCR_BASE + "tesseract.min.js";
+      s.onload = function () { window.Tesseract ? res(window.Tesseract) : rej(codeErr("ocr")); };
+      s.onerror = function () { s.remove(); ocrLoad = null; rej(codeErr("ocr")); };
+      document.head.appendChild(s);
+    });
+    return ocrLoad;
+  }
+  function dropWorker() {
+    clearTimeout(ocrIdleT); ocrIdleT = null;
+    var w = ocrW;
+    ocrW = null; ocrWLang = "";
+    if (w) { try { w.terminate(); } catch (e) {} }
+  }
+  function ocrWorker(lang, job) {
+    clearTimeout(ocrIdleT); ocrIdleT = null;
+    if (ocrW && ocrWLang === lang) return Promise.resolve(ocrW);
+    dropWorker();
+    var base = new URL(OCR_BASE, location.href).href;
+    return ocrScript().then(function (T) {
+      return T.createWorker(lang.split("+"), 1, {
+        workerPath: base + "worker.min.js",
+        corePath: base + "tesseract-core-lstm.js",
+        langPath: base.replace(/\/$/, ""),
+        workerBlobURL: false,
+        cachePath: "oros-scanpdf-ocr",
+        logger: function (m) {
+          if (!m || typeof m.progress !== "number" || job.stop) return;
+          job.pct = Math.round(m.progress * 100);
+          job.paint();
+        }
+      });
+    }).then(function (w) {
+      if (job.stop) { try { w.terminate(); } catch (e) {} throw codeErr("stop"); }
+      ocrW = w; ocrWLang = lang;
+      return w;
+    }, function (e) { throw e && e.code ? e : codeErr("ocr"); });
+  }
+  function hasText(p) {
+    var r = ocrBy[baseKey(p)];
+    return !!(r && (r.own || (r.words && r.words.length)));
+  }
+  // Words to draw: a page with its own text needs none, except when
+  // Compress turns it into a picture (pictures: true).
+  function ocrRecords(pictures) {
+    var out = {};
+    Object.keys(ocrBy).forEach(function (k) {
+      var r = ocrBy[k];
+      if (r.words && r.words.length && (pictures || !r.own)) out[k] = r;
+    });
+    return out;
+  }
+  // Pages of the list still to read in that language (each page once,
+  // however many copies the list has). With pictures, pages with their
+  // own text are read too, as Compress keeps only what was read.
+  function toRead(list, lang, pictures) {
+    var seen = {}, out = [];
+    list.forEach(function (p) {
+      var k = baseKey(p), r = ocrBy[k];
+      if (seen[k] || (r && (r.own ? !pictures || r.words : r.lang === lang))) return;
+      seen[k] = true;
+      out.push(p);
+    });
+    return out;
+  }
+  // A picture of the page as it shows (turned), for reading: about
+  // 2500 pixels on the long side, white behind it.
+  var OCR_SIDE = 2480;
+  function ocrCanvas(p) {
+    var src = sources[p.src], g = geomOf(p);
+    if (!g) return Promise.reject(codeErr("ocr"));
+    if (src.kind === "image") {
+      return createImageBitmap(new Blob([src.img.bytes])).then(function (bmp) {
+        var k = Math.min(2, OCR_SIDE / Math.max(bmp.width, bmp.height));
+        var w = Math.max(1, Math.round(bmp.width * k)), h = Math.max(1, Math.round(bmp.height * k));
+        var turned = g.R % 180 !== 0, cv = document.createElement("canvas");
+        cv.width = turned ? h : w; cv.height = turned ? w : h;
+        var ctx = cv.getContext("2d");
+        ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, cv.width, cv.height);
+        ctx.translate(cv.width / 2, cv.height / 2);
+        ctx.rotate(g.R * Math.PI / 180);
+        ctx.drawImage(bmp, -w / 2, -h / 2, w, h);
+        try { bmp.close(); } catch (e) {}
+        return { cv: cv, g: g, W: src.img.w, H: src.img.h };
+      });
+    }
+    return pjsDoc(src).then(function (doc) { return doc.getPage(p.idx + 1); }).then(function (pg) {
+      var v1 = pg.getViewport({ scale: 1, rotation: g.R });
+      var vp = pg.getViewport({ scale: OCR_SIDE / Math.max(v1.width, v1.height), rotation: g.R });
+      var cv = document.createElement("canvas");
+      cv.width = Math.max(1, Math.floor(vp.width)); cv.height = Math.max(1, Math.floor(vp.height));
+      var ctx = cv.getContext("2d");
+      ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, cv.width, cv.height);
+      return pg.render({ canvasContext: ctx, viewport: vp }).promise.then(function () {
+        try { pg.cleanup(); } catch (e) {}
+        return { cv: cv, g: g, W: g.W, H: g.H };
+      });
+    });
+  }
+  // The PDF's own text of a page, when it has some (then it is not read).
+  var OWN_MIN = 20;
+  function ownText(p) {
+    var src = sources[p.src];
+    if (src.kind !== "pdf") return Promise.resolve("");
+    return pjsDoc(src).then(function (doc) { return doc.getPage(p.idx + 1); }).then(function (pg) {
+      return pg.getTextContent().then(function (tc) {
+        var s = "";
+        (tc.items || []).forEach(function (it) {
+          if (typeof it.str !== "string") return;
+          s += it.str + (it.hasEOL ? "\n" : it.str ? " " : "");
+        });
+        s = s.replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+        return s.replace(/\s/g, "").length >= OWN_MIN ? s : "";
+      });
+    }).then(null, function () { return ""; });
+  }
+  // Read the pages of `list` that need it. Resolves { read, found,
+  // stopped } once done or stopped; pages read before Stop are kept.
+  function readPages(list, lang, pictures) {
+    var todo = toRead(list, lang, pictures), n = todo.length;
+    var job = { stop: false, i: 0, pct: 0, loading: true, found: 0 };
+    // Stop ends the wait at once, even while the worker is busy
+    job.stopped = new Promise(function (res) { job.onStop = res; }).then(function () { throw codeErr("stop"); });
+    job.stopped.then(null, function () {});
+    function orStop(pr) { return Promise.race([pr, job.stopped]); }
+    if (!n) return Promise.resolve({ read: 0, found: 0, stopped: false });
+    ocrJob = job;
+    job.paint = function () {
+      showBusy(job.loading ? t("ocr.load", { p: job.pct }) : t("ocr.page", { i: job.i, n: n, p: job.pct }));
+    };
+    $("busy-stop").hidden = false;
+    job.paint();
+    var chain = Promise.resolve(), worker = null;
+    todo.forEach(function (p, i) {
+      chain = chain.then(function () {
+        if (job.stop) return;
+        job.i = i + 1; job.pct = 0;
+        job.paint();
+        var had = ocrBy[baseKey(p)];
+        return orStop(had && had.own ? Promise.resolve(had.text) : ownText(p)).then(function (own) {
+          if (own && !pictures) { ocrBy[baseKey(p)] = { own: true, text: own }; job.found++; return; }
+          return orStop(worker ? Promise.resolve(worker) : ocrWorker(lang, job)).then(function (w) {
+            worker = w;
+            job.loading = false; job.pct = 0;
+            job.paint();
+            return ocrCanvas(p).then(function (pic) {
+              if (job.stop) throw codeErr("stop");
+              return orStop(w.recognize(pic.cv, {}, { text: true, blocks: true })).then(function (res) {
+                var found = O.wordsFrom(res && res.data, pic.cv.width, pic.cv.height);
+                pic.cv.width = pic.cv.height = 0;
+                if (job.stop) return;
+                var rec = O.record(found, pic.g.R, pic.W, pic.H, lang);
+                // a page with its own text keeps showing that text; the words only go under its picture
+                if (own) { rec.own = true; rec.text = own; }
+                ocrBy[baseKey(p)] = rec;
+                if (own || found.words.length) job.found++;
+              });
+            });
+          });
+        });
+      });
+    });
+    function end(stopped) {
+      if (ocrJob === job) ocrJob = null;
+      $("busy-stop").hidden = true;
+      hideBusy();
+      if (ocrW) { clearTimeout(ocrIdleT); ocrIdleT = setTimeout(dropWorker, OCR_IDLE); }
+      renderAll();
+      return { read: job.stop ? Math.max(0, job.i - 1) : n, found: job.found, stopped: stopped };
+    }
+    return chain.then(function () { return end(job.stop); }, function (e) {
+      if (job.stop || (e && e.code === "stop")) return end(true);
+      end(false);
+      throw e && e.code ? e : codeErr("ocr");
+    });
+  }
+  function stopReading() {
+    if (!ocrJob) return;
+    ocrJob.stop = true;
+    ocrJob.onStop();
+    dropWorker();                            // ends the page being read now
+  }
+
+  function langChoice(value) {
+    return select([["ell+eng", t("ocr.both")], ["ell", t("ocr.ell")], ["eng", t("ocr.eng")]], value);
+  }
+  function readDialog() {
+    var k = selKeys(), body = el("div", "form");
+    body.appendChild(el("p", "hint small", t("ocr.hint")));
+    var lang = langChoice(prefs.ocr);
+    body.appendChild(field(t("ocr.lang"), lang));
+    if (k.length && k.length < pages.length) {
+      var box = el("fieldset", "seg");
+      box.appendChild(el("legend", "field-l", t("ocr.scope")));
+      box.appendChild(radio("scope", "all", tn("ocr.all", pages.length), false));
+      box.appendChild(radio("scope", "sel", tn("ocr.sel", k.length), true));
+      body.appendChild(box);
+    }
+    body.appendChild(el("p", "hint small", t("ocr.dl")));
+    openModal(t("ocr.title"), body, t("ocr.go"), function () {
+      var list = radioVal(body, "scope") === "sel" ? pages.filter(function (p) { return sel[p.key]; }) : pages.slice();
+      prefs.ocr = C.readPrefs({ ocr: lang.value }).ocr; savePrefs();
+      closeModal();
+      readPages(list, prefs.ocr).then(function (r) {
+        if (r.stopped) showToast(tn("ocr.stopped", r.read));
+        textDialog(list);
+      }, function () { showToast(t("ocr.err")); });
+    });
+  }
+  // The text of the pages, page by page: copy it or send it to an app.
+  function pagesText(list) {
+    return list.map(function (p) {
+      var r = ocrBy[baseKey(p)];
+      return r && r.text ? r.text : "";
+    });
+  }
+  function textDialog(list) {
+    var texts = pagesText(list), any = texts.some(function (s) { return s.trim(); });
+    var body = el("div", "form");
+    if (!any) {
+      body.appendChild(el("p", "", t("ocr.none")));
+      openModal(t("txt.title"), body, t("btn.done"), closeModal);
+      return;
+    }
+    var view = el("div", "ocr-text");
+    view.tabIndex = 0;
+    view.setAttribute("role", "document");
+    view.setAttribute("aria-label", t("txt.title"));
+    texts.forEach(function (s, i) {
+      view.appendChild(el("h3", "", t("txt.page", { n: indexOf(list[i].key) + 1 })));
+      view.appendChild(el("p", s.trim() ? "" : "hint small", s.trim() || t("txt.empty")));
+    });
+    body.appendChild(view);
+    var all = texts.map(function (s, i) { return s.trim() ? s.trim() : ""; }).filter(Boolean).join("\n\n");
+    var row = el("div", "txt-btns");
+    var send = sendApi();
+    if (send) {
+      var sb = el("button", "btn", t("txt.send"));
+      sb.type = "button";
+      sb.addEventListener("click", function () {
+        closeModal();
+        send.open({ kind: "text", data: { title: defaultBase(), text: all } });
+      });
+      row.appendChild(sb);
+    }
+    if (row.firstChild) body.appendChild(row);
+    openModal(t("txt.title"), body, t("txt.copy"), function () {
+      copyText(all).then(function () { showToast(t("txt.copied")); }, function () { showToast(t("txt.noCopy")); });
+    });
+    $("modal-cancel").textContent = t("btn.closeIt");
+  }
+  function copyText(s) {
+    if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") return navigator.clipboard.writeText(s);
+    return new Promise(function (res, rej) {
+      var ta = document.createElement("textarea");
+      ta.value = s; ta.setAttribute("readonly", ""); ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.appendChild(ta); ta.select();
+      var ok = false;
+      try { ok = document.execCommand("copy"); } catch (e) {}
+      ta.remove();
+      ok ? res() : rej(new Error("copy"));
+    });
+  }
+  function sendApi() {
+    try { return window.parent !== window && window.parent.orosSend && typeof window.parent.orosSend.open === "function" ? window.parent.orosSend : null; }
+    catch (e) { return null; }
+  }
+  // Save › Make it searchable: on by default when the list has scans
+  // or pages already read.
+  function wantsRead(list) {
+    if (prefs.read !== "auto") return prefs.read === "on";
+    return list.some(function (p) { return sources[p.src].scan || hasText(p); });
+  }
+
+  // Universal search: PDFs saved into Files, by name and text (search.js).
+  function indexDoc(path, name, list) {
+    var text = pagesText(list).filter(function (s) { return s.trim(); }).join(" ");
+    var cur = null;
+    try { cur = JSON.parse(localStorage.getItem(O.INDEX_KEY) || "null"); } catch (e) {}
+    var next = O.addToIndex(cur, { p: path, n: C.baseName(name), t: text, k: list.length }, Date.now());
+    try { localStorage.setItem(O.INDEX_KEY, JSON.stringify(next)); } catch (e) {}
+  }
+  function indexCount() {
+    try { return O.cleanIndex(JSON.parse(localStorage.getItem(O.INDEX_KEY) || "null")).length; } catch (e) { return 0; }
+  }
+
   // ---------- 8. Toast + busy ----------
   var toastTimer = null, toastShown = false;
   function showToast(msg) {
@@ -2511,7 +2901,10 @@
         else if (e.key === "Tab") trapTab(e);
         return;
       }
-      if (isBusy()) return;
+      if (isBusy()) {
+        if (e.key === "Escape" && ocrJob) { e.preventDefault(); stopReading(); }
+        return;
+      }
       if (ed && edKey(e)) return;
       if (sc && scKey(e)) return;
       var typing = /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName);
@@ -2678,6 +3071,9 @@
     $("save-btn").addEventListener("click", function () { saveDialog(false); });
     $("split-btn").addEventListener("click", splitDialog);
     $("opt-btn").addEventListener("click", optionsDialog);
+    $("text-btn").addEventListener("click", readDialog);
+    $("busy-stop").addEventListener("click", stopReading);
+    window.addEventListener("pagehide", dropWorker);
     wireScanner();
     $("ed-cancel").addEventListener("click", cancelEditor);
     $("ed-done").addEventListener("click", function () { closeEditor(true); });

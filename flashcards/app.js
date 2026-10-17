@@ -104,7 +104,29 @@
       "m.nomic": "The microphone is not available. Allow it in the browser to record.",
       "m.saveFail": "A picture or sound could not be written to the orOS disk.",
       "m.recMax": "Recording stopped at 5 minutes.",
-      "v.none": "No installed voice reads this language on this device."
+      "v.none": "No installed voice reads this language on this device.",
+      "btn.import": "Import", "btn.chooseFile": "Choose a file", "btn.importNow": "Import",
+      "dlg.import": "Import cards",
+      "im.intro": "Anki decks (.apkg, .colpkg) or a text file with one card per line (CSV, TSV, TXT, also from Quizlet).",
+      "im.reading": "Reading the file…",
+      "im.media": "Pictures and sounds: {i} of {n}",
+      "im.saving": "Saving the cards…",
+      "im.sum": "{n} notes ({c} cards). Decks: {d}.",
+      "im.hist": "{r} answers from your Anki study history.",
+      "im.mediaSum": "{m} pictures and sounds.",
+      "im.skip": "{s} notes are already here and stay as they are.",
+      "im.histBox": "Bring my study history, so each card's schedule continues where Anki left it",
+      "im.nothing": "Nothing new to import: every card in this file is already here.",
+      "im.done": "Imported {c} cards.",
+      "im.mediaFail": "{m} pictures or sounds could not be read and were left out.",
+      "im.bad": "This file could not be read as an Anki deck.",
+      "im.badText": "No cards were found in this file.",
+      "im.toobig": "The file is too big (up to 300 MB).",
+      "im.tooMany": "This file has more cards than Flashcards can take at once ({n} notes at most).",
+      "im.colFront": "Front column", "im.colBack": "Back column", "im.colTags": "Tags column", "im.none": "(none)",
+      "im.header": "The first line holds column names", "im.deck": "Into deck", "im.newDeck": "New deck “{n}”",
+      "im.col": "Column {n}", "im.preview": "First lines of the file:",
+      "im.dupText": "{s} cards are already here and are left out."
     },
     el: {
       "app.name": "Κάρτες μελέτης",
@@ -182,7 +204,29 @@
       "m.nomic": "Το μικρόφωνο δεν είναι διαθέσιμο. Επίτρεψέ το στον browser για να ηχογραφήσεις.",
       "m.saveFail": "Μια εικόνα ή ένας ήχος δεν γράφτηκε στον δίσκο του orOS.",
       "m.recMax": "Η ηχογράφηση σταμάτησε στα 5 λεπτά.",
-      "v.none": "Καμία εγκατεστημένη φωνή δεν διαβάζει αυτή τη γλώσσα σε αυτή τη συσκευή."
+      "v.none": "Καμία εγκατεστημένη φωνή δεν διαβάζει αυτή τη γλώσσα σε αυτή τη συσκευή.",
+      "btn.import": "Εισαγωγή", "btn.chooseFile": "Διάλεξε αρχείο", "btn.importNow": "Εισαγωγή",
+      "dlg.import": "Εισαγωγή καρτών",
+      "im.intro": "Τράπουλες Anki (.apkg, .colpkg) ή αρχείο κειμένου με μία κάρτα σε κάθε γραμμή (CSV, TSV, TXT, και από το Quizlet).",
+      "im.reading": "Διαβάζω το αρχείο…",
+      "im.media": "Εικόνες και ήχοι: {i} από {n}",
+      "im.saving": "Αποθηκεύω τις κάρτες…",
+      "im.sum": "{n} σημειώσεις ({c} κάρτες). Τράπουλες: {d}.",
+      "im.hist": "{r} απαντήσεις από το ιστορικό μελέτης σου στο Anki.",
+      "im.mediaSum": "{m} εικόνες και ήχοι.",
+      "im.skip": "{s} σημειώσεις υπάρχουν ήδη και μένουν όπως είναι.",
+      "im.histBox": "Φέρε και το ιστορικό μελέτης, ώστε κάθε κάρτα να συνεχίσει από εκεί που την άφησε το Anki",
+      "im.nothing": "Τίποτα καινούργιο: όλες οι κάρτες του αρχείου υπάρχουν ήδη.",
+      "im.done": "Μπήκαν {c} κάρτες.",
+      "im.mediaFail": "{m} εικόνες ή ήχοι δεν διαβάστηκαν και έμειναν έξω.",
+      "im.bad": "Το αρχείο δεν διαβάστηκε ως τράπουλα Anki.",
+      "im.badText": "Δεν βρέθηκαν κάρτες σε αυτό το αρχείο.",
+      "im.toobig": "Το αρχείο είναι πολύ μεγάλο (ως 300 MB).",
+      "im.tooMany": "Το αρχείο έχει περισσότερες κάρτες από όσες χωράνε με μια φορά (το πολύ {n} σημειώσεις).",
+      "im.colFront": "Στήλη για το μπροστά", "im.colBack": "Στήλη για το πίσω", "im.colTags": "Στήλη για τις ετικέτες", "im.none": "(καμία)",
+      "im.header": "Η πρώτη γραμμή έχει τα ονόματα των στηλών", "im.deck": "Στην τράπουλα", "im.newDeck": "Νέα τράπουλα «{n}»",
+      "im.col": "Στήλη {n}", "im.preview": "Οι πρώτες γραμμές του αρχείου:",
+      "im.dupText": "{s} κάρτες υπάρχουν ήδη και έμειναν έξω."
     }
   };
 
@@ -371,6 +415,17 @@
     clearTimeout(revTimer);
     revTimer = setTimeout(function () { writeOwn("reviews"); }, 800);
   }
+  // Many rows at once (import): one write.
+  function addReviewRows(list) {
+    if (!list.length) return Promise.resolve(true);
+    var f = ownFile("reviews");
+    f.items = C.mergeReviews(f.items, list);
+    reviews = C.mergeReviews(reviews, list);
+    clearTimeout(revTimer);
+    revTimer = 0;
+    rebuild();
+    return writeOwn("reviews");
+  }
   function flushReviews() {
     if (!revTimer) return;
     clearTimeout(revTimer);
@@ -504,6 +559,10 @@
       b.type = "button";
       b.addEventListener("click", function (ev) { ev.stopPropagation(); deckDialog(""); });
       add.appendChild(b);
+      var ib = el("button", "chip", t("btn.import"));
+      ib.type = "button";
+      ib.addEventListener("click", function (ev) { ev.stopPropagation(); importDialog(); });
+      add.appendChild(ib);
       add.style.cursor = "default";
       add.style.background = "none";
       add.style.border = "0";
@@ -1007,6 +1066,7 @@
     if (opts.alt) $("dlg-alt").textContent = opts.altText;
     $("dlg-del").hidden = !opts.del;
     $("dlg-cancel").hidden = !!opts.noCancel;
+    $("dlg-ok").disabled = false;
     if (dlg && dlg !== opts && dlg.onClose) dlg.onClose();
     dlg = opts;
     $("veil").hidden = false;
@@ -1434,6 +1494,250 @@
     });
   }
 
+  // ---------- 8b. Import: Anki packages and text files ----------
+  // The readers load only when a file is imported (precached all the same).
+  var IMPORT_MAX = 300 * 1024 * 1024;
+  var loaded = {};
+  function need(src) {
+    if (!loaded[src]) {
+      loaded[src] = new Promise(function (ok, no) {
+        var sc = document.createElement("script");
+        sc.src = src + (SCRIPT_V ? "?v=" + SCRIPT_V : "");
+        sc.onload = function () { ok(); };
+        sc.onerror = function () { delete loaded[src]; no(new Error("load")); };
+        document.head.appendChild(sc);
+      });
+    }
+    return loaded[src];
+  }
+  function readers() {
+    return Promise.all([need("../atelier/zip.js"), need("../vendor/fzstd/fzstd.umd.js"), need("sqlite.js"), need("anki.js")]);
+  }
+  // A deck for every path ["Languages", "Spanish"], reusing decks with the same name and parent.
+  function deckMaker(now) {
+    var next = slice, made = {};
+    function find(name, par) {
+      return C.normalize(next).decks.filter(function (x) { return x.n === name && (x.par || "") === par; })[0];
+    }
+    return {
+      id: function (path) {
+        var par = "";
+        path.slice(0, 12).forEach(function (part) {
+          var name = part.replace(/\s+/g, " ").trim().slice(0, C.LIMITS.name) || "…";
+          var d = find(name, par);
+          if (!d) {
+            if (C.normalize(next).decks.length >= C.LIMITS.decks) return;
+            var id = C.newId("d", now);
+            next = C.addDeck(next, name, now, { id: id, par: par || undefined });
+            made[id] = 1;
+            d = { id: id };
+          }
+          par = d.id;
+        });
+        return par || C.DEFAULT_DECK;
+      },
+      save: function () { if (Object.keys(made).length) saveSlice(next); },
+      count: function () { return Object.keys(made).length; }
+    };
+  }
+  function importDialog() {
+    var body = el("div");
+    body.appendChild(el("p", "hint", t("im.intro")));
+    var pick = el("button", "chip pri", t("btn.chooseFile"));
+    pick.type = "button";
+    var inp = el("input");
+    inp.type = "file";
+    inp.hidden = true;
+    inp.accept = ".apkg,.colpkg,.csv,.tsv,.txt,text/plain,text/csv,text/tab-separated-values";
+    var status = el("p", "im-status");
+    status.setAttribute("role", "status");
+    var area = el("div", "im-area");
+    [pick, inp, status, area].forEach(function (x) { body.appendChild(x); });
+    var job = null;   // { run() } once a file is ready
+    var busy = false;
+    pick.addEventListener("click", function () { inp.click(); });
+    inp.addEventListener("change", function () {
+      var f = inp.files && inp.files[0];
+      inp.value = "";
+      if (f) take(f);
+    });
+    body.addEventListener("dragover", function (ev) { ev.preventDefault(); });
+    body.addEventListener("drop", function (ev) {
+      var f = ev.dataTransfer && ev.dataTransfer.files && ev.dataTransfer.files[0];
+      if (f) { ev.preventDefault(); take(f); }
+    });
+    function say(msg) { status.textContent = msg; }
+    function take(file) {
+      if (busy) return;
+      job = null;
+      $("dlg-ok").disabled = true;
+      area.textContent = "";
+      if (file.size > IMPORT_MAX) { say(t("im.toobig")); return; }
+      say(t("im.reading"));
+      busy = true;
+      file.arrayBuffer().then(function (buf) {
+        var bytes = new Uint8Array(buf);
+        var zip = bytes.length > 4 && bytes[0] === 0x50 && bytes[1] === 0x4b && bytes[2] === 3 && bytes[3] === 4;
+        var base = String(file.name || "").replace(/\.[^.]*$/, "").trim() || t("app.name");
+        return readers().then(function () { return zip ? ankiStep(bytes, base) : textStep(bytes, base); });
+      }).catch(function (e) {
+        console.warn("[flashcards] import read failed", e);
+        say(t("im.bad"));
+      }).then(function () { busy = false; });
+    }
+    function ankiStep(bytes, base) {
+      var A = window.FlashcardsAnki;
+      return A.readPackage(bytes, { zip: window.AtelierZip, sqlite: window.FlashcardsSqlite, zstd: window.fzstd }).then(function (model) {
+        if (model.notes.length >= A.MAX_NOTES) toast(t("im.tooMany", { n: A.MAX_NOTES }));
+        var items = A.convert(model);
+        if (!items.length) { say(t("im.badText")); return; }
+        var probe = A.plan(model, items, { now: Date.now(), deckId: function () { return C.DEFAULT_DECK; }, existing: notes, history: true });
+        // Only what is new counts: notes not here yet, answers not here yet, their media.
+        var fresh = items.filter(function (it) { var x = notes[A.noteIdFor(it.guid, it.key)]; return !x || x.del; });
+        var files = A.mediaUsed(fresh), haveRow = {};
+        reviews.forEach(function (r) { haveRow[r.i] = 1; });
+        probe.answers = probe.rows.filter(function (r) { return !r.f && !haveRow[r.i]; }).length;
+        var decks = {};
+        fresh.forEach(function (it) { decks[(model.decks[it.did] || []).join("\u001f")] = 1; });
+        area.textContent = "";
+        area.appendChild(el("p", "", t("im.sum", { n: probe.notes.length, c: probe.cards, d: Object.keys(decks).length })));
+        if (probe.answers) area.appendChild(el("p", "", t("im.hist", { r: probe.answers })));
+        if (files.length) area.appendChild(el("p", "", t("im.mediaSum", { m: files.length })));
+        if (probe.skipped) area.appendChild(el("p", "hint", t("im.skip", { s: probe.skipped })));
+        var hist = el("input");
+        hist.type = "checkbox";
+        hist.checked = true;
+        if (probe.answers) {
+          var lab = el("label", "check");
+          lab.appendChild(hist);
+          lab.appendChild(el("span", "", t("im.histBox")));
+          area.appendChild(lab);
+        }
+        say("");
+        if (!probe.notes.length && !probe.answers) { area.textContent = ""; say(t("im.nothing")); return; }
+        job = { run: function () { return ankiRun(model, items, files, base, hist.checked); } };
+        $("dlg-ok").disabled = false;
+      });
+    }
+    function ankiRun(model, items, files, base, history) {
+      var A = window.FlashcardsAnki, Fs = fsApi(), map = {}, failed = 0, i = 0;
+      // Pictures and sounds: read, redraw / hash, write, one at a time.
+      function nextMedia() {
+        if (i >= files.length) return Promise.resolve();
+        var name = files[i++];
+        say(t("im.media", { i: i, n: files.length }));
+        return model.readMedia(name).then(function (data) {
+          if (!data) { failed++; return; }
+          return M.prepare(new File([data], name, { type: "" })).then(function (item) {
+            map[name] = item.name;
+            if (disk && Fs) return M.write(Fs, item);
+          });
+        }).catch(function () { failed++; }).then(nextMedia);
+      }
+      return nextMedia().then(function () {
+        say(t("im.saving"));
+        var now = Date.now(), maker = deckMaker(now);
+        var p = A.plan(model, items, {
+          now: now, existing: notes, media: map, history: history,
+          deckId: function (path) {
+            if (!path.length || (path.length === 1 && path[0] === "Default")) path = [base];
+            return maker.id(path);
+          }
+        });
+        maker.save();
+        var list = p.notes.map(C.normNote).filter(Boolean);
+        return Promise.all([list.length ? saveNotes(list) : true, addReviewRows(p.rows.map(C.normReview).filter(Boolean))]).then(function () {
+          return { cards: p.cards, failed: failed };
+        });
+      });
+    }
+    function textStep(bytes, base) {
+      var A = window.FlashcardsAnki;
+      var text = new TextDecoder("utf-8").decode(bytes);
+      var parsed = A.parseText(text);
+      if (!parsed.rows.length || !parsed.cols) { say(t("im.badText")); return Promise.resolve(); }
+      say("");
+      area.textContent = "";
+      var cols = [];
+      for (var c = 0; c < Math.min(parsed.cols, 30); c++) cols.push([String(c), t("im.col", { n: c + 1 })]);
+      var none = [["-1", t("im.none")]];
+      area.appendChild(el("p", "hint", t("im.preview")));
+      var pre = el("div", "im-preview");
+      parsed.rows.slice(0, 4).forEach(function (r) {
+        var line = el("div", "im-row");
+        r.slice(0, 6).forEach(function (cell, ci) {
+          var sp = el("span", "", (ci + 1) + ": " + cell.replace(/\s+/g, " ").slice(0, 60));
+          line.appendChild(sp);
+        });
+        pre.appendChild(line);
+      });
+      area.appendChild(pre);
+      var two = el("div", "two");
+      var fc = select(cols, "0"), bc = select(none.concat(cols), parsed.cols > 1 ? "1" : "-1");
+      two.appendChild(field("im.colFront", fc));
+      two.appendChild(field("im.colBack", bc));
+      area.appendChild(two);
+      var two2 = el("div", "two");
+      var tc = select(none.concat(cols), String(parsed.tagsCol >= 0 && parsed.tagsCol < parsed.cols ? parsed.tagsCol : -1));
+      var kc = select([["basic", t("kind.basic")], ["rev", t("kind.rev")]], "basic");
+      two2.appendChild(field("im.colTags", tc));
+      two2.appendChild(field("f.kind", kc));
+      area.appendChild(two2);
+      var dk = select([["", t("im.newDeck", { n: base })]].concat(deckOptions(null)), view === "deck" && deckById(curDeck) ? curDeck : "");
+      area.appendChild(field("im.deck", dk));
+      var hd = el("label", "check");
+      var hb = el("input");
+      hb.type = "checkbox";
+      hb.checked = parsed.cols > 1 && /^(front|back|question|answer|term|definition|word|meaning|\u03bc\u03c0\u03c1\u03bf\u03c3\u03c4\u03ac|\u03c0\u03af\u03c3\u03c9)$/i.test(String(parsed.rows[0][0] || "").trim());
+      hd.appendChild(hb);
+      hd.appendChild(el("span", "", t("im.header")));
+      area.appendChild(hd);
+      job = { run: function () {
+        var list = A.textNotes(parsed, { front: +fc.value, back: +bc.value, tags: +tc.value, kind: kc.value, header: hb.checked, html: parsed.html });
+        var now = Date.now(), deckId = dk.value;
+        if (!deckId) { var maker = deckMaker(now); deckId = maker.id([base]); maker.save(); }
+        // Same card already here (same type, front and back): left out.
+        var have = {};
+        C.liveNotes(notes).forEach(function (n) { have[n.k + "\u0000" + C.canon(n.f)] = 1; });
+        var dup = 0, out = [];
+        list.forEach(function (x, k) {
+          var v = C.normNote({ id: C.newId("n", now, k.toString(36) + Math.random().toString(36).slice(2, 6)), m: now, k: x.k, dk: deckId, f: x.f, tg: x.tg });
+          if (!v) return;
+          var key = v.k + "\u0000" + C.canon(v.f);
+          if (have[key]) { dup++; return; }
+          have[key] = 1;
+          out.push(v);
+        });
+        if (dup) toast(t("im.dupText", { s: dup }));
+        var cards = 0;
+        out.forEach(function (v) { cards += C.ords(v).length; });
+        return (out.length ? saveNotes(out) : Promise.resolve(true)).then(function () { return { cards: cards, failed: 0, deck: deckId }; });
+      } };
+      $("dlg-ok").disabled = false;
+      return Promise.resolve();
+    }
+    openDialog(t("dlg.import"), body, {
+      okText: t("btn.importNow"),
+      ok: function () {
+        if (!job || busy) return;
+        busy = true;
+        $("dlg-ok").disabled = true;
+        pick.disabled = true;
+        job.run().then(function (r) {
+          closeDialog();
+          toast(t("im.done", { c: r.cards }) + (r.failed ? " " + t("im.mediaFail", { m: r.failed }) : ""));
+          if (r.deck && deckById(r.deck)) openDeck(r.deck); else show("home");
+        }, function (e) {
+          console.warn("[flashcards] import failed", e);
+          say(t("diskFail"));
+        }).then(function () { busy = false; pick.disabled = false; });
+      },
+      onClose: function () { $("dlg-ok").disabled = false; }
+    });
+    $("dlg-ok").disabled = true;
+    pick.focus();
+  }
+
   // ---------- 9. Wiring ----------
   function goBack() {
     if (!$("veil").hidden) { closeDialog(); return; }
@@ -1470,6 +1774,7 @@
     });
     M.onVoices(function () { if (view === "study" && study.key) $("speak-btn").hidden = !M.hasVoices(); });
     $("first-deck-btn").addEventListener("click", function () { deckDialog(""); });
+    $("first-import-btn").addEventListener("click", importDialog);
     $("add-card-btn").addEventListener("click", function () { noteDialog(""); });
     $("settings-btn").addEventListener("click", settingsDialog);
     $("study-btn").addEventListener("click", function () { startStudy(curDeck); });
