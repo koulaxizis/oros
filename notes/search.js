@@ -15,6 +15,19 @@
       .filter(Boolean)[0] || "";
   }
 
+  // The one text of its own (same key and English as notes.js). The
+  // shell runs this file, not the Notes page: a pack language shows
+  // the "notes" pack line when the shell has it, else English.
+  var S = {
+    en: { "page.untitled": "Untitled" },
+    el: { "page.untitled": "Χωρίς τίτλο" }
+  };
+  function untitled(lang) {
+    var I = root && root.orosI18n;
+    var tab = S[lang] || (I && lang ? I.table(S, "notes", lang) : S.en);
+    return tab["page.untitled"] || S.en["page.untitled"];
+  }
+
   var PROVIDER = {
     id: "notes",
     keys: [KEY],
@@ -29,7 +42,7 @@
         if (!p || typeof p.id !== "string") return;
         var text = typeof p.text === "string" ? p.text : "";
         var title = String(p.title || "").trim() || firstLine(text).slice(0, 60) ||
-                    (ctx.lang === "el" ? "Χωρίς τίτλο" : "Untitled");
+                    untitled(ctx.lang);
         out.push({
           id: p.id,
           title: title,

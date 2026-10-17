@@ -21,6 +21,12 @@
     var n = [str(c.given), str(c.middle), str(c.family)].filter(Boolean).join(" ");
     return n || str(c.nickname) || str(c.org);
   }
+  var W = { en: { "name.unnamed": "Unnamed" }, el: { "name.unnamed": "Χωρίς όνομα" } };
+  function unnamed(lang) {
+    var I = typeof window !== "undefined" && window.orosI18n;
+    if (I && lang && !W[lang]) I.table(W, "contacts", lang);
+    return (W[lang] || W.en)["name.unnamed"];
+  }
 
   var PROVIDER = {
     id: "contacts",
@@ -30,7 +36,7 @@
       if (!d || !Array.isArray(d.contacts)) return out;
       d.contacts.forEach(function (c) {
         if (!c || typeof c.id !== "string") return;
-        var name = displayName(c) || (ctx.lang === "el" ? "Χωρίς όνομα" : "Unnamed");
+        var name = displayName(c) || unnamed(ctx.lang);
         var parts = [str(c.nickname), str(c.org), str(c.jobTitle)]
           .concat(vals(c.phones, function (x) { return str(x.v); }))
           .concat(vals(c.emails, function (x) { return str(x.v); }))

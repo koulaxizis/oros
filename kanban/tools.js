@@ -438,56 +438,149 @@
 
   var C = { red: "#e06c75", yellow: "#ecc75f", green: "#87cf3e", cyan: "#4fc4cf",
             violet: "#6d4aff", pink: "#e09ecf", orange: "#f28c5a", gray: "#9aa4b0" };
+  // Built-in templates: the shape here, the words in TPL (one key per
+  // text, so a language pack can translate them; pack "kanban").
+  var TPL = {
+    en: {
+      "tplb.personal.name": "Personal",
+      "tplb.personal.desc": "Ideas, to do, this week and done, with a few life labels.",
+      "tplb.personal.col.0": "Ideas",
+      "tplb.personal.col.1": "To do",
+      "tplb.personal.col.2": "This week",
+      "tplb.personal.col.3": "Done",
+      "tplb.personal.label.0": "Home",
+      "tplb.personal.label.1": "Health",
+      "tplb.personal.label.2": "Errands",
+      "tplb.personal.label.3": "Fun",
+      "tplb.personal.label.4": "Overdue",
+      "tplb.personal.card.0": "Plan the week",
+      "tplb.personal.card.0.sub.0": "Check the calendar",
+      "tplb.personal.card.0.sub.1": "Pick three priorities",
+      "tplb.sprint.name": "Software sprint",
+      "tplb.sprint.desc": "Backlog to done with WIP limits, bug/feature labels and automations.",
+      "tplb.sprint.col.0": "Backlog",
+      "tplb.sprint.col.1": "To do",
+      "tplb.sprint.col.2": "In progress",
+      "tplb.sprint.col.3": "Review",
+      "tplb.sprint.col.4": "Done",
+      "tplb.sprint.label.0": "Bug",
+      "tplb.sprint.label.1": "Feature",
+      "tplb.sprint.label.2": "Chore",
+      "tplb.sprint.label.3": "Urgent",
+      "tplb.sprint.label.4": "Overdue",
+      "tplb.sprint.card.0": "Write the sprint goal",
+      "tplb.sprint.card.1": "Set up the release checklist",
+      "tplb.sprint.card.1.sub.0": "Changelog",
+      "tplb.sprint.card.1.sub.1": "Version number",
+      "tplb.sprint.card.1.sub.2": "Tag the release",
+      "tplb.content.name": "Content calendar",
+      "tplb.content.desc": "Ideas to published, with a label per channel. Use the Timeline view for dates.",
+      "tplb.content.col.0": "Ideas",
+      "tplb.content.col.1": "Writing",
+      "tplb.content.col.2": "Editing",
+      "tplb.content.col.3": "Scheduled",
+      "tplb.content.col.4": "Published",
+      "tplb.content.label.0": "Blog",
+      "tplb.content.label.1": "Video",
+      "tplb.content.label.2": "Social",
+      "tplb.content.label.3": "Newsletter",
+      "tplb.content.label.4": "Overdue",
+      "tplb.content.card.0": "Topic list for next month"
+    },
+    el: {
+      "tplb.personal.name": "Προσωπικά",
+      "tplb.personal.desc": "Ιδέες, εκκρεμότητες, αυτή την εβδομάδα και ολοκληρωμένα, με λίγες ετικέτες για την καθημερινότητα.",
+      "tplb.personal.col.0": "Ιδέες",
+      "tplb.personal.col.1": "Να γίνουν",
+      "tplb.personal.col.2": "Αυτή την εβδομάδα",
+      "tplb.personal.col.3": "Ολοκληρωμένα",
+      "tplb.personal.label.0": "Σπίτι",
+      "tplb.personal.label.1": "Υγεία",
+      "tplb.personal.label.2": "Θελήματα",
+      "tplb.personal.label.3": "Διασκέδαση",
+      "tplb.personal.label.4": "Καθυστέρηση",
+      "tplb.personal.card.0": "Πρόγραμμα της εβδομάδας",
+      "tplb.personal.card.0.sub.0": "Έλεγχος ημερολογίου",
+      "tplb.personal.card.0.sub.1": "Τρεις προτεραιότητες",
+      "tplb.sprint.name": "Σπριντ λογισμικού",
+      "tplb.sprint.desc": "Από το backlog ως το τέλος, με όρια WIP, ετικέτες σφάλμα/λειτουργία και αυτοματισμούς.",
+      "tplb.sprint.col.0": "Backlog",
+      "tplb.sprint.col.1": "Να γίνουν",
+      "tplb.sprint.col.2": "Σε εξέλιξη",
+      "tplb.sprint.col.3": "Έλεγχος",
+      "tplb.sprint.col.4": "Ολοκληρωμένα",
+      "tplb.sprint.label.0": "Σφάλμα",
+      "tplb.sprint.label.1": "Λειτουργία",
+      "tplb.sprint.label.2": "Συντήρηση",
+      "tplb.sprint.label.3": "Επείγον",
+      "tplb.sprint.label.4": "Καθυστέρηση",
+      "tplb.sprint.card.0": "Στόχος του σπριντ",
+      "tplb.sprint.card.1": "Λίστα ελέγχου έκδοσης",
+      "tplb.sprint.card.1.sub.0": "Σημειώσεις αλλαγών",
+      "tplb.sprint.card.1.sub.1": "Αριθμός έκδοσης",
+      "tplb.sprint.card.1.sub.2": "Ετικέτα έκδοσης",
+      "tplb.content.name": "Ημερολόγιο περιεχομένου",
+      "tplb.content.desc": "Από την ιδέα ως τη δημοσίευση, με μια ετικέτα ανά κανάλι. Δες τις ημερομηνίες στο Χρονολόγιο.",
+      "tplb.content.col.0": "Ιδέες",
+      "tplb.content.col.1": "Γράψιμο",
+      "tplb.content.col.2": "Επιμέλεια",
+      "tplb.content.col.3": "Προγραμματισμένα",
+      "tplb.content.col.4": "Δημοσιευμένα",
+      "tplb.content.label.0": "Ιστολόγιο",
+      "tplb.content.label.1": "Βίντεο",
+      "tplb.content.label.2": "Κοινωνικά δίκτυα",
+      "tplb.content.label.3": "Ενημερωτικό",
+      "tplb.content.label.4": "Καθυστέρηση",
+      "tplb.content.card.0": "Θέματα για τον επόμενο μήνα"
+    }
+  };
   var BUILTIN = {
     personal: {
-      en: { name: "Personal", desc: "Ideas, to do, this week and done, with a few life labels.",
-            cols: ["Ideas", "To do", "This week", "Done"], labels: [["Home", C.cyan], ["Health", C.green], ["Errands", C.yellow], ["Fun", C.pink], ["Overdue", C.red, "overdue"]],
-            cards: [[1, "Plan the week", [0], ["Check the calendar", "Pick three priorities"]]] },
-      el: { name: "Προσωπικά", desc: "Ιδέες, εκκρεμότητες, αυτή την εβδομάδα και ολοκληρωμένα, με λίγες ετικέτες για την καθημερινότητα.",
-            cols: ["Ιδέες", "Να γίνουν", "Αυτή την εβδομάδα", "Ολοκληρωμένα"], labels: [["Σπίτι", C.cyan], ["Υγεία", C.green], ["Θελήματα", C.yellow], ["Διασκέδαση", C.pink], ["Καθυστέρηση", C.red, "overdue"]],
-            cards: [[1, "Πρόγραμμα της εβδομάδας", [0], ["Έλεγχος ημερολογίου", "Τρεις προτεραιότητες"]]] },
+      cols: 4, labels: [[C.cyan], [C.green], [C.yellow], [C.pink], [C.red, "overdue"]],
+      cards: [[1, [0], 2]],   // [column, labels, subtasks]
       rules: { 3: { done: true } }, wip: { 2: 5 }
     },
     sprint: {
-      en: { name: "Software sprint", desc: "Backlog to done with WIP limits, bug/feature labels and automations.",
-            cols: ["Backlog", "To do", "In progress", "Review", "Done"], labels: [["Bug", C.red], ["Feature", C.cyan], ["Chore", C.gray], ["Urgent", C.orange], ["Overdue", C.red, "overdue"]],
-            cards: [[0, "Write the sprint goal", [2], []], [1, "Set up the release checklist", [2], ["Changelog", "Version number", "Tag the release"]]] },
-      el: { name: "Σπριντ λογισμικού", desc: "Από το backlog ως το τέλος, με όρια WIP, ετικέτες σφάλμα/λειτουργία και αυτοματισμούς.",
-            cols: ["Backlog", "Να γίνουν", "Σε εξέλιξη", "Έλεγχος", "Ολοκληρωμένα"], labels: [["Σφάλμα", C.red], ["Λειτουργία", C.cyan], ["Συντήρηση", C.gray], ["Επείγον", C.orange], ["Καθυστέρηση", C.red, "overdue"]],
-            cards: [[0, "Στόχος του σπριντ", [2], []], [1, "Λίστα ελέγχου έκδοσης", [2], ["Σημειώσεις αλλαγών", "Αριθμός έκδοσης", "Ετικέτα έκδοσης"]]] },
+      cols: 5, labels: [[C.red], [C.cyan], [C.gray], [C.orange], [C.red, "overdue"]],
+      cards: [[0, [2], 0], [1, [2], 3]],   // [column, labels, subtasks]
       rules: { 2: { top: true }, 4: { done: true } }, wip: { 2: 3, 3: 2 }
     },
     content: {
-      en: { name: "Content calendar", desc: "Ideas to published, with a label per channel. Use the Timeline view for dates.",
-            cols: ["Ideas", "Writing", "Editing", "Scheduled", "Published"], labels: [["Blog", C.violet], ["Video", C.red], ["Social", C.cyan], ["Newsletter", C.yellow], ["Overdue", C.red, "overdue"]],
-            cards: [[0, "Topic list for next month", [0], []]] },
-      el: { name: "Ημερολόγιο περιεχομένου", desc: "Από την ιδέα ως τη δημοσίευση, με μια ετικέτα ανά κανάλι. Δες τις ημερομηνίες στο Χρονολόγιο.",
-            cols: ["Ιδέες", "Γράψιμο", "Επιμέλεια", "Προγραμματισμένα", "Δημοσιευμένα"], labels: [["Ιστολόγιο", C.violet], ["Βίντεο", C.red], ["Κοινωνικά δίκτυα", C.cyan], ["Ενημερωτικό", C.yellow], ["Καθυστέρηση", C.red, "overdue"]],
-            cards: [[0, "Θέματα για τον επόμενο μήνα", [0], []]] },
+      cols: 5, labels: [[C.violet], [C.red], [C.cyan], [C.yellow], [C.red, "overdue"]],
+      cards: [[0, [0], 0]],   // [column, labels, subtasks]
       rules: { 4: { today: true, done: true } }, wip: { 1: 3 }
     }
   };
+  // The template words in a language: TPL[lang], built from the pack the
+  // first time (orosI18n, in the app only), else English.
+  function tplWords(lang) {
+    var L = typeof lang === "string" && lang ? lang : "en";
+    if (!TPL[L] && root && root.orosI18n) root.orosI18n.table(TPL, "kanban", L);
+    return TPL[L] || TPL.en;
+  }
   function builtinList(lang) {
-    var L = lang === "el" ? "el" : "en";
-    return Object.keys(BUILTIN).map(function (k) { return { key: k, name: BUILTIN[k][L].name, desc: BUILTIN[k][L].desc }; });
+    var W = tplWords(lang);
+    return Object.keys(BUILTIN).map(function (k) { return { key: k, name: W["tplb." + k + ".name"], desc: W["tplb." + k + ".desc"] }; });
   }
   // A built-in as a board-shaped object (then boardFromTemplate).
   function builtinBoard(key, lang) {
     var B = BUILTIN[key];
     if (!B) return null;
-    var L = B[lang === "el" ? "el" : "en"];
-    var labels = L.labels.map(function (l, i) { var o = { id: "l" + i, name: l[0], color: l[1] }; if (l[2]) o.auto = l[2]; return o; });
-    var columns = L.cols.map(function (n, i) {
-      var c = { name: n, cards: [] };
+    var W = tplWords(lang), pre = "tplb." + key + ".";
+    var labels = B.labels.map(function (l, i) { var o = { id: "l" + i, name: W[pre + "label." + i], color: l[0] }; if (l[1]) o.auto = l[1]; return o; });
+    var columns = [];
+    for (var i = 0; i < B.cols; i++) {
+      var c = { name: W[pre + "col." + i], cards: [] };
       if (B.wip[i]) c.wip = B.wip[i];
       if (B.rules[i]) c.auto = B.rules[i];
-      return c;
+      columns.push(c);
+    }
+    B.cards.forEach(function (k, n) {
+      var subs = [];
+      for (var j = 0; j < k[2]; j++) subs.push({ text: W[pre + "card." + n + ".sub." + j], completed: false });
+      columns[k[0]].cards.push({ text: W[pre + "card." + n], labels: k[1].map(function (x) { return "l" + x; }), subtasks: subs });
     });
-    L.cards.forEach(function (k) {
-      columns[k[0]].cards.push({ text: k[1], labels: k[2].map(function (i) { return "l" + i; }),
-                                 subtasks: k[3].map(function (s) { return { text: s, completed: false }; }) });
-    });
-    return { name: L.name, labels: labels, columns: columns };
+    return { name: W[pre + "name"], labels: labels, columns: columns };
   }
 
   // Assistant entry card (BR-W8-6, prefill only): the shell's

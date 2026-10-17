@@ -172,10 +172,16 @@
     while (rest.length) { out.push(" " + rest.slice(0, 74)); rest = rest.slice(74); }
     return out;
   }
+  var W = { en: { "name.unnamed": "Unnamed" }, el: { "name.unnamed": "Χωρίς όνομα" } };
+  function unnamed(lang) {
+    var I = typeof window !== "undefined" && window.orosI18n;
+    if (I && lang && !W[lang]) I.table(W, "contacts", lang);
+    return (W[lang] || W.en)["name.unnamed"];
+  }
   function displayName(c, lang) {
     var parts = [c.given, c.middle, c.family].filter(Boolean);
     if (parts.length) return parts.join(" ");
-    return c.nickname || c.org || (lang === "el" ? "Χωρίς όνομα" : "Unnamed");
+    return c.nickname || c.org || unnamed(lang);
   }
   function upType(ty) { return String(ty || "other").replace(/[^a-z]/gi, "").toUpperCase() || "OTHER"; }
   // c: a contact (as norm returns it); labels: { id: name }
