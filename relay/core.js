@@ -13,6 +13,7 @@
 //           POST /v1  { op: "papi", prov, key, dom?, reqs:[...] }  (Newsletter: provider APIs, see papi.js)
 //           POST /v1  { op: "ext", p, host, base, ck, cs, reqs:[...] }  (Connected services: a person's own shop, see ext.js)
 //           POST /v1  { op: "crmf", act, k, sec, ... }  (CRM web form, see crmform.js)
+//           POST /v1  { op: "push", act, id, tok, ... }  (notifications with orOS closed, see push.js)
 //           /nl/...   public sign-up form and one-click unsubscribe (newsletter.js)
 //           /crm/f/<k> public CRM contact form (crmform.js)
 // Response: { ok:true, data } | { ok:false, error:{ code, msg } }
@@ -28,6 +29,7 @@ import { validCrmf, runCrmf, handleCrmForm, crmPage, CrmfError } from "./crmform
 import { validPapi, runPapi, PAPI_LIMITS } from "./papi.js";
 import { validExt, runExt, EXT_LIMITS } from "./ext.js";
 import { handleRemote, ROOM_RE } from "./remote.js";
+import { validPush, runPush, PushError } from "./push.js";
 
 export const LIMITS = {
   bodyBytes: 64 * 1024,        // request JSON
@@ -39,7 +41,7 @@ export const LIMITS = {
 const PORTS = { 993: "tls", 143: "starttls" };
 const SMTP_PORTS = { 465: "tls", 587: "starttls" };
 const OPS = { check: 1, folders: 1, list: 1, fetch: 1, flag: 1, web: 1, canva: 1, smtpcheck: 1, send: 1,
-              move: 1, expunge: 1, create: 1, rename: 1, delete: 1, search: 1, draft: 1, sieve: 1, nl: 1, papi: 1, ext: 1, crmf: 1 };
+              move: 1, expunge: 1, create: 1, rename: 1, delete: 1, search: 1, draft: 1, sieve: 1, nl: 1, papi: 1, ext: 1, crmf: 1, push: 1 };
 const SIEVE_PORT = 4190;
 
 // ---------- validation ----------
@@ -90,6 +92,7 @@ export function validRequest(b, env) {
   if (b.op === "crmf") return validCrmf(b);   // CRM: web form messages waiting in D1
   if (b.op === "papi") return validPapi(b);   // Newsletter: provider HTTP APIs
   if (b.op === "ext") return validExt(b);     // Connected services: a person's own shop
+  if (b.op === "push") return validPush(b);   // Notifications with orOS closed
   const bad = validAccount(b.acct);
   if (bad) return bad;
   if (b.op === "list") {
@@ -292,6 +295,16 @@ export async function handle(request, env, connectFn, now, fetchFn) {
     } catch (e) {
       if (e instanceof CrmfError) return fail(e.status, e.code, e.message, okOrigin);
       return fail(503, "nostore", "storage failed", okOrigin);           // a D1 failure; never its text
+    }
+  }
+
+  if (b.op === "push") {
+    try {
+      const data = await runPush(b, env, now || Date.now(), request.headers.get("CF-Connecting-IP") || "");
+      return json(200, { ok: true, data }, okOrigin);
+    } catch (e) {
+      if (e instanceof PushError) return fail(e.status, e.code, e.code, okOrigin);
+      return fail(503, "nostore", "push failed", okOrigin);            // never its text
     }
   }
 

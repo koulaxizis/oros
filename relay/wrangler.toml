@@ -12,6 +12,18 @@ class_name = "RemoteRoom"
 tag = "remote-v1"
 new_sqlite_classes = ["RemoteRoom"]
 
+# Notifications with orOS closed (push.js): one box per device that
+# turned it on, holding its push endpoint and the next encrypted
+# reminders. Secrets VAPID_PRIVATE (JWK) and VAPID_SUBJECT are set in the
+# dashboard; without them the op answers 503 "nopush".
+[[durable_objects.bindings]]
+name = "PUSH"
+class_name = "PushBox"
+
+[[migrations]]
+tag = "push-v1"
+new_sqlite_classes = ["PushBox"]
+
 # Newsletter's public sign-up forms and one-click unsubscribes
 # (newsletter.js). Declared here: a binding added only in the dashboard is
 # replaced on the next deploy from main.
