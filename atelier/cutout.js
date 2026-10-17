@@ -127,15 +127,25 @@
       });
     });
   }
-  function stored(name) {
+  // A file list: { name: { url, v } }. The runtime (js, mjs, wasm) is
+  // shared by every picture tool, so it downloads once for all.
+  function list(urls, v) {
+    var o = {};
+    Object.keys(urls).forEach(function (k) { o[k] = { url: urls[k], v: v }; });
+    return o;
+  }
+  var CUT_FILES = list(FILES, FILES_VER);
+  function stored(name, v) {
     return tx("readonly", function (s) { return s.get(name); }).then(function (rec) {
-      return rec && rec.v === FILES_VER && rec.blob instanceof Blob ? rec.blob : null;
+      return rec && rec.v === v && rec.blob instanceof Blob ? rec.blob : null;
     }, function () { return null; });
   }
   // Is everything here already? (no download needed)
-  function ready() {
-    return Promise.all(Object.keys(FILES).map(stored)).then(function (l) { return l.every(Boolean); }, function () { return false; });
+  function readyOf(spec) {
+    return Promise.all(Object.keys(spec).map(function (k) { return stored(k, spec[k].v); }))
+      .then(function (l) { return l.every(Boolean); }, function () { return false; });
   }
+  function ready() { return readyOf(CUT_FILES); }
   // fetch with progress: onBytes(n) for every chunk
   function fetchFile(url, onBytes, signal) {
     return fetch(url, { cache: "no-cache", signal: signal }).then(function (res) {
@@ -152,28 +162,30 @@
       return pump();
     });
   }
-  // → { name: Blob } for every file. onProgress(0..1) while downloading.
-  function files(onProgress, signal) {
-    var names = Object.keys(FILES), got = {}, done = 0, total = APPROX_MB * 1024 * 1024;
+  // → { name: Blob } for every file. onProgress(0..1) while downloading
+  // (mb: about how much a first download is).
+  function filesOf(spec, mb, onProgress, signal) {
+    var names = Object.keys(spec), got = {}, done = 0, total = mb * 1024 * 1024;
     return names.reduce(function (p, name) {
       return p.then(function () {
-        return stored(name).then(function (b) {
+        return stored(name, spec[name].v).then(function (b) {
           if (b) { got[name] = b; return; }
-          return fetchFile(FILES[name], function (n) {
+          return fetchFile(spec[name].url, function (n) {
             done += n;
             if (onProgress) onProgress(Math.min(0.99, done / total));
           }, signal).then(function (blob) {
             got[name] = blob;
-            return tx("readwrite", function (s) { s.put({ v: FILES_VER, blob: blob }, name); }).catch(function () {});
+            return tx("readwrite", function (s) { s.put({ v: spec[name].v, blob: blob }, name); }).catch(function () {});
           });
         });
       });
     }, Promise.resolve()).then(function () { if (onProgress) onProgress(1); return got; });
   }
-  function forget() { return tx("readwrite", function (s) { s.clear(); }).catch(function () {}); }
+  // Removes every picture tool (the runtime is shared).
+  function forget() { sessions = {}; return tx("readwrite", function (s) { s.clear(); }).catch(function () {}); }
 
   // ---------- Runtime ----------
-  var sessionP = null;
+  var sessions = {}, wasmSet = false;
   function loadScript(blob) {
     return new Promise(function (resolve, reject) {
       if (root.ort && root.ort.InferenceSession) { resolve(); return; }
@@ -184,26 +196,32 @@
       document.head.appendChild(s);
     });
   }
-  function session(onProgress, signal) {
-    if (sessionP) return sessionP;
-    sessionP = files(onProgress, signal).then(function (f) {
+  // The ONNX session for one model (key = its file name in the spec),
+  // downloading the runtime and the model first when needed.
+  function sessionOf(spec, model, mb, onProgress, signal) {
+    if (sessions[model]) return sessions[model];
+    var p = sessions[model] = filesOf(spec, mb, onProgress, signal).then(function (f) {
       return loadScript(f.js).then(function () {
         var ort = root.ort;
         if (!ort || !ort.InferenceSession) throw new Error("runtime");
-        ort.env.wasm.numThreads = 1;
-        ort.env.wasm.proxy = false;
-        ort.env.wasm.wasmPaths = {
-          mjs: URL.createObjectURL(new Blob([f.mjs], { type: "text/javascript" })),
-          wasm: URL.createObjectURL(new Blob([f.wasm], { type: "application/wasm" }))
-        };
-        return f.model.arrayBuffer().then(function (buf) {
+        if (!wasmSet) {
+          ort.env.wasm.numThreads = 1;
+          ort.env.wasm.proxy = false;
+          ort.env.wasm.wasmPaths = {
+            mjs: URL.createObjectURL(new Blob([f.mjs], { type: "text/javascript" })),
+            wasm: URL.createObjectURL(new Blob([f.wasm], { type: "application/wasm" }))
+          };
+          wasmSet = true;
+        }
+        return f[model].arrayBuffer().then(function (buf) {
           return ort.InferenceSession.create(new Uint8Array(buf), { executionProviders: ["wasm"] });
         });
       });
     });
-    sessionP.catch(function () { sessionP = null; });
-    return sessionP;
+    p.catch(function () { if (sessions[model] === p) sessions[model] = null; });
+    return p;
   }
+  function session(onProgress, signal) { return sessionOf(CUT_FILES, "model", APPROX_MB, onProgress, signal); }
 
   // A drawable (img / canvas / bitmap) → { w, h, render(lo, maxSide) }:
   // render gives a canvas (at most maxSide on its long side) with the
@@ -255,6 +273,8 @@
 
   root.AtelierCutout = {
     S: S, prep: prep, toMask: toMask, alphaFor: alphaFor, applyAlpha: applyAlpha,
-    LO: LO, ready: ready, cut: cut, forget: forget, APPROX_MB: APPROX_MB
+    LO: LO, ready: ready, cut: cut, forget: forget, APPROX_MB: APPROX_MB,
+    // for the other picture tools (inpaint.js)
+    FILES: FILES, FILES_VER: FILES_VER, list: list, readyOf: readyOf, sessionOf: sessionOf, scaled: scaled
   };
 })(typeof window !== "undefined" ? window : this);

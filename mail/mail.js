@@ -223,6 +223,7 @@
       "to.btn": "Other apps", "to.title": "Use this message in…", "to.app": "Mail", "to.from": "From:", "to.date": "Date:", "to.subj": "Subject:",
       "to.todo": "A To-Do task", "to.todoHint": "The subject as the task, the message as its note.",
       "to.note": "A note", "to.noteHint": "Saves the message's text as a new page in Notes.",
+      "to.other": "Another app…", "to.otherHint": "Writer, Wiki, Text Tools and the other apps that take text.",
       "to.link": "A bookmark", "to.linkHint": "Pick one of its {n} links.", "to.nolinks": "This message has no links.", "to.pick": "Pick a link",
       "to.travel": "Booking to Travel", "to.travelHint": "Flights, hotels, trains, car hire or tickets found in this e-mail.",
       "to.contact": "Sender to Contacts", "to.crm": "Log in CRM", "to.sum": "Summary by the Assistant", "to.reply": "Reply drafted by the Assistant",
@@ -433,6 +434,7 @@
       "to.btn": "Άλλες εφαρμογές", "to.title": "Χρήση του μηνύματος σε…", "to.app": "Αλληλογραφία", "to.from": "Από:", "to.date": "Ημερομηνία:", "to.subj": "Θέμα:",
       "to.todo": "Εργασία στο To-Do", "to.todoHint": "Το θέμα γίνεται εργασία, το μήνυμα σημείωσή της.",
       "to.note": "Σημείωση", "to.noteHint": "Αποθηκεύει το κείμενο του μηνύματος ως νέα σελίδα στις Σημειώσεις.",
+      "to.other": "Άλλη εφαρμογή…", "to.otherHint": "Writer, Wiki, Εργαλεία κειμένου και οι άλλες εφαρμογές που δέχονται κείμενο.",
       "to.link": "Σελιδοδείκτης", "to.linkHint": "Διάλεξε έναν από τους {n} συνδέσμους του.", "to.nolinks": "Το μήνυμα δεν έχει συνδέσμους.", "to.pick": "Διάλεξε σύνδεσμο",
       "to.travel": "Κράτηση στα Ταξίδια", "to.travelHint": "Πτήσεις, ξενοδοχεία, τρένα, ενοικιάσεις ή εισιτήρια που βρέθηκαν στο μήνυμα.",
       "to.contact": "Αποστολέας στις Επαφές", "to.crm": "Καταγραφή στους Πελάτες", "to.sum": "Περίληψη από τον Βοηθό", "to.reply": "Πρόχειρη απάντηση από τον Βοηθό",
@@ -4384,6 +4386,13 @@
     }
     item(t("to.sum"), t("to.aiHint"), function () { go("assistant", { ask: ask(t("ai.sum")) }); });
     item(t("to.reply"), t("to.aiHint"), function () { go("assistant", { ask: ask(t("ai.reply")) }); });
+    // "Send to an app" (shell send/, BR-SEND): every other app that takes text.
+    if (sh.orosSend && typeof sh.orosSend.open === "function") {
+      item(t("to.other"), t("to.otherHint"), function () {
+        dlg.close();
+        sh.orosSend.open({ kind: "text", data: { title: subj.slice(0, 200), text: msgHead(m) + "\n" + t("to.subj") + " " + subj + "\n\n" + body } });
+      });
+    }
     dlg.appendChild(ul);
     var acts = el("div", "dlg-actions");
     acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); }));

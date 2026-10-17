@@ -1,5 +1,6 @@
 // orOS Files — one-time import from Google Drive and Google Photos
-// (files/gmedia.js; Photo Lab loads it too, for one picture).
+// (files/gmedia.js; Photo Lab loads it too, for one picture, and
+// Writer, Spreadsheet and Slides, for one document).
 //
 // The sign-in, the token and its revoke are /google-import.js's
 // (window.OrosGoogleImport); this file asks Google's own pickers what
@@ -14,8 +15,8 @@
 //     "=dv" (video) with the token, then ends the session (DELETE).
 //   Google Drive — scope drive.file: only the files picked in the
 //     Google Picker (Google's script, apis.google.com/js/api.js,
-//     loaded on the click, never before; it needs the person's own
-//     browser API key, OrosGoogleImport.apiKey()). Each picked file:
+//     loaded on the click, never before; it needs a browser API key,
+//     OrosGoogleImport.apiKey()). Each picked file:
 //     its metadata, then alt=media; Google Docs, Sheets, Slides and
 //     Drawings are exported (docx, xlsx, pptx, png; pdf otherwise).
 // Caps: number of files, size of one file, total size.
@@ -24,9 +25,14 @@
 //   safeName(name, fallback) · photoItem(it) · exportFor(mime)
 //   driveName(meta) · duration("5s") → ms · plan(found, existing)
 //   folderFor(kind, rootNames, lang)
+//   docMimes(kind) · docMessage(err, lang)
 // Browser: readPhotos(api, hooks, caps) · readDrive(api, token, hooks,
 //   caps) → { items: [{ key, name, blob, size, mime }], skipped:
 //   [{ name, why }] } · loadPicker() · showPicker(token, opts)
+//   docReady() · pickDoc(kind, lang, hooks) → File | null: one Google
+//   Doc / Sheet / Slides (or Office / OpenDocument) file straight into
+//   Writer, Spreadsheet or Slides ("document" / "spreadsheet" /
+//   "presentation")
 // ============================================================
 (function (root) {
   "use strict";
@@ -270,7 +276,8 @@
     pickerP.catch(function () { pickerP = null; });
     return pickerP;
   }
-  // opts: { key, appId, lang, max } → Promise [docs] ([] = cancelled)
+  // opts: { key, appId, lang, max, mimes } → Promise [docs] ([] =
+  // cancelled); mimes limits what the picker shows
   function showPicker(token, opts) {
     opts = opts || {};
     return loadPicker().then(function () {
@@ -278,6 +285,7 @@
         var G = root.google && root.google.picker;
         if (!G) { resolve([]); return; }
         var view = new G.DocsView(G.ViewId.DOCS).setIncludeFolders(true).setSelectFolderEnabled(false);
+        if (Array.isArray(opts.mimes) && opts.mimes.length) view.setMimeTypes(opts.mimes.join(","));
         var b = new G.PickerBuilder()
           .addView(view)
           .enableFeature(G.Feature.MULTISELECT_ENABLED)
@@ -347,8 +355,69 @@
     return { add: add, dup: dup };
   }
 
+  // ---- one document for an app's own import (Writer, Spreadsheet,
+  // Slides): Google's own format plus the files that app opens ----
+  var DOC_CAPS = { count: 1, file: 50 * 1024 * 1024, total: 50 * 1024 * 1024 };
+  var DOC_MIMES = {
+    document: ["application/vnd.google-apps.document",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/vnd.oasis.opendocument.text", "application/rtf", "text/rtf",
+      "text/plain", "text/markdown", "text/html"],
+    spreadsheet: ["application/vnd.google-apps.spreadsheet",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "application/vnd.ms-excel", "application/vnd.oasis.opendocument.spreadsheet"],
+    presentation: ["application/vnd.google-apps.presentation",
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      "application/vnd.oasis.opendocument.presentation", "text/markdown"]
+  };
+  function docMimes(kind) { return DOC_MIMES[kind] ? DOC_MIMES[kind].slice() : null; }
+  var DOC_TEXT = {
+    en: { picker: "Google Drive's file picker did not load. Check the connection and try again.",
+      fail: "This file could not be brought in from Google Drive." },
+    el: { picker: "Η επιλογή αρχείων του Google Drive δεν φόρτωσε. Έλεγξε τη σύνδεση και δοκίμασε ξανά.",
+      fail: "Αυτό το αρχείο δεν ήρθε από το Google Drive." }
+  };
+  // The person-facing text for a pickDoc failure ("" = they cancelled)
+  function docMessage(e, lang) {
+    var tx = DOC_TEXT[lang === "el" ? "el" : "en"], c = e && e.code;
+    if (c === "cancelled") return "";
+    if (c === "network" && e.detail === "picker") return tx.picker;
+    if (c === "fail") return tx.fail;
+    var GI = root && root.OrosGoogleImport;
+    return GI ? GI.message(e, lang) : tx.fail;
+  }
+  function docReady() {
+    var GI = root && root.OrosGoogleImport;
+    return !!(GI && typeof GI.driveReady === "function" && GI.driveReady());
+  }
+  // Sign in (call it inside the click), pick ONE file of that kind in
+  // the Google Picker, download it while the token lives, revoke.
+  // hooks: { picking() (the picker is about to show) }
+  // → Promise File, or null when nothing was picked
+  function pickDoc(kind, lang, hooks) {
+    var GI = root && root.OrosGoogleImport, mimes = docMimes(kind);
+    hooks = hooks || {};
+    if (!GI || !mimes) return Promise.reject(err("other", "drive"));
+    return GI.run({
+      scope: GI.SCOPES.drive,
+      read: function (token, api) {
+        return readDrive(api, token, {
+          pick: function (tk) {
+            if (hooks.picking) hooks.picking();
+            return showPicker(tk, { key: GI.apiKey(), appId: GI.appId(), lang: lang, max: 1, mimes: mimes });
+          }
+        }, DOC_CAPS);
+      }
+    }).then(function (res) {
+      var d = res && res.data, it = d && d.items[0];
+      if (!it) { if (d && d.picked) throw err("fail"); return null; }
+      try { return new File([it.blob], it.name, { type: it.mime || it.blob.type || "" }); }
+      catch (e) { var b = it.blob; try { b.name = it.name; } catch (x) {} return b; }
+    });
+  }
+
   var api = {
-    CAPS: CAPS, FOLDERS: FOLDERS, safeName: safeName, duration: duration, photoItem: photoItem,
+    CAPS: CAPS, docMimes: docMimes, docMessage: docMessage, docReady: docReady, pickDoc: pickDoc, FOLDERS: FOLDERS, safeName: safeName, duration: duration, photoItem: photoItem,
     exportFor: exportFor, driveName: driveName, driveItem: driveItem, plan: plan, folderFor: folderFor, sameName: sameName,
     readPhotos: readPhotos, readDrive: readDrive, loadPicker: loadPicker, showPicker: showPicker
   };

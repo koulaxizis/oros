@@ -85,7 +85,7 @@
       "vd.soundHint": "Pages that share a sound play it on without starting over. It plays in Play, Present and Download › Video.",
       "an.stop": "Stop",
       "tab.brand": "Brand kit", "col.brand": "Brand colours",
-      "tab.ai": "AI", "ai.menu": "Write with AI", "ai.cut": "Remove background",
+      "tab.ai": "AI", "ai.menu": "Write with AI", "ai.cut": "Remove background", "ai.erase": "Magic eraser", "ai.grab": "Magic grab", "ai.edit": "Magic edit", "ai.expand": "Magic expand", "ai.pics": "Picture tools",
       "br.intro": "Your colours, fonts and logos, on all your devices.", "br.edit": "Edit", "br.done": "Done",
       "br.colors": "Colours", "br.pickEl": "Select an element first, then tap a colour.", "br.remove": "Remove",
       "br.noColors": "No brand colours yet.", "br.addColor": "Add colour", "br.fromDesign": "From this design",
@@ -105,6 +105,9 @@
       "imp.file": "From a file (.pptx, picture, package)…", "imp.folder": "From an unzipped package folder…", "imp.canva": "From your Canva account…",
       "home.select": "Select", "home.picked": "{n} selected", "home.fromCanva": "From Canva ({n})", "home.delSel": "Delete ({n})",
       "home.delAsk": "Delete {n} designs?", "home.delOk": "Delete", "home.deleted": "{n} designs deleted.",
+      "del.one": "Delete “{name}”?", "del.files": "Also delete the files nothing else uses (pictures, videos, sounds): {n}",
+      "del.filesHint": "Files another design, Slides or Layout still uses are kept. Deleted files cannot be brought back, and Vault Drive deletes them on your other devices too.",
+      "del.done": "Deleted. Files deleted too: {n}.",
       "fo.all": "All", "fo.newShort": "New folder", "fo.new": "New folder", "fo.newMove": "New folder…", "fo.none": "No folder",
       "fo.move": "Move ({n})", "fo.moveOne": "Move to folder…", "fo.moved": "{n} moved to {f}.", "fo.movedOut": "{n} taken out of their folder.",
       "fo.rename": "Rename folder", "fo.delete": "Delete folder", "fo.options": "Folder options",
@@ -282,7 +285,7 @@
       "vd.soundHint": "Οι σελίδες με τον ίδιο ήχο τον συνεχίζουν χωρίς να ξεκινά από την αρχή. Παίζει στην Αναπαραγωγή, στην Παρουσίαση και στη Λήψη › Βίντεο.",
       "an.stop": "Διακοπή",
       "tab.brand": "Ταυτότητα", "col.brand": "Χρώματα ταυτότητας",
-      "tab.ai": "AI", "ai.menu": "Γράψε με AI", "ai.cut": "Αφαίρεση φόντου",
+      "tab.ai": "AI", "ai.menu": "Γράψε με AI", "ai.cut": "Αφαίρεση φόντου", "ai.erase": "Μαγική γόμα", "ai.grab": "Μαγική λαβή", "ai.edit": "Μαγική επεξεργασία", "ai.expand": "Μαγική επέκταση", "ai.pics": "Εργαλεία εικόνας",
       "br.intro": "Τα χρώματα, οι γραμματοσειρές και τα λογότυπά σου, σε όλες τις συσκευές σου.", "br.edit": "Επεξεργασία", "br.done": "Τέλος",
       "br.colors": "Χρώματα", "br.pickEl": "Διάλεξε πρώτα ένα στοιχείο και μετά πάτα ένα χρώμα.", "br.remove": "Αφαίρεση",
       "br.noColors": "Δεν υπάρχουν ακόμα χρώματα ταυτότητας.", "br.addColor": "Προσθήκη χρώματος", "br.fromDesign": "Από αυτό το σχέδιο",
@@ -302,6 +305,9 @@
       "imp.file": "Από αρχείο (.pptx, εικόνα, πακέτο)…", "imp.folder": "Από φάκελο αποσυμπιεσμένου πακέτου…", "imp.canva": "Από τον λογαριασμό σου στο Canva…",
       "home.select": "Επιλογή", "home.picked": "{n} επιλεγμένα", "home.fromCanva": "Από το Canva ({n})", "home.delSel": "Διαγραφή ({n})",
       "home.delAsk": "Να διαγραφούν {n} σχέδια;", "home.delOk": "Διαγραφή", "home.deleted": "Διαγράφηκαν {n} σχέδια.",
+      "del.one": "Να διαγραφεί το «{name}»;", "del.files": "Διαγραφή και των αρχείων που δεν χρησιμοποιεί τίποτε άλλο (εικόνες, βίντεο, ήχοι): {n}",
+      "del.filesHint": "Όσα αρχεία χρησιμοποιεί ακόμη άλλο σχέδιο, οι Διαφάνειες ή η Σελιδοποίηση μένουν. Τα αρχεία που διαγράφονται δεν επανέρχονται και το Vault Drive τα διαγράφει και από τις άλλες σου συσκευές.",
+      "del.done": "Η διαγραφή έγινε. Διαγράφηκαν και αρχεία: {n}.",
       "fo.all": "Όλα", "fo.newShort": "Νέος φάκελος", "fo.new": "Νέος φάκελος", "fo.newMove": "Νέος φάκελος…", "fo.none": "Χωρίς φάκελο",
       "fo.move": "Μεταφορά ({n})", "fo.moveOne": "Μεταφορά σε φάκελο…", "fo.moved": "{n} μεταφέρθηκαν στο {f}.", "fo.movedOut": "{n} βγήκαν από τον φάκελό τους.",
       "fo.rename": "Μετονομασία φακέλου", "fo.delete": "Διαγραφή φακέλου", "fo.options": "Επιλογές φακέλου",
@@ -509,6 +515,10 @@
     present: '<rect x="3" y="4" width="18" height="12" rx="1"/><path d="M12 16v4M8 20h8"/>',
     ai: '<path d="M10 3l1.6 4.4L16 9l-4.4 1.6L10 15l-1.6-4.4L4 9l4.4-1.6z"/><path d="M18 13l.9 2.1L21 16l-2.1.9L18 19l-.9-2.1L15 16l2.1-.9z"/>',
     cutout: '<path d="M4 7V5a1 1 0 0 1 1-1h2M17 4h2a1 1 0 0 1 1 1v2M20 17v2a1 1 0 0 1-1 1h-2M7 20H5a1 1 0 0 1-1-1v-2"/><circle cx="12" cy="9.5" r="2.5"/><path d="M7.5 17a4.5 4.5 0 0 1 9 0"/>',
+    erase: '<path d="M7 20h11"/><path d="M5.5 14.5l8-8a2 2 0 0 1 2.8 0l2.2 2.2a2 2 0 0 1 0 2.8L12 18H8.5z"/><path d="M9.5 10.5l5 5"/><path d="M18 2.5l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6z"/>',
+    grab: '<path d="M8 13V5.5a1.5 1.5 0 0 1 3 0V11"/><path d="M11 10.5V4a1.5 1.5 0 0 1 3 0v6.5"/><path d="M14 10.5V6a1.5 1.5 0 0 1 3 0v7a7 7 0 0 1-7 7h-.5a6 6 0 0 1-5-2.7L3 14.5a1.6 1.6 0 0 1 2.6-1.8L8 15"/>',
+    medit: '<path d="M4 20l9.5-9.5"/><path d="M14.5 6.5l3 3"/><path d="M12.5 8.5l3 3"/><path d="M19 3l.5 1.5L21 5l-1.5.5L19 7l-.5-1.5L17 5l1.5-.5z"/><path d="M8 3l.4 1.1L9.5 4.5l-1.1.4L8 6l-.4-1.1L6.5 4.5l1.1-.4z"/>',
+    mexpand: '<path d="M8 3H3v5"/><path d="M16 3h5v5"/><path d="M8 21H3v-5"/><path d="M16 21h5v-5"/><rect x="8" y="8" width="8" height="8" rx="1"/>',
     editpic: '<path d="M3 17l5-5 4 4 3-3 6 6"/><circle cx="8" cy="7" r="2"/><path d="M14 4l6 6-3 3-6-6z"/>',
     replace: '<path d="M4 9a8 8 0 0 1 14-3l2 2"/><path d="M20 4v4h-4"/><path d="M20 15a8 8 0 0 1-14 3l-2-2"/><path d="M4 20v-4h4"/>',
     table: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M3 14.5h18M9 9v11M15 9v11"/>',
@@ -1086,29 +1096,63 @@
   function deleteMany(ids) {
     ids = ids.filter(function (id) { return findDoc(id); });
     if (!ids.length) return;
-    AT.confirm(t("home.delAsk", { n: ids.length }), t("home.delOk"), function () {
-      var nw = now(), keep = [];
-      ids.forEach(function (id) {
-        var d = findDoc(id);
-        keep.push(JSON.parse(JSON.stringify(d)));
-        data.dt[id] = Math.max(nw, M.maxM(d));
-        if (AT.prefs.doc === id) { AT.prefs.doc = null; savePrefs(); }
+    var title = t("home.delAsk", { n: ids.length });
+    var go = function (files) { pick = null; removeDocs(ids, files); };
+    if (!askFiles(ids, title, go)) AT.confirm(title, t("home.delOk"), function () { go(null); });
+  }
+
+  // Designs whose pictures, videos or sounds nothing else uses ask
+  // first, with an opt-in box to delete those files too. false: none.
+  function askFiles(ids, title, done) {
+    var files = AT.filesOnlyIn ? AT.filesOnlyIn(ids) : null;
+    if (!files || !files.length) return false;
+    AT.openDialog(title, function (body, close) {
+      var row = el("label", "chk-row");
+      var cb = el("input"); cb.type = "checkbox";
+      row.appendChild(cb);
+      row.appendChild(el("span", "", t("del.files", { n: files.length })));
+      body.appendChild(row);
+      body.appendChild(el("p", "hint", t("del.filesHint")));
+      var act = el("div", "dlg-actions");
+      var c = el("button", "btn", t("btn.cancel")); c.type = "button";
+      var o = el("button", "btn primary", t("home.delOk")); o.type = "button";
+      c.addEventListener("click", close);
+      o.addEventListener("click", function () { close(); done(cb.checked ? files : null); });
+      act.appendChild(c); act.appendChild(o);
+      body.appendChild(act);
+    });
+    return true;
+  }
+
+  // tombstones the designs; undo brings them all back, unless their
+  // files were deleted with them (those cannot come back)
+  function removeDocs(ids, files) {
+    var nw = now(), keep = [];
+    ids.forEach(function (id) {
+      var d = findDoc(id);
+      keep.push(JSON.parse(JSON.stringify(d)));
+      data.dt[id] = Math.max(nw, M.maxM(d));
+      if (AT.prefs.doc === id) { AT.prefs.doc = null; savePrefs(); }
+    });
+    data = M.normData(data);
+    save();
+    renderHome();
+    if (files) {
+      AT.flush();
+      AT.dropFiles(files).then(function (n) { toast(t("del.done", { n: n })); });
+      return;
+    }
+    toast(ids.length > 1 ? t("home.deleted", { n: ids.length }) : t("toast.docDeleted"), t("btn.undo"), function () {
+      // resurrect: every entity newer than the tombstone (R17)
+      var t1 = now();
+      keep.forEach(function (k) {
+        k.m = t1;
+        M.COLLECTIONS.forEach(function (c) { (k[c] || []).forEach(function (e) { e.m = t1; }); });
+        data.docs.push(M.normDoc(k));
       });
       data = M.normData(data);
       save();
-      pick = null;
       renderHome();
-      toast(t("home.deleted", { n: ids.length }), t("btn.undo"), function () {
-        var t1 = now();
-        keep.forEach(function (k) {
-          k.m = t1;
-          M.COLLECTIONS.forEach(function (c) { (k[c] || []).forEach(function (e) { e.m = t1; }); });
-          data.docs.push(M.normDoc(k));
-        });
-        data = M.normData(data);
-        save();
-        renderHome();
-      });
     });
   }
 
@@ -1189,23 +1233,8 @@
   function deleteDoc(id) {
     var d = findDoc(id);
     if (!d) return;
-    var nw = now();
-    var keep = JSON.parse(JSON.stringify(d));
-    data.dt[id] = Math.max(nw, M.maxM(d));
-    data = M.normData(data);
-    save();
-    if (AT.prefs.doc === id) { AT.prefs.doc = null; savePrefs(); }
-    renderHome();
-    toast(t("toast.docDeleted"), t("btn.undo"), function () {
-      // resurrect: every entity newer than the tombstone (R17)
-      var t1 = now();
-      keep.m = t1;
-      M.COLLECTIONS.forEach(function (c) { (keep[c] || []).forEach(function (e) { e.m = t1; }); });
-      data.docs.push(M.normDoc(keep));
-      data = M.normData(data);
-      save();
-      renderHome();
-    });
+    var go = function (files) { removeDocs([id], files); };
+    if (!askFiles([id], t("del.one", { name: docTitle(d) }), go)) go(null);
   }
 
   // removes a design without asking or offering undo (a Canva
@@ -1235,7 +1264,7 @@
   function openDoc(id) {
     var d = findDoc(id);
     if (!d) return;
-    // A newer model level (setup.x.mv): never opened, so never written here.
+    // A newer model level (setup.ext.mv): never opened, so never written here.
     if (M.needsNewer(d)) { toast(t("unk.doc")); return; }
     AT.doc = d;
     undoStack = []; redoStack = []; gesture = null;

@@ -15,6 +15,7 @@ Folders are on the left, the current folder's contents on the right. On a phone,
 - Select several items with Ctrl+click (Cmd+click on Mac), or a range with Shift+click.
 - Right-click an item, or select it and tap `More actions`, for `Preview`, `Add to Favourites`, `Download`, `Move to…`, `Copy to…`, `Compress to ZIP`, `Extract here` (ZIP files), `Copy name`, `Copy path`, `Copy content` (text files only), `Rename` and `Delete`.
 - `Convert to orOS` (in the menu and in the selection bar) appears when the selection holds documents or spreadsheets the [orOS Converter](app:converter) can turn into orOS files (.docx, .odt, .xlsx, .csv and more). It opens the Converter with those files; your files here stay as they are.
+- `Open in Scanner & PDF` (in the menu and in the selection bar) appears when the selection holds a PDF, or several pictures. It opens [Scanner & PDF](app:scanpdf) with their pages, to merge, split or arrange them, or to make one PDF from the pictures; your files here stay as they are.
 - On a computer you can also drag items onto a folder in the tree to move them there, or onto `Trash`.
 - Tap the column headers `Name`, `Size` or `Modified` to sort; tap again to reverse.
 
@@ -94,6 +95,7 @@ The orOS disk is the encrypted place: with orOS sync on, every file on it is enc
 - Opening a file downloads it, and from then on it stays up to date here. Opening it from another place in Files works the same way once it is downloaded.
 - `Keep on this device` downloads the whole folder and keeps it. `Free up space` removes the downloaded copies of a folder from this device; nothing is deleted from your other devices or from the cloud. Files you changed here and haven't synced yet always stay.
 - Deleting a downloaded file in Files deletes it everywhere, including on the computer it came from.
+- In the orOS Android app, the phone button opens orOS Drive on the phone: pick folders of the phone and they are mirrored the same way, in the background every 15 minutes (on Wi-Fi only, unless you change it).
 
 ## Sync and backup
 The disk lives in this browser. When [orOS sync](help:t/sync) is connected and unlocked, Vault Drive syncs it file by file, whether Files is open or not. Names and contents are encrypted before they leave your device.

@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "2.65.01";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "2.71.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -167,6 +167,7 @@
     budget: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2v-2"/><path d="M16 8h5v8h-5a4 4 0 0 1 0-8z"/><circle cx="16.5" cy="12" r="0.6" fill="currentColor"/></svg>',
     qr: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14v1M14 20h1M18 18h3v3M17 21h0"/></svg>',
     converter: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M8 13h8l-2.5-2.5"/><path d="M16 17H8l2.5 2.5"/></svg>',
+    scanpdf: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>',
     files: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 3v18"/></svg>',
     pubdomain: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M14.8 9.2a4 4 0 1 0 0 5.6"/><line x1="5" y1="5" x2="19" y2="19"/></svg>',
     cycle: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>',
@@ -3047,6 +3048,64 @@
       });
     }
   };
+  // "Send to…" (send/, BR-SEND): one app hands an item to another app
+  // of this orOS. send/core.js + send/sheet.js load on first use, never
+  // at boot. Apps call window.parent.orosSend.open({ kind, data }) with
+  // kind text | link | items | table (+ share: the item for "Send to
+  // someone", which stays window.orosShare); the sheet lists the
+  // installed apps that take it and calls __orosOpenAt with that app's
+  // own prefill target. Nothing is stored or synced.
+  var sendLoad = null;
+  function sendModule() {
+    if (window.__orosSendImpl) return Promise.resolve(window.__orosSendImpl);
+    if (!sendLoad) {
+      var load = function (src) {
+        return new Promise(function (resolve, reject) {
+          var s = document.createElement("script");
+          s.src = src + "?v=" + APP_VERSION;
+          s.onload = resolve;
+          s.onerror = reject;
+          document.head.appendChild(s);
+        });
+      };
+      sendLoad = load("send/core.js").then(function () { return load("send/sheet.js"); })
+        .then(function () {
+          if (!window.__orosSendImpl) throw new Error("send module missing");
+          return window.__orosSendImpl;
+        });
+      sendLoad.catch(function () { sendLoad = null; });
+    }
+    return sendLoad;
+  }
+  window.orosSend = {
+    open: function (opts) {
+      var self = state.running ? state.running.id : "";
+      var apps = window.orosAssistInstalled();
+      var from = "";
+      apps.forEach(function (a) { if (a.id === self) from = a.name; });
+      sendModule().then(function (m) {
+        m.open(opts, {
+          apps: apps, self: self, from: from, openAt: window.__orosOpenAt,
+          share: function (item) { window.orosShare.open(item); },
+          icon: function (id) {
+            for (var i = 0; i < state.apps.length; i++) {
+              var a = state.apps[i];
+              if (a.id === id && ICONS[a.icon]) {
+                var sp = document.createElement("span");
+                sp.innerHTML = ICONS[a.icon];          // static shell icon, not data
+                return sp.firstChild;
+              }
+            }
+            return null;
+          }
+        });
+      }, function () {
+        notifySys("dim", window.orosLang === "el"
+          ? "Η αποστολή δεν φορτώθηκε. Έλεγξε τη σύνδεση και δοκίμασε ξανά."
+          : "Sending could not load. Check your connection and try again.");
+      });
+    }
+  };
   var pendingShareIn = false;
   (function () {
     try {
@@ -5434,6 +5493,9 @@
         { name: "PDF.js 5.4.394", url: "https://mozilla.github.io/pdf.js/",
           by: "Mozilla Foundation & contributors", lic: "Apache-2.0",
           en: "Opening PDF files (Layout); reading PDF text on the device (Assistant)", el: "Άνοιγμα αρχείων PDF (Σελιδοποίηση)· ανάγνωση κειμένου PDF στη συσκευή (Βοηθός)" },
+        { name: "pdf-lib 1.17.1", url: "https://pdf-lib.js.org/",
+          by: "Andrew Dillon & contributors", lic: "MIT",
+          en: "Merging, splitting and making PDFs (Scanner & PDF)", el: "Ένωση, διαχωρισμός και δημιουργία PDF (Σαρωτής & PDF)" },
         { name: "three.js r180", url: "https://threejs.org/",
           by: "three.js authors", lic: "MIT",
           en: "3D book mockups (Mockups)", el: "Τρισδιάστατες μακέτες βιβλίων (Μακέτες)" },
@@ -5446,6 +5508,9 @@
         { name: "U²-Net (u2netp model)", url: "https://github.com/xuebinqin/U-2-Net",
           by: "Xuebin Qin & contributors", lic: "Apache-2.0",
           en: "The background removal model (Atelier)", el: "Το μοντέλο αφαίρεσης φόντου (Ατελιέ)" },
+        { name: "MI-GAN (512 Places2 model)", url: "https://github.com/Picsart-AI-Research/MI-GAN",
+          by: "Picsart AI Research", lic: "MIT",
+          en: "Filling a part of a picture: Magic eraser and Magic grab (Atelier)", el: "Γέμισμα μέρους μιας εικόνας: Μαγική γόμα και Μαγική λαβή (Ατελιέ)" },
         { name: "Tesseract.js 7.0.0 + tesseract.js-core 6.1.2", url: "https://github.com/naptha/tesseract.js",
           by: "Project Naptha, Google (Tesseract OCR) & contributors", lic: "Apache-2.0",
           en: "Reading text from a business card photo, on the device (Contacts); text of photos and scanned PDFs (Assistant)", el: "Ανάγνωση κειμένου από φωτογραφία κάρτας, στη συσκευή (Επαφές)· κείμενο φωτογραφιών και σκαναρισμένων PDF (Βοηθός)" },
@@ -5625,6 +5690,9 @@
         { name: "Funkwhale", url: "https://www.funkwhale.audio/",
           by: "The Funkwhale collective", lic: { en: "AGPL-3.0 (server); public pods or your own", el: "AGPL-3.0 (server)· δημόσια pods ή το δικό σου" },
           en: "Federated music libraries (Music)", el: "Ομοσπονδιακές μουσικές βιβλιοθήκες (Μουσική)" },
+        { name: "LRCLIB", url: "https://lrclib.net/",
+          by: "The LRCLIB project and its contributors", lic: { en: "Free API, no key; lyrics are their writers' works", el: "Δωρεάν API χωρίς κλειδί· οι στίχοι ανήκουν στους δημιουργούς τους" },
+          en: "Song lyrics, only when you ask (Music)", el: "Στίχοι τραγουδιών, μόνο όταν το ζητήσεις (Μουσική)" },
         { name: "iptv-org", url: "https://github.com/iptv-org/iptv",
           by: "iptv-org contributors", lic: "Unlicense (public domain)",
           en: "Channel directory (Television)", el: "Κατάλογος καναλιών (Τηλεόραση)" },
@@ -5712,8 +5780,11 @@
         { name: "Pollinations", url: "https://pollinations.ai/",
           by: "Pollinations.AI", lic: { en: "Their terms, your own key (free plan)", el: "Οι όροι τους, με δικό σου κλειδί (δωρεάν πλάνο)" },
           en: "AI chat you choose (Assistant)", el: "Συζήτηση με το AI που διαλέγεις (Βοηθός)" },
+        { name: "Pollinations, Hugging Face, OpenAI, Stability AI, Stable Diffusion WebUI / Forge", url: "https://pollinations.ai/",
+          by: "Each provider or project", lic: { en: "Their terms; Pollinations free with no key, the others with your own key or your own computer", el: "Οι όροι τους· το Pollinations δωρεάν χωρίς κλειδί, τα άλλα με δικό σου κλειδί ή στον υπολογιστή σου" },
+          en: "Image AI you choose: Image from text (Atelier)", el: "AI εικόνας που διαλέγεις: Εικόνα από κείμενο (Ατελιέ)" },
         { name: "Cloudflare Workers", url: "https://workers.cloudflare.com/",
-          by: "Cloudflare, Inc.", lic: { en: "Runs the orOS mail relay (code in relay/)", el: "Τρέχει το relay αλληλογραφίας του orOS (κώδικας στο relay/)" },
+          by: "Cloudflare, Inc.", lic: { en: "Runs the orOS mail relay (code in relay/); D1 keeps encrypted share links with an expiry", el: "Τρέχει το relay αλληλογραφίας του orOS (κώδικας στο relay/)· το D1 κρατά κρυπτογραφημένους συνδέσμους με λήξη" },
           en: "Mail: IMAP over HTTPS, nothing stored", el: "Αλληλογραφία: IMAP μέσω HTTPS, δεν αποθηκεύεται τίποτα" },
         { name: "WooCommerce REST API", url: "https://woocommerce.github.io/woocommerce-rest-api-docs/",
           by: "Automattic; your own shop", lic: { en: "Your own shop and keys", el: "Το δικό σου κατάστημα και κλειδιά" },
