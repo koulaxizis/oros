@@ -7707,3 +7707,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Garage, Plant Care, Chore Wheel, Habits, Mood and Travel are now in German: packs and help pages in `i18n/de/`, inline texts moved into {en, el} tables, and each `index.html` loads `../i18n.js` before its own scripts. English still fills any missing line.
 - Files: `i18n/de/**`, `garage/`, `plants/`, `chores/`, `habits/`, `mood/`, `travel/` (index.html + scripts, `habits.css`), `.github/i18n/inline-baseline.json`, `i18n/apps.json`.
   - Tests: 4776/4776; Chromium 360 de / el / en. Not tested: a German native reader's review, real phone, Safari.
+
+### 2026-10-17 — Calendar reminders always ring from orOS on Android; Settings shows why push is unavailable (#518) — 3.13.01
+- Android app: Calendar reminders now ring from orOS even when events are also shown in the phone's Calendar, so a reminder is never lost between the two. Settings shows the error code when Web Push cannot be turned on.
+- Files: `phone.js`, `webpush.js`, `settings/settings.js`, `tests/phone.test.js`, `tests/webpush.test.js`.
+  - Tests: 4777/4777; Chromium E2E. Not tested: a real Android phone with orOS closed.

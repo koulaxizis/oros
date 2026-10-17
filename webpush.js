@@ -224,6 +224,7 @@
     body.op = "push";
     return fetch(RELAY + "/v1", { method: "POST", headers: { "Content-Type": "application/json" },
                                   body: JSON.stringify(body) })
+      .catch(function () { throw fail("network"); })   // offline, blocked, or the relay refused this origin
       .then(function (r) { return r.json().catch(function () { return { ok: false, error: { code: "proto" } }; }); })
       .then(function (j) {
         if (j && j.ok) return j.data;

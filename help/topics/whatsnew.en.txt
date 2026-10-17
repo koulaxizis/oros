@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.13.01
+- Android app: Calendar reminders now ring from orOS even when your events are also shown in the phone's Calendar. Settings shows why notifications with orOS closed cannot be turned on.
+
 ## Version 3.13.00
 - Garage, Plant Care, Chore Wheel, Habits, Mood and Travel are now in German.
 

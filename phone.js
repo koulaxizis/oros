@@ -154,7 +154,6 @@
   var OCC = (root && root.OrosCalOccur) ||
     (typeof module !== "undefined" && typeof require === "function" ? require("./calendar/occur.js") : null);
   var FREQ = { D: "DAILY", W: "WEEKLY", M: "MONTHLY", Y: "YEARLY" };
-  var REMIND = [5, 15, 30, 60, 1440, 4320, 7200];
   function parts(ymd) { var p = ymd.split("-"); return [+p[0], +p[1] - 1, +p[2]]; }
   function hm(s) { var p = (s || "00:00").split(":"); return [+p[0], +p[1]]; }
   function localMs(ymd, time) {
@@ -221,7 +220,11 @@
         dtend: null, duration: null,
         tz: timed ? (z || tz || "UTC") : "UTC",
         rrule: rule, exdate: null,
-        remind: typeof e.remindMin === "number" && REMIND.indexOf(e.remindMin) !== -1 ? e.remindMin : null,
+        // No Android reminder on the copy: orOS rings Calendar reminders
+        // itself (calendarReminders), as some phone Calendar apps never
+        // ring events of another account. A reminder added on the phone
+        // still comes back (remindIn) and orOS rings it from then on.
+        remind: null,
         color: colors[e.labelId] || null
       };
       if (rule) {
@@ -408,6 +411,7 @@
             var one = eventIn(c, sz);
             if (one) {
               one.recur = null;
+              if (one.remindMin == null) one.remindMin = s.remindMin == null ? null : s.remindMin;
               if (sz && one.start) one.tz = sz;
               b.events.push(Object.assign(one, { id: newEventId(now), labelId: s.labelId || null, mtime: now }));
             }
@@ -426,6 +430,8 @@
       var e = eventIn(c, z);
       if (!e) { refs.push(c.ref); return; }
       if (i !== -1) {
+        // The copy carries no reminder, so "none" from the phone keeps orOS's own.
+        if (e.remindMin == null) delete e.remindMin;
         var merged = Object.assign({}, b.events[i], e, { mtime: now });
         if (!merged.start || !z) delete merged.tz;
         b.events[i] = merged;
@@ -1034,11 +1040,10 @@
              habitsTitle: tr("app.habits", lang === "el" ? "Συνήθειες" : "Habits"),
              healthTitle: tr("app.health", lang === "el" ? "Υγεία" : "Health") };
   }
-  // Calendar reminders ring here only while the events are NOT copied
-  // to the phone's Calendar (that app rings them then, so no double).
+  // Calendar reminders ring here, whether or not the events are also
+  // copied to the phone's Calendar (the copies carry no reminder).
   function calendarReminders(now) {
     var P = root.orosPush;
-    if (prefs().calendar && appState && appState.calendar === "granted") return [];
     if (!P || typeof P.calendarRows !== "function") return [];
     var data = null;
     try { data = JSON.parse(localStorage.getItem(KEYS.calendar) || "null"); } catch (e) {}
