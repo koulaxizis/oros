@@ -69,6 +69,7 @@
   <footer id="foot" hidden>
     <div id="foot-info" class="foot-info"></div>
     <div class="foot-btns">
+      <button type="button" id="text-btn" class="btn" data-i18n="btn.read">Read text</button>
       <button type="button" id="opt-btn" class="btn" data-i18n="btn.options">Options</button>
       <button type="button" id="split-btn" class="btn" data-i18n="btn.split">Split</button>
       <button type="button" id="save-btn" class="btn primary" data-i18n="btn.save">Save PDF</button>
@@ -177,7 +178,7 @@
     </div>
   </div>
 
-  <div id="busy" hidden><div class="busy-box"><span class="spin" aria-hidden="true"></span><span id="busy-text"></span></div></div>
+  <div id="busy" hidden><div class="busy-box"><span class="spin" aria-hidden="true"></span><span id="busy-text"></span><button type="button" id="busy-stop" class="btn" data-i18n="ocr.stop" hidden>Stop</button></div></div>
   <div id="drag-veil" hidden><span data-i18n="drop.veil">Drop to add</span></div>
   <div id="live" class="sr-only" aria-live="polite"></div>
   <div id="toast" role="status"></div>
@@ -185,6 +186,7 @@
   <script src="../vendor/pdf-lib/pdf-lib.min.js?v=2.96.00"></script>
   <script src="core.js?v=2.96.00"></script>
   <script src="scan.js?v=2.96.00"></script>
+  <script src="ocr.js?v=2.96.00"></script>
   <script src="pdfops.js?v=2.96.00"></script>
   <script src="../bundle.js?v=2.96.00"></script>
   <script src="scanpdf.js?v=2.96.00"></script>

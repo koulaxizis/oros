@@ -11,15 +11,21 @@
 //     pages: the page list (core.js), in output order, with the
 //            additions of each page (p.ov: signatures, text).
 //     meta: { title, opts (core.readDocOpts: page numbers,
-//            watermark, title, author), font: { fontkit, bytes } }.
+//            watermark, title, author), font: { fontkit, bytes },
+//            ocr: { "<src>:<idx>": ocr.record } (wave 4: text read
+//            from the page, drawn under it as an invisible layer, so
+//            the PDF can be searched and copied) }.
 //            Text is drawn with the font given (Noto Sans: Greek and
 //            Latin), embedded as a subset; without it, text fails
 //            with code "font".
 // geom(lib, srcs, p, prefs) -> { W, H, R, bx, by } of a list page:
 //     its unturned size, how it shows turned, and its box origin.
 // fromImages(lib, list, meta) -> Promise<Uint8Array>
-//     list: [{ bytes (JPEG), w, h (page points) }]: one picture per
-//     page, the page filled (Compress makes these).
+//     list: [{ bytes (JPEG), w, h (page points), words? }]: one
+//     picture per page, the page filled (Compress makes these);
+//     words (wordsFor(…, true)) keep the text layer.
+// wordsFor(lib, srcs, p, prefs, rec, display) -> where each word of
+//     an ocr record goes on that page (ocr.place).
 // Pages of a PDF are copied as they are (text, links on the page,
 // fonts); bookmarks and forms of the whole file are not carried.
 // A picture becomes one page sized by prefs (core.pageFor/fitRect).
@@ -30,7 +36,9 @@
 (function (root) {
   "use strict";
 
-  var C = (typeof module !== "undefined" && module.exports) ? require("./core.js") : root.ScanPdfCore;
+  var NODE = typeof module !== "undefined" && module.exports;
+  var C = NODE ? require("./core.js") : root.ScanPdfCore;
+  var O = NODE ? require("./ocr.js") : root.ScanPdfOcr;
   var PRODUCER = "orOS Scanner & PDF";
 
   function load(lib, bytes) {
@@ -62,9 +70,48 @@
     return { W: b.width, H: b.height, R: C.normRot(rot), bx: b.x, by: b.y };
   }
 
-  function needsFont(pages, opts) {
+  function needsFont(pages, opts, ocr) {
     if (opts.num.on || opts.wm.on) return true;
-    return pages.some(function (p) { return (p.ov || []).some(function (o) { return o.t === "text"; }); });
+    return pages.some(function (p) {
+      return !!recOf(ocr, p) || (p.ov || []).some(function (o) { return o.t === "text"; });
+    });
+  }
+  function recOf(ocr, p) {
+    var r = ocr && ocr[p.src + ":" + p.idx];
+    return r && Array.isArray(r.words) && r.words.length ? r : null;
+  }
+
+  // The part of the unturned page the words were read from: the whole
+  // page of a PDF, the picture on a picture page.
+  function contentBox(srcs, p, prefs, g) {
+    var s = srcs[p.src];
+    if (s.kind === "pdf") return { left: 0, top: 0, w: g.W, h: g.H };
+    var PP = C.prefsFor(s, prefs), r = C.fitRect(s.img.w, s.img.h, g.W, g.H, PP.margin);
+    return { left: r.x, top: g.H - r.y - r.h, w: r.w, h: r.h };
+  }
+  function wordsFor(lib, srcs, p, prefs, rec, display) {
+    if (!rec) return [];
+    var g = geom(lib, srcs, p, prefs);
+    return O.place(rec, contentBox(srcs, p, prefs, g), g, display);
+  }
+
+  // The invisible text layer (render mode 3, as scanners write it):
+  // each word stretched (Tz) to the width it covers on the picture.
+  function drawWords(lib, page, font, list) {
+    if (!list || !list.length) return;
+    page.setFont(font);
+    var key = page.getFont()[1];
+    var ops = [lib.pushGraphicsState(), lib.beginText(), lib.setTextRenderingMode(lib.TextRenderingMode.Invisible)];
+    list.forEach(function (w, i) {
+      var text = w.t + (i < list.length - 1 ? " " : "");
+      var nat = font.widthOfTextAtSize(w.t, w.size);
+      var tz = nat > 0 ? Math.min(500, Math.max(20, 100 * w.w / nat)) : 100;
+      var a = w.A * Math.PI / 180, c = Math.cos(a), s = Math.sin(a);
+      ops.push(lib.setFontAndSize(key, w.size), lib.setCharacterSqueeze(Math.round(tz * 10) / 10),
+               lib.setTextMatrix(c, s, -s, c, w.x, w.y), lib.showText(font.encodeText(text)));
+    });
+    ops.push(lib.endText(), lib.popGraphicsState());
+    page.pushOperators.apply(page, ops);
   }
 
   // Additions, page number and watermark of one page.
@@ -114,6 +161,7 @@
   function build(lib, srcs, pages, prefs, meta) {
     var P = C.readPrefs(prefs);
     var opts = C.readDocOpts(meta && meta.opts);
+    var ocr = meta && meta.ocr;
     var fontP = null, images = {};
     return lib.PDFDocument.create().then(function (out) {
       // Each PDF source is copied in ONE copyPages call (shared fonts
@@ -139,7 +187,7 @@
         embedded[id] = img.type === "jpg" ? out.embedJpg(img.bytes) : out.embedPng(img.bytes);
         return embedded[id];
       }
-      if (needsFont(pages, opts)) {
+      if (needsFont(pages, opts, ocr)) {
         var f = meta && meta.font;
         if (!f || !f.fontkit || !f.bytes) throw codeErr("font");
         out.registerFontkit(f.fontkit);
@@ -154,6 +202,7 @@
               out.addPage(page);
               var rot = C.normRot(page.getRotation().angle + (p.rot || 0));
               if (p.rot) page.setRotation(lib.degrees(rot));
+              drawWords(lib, page, font, wordsFor(lib, srcs, p, P, recOf(ocr, p), false));
               return decorate(lib, out, page, geomOf(lib, page, rot), p, i, pages.length, opts, font, images);
             }
             return embed(p.src).then(function (emb) {
@@ -162,6 +211,7 @@
               page = out.addPage(size);
               page.drawImage(emb, { x: r.x, y: r.y, width: r.w, height: r.h });
               if (p.rot) page.setRotation(lib.degrees(C.normRot(p.rot)));
+              drawWords(lib, page, font, wordsFor(lib, srcs, p, P, recOf(ocr, p), false));
               return decorate(lib, out, page, geomOf(lib, page, p.rot || 0), p, i, pages.length, opts, font, images);
             });
           });
@@ -184,15 +234,25 @@
   // upright (the pictures were rendered turned), so no /Rotate.
   function fromImages(lib, list, meta) {
     var opts = C.readDocOpts(meta && meta.opts);
+    var fontP = null;
     return lib.PDFDocument.create().then(function (out) {
-      return list.reduce(function (c, it) {
-        return c.then(function () {
-          return out.embedJpg(it.bytes).then(function (emb) {
-            var page = out.addPage([it.w, it.h]);
-            page.drawImage(emb, { x: 0, y: 0, width: it.w, height: it.h });
+      if (list.some(function (it) { return it.words && it.words.length; })) {
+        var f = meta && meta.font;
+        if (!f || !f.fontkit || !f.bytes) throw codeErr("font");
+        out.registerFontkit(f.fontkit);
+        fontP = out.embedFont(f.bytes, { subset: true });
+      }
+      return Promise.resolve(fontP).then(function (font) {
+        return list.reduce(function (c, it) {
+          return c.then(function () {
+            return out.embedJpg(it.bytes).then(function (emb) {
+              var page = out.addPage([it.w, it.h]);
+              page.drawImage(emb, { x: 0, y: 0, width: it.w, height: it.h });
+              if (font) drawWords(lib, page, font, it.words);
+            });
           });
-        });
-      }, Promise.resolve()).then(function () {
+        }, Promise.resolve());
+      }).then(function () {
         var now = new Date();
         var title = opts.title || (meta && meta.title);
         if (title) out.setTitle(String(title).slice(0, 200));
@@ -206,7 +266,7 @@
     });
   }
 
-  var api = { load: load, build: build, geom: geom, fromImages: fromImages, PRODUCER: PRODUCER };
+  var api = { load: load, build: build, geom: geom, fromImages: fromImages, wordsFor: wordsFor, PRODUCER: PRODUCER };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.ScanPdfOps = api;
 })(typeof window !== "undefined" ? window : this);

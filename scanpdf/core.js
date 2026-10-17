@@ -13,7 +13,7 @@
 (function (root) {
   "use strict";
 
-  var VERSION = "1.2.0";
+  var VERSION = "1.3.0";
   var PREFS_KEY = "oros-scanpdf-prefs";      // device-local (R10), never synced
   var SIGS_KEY = "oros-scanpdf-sigs";        // device-local (R10), never synced
   var MAX_SIGS = 6;
@@ -143,6 +143,8 @@
   var MARGINS = ["none", "small", "normal"];
   var DESTS = ["device", "files"];
   var CMPS = ["off", "light", "medium", "strong"];
+  var OCR_LANGS = ["ell+eng", "ell", "eng"];   // wave 4: what Read text reads
+  var READS = ["auto", "on", "off"];           // Save › Make it searchable (auto: on when there are scans)
   function pick(v, list, def) { return list.indexOf(v) !== -1 ? v : def; }
   function readPrefs(raw) {
     var p = raw && typeof raw === "object" ? raw : {};
@@ -151,7 +153,9 @@
       orient: pick(p.orient, ORIENTS, "auto"),
       margin: pick(p.margin, MARGINS, "small"),
       dest: pick(p.dest, DESTS, "device"),
-      cmp: pick(p.cmp, CMPS, "off")
+      cmp: pick(p.cmp, CMPS, "off"),
+      ocr: pick(p.ocr, OCR_LANGS, "ell+eng"),
+      read: pick(p.read, READS, "auto")
     };
   }
 
