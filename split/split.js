@@ -151,6 +151,7 @@
       "sh.even": "Everyone is even.", "sh.bal": "Balances:", "sh.foot": "Made with orOS Split",
       "exp.title": "Export", "exp.csvfmt": "CSV for", "exp.csv.excel": "Greek Excel (; and 12,50)",
       "exp.csv.std": "Other apps, orOS Spreadsheet (, and 12.50)", "exp.csv": "CSV", "exp.pdf": "PDF summary",
+      "exp.sheet": "Open in Spreadsheet", "exp.sheetCap": "Only the first {n} rows fit in one sheet",
       "exp.done": "Exported", "exp.empty": "Nothing to export yet",
       "exp.lib": "Library not found (vendor/{f})", "exp.font": "Greek font not found: Greek text may not show in the PDF",
       "col.date": "Date", "col.type": "Type", "col.title": "What for", "col.cat": "Category", "col.amount": "Amount",
@@ -276,6 +277,7 @@
       "sh.even": "Όλοι είναι εντάξει.", "sh.bal": "Υπόλοιπα:", "sh.foot": "Από τη Μοιρασιά του orOS",
       "exp.title": "Εξαγωγή", "exp.csvfmt": "CSV για", "exp.csv.excel": "Ελληνικό Excel (; και 12,50)",
       "exp.csv.std": "Άλλες εφαρμογές, Υπολογιστικό φύλλο orOS (, και 12.50)", "exp.csv": "CSV", "exp.pdf": "Σύνοψη PDF",
+      "exp.sheet": "Άνοιγμα στο Υπολογιστικό φύλλο", "exp.sheetCap": "Χωρούν μόνο οι πρώτες {n} γραμμές σε ένα φύλλο",
       "exp.done": "Η εξαγωγή έγινε", "exp.empty": "Δεν υπάρχει τίποτα για εξαγωγή ακόμα",
       "exp.lib": "Δεν βρέθηκε η βιβλιοθήκη (vendor/{f})", "exp.font": "Δεν βρέθηκε η ελληνική γραμματοσειρά: τα ελληνικά μπορεί να μη φανούν στο PDF",
       "col.date": "Ημερομηνία", "col.type": "Τύπος", "col.title": "Για τι", "col.cat": "Κατηγορία", "col.amount": "Ποσό",
@@ -3534,40 +3536,74 @@
     var go = function (kind) {
       return function () {
         if (!entriesCount(g.id)) { showToast(t("exp.empty")); return; }
-        if (kind === "csv") exportCsv(g); else exportPdf(g);
+        if (kind === "csv") exportCsv(g);
+        else if (kind === "sheet") openInSheet(g);
+        else exportPdf(g);
         dlg.close();
       };
     };
     acts.appendChild(button(t("exp.csv"), "", go("csv")));
     acts.appendChild(button(t("exp.pdf"), "primary", go("pdf")));
     dlg.appendChild(acts);
+    if (openAtFn()) {
+      var sa = el("div", "dlg-actions");
+      sa.appendChild(button(t("exp.sheet"), "", go("sheet")));
+      dlg.appendChild(sa);
+    }
     var close = el("div", "dlg-actions");
     close.appendChild(button(t("dlg.close"), "", function () { dlg.close(); }));
     dlg.appendChild(close);
     document.body.appendChild(dlg);
     dlg.showModal();
   }
-  function exportCsv(g) {
+  // The group's entries as a table, oldest first: CSV and Spreadsheet
+  // share it. money(cents) and rate(r) shape the number cells.
+  function groupTable(g, money, rate) {
     var people = sortedPeople(g.id);
     var head = [t("col.date"), t("col.type"), t("col.title"), t("col.cat"), t("col.amount"), t("col.cur"), t("col.by")]
       .concat(people.map(function (p) { return t("col.share", { p: p.n }); }))
       .concat([t("col.note"), t("col.orig"), t("col.ocur"), t("col.rate")]);
-    var rateCell = function (r) { var s = String(r); return prefs.csv === "excel" ? s.replace(".", ",") : s; };
     var rows = entriesOf(g.id).reverse().map(function (en) {
       var x = en.x;
       if (en.kind === "p") {
-        return [x.d, t("k.pay"), personName(x.f) + " → " + personName(x.to), "", x.a, g.cur, personName(x.f)]
+        return [x.d, t("k.pay"), personName(x.f) + " → " + personName(x.to), "", money(x.a), g.cur, personName(x.f)]
           .concat(people.map(function () { return ""; })).concat(["", "", "", ""]);
       }
       var sh = sharesOf(x);
-      return [x.d, t("k.exp"), x.t, catName(x.c), x.a, g.cur,
+      return [x.d, t("k.exp"), x.t, catName(x.c), money(x.a), g.cur,
               Object.keys(x.by).map(function (k) { return personName(k) + (Object.keys(x.by).length > 1 ? " " + centsToInput(x.by[k], LANG) : ""); }).join(", ")]
-        .concat(people.map(function (p) { return sh[p.id] ? sh[p.id] : ""; }))
-        .concat([x.n].concat(x.fx ? [x.fx.a, x.fx.c, rateCell(x.fx.r)] : ["", "", ""]));
+        .concat(people.map(function (p) { return sh[p.id] ? money(sh[p.id]) : ""; }))
+        .concat([x.n].concat(x.fx ? [money(x.fx.a), x.fx.c, rate(x.fx.r)] : ["", "", ""]));
     });
-    var text = buildCsv(head, rows, prefs.csv);
+    return { head: head, rows: rows, people: people.length };
+  }
+  function exportCsv(g) {
+    var rateCell = function (r) { var s = String(r); return prefs.csv === "excel" ? s.replace(".", ",") : s; };
+    var tb = groupTable(g, function (c) { return c; }, rateCell);
+    var text = buildCsv(tb.head, tb.rows, prefs.csv);
     saveBlob(new Blob([text], { type: "text/csv;charset=utf-8" }), "oros-split-" + slug(g.n) + ".csv",
              "text/csv;charset=utf-8", "CSV", ".csv");
+  }
+
+  // "Open in Spreadsheet" (Bible BR-S1): the same table as the CSV in a
+  // new sheet of the orOS Spreadsheet, amounts as numbers, a SUM under
+  // the amount and each person's share. Shell only.
+  var SHEET_ROWS = 498;   // + heading + SUM row = the Spreadsheet's 500
+  function openAtFn() {
+    try {
+      var p = window.parent;
+      return p && p !== window && typeof p.__orosOpenAt === "function" ? p : null;
+    } catch (e) { return null; }
+  }
+  function openInSheet(g) {
+    var p = openAtFn();
+    if (!p) return;
+    var tb = groupTable(g, function (c) { return c / 100; }, function (r) { var n = Number(r); return isFinite(n) ? n : ""; });
+    var rows = tb.rows;
+    if (rows.length > SHEET_ROWS) { showToast(t("exp.sheetCap", { n: SHEET_ROWS })); rows = rows.slice(0, SHEET_ROWS); }
+    var sum = [4];
+    for (var i = 0; i < tb.people; i++) sum.push(7 + i);
+    p.__orosOpenAt("spreadsheet", { newSheet: { name: (t("app") + " " + g.n).slice(0, 31).trim(), rows: [tb.head].concat(rows), sum: sum } });
   }
 
   // Vendored libraries (never a CDN), loaded on first use.

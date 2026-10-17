@@ -166,6 +166,9 @@
       "exp.row.entries": "Entries in range",
       "exp.row.days":    "Days logged",
       "exp.font.err":   "Greek font not found (vendor/NotoSans-Regular.ttf) — Greek text may not render in the PDF.",
+      "exp.sheet":      "Open in Spreadsheet",
+      "exp.sheetCap":   "Only the first {n} entries fit in one sheet",
+      "exp.sheetHead":  "Date|Time|Feelings|Location|With|Trigger|Habits|Activities|Note",
       "ent.empty":      "No entries yet — they'll appear here after your first check-in.",
       "ent.noRes":      "No entries match \u201C{q}\u201D.",
       "grp.own":        "Your activities",
@@ -348,6 +351,9 @@
       "exp.row.entries": "Καταχωρήσεις στο εύρος",
       "exp.row.days":    "Ημέρες με καταγραφή",
       "exp.font.err":   "Δεν βρέθηκε η ελληνική γραμματοσειρά (vendor/NotoSans-Regular.ttf) — τα ελληνικά μπορεί να μη φανούν στο PDF.",
+      "exp.sheet":      "Άνοιγμα στο Υπολογιστικό φύλλο",
+      "exp.sheetCap":   "Χωρούν μόνο οι πρώτες {n} καταχωρήσεις σε ένα φύλλο",
+      "exp.sheetHead":  "Ημερομηνία|Ώρα|Συναισθήματα|Τοποθεσία|Με ποιον|Αιτία|Συνήθειες|Δραστηριότητες|Σημείωση",
       "ent.empty":      "Καμία καταχώρηση ακόμα — θα εμφανιστούν εδώ μετά την πρώτη καταγραφή.",
       "ent.noRes":      "Καμία καταχώρηση δεν ταιριάζει με «{q}».",
       "grp.own":        "Οι δραστηριότητές σου",
@@ -4007,6 +4013,41 @@ function mergeMoodStates(A, B) {
     return String(s).normalize("NFC");
   }
 
+  // "Open in Spreadsheet" (Bible BR-S1): a new sheet in the orOS
+  // Spreadsheet with the entries the PDF covers (range + filters),
+  // the same columns as the mood.csv of the .orosmood file, newest
+  // first. Plain text cells only; the receiver adds no SUM here.
+  var SHEET_ROWS = 499;   // + heading = the Spreadsheet's 500
+  function sheetBridge() {
+    try {
+      var p = window.parent;
+      return p && p !== window && typeof p.__orosOpenAt === "function" ? p : null;
+    } catch (e) { return null; }
+  }
+  function openInSheet() {
+    var p = sheetBridge();
+    if (!p) return;
+    var es = entriesInRange();
+    if (filtersActive()) es = applyFilters(es);
+    es = es.slice().sort(function (a, b) { return b.ts - a.ts || (a.id < b.id ? -1 : 1); });
+    if (!es.length) { transientNote(t("ins.ctx.none")); return; }
+    if (es.length > SHEET_ROWS) {
+      transientNote(t("exp.sheetCap").replace("{n}", SHEET_ROWS));
+      es = es.slice(0, SHEET_ROWS);
+    }
+    var cv = function (col, id) { return colLabel(colValById(col, id)); };
+    var rows = [t("exp.sheetHead").split("|")].concat(es.map(function (e) {
+      var d = new Date(e.ts);
+      var feel = (e.emotions || []).map(function (m) { return emoLabel(m.k) + " " + m.i + "/5"; }).join("; ");
+      var habs = [];
+      HABITS.forEach(function (h) { if (e[h.f] === "yes" || e[h.f] === "no") habs.push(habLbl(h, e[h.f])); });
+      var acts = (e.acts || []).map(function (id) { var a = actById(id); return a ? a.label : id; }).join("; ");
+      return [dayKey(e.ts), pad(d.getHours()) + ":" + pad(d.getMinutes()), feel, cv("loc", e.loc),
+              cv("person", e.person), cv("trig", e.trig), habs.join("; "), acts, e.note || ""];
+    }));
+    p.__orosOpenAt("spreadsheet", { newSheet: { name: t("app.title") + " " + dayKey(Date.now()), rows: rows } });
+  }
+
   function exportPdf() {
     loadPdfLib(function () {
       loadPdfFont(function () {
@@ -4318,6 +4359,15 @@ function mergeMoodStates(A, B) {
     pdf.textContent = t("exp.btn");
     pdf.addEventListener("click", exportPdf);
     top.appendChild(pdf);
+    // "Open in Spreadsheet" (Bible BR-S1): only inside orOS
+    if (sheetBridge()) {
+      var sb = document.createElement("button");
+      sb.type = "button";
+      sb.className = "chip ghost";
+      sb.textContent = t("exp.sheet");
+      sb.addEventListener("click", openInSheet);
+      top.appendChild(sb);
+    }
     var imp = document.createElement("button");
     imp.type = "button";
     imp.className = "chip ghost";

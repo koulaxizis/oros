@@ -46,7 +46,7 @@ If you set who you are, the group shows `Group spending`, `Your share` and `Your
 From the `More` menu in a group:
 - `Share the summary`: a short text of totals and who pays whom, to copy or, on a phone, share.
 - `Send the group file`: a file your friends open in their own orOS with `Import a group file…` from the `More` menu on the home screen. Files sent back and forth join up and never count an expense twice. Each person picks who they are on their own device.
-- `Export (CSV, PDF)`: a CSV for Greek Excel or other apps, or a PDF summary.
+- `Export (CSV, PDF)`: a CSV for Greek Excel or other apps, or a PDF summary. Inside orOS, `Open in Spreadsheet` puts the same table in a new sheet of the Spreadsheet, with totals under the amounts.
 - `Group and people`, `Archive the group` and `Delete the group`.
 
 ## Save and open an orOS file

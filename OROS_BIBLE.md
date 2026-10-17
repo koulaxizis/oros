@@ -2077,6 +2077,7 @@ Owner: Spreadsheet (`spreadsheet/`). First sender: Budget (Export → "Open in S
 - **BR-S1-2 · Always a NEW sheet**, never overwrites; capped at 500 rows × 64 columns (the sender caps first and says so). `name` goes through `xlSafeName`.
 - **BR-S1-3 · No formulas from the sender.** A string cell is plain text; one starting with `= + - @` gets a leading apostrophe. The only formulas are the receiver's own `SUM`s.
 - **BR-S1-4 · Receiver.** `sheetFromTable()` in `spreadsheet.js`: live push via `window.__orosOpenAt(target)`, boot take via `takeTarget()`. It marks the slice dirty like any import (it is user data from then on).
+- **BR-S1-5 · Record apps (app interop wave 4, 2026-10-17).** "Open in Spreadsheet" / «Άνοιγμα στο Υπολογιστικό φύλλο» next to each app's CSV export (same columns and order as the CSV, numbers as numbers, dates YYYY-MM-DD), shown only when the shell bridge exists: Timesheet (report; sums Hours, Amount; `core.toTable`), Workouts (all sets; sums reps, time, distance), Health (report + all readings; no sums), Water (`core.toTable`; sum ml), Mood (Insights range and filters, the .orosmood CSV columns; no sums), Garage (all costs; sum cost), Invoices (dashboard period, `core.docsRows`; money sums only when one currency), CRM (customers; sums open deals, open value), Library (More menu, books.csv columns; sums pages, highlights, bookmarks, notes), Media Shelf (More menu, shelf.csv columns), Split (Export dialog, the group's CSV table `groupTable`; sums amount and each share), Meals (week plan and shopping list, no CSV before). Cap: 499 data rows, 498 with a `sum` (the receiver keeps 500 rows with the SUM row), with the app's toast. Tests `tests/interop-sheets.test.js`.
 
 ### Budget recurring entries in the Calendar (BR-B2)
 
@@ -7481,3 +7482,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Sync with WebDAV: servers that block the browser now work through the orOS relay (optional, relay `/dav` from #477), Nextcloud users can sign in without typing a password (Login Flow v2), and big files go up in pieces.
 - Files: `sync.js`, `shell.js`, `translations.js`, `settings/{settings,core}.js`, help sync + Settings EN/EL, Bible.
   - Tests: full suite green (`tests/sync-webdav.test.js` extended); real Chromium through a real workerd relay (EL 360 / EN 1280). Not tested: a real Nextcloud / Synology / QNAP, the deployed relay from the cloud container, phones.
+
+### 2026-10-17 — App interop wave 4: record apps open in Spreadsheet (#482) — 2.84.00
+- Open in Spreadsheet in twelve more apps: Timesheet, Workouts, Health, Water, Mood, Garage, Invoices, CRM, Library, Media Shelf, Split and Meals open their data as a new sheet.
+- Files: the twelve apps' scripts + help EN/EL, Bible.
+  - Tests: full suite green (new `tests/interop-sheets.test.js`); real Chromium. Not tested: a real phone.
