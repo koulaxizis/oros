@@ -2517,7 +2517,7 @@ Rebuild this in any session where code is delivered.
 - LibreOffice via `/mnt/skills/public/pptx/scripts/office/soffice.py` (convert DOCX/RTF/ODT).
 - `python-docx` to parse DOCX and to generate list/heading fixtures.
 
-### §G — Quality gate (`.github/workflows/quality.yml`, wave Q1)
+### §G — Quality gate (`.github/workflows/quality.yml`, waves Q1-Q3)
 
 Every PR that touches app code, every push to main and every night, CI opens **every app of `apps.json`** with `?standalone` in Chromium (`LANG=C.UTF-8`, offline: every host but the local server is blocked), in a fresh context per visit, at 360 and 1280 px, EN and EL, plus the shell. 4 shards in parallel. Runner: `.github/qa/smoke.js`. Plan: `/mnt/project-files/quality-gate/plan.md` (Q2 sync convergence, Q3 axe + size budget, Q4-Q6 next).
 
@@ -2527,6 +2527,8 @@ Every PR that touches app code, every push to main and every night, CI opens **e
 - **Locally:** `npm install --prefix .github/qa && node .github/qa/smoke.js --only todo,notes` (or `QA_CHROMIUM=<chrome>` with a global Playwright). `--update-baseline` rewrites the baseline for the apps it ran.
 - A new app needs nothing: it is checked as soon as it is in `apps.json`.
 - **Sync convergence (wave Q2, `.github/qa/converge.js`, same jobs):** each app is opened inside the shell, its slices are captured as they register, and every slice with a merge function runs two simulated devices through the engine's pull rule (`merge(local, remote)`, null = take remote, apply when it differs from local, push when it differs from remote, JSON equality), every apply going through the app's own set + get (SY-L1). Devices diverge with a new record each and a changed text on top-level id-keyed records, newer time stamps; a record the app's own store refuses is not counted. New problem kinds: `sync-throws`, `sync-idempotent` (merge(x, x) ≠ x for the converged state), `sync-diverge` (devices or cloud still differ after 3 rounds), `sync-loop` (uploads after agreement), `sync-lost` (a stored record gone after the merge). Starting states: most apps start empty, so `.github/qa/fixtures/<slice>.json` holds the sample from the app's own bundle test (`node .github/qa/make-fixtures.js` rebuilds them; 39 files) or hand-written `{ a, b }` device states. At 2.69.x: 128 slices swept, 33 with records (all record apps with a fixture), 0 problems; the job summary lists the slices that had only an empty state ("only idempotence checked"), and adding a fixture deepens them.
+- **Accessibility (wave Q3, `.github/qa/a11y.js`, same jobs):** axe-core (pinned in `.github/qa/package.json`, injected by Playwright, never loaded by an app) runs on every app and the shell at 360 px, EN and EL, with WCAG 2.x A/AA rules and axe best practices. Only impact `critical` and `serious` count. Baseline line per app, language and rule: `app | a11y | 360 | lang | rule-id`, so a rule new to an app fails while more elements of a known rule do not. Same shrink-only baseline and single re-check as above.
+- **Size budget (wave Q3, `.github/qa/budget.js`, `.github/qa/budget.json`):** the precache total (every file of `PRECACHE_URLS` in `sw.js`) may grow at most 10 % over `precache.bytes`; over it, the job lists the largest files that are new compared to the base branch's sw.js. Every app opened once with an empty cache at 360 px EN may download at most 20 % more than its `apps.<id>.bytes`; time to the load event is only a warning (runners differ). An app with no line yet is reported, not failed. Raise a value only for intended growth (`node .github/qa/budget.js [--precache] [--only id] --update-budget`) and say why in the PR.
 
 ---
 
@@ -7456,3 +7458,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - WebDAV W3 (relay): /dav passes WebDAV requests to the user's own server when it sends no CORS headers (opt-in on the client, next PR).
 - Files: `relay/dav.js` (new), `relay/core.js`, `relay/README.md`, `tests/dav-relay.test.js`, Bible. Mail thread (relay owner) OK at 06cfaea.
   - Tests: full suite green; real workerd (wrangler dev) against WsgiDAV. Not tested: a real Nextcloud / Synology through the deployed relay.
+
+### 2026-10-17 — Quality gate Q3: accessibility baseline + size budget (#478) — CI only, no APP_VERSION
+- Quality gate Q3: CI checks accessibility with axe-core (critical/serious, 92 known) and a size budget (precache +10 %, each app's first open +20 %). A stamp that adds precache files must stay under budget, or raise `budget.json` in the same PR.
+- Files: `.github/qa/**`, `.github/workflows/quality.yml`, `tests/quality-gate.test.js`, Bible §G.
+  - Tests: full suite green; quality.yml green on GitHub. Nothing shipped to users.
