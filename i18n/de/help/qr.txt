@@ -1,0 +1,75 @@
+# QR-Generator
+Der QR-Generator erstellt QR-Codes für Links, WLAN-Netzwerke, Visitenkarten, Termine, Text, E-Mail, Telefonnummern, SMS und Orte und liest sie auch: mit der Kamera oder aus einem Bild. Alles passiert auf deinem Gerät, auch offline.
+
+## Erste Schritte
+1. Wähle unter `Typ`, wofür der Code ist: `Link`, `WLAN`, `Kontakt`, `Termin`, `Text`, `E-Mail`, `Telefon`, `SMS` oder `Ort`.
+2. Füll die Felder unter `Inhalt` aus. Der Code erscheint, während du tippst; fehlt etwas, sagt dir eine kurze Meldung, was.
+3. Speichere, exportiere oder drucke ihn.
+
+Unter dem Code siehst du, wie voll er ist. Ist zu viel Inhalt drin, kürze ihn oder senke die Fehlerkorrektur.
+
+## Aus anderen Apps ausfüllen
+Bei manchen Typen füllt eine Schaltfläche das Formular für dich aus, ohne in der anderen App etwas zu ändern:
+- `Aus Lesezeichen` für einen `Link`, aus [Lesezeichen](app:bookmarks).
+- `Aus Kontakten` für einen `Kontakt`, aus [Kontakte](app:contacts).
+- `Aus Kalender` für einen `Termin`, aus [Kalender](app:calendar).
+
+Es geht auch andersherum: `QR-Code` auf der Karte eines Kontakts in Kontakte, im Bearbeitungsfenster eines Termins in Kalender oder eines Lesezeichens in Lesezeichen öffnet diese App mit einem schon ausgefüllten neuen Code. Der Code, den du offen hattest, bleibt, wie er war, und `Rückgängig` in der Meldung holt ihn zurück. Bei einem wiederkehrenden Termin bekommt der Code das Datum des Vorkommens, das du geöffnet hast.
+
+## Aussehen ändern
+Unter `Aussehen` kannst du einstellen:
+- `Fehlerkorrektur`, von `Niedrig (7%)` bis `Sehr hoch (30%)`. Höher übersteht Flecken und Kratzer, aber der Code wird dichter.
+- Die Farben von `Code` und `Hintergrund`, mit `Farben tauschen` und `Schwarz auf Weiß`.
+- `Rand` und eine `Beschriftung unter dem Code`.
+- `Punkte`: `Quadrat`, `Abgerundet` oder `Punkte`. `Ecken`, die drei großen Quadrate: `Quadrat`, `Abgerundet` oder `Kreis`.
+- `Logo`: `Logo hinzufügen…` setzt ein Bild in die Mitte des Codes. Solange ein Logo da ist, steht die Fehlerkorrektur auf `Sehr hoch (30%)`, damit Handys den Code trotzdem lesen. `Logo ändern` wählt ein anderes Bild, und das Kreuz daneben entfernt das Logo.
+
+Die App warnt dich, wenn der Kontrast gering ist, die Farben vertauscht sind oder der Rand fehlt, weil manche Handys solche Codes nicht lesen können.
+
+## Speichern, exportieren und teilen
+- `Speichern` behält den Code mit einem Namen unter `Meine Codes`. Änderungen an einem gespeicherten Code werden laufend gespeichert. Dort kannst du ihn umbenennen, kopieren oder löschen, mit `Rückgängig` nach dem Löschen. `Neu` beginnt einen neuen Code.
+- `PNG` (wähle die `PNG-Größe`) und `SVG` speichern eine Bilddatei, mit Logo.
+- `Kopieren` legt das Bild in die Zwischenablage; `Teilen` erscheint auf Handys.
+- `In Dateien speichern` legt das Bild in den Ordner QR in [Dateien](app:files).
+- `Drucken` druckt den Code. Bei WLAN-Codes druckt `WLAN-Karte` eine Karte mit Netzwerkname, Passwort und Code, fertig für Gäste.
+
+## Code scannen
+`Scannen` öffnet den Scanner. Auf dem Handy startet die Kamera sofort; sonst drück `Kamera nutzen`. Du kannst auch `Bild scannen…` drücken, um einen Code aus einer Bilddatei zu lesen, oder ein Bild einfügen.
+
+Der Scanner zeigt, was im Code steht und was du damit tun kannst:
+- Ein Link: Du siehst zuerst die ganze Adresse und den Namen der Website, dann öffnet `Link öffnen` ihn in einem neuen Tab. Nur `http`- und `https`-Links öffnen sich von hier.
+- Ein WLAN-Netzwerk: Netzwerkname, Sicherheit und Passwort, mit `Passwort kopieren`.
+- Ein Kontakt (vCard oder MECARD): `Zu Kontakten hinzufügen` öffnet [Kontakte](app:contacts), das zeigt, was es importiert, und vorher fragt.
+- Ein Termin: `Zum Kalender hinzufügen` öffnet einen neuen, ausgefüllten Termin in [Kalender](app:calendar); er wird erst gespeichert, wenn du dort auf Speichern drückst.
+- Jeder Code: `Text kopieren` und `QR-Code daraus machen`, um ihn hier als neuen Code zu öffnen.
+
+Deine Scans stehen unter `Letzte Scans` (bis zu 50), nur auf diesem Gerät. Tipp einen an, um ihn wieder zu sehen; das Kreuz entfernt einen und `Leeren` entfernt alle, beides mit `Rückgängig`.
+
+## Viele Codes auf einmal
+`Viele Codes` erstellt einen Code für jede Zeile einer Tabelle:
+1. Füge die Zeilen ein oder drück `CSV-Datei öffnen…`. Spalten können durch Kommas, Semikolons oder Tabs getrennt sein.
+2. Wähle die Spalte für `Inhalt jedes Codes` und, wenn du willst, eine `Beschriftung unter jedem Code`. Hake `Die erste Zeile enthält Spaltennamen` an, wenn das so ist (die App rät es).
+3. Wähle `Etiketten pro Seite` und drück `Drucken`, `PDF` (ein A4-Bogen mit Etiketten) oder `ZIP mit PNGs` (ein Bild pro Zeile, in der gewählten `PNG-Größe`, benannt nach der Zeile und ihrer Beschriftung).
+
+Die Codes nutzen das Aussehen, das du eingestellt hast: Farben, Punkte, Ecken, Logo und Rand. Leere Zeilen und Zeilen, die für einen QR-Code zu lang sind, werden ausgelassen, und die App sagt dir, welche.
+
+## Synchronisierung und Sicherung
+Deine gespeicherten Codes werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert und sind Teil der orOS-[Sicherung](help:t/backup), mit Logo und Aussehen. Der Code, an dem du vor dem Speichern arbeitest, der offene Code, die PNG-Größe und deine letzten Scans bleiben auf diesem Gerät.
+
+>! Ein gespeicherter WLAN-Code enthält das Passwort und wird mit deinen anderen Codes synchronisiert. Ein gescannter WLAN-Code behält sein Passwort in deinen letzten Scans auf diesem Gerät, bis du ihn entfernst.
+
+## Tastenkürzel
+- [[Ctrl+S]] speichert den Code als PNG.
+- Die Pfeiltasten wechseln zwischen den Typen, sobald einer den Fokus hat.
+
+## Tipps
+- Wähle bei einem WLAN-Code die richtige `Sicherheit`; WPA-Passwörter brauchen mindestens 8 Zeichen.
+- Ein Logo wirkt am besten, wenn es einfach ist und einen hellen oder transparenten Hintergrund hat.
+- Teste einen gedruckten Code mit deiner Handykamera, bevor du ihn weitergibst.
+
+## Grenzen
+- Du kannst bis zu 100 gespeicherte Codes behalten.
+- Ein Logo wird verkleinert (höchstens 192 Pixel), damit es synchronisiert werden kann; ein Bild, das danach noch zu groß ist, wird abgelehnt.
+- Der Scanner liest nur QR-Codes, keine Strichcodes. Die Kamera braucht einen Browser, der sie erlaubt; in Browsern ohne eingebauten Leser ist der eigene Leser der App etwas langsamer.
+- `Viele Codes` erstellt bis zu 500 Codes auf einmal, aus einer CSV-Datei bis 2 MB.
+- Ein aus einem Code gelesener Termin behält Titel, Zeit, Ort und Beschreibung; Wiederholungsregeln und Erinnerungen werden nicht übernommen.
