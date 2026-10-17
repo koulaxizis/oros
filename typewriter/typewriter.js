@@ -42,7 +42,9 @@
   var BELL_LEFT   = 6;                // the bell rings this many letters before the margin
 
   // ---------- 1. Constants, i18n, helpers ----------
+  // orosI18n (../i18n.js): the full language code, a pack language included.
   function appLang() {
+    if (window.orosI18n) return window.orosI18n.lang();
     try {
       var l = localStorage.getItem("oros-lang") ||
               (window.parent && window.parent.orosLang) || "en";
@@ -50,6 +52,7 @@
     } catch (e) { return "en"; }
   }
   var LANG = appLang();
+  var LOC = window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB");
 
   var STRINGS = {
     en: {
@@ -99,6 +102,8 @@
       "hint.mode": "Λειτουργία γραφομηχανής: το Backspace διαγράφει το γράμμα με X αντί να το σβήσει."
     }
   };
+
+  if (typeof window !== "undefined" && window.orosI18n) window.orosI18n.table(STRINGS, "typewriter", LANG);
 
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;
@@ -484,8 +489,8 @@
     try {
       var d = new Date(ms), now = new Date();
       var sameDay = d.toDateString() === now.toDateString();
-      return sameDay ? d.toLocaleTimeString(LANG === "el" ? "el-GR" : "en-GB", { hour: "2-digit", minute: "2-digit" })
-                     : d.toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB", { day: "numeric", month: "short" });
+      return sameDay ? d.toLocaleTimeString(LOC, { hour: "2-digit", minute: "2-digit" })
+                     : d.toLocaleDateString(LOC, { day: "numeric", month: "short" });
     } catch (e) { return ""; }
   }
 
