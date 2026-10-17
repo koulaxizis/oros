@@ -1,0 +1,142 @@
+# Bestand
+Bestand führt das Lager eines Geschäfts: deine Produkte, was hereinkommt, was hinausgeht und was übrig ist. Für Dinge zu Hause (wo die Winterdecken liegen) nimm stattdessen [Inventar](app:storage).
+
+## Erste Schritte
+1. Füge ein Produkt mit `Neu` › `Produkt` hinzu, oder hol alle auf einmal mit `CSV importieren` (Einstellungen › `Produkte importieren (CSV)`).
+2. Gib ihm einen `Name` und, falls vorhanden, eine `SKU` und einen `Barcode`. Eine `Mindestmenge` sagt Bestand, wann es Zeit zum Nachbestellen ist.
+3. Gib eine `Anfangsmenge` ein, oder erfasse später deinen ersten Vorgang `Ware empfangen`.
+
+Die Menge eines Produkts wird nie direkt eingetippt: Sie ist immer die Summe seiner Bewegungen. Deshalb bleibt sie richtig, auch wenn zwei deiner Geräte gleichzeitig verkaufen.
+
+## Produkte
+Der Tab `Produkte` zeigt, was du hast, mit dem gesamten `Bestandswert` und wie viele Produkte unter `Nachbestellen` oder `Nicht vorrätig` fallen. Filtere mit `Knapp`, `Nicht vorrätig` oder `Archiviert`, wähle eine Kategorie und die Reihenfolge.
+
+Tippe oder klicke auf ein Produkt, um Menge, Durchschnittskosten, Wert, Preise und jede Bewegung zu sehen, die es je hatte. Von dort: `+ Eingang`, `− Verkauf`, `Zählen`, `Bearbeiten`, `Etikett erstellen`, `Archivieren`.
+
+> Ein Barcode-Scanner (USB oder Bluetooth) funktioniert im Suchfeld: Scanne einen Code und das Produkt öffnet sich. Bei einem unbekannten Code wird `Neues Produkt` mit ausgefüllter SKU angeboten.
+
+Auf dem Handy liest die 📷-Taste neben einem Such- oder Scanfeld Barcodes mit der Kamera (Chrome auf Android). In einem Eingang, einem Verkauf oder der Kasse bleibt sie offen, damit du ein Produkt nach dem anderen scannen kannst; tippe auf `Fertig`, wenn du durch bist. Wo die Taste nicht erscheint, kann der Browser keine Barcodes lesen, ein Scanner funktioniert aber trotzdem.
+
+Ein Produkt kann ein Foto haben: `Foto hinzufügen` in seinem Blatt. Das Bild wird verkleinert und in [Dateien](app:files) im Ordner Stock/Photos gespeichert (ohne Standort- oder Kameradaten); mit Vault Drive kommt es auf deine anderen Geräte.
+
+### Barcode-Etiketten
+`Neu` › `Barcode-Etiketten` (oder die Taste im Blatt eines Produkts) druckt Etiketten auf einen A4-Bogen mit 3 × 8 (70 × 37 mm): Name, Barcode und, wenn du willst, den Preis. Wähle die Produkte und wie viele Kopien von jedem. Ein Produkt mit 13-stelligem Barcode bekommt einen EAN-13; alle anderen einen Code 128 aus Barcode oder SKU. Drucke auf Papier oder speichere im Druckfenster als PDF.
+
+## Bewegungen
+Jede Änderung im Bestand ist eine Bewegung. Der Tab `Bewegungen` listet sie Tag für Tag; filtere nach Art und Zeitraum.
+
+### Empfangen und verkaufen
+Öffne `Neu` › `Ware empfangen` oder `Verkauf / Ausgabe`. Wähle ein `Datum`, einen `Beleg` (deine Rechnungs- oder Belegnummer) und, bei Eingängen, einen `Lieferant`. Dann füge Produkte hinzu: Tippe einen Namen oder scanne. Scannst du dasselbe Produkt noch einmal, kommt eins dazu. Eingänge haben `Stückkosten`, Verkäufe einen `Stückpreis`, und die `Summe` wird angezeigt.
+
+Andere Arten: `Kundenrückgabe`, `Rücksendung an Lieferant`, `Verlust / Schaden` und `Korrektur` (eine Menge mit + oder −).
+
+Ein Verkauf kann auch aus einer anderen orOS-App kommen, schon ausgefüllt, zum Beispiel die Produkte einer Rechnung. Bestand ordnet sie über SKU oder Barcode zu, listet jeden Code, den es nicht gefunden hat, und warnt, wenn dasselbe Dokument schon einmal vom Bestand abgebucht wurde. Nichts wird gespeichert, bevor du auf `Speichern` tippst.
+
+### Chargen und Ablaufdaten
+Für Lebensmittel, Kosmetik oder alles, was abläuft, tippe in einer Eingangszeile auf `+ Charge / Ablauf` und gib die `Charge` und das Datum ein, an dem sie `Läuft ab` (ein Datum allein reicht; es wird zum Namen der Charge). Ab dann fragen die Eingänge dieses Produkts jedes Mal danach.
+
+Beim Verkauf bietet ein Produkt mit Chargen eine Auswahl `Charge`; lass sie auf `Zuerst ablaufend`, und Bestand nimmt die Charge, die zuerst abläuft. Das Blatt eines Produkts zeigt, was von jeder Charge übrig ist, der Filter `Läuft ab` unter Produkte listet, was innerhalb von 30 Tagen abläuft, Berichte zeigt sie auch, und [Heute](app:today) erinnert dich eine Woche vorher.
+
+### Kasse
+`Neu` › `Kasse (Schnellverkauf)` ist für einen Laden mit Scanner gemacht: Scanne Produkte (jeder Scan fügt eins hinzu), ändere Mengen mit − und + und tippe auf `Verkauf abschließen`. Das speichert einen Verkauf zu den Verkaufspreisen der Produkte, und du kannst ihn sofort `Rückgängig` machen. Ein offen gelassener Verkauf bleibt in der Kasse, bis du ihn abschließt oder leerst.
+
+### Kassensystem
+`Neu` › `Kassensystem (Kasse)` ist eine Vollbild-Kasse für einen Laden. Links: ein Suchfeld (ein Scanner oder die 📷-Kamera fügt das Produkt sofort hinzu), Kategorie-Chips und ein Raster der Produkte mit Preis und Restmenge. Rechts: der Verkauf, mit − und + oder einer eingetippten Menge je Zeile, dem Nettobetrag, der MwSt. je Satz und der Summe.
+
+1. Wähle oben eine `Preisliste`. `Einzelhandel` nutzt den Verkaufspreis jedes Produkts. Unter `Preislisten` kannst du weitere anlegen, etwa `Großhandel`: ein Prozentsatz auf den Verkaufspreis (−10 heißt 10 % weniger) und, mit `Preise…`, ein eigener Preis für jedes Produkt.
+2. Wähle `Bar`, `Karte` oder `Sonstige`. Bei Barzahlung kannst du `Gegeben (bar)` eintippen, um das Rückgeld zu sehen.
+3. Tippe auf `Kassieren`. Die Produkte werden vom Bestand abgebucht (aus dem oben gezeigten Lager, wenn du mehrere hast), und der Beleg öffnet sich: Drucke ihn auf 58-mm- oder 80-mm-Rollenpapier. `Rückgängig` in der Meldung storniert den Verkauf sofort.
+
+`Beleg-Einstellungen` enthält den Belegkopf (Shopname, Adresse, USt-IdNr.) und den Belegfuß, die Papierbreite und den `Kassencode`: zwei Zeichen am Anfang der Belegnummern (etwa AB-261014-001), damit zwei Kassen nie dieselbe Nummer drucken. Diese Einstellungen bleiben auf jedem Gerät.
+
+`Z-Bericht` zeigt die Verkäufe eines Tages: wie viele, netto, MwSt. je Satz, nach Zahlungsart und Preisliste, die Bestseller und jeden Beleg (von dort neu drucken oder `Stornieren`; die Produkte eines stornierten Verkaufs gehen zurück in den Bestand). `Tag abschließen` speichert die Tagessummen als nummerierten Z; Verkäufe danach erscheinen getrennt. `Z-Bericht drucken` druckt ihn auf die Rolle.
+
+Jeder Verkauf ist auch eine normale Bewegung `Verkauf`, also funktionieren Bestand, Berichte und Synchronisierung wie bei jedem Verkauf. Zwei Kassen, die gleichzeitig verkaufen, verlieren nie einen Verkauf.
+
+### Inventur
+In einer `Inventur` gibst du ein, was du `Gezählt` hast. Bestand speichert die Differenz zu dem, was es erwartet hat, sodass ein Verkauf auf einem anderen Gerät im selben Moment trotzdem zählt.
+
+### Bewegung stornieren
+Eine Bewegung wird nie bearbeitet oder gelöscht. Öffne sie und wähle `Diese Bewegung stornieren`: Ihre Mengen zählen nicht mehr und sie bleibt durchgestrichen in der Liste. Erfasse dann die richtige.
+
+>! Würde ein Verkauf ein Produkt unter null bringen, fragt Bestand vorher. Du kannst das in den Einstellungen verbieten.
+
+### Lager
+Wenn du Ware an mehr als einem Ort hast (ein Laden und ein Lagerraum, zwei Filialen), lege sie unter Einstellungen › `Lager` an. Ab dann:
+- hat jeder Eingang, Verkauf, jede Inventur und die Kasse ein `Lager` (dieses Gerät merkt sich das zuletzt benutzte);
+- verschiebt `Neu` › `Umlagerung` Produkte `Von` einem Lager `Nach` einem anderen; die Summen ändern sich nicht;
+- kann der Tab Produkte ein Lager zeigen, und das Blatt eines Produkts zeigt seine Menge `Nach Lager`;
+- vergleicht eine Inventur mit dem, was dieses Lager haben sollte;
+- zeigt Berichte zusätzlich den `Wert je Lager`.
+
+Nachbestellen, Mindestmengen und der Gesamtwert gelten für das ganze Geschäft. Ein benutztes Lager kann archiviert, aber nicht gelöscht werden; lagere seinen Bestand zuerst um.
+
+## Nachbestellen
+`Nachbestellen` listet jedes Produkt bei oder unter seiner Mindestmenge, nach Lieferant gruppiert, mit einer vorgeschlagenen Menge (die `Bestellmenge` des Produkts, oder genug für die doppelte Mindestmenge, abzüglich dessen, was schon bestellt ist). Für jeden Lieferanten:
+- `Bestellung erstellen` legt eine Bestellung mit diesen Zeilen an.
+- `Liste kopieren` kopiert die Bestellung als Text; `Aufgaben` schickt sie in eine neue Aufgabenliste; `E-Mail` öffnet eine Nachricht an den Lieferanten in [Mail](app:mail) (wenn Mail auf diesem Gerät ein Konto hat).
+- `Diese Bestellung empfangen` öffnet einen Eingang mit diesen Zeilen, wenn die Ware ankommt.
+
+Erreicht ein Produkt seine Mindestmenge, bekommst du außerdem einen Hinweis auf diesem Gerät (du kannst ihn in den Einstellungen ausschalten).
+
+### Bestellungen
+Eine Bestellung hält fest, was du bei einem Lieferanten angefragt hast: `Bestell-Nr.`, `Lieferant`, `Bestelldatum`, `Erwartet`-Tag (aus der Lieferzeit des Lieferanten ausgefüllt) und die Produkte mit Menge und Stückkosten. Speichere sie als Entwurf oder markiere sie als gesendet. Offene Bestellungen erscheinen oben in `Nachbestellen`.
+
+Kommt Ware an, öffne die Bestellung und wähle `Empfangen`: Ein Eingang öffnet sich mit dem, was noch aussteht. Speichere ihn, auch wenn nur ein Teil kam; die Bestellung zeigt `Teilweise erhalten`, bis alles da ist, dann `Erhalten`. Stornierst du einen Eingang, kommen seine Mengen zurück auf die Bestellung. `Bestellung schließen`, wenn nichts mehr kommt; `Bestellung stornieren`, wenn sie nie rausging.
+
+Was bestellt ist, steht neben knappen Produkten und senkt ihre vorgeschlagene Menge. Eine verspätete Lieferung erscheint in [Heute](app:today).
+
+## Berichte
+Der Tab `Berichte` zeigt Bestandswert, Umsatz, Einkäufe und Verluste eines Zeitraums (letzte 30 Tage, dieser Monat, dieses Jahr oder alle), den Wert je Kategorie, die meistverkauften Produkte und die, die 90 Tage lang nichts verkauft haben. `In Tabelle öffnen` schickt die ganze Tabelle in ein neues Blatt; `Bericht (CSV)` speichert sie als Datei.
+
+## Zeitraum abschließen
+Ein gut laufender Laden schreibt Tausende Bewegungen im Jahr, und sie brauchen auf jedem Gerät Platz. Einstellungen › `Zeitraum abschließen` archiviert alles bis zu einem Tag deiner Wahl (zum Beispiel 31. Dezember):
+1. die vollständigen Daten, wie sie waren, kommen in eine Datei in [Dateien](app:files), Ordner Stock/Archive (sie reist mit Vault Drive wie jede Datei);
+2. die Bewegungen bis zu diesem Tag werden durch einen `Anfangsbestand` je Produkt ersetzt: Mengen je Lager, Chargen und Durchschnittskosten.
+
+Mengen, Wert und Nachbestellung bleiben genau gleich. Der Tab Bewegungen und die Berichte beginnen dann nach diesem Tag, und neue Bewegungen können nicht in den abgeschlossenen Zeitraum datiert werden.
+
+War ein Gerät offline und hat vor der Synchronisierung einen Verkauf im Zeitraum erfasst, zählt dieser Verkauf trotzdem, wenn er ankommt (innerhalb von 90 Tagen). `Wieder öffnen` an derselben Stelle holt die archivierten Bewegungen aus der Datei zurück.
+
+## Lieferanten
+Der Tab `Lieferanten` speichert Namen, Ansprechpartner, Telefon, E-Mail, USt-IdNr. und Lieferzeit. `Aus Kontakte` übernimmt eine Person oder Firma aus [Kontakte](app:contacts) als neuen Lieferanten.
+
+## Der Shop (WooCommerce)
+Verbinde deinen WooCommerce-Shop einmal unter Einstellungen › [Verbundene Dienste](app:settings), dann öffne `Shop (WooCommerce)` über `Neu` oder hier in den Einstellungen.
+- `Produkte`: `Produkte aus dem Shop holen` liest jedes Produkt und jede Variante. `In Bestand importieren` fügt die neuen hinzu und aktualisiert Name, SKU, Verkaufspreis und Kategorie der vorhandenen (zugeordnet über das Shop-Produkt, dann SKU, dann Name). Hake das Kästchen darunter an, um auch die Mengen hier auf die des Shops zu setzen, als eine Inventur.
+- `Abweichende Mengen` listet die Produkte, deren Bestand der Shop verwaltet und deren Menge hier anders ist. `An den Shop senden` setzt die Menge im Shop auf deine; `Die des Shops übernehmen` zählt deine auf die des Shops.
+- `Bestellungen`: die Bestellungen des Shops der letzten 30 Tage. Für jede: `Verkauf erfassen` öffnet einen Verkauf mit ihren Zeilen (danach steht dort `Verkauf erfasst`, damit du ihn nicht doppelt erfasst), `Rechnung` öffnet eine neue Rechnung in [Rechnungen](app:invoices), `Kunde im CRM` vermerkt sie beim Kunden in [CRM](app:crm), `Zu Budget hinzufügen` trägt die Einnahme in [Budget](app:budget) ein, und `Als erledigt markieren` schließt die Bestellung im Shop ab.
+
+Ohne Tastendruck wird nichts an den Shop gesendet, und nichts wird hier oder in einer anderen App gespeichert, bevor du es dort speicherst.
+
+## Import und Export
+In den Einstellungen:
+- `Produkte importieren (CSV)` liest deinen eigenen Export, den Produktexport deines Onlineshops (WooCommerce geht) oder jede Tabelle, deren erste Zeile die Spalten benennt, etwa Name, SKU, Price, Stock. Vorhandene Produkte werden über die SKU zugeordnet, dann über den Namen. Hake `Mengen aus der Datei übernehmen` an, um die Mengen der Datei als eine Inventur zu speichern.
+- Dieselbe Taste liest auch einen Shopify-Produktexport (`Produkte` › `Exportieren`, CSV) und eine Square-Artikelbibliothek (`Artikel` › `Artikelbibliothek` › `Aktionen` › `Bibliothek exportieren`, Excel oder CSV). Jede Shopify-Variante wird ein eigenes Produkt, benannt mit ihren Optionen; die Beschreibung kommt als reiner Text, Tags und der Bildlink kommen in die Notiz. Die Square-Mengen aller Standorte werden zusammengezählt. Zuerst siehst du, wie viele Produkte neu und wie viele schon hier sind; vorhandene Produkte werden nie geändert. Lass `Mengen … setzen` angehakt, um die Mengen als eine Inventur zu übernehmen. Die Meldung nach dem Import hat `Rückgängig`; kamen Mengen mit, bleiben die Produkte archiviert, mit stornierter Inventur.
+- Eine Excel-Tabelle (.xlsx) geht auch; fehlt der Excel-Leser, speichere die Tabelle als CSV.
+- `Produkte (CSV)` und `Bewegungen (CSV)` öffnen sich in jeder Tabellenkalkulation.
+- `Sicherung (JSON)` speichert alles; `Sicherung wiederherstellen` führt eine Sicherung zusammen und löscht nie, was du hast.
+
+## orOS-Datei
+In den Einstellungen unter `Daten` speichert `orOS-Datei (.orosstock)` deine Produkte, Kategorien, Einheiten, Lieferanten, Bestellungen, Lager, Bewegungen, Preislisten, Belege und Z-Berichte als eine `.orosstock`-Datei, mit den Produktfotos, zum Beispiel um sie ohne Synchronisierung auf ein anderes Gerät zu bringen oder eine Kopie aufzubewahren. Deine Filter, die Kasseneinstellungen auf diesem Gerät und die Shop-Verbindung sind nie darin. Hast du einen Zeitraum abgeschlossen, enthält die Datei seinen Anfangsbestand als Korrekturen, nicht die archivierten Bewegungen. Die Datei ist ein einfaches ZIP: Entpackt enthält sie alles als `content.json`, die Fotos in `media/` und `preview/products.csv` und `preview/movements.csv` für Tabellen. Sie ist nicht verschlüsselt, also bewahre sie sicher auf.
+
+`orOS-Datei öffnen…` (oder `Entpackter orOS-Ordner…`, oder „Öffnen mit“ orOS am Computer) zeigt, wie viele Einträge neu und wie viele schon hier sind; dann fügt `Hinzufügen` nur die neuen hinzu, mit eigenen IDs: Dieselbe Datei noch einmal zu öffnen, fügt nichts hinzu. Ein vorhandener Eintrag bleibt, wie er ist, und einer, den du hier gelöscht hast, bleibt gelöscht; eine Datei löscht nie etwas. Hake `Mit neueren Versionen aktualisieren` an, damit später geänderte Einträge in der Datei deine Kopie ersetzen. `Rückgängig` in der Meldung nimmt zurück, was hinzugefügt wurde: Bewegungen und Belege werden storniert, und Produkte mit Bewegungen bleiben archiviert, wie überall in Bestand.
+
+## Synchronisierung und Sicherung
+Produkte, Bewegungen, Lieferanten, Kategorien, Einheiten und Einstellungen werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. Der Schalter für Hinweise bei knappem Bestand und deine Filter bleiben auf jedem Gerät. Die orOS-[Sicherung](help:t/backup) bewahrt auch eine Kopie auf.
+
+## Tipps
+- Lege einen `Lagerplatz` wie „Regal B3“ fest: Er erscheint in der Liste und in der Suche.
+- Archiviere Produkte, die du nicht mehr verkaufst: Ihr Verlauf bleibt.
+- Aus einem Produkt: `Neues Angebot` startet ein Angebot in [Angebot](app:quote) mit diesem Produkt und seinem Verkaufspreis (in der Währung von Bestand). `Angebot aus Produkten` unter `Neu` nimmt mehrere.
+- Öffne einen Eingang oder einen Verkauf und wähle `Zu Budget hinzufügen`, um seine Summe in [Budget](app:budget) einzutragen.
+- Einheiten mit Dezimalstellen (kg, l, m) nehmen Mengen wie 2,5; eigene Einheiten kannst du in den Einstellungen anlegen.
+
+## Grenzen
+- Mindestmengen und Nachbestellen gelten für das ganze Geschäft, nicht je Lager.
+- Chargen werden für das ganze Geschäft gezählt, nicht je Lager; die Kasse verkauft immer die Charge, die zuerst abläuft.
+- Scannen mit der Kamera braucht einen Browser, der Barcodes liest (Chrome auf Android); sonst nimm einen Scanner, der tippt.
+- Ein Produkt mit Bewegungen kann nicht gelöscht, nur archiviert werden.
+- Der Shop: vorerst nur WooCommerce. Bestellungen werden live gelesen (die letzten 30 Tage, bis zu 50), sie brauchen also eine Verbindung. Der Shop führt ganze Einheiten: Eine Menge mit Dezimalstellen wird beim Senden gerundet.
+- Nach dem Abschluss eines Zeitraums zeigen der Tab Bewegungen und die Berichte nur, was danach kam; der ältere Verlauf liegt in der Archivdatei.
+- Das Kassensystem druckt eigene einfache Belege und Z-Berichte: Sie sind keine steuerlichen Belege und gehen an keine Steuerbehörde (in Griechenland nutze dafür eine zertifizierte Registrierkasse oder einen E-Rechnungsanbieter). Kartenzahlungen nimmt es nicht selbst an: Nutze dein Kartenterminal und wähle `Karte`.
