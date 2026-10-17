@@ -3393,6 +3393,8 @@
         : "The command bar did not load. Check the connection and try again.");
     });
   }
+  // The Android widget's command button (phone.js, ?phone-quick=cmd).
+  window.__orosOpenCmdBar = function () { openCmdBar(); };
   // Ctrl+K (Cmd+K on a Mac), from the desktop or from inside an app.
   function cmdIsCtrlK(e) {
     return (e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.code === "KeyK";

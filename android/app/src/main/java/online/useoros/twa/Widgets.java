@@ -36,7 +36,7 @@ import java.util.Locale;
  * here and drawn again every hour and at midnight, so on the days
  * orOS stays closed a task whose day passed shows as late and an
  * event that is over leaves. "Quick add": three buttons. Every tap
- * opens orOS at /?phone-quick=<word> (today, task, water, note);
+ * opens orOS at /?phone-quick=<word> (today, cmd, task, water, note);
  * nothing is written here.
  */
 final class Widgets {
@@ -85,6 +85,7 @@ final class Widgets {
     }
 
     private static void buttons(Context c, RemoteViews v) {
+        v.setOnClickPendingIntent(R.id.w_cmd, open(c, "cmd"));
         v.setOnClickPendingIntent(R.id.w_add_task, open(c, "task"));
         v.setOnClickPendingIntent(R.id.w_add_water, open(c, "water"));
         v.setOnClickPendingIntent(R.id.w_add_note, open(c, "note"));
