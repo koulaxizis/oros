@@ -21,22 +21,62 @@
   "use strict";
   var KEY = "oros-baby-data";
   var YMD = /^(\d{4})-(\d{2})-(\d{2})$/;
+  // Titles per kind. Same keys and English as baby.js (one "baby" pack).
   var KIND = {
-    feed:   { en: "Breastfeed",  el: "Θηλασμός" },
-    bottle: { en: "Bottle",      el: "Μπιμπερό" },
-    solid:  { en: "Solids",      el: "Στερεά" },
-    sleep:  { en: "Sleep",       el: "Ύπνος" },
-    diaper: { en: "Nappy",       el: "Πάνα" },
-    pump:   { en: "Pump",        el: "Άντληση" },
-    med:    { en: "Medicine",    el: "Φάρμακο" },
-    temp:   { en: "Temperature", el: "Θερμοκρασία" },
-    bath:   { en: "Bath",        el: "Μπάνιο" },
-    tummy:  { en: "Tummy time",  el: "Μπρούμυτα" },
-    note:   { en: "Note",        el: "Σημείωση" },
-    ms:     { en: "Milestone",   el: "Ορόσημο" },
-    vac:    { en: "Vaccine",     el: "Εμβόλιο" },
-    doc:    { en: "Doctor visit", el: "Επίσκεψη" }
+    feed: "t.feed",
+    bottle: "t.bottle",
+    solid: "t.solid",
+    sleep: "t.sleep",
+    diaper: "t.diaper",
+    pump: "t.pump",
+    med: "t.med",
+    temp: "t.temp",
+    bath: "t.bath",
+    tummy: "t.tummy",
+    note: "t.note",
+    ms: "dlg.ms",
+    vac: "dlg.vac",
+    doc: "dlg.doc"
   };
+  var W = {
+    en: {
+      "t.feed": "Breastfeed",
+      "t.bottle": "Bottle",
+      "t.solid": "Solids",
+      "t.sleep": "Sleep",
+      "t.diaper": "Nappy",
+      "t.pump": "Pump",
+      "t.med": "Medicine",
+      "t.temp": "Temperature",
+      "t.bath": "Bath",
+      "t.tummy": "Tummy time",
+      "t.note": "Note",
+      "dlg.ms": "Milestone",
+      "dlg.vac": "Vaccine",
+      "dlg.doc": "Doctor visit"
+    },
+    el: {
+      "t.feed": "Θηλασμός",
+      "t.bottle": "Μπιμπερό",
+      "t.solid": "Στερεά",
+      "t.sleep": "Ύπνος",
+      "t.diaper": "Πάνα",
+      "t.pump": "Άντληση",
+      "t.med": "Φάρμακο",
+      "t.temp": "Θερμοκρασία",
+      "t.bath": "Μπάνιο",
+      "t.tummy": "Μπρούμυτα",
+      "t.note": "Σημείωση",
+      "dlg.ms": "Ορόσημο",
+      "dlg.vac": "Εμβόλιο",
+      "dlg.doc": "Επίσκεψη"
+    }
+  };
+  function words(lang) {
+    var I = typeof window !== "undefined" && window.orosI18n;
+    if (I && lang && !W[lang]) I.table(W, "baby", lang);
+    return W[lang] || W.en;
+  }
 
   function str(v) { return typeof v === "string" ? v.trim() : ""; }
   function arr(a) { return Array.isArray(a) ? a : []; }
@@ -52,7 +92,7 @@
     search: function (ctx) {
       var d = ctx.readJSON(KEY), out = [];
       if (!d || !Array.isArray(d.kids)) return out;
-      var lang = ctx.lang === "el" ? "el" : "en";
+      var w = words(ctx.lang || "en");
       var kids = {};
       d.kids.forEach(function (k) {
         if (!ok(k)) return;
@@ -66,7 +106,7 @@
         if (!tx) return;
         out.push({
           id: "ev:" + e.id,
-          title: KIND[e.t][lang],
+          title: w[KIND[e.t]],
           text: [tx, kids[e.k]].filter(Boolean).join(" · "),
           when: typeof e.ts === "number" ? e.ts : 0,
           target: { kid: e.k, ev: e.id }
@@ -78,7 +118,7 @@
         if (!tx && !nt) return;
         out.push({
           id: "mk:" + x.id,
-          title: tx || KIND[x.t][lang],
+          title: tx || w[KIND[x.t]],
           text: [nt, kids[x.k]].filter(Boolean).join(" · "),
           when: dayMs(x.d),
           target: { kid: x.k, mk: x.id }

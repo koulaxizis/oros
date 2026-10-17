@@ -36,6 +36,7 @@
 // text length. Needs OrosImportKit (../importkit.js) and the Baby
 // core (core.js); a ZIP needs AtelierZip.
 // UMD: window.OrosBabyImport in the browser, module.exports in Node.
+// i18n-inline-ok: Greek side / nappy / head words for the import parsers (data, no UI text)
 // ============================================================
 (function (root) {
   "use strict";

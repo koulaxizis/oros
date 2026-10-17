@@ -1,0 +1,82 @@
+# Baby
+Baby ist ein Protokoll für die Mahlzeiten, den Schlaf und die Windeln deines Babys, mit Wachstumskurven und Meilensteinen. Es funktioniert für ein oder mehrere Kinder und synchronisiert, sodass beide Eltern auf dem eigenen Telefon eintragen können.
+
+## Erste Schritte
+Tippe oder klicke auf `Dein Baby hinzufügen`, gib `Name` und `Geburtsdatum` ein und, wenn du magst, `Geschlecht (optional)` und eine `Farbe`. Name und Alter des Kindes stehen oben; tippe darauf, um das Kind zu wechseln, `Kind bearbeiten` oder `Weiteres Kind hinzufügen`.
+
+Die Tabs unten heißen `Heute`, `Verlauf`, `Wachstum` und `Meilensteine`.
+
+## Heute
+### Schnelltasten
+- `Stillen` startet einen Still-Timer auf der Seite, die du wählst; die andere Seite als beim letzten Mal ist als `empfohlen` markiert. Während er läuft, kannst du die Seite wechseln, `Pause` und `Weiter` tippen und `Fertig`, wenn du fertig bist.
+- `Schlaf` startet einen Schlaf-Timer; tippe auf `Aufgewacht`, wenn das Baby aufwacht.
+- `Fläschchen` (`Muttermilch` oder `Pre-Nahrung`, mit Menge), `Windel` (`Nass`, `Voll`, `Nass + voll`), `Beikost` und `Abpumpen`.
+- `Mehr` enthält `Medikament`, `Temperatur`, `Baden`, `Bauchlage`, `Notiz`, `Milchvorrat` sowie `Früheren Schlaf eintragen` oder `Frühere Mahlzeit eintragen` für Dinge, die du vergessen hast.
+
+Karten zeigen, wie lange die letzte Mahlzeit und die letzte Windel her sind und wie lange das Baby schon wach ist oder schläft. Darunter folgen die Summen von heute und das `Protokoll`.
+
+### Abpumpen und der Milchvorrat
+`Abpumpen` trägt eine Sitzung ein: die Menge, die Seite (`Links`, `Rechts` oder `Beide`) und, wenn du magst, `Dauer (Min., optional)`. Hake `Zum Milchvorrat hinzufügen` an und wähle `Kühlschrank` oder `Gefrierfach`, um die Milch gleich als Beutel zu lagern.
+
+Sobald du abpumpst oder Milch lagerst, zeigt eine Karte `Milchvorrat` unter `Heute`, wie viele Beutel und wie viel Milch im Kühlschrank und im Gefrierfach sind, welcher Beutel als Nächstes dran ist und welche Beutel ihr Verbrauchsdatum überschritten haben. Tippe darauf (oder `Mehr` → `Milchvorrat`), um alle Beutel zu sehen:
+- Der Beutel, der zuerst dran ist, steht oben und ist mit `Zuerst` markiert: Kühlschrank-Beutel vor Gefrierfach-Beuteln, dann das früheste Verbrauchsdatum, damit die älteste Milch zuerst verbraucht wird.
+- `Verbrauchen` markiert einen Beutel als verbraucht, mit `Fläschchen eintragen`, um ihn als Muttermilch-Fläschchen einzutragen, und `Rückgängig`. `Auftauen` legt einen Beutel aus dem Gefrierfach in den Kühlschrank, zum Verbrauch innerhalb eines Tages. Ein abgelaufener Beutel bietet `Entsorgen` an.
+- `Beutel hinzufügen` fügt einen von Hand hinzu. Tippe auf einen Beutel, um Menge, Tag (`Abgepumpt`), Ort oder Datum (`Verbrauchen bis`) zu ändern oder ihn zu löschen.
+
+Das Verbrauchsdatum wird nach üblichen Zeiten ausgefüllt: Kühlschrank 4 Tage, Gefrierfach 6 Monate (bis 12), aufgetaute Milch innerhalb von 24 Stunden und nie wieder einfrieren. Du kannst es ändern. Verbrauchte und entsorgte Beutel findest du unter `Verbraucht und entsorgt`.
+
+### Bearbeiten oder löschen
+Tippe auf einen Eintrag, um Beginn, Ende oder Werte zu ändern oder ihn zu `Löschen`. Nach dem Löschen erscheint für ein paar Sekunden `Rückgängig`.
+
+## Verlauf und Wachstum
+`Verlauf` zeigt die Summen und Einträge eines beliebigen Tages; mit den Pfeilen gehst du einen Tag weiter. `Letzte 7 Tage` zeigt Balken für `Schlaf`, `Mahlzeiten` oder `Windeln`, und `24-Stunden-Muster` zeigt, wann das Baby geschlafen und getrunken hat.
+
+Unter `Wachstum` trägt `Messung hinzufügen` Gewicht, Größe und Kopfumfang ein (füll eines der drei aus). Jeder Wert bekommt eine Kurve nach Alter in Monaten. Das sind nur deine eigenen Messungen, ohne Vergleich mit Wachstumskurven.
+
+## Meilensteine
+Hake die vorgegebenen Meilensteine ab, wenn sie passieren, oder füg mit `Hinzufügen` eigene hinzu. Du kannst auch `Impfungen` und `Arztbesuche` eintragen.
+
+## Erinnerungen und Kalender
+In den `Einstellungen` gibt es unter `Erinnerungen auf diesem Gerät` zwei optionale Erinnerungen, beide anfangs aus:
+- `Erinnerung ans Füttern`: ein Hinweis 2 bis 6 Stunden nach der letzten Mahlzeit.
+- `Tägliches Medikament oder Vitamin`: ein Hinweis jeden Tag zur selben Zeit, mit optionalem `Name`. Lass die Uhrzeit leer, um sie auszuschalten.
+
+Erinnerungen kommen von orOS, nur auf diesem Gerät und nur, solange orOS geöffnet ist; die Baby-App selbst darf geschlossen sein. Jedes Elternteil schaltet sie auf dem eigenen Gerät ein. Siehe auch [Benachrichtigungen](help:t/notifications).
+
+[Kalender](app:calendar) kann Meilensteine, Impfungen, Arztbesuche und das Alter deines Kindes jeden Monat (bis 2 Jahre, danach Geburtstage) unter dem Chip `Baby` zeigen. Ein Tipp darauf öffnet Baby.
+
+## Aus anderer App importieren
+Hol dein Protokoll aus einem anderen Baby-Tracker herüber. Wähle zuerst oben das Kind, dann tippe in den `Einstellungen` auf `Aus anderer App importieren` und wähle die exportierte Datei. Baby erkennt die App und zeigt, was es gefunden hat: wie viele Mahlzeiten, Schlafphasen, Windeln und Messungen neu sind, wie viele schon da sind, welche Tage sie abdecken und was es auslässt. Tippe auf `Importieren`; eine Meldung sagt dir, wie viele Einträge hinzugekommen sind, und ihre Taste `Rückgängig` nimmt den ganzen Import zurück.
+
+So exportierst du aus jeder App:
+- **Huckleberry**: Such in den Einstellungen der App nach dem Export deiner Daten als CSV (auf der Website steht er unter deinem Konto). Mahlzeiten (Stillen mit Zeiten links und rechts oder Fläschchen mit Menge), Schlaf, Windeln, Abpumpen, Wachstum, Medikamente, Beikost, Temperatur, Baden und Bauchlage werden übernommen.
+- **Baby Buddy**: Öffne in den Admin-Seiten eine Liste wie Feedings, Sleep, Diaper changes, Weight, Height, Head circumference, Temperature, Tummy time, Pumping oder Notes und nutze `Export` (CSV oder JSON). Importiere jede Datei nacheinander. Ein vollständiger JSON-Dump der Datenbank funktioniert auch. Baby Buddy speichert keine Einheiten, daher werden Werte in den Einheiten gelesen, die du in den `Einstellungen` gewählt hast.
+- **Baby Tracker** (Nighp): Exportiere deine Daten in den Einstellungen der App als CSV. Du bekommst eine Datei pro Aktivität (Nursing, Formula, Pumped, Pump, Sleep, Diaper, Growth, Medicine und mehr); wähle die ZIP mit allen oder eine einzelne Datei. Wenn die Datei mehr als ein Baby enthält, wähle, welches zu diesem Kind gehört.
+
+Einträge, die das Kind schon zur selben Minute hat, kommen nicht doppelt hinzu, und derselbe Import noch einmal fügt nur Neues hinzu. Deine eigenen Einträge werden nie geändert. Arten, die Baby nicht speichert, wie Töpfchen oder Spielzeit, werden aufgelistet und ausgelassen. Die Datei wird auf deinem Gerät gelesen; nichts wird irgendwohin hochgeladen, außer über deine eigene Synchronisierung.
+
+## orOS-Datei speichern und öffnen
+In den `Einstellungen` speichert unter `Daten` die Option `orOS-Datei (.orosbaby)` deine Kinder mit jedem Eintrag, jeder Messung, jedem Meilenstein, jeder Impfung, jedem Arztbesuch und jedem Beutel des Milchvorrats als eine `.orosbaby`-Datei, zum Beispiel um sie ohne Synchronisierung auf ein anderes Gerät zu bringen oder eine Kopie aufzuheben. Deine Einheiten und Erinnerungen bleiben auf jedem Gerät, und ein gerade laufender Timer wird ausgelassen. Die Datei ist eine einfache ZIP: Entpackt enthält sie die Daten als `content.json` sowie `preview/log.csv` und `preview/growth.csv` (wie die CSV-Exporte) für andere Programme. Sie ist nicht verschlüsselt und enthält Gesundheitsdaten deines Kindes, also bewahre sie sicher auf.
+
+`orOS-Datei öffnen…` (oder `Entpackter orOS-Ordner…` oder „Öffnen mit“ orOS am Computer) zeigt, wie viele Einträge neu und wie viele schon da sind; dann fügt `Hinzufügen` nur die neuen hinzu, mit ihren eigenen IDs: Dieselbe Datei erneut zu öffnen, fügt nichts hinzu. Ein schon vorhandener Eintrag bleibt, wie er ist, einer, den du hier gelöscht hast, bleibt gelöscht, und ein hier schon abgehakter Meilenstein behält sein Datum; eine Datei löscht nie etwas. Hake `Mit neueren Versionen aktualisieren` an, damit Einträge, die in der Datei später geändert wurden, deine Kopie ersetzen. `Rückgängig` in der Meldung entfernt, was hinzugefügt wurde.
+
+## Synchronisierung und Sicherung
+Kinder, alle Einträge, Wachstum, Meilensteine, der Milchvorrat und die Einheiten werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. Auch ein laufender Timer wird synchronisiert, sodass ein Elternteil einen Timer stoppen kann, den das andere gestartet hat. Die Nachtansicht und der offene Tab bleiben auf jedem Gerät.
+
+In den `Einstellungen` findest du `Protokoll exportieren (CSV)`, `Wachstum exportieren (CSV)`, `Sichern (JSON)` und `Aus Sicherung wiederherstellen`. Wiederherstellen führt zusammen: Es fügt hinzu und aktualisiert und entfernt nie, was schon da ist.
+
+## Tastenkürzel
+- [[1]] bis [[4]] wechseln die Tabs.
+- [[Left]] / [[Right]] in `Verlauf` gehen zum vorherigen oder nächsten Tag.
+- [[Ctrl+Z]] wirkt wie `Rückgängig`, solange es angezeigt wird.
+
+## Tipps
+- Die Mond-Taste schaltet die Nachtansicht ein, eine gedämpfte Farbpalette für mitten in der Nacht.
+- `Übersicht für die Kinderarztpraxis` in den `Einstellungen` erstellt einen Text, den du `Kopieren`, `Teilen` oder `Als Text speichern` kannst.
+- Wähle in den `Einstellungen` die Einheiten für Gewicht (kg oder lb), Temperatur (°C oder °F) und Volumen (ml oder fl oz).
+
+## Grenzen
+- Baby führt ein Protokoll; es ist keine medizinische Beratung. Wenn du dir Sorgen um dein Baby machst, ruf deine Kinderarztpraxis an.
+- Erinnerungen erscheinen nur, solange orOS auf diesem Gerät geöffnet ist.
+- Die Lagerzeiten für Milch sind allgemeine Hinweise, keine Regeln für deine Milch oder dein Gefrierfach. Im Zweifel entsorgen, und folge dem Rat deiner Kinderarztpraxis oder Stillberatung.
+- Die CSV-Exporte enthalten den Milchvorrat nicht; die JSON-Sicherung schon.
