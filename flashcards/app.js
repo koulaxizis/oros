@@ -126,7 +126,16 @@
       "im.colFront": "Front column", "im.colBack": "Back column", "im.colTags": "Tags column", "im.none": "(none)",
       "im.header": "The first line holds column names", "im.deck": "Into deck", "im.newDeck": "New deck “{n}”",
       "im.col": "Column {n}", "im.preview": "First lines of the file:",
-      "im.dupText": "{s} cards are already here and are left out."
+      "im.dupText": "{s} cards are already here and are left out.",
+      "dlg.make": "Make cards", "btn.makeN": "Make {n} cards", "btn.make1": "Make 1 card",
+      "mk.found": "{n} cards found in “{t}”. Untick the ones you do not want, or change them here.",
+      "mk.found1": "1 card found in “{t}”. Change it here if you like.",
+      "mk.guess": "No question and answer lines were found, so this is one card with all the text on the back. Shape it here, or write lines like “Question :: Answer” or mark words with ==highlights== in the other app.",
+      "mk.from": "From other apps",
+      "mk.dup": "Already here",
+      "mk.front": "Front", "mk.back": "Back", "mk.text": "Text with gaps",
+      "mk.done": "Made {c} cards.",
+      "f.rem": "Remind me to study every day at", "f.remHint": "Only on this device, and only while cards are waiting. You can switch Flashcards notifications off in Settings > Notifications."
     },
     el: {
       "app.name": "Κάρτες μελέτης",
@@ -226,7 +235,16 @@
       "im.colFront": "Στήλη για το μπροστά", "im.colBack": "Στήλη για το πίσω", "im.colTags": "Στήλη για τις ετικέτες", "im.none": "(καμία)",
       "im.header": "Η πρώτη γραμμή έχει τα ονόματα των στηλών", "im.deck": "Στην τράπουλα", "im.newDeck": "Νέα τράπουλα «{n}»",
       "im.col": "Στήλη {n}", "im.preview": "Οι πρώτες γραμμές του αρχείου:",
-      "im.dupText": "{s} κάρτες υπάρχουν ήδη και έμειναν έξω."
+      "im.dupText": "{s} κάρτες υπάρχουν ήδη και έμειναν έξω.",
+      "dlg.make": "Φτιάξε κάρτες", "btn.makeN": "Φτιάξε {n} κάρτες", "btn.make1": "Φτιάξε 1 κάρτα",
+      "mk.found": "Βρέθηκαν {n} κάρτες στο «{t}». Ξετσέκαρε όσες δεν θέλεις ή άλλαξέ τες εδώ.",
+      "mk.found1": "Βρέθηκε 1 κάρτα στο «{t}». Άλλαξέ τη εδώ αν θέλεις.",
+      "mk.guess": "Δεν βρέθηκαν γραμμές ερώτησης και απάντησης, οπότε αυτή είναι μία κάρτα με όλο το κείμενο στην πίσω πλευρά. Διαμόρφωσέ τη εδώ ή γράψε στην άλλη εφαρμογή γραμμές όπως «Ερώτηση :: Απάντηση» ή σημείωσε λέξεις με ==επισήμανση==.",
+      "mk.from": "Από άλλες εφαρμογές",
+      "mk.dup": "Υπάρχει ήδη",
+      "mk.front": "Μπροστά", "mk.back": "Πίσω", "mk.text": "Κείμενο με κενά",
+      "mk.done": "Φτιάχτηκαν {c} κάρτες.",
+      "f.rem": "Θύμισέ μου να μελετήσω κάθε μέρα στις", "f.remHint": "Μόνο σε αυτή τη συσκευή και μόνο όταν περιμένουν κάρτες. Τις ειδοποιήσεις των Καρτών μελέτης τις κλείνεις από Ρυθμίσεις > Ειδοποιήσεις."
     }
   };
 
@@ -437,7 +455,20 @@
 
   function rebuild() {
     sched = C.schedule(slice, notes, reviews, F);
+    writeDue();
     render();
+  }
+  // What is waiting, for Today and the study reminder (flashcards/due.js):
+  // a device-local summary, written only when it changed.
+  var dueText = "";
+  function writeDue() {
+    var D = window.FlashcardsDue;
+    if (!disk || !D) return;
+    var sum = C.dueSummary(slice, sched, reviews, Date.now());
+    var cmp = JSON.stringify([sum.day, sum.n, sum.rv, sum.nd, sum.fresh, sum.days]);
+    if (cmp === dueText) return;
+    dueText = cmp;
+    writeLS(D.KEY, JSON.stringify(sum));
   }
 
   // ---------- 4. Palette: follow the shell's theme and skin (G3) ----------
@@ -1207,10 +1238,27 @@
     auto.appendChild(cb);
     auto.appendChild(el("span", "", t("f.autoplay")));
     body.appendChild(auto);
+    var D = window.FlashcardsDue, rem = D ? D.readRem(readLS(D.REM_KEY)) : null;
+    var rcb = el("input"), rat = input("time", rem ? rem.at : "19:00");
+    if (rem) {
+      var rl = el("label", "check");
+      rcb.type = "checkbox";
+      rcb.checked = rem.on;
+      rl.appendChild(rcb);
+      rl.appendChild(el("span", "", t("f.rem")));
+      rat.setAttribute("aria-label", t("f.rem"));
+      rat.className = "rem-at";
+      rat.disabled = !rem.on;
+      rcb.addEventListener("change", function () { rat.disabled = !rcb.checked; });
+      body.appendChild(rl);
+      body.appendChild(rat);
+      body.appendChild(el("p", "hint", t("f.remHint")));
+    }
     body.appendChild(el("p", "hint", t("f.where")));
     openDialog(t("dlg.settings"), body, {
       ok: function () {
         setPref("auto", cb.checked);
+        if (rem) writeLS(D.REM_KEY, JSON.stringify({ on: rcb.checked, at: /^([01]\d|2[0-3]):[0-5]\d$/.test(rat.value) ? rat.value : rem.at }));
         if (+ro.value !== slice.set.ro) saveSlice(C.setDayStart(slice, +ro.value, Date.now()));
         closeDialog();
       }
@@ -1738,6 +1786,91 @@
     pick.focus();
   }
 
+  // ---------- 8c. Cards from other apps ("Send to…" → Flashcards) ----------
+  // target.make = { title, text } | { title, rows } (send/core.js). The
+  // cards found (flashcards/make.js) are shown first: untick, change,
+  // pick the deck, then save. Cards already here start unticked.
+  function makeDialog(found) {
+    var title = found.title || t("mk.from");
+    // "Already here": same type and same main text (a gap card's Extra line does not count).
+    function sameKey(v) { return v.k + "\u0000" + C.canon(v.k === "cloze" ? { x: v.f.x } : v.f); }
+    var have = {};
+    C.liveNotes(notes).forEach(function (n) { have[sameKey(n)] = 1; });
+    var body = el("div");
+    var many = found.cards.length;
+    body.appendChild(el("p", "hint", found.guess ? t("mk.guess") : many === 1 ? t("mk.found1", { t: title }) : t("mk.found", { n: many, t: title })));
+    var p = prefs();
+    var deckDefault = view !== "home" && deckById(curDeck) ? curDeck : (deckById(p.makeDeck) ? p.makeDeck : "");
+    var dk = select([["", t("im.newDeck", { n: title })]].concat(deckOptions(null)), deckDefault);
+    body.appendChild(field("im.deck", dk));
+    var list = el("ul", "mk-list"), rows = [];
+    found.cards.forEach(function (c, i) {
+      var v = C.normNote({ id: "n0", m: 1, k: c.k, f: c.f });
+      if (!v) return;
+      var li = el("li");
+      var head = el("label", "check");
+      var cb = el("input");
+      cb.type = "checkbox";
+      var dup = !!have[sameKey(v)];
+      cb.checked = !dup;
+      head.appendChild(cb);
+      head.appendChild(el("span", "", (i + 1) + ". " + t("kind." + v.k) + (dup ? " · " + t("mk.dup") : "")));
+      li.appendChild(head);
+      var areas = {};
+      (v.k === "cloze" ? [["x", "mk.text"]] : [["q", "mk.front"], ["a", "mk.back"]]).forEach(function (fk) {
+        var a = textarea(v.f[fk[0]]);
+        a.rows = fk[0] === "a" && v.f.a.indexOf("\n") >= 0 ? 4 : 2;
+        a.setAttribute("aria-label", (i + 1) + ". " + t(fk[1]));
+        areas[fk[0]] = a;
+        li.appendChild(a);
+        a.addEventListener("input", count);
+      });
+      cb.addEventListener("change", function () { li.classList.toggle("off", !cb.checked); count(); });
+      li.classList.toggle("off", !cb.checked);
+      list.appendChild(li);
+      rows.push({ cb: cb, k: v.k, e: v.k === "cloze" ? v.f.e : "", areas: areas });
+    });
+    body.appendChild(list);
+    function build() {
+      var out = [], at = Date.now();
+      rows.forEach(function (r, i) {
+        if (!r.cb.checked) return;
+        var f = r.k === "cloze" ? { x: r.areas.x.value, e: r.e } : { q: r.areas.q.value, a: r.areas.a.value };
+        var v = C.normNote({ id: C.newId("n", at, i.toString(36) + Math.random().toString(36).slice(2, 6)), m: at, k: r.k, dk: "d0", f: f });
+        if (!v || !C.ords(v).length || (v.k !== "cloze" && !C.plain(v.f.q).trim())) return;
+        out.push(v);
+      });
+      return out;
+    }
+    function count() {
+      var n = 0;
+      build().forEach(function (v) { n += C.ords(v).length; });
+      $("dlg-ok").textContent = n === 1 ? t("btn.make1") : t("btn.makeN", { n: n });
+      $("dlg-ok").disabled = !n;
+    }
+    var busy = false;
+    openDialog(t("dlg.make"), body, {
+      ok: function () {
+        if (busy) return;
+        var list = build();
+        if (!list.length) return;
+        busy = true;
+        var deckId = dk.value, at = Date.now();
+        if (!deckId) { var maker = deckMaker(at); deckId = maker.id([title]); maker.save(); }
+        setPref("makeDeck", deckId);
+        var cards = 0;
+        list = list.map(function (v) { v.dk = deckId; cards += C.ords(v).length; return v; });
+        saveNotes(list).then(function () {
+          closeDialog();
+          toast(t("mk.done", { c: cards }));
+          if (deckById(deckId)) openDeck(deckId);
+        }).then(function () { busy = false; });
+      },
+      onClose: function () { $("dlg-ok").disabled = false; }
+    });
+    count();
+  }
+
   // ---------- 9. Wiring ----------
   function goBack() {
     if (!$("veil").hidden) { closeDialog(); return; }
@@ -1846,11 +1979,19 @@
   }
 
   // ---------- 10. Deep link: search hits and other apps ----------
-  // target = { deck } | { note } | { study: deckId }. Unknown ids are ignored;
-  // nothing happens while a dialog is open (unsaved edits win).
+  // target = { deck } | { note } | { study: deckId } | { home: 1 } (Today)
+  // | { make: { title, text | rows } } ("Send to…"). Unknown ids are
+  // ignored; nothing happens while a dialog is open (unsaved edits win).
   window.__orosOpenAt = function (target) {
     if (!target || typeof target !== "object" || !$("veil").hidden) return;
-    if (typeof target.note === "string") {
+    if (target.make) {
+      var M = window.FlashcardsMake, found = M ? M.fromTarget(target.make) : null;
+      if (!found) return;
+      // Cards already here are found only once the disk is read.
+      Promise.resolve(loading).then(function () { if ($("veil").hidden) makeDialog(found); });
+    } else if (target.home) {
+      if (view !== "study") show("home");
+    } else if (typeof target.note === "string") {
       var n = notes[target.note];
       if (!n || n.del) {
         // The disk may still be loading: try once more after it.
@@ -1870,7 +2011,7 @@
     try {
       var p = window.parent;
       if (p && p !== window && typeof p.__orosTakeTarget === "function") {
-        var pending = p.__orosTakeTarget(APP_ID);
+        var pending = p.__orosTakeTarget("flashcards");
         if (pending) window.__orosOpenAt(pending);
       }
     } catch (e) { /* standalone */ }

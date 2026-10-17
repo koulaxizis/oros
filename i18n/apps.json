@@ -30,7 +30,8 @@
   {
    "app": "flashcards",
    "files": [
-    "flashcards/app.js"
+    "flashcards/app.js",
+    "flashcards/due.js"
    ]
   },
   {

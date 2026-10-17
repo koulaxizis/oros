@@ -282,6 +282,7 @@
       "icon": "flashcards",
       "url": "flashcards/",
       "search": "search.js",
+      "today": ["due.js", "today.js"],
       "type": "internal"
     },
     {

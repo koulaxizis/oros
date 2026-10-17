@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "3.02.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "3.03.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -1152,6 +1152,7 @@
       tickSafe("healthCheckTick", healthCheckTickThrottled); // Health: reminder times per measurement (60s throttle)
       tickSafe("waterCheckTick", waterCheckTickThrottled); // Water: behind-the-pace reminder (60s throttle)
       tickSafe("habitsCheckTick", habitsCheckTickThrottled); // Habits: per-habit reminder time (60s throttle)
+      tickSafe("flashcardsCheckTick", flashcardsCheckTickThrottled); // Flashcards: daily study reminder (60s throttle)
       tickSafe("plantsCheckTick", plantsCheckTickThrottled); // Plant Care: daily watering reminder (60s throttle)
       tickSafe("travelCheckTick", travelCheckTickThrottled); // Travel: evening before + before departures (60s throttle)
       tickSafe("namedayCheckTick", namedayCheckTickThrottled); // Calendar: contacts' name days, morning notice (60s throttle)
@@ -2194,6 +2195,34 @@
         deepLink: "habits:0"
       });
     });
+  }
+
+  // Flashcards — daily study reminder (Flashcards wave 4, OFF by
+  // default: the app's Settings turn it on, per device). The cards and
+  // their schedule live on the orOS disk, so the app writes a small
+  // summary to the device-local key oros-flashcards-due after each
+  // rebuild; flashcards/due.js (loaded by index.html, the SAME file
+  // Today runs) reads it with oros-flashcards-rem and says when to
+  // remind: from the chosen time on, once a day, while cards wait.
+  // Key "study-<ymd>" = one notification a day.
+  var flashcardsLastTick = 0;
+  function flashcardsCheckTickThrottled() {
+    var now = Date.now();
+    if (now - flashcardsLastTick < 60000) return;
+    flashcardsLastTick = now;
+    flashcardsCheckTick();
+  }
+  function flashcardsCheckTick() {
+    var D = window.FlashcardsDue, N = window.orosNotifs;
+    if (!D || typeof D.reminderDue !== "function") return;   // stale bundle: silent
+    if (!(N && typeof N.emit === "function")) return;
+    var rem, sum;
+    try { rem = localStorage.getItem(D.REM_KEY); sum = localStorage.getItem(D.KEY); } catch (e) { return; }
+    if (!rem) return;                                        // never switched on
+    var due = D.reminderDue(D.read(sum), rem, Date.now());
+    if (!due) return;
+    var txt = D.reminderText(due.n, state.lang === "el" ? "el" : "en");
+    N.emit({ ns: "flashcards", key: due.key, type: "reminder", title: txt.title, body: txt.body, deepLink: "system:open:flashcards" });
   }
 
   // Timesheet (Wave 3) — the shell reads "oros-timesheet-data" with
