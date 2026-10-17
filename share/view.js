@@ -30,8 +30,13 @@
       addHint: { list: "Opens To-Do with the items ready to add.", note: "Makes a new page in Notes.",
         contact: "Opens Contacts and asks before saving.", event: "Opens Calendar and asks before saving.",
         recipe: "Opens the Meal Planner with the recipe ready to save.", links: "Opens Bookmarks.",
-        wiki: "Opens Wiki with the article ready to save." },
-      dl: { contact: "Download (.vcf)", event: "Add to calendar (.ics)", links: "Download (.html)", wiki: "Download (.md)" },
+        wiki: "Opens Wiki with the article ready to save.",
+        cal: "Opens Calendar, shows how many events are new and asks before saving." },
+      dl: { contact: "Download (.vcf)", event: "Add to calendar (.ics)", links: "Download (.html)", wiki: "Download (.md)",
+        cal: "Add to calendar (.ics)" },
+      calMonth: "Month", calList: "List", calPrev: "Previous month", calNext: "Next month",
+      calNoneDay: "Nothing on this day.", calNoneMonth: "Nothing this month.",
+      calZone: "Times are in your time zone ({z}).", calAllDay: "all day",
       copied: "Copied", copyFail: "Could not copy",
       tickHint: "Ticks here are only for you and are not saved.",
       phone: "Phone", email: "Email", address: "Address", web: "Website", im: "Chat",
@@ -60,8 +65,13 @@
       addHint: { list: "Ανοίγει το To-Do με τα είδη έτοιμα για προσθήκη.", note: "Φτιάχνει νέα σελίδα στις Σημειώσεις.",
         contact: "Ανοίγει τις Επαφές και ρωτά πριν αποθηκεύσει.", event: "Ανοίγει το Ημερολόγιο και ρωτά πριν αποθηκεύσει.",
         recipe: "Ανοίγει το Πλάνο γευμάτων με τη συνταγή έτοιμη για αποθήκευση.", links: "Ανοίγει τους Σελιδοδείκτες.",
-        wiki: "Ανοίγει το Wiki με το άρθρο έτοιμο για αποθήκευση." },
-      dl: { contact: "Λήψη (.vcf)", event: "Προσθήκη σε ημερολόγιο (.ics)", links: "Λήψη (.html)", wiki: "Λήψη (.md)" },
+        wiki: "Ανοίγει το Wiki με το άρθρο έτοιμο για αποθήκευση.",
+        cal: "Ανοίγει το Ημερολόγιο, δείχνει πόσα γεγονότα είναι καινούργια και ρωτά πριν αποθηκεύσει." },
+      dl: { contact: "Λήψη (.vcf)", event: "Προσθήκη σε ημερολόγιο (.ics)", links: "Λήψη (.html)", wiki: "Λήψη (.md)",
+        cal: "Προσθήκη σε ημερολόγιο (.ics)" },
+      calMonth: "Μήνας", calList: "Λίστα", calPrev: "Προηγούμενος μήνας", calNext: "Επόμενος μήνας",
+      calNoneDay: "Τίποτα αυτή τη μέρα.", calNoneMonth: "Τίποτα αυτόν τον μήνα.",
+      calZone: "Οι ώρες είναι στη ζώνη ώρας σου ({z}).", calAllDay: "όλη μέρα",
       copied: "Αντιγράφηκε", copyFail: "Η αντιγραφή απέτυχε",
       tickHint: "Τα τικ εδώ είναι μόνο για σένα και δεν αποθηκεύονται.",
       phone: "Τηλέφωνο", email: "Email", address: "Διεύθυνση", web: "Ιστότοπος", im: "Chat",
@@ -260,6 +270,8 @@
     } else if (env.k === "slots") {
       renderSlots(c, env);
       return;
+    } else if (env.k === "cal") {
+      renderCal(c, env);
     } else if (env.k === "links") {
       var lu = el("ul", "items links");
       d.i.forEach(function (it) {
@@ -350,6 +362,200 @@
     pick.hidden = true;
     c.insertBefore(box, pick);
     try { box.scrollIntoView({ block: "nearest" }); } catch (e) {}
+  }
+
+  // ---------- A calendar: month grid or list, one month at a time ----------
+  // Occurrences come from the Calendar's own rules (calendar/occur.js);
+  // timed events are converted from the sender's zone to this one.
+  function pad2(n) { return (n < 10 ? "0" : "") + n; }
+  function ymdOf(y, m, d) { var x = new Date(Date.UTC(y, m, d)); return x.getUTCFullYear() + "-" + pad2(x.getUTCMonth() + 1) + "-" + pad2(x.getUTCDate()); }
+  function calItems(d) {
+    var O = window.OrosCalOccur;
+    if (!O) return [];
+    return d.ev.map(function (e) {
+      var ce = { date: e.d, dateEnd: e.de || null, start: e.s || null, end: e.s ? (e.e || null) : null,
+                 tz: e.s ? (e.z || d.tz || null) : null, recur: null };
+      if (e.r) {
+        var r = null;
+        if (e.r.x) { var fr = O.fromRrule(e.r.x, e.d); r = fr && fr.recur ? fr.recur : null; }
+        else r = { freq: e.r.f, interval: e.r.i, until: e.r.u || null };
+        if (r) { r.exdates = e.xd || []; ce.recur = O.normRecur(r, e.d); }
+      }
+      return { e: e, c: ce };
+    });
+  }
+  function renderCal(c, env) {
+    var d = env.d, O = window.OrosCalOccur, S = K.strings(LANG);
+    var loc = LANG === "el" ? "el-GR" : "en-GB";
+    var meta = [d.ev.length === 1 ? S.cal1 : S.calN.replace("{n}", d.ev.length), K.calRange(d, LANG)].filter(Boolean).join(" · ");
+    c.appendChild(el("p", "meta", meta));
+    if (!O) return;
+    var items = calItems(d), lb = d.lb || [];
+    if (lb.some(function (l) { return l.n; })) {
+      var leg = el("div", "cal-leg");
+      lb.forEach(function (l) {
+        if (!l.n) return;
+        var chip = el("span", "chip"), dot = el("i", "dot");
+        if (l.c) dot.style.background = l.c;
+        chip.appendChild(dot);
+        chip.appendChild(document.createTextNode(l.n));
+        leg.appendChild(chip);
+      });
+      c.appendChild(leg);
+    }
+    var zoneNote = el("p", "hint");
+    zoneNote.hidden = true;
+    c.appendChild(zoneNote);
+    // The month to open on: today's when it is inside the range, else
+    // the range's first, else the earliest event's.
+    var today = (function () { var n = new Date(); return ymdOf(n.getFullYear(), n.getMonth(), n.getDate()); })();
+    var first = d.f || d.ev.reduce(function (a, e) { return !a || e.d < a ? e.d : a; }, "");
+    var start = (!d.f || today >= d.f) && (!d.u || today <= d.u) ? today : first;
+    var ym = { y: +start.slice(0, 4), m: +start.slice(5, 7) - 1 };
+    var mode = "month", sel = null;
+
+    var bar = el("div", "cal-bar");
+    var prev = btn("\u2039", "cal-arrow", function () { step(-1); });
+    var next = btn("\u203a", "cal-arrow", function () { step(1); });
+    prev.setAttribute("aria-label", t("calPrev"));
+    next.setAttribute("aria-label", t("calNext"));
+    var head = el("h2", "cal-head");
+    head.setAttribute("aria-live", "polite");
+    var tabs = el("div", "cal-tabs");
+    tabs.setAttribute("role", "group");
+    var tMonth = btn(t("calMonth"), "", function () { mode = "month"; draw(); });
+    var tList = btn(t("calList"), "", function () { mode = "list"; draw(); });
+    tabs.appendChild(tMonth);
+    tabs.appendChild(tList);
+    bar.appendChild(prev);
+    bar.appendChild(head);
+    bar.appendChild(next);
+    c.appendChild(bar);
+    c.appendChild(tabs);
+    var box = el("div", "cal-box");
+    c.appendChild(box);
+
+    var minYm = d.f ? +d.f.slice(0, 4) * 12 + +d.f.slice(5, 7) - 1 : -Infinity;
+    var maxYm = d.u ? +d.u.slice(0, 4) * 12 + +d.u.slice(5, 7) - 1 : Infinity;
+    function step(n) {
+      var v = ym.y * 12 + ym.m + n;
+      if (v < minYm || v > maxYm) return;
+      ym = { y: Math.floor(v / 12), m: v % 12 };
+      sel = null;
+      draw();
+    }
+    // day → [{ e, inst }] for the device days [from, to], inside the range.
+    function collect(from, to) {
+      var lo = d.f && d.f > from ? d.f : from, hi = d.u && d.u < to ? d.u : to, by = {}, zoned = false;
+      if (lo > hi) return { by: by, zoned: false };
+      items.forEach(function (it) {
+        O.instancesBetween(it.c, lo, hi, function (inst) {
+          if (inst.zoned) zoned = true;
+          var day = inst.date < lo ? lo : inst.date, last = inst.dateEnd && inst.dateEnd < hi ? inst.dateEnd : (inst.dateEnd ? hi : inst.date);
+          for (var g = 0; day <= last && g < 62; g++) {
+            (by[day] = by[day] || []).push({ e: it.e, inst: inst });
+            day = O.addDays(day, 1);
+          }
+          return true;
+        });
+      });
+      Object.keys(by).forEach(function (k) {
+        by[k].sort(function (a, b) {
+          var sa = a.inst.start && a.inst.date === k ? a.inst.start : "", sb = b.inst.start && b.inst.date === k ? b.inst.start : "";
+          return sa < sb ? -1 : sa > sb ? 1 : 0;
+        });
+      });
+      return { by: by, zoned: zoned };
+    }
+    function color(e) { var l = typeof e.b === "number" ? lb[e.b] : null; return l && l.c ? l.c : ""; }
+    function evRow(x, day) {
+      var li = el("li"), dot = el("i", "dot");
+      var col = color(x.e);
+      if (col) dot.style.background = col;
+      li.appendChild(dot);
+      var tm = !x.inst.start ? t("calAllDay")
+        : (x.inst.date === day ? x.inst.start : "\u2026") + (x.inst.end && (x.inst.dateEnd || x.inst.date) === day ? "\u2013" + x.inst.end : "");
+      li.appendChild(el("span", "tm", tm));
+      var w = el("span", "what", x.e.t || S.untitled);
+      if (x.e.l) w.appendChild(el("small", "", x.e.l));
+      li.appendChild(w);
+      return li;
+    }
+    function dayList(by, day, emptyKey) {
+      var list = by[day] || [];
+      if (!list.length) return el("p", "state", t(emptyKey));
+      var ul = el("ul", "cal-evs");
+      list.forEach(function (x) { ul.appendChild(evRow(x, day)); });
+      return ul;
+    }
+    function dayHead2(day) {
+      var p = day.split("-");
+      try { return new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString(loc, { weekday: "long", day: "numeric", month: "long" }); }
+      catch (e) { return day; }
+    }
+    function draw() {
+      tMonth.setAttribute("aria-pressed", mode === "month" ? "true" : "false");
+      tList.setAttribute("aria-pressed", mode === "list" ? "true" : "false");
+      var v = ym.y * 12 + ym.m;
+      prev.disabled = v <= minYm;
+      next.disabled = v >= maxYm;
+      try { head.textContent = new Date(ym.y, ym.m, 1).toLocaleDateString(loc, { month: "long", year: "numeric" }); }
+      catch (e) { head.textContent = ym.y + "-" + pad2(ym.m + 1); }
+      var mFirst = ymdOf(ym.y, ym.m, 1), mLast = ymdOf(ym.y, ym.m + 1, 0);
+      var gFirst = O.addDays(mFirst, -((O.wdOf(mFirst) + 6) % 7));
+      var gLast = O.addDays(mLast, (7 - O.wdOf(mLast)) % 7);
+      var got = collect(mode === "month" ? gFirst : mFirst, mode === "month" ? gLast : mLast), by = got.by;
+      var zone = myZone();
+      zoneNote.hidden = !(got.zoned && zone);
+      zoneNote.textContent = zone ? t("calZone").replace("{z}", zone) : "";
+      box.textContent = "";
+      if (mode === "list") {
+        var days = Object.keys(by).filter(function (k) { return k >= mFirst && k <= mLast; }).sort();
+        if (!days.length) { box.appendChild(el("p", "state", t("calNoneMonth"))); return; }
+        days.forEach(function (k) {
+          box.appendChild(el("h2", "", dayHead2(k)));
+          box.appendChild(dayList(by, k, "calNoneDay"));
+        });
+        return;
+      }
+      var grid = el("div", "cal-grid");
+      var mon = O.addDays("2024-01-01", 0);                   // a Monday
+      for (var w = 0; w < 7; w++) {
+        var wd = mon.split("-");
+        var name = "";
+        try { name = new Date(+wd[0], +wd[1] - 1, +wd[2] + w).toLocaleDateString(loc, { weekday: "narrow" }); } catch (e) {}
+        grid.appendChild(el("span", "wd", name));
+      }
+      if (!sel || sel < mFirst || sel > mLast) sel = today >= mFirst && today <= mLast ? today : mFirst;
+      for (var day = gFirst; day <= gLast; day = O.addDays(day, 1)) {
+        (function (day) {
+          var list = by[day] || [];
+          var b = btn("", "cal-day" + (day < mFirst || day > mLast ? " out" : "") + (day === today ? " today" : "") +
+            (day === sel ? " sel" : "") + ((d.f && day < d.f) || (d.u && day > d.u) ? " off" : ""), function () {
+            sel = day;
+            draw();
+          });
+          b.appendChild(el("span", "n", String(+day.slice(8))));
+          if (list.length) {
+            var dots = el("span", "dots");
+            list.slice(0, 3).forEach(function (x) {
+              var dt = el("i", "dot"), col = color(x.e);
+              if (col) dt.style.background = col;
+              dots.appendChild(dt);
+            });
+            if (list.length > 3) dots.appendChild(el("small", "", "+" + (list.length - 3)));
+            b.appendChild(dots);
+          }
+          b.setAttribute("aria-label", dayHead2(day) + (list.length ? ", " + (list.length === 1 ? S.cal1 : S.calN.replace("{n}", list.length)) : ""));
+          if (day === sel) b.setAttribute("aria-current", "date");
+          grid.appendChild(b);
+        })(day);
+      }
+      box.appendChild(grid);
+      box.appendChild(el("h2", "", dayHead2(sel)));
+      box.appendChild(dayList(by, sel, "calNoneDay"));
+    }
+    draw();
   }
 
   function ingLine(ing) {

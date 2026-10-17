@@ -13,8 +13,8 @@ Next to each card you'll see where it applies: `All devices` means it travels wi
 ## The sections
 - `Appearance`: `Theme` (`Dark` or `Light`), `System colour`, `Wallpaper`, `Seasonal decorations`, the `Dock` when your orOS has one, and the `Screen pet`. See [Appearance](help:t/appearance).
 - `Menu`: which apps the menu lists. Untick an app to hide it, or use `Hide all`, `Show all` and `Choose a profile` (Home, Work, School…); `Find an app` narrows the list. Hidden apps still open from the menu search, links, the desktop and the Dock. See [The menu](help:t/menu).
-- `Notifications`: the `Notifications` switch, `Send a test`, position, style, sound, `Quiet hours` and `Which apps may notify`. See [Notifications](help:t/notifications).
-- `Sync`: `Connect to Dropbox`, your `Passphrase`, `Get from cloud`, `Send to cloud`, `Sync automatically` and `Disconnect`. See [Sync across devices](help:t/sync).
+- `Notifications`: the `Notifications` switch, `Send a test`, `Notifications with orOS closed` (optional, per device), position, style, sound, `Quiet hours` and `Which apps may notify`. See [Notifications](help:t/notifications).
+- `Sync`: `Connect to Dropbox` or `Use WebDAV / Nextcloud`, your `Passphrase`, `Get from cloud`, `Send to cloud`, `Sync automatically` and `Disconnect`. See [Sync across devices](help:t/sync).
 - `Backups`: `Automatic backup`, `Backup folder`, `Back up now`, `Export backup file` and `Import backup file`. See [Backup and restore](help:t/backup).
 - `Language & search`: the `Language` of orOS and which apps the menu search looks in.
 - `Opening files`: which orOS app opens which file type from your device (`Open with`), the choice for types more than one app opens, and how to make orOS the default on Windows, Linux and Mac.

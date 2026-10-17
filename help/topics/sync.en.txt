@@ -1,5 +1,5 @@
 # Sync across devices
-Sync keeps your orOS data the same on every device you use, through your own Dropbox account. Everything is encrypted on your device before it leaves, so Dropbox only ever stores scrambled data.
+Sync keeps your orOS data the same on every device you use, through your own Dropbox account or your own WebDAV server (Nextcloud, ownCloud, Synology, QNAP and others). Everything is encrypted on your device before it leaves, so the cloud only ever stores scrambled data.
 
 ## Connect Dropbox
 1. Open the menu, choose `Settings` and go to `Sync`.
@@ -9,6 +9,18 @@ Sync keeps your orOS data the same on every device you use, through your own Dro
 
 The first time, your passphrase needs at least 10 characters.
 
+## Connect a WebDAV or Nextcloud server
+1. In `Settings` › `Sync`, tap `Use WebDAV / Nextcloud`.
+2. Fill in the `Server address` (it must start with https://; for Nextcloud it looks like `https://your.cloud/remote.php/dav/files/your-name`), your `Username` and an `App password`, and pick a `Folder on the server` (orOS by default).
+3. Tap `Test and connect`. orOS checks the server first and saves nothing if a check fails.
+4. Type your passphrase and tap `Unlock`, as with Dropbox.
+
+Use an app password, not your main password: in Nextcloud it's under Settings › Security › Devices & sessions. orOS keeps it on this device only. On Nextcloud, a factory reset also deletes that app password from the server; on other servers, remove it there yourself.
+
+The server has to let orOS connect from the browser (CORS) and show it file versions (ETag). On Nextcloud the free WebAppPassword app does this; on your own server, allow orOS's address and expose the ETag header. orOS also refuses a server that doesn't protect against two devices overwriting each other, and says which check failed.
+
+One device uses one cloud at a time. When a device moves to a new cloud, everything on it goes up there on the next sync; the old cloud keeps its copy.
+
 ## Your passphrase
 The passphrase encrypts your data on this device. It never leaves the device, and neither Dropbox nor anyone else can read your data without it.
 
@@ -17,7 +29,7 @@ The passphrase encrypts your data on this device. It never leaves the device, an
 - `Change passphrase` re-encrypts your cloud data with a new one. After that, every device needs the new passphrase.
 - If the passphrase was changed on another device, you'll see `Passphrase changed on another device?`. Type the new one there.
 - `Forget passphrase here` (or `Forget this device` when it was remembered) removes it from this device. Your data stays.
-- `Disconnect` signs this device out of Dropbox; tap it twice to confirm. Your data stays on the device.
+- `Disconnect` signs this device out of Dropbox or the WebDAV server; tap it twice to confirm. Your data stays on the device.
 
 ## The sync dot
 The small dot in the top bar shows how sync is doing. On a computer, point at it to see its label:

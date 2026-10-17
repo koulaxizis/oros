@@ -1,0 +1,110 @@
+{
+ "source": "tests/bundle-habits.test.js slice()",
+ "base": {
+  "ver": 2,
+  "habits": [
+   {
+    "id": "h-gone",
+    "name": "Old",
+    "icon": "check",
+    "color": "#e06c75",
+    "days": [],
+    "mtime": 1792201836613,
+    "del": true
+   },
+   {
+    "id": "h-read",
+    "name": "Read",
+    "icon": "book",
+    "color": "#e06c75",
+    "days": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6
+    ],
+    "mtime": 1792201834613,
+    "del": false,
+    "num": {
+     "u": "pages",
+     "t": 10,
+     "c": "ge",
+     "s": 1
+    },
+    "rem": 480
+   },
+   {
+    "id": "h-run",
+    "name": "=Run",
+    "icon": "run",
+    "color": "#87cf3e",
+    "days": [],
+    "per": [
+     "w",
+     3
+    ],
+    "mtime": 1792201835613,
+    "del": false
+   }
+  ],
+  "comps": [
+   {
+    "id": "h-gone|2026-10-01",
+    "habitId": "h-gone",
+    "date": "2026-10-01",
+    "mtime": 1792201836613,
+    "del": true
+   },
+   {
+    "id": "h-read|2026-10-01",
+    "habitId": "h-read",
+    "date": "2026-10-01",
+    "mtime": 0,
+    "del": true,
+    "v": {
+     "dev1abc": [
+      12,
+      1792201838613
+     ]
+    },
+    "nt": [
+     "good book",
+     1792201838613
+    ]
+   },
+   {
+    "id": "h-run|2026-10-01",
+    "habitId": "h-run",
+    "date": "2026-10-01",
+    "mtime": 1792201839613,
+    "del": false
+   },
+   {
+    "id": "h-run|2026-10-02",
+    "habitId": "h-run",
+    "date": "2026-10-02",
+    "mtime": 1792201840613,
+    "del": true,
+    "sk": [
+     1,
+     1792201840613
+    ]
+   },
+   {
+    "id": "h-run|2026-10-03",
+    "habitId": "h-run",
+    "date": "2026-10-03",
+    "mtime": 1792201840613,
+    "del": true
+   }
+  ],
+  "set": {
+   "st": 0,
+   "sg": 9000,
+   "m": 1792201843513
+  }
+ }
+}

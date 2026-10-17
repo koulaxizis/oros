@@ -1,0 +1,107 @@
+{
+ "source": "tests/bundle-library.test.js slice()",
+ "base": {
+  "ver": 1,
+  "books": [
+   {
+    "id": "b0123456789abcdef",
+    "m": 1799999999100,
+    "fmt": "epub",
+    "h": "0123456789abcdef000000000000000000000000000000000000000000000000",
+    "title": "Zorba the Greek",
+    "by": "N. Kazantzakis",
+    "year": 1946,
+    "path": "/internal/Books/zorba.epub",
+    "size": 400000,
+    "tags": [
+     "novel"
+    ],
+    "added": 1799999995000,
+    "fin": "2026-01-02"
+   },
+   {
+    "id": "bfedcba9876543210",
+    "m": 1799999999200,
+    "fmt": "pdf",
+    "title": "=HYPERLINK(\"x\")",
+    "pages": 12,
+    "path": "/internal/Books/x.pdf"
+   }
+  ],
+  "pos": {
+   "b0123456789abcdef": {
+    "m": 1799999999300,
+    "loc": "e:3:120",
+    "pct": 455
+   },
+   "b1111111111111111": {
+    "m": 1799999999999,
+    "loc": "e:1:1",
+    "pct": 1
+   }
+  },
+  "marks": [
+   {
+    "id": "kbm000001",
+    "m": 1799999999500,
+    "b": "b0123456789abcdef",
+    "k": "bm",
+    "loc": "e:4:0",
+    "q": "start"
+   },
+   {
+    "id": "khl000001",
+    "m": 1799999999400,
+    "b": "b0123456789abcdef",
+    "k": "hl",
+    "loc": "e:3:10",
+    "end": "e:3:40",
+    "c": 1,
+    "q": "Boss, I said",
+    "n": "a note",
+    "lbl": "Chapter 3"
+   },
+   {
+    "id": "korphan01",
+    "m": 1799999999500,
+    "b": "b1111111111111111",
+    "k": "bm",
+    "loc": "e:1:0"
+   }
+  ],
+  "tombs": {
+   "b1111111111111111": 1799999999900,
+   "kgone00001": 1799999999950
+  },
+  "cats": [
+   {
+    "id": "cfeeds001",
+    "m": 1799999999600,
+    "url": "https://example.org/opds",
+    "name": "Mine"
+   },
+   {
+    "id": "csecret01",
+    "m": 1799999999600,
+    "url": "https://me:pw@example.org/opds"
+   },
+   {
+    "id": "csecret02",
+    "m": 1799999999600,
+    "url": "https://example.org/opds?apikey=123"
+   }
+  ],
+  "stats": {
+   "d": {
+    "2026-10-01": {
+     "dev000001": 300
+    }
+   },
+   "b": {
+    "b0123456789abcdef": {
+     "dev000001": 300
+    }
+   }
+  }
+ }
+}

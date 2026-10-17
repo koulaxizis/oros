@@ -1,5 +1,5 @@
 {
-  "note": "Known failures of the quality gate (.github/qa/smoke.js). This list may only shrink: fix a problem, then delete its line. Format: app | kind | width | lang | detail.",
+  "note": "Known failures of the quality gate (.github/qa/smoke.js, converge.js). This list may only shrink: fix a problem, then delete its line. Format: app | kind | width | lang | detail.",
   "entries": [
     "atelier | greek |  | el | Brand & web",
     "atelier | greek |  | el | Story / Reel",

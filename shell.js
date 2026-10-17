@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "2.73.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "2.78.01";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -5177,6 +5177,20 @@
     }
   }
 
+  // WebDAV W2: test the server, then sync through it. The password
+  // goes straight to sync.js; the shell keeps nothing of it.
+  function syncConnectDav(form) {
+    var S = window.orosSync;
+    if (!S || typeof S.connectWebdav !== "function" || S.isConnected()) return;
+    setSyncMsgRaw("dim", window.t("sync.dav.testing"));
+    S.connectWebdav({ url: form.url, user: form.user, pass: form.pass, dir: form.dir })
+      .then(function (acc) {
+        state.syncUserEmail = (acc && acc.email) || null;
+        setSyncMsg("ok", "sync.dav.ok");
+      })
+      .catch(handleSyncError);
+  }
+
   function syncDisconnectUser() {
     if (!window.orosSync) return;
     window.orosSync.disconnect();
@@ -5955,7 +5969,10 @@
           en: "Book details (Media Shelf)", el: "Στοιχεία βιβλίων (Το ράφι μου)" },
         { name: "MusicBrainz", url: "https://musicbrainz.org/",
           by: "MetaBrainz Foundation", lic: "CC0 (core data)",
-          en: "Album details (Media Shelf)", el: "Στοιχεία άλμπουμ (Το ράφι μου)" },
+          en: "Album details (Media Shelf, Music covers)", el: "Στοιχεία άλμπουμ (Το ράφι μου, εξώφυλλα στη Μουσική)" },
+        { name: "Cover Art Archive", url: "https://coverartarchive.org/",
+          by: "MetaBrainz Foundation and Internet Archive", lic: { en: "Free API, no key; each image belongs to its owner", el: "Δωρεάν API χωρίς κλειδί· κάθε εικόνα ανήκει στον κάτοχό της" },
+          en: "Album covers, only when you ask (Music)", el: "Εξώφυλλα άλμπουμ, μόνο όταν το ζητήσεις (Μουσική)" },
         { name: "Anthropic, OpenAI, Google Gemini, Mistral, OpenRouter, Ollama, LM Studio", url: "https://www.anthropic.com/",
           by: "Each provider", lic: { en: "Their terms, your own key", el: "Οι όροι τους, με δικό σου κλειδί" },
           en: "AI chat you choose (Assistant)", el: "Συζήτηση με το AI που διαλέγεις (Βοηθός)" },
@@ -5986,6 +6003,10 @@
         { name: "Cloudflare Workers", url: "https://workers.cloudflare.com/",
           by: "Cloudflare, Inc.", lic: { en: "Runs the orOS mail relay (code in relay/); D1 keeps encrypted share links with an expiry", el: "Τρέχει το relay αλληλογραφίας του orOS (κώδικας στο relay/)· το D1 κρατά κρυπτογραφημένους συνδέσμους με λήξη" },
           en: "Mail: IMAP over HTTPS, nothing stored", el: "Αλληλογραφία: IMAP μέσω HTTPS, δεν αποθηκεύεται τίποτα" },
+        { name: "Web Push: Google FCM, Mozilla Push, Microsoft WNS", url: "https://www.rfc-editor.org/rfc/rfc8030",
+          by: "Google LLC; Mozilla Foundation; Microsoft Corporation (your browser's)", lic: { en: "Their terms; only with the switch on", el: "Οι όροι τους· μόνο με ανοιχτό το διακόπτη" },
+          en: "Optional notifications with orOS closed, encrypted on the device (Settings › Notifications)",
+          el: "Προαιρετικές ειδοποιήσεις με κλειστό orOS, κρυπτογραφημένες στη συσκευή (Ρυθμίσεις › Ειδοποιήσεις)" },
         { name: "WooCommerce REST API", url: "https://woocommerce.github.io/woocommerce-rest-api-docs/",
           by: "Automattic; your own shop", lic: { en: "Your own shop and keys", el: "Το δικό σου κατάστημα και κλειδιά" },
           en: "Connected services: shop stock and orders (Stock)", el: "Συνδεδεμένες υπηρεσίες: απόθεμα και παραγγελίες καταστήματος (Απόθεμα)" },
@@ -8690,6 +8711,8 @@
         connected: connected,
         unlocked: unlocked,
         email: connected ? (state.syncUserEmail || null) : null,
+        provider: (S && typeof S.getProvider === "function") ? S.getProvider() : "dropbox",
+        davAvailable: !!(S && typeof S.connectWebdav === "function"),
         dirty: !!(unlocked && S.isDirty()),
         hasVault: !!(connected && S.hasDeviceVault()),
         interval: getSafeInterval(),
@@ -8772,6 +8795,9 @@
     var S = window.orosSync;
     switch (name) {
       case "sync.connect":    if (S && !S.isConnected()) S.connect(); return;
+      case "sync.connectDav":
+        if (arg && typeof arg.url === "string" && typeof arg.pass === "string") syncConnectDav(arg);
+        return;
       case "sync.unlock":
         if (S && S.isConnected() && !S.hasPassphrase() && arg && typeof arg.pw === "string") {
           syncUnlock(arg.pw, !!arg.remember);

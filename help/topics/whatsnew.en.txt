@@ -1,6 +1,26 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.78.01
+- orOS Drive on the phone: a file that could not be saved to orOS now shows a notification, and file pickers stay light until you sign in to orOS Drive.
+
+## Version 2.78.00
+- Send to someone: send a whole calendar or a date range from Calendar › More. It opens month by month in any browser, as an .ics file or straight into orOS.
+
+## Version 2.77.00
+- Notifications with orOS closed (optional): turn it on per device in Settings › Notifications and alarms and reminders arrive even when orOS is closed.
+
+## Version 2.76.00
+- Sync can now go through your own WebDAV server (Nextcloud, ownCloud, Synology, QNAP): Settings › Sync › Use WebDAV / Nextcloud.
+
+## Version 2.75.00
+- Files opens documents, spreadsheets, songs and videos straight in the orOS app that reads them (Open with…), plays songs in Music, and sends files to Mail.
+
+## Version 2.74.00
+- Music: Made for you on Home. A Daily mix, On repeat, Rewind and song radio are made on your device from what you play, and every year gets its own recap (top songs, artists and your biggest month). Today shows the recap or the Daily mix.
+- Music: bring your Spotify playlists and likes. Open the my_spotify_data.zip (or its JSON/CSV files) and Music finds the songs in your library, then (if you say yes) in free music online.
+- Music: find missing album covers online (MusicBrainz and the Cover Art Archive), add an album to Media Shelf, or send a free song to Montage.
+
 ## Version 2.73.00
 - New users choose what the menu shows: Everything (first and chosen), or Home, Work, School, Creating, Games and any app by hand. You can change it later in Settings › Menu › Choose a profile.
 

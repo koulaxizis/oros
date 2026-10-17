@@ -1,0 +1,105 @@
+{
+ "source": "tests/bundle-feeds.test.js slice()",
+ "base": {
+  "ver": 1,
+  "feeds": [
+   {
+    "id": "f0h8hi33dltu",
+    "url": "oros-mail:acct000001/Newsletters",
+    "title": "Letters",
+    "site": "",
+    "folder": "",
+    "img": 0,
+    "full": 0,
+    "notify": 0,
+    "m": 1799999999300
+   },
+   {
+    "id": "f1nzu6f9g1wc",
+    "url": "https://news.example.com/rss",
+    "title": "=News",
+    "site": "",
+    "folder": "",
+    "img": 1,
+    "full": 1,
+    "notify": 0,
+    "m": 1799999999200
+   },
+   {
+    "id": "f2448q2np4dc",
+    "url": "https://example.org/feed.xml",
+    "title": "Example",
+    "site": "https://example.org/",
+    "folder": "dtech0001",
+    "img": -1,
+    "full": 0,
+    "notify": 0,
+    "m": 1799999999100
+   }
+  ],
+  "folders": [
+   {
+    "id": "dtech0001",
+    "name": "Tech & <b>",
+    "ord": 0,
+    "m": 1799999999100
+   }
+  ],
+  "items": [
+   {
+    "id": "isaved0001",
+    "feed": "f2448q2np4dc",
+    "title": "Saved [one]",
+    "link": "https://example.org/a",
+    "date": 1799913600000,
+    "author": "Ann",
+    "sum": "summary",
+    "star": 1,
+    "later": 0,
+    "tags": [
+     "tread00001"
+    ],
+    "m": 1799999999400
+   }
+  ],
+  "tags": [
+   {
+    "id": "tread00001",
+    "name": "read",
+    "m": 1799999999350
+   }
+  ],
+  "rules": [
+   {
+    "id": "rmute00001",
+    "name": "mute",
+    "q": "sport",
+    "in": "title",
+    "scope": "",
+    "act": "read",
+    "tag": "",
+    "list": 0,
+    "notify": 0,
+    "m": 1799999999500
+   }
+  ],
+  "set": {
+   "refresh": {
+    "v": 60,
+    "m": 1799999999900
+   },
+   "relay": {
+    "v": "https://relay.example.net",
+    "m": 1799999999900
+   }
+  },
+  "read": {
+   "old": 1799568000000,
+   "cut": {},
+   "ids": {}
+  },
+  "tombs": {
+   "f:fgone000001": 1799999999950
+  }
+ }
+}
