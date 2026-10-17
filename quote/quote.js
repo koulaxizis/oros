@@ -45,7 +45,9 @@
   var STATUSES = ["draft", "sent", "accepted", "rejected", "expired"];
 
   // ---------- 1. Σταθερές, i18n, helpers ----------
-  var LANG = localStorage.getItem("oros-lang") === "el" ? "el" : "en";
+  // orosI18n (../i18n.js): the full language code, a pack language included.
+  var LANG = window.orosI18n ? window.orosI18n.lang() : (localStorage.getItem("oros-lang") === "el" ? "el" : "en");
+  var LOC = window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB");
 
   var STRINGS = {
     en: {
@@ -186,7 +188,6 @@
       "acc.bad_code":         "That isn't a quote answer, or it was cut short.",
       "acc.no_quote":         "This answer is for a quote that isn't in your Quote app.",
       "acc.who":              "{n} accepted quote {q} on {d}.",
-      "acc.v_ok":             "",
       "acc.v_tampered":       "✗ This doesn't match the quote you sent: the link was changed before it was accepted. Don't count it; send the quote again.",
       "acc.v_stale":          "This answer is for an older link of this quote: you made a new link since. Ask the client to accept the latest one.",
       "acc.v_none":           "This quote was never sent for acceptance from here.",
@@ -343,7 +344,6 @@
       "acc.bad_code":         "Αυτό δεν είναι απάντηση σε προσφορά ή είναι κομμένο.",
       "acc.no_quote":         "Αυτή η απάντηση αφορά προσφορά που δεν υπάρχει στην εφαρμογή Προσφορά σου.",
       "acc.who":              "{n}: αποδοχή της προσφοράς {q} στις {d}.",
-      "acc.v_ok":             "",
       "acc.v_tampered":       "✗ Δεν ταιριάζει με την προσφορά που έστειλες: ο σύνδεσμος άλλαξε πριν την αποδοχή. Μην τη μετρήσεις· στείλε ξανά την προσφορά.",
       "acc.v_stale":          "Η απάντηση αφορά παλιότερο σύνδεσμο αυτής της προσφοράς: έφτιαξες νέο στο μεταξύ. Ζήτα από τον πελάτη να αποδεχτεί τον τελευταίο.",
       "acc.v_none":           "Αυτή η προσφορά δεν στάλθηκε ποτέ για αποδοχή από εδώ.",
@@ -364,6 +364,8 @@
     }
   };
 
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "quote", LANG);
+
   function t(key) {
     var p = STRINGS[LANG] || STRINGS.en;
     return p[key] !== undefined ? p[key] :
@@ -375,7 +377,7 @@
   }
   function $(id) { return document.getElementById(id); }
   function esc(s) {
-    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+    return String(s == null ? "" : s).replace(/[&<>\x22\x27]/g, function (c) {
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
     });
   }
@@ -416,7 +418,7 @@
   function money(n, currency) {
     if (QC) return QC.fmtMoney(n, currency, LANG);
     var s = Math.abs(n).toFixed(2);
-    if (LANG === "el") s = s.replace(".", ",");
+    if (LANG !== "en") s = s.replace(".", ",");
     return (n < 0 ? "-" : "") + s + " " + (curOk(currency) ? currency : "EUR");
   }
 
@@ -424,8 +426,11 @@
     if (!iso) return "—";
     var p = iso.split("-");
     if (p.length !== 3) return iso;
-    return LANG === "el" ? p[2] + "/" + p[1] + "/" + p[0]
-                         : p[1] + "/" + p[2] + "/" + p[0];
+    if (LANG === "el") return p[2] + "/" + p[1] + "/" + p[0];
+    if (LANG === "en") return p[1] + "/" + p[2] + "/" + p[0];
+    try {
+      return new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString(LOC, { day: "2-digit", month: "2-digit", year: "numeric" });
+    } catch (e) { return p[2] + "/" + p[1] + "/" + p[0]; }
   }
 
   function newItemObj() {
@@ -490,6 +495,7 @@
       cash:  "Μετρητά κατά την παράδοση"
     }
   };
+  if (window.orosI18n) window.orosI18n.table(PM_DEFAULTS, "quote", LANG);
 
   function seedPayMethods() {
     var texts = PM_DEFAULTS[LANG] || PM_DEFAULTS.en;
@@ -2345,7 +2351,7 @@
   }
   function recHooks() {
     return {
-      lang: function () { return LANG; },
+      lang: function () { return LANG === "el" ? "el" : "en"; },
       get: recLocal,
       title: function () { return "Quote"; },
       set: function (next) {
@@ -2376,7 +2382,7 @@
         save();
         if (dropCur) newDraft();
         scheduleRender();
-        notifyTransient(RP.str(LANG, "undone"));
+        notifyTransient(RP.str(LANG === "el" ? "el" : "en", "undone"));
       },
       toast: function (text, undo) { if (undo) notifyUndo(text, undo); else notifyTransient(text); }
     };
