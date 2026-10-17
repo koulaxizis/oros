@@ -94,6 +94,8 @@
 
   // ---------- 1. Constants, i18n, helpers ----------
   function appLang() {
+    // orosI18n (../i18n.js): the full language code, a pack language included.
+    if (window.orosI18n) return window.orosI18n.lang();
     try {
       var l = localStorage.getItem("oros-lang") ||
               (window.parent && window.parent.orosLang) || "en";
@@ -527,6 +529,8 @@
     }
   };
 
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "mail", LANG);
+
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;
     var s = p[key] !== undefined ? p[key] : (STRINGS.en[key] !== undefined ? STRINGS.en[key] : key);
@@ -557,7 +561,7 @@
     if (n < 1024 * 1024) return Math.round(n / 1024) + " KB";
     return (n / 1048576).toFixed(1) + " MB";
   }
-  function locale() { return LANG === "el" ? "el-GR" : "en-GB"; }
+  function locale() { return window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB"); }
   function fmtListDate(ms) {
     if (!ms) return "";
     var d = new Date(ms), now = new Date();
