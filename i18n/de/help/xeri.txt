@@ -1,0 +1,37 @@
+# Xeri
+Xeri (Ξερή) ist das klassische griechische Kartenspiel, du gegen den Computer. Nimm Karten vom Tisch und sammle Punkte.
+
+## So wird gespielt
+Ihr bekommt je 6 Karten, und 4 Karten liegen offen auf dem Tisch. Wenn du dran bist, spielst du eine Karte:
+- Hat sie denselben Rang wie die oberste Karte auf dem Tisch, nimmst du den ganzen Tisch.
+- Ein Bube nimmt immer den Tisch, solange er nicht leer ist.
+- Sonst bleibt deine Karte oben auf dem Stapel liegen.
+
+Nimmst du den Tisch, wenn dort nur eine Karte liegt, ist das ein **Xeri**: 10 Punkte, oder 20 für einen Buben auf einem einzelnen Buben. Neue Karten kommen vom Stapel. Am Ende der Runde gehen die Karten auf dem Tisch an den, der zuletzt genommen hat.
+
+Punkte pro Runde: 3 für die meisten Karten (bei 26–26 bekommt sie niemand), 1 für jeden König, jede Dame, jeden Buben und jede 10 (die 10♦ zählt 2), 1 für die 2♣, plus deine Xeri-Punkte. Nach jeder Runde drückst du `Nächste Runde`, um weiterzuspielen.
+
+## Bedienung
+Tippe oder klicke auf eine Karte in deiner Hand oder zieh sie auf den Tisch. In der Werkzeugleiste findest du die Stufe, `Regeln`, `Neues Match (N)`, `Rekorde` und die Ton-Taste.
+
+Unter `Regeln` stellst du das `Match` ein (`Bis 51`, `Bis 101` oder `Eine Runde`), die `Karten pro Hand` (6 oder 4) und ob ein `Bube auf einzelne Karte` als `Normal nehmen` oder als `Xeri (10)` zählt. Regeländerungen gelten ab dem nächsten Match, oder du drückst `Jetzt neues Match`. Startest du mitten im Spiel ein neues Match, erscheint für ein paar Sekunden eine Taste `Rückgängig`.
+
+Tastatur: [[1]] bis [[6]] spielen diese Karte aus deiner Hand; ist eine Karte ausgewählt, wechseln [[←]] / [[→]] zwischen den Karten und [[Enter]] oder [[Space]] spielt sie; [[N]] startet ein neues Match.
+
+## Stufen und Punkte
+Der Computer spielt `Leicht`, `Mittel` oder `Schwer`; wenn du die Stufe wechselst, beginnt ein neues Match. `Rekorde` zeigt für jede Stufe deine Matches und Siege, deine Xeri und Bube-auf-Bube und deine beste Runde. `Rekorde zurücksetzen` löscht sie.
+
+## Zwei Geräte
+Spiel gegen jemanden mit eigenem Handy, Tablet oder Computer. Drück `Auf zwei Geräten spielen` (die Taste mit zwei Bildschirmen): Einer von euch wählt `Show a code`, der andere `Enter a code` und tippt den 6-stelligen Code ein oder scannt den QR-Code, und das erste Gerät lässt das andere mit `Allow` herein. Solange ihr verbunden seid, steht `Two devices` in der Werkzeugleiste; drück darauf, um die Verbindung zu sehen oder `Leave the game` zu wählen. Diese Tasten des Zwei-Geräte-Dialogs sind noch Englisch.
+- Das Gerät, das den Code gezeigt hat, mischt, teilt aus und führt das Match. Jedes Gerät zeigt nur die eigene Hand: Die andere Hand und der Stapel zeigen nur, wie viele Karten darin sind, nie welche.
+- `Nächste Runde` und ein neues Match richten sich nach dem Gerät, das den Code gezeigt hat; das andere Gerät fragt danach.
+- Lädt ein Gerät neu oder verliert es das Netz, wartet das Spiel und geht dort weiter, wo es war, sobald es zurück ist (bis zu einem Tag lang).
+- Die Züge gehen direkt zwischen den beiden Geräten im selben Netz oder versiegelt über das orOS-Relay; online wird nichts gespeichert.
+
+Grenzen: nur zwei Spieler, jeder auf seinem eigenen Gerät mit orOS in diesem Spiel offen. Spiele auf zwei Geräten zählen nicht für deine Rekorde, und die Stufen-Tasten sind solange ausgeblendet. `Leave the game` beendet es auf beiden Geräten und holt das Spiel zurück, das du auf diesem Gerät hattest.
+
+## Synchronisierung
+Deine Rekorde werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert, und die Matches aller Geräte werden zusammengezählt; `Rekorde zurücksetzen` löscht sie überall. Das laufende Match, deine Stufe und Regeln und die Ton-Einstellung bleiben auf diesem Gerät.
+
+## Tipps
+- Heb dir deine Buben für einen großen Stapel auf.

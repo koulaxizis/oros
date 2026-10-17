@@ -1,0 +1,35 @@
+# Nonogramm
+Male das versteckte Bild, indem du den Zahlen folgst. Jedes Rätsel lässt sich allein mit Logik lösen, ganz ohne Raten.
+
+## So wird gespielt
+Die Zahlen neben jeder Zeile und über jeder Spalte sind die Blöcke gefüllter Felder in dieser Linie, in der richtigen Reihenfolge, mit mindestens einem leeren Feld zwischen zwei Blöcken. Zum Beispiel bedeutet `3 1` einen Block aus drei gefüllten Feldern, eine Lücke und dann noch eines.
+
+Fülle die Felder, bei denen du sicher bist, und markiere sicher leere Felder mit ✕. Passt eine Zeile oder Spalte zu ihren Zahlen, werden die Zahlen blasser. Das Rätsel ist gelöst, wenn jede Linie passt; Markierungen spielen keine Rolle.
+
+Jedes Bild entsteht auf deinem Gerät und hat genau eine Lösung.
+
+## Steuerung
+- Wähle in der Werkzeugleiste `Füllen` oder `Markieren` ([[M]] wechselt). Tippe oder klicke auf ein Feld, um es in diesem Modus zu malen; noch einmal, um es zu leeren.
+- Ziehe, um eine gerade Zeile oder Spalte in einem Zug zu malen.
+- Mit der Maus markiert ein Rechtsklick ein Feld.
+- [[←]] [[↑]] [[→]] [[↓]] bewegen den Cursor, [[Space]] oder [[Enter]] malen im aktuellen Modus, [[F]] füllt, [[X]] markiert, [[Backspace]] leert.
+- [[U]] oder [[Z]] (oder `Rückgängig (U)`) nimmt den letzten Strich zurück.
+- [[H]] oder `Tipp (H)` korrigiert ein Feld: das unter dem Cursor, wenn es falsch ist, sonst ein anderes falsches Feld, sonst eine fehlende Füllung.
+
+Auf einem kleinen Bildschirm macht der Zoom-Knopf (`Größere Felder (Brett scrollen)`) die Felder größer. Das Brett scrollt dann; ziehe an den Zahlen, um dich zu bewegen, während Ziehen auf den Feldern weiter malt.
+
+## Größen und Wertung
+Wähle `5×5`, `10×10` oder `15×15`. Die Statusleiste zeigt deine `Zeit` und deine `Beste` für diese Größe. Ein Rätsel, das du mit Tipp löst, zählt als gelöst, setzt aber keine Bestzeit. `Rekorde` zeigt für jede Größe die Bestzeit, die gelösten Rätsel und die ohne Tipps gelösten Rätsel.
+
+### Tagesrätsel
+Der Kalender-Knopf öffnet das `Tagesrätsel`: Am selben Datum bekommen alle dasselbe 10×10-Bild. Es entsteht auf deinem Gerät aus dem Datum, funktioniert also offline, und um Mitternacht deiner Ortszeit kommt ein neues. Ein Punkt auf dem Knopf heißt, dass das heutige Rätsel noch wartet.
+
+Löse es an aufeinanderfolgenden Tagen, um eine Serie aufzubauen; `Rekorde` zeigt die gelösten Tagesrätsel, deine Serie und deine beste Serie. `Teilen` schickt dein Ergebnis ohne Spoiler: deine Zeit und ein Quadrat pro Zeile, grün für eine Zeile, die du allein gelöst hast, und gelb für eine Zeile mit Tipp. Auf dem Handy öffnet sich das Teilen-Menü, sonst wird der Text kopiert. `Alle Spiele` öffnet das [Spielecenter](help:a/gamecenter), wenn es installiert ist.
+
+## Synchronisierung
+Deine Rekorde und Tagesergebnisse werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. `Rekorde zurücksetzen` löscht sie nach deiner Bestätigung auf allen Geräten. Das laufende Rätsel, die Größe, der Zoom und die Toneinstellung bleiben auf diesem Gerät.
+
+## Tipps
+- Fang mit Linien an, die die Zahlen fast füllen, etwa `8` in einer Zeile mit 10 Feldern: Ihre mittleren Felder müssen gefüllt sein.
+- Ein angefangenes Rätsel bleibt erhalten; mach jederzeit weiter.
+- Aus Versehen ein neues Rätsel gestartet oder die Größe gewechselt? Tippe in der Meldung, die erscheint, auf `Rückgängig`.

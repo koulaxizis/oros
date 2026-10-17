@@ -1,0 +1,21 @@
+# Spielecenter
+Alle deine Spiele an einem Ort: die heutigen Tagesrätsel, deine Erfolge und die Statistik jedes Spiels, das du gespielt hast.
+
+## So geht's
+- `Heutige Tagesrätsel` zeigt die sechs Spiele mit einem Tagesrätsel: Wordle, Kreuzworträtsel, Sudoku, Nonogramm, Flow Free und Minesweeper. Jede Karte zeigt, ob das heutige Rätsel gelöst, nicht gelöst oder noch offen ist, und deine Serie in diesem Spiel. `Spielen` öffnet das Spiel direkt mit dem heutigen Rätsel; ist es erledigt, zeigt `Ansehen` dein Ergebnis.
+- Die Zeile unter dem Titel zeigt deine tägliche Serie: die Tage in Folge, an denen du mindestens ein Tagesrätsel gelöst hast.
+- `Erfolge` listet Ziele wie den ersten Sieg, eine 7-Tage-Serie bei Tagesrätseln oder alle sechs Tagesrätsel an einem Tag. Ein Pokal markiert die erreichten; die anderen zeigen, wie weit du bist.
+- `Statistik` listet jedes Spiel, das du gespielt hast, die meistgespielten zuerst: gespielte, gewonnene oder gelöste Spiele, gelöste Tagesrätsel, Serie, Bestzeit und Highscore, soweit das Spiel sie hat. Tippe auf den Namen eines Spiels, um es zu öffnen. Noch nicht gespielte Spiele stehen ganz unten.
+
+Die Schaltfläche `Alle Spiele` jedes Spiels (in seiner Statistik und nach einem Tagesrätsel) bringt dich hierher, zur Zeile dieses Spiels.
+
+## Synchronisierung
+Das Spielecenter speichert keine eigenen Daten. Es liest die Aufzeichnungen, die jedes Spiel ohnehin führt, und diese werden mit jedem Spiel über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. Erfolge werden jedes Mal aus diesen Aufzeichnungen berechnet, sie folgen dir also auf jedes Gerät und kommen zurück, wenn die Aufzeichnungen eines Spiels zurückkommen.
+
+>! Wenn du die Aufzeichnungen eines Spiels zurücksetzt, verschwinden auch die Erfolge, die daraus stammen.
+
+## Grenzen
+- Nur Spiele, die auf diesem Gerät installiert sind, lassen sich von hier öffnen.
+- Spiele, die vor dem Zurücksetzen der Aufzeichnungen eines Spiels gespielt wurden, zählen nicht.
+- Schach und die anderen Spiele gegen den Computer zählen nur Partien gegen den Computer, genau wie ihre eigene Statistik.
+- Memory behält nur seine letzten 50 Spiele und zeigt daher höchstens 50 gespielte.

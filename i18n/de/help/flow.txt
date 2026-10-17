@@ -1,0 +1,37 @@
+# Flow Free
+Verbinde jedes Paar gleichfarbiger Punkte mit einer Linie. Linien dürfen sich nicht kreuzen, und jedes Feld des Bretts muss gefüllt sein.
+
+## So wird gespielt
+Zeichne eine Linie von einem Punkt zum anderen Punkt derselben Farbe. Ein Rätsel ist gelöst, wenn jedes Paar verbunden und kein Feld mehr leer ist. Sind alle Paare verbunden, aber manche Felder noch leer, sagt dir eine Meldung Bescheid.
+
+- Fährst du über deine eigene Linie zurück, nimmst du sie zurück.
+- Fährst du über eine andere Linie, wird sie an dieser Stelle abgeschnitten.
+- Eine Linie kann nicht durch den Punkt einer anderen Farbe gehen.
+
+Jeder Punkt trägt außerdem einen Buchstaben, du musst dich also nie nur auf die Farbe verlassen. Jedes Rätsel entsteht auf deinem Gerät und hat genau eine Lösung.
+
+## Steuerung
+- Ziehe mit dem Finger oder der Maus von einem Punkt oder vom Ende einer Linie aus.
+- [[←]] [[↑]] [[→]] [[↓]] bewegen den Cursor, [[Enter]] oder [[Space]] nimmt den Punkt oder die Linie darunter, dann zeichnen die Pfeile, [[Backspace]] nimmt ein Feld zurück, und [[Enter]] oder [[Esc]] lässt los.
+- [[U]] oder `Rückgängig (U)` nimmt deinen letzten Strich zurück.
+- [[R]] oder `Brett leeren (R)` löscht alle Linien.
+- [[H]] oder `Tipp (H)` zeichnet eine Linie der Lösung.
+- [[N]] oder `Neues Rätsel (N)` erstellt ein neues Rätsel.
+
+## Größen und Wertung
+Wähle eine Brettgröße von `5×5` bis `9×9`; größere Bretter haben mehr Farben. Die Statusleiste zeigt, wie viele `Linien` verbunden sind, und deine `Zeit`. Die Uhr startet mit deiner ersten Linie und läuft nur, solange die App auf dem Bildschirm ist.
+
+Ein gelöstes Rätsel zeigt deine Zeit, deine Züge und die Bestzeit für diese Größe. Ein Rätsel, das du mit Tipp löst, zählt als gelöst, setzt aber keine Bestzeit. `Rekorde` zeigt für jede Größe die Bestzeit und die gelösten Rätsel.
+
+### Tagesrätsel
+Der Kalender-Knopf öffnet das `Tagesrätsel`: Am selben Datum bekommen alle dasselbe 7×7-Rätsel mit genau einer Lösung. Es entsteht auf deinem Gerät aus dem Datum, funktioniert also offline, und um Mitternacht deiner Ortszeit kommt ein neues. Ein Punkt auf dem Knopf heißt, dass das heutige Rätsel noch wartet. Es zählt die erste Lösung des Tages.
+
+Löse es an aufeinanderfolgenden Tagen, um eine Serie aufzubauen; `Rekorde` zeigt die gelösten Tagesrätsel, deine Serie und deine beste Serie. `Teilen` schickt dein Ergebnis ohne Spoiler: deine Zeit und ein Quadrat pro Farbe, grün für eine Linie, die du allein gezeichnet hast, und gelb für eine Linie, die ein Tipp gezeichnet hat. Auf dem Handy öffnet sich das Teilen-Menü, sonst wird der Text kopiert. `Alle Spiele` öffnet das [Spielecenter](help:a/gamecenter), wenn es installiert ist.
+
+## Synchronisierung
+Deine Rekorde und Tagesergebnisse werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. `Rekorde zurücksetzen` löscht sie nach deiner Bestätigung auf allen Geräten. Das laufende Rätsel, die Brettgröße und die Toneinstellung bleiben auf diesem Gerät.
+
+## Tipps
+- Ein angefangenes Rätsel bleibt erhalten, samt Verlauf zum Rückgängigmachen.
+- Aus Versehen das Brett geleert, ein neues Rätsel gestartet oder die Größe gewechselt? Tippe in der Meldung, die erscheint, auf `Rückgängig`.
+- Fang mit Punkten nahe an Ecken und Rändern an: Sie haben meist nur einen Weg.

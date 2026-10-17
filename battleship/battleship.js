@@ -60,7 +60,7 @@
       return l === "el" ? "el" : "en";
     } catch (e) { return "en"; }
   }
-  var LANG = appLang();
+  var LANG = window.orosI18n ? window.orosI18n.lang() : appLang();
 
   var STRINGS = {
     en: {
@@ -236,6 +236,8 @@
       "res.lost@net": "Νίκησε ο αντίπαλος", "toast.wait@net": "Περίμενε τη βολή του αντιπάλου"
     }
   };
+
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "battleship", LANG);
 
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;
@@ -1783,7 +1785,7 @@
   function netBoot() {
     if (!window.OrosRemotePlay || !window.OrosRemoteLink) { $("net-btn").hidden = true; return; }
     RP = window.OrosRemotePlay.create({
-      app: "battleship", lang: LANG, game: STRINGS[LANG]["game.name"],
+      app: "battleship", lang: LANG === "el" ? "el" : "en", game: STRINGS[LANG]["game.name"],
       dialog: { make: makeDialog, el: el, button: button },
       onPeer: netOnPeer, onMsg: netOnMsg, onEnd: netOnEnd,
       onLink: function () { if (game) renderStatus(); }

@@ -6,7 +6,26 @@
 // and does the token exchange; nothing here talks to the network.
 (function () {
   "use strict";
-  var el = (localStorage.getItem("oros-lang") === "el");
+  // orosI18n (../i18n.js, data-app="chess"): the full language code,
+  // a pack language included; its keys live in the "chess" pack.
+  var LANG = "en";
+  try { LANG = window.orosI18n ? window.orosI18n.lang() : (localStorage.getItem("oros-lang") === "el" ? "el" : "en"); } catch (e) {}
+  var STRINGS = {
+    en: {
+      "cb.invalid": "Invalid answer from Lichess.",
+      "cb.done": "Done. You can close this window.",
+      "cb.cancel": "Sign-in cancelled. You can close this window.",
+      "cb.back": "Back to Chess…"
+    },
+    el: {
+      "cb.invalid": "Μη έγκυρη απάντηση από το Lichess.",
+      "cb.done": "Έτοιμο. Μπορείς να κλείσεις αυτό το παράθυρο.",
+      "cb.cancel": "Η σύνδεση ακυρώθηκε. Μπορείς να κλείσεις αυτό το παράθυρο.",
+      "cb.back": "Επιστροφή στο Σκάκι…"
+    }
+  };
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "chess", LANG);
+  function t(k) { var p = STRINGS[LANG] || STRINGS.en; return p[k] || STRINGS.en[k]; }
   var msg = document.getElementById("msg");
   var q = new URLSearchParams(location.search);
   var cb = {
@@ -17,7 +36,7 @@
   };
   try { history.replaceState(null, "", location.pathname); } catch (e) {}
   if (!cb.state) {
-    msg.textContent = el ? "Μη έγκυρη απάντηση από το Lichess." : "Invalid answer from Lichess.";
+    msg.textContent = t("cb.invalid");
     return;
   }
   // The mode Chess stored with its PKCE record decides: a popup closes,
@@ -30,12 +49,10 @@
 
   var ok = !cb.error && cb.code;
   if (mode !== "redirect") {
-    msg.textContent = ok
-      ? (el ? "Έτοιμο. Μπορείς να κλείσεις αυτό το παράθυρο." : "Done. You can close this window.")
-      : (el ? "Η σύνδεση ακυρώθηκε. Μπορείς να κλείσεις αυτό το παράθυρο." : "Sign-in cancelled. You can close this window.");
+    msg.textContent = ok ? t("cb.done") : t("cb.cancel");
     setTimeout(function () { try { window.close(); } catch (e) {} }, 400);
   } else {
-    msg.textContent = el ? "Επιστροφή στο Σκάκι…" : "Back to Chess…";
+    msg.textContent = t("cb.back");
     location.replace("../?open=chess");
   }
 })();

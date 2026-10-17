@@ -75,6 +75,8 @@
 
   // ---------- 1. Constants, i18n, helpers ----------
   function appLang() {
+    // orosI18n (../i18n.js): the full language code, a pack language included.
+    if (typeof window !== "undefined" && window.orosI18n) return window.orosI18n.lang();
     try {
       var l = localStorage.getItem("oros-lang") ||
               (window.parent && window.parent.orosLang) || "en";
@@ -267,6 +269,7 @@
       "toast.save": "Δεν αποθηκεύτηκε: ο χώρος είναι γεμάτος"
     }
   };
+  if (typeof window !== "undefined" && window.orosI18n) window.orosI18n.table(STRINGS, "solitaire", LANG);
 
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;
@@ -290,7 +293,7 @@
     return h ? h + ":" + ("0" + m).slice(-2) + ":" + ss : m + ":" + ss;
   }
   function fmtDate(ts) {
-    try { return new Date(ts).toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB"); } catch (e) { return ""; }
+    try { return new Date(ts).toLocaleDateString(typeof window !== "undefined" && window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB")); } catch (e) { return ""; }
   }
 
   // BOOT MARKER

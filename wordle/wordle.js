@@ -61,6 +61,8 @@
     KeyM: "Μ", KeyW: "Σ" };
 
   // ---------- 1. Constants, i18n, helpers ----------
+  // UI language: the full code (a pack language such as "de" included).
+  // The word lists stay EN/EL: a pack language plays with English words.
   function appLang() {
     try {
       var l = localStorage.getItem("oros-lang") ||
@@ -68,7 +70,8 @@
       return l === "el" ? "el" : "en";
     } catch (e) { return "en"; }
   }
-  var LANG = appLang();
+  var LANG = window.orosI18n ? window.orosI18n.lang() : appLang();
+  var WORD_LANG = LANG === "el" ? "el" : "en";
 
   var STRINGS = {
     en: {
@@ -212,6 +215,8 @@
       "toast.noWords": "Η λίστα λέξεων δεν φορτώθηκε"
     }
   };
+
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "wordle", LANG);
 
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;
@@ -532,7 +537,7 @@
   }
 
   // ---------- 4. Device-local prefs + session ----------
-  var prefs = { lang: LANG, mode: "d", hard: false, contrast: false };
+  var prefs = { lang: WORD_LANG, mode: "d", hard: false, contrast: false };
 
   function loadPrefs() {
     try {

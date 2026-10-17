@@ -47,7 +47,7 @@
 //   7c. Online accounts: Chess.com
 //   8. Toasts
 //   9. Sound
-//  10. Input (pointer: click / drag / tap; keyboard; Contract Β)
+//  10. Input (pointer: click / drag / tap; keyboard; Contract B)
 //  11. Sync slice + palette
 //  12. Wiring & boot
 // ============================================================
@@ -70,7 +70,9 @@
   var SLIDE_MS = 160;
 
   // ---------- 1. Constants, i18n, helpers ----------
+  // orosI18n (../i18n.js): the full language code, a pack language included.
   function appLang() {
+    if (window.orosI18n) return window.orosI18n.lang();
     try {
       var l = localStorage.getItem("oros-lang") ||
               (window.parent && window.parent.orosLang) || "en";
@@ -78,6 +80,7 @@
     } catch (e) { return "en"; }
   }
   var LANG = appLang();
+  function loc() { return window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB"); }
 
   var STRINGS = {
     en: {
@@ -645,6 +648,8 @@
       "th.collinearMove": "Κίνηση στην ίδια γραμμή", "th.enPassant": "Αν πασάν", "th.underPromotion": "Υποπροαγωγή"
     }
   };
+
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "chess", LANG);
 
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;
@@ -3156,7 +3161,7 @@
 
   function monthName(ym) {
     var p = ym.split("/");
-    try { return new Date(+p[0], +p[1] - 1, 1).toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB", { month: "long", year: "numeric" }); }
+    try { return new Date(+p[0], +p[1] - 1, 1).toLocaleDateString(loc(), { month: "long", year: "numeric" }); }
     catch (e) { return ym; }
   }
 
@@ -3198,7 +3203,7 @@
         b.type = "button";
         b.appendChild(el("span", "pick-names",
           g.white + (g.wr ? " (" + g.wr + ")" : "") + " – " + g.black + (g.br ? " (" + g.br + ")" : "")));
-        var when = g.end ? new Date(g.end * 1000).toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB", { day: "numeric", month: "short" }) : "";
+        var when = g.end ? new Date(g.end * 1000).toLocaleDateString(loc(), { day: "numeric", month: "short" }) : "";
         b.appendChild(el("span", "pick-meta", [g.result, g.kind ? t("cc.k." + g.kind) : "", when].filter(Boolean).join(" · ")));
         b.addEventListener("click", function () {
           var r = PGN.parse(g.pgn);
@@ -4593,7 +4598,7 @@
       var res = s.ok ? t("tr.ok") : s.fix ? t("tr.fixed") : t("tr.fail");
       var named = p.th.filter(function (x) { return /^(mateIn\d|fork|hangingPiece|promotion|pin|skewer|backRankMate|discoveredAttack|sacrifice)$/.test(x); });
       b.appendChild(el("span", "pick-names", (s.ok ? "✓ " : "✗ ") + (named.length ? named : [p.th[0] || "mate"]).map(themeName).join(", ") + " · " + p.r));
-      b.appendChild(el("span", "pick-meta", res + " · " + t("tr.delta", { r: s.r, d: signed(s.d) }) + " · " + new Date(s.at).toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB")));
+      b.appendChild(el("span", "pick-meta", res + " · " + t("tr.delta", { r: s.r, d: signed(s.d) }) + " · " + new Date(s.at).toLocaleDateString(loc())));
       b.addEventListener("click", function () { dlg.close(); startPuzzle(p); });
       list.appendChild(b);
     });
@@ -4966,7 +4971,7 @@
       if (e.code === "KeyF") { e.preventDefault(); flip(); }
     });
 
-    // Contract Β: forward Ctrl+Alt+Shift shortcuts to the shell (capture)
+    // Contract B: forward Ctrl+Alt+Shift shortcuts to the shell (capture)
     document.addEventListener("keydown", function (e) {
       if (!(e.ctrlKey || e.metaKey) || !e.altKey || !e.shiftKey) return;
       var p = null;
