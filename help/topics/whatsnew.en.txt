@@ -1,6 +1,10 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.68.00
+- Music: lyrics that follow the song. Music reads a .lrc file next to a song, the lyrics in its tags, or (if you say yes) asks LRCLIB, a free lyrics library. Tap a line to jump there.
+- Music: Sound settings with a 10-band equalizer and presets, crossfade, gapless playback and the same volume for every song (ReplayGain). A sleep timer stops the music after a while or at the end of the song.
+
 ## Version 2.67.00
 - Writer, Spreadsheet and Slides can bring in one file straight from Google Docs, Sheets or Slides: pick it and it opens as a normal orOS file.
 
