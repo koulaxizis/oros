@@ -7523,3 +7523,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Pixel wallpaper; Send to… for Pixel, Photo Lab and Atelier pictures (Mail, Layout); Studio → Music and → Ringtone Composer; your melodies as notification and timer sounds.
 - Files: `shell.js`, `notifications.js`, `stickies/host.js`, `send/core.js`, Pixel, Layout, Photo Lab, Atelier, Studio, Ringtones, Time, Settings, help EN/EL, Bible.
   - Tests: full suite green (new interop-pictures / picsend / sound / melodies tests); real Chromium 1280 EN / 360 EL. Not tested: a real phone, sound by ear.
+
+### 2026-10-17 — Quality gate Q5: restore a cloud backup from Settings, rollback on every device (#487) — 2.88.00
+- Sync: restore one of the last 7 cloud backups from Settings › Sync; every device takes it, and today's data is kept as a rescue copy.
+- Files: `sync.js`, `shell.js`, `translations.js`, `settings/{settings,core}.js`, `settings/settings.css`, Bible.
+  - Tests: full suite green; real Chromium 360 EN/EL with two devices. Not tested: a real Dropbox / Nextcloud backup restore from the cloud container.
