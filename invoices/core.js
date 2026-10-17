@@ -1108,17 +1108,28 @@
   // and kindName(kind) give the words.
   function docsCsv(data, from, to, head, kindName, statusName, lang, day) {
     var rows = [head];
-    live(data.docs).filter(function (d) {
+    docsRows(data, from, to, kindName, statusName, day).forEach(function (r) {
+      rows.push(r.map(function (v, i) {
+        if (i === 3 || i === 4) return fmtDay(v);
+        return i >= DOCS_MONEY[0] && i <= DOCS_MONEY[1] ? csvMoney(v, lang) : v;
+      }));
+    });
+    return csvJoin(rows);
+  }
+  // The rows behind docsCsv, raw: dates as YYYY-MM-DD, amounts in
+  // cents (signed like the CSV) in columns DOCS_MONEY[0]..[1]. The
+  // app's "Open in Spreadsheet" (Bible BR-S1) uses them as numbers.
+  var DOCS_MONEY = [8, 14];
+  function docsRows(data, from, to, kindName, statusName, day) {
+    return live(data.docs).filter(function (d) {
       return d.st !== "draft" && d.date >= from && d.date <= to;
     }).sort(function (x, y) { return cmpStr(x.date, y.date) || cmpStr(x.num, y.num) || cmpStr(x.id, y.id); })
-      .forEach(function (d) {
+      .map(function (d) {
         var tt = totals(d), sg = sign(d);
-        rows.push([d.num, kindName(d.kind), statusName(status(data, d, day)), fmtDay(d.date), fmtDay(d.due),
-                   partyName(data, d), d.c.afm, d.cur, csvMoney(sg * tt.net, lang), csvMoney(sg * tt.vat, lang),
-                   csvMoney(sg * tt.total, lang), csvMoney(sg * tt.wht, lang), csvMoney(sg * tt.pay, lang),
-                   csvMoney(paidOf(data, d.id), lang), csvMoney(balance(data, d), lang), d.mark]);
+        return [d.num, kindName(d.kind), statusName(status(data, d, day)), d.date, d.due,
+                partyName(data, d), d.c.afm, d.cur, sg * tt.net, sg * tt.vat,
+                sg * tt.total, sg * tt.wht, sg * tt.pay, paidOf(data, d.id), balance(data, d), d.mark];
       });
-    return csvJoin(rows);
   }
   function paysCsv(data, from, to, head, howName, lang) {
     var rows = [head];
@@ -1160,7 +1171,7 @@
     normPrefill: normPrefill, matchClient: matchClient, fold: fold,
     parseMoney: parseMoney, parseNum: parseNum, fmtMoney: fmtMoney, fmtNumber: fmtNumber,
     moneyInput: moneyInput, numInput: numInput, fmtDay: fmtDay,
-    csvCell: csvCell, docsCsv: docsCsv, paysCsv: paysCsv
+    csvCell: csvCell, docsCsv: docsCsv, docsRows: docsRows, DOCS_MONEY: DOCS_MONEY, paysCsv: paysCsv
   };
 
   if (typeof module !== "undefined" && module.exports) module.exports = API;

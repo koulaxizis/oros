@@ -55,6 +55,8 @@ The shopping list adds up every ingredient planned for the week, grouped by sect
 
 With things in the pantry, a line the pantry covers moves to `At home already` at the bottom: it isn't counted, copied or sent, and you can still tick it. A line only partly there says how much you have ("at home: 200 g"). When you tick a line, `To pantry` on the message puts it in the pantry; `Ticked to pantry` does it for every ticked line that isn't there yet.
 
+Inside orOS, `Open in Spreadsheet` in the Week tab puts the week's plan (date, day, meal, dish, servings) in a new sheet of the [Spreadsheet](app:spreadsheet); the same button in the Shopping tab sends the shopping list (aisle, item, quantity, recipes, bought).
+
 `To To-Do` sends the unticked items to the `Groceries` list in [To-Do](app:todo), each with the recipes it is for. To-Do shows them first: you can pick another list, and items already on it start unticked. Nothing is added until you press `Add`, and your ticks here don't change.
 
 ## Pantry

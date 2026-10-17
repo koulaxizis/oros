@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "2.82.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "2.85.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -5223,7 +5223,7 @@
     var S = window.orosSync;
     if (!S || typeof S.connectWebdav !== "function" || S.isConnected()) return;
     setSyncMsgRaw("dim", window.t("sync.dav.testing"));
-    S.connectWebdav({ url: form.url, user: form.user, pass: form.pass, dir: form.dir })
+    S.connectWebdav({ url: form.url, user: form.user, pass: form.pass, dir: form.dir, relay: !!form.relay })
       .then(function (acc) {
         state.syncUserEmail = (acc && acc.email) || null;
         setSyncMsg("ok", "sync.dav.ok");
@@ -5231,11 +5231,59 @@
       .catch(handleSyncError);
   }
 
-  function syncDisconnectUser() {
-    if (!window.orosSync) return;
-    window.orosSync.disconnect();
-    state.syncUserEmail = null;
+  // WebDAV W3: Nextcloud Login Flow v2. The window opens on the click
+  // (a popup opened later is blocked) and gets the server's page once
+  // the server has answered.
+  function syncConnectNextcloud(form) {
+    var S = window.orosSync;
+    if (!S || typeof S.connectNextcloud !== "function" || S.isConnected()) return;
+    var w = null;
+    try { w = window.open("about:blank", "_blank"); } catch (e) { w = null; }
+    try { if (w) w.opener = null; } catch (e) {}
+    state.ncWaiting = true;
     renderMenu();
+    S.connectNextcloud({ url: form.url, dir: form.dir, relay: !!form.relay }, function (url) {
+      setSyncMsgRaw("dim", window.t("sync.nc.waiting"));
+      if (w && !w.closed) w.location.href = url;
+      else window.open(url, "_blank", "noopener");
+    }).then(function (acc) {
+      state.ncWaiting = false;
+      state.syncUserEmail = (acc && acc.email) || null;
+      setSyncMsg("ok", "sync.dav.ok");
+    }, function (err) {
+      state.ncWaiting = false;
+      try { if (w && !w.closed && w.location.href === "about:blank") w.close(); } catch (e) {}
+      handleSyncError(err);
+    });
+  }
+
+  // SEC-2 / A71a: Disconnect first cancels this device's access at
+  // Dropbox (or deletes the Nextcloud app password), then forgets it
+  // here, and says which of the two happened.
+  var syncDisconnecting = false;
+  function syncDisconnectUser() {
+    var S = window.orosSync;
+    if (!S || syncDisconnecting) return;
+    if (typeof S.disconnectRevoke !== "function") {
+      S.disconnect();
+      state.syncUserEmail = null;
+      renderMenu();
+      return;
+    }
+    syncDisconnecting = true;
+    setSyncMsgRaw("dim", window.t("sync.disc.working"));
+    S.disconnectRevoke(5000).then(function (r) {
+      syncDisconnecting = false;
+      state.syncUserEmail = null;
+      state.syncAutoErr = null;
+      setSyncMsg("ok", syncDisconnectKey(r));
+    });
+  }
+  function syncDisconnectKey(r) {
+    if (r.revoked) return "sync.disc.revoked";
+    if (r.offline) return r.provider === "webdav" ? "sync.disc.offline.dav" : "sync.disc.offline";
+    if (r.provider === "webdav") return "sync.disc.local.dav";
+    return "sync.disc.norevoke";
   }
 
   // User picked an automatic folder-backup cadence (shell slice).
@@ -5461,6 +5509,44 @@
       if (why) text += " (" + why + ")";
     }
     return text;
+  }
+
+  // A72: an automatic sync that fails for a reason only the person
+  // can fix (storage full, sign-in expired, a newer orOS needed) puts
+  // ONE line a day in the bell, with a link to the place to fix it.
+  // Network trouble stays a red dot only: it heals by itself.
+  var SYNC_NOTICE_FOR = {
+    "sync.err.storage":   "settings/backup",
+    "sync.err.auth":      "settings/sync",
+    "sync.err.dav-auth":  "settings/sync",
+    "sync.err.version":   ""
+  };
+  function syncNoticeDaily(ident, text, link) {
+    var N = window.orosNotifs;
+    if (!N || typeof N.emit !== "function") return;
+    try {
+      N.emit({
+        ns: "system",
+        key: "sync-" + ident + "-" + sysYmd(),
+        type: "sys",
+        title: window.t("sync.notice.title"),
+        body: text,
+        deepLink: link ? "system:open:" + link : ""
+      });
+    } catch (e) {}
+  }
+  function syncAutoFailNotice(err) {
+    var S = window.orosSync;
+    if (!S || typeof S.errorKey !== "function") return;
+    var key = S.errorKey(err);
+    if (!SYNC_NOTICE_FOR.hasOwnProperty(key)) return;
+    syncNoticeDaily(key.replace(/^sync\.err\./, ""), window.t(key), SYNC_NOTICE_FOR[key]);
+  }
+  // A37 / A69c: a pull or import could not write some apps' data (the
+  // store is full). Said once a day, the same line as storage-full.
+  function syncApplyFailNotice(names) {
+    if (!names || !names.length) return;
+    syncNoticeDaily("storage", window.t("sync.err.applyfull"), SYNC_NOTICE_FOR["sync.err.storage"]);
   }
 
   function escapeHtml(s) {
@@ -7151,6 +7237,10 @@
       });
     }
 
+    if (window.orosSync && typeof window.orosSync.onApplyFailed === "function") {
+      window.orosSync.onApplyFailed(syncApplyFailNotice);
+    }
+
     // Subtle auto-sync feedback: the status dot pulses while the engine
     // pushes in the background. No messages, no interruptions.
     if (window.orosSync && typeof window.orosSync.onAutoSync === "function") {
@@ -7162,6 +7252,7 @@
           // tooltip and as a line in Settings > Sync (bridge snapshot
           // sync.msg), until the next sync that succeeds.
           state.syncAutoErr = syncErrText(err);
+          syncAutoFailNotice(err);   // A72
           var dotEl = document.getElementById("sync-dot");
           if (dotEl) dotEl.parentNode.setAttribute("title", window.t("syncdot.err") + " — " + state.syncAutoErr);
           renderMenu();
@@ -8753,6 +8844,8 @@
         email: connected ? (state.syncUserEmail || null) : null,
         provider: (S && typeof S.getProvider === "function") ? S.getProvider() : "dropbox",
         davAvailable: !!(S && typeof S.connectWebdav === "function"),
+        ncAvailable: !!(S && typeof S.connectNextcloud === "function"),
+        ncWaiting: !!state.ncWaiting,
         dirty: !!(unlocked && S.isDirty()),
         hasVault: !!(connected && S.hasDeviceVault()),
         interval: getSafeInterval(),
@@ -8837,6 +8930,12 @@
       case "sync.connect":    if (S && !S.isConnected()) S.connect(); return;
       case "sync.connectDav":
         if (arg && typeof arg.url === "string" && typeof arg.pass === "string") syncConnectDav(arg);
+        return;
+      case "sync.connectNc":
+        if (arg && typeof arg.url === "string") syncConnectNextcloud(arg);
+        return;
+      case "sync.cancelNc":
+        if (S && typeof S.cancelNextcloud === "function") S.cancelNextcloud();
         return;
       case "sync.unlock":
         if (S && S.isConnected() && !S.hasPassphrase() && arg && typeof arg.pw === "string") {

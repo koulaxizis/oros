@@ -354,14 +354,19 @@
   };
 
   // ---------- 7. Export ----------
-  function toCsv(data) {
-    var lines = ["date,time,ml"];
+  // Every drink, oldest first, as [date, time, ml] rows (heading
+  // first): the CSV and "Open in Spreadsheet" (BR-S1) share them.
+  function toTable(data) {
+    var rows = [["date", "time", "ml"]];
     liveSips(data).sort(function (x, y) { return x.ts - y.ts || cmpStr(x.id, y.id); })
       .forEach(function (s) {
         var d = new Date(s.ts);
-        lines.push(dayKey(d) + "," + pad(d.getHours()) + ":" + pad(d.getMinutes()) + "," + s.ml);
+        rows.push([dayKey(d), pad(d.getHours()) + ":" + pad(d.getMinutes()), s.ml]);
       });
-    return lines.join("\r\n") + "\r\n";
+    return rows;
+  }
+  function toCsv(data) {
+    return toTable(data).map(function (r) { return r.join(","); }).join("\r\n") + "\r\n";
   }
 
   var API = {
@@ -376,7 +381,7 @@
     average: average, goalRate: goalRate,
     amount: amount, unitWord: unitWord, fmtAmount: fmtAmount, fmtNum: fmtNum, fmtMinutes: fmtMinutes,
     reminderDue: reminderDue, reminderText: reminderText,
-    FEED: FEED, toCsv: toCsv
+    FEED: FEED, toCsv: toCsv, toTable: toTable
   };
 
   if (typeof module !== "undefined" && module.exports) module.exports = API;

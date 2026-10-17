@@ -80,7 +80,8 @@
       "rep.empty": "Nothing in this period.",
       "rep.noteRound": "Times rounded {mode} to {n} min per entry (Settings). Stored times are exact.",
       "rep.noteExact": "Exact times, no rounding.", "rep.up": "up", "rep.near": "to the nearest",
-      "rep.csv": "Export CSV", "rep.quote": "Create quote", "rep.invoice": "Create invoice",
+      "rep.csv": "Export CSV", "rep.sheet": "Open in Spreadsheet",
+      "rep.sheetCap": "Only the first {n} rows fit in one sheet", "rep.quote": "Create quote", "rep.invoice": "Create invoice",
       "quote.cur": "Quotes support only EUR and USD. Change the currency in Settings first.",
       "quote.none": "No billable time with a rate in this period.", "quote.fail": "Could not open Quote.",
       "rep.mark": "Mark {n} as invoiced", "rep.unmark": "Unmark {n} invoiced",
@@ -178,7 +179,8 @@
       "rep.empty": "Τίποτα σε αυτή την περίοδο.",
       "rep.noteRound": "Οι χρόνοι στρογγυλεύονται {mode} στα {n} λεπτά ανά καταγραφή (Ρυθμίσεις). Οι αποθηκευμένοι χρόνοι μένουν ακριβείς.",
       "rep.noteExact": "Ακριβείς χρόνοι, χωρίς στρογγυλοποίηση.", "rep.up": "προς τα πάνω", "rep.near": "στο πλησιέστερο",
-      "rep.csv": "Εξαγωγή CSV", "rep.quote": "Δημιουργία προσφοράς", "rep.invoice": "Δημιουργία τιμολογίου",
+      "rep.csv": "Εξαγωγή CSV", "rep.sheet": "Άνοιγμα στο Υπολογιστικό φύλλο",
+      "rep.sheetCap": "Χωρούν μόνο οι πρώτες {n} γραμμές σε ένα φύλλο", "rep.quote": "Δημιουργία προσφοράς", "rep.invoice": "Δημιουργία τιμολογίου",
       "quote.cur": "Οι προσφορές δέχονται μόνο EUR και USD. Άλλαξε πρώτα το νόμισμα στις Ρυθμίσεις.",
       "quote.none": "Δεν υπάρχει χρεώσιμος χρόνος με τιμή σε αυτή την περίοδο.", "quote.fail": "Δεν ήταν δυνατό να ανοίξει η Προσφορά.",
       "rep.mark": "Σήμανση {n} ως τιμολογημένων", "rep.unmark": "Αναίρεση τιμολόγησης ({n})",
@@ -1065,6 +1067,9 @@
     tbl.hidden = !rep.rows.length;
     $("rep-empty").hidden = rep.rows.length > 0;
     $("rep-csv").disabled = !rep.rows.length;
+    // Open in Spreadsheet (BR-S1): shown only inside orOS.
+    $("rep-sheet").hidden = !invoicesOpener();
+    $("rep-sheet").disabled = !rep.rows.length;
 
     // Invoiced marks: in an "Invoiced" view the button undoes them.
     var mark = $("rep-mark");
@@ -1704,6 +1709,21 @@
     var text = C.toCsv(data, repState.keys[0], repState.keys[1], repState.f, Date.now(), LANG);
     saveText(text, "oros-timesheet-" + repState.keys[0] + "_" + repState.keys[1] + ".csv", "text/csv", ".csv", "CSV");
   }
+  // "Open in Spreadsheet" (Bible BR-S1): the CSV's rows as a new sheet
+  // in the orOS Spreadsheet, with a SUM under hours and amount.
+  var SHEET_ROWS = 498;   // + heading + SUM row = the Spreadsheet's 500
+  function openInSheet() {
+    var p = invoicesOpener();
+    if (!p || !repState) return;
+    var rows = C.toTable(data, repState.keys[0], repState.keys[1], repState.f, Date.now(), LANG);
+    var head = rows.shift();
+    if (!rows.length) return;
+    if (rows.length > SHEET_ROWS) { showToast(t("rep.sheetCap", { n: SHEET_ROWS })); rows = rows.slice(0, SHEET_ROWS); }
+    // "2026-10-01–10-31" (one year) keeps the name under 31 characters
+    var a = repState.keys[0], b = repState.keys[1];
+    var slug = a === b ? a : a.slice(0, 4) === b.slice(0, 4) ? a + "–" + b.slice(5) : a.replace(/-/g, "") + "–" + b.replace(/-/g, "");
+    p.__orosOpenAt("spreadsheet", { newSheet: { name: t("app") + " " + slug, rows: [head].concat(rows), sum: [4, 12] } });
+  }
   function quoteBridge() {
     try { return typeof window.parent.__orosOpenQuoteNew === "function" ? window.parent.__orosOpenQuoteNew : null; }
     catch (e) { return null; }
@@ -2126,6 +2146,7 @@
     $("add-client").innerHTML = UI.plus + "<span></span>";
     $("add-client").lastChild.textContent = t("add.client");
     $("rep-csv").textContent = t("rep.csv");
+    $("rep-sheet").textContent = t("rep.sheet");
     $("rep-quote").textContent = t("rep.quote");
     $("rep-invoice").textContent = t("rep.invoice");
     $("day-btn").title = t("today");
@@ -2184,6 +2205,7 @@
       });
     });
     $("rep-csv").addEventListener("click", exportCsv);
+    $("rep-sheet").addEventListener("click", openInSheet);
     $("rep-quote").addEventListener("click", createQuote);
     $("rep-invoice").addEventListener("click", createInvoice);
     $("rep-mark").addEventListener("click", function () {

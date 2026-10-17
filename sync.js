@@ -178,6 +178,10 @@
 
   // Subscribers for subtle auto-sync feedback (shell status dot pulse)
   var autoListeners = [];
+  // A37 / A69c — listeners told which slices the last apply could not
+  // write (a full store or a setter that threw): fn(names).
+  var applyFailListeners = [];
+  var lastApplyFailed = [];
 
   // Engine guards: never two pushes/pulls racing each other
   var pushInFlight = false;
@@ -969,9 +973,14 @@
   // orOS-backup-*.json, vault/<key>. The app password stays on this
   // device in localStorage, like the Dropbox tokens; it is never in a
   // synced slice and a factory reset removes it (oros-* sweep).
-  var DAV_CONF_KEY = "oros-dav-conf";      // { url, user, dir }
+  // W3: a server without CORS can be reached through the orOS relay
+  // (relay/dav.js), only when the user turns it on (conf.relay): the
+  // app password then passes through the relay on every request; the
+  // data is already end-to-end encrypted.
+  var DAV_CONF_KEY = "oros-dav-conf";      // { url, user, dir, relay? }
   var DAV_PASS_KEY = "oros-dav-pass";
   var DAV_ROOT     = "vault";
+  var DAV_RELAY    = "https://oros-mail-relay.koulaxizis-25b.workers.dev/dav";   // = mail.js
   var DAV_PROPFIND = '<?xml version="1.0" encoding="utf-8"?><d:propfind xmlns:d="DAV:"><d:prop>' +
     "<d:resourcetype/><d:getcontentlength/><d:getlastmodified/><d:getetag/></d:prop></d:propfind>";
   var davConf = null;
@@ -984,7 +993,7 @@
       var c = JSON.parse(localStorage.getItem(DAV_CONF_KEY) || "null");
       var p = localStorage.getItem(DAV_PASS_KEY);
       if (c && typeof c.url === "string" && typeof c.user === "string" && p) {
-        davConf = { url: c.url, user: c.user, dir: typeof c.dir === "string" ? c.dir : "/orOS" };
+        davConf = { url: c.url, user: c.user, dir: typeof c.dir === "string" ? c.dir : "/orOS", relay: c.relay === true };
         davPass = p;
       }
     } catch (e) { davConf = null; davPass = null; }
@@ -1013,11 +1022,15 @@
     var local = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(u.hostname);
     if (u.protocol !== "https:" && !(u.protocol === "http:" && local)) throw new Error("dav-url");
     if (u.username || u.password || u.search || u.hash) throw new Error("dav-url");
-    return {
+    var relay = !!(form && form.relay);
+    if (relay && (u.protocol !== "https:" || local)) throw new Error("dav-relay-target");
+    var conf = {
       url: u.origin + u.pathname.replace(/\/+$/, ""),
       user: String((form && form.user) || "").trim(),
       dir: davNormDir(form && form.dir)
     };
+    if (relay) conf.relay = true;
+    return conf;
   }
 
   function davEnc(rel) {
@@ -1040,12 +1053,28 @@
     var h = { "Authorization": davAuth(conf.user, pass) };
     var extra = opts.headers || {};
     Object.keys(extra).forEach(function (k) { h[k] = extra[k]; });
-    return fetch(opts.abs || davUrl(conf, rel), {
+    var target = opts.abs || davUrl(conf, rel);
+    if (conf.relay) h["X-Oros-Target"] = target;
+    return fetch(conf.relay ? DAV_RELAY : target, {
       method: method, headers: h, body: opts.body, credentials: "omit", cache: "no-store"
-    }).catch(function (err) {
+    }).then(function (res) {
+      return conf.relay ? davRelayed(res) : res;
+    }, function (err) {
       if (err instanceof TypeError) throw new Error("network error: " + (err.message || "unknown"));
       throw err;
     });
+  }
+
+  // The relay's own refusals (X-Oros-Error) and the redirects it
+  // reports instead of following (X-Oros-Status) become reasons;
+  // everything else is the server's answer as it is.
+  function davRelayed(res) {
+    if (res.headers.get("X-Oros-Status")) throw new Error("dav-moved");
+    var code = res.headers.get("X-Oros-Error");
+    if (!code) return res;
+    if (code === "too-big") throw new Error("dav-too-big");
+    if (code === "bad-target" || code === "port") throw new Error("dav-relay-target");
+    throw new Error("network error: relay " + code);   // rate, timeout, upstream: try again later
   }
 
   function davOk(res, what) {
@@ -1164,6 +1193,56 @@
     });
   }
 
+  // Nextcloud chunked upload for big Vault objects: pieces go into
+  // remote.php/dav/uploads/<user>/<id>, then one MOVE of ".file" puts
+  // them together at the target (Nextcloud's v2, and v1 too). Only for
+  // plain overwrites (immutable objects): a conditional write stays one
+  // PUT, so If-Match keeps its meaning. Resolves null when this server
+  // takes no chunks (refused, or blocked by CORS): the caller then
+  // sends the single PUT.
+  var DAV_CHUNK = 10 * 1024 * 1024;
+  function davChunkBase(conf) {
+    var m = conf && /^(.*?\/remote\.php\/dav)\/files\/([^/]+)(?:\/|$)/.exec(conf.url);
+    return m ? m[1] + "/uploads/" + m[2] : null;
+  }
+  function davPutChunked(rel, blob) {
+    var dest = davUrl(davConf, rel);
+    var dir = davChunkBase(davConf) + "/oros-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    var hd = { "Destination": dest };
+    function fallback(err) {
+      if (!/^network error/.test(err && err.message)) throw err;
+      return null;
+    }
+    function cleanup(out) {
+      return davReq("DELETE", null, { abs: dir + "/" }).catch(function () {}).then(function () { return out; });
+    }
+    return davReq("MKCOL", null, { abs: dir, headers: hd }).then(function (res) {
+      if (res.status === 401 || res.status === 403) davOk(res, "upload");
+      if (!res.ok) return null;
+      var n = 0, offset = 0;
+      function next() {
+        if (offset >= blob.size) return Promise.resolve();
+        var piece = blob.slice(offset, offset + DAV_CHUNK);
+        n += 1;
+        return davReq("PUT", null, {
+          abs: dir + "/" + ("0000" + n).slice(-5),
+          headers: { "Destination": dest, "Content-Type": "application/octet-stream" },
+          body: piece
+        }).then(function (r) { davOk(r, "upload"); offset += piece.size; return next(); });
+      }
+      function move() { return davReq("MOVE", null, { abs: dir + "/.file", headers: hd }); }
+      return next().then(move).then(function (r) {
+        if (r.status !== 409 && r.status !== 404) return r;
+        return davMkcols(davConf, davPass, davParentOf(rel)).then(move);
+      }).then(function (r) {
+        if (r.ok) return r;
+        return cleanup(null).then(function () { return davOk(r, "upload"); });
+      }, function (err) {
+        return cleanup(null).then(function () { return fallback(err); });
+      });
+    }, fallback);
+  }
+
   function davGetText(rel) {
     return davReq("GET", rel).then(function (res) {
       if (res.status === 404) return null;
@@ -1229,9 +1308,9 @@
   // other servers have no such call (the user removes it there).
   function davRevoke(timeoutMs) {
     if (!davConf || !/\/remote\.php\//.test(davConf.url)) return Promise.resolve(false);
-    var origin = davConf.url.replace(/^(https?:\/\/[^/]+).*$/, "$1");
+    var server = davConf.url.replace(/\/remote\.php\/.*$/, "");   // keeps a subfolder install's path
     var call = davReq("DELETE", null, {
-      abs: origin + "/ocs/v2.php/core/apppassword",
+      abs: server + "/ocs/v2.php/core/apppassword",
       headers: { "OCS-APIRequest": "true" }
     }).then(function (res) { return !!res.ok; }).catch(function () { return false; });
     if (!timeoutMs) return call;
@@ -1250,7 +1329,12 @@
 
   var davStorage = {
     putObject: function (key, blob, knownRev) {
-      return davPut(davKey(key), blob, knownRev).then(function (res) {
+      var rel = davKey(key);
+      var big = knownRev === undefined && blob && blob.size > DAV_CHUNK && davChunkBase(davConf);
+      var sent = big ? davPutChunked(rel, blob).then(function (res) {
+        return res || davPut(rel, blob, knownRev);
+      }) : davPut(rel, blob, knownRev);
+      return sent.then(function (res) {
         if (res.status === 412 && knownRev !== undefined) throw new Error("storage-conflict");
         return davOk(res, "upload");
       });
@@ -2300,6 +2384,7 @@
     storeFailed = false;                    // SY-Q1: this apply parks everything again
     var applied = 0;
     var cloudStaleAny = false;
+    var failed = [];                        // A37: slices not written (quota, setter threw)
 
     if (payload.shell && slices.shell) {
       var rs = applySlice("shell", payload.shell);
@@ -2309,7 +2394,7 @@
           settleApplied("shell", rs, payload.shell);
           if (rs.baselineCandidate !== null) recordBaseline("shell", rs.baselineCandidate);
           applied++;
-        } catch (e) {}
+        } catch (e) { failed.push("shell"); }
       } else if (rs.baselineCandidate !== null) {
         // Clean no-op apply: refresh/keep the baseline honest —
         // same convergence-reset contract as the apps branch below.
@@ -2331,7 +2416,7 @@
               settleApplied(name, ra, data);
               if (ra.baselineCandidate !== null) recordBaseline(name, ra.baselineCandidate);
               applied++;
-            } catch (e) {}
+            } catch (e) { failed.push(name); }
           } else if (ra.baselineCandidate !== null) {
             // Clean no-op (local == remote == synced content): keep the
             // baseline honest. This is also the convergence reset for
@@ -2361,6 +2446,19 @@
     // winning content is always what reaches the cloud, never
     // an artifact of apply-order.
     if (cloudStaleAny) markDirty();
+
+    // A37 / A69c: say which slices did not land, instead of dropping
+    // the failure. A mailbox copy that could not be kept (SY-Q1) is a
+    // failure of the same kind (the store is full). Nothing else
+    // changes: a slice not written keeps no baseline, so the next pull
+    // tries it again.
+    if (storeFailed && failed.indexOf("mailbox") === -1) failed.push("mailbox");
+    lastApplyFailed = failed;
+    if (failed.length) {
+      applyFailListeners.forEach(function (fn) {
+        try { fn(failed.slice()); } catch (e) {}
+      });
+    }
 
     return applied;
   }
@@ -2524,7 +2622,7 @@
         var applied = applyPayload(payload);
         lastSuccessfulPullAt = Date.now(); // passphrase PROVEN against cloud
         cloudRev = cloud.rev;              // may be undefined (fallback race) → push re-learns
-        return { ok: true, empty: false, applied: applied };
+        return { ok: true, empty: false, applied: applied, failed: lastApplyFailed.slice() };
       });
     });
   }
@@ -2906,11 +3004,155 @@
     });
   }
 
+  // ---------- Nextcloud Login Flow v2 (WebDAV W3) ----------
+  // The user signs in on their own server's page and approves orOS;
+  // orOS gets an app password made for it and never sees the main
+  // password. Nextcloud sends no CORS headers for these two calls, so
+  // they normally need the relay (form.relay, the user's choice).
+  // open(url) shows the server's page (the shell opened the window on
+  // the click). cancelNextcloud() stops the waiting.
+  var ncJob = null;
+  function ncPost(url, body, relay) {
+    var h = {};
+    if (body) h["Content-Type"] = "application/x-www-form-urlencoded";
+    if (relay) h["X-Oros-Target"] = url;
+    return fetch(relay ? DAV_RELAY : url, {
+      method: "POST", headers: h, body: body || undefined, credentials: "omit", cache: "no-store"
+    }).then(function (res) {
+      return relay ? davRelayed(res) : res;
+    }, function (err) {
+      if (err instanceof TypeError) throw new Error("network error: " + (err.message || "unknown"));
+      throw err;
+    });
+  }
+  function ncJson(res) {
+    return res.json().catch(function () { throw new Error("dav-notnextcloud"); });
+  }
+  // Waits, or ends at once when the user cancels.
+  function ncWait(job, ms) {
+    return new Promise(function (r) { job.wake = r; setTimeout(r, ms); });
+  }
+  function ncSameOrigin(a, b) {
+    try { return new URL(a).origin === new URL(b).origin; } catch (e) { return false; }
+  }
+  // The user id the files live under (it can differ from the login
+  // name: LDAP, e-mail logins). Falls back to the login name.
+  function ncUserId(conf, pass) {
+    var body = '<?xml version="1.0"?><d:propfind xmlns:d="DAV:"><d:prop><d:current-user-principal/></d:prop></d:propfind>';
+    return davReq("PROPFIND", null, {
+      abs: conf.url + "/remote.php/dav/", conf: conf, pass: pass, body: body,
+      headers: { "Depth": "0", "Content-Type": "application/xml; charset=utf-8" }
+    }).then(function (res) { return res.status === 207 ? res.text() : ""; })
+      .catch(function () { return ""; })
+      .then(function (xml) {
+        var m = /\/principals\/users\/([^/<]+)\/?</.exec(xml || "");
+        if (!m) return conf.user;
+        try { return decodeURIComponent(m[1]); } catch (e) { return conf.user; }
+      });
+  }
+  function connectNextcloud(form, open) {
+    if (suspended)     return Promise.reject(new Error("engine-suspended"));
+    if (isConnected()) return Promise.reject(new Error("dav-connected"));
+    var conf;
+    try { conf = davNormConf({ url: form && form.url, user: "-", dir: form && form.dir, relay: form && form.relay }); }
+    catch (e) { return Promise.reject(e); }
+    // "https://host/nextcloud/remote.php/dav/files/x" → "https://host/nextcloud"
+    var server = conf.url.replace(/\/(index\.php|remote\.php)(\/.*)?$/, "");
+    var relay = !!conf.relay;
+    var job = { cancelled: false };
+    cancelNextcloud();
+    ncJob = job;
+    function stop() { if (job.cancelled) throw new Error("dav-cancelled"); }
+    var deadline = Date.now() + 20 * 60000;      // Nextcloud's own limit for a login token
+    var every = relay ? 7000 : 3000;              // the relay allows 10 logins a minute
+    var cred = null;
+    return ncPost(server + "/index.php/login/v2", null, relay).catch(function (err) {
+      if (/^network error/.test(err && err.message)) throw new Error("dav-unreachable");
+      throw err;
+    }).then(function (res) {
+      if (res.status === 404) throw new Error("dav-notnextcloud");
+      davOk(res, "login");
+      return ncJson(res);
+    }).then(function (start) {
+      stop();
+      var p = start && start.poll;
+      if (!start || typeof start.login !== "string" || !p || typeof p.token !== "string" ||
+          typeof p.endpoint !== "string" || !ncSameOrigin(p.endpoint, server) ||
+          !/^https?:\/\//.test(start.login)) throw new Error("dav-notnextcloud");
+      open(start.login);
+      function poll() {
+        stop();
+        if (Date.now() > deadline) throw new Error("dav-login-expired");
+        return ncPost(p.endpoint, "token=" + encodeURIComponent(p.token), relay).then(function (res) {
+          if (res.status === 200) return ncJson(res);
+          if (res.status !== 404 && res.status !== 429) davOk(res, "login");
+          return null;                                // not approved yet
+        }, function (err) {
+          if (/^network error/.test(err && err.message)) return null;   // keep waiting
+          throw err;
+        }).then(function (got) {
+          if (got) return got;
+          return ncWait(job, every).then(poll);
+        });
+      }
+      return poll();
+    }).then(function (got) {
+      stop();
+      if (!got || typeof got.loginName !== "string" || typeof got.appPassword !== "string" ||
+          !got.loginName || !got.appPassword) throw new Error("dav-notnextcloud");
+      cred = got;
+      var c = { url: server, user: got.loginName, relay: relay };
+      return ncUserId(c, got.appPassword);
+    }).then(function (uid) {
+      return connectWebdav({
+        url: server + "/remote.php/dav/files/" + encodeURIComponent(uid),
+        user: cred.loginName, pass: cred.appPassword, dir: form && form.dir, relay: relay
+      }).catch(function (err) {
+        // The new app password would stay unused on the server.
+        return davReq("DELETE", null, {
+          abs: server + "/ocs/v2.php/core/apppassword", headers: { "OCS-APIRequest": "true" },
+          conf: { url: server, user: cred.loginName, relay: relay }, pass: cred.appPassword
+        }).catch(function () {}).then(function () { throw err; });
+      });
+    }).then(function (acc) {
+      if (ncJob === job) ncJob = null;
+      return acc;
+    }, function (err) {
+      if (ncJob === job) ncJob = null;
+      throw err;
+    });
+  }
+  function cancelNextcloud() {
+    if (!ncJob) return;
+    ncJob.cancelled = true;
+    if (ncJob.wake) ncJob.wake();
+    ncJob = null;
+  }
+
   function disconnect() {
     provider.disconnect();
     useProvider("dropbox");     // the default again
     passphrase   = null;
     cloudRev     = undefined;   // SY-D1: another account = another cloud
+  }
+
+  // SEC-2 / A71a — the user's Disconnect: first ask the provider to
+  // cancel this device's access (Dropbox auth/token/revoke, Nextcloud
+  // deletes the app password; best effort, bounded by timeoutMs), then
+  // forget everything locally. Offline: forget locally and say so.
+  // Never rejects: { provider, revoked, offline }. The local clear
+  // always happens, whatever the server answered.
+  function disconnectRevoke(timeoutMs) {
+    var id = provider.id;
+    if (!isConnected()) return Promise.resolve({ provider: id, revoked: false, offline: false });
+    var offline = (typeof navigator !== "undefined" && navigator.onLine === false);
+    var ask = offline ? Promise.resolve(false)
+                      : Promise.resolve().then(function () { return provider.revoke(timeoutMs || 5000); })
+                          .catch(function () { return false; });
+    return ask.then(function (revoked) {
+      disconnect();
+      return { provider: id, revoked: !!revoked, offline: offline };
+    });
   }
 
   // Extended unlock: setPassphrase(pw, remember)
@@ -2986,9 +3228,12 @@
   window.orosSync = {
     // Lifecycle
     connect:            connect,
-    connectWebdav:      connectWebdav,    // WebDAV W2: ({ url, user, pass, dir })
+    connectWebdav:      connectWebdav,    // WebDAV W2: ({ url, user, pass, dir, relay? })
+    connectNextcloud:   connectNextcloud, // WebDAV W3: ({ url, dir, relay? }, open(loginUrl))
+    cancelNextcloud:    cancelNextcloud,
     getProvider:        function () { return provider.id; },
     disconnect:         disconnect,
+    disconnectRevoke:   disconnectRevoke, // SEC-2: revoke at the provider, then forget locally
     isConnected:         isConnected,
     getUserInfo:        function () { return provider.account(); },
     redirectHandled:    redirectHandled,
@@ -3046,6 +3291,9 @@
 
     // Auto-sync feedback (optional, for UI status pulse)
     onAutoSync:         function (fn) { if (typeof fn === "function") autoListeners.push(fn); },
+    // A37: fn(names) when a pull or import could not write some slices
+    // (the browser's storage is full, or an app's setter threw).
+    onApplyFailed:      function (fn) { if (typeof fn === "function") applyFailListeners.push(fn); },
 
     // Engine kick (manual triggers from shell, e.g. after manual unlock)
     kickAutoEngine:     function () {

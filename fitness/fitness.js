@@ -140,6 +140,7 @@
       "set.title": "Settings", "set.wu": "Weight unit", "set.du": "Distance unit", "set.incU": "Step, upper body",
       "set.incL": "Step, lower body", "set.rest": "Default rest (s)", "set.sound": "Sound when rest ends",
       "set.vib": "Vibrate when rest ends", "set.habits": "Show workouts in Habits", "set.export": "Export", "set.csv": "All sets (CSV)",
+      "set.sheet": "Open in Spreadsheet", "set.sheetCap": "Only the first {n} rows fit in one sheet", "set.sheetNone": "No finished sets yet",
       "set.json": "Backup (JSON)", "set.restore": "Restore from backup", "set.lib": "Exercise library",
       "set.osave": "orOS file (.orosworkouts)", "set.oopen": "Open orOS file…", "set.ofolder": "Unzipped orOS folder…",
       "set.metric": "Metric (kg, km, cm)", "set.imperial": "Imperial (lb, mi, in)",
@@ -274,6 +275,7 @@
       "set.title": "Ρυθμίσεις", "set.wu": "Μονάδα βάρους", "set.du": "Μονάδα απόστασης", "set.incU": "Βήμα, πάνω σώμα",
       "set.incL": "Βήμα, κάτω σώμα", "set.rest": "Προεπιλεγμένη ανάπαυση (δ)", "set.sound": "Ήχος στο τέλος της ανάπαυσης",
       "set.vib": "Δόνηση στο τέλος της ανάπαυσης", "set.habits": "Εμφάνιση των προπονήσεων στις Συνήθειες", "set.export": "Εξαγωγή", "set.csv": "Όλα τα σετ (CSV)",
+      "set.sheet": "Άνοιγμα στο Υπολογιστικό φύλλο", "set.sheetCap": "Χωρούν μόνο οι πρώτες {n} γραμμές σε ένα φύλλο", "set.sheetNone": "Δεν υπάρχουν ακόμα ολοκληρωμένα σετ",
       "set.json": "Αντίγραφο ασφαλείας (JSON)", "set.restore": "Επαναφορά από αντίγραφο", "set.lib": "Βιβλιοθήκη ασκήσεων",
       "set.osave": "Αρχείο orOS (.orosworkouts)", "set.oopen": "Άνοιγμα αρχείου orOS…", "set.ofolder": "Αποσυμπιεσμένος φάκελος orOS…",
       "set.metric": "Μετρικό (kg, km, cm)", "set.imperial": "Αγγλοσαξονικό (lb, mi, in)",
@@ -962,12 +964,10 @@
     if (s.indexOf(sep) >= 0 || /["\n\r]/.test(s)) s = '"' + s.replace(/"/g, '""') + '"';
     return s;
   }
-  function buildCsv(d) {
-    var set = settingsOf(d), sep = LANG === "el" ? ";" : ",";
-    var num = function (v, dec) {
-      var p = Math.pow(10, dec), s = String(Math.round(v * p) / p);
-      return LANG === "el" ? s.replace(".", ",") : s;
-    };
+  // The rows of the CSV, heading first; num(v, dec) writes a number
+  // (CSV: text with the language's decimal mark; sheet: a real number).
+  function exportRows(d, num) {
+    var set = settingsOf(d);
     var rows = [[t("csv.date"), t("csv.workout"), t("csv.exercise"), t("csv.set"), t("csv.warm"),
                  t("csv.weight", { u: set.wu }), t("csv.reps"), t("csv.time"),
                  t("csv.dist", { u: set.du }), t("csv.e1rm", { u: set.wu })]];
@@ -986,6 +986,14 @@
                      e1 ? num(e1 / wFactor(set.wu), 1) : ""]);
         });
       });
+    });
+    return rows;
+  }
+  function buildCsv(d) {
+    var sep = LANG === "el" ? ";" : ",";
+    var rows = exportRows(d, function (v, dec) {
+      var p = Math.pow(10, dec), s = String(Math.round(v * p) / p);
+      return LANG === "el" ? s.replace(".", ",") : s;
     });
     return "﻿" + rows.map(function (r) {
       return r.map(function (c) { return csvCell(c, sep); }).join(sep);
@@ -3886,6 +3894,25 @@
   }
   function stampName(ext) { return "orOS-workouts-" + ymd(new Date()) + "." + ext; }
   function exportCsv() { saveBlob(new Blob([buildCsv(data)], { type: "text/csv;charset=utf-8" }), stampName("csv"), "text/csv"); }
+  // "Open in Spreadsheet" (Bible BR-S1): the CSV's sets as a new sheet
+  // in the orOS Spreadsheet, with a SUM under reps, time and distance.
+  // Shown only inside orOS.
+  var SHEET_ROWS = 498;   // + heading + SUM row = the Spreadsheet's 500
+  function openAtFn() {
+    try {
+      var p = window.parent;
+      return p && p !== window && typeof p.__orosOpenAt === "function" ? p : null;
+    } catch (e) { return null; }
+  }
+  function openInSheet() {
+    var p = openAtFn();
+    if (!p) return;
+    var rows = exportRows(data, function (v, dec) { var f = Math.pow(10, dec); return Math.round(v * f) / f; });
+    var head = rows.shift();
+    if (!rows.length) { showToast(t("set.sheetNone")); return; }
+    if (rows.length > SHEET_ROWS) { showToast(t("set.sheetCap", { n: SHEET_ROWS })); rows = rows.slice(0, SHEET_ROWS); }
+    p.__orosOpenAt("spreadsheet", { newSheet: { name: t("app") + " " + ymd(new Date()), rows: [head].concat(rows), sum: [6, 7, 8] } });
+  }
   function exportJson() {
     var payload = { app: "fitness", ver: DATA_VER, data: mergeFit(data, data) };
     saveBlob(new Blob([JSON.stringify(payload)], { type: "application/json" }), stampName("json"), "application/json");
@@ -4154,6 +4181,7 @@
     dlg.appendChild(el("div", "dlg-sub", t("set.export")));
     var ex = el("div", "btn-col");
     ex.appendChild(button(t("set.csv"), "", exportCsv));
+    if (openAtFn()) ex.appendChild(button(t("set.sheet"), "", openInSheet));
     ex.appendChild(button(t("set.json"), "", exportJson));
     ex.appendChild(button(t("set.restore"), "", restoreJson));
     ex.appendChild(button(t("set.import"), "", importCsv));
