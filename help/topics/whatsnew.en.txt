@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.83.00
+- Sync with WebDAV: servers that block the browser now work through the orOS relay (optional), Nextcloud users can sign in without typing a password, and big files go up in pieces.
+
 ## Version 2.82.00
 - Command bar: timers and alarms, Kanban cards, habits done, send to an app, sums and unit conversions you can copy, and your recent commands.
 
