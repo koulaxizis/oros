@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.91.00
+- Security: every orOS page now allows only its own scripts (Content-Security-Policy).
+
 ## Version 2.90.00
 - Small everyday links: Shopping list → Budget, Calendar event → Timesheet timer, the One-line diary shows that day's Mood and Mood → Write about it, weather icons on Calendar and Travel days, and Send to… from Calculator and Unit Converter.
 
