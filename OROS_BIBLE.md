@@ -7300,3 +7300,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Send to an app: Writer, Notes, Wiki, Mail, Bookmarks and Reader hand text, a link, items or a table to another installed orOS app (Notes, To-Do, Writer, Mail, Bookmarks, Spreadsheet, Wiki, Assistant, Text Tools, Case Converter, Label Maker), which opens it ready to save. Send to someone stays in the same sheet.
 - Files: `send/core.js`, `send/sheet.js` (new, precached), `shell.js`, the six apps, help share topic EN/EL, Bible BR-SEND.
   - Tests: full suite green (new `tests/send.test.js`); real Chromium 1280 EN / 360 EL. Not tested: a real phone, Safari, Wiki/Mail/Reader entries clicked by hand.
+
+### 2026-10-17 — Settings: tile picker for Connect a service (#454) — 2.69.01
+- Settings: Connect a service shows tiles grouped by purpose, with search, instead of a plain list.
+- Files: `settings/settings.js`, `settings/settings.css`, `settings/core.js`, Bible.
+  - Tests: full suite green; real Chromium 360 EN/EL and 1280 EL. Not tested: a real phone.
