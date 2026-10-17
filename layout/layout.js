@@ -163,7 +163,7 @@
       "idml.working": "Reading the InDesign file…", "idml.bad": "This file could not be read as an InDesign (.idml) document.", "idml.done": "InDesign document imported: {p} pages, {n} objects.",
       "sla.working": "Reading the Scribus file…", "sla.bad": "This file could not be read as a Scribus document.", "sla.done": "Scribus document imported: {p} pages, {n} objects.", "sla.linked": "{n} images were not inside the file: put them back with Place image.", "sla.skipped": "{n} objects (tables, text on a path, mesh or pattern fills) became simple boxes, lost their special fill or were left out.", "svg.working": "Reading the SVG files…", "svg.bad": "These files could not be read as SVG pages.", "svg.done": "SVG imported: {p} pages, {n} objects.", "svg.skipped": "{n} things (pattern fills, text on a path and other effects) were left out or simplified.", "imp.bad": "This file is not a Layout package.", "imp.imgFail": "{n} images could not be restored.",
       "img.fail": "This file could not be read as an image.", "img.nofs": "The orOS disk is not available on this device.",
-      "img.placed": "Image placed", "img.missing": "Syncing…",
+      "img.placed": "Image placed", "img.missing": "Syncing…", "img.sent": "Picture placed on the page",
       "txt.fail": "This file could not be read as text.", "txt.done": "Text imported",
       "inframe.aria": "Type into the text frame",
       "story.title": "Story Editor", "story.empty": "Type here…", "story.ps": "Paragraph style", "story.cs": "Character style",
@@ -288,7 +288,7 @@
       "idml.working": "Διαβάζω το αρχείο InDesign…", "idml.bad": "Αυτό το αρχείο δεν διαβάζεται ως έγγραφο InDesign (.idml).", "idml.done": "Εισαγωγή από InDesign: {p} σελίδες, {n} αντικείμενα.",
       "sla.working": "Διαβάζω το αρχείο Scribus…", "sla.bad": "Αυτό το αρχείο δεν διαβάζεται ως έγγραφο Scribus.", "sla.done": "Εισαγωγή από Scribus: {p} σελίδες, {n} αντικείμενα.", "sla.linked": "{n} εικόνες δεν ήταν μέσα στο αρχείο: βάλ’ τες ξανά με «Τοποθέτηση εικόνας».", "sla.skipped": "{n} αντικείμενα (πίνακες, κείμενο σε διαδρομή, γεμίσματα πλέγματος ή μοτίβου) έγιναν απλά πλαίσια, έχασαν το ειδικό γέμισμά τους ή παραλείφθηκαν.", "svg.working": "Διαβάζω τα αρχεία SVG…", "svg.bad": "Αυτά τα αρχεία δεν διαβάζονται ως σελίδες SVG.", "svg.done": "Εισαγωγή SVG: {p} σελίδες, {n} αντικείμενα.", "svg.skipped": "{n} στοιχεία (γεμίσματα μοτίβου, κείμενο σε διαδρομή και άλλα εφέ) παραλείφθηκαν ή απλοποιήθηκαν.", "imp.bad": "Αυτό το αρχείο δεν είναι πακέτο της Σελιδοποίησης.", "imp.imgFail": "{n} εικόνες δεν επανήλθαν.",
       "img.fail": "Αυτό το αρχείο δεν διαβάζεται ως εικόνα.", "img.nofs": "Ο δίσκος του orOS δεν είναι διαθέσιμος σε αυτή τη συσκευή.",
-      "img.placed": "Η εικόνα τοποθετήθηκε", "img.missing": "Συγχρονίζεται…",
+      "img.placed": "Η εικόνα τοποθετήθηκε", "img.missing": "Συγχρονίζεται…", "img.sent": "Η εικόνα μπήκε στη σελίδα",
       "txt.fail": "Αυτό το αρχείο δεν διαβάζεται ως κείμενο.", "txt.done": "Το κείμενο εισήχθη",
       "inframe.aria": "Πληκτρολόγηση στο πλαίσιο κειμένου",
       "story.title": "Επεξεργαστής κειμένου", "story.empty": "Γράψε εδώ…", "story.ps": "Στυλ παραγράφου", "story.cs": "Στυλ χαρακτήρων",
@@ -968,6 +968,10 @@
   // Opens the document (leaving the one that is open through Home, so
   // the Story Editor flushes). Unknown id → no-op; nothing happens
   // while a dialog is open.
+  // { placeImage: { path, name? } } from the "Send to…" sheet: a
+  // picture on the orOS disk (only under /internal/, .png .jpg .jpeg
+  // .webp .gif) becomes a new image frame on the current page, or on
+  // page 1 of a new document when none is open (io.js placeFromBlob).
   var searchReady = false, searchLater = null;   // fonts first (boot)
   function openSearchTarget(tg) {
     if (!searchReady) { searchLater = tg; return; }
@@ -981,12 +985,29 @@
       LY.io.openFile(f);
       return;
     }
+    if (tg && tg.placeImage) {
+      if (document.querySelector("dialog[open]")) return;
+      var pi = tg.placeImage, fs = diskFs();
+      var path = pi && typeof pi.path === "string" ? pi.path : "";
+      if (!fs || path.indexOf("/internal/") !== 0 || /(^|\/)\.\.(\/|$)/.test(path) || !PLACE_EXT.test(path)) return;
+      var nm = typeof pi.name === "string" && pi.name.trim() ? pi.name.trim() : path.split("/").pop();
+      Promise.resolve(fs.read(path)).then(function (blob) {
+        if (!blob) { toast(t("img.fail")); return; }
+        return LY.io.placeFromBlob(blob, nm);
+      }).then(null, function () { toast(t("img.fail")); });
+      return;
+    }
     var id = tg && typeof tg.doc === "string" ? tg.doc : null;
     if (!id || !findDoc(id)) return;
     if (document.querySelector("dialog[open]")) return;
     if (LY.doc && LY.doc.id === id) return;
     if (LY.doc) goHome();
     openDoc(id);
+  }
+  var PLACE_EXT = /\.(png|jpe?g|webp|gif)$/i;
+  function diskFs() {
+    try { var p = window.parent; return p && p !== window && p.orosFS ? p.orosFS : null; }
+    catch (e) { return null; }
   }
   function takeOpenFile(o) {
     try {

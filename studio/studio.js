@@ -166,6 +166,8 @@
       "export.encoding": "Encoding… {n}%", "export.noOpus": "This browser cannot make Opus files. Chrome, Edge and Firefox can.",
       "export.opusRate": "Opus files are always 48 kHz.", "export.mp3Hint": "192 kbit/s or more keeps a mix close to the WAV.",
       "toast.exportFail": "The export did not finish",
+      "btn.toMusic": "Add to Music", "toast.toMusic": "Added to Music", "toast.toMusicFail": "Could not add it to Music",
+      "btn.ringtone": "Make a ringtone", "toast.ringNoNotes": "Ringtone Composer needs notes: add an instrument track.",
       "au.btn": "A", "au.show": "Automation", "au.title": "Automation: {name}", "au.param": "Parameter",
       "au.vol": "Volume", "au.pan": "Pan", "au.on": "Lane on", "au.delPt": "Delete point", "au.clear": "Clear lane",
       "au.hint": "Tap or click to add a point", "au.pt": "Point at {t}: {v}", "au.lane": "Automation of {name}",
@@ -293,6 +295,8 @@
       "export.encoding": "Κωδικοποίηση… {n}%", "export.noOpus": "Αυτός ο browser δεν φτιάχνει αρχεία Opus. Το Chrome, το Edge και το Firefox φτιάχνουν.",
       "export.opusRate": "Τα αρχεία Opus είναι πάντα 48 kHz.", "export.mp3Hint": "Από 192 kbit/s και πάνω η μίξη μένει κοντά στο WAV.",
       "toast.exportFail": "Η εξαγωγή δεν ολοκληρώθηκε",
+      "btn.toMusic": "Στη Μουσική", "toast.toMusic": "Μπήκε στη Μουσική", "toast.toMusicFail": "Δεν μπόρεσε να μπει στη Μουσική",
+      "btn.ringtone": "Κάνε το ήχο κλήσης", "toast.ringNoNotes": "Ο Ήχος κλήσης χρειάζεται νότες: πρόσθεσε ένα κανάλι οργάνου.",
       "au.btn": "A", "au.show": "Αυτοματισμός", "au.title": "Αυτοματισμός: {name}", "au.param": "Παράμετρος",
       "au.vol": "Ένταση", "au.pan": "Pan", "au.on": "Λωρίδα ενεργή", "au.delPt": "Διαγραφή σημείου", "au.clear": "Καθαρισμός λωρίδας",
       "au.hint": "Πάτα ή κάνε κλικ για να προσθέσεις σημείο", "au.pt": "Σημείο στο {t}: {v}", "au.lane": "Αυτοματισμός: {name}",
@@ -2416,7 +2420,9 @@
     var r = C.exportRange(proj, projClips());
     $("export-range").textContent = t(proj.loop.on ? "export.loop" : "export.all", { a: C.fmtTime(r.a), b: C.fmtTime(r.b) });
     $("export-status").textContent = "";
-    $("export-go").disabled = false;
+    exportBusy(false);
+    $("export-music").hidden = !musicFs() || !shellHas();
+    $("export-ring").hidden = !shellHas();
     renderExportChips();
     showDlg("export-dlg");
     if (opusOk === null) E.opusSupported().then(function (ok) { opusOk = ok; if ($("export-dlg").open) renderExportChips(); });
@@ -2438,7 +2444,10 @@
     $("export-rate-sec").hidden = fmt === "opus";
     $("export-note").textContent = opusOk === false && prefs.fmt === "opus" ? t("export.noOpus") : fmt === "opus" ? t("export.opusRate") : fmt === "mp3" ? t("export.mp3Hint") : "";
   }
-  function doExport() {
+  function exportBusy(on) { ["export-go", "export-music", "export-ring"].forEach(function (id) { $(id).disabled = on; }); }
+  // dest "music": the file goes onto the orOS disk under /internal/Music
+  // and plays in Music; otherwise the save dialog, as always.
+  function doExport(dest) {
     var clips = projClips(), r = C.exportRange(proj, clips);
     if (r.b - r.a < C.MIN_LEN) { showToast(t("export.empty")); return; }
     if (clips.some(function (c) { return !C.isMidi(c) && C.clipEnd(c) > r.a && c.at < r.b && !buffers[c.s]; })) { showToast(t("toast.missing")); return; }
@@ -2446,9 +2455,9 @@
     if (!OAC) { showToast(t("toast.noAudio")); return; }
     var fmt = prefs.fmt === "opus" && opusOk === false ? "wav" : prefs.fmt;
     var rate = fmt === "opus" ? 48000 : prefs.rate, oc, chains = fxChains(), skip = 0, len = Math.ceil((r.b - r.a) * rate);
-    var fail = function () { $("export-go").disabled = false; $("export-status").textContent = ""; showToast(t("toast.noAudio")); };
+    var fail = function () { exportBusy(false); $("export-status").textContent = ""; showToast(t("toast.noAudio")); };
     $("export-status").textContent = t("export.busy");
-    $("export-go").disabled = true;
+    exportBusy(true);
     // the effects' delay is rendered too and cut from the start
     FX.preparePage(chains).then(function () {
       var trLat = tracks().reduce(function (m, tr) { return Math.max(m, FX.chainLatency(tr.fx, rate)); }, 0);
@@ -2471,12 +2480,13 @@
     var done = function (out) {
       var chans = [out.getChannelData(0).subarray(skip, skip + len), out.getChannelData(1).subarray(skip, skip + len)];
       var finish = function (bytes, mime, ext, desc) {
-        $("export-go").disabled = false;
+        exportBusy(false);
         $("export-status").textContent = "";
         hideDlg("export-dlg");
-        saveBlob(new Blob([bytes], { type: mime }), C.fileName(title, ext), mime, desc, "." + ext);
+        if (dest === "music") addToMusic(new Blob([bytes], { type: mime }), C.fileName(title, ext));
+        else saveBlob(new Blob([bytes], { type: mime }), C.fileName(title, ext), mime, desc, "." + ext);
       };
-      var broke = function () { $("export-go").disabled = false; $("export-status").textContent = ""; showToast(t("toast.exportFail")); };
+      var broke = function () { exportBusy(false); $("export-status").textContent = ""; showToast(t("toast.exportFail")); };
       var pct = function (x) { $("export-status").textContent = t("export.encoding", { n: Math.floor(x * 100) }); };
       if (fmt === "mp3") {
         var enc;
@@ -2496,6 +2506,52 @@
           .then(function (bytes) { finish(bytes, "audio/ogg", "opus", "Opus"); }, broke);
       } else finish(C.wavBytes(chans, rate, prefs.bits), "audio/wav", "wav", "WAV");
     };
+  }
+  // ---------- 9a. To other apps: Music, Ringtone Composer ----------
+  var MUSIC_DIR = "/internal/Music";
+  function shellHas() {
+    try { var w = window.parent; return !!w && w !== window && typeof w.__orosOpenAt === "function"; } catch (e) { return false; }
+  }
+  function shellOpen(app, target) {
+    try { if (shellHas()) { window.parent.__orosOpenAt(app, target); return true; } } catch (e) {}
+    return false;
+  }
+  function musicFs() { var f = fsApi(); return f && typeof f.mkdir === "function" && typeof f.stat === "function" ? f : null; }
+  // "name.mp3", or "name (2).mp3", "name (3).mp3"… when taken. → path or null
+  function freeMusicPath(fs, name) {
+    var dot = name.lastIndexOf("."), base = name.slice(0, dot), ext = name.slice(dot), n = 1;
+    var next = function () {
+      var p = MUSIC_DIR + "/" + (n === 1 ? name : base + " (" + n + ")" + ext);
+      return Promise.resolve(fs.stat(p)).then(function () { return true; }, function () { return false; }).then(function (taken) {
+        if (!taken) return p;
+        n++;
+        return n > 500 ? null : next();
+      });
+    };
+    return next();
+  }
+  function addToMusic(blob, name) {
+    var fs = musicFs();
+    if (!fs) { showToast(t("toast.toMusicFail")); return; }
+    Promise.resolve(fs.mkdir(MUSIC_DIR)).then(function () { return freeMusicPath(fs, name); }).then(function (p) {
+      if (!p) throw new Error("full");
+      return Promise.resolve(fs.writeBlob(p, blob)).then(function () { return p; });
+    }).then(function (p) {
+      showToast(t("toast.toMusic"));
+      shellOpen("music", { playPath: p });
+    }, function () { showToast(t("toast.toMusicFail")); });
+  }
+  // The audible instrument notes of the export range (no drum kit) as
+  // one RTTTL melody, handed to Ringtone Composer's Import dialog.
+  function makeRingtone() {
+    if (!proj) return;
+    var r = C.exportRange(proj, projClips()), trs = tracks(), solo = C.anySolo(trs), keep = {};
+    trs.forEach(function (tr) { if (instOf(tr) !== "drums" && !tr.mute && !(solo && !tr.solo)) keep[tr.id] = true; });
+    var notes = passNotes(r.a, r.b).filter(function (q) { return keep[q.t]; });
+    var text = C.toRtttl(notes, proj.bpm, proj.name || t("proj.untitled"));
+    if (!text) { showToast(t("toast.ringNoNotes")); return; }
+    hideDlg("export-dlg");
+    shellOpen("ringtones", { importText: { text: text } });
   }
   function saveBlob(blob, name, mime, desc, ext) {
     saveFileP(blob, name, mime, desc, ext).then(function (ok) { if (ok) showToast(t("toast.file")); });   // cancel = silent exit
@@ -3320,7 +3376,9 @@
     Roll.wire();
     $("track-auto").addEventListener("click", function () { var id = dlgTrack; hideDlg("track-dlg"); prefs.auto[id] = true; savePrefs(); renderRows(); });
     $("export-close").addEventListener("click", function () { hideDlg("export-dlg"); });
-    $("export-go").addEventListener("click", doExport);
+    $("export-go").addEventListener("click", function () { doExport("file"); });
+    $("export-music").addEventListener("click", function () { doExport("music"); });
+    $("export-ring").addEventListener("click", makeRingtone);
     $("more-close").addEventListener("click", function () { hideDlg("more-dlg"); });
     $("in-dev").addEventListener("change", function () { prefs.inDev = $("in-dev").value; savePrefs(); });
     $("out-dev").addEventListener("change", function () { prefs.outDev = $("out-dev").value; savePrefs(); applyOutput(); });

@@ -22,6 +22,7 @@ If the text doesn't fit, the status bar shows `Overset text`. Use `Continue in a
 
 ### Images
 Double-click an image frame, or use `Place image…`, to choose a picture. Pick `Fit` or `Fill` and adjust `Scale`; the panel warns when the resolution is low for print. `Text wrap` lets text flow around a frame.
+A picture sent from another app with `Send to…` (for example from [Files](app:files)) lands on the current page in a new frame that fits the margins, or in a new document when none is open.
 
 ## Pages, masters, styles and colours
 - `Pages`: add, duplicate, delete and reorder pages, and manage `Masters`. Anything on a master appears on every page that uses it; `Edit master` opens it. To change master objects on one page only, use `Detach master objects here` (or right-click one for `Detach this master object`); `Reset to master` undoes it.

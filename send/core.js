@@ -30,6 +30,7 @@
 
   var KINDS = ["text", "link", "items", "table", "files"];
   var MAX_FILES = 10;            // Mail's handed-files cap
+  var PIC_RE = /\.(png|jpe?g|webp|gif)$/i;   // what Layout places
   var MAX_TEXT = 200000;
   var MAX_TITLE = 200;
   var MAX_ITEMS = 200;
@@ -323,6 +324,13 @@
       kinds: ["text"],
       build: function (k, d) { return { newPrompt: { text: d.text.trim().slice(0, PROMPT_MAX) } }; }
     },
+    // One picture from the disk → a frame on the open page (or a new
+    // document); Layout reads the file itself (wave 5).
+    layout: {
+      kinds: ["files"],
+      ok: function (k, d) { return d.items.length === 1 && PIC_RE.test(d.items[0].name); },
+      build: function (k, d) { return { placeImage: { path: d.items[0].path, name: d.items[0].name } }; }
+    },
     labels: {
       kinds: ["text"],
       // A label is one short line.
@@ -332,7 +340,7 @@
   };
   // The sheet's order: the everyday places first.
   var ORDER = ["notes", "todo", "writer", "mail", "kanban", "slides", "bookmarks", "spreadsheet", "wiki", "mindmap", "prompter",
-    "assistant", "texttools", "textcase", "labels"];
+    "layout", "assistant", "texttools", "textcase", "labels"];
 
   function accepts(app, kind, d) {
     if (!own(RECEIVERS, app)) return false;

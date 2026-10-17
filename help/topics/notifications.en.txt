@@ -9,7 +9,7 @@ Open the menu, choose `Settings` and go to `Notifications`:
 
 - The `Notifications` switch turns all notifications on or off.
 - `Send a test` shows a sample so you can check how it looks.
-- `Position on screen`, `Style`, `Sound`, `Volume` and `Stays on screen` change where pop-ups appear, how they look, the sound they make (`None` by default) and how long they stay.
+- `Position on screen`, `Style`, `Sound`, `Volume` and `Stays on screen` change where pop-ups appear, how they look, the sound they make (`None` by default; your melodies from [Ringtone Composer](app:ringtones) are in the list too, so reminders from Habits, Health and every other app can ring with one) and how long they stay.
 - `Quiet hours` keeps pop-ups and sounds away between the `From` and `To` hours (22:00 to 08:00 by default). Notifications still arrive in the inbox.
 - `Which apps may notify` lets you switch notifications off for single apps. `orOS` stands for messages from orOS itself, such as sync and updates.
 
