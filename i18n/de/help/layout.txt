@@ -1,0 +1,77 @@
+# Seitenlayout
+Seitenlayout ist eine App für die Gestaltung von Druckseiten: Flyer, Newsletter, Poster, Karten und Broschüren. Platziere Text, Bilder und Formen auf Seiten und exportiere ein druckfertiges PDF.
+
+## Erste Schritte
+Tippe auf `Neues Dokument` und wähle ein `Seitenformat` (etwa A4, `Visitenkarte` oder `Eigenes`), `Ausrichtung`, `Seiten`, `Ränder`, `Spalten` und `Beschnitt`. Für eine Broschüre hakst du `Doppelseiten` an. Das alles kannst du später unter `Dokument einrichten…` ändern. Unter `Beginnen mit` wählst du `Leer` oder eine von 7 fertigen Vorlagen, etwa einen Flyer oder einen Newsletter.
+
+Deine Dokumente erscheinen als Karten auf der Startseite. Dort kannst du sie suchen, umbenennen, duplizieren oder löschen (gleich danach rückgängig zu machen).
+
+## Dinge auf der Seite platzieren
+Wähle links ein Werkzeug und zieh auf der Seite: `Textrahmen (T)`, `Bildrahmen (F)`, `Rechteck (R)`, `Ellipse (E)` oder `Linie (L)`. `Auswahl (V)` verschiebt Objekte und ändert ihre Größe; `Hand (H)` verschiebt die Ansicht.
+
+Ist etwas ausgewählt, stellst du im Bereich `Eigenschaften` Position und Größe ein, außerdem `Drehung`, `Deckkraft`, `Füllung`, `Verlauf` (für Formen: `Linear` oder `Radial`, Start- und Endfarbe, Winkel), `Kontur`, `Anordnen`, `Ausrichten`, `Gruppieren` und `Position sperren`. Ein Rechtsklick (oder langes Drücken) auf ein Objekt öffnet ein Schnellmenü. `Ausblenden` blendet ein Objekt aus; ist nichts ausgewählt, hat der Seitenbereich `Ausgeblendete Objekte zeigen`.
+
+Zieh aus einem Lineal, um eine Hilfslinie anzulegen, und zieh sie zurück aufs Lineal, um sie zu entfernen. Das Menü `Zoom` hat `Seite einpassen`, `Doppelseite einpassen`, 50, 100 und 200 %.
+
+### Text
+Doppelklicke auf einen Textrahmen, wähle ihn aus und drück [[Enter]] oder klick ihn mit dem Werkzeug `Textrahmen (T)` an, und tippe direkt hinein: Cursor, Auswahl und Umbruch folgen dem Rahmen durch seine Spalten, Verkettungen und seine Drehung. Ein neuer Textrahmen ist sofort zum Tippen bereit. Ziehen oder [[Shift]]+Pfeiltasten wählen aus, ein Doppelklick wählt ein Wort und ein Dreifachklick einen Absatz; [[Enter]] beginnt einen Absatz, [[Shift+Enter]] bricht die Zeile um und [[Esc]] beendet. Absatz- und Zeichenformate im Bereich `Formate` gelten für die Auswahl.
+
+`Text bearbeiten` (Rechtsklickmenü oder `Eigenschaften`) öffnet den `Textmodus` mit dem ganzen Text an einem Ort. Dort kannst du auch die Seitennummer oder die Seitenzahl einfügen.
+
+Passt der Text nicht, zeigt die Statusleiste `Übersatztext`. Nimm `In neuem Rahmen fortsetzen` und tippe oder klicke dann auf einen anderen Rahmen oder eine leere Stelle, oder nimm `Autom. Textfluss: Seiten anfügen, bis er passt`. `Text importieren (.txt)…` im Menü `Mehr` holt eine Textdatei herein.
+
+### Bilder
+Doppelklicke auf einen Bildrahmen oder nimm `Bild platzieren…`, um ein Bild zu wählen. Wähle `Einpassen` oder `Füllen` und passe die `Skalierung` an; der Bereich warnt, wenn die Auflösung für den Druck zu gering ist. Mit `Textumfluss` fließt Text um einen Rahmen herum.
+Ein Bild, das aus einer anderen App mit `Senden an…` kommt (zum Beispiel aus [Dateien](app:files)), landet auf der aktuellen Seite in einem neuen Rahmen, der in die Ränder passt, oder in einem neuen Dokument, wenn keines offen ist.
+
+## Seiten, Musterseiten, Formate und Farben
+- `Seiten`: Seiten hinzufügen, duplizieren, löschen und umsortieren und `Musterseiten` verwalten. Alles auf einer Musterseite erscheint auf jeder Seite, die sie nutzt; `Musterseite bearbeiten` öffnet sie. Um Musterobjekte nur auf einer Seite zu ändern, nimm `Musterobjekte hier lösen` (oder Rechtsklick auf eines für `Dieses Musterobjekt lösen`); `Auf Muster zurücksetzen` macht das rückgängig.
+- `Formate`: Absatz- und Zeichenformate mit Schrift, Größe, Zeilenabstand, Ausrichtung, Abständen und Farbe. Ein Format kann auf einem anderen basieren (`Basiert auf`).
+- `Farben`: deine `Farbfelder`, in RGB oder CMYK. CMYK sieht am Bildschirm nur ungefähr aus, aber das PDF bekommt die genauen Werte.
+
+## Preflight und Export
+Das Abzeichen `Preflight` in der Statusleiste wird grün, orange oder rot. Klick darauf für die Liste der Probleme: `Übersatztext`, `Bild fehlt`, geringe Auflösung, Objekte, die bis zum Endformat, aber nicht in den Beschnitt reichen, Text kleiner als 6 pt und leere Rahmen. Wähle ein Problem, um sein Objekt auszuwählen.
+
+`Exportieren` erstellt ein PDF aller Seiten, der aktuellen Seite oder eines Bereichs, wahlweise mit `Doppelseiten`, `Mit Beschnitt` und `Schnittmarken`, und mit Bildern in `Druck (300 ppi)` oder `Bildschirm (150 ppi)`. `Als Paket speichern (.oroslayout)` speichert eine Datei mit dem Dokument und seinen Bildern; `Datei öffnen` › `Eine Datei (.oroslayout, .sla, .idml, .pdf, .svg)…` auf der Startseite öffnet sie wieder. Das Paket ist eine offene ZIP-Datei: Entpackst du sie, findest du `content.json` (das Dokument), `media` (seine Bilder) und ein Vorschaubild. `Datei öffnen` › `Einen entpackten Paketordner…` holt so einen Ordner zurück, auch wenn du darin ein Bild geändert hast.
+
+`Bild (PNG / JPG)` exportiert eine Seite als Bild mit 72, 150 oder 300 dpi (bis 16 Megapixel).
+
+## Datenzusammenführung
+Erstelle viele Namenskarten, Etiketten, Namensschilder oder Urkunden aus einem Entwurf und einer CSV-Datei (aus Tabelle, Excel oder dem Export eines Adressbuchs; getrennt durch Kommas, Semikolons oder Tabs, mit den Feldnamen in der ersten Zeile).
+- Schreib in einem Textrahmen `{{Name}}` dort, wo ein Wert hinkommt, mit den Spaltennamen der Datei (Groß- und Kleinschreibung und Akzente spielen keine Rolle). Die Formatierung bleibt: Ein fettes `{{Titel}}` ergibt einen fetten Titel. Eine Zeile, die nur leere Felder enthält, fällt weg, damit Etiketten keine Leerzeilen haben.
+- Für ein Bild pro Karte wählst du einen Bildrahmen aus und gibst den Spaltennamen bei `Datenfeld (Zusammenführung)` ein; diese Spalte enthält Dateinamen wie `anna.jpg`.
+- `Mehr` › `Datenzusammenführung (CSV)…` (oder `Exportieren` › `Datenzusammenführung`) öffnet den Dialog: `CSV-Datei wählen…`, prüfe, dass bei jedem Feld `gefunden` steht, und blättere in der Vorschau durch die Zeilen.
+- Bilder werden über ihren Dateinamen in einem Ordner im orOS-Speicher gefunden (`/internal/Pictures` und seine Unterordner, außer du gibst einen anderen ein) oder mit `Bilder von diesem Gerät hinzufügen…`. Sie werden nur für das PDF gelesen: Nichts wird ins Dokument kopiert.
+- `Eine pro Seite` wiederholt die aktuelle Seite (oder `Alle Seiten`, für Vorder- und Rückseite) einmal pro Zeile. `Mehrere pro Bogen` platziert so viele Karten, wie auf A4, A3 oder Letter passen (hoch oder quer, je nachdem, was mehr fasst), mit dem gewählten `Abstand` und Schnittmarken drumherum.
+- `PDF erstellen` speichert ein PDF mit echtem, auswählbarem Text.
+
+## Arbeit aus anderen Programmen holen
+`Datei öffnen` auf der Startseite öffnet als neues Dokument auch:
+- Scribus-Dateien `.sla` und komprimierte `.sla.gz`: Seiten, Musterseiten, Formate, Farben, verketteten Text, Formen und freie Formen (Polygone, Kurven, Bögen, Spiralen), lineare und radiale Verläufe, Ebenen (ihre Reihenfolge; Objekte auf ausgeblendeten Ebenen kommen ausgeblendet, auf gesperrten Ebenen gesperrt) und eingebettete Bilder.
+- InDesign-Dateien `.idml` (in InDesign: Datei, Speichern unter, InDesign Markup): Seiten, Musterseiten, Absatz- und Zeichenformate, Farben, verkettete Textrahmen, Formen, Linien, Gruppen und eingebettete Bilder.
+- PDF-Dateien, zum Beispiel aus Affinity Publisher: Der Text wird zu bearbeitbaren Rahmen, jedes Bild bekommt einen eigenen Bildrahmen, und Zeichnungen und Hintergründe werden ein gesperrtes Bild pro Seite hinter allem.
+- SVG-Dateien, zum Beispiel aus Affinity Publisher oder Designer (Datei, Exportieren, SVG; Text als Text lassen, nicht in Kurven): Formen, Verläufe, Text und eingebettete Bilder. Wähle mehrere SVG-Dateien auf einmal, um ein Dokument mit einer Seite pro Datei zu bekommen, nach Dateinamen sortiert.
+
+Nur verknüpfte Bilder kommen als leere Rahmen mit ihrem Dateinamen; setz sie mit `Bild platzieren…` wieder ein. Tabellen, Text auf Pfad und Gitter- oder Musterfüllungen werden einfache Rahmen oder Vollfarben; die Meldung nach dem Öffnen sagt, wie viele.
+
+## Synchronisierung und Sicherung
+Deine Dokumente werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. Bilder liegen im orOS-Speicher und werden als eigene Dateien synchronisiert, daher kann ein Bild auf einem anderen Gerät eine Weile `Wird synchronisiert…` zeigen. Das offene Dokument und der Zoom bleiben auf jedem Gerät. Für eine vollständige Kopie mit Bildern speicherst du ein Paket; siehe auch [Sicherung](help:t/backup).
+
+Text auf zwei Geräten gleichzeitig geändert? Die andere Fassung wartet unter `Wiederhergestellter Text` im Menü `Mehr`.
+
+## Tastenkürzel
+- [[V]] [[T]] [[F]] [[R]] [[E]] [[L]] [[H]] wählen ein Werkzeug; [[W]] schaltet die Vorschau um.
+- Pfeiltasten verschieben die Auswahl ein Stück ([[Shift]] für größere Schritte); [[Delete]] entfernt sie.
+- [[Ctrl+Z]] / [[Ctrl+Y]] machen rückgängig und wiederholen; [[Ctrl+C]], [[Ctrl+X]], [[Ctrl+V]], [[Ctrl+D]] dupliziert, [[Ctrl+A]] wählt alles aus.
+- [[Ctrl+G]] gruppiert, [[Ctrl+Shift+G]] hebt die Gruppierung auf; [[Ctrl+E]] öffnet den Export.
+- Beim Tippen in einem Rahmen oder im Textmodus: [[Ctrl+B]], [[Ctrl+I]], [[Ctrl+U]]; [[Esc]] beendet.
+
+## Tipps
+- Große Dokumente füllen den Speicher, den alle Apps teilen; Seitenlayout warnt dich, wenn eines groß wird.
+
+## Grenzen
+- Ein PDF öffnet bis zu 300 Seiten; sein Text behält Platz und Aussehen, nicht aber seine ursprünglichen Formate oder Verkettungen.
+- Ein Dokument kann bis zu 999 Seiten und 5.000 Objekte haben.
+- Die Datenzusammenführung liest bis zu 1.000 Zeilen (5 MB) und erstellt nur ein PDF: Die zusammengeführten Karten werden nicht als Dokument behalten, und die CSV-Datei wird nicht mitgespeichert. Ein Textrahmen wächst nicht mit einem langen Wert: Vorschau und Abschlussmeldung sagen, wenn Text nicht passt.
+- `Mehrere pro Bogen` nutzt eine Seite pro Karte (keine Rückseiten) und schneidet jede Karte an ihrer Kante, daher wird kein Beschnitt gedruckt.
+- Ein Dokument aus einem neueren orOS zeigt `Braucht ein neueres orOS` und öffnet sich erst, wenn dieses Gerät aktualisiert ist. Es zu synchronisieren ist sicher: Nichts darin geht verloren.

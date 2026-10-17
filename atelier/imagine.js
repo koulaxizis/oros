@@ -51,10 +51,8 @@
       "im.err.unsupported": "Το {name} δεν το κάνει αυτό.", "im.empty": "Περιέγραψε πρώτα την εικόνα."
     }
   };
-  Object.keys(STR).forEach(function (l) {
-    AT.STRINGS[l] = AT.STRINGS[l] || {};
-    Object.keys(STR[l]).forEach(function (k) { AT.STRINGS[l][k] = STR[l][k]; });
-  });
+  // into Atelier's strings; a pack language gets its lines (core.js AT.addStrings)
+  AT.addStrings(STR);
 
   // → { cf, name } (the free default when nothing is chosen)
   function choice() {

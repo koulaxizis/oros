@@ -43,13 +43,18 @@
   var C = window.MockCore;
 
   // ---------- 1. Constants, i18n, helpers ----------
+  // orosI18n (../i18n.js): the full language code, a pack language included.
   function appLang() {
+    if (window.orosI18n) return window.orosI18n.lang();
     try {
       var l = localStorage.getItem("oros-lang") || (window.parent && window.parent.orosLang) || "en";
       return l === "el" ? "el" : "en";
     } catch (e) { return "en"; }
   }
   var LANG = appLang();
+  var LANG2 = LANG === "el" ? "el" : "en"; // for shared modules that know only el / en
+  function loc() { return window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB"); }
+  var DEC_COMMA = (function () { try { return (1.5).toLocaleString(loc()).indexOf(",") >= 0; } catch (e) { return LANG === "el"; } })();
 
   var STRINGS = {
     en: {
@@ -275,6 +280,7 @@
       "toast.pdfPages": "Μπήκαν οι σελίδες {a} και {b}.", "toast.pdfPage": "Μπήκε η σελίδα {a}."
     }
   };
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "mockups", LANG);
   function t(k, vars) {
     var s = (STRINGS[LANG] && STRINGS[LANG][k] !== undefined) ? STRINGS[LANG][k] : (STRINGS.en[k] !== undefined ? STRINGS.en[k] : k);
     if (vars && typeof s === "string") s = s.replace(/\{(\w+)\}/g, function (m, n) { return vars[n] !== undefined ? vars[n] : m; });
@@ -299,7 +305,7 @@
   }
   function fmtNum(v, d) {
     var s = (+v).toFixed(d).replace(/\.?0+$/, "");
-    return LANG === "el" ? s.replace(".", ",") : s;
+    return DEC_COMMA ? s.replace(".", ",") : s;
   }
   function parseNum(s) {
     var n = parseFloat(String(s || "").replace(",", "."));
@@ -944,7 +950,7 @@
   function renderPhotoThumb() { thumbInto($("photo-thumb"), cur.sc.bg.img); $("photo-del").hidden = !cur.sc.bg.img; }
   function creditLine(cr) {
     if (!cr) return "";
-    if (MEDIA && typeof MEDIA.credit === "function") { var l = MEDIA.credit(cr, LANG); if (l) return l; }
+    if (MEDIA && typeof MEDIA.credit === "function") { var l = MEDIA.credit(cr, LANG2); if (l) return l; }
     return (cr.title || "") + (cr.author ? " · " + cr.author : "");
   }
   function renderCredit() {
@@ -1622,7 +1628,7 @@
     var my = ++find.seq;
     find.busy = true; find.err = "";
     renderFind();
-    MEDIA.search(find.src, "photo", find.q, { page: find.page, restricted: false, lang: LANG }, findEnv()).then(function (res) {
+    MEDIA.search(find.src, "photo", find.q, { page: find.page, restricted: false, lang: LANG2 }, findEnv()).then(function (res) {
       if (my !== find.seq) return;
       find.busy = false;
       find.err = res.error || "";

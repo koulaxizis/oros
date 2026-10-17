@@ -1,0 +1,116 @@
+# Montage
+Montage ist ein Videoeditor. Leg deine Videos, Bilder, Musik und Texte auf eine Zeitleiste, kürze und ordne sie, füg Übergänge und Titel hinzu und exportiere eine Videodatei. Alles passiert in deinem Browser, auch offline.
+
+## Erste Schritte
+1. Tippe oder klicke auf `Neues Projekt`, gib einen `Name` ein, wähl ein `Format` (`Breit 16:9` für einen Bildschirm, `Hoch 9:16` für eine Handy-Story, `Quadrat 1:1` oder `Hochformat 4:5`) und `Bilder pro Sekunde`, dann `Erstellen`.
+2. Tippe auf `Medien` und wähl Videos oder Bilder. Sie reihen sich in der Zeile `Haupt` hintereinander auf.
+3. Drück `Abspielen` zum Ansehen und dann `Export`, wenn du zufrieden bist.
+
+Deine Projekte stehen auf dem ersten Bildschirm. Tippe auf ein Projekt, um es zu öffnen; über seinen Knopf `Mehr` kannst du es `Umbenennen`, `Duplizieren` oder `Löschen` (mit `Rückgängig` für ein paar Sekunden).
+
+## Die Zeitleiste
+Die Zeitleiste hat fünf Zeilen: `Text`, `Overlay`, `Haupt`, `Musik` und `Stimme`. Der Abspielkopf bleibt in der Mitte; scrolle die Zeitleiste, um dich durch dein Video zu bewegen. `Vergrößern` und `Verkleinern` ändern, wie viel du siehst; am Computer zoomt auch Ctrl + Mausrad.
+
+- Tippe auf einen Clip, um ihn auszuwählen. Die Werkzeugleiste zeigt dann, was du damit tun kannst; `Fertig` hebt die Auswahl auf.
+- Zieh einen Clip, um ihn zu verschieben. In der Zeile `Haupt` ändert das die Reihenfolge; in den anderen Zeilen, wann der Clip beginnt. Clips rasten am Abspielkopf und an den Rändern anderer Clips ein.
+- Zieh den linken oder rechten Rand eines ausgewählten Clips, um ihn zu kürzen.
+- `Teilen` schneidet den Clip unter dem Abspielkopf in zwei Teile.
+
+## Clips bearbeiten
+Wenn ein Clip ausgewählt ist:
+- `Tempo` spielt ihn schneller oder langsamer ab. Das Tempo ändert auch die Tonhöhe. Eine `Tempokurve` ändert das Tempo, während der Clip läuft: Wähl `Held`, `Bullet`, `Montage`, `Jump Cut`, `Flash rein` oder `Flash raus`, oder mach `Eigene`, indem du den Abspielkopf entlang des Clips bewegst und `Tempo am Abspielkopf` änderst (0.1× bis 10×). Jede Änderung setzt an dieser Stelle des Videos einen Punkt, und zwischen den Punkten ändert sich das Tempo sanft. Die Grafik zeigt die Kurve, und die Länge des Clips folgt ihr; `Keine` kehrt zu einem einzigen Tempo zurück.
+- `Lautstärke` (bis 200 %), `Blende` (`Einblenden`, `Ausblenden`) und `Stumm` für seinen Ton. `Ton lösen` legt den Ton eines Videos in die Zeile `Musik` (oder `Stimme`, wenn `Musik` dort belegt ist), damit du ihn für sich verschieben kannst.
+- `Übergang` zum Clip: `Überblenden`, `Über Schwarz`, `Schieben`, `Wischen`, `Nach oben schieben`, `Zoom` oder `Kreis`, mit einer `Länge`.
+- `Anpassen`: `Helligkeit`, `Kontrast`, `Sättigung`, `Wärme` und ein `Filter` wie `Schwarzweiß`, `Sepia`, `Film`, `Vintage` oder `Golden`. `.cube-Datei öffnen` fügt einen `Farblook (.cube)` hinzu: eine 3D-LUT aus einer Farbkorrektur-App oder einem LUT-Paket, bis zu 64 Punkte pro Seite. Er wird wie ein Bild aufbewahrt (auf diesem Gerät oder mit den Medien des Projekts synchronisiert); `Look entfernen` nimmt ihn wieder weg.
+- `Rahmen`: `Ganzes Bild` oder `Bild füllen`, `Drehen` und `Spiegeln`.
+- `Zu Overlay` macht aus einem Clip ein Bild im Bild über dem Hauptvideo; `Position` stellt `Links – rechts`, `Oben – unten`, `Größe` und `Deckkraft` ein, und `Rahmen`, `Rahmenfarbe` und `Abgerundete Ecken` rahmen es ein. `Zu Haupt` legt es zurück.
+- `Chroma Key` (Videos und Bilder) entfernt einen Green- oder Bluescreen. Schalte `Farbe entfernen (Green- oder Bluescreen)` ein, wähl `Grün`, `Blau` oder `Aus dem Bild wählen` (dann tippe in der Vorschau auf die Farbe; [[Esc]] bricht ab) und stell `Toleranz`, `Weiche Kante` und `Farbsaum entfernen` ein. Leg den freigestellten Clip in die Zeile `Overlay` über ein anderes Video oder Bild.
+- `Entrauschen` (Videos mit Ton und Tonclips) entfernt gleichmäßiges Hintergrundrauschen (Lüfter, Verkehr, Brummen, Wind) aus dem Ton des Clips, auf diesem Gerät. Montage erstellt eine bereinigte Kopie des Tons, behält sie wie deine anderen Medien und spielt sie stattdessen ab; `Zurück zum Originalton` macht es rückgängig. Clips derselben Datei teilen sich eine bereinigte Kopie.
+- `Standbild` (Videos in der Zeile `Haupt`) hält das Bild am Abspielkopf 2 Sekunden lang an: Der Clip wird dort geteilt, und ein Standbild dieses Bildes in voller Videogröße kommt dazwischen. Ändere seine `Dauer` wie bei jedem Bild.
+- `Rückwärts` (Videos) spielt den Clip rückwärts ab, ohne Ton; `Vorwärts` dreht ihn wieder um.
+- `Duplizieren` und `Löschen` (mit `Rückgängig`).
+
+## Keyframes
+`Keyframes` lässt einen Clip sich bewegen, wachsen, verblassen oder seine Lautstärke ändern, während er läuft (ein langsamer Zoom auf ein Foto, ein Bild, das hereingleitet, Musik, die lauter wird).
+1. Wähl den Clip aus und tippe auf `Keyframes`. Das Feld zeigt die Werte am Abspielkopf.
+2. Ändere `Links – rechts`, `Oben – unten`, `Größe`, `Deckkraft` oder (bei Clips mit Ton) `Lautstärke`: Am Abspielkopf wird ein Keyframe gesetzt.
+3. Bewege dich mit `+½ s`, `−½ s`, `Vorheriger Keyframe` und `Nächster Keyframe` und ändere wieder Werte. Zwischen zwei Keyframes ändert Montage die Werte gleichmäßig; vor dem ersten und nach dem letzten Keyframe bleiben sie, wie sie sind.
+
+`Keyframe setzen` behält die aktuellen Werte am Abspielkopf, `Keyframe entfernen` nimmt ihn weg, `Alle Keyframes entfernen` fängt neu an. Kleine Rauten auf dem Clip in der Zeitleiste zeigen seine Keyframes. Keyframes gehören zum Clip: `Teilen` und `Duplizieren` behalten die Bewegung, wie sie war, aber wenn du den Anfang eines Clips kürzt, verschieben sich seine Keyframes mit. Ein Clip kann bis zu 60 Keyframes haben.
+
+## Formate für soziale Medien und Reframe
+Das `Format` des Projekts (`Breit 16:9`, `Hoch 9:16`, `Quadrat 1:1`, `Hochformat 4:5`) lässt sich jederzeit in den `Projekteinstellungen` ändern. Wenn ein Clip das Bild füllt und sein Bild auf dieses Format zugeschnitten wird, entscheidet `Reframe` (Videos und Bilder), was im Bild bleibt:
+- `Auto-Reframe` sieht sich den Clip an und folgt Gesichtern (wo der Browser sie finden kann) oder sonst dem, was sich nahe der Mitte bewegt, und setzt Keyframes entlang des Clips.
+- `Fokus links – rechts` und `Fokus oben – unten` verschieben am Abspielkopf den Punkt, der in der Mitte bleibt; dort wird ein Keyframe gesetzt. `Reframe entfernen` zentriert das Bild wieder.
+- `Alle Clips neu rahmen` in den `Projekteinstellungen` rahmt jedes Video und Bild in der Zeile `Haupt` auf einmal automatisch neu; ein `Rückgängig` nimmt alles zurück.
+
+Reframe stellt den Clip auf `Bild füllen` um. Alles passiert auf diesem Gerät.
+
+## Text, Musik und Stimme
+- `Text` fügt am Abspielkopf einen Titel hinzu. `Text bearbeiten` ändert die Wörter, `Schrift`, `Textgröße`, `Farbe`, `Kontur`, `Feld hinter dem Text`, `Ausrichtung` und `Auftritt` (`Einblenden`, `Aufsteigen`, `Aufploppen`). Zieh an seinen Rändern, damit er länger oder kürzer zu sehen ist.
+- `Ton` fügt am Abspielkopf Musik oder eine Tondatei hinzu, in `Musik` oder `Stimme`.
+- `Stimme` nimmt deine Stimme über das Mikrofon auf. Nach einem 3-2-1-Countdown läuft das Video ab dem Abspielkopf, und du sprichst darüber; `Stopp` legt die Aufnahme in die Zeile `Stimme` (oder `Musik`, wenn `Stimme` dort belegt ist). Nutze Kopfhörer, damit der Ton des Videos nicht in die Aufnahme gelangt. Beim ersten Mal fragt der Browser, ob orOS das Mikrofon nutzen darf.
+- Tonclips zeigen ihre Wellenform, so siehst du, wo die lauten und leisen Stellen sind.
+- `Overlay` fügt ein Video oder Bild über dem Hauptvideo hinzu.
+- Bilder und Texte haben eine `Dauer` statt eines Tempos.
+- Zieh einen Text in die Zeile `Haupt`, um eine Titelkarte zwischen Clips zu machen; dort stellt `Hintergrund` die Farbe dahinter ein.
+- In den `Projekteinstellungen` macht `Musik leiser, wenn jemand spricht` (`Etwas`, `Mittel` oder `Stark`) die Zeile `Musik` leiser, solange etwas in der Zeile `Stimme` läuft, mit einem kurzen, sanften Übergang nach unten und wieder hoch. Du hörst es in der Vorschau und in der exportierten Datei.
+
+## Untertitel
+`Untertitel` (wenn nichts ausgewählt ist) arbeitet mit den Texten in der Zeile `Text`:
+- `Untertitel hinzufügen` setzt am Abspielkopf einen Text im Untertitelstil: kleine weiße Buchstaben mit schwarzer Kontur unten im Bild.
+- `SRT-Datei öffnen` fügt jede Zeile einer SRT- (oder WebVTT-) Untertiteldatei als eigenen Text zur richtigen Zeit hinzu. Du kannst jeden wie jeden anderen Text bearbeiten, verschieben oder löschen.
+- `Als SRT speichern` schreibt alle Texte der Zeile `Text` als SRT-Datei, für YouTube oder einen Videoplayer.
+- `Untertitel erstellen` unter `Untertitel aus Sprache` hört den Ton des Projekts an und schreibt das Gesprochene als Untertiteltexte. Wähl die `Sprache` (`English`, `Ελληνικά` oder `Erkennen`). Es läuft auf diesem Gerät: Der Ton wird nirgendwohin gesendet. Beim ersten Mal lädt Montage das Sprachmodell (Whisper von OpenAI, etwa 42 MB, von Hugging Face) und die Sprach-Laufzeit (etwa 11 MB, von dieser Seite) herunter und behält sie; danach funktioniert es offline. `Sprachmodell entfernen` gibt den Platz wieder frei.
+
+## Sticker und Formen
+`Sticker` (wenn nichts ausgewählt ist) öffnet `Sticker und Formen`:
+- Eine Form (`Rechteck`, `Abgerundet`, `Kreis`, `Dreieck`, `Stern`, `Herz`, `Pfeil`, `Sprechblase`) kommt am Abspielkopf in die Zeile `Overlay`. Wähl sie aus und ändere mit `Stil` die `Form`, ihre `Füllung`, `Kontur` und `Konturbreite`.
+- Ein Sticker (ein Emoji) kommt am Abspielkopf in die Zeile `Text` und ploppt auf.
+- Verschiebe und skaliere beide mit `Position` und lass sie sich mit `Keyframes` im Lauf der Zeit bewegen. Zieh an ihren Rändern, damit sie länger oder kürzer zu sehen sind.
+
+## Ein Bild sichern
+Wenn nichts ausgewählt ist, speichert `Bild sichern` das Bild am Abspielkopf als PNG in Dateien › Pictures und öffnet es im [Fotolabor](app:photolab), wo du es bearbeiten kannst.
+
+## Export
+`Export` öffnet `Video exportieren`. Wähl eine `Größe` (720p, 1080p oder 4K, je nachdem, was dein Gerät kann) und, wenn du willst, `Auch eine Kopie in Dateien › Videos behalten`. Montage erstellt eine MP4-Datei, wenn dein Browser das kann, sonst eine WebM-Datei.
+
+Wähl `Nur Ton`, um nur den gemischten Ton des Projekts zu bekommen (Musik, Stimme, Clip-Ton, mit jeder Lautstärke, Blende und Absenkung) als M4A-Datei, oder als Ogg oder WAV, wo der Browser kein M4A erstellen kann. `Auch eine Kopie in Dateien › Music behalten` behält ihn auch in orOS.
+
+Wähl `GIF` für ein stummes, sich wiederholendes Bild für Chats und Webseiten: `Klein (320 px)` oder `Mittel (480 px)` an der langen Seite, 12 Bilder pro Sekunde, bis zu 30 Sekunden. GIF-Dateien werden schnell groß, halte es also kurz. `Auch eine Kopie in Dateien › Pictures behalten` behält es auch in orOS. Wenn es fertig ist, kannst du es `Abspielen` oder auf deinem Gerät `Speichern`. Lass die App beim Exportieren offen; `Abbrechen` stoppt es.
+
+## Synchronisierung und Sicherung
+Der Schnitt selbst (Clips, Schnitte, Texte, Einstellungen) reist mit der orOS-Synchronisierung zu deinen anderen Geräten. Die Mediendateien nicht: Standardmäßig bleiben deine Videos auf dem Gerät, auf dem du sie hinzugefügt hast, weil große Dateien lange zum Hochladen brauchen.
+
+In den `Projekteinstellungen` kannst du `Medien dieses Projekts synchronisieren` einschalten. Montage kopiert seine Dateien dann nach Dateien › Assets, und Vault Drive synchronisiert sie verschlüsselt. Auf einem anderen Gerät wird eine Datei, die dort fehlt, als `Fehlt auf diesem Gerät` angezeigt; mit `Datei suchen` kannst du wieder auf sie zeigen (eine andere Datei derselben Art geht auch).
+
+`Platz freigeben` entfernt Medien, die kein Projekt auf diesem Gerät nutzt.
+
+`orOS-Datei (.orosmontage)` in den `Projekteinstellungen` oder im Menü `Mehr` eines Projekts speichert das Projekt als eine offene Datei, die nach ihm benannt ist: jeder Clip, jede Spur, jeder Effekt, Text und Untertitel, zusammen mit den Videos, Bildern und Tönen selbst. So taugt sie auch als Sicherung oder um ein Projekt auf ein anderes Gerät zu bringen. Es ist ein ZIP: Entpack es, und du findest `content.json` (den Schnitt), `media` (die Dateien unter ihren eigenen Namen), `preview/thumbnail.png` (ein Vorschaubild), `preview/timeline.txt` (die Clips der Reihe nach) und `preview/captions.srt`, wenn das Projekt Text hat. `Datei öffnen…` auf der Projektseite öffnet es wieder als neues Projekt, ebenso das Öffnen der Datei mit orOS aus deinem System (`Öffnen mit`); Medien, die schon auf diesem Gerät sind, werden nicht doppelt kopiert. `Entpackter orOS-Ordner…` holt eine entpackte .orosmontage zurück. Große Projekte werden Stück für Stück gelesen und geschrieben, daher funktioniert auch eine Datei von mehreren GB.
+
+>! Wenn du die Websitedaten deines Browsers löschst, werden die auf diesem Gerät gespeicherten Medien entfernt. Behalte die Originaldateien oder schalte für wichtige Projekte die Synchronisierung der Medien ein.
+
+## Tastenkürzel
+- [[Space]] oder [[K]]: abspielen oder anhalten.
+- [[←]] / [[→]]: ein Bild zurück oder vor; mit [[Shift]] eine Sekunde.
+- [[Home]] / [[End]]: Anfang oder Ende.
+- [[S]]: teilen; [[Delete]]: den ausgewählten Clip löschen.
+- [[Ctrl+Z]] rückgängig, [[Ctrl+Y]] oder [[Ctrl+Shift+Z]] wiederholen.
+- [[+]] / [[-]]: die Zeitleiste zoomen.
+- [[Esc]]: Auswahl aufheben oder ein Fenster schließen.
+
+## Tipps
+> Vorschau und Export nutzen dasselbe Bildrezept, also bekommst du in der Datei, was du beim Bearbeiten siehst.
+
+- Für eine Handy-Story starte das Projekt als `Hoch 9:16`; du kannst das `Format` später noch in den `Projekteinstellungen` ändern.
+- Wenn du dieselbe Datei noch einmal hinzufügst, auch in einem anderen Projekt, braucht sie keinen zusätzlichen Platz: Montage behält eine Kopie.
+- Wenn ein großes Video (4K, ein langes Handyvideo) beim Bearbeiten ruckelt, öffne die `Projekteinstellungen` und drück `Leichte Kopien erstellen` unter `Flüssigere Vorschau`. Montage erstellt auf diesem Gerät kleine Kopien nur für die Vorschau; die Medienliste markiert sie als `leichte Kopie`. Der Export, `Bild sichern` und die Synchronisierung nutzen immer die Originale. `Leichte Kopien entfernen` gibt den Platz wieder frei.
+
+## Grenzen
+- Eine Datei kann bis zu 4 GB groß sein. Sehr lange 4K-Projekte brauchen viel Browser-Speicher.
+- Manche Browser können keine 4K- oder MP4-Dateien erstellen; Montage bietet nur an, was dein Browser kann.
+- Bilder außer JPEG und PNG werden beim Hinzufügen in JPEG umgewandelt.
+- Eine Tempokurve hat bis zu 20 Punkte. Wie bei einem einzelnen Tempo ändert sich die Tonhöhe mit dem Tempo.
+- `Entrauschen` ist für gleichmäßiges Rauschen. Es kann keine Musik, andere Stimmen oder plötzliche Geräusche entfernen.
+- `Auto-Reframe` folgt Gesichtern nur, wo der Browser sie finden kann (manche Chrome-Versionen); sonst folgt es der Bewegung, die bei unruhigen Aufnahmen abschweifen kann. Setz diese Keyframes dann von Hand.
+- `Untertitel erstellen` hört die ersten 30 Minuten eines Projekts an und nutzt das kleinste Whisper-Modell, also prüfe die Zeilen: Namen, leise Sprache, Sprache über lauter Musik und Griechisch kommen häufiger falsch heraus als klares Englisch.

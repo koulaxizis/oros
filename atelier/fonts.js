@@ -105,7 +105,7 @@
     if (!more) { st.page = 1; st.items = []; }
     AT.renderDrawer();
     var env = { fetch: window.fetch.bind(window), now: function () { return Date.now(); }, cache: memCache, keys: {} };
-    MEDIA.search("fontsource", "font", st.q, { page: st.page, greek: st.greek, lang: AT.LANG }, env).then(function (res) {
+    MEDIA.search("fontsource", "font", st.q, { page: st.page, greek: st.greek, lang: AT.BASE }, env).then(function (res) {
       if (my !== st.seq) return;
       st.busy = false;
       st.error = res.error || "";

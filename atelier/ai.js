@@ -52,7 +52,8 @@
       "ai.wlName": "In-browser model", "ai.here": "Runs on this device: the text is not sent anywhere.",
       "ai.wlGet": "the model is not on this device yet: download it once in the Assistant (Settings › In-browser model)",
       "ai.wlGpu": "this browser has no WebGPU (use a recent Chrome or Edge)",
-      "ai.wlSpace": "there is not enough memory or space for this model"
+      "ai.wlSpace": "there is not enough memory or space for this model",
+      "ai.net": "no connection", "ai.builtin": "the browser's model is not available", "ai.noPic": "picture not found"
     },
     el: {
       "ai.k.write": "Γράψ' το εσύ…", "ai.k.shorter": "Πιο σύντομο", "ai.k.longer": "Πιο μεγάλο",
@@ -83,13 +84,12 @@
       "ai.wlName": "Μοντέλο μέσα στον browser", "ai.here": "Γίνεται σε αυτή τη συσκευή: το κείμενο δεν στέλνεται πουθενά.",
       "ai.wlGet": "το μοντέλο δεν είναι ακόμα σε αυτή τη συσκευή: κατέβασέ το μία φορά στον Βοηθό (Ρυθμίσεις › Μοντέλο μέσα στον browser)",
       "ai.wlGpu": "αυτός ο browser δεν έχει WebGPU (χρησιμοποίησε πρόσφατο Chrome ή Edge)",
-      "ai.wlSpace": "δεν υπάρχει αρκετή μνήμη ή χώρος για αυτό το μοντέλο"
+      "ai.wlSpace": "δεν υπάρχει αρκετή μνήμη ή χώρος για αυτό το μοντέλο",
+      "ai.net": "δεν υπάρχει σύνδεση", "ai.builtin": "το μοντέλο του browser δεν είναι διαθέσιμο", "ai.noPic": "η εικόνα δεν βρέθηκε"
     }
   };
-  Object.keys(STR).forEach(function (l) {
-    AT.STRINGS[l] = AT.STRINGS[l] || {};
-    Object.keys(STR[l]).forEach(function (k) { AT.STRINGS[l][k] = STR[l][k]; });
-  });
+  // into Atelier's strings; a pack language gets its lines (core.js AT.addStrings)
+  AT.addStrings(STR);
 
   // ---------- 1. The Assistant's AI ----------
   var ASSIST_DATA = "oros-assistant-data", ASSIST_DB = "oros-assistant";
@@ -291,8 +291,8 @@
   function errText(e, cf) {
     var core = C();
     if (e && e.code === "nokey") return t("ai.noKey", { name: cf.name });
-    var why = e && e.code === "net" ? (AT.LANG === "el" ? "δεν υπάρχει σύνδεση" : "no connection")
-      : e && e.code === "builtin" ? (AT.LANG === "el" ? "το μοντέλο του browser δεν είναι διαθέσιμο" : "the browser's model is not available")
+    var why = e && e.code === "net" ? t("ai.net")
+      : e && e.code === "builtin" ? t("ai.builtin")
       : e && e.code === "wlget" ? t("ai.wlGet")
       : e && e.code === "webgpu" ? t("ai.wlGpu")
       : e && e.code === "wlspace" ? t("ai.wlSpace")
@@ -530,7 +530,7 @@
           go.disabled = true;
           stat.textContent = have ? t("ai.cutRun") : t("ai.cutLoad", { p: 0 });
           A.load(it.a).then(function (img) {
-            if (!img) throw new Error(AT.LANG === "el" ? "η εικόνα δεν βρέθηκε" : "picture not found");
+            if (!img) throw new Error(t("ai.noPic"));
             return CUT.cut(img, {
               signal: ctl.signal,
               onProgress: function (p) { if (!have) stat.textContent = t("ai.cutLoad", { p: Math.round(p * 100) }); },

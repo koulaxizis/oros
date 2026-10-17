@@ -401,8 +401,11 @@
   // en, el, pages: [ { bg, g, items: [spec…] } ] } where text specs
   // carry tx: { en, el }. Instantiation picks the language and makes a
   // normal, independent design (fresh ids).
+  // A pack language (templates.js adds o[lang] from its pack) reads its
+  // own text, else English.
+  function pick(o, lang) { return lang === "el" ? o.el : (o[lang] != null ? o[lang] : o.en); }
   function fromTemplate(tpl, lang, now) {
-    var name = lang === "el" ? tpl.el : tpl.en;
+    var name = pick(tpl, lang);
     var d = newDesign({ name: name, w: tpl.w, h: tpl.h, unit: tpl.unit, pages: (tpl.pages || []).length || 1 }, now);
     var pages = M.pagesInOrder(d);
     (tpl.pages || []).forEach(function (P, i) {
@@ -417,14 +420,14 @@
         var s = JSON.parse(JSON.stringify(spec));
         if (s.tx && typeof s.tx === "object") {
           var en = s.tx.en;
-          s.tx = lang === "el" ? s.tx.el : s.tx.en;
+          s.tx = pick(s.tx, lang);
           if (s.tx !== en) fitTranslation(s, en);
         }
         // tables and charts: rows (and a chart title) as { en, el }
         [s.tb, s.ch].forEach(function (o) {
           if (!o) return;
-          if (o.rows && !Array.isArray(o.rows)) o.rows = lang === "el" ? o.rows.el : o.rows.en;
-          if (o.ttl && typeof o.ttl === "object") o.ttl = lang === "el" ? o.ttl.el : o.ttl.en;
+          if (o.rows && !Array.isArray(o.rows)) o.rows = pick(o.rows, lang);
+          if (o.ttl && typeof o.ttl === "object") o.ttl = pick(o.ttl, lang);
         });
         s.z = zi + 1;
         addItem(d, pg.id, s, now);

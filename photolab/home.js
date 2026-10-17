@@ -13,7 +13,7 @@
 
   function when(ms) {
     try {
-      return new Date(ms).toLocaleDateString(PL.LANG === "el" ? "el-GR" : "en-GB", { day: "numeric", month: "short", year: "numeric" });
+      return new Date(ms).toLocaleDateString(PL.LOC, { day: "numeric", month: "short", year: "numeric" });
     } catch (e) { return ""; }
   }
   function freeUrls() { urls.forEach(function (u) { URL.revokeObjectURL(u); }); urls = []; }
@@ -144,7 +144,7 @@
       gpBusy = false;
       if (e && e.code === "cancelled") return;
       console.warn("photolab: Google Photos failed:", e);
-      PL.toast(GI.message(e, PL.LANG) + (e && e.code === "notenabled" ? " " + t("gp.hint") : ""));
+      PL.toast(GI.message(e, PL.BASE) + (e && e.code === "notenabled" ? " " + t("gp.hint") : ""));
     });
   }
 

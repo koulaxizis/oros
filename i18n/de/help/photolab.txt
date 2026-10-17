@@ -1,0 +1,116 @@
+# Fotolabor
+Bearbeite Fotos und Bilder mit Ebenen, Auswahlen, Pinseln, Retusche-Werkzeugen, Filtern und Einstellungen, ganz im Stil von Photoshop, GIMP und Photopea. Alles funktioniert offline.
+
+## Erste Schritte
+- `Neues Bild` startet ein leeres Bild: Wähle eine Größe und einen Hintergrund. `Bild öffnen` öffnet ein Foto von deinem Gerät (auch eine RAW-Datei einer Kamera oder eine Photoshop-, OpenRaster- oder Krita-Datei mit ihren Ebenen), und `Einfügen` öffnet ein Bild, das du kopiert hast. Du kannst eine Bilddatei auch irgendwo auf die App ziehen.
+- Deine Bilder findest du unter `Projekte`. Tippe oder klicke auf eins, um es zu öffnen; der Stift benennt es um, der Papierkorb löscht es (`Rückgängig` in der Meldung holt es zurück).
+- Im Editor führt die Taste oben links zurück zu `Projekte`. Deine Arbeit wird laufend gespeichert.
+
+## Werkzeuge
+Die Werkzeugleiste ist links (auf dem Handy unten). Die Leiste über dem Bild zeigt die Optionen des aktuellen Werkzeugs.
+- `Verschieben`: Zieh die Ebene. Mit einer Auswahl hebst du die ausgewählten Pixel an und verschiebst sie.
+- `Auswahlrechteck` und `Lasso`: wählen einen Bereich aus. Tippe noch mal auf das Werkzeug, um zwischen `Rechteck` und `Ellipse` zu wechseln, oder zwischen Freihand- und Punkt-für-Punkt-Lasso. Halte Shift, um zur Auswahl hinzuzufügen, Alt, um abzuziehen.
+- `Zauberstab`: wählt ähnliche Farben aus; stell die `Toleranz` ein und ob nur `Benachbart` liegende Pixel zählen.
+- `Schnellauswahl`: Male über das, was du willst, und die Auswahl wächst bis zu den Kanten; Alt+Ziehen nimmt weg. [[Shift+W]] wechselt zwischen ihr und dem Zauberstab.
+- `Pinsel` und `Radiergummi`: `Größe`, `Härte`, `Deckkraft` und `Fluss`. Ein Stift malt breiter, wenn du fester drückst.
+- `Kopierstempel`: Alt+Klick (oder `Quelle setzen`, dann tippen) dorthin, wovon kopiert wird, dann male dort, wo die Kopie hin soll. `Reparaturpinsel` macht dasselbe, behält aber die Farbe rund um die Stelle, für Hautunreinheiten und Staub; seine Art `Rote Augen` macht rote Pupillen dunkel.
+- `Abwedeln / Nachbelichten / Schwamm`: `Abwedeln` hellt auf und `Nachbelichten` dunkelt ab, in den `Tiefen`, `Mitteltöne` oder `Lichter`; `Schwamm` nimmt Farbe weg oder fügt sie hinzu. `Wischfinger` verschmiert Farbe wie ein Finger in nasser Farbe.
+- `Farbeimer` und `Verlauf` (`Linear` oder `Radial`) füllen mit der Vordergrundfarbe.
+- `Pipette`: Ein Klick nimmt die Vordergrundfarbe auf, Alt+Klick die Hintergrundfarbe.
+- `Text` und `Form` fügen eigene Ebenen hinzu; klicke auf einen Text, um ihn zu ändern.
+- `Zuschneiden`: Zieh den Rahmen, wähle ein `Seitenverhältnis`, dann `Zuschneiden` oder [[Enter]].
+- `Hand` und `Zoom` bewegen die Ansicht. Auf Touchscreens zoomst du mit zwei Fingern.
+
+## Ebenen
+`Bedienfelder ein/aus` (die Ebenen-Taste oben rechts) öffnet `Ebenen` und `Verlauf`.
+- Jede Ebene hat ein Auge (ein- oder ausblenden), ein Schloss und einen Namen (tippe darauf, um die Ebene zu wählen). `Füllmethode` und `Deckkraft` gelten für die gewählte Ebene.
+- Die Tasten darunter fügen Ebenen hinzu, duplizieren, verschieben, fügen nach unten zusammen und löschen sie. Das Menü `Ebene` hat mehr: `Ebene durch Kopieren`, `Ebene rastern`, `Auf eine Ebene reduzieren` und mehr.
+- `Verlauf` listet deine Schritte; tippe auf einen, um zu ihm zurückzugehen.
+
+## Masken, Einstellungsebenen und Stile
+- Eine Ebenenmaske verbirgt Teile einer Ebene, ohne sie zu löschen: Schwarz verbirgt, Weiß zeigt, Grau zeigt ein wenig. `Ebenenmaske hinzufügen` (die Masken-Taste unter den Ebenen oder das Menü `Ebene`) zeigt alles; mit einer Auswahl zeigt sie nur die Auswahl. Male auf die Maske mit Pinsel, Verlauf oder Füllung; tippe auf das Bild der Ebene, um wieder ihre Pixel zu malen, und auf das Bild der Maske, um zur Maske zurückzugehen ([[Ctrl+\]] wechselt). `Maske aus- oder einschalten`, `Maske anwenden` (in die Pixel) und `Maske löschen` sind im Menü `Ebene`.
+- `Neue Einstellungsebene…` (die Taste mit dem halb gefüllten Kreis) ändert die Farben jeder sichtbaren Ebene darunter, ohne ihre Pixel anzufassen: `Tonwerte`, `Gradationskurven`, `Farbton / Sättigung`, `Farbbalance`, `Helligkeit / Kontrast`, `Schwarzweiß`, `Fotofilter`, `Verlaufsumsetzung`, `Umkehren`, `Schwellenwert`, `Tontrennung`. Doppelklicke sie, um sie zu ändern; ihre Deckkraft und Maske bestimmen, wie stark und wo.
+- `Ebenenstil…` (die fx-Taste) fügt einer Ebene `Schlagschatten`, `Schein nach außen`, `Schein nach innen`, `Kontur` oder `Farbüberlagerung` hinzu. Stile folgen den Pixeln der Ebene und bleiben bearbeitbar; eine Ebene mit Stilen zeigt eine fx-Taste in ihrer Zeile.
+
+## Menüs
+- `Bild`: `Bildgröße…`, `Arbeitsfläche…`, drehen, spiegeln, `Auf Auswahl zuschneiden`, `Transparente Ränder entfernen`.
+- `Auswahl`: `Alles auswählen`, `Auswahl umkehren`, `Motiv…` (siehe unten), `Farbbereich…` (jedes Pixel nah an einer Farbe), `Weiche Kante…`, `Erweitern…`, `Verkleinern…`, `Auswahl speichern…` und `Auswahl laden…` (gespeicherte Auswahlen bleiben im Projekt).
+- `Ansicht`: `Lineale`, `Hilfslinien`, `Raster` und `Ausrichten` schaltest du ein und aus; dazu `Neue Hilfslinie…`, `Hilfslinien löschen` und `Rastergröße…`. Zieh eine Hilfslinie aus einem Lineal; mit dem Werkzeug `Verschieben` oder `Hand` ziehst du eine Hilfslinie, um sie zu verschieben, oder zurück aufs Lineal, um sie zu entfernen. Ist `Ausrichten` an, haften Auswahlen, Zuschnitte, Formen und verschobene Ebenen an Hilfslinien, am Raster und an den Rändern und der Mitte der Arbeitsfläche.
+- `Korrektur`: `Licht und Farbe…`, `Looks…`, `Farbton / Sättigung…`, `Tonwerte…`, `Lightroom-Preset (.xmp)…`, `Umkehren`, `Schwarzweiß`, `Schwellenwert…`, `Tontrennung…`. Die Dialoge zeigen eine Live-Vorschau; mit einer Auswahl ändert sich nur der ausgewählte Bereich.
+- `Filter`: `Gaußscher Weichzeichner…`, `Bewegungsunschärfe…`, `Objektivunschärfe…`, `Unscharf maskieren…` (schärft), `Rauschen hinzufügen…`, `Rauschen reduzieren…`, `Verpixeln…`, `Relief…`, `Kanten finden`, `Vignette…`. Weichzeichner können über die Pixel der Ebene hinausreichen; mit einer Auswahl bleiben sie darin.
+- `Datei`: `Exportieren…` speichert eine PNG-, JPG-, WebP-, PSD-, OpenRaster- oder orOS-Datei (`.orosphoto`) auf deinem Gerät, `In Pictures speichern…` speichert sie im Ordner Pictures der orOS-Disk, `Stapelverarbeitung…` bearbeitet viele Fotos auf einmal (siehe unten), `Als Hintergrundbild verwenden` macht das Bild zum Hintergrundbild dieses Geräts, und `An jemanden senden…` schickt das Bild als Link (siehe [An jemanden senden](help:t/share)): Es geht als JPEG mit höchstens 2048 px, ohne versteckte Details wie Ort oder Kamera.
+- `Datei` › `Senden an…` speichert das Bild als PNG in Pictures und schickt es weiter: an Mail als Anhang, an Seitenlayout auf eine Seite oder an eine Person.
+Auf dem Handy sind alle Menüs unter der Menü-Taste.
+
+## Motiv auswählen und Hintergrund entfernen
+- `Auswahl` › `Motiv…` findet das Hauptmotiv des Bildes (eine Person, ein Tier, einen Gegenstand) und wählt es mit weicher Kante aus. Dann kannst du genau diesen Teil korrigieren, kopieren oder maskieren.
+- `Ebene` › `Hintergrund entfernen…` macht dasselbe und verbirgt alles andere mit einer Ebenenmaske auf der aktuellen Ebene. Nichts wird gelöscht: Male auf die Maske, um eine Kante zu korrigieren, oder lösche die Maske, um den Hintergrund zurückzubekommen.
+- Beide betrachten das ganze sichtbare Bild. Bewege den Regler `Kante`, um mehr oder weniger um das Motiv zu behalten, dann `Anwenden`. Ein `Rückgängig` nimmt es zurück.
+- Sie nutzen dasselbe Werkzeug auf dem Gerät wie der Hintergrund-Entferner im Atelier. Beim ersten Mal ist ein Download von etwa 16 MB nötig; danach geht es offline, und das Bild verlässt nie dein Gerät. Hat das Atelier es schon geladen, musst du nichts laden.
+
+## Aus Google Fotos
+- Auf dem Projekte-Bildschirm `Aus Google Fotos`: Melde dich bei Google an, tippe auf `Google Fotos öffnen`, wähle ein Bild und tippe auf `Fertig`. Es öffnet sich hier als neues Projekt.
+- orOS liest nur dieses Bild, einmal, und gibt die Anmeldung sofort wieder frei. Videos öffnen sich hier nicht.
+
+## RAW-Dateien von Kameras
+- `Bild öffnen`, Ziehen und Ablegen und `Stapelverarbeitung…` nehmen RAW-Dateien der meisten Kameras: DNG, CR2, CR3, CRW, NEF, NRW, ARW, SR2, ORF, RAF, RW2, PEF, SRW, X3F, 3FR, IIQ, ERF und mehr.
+- Das Fotolabor entwickelt die RAW-Daten selbst (mit dem Weißabgleich der Kamera), danach öffnet sich die Datei wie jedes Foto. Bei einer großen Datei kann das einige Sekunden dauern. Auf dem Handy werden RAW-Dateien in halber Größe entwickelt, um Speicher zu sparen.
+- Wo der Browser RAW-Daten nicht entwickeln kann, öffnet das Fotolabor stattdessen die Vorschau, die die Kamera in der Datei gespeichert hat (meist in voller Größe oder fast), und eine Meldung sagt das. Diese Vorschau hat den eigenen Look der Kamera.
+
+## Stapelverarbeitung
+`Datei` › `Stapelverarbeitung…` (oder `Stapelverarbeitung` auf dem Projekte-Bildschirm) macht dieselbe Arbeit an vielen Fotos auf einmal. Deine Fotos werden nie verändert: Es entstehen neue Dateien.
+- `Fotos`: Füge sie `Von diesem Gerät…` oder `Von der orOS-Disk…` hinzu (markiere Fotos in beliebigen Ordnern; `Alle hier markieren` markiert einen ganzen Ordner). RAW-Dateien gehen auch.
+- `Einstellungen`: nichts, `Die Einstellungsebenen dieses Bildes` (die sichtbaren Einstellungsebenen des offenen Bildes, mit ihrer Deckkraft) oder `Ein Lightroom-Preset (.xmp)`.
+- `Größe`: beibehalten oder `Lange Seite`, `Breite`, `Höhe` oder `Prozent` festlegen. Kleinere Fotos werden nicht vergrößert, außer du markierst `Kleinere Fotos auch vergrößern`.
+- `Wasserzeichen`: ein `Text` (mit Farbe und Größe) oder ein `Bild` wie ein Logo, an einer von neun Positionen, mit seiner `Deckkraft`.
+- `Speichern`: JPG, PNG oder WebP mit einer `Qualität`, und die `Dateinamen`: {name} ist der eigene Name des Fotos, {n} eine Zahl, {nnn} eine Zahl mit Nullen (001), {date} das heutige Datum, {w} und {h} die neue Größe. Speichere in einen Ordner in `Pictures` auf der orOS-Disk oder als `Eine ZIP-Datei`; der Abschlussbildschirm hat `ZIP speichern…`.
+- `Stoppen` beendet den Lauf nach dem Foto, an dem gerade gearbeitet wird; was fertig ist, bleibt fertig. Fotos, die nicht gelesen werden können, stehen am Ende in einer Liste.
+
+## Ein Bild aus dem Atelier bearbeiten
+Wenn das Atelier ein Bild zum Bearbeiten hierher schickt, erscheint oben eine Taste `Fertig`. Sie speichert das Ergebnis als neues Bild und schickt es zurück ans Atelier; das Projekt bleibt auch im Fotolabor für spätere Änderungen.
+
+## Photoshop- und OpenRaster-Dateien
+- Photoshop-Dateien (`.psd`) und OpenRaster-Dateien (`.ora`, aus GIMP, Krita und MyPaint) öffnen sich mit ihren Ebenen: Namen, Positionen, Deckkraft, Füllmethoden und Sichtbarkeit.
+- Gruppen werden in die Ebenenliste aufgelöst (eine ausgeblendete Gruppe blendet ihre Ebenen aus), und Ebenenmasken werden in die Pixel der Ebenen eingerechnet. Text, Smartobjekte und Effekte kommen als die Pixel an, die die Datei für sie gespeichert hat.
+- Krita-Dateien (`.kra`) öffnen sich auch: Öffne einfach die Datei, die du in Krita gespeichert hast. Normale Malebenen in 8-Bit-RGBA kommen mit Namen, Positionen, Deckkraft, Füllmethoden und Sichtbarkeit an; Vektor-, Datei-, Filter- und Füllebenen sowie Masken bleiben außen vor. Nutzen die Ebenen eine andere Farbtiefe (16 Bit, Gleitkomma, CMYK, Grau), öffnet sich die Datei als eine Ebene aus dem Bild, das Krita mit ihnen speichert, und das Fotolabor sagt dir das. Für ein sicheres Ergebnis mit jeder Krita-Datei nutze in Krita Datei › Exportieren und wähle OpenRaster (`.ora`).
+- `Exportieren…` mit `PSD (Photoshop, mit Ebenen)` oder `OpenRaster (GIMP, Krita, mit Ebenen)` behält deine Ebenen für Photoshop, Photopea, GIMP oder Krita. Text, Formen, Masken, Stile und Einstellungsebenen werden zu Pixeln.
+
+## orOS-Datei (.orosphoto)
+- `Datei` › `orOS-Datei (.orosphoto)…` (oder `Exportieren…` › `orOS-Datei (.orosphoto)`) speichert das ganze Projekt in einer Datei: jede Ebene mit Masken, Stilen, Füllmethode und Deckkraft, Einstellungsebenen, Text und Formen, die du weiter bearbeiten kannst, Hilfslinien und gespeicherte Auswahlen. Die Pixel bleiben genau so, wie sie sind.
+- Eine .orosphoto ist eine offene ZIP-Datei: Entpackst du sie, findest du `content.json` (das Projekt), `media` mit einer PNG pro Ebene, Maske oder Auswahl, und `preview/image.png`, das fertige Bild, das jeder Bildbetrachter öffnet.
+- Öffne sie mit `Bild öffnen`, indem du sie auf die App ziehst, oder von deinem Gerät mit „Öffnen mit“ orOS: Sie kommt immer als neues Projekt an. `Datei` › `Entpackter orOS-Ordner…` öffnet eine entpackte .orosphoto, auch nachdem du ihre Dateien geändert hast.
+
+## Lightroom-Presets
+- `Korrektur` › `Lightroom-Preset (.xmp)…` öffnet ein aus Lightroom (Classic oder CC) oder Camera Raw gespeichertes Preset und fügt es als Einstellungsebenen über der aktuellen Ebene hinzu, benannt nach dem Preset: Belichtung, Weiß und Schwarz als `Tonwerte`, Kontrast, Tiefen, Lichter und die Gradationskurve als `Gradationskurven`, Weißabgleich, Sättigung und Dynamik sowie Schwarzweiß.
+- Die Ebenen bleiben bearbeitbar: Senke die Deckkraft einer Ebene, um das Preset schwächer zu machen, oder blende eine aus, die du nicht willst. Ein `Rückgängig` entfernt sie alle.
+- Es ist eine Annäherung, weil Lightroom mit den Rohdaten arbeitet. Einstellungen, für die das Fotolabor keine Ebene hat (Klarheit, Struktur, Dunst entfernen, Schärfen, Rauschen, Körnung, Vignette, Farbmischer, Color Grading), bleiben außen vor, und eine Meldung sagt, welche.
+
+## Synchronisierung und Sicherung
+- Die Liste der Projekte folgt dir über die [orOS-Synchronisierung](help:t/sync). Die Bilder selbst liegen auf der orOS-Disk im Ordner `Photo Lab`, und Vault Drive synchronisiert sie Datei für Datei, verschlüsselt.
+- Hat sich dasselbe Bild auf zwei Geräten geändert, bevor sie synchronisiert haben, geht nichts verloren: Die Version des anderen Geräts wird als eigenes Projekt behalten.
+- Rückgängig-Verlauf, Werkzeugeinstellungen und Farben bleiben auf diesem Gerät.
+
+## Tastenkürzel
+- [[Ctrl+Z]]: rückgängig. [[Ctrl+Shift+Z]] oder [[Ctrl+Y]]: wiederholen.
+- [[Alt+N]]: neues Bild. [[Ctrl+O]]: Bild öffnen. [[Ctrl+Shift+S]]: exportieren.
+- [[Ctrl+C]], [[Ctrl+X]], [[Ctrl+V]]: kopieren, ausschneiden, einfügen. [[Delete]]: Auswahl leeren.
+- [[Ctrl+A]]: alles auswählen. [[Ctrl+D]]: Auswahl aufheben. [[Ctrl+Shift+I]]: Auswahl umkehren.
+- [[Alt+T]]: frei transformieren. [[Alt+Shift+N]]: neue Ebene. [[Ctrl+J]]: Ebene durch Kopieren. [[Ctrl+E]]: nach unten zusammenfügen.
+- [[Ctrl+U]]: Farbton / Sättigung. [[Ctrl+L]]: Tonwerte. [[Ctrl+I]]: umkehren. [[Ctrl+\]]: Maske oder Pixel bearbeiten.
+- [[Ctrl+=]], [[Ctrl+-]], [[Ctrl+0]], [[Ctrl+1]]: vergrößern, verkleinern, anpassen, 100 %.
+- [[Ctrl+Alt+R]]: Lineale. [[Ctrl+;]]: Hilfslinien. [[Ctrl+']]: Raster. [[Ctrl+Shift+;]]: ausrichten.
+- Werkzeuge: [[V]] Verschieben, [[M]] Auswahlrechteck, [[L]] Lasso, [[W]] Zauberstab, [[C]] Zuschneiden, [[B]] Pinsel, [[E]] Radiergummi, [[S]] Kopierstempel, [[J]] Reparaturpinsel, [[O]] Abwedeln / Nachbelichten / Schwamm, [[R]] Wischfinger, [[G]] Farbeimer ([[Shift+G]] Verlauf), [[I]] Pipette, [[T]] Text, [[U]] Form, [[H]] Hand, [[Z]] Zoom.
+- [[X]] tauscht die Farben, [[D]] setzt sie zurück, `[` und `]` ändern die Pinselgröße. Halte [[Space]], um die Ansicht zu bewegen.
+
+## Tipps
+> Willst du nur einen Teil eines Fotos bearbeiten? Wähle ihn zuerst aus: Pinsel, Füllungen und Einstellungen bleiben innerhalb der Auswahl.
+
+## Grenzen
+- Bilder bis 8192 px pro Seite auf Computern und 4096 px (etwa 16 Megapixel) auf Handys. Größere Bilder werden beim Öffnen verkleinert.
+- Bis zu 100 Ebenen pro Bild. Text- und Formebenen lassen sich verschieben und skalieren, aber nicht drehen; rastere sie zuerst.
+- Eine Maske bleibt an ihrem Platz, wenn du nur ihre Ebene spiegelst, drehst oder transformierst; Größe, Drehung und Spiegelung des ganzen Bildes bewegen sie mit der Ebene.
+- Alte Rückgängig-Schritte werden verworfen, wenn sie zu viel Speicher brauchen würden.
+- Photoshop-Dateien: RGB, Graustufen und CMYK mit 8 oder 16 Bit (CMYK-Farben werden einfach umgerechnet, ohne Farbprofil). Große Dokumente (PSB) und andere Farbmodi öffnen sich nicht.
+- RAW-Dateien bis 300 MB. Zum Entwickeln von RAW-Daten braucht es einen Browser, der das erlaubt (Chrome, Edge und andere Chromium-Browser); anderswo öffnet sich die in der Datei gespeicherte Vorschau. Manche seltenen oder sehr neuen Kameras werden vielleicht nicht gelesen; dann öffnet sich nichts.
+- Motiv auswählen findet ein Hauptmotiv; bei mehreren Personen oder einer unruhigen Szene muss die Maske vielleicht etwas nachgemalt werden.
+- Stapelverarbeitung: bis zu 2000 Fotos auf einmal und ein ZIP von 1 GB. Masken der Einstellungsebenen bleiben außen vor. PSD-, OpenRaster- und SVG-Dateien werden nicht genommen; das Bild für das Wasserzeichen und die Liste der Fotos werden nach dem Schließen des Dialogs nicht behalten.

@@ -10,6 +10,17 @@
 (function (root) {
   "use strict";
   var KEY = "oros-montage";
+  // The shell runs this file, not the Montage page: a pack language reads
+  // the "montage" pack when the shell has it, else English.
+  var TEXT = {
+    en: { "proj.untitled": "My video" },
+    el: { "proj.untitled": "Το βίντεό μου" }
+  };
+  function text(lang) {
+    var I = typeof window !== "undefined" && window.orosI18n;
+    if (!TEXT[lang] && I && typeof lang === "string") I.table(TEXT, "montage", lang);
+    return TEXT[lang] || TEXT.en;
+  }
 
   function str(v) { return typeof v === "string" ? v.trim() : ""; }
   function obj(v) { return v && typeof v === "object" && !Array.isArray(v) ? v : null; }
@@ -21,7 +32,7 @@
       var d = obj(ctx.readJSON(KEY)), out = [];
       var ps = d && obj(d.projects);
       if (!ps) return out;
-      var el = ctx.lang === "el";
+      var untitled = text(ctx.lang)["proj.untitled"];
       Object.keys(ps).forEach(function (id) {
         var p = obj(ps[id]);
         if (!p || !/^[a-z0-9]{1,40}$/.test(id)) return;
@@ -32,7 +43,7 @@
         });
         out.push({
           id: "p:" + id,
-          title: str(p.name) || (el ? "Το βίντεό μου" : "My video"),
+          title: str(p.name) || untitled,
           text: words.join(" · ").slice(0, 300),
           when: typeof p.m === "number" ? p.m : 0,
           target: { project: id }

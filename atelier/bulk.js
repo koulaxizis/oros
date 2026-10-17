@@ -206,10 +206,8 @@
       "bulk.badFile": "Αυτό το αρχείο δεν διαβάζεται."
     }
   };
-  ["en", "el"].forEach(function (l) {
-    AT.STRINGS[l] = AT.STRINGS[l] || {};
-    Object.keys(STR[l]).forEach(function (k) { AT.STRINGS[l][k] = STR[l][k]; });
-  });
+  // into Atelier's strings; a pack language gets its lines (core.js AT.addStrings)
+  AT.addStrings(STR);
 
   function textH(it) { return AX.textHeight(M.normItem(it)); }
 

@@ -29,6 +29,19 @@
     }).join(" ");
   }
 
+  // The one text of its own (same key and English as layout.js). The
+  // shell runs this file, not the Layout page: a pack language shows
+  // the "layout" pack line when the shell has it, else English.
+  var S = {
+    en: { "doc.untitled": "Untitled" },
+    el: { "doc.untitled": "Χωρίς τίτλο" }
+  };
+  function untitled(lang) {
+    var I = root && root.orosI18n;
+    var tab = S[lang] || (I && lang ? I.table(S, "layout", lang) : S.en);
+    return tab["doc.untitled"] || S.en["doc.untitled"];
+  }
+
   var PROVIDER = {
     id: "layout",
     keys: [KEY],
@@ -47,7 +60,7 @@
         var name = typeof doc.name === "string" ? doc.name.trim() : "";
         out.push({
           id: doc.id,
-          title: name || (ctx.lang === "el" ? "Χωρίς τίτλο" : "Untitled"),
+          title: name || untitled(ctx.lang),
           text: text,
           when: m,
           target: { doc: doc.id }

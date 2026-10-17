@@ -247,7 +247,20 @@ window.PL_STRINGS = {
     "batch.savedIn": "Saved in {path}.", "batch.pictures": "Pictures", "batch.failed": "Not done ({n}):",
     "batch.saveZip": "Save ZIP…", "batch.zipReady": "Photos in the ZIP: {n}.",
     "batch.errBig": "too big", "batch.errGone": "the file is no longer there", "batch.errEncode": "could not be saved in this format",
-    "batch.errZip": "the ZIP is full (1 GB)", "batch.errRead": "not a photo this browser can read"
+    "batch.errZip": "the ZIP is full (1 GB)", "batch.errRead": "not a photo this browser can read",
+    // Names of blend modes, size presets (core.js), looks and shapes (designkit/fx.js)
+    "blend.normal": "Normal", "blend.multiply": "Multiply", "blend.screen": "Screen", "blend.overlay": "Overlay", "blend.darken": "Darken",
+    "blend.lighten": "Lighten", "blend.dodge": "Color dodge", "blend.burn": "Color burn", "blend.hard": "Hard light", "blend.soft": "Soft light",
+    "blend.difference": "Difference", "blend.exclusion": "Exclusion", "blend.hue": "Hue", "blend.saturation": "Saturation", "blend.color": "Color",
+    "blend.luminosity": "Luminosity", "preset.hd": "Full HD 1920 × 1080", "preset.square": "Square post 1080 × 1080", "preset.story": "Story 1080 × 1920", "preset.phone": "Phone wallpaper 1440 × 3120",
+    "preset.a4": "A4 at 300 dpi", "preset.a5": "A5 at 300 dpi", "preset.web": "Web banner 1200 × 630", "preset.icon": "Icon 512 × 512", "look.none": "Original", "look.vivid": "Vivid",
+    "look.warm": "Warm", "look.cool": "Cool", "look.aegean": "Aegean", "look.summer": "Summer", "look.mono": "Mono",
+    "look.noir": "Noir", "look.sepia": "Sepia", "look.vintage": "Vintage", "look.faded": "Faded", "look.drama": "Dramatic",
+    "look.soft": "Soft", "shape.rect": "Square", "shape.rounded": "Rounded", "shape.circle": "Circle", "shape.triangle": "Triangle",
+    "shape.rtriangle": "Right triangle", "shape.diamond": "Diamond", "shape.pentagon": "Pentagon", "shape.hexagon": "Hexagon", "shape.octagon": "Octagon",
+    "shape.star": "Star", "shape.burst": "Badge", "shape.heart": "Heart", "shape.cross": "Cross", "shape.arrow": "Arrow",
+    "shape.chevron": "Chevron", "shape.parallelogram": "Parallelogram", "shape.trapezoid": "Trapezoid", "shape.arch": "Arch", "shape.drop": "Drop",
+    "shape.shield": "Shield", "shape.bubble": "Speech bubble"
   },
   el: {
     "app.name": "Εργαστήριο εικόνας",
@@ -494,6 +507,18 @@ window.PL_STRINGS = {
     "batch.savedIn": "Αποθηκεύτηκαν σε: {path}.", "batch.pictures": "Εικόνες", "batch.failed": "Δεν έγιναν ({n}):",
     "batch.saveZip": "Αποθήκευση ZIP…", "batch.zipReady": "Φωτογραφίες στο ZIP: {n}.",
     "batch.errBig": "πολύ μεγάλο", "batch.errGone": "το αρχείο δεν υπάρχει πια", "batch.errEncode": "δεν αποθηκεύτηκε σε αυτή τη μορφή",
-    "batch.errZip": "το ZIP γέμισε (1 GB)", "batch.errRead": "δεν είναι φωτογραφία που διαβάζει αυτός ο browser"
+    "batch.errZip": "το ZIP γέμισε (1 GB)", "batch.errRead": "δεν είναι φωτογραφία που διαβάζει αυτός ο browser",
+    "blend.normal": "Κανονική", "blend.multiply": "Πολλαπλασιασμός", "blend.screen": "Οθόνη", "blend.overlay": "Επικάλυψη", "blend.darken": "Σκούρυνση",
+    "blend.lighten": "Φωτισμός", "blend.dodge": "Αποφυγή χρώματος", "blend.burn": "Κάψιμο χρώματος", "blend.hard": "Σκληρό φως", "blend.soft": "Απαλό φως",
+    "blend.difference": "Διαφορά", "blend.exclusion": "Αποκλεισμός", "blend.hue": "Απόχρωση", "blend.saturation": "Κορεσμός", "blend.color": "Χρώμα",
+    "blend.luminosity": "Φωτεινότητα", "preset.hd": "Full HD 1920 × 1080", "preset.square": "Τετράγωνη ανάρτηση 1080 × 1080", "preset.story": "Story 1080 × 1920", "preset.phone": "Ταπετσαρία κινητού 1440 × 3120",
+    "preset.a4": "A4 στα 300 dpi", "preset.a5": "A5 στα 300 dpi", "preset.web": "Banner ιστού 1200 × 630", "preset.icon": "Εικονίδιο 512 × 512", "look.none": "Πρωτότυπο", "look.vivid": "Ζωντανό",
+    "look.warm": "Ζεστό", "look.cool": "Δροσερό", "look.aegean": "Αιγαίο", "look.summer": "Καλοκαίρι", "look.mono": "Ασπρόμαυρο",
+    "look.noir": "Νουάρ", "look.sepia": "Σέπια", "look.vintage": "Ρετρό", "look.faded": "Ξεθωριασμένο", "look.drama": "Δραματικό",
+    "look.soft": "Απαλό", "shape.rect": "Τετράγωνο", "shape.rounded": "Στρογγυλεμένο", "shape.circle": "Κύκλος", "shape.triangle": "Τρίγωνο",
+    "shape.rtriangle": "Ορθογώνιο τρίγωνο", "shape.diamond": "Ρόμβος", "shape.pentagon": "Πεντάγωνο", "shape.hexagon": "Εξάγωνο", "shape.octagon": "Οκτάγωνο",
+    "shape.star": "Αστέρι", "shape.burst": "Σήμα", "shape.heart": "Καρδιά", "shape.cross": "Σταυρός", "shape.arrow": "Βέλος",
+    "shape.chevron": "Σιρίτι", "shape.parallelogram": "Παραλληλόγραμμο", "shape.trapezoid": "Τραπέζιο", "shape.arch": "Αψίδα", "shape.drop": "Σταγόνα",
+    "shape.shield": "Ασπίδα", "shape.bubble": "Συννεφάκι"
   }
 };

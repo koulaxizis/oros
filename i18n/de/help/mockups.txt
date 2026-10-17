@@ -1,0 +1,67 @@
+# Mockups
+Mach realistische 3D-Bilder deines Buchs für eine Shopseite, einen Post oder eine Pressemappe. Das Buch entsteht aus seinen echten Maßen: Größe, Seitenzahl und Bindung ändern das Bild sofort.
+
+## Erste Schritte
+1. Drück `Buch-Mockup erstellen` (oder oben [[+]] für ein weiteres).
+2. Gib im Tab `Buch` die Bindung, die Größe und die Seiten an.
+3. Wähl im Tab `Cover` die Bilder für vorne, hinten und den Rücken.
+4. Zieh im Tab `Szene` am Bild, um die Kamera zu drehen, und wähl eine Position und einen Hintergrund.
+5. Wähl im Tab `Speichern` Form und Größe des Bilds und drück `Bild speichern`.
+
+## Das Buch
+- `Bindung`: `Taschenbuch` hat einen weichen Umschlag bündig mit den Seiten; `Hardcover` hat Deckel, die etwas größer als die Seiten sind, eine Rille neben dem Rücken und kann einen `Runder Rücken`, ein `Kapitalband` und ein `Lesebändchen` haben.
+- `Größe`: fertige Formate (A5, B-Format, 6 × 9″ und mehr) oder eigene Breite und Höhe, in mm oder Zoll.
+- `Seiten` und `Papier` ergeben den Rücken: Seiten × die Dicke einer Seite. Weißes und cremefarbenes Papier nutzen die Werte von Print-on-Demand-Diensten. Mit `Rückenbreite von Hand festlegen` gibst du den Rücken ein, den dir deine Druckerei genannt hat.
+- `Klappen`: Beim Taschenbuch sind es Klappen, die nach innen gefaltet sind (Klappenbroschur); beim Hardcover machen sie das Cover zum Schutzumschlag, und `Einband unter dem Schutzumschlag` legt die Farbe der Deckel fest. Öffne das Cover im Tab `Szene` ein wenig, um sie zu sehen.
+- `Oberfläche`: matt, glänzend (glänzt im Licht) oder Soft-Touch. Der `Seitenschnitt` kann weiß, creme oder farbig gesprüht sein.
+
+## Das Cover
+- `Vorne, hinten, Rücken`: ein Bild für jeden Teil und eins für jede Klappe, wenn es Klappen gibt. Ein Bild füllt seinen Teil und wird passend zugeschnitten.
+- `Ein ganzer Umschlag`: das ganze gedruckte Cover in einem Bild, so wie du es an die Druckerei schickst (hinten, Rücken und vorne, auch die Klappen). Es ist der Bogen aus dem Tab `Druck`: Die App sagt dir die genaue Größe und wo jeder Teil beginnt, und legt jeden Teil auf seine Seite des Buchs. `Beschnitt` ist der zusätzliche Rand rundherum.
+- Wo kein Bild ist, nimmt das Buch die `Farbe, wo kein Bild ist`, und der Rücken zeigt den `Rückentext`.
+- Bilder bleiben auf deiner orOS-Disk und reisen mit ihr auf deine anderen Geräte.
+
+## Mehrere Bücher
+- `Bücher im Bild` (im Tab `Szene`): `Ein Buch`, `Vorne + hinten` (dasselbe Buch zweimal, eins zeigt die Rückseite), `Reihe` (nebeneinander, Vorderseiten zur Kamera), `Regal` (stehend in einer Reihe, Rücken zur Kamera) oder `Stapel` (aufeinander liegend).
+- Bei einer Reihe, einem Regal oder einem Stapel geht `Wie viele Bücher` von 2 bis 6, und `Abstand dazwischen` legt den Abstand fest.
+- Im Tab `Cover` gibt `Die anderen Bücher` jedem Buch eigene Bilder, Seiten und Rückentext. Ein Buch ohne eigene übernimmt die des ersten Buchs, ein Stapel desselben Buchs braucht also nichts weiter.
+
+## Szene und Kamera
+- Zieh am Bild, um das Buch zu drehen. Zieh zwei Finger auseinander oder nutz das Mausrad, um näher zu kommen. Die Knöpfe unter dem Bild springen zu fertigen Blickwinkeln.
+- `Position`: stehend, auf dem Rücken liegend oder an eine Wand gelehnt. `Drehen` dreht das Buch auf dem Boden; `Cover öffnen` öffnet es bis zu 160°.
+- `Perspektive`: Niedrige Werte wirken flach wie ein Katalogbild, hohe Werte nah und dramatisch. `Nach links / rechts` und `Nach oben / unten` setzen das Buch im Bildausschnitt.
+- `Hintergrund`: durchsichtig, eine Farbe, ein Verlauf oder ein Foto. Bei `Foto` nimmt `Bild auswählen` eins von deinen, und `Freie Fotos suchen` sucht in Openverse und Wikimedia Commons (nur Fotos, die kommerzielle Nutzung erlauben). Ein freies Foto wird mit seinem Bildnachweis auf deiner orOS-Disk gespeichert und darunter gezeigt; `Bildnachweis kopieren` kopiert die Zeile, die du dort angibst, wo du das Bild veröffentlichst. `Schatten` legt fest, wie dunkel der Schatten auf dem Boden ist.
+- `Licht`: woher es kommt, wie hoch, wie stark, wie weich seine Schatten sind und ob kalt oder warm.
+
+## Offenes Buch und E-Book
+`Was zeigen` (im Tab `Szene`) ändert, was im Bild ist: `Das Buch`, ein `Offenes Buch`, das aufgeschlagen auf dem Rücken liegt, oder ein `E-Book` auf einem Bildschirm.
+- Offenes Buch: Im Tab `Cover` nimmt `Innenseiten` ein Bild für die linke und die rechte Seite. `Seiten aus einem PDF` nimmt das PDF deines Buchs und legt zwei seiner Seiten auf die Doppelseite; `Seite` ist die linke, ändere sie also, um andere Seiten zu zeigen. Die Seiten werden zu Bildern auf deiner orOS-Disk; das PDF selbst wird nicht behalten. `Seitenwölbung` legt fest, wie stark sich die Seiten wölben.
+- Die Dicke des offenen Buchs, sein Papier und sein Cover folgen dem Tab `Buch`.
+- E-Book: Wähl `Tablet`, `Handy` oder `E-Reader` und Schwarz, Weiß oder Silber. Der Bildschirm zeigt `Bildschirm` (ein Bild oder eine PDF-Seite), sonst die rechte Seite, sonst das vordere Cover. Ein E-Reader zeigt es grau, wie E-Ink. Position, Kamera, Licht, Hintergrund, alle Ansichten und das Video funktionieren wie beim Buch.
+
+## Für die Druckerei
+Der Tab `Druck` erstellt den Cover-Bogen, den deine Druckerei verlangt, aus den Werten dieses Buchs. Das Bild oben wird zum flachen Bogen.
+- Ein Taschenbuch-Bogen ist Rückseite · Rücken · Vorderseite (mit den Klappen an den Enden), plus den `Beschnitt` rundherum, der abgeschnitten wird. Der Rücken ist Seiten × die Dicke einer Seite, so wie Print-on-Demand-Dienste rechnen.
+- Ein Hardcover-Einband hat die Deckel, zwei Gelenke neben dem Rücken und 15 mm, die um die Deckel geschlagen werden. Mit Klappen ist es ein Schutzumschlag.
+- Die Hilfslinien: Rot ist der Beschnitt (oder der Einschlag), die rote Linie ist der Schnitt, blaue Striche sind Falze, lila Striche sind Gelenke, und grüne Striche sind der Sicherheitsbereich: Halte Text darin. Das weiße Feld hinten ist der Platz für den Barcode.
+- `Mit meinen Coverbildern` legt deine Vorderseite, Rückseite und deinen Rücken (oder den ganzen Umschlag) auf den Bogen. Ist `Hilfslinien zeigen` aus, bekommst du dein fertiges Cover mit Beschnitt, bereit zum Verschicken.
+- `PNG speichern` und `PDF speichern` erstellen ihn mit 300 dpi; das PDF hat die Endformat- und Beschnittrahmen, die Druckereien lesen. `In Atelier gestalten` erstellt ein Atelier-Design in der richtigen Größe mit Beschnitt; die Hilfslinien sind beim Arbeiten dort zu sehen, werden aber nie gedruckt oder exportiert. Wenn es fertig ist, bringt `Mehr` › `Buch-Mockup erstellen` in Atelier es zurück auf dieses Buch.
+- Die eigene Vorlage deiner Druckerei hat Vorrang. Gibt sie eine andere Rückenbreite an, trag sie unter `Buch` › `Rückenbreite von Hand festlegen` ein; ihren Beschnitt stellst du hier ein.
+
+## Speichern
+- `Bildform`: quadratisch, 4:5 (Posts), 3:2, 4:3, 16:9 oder 9:16 (Storys). `Größe` ist die lange Seite, bis 4096 px; manche Handys zeichnen weniger, und die App sagt es dir.
+- PNG und WebP behalten einen durchsichtigen Hintergrund; JPG macht ihn weiß.
+- `In Pictures speichern` legt es in den Ordner Pictures in Dateien. `In Atelier öffnen` erstellt ein neues Atelier-Design mit dem Bild, um Text und mehr hinzuzufügen.
+
+## Alle Ansichten und Video
+- `Alle Ansichten speichern (ZIP)` erstellt die sieben fertigen Ansichten (vorne, ¾ von beiden Seiten, Rücken, hinten, von oben, von unten) in der Größe und im Format oben, in einer ZIP-Datei. `Alle Ansichten in Pictures` legt sie in einen neuen Ordner in Pictures.
+- `Drehteller-Video`: Die Bücher drehen sich `Rundherum` oder `Hin und her`, 4 bis 12 Sekunden lang. `Video` erstellt ein MP4 (oder WebM, wenn der Browser keinen MP4-Encoder hat) mit 720 oder 1080 px; `GIF` erstellt ein kleines GIF in Schleife (480 px, höchstens 8 Sekunden). `Abbrechen` stoppt es. Wenn es fertig ist, speichere es oder leg es in Videos ab (ein GIF kommt in Pictures).
+- Das Video entsteht auf deinem Gerät, Bild für Bild; ein langes oder großes dauert auf einem Handy etwas. Ein Video kann nicht durchsichtig sein, ein durchsichtiger Hintergrund wird also weiß.
+
+## Atelier
+In Atelier schickt `Mehr` › `Buch-Mockup erstellen` das Design hierher: Seite 1 wird die Vorderseite, Seite 2 die Rückseite und Seite 3 der Rücken. Eine breite Seite gilt als ganzer Umschlag. Ein Design in mm gibt dem Buch auch seine Größe.
+
+## Deine Mockups
+- Jedes Mockup wird mit seinen Einstellungen gespeichert und folgt dir per orOS-Synchronisierung verschlüsselt auf jedes Gerät.
+- `Mehr` (die drei Punkte) hat `Dieses Mockup duplizieren`, `Kamera und Licht zurücksetzen` und `Dieses Mockup löschen`.
+- Tastenkürzel: Ctrl+Shift+S speichert das Bild. Auf dem Bild: Pfeiltasten drehen die Kamera, + und − kommen näher oder entfernen sich.

@@ -28,17 +28,21 @@
     return gr + la ? gr / (gr + la) : 0;
   }
   function isGreek(s) { return greekShare(str(s)) >= 0.5; }
+  // The app's language (orosI18n code) → its name for the model
+  var LANG_NAMES = { en: "English", el: "Greek", de: "German" };
+  function langName(l) { return LANG_NAMES[l] || "English"; }
 
   var BASE = "You write the words for a graphic design (a social media post, poster, invitation, card, flyer). " +
     "Reply with the text only: no quotes around it, no Markdown, no title, no explanation, no options to choose from. " +
     "Keep it as short as a design needs.";
 
   // → { system, user }. opts: { ask (what the user typed, for write),
-  // lang "en" | "el" (the app's language, used when there is no text) }
+  // lang "en" | "el" | "de"… (the app's language, used when there is no text) }
   function rewrite(kind, text, opts) {
     opts = opts || {};
     text = str(text).slice(0, MAX_TX);
-    var lang = text.trim() ? (isGreek(text) ? "Greek" : "English") : (opts.lang === "el" ? "Greek" : "English");
+    // a text that is not Greek: English, or the app's language when it is another one
+    var lang = text.trim() ? (isGreek(text) ? "Greek" : opts.lang && opts.lang !== "en" && opts.lang !== "el" ? "the language of the text" : "English") : langName(opts.lang);
     var keep = " Write it in " + lang + ".";
     var user;
     switch (kind) {
@@ -68,7 +72,7 @@
     var fence = /^```[a-z]*\n([\s\S]*?)\n?```$/i.exec(s);
     if (fence) s = fence[1].trim();
     var lines = s.split("\n");
-    if (lines.length > 1 && /^(here('s| is| are)|sure|certainly|ορίστε|ιδού|εδώ (είναι|το))[^\n]*:\s*$/i.test(lines[0].trim())) {
+    if (lines.length > 1 && /^(here(\x27s| is| are)|sure|certainly|ορίστε|ιδού|εδώ (είναι|το))[^\n]*:\s*$/i.test(lines[0].trim())) {
       s = lines.slice(1).join("\n").trim();
     }
     s = s.replace(/^#{1,6}\s+/gm, "").replace(/\*\*([^*\n]+)\*\*/g, "$1").replace(/__([^_\n]+)__/g, "$1");
@@ -105,7 +109,7 @@
     opts = opts || {};
     topic = str(topic).slice(0, 2000).trim();
     var lang = /[Ͱ-Ͽ]/.test(topic) ? "Greek" : /[A-Za-z]/.test(topic) ? "the language of the request" :
-      (slots.some(function (s) { return isGreek(s.tx); }) ? "Greek" : opts.lang === "el" ? "Greek" : "English");
+      (slots.some(function (s) { return isGreek(s.tx); }) ? "Greek" : langName(opts.lang));
     var boxes = slots.map(function (s, i) {
       return (i + 1) + ". " + s.role + ", now " + s.chars + " characters: " + JSON.stringify(s.tx);
     }).join("\n");

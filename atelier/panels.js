@@ -199,7 +199,7 @@
     FX.SHAPES.forEach(function (sh) {
       var b = el("button", "el-tile");
       b.type = "button";
-      b.title = AT.lbl(sh); b.setAttribute("aria-label", AT.lbl(sh));
+      b.title = AT.fxLbl("shp", sh); b.setAttribute("aria-label", AT.fxLbl("shp", sh));
       b.appendChild(AT.svgPath(FX.toSvgPath(FX.shapePath(sh.id, 40, 40, {})), 40, 40));
       b.addEventListener("click", function () {
         var s = Math.min(AT.doc.setup.w, AT.doc.setup.h) * 0.3;
@@ -230,7 +230,7 @@
     s3.appendChild(q);
     var cats = el("div", "chips");
     [["", t("el.all"), t("el.all")]].concat(ICONS.cats).forEach(function (c) {
-      var b = btn("chip-btn" + (iconCat === c[0] ? " on" : ""), AT.LANG === "el" ? c[2] : c[1], function () {
+      var b = btn("chip-btn" + (iconCat === c[0] ? " on" : ""), AT.lbl3(c), function () {
         iconCat = c[0]; iconLimit = 120; renderDrawer();
       });
       cats.appendChild(b);
@@ -804,7 +804,7 @@
       });
       var prev = el("span", "fx-prev fx-" + f.id, "Ag");
       b.appendChild(prev);
-      b.appendChild(el("span", "fx-name", AT.lbl(f)));
+      b.appendChild(el("span", "fx-name", AT.fxLbl("tfx", f)));
       g.appendChild(b);
     });
     body.appendChild(g);
@@ -860,7 +860,7 @@
         th.appendChild(im);
       }
       b.appendChild(th);
-      b.appendChild(el("span", "flt-name", AT.lbl(f)));
+      b.appendChild(el("span", "flt-name", AT.fxLbl("flt", f)));
       g.appendChild(b);
     });
     body.appendChild(g);
@@ -897,7 +897,7 @@
       if (sh.id === "rect") return;
       var b = el("button", "el-tile" + (it.ax.shp === sh.id ? " on" : ""));
       b.type = "button";
-      b.title = AT.lbl(sh); b.setAttribute("aria-label", AT.lbl(sh));
+      b.title = AT.fxLbl("shp", sh); b.setAttribute("aria-label", AT.fxLbl("shp", sh));
       b.appendChild(AT.svgPath(FX.toSvgPath(FX.shapePath(sh.id, 40, 40, {})), 40, 40));
       b.addEventListener("click", function () { edit(function (x) { x.ax.shp = sh.id; }); });
       g.appendChild(b);

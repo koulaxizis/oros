@@ -30,6 +30,18 @@
     }).join(" ");
   }
 
+  // Its one text of its own (same key and English as core.js). The
+  // shell runs this file, not the Atelier page: a pack language shows
+  // the "atelier" pack line when the shell has it, else English.
+  var S = {
+    en: { "doc.untitled": "Untitled design" },
+    el: { "doc.untitled": "Σχέδιο χωρίς τίτλο" }
+  };
+  function texts(lang) {
+    var I = root && root.orosI18n;
+    return S[lang] || (I && lang ? I.table(S, "atelier", lang) : S.en);
+  }
+
   var PROVIDER = {
     id: "atelier",
     keys: [KEY],
@@ -57,7 +69,7 @@
         var name = typeof doc.name === "string" ? doc.name.trim() : "";
         out.push({
           id: doc.id,
-          title: name || (ctx.lang === "el" ? "Σχέδιο χωρίς τίτλο" : "Untitled design"),
+          title: name || texts(ctx.lang)["doc.untitled"],
           text: text,
           when: m,
           target: { doc: doc.id }

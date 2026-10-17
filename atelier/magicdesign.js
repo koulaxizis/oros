@@ -20,20 +20,22 @@
 
   // ---------- Pure: which templates fit a description ----------
   // words (folded: no accents, lower case, ς → σ) → template category
+  // (English, Greek and German words: parser data, not UI text)
   var CAT_WORDS = {
-    social: ["instagram", "insta", "facebook", "post", "αναρτηση", "ποστ", "social", "linkedin"],
+    social: ["instagram", "insta", "facebook", "post", "αναρτηση", "ποστ", "social", "linkedin", "beitrag"],
     story: ["story", "stories", "reel", "tiktok", "στορι", "ιστορια"],
-    video: ["youtube", "thumbnail", "μικρογραφια", "βιντεο", "video"],
-    pres: ["presentation", "slides", "slide", "deck", "παρουσιαση", "διαφανειε"],
-    poster: ["poster", "αφισα", "afisa"],
-    flyer: ["flyer", "leaflet", "φυλλαδιο", "φλαιερ"],
-    biz: ["business card", "card", "καρτα", "επαγγελματικη"],
-    invite: ["invitation", "invite", "wedding", "birthday", "baptism", "προσκληση", "γαμο", "γενεθλια", "βαφτιση", "παρτι", "party"],
-    cv: ["cv", "resume", "βιογραφικο"],
-    cert: ["certificate", "diploma", "award", "βεβαιωση", "διπλωμα", "πιστοποιητικο", "επαινο"],
-    menu: ["menu", "μενου", "καταλογο", "τιμοκαταλογο"],
-    data: ["chart", "graph", "table", "infographic", "γραφημα", "πινακα", "πινακας"],
-    brand: ["logo", "banner", "header", "λογοτυπο", "μπανερ", "σημα"]
+    video: ["youtube", "thumbnail", "μικρογραφια", "βιντεο", "video", "vorschaubild"],
+    pres: ["presentation", "slides", "slide", "deck", "παρουσιαση", "διαφανειε", "prasentation", "folien"],
+    poster: ["poster", "αφισα", "afisa", "plakat"],
+    flyer: ["flyer", "leaflet", "φυλλαδιο", "φλαιερ", "handzettel"],
+    biz: ["business card", "card", "καρτα", "επαγγελματικη", "visitenkarte"],
+    invite: ["invitation", "invite", "wedding", "birthday", "baptism", "προσκληση", "γαμο", "γενεθλια", "βαφτιση", "παρτι", "party",
+      "einladung", "hochzeit", "geburtstag", "taufe", "feier"],
+    cv: ["cv", "resume", "βιογραφικο", "lebenslauf"],
+    cert: ["certificate", "diploma", "award", "βεβαιωση", "διπλωμα", "πιστοποιητικο", "επαινο", "urkunde", "zertifikat"],
+    menu: ["menu", "μενου", "καταλογο", "τιμοκαταλογο", "speisekarte", "preisliste"],
+    data: ["chart", "graph", "table", "infographic", "γραφημα", "πινακα", "πινακας", "diagramm", "tabelle", "infografik"],
+    brand: ["logo", "banner", "header", "λογοτυπο", "μπανερ", "σημα", "kopfzeile"]
   };
   // a platform's name → its presets (presets.js ids)
   var PLATFORM = { instagram: /^(ig-|story)/, insta: /^(ig-|story)/, facebook: /^fb-/, youtube: /^yt-/, linkedin: /^li-/ };
@@ -59,7 +61,9 @@
     n = n || 3;
     var cats = guessCats(desc), words = wordsOf(desc);
     var scored = list.map(function (tpl, i) {
-      var hay = fold([tpl.en, tpl.el, tpl.tags ? tpl.tags.en : "", tpl.tags ? tpl.tags.el : "", tpl.preset].join(" "));
+      // names and tags in every language the template has (en, el, a pack language)
+      var langs = tpl.tags ? Object.keys(tpl.tags) : ["en", "el"];
+      var hay = fold(langs.map(function (l) { return (tpl[l] || "") + " " + (tpl.tags ? tpl.tags[l] || "" : ""); }).concat([tpl.preset]).join(" "));
       var s = 0;
       if (cats.length && cats.indexOf(tpl.cat) >= 0) s += 10 - cats.indexOf(tpl.cat);
       // a named platform: its own sizes first
@@ -147,10 +151,8 @@
       "ma.go": "Κίνηση σε όλες τις σελίδες", "ma.done": "Κάθε σελίδα έχει κίνηση. Πάτα Αναπαραγωγή να το δεις.", "ma.clear": "Αφαίρεση όλων των κινήσεων", "ma.cleared": "Οι κινήσεις αφαιρέθηκαν"
     }
   };
-  Object.keys(STR).forEach(function (l) {
-    AT.STRINGS[l] = AT.STRINGS[l] || {};
-    Object.keys(STR[l]).forEach(function (k) { AT.STRINGS[l][k] = STR[l][k]; });
-  });
+  // into Atelier's strings; a pack language gets its lines (core.js AT.addStrings)
+  AT.addStrings(STR);
 
   function now() { return Date.now(); }
 

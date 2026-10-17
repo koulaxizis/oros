@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.10.00
+- Photo Lab, Atelier, Layout, Montage and Mockups are now in German.
+
 ## Version 3.09.01
 - Android app: Calendar reminders now ring with orOS closed, also when your events are not copied to the phone's Calendar.
 

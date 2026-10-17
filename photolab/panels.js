@@ -153,7 +153,7 @@
 
   // ---------- Dialogs ----------
   function newDialog() {
-    var presets = C.PRESETS.map(function (p) { return [p.id, p[PL.LANG] || p.en]; });
+    var presets = C.PRESETS.map(function (p) { return [p.id, PL.listName("preset", p)]; });
     presets.unshift(["custom", t("new.custom")]);
     var name = textIn(t("doc.untitled")), pre = select(presets, "hd");
     var w = numIn(1920, 1, 8192), h = numIn(1080, 1, 8192);
@@ -343,7 +343,7 @@
       var grid = el("div", "looks");
       p.id = "none";
       FX.FILTERS.forEach(function (f) {
-        var b = el("button", "chip" + (f.id === "none" ? " on" : ""), f[PL.LANG] || f.en);
+        var b = el("button", "chip" + (f.id === "none" ? " on" : ""), PL.listName("look", f));
         b.type = "button";
         b.addEventListener("click", function () {
           p.id = f.id;
@@ -932,7 +932,7 @@
       box.appendChild(optSelect(t("f.ratio"), ratios, P.cropRatio, function (v) { P.cropRatio = v; }));
       box.appendChild(optButton(t("btn.applyCrop"), function () { PL.tools.applyCrop(); }, true));
     } else if (id === "shape") {
-      box.appendChild(optSelect(t("f.shape"), FX.SHAPES.map(function (s) { return [s.id, s[PL.LANG] || s.en]; }), P.shape.id,
+      box.appendChild(optSelect(t("f.shape"), FX.SHAPES.map(function (s) { return [s.id, PL.listName("shape", s)]; }), P.shape.id,
         function (v) { P.shape.id = v; }));
       box.appendChild(optCheck(t("f.noFill"), P.shape, "noFill"));
       box.appendChild(optCheck(t("f.strokeBg"), P.shape, "stroke"));
@@ -1046,7 +1046,7 @@
     // Active layer properties.
     var bl = $("blend-sel"), op = $("opacity-in");
     bl.innerHTML = "";
-    C.BLENDS.forEach(function (b) { var o = el("option", "", b[PL.LANG] || b.en); o.value = b.id; bl.appendChild(o); });
+    C.BLENDS.forEach(function (b) { var o = el("option", "", PL.listName("blend", b)); o.value = b.id; bl.appendChild(o); });
     if (A) { bl.value = A.bl; op.value = String(A.op); $("opacity-out").textContent = A.op + "%"; }
     bl.disabled = op.disabled = !A;
     if (A && A.k === "adj") bl.disabled = true;           // adjustments mix normally

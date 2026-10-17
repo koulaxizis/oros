@@ -39,7 +39,9 @@
   AT.STORAGE_KEY = STORAGE_KEY;
 
   // ---------- 1. i18n ----------
+  // orosI18n (../i18n.js): the full language code, a pack language included.
   function appLang() {
+    if (window.orosI18n) return window.orosI18n.lang();
     try {
       var l = localStorage.getItem("oros-lang") ||
               (window.parent && window.parent.orosLang) || "en";
@@ -247,7 +249,13 @@
       "tl.all": "All", "tl.search": "Search templates", "tl.none": "No template matches.", "tl.count": "{n} templates", "tl.more": "Show all {n} templates",
       "exp.pdfFlat": "Whole pages as pictures (exact look, text can't be selected)",
       "exp.pdfPics": "Pictures and effects at",
-      "dlg.rename": "Rename", "a11y.canvas": "Design canvas", "a11y.pages": "Pages"
+      "dlg.rename": "Rename", "a11y.canvas": "Design canvas", "a11y.pages": "Pages",
+      // designkit fx.js SHAPES names (a pack language translates them here)
+      "shp.rect": "Square", "shp.rounded": "Rounded", "shp.circle": "Circle", "shp.triangle": "Triangle", "shp.rtriangle": "Right triangle", "shp.diamond": "Diamond", "shp.pentagon": "Pentagon", "shp.hexagon": "Hexagon", "shp.octagon": "Octagon", "shp.star": "Star", "shp.burst": "Badge", "shp.heart": "Heart", "shp.cross": "Cross", "shp.arrow": "Arrow", "shp.chevron": "Chevron", "shp.parallelogram": "Parallelogram", "shp.trapezoid": "Trapezoid", "shp.arch": "Arch", "shp.drop": "Drop", "shp.shield": "Shield", "shp.bubble": "Speech bubble",
+      // designkit fx.js TEXT_FX names (a pack language translates them here)
+      "tfx.none": "None", "tfx.shadow": "Shadow", "tfx.lift": "Lift", "tfx.hollow": "Hollow", "tfx.outline": "Outline", "tfx.splice": "Splice", "tfx.echo": "Echo", "tfx.glitch": "Glitch", "tfx.neon": "Neon", "tfx.background": "Background",
+      // designkit fx.js FILTERS names (a pack language translates them here)
+      "flt.none": "Original", "flt.vivid": "Vivid", "flt.warm": "Warm", "flt.cool": "Cool", "flt.aegean": "Aegean", "flt.summer": "Summer", "flt.mono": "Mono", "flt.noir": "Noir", "flt.sepia": "Sepia", "flt.vintage": "Vintage", "flt.faded": "Faded", "flt.drama": "Dramatic", "flt.soft": "Soft"
     },
     el: {
       "app.name": "Ατελιέ", "loading": "Φόρτωση γραμματοσειρών…",
@@ -447,10 +455,30 @@
       "tl.all": "Όλα", "tl.search": "Αναζήτηση προτύπων", "tl.none": "Κανένα πρότυπο δεν ταιριάζει.", "tl.count": "{n} πρότυπα", "tl.more": "Όλα τα πρότυπα ({n})",
       "exp.pdfFlat": "Ολόκληρες σελίδες ως εικόνες (ακριβής εμφάνιση, το κείμενο δεν επιλέγεται)",
       "exp.pdfPics": "Εικόνες και εφέ σε",
-      "dlg.rename": "Μετονομασία", "a11y.canvas": "Καμβάς σχεδίου", "a11y.pages": "Σελίδες"
+      "dlg.rename": "Μετονομασία", "a11y.canvas": "Καμβάς σχεδίου", "a11y.pages": "Σελίδες",
+      // designkit fx.js SHAPES names (a pack language translates them here)
+      "shp.rect": "Τετράγωνο", "shp.rounded": "Στρογγυλεμένο", "shp.circle": "Κύκλος", "shp.triangle": "Τρίγωνο", "shp.rtriangle": "Ορθογώνιο τρίγωνο", "shp.diamond": "Ρόμβος", "shp.pentagon": "Πεντάγωνο", "shp.hexagon": "Εξάγωνο", "shp.octagon": "Οκτάγωνο", "shp.star": "Αστέρι", "shp.burst": "Σήμα", "shp.heart": "Καρδιά", "shp.cross": "Σταυρός", "shp.arrow": "Βέλος", "shp.chevron": "Σιρίτι", "shp.parallelogram": "Παραλληλόγραμμο", "shp.trapezoid": "Τραπέζιο", "shp.arch": "Αψίδα", "shp.drop": "Σταγόνα", "shp.shield": "Ασπίδα", "shp.bubble": "Συννεφάκι",
+      // designkit fx.js TEXT_FX names (a pack language translates them here)
+      "tfx.none": "Κανένα", "tfx.shadow": "Σκιά", "tfx.lift": "Ανύψωση", "tfx.hollow": "Κούφιο", "tfx.outline": "Περίγραμμα", "tfx.splice": "Μετατόπιση", "tfx.echo": "Ηχώ", "tfx.glitch": "Glitch", "tfx.neon": "Νέον", "tfx.background": "Φόντο",
+      // designkit fx.js FILTERS names (a pack language translates them here)
+      "flt.none": "Πρωτότυπο", "flt.vivid": "Ζωντανό", "flt.warm": "Ζεστό", "flt.cool": "Δροσερό", "flt.aegean": "Αιγαίο", "flt.summer": "Καλοκαίρι", "flt.mono": "Ασπρόμαυρο", "flt.noir": "Νουάρ", "flt.sepia": "Σέπια", "flt.vintage": "Ρετρό", "flt.faded": "Ξεθωριασμένο", "flt.drama": "Δραματικό", "flt.soft": "Απαλό"
     }
   };
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "atelier", LANG);
   AT.STRINGS = STRINGS;
+  // The other files add their own tables to AT.STRINGS: a pack language
+  // gets their lines too (STR[LANG], built by orosI18n.table).
+  AT.addStrings = function (STR) {
+    if (window.orosI18n) window.orosI18n.table(STR, "atelier", LANG);
+    Object.keys(STR).forEach(function (l) {
+      STRINGS[l] = STRINGS[l] || {};
+      Object.keys(STR[l]).forEach(function (k) { STRINGS[l][k] = STR[l][k]; });
+    });
+  };
+  // Dates and numbers: the language's locale.
+  AT.locale = function () { return window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB"); };
+  // For shared modules that know only "el" and "en".
+  AT.BASE = LANG === "el" ? "el" : "en";
 
   function t(key, vars) {
     var s = (STRINGS[LANG] && STRINGS[LANG][key]) || STRINGS.en[key] || key;
@@ -458,7 +486,21 @@
     return s;
   }
   AT.t = t;
-  AT.lbl = function (o) { return o ? (LANG === "el" ? o.el : o.en) : ""; };
+  // { en, el } (and a pack language's own, see templates.js) → this language's text
+  AT.lbl = function (o) { return o ? (LANG === "el" ? o.el : (o[LANG] != null ? o[LANG] : o.en)) : ""; };
+  // [id, EN, EL] rows (categories, groups): a pack language's text is row[LANG]
+  AT.lbl3 = function (r) { return r ? (LANG === "el" ? r[2] : (r[LANG] != null ? r[LANG] : r[1])) : ""; };
+  // presets.js rows [id, group, EN, EL, …]
+  // designkit fx.js SHAPES / TEXT_FX / FILTERS entry → its name. A pack
+  // language reads the "shp." / "tfx." / "flt." line of this table, while
+  // its English is still the designkit's.
+  AT.fxLbl = function (pre, o) {
+    if (!o) return "";
+    var k = pre + "." + o.id;
+    if (LANG !== "en" && LANG !== "el" && STRINGS.en[k] === o.en && STRINGS[LANG] && STRINGS[LANG][k]) return STRINGS[LANG][k];
+    return AT.lbl(o);
+  };
+  AT.presetName = function (p) { return LANG === "el" ? p[3] : (p[LANG] != null ? p[LANG] : p[2]); };
 
   // BOOT MARKER
   try { console.log("[orOS] atelier app v1.0.0 booted"); } catch (e) {}
@@ -813,6 +855,9 @@
     var d = new Date(ms);
     var dd = ("0" + d.getDate()).slice(-2), mm = ("0" + (d.getMonth() + 1)).slice(-2);
     var hh = ("0" + d.getHours()).slice(-2), mi = ("0" + d.getMinutes()).slice(-2);
+    if (LANG !== "el" && LANG !== "en") {
+      try { return d.toLocaleString(AT.locale(), { dateStyle: "short", timeStyle: "short" }); } catch (e) {}
+    }
     return LANG === "el" ? dd + "/" + mm + "/" + d.getFullYear() + " " + hh + ":" + mi
       : d.getFullYear() + "-" + mm + "-" + dd + " " + hh + ":" + mi;
   }
@@ -918,7 +963,7 @@
         b.appendChild(el("span", "tpl-name", AT.lbl(tpl)));
         if (!st.cat) {
           var c = TPL.CATS.filter(function (x) { return x[0] === tpl.cat; })[0];
-          if (c) b.appendChild(el("span", "tpl-cat", LANG === "el" ? c[2] : c[1]));
+          if (c) b.appendChild(el("span", "tpl-cat", AT.lbl3(c)));
         }
         b.title = AT.lbl(tpl);
         b.addEventListener("click", function () { onPick(tpl); });
@@ -946,7 +991,7 @@
       var chips = el("div", "chips");
       chips.setAttribute("role", "group");
       [["", t("tl.all"), t("tl.all")]].concat(TPL.usedCats(TPL.list)).forEach(function (c) {
-        var b = el("button", "chip-btn" + ((st.cat || "") === c[0] ? " on" : ""), LANG === "el" ? c[2] : c[1]);
+        var b = el("button", "chip-btn" + ((st.cat || "") === c[0] ? " on" : ""), AT.lbl3(c));
         b.type = "button";
         b.setAttribute("aria-pressed", (st.cat || "") === c[0] ? "true" : "false");
         b.addEventListener("click", function () {
@@ -973,7 +1018,7 @@
     if (!sizes.childNodes.length) {
       AT.PRESETS.groups.forEach(function (g) {
         var sec = el("div", "size-group");
-        sec.appendChild(el("h3", "size-h", LANG === "el" ? g[2] : g[1]));
+        sec.appendChild(el("h3", "size-h", AT.lbl3(g)));
         var row = el("div", "size-row");
         AT.PRESETS.list.filter(function (p) { return p[1] === g[0]; }).forEach(function (p) {
           var b = el("button", "size-card");
@@ -981,11 +1026,11 @@
           var sz = presetSize(p);
           b.appendChild(sizeIcon(sz.w, sz.h));
           var tx = el("span", "size-txt");
-          tx.appendChild(el("span", "size-name", LANG === "el" ? p[3] : p[2]));
+          tx.appendChild(el("span", "size-name", AT.presetName(p)));
           tx.appendChild(el("span", "size-dim", p[4] + " × " + p[5] + " " + p[6]));
           b.appendChild(tx);
           b.addEventListener("click", function () {
-            createDoc({ name: LANG === "el" ? p[3] : p[2], w: sz.w, h: sz.h, unit: p[6] });
+            createDoc({ name: AT.presetName(p), w: sz.w, h: sz.h, unit: p[6] });
           });
           row.appendChild(b);
         });

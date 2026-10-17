@@ -584,7 +584,7 @@
   // ---------- Credits ----------
   function creditsDialog() {
     var list = AX.credits(AT.doc);
-    var lines = MEDIA ? MEDIA.credits(list, AT.LANG) : [];
+    var lines = MEDIA ? MEDIA.credits(list, AT.BASE) : [];
     AT.openDialog(t("credits.title"), function (body, close) {
       if (!lines.length) body.appendChild(el("p", "hint", t("credits.none")));
       lines.forEach(function (s) { body.appendChild(el("p", "credit-line", s)); });
@@ -647,7 +647,7 @@
         AT.PRESETS.list.forEach(function (p, i) {
           if (!pick[i]) return;
           var s = AT.presetSize(p);
-          out.push({ w: s.w, h: s.h, unit: p[6], label: AT.LANG === "el" ? p[3] : p[2] });
+          out.push({ w: s.w, h: s.h, unit: p[6], label: AT.presetName(p) });
         });
         if (custom.on && custom.w > 0 && custom.h > 0) {
           var mm = custom.unit === "mm";
@@ -677,7 +677,7 @@
       AT.PRESETS.list.forEach(function (p, i) {
         var s = AT.presetSize(p);
         var same = Math.abs(s.w - d.setup.w) < 0.5 && Math.abs(s.h - d.setup.h) < 0.5;
-        row(AT.LANG === "el" ? p[3] : p[2], p[4] + " × " + p[5] + " " + p[6] + (same ? " · " + t("resize.current") : ""), false,
+        row(AT.presetName(p), p[4] + " × " + p[5] + " " + p[6] + (same ? " · " + t("resize.current") : ""), false,
           function (v) { if (v) pick[i] = 1; else delete pick[i]; });
       });
       // custom size

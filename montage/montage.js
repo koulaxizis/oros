@@ -51,8 +51,9 @@
       return l === "el" ? "el" : "en";
     } catch (e) { return "en"; }
   }
-  var LANG = appLang();
-  var LOCALE = LANG === "el" ? "el-GR" : "en-GB";
+  // orosI18n (../i18n.js): the full language code, a pack language included.
+  var LANG = window.orosI18n ? window.orosI18n.lang() : appLang();
+  var LOCALE = window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB");
 
   var STRINGS = {
     en: {
@@ -137,7 +138,7 @@
       "asr.head": "Subtitles from speech",
       "asr.hint": "Montage listens to the project's sound and writes what is said as subtitles, on this device: the sound is not sent anywhere. Check the lines afterwards; names and quiet speech can come out wrong.",
       "asr.need": "The first time, Montage downloads the speech model (Whisper, about {mb} MB, from Hugging Face) and the speech runtime (about {rt} MB, from this site) and keeps them on this device. After that it works offline.",
-      "asr.ready": "The speech model is on this device.", "asr.lang": "Language",
+      "asr.ready": "The speech model is on this device.", "asr.lang": "Language", "asr.en": "English", "asr.el": "Ελληνικά",
       "asr.auto": "Find it", "asr.go": "Make subtitles", "asr.forget": "Remove the speech model",
       "asr.gone": "The speech model was removed from this device.",
       "asr.mixing": "Reading the sound… {p}%", "asr.download": "Downloading the speech model… {p}%",
@@ -281,7 +282,7 @@
       "asr.head": "Υπότιτλοι από την ομιλία",
       "asr.hint": "Το Μοντάζ ακούει τον ήχο του έργου και γράφει όσα λέγονται ως υπότιτλους, σε αυτή τη συσκευή: ο ήχος δεν στέλνεται πουθενά. Έλεγξε τις γραμμές μετά· ονόματα και σιγανή ομιλία μπορεί να βγουν λάθος.",
       "asr.need": "Την πρώτη φορά το Μοντάζ κατεβάζει το μοντέλο ομιλίας (Whisper, περίπου {mb} MB, από το Hugging Face) και το πρόγραμμα που το τρέχει (περίπου {rt} MB, από αυτόν τον ιστότοπο) και τα κρατά σε αυτή τη συσκευή. Μετά δουλεύει και χωρίς σύνδεση.",
-      "asr.ready": "Το μοντέλο ομιλίας είναι σε αυτή τη συσκευή.", "asr.lang": "Γλώσσα",
+      "asr.ready": "Το μοντέλο ομιλίας είναι σε αυτή τη συσκευή.", "asr.lang": "Γλώσσα", "asr.en": "English", "asr.el": "Ελληνικά",
       "asr.auto": "Αυτόματα", "asr.go": "Φτιάξε υπότιτλους", "asr.forget": "Αφαίρεση του μοντέλου ομιλίας",
       "asr.gone": "Το μοντέλο ομιλίας αφαιρέθηκε από αυτή τη συσκευή.",
       "asr.mixing": "Διαβάζω τον ήχο… {p}%", "asr.download": "Κατεβάζω το μοντέλο ομιλίας… {p}%",
@@ -344,6 +345,7 @@
       "rel.today": "σήμερα", "rel.yesterday": "χθες"
     }
   };
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "montage", LANG);
   function t(key, vars) {
     var s = (STRINGS[LANG] && STRINGS[LANG][key]) || STRINGS.en[key] || key;
     if (vars) Object.keys(vars).forEach(function (k) { s = s.split("{" + k + "}").join(String(vars[k])); });
@@ -1537,7 +1539,7 @@
     f.appendChild(need);
     body.appendChild(f);
     var lang = ["auto", "en", "el"].indexOf(prefs.asr) >= 0 ? prefs.asr : "auto";
-    chipField(body, t("asr.lang"), [["auto", t("asr.auto")], ["en", "English"], ["el", "Ελληνικά"]], lang, function (v) {
+    chipField(body, t("asr.lang"), [["auto", t("asr.auto")], ["en", t("asr.en")], ["el", t("asr.el")]], lang, function (v) {
       lang = v; prefs.asr = v; savePrefs();
     });
     var row = el("div", "actions");
