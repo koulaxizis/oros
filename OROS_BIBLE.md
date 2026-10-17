@@ -7633,3 +7633,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - New CI step `.github/qa/multitask.js` in the quality gate (every app opened, hidden and brought back).
 - Files: `shell.js`, `settings/{core.js,settings.js,settings.css,help.*.txt}`, `i18n/de/settings.js`, `.github/qa/{multitask,smoke}.js`, `.github/workflows/quality.yml`, `tests/multitask.test.js`, Bible.
   - Tests: full suite green; multitask gate 130 apps 0 problems; Chromium E2E 1280 EL. Not tested: real phones (memory pressure), Firefox, Safari.
+
+### 2026-10-17 — Languages L3a: Notes, To-Do, Calendar, Contacts and Kanban in German (#504) — 3.02.00
+- Notes, To-Do, Calendar, Contacts and Kanban are now in German: packs in `i18n/de/`, and each of the five `index.html` loads `../i18n.js` before its own scripts; English still fills any missing line.
+- Files: `i18n/de/{notes,todo,calendar,contacts,kanban}.js` and their help, 5 `index.html`, `i18n/apps.json`, `i18n/de/STATUS.md`.
+  - Tests: full suite green; Chromium 360 de / el. Not tested: a German native reader's review, Safari, phones.
