@@ -14,7 +14,7 @@
 (function (root) {
   "use strict";
   var NEAR_DEG = 0.15, DAY_MS = 86400000;
-  var W = { en: { rain: "rain {p}%" }, el: { rain: "βροχή {p}%" } };
+  var W = { en: { "row.rain": "rain {p}%" }, el: { "row.rain": "βροχή {p}%" } };
 
   function pickCity(data, pref) {
     var cities = data.cities.filter(function (c) {
@@ -50,7 +50,7 @@
       if (!row) return [];
       var imp = data.units === "imperial", w = W[ctx.lang] || W.en;
       var text = temp(row.max, imp) + " / " + temp(row.min, imp);
-      if (typeof row.pop === "number") text += " · " + w.rain.replace("{p}", Math.round(row.pop));
+      if (typeof row.pop === "number") text += " · " + w["row.rain"].replace("{p}", Math.round(row.pop));
       return [{ id: "wx", kind: "info", title: (city.label || "") + ": " + text }];
     },
     open: function (target, win) {

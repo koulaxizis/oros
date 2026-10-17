@@ -45,7 +45,11 @@
                          // (truth from the network, not navigator.onLine)
 
   // ---------- 1. Constants, i18n, helpers, icons ----------
-  var LANG = localStorage.getItem("oros-lang") === "el" ? "el" : "en";
+  // orosI18n (../i18n.js): the full language code, a pack language included.
+  var LANG = window.orosI18n ? window.orosI18n.lang() : (localStorage.getItem("oros-lang") === "el" ? "el" : "en");
+  var LOC = window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB");
+  // Open-Meteo geocoding answers in any two-letter language (English otherwise).
+  var GEO_LANG = /^[a-z]{2}$/.test(LANG) ? LANG : "en";
 
   var STRINGS = {
     en: {
@@ -228,7 +232,20 @@
       "cmp.max":        "solid line: highs · dashed: lows",
       "cmp.rain":       "Rain",
       "cmp.model":      "Model {n}",
-      "attrib.air":     "Air quality: Copernicus Atmosphere Monitoring Service (CAMS) via Open-Meteo."
+      "attrib.air":     "Air quality: Copernicus Atmosphere Monitoring Service (CAMS) via Open-Meteo.",
+      "today":          "Today",
+      "loc.mine":       "My location",
+      "cond.clear":     "Clear sky",
+      "cond.partly":    "Partly cloudy",
+      "cond.overcast":  "Overcast",
+      "cond.fog":       "Fog",
+      "cond.drizzle":   "Drizzle",
+      "cond.rain":      "Rain",
+      "cond.snow":      "Snow",
+      "cond.showers":   "Showers",
+      "cond.snowshowers": "Snow showers",
+      "cond.storm":     "Thunderstorm",
+      "cond.cloudy":    "Cloudy"
     },
     el: {
       "warn.mine":      "Επίσημες προειδοποιήσεις",
@@ -292,11 +309,25 @@
       "cmp.max":        "συνεχής γραμμή: μέγιστες · διακεκομμένη: ελάχιστες",
       "cmp.rain":       "Βροχή",
       "cmp.model":      "Μοντέλο {n}",
-      "attrib.air":     "Ποιότητα αέρα: Copernicus Atmosphere Monitoring Service (CAMS) μέσω Open-Meteo."
+      "attrib.air":     "Ποιότητα αέρα: Copernicus Atmosphere Monitoring Service (CAMS) μέσω Open-Meteo.",
+      "today":          "Σήμερα",
+      "loc.mine":       "Η τοποθεσία μου",
+      "cond.clear":     "Καθαρός ουρανός",
+      "cond.partly":    "Λίγες νεφώσεις",
+      "cond.overcast":  "Συννεφιά",
+      "cond.fog":       "Ομίχλη",
+      "cond.drizzle":   "Ψιλή βροχή",
+      "cond.rain":      "Βροχή",
+      "cond.snow":      "Χιόνι",
+      "cond.showers":   "Μπόρες",
+      "cond.snowshowers": "Χιονοπτώσεις",
+      "cond.storm":     "Καταιγίδα",
+      "cond.cloudy":    "Νεφελώδης"
     }
   };
   Object.keys(STRINGS2.en).forEach(function (k) { STRINGS.en[k] = STRINGS2.en[k]; });
   Object.keys(STRINGS2.el).forEach(function (k) { STRINGS.el[k] = STRINGS2.el[k]; });
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "weather", LANG);
 
   function t(key) {
     var p = STRINGS[LANG] || STRINGS.en;
@@ -306,20 +337,19 @@
 
   // WMO codes → condition text (same grouping as the shell chip)
   function condText(code) {
-    var c = Number(code) || 0;
-    var en, el;
-    if (c === 0)                 { en = "Clear sky";     el = "Καθαρός ουρανός"; }
-    else if (c === 1 || c === 2) { en = "Partly cloudy"; el = "Λίγες νεφώσεις"; }
-    else if (c === 3)            { en = "Overcast";      el = "Συννεφιά"; }
-    else if (c === 45 || c === 48) { en = "Fog";         el = "Ομίχλη"; }
-    else if (c >= 51 && c <= 57) { en = "Drizzle";       el = "Ψιλή βροχή"; }
-    else if (c >= 58 && c <= 67) { en = "Rain";         el = "Βροχή"; }
-    else if (c >= 71 && c <= 77) { en = "Snow";         el = "Χιόνι"; }
-    else if (c >= 80 && c <= 82) { en = "Showers";       el = "Μπόρες"; }
-    else if (c === 85 || c === 86) { en = "Snow showers"; el = "Χιονοπτώσεις"; }
-    else if (c >= 95)            { en = "Thunderstorm"; el = "Καταιγίδα"; }
-    else                         { en = "Cloudy";        el = "Νεφελώδης"; }
-    return LANG === "el" ? el : en;
+    var c = Number(code) || 0, k;
+    if (c === 0)                 k = "clear";
+    else if (c === 1 || c === 2) k = "partly";
+    else if (c === 3)            k = "overcast";
+    else if (c === 45 || c === 48) k = "fog";
+    else if (c >= 51 && c <= 57) k = "drizzle";
+    else if (c >= 58 && c <= 67) k = "rain";
+    else if (c >= 71 && c <= 77) k = "snow";
+    else if (c >= 80 && c <= 82) k = "showers";
+    else if (c === 85 || c === 86) k = "snowshowers";
+    else if (c >= 95)            k = "storm";
+    else                         k = "cloudy";
+    return t("cond." + k);
   }
 
   // One-line smart hint for the day — replaces the plain condition
@@ -749,7 +779,7 @@
   // ---------- 3. API: geocoding + forecast + AQI + throttle ----------
   function geocodeCity(name) {
     return fetch("https://geocoding-api.open-meteo.com/v1/search?count=1&language=" +
-                 (LANG === "el" ? "el" : "en") +
+                 GEO_LANG +
                  "&name=" + encodeURIComponent(name))
       .then(function (r) { return r.json(); })
       .then(function (d) {
@@ -769,7 +799,7 @@
   function geocodeSuggest(q) {
     var tok = ++acToken;
     return fetch("https://geocoding-api.open-meteo.com/v1/search?count=5&language=" +
-                 (LANG === "el" ? "el" : "en") +
+                 GEO_LANG +
                  "&name=" + encodeURIComponent(q))
       .then(function (r) { return r.json(); })
       .then(function (d) {
@@ -1035,10 +1065,6 @@
   }
   
       // ---------- 4. Render ----------
-  // Micro-scoped additions (kept out of STRINGS in 3a for size —
-  // same table shape, safe to extend):
-  STRINGS.en["today"] = "Today";
-  STRINGS.el["today"] = "Σήμερα";
 
   function fmtHour(tIso) { return tIso.substring(11, 16); }
   function todayLabel() { return t("today"); }
@@ -1246,7 +1272,7 @@
     }
     var up = new Date(p.at);
     $("cur-updated").textContent = t("updated.at") + " " +
-      up.toLocaleTimeString(LANG === "el" ? "el-GR" : "en-GB",
+      up.toLocaleTimeString(LOC,
                             { hour: "2-digit", minute: "2-digit", hourCycle: "h23" });   // WE-6
 
     // --- hourly strip ---
@@ -1312,13 +1338,13 @@
       } else {
         var dd = new Date(d.date + "T12:00:00");
         day.textContent = dd.toLocaleDateString(
-          LANG === "el" ? "el-GR" : "en-GB", { weekday: "long" });
+          LOC, { weekday: "long" });
       }
       var sub = document.createElement("span");
       sub.className = "dd-sub";
       var dd2 = new Date(d.date + "T12:00:00");
       sub.textContent = dd2.toLocaleDateString(
-        LANG === "el" ? "el-GR" : "en-GB", { day: "numeric", month: "short" });
+        LOC, { day: "numeric", month: "short" });
       day.appendChild(sub);
       row.appendChild(day);
 
@@ -1389,7 +1415,7 @@
     var d = new Date(ms + tz * 1000), now = new Date(Date.now() + tz * 1000);
     var hm = pad(d.getUTCHours()) + ":" + pad(d.getUTCMinutes());
     if (d.toISOString().slice(0, 10) === now.toISOString().slice(0, 10)) return hm;
-    var wd = d.toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB", { weekday: "short", timeZone: "UTC" });
+    var wd = d.toLocaleDateString(LOC, { weekday: "short", timeZone: "UTC" });
     return wd + " " + hm;
   }
   function fmtRain(mm) {
@@ -1399,7 +1425,7 @@
   function toUnit(c) { return state.units === "imperial" ? c * 9 / 5 + 32 : c; }
   function dayName(date, tz) {
     if (date === cityTodayStr(tz)) return t("today");
-    return new Date(date + "T12:00:00").toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB", { weekday: "short" });
+    return new Date(date + "T12:00:00").toLocaleDateString(LOC, { weekday: "short" });
   }
 
   // City place details: country + region (from the geocoder).
@@ -1416,7 +1442,7 @@
     pr.bf[city.id] = Date.now();
     writePrefs(pr);
     return fetch("https://geocoding-api.open-meteo.com/v1/search?count=10&language=" +
-                 (LANG === "el" ? "el" : "en") + "&name=" + encodeURIComponent(city.label))
+                 GEO_LANG + "&name=" + encodeURIComponent(city.label))
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (d) {
         var best = null, bd = Infinity;
@@ -1464,7 +1490,7 @@
   function countryName(city, p) {
     var cc = C ? C.countryOf(city.cc, p && p.tzn) : "";
     try {
-      var dn = new Intl.DisplayNames([LANG === "el" ? "el" : "en"], { type: "region" });
+      var dn = new Intl.DisplayNames([LOC], { type: "region" });
       var n = cc && dn.of(cc);
       if (n) return n;
     } catch (e) {}
@@ -1711,7 +1737,7 @@
       else if (f.err === "norelay" || f.err === "cors") msg = t("warn.st.cors");
       else if (f.err) msg = t("warn.st.err");
       else msg = fill("warn.st.ok", { c: countryName(city, p), n: String(C.activeList(f.list, Date.now()).length),
-        t: new Date(f.ok).toLocaleTimeString(LANG === "el" ? "el-GR" : "en-GB", { hour: "2-digit", minute: "2-digit", hourCycle: "h23" }) });
+        t: new Date(f.ok).toLocaleTimeString(LOC, { hour: "2-digit", minute: "2-digit", hourCycle: "h23" }) });
     }
     host.appendChild(mk("p", "hint", msg));
   }
@@ -2487,7 +2513,7 @@
         window.__orosWeatherUpdate({
           lat: pos.coords.latitude,
           lon: pos.coords.longitude,
-          label: LANG === "el" ? "Η τοποθεσία μου" : "My location"
+          label: t("loc.mine")
         });
       }, function () {
         btn.disabled = false;
@@ -2582,7 +2608,7 @@
       if (w.label && w.label !== dup.label) { dup.label = w.label; dup.mtime = Date.now(); }
       if (state.active !== dup.id) { state.active = dup.id; state.sm = Date.now(); }
     } else {
-      var c = newCityObj(w.label || (LANG === "el" ? "Η τοποθεσία μου" : "My location"),
+      var c = newCityObj(w.label || t("loc.mine"),
                          w.lat, w.lon);
       c.pos = state.cities.length;
       state.cities.push(c);
@@ -2634,7 +2660,7 @@
       // tray pin of a listed city: remember it, never switch the view
       state.sm = Date.now();
     } else {
-      var c = newCityObj(w.label || (LANG === "el" ? "Η τοποθεσία μου" : "My location"),
+      var c = newCityObj(w.label || t("loc.mine"),
                          w.lat, w.lon);
       c.pos = state.cities.length;
       state.cities.push(c);
