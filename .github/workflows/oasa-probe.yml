@@ -1,0 +1,11 @@
+name: oasa-probe
+on:
+  push:
+    branches: [claude/oasa-probe]
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          sleep 120
+          curl -sS -m 60 "https://claude-oasa-probe-oros-mail-relay.koulaxizis-25b.workers.dev/__oasa_probe" || true
