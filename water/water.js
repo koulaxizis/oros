@@ -35,6 +35,7 @@
 
   // ---------- 1. i18n + helpers ----------
   function appLang() {
+    if (window.orosI18n) return window.orosI18n.lang();
     try {
       var l = localStorage.getItem("oros-lang") ||
               (window.parent && window.parent.orosLang) || "en";
@@ -117,6 +118,7 @@
       "live.total": "{a} από {g}"
     }
   };
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "water", LANG);
 
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;
@@ -136,7 +138,7 @@
     if (text !== undefined && text !== null) n.textContent = text;
     return n;
   }
-  function locale() { return LANG === "el" ? "el-GR" : "en-GB"; }
+  function locale() { return window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB"); }
   function fmtA(ml) { return C.fmtAmount(ml, data.prefs, LANG); }
   function numA(ml) { return C.amount(ml, data.prefs, LANG); }
   function mlText(ml) { return C.fmtNum(ml, LANG) + " ml"; }
@@ -861,7 +863,7 @@
   // would come back with the next sync).
   var RP = window.OrosRecordPkg || null, WPK = window.OrosWaterPackage || null;
   var recFile = RP && WPK && window.OrosBundle ? RP.ui(WPK.DESC, {
-    lang: function () { return LANG; },
+    lang: function () { return LANG === "el" ? "el" : "en"; },
     get: function () { return C.normalize(data); },
     title: function () { return t("app"); },
     set: function (next) {
