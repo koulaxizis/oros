@@ -84,7 +84,7 @@
 
       "m.apps": "Apps in the menu",
       "m.hint": "Untick an app to hide it from the menu. Hidden apps still open from the menu search, links from other apps, the desktop and the Dock.",
-      "m.showAll": "Show all", "m.hideAll": "Hide all",
+      "m.showAll": "Show all", "m.hideAll": "Hide all", "m.profiles": "Choose a profile",
       "m.count": "{n} of {total} shown",
       "m.filter": "Find an app", "m.filter.none": "No app matches.",
       "m.none": "This orOS version cannot hide apps from the menu yet.",
@@ -338,7 +338,7 @@
 
       "m.apps": "Εφαρμογές στο μενού",
       "m.hint": "Βγάλε το τικ από μια εφαρμογή για να κρυφτεί από το μενού. Οι κρυφές εφαρμογές ανοίγουν ακόμα από την αναζήτηση του μενού, από συνδέσμους άλλων εφαρμογών, από την επιφάνεια εργασίας και από το Dock.",
-      "m.showAll": "Εμφάνιση όλων", "m.hideAll": "Απόκρυψη όλων",
+      "m.showAll": "Εμφάνιση όλων", "m.hideAll": "Απόκρυψη όλων", "m.profiles": "Διάλεξε προφίλ",
       "m.count": "Φαίνονται {n} από {total}",
       "m.filter": "Βρες εφαρμογή", "m.filter.none": "Καμία εφαρμογή δεν ταιριάζει.",
       "m.none": "Αυτή η έκδοση του orOS δεν μπορεί ακόμα να κρύβει εφαρμογές από το μενού.",

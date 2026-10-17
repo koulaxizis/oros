@@ -31,6 +31,9 @@ You can also search from your browser's address bar. Add a site search (custom s
 Too many apps? Hide the ones you don't use. Open [Settings](app:settings) and choose `Menu`:
 - Untick an app to hide it, tick it again to bring it back. `Find an app` narrows the list.
 - `Hide all` empties the list, so you can then tick only the apps you want. `Show all` brings every app back.
+- `Choose a profile` ticks apps for you: `Home`, `Work / Business`, `School`, `Creating` or `Games`, one or more. `Everything` ticks every app. You can still tick or untick any app before you press `Save`.
+
+The first time you open orOS, the same choice comes before the tour, as `What will you do with orOS?`. `Everything` is chosen already: `Continue`, the × or [[Esc]] keep every app in the menu. If you already use orOS on another device, choose `I already use orOS on another device` and connect [sync](help:t/sync) instead: your menu comes with it.
 
 A hidden app is still there. The quick search still finds it, links from other apps still open it, and its shortcut on the desktop or in the Dock still works. While some apps are hidden, a row under the list says how many, and tapping it opens `Menu` in Settings. Your choice travels to all your devices with [sync](help:t/sync). New apps always appear in the menu until you hide them.
 

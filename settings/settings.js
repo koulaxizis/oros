@@ -437,7 +437,11 @@
     var hideAll = button(t("m.hideAll"), "m.hideAll", function () { act("menu.hideAll"); });
     showAll.disabled = shownN === total;
     hideAll.disabled = shownN === 0;
-    c.appendChild(actions(showAll, hideAll));
+    if (s.menuProfiles) {
+      // Home, Work, School…: the first-run screen, over the current menu.
+      var prof = button(t("m.profiles"), "m.profiles", function () { act("menu.profiles"); });
+      c.appendChild(actions(showAll, hideAll, prof));
+    } else c.appendChild(actions(showAll, hideAll));
     c.appendChild(el("p", "m-count", t("m.count", { n: shownN, total: total })));
 
     var find = el("input", "m-find");
