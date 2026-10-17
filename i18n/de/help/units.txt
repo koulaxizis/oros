@@ -1,0 +1,49 @@
+# Einheitenrechner
+Rechne Längen, Gewichte, Temperaturen, Währungen und mehr sofort um. Fünfzehn Kategorien, Einheiten in mehreren Sprachen, und alles funktioniert offline (Währungen nutzen die letzten Kurse, die das Gerät geladen hat).
+
+## Erste Schritte
+Wähle oben eine Kategorie: `Länge`, `Gewicht`, `Volumen`, `Temperatur`, `Fläche`, `Geschwindigkeit`, `Kochen`, `Zeit`, `Daten`, `Verbrauch`, `Druck`, `Energie`, `Leistung`, `Winkel` oder `Währung`. Auf dem Handy wischst du die Leiste zur Seite, um alle zu sehen.
+
+Gib eine Zahl bei `Von` ein, und das Ergebnis erscheint schon beim Tippen bei `In`. Es geht auch andersherum: Tippe bei `In`, und `Von` rechnet mit.
+- Tippe oder klicke auf eine Einheit, um sie zu ändern. Die Liste hat ein Suchfeld: Gib einen Namen oder ein Symbol ein, auf Deutsch, Englisch oder Griechisch (`ft`, `Fuß`, `πόδι`, `στρέμμα`, `mpg`). [[Enter]] wählt den ersten Treffer.
+- Die Taste ⇄ tauscht die beiden Einheiten.
+- Die Zeile unter den Feldern zeigt die verwendete Regel, zum Beispiel `1 mi = 1,609344 km`.
+- Die Kopieren-Taste kopiert das Ergebnis. [[Esc]] leert das Feld, in dem du gerade bist.
+- `Senden an…` (der Papierflieger daneben) schickt die Umrechnung, etwa `5 km = 3,107 mi`, an eine andere App, zum Beispiel Notizen.
+
+## Zahlen eingeben
+- Für Dezimalstellen gehen Komma und Punkt: `1,5` und `1.5` sind gleich. Mit beiden ist das letzte Zeichen das Dezimaltrennzeichen (`1.234,5`).
+- Ein Punkt (auf Deutsch und Griechisch) oder ein Komma (auf Englisch) mit genau drei Ziffern danach ist ein Tausendertrennzeichen: Auf Deutsch ist `1.500` eintausendfünfhundert.
+- Einfache Rechnungen gehen auch: `2,5*3`, `12+8`, `(3+4)/2` und `1,5e3` für 1500.
+- Ergebnisse werden auf 6 signifikante Stellen gerundet; sehr große oder kleine Zahlen erscheinen als `1,2 × 10⁹`. Die Stellenzahl änderst du in den `Rechner-Einstellungen`.
+
+## Kategorien, die du kennen solltest
+- `Kochen` rechnet Tassen und Löffel in Gramm um und zurück. Wähle die `Zutat` (Wasser, Mehl, Zucker, Butter und mehr): Eine Tasse Mehl wiegt viel weniger als eine Tasse Honig. Diese Küchengewichte sind ungefähr.
+- `Verbrauch` rechnet L/100 km, km/L und Meilen pro Gallone (US und UK) um. Weniger L/100 km heißt mehr mpg, daher hat Null keine Entsprechung.
+- `Daten` hat beide Arten von Einheiten: kB, MB, GB (Potenzen von 1000, wie bei Festplatten und Netzwerken) und KiB, MiB, GiB (Potenzen von 1024).
+- Traditionelle griechische Einheiten: das Stremma (1.000 m²), die Oka (1,2829 kg) mit ihrer Drachme und die Bauelle (0,75 m).
+- Monate und Jahre unter `Zeit` sind Durchschnittswerte (30,44 Tage, 365,2425 Tage).
+
+## Währungen
+`Währung` nutzt die Euro-Referenzkurse der Europäischen Zentralbank über den kostenlosen Dienst Frankfurter. Die App lädt sie, wenn du `Währung` öffnest (höchstens alle 6 Stunden) oder auf `Kurse aktualisieren` tippst, und behält sie auf diesem Gerät, daher funktionieren Währungen auch offline mit den letzten Kursen. Die Zeile unter den Feldern zeigt das Datum der Kurse.
+
+>! Die EZB-Kurse erscheinen einmal täglich an Werktagen. Sie dienen der Information: Banken und Kartenzahlungen nutzen eigene Kurse.
+
+## Alle Einheiten, Favoriten und Zuletzt
+- `Alle Einheiten` zeigt den Wert in jeder Einheit der Kategorie. Tippe auf eine Zeile, um sie zu kopieren. `Ausblenden` klappt die Liste ein.
+- Die Taste ☆ fügt das Paar, das du gerade nutzt, zu den `Favoriten` hinzu, den Chips über dem Rechner. Tippe auf einen Chip, um direkt zu diesem Paar zu springen; tippe noch einmal auf ☆, um es zu entfernen.
+- `Zuletzt` behält deine letzten 20 Umrechnungen, die neueste zuerst. Tippe auf eine, um sie zurückzuholen. `Leeren` leert die Liste; `Rückgängig` in der Meldung holt sie zurück.
+
+## Universelle Suche
+Gib in der Suche des orOS-Menüs eine Umrechnung ein, etwa `10 km to mi`, `72 f to c` oder `5 stremma`, und die Antwort erscheint unter `In deinen Daten`. Tippe darauf, um den Rechner mit dieser Umrechnung zu öffnen. Auch deine Lieblingspaare findest du dort.
+
+## Synchronisierung und Sicherung
+Deine Favoriten, die letzten Umrechnungen und die Stellenzahl werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert, und die orOS-[Sicherung](help:t/backup) bewahrt sie auf. Die offene Kategorie, die zuletzt genutzten Einheiten, die Zutat und die Wechselkurse bleiben auf dem jeweiligen Gerät.
+
+## Tipps
+- Um Preise in einer anderen Währung zu vergleichen, markiere das Paar mit dem Stern (zum Beispiel `EUR → USD`), dann ist es nur einen Tipp entfernt.
+- Nutze `Alle Einheiten`, um eine Strecke auf einmal in Metern, Fuß und Meilen zu sehen.
+
+## Grenzen
+- Kleider- und Schuhgrößen sind nicht dabei: Sie unterscheiden sich je nach Marke.
+- Währungen umfassen die etwa 30 Währungen, die die Europäische Zentralbank veröffentlicht.
