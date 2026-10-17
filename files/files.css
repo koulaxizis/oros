@@ -1013,6 +1013,9 @@ body.v-recent #search-bar { display: none; }
 #entries.grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+  /* max-content rows: once the grid overflows its scroll box, auto rows
+     fall back to min-content and the 84px thumbnails overlap (401 assets) */
+  grid-auto-rows: max-content;
   gap: 8px;
   padding: 8px 10px;
   align-content: start;
@@ -1028,7 +1031,7 @@ body.v-recent #search-bar { display: none; }
   border-bottom: none;
   min-width: 0;
 }
-#entries.grid .entry .glyph { width: 100%; height: 84px; }
+#entries.grid .entry .glyph { width: 100%; height: 84px; flex-shrink: 0; }
 #entries.grid .entry .glyph svg { width: 44px; height: 44px; }
 body.select-mode #entries.grid .entry .glyph { display: inline-flex; }
 #entries.grid .entry .thumb {

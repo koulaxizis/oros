@@ -113,6 +113,7 @@ Import and export (buttons at the bottom right):
 - `Import CSV` adds the file as a new sheet. Commas, semicolons and tabs are detected by themselves.
 - `Export CSV` saves the open sheet, with each cell as you typed it (formulas stay formulas).
 - `Import Excel / Calc / orOS`, then `Open a file (.xlsx, .ods, .xls, .orossheet)…`, adds every sheet of the file as a new sheet. Nothing already here is replaced.
+- `Import Excel / Calc / orOS`, then `From Google Sheets…`, signs in to Google, lets you pick one spreadsheet in Google Drive (a Google Sheet, or an XLSX, XLS or ODS file there) and adds its sheets the same way. orOS sees only that file, and the sign-in ends right after.
 - `Export Excel / Calc / orOS` saves all sheets as `Excel (.xlsx)`, `LibreOffice Calc (.ods)` or `orOS file (.orossheet)`. Excel and Calc get column widths, row heights and merged cells.
 - The .orossheet file keeps everything: formulas, formatting, charts, conditional formatting and every sheet. It is an open ZIP file: unzip it and you find `content.json` (the workbook) and in `preview` one CSV per sheet with the values shown, which any spreadsheet program opens. `Unzipped orOS folder…` brings back a .orossheet that was unzipped.
 

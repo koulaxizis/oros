@@ -346,7 +346,7 @@ dl.info dd { overflow-wrap: anywhere; }
   .tile { font-size: 12px; min-height: 48px; }
   .tile .cover { width: 48px; height: 48px; }
   .full-dlg { max-width: 100vw; width: 100vw; height: 100dvh; max-height: 100dvh; border-radius: 0; border: none; padding: 8px 16px calc(16px + env(safe-area-inset-bottom)); }
-  .fp-body.q-on .fp-art { display: none; }
+  .fp-body.q-on .fp-art, .fp-body.ly-on .fp-art { display: none; }
   .fp-t { font-size: 19px; }
   .row-d { display: none; }
   #toast { bottom: calc(var(--player-h) + 90px); }
@@ -364,3 +364,31 @@ dl.info dd { overflow-wrap: anywhere; }
 .sv-msg { margin: 6px 0; min-height: 1em; }
 .sv-msg.err { color: var(--danger); }
 .sv-msg .link { text-decoration: underline; color: var(--accent); }
+
+/* ---------- Lyrics, sound, sleep timer (wave 5) ---------- */
+.fp-lyrics { display: none; position: relative; flex: 1 1 50%; overflow-y: auto; min-width: 0; scroll-behavior: smooth; padding: 4px 2px; }
+.fp-body.ly-on .fp-lyrics { display: block; }
+.ly-text { display: flex; flex-direction: column; gap: 2px; }
+.ly-l { background: none; border: none; color: var(--text-dim); font: inherit; font-size: 20px; font-weight: 800; line-height: 1.35;
+  text-align: left; padding: 6px 4px; min-height: 40px; cursor: pointer; border-radius: 8px; overflow-wrap: anywhere; }
+.ly-l:hover { color: var(--text); }
+.ly-l.on { color: var(--text); }
+.ly-plain { white-space: pre-wrap; font-size: 17px; line-height: 1.55; margin: 0; overflow-wrap: anywhere; }
+.ly-src { margin: 14px 4px 4px; }
+.ly-src .link { text-decoration: underline; }
+.ly-ask { padding: 12px 4px; }
+.dlg-btns.center { justify-content: center; }
+.fp-extra { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 2px; }
+.fp-pill { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 14px; font-size: 13px; color: var(--text-dim); }
+.fp-pill svg { width: 18px; height: 18px; flex: none; }
+.fp-pill.on { color: var(--accent); border-color: var(--accent); }
+.sound-dlg { max-width: 460px; }
+.eq-bands { display: flex; flex-direction: column; gap: 2px; margin: 4px 0 8px; }
+.eq-bands.off { opacity: .5; }
+.eq-band { display: grid; grid-template-columns: 56px 1fr 30px; align-items: center; gap: 8px; min-height: 32px; }
+.eq-band input { width: 100%; min-width: 0; }
+.eq-hz, .eq-v { color: var(--text-dim); font-variant-numeric: tabular-nums; }
+.eq-v { text-align: right; }
+@media (max-width: 700px) {
+  .ly-l { font-size: 18px; }
+}

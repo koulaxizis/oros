@@ -215,3 +215,20 @@ test("menu: hidden apps leave the list but a search still finds them", () => {
   assert.match(list, /if \(!q\) return;/);
   assert.match(list, /orosSettings\.open\("menu"\)/);
 });
+
+test("services picker: every platform has a group, a monogram and a colour", () => {
+  const CORE = fs.readFileSync(path.join(ROOT, "links", "core.js"), "utf8");
+  const CSS = fs.readFileSync(path.join(ROOT, "settings", "settings.css"), "utf8");
+  const body = CORE.slice(CORE.indexOf("var PLATFORMS = {"), CORE.indexOf("var PLATFORM_IDS"));
+  const ids = [...body.matchAll(/^    ([a-z]+): \{/gm)].map((m) => m[1]);
+  assert.ok(ids.length >= 15, "platform ids found");
+  const groups = APP.slice(APP.indexOf("var SVC_GROUPS"), APP.indexOf("var SVC_MARK"));
+  const marks = APP.slice(APP.indexOf("var SVC_MARK"), APP.indexOf("function svcMark"));
+  for (const id of ids) {
+    assert.ok(groups.includes('"' + id + '"'), "group for " + id);
+    assert.match(marks, new RegExp("\\b" + id + ": \""), "monogram for " + id);
+    assert.ok(CSS.includes(".svc-mark.m-" + id + " {"), "colour for " + id);
+  }
+  // the old native platform list is gone
+  assert.doesNotMatch(APP, /select\(plats/);
+});

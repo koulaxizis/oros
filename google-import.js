@@ -36,8 +36,8 @@
 //   getBlob(url, token, maxBytes) → Blob; rejects { code: "big" } past
 //     maxBytes (the length header first, then the bytes read)
 //   apiKey() / driveReady() / APP_ID: Google Drive's file picker also
-//     wants a browser API key (the person's own, set next to the own
-//     client id in Contacts; none is built in) and the Cloud project
+//     wants a browser API key (built in for orOS's own app; with an
+//     own client id, the person's own key set next to it in Contacts) and the Cloud project
 //     number. api (in run) has send / getBlob too.
 // ============================================================
 (function (root) {

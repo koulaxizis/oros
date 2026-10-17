@@ -3,4 +3,4 @@
     android:contentAuthority="com.android.calendar"
     android:accountType="@string/account_type"
     android:supportsUploading="true"
-    android:userVisible="false" />
+    android:userVisible="true" />
