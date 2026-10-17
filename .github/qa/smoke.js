@@ -87,6 +87,7 @@ function norm(s) {
     .trim()
     .slice(0, 240);
 }
+const OWN_KINDS = new Set(["error", "overflow", "help", "greek", "csp"]);
 const key = (e) => [e.app, e.kind, e.width || "", e.lang || "", e.detail || ""].join(" | ");
 
 // Ignored console noise: the blocked network itself (we run offline on
@@ -105,6 +106,42 @@ const KEEP = new Set(("oros oros's dropbox google github lichess chess.com wikip
   "photoshop scribus mydata timologisi invoice ninja nextcloud webdav lastfm last.fm spotify youtube tmdb radio-browser " +
   "ios android windows linux macos chromium chrome firefox safari edge pwa apk f-droid fdroid play store wasm webgpu " +
   "kb mb gb tb kg km cm mm ml kcal bpm fps rgb hex hsl cmyk dpi utc gmt iso").split(/\s+/));
+
+// A fresh offline browser context at a width and UI language: every host
+// but the local server is blocked, no service worker, splash and tour off.
+// Shared by smoke.js, a11y.js and budget.js.
+async function newContext(browser, width, lang) {
+  const ctx = await browser.newContext({
+    viewport: { width, height: width <= 400 ? 780 : 800 },
+    deviceScaleFactor: 1,
+    serviceWorkers: "block",
+    isMobile: width <= 400, hasTouch: width <= 400,
+  });
+  await ctx.route(/^https?:\/\/(?!127\.0\.0\.1[:/])/, (r) => r.abort("internetdisconnected"));
+  await ctx.addInitScript((lang) => {
+    try {
+      localStorage.setItem("oros-lang", lang);
+      localStorage.setItem("oros-tour-done", "1");
+      sessionStorage.setItem("oros-skip-splash", "1");
+    } catch (e) {}
+    document.addEventListener("securitypolicyviolation", (e) => {
+      (window.__qaCsp = window.__qaCsp || []).push(e.violatedDirective + " " + (e.blockedURI || ""));
+    });
+  }, lang);
+  return ctx;
+}
+
+// Internal apps of apps.json that have a folder, in file order.
+function listApps() {
+  return JSON.parse(fs.readFileSync(path.join(ROOT, "apps.json"), "utf8")).apps
+    .filter((a) => a.type === "internal" && a.url && fs.existsSync(path.join(ROOT, a.url, "index.html")));
+}
+
+function launchOptions() {
+  const launch = { args: ["--no-sandbox", "--lang=en-US"] };
+  if (process.env.QA_CHROMIUM) launch.executablePath = process.env.QA_CHROMIUM;
+  return launch;
+}
 
 // ---------- page probes (run inside the app document) ----------
 function probeLayout() {
@@ -155,37 +192,18 @@ function readsEnglish(t) {
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   const { chromium } = loadPlaywright();
-  const apps = JSON.parse(fs.readFileSync(path.join(ROOT, "apps.json"), "utf8")).apps
-    .filter((a) => a.type === "internal" && a.url && fs.existsSync(path.join(ROOT, a.url, "index.html")));
+  const apps = listApps();
   let mine = apps.filter((a, i) => i % args.shard[1] === args.shard[0] - 1);
   if (args.only) mine = apps.filter((a) => args.only.includes(a.id));
   const doShell = !args.only && args.shard[0] === 1 || (args.only && args.only.includes("shell"));
 
   const srv = await serve();
   const base = "http://127.0.0.1:" + srv.address().port + "/";
-  const launch = { args: ["--no-sandbox", "--lang=en-US"] };
-  if (process.env.QA_CHROMIUM) launch.executablePath = process.env.QA_CHROMIUM;
-  const browser = await chromium.launch(launch);
+  const browser = await chromium.launch(launchOptions());
 
   // One fresh context per visit: no state leaks between apps.
   async function visit(url, width, lang) {
-    const ctx = await browser.newContext({
-      viewport: { width, height: width <= 400 ? 780 : 800 },
-      deviceScaleFactor: 1,
-      serviceWorkers: "block",
-      isMobile: width <= 400, hasTouch: width <= 400,
-    });
-    await ctx.route(/^https?:\/\/(?!127\.0\.0\.1[:/])/, (r) => r.abort("internetdisconnected"));
-    await ctx.addInitScript((lang) => {
-      try {
-        localStorage.setItem("oros-lang", lang);
-        localStorage.setItem("oros-tour-done", "1");
-        sessionStorage.setItem("oros-skip-splash", "1");
-      } catch (e) {}
-      document.addEventListener("securitypolicyviolation", (e) => {
-        (window.__qaCsp = window.__qaCsp || []).push(e.violatedDirective + " " + (e.blockedURI || ""));
-      });
-    }, lang);
+    const ctx = await newContext(browser, width, lang);
     const page = await ctx.newPage();
     const errors = [];
     page.on("pageerror", (e) => errors.push("uncaught: " + String(e.message || e).split("\n")[0]));
@@ -272,14 +290,17 @@ async function main() {
     }
     fresh = fresh.filter((k) => again.has(k));
   }
-  const fixed = baseline.entries.filter((k) => ids.has(k.split(" | ")[0]) && !seen.has(k));
+  // Only this script's own kinds: converge.js (sync-*) and a11y.js (a11y)
+  // keep their entries in the same file.
+  const isMine = (k) => { const p = k.split(" | "); return ids.has(p[0]) && OWN_KINDS.has(p[1]); };
+  const fixed = baseline.entries.filter((k) => isMine(k) && !seen.has(k));
 
   if (args.update) {
     // Replace this shard's apps in the baseline, keep everything else.
-    const keep = baseline.entries.filter((k) => !ids.has(k.split(" | ")[0]));
+    const keep = baseline.entries.filter((k) => !isMine(k));
     const next = [...new Set(keep.concat([...seen.keys()]))].sort();
     fs.writeFileSync(BASELINE, JSON.stringify({
-      note: "Known failures of the quality gate (.github/qa/smoke.js). This list may only shrink: fix a problem, then delete its line. Format: app | kind | width | lang | detail.",
+      note: "Known failures of the quality gate (.github/qa/smoke.js, converge.js, a11y.js). This list may only shrink: fix a problem, then delete its line. Format: app | kind | width | lang | detail.",
       entries: next,
     }, null, 2) + "\n");
   }
@@ -302,4 +323,4 @@ async function main() {
 
 if (require.main === module) main().catch((e) => { console.error(e); process.exit(2); });
 
-module.exports = { norm, readsEnglish, key, serve, loadPlaywright, ROOT };
+module.exports = { norm, readsEnglish, key, serve, loadPlaywright, newContext, listApps, launchOptions, parseArgs, NOISE, ROOT };

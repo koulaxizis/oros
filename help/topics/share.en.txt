@@ -51,8 +51,12 @@ If you got a file instead of a link, open the link inside it, or use `Open a fil
 - [Mail](app:mail): `Another app…` among a message's apps.
 - [Bookmarks](app:bookmarks): `Send to an app…` in a bookmark's menu.
 - [Reader](app:feeds): `Another app…` when you send an article.
+- [Spreadsheet](app:spreadsheet): `Send to an app…` in the sheet menu (⋯ or right click) sends the selected cells, or the whole sheet when one cell is selected.
+- [Slides](app:slides): `Send to an app…` under More sends the presentation's outline.
+- [Mind map](app:mindmap): `Send to an app…` in an idea's menu sends that branch as an indented list.
+- [Kanban](app:kanban): `Send…` in a card, and `Send cards…` in a column's settings.
 
-The window lists only the apps that can take it: text goes to Notes, To-Do (one task per line), Writer, Mail, Wiki, the Assistant, Text Tools, Case Converter and, for one short line, Label Maker; a link also goes to Bookmarks. The app opens with it filled in, and nothing is saved until you save it there. `Send to someone…` in the same window makes a link for another person, as described above.
+The window lists only the apps that can take it: text goes to Notes, To-Do (one task per line), Writer, Mail, Wiki, the Assistant, Text Tools, Case Converter, Slides (each heading becomes a slide), Mind map, Kanban (one card per line), Prompter (as a new prompt) and, for one short line, Label Maker; a link also goes to Bookmarks; a table goes to Writer as a table, to Spreadsheet as a new sheet, and to Mail. The app opens with it filled in, and nothing is saved until you save it there. `Send to someone…` in the same window makes a link for another person, as described above.
 
 ## Privacy
 A plain link carries the item in the part after the # sign, which browsers never send to a server. No orOS server sees it and nothing is stored anywhere except in the link.
