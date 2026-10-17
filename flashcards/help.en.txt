@@ -1,0 +1,55 @@
+# Flashcards
+Learn anything with cards: a question on the front, the answer on the back. Flashcards shows each card again just before you would forget it, so a few minutes a day are enough to keep what you learned. The schedule comes from FSRS, a modern open method for spaced repetition.
+
+## Getting started
+1. Press `New deck` and give the deck a name, for example "Spanish words".
+2. Press `Add card`, write the front and the back, and press `Save`. `Save and add another` keeps the window open for the next card.
+3. Back on the list of decks, press `Study` next to the deck.
+4. Read the front and try to remember the answer. Press `Show answer`, then say how it went (see below).
+
+## Decks
+- Each deck has its own cards. Tap a deck to see its cards, find one with the search box, and open it to change it.
+- A deck can live inside another deck: choose it in `Inside deck`. Studying a deck also studies the decks inside it.
+- The three numbers next to a deck are the new cards (blue), the cards you are still learning (orange) and the cards to review today (green).
+- `Deck settings` changes the name, how many new cards and reviews you get per day, and how much you want to remember.
+- `Delete` in `Deck settings` removes the deck, the decks inside it and their cards.
+
+## Card types
+- `Basic`: one card, front and back.
+- `Basic and reversed`: two cards, one each way. Good for words: "dog → σκύλος" and "σκύλος → dog".
+- `Fill in the gap`: write a sentence, select a word and press `Make a gap`. The word is hidden when you study and you fill it in. Every gap number makes its own card; `Gap with the same number` hides several words on the same card. A gap can carry a hint: `{{c1::Athens::city}}` shows "[city]".
+Tags (words separated by spaces) help you find cards later.
+
+## Studying
+After `Show answer`, pick one of four buttons. Each one shows when you will see the card again:
+- `Again`: you forgot. The card comes back in a few minutes.
+- `Hard`: you remembered with effort.
+- `Good`: you remembered.
+- `Easy`: you knew it at once.
+Be honest: the schedule learns from your answers. `Undo` takes back the last answer. `Edit` fixes a mistake on the card you are looking at.
+New cards come one per day for each note, so the two cards of a reversed note appear on different days.
+
+### How much to remember
+`How much to remember` in `Deck settings` is the chance you want to have of remembering a card when it comes back. 90% is a good start. A higher aim shows cards more often; a lower aim needs less time but you forget more.
+
+### The study day
+A study day starts at 04:00, so studying after midnight still counts for the day before. You can change the hour with the settings button at the top.
+
+## Sync and backup
+- Decks and settings travel with orOS sync, encrypted.
+- Cards and answers are files in the `Flashcards` folder of the orOS disk ([Files](app:files)), and Vault Drive copies them to your other devices. Each device writes only its own files, so two devices can study offline at the same time and every answer is kept.
+- The schedule of each card is worked out again from your answers on every device, so it is the same everywhere.
+
+## Keyboard shortcuts
+- [[Space]] or [[Enter]]: show the answer.
+- [[1]] [[2]] [[3]] [[4]]: Again, Hard, Good, Easy. After the answer is shown, [[Space]] also means Good.
+- [[Ctrl+Z]]: undo the last answer.
+- [[Ctrl+Enter]]: save the card in the card window.
+- [[Esc]]: close a window, or go back.
+
+## Find it from anywhere
+- The menu's search box finds your decks and cards by their words. Choosing one opens it in Flashcards.
+
+## Limits
+- Pictures, sound and importing Anki decks come in later versions.
+- Without the orOS disk (the app opened on its own, outside orOS) cards are not saved.
