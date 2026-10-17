@@ -1,0 +1,56 @@
+# Etiketten
+Gib ein Wort ein, und es wird Buchstabe für Buchstabe in ein Kunststoffband geprägt, mit erhabenen weißen Buchstaben wie bei den alten Prägeetiketten.
+
+## Erste Schritte
+Schreib in das Feld unter dem Band. Jeder Buchstabe wird beim Tippen ins Band geprägt, und das Band wächst mit.
+- Das Band kennt nur Großbuchstaben, lateinische und griechische, ohne Akzente. Kleinbuchstaben werden zu Großbuchstaben.
+- Ziffern und diese Zeichen gehen auch: & - . , / : ! ? # + = ' ( ) * @ € und ♥ ★ ☺. Alles andere wird weggelassen.
+- Ein Etikett hat bis zu 40 Zeichen. Der Zähler im Feld zeigt, wie viele du schon benutzt hast.
+- In griechischem Text wird ; zum Fragezeichen.
+
+## Das Buchstabenrad
+Der Rad-Button oben zeigt das Buchstabenrad, wie am echten Gerät. Die Tastatur funktioniert daneben weiter.
+- Dreh das Rad mit dem Finger oder der Maus, mit dem Mausrad oder mit den Pfeiltasten. Der Buchstabe unter dem Zeiger wird geprägt.
+- Tippe auf den Griff in der Mitte oder auf `Drücken`, um diesen Buchstaben zu prägen. Ist das Rad ausgewählt, prägen auch Enter oder die Leertaste.
+- `ABC`, `ΑΒΓ` und `123 &?` wählen, welche Zeichen auf dem Rad sind.
+- `Leerzeichen` fügt eine Lücke zwischen Wörtern ein, und `Letztes entfernen` nimmt den letzten Buchstaben zurück.
+
+## Band und Enden
+- `Band` stellt die Farbe ein: rot, schwarz, blau, grün, gelb, weiß oder transparent. Gelbes und weißes Band hat schwarze Buchstaben.
+- `Breite` ist 9 oder 12 mm. Die Buchstaben sind halb so hoch wie das Band.
+- `Enden` schneidet das Band gerade oder rund ab, und `Rand` legt fest, wie viel leeres Band an jeder Seite bleibt.
+- Die Buchstaben werden etwas ungleichmäßig geprägt, wie auf echtem Band. Dasselbe Etikett sieht immer gleich aus.
+- Der Lautsprecher-Button schaltet das Klicken jedes Buchstabens ein. Der Ton ist anfangs aus.
+
+## Meine Etiketten
+- `Etikett speichern` (oder Enter im Feld) legt das Etikett unter `Meine Etiketten` ab. Änderungen an einem geöffneten gespeicherten Etikett werden laufend gespeichert.
+- `Neues Etikett` beginnt ein leeres Band in derselben Farbe und Größe.
+- Tippe in der Liste auf ein Etikett, um es zu öffnen. Der Kopier-Button macht ein Duplikat, und das × löscht es; `Rückgängig` holt es zurück.
+- `Zuletzt` zeigt die letzten 10 Etiketten, die du auf diesem Gerät gemacht hast, gespeichert oder nicht. Tippe auf eines, um daraus ein neues Etikett zu beginnen.
+
+## Herunterladen, kopieren und drucken
+- `PNG herunterladen` speichert das Etikett als Bild mit transparentem Hintergrund, scharf genug zum Drucken.
+- `Bild kopieren` legt das Bild in die Zwischenablage, wo dein Browser es erlaubt.
+- `Drucken` erstellt einen A4-Bogen in echter Größe, mit einer gestrichelten Linie um jedes Etikett zum Ausschneiden. Hake Etiketten in `Meine Etiketten` an, um sie zusammen zu drucken; ist keines angehakt, wird das Etikett auf dem Band gedruckt. `Kopien von jedem` legt fest, wie viele von jedem.
+- Ein Etikett, das länger ist, als der Bogen breit ist, wird hochkant gedruckt.
+
+## orOS-Datei
+- `orOS-Datei (.oroslabels)` speichert einen Bogen Etiketten in einer Datei: die Etiketten, die du in `Meine Etiketten` angehakt hast, oder das Etikett auf dem Band, wenn keines angehakt ist, mit `Kopien von jedem`.
+- Die Datei ist ein ZIP. Entpackst du sie, findest du die Etiketten in content.json, ein Bild davon in preview/thumbnail.png und eine Liste, die jede Tabellenkalkulation öffnet, in preview/labels.csv.
+- `orOS-Datei öffnen…` (unter `Meine Etiketten`) fügt die Etiketten einer Datei als neue Etiketten zu `Meine Etiketten` hinzu, angehakt und bereit zum Drucken. Nichts, was du schon hast, wird geändert. Eine .oroslabels-Datei, die du von deinem Gerät aus mit orOS öffnest, öffnet sich genauso.
+- `Entpackter orOS-Ordner…` öffnet eine entpackte .oroslabels-Datei, auch wenn du content.json von Hand geändert hast.
+
+## Aus Inventar
+In Inventar öffnet der Etiketten-Button bei einem Bereich, einem Raum, einem Möbelstück oder einem Regal die Etiketten mit seinem Namen schon auf dem Band.
+
+## Synchronisierung und Sicherung
+- `Meine Etiketten` folgen dir über die orOS-Synchronisierung auf alle deine Geräte.
+- Zuletzt gemachte Etiketten, Ton, das Rad und deine letzte Farbe und Größe bleiben nur auf diesem Gerät.
+
+## Tipps
+> Druck einen Bogen Etiketten auf Stickerpapier und schneide entlang der gestrichelten Linien aus.
+- Nimm das transparente Band für ein Etikett, das zeigt, was darunter ist.
+
+## Grenzen
+- Bis zu 300 gespeicherte Etiketten mit je bis zu 40 Zeichen.
+- Wird dasselbe Etikett auf zwei Geräten geändert, bevor sie synchronisieren, gewinnt die neueste Änderung.
