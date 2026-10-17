@@ -77,7 +77,8 @@
       return l === "el" ? "el" : "en";
     } catch (e) { return "en"; }
   }
-  var LANG = appLang();
+  // orosI18n (../i18n.js): the full language code, a pack language included.
+  var LANG = window.orosI18n ? window.orosI18n.lang() : appLang();
 
   var STRINGS = {
     en: {
@@ -275,6 +276,7 @@
       "toast.wait@net": "Περίμενε: παίζει ο αντίπαλος"
     }
   };
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "xeri", LANG);
 
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;
@@ -1711,7 +1713,7 @@
   function netBoot() {
     if (!window.OrosRemotePlay || !window.OrosRemoteLink) { $("net-btn").hidden = true; return; }
     RP = window.OrosRemotePlay.create({
-      app: "xeri", lang: LANG, game: STRINGS[LANG]["game.name"],
+      app: "xeri", lang: LANG === "el" ? "el" : "en", game: t("game.name"),
       dialog: { make: makeDialog, el: el, button: button },
       onPeer: netOnPeer, onMsg: netOnMsg, onEnd: netOnEnd,
       onLink: function () { if (game) renderStatus(); }
