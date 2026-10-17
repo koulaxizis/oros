@@ -412,10 +412,15 @@
         if (short || expOn) return;
         var key = ck(0, lockOn ? curPass : "");
         if (cache[key]) sizeCheck(cache[key]);
-        else if (!lockOn) codeFor(0, "").then(sizeCheck, function () {});
+        else if (!lockOn) codeFor(0, "").then(sizeCheck, tooBig);
+      }
+      // An item over the receiving page's MAX_JSON has no plain link at all.
+      function tooBig(e) {
+        if (e && e.message === "big") { sizeCheck(null); return true; }
+        return false;
       }
       function sizeCheck(code) {
-        if (code.length <= K.MAX_LINK || expOn) return;
+        if ((code && code.length <= K.MAX_LINK) || expOn) return;
         if (canExp) {
           forced = expOn = true;
           ecb.checked = true;
@@ -428,7 +433,7 @@
         }
         linkBtns.forEach(function (b) { b.disabled = true; });
         msg.className = "osh-msg err";
-        msg.textContent = T("long", { n: code.length });
+        msg.textContent = T("long", { n: code ? code.length : "> " + K.MAX_LINK });
       }
       function act(what) {
         if (busy) return;
@@ -456,6 +461,7 @@
           }
         }, function (e) {
           busy = false;
+          if (!d && tooBig(e)) return;
           msg.className = "osh-msg err";
           msg.textContent = errText(e);
         });

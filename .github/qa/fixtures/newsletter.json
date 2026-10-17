@@ -1,0 +1,285 @@
+{
+ "source": "tests/bundle-newsletter.test.js slice()",
+ "base": {
+  "ver": 1,
+  "chans": [
+   {
+    "id": "chn-smtp",
+    "m": 1799999991000,
+    "name": "Postmark",
+    "kind": "smtp",
+    "acct": "",
+    "preset": "postmark",
+    "host": "smtp.postmarkapp.com",
+    "port": 587,
+    "sec": "starttls",
+    "user": "server-token-secret",
+    "inbox": "",
+    "via": "smtp",
+    "dom": "",
+    "rate": 1,
+    "cap": 100
+   }
+  ],
+  "lists": [
+   {
+    "id": "lst-gone",
+    "m": 1799999999900,
+    "del": 1
+   },
+   {
+    "id": "lst-news",
+    "m": 1799999992000,
+    "name": "Weekly",
+    "chan": "chn-smtp",
+    "from": "me@example.org",
+    "fromName": "",
+    "reply": "",
+    "lang": "en",
+    "addr": "",
+    "why": "You asked.",
+    "theme": "classic",
+    "color": "#2f6fde",
+    "salt": "saltsalt12",
+    "form": {
+     "k": "abcdefghij012345",
+     "sec": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+     "priv": {
+      "kty": "RSA",
+      "alg": "RSA-OAEP-256",
+      "n": "nnn",
+      "e": "AQAB",
+      "d": "secretd",
+      "p": "pp",
+      "q": "qq",
+      "dp": "dp",
+      "dq": "dq",
+      "qi": "qi"
+     },
+     "back": "https://example.org/thanks",
+     "dev": "dev123",
+     "at": 1799999995000
+    }
+   }
+  ],
+  "subs": [
+   {
+    "id": "s-deleted01",
+    "m": 1799999999950,
+    "del": 1
+   },
+   {
+    "id": "s1krx647hi8o",
+    "m": 1799999993100,
+    "list": "lst-news",
+    "email": "bob@example.org",
+    "name": "Bob",
+    "lang": "",
+    "tags": [],
+    "src": "manual",
+    "basis": "consent",
+    "at": 1799999993100,
+    "conf": 0,
+    "off": 0,
+    "offSt": "",
+    "inv": 1799999993200,
+    "bnc": 0,
+    "c": ""
+   },
+   {
+    "id": "s22mewfucr5t",
+    "m": 1799999993000,
+    "list": "lst-news",
+    "email": "ann@example.org",
+    "name": "=Ann",
+    "lang": "",
+    "tags": [
+     "vip"
+    ],
+    "src": "manual",
+    "basis": "consent",
+    "at": 1799999993000,
+    "conf": 1799999993000,
+    "off": 0,
+    "offSt": "",
+    "inv": 0,
+    "bnc": 0,
+    "c": ""
+   }
+  ],
+  "issues": [
+   {
+    "id": "iss-going",
+    "m": 1799999995000,
+    "list": "lst-news",
+    "subj": "Out now",
+    "pre": "",
+    "fmt": "md",
+    "blocks": [],
+    "md": "# Hi\n\ntext",
+    "tags": [],
+    "seg": "",
+    "l2": null,
+    "st": "sending",
+    "when": 0,
+    "lock": {
+     "dev": "dev123",
+     "at": 1799999995000
+    },
+    "start": 1799999995000,
+    "done": 0,
+    "n": 1,
+    "err": "",
+    "fail": {
+     "s1krx647hi8o": "refused"
+    },
+    "imp": 0
+   },
+   {
+    "id": "iss-sched",
+    "m": 1799999996000,
+    "list": "lst-news",
+    "subj": "Later",
+    "pre": "",
+    "fmt": "blocks",
+    "blocks": [],
+    "md": "",
+    "tags": [],
+    "seg": "",
+    "l2": null,
+    "st": "sched",
+    "when": 1800000099999,
+    "lock": {
+     "dev": "dev123",
+     "at": 1800000000000
+    },
+    "start": 0,
+    "done": 0,
+    "n": 0,
+    "err": "",
+    "fail": {},
+    "imp": 0
+   },
+   {
+    "id": "iss-sent",
+    "m": 1799999994000,
+    "list": "lst-news",
+    "subj": "Hello",
+    "pre": "",
+    "fmt": "blocks",
+    "blocks": [
+     {
+      "k": "h",
+      "t": "Title"
+     },
+     {
+      "k": "p",
+      "t": "Some <b>text</b>"
+     },
+     {
+      "k": "img",
+      "f": "/internal/Newsletter/img-aaaa.jpg",
+      "alt": "A cat",
+      "href": "",
+      "w": 600,
+      "h": 400,
+      "b": 1000
+     },
+     {
+      "k": "btn",
+      "t": "Read",
+      "href": "https://example.org/a"
+     }
+    ],
+    "md": "",
+    "tags": [],
+    "seg": "",
+    "l2": null,
+    "st": "sent",
+    "when": 0,
+    "lock": null,
+    "start": 0,
+    "done": 1799999994000,
+    "n": 2,
+    "err": "",
+    "fail": {},
+    "imp": 0
+   }
+  ],
+  "segs": [
+   {
+    "id": "seg-vip",
+    "m": 1799999997000,
+    "list": "lst-news",
+    "name": "VIPs",
+    "tags": [
+     "vip"
+    ],
+    "match": "any",
+    "lang": ""
+   }
+  ],
+  "tpls": [
+   {
+    "id": "tpl-base",
+    "m": 1799999998000,
+    "name": "Base",
+    "subj": "",
+    "pre": "",
+    "fmt": "blocks",
+    "blocks": [
+     {
+      "k": "img",
+      "f": "/internal/Newsletter/logo.png",
+      "alt": "",
+      "href": "",
+      "w": 100,
+      "h": 50,
+      "b": 0
+     }
+    ],
+    "md": "",
+    "l2": null
+   }
+  ],
+  "rss": [
+   {
+    "id": "rss-blog",
+    "m": 1799999999000,
+    "list": "lst-news",
+    "url": "https://example.org/feed",
+    "name": "Blog",
+    "every": "week",
+    "wd": 1,
+    "hour": 9,
+    "mode": "send",
+    "max": 10,
+    "seg": "",
+    "last": 0,
+    "ran": 0,
+    "dev": "dev123",
+    "on": 1
+   }
+  ],
+  "sent": {
+   "iss-going": [
+    "s22mewfucr5t"
+   ]
+  },
+  "supp": [
+   "x0qqnzbolkpx"
+  ],
+  "plinks": [
+   {
+    "id": "pl-x",
+    "m": 1799999999100,
+    "list": "lst-news",
+    "acct": "acct0001",
+    "p": "brevo",
+    "grp": "12",
+    "gname": "Group",
+    "last": 0
+   }
+  ]
+ }
+}

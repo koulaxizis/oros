@@ -1,0 +1,125 @@
+{
+ "source": "tests/bundle-contacts.test.js slice()",
+ "base": {
+  "ver": 1,
+  "labels": [
+   {
+    "id": "lbl-personal",
+    "name": "Personal",
+    "color": "#d4af37",
+    "mtime": 0
+   },
+   {
+    "id": "lbl-climb",
+    "name": "Climbing",
+    "color": "#7aa2f7",
+    "mtime": 1792201842684
+   }
+  ],
+  "contacts": [
+   {
+    "id": "c1",
+    "given": "Maria",
+    "middle": "",
+    "family": "Papadopoulou",
+    "nickname": "",
+    "org": "",
+    "jobTitle": "",
+    "phones": [
+     {
+      "v": "+30 690 000 0001",
+      "type": "mobile"
+     }
+    ],
+    "emails": [
+     {
+      "v": "maria@example.org",
+      "type": "work"
+     }
+    ],
+    "addresses": [
+     {
+      "street": "Odos 1",
+      "city": "Athens",
+      "zip": "10558",
+      "region": "",
+      "country": "GR",
+      "type": "home"
+     }
+    ],
+    "websites": [],
+    "im": [],
+    "events": [
+     {
+      "day": "03-17",
+      "year": 1975,
+      "type": "birthday",
+      "label": ""
+     }
+    ],
+    "relations": [
+     {
+      "with": "c2",
+      "type": "friend"
+     }
+    ],
+    "labelIds": [
+     "lbl-climb"
+    ],
+    "starred": true,
+    "note": "line one\nline two; x",
+    "avatar": "px:ab12",
+    "mtime": 1792201842784,
+    "keep": {
+     "n": 2,
+     "u": "w"
+    },
+    "seen": "2026-10-01",
+    "log": [
+     {
+      "id": "lg1",
+      "k": "call",
+      "d": "2026-10-01",
+      "tx": "hi",
+      "m": 1792201842784
+     }
+    ],
+    "fm": {
+     "given": 1792201842784,
+     "note": 1792201842784
+    }
+   },
+   {
+    "id": "c2",
+    "given": "",
+    "middle": "",
+    "family": "",
+    "nickname": "",
+    "org": "=HYPERLINK(\"x\")",
+    "jobTitle": "",
+    "phones": [],
+    "emails": [],
+    "addresses": [],
+    "websites": [],
+    "im": [],
+    "events": [],
+    "relations": [],
+    "labelIds": [],
+    "starred": false,
+    "note": "",
+    "avatar": null,
+    "mtime": 1792201842884
+   }
+  ],
+  "deleted": [
+   {
+    "id": "c-gone",
+    "mtime": 1792201843484
+   },
+   {
+    "id": "lbl-work",
+    "mtime": 1792201843484
+   }
+  ]
+ }
+}

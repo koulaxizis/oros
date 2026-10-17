@@ -16,7 +16,8 @@
 //     WITH its merge, registered here and only here;
 //   - device-local state "oros-music-local": the queue (what was
 //     started, shuffle order, "next up", repeat), the position of
-//     the current song, the volume and the listening history;
+//     the current song, the volume and the listening history, and
+//     the yearly listening stats "oros-music-stats" (recap, mixes);
 //   - Media Session (lock screen, headphones, media keys: play,
 //     pause, previous, next, seek);
 //   - the tray chip (play/pause) on the shell bar;
@@ -32,7 +33,7 @@
   var C = w.OrosMusicCore, ST = w.OrosMusicStore;
   if (!C) return;
 
-  var KEY = "oros-music-data", LOCAL_KEY = "oros-music-local";
+  var KEY = "oros-music-data", LOCAL_KEY = "oros-music-local", STATS_KEY = "oros-music-stats";
   var doc = w.document;
   function isEl() { return w.orosLang === "el"; }
 
@@ -545,8 +546,17 @@
   function countPlay() {
     if (counted || !cur) return;
     counted = true;
-    local.hist = C.addPlay(local.hist, cur, Date.now());
+    var now = Date.now();
+    local.hist = C.addPlay(local.hist, cur, now);
     saveLocal();
+    // Yearly listening stats (recap, mixes, the Today line).
+    if (typeof C.addStat === "function") {
+      try {
+        var d = isFinite(audio.duration) && audio.duration > 0 ? audio.duration : cur.d || 0;
+        var st = C.addStat(C.normStats(JSON.parse(w.localStorage.getItem(STATS_KEY) || "null")), cur, d, now);
+        w.localStorage.setItem(STATS_KEY, JSON.stringify(st));
+      } catch (e) {}
+    }
   }
   on("timeupdate", function () {
     if (!cur) return;
