@@ -4,14 +4,21 @@
 // Recognising files (name + first bytes), the page list and its
 // edits (move, rotate, delete, duplicate, undo), page ranges for
 // split, picture page sizes, output names and device-local prefs.
+// Wave 2: overlays (signatures, text) and where they sit on a turned
+// page, page numbers, watermark, compress levels, the signature
+// library and turning a photo of a signature into ink.
 // scanpdf.js does the DOM and the I/O, pdfops.js the PDF writing.
 // UMD: window.ScanPdfCore, or module.exports in Node.
 // ============================================================
 (function (root) {
   "use strict";
 
-  var VERSION = "1.0.0";
+  var VERSION = "1.1.0";
   var PREFS_KEY = "oros-scanpdf-prefs";      // device-local (R10), never synced
+  var SIGS_KEY = "oros-scanpdf-sigs";        // device-local (R10), never synced
+  var MAX_SIGS = 6;
+  var MAX_SIG_URL = 280000;                  // ~200 KB of PNG as a data: URL
+  var MAX_OV = 40;                           // additions on one page
   var MAX_FILE = 200 * 1024 * 1024;          // one input file
   var MAX_PAGES = 2000;                      // pages in the list
   var MAX_HISTORY = 60;                      // undo steps
@@ -135,6 +142,7 @@
   var ORIENTS = ["auto", "portrait", "landscape"];
   var MARGINS = ["none", "small", "normal"];
   var DESTS = ["device", "files"];
+  var CMPS = ["off", "light", "medium", "strong"];
   function pick(v, list, def) { return list.indexOf(v) !== -1 ? v : def; }
   function readPrefs(raw) {
     var p = raw && typeof raw === "object" ? raw : {};
@@ -142,7 +150,8 @@
       size: pick(p.size, SIZES, "a4"),
       orient: pick(p.orient, ORIENTS, "auto"),
       margin: pick(p.margin, MARGINS, "small"),
-      dest: pick(p.dest, DESTS, "device")
+      dest: pick(p.dest, DESTS, "device"),
+      cmp: pick(p.cmp, CMPS, "off")
     };
   }
 
@@ -178,9 +187,16 @@
   // page: { key, src (source id), idx (page index in the source, 0-based),
   //         rot (0|90|180|270, added to the page's own rotation) }
   function normRot(r) { r = Math.round((Number(r) || 0) / 90) * 90 % 360; return r < 0 ? r + 360 : r; }
+  // p.ov: the additions on the page (see Overlays), copied one level
+  // deep so an edit never changes an older list kept for Undo.
   function clonePages(pages) {
-    return pages.map(function (p) { return { key: p.key, src: p.src, idx: p.idx, rot: p.rot }; });
+    return pages.map(function (p) {
+      var c = { key: p.key, src: p.src, idx: p.idx, rot: p.rot };
+      if (p.ov && p.ov.length) c.ov = cloneOv(p.ov);
+      return c;
+    });
   }
+  function cloneOv(ov) { return (ov || []).map(function (o) { return Object.assign({}, o); }); }
   function keySet(keys) { var s = {}; (keys || []).forEach(function (k) { s[k] = true; }); return s; }
 
   // Move the chosen pages one step earlier (-1) or later (+1), as a
@@ -224,7 +240,11 @@
     var s = keySet(keys), out = [];
     clonePages(pages).forEach(function (p) {
       out.push(p);
-      if (s[p.key]) out.push({ key: mkKey(), src: p.src, idx: p.idx, rot: p.rot });
+      if (s[p.key]) {
+        var c = { key: mkKey(), src: p.src, idx: p.idx, rot: p.rot };
+        if (p.ov && p.ov.length) c.ov = cloneOv(p.ov);
+        out.push(c);
+      }
     });
     return out;
   }
@@ -257,6 +277,223 @@
     if (!h.future.length) return null;
     h.past.push(clonePages(current));
     return h.future.pop();
+  }
+
+  // ---------- Overlays ----------
+  // An addition on a page: { id, t: "img"|"text", cx, cy, A, ... }.
+  //   cx, cy: its centre as fractions of the UNTURNED page (W × H
+  //           points, top-left origin), so turning the page later
+  //           turns the addition with it.
+  //   A:      how the page was turned (0|90|180|270, clockwise) when
+  //           it was put on, so it stood upright then.
+  //   img:    w, h as fractions of S = min(W, H); src a PNG data: URL.
+  //   text:   fs (font size / S), text, color ("black"|"blue"|"red").
+  // The display of a page turned by R (clockwise) is W' × H' with
+  // W' = H when R is 90 or 270.
+  var COLORS = { black: [0.07, 0.07, 0.09], blue: [0.1, 0.23, 0.6], red: [0.75, 0.1, 0.12] };
+  function dispSize(W, H, R) { return R % 180 ? [H, W] : [W, H]; }
+  // Unturned point (px, py) → where it shows on the turned page.
+  function toDisp(px, py, W, H, R) {
+    R = normRot(R);
+    if (R === 90) return [H - py, px];
+    if (R === 180) return [W - px, H - py];
+    if (R === 270) return [py, W - px];
+    return [px, py];
+  }
+  // And back: a point on the turned page → the unturned page.
+  function fromDisp(dx, dy, W, H, R) {
+    R = normRot(R);
+    if (R === 90) return [dy, H - dx];
+    if (R === 180) return [W - dx, H - dy];
+    if (R === 270) return [W - dy, dx];
+    return [dx, dy];
+  }
+  function clamp01(n) { n = Number(n); return n > 1 ? 1 : n > 0 ? n : 0; }
+  // Display fractions (fx, fy of W' × H') → { cx, cy } of the unturned page.
+  function ovAt(fx, fy, W, H, R) {
+    var d = dispSize(W, H, R), u = fromDisp(clamp01(fx) * d[0], clamp01(fy) * d[1], W, H, R);
+    return { cx: round4(u[0] / W), cy: round4(u[1] / H) };
+  }
+  // Where an addition shows: { fx, fy } of the turned page and how
+  // much it is turned there (clockwise degrees).
+  function ovDisp(o, W, H, R) {
+    var d = dispSize(W, H, R), v = toDisp(o.cx * W, o.cy * H, W, H, R);
+    return { fx: v[0] / d[0], fy: v[1] / d[1], turn: normRot(R - (o.A || 0)) };
+  }
+  function round4(n) { return Math.round(n * 10000) / 10000; }
+
+  // The point pdf-lib draws from (bottom-left of a picture, start of
+  // the baseline of a line of text) for a box of ow × oh points whose
+  // centre is (X, Y) in PDF space (y up), turned A degrees
+  // counter-clockwise; (ox, oy) is that point's offset from the centre
+  // before turning.
+  function anchor(X, Y, ox, oy, A) {
+    var a = A * Math.PI / 180, c = Math.cos(a), s = Math.sin(a);
+    return { x: round2(X + ox * c - oy * s), y: round2(Y + ox * s + oy * c) };
+  }
+  // Baseline below the centre of a line box of 1.2 × size (Noto Sans:
+  // ascender 1.069, descender 0.293), as the editor shows it.
+  var BASELINE = 0.388;
+
+  // A clean overlay, or null: only known fields, numbers in range.
+  function cleanOv(o) {
+    if (!o || typeof o !== "object") return null;
+    var c = { id: String(o.id || "").slice(0, 40) || "o", t: o.t === "img" ? "img" : "text",
+              cx: clamp01(o.cx), cy: clamp01(o.cy), A: normRot(o.A) };
+    if (c.t === "img") {
+      if (typeof o.src !== "string" || o.src.indexOf("data:image/png;base64,") !== 0 || o.src.length > MAX_SIG_URL) return null;
+      c.src = o.src;
+      c.w = Math.min(2, Math.max(0.01, Number(o.w) || 0.3));
+      c.h = Math.min(2, Math.max(0.005, Number(o.h) || 0.1));
+    } else {
+      c.text = String(o.text == null ? "" : o.text).replace(/[\u0000-\u001f\u007f]/g, " ").slice(0, 200);
+      if (!c.text.trim()) return null;
+      c.fs = Math.min(0.5, Math.max(0.005, Number(o.fs) || 0.03));
+      c.color = COLORS[o.color] ? o.color : "black";
+    }
+    return c;
+  }
+  // Put the additions of each key in `map` ({ key: [ov] }) on the list.
+  function setOverlays(pages, map) {
+    return clonePages(pages).map(function (p) {
+      if (!Object.prototype.hasOwnProperty.call(map, p.key)) return p;
+      var ov = (map[p.key] || []).map(cleanOv).filter(Boolean).slice(0, MAX_OV);
+      if (ov.length) p.ov = ov; else delete p.ov;
+      return p;
+    });
+  }
+
+  // ---------- Page numbers and watermark ----------
+  var NUM_POS = ["bc", "br", "bl", "tc", "tr"];
+  var NUM_FMT = ["n", "nt"];
+  var WM_OP = { light: 0.12, medium: 0.22, strong: 0.35 };
+  // The document options of one session (not kept): page numbers,
+  // watermark, title and author.
+  function readDocOpts(raw) {
+    var o = raw && typeof raw === "object" ? raw : {}, n = o.num || {}, w = o.wm || {};
+    var start = Math.floor(Number(n.start));
+    return {
+      num: { on: !!n.on, pos: pick(n.pos, NUM_POS, "bc"), fmt: pick(n.fmt, NUM_FMT, "n"),
+             start: start >= 0 && start <= 99999 ? start : 1 },
+      wm: { on: !!w.on && !!String(w.text || "").trim(), text: String(w.text || "").replace(/[\u0000-\u001f\u007f]/g, " ").slice(0, 60),
+            op: WM_OP[w.op] ? w.op : "light" },
+      title: String(o.title || "").replace(/[\u0000-\u001f\u007f]/g, " ").slice(0, 200),
+      author: String(o.author || "").replace(/[\u0000-\u001f\u007f]/g, " ").slice(0, 200)
+    };
+  }
+  // The text of the page number of the i-th page (0-based) of `total`.
+  function numText(opts, i, total) {
+    var n = opts.num.start + i;
+    return opts.num.fmt === "nt" ? n + " / " + (opts.num.start + total - 1) : String(n);
+  }
+  function numSize(S) { return Math.max(8, Math.min(16, round2(S / 60))); }
+  // Centre of the number on the turned page (W' × H'), points, top-left.
+  function numCenter(pos, dw, dh, size) {
+    var m = Math.max(18, size * 2.2);
+    var x = pos === "br" || pos === "tr" ? dw - m : pos === "bl" ? m : dw / 2;
+    var y = pos.charAt(0) === "t" ? m * 0.8 : dh - m * 0.8;
+    return [x, y];
+  }
+  // Watermark: corner to corner of the turned page, 45° up.
+  function wmSize(textWidthAt1, dw, dh) {
+    var diag = Math.sqrt(dw * dw + dh * dh);
+    return Math.max(10, Math.min(Math.min(dw, dh) / 4, round2(diag * 0.62 / Math.max(0.1, textWidthAt1))));
+  }
+
+  // ---------- Compress ----------
+  var COMPRESS = { light: { dpi: 150, q: 0.8 }, medium: { dpi: 110, q: 0.7 }, strong: { dpi: 80, q: 0.6 } };
+  var MAX_RENDER_SIDE = 5000;
+  // Scale for PDF.js (pixels per point) of a page of w × h points.
+  function renderScale(w, h, dpi) {
+    var s = dpi / 72, big = Math.max(w, h) * s;
+    return big > MAX_RENDER_SIDE ? MAX_RENDER_SIDE / Math.max(w, h) : s;
+  }
+
+  // ---------- Signatures ----------
+  // The saved signatures: [{ id, src (PNG data: URL), w, h }], newest first.
+  function readSigs(raw) {
+    var list = Array.isArray(raw) ? raw : [], out = [], seen = {};
+    list.forEach(function (s) {
+      if (!s || typeof s.src !== "string" || s.src.indexOf("data:image/png;base64,") !== 0 || s.src.length > MAX_SIG_URL) return;
+      var id = String(s.id || "").slice(0, 40);
+      if (!id || seen[id]) return;
+      seen[id] = true;
+      var w = Math.floor(Number(s.w)), h = Math.floor(Number(s.h));
+      if (!(w > 0 && h > 0 && w <= 4000 && h <= 4000)) return;
+      out.push({ id: id, src: s.src, w: w, h: h });
+    });
+    return out.slice(0, MAX_SIGS);
+  }
+  function addSig(list, sig) {
+    return readSigs([sig].concat((list || []).filter(function (s) { return s.id !== sig.id; })));
+  }
+  function removeSig(list, id) { return readSigs((list || []).filter(function (s) { return s.id !== id; })); }
+
+  // Otsu's split of a 256-bin histogram of grey levels: the split that
+  // best parts ink from paper; the level returned is half way between
+  // the mean ink and the mean paper of that split.
+  function otsu(hist) {
+    var total = 0, sum = 0, i;
+    for (i = 0; i < 256; i++) { total += hist[i]; sum += i * hist[i]; }
+    if (!total) return 128;
+    var sumB = 0, wB = 0, best = 0, at = 128;
+    for (i = 0; i < 256; i++) {
+      wB += hist[i];
+      if (!wB) continue;
+      var wF = total - wB;
+      if (!wF) break;
+      sumB += i * hist[i];
+      var mB = sumB / wB, mF = (sum - sumB) / wF, v = wB * wF * (mB - mF) * (mB - mF);
+      if (v > best) { best = v; at = Math.round((mB + mF) / 2); }
+    }
+    return at;
+  }
+  // RGBA pixels of a photo of a signature → ink: dark pixels keep the
+  // ink colour with an alpha that fades near the threshold, the paper
+  // becomes see-through. Changes `data` in place; returns the threshold.
+  function inkFromPhoto(data, rgb) {
+    var hist = new Array(256), i, n = data.length / 4;
+    for (i = 0; i < 256; i++) hist[i] = 0;
+    var grey = new Uint8Array(n);
+    for (i = 0; i < n; i++) {
+      var g = Math.round(0.299 * data[i * 4] + 0.587 * data[i * 4 + 1] + 0.114 * data[i * 4 + 2]);
+      grey[i] = g; hist[g]++;
+    }
+    var thr = Math.min(otsu(hist), 200), soft = 24;
+    for (i = 0; i < n; i++) {
+      var a = grey[i] >= thr ? 0 : Math.min(255, Math.round(255 * (thr - grey[i]) / soft));
+      data[i * 4] = rgb[0]; data[i * 4 + 1] = rgb[1]; data[i * 4 + 2] = rgb[2]; data[i * 4 + 3] = a;
+    }
+    return thr;
+  }
+  // The box around the visible pixels (alpha > min) of RGBA data, with
+  // `pad` pixels around it; null when nothing is visible.
+  function inkBox(data, w, h, pad, min) {
+    var x0 = w, y0 = h, x1 = -1, y1 = -1, lim = min == null ? 8 : min;
+    for (var y = 0; y < h; y++) {
+      for (var x = 0; x < w; x++) {
+        if (data[(y * w + x) * 4 + 3] > lim) {
+          if (x < x0) x0 = x; if (x > x1) x1 = x;
+          if (y < y0) y0 = y; if (y > y1) y1 = y;
+        }
+      }
+    }
+    if (x1 < 0) return null;
+    pad = pad || 0;
+    x0 = Math.max(0, x0 - pad); y0 = Math.max(0, y0 - pad);
+    x1 = Math.min(w - 1, x1 + pad); y1 = Math.min(h - 1, y1 + pad);
+    return { x: x0, y: y0, w: x1 - x0 + 1, h: y1 - y0 + 1 };
+  }
+
+  // The bytes of a base64 data: URL.
+  function dataUrlBytes(url) {
+    var b64 = String(url).slice(String(url).indexOf(",") + 1);
+    if (typeof atob === "function") {
+      var bin = atob(b64), out = new Uint8Array(bin.length);
+      for (var i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+      return out;
+    }
+    return new Uint8Array(Buffer.from(b64, "base64"));
   }
 
   // ---------- Ranges and split ----------
@@ -323,7 +560,14 @@
     normRot: normRot, clonePages: clonePages, moveStep: moveStep, moveTo: moveTo, rotate: rotate,
     remove: remove, duplicate: duplicate, pagesOf: pagesOf, usedSources: usedSources,
     history: history, record: record, undo: undo, redo: redo,
-    parseRanges: parseRanges, splitPlan: splitPlan, rangeLabel: rangeLabel, parseTarget: parseTarget
+    parseRanges: parseRanges, splitPlan: splitPlan, rangeLabel: rangeLabel, parseTarget: parseTarget,
+    SIGS_KEY: SIGS_KEY, MAX_SIGS: MAX_SIGS, MAX_OV: MAX_OV, COLORS: COLORS, BASELINE: BASELINE,
+    COMPRESS: COMPRESS, WM_OP: WM_OP, NUM_POS: NUM_POS,
+    cloneOv: cloneOv, dispSize: dispSize, toDisp: toDisp, fromDisp: fromDisp, ovAt: ovAt, ovDisp: ovDisp,
+    anchor: anchor, cleanOv: cleanOv, setOverlays: setOverlays,
+    readDocOpts: readDocOpts, numText: numText, numSize: numSize, numCenter: numCenter, wmSize: wmSize,
+    renderScale: renderScale, readSigs: readSigs, addSig: addSig, removeSig: removeSig,
+    otsu: otsu, inkFromPhoto: inkFromPhoto, inkBox: inkBox, dataUrlBytes: dataUrlBytes
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.ScanPdfCore = api;

@@ -3,8 +3,11 @@
 // delete, duplicate, undo/redo), page ranges and split plans, picture
 // page sizes, names, prefs and deep-link targets; real PDFs written by
 // pdfops.js with the vendored pdf-lib (merge, order, rotation, copies,
-// pictures, split parts, locked and broken files); the page wiring
-// (DL-1, palette, R33, every t() key exists).
+// pictures, split parts, locked and broken files); wave 2: where an
+// addition sits on a turned page (editor ↔ PDF), page numbers,
+// watermark, Greek text through fontkit + Noto, compress output, the
+// signature library and ink from a photo; the page wiring (DL-1,
+// palette, R33, every t() key exists).
 // Run: node --test tests/*.test.js
 
 "use strict";
@@ -20,6 +23,8 @@ const read = (f) => fs.readFileSync(path.join(ROOT, f), "utf8");
 const C = require(path.join(ROOT, "scanpdf/core.js"));
 const OPS = require(path.join(ROOT, "scanpdf/pdfops.js"));
 const L = require(path.join(ROOT, "vendor/pdf-lib/pdf-lib.min.js"));
+const fontkit = require(path.join(ROOT, "vendor/pdf-lib/fontkit.umd.min.js"));
+const FONT = { fontkit, bytes: new Uint8Array(fs.readFileSync(path.join(ROOT, "vendor/noto/NotoSans-Regular.ttf"))) };
 const fixture = (f) => new Uint8Array(fs.readFileSync(path.join(ROOT, "tests/fixtures/scanpdf", f)));
 
 function keys() { let k = 0; return () => "k" + (k++); }
@@ -120,10 +125,10 @@ test("names: clean, base, output parts, unique, .pdf added once", () => {
 });
 
 test("prefs: defaults and unknown values", () => {
-  assert.deepEqual(C.readPrefs(null), { size: "a4", orient: "auto", margin: "small", dest: "device" });
-  assert.deepEqual(C.readPrefs({ size: "fit", orient: "landscape", margin: "none", dest: "files", x: 1 }),
-    { size: "fit", orient: "landscape", margin: "none", dest: "files" });
-  assert.deepEqual(C.readPrefs({ size: "a3", orient: 9, margin: "<b>", dest: "cloud" }), C.readPrefs(null));
+  assert.deepEqual(C.readPrefs(null), { size: "a4", orient: "auto", margin: "small", dest: "device", cmp: "off" });
+  assert.deepEqual(C.readPrefs({ size: "fit", orient: "landscape", margin: "none", dest: "files", cmp: "medium", x: 1 }),
+    { size: "fit", orient: "landscape", margin: "none", dest: "files", cmp: "medium" });
+  assert.deepEqual(C.readPrefs({ size: "a3", orient: 9, margin: "<b>", dest: "cloud", cmp: "max" }), C.readPrefs(null));
 });
 
 // ---------- core: picture pages ----------
@@ -309,6 +314,167 @@ test("build: an unknown source fails instead of writing a short PDF", async () =
   await assert.rejects(OPS.build(L, {}, [{ key: "x", src: "gone", idx: 0, rot: 0 }], {}));
 });
 
+// ---------- wave 2: overlays, numbers, watermark, signatures ----------
+
+test("overlays: display ↔ unturned page for every turn, round trip", () => {
+  const W = 600, H = 800;
+  [0, 90, 180, 270].forEach((R) => {
+    [[0, 0], [600, 0], [123, 456], [600, 800]].forEach(([px, py]) => {
+      const d = C.toDisp(px, py, W, H, R);
+      assert.deepEqual(C.fromDisp(d[0], d[1], W, H, R), [px, py], "R " + R);
+    });
+  });
+  // turned 90° clockwise: the top-left corner shows at the top right
+  assert.deepEqual(C.toDisp(0, 0, W, H, 90), [800, 0]);
+  assert.deepEqual(C.dispSize(W, H, 270), [800, 600]);
+  // put at display (0.25, 0.1) of a page turned 90 → stays there, upright
+  const at = C.ovAt(0.25, 0.1, W, H, 90);
+  const v = C.ovDisp(Object.assign({ A: 90 }, at), W, H, 90);
+  assert.ok(Math.abs(v.fx - 0.25) < 1e-3 && Math.abs(v.fy - 0.1) < 1e-3 && v.turn === 0);
+  // the page turned again later: the addition turns with it
+  assert.equal(C.ovDisp(Object.assign({ A: 90 }, at), W, H, 180).turn, 90);
+  // clamped to the page
+  assert.deepEqual(C.ovAt(-1, 2, W, H, 0), { cx: 0, cy: 1 });
+});
+
+test("overlays: clean, kept on the list, copied by duplicate and undo", () => {
+  const img = "data:image/png;base64,iVBORw0KGgo=";
+  assert.equal(C.cleanOv({ t: "img", src: "javascript:alert(1)", cx: 0.5, cy: 0.5 }), null);
+  assert.equal(C.cleanOv({ t: "img", src: "data:image/svg+xml;base64,AA==" }), null);
+  assert.equal(C.cleanOv({ t: "text", text: "   " }), null);
+  const c = C.cleanOv({ id: "a", t: "text", text: "Hi\u0000there", cx: 3, cy: -1, A: 450, fs: 9, color: "pink", x: 1 });
+  assert.deepEqual(c, { id: "a", t: "text", cx: 1, cy: 0, A: 90, text: "Hi there", fs: 0.5, color: "black" });
+  const mk = keys();
+  let p = C.pagesOf("s", 2, mk);
+  p = C.setOverlays(p, { k0: [{ id: "x", t: "img", src: img, cx: 0.5, cy: 0.5, w: 0.3, h: 0.1 }, { t: "text", text: "" }] });
+  assert.equal(p[0].ov.length, 1);
+  assert.equal(p[1].ov, undefined);
+  const h = C.history(); C.record(h, p);
+  const before = h.past[0][0].ov[0];
+  p[0].ov[0].cx = 0.9;                                  // a later change …
+  assert.equal(before.cx, 0.5);                         // … never reaches the Undo copy
+  const d = C.duplicate(p, ["k0"], mk);
+  assert.equal(d[1].ov.length, 1);
+  assert.notEqual(d[1].ov[0], d[0].ov[0]);
+  assert.equal(C.setOverlays(p, { k0: [] })[0].ov, undefined);
+});
+
+test("doc options, page number text and place, watermark size, render scale", () => {
+  const o = C.readDocOpts(null);
+  assert.deepEqual(o.num, { on: false, pos: "bc", fmt: "n", start: 1 });
+  assert.equal(o.wm.on, false);
+  const n = C.readDocOpts({ num: { on: 1, pos: "tr", fmt: "nt", start: "5" }, wm: { on: true, text: "  " }, title: "T\n1" });
+  assert.equal(n.wm.on, false, "an empty watermark is off");
+  assert.equal(n.title, "T 1");
+  assert.equal(C.numText(n, 0, 3), "5 / 7");
+  assert.equal(C.numText(C.readDocOpts({ num: { on: true, start: -3 } }), 2, 9), "3");
+  const c = C.numCenter("bc", 600, 800, 10);
+  assert.equal(c[0], 300);
+  assert.ok(c[1] > 760 && c[1] < 800);
+  assert.ok(C.numCenter("tr", 600, 800, 10)[1] < 40);
+  assert.equal(C.numSize(595), 9.92);
+  const ws = C.wmSize(5, 595, 842);
+  assert.ok(ws > 50 && ws <= 595 / 4);
+  assert.equal(C.renderScale(595, 842, 72), 1);
+  assert.ok(C.renderScale(20000, 20000, 150) * 20000 <= 5000);
+});
+
+test("signatures: kept list (valid PNG data URLs, at most 6, newest first), Otsu, ink, crop, bytes", () => {
+  const src = "data:image/png;base64,iVBORw0KGgo=";
+  let list = [];
+  for (let i = 0; i < 8; i++) list = C.addSig(list, { id: "s" + i, src, w: 100, h: 40 });
+  assert.equal(list.length, C.MAX_SIGS);
+  assert.equal(list[0].id, "s7");
+  list = C.removeSig(list, "s7");
+  assert.equal(list[0].id, "s6");
+  assert.deepEqual(C.readSigs([{ id: "a", src: "data:text/html,<b>", w: 1, h: 1 }, { id: "b", src, w: 0, h: 9 }, "x", null]), []);
+  assert.equal(C.readSigs([{ id: "c", src: src + "A".repeat(300000), w: 9, h: 9 }]).length, 0);
+  // bimodal: dark ink around 30, paper around 220
+  const hist = new Array(256).fill(0);
+  hist[30] = 100; hist[35] = 50; hist[215] = 400; hist[225] = 300;
+  const thr = C.otsu(hist);
+  assert.ok(thr >= 35 && thr < 215, String(thr));
+  // 4 × 1 pixels: ink, paper, ink, paper
+  const px = new Uint8ClampedArray([20, 20, 20, 255, 230, 230, 230, 255, 25, 25, 25, 255, 235, 235, 235, 255]);
+  C.inkFromPhoto(px, [1, 2, 3]);
+  assert.deepEqual([px[3], px[7], px[11], px[15]].map((a) => a > 200 ? "ink" : a === 0 ? "clear" : "?"), ["ink", "clear", "ink", "clear"]);
+  assert.deepEqual([px[0], px[1], px[2]], [1, 2, 3]);
+  const box = new Uint8ClampedArray(10 * 5 * 4);
+  box[(2 * 10 + 3) * 4 + 3] = 255; box[(3 * 10 + 6) * 4 + 3] = 255;
+  assert.deepEqual(C.inkBox(box, 10, 5, 1), { x: 2, y: 1, w: 6, h: 4 });
+  assert.equal(C.inkBox(new Uint8ClampedArray(16), 2, 2, 0), null);
+  assert.deepEqual([...C.dataUrlBytes("data:image/png;base64,AQID")], [1, 2, 3]);
+});
+
+// Where pdf-lib put each picture: the centre of the box drawn by the
+// "x y cm / rotate cm / w h cm … Do" run before each image.
+function imageCentres(content) {
+  const out = [], re = /1 0 0 1 (-?[\d.]+) (-?[\d.]+) cm\s+(-?[\d.]+) (-?[\d.]+) (-?[\d.]+) (-?[\d.]+) 0 0 cm\s+([\d.]+) 0 0 ([\d.]+) 0 0 cm[^]*?Do/g;
+  let m;
+  while ((m = re.exec(content))) {
+    const [x, y, a, b, c, d, w, h] = m.slice(1).map(Number);
+    out.push([x + a * w / 2 + c * h / 2, y + b * w / 2 + d * h / 2]);
+  }
+  return out;
+}
+
+test("build: a signature put on a turned page lands where the editor showed it", async () => {
+  const src = await L.PDFDocument.create();
+  [0, 90, 180, 270].forEach((r) => src.addPage([300, 500]).setRotation(L.degrees(r)));
+  const s = await OPS.load(L, await src.save());
+  const srcs = { s: { kind: "pdf", doc: s.doc } };
+  const img = "data:image/png;base64," + Buffer.from(png(4, 2)).toString("base64");
+  const where = [[0.2, 0.1], [0.7, 0.85], [0.5, 0.3], [0.9, 0.6]];
+  const pages = C.pagesOf("s", 4, keys()).map((p, i) => {
+    const g = OPS.geom(L, srcs, p, {});
+    return Object.assign(p, { ov: [Object.assign({ id: "o", t: "img", src: img, w: 0.2, h: 0.1, A: g.R }, C.ovAt(where[i][0], where[i][1], g.W, g.H, g.R))] });
+  });
+  const out = await OPS.build(L, srcs, pages, {});
+  const d = await L.PDFDocument.load(out);
+  const texts = await textOf(out);
+  d.getPages().forEach((pg, i) => {
+    const R = pg.getRotation().angle, W = pg.getWidth(), H = pg.getHeight();
+    const c = imageCentres(texts[i]);
+    assert.equal(c.length, 1, "page " + (i + 1));
+    const disp = C.toDisp(c[0][0], H - c[0][1], W, H, R), size = C.dispSize(W, H, R);
+    assert.ok(Math.abs(disp[0] / size[0] - where[i][0]) < 0.005 && Math.abs(disp[1] / size[1] - where[i][1]) < 0.005,
+      "page " + (i + 1) + " at " + disp.map((v, k) => (v / size[k]).toFixed(3)));
+  });
+});
+
+test("build: Greek text, page numbers, watermark, title and author with the Noto font; no font → code font", async () => {
+  const a = await OPS.load(L, await pdf(3, "A"));
+  const srcs = { a: { kind: "pdf", doc: a.doc } };
+  const p = C.pagesOf("a", 3, keys());
+  p[1].ov = [{ id: "t", t: "text", text: "Υπογραφή: Χρήστος", cx: 0.5, cy: 0.5, A: 0, fs: 0.05, color: "blue" }];
+  const opts = { num: { on: true, fmt: "nt" }, wm: { on: true, text: "ΑΝΤΙΓΡΑΦΟ", op: "strong" }, title: "Σύμβαση", author: "Χρήστος" };
+  await assert.rejects(OPS.build(L, srcs, p, {}, { opts }), (e) => e.code === "font");
+  const out = await OPS.build(L, srcs, p, {}, { opts, font: FONT });
+  const d = await L.PDFDocument.load(out, { updateMetadata: false });
+  assert.equal(d.getPageCount(), 3);
+  assert.equal(d.getTitle(), "Σύμβαση");
+  assert.equal(d.getAuthor(), "Χρήστος");
+  const fonts = d.context.enumerateIndirectObjects().map(([, o]) => o)
+    .filter((o) => o instanceof L.PDFDict && String(o.get(L.PDFName.of("BaseFont")) || "").includes("NotoSans"));
+  assert.ok(fonts.length > 0, "the Noto font is embedded");
+  const texts = await textOf(out);
+  texts.forEach((t, i) => {
+    assert.ok(t.includes(hex("A " + (i + 1))), "the page's own text stays");
+    assert.ok(/\/GS-?\d+ gs/.test(t) || /gs/.test(t), "watermark opacity on page " + (i + 1));
+  });
+  // only pictures and no text: no font needed
+  const plain = await OPS.build(L, srcs, C.pagesOf("a", 1, keys()), {}, {});
+  assert.ok(plain.length > 0);
+});
+
+test("fromImages: one JPEG per page, the page filled, upright", async () => {
+  const jpg = fixture("plain.jpg");
+  const out = await OPS.fromImages(L, [{ bytes: jpg, w: 842, h: 595 }, { bytes: jpg, w: 300, h: 400 }], { opts: { title: "Small" } });
+  const d = await L.PDFDocument.load(out, { updateMetadata: false });
+  assert.deepEqual(d.getPages().map((x) => [x.getWidth(), x.getHeight(), x.getRotation().angle]), [[842, 595, 0], [300, 400, 0]]);
+  assert.equal(d.getTitle(), "Small");
+});
+
 // ---------- page wiring ----------
 
 test("index.html: DL-1 first, scripts in order, [hidden] rule, no inline handlers", () => {
@@ -340,5 +506,13 @@ test("scanpdf.js: palette, deep link, R33 dialogs, no innerHTML from data, every
   used.forEach((k) => assert.ok(en[k] !== undefined, "missing string " + k));
   // keys built at runtime
   ["pic.a4", "pic.letter", "pic.fit", "pic.portrait", "pic.landscape", "split.err.empty", "split.err.syntax",
-   "split.err.range", "split.err.number", "err.locked", "err.bad"].forEach((k) => assert.ok(en[k], k));
+   "split.err.range", "split.err.number", "err.locked", "err.bad",
+   "ed.sig", "ed.text", "ed.date", "ed.all", "ed.del", "ed.prev", "ed.next", "btn.close", "btn.edit",
+   "color.black", "color.blue", "color.red", "sig.draw", "sig.type", "sig.photo",
+   "cmp.off", "cmp.light", "cmp.medium", "cmp.strong"].concat(C.NUM_POS.map((k) => "num." + k)).forEach((k) => assert.ok(en[k], k));
+  // every English string has a Greek one
+  const el = new Function("return " + js.slice(js.indexOf("var STRINGS = ") + 14, js.indexOf("\n  };\n", js.indexOf("var STRINGS = ")) + 4))().el;
+  Object.keys(en).forEach((k) => assert.ok(el[k] !== undefined, "no Greek for " + k));
+  // saved signatures stay device-local: never handed to sync
+  assert.ok(js.includes("C.SIGS_KEY") && !/orosSync|__slices/.test(js));
 });
