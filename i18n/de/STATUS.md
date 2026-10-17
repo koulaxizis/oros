@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 0 of 26457 (0%)
+- Strings: 0 of 26497 (0%)
 - Help pages: 0 of 145 (0%)
 - Shown in the language list: not yet (try it with ?lang=de)
 
@@ -99,7 +99,7 @@ text is still written in the code. They switch over wave by wave
 | reversi | English for now | 0 / 60 |
 | ringtones | English for now | 0 / 99 |
 | rps | English for now | 0 / 59 |
-| scanpdf | English for now | 0 / 191 |
+| scanpdf | English for now | 0 / 231 |
 | scores | English for now | 0 / 147 |
 | settings | 0% | 0 / 475 |
 | share | English for now | 0 / 152 |
