@@ -32,6 +32,8 @@
     keys: ["oros-calendar-data", "oros-contacts-data", "oros-cal-days", "oros-pet-data"],
     collect: function (ctx) {
       var ND = root.OrosNamedays, OCC = root.OrosCalOccur;
+      // A pack language: English + the calendar pack, when one is loaded.
+      if (!W[ctx.lang] && root.orosI18n) root.orosI18n.table(W, "calendar", ctx.lang);
       var w = W[ctx.lang] || W.en, el = ctx.lang === "el", out = [];
       var cal = OCC ? ctx.readJSON("oros-calendar-data") : null;
       if (cal && Array.isArray(cal.events)) {
