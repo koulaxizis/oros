@@ -29,6 +29,27 @@
 
   function str(v) { return typeof v === "string" ? v.replace(/\s+/g, " ").trim() : ""; }
 
+  // Shares the "feeds" pack with feeds.js (same key = same English).
+  // The shell loads only its own pack, so a pack language fetches the
+  // feeds pack on first need; until it is in, English.
+  var W = {
+    en: { "srch.noName": "Unnamed feed", "srch.noTitle": "Untitled article" },
+    el: { "srch.noName": "Ροή χωρίς όνομα", "srch.noTitle": "Άρθρο χωρίς τίτλο" }
+  };
+  var packAsked = {};
+  function labels(ctx) {
+    var I = typeof window !== "undefined" && window.orosI18n, l = ctx && ctx.lang === "el" ? "el" : "en";
+    if (I) { try { l = I.lang() || l; } catch (x) {} }
+    if (W[l]) return W[l];
+    if (!I) return W.en;
+    var tab = I.table(W, "feeds", l);
+    if (!packAsked[l] && typeof I.ensure === "function") {
+      packAsked[l] = true;
+      try { I.ensure(l, "feeds", function () { if (l !== "en" && l !== "el") delete W[l]; }); } catch (x) {}
+    }
+    return tab || W.en;
+  }
+
   // All rows of one store, read-only; null when there is none.
   function readStore(name, store) {
     return new Promise(function (resolve) {
@@ -80,7 +101,7 @@
   }
 
   function build(ctx, d, headList) {
-    var out = [];
+    var out = [], w = labels(ctx);
     var tombs = d.tombs && typeof d.tombs === "object" ? d.tombs : {};
     var folderName = {}, feedName = {}, live = {};
     (Array.isArray(d.folders) ? d.folders : []).forEach(function (f) {
@@ -90,7 +111,7 @@
       if (!f || typeof f.id !== "string" || gone(tombs, "f:" + f.id, f.m)) return;
       var url = /^https?:\/\//i.test(str(f.url)) ? str(f.url) : "";   // a Mail folder's address means nothing here
       var title = str(f.title) || url.replace(/^https?:\/\//, "").split("/")[0] ||
-                  (ctx.lang === "el" ? "Ροή χωρίς όνομα" : "Unnamed feed");
+                  w["srch.noName"];
       live[f.id] = true;
       feedName[f.id] = title;
       out.push({
@@ -114,7 +135,7 @@
       seen[id] = true;
       out.push({
         id: "i:" + id,
-        title: title || (ctx.lang === "el" ? "Άρθρο χωρίς τίτλο" : "Untitled article"),
+        title: title || w["srch.noTitle"],
         text: text,
         when: typeof date === "number" && isFinite(date) && date > 0 ? date : 0,
         target: { item: id, feed: feed }

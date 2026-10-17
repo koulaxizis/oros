@@ -1,0 +1,71 @@
+# Reader
+Reader folgt Nachrichtenseiten, Blogs und Kanälen über ihre RSS-, Atom- oder JSON-Feeds. Die Artikel kommen an einem Ort an, bleiben offline lesbar, und was du gelesen hast, wird zwischen deinen Geräten synchronisiert.
+
+## Erste Schritte
+Tippe auf `Feed hinzufügen`, gib eine Website- oder Feed-Adresse ein, auch einen YouTube-Kanal, und dann `Suchen`. Reader sucht die Feeds selbst, auch die von YouTube, Reddit, Mastodon und GitHub. Wähle einen unter `Gefundene Feeds`, wähle bei Bedarf einen `Ordner` und tippe auf `Abonnieren`.
+
+Du kommst von einem anderen Reader? Nutze `Aus anderem Reader importieren (OPML)` oder `Aus FreshRSS oder Miniflux importieren`, um deine Abos, Artikel mit Stern und das Gelesene direkt von deinem eigenen Server zu holen. Auch Newsletter, die du per E-Mail bekommst, können hereinkommen: siehe „Newsletter aus Mail“ unten.
+
+## Lesen
+- Die Seitenleiste hat `Alle Artikel`, `Mit Stern`, `Später lesen`, deine Ordner und Feeds mit der Zahl der ungelesenen Artikel sowie deine Tags und beobachteten Wörter. Auf dem Handy öffnest du sie mit der Menütaste.
+- Tippe oder klicke auf einen Artikel, um ihn zu lesen und als gelesen zu markieren. Audio und Video in einem Artikel spielen direkt dort.
+- Bilder sind aus, bis du `Bilder zeigen` oder `Immer für diesen Feed` wählst.
+- `Ganzer Artikel` lädt den ganzen Text von der Website, wenn der Feed nur eine Zusammenfassung enthält.
+- Unter einem Artikel: `Stern`, `Später lesen`, `Tags`, `Als ungelesen markieren`, `Original öffnen`, `Link kopieren` und `Senden an…`. `Senden an…` kann `In Lesezeichen speichern`, `Als Notiz speichern` in [Notizen](app:notes), `Aufgabe erstellen` in [Aufgaben](app:todo), `Per E-Mail senden` oder `Teilen…`.
+- Die Tasten der Liste wechseln den Stil (`Liste`, `Karten`, `Magazin`), schalten zwischen `Nur ungelesene` / `Alle zeigen` um und markieren mit `Als gelesen markieren` alles oder was älter als ein Tag oder eine Woche ist, mit `Rückgängig`.
+- Auf dem Handy wischst du einen Artikel nach rechts, um ihn als gelesen oder ungelesen zu markieren, und nach links für einen Stern.
+
+### Zusammenfassen
+Die Funkeltaste (`Zusammenfassen`) über einem Artikel fragt nach einer kurzen Zusammenfassung: ein Satz und ein paar Kernpunkte, in der Sprache, in der orOS gerade läuft. Sie nutzt die KI, die du im [Assistenten](app:assistant) eingerichtet hast: deinen eigenen Schlüssel (Claude, ChatGPT, Gemini…), einen Server auf deinem Computer oder das eingebaute Modell des Browsers. Nur Titel und Text dieses Artikels gehen an diesen Anbieter, direkt von diesem Gerät; orOS hat keinen eigenen KI-Schlüssel. Ohne eingerichteten Assistenten sagt die Taste, wie es geht. `Kopieren` kopiert die Zusammenfassung; sie wird nicht gespeichert.
+
+## Newsletter aus Mail
+`Newsletter aus Mail` (in `Feed hinzufügen`, in den `Einstellungen` und auf dem ersten Bildschirm) zeigt einen Ordner der App [Mail](app:mail) als Feed, zum Beispiel einen, in den eine Mail-Regel deine Newsletter legt. Seine Nachrichten werden zu Artikeln: Gib ihnen einen Stern oder ein Tag, durchsuche sie und markiere sie hier als gelesen. Bilder sind aus, bis du sie für diesen Feed erlaubst, damit Absender nicht erfahren, dass du eine Nachricht geöffnet hast. `In Mail öffnen` öffnet die Nachricht in Mail.
+
+Reader liest nur, was Mail auf diesem Gerät hat, und verbindet sich nie selbst mit deinem Mailserver. Eine Nachricht, die Mail noch nicht heruntergeladen hat, zeigt ihren Betreff mit einem Hinweis; öffne sie einmal in Mail, dann erscheint sie auch hier.
+
+## Ordnen
+- Die Taste ⋯ (`Bearbeiten`) bei einem gewählten Feed ändert Name, Ordner, Bilder und `Beim Öffnen den ganzen Artikel laden`, zeigt, wie oft er Neues bringt, und hat `Jetzt prüfen` und `Abo beenden`. Bei einem Ordner benennt sie ihn um oder löscht ihn (seine Feeds bleiben).
+- Mit Tags gruppierst du Artikel nach deiner Art. Gespeicherte Artikel bleiben für immer, auch wenn du das Abo beendest.
+
+### Suche, Regeln und beobachtete Wörter
+Die Suchtaste durchsucht Titel und Text, `Hier` oder `Überall`, ohne auf griechische Akzente zu achten. `Diese Wörter beobachten` macht aus einer Suche eine Liste in der Seitenleiste.
+
+In den `Einstellungen` wirkt `Regeln und beobachtete Wörter` auf neue Artikel, sobald sie ankommen: als gelesen markieren (stumm), einen Stern geben, zu `Später lesen` hinzufügen oder ein Tag geben. Eine Regel kann auch `Bei neuen Artikeln benachrichtigen`, und das kann auch ein einzelner Feed in seinem Fenster `Bearbeiten`: Neue Artikel erscheinen dann in der Glocke und öffnen den Artikel. Siehe [Benachrichtigungen](help:t/notifications). `Statistik` zeigt, welche Feeds aktiv, ruhig oder fehlerhaft sind.
+
+### Import aus FreshRSS oder Miniflux
+Wähle in den `Einstellungen` › `Aus FreshRSS oder Miniflux…` deinen Reader und gib die Adresse deines Servers ein. FreshRSS fragt nach deinem Benutzernamen und seinem API-Passwort (festgelegt in FreshRSS unter Settings › Profile › API management); Miniflux fragt nach einem API-Schlüssel (Settings › API Keys). Wähle, was du übernimmst: Abos und Ordner immer, `Artikel mit Stern` und `Was ich gelesen habe` nach Wunsch. Reader lädt zuerst die neuen Feeds, gibt dann denselben Artikeln einen Stern und markiert als gelesen, was du dort gelesen hattest. Das Passwort oder der Schlüssel wird nur für diesen Import genutzt und nicht gespeichert; die Anfragen gehen direkt von diesem Gerät an deinen Server.
+
+Wenn dein Server das nicht erlaubt (eine Browserseite braucht dafür CORS-Header, und er muss über https laufen), exportiere deine Abos als OPML und deine Artikel mit Stern als JSON aus deinem Reader und nutze dann `OPML importieren` und `Stern-Artikel importieren (JSON)` in den `Einstellungen`.
+
+## Einstellungen
+In den `Einstellungen` legst du fest, wie oft `Nach neuen Artikeln suchen` läuft, die Reihenfolge, den Listenstil, Textgröße und -breite, Bilder, `Beim Scrollen der Liste als gelesen markieren`, `Eine Meldung aus zwei Feeds nur einmal zeigen` und die `Relay-Adresse`.
+
+## YouTube-Abos
+`Einstellungen` › `YouTube-Abos` holt die YouTube-Kanäle, die du abonniert hast, einmalig in den Reader. Melde dich im kleinen Fenster bei Google an; orOS liest deine Abos (nur lesend) und gibt den Zugriff sofort an Google zurück: Nichts wird gespeichert, und bei YouTube ändert sich nichts. Hake die Kanäle an, die du willst (alle sind zu Beginn angehakt), und tippe auf `Abonnieren`; mit `In einen Ordner namens „YouTube“ legen` kommen sie in diesen Ordner. Die folgende Meldung hat `Rückgängig`.
+
+Jeder Kanal wird zu seinem öffentlichen Video-Feed, neue Videos kommen also wie jeder Artikel an, ohne Google-Konto nach dem Import. Kanäle, denen du hier schon folgst, werden ausgelassen. Google muss das für orOS freigeschaltet haben; antwortet es mit 403, ist der Dienst noch nicht eingeschaltet. Um deine eigene Google-App-ID zu nutzen, trag sie in [Kontakte](app:contacts) › `Aus einem Konto` › `Eigene App-ID verwenden` ein.
+
+## Synchronisierung und Sicherung
+Deine Abos (samt Mail-Ordnern), Ordner, Tags, Regeln, gespeicherten Artikel, der Lesestand und die meisten Einstellungen werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. Heruntergeladene Artikel bleiben 60 Tage auf diesem Gerät (bis zu 200 pro Feed); Textgröße, Breite und die offene Ansicht bleiben ebenfalls hier. `OPML exportieren` und `OPML importieren` in den `Einstellungen` bringen deine Feeds zu oder von anderen Readern.
+
+## Eine orOS-Datei speichern und öffnen
+In den `Einstellungen` speichert `orOS-Datei (.orosfeeds)` deine Abos, Ordner, gespeicherten Artikel (mit Stern, später lesen, mit Tag), Tags und Regeln als eine `.orosfeeds`-Datei, zum Beispiel um sie ohne Synchronisierung auf ein anderes Gerät zu bringen oder eine Kopie aufzubewahren. Einstellungen, das Gelesene und die heruntergeladenen Artikel sind nicht darin. Die Datei ist ein normales ZIP: Entpackt enthält sie die Daten als `content.json` plus `preview/feeds.opml` (deine Feeds, für jeden anderen Reader) und `preview/saved.md` (deine gespeicherten Artikel). Sie ist nicht verschlüsselt, bewahre sie also sicher auf.
+
+`orOS-Datei öffnen…` (oder `Entpackter orOS-Ordner…` oder „Öffnen mit“ orOS auf dem Computer) zeigt, wie viele Einträge neu und wie viele schon hier sind, dann fügt `Hinzufügen` nur die neuen hinzu, mit ihren eigenen IDs: Dieselbe Datei noch einmal zu öffnen fügt nichts hinzu. Ein Feed oder Artikel, der schon hier ist, bleibt, wie er ist, und einer, den du hier gelöscht oder abbestellt hast, bleibt es auch; eine Datei löscht nie etwas. Hake `Mit neueren Versionen aktualisieren` an, damit Einträge, die in der Datei später geändert wurden, deine Kopie ersetzen. Neue Feeds werden sofort geprüft. `Rückgängig` in der Meldung entfernt, was hinzugefügt wurde. Eine `.opml`-Datei, die mit orOS geöffnet wird, geht wie bisher an `OPML importieren`.
+
+## Tastenkürzel
+- [[J]] / [[K]] (oder [[↓]] / [[↑]]) öffnen den nächsten oder vorigen Artikel.
+- [[S]] Stern, [[L]] später lesen, [[M]] gelesen/ungelesen, [[T]] Tags, [[F]] ganzer Artikel, [[V]] Original öffnen.
+- [[R]] aktualisiert, [[A]] fügt einen Feed hinzu, [[Shift+A]] markiert alles als gelesen, [[/]] sucht.
+- [[Esc]] schließt die Suche oder geht auf einem schmalen Bildschirm zurück zur Liste.
+
+## Tipps
+- Viele Websites hindern Browser daran, ihre Feeds zu lesen. Reader nutzt dann das orOS-Relay; ist seine Adresse leer, nimmt er die, die in [Mail](app:mail) eingestellt ist.
+
+## Grenzen
+- Eine Website, die Browser blockiert, lässt sich ohne Relay nicht lesen.
+- Offline sind nur Artikel verfügbar, die auf diesem Gerät geladen wurden.
+- Ein Mail-Ordner zeigt nur die Nachrichten, die Mail auf diesem Gerät hat: Mail muss diesen Ordner hier geöffnet haben, und der Text einer Nachricht erscheint, sobald Mail sie heruntergeladen hat. Auf einem anderen Gerät füllt sich derselbe Ordner aus der Mail dieses Geräts.
+- Der Lesestand von Newslettern bleibt im Reader; die Nachrichten werden in Mail nicht als gelesen markiert.
+- Der Import aus FreshRSS oder Miniflux klappt nur, wenn der Server eine Browserseite verbinden lässt (CORS, https); sonst nutze die Dateien. Das Gelesene kommt nur für Artikel mit, die die Feeds noch enthalten, und wird übersprungen, wenn es mehr als 10.000 ungelesene Artikel gibt.
+- Zusammenfassungen brauchen den eingerichteten Assistenten auf diesem Gerät und eine Internetverbindung zu deinem Anbieter (außer bei einem lokalen Server oder dem Modell des Browsers).

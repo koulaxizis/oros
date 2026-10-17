@@ -1080,6 +1080,7 @@
   // ---------- 8. Search, rules, duplicates, statistics ----------
   // Folded text: lower case, no accents, final sigma as sigma, so that
   // "Ελλάδα", "ΕΛΛΑΔΑ" and "ελλαδα" are the same word.
+  // i18n-inline-ok: the Greek final sigma fold below is search data (no UI text in this file)
   function fold(s) {
     return String(s == null ? "" : s).normalize("NFD").replace(/[\u0300-\u036f]/g, "")
       .toLowerCase().replace(/ς/g, "σ");
