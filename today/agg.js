@@ -173,19 +173,37 @@
 
   // Numbers only: a toast can show over another window, so no text of
   // any app (sensitive or not) goes into the notice.
+  // One table for the notice and the Assistant line (pack "today";
+  // the keys are "n."-prefixed so they never clash with today.js's).
   var NOTE = {
-    en: { title: "Today", over: "{n} overdue", over1: "1 overdue", today: "{n} today", today1: "1 today",
-          soon: "{n} coming up", soon1: "1 coming up" },
-    el: { title: "Σήμερα", over: "{n} εκπρόθεσμα", over1: "1 εκπρόθεσμο", today: "{n} για σήμερα",
-          today1: "1 για σήμερα", soon: "{n} έρχονται", soon1: "1 έρχεται" }
+    en: { "n.title": "Today", "n.over": "{n} overdue", "n.over1": "1 overdue", "n.today": "{n} today",
+          "n.today1": "1 today", "n.soon": "{n} coming up", "n.soon1": "1 coming up",
+          "n.ask": "From my Today summary ({d}): {a} · {t}" },
+    el: { "n.title": "Σήμερα", "n.over": "{n} εκπρόθεσμα", "n.over1": "1 εκπρόθεσμο", "n.today": "{n} για σήμερα",
+          "n.today1": "1 για σήμερα", "n.soon": "{n} έρχονται", "n.soon1": "1 έρχεται",
+          "n.ask": "Από τη σύνοψη «Σήμερα» ({d}): {a} · {t}" }
   };
+  // A pack language (German…): English + the today pack. In the shell
+  // the pack is fetched on first need; until it is in, English.
+  var packAsked = {};
+  function words(lang) {
+    if (NOTE[lang]) return NOTE[lang];
+    var I = root && root.orosI18n;
+    if (!I || typeof lang !== "string" || (I.known && !I.known(lang))) return NOTE.en;
+    var tab = I.table(NOTE, "today", lang);
+    if (!packAsked[lang] && typeof I.ensure === "function") {
+      packAsked[lang] = true;
+      try { I.ensure(lang, "today", function () { if (lang !== "en" && lang !== "el") delete NOTE[lang]; }); } catch (x) {}
+    }
+    return tab;
+  }
   function noticeText(c, lang) {
-    var w = NOTE[lang] || NOTE.en, parts = [];
-    function one(n, k) { if (n) parts.push(n === 1 ? w[k + "1"] : w[k].replace("{n}", n)); }
+    var w = words(lang), parts = [];
+    function one(n, k) { if (n) parts.push(n === 1 ? w["n." + k + "1"] : w["n." + k].replace("{n}", n)); }
     one(c.overdue, "over");
     one(c.today, "today");
     one(c.soon, "soon");
-    return { title: w.title, body: parts.join(" · ") };
+    return { title: w["n.title"], body: parts.join(" · ") };
   }
 
   // ---------- 4. Running providers ----------
@@ -360,12 +378,8 @@
   }
 
   // ---------- 7. Text for the Assistant ----------
-  var ASK = {
-    en: "From my Today summary ({d}): {a} · {t}",
-    el: "Από τη σύνοψη «Σήμερα» ({d}): {a} · {t}"
-  };
   function askText(row, appName, day, lang) {
-    var s = (ASK[lang] || ASK.en).replace("{d}", day).replace("{a}", str(appName, 60))
+    var s = words(lang)["n.ask"].replace("{d}", day).replace("{a}", str(appName, 60))
       .replace("{t}", row.title + (row.time ? " (" + row.time + ")" : "") + (row.text ? " — " + row.text : ""));
     return s.slice(0, 2000);
   }

@@ -1,0 +1,85 @@
+# Heute
+Heute sammelt an einem Ort, was deine Apps heute für dich haben: was überfällig ist, was heute fällig ist und was in den nächsten drei Tagen kommt. Jeden Morgen kann es außerdem eine Benachrichtigung in der Glocke hinterlassen.
+
+## Erste Schritte
+Öffne Heute über das Menü oder mit [[Ctrl+Alt+Shift+Y]]. Oben siehst du das Datum und kurze Zeilen wie das Wetter, wer Namenstag hat, einen laufenden Timer, wie viel Wasser du getrunken hast, die heutigen Mahlzeiten aus dem [Essensplaner](app:meals) oder wie viele ungelesene E-Mails in [Mail](app:mail) warten. Tippe oder klicke auf eine Zeile, um ihre App zu öffnen.
+
+Darunter folgen drei Gruppen:
+- `Überfällig`: Aufgaben, deren Tag vorbei ist, mit der Zahl der Tage Verspätung.
+- `Heute`: was heute fällig ist. Zeilen mit Uhrzeit kommen zuerst, nach Uhrzeit sortiert.
+- `Demnächst`: die nächsten drei Tage, Tag für Tag.
+
+Tippe oder klicke auf den Titel einer Gruppe, um sie einzuklappen. Tippe oder klicke auf eine Zeile, um sie in ihrer App zu öffnen, beim jeweiligen Termin, bei der Aufgabe, Karte, dem Angebot, Kontakt, der Pflanze, dem Haustier, Auto, der Reise, dem wiederkehrenden Eintrag oder Tag. Eine Erinnerung aus [Gesundheit](app:health) öffnet eine neue Messung dieser Art, eine Einheit aus [Training](app:fitness) öffnet den Tab Training und eine Zeile aus [Gewohnheiten](app:habits) öffnet die Gewohnheiten dieser Woche, wo du sie abhakst. `Aktualisieren` (der runde Pfeil) baut die Übersicht neu auf.
+
+Aufgaben aus [Aufgaben](app:todo) und [Pflanzenpflege](app:plants) haben außerdem einen Haken-Button, `Erledigt (öffnet die App)`. Er öffnet die App, die die Aufgabe selbst als erledigt markiert: Aufgaben hakt sie ab (dort nimmst du den Haken wieder weg) und Pflanzenpflege trägt sie ein, mit `Rückgängig` in ihrer Meldung.
+
+## Widgets
+Mach Heute zu deinem eigenen Bildschirm, wie die Widgets auf dem Startbildschirm eines Handys. Drück oben auf `Anpassen` (die vier Quadrate):
+- Zieh ein Widget an seinem Griff (den sechs Punkten), um es zu verschieben, mit der Maus oder dem Finger. Die Pfeile nach oben und unten verschieben es ebenfalls um einen Platz, praktisch auf einem Touchscreen oder mit der Tastatur.
+- `Klein` / `Breit` ändert seine Größe. Zwei kleine Karten wie Uhr und Wasser teilen sich auch auf dem Handy eine Zeile; kleine Listen stehen auf einem breiten Bildschirm nebeneinander.
+- Das Kreuz entfernt ein Widget. `Widget hinzufügen` listet die Widgets, die nicht auf dem Bildschirm sind.
+- `Standardanordnung wiederherstellen` bringt die vier Bereiche zurück, die Heute immer hatte.
+Drück auf den Haken, um fertig zu werden.
+
+Die Widgets:
+- `Auf einen Blick`: die kurzen Zeilen oben (Wetter, Namenstage, ein laufender Timer, Mahlzeiten und mehr).
+- `Überfällig`, `Heute`, `Demnächst`: die drei oben beschriebenen Gruppen.
+- `Uhr`: Uhrzeit und Datum; die breite Variante zeigt zusätzlich die Sekunden und das volle Datum.
+- `Wetter` und `Wasser`: die Zeile aus [Wetter](app:weather) oder [Wasser](app:water), größer, in einer eigenen Karte. Tippe darauf, um die App zu öffnen.
+- `Gewohnheiten`: die Gewohnheiten, die heute noch abzuhaken sind.
+- `Nächste Termine`: Termine aus dem [Kalender](app:calendar) von heute und den nächsten drei Tagen.
+- `Aufgaben`: Aufgaben aus [Aufgaben](app:todo), die überfällig, heute oder in den nächsten drei Tagen fällig sind.
+
+Eine Zeile erscheint nur an einer Stelle: Ist das Widget `Aufgaben` auf dem Bildschirm, verlassen die Aufgaben `Überfällig`, `Heute` und `Demnächst` und erscheinen dort; dasselbe gilt für Gewohnheiten, Kalendertermine, Wetter und Wasser. Entfernst du das Widget, kehren sie zurück. Die Widgets zeigen, was die in den `Einstellungen` eingeschalteten Apps liefern; eine App, die du dort ausgeschaltet hast, bleibt leer.
+
+## Was jede App beiträgt
+- [Gesundheit](app:health): die heutigen Erinnerungszeiten, für die es noch keine Messung gibt. Eine Messung bis zu einer Stunde vorher oder später hakt ihre Zeit ab.
+- [Training](app:fitness): die für heute geplanten Programmtage, bis du ein Training dieses Tages abschließt.
+- [Gewohnheiten](app:habits): für heute geplante und noch nicht abgehakte Gewohnheiten. Gewohnheiten für einen beliebigen Wochentag sind nicht „fällig“ und bleiben deshalb draußen.
+- [Budget](app:budget): wiederkehrende Einträge (Miete, Gehalt, eine jährliche Rechnung), die heute oder in den nächsten drei Tagen anfallen, mit dem Betrag.
+- [Essensplaner](app:meals): der heutige Plan als Zeilen oben, eine pro Mahlzeit.
+- [Zyklus](app:cycle) (aus, bis du es einschaltest): der erwartete Beginn deiner nächsten Periode, wenn er in die nächsten drei Tage fällt, oder eine Zeile oben, wenn sie sich zu verspäten scheint (bis zu 14 Tage). Es ist eine Schätzung aus deinem eigenen Verlauf.
+- [Stimmung](app:mood) (aus, bis du es einschaltest): eine Zeile zum Eintragen, solange du heute keine Stimmung erfasst hast.
+- [Minimalismus](app:minimalism): eine Zeile, solange der heutige Vorschlag weder erledigt noch übersprungen ist. Sein Text bleibt in der App.
+- [Stammbaum](app:familytree): Todestage von heute und den nächsten drei Tagen.
+- [Mond & Himmel](app:sky): die Hauptmondphasen, Tagundnachtgleichen und Sonnenwenden, Höhepunkte von Meteorströmen und Finsternisse; die heutigen als Zeilen oben.
+- Der Geburtstag des Bildschirm-Haustiers kommt mit dem Kalender, außer du hast den Kalender-Feed des Haustiers auf diesem Gerät ausgeschaltet.
+- [Mail](app:mail): nur die Zahl der ungelesenen Nachrichten im Posteingang jedes Kontos, nie ein Absender oder Betreff. Mail-Zeilen haben keinen Assistenten-Button; in Mail selbst kannst du trotzdem zu einer Nachricht fragen.
+
+## Die tägliche Benachrichtigung
+Beim ersten Öffnen von orOS jeden Tag nach der Startzeit (06:00, außer du änderst sie) hinterlässt Heute eine Benachrichtigung in der Glocke, wenn etwas überfällig oder heute fällig ist. Sie zeigt nur Zahlen, zum Beispiel „2 überfällig · 1 heute“, nie die Namen deiner Aufgaben. Sie öffnet diese Seite.
+
+Die Benachrichtigung kommt einmal am Tag, auch mit mehreren Geräten: Alle sehen dieselbe. Ist die Synchronisierung an, wartet sie, bis deine Daten synchronisiert sind, damit sie nie den Stand von gestern meldet. An einem Tag ohne Überfälliges oder Fälliges kommt keine Benachrichtigung.
+
+## Den Assistenten fragen
+Ist der [Assistent](app:assistant) eingerichtet, haben die Zeilen einen Sprechblasen-Button, `Den Assistenten dazu fragen`. Er öffnet den Assistenten mit einer schon getippten Frage zu dieser Zeile. Nichts wird gesendet, bevor du dort auf `Senden` drückst. Der Button folgt der Erlaubnis des Assistenten für jede App, er erscheint also nie für eine App, die der Assistent nicht lesen darf.
+
+Der Funkel-Button oben, `Tagesbriefing vom Assistenten`, bittet den Assistenten in einer Antwort um ein kurzes Briefing deines Tages. Er erscheint nur, wenn der Assistent mit einem Dienst eingerichtet ist, der deine Daten lesen darf. Apps mit der Einstellung `Erst fragen` erscheinen auf einer Karte, bevor etwas gesendet wird; die Details stehen in der Hilfe des Assistenten.
+
+## Einstellungen
+Öffne sie mit dem Zahnrad:
+- `Tägliche Übersicht` schaltet die tägliche Benachrichtigung ein oder aus. Der Tab Heute funktioniert so oder so.
+- `Ab` ist die Startzeit, von 00:00 bis 12:00.
+- `Morgendliche Erinnerungen stummschalten, die die Übersicht abdeckt`: Sobald die Übersicht da ist, bleiben die einzelnen Erinnerungen von Pflanzenpflege, Hausarbeitsrad, Tier-Gesundheitspass, Garage, Aufgaben, Angebot, Minimalismus, Namenstagen und dem Wetterbriefing still. Erinnerungen zu einer festen Uhrzeit, etwa Wecker oder Medikamente, klingeln weiterhin.
+- `Apps in der Übersicht`: Wähle, welche Apps mitmachen. Als `sensibel` markierte Apps erscheinen nur, wenn du es willst: Gesundheit, Baby und Budget sind an, Zyklus und Stimmung sind aus, bis du sie einschaltest.
+
+## Synchronisierung und Sicherung
+Deine Einstellungen für Heute werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. Heute speichert sonst nichts: Jede Zeile wird in dem Moment, in dem du hinschaust, aus ihrer App gelesen. Welche Gruppen du eingeklappt hast, bleibt nur in diesem Tab. Deine Widget-Anordnung bleibt nur auf diesem Gerät, damit Handy und Computer jeweils ihre eigene haben können; sie wird nicht synchronisiert.
+
+## Auf dem Android-Startbildschirm
+Drück in der orOS-App für Android lange auf den Startbildschirm, wähle `Widgets` und füge `orOS Today` hinzu. Es zeigt, was überfällig ist, die heutigen Termine und Aufgaben und die nächsten Tage, wie Heute. Tippe darauf, um Heute zu öffnen. Seine Buttons fügen eine Aufgabe, ein Glas Wasser oder eine Notiz hinzu. Es gibt auch ein kleines Widget `orOS quick add` nur mit den Buttons.
+
+Das Widget füllt sich, während orOS offen ist, und bleibt von selbst aktuell, wenn orOS geschlossen ist: Aufgaben, deren Tag vorbei ist, erscheinen als überfällig, und vorbeigegangene Termine verschwinden. Öffne orOS ab und zu, damit es von neuen Dingen erfährt.
+
+## Tastenkürzel
+- [[Ctrl+Alt+Shift+Y]] öffnet Heute von überall in orOS.
+
+## Tipps
+- Um deinen Tag ohne Benachrichtigung zu sehen, schalte `Tägliche Übersicht` aus und öffne Heute, wann du willst.
+- Eine Benachrichtigung von einem früheren Tag öffnet trotzdem die heutige Übersicht.
+
+## Grenzen
+- Die Benachrichtigung kann nur kommen, während orOS offen ist: Öffnest du es nicht, kommt nichts, und sie erscheint beim nächsten Öffnen.
+- Die Mail-Zahl ist die, die Mail auf diesem Gerät beim letzten Aktualisieren der Ordner gesehen hat; deshalb sagt die Zeile, wann das war. Öffne Mail, um sie auf den neuesten Stand zu bringen.
+- Nur Aufgaben aus Aufgaben und Pflanzenpflege haben den Button `Erledigt`; andere Aufgaben erledigst du in ihrer App.
+- Aus Kanban bleiben die Karten in der letzten Spalte jedes Boards (meist „Done“) draußen.

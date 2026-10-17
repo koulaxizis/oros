@@ -37,6 +37,13 @@
 
   function env() { return root.orosTodayEnv || null; }
   function lang() { var e = env(); try { return e && e.lang() === "el" ? "el" : "en"; } catch (x) { return "en"; } }
+  // The full code (a pack language included) for the notice text; the
+  // providers keep getting "el" / "en" (ctx.lang).
+  function fullLang() {
+    var I = root.orosI18n;
+    if (I) { try { return I.lang(); } catch (x) {} }
+    return lang();
+  }
   function S() { return root.orosSync || null; }
 
   // ---------- Settings slice ----------
@@ -248,7 +255,7 @@
       building = null;
       if (res.today !== A.ymdOf(new Date())) return;      // midnight passed while building
       if (!A.worthNotice(res.counts)) { emptyAt = Date.now(); return; }
-      var txt = A.noticeText(res.counts, res.lang);
+      var txt = A.noticeText(res.counts, fullLang());
       var id = N.emit({
         ns: "today",
         key: "day-" + res.today,
