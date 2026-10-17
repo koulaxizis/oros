@@ -1,0 +1,39 @@
+# Wordle
+Errate das versteckte Wort mit fünf Buchstaben in sechs Versuchen. Nach jedem Versuch zeigen die Farben der Buchstaben, wie nah du dran bist. Spiel mit englischen oder griechischen Wörtern.
+
+## So wird gespielt
+Tippe ein Wort mit fünf Buchstaben und drück [[Enter]]. Jeder Buchstabe wird dann:
+- grün: richtiger Buchstabe an der richtigen Stelle;
+- gelb: der Buchstabe kommt im Wort vor, aber an einer anderen Stelle;
+- grau: der Buchstabe kommt im Wort nicht vor.
+
+Doppelte Buchstaben werden genau gezählt: Hat das Wort ein E und du tippst zwei, leuchtet nur eines auf. Dein Versuch muss in der Wortliste stehen, sonst siehst du `Nicht in der Wortliste`.
+
+Bei griechischen Wörtern spielen Akzente und Trema keine Rolle, und ς zählt als σ.
+
+### Täglich und Frei
+- `Täglich` gibt dir ein Wort pro Tag, auf jedem Gerät dasselbe. Es zählt für deine `Serie`.
+- `Frei` gibt dir so viele Wörter, wie du willst. Ein weiteres startest du mit `Neues Wort (Shift+N)`.
+
+`EN` und `ΕΛ` in der Werkzeugleiste wählen die Sprache der Wörter. Sie startet mit deiner orOS-Sprache; auf Deutsch spielst du mit den englischen Wörtern und der englischen Tastatur.
+
+## Bedienung
+- Tippe mit deiner Tastatur, oder tippe bzw. klicke auf die Tasten am Bildschirm.
+- [[Enter]] schickt den Versuch ab; [[Backspace]] löscht einen Buchstaben.
+- [[Shift+N]] startet ein neues Wort in `Frei`.
+
+Bei griechischen Wörtern tippt deine Tastatur griechische Buchstaben nach Tastenposition, wie auf einer griechischen Tastatur, auch wenn dein System auf Englisch steht.
+
+## Stufen und Wertung
+Unter `Optionen`:
+- `Schwer`: Gefundene Hinweise müssen in jedem weiteren Versuch vorkommen. Du kannst es nur vor deinem ersten Versuch bei einem Wort ein- oder ausschalten.
+- `Kontrastreiche Farben`: Orange und Blau statt Grün und Gelb.
+
+`Statistik` zeigt für die Sprache, in der du gerade spielst, deine Tagesspiele, die Siegquote, die aktuelle und die beste Serie und wie viele Versuche deine Siege gebraucht haben, dazu deine Spiele in `Frei` und die gefundenen Wörter.
+
+## Synchronisierung
+Deine Tagesergebnisse und Zahlen aus `Frei` werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten abgeglichen, deine Serie kommt also mit. Hast du das heutige Wort schon auf einem anderen Gerät gespielt, sagt Wordle dir das und schlägt `Frei` vor. `Statistik zurücksetzen` in `Statistik` löscht nach deiner Bestätigung alles auf allen Geräten. Deine Optionen, die Sprache der Wörter, die Ton-Taste und angefangene Wörter bleiben auf diesem Gerät.
+
+## Tipps
+- Nach einem Wort schickt `Teilen` die farbigen Felder ohne das Wort, so wird nichts verraten: Auf dem Handy öffnet sich das Teilen-Menü, sonst wird der Text kopiert.
+- `Alle Spiele` (nach einem Wort und in `Statistik`) öffnet das [Spielecenter](help:a/gamecenter), wenn es installiert ist: die Statistik aller Spiele, deine Erfolge und die heutigen Tagesrätsel an einem Ort.
