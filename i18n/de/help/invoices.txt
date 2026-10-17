@@ -1,0 +1,99 @@
+# Rechnungen
+Rechnungen erstellt Rechnungen, Quittungen, Proformas und Gutschriften mit MwSt. und automatischer Nummerierung, als PDF. Die App verfolgt, wer bezahlt hat und wer noch schuldet, zeigt deine Einnahmen und verwaltet deine Kunden. Rechnungen, die du anderswo ausstellst (zum Beispiel in myDATA), kannst du hier ebenfalls erfassen, sodass alle Zahlungen an einem Ort sind.
+
+>! orOS sendet nichts an ΑΑΔΕ / myDATA. Griechische B2B-Rechnungen, die elektronisch ausgestellt werden müssen, werden in myDATA oder bei deinem Anbieter ausgestellt; erfasse sie hier mit `Neu` › `Anderswo ausgestellte Rechnung erfassen`. Was du ausstellen musst, entscheidet am Ende deine Steuerberatung.
+
+## Erste Schritte
+Beim ersten Mal bittet dich ein Banner um `Daten eingeben`: dein Name oder deine Firma, Steuernummer (ΑΦΜ), Finanzamt (ΔΟΥ), Adresse, Bankkonten (IBAN) und, wenn du magst, ein Logo. Sie stehen ab dann auf jeder Rechnung, die du ausstellst.
+
+Tippe auf `Neu` und wähle, was du erstellen willst: `Rechnung`, `Quittung`, `Proforma`, `Gutschrift`, `Anderswo ausgestellte Rechnung erfassen` oder `Aus einer Vorlage`. Wähle einen `Kunde` (oder lege mit + einen an), das `Datum`, wann sie `Fällig` ist (die Tasten setzen 15, 30 oder 60 Tage) und die `Währung`. Füge dann die `Positionen` hinzu: Beschreibung, Menge, Einzelpreis, Rabatt und MwSt. %. Die Summen aktualisieren sich beim Tippen.
+
+`Entwurf speichern` hebt sie zum späteren Fertigstellen auf. `PDF-Vorschau` zeigt, wie sie aussehen wird, mit einem ENTWURF-Vermerk. `Ausstellen` gibt ihr ihre Nummer und friert sie ein.
+
+## Ausstellen und Nummerierung
+Beim Ausstellen bekommt das Dokument die nächste Nummer seiner Serie, etwa INV-2026-0001. Die Nummer steigt um eins und beginnt jedes Jahr neu. Nach dem Ausstellen lassen sich Positionen und Kunde nicht mehr ändern: Ein Fehler wird mit einer `Gutschrift` korrigiert, und ein Dokument, das es nicht geben sollte, wird mit `Stornieren` storniert (seine Nummer bleibt vergeben und es zählt als null).
+
+Stellst du auf zwei Geräten aus, bevor sie synchronisiert sind, können beide dieselbe Nummer nehmen. Rechnungen zeigt dann ein Banner mit einer Taste, um einem davon eine neue Nummer zu geben. Um das zu vermeiden, lege in `Einstellungen` › `Nummernkreise` eine zweite Serie an (zum Beispiel mit dem Präfix INV-B) und hake auf dem zweiten Gerät `Auf diesem Gerät nutzen` an.
+
+## Quellensteuer, Rabatt und MwSt.-Befreiung
+- `Rabatt auf die Summe (%)` wird vor der MwSt. abgezogen.
+- `Quellensteuer (%)` (zum Beispiel 20 % auf Leistungen von Freiberuflern) wird vom Zahlbetrag abgezogen; die Rechnung zeigt trotzdem die volle Summe.
+- Unter `Bedingungen, Notizen und mehr` kannst du einen `Grund der MwSt.-Befreiung` angeben (gedruckt, wenn eine Position 0 % MwSt. hat), die `Zahlungsbedingungen`, `Notizen`, und die `PDF-Sprache` (Griechisch oder Englisch) für dieses Dokument wählen.
+
+## Zahlungen und Status
+Öffne ein ausgestelltes Dokument, um es und seine Aktionen zu sehen. `Als bezahlt markieren` erfasst den ganzen Saldo als eine Zahlung; `Zahlung hinzufügen` erfasst einen Teil davon mit Datum und Zahlungsart (Überweisung, Bar, Karte, IRIS, PayPal). Jedes Dokument zeigt seinen Status: `Unbezahlt`, `Teilweise bezahlt`, `Bezahlt` oder `Überfällig` (nach dem Fälligkeitsdatum). Eine Gutschrift senkt, was die korrigierte Rechnung noch schuldet. Tippe auf eine Zahlung, um sie zu ändern oder zu löschen.
+
+Eine Quittung wird meist sofort bezahlt: Lass beim Ausstellen `Jetzt bezahlt` angehakt.
+
+## Proformas, Gutschriften und erfasste Rechnungen
+- Eine `Proforma` fordert eine Zahlung an, ohne eine Rechnung zu sein. `Rechnung erstellen` macht daraus einen Rechnungsentwurf mit denselben Positionen.
+- Eine `Gutschrift` korrigiert eine Rechnung, die du ausgestellt hast: Wähle sie unter `Korrigiert`.
+- Eine erfasste Rechnung (`Anderswo ausgestellte Rechnung erfassen`) speichert Nummer, Netto- und MwSt.-Beträge und die ΜΑΡΚ einer Rechnung, die in myDATA oder bei deinem Anbieter ausgestellt wurde. `Anhängen` legt ihr offizielles PDF auf der orOS-Disk ab, unter Invoices. Zahlungen und Status funktionieren wie bei jeder Rechnung.
+
+## PDF, Versenden und Teilen
+`PDF` speichert das Dokument als PDF mit deinem Logo und deinen Daten; `PDF teilen` gibt es an eine andere App weiter, wo dein Gerät das erlaubt. `E-Mail` öffnet eine neue Nachricht in [Mail](app:mail) (oder deiner E-Mail-App) mit Betreff und Text. In Mail ist das PDF schon angehängt (eine erfasste Rechnung bringt ihr offizielles PDF mit) und eine Kopie bleibt auf der orOS-Disk unter Invoices; in einer anderen E-Mail-App hängst du das gespeicherte PDF an. `Als versendet markieren` notiert das Datum, an dem du sie versendet hast.
+
+### Online bezahlen
+Trag deinen eigenen Zahlungslink in `Einstellungen` › `Link zum Online-Bezahlen` ein: einen Stripe Payment Link (https://buy.stripe.com/…, erstellt in deinem Stripe-Dashboard) oder eine andere https-Zahlungsseite. Jede Rechnung oder Proforma, auf der noch etwas zu zahlen ist, zeigt dann `Online bezahlen` auf ihrem PDF, als Link und QR-Code, und die E-Mail bekommt eine Zeile mit dem Link. Mit einem Stripe-Link geht die Rechnungsnummer als Verwendungszweck mit, und die E-Mail des Kunden ist auf der Zahlungsseite schon eingetragen. orOS fragt nie nach einem Zahlungsschlüssel und sieht die Zahlung nie: Wenn das Geld ankommt, erfasse es wie gewohnt mit `Als bezahlt markieren` oder `Zahlung hinzufügen`. Jedes Unternehmensprofil kann einen eigenen Link haben.
+
+## An myDATA senden (timologisi.online)
+Wenn du über timologisi.online ausstellst, verbinde zuerst dein Konto in [Einstellungen](app:settings) › `Verbundene Dienste` (Umgebung, deine ΑΦΜ und der API-Schlüssel aus dem Entwicklerportal von timologisi.online). Eine ausgestellte Rechnung, Quittung oder Gutschrift zeigt dann `An myDATA senden`. Wähle das Konto, die Dokumentart (orOS schlägt eine anhand von Kunde und Positionen vor), die Zahlungsart und, wenn nötig, den Grund der MwSt.-Befreiung oder die Quellensteuer-Kategorie, dann `Senden`. Das Dokument bekommt seine ΜΑΡΚ, UID, den Authentifizierungscode und einen Link zum offiziellen PDF, angezeigt auf dem Dokument.
+- myDATA nimmt nur Dokumente mit heutigem Datum und in Euro. MwSt.-Sätze 24, 13, 6, 17, 9, 4 und 0 %.
+- Jedes Dokument verbraucht Guthaben des Kontos (1 für eine Rechnung, 0,5 für eine Quittung).
+- Ein gesendetes Dokument kann nicht storniert oder neu nummeriert werden. Ein Fehler wird mit einer `Gutschrift` korrigiert, die genauso gesendet wird und auf die ursprüngliche ΜΑΡΚ verweist.
+- Kommt keine Antwort, zeigt das Dokument, dass es wartet: Tippe vor allem anderen auf `In myDATA prüfen`. orOS sendet dasselbe Dokument nie von selbst zweimal.
+- War die AADE nicht erreichbar, stellt der Anbieter es trotzdem aus und die ΜΑΡΚ kommt später: `In myDATA prüfen` holt sie.
+- Ein Testkonto (Sandbox) stellt nichts Echtes aus, aber der Anbieter mailt trotzdem an die registrierten Adressen des Kunden: Nutze für Testkunden die Test-ΑΦΜ 987654324.
+- Nichts wird gesendet, solange du nicht auf `Senden` tippst. Dein Schlüssel verlässt deine Geräte nie im Klartext.
+
+## Kunden
+Lege unter `Kunden` einen `Neuer Kunde` mit Name, Beruf, ΑΦΜ, ΔΟΥ, Adresse, Land, E-Mail und Telefon an. `Aus Kontakte` und `Aus Angebot` holen Personen, die du schon hast. Ein Kunde zeigt, wie viele Dokumente er hat und was er noch schuldet; öffne ihn für `Neue Rechnung` oder `Dokumente zeigen`. Eine Änderung am Kunden ändert nie schon ausgestellte Dokumente: Sie behalten die Daten, mit denen sie ausgestellt wurden.
+
+## Vorlagen und wiederkehrende Rechnungen
+`Als Vorlage speichern` im Editor hebt Kunde und Positionen auf, um sie mit `Neu` › `Aus einer Vorlage` wiederzuverwenden. Stell `Wiederholen` auf jeden Monat, alle 3 Monate oder jedes Jahr, dann entsteht an diesem Tag ein Entwurf, den du prüfst und ausstellst. Nichts wird von selbst ausgestellt.
+
+## Übersicht
+`Übersicht` zeigt für einen `Zeitraum`, wie viel du `Berechnet` und `Eingenommen` hast, was `Offen` und `Überfällig` ist, einen Balken pro Monat, deine Top-Kunden und die MwSt. pro Satz. Wähle die `Währung`, wenn du in mehreren abrechnest. `Dokumente exportieren (CSV)` und `Zahlungen exportieren (CSV)` speichern sie für eine Tabellenkalkulation oder deine Steuerberatung. Innerhalb von orOS öffnet `In Tabelle öffnen` die Dokumente des Zeitraums direkt in einem neuen Blatt in [Tabelle](app:spreadsheet), mit Netto, MwSt. und Gesamt als Zahlen und ihren Summen unten, wenn der Zeitraum nur eine Währung hat.
+
+## Kalender, Heute und Erinnerungen
+- Unbezahlte Rechnungen erscheinen in [Kalender](app:calendar) an ihrem Fälligkeitsdatum, unter dem Chip `Rechnungen`; ein Tipp darauf öffnet sie hier.
+- Die Zusammenfassung [Heute](app:today) listet Rechnungen, die überfällig oder in den nächsten Tagen fällig sind, und wiederkehrende Rechnungen, die zur Prüfung bereit sind.
+- orOS erinnert dich einmal am Tag, wenn Rechnungen überfällig oder innerhalb von zwei Tagen fällig sind, und erneut, wenn es mehr werden; ein Tipp auf die Erinnerung öffnet die erste. Siehe [Benachrichtigungen](help:t/notifications).
+
+## Budget, Angebot, Zeiterfassung und CRM
+- Neben jeder Zahlung öffnet `Zu Budget hinzufügen` [Budget](app:budget) mit der Zahlung als freiberufliche Einnahme; prüfe und speichere sie dort. Die Taste erscheint, wenn die Zahlung in der Währung von Budget ist, und merkt sich, dass du sie gesendet hast.
+- `Rechnung erstellen` bei einem angenommenen [Angebot](app:quote) und `Rechnung erstellen` in einem Bericht der [Zeiterfassung](app:timesheet) öffnen hier eine neue Rechnung mit Kunde und Positionen.
+- Unter `Kunden` holt `Aus CRM` Kunden aus [CRM](app:crm); jeder bleibt verknüpft, sodass CRM seine Rechnungen zeigen kann.
+- Bei einer ausgestellten Rechnung oder Quittung, deren Positionen einen Produktcode haben, öffnet `Aus dem Bestand nehmen` einen Verkauf in [Bestand](app:stock) mit diesen Produkten und Preisen; eine Gutschrift bietet `Zurück in den Bestand` für eine Rückgabe. In Bestand ändert sich nichts, bis du dort speicherst. Die Taste erscheint erst, wenn du Bestand nutzt.
+
+## Kontoübersichten, Erinnerungen, EU-Kunden und mehrere Unternehmen
+- `Kontoübersicht (PDF)` bei einem Kunden (tippe unter `Kunden` auf den Kunden) listet jedes Dokument, das dieser Kunde noch schuldet, mit dem Bezahlten, dem Saldo und wie überfällig jedes ist, sowie die offene Summe pro Währung.
+- Bei einer Rechnung, die innerhalb einer Woche fällig oder schon überfällig ist, öffnet `Zahlungserinnerung` eine E-Mail mit einem höflichen Text, oder einem bestimmten, sobald sie überfällig ist. In [Mail](app:mail) ist das PDF angehängt; bearbeite den Text, bevor du ihn sendest.
+- Ist der Kunde ein Unternehmen (mit USt-IdNr.) in einem anderen EU-Land, bietet der Editor Reverse Charge an: `Leistungen, 0 % MwSt.` oder `Waren, 0 % MwSt.` setzen jede Position auf 0 % MwSt. und tragen den Standardhinweis als MwSt.-Befreiung ein. Prüfe das mit deiner Steuerberatung; nichts wird angewendet, solange du nicht darauf tippst.
+- Ein PDF in Euro zeigt einen Zahlungs-QR-Code (EPC / SEPA, den Banking-Apps scannen) mit deiner ersten IBAN, dem noch offenen Betrag und der Dokumentnummer. Schalte ihn in `Einstellungen` (Standardwerte) aus.
+- Mehr als ein Unternehmen? In `Einstellungen` legt `Unternehmensprofil hinzufügen` einen weiteren Satz Daten, Logo, Bankzeilen, Bedingungen und Fußzeile an. Wähle das Unternehmen auf jedem Dokument (`Unternehmen`, sichtbar ab zwei). Verknüpfe einen Nummernkreis mit einem Profil (`Profil`, neben jeder Serie), damit jedes Unternehmen eigene Nummern behält. Vorlagen und Kopien behalten ihr Unternehmen.
+
+## Einstellungen
+Die Zahnrad-Taste öffnet `Einstellungen`: deine Unternehmensdaten und dein Logo, die Standardwerte für neue Dokumente (Währung, MwSt. %, Zahlungsziel, Quellensteuer, PDF-Sprache, Zahlungsbedingungen, Fußzeile), die Nummernkreise und deine Vorlagen.
+
+## orOS-Datei speichern und öffnen
+In `Einstellungen` unter `Daten` speichert `orOS-Datei (.orosinvoices)` jedes Dokument, jede Zahlung, jeden Kunden, Nummernkreis, jede Vorlage und jedes Unternehmensprofil als eine `.orosinvoices`-Datei, zum Beispiel um sie ohne Synchronisierung auf ein anderes Gerät zu bringen oder deiner Steuerberatung eine Kopie zu geben. Angehängte offizielle PDFs und Scans in `/internal/Invoices/` kommen auch in die Datei. Konten und Schlüssel verbundener Dienste (myDATA über timologisi.online, Zahlungsanbieter) werden nie darin gespeichert. Die Datei ist ein einfaches ZIP: Entpackt enthält sie alles als `content.json`, die PDFs in `media/` sowie `preview/documents.csv` und `preview/payments.csv` (dieselben Spalten wie `Dokumente exportieren (CSV)` und `Zahlungen exportieren (CSV)`, alle Daten) für andere Programme. Sie ist nicht verschlüsselt, also bewahre sie sicher auf.
+
+`orOS-Datei öffnen…` (oder `Entpackter orOS-Ordner…` oder „Öffnen mit“ orOS auf dem Computer) zeigt, wie viele Einträge neu sind und wie viele schon da sind; dann fügt `Hinzufügen` nur die neuen hinzu, mit eigenen IDs und Nummern: Öffnest du dieselbe Datei noch einmal, kommt nichts hinzu. Ein schon vorhandener Eintrag bleibt, wie er ist, einer, den du hier gelöscht hast, bleibt gelöscht, und eine Datei löscht nie etwas. Ein Dokument, das hier schon ausgestellt, storniert oder erfasst ist, ändert sich nie, und Nummern werden nie geändert: Ein Dokument, dessen Nummer hier schon ein anderes Dokument hat, oder eine Rechnung, die hier schon mit derselben Nummer und ΑΦΜ erfasst ist, bleibt draußen. `Mit neueren Versionen aktualisieren` lässt Entwürfe, Kunden, Zahlungen und andere Einträge, die in der Datei später geändert wurden, deine Kopie ersetzen. Ein angehängtes PDF wird nur dann nach `/internal/Invoices/` geschrieben, wenn es dort noch nicht liegt. `Rückgängig` in der Meldung nimmt zurück, was hinzugefügt wurde.
+
+## Synchronisierung und Sicherung
+Dokumente, Zahlungen, Kunden, Serien, Vorlagen und deine Unternehmensdaten werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. Die Filter und die Serie, die du auf jedem Gerät nutzt, bleiben auf diesem Gerät; ein ungespeicherter Entwurf bleibt auf dem Gerät, bis du ihn speicherst.
+
+In `Einstellungen` speichert `Sichern (JSON)` alles in eine Datei, und `Aus Sicherung wiederherstellen` führt eine Sicherung mit deinen Daten zusammen: Nichts wird ersetzt oder geht verloren. Die [Sicherung](help:t/backup) von orOS enthält Rechnungen ebenfalls. Angehängte offizielle PDFs liegen auf der orOS-Disk, nicht in der Sicherung.
+
+## Tastenkürzel
+- [[N]] erstellt ein neues Dokument.
+- [[/]] springt ins Suchfeld.
+- [[Esc]] geht von einem Dokument, dem Editor oder den Einstellungen zurück.
+- [[Ctrl+Z]] macht die letzte Änderung rückgängig, die `Rückgängig` angeboten hat.
+
+## Grenzen
+- Ein Dokument hat höchstens 200 Positionen.
+- Beträge bis 1.000.000.000,00 in jeder Währung; jedes Dokument hat eine Währung.
+- Das Logo wird verkleinert (höchstens 600 × 300), damit die Synchronisierung leicht bleibt.
+- `Online bezahlen` öffnet deine eigene Zahlungsseite; sie zeigt den fälligen Betrag nur, wenn deine Zahlungsseite das tut (ein Stripe Payment Link hat einen festen oder vom Kunden gewählten Preis), und Zahlungen werden nicht automatisch erfasst.

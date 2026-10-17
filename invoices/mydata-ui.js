@@ -29,9 +29,9 @@
     en: {
       send: "Send to myDATA", check: "Check in myDATA", title: "Send to myDATA",
       intro: "timologisi.online issues this document and sends it to myDATA (AADE). Once sent it cannot be changed or deleted: a mistake is corrected with a credit note.",
-      acct: "Account", type: "Document type", goods: "goods", services: "services",
+      acct: "Account", type: "Document type", "nat.goods": "goods", "nat.services": "services",
       cc: "Client's country (2 letters)", ccHint: "GR for Greece; e.g. DE, CY; outside the EU e.g. US, GB.",
-      pay: "Payment method", exempt: "VAT exemption reason (0 % lines)", wht: "Withholding category",
+      payHow: "Payment method", exemptWhy: "VAT exemption reason (0 % lines)", whtCat: "Withholding category",
       test: "Test account: the document is not real, but the provider still e-mails the client's registered addresses. Use the test ΑΦΜ 987654324 for test clients.",
       go: "Send", sending: "Sending…", checking: "Checking…",
       cost: "Uses {n} credit(s) of the account.",
@@ -63,9 +63,9 @@
     el: {
       send: "Αποστολή στο myDATA", check: "Έλεγχος στο myDATA", title: "Αποστολή στο myDATA",
       intro: "Το timologisi.online εκδίδει αυτό το παραστατικό και το διαβιβάζει στο myDATA (ΑΑΔΕ). Μετά την αποστολή δεν αλλάζει ούτε διαγράφεται: ένα λάθος διορθώνεται με πιστωτικό.",
-      acct: "Λογαριασμός", type: "Τύπος παραστατικού", goods: "αγαθά", services: "υπηρεσίες",
+      acct: "Λογαριασμός", type: "Τύπος παραστατικού", "nat.goods": "αγαθά", "nat.services": "υπηρεσίες",
       cc: "Χώρα πελάτη (2 γράμματα)", ccHint: "GR για Ελλάδα· π.χ. DE, CY· εκτός ΕΕ π.χ. US, GB.",
-      pay: "Τρόπος πληρωμής", exempt: "Αιτία εξαίρεσης ΦΠΑ (γραμμές 0 %)", wht: "Κατηγορία παρακράτησης",
+      payHow: "Τρόπος πληρωμής", exemptWhy: "Αιτία εξαίρεσης ΦΠΑ (γραμμές 0 %)", whtCat: "Κατηγορία παρακράτησης",
       test: "Δοκιμαστικός λογαριασμός: το παραστατικό δεν είναι πραγματικό, αλλά ο πάροχος στέλνει email στις δηλωμένες διευθύνσεις του πελάτη. Για δοκιμές βάλε στον πελάτη το ΑΦΜ 987654324.",
       go: "Αποστολή", sending: "Αποστολή…", checking: "Έλεγχος…",
       cost: "Χρεώνει {n} μονάδα(ες) του λογαριασμού.",
@@ -96,7 +96,10 @@
     }
   };
   function t(k, p) {
-    var tab = S[A && A.lang === "el" ? "el" : "en"];
+    // orosI18n (../i18n.js): the app's language, a pack language included.
+    var l = (A && A.lang) || "en", I = root.orosI18n;
+    if (I && !S[l]) I.table(S, "invoices", l);
+    var tab = S[l] || S.en;
     var s = tab[k] !== undefined ? tab[k] : (S.en[k] !== undefined ? S.en[k] : k);
     return String(s).replace(/\{(\w+)\}/g, function (m, n) { return p && p[n] !== undefined ? String(p[n]) : m; });
   }
@@ -177,7 +180,7 @@
     form.appendChild(tWrap);
     function fillTypes() {
       var opts = typesFor(d, st.cc).map(function (x) {
-        return [x, x + " · " + M.LABEL[x][A.lang === "el" ? 0 : 1] + (d.kind !== "cred" ? " (" + t(natureOf(x) === "s" ? "services" : "goods") + ")" : "")];
+        return [x, x + " · " + M.LABEL[x][A.lang === "el" ? 0 : 1] + (d.kind !== "cred" ? " (" + t(natureOf(x) === "s" ? "nat.services" : "nat.goods") + ")" : "")];
       });
       var keep = opts.some(function (o) { return o[0] === st.type; }) ? st.type : opts[0][0];
       A.fillSelect(tSel, opts, keep);
@@ -185,17 +188,17 @@
     }
     fillTypes();
     var pSel = A.select(M.PAY.map(function (p) { return [String(p[0]), A.lang === "el" ? p[1] : p[2]]; }), String(st.pay));
-    form.appendChild(A.field(t("pay"), pSel));
+    form.appendChild(A.field(t("payHow"), pSel));
     var zero = (d.lines || []).some(function (l) { return l.vat === 0 && (l.q || l.p); });
     var eSel = null, wSel = null;
     if (zero) {
       eSel = A.select([["0", "—"]].concat(M.EXEMPT.map(function (e) { return [String(e[0]), A.lang === "el" ? e[1] : e[2]]; })), "0");
-      form.appendChild(A.field(t("exempt"), eSel, d.exempt || ""));
+      form.appendChild(A.field(t("exemptWhy"), eSel, d.exempt || ""));
     }
     if (d.wht > 0) {
       var rows = M.WHT.filter(function (w) { return w[1] === d.wht; });
       wSel = A.select([["0", "—"]].concat(rows.map(function (w) { return [String(w[0]), A.lang === "el" ? w[2] : w[3]]; })), rows.length === 1 ? String(rows[0][0]) : "0");
-      form.appendChild(A.field(t("wht"), wSel));
+      form.appendChild(A.field(t("whtCat"), wSel));
     }
     var errBox = A.el("div", "md-errs");
     errBox.setAttribute("role", "alert");

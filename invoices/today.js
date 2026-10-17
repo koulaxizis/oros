@@ -15,9 +15,11 @@
     en: { owes: "{a} owed", rec: "Recurring invoice ready to check: {n}" },
     el: { owes: "οφείλονται {a}", rec: "Επαναλαμβανόμενο τιμολόγιο για έλεγχο: {n}" }
   };
+  // orosI18n (the shell's ../i18n.js): a pack language included.
+  function i18n() { return typeof window !== "undefined" && window.orosI18n; }
   function money(cents, cur, lang) {
     try {
-      return new Intl.NumberFormat(lang === "el" ? "el-GR" : "en-GB", { style: "currency", currency: cur }).format(cents / 100);
+      return new Intl.NumberFormat(i18n() ? i18n().locale(lang) : (lang === "el" ? "el-GR" : "en-GB"), { style: "currency", currency: cur }).format(cents / 100);
     } catch (e) { return (cents / 100).toFixed(2) + " " + cur; }
   }
 
@@ -29,6 +31,8 @@
       if (!C) return [];
       var data = C.parse(ctx.readRaw(C.STORAGE_KEY));
       if (!data) return [];
+      var I = i18n();
+      if (I && ctx.lang && !W[ctx.lang]) I.table(W, "invoices", ctx.lang);
       var w = W[ctx.lang] || W.en, out = [];
       C.dueRows(data, ctx.today, ctx.addDays(ctx.today, ctx.horizon)).forEach(function (r) {
         out.push({

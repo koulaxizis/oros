@@ -4,6 +4,7 @@
 // One copy of the logic for the app, the universal search provider
 // and (read-only) CRM Lite. Exposes window.OrosInvoicesCore and,
 // under Node, module.exports (tests/invoices.test.js).
+// i18n-inline-ok: Greek country names for EU matching and Greek letters in series prefixes (data, no UI text)
 //
 // Data (synced slice "invoices", key oros-invoices-data):
 //   { ver: 1,
@@ -1058,7 +1059,17 @@
     if (!/^-?\d+(\.\d+)?$/.test(s)) return NaN;
     return parseFloat(s);
   }
-  function locale(lang) { return lang === "el" ? "el-GR" : "en-GB"; }
+  // orosI18n (../i18n.js, in the browser): any language's locale.
+  function locale(lang) {
+    var I = typeof window !== "undefined" && window.orosI18n;
+    return I && lang ? I.locale(lang) : (lang === "el" ? "el-GR" : "en-GB");
+  }
+  // Does the language write "1,5" (el, de, ...) rather than "1.5"?
+  function decComma(lang) {
+    if (lang === "el") return true;
+    if (!lang || lang === "en") return false;
+    try { return new Intl.NumberFormat(locale(lang)).format(1.5).indexOf(",") >= 0; } catch (e) { return false; }
+  }
   function fmtMoney(c, cur, lang) {
     try {
       return new Intl.NumberFormat(locale(lang), { style: "currency", currency: cur }).format(c / 100);
@@ -1069,18 +1080,18 @@
       return new Intl.NumberFormat(locale(lang), { maximumFractionDigits: maxDec === undefined ? 3 : maxDec }).format(v);
     } catch (e) { return String(v); }
   }
-  // Money for an input field: "45" or "45,50" (el) / "45.50" (en).
+  // Money for an input field: "45" or "45,50" (el, de) / "45.50" (en).
   function moneyInput(c, lang) {
     if (!c) return "";
     var neg = c < 0;
     c = Math.abs(c);
     var whole = Math.floor(c / 100), dec = c % 100;
-    return (neg ? "-" : "") + (dec ? whole + (lang === "el" ? "," : ".") + pad(dec) : String(whole));
+    return (neg ? "-" : "") + (dec ? whole + (decComma(lang) ? "," : ".") + pad(dec) : String(whole));
   }
   function numInput(v, lang) {
     if (!v) return v === 0 ? "0" : "";
     var s = String(v);
-    return lang === "el" ? s.replace(".", ",") : s;
+    return decComma(lang) ? s.replace(".", ",") : s;
   }
   // dd/mm/yyyy (both languages print the day first on an invoice).
   function fmtDay(key) {
@@ -1097,7 +1108,7 @@
   }
   function csvMoney(c, lang) {
     var s = (Math.abs(c) / 100).toFixed(2);
-    if (lang === "el") s = s.replace(".", ",");
+    if (decComma(lang)) s = s.replace(".", ",");
     return (c < 0 ? "-" : "") + s;
   }
   function csvJoin(rows) {

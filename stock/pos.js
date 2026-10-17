@@ -19,9 +19,9 @@
 
   var STR = {
     en: {
-      title: "Point of sale", pl: "Price list", retail: "Retail", wh: "Warehouse",
+      "pos.title": "Point of sale", pl: "Price list", retail: "Retail", wh: "Warehouse",
       zrep: "Z report", lists: "Price lists", setup: "Receipt settings", close: "Close",
-      ph: "Scan or search a product", all: "All", none: "No products match.", more: "Showing {n} of {t}. Type to narrow.",
+      ph: "Scan or search a product", all: "All", "pos.none": "No products match.", more: "Showing {n} of {t}. Type to narrow.",
       left: "{q} left", noPrice: "no price",
       cart: "Sale", empty: "Tap a product or scan a barcode.", unknown: "No product with the code \"{c}\".",
       net: "Net", vat: "VAT", total: "Total",
@@ -36,7 +36,7 @@
       zClose: "Close the day", zClosed: "Day closed at {t} (Z #{n}): {g}.", zAfter: "{n} sales came after the close.",
       zCloseQ: "Close {d}? The day's totals are kept as Z #{n}. You can still sell; later sales show as after the close.",
       zPrint: "Print Z report", zNone: "No sales on this day.", zFirst: "First {a} · last {b}",
-      void: "Void", voidQ: "Void sale {n}? Its products go back into stock.", voided: "Sale voided", isVoid: "voided",
+      void: "Void", voidQ: "Void sale {n}? Its products go back into stock.", "pos.voided": "Sale voided", isVoid: "voided",
       reprint: "Receipt",
       plTitle: "Price lists", plHint: "Retail uses each product's sale price. Another list can change it by a percentage (−10 for wholesale) and set its own price per product.",
       plName: "Name", plPct: "± % on the sale price", plPrices: "Prices…", plAdd: "Add a price list", plNew: "Wholesale",
@@ -50,9 +50,9 @@
       notFiscal: "Not a tax receipt."
     },
     el: {
-      title: "Σημείο πώλησης (POS)", pl: "Τιμοκατάλογος", retail: "Λιανική", wh: "Αποθήκη",
+      "pos.title": "Σημείο πώλησης (POS)", pl: "Τιμοκατάλογος", retail: "Λιανική", wh: "Αποθήκη",
       zrep: "Αναφορά Ζ", lists: "Τιμοκατάλογοι", setup: "Ρυθμίσεις απόδειξης", close: "Κλείσιμο",
-      ph: "Σάρωση ή αναζήτηση προϊόντος", all: "Όλα", none: "Κανένα προϊόν δεν ταιριάζει.", more: "Φαίνονται {n} από {t}. Γράψε για να περιορίσεις.",
+      ph: "Σάρωση ή αναζήτηση προϊόντος", all: "Όλα", "pos.none": "Κανένα προϊόν δεν ταιριάζει.", more: "Φαίνονται {n} από {t}. Γράψε για να περιορίσεις.",
       left: "απομένουν {q}", noPrice: "χωρίς τιμή",
       cart: "Πώληση", empty: "Πάτα ένα προϊόν ή σάρωσε barcode.", unknown: "Δεν υπάρχει προϊόν με κωδικό «{c}».",
       net: "Καθαρή αξία", vat: "ΦΠΑ", total: "Σύνολο",
@@ -67,7 +67,7 @@
       zClose: "Κλείσιμο ημέρας", zClosed: "Η ημέρα έκλεισε στις {t} (Ζ #{n}): {g}.", zAfter: "{n} πωλήσεις έγιναν μετά το κλείσιμο.",
       zCloseQ: "Να κλείσει η {d}; Τα σύνολα της ημέρας κρατιούνται ως Ζ #{n}. Μπορείς να συνεχίσεις να πουλάς· οι επόμενες πωλήσεις φαίνονται ως μετά το κλείσιμο.",
       zPrint: "Εκτύπωση αναφοράς Ζ", zNone: "Καμία πώληση αυτή την ημέρα.", zFirst: "Πρώτη {a} · τελευταία {b}",
-      void: "Ακύρωση", voidQ: "Ακύρωση της πώλησης {n}; Τα προϊόντα της επιστρέφουν στο απόθεμα.", voided: "Η πώληση ακυρώθηκε", isVoid: "ακυρωμένη",
+      void: "Ακύρωση", voidQ: "Ακύρωση της πώλησης {n}; Τα προϊόντα της επιστρέφουν στο απόθεμα.", "pos.voided": "Η πώληση ακυρώθηκε", isVoid: "ακυρωμένη",
       reprint: "Απόδειξη",
       plTitle: "Τιμοκατάλογοι", plHint: "Η λιανική χρησιμοποιεί την τιμή πώλησης κάθε προϊόντος. Ένας άλλος τιμοκατάλογος την αλλάζει κατά ένα ποσοστό (−10 για χονδρική) και μπορεί να έχει δική του τιμή ανά προϊόν.",
       plName: "Όνομα", plPct: "± % στην τιμή πώλησης", plPrices: "Τιμές…", plAdd: "Νέος τιμοκατάλογος", plNew: "Χονδρική",
@@ -105,13 +105,15 @@
   // ---------- The till ----------
   function open(a) {
     api = a;
-    LANG = a.lang === "el" ? "el" : "en";
+    // orosI18n (../i18n.js): the full language code, a pack language included.
+    LANG = window.orosI18n ? window.orosI18n.lang() : (a.lang === "el" ? "el" : "en");
+    if (window.orosI18n && !STR[LANG]) window.orosI18n.table(STR, "stock", LANG);
     var pp = prefs();
     var dlg = api.makeDialog("st-pos", true);
     dlg.classList.add("pos-dlg");
 
     var top = el("div", "pos-top");
-    top.appendChild(el("div", "dlg-title pos-title", "🧾 " + t("title")));
+    top.appendChild(el("div", "dlg-title pos-title", "🧾 " + t("pos.title")));
     var plSel = el("select", "pos-pl");
     plSel.setAttribute("aria-label", t("pl"));
     plSel.id = "st-pos-pl";
@@ -273,7 +275,7 @@
         b.addEventListener("click", function () { add(it, 1000); });
         grid.appendChild(b);
       });
-      if (!list.length) grid.appendChild(el("p", "muted pad", t("none")));
+      if (!list.length) grid.appendChild(el("p", "muted pad", t("pos.none")));
       note.textContent = list.length > shown.length ? t("more", { n: shown.length, t: list.length }) : "";
     }
     function paintChange() {
@@ -539,7 +541,7 @@
         var ra = el("span", "pos-sale-acts");
         ra.appendChild(btn(t("reprint"), "", function () { receiptDialog(s.id); }));
         if (s.v !== 1) ra.appendChild(btn(t("void"), "danger", function () {
-          api.confirm(t("voidQ", { n: s.no }), t("void"), true, function () { api.voidSale(s.id); api.toast(t("voided")); paint(); });
+          api.confirm(t("voidQ", { n: s.no }), t("void"), true, function () { api.voidSale(s.id); api.toast(t("pos.voided")); paint(); });
         }));
         li.appendChild(ra);
         ul.appendChild(li);

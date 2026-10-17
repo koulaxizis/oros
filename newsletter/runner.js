@@ -43,7 +43,7 @@
 
   var TXT = {
     en: {
-      done: "“{s}” went out to {n}", done1: "“{s}” went out to 1",
+      "run.done": "“{s}” went out to {n}", done1: "“{s}” went out to 1",
       paused: "Newsletter paused: “{s}”", pausedBody: "Open Newsletter to see why and resume.",
       started: "Sending “{s}”", startedBody: "The scheduled issue started.",
       inbox: "Newsletter: {list}", subs: "{n} new", unsubs: "{n} unsubscribed", bounced: "{n} bounced",
@@ -52,7 +52,7 @@
       rssSend: "Sending “{s}” (RSS)"
     },
     el: {
-      done: "Το «{s}» στάλθηκε σε {n}", done1: "Το «{s}» στάλθηκε σε 1",
+      "run.done": "Το «{s}» στάλθηκε σε {n}", done1: "Το «{s}» στάλθηκε σε 1",
       paused: "Παύση αποστολής: «{s}»", pausedBody: "Άνοιξε το Ενημερωτικό δελτίο για να δεις γιατί και να συνεχίσεις.",
       started: "Αποστολή «{s}»", startedBody: "Το προγραμματισμένο τεύχος ξεκίνησε.",
       inbox: "Ενημερωτικό δελτίο: {list}", subs: "{n} νέοι", unsubs: "{n} διαγραφές", bounced: "{n} επιστροφές",
@@ -61,12 +61,16 @@
       rssSend: "Αποστολή «{s}» (RSS)"
     }
   };
+  // The shell's language; a pack language (orosI18n) reads the
+  // "newsletter" pack when the shell has it loaded, else English.
   function lang() {
+    try { if (root.orosI18n) return root.orosI18n.lang(); } catch (e) {}
     try { if (root.orosTodayEnv && root.orosTodayEnv.lang() === "el") return "el"; } catch (e) {}
     try { return localStorage.getItem("oros-lang") === "el" ? "el" : "en"; } catch (e) { return "en"; }
   }
   function tx(k, p) {
-    var s = (TXT[lang()] || TXT.en)[k] || "";
+    var l = lang(), I = root.orosI18n;
+    var s = (TXT[l] || (I ? I.table(TXT, "newsletter", l) : TXT.en))[k] || "";
     if (p) Object.keys(p).forEach(function (x) { s = s.split("{" + x + "}").join(String(p[x])); });
     return s;
   }
@@ -84,7 +88,7 @@
   function notify(kind, info) {
     if (kind === "done") {
       var x = info.issue;
-      emit({ key: "done-" + x.id, type: "info", title: x.n === 1 ? tx("done1", { s: subjOf(x) }) : tx("done", { s: subjOf(x), n: x.n }), body: "" });
+      emit({ key: "done-" + x.id, type: "info", title: x.n === 1 ? tx("done1", { s: subjOf(x) }) : tx("run.done", { s: subjOf(x), n: x.n }), body: "" });
     } else if (kind === "paused") {
       emit({ key: "paused-" + info.issue.id + "-" + E.dayKey(), type: "reminder", title: tx("paused", { s: subjOf(info.issue) }), body: tx("pausedBody") });
     } else if (kind === "started") {

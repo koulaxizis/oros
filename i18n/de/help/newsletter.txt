@@ -1,0 +1,108 @@
+# Newsletter
+Newsletter schreibt E-Mail-Newsletter an deine eigenen Abonnentenlisten und versendet sie, wie Mailerlite oder Buttondown, aber über dein eigenes E-Mail-Konto oder einen Versanddienst. Die Abonnenten liegen in orOS, nicht beim Dienst eines anderen, und nichts wird verfolgt: es gibt kein Zählen von Öffnungen oder Klicks.
+
+## Erste Schritte
+1. Wähle unter `Listen` die Option `Versandkonto hinzufügen`. Nimm ein `Mail-Konto`, das du schon in [Mail](app:mail) eingerichtet hast, oder `Anbieter (SMTP)` für einen Versanddienst wie Brevo, Amazon SES, Mailgun, Postmark, SendGrid oder MailerSend. `Anmeldung testen` prüft es. MailerLite selbst bietet kein SMTP: sein Versanddienst heißt MailerSend.
+2. Leg eine `Neue Liste` an: ihren Namen, das Konto, über das sie sendet (`Sendet über`), die `Absenderadresse` und `Dein Name und deine Postanschrift (Fußzeile)`, die laut Gesetz jeder Newsletter zeigen muss.
+3. Füge unter `Abonnenten` Abonnenten hinzu und schreib dann mit `Neu` unter `Ausgaben` deine erste Ausgabe.
+
+## Listen und Versandkonten
+Eine Liste hat ihr eigenes Aussehen (`Klassisch`, `Warm`, `Dunkel` oder `Schlicht`), ihre Farbe, die Sprache der Fußzeile und den Text `Warum sie ihn erhalten (Fußzeile)`. `Domain prüfen` sucht die SPF-, DKIM- und DMARC-Einträge deiner Absenderadresse: ohne sie landen Newsletter oft im Spam.
+
+`Sekunden zwischen Nachrichten` und `Nachrichten pro Tag (höchstens)` halten dich unter den Limits deines Anbieters. Das Passwort oder der API-Schlüssel eines Anbieters bleibt versiegelt auf dem Gerät, auf dem du es eingegeben hast, und wird nie synchronisiert: gib es auf jedem sendenden Gerät einmal ein.
+
+## Versand über die API eines Anbieters
+Für Brevo, Postmark, SendGrid und Mailgun stellst du im Versandkonto `Verbindung` auf `HTTP-API` und fügst den API-Schlüssel des Anbieters ein (Mailgun braucht auch seine Versanddomain). Dann:
+- Bis zu 10 Nachrichten gehen in einem Aufruf raus statt einzeln.
+- Alle 10 Minuten liest Newsletter die harten Rückläufer, Spam-Beschwerden und Abmeldungen beim Anbieter und markiert diese Abonnenten in deinen Listen.
+- Eine abgelehnte Adresse zählt als unzustellbar; ein abgelehnter Schlüssel pausiert die Ausgabe, bis du ihn korrigierst.
+
+Der Schlüssel braucht die Berechtigung zum Senden und zum Lesen von Rückläufern oder Sperrlisten. Die API von Brevo kann keine Bilder in einer Nachricht mitschicken: für Ausgaben mit Bildern nimm Brevos SMTP. Die Anfragen folgen der öffentlichen API-Anleitung jedes Anbieters, also probier zuerst einen Testversand.
+
+## Abonnenten
+`Hinzufügen`, `Adressen einfügen`, `CSV importieren`, oder wähle Personen `Aus Kontakte` oder `Aus CRM` (deine CRM-Kunden mit E-Mail; ihr CRM-Status und ihre Tags werden zu Tags). Jede Person hat einen Status (`Aktiv`, `Wartet auf Bestätigung`, `Abgemeldet`, `Unzustellbar`), Tags und die Grundlage, auf der du ihr schreibst:
+- `Hat eingewilligt`: sie hat zugestimmt, zum Beispiel über ein Formular.
+- `Bestehende Kundschaft`: Neuigkeiten zu ähnlichen Produkten oder Leistungen.
+- `Bestätigt per E-Mail`: sie bekommt eine Bestätigungsanfrage und erhält Ausgaben erst nach der Bestätigung.
+
+Ein Import bringt nie jemanden zurück, der sich abgemeldet hat. `Endgültig löschen` entfernt eine Person und behält nur einen Fingerabdruck der Adresse, damit sie nicht versehentlich wieder importiert wird. `Ihre Daten (JSON)` speichert alles, was über eine Person gespeichert ist.
+
+## E-Mail-Plattformen (MailerLite, Mailchimp, Brevo)
+Hast du auch Abonnenten bei MailerLite, Mailchimp oder Brevo, verbinde das Konto zuerst unter [Einstellungen](app:settings) › `Verbundene Dienste`. Dann verknüpft `E-Mail-Plattformen` unter `Abonnenten` die Liste mit einer Gruppe (MailerLite), einer Zielgruppe (Mailchimp) oder einer Kontaktliste (Brevo). `Synchronisieren` liest alle dort und zeigt, was sich ändern würde, bevor sich etwas ändert; `Anwenden` führt die Änderungen aus.
+- `Deren Abonnenten hierher holen`: Personen auf der Plattform, die nicht auf dieser Liste sind, werden hinzugefügt, mit dem Tag der Plattform und der Grundlage `Hat eingewilligt`.
+- `Unsere bestätigten Abonnenten dorthin senden`: nur Personen mit Status `Aktiv` gehen; wer noch auf die Bestätigung wartet, nicht.
+- Abmeldungen gelten immer in beide Richtungen: wer sich auf der Plattform abgemeldet hat, wird auch hier abgemeldet, und wer sich hier abgemeldet hat (oder endgültig gelöscht wurde), wird dort abgemeldet. Wer auf einer Seite gegangen ist, wird auf der anderen nie zurückgeholt.
+- `Trennen` entfernt nur die Verknüpfung: weder hier noch dort wird jemand gelöscht.
+- Mailchimp spricht nur mit Servern, also geht es immer über das orOS-Relay; das Relay speichert nichts. Deine Schlüssel bleiben in Verbundene Dienste und kommen nie in Newsletter.
+
+## Eine Ausgabe schreiben
+Schreib in `Blöcke` (Überschrift, Text, Bild, Schaltfläche, Linie, zwei Spalten) oder in `Markdown`. `{first}` und `{name}` setzen den Namen des Abonnenten ein; `{first|friend}` setzt „friend“ ein, wenn kein Name da ist. Unter `Geht an` sendest du an alle Aktiven, an Abonnenten mit bestimmten Tags oder an ein gespeichertes Segment. `Segmente…` legt Segmente an: Abonnenten mit bestimmten Tags (einem davon oder allen), einer Sprache oder beidem. Bilder werden verkleinert und in der E-Mail mitgeschickt.
+
+`+ Version auf Griechisch` (oder `+ Version auf Englisch`) fügt der Ausgabe eine zweite Sprache hinzu: Abonnenten, die diese Sprache lesen, bekommen sie, alle anderen die Hauptversion. Oben im Editor wechselst du zwischen den beiden Versionen.
+
+`Als Vorlage speichern` behält den Inhalt einer Ausgabe; `Neu` bietet dann `Leere Ausgabe` oder eine deiner Vorlagen an.
+
+`Vorschau` zeigt die Ausgabe auf einem Handy und einem Desktop (und in jeder Sprache), `Test senden` schickt sie an dich, und `Prüfen` listet, was vor dem Senden behoben werden muss.
+
+## Senden
+`Senden…` zeigt, wie viele Nachrichten rausgehen und wie lange es dauert; tippe die Zahl zum Bestätigen. Wähle `Jetzt`, oder `Später` und einen Tag und eine Uhrzeit, um es zu planen. Der Versand geht Nachricht für Nachricht, solange orOS auf diesem Gerät offen ist, auch wenn Newsletter geschlossen ist, und die Leiste oben zeigt den Fortschritt mit `Pausieren`. Ist das Tageslimit erreicht, geht es am nächsten Tag weiter. Fehlgeschlagene Nachrichten stehen unter `Nicht zugestellt`. orOS sagt dir Bescheid, wenn eine Ausgabe rausgegangen ist oder pausiert, und [Heute](app:today) zeigt gesendete und geplante Ausgaben.
+
+Eine geplante Ausgabe geht von dem Gerät raus, auf dem sie geplant wurde, wo die Passwörter liegen. Öffne sie für `Planung aufheben` oder `Jetzt senden`.
+
+>! orOS muss offen sein: ist orOS geschlossen, wird nichts gesendet, und eine geplante Ausgabe beginnt beim nächsten Öffnen von orOS auf diesem Gerät. Ein Tab im Hintergrund sendet langsamer.
+
+## RSS per E-Mail
+Auf einer Listenkarte macht `RSS per E-Mail` aus einem Blog- oder News-Feed Ausgaben. Wähle einen deiner Feeds im [Reader](app:feeds) oder gib eine beliebige Feed-Adresse ein, wähle jeden Tag, jede Woche oder jeden Monat und die Uhrzeit, und wie viele Artikel hineinkommen. Jede Ausgabe listet die neuen Artikel mit Bild, ein paar Zeilen und einer Schaltfläche `Weiterlesen`.
+
+Wähle `Entwurf zum Prüfen erstellen`, dann bekommst du einen Entwurf und eine Benachrichtigung, oder `Automatisch senden`, dann geht sie von selbst raus, aber nur, wenn die Prüfung vor dem Senden keine Fehler findet; sonst bleibt sie ein Entwurf, und orOS sagt dir Bescheid. `Jetzt eine erstellen` macht sofort einen Entwurf aus den neuesten Artikeln.
+
+>! Ein Feed läuft auf dem Gerät, auf dem du ihn eingerichtet hast, solange orOS offen ist. War orOS zu dieser Zeit geschlossen, läuft er beim nächsten Öffnen.
+
+## Frühere Ausgaben aus einem anderen Dienst
+`Einstellungen` › `Frühere Ausgaben importieren…` holt, was du mit Buttondown, MailerLite oder einem anderen Dienst gesendet hast: deren .zip-Export oder Markdown-, HTML-, CSV- oder JSON-Dateien. Importiere sie als frühere Ausgaben, die bei deinen Ausgaben als schon versendet erscheinen (zum Speichern als Webseite oder zum `Duplizieren`), ohne dass jemand eine E-Mail bekommt, oder als Entwürfe zum erneuten Senden. Text, Überschriften, Links und Bilder kommen mit; Skripte und Tracking-Pixel fallen weg, und Bilder bleiben unter ihrer Webadresse. Dieselbe Datei zweimal zu importieren, fügt nichts Neues hinzu.
+
+Umzug von Substack oder Buttondown: `CSV importieren` und `Frühere Ausgaben importieren…` lesen beide deren Exporte und zeigen eine Vorschau mit den Abonnenten und den früheren Ausgaben nebeneinander; nimm den Haken weg bei allem, was du nicht willst.
+- Substack: `Settings` › `Exports` › `Create new export`, dann die .zip herunterladen. Leser, deren E-Mail deaktiviert ist oder deren Abo beendet ist, bleiben draußen; ein bezahltes Abo wird zu einem Tag. Nur veröffentlichte Beiträge kommen mit, mit ihrem Untertitel als Vorschauzeile.
+- Buttondown: `Subscribers` › `Export` für die CSV, und `Emails` › `Export` (CSV oder die .zip mit Markdown-Dateien) für das Archiv. Nur reguläre, Premium- und geschenkte Abonnenten kommen mit; Entwürfe und geplante E-Mails bleiben draußen.
+
+Abonnenten folgen denselben Regeln wie bei jedem Import (wer gegangen ist, wird nicht zurückgeholt), und `Rückgängig` in der Meldung direkt danach entfernt alles, was dieser Import hinzugefügt hat.
+
+## An- und Abmelden per E-Mail
+Jede Ausgabe hat einen Abmeldelink, der eine fertige E-Mail öffnet. `Anmeldelink` gibt dir einen Link und HTML für deine Website, die dasselbe für neue Abonnenten tun. Newsletter liest diese E-Mails aus dem Posteingang des Kontos der Liste (`Posteingang prüfen`, alle paar Minuten, solange orOS offen ist, und vor jedem Versand), wendet sie an und legt sie in einem Ordner namens Newsletter ab. Unzustellbarkeitsberichte markieren Adressen als unzustellbar.
+
+## Anmeldeformular auf deiner Website
+In `Anmeldelink` macht `Formular einrichten` ein Formular für deine eigene Website: kopiere sein HTML in eine beliebige Seite. Leute geben ihre E-Mail und ihren Namen ein, und das orOS-Relay hält die Anmeldung, so verschlüsselt, dass nur dein Newsletter sie lesen kann, bis orOS sie abholt, alle paar Minuten, solange es offen ist. Jeder neue Abonnent bekommt dann eine Bestätigungsanfrage. Du kannst eine `Dankeseite` auf deiner Website festlegen, auf der die Leute danach landen.
+
+Ist das Formular an, hat jede Ausgabe auch einen Ein-Klick-Abmeldelink, und Gmail und andere Mail-Apps zeigen ihren eigenen Abmelden-Knopf.
+
+>! Anmeldungen werden auf einem Gerät abgeholt, dem, das das Formular eingerichtet hat. Mit `Hier abholen` änderst du das. `Formular ausschalten` löscht, was das Relay hält, und die Ein-Klick-Links in schon versendeten Ausgaben funktionieren nicht mehr; der Weg per E-Mail funktioniert weiter.
+
+## Eine orOS-Datei speichern und öffnen
+In `Einstellungen` speichert unter `Daten` die Option `orOS-Datei (.orosnewsletter)` deine Listen, Abonnenten, Ausgaben (mit ihren Bildern), Segmente, Vorlagen, RSS-Feeds und Versandkonten als eine `.orosnewsletter`-Datei, zum Beispiel um sie ohne Synchronisierung auf ein anderes Gerät zu bringen oder eine Kopie zu behalten. Passwörter, API-Schlüssel, SMTP-Benutzernamen, die Schlüssel des Anmeldeformulars, die Verknüpfungen zu E-Mail-Plattformen und der Versandfortschritt bleiben auf diesem Gerät; eine geplante oder gerade gesendete Ausgabe wird als Entwurf gespeichert, und RSS-Feeds als aus. Die Datei ist ein normales ZIP: entpackt enthält sie alles als `content.json`, die Bilder in `media/` sowie `preview/issues.md` und pro Liste eine `preview/subscribers-….csv` für andere Programme. Sie enthält die E-Mail-Adressen deiner Abonnenten und ist nicht verschlüsselt, also bewahre sie sicher auf.
+
+`orOS-Datei öffnen…` (oder `Entpackter orOS-Ordner…`, oder „Öffnen mit“ orOS am Computer) zeigt, wie viele Einträge neu und wie viele schon hier sind; dann fügt `Hinzufügen` nur die neuen hinzu, mit ihren eigenen IDs: dieselbe Datei erneut zu öffnen, fügt nichts hinzu. Ein Eintrag, der schon hier ist, bleibt, wie er ist, einer, den du hier gelöscht hast, bleibt gelöscht, und eine endgültig gelöschte Adresse kommt nicht zurück; eine Datei löscht nie etwas. Hake `Mit neueren Versionen aktualisieren` an, damit Einträge, die in der Datei später geändert wurden, deine Kopie ersetzen. Das Öffnen einer Datei sendet nie etwas: keine Bestätigungsanfragen, keine Ausgaben. Eine Liste aus einer Datei bekommt neue Abmelde- und Bestätigungscodes (sie stehen nie in der Datei): Abmeldungen als Antwort auf früher gesendete Ausgaben werden auf dem Gerät bearbeitet, das sie gesendet hat, und das Anmeldeformular der Liste wird hier neu eingerichtet. `Rückgängig` in der Meldung entfernt, was hinzugefügt wurde.
+
+## Synchronisierung und Sicherung
+Listen, Abonnenten und Ausgaben werden über die orOS-Synchronisierung abgeglichen, Bilder über den orOS-Speicher. Passwörter, der Tageszähler und wann der Posteingang zuletzt gelesen wurde, bleiben auf jedem Gerät. `Einstellungen` hat `Sichern (JSON)` und `Aus Sicherung wiederherstellen`, und `CSV exportieren` speichert die Abonnenten einer Liste.
+
+## Tastenkürzel
+- [[N]]: neue Ausgabe, neuer Abonnent oder neue Liste (im aktuellen Tab).
+- [[/]]: Abonnenten suchen.
+- [[Esc]]: zurück zur Liste.
+- [[Ctrl+Z]]: das letzte Löschen rückgängig machen.
+
+## Namen aus Online-Profilen
+`Namen online ergänzen` unter Abonnenten sucht für die angezeigten Abonnenten ohne Namen das öffentliche Gravatar-Profil, das jede Person für ihre eigene E-Mail angelegt hat (gesendet wird nur ein codierter Fingerabdruck der Adresse). Du siehst jeden gefundenen Namen, hakst die richtigen an und tippst auf `Auswahl übernehmen`; `Rückgängig` nimmt sie wieder weg.
+
+## Tipps
+> Sende vor jedem großen Versand einen Test an dein eigenes Handy und an eine Gmail-Adresse.
+
+> Frag deinen Anbieter vor dem ersten Versand nach SPF und DKIM: das ist wichtiger als die Betreffzeile.
+
+## Grenzen
+- Gesendet wird nur, solange orOS offen ist, und das Tageslimit zählt pro Gerät.
+- Bis zu 5.000 Abonnenten insgesamt und 20 Listen.
+- Bis zu 20 RSS-Feeds und 500 Ausgaben.
+- Keine Statistiken zu Öffnungen oder Klicks.
+- Das Relay hält höchstens 2.000 Anmeldungen und Abmeldungen pro Liste, die auf das Abholen warten.
+- Jeder Aufruf der API eines Anbieters sendet bis zu 10 Nachrichten (etwa 1 MB); Rückläufer, die vor dem ersten Lesen älter als 7 Tage sind, werden nicht abgerufen.

@@ -710,6 +710,7 @@
     return rows.filter(function (r) { return r.some(function (c) { return c.trim(); }); });
   }
   // Header names (EN + EL) → field keys.
+  // i18n-inline-ok: Greek CSV column names for the team reader (data, no UI text)
   var HEAD = {
     name: ["name", "full name", "fullname", "όνομα", "ονοματεπώνυμο"],
     pron: ["pronouns", "αντωνυμίες"],

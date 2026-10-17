@@ -100,21 +100,34 @@
 
   // Ready units: language-free ids. dec = decimals shown and allowed
   // (a piece is whole, a kilo has grams).
+  // Names: UNIT_NAMES (a { en, el } table of the "stock" pack, so a pack
+  // language shows its own short names). Import reads the English and
+  // Greek names back (unitWords in importPlan).
   var UNITS = {
-    pcs:  { dec: 0, n: ["pcs", "τεμ."] },
-    box:  { dec: 0, n: ["box", "κιβ."] },
-    pack: { dec: 0, n: ["pack", "πακ."] },
-    pair: { dec: 0, n: ["pair", "ζεύγ."] },
-    set:  { dec: 0, n: ["set", "σετ"] },
-    kg:   { dec: 3, n: ["kg", "κιλά"] },
-    g:    { dec: 0, n: ["g", "γρ."] },
-    l:    { dec: 3, n: ["L", "λίτρα"] },
-    ml:   { dec: 0, n: ["mL", "ml"] },
-    m:    { dec: 2, n: ["m", "μέτρα"] },
-    m2:   { dec: 2, n: ["m²", "τ.μ."] }
+    pcs:  { dec: 0 }, box:  { dec: 0 }, pack: { dec: 0 }, pair: { dec: 0 }, set: { dec: 0 },
+    kg:   { dec: 3 }, g:    { dec: 0 }, l:    { dec: 3 }, ml:   { dec: 0 }, m:   { dec: 2 },
+    m2:   { dec: 2 }
   };
+  var UNIT_NAMES = {
+    en: {
+      "unit.pcs": "pcs", "unit.box": "box", "unit.pack": "pack", "unit.pair": "pair", "unit.set": "set",
+      "unit.kg": "kg", "unit.g": "g", "unit.l": "L", "unit.ml": "mL", "unit.m": "m", "unit.m2": "m²"
+    },
+    el: {
+      "unit.pcs": "τεμ.", "unit.box": "κιβ.", "unit.pack": "πακ.", "unit.pair": "ζεύγ.", "unit.set": "σετ",
+      "unit.kg": "κιλά", "unit.g": "γρ.", "unit.l": "λίτρα", "unit.ml": "ml", "unit.m": "μέτρα", "unit.m2": "τ.μ."
+    }
+  };
+  Object.keys(UNITS).forEach(function (u) { UNITS[u].n = [UNIT_NAMES.en["unit." + u], UNIT_NAMES.el["unit." + u]]; });
   var UNIT_IDS = Object.keys(UNITS);
-  function unitName(id, lang) { var u = UNITS[id]; return u ? u.n[lang === "el" ? 1 : 0] : null; }
+  // lang: "en", "el" or a pack language (window.orosI18n, when loaded;
+  // in the shell or in Node: English).
+  function unitName(id, lang) {
+    if (!UNITS[id]) return null;
+    var tb = UNIT_NAMES[lang];
+    if (!tb && typeof window !== "undefined" && window.orosI18n && lang) tb = window.orosI18n.table(UNIT_NAMES, "stock", lang);
+    return (tb && tb["unit." + id]) || UNIT_NAMES.en["unit." + id];
+  }
 
   // Movement types and the sign their lines must have:
   //   in   receive from a supplier (+, unit cost c)

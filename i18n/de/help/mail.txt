@@ -1,0 +1,157 @@
+# Mail
+Mail liest und sendet deine E-Mails direkt in orOS. Füge ein oder mehrere Konten von jedem Anbieter mit IMAP hinzu, blättere durch deine Ordner, lies deine Nachrichten (auch offline, sobald sie einmal geöffnet wurden) und schreib neue.
+
+## Erste Schritte
+Tippe auf `Konto hinzufügen`, gib `Dein Name`, `E-Mail-Adresse` und `Passwort` ein und tippe auf `Verbinden`. Für Gmail, iCloud, Yahoo, GMX und Zoho wird der Server für dich eingetragen. Bei anderen Anbietern öffnest du `Servereinstellungen` und prüfst `Posteingangsserver (IMAP)`, `Port / Sicherheit` und `Benutzername`; die meisten Anbieter nutzen mail.deinedomain.
+
+Gmail, iCloud und Yahoo brauchen ein App-Passwort: Erstelle eins in den Sicherheitseinstellungen deines Kontos und nutze es statt deines normalen Passworts.
+
+## Mails lesen
+- Die Seitenleiste zeigt deine Konten und ihre Ordner (`Posteingang`, `Gesendet`, `Entwürfe`, `Spam`, `Papierkorb` und die übrigen) mit der Zahl der ungelesenen Nachrichten. Auf dem Telefon öffnest du sie mit der Menütaste oben links.
+- Die neuesten Nachrichten stehen oben; ungelesene haben einen Punkt. `Ältere Nachrichten laden` ganz unten holt weitere.
+- Tippe oder klicke auf eine Nachricht, um sie zu lesen. Beim Öffnen wird sie auch auf dem Server als gelesen markiert.
+- Antworten werden mit der Nachricht, auf die sie antworten, zu einer Unterhaltungszeile gruppiert, mit der Zahl der Nachrichten neben dem Absender. Klicke darauf, um die neueste zu lesen und die übrigen darunter zu sehen; klicke noch einmal, um sie zuzuklappen. Ist sie zugeklappt, wählst du mit ihr die ganze Unterhaltung aus. Die Gruppierung schaltest du in den Einstellungen mit `Nachrichten nach Unterhaltung gruppieren` aus.
+- Mit zwei oder mehr Konten zeigt `Alle Posteingänge` oben in der Seitenleiste die Posteingänge aller Konten zusammen, die neuesten zuerst; der farbige Streifen links und der Kontoname neben dem Datum zeigen, zu wem jede Nachricht gehört. Auswählen, Wischen, die Tasten und die Tastatur funktionieren dort kontenübergreifend, und jede Änderung geht an das richtige Konto; `Verschieben nach…` geht nur mit Nachrichten eines Kontos auf einmal. Suche und ältere Nachrichten gibt es im Posteingang des jeweiligen Kontos.
+- Mail sieht alle paar Minuten nach neuen Nachrichten, solange es offen ist; die Aktualisieren-Taste (`Nach neuen Mails sehen`) prüft sofort.
+- Solange orOS offen ist, zeigt eine neue Nachricht im Posteingang auch eine Benachrichtigung, selbst wenn Mail geschlossen ist (Prüfung alle 3 Minuten). Klicke darauf, um die Nachricht zu öffnen. Ausschalten kannst du das unter Einstellungen › Benachrichtigungen › Mail.
+
+### Suche
+- Die Lupe über der Liste (oder [[/]]) durchsucht den offenen Ordner. Während du tippst, werden die Nachrichten, die schon auf diesem Gerät sind, nach Absender, Empfängern und Betreff gefiltert.
+- Drück [[Enter]] oder `Ganzen Ordner auf dem Server durchsuchen`, um jede Nachricht im Ordner zu durchsuchen, auch ältere und auch den Text der Nachrichten (mit `Überall`). Die neuesten 100 Treffer werden gezeigt.
+- `Absender` oder `Betreff` grenzt die Suche ein. Akzente spielen auf dem Gerät keine Rolle; auf dem Server hängt es von deinem Anbieter ab.
+- Die Tasten unter einer Nachricht funktionieren auch bei Suchergebnissen. [[Esc]] oder das × schließt die Suche.
+
+### Bilder und Formatierung
+Bilder aus dem Internet sind zuerst ausgeblendet, damit der Absender nicht erfährt, dass du die Nachricht geöffnet hast. Tippe auf `Bilder anzeigen`, um sie einmal zu laden, oder auf `Immer für` einen Absender, um ihm ab jetzt zu vertrauen. In den Einstellungen zeigt `Immer als reinen Text zeigen` jede Nachricht als Text; `Formatierte Version zeigen` schaltet eine Nachricht zurück.
+
+### Absender- und Linkprüfung
+- `Bestätigter Absender` neben dem Absender heißt, dass der empfangende Server geprüft hat, dass die Nachricht wirklich von der Domain dieser Adresse kommt (SPF, DKIM, DMARC).
+- Ein roter Kasten `Vorsicht` heißt, dass eine Prüfung gescheitert ist oder der Name des Absenders eine andere Adresse zeigt als die echte. Behandle so eine Nachricht als mögliche Fälschung.
+- `Links, die täuschen können` listet Links, deren Text eine Seite nennt, die aber eine andere öffnen, einen bekannten Namen nachahmen (etwa paypa1) oder die echte Adresse verstecken. In der Nachricht ist jeder davon mit ⚠ und der Seite markiert, die er wirklich öffnet.
+- Die Prüfungen laufen auf diesem Gerät und senden nichts irgendwohin. Kein Abzeichen heißt nicht, dass eine Nachricht gefälscht ist; viele Server halten die Prüfungen nicht fest.
+
+### Anhänge und Einladungen
+Anhänge stehen unter der Nachricht. Tippe auf einen, um ihn zu öffnen: Bilder und PDFs zeigen eine Vorschau (PDFs bis zu 20 Seiten), und jede Datei hat `Auf Gerät speichern` und `In Dateien speichern` (in den Ordner Mail in [Dateien](app:files)). Eine Einladung zeigt eine Karte mit `Zum Kalender hinzufügen`, das einen schon ausgefüllten neuen Termin im [Kalender](app:calendar) öffnet, und `Auf der Karte zeigen`, das den Ort in [Karten](app:maps) öffnet.
+
+### Abmelden
+Ein Newsletter oder eine Mailingliste, die sagt, wie man sie verlässt, zeigt einen Kasten `Mailingliste` mit `Abmelden`:
+- Nimmt die Liste eine Abmelde-E-Mail an, zeigt Mail, wohin sie geht und von welcher deiner Adressen, und `Abmelde-E-Mail senden` sendet sie (sie bleibt in `Gesendet`).
+- Hat die Liste eine Abmeldeseite, zeigt Mail ihre Adresse, und `Seite öffnen` öffnet sie in einem neuen Tab, wo du eventuell bestätigen musst.
+- Melde dich nur von Listen ab, für die du dich angemeldet hast: Bei Spam verrät es dem Absender nur, dass deine Adresse funktioniert. Nutze stattdessen `Spam` oder `Absender blockieren`.
+
+>! Manche Listen bieten ein echtes Abmelden mit einem Klick (RFC 8058), das die Mail-App im Hintergrund an den Server der Liste sendet. Eine Webseite kann diese Anfrage nicht an eine andere Website senden, und das orOS-Relay leitet sie nicht weiter, darum öffnet Mail stattdessen die Seite.
+
+## Mails ordnen
+- Unter einer offenen Nachricht wirken die Tasten `Archivieren`, `Löschen`, `Spam` (`Kein Spam` im Spam-Ordner), `Markieren`, `Als ungelesen markieren` und `Verschieben nach…` auf sie. `Archivieren` nutzt den Archivordner des Kontos und legt einen an, wenn es keinen gibt.
+- `Löschen` verschiebt eine Nachricht in den Papierkorb. Im Papierkorb oder Spam, oder bei einem Konto ohne Papierkorb, wird daraus `Endgültig löschen`, das vorher fragt.
+- Nach dem Verschieben erscheint für ein paar Sekunden `Rückgängig`; die Änderung erreicht den Server erst danach.
+- `Auswählen` über der Liste zeigt Kästchen: Hake mehrere Nachrichten an (oder `Alle auswählen`) und nutze dieselben Tasten für alle. `Fertig` beendet die Auswahl.
+- Auf dem Telefon wischst du eine Nachricht nach rechts zum Archivieren oder nach links zum Löschen.
+- `Absender blockieren` unter einer Nachricht schickt sie in den Spam und legt eine Regel an, die auch die nächsten Nachrichten des Absenders dorthin schickt (der Spam-Ordner wird angelegt, wenn er fehlt). Zum Aufheben löschst du diese Regel.
+- Wenn du eine Nachricht als Spam markierst, lernt auch der Spamfilter deines Anbieters dazu.
+
+### Zurückstellen
+`Zurückstellen` ([[B]]) unter einer Nachricht oder bei ausgewählten Nachrichten blendet sie bis zu einer Zeit deiner Wahl aus: `Später heute`, `Morgen`, `Nächsten Montag` (jeweils mit Uhrzeit) oder ein beliebiges `Datum und Uhrzeit` bis zu ein Jahr im Voraus.
+- Die Nachrichten kommen in einen Ordner `Zurückgestellt` auf dem Server (wird angelegt, wenn es keinen gibt), so verschwinden sie auf allen deinen Geräten und auch im Webmail aus dem Posteingang. `Zurückgestellt` zeigt sie mit der Zeit, zu der jede zurückkommt.
+- Zu dieser Zeit kehren sie ungelesen in ihren Ordner zurück. Das passiert, solange orOS auf einem deiner Geräte offen ist, auch wenn Mail geschlossen ist; ist orOS überall geschlossen, kommen sie zurück, sobald es startet.
+- In `Zurückgestellt` holt `Nicht mehr zurückstellen` eine Nachricht sofort zurück, und `Auf andere Zeit zurückstellen` ändert ihre Zeit.
+- Die Zeiten werden zwischen deinen Geräten synchronisiert, so kann jedes davon die Nachrichten zurückholen.
+
+### Ordner
+Die Ordnertaste neben einem Konto in der Seitenleiste öffnet `Ordner`. `Neuer Ordner` legt einen auf der obersten Ebene oder `In` einem anderen Ordner an. Der Stift benennt einen Ordner um (seine Unterordner wandern mit), und der Papierkorb löscht ihn nach einer Rückfrage samt den Nachrichten darin; ein Ordner mit Unterordnern wird erst nach ihnen gelöscht. Posteingang, Gesendet, Entwürfe, Papierkorb, Spam und Archiv bleiben, wie sie sind. Regeln, die Mails in einen umbenannten Ordner verschieben, folgen ihm; die für einen gelöschten Ordner werden ausgeschaltet.
+
+## Regeln
+Regeln sortieren neue Mails im Posteingang von selbst: zum Beispiel Newsletter in einen Ordner verschieben, einen Absender in den Spam schicken oder Mails deiner Chefin markieren.
+- Öffne die Zahnradtaste und tippe auf `Regel hinzufügen`, oder tippe unter einer Nachricht auf `Regel erstellen…`, um mit ihrem Absender zu beginnen.
+- Wähle, was geprüft wird (`der Absender`, `ein Empfänger`, `der Betreff` oder alle drei) und welche Wörter es `enthält`. Mehrere Wörter durch Kommas getrennt heißen: eines davon genügt.
+- Wähle, was passiert: in Spam, Papierkorb, Archiv oder einen anderen Ordner verschieben, `als gelesen markieren` oder `markieren`.
+- `Jetzt auch auf den Posteingang anwenden` wendet eine neue Regel auf die Nachrichten an, die schon dort sind, mit `Rückgängig`.
+- Hake eine Regel in den Einstellungen an oder ab, um sie ein- oder auszuschalten; `Bearbeiten` ändert oder löscht sie.
+
+>! Regeln funktionieren, solange orOS auf einem deiner Geräte offen ist, auch wenn Mail geschlossen ist. Mails, die ankommen, während orOS überall geschlossen ist, werden nur sortiert, wenn sie beim Start von orOS noch zu den neuesten gehören. Eine Nachricht, die eine Regel verschiebt oder als gelesen markiert, zeigt keine Benachrichtigung.
+
+## Regeln und Abwesenheit auf dem Server
+Viele Mailserver können deine Regeln und eine automatische Antwort selbst ausführen, so funktionieren sie auch, wenn orOS auf allen Geräten geschlossen ist.
+- Öffne die Zahnradtaste, such `Auf dem Mailserver` und tippe neben dem Konto auf `Einrichten`. Mail fragt den Server, was er kann.
+- Wenn er es kann, hake `Meine Regeln und die Abwesenheitsnotiz auf dem Server ausführen` an und tippe auf `Speichern`. Ab dann geht jede Änderung an den Regeln dieses Kontos von selbst an den Server.
+- Unter `Abwesenheitsnotiz` hakst du `Automatische Antwort senden` an, schreibst die Nachricht und, wenn du willst, die Daten. Derselbe Absender bekommt die Antwort höchstens einmal am Tag oder so oft, wie du wählst.
+- Hatte der Server schon eigene Filter (im Webmail angelegt), sagt Mail das: Einschalten ersetzt sie, Ausschalten bringt sie zurück.
+- Nimm den Haken weg und tippe auf `Speichern`, um die Regeln wieder auf deine Geräte zu holen.
+
+>! Das funktioniert mit Servern, die Sieve (ManageSieve) anbieten, etwa viele Anbieter auf Dovecot-Basis. Gmail, Outlook und Yahoo bieten es nicht: Dort sagt Mail das, deine Regeln laufen weiter auf deinen Geräten, solange orOS offen ist, und die automatische Antwort stellst du auf der Webseite deines Anbieters ein. Gibt dein Anbieter eine eigene Adresse für Sieve an, trag sie unter `Regelserver` ein.
+
+## Schreiben und antworten
+- Die Stifttaste oben (`Neue Nachricht`) öffnet eine neue Nachricht. Fülle `An` aus (mehrere Adressen durch Kommas getrennt), tippe für Kopien auf `Cc / Bcc`, gib einen `Betreff` ein und schreib unter `Nachricht`, dann tippe auf `Senden`. Während du einen Namen oder eine Adresse tippst, erscheinen passende Personen aus [Kontakte](app:contacts) unter dem Feld: Wähle eine per Tippen oder mit den Pfeiltasten und [[Enter]].
+- Unter einer offenen Nachricht antwortet `Antworten` dem Absender, `Allen antworten` auch allen anderen darin, und `Weiterleiten` schickt sie an jemand Neues. Der ursprüngliche Text wird unter deinem zitiert.
+- `Vorlagen` hebt Nachrichten auf, die du oft schreibst (synchronisiert): Speichere die Nachricht, die du gerade schreibst, unter einem Namen, und wähle sie später, um ihren Text an der Cursorstelle einzufügen (und ihren Betreff, wenn der Betreff leer ist). Der Papierkorb löscht eine.
+- `Dateien anhängen` fügt Dateien von diesem Gerät hinzu (oder zieh sie auf die Nachricht), `Aus Dateien` aus [Dateien](app:files); das × entfernt eine. Dateien dürfen zusammen bis zu 7 MB groß sein. `Weiterleiten` nimmt die Dateien der Nachricht mit.
+- Mit mehreren Konten wählt `Von`, welches sendet.
+- Eine Kopie dessen, was du sendest, kommt in den Ordner `Gesendet` des Kontos.
+- `Verwerfen` (oder [[Esc]]) fragt vorher, wenn du etwas geschrieben hast, und bietet `Entwurf speichern` an.
+
+### Entwürfe
+`Entwurf speichern` legt die Nachricht im Ordner `Entwürfe` des Kontos auf dem Server ab (wird angelegt, wenn es keinen gibt), so kannst du sie später fertig schreiben, auf einem anderen Gerät oder im Webmail. Erneutes Speichern ersetzt die frühere Kopie, und Senden löscht sie. Öffne eine Nachricht in `Entwürfe` und tippe auf `Weiterschreiben`, um weiterzumachen. Entwürfe behalten `Bcc`; es geht nie mit der gesendeten Nachricht hinaus.
+
+### Formatierung
+Die Leiste über `Nachricht` fügt **fett** ([[Ctrl+B]]), kursiv ([[Ctrl+I]]), unterstrichen ([[Ctrl+U]]), Listen, Links ([[Ctrl+K]]) und Farbe hinzu; `Formatierung entfernen` nimmt sie weg. Eine formatierte Nachricht hat auch eine Nur-Text-Kopie für Leute, deren Mail-App nur Text zeigt. Eine Nachricht ohne Formatierung geht als reiner Text hinaus. Eingefügter Text behält nur seine Wörter, nicht sein Aussehen.
+
+### Signatur und Postausgangsserver
+In einem Konto fügt `Signatur` ein paar Zeilen unter jede neue Nachricht und Antwort. Sie lässt sich wie eine Nachricht formatieren und kann ein kleines Bild enthalten, etwa ein Logo (`Bild oder Logo`; es wird passend verkleinert). Mit mehreren Konten tauscht ein Wechsel bei `Von` die Signatur. Gesendet wird über den `Postausgangsserver (SMTP)` in `Servereinstellungen`, mit demselben Benutzernamen und Passwort wie für eingehende Mails; er wird nach dem Posteingangsserver ausgefüllt und beim Speichern geprüft.
+
+### Senden rückgängig und Später senden
+Nach `Senden` wartet die Nachricht ein paar Sekunden mit einer Taste `Rückgängig` unten: `Rückgängig` holt sie zurück in den Editor. Wie lange, oder ob gar nicht, wählst du unter `Senden rückgängig` in `Mail-Einstellungen` (dieses Gerät).
+`Später senden` (neben `Dateien anhängen`) wählt eine Zeit: `In einer Stunde`, `Morgen früh`, `Montagmorgen` oder ein beliebiges `Datum und Uhrzeit` bis zu ein Jahr im Voraus. Die Nachricht wartet im `Postausgang` und wird zu dieser Zeit gesendet, solange orOS auf diesem Gerät offen ist, auch wenn Mail geschlossen ist (orOS zeigt einen Hinweis, wenn sie gesendet ist); ist orOS dann geschlossen, geht sie hinaus, sobald orOS startet. Im `Postausgang` kannst du sie mit `Jetzt senden`, `Bearbeiten` oder `Löschen` behandeln, bis das Senden beginnt.
+
+### Offline: der Postausgang
+Nachrichten, die du offline sendest, warten im `Postausgang` in der Seitenleiste und gehen von selbst hinaus, sobald du wieder online bist. Wird eine abgelehnt (zum Beispiel wegen einer falschen Adresse), bleibt sie dort mit dem Grund: Öffne den `Postausgang`, um sie mit `Bearbeiten`, `Jetzt senden` oder `Löschen` zu behandeln.
+
+## Verschlüsselung (OpenPGP)
+Mail kann Nachrichten mit OpenPGP signieren und verschlüsseln, dem Standard von Thunderbird, Proton Mail, GnuPG und anderen. So können nur die Leute, denen du schreibst, sie lesen, und sie können sehen, dass die Nachricht wirklich von dir kommt.
+- Öffne die Zahnradtaste und tippe unter `Verschlüsselung (OpenPGP)` auf `Schlüssel`. `Meinen Schlüssel erstellen` erstellt einen Schlüssel für eines deiner Konten, gesperrt mit einer `Passphrase` deiner Wahl (mindestens 8 Zeichen). Niemand kann die Passphrase für dich wiederherstellen: Schreib sie an einem sicheren Ort auf.
+- `Schlüssel importieren` nimmt einen eingefügten Schlüsselblock oder eine .asc-Datei: die öffentlichen Schlüssel der Leute, denen du schreibst, oder deinen eigenen privaten Schlüssel aus einem anderen Programm (einer ohne Passphrase bekommt eine, bevor er gespeichert wird). Eine Nachricht mit einem Schlüssel bietet `Zu meinen Schlüsseln` an.
+- Neben jedem Schlüssel gibt dir `Öffentlichen Schlüssel speichern` die Datei, die du anderen schickst oder veröffentlichst, `Privaten Schlüssel sichern` speichert deinen privaten Schlüssel (weiter mit deiner Passphrase gesperrt), und `Schlüssel löschen` entfernt ihn.
+- In einer neuen Nachricht hakst du `Signieren`, `Verschlüsseln` oder beides an. Zum Verschlüsseln braucht Mail den öffentlichen Schlüssel jedes Empfängers; es nennt die, die fehlen. Du wirst einmal nach deiner Passphrase gefragt, und der entsperrte Schlüssel bleibt 10 Minuten bereit, solange Mail offen ist. Eine Antwort auf eine verschlüsselte Nachricht beginnt mit angehaktem `Verschlüsseln`.
+- Nachrichten gehen als PGP/MIME (RFC 3156) hinaus. Verschlüsselte werden auch für dich verschlüsselt, damit du sie in `Gesendet` lesen kannst, und innen signiert.
+- Eine verschlüsselte Nachricht, die du bekommst, zeigt `Entschlüsseln`. Sie wird auf diesem Gerät und nur zum Ansehen entschlüsselt: Auf dem Server und auf diesem Gerät bleibt sie verschlüsselt. Signaturen werden von selbst geprüft, wenn der Schlüssel des Absenders hier ist (sonst mit `Signatur prüfen`), und ein Kasten sagt, ob die Signatur gültig ist, nicht passt oder von einem Schlüssel stammt, den du nicht hast. Gelesen werden PGP/MIME und ältere Inline-Nachrichten (-----BEGIN PGP MESSAGE-----).
+
+>! Deine Schlüssel bleiben auf diesem Gerät: Sie werden nie synchronisiert und nie mit deiner Sicherung exportiert. Nutze `Privaten Schlüssel sichern` und importiere ihn auf deinen anderen Geräten. Verlierst du den privaten Schlüssel und seine Sicherung, lassen sich verschlüsselte Mails nie wieder öffnen.
+
+## Eine Nachricht in anderen Apps nutzen
+`Andere Apps` unter einer offenen Nachricht gibt sie innerhalb von orOS weiter:
+- `Eine Aufgabe`: Der Betreff wird eine Aufgabe in [Aufgaben](app:todo), mit Absender, Datum und Text als Notiz; du wählst die Liste und tippst auf `Hinzufügen`.
+- `Eine Notiz`: speichert den Text der Nachricht als neue Seite in [Notizen](app:notes).
+- `Ein Lesezeichen`: Einer der Links der Nachricht kommt in [Lesezeichen](app:bookmarks), bereit zum Speichern.
+- `Absender zu Kontakte`: öffnet einen neuen Kontakt in [Kontakte](app:contacts) mit Name und E-Mail des Absenders, oder seine Karte, wenn du ihn schon hast.
+- `Im CRM festhalten`: öffnet [CRM](app:crm) mit einem neuen Eintrag für die andere Person (den Absender oder die Person, der du geschrieben hast), mit Betreff, Textanfang und Datum ausgefüllt; speichern tust du dort.
+- `Zusammenfassung vom Assistenten` und `Antwortentwurf vom Assistenten` öffnen den [Assistent](app:assistant) mit der fertigen Frage und dem Schlüssel, den du dort eingestellt hast. Sehr lange Nachrichten werden passend gekürzt; senden tust du dort, und die Antwort kopierst du selbst in Mail.
+Andersherum öffnen eine E-Mail-Adresse auf einer Kontaktkarte in Kontakte und `E-Mail` bei einem gespeicherten Termin im [Kalender](app:calendar) hier eine neue Nachricht (wenn Mail auf diesem Gerät ein Konto hat).
+
+## Konten und Einstellungen
+Die Zahnradtaste öffnet `Mail-Einstellungen`: deine `Konten` (mit `Bearbeiten`), `Immer als reinen Text zeigen`, `Nachrichten nach Unterhaltung gruppieren` und die `Relay-Adresse`. In einem Konto kannst du die Angaben ändern oder `Konto entfernen`; deine Mails bleiben auf dem Server.
+
+## Synchronisierung und Sicherung
+Deine Konten (ohne Passwörter), deine Regeln, deine Vorlagen, die Zeiten deiner zurückgestellten Nachrichten, die Relay-Adresse und die Absender, deren Bilder du erlaubst, werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. Passwörter bleiben auf jedem Gerät versiegelt und werden nie synchronisiert oder exportiert, darum zeigt ein neues Gerät `Passwort auf diesem Gerät nötig`: Tippe dort einmal auf `Passwort eingeben`. Heruntergeladene Nachrichten, OpenPGP-Schlüssel, der offene Ordner und `Immer als reinen Text zeigen` bleiben auf diesem Gerät.
+
+>! Wenn du ein Konto entfernst, verschwindet es auf allen deinen Geräten aus orOS.
+
+## Tastenkürzel
+- [[J]] oder [[↓]] öffnet die nächste Nachricht, [[K]] oder [[↑]] die vorige.
+- [[Esc]] geht auf einem schmalen Bildschirm zurück zur Liste.
+- [[/]] durchsucht den offenen Ordner.
+- [[C]] schreibt eine neue Nachricht; bei offener Nachricht antwortet [[R]], [[A]] antwortet allen und [[F]] leitet weiter.
+- Bei der offenen oder den ausgewählten Nachrichten: [[E]] archiviert, [[Delete]] oder [[#]] löscht, [[!]] markiert als Spam (oder kein Spam), [[S]] markiert, [[U]] markiert als gelesen oder ungelesen, [[B]] stellt zurück und [[V]] verschiebt in einen Ordner.
+
+## Tipps
+- Browser können nicht direkt mit Mailservern sprechen, darum geht Mail über das orOS-Mail-Relay. Es leitet deine Mails nur durch und speichert nichts.
+- Das Relay, das du hier einstellst, lässt auch [Reader](app:feeds) und [Podcasts](app:podcasts) Seiten lesen, die Browser blockieren.
+
+## Grenzen
+- Angehängte Dateien dürfen zusammen bis zu 7 MB groß sein; Vorschauen zeigen Bilder und bis zu 20 Seiten eines PDFs.
+- Der Postausgang bleibt auf dem Gerät, auf dem geschrieben wurde, und geplante Nachrichten ebenso: Sie gehen nur von diesem Gerät hinaus. Nutze `Entwurf speichern`, um auf einem anderen Gerät weiterzumachen.
+- Konten von Outlook.com und Hotmail funktionieren noch nicht; sie nehmen keine Passwörter von anderen Apps mehr an.
+- Bis zu 10 Konten. Nur die neuesten Nachrichten werden zum Offline-Lesen aufgehoben.
+- Zurückgestellte Nachrichten kommen nur zurück, solange orOS auf einem deiner Geräte offen ist; bis zu 200 können gleichzeitig zurückgestellt sein. Ein Zurückstellen aus einer anderen Mail-App wird hier nicht erkannt.
+- In `Alle Posteingänge` geht `Verschieben nach…` nur mit den Nachrichten eines Kontos auf einmal; Suche und ältere Nachrichten gibt es pro Konto.
+- OpenPGP verschlüsselt den Text und die Dateien, nicht den Betreff oder die Adressen. Entwürfe, die beim Schreiben einer verschlüsselten Nachricht auf dem Server gespeichert werden, sind nicht verschlüsselt.
+- OpenPGP-Schlüssel bleiben auf dem Gerät, auf dem sie erstellt oder importiert wurden. Es gibt keine Suche auf Schlüsselservern: Hol dir die öffentlichen Schlüssel von den Leuten selbst, als Datei oder eingefügten Text.
+- Abmelden kann die E-Mail der Liste senden oder ihre Seite öffnen, aber nicht die Ein-Klick-Anfrage (RFC 8058), die manche Listen bevorzugen.

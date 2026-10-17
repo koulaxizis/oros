@@ -173,34 +173,46 @@
   }
 
   // ---------- previews ----------
+  // One flat { en, el } table (orosI18n packs: pack "invoices"); the
+  // CSV column titles are DOC_COLS / PAY_COLS in order.
   var WORDS = {
     en: {
-      docs: ["Number", "Kind", "Status", "Date", "Due", "Client", "Tax number", "Currency", "Net", "VAT", "Total",
-             "Withholding", "Amount payable", "Paid", "Balance", "ΜΑΡΚ"],
-      pays: ["Date", "Number", "Client", "Amount", "Currency", "Method", "Note"],
-      kind: { inv: "Invoice", rcpt: "Receipt", pro: "Proforma", cred: "Credit note", ext: "Recorded invoice" },
-      st: { draft: "Draft", "void": "Cancelled", pro: "Proforma", credit: "Credit note", paid: "Paid",
-            partial: "Partly paid", overdue: "Overdue", unpaid: "Unpaid" },
-      how: { bank: "Bank transfer", cash: "Cash", card: "Card", iris: "IRIS", paypal: "PayPal", other: "Other" }
+      "csv.num": "Number", "csv.kind": "Kind", "csv.status": "Status", "csv.date": "Date", "csv.due": "Due",
+      "csv.client": "Client", "csv.afm": "Tax number", "csv.cur": "Currency", "csv.net": "Net", "csv.vat": "VAT",
+      "csv.total": "Total", "csv.wht": "Withholding", "csv.pay": "Amount payable", "csv.paid": "Paid",
+      "csv.bal": "Balance", "csv.mark": "ΜΑΡΚ", "csv.amt": "Amount", "csv.how": "Method", "csv.note": "Note",
+      "kind.inv": "Invoice", "kind.rcpt": "Receipt", "kind.pro": "Proforma", "kind.cred": "Credit note", "kind.ext": "Recorded invoice",
+      "st.draft": "Draft", "st.void": "Cancelled", "st.pro": "Proforma", "st.credit": "Credit note", "st.paid": "Paid",
+      "st.partial": "Partly paid", "st.overdue": "Overdue", "st.unpaid": "Unpaid",
+      "how.bank": "Bank transfer", "how.cash": "Cash", "how.card": "Card", "how.iris": "IRIS", "how.paypal": "PayPal", "how.other": "Other"
     },
     el: {
-      docs: ["Αριθμός", "Είδος", "Κατάσταση", "Ημερομηνία", "Λήξη", "Πελάτης", "ΑΦΜ", "Νόμισμα", "Καθαρή αξία", "ΦΠΑ",
-             "Σύνολο", "Παρακράτηση", "Πληρωτέο", "Πληρώθηκαν", "Υπόλοιπο", "ΜΑΡΚ"],
-      pays: ["Ημερομηνία", "Αριθμός", "Πελάτης", "Ποσό", "Νόμισμα", "Τρόπος", "Σημείωση"],
-      kind: { inv: "Τιμολόγιο", rcpt: "Απόδειξη", pro: "Προτιμολόγιο", cred: "Πιστωτικό", ext: "Καταχωρισμένο τιμολόγιο" },
-      st: { draft: "Πρόχειρο", "void": "Ακυρωμένο", pro: "Προτιμολόγιο", credit: "Πιστωτικό", paid: "Εξοφλημένο",
-            partial: "Μερικώς εξοφλημένο", overdue: "Ληξιπρόθεσμο", unpaid: "Ανεξόφλητο" },
-      how: { bank: "Τραπεζική μεταφορά", cash: "Μετρητά", card: "Κάρτα", iris: "IRIS", paypal: "PayPal", other: "Άλλο" }
+      "csv.num": "Αριθμός", "csv.kind": "Είδος", "csv.status": "Κατάσταση", "csv.date": "Ημερομηνία", "csv.due": "Λήξη",
+      "csv.client": "Πελάτης", "csv.afm": "ΑΦΜ", "csv.cur": "Νόμισμα", "csv.net": "Καθαρή αξία", "csv.vat": "ΦΠΑ",
+      "csv.total": "Σύνολο", "csv.wht": "Παρακράτηση", "csv.pay": "Πληρωτέο", "csv.paid": "Πληρώθηκαν",
+      "csv.bal": "Υπόλοιπο", "csv.mark": "ΜΑΡΚ", "csv.amt": "Ποσό", "csv.how": "Τρόπος", "csv.note": "Σημείωση",
+      "kind.inv": "Τιμολόγιο", "kind.rcpt": "Απόδειξη", "kind.pro": "Προτιμολόγιο", "kind.cred": "Πιστωτικό", "kind.ext": "Καταχωρισμένο τιμολόγιο",
+      "st.draft": "Πρόχειρο", "st.void": "Ακυρωμένο", "st.pro": "Προτιμολόγιο", "st.credit": "Πιστωτικό", "st.paid": "Εξοφλημένο",
+      "st.partial": "Μερικώς εξοφλημένο", "st.overdue": "Ληξιπρόθεσμο", "st.unpaid": "Ανεξόφλητο",
+      "how.bank": "Τραπεζική μεταφορά", "how.cash": "Μετρητά", "how.card": "Κάρτα", "how.iris": "IRIS", "how.paypal": "PayPal", "how.other": "Άλλο"
     }
   };
+  var DOC_COLS = ["num", "kind", "status", "date", "due", "client", "afm", "cur", "net", "vat", "total", "wht", "pay", "paid", "bal", "mark"];
+  var PAY_COLS = ["date", "num", "client", "amt", "cur", "how", "note"];
+  function words(lang) {
+    var I = typeof window !== "undefined" && window.orosI18n;
+    if (I && lang && !WORDS[lang]) I.table(WORDS, "invoices", lang);
+    return WORDS[lang] || WORDS.en;
+  }
   function previews(state, lang) {
-    var w = WORDS[lang === "el" ? "el" : "en"];
+    var w = words(lang);
+    function col(k) { return w["csv." + k]; }
+    function word(pre) { return function (k) { return w[pre + k] || k; }; }
     var data = C.normalize(state);
     var from = "0000-01-01", to = "9999-12-31";
     return {
-      "documents.csv": C.docsCsv(data, from, to, w.docs, function (k) { return w.kind[k] || k; },
-                                 function (s) { return w.st[s] || s; }, lang, C.today()),
-      "payments.csv": C.paysCsv(data, from, to, w.pays, function (h) { return w.how[h] || h; }, lang)
+      "documents.csv": C.docsCsv(data, from, to, DOC_COLS.map(col), word("kind."), word("st."), lang, C.today()),
+      "payments.csv": C.paysCsv(data, from, to, PAY_COLS.map(col), word("how."), lang)
     };
   }
 

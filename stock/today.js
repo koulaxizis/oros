@@ -21,7 +21,9 @@
     el: { low: "Για παραγγελία: {n}", po: "Αναμένεται παράδοση: {no}", from: "από {s}", items: "έρχονται {n} προϊόντα", exp: "Λήγει: {n}", lot: "παρτίδα {l}" }
   };
   function tr(lang, k, p) {
-    var s = (S[lang === "el" ? "el" : "en"])[k];
+    // A pack language: English + the stock pack, when one is loaded.
+    if (lang && !S[lang] && root.orosI18n) root.orosI18n.table(S, "stock", lang);
+    var s = (S[lang] || S.en)[k];
     Object.keys(p || {}).forEach(function (x) { s = s.split("{" + x + "}").join(String(p[x])); });
     return s;
   }

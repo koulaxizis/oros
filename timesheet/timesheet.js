@@ -36,7 +36,9 @@
   var FORGOT_MS = C.FORGOT_MS;
 
   // ---------- 1. i18n + helpers ----------
+  // orosI18n (../i18n.js): the full language code, a pack language included.
   function appLang() {
+    if (window.orosI18n) return window.orosI18n.lang();
     try {
       var l = localStorage.getItem("oros-lang") ||
               (window.parent && window.parent.orosLang) || "en";
@@ -245,6 +247,7 @@
       "toast.pomo1": "Pomodoro: καταγράφηκε 1 περίοδος εστίασης", "toast.pomo": "Pomodoro: καταγράφηκαν {n} περίοδοι εστίασης"
     }
   };
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "timesheet", LANG);
 
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;
@@ -264,7 +267,7 @@
     if (text !== undefined && text !== null) n.textContent = text;
     return n;
   }
-  function locale() { return LANG === "el" ? "el-GR" : "en-GB"; }
+  function locale() { return window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB"); }
   function money(cents) { return C.fmtMoney(cents, data.prefs.cur, LANG); }
   function dur(ms) { return C.fmtDur(ms); }
   function hours(ms) { return C.fmtHours(ms, LANG); }
@@ -1813,7 +1816,7 @@
   // deletion syncs.
   var RP = window.OrosRecordPkg || null, TPK = window.OrosTimesheetPackage || null;
   var recFile = RP && TPK && window.OrosBundle ? RP.ui(TPK.DESC, {
-    lang: function () { return LANG; },
+    lang: function () { return LANG === "el" ? "el" : "en"; },
     get: function () { return sliceGet(); },
     title: function () { return t("app"); },
     set: function (next) {
@@ -1860,7 +1863,7 @@
   // Also the handle for tests / a file opened with orOS (Promise)
   function importFile(file) {
     if (file.size > IMPORT_MAX_BYTES) { showToast(t(IMPX ? "imp.bad2" : "imp.bad1")); return Promise.resolve(false); }
-    var order = LANG === "el" ? "dmy" : "mdy";
+    var order = LANG === "en" ? "mdy" : "dmy";
     if (!IMPX || !window.OrosImportKit) {
       return file.text().then(function (text) {
         var plan = C.importPlan(text, data, order);

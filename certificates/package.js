@@ -56,7 +56,7 @@
     // only the event and its people: never data.keys, data.tombs or
     // another event
     var content = { kind: KIND, ver: VER, ev: copy(ev), ppl: ppl.map(copy) };
-    var csv = C.registerCsv(data, evId, lang === "el" ? "el" : "en");
+    var csv = C.registerCsv(data, evId, lang);
     return {
       content: content, assets: assetIds(ev), title: ev.t || "", modified: modified || 0,
       preview: [{ name: "people.csv", data: csv, type: "text/csv" }]

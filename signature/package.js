@@ -98,14 +98,18 @@
     return state;
   }
 
+  // The kit passes "el" or "en"; a pack language (orosI18n, ../i18n.js,
+  // browser only) reads the "signature" pack.
   var TEXT = {
-    en: { title: "Email signatures", tpl: "Layout", lang: "Language", web: "Pictures appear only when they have an address on a website.",
+    en: { title: "Email signatures", tpl: "Layout", lang: "Language", picsWeb: "Pictures appear only when they have an address on a website.",
           untitled: "Signature" },
-    el: { title: "Υπογραφές email", tpl: "Διάταξη", lang: "Γλώσσα", web: "Οι εικόνες φαίνονται μόνο όταν έχουν διεύθυνση σε ιστότοπο.",
+    el: { title: "Υπογραφές email", tpl: "Διάταξη", lang: "Γλώσσα", picsWeb: "Οι εικόνες φαίνονται μόνο όταν έχουν διεύθυνση σε ιστότοπο.",
           untitled: "Υπογραφή" }
   };
   function previews(state, lang) {
-    var T = TEXT[lang === "el" ? "el" : "en"], sigs = isObj(state) && Array.isArray(state.sigs) ? state.sigs : [];
+    var code = lang === "el" ? "el" : "en", I = root && root.orosI18n;
+    if (code === "en" && I) { code = I.lang(); if (code !== "el" && code !== "en") I.table(TEXT, "signature", code); }
+    var T = TEXT[code] || TEXT.en, sigs = isObj(state) && Array.isArray(state.sigs) ? state.sigs : [];
     var md = ["# " + T.title, ""], html = [];
     sigs.forEach(function (x) {
       var s = C.normSig(x);
@@ -120,9 +124,9 @@
     if (!html.length) return {};
     return {
       "signatures.md": md.join("\n"),
-      "signatures.html": '<!DOCTYPE html>\n<html lang="' + (lang === "el" ? "el" : "en") + '">\n<head>\n<meta charset="utf-8">\n<title>' +
+      "signatures.html": '<!DOCTYPE html>\n<html lang="' + code + '">\n<head>\n<meta charset="utf-8">\n<title>' +
         C.esc(T.title) + '</title>\n</head>\n<body style="margin:0;padding:16px;background:#ffffff;">\n<p style="font:12px Arial,sans-serif;color:#888888;">' +
-        C.esc(T.web) + "</p>\n" + html.join("\n<hr style=\"border:0;border-top:1px solid #dddddd;margin:24px 0;\">\n") + "\n</body>\n</html>\n"
+        C.esc(T.picsWeb) + "</p>\n" + html.join("\n<hr style=\"border:0;border-top:1px solid #dddddd;margin:24px 0;\">\n") + "\n</body>\n</html>\n"
     };
   }
 

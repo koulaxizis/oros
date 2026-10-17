@@ -9,6 +9,15 @@
    ]
   },
   {
+   "app": "certificates",
+   "files": [
+    "certificates/certificates.js",
+    "certificates/core.js",
+    "certificates/search.js",
+    "certificates/verify.js"
+   ]
+  },
+  {
    "app": "contacts",
    "files": [
     "contacts/contacts.js",
@@ -16,6 +25,16 @@
     "contacts/package.js",
     "contacts/search.js",
     "contacts/today.js"
+   ]
+  },
+  {
+   "app": "crm",
+   "files": [
+    "crm/core.js",
+    "crm/crm.js",
+    "crm/platforms.js",
+    "crm/search.js",
+    "crm/webform.js"
    ]
   },
   {
@@ -42,10 +61,29 @@
    ]
   },
   {
+   "app": "invoices",
+   "files": [
+    "invoices/invoices.js",
+    "invoices/mydata-ui.js",
+    "invoices/package.js",
+    "invoices/search.js",
+    "invoices/today.js"
+   ]
+  },
+  {
    "app": "kanban",
    "files": [
     "kanban/kanban.js",
     "kanban/tools.js"
+   ]
+  },
+  {
+   "app": "mail",
+   "files": [
+    "mail/mail.js",
+    "mail/notify.js",
+    "mail/search.js",
+    "mail/today.js"
    ]
   },
   {
@@ -54,6 +92,19 @@
     "mindmap/mindmap.js",
     "mindmap/mm-core.js",
     "mindmap/search.js"
+   ]
+  },
+  {
+   "app": "newsletter",
+   "files": [
+    "newsletter/core.js",
+    "newsletter/newsletter.js",
+    "newsletter/package.js",
+    "newsletter/platforms.js",
+    "newsletter/render.js",
+    "newsletter/runner.js",
+    "newsletter/search.js",
+    "newsletter/today.js"
    ]
   },
   {
@@ -75,6 +126,15 @@
    "app": "shell",
    "files": [
     "translations.js"
+   ]
+  },
+  {
+   "app": "signature",
+   "files": [
+    "signature/core.js",
+    "signature/package.js",
+    "signature/search.js",
+    "signature/signature.js"
    ]
   },
   {
@@ -100,6 +160,26 @@
    "files": [
     "stickies/host.js",
     "stickies/stickies.js"
+   ]
+  },
+  {
+   "app": "stock",
+   "files": [
+    "stock/core.js",
+    "stock/package.js",
+    "stock/pos.js",
+    "stock/shop.js",
+    "stock/stock.js",
+    "stock/today.js"
+   ]
+  },
+  {
+   "app": "timesheet",
+   "files": [
+    "timesheet/core.js",
+    "timesheet/search.js",
+    "timesheet/timesheet.js",
+    "timesheet/today.js"
    ]
   },
   {

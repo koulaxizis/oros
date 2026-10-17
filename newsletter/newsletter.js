@@ -58,7 +58,12 @@
       return l === "el" ? "el" : "en";
     } catch (e) { return "en"; }
   }
-  var LANG = appLang();
+  // orosI18n (../i18n.js): the full language code, a pack language included.
+  var LANG = window.orosI18n ? window.orosI18n.lang() : appLang();
+  function loc() { return window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB"); }
+  // "el" or "en": for the list / subscriber language (e-mails exist in
+  // these two) and for shared modules that pick between them.
+  var LANG2 = LANG === "el" ? "el" : "en";
 
   var STRINGS = {
     en: {
@@ -258,7 +263,8 @@
       "toast.noDisk": "The orOS disk isn't available here", "toast.imgBad": "Couldn't read that picture",
       "toast.sentAll": "\"{s}\" went out to {n}", "toast.noCsv": "No addresses found in that file", "toast.invSent": "Confirmation requests sent",
       "toast.testFail": "The test wasn't sent: {e}", "toast.chanFail": "Login failed: {e}", "toast.opened": "Opened from {a}",
-      "live.saved": "Saved", "time.now": "just now"
+      "live.saved": "Saved", "time.now": "just now",
+      "seed.hi": "Hi {first|there},"
     },
     el: {
       "app": "Ενημερωτικό δελτίο", "settings": "Ρυθμίσεις", "back": "Πίσω", "new": "Νέο",
@@ -457,9 +463,11 @@
       "toast.noDisk": "Ο δίσκος του orOS δεν είναι διαθέσιμος εδώ", "toast.imgBad": "Δεν διαβάστηκε αυτή η εικόνα",
       "toast.sentAll": "Το «{s}» στάλθηκε σε {n}", "toast.noCsv": "Δεν βρέθηκαν διευθύνσεις σε αυτό το αρχείο", "toast.invSent": "Τα αιτήματα επιβεβαίωσης στάλθηκαν",
       "toast.testFail": "Η δοκιμή δεν στάλθηκε: {e}", "toast.chanFail": "Η σύνδεση απέτυχε: {e}", "toast.opened": "Άνοιξε από {a}",
-      "live.saved": "Αποθηκεύτηκε", "time.now": "μόλις τώρα"
+      "live.saved": "Αποθηκεύτηκε", "time.now": "μόλις τώρα",
+      "seed.hi": "Γεια σου {first|φίλε},"
     }
   };
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "newsletter", LANG);
 
   function fill(s, params) {
     if (params) Object.keys(params).forEach(function (k) { s = s.split("{" + k + "}").join(String(params[k])); });
@@ -483,7 +491,7 @@
     var ago = Date.now() - ms;
     if (ago >= 0 && ago < 60000) return t("time.now");
     try {
-      return new Date(ms).toLocaleString(LANG === "el" ? "el-GR" : "en-GB",
+      return new Date(ms).toLocaleString(loc(),
         { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
     } catch (e) { return new Date(ms).toISOString().slice(0, 16).replace("T", " "); }
   }
@@ -761,7 +769,7 @@
     });
     if (!items.length) { localToast(t("en.none")); return; }
     function go() {
-      window.OrosEnrichUI.open({ lang: LANG === "el" ? "el" : "en", items: items, kinds: ["name"], apply: function (picks) {
+      window.OrosEnrichUI.open({ lang: LANG2, items: items, kinds: ["name"], apply: function (picks) {
         var before = [];
         picks.forEach(function (p) {
           var cur = null;
@@ -912,7 +920,7 @@
     var x = C.normIssue(tpl ? { id: C.randomId("i", null), m: 0, list: l.id, subj: tpl.subj, pre: tpl.pre, fmt: tpl.fmt,
                                 blocks: copy(tpl.blocks), md: tpl.md, l2: tpl.l2 ? copy(tpl.l2) : null }
       : { id: C.randomId("i", null), m: 0, list: l.id, fmt: "blocks",
-          blocks: [{ k: "h", t: "" }, { k: "p", t: LANG === "el" ? "Γεια σου {first|φίλε}," : "Hi {first|there}," }] });
+          blocks: [{ k: "h", t: "" }, { k: "p", t: t("seed.hi") }] });
     put("issues", x);
     viewId = x.id;
     showView("edit");
@@ -936,6 +944,9 @@
   // The editor shows the main version or the other language's (x.l2).
   var edSide = { id: "", l2: false };
   function side(x) { return edSide.id === x.id && edSide.l2 && x.l2 ? x.l2 : x; }
+  // A list's / subscriber's language, each in its own name (e-mails
+  // exist in English and Greek).
+  var LANG_OWN = [["en", "English"], ["el", "Ελληνικά"]];
   function langName(k) { return t("lang." + (k === "el" ? "el" : "en")); }
   // The main version's language: the other one when there is a second
   // version, else the list's.
@@ -1508,7 +1519,7 @@
     var chans = C.live(data.chans);
     if (!chans.length) { showToast(t("l.needChan")); chanDialog(null); return; }
     var dlg = makeDialog("nl-list", t("l.title"), true);
-    var src = l || { name: "", chan: chans[0].id, from: "", fromName: "", reply: "", lang: LANG, addr: "", why: "", theme: "classic", color: "#2f6fde" };
+    var src = l || { name: "", chan: chans[0].id, from: "", fromName: "", reply: "", lang: LANG2, addr: "", why: "", theme: "classic", color: "#2f6fde" };
     var f = {};
     f.name = inp("text", src.name, C.LIM.name);
     f.name.placeholder = t("l.namePh");
@@ -1529,7 +1540,7 @@
     defFrom();
     f.reply = inp("email", src.reply, 254);
     dlg.appendChild(field(t("l.reply"), f.reply));
-    f.lang = sel([["en", "English"], ["el", "Ελληνικά"]], src.lang);
+    f.lang = sel(LANG_OWN, src.lang);
     dlg.appendChild(field(t("l.lang"), f.lang));
     f.addr = area(src.addr, 3);
     f.addr.maxLength = C.LIM.addr;
@@ -1819,7 +1830,7 @@
     dlg.appendChild(field(t("s.name"), f.name));
     f.tags = inp("text", s ? s.tags.join(", ") : "", 400);
     dlg.appendChild(field(t("s.tags"), f.tags, t("s.tagsHint")));
-    f.lang = sel([["", t("s.langAny")], ["en", "English"], ["el", "Ελληνικά"]], s ? s.lang : "");
+    f.lang = sel([["", t("s.langAny")]].concat(LANG_OWN), s ? s.lang : "");
     dlg.appendChild(field(t("s.lang"), f.lang));
     if (!s) {
       f.basis = sel(C.BASES.map(function (b) { return [b, t("basis." + b)]; }), "optin");
@@ -2534,7 +2545,7 @@
     return memo[path];
   }
   var recFile = RP && NPK && window.OrosBundle ? RP.ui(NPK.DESC, {
-    lang: function () { return LANG; },
+    lang: function () { return LANG2; },
     get: function () { return C.normalize(data); },
     title: function () { return t("app"); },
     // media/: every picture the issues and templates name, read from
@@ -2980,7 +2991,7 @@
     dlg.appendChild(bw);
     // past issues
     var rg = I2.range(res.items);
-    var day = function (ms) { try { return new Date(ms).toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB"); } catch (e) { return ""; } };
+    var day = function (ms) { try { return new Date(ms).toLocaleDateString(loc()); } catch (e) { return ""; } };
     var span = rg.from ? " · " + day(rg.from) + (day(rg.to) !== day(rg.from) ? " – " + day(rg.to) : "") : "";
     f.iss = part(res.items.length > 0, res.items.length + res.iSkip + res.iNoBody > 0, t("i2.iss", { n: res.items.length }) + span);
     var gone = [];
