@@ -58,6 +58,17 @@ A study day starts at 04:00, so studying after midnight still counts for the day
 - **Text files** (`.csv`, `.tsv`, `.txt`), for example Anki's "Notes in plain text" export or a Quizlet export: one card per line. Choose which column is the front, the back and the tags, the card type and the deck. A front with `{{c1::…}}` becomes a fill-in-the-gap card.
 Importing the same Anki deck again adds only what is new. Nothing in the file is ever run: card styles and scripts are left out, and the text keeps bold, italic and lists.
 
+## Cards from Notes, Wiki, Writer and other apps
+In Notes, Wiki, Writer, Reader or Spreadsheet, choose `Send to an app…` and then `Flashcards`. In Notes and Writer, select some text first to send only that part. Flashcards finds the cards and shows them before anything is saved:
+- a line `Question :: Answer` becomes a Basic card, and `Question ::: Answer` a Basic and reversed card;
+- a line with words marked `==like this==` becomes a fill-in-the-gap card, one gap for each marked part;
+- a heading with text under it becomes a card with the heading on the front;
+- in a table, the first row holds the column names, then the first column is the front and the second the back.
+If none of these is found, you get one card with the title on the front and all the text on the back. Untick the cards you do not want, change any of them, pick the deck, then press `Make cards`. Cards that are already here start unticked.
+
+## Today and the study reminder
+When cards are waiting, the Today app shows a line like "12 cards to study". In the settings at the top, `Remind me to study every day at` sends one notification a day from that time on, while cards are waiting. The reminder is off at first, and it is set on each device separately. The count comes from this device: answers you gave on another device are counted once Flashcards opens here.
+
 ## Browse all cards
 `Browse` at the top lists every card, one row per card. Narrow the list with the search box, a deck, a tag or a state (new, learning, due today, review later, hidden, suspended). Tick cards (or the box at the top for all of them) to:
 - `Move` their notes to another deck,

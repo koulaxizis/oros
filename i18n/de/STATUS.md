@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 4138 of 26798 (15%)
+- Strings: 4151 of 26830 (15%)
 - Help pages: 27 of 144 (18%)
 - Shown in the language list: yes
 
@@ -43,7 +43,7 @@ text is still written in the code. They switch over wave by wave
 | feeds | English for now | 0 / 319 |
 | files | 100% | 343 / 343 |
 | fitness | English for now | 0 / 344 |
-| flashcards | 0% | 0 / 179 |
+| flashcards | 0% | 0 / 198 |
 | flow | English for now | 0 / 75 |
 | g2048 | English for now | 0 / 54 |
 | gamecenter | English for now | 0 / 99 |
@@ -104,7 +104,7 @@ text is still written in the code. They switch over wave by wave
 | settings | 100% | 480 / 480 |
 | share | English for now | 0 / 152 |
 | shelf | English for now | 0 / 285 |
-| shell | 100% | 433 / 433 |
+| shell | 100% | 446 / 446 |
 | signature | English for now | 0 / 195 |
 | simon | English for now | 0 / 49 |
 | sky | English for now | 0 / 149 |
@@ -143,6 +143,12 @@ text is still written in the code. They switch over wave by wave
 | writer | 100% | 377 / 377 |
 | xeri | English for now | 0 / 108 |
 | zen | English for now | 0 / 89 |
+
+## Lines to fix
+
+These show English until fixed (usually the English text changed).
+
+- de/help/settings.txt: links or key caps differ from settings/help.en.txt
 
 ## Help pages not translated yet
 

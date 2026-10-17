@@ -53,6 +53,7 @@
   var CARD_TEXT = 300;           // a card's text (Kanban's own cap is 500)
   var CARD_NOTES = 5000;         // a card's notes
   var PROMPT_MAX = 8000;         // a Prompter prompt
+  var MAKE_MAX = 200000;         // Flashcards' text cap (flashcards/make.js)
 
   // Control characters other than tab / newline, and U+2028/2029.
   var CTRL = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f\u2028\u2029]/g;
@@ -238,7 +239,8 @@
   //   bridge), spreadsheet {newSheet} (BR-S1); wave 3: slides {outline,
   //   title} (Mind map's contract), mindmap {pasteText:{text}} (single
   //   app share), kanban {addCards} and prompter {newPrompt} (new here),
-  //   writer {newDoc:{title, rows}} (a table, new here).
+  //   writer {newDoc:{title, rows}} (a table, new here); Flashcards
+  //   wave 4: flashcards {make:{title, text | rows}}.
   var RECEIVERS = {
     notes: {
       kinds: ["text", "link", "items"],
@@ -331,6 +333,25 @@
       ok: function (k, d) { return d.items.length === 1 && PIC_RE.test(d.items[0].name); },
       build: function (k, d) { return { placeImage: { path: d.items[0].path, name: d.items[0].name } }; }
     },
+    // Flashcards finds the cards ("Q :: A" lines, ==highlights==,
+    // headings; a table's two first columns) and shows them in a
+    // preview before saving (Flashcards wave 4).
+    flashcards: {
+      kinds: ["text", "items", "link", "table"],
+      ok: function (k, d) {
+        if (k === "link") return !!d.note;
+        if (k === "table") return d.rows.some(function (r, i) { return (i > 0 || d.rows.length === 1) && r.filter(function (c) { return c !== ""; }).length >= 2; });
+        return true;
+      },
+      build: function (k, d) {
+        if (k === "table") return { make: { title: d.name, rows: d.rows } };
+        if (k === "link") return { make: { title: d.title, text: d.note.slice(0, MAKE_MAX) } };
+        if (k === "items") {
+          return { make: { title: d.title, text: d.items.map(function (it) { return it.note ? it.text + " :: " + it.note.replace(/\s+/g, " ") : it.text; }).join("\n") } };
+        }
+        return { make: { title: d.title, text: d.text.slice(0, MAKE_MAX) } };
+      }
+    },
     labels: {
       kinds: ["text"],
       // A label is one short line.
@@ -340,7 +361,7 @@
   };
   // The sheet's order: the everyday places first.
   var ORDER = ["notes", "todo", "writer", "mail", "kanban", "slides", "bookmarks", "spreadsheet", "wiki", "mindmap", "prompter",
-    "layout", "assistant", "texttools", "textcase", "labels"];
+    "flashcards", "layout", "assistant", "texttools", "textcase", "labels"];
 
   function accepts(app, kind, d) {
     if (!own(RECEIVERS, app)) return false;

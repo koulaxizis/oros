@@ -679,6 +679,42 @@
     }
     return { n: nw.length, l: learn.length, r: rev.length, queue: queue, next: later };
   }
+  // What is waiting, for Today and the study reminder (flashcards/due.js
+  // reads it; written to the device-local key oros-flashcards-due):
+  // { v, at, day "YYYY-MM-DD" (the study day), n new and rv reviews +
+  // learning left today (deck limits applied), nd new cards a day
+  // (sum of the top decks' limits), fresh new cards in all,
+  // days { "YYYY-MM-DD": reviews due that day } for the next 30 days }.
+  function ymdOf(ms) {
+    var d = new Date(ms);
+    return d.getFullYear() + "-" + (d.getMonth() < 9 ? "0" : "") + (d.getMonth() + 1) + "-" + (d.getDate() < 10 ? "0" : "") + d.getDate();
+  }
+  function dueSummary(data, sched, reviews, now) {
+    var d = normalize(data), start = dayStart(now, d.set.ro), end = dayEnd(now, d.set.ro);
+    var roots = deckTree(d).filter(function (x) { return x.depth === 0; }).map(function (x) { return x.deck; });
+    var orphans = Object.keys(sched).some(function (k) { return sched[k].deck === DEFAULT_DECK; });
+    if (orphans) roots.push({ id: DEFAULT_DECK, cfg: CFG_DEF });
+    var n = 0, rv = 0, nd = 0, fresh = 0, days = {};
+    roots.forEach(function (x) {
+      var q = studyQueue(d, sched, reviews, x.id, now);
+      n += q.n;
+      rv += q.r;
+      nd += x.cfg.nd;
+    });
+    Object.keys(sched).forEach(function (k) {
+      var c = sched[k];
+      if (c.sus) return;
+      var st = c.card.st;
+      if (!st) { fresh++; return; }
+      if (c.bury && c.bury >= start) return;
+      if (st === 1 || st === 3) { if (c.card.due < end) { rv++; return; } }
+      if (c.card.due < end) return;           // reviews of today: in rv (limits applied)
+      if (c.card.due >= end + 30 * DAY) return;
+      var key = ymdOf(dayStart(c.card.due, d.set.ro));
+      days[key] = (days[key] || 0) + 1;
+    });
+    return { v: 1, at: now, day: ymdOf(start), n: n, rv: rv, nd: nd, fresh: fresh, days: days };
+  }
   // What a card is now, for the card browser:
   // "sus" suspended, "bury" buried today, "new", "learn", "due" (today), "rev" (later).
   function cardStatus(c, now, ro) {
@@ -702,7 +738,7 @@
   }
 
   var API = {
-    VERSION: "1.1.0", VER: VER, DEFAULT_DECK: DEFAULT_DECK, ROOT_DIR: ROOT_DIR,
+    VERSION: "1.2.0", VER: VER, DEFAULT_DECK: DEFAULT_DECK, ROOT_DIR: ROOT_DIR,
     NOTES_DIR: NOTES_DIR, REVIEWS_DIR: REVIEWS_DIR, MEDIA_DIR: MEDIA_DIR, MEDIA_RE: MEDIA_RE, MEDIA_MAX: MEDIA_MAX,
     LANG_RE: LANG_RE, LIMITS: LIMITS, CFG_DEF: CFG_DEF, DEV_RE: DEV_RE,
     canon: canon, empty: empty, normalize: normalize, merge: merge, serialize: serialize,
@@ -717,7 +753,7 @@
     fmtBlocks: fmtBlocks, fmtInline: fmtInline, plain: plain, sideMarked: sideMarked, MK: MK,
     mediaKind: mediaKind, mediaExt: mediaExt, mediaMime: mediaMime, fitSize: fitSize, mediaInUse: mediaInUse, normMedia: normMedia,
     localVoice: localVoice, voiceLangs: voiceLangs, guessLang: guessLang, fieldLang: fieldLang,
-    schedule: schedule, dayStart: dayStart, dayEnd: dayEnd, studyQueue: studyQueue, cardStatus: cardStatus, ivlParts: ivlParts
+    schedule: schedule, dayStart: dayStart, dayEnd: dayEnd, studyQueue: studyQueue, dueSummary: dueSummary, ymdOf: ymdOf, cardStatus: cardStatus, ivlParts: ivlParts
   };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   if (root) root.FlashcardsCore = API;
