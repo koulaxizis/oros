@@ -13,8 +13,10 @@
   "use strict";
   var KEY = "oros-invoices-data";
   var KINDS = {
-    en: { inv: "Invoice", rcpt: "Receipt", pro: "Proforma", cred: "Credit note", ext: "Recorded invoice", draft: "draft", nameless: "Unnamed client" },
-    el: { inv: "Τιμολόγιο", rcpt: "Απόδειξη", pro: "Προτιμολόγιο", cred: "Πιστωτικό", ext: "Καταχωρισμένο τιμολόγιο", draft: "πρόχειρο", nameless: "Πελάτης χωρίς όνομα" }
+    en: { "kind.inv": "Invoice", "kind.rcpt": "Receipt", "kind.pro": "Proforma", "kind.cred": "Credit note", "kind.ext": "Recorded invoice",
+          "search.draft": "draft", "search.nameless": "Unnamed client", "search.mark": "ΜΑΡΚ {m}" },
+    el: { "kind.inv": "Τιμολόγιο", "kind.rcpt": "Απόδειξη", "kind.pro": "Προτιμολόγιο", "kind.cred": "Πιστωτικό", "kind.ext": "Καταχωρισμένο τιμολόγιο",
+          "search.draft": "πρόχειρο", "search.nameless": "Πελάτης χωρίς όνομα", "search.mark": "ΜΑΡΚ {m}" }
   };
 
   function str(v) { return typeof v === "string" ? v.trim() : ""; }
@@ -34,11 +36,14 @@
     search: function (ctx) {
       var d = ctx.readJSON(KEY), out = [];
       if (!d || typeof d !== "object") return out;
-      var L = KINDS[ctx.lang === "el" ? "el" : "en"];
+      // orosI18n (the shell's ../i18n.js): a pack language included.
+      var I = typeof window !== "undefined" && window.orosI18n;
+      if (I && ctx.lang && !KINDS[ctx.lang]) I.table(KINDS, "invoices", ctx.lang);
+      var L = KINDS[ctx.lang] || KINDS.en;
       var clients = {};
       live(d.clients).forEach(function (c) { clients[c.id] = c; });
       live(d.docs).forEach(function (x) {
-        var kind = L[x.kind] ? x.kind : "inv";
+        var kind = L["kind." + x.kind] ? x.kind : "inv";
         var c = x.c && typeof x.c === "object" ? x.c : {};
         var cl = clients[x.cli];
         var who = str(c.name) || (cl ? str(cl.name) : "");
@@ -48,8 +53,8 @@
         }).filter(Boolean);
         out.push({
           id: "d:" + x.id,
-          title: (num ? L[kind] + " " + num : L[kind] + " (" + L.draft + ")") + (who ? " · " + who : ""),
-          text: [items.join(" · ").slice(0, 400), str(c.afm), str(x.mark) ? "ΜΑΡΚ " + str(x.mark) : ""].filter(Boolean).join(" · "),
+          title: (num ? L["kind." + kind] + " " + num : L["kind." + kind] + " (" + L["search.draft"] + ")") + (who ? " · " + who : ""),
+          text: [items.join(" · ").slice(0, 400), str(c.afm), str(x.mark) ? L["search.mark"].replace("{m}", str(x.mark)) : ""].filter(Boolean).join(" · "),
           when: dayMs(x.date) || (typeof x.m === "number" ? x.m : 0),
           target: { invoice: x.id }
         });
@@ -58,7 +63,7 @@
         var c = clients[id];
         out.push({
           id: "c:" + c.id,
-          title: str(c.name) || L.nameless,
+          title: str(c.name) || L["search.nameless"],
           text: [str(c.job), str(c.afm), str(c.email)].filter(Boolean).join(" · "),
           when: typeof c.m === "number" ? c.m : 0,
           target: { client: { id: c.id } }

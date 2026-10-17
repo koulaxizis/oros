@@ -43,6 +43,8 @@
 
   // ---------- 1. i18n + helpers ----------
   function appLang() {
+    // orosI18n (../i18n.js): the full language code, a pack language included.
+    if (window.orosI18n) return window.orosI18n.lang();
     try {
       var l = localStorage.getItem("oros-lang") ||
               (window.parent && window.parent.orosLang) || "en";
@@ -50,6 +52,10 @@
     } catch (e) { return "en"; }
   }
   var LANG = appLang();
+  function loc(l) {
+    l = l || LANG;
+    return window.orosI18n ? window.orosI18n.locale(l) : (l === "el" ? "el-GR" : "en-GB");
+  }
 
   var STRINGS = {
     en: {
@@ -110,7 +116,7 @@
       "ed.more": "Terms, notes and more", "ed.exempt": "VAT exemption reason",
       "ed.exemptHint": "Printed when VAT is 0 %, e.g. \"Article 39a\" or \"Reverse charge\".",
       "ed.terms": "Payment terms", "ed.termsHint": "Your bank account from Settings is printed under them.",
-      "ed.notes": "Notes", "ed.plang": "PDF language", "ed.plangApp": "Like the app", "ed.ref": "Corrects",
+      "ed.notes": "Notes", "ed.plang": "PDF language", "ed.plangApp": "Like the app", "plang.el": "Ελληνικά", "plang.en": "English", "ed.ref": "Corrects",
       "ed.refNone": "Choose the invoice", "ed.paidNow": "Paid now (records a payment)",
       "ed.num": "Number", "ed.numHint": "As it is on the issued invoice.",
       "ed.net": "Net amount", "ed.vatAmt": "VAT amount", "ed.mark": "ΜΑΡΚ (myDATA)", "ed.markHint": "Optional: the mark of the invoice in myDATA.",
@@ -259,7 +265,7 @@
       "ed.more": "Όροι, σημειώσεις και άλλα", "ed.exempt": "Αιτία απαλλαγής ΦΠΑ",
       "ed.exemptHint": "Τυπώνεται όταν ο ΦΠΑ είναι 0 %, π.χ. «Άρθρο 39α» ή «Αντίστροφη χρέωση».",
       "ed.terms": "Όροι πληρωμής", "ed.termsHint": "Από κάτω τυπώνεται ο λογαριασμός σου από τις Ρυθμίσεις.",
-      "ed.notes": "Σημειώσεις", "ed.plang": "Γλώσσα PDF", "ed.plangApp": "Όπως η εφαρμογή", "ed.ref": "Διορθώνει",
+      "ed.notes": "Σημειώσεις", "ed.plang": "Γλώσσα PDF", "ed.plangApp": "Όπως η εφαρμογή", "plang.el": "Ελληνικά", "plang.en": "English", "ed.ref": "Διορθώνει",
       "ed.refNone": "Επίλεξε το τιμολόγιο", "ed.paidNow": "Πληρώθηκε τώρα (καταγράφει πληρωμή)",
       "ed.num": "Αριθμός", "ed.numHint": "Όπως είναι στο τιμολόγιο που εκδόθηκε.",
       "ed.net": "Καθαρή αξία", "ed.vatAmt": "Ποσό ΦΠΑ", "ed.mark": "ΜΑΡΚ (myDATA)", "ed.markHint": "Προαιρετικά: ο ΜΑΡΚ του τιμολογίου στο myDATA.",
@@ -352,6 +358,8 @@
     }
   };
 
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "invoices", LANG);
+
   // Labels printed on the PDF: in the document's language, which can
   // differ from the app's (an English invoice for a client abroad).
   var PDF_STRINGS = {
@@ -367,7 +375,7 @@
       "qr": "Scan with your banking app to pay", "qrAmt": "{a} to {n}",
       "payOnline": "Pay online", "payOnlineHint": "Scan the code or open the link to pay by card.",
       "t.stmt": "STATEMENT OF ACCOUNT", "asOf": "As of {d}", "doc": "Document", "paid": "Paid", "bal": "Balance",
-      "open": "Open balance", "late": "{n} days late"
+      "open": "Open balance", "late": "{n} days late", "stmtFile": "Statement"
     },
     el: {
       "t.inv": "ΤΙΜΟΛΟΓΙΟ", "t.rcpt": "ΑΠΟΔΕΙΞΗ", "t.pro": "ΠΡΟΤΙΜΟΛΟΓΙΟ", "t.cred": "ΠΙΣΤΩΤΙΚΟ ΤΙΜΟΛΟΓΙΟ",
@@ -381,9 +389,11 @@
       "qr": "Σκανάρετε με την εφαρμογή της τράπεζάς σας για πληρωμή", "qrAmt": "{a} προς {n}",
       "payOnline": "Πληρωμή online", "payOnlineHint": "Σκανάρετε τον κωδικό ή ανοίξτε τον σύνδεσμο για πληρωμή με κάρτα.",
       "t.stmt": "ΚΑΤΑΣΤΑΣΗ ΛΟΓΑΡΙΑΣΜΟΥ", "asOf": "Στις {d}", "doc": "Παραστατικό", "paid": "Πληρωμένο", "bal": "Υπόλοιπο",
-      "open": "Ανοιχτό υπόλοιπο", "late": "{n} ημέρες καθυστέρηση"
+      "open": "Ανοιχτό υπόλοιπο", "late": "{n} ημέρες καθυστέρηση", "stmtFile": "Καρτέλα"
     }
   };
+
+  if (window.orosI18n) window.orosI18n.table(PDF_STRINGS, "invoices", LANG);
 
   // EU reverse charge notes (wave 3), in the document's language.
   var RC_NOTES = {
@@ -392,6 +402,7 @@
     el: { services: "Αντίστροφη επιβάρυνση: τον ΦΠΑ τον αποδίδει ο λήπτης (άρθρο 196 Οδηγίας 2006/112/ΕΚ).",
           goods: "Απαλλασσόμενη ενδοκοινοτική παράδοση αγαθών (άρθρο 138 Οδηγίας 2006/112/ΕΚ)." }
   };
+  if (window.orosI18n) window.orosI18n.table(RC_NOTES, "invoices", LANG);
 
   function fill(s, params) {
     if (params) {
@@ -418,7 +429,7 @@
   function day(key) {
     if (!C.validDay(key)) return "";
     try {
-      return C.keyDate(key).toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB",
+      return C.keyDate(key).toLocaleDateString(loc(),
         { day: "numeric", month: "short", year: "numeric" });
     } catch (e) { return C.fmtDay(key); }
   }
@@ -781,7 +792,7 @@
     var q = C.fold($("cq").value);
     var list = liveList("clients").filter(function (c) {
       return !q || C.fold([c.name, c.afm, c.email, c.phone, c.job, c.addr].join(" ")).indexOf(q) >= 0;
-    }).sort(function (a, b) { return a.name.localeCompare(b.name, LANG === "el" ? "el" : "en"); });
+    }).sort(function (a, b) { return a.name.localeCompare(b.name, loc()); });
     var ol = $("clients");
     ol.textContent = "";
     list.forEach(function (c) { ol.appendChild(clientRow(c)); });
@@ -845,7 +856,7 @@
       col.appendChild(pair);
       var d = C.keyDate(m.ym + "-01");
       var lbl = "";
-      try { lbl = d.toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB", { month: "short" }); } catch (e) { lbl = m.ym.slice(5); }
+      try { lbl = d.toLocaleDateString(loc(), { month: "short" }); } catch (e) { lbl = m.ym.slice(5); }
       col.appendChild(el("span", "bar-l", lbl));
       bars.appendChild(col);
     });
@@ -1231,7 +1242,7 @@
       var no = area(d.notes, 3, C.LIM.notes);
       no.addEventListener("input", function () { d.notes = no.value; touch(); });
       more.appendChild(field(t("ed.notes"), no));
-      var pl = select([["", t("ed.plangApp")], ["el", "Ελληνικά"], ["en", "English"]], d.plang);
+      var pl = select([["", t("ed.plangApp")], ["el", t("plang.el")], ["en", t("plang.en")]], d.plang);
       pl.addEventListener("change", function () { d.plang = pl.value; touch(); });
       more.appendChild(field(t("ed.plang"), pl));
       if (d.exempt || d.notes || (d.terms && d.terms !== data.prof.terms)) more.open = true;
@@ -1279,7 +1290,8 @@
     var d = ed.doc, box = edRefs.rc;
     var cl = C.client(data, d.cli);
     var fit = d.kind !== "ext" && d.kind !== "cred" && cl ? C.reverseCharge(C.profileOf(data, d.pid), cl) : null;
-    var notes = [RC_NOTES.en.services, RC_NOTES.en.goods, RC_NOTES.el.services, RC_NOTES.el.goods];
+    var notes = [];
+    Object.keys(RC_NOTES).forEach(function (l) { notes.push(RC_NOTES[l].services, RC_NOTES[l].goods); });
     var done = notes.indexOf((d.exempt || "").trim()) >= 0 && d.lines.every(function (l) { return !l.vat; });
     box.hidden = !fit || done;
     box.textContent = "";
@@ -2442,7 +2454,7 @@
     f.days.min = 0; f.days.max = 365;
     f.wht = input("text", C.numInput(p.wht, LANG));
     f.wht.inputMode = "decimal";
-    f.plang = select([["", t("ed.plangApp")], ["el", "Ελληνικά"], ["en", "English"]], p.plang);
+    f.plang = select([["", t("ed.plangApp")], ["el", t("plang.el")], ["en", t("plang.en")]], p.plang);
     card.appendChild(row(field(t("set.cur"), f.cur), field(t("set.vat"), f.vat)));
     card.appendChild(row(field(t("set.days"), f.days), field(t("set.wht"), f.wht)));
     card.appendChild(field(t("set.plang"), f.plang));
@@ -2744,7 +2756,7 @@
     } catch (e) { return false; }
   }
   function pdfName(d) {
-    var who = (d.c && d.c.name ? " " + d.c.name : "").replace(/[\\\/:*?"<>|\u0000-\u001f]+/g, " ").trim();
+    var who = (d.c && d.c.name ? " " + d.c.name : "").replace(/[\\\/:*?\x22<>|\u0000-\u001f]+/g, " ").trim();
     return ((d.num || kindName(d.kind)) + (who ? " " + who : "")).slice(0, 100).replace(/[.\s]+$/, "") + ".pdf";
   }
   // mode: "save" (file dialog) | "share" (the device's share sheet)
@@ -3097,8 +3109,9 @@
     pdfWith(function (f) { return buildStatement(c, st, f); }, function (blob) {
       if (!blob) { showToast(t("toast.pdfFail")); return; }
       var lang = data.prof.plang || LANG;
-      var name = ((lang === "el" ? "Καρτέλα " : "Statement ") + c.name + " " + todayKey())
-        .replace(/[\\\/:*?"<>|\u0000-\u001f]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 100) + ".pdf";
+      var P = PDF_STRINGS[lang] || PDF_STRINGS.en;
+      var name = ((P.stmtFile || PDF_STRINGS.en.stmtFile) + " " + c.name + " " + todayKey())
+        .replace(/[\\\/:*?\x22<>|\u0000-\u001f]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 100) + ".pdf";
       saveBlob(blob, name, "application/pdf", ".pdf", "PDF");
     });
   }
@@ -3507,7 +3520,7 @@
       if (!file) return;
       if (file.size > 10 * 1024 * 1024) { showToast(t("toast.fileBig")); return; }
       var ext = (/\.(pdf|png|jpe?g)$/i.exec(file.name || "") || [".pdf"])[0].toLowerCase();
-      var base = (d.num || d.id).replace(/[\\\/:*?"<>|\u0000-\u001f.]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60) || d.id;
+      var base = (d.num || d.id).replace(/[\\\/:*?\x22<>|\u0000-\u001f.]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60) || d.id;
       var path = "/internal/Invoices/" + base + ext;
       return fs.write(path, file).then(function () { showToast(t("toast.fileSaved")); done(path); });
     }).catch(function () { showToast(t("toast.noDisk")); });
