@@ -279,6 +279,7 @@
       "x.device": "Device info", "x.about": "About orOS, credits and licences",
       "x.apps": "Settings inside apps", "x.weather": "Weather on the taskbar",
       "x.wallgen": "Wallpaper Generator",
+      "x.sharelinks": "My shared links",
       "x.reset": "Factory reset", "x.reset.confirm": "Tap again to erase everything",
       "x.reset.hint": "Permanent: erases all orOS data and settings on this device, the backups in the backup folder, all cloud data and cloud backups, and this device's Dropbox sign-in, then starts orOS like new. Repeat on your other devices. Export a backup file first if you may need anything.",
       "x.reset.working": "Erasing…"
@@ -533,6 +534,7 @@
       "x.device": "Πληροφορίες συσκευής", "x.about": "Σχετικά με το orOS, credits και άδειες",
       "x.apps": "Ρυθμίσεις μέσα σε εφαρμογές", "x.weather": "Ο καιρός στη γραμμή εργασιών",
       "x.wallgen": "Γεννήτρια ταπετσαρίας",
+      "x.sharelinks": "Οι σύνδεσμοί μου",
       "x.reset": "Επαναφορά εργοστασιακών", "x.reset.confirm": "Πάτα ξανά για να σβηστούν όλα",
       "x.reset.hint": "Οριστικό: σβήνει όλα τα δεδομένα και τις ρυθμίσεις του orOS σε αυτή τη συσκευή, τα αντίγραφα στον φάκελο αντιγράφων, όλα τα δεδομένα και τα αντίγραφα στο cloud, και τη σύνδεση Dropbox αυτής της συσκευής, και ξεκινά το orOS σαν καινούργιο. Επανάλαβε στις άλλες συσκευές σου. Κάνε πρώτα εξαγωγή αρχείου αν μπορεί να χρειαστείς κάτι.",
       "x.reset.working": "Σβήνονται…"

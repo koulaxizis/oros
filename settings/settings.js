@@ -1248,6 +1248,7 @@
     var c2 = card(t("x.more"));
     if (has.device) c2.appendChild(linkRow(t("x.device"), "x.device", function () { act("openApp", "device"); }));
     c2.appendChild(linkRow(t("x.about"), "x.about", function () { act("info"); }));
+    c2.appendChild(linkRow(t("x.sharelinks"), "x.sharelinks", function () { act("shareLinks"); }));
     if (has.weather) c2.appendChild(linkRow(t("x.weather"), "x.weather", function () { act("openApp", "weather"); }));
     if (has.wallpaper) c2.appendChild(linkRow(t("x.wallgen"), "x.wallgen", function () { act("openApp", "wallpaper"); }));
     host.appendChild(c2);

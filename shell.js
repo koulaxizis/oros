@@ -3029,7 +3029,8 @@
           document.head.appendChild(s);
         });
       };
-      shareLoad = load("share/kinds.js").then(function () { return load("share/send.js"); })
+      shareLoad = load("share/kinds.js").then(function () { return load("share/relay.js"); })
+        .then(function () { return load("share/send.js"); })
         .then(function () {
           if (!window.__orosShareImpl) throw new Error("share module missing");
           return window.__orosShareImpl;
@@ -3038,15 +3039,34 @@
     }
     return shareLoad;
   }
+  function shareLoadFail() {
+    notifySys("dim", window.orosLang === "el"
+      ? "Η αποστολή δεν φορτώθηκε. Έλεγξε τη σύνδεση και δοκίμασε ξανά."
+      : "Sending could not load. Check your connection and try again.");
+  }
   window.orosShare = {
     open: function (opts) {
-      shareModule().then(function (m) { m.open(opts); }, function () {
-        notifySys("dim", window.orosLang === "el"
-          ? "Η αποστολή δεν φορτώθηκε. Έλεγξε τη σύνδεση και δοκίμασε ξανά."
-          : "Sending could not load. Check your connection and try again.");
-      });
+      shareModule().then(function (m) { m.open(opts); }, shareLoadFail);
+    },
+    // "My shared links" (links with an expiry, share/out.js): Settings › Privacy.
+    links: function () {
+      shareModule().then(function (m) { m.links(); }, shareLoadFail);
     }
   };
+  // The list of links with an expiry travels as sync slice "shareOut"
+  // (share/out.js, loaded at boot for its merge) so a link can be taken
+  // back from any device.
+  function registerShareOutSlice() {
+    var O = window.OrosShareOut;
+    if (!O || !window.orosSync || typeof window.orosSync.registerSlice !== "function") return;
+    window.orosSync.registerSlice("shareOut", function () {
+      var o = O.read();
+      return Object.keys(o.items).length ? o : null;
+    }, function (data) {
+      if (!data) return;
+      try { localStorage.setItem(O.KEY, JSON.stringify(O.norm(data))); } catch (e) {}
+    }, O.KEY, O.merge);
+  }
   var pendingShareIn = false;
   (function () {
     try {
@@ -6799,6 +6819,7 @@
     fdMigrateLegacy();          // FILES-V: one-time cleanup of the blob model
     legacyLsMove();             // SY-Q2: retired snapshots out of localStorage
     registerRadioProxySlice();
+    registerShareOutSlice();
     registerTelevisionProxySlice();
     registerMailProxySlice();
 
@@ -8526,6 +8547,7 @@
         return;
       case "updates":         scCheckUpdates(); return;
       case "info":            showInfoModal(); return;
+      case "shareLinks":      if (window.orosShare) window.orosShare.links(); return;
       case "openApp":         if (typeof arg === "string") openAppById(arg); return;
       // Seasonal decorations: "Try it now" shows the desktop at once.
       case "seasonal.preview":
