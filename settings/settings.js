@@ -1047,6 +1047,30 @@
   }
 
   // ---------- 8. Section: Language & search ----------
+  function loadScript(src) {
+    return new Promise(function (resolve, reject) {
+      var v = window.orosI18n && window.orosI18n.ver;
+      var sc = document.createElement("script");
+      sc.src = src + (v ? "?v=" + encodeURIComponent(v) : "");
+      sc.onload = resolve; sc.onerror = reject;
+      document.head.appendChild(sc);
+    });
+  }
+  // Open across a language switch (Try it reloads this frame).
+  var TR_KEY = "oros-settings-tr";
+  function openTranslate() {
+    try { sessionStorage.setItem(TR_KEY, "1"); } catch (e) {}
+    var go2 = function () {
+      window.SettingsTranslate.open({
+        t: t,
+        setLang: function (code) { set("lang", code); },
+        onClose: function () { try { sessionStorage.removeItem(TR_KEY); } catch (e) {} }
+      });
+    };
+    if (window.SettingsTranslate) { go2(); return; }
+    loadScript("../i18n-tables.js").then(function () { return loadScript("translate.js"); }).then(go2, function () {});
+  }
+
   function secLanguage(host, s) {
     var c1 = card(t("l.lang"), "lang");
     // Each language under its own name; a pack language that is not
@@ -1060,6 +1084,14 @@
       if (l.code === s.lang && l.partial) c1.appendChild(el("p", "hint", t("l.lang.partial")));
     });
     host.appendChild(c1);
+
+    // Help translate (settings/translate.js, loaded on demand).
+    if (window.orosI18n && window.orosI18n.LANGS.some(function (l) { return l.code !== "en" && l.code !== "el"; })) {
+      var ct = card(t("tr.title"), "device");
+      ct.appendChild(el("p", "hint", t("tr.card.hint")));
+      ct.appendChild(actions(button(t("tr.open"), "tr.open", openTranslate)));
+      host.appendChild(ct);
+    }
 
     var c2 = card(t("l.search"), "search");
     c2.appendChild(el("p", "hint", s.search.length ? t("l.search.hint") : t("l.search.none")));
@@ -1827,6 +1859,7 @@
       if (p && typeof p.__orosTakeTarget === "function") target = p.__orosTakeTarget("settings");
     } catch (e) {}
     current = C.sectionOf(target) || loadUi();
+    try { if (!target && sessionStorage.getItem(TR_KEY) === "1") { current = "language"; setTimeout(openTranslate, 0); } } catch (e) {}
     window.__orosOpenAt = function (tg) {
       var id = C.sectionOf(tg);
       if (id) go(id, true);

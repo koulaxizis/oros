@@ -128,6 +128,11 @@ test("each language's manifest.json lists its files", () => {
   }
 });
 
+test("i18n/apps.json lists the apps a translator can work on", () => {
+  assert.deepEqual(JSON.parse(fs.readFileSync(path.join(ROOT, "i18n/apps.json"), "utf8")), S.packIndex(ALL),
+    "i18n/apps.json is out of date: run node .github/i18n/coverage.js");
+});
+
 test("pages that load i18n.js name a real app, before their own scripts", () => {
   const bad = [];
   for (const p of S.packApps()) {
