@@ -7697,3 +7697,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Studio, Music, Radio, Podcasts, Reader and Media Shelf are now in German: packs in `i18n/de/`, inline texts moved into {en, el} tables, and each `index.html` loads `../i18n.js` before its own scripts; English still fills any missing line.
 - Files: `i18n/de/**`, `studio/`, `music/`, `radio/`, `podcasts/`, `feeds/`, `shelf/` (index.html + scripts), `.github/i18n/inline-baseline.json`, `i18n/apps.json`.
   - Tests: full suite green; Chromium 360 de / el. Not tested: a German native reader's review, audio playback in German UI on phones, Safari.
+
+### 2026-10-17 — Languages L6a: Budget, Meals, Water, Fitness, Health, Baby and Cycle in German (#516) — 3.12.00
+- Budget, Meals, Water, Fitness, Health, Baby and Cycle are now in German: packs and help pages in `i18n/de/`, inline texts moved into {en, el} tables, and each `index.html` loads `../i18n.js` before its own scripts. German gets a decimal comma, German dates and `;` CSV; Meals reads German unit words in ingredient lines and Cycle imports German CSV headers. English still fills any missing line.
+- Files: `i18n/de/**`, `budget/`, `meals/`, `water/`, `fitness/`, `health/`, `baby/`, `cycle/` (index.html + scripts), `.github/i18n/inline-baseline.json`, `i18n/apps.json`.
+  - Tests: 4776/4776; Chromium 360 de / el / en. Not tested: a German native reader's review, real phone, Safari.
