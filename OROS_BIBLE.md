@@ -7390,3 +7390,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Albums: Find cover online (MusicBrainz + Cover Art Archive, opt-in, 1.1 s between calls) one album or all missing; Add to Media Shelf; free songs → Montage (copied with their credit).
 - Files: `music/mixes.js` (new, 1.0.0), `music/today.js` (new), `music/{host,library,music}.js`, `music.css`, `index.html`, help EN/EL; precache + apps.json Today entry; credits: Cover Art Archive (new), MusicBrainz now also Music (PR #466).
   - Tests: `tests/music-mixes.test.js` (mixes, recap, Spotify parsing + matching, MusicBrainz pick, Today provider); full suite green; real Chromium in the shell at 360 px Greek: plays → stats, mixes and recap, Spotify ZIP (1 playlist, 3 of 6 songs, 1 like, online match), covers (MusicBrainz/CAA mocked), Media Shelf prefill, Montage project, Today row and deep link. Not tested: real MusicBrainz/CAA (blocked from the cloud container), a real Spotify data file, real phones.
+
+### 2026-10-17 — Files opens files in orOS apps, app interop wave 2 (#467) — 2.75.00
+- Files opens documents, spreadsheets, songs and videos straight in the orOS app that reads them (Open with…), plays songs in Music, and sends files to Mail.
+- Files: `files/files.js`, `fileopen.js`, `music/{music,library}.js`, `send/{core,sheet}.js`, Files help EN/EL, Bible.
+  - Tests: full suite green (new `tests/interop-files.test.js`); real Chromium 1280 EN / 360 EL. Not tested: a real phone, Safari.
