@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "2.64.01";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "2.69.02";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -3047,6 +3047,64 @@
       });
     }
   };
+  // "Send to…" (send/, BR-SEND): one app hands an item to another app
+  // of this orOS. send/core.js + send/sheet.js load on first use, never
+  // at boot. Apps call window.parent.orosSend.open({ kind, data }) with
+  // kind text | link | items | table (+ share: the item for "Send to
+  // someone", which stays window.orosShare); the sheet lists the
+  // installed apps that take it and calls __orosOpenAt with that app's
+  // own prefill target. Nothing is stored or synced.
+  var sendLoad = null;
+  function sendModule() {
+    if (window.__orosSendImpl) return Promise.resolve(window.__orosSendImpl);
+    if (!sendLoad) {
+      var load = function (src) {
+        return new Promise(function (resolve, reject) {
+          var s = document.createElement("script");
+          s.src = src + "?v=" + APP_VERSION;
+          s.onload = resolve;
+          s.onerror = reject;
+          document.head.appendChild(s);
+        });
+      };
+      sendLoad = load("send/core.js").then(function () { return load("send/sheet.js"); })
+        .then(function () {
+          if (!window.__orosSendImpl) throw new Error("send module missing");
+          return window.__orosSendImpl;
+        });
+      sendLoad.catch(function () { sendLoad = null; });
+    }
+    return sendLoad;
+  }
+  window.orosSend = {
+    open: function (opts) {
+      var self = state.running ? state.running.id : "";
+      var apps = window.orosAssistInstalled();
+      var from = "";
+      apps.forEach(function (a) { if (a.id === self) from = a.name; });
+      sendModule().then(function (m) {
+        m.open(opts, {
+          apps: apps, self: self, from: from, openAt: window.__orosOpenAt,
+          share: function (item) { window.orosShare.open(item); },
+          icon: function (id) {
+            for (var i = 0; i < state.apps.length; i++) {
+              var a = state.apps[i];
+              if (a.id === id && ICONS[a.icon]) {
+                var sp = document.createElement("span");
+                sp.innerHTML = ICONS[a.icon];          // static shell icon, not data
+                return sp.firstChild;
+              }
+            }
+            return null;
+          }
+        });
+      }, function () {
+        notifySys("dim", window.orosLang === "el"
+          ? "Η αποστολή δεν φορτώθηκε. Έλεγξε τη σύνδεση και δοκίμασε ξανά."
+          : "Sending could not load. Check your connection and try again.");
+      });
+    }
+  };
   var pendingShareIn = false;
   (function () {
     try {
@@ -5625,6 +5683,9 @@
         { name: "Funkwhale", url: "https://www.funkwhale.audio/",
           by: "The Funkwhale collective", lic: { en: "AGPL-3.0 (server); public pods or your own", el: "AGPL-3.0 (server)· δημόσια pods ή το δικό σου" },
           en: "Federated music libraries (Music)", el: "Ομοσπονδιακές μουσικές βιβλιοθήκες (Μουσική)" },
+        { name: "LRCLIB", url: "https://lrclib.net/",
+          by: "The LRCLIB project and its contributors", lic: { en: "Free API, no key; lyrics are their writers' works", el: "Δωρεάν API χωρίς κλειδί· οι στίχοι ανήκουν στους δημιουργούς τους" },
+          en: "Song lyrics, only when you ask (Music)", el: "Στίχοι τραγουδιών, μόνο όταν το ζητήσεις (Μουσική)" },
         { name: "iptv-org", url: "https://github.com/iptv-org/iptv",
           by: "iptv-org contributors", lic: "Unlicense (public domain)",
           en: "Channel directory (Television)", el: "Κατάλογος καναλιών (Τηλεόραση)" },
@@ -5713,7 +5774,7 @@
           by: "Pollinations.AI", lic: { en: "Their terms, your own key (free plan)", el: "Οι όροι τους, με δικό σου κλειδί (δωρεάν πλάνο)" },
           en: "AI chat you choose (Assistant)", el: "Συζήτηση με το AI που διαλέγεις (Βοηθός)" },
         { name: "Cloudflare Workers", url: "https://workers.cloudflare.com/",
-          by: "Cloudflare, Inc.", lic: { en: "Runs the orOS mail relay (code in relay/)", el: "Τρέχει το relay αλληλογραφίας του orOS (κώδικας στο relay/)" },
+          by: "Cloudflare, Inc.", lic: { en: "Runs the orOS mail relay (code in relay/); D1 keeps encrypted share links with an expiry", el: "Τρέχει το relay αλληλογραφίας του orOS (κώδικας στο relay/)· το D1 κρατά κρυπτογραφημένους συνδέσμους με λήξη" },
           en: "Mail: IMAP over HTTPS, nothing stored", el: "Αλληλογραφία: IMAP μέσω HTTPS, δεν αποθηκεύεται τίποτα" },
         { name: "WooCommerce REST API", url: "https://woocommerce.github.io/woocommerce-rest-api-docs/",
           by: "Automattic; your own shop", lic: { en: "Your own shop and keys", el: "Το δικό σου κατάστημα και κλειδιά" },

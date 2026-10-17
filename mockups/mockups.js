@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Mockups — App logic (v1.2.0)
+// orOS Mockups — App logic (v1.3.0)
 // 3D book mockups: give the book's size, pages, paper and binding
 // (paperback or hardcover, flaps / dust jacket, rounded spine,
 // headband, ribbon), add the cover (front, back, spine, flaps or one
@@ -14,7 +14,10 @@
 // Wave 3: the Print tab, the cover sheet for the printer
 // (MockCore.template drawn by print.js: live flat preview, 300 dpi
 // PNG / PDF with or without the guides, Pictures, a new Atelier
-// design of the right size, BR-MK-TPL).
+// design of the right size, BR-MK-TPL). Wave 4: what to show, the
+// closed book, the open book (inside pages from pictures or a PDF
+// through the vendored PDF.js, page curve) or the e-book on a
+// tablet, phone or e-reader.
 // Data: synced slice "mockups" (oros-mockups-data, core.js);
 // pictures on the orOS disk through designkit/assets.js (R30);
 // project thumbnails cached on this device only (IndexedDB
@@ -27,6 +30,7 @@
 //   3. Thumbnails (IndexedDB) + home
 //   4. Stage (3D view), pictures, camera drag
 //   5. The form (book, cover, scene, save)
+//   5b. Inside pages and the e-book screen
 //   6. Save the picture, Pictures, Atelier, all angles, turntable
 //   6b. Cover sheet for the printer (Print tab)
 //   7. Dialogs: more, ask
@@ -146,7 +150,18 @@
       "tpl.printer": "Your printer's template wins. If they give another spine width, type it in Book › Set the spine width by hand; the bleed is above. The sheet is 300 dpi.",
       "toast.tplAtelier": "Opened in Atelier as a new design of the cover size.", "toast.tplFail": "The template could not be made on this device.",
       "file.tpl": "{name} · cover template", "file.cover": "{name} · cover for print",
-      "toast.wrapBook": "Cover from Atelier, on the book \"{name}\" of the same size."
+      "toast.wrapBook": "Cover from Atelier, on the book \"{name}\" of the same size.",
+      "f.show": "What to show", "show.book": "The book", "show.open": "Open book", "show.ebook": "E-book",
+      "f.dev": "Device", "dev.tablet": "Tablet", "dev.phone": "Phone", "dev.reader": "E-reader",
+      "f.dc": "Device colour", "dc.black": "Black", "dc.white": "White", "dc.silver": "Silver",
+      "sec.ins": "Inside pages", "sec.scr": "On the screen",
+      "ins.hintOpen": "The two pages the book opens at. Take pictures, or two pages of your book's PDF.",
+      "ins.hintEbook": "The page on the screen. Without one, the right inside page or the front cover is shown.",
+      "slot.l": "Left page", "slot.r": "Right page", "slot.scr": "Screen",
+      "btn.pdf": "Pages from a PDF", "f.pdfp": "Page", "f.curl": "Page curve",
+      "pdf.info": "{name}: {n} pages. Change the page number to show other pages.", "pdf.busy": "Reading the PDF…",
+      "pdf.fail": "That PDF could not be read.", "pdf.again": "Choose the PDF again to show other pages.",
+      "toast.pdfPages": "Pages {a} and {b} placed.", "toast.pdfPage": "Page {a} placed."
     },
     el: {
       "app.name": "Μακέτες", "btn.new": "Νέα μακέτα", "btn.more": "Περισσότερα", "btn.back": "Όλες οι μακέτες",
@@ -246,7 +261,18 @@
       "tpl.printer": "Μετράει το πρότυπο του τυπογραφείου σου. Αν δίνει άλλο πλάτος ράχης, γράψ' το στο Βιβλίο › Ορίζω το πάχος της ράχης με το χέρι· το bleed είναι πιο πάνω. Το φύλλο είναι 300 dpi.",
       "toast.tplAtelier": "Άνοιξε στο Ατελιέ ως νέο σχέδιο στο μέγεθος του εξωφύλλου.", "toast.tplFail": "Το πρότυπο δεν μπόρεσε να γίνει σε αυτή τη συσκευή.",
       "file.tpl": "{name} · πρότυπο εξωφύλλου", "file.cover": "{name} · εξώφυλλο για εκτύπωση",
-      "toast.wrapBook": "Εξώφυλλο από το Ατελιέ, στο βιβλίο «{name}» του ίδιου μεγέθους."
+      "toast.wrapBook": "Εξώφυλλο από το Ατελιέ, στο βιβλίο «{name}» του ίδιου μεγέθους.",
+      "f.show": "Τι να δείχνει", "show.book": "Το βιβλίο", "show.open": "Ανοιχτό βιβλίο", "show.ebook": "E-book",
+      "f.dev": "Συσκευή", "dev.tablet": "Tablet", "dev.phone": "Κινητό", "dev.reader": "E-reader",
+      "f.dc": "Χρώμα συσκευής", "dc.black": "Μαύρο", "dc.white": "Λευκό", "dc.silver": "Ασημί",
+      "sec.ins": "Εσωτερικές σελίδες", "sec.scr": "Στην οθόνη",
+      "ins.hintOpen": "Οι δύο σελίδες όπου ανοίγει το βιβλίο. Βάλε εικόνες ή δύο σελίδες από το PDF του βιβλίου σου.",
+      "ins.hintEbook": "Η σελίδα στην οθόνη. Χωρίς αυτή, δείχνει τη δεξιά εσωτερική σελίδα ή το εξώφυλλο.",
+      "slot.l": "Αριστερή σελίδα", "slot.r": "Δεξιά σελίδα", "slot.scr": "Οθόνη",
+      "btn.pdf": "Σελίδες από PDF", "f.pdfp": "Σελίδα", "f.curl": "Καμπύλη σελίδων",
+      "pdf.info": "{name}: {n} σελίδες. Άλλαξε τον αριθμό σελίδας για να δείξεις άλλες.", "pdf.busy": "Διαβάζω το PDF…",
+      "pdf.fail": "Αυτό το PDF δεν διαβάστηκε.", "pdf.again": "Διάλεξε ξανά το PDF για να δείξεις άλλες σελίδες.",
+      "toast.pdfPages": "Μπήκαν οι σελίδες {a} και {b}.", "toast.pdfPage": "Μπήκε η σελίδα {a}."
     }
   };
   function t(k, vars) {
@@ -568,7 +594,7 @@
     loadImg(sc.bg.img).then(function (bg) { if (stage && cur) stage.scene(sc, bg, false); });
   }
   if (AS && typeof AS.onChange === "function") AS.onChange(function () {
-    if (cur) { renderSlots(); renderVols(); pushAll(); drawFlat(); }
+    if (cur) { renderSlots(); renderVols(); renderIns(); pushAll(); drawFlat(); }
   });
 
   // Drag to orbit, pinch / wheel to zoom, arrows on the keyboard.
@@ -733,14 +759,20 @@
     renderSlots();
     renderWrapInfo();
     renderVols();
+    renderIns();
     // scene
-    var st = cur.set;
+    var st = cur.set, show = cur.show;
+    setSeg("showk", show);
+    $("set-grp").hidden = show !== "book";
+    $("dev-box").hidden = show !== "ebook";
+    setSeg("devk", cur.ins.dev); setSeg("dck", cur.ins.dc);
+    $("open-box").hidden = show !== "book";
     setSeg("setk", st.k);
-    $("setn-box").hidden = !(st.k === "row" || st.k === "shelf" || st.k === "stack");
-    $("gap-box").hidden = st.k === "one" || st.k === "stack";
+    $("setn-box").hidden = show !== "book" || !(st.k === "row" || st.k === "shelf" || st.k === "stack");
+    $("gap-box").hidden = show !== "book" || st.k === "one" || st.k === "stack";
     setVal("f-n", st.n); out("n-out", st.n);
     setVal("f-gap", st.gap); out("gap-out", fmtNum(st.gap, 1) + " mm");
-    $("place-grp").hidden = st.k === "shelf" || st.k === "stack";
+    $("place-grp").hidden = show === "open" || (show === "book" && (st.k === "shelf" || st.k === "stack"));
     setSeg("place", s.place);
     setVal("f-turn", s.turn); out("turn-out", s.turn + "°");
     setVal("f-open", s.open); out("open-out", s.open + "°");
@@ -860,7 +892,7 @@
   // The other books of a series, shelf or stack (cover tab).
   function renderVols() {
     var st = cur.set, box = $("vols"), n = C.count(cur);
-    var on = st.k === "row" || st.k === "shelf" || st.k === "stack";
+    var on = cur.show === "book" && (st.k === "row" || st.k === "shelf" || st.k === "stack");
     $("vols-box").hidden = !on;
     box.textContent = "";
     if (!on) return;
@@ -1086,6 +1118,24 @@
     $("f-spTC").addEventListener("input", function () { change("art", function (p) { p.art.spTC = $("f-spTC").value; }); });
     $("f-spT").addEventListener("input", function () { change("art", function (p) { p.art.spT = $("f-spT").value; }); });
     // scene
+    wireSeg("showk", function (v) {
+      change("book", function (p) {
+        // an open book reads best from above
+        if (p.show !== v && v === "open" && p.sc.cam.ph < 25) { p.sc.cam.ph = 40; p.sc.cam.th = 0; }
+        if (p.show !== v && v !== "open" && p.show === "open" && p.sc.cam.ph > 30) p.sc.cam.ph = 12;
+        p.show = v;
+      });
+    });
+    wireSeg("devk", function (v) { change("art", function (p) { p.ins.dev = v; }); });
+    wireSeg("dck", function (v) { change("art", function (p) { p.ins.dc = v; }); });
+    $("f-curl").addEventListener("input", function () { var v = +$("f-curl").value; change("art", function (p) { p.ins.curl = v; }); });
+    $("pdf-pick").addEventListener("click", pickPdf);
+    $("f-pdfp").addEventListener("change", function () {
+      var n = Math.round(parseNum($("f-pdfp").value));
+      if (!(n >= 1)) { renderIns(); return; }
+      if (pdfDoc) pdfPages(n);
+      else { change("art", function (p) { p.ins.pdfp = n; }); toast(t("pdf.again")); }
+    });
     wireSeg("setk", function (v) {
       change("book", function (p) {
         if (p.set.k !== v) {
@@ -1149,6 +1199,109 @@
   }
   function pickBgPhoto() {
     pickPicture(function (id) { change("scene", function (p) { p.sc.bg.img = id; p.sc.bg.k = "photo"; p.sc.bg.cr = null; }); });
+  }
+
+  // ---------- 5b. Inside pages and the e-book screen ----------
+  // Pictures, or pages of a PDF drawn by the vendored PDF.js (loaded
+  // only when asked for). The PDF itself is not kept: its pages
+  // become pictures on the orOS disk, like any other.
+  function renderIns() {
+    if (!cur) return;
+    var show = cur.show, ins = cur.ins;
+    $("ins-box").hidden = show === "book";
+    if (show === "book") return;
+    $("ins-lbl").textContent = t(show === "open" ? "sec.ins" : "sec.scr");
+    $("ins-hint").textContent = t(show === "open" ? "ins.hintOpen" : "ins.hintEbook");
+    var ul = $("ins-slots");
+    ul.textContent = "";
+    (show === "open" ? ["l", "r"] : ["scr"]).forEach(function (k) {
+      ul.appendChild(slotRow(t("slot." + k), ins[k], function (id) { change("art", function (p) { p.ins[k] = id; }); }));
+    });
+    setVal("f-pdfp", ins.pdfp);
+    $("curl-box").hidden = show !== "open";
+    setVal("f-curl", ins.curl); out("curl-out", Math.round(ins.curl * 100) + "%");
+    out("pdf-info", pdfDoc ? t("pdf.info", { name: pdfName, n: pdfDoc.numPages }) : "");
+  }
+  var pdfDoc = null, pdfName = "";
+  // PDF.js is an ES module that sets window.pdfjsLib (as in Layout).
+  var pdfP = null;
+  function pdfLib() {
+    if (!pdfP) pdfP = new Promise(function (res, rej) {
+      if (window.pdfjsLib) { res(window.pdfjsLib); return; }
+      var n = document.createElement("script");
+      n.type = "module"; n.src = "../vendor/pdfjs/pdf.min.js" + VQ;
+      n.onload = function () { if (window.pdfjsLib) res(window.pdfjsLib); else rej(new Error("pdfjs")); };
+      n.onerror = function () { rej(new Error("pdfjs")); };
+      document.head.appendChild(n);
+    }).then(function (L) {
+      L.GlobalWorkerOptions.workerSrc = "../vendor/pdfjs/pdf.worker.min.js" + VQ;
+      return L;
+    }, function (e) { pdfP = null; throw e; });
+    return pdfP;
+  }
+  function pickPdf() {
+    if (!cur || busy) return;
+    if (!AS || !fsApi()) { toast(t("toast.nofs")); return; }
+    var s = shell(), dlg = null;
+    try { dlg = s && s.orosDialog; } catch (e) {}
+    if (dlg && typeof dlg.openFile === "function") {
+      dlg.openFile("application/pdf").then(function (f) { if (f) openPdf(f); });
+      return;
+    }
+    var inp = $("pdf-in");
+    inp.value = "";
+    inp.onchange = function () { var f = inp.files && inp.files[0]; if (f) openPdf(f); };
+    inp.click();
+  }
+  function openPdf(f) {
+    toast(t("pdf.busy"));
+    setBusy(true);
+    Promise.all([pdfLib(), f.arrayBuffer()]).then(function (r) {
+      return r[0].getDocument({ data: new Uint8Array(r[1]), isEvalSupported: false, enableXfa: false, disableAutoFetch: true, disableStream: true }).promise;
+    }).then(function (doc) {
+      if (pdfDoc) try { pdfDoc.destroy(); } catch (e) {}
+      pdfDoc = doc; pdfName = String(f.name || "PDF").slice(0, 80);
+      setBusy(false);
+      pdfPages(Math.min(cur.ins.pdfp || 1, doc.numPages));
+    }).catch(function (e) {
+      console.warn("[orOS Mockups] pdf", e);
+      setBusy(false);
+      toast(t("pdf.fail"));
+    });
+  }
+  // Page n (and n + 1 for an open book) → pictures on the orOS disk.
+  function pdfPage(n) {
+    return pdfDoc.getPage(n).then(function (pg) {
+      var vp0 = pg.getViewport({ scale: 1 }), k = Math.min(4, 2000 / vp0.height, 2000 / vp0.width);
+      var vp = pg.getViewport({ scale: k }), cv = document.createElement("canvas");
+      cv.width = Math.round(vp.width); cv.height = Math.round(vp.height);
+      var ctx = cv.getContext("2d");
+      ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, cv.width, cv.height);
+      return pg.render({ canvasContext: ctx, viewport: vp }).promise.then(function () {
+        return importCanvas(cv, fileBase() + " p" + n);
+      });
+    });
+  }
+  function pdfPages(n) {
+    if (!pdfDoc || !cur || busy) return;
+    var N = pdfDoc.numPages, a = Math.max(1, Math.min(N, n)), two = cur.show === "open" && a + 1 <= N;
+    toast(t("pdf.busy"));
+    setBusy(true);
+    pdfPage(a).then(function (ia) {
+      return (two ? pdfPage(a + 1) : Promise.resolve("")).then(function (ib) { return [ia, ib]; });
+    }).then(function (r) {
+      setBusy(false);
+      change("art", function (p) {
+        p.ins.pdfp = a;
+        if (p.show === "open") { p.ins.l = r[0]; p.ins.r = r[1] || ""; }
+        else p.ins.scr = r[0];
+      });
+      toast(two ? t("toast.pdfPages", { a: a, b: a + 1 }) : t("toast.pdfPage", { a: a }));
+    }).catch(function (e) {
+      console.warn("[orOS Mockups] pdf page", e);
+      setBusy(false);
+      toast(t("pdf.fail"));
+    });
   }
 
   // ---------- 6. Save the picture, Pictures, Atelier ----------
@@ -1259,7 +1412,7 @@
     busy = on;
     $("panel").classList.toggle("busy", on);
     ["save-btn", "pics-btn", "atelier-btn", "angles-zip", "angles-pics", "mo-make", "more-btn", "back-btn", "new-btn",
-     "tpl-png", "tpl-pdf", "tpl-pics", "tpl-atelier"].forEach(function (id) { $(id).disabled = on; });
+     "tpl-png", "tpl-pdf", "tpl-pics", "tpl-atelier", "pdf-pick"].forEach(function (id) { $(id).disabled = on; });
     if (!on && stage) stage.render();
   }
 
@@ -1707,6 +1860,7 @@
     var src = clone(cur);
     newPrj(function (p) {
       p.bk = src.bk; p.art = src.art; p.sc = src.sc; p.out = src.out; p.unit = src.unit; p.set = src.set; p.tpl = src.tpl;
+      p.show = src.show; p.ins = src.ins;
       p.nm = (label(src) + " " + t("copyOf")).slice(0, 80);
     });
     toast(t("toast.dup"));

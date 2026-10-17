@@ -68,7 +68,7 @@ The strip under the canvas shows the pages of your design. `+` adds a page; each
 ## AI
 - The `AI` tab writes for you. `Ideas for this page` gives three ideas with new words for every text box of the page (and new colours, if `New colours too` is ticked), keeping the layout: tell it what the design is about, then tap an idea to try it, or another one; `Undo` brings back your own.
 - `Write a new text` adds a text box with words written from what you ask. A selected text has `Write with AI` in the bar above the canvas: write it for me, shorter, longer, fix spelling, more formal, friendlier, or translate between Greek and English. You see the answer first and choose `Use this`.
-- The words come from the AI you set up in the Assistant app: your own key for Claude, ChatGPT, Gemini and others, a model server on your computer, or the browser's built-in model. Only the text in question goes to it, straight from this device.
+- The words come from the AI you set up in the Assistant app: your own key for Claude, ChatGPT, Gemini and others, a free online provider, a model server on your computer, the browser's built-in model, or the Assistant's in-browser model (WebLLM). Only the text in question goes to it, straight from this device; with the browser's models nothing leaves the device. An in-browser model is downloaded once in the Assistant (Settings › In-browser model) and needs WebGPU (a recent Chrome or Edge); the first answer after opening Atelier takes a little longer while the model loads.
 - `Remove background` (on a selected photo, or in the `AI` tab) keeps the main subject and makes the rest transparent. It runs on this device and the picture is not sent anywhere. The first time it downloads the tool (about 16 MB), then works offline; `Keep more · keep less` adjusts the edge before you apply it. The original picture stays in `Uploads`, and `Undo` brings it back.
 
 ## Import from Canva and other files
@@ -95,6 +95,7 @@ A file opens as a new design:
 Designs sync with orOS sync. Uploaded images are stored once on the orOS disk and sync with Vault Drive like your other files; on another device a photo may show `Syncing…` until it arrives.
 - **Folders:** the row above your designs shows `All` and your folders; `+ New folder` makes one. To put designs in a folder, tap `Select`, pick them and tap `Move`, or use a design's `⋯` › `Move to folder…`. A design you make while a folder is open goes into it. The `⋯` next to the open folder renames or deletes it; deleting a folder keeps its designs. Folders sync to your other devices.
 - To delete several designs at once, tap `Select` above `Your designs`, pick them (or `Select all`, or `From Canva` for every design a Canva import made) and tap `Delete`. `Undo` in the message brings them all back.
+- When a design you delete has pictures, videos or sounds that nothing else uses, `Delete` first asks, with a box to delete those files too (off by default). Files another design, Slides or Layout still uses are always kept; deleted files cannot be brought back.
 - `Files` (also `Uploads` › `Manage files…`) lists every picture, video and sound on this device, biggest first. Files no design uses can be selected and deleted to free space; files still in a design, here or in Slides or Layout, cannot.
 
 ## Keyboard shortcuts

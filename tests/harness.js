@@ -88,8 +88,19 @@ class FakeDropbox {
         return jsonResponse(200, { entries, has_more: false });
       }
       if (endpoint === "files/delete_v2") {
-        this.files.delete(args.path);
+        // A folder path removes everything under it; paths compare
+        // case-insensitively (callers may pass path_lower), as Dropbox does.
+        const target = args.path.toLowerCase();
+        for (const k of [...this.files.keys()]) {
+          const kl = k.toLowerCase();
+          if (kl === target || kl.startsWith(target + "/")) this.files.delete(k);
+        }
+        this.log.push({ device, op: "delete", path: args.path, status: 200 });
         return jsonResponse(200, {});
+      }
+      if (endpoint === "auth/token/revoke") {
+        this.log.push({ device, op: "revoke", status: 200 });
+        return jsonResponse(200, null);
       }
       throw new Error("FakeDropbox: unhandled endpoint " + endpoint);
     };

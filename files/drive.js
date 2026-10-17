@@ -52,7 +52,8 @@
       "off.title":  "Turn on sync to see orOS Drive",
       "off.body":   "orOS Drive folders live in your encrypted Vault. Connect Dropbox and unlock sync in Settings.",
       "intro.title":"No computers or phones yet",
-      "intro.body": "Folders you mirror with the orOS Drive app (Windows, Linux, Android) appear here. They stay in the cloud until you open them, so this device does not fill up."
+      "intro.body": "Folders you mirror with the orOS Drive app (Windows, Linux, Android) appear here. They stay in the cloud until you open them, so this device does not fill up.",
+      "phone":      "Mirror folders of this phone"
     },
     el: {
       "tree":       "orOS Drive",
@@ -80,7 +81,8 @@
       "off.title":  "Ενεργοποίησε το sync για να δεις το orOS Drive",
       "off.body":   "Οι φάκελοι του orOS Drive βρίσκονται στο κρυπτογραφημένο Vault σου. Σύνδεσε το Dropbox και ξεκλείδωσε το sync στις Ρυθμίσεις.",
       "intro.title":"Δεν υπάρχουν ακόμα υπολογιστές ή κινητά",
-      "intro.body": "Οι φάκελοι που αντικατοπτρίζεις με την εφαρμογή orOS Drive (Windows, Linux, Android) εμφανίζονται εδώ. Μένουν στο cloud μέχρι να τους ανοίξεις, ώστε να μη γεμίζει αυτή η συσκευή."
+      "intro.body": "Οι φάκελοι που αντικατοπτρίζεις με την εφαρμογή orOS Drive (Windows, Linux, Android) εμφανίζονται εδώ. Μένουν στο cloud μέχρι να τους ανοίξεις, ώστε να μη γεμίζει αυτή η συσκευή.",
+      "phone":      "Αντικατόπτριση φακέλων αυτού του κινητού"
     }
   };
 
@@ -97,6 +99,7 @@
     up:     '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>',
     refresh:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 4 23 10 17 10"/><path d="M20.5 15a9 9 0 1 1-2.1-9.4L23 10"/></svg>',
     pin:    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>',
+    phone:  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></svg>',
     free:   '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21V9M7 14l5-5 5 5M5 3h14"/></svg>'
   };
 
@@ -123,6 +126,19 @@
     b.setAttribute("aria-label", title);
     b.addEventListener("click", fn);
     return b;
+  }
+  // DRIVE-A: inside the orOS Android app (phone.js in the shell), the
+  // app's own screen mirrors phone folders; null anywhere else.
+  function phone() {
+    try {
+      var p = window.parent && window.parent !== window ? window.parent.orosPhone : null;
+      var st = p && p.available() ? p.state() : null;
+      return st && st.drive ? p : null;
+    } catch (e) { return null; }
+  }
+  function paintPhone() {
+    var b = $("drv-phone");
+    if (b) b.hidden = !phone();
   }
   function toast(s) { if (ctx && ctx.toast) ctx.toast(s); }
   function vault() {
@@ -152,6 +168,11 @@
     free.id = "drv-free";
     bar.appendChild(free);
     bar.appendChild(btn("tool", ICON.refresh, t("refresh"), function () { syncThenLoad(); }));
+    // Inside a click: Chrome follows the app's intent link only then.
+    var ph = btn("tool", ICON.phone, t("phone"), function () { var p = phone(); if (p) p.askPermission("drive"); });
+    ph.id = "drv-phone";
+    ph.hidden = true;
+    bar.appendChild(ph);
     var host = $("bar");
     if (host) host.appendChild(bar);
 
@@ -198,6 +219,7 @@
   function hideMsg() { $("drv-msg").hidden = true; $("drv-head").hidden = false; $("drv-entries").hidden = false; }
 
   function paintBar() {
+    paintPhone();
     var nav = $("drv-crumbs");
     nav.innerHTML = "";
     var rel = cwd === root ? [] : cwd.slice(root.length + 1).split("/");
@@ -428,6 +450,13 @@
       // The shell outlives this frame: leave no listener behind.
       window.addEventListener("pagehide", function () { if (typeof unsub === "function") unsub(); });
     }
+    try {
+      var p = window.parent && window.parent !== window ? window.parent.orosPhone : null;
+      if (p && typeof p.onChange === "function") {
+        var off = p.onChange(paintPhone);
+        window.addEventListener("pagehide", function () { off(); });
+      }
+    } catch (e) {}
     var view = readView();
     if (view && view.on) enter(view.path);
   }
