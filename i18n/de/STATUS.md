@@ -2,8 +2,8 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 10706 of 27607 (38%)
-- Help pages: 40 of 144 (27%)
+- Strings: 12528 of 27706 (45%)
+- Help pages: 46 of 144 (31%)
 - Shown in the language list: yes
 
 Apps marked "English for now" do not load language packs yet: their
@@ -40,7 +40,7 @@ text is still written in the code. They switch over wave by wave
 | dice | English for now | 0 / 52 |
 | dots | English for now | 0 / 54 |
 | familytree | English for now | 0 / 197 |
-| feeds | English for now | 0 / 319 |
+| feeds | 100% | 325 / 325 |
 | files | 100% | 343 / 343 |
 | fitness | English for now | 0 / 344 |
 | flashcards | 0% | 0 / 263 |
@@ -76,7 +76,7 @@ text is still written in the code. They switch over wave by wave
 | montage | 100% | 371 / 371 |
 | mood | English for now | 0 / 246 |
 | museum | English for now | 0 / 46 |
-| music | English for now | 0 / 372 |
+| music | 100% | 432 / 432 |
 | names | English for now | 0 / 40 |
 | netizen | English for now | 0 / 121 |
 | newsletter | 100% | 620 / 620 |
@@ -89,13 +89,13 @@ text is still written in the code. They switch over wave by wave
 | photolab | 100% | 708 / 708 |
 | pixel | English for now | 0 / 101 |
 | plants | English for now | 0 / 163 |
-| podcasts | English for now | 0 / 264 |
+| podcasts | 100% | 290 / 290 |
 | pong | English for now | 0 / 64 |
 | prompter | English for now | 0 / 75 |
 | pubdomain | English for now | 0 / 66 |
 | qr | English for now | 0 / 248 |
 | quote | English for now | 0 / 216 |
-| radio | English for now | 0 / 102 |
+| radio | 100% | 103 / 103 |
 | reversi | English for now | 0 / 60 |
 | ringtones | English for now | 0 / 99 |
 | rps | English for now | 0 / 59 |
@@ -103,7 +103,7 @@ text is still written in the code. They switch over wave by wave
 | scores | English for now | 0 / 147 |
 | settings | 100% | 480 / 480 |
 | share | English for now | 0 / 152 |
-| shelf | English for now | 0 / 285 |
+| shelf | 100% | 291 / 291 |
 | shell | 100% | 452 / 452 |
 | signature | 100% | 219 / 219 |
 | simon | English for now | 0 / 49 |
@@ -118,7 +118,7 @@ text is still written in the code. They switch over wave by wave
 | stickies | 100% | 124 / 124 |
 | stock | 100% | 614 / 614 |
 | storage | English for now | 0 / 166 |
-| studio | English for now | 0 / 381 |
+| studio | 100% | 381 / 381 |
 | sudoku | English for now | 0 / 139 |
 | television | English for now | 0 / 81 |
 | tetris | English for now | 0 / 59 |
@@ -175,7 +175,6 @@ These show English until fixed (usually the English text changed).
 - help/dice.txt
 - help/dots.txt
 - help/familytree.txt
-- help/feeds.txt
 - help/fitness.txt
 - help/flashcards.txt
 - help/flow.txt
@@ -202,7 +201,6 @@ These show English until fixed (usually the English text changed).
 - help/mixer.txt
 - help/mood.txt
 - help/museum.txt
-- help/music.txt
 - help/names.txt
 - help/netizen.txt
 - help/nonogram.txt
@@ -212,19 +210,16 @@ These show English until fixed (usually the English text changed).
 - help/petworld.txt
 - help/pixel.txt
 - help/plants.txt
-- help/podcasts.txt
 - help/pong.txt
 - help/prompter.txt
 - help/pubdomain.txt
 - help/qr.txt
 - help/quote.txt
-- help/radio.txt
 - help/reversi.txt
 - help/ringtones.txt
 - help/rps.txt
 - help/scanpdf.txt
 - help/scores.txt
-- help/shelf.txt
 - help/simon.txt
 - help/sky.txt
 - help/slider.txt
@@ -233,7 +228,6 @@ These show English until fixed (usually the English text changed).
 - help/split.txt
 - help/spot.txt
 - help/storage.txt
-- help/studio.txt
 - help/sudoku.txt
 - help/television.txt
 - help/tetris.txt

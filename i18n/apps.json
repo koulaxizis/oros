@@ -55,6 +55,15 @@
    ]
   },
   {
+   "app": "feeds",
+   "files": [
+    "feeds/feeds.js",
+    "feeds/package.js",
+    "feeds/search.js",
+    "feeds/sources.js"
+   ]
+  },
+  {
    "app": "files",
    "files": [
     "files/drive.js",
@@ -134,6 +143,16 @@
    ]
   },
   {
+   "app": "music",
+   "files": [
+    "music/host.js",
+    "music/music.js",
+    "music/open.js",
+    "music/search.js",
+    "music/today.js"
+   ]
+  },
+  {
    "app": "newsletter",
    "files": [
     "newsletter/core.js",
@@ -161,10 +180,36 @@
    ]
   },
   {
+   "app": "podcasts",
+   "files": [
+    "podcasts/core.js",
+    "podcasts/host.js",
+    "podcasts/package.js",
+    "podcasts/podcasts.js",
+    "podcasts/search.js"
+   ]
+  },
+  {
+   "app": "radio",
+   "files": [
+    "radio/radio.js",
+    "radio/search.js"
+   ]
+  },
+  {
    "app": "settings",
    "files": [
     "settings/core.js",
     "settings/search.js"
+   ]
+  },
+  {
+   "app": "shelf",
+   "files": [
+    "shelf/feed.js",
+    "shelf/package.js",
+    "shelf/search.js",
+    "shelf/shelf.js"
    ]
   },
   {
@@ -216,6 +261,12 @@
     "stock/shop.js",
     "stock/stock.js",
     "stock/today.js"
+   ]
+  },
+  {
+   "app": "studio",
+   "files": [
+    "studio/studio.js"
    ]
   },
   {
