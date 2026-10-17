@@ -39,6 +39,7 @@
 
   // ---------- 1. Constants, i18n, helpers ----------
   function appLang() {
+    if (window.orosI18n) return window.orosI18n.lang();
     try {
       var l = localStorage.getItem("oros-lang") ||
               (window.parent && window.parent.orosLang) || "en";
@@ -46,7 +47,7 @@
     } catch (e) { return "en"; }
   }
   var LANG = appLang();
-  var LOCALE = LANG === "el" ? "el-GR" : "en-GB";
+  var LOCALE = window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB");
 
   var STRINGS = {
     en: {
@@ -88,6 +89,8 @@
       "pl.none": "No planets to see tonight.", "pl.hidden": "Not visible tonight: {list}",
       "dir.0": "North", "dir.1": "Northeast", "dir.2": "East", "dir.3": "Southeast",
       "dir.4": "South", "dir.5": "Southwest", "dir.6": "West", "dir.7": "Northwest",
+      "dirl.0": "north", "dirl.1": "northeast", "dirl.2": "east", "dirl.3": "southeast",
+      "dirl.4": "south", "dirl.5": "southwest", "dirl.6": "west", "dirl.7": "northwest",
       "card.N": "N", "card.E": "E", "card.S": "S", "card.W": "W",
       "map.time": "Sky at {t}", "map.list": "What is up (list)",
       "map.img": "Sky map for {t}: {n} bright objects above the horizon. The list below names them.",
@@ -102,7 +105,7 @@
       "ev.soon.none": "Nothing special in the next two months.",
       "prev": "Previous month", "next": "Next month",
       "day.label": "{date}: {phase}, {p}% lit",
-      "km": "km"
+      "km": "km", "dur.hm": "{h} h {m} min"
     },
     el: {
       "app.name": "Σελήνη & Ουρανός",
@@ -143,6 +146,8 @@
       "pl.none": "Δεν φαίνονται πλανήτες απόψε.", "pl.hidden": "Δεν φαίνονται απόψε: {list}",
       "dir.0": "Βόρεια", "dir.1": "Βορειοανατολικά", "dir.2": "Ανατολικά", "dir.3": "Νοτιοανατολικά",
       "dir.4": "Νότια", "dir.5": "Νοτιοδυτικά", "dir.6": "Δυτικά", "dir.7": "Βορειοδυτικά",
+      "dirl.0": "βόρεια", "dirl.1": "βορειοανατολικά", "dirl.2": "ανατολικά", "dirl.3": "νοτιοανατολικά",
+      "dirl.4": "νότια", "dirl.5": "νοτιοδυτικά", "dirl.6": "δυτικά", "dirl.7": "βορειοδυτικά",
       "card.N": "Β", "card.E": "Α", "card.S": "Ν", "card.W": "Δ",
       "map.time": "Ο ουρανός στις {t}", "map.list": "Τι είναι πάνω από τον ορίζοντα (λίστα)",
       "map.img": "Χάρτης ουρανού για {t}: {n} λαμπρά σώματα πάνω από τον ορίζοντα. Η λίστα από κάτω τα ονομάζει.",
@@ -157,9 +162,10 @@
       "ev.soon.none": "Τίποτα ιδιαίτερο τους επόμενους δύο μήνες.",
       "prev": "Προηγούμενος μήνας", "next": "Επόμενος μήνας",
       "day.label": "{date}: {phase}, φωτίζεται {p}%",
-      "km": "χλμ."
+      "km": "χλμ.", "dur.hm": "{h} ώ {m} λ"
     }
   };
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "sky", LANG);
 
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;
@@ -188,7 +194,7 @@
   }
   function dur(ms) {
     var m = Math.round(ms / MIN);
-    return Math.floor(m / 60) + (LANG === "el" ? " ώ " : " h ") + (m % 60 < 10 ? "0" : "") + (m % 60) + (LANG === "el" ? " λ" : " min");
+    return t("dur.hm", { h: Math.floor(m / 60), m: (m % 60 < 10 ? "0" : "") + (m % 60) });
   }
   function num(n, d) { return Number(n).toLocaleString(LOCALE, { maximumFractionDigits: d || 0, minimumFractionDigits: d || 0 }); }
   function kv(dl, rows) {
@@ -249,8 +255,8 @@
   }
   var coords = null;
   function placeText(c) {
-    var ll = Math.abs(c.lat).toFixed(2) + "°" + (c.lat >= 0 ? (LANG === "el" ? "Β" : "N") : (LANG === "el" ? "Ν" : "S")) + " " +
-             Math.abs(c.lon).toFixed(2) + "°" + (c.lon >= 0 ? (LANG === "el" ? "Α" : "E") : (LANG === "el" ? "Δ" : "W"));
+    var ll = Math.abs(c.lat).toFixed(2) + "°" + t(c.lat >= 0 ? "card.N" : "card.S") + " " +
+             Math.abs(c.lon).toFixed(2) + "°" + t(c.lon >= 0 ? "card.E" : "card.W");
     return c.name ? c.name : ll;
   }
 
@@ -455,7 +461,7 @@
       head.appendChild(el("b", "", t("p." + p.name)));
       head.appendChild(document.createTextNode(" · " + brightWord(p.mag)));
       box.appendChild(head);
-      box.appendChild(el("div", "", t("pl.line", { when: when, dir: t("dir." + C.compass8(p.az)).toLowerCase(), height: heightWord(p.best) })));
+      box.appendChild(el("div", "", t("pl.line", { when: when, dir: t("dirl." + C.compass8(p.az)), height: heightWord(p.best) })));
       box.appendChild(el("div", "sub", t("pl.window", { a: hm(p.first), b: hm(p.last) }) + " · " + t("pl.best", { t: hm(p.bestT) })));
       li.appendChild(box);
       ul.appendChild(li);
@@ -606,7 +612,7 @@
       if (st[2] < 1.3 && st[3]) {
         g.globalAlpha = dayDim ? 0.35 : 0.8;
         g.fillStyle = dimCol;
-        g.fillText(LANG === "el" ? st[4] : st[3], cx + pp.x + rr + 3, cy + pp.y);
+        g.fillText(CAT.starName(st, LANG), cx + pp.x + rr + 3, cy + pp.y);
         g.fillStyle = starCol;
       }
       hits.push({ x: cx + pp.x, y: cy + pp.y, kind: "star", i: i, alt: pos[i].alt, az: pos[i].az });
@@ -669,7 +675,7 @@
     objs.forEach(function (o) { if (o.alt > 0) out.push({ name: o.name, alt: o.alt, az: o.az, mag: o.mag }); });
     for (var i = 0; i < CAT.stars.length; i++) {
       var s = CAT.stars[i];
-      if (s[2] < 1.5 && s[3] && pos[i].alt > 0) out.push({ name: LANG === "el" ? s[4] : s[3], alt: pos[i].alt, az: pos[i].az, mag: s[2] });
+      if (s[2] < 1.5 && s[3] && pos[i].alt > 0) out.push({ name: CAT.starName(s, LANG), alt: pos[i].alt, az: pos[i].az, mag: s[2] });
     }
     return out.sort(function (a, b) { return a.mag - b.mag; });
   }
@@ -680,17 +686,13 @@
     up.forEach(function (u) {
       var li = el("li");
       li.appendChild(el("b", "", u.name));
-      li.appendChild(document.createTextNode(" · " + t("moon.up", { alt: Math.round(u.alt), dir: t("dir." + C.compass8(u.az)).toLowerCase() })));
+      li.appendChild(document.createTextNode(" · " + t("moon.up", { alt: Math.round(u.alt), dir: t("dirl." + C.compass8(u.az)) })));
       ul.appendChild(li);
     });
   }
 
   function conName(id) {
-    for (var i = 0; i < CAT.constellations.length; i++) {
-      var c = CAT.constellations[i];
-      if (c[0] === id) return LANG === "el" ? c[2] : c[1];
-    }
-    return id;
+    return CAT.conName(id, LANG);
   }
   function showInfo(h) {
     var box = $("map-info");
@@ -699,7 +701,7 @@
     var name, lines = [];
     if (h.kind === "star") {
       var s = CAT.stars[h.i];
-      name = (LANG === "el" ? s[4] : s[3]) || t("info.star", { con: conName(s[5]) });
+      name = CAT.starName(s, LANG) || t("info.star", { con: conName(s[5]) });
       if (s[3]) lines.push(t("info.star", { con: conName(s[5]) }));
       lines.push(t("info.mag", { m: num(s[2], 1) }));
     } else {
@@ -710,7 +712,7 @@
         lines.push(t("info.mag", { m: num(h.o.mag, 1) }));
       }
     }
-    lines.unshift(h.alt > 0 ? t("info.alt", { alt: Math.round(h.alt), dir: t("dir." + C.compass8(h.az)).toLowerCase(), az: Math.round(h.az) }) : t("info.below"));
+    lines.unshift(h.alt > 0 ? t("info.alt", { alt: Math.round(h.alt), dir: t("dirl." + C.compass8(h.az)), az: Math.round(h.az) }) : t("info.below"));
     box.appendChild(el("b", "", name));
     lines.forEach(function (l) { box.appendChild(el("div", "", l)); });
     box.hidden = false;
