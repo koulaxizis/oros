@@ -836,9 +836,11 @@
   // A tap on a reminder the app rang opens /?phone-open=<deepLink>
   // (the shell's notification deep links, e.g. "todo:<list>").
   // The home-screen widget (v4) opens /?phone-quick=<word>: one of
-  // QUICK below, nothing else.
+  // QUICK below, nothing else. "cmd" (K3) opens the shell's command
+  // bar (BR-CMD) instead of an app.
   var QUICK = {
     today: ["today", null],
+    cmd: ["", null],
     task: ["todo", { quickAdd: true }],
     water: ["water", { sip: "glass" }],
     note: ["notes", { newPage: true }]
@@ -1185,7 +1187,8 @@
       var o = phoneOpen; phoneOpen = null;
       if (o && root.orosNotifs && typeof root.orosNotifs.openLink === "function") root.orosNotifs.openLink(o);
       var q = phoneQuick; phoneQuick = null;
-      if (q && typeof root.__orosOpenAt === "function") root.__orosOpenAt(q[0], q[1]);
+      if (q && !q[0]) { if (typeof root.__orosOpenCmdBar === "function") root.__orosOpenCmdBar(); }
+      else if (q && typeof root.__orosOpenAt === "function") root.__orosOpenAt(q[0], q[1]);
     },
     // The same reminder rows, for Web Push (webpush.js): a longer
     // horizon, rung by the browser's push service instead of the app.
