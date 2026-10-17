@@ -20,6 +20,16 @@
   }
   function arr(a) { return Array.isArray(a) ? a : []; }
 
+  // The one text of its own. The shell runs this file, not the Mind
+  // Map page: a pack language shows the "mindmap" pack line when the
+  // shell has it, else English.
+  var W = { en: { "search.untitled": "Untitled" }, el: { "search.untitled": "Χωρίς τίτλο" } };
+  function untitledText(lang) {
+    var I = typeof window !== "undefined" && window.orosI18n;
+    if (I && lang && !W[lang]) I.table(W, "mindmap", lang);
+    return (W[lang] || W.en)["search.untitled"];
+  }
+
   var PROVIDER = {
     id: "mindmap",
     keys: [KEY],
@@ -41,7 +51,7 @@
           names[n.map] = lines(n.text)[0] || "";
         }
       });
-      var untitled = ctx.lang === "el" ? "Χωρίς τίτλο" : "Untitled";
+      var untitled = untitledText(ctx.lang);
       d.nodes.forEach(function (n) {
         if (!n || typeof n.id !== "string" || typeof n.map !== "string" || !maps[n.map] || dead(n)) return;
         var ls = lines(n.text);

@@ -101,7 +101,8 @@
   var ORD_RE = /^[0-9A-Za-z]{1,80}$/;
   // C0/C1 controls, line/paragraph separators, bidi overrides.
   var CTRL_RE = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f-\u009f\u2028\u2029\u202a-\u202e\u2066-\u2069]/g;
-  var URL_RE = /^https?:\/\/[^\s<>"'`\\]+$/i;
+  // Quote chars as \x escapes (same regex) so string scanners stay in step.
+  var URL_RE = /^https?:\/\/[^\s<>\x22\x27\x60\\]+$/i;
   var IMG_RE = /^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+\/]+={0,2}$/;
 
   function isInt(v) { return typeof v === "number" && isFinite(v) && Math.floor(v) === v; }
@@ -542,7 +543,7 @@
     var base = 0, stack = [], inFence = false;
     lines.forEach(function (raw) {
       if (items.length >= MAX_NODES) return;
-      if (/^\s*```/.test(raw)) { inFence = !inFence; return; }
+      if (/^\s*\x60{3}/.test(raw)) { inFence = !inFence; return; }   // ``` fence
       if (inFence || !raw.trim()) return;
       var exp = raw.replace(/\t/g, "    ");
       var ind = exp.length - exp.replace(/^ +/, "").length;
@@ -1397,23 +1398,42 @@
 
   // ---------- 11. Example map ----------
   // Fixed ids: two devices that both press "Example" get ONE map.
+  // The texts are a { en, el } table (pack "mindmap"); EXAMPLE_TREE
+  // gives the shape: [centre, [[branch, [leaves…]], …]] as keys.
   var EXAMPLE = {
-    en: ["Plan a trip", [["Where", ["Beach or mountains?", "Budget per day"]], ["When", ["Dates", "Book time off"]],
-         ["Packing", ["Clothes", "Chargers", "Documents"]], ["Tips", ["Tab: add a child", "Enter: add a sibling",
-         "Drag a node onto another to move it"]]]],
-    el: ["Σχέδιο ταξιδιού", [["Πού", ["Θάλασσα ή βουνό;", "Προϋπολογισμός ανά μέρα"]], ["Πότε", ["Ημερομηνίες", "Άδεια από τη δουλειά"]],
-         ["Βαλίτσα", ["Ρούχα", "Φορτιστές", "Έγγραφα"]], ["Συμβουλές", ["Tab: νέο παιδί", "Enter: νέος αδελφός",
-         "Σύρε έναν κόμβο πάνω σε άλλον για να τον μετακινήσεις"]]]]
+    en: {
+      "example.title": "Plan a trip",
+      "example.where": "Where", "example.where.1": "Beach or mountains?", "example.where.2": "Budget per day",
+      "example.when": "When", "example.when.1": "Dates", "example.when.2": "Book time off",
+      "example.packing": "Packing", "example.packing.1": "Clothes", "example.packing.2": "Chargers", "example.packing.3": "Documents",
+      "example.tips": "Tips", "example.tips.1": "Tab: add a child", "example.tips.2": "Enter: add a sibling",
+      "example.tips.3": "Drag a node onto another to move it"
+    },
+    el: {
+      "example.title": "Σχέδιο ταξιδιού",
+      "example.where": "Πού", "example.where.1": "Θάλασσα ή βουνό;", "example.where.2": "Προϋπολογισμός ανά μέρα",
+      "example.when": "Πότε", "example.when.1": "Ημερομηνίες", "example.when.2": "Άδεια από τη δουλειά",
+      "example.packing": "Βαλίτσα", "example.packing.1": "Ρούχα", "example.packing.2": "Φορτιστές", "example.packing.3": "Έγγραφα",
+      "example.tips": "Συμβουλές", "example.tips.1": "Tab: νέο παιδί", "example.tips.2": "Enter: νέος αδελφός",
+      "example.tips.3": "Σύρε έναν κόμβο πάνω σε άλλον για να τον μετακινήσεις"
+    }
   };
+  var EXAMPLE_TREE = ["example.title", [
+    ["example.where", ["example.where.1", "example.where.2"]],
+    ["example.when", ["example.when.1", "example.when.2"]],
+    ["example.packing", ["example.packing.1", "example.packing.2", "example.packing.3"]],
+    ["example.tips", ["example.tips.1", "example.tips.2", "example.tips.3"]]]];
   var EXAMPLE_ID = "example1";
   function exampleRows(lang, now) {
-    var src = EXAMPLE[lang === "el" ? "el" : "en"], nodes = [], k1 = spread(src[1].length);
-    nodes.push({ id: rootId(EXAMPLE_ID), m: now, map: EXAMPLE_ID, parent: "", ord: "", text: src[0] });
+    var I = typeof window !== "undefined" && window.orosI18n;
+    if (I && lang && !EXAMPLE[lang]) I.table(EXAMPLE, "mindmap", lang);
+    var tx = EXAMPLE[lang] || EXAMPLE.en, src = EXAMPLE_TREE, nodes = [], k1 = spread(src[1].length);
+    nodes.push({ id: rootId(EXAMPLE_ID), m: now, map: EXAMPLE_ID, parent: "", ord: "", text: tx[src[0]] });
     src[1].forEach(function (b, i) {
       var bid = EXAMPLE_ID + "-b" + i, k2 = spread(b[1].length);
-      nodes.push({ id: bid, m: now, map: EXAMPLE_ID, parent: rootId(EXAMPLE_ID), ord: k1[i], text: b[0] });
+      nodes.push({ id: bid, m: now, map: EXAMPLE_ID, parent: rootId(EXAMPLE_ID), ord: k1[i], text: tx[b[0]] });
       b[1].forEach(function (leaf, j) {
-        nodes.push({ id: bid + "-" + j, m: now, map: EXAMPLE_ID, parent: bid, ord: k2[j], text: leaf });
+        nodes.push({ id: bid + "-" + j, m: now, map: EXAMPLE_ID, parent: bid, ord: k2[j], text: tx[leaf] });
       });
     });
     return { map: normMap({ id: EXAMPLE_ID, m: now, sides: "both" }), nodes: nodes.map(normNode) };
