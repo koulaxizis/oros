@@ -1,0 +1,128 @@
+# Aufgaben
+Aufgaben hält deine Aufgaben in Listen, jede Liste auf einem eigenen Tab. Gib Aufgaben Fälligkeiten, Prioritäten, Labels, Notizen und eine Checkliste mit Unteraufgaben, lass sie sich wiederholen, verschiebe sie zwischen Listen und sieh in intelligenten Listen und eigenen gespeicherten Filtern, was über alle Listen hinweg wichtig ist.
+
+## Erste Schritte
+Du startest mit zwei Listen, `Allgemein` und `Einkäufe`. Tippe in das Feld oben (`Aufgabe hinzufügen… (probier „tomorrow“, „friday“)`) und drück [[Enter]], oder tippe bzw. klicke auf die Schaltfläche **+**. Neue Aufgaben landen oben in der offenen Liste.
+
+Hake das runde Kästchen neben einer Aufgabe an, um sie zu erledigen. Tippe oder klicke auf den Text der Aufgabe, um ihre Details zu öffnen.
+
+## Aufgaben hinzufügen und bearbeiten
+### Schnelle Daten und Priorität beim Tippen
+Das Eingabefeld versteht ein paar Wörter auf Englisch und Griechisch und entfernt sie aus dem Aufgabentext (deutsche Wörter noch nicht):
+- `today` / `tomorrow` (auf Griechisch auch: `σήμερα`, `αύριο`).
+- Ein Wochentag, ganz oder kurz, etwa `friday` oder `fri`. Gemeint ist der nächste; `friday` an einem Freitag ergibt den Freitag nächster Woche.
+- `p1`, `p2`, `p3` oder `p4` setzt die Priorität, wie in Todoist.
+
+### Aufgabendetails
+Das Fenster `Aufgabe` hat `Text`, `Fällig am`, `Priorität`, `Liste`, `Unteraufgaben`, `Notizen`, `Labels` und `Weitere Angaben`. Mit `Feld hinzufügen` legst du eigene Paare aus `Feld` und `Wert` an, etwa eine Telefonnummer oder einen Preis. Änderungen werden gespeichert, wenn du das Fenster schließt oder `Speichern` drückst. `Löschen` entfernt die Aufgabe, nachdem du bestätigt hast.
+
+Fälligkeiten stehen bei jeder Aufgabe als `Heute`, `Morgen` oder kurzes Datum, hervorgehoben, wenn die Aufgabe heute fällig oder überfällig ist. Ein Tab zeigt eine kleine Zahl überfälliger Aufgaben.
+
+### Prioritäten
+Es gibt vier: `P1` (dringend, rot), `P2` (hoch, orange), `P3` (mittel, blau) und `P4` (keine). Das Kästchen einer Aufgabe nimmt die Farbe ihrer Priorität an, und eine kleine Flagge zeigt `P1`–`P3`. Du setzt sie im Fenster `Aufgabe`, mit `p1`–`p4` im Eingabefeld oder über das Schnellmenü.
+
+### Unteraufgaben
+Unter `Unteraufgaben` im Fenster `Aufgabe` tippst du einen Schritt in `Neue Unteraufgabe…` und drückst [[Enter]] oder `Hinzufügen`. Hake Schritte ab, ändere ihren Text, verschiebe sie mit den Pfeilen nach oben und unten oder lösche sie mit ×. Schritte werden sofort gespeichert.
+
+Eine Aufgabe mit Unteraufgaben zeigt, wie viele erledigt sind, etwa `2/5`. Tippe auf diese Zahl, um die Checkliste direkt bei der Aufgabe zu öffnen und dort Schritte abzuhaken; tippe erneut, um sie zu schließen.
+
+### Wiederkehrende Aufgaben
+Unter `Wiederholen` wählst du `Alle` und eine Anzahl `Tage`, `Wochen` oder `Monate`, dann, wie das nächste Datum zählt:
+- `nach festem Plan`: ab dem Fälligkeitsdatum (bei Wochen kannst du auch einen Wochentag wählen). Wer früher fertig ist, springt zum nächsten Datum nach dem aktuellen.
+- `ab Erledigung`: ab dem Tag, an dem du sie abhakst. „Alle 30 Tage ab Erledigung“, am 14. Oktober abgehakt, ist am 13. November wieder fällig, egal welches Datum sie vorher hatte.
+
+Wenn du eine wiederkehrende Aufgabe abhakst, bleibt sie nicht erledigt: Sie öffnet sich wieder mit ihrem nächsten Fälligkeitsdatum, und ihre Unteraufgaben werden zurückgesetzt.
+
+### Anordnen und sortieren
+Zieh eine Aufgabe an ihrem Griff (die Punkte rechts), um sie innerhalb der Liste zu verschieben.
+
+Die Sortier-Schaltfläche (Linien mit Pfeil) ordnet die Ansicht `Nach Priorität`, `Nach Fälligkeit` oder wieder in `Eigene Reihenfolge`. Jede Liste und intelligente Liste merkt sich ihre Wahl auf diesem Gerät. Abgehakte Aufgaben kommen beim Sortieren ans Ende, und die Griffe erscheinen nur in `Eigene Reihenfolge`.
+
+## Aufgaben in eine andere Liste verschieben
+- Wähl im Fenster `Aufgabe` eine andere `Liste`; die Aufgabe zieht mit ihren Unteraufgaben um, wenn du das Fenster schließt.
+- Oder klick mit rechts auf eine Aufgabe (auf dem Handy: gedrückt halten) für das Schnellmenü: die Prioritätsflaggen, `Verschieben nach…`, `Öffnen` und `Auswählen`.
+- Um mehrere auf einmal zu verschieben, wähl `Auswählen` im Schnellmenü, tippe die anderen Aufgaben an und dann `Priorität / Verschieben…` in der Leiste unten. `Abbrechen` oder [[Esc]] beendet die Auswahl.
+
+Eine verschobene Aufgabe landet oben in ihrer neuen Liste. `Rückgängig` in der Meldung bringt sie zurück.
+
+## Intelligente Listen und gespeicherte Filter
+Die ersten Tabs zeigen Aufgaben aus all deinen Listen auf einmal (auf dem Handy nur ihre Symbole):
+- `Heute`: heute fällig oder überfällig.
+- `Nächste 7 Tage`: in den nächsten sieben Tagen fällig, Überfälliges eingeschlossen.
+- `Ohne Datum`: Aufgaben ohne Fälligkeit.
+- `Priorität 1`: alles, was `P1` hat.
+
+Dort erscheinen nur offene Aufgaben; eine Aufgabe, die du abhakst, bleibt abgehakt sichtbar, bis du die Ansicht verlässt, damit du den Haken zurücknehmen kannst. Bei jeder Aufgabe steht ihre Liste, und alles andere geht wie in einer Liste: öffnen, abhaken, Schnellmenü, sortieren. Eine Aufgabe, die du in einer intelligenten Liste anlegst, kommt in die zuletzt geöffnete Liste, mit dem, was sie dort erscheinen lässt (zum Beispiel heute fällig in `Heute`).
+
+Eigene Ansichten: Öffne die Trichter-Schaltfläche und wähl `Neuer gespeicherter Filter…`. Gib einen Namen und wähl beliebig aus `Labels (eins davon)`, `Priorität`, `Fällig am` (`Überfällig`, `Heute oder überfällig`, `Nächste 7 Tage`, `Nächste 30 Tage`, `Ohne Datum` oder `Zwischen zwei Daten`) und `Text enthält`. Er startet mit der Suche und den Labels, die du gewählt hattest. Der Filter bekommt einen eigenen Tab nach den intelligenten Listen; sein Stift oder die Schaltfläche ⋮, während er offen ist, bearbeitet oder löscht ihn.
+
+## Listen
+- Tippe oder klicke auf das **+** neben den Tabs, um eine Liste hinzuzufügen. Sie öffnet sich direkt in `Listeneinstellungen`, damit du sie benennen kannst.
+- Um eine Liste umzubenennen, doppelklicke auf ihren Tab, tippe auf den Stift im Tab oder nutze die Schaltfläche ⋮ rechts.
+- Zieh Tabs seitwärts, um ihre Reihenfolge zu ändern.
+- `Listenzyklus` entfernt alle Haken der Liste automatisch alle paar Tage, Wochen oder Monate, Unteraufgaben eingeschlossen. Praktisch für Checklisten, die du wiederholst, etwa eine wöchentliche Einkaufsliste. Das Fenster zeigt das nächste Datum zum Zurücksetzen.
+- `Liste löschen` entfernt die Liste mit all ihren Aufgaben.
+- Die Papierflieger-Schaltfläche über der Liste schickt die offene Liste als Link an jemanden (`An jemanden senden…`). Die Person kann sie in jedem Browser öffnen und in ihr eigenes orOS übernehmen.
+
+`Erledigte ausblenden` blendet abgehakte Aufgaben in dieser Ansicht aus. `Erledigte entfernen` löscht alle abgehakten Aufgaben der offenen Liste. Nach einem Löschen oder Entfernen erscheint ein paar Sekunden lang `Rückgängig`.
+
+## Labels, Suche und Filter
+Öffne in einer Aufgabe `Labels hinzufügen / verwalten`, um Labels mit Name und Farbe anzulegen, und tippe auf ein Label, um es zuzuordnen. Tippe auf ein Label in der Aufgabe, um es zu entfernen.
+
+Die Suche durchsucht jede Liste: Aufgabentext, Notizen, weitere Angaben, Unteraufgaben und Labelnamen. Die Trichter-Schaltfläche filtert nach Label; eine Aufgabe erscheint, wenn sie eines der gewählten Labels hat. Treffer aus allen Listen erscheinen zusammen, jeweils mit ihrem Listennamen. Im Filtermenü kannst du auch ein Label löschen; es wird von allen Aufgaben entfernt.
+
+## Aus Todoist importieren
+- Verbinde zuerst Todoist unter [Einstellungen](app:settings) › `Verbundene Dienste` mit deinem API-Token (Todoist › Einstellungen › Integrationen › Entwickler).
+- Dann zeigt `Listeneinstellungen` (die Schaltfläche ⋮) › `Aus Todoist oder GitHub importieren…` › `Konto lesen`, was kommen wird; `Importieren` holt es, und `Rückgängig` in der Meldung nimmt es zurück.
+- Jedes Projekt mit offenen Aufgaben wird eine Liste. Aufgaben behalten Fälligkeit und Priorität (P1–P4 aus Todoist bleiben hier gleich); die Beschreibung wird zu Notizen, und Labels kommen nach Namen (ein vorhandenes Label mit gleichem Namen wird genutzt). Unteraufgaben kommen als Aufgaben direkt nach ihrer übergeordneten Aufgabe. Wiederkehrende Aufgaben kommen nur mit ihrem nächsten Datum: Stell hier `Wiederholen` ein, wenn du es willst. Erledigte Aufgaben bleiben in Todoist.
+- Aufgaben, die importiert wurden, bevor es hier Prioritäten gab, tragen `Priority: P1`–`P3` in ihren weiteren Angaben. Dieses Feld bleibt, wie es ist; der nächste Import mit `Früher Importiertes aktualisieren` setzt auch ihre Priorität.
+- Importiere, so oft du willst: Neue Aufgaben kommen dazu, und mit `Früher Importiertes aktualisieren` folgen Text, Notizen, Fälligkeit und Priorität Todoist. Deine Haken, deine eigenen Labels und weiteren Angaben hier ändern sich nie. Eine Aufgabe oder Liste, die du hier gelöscht hast, bleibt gelöscht, außer du hakst `Hier Gelöschtes zurückholen` an; eine neue Aufgabe, deren Text in ihrer Liste schon offen ist, wird übersprungen.
+- orOS liest Todoist nur: Dort ändert sich nichts.
+
+## Aus GitHub importieren
+- Verbinde GitHub unter [Einstellungen](app:settings) › `Verbundene Dienste` mit einem persönlichen Zugriffstoken (nur Lesezugriff auf die Issues der gewünschten Repositorys).
+- Dann `Listeneinstellungen` (die Schaltfläche ⋮) › `Aus Todoist oder GitHub importieren…`, das GitHub-Konto wählen, `Konto lesen` und `Importieren`.
+- Die offenen Issues, die dir zugewiesen sind, kommen herein: Jedes Repository wird eine Liste (namens „owner/repository“), jedes Issue eine Aufgabe „#12 Titel“ mit Text und Link als Notizen, seinen Labels nach Namen und dem Datum seines Meilensteins als Fälligkeit. Pull Requests bleiben draußen.
+- Importiere erneut, um neu zugewiesene Issues zu holen; mit `Früher Importiertes aktualisieren` folgen Titel, Text und Fälligkeit GitHub. Ein auf GitHub geschlossenes Issue bleibt hier, wie es ist: Hake es selbst ab. Für gelöschte Aufgaben und Doppelte gelten dieselben Regeln wie bei Todoist.
+- orOS liest GitHub nur: Dort ändert sich nichts.
+
+## Aus Google Tasks importieren
+Im Fenster einer Liste (der Stift auf ihrem Tab) kopiert `Aus Google Tasks importieren…` deine Aufgaben einmalig von Google. Melde dich im kleinen Fenster bei Google an; orOS liest deine Aufgabenlisten (nur lesend), zeigt sie mit der Zahl neuer und schon vorhandener Aufgaben und gibt den Zugriff sofort an Google zurück: Nichts wird gespeichert, und bei Google ändert sich nichts. Hake die gewünschten Listen an und ob erledigte Aufgaben mitkommen, dann drück `Importieren`; die folgende Meldung hat `Rückgängig`.
+
+Jede Google-Liste wird eine Liste (eine mit gleichem Namen hier wird genutzt), jede Aufgabe eine Aufgabe mit Notizen und Fälligkeit, abgehakt, wenn sie dort erledigt war. Unteraufgaben werden Unteraufgaben ihrer Aufgabe; Notizen und Fälligkeit einer Unteraufgabe kommen in die Notizen ihrer Aufgabe. Ein erneuter Import fügt nur hinzu, was fehlt, und eine neue offene Aufgabe, deren Text in derselben Liste schon offen ist, wird übersprungen. Google muss das für orOS freigeschaltet haben; antwortet es mit 403, ist der Dienst noch nicht eingeschaltet. Für eine eigene Google-App-ID: Lege sie unter [Kontakte](app:contacts) › `Aus einem Konto` › `Eigene App-ID verwenden` fest.
+
+## Eine Datei aus einer anderen App importieren
+Im Fenster einer Liste (der Stift auf ihrem Tab) liest `Datei importieren…` eine Exportdatei einer anderen Aufgaben-App, hier auf dem Desktop oder in Aufgaben für sich allein; es wird nichts verschickt. Das Fenster sagt, was es gefunden hat, wie es zuordnet, welche Listen neu oder schon da sind und den Zeitraum der Fälligkeiten; hake die gewünschten Listen an und ob erledigte Aufgaben mitkommen, dann `Importieren`. Die folgende Meldung hat `Rückgängig`.
+- **Todoist**: Öffne ein Projekt › ⋯ › `Als CSV exportieren` (ein Projekt) oder Einstellungen › Backups › Backup herunterladen (ein ZIP mit einer CSV pro Projekt). Jedes Projekt wird eine Liste; eingerückte Aufgaben werden Unteraufgaben, Kommentare kommen in die Notizen, @Labels werden Labels, Abschnitte kommen in die weiteren Angaben der Aufgabe, und P1–P4 bleiben gleich. Ein Datum, das kein einfaches Datum ist (etwa „every monday“), kommt in die Notizen.
+- **TickTick**: Einstellungen › Konto › `Backup erstellen` (eine CSV). Jede Liste wird eine Liste; Checklisten-Punkte und Unteraufgaben werden Unteraufgaben, Tags werden Labels, und hohe / mittlere / niedrige Priorität wird P1 / P2 / P3.
+- **Google Tasks**: Wähl auf takeout.google.com nur `Tasks`; öffne das ZIP oder seine `Tasks.json`. Es wird wie bei `Aus Google Tasks importieren…` zugeordnet, und beide kennen die Aufgaben des anderen.
+- **todo.txt** und **done.txt**: Das erste +project einer Zeile wird ihre Liste (ohne Projekt: eine Liste mit dem Namen der Datei), @contexts werden Labels, (A) (B) (C) werden P1 P2 P3, `due:` das Fälligkeitsdatum, und Zeilen, die mit `x` beginnen, kommen abgehakt.
+- **iCalendar (.ics)** aus einer Kalender- oder Aufgaben-App (Apple Erinnerungen über eine CalDAV-App, Thunderbird, Nextcloud Tasks…): Jede Aufgabe kommt in eine Liste mit dem Namen des Kalenders, mit Beschreibung, Fälligkeit, Priorität und Kategorien als Labels; eine mit einer anderen verknüpfte Aufgabe wird deren Unteraufgabe, abgebrochene werden übersprungen.
+- **Remember The Milk**: Einstellungen › Konto › `Daten exportieren` (JSON). Listen, Tags, Notizen, Unteraufgaben, Fälligkeiten und P1–P3 kommen mit; gelöschte Aufgaben bleiben draußen.
+
+Ein erneuter Import derselben Datei fügt nur hinzu, was fehlt. Eine hier gelöschte Aufgabe bleibt gelöscht, eine Liste oder ein Label mit gleichem Namen wird genutzt, und eine neue offene Aufgabe, deren Text in derselben Liste schon offen ist, wird übersprungen. Wiederkehrende Aufgaben kommen einmal, nur mit ihrem Datum.
+
+## Eine orOS-Datei speichern und öffnen
+Im Fenster einer Liste (der Stift auf ihrem Tab) speichert `Als orOS-Datei speichern…` alle Listen, Aufgaben, Unteraufgaben und Labels in einer `.orostasks`-Datei, etwa um sie ohne Synchronisierung auf ein anderes Gerät zu bringen oder eine Kopie zu behalten. Die Datei ist ein einfaches ZIP: Entpackt enthält sie die Aufgaben als `content.json` sowie `preview/tasks.md` und `preview/tasks.csv` für andere Programme. Sie ist nicht verschlüsselt, also bewahre sie sicher auf.
+
+`orOS-Datei öffnen…` (oder `Entpackten Ordner öffnen…`, oder „Öffnen mit“ orOS am Computer) zeigt, wie viele Aufgaben neu und wie viele schon da sind; dann fügt `Hinzufügen` nur die neuen hinzu, mit ihren eigenen IDs: Dieselbe Datei noch einmal zu öffnen, fügt nichts hinzu. Eine schon vorhandene Aufgabe bleibt, wie sie ist, und eine hier gelöschte bleibt gelöscht; eine Datei löscht nie etwas. Hake `Mit neueren Versionen aktualisieren` an, damit Aufgaben, die in der Datei später geändert wurden, deine Kopie ersetzen. `Rückgängig` in der Meldung entfernt das Hinzugefügte.
+
+## Synchronisierung und Sicherung
+Deine Listen, Aufgaben (mit Prioritäten und Unteraufgaben), Labels und gespeicherten Filter werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. Haken zwei Geräte verschiedene Unteraufgaben derselben Aufgabe ab, bleiben beide Haken erhalten, und eine auf einem Gerät verschobene Aufgabe landet auf allen in ihrer neuen Liste. Der offene Tab, die Sortierung jeder Ansicht und `Erledigte ausblenden` bleiben auf jedem Gerät für sich; Suche, Filter, offene Checklisten und eine Auswahl werden beim Schließen der App zurückgesetzt.
+
+Aufgaben hat keinen eigenen Export; nutze die orOS-[Sicherung](help:t/backup), um eine Kopie zu behalten.
+
+## Tastenkürzel
+- [[Enter]] im Eingabefeld fügt die Aufgabe hinzu; in `Neue Unteraufgabe…` fügt es den Schritt hinzu.
+- [[Esc]] schließt das Schnellmenü, das Sortier- oder Labelfilter-Menü, das offene Fenster oder beendet eine Auswahl.
+
+## Tipps
+- Nicht erledigte Aufgaben mit Fälligkeit erscheinen an ihrem Tag im [Kalender](app:calendar), und der Kalendereintrag öffnet die Liste hier. Sie erscheinen auch in Heute, mit einer Schaltfläche, die sie hier abhakt.
+- Andere Apps können Einträge hierher schicken, etwa die Einkaufsliste aus dem [Essensplaner](app:meals). Ein Fenster `Zu Aufgaben hinzufügen` zeigt sie mit einer Auswahl für die `Liste`; Einträge, die schon auf dieser Liste stehen, starten nicht angehakt, und nichts wird gespeichert, bis du `Hinzufügen` drückst.
+- orOS kann dich erinnern, wenn Aufgaben fällig oder überfällig sind; siehe [Benachrichtigungen](help:t/notifications).
+
+## Grenzen
+- Schnelle Daten kennen nur heute, morgen und Wochentage (auf Englisch oder Griechisch). Für andere Daten setz `Fällig am` in der Aufgabe.
+- Du kannst Aufgaben nicht ziehen, während du suchst, in einer intelligenten Liste oder einem gespeicherten Filter oder wenn eine Liste nach Priorität oder Datum sortiert ist. Unteraufgaben ordnest du mit den Pfeilen, nicht durch Ziehen.
+- Unteraufgaben haben keine eigenen Fälligkeiten, Prioritäten oder Unteraufgaben und erscheinen nicht im Kalender oder in Heute. Eine Aufgabe hat bis zu 100.
+- Ein Gerät mit einer älteren orOS-Version zeigt eine anderswo hin verschobene Aufgabe in beiden Listen, bis es aktualisiert wird.

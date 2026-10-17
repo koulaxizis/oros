@@ -191,7 +191,9 @@
   };
   var A = null;
   function t(k, params) {
-    var tab = S[A && A.lang === "el" ? "el" : "en"];
+    // orosI18n (../i18n.js): a pack language gets S[code] (English + the "todo" pack).
+    var code = A && A.lang ? A.lang : "en";
+    var tab = S[code] || (typeof window !== "undefined" && window.orosI18n ? window.orosI18n.table(S, "todo", code) : S.en);
     var s = tab[k] !== undefined ? tab[k] : S.en[k];
     return s.replace(/\{(\w+)\}/g, function (m, n) { return params && params[n] !== undefined ? String(params[n]) : m; });
   }
@@ -305,7 +307,7 @@
       busy = false;
       if (!dlg.open) return;
       closeBtn.textContent = t("close");
-      say(GI.message(e, A && A.lang));
+      say(GI.message(e, A && A.lang === "el" ? "el" : "en"));
     });
   }
 
