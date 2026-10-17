@@ -61,15 +61,25 @@
   }
 
   var FOOT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 3c1.9 0 3 1.9 3 4.4 0 2.3-.8 3.6-.8 5.1H5.6c0-1.6-.9-2.7-.9-5C4.7 5 6.4 3 8.5 3z"/><path d="M5.7 15.2h5v1.3a2.5 2.5 0 0 1-5 0z"/><path d="M15.5 7c1.9 0 3.6 2 3.6 4.5 0 2.3-.9 3.4-.9 5h-5.1c0-1.5-.8-2.8-.8-5.1C12.3 8.9 13.6 7 15.5 7z"/><path d="M13.1 19.2h5v1.3a2.5 2.5 0 0 1-5 0z"/></svg>';
+  // The row's texts (keys of the "habits" pack). The feed contract
+  // takes { en, el } or a plain string: a pack language (German) gets
+  // its pack line as a string, English and Greek the { en, el } pair.
+  var S = {
+    en: { "steps.name": "Steps", "steps.hint": "Steps from the Health app", "steps.unit": "steps" },
+    el: { "steps.name": "Βήματα", "steps.hint": "Βήματα από την εφαρμογή Υγεία", "steps.unit": "βήματα" }
+  };
+  var I = typeof window !== "undefined" && window.orosI18n;
+  var PACK = I && I.lang() !== "en" && I.lang() !== "el" ? I.table(S, "habits", I.lang()) : null;
+  function txt(k) { return PACK ? PACK[k] : { en: S.en[k], el: S.el[k] }; }
   function readJSON(key) {
     try { return JSON.parse(root.localStorage.getItem(key)); } catch (e) { return null; }
   }
   var FEED = {
     id: "steps",
     app: "health",
-    name: { en: "Steps", el: "Βήματα" },
-    hint: { en: "Steps from the Health app", el: "Βήματα από την εφαρμογή Υγεία" },
-    unit: { en: "steps", el: "βήματα" },
+    name: txt("steps.name"),
+    hint: txt("steps.hint"),
+    unit: txt("steps.unit"),
     color: "#87cf3e",
     icon: FOOT,
     keys: [HEALTH_KEY, HABITS_KEY],

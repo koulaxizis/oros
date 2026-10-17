@@ -1,0 +1,91 @@
+# Gewohnheiten
+Gewohnheiten hilft dir, Routinen aufzubauen: Du hakst sie Tag für Tag ab oder zählst, wie viel du geschafft hast. Du siehst deine Woche auf einen Blick, einen Monatskalender, eine Stärke für jede Gewohnheit und eine Statistik mit Serien.
+
+## Erste Schritte
+Tippe oder klicke auf `Gewohnheit anlegen` (oder oben auf die Schaltfläche **+**), gib einen `Name` ein und drücke `Speichern`. Deine Gewohnheit erscheint in der `Liste` mit einem Punkt für jeden Tag der Woche. Tippe auf einen Punkt, um den Tag als erledigt zu markieren; tippe noch einmal, um es rückgängig zu machen.
+
+## Gewohnheiten und Zeitpläne
+Im Fenster `Gewohnheit hinzufügen` wählst du `Name`, `Art`, `Symbol`, `Farbe`, `Häufigkeit` und `Erinnerung`.
+
+`Art`:
+- **`Ja / Nein`**: Der Tag ist erledigt oder nicht, mit einem Tippen.
+- **`Menge`**: eine Zahl mit Einheit und einem `Tagesziel`, zum Beispiel *mindestens 10 Seiten*, *mindestens 8000 Schritte* oder *höchstens 2 Kaffee*. Wähle `Mindestens` oder `Höchstens`, gib Ziel und Einheit ein und den `Schritt für − / +` (wie viel ein Tippen hinzufügt). Ein Tag ist erledigt, wenn sein Wert das Ziel erreicht. Bei `Höchstens` musst du den Tag eintragen (auch 0), damit er zählt.
+
+`Häufigkeit`:
+- **`Tage`**: Wähle alle sieben Tage für `Jeden Tag`, ein paar Tage für nur diese Wochentage oder keinen für `Beliebiger Tag` (angezeigt als `Flexibel`). Eine Gewohnheit mit Wochentagen lässt sich nur an ihren Tagen abhaken.
+- **`Pro Woche`** oder **`Pro Monat`**: Die Gewohnheit wird X-mal pro Woche (Montag bis Sonntag) oder X-mal pro Kalendermonat erledigt, an beliebigen Tagen. Das Abzeichen zeigt, wie viele in der laufenden Woche oder im laufenden Monat erledigt sind, zum Beispiel `3×/Wo. · 2/3`.
+
+Tage in der Zukunft kannst du nicht abhaken.
+
+Der Stift an einer Gewohnheit öffnet `Gewohnheit bearbeiten`. Der Papierkorb oder `Löschen` im Bearbeitungsfenster entfernt die Gewohnheit und ihren ganzen Verlauf, nachdem du bestätigt hast.
+
+## Mengen
+Bei einer Gewohnheit der Art `Menge` zeigt die Zeile den heutigen Wert mit den Schaltflächen **−** und **+**. Tippe auf einen Punkt, um den Tag zu öffnen: Gib den Wert ein oder nutze **−** / **+**. Ein Punkt zeigt den Wert des Tages, in der Farbe der Gewohnheit gefüllt, wenn das Ziel erreicht ist, und leicht getönt, wenn du einen Teil geschafft hast.
+
+Wenn du am selben Tag auf zwei Geräten etwas hinzufügst, zählen nach der Synchronisierung beide Mengen. Ein eingegebener Wert setzt die Summe des Tages.
+
+## Tag überspringen und Notizen
+Klicke mit der rechten Maustaste auf einen Punkt oder halte ihn auf einem Touchscreen gedrückt, um den Tag zu öffnen. Dort kannst du:
+- `Diesen Tag überspringen`, wenn du krank oder im Urlaub bist. Ein übersprungener Tag ist gestreift, unterbricht keine Serie und senkt die Stärke nicht. Bei einer Gewohnheit `Pro Woche` oder `Pro Monat` zählt er zum Ziel.
+- Eine kurze `Notiz` hinzufügen (bis zu 200 Zeichen). Ein Punkt mit Notiz hat eine kleine Markierung in der Ecke.
+
+## Serien und Stärke
+Die Flamme zeigt deine aktuelle Serie: Tage in Folge, oder Wochen bzw. Monate in Folge bei einer Gewohnheit `Pro Woche` oder `Pro Monat`. Der heutige Tag unterbricht eine Serie erst, wenn er vorbei ist; übersprungene Tage und Tage außerhalb des Zeitplans werden nicht mitgezählt.
+
+Der Ring mit einem Prozentwert ist die **Stärke** der Gewohnheit, ein Wert von 0 bis 100 % im Stil von Loop Habit Tracker. Sie wächst ein wenig, jedes Mal wenn du die Gewohnheit einhältst, und sinkt langsam, wenn du sie verpasst, sodass ein einzelner verpasster Tag nur ein paar Punkte kostet. Ein Tag, an dem du einen Teil einer Menge erreicht hast, zählt anteilig. Eine flexible Gewohnheit wird wie einmal pro Woche bewertet.
+
+## Details einer Gewohnheit
+Tippe auf das Symbol oder den Namen einer Gewohnheit, um ihre Details zu öffnen: Stärke, aktuelle und längste Serie, Anzahl abgehakter Tage, ein Diagramm der Stärke im letzten Jahr, ein Jahr voller Tage wie ein GitHub-Diagramm (mit den Pfeilen zu anderen Jahren, tippe auf einen Tag, um ihn zu öffnen) und deine neuesten Notizen. `Bearbeiten` öffnet die Einstellungen der Gewohnheit.
+
+## Erinnerungen
+Stelle bei einer Gewohnheit eine `Erinnerung` ein, um zu dieser Uhrzeit eine orOS-Benachrichtigung zu bekommen, an Tagen, an denen die Gewohnheit noch offen ist: nicht an Tagen, an denen sie schon erledigt oder übersprungen ist, nur an ihren Wochentagen, und bei einer Gewohnheit `Pro Woche` oder `Pro Monat` nur, solange das Ziel noch nicht erreicht ist. `Keine Erinnerung` schaltet sie aus. Eine Glocke neben der Gewohnheit zeigt, dass sie eine hat.
+
+Erinnerungen kommen von orOS selbst, daher muss orOS geöffnet sein. Mit der orOS-Android-App und eingeschalteten Erinnerungen meldet sich das Handy auch, wenn orOS geschlossen ist. Eine Erinnerung, die mehr als 4 Stunden zu spät ist, entfällt.
+
+## Ansichten
+- **`Liste`**: eine Woche, beginnend mit Montag. Die Pfeile gehen eine Woche zurück oder vor; die mittlere Schaltfläche bringt dich zur aktuellen Woche.
+- **`Kalender`**: ein ganzer Monat, eine Zeile pro Gewohnheit. Tippe auf einen Tag, um ihn abzuhaken (oder ihn bei einer Menge zu öffnen), und tippe auf den Namen einer Gewohnheit, um ihre Details zu sehen. Die Pfeile blättern monatsweise.
+- **`Statistik`**: Wähle `30 T`, `90 T` oder `Alle`, um `Abgehakt`, `Aktive Gewohnheiten`, `Ø / Woche` und `Perfekte Tage` zu sehen, dann unter `Nach Gewohnheit` für jede Gewohnheit Stärke, aktuelle und längste Serie, die Erfolgsquote (bei Gewohnheiten `Pro Woche` und `Pro Monat` der Anteil der Wochen oder Monate, die das Ziel erreicht haben), den Durchschnitt einer Menge und ein kleines Stärkediagramm für den Zeitraum, und dazu ein paar `Erkenntnisse`. Übersprungene Tage zählen bei den Quoten nicht mit.
+
+## Zeilen aus anderen Apps
+Manche Apps können eine automatische Zeile hinzufügen, markiert mit `Auto`, die sich selbst abhakt:
+- [Wasser](app:water): Tage, an denen du dein Trinkziel erreicht hast. Du kannst sie mit `In Gewohnheiten zeigen` in den Einstellungen von Wasser ausschalten.
+- [Training](app:fitness): Tage mit einem abgeschlossenen Training. Du kannst sie in den Einstellungen von Training ausschalten.
+- [Mikro-Zen](app:zen): Tage mit einer abgeschlossenen Atemübung. Du kannst sie mit `In Gewohnheiten zeigen` in Mikro-Zen ausschalten.
+- **Schritte** aus [Gesundheit](app:health): deine täglichen Schritte, wie Gesundheit sie speichert (dort eingetragen oder aus Health Connect mit der orOS-Android-App), erledigt an Tagen, die dein Schrittziel erreichen. Mit dem Zahnrad oben schaltest du `Schritte aus Gesundheit zeigen` ein oder aus und legst das `Tagesziel Schritte` fest (anfangs 8000).
+
+Diese Zeilen sind schreibgeschützt und zählen nicht in der `Statistik`. Tippe auf eine, um ihre App zu öffnen.
+
+## Aus anderer App importieren
+Hol deine Gewohnheiten samt Verlauf aus einem anderen Gewohnheiten-Tracker herüber. Drücke oben auf das Zahnrad, dann auf `Aus anderer App importieren`, und wähle die exportierte Datei. Gewohnheiten erkennt die App und zeigt ihren Namen, wie viele Gewohnheiten und Einträge gefunden wurden, und eine Liste der Gewohnheiten mit je einem Kästchen (archivierte Gewohnheiten sind anfangs nicht angehakt). Drücke `Importieren`; eine Meldung sagt dir, wie viele hinzugefügt wurden, und ihre Schaltfläche `Rückgängig` nimmt den Import zurück.
+
+So exportierst du aus den einzelnen Apps:
+- **Loop Habit Tracker** (Android): `Einstellungen` › `Als CSV exportieren`. Wähle die ZIP-Datei, so wie sie ist. Gewohnheiten übernimmt Häufigkeit (jeden Tag, X-mal pro Woche oder Monat), Farbe, Menge und Ziel jeder Gewohnheit; erledigte und übersprungene Tage kommen mit, die automatischen Häkchen von Loop nicht.
+- **Habitica**: auf der Website `Einstellungen` › `Seitendaten` › `Daten exportieren`, und wähle die Benutzerdaten als JSON (oder den Aufgabenverlauf als CSV). Tägliche Aufgaben und positive Gewohnheiten kommen mit ihrem Verlauf; eine tägliche Aufgabe behält ihre Wochentage.
+- **Streaks** (iPhone): Exportiere deine Daten in den Einstellungen der App als CSV. Erledigte und übersprungene Tage kommen mit.
+- **Habitify**: Exportiere deine Daten als CSV. Erledigte und übersprungene Tage kommen mit; Gewohnheiten mit Werten werden zu Gewohnheiten der Art `Menge`.
+- **Jede CSV**: eine Datumsspalte mit einer Spalte für den Gewohnheitsnamen (und optional einem Status oder Wert) oder eine Zeile pro Datum mit einer Spalte pro Gewohnheit. Eine Zelle wie `yes`, `x`, `done` oder eine Zahl über 0 zählt als erledigt; `skip` zählt als übersprungen.
+
+Importierst du dieselbe Datei noch einmal, kommt nur Neues dazu, nie eine zweite Kopie. Tage, die du schon ausgefüllt oder abgewählt hast, bleiben, wie du sie gelassen hast, und deine eigenen Gewohnheiten werden nie geändert. Die Datei wird auf deinem Gerät gelesen; nichts wird irgendwohin hochgeladen außer über deine eigene Synchronisierung.
+
+## orOS-Datei speichern und öffnen
+Drücke oben auf das Zahnrad, dann auf `orOS-Datei (.oroshabits)`, um jede Gewohnheit mit all ihren Tagen (Häkchen, Mengen, übersprungene Tage und Notizen) als eine `.oroshabits`-Datei zu speichern, zum Beispiel um sie ohne Synchronisierung auf ein anderes Gerät zu bringen oder eine Kopie zu behalten. Die Datei ist ein normales ZIP: Entpackt enthält sie die Gewohnheiten als `content.json` sowie `preview/habits.md` und `preview/checkins.csv` für andere Programme. Sie ist nicht verschlüsselt, bewahre sie also sicher auf. Die Schritte-Einstellung bleibt auf diesem Gerät.
+
+`orOS-Datei öffnen…` (oder `Entpackter orOS-Ordner…`, oder „Öffnen mit“ orOS am Computer) zeigt, wie viele Gewohnheiten und Tage neu und wie viele schon hier sind; dann fügt `Hinzufügen` nur die neuen hinzu, mit ihren eigenen IDs: Dieselbe Datei erneut zu öffnen, fügt nichts hinzu. Eine Gewohnheit oder ein Tag, der schon hier ist, behält, was du hier eingegeben hast, und eine Gewohnheit, die du hier gelöscht hast, bleibt gelöscht, ohne ihre Tage; eine Datei löscht nie etwas. Hake `Mit neueren Versionen aktualisieren` an, damit Gewohnheiten und Tage, die in der Datei später geändert wurden, die Kopie der Datei übernehmen. `Rückgängig` in der Meldung entfernt, was hinzugefügt wurde.
+
+## Synchronisierung und Sicherung
+Deine Gewohnheiten, abgehakten Tage, Mengen, übersprungenen Tage, Notizen und die Schritte-Einstellung werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. Die offene Ansicht und der Zeitraum bleiben auf diesem Gerät. Um eine Kopie von allem zu behalten, nutze die [Sicherung](help:t/backup) von orOS oder speichere eine orOS-Datei (siehe „orOS-Datei speichern und öffnen“ oben). Um Gewohnheiten aus einer anderen App zu holen, siehe „Aus anderer App importieren“.
+
+## Tastenkürzel
+- [[N]] öffnet `Gewohnheit hinzufügen` (wenn du nicht gerade in einem Feld tippst).
+- [[Enter]] im Feld `Name` speichert die Gewohnheit; im Wert eines Tages speichert es den Tag.
+- [[Esc]] schließt das offene Fenster.
+
+## Tipps
+- Abgehakte Gewohnheiten erscheinen als Punkte im [Kalender](app:calendar) an ihrem Tag.
+- Nimm `Beliebiger Tag` für Dinge, die du oft, aber nicht an festen Tagen tun willst, und `Pro Woche`, wenn du eine Zahl im Kopf hast, etwa dreimal pro Woche ins Fitnessstudio.
+
+## Grenzen
+- Das Löschen einer Gewohnheit lässt sich nicht rückgängig machen.
+- Wechselt eine Gewohnheit zwischen `Ja / Nein` und `Menge`, bleiben die alten Tage erhalten, zählen aber nur für die Art, mit der sie angelegt wurden.
+- Ein Gerät mit einer älteren orOS-Version zeigt Mengen-, Pro-Woche- und Pro-Monat-Gewohnheiten als einfache an und zeigt übersprungene Tage, Notizen und Erinnerungen erst nach dem Update; deine anderen Geräte behalten sie. Bearbeitest du eine solche Gewohnheit auf dem älteren Gerät, wird sie wieder zu einer einfachen.

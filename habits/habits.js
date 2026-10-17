@@ -36,14 +36,20 @@
     var m = src.match(/[?&]v=([^&#]+)/);
     SCRIPT_V = m ? m[1] : "";
   })();
+  // orosI18n (../i18n.js): the full language code, a pack language included.
   var LANG = "en";
   try {
-    LANG = (window.parent && window.parent.orosLang) ||
-           window.orosLang ||
-           (localStorage.getItem("oros-lang") === "el" ? "el" : "en");
-    if (LANG !== "el" && LANG !== "en") LANG = "en";
+    if (window.orosI18n) LANG = window.orosI18n.lang();
+    else {
+      LANG = (window.parent && window.parent.orosLang) ||
+             window.orosLang ||
+             (localStorage.getItem("oros-lang") === "el" ? "el" : "en");
+      if (LANG !== "el" && LANG !== "en") LANG = "en";
+    }
   } catch (e) { LANG = "en"; }
   document.documentElement.lang = LANG;
+  // Dates and numbers in the language's locale (de-DE for German).
+  function loc() { return window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB"); }
 
   // ===== STRINGS =====
   var STRINGS = {
@@ -350,6 +356,7 @@
       "file.hint": "Όλες οι συνήθειες και οι μέρες τους σε ένα αρχείο. Το άνοιγμα προσθέτει μόνο όσα λείπουν από αυτή τη συσκευή· το αρχείο δεν είναι κρυπτογραφημένο."
     }
   };
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "habits", LANG);
 
   function t(key) {
     var p = STRINGS[LANG] || {};
@@ -365,12 +372,12 @@
   }
   // Localized month/day formatting WITHOUT hardcoded EN tables (audit #4)
   function monthYearLabel(d) {
-    var s = new Intl.DateTimeFormat(LANG === "el" ? "el-GR" : "en-GB",
+    var s = new Intl.DateTimeFormat(loc(),
       { month: "short", year: "numeric" }).format(d);
     return LANG === "el" ? s : s.replace(".", "");
   }
   function dayNum(d) {
-    return new Intl.DateTimeFormat(LANG === "el" ? "el-GR" : "en-GB",
+    return new Intl.DateTimeFormat(loc(),
       { day: "numeric" }).format(d);
   }
 
@@ -543,7 +550,7 @@
   // ===== NUMBERS =====
   function fmtNum(v) {
     if (v === null || v === undefined || !isFinite(v)) return "";
-    return new Intl.NumberFormat(LANG === "el" ? "el-GR" : "en-GB", { maximumFractionDigits: 2 }).format(v);
+    return new Intl.NumberFormat(loc(), { maximumFractionDigits: 2 }).format(v);
   }
   function fmtCompact(v) {
     if (v === null || !isFinite(v)) return "";
@@ -805,7 +812,7 @@
   }
 
   function shortMonth(d) {
-    return new Intl.DateTimeFormat(LANG === "el" ? "el-GR" : "en-GB",
+    return new Intl.DateTimeFormat(loc(),
       { month: "short" }).format(d).replace(".", "");
   }
   function shortDate(d) { return dayNum(d) + " " + shortMonth(d); }
@@ -1815,7 +1822,7 @@
     dayCtx = { id: h.id, k: k, base: base };
     var d = parseDateKey(k);
     document.getElementById("df-title").textContent = h.name;
-    document.getElementById("df-sub").textContent = new Intl.DateTimeFormat(LANG === "el" ? "el-GR" : "en-GB",
+    document.getElementById("df-sub").textContent = new Intl.DateTimeFormat(loc(),
       { weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(d);
     document.getElementById("df-numbox").hidden = !num;
     document.getElementById("df-donebox").hidden = num;
@@ -2275,7 +2282,7 @@
   // deleteHabit and clears the added days with the model's writes.
   var RP = window.OrosRecordPkg || null, HPK = window.OrosHabitsPackage || null;
   var recFile = RP && HPK && window.OrosBundle ? RP.ui(HPK.forLocal(function () { return M.canon(db); }), {
-    lang: function () { return LANG; },
+    lang: function () { return LANG === "el" ? "el" : "en"; },
     get: function () { return M.canon(db); },
     title: function () { return t("app.name"); },
     set: function (next) {
@@ -2307,7 +2314,7 @@
       if (any) save();
       render();
       refreshOpenDialogs();
-      transientNote(RP.str(LANG, "undone"));
+      transientNote(RP.str(LANG === "el" ? "el" : "en", "undone"));
     },
     toast: function (text, undo) {
       var used = false;
@@ -2658,7 +2665,7 @@
   function foldName(s) {
     s = String(s || "").toLowerCase();
     if (s.normalize) s = s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    return s.replace(/ς/g, "σ").replace(/\s+/g, " ").trim();
+    return s.replace(/\u03c2/g, "\u03c3").replace(/\s+/g, " ").trim();
   }
   function tickByName(x) {
     var want = foldName(x && typeof x.name === "string" ? x.name.slice(0, 200) : "");
