@@ -7646,3 +7646,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Flashcards: make cards from Notes, Wiki, Writer, Reader or Spreadsheet with Send to an app (`flashcards/make.js`, send/core.js target), see cards waiting in Today (`flashcards/today.js`, shell loads `flashcards/due.js`), and an optional daily study reminder through orOS notifications.
 - Files: `flashcards/{index.html,app.js,make.js,due.js,today.js,help.*.txt}`, `send/core.js`, `notifications.js`, `shell.js`, root `index.html`, precache, `tests/flashcards-make.test.js`, `tests/send.test.js`.
   - Tests: full suite green; Chromium 1280 EN / 360 EL. Not tested: the reminder with orOS closed (Web Push), real phones, Safari.
+
+### 2026-10-17 — Multitasking M3: app switcher (#506) — 3.04.00
+- Multitasking (experimental, off by default): with the switch on, a top-bar button with a count shows your open apps and switches between them, also with Ctrl+Alt+Shift+W; on phones it opens a bottom sheet where swiping a card closes an app; open apps get a dot in the menu and the Dock.
+- Files: `shell.js`, `launcher.js`, `style.css`, `translations.js`, `i18n/de/shell.js`, help shortcuts topic (EN/EL/DE), `settings/help.*.txt`, `tests/multitask.test.js`.
+  - Tests: full suite green; multitask gate 130 apps 0 problems; axe on the switcher; Chromium 1280 EN / 360 EL. Not tested: real phones (swipe), Firefox, Safari.
