@@ -1,0 +1,39 @@
+# Sicherung und Wiederherstellung
+Eine Sicherung ist eine einzige Datei mit all deinen orOS-Daten: jede App, deine Einstellungen und die Dateien in der App [Dateien](app:files). Bewahre eine an einem sicheren Ort auf, auch wenn du die Synchronisierung nutzt.
+
+## Eine Sicherung exportieren
+1. Öffne das Menü, wähle `Einstellungen` und geh zu `Sicherungen`.
+2. Tippe oder klicke auf `Sicherungsdatei exportieren`.
+3. Wähle, wo die Datei gespeichert wird, oder lass deinen Browser sie herunterladen. Sie heißt etwa `orOS-backup-2026-10-09.json`.
+
+Du kannst auch [[Ctrl+Alt+Shift+X]] drücken (`Datenbank exportieren`). Der Export funktioniert offline und braucht kein Dropbox.
+
+>! Eine Sicherungsdatei ist **nicht verschlüsselt**. Wer sie öffnet, kann deine Daten lesen. Bewahre sie sicher auf, wie die `Einstellungen` dich erinnern: `Eine Sicherungsdatei ist NICHT verschlüsselt. Bewahre sie sicher auf.`
+
+## Automatische Sicherungen in einen Ordner
+In Chrome, Edge und ähnlichen Browsern auf einem Computer kann orOS Sicherungen in einen Ordner deiner Wahl schreiben. Diese Optionen erscheinen nicht in Firefox, Safari oder auf Handys, weil diese Browser nicht in einen Ordner schreiben können. Dort exportierst du ab und zu von Hand.
+
+1. Stelle in den `Einstellungen` unter `Sicherungen` die `Automatische Sicherung` auf `Täglich`, `Wöchentlich` oder `Monatlich`.
+2. Tippe unter `Sicherungsordner` auf `Ordner wählen` und wähle einen Ordner. orOS schreibt sofort die erste Sicherung und zeigt `Sicherung in Ordner geschrieben`.
+
+Gut zu wissen:
+- orOS prüft beim Start und wenn du zu seinem Tab zurückkehrst, ob eine Sicherung fällig ist. Solange orOS geschlossen ist, läuft nichts.
+- Eine Datei pro Tag. Eine zweite Sicherung am selben Tag ersetzt die Datei dieses Tages.
+- [[Ctrl+Alt+Shift+S]] schreibt sofort eine Sicherung in den Ordner. In Browsern ohne Ordner-Sicherung exportiert es stattdessen die Datei.
+- `Nicht mehr nutzen` beendet das Schreiben in den Ordner. Deine alten Sicherungsdateien bleiben, wo sie sind.
+- Browser nehmen die Ordner-Erlaubnis manchmal zurück. Die `Einstellungen` zeigen dann `Der Browser braucht erneut deine Erlaubnis.` Tippe auf `Erneut erlauben`, um sie wieder zu erteilen.
+
+Siehst du `Schalte zuerst die automatische Sicherung ein` oder `Wähle zuerst einen Sicherungsordner`, stelle die fehlende Option ein und versuche es noch mal.
+
+## Aus einer Datei wiederherstellen
+1. Öffne die `Einstellungen`, geh zu `Sicherungen` und tippe auf `Sicherungsdatei importieren`.
+2. Wähle eine orOS-Sicherungsdatei.
+3. Du siehst `Daten importiert` mit der Zahl der aktualisierten Bereiche.
+
+Der Import löscht orOS nicht vorher. Wo eine App zusammenführen kann, wird die Sicherung mit dem kombiniert, was schon da ist, und Dateien aus der Sicherung kommen zur App Dateien dazu, ohne deine zu löschen. Ist die Synchronisierung an, gehen die wiederhergestellten Daten danach auch auf deine anderen Geräte.
+
+## Sicherungen in Dropbox
+Bei eingeschalteter Synchronisierung behält orOS außerdem ein paar verschlüsselte tägliche Kopien deiner Cloud-Daten in seinem Dropbox-Ordner (bis zu 7). Sie sind ein Sicherheitsnetz, und in orOS gibt es keinen Knopf, um sie wiederherzustellen. Deine eigene Exportdatei ist die Sicherung, die du in der Hand hast. Siehe [Synchronisierung zwischen Geräten](help:t/sync).
+
+## Sicherungen in Apps
+Manche Apps haben ihren eigenen Import oder Export, zum Beispiel um ein Notizbuch zu speichern oder Kontakte aus einem anderen Programm zu holen. Die Einzelheiten findest du auf der Hilfeseite der jeweiligen App. Die vollständige Sicherung oben deckt immer alle Apps auf einmal ab.

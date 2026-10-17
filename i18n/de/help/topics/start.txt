@@ -1,0 +1,52 @@
+# Erste Schritte mit orOS
+orOS ist ein kleines Betriebssystem, das in deinem Webbrowser läuft. Es hat einen eigenen Desktop, ein Menü voller Apps und deine Einstellungen, und es funktioniert auf Handys, Tablets und Computern, sogar ohne Verbindung.
+
+## Was orOS ist
+Alles in orOS läuft im Browser: Du musst dich nirgends anmelden und kein Konto anlegen. Deine Apps und Daten bleiben auf diesem Gerät, außer du entscheidest dich, sie zu synchronisieren. Du kannst [orOS auch als App installieren](help:t/install), damit es sich in einem eigenen Fenster öffnet. Für orOS auf einem USB-Stick, auf Android oder als einzelne Apps öffne das Menü und wähle **orOS holen**, oder geh zu [useoros.online/download](https://useoros.online/download/).
+
+## Die obere Leiste
+Die Leiste oben ist immer da:
+- Die Schaltfläche `orOS` links öffnet das [Menü](help:t/menu) mit all deinen Apps und den [Einstellungen](app:settings). Solange eine App offen ist, heißt sie `Zurück`.
+- Die Schaltfläche **?** öffnet die Hilfe auf der Seite der App, die du gerade nutzt, oder am Anfang der Hilfe, wenn du auf dem Desktop bist.
+- Die Uhrzeit öffnet [Zeit](app:time) und das Datum öffnet [Kalender](app:calendar).
+- Die Schaltfläche `EL` / `EN` wechselt die Sprache zwischen Griechisch und Englisch.
+- Die Glocke öffnet deine Benachrichtigungen. Eine Zahl darauf zeigt, wie viele du noch nicht gelesen hast. Siehe [Benachrichtigungen](help:t/notifications).
+- Der kleine Punkt zeigt den Status der Synchronisierung. Fahre mit der Maus darüber, um ihn zu lesen, und tippe oder klicke darauf, um sofort zu synchronisieren. Siehe [Synchronisierung](help:t/sync).
+- Ein kleines Wettersymbol zeigt die Temperatur einer deiner Städte. Es öffnet [Wetter](app:weather), wo du es ausblenden oder seine Stadt wählen kannst. Siehe [Darstellung](help:t/appearance).
+- Wenn du einen Sender in [Radio](app:radio) abspielst, zeigt ein Radio-Chip, was gerade läuft. Das Radio spielt weiter, während du andere Apps nutzt.
+
+## Apps öffnen und schließen
+1. Tippe oder klicke auf `orOS`, um das Menü zu öffnen.
+2. Öffne eine Kategorie und tippe oder klicke auf eine App, oder tippe ihren Namen in `Apps und deine Daten durchsuchen…`.
+3. Die App füllt den Bildschirm.
+4. Um zum Desktop zurückzukehren, tippe oder klicke auf `Zurück` oder drücke [[Esc]].
+
+Es ist immer nur eine App offen: Wenn du zum Desktop zurückgehst, schließt sie sich.
+
+Auf dem Desktop können auch [Haftnotizen](app:stickies) liegen: Drücke das runde `+` unten links oder [[Ctrl+Alt+Shift+N]], um eine hinzuzufügen.
+
+## Wo deine Daten liegen
+Deine Daten werden in diesem Browser auf diesem Gerät gespeichert. Nichts wird irgendwohin gesendet, außer du willst es:
+- Mit der [Synchronisierung](help:t/sync) kannst du deine eigene Dropbox verbinden und deine Geräte auf dem gleichen Stand halten. Deine Daten werden zuerst auf deinem Gerät verschlüsselt.
+- Mit `Sicherungsdatei exportieren` in den `Einstellungen` kannst du alles in einer Datei speichern und mit `Sicherungsdatei importieren` zurückholen. Siehe [Sicherung](help:t/backup).
+
+Mehr unter [Deine Daten und Dateien](help:t/data).
+
+>! Wenn du die Daten dieser Website in den Browser-Einstellungen löschst, sind deine orOS-Daten auf diesem Gerät weg. Behalte eine Sicherung oder schalte die Synchronisierung ein.
+
+## Mehr Hilfe
+Neu hier? [Mach die Tour](tour:start) durch die obere Leiste: ein paar kurze Schritte, die zeigen, wo alles ist. Was sich in den letzten Updates geändert hat, liest du unter [Neuigkeiten](help:t/whatsnew).
+
+Die Hilfe hat ein Suchfeld: Tippe ein Wort, um es auf allen Seiten zu finden. Ein paar gute Startpunkte:
+- [Neuigkeiten](help:t/whatsnew)
+- [Das Menü und die Schnellsuche](help:t/menu)
+- [orOS als App installieren](help:t/install)
+- [Darstellung](help:t/appearance)
+- [Synchronisierung zwischen Geräten](help:t/sync)
+- [Sicherung und Wiederherstellung](help:t/backup)
+- [Tastenkürzel](help:t/shortcuts)
+- [Datenschutz und Offline-Nutzung](help:t/privacy)
+- [Zurücksetzen auf Werkseinstellungen](help:t/reset)
+- [Fehlerbehebung](help:t/troubleshooting)
+
+> Drücke [[Ctrl+Alt+Shift+H]], um die Hilfe auf der Seite der App zu öffnen, die du gerade nutzt.

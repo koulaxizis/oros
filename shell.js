@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "2.96.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "2.98.01";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -2374,8 +2374,8 @@
     var rec = C.idleRecord(run, from, to, p.min * 60000);
     if (!rec) return;
     tsIdleSave(C.idlePut(tsIdleList(), rec));
-    if (state.running && state.running.id === "timesheet") {
-      var f = document.getElementById("app-frame");
+    if (appLive("timesheet")) {
+      var f = appFrameOf("timesheet");
       try {
         if (f && f.contentWindow && typeof f.contentWindow.__orosTimesheetIdle === "function") {
           f.contentWindow.__orosTimesheetIdle();
@@ -2438,8 +2438,8 @@
   }
   // Commands for the app: a live push, else a one-shot flag + open.
   function tsAppDo(liveFn, args, flagKey, flagVal) {
-    if (state.running && state.running.id === "timesheet") {
-      var f = document.getElementById("app-frame");
+    if (appLive("timesheet")) {
+      var f = appFrameOf("timesheet");
       try {
         if (f && f.contentWindow && typeof f.contentWindow[liveFn] === "function") {
           f.contentWindow[liveFn].apply(null, args);
@@ -2528,8 +2528,8 @@
     var has = false;
     for (var k = 0; k < state.apps.length; k++) if (state.apps[k].id === "timesheet") has = true;
     if (!has) return;
-    if (state.running && state.running.id === "timesheet") {
-      var f = document.getElementById("app-frame");
+    if (appLive("timesheet")) {
+      var f = appFrameOf("timesheet");
       try {
         if (f && f.contentWindow && typeof f.contentWindow.__orosTimesheetToggle === "function") {
           f.contentWindow.__orosTimesheetToggle();
@@ -2958,10 +2958,10 @@
     if (!app || app.type !== "internal") return;
     var t = null;
     try { t = JSON.parse(JSON.stringify(target === undefined ? null : target)); } catch (e) { t = null; }
-    if (state.running && state.running.id === appId) {
+    if (appLive(appId)) {
       closeMenu();
       menuReset();
-      var f = document.getElementById("app-frame");
+      var f = appFrameOf(appId);
       try {
         if (f && f.contentWindow && typeof f.contentWindow.__orosOpenAt === "function") {
           f.contentWindow.__orosOpenAt(t);
@@ -3418,9 +3418,8 @@
     e.preventDefault();
     openCmdBar();
   });
-  (function () {
-    var frame = document.getElementById("app-frame");
-    if (!frame) return;
+  // Every app frame gets the listener (one today, more with M2).
+  function cmdWireFrame(frame) {
     frame.addEventListener("load", function () {
       var w;
       try { w = frame.contentWindow; if (!w || !w.document) return; } catch (e) { return; }   // not same-origin
@@ -3432,7 +3431,8 @@
         openCmdBar();
       }, true);
     });
-  })();
+  }
+  appFrames().forEach(cmdWireFrame);
 
   // Ctrl+Alt+Shift+F: the menu opens with the cursor in the field,
   // from the desktop or from inside an app.
@@ -5795,10 +5795,15 @@
 
   // The language button: the next of the languages on offer (English
   // and Greek, plus every shown pack language and the active one).
+  // The bar button toggles English and the last other language picked
+  // on this device (Greek until another is picked); Settings lists all.
+  var LANG_ALT_LS = "oros-lang-alt";
   function langNext() {
-    var list = window.orosI18n ? window.orosI18n.choices().map(function (l) { return l.code; }) : ["en", "el"];
-    var i = list.indexOf(state.lang);
-    return list[(i + 1) % list.length] || "en";
+    if (state.lang !== "en") return "en";
+    var alt = null;
+    try { alt = localStorage.getItem(LANG_ALT_LS); } catch (e) {}
+    var shown = window.orosI18n ? window.orosI18n.choices().map(function (l) { return l.code; }) : ["en", "el"];
+    return alt && alt !== "en" && shown.indexOf(alt) !== -1 ? alt : "el";
   }
 
   // A language picked on this device (button, shortcut, Settings).
@@ -5807,8 +5812,10 @@
   // kept for offline use (langKeepOffline).
   function setLangUser(code) {
     if (!langKnown(code) || code === state.lang) return;
+    var alt = code !== "en" ? code : state.lang;
     state.lang = code;
     localStorage.setItem("oros-lang", state.lang);
+    if (alt !== "en") try { localStorage.setItem(LANG_ALT_LS, alt); } catch (e) {}
     noteLocalChange();            // user action → sync engine
     langApplyPack();
   }
@@ -7132,13 +7139,14 @@
     if (!w.on ||
         typeof w.lat !== "number" || typeof w.lon !== "number" ||
         isNaN(w.lat) || isNaN(w.lon)) return;
-    var f = document.getElementById("app-frame");
-    try {
-      if (f && f.contentWindow &&
-          typeof f.contentWindow.__orosWeatherUpdate === "function") {
-        f.contentWindow.__orosWeatherUpdate(w);
-      }
-    } catch (e) { /* app not running/loaded — tray keeps it */ }
+    appFrames().forEach(function (f) {
+      try {
+        if (f && f.contentWindow &&
+            typeof f.contentWindow.__orosWeatherUpdate === "function") {
+          f.contentWindow.__orosWeatherUpdate(w);
+        }
+      } catch (e) { /* app not running/loaded — tray keeps it */ }
+    });
   }
 
   // Morning briefing: one daily advisory between 08:00–11:59 local,
@@ -8306,10 +8314,10 @@
   function cycleCheckTick() {
     todoCheckTick();                  // Wave 7 — rides the same 60s throttle
     var payload = null;
-    if (state.running && state.running.id === "cycle") {
+    if (appLive("cycle")) {
       // App open: the iframe owns the decision (prefs + math +
       // i18n — all in cycle.js). Mid-load iframe → next tick.
-      var f = document.getElementById("app-frame");
+      var f = appFrameOf("cycle");
       try {
         if (f && f.contentWindow &&
             typeof f.contentWindow.__orosCycleCheck === "function") {
@@ -8893,8 +8901,8 @@
   // factory reset, δεν ταξιδεύει στο sync ποτέ) + άνοιγμα app.
   window.__orosOpenRadio = function (stationUuid) {
     if (typeof stationUuid !== "string" || !stationUuid) return;
-    if (state.running && state.running.id === "radio") {
-      var f = document.getElementById("app-frame");
+    if (appLive("radio")) {
+      var f = appFrameOf("radio");
       try {
         if (f && f.contentWindow &&
             typeof f.contentWindow.__orosRadioOpen === "function") {
@@ -9373,6 +9381,35 @@
     h.badge(n);
   }
 
+  // ---------- 10a. App frames (multitasking groundwork, wave M1) ----------
+  // Every shell path that talks to a running app finds its frame here,
+  // so the shell can later hold more than one live frame (the
+  // experimental multitasking switch, Settings › System, wave M2).
+  // Today there is exactly one frame, #app-frame, and it shows
+  // state.running: these helpers return what the old inline code did.
+  //   appFrames()     every live app frame (shown or hidden)
+  //   appFrameOf(id)  the frame that shows app `id`, or null
+  //   appLive(id)     app `id` is open in a frame
+  // window.__orosAppDocs() gives sync.js the documents of the live
+  // frames (SY-D5: a hidden frame is live, a closed one is not).
+  function appFrames() {
+    var f = document.getElementById("app-frame");
+    return f ? [f] : [];
+  }
+  function appFrameOf(id) {
+    if (!state.running || state.running.id !== id) return null;
+    return document.getElementById("app-frame");
+  }
+  function appLive(id) { return !!appFrameOf(id); }
+  window.__orosAppDocs = function () {
+    if (!state.running) return [];
+    var out = [];
+    appFrames().forEach(function (f) {
+      try { if (f.contentDocument) out.push(f.contentDocument); } catch (e) {}
+    });
+    return out;
+  };
+
   // ---------- 10. App opening (fullscreen takeover) ----------
 
   function openApp(app, at) {
@@ -9576,7 +9613,7 @@
       // Absolute URL: a relative "#…" would resolve against the SHELL
       // page and load the shell inside the frame.
       try {
-        var loc = document.getElementById("app-frame").contentWindow.location;
+        var loc = appFrameOf("help").contentWindow.location;
         loc.replace(String(loc.href).split("#")[0] + "#" + route);
       } catch (e) {}
       return;
@@ -9909,8 +9946,8 @@
   // open the app — it consumes the pending id at boot.
   window.__orosOpenContact = function (contactId) {
     if (typeof contactId !== "string" || !contactId) return;
-    if (state.running && state.running.id === "contacts") {
-      var f = document.getElementById("app-frame");
+    if (appLive("contacts")) {
+      var f = appFrameOf("contacts");
       try {
         if (f && f.contentWindow &&
             typeof f.contentWindow.__orosContactsOpen === "function") {
@@ -9938,8 +9975,8 @@
   // το factory reset, δεν ταξιδεύει ποτέ στο sync) + άνοιγμα app.
   window.__orosOpenCycle = function (entryId) {
     if (typeof entryId !== "string" || !entryId) return;
-    if (state.running && state.running.id === "cycle") {
-      var f = document.getElementById("app-frame");
+    if (appLive("cycle")) {
+      var f = appFrameOf("cycle");
       try {
         if (f && f.contentWindow &&
             typeof f.contentWindow.__orosCycleOpen === "function") {
@@ -9966,8 +10003,8 @@
   // Wave 4 — Mood deep-link bridge (ίδιο ακριβώς σχήμα).
   window.__orosOpenMood = function (entryId) {
     if (typeof entryId !== "string" || !entryId) return;
-    if (state.running && state.running.id === "mood") {
-      var f = document.getElementById("app-frame");
+    if (appLive("mood")) {
+      var f = appFrameOf("mood");
       try {
         if (f && f.contentWindow &&
             typeof f.contentWindow.__orosMoodOpen === "function") {
@@ -9995,8 +10032,8 @@
   // reset, δεν ταξιδεύει στο sync ποτέ) + άνοιγμα app.
   window.__orosOpenTime = function (pane) {
     if (typeof pane !== "string" || !pane) return;
-    if (state.running && state.running.id === "time") {
-      var f = document.getElementById("app-frame");
+    if (appLive("time")) {
+      var f = appFrameOf("time");
       try {
         if (f && f.contentWindow &&
             typeof f.contentWindow.__orosTimeOpen === "function") {
@@ -10029,8 +10066,8 @@
   // shell).
   window.__orosOpenTodo = function (listId) {
     if (typeof listId !== "string" || !listId) return;
-    if (state.running && state.running.id === "todo") {
-      var f = document.getElementById("app-frame");
+    if (appLive("todo")) {
+      var f = appFrameOf("todo");
       try {
         if (f && f.contentWindow &&
             typeof f.contentWindow.__orosTodoOpen === "function") {
@@ -10050,8 +10087,8 @@
   // To-Do; a stale bundle without the receiver ignores the id.
   window.__orosOpenFitness = function (workoutId) {
     if (typeof workoutId !== "string" || !/^[a-z0-9-]{1,40}$/.test(workoutId)) return;
-    if (state.running && state.running.id === "fitness") {
-      var f = document.getElementById("app-frame");
+    if (appLive("fitness")) {
+      var f = appFrameOf("fitness");
       try {
         if (f && f.contentWindow &&
             typeof f.contentWindow.__orosFitnessOpen === "function") {
@@ -10075,8 +10112,8 @@
   window.__orosOpenHabits = function (periodOffsetDays) {
     var n = parseInt(periodOffsetDays, 10);
     if (isNaN(n)) n = 0;
-    if (state.running && state.running.id === "habits") {
-      var f = document.getElementById("app-frame");
+    if (appLive("habits")) {
+      var f = appFrameOf("habits");
       try {
         if (f && f.contentWindow &&
             typeof f.contentWindow.__orosHabitsOpen === "function") {
@@ -10095,8 +10132,8 @@
   // του quote.js καταναλώνει one-shot).
   window.__orosOpenQuote = function (quoteId) {
     if (typeof quoteId !== "string" || !quoteId) return;
-    if (state.running && state.running.id === "quote") {
-      var f = document.getElementById("app-frame");
+    if (appLive("quote")) {
+      var f = appFrameOf("quote");
       try {
         if (f && f.contentWindow &&
             typeof f.contentWindow.__orosQuoteOpen === "function") {
@@ -10120,8 +10157,8 @@
   // by health.js at boot) + open.
   window.__orosOpenHealth = function (kind) {
     if (typeof kind !== "string" || !/^[a-z0-9-]{1,40}$/.test(kind)) return;
-    if (state.running && state.running.id === "health") {
-      var f = document.getElementById("app-frame");
+    if (appLive("health")) {
+      var f = appFrameOf("health");
       try {
         if (f && f.contentWindow &&
             typeof f.contentWindow.__orosHealthOpen === "function") {
@@ -10136,8 +10173,8 @@
 
   window.__orosOpenMinimalism = function (ymd) {
     if (typeof ymd !== "string" || !ymd) return;
-    if (state.running && state.running.id === "minimalism") {
-      var f = document.getElementById("app-frame");
+    if (appLive("minimalism")) {
+      var f = appFrameOf("minimalism");
       try {
         if (f && f.contentWindow &&
             typeof f.contentWindow.__orosMinimalismOpen === "function") {
@@ -10159,8 +10196,8 @@
   // shot, consumed by plants.js at boot) + open.
   window.__orosOpenPlants = function (target) {
     if (typeof target !== "string" || !/^[a-z0-9]{1,40}$/.test(target)) return;
-    if (state.running && state.running.id === "plants") {
-      var f = document.getElementById("app-frame");
+    if (appLive("plants")) {
+      var f = appFrameOf("plants");
       try {
         if (f && f.contentWindow &&
             typeof f.contentWindow.__orosPlantsOpen === "function") {
@@ -10179,8 +10216,8 @@
   // local, one-shot, consumed by chores.js at boot) + open.
   window.__orosOpenChores = function (target) {
     if (typeof target !== "string" || !/^(today|\d{4}-\d{2}-\d{2})$/.test(target)) return;
-    if (state.running && state.running.id === "chores") {
-      var f = document.getElementById("app-frame");
+    if (appLive("chores")) {
+      var f = appFrameOf("chores");
       try {
         if (f && f.contentWindow &&
             typeof f.contentWindow.__orosChoresOpen === "function") {
@@ -10199,8 +10236,8 @@
   var podcastsPendingAdd = null;
   window.__orosOpenPodcastsAdd = function (url) {
     if (typeof url !== "string" || url.length > 2000 || !/^https?:\/\//i.test(url)) return;
-    if (state.running && state.running.id === "podcasts") {
-      var f = document.getElementById("app-frame");
+    if (appLive("podcasts")) {
+      var f = appFrameOf("podcasts");
       try {
         if (f && f.contentWindow &&
             typeof f.contentWindow.__orosPodcastsAdd === "function") {
@@ -10225,8 +10262,8 @@
   // garage.js at boot) + open.
   window.__orosOpenGarage = function (target) {
     if (typeof target !== "string" || !/^[a-z0-9]{1,40}$/.test(target)) return;
-    if (state.running && state.running.id === "garage") {
-      var f = document.getElementById("app-frame");
+    if (appLive("garage")) {
+      var f = appFrameOf("garage");
       try {
         if (f && f.contentWindow &&
             typeof f.contentWindow.__orosGarageOpen === "function") {
@@ -10247,8 +10284,8 @@
   window.__orosOpenTravel = function (tripId, tab) {
     if (typeof tripId !== "string" || !/^[a-z0-9][a-z0-9-]{3,40}$/.test(tripId)) return;
     tab = tab === "pack" || tab === "plan" ? tab : "";
-    if (state.running && state.running.id === "travel") {
-      var f = document.getElementById("app-frame");
+    if (appLive("travel")) {
+      var f = appFrameOf("travel");
       try {
         if (f && f.contentWindow &&
             typeof f.contentWindow.__orosTravelOpen === "function") {
@@ -10267,8 +10304,8 @@
   // shot, consumed by petcare.js at boot) + open.
   window.__orosOpenPetcare = function (target) {
     if (typeof target !== "string" || !/^[a-z0-9]{1,40}$/.test(target)) return;
-    if (state.running && state.running.id === "petcare") {
-      var f = document.getElementById("app-frame");
+    if (appLive("petcare")) {
+      var f = appFrameOf("petcare");
       try {
         if (f && f.contentWindow &&
             typeof f.contentWindow.__orosPetcareOpen === "function") {
@@ -10308,8 +10345,8 @@
   window.__orosOpenMaps = function (lat, lon, label) {
     if (typeof lat !== "number" || typeof lon !== "number" ||
         isNaN(lat) || isNaN(lon)) return;
-    if (state.running && state.running.id === "maps") {
-      var f = document.getElementById("app-frame");
+    if (appLive("maps")) {
+      var f = appFrameOf("maps");
       try {
         if (f && f.contentWindow &&
             typeof f.contentWindow.__orosMapsOpen === "function") {
@@ -10352,8 +10389,8 @@
       q: query.trim(),
       label: (typeof label === "string") ? label : ""
     };
-    if (state.running && state.running.id === "maps") {
-      var f = document.getElementById("app-frame");
+    if (appLive("maps")) {
+      var f = appFrameOf("maps");
       try {
         if (f && f.contentWindow &&
             typeof f.contentWindow.__orosMapsOpen === "function") {
@@ -10377,8 +10414,8 @@
     if (typeof boardId !== "string" || !boardId ||
         typeof colId   !== "string" || !colId ||
         typeof cardId  !== "string" || !cardId) return;
-    if (state.running && state.running.id === "kanban") {
-      var f = document.getElementById("app-frame");
+    if (appLive("kanban")) {
+      var f = appFrameOf("kanban");
       try {
         if (f && f.contentWindow &&
             typeof f.contentWindow.__orosKanbanOpen === "function") {
@@ -10415,8 +10452,8 @@
   window.__orosOpenCalendarNew = function (p) {
     if (!p || typeof p !== "object" || typeof p.date !== "string") return;
     if (!/^\d{4}-\d{2}-\d{2}$/.test(p.date)) return;   // strict date guard
-    if (state.running && state.running.id === "calendar") {
-      var f = document.getElementById("app-frame");
+    if (appLive("calendar")) {
+      var f = appFrameOf("calendar");
       try {
         if (f && f.contentWindow &&
             typeof f.contentWindow.__orosCalendarNew === "function") {
@@ -10463,8 +10500,8 @@
     var has = false;
     for (var i = 0; i < state.apps.length; i++) if (state.apps[i].id === "budget") has = true;
     if (!has) return false;
-    if (state.running && state.running.id === "budget") {
-      var f = document.getElementById("app-frame");
+    if (appLive("budget")) {
+      var f = appFrameOf("budget");
       try {
         if (f && f.contentWindow &&
             typeof f.contentWindow.__orosBudgetNew === "function") {
@@ -10514,8 +10551,8 @@
     var has = false;
     for (var k = 0; k < state.apps.length; k++) if (state.apps[k].id === "quote") has = true;
     if (!has) return false;
-    if (state.running && state.running.id === "quote") {
-      var f = document.getElementById("app-frame");
+    if (appLive("quote")) {
+      var f = appFrameOf("quote");
       try {
         if (f && f.contentWindow &&
             typeof f.contentWindow.__orosQuoteNew === "function") {
@@ -10551,8 +10588,8 @@
     }
     if (!evId || !ymd || !/^\d{4}-\d{2}-\d{2}$/.test(ymd)) return;
 
-    if (state.running && state.running.id === "calendar") {
-      var f = document.getElementById("app-frame");
+    if (appLive("calendar")) {
+      var f = appFrameOf("calendar");
       try {
         if (f && f.contentWindow &&
             typeof f.contentWindow.__calDeepLink === "function") {
@@ -10581,8 +10618,8 @@
       payload = { channelId: channelIdOrPayload };
     }
     
-    if (state.running && state.running.id === "television") {
-      var f = document.getElementById("app-frame");
+    if (appLive("television")) {
+      var f = appFrameOf("television");
       try {
         if (f && f.contentWindow &&
             typeof f.contentWindow.__orosTelevisionOpen === "function") {

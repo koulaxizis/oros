@@ -2,9 +2,9 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 0 of 26497 (0%)
-- Help pages: 0 of 145 (0%)
-- Shown in the language list: not yet (try it with ?lang=de)
+- Strings: 1266 of 26559 (4%)
+- Help pages: 17 of 144 (11%)
+- Shown in the language list: yes
 
 Apps marked "English for now" do not load language packs yet: their
 text is still written in the code. They switch over wave by wave
@@ -41,9 +41,9 @@ text is still written in the code. They switch over wave by wave
 | dots | English for now | 0 / 54 |
 | familytree | English for now | 0 / 197 |
 | feeds | English for now | 0 / 319 |
-| files | English for now | 0 / 340 |
+| files | 100% | 343 / 343 |
 | fitness | English for now | 0 / 344 |
-| flashcards | 0% | 0 / 90 |
+| flashcards | 0% | 0 / 149 |
 | flow | English for now | 0 / 75 |
 | g2048 | English for now | 0 / 54 |
 | gamecenter | English for now | 0 / 99 |
@@ -52,7 +52,7 @@ text is still written in the code. They switch over wave by wave
 | habits | English for now | 0 / 159 |
 | hangman | English for now | 0 / 52 |
 | health | English for now | 0 / 595 |
-| help | 0% | 0 / 15 |
+| help | 100% | 15 / 15 |
 | hexagon | English for now | 0 / 59 |
 | invoices | English for now | 0 / 512 |
 | jigsaw | English for now | 0 / 85 |
@@ -101,10 +101,10 @@ text is still written in the code. They switch over wave by wave
 | rps | English for now | 0 / 59 |
 | scanpdf | English for now | 0 / 231 |
 | scores | English for now | 0 / 147 |
-| settings | 0% | 0 / 475 |
+| settings | 100% | 475 / 475 |
 | share | English for now | 0 / 152 |
 | shelf | English for now | 0 / 285 |
-| shell | 0% | 0 / 433 |
+| shell | 100% | 433 / 433 |
 | signature | English for now | 0 / 195 |
 | simon | English for now | 0 / 49 |
 | sky | English for now | 0 / 149 |
@@ -175,7 +175,6 @@ text is still written in the code. They switch over wave by wave
 - help/dots.txt
 - help/familytree.txt
 - help/feeds.txt
-- help/files.txt
 - help/fitness.txt
 - help/flashcards.txt
 - help/flow.txt
@@ -186,7 +185,6 @@ text is still written in the code. They switch over wave by wave
 - help/habits.txt
 - help/hangman.txt
 - help/health.txt
-- help/help.txt
 - help/hexagon.txt
 - help/invoices.txt
 - help/jigsaw.txt
@@ -235,7 +233,6 @@ text is still written in the code. They switch over wave by wave
 - help/rps.txt
 - help/scanpdf.txt
 - help/scores.txt
-- help/settings.txt
 - help/shelf.txt
 - help/signature.txt
 - help/simon.txt
@@ -276,18 +273,3 @@ text is still written in the code. They switch over wave by wave
 - help/writer.txt
 - help/xeri.txt
 - help/zen.txt
-- help/topics/appearance.txt
-- help/topics/backup.txt
-- help/topics/data.txt
-- help/topics/faq.txt
-- help/topics/install.txt
-- help/topics/menu.txt
-- help/topics/notifications.txt
-- help/topics/privacy.txt
-- help/topics/reset.txt
-- help/topics/share.txt
-- help/topics/shortcuts.txt
-- help/topics/start.txt
-- help/topics/sync.txt
-- help/topics/troubleshooting.txt
-- help/topics/whatsnew.txt
