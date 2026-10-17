@@ -12,16 +12,31 @@
 (function (root) {
   "use strict";
   var KEY = "oros-petcare-data";
+  // Pack "petcare": the shell runs this file, so a pack language reads
+  // the "petcare" pack when the shell has it, else English.
   var W = {
-    en: { due: "{name}: {what}", med: "{name}: last day of {what}", bday: "🎂 {name} turns {n}",
-          deworm: "deworming", recheck: "recheck", food: "food runs out",
-          care: { bath: "bath", nails: "nail trim", brush: "brushing", teeth: "teeth", ears: "ear cleaning",
-                  litter: "litter change", cage: "cage cleaning", tank: "tank water change" } },
-    el: { due: "{name}: {what}", med: "{name}: τελευταία μέρα για {what}", bday: "🎂 {name}: γενέθλια ({n})",
-          deworm: "αποπαρασίτωση", recheck: "επανεξέταση", food: "νέο σακί τροφής",
-          care: { bath: "μπάνιο", nails: "κόψιμο νυχιών", brush: "βούρτσισμα", teeth: "δόντια", ears: "καθάρισμα αυτιών",
-                  litter: "αλλαγή άμμου", cage: "καθάρισμα κλουβιού", tank: "αλλαγή νερού ενυδρείου" } }
+    en: { "today.due": "{name}: {what}", "today.med": "{name}: last day of {what}", "today.bday": "🎂 {name} turns {n}",
+          "today.deworm": "deworming", "today.recheck": "recheck", "today.food": "food runs out",
+          "today.care.bath": "bath", "today.care.nails": "nail trim", "today.care.brush": "brushing", "today.care.teeth": "teeth",
+          "today.care.ears": "ear cleaning", "today.care.litter": "litter change", "today.care.cage": "cage cleaning",
+          "today.care.tank": "tank water change" },
+    el: { "today.due": "{name}: {what}", "today.med": "{name}: τελευταία μέρα για {what}", "today.bday": "🎂 {name}: γενέθλια ({n})",
+          "today.deworm": "αποπαρασίτωση", "today.recheck": "επανεξέταση", "today.food": "νέο σακί τροφής",
+          "today.care.bath": "μπάνιο", "today.care.nails": "κόψιμο νυχιών", "today.care.brush": "βούρτσισμα", "today.care.teeth": "δόντια",
+          "today.care.ears": "καθάρισμα αυτιών", "today.care.litter": "αλλαγή άμμου", "today.care.cage": "καθάρισμα κλουβιού",
+          "today.care.tank": "αλλαγή νερού ενυδρείου" }
   };
+  function words(lang) {
+    var I = root && root.orosI18n;
+    if (I && I.known(lang) && !W[lang]) I.table(W, "petcare", lang);
+    var tb = W[lang] || W.en, w = { care: {} };
+    Object.keys(W.en).forEach(function (k) {
+      var v = tb[k] !== undefined ? tb[k] : W.en[k];
+      if (k.indexOf("today.care.") === 0) w.care[k.slice(11)] = v;
+      else w[k.slice(6)] = v;
+    });
+    return w;
+  }
   function fill(s, v) { return s.replace("{name}", v.name).replace("{what}", v.what || "").replace("{n}", v.n || ""); }
   function what(w, it) {
     if (it.kind === "vacc") return it.label;
@@ -37,7 +52,7 @@
     collect: function (ctx) {
       var C = root.OrosPetcareCore, raw = ctx.readJSON(KEY);
       if (!C || !raw || !Array.isArray(raw.pets) || !raw.pets.length) return [];
-      var w = W[ctx.lang] || W.en;
+      var w = words(ctx.lang);
       var data = C.merge(raw, raw, ctx.now), out = [];
       C.items(data, ctx.today).forEach(function (it) {
         if (it.diff > ctx.horizon) return;

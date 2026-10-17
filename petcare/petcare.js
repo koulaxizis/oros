@@ -52,8 +52,8 @@
       return l === "el" ? "el" : "en";
     } catch (e) { return "en"; }
   }
-  var LANG = appLang();
-  var LOCALE = LANG === "el" ? "el-GR" : "en-GB";
+  var LANG = window.orosI18n ? window.orosI18n.lang() : appLang();
+  var LOCALE = window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB");
 
   var STRINGS = {
     en: {
@@ -257,6 +257,7 @@
       "live.done": "{what} έγινε για {name}"
     }
   };
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "petcare", LANG);
 
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;
@@ -301,7 +302,7 @@
     return Date.now().toString(36) + r[0].toString(36) + r[1].toString(36).slice(0, 4);
   }
   function todayYmd() { return C.ymdOf(new Date()); }
-  function spName(sp) { var s = C.SPECIES[sp] || C.SPECIES.other; return s[LANG] || s.en; }
+  function spName(sp) { return C.label("species." + (C.SPECIES[sp] ? sp : "other"), LANG); }
   function spEm(sp) { return (C.SPECIES[sp] || C.SPECIES.other).em; }
   function isSmall(p) { return !!SMALL[p.sp]; }
   function nf(v, max) {
@@ -1756,7 +1757,7 @@
 
     if (kind === "vacc") {
       var vs = C.VACCINES[pet.sp] || [];
-      form.appendChild(nameField("rf.name", t("rf.namePh"), vs.map(function (x) { return x[LANG] || x.en; })));
+      form.appendChild(nameField("rf.name", t("rf.namePh"), vs.map(function (x) { return C.label("vaccine." + x.id, LANG); })));
       var row = el("div", "fld-row");
       row.appendChild(field(t("rf.date"), f.d, "pr-d"));
       f.nx = dateInput(v.nx || "");
@@ -1767,7 +1768,7 @@
       // A ready vaccine name → its usual gap (only when no next date yet)
       f.n.addEventListener("change", function () {
         var hit = null;
-        vs.forEach(function (x) { if ((x[LANG] || x.en) === f.n.value) hit = x; });
+        vs.forEach(function (x) { if (C.label("vaccine." + x.id, LANG) === f.n.value) hit = x; });
         if (hit && !f.nx.value) f.nx.value = C.addDays(C.isYmd(f.d.value) ? f.d.value : today, hit.days);
       });
       var row2 = el("div", "fld-row");
