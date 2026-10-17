@@ -1,10 +1,17 @@
 {
  "code": "de",
  "files": [
+  "calendar.js",
+  "contacts.js",
   "files.js",
+  "help/calendar.txt",
+  "help/contacts.txt",
   "help/files.txt",
   "help/help.txt",
+  "help/kanban.txt",
+  "help/notes.txt",
   "help/settings.txt",
+  "help/todo.txt",
   "help/topics/appearance.txt",
   "help/topics/backup.txt",
   "help/topics/data.txt",
@@ -20,7 +27,10 @@
   "help/topics/sync.txt",
   "help/topics/troubleshooting.txt",
   "help.js",
+  "kanban.js",
+  "notes.js",
   "settings.js",
-  "shell.js"
+  "shell.js",
+  "todo.js"
  ]
 }

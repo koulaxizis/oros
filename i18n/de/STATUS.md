@@ -2,8 +2,8 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 1266 of 26559 (4%)
-- Help pages: 17 of 144 (11%)
+- Strings: 2581 of 26669 (9%)
+- Help pages: 22 of 144 (15%)
 - Shown in the language list: yes
 
 Apps marked "English for now" do not load language packs yet: their
@@ -23,14 +23,14 @@ text is still written in the code. They switch over wave by wave
 | bubble | English for now | 0 / 53 |
 | budget | English for now | 0 / 496 |
 | calculator | English for now | 0 / 133 |
-| calendar | English for now | 0 / 339 |
+| calendar | 100% | 370 / 370 |
 | certificates | English for now | 0 / 343 |
 | characters | English for now | 0 / 73 |
 | checkers | English for now | 0 / 72 |
 | chess | English for now | 0 / 401 |
 | chores | English for now | 0 / 156 |
 | connect4 | English for now | 0 / 62 |
-| contacts | English for now | 0 / 285 |
+| contacts | 100% | 293 / 293 |
 | converter | English for now | 0 / 67 |
 | crm | English for now | 0 / 417 |
 | crossword | English for now | 0 / 170 |
@@ -56,7 +56,7 @@ text is still written in the code. They switch over wave by wave
 | hexagon | English for now | 0 / 59 |
 | invoices | English for now | 0 / 512 |
 | jigsaw | English for now | 0 / 85 |
-| kanban | English for now | 0 / 229 |
+| kanban | 100% | 272 / 272 |
 | labels | English for now | 0 / 88 |
 | layout | English for now | 0 / 415 |
 | library | English for now | 0 / 307 |
@@ -81,7 +81,7 @@ text is still written in the code. They switch over wave by wave
 | netizen | English for now | 0 / 121 |
 | newsletter | English for now | 0 / 594 |
 | nonogram | English for now | 0 / 70 |
-| notes | English for now | 0 / 172 |
+| notes | 100% | 172 / 172 |
 | oracle | English for now | 0 / 38 |
 | passwords | English for now | 0 / 321 |
 | petcare | English for now | 0 / 317 |
@@ -128,7 +128,7 @@ text is still written in the code. They switch over wave by wave
 | time | English for now | 0 / 408 |
 | timesheet | English for now | 0 / 230 |
 | today | English for now | 0 / 82 |
-| todo | English for now | 0 / 180 |
+| todo | 100% | 208 / 208 |
 | travel | English for now | 0 / 422 |
 | trees | English for now | 0 / 76 |
 | typewriter | English for now | 0 / 46 |
@@ -157,14 +157,12 @@ text is still written in the code. They switch over wave by wave
 - help/bubble.txt
 - help/budget.txt
 - help/calculator.txt
-- help/calendar.txt
 - help/certificates.txt
 - help/characters.txt
 - help/checkers.txt
 - help/chess.txt
 - help/chores.txt
 - help/connect4.txt
-- help/contacts.txt
 - help/converter.txt
 - help/crm.txt
 - help/crossword.txt
@@ -188,7 +186,6 @@ text is still written in the code. They switch over wave by wave
 - help/hexagon.txt
 - help/invoices.txt
 - help/jigsaw.txt
-- help/kanban.txt
 - help/labels.txt
 - help/layout.txt
 - help/library.txt
@@ -213,7 +210,6 @@ text is still written in the code. They switch over wave by wave
 - help/netizen.txt
 - help/newsletter.txt
 - help/nonogram.txt
-- help/notes.txt
 - help/oracle.txt
 - help/passwords.txt
 - help/petcare.txt
@@ -257,7 +253,6 @@ text is still written in the code. They switch over wave by wave
 - help/time.txt
 - help/timesheet.txt
 - help/today.txt
-- help/todo.txt
 - help/travel.txt
 - help/trees.txt
 - help/typewriter.txt

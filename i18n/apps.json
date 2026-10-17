@@ -1,6 +1,24 @@
 {
  "apps": [
   {
+   "app": "calendar",
+   "files": [
+    "calendar/calendar.js",
+    "calendar/package.js",
+    "calendar/today.js"
+   ]
+  },
+  {
+   "app": "contacts",
+   "files": [
+    "contacts/contacts.js",
+    "contacts/keep.js",
+    "contacts/package.js",
+    "contacts/search.js",
+    "contacts/today.js"
+   ]
+  },
+  {
    "app": "files",
    "files": [
     "files/drive.js",
@@ -22,6 +40,21 @@
    ]
   },
   {
+   "app": "kanban",
+   "files": [
+    "kanban/kanban.js",
+    "kanban/tools.js"
+   ]
+  },
+  {
+   "app": "notes",
+   "files": [
+    "notes/notes.js",
+    "notes/platforms.js",
+    "notes/search.js"
+   ]
+  },
+  {
    "app": "settings",
    "files": [
     "settings/core.js",
@@ -32,6 +65,16 @@
    "app": "shell",
    "files": [
     "translations.js"
+   ]
+  },
+  {
+   "app": "todo",
+   "files": [
+    "todo/gtasks.js",
+    "todo/import.js",
+    "todo/package.js",
+    "todo/platforms.js",
+    "todo/todo.js"
    ]
   }
  ]
