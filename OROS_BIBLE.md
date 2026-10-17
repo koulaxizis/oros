@@ -202,6 +202,13 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 
 **There is NO `window.__orosNotify`** in shell.js or notifications.js (0.38.12). Older Bible text used it; see the Part X audit item.
 
+### App frames (multitasking groundwork, wave M1)
+
+Multitasking (several live app frames) is an approved EXPERIMENT, off by default, per device (Chris 2026-10-17; plan `/mnt/project-files/multitasking/plan.md`). With it off, the shell must behave exactly as with the single `#app-frame`. Since M1 every shell path that talks to a running app goes through one place in `shell.js` (section 10a):
+- `appFrames()` every live app frame, `appFrameOf(id)` the frame showing app `id` (or null), `appLive(id)`. A bridge that pushes into a running app is `if (appLive("x")) { var f = appFrameOf("x"); … }`, never `state.running.id === "x"` + `getElementById("app-frame")` (guarded by `tests/multitask.test.js`). `state.running` stays "the app in front".
+- `window.__orosAppDocs()` = documents of the live frames (none while nothing runs). `sync.js` SY-D5 keeps a live slice while its document is in that list (a hidden frame is live, a closed one is not) and finds a registration's owner by the realm of its getter (`ownerDocOf`); without the helper it falls back to `#app-frame` as before. `mail/notify.js` `mailOpen()` reads the same list.
+- Tools (CI/local only, `.github/qa/`): `memory.js` (per-app JS + DOM bytes via `measureUserAgentSpecificMemory` on a cross-origin-isolated local server, canvas pixels, WebGL, apps not freed after close; `--stack` = process memory of several apps alive together) and `writers.js` (static scan: who writes an app's localStorage keys from another window; verdicts ok / handoff / host / listens / check). Reports: `/mnt/project-files/multitasking/`.
+
 ### `shell.js` [verified 2026-10-05, `APP_VERSION` 0.39.06]
 
 - One IIFE + `"use strict"`. `APP_VERSION` lives here only (R23; 0.39.06 when first read, 0.39.18 in the copy sent back for reconciliation, 0.39.19 delivered 2026-10-07). `ICONS` has 25 entries (24 apps + `mail`).
@@ -7592,3 +7599,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Flashcards: pictures and sounds on cards (pick, paste, drop or record; stored once by content under `/internal/Flashcards/Media/`, pictures redrawn without EXIF/location, no SVG), Read aloud with the device's own voices only (`localService === true`, NO GOOGLE LOGGING rule), a Browse list with actions on many cards (move, tags, suspend, resume, delete), Hide until tomorrow and Suspend on the study screen, bold, italic and lists in fields.
 - Files: `flashcards/{index.html,app.css,app.js,core.js,media.js,help.*.txt}`, Bible registry row, tests, What's new.
   - Tests: full suite green; Chromium 1280 EN / 360 EL. Not tested: recording on real phones, voices on Safari, very large media folders over Vault Drive.
+
+### 2026-10-17 — Multitasking M1: one place for app frames, sync over live frame documents (#499) — 2.98.01
+- Groundwork for experimental multitasking (Chris approved the plan 2026-10-17 12:25, /mnt/project-files/multitasking/plan.md): one place for app frames in the shell (`appFrameOf` / `appLive`, 30 bridges moved to it), SY-D5 sync keeps hidden frames live instead of one frame; nothing changes for users (the switch comes in M2). Memory and writer audits in `.github/qa/memory.js` and `.github/qa/writers.js`.
+- Files: `shell.js`, `sync.js`, `mail/notify.js`, `.github/qa/{memory,writers}.js`, `tests/multitask.test.js`, Bible.
+  - Tests: full suite green (9 new in `tests/multitask.test.js`); Chromium shell E2E. Not tested: real phones, Firefox, Safari.
