@@ -635,7 +635,7 @@
 
   // Notifications with orOS closed (webpush.js): optional, off by
   // default, per device; hidden in the Android app (it rings itself).
-  var pushOff = null, pushNote = "";
+  var pushOff = null, pushNote = "", pushCode = "";
   function webPush() {
     var p = parentWin();
     try { return p && p.orosPush && typeof p.orosPush.enable === "function" ? p.orosPush : null; } catch (e) { return null; }
@@ -652,10 +652,11 @@
     }
     var st = W.state();
     c.appendChild(row(t("n.push"), switchBtn(st.on, "n.push", function (v) {
-      pushNote = "";
+      pushNote = ""; pushCode = "";
       (v ? W.enable() : W.disable()).catch(function (e) {
         var code = e && e.code;
         pushNote = code === "denied" ? "n.push.denied" : (code === "unsupported" || code === "nosubscribe") ? "n.push.unsupported" : "n.push.unavailable";
+        pushCode = pushNote === "n.push.unavailable" && typeof code === "string" ? code.replace(/[^a-z-]/g, "").slice(0, 20) : "";
         render();
       }).then(function () { render(); });
     }, t("n.push")), { hint: t("n.push.hint") }));
@@ -665,7 +666,8 @@
         when: new Date(st.at).toLocaleString(document.documentElement.lang || undefined, { dateStyle: "short", timeStyle: "short" }) })));
     }
     if (st.on && st.err && st.err !== "rate") c.appendChild(el("div", "hint", t("n.push.failed")));
-    if (pushNote) c.appendChild(el("div", "hint", t(pushNote)));
+    // The relay's code ("nopush", "rate", "network"…) tells what to fix.
+    if (pushNote) c.appendChild(el("div", "hint", t(pushNote) + (pushCode && pushNote === "n.push.unavailable" ? " (" + pushCode + ")" : "")));
     var devs = W.devices ? W.devices() : [];
     if (devs.length) {
       var dl = el("div", "checks");
@@ -684,7 +686,11 @@
       c.appendChild(actions(button(t("n.push.test"), "n.push.test", function () {
         W.test(t("n.push.test.title"), t("n.push.test.body")).then(function () {
           pushNote = "n.push.test.sent"; render();
-        }, function () { pushNote = "n.push.unavailable"; render(); });
+        }, function (e) {
+          pushNote = "n.push.unavailable";
+          pushCode = e && typeof e.code === "string" ? e.code.replace(/[^a-z-]/g, "").slice(0, 20) : "";
+          render();
+        });
       })));
     }
     host.appendChild(c);
