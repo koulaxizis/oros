@@ -77,7 +77,11 @@
       return l === "el" ? "el" : "en";
     } catch (e) { return "en"; }
   }
-  var LANG = appLang();
+  // orosI18n (../i18n.js): the full language code, a pack language included.
+  var LANG = window.orosI18n ? window.orosI18n.lang() : appLang();
+  // "el" or "en", for shared modules that pick between two inline tables.
+  var LANG2 = LANG === "el" ? "el" : "en";
+  function loc() { return window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB"); }
 
   var STRINGS = {
     en: {
@@ -335,6 +339,7 @@
       "months": "Ιαν,Φεβ,Μαρ,Απρ,Μαΐ,Ιουν,Ιουλ,Αυγ,Σεπ,Οκτ,Νοε,Δεκ"
     }
   };
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "shelf", LANG);
 
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;
@@ -379,7 +384,7 @@
   }
   function fmtNum(n, dec) {
     try {
-      return Number(n).toLocaleString(LANG === "el" ? "el-GR" : "en-GB",
+      return Number(n).toLocaleString(loc(),
         { minimumFractionDigits: dec || 0, maximumFractionDigits: dec || 0 });
     } catch (e) { return String(n); }
   }
@@ -2328,21 +2333,21 @@
       return fetchJson(lookupUrl(type, title, by), null, signal).then(function (j) { return parseLookup(type, j); });
     }
     if (src === "tmdb") {
-      var rq = tmdbSearchReq(type, title, tmdbKey(), LANG);
+      var rq = tmdbSearchReq(type, title, tmdbKey(), LANG2);
       if (!rq) return Promise.reject(new LookupError("auth"));
       return fetchJson(rq.url, rq.headers, signal).then(function (j) { return parseTmdbSearch(type, j); });
     }
-    return fetchJson(wdSearchUrl(title, LANG), null, signal).then(function (j) {
+    return fetchJson(wdSearchUrl(title, LANG2), null, signal).then(function (j) {
       var hits = parseWdSearch(j);
       if (!hits.length) return [];
-      return fetchJson(wdEntitiesUrl(hits.map(function (h) { return h.id; }), LANG), null, signal).then(function (k) {
-        var list = parseWdEntities(type, k, hits, LANG);
+      return fetchJson(wdEntitiesUrl(hits.map(function (h) { return h.id; }), LANG2), null, signal).then(function (k) {
+        var list = parseWdEntities(type, k, hits, LANG2);
         var ids = [];
         list.forEach(function (c) { c.byIds.forEach(function (q) { if (ids.indexOf(q) < 0) ids.push(q); }); });
         if (!ids.length) return list;
         // the director / creator names, in one more call
-        return fetchJson(wdEntitiesUrl(ids, LANG, "labels"), null, signal).then(function (l) {
-          var names = parseWdLabels(l, LANG);
+        return fetchJson(wdEntitiesUrl(ids, LANG2, "labels"), null, signal).then(function (l) {
+          var names = parseWdLabels(l, LANG2);
           list.forEach(function (c) {
             c.by = clipLine(c.byIds.map(function (q) { return names[q] || ""; }).filter(Boolean).join(", "), BY_LEN);
           });
@@ -2355,7 +2360,7 @@
   // credit. A failure here keeps what the search gave.
   function detailSrc(src, type, c, signal) {
     if (src === "tmdb") {
-      var rq = tmdbDetailsReq(type, c.tmdb, tmdbKey(), LANG);
+      var rq = tmdbDetailsReq(type, c.tmdb, tmdbKey(), LANG2);
       if (!rq) return Promise.resolve(c);
       return fetchJson(rq.url, rq.headers, signal).then(function (j) {
         var d = parseTmdbDetails(type, j);
@@ -2857,7 +2862,7 @@
     if (!p) return;
     if (!data.items.length) { showToast(t("sheet.empty")); return; }
     var items = data.items.slice().sort(function (a, b) {
-      return (TYPES.indexOf(a.type) - TYPES.indexOf(b.type)) || a.title.localeCompare(b.title, LANG) || cmpStr(a.id, b.id);
+      return (TYPES.indexOf(a.type) - TYPES.indexOf(b.type)) || a.title.localeCompare(b.title, loc()) || cmpStr(a.id, b.id);
     });
     if (items.length > SHEET_ROWS) { showToast(t("sheet.cap", { n: SHEET_ROWS })); items = items.slice(0, SHEET_ROWS); }
     // the latest start and finish of each title
@@ -2912,7 +2917,7 @@
   // the reminder and the TMDB key are device-local, never in a file.
   var RP = window.OrosRecordPkg || null, SPK = window.OrosShelfPackage || null;
   var recFile = RP && SPK && window.OrosBundle ? RP.ui(SPK.DESC, {
-    lang: function () { return LANG; },
+    lang: function () { return LANG2; },
     get: function () { return mergeShelf(data, data); },
     title: function () { return t("app"); },
     set: function (next, info) {
@@ -3109,7 +3114,7 @@
     }, function (e) {
       busy = false;
       if (!dlg.open) return;
-      stat.textContent = GI.message(e, LANG);
+      stat.textContent = GI.message(e, LANG2);
     });
   }
 

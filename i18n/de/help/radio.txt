@@ -1,0 +1,64 @@
+# Radio
+Radio spielt Tausende Internetradiosender aus aller Welt. Stöbere nach Land oder Genre, suche nach Namen und behalte deine Favoriten. Die Musik läuft weiter, auch wenn du die App schließt.
+
+## Erste Schritte
+Radio öffnet mit `Entdecken` und den Top-Sendern weltweit. Tippe oder klicke auf einen Sender, um ihn abzuspielen. Unten erscheint eine Player-Leiste mit Play/Pause, dem Namen des Senders, dem Sleep-Timer (☾), den Sender-Tools (⋯), Stopp (■) und einem Herz für Favoriten.
+
+Die Kachel `Überrasch mich` spielt einen zufälligen Top-Sender.
+
+## Sender finden
+- `Länder` zeigt jedes Land mit der Zahl seiner Sender. Wähle eins, um seine Sender zu sehen; die Chips über der Liste filtern sie nach Genre. Tippe einen Chip erneut an, um den Filter zu entfernen.
+- `Genres` zeigt Genres wie Jazz oder Nachrichten; wähle eins, um seine Sender zu sehen.
+- Das Suchfeld (`Sender suchen…`) schlägt Sender vor, sobald du drei Buchstaben tippst. Mit [[↑]] und [[↓]] wählst du einen Vorschlag, mit [[Enter]] siehst du alle Ergebnisse. Ist das Feld leer, zeigt ein Klick hinein deine zuletzt gehörten Sender.
+
+Jeder Sender zeigt Bitrate, Format und Ländercode, sofern bekannt.
+
+## Favoriten und zuletzt gehörte Sender
+Während ein Sender läuft, tippe in der Player-Leiste auf das Herz, um ihn zu `Favoriten` hinzuzufügen; tippe erneut, um ihn zu entfernen. `Zuletzt` behält die letzten 20 Sender, die du gehört hast. Die Taste ✕ in dieser Ansicht löscht sie, mit `Rückgängig` für ein paar Sekunden.
+
+### Sender importieren
+`Sender importieren` oben in `Favoriten` fügt Sender aus einer Listendatei eines anderen Players hinzu:
+- **M3U / M3U8**: die meisten Player und Radio-Websites (VLC: Medien › Wiedergabeliste in Datei speichern; viele Sender bieten einen „Anhören“-Link als .m3u).
+- **RadioDroid**: Einstellungen › Sicherung / Wiederherstellung oder das Favoritenmenü › Als M3U speichern (exportieren).
+- **PLS**- und **XSPF**-Playlists (Winamp, foobar2000, VLC, Clementine…).
+- **CSV**: ein Sender pro Zeile, `name,url` (eine Kopfzeile ist optional).
+
+Bevor sich etwas ändert, zeigt eine Vorschau, wie viele Sender neu sind, welche schon in deinen Favoriten sind und was übersprungen wird und warum: ein doppelt gelisteter Sender, eine Adresse, die kein Stream ist, oder einer, der nur über einfaches http sendet. orOS spielt nur https-Streams; hake `Reine http-Sender (…) über https versuchen` an, um sie trotzdem hinzuzufügen, denn viele Server können beides. `Importieren` fügt alle auf einmal hinzu, mit `Rückgängig` für ein paar Sekunden. Importierst du dieselbe Datei noch einmal, kommt nur hinzu, was fehlt.
+
+## Wiedergabe im Hintergrund
+Die Wiedergabe läuft in orOS selbst, also geht sie weiter, wenn du die App schließt. Ein Chip in der Taskleiste zeigt den Sender; tippe oder klicke darauf für Play/Pause, Stopp, Favorit, Lautstärke und `Radio öffnen`. Auch die Mediensteuerung deines Geräts (Sperrbildschirm, Headset-Tasten) kann abspielen und pausieren.
+
+### Sleep-Timer
+Tippe auf ☾ und wähle 15, 30, 60 oder 90 Minuten. Die Restzeit steht in der Player-Leiste; in der letzten Minute wird der Ton leiser, und die Wiedergabe stoppt, wenn die Zeit abläuft. `Ausschalten` bricht den Timer ab.
+
+## Sender-Tools
+Die Taste ⋯ in der Player-Leiste öffnet die Tools für den Sender, der gerade läuft.
+
+### Läuft gerade und Song-Verlauf
+Wenn ein Sender seine Songs ansagt, steht der Titel unter `Läuft gerade` und in der Player-Leiste (♪). `Song-Verlauf` zeigt, was wann lief, das Neueste zuerst; `Verlauf löschen` leert ihn. Der Verlauf bleibt auf diesem Gerät.
+
+### Aufnehmen
+`Aufnehmen` speichert den Stream auf deinem orOS-Speicher, in Dateien › Radio, benannt nach Datum, Uhrzeit und Sender. Die Player-Leiste zeigt einen roten Punkt und die aufgenommene Zeit; `Aufnahme beenden` speichert die Datei. Eine Aufnahme stoppt und wird auch nach 4 Stunden oder 200 MB gespeichert.
+
+Aufnahmen sind nur für deinen privaten Gebrauch. Radiosendungen sind urheberrechtlich geschützt: Teile, veröffentliche oder verkaufe sie nicht.
+
+### Mit einem Sender aufwachen
+Wähle unter `Mit diesem Sender aufwachen` eine `Uhrzeit` und ob sie sich wiederholt (`Einmal` oder `Täglich`), dann `Wecker stellen`. Der Wecker erscheint in [Zeit](app:time), und wenn er klingelt, startet der Sender, erst leise. Du kannst auch einen vorhandenen Wecker aus Zeit wählen und `Nutzen` drücken. `Entfernen` nimmt einen Sender von einem Wecker.
+
+## Synchronisierung und Sicherung
+Deine Favoriten und Wecksender werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. Song-Verlauf, zuletzt gehörte Sender und die vorübergehend gespeicherten Senderlisten bleiben auf diesem Gerät. Sender kannst du importieren (siehe `Sender importieren` oben), nicht exportieren; Favoriten sind Teil der orOS-[Sicherung](help:t/backup).
+
+## Tastenkürzel
+- Im Suchfeld: [[Enter]] sucht oder spielt den markierten Vorschlag, [[↑]] / [[↓]] gehen durch die Vorschläge, [[Esc]] schließt sie.
+
+## Tipps
+- Senderlisten, die du gerade durchgesehen hast, bleiben 30 Minuten gespeichert und öffnen sofort. Zum Abspielen brauchst du immer eine Verbindung.
+- Spielt ein Sender nicht, siehst du `Stream nicht verfügbar`: Versuch einen anderen, Streams kommen und gehen.
+
+## Grenzen
+- Die Sender stammen aus dem freien Community-Verzeichnis radio-browser.info, daher sind Namen, Logos und Genres nur so gut wie dieses Verzeichnis. Ist es nicht erreichbar (keine Verbindung oder ein Content-Blocker), bleiben die Listen leer.
+- Favoriten kannst du nur über die Player-Leiste, den Taskleisten-Chip oder `Sender importieren` hinzufügen, nicht aus der Senderliste.
+- Songtitel und Aufnahmen brauchen einen Sender, der Webseiten seinen Stream lesen lässt (CORS). Viele tun das nicht: Dann erscheint `Dieser Sender sagt nicht, was er spielt.`, oder die Aufnahme erklärt, dass sie nicht erlaubt ist. Das Senderverzeichnis selbst hat keine Song-Infos.
+- Eine Aufnahme lädt den Stream während sie läuft ein zweites Mal, braucht also doppelt so viele Daten. Playlist-Streams (HLS) lassen sich nicht aufnehmen.
+- Ein Wecksender spielt nur, wenn orOS offen ist, während der Wecker klingelt, und der Browser hält den Ton eventuell stumm, bis du die Seite berührst.
+- orOS spielt Sender nur über eine verschlüsselte (https) Verbindung. Ein Sender mit einfacher http-Adresse wird über https versucht; antwortet er dort nicht, erscheint `Nur unverschlüsselter (http) Stream, wird nicht abgespielt`. Ein unverschlüsselter Stream würde die Seite unsicher machen, und die installierte App würde dann die Adressleiste des Browsers zeigen.

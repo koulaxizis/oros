@@ -20,6 +20,19 @@
     return str(v).split(",").map(str).filter(Boolean).join(", ");
   }
 
+  // The one text of its own (pack "radio"). The shell runs this file,
+  // not the Radio page: a pack language shows the "radio" pack line
+  // when the shell has it, else English.
+  var S = {
+    en: { "station.unnamed": "Unnamed station" },
+    el: { "station.unnamed": "Σταθμός χωρίς όνομα" }
+  };
+  function unnamed(lang) {
+    var I = root && root.orosI18n;
+    var tab = S[lang] || (I && lang ? I.table(S, "radio", lang) : S.en);
+    return tab["station.unnamed"] || S.en["station.unnamed"];
+  }
+
   var PROVIDER = {
     id: "radio",
     keys: [KEY],
@@ -34,7 +47,7 @@
         seen[f.stationuuid] = true;
         out.push({
           id: f.stationuuid,
-          title: str(f.name) || (ctx.lang === "el" ? "Σταθμός χωρίς όνομα" : "Unnamed station"),
+          title: str(f.name) || unnamed(ctx.lang),
           text: [str(f.country), tagsOf(f.tags), str(f.homepage)].filter(Boolean).join(" · "),
           target: f.stationuuid
         });

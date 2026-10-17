@@ -1,0 +1,89 @@
+# Musik
+Musik spielt die Songs auf deinem Gerät ab, so wie du es von den großen Streaming-Apps kennst: Start, Suche, Deine Bibliothek, Alben, Künstler, Playlists, Lieblingssongs und eine Warteschlange mit Zufall und Wiederholen. Die Wiedergabe läuft weiter, wenn du die App schließt.
+
+## Erste Schritte
+Drücke oben **+** (`Musik hinzufügen`) und wähle `Songs hinzufügen` oder `Ordner hinzufügen`, oder zieh Musikdateien ins Fenster. Die Dateien werden nach `Dateien › Music` auf dem orOS-Speicher kopiert und spielen so ohne Verbindung. Mit Vault Drive kommen sie auch auf deine anderen Geräte. Musik liest MP3-, M4A/AAC-, FLAC-, Ogg/Opus-, WAV- und WebM-Dateien.
+
+Songs, die du mit [Dateien](app:files) in den Ordner Music legst, erscheinen ebenfalls: Musik liest den Ordner bei jedem Öffnen. `Musikordner neu einlesen` in den Einstellungen macht das auf Wunsch.
+
+Die Tabs:
+- `Start`: deine Playlists und Lieblingssongs, `Weiterhören`, `Zuletzt hinzugefügt`, `Deine meistgespielten` und deine Künstler.
+- `Suche`: Songs, Alben, Künstler und Playlists; bei leerem Feld `Nach Genre stöbern`.
+- `Deine Bibliothek`: `Playlists`, `Songs`, `Alben`, `Künstler`, `Genres`, `Ordner`, `Offline` und `Server`.
+
+## Hören
+Tippe auf einen Song, um ihn abzuspielen, danach folgt der Rest seines Albums oder seiner Liste. Der große Abspielknopf spielt ein ganzes Album, einen Künstler, eine Playlist oder ein Genre, und `Zufällig` spielt es in zufälliger Reihenfolge.
+
+Die Leiste unten zeigt den Song, ein Herz sowie Abspielen/Pause und Weiter. Tippe auf den Namen des Songs für den großen Player: Position, `Zurück`, `Weiter`, `Zufällig`, `Wiederholen` (alle, dann einen), Lautstärke und `Warteschlange`. Die Mediensteuerung deines Geräts (Sperrbildschirm, Headset, Medientasten) funktioniert auch. Radio und Podcasts pausieren, wenn Musik startet, und umgekehrt.
+
+## Warteschlange
+`Warteschlange` im großen Player zeigt `Läuft gerade`, `Als Nächstes` (Songs, die du von Hand hinzugefügt hast) und was aus der gestarteten Liste folgt. Tippe dort auf einen Song, um zu ihm zu springen, oder drücke ×, um ihn aus `Als Nächstes` zu nehmen. Die Schaltfläche ⋯ bei jedem Song bietet `Als Nächstes spielen` und `Zur Warteschlange`.
+
+## Lieblingssongs und Playlists
+Das Herz speichert einen Song in `Lieblingssongs`. `Neue Playlist` in `Deine Bibliothek` (oder unter **+**) legt eine Liste an; `Zur Playlist hinzufügen` im ⋯-Menü eines Songs oder auf einer Albumseite fügt Songs hinzu. Auf einer Playlist-Seite hat das ⋯-Menü eines Songs `Nach oben`, `Nach unten` und `Aus dieser Playlist entfernen`; die eigene ⋯-Schaltfläche der Playlist hat `Umbenennen` und `Playlist löschen`.
+
+Lieblingssongs und Playlists werden mit deinen anderen Geräten synchronisiert. Ein Song, der nicht auf einem Gerät ist, erscheint dort als `Nicht auf diesem Gerät`, bis seine Datei ankommt.
+
+## Deine Dateien
+Das ⋯-Menü eines Songs hat `Details` (Datei, Format, Größe, Länge) und `Von diesem Gerät löschen`, das die Datei aus `Dateien › Music` löscht. Alte griechische Tags mit der Windows-Codepage werden automatisch erkannt; wenn Namen falsch aussehen, wähle in den Einstellungen unter `Alte Tags` die Option `Immer Griechisch` oder `Immer westlich`.
+
+## Freie Musik
+Neben deinen eigenen Songs spielt Musik freie und legale Musik aus vier offenen Katalogen, ohne Konto:
+- **Jamendo**: unabhängige Künstler, die ihre Musik unter Creative Commons teilen. Beliebt diese Woche, neue Alben, Lieblinge aller Zeiten, Stimmungen und Jamendos eigene Radios. Jamendo-Songs werden immer gestreamt (Jamendo erlaubt keine Offline-Kopien), und jeder verlinkt zurück auf seine Seite bei Jamendo.
+- **Internet Archive**: Netlabel-Alben, Klassikaufnahmen und das Live Music Archive (Konzertmitschnitte von Bands, die freie, nichtkommerzielle Weitergabe erlauben). Nur Einträge mit Creative-Commons- oder Gemeinfrei-Lizenz werden gezeigt.
+- **Openverse**: Songs mit Creative-Commons- oder Gemeinfrei-Lizenz von Wikimedia Commons, Freesound, Jamendo und mehr.
+- **ccMixter**: Creative-Commons-Remixe, Instrumentals und A-cappellas.
+
+Auf `Start` hat `Freie Musik` Regale wie `Beliebt diese Woche`, `Jamendo-Radios`, `Live-Konzerte`, `Netlabel-Alben`, `Klassik` und `Remixe`; `Freie Musik nach Genre` hat Genres und `Stimmungen (Jamendo)` hat Stimmungen. In `Suche` fügt `Freie Musik online` Ergebnisse aus den Katalogen hinzu, sobald du aufhörst zu tippen (oder Enter drückst); die Chips wählen `Alle` oder einen Katalog. Die Kataloge werden erst gefragt, wenn du ein Regal öffnest oder suchst, und die Anfragen gehen direkt an sie.
+
+Jeder Song zeigt seine Lizenz (zum Beispiel `CC BY-SA`). Sein ⋯-Menü hat `Quellenangabe kopieren`: die Zeile mit Song, Künstler, Lizenz und Quelle, fertig zum Einfügen, wo immer du den Song nutzt; `Details` zeigt sie auch, ebenso die Lizenzzeile unter dem Song im großen Player. `Auf … öffnen` öffnet die Seite des Songs bei seiner Quelle.
+
+Songs aus den Katalogen kommen wie deine eigenen in `Lieblingssongs` und Playlists und spielen auch auf deinen anderen Geräten. `Offline speichern` (bei einem Song, oder der Pfeil bei einem Album) behält eine Kopie auf diesem Gerät, nur wo Lizenz und Quelle es erlauben: Songs, die Openverse von Jamendo listet, werden immer gestreamt. Gespeicherte Songs findest du unter `Offline` in `Deine Bibliothek`, mit dem Pfeilsymbol; `Offline-Kopie entfernen` oder `Alle Offline-Kopien löschen` in den Einstellungen gibt den Platz frei. Um die Kataloge auszuschalten, entferne in den Einstellungen das Häkchen bei `Freie Musik online`.
+
+## Deine eigenen Server
+Wenn deine Musik auf einem eigenen Server liegt, spielt Musik sie von dort. Drücke **+** und `Server verbinden`, oder geh zu `Deine Bibliothek › Server`:
+- **Subsonic / Navidrome**: Navidrome, Airsonic, Gonic, Ampache und andere Server mit der Subsonic-API (OpenSubsonic). Gib Adresse, Benutzername und Passwort ein. Musik speichert ein gesalzenes Token, nicht das Passwort selbst.
+- **Jellyfin**: Adresse, Benutzername und Passwort. Musik meldet sich einmal an und behält nur das Zugriffstoken.
+- **Funkwhale**: die Adresse eines Pods. Öffentliche Pods gehen ohne Anmeldung; für deine eigene Bibliothek erstelle in Funkwhale unter `Einstellungen › Anwendungen` ein Token (Lesezugriff) und füge es ein.
+- **WebDAV / Nextcloud**: die WebDAV-Adresse (Nextcloud zeigt sie unter `Dateien › Einstellungen`), dein Benutzername und ein App-Passwort, dazu optional ein Startordner. Der Server muss Anfragen von orOS erlauben (CORS); bei Nextcloud braucht das eine App oder eine Einstellung durch den Admin.
+- **Dropbox**: ein Ordner deiner Dropbox, über die Verbindung, die du in [Dateien](app:files) eingerichtet hast (`Dateien › Dropbox`).
+
+Nutze eine `https://`-Adresse: Browser blockieren in orOS einfache `http://`-Adressen, außer bei einem Server auf demselben Computer. Adresse und Anmeldung bleiben auf diesem Gerät, versiegelt mit einem Schlüssel, der den Browser nie verlässt, und werden nie synchronisiert. Die Seite eines Servers hat seine Alben, Künstler und Playlists (oder seine Ordner) sowie `Server zufällig abspielen`. Seine ⋯-Schaltfläche hat `Umbenennen` und `Von diesem Gerät entfernen`. `Start` zeigt `Neu auf …` für deine Server, und `Suche` fragt sie auch, sobald du aufhörst zu tippen.
+
+Songs von einem Server kommen wie alle anderen in `Lieblingssongs` und deine Playlists. Sie spielen auf deinen anderen Geräten, sobald du dort denselben Server verbindest; bis dahin erscheinen sie als `Von einem hier nicht verbundenen Server`.
+
+## Playlist-Dateien und Musik-Feeds
+`Playlist importieren (M3U, PLS, XSPF)` erstellt eine neue Playlist aus einer Playlist-Datei oder ihrer Adresse. Jeder Eintrag wird zum Song mit demselben Dateinamen (oder Titel und Künstler) auf diesem Gerät, zum Song unter einer `https://`-Adresse oder, bei einer Datei auf einem WebDAV- oder Dropbox-Server, zum Song daneben auf diesem Server. Einträge, die nicht gefunden werden, bleiben weg, und Musik sagt, wie viele. Playlist-Dateien in den Ordnern eines Servers öffnen sich genauso.
+
+`Musik-Feed hinzufügen (RSS)` fügt einen Feed mit Songs hinzu, zum Beispiel einen Podcasting-2.0-Musik-Feed (Wavlake und andere) oder einen beliebigen RSS- oder Atom-Feed mit Audio. Die Seite des Feeds listet seine Songs; seine ⋯-Schaltfläche hat `Zur Playlist hinzufügen`, `Website öffnen` und `Feed entfernen`. Feeds bleiben auf diesem Gerät.
+
+## Songtexte
+`Songtext` (die Zeilen-Schaltfläche oben im großen Player) zeigt den Text des laufenden Songs. Zeilen mit Zeitangaben laufen mit dem Song mit: Die gesungene Zeile ist hell, und ein Tipp auf eine Zeile springt dorthin. Musik sucht zuerst eine `.lrc`-Datei mit demselben Namen neben dem Song in `Dateien › Music` (füge sie zusammen mit dem Song hinzu oder leg sie in den Ordner), dann einen Songtext in den Tags des Songs.
+
+Für andere Songs kann Musik LRCLIB fragen (lrclib.net, eine freie und offene Songtext-Bibliothek). Musik fragt dich einmal; gesendet werden nur Titel, Künstler, Album und Länge des Songs, dessen Songtext du öffnest. Online gefundene Songtexte bleiben auf diesem Gerät. Schalte das mit `Songtexte online suchen (LRCLIB)` in den Einstellungen ein oder aus.
+
+## Klang
+`Klang` im großen Player (auch in den Einstellungen) hat:
+- `Equalizer`: zehn Bänder von 31 Hz bis 16 kHz, mit Voreinstellungen (Mehr Bass, Stimme, Rock, Spätabends und mehr) oder deiner eigenen Kurve. Er wirkt auf Songs auf diesem Gerät, offline gespeicherte Songs und Songs von WebDAV oder Dropbox; Songs, die von anderen Seiten gestreamt werden, spielen ohne ihn, weil ihre Seiten das nicht erlauben.
+- `Überblenden`: Das Ende eines Songs geht in den nächsten über, bis zu 12 Sekunden. Sehr kurze Songs werden nicht überblendet.
+- `Lückenlose Wiedergabe`: Der nächste Song wird geladen, bevor dieser endet, so laufen Live-Alben und Mixe ohne Pause durch. Sie ist an, solange du sie nicht ausschaltest.
+- `Gleiche Lautstärke für jeden Song (ReplayGain)`: nutzt die ReplayGain-Tags in deinen Dateien, damit laute und leise Songs gleich laut spielen. `Automatisch` nutzt den Pegel des Albums, während du ein Album hörst. Songs ohne diese Tags behalten ihre Lautstärke.
+
+Diese Einstellungen bleiben auf diesem Gerät.
+
+## Sleep-Timer
+`Sleep-Timer` im großen Player stoppt die Musik nach 5 bis 90 Minuten oder am Ende des laufenden Songs. Die letzten zehn Sekunden werden ausgeblendet. Die Schaltfläche zeigt, wie viel Zeit übrig ist; wähle `Timer ausschalten`, um ihn abzubrechen.
+
+## Für dich gemacht
+`Start › Für dich gemacht` hat Mixe aus dem, was du auf diesem Gerät hörst: `Tagesmix` (Songs, die du liebst, und mehr, jeden Tag neu), `Dauerschleife` (was du diesen Monat am meisten hörst) und `Rückblick` (alte Lieblinge, die du länger nicht gehört hast). `Song-Radio` im ⋯-Menü eines Songs spielt ähnliche Songs: mehr vom selben Künstler, aus demselben Genre und von Künstlern, die du in denselben Playlists hast. `Als Playlist speichern` behält einen Mix.
+
+`Mein Jahr in Musik` zeigt deine Minuten Musik, Top-Songs, Top-Künstler und deine Monate, aus den Wiedergaben auf diesem Gerät; im Dezember erscheint es auch in Heute. Nichts darüber, was du hörst, verlässt das Gerät.
+
+## Aus Spotify importieren
+`Aus Spotify importieren` (unter **+**) liest deine eigenen Spotify-Daten. Geh in Spotify zu Konto › Datenschutzeinstellungen › Deine Daten herunterladen; Spotify schickt eine ZIP-Datei per E-Mail. Wähle diese ZIP (oder die Playlist- und YourLibrary-.json-Dateien darin) oder eine CSV von Exportify oder TuneMyMusic. Jede Spotify-Playlist wird hier zu einer Playlist mit den Songs, die Musik abspielen kann (Songs auf diesem Gerät, auf deinen Servern oder schon in deiner Musik), und deine Spotify-Lieblingssongs werden zu Likes. Die nicht gefundenen Songs werden aufgelistet, und du kannst die Liste kopieren. `Fehlende Songs auf Jamendo und deinen Servern suchen` sendet Titel und Künstler jedes fehlenden Songs dorthin und fügt nur genaue Treffer hinzu.
+
+## Cover und andere Apps
+`Fehlende Cover online suchen` in den Einstellungen oder `Cover online suchen` auf der ⋯-Schaltfläche eines Albums fragt MusicBrainz und das Cover Art Archive nach Covern für Alben, die keins haben; gesendet werden nur Album- und Künstlernamen. Die ⋯-Schaltfläche eines Albums hat auch `Zum Medienregal hinzufügen`. `In Montage verwenden` bei einem Song öffnet ihn in Montage: einen Song dieses Geräts so, wie er ist, einen freien Song, dessen Lizenz Änderungen erlaubt, zuerst gespeichert in `Dateien › Music › Free music`, mit kopierter Quellenangabe für dein Video.
+
+## Tasten
+Die Leertaste spielt oder pausiert, ← und → springen 10 Sekunden, Shift+← und Shift+→ gehen zum vorigen oder nächsten Song, S schaltet Zufall ein oder aus, R ändert Wiederholen und L markiert den Song als Lieblingssong.

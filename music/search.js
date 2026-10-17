@@ -22,6 +22,25 @@
   var FRESH_MS = 10000;
   var cache = null;          // { at, idb, list }
 
+  // Shares the "music" pack with music.js (same key = same English).
+  var TXT = {
+    en: { "srch.pl": "Playlist", "srch.plText.one": "Playlist · 1 song", "srch.plText": "Playlist · {n} songs", "srch.album": "Album · {a}" },
+    el: { "srch.pl": "Λίστα", "srch.plText.one": "Λίστα · 1 τραγούδι", "srch.plText": "Λίστα · {n} τραγούδια", "srch.album": "Άλμπουμ · {a}" }
+  };
+  // orosI18n (../i18n.js, in the shell): the full language code, a pack
+  // language included; the music pack is fetched by music/host.js.
+  function langOf(ctx) {
+    var I = root && root.orosI18n;
+    if (I && ctx.lang !== "el") { try { return I.lang(); } catch (e) {} }
+    return ctx.lang === "el" ? "el" : "en";
+  }
+  function words(l) {
+    if (l === "en" || l === "el") return TXT[l];
+    // rebuilt each time: the pack may come in after the first call
+    var I = root && root.orosI18n;
+    return I ? I.table(TXT, "music", l) : TXT.en;
+  }
+
   function str(v) { return typeof v === "string" ? v.replace(/\s+/g, " ").trim() : ""; }
   // Same album key as core.js (albumKey): "b:" + hash(fold(artist) | fold(album)).
   function fold(s) {
@@ -69,14 +88,14 @@
   }
 
   function build(ctx, d, list) {
-    var out = [], el = ctx.lang === "el";
+    var out = [], L = words(langOf(ctx));
     var tombs = d && d.tombs && typeof d.tombs === "object" ? d.tombs : {};
     (d && Array.isArray(d.pls) ? d.pls : []).forEach(function (p) {
       if (!p || typeof p.id !== "string") return;
       if (typeof tombs[p.id] === "number" && tombs[p.id] >= (p.m || 0)) return;
       var n = Array.isArray(p.it) ? p.it.length : 0;
-      out.push({ id: p.id, title: str(p.n) || (el ? "Λίστα" : "Playlist"),
-        text: (el ? "Λίστα · " : "Playlist · ") + n + (el ? (n === 1 ? " τραγούδι" : " τραγούδια") : (n === 1 ? " song" : " songs")),
+      out.push({ id: p.id, title: str(p.n) || L["srch.pl"],
+        text: n === 1 ? L["srch.plText.one"] : L["srch.plText"].replace("{n}", n),
         target: { pl: p.id } });
     });
     var seenSong = {}, albums = {};
@@ -86,7 +105,7 @@
         out.push({ id: r.k, title: r.t || "?", text: [r.a, r.al].filter(Boolean).join(" · "), target: { track: r.k } });
       }
       var ak = albumKey(r);
-      if (ak && !albums[ak]) albums[ak] = { id: ak, title: r.al, text: (el ? "Άλμπουμ · " : "Album · ") + (r.aa || r.a || ""), target: { album: ak } };
+      if (ak && !albums[ak]) albums[ak] = { id: ak, title: r.al, text: L["srch.album"].replace("{a}", r.aa || r.a || ""), target: { album: ak } };
     });
     Object.keys(albums).forEach(function (k) { out.push(albums[k]); });
     return out;

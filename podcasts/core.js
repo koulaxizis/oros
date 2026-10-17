@@ -1130,27 +1130,73 @@
 
   // ---------- 15. Browse like Radio: genres, countries, surprise (2026-10-16) ----------
   // Apple's podcast genres (2019 taxonomy). No key, no Google.
+  // Their names are a { en, el } table (the "podcasts" pack: the app
+  // calls orosI18n.table on it, so genreName reads a pack language too).
+  var GENRE_NAMES = {
+    en: {
+      "genre.1301": "Arts",
+      "genre.1321": "Business",
+      "genre.1303": "Comedy",
+      "genre.1304": "Education",
+      "genre.1483": "Fiction",
+      "genre.1511": "Government",
+      "genre.1512": "Health & Fitness",
+      "genre.1487": "History",
+      "genre.1305": "Kids & Family",
+      "genre.1502": "Leisure",
+      "genre.1310": "Music",
+      "genre.1489": "News",
+      "genre.1314": "Religion & Spirituality",
+      "genre.1533": "Science",
+      "genre.1324": "Society & Culture",
+      "genre.1545": "Sports",
+      "genre.1318": "Technology",
+      "genre.1488": "True Crime",
+      "genre.1309": "TV & Film"
+    },
+    el: {
+      "genre.1301": "Τέχνες",
+      "genre.1321": "Επιχειρήσεις",
+      "genre.1303": "Κωμωδία",
+      "genre.1304": "Εκπαίδευση",
+      "genre.1483": "Μυθοπλασία",
+      "genre.1511": "Πολιτική & Δημόσιο",
+      "genre.1512": "Υγεία & Άθληση",
+      "genre.1487": "Ιστορία",
+      "genre.1305": "Παιδιά & Οικογένεια",
+      "genre.1502": "Ελεύθερος χρόνος",
+      "genre.1310": "Μουσική",
+      "genre.1489": "Ειδήσεις",
+      "genre.1314": "Θρησκεία & Πνευματικότητα",
+      "genre.1533": "Επιστήμη",
+      "genre.1324": "Κοινωνία & Πολιτισμός",
+      "genre.1545": "Αθλητικά",
+      "genre.1318": "Τεχνολογία",
+      "genre.1488": "Αληθινά εγκλήματα",
+      "genre.1309": "Τηλεόραση & Κινηματογράφος"
+    }
+  };
   var GENRES = [
-    { id: "1301", en: "Arts", el: "Τέχνες", ic: "🎨" },
-    { id: "1321", en: "Business", el: "Επιχειρήσεις", ic: "💼" },
-    { id: "1303", en: "Comedy", el: "Κωμωδία", ic: "😂" },
-    { id: "1304", en: "Education", el: "Εκπαίδευση", ic: "🎓" },
-    { id: "1483", en: "Fiction", el: "Μυθοπλασία", ic: "📖" },
-    { id: "1511", en: "Government", el: "Πολιτική & Δημόσιο", ic: "🏛️" },
-    { id: "1512", en: "Health & Fitness", el: "Υγεία & Άθληση", ic: "💪" },
-    { id: "1487", en: "History", el: "Ιστορία", ic: "🏺" },
-    { id: "1305", en: "Kids & Family", el: "Παιδιά & Οικογένεια", ic: "🧸" },
-    { id: "1502", en: "Leisure", el: "Ελεύθερος χρόνος", ic: "🎲" },
-    { id: "1310", en: "Music", el: "Μουσική", ic: "🎵" },
-    { id: "1489", en: "News", el: "Ειδήσεις", ic: "📰" },
-    { id: "1314", en: "Religion & Spirituality", el: "Θρησκεία & Πνευματικότητα", ic: "🕊️" },
-    { id: "1533", en: "Science", el: "Επιστήμη", ic: "🔬" },
-    { id: "1324", en: "Society & Culture", el: "Κοινωνία & Πολιτισμός", ic: "🌍" },
-    { id: "1545", en: "Sports", el: "Αθλητικά", ic: "⚽" },
-    { id: "1318", en: "Technology", el: "Τεχνολογία", ic: "💻" },
-    { id: "1488", en: "True Crime", el: "Αληθινά εγκλήματα", ic: "🔎" },
-    { id: "1309", en: "TV & Film", el: "Τηλεόραση & Κινηματογράφος", ic: "🎬" }
-  ];
+    { id: "1301", ic: "🎨" },
+    { id: "1321", ic: "💼" },
+    { id: "1303", ic: "😂" },
+    { id: "1304", ic: "🎓" },
+    { id: "1483", ic: "📖" },
+    { id: "1511", ic: "🏛️" },
+    { id: "1512", ic: "💪" },
+    { id: "1487", ic: "🏺" },
+    { id: "1305", ic: "🧸" },
+    { id: "1502", ic: "🎲" },
+    { id: "1310", ic: "🎵" },
+    { id: "1489", ic: "📰" },
+    { id: "1314", ic: "🕊️" },
+    { id: "1533", ic: "🔬" },
+    { id: "1324", ic: "🌍" },
+    { id: "1545", ic: "⚽" },
+    { id: "1318", ic: "💻" },
+    { id: "1488", ic: "🔎" },
+    { id: "1309", ic: "🎬" }
+  ].map(function (g) { return { id: g.id, en: GENRE_NAMES.en["genre." + g.id], el: GENRE_NAMES.el["genre." + g.id], ic: g.ic }; });
   // Apple Podcasts storefronts (ISO 3166 alpha-2, lower case).
   var COUNTRIES = ("ae ag ai al am ao ar at au az ba bb be bf bg bh bj bm bn bo br bs bt bw by bz ca cg ch ci cl cm cn co cr cv cy cz " +
     "de dk dm do dz ec ee eg es fi fj fm fr ga gb gd ge gh gm gr gt gw gy hk hn hr hu id ie il in iq is it jm jo jp ke kg kh kn kr kw ky kz " +
@@ -1162,7 +1208,9 @@
   }
   function genreName(id, lang) {
     var g = genreOf(id);
-    return g ? (lang === "el" ? g.el : g.en) : "";
+    if (!g) return "";
+    var tb = GENRE_NAMES[lang] || GENRE_NAMES.en;
+    return tb["genre." + g.id] || g.en;
   }
   function isCountry(cc) { return COUNTRIES.indexOf(String(cc || "")) >= 0; }
   // 🇬🇷 from "gr" (regional indicator letters).
@@ -1438,7 +1486,7 @@
     noteChapters: noteChapters, searchEpisodes: searchEpisodes, dayKey: dayKey, addListen: addListen, statsSummary: statsSummary,
     appleTopUrl: appleTopUrl, parseAppleTop: parseAppleTop, appleLookupManyUrl: appleLookupManyUrl, orderByIds: orderByIds,
     topCountry: topCountry, shareText: shareText,
-    GENRES: GENRES, COUNTRIES: COUNTRIES, genreOf: genreOf, genreName: genreName, isCountry: isCountry, flag: flag,
+    GENRES: GENRES, GENRE_NAMES: GENRE_NAMES, COUNTRIES: COUNTRIES, genreOf: genreOf, genreName: genreName, isCountry: isCountry, flag: flag,
     chartUrl: chartUrl, parseChart: parseChart, genreSearchUrl: genreSearchUrl, inGenre: inGenre, idBatches: idBatches,
     subChips: subChips, withChip: withChip, pickRandom: pickRandom, sortCountries: sortCountries,
     shuffled: shuffled, unplayedOf: unplayedOf, shufflePlan: shufflePlan, queueFront: queueFront, letterOf: letterOf, indexLetters: indexLetters, indexSort: indexSort,

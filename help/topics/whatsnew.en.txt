@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.11.00
+- Studio, Music, Radio, Podcasts, Reader and Media Shelf are now in German.
+
 ## Version 3.10.00
 - Photo Lab, Atelier, Layout, Montage and Mockups are now in German.
 

@@ -69,11 +69,11 @@
   }
   function licParts(li) { var m = /^(\S+)(?: (\d\.\d))?$/.exec(String(li || "")); return m ? { c: m[1], v: m[2] || "" } : { c: "", v: "" }; }
   function licLabel(li, lang) {
-    var p = licParts(li), el = lang === "el";
+    var p = licParts(li);
     if (p.c === "cc0") return "CC0";
-    if (p.c === "pdm") return el ? "Κοινό κτήμα" : "Public domain";
-    if (p.c === "lma") return el ? "Live Music Archive (ελεύθερη μη εμπορική διανομή)" : "Live Music Archive (free non-commercial sharing)";
-    if (!p.c) return el ? "Άγνωστη άδεια" : "Unknown licence";
+    if (p.c === "pdm") return tr("open.lic.pd", lang);
+    if (p.c === "lma") return tr("open.lic.lma", lang);
+    if (!p.c) return tr("open.lic.unknown", lang);
     return "CC " + p.c.toUpperCase() + (p.v ? " " + p.v : "");
   }
   function licShort(li) {
@@ -370,32 +370,79 @@
   }
 
   // ---------- 6. Browse shelves (Home) ----------
+  // Names of shelves, moods and genres, licence labels and the credit
+  // words. Shares the "music" pack with music.js (same key = same
+  // English); a pack language reads English + that pack.
+  var STRINGS = {
+    en: {
+      "open.browse.live": "Live concerts", "open.browse.netlabels": "Netlabel albums", "open.browse.new": "New free albums",
+      "open.browse.classical": "Classical", "open.browse.remix": "Remixes", "open.browse.instr": "Instrumentals",
+      "open.browse.free": "Free songs (Openverse)", "open.browse.jmweek": "Popular this week", "open.browse.jmnew": "New albums",
+      "open.browse.jmtop": "All-time favourites", "open.browse.jmradio": "Jamendo radios",
+      "open.mood.relaxed": "Relaxed", "open.mood.happy": "Happy", "open.mood.energetic": "Energetic", "open.mood.romantic": "Romantic",
+      "open.mood.sad": "Melancholic", "open.mood.epic": "Epic", "open.mood.dark": "Dark",
+      "open.genre.rock": "Rock", "open.genre.jazz": "Jazz", "open.genre.electronic": "Electronic", "open.genre.hiphop": "Hip-hop",
+      "open.genre.folk": "Folk", "open.genre.ambient": "Ambient", "open.genre.classical": "Classical", "open.genre.blues": "Blues",
+      "open.genre.pop": "Pop", "open.genre.reggae": "Reggae", "open.genre.metal": "Metal", "open.genre.world": "World",
+      "open.lic.pd": "Public domain", "open.lic.lma": "Live Music Archive (free non-commercial sharing)", "open.lic.unknown": "Unknown licence",
+      "open.credit.title": "“{t}”", "open.credit.untitled": "Untitled", "open.credit.by": " by {a}", "open.credit.from": ", from {s}"
+    },
+    el: {
+      "open.browse.live": "Συναυλίες live", "open.browse.netlabels": "Άλμπουμ από netlabels", "open.browse.new": "Νέα ελεύθερα άλμπουμ",
+      "open.browse.classical": "Κλασική", "open.browse.remix": "Remix", "open.browse.instr": "Ορχηστρικά",
+      "open.browse.free": "Ελεύθερα τραγούδια (Openverse)", "open.browse.jmweek": "Δημοφιλή της εβδομάδας", "open.browse.jmnew": "Νέα άλμπουμ",
+      "open.browse.jmtop": "Τα αγαπημένα όλων των εποχών", "open.browse.jmradio": "Ραδιόφωνα Jamendo",
+      "open.mood.relaxed": "Χαλαρή", "open.mood.happy": "Χαρούμενη", "open.mood.energetic": "Γεμάτη ενέργεια", "open.mood.romantic": "Ρομαντική",
+      "open.mood.sad": "Μελαγχολική", "open.mood.epic": "Επική", "open.mood.dark": "Σκοτεινή",
+      "open.genre.rock": "Ροκ", "open.genre.jazz": "Τζαζ", "open.genre.electronic": "Ηλεκτρονική", "open.genre.hiphop": "Χιπ χοπ",
+      "open.genre.folk": "Φολκ", "open.genre.ambient": "Ambient", "open.genre.classical": "Κλασική", "open.genre.blues": "Μπλουζ",
+      "open.genre.pop": "Ποπ", "open.genre.reggae": "Ρέγκε", "open.genre.metal": "Μέταλ", "open.genre.world": "Έθνικ",
+      "open.lic.pd": "Κοινό κτήμα", "open.lic.lma": "Live Music Archive (ελεύθερη μη εμπορική διανομή)", "open.lic.unknown": "Άγνωστη άδεια",
+      "open.credit.title": "«{t}»", "open.credit.untitled": "Χωρίς τίτλο", "open.credit.by": ", καλλιτέχνης: {a}", "open.credit.from": ", από {s}"
+    }
+  };
+  // The text of key k in language lang (a pack language: English +
+  // the music pack, when i18n.js is loaded; Node: English or Greek).
+  function tr(k, lang, v) {
+    var tab = STRINGS[lang];
+    if (!tab) {
+      var I = typeof window !== "undefined" && window.orosI18n;
+      tab = I && lang ? I.table(STRINGS, "music", lang) : STRINGS.en;
+    }
+    var s = tab[k] !== undefined ? tab[k] : (STRINGS.en[k] !== undefined ? STRINGS.en[k] : k);
+    if (v) Object.keys(v).forEach(function (n) { s = s.split("{" + n + "}").join(String(v[n])); });
+    return s;
+  }
+  function shelf(id, src, o) {
+    var b = { id: id, src: src, en: STRINGS.en["open.browse." + id], el: STRINGS.el["open.browse." + id] };
+    b[src] = o;
+    return b;
+  }
   var BROWSE = [
-    { id: "live", src: "ia", en: "Live concerts", el: "Συναυλίες live", ia: { coll: "etree" } },
-    { id: "netlabels", src: "ia", en: "Netlabel albums", el: "Άλμπουμ από netlabels", ia: { coll: "netlabels" } },
-    { id: "new", src: "ia", en: "New free albums", el: "Νέα ελεύθερα άλμπουμ", ia: { coll: "netlabels", sort: "publicdate desc" } },
-    { id: "classical", src: "ia", en: "Classical", el: "Κλασική", ia: { subject: "classical" } },
-    { id: "remix", src: "cc", en: "Remixes", el: "Remix", cc: { tags: "remix" } },
-    { id: "instr", src: "cc", en: "Instrumentals", el: "Ορχηστρικά", cc: { tags: "instrumental" } },
-    { id: "free", src: "ov", en: "Free songs (Openverse)", el: "Ελεύθερα τραγούδια (Openverse)", ov: {} },
-    { id: "jmweek", src: "jm", en: "Popular this week", el: "Δημοφιλή της εβδομάδας", jm: { order: "popularity_week" } },
-    { id: "jmnew", src: "jm", en: "New albums", el: "Νέα άλμπουμ", jm: { albums: 1, order: "releasedate_desc" } },
-    { id: "jmtop", src: "jm", en: "All-time favourites", el: "Τα αγαπημένα όλων των εποχών", jm: { order: "popularity_total" } },
-    { id: "jmradio", src: "jm", en: "Jamendo radios", el: "Ραδιόφωνα Jamendo", jm: { radios: 1 } }
+    shelf("live", "ia", { coll: "etree" }),
+    shelf("netlabels", "ia", { coll: "netlabels" }),
+    shelf("new", "ia", { coll: "netlabels", sort: "publicdate desc" }),
+    shelf("classical", "ia", { subject: "classical" }),
+    shelf("remix", "cc", { tags: "remix" }),
+    shelf("instr", "cc", { tags: "instrumental" }),
+    shelf("free", "ov", {}),
+    shelf("jmweek", "jm", { order: "popularity_week" }),
+    shelf("jmnew", "jm", { albums: 1, order: "releasedate_desc" }),
+    shelf("jmtop", "jm", { order: "popularity_total" }),
+    shelf("jmradio", "jm", { radios: 1 })
   ];
+  // [id, English, Greek] from the table.
+  function named(pre, ids) { return ids.map(function (id) { return [id, STRINGS.en[pre + id], STRINGS.el[pre + id]]; }); }
   // Moods (Jamendo's own tags).
-  var MOODS = [
-    ["relaxed", "Relaxed", "Χαλαρή"], ["happy", "Happy", "Χαρούμενη"], ["energetic", "Energetic", "Γεμάτη ενέργεια"],
-    ["romantic", "Romantic", "Ρομαντική"], ["sad", "Melancholic", "Μελαγχολική"], ["epic", "Epic", "Επική"], ["dark", "Dark", "Σκοτεινή"]
-  ];
-  var OPEN_GENRES = [
-    ["rock", "Rock", "Ροκ"], ["jazz", "Jazz", "Τζαζ"], ["electronic", "Electronic", "Ηλεκτρονική"], ["hiphop", "Hip-hop", "Χιπ χοπ"],
-    ["folk", "Folk", "Φολκ"], ["ambient", "Ambient", "Ambient"], ["classical", "Classical", "Κλασική"], ["blues", "Blues", "Μπλουζ"],
-    ["pop", "Pop", "Ποπ"], ["reggae", "Reggae", "Ρέγκε"], ["metal", "Metal", "Μέταλ"], ["world", "World", "Έθνικ"]
-  ];
+  var MOODS = named("open.mood.", ["relaxed", "happy", "energetic", "romantic", "sad", "epic", "dark"]);
+  var OPEN_GENRES = named("open.genre.", ["rock", "jazz", "electronic", "hiphop", "folk", "ambient", "classical", "blues", "pop", "reggae", "metal", "world"]);
   function browseOf(id) { return BROWSE.filter(function (b) { return b.id === id; })[0] || null; }
   function moodOf(id) { var g = MOODS.filter(function (x) { return x[0] === id; })[0]; return g ? { id: g[0], en: g[1], el: g[2] } : null; }
   function genreOf(id) { var g = OPEN_GENRES.filter(function (x) { return x[0] === id; })[0]; return g ? { id: g[0], en: g[1], el: g[2] } : null; }
+  // Shown names in any language.
+  function browseName(id, lang) { return tr("open.browse." + id, lang); }
+  function moodName(id, lang) { return tr("open.mood." + id, lang); }
+  function genreName(id, lang) { return tr("open.genre." + id, lang); }
 
   // ---------- 7. Credit line ----------
   // EN: “Title” by Artist, CC BY 4.0 (licence link), from Internet Archive: page
@@ -407,11 +454,10 @@
   }
   function credit(r, lang) {
     if (!r || !r.s) return "";
-    var el = lang === "el";
-    var line = el ? "«" + (r.t || "Χωρίς τίτλο") + "»" : "“" + (r.t || "Untitled") + "”";
-    if (r.a) line += el ? ", καλλιτέχνης: " + r.a : " by " + r.a;
+    var line = tr("open.credit.title", lang, { t: r.t || tr("open.credit.untitled", lang) });
+    if (r.a) line += tr("open.credit.by", lang, { a: r.a });
     if (r.li) line += ", " + licLabel(r.li, lang) + (licUrl(r.li) ? " (" + licUrl(r.li) + ")" : "");
-    line += ", " + (el ? "από " : "from ") + sourceName(r);
+    line += tr("open.credit.from", lang, { s: sourceName(r) });
     if (r.pg) line += ": " + r.pg;
     return line;
   }
@@ -482,6 +528,7 @@
     iaSearchUrl: iaSearchUrl, iaParseSearch: iaParseSearch, iaMetaUrl: iaMetaUrl, iaParseMeta: iaParseMeta, iaIdFromPage: iaIdFromPage,
     ovUrl: ovUrl, ovParse: ovParse, ccUrl: ccUrl, ccParse: ccParse, ccUserFromPage: ccUserFromPage,
     browseOf: browseOf, genreOf: genreOf, sourceName: sourceName, credit: credit,
+    browseName: browseName, moodName: moodName, genreName: genreName, STRINGS: STRINGS,
     getJSON: getJSON, iaSearch: iaSearch, iaAlbum: iaAlbum, ovSearch: ovSearch, ccSearch: ccSearch, OpenError: OpenError
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

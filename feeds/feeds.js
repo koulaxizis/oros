@@ -82,7 +82,8 @@
       return l === "el" ? "el" : "en";
     } catch (e) { return "en"; }
   }
-  var LANG = appLang();
+  // orosI18n (../i18n.js): the full language code, a pack language included.
+  var LANG = window.orosI18n ? window.orosI18n.lang() : appLang();
 
   var STRINGS = {
     en: {
@@ -362,6 +363,7 @@
       "set.osave": "Αρχείο orOS (.orosfeeds)", "set.oopen": "Άνοιγμα αρχείου orOS…", "set.ofolder": "Αποσυμπιεσμένος φάκελος orOS…"
     }
   };
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "feeds", LANG);
 
   var UI = {
     menu: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>',
@@ -421,7 +423,7 @@
     b.title = label;
     return b;
   }
-  function locale() { return LANG === "el" ? "el-GR" : "en-GB"; }
+  function locale() { return window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB"); }
   function ago(ms) {
     if (!ms) return "";
     var d = Date.now() - ms;
@@ -2931,7 +2933,7 @@
       busy = false;
       if (!dlg.open) return;
       cancelBtn.textContent = t("dlg.close");
-      status.textContent = GI.message(e, LANG);
+      status.textContent = GI.message(e, LANG === "el" ? "el" : "en");
     });
   }
   // Undo: each feed goes the way an unsubscribe does (tombstone newer
@@ -3004,7 +3006,7 @@
   // the OPML import.
   var RP = window.OrosRecordPkg || null, FPK = window.OrosFeedsPackage || null;
   var recFile = RP && FPK && window.OrosBundle ? RP.ui(FPK.DESC, {
-    lang: function () { return LANG; },
+    lang: function () { return LANG === "el" ? "el" : "en"; },
     get: function () { return C.merge(data, null); },
     title: function () { return t("app"); },
     set: function (next, info) {

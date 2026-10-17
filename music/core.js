@@ -103,6 +103,7 @@
     return s;
   }
   // Accent-free, case-free form for search and sorting keys.
+  // i18n-inline-ok: the Greek final sigma fold below is search data (no UI text in this file)
   function fold(s) {
     s = String(s == null ? "" : s).toLowerCase();
     try { s = s.normalize("NFD").replace(/[̀-ͯ]/g, ""); } catch (e) {}
@@ -829,7 +830,9 @@
   // tracks: [rec] from the device's index (store "tracks"):
   //   { p, k, t, a, aa, al, n, dn, g, y, d, art, add }
   function collator(lang) {
-    try { return new Intl.Collator(lang === "el" ? "el" : "en", { sensitivity: "base", numeric: true }); }
+    // orosI18n (../i18n.js, browser only): the language's locale, a pack language included.
+    var I = typeof window !== "undefined" && window.orosI18n;
+    try { return new Intl.Collator(I ? I.locale(lang) : (lang === "el" ? "el" : "en"), { sensitivity: "base", numeric: true }); }
     catch (e) { return { compare: function (x, y) { return cmpStr(fold(x), fold(y)); } }; }
   }
   function byTrackNo(x, y) { return (x.dn || 0) - (y.dn || 0) || (x.n || 0) - (y.n || 0) || cmpStr(fold(x.t), fold(y.t)); }

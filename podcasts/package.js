@@ -115,10 +115,15 @@
     });
     return out + "</body>\n</opml>\n";
   }
+  // The title inside the OPML preview (the bundle passes "el" or "en").
+  var PV = {
+    en: { "opml.title": "orOS Podcasts (subscriptions)" },
+    el: { "opml.title": "orOS Podcasts (συνδρομές)" }
+  };
   function previews(state, lang) {
     var shows = isObj(state) && Array.isArray(state.shows) ? state.shows : [], modified = 0;
     shows.forEach(function (s) { if (s && s.m > modified) modified = s.m; });
-    return { "podcasts.opml": opml(shows, lang === "el" ? "orOS Podcasts (συνδρομές)" : "orOS Podcasts (subscriptions)", modified) };
+    return { "podcasts.opml": opml(shows, (PV[lang] || PV.en)["opml.title"], modified) };
   }
 
   // What an id names in a state (Undo removes each the right way).

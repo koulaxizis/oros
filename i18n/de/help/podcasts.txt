@@ -1,0 +1,77 @@
+# Podcasts
+Mit Podcasts folgst du deinen Lieblingssendungen, siehst neue Folgen, baust eine Warteschlange `Als Nächstes` auf und lädst Folgen herunter, um sie offline zu hören. Der Player läuft weiter, wenn du die App schließt.
+
+## Erste Schritte
+Öffne `Entdecken`, suche einen Podcast und drück `Abonnieren`. Du kannst auch eine Adresse in `Adresse von Feed, Website oder Apple Podcasts` einfügen und `Hinzufügen` drücken. Die Taste **+** oben (`Podcast hinzufügen`) bringt dich direkt dorthin.
+
+Die Tabs:
+- `Hören`: was gerade läuft, die Warteschlange `Als Nächstes` und `Weiterhören`.
+- `Neu`: Folgen der letzten 30 Tage, die du noch nicht angefangen hast.
+- `Bibliothek`: deine Podcasts, mit einem Zähler für neue Folgen. Tippe einen an, um seine Seite zu öffnen. `Alle Folgen durchsuchen` findet eine Folge in jedem deiner Podcasts, und `Statistik` zeigt, wie lange du gehört hast (auf diesem Gerät gezählt).
+- `Downloads`: Folgen, die auf diesem Gerät gespeichert sind.
+- `Entdecken`: Suche, Hinzufügen per Adresse und OPML, und Stöbern wie im Radio: `Beliebt` (die Top 100 eines Landes, mit Chips für Untergenres), `Genres`, `Länder` und `Überrasch mich` (ein zufälliger beliebter Podcast startet). Tippe auf den Namen eines Podcasts, um ihn vor dem Abonnieren auszuprobieren: Seine Folgen laufen, aber nichts wird gespeichert oder synchronisiert, bis du `Abonnieren` drückst. Die Listen stammen aus den Charts von Apple Podcasts.
+
+## Hören
+Drück die Wiedergabetaste bei einer Folge. Die Player-Leiste unten hat Zurückspringen, Wiedergabe/Pause und Vorspringen; tippe dort auf den Namen der Folge, um den großen Player zu öffnen, mit `Wiedergabetempo`, `Schlaftimer`, Kapiteln, `Shownotes`, `Nächste in der Warteschlange` und `Stopp`. Der Schlaftimer stoppt nach 5 bis 60 Minuten oder am `Ende der Folge`.
+
+Tippe auf den Titel einer Folge, um ihre Shownotes zu lesen; Zeitangaben darin stehen unter `Springen zu`. Die Taste ⋯ (`Weitere Aktionen`) bietet `Als Nächstes`, `In Warteschlange`, `Als gehört markieren`, `Herunterladen`, `Shownotes` und `Seite der Folge öffnen`.
+
+`Alle zufällig` in `Bibliothek` spielt je eine zufällige ungehörte Folge jedes Podcasts, dem du folgst, und `Zufällig` auf der Seite eines Podcasts spielt seine ungehörten Folgen in zufälliger Reihenfolge. Die erste läuft, der Rest kommt oben in `Als Nächstes`. Wenn du vielen Podcasts folgst, springt die Buchstabenleiste (A–Z, Α–Ω) in `Bibliothek` zu einem Buchstaben, und `Länder` in `Entdecken` hat auch eine.
+
+In `Als Nächstes` verschieben die Pfeile Folgen nach oben oder unten. Die Mediensteuerung deines Geräts (Sperrbildschirm, Headset) funktioniert auch.
+
+## Kapitel, Transkripte und Video
+- Hat eine Folge Kapitel, listet der große Player sie unter `Kapitel` auf, mit `Vorheriges Kapitel` und `Nächstes Kapitel`.
+- `Transkript` zeigt den Text der Folge, wenn die Sendung einen anbietet. Tippe auf eine Zeile, um dorthin zu springen, nutze `Transkript durchsuchen` und schalte `Wiedergabe folgen` ein, damit die aktuelle Zeile sichtbar bleibt.
+- Video-Folgen haben eine Taste `Ansehen`.
+- `Teilen` schickt einen Link zu einer Folge; im Player nimmt `Diesen Moment teilen` die aktuelle Zeit mit.
+- `Notiz bei 12:34` schreibt eine Notiz in [Notizen](app:notes) mit der Folge und der Zeit, und `Später hören (Aufgaben)` fügt die Folge zu [Aufgaben](app:todo) hinzu.
+
+## Podcast-Seiten
+Die Seite eines Podcasts listet seine Folgen, mit den Filtern `Alle`, `Ungehört`, `Angefangen`, `Gehört` und `Heruntergeladen`, und `Neueste zuerst` oder `Älteste zuerst`. Dort kannst du `Alle als gehört markieren`, die `Website` besuchen, `Sendung unterstützen`, wenn der Podcast das anbietet, oder `Abo beenden` (seine Downloads werden auch gelöscht). `Website im Reader folgen` folgt der Website der Sendung im [Reader](app:feeds).
+
+`Podcast-Einstellungen` legt ein Tempo für diese Sendung fest, `Anfang überspringen` und `Ende überspringen` in Sekunden (für Intros und Outros) und `Neue Folgen automatisch herunterladen`. `Über neue Folgen benachrichtigen` schickt eine Benachrichtigung, wenn diese Sendung eine neue Folge veröffentlicht; das ist anfangs aus, und orOS prüft alle paar Stunden, solange es offen ist.
+
+## Downloads
+Wähle `Herunterladen` im Menü einer Folge. Der Tab `Downloads` zeigt, wie viel Platz sie belegen und wie viel frei ist. `Downloads vor automatischem Aufräumen schützen` bittet den Browser, sie zu behalten; `Gehörte Downloads löschen` räumt auf.
+
+## Einstellungen
+Die Zahnradtaste öffnet `Einstellungen`: Standardtempo, die Sprünge für `Zurückspringen` und `Vorspringen`, `Nächste Folge der Warteschlange abspielen`, `Downloads nach dem Hören löschen` und welchen Katalog die `Katalogsuche` nutzt (`Apple Podcasts und fyyd`, einen davon oder aus).
+
+### Stille überspringen und Stimmverstärkung
+`Stille überspringen` spielt die leisen Stellen zwischen den Wörtern schneller ab, so dauern Folgen weniger lang; der große Player zeigt, wie viel Zeit es gespart hat, und `Statistik` zählt es zusammen. `Stimmverstärkung` gleicht die Lautstärke aus und macht Stimmen klarer, praktisch in einem lauten Raum. Schalte beides in `Einstellungen` ein oder mit den zwei Tasten im großen Player.
+
+Beides wirkt bei heruntergeladenen Folgen und bei Podcasts, deren Server den Browser den Ton lesen lässt. Wenn ein Server das nicht erlaubt, läuft die Folge normal und der große Player sagt es dir; lade die Folge herunter, um beides zu nutzen.
+
+### Mit gpodder synchronisieren
+`Mit gpodder synchronisieren…` in `Einstellungen` hält deine Abos und deinen Hörfortschritt mit anderen Podcast-Apps (AntennaPod, Kasts, gPodder und andere) gleich, über dein eigenes gpodder.net-Konto oder deine eigene Nextcloud mit der App GPodder Sync. Wähle den Dienst, gib Serveradresse, Benutzername und Passwort ein und drück `Speichern und synchronisieren`. Danach synchronisiert es beim Öffnen von Podcasts und jede Stunde, solange es offen ist; `Jetzt synchronisieren` synchronisiert sofort und `Trennen` beendet es, ohne etwas zu löschen.
+
+Das Passwort bleibt versiegelt auf diesem Gerät und wird nie synchronisiert, gib es also auf jedem Gerät einmal ein; nutze ein App-Passwort, wenn dein Server eins anbietet.
+
+Ohne Server überträgst du Abos mit `OPML exportieren` und `OPML importieren` und den Hörfortschritt mit `Hörfortschritt exportieren` und `Hörfortschritt importieren` (gpodder-Folgenaktionen als JSON-Datei).
+
+## orOS-Datei speichern und öffnen
+In `Einstellungen` speichert `orOS-Datei (.orospodcasts)` alle Abos mit ihren eigenen Einstellungen, Gehört-Markierungen und dem Hörfortschritt als eine `.orospodcasts`-Datei, zum Beispiel um sie ohne Synchronisierung auf ein anderes Gerät zu bringen oder eine Kopie zu behalten. Die Datei ist ein normales ZIP: Entpackt enthält sie die Podcasts als `content.json` plus `preview/podcasts.opml`, das jede Podcast-App importieren kann. Sie ist nicht verschlüsselt, also bewahre sie sicher auf. Downloads, die Warteschlange, die Player-Einstellungen und deine gpodder-Anmeldung sind nie darin.
+
+`orOS-Datei öffnen…` (oder `Entpackter orOS-Ordner…`, oder „Öffnen mit“ orOS am Computer) zeigt, wie viele Podcasts und Fortschrittseinträge neu und wie viele schon hier sind; dann fügt `Hinzufügen` nur die neuen hinzu: Dieselbe Datei erneut zu öffnen, fügt nichts hinzu. Ein Podcast, der schon hier ist, behält seine Einstellungen und seinen Fortschritt, und einer, dessen Abo du hier beendet hast, bleibt beendet; eine Datei löscht nie etwas. Hake `Mit neueren Versionen aktualisieren` an, damit Einträge, die in der Datei später geändert wurden, deine ersetzen. `Rückgängig` in der Meldung entfernt, was hinzugefügt wurde. Eine `.opml`-Datei, die du mit Podcasts öffnest, wird wie bisher importiert.
+
+## Synchronisierung und Sicherung
+Deine Podcasts, der Fortschritt in Folgen, Gehört-Markierungen, die Warteschlange und die Einstellungen werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten abgeglichen. Downloads, zwischengespeicherte Folgenlisten und genaue Positionen bleiben auf diesem Gerät. `OPML exportieren` und `OPML importieren` in `Entdecken` bringen deine Abos zu oder von anderen Podcast-Apps. Siehe auch [Sicherung](help:t/backup).
+
+## Tastenkürzel
+Solange eine Folge geladen ist:
+- [[Space]] spielt ab oder pausiert.
+- [[←]] / [[→]] springen zurück oder vor.
+- `[` / `]` machen langsamer oder schneller.
+- [[N]] spielt die nächste Folge der Warteschlange.
+
+## Tipps
+- Podcasts werden beim Öffnen der App und jede Stunde, solange sie offen ist, aktualisiert; `Aktualisieren` prüft sofort.
+- Manche Podcast-Seiten blockieren Browser. Wenn du das Relay in [Mail](app:mail) einrichtest, kann Podcasts sie lesen.
+
+## Grenzen
+- Suchbegriffe gehen an den gewählten Katalog; schalte die Suche aus, wenn du Podcasts lieber nur per Adresse hinzufügst.
+- Manche Anbieter erlauben keine Downloads; diese Folgen lassen sich trotzdem streamen.
+- Bis zu 500 Podcasts.
+- Stille überspringen und Stimmverstärkung wirken nur, wenn der Browser den Ton lesen darf (Downloads oder Server, die es erlauben). Sonst bleiben sie aus.
+- Die gpodder-Synchronisierung verbindet sich direkt aus dem Browser, daher muss der Server Verbindungen von Webseiten erlauben (CORS). Wenn nicht, siehst du eine Meldung dazu; nutze dann die Dateien. Sie synchronisiert nur, solange orOS offen ist.

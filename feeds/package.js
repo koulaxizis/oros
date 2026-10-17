@@ -69,23 +69,31 @@
 
   // Markdown text: one line, no markup that could become a link or a heading
   function mdText(s) {
-    return String(s == null ? "" : s).replace(/[\u0000-\u001f\u007f]/g, " ").replace(/([\\`*_\[\]<>|])/g, "\\$1").trim();
+    return String(s == null ? "" : s).replace(/[\u0000-\u001f\u007f]/g, " ").replace(/([\\\x60*_\[\]<>|])/g, "\\$1").trim();
   }
+  // Text inside the file's readable copies. Shares the "feeds" pack
+  // with feeds.js (same key = same English).
+  var PV = {
+    en: { "app": "Reader", "pkg.saved": "Saved articles", "pkg.starred": "starred", "pkg.later": "read later" },
+    el: { "app": "Αναγνώστης", "pkg.saved": "Αποθηκευμένα άρθρα", "pkg.starred": "αστέρι", "pkg.later": "για αργότερα" }
+  };
   function previews(state, lang) {
-    var el = lang === "el", out = {};
+    var I = typeof window !== "undefined" && window.orosI18n, out = {};
+    if (I && lang && !PV[lang]) I.table(PV, "feeds", lang);
+    var w = PV[lang] || PV.en;
     var s = isObj(state) ? state : {};
     var data = { feeds: Array.isArray(s.feeds) ? s.feeds : [], folders: Array.isArray(s.folders) ? s.folders : [] };
-    if (data.feeds.length) out["feeds.opml"] = C.buildOpml(data, "orOS " + (el ? "Αναγνώστης" : "Reader"), Date.now());
+    if (data.feeds.length) out["feeds.opml"] = C.buildOpml(data, "orOS " + w.app, Date.now());
     var items = Array.isArray(s.items) ? s.items : [];
     if (items.length) {
       var feeds = {}, tags = {};
       data.feeds.forEach(function (f) { feeds[f.id] = f.title; });
       (Array.isArray(s.tags) ? s.tags : []).forEach(function (g) { tags[g.id] = g.name; });
-      var md = ["# " + (el ? "Αποθηκευμένα άρθρα" : "Saved articles"), ""];
+      var md = ["# " + w["pkg.saved"], ""];
       items.slice().sort(function (a, b) { return (b.date || 0) - (a.date || 0); }).forEach(function (x) {
         var marks = [];
-        if (x.star) marks.push(el ? "αστέρι" : "starred");
-        if (x.later) marks.push(el ? "για αργότερα" : "read later");
+        if (x.star) marks.push(w["pkg.starred"]);
+        if (x.later) marks.push(w["pkg.later"]);
         (x.tags || []).forEach(function (t) { if (tags[t]) marks.push("#" + tags[t]); });
         var head = mdText(x.title) || "—";
         var line = "- " + (x.link ? "[" + head + "](<" + String(x.link).replace(/[<>\s]/g, encodeURIComponent) + ">)" : head);
