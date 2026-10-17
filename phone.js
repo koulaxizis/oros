@@ -41,7 +41,8 @@
 //               {t:"health", seq, since, water, workouts}  (v5: Health
 //                 Connect, see healthOut)
 //   app → page: {t:"state", v, contacts, calendar, reminders, exact,
-//                widgets, health, app}
+//                widgets, health, drive, app}  (drive: the app can
+//                mirror phone folders, DRIVE-A)
 //               {t:"health-in", steps, water, workouts}  (v5: what other
 //                 apps put in Health Connect, see healthIn)
 //               {t:"changes", what, items}   (v2: edits made on the phone)
@@ -62,7 +63,9 @@
   var PERM_URL = { contacts: "intent://contacts#Intent;scheme=oros-permission;package=online.useoros.twa;end",
                    calendar: "intent://calendar#Intent;scheme=oros-permission;package=online.useoros.twa;end",
                    reminders: "intent://reminders#Intent;scheme=oros-permission;package=online.useoros.twa;end",
-                   health: "intent://health#Intent;scheme=oros-permission;package=online.useoros.twa;end" };
+                   health: "intent://health#Intent;scheme=oros-permission;package=online.useoros.twa;end",
+                   // DRIVE-A: orOS Drive's folders screen (orOS app only, state.drive).
+                   drive: "intent://drive#Intent;scheme=oros-permission;package=online.useoros.twa;end" };
   var HEALTH_KEYS = { water: "oros-water-data", fitness: "oros-fitness-data", health: "oros-health-data" };
 
   /* ---------- pure helpers ---------- */
@@ -1070,6 +1073,7 @@
         exact: m.exact === true,
         widgets: Math.max(0, Math.min(50, m.widgets | 0)),
         health: ["granted", "some", "ask", "denied", "update", "unavailable"].indexOf(m.health) >= 0 ? m.health : "",
+        drive: m.drive === true,
         app: typeof m.app === "string" ? m.app.slice(0, 20) : ""
       };
       emit();

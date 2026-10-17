@@ -20,6 +20,19 @@ binding = "NL_DB"
 database_name = "oros-newsletter"
 database_id = "ad575aa3-9d64-4506-bf69-c1b93aa45583"
 
+# Send to someone links with an expiry (share.js): encrypted pieces
+# only. Its own database because a Free D1 database holds 500 MB and
+# NL_DB carries Newsletter and the CRM form. Without the binding the
+# "shr" op and /s/ answer 503 "nostore".
+[[d1_databases]]
+binding = "SHR_DB"
+database_name = "oros-share"
+database_id = "bb524951-d4d8-44b3-a5f0-bb34f14b8c6b"
+
+# Deletes expired share links and unfinished uploads (share.js purgeShares).
+[triggers]
+crons = ["17 * * * *"]
+
 [vars]
 # Comma-separated list of pages allowed to call the relay.
 ALLOWED_ORIGINS = "https://useoros.online"

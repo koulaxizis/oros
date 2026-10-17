@@ -8,6 +8,8 @@
 // Wave 3: the cover sheet for the printer (template, wrapMap,
 // normTpl, MockPrint.spans), the Atelier newTemplate receiver
 // (parseTpl) and the wrap's trim size coming back (parseCover ww/wh).
+// Wave 4: the open book (normIns, openCurve) and the e-book (device,
+// containIn), kept in the project and its assets, and the wiring.
 // Run: node --test tests/*.test.js
 
 "use strict";
@@ -511,4 +513,82 @@ test("wave 3 wiring: Print tab, flat preview, PDF, Atelier guides never export",
   // help has a section for the printer in both languages
   assert.match(read("mockups/help.en.txt"), /^## For the printer$/m);
   assert.match(read("mockups/help.el.txt"), /^## Για το τυπογραφείο$/m);
+});
+
+test("normIns: inside pages, curve, device, PDF page with safe defaults", () => {
+  const d = C.normIns(null);
+  assert.deepEqual(d, { l: "", r: "", scr: "", curl: 0.5, dev: "tablet", dc: "black", pdfp: 1 });
+  const o = C.normIns({ l: A1, r: A2, scr: "../x.png", curl: 7, dev: "laptop", dc: "silver", pdfp: 12.7 });
+  assert.equal(o.l, A1); assert.equal(o.r, A2); assert.equal(o.scr, "");
+  assert.equal(o.curl, 1); assert.equal(o.dev, "tablet"); assert.equal(o.dc, "silver");
+  assert.ok(Number.isInteger(o.pdfp) && o.pdfp >= 1);
+  assert.equal(C.normIns({ curl: -3 }).curl, 0);
+  assert.equal(C.normIns({ pdfp: -5 }).pdfp, 1);
+  ["tablet", "phone", "reader"].forEach((k) => assert.equal(C.normIns({ dev: k }).dev, k));
+});
+
+test("openCurve: pages rise from the gutter, arch, and end at the fore-edge", () => {
+  const bk = { trim: "a5", pages: 240 };
+  const pts = C.openCurve(bk, 0.5, 32), b = C.normBook(bk), t = C.blockMm(b) / 2;
+  assert.equal(pts.length, 33);
+  assert.equal(pts[0][0], 0);
+  assert.ok(pts[0][1] < t * 0.2, "starts low in the gutter");
+  for (let i = 1; i < pts.length; i++) assert.ok(pts[i][0] > pts[i - 1][0], "x grows");
+  const last = pts[pts.length - 1];
+  assert.ok(last[0] <= b.w && last[0] > b.w * 0.95, "ends near the page width");
+  const top = Math.max(...pts.map((p) => p[1]));
+  assert.ok(top > t, "the page arches above the block");
+  // a flat curve (0) stays at the block height, a full one rises more
+  const flat = Math.max(...C.openCurve(bk, 0, 32).map((p) => p[1]));
+  const full = Math.max(...C.openCurve(bk, 1, 32).map((p) => p[1]));
+  assert.ok(flat <= t * 1.001 && full > top);
+  // a thicker book stands higher
+  const thick = Math.max(...C.openCurve({ trim: "a5", pages: 600 }, 0.5, 32).map((p) => p[1]));
+  assert.ok(thick > top);
+});
+
+test("device + containIn: real sizes, the screen inside the body, page fitted", () => {
+  ["tablet", "phone", "reader"].forEach((k) => {
+    const d = C.device(k);
+    assert.equal(d.k, k);
+    assert.ok(d.sw < d.w && d.sh + d.sy < d.h && d.d > 4 && d.d < 10, k);
+  });
+  assert.equal(C.device("nope").k, "tablet");
+  assert.equal(C.device("reader").ink, 1);
+  assert.equal(C.device("phone").ink, 0);
+  const f = C.containIn(300, 450, 163, 228);
+  assert.ok(Math.abs(f.h - 228) < 0.01 && f.w < 163 && Math.abs(f.x * 2 + f.w - 163) < 0.01 && f.y === 0);
+  const g = C.containIn(800, 400, 100, 100);
+  assert.ok(g.w === 100 && g.h === 50 && g.y === 25);
+  assert.deepEqual(C.containIn(0, 0, 10, 20), { x: 0, y: 0, w: 10, h: 20 });
+});
+
+test("project keeps show + ins; their pictures count as assets; merge keeps them", () => {
+  const p = prj({ show: "open", ins: { l: A1, r: A2, curl: 0.8 } });
+  assert.equal(p.show, "open");
+  assert.equal(p.ins.l, A1);
+  assert.equal(prj({ show: "movie" }).show, "book");
+  assert.equal(prj().show, "book");
+  const as = C.assetsOf(prj({ show: "ebook", ins: { scr: A1, l: A2 } }));
+  assert.ok(as.includes(A1) && as.includes(A2));
+  const m = C.merge({ prj: [p] }, null);
+  const q = m.prj.find((x) => x.id === ID);
+  assert.equal(q.show, "open"); assert.equal(q.ins.r, A2); assert.equal(q.ins.curl, 0.8);
+});
+
+test("wave 4 wiring: what to show, inside pages, PDF pages, devices, help", () => {
+  const js = read("mockups/mockups.js"), html = read("mockups/index.html"), sc = read("mockups/scene.js");
+  ["showk", "dev-box", "devk", "dck", "set-grp", "place-grp", "open-box", "ins-box", "ins-slots", "pdf-pick", "f-pdfp", "pdf-info", "curl-box", "f-curl", "pdf-in"].forEach((id) => {
+    assert.match(html, new RegExp('id="' + id + '"'), id);
+    assert.ok(js.includes('"' + id + '"'), id);
+  });
+  // PDF.js is an ES module (as in Layout) and already precached
+  assert.match(js, /n\.type = "module"; n\.src = "\.\.\/vendor\/pdfjs\/pdf\.min\.js"/);
+  assert.match(js, /isEvalSupported: false/);
+  assert.ok(read("sw.js").includes('"vendor/pdfjs/pdf.min.js"') && read("sw.js").includes('"vendor/pdfjs/pdf.worker.min.js"'));
+  assert.match(sc, /function makeOpen\(/); assert.match(sc, /function makeDevice\(/);
+  ["f.show", "show.open", "show.ebook", "dev.reader", "dc.silver", "sec.ins", "slot.scr", "btn.pdf", "f.curl", "pdf.fail", "toast.pdfPages"].forEach((k) =>
+    assert.equal(js.split('"' + k + '":').length - 1, 2, k));
+  assert.match(read("mockups/help.en.txt"), /^## Open book and e-book$/m);
+  assert.match(read("mockups/help.el.txt"), /^## Ανοιχτό βιβλίο και e-book$/m);
 });

@@ -25,6 +25,7 @@ public class PermissionActivity extends Activity {
         kind = data != null ? data.getHost() : null;
         if ("reminders".equals(kind)) { reminders(); return; }
         if ("install".equals(kind)) { install(data); return; }
+        if ("drive".equals(kind)) { drive(); return; }
         if ("health".equals(kind)) {
             startActivity(new Intent(this, HealthPermissionActivity.class));
             finish();
@@ -73,6 +74,15 @@ public class PermissionActivity extends Activity {
                 startActivity(Intent.createChooser(new Intent(Intent.ACTION_VIEW, page), null)
                         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
             }
+        }
+        finish();
+    }
+
+    /** orOS Drive (DRIVE-A): its folders screen. Only the orOS flavour
+     *  has it (app/src/oros), so it is named, not linked. */
+    private void drive() {
+        if (PhoneBridge.hasDrive(this)) {
+            startActivity(new Intent().setClassName(this, PhoneBridge.DRIVE_ACTIVITY));
         }
         finish();
     }

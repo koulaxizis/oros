@@ -1,10 +1,12 @@
 // ============================================================
-// orOS Atelier — ai.js: AI in Atelier (v1.0.0)
+// orOS Atelier — ai.js: AI in Atelier (v1.1.0)
 //   - words: write / shorten / lengthen / fix / change the tone /
 //     translate a text box, write a new text, ideas for a whole page
 //     (new words + a colour palette). These use the AI the user set
 //     up in the Assistant app (their own key for Claude, ChatGPT,
-//     Gemini…, a local server, or the browser's built-in model):
+//     Gemini…, a local server, the browser's built-in model, or the
+//     Assistant's in-browser model (WebLLM, run here in a worker of
+//     its own once the Assistant has downloaded it)):
 //     Atelier reads the Assistant's choice (oros-assistant-data) and
 //     its sealed key (IndexedDB "oros-assistant") and never writes
 //     either. The request goes from this device straight to that
@@ -29,7 +31,7 @@
       "ai.asking": "Asking {name}…", "ai.use": "Use this", "ai.add": "Add to the page", "ai.again": "Try again",
       "ai.stop": "Stop", "ai.empty": "The answer was empty. Try again.",
       "ai.sent": "Only this text goes to {name}, straight from this device.",
-      "ai.none": "Atelier uses the AI you set up in the Assistant app: your own key (Claude, ChatGPT, Gemini…), a server on your computer, or the browser's built-in model.",
+      "ai.none": "Atelier uses the AI you set up in the Assistant app: your own key (Claude, ChatGPT, Gemini…), a free online provider, a server on your computer, or a model that runs in the browser.",
       "ai.noneBtn": "Set up in the Assistant", "ai.noAssistant": "The Assistant app is needed for this.",
       "ai.using": "Words: {name} · {model}", "ai.change": "Change in the Assistant",
       "ai.noKey": "There is no key for {name} on this device. Add it in the Assistant.",
@@ -46,7 +48,11 @@
       "ai.cutVideo": "Not for videos.", "ai.cutLittle": "Hardly anything was left: try “Keep more”.",
       "ai.cutReady": "The background tool is on this device ({mb} MB).", "ai.cutForget": "Remove the tool",
       "ai.cutGone": "The tool was removed from this device.", "ai.cutMissing": "Downloads once (about {mb} MB) the first time you use it.",
-      "ai.err": "{name} did not answer: {why}"
+      "ai.err": "{name} did not answer: {why}",
+      "ai.wlName": "In-browser model", "ai.here": "Runs on this device: the text is not sent anywhere.",
+      "ai.wlGet": "the model is not on this device yet: download it once in the Assistant (Settings › In-browser model)",
+      "ai.wlGpu": "this browser has no WebGPU (use a recent Chrome or Edge)",
+      "ai.wlSpace": "there is not enough memory or space for this model"
     },
     el: {
       "ai.k.write": "Γράψ' το εσύ…", "ai.k.shorter": "Πιο σύντομο", "ai.k.longer": "Πιο μεγάλο",
@@ -56,7 +62,7 @@
       "ai.asking": "Ρωτάω το {name}…", "ai.use": "Χρήση", "ai.add": "Προσθήκη στη σελίδα", "ai.again": "Ξανά",
       "ai.stop": "Διακοπή", "ai.empty": "Η απάντηση ήταν κενή. Δοκίμασε ξανά.",
       "ai.sent": "Μόνο αυτό το κείμενο πηγαίνει στο {name}, απευθείας από αυτή τη συσκευή.",
-      "ai.none": "Το Ατελιέ χρησιμοποιεί το AI που έχεις ρυθμίσει στον Βοηθό: δικό σου κλειδί (Claude, ChatGPT, Gemini…), διακομιστή στον υπολογιστή σου ή το μοντέλο του browser.",
+      "ai.none": "Το Ατελιέ χρησιμοποιεί το AI που έχεις ρυθμίσει στον Βοηθό: δικό σου κλειδί (Claude, ChatGPT, Gemini…), δωρεάν πάροχο στο διαδίκτυο, διακομιστή στον υπολογιστή σου ή μοντέλο που τρέχει μέσα στον browser.",
       "ai.noneBtn": "Ρύθμιση στον Βοηθό", "ai.noAssistant": "Χρειάζεται η εφαρμογή Βοηθός.",
       "ai.using": "Κείμενα: {name} · {model}", "ai.change": "Αλλαγή στον Βοηθό",
       "ai.noKey": "Δεν υπάρχει κλειδί για το {name} σε αυτή τη συσκευή. Πρόσθεσέ το στον Βοηθό.",
@@ -73,7 +79,11 @@
       "ai.cutVideo": "Όχι για βίντεο.", "ai.cutLittle": "Δεν έμεινε σχεδόν τίποτα: δοκίμασε «Κράτα περισσότερο».",
       "ai.cutReady": "Το εργαλείο φόντου είναι σε αυτή τη συσκευή ({mb} MB).", "ai.cutForget": "Αφαίρεση του εργαλείου",
       "ai.cutGone": "Το εργαλείο αφαιρέθηκε από τη συσκευή.", "ai.cutMissing": "Κατεβαίνει μία φορά (περίπου {mb} MB) την πρώτη φορά που θα το χρησιμοποιήσεις.",
-      "ai.err": "Το {name} δεν απάντησε: {why}"
+      "ai.err": "Το {name} δεν απάντησε: {why}",
+      "ai.wlName": "Μοντέλο μέσα στον browser", "ai.here": "Γίνεται σε αυτή τη συσκευή: το κείμενο δεν στέλνεται πουθενά.",
+      "ai.wlGet": "το μοντέλο δεν είναι ακόμα σε αυτή τη συσκευή: κατέβασέ το μία φορά στον Βοηθό (Ρυθμίσεις › Μοντέλο μέσα στον browser)",
+      "ai.wlGpu": "αυτός ο browser δεν έχει WebGPU (χρησιμοποίησε πρόσφατο Chrome ή Edge)",
+      "ai.wlSpace": "δεν υπάρχει αρκετή μνήμη ή χώρος για αυτό το μοντέλο"
     }
   };
   Object.keys(STR).forEach(function (l) {
@@ -97,8 +107,10 @@
     if (!p) return null;
     var pc = d.provs[pid] || {};
     var model = pc.model || p.model || "";
+    if (p.kind === "webllm" && core.webllmModel && !core.webllmModel(model)) model = p.model;
     if (!model) return null;
-    return { pid: pid, name: p.name, model: model, base: core.provBase(pid, pc), p: p };
+    var name = p.kind === "webllm" ? t("ai.wlName") : p.name;
+    return { pid: pid, name: name, model: model, base: core.provBase(pid, pc), p: p };
   }
 
   // The Assistant's key for pid, read from its IndexedDB without
@@ -133,10 +145,89 @@
     catch (e) { return null; }
   }
 
+  // ---------- The Assistant's in-browser model (WebLLM) ----------
+  // Same library, worker and Cache Storage ("webllm/model") as the
+  // Assistant, so a model downloaded there is used here as it is.
+  // Atelier never downloads one: a model that is not cached yet only
+  // says where to get it. The engine stays loaded while Atelier is open.
+  var WL_SRC = "../vendor/webllm/web-llm-0.2.86.js", WL_WORKER = "../assistant/webllm-worker.js";
+  var wl = { lib: null, engine: null, worker: null, model: "", loading: null };
+  function wlGpu() { try { return !!navigator.gpu; } catch (e) { return false; } }
+  function wlCached(model) {
+    if (typeof caches === "undefined") return Promise.resolve(false);
+    return caches.has("webllm/model").then(function (has) {
+      if (!has) return false;
+      return caches.open("webllm/model").then(function (c) { return c.keys(); }).then(function (keys) {
+        return keys.some(function (r) { return r.url.indexOf("/" + model + "/") >= 0; });
+      });
+    }).catch(function () { return false; });
+  }
+  function wlDrop() {
+    try { if (wl.engine && wl.engine.unload) wl.engine.unload(); } catch (e) {}
+    try { if (wl.worker) wl.worker.terminate(); } catch (e) {}
+    wl.engine = null; wl.worker = null; wl.model = "";
+  }
+  function wlEngine(model) {
+    if (wl.engine && wl.model === model) return Promise.resolve(wl.engine);
+    if (wl.loading && wl.loading.model === model) return wl.loading.p;
+    wlDrop();
+    if (!wl.lib) wl.lib = import(WL_SRC).catch(function (e) { wl.lib = null; throw e; });
+    var p = wl.lib.then(function (lib) {
+      wl.worker = new Worker(new URL(WL_WORKER, location.href), { type: "module" });
+      return lib.CreateWebWorkerMLCEngine(wl.worker, model, {});
+    }).then(function (engine) {
+      wl.engine = engine; wl.model = model; wl.loading = null;
+      return engine;
+    }, function (e) { wl.loading = null; wlDrop(); throw e; });
+    wl.loading = { model: model, p: p };
+    return p;
+  }
+  function wlAsk(cf, system, user, signal, onText) {
+    var core = C(), engine = null;
+    function err(code, msg) { return new core.ProviderError(code, msg || ""); }
+    if (!wlGpu()) return Promise.reject(err("webgpu"));
+    function stop() { try { if (engine) engine.interruptGenerate(); } catch (e) {} }
+    if (signal) signal.addEventListener("abort", stop);
+    return wlCached(cf.model).then(function (yes) {
+      if (!yes) throw err("wlget");
+      return wlEngine(cf.model);
+    }).then(function (eng) {
+      engine = eng;
+      if (signal && signal.aborted) throw new DOMException("Aborted", "AbortError");
+      var req = { messages: core.webllmMessages([{ r: "user", text: user }], system), stream: true };
+      if (/^Qwen3/.test(cf.model)) req.extra_body = { enable_thinking: false };   // no thinking out loud
+      return eng.chat.completions.create(req);
+    }).then(function (chunks) {
+      var red = core.makeReducer("webllm"), it = chunks[Symbol.asyncIterator]();
+      function pump() {
+        return it.next().then(function (r) {
+          if (signal && signal.aborted) throw new DOMException("Aborted", "AbortError");
+          if (r.done) return red.result().text || "";
+          red.push(r.value);
+          if (onText) onText(red.text());
+          return pump();
+        });
+      }
+      return pump();
+    }).then(function (text) {
+      if (signal) signal.removeEventListener("abort", stop);
+      return text;
+    }, function (e) {
+      if (signal) signal.removeEventListener("abort", stop);
+      if (signal && signal.aborted) throw e;
+      if (e instanceof core.ProviderError) throw e;
+      var m = String(e && e.message || e || "");
+      throw /webgpu|adapter|gpu/i.test(m) ? err("webgpu", m.slice(0, 200))
+        : /memory|quota|storage/i.test(m) ? err("wlspace", m.slice(0, 200))
+        : err("server", m.slice(0, 200));
+    });
+  }
+
   // One question → the answer's text. onText(text so far) as it streams.
   function ask(cf, system, user, signal, onText) {
     var core = C();
     var msgs = [{ r: "user", text: user }];
+    if (cf.p.kind === "webllm") return wlAsk(cf, system, user, signal, onText);
     if (cf.p.builtin) {
       var api = LM();
       if (!api) return Promise.reject(new core.ProviderError("builtin"));
@@ -202,6 +293,9 @@
     if (e && e.code === "nokey") return t("ai.noKey", { name: cf.name });
     var why = e && e.code === "net" ? (AT.LANG === "el" ? "δεν υπάρχει σύνδεση" : "no connection")
       : e && e.code === "builtin" ? (AT.LANG === "el" ? "το μοντέλο του browser δεν είναι διαθέσιμο" : "the browser's model is not available")
+      : e && e.code === "wlget" ? t("ai.wlGet")
+      : e && e.code === "webgpu" ? t("ai.wlGpu")
+      : e && e.code === "wlspace" ? t("ai.wlSpace")
       : e && e.status ? "HTTP " + e.status + (e.msg ? " · " + String(e.msg).slice(0, 160) : "")
       : String(e && (e.msg || e.message) || e).slice(0, 160);
     void core;
@@ -238,7 +332,7 @@
   function answer(cf, spec) {
     var dlg = AT.$("dlg"), ctl = null;
     AT.openDialog(spec.title, function (body, close) {
-      var note = el("p", "hint ai-note", t("ai.sent", { name: cf.name }));
+      var note = el("p", "hint ai-note", cf.p.device ? t("ai.here") : t("ai.sent", { name: cf.name }));
       var out = el("div", "ai-out");
       out.setAttribute("aria-live", "polite");
       var stat = el("p", "hint ai-stat");
@@ -567,7 +661,8 @@
     // which AI
     var s4 = sec();
     if (cf) {
-      s4.appendChild(el("p", "hint", t("ai.using", { name: cf.name, model: cf.model })));
+      var wm = cf.p.kind === "webllm" && C().webllmModel && C().webllmModel(cf.model);
+      s4.appendChild(el("p", "hint", t("ai.using", { name: cf.name, model: wm ? wm.name : cf.model })));
       s4.appendChild(button("btn small", t("ai.change"), openAssistant));
     } else {
       s4.appendChild(el("p", "hint", t("ai.none")));
