@@ -7416,3 +7416,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Quality gate Q2: CI sweeps every sync merge function with two simulated devices (diverge, endless upload, lost record); closes A5 as an automated check.
 - Files: `.github/qa/{converge.js,make-fixtures.js,fixtures/*.json,baseline.json,smoke.js}`, `.github/workflows/quality.yml`, `tests/quality-gate.test.js`, Bible.
   - Tests: full suite green; quality.yml green on GitHub. Nothing shipped to users.
+
+### 2026-10-17 — App Kit K2: the quality gate checks every app a PR adds (#472) — CI only, no APP_VERSION
+- App Kit K2: the quality gate checks every app a PR adds with check-app.js (registration, precache, help, DL-1, palette, sync, safety).
+- Files: `.github/workflows/quality.yml` (job `new-apps`), `.github/app-kit/check-app.js`, `docs/app-kit/README.md`, `tests/app-kit.test.js`, Bible.
+  - Tests: full suite green; quality.yml green on GitHub. Nothing shipped to users.
