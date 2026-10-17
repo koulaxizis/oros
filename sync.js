@@ -2022,24 +2022,43 @@
   // document, the slice goes back to its stored form (the same proxy
   // a fresh boot would create). Shell-realm registrations (pet,
   // shell, notifications, the shell's own proxies) are never touched.
-  function appFrameDoc() {
+  // Multitasking groundwork (M1): the shell may show more than one app
+  // frame; window.__orosAppDocs() lists the documents of every LIVE app
+  // frame (shown or hidden; a closed frame is not in it). Without the
+  // shell's helper, the single #app-frame as before.
+  function appFrameDocs() {
+    try {
+      if (typeof window.__orosAppDocs === "function") return window.__orosAppDocs() || [];
+    } catch (e) { return []; }
     try {
       var fr = document.getElementById("app-frame");
-      return fr ? (fr.contentDocument || null) : null;
-    } catch (e) { return null; }
+      var d = fr ? (fr.contentDocument || null) : null;
+      return d ? [d] : [];
+    } catch (e2) { return []; }
+  }
+  // The live frame document a foreign-realm getter belongs to: the one
+  // whose window made the function. Falls back to the first frame (the
+  // only one while multitasking is off).
+  function ownerDocOf(fn) {
+    var docs = appFrameDocs();
+    for (var i = 0; i < docs.length; i++) {
+      try {
+        var w = docs[i].defaultView;
+        if (w && w.Function && fn instanceof w.Function) return docs[i];
+      } catch (e) {}
+    }
+    return docs[0] || null;
   }
   function reapClosedApps() {
-    var cur = appFrameDoc();
+    var live = appFrameDocs();
     Object.keys(slices).forEach(function (name) {
       var s = slices[name];
       if (!s || !s.live || !s.ownerDoc || !s.storageKey) return;
-      if (s.ownerDoc === cur) return;
+      if (live.indexOf(s.ownerDoc) !== -1) return;
       slices[name] = makeProxySlice(s.storageKey);
     });
   }
 
-  // v0.7: 5th argument = optional mergeFn(local, remote) → merged.
-  // Backward compatible: existing 4-arg registrations behave as before.
   function registerSlice(name, getter, setter, storageKey, mergeFn) {
     if (RETIRED_SLICES[name]) {
       // A cached older shell.js may still try. Not an error.
@@ -2049,7 +2068,7 @@
     // SY-D5: a getter from another realm = registered by the app in
     // the frame; remember that document (see reapClosedApps).
     var ownerDoc = null;
-    try { if (!(getter instanceof Function)) ownerDoc = appFrameDoc(); } catch (eOwn) {}
+    try { if (!(getter instanceof Function)) ownerDoc = ownerDocOf(getter); } catch (eOwn) {}
     slices[name] = {
       get: getter,
       set: setter,

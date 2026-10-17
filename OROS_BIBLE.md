@@ -202,6 +202,13 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 
 **There is NO `window.__orosNotify`** in shell.js or notifications.js (0.38.12). Older Bible text used it; see the Part X audit item.
 
+### App frames (multitasking groundwork, wave M1)
+
+Multitasking (several live app frames) is an approved EXPERIMENT, off by default, per device (Chris 2026-10-17; plan `/mnt/project-files/multitasking/plan.md`). With it off, the shell must behave exactly as with the single `#app-frame`. Since M1 every shell path that talks to a running app goes through one place in `shell.js` (section 10a):
+- `appFrames()` every live app frame, `appFrameOf(id)` the frame showing app `id` (or null), `appLive(id)`. A bridge that pushes into a running app is `if (appLive("x")) { var f = appFrameOf("x"); … }`, never `state.running.id === "x"` + `getElementById("app-frame")` (guarded by `tests/multitask.test.js`). `state.running` stays "the app in front".
+- `window.__orosAppDocs()` = documents of the live frames (none while nothing runs). `sync.js` SY-D5 keeps a live slice while its document is in that list (a hidden frame is live, a closed one is not) and finds a registration's owner by the realm of its getter (`ownerDocOf`); without the helper it falls back to `#app-frame` as before. `mail/notify.js` `mailOpen()` reads the same list.
+- Tools (CI/local only, `.github/qa/`): `memory.js` (per-app JS + DOM bytes via `measureUserAgentSpecificMemory` on a cross-origin-isolated local server, canvas pixels, WebGL, apps not freed after close; `--stack` = process memory of several apps alive together) and `writers.js` (static scan: who writes an app's localStorage keys from another window; verdicts ok / handoff / host / listens / check). Reports: `/mnt/project-files/multitasking/`.
+
 ### `shell.js` [verified 2026-10-05, `APP_VERSION` 0.39.06]
 
 - One IIFE + `"use strict"`. `APP_VERSION` lives here only (R23; 0.39.06 when first read, 0.39.18 in the copy sent back for reconciliation, 0.39.19 delivered 2026-10-07). `ICONS` has 25 entries (24 apps + `mail`).

@@ -280,11 +280,23 @@
   }
   // Mail open in this shell: it sends its own (its timer is exact)
   function mailOpen() {
+    // Every live app frame (the shell's list; the single #app-frame
+    // when the shell has no list).
+    var docs = [];
     try {
-      var f = root.document.getElementById("app-frame");
-      var w = f && f.contentWindow;
-      return !!(w && /\/mail\/(index\.html)?$/.test(w.location.pathname) && w.orosMailOutbox);
+      if (typeof root.__orosAppDocs === "function") docs = root.__orosAppDocs() || [];
+      else {
+        var f = root.document.getElementById("app-frame");
+        if (f && f.contentDocument) docs = [f.contentDocument];
+      }
     } catch (e) { return false; }
+    for (var i = 0; i < docs.length; i++) {
+      try {
+        var w = docs[i].defaultView;
+        if (w && /\/mail\/(index\.html)?$/.test(w.location.pathname) && w.orosMailOutbox) return true;
+      } catch (e2) {}
+    }
+    return false;
   }
   function notice(key, title, subj) {
     var N = root.orosNotifs;
