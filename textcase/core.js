@@ -640,7 +640,8 @@
 
   function sortedForList(data, lang) {
     var coll;
-    try { coll = new Intl.Collator(lang === "el" ? "el" : "en", { sensitivity: "base" }); } catch (e) { coll = null; }
+    var loc = typeof lang === "string" && /^[a-z]{2,3}(-[A-Z]{2})?$/.test(lang) ? lang : "en";   // the app's language
+    try { coll = new Intl.Collator(loc, { sensitivity: "base" }); } catch (e) { coll = null; }
     return (data && data.words ? data.words.slice() : []).sort(function (x, y) {
       return coll ? coll.compare(x.w, y.w) : cmpStr(foldKey(x.w), foldKey(y.w));
     });

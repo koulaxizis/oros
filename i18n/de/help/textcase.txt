@@ -1,0 +1,38 @@
+# Groß/Klein
+Ändere Schreibung und Buchstaben eines beliebigen Textes: Großbuchstaben, Kleinbuchstaben, Titelschreibung, Griechisch ohne Akzente, Griechisch in lateinischen Buchstaben, Namen für Code und ausgefallene Unicode-Buchstaben. Griechisch wird richtig gemacht: ΤΣΑΪ, ΜΑΪΟΣ, Großbuchstaben ohne Akzente und ein End-ς.
+
+## Erste Schritte
+1. Gib deinen Text in `Text` ein oder füge ihn ein. `Einfügen` übernimmt, was du kopiert hast; `Leeren` leert das Feld (`Rückgängig` holt es zurück).
+2. Wähle eine Umwandlung. Das `Ergebnis` ändert sich beim Tippen.
+3. Drück auf `Kopieren` oder auf `Als Text nehmen`, um das Ergebnis noch einmal umzuwandeln (zum Beispiel erst `Akzente entfernen`, dann `GROSSBUCHSTABEN`).
+Unter dem Text siehst du seine Zeichen, Wörter und Zeilen. Hast du die App Textwerkzeuge, öffnet `Textwerkzeuge` neben dem Ergebnis das Ergebnis dort.
+
+## Die Umwandlungen
+- `Einfach`: `GROSSBUCHSTABEN`, `kleinbuchstaben`, `Satzanfang groß` (ein Großbuchstabe am Anfang jedes Satzes), `Titelschreibung` (kleine Wörter wie „of“, „the“, „και“, „του“ bleiben klein), `Jedes Wort Groß`, `uMKEHREN` (repariert Text, der mit Caps Lock getippt wurde) und `aBwEcHsElNd`.
+- `Griechisch`: `Akzente entfernen` (auch Trema und die Akzente anderer Sprachen), `Griechisch → Latein (ELOT 743)` wie in griechischen Reisepässen (Θεσσαλονίκη → Thessaloniki), `Greeklish` wie in Nachrichten, und `Gemischte Buchstaben korrigieren`, das lateinische Buchstaben findet, die sich in griechischen Wörtern verstecken (ein englisches A in ΑΘΗΝΑ), und umgekehrt.
+- `Code`: camelCase, PascalCase, snake_case, kebab-case, CONSTANT_CASE, dot.case, path/case und Train-Case. Jede Zeile wird ein Name. Griechisch wird in lateinischen Buchstaben geschrieben, außer du hakst `Griechische Buchstaben behalten` an.
+- `Stile`: fette, kursive, Festbreiten-, Doppelstrich-, Kapitälchen-, Vollbreiten-, eingekreiste, durchgestrichene und unterstrichene Buchstaben für Posts. `Einfacher Text` macht sie wieder normal.
+
+## Sprache und Auswahl
+- `Sprache` ist anfangs `Automatisch`: Die App schaut auf die Buchstaben. Wähle `Türkçe` für das türkische i und İ oder `Deutsch`, wenn der Text es braucht.
+- Hak `Nur Auswahl` an und markiere einen Teil des Textes: Nur dieser Teil ändert sich; der Rest des Ergebnisses bleibt, wie er ist.
+
+## Meine Wörter
+Der Button oben rechts öffnet `Meine Wörter`: Wörter, die ihre Großbuchstaben bei `Satzanfang groß`, `Titelschreibung` und `Jedes Wort Groß` immer behalten, etwa iPhone, NASA oder ΔΕΗ. Gib ein Wort ein und drück auf `Hinzufügen`; das × neben einem Wort entfernt es (`Rückgängig` holt es zurück). Ein paar häufige Wörter sind anfangs schon da.
+
+## Synchronisierung und Sicherung
+- `Meine Wörter` folgt dir über die orOS-Synchronisierung auf alle deine Geräte, verschlüsselt wie deine übrigen Daten, und ist Teil des orOS-Exports.
+- Dein Text wird nie synchronisiert. Er bleibt auf diesem Gerät und ist deshalb beim nächsten Öffnen der App noch da; `Leeren` entfernt ihn. Sehr lange Texte (über 100.000 Zeichen) bleiben nur, solange die App offen ist.
+
+## Tastenkürzel
+- [[Ctrl+Enter]]: das Ergebnis kopieren.
+- [[←]] und [[→]] auf den Tabs oder den Umwandlungen: zwischen ihnen wechseln.
+- [[Esc]]: `Meine Wörter` schließen.
+
+## Tipps
+> Schreibst du einen Titel in griechischen Großbuchstaben? Nimm `GROSSBUCHSTABEN`: Die Akzente verschwinden von selbst, und das Trema bleibt, wo es hingehört.
+
+## Grenzen
+- Kleinbuchstaben bekommen die Akzente eines in Großbuchstaben geschriebenen Textes nicht zurück (ΚΑΛΗΜΕΡΑ → καλημερα).
+- Greeklish zu Griechisch gibt es nicht: Dieselben lateinischen Buchstaben können mehreren griechischen entsprechen.
+- Viele Screenreader lesen die Buchstaben aus `Stile` schlecht; nimm sie nur für kurze Titel. Buchstaben, für die ein Stil keine Form hat, etwa Griechisch in Festbreite, bleiben, wie sie sind.
