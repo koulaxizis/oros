@@ -59,6 +59,7 @@
 
   // ---------- 1. Constants, i18n, helpers ----------
   function appLang() {
+    if (window.orosI18n) return window.orosI18n.lang();
     try {
       var l = localStorage.getItem("oros-lang") ||
               (window.parent && window.parent.orosLang) || "en";
@@ -163,6 +164,8 @@
       "toast.noWords": "Η λίστα λέξεων δεν φορτώθηκε"
     }
   };
+  // A pack language (German …): English + the hangman pack.
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "hangman", LANG);
 
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;
@@ -398,7 +401,9 @@
   }
 
   // ---------- 4. Device-local prefs + session ----------
-  var prefs = { lang: LANG, level: "e" };
+  // Word language: Greek words in Greek, English words in every other
+  // UI language (German plays with the English list).
+  var prefs = { lang: LANG === "el" ? "el" : "en", level: "e" };
 
   function loadPrefs() {
     try {
