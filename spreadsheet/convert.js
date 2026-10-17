@@ -158,7 +158,10 @@ function makeCanvas(w, h) {
 
 function convert(file, opts) {
   opts = opts || {};
-  var lang = opts.lang === "el" ? "el" : "en", S = STR[lang];
+  /* S: the messages (a pack language through orosI18n, browser only);
+     lang: "el" / "en" for the workbook itself */
+  var I = root && root.orosI18n, lang = opts.lang === "el" ? "el" : "en";
+  var S = STR[opts.lang] || (I && opts.lang && I.known(opts.lang) ? I.table(STR, "spreadsheet", opts.lang) : STR[lang]);
   var prog = typeof opts.onProgress === "function" ? opts.onProgress : function () {};
   function step(x) { try { prog(x); } catch (e) {} }
   return Promise.resolve().then(function () {

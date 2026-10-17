@@ -35,8 +35,9 @@
       return l === "el" ? "el" : "en";
     } catch (e) { return "en"; }
   }
-  var LANG = appLang();
-  var LOCALE = LANG === "el" ? "el-GR" : "en-GB";
+  // orosI18n (../i18n.js): the full language code, a pack language included.
+  var LANG = window.orosI18n ? window.orosI18n.lang() : appLang();
+  var LOCALE = window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB");
 
   var STRINGS = {
     en: {
@@ -54,14 +55,15 @@
       "faded.empty": "Nothing has faded.",
       "faded.when": "Faded {when} · deleted {left}",
       "left.days": "in {n} days", "left.day": "tomorrow", "left.today": "today",
-      "rings": "Rings {when}", "ringing": "Ringing", "vanishes": "Vanishes {when}", "vanishDone": "Vanishes when the ring is done",
+      "rings": "Rings {when}", "ringingNow": "Ringing", "vanishes": "Vanishes {when}", "vanishOnDone": "Vanishes when the ring is done",
+      "rel.today": "today {t}", "rel.tomorrow": "tomorrow {t}", "rel.yesterday": "yesterday {t}",
       "note.empty": "(empty)",
       "more.title": "Sticky Notes settings", "sec.desk": "On this device", "sec.tools": "Notes",
       "set.show": "Show sticky notes on the desktop", "set.sound": "Ring sound",
       "snd.bell": "Bell", "snd.dingdong": "Ding-dong", "snd.wind": "Wind chime", "snd.off": "No sound",
       "set.pop": "A soft sound when a note fades", "set.color": "Colour of new notes",
       "snd.melodies": "Your melodies (Ringtone Composer)", "snd.gone": "A melody that was deleted (the bell plays)",
-      "rep.daily": "every day", "rep.weekdays": "Mon–Fri", "rep.weekly": "every week",
+      "repf.daily": "every day", "repf.weekdays": "Mon–Fri", "repf.weekly": "every week",
       "set.hint": "These settings stay on this device. The notes themselves follow you to every device through orOS sync.",
       "c.yellow": "Yellow", "c.pink": "Pink", "c.green": "Green", "c.blue": "Blue", "c.orange": "Orange", "c.lilac": "Lilac",
       "standalone": "Sticky Notes lives on the orOS desktop. Open it from inside orOS.",
@@ -86,14 +88,15 @@
       "faded.empty": "Δεν έχει ξεθωριάσει τίποτα.",
       "faded.when": "Ξεθώριασε {when} · σβήνεται {left}",
       "left.days": "σε {n} μέρες", "left.day": "αύριο", "left.today": "σήμερα",
-      "rings": "Χτυπάει {when}", "ringing": "Χτυπάει", "vanishes": "Εξαφανίζεται {when}", "vanishDone": "Εξαφανίζεται όταν πατήσεις «Έγινε»",
+      "rings": "Χτυπάει {when}", "ringingNow": "Χτυπάει", "vanishes": "Εξαφανίζεται {when}", "vanishOnDone": "Εξαφανίζεται όταν πατήσεις «Έγινε»",
+      "rel.today": "σήμερα {t}", "rel.tomorrow": "αύριο {t}", "rel.yesterday": "χθες {t}",
       "note.empty": "(κενό)",
       "more.title": "Ρυθμίσεις για τα post-it", "sec.desk": "Σε αυτή τη συσκευή", "sec.tools": "Post-it",
       "set.show": "Εμφάνιση των post-it στην επιφάνεια εργασίας", "set.sound": "Ήχος κουδουνίσματος",
       "snd.bell": "Καμπανάκι", "snd.dingdong": "Ντινγκ-ντονγκ", "snd.wind": "Καμπανάκια ανέμου", "snd.off": "Χωρίς ήχο",
       "set.pop": "Απαλός ήχος όταν ξεθωριάζει ένα post-it", "set.color": "Χρώμα για τα νέα post-it",
       "snd.melodies": "Οι μελωδίες σου (Συνθέτης ήχων κλήσης)", "snd.gone": "Μελωδία που διαγράφηκε (παίζει το κουδούνι)",
-      "rep.daily": "κάθε μέρα", "rep.weekdays": "Δευ–Παρ", "rep.weekly": "κάθε εβδομάδα",
+      "repf.daily": "κάθε μέρα", "repf.weekdays": "Δευ–Παρ", "repf.weekly": "κάθε εβδομάδα",
       "set.hint": "Αυτές οι ρυθμίσεις μένουν σε αυτή τη συσκευή. Τα ίδια τα post-it σε ακολουθούν σε κάθε συσκευή μέσω του συγχρονισμού του orOS.",
       "c.yellow": "Κίτρινο", "c.pink": "Ροζ", "c.green": "Πράσινο", "c.blue": "Μπλε", "c.orange": "Πορτοκαλί", "c.lilac": "Λιλά",
       "standalone": "Τα post-it ζουν στην επιφάνεια εργασίας του orOS. Άνοιξε την εφαρμογή μέσα από το orOS.",
@@ -104,6 +107,7 @@
       "aria.note": "Post-it: {text}"
     }
   };
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "stickies", LANG);
 
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;
@@ -124,9 +128,9 @@
     var d = new Date(ms), now = new Date();
     var day0 = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
     var dd = Math.round((new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime() - day0) / 86400000);
-    if (dd === 0) return (LANG === "el" ? "σήμερα " : "today ") + hm(d);
-    if (dd === 1) return (LANG === "el" ? "αύριο " : "tomorrow ") + hm(d);
-    if (dd === -1) return (LANG === "el" ? "χθες " : "yesterday ") + hm(d);
+    if (dd === 0) return t("rel.today", { t: hm(d) });
+    if (dd === 1) return t("rel.tomorrow", { t: hm(d) });
+    if (dd === -1) return t("rel.yesterday", { t: hm(d) });
     try { return d.toLocaleDateString(LOCALE, { weekday: "short", day: "numeric", month: "numeric" }).replace(",", "") + " " + hm(d); }
     catch (e) { return ""; }
   }
@@ -175,9 +179,9 @@
       li.setAttribute("aria-label", t("aria.note", { text: C.firstLine(n.text) || t("note.empty") }));
       li.appendChild(el("div", "txt", preview(n)));
       var meta = [];
-      if (n.ring) meta.push((n.ring.at <= now ? "🔔 " + t("ringing") : "🔔 " + t("rings", { when: when(n.ring.at) })) +
-        (n.ring.rep ? " ↻ " + t("rep." + n.ring.rep) : ""));
-      if (n.vanish) meta.push("⏳ " + (n.vanish.at ? t("vanishes", { when: when(n.vanish.at) }) : t("vanishDone")));
+      if (n.ring) meta.push((n.ring.at <= now ? "🔔 " + t("ringingNow") : "🔔 " + t("rings", { when: when(n.ring.at) })) +
+        (n.ring.rep ? " ↻ " + t("repf." + n.ring.rep) : ""));
+      if (n.vanish) meta.push("⏳ " + (n.vanish.at ? t("vanishes", { when: when(n.vanish.at) }) : t("vanishOnDone")));
       if (meta.length) li.appendChild(el("div", "meta", meta.join(" · ")));
       var acts = el("div", "acts");
       acts.appendChild(action(t("btn.edit"), function () { H.edit(n.id); }, "pri"));
@@ -330,7 +334,7 @@
   var RP = window.OrosRecordPkg || null, SPK = window.OrosStickiesPackage || null;
   var lastAdded = [];
   var recFile = H && RP && SPK && window.OrosBundle ? RP.ui(SPK.DESC, {
-    lang: function () { return LANG; },
+    lang: function () { return LANG === "el" ? "el" : "en"; },
     get: function () { return SPK.stamped(data()); },
     title: function () { return t("app.name"); },
     set: function (next, info) {

@@ -18,6 +18,12 @@
   var MAX_SCAN = 20000, MAX_CELLS = 300;
   var KEY_RE = /^([\w-]+)\|(\d+)\|(\d+)$/;
   var NUMERIC = /^[\s\d.,%€$£+\-()\/:]*$/;
+  // the fallback name of a sheet without one
+  var S = {
+    en: { "sheet.word": "Sheet" },
+    el: { "sheet.word": "Φύλλο" }
+  };
+  if (root.orosI18n) root.orosI18n.table(S, "spreadsheet");
 
   function num(n) { return typeof n === "number" && isFinite(n) && n > 0 ? n : 0; }
   // the value's own stamp (fm.v), as spreadsheet.js cellStamps() reads it
@@ -67,7 +73,7 @@
         var bi = sh.bi && typeof sh.bi === "object" ? sh.bi : {};
         var name = (typeof sh.name === "string" && sh.name.trim()) ||
                    (ctx.lang === "el" ? bi.el || bi.en : bi.en || bi.el) || "";
-        sheets[sh.id] = String(name).trim() || (ctx.lang === "el" ? "Φύλλο" : "Sheet");
+        sheets[sh.id] = String(name).trim() || ((S[ctx.lang] || S.en)["sheet.word"]);
         out.push({ id: "s:" + sh.id, title: sheets[sh.id], text: "",
                    when: num(sh.mtime), target: { sheet: sh.id } });
       });

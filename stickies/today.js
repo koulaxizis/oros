@@ -14,6 +14,20 @@
   "use strict";
   var KEY = "oros-stickies-data";
   var NAME = { en: "Sticky note", el: "Post-it" };
+  // The fallback title: "note" of the stickies pack for a pack language
+  // (host.js loads that pack in the shell), else English or Greek.
+  function name(l) {
+    if (l === "el" || l === "en") return NAME[l];
+    var I = root && root.orosI18n;
+    if (!I) return NAME.en;
+    var tab = I.table({ en: { note: NAME.en } }, "stickies", l);
+    return tab.note || NAME.en;
+  }
+  function langOf(ctx) {
+    var I = root && root.orosI18n;
+    if (I && ctx.lang !== "el") { try { return I.lang(); } catch (e) {} }
+    return ctx.lang === "el" ? "el" : "en";
+  }
   var MAX_ROUNDS = 8;
 
   function core() {
@@ -34,10 +48,10 @@
       var C = core(), d = ctx.readJSON(KEY);
       if (!C || !d) return [];
       var last = ctx.addDays(ctx.today, ctx.horizon), rows = [];
-      var lang = ctx.lang === "el" ? "el" : "en";
+      var lang = langOf(ctx);
       C.live(C.merge(d, null)).forEach(function (n) {
         if (!n.ring) return;
-        var title = C.firstLine(n.text) || NAME[lang];
+        var title = C.firstLine(n.text) || name(lang);
         var at = n.ring.at, k = 0;
         while (at && k < MAX_ROUNDS) {
           var day = ymd(new Date(at));
