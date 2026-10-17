@@ -1034,6 +1034,17 @@
              habitsTitle: tr("app.habits", lang === "el" ? "Συνήθειες" : "Habits"),
              healthTitle: tr("app.health", lang === "el" ? "Υγεία" : "Health") };
   }
+  // Calendar reminders ring here only while the events are NOT copied
+  // to the phone's Calendar (that app rings them then, so no double).
+  function calendarReminders(now) {
+    var P = root.orosPush;
+    if (prefs().calendar && appState && appState.calendar === "granted") return [];
+    if (!P || typeof P.calendarRows !== "function") return [];
+    var data = null;
+    try { data = JSON.parse(localStorage.getItem(KEYS.calendar) || "null"); } catch (e) {}
+    try { return P.calendarRows(data, OCC, now, now + REM_HOURS * 3600000, (document.documentElement.lang || "en").slice(0, 2)); }
+    catch (e) { return []; }
+  }
   function pushReminders(force) {
     var p = prefs();
     if (!port || !appState || !p.reminders || appState.reminders !== "granted") return;
@@ -1041,7 +1052,8 @@
     try {
       raw = [localStorage.getItem("oros-alarms"), localStorage.getItem("oros-water-data"),
              localStorage.getItem("oros-todo-data"), localStorage.getItem("oros-notifs"),
-             localStorage.getItem("oros-habits-data"), localStorage.getItem("oros-health-data")].join("\n");
+             localStorage.getItem("oros-habits-data"), localStorage.getItem("oros-calendar-data"),
+             localStorage.getItem("oros-health-data")].join("\n");
     } catch (e) { return; }
     // Water rows depend on the hour too: recheck every 5 minutes.
     var key = fnv(raw) + ":" + raw.length + ":" + Math.floor(now / 300000) + ":" + zone();
@@ -1051,7 +1063,9 @@
       var N = root.orosNotifs, sl = N && N.getSlice && N.getSlice();
       (sl && Array.isArray(sl.items) ? sl.items : []).forEach(function (it) { if (it && it.dedupKey) shown[it.dedupKey] = 1; });
     } catch (e) {}
-    var items = reminderRows(reminderSource(), now).filter(function (r) { return !shown[r.id]; });
+    var items = reminderRows(reminderSource(), now).concat(calendarReminders(now))
+      .filter(function (r) { return !shown[r.id]; })
+      .sort(function (a, b) { return a.at - b.at; }).slice(0, 100);
     if (!send({ t: "reminders", seq: ++seq, items: items })) return;
     lastSent.reminders = key;
     var h = handled(), keep = {};
