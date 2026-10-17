@@ -74,6 +74,7 @@
   // ---------- Animate panel ----------
   function view(body) {
     var doc = AT.doc;
+    if (AT.magicDesign) AT.magicDesign.section(body);
     var list = ED.selItems().filter(function (it) { return !it.ax.bg; });
     var s1 = sec(t("an.element"));
     if (!list.length) s1.appendChild(el("p", "hint", t("an.pick")));

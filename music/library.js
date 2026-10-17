@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Music — library.js (the device's music, v1.0.0)
+// orOS Music — library.js (the device's music, v1.1.0)
 // Runs in the app window. The music files live on the orOS disk
 // under /internal/Music (window.orosFS: Files shows them, Vault
 // Drive syncs them like any other file). This file:
@@ -11,12 +11,18 @@
 //     the files (re-drawn on a canvas: only real JPEG/PNG/WebP/GIF
 //     bytes are ever shown);
 //   - copies picked or dropped files (or a whole folder) into the
-//     music folder, and deletes songs from the device.
+//     music folder (with their .lrc lyrics files), and deletes songs
+//     from the device;
+//   - finds a song's lyrics: the .lrc file next to it, or the lyrics
+//     inside its tags.
 // ============================================================
 (function (w) {
   "use strict";
   var C = w.OrosMusicCore, ST = w.OrosMusicStore;
   var ROOT = "/internal/Music";
+  // Index records made before TV are read again once (ReplayGain and
+  // the lyrics flag came with TV 2).
+  var TV = 2;
   var HEAD = 512 * 1024, TAIL = 128 * 1024, MAX_TAG = 16 * 1024 * 1024, ART_PX = 300;
 
   function fs() {
@@ -105,7 +111,7 @@
           seen[f.p] = 1;
           return F.stat(f.p).then(function (st) {
             var o = old[f.p];
-            if (o && o.sz === st.size && o.mt === (st.mtime || 0) && !opts.force) { keepRecs.push(o); return; }
+            if (o && o.sz === st.size && o.mt === (st.mtime || 0) && o.tv >= TV && !opts.force) { keepRecs.push(o); return; }
             todo.push({ f: f, st: st, o: o });
           }, function () {});
         });
@@ -118,7 +124,9 @@
               return readFileTags(blob, x.f.p, legacy).then(function (tg) {
                 var k = C.trackKey(tg, x.f.p), art = tg.pic ? artIdFor(tg, k) : (x.o && x.o.art) || "";
                 var rec = { p: x.f.p, sz: x.st.size, mt: x.st.mtime || 0, k: k, t: tg.t || C.stem(x.f.name), a: tg.a, aa: tg.aa, al: tg.al,
-                  n: tg.n, dn: tg.dn, g: tg.g, y: tg.y, d: tg.dur || (x.o && x.o.d) || 0, art: art, add: (x.o && x.o.add) || Date.now(), fmt: tg.fmt };
+                  n: tg.n, dn: tg.dn, g: tg.g, y: tg.y, d: tg.dur || (x.o && x.o.d) || 0, art: art, add: (x.o && x.o.add) || Date.now(), fmt: tg.fmt, tv: TV };
+                if (tg.rg) rec.rg = tg.rg;
+                if (tg.ly) rec.ly = 1;
                 var artJob = !tg.pic || made[art] ? Promise.resolve() : ST.hasArt(art).then(function (has) {
                   if (has && !opts.force) { made[art] = 1; return; }
                   return makeArt(tg.pic).then(function (jpg) { if (jpg) { made[art] = 1; return ST.putArt(art, jpg); } rec.art = ""; });
@@ -164,21 +172,39 @@
     }
     return next();
   }
+  function isLrc(f) { return /\.lrc$/i.test(f.name || "") && f.size < 512 * 1024; }
+  // The lyrics file next to a song: same name, .lrc. → text or "".
+  function lrcFor(p) {
+    var F = fs();
+    if (!F || typeof p !== "string" || p.indexOf(ROOT + "/") !== 0) return Promise.resolve("");
+    var base = p.replace(/\.[^./]+$/, "");
+    var tryOne = function (ext) {
+      return F.read(base + ext).then(function (b) { return b && b.size < 512 * 1024 ? b.text() : ""; }, function () { return ""; });
+    };
+    return tryOne(".lrc").then(function (t) { return t || tryOne(".LRC"); });
+  }
+  // Lyrics inside a song's own tags (ID3 USLT, Vorbis LYRICS, MP4 ©lyr).
+  function tagLyrics(p) {
+    var F = fs();
+    if (!F) return Promise.resolve("");
+    return F.read(p).then(function (blob) { return readFileTags(blob, p, "auto"); }).then(function (tg) { return (tg && tg.ly) || ""; }, function () { return ""; });
+  }
   // files: [File] (webkitRelativePath kept as sub-folders). → { saved, skipped }
   function addFiles(files, onProgress) {
     var F = fs();
     if (!F) return Promise.reject(new Error("nofs"));
-    var list = [].slice.call(files || []).filter(function (f) { return f && C.isAudioName(f.name); });
+    // Lyrics files (.lrc) go next to their songs, under their own name.
+    var list = [].slice.call(files || []).filter(function (f) { return f && (C.isAudioName(f.name) || isLrc(f)); });
     var skipped = (files ? files.length : 0) - list.length, saved = 0, done = 0;
     return list.reduce(function (pr, f) {
       return pr.then(function () {
         var rel = String(f.webkitRelativePath || f.relPath || "").split("/").filter(Boolean).slice(0, -1).map(safeName);
         var dir = ROOT + (rel.length ? "/" + rel.join("/") : "");
         return (rel.length ? F.mkdir(dir) : F.mkdir(ROOT)).then(function () {
-          return uniquePath(F, dir, safeName(f.name));
+          return isLrc(f) ? dir + "/" + safeName(f.name) : uniquePath(F, dir, safeName(f.name));
         }).then(function (p) {
           if (!p) { skipped++; return; }
-          return F.write(p, f).then(function () { saved++; });
+          return F.write(p, f).then(function () { if (!isLrc(f)) saved++; });
         }).catch(function () { skipped++; }).then(function () { done++; if (onProgress) onProgress(done, list.length); });
       });
     }, Promise.resolve()).then(function () { return { saved: saved, skipped: skipped }; });
@@ -189,5 +215,5 @@
     return F.rm(p).then(function () { return ST.delTracks([p]); });
   }
 
-  w.OrosMusicLibrary = { ROOT: ROOT, scan: scan, addFiles: addFiles, removeFile: removeFile, readFileTags: readFileTags, fs: fs };
+  w.OrosMusicLibrary = { ROOT: ROOT, scan: scan, addFiles: addFiles, removeFile: removeFile, readFileTags: readFileTags, lrcFor: lrcFor, tagLyrics: tagLyrics, fs: fs };
 })(window);

@@ -5,13 +5,17 @@ import android.accounts.AccountManager;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.net.Uri;
+import android.os.Bundle;
 import android.provider.CalendarContract;
 import android.provider.ContactsContract;
 
 /** The single "orOS" account that owns the mirrored rows. */
 final class OrosAccount {
     static final String NAME = "orOS";
+    private static final String PREFS = "oros-account";
+    private static final String SYNC_ON_SET = "sync-on-set";
 
     private OrosAccount() {}
 
@@ -35,8 +39,15 @@ final class OrosAccount {
         try {
             ContentResolver.setIsSyncable(acc, ContactsContract.AUTHORITY, 1);
             ContentResolver.setIsSyncable(acc, CalendarContract.AUTHORITY, 1);
-            ContentResolver.setSyncAutomatically(acc, ContactsContract.AUTHORITY, false);
-            ContentResolver.setSyncAutomatically(acc, CalendarContract.AUTHORITY, false);
+            // Contacts and Calendar each have a switch in Settings ›
+            // Accounts › orOS. They start on once (earlier versions set
+            // them off), after that they are the person's choice.
+            SharedPreferences sp = c.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+            if (!sp.getBoolean(SYNC_ON_SET, false)) {
+                ContentResolver.setSyncAutomatically(acc, ContactsContract.AUTHORITY, true);
+                ContentResolver.setSyncAutomatically(acc, CalendarContract.AUTHORITY, true);
+                sp.edit().putBoolean(SYNC_ON_SET, true).apply();
+            }
         } catch (RuntimeException ignored) {
             // Sync settings are a nicety; the mirrored rows work without them.
         }
@@ -55,6 +66,31 @@ final class OrosAccount {
             // Contacts permission not granted yet: visibility is set on the first write.
         }
         return acc;
+    }
+
+    /** Whether the person left this kind's switch on in Settings › Accounts › orOS. */
+    static boolean syncOn(Context c, String authority) {
+        Account acc = ensure(c);
+        try {
+            return ContentResolver.getSyncAutomatically(acc, authority);
+        } catch (RuntimeException e) {
+            return true;
+        }
+    }
+
+    /**
+     * After a write: a short sync run, so Settings › Accounts › orOS
+     * shows "Last synced" for this kind like any other account does.
+     */
+    static void synced(Context c, String authority) {
+        Bundle b = new Bundle();
+        b.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
+        b.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
+        try {
+            ContentResolver.requestSync(get(c), authority, b);
+        } catch (RuntimeException ignored) {
+            // Only the time shown in Settings is lost.
+        }
     }
 
     static Uri asSyncAdapter(Uri uri, Account acc) {
