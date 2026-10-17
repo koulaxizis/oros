@@ -1,0 +1,32 @@
+# Mahjong
+Mahjong-Solitär: Nimm passende Paare freier Steine weg, bis die Aufstellung leer ist. Jedes Spiel ist lösbar.
+
+## So wird gespielt
+Tippe oder klicke auf zwei passende Steine, um sie wegzunehmen. Ein Stein ist frei, wenn kein Stein auf ihm liegt und seine linke oder rechte Seite offen ist. Wählst du einen Stein, der nicht frei ist, sagt dir eine Meldung, warum.
+
+- Die meisten Steine passen nur zu einem gleichen Stein.
+- Jede Blume passt zu jeder anderen Blume und jede Jahreszeit zu jeder anderen Jahreszeit.
+
+`Steine` zeigt, wie viele Steine übrig sind, und die Statuszeile sagt dir, wie viele Paare du gerade nehmen kannst. Wenn keine freien Steine zusammenpassen, bietet `Keine Züge mehr` an, die übrigen Steine zu mischen (`Mischen`, das Spiel bleibt lösbar), `Rückgängig` oder ein `Neues Spiel`.
+
+## Steuerung
+- Tippe oder klicke auf einen Stein, um ihn auszuwählen, dann auf sein Gegenstück.
+- Die Pfeiltasten bewegen einen Cursor über die freien Steine; [[Enter]] oder [[Space]] nimmt den Stein darunter. [[Esc]] hebt deine Auswahl auf.
+- [[H]] oder `Tipp (H)` zeigt ein Paar, das du nehmen kannst.
+- [[U]], [[Backspace]] oder `Rückgängig (U)` legt das letzte Paar zurück.
+- [[S]] oder `Mischen (S)` mischt die Steine, die noch auf dem Brett liegen.
+- [[Z]] oder `Zoom (Z)` macht die Steine größer; das Brett lässt sich dann scrollen.
+- [[N]] oder `Neues Spiel (N)` gibt ein neues Spiel. Verlässt du ein laufendes Spiel, erscheint kurz eine Schaltfläche `Rückgängig`, um es zurückzuholen.
+
+Die Uhr startet mit deinem ersten Zug und läuft nur, solange die App auf dem Bildschirm ist. Ein laufendes Spiel bleibt für das nächste Mal auf diesem Gerät.
+
+## Stufen und Wertung
+Wähle eine Aufstellung: `Schildkröte` (144 Steine), `Pyramide` (82) oder `Festung` (70, Standard auf Handys). Ein Wechsel gibt ein neues Spiel. Auf einem Handy ist die `Schildkröte` größer als der Bildschirm, du bewegst dich also darin.
+
+`Rekorde` zeigt deine Bestzeit und die Zahl deiner Siege für jede Aufstellung.
+
+## Synchronisierung
+Deine Rekorde werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. `Rekorde zurücksetzen` in `Rekorde` löscht sie nach einer Bestätigung auf allen Geräten. Die Aufstellung, der Zoom, das laufende Spiel und die Tontaste bleiben auf diesem Gerät.
+
+## Tipps
+- Räume die langen Reihen von den Enden her ab und baue die hohen Stapel früh ab; Steine, die unter anderen liegen, sind die, die dich später blockieren.

@@ -47,6 +47,7 @@
 
   // ---------- 1. Constants, i18n, helpers ----------
   function appLang() {
+    if (window.orosI18n) return window.orosI18n.lang();
     try {
       var l = localStorage.getItem("oros-lang") ||
               (window.parent && window.parent.orosLang) || "en";
@@ -143,6 +144,7 @@
       "toast.save": "Δεν αποθηκεύτηκε: ο χώρος είναι γεμάτος"
     }
   };
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "simon", LANG);
 
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;
@@ -171,7 +173,7 @@
 
   function fmtDate(ts) {
     try {
-      return new Date(ts).toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB",
+      return new Date(ts).toLocaleDateString(window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB"),
         { day: "numeric", month: "short", year: "numeric" });
     } catch (e) { return ""; }
   }

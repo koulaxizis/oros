@@ -1,0 +1,33 @@
+# Snake
+Steuere die Schlange auf einem Feld von 20×20 zu den Früchten. Jede Frucht macht sie ein Feld länger, und das Spiel endet, wenn sie sich selbst beißt.
+
+## So wird gespielt
+Wähle ein Tempo und einen Modus, dann drück eine Pfeiltaste, wisch über das Feld oder tipp auf einen Richtungsknopf, um loszulegen. Die Schlange bewegt sich von selbst; du lenkst sie nur.
+
+- Jede Frucht bringt 1 Punkt und macht die Schlange 1 Feld länger.
+- Alle 5 Früchte wird die Schlange etwas schneller.
+- Läufst du in deinen eigenen Körper, ist das Spiel vorbei.
+- Im Modus `Wände` endet das Spiel auch am Rand. Im Modus `Ohne Wände` kommt die Schlange auf der anderen Seite wieder heraus.
+
+Füllst du das ganze Feld, hast du gewonnen: `Das Feld ist voll!`
+
+## Steuerung
+- Die Pfeiltasten oder [[W]] [[A]] [[S]] [[D]] lenken die Schlange.
+- Auf einem Touchscreen wischst du über das Feld oder nutzt die Knöpfe `Hoch`, `Runter`, `Links` und `Rechts` darunter.
+- Du kannst zwei Richtungswechsel schnell hintereinander drücken; beide zählen. Eine direkte Kehrtwende wird ignoriert.
+- [[Space]] oder [[P]] pausiert und spielt weiter (`Pause (Space)`). Das Spiel geht nach einem Countdown 3-2-1 weiter.
+- [[N]] startet ein neues Spiel (`Neues Spiel (N)`).
+
+Wechselst du in eine andere App, pausiert das Spiel. Ein laufendes Spiel bleibt auf diesem Gerät und wartet pausiert, bis du Snake das nächste Mal öffnest.
+
+## Level und Punkte
+Die Tempos `Langsam`, `Normal` und `Schnell` gibt es jeweils mit `Wände` und `Ohne Wände`, also gibt es sechs Rekorde. `Rekorde` zeigt für jeden deine beste Punktzahl und die Zahl der Spiele.
+
+Ein anderes Tempo oder ein anderer Modus startet ein neues Spiel. Verlässt du so oder mit `Neues Spiel (N)` ein laufendes Spiel, erscheint kurz ein Knopf `Rückgängig`, um es zurückzuholen.
+
+## Synchronisierung
+Deine Bestwerte und die Zahl der Spiele werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. `Rekorde zurücksetzen` in `Rekorde` löscht sie nach einer Bestätigung auf allen Geräten. Tempo und Modus, das laufende Spiel und der Ton-Knopf bleiben auf diesem Gerät.
+
+## Tipps
+- `Ohne Wände` verzeiht mehr: nutze die Ränder als Abkürzung.
+- Führe die Schlange in langen Schleifen an den Seiten entlang, damit ihr Körper nicht die Mitte blockiert.

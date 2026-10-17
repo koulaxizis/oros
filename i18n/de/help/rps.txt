@@ -1,0 +1,31 @@
+# Schere, Stein, Papier
+Das klassische Handspiel gegen den Computer. Stein macht die Schere stumpf, Schere schneidet Papier, Papier wickelt den Stein ein.
+
+## So wird gespielt
+Wähl `Stein`, `Papier` oder `Schere`. Der Computer wählt im selben Moment, nur anhand dessen, was du in früheren Runden gespielt hast, und schaut nie auf deinen Zug. Beide Hände schwingen dreimal und zeigen dann; die gewinnende Hand wird eingekreist. Derselbe Zug auf beiden Seiten ist unentschieden.
+
+Wähl, wie lange ein Spiel dauert:
+- `Bis 3` oder `Bis 5`: Wer zuerst so viele Runden gewinnt, gewinnt das Spiel, und ein Ergebnisfenster öffnet sich. Deine nächste Wahl startet ein neues Spiel.
+- `Endlos`: Spiel, so lange du willst.
+
+Die Statusleiste zeigt den Stand, die Runde und deine aktuelle Siegesserie.
+
+## Bedienung
+- Tippe oder klicke auf einen der drei großen Knöpfe.
+- [[R]], [[P]], [[S]] oder [[1]], [[2]], [[3]] spielen Stein, Papier und Schere. Auf einer griechischen Tastatur gehen auch [[Π]], [[Χ]] und [[Ψ]].
+- [[N]] (oder der Knopf `Neues Spiel (N)`) startet ein neues Spiel.
+
+## Stufen und Punkte
+- `Leicht`: Der Computer spielt zufällig.
+- `Mittel`: Er kontert den Zug, den du am häufigsten spielst.
+- `Schwer`: Er sucht nach Mustern in deinem Spiel, etwa was du nach einem Sieg oder einer Niederlage gern wählst, und folgt der Vermutung, die bisher am besten funktioniert hat.
+
+`Rekorde` zeigt pro Stufe die gewonnenen und verlorenen Spiele, die gewonnenen, unentschiedenen und verlorenen Runden und deine beste Siegesserie. Eine Siegesserie zählt Runden, die du hintereinander gewinnst; ein Unentschieden unterbricht sie nicht.
+
+## Synchronisierung
+Deine Rekorde werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. `Rekorde zurücksetzen` löscht sie auf allen Geräten, nachdem du bestätigt hast. Das laufende Spiel, die Stufe, die Spiellänge, die Ton-Einstellung und der Verlauf deiner Züge, aus dem der Computer lernt, bleiben auf diesem Gerät.
+
+## Tipps
+- Aus Versehen ein neues Spiel gestartet oder Stufe oder Länge geändert? Tippe auf `Rückgängig` in der Meldung, die erscheint.
+- Bei `Schwer` versuch, wirklich zufällig zu spielen: Jede Gewohnheit, die du hast, findet er.
+- Das laufende Spiel bleibt erhalten; schließ die App und spiel später weiter.

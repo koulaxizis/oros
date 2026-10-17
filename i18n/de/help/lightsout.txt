@@ -1,0 +1,26 @@
+# Lights Out
+Ein 5×5-Raster aus Lichtern. Drückst du ein Licht, schaltest du es und seine vier Nachbarn um (oben, unten, links und rechts). Dein Ziel ist, alle Lichter auszuschalten.
+
+## So wird gespielt
+Tippe oder klicke auf ein Licht, um es zu drücken. Ein Licht, das an ist, ist eine leuchtende Scheibe; eines, das aus ist, ein leerer Ring. Drückst du dasselbe Licht zweimal, hebt das den ersten Druck auf. Die Reihenfolge deiner Drücke spielt also keine Rolle, nur welche Lichter du drückst.
+
+Jedes Rätsel ist lösbar. Der Status zeigt deine `Züge` neben der kleinsten nötigen Zahl an Drücken (`min`), wie viele Lichter noch an sind, und die `Zeit`. Die Uhr startet mit deinem ersten Druck und läuft nur, solange die App auf dem Bildschirm ist.
+
+## Steuerung
+- `Rückgängig (U)` drückt dein letztes Licht noch einmal. Das zählt als Zug.
+- `Rätsel neu starten (R)` geht zurück zum Startbrett; die Zeit läuft weiter. Ein Knopf `Rückgängig` erscheint für ein paar Sekunden, falls es keine Absicht war.
+- `Tipp (H)` markiert ein Licht, das zu einer kürzesten Lösung gehört. Ein Rätsel, das mit Tipp gelöst wird, zählt als gelöst, stellt aber keine Rekorde auf.
+- `Neues Rätsel (N)` gibt ein neues Brett. Warst du mitten in einem Rätsel, holt ein Knopf `Rückgängig` es zurück.
+- Der Lautsprecher-Knopf schaltet den Ton an oder aus (anfangs aus).
+- Tasten: Die Pfeiltasten wechseln zwischen den Lichtern, [[Enter]] oder [[Space]] drückt das gewählte, und [[U]], [[R]], [[H]] und [[N]] funktionieren wie oben.
+
+## Stufen und Punkte
+Die Stufe legt fest, wie viele Drücke die kürzeste Lösung braucht: `Leicht` 3 bis 6, `Mittel` 7 bis 11, `Schwer` 12 bis 15.
+
+Löst du ein Rätsel ohne Tipp mit genau der kleinsten Zahl an Drücken, ist es `Perfekt!`. `Rekorde` zeigt für jede Stufe deine Bestzeit, perfekte Lösungen und gelöste Rätsel (`Bestzeit · perfekt · gelöst`). `Rekorde löschen` löscht sie nach einer Bestätigung.
+
+## Synchronisierung
+Deine Rekorde werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert, und Löschen entfernt sie überall. Das laufende Rätsel, die Stufe und die Ton-Einstellung bleiben auf diesem Gerät. Ein unfertiges Rätsel geht weiter, wenn du zurückkommst.
+
+## Tipps
+- Lichter jagen: Arbeite dich Reihe für Reihe von oben nach unten. Für jedes Licht, das noch an ist, drückst du das Licht direkt darunter. Dann bleibt nur die unterste Reihe übrig, und mit Übung lernst du, welche Drücke in der obersten Reihe sie lösen.

@@ -1,0 +1,27 @@
+# Galgenmännchen
+Errate das versteckte Wort Buchstabe für Buchstabe, bevor die Figur fertig ist. Spiele mit englischen oder griechischen Wörtern.
+
+## So wird gespielt
+Das Wort erscheint als leere Felder. Wähle einen Buchstaben: Kommt er im Wort vor, erscheint er an jeder Stelle, an der er steht. Wenn nicht, kommt ein Teil zur Figur dazu: Kopf, Körper, zwei Arme, zwei Beine. Bei sechs Fehlern ist das Wort verloren; findest du alle Buchstaben, gewinnst du.
+
+Jeder Buchstabe kann einmal versucht werden; versuchte Buchstaben sind auf der Tastatur ausgegraut. Wenn ein Wort endet, zeigt ein Fenster das Wort (fehlende Buchstaben in Rot), dazu deine gespielten Wörter, die Siegquote, die Serie und die beste Serie.
+
+In griechischen Wörtern spielen Akzente und Trema keine Rolle, und `ς` zählt als `σ`.
+
+## Steuerung
+- Tippe oder klicke auf einen Buchstaben der Bildschirmtastatur.
+- Oder tippe auf deiner Tastatur. Die Tasten zählen nach ihrer Position, daher folgen griechische Wörter dem griechischen Tastaturlayout, auch wenn dein Computer auf Englisch eingestellt ist.
+- [[Shift+N]] (oder die Schaltfläche `Neues Wort (Shift+N)`) gibt dir ein neues Wort.
+
+## Stufen und Wertung
+- `EN` / `ΕΛ` wechselt zwischen englischen und griechischen Wörtern. Das Spiel startet in der Sprache von orOS; auf Deutsch spielst du mit den englischen Wörtern, eine deutsche Wortliste gibt es nicht. Jede Sprache behält ihr eigenes Wort in Arbeit, beim Zurückwechseln ist es also wieder da.
+- `Leicht`: 5–6 Buchstaben, `Mittel`: 7–8 Buchstaben, `Schwer`: 9–10 Buchstaben.
+
+Die Statusleiste zeigt deine Fehler und deine aktuelle Serie gefundener Wörter in Folge. `Rekorde` zeigt gewonnene und verlorene Wörter sowie Serien für jede Sprache.
+
+## Synchronisierung
+Deine Rekorde werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. `Rekorde zurücksetzen` löscht sie nach einer Bestätigung auf allen Geräten. Das Wort in Arbeit, die Wortsprache, die Stufe und die Toneinstellung bleiben auf diesem Gerät.
+
+## Tipps
+- Aus Versehen ein neues Wort gestartet oder die Stufe gewechselt? Tippe in der Meldung auf `Rückgängig`.
+- Beginne mit häufigen Buchstaben: Vokale, dann Buchstaben wie `S`, `T`, `N` oder, auf Griechisch, `Σ`, `Τ`, `Ν`.

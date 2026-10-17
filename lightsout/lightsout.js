@@ -56,7 +56,7 @@
       return l === "el" ? "el" : "en";
     } catch (e) { return "en"; }
   }
-  var LANG = appLang();
+  var LANG = window.orosI18n ? window.orosI18n.lang() : appLang();
 
   var STRINGS = {
     en: {
@@ -156,6 +156,7 @@
       "toast.save": "Δεν αποθηκεύτηκε: ο χώρος είναι γεμάτος"
     }
   };
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "lightsout", LANG);
 
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;

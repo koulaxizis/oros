@@ -1,0 +1,37 @@
+# Tetris
+Fallende Steine landen in einem Feld von 10×20. Bewege und drehe sie, um ganze Reihen zu füllen: eine volle Reihe verschwindet. Das Spiel endet, wenn der Stapel oben ankommt.
+
+## So wird gespielt
+Wähle ein Startlevel und drück `Start` ([[Space]]). Die Steine fallen einzeln und werden schneller, je höher das Level steigt.
+
+- `Nächste` zeigt die nächsten drei Steine.
+- Ein Schatten zeigt, wo der Stein landen wird.
+- `Halten` legt den aktuellen Stein beiseite und holt ihn später zurück. Du kannst einmal pro Stein halten.
+- Ein Stein rastet eine halbe Sekunde nach dem Landen ein; bewegst oder drehst du ihn, gewinnst du etwas Zeit.
+
+## Steuerung
+- [[←]] [[→]] bewegen; [[↓]] lässt ihn schneller fallen.
+- [[↑]] oder [[X]] dreht nach rechts; [[Z]] dreht nach links.
+- [[Space]] lässt den Stein sofort fallen.
+- [[C]] oder [[Shift]] hält; du kannst auch auf das Feld `Halten` tippen oder klicken.
+- [[P]] oder [[Esc]] pausiert und spielt weiter. Nach einer Pause läuft ein Countdown 3-2-1.
+- [[N]] oder `Neues Spiel (N)` startet ein neues Spiel. Verlässt du ein laufendes Spiel, erscheint kurz ein Knopf `Rückgängig`, um es zurückzuholen.
+
+Auf einem Touchscreen tippst du ins Feld zum Drehen, ziehst zum Bewegen, wischst nach unten zum Fallenlassen und nach oben zum Halten. Die Knöpfe unter dem Feld bewegen, drehen und lassen fallen.
+
+Wechselst du in eine andere App, pausiert das Spiel. Ein laufendes Spiel bleibt auf diesem Gerät und wartet pausiert auf das nächste Mal.
+
+## Level und Punkte
+Starte mit `Level 1`, `Level 5` oder `Level 10`; eine Änderung startet ein neues Spiel. Danach steigt das Level alle 10 Reihen.
+
+- 1, 2, 3 oder 4 Reihen auf einmal bringen 100, 300, 500 oder 800 Punkte, mal das Level.
+- Vier Reihen auf einmal (ein Tetris) direkt nach einem anderen zählen 1,5-mal so viel.
+- Schnelles Fallen bringt 1 Punkt pro Reihe, sofortiges Fallen 2.
+
+`Rekorde` zeigt für jedes Startlevel deine beste Punktzahl, die meisten Reihen und die gespielten Spiele.
+
+## Synchronisierung
+Deine Rekorde werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. `Rekorde zurücksetzen` in `Rekorde` löscht sie nach einer Bestätigung auf allen Geräten. Das Startlevel, das laufende Spiel und der Ton-Knopf bleiben auf diesem Gerät.
+
+## Tipps
+- Halte eine Spalte am Rand frei und heb sie für den langen geraden Stein auf: Tetrisse bringen die meisten Punkte.

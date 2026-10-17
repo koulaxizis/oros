@@ -1,0 +1,31 @@
+# Puzzle
+Mach aus jedem Bild ein Puzzle. Schneide es in 12 bis 150 Teile, verteile sie auf dem Tisch und setz sie wieder zusammen.
+
+## So wird gespielt
+Drücke `Neues Puzzle (N)` und wähle ein Bild: `Von diesem Gerät`, `Aus Dateien` (deine [Dateien](app:files)-Disk) oder `Fertige Bilder`. Nach einem Puzzle nimmt `Gleiches Bild, neu geschnitten` das letzte Bild noch einmal. SVG-Bilder werden nicht angenommen; nimm PNG, JPEG oder WebP.
+
+Im Fenster `Neues Puzzle` ziehst du das Bild in den Rahmen und zoomst mit zwei Fingern, dem Mausrad oder dem Regler `Zoom`. Dann wähle:
+- `Teile`: 12, 24, 48, 96 oder 150. Auf dem Handy sind 48 oder weniger leichter zu greifen.
+- `Form`: `Klassisch` mit Nasen oder `Quadrate`.
+- `Format`: `Quer` oder `Hoch`.
+- `Gedrehte Teile (tippe auf eins, um es zu drehen)`: für eine extra Herausforderung.
+
+Drücke `Starten`. Teile rasten ein, wenn du sie nahe an ihrem Platz oder neben einem passenden Teil ablegst, und bewegen sich dann als eine Gruppe. Eine Gruppe an ihrem Platz bleibt liegen. Die Statuszeile zeigt die Zeit und wie viel schon zusammengesetzt ist.
+
+## Steuerung
+- Zieh ein Teil, um es zu bewegen. Mit Drehen tippst oder klickst du auf ein Teil, um es um 90° zu drehen.
+- Zieh den leeren Tisch, um dich zu bewegen; zoome mit zwei Fingern oder dem Mausrad.
+- Helfer in der Werkzeugleiste: `Bild ansehen (P)`, `Blasses Bild im Rahmen (G)`, `Nur Randteile (E)` und `Lose Teile an den Rand räumen (T)`.
+- Zoom-Tasten: `Verkleinern (−)`, `Ganzer Tisch (0)` und `Vergrößern (+)`.
+
+Tasten: [[N]] neues Puzzle, [[P]] Bild ansehen, [[G]] blasses Bild, [[E]] Randteile, [[T]] aufräumen, [[+]] / [[−]] Zoom, [[0]] ganzer Tisch.
+
+## Stufen und Wertung
+`Rekorde` zeigt für jede Teilezahl deine Bestzeit und wie viele Puzzles du gelöst hast. `Rekorde zurücksetzen` löscht sie.
+
+## Synchronisierung
+Deine Rekorde werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert; `Rekorde zurücksetzen` löscht sie überall. Das Bild und das laufende Puzzle bleiben auf diesem Gerät: Deine Fotos verlassen es nie. Schließt du die App, geht das Puzzle dort weiter, wo du aufgehört hast.
+
+## Tipps
+- Fang mit dem Rand an: Schalte `Nur Randteile` ein, bau den Rahmen und schalte es dann wieder aus.
+- Nutze ab und zu `Aufräumen`, um die losen Teile aufzureihen, damit du sie leichter durchsehen kannst.

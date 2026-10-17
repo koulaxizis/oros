@@ -58,7 +58,8 @@
       return l === "el" ? "el" : "en";
     } catch (e) { return "en"; }
   }
-  var LANG = appLang();
+  // orosI18n (../i18n.js): the full language code, a pack language included.
+  var LANG = window.orosI18n ? window.orosI18n.lang() : appLang();
 
   var STRINGS = {
     en: {
@@ -156,6 +157,7 @@
       "res.seriesNet": "Εσύ – αντίπαλος"
     }
   };
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "connect4", LANG);
 
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;
@@ -1275,7 +1277,7 @@
   function netBoot() {
     if (!window.OrosRemotePlay || !window.OrosRemoteLink) { $("net-btn").hidden = true; return; }
     RP = window.OrosRemotePlay.create({
-      app: "connect4", lang: LANG, game: t("game.name"),
+      app: "connect4", lang: LANG === "el" ? "el" : "en", game: t("game.name"),
       dialog: { make: makeDialog, el: el, button: button },
       onPeer: netOnPeer, onMsg: netOnMsg, onEnd: netOnEnd,
       onLink: function () { if (game) renderStatus(); }

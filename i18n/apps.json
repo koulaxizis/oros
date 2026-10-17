@@ -39,6 +39,18 @@
    ]
   },
   {
+   "app": "breakout",
+   "files": [
+    "breakout/breakout.js"
+   ]
+  },
+  {
+   "app": "bubble",
+   "files": [
+    "bubble/bubble.js"
+   ]
+  },
+  {
    "app": "budget",
    "files": [
     "budget/bankui.js",
@@ -90,6 +102,12 @@
    ]
   },
   {
+   "app": "connect4",
+   "files": [
+    "connect4/connect4.js"
+   ]
+  },
+  {
    "app": "contacts",
    "files": [
     "contacts/contacts.js",
@@ -122,6 +140,18 @@
     "cycle/package.js",
     "cycle/search.js",
     "cycle/today.js"
+   ]
+  },
+  {
+   "app": "dice",
+   "files": [
+    "dice/dice.js"
+   ]
+  },
+  {
+   "app": "dots",
+   "files": [
+    "dots/dots.js"
    ]
   },
   {
@@ -166,6 +196,12 @@
    ]
   },
   {
+   "app": "g2048",
+   "files": [
+    "g2048/g2048.js"
+   ]
+  },
+  {
    "app": "gamecenter",
    "files": [
     "gamecenter/gamecenter.js"
@@ -182,12 +218,24 @@
    ]
   },
   {
+   "app": "gomoku",
+   "files": [
+    "gomoku/gomoku.js"
+   ]
+  },
+  {
    "app": "habits",
    "files": [
     "habits/habits.js",
     "habits/package.js",
     "habits/search.js",
     "habits/steps.js"
+   ]
+  },
+  {
+   "app": "hangman",
+   "files": [
+    "hangman/hangman.js"
    ]
   },
   {
@@ -206,6 +254,12 @@
    ]
   },
   {
+   "app": "hexagon",
+   "files": [
+    "hexagon/hexagon.js"
+   ]
+  },
+  {
    "app": "invoices",
    "files": [
     "invoices/invoices.js",
@@ -213,6 +267,12 @@
     "invoices/package.js",
     "invoices/search.js",
     "invoices/today.js"
+   ]
+  },
+  {
+   "app": "jigsaw",
+   "files": [
+    "jigsaw/jigsaw.js"
    ]
   },
   {
@@ -231,12 +291,36 @@
    ]
   },
   {
+   "app": "lightsout",
+   "files": [
+    "lightsout/lightsout.js"
+   ]
+  },
+  {
+   "app": "mahjong",
+   "files": [
+    "mahjong/mahjong.js"
+   ]
+  },
+  {
    "app": "mail",
    "files": [
     "mail/mail.js",
     "mail/notify.js",
     "mail/search.js",
     "mail/today.js"
+   ]
+  },
+  {
+   "app": "mancala",
+   "files": [
+    "mancala/mancala.js"
+   ]
+  },
+  {
+   "app": "mastermind",
+   "files": [
+    "mastermind/mastermind.js"
    ]
   },
   {
@@ -248,6 +332,12 @@
     "meals/pantry.js",
     "meals/search.js",
     "meals/today.js"
+   ]
+  },
+  {
+   "app": "memory",
+   "files": [
+    "memory/memory.js"
    ]
   },
   {
@@ -352,10 +442,28 @@
    ]
   },
   {
+   "app": "pong",
+   "files": [
+    "pong/pong.js"
+   ]
+  },
+  {
    "app": "radio",
    "files": [
     "radio/radio.js",
     "radio/search.js"
+   ]
+  },
+  {
+   "app": "reversi",
+   "files": [
+    "reversi/reversi.js"
+   ]
+  },
+  {
+   "app": "rps",
+   "files": [
+    "rps/rps.js"
    ]
   },
   {
@@ -390,6 +498,18 @@
    ]
   },
   {
+   "app": "simon",
+   "files": [
+    "simon/simon.js"
+   ]
+  },
+  {
+   "app": "slider",
+   "files": [
+    "slider/slider.js"
+   ]
+  },
+  {
    "app": "slides",
    "files": [
     "slides/app.js",
@@ -398,9 +518,21 @@
    ]
   },
   {
+   "app": "snake",
+   "files": [
+    "snake/snake.js"
+   ]
+  },
+  {
    "app": "solitaire",
    "files": [
     "solitaire/solitaire.js"
+   ]
+  },
+  {
+   "app": "spot",
+   "files": [
+    "spot/spot.js"
    ]
   },
   {
@@ -444,6 +576,18 @@
    ]
   },
   {
+   "app": "tetris",
+   "files": [
+    "tetris/tetris.js"
+   ]
+  },
+  {
+   "app": "tictactoe",
+   "files": [
+    "tictactoe/tictactoe.js"
+   ]
+  },
+  {
    "app": "timesheet",
    "files": [
     "timesheet/core.js",
@@ -477,6 +621,12 @@
    "files": [
     "water/core.js",
     "water/water.js"
+   ]
+  },
+  {
+   "app": "whack",
+   "files": [
+    "whack/whack.js"
    ]
   },
   {

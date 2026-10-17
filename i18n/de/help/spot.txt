@@ -1,0 +1,31 @@
+# Finde den Unterschied
+Zwei Bilder sehen gleich aus, aber ein paar Dinge sind anders. Finde sie alle, so schnell du kannst. Jedes Bilderpaar ist neu: Die App zeichnet sie selbst, in einem Park, am Meer, auf einer Straße in der Stadt oder im Weltraum.
+
+## So wird gespielt
+Tippe oder klicke auf alles, was anders ist, auf einem der beiden Bilder. Ein gefundener Unterschied wird auf beiden markiert. Das zweite Bild kann ein Objekt auf verschiedene Weise ändern: Es kann fehlen, eine andere Farbe haben, größer oder kleiner sein, verschoben oder gespiegelt.
+
+- Ein Tipp, wo nichts anders ist, kostet dich 5 Sekunden.
+- Drei schnelle Fehltipps hintereinander sperren die Bilder für 3 Sekunden.
+- `Tipp (H): +10 s` kreist kurz einen Unterschied ein und kostet 10 Sekunden.
+
+Wenn du alle gefunden hast, zeigt das Ergebnis deine Zeit, deine Bestzeit, deine Siege und deine Fehltipps und Tipps.
+
+## Bedienung
+- Tippe oder klicke auf eines der Bilder.
+- Die Pfeiltasten bewegen ein Fadenkreuz über die Bilder; [[Enter]] oder [[Space]] tippt an dieser Stelle.
+- [[H]] gibt einen Tipp.
+- [[N]] oder `Neue Bilder (N)` bringt ein neues Paar. Verlässt du so ein laufendes Spiel, erscheint kurz ein Knopf `Rückgängig`, um es zurückzuholen.
+
+Die Bilder stehen nebeneinander, oder auf einem hochkant gehaltenen Handy übereinander. Die Uhr läuft nur, solange die App zu sehen ist, und ein laufendes Spiel bleibt auf diesem Gerät für das nächste Mal erhalten.
+
+## Stufen und Punkte
+`Leicht · 5`, `Mittel · 7` und `Schwer · 10` legen fest, wie viele Unterschiede es gibt. Auf schwereren Stufen können sich kleinere Objekte ändern, und weniger stark. Eine andere Stufe bringt neue Bilder.
+
+`Rekorde` zeigt deine Bestzeit und die Zahl der Siege für jede Stufe.
+
+## Synchronisierung
+Deine Bestzeiten und Siege werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. `Rekorde zurücksetzen` in `Rekorde` löscht sie auf allen Geräten, nachdem du bestätigt hast. Die Stufe, das laufende Spiel und der Ton-Knopf bleiben auf diesem Gerät.
+
+## Tipps
+- Such die Bilder in Streifen ab, von oben nach unten, statt hin und her zu springen.
+- Fehltipps kosten weniger als ein Tipp, aber drei hintereinander kosten dich auch eine Pause.

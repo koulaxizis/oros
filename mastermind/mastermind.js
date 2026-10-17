@@ -70,7 +70,8 @@
       return l === "el" ? "el" : "en";
     } catch (e) { return "en"; }
   }
-  var LANG = appLang();
+  // orosI18n (../i18n.js): the full language code, a pack language included.
+  var LANG = window.orosI18n ? window.orosI18n.lang() : appLang();
 
   var STRINGS = {
     en: {
@@ -200,6 +201,7 @@
       "toast.save": "Δεν αποθηκεύτηκε: ο χώρος είναι γεμάτος"
     }
   };
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "mastermind", LANG);
 
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;
@@ -789,7 +791,11 @@
   function fmtAvg(v) {
     if (!v) return "–";
     var s = (Math.round(v * 10) / 10).toFixed(1);
-    return LANG === "el" ? s.replace(".", ",") : s;
+    // The language's decimal mark ("," in Greek and German).
+    var mark = window.orosI18n
+      ? (1.5).toLocaleString(window.orosI18n.locale(LANG)).replace(/\d/g, "")
+      : (LANG === "el" ? "," : ".");
+    return s.replace(".", mark || ".");
   }
 
   function resultDialog() {

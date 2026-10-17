@@ -1,0 +1,45 @@
+# Würfel & Münze
+Würfle jede Mischung aus Würfeln für Brett- und Rollenspiele, oder wirf eine Münze. Jedes Ergebnis landet in einem Verlauf, den du teilen, exportieren und als Statistik ansehen kannst.
+
+## Erste Schritte
+Stell `Anzahl` (1 bis 30 Würfel), `Typ` (d4, d6, d8, d10, d12, d20 oder d100) und einen `Modifikator` (−99 bis +99) ein, der zur Summe addiert wird. Tippe oder klicke dann auf `Würfeln`. Das Ergebnis zeigt die `Summe` und jeden Würfel; Würfel, die nicht zur Summe zählen, erscheinen blasser.
+
+Um eine Münze zu werfen, tippe oder klicke auf `Münze werfen` oder auf die Münze selbst. Die Zahl der Würfe mit `Kopf` und `Zahl` steht unter der Münze.
+
+## Würfelmodi
+- `Normal`: Alle Würfel zählen.
+- `Höchsten behalten`: Nur der höchste Würfel zählt.
+- `Niedrigsten behalten`: Nur der niedrigste Würfel zählt.
+- `Niedrigsten streichen`: Alle Würfel zählen außer dem niedrigsten.
+
+Ein Abzeichen `MAX!` erscheint, wenn jeder Würfel seine höchste Zahl zeigt, und `Patzer`, wenn ein einzelner Würfel eine 1 zeigt.
+
+## Notation und Vorlagen
+### Einen Wurf eingeben
+Gib im Feld mit `2d20+5 · 4d6 dl · 8d6 kh` einen Wurf in Würfelnotation ein und drück `Anwenden` oder [[Enter]]: Die Einstellungen werden ausgefüllt und es wird sofort gewürfelt. Häng `kh` an, um den höchsten zu behalten, `kl` für den niedrigsten oder `dl`, um den niedrigsten zu streichen. Blinkt das Feld rot, wurde die Notation nicht verstanden.
+
+### Vorlagen
+`Vorlage speichern` (der Knopf **＋**) speichert die aktuellen Einstellungen unter einem Namen deiner Wahl. Tippe oder klicke auf eine Vorlage, um ihre Einstellungen zu laden, und würfle dann. Das ✕ an einer Vorlage löscht sie. Speicherst du unter einem vorhandenen Namen, wird diese Vorlage ersetzt.
+
+## Verlauf und Statistik
+`Verlauf` listet deine letzten 50 Würfe und Münzwürfe mit Datum und Uhrzeit.
+- `Statistik` zeigt, wie viele Würfel- und Münzwürfe du gemacht hast, Kopf gegen Zahl, Maximalwürfe, Patzer und den Durchschnitt für jeden Würfeltyp.
+- `Exportieren` speichert den Verlauf als Textdatei.
+- `Teilen` kopiert das letzte Ergebnis als kurze Textkarte in die Zwischenablage.
+- `Leeren` löscht den ganzen Verlauf, nachdem du bestätigt hast.
+
+## Synchronisierung und Sicherung
+Dein Verlauf und deine Vorlagen werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert, und auch das Leeren des Verlaufs oder Löschen einer Vorlage wird übernommen. Die Ton-Einstellung bleibt auf diesem Gerät. Nutze `Exportieren` für eine lesbare Kopie des Verlaufs oder die [Sicherung](help:t/backup) von orOS für alles.
+
+## Tastenkürzel
+- [[Space]] würfelt.
+- [[C]] wirft die Münze.
+- [[Enter]] im Notationsfeld wendet an und würfelt.
+
+## Tipps
+- Der Lautsprecher-Knopf schaltet Würfel- und Münzgeräusche an oder aus (am Anfang aus).
+- Für einen klassischen Charakterwert gib `4d6 dl` ein und drück [[Enter]].
+
+## Grenzen
+- Der Verlauf behält nur die letzten 50 Ergebnisse, also zählen die Münzzahlen und `Statistik` nur diese 50.
+- Die Notation nimmt eine Würfelart pro Wurf, etwa `3d8+2`; Mischungen wie `1d20+1d4` werden nicht verstanden.

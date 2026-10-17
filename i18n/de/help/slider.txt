@@ -1,0 +1,26 @@
+# Schiebepuzzle
+Das klassische Schiebepuzzle: Schiebe die nummerierten Felder in das leere Feld, bis sie in der richtigen Reihenfolge sind. Jede Mischung ist lösbar.
+
+## So wird gespielt
+Bring die Zahlen in die richtige Reihenfolge, von links nach rechts und von oben nach unten, mit der 1 oben links und dem leeren Feld unten rechts. Felder, die schon an ihrem Platz sind, sind eingefärbt, so siehst du deinen Fortschritt.
+
+Wähle die Größe in der Werkzeugleiste: `3×3` (8 Felder), `4×4` (15, der Klassiker) oder `5×5` (24).
+
+## Steuerung
+- Tippe oder klicke auf ein beliebiges Feld in der Reihe oder Spalte des leeren Felds. Es rutscht in die Lücke und schiebt die Felder dazwischen mit; jedes Feld, das sich bewegt, zählt als ein Zug.
+- Auf einem Touchscreen kannst du auch in die Richtung wischen, in die sich ein Feld neben der Lücke bewegen soll.
+- Die Pfeiltasten bewegen das Feld neben der Lücke in diese Richtung.
+- `Neues Spiel (N)` oder [[N]] mischt ein neues Puzzle. Warst du mitten in einem, erscheint für ein paar Sekunden ein Knopf `Rückgängig`, der es zurückholt.
+- Der Lautsprecher-Knopf schaltet den Ton an oder aus (anfangs aus).
+
+## Stufen und Punkte
+Der Status zeigt `Züge` und `Zeit`. Die Uhr startet mit deinem ersten Zug und läuft nur, solange die App auf dem Bildschirm ist.
+
+Wenn du ein Puzzle löst, siehst du deine Züge und deine Zeit, und ein Abzeichen `Neue Bestzeit!` oder `Neuer Rekord: wenigste Züge!`, wenn du einen Rekord schlägst. `Rekorde` zeigt für jede Größe deine Bestzeit, die wenigsten Züge und wie viele Puzzles du gelöst hast (`Bestzeit · wenigste Züge · gelöst`). `Rekorde löschen` löscht sie nach einer Bestätigung.
+
+## Synchronisierung
+Deine Rekorde werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert, und Löschen entfernt sie überall. Das laufende Puzzle, die gewählte Größe und die Ton-Einstellung bleiben auf diesem Gerät. Ein unfertiges Puzzle bleibt erhalten und geht weiter, wenn du zurückkommst.
+
+## Tipps
+- Löse zuerst die oberste Reihe, dann die linke Spalte, und mach so weiter: Das Puzzle wird jedes Mal kleiner.
+- Tippst du auf ein Feld ein paar Plätze entfernt, bewegt sich die ganze Reihe auf einmal. Das spart viel Tippen.

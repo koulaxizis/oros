@@ -54,6 +54,7 @@
 
   // ---------- 1. Constants, i18n, helpers ----------
   function appLang() {
+    if (window.orosI18n) return window.orosI18n.lang();
     try {
       var l = localStorage.getItem("oros-lang") ||
               (window.parent && window.parent.orosLang) || "en";
@@ -160,6 +161,8 @@
       "letter": "Γράμμα {c}"
     }
   };
+  // A pack language (German …): English + the memory pack.
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "memory", LANG);
 
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;
@@ -272,7 +275,7 @@
         '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
         ICON_PATHS[id] + '</svg>';
     }
-    return '<span class="glyph" aria-hidden="true">' + LETTERS[LANG].charAt(idx) + '</span>';
+    return '<span class="glyph" aria-hidden="true">' + (LETTERS[LANG] || LETTERS.en).charAt(idx) + '</span>';
   }
 
   function symbolName(set, idx) {
@@ -280,7 +283,7 @@
       return t("shape." + SHAPES[idx % 6]) + " (" + t("color." + Math.floor(idx / 6)) + ")";
     }
     if (set === "icons") return t("icon." + ICON_IDS[idx]);
-    return t("letter", { c: LETTERS[LANG].charAt(idx) });
+    return t("letter", { c: (LETTERS[LANG] || LETTERS.en).charAt(idx) });
   }
 
   // ---------- 3. Synced data ----------

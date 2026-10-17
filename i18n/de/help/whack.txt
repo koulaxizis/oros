@@ -1,0 +1,30 @@
+# Hau den Maulwurf
+Maulwürfe schauen kurz aus neun Löchern heraus. Hau so viele wie möglich, bevor die 30 Sekunden um sind.
+
+## So wird gespielt
+Wähl eine Stufe und drück auf `Start`. Ein Countdown 3-2-1 läuft, dann tauchen die Maulwürfe auf. Tippe oder klicke auf einen Maulwurf, um ihn zu hauen; ein Treffer zählt in dem Moment, in dem du drückst, nicht beim Loslassen.
+
+- Ein Maulwurf bringt 1 Punkt.
+- Ein goldener Maulwurf ist seltener und versteckt sich schneller, bringt aber 3 Punkte.
+- Bei `Mittel` und `Schwer` taucht ab und zu ein Igel auf. Hau ihn nicht: Er kostet 2 Punkte (deine Punkte fallen nie unter 0).
+
+Die letzten 10 Sekunden laufen etwas schneller. Wenn die Zeit um ist, zeigt ein Fenster deine Punkte, die gehauenen Maulwürfe, deine Trefferquote und, wo es sie gibt, die getroffenen Igel.
+
+## Bedienung
+- Tippe oder klicke auf ein Loch.
+- Die Tasten [[1]] bis [[9]] hauen auf ein Loch, angeordnet wie ein Ziffernblock: [[7]] [[8]] [[9]] ist die obere Reihe, [[1]] [[2]] [[3]] die untere.
+- [[Space]] startet eine Runde.
+- [[N]] startet eine Runde oder stoppt die laufende (`Runde stoppen (N)`). Eine gestoppte Runde zählt nicht.
+
+Wechselst du zu einer anderen App, pausiert die Runde und geht nach einem kurzen Countdown weiter. Schließt du die App, ist die Runde weg.
+
+## Stufen und Punkte
+`Leicht`, `Mittel` und `Schwer` ändern, wie lange ein Maulwurf oben bleibt und wie viele gleichzeitig oben sein können; `Leicht` hat keinen Igel. Beende oder stoppe eine Runde, bevor du die Stufe änderst. `Rekorde` zeigt deine beste Punktzahl und die Zahl der Runden für jede Stufe.
+
+## Synchronisierung
+Deine Rekorde und Rundenzähler werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. `Rekorde zurücksetzen` in `Rekorde` löscht sie auf allen Geräten, nachdem du bestätigt hast. Die gewählte Stufe und der Ton-Knopf bleiben auf diesem Gerät.
+
+## Tipps
+- Auf einer Tastatur leg die Finger auf den Ziffernblock: Die Tasten passen zu den Löchern.
+- Bei `Schwer` können bis zu drei Maulwürfe gleichzeitig oben sein, also hau zuerst die goldenen.
+- Der Ton-Knopf in der Werkzeugleiste schaltet die Soundeffekte an oder aus.

@@ -1,0 +1,33 @@
+# Bubble Shooter
+Schieße bunte Blasen in die Wand, die von der Decke hängt. Verbinde drei oder mehr einer Farbe, um sie platzen zu lassen, und räume die ganze Wand ab, bevor sie die Linie erreicht.
+
+## So wird gespielt
+Deine Blase fliegt geradeaus, prallt an den Seitenwänden ab und bleibt dort hängen, wo sie die Wand oder die Decke berührt.
+- Drei oder mehr Blasen einer Farbe, die sich berühren, platzen.
+- Blasen, die nicht mehr an der Decke hängen, fallen herunter und bringen Extrapunkte.
+- Alle paar Schüsse sinkt die Decke um eine Reihe. Die Punkte am Werfer zählen herunter, und die Statuszeile warnt dich beim letzten Schuss.
+- Du verlierst, wenn eine Blase die gestrichelte Linie überschreitet, und gewinnst, wenn die Wand leer ist.
+
+Die nächste Blase wartet unten links. Neue Blasen kommen nur in Farben, die noch auf dem Feld sind; jede Farbe hat auch ein eigenes Symbol.
+
+## Steuerung
+- **Touch:** Ziehe auf dem Feld, um zu zielen; die gepunktete Linie zeigt die Bahn mit einem Abprall. Lass los, um zu schießen. Lass unterhalb des Werfers los, um abzubrechen.
+- **Maus:** Das Ziel folgt dem Zeiger; klicke, um zu schießen.
+- Tippe oder klicke auf die nächste Blase oder auf den Knopf `Blasen tauschen (S)`, um die beiden zu tauschen.
+- [[←]] [[→]] zielen (gedrückt halten, um weiterzudrehen), [[Space]], [[Enter]] oder [[↑]] schießen, [[S]] oder [[↓]] tauscht, [[N]] startet ein neues Spiel.
+
+In der Werkzeugleiste findest du außerdem `Neues Spiel (N)`, `Rekorde` und den Ton-Knopf (`Ton aus` / `Ton an`; der Ton ist anfangs aus).
+
+## Stufen und Punkte
+- `Leicht`: 4 Farben, 5 Reihen, die Decke sinkt alle 10 Schüsse.
+- `Normal`: 5 Farben, 6 Reihen, alle 8 Schüsse.
+- `Schwer`: 6 Farben, 6 Reihen, alle 7 Schüsse.
+
+Eine geplatzte Blase bringt 10 Punkte, eine fallende 20 (doppelt, wenn 5 oder mehr auf einmal fallen, dreifach ab 10). Eine leere Wand bringt 1.000 extra. Jede Stufe hat eigene Rekorde.
+
+## Synchronisierung
+Deine Rekorde (höchste Punktzahl, Spiele und geleerte Wände pro Stufe) werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. `Rekorde löschen` in `Rekorde` löscht sie nach einer Bestätigung auf allen Geräten. Das laufende Spiel, die gewählte Stufe und die Ton-Einstellung bleiben auf diesem Gerät.
+
+## Tipps
+- Ein laufendes Spiel wird gespeichert; schließe die App und spiele später weiter.
+- Aus Versehen ein neues Spiel gestartet oder die Stufe gewechselt? Tippe in der Meldung, die erscheint, auf `Rückgängig`.

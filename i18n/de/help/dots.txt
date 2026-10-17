@@ -1,0 +1,25 @@
+# Käsekästchen
+Zieht abwechselnd Linien zwischen den Punkten. Schließt du die vierte Seite eines Kästchens, gehört es dir und du ziehst nochmal. Wer am Ende die meisten Kästchen hat, gewinnt.
+
+## So wird gespielt
+Tippe oder klicke auf den Raum zwischen zwei Punkten, um dort eine Linie zu ziehen. Schließt deine Linie ein Kästchen (oder zwei), wird es als deins markiert und du ziehst eine weitere Linie. Das Spiel endet, wenn alle Linien gezogen sind.
+
+Wähle `Gegen Computer` oder `2 Spieler` und die Spielfeldgröße: `3×3`, `4×4` oder `5×5` Kästchen. Gegen den Computer wählst du unter `Erster Zug`: `Du beginnst`, `Computer beginnt` oder `Abwechselnd`. Bei 2 Spielern beginnen die Spieler abwechselnd, und ein laufender Serienstand wird geführt.
+
+## Steuerung
+- Tippe oder klicke in die Nähe einer Linie, um sie zu ziehen; der ganze Rand eines Kästchens zählt, du musst sie also nicht genau treffen.
+- `Rückgängig (Z)` nimmt deine letzte Linie zurück; gegen den Computer auch seine Linien seitdem. Nach Spielende geht das nicht mehr.
+- `Neues Spiel (N)` beginnt von vorn. Lief gerade ein Spiel, erscheint für ein paar Sekunden eine Taste `Rückgängig`, die es zurückholt.
+- Die Lautsprecher-Taste schaltet den Ton an oder aus (anfangs aus).
+- Tasten: Die Pfeiltasten wechseln zwischen den Linien, [[Enter]] oder [[Space]] zieht die gewählte Linie, [[N]] startet ein neues Spiel, und [[Z]] oder [[Ctrl+Z]] macht rückgängig.
+
+## Stufen und Wertung
+Der Computer hat drei Stufen. `Leicht` nimmt ein Kästchen, wenn es geht, und zieht sonst irgendeine Linie. `Mittel` vermeidet zusätzlich, dir ein Kästchen zu schenken, solange es eine sichere Linie gibt, und gibt, wenn es sein muss, so wenige wie möglich ab. `Schwer` spielt wie Mittel, kennt aber auch den Endspieltrick, dir die letzten zwei Kästchen einer Kette zu überlassen, um die Kontrolle zu behalten.
+
+`Bilanz` zeigt deine Siege, Niederlagen und Unentschieden gegen den Computer (`Gewonnen · verloren · remis`) für jede Stufe und Spielfeldgröße, dazu die 2-Spieler-Serie. `Bilanz zurücksetzen` löscht sie nach einer Bestätigung.
+
+## Synchronisierung
+Deine Bilanz gegen den Computer wird über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert, und ein Zurücksetzen löscht sie überall. Das laufende Spiel, die 2-Spieler-Serie, deine Einstellungen und der Ton bleiben auf diesem Gerät. Ein halb gespieltes Spiel ist noch da, wenn du zurückkommst.
+
+## Tipps
+- Zieh nicht die dritte Seite eines Kästchens: Damit schenkst du dem nächsten Spieler ein Kästchen.

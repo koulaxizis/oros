@@ -1,0 +1,31 @@
+# Memory
+Das klassische Paarspiel: Decke immer zwei Karten auf und finde alle passenden Paare. Spiel allein gegen die Uhr oder mit einem Freund auf demselben Gerät.
+
+## So wird gespielt
+Tippe oder klicke auf eine Karte, um sie aufzudecken, dann auf eine zweite. Passen die beiden zusammen, bleiben sie offen; wenn nicht, drehen sie sich nach einem Moment wieder um. Das Spiel endet, wenn alle Paare gefunden sind.
+
+Wähle die Motive auf den Karten in der Werkzeugleiste: `Formen`, `Symbole` oder `Buchstaben`.
+
+### Solo und 2 Spieler
+- `Solo`: Die Statusleiste zeigt `Züge`, `Zeit` und deinen `Rekord` für die Stufe. Die Uhr pausiert, solange die App verborgen ist, und läuft mit deiner nächsten Karte weiter.
+- `2 Spieler`: Ihr spielt abwechselnd auf einem Gerät. Ein gefundenes Paar bringt einen Punkt und du bist nochmal dran; ein Fehlgriff gibt den Zug ab. Wer mehr Paare hat, gewinnt, sonst ist es unentschieden.
+
+## Steuerung
+- Tippe oder klicke auf eine Karte, um sie umzudrehen.
+- `Neues Spiel (N)` legt ein frisches Brett aus. Lief gerade ein Spiel, erscheint für ein paar Sekunden eine Schaltfläche `Rückgängig`, um es zurückzuholen. Auch ein Wechsel von Stufe, Modus oder Motiven startet ein neues Spiel.
+- Die Lautsprecher-Taste schaltet den Ton an oder aus (anfangs aus).
+- [[N]] startet ein neues Spiel, die Pfeiltasten wechseln zwischen den Karten, und [[Enter]] oder [[Space]] dreht die gewählte Karte um.
+
+## Stufen und Wertung
+Vier Stufen: `Leicht` (6 Paare), `Mittel` (8), `Schwer` (12) und `Experte` (18).
+
+Im Solo ist ein Zug ein aufgedecktes Kartenpaar. Dein Rekord pro Stufe ist das Spiel mit den wenigsten Zügen; bei Gleichstand gewinnt die schnellere Zeit. Endest du mit einem neuen Rekord, erscheint `Neuer Rekord!`.
+
+`Rekorde` listet den Rekord für jede Stufe und wie viele Spiele du gespielt hast (die letzten 50), dazu deine Spiele zu zweit. `Rekorde zurücksetzen` löscht sie nach einer Bestätigung.
+
+## Synchronisierung
+Deine Rekorde und die Liste der beendeten Spiele werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert; ein Zurücksetzen löscht sie auf allen Geräten. Das laufende Spiel, deine Stufe, dein Modus, deine Motive und die Toneinstellung bleiben auf diesem Gerät. Das laufende Spiel bleibt erhalten, wenn du die App schließt.
+
+## Tipps
+- Wärm dich mit `Leicht` auf und steigere dich dann: Der Rekord wird für jede Stufe getrennt gespeichert.
+- Merk dir bei Spielen zu zweit, wo die Fehlgriffe deines Freundes lagen: Sie helfen auch dir.

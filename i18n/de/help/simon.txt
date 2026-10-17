@@ -1,0 +1,29 @@
+# Simon sagt
+Simon lässt eine Folge von Feldern aufleuchten, jedes mit seinem eigenen Ton. Wiederhole sie genau. Jede Runde kommt ein Schritt dazu, und das erste falsche Feld beendet das Spiel.
+
+## So wird gespielt
+Drück auf `Start` in der Mitte des Rings. Schau zu, solange der Status `Simon sagt…` zeigt, und drück dann die Felder in derselben Reihenfolge, wenn er `Du bist dran` zeigt. Hast du alles richtig, spielt Simon die Folge mit einem Schritt mehr. Für deine Antwort gibt es kein Zeitlimit.
+
+Drückst du ein falsches Feld, ist das Spiel vorbei, und das Feld, das richtig gewesen wäre, wird gezeigt. Deine Punkte sind die längste Folge, die du geschafft hast.
+
+### Felder und Modi
+- `4 Felder` oder `6 Felder`. Jedes Feld hat seine eigene Farbe, Form und Zahl, du kannst also auch nur nach der Form spielen.
+- `Klassisch`: Wiederhole die Folge so, wie sie gezeigt wurde. `Rückwärts`: Wiederhole sie von hinten nach vorn, vom letzten Schritt bis zum ersten.
+
+## Bedienung
+- Tippe oder klicke auf ein Feld; es zählt, sobald du es berührst.
+- `Neues Spiel (N)` beendet das laufende Spiel (seine Punkte zählen trotzdem) und bereitet ein neues vor. Auch wenn du Felder oder Modus änderst oder die App mitten im Spiel verlässt, endet es.
+- Der Ton ist am Anfang an, weil die Töne beim Merken helfen. Der Lautsprecher-Knopf schaltet ihn aus oder an.
+- Tasten: [[Space]] startet ein Spiel, [[1]] bis [[4]] (oder [[1]] bis [[6]]) drücken die Felder nach Zahl, und [[N]] ist ein neues Spiel.
+
+## Stufen und Punkte
+Simon wird nach den Schritten 5, 9 und 13 schneller. Der Status zeigt die aktuelle `Runde` und deinen `Rekord` für die gewählten Felder und den Modus. Ein neuer Rekord zeigt `Neuer Rekord!`.
+
+`Rekorde` listet deine beste Punktzahl und die Zahl der Spiele für jede Kombination aus Feldern und Modus (`Rekord · Spiele`). `Rekorde zurücksetzen` löscht sie, nachdem du bestätigt hast.
+
+## Synchronisierung
+Deine Rekorde und Spielzähler werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert, und Zurücksetzen löscht sie überall. Die Zahl der Felder, der Modus und die Ton-Einstellung bleiben auf diesem Gerät. Ein laufendes Spiel wird nicht gespeichert: Simon muss die Folge von vorn zeigen.
+
+## Tipps
+- Summ oder zähl bei den Tönen mit; mit Ton sind lange Folgen viel leichter.
+- Sag dir die Zahlen oder Formen vor, während Simon spielt, und wiederhole dann die Liste.

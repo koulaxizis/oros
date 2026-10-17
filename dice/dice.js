@@ -43,7 +43,7 @@
   var TOMB_LIFETIME_MS = 30 * 24 * 60 * 60 * 1000;   // 30 days
 
   // ---------- 1. Constants, i18n, helpers ----------
-  var LANG = localStorage.getItem("oros-lang") === "el" ? "el" : "en";
+  var LANG = window.orosI18n ? window.orosI18n.lang() : (localStorage.getItem("oros-lang") === "el" ? "el" : "en");
 
   var STRINGS = {
     en: {
@@ -155,6 +155,7 @@
       "export.exported":   "Εξήχθη: {time}"
     }
   };
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "dice", LANG);
 
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;

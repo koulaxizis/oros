@@ -1,0 +1,32 @@
+# Gomoku
+Fünf in einer Reihe auf einem 15×15-Brett. Setzt abwechselnd Steine auf die Kreuzungspunkte; wer zuerst fünf oder mehr Steine seiner Farbe in eine Reihe bringt, gewinnt.
+
+## So wird gespielt
+Wähle in der Werkzeugleiste `Gegen Computer` oder `2 Spieler`. Gegen den Computer wählst du auch eine Stufe und deine Farbe: `Du: Schwarz` oder `Du: Weiß`. Schwarz zieht immer zuerst. Wenn du etwas davon änderst, beginnt ein neues Spiel.
+
+Tippe oder klicke auf einen freien Punkt, um deinen Stein zu setzen. Eine Reihe aus fünf oder mehr Steinen, waagerecht, senkrecht oder diagonal, gewinnt. Die Gewinnreihe leuchtet auf, und der zuletzt gesetzte Stein ist markiert. Ist das Brett voll und niemand hat fünf, ist es unentschieden.
+
+Auf einem Touchscreen, wo die Punkte klein sind, zielt dein erstes Tippen nur (`Zum Setzen denselben Punkt noch mal tippen`); tippe noch einmal auf denselben Punkt, um den Stein zu setzen.
+
+## Steuerung
+- Tippe oder klicke auf einen Punkt, um einen Stein zu setzen.
+- Die Pfeiltasten bewegen dich über das Brett; [[Enter]] oder [[Space]] setzt dort einen Stein.
+- [[Z]], [[Ctrl+Z]] oder `Zug zurück (Z)` nimmt einen Zug zurück. Gegen den Computer nimmt es auch seine Antwort zurück.
+- [[Esc]] hebt einen anvisierten Punkt auf.
+- [[N]] oder `Neues Spiel (N)` startet ein neues Spiel. Verlässt du ein laufendes Spiel, erscheint kurz ein Knopf `Rückgängig`, der es zurückholt.
+
+Ein laufendes Spiel bleibt auf diesem Gerät und wartet beim nächsten Mal auf dich.
+
+## Stufen und Wertung
+`Leicht` wählt einen seiner wenigen besten Züge, `Mittel` spielt immer seinen besten Zug, und `Schwer` sucht außerdem voraus nach einem erzwungenen Sieg. Jede Stufe nimmt einen Sieg, wenn sie ihn sieht, und blockt deine Vierer.
+
+`Bilanz` (`Bilanz gegen Computer`) zeigt deine Siege, Niederlagen und Unentschieden für jede Stufe. Bei `2 Spieler` zählt das Ergebnisfenster eine laufende `Serie` zwischen Schwarz und Weiß.
+
+## Synchronisierung
+Deine Bilanz gegen den Computer wird über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. Die 2-Spieler-Serie, Modus, Stufe, Farbe, das laufende Spiel und der Ton-Knopf bleiben auf diesem Gerät.
+
+>! `Bilanz zurücksetzen` löscht die Bilanz gegen den Computer auf allen Geräten und auch die 2-Spieler-Serie dieses Geräts.
+
+## Tipps
+- Eine offene Drei (drei in einer Reihe mit beiden Enden frei) zwingt deinen Gegner zu einer Antwort; zwei davon auf einmal gewinnen meist.
+- Mit Weiß gegen den Computer ist es schwerer, weil Schwarz zuerst zieht.

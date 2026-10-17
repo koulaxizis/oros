@@ -1,0 +1,28 @@
+# Reversi
+Reversi ist das klassische Spiel mit Wendesteinen auf einem 8×8-Brett. Spiel gegen den Computer oder mit jemandem auf demselben Gerät; wer am Ende mehr Steine hat, gewinnt.
+
+## So wird gespielt
+Das Spiel beginnt mit vier Steinen in der Mitte, und Schwarz zieht zuerst. Setz einen Stein so, dass er eine oder mehrere Reihen der anderen Farbe zwischen deinem neuen Stein und einem deiner Steine einschließt, in jeder Richtung (waagerecht, senkrecht oder diagonal). Jeder eingeschlossene Stein wird in deine Farbe umgedreht.
+
+Hast du keinen gültigen Zug, passt du, und die andere Seite ist noch einmal dran. Das Spiel endet, wenn keine Seite mehr ziehen kann, und die Seite mit mehr Steinen gewinnt.
+
+## Steuerung
+Tippe oder klicke auf ein leeres Feld, um dort einen Stein zu setzen. In der Werkzeugleiste findest du:
+- `Gegen Computer` oder `2 Spieler`, und gegen den Computer die Stufe und `Du: Schwarz` / `Du: Weiß`. Wenn du etwas davon änderst, beginnt ein neues Spiel.
+- `Neues Spiel (N)`, `Zug zurück (Z)`, den Hinweis-Knopf (`Hinweise an (H)` / `Hinweise aus (H)`), `Bilanz` und den Ton-Knopf.
+
+Hinweise markieren die Felder, auf denen du setzen kannst. Gegen den Computer nimmt Zurück auch seine Antwort zurück, sodass du wieder dran bist. Startest du mitten in einem Spiel ein neues, holt ein Knopf `Rückgängig` es für ein paar Sekunden zurück.
+
+Tastatur:
+- Die Pfeiltasten bewegen dich über das Brett; [[Enter]] oder [[Space]] setzt einen Stein.
+- [[N]] neues Spiel, [[Z]] oder [[Ctrl+Z]] Zug zurück, [[H]] Hinweise an oder aus.
+
+## Stufen und Wertung
+Der Computer spielt `Leicht`, `Mittel` oder `Schwer`. `Bilanz` zeigt deine Siege, Niederlagen und Unentschieden gegen ihn für jede Stufe, und `Bilanz zurücksetzen` löscht sie. Im Modus `2 Spieler` zählt das Ergebnisfenster eine laufende `Serie` zwischen Schwarz und Weiß.
+
+## Synchronisierung
+Deine Bilanz gegen den Computer wird über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert und zählt die Spiele aller Geräte zusammen. Das laufende Spiel, die 2-Spieler-Serie, deine Einstellungen und der Ton bleiben auf diesem Gerät. `Bilanz zurücksetzen` löscht die Bilanz auf allen Geräten.
+
+## Tipps
+- Ecken können nie umgedreht werden, darum sind sie viel wert. Vorsicht mit den Feldern direkt neben einer leeren Ecke: Sie geben die Ecke oft deinem Gegner.
+- Viele mögliche Züge zu haben ist im Mittelspiel oft wichtiger als viele Steine.
