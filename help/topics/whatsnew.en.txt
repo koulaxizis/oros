@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.68.01
+- Prompter: Use now opens the prompt in Writer as a new document, and the Cancel and Factory reset buttons no longer touch.
+
 ## Version 2.68.00
 - Music: lyrics that follow the song. Music reads a .lrc file next to a song, the lyrics in its tags, or (if you say yes) asks LRCLIB, a free lyrics library. Tap a line to jump there.
 - Music: Sound settings with a 10-band equalizer and presets, crossfade, gapless playback and the same volume for every song (ReplayGain). A sleep timer stops the music after a while or at the end of the song.
