@@ -7305,3 +7305,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Settings: Connect a service shows tiles grouped by purpose, with search, instead of a plain list.
 - Files: `settings/settings.js`, `settings/settings.css`, `settings/core.js`, Bible.
   - Tests: full suite green; real Chromium 360 EN/EL and 1280 EL. Not tested: a real phone.
+
+### 2026-10-17 — Files Assets grid + picture preview fix; Atelier opt-in delete of design files (#456) — 2.69.02
+- Files: big folders in grid view no longer overlap and pictures open again. Atelier: deleting a design can also delete its unused files, if you tick it.
+- Files: `files/files.js`, `files/files.css`, `atelier/core.js`, `atelier/panels.js`, Bible.
+  - Tests: full suite green; real Chromium 390 EN/EL. Not tested: a real phone.
