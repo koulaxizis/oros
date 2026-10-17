@@ -44,7 +44,7 @@ Type what you want to do, in English or Greek, and the first row of the search s
 
 In the bar, before you type, your last commands are listed; tap one to use it again. This list stays on this device only, and `Clear the list` empties it.
 
-The same commands work in a small bar over any app: press [[Ctrl+K]] (in Notes and Wiki, [[Ctrl+Alt+Shift+K]]). Anything that is not a command is a normal search, and with the [Assistant](app:assistant) installed the last row asks it. Commands are understood on your device; nothing is sent anywhere.
+The same commands work in a small bar over any app: press [[Ctrl+K]] (in Notes and Wiki, [[Ctrl+Alt+Shift+K]]). In the orOS Android app, the magnifier button of the home-screen widgets opens the same bar. Anything that is not a command is a normal search, and with the [Assistant](app:assistant) installed the last row asks it. Commands are understood on your device; nothing is sent anywhere.
 
 ## Choose which apps the menu shows
 Too many apps? Hide the ones you don't use. Open [Settings](app:settings) and choose `Menu`:

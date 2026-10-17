@@ -10,7 +10,8 @@
     <string name="widget_today">orOS Today</string>
     <string name="widget_today_desc">Your next events and tasks, with quick add buttons</string>
     <string name="widget_quick">orOS quick add</string>
-    <string name="widget_quick_desc">Add a task, a glass of water or a note</string>
+    <string name="widget_quick_desc">A command, a task, a glass of water or a note</string>
+    <string name="widget_cmd">Command bar</string>
     <string name="widget_add_task">+ Task</string>
     <string name="widget_add_water">+ Water</string>
     <string name="widget_add_note">+ Note</string>

@@ -218,3 +218,16 @@ test("K2 receivers read the targets the bar sends", () => {
   assert.match(sh, /CMD_HIST_KEY = "oros-cmd-history"/);
   assert.doesNotMatch(read("sync.js"), /oros-cmd-history/);   // device-local, never synced
 });
+
+test("K3 the Android widgets' command button opens the bar", () => {
+  const ph = read("phone.js"), w = read("android/app/src/main/java/online/useoros/twa/Widgets.java");
+  assert.match(ph, /cmd: \["", null\]/);
+  assert.match(ph, /root\.__orosOpenCmdBar\(\)/);
+  assert.match(read("shell.js"), /window\.__orosOpenCmdBar = function \(\) \{ openCmdBar\(\); \}/);
+  assert.match(w, /R\.id\.w_cmd, open\(c, "cmd"\)/);
+  for (const l of ["widget_quick", "widget_today"]) {
+    assert.match(read("android/app/src/main/res/layout/" + l + ".xml"), /@\+id\/w_cmd"[^>]*contentDescription="@string\/widget_cmd"/);
+  }
+  assert.match(read("android/app/src/main/res/values/strings.xml"), /name="widget_cmd">Command bar</);
+  assert.match(read("android/app/src/main/res/values-el/strings.xml"), /name="widget_cmd">Γραμμή εντολών</);
+});
