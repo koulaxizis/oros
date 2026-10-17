@@ -1,0 +1,50 @@
+# Schreibimpulse
+Schreibimpulse gibt dir Ideen zum Schreiben: 100 eingebaute Impulse in zehn Textarten, vom Haiku bis zum Brief, dazu ein Impuls des Tages und Platz für deine eigenen. Markiere, was du geschrieben hast, und sieh deine Serie wachsen.
+
+## Erste Schritte
+Die App öffnet mit `Stöbern`, einem Raster aus Impulskarten. Jede Karte zeigt ihre Kategorie, den Impuls in deiner orOS-Sprache und ihre Schlagwörter. Der Impuls des Tages trägt das Abzeichen `Heute`, oder `Neu heute!`, wenn du ihn an diesem Tag zum ersten Mal siehst.
+
+Die drei Knöpfe oben wechseln zwischen `Stöbern`, `Statistik` und `Einstellungen`.
+
+## Einen Impuls finden
+- Tippe in `Impulse suchen…`, um den Text aller Impulse in allen Sprachen und ihre Schlagwörter zu durchsuchen.
+- Ab dem zweiten Buchstaben erscheinen passende Schlagwörter unter dem Feld als `#Schlagwort`-Knöpfe; tippe oder klicke auf einen, um danach zu filtern. Schlagwörter auf den Karten funktionieren genauso. Tippe auf den Chip `#Schlagwort ✕`, um den Filter zu löschen.
+- Die Kategorie-Chips filtern nach Art: `Alle`, `Mikrofiktion`, `Haiku`, `Freie Lyrik`, `Gebundene Lyrik`, `Lied`, `Aphorismus`, `Theater`, `Roman`, `Monolog` und `Brief/Tagebuch`. `✦ Meine` zeigt nur deine eigenen Impulse.
+
+## Mit einem Impuls arbeiten
+Jede Karte hat diese Knöpfe:
+- `Nutzen` öffnet den Impuls als neues Dokument im [Texteditor](app:writer), damit du sofort losschreiben kannst (mit der Variante, wenn sie angezeigt wird). Allein außerhalb von orOS geöffnet, kopiert er stattdessen den Impuls.
+- `Kopieren` kopiert den Impuls in die Zwischenablage.
+- `Variante` (bei manchen Impulsen) fügt unter dem Impuls eine zusätzliche Wendung hinzu; `Kopieren` kopiert dann beides.
+- `Merken` macht ihn zum Favoriten (★); `Nicht merken` entfernt ihn.
+- `Erledigt` setzt ein ✓, sobald du ihn geschrieben hast; `Rückgängig` nimmt es zurück.
+
+## Deine eigenen Impulse
+Tippe oder klicke auf `＋ Neuer Impuls`. Wähle eine `Kategorie`, fülle `Englischer Text` und `Griechischer Text` aus (beide sind Pflicht) und optional eine Variante in jeder Sprache und `Schlagwörter (durch Komma getrennt) – optional`. Bekannte Schlagwörter werden beim Tippen vorgeschlagen. `Speichern` (oder [[Ctrl+Enter]]) fügt ihn hinzu; deine Impulse stehen im Raster ganz vorn. Auf Deutsch zeigen deine eigenen Impulse den englischen Text.
+
+Deine eigenen Impulse haben die Knöpfe `Bearbeiten` und `Löschen`. Löschen fragt zuerst nach und lässt sich nicht rückgängig machen.
+
+## Einen Impuls als Datei speichern
+Deine eigenen Impulse haben auch `orOS-Datei (.orosscript)`: Das speichert den Impuls mit beiden Sprachen, Varianten, Schlagwörtern sowie Stern und Erledigt-Markierung. Eine .orosscript ist eine offene ZIP-Datei: Entpackst du sie, findest du `content.json` (den Impuls) und `preview/script.txt`, das jeder Texteditor öffnet.
+
+Zum Öffnen gehst du in die `Einstellungen` und wählst `orOS-Datei öffnen (.orosscript)…` oder `Entpackter orOS-Ordner…` für eine entpackte Datei. Du kannst eine .orosscript auch von deinem Computer aus mit orOS öffnen. Sie kommt immer als neuer Impuls unter `✦ Meine` an; nichts, was du schon hast, wird geändert.
+
+## Statistik
+`Statistik` zeigt die Gesamtzahl der Impulse, wie viele du erledigt, gemerkt und selbst geschrieben hast, deine Serie von Tagen in Folge mit mindestens einem erledigten Impuls, deinen Fortschritt durch die eingebauten Impulse und eine Aufteilung nach Kategorie.
+
+## Synchronisierung und Sicherung
+Deine Favoriten, Erledigt-Markierungen und eigenen Impulse werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. Suche, Filter und angezeigte Varianten werden zurückgesetzt, wenn du die App schließt. Für eine Kopie von allem nutze die orOS-[Sicherung](help:t/backup).
+
+>! Die `Einstellungen` haben `Auf Werkseinstellungen zurücksetzen`: Das löscht alle deine eigenen Impulse, Favoriten und Erledigt-Markierungen auf jedem synchronisierten Gerät, ohne Rückgängig.
+
+## Tastenkürzel
+- [[Ctrl+Enter]] im Impuls-Editor: speichern.
+- [[Esc]]: den Editor oder die Einstellungen schließen.
+
+## Tipps
+- Füge einen Impuls in den [Texteditor](app:writer) oder in [Notizen](app:notes) ein und schreib sofort los.
+- Schreib deine eigenen Impulse in beiden Sprachen, damit sie sich in jeder orOS-Sprache gut lesen.
+
+## Grenzen
+- Ohne Suche oder Filter zeigt das Raster die ersten 50 eingebauten Impulse (plus den von heute und alle deine). Suche, eine Kategorie oder ein Schlagwort erreichen den Rest.
+- Es gibt keine Liste nur mit deinen Favoriten.
