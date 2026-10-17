@@ -205,3 +205,25 @@ test("stale timetables: nearest stops and verdict", () => {
   assert.equal(X.stoptimesUrl(B, "v6", { stopId: "gr-Athens-Bus_61593", n: 1 }),
     B + "v6/stoptimes?stopId=gr-Athens-Bus_61593&n=1");
 });
+
+test("OASA: stop code and live arrivals (strict copies)", () => {
+  assert.equal(X.oasaStop("gr-Athens-Bus_61260"), "061260");
+  assert.equal(X.oasaStop("gr-Athens-Bus_1234567"), "1234567");
+  assert.equal(X.oasaStop("gr-Athens-Rail_61260"), "");
+  assert.equal(X.oasaStop("gr-Athens-Bus_6a"), "");
+  assert.equal(X.oasaStop(null), "");
+  const routes = X.normOasaRoutes([
+    { RouteCode: "1989", LineID: "Α2", RouteDescr: "ΑΚΑΔΗΜΙΑ - ΓΛΥΦΑΔΑ", RouteDescrEng: "AKADIMIA - GLYFADA" },
+    { RouteCode: "x<1>", LineID: "BAD" }, null, "s"
+  ], "el");
+  assert.deepEqual(Object.keys(routes), ["1989"]);
+  assert.equal(routes["1989"].line, "Α2");
+  assert.equal(X.normOasaRoutes([{ RouteCode: "1", RouteDescr: "Α", RouteDescrEng: "A" }], "en")["1"].descr, "A");
+  const rows = X.normOasaArrivals([
+    { route_code: "1989", veh_code: "88017", btime2: "12" }, { route_code: "1989", veh_code: "88084", btime2: "1" },
+    { route_code: "777", btime2: "5" }, { route_code: "1989", btime2: "-3" }, { route_code: "1989", btime2: "x" }, { btime2: "2" }
+  ], routes);
+  assert.deepEqual(rows.map((r) => [r.min, r.line, r.route]), [[1, "Α2", "1989"], [5, "", "777"], [12, "Α2", "1989"]]);
+  assert.deepEqual(X.normOasaArrivals(null, routes), [], "null = no bus right now");
+  assert.equal(X.normOasaArrivals(Array.from({ length: 50 }, () => ({ route_code: "1", btime2: "3" }))).length, 20);
+});
