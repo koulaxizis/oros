@@ -7733,3 +7733,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Files: Open in Photo Lab, and every other Open in… / Open with…, loads the chosen file again instead of opening the app empty.
 - Files: `fileopen.js`, `tests/fileopen.test.js`.
   - Tests: 4778/4778; Chromium desktop / phone el. Not tested: Safari, every target app one by one.
+
+### 2026-10-17 — Settings: how to turn on push in Brave (#523) — 3.14.03
+- Settings explains how to turn on notifications with orOS closed in Brave, which blocks push by default; the Notifications help page says the same.
+- Files: `settings/settings.js`, `settings/core.js`, `help/topics/notifications.{en,el}.txt`.
+  - Tests: 4777/4777; Chromium E2E. Not tested: Brave itself.

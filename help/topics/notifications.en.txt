@@ -39,6 +39,7 @@ How it works: orOS keeps the next 7 days of reminders on the orOS relay, and at 
 
 Good to know:
 - On a computer the browser has to keep running in the background, although the orOS window itself can be closed. Chrome and Edge on Windows do this by default. On Linux and in Firefox, keep the browser open.
+- Brave keeps its push service off by default: in `brave://settings/privacy` turn on `Use Google services for push messaging`, restart Brave, then turn the switch on. Reminders then pass through Google, encrypted.
 - Android phones get them even with Chrome closed. In the orOS Android app this switch is hidden, because the app rings reminders itself (see below).
 - The sound is your system's notification sound, not the orOS ringtone. Alarms stay on screen until you tap them.
 - While orOS is on screen, it shows reminders itself, so you never get the same one twice.
