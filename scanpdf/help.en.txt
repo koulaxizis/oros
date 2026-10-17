@@ -1,0 +1,71 @@
+# Scanner & PDF
+Put PDFs together, take them apart and set their pages in order, and make a PDF from pictures. Everything happens on your device: nothing is uploaded, and your own files are never changed. Scanning with the camera and making scanned pages searchable come in later versions.
+
+## Getting started
+1. Drop PDFs or pictures on the app, or press `Add PDFs or pictures`.
+2. Every page shows as a card with its number. When the pages come from more than one file, a coloured line on top tells the files apart and the card names its file.
+3. Put the pages the way you want them (see below).
+4. Press `Save PDF` to save every page, in that order, as one PDF.
+
+## What it reads
+- PDF files (.pdf).
+- Pictures: JPEG, PNG, WebP, GIF, BMP and AVIF. Each picture becomes one page.
+A photo that the phone stored sideways is turned upright first.
+
+## Selecting pages
+- Tap a page to select it; tap it again to let it go. The tick on the corner shows it.
+- [[Shift]] and a click selects every page between the last one you tapped and this one.
+- The first button in the bar above the pages selects all of them, or none.
+The bar says how many pages there are and how many are selected.
+
+## Arranging pages
+The buttons of the bar work on the selected pages:
+- `Move earlier` and `Move later` move them one place.
+- `Rotate left` and `Rotate right` turn them by a quarter.
+- `Duplicate` puts a copy right after each one.
+- `Save the selected pages as a new PDF` saves only them, in a new file.
+- `Delete` takes them out of the list.
+To move a page by dragging, take it with the mouse, or on a touch screen by the handle with the six dots in its corner. Selected pages move together when you drag one of them.
+`Undo` and `Redo` at the top step back and forward through every change.
+
+## Merging PDFs
+Add two or more PDFs (and pictures, if you like): their pages are put one after the other. Arrange them, then press `Save PDF`. The text, pictures and links of each page stay as they were. Bookmarks and form fields of the original files are not carried into the new PDF.
+
+## Splitting a PDF
+Press `Split` and choose how:
+- `Each page on its own`: one PDF per page.
+- `Every` 2, 3 or more `pages`: a new PDF every few pages.
+- `Page ranges`: type them, such as `1-3, 5, 8-`. `8-` means from page 8 to the end. Each range becomes its own PDF.
+The window shows how many PDFs come out. They go into one .zip on your device, or into a folder in Files › PDF named after the file. The split always follows the list as it is now, so you can arrange the pages first.
+
+## Pictures to PDF
+Add pictures and press `Save PDF`. The button `Picture pages` at the bottom sets how a picture becomes a page:
+- Page size: A4, Letter, or the picture's shape (no empty space around it).
+- Orientation: as the picture, portrait or landscape.
+- Margin: none, small or normal.
+The picture is placed in the middle, as large as fits. The app remembers these choices on this device.
+
+## Saving
+`Save PDF` asks for a file name and where it goes:
+- `On this device`: the usual save window of your browser, or a download.
+- `In Files › PDF`: the PDF goes into Files. When the name is taken, it gets a number, such as "Report (2).pdf".
+
+## From Files
+In Files, select one or more PDFs, or several pictures, and choose `Open in Scanner & PDF` in the menu or in the selection bar. The app opens with their pages, in the order of the selection.
+
+## Keyboard shortcuts
+- [[Ctrl+O]]: add files.
+- [[Ctrl+S]]: save PDF.
+- [[Ctrl+A]]: select all pages, or none.
+- [[Ctrl+Z]] and [[Ctrl+Y]]: undo and redo.
+- [[Left]] and [[Right]]: go to the page before or after.
+- [[Ctrl+Left]] and [[Ctrl+Right]]: move the page (or the selected pages) one place.
+- [[Space]]: select the page; [[Delete]]: delete the selected pages; [[Esc]]: select none.
+
+## Privacy and sync
+Everything happens on your device; no file is sent anywhere. The app keeps no data of its own and has nothing to sync: PDFs you save into Files are synced like the rest of Files when Vault Drive is on. Only your choices (picture pages, where to save) are kept, on this device.
+
+## Limits
+- PDFs locked with a password can't be changed: their pages can't be copied without it.
+- A file can be up to 200 MB, and the list can hold up to 2,000 pages.
+- Large files take a moment to read and to save; keep the app open until it is done.
