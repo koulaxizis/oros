@@ -22,6 +22,7 @@
 // Usage: node .github/qa/smoke.js [--shard i/n] [--only id,id]
 //                                 [--update-baseline] [--runs n] [--out file]
 // Env: QA_CHROMIUM = Chromium executable (default: Playwright's own).
+//      OROS_MULTITASK=1 = every context starts with multitasking on.
 "use strict";
 
 const fs = require("fs");
@@ -118,8 +119,10 @@ async function newContext(browser, width, lang) {
     isMobile: width <= 400, hasTouch: width <= 400,
   });
   await ctx.route(/^https?:\/\/(?!127\.0\.0\.1[:/])/, (r) => r.abort("internetdisconnected"));
-  await ctx.addInitScript((lang) => {
+  await ctx.addInitScript(([lang, mt]) => {
     try {
+      // OROS_MULTITASK=1: the gate runs with the experimental switch on.
+      if (mt) localStorage.setItem("oros-multitask", "1");
       localStorage.setItem("oros-lang", lang);
       localStorage.setItem("oros-tour-done", "1");
       sessionStorage.setItem("oros-skip-splash", "1");
@@ -127,7 +130,7 @@ async function newContext(browser, width, lang) {
     document.addEventListener("securitypolicyviolation", (e) => {
       (window.__qaCsp = window.__qaCsp || []).push(e.violatedDirective + " " + (e.blockedURI || ""));
     });
-  }, lang);
+  }, [lang, process.env.OROS_MULTITASK === "1"]);
   return ctx;
 }
 

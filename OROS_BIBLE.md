@@ -202,12 +202,19 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 
 **There is NO `window.__orosNotify`** in shell.js or notifications.js (0.38.12). Older Bible text used it; see the Part X audit item.
 
-### App frames (multitasking groundwork, wave M1)
+### App frames (multitasking, waves M1-M2)
 
 Multitasking (several live app frames) is an approved EXPERIMENT, off by default, per device (Chris 2026-10-17; plan `/mnt/project-files/multitasking/plan.md`). With it off, the shell must behave exactly as with the single `#app-frame`. Since M1 every shell path that talks to a running app goes through one place in `shell.js` (section 10a):
 - `appFrames()` every live app frame, `appFrameOf(id)` the frame showing app `id` (or null), `appLive(id)`. A bridge that pushes into a running app is `if (appLive("x")) { var f = appFrameOf("x"); … }`, never `state.running.id === "x"` + `getElementById("app-frame")` (guarded by `tests/multitask.test.js`). `state.running` stays "the app in front".
 - `window.__orosAppDocs()` = documents of the live frames (none while nothing runs). `sync.js` SY-D5 keeps a live slice while its document is in that list (a hidden frame is live, a closed one is not) and finds a registration's owner by the realm of its getter (`ownerDocOf`); without the helper it falls back to `#app-frame` as before. `mail/notify.js` `mailOpen()` reads the same list.
 - Tools (CI/local only, `.github/qa/`): `memory.js` (per-app JS + DOM bytes via `measureUserAgentSpecificMemory` on a cross-origin-isolated local server, canvas pixels, WebGL, apps not freed after close; `--stack` = process memory of several apps alive together) and `writers.js` (static scan: who writes an app's localStorage keys from another window; verdicts ok / handoff / host / listens / check). Reports: `/mnt/project-files/multitasking/`.
+
+**Wave M2 (live hidden apps).** Settings › System › Multitasking (badge "Experimental", device scope, `oros-multitask` = `"1"`, bridge `orosSettings.set("multitask", bool)`, snapshot `get().multitask` = `{ on, slots, open }`, null in SOLO). Off, or in SOLO, the shell uses the single `#app-frame` exactly as before. On (`shell.js` section 10b):
+- The id `app-frame` always marks the FRONT frame; leaving an app (another app, or home) hides its frame instead of blanking it: no `id`, `display:none`, `data-oros-app="<id>"`, and in its document `visibilityState` / `hidden` report hidden with a `visibilitychange`, `<audio>` / `<video>` paused, optional `window.__orosAppPause()` / `__orosAppResume()` called. Opening it again shows the same window (no reload); opening the app in front again reloads it (as before).
+- Slots from `navigator.deviceMemory` (≤1 GB 2, ≤2 GB 3, ≤4 GB 4, more 8; unknown: 3 under 768 px, else 6). The front app counts too; `MT_HEAVY` apps weigh 2. When full, the hidden app left longest ago closes.
+- `MT_CLOSE_ON_LEAVE` apps close on leave as before: the M1 writer scan's "check" list (another window writes their data), camera / microphone users, Passwords, Settings. A new app that is written from another window, holds a device or unlocks secrets goes in that list.
+- A bridge that opens an app (`appShow(id)` before `appFrameOf(id)`) brings a hidden one to the front; background pushes (Timesheet tracker, the cycle check) stay hidden. A language change, an update reload or switching off closes every hidden app (`mtDropAll`).
+- Quality gate: `.github/qa/multitask.js` opens each app with the switch on, leaves it, checks it is hidden and alive, sweeps its merge slices while hidden (a throw fails), opens it again (same window) and fails on errors in between. `smoke.js` and the rest read `OROS_MULTITASK=1` for a run with the switch on.
 
 ### `shell.js` [verified 2026-10-05, `APP_VERSION` 0.39.06]
 
@@ -7620,3 +7627,9 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Flashcards: import Anki decks (.apkg, .colpkg; legacy and new zstd format via vendored fzstd 0.1.1, MIT) with pictures, sounds and your study history, and CSV/TSV/TXT files such as Quizlet exports. `flashcards/sqlite.js` reads the Anki collection, `flashcards/anki.js` maps it to notes, media and answer rows.
 - Files: `flashcards/{index.html,app.css,app.js,anki.js,sqlite.js,help.*.txt}`, `vendor/fzstd/`, credits (CREDITS.md, shell CREDIT_GROUPS, Part VIII), precache, `tests/flashcards-anki.test.js` + fixtures.
   - Tests: full suite green; Chromium 1280 EN / 360 EL. Not tested: very large Anki collections on phones, Safari.
+
+### 2026-10-17 — Multitasking M2: live hidden apps behind an experimental switch (#503) — 3.01.00
+- Multitasking (experimental, off by default): Settings › System has a per-device switch marked experimental; when it is on, apps you leave stay open in the background, back where you left them, up to a limit set by the device's memory, closing the one used longest ago; Mail, Calendar, Passwords, Settings and apps with the camera or microphone still close when you leave. With the switch off the shell behaves exactly as before.
+- New CI step `.github/qa/multitask.js` in the quality gate (every app opened, hidden and brought back).
+- Files: `shell.js`, `settings/{core.js,settings.js,settings.css,help.*.txt}`, `i18n/de/settings.js`, `.github/qa/{multitask,smoke}.js`, `.github/workflows/quality.yml`, `tests/multitask.test.js`, Bible.
+  - Tests: full suite green; multitask gate 130 apps 0 problems; Chromium E2E 1280 EL. Not tested: real phones (memory pressure), Firefox, Safari.

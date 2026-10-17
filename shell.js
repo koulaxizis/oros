@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "3.00.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "3.01.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -391,6 +391,7 @@
   // boot, so the honest way to localize an already-running app is a
   // clean re-open. Data lives in storage/slices — zero loss risk.
   function refreshRunningApp() {
+    mtDropAll();                  // hidden apps would stay in the old language
     if (state.running) {
       document.getElementById("app-frame").src = state.running.url;
     }
@@ -2961,6 +2962,7 @@
     if (appLive(appId)) {
       closeMenu();
       menuReset();
+      appShow(appId);   // multitasking: a hidden app comes to the front first
       var f = appFrameOf(appId);
       try {
         if (f && f.contentWindow && typeof f.contentWindow.__orosOpenAt === "function") {
@@ -8905,6 +8907,7 @@
   window.__orosOpenRadio = function (stationUuid) {
     if (typeof stationUuid !== "string" || !stationUuid) return;
     if (appLive("radio")) {
+      appShow("radio");
       var f = appFrameOf("radio");
       try {
         if (f && f.contentWindow &&
@@ -9094,6 +9097,7 @@
       seasonal: settingsSeasonal(),
       menu: settingsMenuApps(),
       menuProfiles: !!profilesL(),
+      multitask: mtSnapshot(),
       apps: state.apps.filter(function (a) { return a && a.type === "internal"; })
         .map(function (a) { return a.id; }),
       shortcuts: SC_DEFS.map(function (d) {
@@ -9123,6 +9127,9 @@
         return;
       case "syncInterval": setSyncIntervalUser(Number(value)); return;
       case "autoexport":   setAutoexportUser(value); return;
+      case "multitask":
+        if (!SOLO) { mtSetUser(!!value); settingsNotify(); }
+        return;
     }
     if (/^dock:(on|size|magnify|autohide|over|style|hover)$/.test(name)) {
       var L = settingsLauncher();
@@ -9384,36 +9391,219 @@
     h.badge(n);
   }
 
+  // ---------- 10. App opening (fullscreen takeover) ----------
+
   // ---------- 10a. App frames (multitasking groundwork, wave M1) ----------
-  // Every shell path that talks to a running app finds its frame here,
-  // so the shell can later hold more than one live frame (the
-  // experimental multitasking switch, Settings › System, wave M2).
-  // Today there is exactly one frame, #app-frame, and it shows
-  // state.running: these helpers return what the old inline code did.
-  //   appFrames()     every live app frame (shown or hidden)
+  // Every shell path that talks to a running app finds its frame here.
+  // The app in front is always the frame with id="app-frame" and it
+  // shows state.running. With multitasking on (10b) other apps may stay
+  // alive in hidden frames (mt.hidden); with it off there are none and
+  // these helpers return exactly what the old inline code did.
+  //   appFrames()     every live app frame (front + hidden)
   //   appFrameOf(id)  the frame that shows app `id`, or null
-  //   appLive(id)     app `id` is open in a frame
+  //   appLive(id)     app `id` is open in a frame (shown or hidden)
+  //   appShow(id)     bring a hidden app to the front (no reload); a
+  //                   bridge that opens something calls it before its
+  //                   live push. No-op for the app in front.
   // window.__orosAppDocs() gives sync.js the documents of the live
   // frames (SY-D5: a hidden frame is live, a closed one is not).
   function appFrames() {
     var f = document.getElementById("app-frame");
-    return f ? [f] : [];
+    var out = f ? [f] : [];
+    mtList().forEach(function (r) { out.push(r.el); });
+    return out;
   }
   function appFrameOf(id) {
-    if (!state.running || state.running.id !== id) return null;
-    return document.getElementById("app-frame");
+    if (state.running && state.running.id === id) return document.getElementById("app-frame");
+    var r = mtFind(id);
+    return r ? r.el : null;
   }
   function appLive(id) { return !!appFrameOf(id); }
+  function appShow(id) {
+    var r = mtFind(id);
+    if (r) openApp(r.app);
+  }
   window.__orosAppDocs = function () {
-    if (!state.running) return [];
     var out = [];
-    appFrames().forEach(function (f) {
-      try { if (f.contentDocument) out.push(f.contentDocument); } catch (e) {}
+    var f = document.getElementById("app-frame");
+    try { if (state.running && f && f.contentDocument) out.push(f.contentDocument); } catch (e) {}
+    mtList().forEach(function (r) {
+      try { if (r.el.contentDocument) out.push(r.el.contentDocument); } catch (e) {}
     });
     return out;
   };
 
-  // ---------- 10. App opening (fullscreen takeover) ----------
+  // ---------- 10b. Multitasking (experimental, off by default, wave M2) ----------
+  // Settings › System › "Multitasking (experimental)", per device
+  // (oros-multitask = "1", never synced; Chris 2026-10-17: experimental
+  // and off by default). When you leave an app it stays alive in a
+  // hidden frame and comes back as you left it, up to a number of
+  // "slots" set by the device's memory (mtSlots; heavy apps take 2).
+  // When the slots are full the app used longest ago closes. Off (or in
+  // a single app, SOLO): nothing here runs and there is one frame.
+  // Hidden frames: display:none (half the memory of a covered frame,
+  // measured in M1), their document reports visibilityState "hidden"
+  // with a visibilitychange (95 apps already pause on it), media
+  // paused, optional window.__orosAppPause / __orosAppResume hooks.
+  // Music, Radio and Podcasts play from the shell, so sound goes on.
+  // Plan + measurements: /mnt/project-files/multitasking/.
+  var MT_KEY = "oros-multitask";
+  // Close when you leave them, as before, even with multitasking on:
+  // another window writes their data while they would be hidden
+  // (the M1 writer scan's "check" list: mail, radio, television,
+  // weather, calendar, assistant), they hold the camera or microphone
+  // (getUserMedia), they unlock secrets (passwords), or they mirror
+  // shell state (settings).
+  var MT_CLOSE_ON_LEAVE = {
+    mail: 1, radio: 1, television: 1, weather: 1, calendar: 1, assistant: 1,
+    flashcards: 1, meals: 1, montage: 1, qr: 1, scanpdf: 1, stock: 1, storage: 1, studio: 1,
+    passwords: 1, settings: 1
+  };
+  // Heavy apps take two slots (declared + measured in M1).
+  var MT_HEAVY = { atelier: 1, maps: 1, photolab: 1, layout: 1, montage: 1, scanpdf: 1, studio: 1, assistant: 1 };
+  var mt = { hidden: [] };   // { app, el, at } of each hidden live app
+
+  function mtOn() {
+    try { return localStorage.getItem(MT_KEY) === "1"; } catch (e) { return false; }
+  }
+  function mtActive() { return !SOLO && mtOn(); }
+  // Slots for a device: navigator.deviceMemory (GB, Chromium only,
+  // capped at 8 by the browser) or, unknown, the screen width.
+  function mtSlots(mem, width) {
+    if (typeof mem === "number" && mem > 0) return mem <= 1 ? 2 : mem <= 2 ? 3 : mem <= 4 ? 4 : 8;
+    return width < 768 ? 3 : 6;
+  }
+  function mtSlotsHere() {
+    return mtSlots(navigator.deviceMemory, window.innerWidth || 1024);
+  }
+  function mtWeight(id) { return MT_HEAVY[id] ? 2 : 1; }
+  function mtKeepable(app) { return !!app && app.type === "internal" && !MT_CLOSE_ON_LEAVE[app.id]; }
+  // The hidden list; empty while shell.js is still running its top
+  // part (appFrames() wires the frame listeners before 10b is reached).
+  function mtList() { return mt ? mt.hidden : []; }
+  function mtFind(id) {
+    var l = mtList();
+    for (var i = 0; i < l.length; i++) if (l[i].app.id === id) return l[i];
+    return null;
+  }
+  function mtTake(id) {
+    var r = mtFind(id);
+    if (r) mt.hidden.splice(mt.hidden.indexOf(r), 1);
+    return r;
+  }
+  function mtHasDoc(el) {
+    try { return !!(el && el.contentDocument && el.contentWindow.location.href !== "about:blank"); }
+    catch (e) { return false; }
+  }
+
+  // The app's document reports itself hidden / visible again.
+  function mtVis(el, hidden) {
+    var w, d;
+    try { w = el.contentWindow; d = el.contentDocument; } catch (e) { return; }
+    if (!w || !d) return;
+    try {
+      if (hidden) {
+        Object.defineProperty(d, "visibilityState", { configurable: true, get: function () { return "hidden"; } });
+        Object.defineProperty(d, "hidden", { configurable: true, get: function () { return true; } });
+        Array.prototype.forEach.call(d.querySelectorAll("audio,video"), function (m) {
+          try { if (!m.paused) m.pause(); } catch (e2) {}
+        });
+      } else {
+        delete d.visibilityState;
+        delete d.hidden;
+      }
+      d.dispatchEvent(new w.Event("visibilitychange"));
+    } catch (e3) {}
+    try {
+      var fn = w[hidden ? "__orosAppPause" : "__orosAppResume"];
+      if (typeof fn === "function") fn();
+    } catch (e4) {}
+  }
+
+  function mtNewFrame() {
+    var f = document.createElement("iframe");
+    f.id = "app-frame";
+    f.setAttribute("title", "orOS application");
+    document.getElementById("oros-running").appendChild(f);
+    cmdWireFrame(f);
+    return f;
+  }
+  function mtDrop(el) {
+    try { el.src = "about:blank"; } catch (e) {}
+    if (el.parentNode) el.parentNode.removeChild(el);
+  }
+  // The front frame steps back: hidden, paused, still live.
+  function mtHide(el, app) {
+    el.removeAttribute("id");
+    el.style.display = "none";
+    el.setAttribute("data-oros-app", app.id);
+    mtVis(el, true);
+    if (!el.__mtLoadHook) {      // still booting: hide it again once loaded
+      el.__mtLoadHook = true;
+      el.addEventListener("load", function () { if (el.hasAttribute("data-oros-app")) mtVis(el, true); });
+    }
+    mt.hidden.push({ app: app, el: el, at: Date.now() });
+  }
+  function mtShow(el) {
+    el.id = "app-frame";
+    el.removeAttribute("data-oros-app");
+    el.style.display = "";
+    mtVis(el, false);
+  }
+  // Oldest hidden apps close until front + hidden fit the slots.
+  function mtFit(front) {
+    var slots = mtSlotsHere();
+    var used = front ? mtWeight(front.id) : 0;
+    mt.hidden.forEach(function (r) { used += mtWeight(r.app.id); });
+    mt.hidden.sort(function (a, b) { return a.at - b.at; });
+    while (used > slots && mt.hidden.length) {
+      var r = mt.hidden.shift();
+      used -= mtWeight(r.app.id);
+      mtDrop(r.el);
+    }
+  }
+  function mtDropAll() {
+    var l = mtList();
+    while (l.length) mtDrop(l.shift().el);
+  }
+  // openApp with multitasking on: `prev` was in front, `app` comes.
+  function mtSwitch(prev, app, at) {
+    var front = document.getElementById("app-frame");
+    if (prev && prev.id === app.id) { front.src = app.url + (at || ""); return; }   // reopen = reload, as before
+    var back = mtTake(app.id);
+    if (prev && mtKeepable(prev) && mtHasDoc(front)) { mtHide(front, prev); front = null; }
+    if (back) {
+      if (front) mtDrop(front);
+      mtShow(back.el);
+      if (at) back.el.src = app.url + at;
+    } else {
+      if (!front) front = mtNewFrame();
+      front.src = app.url + (at || "");
+    }
+    mtFit(app);
+  }
+  // returnToDesktop with multitasking on: keep the app alive if it may.
+  function mtLeave(prev) {
+    var front = document.getElementById("app-frame");
+    if (prev && mtKeepable(prev) && mtHasDoc(front)) {
+      mtHide(front, prev);
+      mtNewFrame();
+      mtFit(null);
+      return true;
+    }
+    return false;
+  }
+  function mtSetUser(on) {
+    try {
+      if (on) localStorage.setItem(MT_KEY, "1");
+      else localStorage.removeItem(MT_KEY);
+    } catch (e) {}
+    if (!on) mtDropAll();
+  }
+  function mtSnapshot() {
+    if (SOLO) return null;
+    return { on: mtOn(), slots: mtSlotsHere(), open: mt.hidden.length };
+  }
 
   function openApp(app, at) {
     closeMenu();
@@ -9423,9 +9613,11 @@
       window.open(app.url, "_blank", "noopener");
       return;
     }
+    var prev = state.running;
     state.running = app;
     document.body.classList.add("app-running");   // narrow bar: "?" takes the language button's place
-    document.getElementById("app-frame").src = app.url + (at || "");   // at: DL-1 launchAppSuffix only
+    if (mtActive()) mtSwitch(prev, app, at);
+    else document.getElementById("app-frame").src = app.url + (at || "");   // at: DL-1 launchAppSuffix only
     if (typeof window.t === "function") frameTitle();
     document.getElementById("oros-running").classList.add("active");
     document.getElementById("oros-desktop").style.display = "none";
@@ -9442,9 +9634,10 @@
 
   function returnToDesktop() {
     if (SOLO && soloHome()) return;   // a single app has no desktop
+    var prev = state.running;
     state.running = null;
     document.body.classList.remove("app-running");
-    document.getElementById("app-frame").src = "about:blank";
+    if (!(mtActive() && mtLeave(prev))) document.getElementById("app-frame").src = "about:blank";
     document.getElementById("oros-running").classList.remove("active");
     document.getElementById("oros-desktop").style.display = "";
     var mb = document.getElementById("btn-menu");
@@ -9950,6 +10143,7 @@
   window.__orosOpenContact = function (contactId) {
     if (typeof contactId !== "string" || !contactId) return;
     if (appLive("contacts")) {
+      appShow("contacts");
       var f = appFrameOf("contacts");
       try {
         if (f && f.contentWindow &&
@@ -9979,6 +10173,7 @@
   window.__orosOpenCycle = function (entryId) {
     if (typeof entryId !== "string" || !entryId) return;
     if (appLive("cycle")) {
+      appShow("cycle");
       var f = appFrameOf("cycle");
       try {
         if (f && f.contentWindow &&
@@ -10007,6 +10202,7 @@
   window.__orosOpenMood = function (entryId) {
     if (typeof entryId !== "string" || !entryId) return;
     if (appLive("mood")) {
+      appShow("mood");
       var f = appFrameOf("mood");
       try {
         if (f && f.contentWindow &&
@@ -10036,6 +10232,7 @@
   window.__orosOpenTime = function (pane) {
     if (typeof pane !== "string" || !pane) return;
     if (appLive("time")) {
+      appShow("time");
       var f = appFrameOf("time");
       try {
         if (f && f.contentWindow &&
@@ -10070,6 +10267,7 @@
   window.__orosOpenTodo = function (listId) {
     if (typeof listId !== "string" || !listId) return;
     if (appLive("todo")) {
+      appShow("todo");
       var f = appFrameOf("todo");
       try {
         if (f && f.contentWindow &&
@@ -10091,6 +10289,7 @@
   window.__orosOpenFitness = function (workoutId) {
     if (typeof workoutId !== "string" || !/^[a-z0-9-]{1,40}$/.test(workoutId)) return;
     if (appLive("fitness")) {
+      appShow("fitness");
       var f = appFrameOf("fitness");
       try {
         if (f && f.contentWindow &&
@@ -10116,6 +10315,7 @@
     var n = parseInt(periodOffsetDays, 10);
     if (isNaN(n)) n = 0;
     if (appLive("habits")) {
+      appShow("habits");
       var f = appFrameOf("habits");
       try {
         if (f && f.contentWindow &&
@@ -10136,6 +10336,7 @@
   window.__orosOpenQuote = function (quoteId) {
     if (typeof quoteId !== "string" || !quoteId) return;
     if (appLive("quote")) {
+      appShow("quote");
       var f = appFrameOf("quote");
       try {
         if (f && f.contentWindow &&
@@ -10161,6 +10362,7 @@
   window.__orosOpenHealth = function (kind) {
     if (typeof kind !== "string" || !/^[a-z0-9-]{1,40}$/.test(kind)) return;
     if (appLive("health")) {
+      appShow("health");
       var f = appFrameOf("health");
       try {
         if (f && f.contentWindow &&
@@ -10177,6 +10379,7 @@
   window.__orosOpenMinimalism = function (ymd) {
     if (typeof ymd !== "string" || !ymd) return;
     if (appLive("minimalism")) {
+      appShow("minimalism");
       var f = appFrameOf("minimalism");
       try {
         if (f && f.contentWindow &&
@@ -10200,6 +10403,7 @@
   window.__orosOpenPlants = function (target) {
     if (typeof target !== "string" || !/^[a-z0-9]{1,40}$/.test(target)) return;
     if (appLive("plants")) {
+      appShow("plants");
       var f = appFrameOf("plants");
       try {
         if (f && f.contentWindow &&
@@ -10220,6 +10424,7 @@
   window.__orosOpenChores = function (target) {
     if (typeof target !== "string" || !/^(today|\d{4}-\d{2}-\d{2})$/.test(target)) return;
     if (appLive("chores")) {
+      appShow("chores");
       var f = appFrameOf("chores");
       try {
         if (f && f.contentWindow &&
@@ -10240,6 +10445,7 @@
   window.__orosOpenPodcastsAdd = function (url) {
     if (typeof url !== "string" || url.length > 2000 || !/^https?:\/\//i.test(url)) return;
     if (appLive("podcasts")) {
+      appShow("podcasts");
       var f = appFrameOf("podcasts");
       try {
         if (f && f.contentWindow &&
@@ -10266,6 +10472,7 @@
   window.__orosOpenGarage = function (target) {
     if (typeof target !== "string" || !/^[a-z0-9]{1,40}$/.test(target)) return;
     if (appLive("garage")) {
+      appShow("garage");
       var f = appFrameOf("garage");
       try {
         if (f && f.contentWindow &&
@@ -10288,6 +10495,7 @@
     if (typeof tripId !== "string" || !/^[a-z0-9][a-z0-9-]{3,40}$/.test(tripId)) return;
     tab = tab === "pack" || tab === "plan" ? tab : "";
     if (appLive("travel")) {
+      appShow("travel");
       var f = appFrameOf("travel");
       try {
         if (f && f.contentWindow &&
@@ -10308,6 +10516,7 @@
   window.__orosOpenPetcare = function (target) {
     if (typeof target !== "string" || !/^[a-z0-9]{1,40}$/.test(target)) return;
     if (appLive("petcare")) {
+      appShow("petcare");
       var f = appFrameOf("petcare");
       try {
         if (f && f.contentWindow &&
@@ -10349,6 +10558,7 @@
     if (typeof lat !== "number" || typeof lon !== "number" ||
         isNaN(lat) || isNaN(lon)) return;
     if (appLive("maps")) {
+      appShow("maps");
       var f = appFrameOf("maps");
       try {
         if (f && f.contentWindow &&
@@ -10393,6 +10603,7 @@
       label: (typeof label === "string") ? label : ""
     };
     if (appLive("maps")) {
+      appShow("maps");
       var f = appFrameOf("maps");
       try {
         if (f && f.contentWindow &&
@@ -10418,6 +10629,7 @@
         typeof colId   !== "string" || !colId ||
         typeof cardId  !== "string" || !cardId) return;
     if (appLive("kanban")) {
+      appShow("kanban");
       var f = appFrameOf("kanban");
       try {
         if (f && f.contentWindow &&
@@ -10456,6 +10668,7 @@
     if (!p || typeof p !== "object" || typeof p.date !== "string") return;
     if (!/^\d{4}-\d{2}-\d{2}$/.test(p.date)) return;   // strict date guard
     if (appLive("calendar")) {
+      appShow("calendar");
       var f = appFrameOf("calendar");
       try {
         if (f && f.contentWindow &&
@@ -10504,6 +10717,7 @@
     for (var i = 0; i < state.apps.length; i++) if (state.apps[i].id === "budget") has = true;
     if (!has) return false;
     if (appLive("budget")) {
+      appShow("budget");
       var f = appFrameOf("budget");
       try {
         if (f && f.contentWindow &&
@@ -10555,6 +10769,7 @@
     for (var k = 0; k < state.apps.length; k++) if (state.apps[k].id === "quote") has = true;
     if (!has) return false;
     if (appLive("quote")) {
+      appShow("quote");
       var f = appFrameOf("quote");
       try {
         if (f && f.contentWindow &&
@@ -10592,6 +10807,7 @@
     if (!evId || !ymd || !/^\d{4}-\d{2}-\d{2}$/.test(ymd)) return;
 
     if (appLive("calendar")) {
+      appShow("calendar");
       var f = appFrameOf("calendar");
       try {
         if (f && f.contentWindow &&
@@ -10622,6 +10838,7 @@
     }
     
     if (appLive("television")) {
+      appShow("television");
       var f = appFrameOf("television");
       try {
         if (f && f.contentWindow &&
