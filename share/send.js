@@ -12,6 +12,10 @@
 //                days; items too long for a plain link always go that
 //                way. Such links are kept in "My shared links"
 //                (share/out.js, synced) where they can be revoked.
+//                An album (kind "album", share wave 4) comes as
+//                { kind: "album", data: { t }, photos: [{ blob? | path?,
+//                name?, c? }] }: share/album.js draws every photo again
+//                (no EXIF / GPS) and it always goes with an expiry.
 //   links()      the dialog straight on "My shared links" (Settings).
 //   deliver(sh)  "Add to my orOS" from the receiving page: the item
 //                waits in sessionStorage "oros-share-in" (this tab
@@ -60,7 +64,10 @@
       net: "Could not reach the orOS server. Check your connection and try again.",
       mine: "My shared links", none: "No links with an expiry yet.",
       until: "Until {d}", revoke: "Take back", sure: "Sure? Take back", revoked: "Taken back. The link no longer opens.",
-      revokeFail: "Could not take it back. Check your connection and try again.", locked: "with password"
+      revokeFail: "Could not take it back. Check your connection and try again.", locked: "with password",
+      preparing: "Preparing photos… {n} of {all}", noPhotos: "None of these pictures could be read.",
+      albumWarn: "Photos are made smaller (2048 px at most) and lose their hidden details (place, camera, time) before they leave.",
+      skipped: "Left out: {n} that could not be read.", cut: "Only the first {n} photos fit (25 MB or 200 photos at most)."
     },
     el: {
       title: "Στείλε σε κάποιον", close: "Κλείσιμο",
@@ -87,7 +94,10 @@
       net: "Δεν ήταν δυνατή η σύνδεση με τον server του orOS. Έλεγξε τη σύνδεσή σου και δοκίμασε ξανά.",
       mine: "Οι σύνδεσμοί μου", none: "Δεν υπάρχουν ακόμη σύνδεσμοι με λήξη.",
       until: "Έως {d}", revoke: "Ανάκληση", sure: "Σίγουρα; Ανάκληση", revoked: "Ανακλήθηκε. Ο σύνδεσμος δεν ανοίγει πια.",
-      revokeFail: "Η ανάκληση απέτυχε. Έλεγξε τη σύνδεσή σου και δοκίμασε ξανά.", locked: "με κωδικό"
+      revokeFail: "Η ανάκληση απέτυχε. Έλεγξε τη σύνδεσή σου και δοκίμασε ξανά.", locked: "με κωδικό",
+      preparing: "Ετοιμάζω τις φωτογραφίες… {n} από {all}", noPhotos: "Καμία από αυτές τις εικόνες δεν διαβάστηκε.",
+      albumWarn: "Οι φωτογραφίες μικραίνουν (έως 2048 px) και χάνουν τα κρυφά στοιχεία τους (τοποθεσία, κάμερα, ώρα) πριν φύγουν.",
+      skipped: "Έμειναν έξω: {n} που δεν διαβάστηκαν.", cut: "Χωράνε μόνο οι πρώτες {n} φωτογραφίες (έως 25 MB ή 200 φωτογραφίες)."
     }
   };
   function lang() { return window.orosLang === "el" ? "el" : "en"; }
@@ -301,14 +311,47 @@
   function open(opts) {
     if (!K) return;
     opts = opts || {};
+    if (opts.kind === "album") { openAlbum(opts); return; }
     var env = K.pack(opts.kind, opts.data);
     if (!env) { toast(T("failed")); return; }
-    var f = frame(), dlg = f.dlg, body = f.body;
+    send(opts, env, null, null);
+  }
+  // An album: the photos are prepared first (share/album.js), then the
+  // usual window opens with "With an expiry" on for good.
+  function openAlbum(opts) {
+    var A = window.OrosShareAlbum;
+    if (!A || !R || !OUT) { toast(T("nostore")); return; }
+    var f = frame();
+    var msg = el("p", "osh-warn", T("preparing", { n: 0, all: (opts.photos || []).length }));
+    msg.setAttribute("role", "status");
+    f.body.appendChild(msg);
+    var stop = false;
+    f.foot.appendChild(btn(T("close"), "", function () { stop = true; f.dlg.close(); }));
+    f.show();
+    var fs = window.orosFS;
+    A.prepare(opts.photos || [], {
+      title: opts.data && opts.data.t,
+      read: function (p) { return fs && typeof fs.read === "function" ? fs.read(p) : Promise.resolve(null); },
+      onProgress: function (n, all) { msg.textContent = T("preparing", { n: n, all: all }); }
+    }).then(function (r) {
+      if (stop) return;
+      var env = r.data.p.length ? K.pack("album", r.data) : null;
+      if (!env) { msg.textContent = T("noPhotos"); return; }
+      var notes = [T("albumWarn")];
+      if (r.skipped) notes.push(T("skipped", { n: r.skipped }));
+      if (r.cut) notes.push(T("cut", { n: env.d.p.length }));
+      send(opts, env, r.bin, notes.join(" "), f);
+    }, function () { if (!stop) msg.textContent = T("failed"); });
+  }
+  // bin: an album's photo bytes (share/relay.js flag 2); note: a line
+  // shown under the warning; f: the frame already open.
+  function send(opts, env, bin, note, f0) {
+    var f = f0 || frame(), dlg = f.dlg, body = f.body;
 
     var cache = {};                       // JSON [days (0 = plain link), password] → code
     var busy = false;
     var lockOn = false;
-    var expOn = false, forced = false, days = 7;
+    var expOn = !!bin, forced = !!bin, days = 7;
     var canExp = !!(R && OUT);
 
     function main() {
@@ -320,6 +363,7 @@
       body.appendChild(el("p", "osh-sum", K.summary(env, lang())));
       var warn = el("p", "osh-warn");
       body.appendChild(warn);
+      if (note) body.appendChild(el("p", "osh-warn", note));
       function warnText() { warn.textContent = expOn ? T("warnExp") : (lockOn ? T("warnLock") : T("warn")); }
       warnText();
 
@@ -404,7 +448,7 @@
       // A plain link too long for a URL turns "With an expiry" on for good.
       function check() {
         msg.className = "osh-msg";
-        msg.textContent = forced ? T("forced") : "";
+        msg.textContent = forced && !bin ? T("forced") : "";
         var short = lockOn && curPass.length < MIN_PASS;
         if (short) { msg.textContent = T("passShort", { n: MIN_PASS }); }
         linkBtns.forEach(function (b) { b.disabled = short; });
@@ -443,7 +487,7 @@
         if (!cache[ck(d, pass)]) { msg.className = "osh-msg"; msg.textContent = T("making"); }
         codeFor(d, pass).then(function (code) {
           busy = false;
-          msg.textContent = forced ? T("forced") : "";
+          msg.textContent = forced && !bin ? T("forced") : "";
           if (what !== "file" && !expOn && code.length > K.MAX_LINK) { sizeCheck(code); return; }
           var link = baseUrl() + "#" + code;
           if (what === "share") {
@@ -478,7 +522,7 @@
       var key = ck(d, pass);
       if (cache[key]) return Promise.resolve(cache[key]);
       if (!d) return K.encode(env, pass || undefined).then(function (code) { cache[key] = code; return code; });
-      return R.create(env, { days: d, password: pass || undefined }).then(function (r) {
+      return R.create(env, { days: d, password: pass || undefined, bin: bin || undefined }).then(function (r) {
         OUT.add({ id: r.id, c: r.code, d: r.del, k: env.k, t: K.title(env, lang()), x: r.exp, a: Date.now(), p: pass ? 1 : 0 });
         cache[key] = r.code;
         return r.code;
@@ -521,7 +565,7 @@
     }
 
     main();
-    f.show();
+    if (!f0) f.show();
   }
 
   // ---------- "Add to my orOS" ----------

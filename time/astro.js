@@ -451,9 +451,13 @@
     }
     return false;
   }
+  // { timer } / { alarm }: the command bar, through time.js.
+  function timeCmd(target) {
+    return typeof window.__orosTimeCmd === "function" && window.__orosTimeCmd(target);
+  }
   window.__orosOpenAt = function (target) {
     if (target && target.astro === "location") focusLocation();
-    else openPane(target);
+    else if (!timeCmd(target)) openPane(target);
   };
 
   // Boot + periodic refresh (positions drift, moon barely moves)
@@ -464,6 +468,7 @@
       ? window.parent.__orosTakeTarget("time") : null;
     if (pending && pending.astro === "location") setTimeout(focusLocation, 50);
     else if (pending && typeof pending.pane === "string") setTimeout(function () { openPane(pending); }, 50);
+    else if (pending && (pending.timer || pending.alarm)) setTimeout(function () { timeCmd(pending); }, 50);
     else if (pending) window.__orosTimePending = pending;   // another part of Time (stage.js) takes it
   } catch (e) {}
   setInterval(render, 30000);

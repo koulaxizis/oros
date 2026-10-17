@@ -1,0 +1,524 @@
+{
+  "note": "Size budget of the quality gate (.github/qa/budget.js). The gate fails at precache.bytes + 10 % and at an app's bytes + 20 % (ms is a warning only). Raise a value only for an intended growth: node .github/qa/budget.js [--precache] --update-budget.",
+  "precache": {
+    "bytes": 46115553
+  },
+  "apps": {
+    "assistant": {
+      "bytes": 524213,
+      "ms": 51
+    },
+    "atelier": {
+      "bytes": 1998248,
+      "ms": 113
+    },
+    "aura": {
+      "bytes": 94591,
+      "ms": 78
+    },
+    "baby": {
+      "bytes": 339163,
+      "ms": 46
+    },
+    "backgammon": {
+      "bytes": 163961,
+      "ms": 42
+    },
+    "battleship": {
+      "bytes": 158386,
+      "ms": 51
+    },
+    "bookmarks": {
+      "bytes": 406656,
+      "ms": 75
+    },
+    "breakout": {
+      "bytes": 69568,
+      "ms": 48
+    },
+    "bubble": {
+      "bytes": 67720,
+      "ms": 47
+    },
+    "budget": {
+      "bytes": 594021,
+      "ms": 99
+    },
+    "calculator": {
+      "bytes": 235670,
+      "ms": 59
+    },
+    "calendar": {
+      "bytes": 1156145,
+      "ms": 115
+    },
+    "certificates": {
+      "bytes": 1077381,
+      "ms": 63
+    },
+    "characters": {
+      "bytes": 106479,
+      "ms": 35
+    },
+    "checkers": {
+      "bytes": 72499,
+      "ms": 42
+    },
+    "chess": {
+      "bytes": 495249,
+      "ms": 59
+    },
+    "chores": {
+      "bytes": 220220,
+      "ms": 54
+    },
+    "connect4": {
+      "bytes": 128023,
+      "ms": 53
+    },
+    "contacts": {
+      "bytes": 440893,
+      "ms": 68
+    },
+    "converter": {
+      "bytes": 119240,
+      "ms": 53
+    },
+    "crm": {
+      "bytes": 466165,
+      "ms": 64
+    },
+    "crossword": {
+      "bytes": 277806,
+      "ms": 70
+    },
+    "cycle": {
+      "bytes": 338755,
+      "ms": 63
+    },
+    "device": {
+      "bytes": 87240,
+      "ms": 45
+    },
+    "diary": {
+      "bytes": 320889,
+      "ms": 66
+    },
+    "dice": {
+      "bytes": 73210,
+      "ms": 51
+    },
+    "dots": {
+      "bytes": 64737,
+      "ms": 44
+    },
+    "familytree": {
+      "bytes": 278869,
+      "ms": 46
+    },
+    "feeds": {
+      "bytes": 439599,
+      "ms": 75
+    },
+    "files": {
+      "bytes": 435416,
+      "ms": 52
+    },
+    "fitness": {
+      "bytes": 467150,
+      "ms": 62
+    },
+    "flow": {
+      "bytes": 98264,
+      "ms": 63
+    },
+    "g2048": {
+      "bytes": 60488,
+      "ms": 41
+    },
+    "gamecenter": {
+      "bytes": 56468,
+      "ms": 56
+    },
+    "garage": {
+      "bytes": 408833,
+      "ms": 61
+    },
+    "gomoku": {
+      "bytes": 72511,
+      "ms": 57
+    },
+    "habits": {
+      "bytes": 356775,
+      "ms": 51
+    },
+    "hangman": {
+      "bytes": 123987,
+      "ms": 47
+    },
+    "health": {
+      "bytes": 481981,
+      "ms": 66
+    },
+    "help": {
+      "bytes": 1078456,
+      "ms": 31
+    },
+    "hexagon": {
+      "bytes": 81177,
+      "ms": 42
+    },
+    "invoices": {
+      "bytes": 428641,
+      "ms": 54
+    },
+    "jigsaw": {
+      "bytes": 175594,
+      "ms": 44
+    },
+    "kanban": {
+      "bytes": 496726,
+      "ms": 51
+    },
+    "labels": {
+      "bytes": 147754,
+      "ms": 52
+    },
+    "layout": {
+      "bytes": 1229025,
+      "ms": 72
+    },
+    "library": {
+      "bytes": 523982,
+      "ms": 69
+    },
+    "lightsout": {
+      "bytes": 54321,
+      "ms": 53
+    },
+    "mahjong": {
+      "bytes": 74867,
+      "ms": 81
+    },
+    "mail": {
+      "bytes": 473838,
+      "ms": 63
+    },
+    "mancala": {
+      "bytes": 69509,
+      "ms": 57
+    },
+    "maps": {
+      "bytes": 1340573,
+      "ms": 132
+    },
+    "mastermind": {
+      "bytes": 64165,
+      "ms": 50
+    },
+    "meals": {
+      "bytes": 434526,
+      "ms": 83
+    },
+    "memory": {
+      "bytes": 60413,
+      "ms": 45
+    },
+    "mindmap": {
+      "bytes": 369680,
+      "ms": 50
+    },
+    "minesweeper": {
+      "bytes": 85486,
+      "ms": 36
+    },
+    "minimalism": {
+      "bytes": 537674,
+      "ms": 40
+    },
+    "mixer": {
+      "bytes": 79923,
+      "ms": 44
+    },
+    "mockups": {
+      "bytes": 252406,
+      "ms": 49
+    },
+    "montage": {
+      "bytes": 1093404,
+      "ms": 103
+    },
+    "mood": {
+      "bytes": 400289,
+      "ms": 71
+    },
+    "museum": {
+      "bytes": 60441,
+      "ms": 31
+    },
+    "music": {
+      "bytes": 495373,
+      "ms": 74
+    },
+    "names": {
+      "bytes": 70759,
+      "ms": 30
+    },
+    "netizen": {
+      "bytes": 497784,
+      "ms": 81
+    },
+    "newsletter": {
+      "bytes": 623068,
+      "ms": 70
+    },
+    "nonogram": {
+      "bytes": 90914,
+      "ms": 52
+    },
+    "notes": {
+      "bytes": 404293,
+      "ms": 55
+    },
+    "oracle": {
+      "bytes": 71367,
+      "ms": 48
+    },
+    "passwords": {
+      "bytes": 482048,
+      "ms": 56
+    },
+    "petcare": {
+      "bytes": 283260,
+      "ms": 49
+    },
+    "petworld": {
+      "bytes": 178979,
+      "ms": 46
+    },
+    "photolab": {
+      "bytes": 701754,
+      "ms": 91
+    },
+    "pixel": {
+      "bytes": 181764,
+      "ms": 48
+    },
+    "plants": {
+      "bytes": 214948,
+      "ms": 39
+    },
+    "podcasts": {
+      "bytes": 478917,
+      "ms": 60
+    },
+    "pong": {
+      "bytes": 71944,
+      "ms": 54
+    },
+    "prompter": {
+      "bytes": 174829,
+      "ms": 47
+    },
+    "pubdomain": {
+      "bytes": 76723,
+      "ms": 39
+    },
+    "qr": {
+      "bytes": 199585,
+      "ms": 64
+    },
+    "quote": {
+      "bytes": 702189,
+      "ms": 121
+    },
+    "radio": {
+      "bytes": 162447,
+      "ms": 54
+    },
+    "reversi": {
+      "bytes": 65538,
+      "ms": 53
+    },
+    "ringtones": {
+      "bytes": 150903,
+      "ms": 54
+    },
+    "rps": {
+      "bytes": 57983,
+      "ms": 43
+    },
+    "scanpdf": {
+      "bytes": 671882,
+      "ms": 59
+    },
+    "scores": {
+      "bytes": 230273,
+      "ms": 43
+    },
+    "settings": {
+      "bytes": 175227,
+      "ms": 31
+    },
+    "shelf": {
+      "bytes": 357225,
+      "ms": 61
+    },
+    "signature": {
+      "bytes": 277786,
+      "ms": 47
+    },
+    "simon": {
+      "bytes": 48643,
+      "ms": 30
+    },
+    "sky": {
+      "bytes": 119089,
+      "ms": 45
+    },
+    "slider": {
+      "bytes": 48651,
+      "ms": 41
+    },
+    "slides": {
+      "bytes": 1461191,
+      "ms": 73
+    },
+    "snake": {
+      "bytes": 59452,
+      "ms": 41
+    },
+    "solitaire": {
+      "bytes": 131271,
+      "ms": 45
+    },
+    "split": {
+      "bytes": 433537,
+      "ms": 68
+    },
+    "spot": {
+      "bytes": 79724,
+      "ms": 56
+    },
+    "spreadsheet": {
+      "bytes": 537582,
+      "ms": 113
+    },
+    "stickies": {
+      "bytes": 147262,
+      "ms": 34
+    },
+    "stock": {
+      "bytes": 569452,
+      "ms": 60
+    },
+    "storage": {
+      "bytes": 304728,
+      "ms": 51
+    },
+    "studio": {
+      "bytes": 652679,
+      "ms": 88
+    },
+    "sudoku": {
+      "bytes": 159210,
+      "ms": 45
+    },
+    "television": {
+      "bytes": 593655,
+      "ms": 80
+    },
+    "tetris": {
+      "bytes": 79156,
+      "ms": 54
+    },
+    "textcase": {
+      "bytes": 76770,
+      "ms": 47
+    },
+    "texttools": {
+      "bytes": 207537,
+      "ms": 50
+    },
+    "tictactoe": {
+      "bytes": 58227,
+      "ms": 40
+    },
+    "time": {
+      "bytes": 494461,
+      "ms": 97
+    },
+    "timesheet": {
+      "bytes": 308575,
+      "ms": 54
+    },
+    "today": {
+      "bytes": 181964,
+      "ms": 30
+    },
+    "todo": {
+      "bytes": 482092,
+      "ms": 61
+    },
+    "travel": {
+      "bytes": 431388,
+      "ms": 55
+    },
+    "trees": {
+      "bytes": 95036,
+      "ms": 80
+    },
+    "typewriter": {
+      "bytes": 62355,
+      "ms": 40
+    },
+    "units": {
+      "bytes": 104798,
+      "ms": 54
+    },
+    "wallpaper": {
+      "bytes": 126154,
+      "ms": 64
+    },
+    "water": {
+      "bytes": 167372,
+      "ms": 64
+    },
+    "weather": {
+      "bytes": 269782,
+      "ms": 64
+    },
+    "whack": {
+      "bytes": 54396,
+      "ms": 43
+    },
+    "wheel": {
+      "bytes": 74481,
+      "ms": 57
+    },
+    "wiki": {
+      "bytes": 460947,
+      "ms": 56
+    },
+    "wordle": {
+      "bytes": 192799,
+      "ms": 45
+    },
+    "wordsearch": {
+      "bytes": 196179,
+      "ms": 50
+    },
+    "writer": {
+      "bytes": 609778,
+      "ms": 82
+    },
+    "xeri": {
+      "bytes": 172616,
+      "ms": 54
+    },
+    "zen": {
+      "bytes": 102274,
+      "ms": 67
+    }
+  }
+}

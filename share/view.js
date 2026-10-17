@@ -37,6 +37,8 @@
       calMonth: "Month", calList: "List", calPrev: "Previous month", calNext: "Next month",
       calNoneDay: "Nothing on this day.", calNoneMonth: "Nothing this month.",
       calZone: "Times are in your time zone ({z}).", calAllDay: "all day",
+      alHint: "Tap a photo to see it large and save it.", alSave: "Save photo", alClose: "Close",
+      alPrev: "Previous photo", alNext: "Next photo", alOf: "{i} of {n}", alBad: "{n} photos could not be shown.",
       copied: "Copied", copyFail: "Could not copy",
       tickHint: "Ticks here are only for you and are not saved.",
       phone: "Phone", email: "Email", address: "Address", web: "Website", im: "Chat",
@@ -72,6 +74,8 @@
       calMonth: "Μήνας", calList: "Λίστα", calPrev: "Προηγούμενος μήνας", calNext: "Επόμενος μήνας",
       calNoneDay: "Τίποτα αυτή τη μέρα.", calNoneMonth: "Τίποτα αυτόν τον μήνα.",
       calZone: "Οι ώρες είναι στη ζώνη ώρας σου ({z}).", calAllDay: "όλη μέρα",
+      alHint: "Πάτα μια φωτογραφία για να τη δεις μεγάλη και να την αποθηκεύσεις.", alSave: "Αποθήκευση φωτογραφίας", alClose: "Κλείσιμο",
+      alPrev: "Προηγούμενη φωτογραφία", alNext: "Επόμενη φωτογραφία", alOf: "{i} από {n}", alBad: "{n} φωτογραφίες δεν εμφανίστηκαν.",
       copied: "Αντιγράφηκε", copyFail: "Η αντιγραφή απέτυχε",
       tickHint: "Τα τικ εδώ είναι μόνο για σένα και δεν αποθηκεύονται.",
       phone: "Τηλέφωνο", email: "Email", address: "Διεύθυνση", web: "Ιστότοπος", im: "Chat",
@@ -193,7 +197,7 @@
     [].slice.call(box.querySelectorAll("img, .ref-up")).forEach(function (n) { n.remove(); });
     return box;
   }
-  function render(env) {
+  function render(env, bin) {
     var c = card(), d = env.d, S = K.strings(LANG);
     c.appendChild(el("p", "kind", S[env.k]));
     c.appendChild(el("h1", "", env.k === "recipe" && d.e ? d.e + " " + K.title(env, LANG) : K.title(env, LANG)));
@@ -269,6 +273,9 @@
       }
     } else if (env.k === "slots") {
       renderSlots(c, env);
+      return;
+    } else if (env.k === "album") {
+      renderAlbum(c, env, bin);
       return;
     } else if (env.k === "cal") {
       renderCal(c, env);
@@ -362,6 +369,104 @@
     pick.hidden = true;
     c.insertBefore(box, pick);
     try { box.scrollIntoView({ block: "nearest" }); } catch (e) {}
+  }
+
+  // ---------- An album: a grid, one photo large ----------
+  // Each photo is its own slice of the item's byte run; it is shown only
+  // when its first bytes say JPEG / PNG / WebP, from a blob: URL.
+  var albumUrls = [];
+  function renderAlbum(c, env, bin) {
+    var d = env.d, S = K.strings(LANG);
+    albumUrls.forEach(function (u) { URL.revokeObjectURL(u); });
+    albumUrls = [];
+    var photos = [], bad = 0;
+    d.p.forEach(function (x) {
+      var bytes = bin && x.o + x.n <= bin.length ? bin.subarray(x.o, x.o + x.n) : null;
+      var type = bytes ? K.photoType(bytes) : "";
+      if (!type) { bad++; return; }
+      var url = URL.createObjectURL(new Blob([bytes], { type: type }));
+      albumUrls.push(url);
+      photos.push({ url: url, type: type, c: x.c || "", w: x.w, h: x.h });
+    });
+    c.appendChild(el("p", "meta", photos.length === 1 ? S.album1 : S.albumN.replace("{n}", photos.length)));
+    if (bad) c.appendChild(el("p", "hint", t("alBad").replace("{n}", bad)));
+    var grid = el("div", "al-grid");
+    photos.forEach(function (ph, i) {
+      var b = btn("", "al-cell", function () { lightbox(photos, i, b); });
+      var im = el("img");
+      im.src = ph.url;
+      im.alt = ph.c || S.photo.replace("{n}", i + 1);
+      im.loading = "lazy";
+      im.decoding = "async";
+      b.appendChild(im);
+      b.setAttribute("aria-label", im.alt);
+      grid.appendChild(b);
+    });
+    c.appendChild(grid);
+    if (photos.length) c.appendChild(el("p", "hint", t("alHint")));
+  }
+  function photoName(ph, i) {
+    var base = (ph.c || "").replace(/[\\\/:*?"<>|\u0000-\u001f]/g, " ").replace(/\s+/g, " ").trim().slice(0, 60);
+    var ext = ph.type === "image/png" ? ".png" : ph.type === "image/webp" ? ".webp" : ".jpg";
+    return (base || "orOS photo " + (i + 1)) + ext;
+  }
+  function lightbox(photos, at, from) {
+    var S = K.strings(LANG), i = at;
+    var box = el("div", "al-box");
+    box.setAttribute("role", "dialog");
+    box.setAttribute("aria-modal", "true");
+    var img = el("img"), cap = el("p", "al-cap"), count = el("span", "al-count");
+    var bar = el("div", "al-bar");
+    var prev = btn("\u2039", "al-nav", function () { go(-1); });
+    var next = btn("\u203a", "al-nav", function () { go(1); });
+    prev.setAttribute("aria-label", t("alPrev"));
+    next.setAttribute("aria-label", t("alNext"));
+    var save = btn(t("alSave"), "prim", function () {
+      var a = el("a");
+      a.href = photos[i].url;
+      a.download = photoName(photos[i], i);
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    });
+    var close = btn(t("alClose"), "", shut);
+    bar.appendChild(prev);
+    bar.appendChild(count);
+    bar.appendChild(next);
+    bar.appendChild(save);
+    bar.appendChild(close);
+    var stage = el("div", "al-stage");
+    stage.appendChild(img);
+    box.appendChild(stage);
+    box.appendChild(cap);
+    box.appendChild(bar);
+    stage.addEventListener("click", function (e) { if (e.target === stage) shut(); });
+    function go(n) { i = (i + n + photos.length) % photos.length; show(); }
+    function show() {
+      var ph = photos[i];
+      img.src = ph.url;
+      img.alt = ph.c || S.photo.replace("{n}", i + 1);
+      cap.textContent = ph.c;
+      cap.hidden = !ph.c;
+      count.textContent = t("alOf").replace("{i}", i + 1).replace("{n}", photos.length);
+      prev.hidden = next.hidden = photos.length < 2;
+    }
+    function key(e) {
+      if (e.key === "Escape") shut();
+      else if (e.key === "ArrowLeft") go(-1);
+      else if (e.key === "ArrowRight") go(1);
+    }
+    function shut() {
+      document.removeEventListener("keydown", key);
+      box.remove();
+      document.body.classList.remove("al-open");
+      try { from.focus(); } catch (e) {}
+    }
+    document.addEventListener("keydown", key);
+    document.body.classList.add("al-open");
+    document.body.appendChild(box);
+    show();
+    close.focus();
   }
 
   // ---------- A calendar: month grid or list, one month at a time ----------
@@ -637,7 +742,7 @@
       }
       var env = r.e && r.e.v === 1 && typeof r.e.k === "string" ? K.pack(r.e.k, r.e.d) : null;
       if (!env) { stateMsg("bad", true); return; }
-      render(env);
+      render(env, r.bin || null);
       var d = new Date(r.x);
       $("card").appendChild(el("p", "hint", t("until").replace("{d}", d.toLocaleString(LANG === "el" ? "el-GR" : "en-GB",
         { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }))));

@@ -7,6 +7,8 @@
 //   - the key normaliser and the "reads as English" rule
 //   - the sync convergence sweep catches the bugs it is meant to catch
 //   - every fixture is a plain object with a source
+//   - accessibility keeps only critical / serious, one entry per rule
+//   - the size budget is well formed and its verdicts are right
 // Run: node --test tests/
 
 "use strict";
@@ -35,7 +37,7 @@ test("baseline.json is sorted, unique and names real apps", () => {
   const b = JSON.parse(read(".github/qa/baseline.json"));
   const ids = new Set(JSON.parse(read("apps.json")).apps.map((a) => a.id).concat(["shell"]));
   const kinds = new Set(["error", "overflow", "help", "greek", "csp",
-    "sync-throws", "sync-idempotent", "sync-diverge", "sync-loop", "sync-lost"]);
+    "sync-throws", "sync-idempotent", "sync-diverge", "sync-loop", "sync-lost", "a11y"]);
   assert.deepEqual(b.entries, [...new Set(b.entries)].sort(), "sorted and unique");
   for (const e of b.entries) {
     const p = e.split(" | ");
@@ -120,4 +122,53 @@ test("convergence sweep: a merge that throws is reported", async () => {
 test("convergence sweep: a record the app's own store refuses is not counted as lost", async () => {
   const onlyValid = (x) => ({ items: x.items.filter((it) => /^a\d+$/.test(it.id)) });
   assert.deepEqual(await sweep(goodMerge, { items: [{ id: "a1", text: "milk", mtime: 10 }, { id: "x-qa", text: "y", mtime: 1 }] }, onlyValid), []);
+});
+
+const A11Y = require("../.github/qa/a11y.js");
+const BUD = require("../.github/qa/budget.js");
+
+test("a11y keeps only critical and serious, one entry per rule", () => {
+  const got = A11Y.pickViolations([
+    { id: "color-contrast", impact: "serious", help: "c", nodes: [{ target: ["#a"] }, { target: ["#b"] }] },
+    { id: "color-contrast", impact: "serious", help: "c", nodes: [{ target: ["#c"] }] },
+    { id: "region", impact: "moderate", help: "r", nodes: [{ target: ["#d"] }] },
+    { id: "button-name", impact: "critical", help: "b", nodes: [{ target: ["#e"] }] },
+  ]);
+  assert.deepEqual(got.map((v) => v.id + ":" + v.nodes).sort(), ["button-name:1", "color-contrast:3"]);
+});
+
+test("budget.json covers the precache and names real apps", () => {
+  const b = JSON.parse(read(".github/qa/budget.json"));
+  const ids = new Set(JSON.parse(read("apps.json")).apps.map((a) => a.id));
+  assert.ok(b.precache.bytes > 0, "precache budget recorded");
+  for (const [id, v] of Object.entries(b.apps)) {
+    assert.ok(ids.has(id), "unknown app in budget: " + id);
+    assert.ok(Number.isInteger(v.bytes) && v.bytes > 0 && Number.isInteger(v.ms), id + " has bytes and ms");
+  }
+  assert.deepEqual(Object.keys(b.apps), Object.keys(b.apps).slice().sort(), "apps sorted");
+});
+
+test("precache list is read from sw.js like the service worker", () => {
+  const list = BUD.precacheList('var PRECACHE_URLS = [\n  "./",\n  "./todo/todo.js?v=1",\n  "./notes/"\n];');
+  assert.deepEqual(list, ["index.html", "todo/todo.js", "notes/index.html"]);
+  assert.ok(BUD.precacheList(read("sw.js")).length > 100);
+});
+
+test("precache verdict: 10 % slack, largest NEW files listed", () => {
+  const sizes = { a: 100, b: 50, c: 70 };
+  const ok = BUD.checkPrecache(["a", "b"], sizes, 140, null);
+  assert.equal(ok.over, false);
+  const over = BUD.checkPrecache(["a", "b", "c"], sizes, 140, ["a", "b"]);
+  assert.equal(over.over, true);
+  assert.deepEqual(over.largest.map((f) => f.path), ["c"], "only files new against the base");
+  assert.equal(BUD.checkPrecache(["a"], sizes, 0, null).over, false, "no budget yet never fails");
+});
+
+test("first-open verdict: 20 % slack on bytes, time only warns", () => {
+  const line = { bytes: 1000, ms: 100 };
+  assert.equal(BUD.checkApp("x", { bytes: 1200, ms: 100 }, line).status, "ok");
+  assert.equal(BUD.checkApp("x", { bytes: 1201, ms: 100 }, line).status, "over");
+  assert.equal(BUD.checkApp("x", { bytes: 1000, ms: 500 }, line).status, "slow");
+  assert.equal(BUD.checkApp("x", { bytes: 500, ms: 100 }, line).status, "shrunk");
+  assert.equal(BUD.checkApp("x", { bytes: 500, ms: 100 }, undefined).status, "new");
 });
