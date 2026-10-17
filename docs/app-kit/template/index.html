@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob: 'wasm-unsafe-eval' 'sha256-RjbgZ2BhzIYAYaAm0x8Mg+hmU7mExFEbMFfupHxMCFM='; style-src 'self' 'unsafe-inline'; img-src 'self' https: data: blob:; media-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https: wss: data: blob: http://localhost:* http://127.0.0.1:*; worker-src 'self' blob:; frame-src 'self' https: blob: data:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <!-- DL-1: a direct link to this app opens it inside the orOS shell -->
+  <script>if (window.top === window.self && !/[?&]standalone\b/.test(location.search)) location.replace("../?open=myapp" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>My App · orOS</title>
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+
+  <header id="toolbar">
+    <h1 id="title" data-i18n="app.name">My App</h1>
+  </header>
+
+  <main id="main">
+    <form id="add-form" autocomplete="off">
+      <label for="add-text" class="sr-only" data-i18n="add.label">New item</label>
+      <input type="text" id="add-text" maxlength="2000" data-i18n-ph="add.ph">
+      <button type="submit" class="chip pri" data-i18n="btn.add">Add</button>
+    </form>
+    <ul id="list"></ul>
+    <p id="empty" class="hint" data-i18n="empty">Nothing here yet. Write something above and press Add.</p>
+  </main>
+
+  <div id="toast" role="status"></div>
+
+  <script src="core.js"></script>
+  <script src="app.js"></script>
+
+</body>
+</html>

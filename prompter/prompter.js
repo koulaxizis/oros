@@ -881,10 +881,13 @@
   function closeEditor(){
     if(editorModal){ editorModal.close(); editorModal.remove(); editorModal=null; }
   }
-  function openCustomEditor(existing){
+  // prefill (optional, new prompt only): { text } from "Send to an app"
+  // (BR-SEND) — the same text in both language fields, to be edited.
+  function openCustomEditor(existing, prefill){
     if(editorModal) return;
     var editing=!!existing;
     var p=existing||{cat:"micro", en:"", el:"", var_en:"", var_el:"", tags:[]};
+    if(!editing && prefill && typeof prefill.text==="string"){ p.en=prefill.text; p.el=prefill.text; }
     editorModal=document.createElement("dialog");
     editorModal.className="settings-dlg custom-editor";
 
@@ -1757,8 +1760,17 @@ document.body.appendChild(loader);
   }
   // One receiver for both deep links: { prompt } (search) and
   // { openFile: { token } } (the system's "Open with").
+  // { newPrompt: { text } }: "Send to an app" (BR-SEND) — the New
+  // prompt editor filled with that text; nothing is saved until Save.
+  var NEWPROMPT_MAX=8000;
   function openTarget(tg){
     if(tg && typeof tg==="object" && tg.openFile && typeof tg.openFile.token==="string"){ openFileTarget(tg); return; }
+    if(tg && typeof tg==="object" && tg.newPrompt && typeof tg.newPrompt.text==="string"){
+      var txt=tg.newPrompt.text.replace(/\r\n?/g,"\n").replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g," ").trim().slice(0,NEWPROMPT_MAX);
+      if(!txt || editorModal || settingsModal || document.querySelector("dialog[open]")) return;
+      openCustomEditor(null, { text: txt });
+      return;
+    }
     openSearchTarget(tg);
   }
   window.__orosOpenAt=openTarget;

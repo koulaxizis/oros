@@ -100,3 +100,5 @@ In `Diary settings`, `orOS file (.orosdiary)` saves every day's line, longer ent
 
 ## Tips
 > Write the first thing that comes to mind. One honest sentence is worth more than a long page you never write.
+- Under the date, a quiet line shows the feelings you logged in [Mood](app:mood) that day; tap it to see them there.
+- `Write about it` on a Mood entry opens its day here with the longer entry filled in; it's saved only once you edit it or tap `Keep`.

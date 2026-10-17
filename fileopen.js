@@ -175,6 +175,14 @@
   ];
   var TEXT_MAX = 5 * 1024 * 1024;
 
+  // Types only orOS's own Files opens in an app (BR-FO-9, app interop
+  // wave 2). Not in the manifest: orOS does not take these over in the
+  // system's "Open with". Music copies a song from elsewhere into its
+  // folder (Files passes { playPath } for a song already there).
+  var INSIDE = [
+    { app: "music", exts: [".mp3", ".m4a", ".m4b", ".aac", ".ogg", ".oga", ".opus", ".flac", ".wav", ".wave", ".weba"] }
+  ];
+
   var STRINGS = {
     en: {
       "title": "Open “{name}” with",
@@ -222,6 +230,24 @@
   function appsFor(ext) {
     ext = String(ext || "").toLowerCase();
     return Object.prototype.hasOwnProperty.call(APPS_BY_EXT, ext) ? APPS_BY_EXT[ext].slice() : [];
+  }
+
+  // Apps for a file opened from inside orOS (Files): the table's, then
+  // INSIDE's.
+  function insideFor(ext) {
+    ext = String(ext || "").toLowerCase();
+    var out = appsFor(ext);
+    INSIDE.forEach(function (h) { if (h.exts.indexOf(ext) !== -1 && out.indexOf(h.app) === -1) out.push(h.app); });
+    return out;
+  }
+  // Same as choose(), with insideFor(): { app } | { ask } | null.
+  function chooseInside(name, prefs) {
+    var ext = extOf(name), apps = insideFor(ext);
+    if (!apps.length) return null;
+    var p = normPrefs(prefs).map[ext];
+    if (p && p !== "ask" && apps.indexOf(p) !== -1) return { app: p, ext: ext };
+    if (p !== "ask" && apps.length === 1) return { app: apps[0], ext: ext };
+    return { ask: apps, ext: ext };
   }
 
   // Every extension, in table order.
@@ -333,6 +359,7 @@
     HANDLERS: HANDLERS, MAX_BYTES: MAX_BYTES, PREF_KEY: PREF_KEY, STRINGS: STRINGS,
     extOf: extOf, appsFor: appsFor, extensions: extensions, shared: shared,
     normPrefs: normPrefs, choose: choose, choiceFor: choiceFor, setChoice: setChoice,
+    INSIDE: INSIDE, insideFor: insideFor, chooseInside: chooseInside,
     manifestHandlers: manifestHandlers, shareTarget: shareTarget, shareAccept: shareAccept,
     // The whole table, copied (the single apps' manifests, solo.js).
     table: function () {
@@ -563,6 +590,23 @@
     },
     // Same path for a File from elsewhere (drag onto the desktop, tests).
     open: function (files) { take(Array.prototype.slice.call(files || [])); },
+    // Files (inside orOS, BR-FO-9). appsFor with the INSIDE types too.
+    insideFor: insideFor,
+    // A file from the orOS disk: the saved choice, the only app, or the
+    // chooser (ask: true always shows the chooser).
+    openInside: function (file, ask) {
+      if (!file) return;
+      var c = chooseInside(file.name, loadPrefs());
+      if (!c) { notice(T("unknown")); return; }
+      if (ask && c.app && insideFor(c.ext).length > 1) c = { ask: insideFor(c.ext), ext: c.ext };
+      if (c.app) {
+        if (file.size > maxFor(c.app)) { notice(T("big")); return; }
+        openWith(c.app, file);
+        return;
+      }
+      if (file.size > maxFor("")) { notice(T("big")); return; }
+      chooser(file, c.ask, c.ext);
+    },
     // Settings → Opening files.
     supported: function () { return "launchQueue" in w; },
     installed: function () {

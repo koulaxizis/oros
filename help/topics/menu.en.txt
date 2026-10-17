@@ -27,10 +27,32 @@ If nothing matches, you'll see `No matching apps`.
 
 You can also search from your browser's address bar. Add a site search (custom search engine) in your browser settings with your orOS address followed by `?search=%s`; orOS then opens with your words already in this box.
 
+## Commands
+Type what you want to do, in English or Greek, and the first row of the search shows the action. Press [[Enter]] or tap it. Nothing is saved yet: the app opens with the form filled in, and you check it and press `Save`.
+- `dentist tomorrow 10`, `meeting Friday 3pm at the office`: a new event in [Calendar](app:calendar). A line with a day and a time is enough.
+- `buy milk, eggs`, `bread to the shopping list`: the shopping list in [To-Do](app:todo).
+- `todo call Nikos`, `remind me to pay the rent`: a new task in To-Do.
+- `spent 12€ coffee`, `12€ coffee`, `paid 30 fuel yesterday`, `got 500 salary`: an expense or income in [Budget](app:budget), with the category guessed from the words.
+- `note: wifi code 1234`: a new page in [Notes](app:notes).
+- `a glass of water`: one glass in [Water](app:water), right away.
+- `open maps`: opens that app.
+- `timer 10 min pasta`, `timer 1h30m`: starts a timer in [Time](app:time) right away. `alarm 7:00`, `wake me at 6:30 every day`: fills in a new alarm, and you press `Add`.
+- `card fix the door`, `fix the door to kanban`: a new card in [Kanban](app:kanban).
+- `habit reading done`: ticks today in [Habits](app:habits) (tap the day again to undo). `new habit running` opens a new habit.
+- `send hello world to writer`: hands the text or link to that app, like `Send to an app`.
+- `12*3+4`, `√2`, `5 miles to km`, `100 usd to eur`: the answer appears in the row. Press [[Enter]] to copy it.
+
+In the bar, before you type, your last commands are listed; tap one to use it again. This list stays on this device only, and `Clear the list` empties it.
+
+The same commands work in a small bar over any app: press [[Ctrl+K]] (in Notes and Wiki, [[Ctrl+Alt+Shift+K]]). In the orOS Android app, the magnifier button of the home-screen widgets opens the same bar. Anything that is not a command is a normal search, and with the [Assistant](app:assistant) installed the last row asks it. Commands are understood on your device; nothing is sent anywhere.
+
 ## Choose which apps the menu shows
 Too many apps? Hide the ones you don't use. Open [Settings](app:settings) and choose `Menu`:
 - Untick an app to hide it, tick it again to bring it back. `Find an app` narrows the list.
 - `Hide all` empties the list, so you can then tick only the apps you want. `Show all` brings every app back.
+- `Choose a profile` ticks apps for you: `Home`, `Work / Business`, `School`, `Creating` or `Games`, one or more. `Everything` ticks every app. You can still tick or untick any app before you press `Save`.
+
+The first time you open orOS, the same choice comes before the tour, as `What will you do with orOS?`. `Everything` is chosen already: `Continue`, the × or [[Esc]] keep every app in the menu. If you already use orOS on another device, choose `I already use orOS on another device` and connect [sync](help:t/sync) instead: your menu comes with it.
 
 A hidden app is still there. The quick search still finds it, links from other apps still open it, and its shortcut on the desktop or in the Dock still works. While some apps are hidden, a row under the list says how many, and tapping it opens `Menu` in Settings. Your choice travels to all your devices with [sync](help:t/sync). New apps always appear in the menu until you hide them.
 

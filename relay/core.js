@@ -15,6 +15,8 @@
 //           POST /v1  { op: "crmf", act, k, sec, ... }  (CRM web form, see crmform.js)
 //           POST /v1  { op: "shr", act, id, ... }  (share links with an expiry, see share.js)
 //           /s/<id>/<i> PUT / GET one encrypted piece of a shared item (share.js)
+//           POST /v1  { op: "push", act, id, tok, ... }  (notifications with orOS closed, see push.js)
+//           /dav      WebDAV pass-through, target in X-Oros-Target (Sync through WebDAV, see dav.js)
 //           /nl/...   public sign-up form and one-click unsubscribe (newsletter.js)
 //           /crm/f/<k> public CRM contact form (crmform.js)
 // Response: { ok:true, data } | { ok:false, error:{ code, msg } }
@@ -31,6 +33,9 @@ import { validPapi, runPapi, PAPI_LIMITS } from "./papi.js";
 import { validExt, runExt, EXT_LIMITS } from "./ext.js";
 import { handleRemote, ROOM_RE } from "./remote.js";
 import { validShr, runShr, handlePiece, ShrError } from "./share.js";
+import { validPush, runPush, PushError } from "./push.js";
+import { handleDav } from "./dav.js";
+import { validOasa, runOasa, OasaError } from "./oasa.js";
 
 export const LIMITS = {
   bodyBytes: 64 * 1024,        // request JSON
@@ -42,7 +47,7 @@ export const LIMITS = {
 const PORTS = { 993: "tls", 143: "starttls" };
 const SMTP_PORTS = { 465: "tls", 587: "starttls" };
 const OPS = { check: 1, folders: 1, list: 1, fetch: 1, flag: 1, web: 1, canva: 1, smtpcheck: 1, send: 1,
-              move: 1, expunge: 1, create: 1, rename: 1, delete: 1, search: 1, draft: 1, sieve: 1, nl: 1, papi: 1, ext: 1, crmf: 1, shr: 1 };
+              move: 1, expunge: 1, create: 1, rename: 1, delete: 1, search: 1, draft: 1, sieve: 1, nl: 1, papi: 1, ext: 1, crmf: 1, shr: 1, push: 1, oasa: 1 };
 const SIEVE_PORT = 4190;
 
 // ---------- validation ----------
@@ -94,6 +99,8 @@ export function validRequest(b, env, now) {
   if (b.op === "shr") return validShr(b, now);   // Send to someone: encrypted items with an expiry
   if (b.op === "papi") return validPapi(b);   // Newsletter: provider HTTP APIs
   if (b.op === "ext") return validExt(b);     // Connected services: a person's own shop
+  if (b.op === "push") return validPush(b);   // Notifications with orOS closed
+  if (b.op === "oasa") return validOasa(b);   // Maps: live bus arrivals in Athens (OASA)
   const bad = validAccount(b.acct);
   if (bad) return bad;
   if (b.op === "list") {
@@ -221,6 +228,12 @@ export async function handle(request, env, connectFn, now, fetchFn) {
     return handlePiece(request, env, url, okOrigin, request.headers.get("CF-Connecting-IP") || "", now || Date.now());
   }
 
+  // Sync through WebDAV: one WebDAV request to the server named in
+  // X-Oros-Target (relay/dav.js), with its own CORS and rate limit.
+  if (url.pathname === "/dav") {
+    return handleDav(request, env, okOrigin, request.headers.get("CF-Connecting-IP") || "", now || Date.now(), fetchFn);
+  }
+
   if (request.method === "OPTIONS") {
     if (!okOrigin) return new Response(null, { status: 403 });
     return new Response(null, { status: 204, headers: corsHeaders(okOrigin) });
@@ -285,6 +298,17 @@ export async function handle(request, env, connectFn, now, fetchFn) {
     }
   }
 
+  if (b.op === "oasa") {
+    try {
+      const cache = typeof caches !== "undefined" && caches.default ? caches.default : null;
+      const data = await runOasa(b, fetchFn || ((u, o) => fetch(u, o)), cache);
+      return json(200, { ok: true, data }, okOrigin);
+    } catch (e) {
+      const code = e instanceof OasaError ? e.code : "upstream";
+      return fail(200, code, code, okOrigin);                        // fixed codes only, never upstream text
+    }
+  }
+
   if (b.op === "nl") {
     try {
       const data = await runNl(b, env, now || Date.now());
@@ -312,6 +336,16 @@ export async function handle(request, env, connectFn, now, fetchFn) {
     } catch (e) {
       if (e instanceof ShrError) return fail(e.status, e.code, e.message, okOrigin);
       return fail(503, "nostore", "storage failed", okOrigin);           // a D1 failure; never its text
+    }
+  }
+
+  if (b.op === "push") {
+    try {
+      const data = await runPush(b, env, now || Date.now(), request.headers.get("CF-Connecting-IP") || "");
+      return json(200, { ok: true, data }, okOrigin);
+    } catch (e) {
+      if (e instanceof PushError) return fail(e.status, e.code, e.code, okOrigin);
+      return fail(503, "nostore", "push failed", okOrigin);            // never its text
     }
   }
 

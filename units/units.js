@@ -60,7 +60,7 @@
       "app.name": "Unit Converter",
       "btn.more": "Converter settings", "btn.close": "Close", "btn.swap": "Swap units",
       "btn.star": "Add this pair to favourites", "btn.unstar": "Remove this pair from favourites",
-      "btn.copy": "Copy the result", "btn.clear": "Clear",
+      "btn.copy": "Copy the result", "btn.send": "Send to…", "btn.clear": "Clear",
       "all.hide": "Hide", "all.show": "Show",
       "f.from": "From", "f.to": "To", "f.ing": "Ingredient", "f.find": "Find a unit",
       "ph.find": "Find a unit (name or symbol)",
@@ -96,7 +96,7 @@
       "app.name": "Μετατροπέας μονάδων",
       "btn.more": "Ρυθμίσεις μετατροπέα", "btn.close": "Κλείσιμο", "btn.swap": "Αντιμετάθεση μονάδων",
       "btn.star": "Προσθήκη του ζεύγους στα αγαπημένα", "btn.unstar": "Αφαίρεση του ζεύγους από τα αγαπημένα",
-      "btn.copy": "Αντιγραφή του αποτελέσματος", "btn.clear": "Καθαρισμός",
+      "btn.copy": "Αντιγραφή του αποτελέσματος", "btn.send": "Αποστολή σε…", "btn.clear": "Καθαρισμός",
       "all.hide": "Απόκρυψη", "all.show": "Εμφάνιση",
       "f.from": "Από", "f.to": "Σε", "f.ing": "Υλικό", "f.find": "Αναζήτηση μονάδας",
       "ph.find": "Βρες μονάδα (όνομα ή σύμβολο)",
@@ -638,6 +638,20 @@
     var v = $(side === "a" ? "vb" : "va").value;
     if (v) copyText(v);
   }
+  // "Send to…" (shell send/, BR-SEND): "<value> <unit> = <result> <unit>"
+  // as text to another app of this orOS. Hidden without the shell bridge.
+  function sendApi() {
+    try { return window.parent !== window && window.parent.orosSend ? window.parent.orosSend : null; }
+    catch (e) { return null; }
+  }
+  function sendResult() {
+    var api = sendApi();
+    if (!api || !$("err").hidden) return;
+    var a = $("va").value.trim(), b = $("vb").value.trim();
+    if (!a || !b) return;
+    var x = a + " " + symOf(pair.f), y = b + " " + symOf(pair.t);
+    api.open({ kind: "text", data: { title: t("app.name"), text: side === "b" ? y + " = " + x : x + " = " + y } });
+  }
 
   function showToast(text) {
     try {
@@ -810,6 +824,7 @@
     star: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>',
     copy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>',
     more: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
+    send: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>',
     close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>'
   };
 
@@ -821,6 +836,8 @@
     $("swap").innerHTML = ICON.swap; setLabel($("swap"), t("btn.swap"));
     $("star").innerHTML = ICON.star;
     $("copy").innerHTML = ICON.copy; setLabel($("copy"), t("btn.copy"));
+    $("send").innerHTML = ICON.send; setLabel($("send"), t("btn.send"));
+    $("send").hidden = !sendApi();
     $("more-btn").innerHTML = ICON.more; setLabel($("more-btn"), t("btn.more"));
     $("more-close").innerHTML = ICON.close; setLabel($("more-close"), t("btn.close"));
     $("picker-close").innerHTML = ICON.close; setLabel($("picker-close"), t("btn.close"));
@@ -844,6 +861,7 @@
     $("swap").addEventListener("click", swap);
     $("star").addEventListener("click", toggleStar);
     $("copy").addEventListener("click", copyResult);
+    $("send").addEventListener("click", sendResult);
     $("ing").addEventListener("change", function () { prefs.ing = $("ing").value; savePrefs(); recompute(); });
     $("fx-btn").addEventListener("click", function () { maybeFetchRates(true); });
     $("recent-clear").addEventListener("click", clearRecent);

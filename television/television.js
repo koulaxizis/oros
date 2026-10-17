@@ -20,6 +20,12 @@ var SCRIPT_V = "";
 
 (function(){
 "use strict";
+// Q6 CSP: no inline handlers. A logo marked data-drop-on-error removes
+// itself when it fails to load (error does not bubble: capture phase).
+document.addEventListener("error", function(e){
+  var t = e.target;
+  if(t && t.tagName === "IMG" && t.hasAttribute("data-drop-on-error")) t.remove();
+}, true);
 
 /* ===== CONFIG ===== */
 
@@ -1416,7 +1422,7 @@ function renderGuide(box){
     chBtn.className = "tvg-ch";
     chBtn.title = row.ch.name || "";
     var logo = C.safeLogo(row.ch.logo);
-    chBtn.innerHTML = (logo ? '<img src="' + esc(logo) + '" alt="" loading="lazy" onerror="this.remove()">' : "") +
+    chBtn.innerHTML = (logo ? '<img src="' + esc(logo) + '" alt="" loading="lazy" data-drop-on-error>' : "") +
       '<span>' + esc(row.ch.name || "") + '</span>';
     chBtn.addEventListener("click", function(){ playChannel(row.ch); });
     r.appendChild(chBtn);
@@ -1767,7 +1773,7 @@ function createChannelCard(channel){
   var logo = C.safeLogo(channel.logo);            // Wave 43: https logos only
   if(logo){
     logoHtml += '<img src="' + esc(logo) +
-      '" alt="" loading="lazy" onerror="this.remove()">';
+      '" alt="" loading="lazy" data-drop-on-error>';
   }
   logoHtml += '</div>';
 

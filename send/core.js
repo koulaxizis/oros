@@ -6,6 +6,8 @@
 //   link   { url, title?, note? }           one http(s) address
 //   items  { title?, items: [{text, note?}] }   a list of lines
 //   table  { name?, rows: [[cell…]…], sum? }    rows, row 1 = heading
+//   files  { items: [{ path, name? }] }     files on the orOS disk
+//                                           (/internal/…, ≤ 10; wave 2)
 // RECEIVERS says which app takes which kind and builds the target of
 // that app's EXISTING deep link (__orosOpenAt). Every receiver opens a
 // prefill the user still has to save (BR-W8-6); nothing here writes
@@ -26,7 +28,9 @@
 (function (root) {
   "use strict";
 
-  var KINDS = ["text", "link", "items", "table"];
+  var KINDS = ["text", "link", "items", "table", "files"];
+  var MAX_FILES = 10;            // Mail's handed-files cap
+  var PIC_RE = /\.(png|jpe?g|webp|gif)$/i;   // what Layout places
   var MAX_TEXT = 200000;
   var MAX_TITLE = 200;
   var MAX_ITEMS = 200;
@@ -41,6 +45,14 @@
   var MAIL_MAX = 20000;          // Mail's compose body cap
   var NOTES_MAX = 20000;         // Notes' {add} cap
   var WIKI_MAX = 200000;         // Wiki's article cap
+  var OUTLINE_MAX = 200000;      // Slides' outline cap (slides/app.js)
+  var SLIDES_MAX = 300;          // slides one handed outline may make
+  var SLIDE_BULLETS = 8;         // bullets on one slide before the next
+  var PASTE_MAX = 20000;         // Mind map's paste box cap
+  var CARDS_MAX = 100;           // Kanban cards one send may add
+  var CARD_TEXT = 300;           // a card's text (Kanban's own cap is 500)
+  var CARD_NOTES = 5000;         // a card's notes
+  var PROMPT_MAX = 8000;         // a Prompter prompt
 
   // Control characters other than tab / newline, and U+2028/2029.
   var CTRL = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f\u2028\u2029]/g;
@@ -100,7 +112,22 @@
     }) : [];
     return { name: line(d.name, 100), rows: rows, sum: sum };
   }
-  var NORM = { text: normText, link: normLink, items: normItems, table: normTable };
+  // A path on the orOS disk, as Mail's diskPath() takes it.
+  function diskPath(p) {
+    if (typeof p !== "string" || p.length > 1000 || p.indexOf("/internal/") !== 0) return false;
+    return p.split("/").slice(2).every(function (seg) { return seg && seg !== "." && seg !== ".." && !/[\u0000-\u001f]/.test(seg); });
+  }
+  function normFiles(d) {
+    if (!Array.isArray(d.items)) return null;
+    var out = [];
+    d.items.forEach(function (f) {
+      if (!f || typeof f !== "object" || !diskPath(f.path) || out.length >= MAX_FILES) return;
+      var name = line(f.name, 200).replace(/[\/\\]/g, "") || f.path.replace(/^.*\//, "").slice(0, 200);
+      if (!out.some(function (o) { return o.path === f.path; })) out.push({ path: f.path, name: name });
+    });
+    return out.length ? { items: out } : null;
+  }
+  var NORM = { text: normText, link: normLink, items: normItems, table: normTable, files: normFiles };
   function norm(kind, data) {
     if (!own(NORM, kind) || !data || typeof data !== "object") return null;
     try { return NORM[kind](data); } catch (e) { return null; }
@@ -121,6 +148,7 @@
     if (kind === "text") return { title: d.title, text: d.text };
     if (kind === "link") return { title: d.title || d.url, text: linkAsText(d) };
     if (kind === "items") return { title: d.title, text: itemsAsText(d) };
+    if (kind === "files") return { title: d.items[0].name, text: d.items.map(function (f) { return f.name; }).join("\n") };
     return { title: d.name, text: tableAsText(d) };
   }
   // text / link → To-Do items: one per non-empty line of a text.
@@ -138,6 +166,67 @@
     return null;
   }
 
+  // text / items → a Slides outline ("# " starts a slide, "- " bullets,
+  // two spaces a level; slides/core.js parseOutline). Markdown headings
+  // start slides; without any, the title (or the first line) heads them.
+  // Long runs of bullets continue on a new slide with the same heading.
+  // → outline text, or "" when nothing fits.
+  function bulletOf(raw) {
+    var exp = raw.replace(/\t/g, "  ");
+    var ind = exp.length - exp.replace(/^ +/, "").length;
+    var body = line(exp.replace(/^\s*(?:[-*\u2022+]|\d+[.)]|\[[ xX]?\])\s+/, ""), MAX_ITEM);
+    return body ? new Array(Math.min(3, Math.floor(ind / 2)) + 1).join("  ") + "- " + body : "";
+  }
+  function asOutline(kind, d) {
+    var slides = [], cur = null;
+    function start(head) {
+      cur = { head: line(head, MAX_TITLE) || "\u2026", lines: [] };
+      slides.push(cur);
+    }
+    function add(b) {
+      if (!b) return;
+      if (!cur) start(d.title || b.replace(/^\s*- /, ""));
+      else if (cur.lines.length >= SLIDE_BULLETS) start(cur.head);
+      cur.lines.push(b);
+    }
+    if (kind === "items") {
+      start(d.title || d.items[0].text);
+      d.items.forEach(function (it) { add("- " + it.text); });
+    } else {
+      var src = d.text.split("\n"), heads = src.some(function (l) { return /^\s*#{1,6}\s+\S/.test(l); });
+      if (d.title && !(heads && /^\s*#{1,6}\s+\S/.test(src.filter(function (l) { return l.trim(); })[0] || ""))) start(d.title);
+      src.forEach(function (l) {
+        var m = /^\s*#{1,6}\s+(.*)$/.exec(l);
+        if (m) { if (line(m[1], MAX_TITLE)) start(m[1]); return; }
+        if (l.trim()) add(bulletOf(l));
+      });
+    }
+    if (!slides.length) return "";
+    var out = [];
+    slides.slice(0, SLIDES_MAX).forEach(function (s, i) {
+      if (i) out.push("");
+      out.push("# " + s.head);
+      out = out.concat(s.lines);
+    });
+    return (out.join("\n") + "\n").slice(0, OUTLINE_MAX);
+  }
+  // text / items → a Mind map paste ("# title" root, "- " lines).
+  function asPaste(kind, d) {
+    if (kind === "items") {
+      return ((d.title ? "# " + d.title + "\n" : "") + d.items.map(function (it) { return "- " + it.text; }).join("\n")).slice(0, PASTE_MAX);
+    }
+    var heads = /^\s*#{1,6}\s+\S/m.test(d.text);
+    return ((d.title && !heads ? "# " + d.title + "\n" : "") + d.text).slice(0, PASTE_MAX);
+  }
+  // items / text / link → Kanban cards { title, notes } (≤ CARDS_MAX).
+  function asCards(kind, d) {
+    var its = asItems(kind, d);
+    if (!its) return null;
+    return its.slice(0, CARDS_MAX).map(function (it) {
+      return { title: line(it.text, CARD_TEXT), notes: it.note.slice(0, CARD_NOTES) };
+    });
+  }
+
   // ---------- 3. Receivers ----------
   // app → { kinds, ok?(kind, d), build(kind, d, from) → target }. The
   // targets are the apps' own documented contracts:
@@ -146,7 +235,10 @@
   //   Email), assistant {ask} (Assistant deep link), bookmarks {add}
   //   (Send to orOS), wiki {addArticle:{t,x}} (Wiki wave 3), texttools /
   //   textcase {text} (Text Tools deep link), labels {text} (Label Maker
-  //   bridge), spreadsheet {newSheet} (BR-S1).
+  //   bridge), spreadsheet {newSheet} (BR-S1); wave 3: slides {outline,
+  //   title} (Mind map's contract), mindmap {pasteText:{text}} (single
+  //   app share), kanban {addCards} and prompter {newPrompt} (new here),
+  //   writer {newDoc:{title, rows}} (a table, new here).
   var RECEIVERS = {
     notes: {
       kinds: ["text", "link", "items"],
@@ -154,7 +246,11 @@
     },
     writer: {
       kinds: ["text", "link", "items", "table"],
-      build: function (k, d) { var x = asText(k, d); return { newDoc: { title: x.title, text: x.text } }; }
+      build: function (k, d) {
+        if (k === "table") return { newDoc: { title: d.name, rows: d.rows } };
+        var x = asText(k, d);
+        return { newDoc: { title: x.title, text: x.text } };
+      }
     },
     todo: {
       kinds: ["items", "text", "link"],
@@ -166,9 +262,12 @@
       }
     },
     mail: {
-      kinds: ["text", "link", "items"],
+      kinds: ["text", "link", "items", "table", "files"],
       build: function (k, d) {
         var x = asText(k, d);
+        if (k === "files") {
+          return { compose: { subject: line(x.title, 300), attach: d.items.map(function (f) { return { path: f.path, name: f.name }; }) } };
+        }
         return { compose: { subject: line(x.title, 300), body: x.text.slice(0, MAIL_MAX) } };
       }
     },
@@ -204,6 +303,34 @@
       kinds: ["text"],
       build: function (k, d) { return { text: d.text }; }
     },
+    slides: {
+      kinds: ["text", "items"],
+      ok: function (k, d) { return !!asOutline(k, d); },
+      build: function (k, d) { return { outline: asOutline(k, d), title: d.title }; }
+    },
+    mindmap: {
+      kinds: ["text", "items"],
+      build: function (k, d) { return { pasteText: { text: asPaste(k, d) } }; }
+    },
+    kanban: {
+      kinds: ["items", "text", "link"],
+      ok: function (k, d) { return !!asCards(k, d); },
+      build: function (k, d) {
+        var x = asText(k, d);
+        return { addCards: { title: line(x.title, 60), cards: asCards(k, d) } };
+      }
+    },
+    prompter: {
+      kinds: ["text"],
+      build: function (k, d) { return { newPrompt: { text: d.text.trim().slice(0, PROMPT_MAX) } }; }
+    },
+    // One picture from the disk → a frame on the open page (or a new
+    // document); Layout reads the file itself (wave 5).
+    layout: {
+      kinds: ["files"],
+      ok: function (k, d) { return d.items.length === 1 && PIC_RE.test(d.items[0].name); },
+      build: function (k, d) { return { placeImage: { path: d.items[0].path, name: d.items[0].name } }; }
+    },
     labels: {
       kinds: ["text"],
       // A label is one short line.
@@ -212,7 +339,8 @@
     }
   };
   // The sheet's order: the everyday places first.
-  var ORDER = ["notes", "todo", "writer", "mail", "bookmarks", "spreadsheet", "wiki", "assistant", "texttools", "textcase", "labels"];
+  var ORDER = ["notes", "todo", "writer", "mail", "kanban", "slides", "bookmarks", "spreadsheet", "wiki", "mindmap", "prompter",
+    "layout", "assistant", "texttools", "textcase", "labels"];
 
   function accepts(app, kind, d) {
     if (!own(RECEIVERS, app)) return false;
@@ -237,8 +365,8 @@
 
   // ---------- 4. Summary line ----------
   var S = {
-    en: { text: "Text", link: "Link", items: "List", table: "Table", n: "{n} items", rows: "{n} rows", chars: "{n} characters" },
-    el: { text: "Κείμενο", link: "Σύνδεσμος", items: "Λίστα", table: "Πίνακας", n: "{n} στοιχεία", rows: "{n} γραμμές", chars: "{n} χαρακτήρες" }
+    en: { text: "Text", link: "Link", items: "List", table: "Table", files: "Files", file: "File", n: "{n} items", rows: "{n} rows", chars: "{n} characters" },
+    el: { text: "Κείμενο", link: "Σύνδεσμος", items: "Λίστα", table: "Πίνακας", files: "Αρχεία", file: "Αρχείο", n: "{n} στοιχεία", rows: "{n} γραμμές", chars: "{n} χαρακτήρες" }
   };
   function summary(kind, data, lang) {
     var s = S[lang === "el" ? "el" : "en"];
@@ -248,6 +376,10 @@
     if (kind === "text") { name = d.title || line(d.text, 60); more = s.chars.replace("{n}", d.text.length); }
     else if (kind === "link") { name = d.title || d.url; more = d.title ? d.url : ""; }
     else if (kind === "items") { name = d.title; more = s.n.replace("{n}", d.items.length); }
+    else if (kind === "files") {
+      if (d.items.length === 1) { head = s.file; name = d.items[0].name; more = ""; }
+      else { name = ""; more = s.n.replace("{n}", d.items.length); }
+    }
     else { name = d.name; more = s.rows.replace("{n}", d.rows.length); }
     return [head, name, more].filter(function (x) { return !!x; }).join(" · ").slice(0, 240);
   }

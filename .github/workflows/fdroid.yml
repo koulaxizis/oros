@@ -9,7 +9,8 @@ name: F-Droid repository
 # icons, phone.js): the apps' content updates from the web by itself, so
 # a version bump alone must not send every phone an update.
 # Store texts and pictures (tools/fdroid-metadata.js, tools/fdroid/)
-# are part of that hash too, and a push touching them republishes.
+# and this workflow are part of that hash too, and a push touching
+# them republishes.
 # Run it by hand (Actions → F-Droid repository → Run workflow) with
 # "force" to publish anyway.
 #
@@ -27,10 +28,11 @@ on:
     workflows: ['Android app']
     types: [completed]
     branches: [main]
-  # New store texts or pictures (no new APKs needed)
+  # New store texts or pictures, or a new way of building the
+  # repository (no new APKs needed)
   push:
     branches: [main]
-    paths: ['tools/fdroid-metadata.js', 'tools/fdroid/**']
+    paths: ['tools/fdroid-metadata.js', 'tools/fdroid/**', '.github/workflows/fdroid.yml']
   workflow_dispatch:
     inputs:
       force:
@@ -68,7 +70,7 @@ jobs:
             echo "::notice::No F-Droid secrets: nothing published."
             echo "go=0" >> "$GITHUB_OUTPUT"; exit 0
           fi
-          hash=$(git ls-files -s android phone.js manifest.webmanifest '*/manifest.webmanifest' icons/solo icons/icon-512.png tools/fdroid-metadata.js tools/fdroid | sha256sum | cut -d' ' -f1)
+          hash=$(git ls-files -s android phone.js manifest.webmanifest '*/manifest.webmanifest' icons/solo icons/icon-512.png .github/workflows/fdroid.yml tools/fdroid-metadata.js tools/fdroid | sha256sum | cut -d' ' -f1)
           echo "hash=$hash" >> "$GITHUB_OUTPUT"
           last=$(curl -fsSL "https://raw.githubusercontent.com/$DEST/main/shell-hash.txt" 2>/dev/null || true)
           if [ "$FORCE" != "1" ] && [ "$hash" = "$last" ]; then
@@ -110,6 +112,24 @@ jobs:
             const got = fs.readdirSync(dir + "/repo").filter((f) => f.endsWith(".apk")).sort();
             if (JSON.stringify(want) !== JSON.stringify(got)) { console.error("APKs", got, "metadata", want); process.exit(1); }
           ' "$fd"
+          # One file name per build (<package>_<versionCode>_<sha256 8>.apk;
+          # the hash too, since an unstamped merge keeps the versionCode).
+          # A fixed name (oros.apk) changes under the same URL: the Pages CDN and the phone's half-finished download keep
+          # the old bytes while the new index has the new hash, so F-Droid
+          # says "Hash not matching" and the resumed download gets 416.
+          aapt2=$(ls "$ANDROID_HOME"/build-tools/*/aapt2 | sort -V | tail -1)
+          for f in "$fd"/repo/*.apk; do
+            b=$(basename "$f")
+            want=$(node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"))[process.argv[2]] || "")' "$fd/apks.json" "$b")
+            badge=$("$aapt2" dump badging "$f" | head -1)
+            pkg=$(echo "$badge" | sed -n "s/^package: name='\([^']*\)'.*/\1/p")
+            code=$(echo "$badge" | sed -n "s/^package: .*versionCode='\([0-9]*\)'.*/\1/p")
+            if [ -z "$code" ] || [ "$pkg" != "$want" ]; then
+              echo "::error::$b: package '$pkg' (metadata '$want'), versionCode '$code'"; exit 1
+            fi
+            sum=$(sha256sum "$f" | cut -c1-8)
+            mv "$f" "$fd/repo/${pkg}_${code}_${sum}.apk"
+          done
           echo "$KS_B64" | base64 -d > "$RUNNER_TEMP/repo.keystore"
           apksigner=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
           umask 077

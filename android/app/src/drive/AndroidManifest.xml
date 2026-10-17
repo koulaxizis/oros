@@ -3,12 +3,24 @@
      libs/orosdrive.aar exists (build.gradle driveLib):
      orOS Drive on the phone (DRIVE-A). Opened from Files › orOS Drive
      through PermissionActivity ("intent://drive#Intent;scheme=oros-permission;…").
-     WorkManager brings its own components and permissions. -->
+     WorkManager brings its own components and permissions.
+     DriveProvider (wave 5) shows the whole orOS disk as "orOS" in the
+     Files app and in every file picker; only the system's documents
+     UI may bind to it (MANAGE_DOCUMENTS). -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application>
         <activity android:name=".DriveActivity"
             android:exported="false"
             android:label="@string/drive_title"
             android:theme="@android:style/Theme.Material.Light.DarkActionBar" />
+        <provider android:name=".DriveProvider"
+            android:authorities="${applicationId}.drive"
+            android:grantUriPermissions="true"
+            android:exported="true"
+            android:permission="android.permission.MANAGE_DOCUMENTS">
+            <intent-filter>
+                <action android:name="android.content.action.DOCUMENTS_PROVIDER" />
+            </intent-filter>
+        </provider>
     </application>
 </manifest>

@@ -14,6 +14,8 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = path.join(__dirname, "..");
+// Q6: the CSP meta may ALLOW the Picker host; loading it is what is checked.
+const noCsp = (html) => html.replace(/<meta http-equiv="Content-Security-Policy"[^>]*>/i, "");
 
 // ---- a browser-ish global for the shared module ----
 const store = new Map();
@@ -447,7 +449,7 @@ test("Drive uses the built-in key with the built-in app, an own key when set; Go
   assert.equal(GI.driveReady(), false);
   assert.equal(GI.appId(), "555666777", "an own client id brings its own project");
   for (const f of ["files/index.html", "photolab/index.html"]) {
-    assert.ok(!/apis\.google\.com/.test(fs.readFileSync(path.join(ROOT, f), "utf8")), f + " does not load Google's script");
+    assert.ok(!/apis\.google\.com/.test(noCsp(fs.readFileSync(path.join(ROOT, f), "utf8"))), f + " does not load Google's script");
   }
 });
 
@@ -720,7 +722,7 @@ test("Writer, Spreadsheet and Slides offer one Google file each, only when Drive
     const html = read(app + "/index.html");
     const a = html.indexOf("../google-import.js"), b = html.indexOf("../files/gmedia.js");
     assert.ok(a > 0 && b > a, app + ": loads google-import.js, then gmedia.js");
-    assert.ok(!/apis\.google\.com/.test(html), app + ": Google's script is not loaded up front");
+    assert.ok(!/apis\.google\.com/.test(noCsp(html)), app + ": Google's script is not loaded up front");
     const src = read(app + "/" + js);
     assert.ok(src.includes('pickDoc("' + kind + '"') || src.includes("pickDoc('" + kind + "'"), app + " picks a " + kind);
     assert.ok(/docReady\(\)/.test(src), app + " shows the entry only when Drive is ready");

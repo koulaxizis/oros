@@ -32,12 +32,12 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "2.71.01";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "2.92.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
   var state = {
-    lang:            null,   // "en" | "el"
+    lang:            null,   // "en" | "el" | a pack language (i18n.js)
     theme:           null,   // "dark" | "light"
     skin:            null,   // palette id (see SKINS)
     wallpaper:       null,   // wallpaper id (see WALLPAPERS)
@@ -48,6 +48,9 @@
     // sync UI state
     syncUserEmail:   null,
     syncMsg:         null,   // { kind: "ok"|"err"|"dim", text: "…" }
+    syncBackups:     null,   // A43: { loading, list: [{ name, at, size }], err } once Settings asked
+    syncRestoring:   null,   // A43: name of the backup being restored
+    syncOldPassFor:  null,   // A43: backup that needs its old passphrase
     syncAutoErr:     null,   // SY-L2: why the last background sync failed (cleared by a success)
 
     // auto-backup mode: "off" | "daily" | "weekly" | "monthly"
@@ -280,14 +283,22 @@
     }
   }
 
+  // A language orOS knows: English, Greek, or a pack language listed
+  // in i18n.js. langBase(): "el" or "en", for the modules that still
+  // pick between two inline strings (a pack language reads English).
+  function langKnown(v) {
+    return v === "en" || v === "el" || !!(window.orosI18n && window.orosI18n.known(v));
+  }
+  function langBase() { return state.lang === "el" ? "el" : "en"; }
+
   // ---------- 2. Preferences ----------
   function initPrefs() {
     var params = new URLSearchParams(window.location.search);
 
     var urlLang    = params.get("lang");
     var storedLang = localStorage.getItem("oros-lang");
-    state.lang     = (urlLang === "el" || urlLang === "en") ? urlLang
-                   : (storedLang === "el" || storedLang === "en") ? storedLang
+    state.lang     = langKnown(urlLang) ? urlLang
+                   : langKnown(storedLang) ? storedLang
                    : "en";
     // Χ2: persist — wxFetch trayfail copy and wxBriefTick (plus iframe
     // apps) read localStorage["oros-lang"] directly; a URL-param lang
@@ -316,6 +327,7 @@
   function applyLang() {
     window.orosLang = state.lang;
     document.documentElement.setAttribute("lang", state.lang);
+    if (window.orosI18n) document.documentElement.setAttribute("dir", window.orosI18n.dir(state.lang));
 
     // TP-guard: applyLang() is called EARLY in boot (before "load" event).
     // If translations.js hasn't finished loading yet, skip t()-calls entirely
@@ -343,7 +355,7 @@
     // the single release key.
 
     var langBtn = document.getElementById("btn-lang");
-    langBtn.textContent = state.lang === "en" ? "EL" : "EN";
+    langBtn.textContent = langNext().toUpperCase();
     langBtn.setAttribute("title", window.t("lang.tooltip"));
 
     // E1/E2 — localized titles for the split clock buttons. Painted
@@ -1018,7 +1030,7 @@
   var BAR_FIT_MAX = 6;
 
   function barDateStr(now, lvl) {
-    var loc = state.lang === "el" ? "el-GR" : "en-GB";
+    var loc = window.orosI18n ? window.orosI18n.locale(state.lang) : (state.lang === "el" ? "el-GR" : "en-GB");
     if (lvl >= 4) {
       return String(now.getDate()).padStart(2, "0") + "/" +
              String(now.getMonth() + 1).padStart(2, "0");
@@ -1624,7 +1636,7 @@
     var hm = (now.getHours() < 10 ? "0" : "") + now.getHours() + ":" + (now.getMinutes() < 10 ? "0" : "") + now.getMinutes();
     var r = Core.reminders(data, today, hm, seen);
     r.fresh.slice(0, 10).forEach(function (x) {         // a long-closed orOS: at most 10 per tick
-      var txt = Core.reminderText(data, x.fup, today, state.lang);
+      var txt = Core.reminderText(data, x.fup, today, langBase());
       N.emit({ ns: "crm", key: "fup-" + x.key, type: "reminder",
                title: txt.title, body: txt.body, deepLink: "crm:" + x.fup.id });
     });
@@ -1664,7 +1676,7 @@
     if (!raw || !Array.isArray(raw.contacts) || !raw.contacts.length) return;
     var r = K.reminder(raw, pr, Date.now());
     if (!r) return;
-    var txt = K.reminderText(r, state.lang);
+    var txt = K.reminderText(r, langBase());
     N.emit({
       ns: "contacts",
       key: r.key,
@@ -3030,7 +3042,9 @@
           document.head.appendChild(s);
         });
       };
-      shareLoad = load("share/kinds.js").then(function () { return load("share/send.js"); })
+      shareLoad = load("share/kinds.js").then(function () { return load("share/relay.js"); })
+        .then(function () { return load("share/album.js"); })
+        .then(function () { return load("share/send.js"); })
         .then(function () {
           if (!window.__orosShareImpl) throw new Error("share module missing");
           return window.__orosShareImpl;
@@ -3039,15 +3053,34 @@
     }
     return shareLoad;
   }
+  function shareLoadFail() {
+    notifySys("dim", window.orosLang === "el"
+      ? "Η αποστολή δεν φορτώθηκε. Έλεγξε τη σύνδεση και δοκίμασε ξανά."
+      : "Sending could not load. Check your connection and try again.");
+  }
   window.orosShare = {
     open: function (opts) {
-      shareModule().then(function (m) { m.open(opts); }, function () {
-        notifySys("dim", window.orosLang === "el"
-          ? "Η αποστολή δεν φορτώθηκε. Έλεγξε τη σύνδεση και δοκίμασε ξανά."
-          : "Sending could not load. Check your connection and try again.");
-      });
+      shareModule().then(function (m) { m.open(opts); }, shareLoadFail);
+    },
+    // "My shared links" (links with an expiry, share/out.js): Settings › Privacy.
+    links: function () {
+      shareModule().then(function (m) { m.links(); }, shareLoadFail);
     }
   };
+  // The list of links with an expiry travels as sync slice "shareOut"
+  // (share/out.js, loaded at boot for its merge) so a link can be taken
+  // back from any device.
+  function registerShareOutSlice() {
+    var O = window.OrosShareOut;
+    if (!O || !window.orosSync || typeof window.orosSync.registerSlice !== "function") return;
+    window.orosSync.registerSlice("shareOut", function () {
+      var o = O.read();
+      return Object.keys(o.items).length ? o : null;
+    }, function (data) {
+      if (!data) return;
+      try { localStorage.setItem(O.KEY, JSON.stringify(O.norm(data))); } catch (e) {}
+    }, O.KEY, O.merge);
+  }
   // "Send to…" (send/, BR-SEND): one app hands an item to another app
   // of this orOS. send/core.js + send/sheet.js load on first use, never
   // at boot. Apps call window.parent.orosSend.open({ kind, data }) with
@@ -3171,7 +3204,7 @@
       });
     },
     version: APP_VERSION,
-    lang: function () { return state.lang; },
+    lang: function () { return langBase(); },
     icon: function (id) {
       for (var i = 0; i < state.apps.length; i++) {
         if (state.apps[i].id === id) return ICONS[state.apps[i].icon] || "";
@@ -3183,7 +3216,7 @@
   // installed (the module is inert until then), the running app, the
   // way back to the desktop and a plain app open.
   window.orosStickiesEnv = {
-    lang: function () { return state.lang; },
+    lang: function () { return langBase(); },
     registered: function () {
       for (var i = 0; i < state.apps.length; i++) if (state.apps[i] && state.apps[i].id === "stickies") return true;
       return false;
@@ -3202,7 +3235,7 @@
     if (!searchReader) searchReader = S.makeReader(localStorage);
     return S.load(apps, APP_VERSION).then(function () {
       return S.run(window.orosSearchProviders, String(q || ""), {
-        lang: state.lang, readJSON: searchReader,
+        lang: langBase(), readJSON: searchReader,
         enabled: function (id) { return !!allow[id]; }
       });
     }).then(function (groups) {
@@ -3232,6 +3265,173 @@
       window.__orosOpenAt("assistant", { ask: q.trim().slice(0, 2000) });
     } else openAppById("assistant");
   }
+
+  // ---------- Command bar (commands/, strategy §10, BR-CMD) ----------
+  // One line of words → one action in an app, on the device, no AI
+  // (commands/core.js). Two ways in: the first row of the menu search
+  // (Enter runs it) and a small bar over any app (commands/bar.js):
+  // Ctrl+K, and Ctrl+Alt+Shift+K everywhere (SC_DEFS). Notes and Wiki
+  // keep their own Ctrl+K (their search). Both files load on first use,
+  // with the engines they borrow (Calendar quick add, Calculator, Unit
+  // Converter, "Send to an app"); a missing engine only drops its kind.
+  // The last commands run are a device-local list (CMD_HIST_KEY, never
+  // synced) that the bar shows while its field is empty.
+  var CMD_OWN_CTRLK = { notes: true, wiki: true };
+  var CMD_HIST_KEY = "oros-cmd-history", CMD_HIST_MAX = 12;
+  var cmdLoad = null;
+  function cmdModule() {
+    if (window.OrosCommands && window.orosCmdBar && window.OrosCalQuick && window.CalcCore && window.UnitsCore &&
+        window.OrosSendCore) return Promise.resolve(window.OrosCommands);
+    if (!cmdLoad) {
+      var load = function (src) {
+        return new Promise(function (resolve, reject) {
+          var sc = document.createElement("script");
+          sc.src = src + "?v=" + APP_VERSION;
+          sc.onload = resolve;
+          sc.onerror = reject;
+          document.head.appendChild(sc);
+        });
+      };
+      var opt = function (src) { return load(src).catch(function () {}); };
+      cmdLoad = Promise.all([
+        window.OrosCalQuick ? null : load("calendar/quickadd.js"),
+        window.OrosCommands ? null : load("commands/core.js"),
+        window.orosCmdBar ? null : load("commands/bar.js"),
+        window.CalcCore ? null : opt("calculator/core.js"),
+        window.UnitsCore ? null : opt("units/core.js"),
+        window.OrosSendCore ? null : opt("send/core.js")
+      ]).then(function () {
+        if (!window.OrosCommands || !window.orosCmdBar) throw new Error("commands missing");
+        return window.OrosCommands;
+      });
+      cmdLoad.catch(function () { cmdLoad = null; });
+    }
+    return cmdLoad;
+  }
+  function cmdAppName(id) {
+    var k = "app." + id, v = window.t(k);
+    if (v !== k) return v;
+    for (var i = 0; i < state.apps.length; i++) if (state.apps[i].id === id) return state.apps[i].name || id;
+    return id;
+  }
+  function cmdToday() {
+    var d = new Date(), m = d.getMonth() + 1, dd = d.getDate();
+    return d.getFullYear() + "-" + (m < 10 ? "0" : "") + m + "-" + (dd < 10 ? "0" : "") + dd;
+  }
+  // The installed apps with the names a user may type (EN, EL, apps.json).
+  function cmdApps() {
+    return state.apps.filter(function (a) { return a && a.type === "internal"; }).map(function (a) {
+      var names = [a.name, cmdAppName(a.id)];
+      var TR = window.OROS_TRANSLATIONS || {}, en = TR.en, el = TR.el;
+      if (en && en["app." + a.id]) names.push(en["app." + a.id]);
+      if (el && el["app." + a.id]) names.push(el["app." + a.id]);
+      return { id: a.id, names: names };
+    });
+  }
+  // null until commands/ is loaded (the menu row then waits for it).
+  function cmdParse(q) {
+    var C = window.OrosCommands;
+    if (!C) return null;
+    var U = window.UnitsCore, rates = null;
+    if (U) { try { rates = U.storedRates(JSON.parse(localStorage.getItem(U.RATES_KEY))); } catch (e) { rates = null; } }
+    return C.parse(q, { today: cmdToday(), apps: cmdApps(), cal: window.OrosCalQuick, lang: langBase(),
+                        calc: window.CalcCore, units: U, rates: rates, send: window.OrosSendCore });
+  }
+  function cmdHistory() {
+    try {
+      var l = JSON.parse(localStorage.getItem(CMD_HIST_KEY));
+      return Array.isArray(l) ? l.filter(function (x) { return typeof x === "string" && x && x.length <= 300; }).slice(0, CMD_HIST_MAX) : [];
+    } catch (e) { return []; }
+  }
+  function cmdRemember(q) {
+    q = String(q || "").replace(/\s+/g, " ").trim();
+    if (!q || q.length > 300) return;
+    var l = cmdHistory().filter(function (x) { return x !== q; });
+    l.unshift(q);
+    try { localStorage.setItem(CMD_HIST_KEY, JSON.stringify(l.slice(0, CMD_HIST_MAX))); } catch (e) {}
+  }
+  function cmdForget() { try { localStorage.removeItem(CMD_HIST_KEY); } catch (e) {} }
+  function cmdRun(cmd, q) {
+    var C = window.OrosCommands;
+    var c = C ? C.call(cmd, langBase()) : null;
+    if (!c) return;
+    if (typeof q === "string") cmdRemember(q);
+    closeMenu();
+    if (c.fn === "openAppById") { openAppById(c.args[0]); return; }
+    if (c.fn === "copy") {
+      var el = state.lang === "el", txt = String(c.args[0]);
+      var done = function () { notifySys("dim", (el ? "Αντιγράφηκε: " : "Copied: ") + txt); };
+      try { navigator.clipboard.writeText(txt).then(done, function () { notifySys("dim", txt); }); }
+      catch (e) { notifySys("dim", txt); }
+      return;
+    }
+    var f = window[c.fn];
+    if (typeof f === "function") f.apply(window, c.args);
+  }
+  function cmdMatchApps(q) {
+    var fq = menuFold(q.trim());
+    if (!fq) return [];
+    var hits = [];
+    cmdApps().forEach(function (a) {
+      var best = -1;
+      a.names.forEach(function (n) {
+        var at = menuFold(String(n || "")).indexOf(fq);
+        if (at >= 0 && (best < 0 || at < best)) best = at;
+      });
+      if (best >= 0) hits.push({ id: a.id, name: cmdAppName(a.id), at: best });
+    });
+    hits.sort(function (x, y) { return x.at - y.at || x.name.localeCompare(y.name); });
+    return hits;
+  }
+  function openCmdBar(text) {
+    if (SOLO) return;
+    cmdModule().then(function () {
+      closeMenu();
+      window.orosCmdBar.open({
+        lang: function () { return langBase(); },
+        parse: cmdParse,
+        describe: function (cmd) { return window.OrosCommands.describe(cmd, langBase()); },
+        appName: cmdAppName,
+        apps: cmdMatchApps,
+        run: cmdRun,
+        openApp: openAppById,
+        history: cmdHistory,
+        forget: cmdForget,
+        ask: hasApp("assistant") ? function (q) { openAssistant(q); } : null
+      }, text);
+    }, function () {
+      notifySys("dim", state.lang === "el"
+        ? "Η γραμμή εντολών δεν φορτώθηκε. Έλεγξε τη σύνδεση και δοκίμασε ξανά."
+        : "The command bar did not load. Check the connection and try again.");
+    });
+  }
+  // The Android widget's command button (phone.js, ?phone-quick=cmd).
+  window.__orosOpenCmdBar = function () { openCmdBar(); };
+  // Ctrl+K (Cmd+K on a Mac), from the desktop or from inside an app.
+  function cmdIsCtrlK(e) {
+    return (e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.code === "KeyK";
+  }
+  document.addEventListener("keydown", function (e) {
+    if (!cmdIsCtrlK(e) || e.defaultPrevented) return;
+    if (window.orosCmdBar && window.orosCmdBar.isOpen()) return;
+    e.preventDefault();
+    openCmdBar();
+  });
+  (function () {
+    var frame = document.getElementById("app-frame");
+    if (!frame) return;
+    frame.addEventListener("load", function () {
+      var w;
+      try { w = frame.contentWindow; if (!w || !w.document) return; } catch (e) { return; }   // not same-origin
+      w.addEventListener("keydown", function (e) {
+        if (!cmdIsCtrlK(e)) return;
+        if (state.running && CMD_OWN_CTRLK[state.running.id]) return;   // the app's own Ctrl+K
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        openCmdBar();
+      }, true);
+    });
+  })();
 
   // Ctrl+Alt+Shift+F: the menu opens with the cursor in the field,
   // from the desktop or from inside an app.
@@ -3348,6 +3548,52 @@
 
     menu.appendChild(heading);
 
+    // Command bar: when the line is a command, its row comes first
+    // and Enter runs it (commands/core.js, loaded on the first query).
+    var cmdHost = document.createElement("div");
+    cmdHost.id = "menu-cmd";
+    menu.insertBefore(cmdHost, heading);
+    var menuCmd = null;
+    function renderCmdRow() {
+      cmdHost.textContent = "";
+      menuCmd = null;
+      var q = menuQuery.trim();
+      if (!q || SOLO) return;
+      if (!window.OrosCommands) {
+        cmdModule().then(function () { if (cmdHost.isConnected && menuQuery.trim() === q) renderCmdRow(); }, function () {});
+        return;
+      }
+      var cmd = cmdParse(q);
+      if (!cmd || cmd.kind === "convert") return;     // conversions: the Unit Converter's own search row
+      menuCmd = cmd;
+      var d = window.OrosCommands.describe(cmd, langBase());
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "menu-cmd";
+      var v = document.createElement("span");
+      v.className = "menu-cmd-verb";
+      v.textContent = d.verb + (cmd.kind === "open" ? " " + cmdAppName(cmd.app) : "");
+      b.appendChild(v);
+      if (d.detail) {
+        var dt = document.createElement("span");
+        dt.className = "menu-cmd-detail";
+        dt.textContent = d.detail;
+        b.appendChild(dt);
+      }
+      if (cmd.kind !== "open") {
+        var ap = document.createElement("span");
+        ap.className = "menu-cmd-app";
+        ap.textContent = d.hint || "→ " + cmdAppName(cmd.app);
+        b.appendChild(ap);
+      }
+      b.addEventListener("click", function () { cmdRun(cmd, q); });
+      b.addEventListener("keydown", function (e) {
+        if (e.key === "ArrowDown") { var n = menuNavItems(); if (n[1]) { e.preventDefault(); n[1].focus(); } }
+        else if (e.key === "ArrowUp") { e.preventDefault(); search.focus(); }
+      });
+      cmdHost.appendChild(b);
+    }
+
     var appsHost = document.createElement("div");
     appsHost.id = "menu-apps";
     menu.appendChild(appsHost);
@@ -3361,12 +3607,16 @@
 
     search.addEventListener("input", function () {
       menuQuery = search.value;
+      renderCmdRow();
       renderAppList();
       scheduleDataSearch();
     });
     search.addEventListener("keydown", function (e) {
       if (e.key === "Enter") {
-        if (firstMatch) {
+        if (menuCmd) {
+          e.preventDefault();
+          cmdRun(menuCmd, menuQuery);
+        } else if (firstMatch) {
           e.preventDefault();
           openApp(firstMatch);
         } else {
@@ -3379,6 +3629,7 @@
       } else if (e.key === "Escape" && search.value) {
         e.stopPropagation();          // clear first; next Escape closes the menu
         search.value = menuQuery = "";
+        renderCmdRow();
         renderAppList();
         scheduleDataSearch();
       }
@@ -3389,7 +3640,7 @@
     function menuNavItems() {
       if (!menuQuery.trim()) return [];
       return Array.prototype.slice.call(
-        menu.querySelectorAll("#menu-apps .menu-item, #menu-results button"));
+        menu.querySelectorAll("#menu-cmd button, #menu-apps .menu-item, #menu-results button"));
     }
     function onNavKey(e) {
       if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
@@ -3430,7 +3681,7 @@
         if (!searchReader) searchReader = S.makeReader(localStorage);
         S.load(searchApps(), APP_VERSION).then(function () {
           return S.run(window.orosSearchProviders, q, {
-            lang: state.lang, readJSON: searchReader,
+            lang: langBase(), readJSON: searchReader,
             enabled: function (id) {
               for (var i = 0; i < state.apps.length; i++) {
                 if (state.apps[i].id === id) {
@@ -3580,6 +3831,7 @@
       appendAsk(host, q);
     }
 
+    renderCmdRow();
     renderAppList();
     scheduleDataSearch();
     if (keepSearch && keepSearch.focus) {
@@ -3922,7 +4174,7 @@
   // something shellSliceSet would accept (same validations).
   function shellCanon(name, v) {
     switch (name) {
-      case "lang":         return (v === "en" || v === "el") ? v : undefined;
+      case "lang":         return langKnown(v) ? v : undefined;
       case "theme":        return (v === "dark" || v === "light") ? v : undefined;
       case "skin":         return isValidSkin(v) ? v : undefined;
       case "wallpaper":    return (typeof v === "string" && findWallpaper(v)) ? v : undefined;
@@ -4195,7 +4447,7 @@
 
   function shellSliceSet(data) {
     if (!data) return;
-    if (data.lang  === "en" || data.lang  === "el") state.lang  = data.lang;
+    if (langKnown(data.lang)) state.lang = data.lang;
     if (data.theme === "dark" || data.theme === "light") state.theme = data.theme;
     if (isValidSkin(data.skin)) state.skin = data.skin;
     if (findWallpaper(data.wallpaper)) {
@@ -4316,7 +4568,14 @@
     applySkin();
     applyWallpaper();
     applyTheme();
-    applyLang();     // re-renders menu too
+    // A pack language that came from another device loads its shell
+    // pack first (i18n.js); English and Greek repaint at once.
+    if (window.orosI18n && state.lang !== "en" && state.lang !== "el") window.orosI18n.ensure(state.lang, "shell", function () {
+      window.orosI18n.table(window.OROS_TRANSLATIONS, "shell", state.lang);
+      applyLang();
+      langKeepOffline();
+    });
+    else applyLang();     // re-renders menu too
     // Deliberately NO noteLocalChange() here — pulled data must not
     // re-mark dirty, or pull → set → push → pull → … infinite loop.
   }
@@ -4977,11 +5236,149 @@
     }
   }
 
-  function syncDisconnectUser() {
-    if (!window.orosSync) return;
-    window.orosSync.disconnect();
-    state.syncUserEmail = null;
+  // WebDAV W2: test the server, then sync through it. The password
+  // goes straight to sync.js; the shell keeps nothing of it.
+  function syncConnectDav(form) {
+    var S = window.orosSync;
+    if (!S || typeof S.connectWebdav !== "function" || S.isConnected()) return;
+    setSyncMsgRaw("dim", window.t("sync.dav.testing"));
+    S.connectWebdav({ url: form.url, user: form.user, pass: form.pass, dir: form.dir, relay: !!form.relay })
+      .then(function (acc) {
+        state.syncUserEmail = (acc && acc.email) || null;
+        setSyncMsg("ok", "sync.dav.ok");
+      })
+      .catch(handleSyncError);
+  }
+
+  // WebDAV W3: Nextcloud Login Flow v2. The window opens on the click
+  // (a popup opened later is blocked) and gets the server's page once
+  // the server has answered.
+  function syncConnectNextcloud(form) {
+    var S = window.orosSync;
+    if (!S || typeof S.connectNextcloud !== "function" || S.isConnected() !== !!form.move) return;
+    var w = null;
+    try { w = window.open("about:blank", "_blank"); } catch (e) { w = null; }
+    try { if (w) w.opener = null; } catch (e) {}
+    state.ncWaiting = true;
     renderMenu();
+    S.connectNextcloud({ url: form.url, dir: form.dir, relay: !!form.relay, move: !!form.move }, function (url) {
+      setSyncMsgRaw("dim", window.t("sync.nc.waiting"));
+      if (w && !w.closed) w.location.href = url;
+      else window.open(url, "_blank", "noopener");
+    }).then(function (acc) {
+      state.ncWaiting = false;
+      state.syncUserEmail = (acc && acc.email) || null;
+      setSyncMsg("ok", form.move ? "sync.move.ok" : "sync.dav.ok");
+    }, function (err) {
+      state.ncWaiting = false;
+      try { if (w && !w.closed && w.location.href === "about:blank") w.close(); } catch (e) {}
+      handleSyncError(err);
+    });
+  }
+
+  // WebDAV W4: move this device's cloud to the other provider. The
+  // sync file and every Vault file are copied as they are (encrypted);
+  // the old cloud is left as it was.
+  function syncMoveDav(form) {
+    var S = window.orosSync;
+    if (!S || typeof S.moveToWebdav !== "function" || !S.isConnected()) return;
+    setSyncMsgRaw("dim", window.t("sync.dav.testing"));
+    S.moveToWebdav({ url: form.url, user: form.user, pass: form.pass, dir: form.dir, relay: !!form.relay })
+      .then(function (acc) {
+        state.syncUserEmail = (acc && acc.email) || null;
+        setSyncMsg("ok", "sync.move.ok");
+      })
+      .catch(handleSyncError);
+  }
+  function syncMoveDropbox() {
+    var S = window.orosSync;
+    if (!S || typeof S.moveToDropbox !== "function" || !S.isConnected()) return;
+    S.moveToDropbox().catch(handleSyncError);
+  }
+
+  // SEC-2 / A71a: Disconnect first cancels this device's access at
+  // Dropbox (or deletes the Nextcloud app password), then forgets it
+  // here, and says which of the two happened.
+  var syncDisconnecting = false;
+  function syncDisconnectUser() {
+    var S = window.orosSync;
+    if (!S || syncDisconnecting) return;
+    if (typeof S.disconnectRevoke !== "function") {
+      S.disconnect();
+      state.syncUserEmail = null;
+      state.syncBackups = null;
+      renderMenu();
+      return;
+    }
+    syncDisconnecting = true;
+    setSyncMsgRaw("dim", window.t("sync.disc.working"));
+    S.disconnectRevoke(5000).then(function (r) {
+      syncDisconnecting = false;
+      state.syncUserEmail = null;
+      state.syncBackups = null;
+      state.syncAutoErr = null;
+      setSyncMsg("ok", syncDisconnectKey(r));
+    });
+  }
+  // A43: the cloud backups for Settings › Sync, and Restore.
+  function syncBackupsLoad() {
+    var S = window.orosSync;
+    if (!S || typeof S.listBackups !== "function" || !S.isConnected()) return;
+    state.syncBackups = { loading: true, list: (state.syncBackups && state.syncBackups.list) || [] };
+    settingsNotify();
+    S.listBackups().then(function (list) {
+      state.syncBackups = { loading: false, list: Array.prototype.map.call(list || [], function (e) {
+        return { name: String(e.name), at: String(e.at || ""), size: +e.size || 0 };
+      }) };
+    }, function (err) {
+      state.syncBackups = { loading: false, list: [], err: window.t(S.errorKey(err)) };
+    }).then(settingsNotify);
+  }
+  function syncRestore(arg) {
+    var S = window.orosSync;
+    if (!S || typeof S.restoreBackup !== "function" || state.syncRestoring) return;
+    state.syncRestoring = arg.name;
+    state.syncOldPassFor = null;
+    setSyncMsgRaw("dim", window.t("sync.restore.working"));
+    S.restoreBackup(arg.name, arg.old || undefined).then(function (r) {
+      state.syncRestoring = null;
+      state.syncAutoErr = null;
+      setSyncMsg(r.failed && r.failed.length ? "err" : "ok",
+        r.failed && r.failed.length ? "sync.err.applyfull" : "sync.restore.done");
+      syncBackupsLoad();
+    }, function (err) {
+      state.syncRestoring = null;
+      var key = S.errorKey(err);
+      if (key === "sync.err.restore-oldpass" || key === "sync.err.restore-oldpass-wrong") {
+        state.syncOldPassFor = arg.name;
+      }
+      setSyncMsg("err", key);
+    });
+  }
+  // Local rescue copies (sync.js asks for one before every rollback):
+  // /internal/Rescue on this device's orOS disk, importable from
+  // Settings › Backups like any backup file.
+  function syncRescueSink(text) {
+    var F = window.orosFS;
+    if (!F || typeof F.writeText !== "function") return Promise.resolve(false);
+    var dir = "/internal/Rescue";
+    var file = dir + "/orOS-rescue-" + new Date().toISOString().replace(/[:.]/g, "-") + ".json";
+    return Promise.resolve(typeof F.mkdir === "function" ? F.mkdir(dir) : null)
+      .catch(function () {})
+      .then(function () { return F.writeText(file, text); })
+      .then(function () { return true; }, function () { return false; });
+  }
+  // A restore made on another device reached this one.
+  function syncRestoredNotice(info) {
+    if (!info || info.here) return;
+    setSyncMsg("ok", info.rescued ? "sync.restore.followed" : "sync.restore.followed.nocopy");
+  }
+
+  function syncDisconnectKey(r) {
+    if (r.revoked) return "sync.disc.revoked";
+    if (r.offline) return r.provider === "webdav" ? "sync.disc.offline.dav" : "sync.disc.offline";
+    if (r.provider === "webdav") return "sync.disc.local.dav";
+    return "sync.disc.norevoke";
   }
 
   // User picked an automatic folder-backup cadence (shell slice).
@@ -5209,6 +5606,44 @@
     return text;
   }
 
+  // A72: an automatic sync that fails for a reason only the person
+  // can fix (storage full, sign-in expired, a newer orOS needed) puts
+  // ONE line a day in the bell, with a link to the place to fix it.
+  // Network trouble stays a red dot only: it heals by itself.
+  var SYNC_NOTICE_FOR = {
+    "sync.err.storage":   "settings/backup",
+    "sync.err.auth":      "settings/sync",
+    "sync.err.dav-auth":  "settings/sync",
+    "sync.err.version":   ""
+  };
+  function syncNoticeDaily(ident, text, link) {
+    var N = window.orosNotifs;
+    if (!N || typeof N.emit !== "function") return;
+    try {
+      N.emit({
+        ns: "system",
+        key: "sync-" + ident + "-" + sysYmd(),
+        type: "sys",
+        title: window.t("sync.notice.title"),
+        body: text,
+        deepLink: link ? "system:open:" + link : ""
+      });
+    } catch (e) {}
+  }
+  function syncAutoFailNotice(err) {
+    var S = window.orosSync;
+    if (!S || typeof S.errorKey !== "function") return;
+    var key = S.errorKey(err);
+    if (!SYNC_NOTICE_FOR.hasOwnProperty(key)) return;
+    syncNoticeDaily(key.replace(/^sync\.err\./, ""), window.t(key), SYNC_NOTICE_FOR[key]);
+  }
+  // A37 / A69c: a pull or import could not write some apps' data (the
+  // store is full). Said once a day, the same line as storage-full.
+  function syncApplyFailNotice(names) {
+    if (!names || !names.length) return;
+    syncNoticeDaily("storage", window.t("sync.err.applyfull"), SYNC_NOTICE_FOR["sync.err.storage"]);
+  }
+
   function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, function (c) {
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
@@ -5340,12 +5775,63 @@
     setSyncMsgRaw("dim", window.t("update.checking"));
   }
 
-  function scToggleLang() {
-    state.lang = state.lang === "en" ? "el" : "en";
+  function scToggleLang() { setLangUser(langNext()); }
+
+  // The language button: the next of the languages on offer (English
+  // and Greek, plus every shown pack language and the active one).
+  function langNext() {
+    var list = window.orosI18n ? window.orosI18n.choices().map(function (l) { return l.code; }) : ["en", "el"];
+    var i = list.indexOf(state.lang);
+    return list[(i + 1) % list.length] || "en";
+  }
+
+  // A language picked on this device (button, shortcut, Settings).
+  // A pack language loads its shell pack first; open apps reload and
+  // load their own (i18n.js). The chosen language's files are then
+  // kept for offline use (langKeepOffline).
+  function setLangUser(code) {
+    if (!langKnown(code) || code === state.lang) return;
+    state.lang = code;
     localStorage.setItem("oros-lang", state.lang);
-    noteLocalChange();
-    applyLang();
-    refreshRunningApp();          // opened apps follow the language too
+    noteLocalChange();            // user action → sync engine
+    langApplyPack();
+  }
+  function langApplyPack() {
+    var I = window.orosI18n;
+    function go() {
+      if (I && window.OROS_TRANSLATIONS) I.table(window.OROS_TRANSLATIONS, "shell", state.lang);
+      applyLang();
+      refreshRunningApp();        // opened apps follow the language too
+      langKeepOffline();
+    }
+    if (I) I.ensure(state.lang, "shell", go); else go();
+  }
+
+  // A pack language's files (i18n/<code>/manifest.json, written by
+  // the coverage script, see the translator guide) are fetched once per release while
+  // online; the service worker keeps them in its language cache,
+  // which outlives releases, so the language works offline.
+  function langKeepOffline() {
+    var I = window.orosI18n, code = state.lang;
+    if (!I || code === "en" || code === "el" || !navigator.onLine) return;
+    // Only through the service worker (it keeps the copies); the first
+    // visit, before the worker controls the page, tries on the next start.
+    if (!navigator.serviceWorker || !navigator.serviceWorker.controller) return;
+    var mark = code + "@" + APP_VERSION;
+    try { if (localStorage.getItem("oros-i18n-kept") === mark) return; } catch (e) { return; }
+    fetch(I.root + "i18n/" + code + "/manifest.json", { cache: "no-cache" })
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function (m) {
+        var files = (m && Array.isArray(m.files) ? m.files : []).filter(function (f) {
+          return typeof f === "string" && /^[a-z0-9][a-z0-9/._-]{0,120}$/.test(f) && f.indexOf("..") === -1;
+        });
+        return Promise.all(files.map(function (f) {
+          var u = I.root + "i18n/" + code + "/" + f + (/\.js$/.test(f) ? "?v=" + APP_VERSION : "");
+          return fetch(u).catch(function () {});
+        }));
+      })
+      .then(function () { try { localStorage.setItem("oros-i18n-kept", mark); } catch (e) {} })
+      .catch(function () {});
   }
 
   function scReconnect() {
@@ -5663,6 +6149,9 @@
         { name: "Transitous", url: "https://transitous.org/sources/",
           by: "The Transitous community (MOTIS); timetables by each operator", lic: { en: "Each feed's open licence; ODbL (map data)", el: "Η ανοιχτή άδεια κάθε πηγής· ODbL (δεδομένα χάρτη)" },
           en: "Public transport: connections, departures, live vehicles (Maps)", el: "Μέσα μαζικής μεταφοράς: δρομολόγια, αναχωρήσεις, οχήματα (Χάρτες)" },
+        { name: "OASA Telematics", url: "https://telematics.oasa.gr/",
+          by: "OASA (Athens Urban Transport Organisation)", lic: { en: "OASA's terms of use", el: "Όροι χρήσης του ΟΑΣΑ" },
+          en: "Live bus arrivals at Athens stops, through the orOS relay (Maps)", el: "Ζωντανές αφίξεις λεωφορείων στις στάσεις της Αθήνας, μέσω του relay του orOS (Χάρτες)" },
         { name: "OpenStreetMap API", url: "https://operations.osmfoundation.org/policies/api/",
           by: "OpenStreetMap Foundation; data by OpenStreetMap contributors", lic: "ODbL (data)",
           en: "Notes, sign-in, place edits and GPS trace uploads (Maps)", el: "Σημειώσεις, σύνδεση, διορθώσεις μερών και ανέβασμα GPS traces (Χάρτες)" },
@@ -5755,7 +6244,10 @@
           en: "Book details (Media Shelf)", el: "Στοιχεία βιβλίων (Το ράφι μου)" },
         { name: "MusicBrainz", url: "https://musicbrainz.org/",
           by: "MetaBrainz Foundation", lic: "CC0 (core data)",
-          en: "Album details (Media Shelf)", el: "Στοιχεία άλμπουμ (Το ράφι μου)" },
+          en: "Album details (Media Shelf, Music covers)", el: "Στοιχεία άλμπουμ (Το ράφι μου, εξώφυλλα στη Μουσική)" },
+        { name: "Cover Art Archive", url: "https://coverartarchive.org/",
+          by: "MetaBrainz Foundation and Internet Archive", lic: { en: "Free API, no key; each image belongs to its owner", el: "Δωρεάν API χωρίς κλειδί· κάθε εικόνα ανήκει στον κάτοχό της" },
+          en: "Album covers, only when you ask (Music)", el: "Εξώφυλλα άλμπουμ, μόνο όταν το ζητήσεις (Μουσική)" },
         { name: "Anthropic, OpenAI, Google Gemini, Mistral, OpenRouter, Ollama, LM Studio", url: "https://www.anthropic.com/",
           by: "Each provider", lic: { en: "Their terms, your own key", el: "Οι όροι τους, με δικό σου κλειδί" },
           en: "AI chat you choose (Assistant)", el: "Συζήτηση με το AI που διαλέγεις (Βοηθός)" },
@@ -5786,6 +6278,10 @@
         { name: "Cloudflare Workers", url: "https://workers.cloudflare.com/",
           by: "Cloudflare, Inc.", lic: { en: "Runs the orOS mail relay (code in relay/); D1 keeps encrypted share links with an expiry", el: "Τρέχει το relay αλληλογραφίας του orOS (κώδικας στο relay/)· το D1 κρατά κρυπτογραφημένους συνδέσμους με λήξη" },
           en: "Mail: IMAP over HTTPS, nothing stored", el: "Αλληλογραφία: IMAP μέσω HTTPS, δεν αποθηκεύεται τίποτα" },
+        { name: "Web Push: Google FCM, Mozilla Push, Microsoft WNS", url: "https://www.rfc-editor.org/rfc/rfc8030",
+          by: "Google LLC; Mozilla Foundation; Microsoft Corporation (your browser's)", lic: { en: "Their terms; only with the switch on", el: "Οι όροι τους· μόνο με ανοιχτό το διακόπτη" },
+          en: "Optional notifications with orOS closed, encrypted on the device (Settings › Notifications)",
+          el: "Προαιρετικές ειδοποιήσεις με κλειστό orOS, κρυπτογραφημένες στη συσκευή (Ρυθμίσεις › Ειδοποιήσεις)" },
         { name: "WooCommerce REST API", url: "https://woocommerce.github.io/woocommerce-rest-api-docs/",
           by: "Automattic; your own shop", lic: { en: "Your own shop and keys", el: "Το δικό σου κατάστημα και κλειδιά" },
           en: "Connected services: shop stock and orders (Stock)", el: "Συνδεδεμένες υπηρεσίες: απόθεμα και παραγγελίες καταστήματος (Απόθεμα)" },
@@ -6203,7 +6699,8 @@
     { key: "t", label: "sc.desc.timer",      fn: scTimesheetToggle },
     { key: "a", label: "sc.desc.assistant",  fn: function() { openAssistant(); } },
     { key: "y", label: "sc.desc.today",      fn: function() { openAppById("today"); } },
-    { key: "n", label: "sc.desc.stickies",   fn: scNewSticky }
+    { key: "n", label: "sc.desc.stickies",   fn: scNewSticky },
+    { key: "k", label: "sc.desc.cmdbar",     fn: function() { openCmdBar(); } }
   ];
 
   // Public contract consumed by iframe apps (same-origin, so this
@@ -6870,6 +7367,7 @@
     fdMigrateLegacy();          // FILES-V: one-time cleanup of the blob model
     legacyLsMove();             // SY-Q2: retired snapshots out of localStorage
     registerRadioProxySlice();
+    registerShareOutSlice();
     registerTelevisionProxySlice();
     registerMailProxySlice();
 
@@ -6880,12 +7378,37 @@
       });
     }
 
+    // WebDAV W4: a move started before the Dropbox sign-in finished on
+    // boot; its progress shows in Settings › Sync.
+    if (window.orosSync && typeof window.orosSync.onMove === "function") {
+      window.orosSync.onMove(function (p) {
+        if (p.done >= p.total) return;
+        state.syncMsg = { kind: "dim", text: window.t("sync.move.progress")
+          .replace("{done}", String(p.done)).replace("{total}", String(p.total)) };
+        renderMenu();
+      });
+    }
+    if (window.orosSync && window.orosSync.moveDone) {
+      window.orosSync.moveDone.then(function (r) {
+        if (r && r.moved) { state.syncUserEmail = null; setSyncMsg("ok", "sync.move.ok"); }
+        else if (r && r.error) handleSyncError(r.error);
+      });
+    }
+
     // Vault auto-unlock settled → re-render (dot turns "on" without user
     // ever typing the passphrase; silent pull already handled by engine)
     if (window.orosSync && window.orosSync.vaultUnlocked) {
       window.orosSync.vaultUnlocked.then(function () {
         renderMenu();
       });
+    }
+
+    if (window.orosSync && typeof window.orosSync.onApplyFailed === "function") {
+      window.orosSync.onApplyFailed(syncApplyFailNotice);
+    }
+    if (window.orosSync && typeof window.orosSync.setRescueSink === "function") {
+      window.orosSync.setRescueSink(syncRescueSink);
+      window.orosSync.onRestored(syncRestoredNotice);
     }
 
     // Subtle auto-sync feedback: the status dot pulses while the engine
@@ -6899,6 +7422,7 @@
           // tooltip and as a line in Settings > Sync (bridge snapshot
           // sync.msg), until the next sync that succeeds.
           state.syncAutoErr = syncErrText(err);
+          syncAutoFailNotice(err);   // A72
           var dotEl = document.getElementById("sync-dot");
           if (dotEl) dotEl.parentNode.setAttribute("title", window.t("syncdot.err") + " — " + state.syncAutoErr);
           renderMenu();
@@ -7027,18 +7551,29 @@
     try {
       var list = JSON.parse(localStorage.getItem("oros-time-timers"));
       for (var i = 0; Array.isArray(list) && i < list.length; i++) {
-        if (list[i] && list[i].aid === a.id && ALARM_SOUNDS[list[i].sound]) return list[i].sound;
+        if (list[i] && list[i].aid === a.id && (ALARM_SOUNDS[list[i].sound] || ALARM_RT.test(list[i].sound))) return list[i].sound;
       }
     } catch (e) {}
     return "beep";
   }
+  // A timer can also ring with a Ringtone Composer melody, "rt:<id>"
+  // (stickies/host.js window.orosMelodies; gone → the beep).
+  var ALARM_RT = /^rt:[A-Za-z0-9_-]{1,64}$/;
+  function alarmVoice(name) {
+    if (ALARM_RT.test(name) && window.orosMelodies) {
+      window.orosMelodies.play(name.slice(3), function () { alarmPip("beep"); }, 15);
+      return;
+    }
+    alarmPip(name);
+  }
   // Preview for the Time app's sound pickers (same voices).
   window.orosAlarmSound = function (name) {
-    if (typeof name === "string" && ALARM_SOUNDS[name]) alarmPip(name);
+    if (typeof name === "string" && (ALARM_SOUNDS[name] || ALARM_RT.test(name))) alarmVoice(name);
   };
 
   function alarmStopRing() {
     if (alarmRing.timer) { clearInterval(alarmRing.timer); alarmRing.timer = null; }
+    try { if (window.orosMelodies) window.orosMelodies.stop(); } catch (e) {}
     var ov = document.getElementById("alarm-toast");
     if (ov) ov.remove();
   }
@@ -7126,8 +7661,9 @@
     el.appendChild(snoozeBtn);
     el.appendChild(btn);
     document.body.appendChild(el);
-    alarmPip(voice);
-    alarmRing.timer = setInterval(function () { alarmPip(voice); }, 1500);
+    alarmVoice(voice);
+    // a melody (≤ 15 s) plays again after a pause, the pips every 1.5 s
+    alarmRing.timer = setInterval(function () { alarmVoice(voice); }, ALARM_RT.test(voice) ? 17000 : 1500);
     setTimeout(function () {
       if (document.getElementById("alarm-toast")) alarmStopRing();
     }, 30000);
@@ -8461,6 +8997,7 @@
     return {
       version: APP_VERSION,
       lang: state.lang,
+      langs: window.orosI18n ? window.orosI18n.choices() : [{ code: "en", name: "English" }, { code: "el", name: "Ελληνικά" }],
       theme: state.theme,
       skin: state.skin,
       skins: SKINS.map(function (k) {
@@ -8488,11 +9025,24 @@
         connected: connected,
         unlocked: unlocked,
         email: connected ? (state.syncUserEmail || null) : null,
+        provider: (S && typeof S.getProvider === "function") ? S.getProvider() : "dropbox",
+        davAvailable: !!(S && typeof S.connectWebdav === "function"),
+        ncAvailable: !!(S && typeof S.connectNextcloud === "function"),
+        ncWaiting: !!state.ncWaiting,
+        moveAvailable: !!(S && typeof S.moveToWebdav === "function"),
         dirty: !!(unlocked && S.isDirty()),
         hasVault: !!(connected && S.hasDeviceVault()),
         interval: getSafeInterval(),
         intervals: [0, 1, 3, 5, 15],
         minPass: MIN_PASS_LEN,
+        canRestore: !!(S && typeof S.restoreBackup === "function"),
+        backups: (connected && state.syncBackups) ? {
+          loading: !!state.syncBackups.loading,
+          list: state.syncBackups.list.slice(),
+          err: state.syncBackups.err || null
+        } : null,
+        restoring: state.syncRestoring,
+        oldPassFor: state.syncOldPassFor,
         msg: state.syncMsg ? { kind: state.syncMsg.kind, text: state.syncMsg.text }
            : (state.syncAutoErr ? { kind: "err", text: state.syncAutoErr } : null)
       },
@@ -8510,6 +9060,7 @@
       dock: settingsDock(),
       seasonal: settingsSeasonal(),
       menu: settingsMenuApps(),
+      menuProfiles: !!profilesL(),
       apps: state.apps.filter(function (a) { return a && a.type === "internal"; })
         .map(function (a) { return a.id; }),
       shortcuts: SC_DEFS.map(function (d) {
@@ -8522,7 +9073,7 @@
   function settingsSet(name, value) {
     switch (name) {
       case "lang":
-        if ((value === "en" || value === "el") && value !== state.lang) scToggleLang();
+        setLangUser(value);
         return;
       case "theme":      setThemeUser(value); return;
       case "skin":       setSkinUser(value); return;
@@ -8569,6 +9120,19 @@
     var S = window.orosSync;
     switch (name) {
       case "sync.connect":    if (S && !S.isConnected()) S.connect(); return;
+      case "sync.connectDav":
+        if (arg && typeof arg.url === "string" && typeof arg.pass === "string") syncConnectDav(arg);
+        return;
+      case "sync.connectNc":
+        if (arg && typeof arg.url === "string") syncConnectNextcloud(arg);
+        return;
+      case "sync.moveDav":
+        if (arg && typeof arg.url === "string" && typeof arg.pass === "string") syncMoveDav(arg);
+        return;
+      case "sync.moveDb":     syncMoveDropbox(); return;
+      case "sync.cancelNc":
+        if (S && typeof S.cancelNextcloud === "function") S.cancelNextcloud();
+        return;
       case "sync.unlock":
         if (S && S.isConnected() && !S.hasPassphrase() && arg && typeof arg.pw === "string") {
           syncUnlock(arg.pw, !!arg.remember);
@@ -8579,6 +9143,12 @@
       case "sync.forget":     syncForgetHere(); return;
       case "sync.changePass": if (S && S.isConnected() && S.hasPassphrase()) showChangePassDialog(); return;
       case "sync.disconnect": syncDisconnectUser(); return;
+      case "sync.backups.load": syncBackupsLoad(); return;
+      case "sync.restore":
+        if (S && S.isConnected() && S.hasPassphrase() && arg && typeof arg.name === "string") {
+          syncRestore({ name: arg.name, old: typeof arg.old === "string" ? arg.old : "" });
+        }
+        return;
       // Folder picker and permission prompts need a user gesture: the
       // app calls these straight from its click handler (the gesture
       // of a same-origin frame counts for the shell window too).
@@ -8597,6 +9167,7 @@
         return;
       case "updates":         scCheckUpdates(); return;
       case "info":            showInfoModal(); return;
+      case "shareLinks":      if (window.orosShare) window.orosShare.links(); return;
       case "openApp":         if (typeof arg === "string") openAppById(arg); return;
       // Seasonal decorations: "Try it now" shows the desktop at once.
       case "seasonal.preview":
@@ -8608,6 +9179,7 @@
       // Menu apps: show or hide every app at once (one change, one push).
       case "menu.showAll":    if (settingsMenuL()) settingsMenuL().setMenuHidden(settingsMenuIds(), false); return;
       case "menu.hideAll":    if (settingsMenuL()) settingsMenuL().setMenuHidden(settingsMenuIds(), true); return;
+      case "menu.profiles":   showProfiles("settings"); return;
       // The app arms and confirms first (two taps, like the Info modal);
       // this is the same wipe, with no button of its own to update.
       case "reset":           scFactoryReset({ disabled: false, textContent: "" }); return;
@@ -8654,7 +9226,7 @@
     }
     return null;
   }
-  function soloName() { return window.orosSolo.nameOf(SOLO, state.lang); }
+  function soloName() { return window.orosSolo.nameOf(SOLO, langBase()); }
 
   // Window title, bar button and the host page's title.
   function soloPaint() {
@@ -8873,11 +9445,7 @@
   });
 
   document.getElementById("btn-lang").addEventListener("click", function () {
-    state.lang = state.lang === "en" ? "el" : "en";
-    localStorage.setItem("oros-lang", state.lang);
-    noteLocalChange();            // user action → sync engine
-    applyLang();
-    refreshRunningApp();          // v0.18.1b: open apps follow the toggle
+    setLangUser(langNext());      // v0.18.1b: open apps follow the toggle
   });
 
   // Unsynced-changes guard: warn on close when dirty AND online
@@ -9040,15 +9608,83 @@
     try {
       if (localStorage.getItem(TOUR_DONE) === "1") return;
       localStorage.setItem(TOUR_KEY, "1");
+      if (profilesWanted()) localStorage.setItem(PROFILE_KEY, "1");
     } catch (e) { return; }
     tourMaybe();
+  }
+
+  // First-run profiles (profiles.js, strategy §9): before the tour, a
+  // new user chooses which apps the menu shows. "Everything" is first
+  // and chosen; Continue, X or Escape with it change nothing. Not on a
+  // device that already has menu choices (pulled or made) or is
+  // connected to sync: that user is not new, only this device is.
+  // profiles.js loads on first use (first run or Settings), never at boot.
+  var PROFILE_KEY = "oros-profile-pending";
+  var profilesLoad = null;
+  function profilesL() {
+    var L = window.orosLauncher;
+    return (L && typeof L.presetMenuHidden === "function" && typeof L.menuStored === "function") ? L : null;
+  }
+  function profilesModule() {
+    if (window.orosProfiles) return Promise.resolve(window.orosProfiles);
+    if (!profilesLoad) {
+      profilesLoad = new Promise(function (resolve, reject) {
+        var s = document.createElement("script");
+        s.src = "profiles.js?v=" + APP_VERSION;
+        s.onload = function () { if (window.orosProfiles) resolve(window.orosProfiles); else reject(new Error("profiles missing")); };
+        s.onerror = reject;
+        document.head.appendChild(s);
+      });
+      profilesLoad.catch(function () { profilesLoad = null; });
+    }
+    return profilesLoad;
+  }
+  function profilesWanted() {
+    if (SOLO) return false;
+    var L = profilesL();
+    if (!L || L.menuStored()) return false;
+    var S = window.orosSync;
+    return !(S && typeof S.isConnected === "function" && S.isConnected());
+  }
+  function profilesApps() {
+    return settingsMenuApps() || [];
+  }
+  // mode "first": then the tour; "settings": from Settings › Menu.
+  var profilesBusy = false;   // loading or on screen: the tour waits
+  function showProfiles(mode, after) {
+    var L = profilesL();
+    if (!L || profilesBusy) return;
+    profilesBusy = true;
+    var then = function (r) { profilesBusy = false; if (after) after(r); };
+    profilesModule().then(function (P) {
+      if (!showProfilesNow(P, L, mode, then)) then();
+    }, function () { then(); });
+  }
+  function showProfilesNow(P, L, mode, after) {
+    var apps = profilesApps();
+    return P.show({
+      mode: mode,
+      lang: langBase(),
+      apps: apps,
+      shown: apps.filter(function (a) { return a.shown; }).map(function (a) { return a.id; }),
+      done: function (r) {
+        if (r && r.hidden) {
+          if (mode === "first") L.presetMenuHidden(r.hidden);
+          else {
+            L.setMenuHidden(r.hidden, true);
+            L.setMenuHidden(r.shown, false);
+          }
+        }
+        if (after) after(r);
+      }
+    });
   }
 
   function tourMaybe() {
     if (SOLO) return;                  // the tour shows the desktop's top bar
     var pending;
     try { pending = localStorage.getItem(TOUR_KEY) === "1"; } catch (e) { pending = false; }
-    if (!pending || tourBox) return;
+    if (!pending || tourBox || profilesBusy) return;
     var tries = 0;
     (function wait() {
       // Splash still up, apps.json not in yet, or an app on screen.
@@ -9057,6 +9693,22 @@
         setTimeout(wait, 250);
         return;
       }
+      var prof = false;
+      try { prof = localStorage.getItem(PROFILE_KEY) === "1"; } catch (e) {}
+      if (prof && profilesWanted()) {
+        showProfiles("first", function (r) {
+          try { localStorage.removeItem(PROFILE_KEY); } catch (e) {}
+          if (r && r.already) {
+            // Not a new user: no tour; their apps and menu come with sync.
+            try { localStorage.removeItem(TOUR_KEY); localStorage.setItem(TOUR_DONE, "1"); } catch (e) {}
+            if (typeof window.__orosOpenAt === "function") window.__orosOpenAt("settings", { section: "sync" });
+            return;
+          }
+          startTour();
+        });
+        return;
+      }
+      try { localStorage.removeItem(PROFILE_KEY); } catch (e) {}
       startTour();
     })();
   }
@@ -9068,7 +9720,9 @@
   }
 
   function tourSteps() {
-    var steps = [{ key: "welcome" }, { key: "menu", target: "btn-menu" }];
+    var L = window.orosLauncher;
+    var someHidden = !!(L && typeof L.menuHiddenIds === "function" && L.menuHiddenIds().length);
+    var steps = [{ key: "welcome" }, { key: "menu", target: "btn-menu", body: someHidden ? "tour.menu.bodyHidden" : "" }];
     if (tourVisible(document.getElementById("sync-dot-btn"))) steps.push({ key: "sync", target: "sync-dot-btn" });
     if (tourVisible(document.getElementById("oros-taskbar-bell"))) steps.push({ key: "bell", target: "oros-taskbar-bell" });
     if (tourVisible(document.getElementById("btn-lang"))) steps.push({ key: "lang", target: "btn-lang" });
@@ -9943,7 +10597,7 @@
       open: openApp,
       running: function () { return state.running; },
       icons: ICONS,
-      lang: function () { return state.lang; },
+      lang: function () { return langBase(); },
       label: function (app) {
         var k = "app." + app.id, v = window.t(k);
         return (v === k) ? app.name : v;
@@ -9956,6 +10610,7 @@
   applyWallpaper();
   applyTheme();
   applyLang();
+  langKeepOffline();
   // Seasonal decorations (seasonal.js, a shell component like pet.js):
   // snow, lights, pumpkins… over the wallpaper in the right season.
   // A single app has no desktop, so it gets none.
@@ -9963,7 +10618,7 @@
     window.orosSeasonal.attach({
       desktop: document.getElementById("oros-desktop"),
       running: function () { return !!state.running; },
-      lang: function () { return state.lang; },
+      lang: function () { return langBase(); },
       changed: function () { settingsNotify(); }
     });
   }

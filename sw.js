@@ -20,13 +20,16 @@
 // GitHub Action should stamp just the version number; we prepend
 // the oros-v prefix here for cache namespace separation.
 
-var CACHE_VERSION = "oros-v2.71.01";
+var CACHE_VERSION = "oros-v2.92.00";
 var SHELL_CACHE   = "oros-shell-" + CACHE_VERSION;
 var RUNTIME_CACHE = "oros-runtime-" + CACHE_VERSION;
 // WebLLM's library (vendor/webllm, about 7 MB, loaded only when the
 // Assistant's in-browser model is used): one copy kept across
 // releases, so a downloaded model keeps working offline after an update.
 var WEBLLM_CACHE = "oros-webllm";
+// Language packs (i18n.js, i18n/<code>/…): one copy kept across
+// releases, so a chosen language keeps working offline after an update.
+var LANG_CACHE = "oros-lang-packs";
 // MAPS-TILES (Wave 5): dedicated cache for map raster tiles.
 // Deliberately OUTSIDE CACHE_VERSION — tiles must survive SW
 // updates (browsing history is expensive to rebuild). Growth is
@@ -180,11 +183,14 @@ var PRECACHE_URLS = [
   "./pet.css",
   "./pet.js",
   "./launcher.js",
+  "./profiles.js",
   "./seasonal.js",
   "./fileopen.js",
   "./phone.js",
+  "./webpush.js",
   "./vault.js",
   "./remote-link.js",
+  "./i18n.js",
   "./translations.js",
   "./apps.json",
   "./manifest.webmanifest",
@@ -1106,8 +1112,13 @@ var PRECACHE_URLS = [
   "share/kinds.js",
   "share/send.js",
   "share/view.js",
+  "share/relay.js",
+  "share/out.js",
+  "share/album.js",
   "send/core.js",
   "send/sheet.js",
+  "commands/core.js",
+  "commands/bar.js",
   "settings/",
   "settings/index.html",
   "settings/settings.css",
@@ -1358,7 +1369,9 @@ var PRECACHE_URLS = [
   "music/library.js",
   "music/open.js",
   "music/servers.js",
+  "music/mixes.js",
   "music/music.js",
+  "music/today.js",
   "radio/",
   "radio/index.html",
   "radio/search.js",
@@ -1904,6 +1917,7 @@ var PRECACHE_URLS = [
   "vendor/jsqr/jsQR.js",
   "vendor/openpgp/openpgp.min.js",
   "weather/core.js",
+  "weather/days.js",
   "weather/rainmap-core.js",
   "weather/rainmap.js",
   "writer/core.js",
@@ -1985,7 +1999,7 @@ self.addEventListener("install", function (event) {
 
 // ---------- Activate: purge old caches ----------
 self.addEventListener("activate", function (event) {
-  var keep = [SHELL_CACHE, RUNTIME_CACHE, TILE_CACHE, "oros-television-api", SHARE_INBOX];
+  var keep = [SHELL_CACHE, RUNTIME_CACHE, TILE_CACHE, LANG_CACHE, "oros-television-api", SHARE_INBOX];
   // SW-I: Add a guard against slow cache cleanup blocking claim.
   // If cleanup takes >30s (extreme), we still want to claim clients
   // to restore online/offline functionality. The background cleanup
@@ -2211,6 +2225,27 @@ self.addEventListener("fetch", function (event) {
   // writer/spell-worker.js in IndexedDB). Other lazy vendor files
   // (tesseract, libarchive, libraw, rnnoise) use the runtime cache.
   if (/\/vendor\/(ort|u2netp|migan|hunspell)\//.test(url.pathname)) return;
+  // Language packs: their own cache, matched without ?v=. The cached
+  // copy answers at once and the network refreshes it in the
+  // background; a missing pack (not translated yet) is never stored,
+  // and i18n.js then shows English.
+  if (/\/i18n\/[a-z]{2,3}(-[A-Z]{2})?\//.test(url.pathname)) {
+    event.respondWith(caches.open(LANG_CACHE).then(function (cache) {
+      var key = url.origin + url.pathname;
+      return cache.match(key).then(function (hit) {
+        var net = fetch(request, { cache: "no-cache" }).then(function (response) {
+          if (response && response.status === 200) {
+            var copy = response.clone();
+            return cache.put(key, copy).then(function () { return response; }, function () { return response; });
+          }
+          return response;
+        });
+        if (hit) { event.waitUntil(net.catch(function () {})); return hit; }
+        return net.catch(function () { return Response.error(); });
+      });
+    }));
+    return;
+  }
   // WebLLM: cache-first in its own cache, matched without ?v=. The
   // file name carries the library version (web-llm-<version>.js), so
   // a new version is a cache miss; storing it drops the old copy.
@@ -2257,4 +2292,44 @@ self.addEventListener("fetch", function (event) {
       });   // releaseCopy
     })
   );
+});
+// ---- Notifications with orOS closed (webpush.js, relay/push.js) ----
+// The packet was encrypted by the page for this subscription; the
+// browser has decrypted it already. While an orOS window is on screen
+// the in-app engine rings, so nothing is shown here. Otherwise one
+// notification, tag = the shell's dedupKey, so an in-app one for the
+// same reminder replaces it instead of doubling.
+self.addEventListener("push", function (event) {
+  var d = null;
+  try { d = event.data ? event.data.json() : null; } catch (e) { d = null; }
+  if (!d || d.v !== 1 || typeof d.title !== "string" || typeof d.k !== "string") return;
+  event.waitUntil(self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(function (list) {
+    var onScreen = list.some(function (c) { return c.visibilityState === "visible"; });
+    if (onScreen && d.ns !== "system") return;
+    var alarm = d.kind === "alarm";
+    return self.registration.showNotification("orOS — " + d.title.slice(0, 120), {
+      body: typeof d.body === "string" ? d.body.slice(0, 240) : "",
+      tag: d.k.slice(0, 200),
+      renotify: alarm,
+      requireInteraction: alarm,
+      vibrate: alarm ? [400, 200, 400, 200, 400] : [200],
+      icon: "./icons/icon-192.png",
+      badge: "./icons/icon-192.png",
+      timestamp: typeof d.at === "number" ? d.at : Date.now(),
+      data: { link: typeof d.link === "string" ? d.link.slice(0, 200) : "" }
+    });
+  }));
+});
+
+self.addEventListener("notificationclick", function (event) {
+  var link = (event.notification.data && event.notification.data.link) || "";
+  event.notification.close();
+  event.waitUntil(self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(function (list) {
+    var c = list.filter(function (w) { return new URL(w.url).origin === self.location.origin; })[0];
+    if (c) {
+      if (link) c.postMessage({ t: "oros-push-open", link: link });
+      return c.focus();
+    }
+    return self.clients.openWindow("./" + (link ? "?phone-open=" + encodeURIComponent(link) : ""));
+  }));
 });

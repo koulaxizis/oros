@@ -12,6 +12,7 @@ const path = require("path");
 const ROOT = path.join(__dirname, "..");
 const read = (p) => fs.readFileSync(path.join(ROOT, p), "utf8");
 const S = require(path.join(ROOT, "solo.js"));
+const CSP = require(path.join(ROOT, ".github", "scripts", "csp.js"));
 const F = require(path.join(ROOT, "fileopen.js"));
 const BASE = JSON.parse(read("manifest.webmanifest"));
 const APPS = JSON.parse(read("apps.json")).apps;
@@ -21,7 +22,7 @@ test("every single app is a registered internal app with a page, a manifest and 
   S.ids().forEach((id) => {
     const app = APPS.find((a) => a.id === id);
     assert.ok(app && app.type === "internal", id + ": not an internal app");
-    assert.equal(read(id + "/solo.html"), S.pageFor(id, BASE), id + ": solo.html is stale (node tools/solo-manifests.js)");
+    assert.equal(read(id + "/solo.html"), CSP.withPolicy(S.pageFor(id, BASE)), id + ": solo.html is stale (node tools/solo-manifests.js)");
     assert.deepEqual(JSON.parse(read(id + "/manifest.webmanifest")), S.manifestFor(id, F.table(), BASE),
       id + ": manifest is stale (node tools/solo-manifests.js)");
     ["", "-192", "-512", "-maskable-512"].forEach((k) => {
@@ -335,6 +336,9 @@ test("F-Droid repo (FDROID-1): packages, links, launch version and metadata for 
   assert.match(wf, /repo_keyalias: orosrepo/);
   assert.match(wf, /SITE: https:\/\/koulaxizis\.github\.io\/oros-fdroid/);
   assert.match(wf, /versions\.json/);
+  // Each build gets its own file name in the repository (a fixed oros.apk
+  // made F-Droid report "Hash not matching" and HTTP 416 after an update)
+  assert.match(wf, /mv "\$f" "\$fd\/repo\/\$\{pkg\}_\$\{code\}_\$\{sum\}\.apk"/);
 });
 
 test("F-Droid store listing (FDROID-2): texts, categories, pictures and front page", () => {
@@ -369,7 +373,7 @@ test("F-Droid store listing (FDROID-2): texts, categories, pictures and front pa
   fs.rmSync(tmp, { recursive: true, force: true });
   // Store-only changes republish the repository
   const wf = read(".github/workflows/fdroid.yml");
-  assert.match(wf, /paths: \['tools\/fdroid-metadata\.js', 'tools\/fdroid\/\*\*'\]/);
+  assert.match(wf, /paths: \['tools\/fdroid-metadata\.js', 'tools\/fdroid\/\*\*', '\.github\/workflows\/fdroid\.yml'\]/);
   assert.match(wf, /tools\/fdroid-metadata\.js tools\/fdroid \|/);
   assert.match(wf, /cp -r "\$fd\/site\/\." "\$site\/"/);
 });

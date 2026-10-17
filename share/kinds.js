@@ -1,7 +1,8 @@
 // ============================================================
 // orOS "Send to someone" — share/kinds.js (pure core, v1.0.0)
 // One item (a To-Do list, a note, a contact, an event, a recipe,
-// a few bookmarks, a Calendar's free times or a Wiki article)
+// a few bookmarks, a Calendar's free times, a Wiki article, a whole
+// calendar / date range of the Calendar, or a photo album)
 // travels INSIDE a link:
 //   https://useoros.online/share/#1.<base64url of deflate-raw JSON>
 //   https://useoros.online/share/#p1.<base64url of salt|iv|AES-GCM>
@@ -36,12 +37,18 @@
 //                                    receiver's own local day + times
 //   slotEvent(d, day, min, lang)   → that time as "event" data (.ics, Calendar)
 //   slotMail(d, day, min, lang)    → mailto: link back to the sender, or ""
+//   calIcs(d, lang)                → a whole "cal" item as one .ics
+//   RELAY_ONLY                     → kinds that only travel as a link with
+//                                    an expiry ("album": its photos ride
+//                                    beside the JSON, share/relay.js)
+//   photoType(bytes)               → "image/jpeg" | "image/png" | "image/webp" | ""
 // ============================================================
 (function (root) {
   "use strict";
 
   var VER = 1;
-  var KINDS = ["list", "note", "contact", "event", "recipe", "links", "slots", "wiki"];
+  var KINDS = ["list", "note", "contact", "event", "recipe", "links", "slots", "wiki", "cal", "album"];
+  var RELAY_ONLY = ["album"];
   var MAX_LINK = 32768;          // characters of the code after "#"
   var MAX_JSON = 262144;         // bytes after decompression (bomb guard)
   var ITER = 600000;             // PBKDF2 rounds for password links
@@ -64,7 +71,9 @@
       slots: "Free times", slotsT: "Free times", slotsN: "{n} times to pick from", slots1: "1 time to pick from",
       slotLen: "{n} min", slotWith: "With {n}", slotSubj: "Booking: {t}, {w}",
       slotBody: "Hello{n},\n\nI'd like to take this time:\n{t}\n{w}\n\nThanks!",
-      slotZone: "{w} ({z} time)"
+      slotZone: "{w} ({z} time)",
+      cal: "Calendar", calT: "Calendar", calN: "{n} events", cal1: "1 event", calFrom: "from {d}", calTo: "to {d}",
+      album: "Album", albumT: "Photos", albumN: "{n} photos", album1: "1 photo", photo: "Photo {n}"
     },
     el: {
       list: "Λίστα", note: "Σημείωμα", contact: "Επαφή", event: "Γεγονός", recipe: "Συνταγή", links: "Σύνδεσμοι", wiki: "Άρθρο wiki",
@@ -79,7 +88,9 @@
       slots: "Ελεύθερες ώρες", slotsT: "Ελεύθερες ώρες", slotsN: "{n} ώρες για να διαλέξεις", slots1: "1 ώρα για να διαλέξεις",
       slotLen: "{n}′", slotWith: "Με: {n}", slotSubj: "Κράτηση: {t}, {w}",
       slotBody: "Γεια σου{n},\n\nΘα ήθελα να κλείσω αυτή την ώρα:\n{t}\n{w}\n\nΕυχαριστώ!",
-      slotZone: "{w} (ώρα {z})"
+      slotZone: "{w} (ώρα {z})",
+      cal: "Ημερολόγιο", calT: "Ημερολόγιο", calN: "{n} γεγονότα", cal1: "1 γεγονός", calFrom: "από {d}", calTo: "έως {d}",
+      album: "Άλμπουμ", albumT: "Φωτογραφίες", albumN: "{n} φωτογραφίες", album1: "1 φωτογραφία", photo: "Φωτογραφία {n}"
     }
   };
   function L(lang) { return S[lang] || S.en; }
@@ -282,7 +293,83 @@
     if (x2) o.x = x2;
     return o;
   }
-  var NORM = { list: normList, note: normNote, contact: normContact, event: normEvent, recipe: normRecipe, links: normLinks, slots: normSlots, wiki: normWiki };
+  // A whole calendar or a date range of it (share wave 3): the
+  // Calendar's own events, wall times in the zone `tz` (or the event's
+  // own `z`), labels as names + colours, excluded dates `xd` of a
+  // series. ≤ 5,000 events and about 3 MB of JSON (the relay opens up
+  // to 4 MB).
+  var COLOR_RE = /^#[0-9a-fA-F]{6}$/;
+  var CAL_MAX = 5000, CAL_BYTES = 3000000;
+  function normCalEv(x, nlb) {
+    if (!x || typeof x !== "object") return null;
+    var e = normEvent(x);
+    if (!e) return null;
+    if (!e.id) e.id = "c" + hashHex(JSON.stringify([e.t, e.d, e.s || "", e.l || ""]));
+    if (e.r) {
+      var seen = {}, xd = [];
+      arr(x.xd, 400).forEach(function (v) { if (validYmd(v) && !seen[v]) { seen[v] = 1; xd.push(v); } });
+      if (xd.length) e.xd = xd.sort();
+    }
+    if (e.s && typeof x.z === "string" && TZ_RE.test(x.z)) e.z = x.z;
+    if (typeof x.b === "number" && x.b % 1 === 0 && x.b >= 0 && x.b < nlb) e.b = x.b;
+    return e;
+  }
+  function normCal(d) {
+    var o = { t: line(d.t, 120) };
+    if (typeof d.tz === "string" && TZ_RE.test(d.tz)) o.tz = d.tz;
+    if (validYmd(d.f)) o.f = d.f;
+    if (validYmd(d.u) && (!o.f || d.u >= o.f)) o.u = d.u;
+    var lb = [];
+    arr(d.lb, 50).forEach(function (x) {
+      if (!x || typeof x !== "object") return;
+      lb.push({ n: line(x.n, 60), c: typeof x.c === "string" && COLOR_RE.test(x.c) ? x.c.toLowerCase() : "" });
+    });
+    if (lb.length) o.lb = lb;
+    var ev = [], ids = {}, size = 0;
+    arr(d.ev, CAL_MAX).forEach(function (x) {
+      var e = normCalEv(x, lb.length);
+      if (!e || ids[e.id]) return;
+      size += JSON.stringify(e).length + 1;
+      if (size > CAL_BYTES) return;
+      ids[e.id] = 1;
+      ev.push(e);
+    });
+    if (!ev.length) return null;
+    o.ev = ev;
+    return o;
+  }
+  // A photo album (share wave 4): only the list travels in the JSON;
+  // the photos (re-drawn by the sender, so no EXIF / GPS) ride beside
+  // it in the relay item as one byte run, each at [o, o + n).
+  var PHOTO_MIME = ["image/jpeg", "image/png", "image/webp"];
+  var ALBUM_MAX = 200, PHOTO_MAX = 8388608, ALBUM_BYTES = 26214400;
+  function normAlbum(d) {
+    var p = [], total = 0;
+    arr(d.p, ALBUM_MAX).forEach(function (x) {
+      if (!x || typeof x !== "object") return;
+      var o = num(x.o, 0, ALBUM_BYTES), n = num(x.n, 1, PHOTO_MAX);
+      var w = num(x.w, 1, 8192), h = num(x.h, 1, 8192);
+      if (o === null || n === null || o % 1 || n % 1 || o + n > ALBUM_BYTES || PHOTO_MIME.indexOf(x.m) < 0) return;
+      if (total + n > ALBUM_BYTES) return;
+      total += n;
+      var q = { o: o, n: n, m: x.m };
+      if (w !== null && h !== null && !(w % 1) && !(h % 1)) { q.w = w; q.h = h; }
+      var c = line(x.c, 300);
+      if (c) q.c = c;
+      p.push(q);
+    });
+    if (!p.length) return null;
+    return { t: line(d.t, 120), p: p };
+  }
+  // The first bytes say what a photo is; anything else (SVG, HTML…) is not shown.
+  function photoType(b) {
+    if (!b || b.length < 12) return "";
+    if (b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return "image/jpeg";
+    if (b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47 && b[4] === 0x0d && b[5] === 0x0a) return "image/png";
+    if (b[0] === 0x52 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x46 && b[8] === 0x57 && b[9] === 0x45 && b[10] === 0x42 && b[11] === 0x50) return "image/webp";
+    return "";
+  }
+  var NORM = { list: normList, note: normNote, contact: normContact, event: normEvent, recipe: normRecipe, links: normLinks, slots: normSlots, wiki: normWiki, cal: normCal, album: normAlbum };
   function norm(kind, data) {
     if (!NORM[kind] || !data || typeof data !== "object" || Array.isArray(data)) return null;
     try { return NORM[kind](data); } catch (e) { return null; }
@@ -354,7 +441,11 @@
   function encode(env, password) {
     var e = unpack(env);
     if (!e) return Promise.reject(new Error("bad"));
+    if (RELAY_ONLY.indexOf(e.k) >= 0) return Promise.reject(new Error("big"));
     var raw = new TextEncoder().encode(JSON.stringify(e));
+    // The receiving page refuses more than MAX_JSON: such an item can
+    // only travel with an expiry (share/relay.js).
+    if (raw.length > MAX_JSON) return Promise.reject(new Error("big"));
     var body = hasZip()
       ? deflate(raw).then(function (z) { return { z: 1, b: z }; })
       : Promise.resolve({ z: 0, b: raw });
@@ -427,7 +518,7 @@
   function titleOf(env, lang) {
     var d = env.d, s = L(lang);
     var t = env.k === "contact" ? contactName(d) : d.t;
-    return t || (env.k === "links" ? s.sharedLinks : env.k === "slots" ? s.slotsT : s.untitled);
+    return t || (env.k === "links" ? s.sharedLinks : env.k === "slots" ? s.slotsT : env.k === "cal" ? s.calT : env.k === "album" ? s.albumT : s.untitled);
   }
   function fmtDate(ymd, lang) {
     var m = YMD_RE.exec(ymd);
@@ -467,7 +558,15 @@
       d.s.forEach(function (x) { cnt += x.m.length; });
       return s.slots + " \u00ab" + name + "\u00bb \u00b7 " + (cnt === 1 ? s.slots1 : fill(s.slotsN, { n: cnt }));
     }
+    if (env.k === "album") return s.album + " \u00ab" + name + "\u00bb \u00b7 " + (d.p.length === 1 ? s.album1 : fill(s.albumN, { n: d.p.length }));
+    if (env.k === "cal") return s.cal + " \u00ab" + name + "\u00bb \u00b7 " + (d.ev.length === 1 ? s.cal1 : fill(s.calN, { n: d.ev.length }));
     return s[env.k] + " \u00ab" + name + "\u00bb";
+  }
+  // "from 1 Nov 2026 to 31 Dec 2026", "" for a whole calendar.
+  function calRange(d, lang) {
+    var s = L(lang);
+    return [d.f ? fill(s.calFrom, { d: fmtDate(d.f, lang) }) : "", d.u ? fill(s.calTo, { d: fmtDate(d.u, lang) }) : ""]
+      .filter(Boolean).join(" ");
   }
 
   // ---------- 7. Plain text ----------
@@ -527,6 +626,19 @@
       });
       if (d.tz) out.push("(" + d.tz + ")");
       if (d.m) out.push("", s.email + ": " + d.m);
+    } else if (env.k === "album") {
+      out.push(d.p.length === 1 ? s.album1 : fill(s.albumN, { n: d.p.length }));
+      d.p.forEach(function (x, i) { if (x.c) out.push((i + 1) + ". " + x.c); });
+    } else if (env.k === "cal") {
+      var rg = calRange(d, lang);
+      if (rg) out.push(rg);
+      out.push("");
+      d.ev.slice().sort(function (a, b) { return a.d < b.d ? -1 : a.d > b.d ? 1 : (a.s || "") < (b.s || "") ? -1 : 1; })
+        .forEach(function (e) {
+          out.push(whenText(e, lang) + " \u00b7 " + (e.t || s.untitled) + (e.r ? " (" + repeatText(e.r, lang) + ")" : "") +
+            (e.l ? " \u00b7 " + e.l : ""));
+        });
+      if (d.tz) out.push("", "(" + d.tz + ")");
     } else if (env.k === "links") {
       out.push("");
       d.i.forEach(function (it) {
@@ -595,6 +707,40 @@
     out.push("END:VEVENT", "END:VCALENDAR");
     return out.join("\r\n") + "\r\n";
   }
+  // A whole "cal" item: one VEVENT per event, timed ones in their zone
+  // (TZID = IANA name, which the Calendar's parser and the big calendar
+  // apps read), series with their RRULE and excluded dates, the label
+  // as CATEGORIES (the Calendar matches it to a label by name).
+  function calIcs(d, lang) {
+    var F = { D: "DAILY", W: "WEEKLY", M: "MONTHLY", Y: "YEARLY" };
+    var out = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//orOS//Share//EN", "CALSCALE:GREGORIAN",
+      "X-WR-CALNAME:" + vEsc(d.t || L(lang).calT)];
+    if (d.tz) out.push("X-WR-TIMEZONE:" + d.tz);
+    d.ev.forEach(function (e) {
+      var zone = e.s ? (e.z || d.tz || "") : "", zp = zone ? ";TZID=" + zone : "";
+      out.push("BEGIN:VEVENT", "UID:" + e.id + "@share.oros", "DTSTAMP:20000101T000000Z");
+      if (!e.s) {
+        out.push("DTSTART;VALUE=DATE:" + icsDt(e.d), "DTEND;VALUE=DATE:" + icsDt(addDay(e.de || e.d)));
+      } else {
+        out.push("DTSTART" + zp + ":" + icsDt(e.d, e.s), "DTEND" + zp + ":" + icsDt(e.de || e.d, e.e || e.s));
+      }
+      out.push("SUMMARY:" + vEsc(e.t || L(lang).untitled));
+      if (e.x) out.push("DESCRIPTION:" + vEsc(e.x));
+      if (e.l) out.push("LOCATION:" + vEsc(e.l));
+      if (e.r) {
+        out.push("RRULE:" + (e.r.x || ("FREQ=" + F[e.r.f] + (e.r.i === 2 ? ";INTERVAL=2" : "") + (e.r.u ? ";UNTIL=" + icsDt(e.r.u) : ""))));
+        if (e.xd) {
+          out.push(e.s ? "EXDATE" + zp + ":" + e.xd.map(function (x) { return icsDt(x, e.s); }).join(",")
+                       : "EXDATE;VALUE=DATE:" + e.xd.map(function (x) { return icsDt(x); }).join(","));
+        }
+      }
+      var lb = typeof e.b === "number" && d.lb ? d.lb[e.b] : null;
+      if (lb && lb.n) out.push("CATEGORIES:" + vEsc(lb.n));
+      out.push("END:VEVENT");
+    });
+    out.push("END:VCALENDAR");
+    return out.join("\r\n") + "\r\n";
+  }
   function hashHex(s) {
     var h = 0x811c9dc5;
     for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
@@ -621,6 +767,7 @@
     if (env.k === "contact") return { name: fileName(name, ".vcf"), mime: "text/vcard;charset=utf-8", text: vcard(env.d) };
     if (env.k === "event") return { name: fileName(name, ".ics"), mime: "text/calendar;charset=utf-8", text: ics(env.d) };
     if (env.k === "links") return { name: fileName(name, ".html"), mime: "text/html;charset=utf-8", text: netscape(env.d, lang) };
+    if (env.k === "cal") return { name: fileName(name, ".ics"), mime: "text/calendar;charset=utf-8", text: calIcs(env.d, lang) };
     if (env.k === "wiki") return { name: fileName(name, ".md"), mime: "text/markdown;charset=utf-8", text: "# " + env.d.t + "\n\n" + env.d.x + "\n" };
     return { name: fileName(name, ".txt"), mime: "text/plain;charset=utf-8", text: text(env, lang) + "\n" };
   }
@@ -641,8 +788,10 @@
     if (env.k === "contact") return { app: "contacts", target: { importVcf: { name: fileName(contactName(d), ".vcf"), text: vcard(d) } } };
     if (env.k === "event") return { app: "calendar", target: { importIcs: { name: fileName(d.t, ".ics"), text: ics(d) } } };
     if (env.k === "recipe") return { app: "meals", target: { addRecipe: d } };
+    if (env.k === "cal") return { app: "calendar", target: { importIcs: { name: fileName(d.t || s.calT, ".ics"), text: calIcs(d, lang) } } };
     if (env.k === "wiki") return { app: "wiki", target: { addArticle: { t: d.t, x: d.x } } };
     if (env.k === "slots") return null;          // a time is picked on the page first (slotEvent)
+    if (env.k === "album") return null;          // photos are saved one by one on the page
     if (d.i.length === 1) return { app: "bookmarks", target: { add: { url: d.i[0].u, title: d.i[0].t } } };
     return { app: "bookmarks", target: { addMany: { folder: d.t || s.sharedLinks, items: d.i.map(function (it) { return { url: it.u, title: it.t }; }) } } };
   }
@@ -711,11 +860,11 @@
   }
 
   var api = {
-    VER: VER, KINDS: KINDS, MAX_LINK: MAX_LINK, MAX_JSON: MAX_JSON, ITER: ITER,
+    VER: VER, KINDS: KINDS, RELAY_ONLY: RELAY_ONLY, photoType: photoType, MAX_LINK: MAX_LINK, MAX_JSON: MAX_JSON, ITER: ITER,
     norm: norm, pack: pack, encode: encode, decode: decode, isLocked: isLocked, codeFromHash: codeFromHash,
     summary: summary, title: titleOf, text: text, file: file, target: target,
     whenText: whenText, repeatText: repeatText, addrText: addrText, contactName: contactName,
-    vcard: vcard, ics: ics, netscape: netscape, strings: L,
+    vcard: vcard, ics: ics, calIcs: calIcs, calRange: calRange, fmtDate: fmtDate, netscape: netscape, strings: L,
     slotWhen: slotWhen, slotEvent: slotEvent, slotMail: slotMail, hm: hmOf
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

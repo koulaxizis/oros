@@ -53,6 +53,7 @@
   function appLang() {
     try {
       var p = parentWin();
+      if (window.orosI18n) return window.orosI18n.lang();
       if (p && (p.orosLang === "el" || p.orosLang === "en")) return p.orosLang;
       return localStorage.getItem("oros-lang") === "el" ? "el" : "en";
     } catch (e) { return "en"; }
@@ -437,7 +438,11 @@
     var hideAll = button(t("m.hideAll"), "m.hideAll", function () { act("menu.hideAll"); });
     showAll.disabled = shownN === total;
     hideAll.disabled = shownN === 0;
-    c.appendChild(actions(showAll, hideAll));
+    if (s.menuProfiles) {
+      // Home, Work, School…: the first-run screen, over the current menu.
+      var prof = button(t("m.profiles"), "m.profiles", function () { act("menu.profiles"); });
+      c.appendChild(actions(showAll, hideAll, prof));
+    } else c.appendChild(actions(showAll, hideAll));
     c.appendChild(el("p", "m-count", t("m.count", { n: shownN, total: total })));
 
     var find = el("input", "m-find");
@@ -483,6 +488,13 @@
   }
 
   // ---------- 5. Section: Notifications ----------
+  // [{ id, name }] of Ringtone Composer (shell, stickies/host.js)
+  function melodyList() {
+    var p = parentWin();
+    try { return p && p.orosMelodies && typeof p.orosMelodies.list === "function" ? p.orosMelodies.list() : []; }
+    catch (e) { return []; }
+  }
+
   function nSet(name, value) {
     var N = notifs();
     if (N) N.setSetting(name, value);
@@ -503,6 +515,7 @@
     })));
     host.appendChild(c1);
     secPhoneReminders(host);
+    secWebPush(host);
 
     var c2 = card(null);
     c2.appendChild(row(t("n.position"), select(C.POSITIONS.map(function (p) {
@@ -513,9 +526,13 @@
       return { value: v, label: v.charAt(0).toUpperCase() + v.slice(1) };
     }), N.getSetting("style", "oros"), "n.style", function (v) { nSet("style", v); }),
       { forId: "f-n.style" }));
-    c2.appendChild(row(t("n.sound"), select(C.SOUNDS.map(function (v) {
+    // the built-in sounds, then the Ringtone Composer melodies ("rt:<id>")
+    var sndCur = String(N.getSetting("sound", "none")), sndOpts = C.SOUNDS.map(function (v) {
       return { value: v, label: t("n.sound." + v) };
-    }), N.getSetting("sound", "none"), "n.sound", function (v) { nSet("sound", v); }),
+    });
+    melodyList().forEach(function (m) { sndOpts.push({ value: "rt:" + m.id, label: t("n.sound.rt", { name: m.name || "…" }) }); });
+    if (/^rt:/.test(sndCur) && !sndOpts.some(function (o) { return o.value === sndCur; })) sndOpts.push({ value: sndCur, label: t("n.sound.gone") });
+    c2.appendChild(row(t("n.sound"), select(sndOpts, sndCur, "n.sound", function (v) { nSet("sound", v); }),
       { forId: "f-n.sound" }));
 
     var volWrap = el("div", "range");
@@ -616,6 +633,63 @@
     host.appendChild(c);
   }
 
+  // Notifications with orOS closed (webpush.js): optional, off by
+  // default, per device; hidden in the Android app (it rings itself).
+  var pushOff = null, pushNote = "";
+  function webPush() {
+    var p = parentWin();
+    try { return p && p.orosPush && typeof p.orosPush.enable === "function" ? p.orosPush : null; } catch (e) { return null; }
+  }
+  function secWebPush(host) {
+    var W = webPush();
+    if (!W || phone()) return;
+    if (!pushOff) pushOff = W.onChange(function () { render(); });
+    var c = card(null);
+    if (!W.supported()) {
+      c.appendChild(row(t("n.push"), el("span", "hint", t("n.push.unsupported")), {}));
+      host.appendChild(c);
+      return;
+    }
+    var st = W.state();
+    c.appendChild(row(t("n.push"), switchBtn(st.on, "n.push", function (v) {
+      pushNote = "";
+      (v ? W.enable() : W.disable()).catch(function (e) {
+        var code = e && e.code;
+        pushNote = code === "denied" ? "n.push.denied" : (code === "unsupported" || code === "nosubscribe") ? "n.push.unsupported" : "n.push.unavailable";
+        render();
+      }).then(function () { render(); });
+    }, t("n.push")), { hint: t("n.push.hint") }));
+    c.appendChild(el("div", "hint", t("n.push.desktop")));
+    if (st.on && st.at) {
+      c.appendChild(el("div", "hint", t("n.push.status", { n: st.n,
+        when: new Date(st.at).toLocaleString(document.documentElement.lang || undefined, { dateStyle: "short", timeStyle: "short" }) })));
+    }
+    if (st.on && st.err && st.err !== "rate") c.appendChild(el("div", "hint", t("n.push.failed")));
+    if (pushNote) c.appendChild(el("div", "hint", t(pushNote)));
+    var devs = W.devices ? W.devices() : [];
+    if (devs.length) {
+      var dl = el("div", "checks");
+      c.appendChild(el("div", "hint", t("n.push.devices")));
+      devs.forEach(function (d) {
+        var line = el("div", "pair");
+        line.appendChild(el("span", "pair-label", (d.name || "?") + (d.self ? " (" + t("n.push.this") + ")" : "")));
+        line.appendChild(button(t("n.push.remove"), "n.push.remove:" + d.id, function () {
+          W.remove(d.id).then(function () { render(); });
+        }));
+        dl.appendChild(line);
+      });
+      c.appendChild(dl);
+    }
+    if (st.on) {
+      c.appendChild(actions(button(t("n.push.test"), "n.push.test", function () {
+        W.test(t("n.push.test.title"), t("n.push.test.body")).then(function () {
+          pushNote = "n.push.test.sent"; render();
+        }, function () { pushNote = "n.push.unavailable"; render(); });
+      })));
+    }
+    host.appendChild(c);
+  }
+
   // In the orOS Android app only (BR-PHONE v5): Health Connect.
   function secPhoneHealth(host) {
     var P = phone();
@@ -652,10 +726,86 @@
   // The passphrase lives only in this field and in the shell call;
   // it survives repaints in memory and is cleared once used.
   var pass = { value: "", shown: false, remember: null };
+  // WebDAV W2: the server form. The password stays in memory only
+  // until it is handed to the shell.
+  // W4: move = the same form moves this device's Dropbox cloud.
+  var dav = { open: false, move: false, url: "", user: "", pass: "", dir: "orOS", relay: false };
+
+  function davInput(key, label, type, ph, auto) {
+    var wrap = el("div", "dav-field");
+    var lab = el("label", "row-label", label);
+    lab.htmlFor = "f-dav-" + key;
+    wrap.appendChild(lab);
+    var inp = el("input");
+    inp.id = "f-dav-" + key;
+    inp.type = type;
+    inp.autocomplete = auto;
+    inp.spellcheck = false;
+    inp.setAttribute("autocapitalize", "off");
+    if (ph) inp.placeholder = ph;
+    inp.value = dav[key];
+    inp.setAttribute("data-k", "dav-" + key);
+    inp.addEventListener("input", function () { dav[key] = inp.value; });
+    wrap.appendChild(inp);
+    return wrap;
+  }
+
+  // W3: "Through the orOS relay" (servers without CORS, the user's
+  // choice) and "Sign in with Nextcloud" (Login Flow v2: no password
+  // typed here).
+  function davForm(y) {
+    var form = el("form", "pass dav-form");
+    form.setAttribute("autocomplete", "off");
+    if (dav.move) form.appendChild(el("div", "hint", t("y.move.dav.hint")));
+    form.appendChild(el("div", "hint", t("y.dav.hint")));
+    form.appendChild(davInput("url", t("y.dav.url"), "url", t("y.dav.url.ph"), "url"));
+    form.appendChild(davInput("dir", t("y.dav.dir"), "text", "orOS", "off"));
+    var rl = el("label", "check");
+    var rc = el("input");
+    rc.type = "checkbox";
+    rc.setAttribute("data-k", "dav-relay");
+    rc.checked = dav.relay;
+    rc.addEventListener("change", function () { dav.relay = rc.checked; });
+    rl.appendChild(rc);
+    rl.appendChild(el("span", null, t("y.dav.relay")));
+    form.appendChild(rl);
+    form.appendChild(el("div", "hint", t("y.dav.relay.hint")));
+    if (y.ncAvailable) {
+      form.appendChild(actions(y.ncWaiting
+        ? button(t("y.dav.nc.cancel"), "y.dav.nc.cancel", function () { act("sync.cancelNc"); })
+        : button(t("y.dav.nc"), "y.dav.nc", function () {
+            act("sync.connectNc", { url: dav.url, dir: dav.dir, relay: dav.relay, move: dav.move });
+          })));
+      form.appendChild(el("div", "hint", t("y.dav.nc.hint")));
+    }
+    form.appendChild(davInput("user", t("y.dav.user"), "text", "", "username"));
+    form.appendChild(davInput("pass", t("y.dav.pass"), "password", "", "current-password"));
+    var go = el("button", "btn primary", t(dav.move ? "y.move.go" : "y.dav.go"));
+    go.type = "submit";
+    go.setAttribute("data-k", dav.move ? "y.move.go" : "y.dav.go");
+    form.appendChild(actions(go, button(t("y.dav.cancel"), "y.dav.cancel", function () {
+      dav.open = false;
+      dav.move = false;
+      dav.pass = "";
+      render();
+    })));
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var arg = { url: dav.url, user: dav.user, pass: dav.pass, dir: dav.dir, relay: dav.relay };
+      dav.pass = "";
+      act(dav.move ? "sync.moveDav" : "sync.connectDav", arg);
+    });
+    return form;
+  }
 
   function secSync(host, s) {
     var y = s.sync;
     var st = C.syncState(y);
+    // The form connects while off and moves while on; a change of
+    // state (connected, moved) closes it.
+    var formFor = st === "off" ? "connect" : st === "locked" ? "" : "move";
+    if (dav.open && formFor !== (dav.move ? "move" : "connect")) { dav.open = false; dav.move = false; dav.pass = ""; }
+    if (dav.move && y.provider !== "dropbox") { dav.open = false; dav.move = false; dav.pass = ""; }
     var c1 = card(null);
     var status = el("div", "status status-" + st);
     status.appendChild(el("span", "dot"));
@@ -663,14 +813,28 @@
     txt.appendChild(el("div", "status-main",
       st === "off" ? t("y.status.off") : st === "locked" ? t("y.status.locked") :
       st === "dirty" ? t("y.status.dirty") : t("y.status.on")));
-    if (y.email) txt.appendChild(el("div", "hint", y.email));
+    if (y.email) {
+      txt.appendChild(el("div", "hint",
+        t(y.provider === "webdav" ? "y.via.webdav" : "y.via.dropbox", { who: y.email })));
+    }
     status.appendChild(txt);
     c1.appendChild(status);
 
     if (st === "off") {
       if (y.available) {
         c1.appendChild(el("p", "hint", t("y.connect.hint")));
-        c1.appendChild(actions(button(t("y.connect"), "y.connect", function () { act("sync.connect"); }, "primary")));
+        if (dav.open && y.davAvailable) {
+          c1.appendChild(davForm(y));
+        } else {
+          c1.appendChild(actions(
+            button(t("y.connect"), "y.connect", function () { act("sync.connect"); }, "primary"),
+            y.davAvailable ? button(t("y.dav"), "y.dav", function () {
+              dav.open = true;
+              render();
+              var f = $("f-dav-url");
+              if (f) f.focus();
+            }) : null));
+        }
       }
     } else if (st === "locked") {
       var form = el("form", "pass");
@@ -730,6 +894,21 @@
       c1.appendChild(actions(
         button(t("y.pull"), "y.pull", function () { act("sync.pull"); }),
         button(t("y.push"), "y.push", function () { act("sync.push"); })));
+      // WebDAV W4: move this cloud to the other provider.
+      if (y.moveAvailable && dav.move && dav.open) {
+        c1.appendChild(davForm(y));
+      } else if (y.moveAvailable && y.provider === "dropbox" && y.davAvailable) {
+        c1.appendChild(actions(button(t("y.move.dav"), "y.move.dav", function () {
+          dav.open = true;
+          dav.move = true;
+          render();
+          var f = $("f-dav-url");
+          if (f) f.focus();
+        })));
+      } else if (y.moveAvailable && y.provider === "webdav") {
+        c1.appendChild(actions(button(t("y.move.db"), "y.move.db", function () { act("sync.moveDb"); })));
+        c1.appendChild(el("div", "hint", t("y.move.db.hint")));
+      }
     }
     if (y.msg && y.msg.text) {
       var m = el("div", "msg msg-" + (y.msg.kind === "err" ? "err" : y.msg.kind === "ok" ? "ok" : "dim"), y.msg.text);
@@ -746,6 +925,8 @@
         { scope: "syncInterval", forId: "f-y.interval" }));
       host.appendChild(c2);
 
+      if (y.canRestore) host.appendChild(backupsCard(y));
+
       var c3 = card(null);
       c3.appendChild(actions(
         button(t("y.changePass"), "y.changePass", function () { act("sync.changePass"); }),
@@ -755,6 +936,80 @@
         }, "danger")));
       host.appendChild(c3);
     }
+  }
+
+  // A43: the cloud's daily backups, newest first, each with Restore
+  // (two taps). A backup sealed with an older passphrase asks for it
+  // here; that field, like the unlock one, lives only in memory.
+  var oldPass = { value: "" };
+  function backupsCard(y) {
+    var c = card(t("y.backups"));
+    c.appendChild(el("p", "hint", t("y.backups.hint")));
+    var b = y.backups;
+    if (!b) {
+      c.appendChild(actions(button(t("y.backups.show"), "y.backups.show", function () { act("sync.backups.load"); })));
+      return c;
+    }
+    if (b.err) c.appendChild(el("div", "msg msg-err", b.err));
+    if (b.loading && !b.list.length) c.appendChild(el("div", "hint", t("y.backups.loading")));
+    else if (!b.list.length && !b.err) c.appendChild(el("div", "hint", t("y.backups.none")));
+    var locale = LANG === "el" ? "el-GR" : "en-GB";
+    b.list.forEach(function (e, i) {
+      var d = new Date(e.at);
+      var when = isNaN(d.getTime()) ? e.name : d.toLocaleString(locale, { dateStyle: "medium", timeStyle: "short" });
+      var size = e.size > 0 ? (e.size < 1048576 ? Math.max(1, Math.round(e.size / 1024)) + " KB"
+                                                 : (e.size / 1048576).toFixed(1) + " MB") : "";
+      var r = el("div", "row backup-row");
+      var head = el("div", "row-head");
+      head.appendChild(el("div", "row-label", when));
+      r.appendChild(head);
+      if (size) r.appendChild(el("div", "hint", size));
+      var ctl = el("div", "row-ctl");
+      if (y.restoring === e.name) {
+        var w = button(t("y.backups.restoring"), "y.restore:" + i, function () {});
+        w.disabled = true;
+        ctl.appendChild(w);
+      } else {
+        var rb = confirmBtn(t("y.backups.restore"), t("y.backups.restore.confirm"), "y.restore:" + i, function () {
+          act("sync.restore", { name: e.name });
+        });
+        if (y.restoring) rb.disabled = true;
+        ctl.appendChild(rb);
+      }
+      r.appendChild(ctl);
+      if (y.oldPassFor === e.name && !y.restoring) r.appendChild(oldPassForm(e.name));
+      c.appendChild(r);
+    });
+    return c;
+  }
+  function oldPassForm(name) {
+    var form = el("form", "pass");
+    form.setAttribute("autocomplete", "off");
+    var lab = el("label", "row-label", t("y.backups.old"));
+    lab.htmlFor = "f-oldpass";
+    form.appendChild(lab);
+    var inp = el("input");
+    inp.id = "f-oldpass";
+    inp.type = "password";
+    inp.autocomplete = "off";
+    inp.spellcheck = false;
+    inp.value = oldPass.value;
+    inp.setAttribute("data-k", "oldpass");
+    inp.addEventListener("input", function () { oldPass.value = inp.value; });
+    var ir = el("div", "pass-row");
+    ir.appendChild(inp);
+    form.appendChild(ir);
+    var go = el("button", "btn primary", t("y.backups.old.go"));
+    go.type = "submit";
+    go.setAttribute("data-k", "y.backups.old.go");
+    form.appendChild(actions(go));
+    form.addEventListener("submit", function (ev) {
+      ev.preventDefault();
+      var pw = oldPass.value;
+      oldPass.value = "";
+      if (pw) act("sync.restore", { name: name, old: pw });
+    });
+    return form;
   }
 
   // ---------- 7. Section: Backups ----------
@@ -794,9 +1049,16 @@
   // ---------- 8. Section: Language & search ----------
   function secLanguage(host, s) {
     var c1 = card(t("l.lang"), "lang");
-    c1.appendChild(segmented([
-      { value: "en", label: "English" }, { value: "el", label: "Ελληνικά" }
-    ], s.lang, "lang", function (v) { set("lang", v); }, t("l.lang")));
+    // Each language under its own name; a pack language that is not
+    // complete yet says so (the rest shows in English).
+    var langs = Array.isArray(s.langs) && s.langs.length ? s.langs
+      : [{ code: "en", name: "English" }, { code: "el", name: "Ελληνικά" }];
+    c1.appendChild(segmented(langs.map(function (l) {
+      return { value: l.code, label: l.name };
+    }), s.lang, "lang", function (v) { set("lang", v); }, t("l.lang")));
+    langs.forEach(function (l) {
+      if (l.code === s.lang && l.partial) c1.appendChild(el("p", "hint", t("l.lang.partial")));
+    });
     host.appendChild(c1);
 
     var c2 = card(t("l.search"), "search");
@@ -1358,6 +1620,7 @@
     var c2 = card(t("x.more"));
     if (has.device) c2.appendChild(linkRow(t("x.device"), "x.device", function () { act("openApp", "device"); }));
     c2.appendChild(linkRow(t("x.about"), "x.about", function () { act("info"); }));
+    c2.appendChild(linkRow(t("x.sharelinks"), "x.sharelinks", function () { act("shareLinks"); }));
     if (has.weather) c2.appendChild(linkRow(t("x.weather"), "x.weather", function () { act("openApp", "weather"); }));
     if (has.wallpaper) c2.appendChild(linkRow(t("x.wallgen"), "x.wallgen", function () { act("openApp", "wallpaper"); }));
     host.appendChild(c2);

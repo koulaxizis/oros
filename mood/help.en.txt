@@ -38,7 +38,7 @@ Pick `7 days`, `30 days` or `All`. You get a `Weekly recap`, your `Goals`, `Patt
 
 `Filters` narrows most of these to one location, person or habit; `Clear filters` resets. If you use [Cycle](app:cycle) on this device, `Patterns` can also tell you how you feel on period days.
 
-`Export PDF` saves a PDF report of the range and filters you've chosen.
+`Export PDF` saves a PDF report of the range and filters you've chosen. Inside orOS, `Open in Spreadsheet` next to it opens the same entries as a new sheet in [Spreadsheet](app:spreadsheet), one row per entry.
 
 ## Import from another app
 `Import…`, next to `Export PDF` at the top of `Insights`, reads a file you exported from another mood app. Mood shows what it found before anything changes: the app, how many entries and which dates, how each mood maps to a feeling, and which activities are new. Pick another feeling for any mood (or `Skip`) and press `Import`. A toast then offers `Undo`.
@@ -64,6 +64,8 @@ Your entries, your own locations, people and triggers, your feelings and activit
 
 ## Tips
 - Your entries show up in [Calendar](app:calendar) on their day; opening one there brings you back here to edit it.
+- In `Entries`, the book button (`Write about it`) opens that day in [Diary](app:diary) with your feelings and note filled in; nothing is saved there until you keep it.
+- Diary shows the feelings of each day under its date; tapping them brings you here to that day's entries (`Show all days` lists everything again).
 - Once you have entries, orOS reminds you once a day if you haven't logged anything that day. Turn it off in [Notifications](help:t/notifications).
 
 ## Limits

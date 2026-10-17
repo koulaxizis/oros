@@ -54,6 +54,8 @@
       "calc.troll.on": "On",
       "calc.troll.off": "Off",
       "calc.copy_hint": "Click to copy",
+      "calc.send": "Send to…",
+      "calc.send.title": "Send the result to another app",
       "calc.undo": "Undone.",
       "calc.copied": "Copied to clipboard.",
       "calc.intensity": "Troll intensity",
@@ -146,6 +148,8 @@
       "calc.troll.on": "Ενεργό",
       "calc.troll.off": "Ανενεργό",
       "calc.copy_hint": "Κλικ για αντιγραφή",
+      "calc.send": "Αποστολή σε…",
+      "calc.send.title": "Αποστολή του αποτελέσματος σε άλλη εφαρμογή",
       "calc.undo": "Αναίρεση πράξης.",
       "calc.copied": "Αντιγράφηκε στο πρόχειρο.",
       "calc.intensity": "Ένταση πειράγματος",
@@ -1403,6 +1407,7 @@
     els.graph.hidden = m !== "graph";
     els.prog.hidden = m !== "prog";
     els.fin.hidden = m !== "fin";
+    if (els.sendBtn) els.sendBtn.hidden = !sendApi() || m === "graph" || m === "fin";
     savePrefs();
     if (m === "sci") { loadRates(); sciPreview(); if (user && !coarse()) els.sciIn.focus(); }
     if (m === "graph") { graphResize(); scheduleDraw(true); }
@@ -2586,6 +2591,40 @@
     document.getElementById("sv-csv").addEventListener("click", function () { exportFin("save"); });
   }
 
+  // "Send to…" (shell send/, BR-SEND): the shown result, or
+  // "expression = result" when one was just worked out, as text to
+  // another app of this orOS. Hidden without the shell bridge.
+  function sendApi() {
+    try { return window.parent !== window && window.parent.orosSend ? window.parent.orosSend : null; }
+    catch (e) { return null; }
+  }
+  function sendText() {
+    var m = state.ui.mode, res, src;
+    if (m === "sci") {
+      if (els.sciRes.classList.contains("error")) return "";
+      res = els.sciRes.textContent.trim();
+      src = els.sciPrev.textContent.trim();
+      if (/ =$/.test(src)) return src + " " + res;
+      src = els.sciIn.value.trim();
+      return src && res && src !== res ? src + " = " + res : res;
+    }
+    if (m === "prog") {
+      if (els.progRes.classList.contains("error")) return "";
+      res = els.progRes.textContent.trim();
+      src = els.progIn.value.trim();
+      return src && res && src !== res ? src + " = " + res : res;
+    }
+    res = els.res.textContent.trim();
+    var h = state.history[0];
+    if (state.op === null && state.fresh && h && h.res === state.cur) return h.expr + " = " + res;
+    return res === "Error" ? "" : res;
+  }
+  function sendResult() {
+    var api = sendApi(), text = sendText();
+    if (!api || !text) return;
+    api.open({ kind: "text", data: { title: t("calc.title"), text: text } });
+  }
+
   function wireModesAll() {
     els.modes = document.getElementById("calc-modes");
     els.sci = document.getElementById("sci");
@@ -2611,6 +2650,8 @@
     els.progView = document.getElementById("prog-view");
     els.progKbd = document.getElementById("prog-kbd");
     els.fin = document.getElementById("fin");
+    els.sendBtn = document.getElementById("calc-send");
+    els.sendBtn.addEventListener("click", sendResult);
     wireModes();
     wireSci();
     wireGraph();

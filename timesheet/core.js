@@ -636,19 +636,25 @@
   }
   // One row per piece (as in the report), `;` separated with a BOM so
   // spreadsheet apps read Greek right; decimals follow the language.
-  function toCsv(data, fromKey, toKey, f, now, lang) {
-    f = f || {};
-    var el = lang === "el";
-    var dec = function (n, d) { var s = n.toFixed(d); return el ? s.replace(".", ",") : s; };
-    var head = el
+  function exportHead(lang) {
+    return lang === "el"
       ? ["Ημερομηνία", "Έναρξη", "Λήξη", "Διάρκεια", "Ώρες", "Πελάτης", "Έργο", "Περιγραφή", "Εργασία", "Ετικέτες", "Χρεώσιμο", "Χρέωση/ώρα", "Ποσό", "Τιμολογήθηκε"]
       : ["Date", "Start", "End", "Duration", "Hours", "Client", "Project", "Description", "Task", "Tags", "Billable", "Rate", "Amount", "Billed"];
-    var yes = el ? "Ναι" : "Yes", no = el ? "Όχι" : "No";
-    var lines = [head.map(csvCell).join(";")];
-    var prefs = data.prefs;
-    var rows = piecesIn(data, fromKey, toKey, now).filter(function (pc) {
+  }
+  // The report's pieces in the range and filter, oldest first.
+  function exportPieces(data, fromKey, toKey, f, now) {
+    f = f || {};
+    return piecesIn(data, fromKey, toKey, now).filter(function (pc) {
       return matches(data, pc.x, f);
     }).sort(function (a, b) { return a.s - b.s || cmpStr(a.x.id, b.x.id); });
+  }
+  function toCsv(data, fromKey, toKey, f, now, lang) {
+    var el = lang === "el";
+    var dec = function (n, d) { var s = n.toFixed(d); return el ? s.replace(".", ",") : s; };
+    var yes = el ? "Ναι" : "Yes", no = el ? "Όχι" : "No";
+    var lines = [exportHead(lang).map(csvCell).join(";")];
+    var prefs = data.prefs;
+    var rows = exportPieces(data, fromKey, toKey, f, now);
     rows.forEach(function (pc) {
       var x = pc.x, p = project(data, x.p), c = projectClient(data, p);
       var b = billable(data, x.p);
@@ -665,6 +671,27 @@
       ].map(csvCell).join(";"));
     });
     return "﻿" + lines.join("\r\n") + "\r\n";
+  }
+  // The same rows as the CSV for "Open in Spreadsheet" (BR-S1): real
+  // numbers for hours, rate and amount, dates as YYYY-MM-DD.
+  // → [heading, ...rows]
+  function toTable(data, fromKey, toKey, f, now, lang) {
+    var el = lang === "el";
+    var yes = el ? "Ναι" : "Yes", no = el ? "Όχι" : "No";
+    var prefs = data.prefs;
+    return [exportHead(lang)].concat(exportPieces(data, fromKey, toKey, f, now).map(function (pc) {
+      var x = pc.x, p = project(data, x.p), c = projectClient(data, p);
+      var b = billable(data, x.p);
+      var ms = roundMs(pc.e - pc.s, prefs.round, prefs.rup);
+      var rate = b ? rateOf(data, x.p) : 0;
+      return [
+        pc.k, hhmm(pc.s), pc.e === dayStart(addDays(pc.k, 1)) ? "24:00" : hhmm(pc.e),
+        fmtDur(ms), Math.round(ms / HOUR * 100) / 100,
+        c ? c.name : "", p ? p.name : "", x.desc || "", x.task || "", (x.tags || []).join(", "),
+        b ? yes : no, rate / 100, b ? Math.round(ms * rate / HOUR) / 100 : 0,
+        x.billed ? yes : no
+      ];
+    }));
   }
 
   // Quote lines for "Create quote" (BR-Q1): one line per project of
@@ -1090,7 +1117,7 @@
     dayEntries: dayEntries, dayFeed: dayFeed, overlaps: overlaps, matches: matches, weekGrid: weekGrid, report: report,
     parseDuration: parseDuration, parseMoney: parseMoney, fmtDur: fmtDur, fmtHours: fmtHours,
     fmtMoney: fmtMoney, moneyInput: moneyInput, hhmm: hhmm,
-    csvCell: csvCell, toCsv: toCsv, quoteLines: quoteLines, fmtRange: fmtRange, toBackup: toBackup, fromBackup: fromBackup,
+    csvCell: csvCell, toCsv: toCsv, toTable: toTable, quoteLines: quoteLines, fmtRange: fmtRange, toBackup: toBackup, fromBackup: fromBackup,
     readCsv: readCsv, importPlan: importPlan
   };
 

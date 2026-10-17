@@ -3,6 +3,7 @@ import { connect } from "cloudflare:sockets";
 import { handle } from "./core.js";
 import { purgeShares } from "./share.js";
 export { RemoteRoom } from "./remote.js";
+export { PushBox } from "./push.js";
 
 function connectFn(host, port, mode) {
   return connect({ hostname: host, port: port },

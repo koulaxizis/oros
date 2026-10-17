@@ -2,12 +2,13 @@
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob: 'wasm-unsafe-eval' 'sha256-+R4AHly7ubMGtUUwzoTUXRklNVMXRNqSBN/aF4lFn7A='; style-src 'self' 'unsafe-inline'; img-src 'self' https: data: blob:; media-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https: wss: data: blob: http://localhost:* http://127.0.0.1:*; worker-src 'self' blob:; frame-src 'self' https: blob: data:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
   <!-- DL-1: a direct link to this app opens it inside the orOS shell -->
   <script>if (window.top === window.self && !/[?&]standalone\b/.test(location.search)) location.replace("../?open=calendar" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Calendar · orOS</title>
 
-  <link rel="stylesheet" href="calendar.css?v=2.71.01">
+  <link rel="stylesheet" href="calendar.css?v=2.92.00">
 
 </head>
 <body>
@@ -28,6 +29,7 @@
           <div id="more-menu" class="more-menu" hidden>
             <button id="mm-subs" type="button" data-i18n="mm.subs"></button>
             <button id="mm-free" type="button" data-i18n="mm.free"></button>
+            <button id="mm-send" type="button" data-i18n="mm.send" hidden></button>
             <button id="mm-google" type="button" data-i18n="mm.google" hidden></button>
             <button id="mm-print" type="button" data-i18n="mm.print"></button>
             <!-- .oroscal: the orOS file of every event and label -->
@@ -176,6 +178,7 @@
     </div>
     <div class="dlg-row" id="ev-del-row">
       <button id="ev-qr" type="button" class="btn" data-i18n="ev.qr" hidden></button>
+      <button id="ev-track" type="button" class="btn" data-i18n="ev.track" hidden></button>
       <button id="ev-mail" type="button" class="btn" data-i18n="ev.mail" hidden></button>
       <button id="ev-share" type="button" class="btn" data-i18n="ev.share" hidden></button>
       <button id="ev-delete" type="button" class="btn danger" data-i18n="ev.delete"></button>
@@ -302,6 +305,33 @@
     </div>
   </dialog>
 
+  <!-- Send a whole calendar or a date range (share wave 3, kind "cal") -->
+  <dialog id="scal-dlg" aria-labelledby="scal-dlg-title">
+    <h3 id="scal-dlg-title" data-i18n="sc.title"></h3>
+    <p class="del-text" data-i18n="sc.text"></p>
+    <div class="ev-form">
+      <label for="sc-lbl" data-i18n="sc.which"></label>
+      <select id="sc-lbl"></select>
+      <label for="sc-range" data-i18n="sc.range"></label>
+      <select id="sc-range"></select>
+      <div id="sc-dates" class="date-pair" hidden>
+        <div>
+          <label for="sc-from" data-i18n="sc.from"></label>
+          <input id="sc-from" type="date">
+        </div>
+        <div>
+          <label for="sc-to" data-i18n="sc.to"></label>
+          <input id="sc-to" type="date">
+        </div>
+      </div>
+    </div>
+    <p id="sc-sum" class="span-hint" aria-live="polite"></p>
+    <div class="dlg-row">
+      <button id="sc-go" type="button" class="btn prim" data-i18n="sc.go"></button>
+      <button id="sc-no" type="button" class="btn" data-i18n="ev.cancel"></button>
+    </div>
+  </dialog>
+
   <!-- Share free times (wave 8): a booking link, no server -->
   <dialog id="free-dlg" aria-labelledby="free-dlg-title">
     <h3 id="free-dlg-title" data-i18n="fr.title"></h3>
@@ -355,37 +385,38 @@
     </div>
   </dialog>
 
-  <script src="../plants/core.js?v=2.71.01"></script>
-  <script src="../chores/core.js?v=2.71.01"></script>
-  <script src="../petcare/core.js?v=2.71.01"></script>
-  <script src="../garage/core.js?v=2.71.01"></script>
-  <script src="../baby/core.js?v=2.71.01"></script>
-  <script src="../travel/core.js?v=2.71.01"></script>
-  <script src="../meals/core.js?v=2.71.01"></script>
-  <script src="../budget/feed.js?v=2.71.01"></script>
-  <script src="../shelf/feed.js?v=2.71.01"></script>
-  <script src="../invoices/core.js?v=2.71.01"></script>
-  <script src="../timesheet/core.js?v=2.71.01"></script>
-  <script src="../familytree/ft-core.js?v=2.71.01"></script>
-  <script src="../sky/core.js?v=2.71.01"></script>
-  <script src="../todo/core.js?v=2.71.01"></script>
-  <script src="../kanban/core.js?v=2.71.01"></script>
-  <script src="../contacts/dates.js?v=2.71.01"></script>
-  <script src="../habits/core.js?v=2.71.01"></script>
-  <script src="../crm/core.js?v=2.71.01"></script>
-  <script src="../health/core.js?v=2.71.01"></script>
-  <script src="occur.js?v=2.71.01"></script>
-  <script src="namedays.js?v=2.71.01"></script>
-  <script src="ics.js?v=2.71.01"></script>
-  <script src="../google-import.js?v=2.71.01"></script>
-  <script src="gcal.js?v=2.71.01"></script>
-  <script src="quickadd.js?v=2.71.01"></script>
-  <script src="subs.js?v=2.71.01"></script>
-  <script src="free.js?v=2.71.01"></script>
-  <script src="../bundle.js?v=2.71.01"></script>
-  <script src="../recordpkg.js?v=2.71.01"></script>
-  <script src="package.js?v=2.71.01"></script>
-  <script src="calendar.js?v=2.71.01"></script>
+  <script src="../plants/core.js?v=2.92.00"></script>
+  <script src="../chores/core.js?v=2.92.00"></script>
+  <script src="../petcare/core.js?v=2.92.00"></script>
+  <script src="../garage/core.js?v=2.92.00"></script>
+  <script src="../baby/core.js?v=2.92.00"></script>
+  <script src="../travel/core.js?v=2.92.00"></script>
+  <script src="../meals/core.js?v=2.92.00"></script>
+  <script src="../budget/feed.js?v=2.92.00"></script>
+  <script src="../shelf/feed.js?v=2.92.00"></script>
+  <script src="../invoices/core.js?v=2.92.00"></script>
+  <script src="../timesheet/core.js?v=2.92.00"></script>
+  <script src="../familytree/ft-core.js?v=2.92.00"></script>
+  <script src="../sky/core.js?v=2.92.00"></script>
+  <script src="../todo/core.js?v=2.92.00"></script>
+  <script src="../kanban/core.js?v=2.92.00"></script>
+  <script src="../contacts/dates.js?v=2.92.00"></script>
+  <script src="../habits/core.js?v=2.92.00"></script>
+  <script src="../crm/core.js?v=2.92.00"></script>
+  <script src="../health/core.js?v=2.92.00"></script>
+  <script src="occur.js?v=2.92.00"></script>
+  <script src="namedays.js?v=2.92.00"></script>
+  <script src="ics.js?v=2.92.00"></script>
+  <script src="../google-import.js?v=2.92.00"></script>
+  <script src="gcal.js?v=2.92.00"></script>
+  <script src="quickadd.js?v=2.92.00"></script>
+  <script src="subs.js?v=2.92.00"></script>
+  <script src="free.js?v=2.92.00"></script>
+  <script src="../bundle.js?v=2.92.00"></script>
+  <script src="../recordpkg.js?v=2.92.00"></script>
+  <script src="package.js?v=2.92.00"></script>
+  <script src="../weather/days.js?v=2.92.00"></script>
+  <script src="calendar.js?v=2.92.00"></script>
 
 </body>
 </html>

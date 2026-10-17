@@ -2,12 +2,13 @@
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob: 'wasm-unsafe-eval' 'sha256-qnq4sdWpPDPJvMTDpV5zd59I4sHkGnyNFtGlzBtBzds='; style-src 'self' 'unsafe-inline'; img-src 'self' https: data: blob:; media-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https: wss: data: blob: http://localhost:* http://127.0.0.1:*; worker-src 'self' blob:; frame-src 'self' https: blob: data:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
   <!-- DL-1: a direct link to this app opens it inside the orOS shell -->
   <script>if (window.top === window.self && !/[?&]standalone\b/.test(location.search)) location.replace("../?open=pixel" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Pixel Avatar · orOS</title>
 
-  <link rel="stylesheet" href="pixel.css?v=2.71.01">
+  <link rel="stylesheet" href="pixel.css?v=2.92.00">
 
 </head>
 <body>
@@ -74,6 +75,8 @@
           <button type="button" id="copyimg-btn" class="chip" data-i18n="btn.copyImg">Copy image</button>
           <button type="button" id="oros-btn" class="chip" data-i18n="btn.oros" hidden>orOS file (.orospixel)</button>
           <button type="button" id="netizen-btn" class="chip" data-i18n="btn.netizen" hidden>Use in Netizen ID</button>
+          <button type="button" id="wall-btn" class="chip" data-i18n="btn.wall" hidden>Use as wallpaper</button>
+          <button type="button" id="send-btn" class="chip" data-i18n="btn.send" hidden>Send to…</button>
         </div>
       </div>
 
@@ -91,10 +94,10 @@
   <div id="live" class="sr-only" aria-live="polite"></div>
   <div id="toast" role="status"></div>
 
-  <script src="../importkit.js?v=2.71.01"></script>
-  <script src="import.js?v=2.71.01"></script>
-  <script src="../bundle.js?v=2.71.01"></script>
-  <script src="pixel.js?v=2.71.01"></script>
+  <script src="../importkit.js?v=2.92.00"></script>
+  <script src="import.js?v=2.92.00"></script>
+  <script src="../bundle.js?v=2.92.00"></script>
+  <script src="pixel.js?v=2.92.00"></script>
 
 </body>
 </html>

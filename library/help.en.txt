@@ -62,6 +62,8 @@ With orOS sync on, your library list, reading place, highlights, notes, bookmark
 ## Save and open an orOS file
 `More` › `orOS file (.oroslibrary)` saves your library list (titles, authors, tags, finished dates), where you stopped in each book, every highlight, note and bookmark, and the catalogues you added as one `.oroslibrary` file, for example to move them to another device without sync or to keep a copy. The book files themselves are not in it (they travel through the orOS disk), and neither are covers, reading time, reading settings or a catalogue address that holds a login or a key. The file is a plain ZIP: unzipped it holds the records as `content.json` plus `preview/books.csv` and `preview/notes.md` for other programs. It is not encrypted, so keep it somewhere safe.
 
+Inside orOS, `More` › `Open in Spreadsheet` puts the same book list (title, author, format, pages, progress, finished date, tags, highlight counts) in a new sheet of the Spreadsheet, with totals under the pages and the highlights.
+
 `More` › `Open orOS file…` (or `Unzipped orOS folder…`, dropping the file on the window, or "Open with" orOS on the computer) shows how many records are new and how many are already here, then `Add` adds only the new ones, with their own ids: opening the same file again adds nothing. A book, highlight or reading place already here is kept as it is, and one you deleted here stays deleted; a file never deletes anything. Tick `Update with newer versions` to let records that were changed later in the file replace your copy. `Undo` in the message takes back what was added. A book whose file isn't on this device shows as not on this device until you add the file.
 
 ## Keyboard shortcuts

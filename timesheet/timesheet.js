@@ -80,7 +80,8 @@
       "rep.empty": "Nothing in this period.",
       "rep.noteRound": "Times rounded {mode} to {n} min per entry (Settings). Stored times are exact.",
       "rep.noteExact": "Exact times, no rounding.", "rep.up": "up", "rep.near": "to the nearest",
-      "rep.csv": "Export CSV", "rep.quote": "Create quote", "rep.invoice": "Create invoice",
+      "rep.csv": "Export CSV", "rep.sheet": "Open in Spreadsheet",
+      "rep.sheetCap": "Only the first {n} rows fit in one sheet", "rep.quote": "Create quote", "rep.invoice": "Create invoice",
       "quote.cur": "Quotes support only EUR and USD. Change the currency in Settings first.",
       "quote.none": "No billable time with a rate in this period.", "quote.fail": "Could not open Quote.",
       "rep.mark": "Mark {n} as invoiced", "rep.unmark": "Unmark {n} invoiced",
@@ -130,7 +131,7 @@
       "imp.tempo": "Project Name → project · Account Customer → client · issue key and summary → task · Work Description → description. A work date without a time is placed from 09:00, one entry after another.",
       "imp.undone": "Import undone",
       "toast.save": "Could not save: storage is full", "toast.started": "Started: {p}",
-      "toast.stopped": "Stopped: {p}, {d}", "toast.started": "Started: {p}", "toast.added": "Added {d}", "toast.deleted": "Entry deleted",
+      "toast.stopped": "Stopped: {p}, {d}", "toast.started": "Started: {p}", "toast.alreadyRunning": "A timer is already running. Stop it first.", "toast.added": "Added {d}", "toast.deleted": "Entry deleted",
       "toast.saved": "Saved", "toast.undo": "Undo", "toast.badTime": "The end must be after the start",
       "toast.badDur": "Could not read that duration", "toast.badMoney": "Could not read that amount",
       "toast.badName": "Give it a name", "toast.overlap": "Saved. It overlaps another entry.",
@@ -178,7 +179,8 @@
       "rep.empty": "Τίποτα σε αυτή την περίοδο.",
       "rep.noteRound": "Οι χρόνοι στρογγυλεύονται {mode} στα {n} λεπτά ανά καταγραφή (Ρυθμίσεις). Οι αποθηκευμένοι χρόνοι μένουν ακριβείς.",
       "rep.noteExact": "Ακριβείς χρόνοι, χωρίς στρογγυλοποίηση.", "rep.up": "προς τα πάνω", "rep.near": "στο πλησιέστερο",
-      "rep.csv": "Εξαγωγή CSV", "rep.quote": "Δημιουργία προσφοράς", "rep.invoice": "Δημιουργία τιμολογίου",
+      "rep.csv": "Εξαγωγή CSV", "rep.sheet": "Άνοιγμα στο Υπολογιστικό φύλλο",
+      "rep.sheetCap": "Χωρούν μόνο οι πρώτες {n} γραμμές σε ένα φύλλο", "rep.quote": "Δημιουργία προσφοράς", "rep.invoice": "Δημιουργία τιμολογίου",
       "quote.cur": "Οι προσφορές δέχονται μόνο EUR και USD. Άλλαξε πρώτα το νόμισμα στις Ρυθμίσεις.",
       "quote.none": "Δεν υπάρχει χρεώσιμος χρόνος με τιμή σε αυτή την περίοδο.", "quote.fail": "Δεν ήταν δυνατό να ανοίξει η Προσφορά.",
       "rep.mark": "Σήμανση {n} ως τιμολογημένων", "rep.unmark": "Αναίρεση τιμολόγησης ({n})",
@@ -228,7 +230,7 @@
       "imp.tempo": "Project Name → έργο · Account Customer → πελάτης · κλειδί και τίτλος θέματος → εργασία · Work Description → περιγραφή. Μια μέρα χωρίς ώρα μπαίνει από τις 09:00, η μία καταγραφή μετά την άλλη.",
       "imp.undone": "Η εισαγωγή αναιρέθηκε",
       "toast.save": "Η αποθήκευση απέτυχε: ο χώρος γέμισε", "toast.started": "Ξεκίνησε: {p}",
-      "toast.stopped": "Σταμάτησε: {p}, {d}", "toast.started": "Ξεκίνησε: {p}", "toast.added": "Προστέθηκε {d}", "toast.deleted": "Η καταγραφή διαγράφηκε",
+      "toast.stopped": "Σταμάτησε: {p}, {d}", "toast.started": "Ξεκίνησε: {p}", "toast.alreadyRunning": "Ήδη μετράει ένα χρονόμετρο. Σταμάτησέ το πρώτα.", "toast.added": "Προστέθηκε {d}", "toast.deleted": "Η καταγραφή διαγράφηκε",
       "toast.saved": "Αποθηκεύτηκε", "toast.undo": "Αναίρεση", "toast.badTime": "Η λήξη πρέπει να είναι μετά την έναρξη",
       "toast.badDur": "Δεν κατάλαβα αυτή τη διάρκεια", "toast.badMoney": "Δεν κατάλαβα αυτό το ποσό",
       "toast.badName": "Δώσε ένα όνομα", "toast.overlap": "Αποθηκεύτηκε. Επικαλύπτεται με άλλη καταγραφή.",
@@ -1065,6 +1067,9 @@
     tbl.hidden = !rep.rows.length;
     $("rep-empty").hidden = rep.rows.length > 0;
     $("rep-csv").disabled = !rep.rows.length;
+    // Open in Spreadsheet (BR-S1): shown only inside orOS.
+    $("rep-sheet").hidden = !invoicesOpener();
+    $("rep-sheet").disabled = !rep.rows.length;
 
     // Invoiced marks: in an "Invoiced" view the button undoes them.
     var mark = $("rep-mark");
@@ -1704,6 +1709,21 @@
     var text = C.toCsv(data, repState.keys[0], repState.keys[1], repState.f, Date.now(), LANG);
     saveText(text, "oros-timesheet-" + repState.keys[0] + "_" + repState.keys[1] + ".csv", "text/csv", ".csv", "CSV");
   }
+  // "Open in Spreadsheet" (Bible BR-S1): the CSV's rows as a new sheet
+  // in the orOS Spreadsheet, with a SUM under hours and amount.
+  var SHEET_ROWS = 498;   // + heading + SUM row = the Spreadsheet's 500
+  function openInSheet() {
+    var p = invoicesOpener();
+    if (!p || !repState) return;
+    var rows = C.toTable(data, repState.keys[0], repState.keys[1], repState.f, Date.now(), LANG);
+    var head = rows.shift();
+    if (!rows.length) return;
+    if (rows.length > SHEET_ROWS) { showToast(t("rep.sheetCap", { n: SHEET_ROWS })); rows = rows.slice(0, SHEET_ROWS); }
+    // "2026-10-01–10-31" (one year) keeps the name under 31 characters
+    var a = repState.keys[0], b = repState.keys[1];
+    var slug = a === b ? a : a.slice(0, 4) === b.slice(0, 4) ? a + "–" + b.slice(5) : a.replace(/-/g, "") + "–" + b.replace(/-/g, "");
+    p.__orosOpenAt("spreadsheet", { newSheet: { name: t("app") + " " + slug, rows: [head].concat(rows), sum: [4, 12] } });
+  }
   function quoteBridge() {
     try { return typeof window.parent.__orosOpenQuoteNew === "function" ? window.parent.__orosOpenQuoteNew : null; }
     catch (e) { return null; }
@@ -2126,6 +2146,7 @@
     $("add-client").innerHTML = UI.plus + "<span></span>";
     $("add-client").lastChild.textContent = t("add.client");
     $("rep-csv").textContent = t("rep.csv");
+    $("rep-sheet").textContent = t("rep.sheet");
     $("rep-quote").textContent = t("rep.quote");
     $("rep-invoice").textContent = t("rep.invoice");
     $("day-btn").title = t("today");
@@ -2184,6 +2205,7 @@
       });
     });
     $("rep-csv").addEventListener("click", exportCsv);
+    $("rep-sheet").addEventListener("click", openInSheet);
     $("rep-quote").addEventListener("click", createQuote);
     $("rep-invoice").addEventListener("click", createInvoice);
     $("rep-mark").addEventListener("click", function () {
@@ -2298,9 +2320,15 @@
 
   // Universal search deep link (shell __orosOpenAt / __orosTakeTarget):
   // target { entry } | { project } | { client } | { day } (Calendar
-  // feed row, Wave 4: the Timer tab on that day). An entry: the Timer
-  // tab on its day, then its dialog; a project or a client: the
-  // Projects tab, then its dialog. Unknown ids or an open dialog → no-op.
+  // feed row, Wave 4: the Timer tab on that day) | { startTimer: { title,
+  // note? } } (Calendar's "Track time" on an event: the user's own click
+  // there, like pressing Start). An entry: the Timer tab on its day,
+  // then its dialog; a project or a client: the Projects tab, then its
+  // dialog. startTimer: the Timer tab; with no timer running, a new one
+  // starts with the title (≤ 200, " · note" appended) as its description
+  // and the project whose name is the title (case-insensitive, trimmed,
+  // not archived) or none; a running timer is never stopped, only shown
+  // with a toast. Unknown ids or an open dialog → no-op.
   function openSearchTarget(t) {
     // "Open with" an .oroshours file (fileopen.js): { openFile: { token } },
     // the File taken once with window.parent.__orosTakeFile(token)
@@ -2309,6 +2337,7 @@
     // Single app icon shortcuts: start/stop the timer, a new entry.
     if (t.toggle) { window.__orosTimesheetToggle(); return; }
     if (t.newEntry) { setTab("timer"); entryDialog(null, null); return; }
+    if (t.startTimer && typeof t.startTimer === "object") { startFromTarget(t.startTimer); return; }
     if (typeof t.entry === "string") {
       var x = findEntry(t.entry);
       if (!x) return;
@@ -2327,6 +2356,23 @@
       setTab("timer");
       goDay(t.day);
     }
+  }
+  function startFromTarget(st) {
+    var title = C.cleanText(typeof st.title === "string" ? st.title : "", 200);
+    if (!title) return;
+    setTab("timer");
+    if (C.running(data).length) {
+      goDay(todayKey());
+      showToast(t("toast.alreadyRunning"));
+      return;
+    }
+    var note = C.cleanText(typeof st.note === "string" ? st.note : "", C.LIM.desc);
+    var key = title.toLowerCase(), pid = "";
+    C.live(data.projects).forEach(function (p) {
+      if (!pid && !p.arch && String(p.name || "").trim().toLowerCase() === key) pid = p.id;
+    });
+    startTimer(pid, note ? title + " · " + note : title);
+    showToast(t("toast.started", { p: pid ? projLabel(pid) : title }));
   }
   window.__orosOpenAt = openSearchTarget;
   try {

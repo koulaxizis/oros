@@ -103,6 +103,8 @@ Control Studio's mixer and transport from a tablet or phone while the sound play
 - `WAV`: 16 or 24 bit, 44.1 or 48 kHz. Lossless, the best choice for further work.
 - `MP3`: 128 to 320 kbit/s. Plays everywhere; Studio's own encoder makes it on this device, and players start and end it without a gap.
 - `Opus (OGG)`: a smaller file at the same quality, always 48 kHz. Offered where the browser can encode Opus (Chrome, Edge, Firefox).
+- `Add to Music` makes the same file in the chosen format, puts it in the Music folder on the orOS disk and plays it in Music.
+- `Make a ringtone` turns the notes of the instrument tracks (not the drum kit) into a one-voice melody and opens it in Ringtone Composer: where notes overlap the highest one wins, and you press `Import` there to keep it.
 
 ## Sync and backup
 - Projects, tracks and clips, the notes of MIDI clips too, follow you to your other devices through orOS sync.

@@ -48,4 +48,12 @@
     <string name="drive_activity">Δραστηριότητα</string>
     <string name="drive_cancel">Ακύρωση</string>
     <string name="drive_unavailable">Το orOS Drive δεν μπόρεσε να ξεκινήσει: %1$s</string>
+    <string name="drive_files_summary">Ο κρυπτογραφημένος δίσκος του orOS</string>
+    <string name="drive_files_title">Το orOS στην εφαρμογή Αρχεία</string>
+    <string name="drive_files_text">Όλος ο δίσκος του orOS εμφανίζεται ως «orOS» στην εφαρμογή Αρχεία και σε κάθε εφαρμογή που ανοίγει ή αποθηκεύει αρχεία. Ένα αρχείο κατεβαίνει όταν το ανοίγεις και ανεβαίνει όταν η εφαρμογή το αποθηκεύει. Αν άλλαξε στο μεταξύ στο orOS, κρατιούνται και οι δύο εκδοχές.</string>
+    <string name="drive_cache">Αντίγραφα που κατέβηκαν: %1$s</string>
+    <string name="drive_clear_cache">Καθαρισμός αντιγράφων</string>
+    <string name="drive_channel">orOS Drive</string>
+    <string name="drive_not_saved_title">Δεν αποθηκεύτηκε στο orOS</string>
+    <string name="drive_not_saved_text">Το %1$s δεν αποθηκεύτηκε στο orOS (%2$s). Αποθήκευσέ το ξανά από την εφαρμογή που χρησιμοποίησες.</string>
 </resources>

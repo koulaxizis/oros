@@ -2260,10 +2260,35 @@ function bindShortcuts() {
 // system's "Open with" (shell fileopen.js), taken once from the shell.
 // { newDoc: { title?, text } }: Typewriter's "Send to Writer", a NEW
 // document from plain text (paragraphs split on blank lines).
+// { newDoc: { title?, rows } }: "Send to an app" with a table
+// (Spreadsheet, BR-SEND): a NEW document holding that table, row 1 as
+// the heading row; every cell is plain text.
 // { newBlank: true }: the single app's "New document" icon shortcut.
 const NEWDOC_MAX = 500000;
+const NEWDOC_ROWS = 500, NEWDOC_COLS = 64, NEWDOC_CELL = 2000;
+function tableDocHtml(rows) {
+  const cell = 'border:1px solid var(--border);padding:6px 10px';
+  let out = '', n = 0;
+  rows.slice(0, NEWDOC_ROWS).forEach((r, i) => {
+    if (!Array.isArray(r)) return;
+    const tag = i === 0 ? 'th' : 'td';
+    out += '<tr>' + r.slice(0, NEWDOC_COLS).map(c => {
+      const v = typeof c === 'number' && isFinite(c) ? String(c) : typeof c === 'string' ? c.slice(0, NEWDOC_CELL) : '';
+      return '<' + tag + ' style="' + cell + '">' + (v.trim() ? esc(v).replace(/\n/g, '<br>') : '&nbsp;') + '</' + tag + '>';
+    }).join('') + '</tr>';
+    n++;
+  });
+  return n ? '<table style="border-collapse:collapse;width:100%;margin:1em 0">' + out + '</table><p><br></p>' : '';
+}
 function openSearchTarget(t) {
   if (t && t.newBlank === true) { createDoc({}); return; }
+  if (t && t.newDoc && typeof t.newDoc === 'object' && Array.isArray(t.newDoc.rows)) {
+    const html = tableDocHtml(t.newDoc.rows);
+    if (!html) return;
+    const title = typeof t.newDoc.title === 'string' ? t.newDoc.title.replace(/\s+/g, ' ').trim().slice(0, 120) : '';
+    createDoc({ title: title, html: html });
+    return;
+  }
   if (t && t.newDoc && typeof t.newDoc === 'object' && typeof t.newDoc.text === 'string') {
     const text = t.newDoc.text.slice(0, NEWDOC_MAX);
     if (!text.trim()) return;

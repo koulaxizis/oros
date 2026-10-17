@@ -1471,7 +1471,7 @@ dialog { margin: auto; }
   flex-shrink: 0;
 }
 
-dialog#qa-dlg, dialog#subs-dlg, dialog#sv-dlg, dialog#free-dlg {
+dialog#qa-dlg, dialog#subs-dlg, dialog#sv-dlg, dialog#free-dlg, dialog#scal-dlg {
   background: var(--panel-bg);
   color: var(--text);
   border: 1px solid var(--border);
@@ -1482,15 +1482,15 @@ dialog#qa-dlg, dialog#subs-dlg, dialog#sv-dlg, dialog#free-dlg {
   max-height: calc(100dvh - 40px);
   overflow-y: auto;
 }
-dialog#qa-dlg::backdrop, dialog#subs-dlg::backdrop, dialog#sv-dlg::backdrop, dialog#free-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
-#qa-dlg h3, #subs-dlg h3, #sv-dlg h3, #free-dlg h3 {
+dialog#qa-dlg::backdrop, dialog#subs-dlg::backdrop, dialog#sv-dlg::backdrop, dialog#free-dlg::backdrop, dialog#scal-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
+#qa-dlg h3, #subs-dlg h3, #sv-dlg h3, #free-dlg h3, #scal-dlg h3 {
   font-size: 14px;
   color: var(--accent);
   margin-bottom: 10px;
   overflow-wrap: anywhere;
 }
 #sv-dlg h3 { font-size: 16px; color: var(--text); }
-#qa-dlg .del-text, #subs-dlg .del-text, #sv-dlg .del-text, #free-dlg > .del-text { margin-bottom: 10px; }
+#qa-dlg .del-text, #subs-dlg .del-text, #sv-dlg .del-text, #free-dlg > .del-text, #scal-dlg > .del-text { margin-bottom: 10px; }
 #qa-in, #sub-url, #sub-name, #fr-mail, .sub-name {
   background: var(--bg);
   color: var(--text);
@@ -1609,3 +1609,6 @@ dialog#qa-dlg::backdrop, dialog#subs-dlg::backdrop, dialog#sv-dlg::backdrop, dia
 
 /* ---------- X. [hidden] must ALWAYS win ---------- */
 [hidden] { display: none !important; }
+/* Weather on days (app links wave 6): the Weather app's cached forecast */
+.cal-wx { position: absolute; top: 3px; right: 4px; font-size: 11px; line-height: 1; pointer-events: none; }
+.wk-wx, .day-wx { margin-left: 6px; font-size: 11.5px; font-weight: 600; color: var(--text-dim); white-space: nowrap; }

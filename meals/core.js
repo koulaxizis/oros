@@ -19,7 +19,7 @@
 //   8. Dates
 //   9. Normalize
 //  10. Merge (R5, R17, R26)
-//  11. Shopping list
+//  11. Shopping list (+ parseAmount for "Add to Budget")
 //  12. Ready recipes (seeds)
 // ============================================================
 (function (root) {
@@ -1056,6 +1056,45 @@
     return out.join("\n");
   }
 
+  // "Add to Budget" (BR-B1): the typed amount paid → integer cents, or
+  // null. As Budget's own parseAmount: "12,50" / "12.50" → 1250,
+  // "1.234,5" / "1,234.50" → 123450 (both separators: the last one is
+  // the decimal point); a single separator with exactly three digits
+  // after it is thousands ("1.250" → 125000). Zero, signs, letters,
+  // more than 2 decimals or over 1e11 cents → null.
+  var MAX_CENTS = 100000000000;
+  function thousandsOk(s, ch) {
+    var g = s.split(ch);
+    if (!g[0] || g[0].length > 3) return false;
+    for (var i = 1; i < g.length; i++) if (g[i].length !== 3) return false;
+    return true;
+  }
+  function parseAmount(s) {
+    if (typeof s !== "string") return null;
+    s = s.replace(/[\s\u00a0\u202f'’€$£¥]/g, "").replace(/^\+/, "");
+    if (!/^[0-9.,]+$/.test(s) || !/[0-9]/.test(s)) return null;
+    var dot = s.lastIndexOf("."), com = s.lastIndexOf(",");
+    var intPart, decPart = "";
+    if (dot >= 0 && com >= 0) {
+      var dec = Math.max(dot, com), thou = dec === dot ? "," : ".";
+      intPart = s.slice(0, dec);
+      decPart = s.slice(dec + 1);
+      if (intPart.indexOf(s.charAt(dec)) >= 0 || !thousandsOk(intPart, thou)) return null;
+      intPart = intPart.split(thou).join("");
+    } else if (dot >= 0 || com >= 0) {
+      var ch = dot >= 0 ? "." : ",", parts = s.split(ch);
+      if (parts.length === 2 && parts[1].length !== 3) { intPart = parts[0]; decPart = parts[1]; }
+      else {
+        if (!thousandsOk(s, ch)) return null;
+        intPart = parts.join("");
+      }
+    } else intPart = s;
+    if (decPart.length > 2 || !/^[0-9]*$/.test(decPart) || !/^[0-9]*$/.test(intPart)) return null;
+    if (!intPart && !decPart) return null;
+    var cents = Number(intPart || "0") * 100 + Number((decPart + "00").slice(0, 2));
+    return Math.floor(cents) === cents && cents > 0 && cents <= MAX_CENTS ? cents : null;
+  }
+
   // ---------- 12. Ready recipes ----------
   // Shown from here in the app's language and stored only once the user
   // changes one (R28): an EN and an EL device never fight over them
@@ -1228,7 +1267,7 @@
     compactYmd: compactYmd,
     normRecipe: normRecipe, normCell: normCell, normSet: normSet, defaultSet: defaultSet, emptyData: emptyData,
     mergeMeals: mergeMeals,
-    inPantry: inPantry, pantryList: pantryList, buildShop: buildShop, shopText: shopText,
+    inPantry: inPantry, pantryList: pantryList, buildShop: buildShop, shopText: shopText, parseAmount: parseAmount,
     seedRecipe: seedRecipe, allRecipes: allRecipes, stepTimers: stepTimers, planByDay: planByDay
   };
 })(typeof window !== "undefined" ? window : this);

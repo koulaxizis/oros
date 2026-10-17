@@ -6,8 +6,16 @@
 //   - the same holds for keys added later with X.en["k"] = … / X.el["k"] = …
 //   - a Greek value is never a plain copy of an English sentence
 //   - every help.en.txt has a help.el.txt (see help.test.js for parity)
-// The scanner is a small tokenizer (strings, template literals,
-// comments), no dependencies. Word lists and preset data are skipped.
+// Languages beyond English and Greek (i18n.js, i18n/<code>/ packs):
+//   - a pack is data only (orosPack("<code>", "<app>", {JSON strings}))
+//   - it names a real app and only that app's English keys
+//   - every value keeps the English {placeholders} and HTML tags
+//   - manifest.json lists the language's files (offline download)
+//   - no NEW file writes Greek text in code outside the en/el tables
+//     (.github/i18n/inline-baseline.json holds today's files)
+// The scanner (.github/i18n/scan.js) is a small tokenizer (strings,
+// template literals, comments), no dependencies. Word lists and preset
+// data are skipped.
 // Run: node --test tests/
 
 "use strict";
@@ -17,126 +25,10 @@ const assert = require("node:assert/strict");
 const fs = require("fs");
 const path = require("path");
 
-const ROOT = path.join(__dirname, "..");
+const S = require("../.github/i18n/scan.js");
+const { ROOT, jsFiles, tables, sentence } = S;
 
-// Data files whose tables are not UI strings (word lists, OSM presets).
-const SKIP = /(^|\/)(words[\w-]*\.js|presets-data\.js|wordlist[\w-]*\.js)$|\/(vendor|lib|tests|android|extension|relay|node_modules)\//;
-
-function jsFiles() {
-  const out = [];
-  (function walk(dir) {
-    for (const f of fs.readdirSync(dir)) {
-      if (f.startsWith(".")) continue;
-      const p = path.join(dir, f), rel = path.relative(ROOT, p);
-      if (fs.statSync(p).isDirectory()) { if (!SKIP.test("/" + rel + "/")) walk(p); continue; }
-      if (/\.js$/.test(f) && !SKIP.test("/" + rel)) out.push(rel);
-    }
-  })(ROOT);
-  return out;
-}
-
-// Index just past the literal / comment that starts at i, or i itself.
-function skipToken(s, i) {
-  const c = s[i];
-  if (c === '"' || c === "'" || c === "`") {
-    for (let j = i + 1; j < s.length; j++) {
-      if (s[j] === "\\") { j++; continue; }
-      if (s[j] === c) return j + 1;
-    }
-    return s.length;
-  }
-  if (c === "/" && s[i + 1] === "/") { const j = s.indexOf("\n", i); return j < 0 ? s.length : j; }
-  if (c === "/" && s[i + 1] === "*") { const j = s.indexOf("*/", i + 2); return j < 0 ? s.length : j + 2; }
-  return i;
-}
-
-// The balanced { … } block starting at the brace at index i: [i, end).
-function blockEnd(s, i) {
-  let depth = 0;
-  for (let j = i; j < s.length;) {
-    const k = skipToken(s, j);
-    if (k !== j) { j = k; continue; }
-    if (s[j] === "{") depth++;
-    else if (s[j] === "}") { depth--; if (depth === 0) return j + 1; }
-    j++;
-  }
-  return -1;
-}
-
-const unquote = (lit) => {
-  try { return lit[0] === "`" ? lit.slice(1, -1) : JSON.parse(lit[0] === "'" ? '"' + lit.slice(1, -1).replace(/\\'/g, "'").replace(/"/g, '\\"') + '"' : lit); }
-  catch (e) { return null; }
-};
-
-// Top-level entries of an object literal body: key → string value | null.
-function entries(s, from, to) {
-  const out = new Map();
-  let depth = 0, expectKey = true;
-  for (let j = from + 1; j < to - 1;) {
-    if (depth === 0 && expectKey) {
-      const m = /^\s*(?:"((?:\\.|[^"\\])*)"|'((?:\\.|[^'\\])*)'|([A-Za-z_$][\w$]*))\s*:\s*/.exec(s.slice(j, j + 300));
-      if (m) {
-        const key = m[1] !== undefined ? m[1] : m[2] !== undefined ? m[2] : m[3];
-        j += m[0].length;
-        let val = null;
-        const q = s[j];
-        if (q === '"' || q === "'" || q === "`") {
-          const e = skipToken(s, j);
-          const after = /^\s*([,}]|$)/.exec(s.slice(e, e + 50));
-          if (after && !(q === "`" && s.slice(j, e).includes("${"))) val = unquote(s.slice(j, e));
-        }
-        out.set(key, val);
-        expectKey = false;
-        continue;
-      }
-    }
-    const k = skipToken(s, j);
-    if (k !== j) { j = k; continue; }
-    const c = s[j];
-    if (c === "{" || c === "[" || c === "(") depth++;
-    else if (c === "}" || c === "]" || c === ")") depth--;
-    else if (c === "," && depth === 0) expectKey = true;
-    j++;
-  }
-  return out;
-}
-
-const line = (s, i) => s.slice(0, i).split("\n").length;
-const GREEK = /[\u0370-\u03ff\u1f00-\u1fff]/;
-// An English sentence: three or more lowercase words, no Greek letter.
-const sentence = (v) => typeof v === "string" && !GREEK.test(v) &&
-  (v.replace(/\{[^}]*\}|https?:\/\/\S+/g, " ").match(/(^|\s)[a-z]{2,}(?=[\s,.;:!?…]|$)/g) || []).length >= 3;
-
-function tables(rel) {
-  const s = fs.readFileSync(path.join(ROOT, rel), "utf8");
-  const out = [];
-  const re = /(^|[\s{,(])(?:en|"en"|'en')\s*:\s*\{/g;
-  let m;
-  while ((m = re.exec(s))) {
-    const open = m.index + m[0].length - 1;
-    // An "en" inside a string or comment is not a table: re-check by scanning from the line start.
-    const enEnd = blockEnd(s, open);
-    if (enEnd < 0) continue;
-    const next = /^\s*,\s*(?:\/\/[^\n]*\n\s*|\/\*[\s\S]*?\*\/\s*)*(?:el|"el"|'el')\s*:\s*\{/.exec(s.slice(enEnd, enEnd + 400));
-    if (!next) continue;
-    const elOpen = enEnd + next[0].length - 1;
-    const elEnd = blockEnd(s, elOpen);
-    if (elEnd < 0) continue;
-    out.push({ at: rel + ":" + line(s, open), en: entries(s, open, enEnd), el: entries(s, elOpen, elEnd) });
-    re.lastIndex = elEnd;
-  }
-  // Keys added after the table: NAME.en["k"] = … / NAME.el["k"] = …
-  const added = {};
-  const re2 = /\b([A-Za-z_$][\w$]*)\.(en|el)\[\s*(["'])([^"']+)\3\s*\]\s*=(?!=)/g;
-  while ((m = re2.exec(s))) {
-    const o = (added[m[1]] = added[m[1]] || { en: new Map(), el: new Map(), at: rel + ":" + line(s, m.index) });
-    o[m[2]].set(m[4], null);
-  }
-  for (const o of Object.values(added)) out.push(o);
-  return out;
-}
-
-const ALL = jsFiles().map((rel) => ({ rel, tables: tables(rel) }));
+const ALL = S.ALL_FILES();
 
 test("scanner finds the string tables", () => {
   const n = ALL.reduce((a, f) => a + f.tables.length, 0);
@@ -183,3 +75,84 @@ test("every app page and help topic has a Greek page", () => {
   }
   assert.deepEqual(missing, []);
 });
+
+// ---- Pack languages ----
+
+const LANGS = S.langs();
+const PACK_LANGS = LANGS.filter((l) => l.code !== "en" && l.code !== "el");
+
+test("i18n.js lists English and Greek first, every code once", () => {
+  assert.deepEqual(LANGS.slice(0, 2).map((l) => l.code), ["en", "el"]);
+  const codes = LANGS.map((l) => l.code);
+  assert.equal(new Set(codes).size, codes.length);
+  for (const d of fs.readdirSync(path.join(ROOT, "i18n"))) {
+    if (fs.statSync(path.join(ROOT, "i18n", d)).isDirectory()) {
+      assert.ok(codes.includes(d), "i18n/" + d + "/ is not in the LANGS list of i18n.js");
+    }
+  }
+});
+
+test("every pack is plain data for a real app, with fitting values", () => {
+  const bad = [];
+  for (const l of PACK_LANGS) {
+    for (const f of S.packFiles(l.code)) {
+      const rel = "i18n/" + l.code + "/" + f;
+      if (f === "manifest.json" || f === "STATUS.md") continue;
+      if (/^help\/(topics\/)?[a-z0-9-]+\.txt$/.test(f)) continue;
+      if (!/^[a-z0-9][a-z0-9-]*\.js$/.test(f)) { bad.push(rel + ": not a pack (<app>.js) or help page (help/<app>.txt)"); continue; }
+      const p = S.readPack(rel);
+      if (p.error) { bad.push(p.error); continue; }
+      bad.push(...S.checkPack(p, S.appKeys(p.app, ALL)));
+    }
+  }
+  assert.deepEqual(bad, [], "Language pack problems:\n" + bad.join("\n"));
+});
+
+test("every translated help page belongs to an English one", () => {
+  const known = new Set(S.helpPages().map((h) => h.pack));
+  const bad = [];
+  for (const l of PACK_LANGS) {
+    for (const f of S.packFiles(l.code)) {
+      if (f.startsWith("help/") && !known.has(f)) bad.push("i18n/" + l.code + "/" + f + ": no English page for it");
+    }
+  }
+  assert.deepEqual(bad, []);
+});
+
+test("each language's manifest.json lists its files", () => {
+  for (const l of PACK_LANGS) {
+    const p = path.join(ROOT, "i18n", l.code, "manifest.json");
+    assert.ok(fs.existsSync(p), "i18n/" + l.code + "/manifest.json missing: run node .github/i18n/coverage.js");
+    assert.deepEqual(JSON.parse(fs.readFileSync(p, "utf8")), S.manifest(l.code),
+      "i18n/" + l.code + "/manifest.json is out of date: run node .github/i18n/coverage.js");
+  }
+});
+
+test("pages that load i18n.js name a real app, before their own scripts", () => {
+  const bad = [];
+  for (const p of S.packApps()) {
+    const s = fs.readFileSync(path.join(ROOT, p.page), "utf8");
+    for (const a of p.apps) if (!S.appKeys(a, ALL).size) bad.push(p.page + ': data-app="' + a + '" has no strings');
+    const i = s.indexOf("i18n.js");
+    const first = /<script src="(?!(?:\.\.\/)?i18n\.js)[^"]+"/.exec(s);
+    if (first && first.index < i) bad.push(p.page + ": i18n.js must come before " + first[0]);
+  }
+  assert.deepEqual(bad, []);
+});
+
+test("no new file writes Greek text in code outside the en/el tables", () => {
+  const base = JSON.parse(fs.readFileSync(path.join(ROOT, ".github/i18n/inline-baseline.json"), "utf8"));
+  const bad = [], grew = [];
+  for (const f of ALL) {
+    const n = S.inlineGreek(f.rel, f.tables);
+    if (!n) continue;
+    if (base[f.rel] === undefined) bad.push(f.rel + ": " + n);
+    else if (n > base[f.rel]) grew.push(f.rel + ": " + base[f.rel] + " → " + n);
+  }
+  // Existing files may still grow during the first waves; listed so the
+  // owner can move the text into the file's en/el table.
+  if (grew.length) console.log("# inline Greek grew (move it into the en/el table):\n# " + grew.join("\n# "));
+  assert.deepEqual(bad, [], "Greek text written in code, outside the en/el tables (a pack language cannot translate it). " +
+    "Put it in the file's { en, el } table and use t(key); Greek data (name days, parsers) may say // i18n-inline-ok: <reason>\n" + bad.join("\n"));
+});
+

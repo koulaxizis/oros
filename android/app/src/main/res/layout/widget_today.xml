@@ -70,6 +70,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:paddingTop="6dp">
+        <ImageView android:id="@+id/w_cmd" style="@style/WidgetIconButton" android:src="@drawable/ic_widget_cmd" android:contentDescription="@string/widget_cmd" />
         <TextView android:id="@+id/w_add_task" style="@style/WidgetButton" android:text="@string/widget_add_task" />
         <TextView android:id="@+id/w_add_water" style="@style/WidgetButton" android:text="@string/widget_add_water" />
         <TextView android:id="@+id/w_add_note" style="@style/WidgetButton" android:text="@string/widget_add_note" />

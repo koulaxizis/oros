@@ -140,7 +140,8 @@
       "set.unit": "Consumption", "set.remind": "Daily reminder", "set.off": "Off",
       "set.remindHint": "Reminders for renewals and service appear while orOS is open (also with this app closed). With orOS closed they wait for the next time you open it.",
       "set.tyreAge": "Tyres are old after (years)", "set.tread": "Tyres are worn below (mm)",
-      "set.data": "Your data", "set.csv": "Export CSV", "set.json": "Export backup", "set.import": "Import backup", "set.close": "Close",
+      "set.data": "Your data", "set.csv": "Export CSV", "set.sheet": "Open in Spreadsheet",
+      "set.sheetCap": "Only the first {n} entries fit in one sheet", "set.json": "Export backup", "set.import": "Import backup", "set.close": "Close",
       "set.osave": "orOS file (.orosgarage)", "set.oopen": "Open orOS file…", "set.ofolder": "Unzipped orOS folder…",
       "toast.added": "Added", "toast.saved": "Saved", "toast.deleted": "Deleted", "toast.undo": "Undo", "toast.budget": "Budget",
       "toast.save": "Could not save: storage is full", "toast.needName": "Give the vehicle a name",
@@ -265,7 +266,8 @@
       "set.unit": "Κατανάλωση", "set.remind": "Καθημερινή υπενθύμιση", "set.off": "Κλειστή",
       "set.remindHint": "Οι υπενθυμίσεις για ανανεώσεις και σέρβις εμφανίζονται όσο το orOS είναι ανοιχτό (και με κλειστή αυτή την εφαρμογή). Με κλειστό το orOS περιμένουν το επόμενο άνοιγμα.",
       "set.tyreAge": "Λάστιχα παλιά μετά από (χρόνια)", "set.tread": "Λάστιχα φαγωμένα κάτω από (mm)",
-      "set.data": "Τα δεδομένα σου", "set.csv": "Εξαγωγή CSV", "set.json": "Αντίγραφο ασφαλείας", "set.import": "Επαναφορά αντιγράφου", "set.close": "Κλείσιμο",
+      "set.data": "Τα δεδομένα σου", "set.csv": "Εξαγωγή CSV", "set.sheet": "Άνοιγμα στο Υπολογιστικό φύλλο",
+      "set.sheetCap": "Χωρούν μόνο οι πρώτες {n} καταχωρίσεις σε ένα φύλλο", "set.json": "Αντίγραφο ασφαλείας", "set.import": "Επαναφορά αντιγράφου", "set.close": "Κλείσιμο",
       "set.osave": "Αρχείο orOS (.orosgarage)", "set.oopen": "Άνοιγμα αρχείου orOS…", "set.ofolder": "Αποσυμπιεσμένος φάκελος orOS…",
       "toast.added": "Προστέθηκε", "toast.saved": "Αποθηκεύτηκε", "toast.deleted": "Διαγράφηκε", "toast.undo": "Αναίρεση", "toast.budget": "Έσοδα & Έξοδα",
       "toast.save": "Δεν αποθηκεύτηκε: ο χώρος είναι γεμάτος", "toast.needName": "Δώσε ένα όνομα στο όχημα",
@@ -2620,6 +2622,7 @@
     var io = el("div", "dlg-actions tight");
     io.style.flexWrap = "wrap";
     io.appendChild(button(t("set.csv"), "", exportCsv));
+    if (todoBridge()) io.appendChild(button(t("set.sheet"), "", function () { dlg.close(); openInSheet(); }));
     io.appendChild(button(t("set.json"), "", exportData));
     io.appendChild(button(t("set.import"), "", importData));
     io.appendChild(button(t("imp.btn"), "", function () { dlg.close(); startImport(); }));
@@ -2680,16 +2683,34 @@
     var payload = { app: "oros-garage", ver: C.DATA_VER, exported: new Date().toISOString(), data: canonical(data) };
     saveText(JSON.stringify(payload, null, 2), "orOS-garage-" + todayYmd() + ".json", "application/json", "JSON", ".json");
   }
-  function exportCsv() {
+  // Export CSV and Open in Spreadsheet share the heading and the rows
+  function csvNames() {
     var names = { fuel: t("kind.fuel"), charge: t("kind.charge"), service: t("kind.service"), cost: t("kind.cost"), odo: t("kind.odo") };
     C.ITEM_IDS.forEach(function (it) { names[it] = t("item." + it); });
     C.COST_CATS.forEach(function (c) { names[c] = t("cat." + c); });
-    var sep = LANG === "el" ? ";" : ",";
-    var head = LANG === "el"
+    return names;
+  }
+  function csvHead() {
+    return LANG === "el"
       ? ["Ημερομηνία", "Όχημα", "Είδος", "Λεπτομέρειες", "Km", "Ποσότητα", "Κόστος (" + data.settings.cur + ")", "Σημειώσεις"]
       : ["Date", "Vehicle", "Kind", "Details", "Km", "Quantity", "Cost (" + data.settings.cur + ")", "Notes"];
-    var lines = [head.map(C.csvCell).join(sep)];
-    C.csvRows(data, names).forEach(function (r) {
+  }
+  // "Open in Spreadsheet" (Bible BR-S1): the Export CSV rows as a new
+  // sheet in the orOS Spreadsheet, numbers as numbers, a SUM under the
+  // cost. Offered only inside orOS (todoBridge = the shell's __orosOpenAt).
+  var SHEET_ROWS = 498;   // + heading + SUM row = the Spreadsheet's 500
+  function openInSheet() {
+    var go = todoBridge();
+    if (!go) return;
+    var rows = C.csvRows(data, csvNames());
+    if (!rows.length) return;
+    if (rows.length > SHEET_ROWS) { showToast(t("set.sheetCap", { n: SHEET_ROWS })); rows = rows.slice(0, SHEET_ROWS); }
+    go("spreadsheet", { newSheet: { name: t("app") + " " + todayYmd(), rows: [csvHead()].concat(rows), sum: [6] } });
+  }
+  function exportCsv() {
+    var sep = LANG === "el" ? ";" : ",";
+    var lines = [csvHead().map(C.csvCell).join(sep)];
+    C.csvRows(data, csvNames()).forEach(function (r) {
       lines.push(r.map(function (v) {
         if (typeof v === "number" && LANG === "el") return String(v).replace(".", ",");
         return C.csvCell(v);
