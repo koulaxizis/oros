@@ -1,0 +1,35 @@
+# Geräteinfo
+Geräteinfo zeigt, was orOS über dieses Gerät sieht: den Speicher, den jede App belegt, Akku, Netzwerk, Synchronisierungsstand, Bildschirm, Browser und die Browser-Funktionen, auf die die Apps angewiesen sind. Die App liest nur; sie ändert nichts und sendet nichts.
+
+## Erste Schritte
+Öffne die App, und die Karten füllen sich von selbst. Tippe oder klicke auf den Titel einer Karte, um sie ein- oder auszuklappen. Die Taste mit dem Kreispfeil (`Aktualisieren`) liest alles neu ein; die App aktualisiert sich auch, wenn du zu ihr zurückkommst.
+
+## Die Karten
+- `Speicher`: wie viel Platz orOS belegt, aufgeteilt in `App-Daten (lokaler Speicher)`, `Datenbanken (Dateien, Hintergrundbild)` und `Offline-Kopien und Caches`, mit einem Balken gegen das übliche Browser-Limit. Eine Warnung erscheint, wenn der lokale Speicher fast voll ist.
+- `Speicher pro App`: lokaler Speicher pro App, die größte zuerst. Tippe oder klicke auf eine App, um sie zu öffnen. `Alle zeigen` listet jede App auf.
+- `Akku`: Ladestand, ob er lädt, und die Zeit bis voll oder leer. Safari und Firefox geben nie Akku-Infos. Brave täuscht immer einen vollen, ladenden Akku vor, deshalb zeigt orOS dort keine Zahl; meldet ein anderer Browser genau „100 % und Laden“, bevor sich etwas ändert, warnt orOS, dass es ein Platzhalter sein kann.
+- `Netzwerk`: online oder offline und, wo der Browser es sagt, Verbindungstyp, geschätzte Geschwindigkeit, Latenz und Datensparmodus. orOS macht keinen Geschwindigkeitstest.
+- `Synchronisierung`: ob dieses Gerät mit Dropbox verbunden ist, entsperrt ist, Änderungen auf den Upload warten, wie oft es synchronisiert, die letzte Cloud-Sicherungskopie und deine automatische Sicherung in eine Datei.
+- `Bildschirm`: Bildschirm- und Fenstergröße, Pixelverhältnis, Ausrichtung, Touch, Dunkelmodus, weniger Bewegung und ob orOS als installierte App oder in einem Browser-Tab läuft.
+- `orOS & Browser`: orOS-Version, Offline-Kopie, Sprache, Design, ungefährer Browser und System, CPU-Kerne, Arbeitsspeicher und Zeitzone.
+- `Browser-Funktionen`: ein Haken oder ein Kreuz für Benachrichtigungen, Sicherungsordner auf der Festplatte, Teilen-Menü, Zwischenablage, Vibration, Bildschirm anlassen, Standort, privaten Dateispeicher, Offline-Nutzung, Verschlüsselung und Ton. Bei einer fehlenden Funktion stehen die Apps, die sie betrifft.
+
+### Schütze deinen Speicher
+Ist der Speicher nicht geschützt, kann der Browser orOS-Daten löschen, wenn auf dem Gerät der Platz knapp wird. Drück `Schutz anfordern`, um den Browser zu fragen. Lehnt er ab, hilft es meistens, [orOS zu installieren](help:t/install) als App.
+
+## Einen Bericht kopieren
+`Bericht kopieren` kopiert jede Karte als reinen Text, praktisch, wenn du bei einem Problem um Hilfe bittest. Werte, die andere Apps speichern, sind nie enthalten, nur ihre Größen.
+
+## Synchronisierung und Sicherung
+Hier wird nichts synchronisiert: Alles beschreibt dieses Gerät. Nur die eingeklappten Karten werden gemerkt, auf diesem Gerät. Um Synchronisierung oder Sicherung zu ändern, öffne [Einstellungen](app:settings); siehe [Synchronisierung](help:t/sync) und [Sicherung](help:t/backup).
+
+## Tastenkürzel
+- [[R]] aktualisiert alle Karten.
+
+## Tipps
+- Zeigt `Speicher pro App` oben eine App, die du nicht mehr nutzt, öffne sie und lösch, was du nicht brauchst. Siehe auch [Deine Daten](help:t/data).
+- Bei Problemen fang mit [Fehlerbehebung](help:t/troubleshooting) an.
+
+## Grenzen
+- Browser, System und das Limit des lokalen Speichers sind ungefähr.
+- Viele Details (Akku, Netzwerk, Arbeitsspeicher) hängen vom Browser ab und zeigen vielleicht `Nicht verfügbar` oder `Unbekannt`.
