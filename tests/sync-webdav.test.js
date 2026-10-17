@@ -14,7 +14,7 @@ process.env.OROS_CLOUD = "webdav";
 const test = require("node:test");
 const assert = require("node:assert/strict");
 
-for (const suite of ["sync-merge", "sync-loop", "sync-kdf", "sync-storage-full",
+for (const suite of ["sync-merge", "sync-loop", "sync-kdf", "sync-storage-full", "sync-silent-fail",
                      "sync-provider", "vault-ondemand", "passwords-vault"]) {
   test.describe("webdav: " + suite, () => { require("./" + suite + ".test.js"); });
 }
