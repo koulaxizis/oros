@@ -7294,3 +7294,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Sync: every cloud call goes through one provider contract (no visible change; prepares WebDAV / Nextcloud).
 - Files: `sync.js`, Bible.
   - Tests: full suite green; real Chromium with two devices 1280 EN / 360 EL. Not tested: a real Dropbox account from the cloud container.
+
+### 2026-10-17 — Send to an app: app interop wave 1 (#453) — 2.69.00
+- Send to an app: Writer, Notes, Wiki, Mail, Bookmarks and Reader hand text, a link, items or a table to another installed orOS app (Notes, To-Do, Writer, Mail, Bookmarks, Spreadsheet, Wiki, Assistant, Text Tools, Case Converter, Label Maker), which opens it ready to save. Send to someone stays in the same sheet.
+- Files: `send/core.js`, `send/sheet.js` (new, precached), `shell.js`, the six apps, help share topic EN/EL, Bible BR-SEND.
+  - Tests: full suite green (new `tests/send.test.js`); real Chromium 1280 EN / 360 EL. Not tested: a real phone, Safari, Wiki/Mail/Reader entries clicked by hand.
