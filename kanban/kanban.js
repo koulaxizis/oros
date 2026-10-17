@@ -50,7 +50,8 @@
   // ---------- 1. Σταθερές, i18n, βοηθητικές συναρτήσεις ----------
   // Ecosystem: η γλώσσα έρχεται από το shell (window.orosLang) με
   // fallback στο τοπικό κλειδί — ίδια αλυσίδα με Characters/Weather.
-  var LANG = (function () {
+  // orosI18n (../i18n.js): the full language code, a pack language included.
+  var LANG = window.orosI18n ? window.orosI18n.lang() : (function () {
     try {
       if (window.parent && window.parent.orosLang) {
         return window.parent.orosLang === "el" ? "el" : "en";
@@ -285,6 +286,10 @@
       "color.yellow":     "Yellow",
       "color.orange":     "Orange",
       "color.gray":       "Gray",
+      "seed.todo":        "To Do",
+      "seed.doing":       "Doing",
+      "seed.done":        "Done",
+      "seed.main":        "Main",
     },
     el: {
       "board.create":     "Νέος πίνακας",
@@ -511,8 +516,14 @@
       "color.yellow":     "Κίτρινο",
       "color.orange":     "Πορτοκαλί",
       "color.gray":       "Γκρι",
+      "seed.todo":        "Εκκρεμεί",
+      "seed.doing":       "Σε εξέλιξη",
+      "seed.done":        "Ολοκληρωμένα",
+      "seed.main":        "Κύριο",
     }
   };
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "kanban", LANG);
+  function loc() { return window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el" : "en"); }
 
   function t(key, vars) {
     var p = STRINGS[LANG] || STRINGS.en;
@@ -659,9 +670,7 @@
   }
 
   function newBoardObj(name) {
-    var names = LANG === "el"
-      ? ["Εκκρεμεί", "Σε εξέλιξη", "Ολοκληρωμένα"]
-      : ["To Do", "Doing", "Done"];
+    var names = [t("seed.todo"), t("seed.doing"), t("seed.done")];
     return {
       id: uid(),
       name: name,
@@ -715,7 +724,7 @@
         // v4 → v5 migration: wrap into default board
         var boardName = (data.ver === 4 && data.columns && data.columns.length > 0 && data.columns[0].name)
           ? "Main" 
-          : (LANG === "el" ? "Κύριο" : "Main");
+          : t("seed.main");
         
         // Create new v5 state
         var v5state = {
@@ -880,9 +889,7 @@
       boards: []
     };
 
-    var seedCols = (LANG === "el"
-      ? ["Εκκρεμεί", "Σε εξέλιξη", "Ολοκληρωμένα"]
-      : ["To Do", "Doing", "Done"])
+    var seedCols = [t("seed.todo"), t("seed.doing"), t("seed.done")]
       .map(function (n, i) {
         return {
           id: "kb-seed-col-" + i,          // deterministic per-position
@@ -896,7 +903,7 @@
 
     state.boards.push({
       id: "kb-seed-main",                 // THE fixed seed board id
-      name: LANG === "el" ? "Κύριο" : "Main",
+      name: t("seed.main"),
       mtime: 0,
       om: 0,
       deleted: {},
@@ -1955,7 +1962,7 @@
   }
 
   function escapeHtml(s) {
-    return String(s).replace(/[&<>"']/g, function (c) {
+    return String(s).replace(/[&<>\x22\x27]/g, function (c) {
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
     });
   }
@@ -2082,7 +2089,7 @@
       if (quickPrefill.due) {
         var dp = quickPrefill.due.split("-");
         bits.push(t("card.due") + " " + new Date(+dp[0], +dp[1] - 1, +dp[2])
-          .toLocaleDateString(LANG === "el" ? "el" : "en", { day: "numeric", month: "short", year: "numeric" }));
+          .toLocaleDateString(loc(), { day: "numeric", month: "short", year: "numeric" }));
       }
       if (bits.length) {
         var pf = document.createElement("div");
@@ -2211,7 +2218,7 @@
       var parts = isoDate.split("-");
       var d = new Date(+parts[0], +parts[1] - 1, +parts[2]);  // τοπικό μεσονύκτιο
       var dd = String(d.getDate()).padStart(2, "0");
-      var mm = d.toLocaleString(LANG === "el" ? "el" : "en", { month: "short" }).replace(".", "");
+      var mm = d.toLocaleString(loc(), { month: "short" }).replace(".", "");
       // ΕΛ: "19 Σεπ" | EN: "19 Sep"
       label = dd + " " + mm;
       colorClass = "due-future";
@@ -4827,7 +4834,7 @@
     hd.appendChild(corner);
     var track = document.createElement("div");
     track.className = "tl-track";
-    var loc = LANG === "el" ? "el" : "en";
+    var mloc = loc();
     for (var i = 0; i < rg.days; i++) {
       var ymd = T.addDays(rg.from, i);
       var p = ymd.split("-");
@@ -4838,7 +4845,7 @@
       if (+p[2] === 1 || i === 0) {
         var mo = document.createElement("span");
         mo.className = "tl-month";
-        mo.textContent = d.toLocaleString(loc, { month: "short" }).replace(".", "") + (+p[1] === 1 || i === 0 ? " " + p[0] : "");
+        mo.textContent = d.toLocaleString(mloc, { month: "short" }).replace(".", "") + (+p[1] === 1 || i === 0 ? " " + p[0] : "");
         cell.appendChild(mo);
       }
       var dn = document.createElement("span");
@@ -5120,7 +5127,7 @@
   // export holds it), media/<sha256>.<ext> = the card attachments,
   // preview/board.md + board.csv for any other program.
   function fileTitle(s) {
-    return String(s || "").replace(/[\u0000-\u001f\u007f\/\\:*?"<>|]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 80) || "Board";
+    return String(s || "").replace(/[\u0000-\u001f\u007f\/\\:*?\x22<>|]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 80) || "Board";
   }
   function saveBytes(bytes, filename, mime, ext) {
     var host = dialogHost(), blob = new Blob([bytes], { type: mime });
