@@ -2,8 +2,8 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 23929 of 30254 (79%)
-- Help pages: 122 of 144 (84%)
+- Strings: 26996 of 30647 (88%)
+- Help pages: 134 of 144 (93%)
 - Shown in the language list: yes
 
 Apps marked "English for now" do not load language packs yet: their
@@ -18,7 +18,7 @@ text is still written in the code. They switch over wave by wave
 | baby | 100% | 324 / 324 |
 | backgammon | 100% | 91 / 91 |
 | battleship | 100% | 102 / 102 |
-| bookmarks | English for now | 0 / 231 |
+| bookmarks | 100% | 232 / 232 |
 | breakout | 100% | 55 / 55 |
 | bubble | 100% | 53 / 53 |
 | budget | 100% | 555 / 555 |
@@ -36,10 +36,10 @@ text is still written in the code. They switch over wave by wave
 | crossword | 100% | 170 / 170 |
 | cycle | 100% | 203 / 203 |
 | device | 100% | 124 / 124 |
-| diary | English for now | 0 / 187 |
+| diary | 100% | 234 / 234 |
 | dice | 100% | 52 / 52 |
 | dots | 100% | 54 / 54 |
-| familytree | English for now | 0 / 197 |
+| familytree | 100% | 200 / 200 |
 | feeds | 100% | 325 / 325 |
 | files | 100% | 354 / 354 |
 | fitness | 100% | 413 / 413 |
@@ -59,7 +59,7 @@ text is still written in the code. They switch over wave by wave
 | kanban | 100% | 272 / 272 |
 | labels | 100% | 88 / 88 |
 | layout | 100% | 415 / 415 |
-| library | English for now | 0 / 307 |
+| library | 100% | 323 / 323 |
 | lightsout | 100% | 51 / 51 |
 | mahjong | 100% | 69 / 69 |
 | mail | 100% | 495 / 495 |
@@ -85,7 +85,7 @@ text is still written in the code. They switch over wave by wave
 | oracle | 100% | 38 / 38 |
 | passwords | English for now | 0 / 321 |
 | petcare | English for now | 0 / 317 |
-| petworld | English for now | 0 / 252 |
+| petworld | 100% | 256 / 256 |
 | photolab | 100% | 708 / 708 |
 | pixel | 100% | 101 / 101 |
 | plants | 100% | 218 / 218 |
@@ -93,21 +93,21 @@ text is still written in the code. They switch over wave by wave
 | pong | 100% | 64 / 64 |
 | prompter | 100% | 332 / 332 |
 | pubdomain | 100% | 120 / 120 |
-| qr | English for now | 0 / 248 |
-| quote | English for now | 0 / 216 |
+| qr | 100% | 248 / 248 |
+| quote | 100% | 230 / 230 |
 | radio | 100% | 103 / 103 |
 | reversi | 100% | 60 / 60 |
 | ringtones | 100% | 107 / 107 |
 | rps | 100% | 59 / 59 |
-| scanpdf | English for now | 0 / 270 |
-| scores | English for now | 0 / 147 |
+| scanpdf | 100% | 270 / 270 |
+| scores | 100% | 147 / 147 |
 | settings | 99% | 480 / 481 |
-| share | English for now | 0 / 152 |
+| share | 100% | 179 / 179 |
 | shelf | 100% | 291 / 291 |
 | shell | 100% | 452 / 452 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 49 / 49 |
-| sky | English for now | 0 / 149 |
+| sky | 100% | 383 / 383 |
 | slider | 100% | 37 / 37 |
 | slides | 100% | 418 / 418 |
 | snake | 100% | 52 / 52 |
@@ -117,7 +117,7 @@ text is still written in the code. They switch over wave by wave
 | spreadsheet | 100% | 355 / 355 |
 | stickies | 100% | 124 / 124 |
 | stock | 100% | 614 / 614 |
-| storage | English for now | 0 / 166 |
+| storage | 100% | 179 / 179 |
 | studio | 100% | 381 / 381 |
 | sudoku | 100% | 139 / 139 |
 | television | 100% | 82 / 82 |
@@ -135,7 +135,7 @@ text is still written in the code. They switch over wave by wave
 | units | 100% | 214 / 214 |
 | wallpaper | 100% | 71 / 71 |
 | water | 100% | 94 / 94 |
-| weather | English for now | 0 / 152 |
+| weather | 100% | 186 / 186 |
 | whack | 100% | 49 / 49 |
 | wheel | 100% | 107 / 107 |
 | wiki | English for now | 0 / 392 |
@@ -153,24 +153,12 @@ These show English until fixed (usually the English text changed).
 ## Help pages not translated yet
 
 - help/assistant.txt
-- help/bookmarks.txt
-- help/diary.txt
-- help/familytree.txt
 - help/flashcards.txt
-- help/library.txt
 - help/maps.txt
 - help/passwords.txt
 - help/petcare.txt
-- help/petworld.txt
-- help/qr.txt
-- help/quote.txt
-- help/scanpdf.txt
-- help/scores.txt
-- help/sky.txt
 - help/split.txt
-- help/storage.txt
 - help/texttools.txt
 - help/time.txt
-- help/weather.txt
 - help/wiki.txt
 - help/wordsearch.txt
