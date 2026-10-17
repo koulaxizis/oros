@@ -13,7 +13,7 @@ On a phone the preview sits above the form; on a wide screen it is on the right.
 - `Language of the certificate` is the language of its texts and dates, whatever language orOS is in.
 - Six looks: `Classic`, `Modern`, `Elegant`, `Bold`, `Minimal` and `Playful`. Each sets its own colours and font; change them after with `Main colour`, `Second colour` and `Font`.
 - `Paper` is A4 or Letter, landscape or portrait.
-- Under `Texts` you can change every line. Tap a field such as `Name` or `Dates` to put it where the cursor is; each person's details go in its place. A part between `[[` and `]]` shows only when its fields have a value, so `[[ ({hours} hours)]]` disappears when the hours are empty.
+- Under `Texts` you can change every line. Tap a field such as `Name` or `Dates` to put it where the cursor is; each person's details go in its place. A part between double square brackets shows only when its fields have a value, so in `[[{place}, ]]{date}` the place and its comma disappear when the place is empty.
 - `Ready texts for this kind` puts the original texts back.
 
 ## Logo, signatures and seal

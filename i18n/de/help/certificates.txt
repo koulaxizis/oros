@@ -1,0 +1,82 @@
+# Urkunden
+Erstelle Teilnahmebestätigungen, Abschlusszertifikate, Ehrenurkunden, Diplome, Dankesurkunden und Kinderurkunden für eine ganze Liste von Personen auf einmal. Du gestaltest eine Urkunde, fügst die Namen hinzu und bekommst für jede Person ein nummeriertes PDF.
+
+## Erste Schritte
+1. Tippe auf `Urkunden erstellen` (oder oben auf [[+]]), wähle eine `Art`, gib das Seminar oder den Kurs ein und tippe auf `Erstellen`.
+2. Fülle unter `Gestaltung` den Bereich `Wofür` aus: die Organisation, die Daten, den Ort und die Stunden.
+3. Füge unter `Personen` die Namen hinzu.
+4. Tippe unter `Ausstellen` auf `Nummern vergeben`, dann auf `PDF mit allen` oder `ZIP, ein PDF pro Person`.
+Auf dem Handy steht die Vorschau über dem Formular, auf einem breiten Bildschirm rechts daneben. Mit den Pfeilen daneben gehst du von Person zu Person.
+
+## Gestaltung
+- Zehn Arten haben fertige Texte auf Englisch und Griechisch (und auf Deutsch, wenn orOS auf Deutsch eingestellt ist): `Teilnahme`, `Abschluss`, `Auszeichnung`, `Exzellenz`, `Diplom`, `Mitwirkung`, `Schulung`, `Dank`, `Ehrenamt` und `Kinderurkunde`.
+- `Sprache der Urkunde` ist die Sprache ihrer Texte und Daten, egal in welcher Sprache orOS läuft.
+- Sechs Stile: `Klassisch`, `Modern`, `Elegant`, `Kräftig`, `Schlicht` und `Verspielt`. Jeder hat eigene Farben und eine eigene Schrift; ändern kannst du sie danach mit `Hauptfarbe`, `Zweite Farbe` und `Schrift`.
+- `Papier` ist A4 oder Letter, Querformat oder Hochformat.
+- Unter `Texte` kannst du jede Zeile ändern. Tippe auf ein Feld wie `Name` oder `Daten`, um es an der Cursorposition einzufügen; an seiner Stelle stehen die Angaben jeder Person. Ein Teil zwischen doppelten eckigen Klammern erscheint nur, wenn seine Felder einen Wert haben: In `[[{place}, ]]{date}` fallen der Ort und sein Komma weg, wenn kein Ort angegeben ist.
+- `Fertige Texte für diese Art` stellt die ursprünglichen Texte wieder her.
+
+## Logo, Unterschriften und Siegel
+- Mit `Bild wählen` fügst du oben ein Logo und unten ein Siegel oder einen Stempel hinzu. Ohne Siegel zeichnet `Eine Medaille, wenn es kein Siegel gibt` eine Medaille mit der Jahreszahl.
+- Bis zu drei Unterschriften, jede mit Name, Funktion und Unterschrift: `Auf dem Bildschirm unterschreiben` mit Finger, Stift oder Maus, oder `Bild einer Unterschrift`.
+- Eine neue Urkundenreihe übernimmt Organisation, Logo, Unterschriften und Siegel deiner letzten.
+
+## Personen
+- Gib einen Namen und eine E-Mail-Adresse ein und tippe auf `Hinzufügen`, oder nutze `Liste einfügen`: eine Person pro Zeile oder eine aus einer Tabellenkalkulation kopierte Tabelle mit einer ersten Zeile aus Spaltennamen (Name, E-Mail, Bewertung…).
+- `Datei öffnen (CSV, Excel)` liest eine .csv-, .xlsx-, .xls- oder .ods-Tabelle auf dieselbe Weise. Spalten „Vorname“ und „Nachname“ werden zusammengeführt.
+- `Aus Kontakte` und `Aus CRM` fügen alle hinzu oder die Personen eines Labels oder Tags.
+- Ein Name, der mit derselben E-Mail-Adresse schon auf der Liste steht, wird nicht doppelt hinzugefügt.
+- Tippe auf eine Person, um die Angaben zu ändern, eine `Note oder Auszeichnung` hinzuzufügen, die Urkunde als `Widerrufen` zu markieren oder die Person zu entfernen.
+- `Andere Form des Namens` ist für eigene Texte, die den Namen zum Beispiel im Griechischen im Akkusativ brauchen. Die fertigen Texte verwenden den Namen so, wie er geschrieben ist, du musst das Feld also nie ausfüllen.
+
+## Nummern
+- `Nummern vergeben` nummeriert alle ohne Nummer in der Reihenfolge der Liste: CERT-2026-0001, CERT-2026-0002… Den Anfang änderst du unter `Nummern` › `Nummer beginnt mit`.
+- Eine Nummer wird nur einmal vergeben und nie wiederverwendet, auch wenn eine Person entfernt wird.
+- Wenn zwei Geräte im selben Moment Nummern vergeben, zeigt `Prüfung` die doppelt vergebene Nummer, und `Neue Nummer vergeben` behebt das.
+
+## Prüfcode
+- Setze unter `Prüfcode (QR)` das Häkchen bei `Ein QR-Code, der zeigt, dass die Urkunde echt ist`. Jede Urkunde bekommt unten links einen QR-Code.
+- Wer ihn mit dem Handy scannt, sieht eine Prüfseite mit den Angaben, die du signiert hast: Nummer, Name, Kurs, Daten, Organisation und Ausstellungsdatum. Ändert jemand auch nur einen Buchstaben, zeigt die Seite `Ungültig`.
+- Der Code wird mit einem Schlüssel signiert, den orOS beim ersten Mal erstellt und in deinen synchronisierten Daten aufbewahrt, sodass alle deine Geräte mit demselben Schlüssel signieren. Die Prüfseite zeigt diesen Schlüssel, zum Beispiel `714C-C0EF-E8A4-2098`.
+- Mit `Schlüssel kopieren` kannst du ihn auf deine Website oder unter deine E-Mails stellen, damit man sieht, dass die Urkunde wirklich von dir stammt. `Prüfseite öffnen` zeigt die Seite für die Person in der Vorschau.
+- Die Prüfung braucht keinen Server, und nichts wird irgendwohin gesendet. Im PDF ist der Code auch ein Link.
+
+## Anwesenheit
+- `Anwesenheitsliste (PDF)` unter `Personen` druckt die Liste mit einer Unterschriftenspalte für jeden Tag des Seminars (bis zu 7 Tage) und ein paar leeren Zeilen für Personen, die ohne Anmeldung kommen.
+- Setze das Häkchen neben jeder Person, die da war, oder tippe auf `Alle waren da`. `Häkchen entfernen` entfernt alle.
+- Setze unter `Ausstellen` das Häkchen bei `Nur für Personen, die als anwesend markiert sind`: Die PDFs, die Nummern und die E-Mail-Liste gelten dann nur für sie. `Prüfung` zeigt, wie viele markiert sind.
+
+## Open Badges
+- `Open Badges (ZIP)` erstellt für jede Person einen Open-Badges-3.0-Nachweis, eine .jwt-Datei, signiert mit demselben Schlüssel wie der Prüfcode.
+- Man kann ihn in eine Badge-Wallet oder eine Kursplattform aufnehmen, die Open Badges 3.0 akzeptiert, und jeder kann die Signatur ohne einen Server von uns prüfen.
+- Die E-Mail-Adresse wird nur als Hash gespeichert. Ist der Prüfcode eingeschaltet, trägt das Badge auch den Link zur Prüfseite.
+
+## Speichern, drucken und senden
+- `PDF mit allen` erstellt eine Datei mit einer Seite pro Person; `ZIP, ein PDF pro Person` ein PDF pro Person, benannt nach Nummer und Name.
+- `Einzeln in Dateien speichern` legt die PDFs in Dateien › Certificates › Name der Reihe ab.
+- `Drucken` druckt bis zu 100 Urkunden auf einmal.
+- `PDF dieser Urkunde` und `Bild (PNG) dieser Urkunde` speichern die Urkunde aus der Vorschau.
+- `Per E-Mail senden…` öffnet eine Nachricht pro Person. Ist orOS Mail auf diesem Gerät eingerichtet, wird das PDF angehängt; sonst wird das PDF gespeichert, deine Mail-App öffnet sich, und du hängst es selbst an.
+- `Register (CSV)` speichert die Liste mit Nummern, Namen, Noten, Daten und widerrufenen Urkunden.
+- Wenn die Gestaltung Nummern zeigt, bietet orOS zuerst an, die Personen ohne Nummer zu nummerieren. `Widerrufene Urkunden weglassen` lässt widerrufene weg.
+
+## Allen per E-Mail senden
+- Mit einem in orOS Mail eingerichteten Konto auf diesem Gerät sendet `Allen per E-Mail senden…` unter `Ausstellen` jeder Person eine Nachricht mit ihrer eigenen Urkunde im Anhang. Jede Nachricht hat genau einen Empfänger.
+- Die Nachrichten gehen einzeln raus, höchstens so viele pro Stunde, wie du einstellst (Mail-Anbieter begrenzen das, oft auf 100 bis 300 pro Stunde). Lass orOS offen und im Vordergrund, solange gesendet wird.
+- Lehnt der Mailserver weitere Nachrichten ab, stimmt das Passwort nicht oder bricht die Verbindung ab, stoppt das Senden. Tippe später auf `Weiter`. Wer seine Urkunde schon bekommen hat, bekommt sie nicht noch einmal, auch nicht nach dem Schließen von orOS, außer du setzt das Häkchen bei `Auch an Personen, die ihre schon bekommen haben`.
+- Eine Adresse, die der Server ablehnt, wird übersprungen und am Ende genannt.
+
+## Synchronisierung und Sicherung
+- Deine Urkunden und Listen begleiten dich über die orOS-Synchronisierung verschlüsselt auf jedes Gerät und sind Teil des orOS-Exports.
+- Logos, Unterschriften und Siegel bleiben auf deinem orOS-Speicher und reisen mit ihm.
+- [[⋯]] › `orOS-Datei (.oroscert)` speichert eine Urkundenreihe als offene Datei mit ihrem Namen: die Gestaltung, die Texte, die Personenliste mit ihren Nummern und das Logo, die Unterschriften und das Siegel selbst. Es ist ein ZIP: Entpackt findest du `content.json` (die Reihe), `media` (die Bilder) und `preview` mit `thumbnail.png` (die Gestaltung) und `people.csv` (das Register, das jede Tabellenkalkulation öffnet). Der Schlüssel, der die QR-Prüfcodes signiert, kommt nie in die Datei: Urkunden, die auf einem anderen Gerät geöffnet werden, signieren mit dem Schlüssel dieses Geräts.
+- `orOS-Datei öffnen (.oroscert)…` auf dem ersten Bildschirm oder das Öffnen der Datei mit orOS aus deinem System (`Öffnen mit…`) holt sie als neue Urkunden herein; sie ersetzt nie deine vorhandenen. `Entpackter orOS-Ordner…` daneben holt eine entpackte .oroscert zurück, auch wenn du eine Datei darin geändert hast.
+- Nichts wird irgendwohin gesendet, außer du sendest selbst eine E-Mail.
+
+## Tipps
+> [[⋯]] › `Duplizieren (nur Gestaltung)` kopiert eine Gestaltung ohne ihre Personen, bereit für das nächste Seminar.
+
+## Grenzen
+- Bis zu 2.000 Personen in einer Reihe und 5.000 insgesamt; bis zu 200 Reihen.
+- Die Schriften sind Noto Serif und Noto Sans, die griechische und lateinische Buchstaben abdecken.
+- Eine Urkunde, die du widerrufst, nachdem sie verschickt wurde, erscheint auf der Prüfseite trotzdem als signiert, weil es keinen Server zum Nachfragen gibt. Sag den Leuten, dass sie sich im Zweifel bei dir melden sollen.
