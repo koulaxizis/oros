@@ -9,9 +9,11 @@
 (function (root) {
   "use strict";
   var KEY = "oros-mockups-data";
-  var NAME = { en: "Book mockup", el: "Μακέτα βιβλίου" };
-  var BIND = { en: { pb: "Paperback", hc: "Hardcover" }, el: { pb: "Χαρτόδετο", hc: "Σκληρόδετο" } };
-  var PAGES = { en: "pages", el: "σελίδες" };
+  // Runs in the shell, which loads only its own pack: a pack language shows English.
+  var S = {
+    en: { "search.name": "Book mockup", "bind.pb": "Paperback", "bind.hc": "Hardcover", "search.pages": "pages" },
+    el: { "search.name": "Μακέτα βιβλίου", "bind.pb": "Χαρτόδετο", "bind.hc": "Σκληρόδετο", "search.pages": "σελίδες" }
+  };
   var ID_RE = /^k[0-9a-z]{6,24}$/;
 
   function str(v) { return typeof v === "string" ? v.replace(/\s+/g, " ").trim() : ""; }
@@ -30,10 +32,10 @@
         var bk = p.bk && typeof p.bk === "object" ? p.bk : {}, art = p.art && typeof p.art === "object" ? p.art : {};
         var parts = [];
         if (n(bk.w) && n(bk.h)) parts.push(n(bk.w) + " × " + n(bk.h) + " mm");
-        if (n(bk.pages)) parts.push(n(bk.pages) + " " + PAGES[lang]);
-        if (BIND[lang][bk.bind]) parts.push(BIND[lang][bk.bind]);
+        if (n(bk.pages)) parts.push(n(bk.pages) + " " + S[lang]["search.pages"]);
+        if (bk.bind === "pb" || bk.bind === "hc") parts.push(S[lang]["bind." + bk.bind]);
         if (str(art.spT)) parts.push(str(art.spT));
-        out.push({ id: p.id, title: str(p.nm) || NAME[lang], text: parts.join(" · "), target: { id: p.id } });
+        out.push({ id: p.id, title: str(p.nm) || S[lang]["search.name"], text: parts.join(" · "), target: { id: p.id } });
       });
       return out;
     },
