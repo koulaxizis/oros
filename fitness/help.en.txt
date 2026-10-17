@@ -73,7 +73,7 @@ In `Settings`, `orOS file (.orosworkouts)` saves your own exercises, programs, p
 ## Sync and backup
 Your exercises, programs, progression programs, workouts (with their routes), body measurements and settings sync through [orOS sync](help:t/sync). A running workout reaches sync every few minutes, so you can finish it on another device. The open tab, chart choices, rest timer and exercise pictures stay on this device.
 
-In `Settings` › `Export`, save `All sets (CSV)` or a `Backup (JSON)`. `Restore from backup` merges a backup into what you already have.
+In `Settings` › `Export`, save `All sets (CSV)` or a `Backup (JSON)`. `Restore from backup` merges a backup into what you already have. Inside orOS, `Open in Spreadsheet` opens the same sets as a new sheet in Spreadsheet, with totals under reps, time and distance.
 
 ## Keyboard shortcuts
 - [[1]] to [[5]] switch between the five tabs (when you're not typing).

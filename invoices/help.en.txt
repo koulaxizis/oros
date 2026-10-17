@@ -53,7 +53,7 @@ On `Clients`, add a `New client` with name, profession, ΑΦΜ, ΔΟΥ, address,
 `Save as template` in the editor keeps the client and items to reuse with `New` › `From a template`. Set `Repeat` to every month, every 3 months or every year and a draft is made on that day for you to check and issue. Nothing is issued by itself.
 
 ## Dashboard
-`Dashboard` shows, for a `Period`, how much you `Invoiced` and `Collected`, what is `Outstanding` and `Overdue`, a bar per month, your top clients and the VAT per rate. Choose the `Currency` when you invoice in more than one. `Export documents (CSV)` and `Export payments (CSV)` save them for a spreadsheet or your accountant.
+`Dashboard` shows, for a `Period`, how much you `Invoiced` and `Collected`, what is `Outstanding` and `Overdue`, a bar per month, your top clients and the VAT per rate. Choose the `Currency` when you invoice in more than one. `Export documents (CSV)` and `Export payments (CSV)` save them for a spreadsheet or your accountant. Inside orOS, `Open in Spreadsheet` opens the documents of the period straight in a new sheet in [Spreadsheet](app:spreadsheet), with net, VAT and total as numbers and their totals at the bottom when the period has a single currency.
 
 ## Calendar, Today and reminders
 - Unpaid invoices show in [Calendar](app:calendar) on their due date, under the `Invoices` chip; tapping one opens it here.

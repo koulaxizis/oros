@@ -8,7 +8,8 @@
     <string name="widget_today">orOS Σήμερα</string>
     <string name="widget_today_desc">Τα επόμενα γεγονότα και οι εργασίες σου, με κουμπιά γρήγορης προσθήκης</string>
     <string name="widget_quick">orOS γρήγορη προσθήκη</string>
-    <string name="widget_quick_desc">Πρόσθεσε εργασία, ποτήρι νερό ή σημείωση</string>
+    <string name="widget_quick_desc">Εντολή, εργασία, ποτήρι νερό ή σημείωση</string>
+    <string name="widget_cmd">Γραμμή εντολών</string>
     <string name="widget_add_task">+ Εργασία</string>
     <string name="widget_add_water">+ Νερό</string>
     <string name="widget_add_note">+ Σημείωση</string>

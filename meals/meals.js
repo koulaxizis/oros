@@ -89,6 +89,10 @@
       "sh.excluded": "Left out, you always have them:", "sh.restore": "Put {name} back on the list",
       "sh.title": "Shopping list {week}", "sh.more": "Options for {name}", "sh.aisle": "Aisle",
       "sh.pantry": "I always have it", "sh.remove": "Remove", "sh.from.recipes": "for {list}",
+      "sheet.open": "Open in Spreadsheet", "sheet.cap": "Only the first {n} rows fit in one sheet",
+      "sheet.weekNone": "Nothing planned this week", "sheet.shopNone": "Nothing to buy this week",
+      "sheet.date": "Date", "sheet.day": "Day", "sheet.meal": "Meal", "sheet.dish": "Dish", "sheet.serv": "Servings",
+      "sheet.item": "Item", "sheet.qty": "Quantity", "sheet.for": "For", "sheet.done": "Bought",
       "aisle.produce": "Fruit & vegetables", "aisle.meat": "Meat", "aisle.fish": "Fish & seafood", "aisle.dairy": "Dairy & eggs",
       "aisle.bakery": "Bakery", "aisle.pantry": "Cupboard", "aisle.spices": "Spices & herbs", "aisle.frozen": "Frozen",
       "aisle.drinks": "Drinks", "aisle.household": "Household", "aisle.other": "Other",
@@ -214,6 +218,10 @@
       "sh.excluded": "Δεν μπήκαν, τα έχεις πάντα:", "sh.restore": "Βάλε ξανά στη λίστα: {name}",
       "sh.title": "Λίστα για ψώνια {week}", "sh.more": "Επιλογές για: {name}", "sh.aisle": "Τμήμα",
       "sh.pantry": "Το έχω πάντα", "sh.remove": "Αφαίρεση", "sh.from.recipes": "για {list}",
+      "sheet.open": "Άνοιγμα στο Υπολογιστικό φύλλο", "sheet.cap": "Χωρούν μόνο οι πρώτες {n} γραμμές σε ένα φύλλο",
+      "sheet.weekNone": "Δεν υπάρχει τίποτα προγραμματισμένο αυτή την εβδομάδα", "sheet.shopNone": "Τίποτα για ψώνια αυτή την εβδομάδα",
+      "sheet.date": "Ημερομηνία", "sheet.day": "Ημέρα", "sheet.meal": "Γεύμα", "sheet.dish": "Φαγητό", "sheet.serv": "Μερίδες",
+      "sheet.item": "Είδος", "sheet.qty": "Ποσότητα", "sheet.for": "Για", "sheet.done": "Τα πήρα",
       "aisle.produce": "Φρούτα & λαχανικά", "aisle.meat": "Κρέας", "aisle.fish": "Ψάρια & θαλασσινά", "aisle.dairy": "Γαλακτοκομικά & αυγά",
       "aisle.bakery": "Φούρνος", "aisle.pantry": "Ντουλάπι", "aisle.spices": "Μπαχαρικά & μυρωδικά", "aisle.frozen": "Κατεψυγμένα",
       "aisle.drinks": "Ποτά", "aisle.household": "Είδη σπιτιού", "aisle.other": "Άλλα",
@@ -976,6 +984,40 @@
     });
     if (!items.length) { showToast(t("sh.todoNone")); return; }
     p.__orosOpenAt("todo", { addItems: { list: "tdl-groceries", from: t("app.name"), items: items.slice(0, 200) } });
+  }
+
+  // "Open in Spreadsheet" (Bible BR-S1): the week on screen (one row
+  // per planned dish) or its shopping list as a new sheet in the orOS
+  // Spreadsheet. Shell only (shellOpenAt); dates YYYY-MM-DD.
+  var SHEET_ROWS = 499;   // + heading = the Spreadsheet's 500
+  function openInSheet(name, head, rows) {
+    var p = shellOpenAt();
+    if (!p) return;
+    if (rows.length > SHEET_ROWS) { showToast(t("sheet.cap", { n: SHEET_ROWS })); rows = rows.slice(0, SHEET_ROWS); }
+    p.__orosOpenAt("spreadsheet", { newSheet: { name: name.slice(0, 31), rows: [head].concat(rows) } });
+  }
+  function weekToSheet() {
+    var wd = new Intl.DateTimeFormat(LOCALE, { weekday: "long" }), rows = [];
+    C.weekDays(view.wk).forEach(function (d) {
+      var day = wd.format(new Date(d + "T12:00:00"));
+      data.set.sl.forEach(function (s) {
+        cellItems(cellKey(d, s)).forEach(function (it) {
+          var L = itemLabel(it);
+          rows.push([d, day, slotName(s), L.t, L.sv || ""]);
+        });
+      });
+    });
+    if (!rows.length) { showToast(t("sheet.weekNone")); return; }
+    openInSheet(t("app.name") + " " + view.wk,
+      [t("sheet.date"), t("sheet.day"), t("sheet.meal"), t("sheet.dish"), t("sheet.serv")], rows);
+  }
+  function shopToSheet() {
+    var rows = shopList().items.map(function (it) {
+      return [aisleName(it.aisle), it.name, it.qty, it.from.join(", "), it.done ? "✓" : ""];
+    });
+    if (!rows.length) { showToast(t("sheet.shopNone")); return; }
+    openInSheet(t("tab.sh") + " " + view.wk,
+      [t("sh.aisle"), t("sheet.item"), t("sheet.qty"), t("sheet.for"), t("sheet.done")], rows);
   }
 
   function renderAll() {
@@ -3407,10 +3449,12 @@
     $("wk-copy").textContent = t("wk.copy");
     $("wk-fill").textContent = t("wk.fill");
     $("wk-clear").textContent = t("wk.clear");
+    $("wk-sheet").textContent = t("sheet.open");
     $("sh-from").textContent = t("sh.from");
     $("sh-copy").textContent = t("sh.copy");
     $("sh-share").textContent = t("sh.share");
     $("sh-todo").textContent = t("sh.todo");
+    $("sh-sheet").textContent = t("sheet.open");
     $("sh-uncheck").textContent = t("sh.uncheck");
     $("sh-pantry").textContent = t("sh.tickedToPantry");
     $("pa-add-in").placeholder = t("pa.add");
@@ -3442,11 +3486,15 @@
     $("wk-copy").addEventListener("click", copyLastWeek);
     $("wk-fill").addEventListener("click", fillGaps);
     $("wk-clear").addEventListener("click", clearWeek);
+    $("wk-sheet").hidden = !shellOpenAt();
+    $("wk-sheet").addEventListener("click", weekToSheet);
     $("sh-from").addEventListener("click", function () { prefs.from = prefs.from ? 0 : 1; savePrefs(); renderShop(); });
     $("sh-copy").addEventListener("click", function () { copyText(shopAsText()); });
     $("sh-share").addEventListener("click", function () { shareText(shopTitle(), shopAsText()); });
     $("sh-todo").hidden = !shellOpenAt();
     $("sh-todo").addEventListener("click", sendToTodo);
+    $("sh-sheet").hidden = !shellOpenAt();
+    $("sh-sheet").addEventListener("click", shopToSheet);
     $("sh-uncheck").addEventListener("click", function () {
       var l = shopList();
       l.items.concat(l.home).forEach(function (it) { if (it.done) setTick(it, false); });
