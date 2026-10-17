@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.78.00
+- Send to someone: send a whole calendar or a date range from Calendar › More. It opens month by month in any browser, as an .ics file or straight into orOS.
+
 ## Version 2.77.00
 - Notifications with orOS closed (optional): turn it on per device in Settings › Notifications and alarms and reminders arrive even when orOS is closed.
 

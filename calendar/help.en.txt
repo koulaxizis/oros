@@ -72,6 +72,9 @@ The Calendar reads a subscribed calendar when you open it (if it's been more tha
 
 Free times are worked out on this device from your own events with a time and from the subscribed calendars you show; all-day events (birthdays, holidays) don't block time, and times already past are left out. The other person opens the link in any browser, sees the times in their own time zone, picks one, and gets `Add to calendar (.ics)`, `Add to my orOS`, and an email back to you, written for them, with the time they chose. Nothing is booked by itself: the time is yours to confirm when the email arrives. Like every shared link, the times travel inside the link; no server keeps them.
 
+## Send your calendar to someone
+`More` › `Send calendar to someone…` puts your own events in a link: all of them or one label's, whole or only some dates (`This month`, `Next 3 months`, `This year`, or `Choose dates…`). The window says how many events go; `Next` opens [Send to someone](help:t/share), where you copy, share or email the link, add a password, or choose how long it lasts. Events from subscriptions and from other apps (birthdays, cycle, habits) stay here. A calendar with many events goes as a link with an expiry. The other person sees it month by month in any browser and can add it to their calendar as an .ics file or to their orOS.
+
 ## Print
 `More` › `Print…` prints the view you're looking at, `Day`, `Week`, `Month`, `Year` or `Agenda`, on a clean white page: the month as a table with times and titles, the week and agenda as lists per day, the year as 12 small months with days that have events in bold. To make a PDF, pick "Save as PDF" as the printer.
 

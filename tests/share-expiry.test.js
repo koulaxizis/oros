@@ -271,3 +271,15 @@ test("the shell loads out.js at boot and relay.js before send.js; the page loads
   // the page's relay address is the one relay.js uses
   assert.ok(csp[1].includes(R.RELAY));
 });
+
+test("a whole calendar of 5,000 events travels with an expiry and opens whole", async () => {
+  const s = setup();
+  const ev = Array.from({ length: 5000 }, (_, i) => ({ id: "e" + i, t: "Event " + i, d: "2026-" + String(1 + i % 12).padStart(2, "0") + "-" + String(1 + i % 28).padStart(2, "0"),
+    s: "09:00", e: "10:00", l: "Room " + (i % 40), x: "Note " + i }));
+  const env = K.pack("cal", { t: "Team", tz: "Europe/Athens", ev });
+  assert.equal(env.d.ev.length, 5000);
+  const r = await R.create(env, { days: 30, fetch: s.fetch, now: s.clock.now });
+  assert.ok(r.code.split(".")[3] >= 1);
+  const o = await R.open(r.code, { fetch: s.fetch });
+  assert.deepEqual(K.pack(o.e.k, o.e.d), env);
+});
