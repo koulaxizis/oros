@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "2.79.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "2.81.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -3031,6 +3031,7 @@
         });
       };
       shareLoad = load("share/kinds.js").then(function () { return load("share/relay.js"); })
+        .then(function () { return load("share/album.js"); })
         .then(function () { return load("share/send.js"); })
         .then(function () {
           if (!window.__orosShareImpl) throw new Error("share module missing");

@@ -28,6 +28,7 @@ Mail app (browser) ──HTTPS/JSON──▶ relay (Worker) ──IMAP over TLS�
 | `share.js` | "Send to someone" links with an expiry: op `shr` and `/s/<id>/<i>`, encrypted pieces kept in their own D1 until they expire or are revoked (see below) |
 | `remote.js` | Studio Remote's meeting rooms: a Durable Object that joins two WebSockets (see below) |
 | `push.js` | Notifications with orOS closed (op `push`): one Durable Object per device holding its encrypted reminders, sent by Web Push at their time (see below) |
+| `dav.js` | Sync through WebDAV: `/dav` passes one WebDAV request to the user's own server when that server sends no CORS headers (see below) |
 | `wrangler.toml` | Worker name and `ALLOWED_ORIGINS` |
 
 Tests: `tests/mail.test.js` (Node, runs in CI) drives `core.js` +
@@ -583,6 +584,50 @@ Secrets, type *Secret*):
 
 Without them every `push` request answers 503 `nopush`, and Settings
 shows the switch as unavailable.
+
+## Sync through WebDAV: pass-through (`/dav`)
+
+Optional, off by default: the user turns it on in Settings › Sync when
+their WebDAV server (Synology, ownCloud, Nextcloud without the
+WebAppPassword app) sends no CORS headers. orOS then sends the same
+WebDAV request to `/dav`, with the server's full address in the header
+`X-Oros-Target`, and gets the server's answer back. The sync data is
+end-to-end encrypted before it leaves the browser; the app password in
+`Authorization` passes through on every request and is never logged or
+stored.
+
+- Target: `https` only, no user name or `#`, a public host name (the
+  same `validHost` check, so no IP literals and no local names), port
+  443, 5006 (Synology), 8443 or 9443. Workers reach any port on a host
+  that is not behind Cloudflare's proxy (`allow_custom_ports`, on since
+  compatibility date 2024-09-02); a server behind the proxy only on the
+  proxy's own ports.
+- Methods `GET HEAD PUT DELETE MKCOL PROPFIND COPY MOVE`; `POST` only to
+  a path ending in `/index.php/login/v2` or `/index.php/login/v2/poll`
+  (Nextcloud Login Flow v2, answer capped at 64 KB, 10 a minute per IP).
+- Request headers: exactly `Authorization, Content-Type, Content-Length,
+  Depth, Destination, Overwrite, If-Match, If-None-Match,
+  OCS-APIRequest`; everything else (cookies, `Origin`, `Referer`,
+  `CF-*`, `X-Forwarded-*`) is dropped. `Destination` must be on the
+  target's own origin.
+- Answer headers: only `Content-Type, Content-Length, ETag,
+  Last-Modified, DAV, OC-ETag, OC-FileId`, plus `nosniff` and
+  `Cache-Control: no-store`; never `Set-Cookie`.
+- `PUT` needs `Content-Length` and at most 95 MB (Cloudflare takes
+  100 MB); the body streams through, nothing is buffered. Bigger Vault
+  files go to Nextcloud in 10 MB pieces (chunked upload) anyway.
+- Redirects are not followed and not answered as redirects (the browser
+  would follow one itself): `200` with `X-Oros-Status` and
+  `X-Oros-Location`.
+- Relay refusals: status + `X-Oros-Error` with a fixed code (`origin`,
+  `bad-target`, `port`, `method`, `length`, `too-big`, `rate`,
+  `timeout`, `upstream`), never an error's text. The server's own
+  errors pass through as their status.
+- Its own rate limit: about 600 requests a minute per IP (a sync round
+  lists folders one by one), timeout 60 s until the server answers
+  (`PUT` 5 min).
+
+Tests: `tests/dav-relay.test.js`.
 
 ## Rules it enforces
 

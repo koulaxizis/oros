@@ -38,7 +38,7 @@ The tool bar is on the left (at the bottom on a phone). The bar above the pictur
 - `View`: `Rulers`, `Guides`, `Grid` and `Snap` turn on and off; `New guide…`, `Clear guides` and `Grid size…`. Drag a guide out of a ruler; with the `Move` or `Hand` tool drag a guide to move it, or back onto the ruler to remove it. With `Snap` on, selections, crops, shapes and moved layers stick to guides, the grid and the canvas edges and centre.
 - `Adjust`: `Light and colour…`, `Looks…`, `Hue / saturation…`, `Levels…`, `Lightroom preset (.xmp)…`, `Invert`, `Black and white`, `Threshold…`, `Posterize…`. Dialogs show a live preview; with a selection, only the selected area changes.
 - `Filter`: `Gaussian blur…`, `Motion blur…`, `Lens blur…`, `Unsharp mask…` (sharpens), `Add noise…`, `Reduce noise…`, `Pixelate…`, `Emboss…`, `Find edges`, `Vignette…`. Blurs may spread past the layer's pixels; with a selection they stay inside it.
-- `File`: `Export…` saves a PNG, JPG, WebP, PSD, OpenRaster or orOS (`.orosphoto`) file to your device, `Save to Pictures…` saves it in the Pictures folder of the orOS disk, `Batch process…` works on many photos at once (see below), and `Use as wallpaper` makes it the wallpaper of this device.
+- `File`: `Export…` saves a PNG, JPG, WebP, PSD, OpenRaster or orOS (`.orosphoto`) file to your device, `Save to Pictures…` saves it in the Pictures folder of the orOS disk, `Batch process…` works on many photos at once (see below), `Use as wallpaper` makes it the wallpaper of this device, and `Send to someone…` sends the picture as a link (see [Send to someone](help:t/share)): it goes as a JPEG of at most 2048 px, without hidden details such as place or camera.
 On a phone all menus are under the menu button.
 
 ## Select subject and remove background

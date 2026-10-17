@@ -901,6 +901,10 @@ dialog {
   margin: auto;                  /* R32: το reset * {margin:0} ξε-κεντράρει το dialog */
 }
 dialog::backdrop { background: rgba(0, 0, 0, 0.5); }
+/* "Send to an app" → Add cards dialog (BR-SEND) */
+#dlg-addcards .add-list { list-style: disc; margin: 0 0 4px 18px; font-size: 13px; line-height: 1.5; max-height: 180px; overflow-y: auto; }
+#dlg-addcards .add-list li { overflow-wrap: anywhere; }
+#dlg-addcards .add-more { list-style: none; margin-left: -18px; color: var(--text-dim); }
 
 dialog h3 {
   font-size: 15px;

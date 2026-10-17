@@ -2,10 +2,12 @@ name: Quality gate
 
 # Opens every app of apps.json in Chromium (360 + 1280 px, EN + EL) and fails
 # on NEW console errors, horizontal scroll at 360, missing help pages or
-# English text left in the Greek UI, and runs a two-device sync convergence
-# sweep on every merge function (converge.js). Known problems live in
-# .github/qa/baseline.json (may only shrink). Playwright is installed here
-# only and never ships with orOS. See OROS_BIBLE.md "Quality gate".
+# English text left in the Greek UI, runs a two-device sync convergence
+# sweep on every merge function (converge.js), an axe-core accessibility
+# check (a11y.js) and a size budget for the precache and each app's first
+# open (budget.js, budget.json). Known problems live in
+# .github/qa/baseline.json (may only shrink). Playwright and axe-core are
+# installed here only and never ship with orOS. See OROS_BIBLE.md "Quality gate".
 
 on:
   pull_request:
@@ -48,6 +50,22 @@ jobs:
       - name: Sync convergence of every merge function
         if: success() || failure()
         run: node .github/qa/converge.js --shard ${{ matrix.shard }}/4 --out qa-sync-${{ matrix.shard }}.json
+      - name: Accessibility (axe-core, critical and serious)
+        if: success() || failure()
+        run: node .github/qa/a11y.js --shard ${{ matrix.shard }}/4 --out qa-a11y-${{ matrix.shard }}.json
+      - name: First-open size budget
+        if: success() || failure()
+        run: node .github/qa/budget.js --shard ${{ matrix.shard }}/4 --out qa-budget-${{ matrix.shard }}.json
+      - name: Precache size budget
+        if: matrix.shard == 1 && (success() || failure())
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          if [ -n "$BASE_REF" ] && git fetch --depth 1 origin "$BASE_REF" && git show FETCH_HEAD:sw.js > "$RUNNER_TEMP/base-sw.js"; then
+            node .github/qa/budget.js --precache --base-sw "$RUNNER_TEMP/base-sw.js" --out qa-precache-1.json
+          else
+            node .github/qa/budget.js --precache --out qa-precache-1.json
+          fi
       - if: always()
         uses: actions/upload-artifact@v4
         with:

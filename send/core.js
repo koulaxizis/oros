@@ -44,6 +44,14 @@
   var MAIL_MAX = 20000;          // Mail's compose body cap
   var NOTES_MAX = 20000;         // Notes' {add} cap
   var WIKI_MAX = 200000;         // Wiki's article cap
+  var OUTLINE_MAX = 200000;      // Slides' outline cap (slides/app.js)
+  var SLIDES_MAX = 300;          // slides one handed outline may make
+  var SLIDE_BULLETS = 8;         // bullets on one slide before the next
+  var PASTE_MAX = 20000;         // Mind map's paste box cap
+  var CARDS_MAX = 100;           // Kanban cards one send may add
+  var CARD_TEXT = 300;           // a card's text (Kanban's own cap is 500)
+  var CARD_NOTES = 5000;         // a card's notes
+  var PROMPT_MAX = 8000;         // a Prompter prompt
 
   // Control characters other than tab / newline, and U+2028/2029.
   var CTRL = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f\u2028\u2029]/g;
@@ -157,6 +165,67 @@
     return null;
   }
 
+  // text / items → a Slides outline ("# " starts a slide, "- " bullets,
+  // two spaces a level; slides/core.js parseOutline). Markdown headings
+  // start slides; without any, the title (or the first line) heads them.
+  // Long runs of bullets continue on a new slide with the same heading.
+  // → outline text, or "" when nothing fits.
+  function bulletOf(raw) {
+    var exp = raw.replace(/\t/g, "  ");
+    var ind = exp.length - exp.replace(/^ +/, "").length;
+    var body = line(exp.replace(/^\s*(?:[-*\u2022+]|\d+[.)]|\[[ xX]?\])\s+/, ""), MAX_ITEM);
+    return body ? new Array(Math.min(3, Math.floor(ind / 2)) + 1).join("  ") + "- " + body : "";
+  }
+  function asOutline(kind, d) {
+    var slides = [], cur = null;
+    function start(head) {
+      cur = { head: line(head, MAX_TITLE) || "\u2026", lines: [] };
+      slides.push(cur);
+    }
+    function add(b) {
+      if (!b) return;
+      if (!cur) start(d.title || b.replace(/^\s*- /, ""));
+      else if (cur.lines.length >= SLIDE_BULLETS) start(cur.head);
+      cur.lines.push(b);
+    }
+    if (kind === "items") {
+      start(d.title || d.items[0].text);
+      d.items.forEach(function (it) { add("- " + it.text); });
+    } else {
+      var src = d.text.split("\n"), heads = src.some(function (l) { return /^\s*#{1,6}\s+\S/.test(l); });
+      if (d.title && !(heads && /^\s*#{1,6}\s+\S/.test(src.filter(function (l) { return l.trim(); })[0] || ""))) start(d.title);
+      src.forEach(function (l) {
+        var m = /^\s*#{1,6}\s+(.*)$/.exec(l);
+        if (m) { if (line(m[1], MAX_TITLE)) start(m[1]); return; }
+        if (l.trim()) add(bulletOf(l));
+      });
+    }
+    if (!slides.length) return "";
+    var out = [];
+    slides.slice(0, SLIDES_MAX).forEach(function (s, i) {
+      if (i) out.push("");
+      out.push("# " + s.head);
+      out = out.concat(s.lines);
+    });
+    return (out.join("\n") + "\n").slice(0, OUTLINE_MAX);
+  }
+  // text / items → a Mind map paste ("# title" root, "- " lines).
+  function asPaste(kind, d) {
+    if (kind === "items") {
+      return ((d.title ? "# " + d.title + "\n" : "") + d.items.map(function (it) { return "- " + it.text; }).join("\n")).slice(0, PASTE_MAX);
+    }
+    var heads = /^\s*#{1,6}\s+\S/m.test(d.text);
+    return ((d.title && !heads ? "# " + d.title + "\n" : "") + d.text).slice(0, PASTE_MAX);
+  }
+  // items / text / link → Kanban cards { title, notes } (≤ CARDS_MAX).
+  function asCards(kind, d) {
+    var its = asItems(kind, d);
+    if (!its) return null;
+    return its.slice(0, CARDS_MAX).map(function (it) {
+      return { title: line(it.text, CARD_TEXT), notes: it.note.slice(0, CARD_NOTES) };
+    });
+  }
+
   // ---------- 3. Receivers ----------
   // app → { kinds, ok?(kind, d), build(kind, d, from) → target }. The
   // targets are the apps' own documented contracts:
@@ -165,7 +234,10 @@
   //   Email), assistant {ask} (Assistant deep link), bookmarks {add}
   //   (Send to orOS), wiki {addArticle:{t,x}} (Wiki wave 3), texttools /
   //   textcase {text} (Text Tools deep link), labels {text} (Label Maker
-  //   bridge), spreadsheet {newSheet} (BR-S1).
+  //   bridge), spreadsheet {newSheet} (BR-S1); wave 3: slides {outline,
+  //   title} (Mind map's contract), mindmap {pasteText:{text}} (single
+  //   app share), kanban {addCards} and prompter {newPrompt} (new here),
+  //   writer {newDoc:{title, rows}} (a table, new here).
   var RECEIVERS = {
     notes: {
       kinds: ["text", "link", "items"],
@@ -173,7 +245,11 @@
     },
     writer: {
       kinds: ["text", "link", "items", "table"],
-      build: function (k, d) { var x = asText(k, d); return { newDoc: { title: x.title, text: x.text } }; }
+      build: function (k, d) {
+        if (k === "table") return { newDoc: { title: d.name, rows: d.rows } };
+        var x = asText(k, d);
+        return { newDoc: { title: x.title, text: x.text } };
+      }
     },
     todo: {
       kinds: ["items", "text", "link"],
@@ -185,7 +261,7 @@
       }
     },
     mail: {
-      kinds: ["text", "link", "items", "files"],
+      kinds: ["text", "link", "items", "table", "files"],
       build: function (k, d) {
         var x = asText(k, d);
         if (k === "files") {
@@ -226,6 +302,27 @@
       kinds: ["text"],
       build: function (k, d) { return { text: d.text }; }
     },
+    slides: {
+      kinds: ["text", "items"],
+      ok: function (k, d) { return !!asOutline(k, d); },
+      build: function (k, d) { return { outline: asOutline(k, d), title: d.title }; }
+    },
+    mindmap: {
+      kinds: ["text", "items"],
+      build: function (k, d) { return { pasteText: { text: asPaste(k, d) } }; }
+    },
+    kanban: {
+      kinds: ["items", "text", "link"],
+      ok: function (k, d) { return !!asCards(k, d); },
+      build: function (k, d) {
+        var x = asText(k, d);
+        return { addCards: { title: line(x.title, 60), cards: asCards(k, d) } };
+      }
+    },
+    prompter: {
+      kinds: ["text"],
+      build: function (k, d) { return { newPrompt: { text: d.text.trim().slice(0, PROMPT_MAX) } }; }
+    },
     labels: {
       kinds: ["text"],
       // A label is one short line.
@@ -234,7 +331,8 @@
     }
   };
   // The sheet's order: the everyday places first.
-  var ORDER = ["notes", "todo", "writer", "mail", "bookmarks", "spreadsheet", "wiki", "assistant", "texttools", "textcase", "labels"];
+  var ORDER = ["notes", "todo", "writer", "mail", "kanban", "slides", "bookmarks", "spreadsheet", "wiki", "mindmap", "prompter",
+    "assistant", "texttools", "textcase", "labels"];
 
   function accepts(app, kind, d) {
     if (!own(RECEIVERS, app)) return false;

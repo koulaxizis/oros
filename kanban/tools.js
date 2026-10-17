@@ -516,6 +516,25 @@
     };
   }
 
+  // "Send to an app" (BR-SEND, prefill only): the shell's { addCards: {
+  // title?, cards: [{ title, notes? }] } } → { title, cards } with
+  // clean one-line titles (≤ ADD_MAX cards), or null when no card has a
+  // title. Nothing is written until the user presses Add.
+  var ADD_MAX = 100;
+  function asCards(x) {
+    if (!x || typeof x !== "object" || !Array.isArray(x.cards)) return null;
+    var cards = [];
+    x.cards.forEach(function (c) {
+      if (cards.length >= ADD_MAX || !c || typeof c !== "object") return;
+      var title = oneLine(c.title, MAX.text);
+      if (!title) return;
+      var notes = typeof c.notes === "string"
+        ? c.notes.replace(/\r\n?/g, "\n").replace(/[\u0000-\u0009\u000b-\u001f\u007f]/g, "").trim().slice(0, MAX.notes) : "";
+      cards.push({ title: title, notes: notes });
+    });
+    return cards.length ? { title: oneLine(x.title, MAX.name), cards: cards } : null;
+  }
+
   // Every attachment file name any card of the state still points at.
   function usedFiles(state) {
     var used = {};
@@ -535,7 +554,8 @@
     rebuild: rebuild, counter: counter, exportBoard: exportBoard, isExport: isExport, parseExport: parseExport,
     boardCsv: boardCsv, csvCell: csvCell, packBoard: packBoard, isPackage: isPackage, parsePackage: parsePackage, boardMd: boardMd,
     PKG_KIND: PKG_KIND, templateFromBoard: templateFromBoard, boardFromTemplate: boardFromTemplate,
-    builtinList: builtinList, builtinBoard: builtinBoard, usedFiles: usedFiles, asNew: asNew
+    builtinList: builtinList, builtinBoard: builtinBoard, usedFiles: usedFiles, asNew: asNew,
+    asCards: asCards, ADD_MAX: ADD_MAX
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root && root.document) root.OrosKanbanTools = api;
