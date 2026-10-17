@@ -1,0 +1,46 @@
+# Hintergrundbild-Generator
+Der Hintergrundbild-Generator zeichnet abstrakte Hintergrundbilder aus einem Startwert, einem Stil und einer Palette. Dieselben Einstellungen ergeben immer dasselbe Bild. So kannst du eines für deinen orOS-Desktop machen oder es für dein Handy oder deinen Computer exportieren.
+
+## Erste Schritte
+Die große Vorschau rechts (auf dem Handy oben) zeigt dein Hintergrundbild im Format der gewählten Größe. Tippe ein beliebiges Wort in `Startwert` oder tippe bzw. klicke auf den Würfel (`Zufälliger Startwert (R)`) für einen neuen. Probiere dann verschiedene Stile und Paletten aus; die Stil-Knöpfe zeigen kleine Vorschauen deines aktuellen Startwerts.
+
+## Stil und Palette
+- `Stil`: `Wellen`, `Strömung`, `Umlaufbahnen`, `Raster`, `Nebel` oder `Baum`.
+- `Baum` zeichnet einen Baum aus dem [Baumzeichner](app:trees) in den Farben der Palette. `Dichte` bestimmt die Blätter und `Chaos` den Zufall. `Baum im Baumzeichner formen` öffnet ihn dort, wo du Baumart, Jahreszeit und Äste wählst; der Knopf `Als Hintergrundbild` dieser App bringt ihn hierher zurück.
+- `Palette`: `Glut`, `Ozean`, `Wald`, `Dämmerung`, `Pastell`, `Mono` und `orOS-Skin`, die ihre Farben von deinem orOS-Skin nimmt und sich mit ihm ändert.
+
+Unter `Einstellungen`:
+- Die Regler `Dichte` und `Chaos` ändern, wie viel gezeichnet wird und wie wild es wird.
+- `Filmkorn` fügt eine feine, körnige Struktur hinzu.
+- `Heller Hintergrund` zeichnet auf hellem statt dunklem Grund. `Nebel` ist immer dunkel (`Ein Nebel wird immer bei Nacht gezeichnet.`).
+
+## Größe
+Wähle `Dieser Bildschirm`, `Handy`, `iPhone`, `Desktop`, `QHD`, `Ultrawide`, `4K`, `Quadrat` oder `Eigene`. Mit `Eigene` gibst du Breite und Höhe ein, jeweils von 64 bis 8192 Pixel. Dasselbe Design in zwei Größen mit gleichem Seitenverhältnis ergibt dasselbe Bild.
+
+## Als Hintergrundbild festlegen und exportieren
+- `Als Hintergrundbild` macht das aktuelle Design zu deinem orOS-Desktop-Hintergrund. Der Knopf zeigt dann `Dein Hintergrundbild`. Es erscheint in den [Einstellungen](app:settings) unter `Hintergrundbild` als `Eigenes`; siehe [Aussehen](help:t/appearance).
+- Unter `Auf deinem Desktop` behält `Jeden Tag ein neues Bild`, sobald ein Design dein Hintergrundbild ist, Stil, Palette und Einstellungen, ändert aber um Mitternacht den Startwert. So bekommst du jeden Tag ein frisches Bild. Alle deine Geräte zeigen dasselbe.
+- `Live-Hintergrund` (auch unter `Auf deinem Desktop`) lässt sanfte Lichter in den Farben der Palette langsam über das Bild ziehen. Sie pausieren, solange eine App offen ist, und bleiben aus, wenn dein Gerät Bewegung reduziert.
+- Beide Optionen werden mit deinem Hintergrund `Eigenes` synchronisiert, und wenn du ein anderes Design festlegst, bleiben sie an.
+- `Exportieren` fragt nach `PNG · verlustfrei` oder `JPG · kleinere Datei` in der gewählten Größe. Große Formate dauern einen Moment; ein Fortschrittsbalken mit `Abbrechen` erscheint.
+
+## Favoriten
+Der Stern (`Zu Favoriten`) behält das aktuelle Design in `Favoriten`, das neueste zuerst, mit kleinem Vorschaubild. Tippe oder klicke auf eines, um es wieder zu öffnen, oder drücke den Stern erneut, um es zu entfernen; ein Knopf `Rückgängig` bleibt ein paar Sekunden lang.
+
+## Synchronisierung und Sicherung
+Favoriten werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert, ebenso dein Hintergrund `Eigenes` als Teil der orOS-Einstellungen. Jedes Gerät zeichnet ihn in seiner eigenen Bildschirmgröße. Das Design, an dem du gerade arbeitest, und die Größenwahl bleiben auf diesem Gerät. Es werden keine Bilder gespeichert oder synchronisiert, nur die Einstellungen, die sie erzeugen.
+
+Nutze die orOS-[Sicherung](help:t/backup), um eine Kopie zu behalten.
+
+## Tastenkürzel
+- [[R]]: ein zufälliger Startwert (nicht beim Tippen in einem Feld).
+- Pfeiltasten auf den Stilen oder Paletten: zum nächsten oder vorherigen wechseln.
+- [[Enter]] im Startwert-Feld: fertig mit Tippen.
+
+## Tipps
+- Gefällt dir ein Bild? Notiere Startwert, Stil und Palette oder gib ihm einfach einen Stern.
+- Mit der Palette `orOS-Skin` passt dein Hintergrundbild immer, wenn du den Skin wechselst.
+
+## Grenzen
+- Sehr große Exporte brauchen viel Speicher. Auf einem Handy können sie mit `Export fehlgeschlagen: nicht genug Speicher für diese Größe` scheitern.
+- Du kannst bis zu 60 Favoriten behalten.
