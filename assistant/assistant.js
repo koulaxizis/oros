@@ -55,7 +55,9 @@
   var MAX_INPUT   = 20000;
 
   // ---------- 1. Constants, i18n, helpers ----------
+  // orosI18n (../i18n.js): the full language code, a pack language included.
   function appLang() {
+    if (window.orosI18n) return window.orosI18n.lang();
     try {
       var l = localStorage.getItem("oros-lang") ||
               (window.parent && window.parent.orosLang) || "en";
@@ -309,7 +311,7 @@
       "sum.title": "Share this summary of {app} with {name}?",
       "sum.text": "Worked out on this device. Only these lines are sent, not the entries themselves.",
       "btn.copy": "Copy", "toast.copied": "Copied", "toast.copyFail": "Could not copy",
-      "prov.browser": "Built-in browser model", "who.device": "Stays on this device",
+      "prov.browser": "Built-in browser model", "prov.local": "Local / OpenAI-compatible", "who.device": "Stays on this device",
       "set.bi.ok": "Ready on this device. It works offline. It is smaller than the online assistants: orOS searches your data for it before each message (you choose what to share), and it can't prepare entries.",
       "set.bi.get": "The browser can download its model (about 2 GB, once).",
       "set.bi.getBtn": "Download the model", "set.bi.busy": "Downloading… {p}%",
@@ -576,7 +578,7 @@
       "sum.title": "Να δει το {name} αυτή τη σύνοψη ({app});",
       "sum.text": "Υπολογίστηκε σε αυτή τη συσκευή. Στέλνονται μόνο αυτές οι γραμμές, όχι οι ίδιες οι καταχωρήσεις.",
       "btn.copy": "Αντιγραφή", "toast.copied": "Αντιγράφηκε", "toast.copyFail": "Δεν αντιγράφηκε",
-      "prov.browser": "Ενσωματωμένο μοντέλο του browser", "who.device": "Μένει σε αυτή τη συσκευή",
+      "prov.browser": "Ενσωματωμένο μοντέλο του browser", "prov.local": "Local / OpenAI-compatible", "who.device": "Μένει σε αυτή τη συσκευή",
       "set.bi.ok": "Έτοιμο σε αυτή τη συσκευή. Δουλεύει και χωρίς σύνδεση. Είναι μικρότερο από τους online βοηθούς: το orOS ψάχνει γι' αυτό στα δεδομένα σου πριν από κάθε μήνυμα (εσύ διαλέγεις τι μοιράζεσαι) και δεν ετοιμάζει καταχωρήσεις.",
       "set.bi.get": "Ο browser μπορεί να κατεβάσει το μοντέλο του (περίπου 2 GB, μία φορά).",
       "set.bi.getBtn": "Λήψη του μοντέλου", "set.bi.busy": "Λήψη… {p}%",
@@ -600,6 +602,9 @@
       "f.watered": "Τελευταίο πότισμα", "f.labels": "Ετικέτες", "f.subtasks": "Υποεργασίες", "f.position": "Θέση"
     }
   };
+
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "assistant", LANG);
+  function loc() { return window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB"); }
 
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;
@@ -632,7 +637,7 @@
     return m ? m[1] : String(url || "");
   }
   function fmtNum(n) {
-    try { return Number(n || 0).toLocaleString(LANG === "el" ? "el-GR" : "en-GB"); }
+    try { return Number(n || 0).toLocaleString(loc()); }
     catch (e) { return String(n || 0); }
   }
 
@@ -700,6 +705,7 @@
   function provName(pid) {
     if (pid === "browser") return t("prov.browser");
     if (pid === "webllm") return t("prov.webllm");
+    if (pid === "local") return t("prov.local");
     return C.PROVIDERS[pid] ? C.PROVIDERS[pid].name : pid;
   }
   function curProv() { return data.set.prov; }
@@ -1278,7 +1284,7 @@
   function impSource(c) { var I = window.OrosAssistantImport; return I ? I.sourceOf(c) : ""; }
   function impAt(c) { var m = c.msgs[0]; return typeof m.at === "number" && m.at > 0 ? m.at : c.m; }
   function fullDate(ms) {
-    try { return new Date(ms).toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB", { day: "numeric", month: "short", year: "numeric" }); }
+    try { return new Date(ms).toLocaleDateString(loc(), { day: "numeric", month: "short", year: "numeric" }); }
     catch (e) { return C.ymd(ms); }
   }
   function pickFile(accept) {
@@ -2550,7 +2556,7 @@
     return !!pid && !!C.PROVIDERS[pid] && !data.set.chat;
   }
   function briefDate() {
-    try { return new Date().toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB", { weekday: "long", day: "numeric", month: "long" }); }
+    try { return new Date().toLocaleDateString(loc(), { weekday: "long", day: "numeric", month: "long" }); }
     catch (e) { return ymdNow(); }
   }
   function startBriefing() {
@@ -2852,7 +2858,7 @@
     var b = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
     if (a === b) return t("time.today");
     if (b - a === 86400000) return t("time.yesterday");
-    try { return d.toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB", { day: "numeric", month: "short" }); }
+    try { return d.toLocaleDateString(loc(), { day: "numeric", month: "short" }); }
     catch (e) { return C.ymd(ms); }
   }
 
@@ -3473,7 +3479,7 @@
         var ac = new AbortController(), timer = setTimeout(function () { ac.abort(); }, 30000);
         callModel(pid, [{ r: "user", text: "Reply with the single word: OK" }], {}, ac.signal, null).then(function (r) {
           var said = String(r && r.text || "").replace(/\s+/g, " ").trim().slice(0, 60);
-          tstat.textContent = t("set.testOk", { name: provName(pid), model: modelOf(pid) }) + (said ? (LANG === "el" ? " \u00ab" + said + "\u00bb" : " \u201c" + said + "\u201d") : "");
+          tstat.textContent = t("set.testOk", { name: provName(pid), model: modelOf(pid) }) + (said ? (LANG === "el" ? " \u00ab" + said + "\u00bb" : LANG === "de" ? " \u201e" + said + "\u201c" : " \u201c" + said + "\u201d") : "");
           tstat.classList.add("ok");
         }, function (e) {
           tstat.textContent = testErr(e, pid, ac.signal.aborted);

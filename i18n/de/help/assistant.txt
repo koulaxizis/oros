@@ -1,0 +1,167 @@
+# Assistent
+Der Assistent ist ein Chat mit dem KI-Assistenten deiner Wahl: Claude, ChatGPT, Gemini, Mistral, OpenRouter, ein Dienst mit kostenlosem Tarif (Groq, Cerebras, GitHub Models, Cohere, Hugging Face, SambaNova, Pollinations), ein Modell auf deinem eigenen Computer oder das eingebaute Modell des Browsers. Er kann deine orOS-Daten durchsuchen, um Fragen zu deinen Notizen, Aufgaben, Terminen und mehr zu beantworten, aber nur, was du erlaubst. Er kann auch einen Eintrag für dich vorbereiten, etwa eine Aufgabe, einen Termin oder eine Ausgabe, den du in der jeweiligen App prüfst und selbst speicherst. Außerdem kann er eine Aufgabe, einen Termin, eine Ausgabe, ein Lesezeichen, einen Kontakt, eine Kanban-Karte und mehr, die du schon hast, ändern oder löschen, aber erst, nachdem du die Änderung gesehen und auf Übernehmen gedrückt hast.
+
+## Erste Schritte
+1. Öffne `Assistent` und tippe oder klicke auf `Assistenten einrichten`.
+2. Wähle unter `Assistent`, mit wem du sprechen willst.
+3. Füge deinen `API-Schlüssel` von diesem Dienst ein und drücke `Schlüssel speichern`. `Schlüssel holen` öffnet die Seite, auf der du einen erstellst.
+4. Prüfe das `Modell`. `Modelle laden` listet die Modelle, die dein Schlüssel nutzen kann, und zeigt dir dabei auch, dass der Schlüssel funktioniert.
+5. Drücke `Verbindung testen`. Es sendet eine kurze Nachricht und sagt dir, ob der Dienst hier antwortet. Wenn es heißt, der Dienst nimmt keine Aufrufe aus einem Webbrowser an, wähle einen anderen: Das lässt sich in orOS nicht beheben.
+6. Drücke `Schließen`, tippe deine Frage und drücke `Senden`.
+
+## Kostenlose Dienste
+Diese brauchen nur ein kostenloses Konto und einen kostenlosen Schlüssel, mit täglichen Limits. Es wird nichts berechnet, solange du auf ihrer Seite keine Zahlungsart hinzufügst:
+- `Groq`, `Cerebras` und `SambaNova`: schnelle offene Modelle wie Llama und Qwen.
+- `GitHub Models`: GPT, Llama, Mistral und mehr mit jedem GitHub-Konto. Der Schlüssel ist ein persönliches Zugriffstoken (fine-grained) mit der Berechtigung `Models` auf Lesen.
+- `Cohere`: Command-Modelle. Der kostenlose Testschlüssel ist nur für private Nutzung und Tests.
+- `Hugging Face`: viele offene Modelle über ein kostenloses Token.
+- `Pollinations`: Nutze einen veröffentlichbaren Schlüssel (er beginnt mit `pk_`).
+- `OpenRouter`: Setze den Haken bei `Nur kostenlose Modelle`, dann `Modelle laden`: Es werden nur die Modelle gelistet, deren Name auf `:free` endet.
+
+Jeder von ihnen kann deine Daten durchsuchen, Einträge vorbereiten und mit der eigenen Suche von orOS im Internet suchen. Fotos und PDFs gehen als der Text an sie, den orOS auf diesem Gerät liest.
+
+## Open-Source-Modelle auf deinem Computer
+Wähle `Lokal / OpenAI-kompatibel`, dann dein Programm unter `Server`: Ollama, LM Studio, llama.cpp, Jan, LocalAI, vLLM oder KoboldCpp. orOS trägt seine Adresse ein und zeigt, wie du dieser Seite erlaubst, es aufzurufen (CORS), was jedes von ihnen einmal braucht. `Andere / meine eigene Adresse` nimmt jeden OpenAI-kompatiblen Server. Ein Schlüssel ist optional, außer bei Jan. Drücke dann `Modelle laden` und `Verbindung testen`. Wenn das Modell keine Werkzeuge nutzen kann (viele kleine können es nicht; die Fehlermeldung sagt es), setze den Haken bei `Dieses Modell kann keine Werkzeuge nutzen`. Chrome fragt eventuell, ob die Seite Geräte in deinem lokalen Netzwerk erreichen darf: Erlaube es. Nichts verlässt dein Netzwerk.
+
+## Ein Modell im Browser
+`Modell im Browser (WebLLM)` führt ein offenes Modell (Llama, Qwen, Phi, Mistral, Hermes und mehr) auf der Grafikkarte dieses Geräts aus, ohne Schlüssel und ohne Server. Wähle ein Modell und drücke `Modell herunterladen`: Es kommt einmalig von huggingface.co (etwa 0,9 GB bis 6,3 GB, besser über WLAN) und bleibt auf dem Gerät. Danach funktioniert es ohne Internet, und nichts, was du schreibst, verlässt das Gerät. `Von diesem Gerät entfernen` gibt den Platz frei. Es braucht WebGPU: ein aktuelles Chrome oder Edge unter Windows, Linux, auf einem Mac oder Android. Größere Modelle antworten besser, brauchen aber eine stärkere Grafikkarte. Wie das eingebaute Browsermodell kann es keine Werkzeuge aufrufen, daher durchsucht orOS deine Daten dafür (siehe unten).
+
+`Eingebautes Browsermodell` braucht keinen Schlüssel und kein Internet: Ein aktuelles Chrome unter Windows, Linux oder auf einem Mac hat ein eigenes kleines Modell. Die Einstellungen zeigen, ob dieses Gerät es hat; `Modell herunterladen` holt es einmalig (etwa 2 GB). Es kann keine Werkzeuge aufrufen, daher durchsucht orOS deine Daten dafür (siehe unten).
+
+## Fragen zu deinen Daten
+Wenn eine Frage deine Daten braucht, durchsucht der Assistent deine Apps, ähnlich wie die Menüsuche. Bevor etwas geteilt wird, siehst du eine Karte, `Mit … teilen?`, mit jedem gefundenen Ergebnis:
+- Entferne den Haken bei allem, was er nicht sehen soll, und drücke dann `Teilen`;
+- `Nicht teilen` behält alles auf diesem Gerät; der Assistent antwortet ohne;
+- `Aus … immer ohne Nachfrage teilen` beendet die Fragen für diese Apps.
+
+In der Antwort sind Titel in der Akzentfarbe Links: Tippe auf einen, um diesen Eintrag in seiner App zu öffnen. Eine graue Zeile über der Antwort zeigt, wonach gesucht wurde und was du geteilt hast.
+
+Reicht ein kurzes Ergebnis nicht, fragt der Assistent eventuell nach dem ganzen Eintrag, zum Beispiel einer langen Notiz. Bei einer App auf `Erst fragen` siehst du noch eine Karte mit dem Anfang des Eintrags und seiner Größe; drücke `Teilen` oder `Nicht teilen`.
+
+Modelle, die keine Werkzeuge aufrufen können (das eingebaute Browsermodell, das Modell im Browser und ein lokales Modell mit Haken bei `Dieses Modell kann keine Werkzeuge nutzen`), können nicht selbst suchen. Für sie erledigt orOS das, bevor deine Nachricht losgeht: Es nimmt ein paar Wörter aus deiner Frage, durchsucht die erlaubten Apps, zeigt für Apps auf `Erst fragen` dieselbe Karte `Mit … teilen?` und sendet, was du teilst, mit der Nachricht mit. Eine graue Zeile zeigt, wonach gesucht wurde. Sie können auch ein `Briefing` machen und Fotos und PDFs als Text lesen. Einträge vorbereiten oder etwas ändern können sie nicht.
+
+## Zusammenfassungen
+Für Summen und Überblicke, etwa „Wie viel habe ich diesen Monat für Lebensmittel ausgegeben?“, „Wie viele Stunden habe ich im September gearbeitet?“ oder „Was steht diese Woche an?“, bittet der Assistent eine App um eine Zusammenfassung, statt Eintrag für Eintrag zu suchen. orOS berechnet sie auf diesem Gerät:
+- Budget: Einnahmen, Ausgaben und jede Kategorie eines Monats.
+- Zeiterfassung: Stunden und Beträge eines Monats pro Projekt.
+- Aufgaben: offene, überfällige und heute fällige Aufgaben pro Liste und was als Nächstes fällig ist.
+- Kalender, Gewohnheiten, Pflanzenpflege und die anderen Apps, die in `Heute` erscheinen: was überfällig ist, heute und in den nächsten Tagen.
+
+Bei einer App auf `Erst fragen` siehst du die Zusammenfassung auf einer Karte, bevor sie geteilt wird; drücke `Teilen` oder `Nicht teilen`. Nur diese Zeilen verlassen das Gerät, nicht die Einträge selbst. Budget steht anfangs auf `Nie`, erlaube es also zuerst unter `Einstellungen` → `Deine Daten`.
+
+## Einträge hinzufügen
+Frag zum Beispiel „Erinnere mich, den Klempner anzurufen“, „Ich habe 12,50 fürs Mittagessen ausgegeben“ oder „Mach eine Rechnung für ACME: 3 Stunden Design zu 50“. Der Assistent antwortet mit einer Karte, die genau zeigt, was er hinzufügen würde, und zwei Schaltflächen:
+- `In … öffnen` öffnet diese App mit dem ausgefüllten Eintrag. Bei Aufgaben, Kalender, Budget, Angebot, Rechnungen und Lesezeichen wird nichts gespeichert, bis du dort auf Speichern oder Hinzufügen drückst; `Abbrechen` hinterlässt keine Spur.
+- `Verwerfen` entfernt die Karte.
+
+Notizen und Tabelle legen die neue Notiz oder Tabelle an, wenn du `In … öffnen` drückst, und Folien bittet dich zuerst, ein Design zu wählen; dort kannst du sie ändern oder löschen.
+
+Du kannst auch nach einem Kontakt fragen („Füge Maria von ACME hinzu, 6971234567“), einem CRM-Kunden, einer Kanban-Karte, einer Gewohnheit, einem beendeten Training, einer Wartung oder Verlängerungserinnerung in Garage („TÜV für den Golf ist am 1. März fällig“), einer neuen Pflanze, einer Impfung oder einem Tierarztbesuch für ein Haustier, einem Buch, Film, einer Serie, einem Album, Podcast oder Spiel für das Medienregal, einem Ort auf der Karte oder einer geteilten Ausgabe in Kosten teilen („Ich habe 64 fürs Abendessen auf der Kreta-Reise bezahlt“). Jedes davon öffnet das Formular der jeweiligen App ausgefüllt, und nichts wird gespeichert, bis du es dort speicherst. Eine Kanban-Karte wartet im Feld „Karte hinzufügen“ der Spalte, bis du Enter drückst, und ein Ort öffnet sich auf der Karte, wo du ihn über seine Markierung speicherst, wenn er der richtige ist.
+
+## Ändern, was du schon hast
+Frag zum Beispiel „Markiere den Anruf beim Klempner als erledigt“, „Verschieb den Zahnarzt auf Freitag um 10:00“, „Das Mittagessen war 14,50, nicht 12,50“ oder „Lösch das alte Lesezeichen über Züge“. Der Assistent findet den Eintrag zuerst mit einer Suche (du siehst und teilst ihn wie gewohnt) und zeigt dann eine Karte: was sich ändert, `Vorher` und `Nachher`, oder was gelöscht wird.
+- `Übernehmen` (oder `Löschen`) führt die Änderung aus. `Nicht ändern` lässt alles, wie es ist. Nichts ändert sich, bis du darauf drückst, auch bei Apps auf `Immer teilen`.
+- Nach einer Änderung sagt die Karte, was passiert ist, und hat `Rückgängig`. Rückgängig geht, bis du den Assistenten verlässt; danach änderst du es in der App selbst zurück.
+- Hat sich der Eintrag inzwischen geändert (zum Beispiel auf einem anderen Gerät), wird nichts geändert, und die Karte sagt es.
+
+Was er ändern kann:
+- [Aufgaben](app:todo): eine Aufgabe als erledigt oder nicht erledigt markieren, ihr Datum verschieben, sie umbenennen, ihre Notiz ändern, sie löschen.
+- [Kalender](app:calendar): einen Termin verschieben (Tag, Beginn, Ende), umbenennen, Ort oder Notiz ändern, löschen.
+- [Budget](app:budget): Betrag, Datum, Kategorie oder Notiz eines Eintrags ändern, ihn löschen.
+- [Lesezeichen](app:bookmarks): ein Lesezeichen umbenennen, seine Notiz ändern, es löschen.
+- [Kontakte](app:contacts): Name, Organisation, Geburtstag oder Notiz eines Kontakts ändern, eine Telefonnummer oder E-Mail hinzufügen (die alten bleiben), ihn löschen.
+- [Kanban](app:kanban): eine Karte in eine andere Spalte verschieben („Verschieb die Rechnungskarte nach Erledigt“), Fälligkeit, Titel oder Notiz ändern, sie löschen. Ein Verschieben startet die eigenen Automatisierungen der Spalte, und die Karte zeigt, was sie ändern.
+- [Medienregal](app:shelf): den Status eines Titels ändern (vorgemerkt, läuft gerade, fertig, abgebrochen), Name oder Notiz ändern, ihn löschen.
+- [Gewohnheiten](app:habits): eine Ja/Nein-Gewohnheit für heute abhaken oder den Haken entfernen, eine Gewohnheit umbenennen.
+- [Pflanzenpflege](app:plants): eine Pflanze als heute gegossen markieren, sie umbenennen, ihre Notizen ändern.
+
+Manche Änderungen bleiben in der App, und der Assistent sagt das: das Abhaken einer wiederkehrenden Aufgabe (die App berechnet ihr nächstes Datum), das Verschieben oder Löschen eines wiederkehrenden Termins (du wählst dieses Mal oder die ganze Serie), wiederkehrende Budget-Einträge, Einträge mit Belegen oder in einer anderen Währung, Lesezeichen mit gespeicherter Kopie, Kanban-Karten mit Dateien auf der orOS-Disk oder auf einem archivierten Board, Gewohnheiten, die eine Menge zählen, und das Löschen einer Gewohnheit oder Pflanze (das entfernt ihren ganzen Verlauf). Nur das Ergebnis geht an den KI-Dienst zurück („übernommen“ oder „nicht übernommen“), nie, wie der Eintrag vorher aussah.
+
+## Fotos und PDFs
+Drücke die Büroklammer neben dem Nachrichtenfeld, um ein Foto (JPEG, PNG, WebP, GIF) oder ein PDF anzuhängen, `Von diesem Gerät…` oder `Von der orOS-Disk…`. Du kannst ein Foto auch einfügen oder auf das Nachrichtenfeld ziehen. Bis zu 3 Dateien gehen mit einer Nachricht.
+- Frag zum Beispiel „Füge diesen Beleg zu meinen Ausgaben hinzu“, „Speichere diese Visitenkarte als Kontakt“, „Trag das Konzert von diesem Plakat in meinen Kalender ein“ oder „Fass diesen Vertrag in einer Notiz zusammen“. Der Assistent liest die Datei und bereitet die Eintragskarte vor, die du wie gewohnt prüfst und speicherst.
+- Über dem Nachrichtenfeld siehst du jede Datei, ihre Größe und wohin sie geht. Die Datei geht nur an diesen Dienst, und nur wenn du `Senden` drückst. Große Fotos werden vorher verkleinert.
+- Claude, ChatGPT, Gemini und OpenRouter lesen Fotos und PDFs selbst. Mistral liest Fotos selbst.
+- Alle anderen Fälle funktionieren auch: orOS liest den Text der Datei zuerst auf diesem Gerät und sendet nur diesen Text. PDFs laufen über PDF.js; ein gescanntes PDF (ohne Text darin) und die Wörter in einem Foto laufen über Tesseract, auf Englisch und Griechisch. So liest Mistral PDFs, ein lokales Modell PDFs und Fotos und das eingebaute Browsermodell beides. Der Chip zeigt dann `nur Text`.
+- Wenn ein Foto zum ersten Mal so gelesen wird, wird die Texterkennung einmalig von orOS selbst geladen (etwa 7 MB). Sonst wird nichts kontaktiert, und die Datei verlässt nie das Gerät.
+- Für ein lokales Modell mit Bildverständnis (llava, gemma3, qwen2.5-vl und andere) setze in den Einstellungen den Haken bei `Dieses Modell kann Fotos sehen`: Fotos gehen dann als Bilder.
+- Dateien werden nicht mit der Unterhaltung gespeichert und nie synchronisiert. Nachdem du den Assistenten verlassen hast, zeigt die Unterhaltung sie als `nicht behalten`, und sie werden nicht noch einmal gesendet. Dateien kosten Tokens wie Text: Eine PDF-Seite oder ein Foto ist etwa so viel wie eine Seite Text.
+
+## Im Internet suchen
+Unter `Einstellungen` → `Internet` lässt `Den Assistenten im Internet suchen lassen, wenn eine Antwort es braucht` den Assistenten Dinge im Web nachschlagen: Öffnungszeiten, Nachrichten, Preise, ein Restaurant für deine Reise. Es ist aus, bis du es einschaltest, und funktioniert mit jedem KI-Dienst außer dem eingebauten Browsermodell.
+- `Suchen mit` → `Automatisch`: Claude nutzt die eigene Suche von Anthropic; jeder andere Dienst nutzt Wikipedia.
+- `Wikipedia`: kostenlos, ohne Schlüssel. Gut für Fakten, Orte und Personen.
+- `Tavily`: durchsucht das ganze Web, auch Nachrichten und Öffnungszeiten. Erstelle einen kostenlosen Schlüssel bei tavily.com (1.000 Suchen im Monat ohne Kosten) und speichere ihn unter `Tavily-Schlüssel`.
+- `Mein eigener SearXNG-Server`: Open Source, auf deinem eigenen Computer oder Server. Gib seine Adresse ein; füge in seiner settings.yml `json` zu `search.formats` hinzu und erlaube dieser Seite, ihn aufzurufen (CORS).
+- `Suche testen` probiert die gewählte Quelle aus und sagt, ob sie funktioniert.
+- Der Assistent entscheidet, wann eine Frage eine Suche braucht. Die Zeile über dem Nachrichtenfeld zeigt `Websuche an`. Jede Antwort zeigt, wonach gesucht wurde (`Im Web gesucht (…): …`), mit den gefundenen Seiten und den Seiten, die er gelesen hat. Die Links öffnen sich in einem neuen Tab.
+- Reicht ein kurzes Ergebnis nicht, liest der Assistent die ganze Seite: Wikipedia-Seiten über Wikipedia, andere über Jina Reader (r.jina.ai). Er kann nur eine Seite öffnen, die eine Suche geliefert hat oder die du selbst geschrieben hast.
+- Die Suche von Anthropic kostet 10 $ pro 1.000 Suchen zusätzlich zu den Tokens; `Diesen Monat genutzt` zählt sie. Wikipedia und SearXNG kosten nichts; Tavily ist bis zu seinem Monatslimit kostenlos.
+- Suchwörter gehen an die gewählte Quelle. Der Assistent wird angewiesen, deine orOS-Daten nie hineinzupacken, außer du bittest um genau diese Suche.
+
+## Bilder (Bild-KI)
+`Einstellungen` → `Bilder` wählt, wer Bilder für `Bild aus Text` in Atelier erstellt. Die Wahl bleibt auf diesem Gerät.
+- `Standard: Pollinations`: kostenlos, ohne Schlüssel und ohne Konto. Ein kostenloser Pollinations-Schlüssel (enter.pollinations.ai) macht es schneller.
+- `Hugging Face`: ein kostenloses Konto und ein Zugriffstoken mit „Make calls to Inference Providers“ (kleines Monatsguthaben). Es ist derselbe Schlüssel wie bei Hugging Face für Text.
+- `OpenAI gpt-image-1`: dein eigener OpenAI-Schlüssel, bezahlt pro Bild (derselbe Schlüssel wie bei ChatGPT). Es kann auch Magisch bearbeiten und Magisch erweitern.
+- `Stability AI`: dein eigener Schlüssel von platform.stability.ai, bezahlt mit Guthaben. Es kann auch Magisch bearbeiten und Magisch erweitern.
+- `Stable Diffusion WebUI / Forge`: kostenlos und Open Source, auf deinem eigenen Computer mit Grafikkarte. Starte es mit `--api --cors-allow-origins=`, gefolgt von der Adresse dieser Seite (die Einstellungen zeigen die genaue Zeile). Nichts verlässt dein Netzwerk.
+- Jede Wahl zeigt ihre Schritte unter `So schaltest du es ein`. `Testen` prüft den Schlüssel oder die Adresse. Schlüssel werden wie die KI-Schlüssel aufbewahrt (versiegelt auf diesem Gerät und nur synchronisiert, wenn du die Schlüssel-Synchronisierung einschaltest).
+- Nur deine Beschreibung (und zum Bearbeiten das Bild) geht direkt von diesem Gerät an den Dienst. Kein Google-Dienst wird angeboten.
+
+## Briefing
+In einer neuen Unterhaltung fasst `Briefing` deinen Tag in einer Antwort zusammen: die Termine von heute, was überfällig ist, Geburtstage und andere Daten dieser Woche und wie die Ausgaben dieses Monats aussehen. [Heute](app:today) hat dieselbe Schaltfläche (die Funken oben).
+- Es läuft nur, wenn du darauf drückst, nie von selbst, und kostet daher nie etwas, worum du nicht gebeten hast.
+- orOS berechnet die Zusammenfassung jeder App zuerst auf diesem Gerät. Apps auf `Erst fragen` erscheinen auf einer Karte mit den Zeilen, die gesendet würden: Entferne den Haken bei allem, was bleiben soll, und drücke dann `Teilen`. `Ohne diese` sendet nur die Apps auf `Immer teilen`. Apps auf `Nie` werden gar nicht gelesen, und Apps ohne etwas für heute oder diese Woche bleiben weg.
+- Unter deiner Nachricht siehst du, was geteilt wurde und was du zurückgehalten hast. Die Antwort verlinkt jeden Eintrag mit seiner App und schlägt eventuell bis zu 3 Einträge vor (zum Beispiel eine Erinnerung, ein Geschenk zu kaufen), die du wie gewohnt selbst speicherst. Ein Briefing ändert oder löscht nie etwas.
+- Es braucht `Nur Chat` aus. Jeder KI-Dienst kann es, auch die Modelle auf diesem Gerät (sie bekommen eine kürzere Zusammenfassung und schlagen keine Einträge vor).
+
+## Von überall fragen
+- Tippe eine Frage in die Menüsuche: Die letzte Zeile, `Den Assistenten fragen: …`, setzt sie in das Nachrichtenfeld des Assistenten. Nichts wird gesendet, bis du `Senden` drückst.
+- [[Ctrl+Alt+Shift+A]] öffnet den Assistenten von überall in orOS.
+- Markiere im Texteditor etwas Text und drücke die Funken-Schaltfläche: `Zusammenfassen`, `Umformulieren`, `Rechtschreibung & Grammatik korrigieren` oder `Etwas anderes fragen…` setzen den Text und die Bitte in das Nachrichtenfeld. Nichts wird gesendet, bis du `Senden` drückst.
+- `Kopieren` unter jeder Antwort kopiert sie, bereit zum Einfügen in dein Dokument.
+
+## Datenschutz: was dein Gerät verlässt
+- Deine Nachrichten und die Ergebnisse, die du teilst, gehen nur an den gewählten Dienst, direkt aus deinem Browser. Kein orOS-Server ist dazwischen. Die Zeile über dem Nachrichtenfeld zeigt, wohin sie gehen.
+- Unter `Einstellungen` → `Deine Daten` wählst du pro App `Erst fragen`, `Immer teilen` oder `Nie`. Gesundheit, Stimmung, Zyklus, Baby und Budget stehen anfangs auf `Nie`. Mail und Passwörter werden nie angeboten.
+- `Nur Chat` schaltet jede Suche aus: Der Assistent sieht dann nur, was du tippst.
+- Mit `Eingebautes Browsermodell` oder `Modell im Browser (WebLLM)` verlässt gar nichts das Gerät (WebLLM lädt sein Modell einmalig herunter).
+- Ein Foto oder PDF geht nur hinaus, wenn du es anhängst und `Senden` drückst, und nur an diesen Dienst.
+- Die Internetsuche ist aus, bis du sie einschaltest; dann gehen Suchwörter an die Quelle, die du unter `Suchen mit` gewählt hast.
+- Dein Schlüssel wird verschlüsselt auf diesem Gerät gespeichert und nur an diesen Dienst gesendet. Du bezahlst den Dienst für deine Nutzung, also lege auf seiner Seite ein Ausgabenlimit fest.
+
+>! Die Antworten kommen vom KI-Dienst, nicht von orOS. Prüfe alles Wichtige, bevor du dich darauf verlässt.
+
+## Synchronisierung und Sicherung
+Die Wahl von Assistent und Modell, die Berechtigungen pro App und `Nur Chat` gehen über die [Synchronisierung](help:t/sync) auf alle deine Geräte. Unterhaltungen bleiben auf diesem Gerät, außer du setzt den Haken bei `Unterhaltungen mit meinen anderen Geräten synchronisieren`. Jede Unterhaltung ist dann auch eine verschlüsselte Datei in Dateien (internal › Assistant), und Vault Drive bringt sie auf deine anderen Geräte; dafür muss die Synchronisierung verbunden und entsperrt sein. Eine Unterhaltung, die du löschst, wird dann überall gelöscht. Setzen zwei Geräte dieselbe Unterhaltung gleichzeitig fort, behältst du beide: Die ältere erscheint als zweite Unterhaltung mit demselben Titel. Schaltest du den Schalter aus, hört es auf; die Dateien bleiben in Dateien, bis du sie löschst.
+
+Schalte `Unterhaltungen auf diesem Gerät behalten` aus, um keine auf diesem Gerät zu behalten, oder nutze `Alle Unterhaltungen löschen`.
+
+Schlüssel bleiben auf jedem Gerät, außer du setzt den Haken bei `API-Schlüssel mit meinen anderen Geräten synchronisieren`. Dann reisen sie in deiner verschlüsselten Synchronisierung mit, versiegelt mit deiner Sync-Passphrase: Wer diese Passphrase kennt, kann sie nutzen. Entfernst du einen Schlüssel, während das an ist, wird er auf jedem Gerät entfernt.
+
+## Unterhaltungen importieren
+Hol deinen Verlauf aus einem anderen KI-Chat. Drücke in den Einstellungen des Assistenten unter `Dieses Gerät` auf `Unterhaltungen importieren` und wähle die Datei.
+- ChatGPT: Öffne in ChatGPT Settings › Data controls › Export data. Du bekommst eine E-Mail mit einem Link zu einer `.zip`; wähle diese Datei (oder die `conversations.json` darin).
+- Claude: Öffne auf claude.ai Settings › Privacy › Export data. Die E-Mail bringt eine `.zip` mit `conversations.json`; wähle eine von beiden.
+- Zuerst siehst du, wie viele Unterhaltungen und Nachrichten die Datei hat, aus welchem Zeitraum, und eine Liste zum Auswählen (`Alle auswählen`). Unterhaltungen, die schon hier sind, sind ausgegraut und kommen nie doppelt.
+- Deine Nachrichten und die Antworten kommen als Text, mit Fettdruck, Listen und Code. Systemnachrichten, Werkzeugaufrufe und das Nachdenken des Modells bleiben weg; Bilder und Dateien erscheinen als [image] und [file: name]. Bei ChatGPT wird die Fassung jeder Unterhaltung behalten, die du zuletzt gesehen hast (nicht die wegbearbeiteten Zweige).
+- Eine importierte Unterhaltung ist in der Liste mit ChatGPT oder Claude markiert und behält ihr eigenes Datum. Du kannst sie lesen und mit dem Assistenten fortsetzen, den du eingerichtet hast.
+- `Rückgängig` an der Nachricht entfernt, was hereingekommen ist; eine Unterhaltung, die du inzwischen fortgesetzt hast, bleibt. Die Datei wird nur auf diesem Gerät gelesen.
+
+## Tastenkürzel
+- [[Enter]] sendet, [[Shift+Enter]] beginnt eine neue Zeile.
+- [[Esc]] stoppt eine Antwort, die noch kommt.
+- [[Ctrl+Alt+Shift+A]] öffnet den Assistenten von überall in orOS.
+
+## Tipps
+- `Neuer Chat` beginnt eine neue Unterhaltung; ältere stehen in der Liste links oder auf dem Handy hinter der Menüschaltfläche.
+- `Diesen Monat genutzt` in den Einstellungen zeigt, wie viele Tokens dieses Gerät pro Dienst verbraucht hat.
+- Sagt ein Dienst, der Schlüssel oder das Modell sei falsch, öffne die Einstellungen und drücke `Modelle laden`, um beides zu prüfen.
+
+## Grenzen
+- Der Assistent braucht Internet, außer bei einem Modell in deinem eigenen Netzwerk, dem Modell im Browser (nach dem Download) oder dem eingebauten Browsermodell.
+- Er kann Einträge nur in den Apps ändern oder löschen, die unter `Ändern, was du schon hast` stehen, einen nach dem anderen, und er kann nichts versenden (keine E-Mail).
+- Rückgängig machen einer Änderung geht nur, bis du den Assistenten verlässt.
+- Ist eine App in einem anderen Browser-Tab offen, während du hier einen ihrer Einträge änderst, zeigt dieser Tab eventuell noch die alte Fassung, bis du ihn neu lädst.
+- Manche Dienste lehnen Aufrufe aus einem Browser ab: `Verbindung testen` sagt es dir. Ein lokaler Server muss diese Seite erlauben; `Server` in den Einstellungen zeigt für jedes Programm, wie.

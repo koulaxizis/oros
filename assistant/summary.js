@@ -80,10 +80,8 @@
           "o-gift": "Δώρα", "o-other": "Άλλα", "i-salary": "Μισθός", "i-free": "Ελεύθερο επάγγελμα",
           "i-gift": "Δώρα", "i-other": "Άλλα" }
   };
-  var NONE = { en: "Uncategorized", el: "Χωρίς κατηγορία" };
-
   function budgetMonth(d, month, lang) {
-    lang = lang === "el" ? "el" : "en";
+    lang = SEED_NAMES[lang] && L[lang] ? lang : "en";
     var out = { app: "budget", month: month, currency: "EUR", income: 0, expenses: 0, net: 0, entries: 0, categories: [] };
     if (!isObj(d)) return out;
     var tombs = isObj(d.tombs) ? d.tombs : {}, seeds = SEED_NAMES[lang];
@@ -97,11 +95,11 @@
       if (c && typeof c.id === "string" && !dead("cat", c)) stored[c.id] = c;
     });
     function catName(id) {
-      if (!id) return NONE[lang];
+      if (!id) return L[lang].uncat;
       var c = stored[id];
       if (c && str(c.name)) return str(c.name, 60);
       if (seeds[id] && !(("cat:" + id) in tombs && !c)) return seeds[id];
-      return NONE[lang];
+      return L[lang].uncat;
     }
     var cats = {}, inc = 0, exp = 0;
     arr(d.tx).forEach(function (x) {
@@ -212,14 +210,21 @@
   var L = {
     en: { inc: "Income", exp: "Expenses", net: "Balance", ent: "entries", h: "h", bill: "billable",
           open: "open", done: "done", late: "late", today: "due today", none: "Nothing in this period.",
-          run: "Running now", more: "+{n} more" },
+          run: "Running now", more: "+{n} more", uncat: "Uncategorized" },
     el: { inc: "Έσοδα", exp: "Έξοδα", net: "Υπόλοιπο", ent: "καταχωρήσεις", h: "ώ", bill: "χρεώσιμες",
           open: "ανοιχτές", done: "έγιναν", late: "εκπρόθεσμες", today: "για σήμερα", none: "Τίποτα σε αυτή την περίοδο.",
-          run: "Τρέχει τώρα", more: "+{n} ακόμη" }
+          run: "Τρέχει τώρα", more: "+{n} ακόμη", uncat: "Χωρίς κατηγορία" }
   };
+  // A pack language (orosI18n, ../i18n.js) gets its tables here; in Node
+  // (tests) there is no window and only en / el exist.
+  var I18N = typeof window !== "undefined" && window.orosI18n;
+  if (I18N) {
+    I18N.table(SEED_NAMES, "assistant", I18N.lang());
+    I18N.table(L, "assistant", I18N.lang());
+  }
   function amt(n, cur) { return n.toFixed(2) + " " + cur; }
   function preview(s, lang) {
-    var w = L[lang === "el" ? "el" : "en"], out = [];
+    var w = L[lang] || L.en, out = [];
     if (!isObj(s)) return out;
     function more(n) { if (n) out.push(w.more.replace("{n}", n)); }
     if (s.app === "budget") {
