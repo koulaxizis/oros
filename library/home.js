@@ -282,7 +282,43 @@
       { label: t("more.osave"), icon: UI.export, fn: function () { LIB.recFile.save(); } },
       { label: t("more.oopen"), icon: UI.device, fn: function () { LIB.recFile.open(); } },
       { label: t("more.ofolder"), icon: UI.disk, fn: function () { LIB.recFile.openFolder(); } }
+    ] : []).concat(sheetHost() ? [
+      { label: t("more.sheet"), icon: UI.grid, fn: openInSheet }
     ] : []));
+  }
+
+  // "Open in Spreadsheet" (Bible BR-S1): the books as a new sheet in the
+  // orOS Spreadsheet, the columns of books.csv in the .oroslibrary file
+  // (package.js), with sums under pages and the highlight counts. Shell only.
+  var SHEET_ROWS = 498;   // + heading + SUM row = the Spreadsheet's 500
+  function sheetHost() {
+    var p = LIB.parentWin();
+    try { return p && typeof p.__orosOpenAt === "function" ? p : null; } catch (e) { return null; }
+  }
+  function openInSheet() {
+    var p = sheetHost(), s = LIB.data;
+    if (!p) return;
+    var books = (s.books || []).slice().sort(function (a, b) {
+      var x = String(a.title || "").toLowerCase(), y = String(b.title || "").toLowerCase();
+      return x < y ? -1 : x > y ? 1 : 0;
+    });
+    if (!books.length) { LIB.toast(t("sheet.empty")); return; }
+    if (books.length > SHEET_ROWS) { LIB.toast(t("sheet.cap", { n: SHEET_ROWS })); books = books.slice(0, SHEET_ROWS); }
+    var count = {};
+    (s.marks || []).forEach(function (k) {
+      var c = count[k.b] || (count[k.b] = { hl: 0, bm: 0, n: 0 });
+      if (k.k === "hl") c.hl++; else c.bm++;
+      if (k.n) c.n++;
+    });
+    var head = [t("edit.name"), t("edit.by"), t("details.format"), t("details.year"), t("details.pages"), t("sheet.pct"),
+                t("book.finished"), t("details.tags"), t("nf.hl"), t("nf.bm"), t("sheet.notes")];
+    var rows = books.map(function (b) {
+      var c = count[b.id] || { hl: 0, bm: 0, n: 0 }, pct = C.progressOf(s, b.id);
+      return [b.title, b.by || "", C.fmtLabel(b), b.year || "", b.pages || "", pct ? Math.floor(pct / 10) : 0,
+              b.fin || "", (b.tags || []).join(", "), c.hl, c.bm, c.n];
+    });
+    p.__orosOpenAt("spreadsheet", { newSheet: { name: (t("app.name") + " " + C.ymdOf(new Date())).slice(0, 31),
+      rows: [head].concat(rows), sum: [4, 8, 9, 10] } });
   }
 
   // ---------- Adding ----------

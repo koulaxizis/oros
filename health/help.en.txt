@@ -56,7 +56,7 @@ Symptoms appear in `History`, have their own chart in `Charts` (pick the symptom
 ## History, charts and report
 - `History` lists every reading and symptom by day, newest first, with a filter per measurement and one for `Symptoms`. Tap or click a row to edit or delete it.
 - `Charts` shows 7, 30, 90 days, 1 year or all, with the target range shaded. Blood pressure splits mornings and evenings, blood sugar can be shown per context, weight adds a 7-day average. Below the chart you get averages, lowest, highest and `Numbers as a table`. Tick `Show symptoms and doses` to see small marks under a measurement's chart: dots for symptoms (blue mild, amber moderate, red strong) and ticks for doses taken; hover over a mark to see what it is.
-- `Report` builds a sheet for your doctor: pick the period, the measurements, `Medicines (list and doses taken)`, `Symptoms` and whether to include notes. `Print or save as PDF` opens your browser's print window; `Spreadsheet (CSV)` saves the same readings, symptoms and doses as a file.
+- `Report` builds a sheet for your doctor: pick the period, the measurements, `Medicines (list and doses taken)`, `Symptoms` and whether to include notes. `Print or save as PDF` opens your browser's print window; `Spreadsheet (CSV)` saves the same readings, symptoms and doses as a file. Inside orOS, `Open in Spreadsheet` (here and in `Settings` → `Export`) opens the same rows as a new sheet in Spreadsheet.
 
 ## Record
 The `Record` tab has four views: `Medical ID`, `Appointments`, `Vaccines` and `Documents`.

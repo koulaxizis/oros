@@ -70,12 +70,13 @@
       "set.remNote": "Reminders arrive only while orOS is open (in a tab or installed).",
       "every.n": "{n} min", "every.h": "{n} hours", "every.h1": "1 hour",
       "set.habits": "Show in Habits", "set.habitsNote": "A read-only “Water” row, ticked on the days you reach your goal.",
-      "set.export": "Export CSV", "set.data": "Data",
+      "set.export": "Export CSV", "set.data": "Data", "set.sheet": "Open in Spreadsheet",
       "set.osave": "orOS file (.oroswater)", "set.oopen": "Open orOS file…", "set.ofolder": "Unzipped orOS folder…",
       "toast.added": "+{a}", "toast.undo": "Undo", "toast.deleted": "Entry deleted",
       "toast.saved": "Saved", "toast.save": "Could not save: storage is full",
       "toast.bad": "Enter {min}–{max} ml", "toast.badGoal": "The goal must be {min}–{max} ml",
       "toast.badTime": "“Until” must be after “From”", "toast.exported": "CSV exported",
+      "toast.sheetCap": "Only the first {n} rows fit in one sheet", "toast.sheetNone": "No drinks logged yet",
       "toast.goal": "Goal reached! Well done.", "toast.remOn": "Reminders on", "toast.remOff": "Reminders off",
       "live.total": "{a} of {g}"
     },
@@ -105,12 +106,13 @@
       "set.remNote": "Οι υπενθυμίσεις έρχονται μόνο όσο το orOS είναι ανοιχτό (σε καρτέλα ή εγκατεστημένο).",
       "every.n": "{n} λεπτά", "every.h": "{n} ώρες", "every.h1": "1 ώρα",
       "set.habits": "Εμφάνιση στις Συνήθειες", "set.habitsNote": "Μια γραμμή «Νερό» μόνο για ανάγνωση, τσεκαρισμένη τις μέρες που πιάνεις τον στόχο.",
-      "set.export": "Εξαγωγή CSV", "set.data": "Δεδομένα",
+      "set.export": "Εξαγωγή CSV", "set.data": "Δεδομένα", "set.sheet": "Άνοιγμα στο Υπολογιστικό φύλλο",
       "set.osave": "Αρχείο orOS (.oroswater)", "set.oopen": "Άνοιγμα αρχείου orOS…", "set.ofolder": "Αποσυμπιεσμένος φάκελος orOS…",
       "toast.added": "+{a}", "toast.undo": "Αναίρεση", "toast.deleted": "Η καταγραφή διαγράφηκε",
       "toast.saved": "Αποθηκεύτηκε", "toast.save": "Δεν αποθηκεύτηκε: ο χώρος είναι γεμάτος",
       "toast.bad": "Γράψε {min}–{max} ml", "toast.badGoal": "Ο στόχος πρέπει να είναι {min}–{max} ml",
       "toast.badTime": "Το «Έως» πρέπει να είναι μετά το «Από»", "toast.exported": "Έγινε εξαγωγή CSV",
+      "toast.sheetCap": "Χωρούν μόνο οι πρώτες {n} γραμμές σε ένα φύλλο", "toast.sheetNone": "Δεν έχεις καταγράψει ακόμα νερό",
       "toast.goal": "Έπιασες τον στόχο! Μπράβο.", "toast.remOn": "Υπενθυμίσεις ενεργές", "toast.remOff": "Υπενθυμίσεις ανενεργές",
       "live.total": "{a} από {g}"
     }
@@ -746,6 +748,11 @@
     var exp = button(t("set.export"), "", exportCsv);
     exp.classList.add("block");
     form.appendChild(exp);
+    if (openAtFn()) {
+      var sheet = button(t("set.sheet"), "", openInSheet);
+      sheet.classList.add("block");
+      form.appendChild(sheet);
+    }
     // .oroswater: Save keeps the dialog open (like Export CSV); Open
     // and the folder close it first, since they change the data
     if (recFile) {
@@ -803,6 +810,24 @@
   function dialogHost() {
     if (window.orosDialog) return window.orosDialog;
     try { return window.parent.orosDialog || null; } catch (e) { return null; }
+  }
+  // "Open in Spreadsheet" (Bible BR-S1): the CSV's drinks as a new
+  // sheet in the orOS Spreadsheet, with a SUM under ml. Shown only
+  // inside orOS.
+  var SHEET_ROWS = 498;   // + heading + SUM row = the Spreadsheet's 500
+  function openAtFn() {
+    try {
+      var p = window.parent;
+      return p && p !== window && typeof p.__orosOpenAt === "function" ? p : null;
+    } catch (e) { return null; }
+  }
+  function openInSheet() {
+    var p = openAtFn();
+    if (!p) return;
+    var rows = C.toTable(data), head = rows.shift();
+    if (!rows.length) { showToast(t("toast.sheetNone")); return; }
+    if (rows.length > SHEET_ROWS) { showToast(t("toast.sheetCap", { n: SHEET_ROWS })); rows = rows.slice(0, SHEET_ROWS); }
+    p.__orosOpenAt("spreadsheet", { newSheet: { name: t("app") + " " + todayKey(), rows: [head].concat(rows), sum: [2] } });
   }
   function exportCsv() {
     var text = C.toCsv(data);

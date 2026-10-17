@@ -95,7 +95,7 @@
       "ch.band": "Shaded: the range in green on the cards", "ch.fitDots": "Hollow dots: weights from Workouts",
       "rp.title": "Report for the doctor", "rp.intro": "Pick a period and the measurements. Print opens your browser's print window, where you can also save a PDF.",
       "rp.from": "From", "rp.to": "To", "rp.kinds": "Measurements", "rp.notes": "Include notes and tags",
-      "rp.name": "Name on the report (optional)", "rp.print": "Print or save as PDF", "rp.csv": "Spreadsheet (CSV)",
+      "rp.name": "Name on the report (optional)", "rp.print": "Print or save as PDF", "rp.csv": "Spreadsheet (CSV)", "rp.sheet": "Open in Spreadsheet",
       "rp.none": "No readings in this period.", "rp.heading": "Health measurements",
       "rp.period": "Period: {a} to {b}", "rp.made": "Created on {d} with orOS Health",
       "rp.foot": "Readings taken at home and typed in by the patient. Colours follow ESC/ESH 2023 (blood pressure), ADA (blood sugar), WHO (BMI) or the patient's own targets.",
@@ -114,7 +114,8 @@
       "set.title": "Settings", "set.units": "Units", "set.wu": "Weight", "set.gu": "Blood sugar", "set.tu": "Temperature",
       "set.height": "Height ({u})", "set.heightHint": "Only used for the BMI.", "set.fit": "Show body weights from Workouts",
       "set.kinds": "Measurements", "set.hidden": "hidden", "set.edit": "Edit", "set.show": "Show", "set.hideKind": "Hide",
-      "set.export": "Export", "set.csv": "All readings (CSV)", "set.json": "Backup (JSON)", "set.restore": "Restore from backup (merge)",
+      "set.export": "Export", "set.csv": "All readings (CSV)",
+      "set.sheet": "Open in Spreadsheet", "set.sheetCap": "Only the first {n} rows fit in one sheet", "set.sheetNone": "Nothing to open yet", "set.json": "Backup (JSON)", "set.restore": "Restore from backup (merge)",
       "set.osave": "orOS file (.oroshealth)", "set.oopen": "Open orOS file…", "set.ofolder": "Unzipped orOS folder…",
       "set.restored": "Backup merged: {n} readings", "set.badFile": "This is not a Health backup.",
       "feed.gone": "That measurement no longer exists.",
@@ -182,7 +183,7 @@
       "ch.band": "Σκιασμένο: το εύρος που στις κάρτες είναι πράσινο", "ch.fitDots": "Κενές κουκκίδες: βάρη από την Προπόνηση",
       "rp.title": "Αναφορά για τον γιατρό", "rp.intro": "Διάλεξε περίοδο και μετρήσεις. Η εκτύπωση ανοίγει το παράθυρο εκτύπωσης του browser, όπου μπορείς να σώσεις και PDF.",
       "rp.from": "Από", "rp.to": "Έως", "rp.kinds": "Μετρήσεις", "rp.notes": "Μαζί οι σημειώσεις και οι ετικέτες",
-      "rp.name": "Όνομα στην αναφορά (προαιρετικό)", "rp.print": "Εκτύπωση ή αποθήκευση PDF", "rp.csv": "Υπολογιστικό φύλλο (CSV)",
+      "rp.name": "Όνομα στην αναφορά (προαιρετικό)", "rp.print": "Εκτύπωση ή αποθήκευση PDF", "rp.csv": "Υπολογιστικό φύλλο (CSV)", "rp.sheet": "Άνοιγμα στο Υπολογιστικό φύλλο",
       "rp.none": "Καμία μέτρηση σε αυτή την περίοδο.", "rp.heading": "Μετρήσεις υγείας",
       "rp.period": "Περίοδος: {a} έως {b}", "rp.made": "Δημιουργήθηκε στις {d} με την Υγεία του orOS",
       "rp.foot": "Μετρήσεις στο σπίτι, καταχωρισμένες από τον ίδιο τον ασθενή. Τα χρώματα ακολουθούν ESC/ESH 2023 (πίεση), ADA (σάκχαρο), ΠΟΥ (ΔΜΣ) ή τους στόχους του ασθενή.",
@@ -201,7 +202,8 @@
       "set.title": "Ρυθμίσεις", "set.units": "Μονάδες", "set.wu": "Βάρος", "set.gu": "Σάκχαρο", "set.tu": "Θερμοκρασία",
       "set.height": "Ύψος ({u})", "set.heightHint": "Χρειάζεται μόνο για τον ΔΜΣ.", "set.fit": "Εμφάνιση των βαρών από την Προπόνηση",
       "set.kinds": "Μετρήσεις", "set.hidden": "κρυφό", "set.edit": "Επεξεργασία", "set.show": "Εμφάνιση", "set.hideKind": "Απόκρυψη",
-      "set.export": "Εξαγωγή", "set.csv": "Όλες οι μετρήσεις (CSV)", "set.json": "Αντίγραφο (JSON)", "set.restore": "Επαναφορά αντιγράφου (συγχώνευση)",
+      "set.export": "Εξαγωγή", "set.csv": "Όλες οι μετρήσεις (CSV)",
+      "set.sheet": "Άνοιγμα στο Υπολογιστικό φύλλο", "set.sheetCap": "Χωρούν μόνο οι πρώτες {n} γραμμές σε ένα φύλλο", "set.sheetNone": "Δεν υπάρχει ακόμα κάτι για άνοιγμα", "set.json": "Αντίγραφο (JSON)", "set.restore": "Επαναφορά αντιγράφου (συγχώνευση)",
       "set.osave": "Αρχείο orOS (.oroshealth)", "set.oopen": "Άνοιγμα αρχείου orOS…", "set.ofolder": "Αποσυμπιεσμένος φάκελος orOS…",
       "set.restored": "Το αντίγραφο συγχωνεύτηκε: {n} μετρήσεις", "set.badFile": "Αυτό δεν είναι αντίγραφο της Υγείας.",
       "feed.gone": "Αυτή η μέτρηση δεν υπάρχει πια.",
@@ -647,15 +649,17 @@
     if (s.indexOf(sep) >= 0 || /["\n\r]/.test(s)) s = '"' + s.replace(/"/g, '""') + '"';
     return s;
   }
-  function csvNum(tid, i, v) {
+  // raw = a real number (Open in Spreadsheet), else CSV text
+  function csvNum(tid, i, v, raw) {
     var k = slotKind(tid, i), p = Math.pow(10, Math.max(decOf(k, tid), k === "min" ? 2 : 0));
-    var s = String(Math.round(toDisp(k, v) * p) / p);
+    var n = Math.round(toDisp(k, v) * p) / p;
+    if (raw) return n;
+    var s = String(n);
     return LANG === "el" ? s.replace(".", ",") : s;
   }
   // entries: readings; more: [{ at, cells }] (symptoms, doses), in the
-  // same columns, sorted in by time.
-  function buildCsv(entries, more) {
-    var sep = LANG === "el" ? ";" : ",";
+  // same columns, sorted in by time. → rows, heading first.
+  function exportRows(entries, more, raw) {
     var body = [];
     entries.forEach(function (e) {
       var d = new Date(e.at), det = "";
@@ -664,7 +668,7 @@
       else if (e.t === "sl") det = hm(d) + "–" + hm(new Date(C.sleepEnd(e))) + (e.v[1] ? " · " + t("e.quality") + " " + e.v[1] + "/5" : "");
       var lv = C.classify(data, e);
       body.push({ at: e.at, cells: [ymd(d), hm(d), typeName(e.t),
-                 e.t === "bp" ? e.v[0] : csvNum(e.t, 0, e.v[0]),
+                 e.t === "bp" ? e.v[0] : csvNum(e.t, 0, e.v[0], raw),
                  unitOf(e.t),
                  e.t === "bp" ? e.v[1] : "",
                  e.t === "bp" && e.v[2] ? e.v[2] : "",
@@ -675,7 +679,11 @@
     var rows = [[t("csv.date"), t("csv.time"), t("csv.kind"), t("csv.value"), t("csv.unit"), t("csv.dia"),
                  t("csv.pulse"), t("csv.details"), t("csv.status"), t("csv.note"), t("csv.tags"), t("csv.source")]]
       .concat(body.map(function (b) { return b.cells; }));
-    return "﻿" + rows.map(function (r) {
+    return rows;
+  }
+  function buildCsv(entries, more) {
+    var sep = LANG === "el" ? ";" : ",";
+    return "﻿" + exportRows(entries, more).map(function (r) {
       return r.map(function (c) { return csvCell(c, sep); }).join(sep);
     }).join("\r\n") + "\r\n";
   }
@@ -1903,14 +1911,26 @@
       printReport(present.filter(function (ty) { return chosen[ty.id]; }).map(function (ty) { return ty.id; }), from, to,
                   { meds: meds.length && prefs.rm ? meds : [], syms: syms.length && prefs.rs ? syms : [] });
     }));
-    acts.appendChild(txtBtn("wide-btn", null, t("rp.csv"), function () {
+    // The CSV and the sheet: the chosen kinds of the period, plus
+    // symptoms and doses when ticked. raw = numbers for the sheet.
+    function reportRows(raw) {
       var ids = present.filter(function (ty) { return chosen[ty.id]; }).map(function (ty) { return ty.id; });
       var list = [], more = [];
       ids.forEach(function (id) { list = list.concat(readings(id, true).filter(function (e) { return e.at >= from && e.at < to; })); });
       list.sort(function (a, b) { return a.at - b.at; });
       if (syms.length && prefs.rs) more = more.concat(symCsvRows(syms));
-      if (meds.length && prefs.rm) more = more.concat(doseCsvRows(meds, from, to));
-      saveBlob(new Blob([buildCsv(list, more)], { type: "text/csv;charset=utf-8" }), stampName("csv"), "text/csv");
+      if (meds.length && prefs.rm) more = more.concat(doseCsvRows(meds, from, to, raw));
+      return { list: list, more: more };
+    }
+    acts.appendChild(txtBtn("wide-btn", null, t("rp.csv"), function () {
+      var r = reportRows(false);
+      saveBlob(new Blob([buildCsv(r.list, r.more)], { type: "text/csv;charset=utf-8" }), stampName("csv"), "text/csv");
+    }));
+    if (openAtFn()) acts.appendChild(txtBtn("wide-btn", null, t("rp.sheet"), function () {
+      var r = reportRows(true);
+      var a = rpFrom, b = rpTo;   // "2026-09-18–10-17": the name stays under 31 characters
+      openInSheet(exportRows(r.list, r.more, true),
+                  a === b ? a : a.slice(0, 4) === b.slice(0, 4) ? a + "–" + b.slice(5) : a.replace(/-/g, "") + "–" + b.replace(/-/g, ""));
     }));
     ks.appendChild(acts);
     v.appendChild(ks);
@@ -1999,14 +2019,14 @@
   }
   // Every dose of the period that counts (taken, skipped, missed) and
   // every as-needed dose, one row each.
-  function doseCsvRows(meds, from, to) {
+  function doseCsvRows(meds, from, to, raw) {
     var out = [], now = Date.now(), idx = C.logIndex(data), sub = { md: meds, dl: data.dl };
     var b = ymd(new Date(to - DAY_MS));
     for (var day = ymd(new Date(from)), g = 0; day <= b && g < 4000; day = C.ymdAdd(day, 1), g++) {
       C.dosesOn(sub, day, now, idx).forEach(function (r) {
         if (["taken", "skipped", "late", "missed"].indexOf(r.state) < 0 || (r.pre && !r.log)) return;
         var tk = r.state === "taken", when = tk ? new Date(r.log.ta) : new Date(r.at);
-        out.push({ at: r.at, cells: [r.d, hmMin(r.tm), medLabel(r.med), tk ? fmtEdit(r.log.q / 100, 2) : "", unitWord(r.med.f, tk ? r.log.q : r.med.q),
+        out.push({ at: r.at, cells: [r.d, hmMin(r.tm), medLabel(r.med), tk ? (raw ? r.log.q / 100 : fmtEdit(r.log.q / 100, 2)) : "", unitWord(r.med.f, tk ? r.log.q : r.med.q),
           "", "", t("csv.sched", { t: hmMin(r.tm) }) + (tk ? " · " + t("st.taken", { t: hm(when) }) : ""),
           r.state === "taken" ? t("st.takenShort") : r.state === "skipped" ? t("st.skipped") : t("st.missed"), "", "", t("csv.med")] });
       });
@@ -2014,7 +2034,7 @@
     meds.forEach(function (m) {
       C.prnTaken(data, m.id, from, to).forEach(function (l) {
         var d = new Date(l.ta);
-        out.push({ at: l.ta, cells: [ymd(d), hm(d), medLabel(m), fmtEdit(l.q / 100, 2), unitWord(m.f, l.q), "", "", t("dd.prn"), t("st.takenShort"), "", "", t("csv.med")] });
+        out.push({ at: l.ta, cells: [ymd(d), hm(d), medLabel(m), raw ? l.q / 100 : fmtEdit(l.q / 100, 2), unitWord(m.f, l.q), "", "", t("dd.prn"), t("st.takenShort"), "", "", t("csv.med")] });
       });
     });
     return out;
@@ -3929,6 +3949,24 @@
   }
   function stampName(ext) { return "orOS-health-" + ymd(new Date()) + "." + ext; }
   function exportCsv() { saveBlob(new Blob([buildCsv(readings("", true))], { type: "text/csv;charset=utf-8" }), stampName("csv"), "text/csv"); }
+  // "Open in Spreadsheet" (Bible BR-S1): the CSV's rows as a new sheet
+  // in the orOS Spreadsheet. No SUM: the Value column mixes kinds.
+  // Shown only inside orOS.
+  var SHEET_ROWS = 499;   // + heading = the Spreadsheet's 500
+  function openAtFn() {
+    try {
+      var p = window.parent;
+      return p && p !== window && typeof p.__orosOpenAt === "function" ? p : null;
+    } catch (e) { return null; }
+  }
+  function openInSheet(rows, slug) {
+    var p = openAtFn();
+    if (!p) return;
+    var head = rows.shift();
+    if (!rows.length) { showToast(t("set.sheetNone")); return; }
+    if (rows.length > SHEET_ROWS) { showToast(t("set.sheetCap", { n: SHEET_ROWS })); rows = rows.slice(0, SHEET_ROWS); }
+    p.__orosOpenAt("spreadsheet", { newSheet: { name: t("app") + " " + slug, rows: [head].concat(rows) } });
+  }
   function exportJson() {
     var payload = { app: "health", ver: C.DATA_VER, data: C.merge(data, data) };
     saveBlob(new Blob([JSON.stringify(payload)], { type: "application/json" }), stampName("json"), "application/json");
@@ -4287,6 +4325,9 @@
     dlg.appendChild(el("div", "dlg-sub", t("set.export")));
     var ex = el("div", "btn-col");
     ex.appendChild(button(t("set.csv"), "", exportCsv));
+    if (openAtFn()) ex.appendChild(button(t("set.sheet"), "", function () {
+      openInSheet(exportRows(readings("", true), null, true), ymd(new Date()));
+    }));
     ex.appendChild(button(t("set.json"), "", exportJson));
     ex.appendChild(button(t("set.restore"), "", restoreJson));
     if (recFile) {                       // .oroshealth (the record kit)
