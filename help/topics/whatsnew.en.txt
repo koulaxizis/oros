@@ -1,6 +1,22 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.68.00
+- Music: lyrics that follow the song. Music reads a .lrc file next to a song, the lyrics in its tags, or (if you say yes) asks LRCLIB, a free lyrics library. Tap a line to jump there.
+- Music: Sound settings with a 10-band equalizer and presets, crossfade, gapless playback and the same volume for every song (ReplayGain). A sleep timer stops the music after a while or at the end of the song.
+
+## Version 2.67.00
+- Writer, Spreadsheet and Slides can bring in one file straight from Google Docs, Sheets or Slides: pick it and it opens as a normal orOS file.
+
+## Version 2.66.00
+- orOS Drive on the phone: the orOS Android app can mirror folders from your phone into the Vault, so they show in Files › orOS Drive on your other devices. It syncs every 15 minutes, on Wi-Fi only unless you change it. The F-Droid version comes without it for now.
+
+## Version 2.65.01
+- Atelier AI now also works with the in-browser model chosen in the Assistant (WebLLM); it says when the model is not downloaded yet or WebGPU is missing.
+
+## Version 2.65.00
+- Mockups: show your book open at an inside spread, with your own pictures or two pages of your book's PDF and a page curve you choose, or as an e-book on a tablet, phone or e-reader in black, white or silver.
+
 ## Version 2.64.01
 - Seasonal decorations: Autumn leaves and Winter snow no longer vanish when the decorations stand still (low battery, less motion, Still only, slow device). Settings says when a slow device stopped the movement.
 

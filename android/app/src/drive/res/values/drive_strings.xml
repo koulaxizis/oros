@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- orOS Drive on the phone (DRIVE-A). Greek in values-el. -->
+<resources>
+    <string name="drive_title">orOS Drive</string>
+    <string name="drive_intro">Mirror folders of this phone into your encrypted orOS Vault. They appear in orOS under Files › orOS Drive › %1$s, and changes go both ways.</string>
+    <string name="drive_login_text">Sign in to the Dropbox account orOS syncs with. Dropbox only ever sees encrypted data.</string>
+    <string name="drive_login">Sign in with Dropbox</string>
+    <string name="drive_login_wait">Finish the sign-in in the browser, then come back here.</string>
+    <string name="drive_unlock_text">Type your orOS sync passphrase (Settings › Sync in orOS). It opens the vault key, which this phone keeps in its secure key store; the passphrase itself is not stored.</string>
+    <string name="drive_unlock_reset">The vault in Dropbox was reset or rebuilt. Type the orOS sync passphrase again.</string>
+    <string name="drive_passphrase">orOS sync passphrase</string>
+    <string name="drive_unlock">Unlock</string>
+    <string name="drive_wrong_pass">This passphrase does not open the vault.</string>
+    <string name="drive_no_vault">There is no orOS vault in this Dropbox yet. Start one with this passphrase? Use the same passphrase in orOS.</string>
+    <string name="drive_create">Start a new vault</string>
+    <string name="drive_folders">Folders</string>
+    <string name="drive_none">No folders yet.</string>
+    <string name="drive_add">Add a folder</string>
+    <string name="drive_name_title">Name in orOS</string>
+    <string name="drive_added">Added. The first sync only adds files; nothing is deleted on either side.</string>
+    <string name="drive_ok">Up to date</string>
+    <string name="drive_paused">Paused</string>
+    <string name="drive_missing">The folder cannot be opened (removed, or its permission was taken back). Nothing is changed.</string>
+    <string name="drive_reset">The vault in Dropbox is empty although this folder was synced. Nothing was deleted here.</string>
+    <string name="drive_error">Error: %1$s</string>
+    <string name="drive_held">%1$d files were deleted at once. Delete them in orOS too?</string>
+    <string name="drive_approve">Yes, delete them</string>
+    <string name="drive_hold">No, pause this folder</string>
+    <string name="drive_files">%1$d files</string>
+    <string name="drive_local_only">%1$d files are bigger than the limit and stay only on this phone</string>
+    <string name="drive_skipped">%1$d files were skipped (names or files orOS cannot take)</string>
+    <string name="drive_pause">Pause</string>
+    <string name="drive_resume">Resume</string>
+    <string name="drive_remove">Stop mirroring</string>
+    <string name="drive_remove_ask">Stop mirroring this folder? Files stay on the phone and in orOS.</string>
+    <string name="drive_sync_now">Sync now</string>
+    <string name="drive_syncing">Syncing…</string>
+    <string name="drive_last">Last sync: %1$s</string>
+    <string name="drive_options">Options</string>
+    <string name="drive_wifi">Only on Wi-Fi</string>
+    <string name="drive_charging">Only while charging</string>
+    <string name="drive_max_file">Largest file to upload (MB)</string>
+    <string name="drive_device">This phone\'s name in orOS</string>
+    <string name="drive_save">Save</string>
+    <string name="drive_lock">Forget the vault key</string>
+    <string name="drive_logout">Sign out</string>
+    <string name="drive_logout_ask">Sign out of Dropbox? Mirroring stops. Files stay where they are.</string>
+    <string name="drive_trash">Files removed here because they were deleted in orOS are kept for 30 days in Android/data/online.useoros.twa/files/Trash.</string>
+    <string name="drive_activity">Activity</string>
+    <string name="drive_cancel">Cancel</string>
+    <string name="drive_unavailable">orOS Drive could not start: %1$s</string>
+</resources>
