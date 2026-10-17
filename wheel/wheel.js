@@ -54,7 +54,7 @@
       return l === "el" ? "el" : "en";
     } catch (e) { return "en"; }
   }
-  var LANG = appLang();
+  var LANG = window.orosI18n ? window.orosI18n.lang() : appLang();
 
   var STRINGS = {
     en: {
@@ -110,6 +110,7 @@
       "set.movie": "Βραδιά ταινίας", "set.todo": "Τι να κάνω", "set.first": "Ποιος παίζει πρώτος"
     }
   };
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "wheel", LANG);
 
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;
@@ -158,30 +159,43 @@
   }
 
   var SET_IDS = ["yesno", "food", "days", "nums", "coin", "chores", "movie", "todo", "first"];
-  var SETS = {
+  // Ready-set options, one key per option ("seto.<set>.<n>", pack
+  // "wheel"). Picking a set copies them into the draft; a saved wheel
+  // keeps its own text. SETS[lang][set] = [options] is built from it.
+  var SET_TEXT = {
     en: {
-      yesno:  ["Yes", "No"],
-      food:   ["Pizza", "Burger", "Souvlaki", "Pasta", "Salad", "Sushi"],
-      days:   ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
-      nums:   ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"],
-      coin:   ["Heads", "Tails"],
-      chores: ["Dishes", "Laundry", "Vacuum", "Trash", "Shopping"],
-      movie:  ["Comedy", "Action", "Drama", "Horror", "Animation", "Documentary"],
-      todo:   ["Go for a walk", "Read", "Board game", "Cook something", "Call a friend", "Take a nap"],
-      first:  ["Player 1", "Player 2", "Player 3", "Player 4"]
+      "seto.yesno.1": "Yes", "seto.yesno.2": "No",
+      "seto.food.1": "Pizza", "seto.food.2": "Burger", "seto.food.3": "Souvlaki", "seto.food.4": "Pasta", "seto.food.5": "Salad", "seto.food.6": "Sushi",
+      "seto.days.1": "Monday", "seto.days.2": "Tuesday", "seto.days.3": "Wednesday", "seto.days.4": "Thursday", "seto.days.5": "Friday", "seto.days.6": "Saturday", "seto.days.7": "Sunday",
+      "seto.nums.1": "1", "seto.nums.2": "2", "seto.nums.3": "3", "seto.nums.4": "4", "seto.nums.5": "5", "seto.nums.6": "6", "seto.nums.7": "7", "seto.nums.8": "8", "seto.nums.9": "9", "seto.nums.10": "10",
+      "seto.coin.1": "Heads", "seto.coin.2": "Tails",
+      "seto.chores.1": "Dishes", "seto.chores.2": "Laundry", "seto.chores.3": "Vacuum", "seto.chores.4": "Trash", "seto.chores.5": "Shopping",
+      "seto.movie.1": "Comedy", "seto.movie.2": "Action", "seto.movie.3": "Drama", "seto.movie.4": "Horror", "seto.movie.5": "Animation", "seto.movie.6": "Documentary",
+      "seto.todo.1": "Go for a walk", "seto.todo.2": "Read", "seto.todo.3": "Board game", "seto.todo.4": "Cook something", "seto.todo.5": "Call a friend", "seto.todo.6": "Take a nap",
+      "seto.first.1": "Player 1", "seto.first.2": "Player 2", "seto.first.3": "Player 3", "seto.first.4": "Player 4"
     },
     el: {
-      yesno:  ["Ναι", "Όχι"],
-      food:   ["Πίτσα", "Μπέργκερ", "Σουβλάκι", "Μακαρόνια", "Σαλάτα", "Σούσι"],
-      days:   ["Δευτέρα", "Τρίτη", "Τετάρτη", "Πέμπτη", "Παρασκευή", "Σάββατο", "Κυριακή"],
-      nums:   ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"],
-      coin:   ["Κορώνα", "Γράμματα"],
-      chores: ["Πιάτα", "Πλυντήριο", "Σκούπα", "Σκουπίδια", "Ψώνια"],
-      movie:  ["Κωμωδία", "Δράση", "Δράμα", "Τρόμου", "Κινούμενα σχέδια", "Ντοκιμαντέρ"],
-      todo:   ["Βόλτα", "Διάβασμα", "Επιτραπέζιο", "Μαγείρεμα", "Τηλέφωνο σε φίλο", "Υπνάκος"],
-      first:  ["Παίκτης 1", "Παίκτης 2", "Παίκτης 3", "Παίκτης 4"]
+      "seto.yesno.1": "Ναι", "seto.yesno.2": "Όχι",
+      "seto.food.1": "Πίτσα", "seto.food.2": "Μπέργκερ", "seto.food.3": "Σουβλάκι", "seto.food.4": "Μακαρόνια", "seto.food.5": "Σαλάτα", "seto.food.6": "Σούσι",
+      "seto.days.1": "Δευτέρα", "seto.days.2": "Τρίτη", "seto.days.3": "Τετάρτη", "seto.days.4": "Πέμπτη", "seto.days.5": "Παρασκευή", "seto.days.6": "Σάββατο", "seto.days.7": "Κυριακή",
+      "seto.nums.1": "1", "seto.nums.2": "2", "seto.nums.3": "3", "seto.nums.4": "4", "seto.nums.5": "5", "seto.nums.6": "6", "seto.nums.7": "7", "seto.nums.8": "8", "seto.nums.9": "9", "seto.nums.10": "10",
+      "seto.coin.1": "Κορώνα", "seto.coin.2": "Γράμματα",
+      "seto.chores.1": "Πιάτα", "seto.chores.2": "Πλυντήριο", "seto.chores.3": "Σκούπα", "seto.chores.4": "Σκουπίδια", "seto.chores.5": "Ψώνια",
+      "seto.movie.1": "Κωμωδία", "seto.movie.2": "Δράση", "seto.movie.3": "Δράμα", "seto.movie.4": "Τρόμου", "seto.movie.5": "Κινούμενα σχέδια", "seto.movie.6": "Ντοκιμαντέρ",
+      "seto.todo.1": "Βόλτα", "seto.todo.2": "Διάβασμα", "seto.todo.3": "Επιτραπέζιο", "seto.todo.4": "Μαγείρεμα", "seto.todo.5": "Τηλέφωνο σε φίλο", "seto.todo.6": "Υπνάκος",
+      "seto.first.1": "Παίκτης 1", "seto.first.2": "Παίκτης 2", "seto.first.3": "Παίκτης 3", "seto.first.4": "Παίκτης 4"
     }
   };
+  if (typeof window !== "undefined" && window.orosI18n) window.orosI18n.table(SET_TEXT, "wheel", LANG);
+  var SETS = {};
+  Object.keys(SET_TEXT).forEach(function (l) {
+    SETS[l] = {};
+    SET_IDS.forEach(function (id) {
+      var list = [];
+      for (var n = 1; SET_TEXT[l]["seto." + id + "." + n] !== undefined; n++) list.push(SET_TEXT[l]["seto." + id + "." + n]);
+      SETS[l][id] = list;
+    });
+  });
   function setOpts(id) { return (SETS[LANG] || SETS.en)[id].slice(); }
 
   // Segment colours: the palette in turn; the last never matches the
@@ -1068,7 +1082,7 @@
       var opt = d.toDateString() === now.toDateString()
         ? { hour: "2-digit", minute: "2-digit" }
         : { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" };
-      return d.toLocaleString(LANG === "el" ? "el-GR" : "en-GB", opt);
+      return d.toLocaleString(window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB"), opt);
     } catch (e) { return ""; }
   }
   function renderHist() {
