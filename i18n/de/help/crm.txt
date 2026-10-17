@@ -1,0 +1,81 @@
+# CRM
+CRM ist ein kleines Kundenbuch für Selbstständige oder kleine Firmen: deine Kunden, die Menschen, mit denen du dort sprichst, was besprochen wurde, was du als Nächstes versprochen hast und die Deals, an denen du arbeitest.
+
+## Erste Schritte
+Tippe oder klicke auf `Ersten Kunden hinzufügen`. Wähle `Firma` oder `Person`, gib den Namen ein und wähle einen `Status`: `Lead` (noch kein Kunde), `Aktiv` oder `Ehemalig`. Unter `Rechnungsdaten` kannst du `USt-IdNr. (ΑΦΜ)`, `Finanzamt (ΔΟΥ)`, `Beruf`, `Adresse` und `Land` speichern. Bei einer griechischen Steuernummer prüft die App die Prüfziffer und warnt, wenn ein anderer Kunde sie schon hat.
+
+Die Tabs heißen `Kunden`, `Pipeline`, `Agenda` und `Dashboard`. Auf dem Telefon liegen sie unten am Bildschirm.
+
+## Kunden und Personen
+Die Liste hat ein Suchfeld, ein Sortiermenü und Filter: `Leads`, `Aktiv`, `Ehemalige`, `Mit Stern`, `Nicht kontaktiert` und deine Tags. Tippe auf einen Kunden, um seine Seite zu öffnen, mit `Anrufen`, `E-Mail`, `Karte`, `Kontakt notieren`, `Wiedervorlage`, `Deal`, `Rechnung` und `Angebot`.
+
+Tippe unter `Personen` auf `+ Person`. Wähle jemanden `Aus Kontakte` (Telefon und E-Mail werden aus [Kontakte](app:contacts) gelesen und bleiben aktuell) oder gib einen Namen mit Telefon und E-Mail ein. `Zu Kontakte hinzufügen` öffnet Kontakte mit dieser Person ausgefüllt; gespeichert wird dort erst, wenn du auf Speichern tippst.
+
+## Verlauf, Wiedervorlagen und die Agenda
+`Kontakt notieren` hält einen Anruf, eine E-Mail, ein Treffen, eine Nachricht oder eine Notiz fest, mit Datum und Uhrzeit, mit wem du gesprochen hast und um welchen Deal es ging. Wähle `Nächste Wiedervorlage`, um im selben Fenster den nächsten Schritt zu planen.
+
+Eine Wiedervorlage hat einen Tag, eine optionale Uhrzeit und das, was zu tun ist. `Agenda` zeigt die überfälligen, die von heute und die der nächsten 7 Tage. Tippe auf den Kreis, um eine als erledigt zu markieren; die Meldung, die dann erscheint, bietet `Notieren` an. Das Menü einer Wiedervorlage verschiebt sie auf `Morgen` oder `In einer Woche` oder sendet sie an [Aufgaben](app:todo).
+
+Offene Wiedervorlagen erscheinen auch in [Heute](app:today), wo das Häkchen sie in CRM erledigt, und im [Kalender](app:calendar) unter `Kunden`, zusammen mit dem erwarteten Abschlusstag offener Deals. Ein Kontakt, der Person eines Kunden ist, bekommt in [Kontakte](app:contacts) eine Taste `Kunde:`.
+
+## Pipeline
+Ein Deal hat einen Titel, einen Wert, eine Phase (`Neu`, `Kontaktiert`, `Angebot`, `Verhandlung`, `Gewonnen`, `Verloren`), eine Chance in Prozent und einen erwarteten Abschlusstag. Auf einem breiten Bildschirm ziehst du eine Karte in eine andere Spalte. Auf dem Telefon wählst du oben eine Phase und verschiebst einen Deal mit seiner Taste `⋯`. Die Summen zeigen den Wert und den gewichteten Wert (Wert × Chance).
+
+Unter `Einstellungen` › `Pipeline-Phasen` kannst du eine Phase umbenennen, ihre Standard-Chance ändern, sie nach oben oder unten verschieben, eigene hinzufügen (bis zu 8 offene Phasen) oder ungenutzte ausblenden. Eine Phase, die noch Deals hat, lässt sich nicht ausblenden oder löschen. `Gewonnen` und `Verloren` bleiben, wie sie sind.
+
+## Rechnungen und Angebote
+`Rechnung` auf der Seite eines Kunden öffnet [Rechnungen](app:invoices) mit einer neuen Rechnung für diesen Kunden: Name, USt-IdNr., Finanzamt, Beruf, Adresse und Kontaktdaten sind ausgefüllt. `Angebot` macht dasselbe in [Angebot](app:quote). Öffne einen Deal, dort findest du `Deal abrechnen` (gewonnene Deals) und `Angebot zu diesem Deal`: Sie übernehmen den Deal als eine Zeile mit seinem Wert. Nichts wird gespeichert, bis du in der jeweiligen App auf Speichern tippst. Das Angebot übernimmt die Währung des CRM, welche es auch ist.
+
+Der Tab `Dokumente` eines Kunden listet seine Rechnungen mit dem, was berechnet, bezahlt und noch offen ist, und die Angebote für einen Kunden mit gleichem Namen oder gleicher USt-IdNr. Tippe auf eines, um es zu öffnen. CRM liest sie nur; du änderst sie in ihrer eigenen App.
+
+## Dashboard
+Offene Pipeline, gewonnen diesen Monat und dieses Jahr, Abschlussquote, überfällige Wiedervorlagen, Kunden, die du länger nicht kontaktiert hast, neue Leads und, sobald du aus CRM abrechnest, was deine Kunden noch schulden. Tippe auf eine Kachel, um die Liste dahinter zu sehen.
+
+## Synchronisierung und Sicherung
+Kunden, Personen, Verlauf, Wiedervorlagen, Deals, Tags und die Währung werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. Der offene Tab, die Filter und die Sortierung bleiben auf jedem Gerät.
+
+In den `Einstellungen`: `Kunden importieren (CSV)`, `Kunden exportieren (CSV)`, `Sicherung (JSON)` und `Sicherung wiederherstellen`. Eine Sicherung wird mit deinen Daten zusammengeführt; nichts wird gelöscht. Innerhalb von orOS öffnet `In Tabelle öffnen` dieselbe Kundenliste wie `Kunden exportieren (CSV)` in einem neuen Blatt in [Tabelle](app:spreadsheet), mit den offenen Deals und ihrem Wert unten summiert.
+
+`Kunden importieren (CSV)` liest eine Liste aus Excel, HubSpot, einem anderen Programm oder dem eigenen Export von CRM. Die erste Zeile muss die Spalten benennen (zum Beispiel Name oder Company, VAT ID, Email, Phone, Address, City, Status, Tags; die Spaltennamen des deutschen Exports gehen auch). Du siehst, wie viele Kunden neu sind, bevor etwas hinzugefügt wird; Kunden, die du schon hast (gleiche USt-IdNr. oder gleicher Name), werden übersprungen, und `Rückgängig` entfernt den ganzen Import.
+
+## Eine orOS-Datei speichern und öffnen
+In den `Einstellungen` speichert `orOS-Datei (.oroscrm)` jeden Kunden mit seinen Personen, seinem Verlauf, seinen Wiedervorlagen und Deals, deine Tags und deine eigenen Pipeline-Phasen als eine `.oroscrm`-Datei, zum Beispiel um sie ohne Synchronisierung auf ein anderes Gerät zu bringen oder eine Kopie aufzubewahren. Deine Einstellungen (Währung, `„Nicht kontaktiert“ nach`, die Namen der eingebauten Phasen) und das Webformular mit seinen Schlüsseln bleiben auf jedem Gerät, und kein Konto eines verbundenen Dienstes ist je in der Datei. Die Datei ist ein einfaches ZIP: Entpackt enthält sie die Einträge als `content.json` und dazu `preview/customers.csv` (dieselbe Liste wie `Kunden exportieren (CSV)`) für andere Programme. Sie enthält Daten anderer Menschen und ist nicht verschlüsselt, also bewahre sie sicher auf.
+
+`orOS-Datei öffnen…` (oder `Entpackter orOS-Ordner…`, oder „Öffnen mit“ orOS am Computer) zeigt, wie viele Einträge neu und wie viele schon da sind; dann fügt `Hinzufügen` nur die neuen hinzu, mit ihren eigenen IDs: Dieselbe Datei noch einmal zu öffnen, fügt nichts hinzu. Ein schon vorhandener Eintrag bleibt, wie er ist, ein hier gelöschter bleibt gelöscht, und eine Datei löscht nie etwas. Hake `Mit neueren Versionen aktualisieren` an, damit Einträge, die in der Datei später geändert wurden, deine Kopie ersetzen. `Rückgängig` in der Meldung entfernt das Hinzugefügte.
+
+## HubSpot, Pipedrive, Invoice Ninja und Odoo
+`Einstellungen` › `Aus HubSpot, Pipedrive, Invoice Ninja oder Odoo importieren` holt ein Konto herein, das du in den [Einstellungen](app:settings) › `Verbundene Dienste` verbunden hast. Wähle das Konto und `Konto lesen`: Du siehst, wie viele Kunden, Deals und Wiedervorlagen neu sind und wie viele sich dort seit dem letzten Mal geändert haben, bevor etwas hinzugefügt wird.
+
+- Firmen werden zu Kunden, ihre Kontakte zu Personen. Ein Kontakt ohne Firma wird ein Kunde vom Typ Person.
+- Deals behalten ihre Phase: Gewonnene und verlorene bleiben gewonnen und verloren; ein offener Deal kommt in die Phase, die seiner Wahrscheinlichkeit am nächsten liegt (Neu, Kontaktiert, Angebot oder Verhandlung). Ein Deal in einer anderen Währung als der des CRM kommt ohne Wert, mit dem Betrag in seiner Notiz.
+- Aktive Kunden aus Invoice Ninja werden zu Kunden, mit ihren Kontakten als Personen und ihrer USt-IdNr.; ein Kunde mit derselben USt-IdNr. hier wird zuerst zugeordnet.
+- Aus Odoo kommen seine Kontakte (Firmen mit ihren Personen, einzelne Personen, USt-IdNr.) und seine Verkaufschancen als Deals; deine eigene Firma und ihre Mitarbeitenden bleiben außen vor. Dafür braucht es Odoo 19 oder Odoo Online.
+- Offene Aktivitäten aus Pipedrive werden zu Wiedervorlagen. Eine, die du hier erledigst, bleibt erledigt.
+- Ein Kunde, den du schon hast (gleicher Name oder gleiche E-Mail), wird so genommen, wie er ist, und nie geändert.
+- `Früher Importiertes aktualisieren` frischt nur die Felder der Plattform auf (Name, Telefon, E-Mail, Website, Adresse, Personen, Phase und Wert des Deals). Status, Tags, Notizen, Sterne und Verlauf bleiben deine.
+- Was du hier löschst, kommt beim nächsten Import nicht zurück, außer du hakst `Hier Gelöschtes zurückholen` an.
+- `Rückgängig` nimmt den ganzen Import zurück. orOS liest HubSpot, Pipedrive, Invoice Ninja und Odoo nur: Dort ändert sich nichts.
+
+## Webformular
+`Einstellungen` › `Webformular` erstellt ein Kontaktformular für deine eigene Website. Lass `Dankeseite (optional)` leer oder gib eine https-Adresse auf deiner Website ein, dann `Formular erstellen`. Kopiere das `HTML für deine Website` (auf Englisch oder Griechisch) in eine Seite deiner Website. Es ist ein einfaches Formular mit Name, E-Mail, Telefon, Firma und Nachricht, ohne Skript, so kannst du es wie den Rest deiner Website gestalten. Behalte das versteckte Feld: Es hält Spam-Roboter fern.
+
+- Eine Nachricht, die jemand sendet, wartet auf dem orOS-Relay, verschlüsselt mit einem Schlüssel, der auf deinem Gerät erzeugt wurde, bis CRM sie abholt. Nur dein CRM kann sie lesen. Eine Nachricht, die nicht innerhalb von 30 Tagen abgeholt wird, wird gelöscht.
+- `Nach neuen Leads suchen` holt sie ab. CRM prüft auch von selbst, wenn du es öffnest, höchstens alle 10 Minuten.
+- Jede Nachricht wird ein neuer Kunde mit dem Status `Lead` und der Quelle `Webformular`, mit der Nachricht in seinem Verlauf. Gehört die E-Mail schon einem Kunden (oder einer seiner Personen), entsteht kein neuer Kunde: Die Nachricht kommt in den Verlauf dieses Kunden, mit neuem Namen, Telefon oder neuer Firma darunter.
+- Das Formular und seine Schlüssel werden mit deinem CRM synchronisiert. Ein Gerät holt die Nachrichten ab; auf einem anderen tippst du auf `Auf diesem Gerät abholen`.
+- `Formular ausschalten` stoppt das Formular auf deiner Website und löscht die Nachrichten, die noch auf dem Relay warten.
+
+## Aus Online-Quellen aktualisieren
+`Online aktualisieren` auf der Seite eines Kunden (oder `Kunden aus Online-Quellen aktualisieren` in den Einstellungen, für alle) sucht nur dort, wohin der Kunde schon zeigt: im Gravatar-Profil seiner eigenen E-Mail, auf der Website, die im Kunden gespeichert ist, in den öffentlichen GitHub-, Bluesky- oder Mastodon-Profilen, auf die diese zeigen, in Wikidata-Einträgen, die ihn nennen, und bei einer Firma in OpenStreetMap nach Name und Adresse oder Telefon. Es schlägt eine Website, ein Telefon, eine E-Mail, eine Adresse und bei einer Person eine Berufsbezeichnung vor. Ein leeres Feld wird ausgefüllt; alles andere kommt als Zeile wie „Instagram: https://…“ in die Notiz, so wird nichts ersetzt, was du eingegeben hast. Jeder Vorschlag sagt, woher er kommt und wie sicher er ist; nichts ändert sich, bis du auf `Auswahl übernehmen` tippst, und `Rückgängig` stellt die Kunden wieder her. Wenn du einen einzelnen Eintrag prüfst, bietet das Fenster auch DuckDuckGo-Suchlinks (Web, LinkedIn, Facebook, Instagram, X, TikTok), die du selbst öffnest. Sucht der Assistent mit deinem eigenen SearXNG-Server, werden dort auch ein paar Einträge auf einmal nach Name gesucht; diese Ergebnisse sind anfangs immer nicht angehakt. Facebook, Instagram, LinkedIn, X und TikTok werden nie gelesen, und niemand wird nur nach Name gesucht.
+
+## Tipps
+- Erinnerungen an Wiedervorlagen erreichen den Posteingang der [Benachrichtigungen](help:t/notifications), auch wenn CRM geschlossen ist: am Tag oder zur eingestellten Uhrzeit.
+- Ändere `„Nicht kontaktiert“ nach` in den `Einstellungen`, um festzulegen, wann ein Kunde als vergessen gilt.
+- Wenn du einen Kunden löschst, werden auch seine Deals, sein Verlauf und seine Wiedervorlagen gelöscht; `Rückgängig` holt alles zurück.
+- CRM ist erst in der Menüsuche, wenn du es unter `Suchen in` einschaltest, weil es Daten anderer Menschen enthält.
+
+## Grenzen
+- Erinnerungen brauchen orOS offen in einem Tab oder Fenster; eine Erinnerung, die verpasst wurde, während es geschlossen war, kommt beim nächsten Öffnen.
+- Bis zu 2.000 Kunden und 20.000 Verlaufseinträge, damit Platz für die anderen Apps bleibt.
+- Webformular: ein Formular pro CRM. Eine Nachricht hat höchstens 2.000 Zeichen, jedes andere Feld 200. Das Relay hält höchstens 500 wartende Nachrichten und nimmt höchstens 100 am Tag pro Formular an; darüber hinaus zeigt es die Dankeseite, speichert aber nichts. Nachrichten werden nur abgeholt, während CRM auf dem abholenden Gerät offen ist.
+- Ein Gerät mit einer älteren CRM-Version entfernt das Webformular aus seiner eigenen Kopie, bis es aktualisiert ist; deine anderen Geräte behalten es.

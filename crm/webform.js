@@ -122,8 +122,8 @@
   var A = null;                                   // the app's helpers (init)
   var S = {
     en: {
-      btn: "Web form", title: "Web form",
-      intro: "A contact form for your own website. When someone fills it in, the message waits, encrypted, at the orOS relay until CRM picks it up. Then it becomes a lead here, or a new history entry of the customer who already has that e-mail.",
+      "wf.btn": "Web form", "wf.title": "Web form",
+      "wf.intro": "A contact form for your own website. When someone fills it in, the message waits, encrypted, at the orOS relay until CRM picks it up. Then it becomes a lead here, or a new history entry of the customer who already has that e-mail.",
       privacy: "Only your CRM can read the messages: the relay keeps them encrypted with a key made on this device. A message that isn't picked up within 30 days is deleted.",
       back: "Thank-you page (optional)",
       backHint: "An https address on your site to show after sending. Without it, visitors see a short thank-you page.",
@@ -133,12 +133,12 @@
       codeHint: "Paste it into a page of your website and style it as you like. It has no script. Keep the hidden field: it stops spam robots.",
       copy: "Copy", copied: "Copied", save: "Save", saved: "Saved",
       check: "Check for new leads", last: "Last checked: {t}", never: "Not checked yet on this device.",
-      here: "This device collects the messages. CRM also checks when you open it, at most every 10 minutes.",
+      "wf.here": "This device collects the messages. CRM also checks when you open it, at most every 10 minutes.",
       elsewhere: "Another device collects the messages.", collectHere: "Collect on this device",
       off: "Turn the form off",
       offAsk: "Turn the web form off? The form on your site stops working and messages still waiting at the relay are deleted.",
       offDone: "Web form turned off",
-      none: "No new leads.", got: "New leads: {a} · added to customers you already have: {m}",
+      "wf.none": "No new leads.", got: "New leads: {a} · added to customers you already have: {m}",
       over: "{n} didn't fit (CRM's limits).",
       src: "Web form", noMsg: "Sent the web form without a message.",
       "w.name": "Name", "w.phone": "Phone", "w.company": "Company",
@@ -148,12 +148,12 @@
       "err.gone": "The relay no longer knows this form. Turn it off and create a new one.",
       "err.full": "The browser storage is full: nothing was saved. The messages stay at the relay.",
       "err.crypto": "This browser can't make the encryption keys.",
-      "err.other": "Something went wrong. Try again later.",
+      "wf.err.other": "Something went wrong. Try again later.",
       close: "Close"
     },
     el: {
-      btn: "Φόρμα ιστότοπου", title: "Φόρμα ιστότοπου",
-      intro: "Μια φόρμα επικοινωνίας για τον δικό σου ιστότοπο. Όταν κάποιος τη συμπληρώσει, το μήνυμα περιμένει κρυπτογραφημένο στο relay του orOS μέχρι να το παραλάβει το CRM. Τότε γίνεται νέος υποψήφιος πελάτης εδώ ή νέα εγγραφή στο ιστορικό του πελάτη που έχει ήδη αυτό το email.",
+      "wf.btn": "Φόρμα ιστότοπου", "wf.title": "Φόρμα ιστότοπου",
+      "wf.intro": "Μια φόρμα επικοινωνίας για τον δικό σου ιστότοπο. Όταν κάποιος τη συμπληρώσει, το μήνυμα περιμένει κρυπτογραφημένο στο relay του orOS μέχρι να το παραλάβει το CRM. Τότε γίνεται νέος υποψήφιος πελάτης εδώ ή νέα εγγραφή στο ιστορικό του πελάτη που έχει ήδη αυτό το email.",
       privacy: "Μόνο το δικό σου CRM μπορεί να διαβάσει τα μηνύματα: το relay τα κρατά κρυπτογραφημένα με κλειδί που φτιάχτηκε σε αυτή τη συσκευή. Ένα μήνυμα που δεν παραλαμβάνεται μέσα σε 30 μέρες διαγράφεται.",
       back: "Σελίδα ευχαριστίας (προαιρετικά)",
       backHint: "Μια διεύθυνση https στον ιστότοπό σου, που εμφανίζεται μετά την αποστολή. Χωρίς αυτήν, ο επισκέπτης βλέπει μια σύντομη σελίδα ευχαριστίας.",
@@ -163,12 +163,12 @@
       codeHint: "Επικόλλησέ το σε μια σελίδα του ιστότοπού σου και μορφοποίησέ το όπως θέλεις. Δεν έχει script. Κράτησε το κρυφό πεδίο: σταματά τα ρομπότ spam.",
       copy: "Αντιγραφή", copied: "Αντιγράφηκε", save: "Αποθήκευση", saved: "Αποθηκεύτηκε",
       check: "Έλεγχος για νέους υποψήφιους", last: "Τελευταίος έλεγχος: {t}", never: "Δεν έχει γίνει έλεγχος σε αυτή τη συσκευή.",
-      here: "Αυτή η συσκευή παραλαμβάνει τα μηνύματα. Το CRM ελέγχει και όταν το ανοίγεις, το πολύ κάθε 10 λεπτά.",
+      "wf.here": "Αυτή η συσκευή παραλαμβάνει τα μηνύματα. Το CRM ελέγχει και όταν το ανοίγεις, το πολύ κάθε 10 λεπτά.",
       elsewhere: "Τα μηνύματα τα παραλαμβάνει άλλη συσκευή.", collectHere: "Παραλαβή σε αυτή τη συσκευή",
       off: "Απενεργοποίηση φόρμας",
       offAsk: "Απενεργοποίηση της φόρμας; Η φόρμα στον ιστότοπό σου σταματά να λειτουργεί και όσα μηνύματα περιμένουν στο relay διαγράφονται.",
       offDone: "Η φόρμα απενεργοποιήθηκε",
-      none: "Κανένας νέος υποψήφιος.", got: "Νέοι υποψήφιοι: {a} · σε πελάτες που ήδη έχεις: {m}",
+      "wf.none": "Κανένας νέος υποψήφιος.", got: "Νέοι υποψήφιοι: {a} · σε πελάτες που ήδη έχεις: {m}",
       over: "{n} δεν χώρεσαν (όρια του CRM).",
       src: "Φόρμα ιστότοπου", noMsg: "Έστειλε τη φόρμα χωρίς μήνυμα.",
       "w.name": "Όνομα", "w.phone": "Τηλέφωνο", "w.company": "Εταιρεία",
@@ -178,12 +178,12 @@
       "err.gone": "Το relay δεν γνωρίζει πια αυτή τη φόρμα. Απενεργοποίησέ τη και φτιάξε νέα.",
       "err.full": "Ο χώρος του browser γέμισε: δεν αποθηκεύτηκε τίποτα. Τα μηνύματα μένουν στο relay.",
       "err.crypto": "Αυτός ο browser δεν μπορεί να φτιάξει τα κλειδιά κρυπτογράφησης.",
-      "err.other": "Κάτι πήγε στραβά. Δοκίμασε αργότερα.",
+      "wf.err.other": "Κάτι πήγε στραβά. Δοκίμασε αργότερα.",
       close: "Κλείσιμο"
     }
   };
   function t(k, params) {
-    var tab = S[A && A.lang === "el" ? "el" : "en"];
+    var tab = (A && S[A.lang]) || S.en;
     var s = tab[k] !== undefined ? tab[k] : (S.en[k] !== undefined ? S.en[k] : k);
     return s.replace(/\{(\w+)\}/g, function (m, n) { return params && params[n] !== undefined ? String(params[n]) : m; });
   }
@@ -191,7 +191,7 @@
     var c = e && e.code;
     if (c === "timeout" || c === "relay") c = "network";
     if (c === "auth") c = "gone";
-    return t(["offline", "network", "nostore", "gone", "full", "crypto"].indexOf(c) >= 0 ? "err." + c : "err.other");
+    return t(["offline", "network", "nostore", "gone", "full", "crypto"].indexOf(c) >= 0 ? "err." + c : "wf.err.other");
   }
 
   // ---------- device state ----------
@@ -338,7 +338,7 @@
     return busy;
   }
   function tallyText(r) {
-    if (!r || !(r.added || r.merged)) return t("none") + (r && r.over ? " " + t("over", { n: r.over }) : "");
+    if (!r || !(r.added || r.merged)) return t("wf.none") + (r && r.over ? " " + t("over", { n: r.over }) : "");
     return t("got", { a: r.added, m: r.merged }) + (r.over ? " " + t("over", { n: r.over }) : "");
   }
   // On opening CRM (and coming back to it): quietly, at most every 10 minutes.
@@ -358,7 +358,7 @@
   function open() {
     var dlg = A.makeDialog("crm-webform", true);
     var body = el("div");
-    dlg.appendChild(el("h2", "dlg-title", t("title")));
+    dlg.appendChild(el("h2", "dlg-title", t("wf.title")));
     dlg.appendChild(body);
     var acts = el("div", "dlg-actions");
     acts.appendChild(A.button(t("close"), "", function () { dlg.close(); }));
@@ -381,7 +381,7 @@
     function draw() {
       body.innerHTML = "";
       var w = cur(), st = devState();
-      body.appendChild(el("p", "dlg-sub", t("intro")));
+      body.appendChild(el("p", "dlg-sub", t("wf.intro")));
       body.appendChild(el("p", "hint", t("privacy")));
       if (!w) {
         var back0 = backField("");
@@ -430,7 +430,7 @@
       body.appendChild(msg1);
       // collecting
       var mine = !w.dev || w.dev === st.dev;
-      body.appendChild(el("p", "dlg-sub", mine ? t("here") : t("elsewhere")));
+      body.appendChild(el("p", "dlg-sub", mine ? t("wf.here") : t("elsewhere")));
       var msg2 = msgLine();
       var row3 = el("div", "dlg-actions");
       if (mine) {
@@ -463,9 +463,13 @@
     A.showDialog(dlg);
   }
 
-  function init(helpers) { A = helpers; }
+  function init(helpers) {
+    A = helpers;
+    // a pack language (../i18n.js): S[lang] = English + the "crm" pack
+    if (A && A.lang && root.orosI18n) root.orosI18n.table(S, "crm", A.lang);
+  }
   root.OrosCrmWebForm = Object.assign(API, {
-    init: init, open: open, auto: auto, check: check, label: function () { return t("btn"); },
+    init: init, open: open, auto: auto, check: check, label: function () { return t("wf.btn"); },
     relayUrl: relayUrl, openSealed: openSealed
   });
 })(typeof window !== "undefined" ? window : (typeof globalThis !== "undefined" ? globalThis : this));

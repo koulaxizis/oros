@@ -148,11 +148,24 @@
     var c = Number(whole) * 100 + (frac ? Number(frac.length === 1 ? frac + "0" : frac) : 0);
     return isInt(c) && c <= VAL_MAX ? c : null;
   }
+  // orosI18n (../i18n.js, browser only): the locale of any language code,
+  // and the "crm" pack over a { en, el } table for a pack language.
+  function i18n() { return root && root.orosI18n ? root.orosI18n : null; }
+  function localeOf(lang) {
+    var I = i18n();
+    return I ? I.locale(lang) : (lang === "el" ? "el-GR" : "en-GB");
+  }
+  function words(tbl, lang) {
+    var I = i18n();
+    if (I && lang && !tbl[lang]) I.table(tbl, "crm", lang);
+    return tbl[lang] || tbl.en;
+  }
+
   function moneyStr(cents, cur, lang) {
     var v = (isInt(cents) ? cents : 0) / 100;
     var c = CURRENCIES.indexOf(cur) >= 0 ? cur : "EUR";
     try {
-      return new Intl.NumberFormat(lang === "el" ? "el-GR" : "en-GB",
+      return new Intl.NumberFormat(localeOf(lang),
         { style: "currency", currency: c, maximumFractionDigits: v % 1 ? 2 : 0 }).format(v);
     } catch (e) { return v.toFixed(2) + " " + c; }
   }
@@ -617,16 +630,37 @@
     if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
     return /[";\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
   }
+  // The export's columns, in order; "csv.<col>" is the header text.
+  var CSV_COLS = ["name", "alias", "kind", "st", "afm", "doy", "job", "addr", "country",
+                  "phone", "email", "web", "src", "tags", "people", "deals", "open", "last", "note"];
   var CSV_HEAD = {
-    en: ["Name", "Trade name", "Type", "Status", "VAT ID", "Tax office", "Profession", "Address", "Country",
-         "Phone", "Email", "Website", "Source", "Tags", "People", "Open deals", "Open value", "Last contact", "Notes"],
-    el: ["Επωνυμία", "Διακριτικός τίτλος", "Είδος", "Κατάσταση", "ΑΦΜ", "ΔΟΥ", "Επάγγελμα", "Διεύθυνση", "Χώρα",
-         "Τηλέφωνο", "Email", "Ιστότοπος", "Πηγή", "Ετικέτες", "Άνθρωποι", "Ανοιχτές ευκαιρίες", "Ανοιχτή αξία", "Τελευταία επαφή", "Σημειώσεις"]
+    en: { "csv.name": "Name", "csv.alias": "Trade name", "csv.kind": "Type", "csv.st": "Status", "csv.afm": "VAT ID",
+          "csv.doy": "Tax office", "csv.job": "Profession", "csv.addr": "Address", "csv.country": "Country",
+          "csv.phone": "Phone", "csv.email": "Email", "csv.web": "Website", "csv.src": "Source", "csv.tags": "Tags",
+          "csv.people": "People", "csv.deals": "Open deals", "csv.open": "Open value", "csv.last": "Last contact", "csv.note": "Notes" },
+    el: { "csv.name": "Επωνυμία", "csv.alias": "Διακριτικός τίτλος", "csv.kind": "Είδος", "csv.st": "Κατάσταση", "csv.afm": "ΑΦΜ",
+          "csv.doy": "ΔΟΥ", "csv.job": "Επάγγελμα", "csv.addr": "Διεύθυνση", "csv.country": "Χώρα",
+          "csv.phone": "Τηλέφωνο", "csv.email": "Email", "csv.web": "Ιστότοπος", "csv.src": "Πηγή", "csv.tags": "Ετικέτες",
+          "csv.people": "Άνθρωποι", "csv.deals": "Ανοιχτές ευκαιρίες", "csv.open": "Ανοιχτή αξία", "csv.last": "Τελευταία επαφή", "csv.note": "Σημειώσεις" }
   };
   var CSV_WORDS = {
-    en: { co: "Company", person: "Person", lead: "Lead", active: "Active", past: "Past" },
-    el: { co: "Εταιρεία", person: "Ιδιώτης", lead: "Υποψήφιος", active: "Ενεργός", past: "Παλιός" }
+    en: { "csv.co": "Company", "csv.person": "Person", "csv.lead": "Lead", "csv.active": "Active", "csv.past": "Past" },
+    el: { "csv.co": "Εταιρεία", "csv.person": "Ιδιώτης", "csv.lead": "Υποψήφιος", "csv.active": "Ενεργός", "csv.past": "Παλιός" }
   };
+  // The export's own headers and words in every language loaded here
+  // (English, Greek, a pack language): an exported file reads back.
+  function csvOwn() {
+    var I = i18n();
+    if (I) { words(CSV_HEAD, I.lang()); words(CSV_WORDS, I.lang()); }
+    var head = {}, w = { person: {}, lead: {}, past: {} };
+    Object.keys(CSV_HEAD).forEach(function (l) {
+      CSV_COLS.forEach(function (c) { var k = csvKey(CSV_HEAD[l]["csv." + c]); if (k && !head[k]) head[k] = c; });
+    });
+    Object.keys(CSV_WORDS).forEach(function (l) {
+      Object.keys(w).forEach(function (x) { w[x][csvKey(CSV_WORDS[l]["csv." + x])] = 1; });
+    });
+    return { head: head, w: w };
+  }
   // Reading a customer file: this app's own export (EN / EL), and the
   // usual words of Excel lists, HubSpot (companies and contacts) and
   // Greek accounting programs. Headers are matched folded, without
@@ -685,9 +719,11 @@
   function csvKey(h) {
     return fold(h).replace(/\([^)]*\)/g, " ").replace(/[.:*]/g, "").replace(/\s+/g, " ").trim();
   }
-  function csvStatus(v) {
+  function csvStatus(v, own) {
     var f = csvKey(v);
     if (!f) return "";
+    if (own && own.w.lead[f]) return "lead";
+    if (own && own.w.past[f]) return "past";
     if (/^(lead|subscriber|marketing ?qualified ?lead|sales ?qualified ?lead|opportunity|prospect|υποψηφιοσ|υποψηφια)$/.test(f)) return "lead";
     if (/^(past|former|inactive|lost|other|παλιοσ|παλια|ανενεργοσ)$/.test(f)) return "past";
     return "active";
@@ -695,11 +731,11 @@
   function csvImport(data, text, nowMs) {
     var rows = parseCsv(text).rows;
     if (!rows.length) return null;
-    var col = {};
+    var col = {}, own = csvOwn();
     rows[0].forEach(function (h, i) {
       var k = csvKey(h);
       Object.keys(CSV_IN).forEach(function (f) {
-        if (col[f] === undefined && CSV_IN[f].indexOf(k) >= 0) col[f] = i;
+        if (col[f] === undefined && (CSV_IN[f].indexOf(k) >= 0 || own.head[k] === f)) col[f] = i;
       });
     });
     if (col.name === undefined && col.first === undefined && col.last === undefined) return null;
@@ -719,8 +755,8 @@
       if ((afm && seenAfm[afm]) || seenName[fold(name)]) { out.dup++; return; }
       if (out.add.length >= room) { out.over++; return; }
       var kv = csvKey(cell(r, "kind"));
-      var kind = /^(person|individual|ιδιωτησ|φυσικο προσωπο)$/.test(kv) || (!cell(r, "name") && person) ? "person" : "co";
-      var c = { id: newId(nowMs + n++), m: nowMs, ct: nowMs, name: name, kind: kind, st: csvStatus(cell(r, "st")) || "active" };
+      var kind = /^(person|individual|ιδιωτησ|φυσικο προσωπο)$/.test(kv) || own.w.person[kv] || (!cell(r, "name") && person) ? "person" : "co";
+      var c = { id: newId(nowMs + n++), m: nowMs, ct: nowMs, name: name, kind: kind, st: csvStatus(cell(r, "st"), own) || "active" };
       if (afm) c.afm = afm;
       ["alias", "doy", "job", "country", "phone", "email", "web", "src"].forEach(function (f) { var v = cell(r, f); if (v) c[f] = v; });
       if (col.note !== undefined) c.note = cleanText(r[col.note], 2000, true);
@@ -761,16 +797,16 @@
   }
 
   function csvRows(data, lang) {
-    var L = lang === "el" ? "el" : "en", W = CSV_WORDS[L];
+    var W = words(CSV_WORDS, lang), H = words(CSV_HEAD, lang);
     var tagName = {};
     data.tags.forEach(function (t) { tagName[t.id] = t.name; });
     var last = lastContactMap(data);
-    var rows = [CSV_HEAD[L]];
+    var rows = [CSV_COLS.map(function (c) { return H["csv." + c]; })];
     data.cust.slice().sort(function (a, b) { return a.name.localeCompare(b.name) || cmpStr(a.id, b.id); })
       .forEach(function (c) {
         var od = openDeals(data, c.id), ov = 0;
         od.forEach(function (d) { ov += d.val; });
-        rows.push([c.name, c.alias || "", W[c.kind], W[c.st], c.afm || "", c.doy || "", c.job || "",
+        rows.push([c.name, c.alias || "", W["csv." + c.kind], W["csv." + c.st], c.afm || "", c.doy || "", c.job || "",
           c.addr || "", c.country || "", c.phone || "", c.email || "", c.web || "", c.src || "",
           (c.tags || []).map(function (id) { return tagName[id]; }).filter(Boolean).join(", "),
           (c.people || []).map(function (p) { return p.n + (p.role ? " (" + p.role + ")" : ""); }).join(", "),
@@ -809,15 +845,15 @@
     return { fresh: fresh, next: next };
   }
   var REM_WORDS = {
-    en: { title: "Follow-up: {name}", unknown: "Unknown customer", today: "today", yday: "yesterday", late: "{n} days late" },
-    el: { title: "Follow-up: {name}", unknown: "Άγνωστος πελάτης", today: "σήμερα", yday: "χθες", late: "καθυστερεί {n} μέρες" }
+    en: { "rem.title": "Follow-up: {name}", "rem.unknown": "Unknown customer", "rem.today": "today", "rem.yday": "yesterday", "rem.late": "{n} days late" },
+    el: { "rem.title": "Follow-up: {name}", "rem.unknown": "Άγνωστος πελάτης", "rem.today": "σήμερα", "rem.yday": "χθες", "rem.late": "καθυστερεί {n} μέρες" }
   };
   function reminderText(data, f, today, lang) {
-    var w = REM_WORDS[lang === "el" ? "el" : "en"];
+    var w = words(REM_WORDS, lang);
     var c = byId(data.cust, f.cust);
     var n = dayDiff(f.d, today);
-    var when = n <= 0 ? w.today : (n === 1 ? w.yday : w.late.replace("{n}", n));
-    return { title: w.title.replace("{name}", c ? c.name : w.unknown),
+    var when = n <= 0 ? w["rem.today"] : (n === 1 ? w["rem.yday"] : w["rem.late"].replace("{n}", n));
+    return { title: w["rem.title"].replace("{name}", c ? c.name : w["rem.unknown"]),
              body: f.text + " · " + when + (f.t ? " " + f.t : "") };
   }
 

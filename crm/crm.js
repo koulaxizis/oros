@@ -51,7 +51,9 @@
   var LIST_CAP = 200;
 
   // ---------- 1. Constants, i18n, helpers ----------
+  // orosI18n (../i18n.js): the full language code, a pack language included.
   function appLang() {
+    if (window.orosI18n) return window.orosI18n.lang();
     try {
       var l = localStorage.getItem("oros-lang") ||
               (window.parent && window.parent.orosLang) || "en";
@@ -59,7 +61,7 @@
     } catch (e) { return "en"; }
   }
   var LANG = appLang();
-  var LOCALE = LANG === "el" ? "el-GR" : "en-GB";
+  var LOCALE = window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB");
 
   var STRINGS = {
     en: {
@@ -299,9 +301,11 @@
       "toast.already": "Αυτό το follow-up έχει ήδη γίνει."
     }
   };
+  // a pack language: STRINGS[LANG] = English + the "crm" pack
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "crm", LANG);
 
   function t(key, vars) {
-    var s = STRINGS[LANG][key];
+    var s = (STRINGS[LANG] || STRINGS.en)[key];
     if (s === undefined) s = STRINGS.en[key];
     if (s === undefined) return key;
     if (vars) Object.keys(vars).forEach(function (k) { s = s.split("{" + k + "}").join(String(vars[k])); });
@@ -2383,7 +2387,7 @@
   // removeRow does (a customer's tomb also hides its deals etc.).
   var RP = window.OrosRecordPkg || null, CPK = window.OrosCrmPackage || null;
   var recFile = RP && CPK && window.OrosBundle ? RP.ui(CPK.DESC, {
-    lang: function () { return LANG; },
+    lang: function () { return LANG === "el" ? "el" : "en"; },
     get: function () { return C.norm(data); },
     title: function () { return t("app"); },
     set: function (next) {
@@ -2531,7 +2535,7 @@
       .map(function (c) { return { id: c.id, name: c.name, rec: enrichRec(c) }; });
     if (!items.length) { showToast(t("en.empty")); return; }
     var go = function () {
-      window.OrosEnrichUI.open({ lang: LANG, items: items, apply: enrichApply, kinds: ["link", "phone", "email", "address", "job"] });
+      window.OrosEnrichUI.open({ lang: LANG === "el" ? "el" : "en", items: items, apply: enrichApply, kinds: ["link", "phone", "email", "address", "job"] });
     };
     if (window.OrosEnrichUI) { go(); return; }
     var s = document.createElement("script");
