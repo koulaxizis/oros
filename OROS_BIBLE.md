@@ -7571,3 +7571,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Sync design: small slice for decks; notes and answers as one-writer files on the orOS disk (Vault Drive); schedules replayed through FSRS-6, never synced (Part III row).
 - Files: `flashcards/{index.html,app.css,app.js,core.js,fsrs.js,search.js,help.*.txt}`, apps.json, ICONS, translations (`category.learning`, `app.flashcards`), sw.js precache, credits (CREDITS.md, CREDIT_GROUPS, Part VIII), What's new, Bible.
   - Tests: new `tests/flashcards.test.js` (deck/note/answer merge fuzz, 3-device offline simulation, cards, queue, day start, search) and `tests/flashcards-fsrs.test.js` (840 answers against ts-fsrs 5.4.2 vectors); full suite green.
+
+### 2026-10-17 — Relay moved to the main Cloudflare account (#495) — 2.95.01
+- The relay now runs at `oros-mail-relay.koulaxizis.workers.dev` (Chris's main Cloudflare account); every client file uses the new address (Mail, Newsletter, sharing incl. the share CSP `connect-src`, Web Push, Maps transit, Certificates, CRM web form, Atelier, Studio, sync, links). A saved old default address updates itself on start (shell.js migration; Mail resets only the exact old default). Mail thread approved.
+- Files: 16 client files, `shell.js`, `webpush.js`, `share/index.html`, tests.
+  - Tests: full suite green; Chromium migration check. Not tested: live Mail, sharing and Web Push against the new relay (relay host is blocked from cloud containers).
