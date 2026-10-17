@@ -1,0 +1,74 @@
+# Zyklus
+Zyklus ist ein schnelles, privates Protokoll deiner Perioden, Symptome und Schmerzlinderung. Es zeigt deine Perioden auf einer Zeitachse, schätzt, wann die nächste fällig ist, und erstellt aus deinen Einträgen eine einfache Statistik.
+
+## Erste Schritte
+Tippe oder klicke beim ersten Mal auf `Ersten Eintrag machen`. Damit öffnet sich der heutige Tag im Tageseditor. Tippe auf `Periode beginnen`, wenn deine Periode heute begonnen hat, wähle passende Symptome und drücke dann `Tag speichern`.
+
+Mit drei Schaltflächen oben wechselst du zwischen `Zeitachse`, `Tage` und `Statistik`.
+
+## Einen Tag erfassen
+Öffne einen Tag mit `+ Heute erfassen`, wähle im Datumsfeld daneben ein beliebiges Datum oder tippe auf der Zeitachse auf einen Periodenbalken oder einen Tagespunkt. Der Editor hat drei Teile:
+- `Periode`: `Periode beginnen` startet an diesem Tag eine Periode. Innerhalb einer Periode wird `Blutung an diesem Tag` (`Leicht`, `Normal`, `Stark`) sofort für diesen Tag gespeichert; ein Tag, den du nicht eingestellt hast, zeigt die Blutungsstärke der Periode (Perioden, die vor der Blutung pro Tag erfasst wurden, behalten ihre bisherige Stärke). Du kannst auch an einem früheren Tag einer laufenden Periode auf `Periode hier beenden` tippen, an ihrem letzten Tag auf `Um einen Tag verlängern` oder auf `Diese Periode entfernen`. Eine Periode, die sich mit einer anderen überschneiden würde, wird nicht gespeichert.
+- `Symptome`: Tippe auf die passenden Chips. Gib in `Neues Symptom…` etwas ein und drücke `Hinzufügen…`, um eigene anzulegen.
+- `Schmerzlinderung`: Ein Tipp auf einen Chip hält fest, dass du es jetzt eingenommen hast, mit Uhrzeit, unter `Heute eingenommen`. Eigene fügst du mit `Neues Mittel…` hinzu.
+
+Schreib eine Notiz unter `Notizen (optional)` und drücke `Tag speichern`.
+
+## Temperatur und Schleim (optional)
+Für die symptothermale Methode drückst du in `Statistik` auf `Temperatur und Schleim einschalten`. Der Tageseditor hat dann `Temperatur und Schleim`:
+- `Basaltemperatur (°C)`: Miss sie direkt nach dem Aufwachen, bevor du aufstehst, jeden Tag etwa zur gleichen Zeit. Gib sie mit Komma oder Punkt ein (`36,45`); ein Wert in °F wird umgerechnet. Gespeichert wird, wenn du das Feld verlässt.
+- `Zervixschleim`: `Trocken`, `Feucht`, `Cremig` oder `Eiweißartig`, die beste Qualität, die du an dem Tag bemerkt hast. Tippe noch einmal darauf, um die Auswahl zu löschen.
+
+`Statistik` zeigt dann `Fruchtbares Fenster (Schätzung)` für den aktuellen Zyklus, mit einem Diagramm der Temperaturen dieses Zyklus:
+- Der Temperaturanstieg zählt, wenn ein Messwert höher ist als jeder der 6 davor (die Hilfslinie ist der höchste dieser 6) und an aufeinanderfolgenden Tagen 3 höhere Messwerte folgen, der dritte mindestens 0,20 °C über der Hilfslinie (sonst braucht es einen vierten höheren).
+- Der Schleimhöhepunkt ist der letzte Tag mit der besten Schleimqualität, bevor sie schlechter wird; er ist 3 Tage später bestätigt.
+- Das Fenster endet mit dem späteren der beiden. Bis dahin heißt es, dass du fruchtbar sein könntest. Es beginnt an Zyklustag 6 oder früher am ersten Tag mit Schleim; nach 12 Zyklen mit Temperaturanstieg an deinem frühesten Anstieg minus 8 Tage.
+
+Das ist eine Schätzung aus deinen Einträgen, keine Verhütungsmethode. Verlass dich nicht darauf, um eine Schwangerschaft zu vermeiden oder zu planen; lerne die Methode dafür bei einer qualifizierten Beraterin oder frag deine Ärztin oder deinen Arzt. `Ausschalten (deine Einträge bleiben)` blendet sie wieder aus.
+
+### Chips umbenennen oder löschen
+Drücke lange auf einen Symptom- oder Mittel-Chip oder klicke mit der rechten Maustaste darauf, oder tippe auf `Verwalten…` und dann auf einen Chip, um ihn mit `Umbenennen` oder `Löschen` zu bearbeiten. Ein Löschen lässt sich ein paar Sekunden lang rückgängig machen.
+
+## Zeitachse
+Perioden erscheinen als Balken, gefärbt nach Blutungsstärke. Ein gestrichelter Balken ist die vorhergesagte nächste Periode. Mit ‹ und › gehst du `Früher` oder `Später`, mit − und + zeigst du 7 bis 90 Tage an, und mit `Heute` springst du zurück. Die Glocken-Schaltfläche darunter schaltet `Erinnerungen an` oder `Erinnerungen aus`.
+
+Die Vorhersage beruht auf deinen eigenen Durchschnittswerten. Sie ist eine Schätzung, kein medizinischer Rat und keine Verhütungsmethode.
+
+## Tage und Statistik
+`Tage` listet jeden erfassten Tag auf, den neuesten zuerst, mit `Tage durchsuchen…`, `Tag bearbeiten` und `Tag löschen` (mit `Rückgängig`).
+
+`Statistik` zeigt deinen `Ø Zyklus`, deine `Ø Periode` und `Erfasste Perioden` (Zyklus-Durchschnitte brauchen mindestens zwei Perioden), die erwartete nächste Periode, deine häufigsten Symptome, eingenommene Schmerzmittel und einen 90-Tage-Streifen. Wähle `6 Monate` oder `Alle`. Wenn du auch [Stimmung](app:mood) nutzt, siehst du `Stimmung an Periodentagen`, einen Vergleich, wie du dich an Periodentagen und an anderen Tagen gefühlt hast.
+
+`Arztbericht` speichert ein PDF des gewählten Zeitraums: Überblick, Periodenprotokoll, Zyklusschwankung, Schmerzlinderung und Notizen.
+
+## Synchronisierung und Sicherung
+Perioden, Tageseinträge (mit Blutung, Temperatur und Schleim), deine Symptome und Mittel sowie die Einstellungen für Erinnerungen und Temperatur werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. Zyklus stellt sonst keine Netzwerkverbindungen her. Deine Perioden erscheinen auch im [Kalender](app:calendar) unter dem Label `Zyklus`; ein Tipp darauf öffnet sie hier.
+
+Außer dem PDF-Bericht und der orOS-Datei unten gibt es keinen Export; die orOS-[Sicherung](help:t/backup) behält ebenfalls eine Kopie.
+
+## Aus einer anderen App importieren
+Tippe in `Statistik` auf `Importieren` und wähle eine Datei, die du aus einer anderen App exportiert hast. Zyklus zeigt, was es gefunden hat (Perioden, Daten, Tage mit Blutung, Temperatur, Schleim und Notizen und wie viele Perioden du schon hast), bevor etwas gespeichert wird. Die Datei wird nur auf diesem Gerät gelesen und nie hochgeladen.
+- drip.: Öffne in drip. Settings › Data › Export data. Die CSV-Datei bringt Blutung (als Stärke und Perioden), Temperatur, Zervixschleim und Notizen mit; ausgeschlossene Werte und Schmierblutungen werden übersprungen.
+- Clue: Öffne in Clue Settings › Export data und wähle die `.cluedata`-Datei (oder die ZIP-Datei, in der sie kommt). Periodentage werden zu Blutung und Perioden; Schmierblutungen und Tags werden übersprungen.
+- Flo: Fordere bei Flo eine Kopie deiner Daten an (Settings › Privacy settings › Request data) und wähle die JSON-Datei (oder die ZIP-Datei), die Flo schickt. Deine Perioden und Periodentage werden gelesen; Vorhersagen werden übersprungen.
+- Eine CSV-Datei: eine Zeile pro Periode, mit den Spalten `start` und optional `end`, oder eine Zeile pro Blutungstag, mit einer Spalte `date` und optional `flow` (light, medium, heavy), `temperature`, `mucus` und `note`. Blutungstage, die höchstens zwei Tage auseinanderliegen, bilden eine Periode.
+
+Was du schon erfasst hast, bleibt, wie es ist: Eine Periode, die sich mit einer deiner überschneidet, wird übersprungen, und deine eigenen Einträge für einen Tag haben Vorrang. Eine Periode ohne Enddatum bekommt deine durchschnittliche Dauer. Importierst du dieselbe Datei noch einmal, kommt nichts hinzu. `Rückgängig` in der Meldung nach dem Import nimmt alles zurück.
+
+## Eine orOS-Datei speichern und öffnen
+In `Statistik` speichert `orOS-Datei (.oroscycle)` jede Periode, jeden erfassten Tag, jedes Symptom und Mittel als eine `.oroscycle`-Datei, zum Beispiel, um sie ohne Synchronisierung auf ein anderes Gerät zu bringen oder eine Kopie aufzubewahren. Deine Einstellungen für Erinnerungen und Temperatur bleiben auf diesem Gerät. Die Datei ist ein einfaches ZIP: Entpackt enthält sie die Daten als `content.json` sowie `preview/cycle.md`, `preview/periods.csv` und `preview/days.csv` für andere Programme. Sie ist nicht verschlüsselt, also bewahre sie sicher auf.
+
+`orOS-Datei öffnen…` (oder `Entpackter orOS-Ordner…`, oder „Öffnen mit“ orOS am Computer) zeigt, wie viele Einträge neu und wie viele schon hier sind; dann fügt `Hinzufügen` nur die neuen hinzu, mit ihren eigenen IDs: Dieselbe Datei noch einmal zu öffnen, fügt nichts hinzu. Ein Tag, den du hier schon erfasst hast, bleibt, wie er ist, und alles, was du hier gelöscht hast, bleibt gelöscht; eine Datei löscht nie etwas. Ein Symptom oder Mittel mit einem Namen, den du schon hast, nutzt deines. Hake `Mit neueren Versionen aktualisieren` an, damit Einträge, die in der Datei später geändert wurden, deine aktualisieren (ein Tag wird dann Feld für Feld zusammengeführt). `Rückgängig` in der Meldung entfernt, was hinzugefügt wurde.
+
+## Tastenkürzel
+- [[Enter]] in `Neues Symptom…` oder `Neues Mittel…` fügt es hinzu.
+- [[Enter]] speichert eine Umbenennung, [[Esc]] bricht sie ab.
+
+## Tipps
+- Mit eingeschalteten Erinnerungen sagt dir orOS Bescheid, wenn deine Periode in etwa zwei Tagen erwartet wird oder wenn sie überfällig scheint. Siehe [Benachrichtigungen](help:t/notifications).
+- Erfasse jeden Tag einer Periode, damit die Durchschnittswerte genauer werden. Ein nicht erfasster Tag gilt als unbekannt, nie als „keine Periode“.
+
+## Grenzen
+- `Auf Werkseinstellungen zurücksetzen` unten in `Statistik` löscht alle Zyklusdaten auf jedem synchronisierten Gerät. Es fragt zweimal nach und lässt sich nicht rückgängig machen.
+- Das fruchtbare Fenster ist eine Schätzung, die dir hilft, deinen Körper besser zu verstehen, keine Verhütung und kein medizinischer Rat. Krankheit, Alkohol, eine kurze Nacht oder eine andere Aufwachzeit können die Temperatur erhöhen; ein solcher Messwert kann die Schätzung verschieben.
+- Temperaturen werden in °C angegeben (°F wird beim Eingeben umgerechnet). Der Arztbericht enthält noch keine Temperaturen und keinen Schleim.

@@ -34,6 +34,7 @@
 // Caps: file size, rows, days, periods, JSON depth / nodes, note
 // length. Needs OrosImportKit (../importkit.js); ZIP needs AtelierZip.
 // UMD: window.OrosCycleImport in the browser, module.exports in Node.
+// i18n-inline-ok: the Greek (and German) CSV header and flow / mucus words below are parser data, not UI text
 // ============================================================
 (function (root) {
   "use strict";
@@ -115,11 +116,11 @@
   // flow words / numbers → 1|2|3, 0 = explicitly none / spotting,
   // -1 = bleeding of unknown amount, null = nothing said
   var FLOW_WORDS = [
-    [/^(spotting|spot|none|no|false|0|κηλίδες|σταγόνες|καμία|όχι)$/, 0],
-    [/^(very[ _-]?light|light|low|little|1|ελαφριά|ελαφρυά|λίγη|χαμηλή)$/, 1],
-    [/^(medium|normal|moderate|regular|2|μέτρια|κανονική|μεσαία)$/, 2],
-    [/^(heavy|high|very[ _-]?heavy|strong|3|έντονη|πολλή|βαριά|δυνατή)$/, 3],
-    [/^(yes|true|x|bleeding|period|ναι)$/, -1]
+    [/^(spotting|spot|none|no|false|0|κηλίδες|σταγόνες|καμία|όχι|schmierblutung|keine|nein)$/, 0],
+    [/^(very[ _-]?light|light|low|little|1|ελαφριά|ελαφρυά|λίγη|χαμηλή|leicht|schwach)$/, 1],
+    [/^(medium|normal|moderate|regular|2|μέτρια|κανονική|μεσαία|mittel)$/, 2],
+    [/^(heavy|high|very[ _-]?heavy|strong|3|έντονη|πολλή|βαριά|δυνατή|stark)$/, 3],
+    [/^(yes|true|x|bleeding|period|ναι|ja)$/, -1]
   ];
   function flowOf(v) {
     if (v && typeof v === "object") v = v.option !== undefined ? v.option : v.value;
@@ -139,10 +140,10 @@
     var s = K.clean(v, 40).toLowerCase().replace(/[ _-]+/g, " ");
     if (!s) return undefined;
     if (/^\d$/.test(s)) { var n = +s; return n >= 1 && n <= 4 ? n : undefined; }
-    if (/egg|stretch|slippery|clear|ασπράδι|ελαστικ/.test(s)) return 4;
-    if (/cream|sticky|lotion|κρεμώδ|κολλώδ/.test(s)) return 3;
-    if (/moist|wet|watery|υγρ/.test(s)) return 2;
-    if (/dry|none|nothing|ξηρ/.test(s)) return 1;
+    if (/egg|stretch|slippery|clear|ασπράδι|ελαστικ|eiweiß|spinnbar/.test(s)) return 4;
+    if (/cream|sticky|lotion|κρεμώδ|κολλώδ|cremig|klebrig/.test(s)) return 3;
+    if (/moist|wet|watery|υγρ|feucht|nass/.test(s)) return 2;
+    if (/dry|none|nothing|ξηρ|trocken/.test(s)) return 1;
     return undefined;
   }
 
@@ -304,13 +305,13 @@
     return c.done();
   }
 
-  var GEN_START = ["start", "start date", "period start", "period start date", "started", "begin", "from", "first day", "αρχή", "έναρξη", "από"];
-  var GEN_END = ["end", "end date", "period end", "period end date", "ended", "finish", "to", "last day", "τέλος", "λήξη", "έως"];
-  var GEN_DATE = ["date", "day", "bleeding day", "ημερομηνία", "ημέρα"];
-  var GEN_FLOW = ["flow", "bleeding", "intensity", "period", "menstruation", "ροή", "αιμορραγία"];
-  var GEN_BBT = ["bbt", "temperature", "temp", "basal body temperature", "θερμοκρασία"];
-  var GEN_CM = ["mucus", "cervical mucus", "discharge", "fluid", "βλέννα"];
-  var GEN_NOTE = ["note", "notes", "comment", "σημείωση", "σημειώσεις"];
+  var GEN_START = ["start", "start date", "period start", "period start date", "started", "begin", "from", "first day", "αρχή", "έναρξη", "από", "beginn", "anfang", "von"];
+  var GEN_END = ["end", "end date", "period end", "period end date", "ended", "finish", "to", "last day", "τέλος", "λήξη", "έως", "ende", "bis"];
+  var GEN_DATE = ["date", "day", "bleeding day", "ημερομηνία", "ημέρα", "datum", "tag"];
+  var GEN_FLOW = ["flow", "bleeding", "intensity", "period", "menstruation", "ροή", "αιμορραγία", "blutung", "stärke"];
+  var GEN_BBT = ["bbt", "temperature", "temp", "basal body temperature", "θερμοκρασία", "temperatur", "basaltemperatur"];
+  var GEN_CM = ["mucus", "cervical mucus", "discharge", "fluid", "βλέννα", "zervixschleim", "schleim"];
+  var GEN_NOTE = ["note", "notes", "comment", "σημείωση", "σημειώσεις", "notiz", "notizen"];
   function parseGeneric(recs) {
     var c = collector("csv"), head = recs.head, rows = recs.rows;
     var sc = K.col(head, GEN_START);

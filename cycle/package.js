@@ -189,18 +189,39 @@
     var f = /^[=+\-@\t\r]/.test(s);
     return /[",\r\n]/.test(s) || f ? '"' + (f ? "'" : "") + s.replace(/"/g, '""') + '"' : s;
   }
+  // Keys are shared with the "cycle" pack (same key = same English
+  // as cycle.js; "pv." keys are this file's own).
   var WORDS = {
-    en: { title: "Cycle", periods: "Periods", days: "Logged days", ongoing: "ongoing", none: "Nothing logged.",
-          flow: ["", "light", "normal", "heavy"], cm: ["", "dry", "moist", "creamy", "egg white"],
-          sym: "Symptoms", med: "Pain relief", temp: "Temperature", mucus: "Mucus", fl: "Flow",
-          note: "Self-tracked data, informational only — not a medical diagnosis or advice." },
-    el: { title: "Κύκλος", periods: "Περίοδοι", days: "Ημέρες με καταγραφή", ongoing: "σε εξέλιξη", none: "Καμία καταγραφή.",
-          flow: ["", "ελαφριά", "κανονική", "έντονη"], cm: ["", "ξηρή", "υγρή", "κρεμώδης", "ασπράδι αυγού"],
-          sym: "Συμπτώματα", med: "Ανακούφιση πόνου", temp: "Θερμοκρασία", mucus: "Βλέννα", fl: "Ροή",
-          note: "Δεδομένα αυτο-καταγραφής, μόνο ενημερωτικά — όχι ιατρική διάγνωση ή συμβουλή." }
+    en: { "app.title": "Cycle", "pv.periods": "Periods", "days.title": "Logged days", "pv.ongoing": "ongoing",
+          "pv.none": "Nothing logged.", "pv.flow.1": "light", "pv.flow.2": "normal", "pv.flow.3": "heavy",
+          "pv.cm.1": "dry", "pv.cm.2": "moist", "pv.cm.3": "creamy", "pv.cm.4": "egg white",
+          "sym.title": "Symptoms", "med.title": "Pain relief", "pv.temp": "Temperature", "pv.mucus": "Mucus",
+          "per.flow": "Flow", "rep.disc": "Self-tracked data, informational only — not a medical diagnosis or advice." },
+    el: { "app.title": "Κύκλος", "pv.periods": "Περίοδοι", "days.title": "Ημέρες με καταγραφή", "pv.ongoing": "σε εξέλιξη",
+          "pv.none": "Καμία καταγραφή.", "pv.flow.1": "ελαφριά", "pv.flow.2": "κανονική", "pv.flow.3": "έντονη",
+          "pv.cm.1": "ξηρή", "pv.cm.2": "υγρή", "pv.cm.3": "κρεμώδης", "pv.cm.4": "ασπράδι αυγού",
+          "sym.title": "Συμπτώματα", "med.title": "Ανακούφιση πόνου", "pv.temp": "Θερμοκρασία", "pv.mucus": "Βλέννα",
+          "per.flow": "Ροή", "rep.disc": "Δεδομένα αυτο-καταγραφής, μόνο ενημερωτικά — όχι ιατρική διάγνωση ή συμβουλή." }
   };
+  // The file kit passes "el" or "en"; for "en" the page's pack language
+  // (German …) wins when the app runs in one (orosI18n, ../i18n.js).
+  function words(lang) {
+    var I = typeof window !== "undefined" && window.orosI18n, L = lang === "el" ? "el" : "en";
+    if (L === "en" && I && I.lang() !== "en" && I.lang() !== "el") {
+      var code = I.lang();
+      return { L: code, w: WORDS[code] || I.table(WORDS, "cycle", code) || WORDS.en };
+    }
+    return { L: L, w: WORDS[L] };
+  }
   function previews(state, lang) {
-    var L = lang === "el" ? "el" : "en", W = WORDS[L], names = { sym: {}, med: {} };
+    var WL = words(lang), L = WL.L, T = WL.w, names = { sym: {}, med: {} };
+    var W = {
+      title: T["app.title"], periods: T["pv.periods"], days: T["days.title"], ongoing: T["pv.ongoing"],
+      none: T["pv.none"], flow: ["", T["pv.flow.1"], T["pv.flow.2"], T["pv.flow.3"]],
+      cm: ["", T["pv.cm.1"], T["pv.cm.2"], T["pv.cm.3"], T["pv.cm.4"]],
+      sym: T["sym.title"], med: T["med.title"], temp: T["pv.temp"], mucus: T["pv.mucus"], fl: T["per.flow"],
+      note: T["rep.disc"]
+    };
     var s = isObj(state) ? state : {}, cols = isObj(s.cols) ? s.cols : {};
     ["sym", "med"].forEach(function (k) {
       (Array.isArray(cols[k]) ? cols[k] : []).forEach(function (v) {
