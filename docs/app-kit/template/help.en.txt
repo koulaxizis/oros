@@ -1,0 +1,13 @@
+# My App
+A short list of things you want to keep. Replace this page with a guide to your own app: what it is for, how to start, and where its data goes.
+
+## Getting started
+- Write something in the box at the top and press `Add`.
+- Tick an item when it is done. `Delete` removes it.
+
+## Your data
+- Everything stays on this device and is saved as you go.
+- With orOS sync switched on in [Settings](app:settings), your list follows you to your other devices, encrypted.
+
+## Find it from anywhere
+- The menu's search box finds your items by their words. Choosing one opens the app on that item.

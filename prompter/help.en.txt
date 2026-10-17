@@ -13,7 +13,8 @@ The three buttons at the top switch between `Browse`, `Statistics` and `Settings
 
 ## Work with a prompt
 Each card has these buttons:
-- `Use` copies the prompt to the clipboard.
+- `Use` opens the prompt in [Writer](app:writer) as a new document, so you can start writing right away (with the variation, if it is shown). Opened on its own outside orOS, it copies the prompt instead.
+- `Copy` copies the prompt to the clipboard.
 - `Variation` (on some prompts) adds an extra twist under the prompt; `Copy` then copies both.
 - `Star` marks it as a favourite (★); `Unstar` removes it.
 - `Mark done` adds a ✓ once you've written it; `Undo` takes it back.
