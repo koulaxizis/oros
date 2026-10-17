@@ -7368,3 +7368,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Send to someone: links with an expiry (1, 7 or 30 days), stored encrypted on the relay and taken back any time from My shared links; long notes and Wiki articles can now be sent. The list of links travels as sync slice `shareOut`.
 - Files: `share/relay.js`, `share/out.js` (new, precached), `share/send.js`, `share/view.js`, `share/index.html`, `shell.js`, Settings, help share topic EN/EL, Bible.
   - Tests: full suite green (new `tests/share-expiry.test.js`); real Chromium 1280 EN / 360 EL + two-device sync. Not tested: the live relay from the cloud container, a real phone.
+
+### 2026-10-17 — orOS Drive on the phone, wave 5: the orOS disk in Android's Files app (#464) — 2.72.01
+- orOS Drive on the phone: the whole orOS disk appears as «orOS» in Android's Files app and every file picker (a DocumentsProvider in the orOS Android app; not in the F-Droid build).
+- Files: `android/app/src/drive/**` (DriveProvider, DriveActivity, manifest, strings EN/EL), `.github/workflows/android.yml` (oros-drive pin), Files help EN/EL, Bible.
+  - Tests: full suite green; Android build green on GitHub. Not tested: a real phone (needs a new APK).
