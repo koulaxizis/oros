@@ -7279,3 +7279,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Prompter: Use opens the prompt in Writer as a new document; Cancel and Factory reset no longer touch.
 - Files: `prompter/prompter.js`, `prompter/prompter.css`, Bible.
   - Tests: full suite green; real Chromium 360 EN/EL. Not tested: phones.
+
+### 2026-10-17 — Sync: one provider contract, Dropbox behind it (WebDAV W1) (#450) — 2.68.02
+- Sync: every cloud call goes through one provider contract (no visible change; prepares WebDAV / Nextcloud).
+- Files: `sync.js`, Bible.
+  - Tests: full suite green; real Chromium with two devices 1280 EN / 360 EL. Not tested: a real Dropbox account from the cloud container.
