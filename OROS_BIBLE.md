@@ -7728,3 +7728,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Files: folders and files in orOS Drive can be deleted with the bin on each row; files kept only in the cloud are deleted there too.
 - Files: `vault.js`, `files/drive.js`, `files/files.js`, `files/files.css`, `files/help.{en,el}.txt`, `i18n/de/files.js`, `tests/vault-ondemand.test.js`.
   - Tests: 4785/4785; Chromium 360 el / 1200 en. Not tested: a real Dropbox account, Safari.
+
+### 2026-10-17 — Files: "Open in Photo Lab" loads the picture again (#522) — 3.14.02
+- Files: Open in Photo Lab, and every other Open in… / Open with…, loads the chosen file again instead of opening the app empty.
+- Files: `fileopen.js`, `tests/fileopen.test.js`.
+  - Tests: 4778/4778; Chromium desktop / phone el. Not tested: Safari, every target app one by one.
