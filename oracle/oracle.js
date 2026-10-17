@@ -41,7 +41,9 @@
   var W           = window.ORACLE_WORDS;
 
   // ---------- 1. Constants, i18n, helpers ----------
+  // orosI18n (../i18n.js): the full language code, a pack language included.
   function appLang() {
+    if (window.orosI18n) return window.orosI18n.lang();
     try {
       var l = localStorage.getItem("oros-lang") ||
               (window.parent && window.parent.orosLang) || "en";
@@ -49,6 +51,7 @@
     } catch (e) { return "en"; }
   }
   var LANG = appLang();
+  var LOC = window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB");
 
   var STRINGS = {
     en: {
@@ -89,6 +92,8 @@
     }
   };
 
+  if (typeof window !== "undefined" && window.orosI18n) window.orosI18n.table(STRINGS, "oracle", LANG);
+
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;
     var s = p[key] !== undefined ? p[key] : (STRINGS.en[key] !== undefined ? STRINGS.en[key] : key);
@@ -128,7 +133,7 @@
   function normQ(q) {
     var s = String(q || "").toLowerCase();
     if (s.normalize) s = s.normalize("NFD").replace(/[̀-ͯ]/g, "");
-    return s.replace(/ς/g, "σ").replace(/[^a-z0-9Ͱ-Ͽ]+/g, " ").trim();
+    return s.replace(/\u03c2/g, "\u03c3").replace(/[^a-z0-9Ͱ-Ͽ]+/g, " ").trim();
   }
 
   function topicOf(q) {
@@ -308,13 +313,13 @@
 
   function dateLabel(d) {
     try {
-      return new Date(d + "T12:00:00").toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB",
+      return new Date(d + "T12:00:00").toLocaleDateString(LOC,
         { weekday: "long", day: "numeric", month: "long" });
     } catch (e) { return d; }
   }
   function timeLabel(ms) {
     try {
-      return new Date(ms).toLocaleString(LANG === "el" ? "el-GR" : "en-GB",
+      return new Date(ms).toLocaleString(LOC,
         { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
     } catch (e) { return ""; }
   }

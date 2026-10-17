@@ -7,7 +7,9 @@
 //                   language): a word that starts with one of them
 //                   sends the question to that topic
 // The Greek and English lists are written separately; they are not
-// translations of each other.
+// translations of each other. A pack language (orosI18n) shows the
+// English lists: P is content, not UI strings.
+// i18n-inline-ok: the Greek in K is topic keywords for the question parser (data, no UI text)
 // ============================================================
 (function (root) {
   "use strict";
