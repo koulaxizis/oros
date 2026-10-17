@@ -55,6 +55,7 @@
 
   // ---------- 1. Constants, i18n, helpers ----------
   function appLang() {
+    if (window.orosI18n) return window.orosI18n.lang();
     try {
       var l = localStorage.getItem("oros-lang") ||
               (window.parent && window.parent.orosLang) || "en";
@@ -157,6 +158,7 @@
       "toast.fresh": "Ο αγώνας δεν έχει αρχίσει ακόμα"
     }
   };
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "rps", LANG);
 
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;
