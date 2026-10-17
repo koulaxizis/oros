@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.86.00
+- Sync: move your whole cloud between Dropbox and a WebDAV / Nextcloud server from Settings, Vault and Drive files included, still encrypted.
+
 ## Version 2.85.01
 - Android widgets: a magnifier button opens the command bar (needs the new orOS Android app).
 
