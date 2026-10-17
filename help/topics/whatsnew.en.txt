@@ -1,6 +1,12 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.89.00
+- Maps: Athens bus stops show live arrivals from OASA.
+
+## Version 2.88.00
+- Sync: restore one of the last 7 cloud backups from Settings › Sync; every device takes it, and today's data is kept as a rescue copy.
+
 ## Version 2.87.00
 - Pixel Avatar makes wallpapers; Send to… for pictures from Pixel Avatar, Photo Lab and Atelier (Mail, Layout); Studio sends to Music and to Ringtone Composer; your melodies can be the notification and timer sounds.
 

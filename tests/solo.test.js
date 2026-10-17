@@ -335,6 +335,9 @@ test("F-Droid repo (FDROID-1): packages, links, launch version and metadata for 
   assert.match(wf, /repo_keyalias: orosrepo/);
   assert.match(wf, /SITE: https:\/\/koulaxizis\.github\.io\/oros-fdroid/);
   assert.match(wf, /versions\.json/);
+  // Each build gets its own file name in the repository (a fixed oros.apk
+  // made F-Droid report "Hash not matching" and HTTP 416 after an update)
+  assert.match(wf, /mv "\$f" "\$fd\/repo\/\$\{pkg\}_\$\{code\}_\$\{sum\}\.apk"/);
 });
 
 test("F-Droid store listing (FDROID-2): texts, categories, pictures and front page", () => {
@@ -369,7 +372,7 @@ test("F-Droid store listing (FDROID-2): texts, categories, pictures and front pa
   fs.rmSync(tmp, { recursive: true, force: true });
   // Store-only changes republish the repository
   const wf = read(".github/workflows/fdroid.yml");
-  assert.match(wf, /paths: \['tools\/fdroid-metadata\.js', 'tools\/fdroid\/\*\*'\]/);
+  assert.match(wf, /paths: \['tools\/fdroid-metadata\.js', 'tools\/fdroid\/\*\*', '\.github\/workflows\/fdroid\.yml'\]/);
   assert.match(wf, /tools\/fdroid-metadata\.js tools\/fdroid \|/);
   assert.match(wf, /cp -r "\$fd\/site\/\." "\$site\/"/);
 });

@@ -1705,6 +1705,8 @@ body.trn-itin .route-alt { opacity: 0.25; }
 .trn-rt.late { color: var(--danger); }
 .trn-cancel { font-size: 11.5px; color: var(--danger); font-weight: 700; }
 .trn-board { gap: 0; }
+.trn-oasa { margin: 4px 0 10px; padding-bottom: 6px; border-bottom: 2px solid var(--border); }
+.trn-oasa-h { margin: 6px 0 2px; font-size: 13px; font-weight: 800; }
 .trn-dep {
   display: flex;
   align-items: center;

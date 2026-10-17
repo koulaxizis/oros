@@ -1,5 +1,10 @@
 // ============================================================
 // orOS Core v0.9.2 — Dropbox Sync module (Zero-Knowledge Sync v0.9)
+// 2026-10-17 (A43): a cloud backup can be restored from Settings ›
+//   Sync. A restore is a rollback for every device: rescue copy here,
+//   the current blob kept as a backup, conditional upload with a
+//   higher meta.restoreEpoch; a device that pulls a newer epoch keeps
+//   a rescue copy and takes the cloud whole (see restoreBackup).
 // 2026-10-07 (A70): the blob and the vault key wraps are sealed with
 //   PBKDF2 600,000 rounds (was 100,000) and say so in a new "iter"
 //   field. A blob without "iter" is read at 100,000, so every old
@@ -1502,6 +1507,9 @@
     }
     VAULT_CLOUD_KEYS.forEach(function (k) { try { localStorage.removeItem(k); } catch (e) {} });
     try { localStorage.setItem(CLOUD_ID_KEY, id); } catch (e) {}
+    // A43: another cloud's restore epoch means nothing here; this
+    // cloud's data is merged at first contact, then its epoch counts.
+    writeJson(RESTORE_EPOCH_KEY, { cloud: id, n: 0, adopt: 1 });
     return true;
   }
 
@@ -2217,6 +2225,8 @@
                                         // the decryptBlob mismatch check
                                         // goes permanently silent.
     };
+    var restoreN = localRestoreEpoch();     // A43: the restore epoch travels with every push
+    if (restoreN > 0) payload.meta.restoreEpoch = restoreN;
     return payload;
   }
 
@@ -2507,6 +2517,290 @@
       .catch(function () { /* best-effort */ });
   }
 
+  // ---------- A43: restore a cloud backup (rollback) ----------
+  // Settings › Sync lists the cloud backups; Restore puts one of them
+  // back as THE state, on every device. It is a rollback, not a merge:
+  // merging an old copy with today's data would bring nothing back
+  // that a merge had not already kept.
+  //   1. this device's state is saved first as a local rescue file
+  //      (the shell's sink writes it to /internal/Rescue), and the
+  //      cloud blob as it is now becomes one more backup copy, so a
+  //      restore can itself be undone;
+  //   2. the backup is decrypted with the current passphrase, or with
+  //      the old one it was sealed with ("restore-oldpass" asks);
+  //   3. the restored state is uploaded conditionally (rev) with a
+  //      higher meta.restoreEpoch, then replaces the local state;
+  //   4. another device whose pull sees a restoreEpoch newer than the
+  //      one it knows saves its own rescue copy (required when it has
+  //      unpushed work) and takes the cloud whole (followRestore).
+  // An older bundle ignores the field and merges as before. Apps this
+  // device knows that the backup does not hold keep their local data
+  // (nothing is lost; they are uploaded with it). Vault Drive files
+  // are not part of the blob and are not touched.
+  var RESTORE_EPOCH_KEY = "oros-sync-restore-epoch";   // { cloud, n, adopt? }
+  var rescueSink = null;
+  var restoreListeners = [];
+
+  function cloudIdNow() {
+    try { return localStorage.getItem(CLOUD_ID_KEY) || "dropbox"; } catch (e) { return "dropbox"; }
+  }
+  // The epoch this device last took from (or wrote to) this cloud;
+  // 0 when it knows none.
+  function localRestoreEpoch() {
+    var r = readJson(RESTORE_EPOCH_KEY);
+    return (r && r.cloud === cloudIdNow()) ? (r.n | 0) : 0;
+  }
+  function saveRestoreEpoch(n) {
+    writeJson(RESTORE_EPOCH_KEY, { cloud: cloudIdNow(), n: Math.max(0, n | 0) });
+  }
+  // Seen on a normal pull: remember the cloud's epoch (never lower it).
+  function noteRestoreEpoch(n) {
+    var r = readJson(RESTORE_EPOCH_KEY);
+    if (r && r.cloud === cloudIdNow() && !r.adopt && (r.n | 0) >= n) return;
+    if (!r && !(n > 0)) return;
+    saveRestoreEpoch(Math.max(n, (r && r.cloud === cloudIdNow()) ? (r.n | 0) : 0));
+  }
+  // Does a pull of a blob with restoreEpoch cloudN have to roll back?
+  //   · a record for this cloud: when the cloud's epoch is newer;
+  //   · a record for another cloud (adopt): first contact with this
+  //     one, its data is merged as on any first connection;
+  //   · no record (bundle before A43): only a device that synced
+  //     before (it has baselines) follows; a new device just applies.
+  function restoreNeeded(cloudN) {
+    if (!(cloudN > 0)) return false;
+    var r = readJson(RESTORE_EPOCH_KEY);
+    if (r && r.cloud === cloudIdNow()) return !r.adopt && cloudN > (r.n | 0);
+    if (r) return false;
+    return Object.keys(readBaselines()).length > 0;
+  }
+
+  // Local rescue copy (the exportData format, importable again).
+  // Resolves true once the sink stored it, false without a sink or
+  // when it failed.
+  function rescueLocal(reason) {
+    if (typeof rescueSink !== "function") return Promise.resolve(false);
+    var text;
+    try {
+      var p = collectPayload();
+      p.meta = { ver: BLOB_VERSION, exportedAt: new Date().toISOString(), rescue: reason };
+      text = JSON.stringify(p, null, 2);
+    } catch (e) { return Promise.resolve(false); }
+    return Promise.resolve()
+      .then(function () { return rescueSink(text, reason); })
+      .then(function (ok) { return ok !== false; }, function () { return false; });
+  }
+
+  function emitRestored(info) {
+    restoreListeners.forEach(function (fn) { try { fn(info); } catch (e) {} });
+  }
+
+  // Replace the local state with `target` (a decrypted payload).
+  // Known slices are set as they are (no merge, no divergence guard),
+  // their parked copies and deferral flags dropped, their baselines
+  // recorded from what they now hold. Unknown slices replace the
+  // mailbox; mailbox entries the target does not hold are dropped.
+  // Returns { applied, failed, extra }: extra = known slices with
+  // local data that the target does not hold (they keep it).
+  function applyRollback(target) {
+    reapClosedApps();                       // SY-D5
+    storeFailed = false;
+    var failed = [], extra = [], applied = 0;
+    var apps = (target && target.apps) || {};
+    var carry = readCarry() || {};
+
+    function put(name, data) {
+      try { slices[name].set(data, { merged: false, restored: true }); }
+      catch (e) { failed.push(name); return false; }
+      var v;
+      try { v = slices[name].get(); } catch (e) { v = data; }
+      recordBaseline(name, (v === null || v === undefined) ? "null" : JSON.stringify(v));
+      flagSet(DEFER_KEY, name, false);
+      if (mergeBroken[name]) delete mergeBroken[name];
+      applied++;
+      return true;
+    }
+
+    if (slices.shell && target.shell !== null && target.shell !== undefined) put("shell", target.shell);
+    Object.keys(apps).forEach(function (name) {
+      var data = apps[name];
+      if (data === null || data === undefined || RETIRED_SLICES[name]) return;
+      if (slices[name]) {
+        if (put(name, data)) delete carry[name];
+      } else {
+        carry[name] = data;
+      }
+    });
+    Object.keys(carry).forEach(function (name) {
+      if (!slices[name] && (apps[name] === null || apps[name] === undefined)) delete carry[name];
+    });
+    writeCarry(carry);
+
+    Object.keys(slices).forEach(function (name) {
+      var held = name === "shell" ? target.shell : apps[name];
+      if (held !== null && held !== undefined) return;
+      var v = null;
+      try { v = slices[name].get(); } catch (e) { v = null; }
+      if (v !== null && v !== undefined && JSON.stringify(v) !== "{}") extra.push(name);
+    });
+
+    if (storeFailed) failed.push("mailbox");
+    lastApplyFailed = failed;
+    if (failed.length) {
+      applyFailListeners.forEach(function (fn) {
+        try { fn(failed.slice()); } catch (e) {}
+      });
+    }
+    return { applied: applied, failed: failed, extra: extra };
+  }
+
+  // syncDown's leg for a blob restored elsewhere.
+  function followRestore(payload, cloud, n) {
+    var mustRescue = isDirty();             // unpushed work exists only here
+    return rescueLocal("restore-elsewhere").then(function (rescued) {
+      if (!rescued && mustRescue) throw new Error("restore-rescue-failed");
+      var r = applyRollback(payload);
+      // A slice that could not be written keeps the old epoch, so the
+      // next pull rolls back again instead of merging the old data up.
+      saveRestoreEpoch(r.failed.length ? n - 1 : n);
+      lastSuccessfulPullAt = Date.now();
+      cloudRev = cloud.rev;
+      if (!r.failed.length) {
+        if (r.extra.length) markDirty();    // apps the cloud does not hold go up
+        else clearDirty();
+      }
+      emitRestored({ here: false, from: (payload.meta && payload.meta.restoredFrom) || "",
+                     rescued: rescued, failed: r.failed.slice() });
+      return { ok: true, empty: false, applied: r.applied, failed: r.failed.slice(), restored: true };
+    });
+  }
+
+  // "orOS-backup-2026-10-17T08-30-00-000Z.json" → ISO time ("" if not ours).
+  function backupTime(name) {
+    var m = /^orOS-backup-(\d{4}-\d{2}-\d{2})T(\d{2})-(\d{2})-(\d{2})-(\d{3})Z\.json$/.exec(String(name));
+    return m ? m[1] + "T" + m[2] + ":" + m[3] + ":" + m[4] + "." + m[5] + "Z" : "";
+  }
+
+  // Newest first, at most MAX_BACKUPS: [{ name, size, at }].
+  function listBackups() {
+    if (!isConnected()) return Promise.reject(new Error("not-connected"));
+    return provider.backupList().then(function (list) {
+      return (list || []).filter(function (e) { return backupTime(e.name); })
+        .sort(function (a, b) { return a.name < b.name ? 1 : -1; })
+        .slice(0, MAX_BACKUPS)
+        .map(function (e) { return { name: e.name, size: e.size || 0, at: backupTime(e.name) }; });
+    });
+  }
+
+  function isDecryptFailure(err) {
+    return !!err && (err.name === "OperationError" || /OperationError/.test(err.message || ""));
+  }
+
+  // What the restore uploads: the backup's slices, plus the known
+  // slices it does not hold with this device's data.
+  function restorePayload(target, name, n) {
+    var apps = {};
+    Object.keys(target.apps || {}).forEach(function (k) {
+      var d = target.apps[k];
+      if (d !== null && d !== undefined && !RETIRED_SLICES[k]) apps[k] = d;
+    });
+    var shell = (target.shell === undefined) ? null : target.shell;
+    Object.keys(slices).forEach(function (k) {
+      if (k === "shell" ? shell !== null : apps[k] !== undefined) return;
+      var v = null;
+      try { v = slices[k].get(); } catch (e) { v = null; }
+      if (v === null || v === undefined || JSON.stringify(v) === "{}") return;
+      if (k === "shell") shell = v; else apps[k] = v;
+    });
+    var epoch = getWVEpoch();
+    return {
+      shell: shell, apps: apps,
+      meta: {
+        lastPush: new Date().toISOString(),
+        device: navigator.userAgent.slice(0, 80),
+        pwEpoch: epoch > 0 ? epoch : 0,
+        restoreEpoch: n,
+        restoredFrom: name
+      }
+    };
+  }
+
+  // One conditional upload of the restored state (retried, bounded,
+  // when another device wrote in between).
+  function writeRestore(name, target, attempt) {
+    var rev, payload, text;
+    return provider.blobGet().then(function (cloud) {
+      rev = cloud.rev;
+      if (rev === undefined) throw new Error("cloud-rev-unknown");
+      if (!cloud.text) return 0;
+      // A cloud this passphrase cannot read is never replaced (Trap 3).
+      return decryptBlob(cloud.text).then(function (cur) {
+        return (cur && cur.meta && cur.meta.restoreEpoch) | 0;
+      });
+    }).then(function (cloudN) {
+      var n = Math.max(cloudN, localRestoreEpoch()) + 1;
+      payload = restorePayload(target, name, n);
+      return encryptBlob(payload);
+    }).then(function (t) {
+      text = t;
+      return rev === null ? false : backupExistingRemote();   // the state before the restore
+    }).then(function () {
+      return provider.blobPut(text, rev);
+    }).then(function (put) {
+      return { put: put, payload: payload };
+    }, function (err) {
+      if (err && err.message === "cloud-changed" && attempt < MAX_PUSH_RETRIES) {
+        return writeRestore(name, target, attempt + 1);
+      }
+      throw err;
+    });
+  }
+
+  function restoreBackup(name, oldPass) {
+    if (suspended)      return Promise.reject(new Error("engine-suspended"));
+    if (!isConnected()) return Promise.reject(new Error("not-connected"));
+    if (!passphrase)    return Promise.reject(new Error("no-passphrase"));
+    if (pushInFlight || reconcileInFlight) return Promise.reject(new Error("push already in flight"));
+    if (pullInFlight)   return Promise.reject(new Error("pull already in flight"));
+    if (!backupTime(name)) return Promise.reject(new Error("restore-missing"));
+
+    pushInFlight = true;
+    var target;
+    return provider.backupGet(name).then(function (text) {
+      if (!text) throw new Error("restore-missing");
+      return decryptBlob(text).catch(function (err) {
+        if (!isDecryptFailure(err)) throw err;
+        if (!oldPass) throw new Error("restore-oldpass");
+        return withPass(oldPass, function () { return decryptBlob(text); }).catch(function (e2) {
+          throw isDecryptFailure(e2) ? new Error("restore-oldpass-wrong") : e2;
+        });
+      });
+    }).then(function (payload) {
+      if (!payload || typeof payload !== "object" || (!payload.shell && !payload.apps)) {
+        throw new Error("restore-missing");
+      }
+      target = payload;
+      return rescueLocal("restore");
+    }).then(function (rescued) {
+      if (!rescued) throw new Error("restore-rescue-failed");
+      return writeRestore(name, target, 0);
+    }).then(function (w) {
+      cloudRev = w.put.rev;
+      lastSuccessfulPullAt = Date.now();
+      var r = applyRollback(target);
+      r.extra.forEach(function (k) {
+        var d = k === "shell" ? w.payload.shell : w.payload.apps[k];
+        recordBaseline(k, (d === null || d === undefined) ? "null" : JSON.stringify(d));
+      });
+      var n = w.payload.meta.restoreEpoch;
+      saveRestoreEpoch(r.failed.length ? n - 1 : n);
+      if (!r.failed.length) clearDirty();
+      emitRestored({ here: true, from: name, rescued: true, failed: r.failed.slice() });
+      return { ok: true, applied: r.applied, failed: r.failed.slice(), epoch: n };
+    }).finally(function () {
+      pushInFlight = false;
+    });
+  }
+
   // ---------- Dirty flag ----------
   // SY-Q1: the dirty state also lives in memory. On a full store the
   // persisted flag cannot be written, and markDirty() used to THROW
@@ -2620,7 +2914,10 @@
         return { ok: true, empty: true, applied: 0 };
       }
       return decryptBlob(cloud.text).then(function (payload) {
+        var restoreN = (payload && payload.meta && payload.meta.restoreEpoch) | 0;   // A43
+        if (restoreNeeded(restoreN)) return followRestore(payload, cloud, restoreN);
         var applied = applyPayload(payload);
+        noteRestoreEpoch(restoreN);
         lastSuccessfulPullAt = Date.now(); // passphrase PROVEN against cloud
         cloudRev = cloud.rev;              // may be undefined (fallback race) → push re-learns
         return { ok: true, empty: false, applied: applied, failed: lastApplyFailed.slice() };
@@ -3468,6 +3765,14 @@
     // (the browser's storage is full, or an app's setter threw).
     onApplyFailed:      function (fn) { if (typeof fn === "function") applyFailListeners.push(fn); },
 
+    // A43: cloud backups and restore (rollback for every device).
+    listBackups:        listBackups,      // → [{ name, size, at }] newest first
+    restoreBackup:      restoreBackup,    // (name, oldPass?) → { ok, applied, failed, epoch }
+    // fn(text, reason) → Promise<bool>: stores a local rescue copy.
+    setRescueSink:      function (fn) { rescueSink = (typeof fn === "function") ? fn : null; },
+    // fn({ here, from, rescued, failed }) after a restore landed here.
+    onRestored:         function (fn) { if (typeof fn === "function") restoreListeners.push(fn); },
+
     // Engine kick (manual triggers from shell, e.g. after manual unlock)
     kickAutoEngine:     function () {
       if (isConnected() && passphrase) {
@@ -3503,6 +3808,7 @@
       if (msg === "vault-key-rewrap-failed") return "sync.err.generic";
       if (msg === "engine-suspended")   return "sync.err.suspended";
       if (msg === "storage-full")       return "sync.err.storage";   // SY-Q1
+      if (/^restore-/.test(msg))        return "sync.err." + msg;    // A43
       if (/blob version/.test(msg)) return "sync.err.version";
       if (/^dav-/.test(msg))          return "sync.err." + msg;     // WebDAV W2 connect reasons
       if (/^move-/.test(msg))         return "sync.err." + msg;     // WebDAV W4 move reasons

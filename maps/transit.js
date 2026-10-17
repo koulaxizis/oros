@@ -73,6 +73,12 @@
       "board.empty": "No departures in the next hours.",
       "board.refresh": "Refresh",
       "board.updated": "Updated {t}",
+      "oasa.title": "Live arrivals (OASA)",
+      "oasa.min": "in {n} min", "oasa.now": "now",
+      "oasa.none": "No bus is on its way to this stop right now.",
+      "oasa.err": "Live arrivals are not available right now.",
+      "oasa.bus": "Bus",
+      "credit.oasa": "Live arrivals: OASA Telematics",
       "show.stops": "Show stops on the map (zoom in)",
       "show.live": "Show live vehicles",
       "live.hint": "Vehicles move by their timetable and live data where the operator publishes it.",
@@ -124,6 +130,12 @@
       "board.empty": "Καμία αναχώρηση τις επόμενες ώρες.",
       "board.refresh": "Ανανέωση",
       "board.updated": "Ενημέρωση {t}",
+      "oasa.title": "Αφίξεις τώρα (ΟΑΣΑ)",
+      "oasa.min": "σε {n} λεπ.", "oasa.now": "τώρα",
+      "oasa.none": "Αυτή τη στιγμή δεν έρχεται λεωφορείο σε αυτή τη στάση.",
+      "oasa.err": "Οι ζωντανές αφίξεις δεν είναι διαθέσιμες αυτή τη στιγμή.",
+      "oasa.bus": "Λεωφορείο",
+      "credit.oasa": "Ζωντανές αφίξεις: ΟΑΣΑ Telematics",
       "show.stops": "Στάσεις στον χάρτη (με ζουμ)",
       "show.live": "Οχήματα σε πραγματικό χρόνο",
       "live.hint": "Τα οχήματα κινούνται με βάση τα δρομολόγια και τα ζωντανά δεδομένα, όπου ο φορέας τα δημοσιεύει.",
@@ -208,7 +220,7 @@
   var picking = "";                // "" | "from" | "to"
   var plan = { its: [], prev: "", next: "", busy: false, err: "", asked: false, at: null };
   var planSeq = 0;
-  var board = { id: "", name: "", rows: [], busy: false, err: "", next: "", at: 0 };
+  var board = { id: "", name: "", rows: [], busy: false, err: "", next: "", at: 0, oasa: null };
   var boardSeq = 0, boardTimer = null;
 
   // ---------- layers ----------
@@ -396,7 +408,7 @@
   // ---------- departures ----------
   function openBoard(id, name) {
     if (!modeOn) setMode(true);
-    board = { id: id, name: name || "", rows: [], busy: false, err: "", next: "", at: 0 };
+    board = { id: id, name: name || "", rows: [], busy: false, err: "", next: "", at: 0, oasa: null };
     go({ v: "stop" });
     loadBoard(false);
   }
@@ -406,6 +418,7 @@
     var my = ++boardSeq;
     board.busy = true; board.err = "";
     render();
+    if (!more) loadOasa(my);
     api(function (v) { return X.stoptimesUrl(BASE, v, { stopId: board.id, n: 20, cursor: more ? board.next : "", lang: LANG }); })
       .then(function (j) {
         if (my !== boardSeq) return;
@@ -423,6 +436,64 @@
         render();
       });
   }
+  // ---------- OASA live arrivals (Athens buses, through the relay) ----------
+  // OASA Telematics sends no CORS headers, so the orOS relay asks it
+  // (op "oasa"). The relay is the one Mail uses (its own, if set).
+  var DEFAULT_RELAY = "https://oros-mail-relay.koulaxizis-25b.workers.dev";   // = mail.js
+  var oasaRoutes = {};             // stop code → { route code: { line, descr } } (this session)
+  function relayAddr() {
+    try {
+      var m = JSON.parse(localStorage.getItem("oros-mail-data") || "null");
+      var u = m && m.relay && m.relay.url;
+      if (typeof u === "string" && /^https:\/\/[^\s]+$/.test(u)) return u.replace(/\/+$/, "");
+    } catch (e) {}
+    return DEFAULT_RELAY;
+  }
+  function oasa(act, code) {
+    return fetch(relayAddr() + "/v1", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ op: "oasa", act: act, p1: code }) })
+      .then(function (r) { return r.json(); })
+      .then(function (j) { if (!j || j.ok !== true) throw new Error("oasa"); return j.data; });
+  }
+  function loadOasa(my) {
+    var code = X.oasaStop(board.id);
+    if (!code) return;
+    if (!board.oasa) board.oasa = { code: code, rows: [], busy: true, err: false, done: false };
+    var routes = oasaRoutes[code] ? Promise.resolve(oasaRoutes[code]) :
+      oasa("getRoutesForStop", code).then(function (j) { return (oasaRoutes[code] = X.normOasaRoutes(j, LANG)); }, function () { return {}; });
+    Promise.all([oasa("getStopArrivals", code), routes]).then(function (r) {
+      if (my !== boardSeq || !board.oasa) return;
+      board.oasa = { code: code, rows: X.normOasaArrivals(r[0], r[1]), busy: false, err: false, done: true };
+      render();
+    }, function () {
+      if (my !== boardSeq || !board.oasa) return;
+      board.oasa.busy = false; board.oasa.err = true; board.oasa.done = true;
+      render();
+    });
+  }
+  function renderOasa(body) {
+    var o = board.oasa;
+    if (!o) return;
+    var box = el("div", "trn-oasa");
+    box.appendChild(el("h4", "trn-oasa-h", t("oasa.title")));
+    if (o.err) box.appendChild(el("p", "osm-hint trn-msg", t("oasa.err")));
+    else if (o.busy && !o.rows.length) box.appendChild(el("p", "osm-hint trn-msg", t("finding")));
+    else if (o.done && !o.rows.length) box.appendChild(el("p", "osm-hint trn-msg", t("oasa.none")));
+    var ul = el("ul", "osm-list trn-board trn-oasa-list");
+    o.rows.forEach(function (r) {
+      var li = el("li", "trn-dep");
+      var tm = el("span", "trn-dep-t");
+      tm.appendChild(el("b", "", r.min < 1 ? t("oasa.now") : t("oasa.min", { n: r.min })));
+      tm.appendChild(el("span", "trn-rt", t("live")));
+      li.appendChild(tm);
+      li.appendChild(badge({ g: "bus", mode: "BUS", line: r.line || t("oasa.bus") }));
+      li.appendChild(el("span", "trn-dep-h", r.descr || ""));
+      ul.appendChild(li);
+    });
+    box.appendChild(ul);
+    body.appendChild(box);
+  }
+
   function boardTimerOn(on) {
     clearInterval(boardTimer);
     boardTimer = on ? setInterval(function () { if (view.v === "stop" && panelOpen()) loadBoard(false); }, BOARD_MS) : null;
@@ -722,9 +793,11 @@
     top.appendChild(el("span", "osm-small", board.at ? t("board.updated", { t: X.hhmm(board.at) }) : ""));
     top.appendChild(button(t("board.refresh"), "osm-mini trn-refresh", function () { loadBoard(false); }));
     body.appendChild(top);
-    if (board.err) body.appendChild(el("p", "osm-hint trn-msg", board.err));
-    else if (board.busy && !board.rows.length) body.appendChild(el("p", "osm-hint trn-msg", t("finding")));
-    else if (!board.rows.length) body.appendChild(el("p", "osm-hint trn-msg", t("board.empty")));
+    renderOasa(body);
+    var liveOnly = board.oasa && board.oasa.rows.length;
+    if (board.err) { if (!liveOnly) body.appendChild(el("p", "osm-hint trn-msg", board.err)); }
+    else if (board.busy && !board.rows.length) { if (!liveOnly) body.appendChild(el("p", "osm-hint trn-msg", t("finding"))); }
+    else if (!board.rows.length && !liveOnly) body.appendChild(el("p", "osm-hint trn-msg", t("board.empty")));
     var ul = el("ul", "osm-list trn-board");
     board.rows.forEach(function (r) {
       var li = el("li", "trn-dep" + (r.cancelled ? " cancelled" : ""));
@@ -745,6 +818,7 @@
     body.appendChild(ul);
     if (board.next && board.rows.length) body.appendChild(button(t("later"), "osm-mini trn-more", function () { loadBoard(true); }));
     credit(body);
+    if (board.oasa) body.appendChild(el("p", "osm-small trn-credit", t("credit.oasa")));
     panel.appendChild(body);
   }
 
@@ -858,7 +932,7 @@
     board: openBoard, boardNear: boardNear, search: search,
     state: function () {
       return { on: modeOn, view: view.v, from: from, to: to, its: plan.its.length, err: plan.err,
-        board: board.rows.length, stops: stopsLayer.getLayers().length, live: liveLayer.getLayers().length, ver: X.API_VERSIONS[verIdx] };
+        board: board.rows.length, oasa: board.oasa ? board.oasa.rows.length : -1, stops: stopsLayer.getLayers().length, live: liveLayer.getLayers().length, ver: X.API_VERSIONS[verIdx] };
     }
   };
   boot();
