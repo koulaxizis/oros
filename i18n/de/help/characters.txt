@@ -1,0 +1,45 @@
+# Figuren
+Figuren ist ein Notizbuch für die Menschen in deinen Geschichten. Gib jeder Figur eine Rolle, einen Hintergrund, Eigenschaften und Ziele, zeichne dann auf, wie sie zueinander stehen, und vergleiche zwei beliebige nebeneinander.
+
+## Erste Schritte
+Tippe oder klicke oben auf `Neu` (oder drücke [[Ctrl+Alt+N]]). Gib einen `Name` ein; das ist das einzige Pflichtfeld. Drücke `Speichern` oder [[Enter]] im Namensfeld.
+
+Deine Figuren erscheinen als Karten mit ihren Initialen, ihrer Rolle, den ersten Eigenschaften und der Zahl ihrer Verbindungen. Mit `Nach Name, Rolle oder Eigenschaft filtern…` findest du eine. Tippe oder klicke auf eine Karte (oder drücke [[Enter]] darauf), um sie zu bearbeiten.
+
+## Eine Figur aufbauen
+Der Editor hat:
+- `Name` und `Rolle / Archetyp`.
+- `Hintergrund`, für so viel Text, wie du willst.
+- `Eigenschaften`: `Eigenschaft hinzufügen`, eine Eigenschaft eintippen und ihre `Stärke` von 1 bis 5 setzen. Das `Eigenschaftsprofil` zeichnet sie als Netzdiagramm.
+- `Ziele`: `Ziel hinzufügen` und jedes abhaken, sobald es erreicht ist.
+
+Für eine neue Figur kannst du auch `Mit einer Vorlage beginnen` (`Held`, `Bösewicht` oder `Mentor`) oder `🎲 Überrasch mich` drücken, um die leeren Felder mit zufälligem Namen, Rolle und Eigenschaften zu füllen.
+
+`Löschen` fragt zuerst nach und entfernt die Figur zusammen mit all ihren Beziehungen. Direkt danach holt ein ↩-Knopf in der Meldung sie zurück.
+
+## Beziehungen
+Öffne `Beziehungen`, sobald du mindestens zwei Figuren hast. Das Raster hat jede Figur auf beiden Seiten; tippe oder klicke auf eine Zelle, um die Beziehung dieses Paars festzulegen. Wähle eine `Art` (`Freund/in`, `Familie`, `Liebe`, `Rivale/Rivalin`, `Feind/in`, `Mentor/in`, `Verbündete/r` oder `Andere`), füge ein `Kurzes Etikett` und `Notizen` hinzu und tippe auf `Speichern`. Jedes Paar hat eine Beziehung, von beiden Seiten gleich. Eine Legende unter dem Raster zählt jede Art.
+
+Unter `Vergleichen` wählst du zwei Figuren und siehst Hintergrund, Eigenschaften, Ziele und ihre Beziehung nebeneinander.
+
+## Exportieren
+`Exportieren` bietet `Markdown (.md)`, ein lesbares Dokument aller Figuren und Beziehungen, oder `Daten (.json)`, eine vollständige Kopie der App-Daten.
+
+## Synchronisierung und Sicherung
+Figuren und Beziehungen werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. Der offene Tab, der Filter und der Vergleich werden zurückgesetzt, wenn du die App schließt. Neben dem Export behält die orOS-[Sicherung](help:t/backup) eine Kopie.
+
+## Tastenkürzel
+- [[Ctrl+Alt+N]]: neue Figur.
+- [[Ctrl+Alt+E]]: exportieren.
+- [[Enter]] im Namensfeld: speichern. [[Ctrl+Enter]] im Hintergrund: speichern.
+- [[Esc]]: das offene Fenster schließen.
+
+Der Knopf `Hilfe` oben zeigt diese Kürzel ebenfalls.
+
+## Tipps
+- Nutze den Markdown-Export, um deine Figuren in den [Texteditor](app:writer) oder in [Notizen](app:notes) zu bringen.
+- Brauchst du einen Namen? Probiere den [Namensgenerator](app:names): Sein Knopf `New character in Characters` bei einem royalen Paar öffnet hier eine neue Figur mit diesem Namen.
+
+## Grenzen
+- Es gibt keinen Import; der JSON-Export lässt sich nicht wieder in die App laden. Zum Wiederherstellen nutze eine orOS-[Sicherung](help:t/backup).
+- Die Überschriften des Markdown-Exports folgen der Sprache der App.

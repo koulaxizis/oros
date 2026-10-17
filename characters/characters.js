@@ -131,6 +131,27 @@
       "rnd.done":   "Filled the empty fields.",
 
       "tpl.title": "Start from a template",
+      "tpl.hero": "Hero",
+      "tpl.hero.role": "Protagonist",
+      "tpl.hero.traits": "brave,stubborn,compassionate,reckless",
+      "tpl.hero.goal": "Save what remains of their family's name",
+      "tpl.villain": "Villain",
+      "tpl.villain.role": "Antagonist",
+      "tpl.villain.traits": "calculating,proud,resentful,honest",
+      "tpl.villain.goal": "Prove the world wrong, whatever the cost",
+      "tpl.mentor": "Mentor",
+      "tpl.mentor.role": "Guide / Mentor",
+      "tpl.mentor.traits": "patient,observant,guarded,cynical",
+      "tpl.mentor.goal": "Prepare someone else to survive without them",
+
+      "pool.first": "Alma,Bran,Cyrus,Dahlia,Elias,Freya,Gabriel,Harriet,Ines,Jonas,Kira,Leo,Marisol,Nadia,Oscar,Petra,Quinn,Rosa,Silas,Tessa,Ulric,Vera,Wren,Yusuf",
+      "pool.last": "Ashwood,Bellamy,Crane,Devereux,Ellery,Fairbanks,Grimaldi,Halloway,Ingram,Jessup,Kestrel,Larkin,Marchetti,Norwood,Okafor,Pemberton,Quill,Ravenscroft,Sterling,Thorne",
+      "pool.roles": "Detective,Cartographer,Fence,Archivist,Smuggler,Composer,Botanist,Bodyguard,Journalist,Librarian,Mercenary,Physician,Sailor,Translator,Watchmaker,Innkeeper",
+      "pool.traits": "stubborn,curious,loyal,cynical,ambitious,compassionate,guarded,impulsive,patient,sarcastic,brave,calculating,chaotic,devoted,envious,forgiving,honest,irritable,observant,proud,reckless,resentful,tactful,vengeful",
+
+      "md.exported": "Exported on {date}",
+      "md.role": "Role",
+      "md.intensity": "intensity {n}/5",
  
 
       "exp.md":   "Markdown (.md)",
@@ -209,6 +230,27 @@
       "rnd.done":   "Συμπλήρωσα τα κενά πεδία.",
 
       "tpl.title": "Ξεκίνα από πρότυπο",
+      "tpl.hero": "Ήρωας",
+      "tpl.hero.role": "Πρωταγωνιστής",
+      "tpl.hero.traits": "γενναίος,πείσμων,συμπονετικός,απερίσκεπτος",
+      "tpl.hero.goal": "Να σώσει ό,τι απέμεινε από το όνομα της οικογένειάς του",
+      "tpl.villain": "Αντίπαλος",
+      "tpl.villain.role": "Ανταγωνιστής",
+      "tpl.villain.traits": "υπολογιστικός,περήφανος,φοβικός,ειλικρινής",
+      "tpl.villain.goal": "Να αποδείξει ότι ο κόσμος έκανε λάθος, όποιο κι αν είναι το κόστος",
+      "tpl.mentor": "Μέντορας",
+      "tpl.mentor.role": "Οδηγός / Μέντορας",
+      "tpl.mentor.traits": "υπομονετικός,παρατηρητικός,κλειστός,κυνικός",
+      "tpl.mentor.goal": "Να προετοιμάσει κάποιον άλλον να επιβιώσει χωρίς εκείνον",
+
+      "pool.first": "Αγνή,Βλάσης,Γιώργος,Δάφνη,Ελένη,Ζήσης,Ήρα,Θανάσης,Ιωάννα,Κώστας,Λένα,Μάριος,Νίκη,Ξένια,Οδυσσέας,Πέτρος,Ραχήλ,Σοφία,Τάσος,Υβόννη,Φωτεινή,Χάρης,Ψαθας,Άγγελος",
+      "pool.last": "Αντωνόπουλος,Βλάχος,Γεωργίου,Δημάκης,Ευσταθίου,Ζωιτός,Ηλιάδης,Θεοδωρίδης,Καραγιάννης,Λαμπρόπουλος,Μακρής,Νικολαΐδης,Οικονόμου,Παπαδόπουλος,Ρούσσος,Σταυρόπουλος",
+      "pool.roles": "Αστυνόμος,Χαρτογράφος,Μεταπράτης κλεμμένων,Αρχειοθέτης,Λαθρέμπορος,Συνθέτης,Βοτανολόγος,Σωματοφύλακας,Δημοσιογράφος,Βιβλιοθηκονόμος,Μισθοφόρος,Ιατρός,Ναυτικός,Μεταφραστής,Ρολογάς,Ξενοδόχος",
+      "pool.traits": "πείσμων,περίεργος,πιστός,κυνικός,φιλόδοξος,συμπονετικός,κλειστός,παρορμητικός,υπομονετικός,σαρκαστικός,γενναίος,υπολογιστικός,χαοτικός,αφοσιωμένος,ζηλόφθωνος,συγχωρητικός,ειλικρινής,ευέξαπτος,παρατηρητικός,περήφανος,απερίσκεπτος,φοβικός,εύγλωττος,εκδικητικός",
+
+      "md.exported": "Εξαγωγή στις {date}",
+      "md.role": "Ρόλος",
+      "md.intensity": "ένταση {n}/5",
  
 
       "exp.md":   "Markdown (.md)",
@@ -230,9 +272,23 @@
     }
   };
 
+  // orosI18n (../i18n.js): the full language code, a pack language
+  // included (it reads window.orosLang / the parent's / oros-lang).
+  function curLang() {
+    return window.orosI18n ? window.orosI18n.lang() : (window.orosLang || "en");
+  }
+  function loc() {
+    return window.orosI18n ? window.orosI18n.locale(curLang()) : undefined;
+  }
+  // STRINGS[lang] for a pack language is built once, on first use.
+  function packFor(tables, lang) {
+    if (tables[lang]) return tables[lang];
+    return window.orosI18n ? window.orosI18n.table(tables, "characters", lang) : tables.en;
+  }
+
   function t(key) {
-    var lang = window.orosLang || "en";
-    var pack = STRINGS[lang] || STRINGS.en;
+    var lang = curLang();
+    var pack = packFor(STRINGS, lang);
     return pack[key] !== undefined ? pack[key]
          : STRINGS.en[key] !== undefined ? STRINGS.en[key] : key;
   }
@@ -1064,7 +1120,7 @@
       startRow.style.cssText = "display:flex;flex-wrap:wrap;gap:6px;";
       TEMPLATES.forEach(function (tpl) {
         var b = el("button", "chip",
-          (window.orosLang === "el" ? tpl.el : tpl.en));
+          t("tpl." + tpl.key));
         b.type = "button";
         b.addEventListener("click", function () {
           applyTemplate(ui.editing, tpl);
@@ -1417,8 +1473,7 @@
           ally:  "Σύμμαχος/η", other:  "Άλλο" }
   };
   function relTypeLabel(type) {
-    var lang = window.orosLang === "el" ? "el" : "en";
-    var p = REL_LABELS[lang] || REL_LABELS.en;
+    var p = packFor(REL_LABELS, curLang());
     return p[type] || p.other;
   }
 
@@ -1735,60 +1790,20 @@
   // Templates, randomizer (built-in pools), radar chart, compare view.
 
   // ---------- Built-in pools (no external datasets — doctrine) ----------
-  var POOLS = {
-    en: {
-      first: ["Alma","Bran","Cyrus","Dahlia","Elias","Freya","Gabriel","Harriet",
-              "Ines","Jonas","Kira","Leo","Marisol","Nadia","Oscar","Petra",
-              "Quinn","Rosa","Silas","Tessa","Ulric","Vera","Wren","Yusuf"],
-      last:  ["Ashwood","Bellamy","Crane","Devereux","Ellery","Fairbanks","Grimaldi",
-              "Halloway","Ingram","Jessup","Kestrel","Larkin","Marchetti","Norwood",
-              "Okafor","Pemberton","Quill","Ravenscroft","Sterling","Thorne"],
-      roles: ["Detective","Cartographer","Fence","Archivist","Smuggler","Composer",
-              "Botanist","Bodyguard","Journalist","Librarian","Mercenary","Physician",
-              "Sailor","Translator","Watchmaker","Innkeeper"],
-      traits:["stubborn","curious","loyal","cynical","ambitious","compassionate",
-              "guarded","impulsive","patient","sarcastic","brave","calculating",
-              "chaotic","devoted","envious","forgiving","honest","irritable",
-              "observant","proud","reckless","resentful","tactful","vengeful"]
-    },
-    el: {
-      first: ["Αγνή","Βλάσης","Γιώργος","Δάφνη","Ελένη","Ζήσης","Ήρα","Θανάσης",
-              "Ιωάννα","Κώστας","Λένα","Μάριος","Νίκη","Ξένια","Οδυσσέας","Πέτρος",
-              "Ραχήλ","Σοφία","Τάσος","Υβόννη","Φωτεινή","Χάρης","Ψαθας","Άγγελος"],
-      last:  ["Αντωνόπουλος","Βλάχος","Γεωργίου","Δημάκης","Ευσταθίου","Ζωιτός",
-              "Ηλιάδης","Θεοδωρίδης","Καραγιάννης","Λαμπρόπουλος","Μακρής",
-              "Νικολαΐδης","Οικονόμου","Παπαδόπουλος","Ρούσσος","Σταυρόπουλος"],
-      roles: ["Αστυνόμος","Χαρτογράφος","Μεταπράτης κλεμμένων","Αρχειοθέτης",
-              "Λαθρέμπορος","Συνθέτης","Βοτανολόγος","Σωματοφύλακας","Δημοσιογράφος",
-              "Βιβλιοθηκονόμος","Μισθοφόρος","Ιατρός","Ναυτικός","Μεταφραστής",
-              "Ρολογάς","Ξενοδόχος"],
-      traits:["πείσμων","περίεργος","πιστός","κυνικός","φιλόδοξος","συμπονετικός",
-              "κλειστός","παρορμητικός","υπομονετικός","σαρκαστικός","γενναίος",
-              "υπολογιστικός","χαοτικός","αφοσιωμένος","ζηλόφθωνος","συγχωρητικός",
-              "ειλικρινής","ευέξαπτος","παρατηρητικός","περήφανος","απερίσκεπτος",
-              "φοβικός","εύγλωττος","εκδικητικός"]
-    }
-  };
+  // Names, roles and traits are comma lists in STRINGS ("pool.*"), so a
+  // language pack can bring its own. Templates: label, role, traits and
+  // goal in STRINGS ("tpl.<key>.*"); the trait strengths stay here.
+  // What a pool or template fills in is saved as the user's text.
+  function pool(name) {
+    return t("pool." + name).split(",").map(function (x) { return x.trim(); })
+      .filter(Boolean);
+  }
 
   var TEMPLATES = [
-    { key: "hero",   en: "Hero",   el: "Ήρωας",
-      role: { en: "Protagonist",   el: "Πρωταγωνιστής" },
-      traits: [["brave", 4], ["stubborn", 3], ["compassionate", 3], ["reckless", 2]],
-      traitsEl: [["γενναίος", 4], ["πείσμων", 3], ["συμπονετικός", 3], ["απερίσκεπτος", 2]],
-      goal: { en: "Save what remains of their family's name", el: "Να σώσει ό,τι απέμεινε από το όνομα της οικογένειάς του" } },
-    { key: "villain", en: "Villain", el: "Αντίπαλος",
-      role: { en: "Antagonist",     el: "Ανταγωνιστής" },
-      traits: [["calculating", 5], ["proud", 4], ["resentful", 3], ["honest", 1]],
-      traitsEl: [["υπολογιστικός", 5], ["περήφανος", 4], ["φοβικός", 3], ["ειλικρινής", 1]],
-      goal: { en: "Prove the world wrong, whatever the cost", el: "Να αποδείξει ότι ο κόσμος έκανε λάθος, όποιο κι αν είναι το κόστος" } },
-    { key: "mentor", en: "Mentor", el: "Μέντορας",
-      role: { en: "Guide / Mentor", el: "Οδηγός / Μέντορας" },
-      traits: [["patient", 4], ["observant", 4], ["guarded", 3], ["cynical", 2]],
-      traitsEl: [["υπομονετικός", 4], ["παρατηρητικός", 4], ["κλειστός", 3], ["κυνικός", 2]],
-      goal: { en: "Prepare someone else to survive without them", el: "Να προετοιμάσει κάποιον άλλον να επιβιώσει χωρίς εκείνον" } }
+    { key: "hero",    str: [4, 3, 3, 2] },
+    { key: "villain", str: [5, 4, 3, 1] },
+    { key: "mentor",  str: [4, 4, 3, 2] }
   ];
-
-  function poolLang() { return window.orosLang === "el" ? "el" : "en"; }
 
   function existingFirstNames() {
     // FIRST tokens only — the old full-name comparison could never
@@ -1805,20 +1820,20 @@
     return arr[Math.floor(Math.random() * arr.length)];
   }
 
-  function genName(L) {
-    var p = POOLS[L];
-    var first = pickUnused(p.first, existingFirstNames());
-    return first + " " + p.last[Math.floor(Math.random() * p.last.length)];
+  function genName() {
+    var first = pickUnused(pool("first"), existingFirstNames());
+    var last = pool("last");
+    return first + " " + last[Math.floor(Math.random() * last.length)];
   }
 
   // Fill ONLY empty draft fields — never overwrite what the user typed.
   function randomizeDraft(draft) {
-    var L = poolLang();
     var changed = false;
-    if (!draft.name.trim())  { draft.name  = genName(L); changed = true; }
-    if (!draft.role.trim())  { draft.role  = POOLS[L].roles[Math.floor(Math.random() * POOLS[L].roles.length)]; changed = true; }
+    var roles = pool("roles");
+    if (!draft.name.trim())  { draft.name  = genName(); changed = true; }
+    if (!draft.role.trim())  { draft.role  = roles[Math.floor(Math.random() * roles.length)]; changed = true; }
     if (!draft.traits.length) {
-      var bag = POOLS[L].traits.slice();
+      var bag = pool("traits");
       for (var i = 0; i < 3 && bag.length; i++) {
         var idx = Math.floor(Math.random() * bag.length);
         draft.traits.push({
@@ -1832,12 +1847,14 @@
   }
 
   function applyTemplate(draft, tpl) {
-    var L = poolLang();
-    draft.name  = draft.name.trim()  || genName(L);
-    draft.role  = tpl.role[L];
-    var tr = L === "el" ? tpl.traitsEl : tpl.traits;
-    draft.traits = tr.map(function (x) { return { name: x[0], str: x[1] }; });
-    if (!draft.goals.length) draft.goals = [{ done: false, text: tpl.goal[L] }];
+    var k = "tpl." + tpl.key;
+    draft.name  = draft.name.trim()  || genName();
+    draft.role  = t(k + ".role");
+    var names = t(k + ".traits").split(",");
+    draft.traits = tpl.str.map(function (n, i) {
+      return { name: String(names[i] || "").trim(), str: n };
+    }).filter(function (x) { return x.name; });
+    if (!draft.goals.length) draft.goals = [{ done: false, text: t(k + ".goal") }];
   }
 
   // ---------- Radar chart (pure SVG, currentColor = theme accent) ----------
@@ -2134,9 +2151,9 @@
     var rels  = orderedRels();
 
     var buf = [];
-    buf.push("# Characters");
+    buf.push("# " + t("tab.chars"));
     buf.push("");
-    buf.push("> Exported on " + new Date().toLocaleString());
+    buf.push("> " + tf("md.exported", { date: new Date().toLocaleString(loc()) }));
     buf.push("");
     buf.push("---");
     buf.push("");
@@ -2144,17 +2161,17 @@
     chars.forEach(function (c) {
       buf.push("## " + c.name);
       buf.push("");
-      if (c.role) buf.push("**Role:** " + c.role + "");
+      if (c.role) buf.push("**" + t("md.role") + ":** " + c.role + "");
       if (c.bio) {
         buf.push("");
         buf.push(c.bio);
       }
       buf.push("");
       if (c.traits.length) {
-        buf.push("### Traits");
+        buf.push("### " + t("fld.traits"));
         buf.push("");
         c.traits.forEach(function (tr) {
-          buf.push("- **" + tr.name + "** — intensity " + tr.str + "/5");
+          buf.push("- **" + tr.name + "** — " + tf("md.intensity", { n: tr.str }));
         });
         buf.push("");
       }
@@ -2162,7 +2179,7 @@
         // Only non-empty goals — blank draft rows never reach the export
         var active = c.goals.filter(function (g) { return g.text.trim(); });
         if (active.length) {
-          buf.push("### Goals");
+          buf.push("### " + t("fld.goals"));
           buf.push("");
           active.forEach(function (g) {
             buf.push((g.done ? "- [x] " : "- [ ] ") + g.text);
@@ -2175,7 +2192,7 @@
     });
 
     if (rels.length) {
-      buf.push("## Relationships");
+      buf.push("## " + t("tab.rels"));
       buf.push("");
       rels.forEach(function (r) {
         var ca = db.characters[r.a], cb = db.characters[r.b];
