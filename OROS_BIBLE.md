@@ -7410,3 +7410,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - `webpush.js` (new, precached): subscribe with the relay's VAPID key, next 7 days of reminders (`phone.js` `reminderRows` with optional `hours`/`max`), RFC 8291 encryption per device, relay box `set`; sync slice `webpush` (`oros-webpush-devices`, deterministic merge) so a change on any device refreshes every box; resend on schedule-hash change and once a day. `sw.js` `push` + `notificationclick` (nothing shown while an orOS window is visible, except the test). Relay part #460.
 - Files: `webpush.js`, `phone.js`, `sw.js`, `shell.js`, `index.html`, Settings, help Notifications + Settings EN/EL, CREDITS.md + Credits screen, Bible (Part IX decision, Part VIII services, slice table).
   - Tests: new `tests/webpush.test.js` (RFC 8291 checked by an independent decrypt, 3 KB limit, calendar rows, merge symmetry, 7-day horizon); full suite green; Chromium Settings 1280 EN / 360 EL, sw.js push via CDP, schedule to two listed devices. Not tested: a real push subscription (headless Chromium has none), real delivery through FCM / Mozilla / WNS, real phones, Firefox / Edge / Safari. Needs Chris's VAPID_PRIVATE + VAPID_SUBJECT secrets on the relay.
+
+### 2026-10-17 — Quality gate Q2: two-device sync convergence sweep (#469) — CI only, no APP_VERSION
+- Quality gate Q2: CI sweeps every sync merge function with two simulated devices (diverge, endless upload, lost record); closes A5 as an automated check.
+- Files: `.github/qa/{converge.js,make-fixtures.js,fixtures/*.json,baseline.json,smoke.js}`, `.github/workflows/quality.yml`, `tests/quality-gate.test.js`, Bible.
+  - Tests: full suite green; quality.yml green on GitHub. Nothing shipped to users.
