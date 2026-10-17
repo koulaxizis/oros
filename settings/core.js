@@ -19,7 +19,8 @@
   var SCOPE = {
     theme: "all", skin: "all", wallpaper: "all", pet: "all", seasonal: "all",
     notifications: "all", syncInterval: "all", autoexport: "all", lang: "all", menu: "all",
-    folder: "device", search: "device", passphrase: "device", dock: "device", files: "device"
+    folder: "device", search: "device", passphrase: "device", dock: "device", files: "device",
+    multitask: "device"
   };
 
   var POSITIONS = ["top-left", "top", "top-right", "right",
@@ -347,7 +348,11 @@
       "x.sharelinks": "My shared links",
       "x.reset": "Factory reset", "x.reset.confirm": "Tap again to erase everything",
       "x.reset.hint": "Permanent: erases all orOS data and settings on this device, the backups in the backup folder, all cloud data and cloud backups, and this device's Dropbox sign-in, then starts orOS like new. Repeat on your other devices. Export a backup file first if you may need anything.",
-      "x.reset.working": "Erasing…"
+      "x.reset.working": "Erasing…",
+      "mt.title": "Multitasking", "mt.badge": "Experimental",
+      "mt.on": "Keep apps open when you leave them",
+      "mt.hint": "An app you leave stays open in the background and comes back as you left it. Up to {n} at a time on this device; when there is no room, the one you used longest ago closes. Mail, Calendar, Passwords, Settings and apps that use the camera or microphone still close when you leave them. This is a test: if something misbehaves, turn it off.",
+      "mt.open": "Open in the background now: {n}"
     },
     el: {
       "app": "Ρυθμίσεις", "back": "Πίσω", "sections": "Ενότητες ρυθμίσεων",
@@ -667,7 +672,11 @@
       "x.sharelinks": "Οι σύνδεσμοί μου",
       "x.reset": "Επαναφορά εργοστασιακών", "x.reset.confirm": "Πάτα ξανά για να σβηστούν όλα",
       "x.reset.hint": "Οριστικό: σβήνει όλα τα δεδομένα και τις ρυθμίσεις του orOS σε αυτή τη συσκευή, τα αντίγραφα στον φάκελο αντιγράφων, όλα τα δεδομένα και τα αντίγραφα στο cloud, και τη σύνδεση Dropbox αυτής της συσκευής, και ξεκινά το orOS σαν καινούργιο. Επανάλαβε στις άλλες συσκευές σου. Κάνε πρώτα εξαγωγή αρχείου αν μπορεί να χρειαστείς κάτι.",
-      "x.reset.working": "Σβήνονται…"
+      "x.reset.working": "Σβήνονται…",
+      "mt.title": "Πολυεργασία", "mt.badge": "Δοκιμαστικό",
+      "mt.on": "Οι εφαρμογές μένουν ανοιχτές όταν φεύγεις",
+      "mt.hint": "Μια εφαρμογή που αφήνεις μένει ανοιχτή στο παρασκήνιο και ξαναβγαίνει όπως την άφησες. Έως {n} μαζί σε αυτή τη συσκευή· όταν δεν χωράει άλλη, κλείνει αυτή που χρησιμοποίησες πιο παλιά. Η Αλληλογραφία, το Ημερολόγιο, οι Κωδικοί, οι Ρυθμίσεις και οι εφαρμογές με κάμερα ή μικρόφωνο κλείνουν όπως πριν όταν φεύγεις. Είναι δοκιμαστικό: αν κάτι δεν πάει καλά, κλείσε το.",
+      "mt.open": "Ανοιχτές στο παρασκήνιο τώρα: {n}"
     }
   };
 
