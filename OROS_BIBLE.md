@@ -7604,3 +7604,6 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Groundwork for experimental multitasking (Chris approved the plan 2026-10-17 12:25, /mnt/project-files/multitasking/plan.md): one place for app frames in the shell (`appFrameOf` / `appLive`, 30 bridges moved to it), SY-D5 sync keeps hidden frames live instead of one frame; nothing changes for users (the switch comes in M2). Memory and writer audits in `.github/qa/memory.js` and `.github/qa/writers.js`.
 - Files: `shell.js`, `sync.js`, `mail/notify.js`, `.github/qa/{memory,writers}.js`, `tests/multitask.test.js`, Bible.
   - Tests: full suite green (9 new in `tests/multitask.test.js`); Chromium shell E2E. Not tested: real phones, Firefox, Safari.
+
+### 2026-10-17 — Languages L2b: translation gaps only listed, never fail other PRs (#500) — CI only, no APP_VERSION
+- `tests/i18n.test.js` lists new English strings and changed placeholders for a shown language as translation gaps (in `i18n/<code>/STATUS.md` via coverage.js) instead of failing the PR; docs/translate explains it. Tests: full suite green.
