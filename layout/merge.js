@@ -27,7 +27,7 @@
   // ---------- CSV ----------
   // Case, accent and space free key ("Όνομα " = "ονομα").
   function fold(s) {
-    return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/ς/g, "σ").replace(/\s+/g, " ").trim();
+    return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/\u03c2/g, "\u03c3").replace(/\s+/g, " ").trim();
   }
   // The separator of the first line (outside quotes): , ; or tab.
   function sniff(text) {

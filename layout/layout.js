@@ -45,7 +45,10 @@
   LY.STORAGE_KEY = STORAGE_KEY;
 
   // ---------- 1. Constants, i18n ----------
+  // orosI18n (../i18n.js): the full language code, a pack language
+  // (e.g. "de") included; the old en/el reading is the fallback.
   function appLang() {
+    if (window.orosI18n) return window.orosI18n.lang();
     try {
       var l = localStorage.getItem("oros-lang") ||
               (window.parent && window.parent.orosLang) || "en";
@@ -306,7 +309,10 @@
       "a11y.canvas": "Καμβάς σελίδας"
     }
   };
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "layout", LANG);
   LY.STRINGS = STRINGS;
+  // "el" or "en" for the shared designkit modules (seed names {en, el}).
+  LY.BASE = LANG === "el" ? "el" : "en";
 
   function t(key, vars) {
     var s = (STRINGS[LANG] && STRINGS[LANG][key]) || STRINGS.en[key] || key;
@@ -314,7 +320,7 @@
     return s;
   }
   LY.t = t;
-  LY.label = function (name) { return M.label(name, LANG); };
+  LY.label = function (name) { return M.label(name, LY.BASE); };
 
   // BOOT MARKER
   try { console.log("[orOS] layout app v1.3.0 booted"); } catch (e) {}
@@ -601,6 +607,7 @@
     var d = new Date(ms);
     var dd = ("0" + d.getDate()).slice(-2), mm = ("0" + (d.getMonth() + 1)).slice(-2);
     var hh = ("0" + d.getHours()).slice(-2), mi = ("0" + d.getMinutes()).slice(-2);
+    if (LANG === "de") return dd + "." + mm + "." + d.getFullYear() + " " + hh + ":" + mi;
     return LANG === "el" ? dd + "/" + mm + "/" + d.getFullYear() + " " + hh + ":" + mi
       : d.getFullYear() + "-" + mm + "-" + dd + " " + hh + ":" + mi;
   }

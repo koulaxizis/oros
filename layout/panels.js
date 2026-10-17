@@ -1004,7 +1004,7 @@
   }
   LY.newDocSetup = newDocSetup;
   function newDocDlg() {
-    var lang = LY.LANG, TP = window.orosDK.templates || { LIST: [] };
+    var lang = LY.BASE, TP = window.orosDK.templates || { LIST: [] };
     var s = newDocSetup();
     var pick = "";
     LY.openDialog(t("new.title"), function (body, close) {
