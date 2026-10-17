@@ -7582,3 +7582,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - `scanpdf/scan.js` holds the pure parts (detection, homography, warp, looks, rotate, steadiness), precached; no new libraries.
 - Files: `scanpdf/{index.html,scanpdf.css,core.js,pdfops.js,scanpdf.js,scan.js,help.*.txt}`, `tests/scanpdf-scan.test.js`, What's new, precache.
   - Tests: `tests/scanpdf-scan.test.js` 9 tests (quads, detection on light and dark desks, no page on even pictures and blobs, homography + warp, looks under a shadow, rotate, steadiness, scanned page shape in the PDF, wiring + camera stop + strings); full suite green; real Chromium in the shell with a fake camera at 1280 EN and 360 EL (Auto capture, corners + loupe, photos, strip, delete, camera refused, Esc). Not tested: real phone cameras, torch, Safari.
+
+### 2026-10-17 — Languages L2: German for the shell, Settings, Help and Files (#497) — 2.97.00
+- German (Deutsch) is in the language list, shown as partial: the top bar, menu, Settings, Help and Files are in German, other apps follow (English fills every missing line). Packs in `i18n/de/` (shell, settings, help + help topics, files); `files/index.html` loads `../i18n.js`.
+- Files: `i18n/de/**`, `i18n.js`, `shell.js`, `files/index.html`, Bible languages section, tests.
+  - Tests: full suite green (incl. `tests/i18n.test.js`, `tests/i18n-packs.test.js`); Chromium 360 de / el. Not tested: a German native reader's review, Safari, phones.
