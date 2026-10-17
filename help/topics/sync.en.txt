@@ -36,6 +36,19 @@ Nextcloud usually needs `Through the orOS relay` for this step. The approval has
 
 One device uses one cloud at a time. When a device moves to a new cloud, everything on it goes up there on the next sync; the old cloud keeps its copy.
 
+### Move to another cloud
+`Move to WebDAV / Nextcloud` (while on Dropbox) and `Move to Dropbox` (while on a server) copy your whole cloud to the other one: the sync data and every Vault file, including Drive folders this device keeps in the cloud only. The files are copied as they are, still encrypted, so the same passphrase opens them.
+1. On one device, open `Settings` › `Sync` and choose the move. For a server, fill in the same form as when connecting; for Dropbox, sign in.
+2. The new place must be empty: an empty folder on the server, or a Dropbox without orOS data. Otherwise nothing is moved.
+3. Then, on every other device, choose `Disconnect` and connect to the new cloud with the same passphrase.
+
+The old cloud is left as it was, with its backups, until you delete it yourself.
+
+### Server guides
+- **Nextcloud**: the address is `https://your.cloud/remote.php/dav/files/USERNAME`. Use `Sign in with Nextcloud`, or make an app password under Settings › Security › Devices & sessions. With the WebAppPassword app the browser connects directly; otherwise turn on `Through the orOS relay`.
+- **Synology**: install `WebDAV Server` from the Package Center and turn on HTTPS (port 5006). The address is `https://your-nas-address:5006/` followed by a shared folder, such as `/home`. The NAS needs a public address and a valid certificate (for example Synology DDNS with Let's Encrypt), and `Through the orOS relay` turned on.
+- **ownCloud**: the address is `https://your.cloud/remote.php/dav/files/USERNAME`. Make an app passcode under Settings › Security, and turn on `Through the orOS relay`.
+
 ## Your passphrase
 The passphrase encrypts your data on this device. It never leaves the device, and neither Dropbox nor anyone else can read your data without it.
 

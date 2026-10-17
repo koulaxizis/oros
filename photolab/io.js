@@ -570,9 +570,10 @@
       return fs.stat(p).then(function () { return n < 99 ? tryName(n + 1) : Promise.reject(new Error("name")); },
                              function () { return p; });
     }
+    // Resolves with the saved path (null when it failed; the toast says so).
     return tryName(0).then(function (p) {
-      return fs.write(p, blob).then(function () { PL.toast(t("msg.savedPictures", { name: p.split("/").pop() })); });
-    }).catch(function () { PL.toast(t("msg.saveFail")); });
+      return fs.write(p, blob).then(function () { PL.toast(t("msg.savedPictures", { name: p.split("/").pop() })); return p; });
+    }).catch(function () { PL.toast(t("msg.saveFail")); return null; });
   }
 
   // ---------- Wallpaper ----------
@@ -614,6 +615,33 @@
       if (!blob) { PL.toast(t("msg.exportFail")); return; }
       var name = C.cleanName(st.doc.name);
       api.open({ kind: "album", data: { t: name }, photos: [{ blob: blob, name: fileName("jpg"), c: name }] });
+    }, function () { PL.busy(false); PL.toast(t("msg.exportFail")); });
+  }
+
+  // ---------- Send to… (the shell's sheet: Mail, Layout, a person) ----------
+  // The flattened picture as PNG, at most 4096 px, saved in Pictures
+  // first: the receivers take a path on the orOS disk.
+  function sendApi() {
+    try {
+      var s = window.parent && window.parent !== window && window.parent.orosSend;
+      return s && typeof s.open === "function" ? s : null;
+    } catch (e) { return null; }
+  }
+  function sendTo() {
+    var api = sendApi();
+    if (!api || !st.doc) return;
+    var k = Math.min(1, 4096 / Math.max(st.doc.w, st.doc.h));
+    PL.busy(true);
+    render("png", 1, k).then(function (blob) {
+      PL.busy(false);
+      if (!blob) { PL.toast(t("msg.exportFail")); return; }
+      return saveToPictures(blob, fileName("png")).then(function (p) {
+        if (!p) return;
+        var it = { path: p, name: p.split("/").pop() };
+        var opts = { kind: "files", data: { items: [it] } };
+        if (shareApi()) opts.share = { kind: "album", data: { t: "" }, photos: [it] };
+        api.open(opts);
+      });
     }, function () { PL.busy(false); PL.toast(t("msg.exportFail")); });
   }
 
@@ -666,6 +694,7 @@
     openDiskPath: openDiskPath, setClipboard: setClipboard, pasteFromMenu: pasteFromMenu,
     exportImage: exportImage, setWallpaper: setWallpaper, canWallpaper: function () { return !!wallApi(); },
     sendToSomeone: sendToSomeone, canShare: function () { return !!shareApi(); },
+    sendTo: sendTo, canSend: function () { return !!sendApi(); },
     saveThumb: saveThumb, wire: wire, sendBack: sendBack, openLrPreset: openLrPreset,
     IMG_EXT: IMG_EXT, RAW_ACCEPT: RAW_ACCEPT, RAW_MAX: RAW_MAX, rawPixels: rawPixels, source: source,
     dialogHost: dialogHost, saveToPictures: saveToPictures,

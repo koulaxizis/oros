@@ -83,6 +83,7 @@
       "tm.none": "No timers yet. Set a time below and tap Start; several can run at once.",
       "tm.dflt": "Timer {n}", "tm.full": "Up to 20 timers.", "tm.preset": "{n} min",
       "snd.beep": "Beep", "snd.chime": "Chime", "snd.bell": "Bell", "snd.digital": "Digital", "snd.gentle": "Gentle",
+      "snd.melodies": "Your melodies (Ringtone Composer)", "snd.gone": "A deleted melody (beeps)",
       "st.start": "Start", "st.stop": "Stop", "st.reset": "Reset",
       "st.lap": "Lap", "st.laptime": "Lap time", "st.total": "Total", "st.title": "Stopwatch",
       "st.copy": "Copy laps", "st.csv": "Save CSV", "st.copied": "Copied",
@@ -127,6 +128,7 @@
       "tm.none": "Καμία αντίστροφη μέτρηση ακόμη. Όρισε χρόνο παρακάτω και πάτα Έναρξη· μπορούν να τρέχουν πολλές μαζί.",
       "tm.dflt": "Μέτρηση {n}", "tm.full": "Έως 20 αντίστροφες μετρήσεις.", "tm.preset": "{n} λεπτά",
       "snd.beep": "Μπιπ", "snd.chime": "Καμπανάκι", "snd.bell": "Καμπάνα", "snd.digital": "Ψηφιακό", "snd.gentle": "Απαλό",
+      "snd.melodies": "Οι μελωδίες σου (Συνθέτης ήχων κλήσης)", "snd.gone": "Μελωδία που σβήστηκε (μπιπ)",
       "st.start": "Έναρξη", "st.stop": "Διακοπή", "st.reset": "Επαναφορά",
       "st.lap": "Γύρος", "st.laptime": "Χρόνος γύρου", "st.total": "Σύνολο", "st.title": "Χρονόμετρο",
       "st.copy": "Αντιγραφή γύρων", "st.csv": "Αποθήκευση CSV", "st.copied": "Αντιγράφηκε",
@@ -1301,14 +1303,31 @@
     if (changed) tmrSave();
     return changed;
   }
+  // The voices, then the Ringtone Composer melodies ("rt:<id>", read
+  // through the shell's orosMelodies; a deleted one keeps its row).
+  function melodyList() {
+    try {
+      var M = window.parent && window.parent !== window && window.parent.orosMelodies;
+      return M && typeof M.list === "function" ? M.list() : [];
+    } catch (e) { return []; }
+  }
   function soundOptions(sel, cur) {
     sel.innerHTML = "";
-    CC.SOUNDS.forEach(function (s) {
+    var add = function (box, v, label) {
       var o = document.createElement("option");
-      o.value = s;
-      o.textContent = t("snd." + s);
-      sel.appendChild(o);
-    });
+      o.value = v;
+      o.textContent = label;
+      box.appendChild(o);
+    };
+    CC.SOUNDS.forEach(function (s) { add(sel, s, t("snd." + s)); });
+    var mel = melodyList(), gone = /^rt:/.test(cur || "") && !mel.some(function (m) { return "rt:" + m.id === cur; });
+    if (mel.length || gone) {
+      var g = document.createElement("optgroup");
+      g.label = t("snd.melodies");
+      mel.forEach(function (m) { add(g, "rt:" + m.id, m.name || "…"); });
+      if (gone) add(g, cur, t("snd.gone"));
+      sel.appendChild(g);
+    }
     sel.value = cur || "beep";
   }
   // Preview: the shell's alarm voices when inside orOS, else a beep.

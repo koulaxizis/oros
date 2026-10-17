@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "2.85.01";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "2.87.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -5239,25 +5239,45 @@
   // the server has answered.
   function syncConnectNextcloud(form) {
     var S = window.orosSync;
-    if (!S || typeof S.connectNextcloud !== "function" || S.isConnected()) return;
+    if (!S || typeof S.connectNextcloud !== "function" || S.isConnected() !== !!form.move) return;
     var w = null;
     try { w = window.open("about:blank", "_blank"); } catch (e) { w = null; }
     try { if (w) w.opener = null; } catch (e) {}
     state.ncWaiting = true;
     renderMenu();
-    S.connectNextcloud({ url: form.url, dir: form.dir, relay: !!form.relay }, function (url) {
+    S.connectNextcloud({ url: form.url, dir: form.dir, relay: !!form.relay, move: !!form.move }, function (url) {
       setSyncMsgRaw("dim", window.t("sync.nc.waiting"));
       if (w && !w.closed) w.location.href = url;
       else window.open(url, "_blank", "noopener");
     }).then(function (acc) {
       state.ncWaiting = false;
       state.syncUserEmail = (acc && acc.email) || null;
-      setSyncMsg("ok", "sync.dav.ok");
+      setSyncMsg("ok", form.move ? "sync.move.ok" : "sync.dav.ok");
     }, function (err) {
       state.ncWaiting = false;
       try { if (w && !w.closed && w.location.href === "about:blank") w.close(); } catch (e) {}
       handleSyncError(err);
     });
+  }
+
+  // WebDAV W4: move this device's cloud to the other provider. The
+  // sync file and every Vault file are copied as they are (encrypted);
+  // the old cloud is left as it was.
+  function syncMoveDav(form) {
+    var S = window.orosSync;
+    if (!S || typeof S.moveToWebdav !== "function" || !S.isConnected()) return;
+    setSyncMsgRaw("dim", window.t("sync.dav.testing"));
+    S.moveToWebdav({ url: form.url, user: form.user, pass: form.pass, dir: form.dir, relay: !!form.relay })
+      .then(function (acc) {
+        state.syncUserEmail = (acc && acc.email) || null;
+        setSyncMsg("ok", "sync.move.ok");
+      })
+      .catch(handleSyncError);
+  }
+  function syncMoveDropbox() {
+    var S = window.orosSync;
+    if (!S || typeof S.moveToDropbox !== "function" || !S.isConnected()) return;
+    S.moveToDropbox().catch(handleSyncError);
   }
 
   // SEC-2 / A71a: Disconnect first cancels this device's access at
@@ -7288,6 +7308,23 @@
       });
     }
 
+    // WebDAV W4: a move started before the Dropbox sign-in finished on
+    // boot; its progress shows in Settings › Sync.
+    if (window.orosSync && typeof window.orosSync.onMove === "function") {
+      window.orosSync.onMove(function (p) {
+        if (p.done >= p.total) return;
+        state.syncMsg = { kind: "dim", text: window.t("sync.move.progress")
+          .replace("{done}", String(p.done)).replace("{total}", String(p.total)) };
+        renderMenu();
+      });
+    }
+    if (window.orosSync && window.orosSync.moveDone) {
+      window.orosSync.moveDone.then(function (r) {
+        if (r && r.moved) { state.syncUserEmail = null; setSyncMsg("ok", "sync.move.ok"); }
+        else if (r && r.error) handleSyncError(r.error);
+      });
+    }
+
     // Vault auto-unlock settled → re-render (dot turns "on" without user
     // ever typing the passphrase; silent pull already handled by engine)
     if (window.orosSync && window.orosSync.vaultUnlocked) {
@@ -7444,18 +7481,29 @@
     try {
       var list = JSON.parse(localStorage.getItem("oros-time-timers"));
       for (var i = 0; Array.isArray(list) && i < list.length; i++) {
-        if (list[i] && list[i].aid === a.id && ALARM_SOUNDS[list[i].sound]) return list[i].sound;
+        if (list[i] && list[i].aid === a.id && (ALARM_SOUNDS[list[i].sound] || ALARM_RT.test(list[i].sound))) return list[i].sound;
       }
     } catch (e) {}
     return "beep";
   }
+  // A timer can also ring with a Ringtone Composer melody, "rt:<id>"
+  // (stickies/host.js window.orosMelodies; gone → the beep).
+  var ALARM_RT = /^rt:[A-Za-z0-9_-]{1,64}$/;
+  function alarmVoice(name) {
+    if (ALARM_RT.test(name) && window.orosMelodies) {
+      window.orosMelodies.play(name.slice(3), function () { alarmPip("beep"); }, 15);
+      return;
+    }
+    alarmPip(name);
+  }
   // Preview for the Time app's sound pickers (same voices).
   window.orosAlarmSound = function (name) {
-    if (typeof name === "string" && ALARM_SOUNDS[name]) alarmPip(name);
+    if (typeof name === "string" && (ALARM_SOUNDS[name] || ALARM_RT.test(name))) alarmVoice(name);
   };
 
   function alarmStopRing() {
     if (alarmRing.timer) { clearInterval(alarmRing.timer); alarmRing.timer = null; }
+    try { if (window.orosMelodies) window.orosMelodies.stop(); } catch (e) {}
     var ov = document.getElementById("alarm-toast");
     if (ov) ov.remove();
   }
@@ -7543,8 +7591,9 @@
     el.appendChild(snoozeBtn);
     el.appendChild(btn);
     document.body.appendChild(el);
-    alarmPip(voice);
-    alarmRing.timer = setInterval(function () { alarmPip(voice); }, 1500);
+    alarmVoice(voice);
+    // a melody (≤ 15 s) plays again after a pause, the pips every 1.5 s
+    alarmRing.timer = setInterval(function () { alarmVoice(voice); }, ALARM_RT.test(voice) ? 17000 : 1500);
     setTimeout(function () {
       if (document.getElementById("alarm-toast")) alarmStopRing();
     }, 30000);
@@ -8909,6 +8958,7 @@
         davAvailable: !!(S && typeof S.connectWebdav === "function"),
         ncAvailable: !!(S && typeof S.connectNextcloud === "function"),
         ncWaiting: !!state.ncWaiting,
+        moveAvailable: !!(S && typeof S.moveToWebdav === "function"),
         dirty: !!(unlocked && S.isDirty()),
         hasVault: !!(connected && S.hasDeviceVault()),
         interval: getSafeInterval(),
@@ -9005,6 +9055,10 @@
       case "sync.connectNc":
         if (arg && typeof arg.url === "string") syncConnectNextcloud(arg);
         return;
+      case "sync.moveDav":
+        if (arg && typeof arg.url === "string" && typeof arg.pass === "string") syncMoveDav(arg);
+        return;
+      case "sync.moveDb":     syncMoveDropbox(); return;
       case "sync.cancelNc":
         if (S && typeof S.cancelNextcloud === "function") S.cancelNextcloud();
         return;

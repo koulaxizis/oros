@@ -1,6 +1,12 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.87.00
+- Pixel Avatar makes wallpapers; Send to… for pictures from Pixel Avatar, Photo Lab and Atelier (Mail, Layout); Studio sends to Music and to Ringtone Composer; your melodies can be the notification and timer sounds.
+
+## Version 2.86.00
+- Sync: move your whole cloud between Dropbox and a WebDAV / Nextcloud server from Settings, Vault and Drive files included, still encrypted.
+
 ## Version 2.85.01
 - Android widgets: a magnifier button opens the command bar (needs the new orOS Android app).
 

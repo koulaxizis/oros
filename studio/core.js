@@ -517,6 +517,66 @@
     return { a: 0, b: projectEnd(clips) };
   }
 
+  // ---------- Ringtone (RTTTL for Ringtone Composer) ----------
+  // notes: [{ at, end, p }] in project time (clipNotes) → RTTTL text
+  // ringtones/core.js parseRTTTL reads with no skipped token, or null
+  // when there is no note. One voice: where notes overlap the highest
+  // sounds, and a note cut by a higher one does not come back; gaps
+  // become rests, the silence before the first note is left out.
+  // Lengths are quantized to 32nd notes at bpm (40..300, quarter notes
+  // as in RTTTL) and split into 1..32 with an optional dot; pitches
+  // fold into octaves 4..7 (A4 = 440 = MIDI 69). At most 255 notes and
+  // rests; the name is letters, digits and spaces, up to 40.
+  var RT_MAX = 255;
+  var RT_PIECES = [[48, 1, 1], [32, 1, 0], [24, 2, 1], [16, 2, 0], [12, 4, 1], [8, 4, 0],
+                   [6, 8, 1], [4, 8, 0], [3, 16, 1], [2, 16, 0], [1, 32, 0]];    // [32nds, length, dot]
+  var RT_LETTERS = ["c", "c#", "d", "d#", "e", "f", "f#", "g", "g#", "a", "a#", "b"];
+  function rtttlName(name) {
+    var n = String(name || "").replace(/[^\p{L}\p{N} ]+/gu, " ").replace(/\s+/g, " ").trim().slice(0, 40).trim();
+    return n || "Studio";
+  }
+  function toRtttl(notes, bpm, name) {
+    bpm = Math.round(clamp(isNum(bpm) ? bpm : DEFAULT.bpm, 40, 300));
+    var u = 60 / bpm / 8, list = [];
+    (Array.isArray(notes) ? notes : []).forEach(function (q) {
+      if (!q || !isNum(q.at) || !isNum(q.end) || !isNum(q.p) || q.end <= q.at) return;
+      var a = Math.round(q.at / u), e = Math.max(a + 1, Math.round(q.end / u));
+      list.push({ s: a, e: e, p: Math.round(clamp(q.p, 0, 127)) });
+    });
+    if (!list.length) return null;
+    list.sort(function (x, y) { return x.s - y.s || y.p - x.p; });
+    var t0 = list[0].s, span = 0;
+    list.forEach(function (x) { span = Math.max(span, x.e - t0); });
+    span = Math.min(span, RT_MAX * 48);          // never more than 255 of the longest piece
+    var own = new Int32Array(span).fill(-1);
+    list.forEach(function (x, i) {
+      for (var k = Math.max(0, x.s - t0); k < Math.min(span, x.e - t0); k++) {
+        var o = own[k] < 0 ? null : list[own[k]];
+        if (!o || x.p > o.p || (x.p === o.p && x.s > o.s)) own[k] = i;
+      }
+    });
+    var toks = [], gone = {}, k = 0;
+    while (k < span && toks.length < RT_MAX) {
+      var who = own[k], j = k;
+      if (who >= 0 && gone[who]) who = -1;       // cut by a higher note: no comeback
+      while (j < span && (own[j] === own[k])) j++;
+      if (own[k] >= 0) gone[own[k]] = true;
+      var n = j - k, x = who >= 0 ? list[who] : null;
+      var o = x ? Math.floor(x.p / 12) - 1 : 0;
+      o = clamp(o, 4, 7);
+      while (n > 0 && toks.length < RT_MAX) {
+        for (var i = 0; RT_PIECES[i][0] > n; i++) {}
+        var pc = RT_PIECES[i];
+        toks.push({ r: !x, t: pc[1] + (x ? RT_LETTERS[x.p % 12] + o : "p") + (pc[2] ? "." : "") });
+        n -= pc[0];
+      }
+      k = j;
+    }
+    while (toks.length && toks[toks.length - 1].r) toks.pop();
+    if (!toks.length) return null;
+    return rtttlName(name) + ":d=4,o=5,b=" + bpm + ":" + toks.map(function (x) { return x.t; }).join(",");
+  }
+
   // ---------- Peaks (waveform drawing) ----------
   // channels: arrays of samples. Returns `buckets` [min, max] pairs as
   // one Float32Array (min0, max0, min1, max1, …), both channels folded.
@@ -632,7 +692,7 @@
     normAuto: normAuto, autoValueAt: autoValueAt, autoEvents: autoEvents, activeLane: activeLane, setLane: setLane,
     keysOf: keysOf, keyLoops: keyLoops, keyPlan: keyPlan,
     MAX_NOTES: MAX_NOTES, MIN_NOTE: MIN_NOTE, INST_RE: INST_RE, cmpNote: cmpNote, normNotes: normNotes,
-    isMidi: isMidi, retimeClip: retimeClip, clipNotes: clipNotes
+    isMidi: isMidi, retimeClip: retimeClip, clipNotes: clipNotes, toRtttl: toRtttl
   };
   if (typeof module === "object" && module.exports) module.exports = api;
   else root.StudioCore = api;

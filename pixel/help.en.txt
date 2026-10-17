@@ -23,7 +23,9 @@ Pick an export size under `Export`, then:
 - `PNG` saves a crisp image with sharp pixels;
 - `SVG` saves a vector image;
 - `Copy image` puts a PNG on the clipboard;
-- `Use in Netizen ID` makes the face the avatar of the card open in [Netizen ID](app:netizen), with its colours. Faces of 8 or 16 pixels are resized to Netizen's 12×12.
+- `Use in Netizen ID` makes the face the avatar of the card open in [Netizen ID](app:netizen), with its colours. Faces of 8 or 16 pixels are resized to Netizen's 12×12;
+- `Use as wallpaper` makes the face your orOS wallpaper, crisp in the middle of the screen on its background colour;
+- `Send to…` saves the face as a PNG in `/internal/Pictures` and hands it to another app or person.
 
 A clear background stays transparent in the PNG and SVG.
 
