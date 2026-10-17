@@ -61,8 +61,9 @@
     en: {
       list: "List", note: "Note", contact: "Contact", event: "Event", recipe: "Recipe", links: "Links", wiki: "Wiki article",
       items: "{n} items", item1: "1 item", links1: "1 link", linksN: "{n} links",
-      untitled: "Untitled", allday: "all day", repeats: "Repeats", every: { D: "every day", W: "every week", M: "every month", Y: "every year" },
-      every2: { D: "every 2 days", W: "every 2 weeks", M: "every 2 months", Y: "every 2 years" },
+      untitled: "Untitled", allday: "all day", repeats: "Repeats",
+      "every.D": "every day", "every.W": "every week", "every.M": "every month", "every.Y": "every year",
+      "every2.D": "every 2 days", "every2.W": "every 2 weeks", "every2.M": "every 2 months", "every2.Y": "every 2 years",
       until: "until {d}", serv: "Serves {n}", ings: "Ingredients", steps: "Steps", source: "Source",
       prep: "Prep {n} min", cook: "Cook {n} min", from: "an orOS link",
       phone: "Phone", email: "Email", address: "Address", web: "Website", im: "Chat",
@@ -78,8 +79,9 @@
     el: {
       list: "Λίστα", note: "Σημείωμα", contact: "Επαφή", event: "Γεγονός", recipe: "Συνταγή", links: "Σύνδεσμοι", wiki: "Άρθρο wiki",
       items: "{n} είδη", item1: "1 είδος", links1: "1 σύνδεσμος", linksN: "{n} σύνδεσμοι",
-      untitled: "Χωρίς τίτλο", allday: "όλη μέρα", repeats: "Επαναλαμβάνεται", every: { D: "κάθε μέρα", W: "κάθε εβδομάδα", M: "κάθε μήνα", Y: "κάθε χρόνο" },
-      every2: { D: "κάθε 2 μέρες", W: "κάθε 2 εβδομάδες", M: "κάθε 2 μήνες", Y: "κάθε 2 χρόνια" },
+      untitled: "Χωρίς τίτλο", allday: "όλη μέρα", repeats: "Επαναλαμβάνεται",
+      "every.D": "κάθε μέρα", "every.W": "κάθε εβδομάδα", "every.M": "κάθε μήνα", "every.Y": "κάθε χρόνο",
+      "every2.D": "κάθε 2 μέρες", "every2.W": "κάθε 2 εβδομάδες", "every2.M": "κάθε 2 μήνες", "every2.Y": "κάθε 2 χρόνια",
       until: "έως {d}", serv: "Μερίδες: {n}", ings: "Υλικά", steps: "Βήματα", source: "Πηγή",
       prep: "Προετοιμασία {n}′", cook: "Μαγείρεμα {n}′", from: "σύνδεσμο orOS",
       phone: "Τηλέφωνο", email: "Email", address: "Διεύθυνση", web: "Ιστότοπος", im: "Chat",
@@ -93,7 +95,20 @@
       album: "Άλμπουμ", albumT: "Φωτογραφίες", albumN: "{n} φωτογραφίες", album1: "1 φωτογραφία", photo: "Φωτογραφία {n}"
     }
   };
-  function L(lang) { return S[lang] || S.en; }
+  // Another language (orOS language packs, ../i18n.js): English
+  // overlaid with the "share" pack, built on first use. In the shell
+  // the pack may arrive later (send.js asks for it); resetPacks() then
+  // drops the copy built without it.
+  function L(lang) {
+    var I = root && root.orosI18n;
+    if (!S[lang] && I && typeof I.known === "function" && I.known(lang)) I.table(S, "share", lang);
+    return S[lang] || S.en;
+  }
+  function resetPacks() { Object.keys(S).forEach(function (k) { if (k !== "en" && k !== "el") delete S[k]; }); }
+  function locOf(lang) {
+    var I = root && root.orosI18n;
+    return I && typeof I.locale === "function" && lang ? I.locale(lang) : (lang === "el" ? "el-GR" : "en-GB");
+  }
   function fill(s, p) {
     Object.keys(p || {}).forEach(function (k) { s = s.split("{" + k + "}").join(String(p[k])); });
     return s;
@@ -524,7 +539,7 @@
     var m = YMD_RE.exec(ymd);
     if (!m) return ymd;
     try {
-      return new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])).toLocaleDateString(lang === "el" ? "el-GR" : "en-GB",
+      return new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])).toLocaleDateString(locOf(lang),
         { weekday: "short", day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
     } catch (e) { return ymd; }
   }
@@ -537,7 +552,7 @@
   function repeatText(r, lang) {
     if (!r) return "";
     var s = L(lang);
-    var t = (r.i === 2 ? s.every2 : s.every)[r.f];
+    var t = s[(r.i === 2 ? "every2." : "every.") + r.f];
     if (r.u) t += ", " + fill(s.until, { d: fmtDate(r.u, lang) });
     return t;
   }
@@ -864,7 +879,7 @@
     norm: norm, pack: pack, encode: encode, decode: decode, isLocked: isLocked, codeFromHash: codeFromHash,
     summary: summary, title: titleOf, text: text, file: file, target: target,
     whenText: whenText, repeatText: repeatText, addrText: addrText, contactName: contactName,
-    vcard: vcard, ics: ics, calIcs: calIcs, calRange: calRange, fmtDate: fmtDate, netscape: netscape, strings: L,
+    vcard: vcard, ics: ics, calIcs: calIcs, calRange: calRange, fmtDate: fmtDate, netscape: netscape, strings: L, resetPacks: resetPacks, locale: locOf,
     slotWhen: slotWhen, slotEvent: slotEvent, slotMail: slotMail, hm: hmOf
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
