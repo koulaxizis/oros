@@ -7687,3 +7687,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 
 ### 2026-10-17 — orOS Drive on the phone: Android build uses oros-drive main 242b375 (#513) — CI only, no APP_VERSION
 - `.github/workflows/android.yml` builds the Drive core from oros-drive main 242b375 (oros-drive PR #1 merged, Chris 17:15) instead of the earlier pin. Tests: drive-android tests; Android build in CI.
+
+### 2026-10-17 — Languages L5a: Photo Lab, Atelier, Layout, Montage and Mockups in German (#514) — 3.10.00
+- Photo Lab, Atelier, Layout, Montage and Mockups are now in German: packs in `i18n/de/`, inline texts moved into {en, el} tables, and each `index.html` loads `../i18n.js` before its own scripts; English still fills any missing line.
+- Files: `i18n/de/**`, `photolab/`, `atelier/`, `layout/`, `montage/`, `mockups/` (index.html + scripts), `.github/i18n/inline-baseline.json`, `i18n/apps.json`.
+  - Tests: full suite green; Chromium 360 de / el / en. Not tested: a German native reader's review, Safari, phones.
