@@ -312,6 +312,8 @@ const STRINGS = {
     'io.imported': 'Imported',
     'io.importfailed': 'Could not parse this file',
     'io.pickFolder': 'Open an unzipped .orosdoc folder…',
+    'io.gdocs': 'From Google Docs…',
+    'io.gdocsWait': 'Sign in to Google, then pick one document.',
     'io.newer': 'This file was made by a newer orOS. Update orOS to open it.',
     'io.dbConfirm': 'Merge this Writer backup? Its documents, templates and settings come back; documents that exist only here are kept.',
     'io.dbKept': 'Backup merged. {n} document(s) differed: the newer text is kept, the other copy is in Version history.',
@@ -661,6 +663,8 @@ const STRINGS = {
     'io.imported': 'Εισήχθη',
     'io.importfailed': 'Δεν ήταν δυνατή η ανάγνωση του αρχείου',
     'io.pickFolder': 'Άνοιγμα αποσυμπιεσμένου φακέλου .orosdoc…',
+    'io.gdocs': 'Από το Google Docs…',
+    'io.gdocsWait': 'Συνδέσου στη Google και διάλεξε ένα έγγραφο.',
     'io.newer': 'Το αρχείο φτιάχτηκε από νεότερο orOS. Ενημέρωσε το orOS για να το ανοίξεις.',
     'io.dbConfirm': 'Συγχώνευση αυτού του αντιγράφου ασφαλείας; Τα έγγραφα, τα πρότυπα και οι ρυθμίσεις του επανέρχονται· όσα έγγραφα υπάρχουν μόνο εδώ διατηρούνται.',
     'io.dbKept': 'Το αντίγραφο συγχωνεύτηκε. {n} έγγραφα διέφεραν: κρατήθηκε το νεότερο κείμενο και το άλλο αντίγραφο μπήκε στο Ιστορικό εκδόσεων.',
@@ -7297,6 +7301,31 @@ function openImportDialog(prefile) {
   folder.textContent = t('io.pickFolder');
   folder.addEventListener('click', ioPickFolder);
   if (window.OrosBundle) body.appendChild(folder);
+
+  // One Google Doc (or a .docx / .odt in Drive) straight in
+  // (../google-import.js + ../files/gmedia.js). Google's picker is a
+  // layer of this page, so this dialog closes first and the picked
+  // file comes back through the same dialog, like a dropped file.
+  const GM = window.OrosGoogleMedia;
+  if (GM && GM.docReady()) {
+    const gd = document.createElement('button');
+    gd.type = 'button';
+    gd.className = 'io-link-btn';
+    gd.textContent = t('io.gdocs');
+    gd.addEventListener('click', () => {
+      const lang = window.orosLang === 'el' ? 'el' : 'en';
+      const job = GM.pickDoc('document', lang, { picking: () => { if (dlg.open) dlg.close(); } });
+      showToast(t('io.gdocsWait'));
+      job.then(file => {
+        if (dlg.open) dlg.close();
+        if (file) openImportDialog(file);
+      }, e => {
+        const msg = GM.docMessage(e, lang);
+        if (msg) showToast(msg);
+      });
+    });
+    body.appendChild(gd);
+  }
 
   const busy = document.createElement('div');
   busy.className = 'io-busy';

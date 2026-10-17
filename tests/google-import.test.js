@@ -643,3 +643,87 @@ test("Drive: picked files only — download, export of Google formats, skips; th
   assert.equal(none.data.picked, 0);
   assert.equal(revokes().length, 1);
 });
+
+test("gmedia: one document for Writer / Spreadsheet / Slides — kinds, texts", () => {
+  assert.equal(GM.docMimes("nope"), null);
+  assert.equal(GM.docMimes("document")[0], "application/vnd.google-apps.document");
+  assert.equal(GM.docMimes("spreadsheet")[0], "application/vnd.google-apps.spreadsheet");
+  assert.equal(GM.docMimes("presentation")[0], "application/vnd.google-apps.presentation");
+  assert.ok(GM.docMimes("spreadsheet").every((m) => !/google-apps\.(document|presentation)/.test(m)), "a Sheets pick shows no Docs or Slides");
+  // every Google format offered is one gmedia exports
+  ["document", "spreadsheet", "presentation"].forEach((k) => assert.ok(GM.exportFor(GM.docMimes(k)[0])));
+  assert.equal(GM.docMessage({ code: "cancelled" }, "en"), "", "giving up says nothing");
+  assert.match(GM.docMessage({ code: "network", detail: "picker" }, "el"), /Google Drive/);
+  assert.match(GM.docMessage({ code: "fail" }, "en"), /could not be brought in/);
+  assert.notEqual(GM.docMessage({ code: "fail" }, "el"), GM.docMessage({ code: "fail" }, "en"));
+});
+
+test("gmedia: pickDoc signs in, shows only that kind in the picker (one file), downloads the export, revokes", async () => {
+  reset();
+  // a fresh copy of gmedia that sees a browser-ish window with Google's picker
+  const key = require.resolve(path.join(ROOT, "files/gmedia.js"));
+  delete require.cache[key];
+  let shown = null;
+  const B = function () {
+    const me = { opts: {} };
+    ["addView", "enableFeature", "setOAuthToken", "setDeveloperKey", "setAppId", "setOrigin", "setLocale", "setSize"].forEach((f) => {
+      me[f] = (v) => { me.opts[f] = v; return me; };
+    });
+    me.setMaxItems = (n) => { me.opts.max = n; return me; };
+    me.setCallback = (cb) => { me.cb = cb; return me; };
+    me.build = () => ({ setVisible: () => { shown = me.opts; me.cb({ a: "picked", docs: [{ id: "doc1", name: "Plan", mime: "application/vnd.google-apps.document" }] }); } });
+    return me;
+  };
+  const View = function () { this.m = ""; };
+  View.prototype.setIncludeFolders = function () { return this; };
+  View.prototype.setSelectFolderEnabled = function () { return this; };
+  View.prototype.setMimeTypes = function (m) { this.m = m; return this; };
+  global.window = global;
+  global.innerWidth = 900; global.innerHeight = 700;
+  global.location.protocol = "https:"; global.location.host = "useoros.online";
+  global.gapi = { load: (n, o) => o.callback() };
+  global.google = { picker: { DocsView: View, ViewId: { DOCS: "docs" }, Feature: { MULTISELECT_ENABLED: "multi" }, PickerBuilder: B,
+    Response: { ACTION: "a", DOCUMENTS: "docs" }, Action: { PICKED: "picked", CANCEL: "cancel" },
+    Document: { ID: "id", NAME: "name", MIME_TYPE: "mime" } } };
+  global.OrosGoogleImport = GI;
+  try {
+    const GM2 = require(key);
+    assert.equal(GM2.docReady(), true, "the built-in app has the built-in key");
+    popup = fakePopup(() => ({ token: "tok-g" }));
+    routes["https://oauth2.googleapis.com/revoke"] = () => ({});
+    const D = "https://www.googleapis.com/drive/v3/files/";
+    routes[D] = (u) => /\/export\?/.test(u) ? { body: "DOCX" } : { id: "doc1", name: "Plan", mimeType: "application/vnd.google-apps.document" };
+    let picking = 0;
+    const f = await GM2.pickDoc("document", "el", { picking: () => { picking++; } });
+    assert.equal(opened, 1, "sign-in opened at once (inside the click)");
+    assert.equal(picking, 1);
+    assert.equal(f.name, "Plan.docx");
+    assert.equal(await f.text(), "DOCX");
+    assert.equal(shown.max, 1, "one file");
+    assert.equal(shown.setOAuthToken, "tok-g");
+    assert.equal(shown.setDeveloperKey, GI.BUILTIN_KEY);
+    assert.equal(shown.setLocale, "el");
+    assert.equal(shown.addView.m, GM2.docMimes("document").join(","), "the picker shows only documents");
+    assert.ok(calls.some((c) => c.url === D + "doc1/export?mimeType=" + encodeURIComponent(GM2.exportFor("application/vnd.google-apps.document").mime)));
+    assert.equal(revokes().length, 1);
+    await assert.rejects(GM2.pickDoc("other", "en"), (e) => e.code === "other");
+  } finally {
+    delete global.window; delete global.gapi; delete global.google; delete global.OrosGoogleImport;
+    delete require.cache[key];
+  }
+});
+
+test("Writer, Spreadsheet and Slides offer one Google file each, only when Drive is ready", () => {
+  const read = (p) => fs.readFileSync(path.join(ROOT, p), "utf8");
+  [["writer", "writer.js", "document", "io.gdocs"], ["spreadsheet", "spreadsheet.js", "spreadsheet", "gd.from"],
+    ["slides", "app.js", "presentation", "imp.gslides"]].forEach(([app, js, kind, label]) => {
+    const html = read(app + "/index.html");
+    const a = html.indexOf("../google-import.js"), b = html.indexOf("../files/gmedia.js");
+    assert.ok(a > 0 && b > a, app + ": loads google-import.js, then gmedia.js");
+    assert.ok(!/apis\.google\.com/.test(html), app + ": Google's script is not loaded up front");
+    const src = read(app + "/" + js);
+    assert.ok(src.includes('pickDoc("' + kind + '"') || src.includes("pickDoc('" + kind + "'"), app + " picks a " + kind);
+    assert.ok(/docReady\(\)/.test(src), app + " shows the entry only when Drive is ready");
+    assert.equal(src.split(label).length - 1 >= 3, true, app + ": label " + label + " in English, Greek and in use");
+  });
+});
