@@ -7534,3 +7534,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Maps: Athens bus stops show live arrivals from OASA Telematics, through the orOS relay (op `oasa`).
 - Files: `maps/transit-core.js`, `maps/transit.js`, `maps/maps.css`, `relay/oasa.js` (new), `relay/core.js`, `relay/README.md`, credits (CREDITS.md, CREDIT_GROUPS, Part VIII), Maps help EN/EL, Bible. Mail thread (relay owner) OK at 039ba7b.
   - Tests: full suite green (new `tests/oasa-relay.test.js`, transit tests extended); Chromium transit E2E incl. 360 EL. Not tested: the live OASA service from the cloud container.
+
+### 2026-10-17 — App links wave 6: small everyday links (#490) — 2.90.00
+- Shopping list → Budget, Calendar event → Timesheet timer, Diary shows that day's Mood and Mood → Write about it, weather icons on Calendar and Travel days, Send to… from Calculator and Unit Converter.
+- Files: `weather/days.js` (new, precached), Meals, Calendar, Timesheet, Diary, Mood, Travel, Calculator, Unit Converter, help EN/EL, Bible.
+  - Tests: full suite green (new interop-everyday a/b/c tests); real Chromium 1280 EN / 360 EL. Not tested: a real phone, live weather from the cloud container.
