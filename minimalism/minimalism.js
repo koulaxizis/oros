@@ -28,7 +28,9 @@
 
   // ---------- 1. Constants, i18n, helpers ----------
 
-  var LANG = localStorage.getItem("oros-lang") === "el" ? "el" : "en";
+  // orosI18n (../i18n.js): the full language code, a pack language included.
+  var LANG = window.orosI18n ? window.orosI18n.lang() : (localStorage.getItem("oros-lang") === "el" ? "el" : "en");
+  var LOC = window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB");
 
   var STRINGS = {
     en: {
@@ -97,6 +99,8 @@
     }
   };
 
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "minimalism", LANG);
+
   function t(key) {
     var p = STRINGS[LANG] || STRINGS.en;
     return p[key] !== undefined ? p[key]
@@ -136,11 +140,25 @@
     return (dayOfYear(dateFromYmd(ymd)) - 1) % CYCLE_DAYS;
   }
 
+  // content.js: DAYS (order, level, difficulty) + TEXT, the
+  // { en, el } table of "<id>.title" / "<id>.why" (pack "minimalism").
+  var CONTENT = null;
+  function contentAll() {
+    if (CONTENT) return CONTENT;
+    var days = window.MINIMALISM_DAYS, txt = window.MINIMALISM_TEXT;
+    if (!Array.isArray(days) || !txt || !txt.en) return [];
+    if (window.orosI18n && !txt[LANG]) window.orosI18n.table(txt, "minimalism", LANG);
+    var w = txt[LANG] || txt.en;
+    CONTENT = days.map(function (d) {
+      var id = d[0];
+      return { id: id, level: d[1], difficulty: d[2],
+               title: w[id + ".title"] || txt.en[id + ".title"] || "",
+               why: w[id + ".why"] || txt.en[id + ".why"] || "" };
+    });
+    return CONTENT;
+  }
   function contentList(level) {
-    var pack = window.MINIMALISM_CONTENT || {};
-    var arr = pack[LANG] || pack.en;
-    if (!Array.isArray(arr)) return [];
-    return arr.filter(function (c) { return c && c.level === level; });
+    return contentAll().filter(function (c) { return c && c.level === level; });
   }
   function proposalFor(level, ymd) {
     var list = contentList(level);
@@ -657,7 +675,7 @@
     var lab = document.createElement("span");
     lab.className = "card-day-label";
     var d = dateFromYmd(ymd);
-    var nice = d.toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB",
+    var nice = d.toLocaleDateString(LOC,
       { weekday: "long", day: "numeric", month: "long" });
     lab.textContent = (ymd === todayYmd() ? "" : t("viewing.day") + " · ") + nice;
     head.appendChild(lab);
@@ -744,7 +762,7 @@
       var dateLab = document.createElement("span");
       dateLab.className = "history-date";
       dateLab.textContent = (d === 0 ? t("hist.today") + " · " : "") +
-        dd.toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB",
+        dd.toLocaleDateString(LOC,
           { weekday: "short", day: "numeric", month: "short" });
       row.appendChild(dateLab);
 
@@ -884,7 +902,7 @@
     render();                               // repaint live
   }
 
-  // Contract Β: shell-owned combos forward FIRST (capture phase).
+  // Contract B: shell-owned combos forward FIRST (capture phase).
   document.addEventListener("keydown", function (e) {
     if (!(e.ctrlKey || e.metaKey) || !e.altKey || !e.shiftKey) return;
     var p = window.parent;
