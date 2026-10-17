@@ -49,6 +49,14 @@ for (const f of files) {
 }
 console.log(`Cache-bust done: ${touched}/${files.length} file(s) updated with ?v=${ver}`);
 
+// ---- Q6: CSP meta in every page (hashes follow the inline scripts) ----
+// Written here so an edited inline snippet ships with its new hash;
+// tests/csp.test.js fails the PR first when it was not refreshed.
+if (!check) {
+  const csp = require('./csp.js').run(false, process.cwd());
+  console.log(`CSP refreshed in ${csp.written} page(s).`);
+}
+
 // ---- G2: OFFLINE COVERAGE GUARD ----
 const sw = fs.readFileSync('sw.js', 'utf8');
 const pc = sw.match(/PRECACHE_URLS\s*=\s*\[([\s\S]*?)\]/);

@@ -129,9 +129,18 @@ precache.
 
 A link to `useoros.online/<id>/` must open orOS with your app inside it, not
 the bare page. Copy the template's first `<script>` into your `<head>`, right
-after `<meta charset>`, and change the id. Nothing may come before it.
+after `<meta charset>` and the CSP `<meta>`, and change the id. No other
+script may come before it.
 
 **Check:** `check-app` (DL-1), `tests/direct-link.test.js`.
+
+The Content-Security-Policy `<meta>` sits between `<meta charset>` and that
+script and allows only your own files plus the hash of each inline script.
+After changing the id (or any inline script) run `node .github/scripts/csp.js`
+to refresh it. No inline `on…=` handlers and no scripts from other origins:
+the quality gate fails on any CSP violation.
+
+**Check:** `check-app` (CSP), `tests/csp.test.js`.
 
 ## 10. Menu search (Checklist B 13)
 

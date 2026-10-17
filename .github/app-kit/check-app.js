@@ -146,6 +146,11 @@ function checkApp(root, id) {
   else if (html.indexOf("<script") !== dl.index || dl.index > html.indexOf("</head>")) err("DL-1", "the direct-link snippet must be the first script, inside <head>");
   else pass("DL-1", "direct-link snippet first in <head>");
 
+  // 3b. Content-Security-Policy (quality gate Q6)
+  const cspBad = require(path.join(ROOT, ".github", "scripts", "csp.js")).check(html);
+  if (cspBad.length) err("CSP", cspBad.join("; ") + " (fix: node .github/scripts/csp.js)");
+  else pass("CSP", "CSP meta current");
+
   // 4. Palette (G3)
   const own3 = ownJs.map(codeOf).join("\n");
   if (own3.includes("inheritPalette") && own3.includes("watchPalette")) pass("G3", "inheritPalette + watchPalette");
@@ -184,7 +189,9 @@ function checkApp(root, id) {
   for (const f of textFiles) {
     const s = codeOf(f);
     for (const [re, why] of DANGER) if (re.test(s)) err("safety", f + ": " + why);
-    if (GOOGLE_RE.test(s) && !GOOGLE_APPROVED.has(f)) err("privacy", f + ": names a Google service (orOS has no Google dependencies)");
+    // The CSP meta may allow the approved Picker host (Q6); it loads nothing.
+    const named = s.replace(/<meta http-equiv="Content-Security-Policy"[^>]*>/i, "");
+    if (GOOGLE_RE.test(named) && !GOOGLE_APPROVED.has(f)) err("privacy", f + ": names a Google service (orOS has no Google dependencies)");
   }
   scripts.concat(styles).filter((p) => /^(?:https?:)?\/\//.test(p)).forEach((p) => err("safety", "index.html loads " + p + " from another site; vendor it under vendor/"));
   files.filter((f) => f.endsWith(".css")).forEach((f) => {

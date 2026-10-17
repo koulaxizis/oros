@@ -10,6 +10,7 @@
 
 const fs = require("fs");
 const path = require("path");
+const CSP = require("../scripts/csp.js");
 
 const args = process.argv.slice(2);
 let root = path.join(__dirname, "..", "..");
@@ -51,7 +52,8 @@ for (const f of fs.readdirSync(TPL).sort()) {
     fs.mkdirSync(path.dirname(testFile), { recursive: true });
     fs.writeFileSync(testFile, fill(src));
   } else {
-    fs.writeFileSync(path.join(dir, f), fill(src));
+    // A page's CSP hashes its inline scripts: the filled-in id changes the DL-1 one.
+    fs.writeFileSync(path.join(dir, f), /\.html$/.test(f) ? CSP.withPolicy(fill(src)) : fill(src));
     files.push(f);
   }
 }
