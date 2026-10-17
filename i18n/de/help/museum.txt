@@ -1,0 +1,39 @@
+# Ein-Minuten-Museum
+Jede Minute ein neuer Wikipedia-Artikel, gezeigt wie ein Exponat im Museum, mit Bild, Text und Quellenangaben.
+
+## Erste Schritte
+Öffne die App, und das erste Exponat erscheint. Es wechselt von selbst, wenn der Ring oben rechts abgelaufen ist; das nächste lädt ein paar Sekunden vorher, sodass du nicht warten musst.
+- Die Pause-Schaltfläche hält die Uhr an, etwa um einen langen Text zu lesen. Die Uhr hält auch von selbst an, solange die App verborgen oder minimiert ist.
+- Die Pfeile springen zum vorherigen und nächsten Exponat, durch die letzten 50 dieses Besuchs.
+- Die Schaltfläche mit dem Pfeil nach außen öffnet den ganzen Artikel auf Wikipedia in einem neuen Tab.
+
+## Säle, Sprache und Zeit
+- `Alles` zeigt zufällige Artikel. Sehr kurze Artikel und Begriffsklärungsseiten werden übersprungen.
+- `Bilder` zeigt nur Artikel mit Bild.
+- `Heute empfohlen` zeigt den empfohlenen Artikel des Tages, das Bild des Tages und die meistgelesenen Artikel.
+- `An diesem Tag` zeigt Ereignisse, die an diesem Datum geschehen sind. Diesen Saal gibt es nur in der englischen Wikipedia.
+- `Wikipedia` wählt `English` oder `Ελληνικά`. Anfangs folgt sie der Sprache von orOS; auf Deutsch startet sie mit `English`.
+- `Jedes Exponat` legt fest, wie lange ein Exponat bleibt: 30 Sekunden, 1, 2 oder 5 Minuten.
+
+## Deine Sammlung
+- Der Stern behält das Exponat in `Deine Sammlung`, mit Text und Quellenangaben. Tippe oder klicke noch einmal auf den Stern oder auf das × neben einem Eintrag, um es zu entfernen; `Rückgängig` holt es zurück.
+- Tippe oder klicke auf einen Eintrag der Sammlung, um ihn wieder zu zeigen.
+
+## Wenn keine Verbindung besteht
+Das Museum braucht Wikipedia. Ohne Verbindung zeigt es `Das Museum ist geschlossen`: `Deine Sammlung besuchen` zeigt deine behaltenen Exponate nacheinander, und `Erneut versuchen` verbindet neu. Sobald die Verbindung zurück ist, öffnet das Museum von selbst wieder. `Zurück zu Wikipedia` verlässt die Sammlung.
+
+## Synchronisierung und Sicherung
+- Deine Sammlung begleitet dich über die orOS-Synchronisierung auf all deine Geräte und lässt sich offline lesen.
+- Bilder der Sammlung werden nicht synchronisiert: Jedes Gerät speichert sie, wenn es zum ersten Mal online ist, damit sie auch dort offline erscheinen.
+- Saal, Sprache, Zeit und Pause bleiben nur auf diesem Gerät.
+
+## Tastenkürzel
+[[Space]] Pause oder weiter, [[←]] zurück, [[→]] weiter, [[S]] behalten oder entfernen, [[O]] auf Wikipedia öffnen.
+
+## Tipps
+- Die Texte stammen aus Wikipedia unter der Lizenz CC BY-SA 4.0. Unter jedem Exponat gibt es Links zum Artikel und zu seinen Autoren (der Versionsgeschichte). Bilder des Tages kommen von Wikimedia Commons, mit Urheber und Lizenz.
+> Nimm 5 Minuten und `Bilder` für eine langsame Diashow auf einem zweiten Bildschirm.
+
+## Grenzen
+- Die Sammlung fasst bis zu 500 Exponate.
+>! Bilder und Artikel werden so gezeigt, wie Wikipedia sie hat; orOS filtert ihren Inhalt nicht.

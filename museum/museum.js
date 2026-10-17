@@ -48,7 +48,9 @@
   var TIMEOUT_MS  = 12000;
 
   // ---------- 1. Constants, i18n, helpers ----------
+  // orosI18n (../i18n.js): the full language code, a pack language included.
   function appLang() {
+    if (window.orosI18n) return window.orosI18n.lang();
     try {
       var l = localStorage.getItem("oros-lang") ||
               (window.parent && window.parent.orosLang) || "en";
@@ -116,6 +118,8 @@
     }
   };
 
+  if (typeof window !== "undefined" && window.orosI18n) window.orosI18n.table(STRINGS, "museum", LANG);
+
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;
     var s = p[key] !== undefined ? p[key] : (STRINGS.en[key] !== undefined ? STRINGS.en[key] : key);
@@ -175,7 +179,8 @@
     try { p = JSON.parse(localStorage.getItem(PREFS_KEY) || "null"); } catch (e) {}
     p = (p && typeof p === "object") ? p : {};
     prefs = {
-      lang: C.LANGS.indexOf(p.lang) >= 0 ? p.lang : LANG,
+      // Wikipedia in English or Greek; any other language starts with English
+      lang: C.LANGS.indexOf(p.lang) >= 0 ? p.lang : (LANG === "el" ? "el" : "en"),
       hall: HALLS.indexOf(p.hall) >= 0 ? p.hall : "all",
       dur: DURATIONS.indexOf(p.dur) >= 0 ? p.dur : 60,
       paused: p.paused === true
