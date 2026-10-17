@@ -5234,25 +5234,45 @@
   // the server has answered.
   function syncConnectNextcloud(form) {
     var S = window.orosSync;
-    if (!S || typeof S.connectNextcloud !== "function" || S.isConnected()) return;
+    if (!S || typeof S.connectNextcloud !== "function" || S.isConnected() !== !!form.move) return;
     var w = null;
     try { w = window.open("about:blank", "_blank"); } catch (e) { w = null; }
     try { if (w) w.opener = null; } catch (e) {}
     state.ncWaiting = true;
     renderMenu();
-    S.connectNextcloud({ url: form.url, dir: form.dir, relay: !!form.relay }, function (url) {
+    S.connectNextcloud({ url: form.url, dir: form.dir, relay: !!form.relay, move: !!form.move }, function (url) {
       setSyncMsgRaw("dim", window.t("sync.nc.waiting"));
       if (w && !w.closed) w.location.href = url;
       else window.open(url, "_blank", "noopener");
     }).then(function (acc) {
       state.ncWaiting = false;
       state.syncUserEmail = (acc && acc.email) || null;
-      setSyncMsg("ok", "sync.dav.ok");
+      setSyncMsg("ok", form.move ? "sync.move.ok" : "sync.dav.ok");
     }, function (err) {
       state.ncWaiting = false;
       try { if (w && !w.closed && w.location.href === "about:blank") w.close(); } catch (e) {}
       handleSyncError(err);
     });
+  }
+
+  // WebDAV W4: move this device's cloud to the other provider. The
+  // sync file and every Vault file are copied as they are (encrypted);
+  // the old cloud is left as it was.
+  function syncMoveDav(form) {
+    var S = window.orosSync;
+    if (!S || typeof S.moveToWebdav !== "function" || !S.isConnected()) return;
+    setSyncMsgRaw("dim", window.t("sync.dav.testing"));
+    S.moveToWebdav({ url: form.url, user: form.user, pass: form.pass, dir: form.dir, relay: !!form.relay })
+      .then(function (acc) {
+        state.syncUserEmail = (acc && acc.email) || null;
+        setSyncMsg("ok", "sync.move.ok");
+      })
+      .catch(handleSyncError);
+  }
+  function syncMoveDropbox() {
+    var S = window.orosSync;
+    if (!S || typeof S.moveToDropbox !== "function" || !S.isConnected()) return;
+    S.moveToDropbox().catch(handleSyncError);
   }
 
   function syncDisconnectUser() {
@@ -7167,6 +7187,23 @@
       });
     }
 
+    // WebDAV W4: a move started before the Dropbox sign-in finished on
+    // boot; its progress shows in Settings › Sync.
+    if (window.orosSync && typeof window.orosSync.onMove === "function") {
+      window.orosSync.onMove(function (p) {
+        if (p.done >= p.total) return;
+        state.syncMsg = { kind: "dim", text: window.t("sync.move.progress")
+          .replace("{done}", String(p.done)).replace("{total}", String(p.total)) };
+        renderMenu();
+      });
+    }
+    if (window.orosSync && window.orosSync.moveDone) {
+      window.orosSync.moveDone.then(function (r) {
+        if (r && r.moved) { state.syncUserEmail = null; setSyncMsg("ok", "sync.move.ok"); }
+        else if (r && r.error) handleSyncError(r.error);
+      });
+    }
+
     // Vault auto-unlock settled → re-render (dot turns "on" without user
     // ever typing the passphrase; silent pull already handled by engine)
     if (window.orosSync && window.orosSync.vaultUnlocked) {
@@ -8779,6 +8816,7 @@
         davAvailable: !!(S && typeof S.connectWebdav === "function"),
         ncAvailable: !!(S && typeof S.connectNextcloud === "function"),
         ncWaiting: !!state.ncWaiting,
+        moveAvailable: !!(S && typeof S.moveToWebdav === "function"),
         dirty: !!(unlocked && S.isDirty()),
         hasVault: !!(connected && S.hasDeviceVault()),
         interval: getSafeInterval(),
@@ -8867,6 +8905,10 @@
       case "sync.connectNc":
         if (arg && typeof arg.url === "string") syncConnectNextcloud(arg);
         return;
+      case "sync.moveDav":
+        if (arg && typeof arg.url === "string" && typeof arg.pass === "string") syncMoveDav(arg);
+        return;
+      case "sync.moveDb":     syncMoveDropbox(); return;
       case "sync.cancelNc":
         if (S && typeof S.cancelNextcloud === "function") S.cancelNextcloud();
         return;
