@@ -7540,3 +7540,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Shopping list → Budget, Calendar event → Timesheet timer, Diary shows that day's Mood and Mood → Write about it, weather icons on Calendar and Travel days, Send to… from Calculator and Unit Converter.
 - Files: `weather/days.js` (new, precached), Meals, Calendar, Timesheet, Diary, Mood, Travel, Calculator, Unit Converter, help EN/EL, Bible.
   - Tests: full suite green (new interop-everyday a/b/c tests); real Chromium 1280 EN / 360 EL. Not tested: a real phone, live weather from the cloud container.
+
+### 2026-10-17 — Quality gate Q6: a Content-Security-Policy meta in every page (#491) — 2.91.00
+- Security: every orOS page now allows only its own scripts (Content-Security-Policy meta: `script-src 'self'` + the hashes of that page's inline scripts, `object-src 'none'`; share/ keeps its stricter own policy). `.github/scripts/csp.js` writes / checks it, `tests/csp.test.js` fails a page without it, stamp-assets.js refreshes it on main.
+- Files: every `index.html` / `solo.html` (one meta line), `.github/scripts/csp.js`, `radio/radio.js`, `television/television.js`, tests, Bible.
+  - Tests: full suite green; quality smoke 0 new errors; Chromium shell check. Not tested: every integration against its live service with the policy on, Safari, phones.
