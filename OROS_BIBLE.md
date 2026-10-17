@@ -7352,6 +7352,11 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Files: `assistant/imgai.js` + Assistant settings, `atelier/{inpaint,magic,imagine,magicai,magicdesign}.js`, `atelier/{ai,core,panels,cutout,motion}.js`, `vendor/migan/` (runtime-cached, not precached), credits (CREDITS.md, CREDIT_GROUPS, Part VIII), help EN/EL.
   - Tests: full suite green (new atelier-magic, atelier-magicai, atelier-magicdesign, imgai tests); real Chromium 1280/360 EN/EL with mocked providers. Not tested: real image providers (not reachable from the cloud container), the MI-GAN model on a real GPU/phone.
 
+### 2026-10-17 — Maps transit: out-of-date timetables notice + Athens coverage (#461) — 2.71.01
+- Maps: public transport says when an area's timetables are out of date (Athens at Transitous for now), with a coverage text.
+- Files: `maps/transit-core.js`, `maps/transit.js`, Bible.
+  - Tests: full suite green; Chromium transit E2E incl. 360 EL. Not tested: a real phone, live Transitous from the cloud container.
+
 ### 2026-10-17 — App Kit K1: guide, contract, template and checks for community apps (#462) — docs + CI only, no APP_VERSION
 - App Kit K1: `docs/app-kit/` guide + contract, template app, `.github/app-kit/new-app.js` and `check-app.js` (local check with the CI guards), CONTRIBUTING.md (Chris decides what goes in).
 - Files: `docs/app-kit/**`, `.github/app-kit/{new-app,check-app}.js`, `.github/workflows/tests.yml`, CONTRIBUTING.md, README.md, `tests/app-kit.test.js`, Bible.
