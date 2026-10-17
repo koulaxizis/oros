@@ -7723,3 +7723,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Game Center, Solitaire, Xeri, Chess, Backgammon, Checkers, Battleship, Crossword, Wordle, Sudoku, Minesweeper, Nonogram and Flow Free are now in German: packs and help pages in `i18n/de/`, inline texts moved into {en, el} tables, and each `index.html` loads `../i18n.js` before its own scripts. English still fills any missing line.
 - Files: `i18n/de/**`, `gamecenter/`, the 12 game folders (index.html + scripts), `gamekit/daily.js`, `gamecenter.css`, `.github/i18n/inline-baseline.json`, `i18n/apps.json`.
   - Tests: 4776/4776; Chromium 360 de / el / en. Not tested: a German native reader's review, real phone, Safari, online multiplayer in German.
+
+### 2026-10-17 — Files: delete folders and files in orOS Drive (#521) — 3.14.01
+- Files: folders and files in orOS Drive can be deleted with the bin on each row; files kept only in the cloud are deleted there too.
+- Files: `vault.js`, `files/drive.js`, `files/files.js`, `files/files.css`, `files/help.{en,el}.txt`, `i18n/de/files.js`, `tests/vault-ondemand.test.js`.
+  - Tests: 4785/4785; Chromium 360 el / 1200 en. Not tested: a real Dropbox account, Safari.
