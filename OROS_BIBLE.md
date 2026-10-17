@@ -7320,3 +7320,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Files: big folders in grid view no longer overlap and pictures open again. Atelier: deleting a design can also delete its unused files, if you tick it.
 - Files: `files/files.js`, `files/files.css`, `atelier/core.js`, `atelier/panels.js`, Bible.
   - Tests: full suite green; real Chromium 390 EN/EL. Not tested: a real phone.
+
+### 2026-10-17 — Quality gate Q1: every app opened in Chromium on each PR (#451) — CI only, no APP_VERSION
+- Quality gate Q1: CI opens every app at 360/1280 px in EN/EL and fails on new console errors, 360 px overflow, missing help or English left in Greek (baseline `.github/qa/baseline.json`, 76 known).
+- Files: `.github/workflows/quality.yml`, `.github/qa/{smoke.js,baseline.json,package.json,.gitignore}`, `tests/quality-gate.test.js`, Bible.
+  - Tests: full suite green; quality.yml green on GitHub (4 shards). Nothing shipped to users.
