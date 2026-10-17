@@ -48,6 +48,15 @@ The keys and the English text come from the app's `{ en: { … } }` table
 A value that breaks a rule is never shown: orOS falls back to English for
 that line, and the pull request's tests say what to fix.
 
+## Translating inside orOS
+
+The easiest way: in orOS open Settings › Language & search › Help
+translate. Pick the language and a part of orOS: each line shows the
+English and the Greek text with a box for yours, untranslated lines first.
+What you write is kept on your device and shows in orOS at once (`Try it`);
+lines that break a rule below are marked and stay English. `Download file`
+gives you the finished `<app>.js` for the steps below.
+
 ## How to send a translation
 
 Without git: open the file on GitHub, press the pencil (Edit), write,

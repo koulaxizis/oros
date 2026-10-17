@@ -1,8 +1,11 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
-## Version 2.94.00
+## Version 2.95.00
 - New app Flashcards, in the new Learning category: decks, three card types (basic, basic and reversed, fill in the gap) and study with the FSRS method, so each card comes back just before you would forget it. Every answer is kept when two devices study offline.
+
+## Version 2.94.00
+- Help translate orOS: Settings › Language & search › Help translate shows each line in English and Greek with a box for your language. Your lines show in orOS at once, stay on your device, and you can send them as a file for review.
 
 ## Version 2.93.00
 - Scanner & PDF: sign PDFs. Draw your signature, type it or take it from a photo, keep it on this device, and put it, a line of text or the date anywhere on a page (or on every page). Options adds page numbers, a watermark such as COPY, and the title and author. Save can now make a PDF much smaller for email.
