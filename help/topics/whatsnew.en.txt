@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.75.00
+- Files opens documents, spreadsheets, songs and videos straight in the orOS app that reads them (Open with…), plays songs in Music, and sends files to Mail.
+
 ## Version 2.74.00
 - Music: Made for you on Home. A Daily mix, On repeat, Rewind and song radio are made on your device from what you play, and every year gets its own recap (top songs, artists and your biggest month). Today shows the recap or the Daily mix.
 - Music: bring your Spotify playlists and likes. Open the my_spotify_data.zip (or its JSON/CSV files) and Music finds the songs in your library, then (if you say yes) in free music online.
