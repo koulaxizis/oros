@@ -1,6 +1,15 @@
 {
  "apps": [
   {
+   "app": "files",
+   "files": [
+    "files/drive.js",
+    "files/dropbox.js",
+    "files/files.js",
+    "files/gmedia.js"
+   ]
+  },
+  {
    "app": "help",
    "files": [
     "help/help.js"

@@ -1,0 +1,85 @@
+# orOS als App installieren
+Du kannst orOS in einem normalen Browser-Tab nutzen, du kannst es aber auch installieren. Installiert bekommt orOS ein eigenes Symbol und öffnet sich in einem eigenen Fenster, ohne die Adressleiste des Browsers. Offline funktioniert es so oder so.
+
+Alle anderen Wege zu orOS (orOS Portable auf einem USB-Stick, der bootfähige orOS-USB-Stick, Einzel-Apps, Android-APKs) findest du auf [useoros.online/download](https://useoros.online/download/).
+
+## Android
+In Chrome auf Android:
+1. Öffne orOS und tippe auf `orOS`, um das Menü zu öffnen.
+2. Wenn du `orOS installieren` siehst, tippe darauf und bestätige.
+3. Wenn nicht, öffne das Menü des Browsers und wähle die Option, die App zu installieren oder zum Startbildschirm hinzuzufügen.
+
+orOS erscheint dann bei deinen anderen Apps.
+
+## iPhone und iPad
+Auf iPhone und iPad installierst du orOS aus Safari:
+1. Öffne orOS in Safari.
+2. Tippe auf die Teilen-Taste.
+3. Wähle **Zum Home-Bildschirm**, dann **Hinzufügen**.
+
+Öffne orOS über das neue Symbol auf deinem Home-Bildschirm. Es öffnet sich im Vollbild, wie jede andere App.
+
+## Computer (Chrome oder Edge)
+1. Öffne orOS und klicke auf `orOS`, um das Menü zu öffnen.
+2. Klicke auf `orOS installieren` und bestätige.
+
+Du kannst auch das Installationssymbol in der Adressleiste des Browsers nutzen, oder das Menü des Browsers. Danach öffnet sich orOS in einem eigenen Fenster, und du kannst es an die Taskleiste oder das Dock anheften.
+
+> `orOS installieren` erscheint nur, wenn dein Browser es gerade installieren kann. Sobald orOS installiert ist, verschwindet die Zeile. Dieselbe Taste gibt es in den `Einstellungen` unter `System`, als `orOS als App installieren`.
+
+## Dateien von deinem Computer öffnen
+Mit orOS, installiert aus Chrome oder Edge unter Windows, Linux oder Mac, erscheint orOS im `Öffnen mit` deines Systems für die Dateitypen, die seine Apps lesen können. Klicke mit der rechten Maustaste auf eine Datei, wähle `Öffnen mit` und dann orOS; die Datei öffnet sich in der passenden App:
+- [Texteditor](app:writer): .docx, .odt, .rtf, .md, .txt und seine eigenen .orosdoc-Dateien
+- [Tabelle](app:spreadsheet): .xlsx, .xls, .ods, .csv
+- [Atelier](app:atelier): .pptx; [Folien](app:slides), [Seitenlayout](app:layout) (auch .sla und .idml) und Atelier: ihre eigenen orOS-Dateien
+- [Reader](app:feeds) und [Podcasts](app:podcasts): .opml
+- [Mindmap](app:mindmap): .mm, .xmind, und auf Wunsch .opml, .md und .txt
+- [Stammbaum](app:familytree): .ged, .gedcom
+- [Klingelton-Komponist](app:ringtones): .rtttl, .rtx
+- [Fotolabor](app:photolab): .png, .jpg, .webp, .gif, .bmp, .avif, .psd, .ora
+- [Bibliothek](app:library): .epub, .pdf
+- [Karten](app:maps): .gpx, .kml, .geojson
+- [Schach](app:chess): .pgn
+- [Montage](app:montage): .mp4, .m4v, .webm, .mov
+- [Notizen](app:notes): .txt, .md, als Wahl neben dem Texteditor
+- [Textwerkzeuge](app:texttools): .txt, .csv, .tsv, als Wahl neben den Apps oben
+- [Kalender](app:calendar): .ics, zuerst mit der Import-Vorschau
+- [Kontakte](app:contacts): .vcf, mit einer Rückfrage vor dem Import
+
+Die Datei wird als neues Element importiert, oder über die eigene Vorschau der App; orOS schreibt nie in die Originaldatei zurück. Wenn mehr als eine App einen Typ öffnen kann, fragt orOS, welche, und `Immer diese App verwenden` merkt sich deine Wahl auf diesem Gerät. Es öffnet sich immer eine Datei auf einmal.
+
+In den [Einstellungen](app:settings) unter `Dateien öffnen` siehst du die Liste, wählst die App für gemeinsame Typen und findest, wie du orOS unter Windows, Linux oder Mac zum Standard für einen Typ machst. Das kannst nur du tun, in den Einstellungen deines Systems.
+
+Auf Android, mit orOS aus Chrome installiert, nimm `Teilen` › orOS in Dateien, Gmail oder einer beliebigen App: Die Datei öffnet sich in der passenden orOS-App. orOS kann auf Android noch nicht der Standard zum Öffnen von Dateien sein.
+
+> Firefox, Safari und das iPhone können orOS noch keine Dateien übergeben. Öffne dort die App und nimm ihre Taste `Importieren` oder `Öffnen`.
+
+## Einzel-Apps
+Manche orOS-Apps lassen sich auch einzeln installieren: **orOS Notes**, **orOS Calendar**, **orOS Bookmarks**, **orOS To-Do**, **orOS Contacts**, **orOS Writer**, **orOS Spreadsheet**, **orOS Kanban**, **orOS Mind Map**, **orOS Wiki**, **orOS Slides**, **orOS Passwords**, **orOS Budget**, **orOS Habits**, **orOS Water**, **orOS Diary**, **orOS Mood**, **orOS Workouts**, **orOS Health**, **orOS Cycle**, **orOS Calculator**, **orOS Time**, **orOS Weather**, **orOS Maps**, **orOS Reader**, **orOS Mail**, **orOS Files**, **orOS Podcasts**, **orOS Radio**, **orOS Photo Lab**, **orOS Invoices**, **orOS CRM**, **orOS Timesheet** und **orOS Games** (alle orOS-Spiele in einer App: Sie öffnet sich im Spielecenter, und Zurück bringt dich aus einem Spiel dorthin zurück). Eine Einzel-App bekommt ein eigenes Symbol und Fenster, öffnet sich direkt in der App und funktioniert offline, wie orOS selbst.
+1. Öffne die [Einstellungen](app:settings) und wähle `Einzel-Apps`.
+2. Drücke `Installieren` neben der App. Ihre Seite öffnet sich in einem neuen Tab. Auf Android öffnet sie sich in Chrome, auch wenn du in der orOS-App auf Installieren drückst.
+3. Installiere sie dort: die Taste `Installieren` in der Leiste unten auf der Seite, `Installieren` in der Adressleiste von Chrome oder Edge, `Zum Startbildschirm hinzufügen` im Menü von Chrome auf Android, oder Teilen › `Zum Home-Bildschirm` in Safari.
+
+In einer Einzel-App trägt die Taste oben links den Namen der App. Sie öffnet ein kleines Menü: `Synchronisierung und Cloud`, `Einstellungen`, `Hilfe` und `Ganzes orOS öffnen`. Eine von dort geöffnete App zeigt `Zurück`, womit du zur Einzel-App zurückkommst.
+
+- **Deine Daten:** Auf einem Gerät, das auch orOS hat, teilen sich die Einzel-App und orOS sofort dieselben Daten. Auf einem Gerät nur mit der Einzel-App bleiben die Daten auf dem Gerät, bis du in `Synchronisierung und Cloud` die Synchronisierung einschaltest, mit derselben Dropbox und Passphrase wie in orOS. Dann gehört sie zu deiner verschlüsselten orOS-Cloud, in beide Richtungen.
+- **Symbol-Kurzbefehle:** Drücke lange auf das Symbol (Android) oder klicke mit der rechten Maustaste darauf (Windows) für die Schnellaktion der App: `Neue Seite`, `Neuer Termin`, `Lesezeichen hinzufügen`, `Neue Aufgabe`, `Neuer Kontakt`, `Neues Dokument`, `Neue Tabelle`, `Neue Karte`, `Neue Mindmap`, `Neuer Artikel`, `Neue Präsentation`, `Passwort erzeugen`, `Neuer Tresor-Eintrag`, `Neue Ausgabe`, `Neue Gewohnheit`, `Ein Glas hinzufügen`, `Satz des Tages schreiben`, `Stimmung eintragen`, `Training eintragen`, `Neuer Blutdruck`, `Neues Gewicht`, `Heute eintragen`, `Wissenschaftlich`, `Graphen`, `Timer`, `Stoppuhr`, `Wecker`, `Stadt hinzufügen`, `Mein Standort`, `Wo ich geparkt habe`, `Feed hinzufügen`, `Neue Mail`, `Neuer Ordner`, `Podcast finden`, `Letzten Sender spielen`, `Neues Bild`, `Neue Rechnung`, `Neue Quittung`, `Neuer Kunde`, `Timer starten oder stoppen`, `Neuer Zeiteintrag`, `Wordle von heute`, `Kreuzworträtsel von heute`, `Sudoku von heute` oder `Schach`.
+- **Öffnen mit:** Unter Windows und Linux steht jede Einzel-App in `Öffnen mit` für die Dateien, die ihre App öffnet: orOS Notes für .txt und .md, orOS Calendar für .ics, orOS Contacts für .vcf, orOS Writer für .docx, .odt, .rtf, .md und .txt, orOS Spreadsheet für .xlsx, .xls, .ods und .csv, orOS Mind Map für .mm, .xmind, .opml, .md und .txt, und orOS Slides für .pptx.
+- **Teilen:** Auf Android macht `Teilen` › orOS Notes eine neue Seite, › orOS To-Do eine neue Aufgabe, › orOS Calendar einen neuen Termin, › orOS Bookmarks ein neues Lesezeichen, › orOS Contacts einen neuen Kontakt aus dem Text, › orOS Writer ein neues Dokument, › orOS Kanban eine neue Karte, › orOS Mind Map eine neue Mindmap, › orOS Wiki einen neuen Artikel, › orOS Slides eine neue Präsentation, › orOS Passwords einen neuen Tresor-Eintrag für einen geteilten Link, › orOS Budget eine neue Ausgabe mit dem Text als Notiz, › orOS Habits eine neue Gewohnheit, › orOS Workouts ein neues Training mit dem Text als Notiz, › orOS Maps eine Suche nach dem geteilten Ort (oder eine Markierung für einen geteilten Standort), › orOS Reader und › orOS Podcasts ein Abo für einen geteilten Link, › orOS Mail eine neue Mail mit dem Text, › orOS Photo Lab öffnet ein geteiltes Bild, › orOS Invoices eine neue Rechnung mit dem Text als Notizen, und › orOS CRM einen neuen Kunden (Name, E-Mail und Telefon aus dem Text). Nichts wird gespeichert, bis du bestätigst, außer bei orOS Spreadsheet, das die geteilten Zeilen direkt in eine neue Tabelle verwandelt.
+- **Kennzahl:** orOS To-Do zeigt auf seinem Symbol, wie viele Aufgaben heute fällig oder überfällig sind, wo das System Kennzahlen auf Symbolen unterstützt.
+- **Benachrichtigungen:** Jede Einzel-App zeigt nur ihre eigenen Erinnerungen. orOS zeigt weiter alle.
+
+> Eine Einzel-App aktualisiert sich von selbst, wie orOS, während ihr Fenster im Hintergrund ist.
+
+## So kommen Updates an
+Updates musst du nie selbst herunterladen. orOS sucht bei jedem Start nach einer neuen Version, jede Stunde, solange es offen bleibt, und wenn du zurückkommst oder wieder eine Verbindung hast.
+
+Eine neue Version wird im Hintergrund heruntergeladen. orOS lädt sich dann in einem ruhigen Moment neu, damit es dich nie unterbricht:
+- du bist auf dem Desktop, ohne offene App;
+- das Menü und alle Fenster sind geschlossen;
+- kein Wecker klingelt und das Radio spielt nicht;
+- keine Änderungen warten auf die Synchronisierung.
+
+Nach dem Update sagt eine Benachrichtigung `orOS wurde aktualisiert auf` und die neue Versionsnummer. Welche Version du hast, siehst du immer in `Über orOS + Tastenkürzel`.
+
+> Um sofort nach einem Update zu suchen, drücke [[Ctrl+Alt+Shift+U]]. Du siehst dann `Suche nach Updates…`.

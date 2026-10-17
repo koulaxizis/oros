@@ -1,0 +1,91 @@
+# Darstellung
+Gestalte orOS so, wie es dir gefällt: Sprache, helles oder dunkles Design, Farbskin, Hintergrundbild, saisonale Deko, ein Bildschirm-Haustier und das Wetter in der oberen Leiste. Das meiste davon findest du in der App [Einstellungen](app:settings) unter `Darstellung`: Öffne das Menü und wähle `Einstellungen`. Das Wetter in der oberen Leiste stellst du in der Wetter-App ein.
+
+## Sprache
+orOS spricht Englisch und Griechisch. Der Knopf `EL` / `EN` in der oberen Leiste wechselt zur anderen Sprache, ebenso [[Ctrl+Alt+Shift+L]].
+
+Ist beim Wechsel eine App offen, öffnet sie sich in der neuen Sprache neu. Deine Daten bleiben unberührt.
+
+## Helles oder dunkles Design
+Wähle in den `Einstellungen` unter `Darstellung` neben `Design` entweder `Dunkel` oder `Hell`. orOS startet im dunklen Modus.
+
+## Skins
+Die farbigen Punkte unter `Systemfarbe` sind Skins: Jeder gibt orOS und seinen Apps eine andere Akzentfarbe. Sie sind nach Linux-Systemen benannt, etwa `Ubuntu`, `Fedora`, `Mint` oder `Pop!_OS`; fahr mit der Maus über einen Punkt, um seinen Namen zu sehen. Standard ist `Oros`, in Gold.
+
+> Hast du noch das Standard-Hintergrundbild (`Desert Sand`), wechselt ein Skin auch zum passenden Hintergrundbild. Sobald du selbst ein Hintergrundbild wählst, lassen Skins es in Ruhe.
+
+## Hintergrundbilder
+Tippe oder klicke unter `Hintergrundbild` auf ein Bild, um es als Desktop-Hintergrund zu nutzen. Zur Wahl stehen `Adwaita Dusk`, `Midnight`, `Aubergine`, `Forest Night`, `Ember`, `Nordic Frost`, `Aurora`, `Desert Sand`, `Monochrome`, `Nebula`, `Nordic Aurora`, `Hex Grid`, `Obsidian Veil` und `Retro Terrazzo`. `Keiner` nutzt den schlichten Hintergrund deines Designs.
+
+### Dein eigenes Hintergrundbild (Eigenes)
+Die erste Kachel, `Eigenes`, ist ein Hintergrundbild, das du selbst machst.
+1. Solange du keins gemacht hast, zeigt die Kachel ein **+** (`Eigenes im Hintergrundbild-Generator erstellen`). Tippe oder klicke darauf, um den [Hintergrundbild-Generator](app:wallpaper) zu öffnen.
+2. Erstelle dort ein Design und drücke `Als Hintergrundbild festlegen`.
+3. Es wird dein Hintergrundbild `Eigenes`, und du kannst es jederzeit wieder in den `Einstellungen` wählen.
+
+Jedes Gerät zeichnet dein Hintergrundbild passend für seinen eigenen Bildschirm, also bleibt es auf dem Handy wie auf einem großen Monitor scharf.
+
+## Saisonale Deko
+Zu manchen Zeiten im Jahr schmückt sich dein Desktop von selbst: Schnee, eine Lichterkette und ein Baum zu Weihnachten, goldene Funken und ein Granatapfel zu Neujahr (mit Feuerwerk von 23:55 bis 00:10 an Silvester), Kürbisse, Fledermäuse und ein Spinnennetz zu Halloween.
+
+Die griechischen Feiertage haben ihre eigene:
+- `Epiphanias` (5.–6. Januar): ein goldenes Kreuz über dem Meer.
+- `Valentinstag` (13.–14. Februar): aufsteigende Herzen.
+- `Karneval` (vom Tsiknopempti bis zum Sonntag vor dem Reinen Montag): Konfetti, bunte Fähnchen und eine Maske.
+- `Reiner Montag`: Drachen am Himmel.
+- `25. März` und `28. Oktober` (und jeweils der Tag davor): blau-weiße Fähnchen und die griechische Flagge.
+- `Ostern` (Gründonnerstag bis Ostermontag): rote Eier, eine Osterkerze, Blumen und Schmetterlinge.
+- `Erster Mai` (30. April – 1. Mai): ein Blumenkranz und fallende Blütenblätter.
+
+Karneval, Reiner Montag und Ostern verschieben sich jedes Jahr; orOS berechnet ihre Daten aus dem orthodoxen Osterfest. Fallen zwei Anlässe auf denselben Tag, gewinnt einer: der 28. Oktober vor Halloween, der Valentinstag vor Karneval, Ostern vor dem Ersten Mai.
+
+### Extras zum Einschalten
+Diese sind aus, bis du sie wählst:
+- `Mein Geburtstag`: Ballons, Fähnchen und Konfetti an deinem Geburtstag. Wähle Tag und Monat unter dem Anlass; vorher erscheint nichts. Er gewinnt an diesem Tag vor jedem anderen Anlass.
+- `Jahreszeiten`: Blütenblätter und Tulpen im `Frühling`, Sonne und Wellen im `Sommer`, fallende Blätter im `Herbst`, leichter Schnee im `Winter`. Ein Feiertag gewinnt immer vor seiner Jahreszeit.
+- `Osterdatum`: `Orthodox` (Standard) oder `Westlich`, für alle, die Ostern nach dem westlichen Datum feiern. Es verschiebt nur Ostern; Karneval und Reiner Montag bleiben orthodox.
+
+Die Deko liegt hinter deinen Desktop-Symbolen, fängt nie einen Klick ab und hält still, solange eine App offen ist.
+
+Sie ist von Anfang an an. In den `Einstellungen` unter `Darstellung` › `Saisonale Deko`:
+- `Desktop passend zur Jahreszeit schmücken` schaltet alles aus oder wieder an.
+- `Bewegung`: `Bewegt` oder `Nur unbewegt` für die Deko ohne Schnee und ohne alles, was sich bewegt.
+- `Menge`: `Wenig`, `Normal` oder `Viel` Schneeflocken und Funken.
+- `Zu Weihnachten`: ein `Baum` oder das griechische Weihnachts-`Boot`.
+- `Für heute ausblenden` erscheint, solange ein Anlass läuft; `Wieder zeigen` holt die Deko zurück.
+- Unter `Anlässe` zeigt jeder Anlass seine nächsten Daten und hat einen eigenen Schalter. Die Liste beginnt mit dem, was gerade läuft oder als Nächstes kommt.
+
+### Vorab ausprobieren
+Drücke `Jetzt ausprobieren` neben einem Anlass. Die Einstellungen schließen sich, und die Deko erscheint auf deinem Desktop mit einer kleinen Leiste:
+1. `Behalten` behält sie, bis der Zeitraum des Anlasses endet (bei Halloween bis zum 31. Oktober).
+2. `Beenden` nimmt sie weg, und dein Desktop folgt wieder dem Kalender.
+
+Eine behaltene Deko erscheint in den `Einstellungen` mit einem eigenen Knopf `Beenden`.
+
+Wünscht dein Gerät weniger Bewegung oder ist der Akku schwach, erscheinen nur die unbewegten Teile. Herbst und Winter bestehen nur aus fallenden Blättern und Schnee, also erscheinen sie dann als stilles Bild davon. Langsame Geräte bekommen von selbst weniger Schneeflocken; ein Gerät, das zu langsam bleibt, zeigt unbewegte Teile, und eine Änderung an `Bewegung` oder `Menge` versucht es wieder mit Bewegung.
+
+## Bildschirm-Haustier
+In den `Einstellungen` unter `Darstellung` schaltet der Schalter `Bildschirm-Haustier` einen winzigen Begleiter ein, der auf deinem Desktop lebt. Füttere es, streichle es und lass es schlafen. Es stirbt nie: Vergisst du es eine Weile, wird es nur mürrisch. Mehr mit deinem Haustier kannst du in [Tierwelt](app:petworld) machen.
+
+## Wetter in der oberen Leiste
+Ein kleines Symbol mit der aktuellen Temperatur steht von Anfang an in der oberen Leiste. Um es zu ändern, öffne [Wetter](app:weather), dann den Dialog `Städte`, und schau unter `Taskleiste`:
+1. `Wetter in der Taskleiste anzeigen` zeigt oder versteckt es auf diesem Gerät.
+2. Die Nadel neben einer Stadt wählt die Stadt, die es zeigt. Ist keine Stadt angeheftet, zeigt es deine erste Stadt.
+
+Tippe oder klicke auf das Symbol, um [Wetter](app:weather) zu öffnen; in Wetter bringt es dich zurück zum Desktop.
+
+Bist du offline oder ist der Wert älter als 3 Stunden, zeigt das Symbol eine durchgestrichene Wolke und keine Temperatur. orOS zeigt nie eine Temperatur, die es nicht hat. Die Wetterdaten kommen von Open-Meteo (siehe [Datenschutz](help:t/privacy)).
+
+## Dock
+Das Dock ist eine Leiste mit deinen Lieblings-Apps am unteren Rand des Desktops. Füge eine App mit dem ☆ neben ihr im Menü hinzu. In den `Einstellungen` unter `Darstellung` › `Dock`:
+- `Dock anzeigen` schaltet es an oder aus.
+- `Größe` ist `Klein`, `Mittel` oder `Groß`.
+- `Stil` ändert sein Aussehen: `Klassisch`, `Glas`, `Milchglas`, `Rauch`, `Transparent`, `Deckend`, `3D-Regal` oder `Neon`.
+- `Beim Darüberfahren vergrößern` lässt Symbole unter der Maus wachsen (nur mit Maus oder Trackpad).
+- `Automatisch ausblenden` versteckt es, bis du die Maus an den unteren Rand bewegst oder auf einem Touchscreen auf den kleinen Griff tippst.
+- `Über offenen Apps zeigen` lässt es sichtbar, während eine App offen ist. Es ist aus, bis du es einschaltest, damit Apps den ganzen Bildschirm bekommen.
+
+## Was dir auf andere Geräte folgt
+Mit eingeschalteter [Synchronisierung](help:t/sync) gehen deine Sprache, dein Design, Skin, Hintergrundbild (auch `Eigenes`) und die angeheftete Wetterstadt auch auf deine anderen Geräte.
+
+Die Einstellungen der saisonalen Deko gehen ebenfalls mit. Das Dock und seine Einstellungen, eine Deko, die du ausprobierst oder behalten hast, und `Für heute ausblenden` bleiben auf diesem Gerät.

@@ -325,13 +325,29 @@
     return kind === "t" ? "topics/" + id + "." + lang + ".txt" : "../" + id + "/help." + lang + ".txt";
   }
 
+  // A pack language lists its translated pages in manifest.json, so Help
+  // asks only for those (no request per untranslated page).
+  var packPages = null;
+  function packHas(kind, id) {
+    var path = window.orosI18n && window.orosI18n.helpPath(kind, id, LANG);
+    if (!path) return Promise.resolve(true);
+    if (!packPages) {
+      packPages = getJson(stamped("../i18n/" + LANG + "/manifest.json"))
+        .then(function (m) { return m && Array.isArray(m.files) ? m.files : []; })
+        .catch(function () { return null; });   // offline, no list: just try
+    }
+    var rel = path.replace(/^i18n\/[^/]+\//, "");
+    return packPages.then(function (files) { return !files || files.indexOf(rel) !== -1; });
+  }
+
   // The page in the current language, else English (flagged).
   function loadPage(kind, id) {
     var key = kind + "/" + id;
     if (pageCache[key]) return Promise.resolve(pageCache[key]);
     if (!ID_RE.test(id)) return Promise.resolve({ missing: true });
     function done(v) { pageCache[key] = v; return v; }
-    return getText(pageUrl(kind, id, LANG))
+    return packHas(kind, id)
+      .then(function (has) { if (!has) throw new Error("not translated"); return getText(pageUrl(kind, id, LANG)); })
       .then(function (txt) { return done({ page: parsePage(txt), lang: LANG }); })
       .catch(function () {
         if (LANG === "en") return done({ missing: true });

@@ -133,7 +133,9 @@ function helpPages() {
     if (fs.existsSync(path.join(ROOT, d, "help.en.txt"))) out.push({ pack: "help/" + d + ".txt", en: d + "/help.en.txt" });
   }
   for (const f of fs.readdirSync(path.join(ROOT, "help/topics")).sort()) {
-    if (f.endsWith(".en.txt")) out.push({ pack: "help/topics/" + f.slice(0, -7) + ".txt", en: "help/topics/" + f });
+    // What's new is the release log, rewritten every release: it stays
+    // English for pack languages (Help shows the English page).
+    if (f.endsWith(".en.txt") && f !== "whatsnew.en.txt") out.push({ pack: "help/topics/" + f.slice(0, -7) + ".txt", en: "help/topics/" + f });
   }
   return out;
 }

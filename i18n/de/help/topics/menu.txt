@@ -1,0 +1,66 @@
+# Das Menü und die Schnellsuche
+Im Menü findest du alle Apps von orOS und den Weg zu den Einstellungen. Tippe oder klicke links in der oberen Leiste auf `orOS`, um es zu öffnen.
+
+## Menü öffnen und schließen
+- Tippe oder klicke auf `orOS`, um das Menü zu öffnen, und noch einmal, um es zu schließen.
+- Tippe oder klicke irgendwo außerhalb des Menüs oder drücke [[Esc]], um es zu schließen.
+- Solange eine App offen ist, heißt dieselbe Schaltfläche `Zurück` und bringt dich zum Desktop. Öffne das Menü von dort.
+
+## App-Kategorien
+Unter `Anwendungen` sind die Apps in Kategorien wie `Büro`, `Zubehör`, `Spiele` oder `Persönlich` gruppiert. Die Kategorien sind nach Namen in deiner Sprache sortiert, und jede zeigt, wie viele Apps sie enthält.
+
+- Tippe oder klicke auf eine Kategorie, um sie zu öffnen oder zu schließen.
+- Die zwei kleinen Schaltflächen neben `Anwendungen` sind `Alle aufklappen` und `Alle zuklappen`.
+
+Alle Kategorien sind bei jedem Start von orOS und jedes Mal, wenn du eine App öffnest, geschlossen, und das Suchfeld wird geleert. So öffnet sich das Menü immer aufgeräumt.
+
+## Schnellsuche
+Das Feld `Apps und deine Daten durchsuchen…` oben im Menü findet Apps, während du tippst.
+
+- Es sucht im Namen der App und im Namen der Kategorie. `spiele` zeigt also jedes Spiel.
+- Groß- und Kleinschreibung und griechische Akzente spielen keine Rolle: `ημερολογιο` findet `Ημερολόγιο`.
+- Passende Kategorien öffnen sich von selbst, und die Zahl daneben zeigt die Treffer.
+- Drücke [[Enter]], um den ersten Treffer zu öffnen.
+- Drücke [[Esc]], um die Suche zu leeren. Drücke es noch einmal, um das Menü zu schließen.
+
+Passt nichts, siehst du `Keine passenden Apps`.
+
+Du kannst auch über die Adressleiste deines Browsers suchen. Füge in den Browser-Einstellungen eine Website-Suche (eigene Suchmaschine) hinzu, mit deiner orOS-Adresse gefolgt von `?search=%s`; orOS öffnet sich dann mit deinen Wörtern schon in diesem Feld.
+
+## Befehle
+Tippe auf Englisch oder Griechisch, was du tun willst, und die erste Zeile der Suche zeigt die Aktion. Drücke [[Enter]] oder tippe darauf. Noch wird nichts gespeichert: Die App öffnet sich mit ausgefülltem Formular, du prüfst es und drückst `Speichern`.
+- `dentist tomorrow 10`, `meeting Friday 3pm at the office`: ein neuer Termin in [Kalender](app:calendar). Eine Zeile mit Tag und Uhrzeit reicht.
+- `buy milk, eggs`, `bread to the shopping list`: die Einkaufsliste in [Aufgaben](app:todo).
+- `todo call Nikos`, `remind me to pay the rent`: eine neue Aufgabe in Aufgaben.
+- `spent 12€ coffee`, `12€ coffee`, `paid 30 fuel yesterday`, `got 500 salary`: eine Ausgabe oder Einnahme in [Budget](app:budget), die Kategorie wird aus den Wörtern erraten.
+- `note: wifi code 1234`: eine neue Seite in [Notizen](app:notes).
+- `a glass of water`: sofort ein Glas in [Wasser](app:water).
+- `open maps`: öffnet diese App.
+- `timer 10 min pasta`, `timer 1h30m`: startet sofort einen Timer in [Zeit](app:time). `alarm 7:00`, `wake me at 6:30 every day`: füllt einen neuen Wecker aus, und du drückst `Hinzufügen`.
+- `card fix the door`, `fix the door to kanban`: eine neue Karte in [Kanban](app:kanban).
+- `habit reading done`: hakt heute in [Gewohnheiten](app:habits) ab (tippe noch einmal auf den Tag, um es rückgängig zu machen). `new habit running` öffnet eine neue Gewohnheit.
+- `send hello world to writer`: gibt den Text oder Link an diese App weiter, wie `An eine App senden…`.
+- `12*3+4`, `√2`, `5 miles to km`, `100 usd to eur`: Das Ergebnis erscheint in der Zeile. Drücke [[Enter]], um es zu kopieren.
+
+Bevor du tippst, listet die Leiste deine letzten Befehle auf; tippe auf einen, um ihn noch einmal zu nutzen. Diese Liste bleibt nur auf diesem Gerät, und `Liste leeren` leert sie.
+
+Dieselben Befehle funktionieren in einer kleinen Leiste über jeder App: Drücke [[Ctrl+K]] (in Notizen und Wiki [[Ctrl+Alt+Shift+K]]). In der orOS-App für Android öffnet die Lupe der Startbildschirm-Widgets dieselbe Leiste. Alles, was kein Befehl ist, ist eine normale Suche, und wenn der [Assistent](app:assistant) installiert ist, fragt ihn die letzte Zeile. Befehle werden auf deinem Gerät verstanden; nichts wird irgendwohin gesendet.
+
+## Wählen, welche Apps das Menü zeigt
+Zu viele Apps? Blende die aus, die du nicht nutzt. Öffne [Einstellungen](app:settings) und wähle `Menü`:
+- Entferne den Haken bei einer App, um sie auszublenden, setze ihn wieder, um sie zurückzuholen. `App suchen` grenzt die Liste ein.
+- `Alle ausblenden` leert die Liste, dann kannst du nur die Apps anhaken, die du willst. `Alle zeigen` holt alle Apps zurück.
+- `Profil wählen` hakt Apps für dich an: `Zuhause`, `Arbeit / Geschäft`, `Schule`, `Kreativ` oder `Spiele`, eins oder mehrere. `Alles` hakt alle Apps an. Du kannst trotzdem jede App an- oder abhaken, bevor du `Speichern` drückst.
+
+Wenn du orOS zum ersten Mal öffnest, kommt dieselbe Auswahl vor der Tour, als `Was machst du mit orOS?`. `Alles` ist schon gewählt: `Fortsetzen`, das × oder [[Esc]] behalten alle Apps im Menü. Nutzt du orOS schon auf einem anderen Gerät, wähle `Ich nutze orOS schon auf einem anderen Gerät` und verbinde stattdessen die [Synchronisierung](help:t/sync): Dein Menü kommt mit.
+
+Eine ausgeblendete App ist trotzdem da. Die Schnellsuche findet sie weiterhin, Links aus anderen Apps öffnen sie, und ihre Verknüpfung auf dem Desktop oder im Dock funktioniert. Solange Apps ausgeblendet sind, sagt eine Zeile unter der Liste, wie viele, und ein Tipp darauf öffnet `Menü` in den Einstellungen. Deine Auswahl reist mit der [Synchronisierung](help:t/sync) auf all deine Geräte. Neue Apps erscheinen immer im Menü, bis du sie ausblendest.
+
+## Einstellungen im Menü
+Unter den Apps findest du ein paar Zeilen:
+- `orOS installieren`: erscheint nur, wenn dein Browser orOS als App installieren kann. Siehe [Installieren](help:t/install).
+- `Einstellungen`: öffnet die App [Einstellungen](app:settings) mit Darstellung, Benachrichtigungen, Synchronisierung, Sicherungen, Sprache und dem [Zurücksetzen auf Werkseinstellungen](help:t/reset). Sie steht auch in der Kategorie `System`.
+- `Geräteinfo`: was dieses Gerät und dieser Browser können.
+- `Über orOS + Tastenkürzel`: die Version, die Online-Dienste, die orOS nutzt, und die [Tastenkürzel](help:t/shortcuts).
+
+> Uhrzeit und Datum in der oberen Leiste sind auch Abkürzungen: Sie öffnen direkt [Zeit](app:time) und [Kalender](app:calendar).

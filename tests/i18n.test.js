@@ -161,3 +161,53 @@ test("no new file writes Greek text in code outside the en/el tables", () => {
     "Put it in the file's { en, el } table and use t(key); Greek data (name days, parsers) may say // i18n-inline-ok: <reason>\n" + bad.join("\n"));
 });
 
+
+test("one key means one text within a pack app", () => {
+  // A pack has one value per key for the whole app: two files of the same
+  // app may not use one key for different English texts.
+  const bad = [];
+  for (const { app, files } of S.packIndex(ALL).apps) {
+    const seen = new Map();
+    for (const f of ALL.filter((x) => files.includes(x.rel))) {
+      for (const t of f.tables) for (const [k, v] of t.en) {
+        const was = seen.get(k);
+        if (was && was.v !== null && v !== null && was.v !== v && was.rel !== f.rel) bad.push(app + ": " + k + " is \"" + was.v + "\" in " + was.rel + " but \"" + v + "\" in " + f.rel);
+        else if (!was) seen.set(k, { v, rel: f.rel });
+      }
+    }
+  }
+  assert.deepEqual(bad, [], "Rename one of the keys:\n" + bad.join("\n"));
+});
+
+test("a shown language has the shell, Settings and Help translated", () => {
+  // status "partial" or "full" puts a language in the pickers; before
+  // that it stays "hidden" (?lang=<code> only).
+  const bad = [];
+  const topics = S.helpPages().filter((h) => h.pack.startsWith("help/topics/")).map((h) => h.pack);
+  for (const l of PACK_LANGS.filter((x) => x.status !== "hidden")) {
+    const files = new Set(S.packFiles(l.code));
+    for (const app of ["shell", "settings", "help"]) {
+      const p = files.has(app + ".js") ? S.readPack("i18n/" + l.code + "/" + app + ".js") : { table: {} };
+      const en = S.appKeys(app, ALL);
+      const missing = [...en.keys()].filter((k) => typeof p.table[k] !== "string" || !p.table[k].trim());
+      if (missing.length) bad.push(l.code + "/" + app + ": " + missing.length + " strings missing, e.g. " + missing.slice(0, 3).join(", "));
+    }
+    for (const t of topics) if (!files.has(t)) bad.push(l.code + ": " + t + " missing");
+  }
+  assert.deepEqual(bad, [], "Translate these before the language is shown (or keep status \"hidden\"):\n" + bad.join("\n"));
+});
+
+test("translated help pages keep the English links and shortcuts", () => {
+  const marks = (s) => [...new Set((s.match(/\]\((?:app|topic|help|tour|https?):[^)]+\)|\[\[[^\]]+\]\]/g) || []).map((m) => m.replace(/^\]/, "")))].sort().join(" ");
+  const bad = [];
+  for (const l of PACK_LANGS) {
+    const files = new Set(S.packFiles(l.code));
+    for (const h of S.helpPages()) {
+      if (!files.has(h.pack)) continue;
+      const en = fs.readFileSync(path.join(ROOT, h.en), "utf8");
+      const tr = fs.readFileSync(path.join(ROOT, "i18n", l.code, h.pack), "utf8");
+      if (marks(en) !== marks(tr)) bad.push("i18n/" + l.code + "/" + h.pack + ": links/shortcuts differ from " + h.en);
+    }
+  }
+  assert.deepEqual(bad, []);
+});
