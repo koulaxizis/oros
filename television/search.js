@@ -15,6 +15,17 @@
   "use strict";
   var KEY = "oros-television-data";
 
+  // A pack language reads the television pack when the shell has it
+  // loaded (orosI18n.table), else English.
+  var STRINGS = {
+    en: { "search.unnamed": "Unnamed channel" },
+    el: { "search.unnamed": "Κανάλι χωρίς όνομα" }
+  };
+  function tr(lang) {
+    var I = root && root.orosI18n;
+    return STRINGS[lang] || (I && lang ? I.table(STRINGS, "television", lang) : STRINGS.en);
+  }
+
   function str(v) { return typeof v === "string" ? v.trim() : ""; }
   function joinList(v) { return (Array.isArray(v) ? v : []).map(str).filter(Boolean).join(", "); }
 
@@ -32,7 +43,7 @@
         seen[f.id] = true;
         out.push({
           id: f.id,
-          title: str(f.name) || (ctx.lang === "el" ? "Κανάλι χωρίς όνομα" : "Unnamed channel"),
+          title: str(f.name) || tr(ctx.lang)["search.unnamed"],
           text: [str(f.country), joinList(f.categories), joinList(f.languages), str(f.website)]
             .filter(Boolean).join(" · "),
           target: f.id
