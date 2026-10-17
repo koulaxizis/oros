@@ -7629,7 +7629,7 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
   - Tests: full suite green; Chromium 1280 EN / 360 EL. Not tested: very large Anki collections on phones, Safari.
 
 ### 2026-10-17 — Multitasking M2: live hidden apps behind an experimental switch (#503) — 3.01.00
-- Multitasking (experimental, off by default): Settings › System has a per-device switch marked experimental; when it is on, apps you leave stay open in the background, back where you left them, up to a limit set by the device's memory (Atelier, Layout and Assistant count double; Mail, Radio, TV, Weather, Calendar and Assistant still close when you leave until each is checked). With the switch off the shell behaves exactly as before.
+- Multitasking (experimental, off by default): Settings › System has a per-device switch marked experimental; when it is on, apps you leave stay open in the background, back where you left them, up to a limit set by the device's memory, closing the one used longest ago; Mail, Calendar, Passwords, Settings and apps with the camera or microphone still close when you leave. With the switch off the shell behaves exactly as before.
 - New CI step `.github/qa/multitask.js` in the quality gate (every app opened, hidden and brought back).
 - Files: `shell.js`, `settings/{core.js,settings.js,settings.css,help.*.txt}`, `i18n/de/settings.js`, `.github/qa/{multitask,smoke}.js`, `.github/workflows/quality.yml`, `tests/multitask.test.js`, Bible.
   - Tests: full suite green; multitask gate 130 apps 0 problems; Chromium E2E 1280 EL. Not tested: real phones (memory pressure), Firefox, Safari.
