@@ -1,11 +1,26 @@
 # Scanner & PDF
-Put PDFs together, take them apart and set their pages in order, sign them, number their pages, make them smaller, and make a PDF from pictures. Everything happens on your device: nothing is uploaded, and your own files are never changed. Scanning with the camera and making scanned pages searchable come in later versions.
+Scan paper pages with the camera, put PDFs together, take them apart and set their pages in order, sign them, number their pages, make them smaller, and make a PDF from pictures. Everything happens on your device: nothing is uploaded, and your own files are never changed. Making scanned pages searchable comes in a later version.
 
 ## Getting started
 1. Drop PDFs or pictures on the app, or press `Add PDFs or pictures`.
 2. Every page shows as a card with its number. When the pages come from more than one file, a coloured line on top tells the files apart and the card names its file.
 3. Put the pages the way you want them (see below).
 4. Press `Save PDF` to save every page, in that order, as one PDF.
+
+## Scanning with the camera
+Press `Scan with the camera` (the camera button at the top, or on the empty screen). The first time, the browser asks whether the app may use the camera.
+1. Lay the page on a darker surface, in good light, and point the camera at it. A gold outline shows the page the app has found.
+2. With `Auto` on, the picture is taken by itself once the page is held still. With it off, press the round button.
+3. The page is straightened and cleaned up. Choose how it looks:
+   - `Document`: white paper and dark ink, shadows taken out. The best choice for most pages.
+   - `Grey`, `Black & white` (sharpest text, smallest file) or `Photo` (the colours as they are).
+4. Turn it with the arrows if needed, then press `Keep page`. The next page can be scanned right away.
+- When the app can't find the page, or found the wrong shape, press `Corners`: drag each corner onto a corner of the page. A magnifier shows the spot under your finger. `Whole picture` uses all of it; `Take again` goes back to the camera.
+- The pages scanned so far show in a row at the bottom. Tap one to change its look, corners or turn, or to delete it.
+- The light button turns on the phone's flash, when it has one.
+- `Choose photos` takes pages from photos you already have, one after the other, the same way.
+- When the camera is not allowed or not there, the scanner says so; you can still choose photos.
+Press `Add … pages` to put them in the list, after the pages already there. A scanned page keeps its own shape in the PDF, with no margin. Close the scanner with the cross to let the scanned pages go. The camera turns off as soon as you leave the scanner or the app.
 
 ## What it reads
 - PDF files (.pdf).
@@ -91,9 +106,12 @@ In Files, select one or more PDFs, or several pictures, and choose `Open in Scan
 In the page editor:
 - [[Tab]] goes from one addition to the next; [[Left]], [[Right]], [[Up]] and [[Down]] move it ([[Shift]] for bigger steps); [[+]] and [[-]] make it bigger or smaller; [[Delete]] removes it.
 - [[PageUp]] and [[PageDown]]: the previous and next page. [[Esc]]: let go of the addition, or leave.
+In the scanner:
+- [[Tab]] goes through the buttons; on a corner, [[Left]], [[Right]], [[Up]] and [[Down]] move it ([[Shift]] for bigger steps).
+- [[Esc]] steps back, and on the camera leaves the scanner.
 
 ## Privacy and sync
-Everything happens on your device; no file is sent anywhere. The app keeps no data of its own and has nothing to sync: PDFs you save into Files are synced like the rest of Files when Vault Drive is on. Only your choices (picture pages, where to save, how much smaller) and the signatures you keep are kept, on this device. Signatures are never synced, on purpose: they stay on the device where you made them.
+Everything happens on your device; no file is sent anywhere. The app keeps no data of its own and has nothing to sync: PDFs you save into Files are synced like the rest of Files when Vault Drive is on. Only your choices (picture pages, where to save, how much smaller, Auto in the scanner) and the signatures you keep are kept, on this device. Signatures are never synced, on purpose: they stay on the device where you made them.
 
 ## Limits
 - PDFs locked with a password can't be changed: their pages can't be copied without it.
