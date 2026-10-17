@@ -145,3 +145,60 @@ test("a file whose download failed is not dropped from the cloud by the next pus
   assert.ok(paths.includes("/internal/mine.txt"));
   assert.ok(before.size > 0);
 });
+
+test("removeRemote deletes a cloud-only folder in the cloud and on the computer", async () => {
+  const { db, A } = await seeded();
+  const B = await vaultDevice(db, "B");
+  await B.sync();
+  assert.equal(await B.vault.removeRemote(PC + "/photos"), 1);
+  assert.equal(B.vault.isRemoteOnly(PC + "/photos/beach.jpg"), false);
+  assert.equal(B.vault.queueLength(), 1);
+  const r = await B.sync();
+  assert.equal(r.stats.failed, 0);
+  assert.equal(B.vault.queueLength(), 0);
+  assert.deepEqual(await cloudPaths(B), [PC + "/report.txt", "/internal/Notes/todo.md"]);
+  assert.equal(B.vault.manifestEntry(PC + "/photos/beach.jpg"), null);
+  assert.equal(B.vault.isRemoteOnly(PC + "/report.txt"), true, "the rest stays listed");
+  const ra = await A.sync();
+  assert.equal(ra.stats.deleted, 1);
+  assert.equal(A.disk.has(PC + "/photos/beach.jpg"), false);
+  assert.equal(await A.read(PC + "/report.txt"), "quarterly report");
+});
+
+test("removeRemote of a whole folder, with files on this device moved away by Files", async () => {
+  const { db, A } = await seeded();
+  const B = await vaultDevice(db, "B");
+  await B.sync();
+  await B.vault.fetch(PC + "/report.txt");
+  await B.rm(PC + "/report.txt");                   // Files: the local copy goes to the Trash
+  assert.equal(await B.vault.removeRemote(PC), 1);
+  await B.sync();
+  assert.deepEqual(await cloudPaths(B), ["/internal/Notes/todo.md"]);
+  assert.equal(B.vault.remoteOnly().length, 0);
+  await A.sync();
+  assert.equal(A.disk.has(PC + "/report.txt"), false);
+  assert.equal(A.disk.has(PC + "/photos/beach.jpg"), false);
+});
+
+test("removeRemote never deletes a file changed on the computer meanwhile", async () => {
+  const { db, A } = await seeded();
+  const B = await vaultDevice(db, "B");
+  await B.sync();
+  await B.vault.removeRemote(PC + "/photos");
+  await A.write(PC + "/photos/beach.jpg", "retouched");
+  await A.sync();
+  await B.sync();
+  assert.ok((await cloudPaths(B)).includes(PC + "/photos/beach.jpg"), "the newer version stays");
+  await A.sync();
+  assert.equal(await A.read(PC + "/photos/beach.jpg"), "retouched");
+});
+
+test("removeRemote only acts inside orOS Drive", async () => {
+  const { db } = await seeded();
+  const B = await vaultDevice(db, "B");
+  await B.sync();
+  assert.equal(await B.vault.removeRemote("/internal/Notes"), 0);
+  assert.equal(await B.vault.removeRemote(B.vault.driveRoot), 0, "never the whole Drive at once");
+  assert.equal(await B.vault.removeRemote("/internal/Drive/PCX"), 0, "a name prefix is not a folder");
+  assert.equal(B.vault.queueLength(), 0);
+});
