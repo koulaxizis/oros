@@ -51,7 +51,11 @@
       return l === "el" ? "el" : "en";
     } catch (e) { return "en"; }
   }
-  var LANG = appLang();
+  // orosI18n (../i18n.js): the full language code, a pack language included.
+  var LANG = window.orosI18n ? window.orosI18n.lang() : appLang();
+  function loc() { return window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB"); }
+  // A decimal comma where the language writes one (Greek, German…).
+  function decComma() { try { return (1.5).toLocaleString(loc()).indexOf(",") >= 0; } catch (e) { return LANG === "el"; } }
 
   var STRINGS = {
     en: {
@@ -127,6 +131,8 @@
       "imp.empty": "Δεν βρέθηκαν συνεδρίες σε αυτό το αρχείο.", "imp.big": "Το αρχείο είναι πολύ μεγάλο για εισαγωγή."
     }
   };
+
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "zen", LANG);
 
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;
@@ -625,7 +631,7 @@
   function buildPatterns() {
     var host = $("patterns");
     host.innerHTML = "";
-    var mine = pats.pats.slice().sort(function (a, b) { return a.n.localeCompare(b.n) || cmpStr(a.id, b.id); });
+    var mine = pats.pats.slice().sort(function (a, b) { return a.n.localeCompare(b.n, loc()) || cmpStr(a.id, b.id); });
     PATTERN_IDS.concat(mine.map(function (x) { return "c:" + x.id; })).forEach(function (id) {
       var b = el("button", "pat" + (id.indexOf("c:") === 0 ? " mine" : ""));
       b.type = "button";
@@ -708,7 +714,7 @@
     var host = $("chart"), max = 0;
     st.week.forEach(function (w) { if (w.sec > max) max = w.sec; });
     host.innerHTML = "";
-    var loc = LANG === "el" ? "el-GR" : "en-GB";
+    var lc = loc();
     st.week.forEach(function (w, i) {
       var col = el("div", "bar");
       var fill = el("span", "fill");
@@ -716,7 +722,7 @@
       col.appendChild(fill);
       var parts = w.day.split("-"), d = new Date(+parts[0], +parts[1] - 1, +parts[2]);
       var lab = "";
-      try { lab = d.toLocaleDateString(loc, { weekday: "narrow" }); } catch (e) {}
+      try { lab = d.toLocaleDateString(lc, { weekday: "narrow" }); } catch (e) {}
       col.appendChild(el("i", "", lab));
       col.title = w.day + ": " + minutesText(w.sec);
       if (i === 6) col.classList.add("today");
@@ -791,7 +797,7 @@
       inp.inputMode = "decimal";
       inp.autocomplete = "off";
       inp.maxLength = 4;
-      inp.value = String(vals[i] / 1000).replace(".", LANG === "el" ? "," : ".");
+      inp.value = String(vals[i] / 1000).replace(".", decComma() ? "," : ".");
       inp.setAttribute("aria-describedby", "zp-unit");
       inp.addEventListener("input", preview);
       cell.appendChild(lab); cell.appendChild(inp);
@@ -929,7 +935,7 @@
   function impDate(k) {
     var p = k.split("-");
     try {
-      return new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB", { day: "numeric", month: "short", year: "numeric" });
+      return new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString(loc(), { day: "numeric", month: "short", year: "numeric" });
     } catch (e) { return k; }
   }
   function importPreview(res) {
