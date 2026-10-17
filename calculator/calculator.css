@@ -61,6 +61,23 @@ html, body {
   color: var(--text-dim);
 }
 
+.calc-title { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#calc-send {
+  flex: 0 0 auto;
+  min-height: 34px;
+  padding: 4px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+#calc-send:hover { color: var(--text); }
+#calc-send[hidden] { display: none; }
+
 #troll-toggle {
   display: inline-flex;
   align-items: center;

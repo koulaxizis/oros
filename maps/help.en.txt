@@ -56,7 +56,7 @@ Buses, metro, tram, trains and ferries, with live times where the operator publi
 - Pick `Leave now`, `Depart at` or `Arrive by` and a time, then `Find connections`. `Earlier` and `Later` page through the times.
 - Each connection shows its times, the lines in their colours, the changes and how far you walk. A delay shows as "+3 min", and a cancelled trip is marked.
 - Open a connection to see it step by step and drawn on the map (walking dotted). Tap a step to zoom to it. `Share` sends it as text with a link, and `Save to My tracks` keeps it as a track.
-- Tap a stop name in a trip, a stop on the map, or long press › `Departures nearby` for the departures board. It refreshes every minute while it is open.
+- Tap a stop name in a trip, a stop on the map, or long press › `Departures nearby` for the departures board. It refreshes every minute while it is open. At Athens bus stops the board also shows `Live arrivals (OASA)`: the minutes until each bus arrives, from OASA Telematics through the orOS relay.
 - `Show stops on the map` shows stops when you zoom in. `Show live vehicles` moves trains, metro and buses on the map by their timetable and live data.
 
 Coverage depends on open timetables. In Greece it includes Thessaloniki city buses, Hellenic Train with live data, and bike sharing in some areas. Athens is listed too, but since mid-September 2026 its timetables at Transitous are out of date, so searches there find nothing until Transitous refreshes them; Maps tells you when the stops near your points show no departures at all. Intercity buses (KTEL) and ferries are not included yet.
@@ -240,6 +240,7 @@ Each pack shows its size, its detail, when you downloaded it and the date of the
 - **Search and place names**: Photon by komoot. It gets your search text and the centre of the map, or the point you long-pressed.
 - **Routes**: the OSRM demo server (car) and FOSSGIS (bike and walk). They get the coordinates of your route points.
 - **Public transport**: Transitous (api.transitous.org). It gets the start and destination of your search, the time, the stop whose departures you open, and the map area when stops or live vehicles are on.
+- **Live bus arrivals (Athens)**: when you open the board of an Athens bus stop, the orOS relay (the one Mail uses) passes that stop's code to OASA Telematics (telematics.oasa.gr). Nothing else is sent, and the relay keeps nothing.
 - **Sharing**: links are made on your device. Nothing leaves it until you send or open one; a shared link carries the points' coordinates and the destination's name.
 - **Notes**: the OpenStreetMap API. In Mapping mode it gets the area you're looking at. What you write is published under your OpenStreetMap name, with the point you chose. The sign-in key stays on this device.
 - **Places and quests**: the Overpass API (overpass-api.de) gets the area you're looking at to list its places and questions; your edits go to the OpenStreetMap API under your name. Place kinds come from the iD editor's presets.

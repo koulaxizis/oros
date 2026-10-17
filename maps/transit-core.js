@@ -1,6 +1,6 @@
 // ============================================================
 // orOS Maps — transit-core.js (public transport, maps wave 7,
-// v1.1.0). Pure functions, no DOM, no network: Node-tested in
+// v1.2.0). Pure functions, no DOM, no network: Node-tested in
 // tests/maps-transit.test.js.
 //
 // Public transport comes from Transitous (transitous.org): a free,
@@ -26,7 +26,7 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.1.0";
+  var VER = "1.2.0";
   var BASE = "https://api.transitous.org/api/";
   var API_VERSIONS = ["v6", "v5"];
   var SOURCES_URL = "https://transitous.org/sources/";
@@ -439,11 +439,56 @@
     return counts.every(function (n) { return n === 0; });
   }
 
+  // ---------- OASA Telematics (live bus arrivals in Athens) ----------
+  // Transitous names Athens bus stops "gr-Athens-Bus_<code>", the
+  // same code OASA uses (zero-padded to 6 digits). The answers come
+  // through the orOS relay (op "oasa"); these are strict copies.
+  function oasaStop(stopId) {
+    var m = typeof stopId === "string" && /^gr-Athens-Bus_(\d{1,10})$/.exec(stopId);
+    if (!m) return "";
+    var c = m[1];
+    while (c.length < 6) c = "0" + c;
+    return c;
+  }
+  function pick(o, keys) {
+    for (var i = 0; i < keys.length; i++) { var v = o[keys[i]]; if (typeof v === "string" || typeof v === "number") return String(v); }
+    return "";
+  }
+  //   → { "<route code>": { line, descr } }
+  function normOasaRoutes(j, lang) {
+    var out = {};
+    if (!Array.isArray(j)) return out;
+    j.slice(0, 200).forEach(function (r) {
+      if (!r || typeof r !== "object") return;
+      var code = pick(r, ["RouteCode", "route_code"]);
+      if (!/^\d{1,10}$/.test(code)) return;
+      var el = pick(r, ["RouteDescr", "route_descr"]), en = pick(r, ["RouteDescrEng", "route_descr_eng"]);
+      out[code] = { line: str(pick(r, ["LineID", "line_id"]), 12), descr: str(lang === "el" ? el || en : en || el) };
+    });
+    return out;
+  }
+  //   → [{ min, line, descr, route }] soonest first
+  function normOasaArrivals(j, routes) {
+    if (!Array.isArray(j)) return [];
+    routes = routes || {};
+    var out = [];
+    j.slice(0, 100).forEach(function (a) {
+      if (!a || typeof a !== "object") return;
+      var code = pick(a, ["route_code", "RouteCode"]), min = parseInt(pick(a, ["btime2"]), 10);
+      if (!/^\d{1,10}$/.test(code) || !isFinite(min) || min < 0 || min > 300) return;
+      var r = routes[code] || {};
+      out.push({ min: min, line: r.line || "", descr: r.descr || "", route: code });
+    });
+    out.sort(function (a, b) { return a.min - b.min; });
+    return out.slice(0, 20);
+  }
+
   var API = {
     VER: VER, BASE: BASE, API_VERSIONS: API_VERSIONS, SOURCES_URL: SOURCES_URL,
     MODES: MODES, GROUP_COLOR: GROUP_COLOR, TIME_MODES: TIME_MODES,
     modeOf: modeOf, groupOf: groupOf, emojiOf: emojiOf, textOn: textOn, color: color,
     nearestStops: nearestStops, staleVerdict: staleVerdict,
+    oasaStop: oasaStop, normOasaRoutes: normOasaRoutes, normOasaArrivals: normOasaArrivals,
     planUrl: planUrl, stoptimesUrl: stoptimesUrl, stopsUrl: stopsUrl, tripsUrl: tripsUrl,
     tripsPrecision: tripsPrecision,
     decodePolyline: decodePolyline, encodePolyline: encodePolyline,

@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "2.88.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "2.90.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -6082,6 +6082,9 @@
         { name: "Transitous", url: "https://transitous.org/sources/",
           by: "The Transitous community (MOTIS); timetables by each operator", lic: { en: "Each feed's open licence; ODbL (map data)", el: "Η ανοιχτή άδεια κάθε πηγής· ODbL (δεδομένα χάρτη)" },
           en: "Public transport: connections, departures, live vehicles (Maps)", el: "Μέσα μαζικής μεταφοράς: δρομολόγια, αναχωρήσεις, οχήματα (Χάρτες)" },
+        { name: "OASA Telematics", url: "https://telematics.oasa.gr/",
+          by: "OASA (Athens Urban Transport Organisation)", lic: { en: "OASA's terms of use", el: "Όροι χρήσης του ΟΑΣΑ" },
+          en: "Live bus arrivals at Athens stops, through the orOS relay (Maps)", el: "Ζωντανές αφίξεις λεωφορείων στις στάσεις της Αθήνας, μέσω του relay του orOS (Χάρτες)" },
         { name: "OpenStreetMap API", url: "https://operations.osmfoundation.org/policies/api/",
           by: "OpenStreetMap Foundation; data by OpenStreetMap contributors", lic: "ODbL (data)",
           en: "Notes, sign-in, place edits and GPS trace uploads (Maps)", el: "Σημειώσεις, σύνδεση, διορθώσεις μερών και ανέβασμα GPS traces (Χάρτες)" },

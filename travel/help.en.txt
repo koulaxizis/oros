@@ -57,6 +57,7 @@ Travel lists what it found: flights (one row per leg), stays, trains, buses, fer
 - From 7 days before a trip, the trip page shows the `Forecast for` your destination, day by day. If rain is likely, orOS asks `Add an umbrella?`; `Add` puts `Umbrella` on the packing list. The forecast comes from Open-Meteo and is kept on this device for 3 hours.
 - orOS reminds you the evening before you leave (from 18:00), 3 hours before a flight and 1 hour before a train, bus or ferry. The reminder opens the trip. `More` on the trip list has `Turn reminders off` and `Turn reminders on`, for this device only. See also [Notifications](help:t/notifications).
 - `Fuel cost by car` in a trip's `More` menu works out the cost of driving: enter `Distance one way (km)`, tick `Round trip` if you need it, and the consumption and price (per litre, or per kWh for an electric car). If you log fill-ups in [Garage](app:garage), pick the car under `Vehicle (from Garage)` and the consumption and last price are filled in. You see the total and the cost per person; `Add to notes` saves it in the trip notes.
+- Itinerary days also show the [Weather](app:weather) forecast (icon and high / low) when a city you saved in Weather is near the trip and its forecast is fresh. Nothing is downloaded for this.
 - Trips also show in [Calendar](app:calendar) under the `Travel` chip: each trip day and every itinerary entry with a time. Tapping one opens the trip here.
 
 ## Share and export
