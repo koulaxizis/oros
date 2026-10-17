@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.14.03
+- Settings explains how to turn on notifications with orOS closed in Brave.
+
 ## Version 3.14.02
 - Files: Open in Photo Lab, and every other Open in… or Open with…, loads the chosen file again.
 
