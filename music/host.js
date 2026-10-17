@@ -35,7 +35,50 @@
 
   var KEY = "oros-music-data", LOCAL_KEY = "oros-music-local", STATS_KEY = "oros-music-stats";
   var doc = w.document;
-  function isEl() { return w.orosLang === "el"; }
+  // Notices and the tray chip's label. Shares the "music" pack with
+  // music.js (same key = same English).
+  var STRINGS = {
+    en: {
+      "host.full": "Storage is full: Music changes were not saved.",
+      "host.sleep": "Sleep timer: the music stopped.",
+      "host.broken": "These songs cannot play on this device.",
+      "host.pause": "Pause: {s}", "host.play": "Play: {s}"
+    },
+    el: {
+      "host.full": "Ο χώρος αποθήκευσης γέμισε: οι αλλαγές στη Μουσική δεν αποθηκεύτηκαν.",
+      "host.sleep": "Χρονοδιακόπτης ύπνου: η μουσική σταμάτησε.",
+      "host.broken": "Αυτά τα τραγούδια δεν παίζουν σε αυτή τη συσκευή.",
+      "host.pause": "Παύση: {s}", "host.play": "Αναπαραγωγή: {s}"
+    }
+  };
+  // orosI18n (../i18n.js, loaded by the shell): the full language
+  // code, a pack language included; else the shell's "el" / "en".
+  function lang() {
+    var I = w.orosI18n;
+    if (I) { try { return I.lang(); } catch (x) {} }
+    return w.orosLang === "el" ? "el" : "en";
+  }
+  // A pack language: English + the music pack. The shell loads only its
+  // own pack, so this one is fetched on first need (the Today and search
+  // providers read it too); once it is in, the table is rebuilt.
+  var packAsked = {};
+  function strings(l) {
+    if (STRINGS[l]) return STRINGS[l];
+    var I = w.orosI18n;
+    if (!I) return STRINGS.en;
+    var tab = I.table(STRINGS, "music", l);
+    if (!packAsked[l] && typeof I.ensure === "function") {
+      packAsked[l] = true;
+      try { I.ensure(l, "music", function () { if (l !== "en" && l !== "el") delete STRINGS[l]; }); } catch (x) {}
+    }
+    return tab;
+  }
+  function T(k, v) {
+    var tab = strings(lang()) || STRINGS.en;
+    var s = tab[k] !== undefined ? tab[k] : (STRINGS.en[k] !== undefined ? STRINGS.en[k] : k);
+    if (v) Object.keys(v).forEach(function (n) { s = s.split("{" + n + "}").join(String(v[n])); });
+    return s;
+  }
 
   // ---------- Data (synced slice) ----------
   function readData() {
@@ -52,7 +95,7 @@
       // R30: never swallow a failed write; one notice per session.
       if (!quotaWarned) {
         quotaWarned = true;
-        note(isEl() ? "Ο χώρος αποθήκευσης γέμισε: οι αλλαγές στη Μουσική δεν αποθηκεύτηκαν." : "Storage is full: Music changes were not saved.");
+        note(T("host.full"));
       }
     }
   }
@@ -404,7 +447,7 @@
   function sleepDone() {
     sleepSet(0);
     pause();
-    note(isEl() ? "Χρονοδιακόπτης ύπνου: η μουσική σταμάτησε." : "Sleep timer: the music stopped.");
+    note(T("host.sleep"));
   }
   // v: minutes, "end" (end of this song) or 0 (off).
   function sleepSet(v) {
@@ -458,7 +501,7 @@
   function skipBroken() {
     fails++;
     var n = C.normQueue(local.q).ctx.length;
-    if (fails >= 5 || fails > n) { fails = 0; note(isEl() ? "Αυτά τα τραγούδια δεν παίζουν σε αυτή τη συσκευή." : "These songs cannot play on this device."); return; }
+    if (fails >= 5 || fails > n) { fails = 0; note(T("host.broken")); return; }
     w.setTimeout(function () { advance(true, true); }, 600);
   }
   function play() {
@@ -526,7 +569,7 @@
     if (!r.item) { stopAtEnd(); return; }
     local.pos = 0;
     load(r.item, 0, false).then(chip);
-    note(isEl() ? "Χρονοδιακόπτης ύπνου: η μουσική σταμάτησε." : "Sleep timer: the music stopped.");
+    note(T("host.sleep"));
   }
   function stop() {
     loadSeq++;
@@ -685,7 +728,7 @@
       bar.insertBefore(el, doc.getElementById("pc-tray-chip") || doc.getElementById("rx-tray-chip") || doc.getElementById("btn-lang"));
     }
     var on = !audio.paused, err = !!flags.error;
-    var title = (on ? (isEl() ? "Παύση: " : "Pause: ") : (isEl() ? "Αναπαραγωγή: " : "Play: ")) + (cur.t || "") + (cur.a ? " · " + cur.a : "");
+    var title = T(on ? "host.pause" : "host.play", { s: (cur.t || "") + (cur.a ? " · " + cur.a : "") });
     el.setAttribute("data-state", err ? "err" : on ? "on" : "off");
     el.title = title;                         // property: plain text, safe
     el.setAttribute("aria-label", title);
@@ -792,6 +835,10 @@
 
   w.addEventListener("pagehide", function () { saveLocal(true); });
   doc.addEventListener("visibilitychange", function () { if (doc.visibilityState === "hidden") saveLocal(true); });
+
+  // A pack language: fetch the music pack now, before the first notice
+  // (the Today and search providers read it from the shell too).
+  try { strings(lang()); } catch (e) {}
 
   // Shell boot order: sync.js may not have run its setup yet.
   if (!register()) {

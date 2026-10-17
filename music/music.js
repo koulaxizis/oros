@@ -35,6 +35,8 @@
 
   // ---------- 1. Constants, i18n, helpers ----------
   function appLang() {
+    // orosI18n (../i18n.js): the full language code, a pack language included.
+    if (window.orosI18n) return window.orosI18n.lang();
     try {
       var l = localStorage.getItem("oros-lang") || (window.parent && window.parent.orosLang) || "en";
       return l === "el" ? "el" : "en";
@@ -175,7 +177,10 @@
       "sp.online": "Look for the missing songs on Jamendo and your servers", "sp.onlineHint": "Sends each song's title and artist to Jamendo and to your own servers. Only exact matches are added.",
       "sp.looking": "Looking… {d} of {n}", "sp.found": "More songs found and added: {n}.", "sp.zipErr": "Could not open this ZIP file.",
       "cv.find": "Find missing covers online", "cv.hint": "Asks MusicBrainz and the Cover Art Archive for the covers of your albums that have none. Only album and artist names are sent.",
-      "cv.busy": "Looking for covers… {d} of {n}", "cv.done": "Covers found: {n}.", "cv.none": "No covers found.", "cv.all": "Every album has a cover.", "cv.one": "Cover found.", "cv.notOne": "No cover found for this album."
+      "cv.busy": "Looking for covers… {d} of {n}", "cv.done": "Covers found: {n}.", "cv.none": "No covers found.", "cv.all": "Every album has a cover.", "cv.one": "Cover found.", "cv.notOne": "No cover found for this album.",
+      "time.min": "{m} min", "time.h": "{h} h {m} min",
+      "month.1": "January", "month.2": "February", "month.3": "March", "month.4": "April", "month.5": "May", "month.6": "June",
+      "month.7": "July", "month.8": "August", "month.9": "September", "month.10": "October", "month.11": "November", "month.12": "December"
     },
     el: {
       "app": "Μουσική",
@@ -310,9 +315,14 @@
       "sp.online": "Ψάξε τα τραγούδια που λείπουν στο Jamendo και στους servers σου", "sp.onlineHint": "Στέλνει τον τίτλο και τον καλλιτέχνη κάθε τραγουδιού στο Jamendo και στους δικούς σου servers. Προστίθενται μόνο όσα ταιριάζουν ακριβώς.",
       "sp.looking": "Ψάχνω… {d} από {n}", "sp.found": "Τραγούδια που βρέθηκαν ακόμα και προστέθηκαν: {n}.", "sp.zipErr": "Δεν άνοιξε αυτό το αρχείο ZIP.",
       "cv.find": "Βρες τα εξώφυλλα που λείπουν online", "cv.hint": "Ζητά από το MusicBrainz και το Cover Art Archive τα εξώφυλλα των άλμπουμ σου που δεν έχουν. Στέλνονται μόνο ονόματα άλμπουμ και καλλιτεχνών.",
-      "cv.busy": "Ψάχνω εξώφυλλα… {d} από {n}", "cv.done": "Εξώφυλλα που βρέθηκαν: {n}.", "cv.none": "Δεν βρέθηκαν εξώφυλλα.", "cv.all": "Όλα τα άλμπουμ έχουν εξώφυλλο.", "cv.one": "Βρέθηκε εξώφυλλο.", "cv.notOne": "Δεν βρέθηκε εξώφυλλο για αυτό το άλμπουμ."
+      "cv.busy": "Ψάχνω εξώφυλλα… {d} από {n}", "cv.done": "Εξώφυλλα που βρέθηκαν: {n}.", "cv.none": "Δεν βρέθηκαν εξώφυλλα.", "cv.all": "Όλα τα άλμπουμ έχουν εξώφυλλο.", "cv.one": "Βρέθηκε εξώφυλλο.", "cv.notOne": "Δεν βρέθηκε εξώφυλλο για αυτό το άλμπουμ.",
+      "time.min": "{m} λεπ.", "time.h": "{h} ώρ. {m} λεπ.",
+      "month.1": "Ιανουάριος", "month.2": "Φεβρουάριος", "month.3": "Μάρτιος", "month.4": "Απρίλιος", "month.5": "Μάιος", "month.6": "Ιούνιος",
+      "month.7": "Ιούλιος", "month.8": "Αύγουστος", "month.9": "Σεπτέμβριος", "month.10": "Οκτώβριος", "month.11": "Νοέμβριος", "month.12": "Δεκέμβριος"
     }
   };
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "music", LANG);
+  function loc() { return window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB"); }
   function t(k, v) {
     var s = (STRINGS[LANG] && STRINGS[LANG][k]) || STRINGS.en[k] || k;
     if (v) Object.keys(v).forEach(function (n) { s = s.split("{" + n + "}").join(String(v[n])); });
@@ -346,7 +356,7 @@
     list.forEach(function (r) { s += r.d || 0; });
     if (!s) return "";
     var m = Math.max(1, Math.round(s / 60));
-    return m < 60 ? m + (LANG === "el" ? " λεπ." : " min") : Math.floor(m / 60) + (LANG === "el" ? " ώρ. " : " h ") + (m % 60) + (LANG === "el" ? " λεπ." : " min");
+    return m < 60 ? t("time.min", { m: m }) : t("time.h", { h: Math.floor(m / 60), m: m % 60 });
   }
   var I = {
     home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>',
@@ -584,17 +594,17 @@
     s1.appendChild(el("p", "dim small sec-note", t("home.freeSub")));
     var row = el("div", "cards");
     O.BROWSE.forEach(function (b) {
-      var name = b[LANG] || b.en;
+      var name = O.browseName(b.id, LANG);
       row.appendChild(card(cover("", b.id, "", I.globe), name, srcName(b.src), function () { openView({ kind: "browse", id: b.id }); }));
     });
     s1.appendChild(row);
     var s2 = section(m, t("home.genres"));
     var chips = el("div", "chips wrap");
-    O.OPEN_GENRES.forEach(function (g) { chips.appendChild(button(LANG === "el" ? g[2] : g[1], "chip", function () { openView({ kind: "ogenre", id: g[0] }); })); });
+    O.OPEN_GENRES.forEach(function (g) { chips.appendChild(button(O.genreName(g[0], LANG), "chip", function () { openView({ kind: "ogenre", id: g[0] }); })); });
     s2.appendChild(chips);
     var s3 = section(m, t("home.moods"));
     var mc = el("div", "chips wrap");
-    O.MOODS.forEach(function (g) { mc.appendChild(button(LANG === "el" ? g[2] : g[1], "chip", function () { openView({ kind: "omood", id: g[0] }); })); });
+    O.MOODS.forEach(function (g) { mc.appendChild(button(O.moodName(g[0], LANG), "chip", function () { openView({ kind: "omood", id: g[0] }); })); });
     s3.appendChild(mc);
   }
   function copyText(text, ok) {
@@ -1174,13 +1184,10 @@
     if (r.g) seed.g = r.g;
     openView({ kind: "mix", id: "radio", seed: seed, n: r.t });
   }
-  // Month names as they stand alone (Greek dates would give "Οκτωβρίου").
-  var MONTHS = {
-    en: "January February March April May June July August September October November December".split(" "),
-    el: "Ιανουάριος Φεβρουάριος Μάρτιος Απρίλιος Μάιος Ιούνιος Ιούλιος Αύγουστος Σεπτέμβριος Οκτώβριος Νοέμβριος Δεκέμβριος".split(" ")
-  };
+  // Month names as they stand alone (Greek dates would give "Οκτωβρίου"):
+  // "month.1" … "month.12" of the table.
   function monthName(i, long) {
-    var n = (MONTHS[LANG] || MONTHS.en)[i] || String(i + 1);
+    var n = i >= 0 && i < 12 ? t("month." + (i + 1)) : String(i + 1);
     return long ? n : n.slice(0, 3);
   }
   function renderRecap(m, v) {
@@ -1197,7 +1204,7 @@
     var big = el("div", "rc-big");
     [[r.minutes, "recap.minutes"], [r.plays, "recap.plays"], [r.distinct, "recap.songs"]].forEach(function (x) {
       var b = el("div", "rc-num");
-      b.appendChild(el("span", "rc-n", x[0].toLocaleString(LANG === "el" ? "el-GR" : "en-GB")));
+      b.appendChild(el("span", "rc-n", x[0].toLocaleString(loc())));
       b.appendChild(el("span", "dim small", t(x[1])));
       big.appendChild(b);
     });
@@ -1805,7 +1812,7 @@
           var b = el("button", "genre");
           b.type = "button";
           b.style.setProperty("--hue", parseInt(C.hash(g[0]).slice(0, 4), 36) % 360);
-          b.appendChild(el("span", "", LANG === "el" ? g[2] : g[1]));
+          b.appendChild(el("span", "", O.genreName(g[0], LANG)));
           b.appendChild(el("span", "dim small", t("kind.free")));
           b.addEventListener("click", function () { openView({ kind: "ogenre", id: g[0] }); });
           og.appendChild(b);
@@ -2080,7 +2087,7 @@
     if (v.kind === "browse") {
       var b = O.browseOf(v.id);
       if (!b) { m.appendChild(el("p", "empty", t("lib.empty"))); return; }
-      var name = b[LANG] || b.en;
+      var name = O.browseName(b.id, LANG);
       src = { kind: "browse", id: b.id, n: name };
       k = "b|" + b.id;
       f = feed(k, b.src === "ia" ? fIa(b.ia) : b.src === "cc" ? fCc(b.cc) : b.src === "jm" ? fJm(b.jm) : fOv(b.ov));
@@ -2092,7 +2099,7 @@
     } else if (v.kind === "ogenre") {
       var gg = O.genreOf(v.id);
       if (!gg) { m.appendChild(el("p", "empty", t("lib.empty"))); return; }
-      var gn = gg[LANG] || gg.en, word = gg.id === "hiphop" ? "hip hop" : gg.id;
+      var gn = O.genreName(gg.id, LANG), word = gg.id === "hiphop" ? "hip hop" : gg.id;
       src = { kind: "ogenre", id: gg.id, n: gn };
       var ki = "g|ia|" + gg.id, ko = "g|ov|" + gg.id, kc = "g|cc|" + gg.id, kj = "g|jm|" + gg.id;
       var fj = feed(kj, fJm({ tags: gg.id, order: "popularity_month" }));
@@ -2112,7 +2119,7 @@
     } else if (v.kind === "omood") {
       var mo = O.moodOf(v.id);
       if (!mo) { m.appendChild(el("p", "empty", t("lib.empty"))); return; }
-      var mn = mo[LANG] || mo.en;
+      var mn = O.moodName(mo.id, LANG);
       src = { kind: "omood", id: mo.id, n: mn };
       k = "m|jm|" + mo.id;
       f = feed(k, fJm({ mood: mo.id, order: "popularity_month" }));
