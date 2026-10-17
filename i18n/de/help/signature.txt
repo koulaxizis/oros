@@ -1,0 +1,69 @@
+# E-Mail-Signatur
+Erstelle einmal eine professionelle E-Mail-Signatur und nutze sie überall: Gmail, Outlook, Thunderbird, Apple Mail, dein Handy und orOS Mail. Die Signatur wird aus deinen Daten gebaut, sieht daher in jeder Mail-App richtig aus und enthält nie versteckten Code.
+
+## Erste Schritte
+1. Drück `Signatur erstellen` (oder oben [[+]] für eine weitere).
+2. Füll `Deine Daten` aus. Nur was du ausfüllst, wird angezeigt.
+3. Wähle unter `Aussehen` ein `Layout`, eine `Hauptfarbe` und eine Schriftart.
+4. Öffne `Vorschau & Nutzen` (auf dem Handy ist es der zweite Reiter), wähle, wo du sie verwendest, und folge den Schritten unter `So fügst du sie hinzu`.
+
+## Aus orOS ausfüllen
+- `Firmenprofil (Rechnungen)`: Firma, USt-IdNr., Telefon, E-Mail, Website, Adresse und das Logo deines Firmenprofils. Bei mehreren Profilen wählst du eines.
+- `Ein Kontakt`: Name, Position, Firma, Telefonnummern, E-Mail, Website und Adresse einer Karte in Kontakte. Praktisch für die Signatur einer Kollegin oder eines Kollegen.
+- `Brand-Kit (Atelier)`: deine Markenfarben, die passendste E-Mail-sichere Schriftart und dein Logo.
+Jede Schaltfläche erscheint nur, wenn die App etwas zu bieten hat. `Rückgängig` in der Meldung, die dann erscheint, stellt alles wieder her.
+
+## Aussehen
+- Sechs Layouts: `Klassisch`, `Bild an der Seite`, `Minimal`, `Farbbalken`, `Kompakt` (gut auf Handys) und `Nur Text`.
+- `Hauptfarbe` färbt den Firmennamen, die Beschriftungen, die Linie und die Schaltfläche; `Textfarbe` den Rest.
+- Die Schriftarten sind die, die jeder Computer hat (Arial, Georgia, Verdana…). Mail-Apps laden keine Webfonts, eine ausgefallene Schrift würde also ohnehin zu etwas anderem.
+- `Vor Telefon und E-Mail`: Buchstaben (T, M, E), Wörter oder nichts. Eine griechische Signatur schreibt sie auf Griechisch (Τ, Κ).
+
+## Logo und Foto
+- `Bild wählen` legt das Bild auf deiner orOS-Disk ab; es reist mit der Disk auf deine anderen Geräte und wird zugeschnitten in die Signatur eingefügt.
+- Gmail und Outlook im Web entfernen Bilder, die in einer Signatur stecken. Füll für diese auch `Adresse auf deiner Website` mit der Adresse desselben Bildes auf deiner eigenen Website aus. orOS lädt es nie für dich hoch.
+- Ein rundes Foto wird wirklich rund zugeschnitten und bleibt daher auch in Outlook rund.
+
+## Social-Media-Profile, Schaltfläche und Banner
+- `Profil hinzufügen`: bis zu 8 Links. Mit `Social-Media-Symbole` bekommst du kleine runde Symbole in deiner Hauptfarbe; Web-Mail-Apps zeigen stattdessen die Namen.
+- Die Schaltfläche (zum Beispiel „Termin buchen“) ist so gezeichnet, dass auch Outlook sie zeigt.
+- Das `Banner` ist ein Bild unter der Signatur, das nur zwischen seinen beiden Daten erscheint. Lass die Daten leer, damit es immer erscheint.
+
+## QR-Code und Rechtstext
+- `Ein QR-Code mit meiner Kontaktkarte` fügt einen Code hinzu, den andere scannen können, um dich als Kontakt zu speichern.
+- `Rechtstext oder Haftungsausschluss` steht ganz unten in kleiner grauer Schrift. `Fertige Texte` fügt gängige Texte in der Sprache der Signatur hinzu.
+
+## Vorschau & Nutzen
+- `Wo verwendest du sie?` ändert die Vorschau und die Schritte: Jede Mail-App nimmt Signaturen etwas anders an.
+- `Kurzfassung (für Antworten)` behält nur Name, Position, Firma und zwei Kontaktzeilen.
+- `Dunkle Mail-App` und `Handybreite` zeigen, wie sie dort aussehen wird.
+- `Signatur kopieren` kopiert sie mit ihrer Formatierung, bereit zum Einfügen ins Signaturfeld. `HTML-Code kopieren` kopiert den Code selbst, für Apps, die HTML verlangen.
+- `.html speichern` erstellt eine Datei für Thunderbird oder den Signaturordner von Outlook; `.txt speichern` die Textfassung für Apps, die nur Text kennen.
+- `In orOS Mail verwenden` übergibt die Signatur an Mail, das fragt, welches Konto sie bekommt.
+- `Prüfung` listet, was zu korrigieren ist: falsche Links, blasse Farben, Bilder, die eine Web-Mail-App entfernen würde, und das Gmail-Limit von 10.000 Zeichen.
+
+## Signaturen für ein Team
+Füge unter [[⋯]] › `Signaturen für ein Team (CSV)` eine Tabelle mit Kopfzeile ein (name, title, department, email, phone, mobile, pronouns, photo) oder öffne eine CSV-Datei. `Alle als .zip speichern` erstellt eine .html-Datei pro Person, mit Aussehen, Firmendaten und Logo der gerade offenen Signatur. Fotos kommen nur aus der Spalte photo der Tabelle (eine https-Adresse).
+
+## orOS-Datei speichern und öffnen
+Unter [[⋯]] speichert `orOS-Datei (.orossignature)` alle Signaturen (Daten, Aussehen, Social-Media-Links, Schaltfläche, Banner, QR-Code und Rechtstext) als eine `.orossignature`-Datei, mit ihren Logo-, Foto- und Banner-Bildern von deiner orOS-Disk, zum Beispiel um sie ohne Synchronisierung auf ein anderes Gerät zu bringen oder eine Kopie aufzubewahren. Die gewählte Mail-App und die Schalter der Vorschau bleiben auf jedem Gerät. Die Datei ist ein normales ZIP: Entpackt enthält sie die Signaturen als `content.json`, die Bilder in `media/` sowie `preview/signatures.md` (die Textfassungen) und `preview/signatures.html` (die Signaturen, wie Web-Mail sie zeigt) für andere Programme. Sie ist nicht verschlüsselt, bewahre sie also sicher auf.
+
+`orOS-Datei öffnen…` (oder `Entpackter orOS-Ordner…`, oder „Öffnen mit“ orOS am Computer; solange es noch keine Signatur gibt, sind beide unter `Signatur erstellen`) zeigt, wie viele Signaturen neu und wie viele schon da sind; dann fügt `Hinzufügen` nur die neuen hinzu, mit ihren eigenen IDs: Dieselbe Datei noch einmal zu öffnen, fügt nichts hinzu. Eine schon vorhandene Signatur bleibt, wie sie ist, und eine hier gelöschte bleibt gelöscht; eine Datei löscht nie etwas. Hake `Mit neueren Versionen aktualisieren` an, damit Signaturen, die in der Datei später geändert wurden, deine Kopie ersetzen. Bilder werden geprüft und nur auf deine orOS-Disk gelegt, wenn sie noch nicht dort sind. `Rückgängig` in der Meldung entfernt das Hinzugefügte.
+
+## Synchronisierung und Sicherung
+- Deine Signaturen begleiten dich verschlüsselt über die orOS-Synchronisierung auf jedes Gerät und sind Teil des orOS-Exports. Bis zu 30 Signaturen.
+- Bilder bleiben auf deiner orOS-Disk und reisen mit ihr; auf einem Gerät, auf dem eines noch nicht angekommen ist, siehst du „Noch nicht auf diesem Gerät“.
+- Nichts wird irgendwohin gesendet: keine Tracking-Pixel, keine Zähler, keine Bilder von anderen Seiten, außer du gibst ihre Adresse selbst ein.
+
+## Tastenkürzel
+- [[Ctrl+Shift+C]]: die Signatur kopieren.
+- [[←]] und [[→]] auf den Layouts oder den Reitern: zwischen ihnen wechseln.
+- [[Esc]]: ein Fenster schließen.
+
+## Tipps
+> Mach aus einer Signatur zwei mit [[⋯]] › `Diese Signatur duplizieren`: eine auf Englisch, eine auf Griechisch, oder eine lange für neue E-Mails und eine kurze für Antworten.
+
+## Grenzen
+- Einfügen mit Formatierung braucht einen Browser, der HTML kopieren kann; wenn er das nicht kann, nutze `.html speichern` und öffne die Datei, um von dort zu kopieren.
+- Outlook classic ignoriert runde Ecken bei Bildern von deiner Website und zeigt manche Schriftarten anders.
+- Gmail auf dem Handy und viele Mail-Apps auf dem Handy nehmen nur reinen Text.

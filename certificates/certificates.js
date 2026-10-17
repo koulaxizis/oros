@@ -40,7 +40,10 @@
   var T = DK.text, R = DK.render, P = DK.pdf, A = DK.assets;
 
   // ---------- 1. Constants, i18n, helpers ----------
+  // orosI18n (../i18n.js): the full language code, a pack language included.
+  var I18N = window.orosI18n || null;
   function appLang() {
+    if (I18N) return I18N.lang();
     try {
       var l = localStorage.getItem("oros-lang") || (window.parent && window.parent.orosLang) || "en";
       return l === "el" ? "el" : "en";
@@ -92,7 +95,7 @@
       "person.title": "Person", "f.n2": "Other form of the name (optional)", "f.g": "Grade or distinction", "f.x": "Extra",
       "f.rv": "Revoked (no longer valid)", "btn.remove": "Remove from the list", "btn.mailOne": "Send by email", "btn.save": "Save",
       "pe.no": "Number {s}, given on {d}.", "pe.noNone": "No number yet: numbers are given in the Issue tab.",
-      "sec.check": "Check", "btn.number": "Give numbers",
+      "sec.checks": "Check", "btn.number": "Give numbers",
       "chk.none": "No one on the list yet.", "chk.toPeople": "Add people",
       "chk.count": "{n} certificates: {a} with a number, {b} without.", "chk.allNo": "{n} certificates, all numbered.",
       "chk.missing": "The design uses “{f}”, but it is empty.", "chk.fill": "Fill in",
@@ -171,7 +174,9 @@
       "untitled": "Untitled", "copyOf": "{t} (copy)",
       "mail.subject": "Your certificate: {t}", "mail.subjectNoT": "Your certificate",
       "mail.body": "Hello {n},\n\nPlease find attached your certificate{tt}.\n\nKind regards,\n{i}",
-      "standalone": "Opened on its own: saving to files and sync need orOS."
+      "standalone": "Opened on its own: saving to files and sync need orOS.",
+      "mail.for": " for “{t}”", "file.list": "list", "file.register": "register",
+      "sample.csv": "Name,Email,Grade,Other form of the name\nMaria Smith,maria@example.com,Excellent,\nNick Jones,nick@example.com,Very good,\n"
     },
     el: {
       "app.name": "Πιστοποιητικά", "loading": "Φόρτωση γραμματοσειρών…",
@@ -216,7 +221,7 @@
       "person.title": "Άτομο", "f.n2": "Άλλη μορφή του ονόματος (προαιρετικά)", "f.g": "Βαθμός ή διάκριση", "f.x": "Επιπλέον",
       "f.rv": "Ανακλήθηκε (δεν ισχύει πια)", "btn.remove": "Αφαίρεση από τη λίστα", "btn.mailOne": "Αποστολή με email", "btn.save": "Αποθήκευση",
       "pe.no": "Αριθμός {s}, δόθηκε στις {d}.", "pe.noNone": "Χωρίς αριθμό ακόμα: οι αριθμοί δίνονται στην καρτέλα Έκδοση.",
-      "sec.check": "Έλεγχος", "btn.number": "Δώσε αριθμούς",
+      "sec.checks": "Έλεγχος", "btn.number": "Δώσε αριθμούς",
       "chk.none": "Δεν υπάρχει κανείς στη λίστα ακόμα.", "chk.toPeople": "Πρόσθεσε άτομα",
       "chk.count": "{n} πιστοποιητικά: {a} με αριθμό, {b} χωρίς.", "chk.allNo": "{n} πιστοποιητικά, όλα με αριθμό.",
       "chk.missing": "Το σχέδιο χρησιμοποιεί «{f}», αλλά είναι κενό.", "chk.fill": "Συμπλήρωση",
@@ -295,9 +300,14 @@
       "untitled": "Χωρίς τίτλο", "copyOf": "{t} (αντίγραφο)",
       "mail.subject": "Το πιστοποιητικό σας: {t}", "mail.subjectNoT": "Το πιστοποιητικό σας",
       "mail.body": "Καλησπέρα σας,\n\nσας στέλνουμε συνημμένο το πιστοποιητικό σας{tt}.\n\nΜε εκτίμηση,\n{i}",
-      "standalone": "Άνοιξε μόνο του: η αποθήκευση αρχείων και ο συγχρονισμός χρειάζονται το orOS."
+      "standalone": "Άνοιξε μόνο του: η αποθήκευση αρχείων και ο συγχρονισμός χρειάζονται το orOS.",
+      "mail.for": " για «{t}»", "file.list": "λίστα", "file.register": "μητρώο",
+      "sample.csv": "Ονοματεπώνυμο,Email,Βαθμός,Άλλη μορφή ονόματος\nΜαρία Παπαδοπούλου,maria@example.gr,Άριστα,\nΓιώργος Νικολάου,giorgos@example.gr,Πολύ καλά,Γιώργο Νικολάου\n"
     }
   };
+  // A pack language (i18n/<code>/certificates.js): the app's strings and
+  // the ready certificate texts (core.js CT) in that language.
+  if (I18N) { I18N.table(STRINGS, "certificates", LANG); I18N.table(C.CT, "certificates", LANG); }
   function t(k, vars) {
     var s = (STRINGS[LANG] && STRINGS[LANG][k] !== undefined) ? STRINGS[LANG][k] : (STRINGS.en[k] !== undefined ? STRINGS.en[k] : k);
     if (vars && typeof s === "string") s = s.replace(/\{(\w+)\}/g, function (m, n) { return vars[n] !== undefined ? vars[n] : m; });
@@ -306,10 +316,36 @@
   // Texts written in the certificate's language (email).
   function tIn(lang, k, vars) {
     var keep = LANG;
-    LANG = lang === "el" ? "el" : "en";
+    LANG = STRINGS[lang] ? lang : "en";
     var s = t(k, vars);
     LANG = keep;
     return s;
+  }
+
+  // Certificate languages: English and Greek (in the page), the app's
+  // pack language and the one the open set uses. A pack language's
+  // ready texts come from its pack, loaded here when needed.
+  function certLangs(cur) {
+    var out = ["en", "el"];
+    [LANG, cur].forEach(function (c) { if (c && out.indexOf(c) < 0 && I18N && I18N.known(c)) out.push(c); });
+    return out;
+  }
+  function fillLangs(sel, cur) {
+    [].slice.call(sel.querySelectorAll("option[data-pack]")).forEach(function (o) { sel.removeChild(o); });
+    certLangs(cur).forEach(function (c) {
+      if (c === "en" || c === "el") return;
+      var o = document.createElement("option");
+      o.value = c; o.textContent = I18N.info(c).name; o.setAttribute("data-pack", "1");
+      sel.appendChild(o);
+    });
+  }
+  function needLang(c, done) {
+    if (C.CT[c] || !I18N || !I18N.known(c)) { done(); return; }
+    I18N.ensure(c, "certificates", function () {
+      I18N.table(C.CT, "certificates", c);
+      I18N.table(STRINGS, "certificates", c);
+      done();
+    });
   }
 
   function $(id) { return document.getElementById(id); }
@@ -467,6 +503,7 @@
     renderPeople();
     showTab(prefs.tab);
     renderPreviewSoon(0);
+    if (!C.CT[ev.lang]) needLang(ev.lang, function () { if (ev && C.CT[ev.lang]) renderPreviewSoon(0); });
   }
   function showTab(k) {
     prefs.tab = ["design", "people", "issue"].indexOf(k) >= 0 ? k : "design";
@@ -488,7 +525,8 @@
   function openNew() {
     newKind = "attend";
     $("new-t").value = "";
-    $("new-lang").value = LANG;
+    fillLangs($("new-lang"), LANG);
+    $("new-lang").value = C.CT[LANG] ? LANG : "en";
     renderNewKinds();
     showDlg("new");
     $("new-t").focus();
@@ -536,6 +574,7 @@
     $("title-sub").textContent = t("kind." + ev.kind);
     FIELDS.forEach(function (k) { var n = $("f-" + k); if (document.activeElement !== n) n.value = ev[k] || ""; });
     $("f-kind").value = ev.kind;
+    fillLangs($("f-lang"), ev.lang);
     $("f-lang").value = ev.lang;
     $("f-acc").value = ev.acc; $("f-acc2").value = ev.acc2;
     $("f-font").value = ev.font; $("f-size").value = ev.size; $("f-orient").value = ev.orient;
@@ -581,6 +620,7 @@
   function onLang() {
     var l = $("f-lang").value;
     if (!ev || l === ev.lang) return;
+    if (!C.CT[l]) { needLang(l, function () { if (C.CT[l]) onLang(); else if (ev) $("f-lang").value = ev.lang; }); return; }
     var apply = function (replace) {
       change(function (e) {
         var n = replace ? C.applyLang(e, l) : Object.assign({}, e, { lang: l });
@@ -1177,10 +1217,8 @@
     if (list.length) importRows(list);
   }
   function saveSample() {
-    var s = LANG === "el"
-      ? "Ονοματεπώνυμο,Email,Βαθμός,Άλλη μορφή ονόματος\nΜαρία Παπαδοπούλου,maria@example.gr,Άριστα,\nΓιώργος Νικολάου,giorgos@example.gr,Πολύ καλά,Γιώργο Νικολάου\n"
-      : "Name,Email,Grade,Other form of the name\nMaria Smith,maria@example.com,Excellent,\nNick Jones,nick@example.com,Very good,\n";
-    saveFile(new Blob(["\uFEFF" + s], { type: "text/csv" }), (LANG === "el" ? "λίστα" : "list") + ".csv", "text/csv", "csv");
+    var s = t("sample.csv");
+    saveFile(new Blob(["\uFEFF" + s], { type: "text/csv" }), t("file.list") + ".csv", "text/csv", "csv");
   }
   // A CSV / TSV / text file, or a spreadsheet (SheetJS, loaded on first use).
   function openList() {
@@ -1565,7 +1603,7 @@
     if (!ev) return;
     if (saveTimer) saveNow();
     var csv = C.registerCsv(data, ev.id, LANG);
-    saveFile(new Blob([csv], { type: "text/csv" }), stem() + (LANG === "el" ? "-μητρώο" : "-register") + ".csv", "text/csv", "csv");
+    saveFile(new Blob([csv], { type: "text/csv" }), stem() + "-" + t("file.register") + ".csv", "text/csv", "csv");
   }
   // R33: through orosDialog when the shell is there.
   function saveFile(blob, name, mime, ext) {
@@ -1624,7 +1662,7 @@
 
   function mailText(e, p) {
     var lang = e.lang;
-    var title = e.t ? (lang === "el" ? " για «" + e.t + "»" : " for “" + e.t + "”") : "";
+    var title = e.t ? tIn(lang, "mail.for", { t: e.t }) : "";
     return {
       subj: (e.t ? tIn(lang, "mail.subject", { t: e.t }) : tIn(lang, "mail.subjectNoT")).slice(0, 300),
       body: tIn(lang, "mail.body", { n: p.n, tt: title, i: e.issuer || "" }).replace(/\n+$/, "").slice(0, 20000)

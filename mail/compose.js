@@ -244,6 +244,7 @@
   }
 
   // ---------- reply / forward ----------
+  // i18n-inline-ok: the Greek reply / forward prefixes below (Απ, Προώθ) are subject-parser data, not UI text
   function prefixed(subj, pre) {
     subj = String(subj || "").trim();
     var re = new RegExp("^(" + pre + "|" + (pre === "Re" ? "Απ|ΑΠ|Aw|Sv" : "Fw|Fwd|Προώθ|ΠΡΘ") + ")\\s*:", "i");

@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.09.00
+- Certificates, Email Signature, Newsletter and Mail are now in German.
+
 ## Version 3.08.00
 - Invoices, CRM, Timesheet and Stock are now in German.
 

@@ -135,16 +135,30 @@
   }
 
   // ---------- previews ----------
+  // Flat keys, so a pack language (orosI18n, ../i18n.js, browser only)
+  // reads the "newsletter" pack. The kit passes "el" or "en".
+  var HEADS = ["email", "name", "lang", "tags", "status", "src", "basis", "at", "conf", "left"];
   var WORDS = {
-    en: { heads: ["E-mail", "Name", "Language", "Tags", "Status", "Source", "Basis", "Subscribed", "Confirmed", "Left"],
-          st: { on: "active", pend: "pending", off: "unsubscribed", bounce: "bounced", spam: "complaint" },
-          basis: { consent: "consent", customer: "customer", optin: "double opt-in" },
-          title: "Newsletter", issues: "Issues", draft: "Draft", sent: "Sent", none: "No issues." },
-    el: { heads: ["Email", "Όνομα", "Γλώσσα", "Ετικέτες", "Κατάσταση", "Προέλευση", "Βάση", "Εγγραφή", "Επιβεβαίωση", "Αποχώρηση"],
-          st: { on: "ενεργός", pend: "σε αναμονή", off: "αποχώρησε", bounce: "επιστροφή", spam: "παράπονο" },
-          basis: { consent: "συγκατάθεση", customer: "πελάτης", optin: "διπλή επιβεβαίωση" },
-          title: "Ενημερωτικό δελτίο", issues: "Τεύχη", draft: "Πρόχειρο", sent: "Στάλθηκε", none: "Κανένα τεύχος." }
+    en: { "pkg.h.email": "E-mail", "pkg.h.name": "Name", "pkg.h.lang": "Language", "pkg.h.tags": "Tags",
+          "pkg.h.status": "Status", "pkg.h.src": "Source", "pkg.h.basis": "Basis", "pkg.h.at": "Subscribed",
+          "pkg.h.conf": "Confirmed", "pkg.h.left": "Left",
+          "pkg.st.on": "active", "pkg.st.pend": "pending", "pkg.st.off": "unsubscribed", "pkg.st.bounce": "bounced",
+          "pkg.st.spam": "complaint",
+          "pkg.basis.consent": "consent", "pkg.basis.customer": "customer", "pkg.basis.optin": "double opt-in",
+          "pkg.title": "Newsletter", "pkg.issues": "Issues", "pkg.draft": "Draft", "pkg.sent": "Sent", "pkg.none": "No issues." },
+    el: { "pkg.h.email": "Email", "pkg.h.name": "Όνομα", "pkg.h.lang": "Γλώσσα", "pkg.h.tags": "Ετικέτες",
+          "pkg.h.status": "Κατάσταση", "pkg.h.src": "Προέλευση", "pkg.h.basis": "Βάση", "pkg.h.at": "Εγγραφή",
+          "pkg.h.conf": "Επιβεβαίωση", "pkg.h.left": "Αποχώρηση",
+          "pkg.st.on": "ενεργός", "pkg.st.pend": "σε αναμονή", "pkg.st.off": "αποχώρησε", "pkg.st.bounce": "επιστροφή",
+          "pkg.st.spam": "παράπονο",
+          "pkg.basis.consent": "συγκατάθεση", "pkg.basis.customer": "πελάτης", "pkg.basis.optin": "διπλή επιβεβαίωση",
+          "pkg.title": "Ενημερωτικό δελτίο", "pkg.issues": "Τεύχη", "pkg.draft": "Πρόχειρο", "pkg.sent": "Στάλθηκε", "pkg.none": "Κανένα τεύχος." }
   };
+  function words(lang) {
+    var code = lang === "el" ? "el" : "en", I = typeof window !== "undefined" && window.orosI18n;
+    if (code === "en" && I) { code = I.lang(); if (!WORDS[code]) I.table(WORDS, "newsletter", code); }
+    return WORDS[code] || WORDS.en;
+  }
   function day(ms) { return ms ? new Date(ms).toISOString().slice(0, 10) : ""; }
   // One line of Markdown: nothing that turns into HTML or a heading.
   function mdText(s) { return String(s || "").replace(/[<>]/g, function (c) { return c === "<" ? "&lt;" : "&gt;"; }); }
@@ -161,7 +175,10 @@
     return out.filter(function (x) { return x !== ""; }).join("\n\n");
   }
   function previews(state, lang) {
-    var W = WORDS[lang === "el" ? "el" : "en"], out = {}, used = {};
+    var w = words(lang), out = {}, used = {};
+    var W = { heads: HEADS.map(function (k) { return w["pkg.h." + k]; }),
+              st: function (k) { return w["pkg.st." + k] || k; },
+              basis: function (k) { return w["pkg.basis." + k] || k; } };
     var d = C.normalize(state);
     var lists = C.live(d.lists).slice().sort(function (a, b) { return C.fold(a.name) < C.fold(b.name) ? -1 : 1; });
     lists.forEach(function (l) {
@@ -169,10 +186,9 @@
       var base = "subscribers-" + C.slug(l.name || "list"), name = base, i = 2;
       while (used[name]) name = base + "-" + (i++);
       used[name] = 1;
-      out[name + ".csv"] = C.subsCsv(d, l.id, W.heads, function (s) { return W.st[s] || s; },
-                                     function (b) { return W.basis[b] || b; });
+      out[name + ".csv"] = C.subsCsv(d, l.id, W.heads, W.st, W.basis);
     });
-    var md = ["# " + W.title + " · " + W.issues, ""], any = false;
+    var md = ["# " + w["pkg.title"] + " · " + w["pkg.issues"], ""], any = false;
     lists.forEach(function (l) {
       var xs = C.live(d.issues).filter(function (x) { return x.list === l.id; })
         .sort(function (a, b) { return (b.done || b.m) - (a.done || a.m); });
@@ -181,13 +197,13 @@
       md.push("## " + mdText(l.name || "—"), "");
       xs.forEach(function (x) {
         md.push("### " + mdText(x.subj || "—"), "");
-        md.push("*" + (x.st === "sent" ? W.sent + " " + day(x.done) : W.draft) + "*", "");
+        md.push("*" + (x.st === "sent" ? w["pkg.sent"] + " " + day(x.done) : w["pkg.draft"]) + "*", "");
         if (x.pre) md.push("> " + mdText(x.pre), "");
         var body = x.fmt === "md" ? mdText(x.md) : blocksMd(x.blocks);
         if (body) md.push(body, "");
       });
     });
-    if (!any) md.push(W.none, "");
+    if (!any) md.push(w["pkg.none"], "");
     out["issues.md"] = md.join("\n");
     return out;
   }

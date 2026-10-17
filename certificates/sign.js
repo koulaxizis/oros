@@ -106,9 +106,11 @@
   //   0x80–0xFF  U+0380–U+03FF (Greek, one byte a letter)
   //   0x7F hi lo any other character of the BMP
   // Fields: number, name, title, dates, issuer, issued (YYYY-MM-DD),
-  // place, hours, grade, lang ("el" or empty); trailing empty ones
+  // place, hours, grade, lang ("el", another code such as "de", or
+  // empty for English); trailing empty ones
   // are left out.
   var FIELDS = ["no", "n", "t", "dates", "issuer", "idate", "place", "hours", "g", "lang"];
+  var LANG_RE = /^[a-z]{2,3}$/;
   function cut(s, n) {
     s = typeof s === "string" ? s.replace(/\s+/g, " ").trim() : "";
     return s.length > n ? s.slice(0, n - 1).trim() + "\u2026" : s;
@@ -141,7 +143,7 @@
     f = f || {};
     var v = [cut(f.no, CAP.no), cut(f.n, CAP.n), cut(f.t, CAP.t), cut(f.dates, CAP.dates), cut(f.issuer, CAP.issuer),
       /^\d{4}-\d{2}-\d{2}$/.test(f.idate || "") ? f.idate : "", cut(f.place, CAP.place), cut(f.hours, CAP.hours),
-      cut(f.g, CAP.g), f.lang === "el" ? "el" : ""];
+      cut(f.g, CAP.g), LANG_RE.test(f.lang || "") && f.lang !== "en" ? f.lang : ""];
     while (v.length > 6 && v[v.length - 1] === "") v.pop();
     var out = [1];
     v.forEach(function (x, i) { if (i) out.push(0x1E); enc(x, out); });
@@ -163,7 +165,7 @@
     var o = {};
     FIELDS.forEach(function (k, j) { o[k] = vals[j] || ""; });
     if (o.idate && !/^\d{4}-\d{2}-\d{2}$/.test(o.idate)) return null;
-    o.lang = o.lang === "el" ? "el" : "en";
+    o.lang = LANG_RE.test(o.lang) ? o.lang : "en";
     return o;
   }
 

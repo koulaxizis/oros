@@ -858,7 +858,9 @@
     return (items || []).filter(function (it) { return it && it.title && safeUrl(it.link) && (!r.last || (it.date || 0) > r.last); })
       .sort(function (a, b) { return (b.date || 0) - (a.date || 0); }).slice(0, r.max);
   }
-  var MORE = { en: "Read more", el: "Διαβάστε περισσότερα" };
+  // The digest's button, in the list's language (e-mails exist in
+  // English and Greek).
+  var MORE = { en: { "digest.more": "Read more" }, el: { "digest.more": "Διαβάστε περισσότερα" } };
   // A feed's text as one plain paragraph: nothing at its start that the
   // Markdown reader would take for a heading, list, picture or button.
   function mdLine(s) { return oneLine(s, 600).replace(/^(?:[#>*_+=|-]|\d+[.)]|!?\[+|\s)+/, ""); }
@@ -871,7 +873,7 @@
       if (/^https:\/\/[^)\s]+$/.test(img)) out.push("![](" + img + ")");
       var snip = oneLine(it.snip, 600);
       if (snip) out.push(mdLine(snip));
-      out.push("[[" + (MORE[lang] || MORE.en) + "](" + safeUrl(it.link).replace(/\)/g, "%29") + ")]");
+      out.push("[[" + (MORE[lang] || MORE.en)["digest.more"] + "](" + safeUrl(it.link).replace(/\)/g, "%29") + ")]");
       return out.join("\n\n");
     }).join("\n\n---\n\n").slice(0, LIM.md);
   }

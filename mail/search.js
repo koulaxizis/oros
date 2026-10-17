@@ -79,6 +79,13 @@
   }
 
   function str(v) { return typeof v === "string" ? v.replace(/\s+/g, " ").trim() : ""; }
+  // Shares the "mail" pack with mail.js (same key = same English).
+  var W = { en: { "read.nosubj": "(no subject)" }, el: { "read.nosubj": "(χωρίς θέμα)" } };
+  function noSubject(lang) {
+    var I = typeof window !== "undefined" && window.orosI18n;
+    if (I && lang && !W[lang]) I.table(W, "mail", lang);
+    return (W[lang] || W.en)["read.nosubj"];
+  }
 
   function plain(html) {
     html = String(html || "");
@@ -251,7 +258,7 @@
         var body = texts[r.acct + "|" + r.folder + "|" + r.uidv + "|" + m.uid] || "";
         out.push({
           id: r.acct + "|" + r.folder + "|" + m.uid,
-          title: str(m.subj) || (ctx.lang === "el" ? "(χωρίς θέμα)" : "(no subject)"),
+          title: str(m.subj) || noSubject(ctx.lang),
           text: [str(from.name), str(from.addr), body].filter(Boolean).join(" · "),
           when: typeof m.date === "number" && isFinite(m.date) && m.date > 0 ? m.date : 0,
           target: { acct: r.acct, folder: r.folder, uid: m.uid }
