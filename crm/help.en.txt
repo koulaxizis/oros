@@ -34,7 +34,7 @@ Open pipeline, won this month and this year, win rate, late follow-ups, customer
 ## Sync and backup
 Customers, people, history, follow-ups, deals, tags and the currency sync between your devices through [orOS sync](help:t/sync). The open tab, filters and sort stay on each device.
 
-In `Settings`: `Import customers (CSV)`, `Export customers (CSV)`, `Backup (JSON)` and `Restore a backup`. A backup is merged into what you have; nothing is deleted.
+In `Settings`: `Import customers (CSV)`, `Export customers (CSV)`, `Backup (JSON)` and `Restore a backup`. A backup is merged into what you have; nothing is deleted. Inside orOS, `Open in Spreadsheet` opens the same customer list as `Export customers (CSV)` in a new sheet in [Spreadsheet](app:spreadsheet), with the open deals and their value totalled at the bottom.
 
 `Import customers (CSV)` reads a list from Excel, HubSpot, another program or CRM's own export. The first row must name the columns (for example Name or Company, VAT ID, Email, Phone, Address, City, Status, Tags). You see how many customers are new before anything is added; customers you already have (same VAT ID or name) are skipped, and `Undo` removes the whole import.
 

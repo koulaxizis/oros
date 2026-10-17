@@ -163,7 +163,8 @@
       "stg.newPh": "New stage", "stg.add": "Add", "stg.max": "Up to {n} open stages.",
       "stg.notEmpty": "{name} still has deals ({n}). Move them to another stage first.", "stg.last": "One open stage is needed.",
       "stg.hidden": "{name} hidden", "stg.deleted": "{name} deleted",
-      "set.tags": "Tags", "set.export": "Export customers (CSV)", "set.backup": "Backup (JSON)", "set.restore": "Restore a backup",
+      "set.tags": "Tags", "set.export": "Export customers (CSV)", "set.sheet": "Open in Spreadsheet",
+      "set.sheetCap": "Only the first {n} customers fit in one sheet", "set.backup": "Backup (JSON)", "set.restore": "Restore a backup",
       "set.osave": "orOS file (.oroscrm)", "set.oopen": "Open orOS file…", "set.ofolder": "Unzipped orOS folder…",
       "set.restoreHint": "A backup is merged into what you have: nothing here is deleted or overwritten by older copies.",
       "set.usage": "This app uses {kb} KB of the browser storage that all orOS apps share.",
@@ -280,7 +281,8 @@
       "stg.newPh": "Νέο στάδιο", "stg.add": "Προσθήκη", "stg.max": "Έως {n} ανοιχτά στάδια.",
       "stg.notEmpty": "Το {name} έχει ακόμα ευκαιρίες ({n}). Μετακίνησέ τες πρώτα σε άλλο στάδιο.", "stg.last": "Χρειάζεται ένα ανοιχτό στάδιο.",
       "stg.hidden": "Κρύφτηκε: {name}", "stg.deleted": "Διαγράφηκε: {name}",
-      "set.tags": "Ετικέτες", "set.export": "Εξαγωγή πελατών (CSV)", "set.backup": "Αντίγραφο (JSON)", "set.restore": "Επαναφορά αντιγράφου",
+      "set.tags": "Ετικέτες", "set.export": "Εξαγωγή πελατών (CSV)", "set.sheet": "Άνοιγμα στο Υπολογιστικό φύλλο",
+      "set.sheetCap": "Χωρούν μόνο οι πρώτοι {n} πελάτες σε ένα φύλλο", "set.backup": "Αντίγραφο (JSON)", "set.restore": "Επαναφορά αντιγράφου",
       "set.osave": "Αρχείο orOS (.oroscrm)", "set.oopen": "Άνοιγμα αρχείου orOS…", "set.ofolder": "Αποσυμπιεσμένος φάκελος orOS…",
       "set.restoreHint": "Το αντίγραφο συγχωνεύεται με ό,τι έχεις: τίποτα δεν σβήνεται και κανένα παλιότερο αντίγραφο δεν γράφει πάνω σε νεότερο.",
       "set.usage": "Η εφαρμογή χρησιμοποιεί {kb} KB από τον χώρο του browser που μοιράζονται όλες οι εφαρμογές του orOS.",
@@ -2086,6 +2088,7 @@
     if (PL && PL.has()) list.appendChild(button(PL.label(), "sheet-btn", function () { dlg.close(); PL.open(); }));
     if (WF) list.appendChild(button(WF.label(), "sheet-btn", function () { dlg.close(); WF.open(); }));
     list.appendChild(button(t("set.export"), "sheet-btn", exportCsv));
+    if (canSheet()) list.appendChild(button(t("set.sheet"), "sheet-btn", function () { dlg.close(); openInSheet(); }));
     list.appendChild(button(t("set.backup"), "sheet-btn", exportJson));
     list.appendChild(button(t("set.restore"), "sheet-btn", function () { dlg.close(); importJson(); }));
     // .oroscrm: Save keeps the dialog open (like Export CSV); Open and
@@ -2323,6 +2326,20 @@
   function exportCsv() {
     var csv = "﻿" + C.csvRows(data, LANG).map(function (r) { return r.map(C.csvCell).join(";"); }).join("\r\n") + "\r\n";
     saveBlob(new Blob([csv], { type: "text/csv;charset=utf-8" }), "crm-" + stampName() + ".csv", "text/csv", "CSV", ".csv");
+  }
+  // "Open in Spreadsheet" (Bible BR-S1): the customers CSV as a new
+  // sheet in the orOS Spreadsheet, open deals and open value as
+  // numbers with a SUM under them. Offered only inside orOS.
+  var SHEET_ROWS = 498;   // + heading + SUM row = the Spreadsheet's 500
+  function canSheet() { var s = shell(); return !!(s && typeof s.__orosOpenAt === "function"); }
+  function openInSheet() {
+    var s = shell();
+    if (!s || typeof s.__orosOpenAt !== "function") return;
+    var rows = C.csvRows(data, LANG), head = rows.shift();
+    if (!rows.length) return;
+    if (rows.length > SHEET_ROWS) { showToast(t("set.sheetCap", { n: SHEET_ROWS })); rows = rows.slice(0, SHEET_ROWS); }
+    rows.forEach(function (r) { r[16] = Number(r[16]); });   // "12.50" → 12.5
+    s.__orosOpenAt("spreadsheet", { newSheet: { name: t("app") + " " + stampName(), rows: [head].concat(rows), sum: [15, 16] } });
   }
   function exportJson() {
     var json = JSON.stringify(C.backup(data), null, 1);

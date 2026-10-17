@@ -40,7 +40,7 @@ In `Settings`, under `Data`, `orOS file (.oroswater)` saves every drink and ever
 `Open orOS file…` (or `Unzipped orOS folder…`, or "Open with" orOS on the computer) shows how many drinks and goals are new and how many are already here, then `Add` adds only the new ones, with their own ids: opening the same file again adds nothing. A drink already here is kept as it is, one you deleted here stays deleted, and a day that already has its own goal here keeps it; a file never deletes anything. Tick `Update with newer versions` to let records that were changed later in the file replace your copy. `Undo` in the message takes back what was added.
 
 ## Sync and backup
-Your drinks, goals and settings sync between your devices through [orOS sync](help:t/sync). Which month the heatmap shows stays on this device. `Export CSV` (in `Settings`) saves every drink with its date, time and amount; an orOS file (see above) keeps drinks and goals together. For a full copy, see [backup](help:t/backup).
+Your drinks, goals and settings sync between your devices through [orOS sync](help:t/sync). Which month the heatmap shows stays on this device. `Export CSV` (in `Settings`) saves every drink with its date, time and amount, and inside orOS `Open in Spreadsheet` opens the same drinks as a new sheet in Spreadsheet, with the total in ml; an orOS file (see above) keeps drinks and goals together. For a full copy, see [backup](help:t/backup).
 
 ## Keyboard shortcuts
 - [[+]] adds one glass.
