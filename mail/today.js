@@ -21,8 +21,8 @@
   var DB_NAME = "oros-mail";
   var ACCT_RE = /^[a-z0-9]{6,40}$/;
   var TXT = {
-    en: { one: "1 unread", many: "{n} unread", at: "as of {t}" },
-    el: { one: "1 αδιάβαστο", many: "{n} αδιάβαστα", at: "στις {t}" }
+    en: { "today.one": "1 unread", "today.many": "{n} unread", "today.at": "as of {t}" },
+    el: { "today.one": "1 αδιάβαστο", "today.many": "{n} αδιάβαστα", "today.at": "στις {t}" }
   };
 
   function pad2(n) { return (n < 10 ? "0" : "") + n; }
@@ -40,6 +40,9 @@
 
   // Pure (tests): accounts + { acctId: { list, at } } → rows.
   function rows(accts, recs, today, lang) {
+    // A pack language: English + the mail pack, when one is loaded.
+    var I = typeof window !== "undefined" && window.orosI18n;
+    if (I && lang && !TXT[lang]) I.table(TXT, "mail", lang);
     var w = TXT[lang] || TXT.en, out = [];
     accts.forEach(function (a) {
       var rec = recs[a.id];
@@ -52,13 +55,13 @@
       var text = "";
       if (typeof rec.at === "number" && rec.at > 0) {
         var d = new Date(rec.at), hm = pad2(d.getHours()) + ":" + pad2(d.getMinutes());
-        text = w.at.replace("{t}", ymdOf(d) === today ? hm : pad2(d.getDate()) + "/" + pad2(d.getMonth() + 1) + " " + hm);
+        text = w["today.at"].replace("{t}", ymdOf(d) === today ? hm : pad2(d.getDate()) + "/" + pad2(d.getMonth() + 1) + " " + hm);
       }
       var who = typeof a.name === "string" && a.name.trim() ? a.name.trim() : a.email;
       out.push({
         id: a.id,
         due: today,
-        title: (n === 1 ? w.one : w.many.replace("{n}", n > 9999 ? "9999+" : n)) + " · " + who,
+        title: (n === 1 ? w["today.one"] : w["today.many"].replace("{n}", n > 9999 ? "9999+" : n)) + " · " + who,
         text: text,
         kind: "info",
         target: { acct: a.id, folder: "INBOX" }
@@ -101,7 +104,7 @@
       var accts = accounts(ctx.readJSON(KEY));
       if (!accts.length) return [];
       return readFolders(accts.map(function (a) { return a.id; })).then(function (recs) {
-        return rows(accts, recs, ctx.today, ctx.lang === "el" ? "el" : "en");
+        return rows(accts, recs, ctx.today, ctx.lang);
       });
     }
   };

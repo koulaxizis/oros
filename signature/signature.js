@@ -38,7 +38,9 @@
       return l === "el" ? "el" : "en";
     } catch (e) { return "en"; }
   }
-  var LANG = appLang();
+  // "en", "el" or a pack language (i18n/<code>/signature.js).
+  var LANG = window.orosI18n ? window.orosI18n.lang() : appLang();
+  function loc() { return window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB"); }
 
   var STRINGS = {
     en: {
@@ -90,6 +92,10 @@
       "team.hint": "One signature per person, with the look, company details and pictures of the signature open now. Paste a table (CSV) with a header row: name, title, department, email, phone, mobile, pronouns, photo (an https address).",
       "team.csv": "Table (CSV)", "btn.openCsv": "Open a CSV file", "btn.sample": "Save an example", "btn.zip": "Save all as .zip",
       "team.count": "{n} people · columns: {cols}", "team.count1": "1 person · columns: {cols}",
+      // team.sample: the example CSV. Keep its header row in English (or
+      // Greek): the team reader knows only those column names.
+      "team.sample": "name,title,department,email,phone,mobile,photo\nMaria Smith,Sales Manager,Sales,maria@example.com,+44 20 0000 0000,+44 7700 000000,\nNick Jones,Accountant,Finance,nick@example.com,+44 20 0000 0001,,\n",
+      "team.sampleFile": "team",
       "team.noname": "The table needs a \"name\" column in its first row.", "team.empty": "Paste a table with a header row and one row per person.",
       "btn.cancel": "Cancel", "btn.delete": "Delete", "btn.close": "Close", "btn.undo": "Undo", "btn.use": "Use",
       "ask.del": "Delete the signature \"{name}\"? This removes it from all your devices.",
@@ -120,13 +126,33 @@
       "chk.big": "{n} characters: a large signature makes every message heavier. Use smaller pictures.",
       "chk.longlegal": "Long legal text: many people never read it. Keep the part that matters.",
       "chk.round": "Outlook classic shows round photos as squares when the photo comes from your website.",
-      "steps.gmail": ["Press `Copy signature` here.", "In Gmail open Settings (the gear) › See all settings › General › Signature, and press Create new.", "Click in the big box and paste (Ctrl+V).", "Under Signature defaults pick it for new emails and replies, then press Save Changes at the bottom.", "Gmail on the phone uses its own plain-text signature: open its settings and paste the .txt text there."],
-      "steps.outlookweb": ["Press `Copy signature` here.", "In Outlook open Settings › Account › Signatures (on older versions: Mail › Compose and reply).", "Give the signature a name, click in the box and paste (Ctrl+V).", "Pick it for new messages and replies, then press Save."],
-      "steps.outlook": ["Press `Copy signature` here.", "In Outlook open File › Options › Mail › Signatures…, press New and give it a name.", "Click in the Edit signature box and paste (Ctrl+V), then press OK.", "Or: `Save .html`, then put the file in %APPDATA%\\Microsoft\\Signatures. Its file name is the signature's name in Outlook."],
-      "steps.thunderbird": ["Press `Save .html` here.", "In Thunderbird open Account Settings and choose your account.", "Tick \"Attach the signature from a file instead\" and choose the .html file.", "Or: tick \"Use HTML\", then `Copy HTML code` here and paste it into the Signature text box."],
-      "steps.apple": ["Press `Copy signature` here.", "In Mail open Mail › Settings › Signatures and press + under the account.", "Untick \"Always match my default message font\", then paste (Cmd+V) into the right side.", "On an iPhone: Settings › Apps › Mail › Signature, and paste there."],
-      "steps.oros": ["Press `Use in orOS Mail` here.", "orOS Mail opens and asks which account gets the signature.", "Press Use. New messages and replies from that account get it at once, on all your devices."],
-      "steps.other": ["Most mail apps on a phone take only plain text: press `Save .txt` or copy the text from the file.", "Desktop apps that take formatting: press `Copy signature` and paste it into their signature settings.", "Apps that take an HTML file: press `Save .html`."],
+      "steps.gmail.a": "Press `Copy signature` here.",
+      "steps.gmail.b": "In Gmail open Settings (the gear) › See all settings › General › Signature, and press Create new.",
+      "steps.gmail.c": "Click in the big box and paste (Ctrl+V).",
+      "steps.gmail.d": "Under Signature defaults pick it for new emails and replies, then press Save Changes at the bottom.",
+      "steps.gmail.e": "Gmail on the phone uses its own plain-text signature: open its settings and paste the .txt text there.",
+      "steps.outlookweb.a": "Press `Copy signature` here.",
+      "steps.outlookweb.b": "In Outlook open Settings › Account › Signatures (on older versions: Mail › Compose and reply).",
+      "steps.outlookweb.c": "Give the signature a name, click in the box and paste (Ctrl+V).",
+      "steps.outlookweb.d": "Pick it for new messages and replies, then press Save.",
+      "steps.outlook.a": "Press `Copy signature` here.",
+      "steps.outlook.b": "In Outlook open File › Options › Mail › Signatures…, press New and give it a name.",
+      "steps.outlook.c": "Click in the Edit signature box and paste (Ctrl+V), then press OK.",
+      "steps.outlook.d": "Or: `Save .html`, then put the file in %APPDATA%\\Microsoft\\Signatures. Its file name is the signature's name in Outlook.",
+      "steps.thunderbird.a": "Press `Save .html` here.",
+      "steps.thunderbird.b": "In Thunderbird open Account Settings and choose your account.",
+      "steps.thunderbird.c": "Tick \"Attach the signature from a file instead\" and choose the .html file.",
+      "steps.thunderbird.d": "Or: tick \"Use HTML\", then `Copy HTML code` here and paste it into the Signature text box.",
+      "steps.apple.a": "Press `Copy signature` here.",
+      "steps.apple.b": "In Mail open Mail › Settings › Signatures and press + under the account.",
+      "steps.apple.c": "Untick \"Always match my default message font\", then paste (Cmd+V) into the right side.",
+      "steps.apple.d": "On an iPhone: Settings › Apps › Mail › Signature, and paste there.",
+      "steps.oros.a": "Press `Use in orOS Mail` here.",
+      "steps.oros.b": "orOS Mail opens and asks which account gets the signature.",
+      "steps.oros.c": "Press Use. New messages and replies from that account get it at once, on all your devices.",
+      "steps.other.a": "Most mail apps on a phone take only plain text: press `Save .txt` or copy the text from the file.",
+      "steps.other.b": "Desktop apps that take formatting: press `Copy signature` and paste it into their signature settings.",
+      "steps.other.c": "Apps that take an HTML file: press `Save .html`.",
       "legal.conf.t": "This email and any attachments are confidential and meant only for the person they are addressed to. If you received it by mistake, please tell the sender and delete it.",
       "legal.gdpr.t": "We process personal data according to the GDPR (EU 2016/679). You can ask to see, correct or delete your data at any time by replying to this email.",
       "legal.env.t": "Please think of the environment before printing this email.",
@@ -183,6 +209,8 @@
       "team.hint": "Μία υπογραφή για κάθε άτομο, με την εμφάνιση, τα στοιχεία της εταιρείας και τις εικόνες της υπογραφής που είναι ανοιχτή τώρα. Επικόλλησε έναν πίνακα (CSV) με γραμμή επικεφαλίδων: όνομα, θέση, τμήμα, email, τηλέφωνο, κινητό, αντωνυμίες, φωτογραφία (μια διεύθυνση https).",
       "team.csv": "Πίνακας (CSV)", "btn.openCsv": "Άνοιγμα αρχείου CSV", "btn.sample": "Αποθήκευση παραδείγματος", "btn.zip": "Αποθήκευση όλων σε .zip",
       "team.count": "{n} άτομα · στήλες: {cols}", "team.count1": "1 άτομο · στήλες: {cols}",
+      "team.sample": "όνομα,θέση,τμήμα,email,τηλέφωνο,κινητό,φωτογραφία\nΜαρία Παπαδοπούλου,Υπεύθυνη Πωλήσεων,Πωλήσεις,maria@example.gr,+30 210 0000000,+30 690 0000000,\nΝίκος Γεωργίου,Λογιστής,Λογιστήριο,nikos@example.gr,+30 210 0000001,,\n",
+      "team.sampleFile": "ομάδα",
       "team.noname": "Ο πίνακας θέλει μια στήλη «όνομα» (ή «name») στην πρώτη γραμμή.", "team.empty": "Επικόλλησε έναν πίνακα με γραμμή επικεφαλίδων και μία γραμμή για κάθε άτομο.",
       "btn.cancel": "Άκυρο", "btn.delete": "Διαγραφή", "btn.close": "Κλείσιμο", "btn.undo": "Αναίρεση", "btn.use": "Χρήση",
       "ask.del": "Διαγραφή της υπογραφής «{name}»; Θα φύγει από όλες τις συσκευές σου.",
@@ -213,13 +241,33 @@
       "chk.big": "{n} χαρακτήρες: μια μεγάλη υπογραφή βαραίνει κάθε μήνυμα. Βάλε μικρότερες εικόνες.",
       "chk.longlegal": "Μεγάλο νομικό κείμενο: πολλοί δεν το διαβάζουν ποτέ. Κράτα ό,τι μετράει.",
       "chk.round": "Το Outlook classic δείχνει τις στρογγυλές φωτογραφίες τετράγωνες όταν η φωτογραφία έρχεται από τον ιστότοπό σου.",
-      "steps.gmail": ["Πάτα `Αντιγραφή υπογραφής` εδώ.", "Στο Gmail άνοιξε Ρυθμίσεις (το γρανάζι) › Εμφάνιση όλων των ρυθμίσεων › Γενικά › Υπογραφή και πάτα Δημιουργία νέας.", "Κάνε κλικ στο μεγάλο πλαίσιο και επικόλλησε (Ctrl+V).", "Στις Προεπιλογές υπογραφής διάλεξέ τη για νέα μηνύματα και απαντήσεις και πάτα Αποθήκευση αλλαγών στο κάτω μέρος.", "Το Gmail στο κινητό έχει δική του υπογραφή, μόνο κείμενο: άνοιξε τις ρυθμίσεις του και επικόλλησε εκεί το κείμενο του .txt."],
-      "steps.outlookweb": ["Πάτα `Αντιγραφή υπογραφής` εδώ.", "Στο Outlook άνοιξε Ρυθμίσεις › Λογαριασμός › Υπογραφές (σε παλιότερες εκδόσεις: Αλληλογραφία › Σύνταξη και απάντηση).", "Δώσε όνομα στην υπογραφή, κάνε κλικ στο πλαίσιο και επικόλλησε (Ctrl+V).", "Διάλεξέ τη για νέα μηνύματα και απαντήσεις και πάτα Αποθήκευση."],
-      "steps.outlook": ["Πάτα `Αντιγραφή υπογραφής` εδώ.", "Στο Outlook άνοιξε Αρχείο › Επιλογές › Αλληλογραφία › Υπογραφές…, πάτα Δημιουργία και δώσε της όνομα.", "Κάνε κλικ στο πλαίσιο Επεξεργασία υπογραφής, επικόλλησε (Ctrl+V) και πάτα OK.", "Ή: `Αποθήκευση .html` και βάλε το αρχείο στον φάκελο %APPDATA%\\Microsoft\\Signatures. Το όνομα του αρχείου γίνεται το όνομα της υπογραφής στο Outlook."],
-      "steps.thunderbird": ["Πάτα `Αποθήκευση .html` εδώ.", "Στο Thunderbird άνοιξε Ρυθμίσεις λογαριασμού και διάλεξε τον λογαριασμό σου.", "Τσέκαρε «Επισύναψη υπογραφής από αρχείο» και διάλεξε το αρχείο .html.", "Ή: τσέκαρε «Χρήση HTML», πάτα εδώ `Αντιγραφή κώδικα HTML` και επικόλλησέ τον στο πλαίσιο Κείμενο υπογραφής."],
-      "steps.apple": ["Πάτα `Αντιγραφή υπογραφής` εδώ.", "Στο Mail άνοιξε Mail › Ρυθμίσεις › Υπογραφές και πάτα + κάτω από τον λογαριασμό.", "Ξετσέκαρε «Πάντα ίδια με την προεπιλεγμένη γραμματοσειρά» και επικόλλησε (Cmd+V) δεξιά.", "Σε iPhone: Ρυθμίσεις › Εφαρμογές › Mail › Υπογραφή και επικόλλησε εκεί."],
-      "steps.oros": ["Πάτα `Χρήση στο Mail του orOS` εδώ.", "Ανοίγει το Mail του orOS και ρωτά ποιος λογαριασμός παίρνει την υπογραφή.", "Πάτα Χρήση. Τα νέα μηνύματα και οι απαντήσεις από αυτόν τον λογαριασμό την παίρνουν αμέσως, σε όλες τις συσκευές σου."],
-      "steps.other": ["Οι περισσότερες εφαρμογές email στο κινητό δέχονται μόνο κείμενο: πάτα `Αποθήκευση .txt` ή αντίγραψε το κείμενο από το αρχείο.", "Εφαρμογές υπολογιστή που δέχονται μορφοποίηση: πάτα `Αντιγραφή υπογραφής` και επικόλλησέ τη στις ρυθμίσεις υπογραφής τους.", "Εφαρμογές που δέχονται αρχείο HTML: πάτα `Αποθήκευση .html`."],
+      "steps.gmail.a": "Πάτα `Αντιγραφή υπογραφής` εδώ.",
+      "steps.gmail.b": "Στο Gmail άνοιξε Ρυθμίσεις (το γρανάζι) › Εμφάνιση όλων των ρυθμίσεων › Γενικά › Υπογραφή και πάτα Δημιουργία νέας.",
+      "steps.gmail.c": "Κάνε κλικ στο μεγάλο πλαίσιο και επικόλλησε (Ctrl+V).",
+      "steps.gmail.d": "Στις Προεπιλογές υπογραφής διάλεξέ τη για νέα μηνύματα και απαντήσεις και πάτα Αποθήκευση αλλαγών στο κάτω μέρος.",
+      "steps.gmail.e": "Το Gmail στο κινητό έχει δική του υπογραφή, μόνο κείμενο: άνοιξε τις ρυθμίσεις του και επικόλλησε εκεί το κείμενο του .txt.",
+      "steps.outlookweb.a": "Πάτα `Αντιγραφή υπογραφής` εδώ.",
+      "steps.outlookweb.b": "Στο Outlook άνοιξε Ρυθμίσεις › Λογαριασμός › Υπογραφές (σε παλιότερες εκδόσεις: Αλληλογραφία › Σύνταξη και απάντηση).",
+      "steps.outlookweb.c": "Δώσε όνομα στην υπογραφή, κάνε κλικ στο πλαίσιο και επικόλλησε (Ctrl+V).",
+      "steps.outlookweb.d": "Διάλεξέ τη για νέα μηνύματα και απαντήσεις και πάτα Αποθήκευση.",
+      "steps.outlook.a": "Πάτα `Αντιγραφή υπογραφής` εδώ.",
+      "steps.outlook.b": "Στο Outlook άνοιξε Αρχείο › Επιλογές › Αλληλογραφία › Υπογραφές…, πάτα Δημιουργία και δώσε της όνομα.",
+      "steps.outlook.c": "Κάνε κλικ στο πλαίσιο Επεξεργασία υπογραφής, επικόλλησε (Ctrl+V) και πάτα OK.",
+      "steps.outlook.d": "Ή: `Αποθήκευση .html` και βάλε το αρχείο στον φάκελο %APPDATA%\\Microsoft\\Signatures. Το όνομα του αρχείου γίνεται το όνομα της υπογραφής στο Outlook.",
+      "steps.thunderbird.a": "Πάτα `Αποθήκευση .html` εδώ.",
+      "steps.thunderbird.b": "Στο Thunderbird άνοιξε Ρυθμίσεις λογαριασμού και διάλεξε τον λογαριασμό σου.",
+      "steps.thunderbird.c": "Τσέκαρε «Επισύναψη υπογραφής από αρχείο» και διάλεξε το αρχείο .html.",
+      "steps.thunderbird.d": "Ή: τσέκαρε «Χρήση HTML», πάτα εδώ `Αντιγραφή κώδικα HTML` και επικόλλησέ τον στο πλαίσιο Κείμενο υπογραφής.",
+      "steps.apple.a": "Πάτα `Αντιγραφή υπογραφής` εδώ.",
+      "steps.apple.b": "Στο Mail άνοιξε Mail › Ρυθμίσεις › Υπογραφές και πάτα + κάτω από τον λογαριασμό.",
+      "steps.apple.c": "Ξετσέκαρε «Πάντα ίδια με την προεπιλεγμένη γραμματοσειρά» και επικόλλησε (Cmd+V) δεξιά.",
+      "steps.apple.d": "Σε iPhone: Ρυθμίσεις › Εφαρμογές › Mail › Υπογραφή και επικόλλησε εκεί.",
+      "steps.oros.a": "Πάτα `Χρήση στο Mail του orOS` εδώ.",
+      "steps.oros.b": "Ανοίγει το Mail του orOS και ρωτά ποιος λογαριασμός παίρνει την υπογραφή.",
+      "steps.oros.c": "Πάτα Χρήση. Τα νέα μηνύματα και οι απαντήσεις από αυτόν τον λογαριασμό την παίρνουν αμέσως, σε όλες τις συσκευές σου.",
+      "steps.other.a": "Οι περισσότερες εφαρμογές email στο κινητό δέχονται μόνο κείμενο: πάτα `Αποθήκευση .txt` ή αντίγραψε το κείμενο από το αρχείο.",
+      "steps.other.b": "Εφαρμογές υπολογιστή που δέχονται μορφοποίηση: πάτα `Αντιγραφή υπογραφής` και επικόλλησέ τη στις ρυθμίσεις υπογραφής τους.",
+      "steps.other.c": "Εφαρμογές που δέχονται αρχείο HTML: πάτα `Αποθήκευση .html`.",
       "legal.conf.t": "Το παρόν μήνυμα και τυχόν συνημμένα του είναι εμπιστευτικά και προορίζονται μόνο για τον παραλήπτη. Αν το λάβατε κατά λάθος, παρακαλούμε ενημερώστε τον αποστολέα και διαγράψτε το.",
       "legal.gdpr.t": "Επεξεργαζόμαστε προσωπικά δεδομένα σύμφωνα με τον ΓΚΠΔ (ΕΕ 2016/679). Μπορείτε οποτεδήποτε να ζητήσετε πρόσβαση, διόρθωση ή διαγραφή των δεδομένων σας απαντώντας σε αυτό το μήνυμα.",
       "legal.env.t": "Σκεφτείτε το περιβάλλον πριν εκτυπώσετε αυτό το μήνυμα.",
@@ -228,6 +276,7 @@
       "standalone": "Άνοιξε την Υπογραφή email μέσα από το orOS για εικόνες και sync."
     }
   };
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "signature", LANG);
   function t(k, vars) {
     var s = (STRINGS[LANG] && STRINGS[LANG][k] !== undefined) ? STRINGS[LANG][k] : (STRINGS.en[k] !== undefined ? STRINGS.en[k] : k);
     if (vars && typeof s === "string") s = s.replace(/\{(\w+)\}/g, function (m, n) { return vars[n] !== undefined ? vars[n] : m; });
@@ -427,7 +476,7 @@
   function fillSelect() {
     var sel = $("sig-sel");
     sel.textContent = "";
-    data.sigs.slice().sort(function (a, b) { return C.label(a, "").localeCompare(C.label(b, ""), LANG); }).forEach(function (s) {
+    data.sigs.slice().sort(function (a, b) { return C.label(a, "").localeCompare(C.label(b, ""), loc()); }).forEach(function (s) {
       var o = el("option", null, C.label(s, t("untitled")));
       o.value = s.id;
       sel.appendChild(o);
@@ -731,13 +780,20 @@
     if (!out.length) { list.appendChild(el("li", "ok", t("chk.ok"))); return; }
     out.forEach(function (c) {
       var k = "chk." + c.code + (c.code === "needurl" ? "." + c.n : "");
-      list.appendChild(el("li", c.lvl, t(k, { n: (c.n || 0).toLocaleString(LANG === "el" ? "el-GR" : "en-GB") })));
+      list.appendChild(el("li", c.lvl, t(k, { n: (c.n || 0).toLocaleString(loc()) })));
     });
   }
   function renderSteps() {
     var list = $("steps");
     list.textContent = "";
-    (t("steps." + prefs.target) || []).forEach(function (line) {
+    // One key per step: steps.<target>.a, .b, … (a pack translates each).
+    var lines = [];
+    for (var i = 0; i < 8; i++) {
+      var k = "steps." + prefs.target + "." + "abcdefgh".charAt(i);
+      if (STRINGS.en[k] === undefined) break;
+      lines.push(t(k));
+    }
+    lines.forEach(function (line) {
       var li = el("li");
       // `Button` → a highlighted name
       line.split(/(`[^`]+`)/).forEach(function (part) {
@@ -905,7 +961,7 @@
       var p = C.fromContact(c);
       return { label: p.name || p.company || "?", sub: [p.company, p.email].filter(Boolean).join(" · "),
                run: function () { applyPatch(p, appName("contacts", "Contacts")); } };
-    }).sort(function (a, b) { return a.label.localeCompare(b.label, LANG); }), true);
+    }).sort(function (a, b) { return a.label.localeCompare(b.label, loc()); }), true);
   }
   function fillBrand() {
     var b = brandRec();
@@ -1040,10 +1096,8 @@
     }).catch(function () {});
   }
   function saveSample() {
-    var sample = LANG === "el"
-      ? "όνομα,θέση,τμήμα,email,τηλέφωνο,κινητό,φωτογραφία\nΜαρία Παπαδοπούλου,Υπεύθυνη Πωλήσεων,Πωλήσεις,maria@example.gr,+30 210 0000000,+30 690 0000000,\nΝίκος Γεωργίου,Λογιστής,Λογιστήριο,nikos@example.gr,+30 210 0000001,,\n"
-      : "name,title,department,email,phone,mobile,photo\nMaria Smith,Sales Manager,Sales,maria@example.com,+44 20 0000 0000,+44 7700 000000,\nNick Jones,Accountant,Finance,nick@example.com,+44 20 0000 0001,,\n";
-    saveFile(new Blob(["﻿" + sample], { type: "text/csv" }), (LANG === "el" ? "ομάδα" : "team") + ".csv", "text/csv", "csv");
+    var sample = t("team.sample");
+    saveFile(new Blob(["﻿" + sample], { type: "text/csv" }), t("team.sampleFile") + ".csv", "text/csv", "csv");
   }
   function saveZip() {
     if (!sig || !team.people.length) return;

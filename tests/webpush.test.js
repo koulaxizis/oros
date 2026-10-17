@@ -7,6 +7,8 @@ const assert = require("node:assert/strict");
 const W = require("../webpush.js");
 const Phone = require("../phone.js");
 const OCC = require("../calendar/occur.js");
+const fs = require("fs");
+const path = require("path");
 
 async function hmac(key, data) {
   const k = await crypto.subtle.importKey("raw", key, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
@@ -102,4 +104,13 @@ test("phone reminderRows: a week when asked, the two days as before otherwise", 
   assert.equal(Phone.reminderRows(src, now).length, 2);
   assert.equal(Phone.reminderRows(Object.assign({ hours: 168 }, src), now).length, 7);
   assert.equal(Phone.reminderRows(Object.assign({ hours: 168, max: 3 }, src), now).length, 3);
+});
+
+test("Android app: Calendar reminders ring natively only while events are not copied to the phone's Calendar", () => {
+  const ph = fs.readFileSync(path.join(__dirname, "..", "phone.js"), "utf8");
+  assert.ok(/concat\(calendarReminders\(now\)\)/.test(ph), "the reminders snapshot includes Calendar");
+  assert.ok(/prefs\(\)\.calendar && appState && appState\.calendar === "granted"\) return \[\]/.test(ph), "skipped when the phone's Calendar rings them");
+  assert.ok(/localStorage\.getItem\("oros-calendar-data"\)/.test(ph.slice(ph.indexOf("function pushReminders"))), "a Calendar change re-sends the reminders");
+  const wp = fs.readFileSync(path.join(__dirname, "..", "webpush.js"), "utf8");
+  assert.ok(/root\.orosPush = \{\s*calendarRows: calendarRows/.test(wp), "webpush.js shares calendarRows");
 });

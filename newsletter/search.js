@@ -13,8 +13,8 @@
   "use strict";
   var KEY = "oros-newsletter-data";
   var L10N = {
-    en: { untitled: "Untitled issue", draft: "draft", sending: "sending", paused: "paused", sent: "sent", list: "List" },
-    el: { untitled: "Τεύχος χωρίς θέμα", draft: "πρόχειρο", sending: "αποστέλλεται", paused: "σε παύση", sent: "στάλθηκε", list: "Λίστα" }
+    en: { untitled: "Untitled issue", "srch.draft": "draft", "srch.sending": "sending", "srch.paused": "paused", "srch.sent": "sent", list: "List" },
+    el: { untitled: "Τεύχος χωρίς θέμα", "srch.draft": "πρόχειρο", "srch.sending": "αποστέλλεται", "srch.paused": "σε παύση", "srch.sent": "στάλθηκε", list: "Λίστα" }
   };
 
   function str(v) { return typeof v === "string" ? v.trim() : ""; }
@@ -38,17 +38,19 @@
     search: function (ctx) {
       var d = ctx.readJSON(KEY), out = [];
       if (!d || typeof d !== "object") return out;
-      var L = L10N[ctx.lang === "el" ? "el" : "en"];
+      // A pack language: English + the "newsletter" pack, when the shell has it.
+      var I = root && root.orosI18n;
+      var L = L10N[ctx.lang] || (I && ctx.lang ? I.table(L10N, "newsletter", ctx.lang) : L10N.en);
       var lists = {};
       live(d.lists).forEach(function (l) { lists[l.id] = l; });
       live(d.issues).forEach(function (x) {
         var l = lists[x.list];
         if (!l) return;
-        var st = L[x.st] ? x.st : "draft";
+        var st = L["srch." + x.st] ? x.st : "draft";
         out.push({
           id: "i:" + x.id,
           title: (str(x.subj) || L.untitled) + " · " + (str(l.name) || L.list),
-          text: [L[st], str(x.pre), bodyText(x).replace(/\s+/g, " ").trim().slice(0, 400)].filter(Boolean).join(" · "),
+          text: [L["srch." + st], str(x.pre), bodyText(x).replace(/\s+/g, " ").trim().slice(0, 400)].filter(Boolean).join(" · "),
           when: (typeof x.done === "number" && x.done) || (typeof x.start === "number" && x.start) || (typeof x.m === "number" ? x.m : 0),
           target: { issue: x.id }
         });

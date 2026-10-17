@@ -80,15 +80,33 @@
   }
 
   // ---------- strings ----------
-  function el() { return root.orosLang === "el"; }
+  // Keys share the "mail" pack with mail.js (same key = same English).
+  var W = {
+    en: { "ntf.new": "New e-mail", "ntf.many": "{n} new e-mails", "read.nosubj": "(no subject)",
+          "ntf.sent": "E-mail sent", "ntf.fail": "Not sent ({n})" },
+    el: { "ntf.new": "Νέο email", "ntf.many": "{n} νέα email", "read.nosubj": "(χωρίς θέμα)",
+          "ntf.sent": "Το email στάλθηκε", "ntf.fail": "Δεν στάλθηκε ({n})" }
+  };
+  var KEYS = { newOne: "ntf.new", many: "ntf.many", nosubj: "read.nosubj", sent: "ntf.sent", fail: "ntf.fail" };
+  var packAsked = {};
+  // The shell's language (orosI18n: the full code, a pack language
+  // included). The shell loads only its own pack, so the mail pack is
+  // fetched on first need; until it is in, English.
+  function strings() {
+    var I = root.orosI18n, l = root.orosLang === "el" ? "el" : "en";
+    if (I) { try { l = I.lang(); } catch (x) {} }
+    if (W[l]) return W[l];
+    if (!I) return W.en;
+    var tab = I.table(W, "mail", l);
+    if (!packAsked[l] && typeof I.ensure === "function") {
+      packAsked[l] = true;
+      try { I.ensure(l, "mail", function () { if (l !== "en" && l !== "el") delete W[l]; }); } catch (x) {}
+    }
+    return tab || W.en;
+  }
   function T(key, n) {
-    var s = {
-      newOne: el() ? "Νέο email" : "New e-mail",
-      many: el() ? "{n} νέα email" : "{n} new e-mails",
-      nosubj: el() ? "(χωρίς θέμα)" : "(no subject)",
-      sent: el() ? "Το email στάλθηκε" : "E-mail sent",
-      fail: el() ? "Δεν στάλθηκε ({n})" : "Not sent ({n})"
-    }[key];
+    var k = KEYS[key], w = strings();
+    var s = w[k] !== undefined ? w[k] : W.en[k];
     return s.replace("{n}", n);
   }
 

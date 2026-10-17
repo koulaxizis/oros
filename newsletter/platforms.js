@@ -19,9 +19,9 @@
 
   var S = {
     en: {
-      btn: "Email platforms", title: "Email platforms",
+      btn: "Email platforms", "plat.title": "Email platforms",
       intro: "Link this list to a group on MailerLite, an audience on Mailchimp or a list on Brevo. Sync brings their subscribers here, sends yours there, and carries every unsubscribe both ways.",
-      none: "Connect MailerLite, Mailchimp or Brevo in Settings › Connected services first.",
+      "plat.none": "Connect MailerLite, Mailchimp or Brevo in Settings › Connected services first.",
       openSettings: "Open Connected services", noShell: "Open Newsletter from the orOS desktop to use email platforms.",
       linked: "Linked", never: "never synced", last: "last sync {t}",
       sync: "Sync", unlink: "Unlink", unlinkQ: "Unlink {g}? Nothing is deleted here or there.",
@@ -34,22 +34,22 @@
       plan: "{a} new here · {h} left there, leave here too · {u} left here, unsubscribed there · {s} sent there",
       nothing: "Nothing to change: both sides agree.",
       apply: "Apply", applying: "Applying… {n}",
-      done: "Done: {a} added here, {h} left here, {u} unsubscribed there, {s} sent there.",
+      "plat.done": "Done: {a} added here, {h} left here, {u} unsubscribed there, {s} sent there.",
       fails: "{n} couldn't be changed on the platform; Sync again later.",
       tooMany: "The platform has more than {n} people in this group; only the first {n} were read.",
       basisNote: "People brought in count as \"Gave consent\": they signed up on the platform.",
-      "err.auth": "The platform refused the key. Check it in Settings › Connected services.",
-      "err.keys": "This device doesn't have the account's key yet. Enter it in Settings › Connected services.",
-      "err.offline": "You're offline.",
-      "err.busy": "The platform asks to slow down. Try again in a minute.",
-      "err.notfound": "The group wasn't found on the platform. It may have been deleted there.",
-      "err.other": "Couldn't reach the platform. Try again later.",
+      "plat.err.auth": "The platform refused the key. Check it in Settings › Connected services.",
+      "plat.err.keys": "This device doesn't have the account's key yet. Enter it in Settings › Connected services.",
+      "plat.err.offline": "You're offline.",
+      "plat.err.busy": "The platform asks to slow down. Try again in a minute.",
+      "plat.err.notfound": "The group wasn't found on the platform. It may have been deleted there.",
+      "plat.err.other": "Couldn't reach the platform. Try again later.",
       "p.mlite": "MailerLite", "p.mchimp": "Mailchimp", "p.brevo": "Brevo"
     },
     el: {
-      btn: "Πλατφόρμες email", title: "Πλατφόρμες email",
+      btn: "Πλατφόρμες email", "plat.title": "Πλατφόρμες email",
       intro: "Σύνδεσε αυτή τη λίστα με ένα group στο MailerLite, ένα audience στο Mailchimp ή μια λίστα στο Brevo. Ο συγχρονισμός φέρνει τους συνδρομητές τους εδώ, στέλνει τους δικούς σου εκεί και μεταφέρει κάθε διαγραφή και προς τις δύο μεριές.",
-      none: "Σύνδεσε πρώτα MailerLite, Mailchimp ή Brevo στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.",
+      "plat.none": "Σύνδεσε πρώτα MailerLite, Mailchimp ή Brevo στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.",
       openSettings: "Άνοιγμα Συνδεδεμένων υπηρεσιών", noShell: "Άνοιξε το Newsletter από την επιφάνεια εργασίας του orOS για να χρησιμοποιήσεις πλατφόρμες email.",
       linked: "Συνδεδεμένα", never: "δεν έχει συγχρονιστεί", last: "τελευταίος συγχρονισμός {t}",
       sync: "Συγχρονισμός", unlink: "Αποσύνδεση", unlinkQ: "Αποσύνδεση του {g}; Δεν διαγράφεται τίποτα ούτε εδώ ούτε εκεί.",
@@ -62,21 +62,23 @@
       plan: "{a} νέοι εδώ · {h} αποχώρησαν εκεί, αποχωρούν και εδώ · {u} αποχώρησαν εδώ, διαγράφονται εκεί · {s} στέλνονται εκεί",
       nothing: "Τίποτα να αλλάξει: οι δύο μεριές συμφωνούν.",
       apply: "Εφαρμογή", applying: "Εφαρμογή… {n}",
-      done: "Έγινε: {a} προστέθηκαν εδώ, {h} αποχώρησαν εδώ, {u} διαγράφηκαν εκεί, {s} στάλθηκαν εκεί.",
+      "plat.done": "Έγινε: {a} προστέθηκαν εδώ, {h} αποχώρησαν εδώ, {u} διαγράφηκαν εκεί, {s} στάλθηκαν εκεί.",
       fails: "{n} δεν άλλαξαν στην πλατφόρμα· κάνε ξανά συγχρονισμό αργότερα.",
       tooMany: "Η πλατφόρμα έχει πάνω από {n} άτομα σε αυτό το group· διαβάστηκαν μόνο τα πρώτα {n}.",
       basisNote: "Όσοι έρχονται από εκεί μετράνε ως «Έδωσε συναίνεση»: γράφτηκαν στην πλατφόρμα.",
-      "err.auth": "Η πλατφόρμα απέρριψε το κλειδί. Έλεγξέ το στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.",
-      "err.keys": "Αυτή η συσκευή δεν έχει ακόμα το κλειδί του λογαριασμού. Πέρασέ το στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.",
-      "err.offline": "Είσαι εκτός σύνδεσης.",
-      "err.busy": "Η πλατφόρμα ζητά να πάμε πιο αργά. Δοκίμασε ξανά σε ένα λεπτό.",
-      "err.notfound": "Το group δεν βρέθηκε στην πλατφόρμα. Ίσως διαγράφηκε εκεί.",
-      "err.other": "Δεν ήταν δυνατή η σύνδεση με την πλατφόρμα. Δοκίμασε αργότερα.",
+      "plat.err.auth": "Η πλατφόρμα απέρριψε το κλειδί. Έλεγξέ το στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.",
+      "plat.err.keys": "Αυτή η συσκευή δεν έχει ακόμα το κλειδί του λογαριασμού. Πέρασέ το στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.",
+      "plat.err.offline": "Είσαι εκτός σύνδεσης.",
+      "plat.err.busy": "Η πλατφόρμα ζητά να πάμε πιο αργά. Δοκίμασε ξανά σε ένα λεπτό.",
+      "plat.err.notfound": "Το group δεν βρέθηκε στην πλατφόρμα. Ίσως διαγράφηκε εκεί.",
+      "plat.err.other": "Δεν ήταν δυνατή η σύνδεση με την πλατφόρμα. Δοκίμασε αργότερα.",
       "p.mlite": "MailerLite", "p.mchimp": "Mailchimp", "p.brevo": "Brevo"
     }
   };
+  // A pack language (orosI18n, ../i18n.js): English + the "newsletter" pack.
   function t(k, params) {
-    var tab = S[A && A.lang === "el" ? "el" : "en"];
+    var code = A && A.lang ? A.lang : "en", I = root.orosI18n;
+    var tab = S[code] || (I ? I.table(S, "newsletter", code) : S.en);
     var s = tab[k] !== undefined ? tab[k] : S.en[k] !== undefined ? S.en[k] : k;
     return s.replace(/\{(\w+)\}/g, function (m, n) { return params && params[n] !== undefined ? String(params[n]) : m; });
   }
@@ -94,7 +96,7 @@
   }
   function errText(e) {
     var c = e && e.code;
-    return t(c === "auth" || c === "keys" || c === "offline" || c === "busy" || c === "notfound" ? "err." + c : "err.other");
+    return t(c === "auth" || c === "keys" || c === "offline" || c === "busy" || c === "notfound" ? "plat.err." + c : "plat.err.other");
   }
   // One request → its answer, or a thrown code (status-based too).
   function ask(acct, req) {
@@ -128,7 +130,7 @@
   function open() {
     var l = A.curList();
     if (!l) return;
-    var dlg = A.makeDialog("nl-plat", t("title"), true);
+    var dlg = A.makeDialog("nl-plat", t("plat.title"), true);
     dlg.appendChild(el("p", "hint", t("intro")));
     var Lk = links();
     if (!Lk) {
@@ -139,7 +141,7 @@
     }
     var accts = accounts();
     if (!accts.length) {
-      dlg.appendChild(el("p", "dlg-text", t("none")));
+      dlg.appendChild(el("p", "dlg-text", t("plat.none")));
       A.actionsRow(dlg, [A.btn(t("openSettings"), "", function () {
         dlg.close();
         try { root.parent.__orosOpenAt("settings", { section: "services" }); } catch (e) {}
@@ -351,7 +353,7 @@
         (A.data().plinks || []).forEach(function (y) { if (y.id === x.id && !y.del) cur = y; });
         if (cur) { var z = JSON.parse(JSON.stringify(cur)); z.last = Date.now(); savePlink(z); }
         busy = false;
-        msg.textContent = t("done", { a: plan.imp.add.length, h: plan.offHere.length, u: tally.u, s: tally.s }) +
+        msg.textContent = t("plat.done", { a: plan.imp.add.length, h: plan.offHere.length, u: tally.u, s: tally.s }) +
           (tally.failed ? " " + t("fails", { n: tally.failed }) : "");
         go.hidden = true;
         A.renderAll();

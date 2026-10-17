@@ -23,8 +23,8 @@
       "ok": "Genuine signature", "okSub": "These details were signed with the key below and have not been changed.",
       "bad": "Not valid", "badSub": "This code was changed or is damaged. The details cannot be trusted.",
       "broken": "This is not a certificate check link, or part of it is missing.",
-      "f.no": "Number", "f.n": "Name", "f.t": "For", "f.dates": "Dates", "f.place": "Place", "f.hours": "Hours",
-      "f.g": "Grade", "f.issuer": "Issued by", "f.idate": "Issued on", "f.fp": "Key",
+      "vf.no": "Number", "vf.n": "Name", "vf.t": "For", "vf.dates": "Dates", "vf.place": "Place", "vf.hours": "Hours",
+      "vf.g": "Grade", "vf.issuer": "Issued by", "vf.idate": "Issued on", "vf.fp": "Key",
       "note.fp": "Compare this key with the one the organisation publishes (website, emails). The same key means the certificate comes from them.",
       "note.rv": "A certificate the organisation withdrew after it was issued still shows as signed here. When in doubt, ask them."
     },
@@ -38,20 +38,24 @@
       "ok": "Γνήσια υπογραφή", "okSub": "Τα στοιχεία υπογράφηκαν με το παρακάτω κλειδί και δεν έχουν αλλάξει.",
       "bad": "Δεν είναι έγκυρο", "badSub": "Ο κωδικός άλλαξε ή είναι κατεστραμμένος. Τα στοιχεία δεν είναι αξιόπιστα.",
       "broken": "Αυτός δεν είναι σύνδεσμος ελέγχου πιστοποιητικού ή λείπει κομμάτι του.",
-      "f.no": "Αριθμός", "f.n": "Όνομα", "f.t": "Για", "f.dates": "Ημερομηνίες", "f.place": "Τόπος", "f.hours": "Ώρες",
-      "f.g": "Βαθμός", "f.issuer": "Φορέας", "f.idate": "Ημερομηνία έκδοσης", "f.fp": "Κλειδί",
+      "vf.no": "Αριθμός", "vf.n": "Όνομα", "vf.t": "Για", "vf.dates": "Ημερομηνίες", "vf.place": "Τόπος", "vf.hours": "Ώρες",
+      "vf.g": "Βαθμός", "vf.issuer": "Φορέας", "vf.idate": "Ημερομηνία έκδοσης", "vf.fp": "Κλειδί",
       "note.fp": "Συγκρίνετε αυτό το κλειδί με αυτό που δημοσιεύει ο φορέας (ιστότοπος, email). Ίδιο κλειδί σημαίνει ότι το πιστοποιητικό προέρχεται από αυτόν.",
       "note.rv": "Ένα πιστοποιητικό που ο φορέας ανακάλεσε μετά την έκδοση εξακολουθεί να φαίνεται υπογεγραμμένο εδώ. Αν έχετε αμφιβολία, ρωτήστε τον φορέα."
     }
   };
+  // orosI18n (../i18n.js): the orOS language of this browser, a pack
+  // language included; without a stored choice, the browser's.
+  var I18N = window.orosI18n || null;
   var LANG = (function () {
-    try {
-      var l = localStorage.getItem("oros-lang");
-      if (l === "el" || l === "en") return l;
-    } catch (e) {}
+    var l = null;
+    try { l = localStorage.getItem("oros-lang"); } catch (e) {}
+    if (I18N && I18N.known(l)) return I18N.lang();
+    if (l === "el" || l === "en") return l;
     return /^el\b/i.test(navigator.language || "") ? "el" : "en";
   })();
-  function t(k) { return STR[LANG][k] || STR.en[k] || k; }
+  if (I18N) I18N.table(STR, "certificates", LANG);
+  function t(k) { return (STR[LANG] && STR[LANG][k]) || STR.en[k] || k; }
 
   // ---------- palette: the orOS theme of this browser, else the system's ----------
   function theme() {
@@ -72,7 +76,7 @@
     var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ymd || "");
     if (!m) return "";
     try {
-      return new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString(lang === "el" ? "el-GR" : "en-GB", { day: "numeric", month: "long", year: "numeric" });
+      return new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString(I18N && I18N.known(lang) ? I18N.locale(lang) : lang === "el" ? "el-GR" : "en-GB", { day: "numeric", month: "long", year: "numeric" });
     } catch (e) { return ymd; }
   }
 
@@ -119,14 +123,14 @@
         dl.appendChild(el("dt", null, t(key)));
         dl.appendChild(el("dd", cls || null, val));
       }
-      row("f.no", d.no);
-      row("f.dates", d.dates);
-      row("f.place", d.place);
-      row("f.hours", d.hours);
-      row("f.g", d.g);
-      row("f.issuer", d.issuer);
-      row("f.idate", fmtDay(d.idate, d.lang));
-      row("f.fp", fp, "fp");
+      row("vf.no", d.no);
+      row("vf.dates", d.dates);
+      row("vf.place", d.place);
+      row("vf.hours", d.hours);
+      row("vf.g", d.g);
+      row("vf.issuer", d.issuer);
+      row("vf.idate", fmtDay(d.idate, d.lang));
+      row("vf.fp", fp, "fp");
       out.push(dl);
       out.push(el("p", "note", t("note.fp")));
       out.push(el("p", "note", t("note.rv")));

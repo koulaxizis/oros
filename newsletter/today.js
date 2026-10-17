@@ -13,10 +13,10 @@
 (function (root) {
   "use strict";
   var W = {
-    en: { sending: "Sending “{s}”", prog: "{a} of {b} sent", paused: "Newsletter paused: “{s}”",
-          sched: "Newsletter goes out: “{s}”", subs: "{n} new subscribers", subs1: "1 new subscriber", noSubj: "(no subject)" },
-    el: { sending: "Αποστολή «{s}»", prog: "στάλθηκαν {a} από {b}", paused: "Παύση αποστολής: «{s}»",
-          sched: "Φεύγει το δελτίο: «{s}»", subs: "{n} νέοι συνδρομητές", subs1: "1 νέος συνδρομητής", noSubj: "(χωρίς θέμα)" }
+    en: { "today.sending": "Sending “{s}”", prog: "{a} of {b} sent", paused: "Newsletter paused: “{s}”",
+          sched: "Newsletter goes out: “{s}”", "today.subs": "{n} new subscribers", subs1: "1 new subscriber", noSubj: "(no subject)" },
+    el: { "today.sending": "Αποστολή «{s}»", prog: "στάλθηκαν {a} από {b}", paused: "Παύση αποστολής: «{s}»",
+          sched: "Φεύγει το δελτίο: «{s}»", "today.subs": "{n} νέοι συνδρομητές", subs1: "1 νέος συνδρομητής", noSubj: "(χωρίς θέμα)" }
   };
   function fill(s, p) {
     Object.keys(p || {}).forEach(function (k) { s = s.split("{" + k + "}").join(String(p[k])); });
@@ -38,12 +38,14 @@
       if (!C) return [];
       var d = C.parse(ctx.readRaw(C.STORAGE_KEY));
       if (!d) return [];
+      // A pack language: English + the "newsletter" pack, when one is loaded.
+      if (!W[ctx.lang] && root.orosI18n) root.orosI18n.table(W, "newsletter", ctx.lang);
       var w = W[ctx.lang] || W.en, out = [];
       var last = ctx.addDays(ctx.today, ctx.horizon);
       C.live(d.issues).forEach(function (x) {
         if (x.st === "sending") {
           var p = C.progress(d, x);
-          out.push({ id: "send-" + x.id, due: ctx.today, kind: "info", title: fill(w.sending, { s: subj(x, w) }),
+          out.push({ id: "send-" + x.id, due: ctx.today, kind: "info", title: fill(w["today.sending"], { s: subj(x, w) }),
                      text: fill(w.prog, { a: p.sent, b: p.total }), target: { issue: x.id } });
         } else if (x.st === "paused") {
           out.push({ id: "paused-" + x.id, due: ctx.today, kind: "task", title: fill(w.paused, { s: subj(x, w) }),
@@ -65,7 +67,7 @@
       var lists = Object.keys(per), n = 0;
       lists.forEach(function (id) { n += per[id]; });
       if (n) {
-        out.push({ id: "subs-" + ctx.today, due: ctx.today, kind: "info", title: n === 1 ? w.subs1 : fill(w.subs, { n: n }),
+        out.push({ id: "subs-" + ctx.today, due: ctx.today, kind: "info", title: n === 1 ? w.subs1 : fill(w["today.subs"], { n: n }),
                    target: lists.length === 1 ? { list: lists[0] } : null });
       }
       return out;

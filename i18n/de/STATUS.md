@@ -2,8 +2,8 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 5994 of 26979 (22%)
-- Help pages: 31 of 144 (21%)
+- Strings: 7719 of 27081 (28%)
+- Help pages: 35 of 144 (24%)
 - Shown in the language list: yes
 
 Apps marked "English for now" do not load language packs yet: their
@@ -24,7 +24,7 @@ text is still written in the code. They switch over wave by wave
 | budget | English for now | 0 / 496 |
 | calculator | English for now | 0 / 133 |
 | calendar | 100% | 370 / 370 |
-| certificates | English for now | 0 / 343 |
+| certificates | 100% | 391 / 391 |
 | characters | English for now | 0 / 73 |
 | checkers | English for now | 0 / 72 |
 | chess | English for now | 0 / 401 |
@@ -62,7 +62,7 @@ text is still written in the code. They switch over wave by wave
 | library | English for now | 0 / 307 |
 | lightsout | English for now | 0 / 51 |
 | mahjong | English for now | 0 / 69 |
-| mail | English for now | 0 / 491 |
+| mail | 100% | 495 / 495 |
 | mancala | English for now | 0 / 60 |
 | maps | English for now | 0 / 810 |
 | mastermind | English for now | 0 / 73 |
@@ -79,7 +79,7 @@ text is still written in the code. They switch over wave by wave
 | music | English for now | 0 / 372 |
 | names | English for now | 0 / 40 |
 | netizen | English for now | 0 / 121 |
-| newsletter | English for now | 0 / 594 |
+| newsletter | 100% | 620 / 620 |
 | nonogram | English for now | 0 / 70 |
 | notes | 100% | 172 / 172 |
 | oracle | English for now | 0 / 38 |
@@ -105,7 +105,7 @@ text is still written in the code. They switch over wave by wave
 | share | English for now | 0 / 152 |
 | shelf | English for now | 0 / 285 |
 | shell | 100% | 452 / 452 |
-| signature | English for now | 0 / 195 |
+| signature | 100% | 219 / 219 |
 | simon | English for now | 0 / 49 |
 | sky | English for now | 0 / 149 |
 | slider | English for now | 0 / 37 |
@@ -163,7 +163,6 @@ These show English until fixed (usually the English text changed).
 - help/bubble.txt
 - help/budget.txt
 - help/calculator.txt
-- help/certificates.txt
 - help/characters.txt
 - help/checkers.txt
 - help/chess.txt
@@ -195,7 +194,6 @@ These show English until fixed (usually the English text changed).
 - help/library.txt
 - help/lightsout.txt
 - help/mahjong.txt
-- help/mail.txt
 - help/mancala.txt
 - help/maps.txt
 - help/mastermind.txt
@@ -211,7 +209,6 @@ These show English until fixed (usually the English text changed).
 - help/music.txt
 - help/names.txt
 - help/netizen.txt
-- help/newsletter.txt
 - help/nonogram.txt
 - help/oracle.txt
 - help/passwords.txt
@@ -233,7 +230,6 @@ These show English until fixed (usually the English text changed).
 - help/scanpdf.txt
 - help/scores.txt
 - help/shelf.txt
-- help/signature.txt
 - help/simon.txt
 - help/sky.txt
 - help/slider.txt

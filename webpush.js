@@ -426,6 +426,7 @@
   setTimeout(function () { schedule(false); }, 8000);
 
   root.orosPush = {
+    calendarRows: calendarRows,   // also used by phone.js (the Android app's own reminders)
     supported: function () { return supported() && !inApp(); },
     enabled: function () { return !!prefs().on; },
     state: function () {

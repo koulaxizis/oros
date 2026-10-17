@@ -9,6 +9,15 @@
    ]
   },
   {
+   "app": "certificates",
+   "files": [
+    "certificates/certificates.js",
+    "certificates/core.js",
+    "certificates/search.js",
+    "certificates/verify.js"
+   ]
+  },
+  {
    "app": "contacts",
    "files": [
     "contacts/contacts.js",
@@ -69,11 +78,33 @@
    ]
   },
   {
+   "app": "mail",
+   "files": [
+    "mail/mail.js",
+    "mail/notify.js",
+    "mail/search.js",
+    "mail/today.js"
+   ]
+  },
+  {
    "app": "mindmap",
    "files": [
     "mindmap/mindmap.js",
     "mindmap/mm-core.js",
     "mindmap/search.js"
+   ]
+  },
+  {
+   "app": "newsletter",
+   "files": [
+    "newsletter/core.js",
+    "newsletter/newsletter.js",
+    "newsletter/package.js",
+    "newsletter/platforms.js",
+    "newsletter/render.js",
+    "newsletter/runner.js",
+    "newsletter/search.js",
+    "newsletter/today.js"
    ]
   },
   {
@@ -95,6 +126,15 @@
    "app": "shell",
    "files": [
     "translations.js"
+   ]
+  },
+  {
+   "app": "signature",
+   "files": [
+    "signature/core.js",
+    "signature/package.js",
+    "signature/search.js",
+    "signature/signature.js"
    ]
   },
   {

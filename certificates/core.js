@@ -3,7 +3,7 @@
 // Certificates of attendance, completion, merit, diplomas and the
 // like, issued in bulk from a list of people.
 //   - data model + strict normalizers + the canonical merge
-//   - kinds (ready texts, EN + EL) and looks (styles)
+//   - kinds (ready texts, EN + EL + pack languages) and looks (styles)
 //   - fields: {name}, {title}, {dates}… filled per person; a part in
 //     [[ ]] shows only when every field in it has a value
 //   - serial numbers: given once, in list order, never reused
@@ -14,7 +14,7 @@
 //   { ver: 1, evs: [event…], ppl: [person…] (both sorted by id),
 //     tombs: { id: deletedAt }, keys? [key…] (since 1.1.0) }
 // event (one certificate design + the details of what it is for):
-//   { id "e…", m, t, kind, lang en|el, sty, acc, acc2, font serif|sans,
+//   { id "e…", m, t, kind, lang en|el|pack code, sty, acc, acc2, font serif|sans,
 //     size a4|letter, orient l|p, d1, d2, idate (YYYY-MM-DD or ""),
 //     place, hours, issuer, txt { sub, head, pre, nm, body, foot, no },
 //     sigs [{ n, r, a?, w?, h? }] ≤ 3, logo { a, w, h } | null,
@@ -74,68 +74,127 @@
     particip: "modern", train: "minimal", thanks: "bold", volunteer: "bold", kids: "kids"
   };
 
-  // Ready texts. Greek texts use the name as written (nominative), so
-  // no ending has to be guessed; {name2} (another form of the name,
-  // e.g. accusative) is there for people who write their own text.
-  var COMMON = {
-    en: { sub: "{issuer}", nm: "{name}", foot: "[[{place}, ]]{date}", no: "[[Certificate no. {serial}]]" },
-    el: { sub: "{issuer}", nm: "{name}", foot: "[[{place}, ]]{date}", no: "[[Αρ. βεβαίωσης {serial}]]" }
-  };
-  var TEXTS = {
+  // Ready texts, signature roles, dates and the register's header, one
+  // table per language (flat keys, so a pack language gets them too:
+  // certificates.js adds CT[<code>] with orosI18n.table). Greek texts
+  // use the name as written (nominative), so no ending has to be
+  // guessed; {name2} (another form of the name, e.g. accusative) is
+  // there for people who write their own text. Greek months are in the
+  // genitive ("14 Οκτωβρίου 2026"). {d} {m} {y}: day, month, year.
+  var CT = {
     en: {
-      attend: { head: "CERTIFICATE OF ATTENDANCE", pre: "This is to certify that",
-        body: "attended the seminar “{title}”[[ ({hours} hours)]][[, held on {dates}]][[ in {place}]]." },
-      complete: { head: "CERTIFICATE OF COMPLETION", pre: "This is to certify that",
-        body: "has successfully completed the programme “{title}”[[ ({hours} hours)]][[ with grade {grade}]]." },
-      award: { head: "CERTIFICATE OF MERIT", pre: "This certificate is awarded to",
-        body: "for outstanding performance[[ in the programme “{title}”]][[ ({grade})]]." },
-      excel: { head: "AWARD OF EXCELLENCE", pre: "Presented to",
-        body: "in recognition of excellent achievement[[ in the programme “{title}”]][[: {grade}]]." },
-      diploma: { head: "DIPLOMA", pre: "This is to certify that",
-        body: "has fulfilled all the requirements of the programme “{title}”[[ with grade {grade}]] and is awarded this diploma." },
-      particip: { head: "CERTIFICATE OF PARTICIPATION", pre: "This is to certify that",
-        body: "took part in the event “{title}”[[ on {dates}]][[ in {place}]]." },
-      train: { head: "TRAINING CERTIFICATE", pre: "This is to certify that",
-        body: "completed the training programme “{title}”[[ ({hours} training hours)]][[ on {dates}]][[ in {place}]]." },
-      thanks: { head: "CERTIFICATE OF APPRECIATION", pre: "With sincere thanks to",
-        body: "for the valuable contribution[[ to “{title}”]]." },
-      volunteer: { head: "VOLUNTEER CERTIFICATE", pre: "This is to certify that",
-        body: "offered voluntary service[[ to “{title}”]][[ for {hours} hours]][[ on {dates}]]." },
-      kids: { head: "SUPER STAR AWARD", pre: "This award goes to",
-        body: "for a wonderful effort[[ in {title}]]!" }
+      "ct.sub": "{issuer}",
+      "ct.nm": "{name}",
+      "ct.foot": "[[{place}, ]]{date}",
+      "ct.no": "[[Certificate no. {serial}]]",
+      "ct.attend.head": "CERTIFICATE OF ATTENDANCE",
+      "ct.attend.pre": "This is to certify that",
+      "ct.attend.body": "attended the seminar “{title}”[[ ({hours} hours)]][[, held on {dates}]][[ in {place}]].",
+      "ct.complete.head": "CERTIFICATE OF COMPLETION",
+      "ct.complete.pre": "This is to certify that",
+      "ct.complete.body": "has successfully completed the programme “{title}”[[ ({hours} hours)]][[ with grade {grade}]].",
+      "ct.award.head": "CERTIFICATE OF MERIT",
+      "ct.award.pre": "This certificate is awarded to",
+      "ct.award.body": "for outstanding performance[[ in the programme “{title}”]][[ ({grade})]].",
+      "ct.excel.head": "AWARD OF EXCELLENCE",
+      "ct.excel.pre": "Presented to",
+      "ct.excel.body": "in recognition of excellent achievement[[ in the programme “{title}”]][[: {grade}]].",
+      "ct.diploma.head": "DIPLOMA",
+      "ct.diploma.pre": "This is to certify that",
+      "ct.diploma.body": "has fulfilled all the requirements of the programme “{title}”[[ with grade {grade}]] and is awarded this diploma.",
+      "ct.particip.head": "CERTIFICATE OF PARTICIPATION",
+      "ct.particip.pre": "This is to certify that",
+      "ct.particip.body": "took part in the event “{title}”[[ on {dates}]][[ in {place}]].",
+      "ct.train.head": "TRAINING CERTIFICATE",
+      "ct.train.pre": "This is to certify that",
+      "ct.train.body": "completed the training programme “{title}”[[ ({hours} training hours)]][[ on {dates}]][[ in {place}]].",
+      "ct.thanks.head": "CERTIFICATE OF APPRECIATION",
+      "ct.thanks.pre": "With sincere thanks to",
+      "ct.thanks.body": "for the valuable contribution[[ to “{title}”]].",
+      "ct.volunteer.head": "VOLUNTEER CERTIFICATE",
+      "ct.volunteer.pre": "This is to certify that",
+      "ct.volunteer.body": "offered voluntary service[[ to “{title}”]][[ for {hours} hours]][[ on {dates}]].",
+      "ct.kids.head": "SUPER STAR AWARD",
+      "ct.kids.pre": "This award goes to",
+      "ct.kids.body": "for a wonderful effort[[ in {title}]]!",
+      "ct.role.attend": "Instructor",
+      "ct.role.train": "Instructor",
+      "ct.role.kids": "Teacher",
+      "ct.role.other": "Director",
+      "ct.months": "January,February,March,April,May,June,July,August,September,October,November,December",
+      "ct.date": "{d} {m} {y}",
+      "ct.rangeM": "{d1}–{d2} {m} {y}",
+      "ct.rangeY": "{d1} {m1} – {d2} {m2} {y}",
+      "csv.no": "Number",
+      "csv.name": "Name",
+      "csv.name2": "Other form of the name",
+      "csv.email": "Email",
+      "csv.grade": "Grade",
+      "csv.extra": "Extra",
+      "csv.iss": "Numbered on",
+      "csv.rv": "Revoked",
+      "csv.yes": "yes"
     },
     el: {
-      attend: { head: "ΒΕΒΑΙΩΣΗ ΠΑΡΑΚΟΛΟΥΘΗΣΗΣ", pre: "Βεβαιώνεται ότι ο/η",
-        body: "παρακολούθησε το σεμινάριο «{title}»[[ διάρκειας {hours} ωρών]][[, που πραγματοποιήθηκε στις {dates}]][[ ({place})]]." },
-      complete: { head: "ΠΙΣΤΟΠΟΙΗΤΙΚΟ ΟΛΟΚΛΗΡΩΣΗΣ", pre: "Πιστοποιείται ότι ο/η",
-        body: "ολοκλήρωσε με επιτυχία το πρόγραμμα «{title}»[[ διάρκειας {hours} ωρών]][[ με βαθμό {grade}]]." },
-      award: { head: "ΕΠΑΙΝΟΣ", pre: "Έπαινο λαμβάνει ο/η",
-        body: "για την εξαιρετική επίδοση[[ στο πρόγραμμα «{title}»]][[ ({grade})]]." },
-      excel: { head: "ΒΡΑΒΕΙΟ ΑΡΙΣΤΕΙΑΣ", pre: "Το βραβείο αριστείας λαμβάνει ο/η",
-        body: "σε αναγνώριση της άριστης επίδοσης[[ στο πρόγραμμα «{title}»]][[: {grade}]]." },
-      diploma: { head: "ΔΙΠΛΩΜΑ", pre: "Πιστοποιείται ότι ο/η",
-        body: "ολοκλήρωσε όλες τις απαιτήσεις του προγράμματος «{title}»[[ με βαθμό {grade}]] και λαμβάνει το παρόν δίπλωμα." },
-      particip: { head: "ΒΕΒΑΙΩΣΗ ΣΥΜΜΕΤΟΧΗΣ", pre: "Βεβαιώνεται ότι ο/η",
-        body: "συμμετείχε στην εκδήλωση «{title}»[[ στις {dates}]][[ ({place})]]." },
-      train: { head: "ΒΕΒΑΙΩΣΗ ΚΑΤΑΡΤΙΣΗΣ", pre: "Βεβαιώνεται ότι ο/η",
-        body: "ολοκλήρωσε το πρόγραμμα κατάρτισης «{title}»[[ ({hours} ώρες κατάρτισης)]][[ στις {dates}]][[ ({place})]]." },
-      thanks: { head: "ΕΥΧΑΡΙΣΤΗΡΙΟ", pre: "Με θερμές ευχαριστίες",
-        body: "για την πολύτιμη συμβολή σας[[ στο «{title}»]]." },
-      volunteer: { head: "ΒΕΒΑΙΩΣΗ ΕΘΕΛΟΝΤΙΚΗΣ ΠΡΟΣΦΟΡΑΣ", pre: "Βεβαιώνεται ότι ο/η",
-        body: "προσέφερε εθελοντική εργασία[[ στο «{title}»]][[ για {hours} ώρες]][[ στις {dates}]]." },
-      kids: { head: "ΒΡΑΒΕΙΟ ΣΟΥΠΕΡ ΑΣΤΕΡΙ", pre: "Το βραβείο κερδίζει ο/η",
-        body: "για την υπέροχη προσπάθεια[[ στο «{title}»]]!" }
+      "ct.sub": "{issuer}",
+      "ct.nm": "{name}",
+      "ct.foot": "[[{place}, ]]{date}",
+      "ct.no": "[[Αρ. βεβαίωσης {serial}]]",
+      "ct.attend.head": "ΒΕΒΑΙΩΣΗ ΠΑΡΑΚΟΛΟΥΘΗΣΗΣ",
+      "ct.attend.pre": "Βεβαιώνεται ότι ο/η",
+      "ct.attend.body": "παρακολούθησε το σεμινάριο «{title}»[[ διάρκειας {hours} ωρών]][[, που πραγματοποιήθηκε στις {dates}]][[ ({place})]].",
+      "ct.complete.head": "ΠΙΣΤΟΠΟΙΗΤΙΚΟ ΟΛΟΚΛΗΡΩΣΗΣ",
+      "ct.complete.pre": "Πιστοποιείται ότι ο/η",
+      "ct.complete.body": "ολοκλήρωσε με επιτυχία το πρόγραμμα «{title}»[[ διάρκειας {hours} ωρών]][[ με βαθμό {grade}]].",
+      "ct.award.head": "ΕΠΑΙΝΟΣ",
+      "ct.award.pre": "Έπαινο λαμβάνει ο/η",
+      "ct.award.body": "για την εξαιρετική επίδοση[[ στο πρόγραμμα «{title}»]][[ ({grade})]].",
+      "ct.excel.head": "ΒΡΑΒΕΙΟ ΑΡΙΣΤΕΙΑΣ",
+      "ct.excel.pre": "Το βραβείο αριστείας λαμβάνει ο/η",
+      "ct.excel.body": "σε αναγνώριση της άριστης επίδοσης[[ στο πρόγραμμα «{title}»]][[: {grade}]].",
+      "ct.diploma.head": "ΔΙΠΛΩΜΑ",
+      "ct.diploma.pre": "Πιστοποιείται ότι ο/η",
+      "ct.diploma.body": "ολοκλήρωσε όλες τις απαιτήσεις του προγράμματος «{title}»[[ με βαθμό {grade}]] και λαμβάνει το παρόν δίπλωμα.",
+      "ct.particip.head": "ΒΕΒΑΙΩΣΗ ΣΥΜΜΕΤΟΧΗΣ",
+      "ct.particip.pre": "Βεβαιώνεται ότι ο/η",
+      "ct.particip.body": "συμμετείχε στην εκδήλωση «{title}»[[ στις {dates}]][[ ({place})]].",
+      "ct.train.head": "ΒΕΒΑΙΩΣΗ ΚΑΤΑΡΤΙΣΗΣ",
+      "ct.train.pre": "Βεβαιώνεται ότι ο/η",
+      "ct.train.body": "ολοκλήρωσε το πρόγραμμα κατάρτισης «{title}»[[ ({hours} ώρες κατάρτισης)]][[ στις {dates}]][[ ({place})]].",
+      "ct.thanks.head": "ΕΥΧΑΡΙΣΤΗΡΙΟ",
+      "ct.thanks.pre": "Με θερμές ευχαριστίες",
+      "ct.thanks.body": "για την πολύτιμη συμβολή σας[[ στο «{title}»]].",
+      "ct.volunteer.head": "ΒΕΒΑΙΩΣΗ ΕΘΕΛΟΝΤΙΚΗΣ ΠΡΟΣΦΟΡΑΣ",
+      "ct.volunteer.pre": "Βεβαιώνεται ότι ο/η",
+      "ct.volunteer.body": "προσέφερε εθελοντική εργασία[[ στο «{title}»]][[ για {hours} ώρες]][[ στις {dates}]].",
+      "ct.kids.head": "ΒΡΑΒΕΙΟ ΣΟΥΠΕΡ ΑΣΤΕΡΙ",
+      "ct.kids.pre": "Το βραβείο κερδίζει ο/η",
+      "ct.kids.body": "για την υπέροχη προσπάθεια[[ στο «{title}»]]!",
+      "ct.role.attend": "Εισηγητής/τρια",
+      "ct.role.train": "Εκπαιδευτής/τρια",
+      "ct.role.kids": "Δάσκαλος/α",
+      "ct.role.other": "Διευθυντής/ρια",
+      "ct.months": "Ιανουαρίου,Φεβρουαρίου,Μαρτίου,Απριλίου,Μαΐου,Ιουνίου,Ιουλίου,Αυγούστου,Σεπτεμβρίου,Οκτωβρίου,Νοεμβρίου,Δεκεμβρίου",
+      "ct.date": "{d} {m} {y}",
+      "ct.rangeM": "{d1}–{d2} {m} {y}",
+      "ct.rangeY": "{d1} {m1} – {d2} {m2} {y}",
+      "csv.no": "Αριθμός",
+      "csv.name": "Ονοματεπώνυμο",
+      "csv.name2": "Άλλη μορφή ονόματος",
+      "csv.email": "Email",
+      "csv.grade": "Βαθμός",
+      "csv.extra": "Επιπλέον",
+      "csv.iss": "Ημερομηνία αρίθμησης",
+      "csv.rv": "Ανακλήθηκε",
+      "csv.yes": "ναι"
     }
   };
-  var SIG_ROLE = {
-    en: { attend: "Instructor", train: "Instructor", kids: "Teacher", other: "Director" },
-    el: { attend: "Εισηγητής/τρια", train: "Εκπαιδευτής/τρια", kids: "Δάσκαλος/α", other: "Διευθυντής/ρια" }
-  };
-
-  var MONTHS = {
-    en: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
-    el: ["Ιανουαρίου", "Φεβρουαρίου", "Μαρτίου", "Απριλίου", "Μαΐου", "Ιουνίου", "Ιουλίου", "Αυγούστου", "Σεπτεμβρίου", "Οκτωβρίου", "Νοεμβρίου", "Δεκεμβρίου"]
-  };
+  // A certificate's language: "en", "el" or a pack language ("de").
+  var CERT_LANG_RE = /^[a-z]{2,3}$/;
+  // The table of a certificate language (English when it is not here).
+  function ctOf(lang) { return CT[lang] || CT.en; }
+  function ct(lang, k) { var c = ctOf(lang); return c[k] !== undefined ? c[k] : CT.en[k]; }
+  var ROLE_KINDS = ["attend", "train", "kids", "other"];
 
   // ---------- Small helpers ----------
   function cmpStr(a, b) { return a < b ? -1 : a > b ? 1 : 0; }
@@ -192,7 +251,7 @@
   }
   function normEvent(x) {
     if (!x || typeof x !== "object" || typeof x.id !== "string" || !EV_RE.test(x.id) || !stamp(x.m)) return null;
-    var kind = oneOf(x.kind, KINDS, "attend"), lang = oneOf(x.lang, ["en", "el"], "en");
+    var kind = oneOf(x.kind, KINDS, "attend"), lang = typeof x.lang === "string" && CERT_LANG_RE.test(x.lang) ? x.lang : "en";
     var sty = oneOf(x.sty, STYLES, KIND_STYLE[kind]), sd = STYLE_DEF[sty];
     var o = {
       id: x.id, m: x.m, t: line(x.t, LIM.title), kind: kind, lang: lang, sty: sty,
@@ -338,15 +397,17 @@
 
   // ---------- Kinds, styles, new events ----------
   function kindTexts(lang, kind) {
-    var c = COMMON[lang] || COMMON.en, k = (TEXTS[lang] || TEXTS.en)[kind] || TEXTS.en.attend;
-    return { sub: c.sub, head: k.head, pre: k.pre, nm: c.nm, body: k.body, foot: c.foot, no: c.no };
+    if (KINDS.indexOf(kind) < 0) kind = "attend";
+    return {
+      sub: ct(lang, "ct.sub"), head: ct(lang, "ct." + kind + ".head"), pre: ct(lang, "ct." + kind + ".pre"), nm: ct(lang, "ct.nm"),
+      body: ct(lang, "ct." + kind + ".body"), foot: ct(lang, "ct.foot"), no: ct(lang, "ct.no")
+    };
   }
   function sigRole(lang, kind) {
-    var r = SIG_ROLE[lang] || SIG_ROLE.en;
-    return r[kind] || r.other;
+    return ct(lang, "ct.role." + (ROLE_KINDS.indexOf(kind) >= 0 ? kind : "other"));
   }
   function blankEvent(id, now, lang, kind, today) {
-    lang = lang === "el" ? "el" : "en";
+    lang = CT[lang] ? lang : "en";
     kind = oneOf(kind, KINDS, "attend");
     var sty = KIND_STYLE[kind], sd = STYLE_DEF[sty];
     var day = ymd(today) || "";
@@ -367,11 +428,12 @@
   }
   function applyLang(ev, lang) {
     var e = copy(ev);
-    e.lang = lang === "el" ? "el" : "en";
+    e.lang = CT[lang] ? lang : "en";
     e.txt = kindTexts(e.lang, e.kind);
+    // a ready role (in any language here) becomes the new language's
     e.sigs.forEach(function (s) {
-      ["en", "el"].forEach(function (l) {
-        Object.keys(SIG_ROLE[l]).forEach(function (k) { if (s.r === SIG_ROLE[l][k]) s.r = sigRole(e.lang, k === "other" ? e.kind : k); });
+      Object.keys(CT).forEach(function (l) {
+        ROLE_KINDS.forEach(function (k) { if (s.r === CT[l]["ct.role." + k]) s.r = sigRole(e.lang, k === "other" ? e.kind : k); });
       });
     });
     return e;
@@ -542,21 +604,25 @@
   }
 
   // ---------- Dates ----------
+  function months(lang) {
+    var m = String(ct(lang, "ct.months")).split(",");
+    return m.length === 12 ? m : CT.en["ct.months"].split(",");
+  }
+  function put(s, vars) { return String(s).replace(/\{(\w+)\}/g, function (x, k) { return vars[k] !== undefined ? vars[k] : x; }); }
   function partsOf(v) { var m = YMD_RE.exec(v || ""); return m ? { y: +m[1], m: +m[2], d: +m[3] } : null; }
   function fmtDate(v, lang) {
     var p = partsOf(ymd(v));
     if (!p) return "";
-    var mo = (MONTHS[lang] || MONTHS.en)[p.m - 1];
-    return p.d + " " + mo + " " + p.y;
+    return put(ct(lang, "ct.date"), { d: p.d, m: months(lang)[p.m - 1], y: p.y });
   }
   function fmtRange(d1, d2, lang) {
     var a = partsOf(ymd(d1)), b = partsOf(ymd(d2));
     if (!a && !b) return "";
     if (!a || !b || (a.y === b.y && a.m === b.m && a.d === b.d)) return fmtDate(a ? d1 : d2, lang);
     if (d2 < d1) { var t = a; a = b; b = t; }
-    var M = MONTHS[lang] || MONTHS.en;
-    if (a.y === b.y && a.m === b.m) return a.d + "–" + b.d + " " + M[a.m - 1] + " " + a.y;
-    if (a.y === b.y) return a.d + " " + M[a.m - 1] + " – " + b.d + " " + M[b.m - 1] + " " + a.y;
+    var M = months(lang);
+    if (a.y === b.y && a.m === b.m) return put(ct(lang, "ct.rangeM"), { d1: a.d, d2: b.d, m: M[a.m - 1], y: a.y });
+    if (a.y === b.y) return put(ct(lang, "ct.rangeY"), { d1: a.d, m1: M[a.m - 1], d2: b.d, m2: M[b.m - 1], y: a.y });
     return fmtDate(a.y + "-" + pad(a.m, 2) + "-" + pad(a.d, 2), lang) + " – " + fmtDate(b.y + "-" + pad(b.m, 2) + "-" + pad(b.d, 2), lang);
   }
 
@@ -643,15 +709,16 @@
     return rows.map(function (r) { return r.map(function (x) { return String(x).trim(); }); })
       .filter(function (r) { return r.some(function (x) { return x; }); });
   }
-  // Header names (EN + EL, folded) → field keys.
+  // Header names (EN + EL + DE, folded) → field keys.
   var HEAD = {
-    n: ["name", "full name", "fullname", "participant", "student", "ονοματεπωνυμο", "ονοματεπωνυμο συμμετεχοντα", "συμμετεχων", "συμμετεχουσα", "μαθητης", "μαθητρια"],
-    first: ["first name", "firstname", "given name", "given", "first", "ονομα"],
-    last: ["last name", "lastname", "surname", "family name", "family", "last", "επωνυμο"],
-    n2: ["name 2", "name2", "other form", "accusative", "name (accusative)", "αιτιατικη", "ονομα σε αιτιατικη", "ονοματεπωνυμο σε αιτιατικη", "γενικη"],
-    em: ["email", "e-mail", "mail", "email address", "ηλ. ταχυδρομειο", "ηλεκτρονικο ταχυδρομειο"],
-    g: ["grade", "score", "mark", "distinction", "result", "βαθμος", "βαθμολογια", "διακριση", "αποτελεσμα"],
-    x: ["note", "notes", "extra", "comment", "σημειωση", "σημειωσεις", "σχολιο", "επιπλεον"]
+    n: ["name", "full name", "fullname", "participant", "student", "ονοματεπωνυμο", "ονοματεπωνυμο συμμετεχοντα", "συμμετεχων", "συμμετεχουσα", "μαθητης", "μαθητρια",
+      "vollstandiger name", "teilnehmer", "teilnehmerin", "schuler", "schulerin"],
+    first: ["first name", "firstname", "given name", "given", "first", "ονομα", "vorname"],
+    last: ["last name", "lastname", "surname", "family name", "family", "last", "επωνυμο", "nachname", "familienname"],
+    n2: ["name 2", "name2", "other form", "accusative", "name (accusative)", "αιτιατικη", "ονομα σε αιτιατικη", "ονοματεπωνυμο σε αιτιατικη", "γενικη", "other form of the name", "andere form", "andere form des namens"],
+    em: ["email", "e-mail", "mail", "email address", "ηλ. ταχυδρομειο", "ηλεκτρονικο ταχυδρομειο", "e-mail-adresse"],
+    g: ["grade", "score", "mark", "distinction", "result", "βαθμος", "βαθμολογια", "διακριση", "αποτελεσμα", "bewertung", "ergebnis", "punkte", "auszeichnung"],
+    x: ["note", "notes", "extra", "comment", "σημειωση", "σημειωσεις", "σχολιο", "επιπλεον", "notiz", "bemerkung", "anmerkung", "zusatz", "kommentar"]
   };
   function headKey(h) {
     var f = fold(h).replace(/[*:]+$/, "").trim();
@@ -751,10 +818,8 @@
   function registerCsv(data, evId, lang) {
     var ev = eventById(data, evId);
     if (!ev) return "";
-    var H = lang === "el"
-      ? ["Αριθμός", "Ονοματεπώνυμο", "Άλλη μορφή ονόματος", "Email", "Βαθμός", "Επιπλέον", "Ημερομηνία αρίθμησης", "Ανακλήθηκε"]
-      : ["Number", "Name", "Other form of the name", "Email", "Grade", "Extra", "Numbered on", "Revoked"];
-    var yes = lang === "el" ? "ναι" : "yes";
+    var H = ["no", "name", "name2", "email", "grade", "extra", "iss", "rv"].map(function (k) { return ct(lang, "csv." + k); });
+    var yes = ct(lang, "csv.yes");
     var out = [H.map(csvCell).join(",")];
     eventPeople(data, evId).forEach(function (p) {
       out.push([serial(ev, p.no), p.n, p.n2 || "", p.em || "", p.g || "", p.x || "", p.iss || "", p.rv ? yes : ""].map(csvCell).join(","));
@@ -789,7 +854,7 @@
 
   var api = {
     VERSION: VERSION, DATA_VER: DATA_VER, DATA_KEY: DATA_KEY, PREFS_KEY: PREFS_KEY, LIM: LIM,
-    KINDS: KINDS, STYLES: STYLES, STYLE_DEF: STYLE_DEF, KIND_STYLE: KIND_STYLE, TXT_KEYS: TXT_KEYS, TOKENS: TOKENS,
+    CT: CT, KINDS: KINDS, STYLES: STYLES, STYLE_DEF: STYLE_DEF, KIND_STYLE: KIND_STYLE, TXT_KEYS: TXT_KEYS, TOKENS: TOKENS,
     EV_RE: EV_RE, P_RE: P_RE, ASSET_RE: ASSET_RE,
     normEvent: normEvent, normPerson: normPerson, normImg: normImg, normKey: normKey, merge: merge, empty: empty, parse: parse,
     activeKey: activeKey, putKey: putKey, checkFields: checkFields, K_RE: K_RE,
