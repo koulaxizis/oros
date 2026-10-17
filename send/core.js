@@ -6,6 +6,8 @@
 //   link   { url, title?, note? }           one http(s) address
 //   items  { title?, items: [{text, note?}] }   a list of lines
 //   table  { name?, rows: [[cell…]…], sum? }    rows, row 1 = heading
+//   files  { items: [{ path, name? }] }     files on the orOS disk
+//                                           (/internal/…, ≤ 10; wave 2)
 // RECEIVERS says which app takes which kind and builds the target of
 // that app's EXISTING deep link (__orosOpenAt). Every receiver opens a
 // prefill the user still has to save (BR-W8-6); nothing here writes
@@ -26,7 +28,8 @@
 (function (root) {
   "use strict";
 
-  var KINDS = ["text", "link", "items", "table"];
+  var KINDS = ["text", "link", "items", "table", "files"];
+  var MAX_FILES = 10;            // Mail's handed-files cap
   var MAX_TEXT = 200000;
   var MAX_TITLE = 200;
   var MAX_ITEMS = 200;
@@ -100,7 +103,22 @@
     }) : [];
     return { name: line(d.name, 100), rows: rows, sum: sum };
   }
-  var NORM = { text: normText, link: normLink, items: normItems, table: normTable };
+  // A path on the orOS disk, as Mail's diskPath() takes it.
+  function diskPath(p) {
+    if (typeof p !== "string" || p.length > 1000 || p.indexOf("/internal/") !== 0) return false;
+    return p.split("/").slice(2).every(function (seg) { return seg && seg !== "." && seg !== ".." && !/[\u0000-\u001f]/.test(seg); });
+  }
+  function normFiles(d) {
+    if (!Array.isArray(d.items)) return null;
+    var out = [];
+    d.items.forEach(function (f) {
+      if (!f || typeof f !== "object" || !diskPath(f.path) || out.length >= MAX_FILES) return;
+      var name = line(f.name, 200).replace(/[\/\\]/g, "") || f.path.replace(/^.*\//, "").slice(0, 200);
+      if (!out.some(function (o) { return o.path === f.path; })) out.push({ path: f.path, name: name });
+    });
+    return out.length ? { items: out } : null;
+  }
+  var NORM = { text: normText, link: normLink, items: normItems, table: normTable, files: normFiles };
   function norm(kind, data) {
     if (!own(NORM, kind) || !data || typeof data !== "object") return null;
     try { return NORM[kind](data); } catch (e) { return null; }
@@ -121,6 +139,7 @@
     if (kind === "text") return { title: d.title, text: d.text };
     if (kind === "link") return { title: d.title || d.url, text: linkAsText(d) };
     if (kind === "items") return { title: d.title, text: itemsAsText(d) };
+    if (kind === "files") return { title: d.items[0].name, text: d.items.map(function (f) { return f.name; }).join("\n") };
     return { title: d.name, text: tableAsText(d) };
   }
   // text / link → To-Do items: one per non-empty line of a text.
@@ -166,9 +185,12 @@
       }
     },
     mail: {
-      kinds: ["text", "link", "items"],
+      kinds: ["text", "link", "items", "files"],
       build: function (k, d) {
         var x = asText(k, d);
+        if (k === "files") {
+          return { compose: { subject: line(x.title, 300), attach: d.items.map(function (f) { return { path: f.path, name: f.name }; }) } };
+        }
         return { compose: { subject: line(x.title, 300), body: x.text.slice(0, MAIL_MAX) } };
       }
     },
@@ -237,8 +259,8 @@
 
   // ---------- 4. Summary line ----------
   var S = {
-    en: { text: "Text", link: "Link", items: "List", table: "Table", n: "{n} items", rows: "{n} rows", chars: "{n} characters" },
-    el: { text: "Κείμενο", link: "Σύνδεσμος", items: "Λίστα", table: "Πίνακας", n: "{n} στοιχεία", rows: "{n} γραμμές", chars: "{n} χαρακτήρες" }
+    en: { text: "Text", link: "Link", items: "List", table: "Table", files: "Files", file: "File", n: "{n} items", rows: "{n} rows", chars: "{n} characters" },
+    el: { text: "Κείμενο", link: "Σύνδεσμος", items: "Λίστα", table: "Πίνακας", files: "Αρχεία", file: "Αρχείο", n: "{n} στοιχεία", rows: "{n} γραμμές", chars: "{n} χαρακτήρες" }
   };
   function summary(kind, data, lang) {
     var s = S[lang === "el" ? "el" : "en"];
@@ -248,6 +270,10 @@
     if (kind === "text") { name = d.title || line(d.text, 60); more = s.chars.replace("{n}", d.text.length); }
     else if (kind === "link") { name = d.title || d.url; more = d.title ? d.url : ""; }
     else if (kind === "items") { name = d.title; more = s.n.replace("{n}", d.items.length); }
+    else if (kind === "files") {
+      if (d.items.length === 1) { head = s.file; name = d.items[0].name; more = ""; }
+      else { name = ""; more = s.n.replace("{n}", d.items.length); }
+    }
     else { name = d.name; more = s.rows.replace("{n}", d.rows.length); }
     return [head, name, more].filter(function (x) { return !!x; }).join(" · ").slice(0, 240);
   }

@@ -3039,9 +3039,40 @@
   }
   // Deep links (shell __orosOpenAt / __orosTakeTarget): { album } |
   // { artist } | { pl } | { liked: 1 } | { track } (plays it) |
-  // { ia } (an Internet Archive album) | { jm } (a Jamendo album).
+  // { ia } (an Internet Archive album) | { jm } (a Jamendo album) |
+  // { playPath } (a song already under the music folder, from Files) |
+  // { openFile: { token } } (a song from elsewhere: Files' "Open with",
+  // shell fileopen.js; copied into the music folder, then played).
+  function playPath(p) {
+    // A scan already running (the one at boot) may have started before
+    // the file came in: then one more scan picks it up.
+    return rescan(false).then(function () { return byPath[p] ? null : rescan(false); }).then(function () {
+      var r = byPath[p];
+      if (r) playRows([r], 0, { kind: "song", id: r.k, n: r.t }, false);
+      else showToast(t("toast.cant"));
+    });
+  }
+  function openFileTarget(o) {
+    var f = null;
+    try {
+      var p = window.parent;
+      if (o && typeof o.token === "string" && p && p !== window && typeof p.__orosTakeFile === "function") f = p.__orosTakeFile(o.token);
+    } catch (e) { f = null; }
+    if (!f || !C.isAudioName(f.name)) { showToast(t("toast.cant")); return; }
+    if (!LIB.fs()) { showToast(t("toast.noFs")); return; }
+    LIB.addFiles([f]).then(function (r) {
+      if (!r.paths.length) { showToast(t("toast.cant")); return; }
+      showToast(t("toast.saved1"));
+      return playPath(r.paths[0]);
+    }, function () { showToast(t("toast.cant")); });
+  }
   function openTarget(tg) {
     if (!H || !tg || typeof tg !== "object" || document.querySelector("dialog[open]")) return;
+    if (tg.openFile && typeof tg.openFile === "object") { openFileTarget(tg.openFile); return; }
+    if (typeof tg.playPath === "string") {
+      if (tg.playPath.indexOf(LIB.ROOT + "/") === 0) playPath(tg.playPath);
+      return;
+    }
     view = null; history = [];
     if (typeof tg.album === "string") openView({ kind: "album", id: tg.album });
     else if (typeof tg.artist === "string") openView({ kind: "artist", id: tg.artist });
