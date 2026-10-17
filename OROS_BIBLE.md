@@ -7422,3 +7422,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - App Kit K2: the quality gate checks every app a PR adds with check-app.js (registration, precache, help, DL-1, palette, sync, safety).
 - Files: `.github/workflows/quality.yml` (job `new-apps`), `.github/app-kit/check-app.js`, `docs/app-kit/README.md`, `tests/app-kit.test.js`, Bible.
   - Tests: full suite green; quality.yml green on GitHub. Nothing shipped to users.
+
+### 2026-10-17 — Send to someone: whole calendars and date ranges, share wave 3 (#473) — 2.78.00
+- Send to someone: send a whole calendar or a date range from Calendar › More; it opens month by month in any browser, as .ics or into orOS (new share kind `cal`).
+- Files: `share/{kinds,send,view}.js`, `share/share.css`, `share/index.html`, `calendar/calendar.js`, `calendar/calendar.css`, `calendar/index.html`, help, Bible.
+  - Tests: full suite green; real Chromium 1280 EN / 360 EL. Not tested: a real phone, the live relay from the cloud container.
