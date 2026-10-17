@@ -133,6 +133,7 @@
     el: { date: "Ημερομηνία", game: "Παιχνίδι", player: "Παίκτης", total: "Σύνολο", winner: "Νικητής", round: "Γύρος",
           points: "Πόντοι", yes: "ναι", no: "όχι", finished: "Τελείωσε" }
   };
+  if (typeof window !== "undefined" && window.orosI18n) window.orosI18n.table(CSV, "scores");
   function csvCell(v) {
     if (typeof v === "number") return String(v);
     var s = String(v == null ? "" : v);
@@ -162,7 +163,7 @@
     return { totals: tot, best: rounds.length ? best : [] };
   }
   function previews(state, lang) {
-    var L = CSV[lang === "el" ? "el" : "en"];
+    var L = CSV[lang] || CSV.en;
     var d = { matches: Array.isArray(state.matches) ? state.matches : [],
               rounds: Array.isArray(state.rounds) ? state.rounds : [] };
     // history.csv = scores.js historyCsv (finished matches, one row per player)
