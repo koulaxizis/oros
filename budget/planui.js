@@ -86,6 +86,8 @@
     }
   };
   var MAX_GOALS = 30;
+  // orosI18n (../i18n.js): S[<pack language>] from the pack "budget".
+  if (root.orosI18n) root.orosI18n.table(S, "budget", root.orosI18n.lang());
 
   function t(k, p) {
     var tab = S[A.lang] || S.en;
@@ -265,7 +267,7 @@
     amt.autocomplete = "off";
     amt.className = "amt-in";
     amt.value = r.asg ? signedInput(r.asg) : "";
-    amt.placeholder = A.lang === "el" ? "0,00" : "0.00";
+    amt.placeholder = A.zeroAmt();
     form.appendChild(A.field(t("asgThis") + " (" + A.cur() + ")", amt, "bd-asg-a"));
     var err = A.errLine();
     if (r.avail < 0) {
@@ -317,7 +319,7 @@
     amt.inputMode = "decimal";
     amt.autocomplete = "off";
     amt.className = "amt-in";
-    amt.placeholder = A.lang === "el" ? "0,00" : "0.00";
+    amt.placeholder = A.zeroAmt();
     form.appendChild(A.field(A.tt("f.amount") + " (" + A.cur() + ")", amt, "bd-mv-a"));
     var err = A.errLine();
     form.appendChild(err);
@@ -416,7 +418,7 @@
     tgt.inputMode = "decimal";
     tgt.autocomplete = "off";
     tgt.className = "amt-in";
-    tgt.placeholder = A.lang === "el" ? "0,00" : "0.00";
+    tgt.placeholder = A.zeroAmt();
     tgt.value = g ? A.centsToInput(g.t) : "";
     form.appendChild(A.field(t("gTarget") + " (" + A.cur() + ")", tgt, "bd-g-t"));
     var date = el("input");
@@ -432,7 +434,7 @@
     var sv = el("input");
     sv.inputMode = "decimal";
     sv.autocomplete = "off";
-    sv.placeholder = A.lang === "el" ? "0,00" : "0.00";
+    sv.placeholder = A.zeroAmt();
     sv.value = g && g.sv ? A.centsToInput(g.sv) : "";
     var svF = A.field(t("gSaved") + " (" + A.cur() + ")", sv, "bd-g-sv");
     form.appendChild(svF);
@@ -488,7 +490,7 @@
     amt.inputMode = "decimal";
     amt.autocomplete = "off";
     amt.className = "amt-in";
-    amt.placeholder = A.lang === "el" ? "0,00" : "0.00";
+    amt.placeholder = A.zeroAmt();
     form.appendChild(A.field(A.tt("f.amount") + " (" + A.cur() + ")", amt, "bd-gadd-a"));
     form.appendChild(el("p", "hint", t("gAddHint")));
     var err = A.errLine();

@@ -1,0 +1,125 @@
+# Budget
+Budget erfasst deine Einnahmen und Ausgaben Monat für Monat, mit Kategorien, Monatslimits, Umschlägen, Sparzielen, Abos, wiederkehrenden Einträgen, mehreren Währungen, Belegen und Berichten.
+
+## Erste Schritte
+Tippe oder klicke auf `Neu`, wähle `Ausgabe` oder `Einnahme`, gib den `Betrag` ein, wähle eine `Kategorie` und drücke `Speichern`. Du kannst auch das `Datum` setzen und eine `Notiz` hinzufügen. Beträge kannst du als `12,50` oder `12.50` eingeben.
+
+Oben steht der Monat, mit Pfeilen zum Wechseln zwischen den Monaten; `Dieser Monat` bringt dich zurück. Darunter zählen `Einnahmen`, `Ausgaben` und `Saldo` den Monat zusammen, den du gerade ansiehst.
+
+## Einträge
+Der Tab `Einträge` listet die Einträge des Monats nach Tag, mit einer `Tagessumme`. Tippe auf einen Eintrag, um ihn zu bearbeiten oder zu löschen; nach dem Löschen erscheint ein paar Sekunden lang `Rückgängig`.
+
+`Alle Einträge durchsuchen…` sucht in jedem Monat, nicht nur im offenen. Das Menü daneben zeigt `Alle Einträge`, `Nur Ausgaben` oder `Nur Einnahmen`.
+
+## Monatslimits
+Unter `Limits` gibt `Limit setzen` einer Ausgabenkategorie ein Monatslimit, und `Alle Ausgaben` nimmt ein Gesamtlimit. Limits gelten für jeden Monat. Jeder Balken zeigt, wie viel ausgegeben und wie viel übrig ist, und wechselt bei 80 % zu `Nah am Limit` und über 100 % zu `Über dem Limit`. Wenn du im aktuellen Monat ein Limit überschreitest, schickt dir orOS eine [Benachrichtigung](help:t/notifications).
+
+## Wiederkehrend
+Miete, Gehalt, Abos: Unter `Wiederkehrend` fügst du sie einmal hinzu, mit `Jede Woche`, `Jeden Monat` oder `Jedes Jahr`, einem `Erstes Datum` und optional einem `Letztes Datum`. Solange Budget offen ist, wird jeder davon an seinem Tag ein normaler Eintrag, markiert mit `Wiederkehrend`. Wenn du einen wiederkehrenden Eintrag löschst, kommen keine neuen mehr; bereits hinzugefügte Einträge bleiben. Anstehende wiederkehrende Einträge erscheinen auch im [Kalender](app:calendar) unter `Budget`; tippe auf einen, um ihn hier zu öffnen.
+
+## Konten und Umbuchungen
+Konten sind optional. Im Menü `Mehr` kannst du unter `Konten` Bargeld, eine Karte oder ein Bankkonto mit einem `Anfangssaldo` hinzufügen (ein Minuszeichen für Schulden). Wähle in einem Eintrag oder wiederkehrenden Eintrag ein Konto, um seinen Saldo zu führen; `Salden heute` steht unter den Summen. Einträge ohne Konto zählen trotzdem in den Summen.
+
+`Umbuchung` verschiebt Geld zwischen zwei Konten, `Von` einem `Nach` dem anderen. Eine Umbuchung erscheint als „Bank → Bargeld“ und zählt weder als Einnahme noch als Ausgabe. Der Filter `Nur Umbuchungen` listet sie.
+
+## Umschläge
+Die Umschlagmethode (nullbasiert, wie bei YNAB) ist optional. Öffne den Tab `Plan` und drücke `Umschlagmethode starten`. Ab dann gilt:
+- `Zuzuweisen` ist das Geld, das noch keine Aufgabe hat: was deine Konten beim Start hatten, plus die Einnahmen seitdem, minus das, was du zugewiesen hast. Verteile es, bis dort 0 steht.
+- Jede Ausgabenkategorie ist ein Umschlag. Tippe auf einen, um festzulegen, was `Diesen Monat zugewiesen` ist; er zeigt `Ausgegeben` und `Verfügbar`.
+- Was in einem Umschlag übrig bleibt, geht in den nächsten Monat. Das gilt auch für Überziehungen: Der Umschlag startet den nächsten Monat im Minus (`Überzogen`), bis du ihn ausgleichst. `Überziehung ausgleichen` trägt den Betrag ein.
+- `Geld verschieben` nimmt Geld aus einem Umschlag (oder aus `Zuzuweisen`) und gibt es einem anderen. `Wie im Vormonat` kopiert die Beträge des Vormonats in die Umschläge, die noch keinen haben.
+- Deine Monatslimits gelten weiter neben den Umschlägen, und jeder Umschlag zeigt sein Limit.
+- `Umschlagmethode beenden` schaltet sie aus; was du zugewiesen hast, bleibt für einen neuen Start.
+
+## Sparziele
+Unter `Plan` legst du mit `Neues Ziel` an: einen `Name`, ein `Ziel` und, wenn du willst, ein Datum (`Bis`). Der Fortschritt kommt aus `Was ich von Hand zurücklege` (mit `Geld hinzufügen`; ein Minuszeichen nimmt Geld heraus) oder aus dem Saldo eines deiner Konten. Jedes Ziel zeigt, wie weit es ist und wie viel du jeden Monat zurücklegen musst, um es bis zum Datum zu schaffen.
+
+## Abos
+Unter `Wiederkehrend` listet `Abos` deine wiederkehrenden Ausgaben nach ihrer nächsten Abbuchung, jede mit ihren Kosten `Im Monat` und `Im Jahr`, und die Summen oben. In einer wiederkehrenden Ausgabe schickt dir `Erinnern` (`Am Tag der Abbuchung` oder 1 bis 14 Tage vorher) eine [Benachrichtigung](help:t/notifications) vor der Abbuchung. `Erinnerungen um` legt die Uhrzeit auf diesem Gerät fest; `Aus auf diesem Gerät` schaltet sie nur hier stumm.
+
+## Berichte
+`Diagramme` zeigt auch `Wohin das Geld geht` für das Jahr des Monats, den du ansiehst: einen Balken pro Monat, aufgeteilt nach Kategorie, und eine Tabelle jeder Kategorie pro Monat mit Summen, Einnahmen und Ausgaben. Die Pfeile wechseln das Jahr. `Nettovermögen` zählt deine Konten am Ende jedes der letzten 12 Monate zusammen.
+
+## Währungen
+Die Hauptwährung (`Mehr` › `Währung`) ist die, in der jede Summe steht. Ein Konto kann seine eigene haben (`Währung des Kontos`), und ein Eintrag auch: Wähle sie neben dem `Betrag`. Budget trägt dann den Betrag `In` der Hauptwährung nach den Kursen der Europäischen Zentralbank ein; ändere ihn auf das, was deine Bank wirklich berechnet hat. Der Eintrag behält den eingegebenen Betrag und seine Währung. Die Kurse kommen von derselben Stelle und aus derselben gespeicherten Kopie wie beim [Einheitenrechner](app:units), nur wenn etwas in einer anderen Währung ist, höchstens alle 6 Stunden. Offline werden die zuletzt gespeicherten Kurse verwendet, und das Fenster sagt es. Kontosalden erscheinen in ihrer eigenen Währung; das Nettovermögen rechnet sie zum heutigen Kurs um.
+
+## Belege
+In einem Eintrag fügt unter `Beleg` das `+` ein Foto oder ein PDF des Belegs hinzu (bis zu 3). Fotos werden auf diesem Gerät neu gezeichnet, sodass keine Standort- oder Kameradaten bleiben; ein PDF wird nur behalten, wenn es wirklich eines ist (bis zu 10 MB). Die Dateien liegen in [Dateien](app:files), Ordner Budget/Receipts, und kommen mit Vault Drive auf deine anderen Geräte, nicht mit der Synchronisierung. `Summe aus Text lesen` nimmt den Text des Belegs (zum Beispiel aus „Text aus Foto kopieren“ auf deinem Handy) und setzt seine Summe in `Betrag` ein.
+
+## Diagramme
+`Diagramme` zeigt `Ausgaben nach Kategorie` für den Monat, `Einnahmen und Ausgaben, 12 Monate` und `Saldo am Ende jedes Monats`. Tippe auf eine Kategorie, um ihre Einträge zu sehen, oder auf einen Monat, um ihn zu öffnen. `Als Tabelle zeigen` gibt die Zahlen als Text aus.
+
+## Kategorien und Währung
+Im Menü `Mehr` (die drei Punkte) kannst du unter `Kategorien` eigene hinzufügen (`Neue Kategorie…`), sie umbenennen, ihre Farben ändern und sie löschen. Einträge einer gelöschten Kategorie erscheinen als `Ohne Kategorie`.
+
+`Währung` legt die Hauptwährung fest, in der jede Summe steht (siehe Währungen). Eine Änderung rechnet die vorhandenen Beträge nicht um.
+
+## Synchronisierung und Sicherung
+Einträge, Konten, Umbuchungen, Kategorien, Limits, Umschläge, Sparziele, wiederkehrende Einträge und ihre Erinnerungen, Regeln, Bankprofile und die Währung werden über die [orOS-Synchronisierung](help:t/sync) synchronisiert. Der offene Tab, deine CSV-Wahl und die Erinnerungszeit bleiben auf diesem Gerät. Belegdateien reisen mit Vault Drive.
+
+Im Menü `Mehr`:
+- `Exportieren`: Wähle einen Zeitraum (`Dieser Monat`, `Dieses Jahr` oder `Alles`) und speichere als `CSV`, `Excel` oder `PDF-Bericht`. Für CSV wählst du das Excel-Format mit Semikolon und Dezimalkomma oder das für andere Apps, etwa die orOS [Tabelle](app:spreadsheet). `In Tabelle öffnen` öffnet die Einträge und eine Übersicht direkt in der [Tabelle](app:spreadsheet).
+- `Sicherung (JSON)` speichert alles in einer Datei.
+- `Aus Sicherung wiederherstellen` führt eine Sicherung mit deinen Daten zusammen; sie überschreibt nie neuere Elemente.
+
+## orOS-Datei speichern und öffnen
+`Mehr` › `orOS-Datei (.orosbudget)` speichert jeden Eintrag, jedes Konto, jede Umbuchung, Kategorie, jedes Limit, jeden Umschlag, jedes Sparziel, jeden wiederkehrenden Eintrag und jede Regel als eine `.orosbudget`-Datei, mit den Belegfotos und PDFs darin: zum Beispiel, um dein Budget ohne Synchronisierung auf ein anderes Gerät zu bringen oder eine Kopie zu behalten. Bankprofile bleiben auf diesem Gerät. Die Datei ist ein einfaches ZIP: Entpackt enthält sie die Datensätze als `content.json`, die Belege in `media/` und `preview/entries.csv` (dieselbe CSV wie bei `Exportieren`) für andere Programme. Sie ist nicht verschlüsselt, also bewahre sie sicher auf.
+
+`orOS-Datei öffnen…` (oder `Entpackter orOS-Ordner…`, oder „Öffnen mit“ orOS am Computer) zeigt, wie viele Datensätze neu und wie viele schon hier sind; dann fügt `Hinzufügen` nur die neuen hinzu, mit ihren eigenen IDs: Dieselbe Datei erneut zu öffnen, fügt nichts hinzu. Ein Eintrag, der schon hier ist, bleibt, wie er ist, und einer, den du hier gelöscht hast, bleibt gelöscht; eine Datei löscht nie etwas. Hake `Mit neueren Versionen aktualisieren` an, damit Datensätze, die in der Datei später geändert wurden, deine Kopie ersetzen. Belege kommen nur nach Budget/Receipts, wenn sie dort noch nicht sind, mit denselben Prüfungen wie beim Hinzufügen von Hand. `Rückgängig` in der Meldung entfernt, was hinzugefügt wurde.
+
+## Kontoauszüge
+`Mehr` › `Kontoauszug importieren` liest eine Datei, die du aus dem Onlinebanking deiner Bank herunterlädst: CSV jeder Bank, OFX / QFX, QIF oder CAMT.053 (XML). Nichts wird hinzugefügt, bevor du es siehst.
+
+- **Spalten.** Bei einer CSV findet Budget Datum, Beschreibung und Betrag selbst, auch in griechischen Dateien (`1.234,56`, `dd/mm/yyyy`, ein `Χ/Π`-Kennzeichen, Text in Windows-1253). Wenn etwas nicht stimmt, öffne `Spalten und Format`: Wähle die Spalten, eine Spalte `Betrag` oder getrennte Spalten `Soll` und `Haben`, die Datumsreihenfolge, das Zahlenformat, die Zeichenkodierung, oder kehre die Vorzeichen um.
+- **Bankprofil.** Gib unter `Merken als` einen Namen ein (zum Beispiel „Sparkasse“), und die Spalten und das `Budget-Konto` werden auf all deinen Geräten gemerkt. Die nächste Datei dieser Bank wird von selbst erkannt.
+- **Vorschau.** Jede Zeile zeigt `Neu`, `Sieht aus wie ein vorhandener Eintrag` (gleiches Konto, Datum und Betrag mit ähnlicher Beschreibung, oder dieselbe Transaktions-ID der Bank), `Schon importiert`, `Hier früher gelöscht` oder `Übersprungen` (kein Datum, kein Betrag, andere Währung). Nur angehakte Zeilen werden importiert; du kannst ein Duplikat anhaken, wenn es wirklich ein zweites ist.
+- **Kategorien.** Wähle in jeder Zeile eine Kategorie. Nach einer Korrektur macht `Immer so machen` eine Regel daraus, sodass der nächste Import es von selbst tut.
+- `Importieren` fügt sie als normale Einträge hinzu, markiert mit einem kleinen Bank-Symbol. `Rückgängig` nimmt den ganzen Import zurück. Dieselbe Datei, erneut importiert, hier oder auf einem anderen Gerät, fügt nichts doppelt hinzu.
+
+## Andere Budget-Apps
+`Mehr` › `Aus anderer App importieren` (oder `Kontoauszug importieren`, es ist dieselbe Auswahl) erkennt den Export dieser Apps von selbst und übernimmt auch Kategorien und Konten, nicht nur Beträge:
+- **YNAB**: Öffne im Web ein Konto oder All Accounts und nutze `Export` (die Register-CSV; die Register-CSV von YNAB 4 geht auch). Umbuchungen und der Anfangssaldo bleiben draußen; Geld in `Ready to Assign` kommt ohne Kategorie.
+- **Wallet by BudgetBakers**: in der Web-App `Records`, dann `Export` als CSV. `Labels` landen als #Tags in der Notiz.
+- **Spendee**: in den Einstellungen der App `Export data` als CSV.
+- **Money Lover**: im Menü der Wallet `Export to CSV` (Komma oder Semikolon, Datum dd/mm/yyyy, beides geht).
+- **Monefy**: `Settings` › `Data export` › CSV. Sein umgerechneter Betrag wird genutzt, wenn er in der Währung von Budget ist.
+- **Money Manager** (Realbyte): `More` › `Backup` › `Export to Excel` (.xls oder .xlsx), oder schick dir die Datei per E-Mail.
+- **Firefly III**: `Options` › `Export data` › alle Transaktionen (CSV). Abhebungen, Einzahlungen, Kategorien und Tags kommen herein; Umbuchungen und Anfangssalden bleiben draußen.
+
+In der Vorschau:
+- **Konten.** Jedes Konto der Datei geht an ein Budget-Konto mit demselben Namen, an ein `Neues Konto` (wenn du schon Konten nutzt) oder an `Kein Konto`: Dann kommt sein Name in die Notiz.
+- **Kategorien.** Namen werden mit deinen abgeglichen (auch mit den vorgegebenen auf Englisch oder Griechisch). `Fehlende Kategorien anlegen` fügt den Rest hinzu, bis zu 60 Kategorien; nimm den Haken weg, um sie ohne Kategorie zu lassen, wo deine Regeln noch helfen können.
+- **Währungen.** Eine Zeile in einer anderen Währung behält ihren eigenen Betrag und bekommt den Betrag in der Währung von Budget: den umgerechneten Betrag der App, wenn die Datei einen hat, sonst den heutigen Kurs. Ohne Kurs (offline, nie geladen) bleiben diese Zeilen draußen, und das Fenster sagt, welche.
+- Duplikate, `Schon importiert` und `Hier früher gelöscht` funktionieren wie bei Kontoauszügen. Importierte Einträge tragen ein kleines Import-Symbol; `Rückgängig` nimmt die Einträge und die neuen Kategorien und Konten zurück.
+
+## Regeln
+`Mehr` › `Regeln`: „wenn die Beschreibung LIDL enthält → Lebensmittel“. Eine Regel kann auch auf einen Betragsbereich achten (`Betrag ab`, `Betrag bis`), den Eintrag umbenennen (`Umbenennen in`) und eine Notiz hinzufügen. Passen mehrere Regeln, gewinnt die mit dem längsten Text. `Auf Einträge ohne Kategorie anwenden` wendet sie auf das an, was schon hier ist; `Rückgängig` macht es rückgängig.
+
+## Importe ohne Kategorie
+Wenn importierte Einträge keine Kategorie haben, sagt eine Leiste über der Liste, wie viele. Tippe darauf oder wähle `Importiert, ohne Kategorie` im Menü neben der Suche: Du siehst sie aus jedem Monat, jeden mit seiner Kategorie direkt daneben. `Regeln anwenden` und `Regel…` helfen dir, sie schneller abzuarbeiten.
+
+## Stripe und Invoice Ninja
+`Mehr` › `Aus Stripe oder Invoice Ninja importieren` holt ein Konto, das du in den [Einstellungen](app:settings) › `Verbundene Dienste` verbunden hast (bei Stripe ein eingeschränkter Schlüssel, der nur Balance lesen kann). Wähle das Konto, ein Startdatum, die Kategorien und, wenn du sie nutzt, ein Budget-Konto, dann `Konto lesen`: Du siehst, was hinzugefügt wird, bevor irgendetwas passiert.
+
+- Eine Zahlung wird eine Einnahme (der volle Betrag) und ihre Stripe-Gebühr eine eigene Ausgabe. Erstattungen, Stripes eigene Gebühren und verlorene Rückbuchungen werden Ausgaben.
+- Auszahlungen an deine Bank bleiben draußen: Das ist dein eigenes Geld, das umzieht, keine Einnahme.
+- Aus Invoice Ninja wird jede erhaltene Zahlung eine Einnahme, abzüglich dessen, was davon erstattet wurde.
+- Nur die Währung von Budget kommt herein; die anderen werden gezählt und draußen gelassen.
+- Ein zweiter Import fügt nur Neues hinzu. Ein Eintrag, den du hier löschst, kommt nicht zurück. `Rückgängig` nimmt den ganzen Import zurück. orOS liest Stripe und Invoice Ninja nur.
+
+## Tastenkürzel
+- [[N]] öffnet einen neuen Eintrag.
+- [[←]] / [[→]] wechseln zum vorherigen oder nächsten Monat (wenn du nicht gerade tippst).
+- [[Esc]] schließt das Menü `Mehr` oder das offene Fenster.
+
+## Tipps
+- [Garage](app:garage) (`Zu Budget hinzufügen`) und [Kosten teilen](app:split) (`Meinen Anteil zu Budget hinzufügen`) können hier einen neuen Eintrag öffnen, der schon ausgefüllt ist. Nichts wird gespeichert, bis du ihn prüfst und `Speichern` drückst.
+
+## Grenzen
+- Ein Eintrag in einer anderen Währung behält den Hauptbetrag, mit dem er gespeichert wurde; spätere Kurse ändern ihn nicht. Das Nettovermögen rechnet Fremdwährungskonten zum heutigen Kurs um, auch für vergangene Monate. Bank-, Stripe- und Invoice-Ninja-Importe nehmen weiterhin nur die Hauptwährung.
+- Belegtext wird nicht aus dem Foto selbst gelesen: Füge den Text ein, um die Summe einzutragen.
+- Abo-Erinnerungen kommen, solange orOS in einem Browser auf diesem Gerät offen ist; ein geschlossenes orOS holt sie beim Öffnen nach.
+- Wiederkehrende Einträge werden nur hinzugefügt, solange Budget offen ist, und bis zu zwei Jahre rückwirkend nachgetragen.
+- Exporte anderer Apps: bis zu 20.000 Zeilen und 20 MB pro Datei.
+- Bankdateien werden nur auf diesem Gerät gelesen; orOS verbindet sich nie mit deiner Bank. Bis zu 5.000 Zeilen und 8 MB pro Datei; die Vorschau zeigt die ersten 300 Zeilen.
+- Beträge in einer anderen Währung als der von Budget bleiben draußen und werden nicht umgerechnet. Eine Überweisung zwischen zwei deiner Konten kommt als Ausgabe im einen und Einnahme im anderen herein: Mach daraus von Hand eine `Umbuchung`, wenn du willst.

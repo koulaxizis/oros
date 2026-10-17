@@ -16,9 +16,9 @@
 
   var S = {
     en: {
-      btn: "Import from Stripe or Invoice Ninja", title: "Payments",
-      intro: "Bring your payments here. Stripe: charges as income, Stripe's fees, refunds and disputes as expenses; payouts to your bank are left out (they are your own money moving). Invoice Ninja: payments received, net of refunds, as income. orOS only reads them.",
-      none: "Connect Stripe or Invoice Ninja in Settings › Connected services first.",
+      btn: "Import from Stripe or Invoice Ninja", "pay.title": "Payments",
+      "pay.intro": "Bring your payments here. Stripe: charges as income, Stripe's fees, refunds and disputes as expenses; payouts to your bank are left out (they are your own money moving). Invoice Ninja: payments received, net of refunds, as income. orOS only reads them.",
+      "pay.none": "Connect Stripe or Invoice Ninja in Settings › Connected services first.",
       openSettings: "Open Connected services", noShell: "Open Budget from the orOS desktop to import payments.",
       acct: "Account", from: "From", catIn: "Income category", catOut: "Expense category", ac: "Budget account",
       read: "Read the account", reading: "Reading… {n}",
@@ -28,7 +28,7 @@
       skip: "{n} payouts, transfers and other moves: left out.",
       capped: "More than {n} transactions; only the first {n} were read. Pick a later start date.",
       nothing: "Nothing new: Budget already has everything.",
-      go: "Import", done: "Imported: {n} entries", fee: "Stripe fee",
+      "pay.go": "Import", "pay.done": "Imported: {n} entries", fee: "Stripe fee",
       "err.auth": "The platform refused the key. Check it in Settings › Connected services.",
       "err.denied": "The key can't read the payments. For Stripe, give the restricted key read access to Balance.",
       "err.keys": "This device doesn't have the account's key yet. Enter it in Settings › Connected services.",
@@ -37,9 +37,9 @@
       "p.stripe": "Stripe", "p.ininja": "Invoice Ninja"
     },
     el: {
-      btn: "Εισαγωγή από Stripe ή Invoice Ninja", title: "Πληρωμές",
-      intro: "Φέρε εδώ τις πληρωμές σου. Stripe: οι χρεώσεις ως έσοδα, οι προμήθειες του Stripe, οι επιστροφές και οι αμφισβητήσεις ως έξοδα· οι μεταφορές στην τράπεζά σου μένουν έξω (είναι δικά σου χρήματα που μετακινούνται). Invoice Ninja: οι πληρωμές που εισπράχθηκαν, μείον τις επιστροφές, ως έσοδα. Το orOS μόνο τα διαβάζει.",
-      none: "Σύνδεσε πρώτα Stripe ή Invoice Ninja στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.",
+      btn: "Εισαγωγή από Stripe ή Invoice Ninja", "pay.title": "Πληρωμές",
+      "pay.intro": "Φέρε εδώ τις πληρωμές σου. Stripe: οι χρεώσεις ως έσοδα, οι προμήθειες του Stripe, οι επιστροφές και οι αμφισβητήσεις ως έξοδα· οι μεταφορές στην τράπεζά σου μένουν έξω (είναι δικά σου χρήματα που μετακινούνται). Invoice Ninja: οι πληρωμές που εισπράχθηκαν, μείον τις επιστροφές, ως έσοδα. Το orOS μόνο τα διαβάζει.",
+      "pay.none": "Σύνδεσε πρώτα Stripe ή Invoice Ninja στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.",
       openSettings: "Άνοιγμα Συνδεδεμένων υπηρεσιών", noShell: "Άνοιξε τα Έσοδα & Έξοδα από την επιφάνεια εργασίας του orOS για εισαγωγή πληρωμών.",
       acct: "Λογαριασμός", from: "Από", catIn: "Κατηγορία εσόδων", catOut: "Κατηγορία εξόδων", ac: "Λογαριασμός εδώ",
       read: "Ανάγνωση λογαριασμού", reading: "Ανάγνωση… {n}",
@@ -49,7 +49,7 @@
       skip: "{n} μεταφορές στην τράπεζα και άλλες κινήσεις: μένουν έξω.",
       capped: "Πάνω από {n} συναλλαγές· διαβάστηκαν μόνο οι πρώτες {n}. Διάλεξε μεταγενέστερη ημερομηνία.",
       nothing: "Τίποτα νέο: όλα υπάρχουν ήδη εδώ.",
-      go: "Εισαγωγή", done: "Εισαγωγή: {n} κινήσεις", fee: "Προμήθεια Stripe",
+      "pay.go": "Εισαγωγή", "pay.done": "Εισαγωγή: {n} κινήσεις", fee: "Προμήθεια Stripe",
       "err.auth": "Η πλατφόρμα απέρριψε το κλειδί. Έλεγξέ το στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.",
       "err.denied": "Το κλειδί δεν μπορεί να διαβάσει τις πληρωμές. Για το Stripe, δώσε στο restricted key δικαίωμα ανάγνωσης (Read) στο Balance.",
       "err.keys": "Αυτή η συσκευή δεν έχει ακόμα το κλειδί του λογαριασμού. Πέρασέ το στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.",
@@ -58,8 +58,10 @@
       "p.stripe": "Stripe", "p.ininja": "Invoice Ninja"
     }
   };
+  // orosI18n (../i18n.js): S[<pack language>] from the pack "budget".
+  if (root.orosI18n) root.orosI18n.table(S, "budget", root.orosI18n.lang());
   function t(k, params) {
-    var tab = S[A && A.lang === "el" ? "el" : "en"];
+    var tab = (A && S[A.lang]) || S.en;
     var s = tab[k] !== undefined ? tab[k] : S.en[k] !== undefined ? S.en[k] : k;
     return s.replace(/\{(\w+)\}/g, function (m, n) { return params && params[n] !== undefined ? String(params[n]) : m; });
   }
@@ -87,13 +89,13 @@
   function el(tag, cls, text) { return A.el(tag, cls, text); }
 
   function open() {
-    var dlg = A.makeDialog("bd-pay", t("title"));
-    dlg.appendChild(el("p", "pay-hint", t("intro")));
+    var dlg = A.makeDialog("bd-pay", t("pay.title"));
+    dlg.appendChild(el("p", "pay-hint", t("pay.intro")));
     var acts = el("div", "dlg-actions");
     var closeBtn = A.button(t("close"), "", function () { dlg.close(); });
     var Lk = links(), accts = accounts();
     if (!Lk || !accts.length) {
-      dlg.appendChild(el("p", "", Lk ? t("none") : t("noShell")));
+      dlg.appendChild(el("p", "", Lk ? t("pay.none") : t("noShell")));
       acts.appendChild(closeBtn);
       if (Lk) acts.appendChild(A.button(t("openSettings"), "primary", function () {
         dlg.close();
@@ -150,7 +152,7 @@
       if (plan.gone) line(t("gone", { n: plan.gone }));
       if (plan.otherCur) line(t("otherCur", { n: plan.otherCur, cur: A.data().cur }));
       if (plan.skip) line(t("skip", { n: plan.skip }));
-      go.textContent = t("go");
+      go.textContent = t("pay.go");
       go.disabled = !plan.add.length;
     }
     function readNow() {
@@ -195,7 +197,7 @@
     }
     function apply() {
       if (!plan || !plan.add.length) return;
-      A.addEntries(plan.add, t("done", { n: plan.add.length }));
+      A.addEntries(plan.add, t("pay.done", { n: plan.add.length }));
       dlg.close();
     }
     A.showDialog(dlg);
