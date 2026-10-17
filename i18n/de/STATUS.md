@@ -2,8 +2,8 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 1264 of 26368 (4%)
-- Help pages: 17 of 143 (11%)
+- Strings: 1264 of 26500 (4%)
+- Help pages: 17 of 144 (11%)
 - Shown in the language list: yes
 
 Apps marked "English for now" do not load language packs yet: their
@@ -43,6 +43,7 @@ text is still written in the code. They switch over wave by wave
 | feeds | English for now | 0 / 319 |
 | files | 100% | 343 / 343 |
 | fitness | English for now | 0 / 344 |
+| flashcards | 0% | 0 / 90 |
 | flow | English for now | 0 / 75 |
 | g2048 | English for now | 0 / 54 |
 | gamecenter | English for now | 0 / 99 |
@@ -98,12 +99,12 @@ text is still written in the code. They switch over wave by wave
 | reversi | English for now | 0 / 60 |
 | ringtones | English for now | 0 / 99 |
 | rps | English for now | 0 / 59 |
-| scanpdf | English for now | 0 / 191 |
+| scanpdf | English for now | 0 / 231 |
 | scores | English for now | 0 / 147 |
 | settings | 100% | 475 / 475 |
 | share | English for now | 0 / 152 |
 | shelf | English for now | 0 / 285 |
-| shell | 100% | 431 / 431 |
+| shell | 99% | 431 / 433 |
 | signature | English for now | 0 / 195 |
 | simon | English for now | 0 / 49 |
 | sky | English for now | 0 / 149 |
@@ -175,6 +176,7 @@ text is still written in the code. They switch over wave by wave
 - help/familytree.txt
 - help/feeds.txt
 - help/fitness.txt
+- help/flashcards.txt
 - help/flow.txt
 - help/g2048.txt
 - help/gamecenter.txt

@@ -122,7 +122,7 @@ class FakeDropbox {
 // Nextcloud's app-password delete (logged as "revoke").
 const DAV_URL = "https://dav.test/remote.php/dav/files/u";
 const DAV_UPLOADS = "https://dav.test/remote.php/dav/uploads/u";
-const DAV_RELAY = "https://oros-mail-relay.koulaxizis-25b.workers.dev/dav";
+const DAV_RELAY = "https://oros-mail-relay.koulaxizis.workers.dev/dav";
 // Bytes as stored; .text for the sync tests, .data for the vault tests.
 class DavFile {
   constructor(data, rev) { this.data = data; this.rev = rev; }

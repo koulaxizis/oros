@@ -1,6 +1,6 @@
 // ============================================================
-// orOS Scanner & PDF — App logic (v1.1.0, waves 1-2: PDF tools,
-// signing, page numbers, watermark, compress)
+// orOS Scanner & PDF — App logic (v1.2.0, waves 1-3: PDF tools,
+// signing, page numbers, watermark, compress, camera scan)
 // Everything happens on this device: nothing is uploaded.
 //   - Add PDFs and pictures (picker, drag and drop, Files › Open
 //     with, the shell's file-open). Every page shows as a card with
@@ -71,7 +71,7 @@
   var STRINGS = {
     en: {
       "app.name": "Scanner & PDF",
-      "app.sub": "Merge, split, sign and arrange PDF pages",
+      "app.sub": "Scan, merge, split, sign and arrange PDF pages",
       "btn.add": "Add PDFs or pictures", "btn.addMore": "Add more", "btn.split": "Split", "btn.save": "Save PDF",
       "btn.cancel": "Cancel", "btn.undo": "Undo", "btn.redo": "Redo", "btn.addIcon": "Add files",
       "btn.clear": "Clear the list", "btn.selAll": "Select all", "btn.selNone": "Select none",
@@ -89,7 +89,7 @@
       "card": "Page {n}, from {file}, page {p}", "card.img": "Page {n}, the picture {file}",
       "card.rot": "turned {deg}°", "card.sel": "selected",
       "pic.title": "Picture pages",
-      "pic.hint": "How a picture becomes a PDF page. PDF pages stay as they are.",
+      "pic.hint": "How a picture becomes a PDF page. PDF pages and scanned pages stay as they are.",
       "pic.size": "Page size", "pic.a4": "A4", "pic.letter": "Letter", "pic.fit": "The picture's shape",
       "pic.orient": "Orientation", "pic.auto": "As the picture", "pic.portrait": "Portrait", "pic.landscape": "Landscape",
       "pic.margin": "Margin", "pic.none": "None", "pic.small": "Small", "pic.normal": "Normal",
@@ -156,11 +156,25 @@
       "busy.compress": "Making it smaller: page {i} of {n}…", "busy.font": "Loading the font…",
       "toast.smaller": "Saved: {a} → {b}", "toast.smallerFiles": "Saved in Files › {dir}: {a} → {b}",
       "toast.notSmaller": "It was already small, so it was saved as it was.",
-      "err.font": "The font for the text could not be loaded."
+      "err.font": "The font for the text could not be loaded.",
+      "btn.scan": "Scan with the camera", "btn.scanIcon": "Scan with the camera",
+      "sc.title": "Scan", "sc.done": "Add {n} pages", "sc.done.one": "Add 1 page", "sc.close": "Close the scanner",
+      "sc.shoot": "Take the picture", "sc.photos": "Choose photos", "sc.auto": "Auto", "sc.autoHint": "Take the picture by itself when the page is held still",
+      "sc.torchOn": "Turn the light on", "sc.torchOff": "Turn the light off",
+      "sc.find": "Point the camera at a page.", "sc.hold": "Hold still…",
+      "sc.denied": "The camera is not allowed here. You can still choose photos of your pages.",
+      "sc.nocam": "No camera was found. You can still choose photos of your pages.",
+      "sc.adjust": "Drag each corner onto a corner of the page.", "sc.whole": "Whole picture", "sc.retake": "Take again",
+      "sc.next": "Next", "sc.corners": "Corners", "sc.keep": "Keep page", "sc.delete": "Delete this page",
+      "sc.corner.0": "Top-left corner", "sc.corner.1": "Top-right corner", "sc.corner.2": "Bottom-right corner", "sc.corner.3": "Bottom-left corner",
+      "sc.f.color": "Document", "sc.f.gray": "Grey", "sc.f.bw": "Black & white", "sc.f.photo": "Photo", "sc.filter": "Look",
+      "sc.page": "Scanned page {n}", "sc.name": "Scan {n}.jpg", "sc.working": "Straightening the page…",
+      "sc.leaveTitle": "Leave the scanner?", "sc.leaveBody": "The pages scanned so far are let go.", "sc.leave": "Leave",
+      "sc.kept": "Page {n} kept", "sc.bad": "That picture could not be read."
     },
     el: {
       "app.name": "Σαρωτής & PDF",
-      "app.sub": "Ένωση, διαχωρισμός, υπογραφή και τακτοποίηση σελίδων PDF",
+      "app.sub": "Σάρωση, ένωση, διαχωρισμός, υπογραφή και τακτοποίηση σελίδων PDF",
       "btn.add": "Προσθήκη PDF ή εικόνων", "btn.addMore": "Προσθήκη κι άλλων", "btn.split": "Διαχωρισμός", "btn.save": "Αποθήκευση PDF",
       "btn.cancel": "Ακύρωση", "btn.undo": "Αναίρεση", "btn.redo": "Επανάληψη", "btn.addIcon": "Προσθήκη αρχείων",
       "btn.clear": "Καθαρισμός της λίστας", "btn.selAll": "Επιλογή όλων", "btn.selNone": "Καμία επιλογή",
@@ -178,7 +192,7 @@
       "card": "Σελίδα {n}, από το {file}, σελίδα {p}", "card.img": "Σελίδα {n}, η εικόνα {file}",
       "card.rot": "γυρισμένη {deg}°", "card.sel": "επιλεγμένη",
       "pic.title": "Σελίδες εικόνων",
-      "pic.hint": "Πώς μια εικόνα γίνεται σελίδα PDF. Οι σελίδες των PDF μένουν όπως είναι.",
+      "pic.hint": "Πώς μια εικόνα γίνεται σελίδα PDF. Οι σελίδες των PDF και οι σαρωμένες σελίδες μένουν όπως είναι.",
       "pic.size": "Μέγεθος σελίδας", "pic.a4": "A4", "pic.letter": "Letter", "pic.fit": "Το σχήμα της εικόνας",
       "pic.orient": "Προσανατολισμός", "pic.auto": "Όπως η εικόνα", "pic.portrait": "Κατακόρυφος", "pic.landscape": "Οριζόντιος",
       "pic.margin": "Περιθώριο", "pic.none": "Χωρίς", "pic.small": "Μικρό", "pic.normal": "Κανονικό",
@@ -245,7 +259,21 @@
       "busy.compress": "Σμίκρυνση: σελίδα {i} από {n}…", "busy.font": "Φόρτωση της γραμματοσειράς…",
       "toast.smaller": "Αποθηκεύτηκε: {a} → {b}", "toast.smallerFiles": "Αποθηκεύτηκε στα Αρχεία › {dir}: {a} → {b}",
       "toast.notSmaller": "Ήταν ήδη μικρό, οπότε αποθηκεύτηκε όπως ήταν.",
-      "err.font": "Η γραμματοσειρά για το κείμενο δεν φορτώθηκε."
+      "err.font": "Η γραμματοσειρά για το κείμενο δεν φορτώθηκε.",
+      "btn.scan": "Σάρωση με την κάμερα", "btn.scanIcon": "Σάρωση με την κάμερα",
+      "sc.title": "Σάρωση", "sc.done": "Προσθήκη {n} σελίδων", "sc.done.one": "Προσθήκη 1 σελίδας", "sc.close": "Κλείσιμο του σαρωτή",
+      "sc.shoot": "Λήψη φωτογραφίας", "sc.photos": "Διάλεξε φωτογραφίες", "sc.auto": "Αυτόματα", "sc.autoHint": "Η φωτογραφία τραβιέται μόνη της όταν η σελίδα μένει ακίνητη",
+      "sc.torchOn": "Άναψε το φως", "sc.torchOff": "Σβήσε το φως",
+      "sc.find": "Στρέψε την κάμερα σε μια σελίδα.", "sc.hold": "Μείνε ακίνητος…",
+      "sc.denied": "Η κάμερα δεν επιτρέπεται εδώ. Μπορείς ακόμη να διαλέξεις φωτογραφίες των σελίδων σου.",
+      "sc.nocam": "Δεν βρέθηκε κάμερα. Μπορείς ακόμη να διαλέξεις φωτογραφίες των σελίδων σου.",
+      "sc.adjust": "Σύρε κάθε γωνία πάνω σε μια γωνία της σελίδας.", "sc.whole": "Όλη η εικόνα", "sc.retake": "Ξανά λήψη",
+      "sc.next": "Επόμενο", "sc.corners": "Γωνίες", "sc.keep": "Κράτα τη σελίδα", "sc.delete": "Διαγραφή αυτής της σελίδας",
+      "sc.corner.0": "Πάνω αριστερή γωνία", "sc.corner.1": "Πάνω δεξιά γωνία", "sc.corner.2": "Κάτω δεξιά γωνία", "sc.corner.3": "Κάτω αριστερή γωνία",
+      "sc.f.color": "Έγγραφο", "sc.f.gray": "Γκρι", "sc.f.bw": "Ασπρόμαυρο", "sc.f.photo": "Φωτογραφία", "sc.filter": "Εμφάνιση",
+      "sc.page": "Σαρωμένη σελίδα {n}", "sc.name": "Σάρωση {n}.jpg", "sc.working": "Ίσιωμα της σελίδας…",
+      "sc.leaveTitle": "Έξοδος από τον σαρωτή;", "sc.leaveBody": "Οι σελίδες που σάρωσες ως τώρα χάνονται.", "sc.leave": "Έξοδος",
+      "sc.kept": "Κρατήθηκε η σελίδα {n}", "sc.bad": "Αυτή η εικόνα δεν διαβάστηκε."
     }
   };
 
@@ -311,6 +339,9 @@
     date: SVG + '<rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
     sig: SVG + '<path d="M3 17c3-1 4-9 6-9s1 7 3 7 2-4 4-4 1 3 3 3"/><line x1="3" y1="21" x2="21" y2="21"/></svg>',
     close: SVG + '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
+    camera: SVG + '<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>',
+    image: SVG + '<rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>',
+    torch: SVG + '<path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>',
     copy: SVG + '<rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>',
     grip: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>'
   };
@@ -395,7 +426,10 @@
       var real = C.sniff(bytes);
       if (real === "pdf") return readPdf(name, blob.size, bytes);
       if (kind === "pdf") { errToast("err.bad", name); return null; }
-      return readImage(name, blob, bytes, real);
+      return readImage(name, blob, bytes, real).then(function (src) {
+        if (src && it.scan) src.scan = true;
+        return src;
+      });
     }).then(null, function () { errToast(kind === "pdf" ? "err.bad" : "err.img", name); return null; });
   }
 
@@ -654,11 +688,11 @@
   // the Picture pages choices), white around the picture; `side` is
   // the long side in pixels.
   function picturePage(src, thumb, side) {
-    var size = C.pageFor(src.img.w, src.img.h, prefs);
+    var pp = C.prefsFor(src, prefs), size = C.pageFor(src.img.w, src.img.h, pp);
     var sc = side / Math.max(size[0], size[1]);
     var cv = document.createElement("canvas");
     cv.width = Math.max(1, Math.round(size[0] * sc)); cv.height = Math.max(1, Math.round(size[1] * sc));
-    var ctx = cv.getContext("2d"), r = C.fitRect(src.img.w, src.img.h, size[0], size[1], prefs.margin);
+    var ctx = cv.getContext("2d"), r = C.fitRect(src.img.w, src.img.h, size[0], size[1], pp.margin);
     ctx.fillStyle = "#fff";
     ctx.fillRect(0, 0, cv.width, cv.height);
     ctx.drawImage(thumb, r.x * sc, (size[1] - r.y - r.h) * sc, r.w * sc, r.h * sc);
@@ -1920,6 +1954,519 @@
     return null;
   }
 
+  // ---------- 7d. Camera scan ----------
+  // Camera (rear, torch when it has one) or photos → find the page
+  // (scan.js) → straighten it → a look (Document, Grey, Black & white,
+  // Photo) → kept pages in a strip → Add: they join the list as
+  // pictures marked `scan` (their own shape, no margin). The camera
+  // stops whenever the scanner closes. Nothing is stored.
+  var SC = window.ScanPdfScan;
+  var sc = null;   // { stream, track, torch, pages: [], cur, queue, hist, timer, view, cool }
+  var MAX_RAW_SIDE = 4000;
+
+  function openScanner() {
+    if (!SC || sc) return;
+    sc = { pages: [], cur: null, queue: [], hist: [], view: "cam", back: document.activeElement, cool: 0 };
+    $("scanner").hidden = false;
+    document.body.classList.add("editing");
+    try { $("sc-auto").checked = localStorage.getItem("oros-scanpdf-auto") !== "0"; } catch (e) {}
+    scView("cam");
+    renderStrip();
+    startCamera();
+    setTimeout(function () { $("sc-shoot").focus(); }, 0);
+  }
+  function closeScanner(add) {
+    if (!sc) return;
+    var s0 = sc;
+    sc = null;
+    stopCamera(s0);
+    $("scanner").hidden = true;
+    document.body.classList.remove("editing");
+    $("sc-strip").textContent = "";
+    if (add && s0.pages.length) {
+      addBlobs(s0.pages.map(function (pg, i) {
+        return { name: t("sc.name", { n: srcOrder.length + i + 1 }), blob: pg.blob, scan: true };
+      }));
+    }
+    if (s0.back && s0.back.isConnected && s0.back.focus) { try { s0.back.focus({ preventScroll: true }); } catch (e) {} }
+  }
+  function leaveScanner() {
+    if (!sc) return;
+    if (!sc.pages.length) { closeScanner(false); return; }
+    openModal(t("sc.leaveTitle"), el("p", "", t("sc.leaveBody")), t("sc.leave"), function () {
+      closeModal();
+      closeScanner(false);
+    }, true);
+  }
+  function scView(v) {
+    sc.view = v;
+    ["cam", "adjust", "review"].forEach(function (k) { $("sc-" + k).hidden = k !== v; });
+    $("sc-done").hidden = !sc.pages.length;
+    $("sc-done").textContent = tn("sc.done", sc.pages.length);
+    if (v === "cam") detectSoon();
+  }
+
+  // --- the camera ---
+  function startCamera() {
+    var md = navigator.mediaDevices;
+    if (!md || typeof md.getUserMedia !== "function") { camMsg("sc.nocam"); return; }
+    md.getUserMedia({ video: { facingMode: { ideal: "environment" }, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false })
+      .then(function (stream) {
+        if (!sc) { stream.getTracks().forEach(function (tr) { tr.stop(); }); return; }
+        sc.stream = stream;
+        sc.track = stream.getVideoTracks()[0];
+        var v = $("sc-video");
+        v.srcObject = stream;
+        var pl = v.play();
+        if (pl && pl.then) pl.then(null, function () {});
+        var caps = {};
+        try { caps = sc.track.getCapabilities ? sc.track.getCapabilities() : {}; } catch (e) {}
+        $("sc-torch").hidden = !caps.torch;
+        $("sc-msg").hidden = true;
+        $("sc-shoot").disabled = false;
+        tip("sc.find");
+        detectSoon();
+      }, function (e) {
+        camMsg(e && (e.name === "NotAllowedError" || e.name === "SecurityError") ? "sc.denied" : "sc.nocam");
+      });
+  }
+  function stopCamera(s0) {
+    s0 = s0 || sc;
+    if (!s0) return;
+    clearTimeout(s0.timer);
+    if (s0.stream) s0.stream.getTracks().forEach(function (tr) { try { tr.stop(); } catch (e) {} });
+    s0.stream = null; s0.track = null;
+    var v = $("sc-video");
+    try { v.pause(); } catch (e) {}
+    v.srcObject = null;
+    clearOutline();
+  }
+  function camMsg(key) {
+    $("sc-msg-text").textContent = t(key);
+    $("sc-msg").hidden = false;
+    $("sc-shoot").disabled = true;
+    $("sc-auto-l").hidden = true;
+    tip(null);
+  }
+  function tip(key) { $("sc-tip").textContent = key ? t(key) : ""; $("sc-tip").hidden = !key; }
+  function setTorch(on) {
+    if (!sc || !sc.track) return;
+    sc.track.applyConstraints({ advanced: [{ torch: on }] }).then(function () {
+      sc.torch = on;
+      $("sc-torch").classList.toggle("on", on);
+      setLabel($("sc-torch"), t(on ? "sc.torchOff" : "sc.torchOn"));
+    }, function () {});
+  }
+
+  // The video as it shows: the box it fills inside the stage (contain).
+  function videoBox() {
+    var v = $("sc-video"), st = $("sc-camstage"), vw = v.videoWidth, vh = v.videoHeight;
+    var W = st.clientWidth, H = st.clientHeight;
+    if (!vw || !vh) return null;
+    var k = Math.min(W / vw, H / vh);
+    return { x: (W - vw * k) / 2, y: (H - vh * k) / 2, w: vw * k, h: vh * k };
+  }
+  var detCanvas = null;
+  function smallFrame(src, sw, sh) {
+    var k = SC.DETECT_SIDE / Math.max(sw, sh);
+    if (!detCanvas) detCanvas = document.createElement("canvas");
+    detCanvas.width = Math.max(1, Math.round(sw * k)); detCanvas.height = Math.max(1, Math.round(sh * k));
+    var x = detCanvas.getContext("2d", { willReadFrequently: true });
+    x.drawImage(src, 0, 0, detCanvas.width, detCanvas.height);
+    return x.getImageData(0, 0, detCanvas.width, detCanvas.height);
+  }
+  // Find the page about six times a second; draw its outline; when Auto
+  // is on and the outline holds still, take the picture.
+  function detectSoon() {
+    if (!sc) return;
+    clearTimeout(sc.timer);
+    sc.timer = setTimeout(detectTick, 160);
+  }
+  function detectTick() {
+    if (!sc || sc.view !== "cam" || !sc.stream) return;
+    var v = $("sc-video");
+    if (v.readyState >= 2 && v.videoWidth) {
+      var img = smallFrame(v, v.videoWidth, v.videoHeight), r = null;
+      try { r = SC.detectQuad(img); } catch (e) { r = null; }
+      var q = r && r.area > 0.15 ? r.quad.map(function (p) { return [p[0] / img.width, p[1] / img.height]; }) : null;
+      sc.hist.push(q);
+      if (sc.hist.length > 10) sc.hist.shift();
+      drawOutline(q);
+      var auto = $("sc-auto").checked;
+      if (q && auto && Date.now() > sc.cool && SC.steady(sc.hist, 7, 0.018)) { capture(); return; }
+      tip(q ? (auto ? "sc.hold" : null) : "sc.find");
+    }
+    detectSoon();
+  }
+  function drawOutline(q) {
+    var cv = $("sc-outline"), st = $("sc-camstage"), b = videoBox();
+    cv.width = st.clientWidth; cv.height = st.clientHeight;
+    var x = cv.getContext("2d");
+    x.clearRect(0, 0, cv.width, cv.height);
+    if (!q || !b) return;
+    x.beginPath();
+    q.forEach(function (p, i) { var px = b.x + p[0] * b.w, py = b.y + p[1] * b.h; if (i) x.lineTo(px, py); else x.moveTo(px, py); });
+    x.closePath();
+    x.fillStyle = "rgba(212, 175, 55, 0.18)";
+    x.fill();
+    x.lineWidth = 3;
+    x.strokeStyle = "#d4af37";
+    x.stroke();
+  }
+  function clearOutline() { var cv = $("sc-outline"); cv.getContext("2d").clearRect(0, 0, cv.width, cv.height); }
+
+  function capture() {
+    if (!sc || !sc.stream) return;
+    var v = $("sc-video");
+    if (!v.videoWidth) return;
+    clearTimeout(sc.timer);
+    var last = sc.hist[sc.hist.length - 1] || null;
+    var k = Math.min(1, MAX_RAW_SIDE / Math.max(v.videoWidth, v.videoHeight));
+    var cv = document.createElement("canvas");
+    cv.width = Math.round(v.videoWidth * k); cv.height = Math.round(v.videoHeight * k);
+    cv.getContext("2d").drawImage(v, 0, 0, cv.width, cv.height);
+    sc.hist = [];
+    $("scanner").classList.add("flash");
+    setTimeout(function () { $("scanner").classList.remove("flash"); }, 180);
+    newShot({ canvas: cv, quad: last, retake: sc.retake });
+  }
+
+  // --- photos ---
+  function pickPhotos() {
+    var acc = C.IMAGE_EXT.join(",") + ",image/*";
+    var dlg = dialogHost();
+    function got(files) {
+      var list = [].slice.call(files || []).filter(function (f) { return C.kindOf(f.name, f.type) === "image"; });
+      if (!list.length || !sc) return;
+      sc.queue = sc.queue.concat(list);
+      if (sc.view === "cam") nextPhoto();
+    }
+    if (dlg && typeof dlg.openFiles === "function") { dlg.openFiles(acc).then(got); return; }
+    var inp = document.createElement("input");
+    inp.type = "file"; inp.multiple = true; inp.accept = acc;
+    inp.addEventListener("change", function () { got(inp.files); });
+    inp.click();
+  }
+  function nextPhoto() {
+    if (!sc || !sc.queue.length) return false;
+    var f = sc.queue.shift();
+    clearTimeout(sc.timer);
+    createImageBitmap(f).then(function (bmp) {
+      var k = Math.min(1, MAX_RAW_SIDE / Math.max(bmp.width, bmp.height));
+      var cv = document.createElement("canvas");
+      cv.width = Math.max(1, Math.round(bmp.width * k)); cv.height = Math.max(1, Math.round(bmp.height * k));
+      cv.getContext("2d").drawImage(bmp, 0, 0, cv.width, cv.height);
+      try { bmp.close(); } catch (e) {}
+      var img = smallFrame(cv, cv.width, cv.height), r = null;
+      try { r = SC.detectQuad(img); } catch (e) {}
+      var q = r ? r.quad.map(function (p) { return [p[0] / img.width, p[1] / img.height]; }) : null;
+      newShot({ canvas: cv, quad: q, photo: true });
+    }, function () {
+      showToast(t("sc.bad"));
+      if (!nextPhoto() && sc) scView("cam");
+    });
+    return true;
+  }
+
+  // --- one page: corners, look, turn ---
+  // shot: { canvas (the picture), quad (fractions) | null, filter, rot,
+  //         warped (ImageData, straightened, before the look) }
+  function newShot(sh) {
+    sh.filter = sh.filter || "color";
+    sh.rot = 0;
+    sc.cur = sh;
+    sc.edit = typeof sh.retake === "number" ? sh.retake : null;
+    sc.retake = null;
+    if (!sh.quad) {
+      // nothing found: the corners first, from the whole picture
+      sh.quad = SC.fullQuad(1, 1, 0.04);
+      openAdjust();
+      return;
+    }
+    straighten().then(openReview);
+  }
+  function straighten() {
+    var sh = sc.cur, cv = sh.canvas, W = cv.width, H = cv.height;
+    showBusy(t("sc.working"));
+    return new Promise(function (res) { setTimeout(res, 30); }).then(function () {
+      var q = SC.scaleQuad(sh.quad, W, H), size = SC.outSize(q);
+      var src = cv.getContext("2d").getImageData(0, 0, W, H);
+      var ctx = cv.getContext("2d");
+      sh.warped = SC.warp(src, q, size[0], size[1], function (w, h) { return ctx.createImageData(w, h); });
+      hideBusy();
+    });
+  }
+  // The page with its look and turn, on a new canvas.
+  function shotCanvas(sh) {
+    var w = sh.warped, tmp = document.createElement("canvas"), x = tmp.getContext("2d");
+    var img = x.createImageData(w.width, w.height);
+    img.data.set(w.data);
+    SC.filter(img, sh.filter);
+    var r = ((sh.rot % 4) + 4) % 4;
+    for (var i = 0; i < r; i++) img = SC.rotate90(img, 1, function (a, b) { return x.createImageData(a, b); });
+    tmp.width = img.width; tmp.height = img.height;
+    x.putImageData(img, 0, 0);
+    return tmp;
+  }
+  function openReview() {
+    if (!sc) return;
+    scView("review");
+    $("sc-del").hidden = sc.edit === null;
+    renderFilters();
+    drawReview();
+    setTimeout(function () { $("sc-keep").focus(); }, 0);
+  }
+  function drawReview() {
+    var sh = sc.cur, out = shotCanvas(sh), cv = $("sc-result"), st = $("sc-revstage");
+    var k = Math.min((st.clientWidth - 16) / out.width, (st.clientHeight - 16) / out.height, 1);
+    cv.width = out.width; cv.height = out.height;
+    cv.style.width = Math.round(out.width * k) + "px"; cv.style.height = Math.round(out.height * k) + "px";
+    cv.getContext("2d").drawImage(out, 0, 0);
+    sh.out = out;
+  }
+  function renderFilters() {
+    var box = $("sc-filters");
+    box.textContent = "";
+    box.setAttribute("aria-label", t("sc.filter"));
+    SC.FILTERS.forEach(function (f) {
+      var b = el("button", "chip", t("sc.f." + f));
+      b.type = "button";
+      b.setAttribute("role", "radio");
+      b.setAttribute("aria-checked", sc.cur.filter === f ? "true" : "false");
+      b.tabIndex = sc.cur.filter === f ? 0 : -1;
+      b.addEventListener("click", function () { sc.cur.filter = f; renderFilters(); drawReview(); box.querySelector('[aria-checked="true"]').focus(); });
+      box.appendChild(b);
+    });
+  }
+  function keepShot() {
+    var sh = sc.cur, out = sh.out || shotCanvas(sh);
+    showBusy(t("busy.save"));
+    out.toBlob(function (blob) {
+      hideBusy();
+      if (!sc || !blob) return;
+      var pg = { blob: blob, shot: sh, thumb: thumbCanvas(out) };
+      // a kept page holds only compressed pictures (the full-size
+      // canvases are let go); looking at it again decodes them
+      sh.canvas.toBlob(function (raw) { sh.raw = raw; }, "image/jpeg", 0.92);
+      var n;
+      if (sc.edit !== null && sc.pages[sc.edit]) { sc.pages[sc.edit] = pg; n = sc.edit + 1; }
+      else { sc.pages.push(pg); n = sc.pages.length; }
+      sc.cur = null; sc.edit = null;
+      sc.pages.forEach(function (p) { if (p !== pg) dropBig(p.shot); });
+      renderStrip();
+      say(t("sc.kept", { n: n }));
+      sc.cool = Date.now() + 1500;
+      if (!nextPhoto()) { scView("cam"); $("sc-shoot").focus(); }
+    }, "image/jpeg", sh.filter === "photo" ? 0.88 : 0.85);
+  }
+  function thumbCanvas(cv) {
+    var k = 120 / Math.max(cv.width, cv.height), out = document.createElement("canvas");
+    out.width = Math.max(1, Math.round(cv.width * k)); out.height = Math.max(1, Math.round(cv.height * k));
+    out.getContext("2d").drawImage(cv, 0, 0, out.width, out.height);
+    return out;
+  }
+  function renderStrip() {
+    var ul = $("sc-strip");
+    ul.textContent = "";
+    ul.hidden = !sc.pages.length;
+    sc.pages.forEach(function (pg, i) {
+      var li = el("li"), b = el("button", "sc-thumb");
+      b.type = "button";
+      setLabel(b, t("sc.page", { n: i + 1 }));
+      b.appendChild(pg.thumb);
+      b.appendChild(el("span", "sc-num", String(i + 1)));
+      b.addEventListener("click", function () {
+        // look at it again: corners, look, turn, or delete
+        clearTimeout(sc.timer);
+        reopenShot(pg.shot).then(function () { sc.cur = pg.shot; sc.edit = i; openReview(); },
+                                 function () { showToast(t("sc.bad")); });
+      });
+      li.appendChild(b);
+      ul.appendChild(li);
+    });
+    $("sc-done").hidden = !sc.pages.length;
+    $("sc-done").textContent = tn("sc.done", sc.pages.length);
+    var last = ul.lastChild;
+    if (last && last.scrollIntoView) last.scrollIntoView({ inline: "end", block: "nearest" });
+  }
+  // Let go of the big canvases of the kept pages; bring them back on demand.
+  function dropBig(sh) { if (sh.raw) { sh.canvas = null; sh.warped = null; sh.out = null; } }
+  function reopenShot(sh) {
+    if (sh.canvas && sh.warped) return Promise.resolve();
+    return createImageBitmap(sh.raw).then(function (bmp) {
+      var cv = document.createElement("canvas");
+      cv.width = bmp.width; cv.height = bmp.height;
+      cv.getContext("2d").drawImage(bmp, 0, 0);
+      try { bmp.close(); } catch (e) {}
+      sh.canvas = cv;
+      var keep = sc.cur;
+      sc.cur = sh;
+      return straighten().then(function () { sc.cur = keep; });
+    });
+  }
+  function deleteShot() {
+    if (sc.edit === null) return;
+    sc.pages.splice(sc.edit, 1);
+    sc.cur = null; sc.edit = null;
+    renderStrip();
+    scView("cam");
+    $("sc-shoot").focus();
+  }
+  function retake() {
+    // back to the camera; the next picture replaces this page
+    sc.retake = sc.edit;
+    sc.cur = null; sc.edit = null;
+    if (!sc.stream) { scView("cam"); return; }
+    scView("cam");
+    $("sc-shoot").focus();
+  }
+
+  // --- corners by hand ---
+  var adj = null;   // { k, w, h, drag: { i, pid } }
+  function openAdjust() {
+    scView("adjust");
+    var sh = sc.cur, cv = sh.canvas, st = $("sc-adjstage");
+    var k = Math.min((st.clientWidth - 40) / cv.width, (st.clientHeight - 40) / cv.height);
+    var w = Math.max(40, Math.floor(cv.width * k)), h = Math.max(40, Math.floor(cv.height * k));
+    var box = $("sc-adjbox");
+    box.style.width = w + "px"; box.style.height = h + "px";
+    var ph = $("sc-photo"), dpr = Math.min(2, window.devicePixelRatio || 1);
+    ph.width = Math.round(w * dpr); ph.height = Math.round(h * dpr);
+    ph.getContext("2d").drawImage(cv, 0, 0, ph.width, ph.height);
+    $("sc-quad").setAttribute("viewBox", "0 0 " + w + " " + h);
+    adj = { w: w, h: h, drag: null };
+    $("sc-retake").hidden = !!sh.photo || !sc.stream;
+    placeHandles();
+    setTimeout(function () { $("sc-next").focus(); }, 0);
+  }
+  function placeHandles() {
+    var q = sc.cur.quad;
+    [].forEach.call(document.querySelectorAll(".sc-h"), function (b) {
+      var i = +b.getAttribute("data-i");
+      b.style.left = (q[i][0] * 100) + "%";
+      b.style.top = (q[i][1] * 100) + "%";
+    });
+    $("sc-poly").setAttribute("points", q.map(function (p) { return (p[0] * adj.w) + "," + (p[1] * adj.h); }).join(" "));
+    $("sc-next").disabled = !SC.isConvex(q);
+  }
+  function moveCorner(i, fx, fy) {
+    var q = sc.cur.quad.map(function (p) { return p.slice(); });
+    q[i] = [Math.max(0, Math.min(1, fx)), Math.max(0, Math.min(1, fy))];
+    sc.cur.quad = q;
+    placeHandles();
+  }
+  // A magnified view of the picture around the corner being dragged,
+  // above the finger (below it near the top), so the corner can be
+  // placed exactly on a small screen.
+  function drawLoupe(i) {
+    var L = $("sc-loupe"), cv = sc.cur.canvas, p = sc.cur.quad[i];
+    var x = L.getContext("2d"), R = 40;      // source pixels of the picture around the corner, at 3× on 240
+    var sx = p[0] * cv.width, sy = p[1] * cv.height, scale = cv.width / adj.w;
+    var half = R * scale;
+    x.fillStyle = "#000";
+    x.fillRect(0, 0, 240, 240);
+    x.drawImage(cv, sx - half, sy - half, half * 2, half * 2, 0, 0, 240, 240);
+    x.strokeStyle = "#d4af37"; x.lineWidth = 2;
+    x.beginPath(); x.moveTo(120, 96); x.lineTo(120, 144); x.moveTo(96, 120); x.lineTo(144, 120); x.stroke();
+    L.hidden = false;
+    var px = p[0] * adj.w, py = p[1] * adj.h, size = 120;
+    L.style.width = size + "px"; L.style.height = size + "px";
+    L.style.left = Math.max(-20, Math.min(adj.w - size + 20, px - size / 2)) + "px";
+    L.style.top = (py - size - 40 < -20 ? py + 40 : py - size - 40) + "px";
+  }
+  function onHandleDown(e) {
+    var b = e.target.closest && e.target.closest(".sc-h");
+    if (!b || !adj) return;
+    e.preventDefault();
+    b.focus({ preventScroll: true });
+    adj.drag = { i: +b.getAttribute("data-i"), pid: e.pointerId };
+    try { b.setPointerCapture(e.pointerId); } catch (x) {}
+    drawLoupe(adj.drag.i);
+  }
+  function onHandleMove(e) {
+    if (!adj || !adj.drag || e.pointerId !== adj.drag.pid) return;
+    e.preventDefault();
+    var r = $("sc-adjbox").getBoundingClientRect();
+    moveCorner(adj.drag.i, (e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height);
+    drawLoupe(adj.drag.i);
+  }
+  function onHandleUp(e) {
+    if (adj && adj.drag && e.pointerId === adj.drag.pid) { adj.drag = null; $("sc-loupe").hidden = true; }
+  }
+  function adjustDone() {
+    if (!SC.isConvex(sc.cur.quad)) return;
+    sc.cur.quad = SC.orderQuad(sc.cur.quad);
+    straighten().then(openReview);
+  }
+
+  // Keyboard in the scanner: Esc goes back a step (or leaves); in the
+  // corners, arrows move the focused corner (Shift: further).
+  function scKey(e) {
+    if (!$("modal-veil").hidden) return false;
+    if (e.key === "Tab") { trapIn($("scanner"), e); return true; }
+    if (e.key === "Escape") {
+      e.preventDefault();
+      if (sc.view === "cam") leaveScanner();
+      else if (sc.view === "adjust" && sc.cur && sc.cur.warped) openReview();
+      else { sc.cur = null; sc.edit = null; scView("cam"); $("sc-shoot").focus(); }
+      return true;
+    }
+    var h = e.target.closest && e.target.closest(".sc-h");
+    if (h && /^Arrow/.test(e.key)) {
+      e.preventDefault();
+      var i = +h.getAttribute("data-i"), p = sc.cur.quad[i], st = e.shiftKey ? 0.02 : 0.004;
+      moveCorner(i, p[0] + (e.key === "ArrowLeft" ? -st : e.key === "ArrowRight" ? st : 0),
+                    p[1] + (e.key === "ArrowUp" ? -st : e.key === "ArrowDown" ? st : 0));
+    }
+    return true;
+  }
+
+  function wireScanner() {
+    [$("scan-btn"), $("scan-start"), $("scan-more")].forEach(function (b) { b.addEventListener("click", openScanner); });
+    $("sc-close").addEventListener("click", leaveScanner);
+    $("sc-done").addEventListener("click", function () { closeScanner(true); });
+    $("sc-shoot").addEventListener("click", capture);
+    $("sc-photos").addEventListener("click", pickPhotos);
+    $("sc-msg-photos").addEventListener("click", pickPhotos);
+    $("sc-torch").addEventListener("click", function () { setTorch(!(sc && sc.torch)); });
+    $("sc-auto").addEventListener("change", function () {
+      try { localStorage.setItem("oros-scanpdf-auto", $("sc-auto").checked ? "1" : "0"); } catch (e) {}
+      if (sc) sc.hist = [];
+    });
+    $("sc-whole").addEventListener("click", function () { sc.cur.quad = SC.fullQuad(1, 1, 0); placeHandles(); });
+    $("sc-retake").addEventListener("click", retake);
+    $("sc-next").addEventListener("click", adjustDone);
+    $("sc-corners").addEventListener("click", openAdjust);
+    $("sc-rotl").addEventListener("click", function () { sc.cur.rot--; drawReview(); });
+    $("sc-rotr").addEventListener("click", function () { sc.cur.rot++; drawReview(); });
+    $("sc-del").addEventListener("click", deleteShot);
+    $("sc-keep").addEventListener("click", keepShot);
+    var box = $("sc-adjbox");
+    box.addEventListener("pointerdown", onHandleDown);
+    box.addEventListener("pointermove", onHandleMove);
+    box.addEventListener("pointerup", onHandleUp);
+    box.addEventListener("pointercancel", onHandleUp);
+    $("sc-filters").addEventListener("keydown", function (e) {
+      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+      e.preventDefault();
+      var i = SC.FILTERS.indexOf(sc.cur.filter) + (e.key === "ArrowRight" ? 1 : -1);
+      i = (i + SC.FILTERS.length) % SC.FILTERS.length;
+      $("sc-filters").children[i].click();
+    });
+    window.addEventListener("resize", function () {
+      if (!sc) return;
+      if (sc.view === "review" && sc.cur && sc.cur.warped) drawReview();
+      else if (sc.view === "adjust" && sc.cur) openAdjust();
+    });
+    // the camera stops when the app is hidden or closed
+    document.addEventListener("visibilitychange", function () {
+      if (!sc) return;
+      if (document.hidden) stopCamera();
+      else if (!sc.stream) startCamera();
+    });
+    window.addEventListener("pagehide", function () { if (sc) stopCamera(); });
+  }
+
   // ---------- 8. Toast + busy ----------
   var toastTimer = null, toastShown = false;
   function showToast(msg) {
@@ -1966,6 +2513,7 @@
       }
       if (isBusy()) return;
       if (ed && edKey(e)) return;
+      if (sc && scKey(e)) return;
       var typing = /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName);
       var mod = (e.ctrlKey || e.metaKey) && !e.altKey;
       if (mod && !e.shiftKey && e.code === "KeyO") { e.preventDefault(); pickFiles(); return; }
@@ -2073,11 +2621,13 @@
     });
     document.title = t("app.name") + " · orOS";
     var btns = { "undo-btn": ["undo", "btn.undo"], "redo-btn": ["redo", "btn.redo"], "add-btn": ["plus", "btn.addIcon"],
-                 "clear-btn": ["clear", "btn.clear"], "sel-all": ["all", "btn.selAll"], "sel-left": ["left", "btn.left"],
+                 "clear-btn": ["clear", "btn.clear"], "scan-btn": ["camera", "btn.scanIcon"], "sel-all": ["all", "btn.selAll"], "sel-left": ["left", "btn.left"],
                  "sel-right": ["right", "btn.right"], "sel-rotl": ["rotl", "btn.rotl"], "sel-rotr": ["rotr", "btn.rotr"],
                  "sel-dup": ["dup", "btn.dup"], "sel-extract": ["extract", "btn.extract"],
                  "sel-del": ["del", "btn.del"], "ed-prev": ["left", "ed.prev"], "ed-next": ["right", "ed.next"],
-                 "ed-cancel": ["close", "btn.close"] };
+                 "ed-cancel": ["close", "btn.close"], "sc-close": ["close", "sc.close"], "sc-photos": ["image", "sc.photos"],
+                 "sc-torch": ["torch", "sc.torchOn"], "sc-rotl": ["rotl", "btn.rotl"], "sc-rotr": ["rotr", "btn.rotr"],
+                 "sc-del": ["del", "sc.delete"] };
     Object.keys(btns).forEach(function (id) {
       $(id).innerHTML = ICON[btns[id][0]];
       setLabel($(id), t(btns[id][1]));
@@ -2089,6 +2639,9 @@
       setLabel($(b[0]), t(b[2]));
     });
     $("ed-input").setAttribute("aria-label", t("ed.textLabel"));
+    setLabel($("sc-shoot"), t("sc.shoot"));
+    $("sc-auto-l").title = t("sc.autoHint");
+    [].forEach.call(document.querySelectorAll(".sc-h"), function (b) { setLabel(b, t("sc.corner." + b.getAttribute("data-i"))); });
     $("ed-colors").setAttribute("aria-label", t("ed.color"));
     [].forEach.call($("ed-colors").children, function (b) { setLabel(b, t("color." + b.getAttribute("data-color"))); });
   }
@@ -2125,6 +2678,7 @@
     $("save-btn").addEventListener("click", function () { saveDialog(false); });
     $("split-btn").addEventListener("click", splitDialog);
     $("opt-btn").addEventListener("click", optionsDialog);
+    wireScanner();
     $("ed-cancel").addEventListener("click", cancelEditor);
     $("ed-done").addEventListener("click", function () { closeEditor(true); });
     $("ed-prev").addEventListener("click", function () { edGo(-1); });

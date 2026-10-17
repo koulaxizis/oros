@@ -22,7 +22,7 @@
 
   var PREF_KEY = "oros-webpush";
   var HOURS = 168, MAX_ROWS = 300, TTL_ALARM = 900, TTL_NOTE = 3600;
-  var RELAY = "https://oros-mail-relay.koulaxizis-25b.workers.dev";   // = mail.js; the box lives there
+  var RELAY = "https://oros-mail-relay.koulaxizis.workers.dev";   // = mail.js; the box lives there
   var RS = 4096;
 
   /* ---------- bytes ---------- */
@@ -294,6 +294,8 @@
     var hash = fnv(JSON.stringify(rs.map(function (r) { return [r.id, r.at, r.title, r.body, r.link]; })));
     var sent = p.sent && typeof p.sent === "object" ? p.sent : {};
     return checkSelf().then(function () {
+      var q0 = prefs().sent;
+      sent = q0 && typeof q0 === "object" ? q0 : {};   // checkSelf may have cleared it
       devs = liveDevices(list());
       return devs.reduce(function (chain, dev) {
         return chain.then(function () {
@@ -333,8 +335,10 @@
         return;
       }
       var j = sub.toJSON(), k = j.keys || {};
-      if (mine && mine.ep === sub.endpoint && mine.k1 === k.p256dh) return;
+      if (mine && mine.ep === sub.endpoint && mine.k1 === k.p256dh && p.r === RELAY) return;
+      // New endpoint, or a new relay (its boxes start empty): sign up again, resend everything.
       return relay({ act: "sub", id: p.id, tok: p.tok, endpoint: sub.endpoint }).then(function () {
+        var q = prefs(); q.r = RELAY; q.sent = {}; savePrefs(q);
         putDevice(p.id, { tok: p.tok, ep: sub.endpoint, k1: k.p256dh, k2: k.auth, n: deviceName() });
       });
     }).catch(function () {});
@@ -359,7 +363,7 @@
     }).then(function (sub) {
       var id = randomB64u(16), tok = randomB64u(32), k = sub.toJSON().keys || {};
       return relay({ act: "sub", id: id, tok: tok, endpoint: sub.endpoint }).then(function () {
-        savePrefs({ on: true, id: id, tok: tok, sent: {} });
+        savePrefs({ on: true, id: id, tok: tok, r: RELAY, sent: {} });
         putDevice(id, { tok: tok, ep: sub.endpoint, k1: k.p256dh, k2: k.auth, n: deviceName() });
         emit();
         return schedule(true);

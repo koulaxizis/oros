@@ -275,6 +275,15 @@
       "type": "internal"
     },
     {
+      "id": "flashcards",
+      "name": "Flashcards",
+      "category": "Learning",
+      "icon": "flashcards",
+      "url": "flashcards/",
+      "search": "search.js",
+      "type": "internal"
+    },
+    {
       "id": "quote",
       "name": "Quote",
       "category": "Business",

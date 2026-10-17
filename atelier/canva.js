@@ -19,7 +19,7 @@
   var KEY = "oros-atelier-canva";
   var CB_KEY = "oros-atelier-canva-cb";            // callback hand-over (canva-callback.js)
   var CHANNEL = "oros-atelier-canva";
-  var DEFAULT_RELAY = "https://oros-mail-relay.koulaxizis-25b.workers.dev";   // same as Mail
+  var DEFAULT_RELAY = "https://oros-mail-relay.koulaxizis.workers.dev";   // same as Mail
   var SCOPES = "design:meta:read design:content:read";
   var POLL = 2500, POLL_MAX = 180000, CALL_TIMEOUT = 30000, CONFIG_TIMEOUT = 15000;
 

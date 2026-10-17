@@ -10,6 +10,12 @@
    ]
   },
   {
+   "app": "flashcards",
+   "files": [
+    "flashcards/app.js"
+   ]
+  },
+  {
    "app": "help",
    "files": [
     "help/help.js"
