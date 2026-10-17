@@ -55,7 +55,8 @@ function report(code, all) {
   const help = S.helpPages();
   const files = new Set(S.packFiles(code));
   const helpDone = help.filter((h) => files.has(h.pack)).length;
-  return { rows, help: { total: help.length, done: helpDone, missing: help.filter((h) => !files.has(h.pack)).map((h) => h.pack) } };
+  return { rows, help: { total: help.length, done: helpDone, missing: help.filter((h) => !files.has(h.pack)).map((h) => h.pack) },
+    issues: S.packIssues(code, all) };
 }
 
 function pct(a, b) { return b ? Math.floor((a / b) * 100) + "%" : "100%"; }
@@ -80,6 +81,10 @@ function statusMd(lang, r) {
   ];
   for (const x of r.rows) {
     lines.push("| " + x.app + " | " + (x.loads ? pct(x.done, x.keys) : "English for now") + " | " + x.done + " / " + x.keys + " |");
+  }
+  if (r.issues && r.issues.length) {
+    lines.push("", "## Lines to fix", "", "These show English until fixed (usually the English text changed).", "");
+    for (const m of r.issues) lines.push("- " + m);
   }
   if (r.help.missing.length) {
     lines.push("", "## Help pages not translated yet", "");
