@@ -29,6 +29,18 @@
     }).map(str).filter(Boolean);
   }
 
+  // Its two texts of its own (same keys and English as app.js). The
+  // shell runs this file, not the Slides page: a pack language shows
+  // the "slides" pack line when the shell has it, else English.
+  var S = {
+    en: { "deck.untitled": "Untitled presentation", "slide.n": "Slide {n}" },
+    el: { "deck.untitled": "Παρουσίαση χωρίς τίτλο", "slide.n": "Διαφάνεια {n}" }
+  };
+  function texts(lang) {
+    var I = root && root.orosI18n;
+    return S[lang] || (I && lang ? I.table(S, "slides", lang) : S.en);
+  }
+
   var PROVIDER = {
     id: "slides",
     keys: [KEY],
@@ -37,7 +49,7 @@
       if (!d || !d.decks || typeof d.decks !== "object") return out;
       var tombs = d.tombs && typeof d.tombs === "object" ? d.tombs : {};
       function tomb(id) { return own(tombs, id) ? num(tombs[id]) : 0; }
-      var el = ctx.lang === "el";
+      var tx = texts(ctx.lang);
       var decks = {};
       vals(d.decks).forEach(function (dk) {
         if (dk && typeof dk.id === "string" && Math.max(num(dk.m), num(dk.tm)) > tomb(dk.id)) decks[dk.id] = dk;
@@ -55,7 +67,7 @@
       });
       Object.keys(decks).forEach(function (deckId) {
         var dk = decks[deckId];
-        var deckTitle = str(dk.t) || (el ? "Παρουσίαση χωρίς τίτλο" : "Untitled presentation");
+        var deckTitle = str(dk.t) || tx["deck.untitled"];
         if (!byDeck[deckId]) {      // a presentation without slides: one hit for it
           out.push({ id: deckId, title: deckTitle, text: "", when: Math.max(num(dk.m), num(dk.tm)),
                      target: { deck: deckId } });
@@ -96,7 +108,7 @@
             }
             out.push({
               id: s.id,
-              title: title || (el ? "Διαφάνεια " : "Slide ") + (idx + 1),
+              title: title || tx["slide.n"].replace("{n}", String(idx + 1)),
               text: rest.concat([str(s.n), idx === 0 ? deckTitle : ""]).filter(Boolean).join(" · "),
               when: Math.max(num(s.m), num(s.nm), num(s.tm)),
               target: { deck: deckId, slide: s.id }
