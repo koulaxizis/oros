@@ -716,7 +716,7 @@
   var pass = { value: "", shown: false, remember: null };
   // WebDAV W2: the server form. The password stays in memory only
   // until it is handed to the shell.
-  var dav = { open: false, url: "", user: "", pass: "", dir: "orOS" };
+  var dav = { open: false, url: "", user: "", pass: "", dir: "orOS", relay: false };
 
   function davInput(key, label, type, ph, auto) {
     var wrap = el("div", "dav-field");
@@ -737,14 +737,35 @@
     return wrap;
   }
 
-  function davForm() {
+  // W3: "Through the orOS relay" (servers without CORS, the user's
+  // choice) and "Sign in with Nextcloud" (Login Flow v2: no password
+  // typed here).
+  function davForm(y) {
     var form = el("form", "pass dav-form");
     form.setAttribute("autocomplete", "off");
     form.appendChild(el("div", "hint", t("y.dav.hint")));
     form.appendChild(davInput("url", t("y.dav.url"), "url", t("y.dav.url.ph"), "url"));
+    form.appendChild(davInput("dir", t("y.dav.dir"), "text", "orOS", "off"));
+    var rl = el("label", "check");
+    var rc = el("input");
+    rc.type = "checkbox";
+    rc.setAttribute("data-k", "dav-relay");
+    rc.checked = dav.relay;
+    rc.addEventListener("change", function () { dav.relay = rc.checked; });
+    rl.appendChild(rc);
+    rl.appendChild(el("span", null, t("y.dav.relay")));
+    form.appendChild(rl);
+    form.appendChild(el("div", "hint", t("y.dav.relay.hint")));
+    if (y.ncAvailable) {
+      form.appendChild(actions(y.ncWaiting
+        ? button(t("y.dav.nc.cancel"), "y.dav.nc.cancel", function () { act("sync.cancelNc"); })
+        : button(t("y.dav.nc"), "y.dav.nc", function () {
+            act("sync.connectNc", { url: dav.url, dir: dav.dir, relay: dav.relay });
+          })));
+      form.appendChild(el("div", "hint", t("y.dav.nc.hint")));
+    }
     form.appendChild(davInput("user", t("y.dav.user"), "text", "", "username"));
     form.appendChild(davInput("pass", t("y.dav.pass"), "password", "", "current-password"));
-    form.appendChild(davInput("dir", t("y.dav.dir"), "text", "orOS", "off"));
     var go = el("button", "btn primary", t("y.dav.go"));
     go.type = "submit";
     go.setAttribute("data-k", "y.dav.go");
@@ -755,7 +776,7 @@
     })));
     form.addEventListener("submit", function (e) {
       e.preventDefault();
-      var arg = { url: dav.url, user: dav.user, pass: dav.pass, dir: dav.dir };
+      var arg = { url: dav.url, user: dav.user, pass: dav.pass, dir: dav.dir, relay: dav.relay };
       dav.pass = "";
       act("sync.connectDav", arg);
     });
@@ -784,7 +805,7 @@
       if (y.available) {
         c1.appendChild(el("p", "hint", t("y.connect.hint")));
         if (dav.open && y.davAvailable) {
-          c1.appendChild(davForm());
+          c1.appendChild(davForm(y));
         } else {
           c1.appendChild(actions(
             button(t("y.connect"), "y.connect", function () { act("sync.connect"); }, "primary"),

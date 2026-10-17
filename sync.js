@@ -969,9 +969,14 @@
   // orOS-backup-*.json, vault/<key>. The app password stays on this
   // device in localStorage, like the Dropbox tokens; it is never in a
   // synced slice and a factory reset removes it (oros-* sweep).
-  var DAV_CONF_KEY = "oros-dav-conf";      // { url, user, dir }
+  // W3: a server without CORS can be reached through the orOS relay
+  // (relay/dav.js), only when the user turns it on (conf.relay): the
+  // app password then passes through the relay on every request; the
+  // data is already end-to-end encrypted.
+  var DAV_CONF_KEY = "oros-dav-conf";      // { url, user, dir, relay? }
   var DAV_PASS_KEY = "oros-dav-pass";
   var DAV_ROOT     = "vault";
+  var DAV_RELAY    = "https://oros-mail-relay.koulaxizis-25b.workers.dev/dav";   // = mail.js
   var DAV_PROPFIND = '<?xml version="1.0" encoding="utf-8"?><d:propfind xmlns:d="DAV:"><d:prop>' +
     "<d:resourcetype/><d:getcontentlength/><d:getlastmodified/><d:getetag/></d:prop></d:propfind>";
   var davConf = null;
@@ -984,7 +989,7 @@
       var c = JSON.parse(localStorage.getItem(DAV_CONF_KEY) || "null");
       var p = localStorage.getItem(DAV_PASS_KEY);
       if (c && typeof c.url === "string" && typeof c.user === "string" && p) {
-        davConf = { url: c.url, user: c.user, dir: typeof c.dir === "string" ? c.dir : "/orOS" };
+        davConf = { url: c.url, user: c.user, dir: typeof c.dir === "string" ? c.dir : "/orOS", relay: c.relay === true };
         davPass = p;
       }
     } catch (e) { davConf = null; davPass = null; }
@@ -1013,11 +1018,15 @@
     var local = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(u.hostname);
     if (u.protocol !== "https:" && !(u.protocol === "http:" && local)) throw new Error("dav-url");
     if (u.username || u.password || u.search || u.hash) throw new Error("dav-url");
-    return {
+    var relay = !!(form && form.relay);
+    if (relay && (u.protocol !== "https:" || local)) throw new Error("dav-relay-target");
+    var conf = {
       url: u.origin + u.pathname.replace(/\/+$/, ""),
       user: String((form && form.user) || "").trim(),
       dir: davNormDir(form && form.dir)
     };
+    if (relay) conf.relay = true;
+    return conf;
   }
 
   function davEnc(rel) {
@@ -1040,12 +1049,28 @@
     var h = { "Authorization": davAuth(conf.user, pass) };
     var extra = opts.headers || {};
     Object.keys(extra).forEach(function (k) { h[k] = extra[k]; });
-    return fetch(opts.abs || davUrl(conf, rel), {
+    var target = opts.abs || davUrl(conf, rel);
+    if (conf.relay) h["X-Oros-Target"] = target;
+    return fetch(conf.relay ? DAV_RELAY : target, {
       method: method, headers: h, body: opts.body, credentials: "omit", cache: "no-store"
-    }).catch(function (err) {
+    }).then(function (res) {
+      return conf.relay ? davRelayed(res) : res;
+    }, function (err) {
       if (err instanceof TypeError) throw new Error("network error: " + (err.message || "unknown"));
       throw err;
     });
+  }
+
+  // The relay's own refusals (X-Oros-Error) and the redirects it
+  // reports instead of following (X-Oros-Status) become reasons;
+  // everything else is the server's answer as it is.
+  function davRelayed(res) {
+    if (res.headers.get("X-Oros-Status")) throw new Error("dav-moved");
+    var code = res.headers.get("X-Oros-Error");
+    if (!code) return res;
+    if (code === "too-big") throw new Error("dav-too-big");
+    if (code === "bad-target" || code === "port") throw new Error("dav-relay-target");
+    throw new Error("network error: relay " + code);   // rate, timeout, upstream: try again later
   }
 
   function davOk(res, what) {
@@ -1279,9 +1304,9 @@
   // other servers have no such call (the user removes it there).
   function davRevoke(timeoutMs) {
     if (!davConf || !/\/remote\.php\//.test(davConf.url)) return Promise.resolve(false);
-    var origin = davConf.url.replace(/^(https?:\/\/[^/]+).*$/, "$1");
+    var server = davConf.url.replace(/\/remote\.php\/.*$/, "");   // keeps a subfolder install's path
     var call = davReq("DELETE", null, {
-      abs: origin + "/ocs/v2.php/core/apppassword",
+      abs: server + "/ocs/v2.php/core/apppassword",
       headers: { "OCS-APIRequest": "true" }
     }).then(function (res) { return !!res.ok; }).catch(function () { return false; });
     if (!timeoutMs) return call;
@@ -2961,6 +2986,131 @@
     });
   }
 
+  // ---------- Nextcloud Login Flow v2 (WebDAV W3) ----------
+  // The user signs in on their own server's page and approves orOS;
+  // orOS gets an app password made for it and never sees the main
+  // password. Nextcloud sends no CORS headers for these two calls, so
+  // they normally need the relay (form.relay, the user's choice).
+  // open(url) shows the server's page (the shell opened the window on
+  // the click). cancelNextcloud() stops the waiting.
+  var ncJob = null;
+  function ncPost(url, body, relay) {
+    var h = {};
+    if (body) h["Content-Type"] = "application/x-www-form-urlencoded";
+    if (relay) h["X-Oros-Target"] = url;
+    return fetch(relay ? DAV_RELAY : url, {
+      method: "POST", headers: h, body: body || undefined, credentials: "omit", cache: "no-store"
+    }).then(function (res) {
+      return relay ? davRelayed(res) : res;
+    }, function (err) {
+      if (err instanceof TypeError) throw new Error("network error: " + (err.message || "unknown"));
+      throw err;
+    });
+  }
+  function ncJson(res) {
+    return res.json().catch(function () { throw new Error("dav-notnextcloud"); });
+  }
+  // Waits, or ends at once when the user cancels.
+  function ncWait(job, ms) {
+    return new Promise(function (r) { job.wake = r; setTimeout(r, ms); });
+  }
+  function ncSameOrigin(a, b) {
+    try { return new URL(a).origin === new URL(b).origin; } catch (e) { return false; }
+  }
+  // The user id the files live under (it can differ from the login
+  // name: LDAP, e-mail logins). Falls back to the login name.
+  function ncUserId(conf, pass) {
+    var body = '<?xml version="1.0"?><d:propfind xmlns:d="DAV:"><d:prop><d:current-user-principal/></d:prop></d:propfind>';
+    return davReq("PROPFIND", null, {
+      abs: conf.url + "/remote.php/dav/", conf: conf, pass: pass, body: body,
+      headers: { "Depth": "0", "Content-Type": "application/xml; charset=utf-8" }
+    }).then(function (res) { return res.status === 207 ? res.text() : ""; })
+      .catch(function () { return ""; })
+      .then(function (xml) {
+        var m = /\/principals\/users\/([^/<]+)\/?</.exec(xml || "");
+        if (!m) return conf.user;
+        try { return decodeURIComponent(m[1]); } catch (e) { return conf.user; }
+      });
+  }
+  function connectNextcloud(form, open) {
+    if (suspended)     return Promise.reject(new Error("engine-suspended"));
+    if (isConnected()) return Promise.reject(new Error("dav-connected"));
+    var conf;
+    try { conf = davNormConf({ url: form && form.url, user: "-", dir: form && form.dir, relay: form && form.relay }); }
+    catch (e) { return Promise.reject(e); }
+    // "https://host/nextcloud/remote.php/dav/files/x" → "https://host/nextcloud"
+    var server = conf.url.replace(/\/(index\.php|remote\.php)(\/.*)?$/, "");
+    var relay = !!conf.relay;
+    var job = { cancelled: false };
+    cancelNextcloud();
+    ncJob = job;
+    function stop() { if (job.cancelled) throw new Error("dav-cancelled"); }
+    var deadline = Date.now() + 20 * 60000;      // Nextcloud's own limit for a login token
+    var every = relay ? 7000 : 3000;              // the relay allows 10 logins a minute
+    var cred = null;
+    return ncPost(server + "/index.php/login/v2", null, relay).catch(function (err) {
+      if (/^network error/.test(err && err.message)) throw new Error("dav-unreachable");
+      throw err;
+    }).then(function (res) {
+      if (res.status === 404) throw new Error("dav-notnextcloud");
+      davOk(res, "login");
+      return ncJson(res);
+    }).then(function (start) {
+      stop();
+      var p = start && start.poll;
+      if (!start || typeof start.login !== "string" || !p || typeof p.token !== "string" ||
+          typeof p.endpoint !== "string" || !ncSameOrigin(p.endpoint, server) ||
+          !/^https?:\/\//.test(start.login)) throw new Error("dav-notnextcloud");
+      open(start.login);
+      function poll() {
+        stop();
+        if (Date.now() > deadline) throw new Error("dav-login-expired");
+        return ncPost(p.endpoint, "token=" + encodeURIComponent(p.token), relay).then(function (res) {
+          if (res.status === 200) return ncJson(res);
+          if (res.status !== 404 && res.status !== 429) davOk(res, "login");
+          return null;                                // not approved yet
+        }, function (err) {
+          if (/^network error/.test(err && err.message)) return null;   // keep waiting
+          throw err;
+        }).then(function (got) {
+          if (got) return got;
+          return ncWait(job, every).then(poll);
+        });
+      }
+      return poll();
+    }).then(function (got) {
+      stop();
+      if (!got || typeof got.loginName !== "string" || typeof got.appPassword !== "string" ||
+          !got.loginName || !got.appPassword) throw new Error("dav-notnextcloud");
+      cred = got;
+      var c = { url: server, user: got.loginName, relay: relay };
+      return ncUserId(c, got.appPassword);
+    }).then(function (uid) {
+      return connectWebdav({
+        url: server + "/remote.php/dav/files/" + encodeURIComponent(uid),
+        user: cred.loginName, pass: cred.appPassword, dir: form && form.dir, relay: relay
+      }).catch(function (err) {
+        // The new app password would stay unused on the server.
+        return davReq("DELETE", null, {
+          abs: server + "/ocs/v2.php/core/apppassword", headers: { "OCS-APIRequest": "true" },
+          conf: { url: server, user: cred.loginName, relay: relay }, pass: cred.appPassword
+        }).catch(function () {}).then(function () { throw err; });
+      });
+    }).then(function (acc) {
+      if (ncJob === job) ncJob = null;
+      return acc;
+    }, function (err) {
+      if (ncJob === job) ncJob = null;
+      throw err;
+    });
+  }
+  function cancelNextcloud() {
+    if (!ncJob) return;
+    ncJob.cancelled = true;
+    if (ncJob.wake) ncJob.wake();
+    ncJob = null;
+  }
+
   function disconnect() {
     provider.disconnect();
     useProvider("dropbox");     // the default again
@@ -3041,7 +3191,9 @@
   window.orosSync = {
     // Lifecycle
     connect:            connect,
-    connectWebdav:      connectWebdav,    // WebDAV W2: ({ url, user, pass, dir })
+    connectWebdav:      connectWebdav,    // WebDAV W2: ({ url, user, pass, dir, relay? })
+    connectNextcloud:   connectNextcloud, // WebDAV W3: ({ url, dir, relay? }, open(loginUrl))
+    cancelNextcloud:    cancelNextcloud,
     getProvider:        function () { return provider.id; },
     disconnect:         disconnect,
     isConnected:         isConnected,

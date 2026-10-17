@@ -175,3 +175,58 @@ test("big Vault files go up to Nextcloud in pieces; other servers get one PUT", 
     assert.equal(d2.log.filter((e) => e.op === "chunk").length, 0, flag);
   }
 });
+
+test("a server without CORS: refused directly, reached through the relay when the user turns it on", async () => {
+  const dav = new FakeWebDAV();
+  dav.noCors = true;
+  const A = await blank(dav, "A", { "oros-slices": { notes: "app-notes" } });
+  await assert.rejects(A.sync.connectWebdav(FORM), /dav-unreachable/);
+  assert.equal(dav.log.filter((e) => e.op === "relay").length, 0, "nothing goes to the relay unasked");
+  await A.sync.connectWebdav(Object.assign({}, FORM, { relay: true }));
+  assert.equal(JSON.parse(A.localStorage.getItem("oros-dav-conf")).relay, true);
+  writeKey(A, "app-notes", { items: { a: 1 } });
+  A.sync.markDirty();
+  await A.sync.push();
+  assert.deepEqual((await cloudPayload(dav, A)).apps.notes, { items: { a: 1 } });
+  const relayed = dav.log.filter((e) => e.op === "relay");
+  assert.ok(relayed.length > 3);
+  assert.ok(relayed.every((e) => e.target.indexOf("https://dav.test/") === 0));
+
+  // The relay's own refusals become one reason each.
+  dav.relayRefuses = "too-big";
+  await assert.rejects(A.sync.storage.putObject("objects/x/y", new Blob([Buffer.alloc(10)])), /dav-too-big/);
+  dav.relayRefuses = "rate";
+  await assert.rejects(A.sync.storage.getObject("objects/x/y"), /network error: relay rate/);
+  dav.relayRefuses = null;
+
+  // Local or plain-http addresses never go to the relay.
+  const C = await blank(new FakeWebDAV(), "C");
+  await assert.rejects(C.sync.connectWebdav({ url: "http://localhost:8080/dav", user: "u", pass: "p", relay: true }), /dav-relay-target/);
+});
+
+test("Sign in with Nextcloud: the server's page, then an app password made for orOS", async () => {
+  const dav = new FakeWebDAV();
+  dav.noCors = true;
+  dav.loginName = "chris@example.com";          // the login name is not the user id ("u")
+  const A = await blank(dav, "A");
+  let opened = null;
+  const form = { url: "https://dav.test/", dir: "orOS", relay: true };
+  const acc = await A.sync.connectNextcloud(form, (u) => { opened = u; dav.loginApproved = true; });
+  assert.equal(opened, "https://dav.test/login/v2/flow/abc");
+  assert.equal(acc.name, "chris@example.com");
+  const conf = JSON.parse(A.localStorage.getItem("oros-dav-conf"));
+  assert.equal(conf.url, "https://dav.test/remote.php/dav/files/u", "files live under the user id");
+  assert.equal(conf.user, "chris@example.com");
+  assert.equal(conf.relay, true);
+  assert.equal(A.localStorage.getItem("oros-dav-pass"), "app-pass");
+  assert.ok(A.sync.isConnected());
+  assert.ok(dav.log.filter((e) => e.op === "relay" && /login\/v2/.test(e.target)).length >= 2);
+
+  // Not a Nextcloud, cancelled, or no relay for a server without CORS.
+  const B = await blank(dav, "B");
+  await assert.rejects(B.sync.connectNextcloud({ url: "https://dav.test/" }, () => {}), /dav-unreachable/);
+  const D = await blank(dav, "D");
+  const p = D.sync.connectNextcloud(form, () => { setTimeout(() => D.sync.cancelNextcloud(), 10); });   // never approved
+  await assert.rejects(p, /dav-cancelled/);
+  assert.equal(D.sync.isConnected(), false);
+});

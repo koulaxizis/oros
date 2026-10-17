@@ -122,6 +122,7 @@ class FakeDropbox {
 // Nextcloud's app-password delete (logged as "revoke").
 const DAV_URL = "https://dav.test/remote.php/dav/files/u";
 const DAV_UPLOADS = "https://dav.test/remote.php/dav/uploads/u";
+const DAV_RELAY = "https://oros-mail-relay.koulaxizis-25b.workers.dev/dav";
 // Bytes as stored; .text for the sync tests, .data for the vault tests.
 class DavFile {
   constructor(data, rev) { this.data = data; this.rev = rev; }
@@ -180,11 +181,36 @@ class FakeWebDAV {
       const method = opts.method || "GET";
       const h = opts.headers || {};
       const u = String(url);
-      const want = "Basic " + Buffer.from(this.user + ":" + this.pass).toString("base64");
+      if (u === DAV_RELAY) {                     // the orOS relay (relay/dav.js), when the user turned it on
+        const target = h["X-Oros-Target"];
+        const inner = Object.assign({}, h);
+        delete inner["X-Oros-Target"];
+        this.log.push({ device, op: "relay", method, target });
+        if (this.relayRefuses) return textResponse(400, this.relayRefuses, { "X-Oros-Error": this.relayRefuses });
+        return this.fetchFor(device)(target, Object.assign({}, opts, { headers: inner, viaRelay: true }));
+      }
+      if (this.noCors && !opts.viaRelay) throw new TypeError("Failed to fetch");   // no CORS headers
+      if (u === "https://dav.test/index.php/login/v2" && method === "POST") {   // Nextcloud Login Flow v2
+        this.log.push({ device, op: "login-start" });
+        return textResponse(200, JSON.stringify({ login: "https://dav.test/login/v2/flow/abc",
+          poll: { token: "tok-1", endpoint: "https://dav.test/index.php/login/v2/poll" } }));
+      }
+      if (u === "https://dav.test/index.php/login/v2/poll" && method === "POST") {
+        this.log.push({ device, op: "login-poll" });
+        if (String(opts.body) !== "token=tok-1" || !this.loginApproved) return textResponse(404, "");
+        this.loginApproved = false;              // Nextcloud answers once
+        return textResponse(200, JSON.stringify({ server: "https://dav.test", loginName: this.loginName || this.user, appPassword: this.pass }));
+      }
+      const want = "Basic " + Buffer.from((this.loginName || this.user) + ":" + this.pass).toString("base64");
       if (h.Authorization !== want) return textResponse(401, "");
       if (u === "https://dav.test/ocs/v2.php/core/apppassword" && method === "DELETE") {
         this.log.push({ device, op: "revoke", status: 200 });
         return textResponse(200, "");
+      }
+      if (u === "https://dav.test/remote.php/dav/" && method === "PROPFIND") {
+        return textResponse(207, '<?xml version="1.0"?><d:multistatus xmlns:d="DAV:"><d:response><d:href>/remote.php/dav/</d:href>' +
+          "<d:propstat><d:prop><d:current-user-principal><d:href>/remote.php/dav/principals/users/" + this.user +
+          "/</d:href></d:current-user-principal></d:prop><d:status>HTTP/1.1 200 OK</d:status></d:propstat></d:response></d:multistatus>");
       }
       if (u.indexOf(DAV_UPLOADS + "/") === 0) return this.chunked(device, method, h, u.slice(DAV_UPLOADS.length + 1), opts.body);
       if (u.indexOf(DAV_URL) !== 0) throw new TypeError("Failed to fetch");
