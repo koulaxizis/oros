@@ -92,3 +92,19 @@ test("android: SoloWidget only opens the app's own page with a shortcut word", (
   const main = build(web)["AndroidManifest.xml"];
   assert.ok(!main.includes("SoloWidget"));   // the orOS app keeps its own widgets only
 });
+
+test("orOS account: Contacts and Calendar sync have their switch and last-synced time in Settings", () => {
+  const dir = path.join(ROOT, "android", "app", "src", "main");
+  for (const f of ["sync_contacts.xml", "sync_calendar.xml"]) {
+    assert.match(fs.readFileSync(path.join(dir, "res", "xml", f), "utf8"), /android:userVisible="true"/, f);
+  }
+  const twa = path.join(dir, "java", "online", "useoros", "twa");
+  const acc = fs.readFileSync(path.join(twa, "OrosAccount.java"), "utf8");
+  // Switched on once, never forced off again (the person's choice wins).
+  assert.doesNotMatch(acc, /setSyncAutomatically\([^)]*false\)/);
+  assert.match(acc, /SYNC_ON_SET/);
+  const bridge = fs.readFileSync(path.join(twa, "PhoneBridge.java"), "utf8");
+  assert.match(bridge, /if \(!OrosAccount\.syncOn\(app, authority\)\) throw/);
+  assert.match(bridge, /OrosAccount\.synced\(app, authority\)/);
+  assert.match(bridge, /if \(!OrosAccount\.syncOn\(app, contacts \?/);
+});

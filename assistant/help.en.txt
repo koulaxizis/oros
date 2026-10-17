@@ -99,6 +99,16 @@ In `Settings` → `Internet`, `Let the assistant search the internet when an ans
 - Anthropic's search costs $10 per 1,000 searches on top of the tokens; `Used this month` counts them. Wikipedia and SearXNG cost nothing; Tavily is free up to its monthly limit.
 - Search words go to the source you chose. The assistant is told never to put your orOS data in them unless you ask for that exact search.
 
+## Pictures (image AI)
+`Settings` → `Pictures` chooses who makes pictures for Atelier's `Image from text`. The choice stays on this device.
+- `Default: Pollinations`: free, with no key and no account. A free Pollinations key (enter.pollinations.ai) makes it faster.
+- `Hugging Face`: a free account and an access token with "Make calls to Inference Providers" (small monthly credit). It is the same key as Hugging Face for text.
+- `OpenAI gpt-image-1`: your own OpenAI key, paid per picture (the same key as ChatGPT). It can also do Magic edit and Magic expand.
+- `Stability AI`: your own key from platform.stability.ai, paid with credits. It can also do Magic edit and Magic expand.
+- `Stable Diffusion WebUI / Forge`: free and open source, on your own computer with a graphics card. Start it with `--api --cors-allow-origins=` followed by this site's address (Settings shows the exact line). Nothing leaves your network.
+- Each choice shows its steps under `How to switch it on`. `Test` checks the key or the address. Keys are kept like the AI keys (sealed on this device, and synced only if you switch on key sync).
+- Only your description (and, to edit, the picture) goes to the service, straight from this device. No Google service is offered.
+
 ## Briefing
 On a new conversation, `Briefing` sums up your day in one answer: today's agenda, what is late, birthdays and other dates this week, and how this month's spending looks. [Today](app:today) has the same button (the sparkles at the top).
 - It runs only when you press it, never by itself, so it never costs anything you didn't ask for.

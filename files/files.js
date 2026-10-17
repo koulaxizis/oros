@@ -180,6 +180,10 @@
       "pv.unsaved":      "Unsaved changes — close again to discard them",
       "pv.notUtf8":      "This file is not UTF-8 text. Editing it here would damage it — download it instead.",
       "pv.title":        "Preview",
+      "pv.openIn":       "Open in {app}",
+      "pv.openWith":     "Open with…",
+      "menu.openWith":   "Open with…",
+      "menu.sendApp":    "Send to an app…",
       "pv.edit":         "Edit",
       "pv.previewMd":    "Live preview",
       "pv.editSource":   "Source",
@@ -240,6 +244,7 @@
       "menu.zip":      "Compress to ZIP",
       "menu.extract":  "Extract here",
       "menu.convert":  "Convert to orOS",
+      "menu.pdfTools": "Open in Scanner & PDF",
       "zip.archive":   "Archive",
       "zip.working":   "Compressing… {n} of {t}",
       "zip.done":      "Created \"{name}\"",
@@ -401,6 +406,10 @@
       "pv.unsaved":      "Υπάρχουν μη αποθηκευμένες αλλαγές — κλείσε ξανά για απόρριψη",
       "pv.notUtf8":      "Το αρχείο δεν είναι κείμενο UTF-8. Η επεξεργασία εδώ θα το αλλοίωνε — κατέβασέ το.",
       "pv.title":        "Προεπισκόπηση",
+      "pv.openIn":       "Άνοιγμα στο {app}",
+      "pv.openWith":     "Άνοιγμα με…",
+      "menu.openWith":   "Άνοιγμα με…",
+      "menu.sendApp":    "Στείλε σε εφαρμογή…",
       "pv.edit":         "Επεξεργασία",
       "pv.previewMd":    "Ζωντανή προεπισκόπηση",
       "pv.editSource":   "Πηγή",
@@ -461,6 +470,7 @@
       "menu.zip":      "Συμπίεση σε ZIP",
       "menu.extract":  "Αποσυμπίεση εδώ",
       "menu.convert":  "Μετατροπή σε orOS",
+      "menu.pdfTools": "Άνοιγμα στο Σαρωτής & PDF",
       "zip.archive":   "Συμπιεσμένο",
       "zip.working":   "Συμπίεση… {n} από {t}",
       "zip.done":      "Δημιουργήθηκε το «{name}»",
@@ -588,6 +598,8 @@
     '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M10 4h2M10 7h2M10 10h2M10 13h2"/><rect x="9" y="15" width="4" height="4" rx="1"/></svg>';
   var CONVERT_SVG =
     '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h13l-3-3M20 17H7l3 3"/></svg>';
+  var PDFTOOLS_SVG =
+    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>';
   var UNZIP_SVG =
     '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/><path d="M12 10v6M9 13l3 3 3-3"/></svg>';
   var GRID_SVG =
@@ -770,6 +782,88 @@
     var paths = convertiblePaths();
     if (!paths.length) return;
     try { window.parent.__orosOpenAt("converter", { paths: paths }); } catch (e) {}
+  }
+  // ---------- Open in an app / send to an app (app interop wave 2) ----------
+  // A file of the orOS disk opens in the app that reads its type
+  // (shell fileopen.js: the person's choice for the type, the only app,
+  // or the chooser; BR-FO-9). A song already under Music plays there.
+  var APP_SVG =
+    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3h7v7"/><path d="M21 3l-9 9"/><path d="M18 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h5"/></svg>';
+  var MUSIC_ROOT = "/internal/Music/";
+  var AUDIO_RE = /\.(mp3|m4a|m4b|aac|ogg|oga|opus|flac|wav|wave|weba)$/i;
+  function fileOpenApi() {
+    try {
+      var o = window.parent && window.parent !== window ? window.parent.orosFileOpen : null;
+      return o && typeof o.openInside === "function" && typeof o.insideFor === "function" ? o : null;
+    } catch (e) { return null; }
+  }
+  function appsForFile(name) {
+    var o = fileOpenApi(), m = /\.([a-z0-9]{1,24})$/i.exec(String(name || ""));
+    return o && m ? o.insideFor("." + m[1].toLowerCase()) : [];
+  }
+  function shellAppName(id) {
+    try {
+      var k = "app." + id, v = window.parent.t(k);
+      return v && v !== k ? v : id;
+    } catch (e) { return id; }
+  }
+  // Only what the preview cannot show well opens in an app on a double
+  // click / tap: text, pictures and zips keep the preview.
+  function opensInApp(name) {
+    return !isTextExt(name) && !isImageExt(name) && CORE.extOf(name) !== "zip" && appsForFile(name).length > 0;
+  }
+  function openInApp(path, ask) {
+    var o = fileOpenApi(), name = baseName(path);
+    if (!o) return;
+    var apps = appsForFile(name);
+    if (!apps.length) return;
+    recentsTouch(path);
+    if (AUDIO_RE.test(name) && path.indexOf(MUSIC_ROOT) === 0 && (!ask || apps.length === 1) && apps.indexOf("music") !== -1) {
+      try { window.parent.__orosOpenAt("music", { playPath: path }); } catch (e) {}
+      return;
+    }
+    FS().read(path).then(function (blob) {
+      if (!blob) { transientNote(t("pv.notFound")); return; }
+      var file = blob instanceof File && blob.name === name ? blob : new File([blob], name, { type: blob.type || mimeForExt(extOf(name)) });
+      o.openInside(file, !!ask);
+    }, function () { transientNote(t("pv.notFound")); });
+  }
+  function sendApi() {
+    try { return window.parent !== window && window.parent.orosSend ? window.parent.orosSend : null; }
+    catch (e) { return null; }
+  }
+  // Selected files to another app (today Mail, as attachments).
+  function sendSelection() {
+    var api = sendApi();
+    if (!api) return;
+    var dirs = {};
+    lastEntries.forEach(function (e) { if (e.dir) dirs[entryPath(e)] = true; });
+    var items = selectionPaths().filter(function (p) { return !dirs[p]; }).slice(0, 10)
+      .map(function (p) { return { path: p, name: baseName(p) }; });
+    if (items.length) api.open({ kind: "files", data: { items: items } });
+  }
+
+  // "Open in Scanner & PDF": the selected PDFs and pictures (merge,
+  // split, pictures to PDF), only when that app is installed.
+  var PDFTOOLS_EXT = ["pdf", "jpg", "jpeg", "png", "webp", "gif", "bmp", "avif"];
+  function pdfToolPaths() {
+    var env = null;
+    try { env = window.parent && window.parent !== window ? window.parent.orosTodayEnv : null; } catch (e) {}
+    if (!env || typeof env.apps !== "function" ||
+        !env.apps().some(function (a) { return a && a.id === "scanpdf"; })) return [];
+    var dirs = {};
+    lastEntries.forEach(function (e) { if (e.dir) dirs[entryPath(e)] = true; });
+    var paths = selectionPaths().filter(function (p) {
+      return !dirs[p] && !CORE.isTrashPath(p) && PDFTOOLS_EXT.indexOf(CORE.extOf(baseName(p))) !== -1;
+    });
+    // pictures alone are Photo Lab's; at least one PDF, or several pictures
+    var pdfs = paths.filter(function (p) { return CORE.extOf(baseName(p)) === "pdf"; }).length;
+    return pdfs || paths.length > 1 ? paths : [];
+  }
+  function openPdfTools() {
+    var paths = pdfToolPaths();
+    if (!paths.length) return;
+    try { window.parent.__orosOpenAt("scanpdf", { paths: paths }); } catch (e) {}
   }
   // Rows of the Recent and Trash views carry their own full path.
   function entryPath(e) { return e.path || join(cwd, e.name); }
@@ -1375,6 +1469,8 @@
     if (e.dir) {
       clearSelection();
       navigate(path);
+    } else if (opensInApp(e.name || baseName(path))) {
+      openInApp(path, false);
     } else {
       recentsTouch(path);
       openPreview(path);
@@ -3061,6 +3157,9 @@
         recentsTouch(p.path);
         openPreview(p.path);
       }));
+      if (!many && appsForFile(p.name).length) {
+        ctxMenu.appendChild(mkItem(APP_SVG, "menu.openWith", function () { openInApp(p.path, true); }));
+      }
     }
     if (!many) {
       var faved = CORE.favIs(favs, p.path);
@@ -3080,6 +3179,9 @@
     ctxMenu.appendChild(mkItem(CP_SVG, "menu.copyTo", function () {
       openPickerDialog("copy");
     }));
+    if (!p.dir && sendApi()) {
+      ctxMenu.appendChild(mkItem(APP_SVG, "menu.sendApp", sendSelection));
+    }
     if (dbx() && dbx().exportFrom) {
       ctxMenu.appendChild(mkItem(dbx().icon || "", "menu.toDropbox", function () {
         sendToDropbox();
@@ -3095,6 +3197,9 @@
     }
     if (convertiblePaths().length) {
       ctxMenu.appendChild(mkItem(CONVERT_SVG, "menu.convert", convertSelection));
+    }
+    if (pdfToolPaths().length) {
+      ctxMenu.appendChild(mkItem(PDFTOOLS_SVG, "menu.pdfTools", openPdfTools));
     }
     ctxMenu.appendChild(hr());
     ctxMenu.appendChild(mkItem("", "menu.copyName", function () {
@@ -3391,6 +3496,7 @@
         return;
       }
       buildPreviewShell(path, name, size, mtime);
+      injectOpenButton(path, name);
 
       if (CORE.extOf(name) === "zip") {
         renderZipPreview(path);
@@ -3592,6 +3698,21 @@
       .replace(/(^|\W)\*([^*]+)\*(?=\W|$)/g, "$1<em>$2</em>");
   }
 
+  // "Open in Writer" (one app) / "Open with…" (several) in the preview.
+  function injectOpenButton(path, name) {
+    var acts = $("pv-actions"), apps = appsForFile(name);
+    if (!acts || acts.dataset.hasOpen || !apps.length) return;
+    acts.dataset.hasOpen = "1";
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "pv-btn";
+    b.id = "pv-open";
+    b.innerHTML = APP_SVG + "<span></span>";
+    b.querySelector("span").textContent = apps.length === 1 ? tfmt("pv.openIn", { app: shellAppName(apps[0]) }) : t("pv.openWith");
+    b.addEventListener("click", function () { closePreview(); openInApp(path, apps.length > 1); });
+    acts.insertBefore(b, acts.firstChild);
+  }
+
   function injectEditButton(path, name) {
     var acts = $("pv-actions");
     if (!acts || acts.dataset.hasEdit) return;
@@ -3716,9 +3837,12 @@
     pvBodySet('<div class="pv-loading">' + escapeHtml(t("status.loading")) + "</div>");
     FS().read(path).then(function (data) {
       var blob;
-      if (data instanceof Blob) {                    // #FA2 FIX: fs.js returns Blob
+      // The Blob comes from the shell's realm (window.parent.orosFS), so
+      // `instanceof Blob` is false inside the app frame: check the tag.
+      var tag = Object.prototype.toString.call(data);
+      if (tag === "[object Blob]" || tag === "[object File]") {
         blob = data;
-      } else if (data instanceof ArrayBuffer) {
+      } else if (tag === "[object ArrayBuffer]") {
         blob = new Blob([data]);
       } else if (data && typeof data.length === "number" && !(typeof data === "string")) {
         blob = new Blob([new Uint8Array(data)]);
@@ -4442,6 +4566,7 @@
     }));
     bar.appendChild(selBtn("sb-zip", ZIP_SVG, "menu.zip", function () { zipCreate(selectionPaths()); }));
     bar.appendChild(selBtn("sb-conv", CONVERT_SVG, "menu.convert", convertSelection));
+    bar.appendChild(selBtn("sb-pdf", PDFTOOLS_SVG, "menu.pdfTools", openPdfTools));
     bar.appendChild(selBtn("sb-move", MV_SVG, "menu.moveTo", function () { openPickerDialog("move"); }));
     bar.appendChild(selBtn("sb-copy", CP_SVG, "menu.copyTo", function () { openPickerDialog("copy"); }));
     if (dbx() && dbx().exportFrom) {
@@ -4473,6 +4598,8 @@
     show("sb-zip", !trash, n > 0);
     var conv = !trash && n > 0 && convertiblePaths().length > 0;
     show("sb-conv", conv, conv);
+    var pdft = !trash && n > 0 && pdfToolPaths().length > 0;
+    show("sb-pdf", pdft, pdft);
     show("sb-move", !trash, n > 0);
     show("sb-copy", !trash, n > 0);
     show("sb-dbx", !trash, n > 0);

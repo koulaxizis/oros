@@ -1,6 +1,6 @@
 // ============================================================
 // orOS Maps — transit-core.js (public transport, maps wave 7,
-// v1.0.0). Pure functions, no DOM, no network: Node-tested in
+// v1.1.0). Pure functions, no DOM, no network: Node-tested in
 // tests/maps-transit.test.js.
 //
 // Public transport comes from Transitous (transitous.org): a free,
@@ -26,7 +26,7 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.0.0";
+  var VER = "1.1.0";
   var BASE = "https://api.transitous.org/api/";
   var API_VERSIONS = ["v6", "v5"];
   var SOURCES_URL = "https://transitous.org/sources/";
@@ -420,10 +420,30 @@
     return { name: str(name), segs: [seg], wpts: wpts };
   }
 
+  // When a search finds nothing: are the timetables of this area
+  // out of date at the source? The nearest stops to a point (closest
+  // first), then a verdict from how many upcoming departures each of
+  // them has (open-ended: the next one, whenever it is). Stale only
+  // when stops exist and none of them has any departure at all.
+  function nearestStops(stops, lat, lon, k) {
+    if (!Array.isArray(stops) || !okLat(lat) || !okLon(lon)) return [];
+    var c = Math.cos(lat * Math.PI / 180);
+    return stops.filter(function (s) { return s && s.id && okLat(s.lat) && okLon(s.lon); })
+      .map(function (s) { var dy = s.lat - lat, dx = (s.lon - lon) * c; return { s: s, d: dy * dy + dx * dx }; })
+      .sort(function (a, b) { return a.d - b.d; })
+      .slice(0, Math.max(0, Math.min(5, k || 2)))
+      .map(function (x) { return x.s; });
+  }
+  function staleVerdict(counts) {
+    if (!Array.isArray(counts) || !counts.length) return false;
+    return counts.every(function (n) { return n === 0; });
+  }
+
   var API = {
     VER: VER, BASE: BASE, API_VERSIONS: API_VERSIONS, SOURCES_URL: SOURCES_URL,
     MODES: MODES, GROUP_COLOR: GROUP_COLOR, TIME_MODES: TIME_MODES,
     modeOf: modeOf, groupOf: groupOf, emojiOf: emojiOf, textOn: textOn, color: color,
+    nearestStops: nearestStops, staleVerdict: staleVerdict,
     planUrl: planUrl, stoptimesUrl: stoptimesUrl, stopsUrl: stopsUrl, tripsUrl: tripsUrl,
     tripsPrecision: tripsPrecision,
     decodePolyline: decodePolyline, encodePolyline: encodePolyline,

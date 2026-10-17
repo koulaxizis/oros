@@ -1,6 +1,41 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.75.00
+- Files opens documents, spreadsheets, songs and videos straight in the orOS app that reads them (Open with…), plays songs in Music, and sends files to Mail.
+
+## Version 2.74.00
+- Music: Made for you on Home. A Daily mix, On repeat, Rewind and song radio are made on your device from what you play, and every year gets its own recap (top songs, artists and your biggest month). Today shows the recap or the Daily mix.
+- Music: bring your Spotify playlists and likes. Open the my_spotify_data.zip (or its JSON/CSV files) and Music finds the songs in your library, then (if you say yes) in free music online.
+- Music: find missing album covers online (MusicBrainz and the Cover Art Archive), add an album to Media Shelf, or send a free song to Montage.
+
+## Version 2.73.00
+- New users choose what the menu shows: Everything (first and chosen), or Home, Work, School, Creating, Games and any app by hand. You can change it later in Settings › Menu › Choose a profile.
+
+## Version 2.72.01
+- orOS Drive on the phone: the whole orOS disk now appears as «orOS» in Android's Files app and in every file picker (orOS Android app; not in the F-Droid version for now).
+
+## Version 2.72.00
+- Send to someone: links with an expiry (1, 7 or 30 days), stored encrypted and taken back any time from My shared links; long notes and Wiki articles can now be sent.
+
+## Version 2.71.01
+- Maps: public transport now says when an area's timetables are out of date (Athens, for now).
+
+## Version 2.71.00
+- Atelier gets Magic eraser and Magic grab (on the device), Image from text, Magic edit and Magic expand (with the image AI you choose in Assistant › Settings › Pictures: Pollinations, free, by default), Design from a description and Magic animate.
+
+## Version 2.70.00
+- New app Scanner & PDF (Office): merge PDFs, split them (each page, every few pages or page ranges), delete, duplicate, turn and drag pages into order, and make a PDF from pictures. Everything happens on your device. In Files, select PDFs or pictures and choose Open in Scanner & PDF. Camera scanning comes next.
+
+## Version 2.69.02
+- Files: big folders in grid view no longer overlap, and pictures open again. Atelier: when you delete a design you can tick a box to delete its unused files too.
+
+## Version 2.69.01
+- Settings: Connect a service now shows tiles grouped by purpose, with a search box, instead of a plain list.
+
+## Version 2.69.00
+- Send to an app: Writer, Notes, Wiki, Mail, Bookmarks and Reader can hand text or a link to another orOS app (Notes, To-Do, Writer, Mail, Spreadsheet, Wiki, Assistant…), which opens it ready to save.
+
 ## Version 2.68.01
 - Prompter: Use now opens the prompt in Writer as a new document, and the Cancel and Factory reset buttons no longer touch.
 

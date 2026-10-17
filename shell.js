@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "2.68.02";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "2.75.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -167,6 +167,7 @@
     budget: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2v-2"/><path d="M16 8h5v8h-5a4 4 0 0 1 0-8z"/><circle cx="16.5" cy="12" r="0.6" fill="currentColor"/></svg>',
     qr: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14v1M14 20h1M18 18h3v3M17 21h0"/></svg>',
     converter: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M8 13h8l-2.5-2.5"/><path d="M16 17H8l2.5 2.5"/></svg>',
+    scanpdf: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>',
     files: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 3v18"/></svg>',
     pubdomain: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M14.8 9.2a4 4 0 1 0 0 5.6"/><line x1="5" y1="5" x2="19" y2="19"/></svg>',
     cycle: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>',
@@ -3029,7 +3030,8 @@
           document.head.appendChild(s);
         });
       };
-      shareLoad = load("share/kinds.js").then(function () { return load("share/send.js"); })
+      shareLoad = load("share/kinds.js").then(function () { return load("share/relay.js"); })
+        .then(function () { return load("share/send.js"); })
         .then(function () {
           if (!window.__orosShareImpl) throw new Error("share module missing");
           return window.__orosShareImpl;
@@ -3038,9 +3040,86 @@
     }
     return shareLoad;
   }
+  function shareLoadFail() {
+    notifySys("dim", window.orosLang === "el"
+      ? "Η αποστολή δεν φορτώθηκε. Έλεγξε τη σύνδεση και δοκίμασε ξανά."
+      : "Sending could not load. Check your connection and try again.");
+  }
   window.orosShare = {
     open: function (opts) {
-      shareModule().then(function (m) { m.open(opts); }, function () {
+      shareModule().then(function (m) { m.open(opts); }, shareLoadFail);
+    },
+    // "My shared links" (links with an expiry, share/out.js): Settings › Privacy.
+    links: function () {
+      shareModule().then(function (m) { m.links(); }, shareLoadFail);
+    }
+  };
+  // The list of links with an expiry travels as sync slice "shareOut"
+  // (share/out.js, loaded at boot for its merge) so a link can be taken
+  // back from any device.
+  function registerShareOutSlice() {
+    var O = window.OrosShareOut;
+    if (!O || !window.orosSync || typeof window.orosSync.registerSlice !== "function") return;
+    window.orosSync.registerSlice("shareOut", function () {
+      var o = O.read();
+      return Object.keys(o.items).length ? o : null;
+    }, function (data) {
+      if (!data) return;
+      try { localStorage.setItem(O.KEY, JSON.stringify(O.norm(data))); } catch (e) {}
+    }, O.KEY, O.merge);
+  }
+  // "Send to…" (send/, BR-SEND): one app hands an item to another app
+  // of this orOS. send/core.js + send/sheet.js load on first use, never
+  // at boot. Apps call window.parent.orosSend.open({ kind, data }) with
+  // kind text | link | items | table (+ share: the item for "Send to
+  // someone", which stays window.orosShare); the sheet lists the
+  // installed apps that take it and calls __orosOpenAt with that app's
+  // own prefill target. Nothing is stored or synced.
+  var sendLoad = null;
+  function sendModule() {
+    if (window.__orosSendImpl) return Promise.resolve(window.__orosSendImpl);
+    if (!sendLoad) {
+      var load = function (src) {
+        return new Promise(function (resolve, reject) {
+          var s = document.createElement("script");
+          s.src = src + "?v=" + APP_VERSION;
+          s.onload = resolve;
+          s.onerror = reject;
+          document.head.appendChild(s);
+        });
+      };
+      sendLoad = load("send/core.js").then(function () { return load("send/sheet.js"); })
+        .then(function () {
+          if (!window.__orosSendImpl) throw new Error("send module missing");
+          return window.__orosSendImpl;
+        });
+      sendLoad.catch(function () { sendLoad = null; });
+    }
+    return sendLoad;
+  }
+  window.orosSend = {
+    open: function (opts) {
+      var self = state.running ? state.running.id : "";
+      var apps = window.orosAssistInstalled();
+      var from = "";
+      apps.forEach(function (a) { if (a.id === self) from = a.name; });
+      sendModule().then(function (m) {
+        m.open(opts, {
+          apps: apps, self: self, from: from, openAt: window.__orosOpenAt,
+          share: function (item) { window.orosShare.open(item); },
+          icon: function (id) {
+            for (var i = 0; i < state.apps.length; i++) {
+              var a = state.apps[i];
+              if (a.id === id && ICONS[a.icon]) {
+                var sp = document.createElement("span");
+                sp.innerHTML = ICONS[a.icon];          // static shell icon, not data
+                return sp.firstChild;
+              }
+            }
+            return null;
+          }
+        });
+      }, function () {
         notifySys("dim", window.orosLang === "el"
           ? "Η αποστολή δεν φορτώθηκε. Έλεγξε τη σύνδεση και δοκίμασε ξανά."
           : "Sending could not load. Check your connection and try again.");
@@ -5448,6 +5527,9 @@
         { name: "PDF.js 5.4.394", url: "https://mozilla.github.io/pdf.js/",
           by: "Mozilla Foundation & contributors", lic: "Apache-2.0",
           en: "Opening PDF files (Layout); reading PDF text on the device (Assistant)", el: "Άνοιγμα αρχείων PDF (Σελιδοποίηση)· ανάγνωση κειμένου PDF στη συσκευή (Βοηθός)" },
+        { name: "pdf-lib 1.17.1", url: "https://pdf-lib.js.org/",
+          by: "Andrew Dillon & contributors", lic: "MIT",
+          en: "Merging, splitting and making PDFs (Scanner & PDF)", el: "Ένωση, διαχωρισμός και δημιουργία PDF (Σαρωτής & PDF)" },
         { name: "three.js r180", url: "https://threejs.org/",
           by: "three.js authors", lic: "MIT",
           en: "3D book mockups (Mockups)", el: "Τρισδιάστατες μακέτες βιβλίων (Μακέτες)" },
@@ -5460,6 +5542,9 @@
         { name: "U²-Net (u2netp model)", url: "https://github.com/xuebinqin/U-2-Net",
           by: "Xuebin Qin & contributors", lic: "Apache-2.0",
           en: "The background removal model (Atelier)", el: "Το μοντέλο αφαίρεσης φόντου (Ατελιέ)" },
+        { name: "MI-GAN (512 Places2 model)", url: "https://github.com/Picsart-AI-Research/MI-GAN",
+          by: "Picsart AI Research", lic: "MIT",
+          en: "Filling a part of a picture: Magic eraser and Magic grab (Atelier)", el: "Γέμισμα μέρους μιας εικόνας: Μαγική γόμα και Μαγική λαβή (Ατελιέ)" },
         { name: "Tesseract.js 7.0.0 + tesseract.js-core 6.1.2", url: "https://github.com/naptha/tesseract.js",
           by: "Project Naptha, Google (Tesseract OCR) & contributors", lic: "Apache-2.0",
           en: "Reading text from a business card photo, on the device (Contacts); text of photos and scanned PDFs (Assistant)", el: "Ανάγνωση κειμένου από φωτογραφία κάρτας, στη συσκευή (Επαφές)· κείμενο φωτογραφιών και σκαναρισμένων PDF (Βοηθός)" },
@@ -5704,7 +5789,10 @@
           en: "Book details (Media Shelf)", el: "Στοιχεία βιβλίων (Το ράφι μου)" },
         { name: "MusicBrainz", url: "https://musicbrainz.org/",
           by: "MetaBrainz Foundation", lic: "CC0 (core data)",
-          en: "Album details (Media Shelf)", el: "Στοιχεία άλμπουμ (Το ράφι μου)" },
+          en: "Album details (Media Shelf, Music covers)", el: "Στοιχεία άλμπουμ (Το ράφι μου, εξώφυλλα στη Μουσική)" },
+        { name: "Cover Art Archive", url: "https://coverartarchive.org/",
+          by: "MetaBrainz Foundation and Internet Archive", lic: { en: "Free API, no key; each image belongs to its owner", el: "Δωρεάν API χωρίς κλειδί· κάθε εικόνα ανήκει στον κάτοχό της" },
+          en: "Album covers, only when you ask (Music)", el: "Εξώφυλλα άλμπουμ, μόνο όταν το ζητήσεις (Μουσική)" },
         { name: "Anthropic, OpenAI, Google Gemini, Mistral, OpenRouter, Ollama, LM Studio", url: "https://www.anthropic.com/",
           by: "Each provider", lic: { en: "Their terms, your own key", el: "Οι όροι τους, με δικό σου κλειδί" },
           en: "AI chat you choose (Assistant)", el: "Συζήτηση με το AI που διαλέγεις (Βοηθός)" },
@@ -5729,6 +5817,9 @@
         { name: "Pollinations", url: "https://pollinations.ai/",
           by: "Pollinations.AI", lic: { en: "Their terms, your own key (free plan)", el: "Οι όροι τους, με δικό σου κλειδί (δωρεάν πλάνο)" },
           en: "AI chat you choose (Assistant)", el: "Συζήτηση με το AI που διαλέγεις (Βοηθός)" },
+        { name: "Pollinations, Hugging Face, OpenAI, Stability AI, Stable Diffusion WebUI / Forge", url: "https://pollinations.ai/",
+          by: "Each provider or project", lic: { en: "Their terms; Pollinations free with no key, the others with your own key or your own computer", el: "Οι όροι τους· το Pollinations δωρεάν χωρίς κλειδί, τα άλλα με δικό σου κλειδί ή στον υπολογιστή σου" },
+          en: "Image AI you choose: Image from text (Atelier)", el: "AI εικόνας που διαλέγεις: Εικόνα από κείμενο (Ατελιέ)" },
         { name: "Cloudflare Workers", url: "https://workers.cloudflare.com/",
           by: "Cloudflare, Inc.", lic: { en: "Runs the orOS mail relay (code in relay/); D1 keeps encrypted share links with an expiry", el: "Τρέχει το relay αλληλογραφίας του orOS (κώδικας στο relay/)· το D1 κρατά κρυπτογραφημένους συνδέσμους με λήξη" },
           en: "Mail: IMAP over HTTPS, nothing stored", el: "Αλληλογραφία: IMAP μέσω HTTPS, δεν αποθηκεύεται τίποτα" },
@@ -6816,6 +6907,7 @@
     fdMigrateLegacy();          // FILES-V: one-time cleanup of the blob model
     legacyLsMove();             // SY-Q2: retired snapshots out of localStorage
     registerRadioProxySlice();
+    registerShareOutSlice();
     registerTelevisionProxySlice();
     registerMailProxySlice();
 
@@ -8458,6 +8550,7 @@
       dock: settingsDock(),
       seasonal: settingsSeasonal(),
       menu: settingsMenuApps(),
+      menuProfiles: !!profilesL(),
       apps: state.apps.filter(function (a) { return a && a.type === "internal"; })
         .map(function (a) { return a.id; }),
       shortcuts: SC_DEFS.map(function (d) {
@@ -8548,6 +8641,7 @@
         return;
       case "updates":         scCheckUpdates(); return;
       case "info":            showInfoModal(); return;
+      case "shareLinks":      if (window.orosShare) window.orosShare.links(); return;
       case "openApp":         if (typeof arg === "string") openAppById(arg); return;
       // Seasonal decorations: "Try it now" shows the desktop at once.
       case "seasonal.preview":
@@ -8559,6 +8653,7 @@
       // Menu apps: show or hide every app at once (one change, one push).
       case "menu.showAll":    if (settingsMenuL()) settingsMenuL().setMenuHidden(settingsMenuIds(), false); return;
       case "menu.hideAll":    if (settingsMenuL()) settingsMenuL().setMenuHidden(settingsMenuIds(), true); return;
+      case "menu.profiles":   showProfiles("settings"); return;
       // The app arms and confirms first (two taps, like the Info modal);
       // this is the same wipe, with no button of its own to update.
       case "reset":           scFactoryReset({ disabled: false, textContent: "" }); return;
@@ -8991,15 +9086,83 @@
     try {
       if (localStorage.getItem(TOUR_DONE) === "1") return;
       localStorage.setItem(TOUR_KEY, "1");
+      if (profilesWanted()) localStorage.setItem(PROFILE_KEY, "1");
     } catch (e) { return; }
     tourMaybe();
+  }
+
+  // First-run profiles (profiles.js, strategy §9): before the tour, a
+  // new user chooses which apps the menu shows. "Everything" is first
+  // and chosen; Continue, X or Escape with it change nothing. Not on a
+  // device that already has menu choices (pulled or made) or is
+  // connected to sync: that user is not new, only this device is.
+  // profiles.js loads on first use (first run or Settings), never at boot.
+  var PROFILE_KEY = "oros-profile-pending";
+  var profilesLoad = null;
+  function profilesL() {
+    var L = window.orosLauncher;
+    return (L && typeof L.presetMenuHidden === "function" && typeof L.menuStored === "function") ? L : null;
+  }
+  function profilesModule() {
+    if (window.orosProfiles) return Promise.resolve(window.orosProfiles);
+    if (!profilesLoad) {
+      profilesLoad = new Promise(function (resolve, reject) {
+        var s = document.createElement("script");
+        s.src = "profiles.js?v=" + APP_VERSION;
+        s.onload = function () { if (window.orosProfiles) resolve(window.orosProfiles); else reject(new Error("profiles missing")); };
+        s.onerror = reject;
+        document.head.appendChild(s);
+      });
+      profilesLoad.catch(function () { profilesLoad = null; });
+    }
+    return profilesLoad;
+  }
+  function profilesWanted() {
+    if (SOLO) return false;
+    var L = profilesL();
+    if (!L || L.menuStored()) return false;
+    var S = window.orosSync;
+    return !(S && typeof S.isConnected === "function" && S.isConnected());
+  }
+  function profilesApps() {
+    return settingsMenuApps() || [];
+  }
+  // mode "first": then the tour; "settings": from Settings › Menu.
+  var profilesBusy = false;   // loading or on screen: the tour waits
+  function showProfiles(mode, after) {
+    var L = profilesL();
+    if (!L || profilesBusy) return;
+    profilesBusy = true;
+    var then = function (r) { profilesBusy = false; if (after) after(r); };
+    profilesModule().then(function (P) {
+      if (!showProfilesNow(P, L, mode, then)) then();
+    }, function () { then(); });
+  }
+  function showProfilesNow(P, L, mode, after) {
+    var apps = profilesApps();
+    return P.show({
+      mode: mode,
+      lang: state.lang,
+      apps: apps,
+      shown: apps.filter(function (a) { return a.shown; }).map(function (a) { return a.id; }),
+      done: function (r) {
+        if (r && r.hidden) {
+          if (mode === "first") L.presetMenuHidden(r.hidden);
+          else {
+            L.setMenuHidden(r.hidden, true);
+            L.setMenuHidden(r.shown, false);
+          }
+        }
+        if (after) after(r);
+      }
+    });
   }
 
   function tourMaybe() {
     if (SOLO) return;                  // the tour shows the desktop's top bar
     var pending;
     try { pending = localStorage.getItem(TOUR_KEY) === "1"; } catch (e) { pending = false; }
-    if (!pending || tourBox) return;
+    if (!pending || tourBox || profilesBusy) return;
     var tries = 0;
     (function wait() {
       // Splash still up, apps.json not in yet, or an app on screen.
@@ -9008,6 +9171,22 @@
         setTimeout(wait, 250);
         return;
       }
+      var prof = false;
+      try { prof = localStorage.getItem(PROFILE_KEY) === "1"; } catch (e) {}
+      if (prof && profilesWanted()) {
+        showProfiles("first", function (r) {
+          try { localStorage.removeItem(PROFILE_KEY); } catch (e) {}
+          if (r && r.already) {
+            // Not a new user: no tour; their apps and menu come with sync.
+            try { localStorage.removeItem(TOUR_KEY); localStorage.setItem(TOUR_DONE, "1"); } catch (e) {}
+            if (typeof window.__orosOpenAt === "function") window.__orosOpenAt("settings", { section: "sync" });
+            return;
+          }
+          startTour();
+        });
+        return;
+      }
+      try { localStorage.removeItem(PROFILE_KEY); } catch (e) {}
       startTour();
     })();
   }
@@ -9019,7 +9198,9 @@
   }
 
   function tourSteps() {
-    var steps = [{ key: "welcome" }, { key: "menu", target: "btn-menu" }];
+    var L = window.orosLauncher;
+    var someHidden = !!(L && typeof L.menuHiddenIds === "function" && L.menuHiddenIds().length);
+    var steps = [{ key: "welcome" }, { key: "menu", target: "btn-menu", body: someHidden ? "tour.menu.bodyHidden" : "" }];
     if (tourVisible(document.getElementById("sync-dot-btn"))) steps.push({ key: "sync", target: "sync-dot-btn" });
     if (tourVisible(document.getElementById("oros-taskbar-bell"))) steps.push({ key: "bell", target: "oros-taskbar-bell" });
     if (tourVisible(document.getElementById("btn-lang"))) steps.push({ key: "lang", target: "btn-lang" });

@@ -94,6 +94,25 @@
       "set.webBi": "Models that run on this device can't search the internet.",
       "set.ws": "Search with", "set.wsKey": "Tavily key", "set.wsBase": "SearXNG address",
       "set.wsBaseBad": "That address doesn't look right. It starts with https://",
+      "set.img": "Pictures (image AI)", "set.imgProv": "Make pictures with",
+      "set.imgHint": "Used by Atelier for Image from text, Magic edit and Magic expand. Kept on this device only. Only your description (and, to edit, the picture) goes to the service you pick, straight from this device.",
+      "img.opt.off": "Default: Pollinations (free, no key)", "img.opt.pollinations": "Pollinations (free, no key needed)",
+      "img.opt.huggingface": "Hugging Face (free account, small monthly credit)",
+      "img.opt.openai": "OpenAI gpt-image-1 (your key, paid)", "img.opt.stability": "Stability AI (your key, paid credits)",
+      "img.opt.sdwebui": "Stable Diffusion WebUI / Forge on my computer (free, open source)",
+      "img.howTo": "How to switch it on", "img.can": "Can also do: Magic edit, Magic expand.", "img.cant": "Image from text only (no Magic edit or Magic expand).",
+      "img.same": "The same key as {name} for text in the Assistant.",
+      "img.model": "Model (optional)", "img.base": "Address of your computer's WebUI",
+      "img.test": "Test", "img.testing": "Testing…", "img.ok": "It works.", "img.okPic": "It works: a test picture was made.",
+      "img.err.key": "The service refused the key. Check it and save it again.",
+      "img.err.limit": "No credit left, or too many pictures for now. Try later or add credit.",
+      "img.err.net": "Couldn't reach the service. Check the internet; for WebUI check that it runs with --api and --cors-allow-origins.",
+      "img.err.http": "The service answered with an error: {why}", "img.err.bad": "The answer was not a picture.",
+      "img.steps.pollinations": "Nothing to do: it works at once, free and with no account.|Optional: for faster pictures with no waiting line, make a free account at enter.pollinations.ai, create a key there and paste it below.|Your description goes to Pollinations (pollinations.ai, an open-source project).",
+      "img.steps.huggingface": "Make a free account at huggingface.co.|Open Settings › Access Tokens and press “Create new token”. Choose “Fine-grained”, tick “Make calls to Inference Providers”, create it and copy it.|Paste it below and press Save key, then Test.|Free accounts get a small monthly credit; more needs a paid plan.",
+      "img.steps.openai": "Sign in at platform.openai.com and add a payment method (Settings › Billing).|gpt-image-1 may ask you to verify your organisation once (Settings › Organization › Verify).|Open API keys › “Create new secret key”, copy it, paste it below, press Save key, then Test.|Paid per picture (from about $0.01 to $0.25, by size and quality).",
+      "img.steps.stability": "Make an account at platform.stability.ai: new accounts get some free credits.|Open Account › API Keys and copy your key.|Paste it below, press Save key, then Test (it shows your credit).|Paid with credits (about 3 per picture with Core).",
+      "img.steps.sdwebui": "Install Stable Diffusion WebUI (AUTOMATIC1111) or Forge on your computer: free and open source; it needs a graphics card with at least 4 GB.|Start it with these options: --api --cors-allow-origins={origin}|Leave the address as http://127.0.0.1:7860 (or type your computer's address) and press Test.|Everything stays on your computer.",
       "set.wsTest": "Test the search", "set.wsTesting": "Searching…", "set.wsOk": "It works: found {n}.",
       "ws.opt.auto": "Automatic (Claude: Anthropic's search · other models: Wikipedia)",
       "ws.opt.wiki": "Wikipedia (free, no key)", "ws.opt.tavily": "Tavily (free key, 1,000 searches a month)",
@@ -342,6 +361,25 @@
       "set.webBi": "Τα μοντέλα που τρέχουν σε αυτή τη συσκευή δεν ψάχνουν στο internet.",
       "set.ws": "Αναζήτηση με", "set.wsKey": "Κλειδί Tavily", "set.wsBase": "Διεύθυνση SearXNG",
       "set.wsBaseBad": "Η διεύθυνση δεν φαίνεται σωστή. Ξεκινά με https://",
+      "set.img": "Εικόνες (AI εικόνας)", "set.imgProv": "Φτιάχνω εικόνες με",
+      "set.imgHint": "Το χρησιμοποιεί το Ατελιέ για Εικόνα από κείμενο, Μαγική επεξεργασία και Μαγική επέκταση. Μένει μόνο σε αυτή τη συσκευή. Μόνο η περιγραφή σου (και, για επεξεργασία, η εικόνα) πηγαίνει στην υπηρεσία που διαλέγεις, απευθείας από αυτή τη συσκευή.",
+      "img.opt.off": "Προεπιλογή: Pollinations (δωρεάν, χωρίς κλειδί)", "img.opt.pollinations": "Pollinations (δωρεάν, χωρίς κλειδί)",
+      "img.opt.huggingface": "Hugging Face (δωρεάν λογαριασμός, μικρή μηνιαία πίστωση)",
+      "img.opt.openai": "OpenAI gpt-image-1 (δικό σου κλειδί, επί πληρωμή)", "img.opt.stability": "Stability AI (δικό σου κλειδί, πληρωμένα credits)",
+      "img.opt.sdwebui": "Stable Diffusion WebUI / Forge στον υπολογιστή μου (δωρεάν, ανοιχτός κώδικας)",
+      "img.howTo": "Πώς το ενεργοποιείς", "img.can": "Κάνει επίσης: Μαγική επεξεργασία, Μαγική επέκταση.", "img.cant": "Μόνο Εικόνα από κείμενο (όχι Μαγική επεξεργασία ή επέκταση).",
+      "img.same": "Το ίδιο κλειδί με το {name} για κείμενα στον Βοηθό.",
+      "img.model": "Μοντέλο (προαιρετικό)", "img.base": "Διεύθυνση του WebUI στον υπολογιστή σου",
+      "img.test": "Δοκιμή", "img.testing": "Δοκιμή…", "img.ok": "Δουλεύει.", "img.okPic": "Δουλεύει: φτιάχτηκε μια δοκιμαστική εικόνα.",
+      "img.err.key": "Η υπηρεσία δεν δέχτηκε το κλειδί. Έλεγξέ το και αποθήκευσέ το ξανά.",
+      "img.err.limit": "Δεν έμεινε πίστωση ή ζητήθηκαν πολλές εικόνες. Δοκίμασε αργότερα ή πρόσθεσε πίστωση.",
+      "img.err.net": "Δεν βρέθηκε η υπηρεσία. Έλεγξε τη σύνδεση· για το WebUI έλεγξε ότι τρέχει με --api και --cors-allow-origins.",
+      "img.err.http": "Η υπηρεσία απάντησε με σφάλμα: {why}", "img.err.bad": "Η απάντηση δεν ήταν εικόνα.",
+      "img.steps.pollinations": "Δεν χρειάζεται τίποτα: δουλεύει αμέσως, δωρεάν και χωρίς λογαριασμό.|Προαιρετικά: για πιο γρήγορες εικόνες χωρίς αναμονή, φτιάξε δωρεάν λογαριασμό στο enter.pollinations.ai, δημιούργησε εκεί κλειδί και επικόλλησέ το παρακάτω.|Η περιγραφή σου πηγαίνει στο Pollinations (pollinations.ai, έργο ανοιχτού κώδικα).",
+      "img.steps.huggingface": "Φτιάξε δωρεάν λογαριασμό στο huggingface.co.|Άνοιξε Settings › Access Tokens και πάτα «Create new token». Διάλεξε «Fine-grained», τσέκαρε «Make calls to Inference Providers», δημιούργησέ το και αντέγραψέ το.|Επικόλλησέ το παρακάτω, πάτα Αποθήκευση κλειδιού και μετά Δοκιμή.|Οι δωρεάν λογαριασμοί έχουν μικρή μηνιαία πίστωση· για περισσότερα χρειάζεται συνδρομή.",
+      "img.steps.openai": "Μπες στο platform.openai.com και πρόσθεσε τρόπο πληρωμής (Settings › Billing).|Για το gpt-image-1 μπορεί να ζητηθεί μία φορά επιβεβαίωση του οργανισμού (Settings › Organization › Verify).|Άνοιξε API keys › «Create new secret key», αντέγραψέ το, επικόλλησέ το παρακάτω, πάτα Αποθήκευση κλειδιού και μετά Δοκιμή.|Χρέωση ανά εικόνα (από περίπου $0,01 έως $0,25, ανάλογα με μέγεθος και ποιότητα).",
+      "img.steps.stability": "Φτιάξε λογαριασμό στο platform.stability.ai: οι νέοι λογαριασμοί παίρνουν μερικά δωρεάν credits.|Άνοιξε Account › API Keys και αντέγραψε το κλειδί σου.|Επικόλλησέ το παρακάτω, πάτα Αποθήκευση κλειδιού και μετά Δοκιμή (δείχνει την πίστωσή σου).|Πληρώνεται με credits (περίπου 3 ανά εικόνα με το Core).",
+      "img.steps.sdwebui": "Εγκατάστησε το Stable Diffusion WebUI (AUTOMATIC1111) ή το Forge στον υπολογιστή σου: δωρεάν και ανοιχτού κώδικα· θέλει κάρτα γραφικών με τουλάχιστον 4 GB.|Ξεκίνα το με αυτές τις επιλογές: --api --cors-allow-origins={origin}|Άφησε τη διεύθυνση http://127.0.0.1:7860 (ή γράψε τη διεύθυνση του υπολογιστή σου) και πάτα Δοκιμή.|Όλα μένουν στον υπολογιστή σου.",
       "set.wsTest": "Δοκιμή αναζήτησης", "set.wsTesting": "Αναζήτηση…", "set.wsOk": "Δουλεύει: βρέθηκαν {n}.",
       "ws.opt.auto": "Αυτόματα (Claude: αναζήτηση της Anthropic · άλλα μοντέλα: Wikipedia)",
       "ws.opt.wiki": "Wikipedia (δωρεάν, χωρίς κλειδί)", "ws.opt.tavily": "Tavily (δωρεάν κλειδί, 1.000 αναζητήσεις τον μήνα)",
@@ -3750,6 +3788,139 @@
       wsHint.textContent = lines.join(" ");
     }
     drawWeb();
+
+    // Pictures (image AI, used by Atelier): the choice stays on this
+    // device; keys are kept like the AI keys (assistant/imgai.js)
+    var IA = window.OrosImageAI;
+    if (IA) {
+      var secI = section(body, t("set.img"));
+      secI.appendChild(el("p", "dlg-hint", t("set.imgHint")));
+      label(secI, "as-img", t("set.imgProv"));
+      var imSel = el("select", "dlg-input");
+      imSel.id = "as-img";
+      [""].concat(IA.IDS).forEach(function (id) {
+        var o = el("option", "", t("img.opt." + (id || "off")));
+        o.value = id;
+        imSel.appendChild(o);
+      });
+      var imPref = IA.readPref();
+      imSel.value = imPref.prov;
+      secI.appendChild(imSel);
+      var imBox = el("div", "ws-box img-box");
+      secI.appendChild(imBox);
+      imSel.addEventListener("change", function () {
+        imPref = { prov: imSel.value, base: "", model: "" };
+        IA.writePref(imPref);
+        drawImg();
+      });
+      var drawImg = function () {
+        imBox.textContent = "";
+        var cf = IA.use(imPref), auto = !imPref.prov;
+        var P = cf.p, pid = cf.pid;
+        imBox.appendChild(el("h4", "set-sub", t("img.howTo")));
+        var ol = el("ol", "img-steps");
+        t("img.steps." + pid, { origin: siteOrigin() }).split("|").forEach(function (line) { ol.appendChild(el("li", "", line)); });
+        imBox.appendChild(ol);
+        imBox.appendChild(el("p", "dlg-hint", t(P.mask ? "img.can" : "img.cant")));
+        var stat = el("p", "key-status");
+        stat.setAttribute("role", "status");
+        if (P.key !== "no") {
+          var kStat = el("p", "key-status");
+          kStat.setAttribute("role", "status");
+          imBox.appendChild(kStat);
+          label(imBox, "as-img-key", t("set.key"));
+          var kRow = el("div", "row");
+          var kIn = el("input", "dlg-input");
+          kIn.id = "as-img-key";
+          kIn.type = "password";
+          kIn.maxLength = 300;
+          kIn.autocomplete = "off";
+          kIn.spellcheck = false;
+          kRow.appendChild(kIn);
+          var kSave = button(t("set.keySave"), "small", function () {
+            var v = kIn.value.trim();
+            if (!v) { kIn.focus(); return; }
+            kSave.disabled = true;
+            storeKey(P.keyId, v).then(function () { kIn.value = ""; showToast(t("toast.saved")); drawKey(); },
+              function () { showToast(t("toast.storage")); }).then(function () { kSave.disabled = false; });
+          });
+          kRow.appendChild(kSave);
+          imBox.appendChild(kRow);
+          var kActs = el("div", "row links");
+          var kRm = button(t("set.keyRemove"), "small danger", function () {
+            removeKey(P.keyId).then(function () { showToast(t("toast.keyRemoved")); drawKey(); });
+          });
+          kActs.appendChild(kRm);
+          var kGet = el("a", "dlg-link", t("set.keyGet"));
+          kGet.href = P.keyUrl;
+          kGet.target = "_blank";
+          kGet.rel = "noopener noreferrer";
+          kActs.appendChild(kGet);
+          imBox.appendChild(kActs);
+          if (C.PROVIDERS[P.keyId]) imBox.appendChild(el("p", "dlg-hint", t("img.same", { name: provName(P.keyId) })));
+          var drawKey = function () {
+            loadKey(P.keyId).then(function (k) {
+              var has = !!(k && k.key);
+              kStat.textContent = has ? t("set.keySaved", { tail: k.key.slice(-4) }) : t("set.keyNone");
+              kStat.classList.toggle("ok", has);
+              kRm.hidden = !has;
+            });
+          };
+          drawKey();
+        }
+        if (P.local) {
+          label(imBox, "as-img-base", t("img.base"));
+          var bIn = el("input", "dlg-input");
+          bIn.id = "as-img-base";
+          bIn.type = "url";
+          bIn.placeholder = P.defaultBase;
+          bIn.value = imPref.base;
+          bIn.addEventListener("change", function () {
+            var v = IA.normPref({ prov: pid, base: bIn.value }).base;
+            if (bIn.value.trim() && !v) { showToast(t("set.wsBaseBad")); return; }
+            imPref.base = v;
+            bIn.value = v;
+            IA.writePref(imPref);
+          });
+          imBox.appendChild(bIn);
+          imBox.appendChild(el("p", "dlg-hint", t("kit.pna")));
+        }
+        if (!auto) label(imBox, "as-img-model", t("img.model"));
+        var mIn = el("input", "dlg-input");
+        mIn.id = "as-img-model";
+        mIn.maxLength = 200;
+        mIn.spellcheck = false;
+        mIn.placeholder = P.model || "";
+        mIn.value = imPref.model;
+        mIn.addEventListener("change", function () { imPref.model = mIn.value.trim(); IA.writePref(imPref); });
+        if (!auto) imBox.appendChild(mIn);
+        var tRow2 = el("div", "row");
+        var tBtn2 = button(t("img.test"), "small", function () {
+          tBtn2.disabled = true;
+          stat.classList.remove("ok", "err");
+          stat.textContent = t("img.testing");
+          var c2 = IA.use(imPref);
+          (P.keyId ? loadKey(P.keyId) : Promise.resolve(null)).then(function (k) {
+            var key = k && k.key || "";
+            var req = IA.buildTest(c2, key);
+            var pic = !req;
+            if (pic) req = IA.buildGenerate(c2, key, { prompt: "a red apple on a white table", w: 1, h: 1 });
+            return IA.run(req).then(function () {
+              stat.textContent = t(pic ? "img.okPic" : "img.ok");
+              stat.classList.add("ok");
+            });
+          }).catch(function (e) {
+            var code = e && e.code || "net";
+            stat.textContent = t("img.err." + (/^(key|limit|net|http|bad)$/.test(code) ? code : "net"), { why: (e && e.status ? e.status + " " : "") + (e && e.msg || "") });
+            stat.classList.add("err");
+          }).then(function () { tBtn2.disabled = false; });
+        });
+        tRow2.appendChild(tBtn2);
+        imBox.appendChild(tRow2);
+        imBox.appendChild(stat);
+      };
+      drawImg();
+    }
 
     // Key sync
     var secS = section(body, t("set.sync"));

@@ -20,7 +20,7 @@
 // GitHub Action should stamp just the version number; we prepend
 // the oros-v prefix here for cache namespace separation.
 
-var CACHE_VERSION = "oros-v2.68.02";
+var CACHE_VERSION = "oros-v2.75.00";
 var SHELL_CACHE   = "oros-shell-" + CACHE_VERSION;
 var RUNTIME_CACHE = "oros-runtime-" + CACHE_VERSION;
 // WebLLM's library (vendor/webllm, about 7 MB, loaded only when the
@@ -180,6 +180,7 @@ var PRECACHE_URLS = [
   "./pet.css",
   "./pet.js",
   "./launcher.js",
+  "./profiles.js",
   "./seasonal.js",
   "./fileopen.js",
   "./phone.js",
@@ -1093,6 +1094,7 @@ var PRECACHE_URLS = [
   "assistant/index.html",
   "assistant/assistant.css",
   "assistant/core.js",
+  "assistant/imgai.js",
   "assistant/summary.js",
   "assistant/assistant.js",
   "assistant/import.js",
@@ -1105,6 +1107,10 @@ var PRECACHE_URLS = [
   "share/kinds.js",
   "share/send.js",
   "share/view.js",
+  "share/relay.js",
+  "share/out.js",
+  "send/core.js",
+  "send/sheet.js",
   "settings/",
   "settings/index.html",
   "settings/settings.css",
@@ -1229,8 +1235,13 @@ var PRECACHE_URLS = [
   "atelier/relayout.js",
   "atelier/aitext.js",
   "atelier/cutout.js",
+  "atelier/inpaint.js",
   "atelier/ai.js",
   "atelier/editpic.js",
+  "atelier/magic.js",
+  "atelier/imagine.js",
+  "atelier/magicai.js",
+  "atelier/magicdesign.js",
   "atelier/bulk.js",
   "atelier/clips.js",
   "atelier/video.js",
@@ -1292,6 +1303,15 @@ var PRECACHE_URLS = [
   "converter/converter.js",
   "converter/help.en.txt",
   "converter/help.el.txt",
+  "scanpdf/",
+  "scanpdf/index.html",
+  "scanpdf/scanpdf.css",
+  "scanpdf/core.js",
+  "scanpdf/pdfops.js",
+  "scanpdf/scanpdf.js",
+  "scanpdf/help.en.txt",
+  "scanpdf/help.el.txt",
+  "vendor/pdf-lib/pdf-lib.min.js",
   "google-import.js",
   "enrich.js",
   "enrichui.js",
@@ -1341,7 +1361,9 @@ var PRECACHE_URLS = [
   "music/library.js",
   "music/open.js",
   "music/servers.js",
+  "music/mixes.js",
   "music/music.js",
+  "music/today.js",
   "radio/",
   "radio/index.html",
   "radio/search.js",
@@ -2187,13 +2209,13 @@ self.addEventListener("fetch", function (event) {
   // this release's own precache copy (releaseCopy). Everything else
   // goes to the network; the loose ignoreSearch match across caches
   // stays in the network-FAILURE branch only (offline best effort).
-  // Atelier's background tool (vendor/ort + vendor/u2netp, about
-  // 16 MB) is fetched once and kept in Atelier's own IndexedDB
+  // Atelier's picture tools (vendor/ort + vendor/u2netp + vendor/migan,
+  // about 16 + 27 MB) are fetched once and kept in Atelier's own IndexedDB
   // (atelier/cutout.js): no second copy in the runtime cache. The same
   // for Writer's spelling dictionaries (vendor/hunspell, kept by
   // writer/spell-worker.js in IndexedDB). Other lazy vendor files
   // (tesseract, libarchive, libraw, rnnoise) use the runtime cache.
-  if (/\/vendor\/(ort|u2netp|hunspell)\//.test(url.pathname)) return;
+  if (/\/vendor\/(ort|u2netp|migan|hunspell)\//.test(url.pathname)) return;
   // WebLLM: cache-first in its own cache, matched without ?v=. The
   // file name carries the library version (web-llm-<version>.js), so
   // a new version is a cache miss; storing it drops the old copy.
