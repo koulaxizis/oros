@@ -74,5 +74,16 @@ These settings stay on this device.
 ## Sleep timer
 `Sleep timer` in the full player stops the music after 5 to 90 minutes, or at the end of the playing song. The last ten seconds fade out. The button shows how long is left; choose `Turn off the timer` to cancel it.
 
+## Made for you
+`Home › Made for you` has mixes made from what you play on this device: `Daily mix` (songs you love and more, new every day), `On repeat` (what you play most this month) and `Repeat rewind` (old favourites you have not played for a while). `Song radio` on a song's ⋯ menu plays songs like it: more by the same artist, the same genre, and artists you keep in the same playlists. `Save as playlist` keeps a mix.
+
+`My year in music` shows your minutes of music, top songs, top artists and your months, from the plays on this device; in December it also appears in Today. Nothing about what you play leaves the device.
+
+## Import from Spotify
+`Import from Spotify` (under **+**) reads your own Spotify data. In Spotify, go to Account › Privacy settings › Download your data; Spotify sends a ZIP file by e-mail. Choose that ZIP (or the Playlist and YourLibrary .json files in it), or a CSV from Exportify or TuneMyMusic. Each Spotify playlist becomes a playlist here with the songs Music can play (songs on this device, on your servers, or already in your music), and your Spotify liked songs become likes. The songs that were not found are listed, and you can copy the list. `Look for the missing songs on Jamendo and your servers` sends each missing song's title and artist there and adds only exact matches.
+
+## Covers and other apps
+`Find missing covers online` in the settings, or `Find cover online` on an album's ⋯ button, asks MusicBrainz and the Cover Art Archive for covers of albums that have none; only the album and artist names are sent. An album's ⋯ button also has `Add to Media Shelf`. `Use in Montage` on a song opens it in Montage: a song of this device as it is, a free song whose licence allows changes saved first to `Files › Music › Free music`, with its credit copied for your video.
+
 ## Keys
 Space plays or pauses, ← and → move 10 seconds, Shift+← and Shift+→ go to the previous or next song, S turns shuffle on or off, R changes repeat and L likes the song.

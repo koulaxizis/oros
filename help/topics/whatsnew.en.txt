@@ -1,6 +1,11 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.74.00
+- Music: Made for you on Home. A Daily mix, On repeat, Rewind and song radio are made on your device from what you play, and every year gets its own recap (top songs, artists and your biggest month). Today shows the recap or the Daily mix.
+- Music: bring your Spotify playlists and likes. Open the my_spotify_data.zip (or its JSON/CSV files) and Music finds the songs in your library, then (if you say yes) in free music online.
+- Music: find missing album covers online (MusicBrainz and the Cover Art Archive), add an album to Media Shelf, or send a free song to Montage.
+
 ## Version 2.73.00
 - New users choose what the menu shows: Everything (first and chosen), or Home, Work, School, Creating, Games and any app by hand. You can change it later in Settings › Menu › Choose a profile.
 

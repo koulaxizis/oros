@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "2.73.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "2.74.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -5775,7 +5775,10 @@
           en: "Book details (Media Shelf)", el: "Στοιχεία βιβλίων (Το ράφι μου)" },
         { name: "MusicBrainz", url: "https://musicbrainz.org/",
           by: "MetaBrainz Foundation", lic: "CC0 (core data)",
-          en: "Album details (Media Shelf)", el: "Στοιχεία άλμπουμ (Το ράφι μου)" },
+          en: "Album details (Media Shelf, Music covers)", el: "Στοιχεία άλμπουμ (Το ράφι μου, εξώφυλλα στη Μουσική)" },
+        { name: "Cover Art Archive", url: "https://coverartarchive.org/",
+          by: "MetaBrainz Foundation and Internet Archive", lic: { en: "Free API, no key; each image belongs to its owner", el: "Δωρεάν API χωρίς κλειδί· κάθε εικόνα ανήκει στον κάτοχό της" },
+          en: "Album covers, only when you ask (Music)", el: "Εξώφυλλα άλμπουμ, μόνο όταν το ζητήσεις (Μουσική)" },
         { name: "Anthropic, OpenAI, Google Gemini, Mistral, OpenRouter, Ollama, LM Studio", url: "https://www.anthropic.com/",
           by: "Each provider", lic: { en: "Their terms, your own key", el: "Οι όροι τους, με δικό σου κλειδί" },
           en: "AI chat you choose (Assistant)", el: "Συζήτηση με το AI που διαλέγεις (Βοηθός)" },
