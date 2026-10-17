@@ -1,0 +1,43 @@
+# Soundmixer
+Der Soundmixer spielt entspannende Hintergrundklänge, die du mischen kannst: Regen, Donner, Wind, Wellen, einen Bach, einen Kamin, ein Café, Grillen, Vögel, Rauschen, einen Zug, eine Tastatur und eine tickende Uhr. Jeder Klang entsteht live auf deinem Gerät, daher funktioniert alles offline und ohne hörbare Schleifen.
+
+## Erste Schritte
+Tippe oder klicke unter `Klänge` auf einen Klang, um ihn einzuschalten; die Wiedergabe startet von selbst. Tippe noch einmal darauf, um ihn auszuschalten. Der Regler unter jedem Klang stellt seinen Pegel ein.
+
+Die Leiste oben hat die Taste für Abspielen/Pause, den Namen dessen, was läuft, den Regler `Lautstärke`, Stumm, den Schlaf-Timer und `Mix speichern`. Es spielt nichts, bis du startest.
+
+## Klänge mischen
+- Schalte so viele Klänge ein, wie du magst, und gleiche sie mit ihren Reglern aus.
+- `Rauschen` hat eine kleine Taste, die seine Farbe zwischen `Rosa`, `Braun` und `Weiß` wechselt.
+- `Fertige Mixe` bietet sechs Startpunkte: `Regennacht`, `Café`, `Wald`, `Am Meer`, `Sturm` und `Fokus`. Tippe auf einen, um ihn zu laden und abzuspielen, und passe ihn dann nach Wunsch an.
+
+## Mixe speichern
+Wenn dir ein Mix gefällt, drücke `Mix speichern`, gib einen `Name` ein und tippe auf `Speichern`. Er erscheint unter `Meine Mixe`; tippe darauf, um ihn wieder abzuspielen. Jeder gespeicherte Mix hat Tasten zum Umbenennen und Löschen. Nach dem Löschen erscheint für ein paar Sekunden `Rückgängig`. Du kannst bis zu 40 Mixe behalten.
+
+## Schlaf-Timer
+Wähle im Timer-Menü 15, 30, 60 oder 90 Minuten. Die Restzeit steht neben dem Namen des Mixes, der Klang wird in den letzten 30 Sekunden leiser, und dann pausiert die Wiedergabe. Wähle `Timer aus`, um ihn abzubrechen.
+
+## Weiterhören bei geschlossener App
+Der Klang spielt weiter, wenn du den Soundmixer schließt und andere Apps nutzt. Dann erscheint in der orOS-Taskleiste neben der Sprachtaste eine Mixer-Taste. Tippe darauf, um:
+- abzuspielen oder zu pausieren.
+- `Beenden` zu wählen, was die Sitzung beendet und die Taste entfernt.
+- den Soundmixer wieder zu öffnen, mit deinem Mix, wie du ihn verlassen hast.
+- die Lautstärke zu ändern.
+- den Schlaf-Timer zu stellen und die Restzeit zu sehen.
+
+Der Klang endet, wenn du orOS selbst schließt oder neu lädst.
+
+## Synchronisierung und Sicherung
+Deine gespeicherten Mixe werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. Der aktuelle Mix, die Lautstärke, Stumm und die letzte Timer-Wahl bleiben auf diesem Gerät. Es gibt keinen Import oder Export; die orOS-[Sicherung](help:t/backup) enthält deine Mixe.
+
+## Tastenkürzel
+- [[Space]] spielt ab oder pausiert.
+- [[M]] schaltet stumm oder wieder laut.
+- [[1]] bis [[9]] und [[0]] schalten die ersten zehn Klänge in der angezeigten Reihenfolge ein oder aus.
+
+## Tipps
+- Wenn du bei Pause einen Klang einschaltest, startet die Wiedergabe; schaltest du den letzten aus, pausiert sie.
+- Auch deine Medientasten und die Mediensteuerung des Systems können den Mix abspielen und pausieren.
+
+## Grenzen
+- Wenn dein Browser in der App keinen Ton abspielen kann, siehst du stattdessen eine Meldung.
