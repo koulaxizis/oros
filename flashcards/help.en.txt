@@ -55,6 +55,7 @@ A study day starts at 04:00, so studying after midnight still counts for the day
 `Import` (on the list of decks) brings in cards from a file:
 - **Anki decks** (`.apkg`, and whole collections `.colpkg`), old and new Anki versions. Decks, tags, pictures and sounds come along. Cloze notes stay fill-in-the-gap cards, and "Basic and reversed" stays reversed.
 - **Your Anki study history**: tick `Bring my study history`, and each card carries on from where Anki left it. Suspended cards stay suspended.
+- **orOS card files** (`.oroscards`), made with `Export` here or by the [Converter](app:converter) from an Anki deck. Only what is not here yet is added: new decks, new cards and, if you tick it, the study history. Opening the same file twice adds nothing, and nothing here is changed or removed. You can also open the file straight from [Files](app:files) or with your device's "Open with".
 - **Text files** (`.csv`, `.tsv`, `.txt`), for example Anki's "Notes in plain text" export or a Quizlet export: one card per line. Choose which column is the front, the back and the tags, the card type and the deck. A front with `{{c1::…}}` becomes a fill-in-the-gap card.
 Importing the same Anki deck again adds only what is new. Nothing in the file is ever run: card styles and scripts are left out, and the text keeps bold, italic and lists.
 
@@ -68,6 +69,22 @@ If none of these is found, you get one card with the title on the front and all 
 
 ## Today and the study reminder
 When cards are waiting, the Today app shows a line like "12 cards to study". In the settings at the top, `Remind me to study every day at` sends one notification a day from that time on, while cards are waiting. The reminder is off at first, and it is set on each device separately. The count comes from this device: answers you gave on another device are counted once Flashcards opens here.
+
+## Stats
+`Stats` (on the list of decks, or inside a deck) shows your progress for all decks or for one deck and the decks inside it:
+- **Today**: answers, minutes, how many times you pressed Again, and how many days in a row you have studied.
+- **Cards**: new, learning, young (shown again within 21 days) and mature (21 days or more), and suspended.
+- **True retention**: of your answers to cards in review, the share that was not Again, for the last 30 days and for all time. When it is close to `How much to remember` in the deck settings, the schedule fits you.
+- **Study days**: a square for every day of the last 12 months, darker on days with more answers.
+- **Answers per day** for the last 30 days (learning and review), and **reviews due** on each of the next 30 days.
+- **Intervals** and **difficulty** of the cards in review.
+Everything is worked out from your answers, so it is the same on every device once Vault Drive has copied the files.
+
+## Export and share
+`Export` (on the list of decks, or inside a deck) saves all decks or one deck and the decks inside it:
+- **orOS file** (`.oroscards`): decks, cards, pictures and sounds, and your study history if you tick it. Open it in Flashcards on any device, or send it to a friend. It is a ZIP file: unzip it and `content.json` holds the cards and `preview/cards.csv` a plain copy.
+- **CSV text**: one line per note with the front, the back, the tags, the deck and the card type, for spreadsheets and other card apps. Pictures and sounds are not in it.
+Pictures or sounds that have not reached this device yet are left out of the file, and the toast says how many.
 
 ## Browse all cards
 `Browse` at the top lists every card, one row per card. Narrow the list with the search box, a deck, a tag or a state (new, learning, due today, review later, hidden, suspended). Tick cards (or the box at the top for all of them) to:

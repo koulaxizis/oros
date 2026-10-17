@@ -18,9 +18,9 @@ const exists = (f) => fs.existsSync(path.join(ROOT, f));
 const R = require(path.join(ROOT, "converter/registry.js"));
 const C = require(path.join(ROOT, "converter/core.js"));
 
-test("registry: wave 1 is Writer and Spreadsheet, no extension claimed twice", () => {
+test("registry: Writer, Spreadsheet and Flashcards, no extension claimed twice", () => {
   const list = R.list();
-  assert.deepEqual(list.map((c) => c.app), ["writer", "spreadsheet"]);
+  assert.deepEqual(list.map((c) => c.app), ["writer", "spreadsheet", "flashcards"]);
   list.forEach((c) => {
     assert.equal(c.script, c.app + "/convert.js");
     assert.ok(/^\.oros[a-z]+$/.test(c.to), c.to);

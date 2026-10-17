@@ -171,7 +171,8 @@
     { app: "shelf", accept: { "application/x-oros-shelf": [".orosshelf"] } },
     { app: "signature", accept: { "application/x-oros-signature": [".orossignature"] } },
     { app: "newsletter", accept: { "application/x-oros-newsletter": [".orosnewsletter"] } },
-    { app: "storage", accept: { "application/x-oros-inventory": [".orosinventory"] } }
+    { app: "storage", accept: { "application/x-oros-inventory": [".orosinventory"] } },
+    { app: "flashcards", accept: { "application/x-oros-cards": [".oroscards"] } }
   ];
   var TEXT_MAX = 5 * 1024 * 1024;
 

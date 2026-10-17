@@ -608,6 +608,7 @@
         return;
       }
       if (c.card.last && r.t < c.card.last) return;   // rows are sorted; equal times stay in id order
+      if (opts.onAnswer) opts.onAnswer(r, c.card, c);   // stats: the card as it was before this answer
       c.card = F.next(c.card, r.t, r.g, P(c.deck));
       c.revs++;
       if (!c.first) c.first = r.t;

@@ -20,7 +20,7 @@
   var ROOT = "/internal";
 
   // Formats that are ZIP files inside: they start with "PK\3\4".
-  var ZIP_KINDS = [".docx", ".xlsx", ".odt", ".ods"];
+  var ZIP_KINDS = [".docx", ".xlsx", ".odt", ".ods", ".apkg", ".colpkg"];
 
   // The converter entry for a file name, or null ("not supported").
   function targetFor(name) { return R.forName(name); }

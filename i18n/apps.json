@@ -31,6 +31,7 @@
    "app": "flashcards",
    "files": [
     "flashcards/app.js",
+    "flashcards/convert.js",
     "flashcards/due.js"
    ]
   },

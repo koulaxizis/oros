@@ -22,7 +22,9 @@
     { app: "writer", script: "writer/convert.js", to: ".orosdoc",
       from: [".docx", ".odt", ".rtf", ".html", ".htm", ".md", ".markdown", ".txt"] },
     { app: "spreadsheet", script: "spreadsheet/convert.js", to: ".orossheet",
-      from: [".xlsx", ".xls", ".ods", ".csv"] }
+      from: [".xlsx", ".xls", ".ods", ".csv"] },
+    { app: "flashcards", script: "flashcards/convert.js", to: ".oroscards",
+      from: [".apkg", ".colpkg"] }
   ];
 
   function extOf(name) {
