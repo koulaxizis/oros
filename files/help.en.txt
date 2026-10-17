@@ -102,7 +102,9 @@ The orOS disk is the encrypted place: with orOS sync on, every file on it is enc
 - They stay in the cloud until you open them, so this device does not fill up. A cloud mark next to a name means the file is not on this device yet.
 - Opening a file downloads it, and from then on it stays up to date here. Opening it from another place in Files works the same way once it is downloaded.
 - `Keep on this device` downloads the whole folder and keeps it. `Free up space` removes the downloaded copies of a folder from this device; nothing is deleted from your other devices or from the cloud. Files you changed here and haven't synced yet always stay.
-- Deleting a downloaded file in Files deletes it everywhere, including on the computer it came from.
+- To delete a folder or a file, tap the bin at the end of its row (or select the row and press Delete) and confirm. It is deleted everywhere, including in the cloud: copies on this device go to the `Trash`, and orOS Drive on your computers and phones moves its copies to its own trash. Files that are only in the cloud can't go to this Trash, so the dialog says how many leave orOS for good.
+- Deleting a downloaded file elsewhere in Files deletes it everywhere too, including on the computer it came from. Deleting a Drive folder elsewhere in Files removes only the files this device holds, so use the bin in `orOS Drive` for whole folders.
+- On a computer, deleting a file or folder inside a mirrored folder deletes it in orOS as well (more than 50 files at once wait for your OK in orOS Drive's settings). `Stop mirroring` in orOS Drive's settings deletes nothing.
 - In the orOS Android app, the phone button opens orOS Drive on the phone: pick folders of the phone and they are mirrored the same way, in the background every 15 minutes (on Wi-Fi only, unless you change it).
 - In the orOS Android app with orOS Drive signed in and unlocked, the whole orOS disk also appears as «orOS» in the phone's Files app and in every app that opens or saves files. A file downloads when you open it and uploads when the app saves it; if it changed in orOS meanwhile, both versions are kept.
 

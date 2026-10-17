@@ -899,6 +899,34 @@
     });
   }
 
+  // Delete in the cloud: Drive files at or under `path` that this device
+  // holds only as cloud-only entries. Each one is taken into the local
+  // manifest exactly as the cloud has it and queued; with no file on
+  // the disk the next push reads that as a deletion (VD-3), the same
+  // way as a synced file deleted here. A version changed elsewhere in
+  // the meantime is not this entry: the pull downloads it and the
+  // edit wins (VD-4). Files on the disk are the caller's (Files moves
+  // them to the Trash). Resolves the count queued.
+  function removeOnDemand(path) {
+    return betweenSyncs(function () {
+      if (typeof path !== "string" || !under(path, DRIVE_ROOT) || path === DRIVE_ROOT) return 0;
+      var od = getOnDemand(), lm = getLocalManifest(), picked = [];
+      Object.keys(od).forEach(function (p) {
+        if (!under(p, path) || !od[p] || typeof od[p].h !== "string") return;
+        if (!lm.files[p]) lm.files[p] = od[p];
+        delete od[p];
+        picked.push(p);
+      });
+      if (!picked.length) return 0;
+      setLocalManifest(lm);
+      setOnDemand(od);
+      queueTouchMany(picked);
+      armDebounce();
+      tellQueue();
+      return picked.length;
+    });
+  }
+
   function setKeptOffline(folder, on) {
     if (typeof folder !== "string" || !under(folder, DRIVE_ROOT)) return false;
     var l = offlineFolders().filter(function (f) { return f !== folder; });
@@ -1128,6 +1156,7 @@
     },
     fetch: fetchOnDemand,
     evict: evictOnDemand,
+    removeRemote: removeOnDemand,
     offlineFolders: offlineFolders,
     isKeptOffline: keptOffline,
     setKeptOffline: setKeptOffline

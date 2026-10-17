@@ -1,6 +1,12 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.14.02
+- Files: Open in Photo Lab, and every other Open in… or Open with…, loads the chosen file again.
+
+## Version 3.14.01
+- Files: folders and files in orOS Drive can now be deleted with the bin on each row. Files kept only in the cloud are deleted too.
+
 ## Version 3.14.00
 - Game Center and its games are now in German: Solitaire, Xeri, Chess, Backgammon, Checkers, Battleship, Crossword, Wordle, Sudoku, Minesweeper, Nonogram and Flow Free.
 

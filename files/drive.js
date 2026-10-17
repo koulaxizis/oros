@@ -56,7 +56,18 @@
       "off.body":   "orOS Drive folders live in your encrypted Vault. Connect Dropbox and unlock sync in Settings.",
       "intro.title":"No computers or phones yet",
       "intro.body": "Folders you mirror with the orOS Drive app (Windows, Linux, Android) appear here. They stay in the cloud until you open them, so this device does not fill up.",
-      "phone":      "Mirror folders of this phone"
+      "phone":      "Mirror folders of this phone",
+      "rm.title":   "Delete",
+      "rm.btn":     "Delete {name}",
+      "rm.folderMsg":"Delete \u201c{name}\u201d and everything inside it from orOS Drive?",
+      "rm.fileMsg": "Delete \u201c{name}\u201d from orOS Drive?",
+      "rm.note":    "Copies on this device go to the Trash. On the computers and phones that mirror it, orOS Drive moves their copies to its own trash.",
+      "rm.cloudNote":"{n} files are only in the cloud: they leave orOS for good (the copies on your computers stay in their trash).",
+      "rm.cloudOne":"1 file is only in the cloud: it leaves orOS for good (the copy on your computer stays in its trash).",
+      "rm.confirm": "Delete",
+      "rm.cancel":  "Cancel",
+      "rm.done":    "Deleted from orOS Drive",
+      "rm.fail":    "Could not delete {name}"
     },
     el: {
       "tree":       "orOS Drive",
@@ -85,7 +96,18 @@
       "off.body":   "Οι φάκελοι του orOS Drive βρίσκονται στο κρυπτογραφημένο Vault σου. Σύνδεσε το Dropbox και ξεκλείδωσε το sync στις Ρυθμίσεις.",
       "intro.title":"Δεν υπάρχουν ακόμα υπολογιστές ή κινητά",
       "intro.body": "Οι φάκελοι που αντικατοπτρίζεις με την εφαρμογή orOS Drive (Windows, Linux, Android) εμφανίζονται εδώ. Μένουν στο cloud μέχρι να τους ανοίξεις, ώστε να μη γεμίζει αυτή η συσκευή.",
-      "phone":      "Αντικατόπτριση φακέλων αυτού του κινητού"
+      "phone":      "Αντικατόπτριση φακέλων αυτού του κινητού",
+      "rm.title":   "Διαγραφή",
+      "rm.btn":     "Διαγραφή του {name}",
+      "rm.folderMsg":"Διαγραφή του «{name}» και όλων των περιεχομένων του από το orOS Drive;",
+      "rm.fileMsg": "Διαγραφή του «{name}» από το orOS Drive;",
+      "rm.note":    "Τα αντίγραφα αυτής της συσκευής πάνε στον Κάδο. Στους υπολογιστές και τα κινητά που κάνουν mirror, το orOS Drive μεταφέρει τα αντίγραφά τους στον δικό του κάδο.",
+      "rm.cloudNote":"{n} αρχεία είναι μόνο στο cloud: φεύγουν οριστικά από το orOS (τα αντίγραφα στους υπολογιστές σου μένουν στον κάδο τους).",
+      "rm.cloudOne":"1 αρχείο είναι μόνο στο cloud: φεύγει οριστικά από το orOS (το αντίγραφο στον υπολογιστή σου μένει στον κάδο του).",
+      "rm.confirm": "Διαγραφή",
+      "rm.cancel":  "Άκυρο",
+      "rm.done":    "Διαγράφηκε από το orOS Drive",
+      "rm.fail":    "Δεν ήταν δυνατή η διαγραφή του {name}"
     }
   };
 
@@ -105,6 +127,7 @@
     refresh:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 4 23 10 17 10"/><path d="M20.5 15a9 9 0 1 1-2.1-9.4L23 10"/></svg>',
     pin:    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>',
     phone:  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></svg>',
+    trash:  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>',
     free:   '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21V9M7 14l5-5 5 5M5 3h14"/></svg>'
   };
 
@@ -338,9 +361,18 @@
       li.appendChild(nm);
       li.appendChild(el("span", "col-size", fmtSize(r)));
       li.appendChild(el("span", "col-date", fmtDate(r)));
+      var rm = btn("tool drv-rm", ICON.trash, t("rm.btn", { name: r.name }), function (e) {
+        e.stopPropagation();
+        askRemove(r);
+      });
+      rm.tabIndex = -1;                               // Delete on the focused row does the same
+      li.appendChild(rm);
       li.title = r.dir ? r.name : r.name + " · " + (r.cloud ? t("state.cloud") : t("state.here"));
       li.addEventListener("click", function () { activate(r); });
-      li.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); activate(r); } });
+      li.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") { e.preventDefault(); activate(r); }
+        else if (e.key === "Delete") { e.preventDefault(); askRemove(r); }
+      });
       ul.appendChild(li);
     });
     $("drv-status").textContent = rows.length === 1 ? t("oneItem") : t("items", { n: rows.length });
@@ -386,6 +418,80 @@
       if (ctx && ctx.onDiskChanged) ctx.onDiskChanged();
       load();
     }, function () { busy = false; load(); });
+  }
+
+  // ---------- delete ----------
+  // A row leaves orOS Drive everywhere: what this device holds goes to
+  // the Files Trash (ctx.trash, a plain disk move that Vault Drive
+  // carries as a deletion), and what is in the cloud only is deleted
+  // there (vault.removeRemote: a queued deletion, VD-3; an edit made
+  // elsewhere meanwhile wins, VD-4). The trash first: if it fails,
+  // nothing is deleted in the cloud. orOS Drive on the computers and
+  // phones then moves their copies to its trash.
+  function rmDialog() {
+    var d = $("drv-dlg-rm");
+    if (d) return d;
+    d = el("dialog");
+    d.id = "drv-dlg-rm";
+    var f = el("form");
+    f.method = "dialog";
+    f.appendChild(el("h3", "", t("rm.title")));
+    var p1 = el("p"); p1.id = "drv-rm-msg"; f.appendChild(p1);
+    var p2 = el("p", "drv-rm-note"); p2.id = "drv-rm-note"; f.appendChild(p2);
+    var m = el("menu");
+    var no = el("button", "", t("rm.cancel"));
+    no.type = "button";
+    no.addEventListener("click", function () { d.close(); });
+    m.appendChild(no);
+    m.appendChild(el("span", "spacer"));
+    var ok = el("button", "danger", t("rm.confirm"));
+    ok.type = "submit";
+    ok.value = "ok";
+    m.appendChild(ok);
+    f.appendChild(m);
+    d.appendChild(f);
+    document.body.appendChild(d);
+    return d;
+  }
+
+  function askRemove(r) {
+    var v = vault();
+    if (!v || busy || r.path === root || !under(r.path, root)) return;
+    var n = v.remoteOnly(r.path).length;
+    var d = rmDialog();
+    $("drv-rm-msg").textContent = t(r.dir ? "rm.folderMsg" : "rm.fileMsg", { name: r.name });
+    $("drv-rm-note").textContent = t("rm.note") +
+      (n ? " " + (n === 1 ? t("rm.cloudOne") : t("rm.cloudNote", { n: n })) : "");
+    d.returnValue = "";
+    d.onclose = function () { if (d.returnValue === "ok") remove(r); };
+    d.showModal();
+  }
+
+  function remove(r) {
+    var v = vault(), fs = disk();
+    if (!v || busy) return;
+    busy = true;
+    var onDisk = (fs && typeof fs.stat === "function")
+      ? fs.stat(r.path).then(function () { return true; }, function () { return false; })
+      : Promise.resolve(false);
+    onDisk.then(function (has) {
+      if (!has) return null;
+      if (!ctx || typeof ctx.trash !== "function") throw new Error("no trash");
+      return ctx.trash(r.path);
+    }).then(function () {
+      return v.removeRemote(r.path);
+    }).then(function () {
+      busy = false;
+      toast(t("rm.done"));
+      if (ctx && ctx.onDiskChanged) ctx.onDiskChanged();
+      if (cwd === r.path || under(cwd, r.path)) go(parentOf(r.path));
+      else load();
+      v.sync("drive-delete").catch(function () {});
+    }, function () {
+      busy = false;
+      toast(t("rm.fail", { name: r.name }));
+      load();
+    });
   }
 
   function syncThenLoad() {
