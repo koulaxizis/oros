@@ -37,6 +37,7 @@
 
   // ---------- 1. Constants, i18n, helpers ----------
   function appLang() {
+    if (window.orosI18n) return window.orosI18n.lang();
     try {
       var l = localStorage.getItem("oros-lang") ||
               (window.parent && window.parent.orosLang) || "en";
@@ -52,7 +53,7 @@
       "open.app": "Open {app}", "toc": "On this page",
       "missing.title": "No guide yet",
       "missing.body": "This app has no guide page yet. It is on the way.",
-      "fallback.en": "This page is not in Greek yet; showing the English one.",
+      "fallback.en": "This page is not in your language yet; showing the English one.",
       "load.fail": "This page could not be loaded. If you are offline, open Help once while online.",
       "hits.none": "Nothing found for “{q}”.",
       "hits.count": "{n} results", "hits.one": "1 result",
@@ -71,6 +72,8 @@
       "soon": "σύντομα"
     }
   };
+
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "help", LANG);
 
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;
@@ -316,6 +319,9 @@
   }
 
   function pageUrl(kind, id, lang) {
+    // A pack language: i18n/<code>/help/[topics/]<id>.txt (i18n.js).
+    var packed = lang !== "en" && window.orosI18n && window.orosI18n.helpPath(kind, id, lang);
+    if (packed) return "../" + packed;
     return kind === "t" ? "topics/" + id + "." + lang + ".txt" : "../" + id + "/help." + lang + ".txt";
   }
 
@@ -354,7 +360,7 @@
       groups[k].apps.push(a);
     });
     return order.map(function (k) { return groups[k]; }).sort(function (a, b) {
-      return a.label.localeCompare(b.label, LANG === "el" ? "el" : "en");
+      return a.label.localeCompare(b.label, window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el" : "en"));
     });
   }
 

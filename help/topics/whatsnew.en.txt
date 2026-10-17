@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.92.00
+- Ready for more languages: orOS can now load translations into other languages, made by volunteers, with English shown wherever a text is not translated yet. German comes next.
+
 ## Version 2.91.00
 - Security: every orOS page now allows only its own scripts (Content-Security-Policy).
 

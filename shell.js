@@ -32,12 +32,12 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "2.91.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "2.92.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
   var state = {
-    lang:            null,   // "en" | "el"
+    lang:            null,   // "en" | "el" | a pack language (i18n.js)
     theme:           null,   // "dark" | "light"
     skin:            null,   // palette id (see SKINS)
     wallpaper:       null,   // wallpaper id (see WALLPAPERS)
@@ -283,14 +283,22 @@
     }
   }
 
+  // A language orOS knows: English, Greek, or a pack language listed
+  // in i18n.js. langBase(): "el" or "en", for the modules that still
+  // pick between two inline strings (a pack language reads English).
+  function langKnown(v) {
+    return v === "en" || v === "el" || !!(window.orosI18n && window.orosI18n.known(v));
+  }
+  function langBase() { return state.lang === "el" ? "el" : "en"; }
+
   // ---------- 2. Preferences ----------
   function initPrefs() {
     var params = new URLSearchParams(window.location.search);
 
     var urlLang    = params.get("lang");
     var storedLang = localStorage.getItem("oros-lang");
-    state.lang     = (urlLang === "el" || urlLang === "en") ? urlLang
-                   : (storedLang === "el" || storedLang === "en") ? storedLang
+    state.lang     = langKnown(urlLang) ? urlLang
+                   : langKnown(storedLang) ? storedLang
                    : "en";
     // Χ2: persist — wxFetch trayfail copy and wxBriefTick (plus iframe
     // apps) read localStorage["oros-lang"] directly; a URL-param lang
@@ -319,6 +327,7 @@
   function applyLang() {
     window.orosLang = state.lang;
     document.documentElement.setAttribute("lang", state.lang);
+    if (window.orosI18n) document.documentElement.setAttribute("dir", window.orosI18n.dir(state.lang));
 
     // TP-guard: applyLang() is called EARLY in boot (before "load" event).
     // If translations.js hasn't finished loading yet, skip t()-calls entirely
@@ -346,7 +355,7 @@
     // the single release key.
 
     var langBtn = document.getElementById("btn-lang");
-    langBtn.textContent = state.lang === "en" ? "EL" : "EN";
+    langBtn.textContent = langNext().toUpperCase();
     langBtn.setAttribute("title", window.t("lang.tooltip"));
 
     // E1/E2 — localized titles for the split clock buttons. Painted
@@ -1021,7 +1030,7 @@
   var BAR_FIT_MAX = 6;
 
   function barDateStr(now, lvl) {
-    var loc = state.lang === "el" ? "el-GR" : "en-GB";
+    var loc = window.orosI18n ? window.orosI18n.locale(state.lang) : (state.lang === "el" ? "el-GR" : "en-GB");
     if (lvl >= 4) {
       return String(now.getDate()).padStart(2, "0") + "/" +
              String(now.getMonth() + 1).padStart(2, "0");
@@ -1627,7 +1636,7 @@
     var hm = (now.getHours() < 10 ? "0" : "") + now.getHours() + ":" + (now.getMinutes() < 10 ? "0" : "") + now.getMinutes();
     var r = Core.reminders(data, today, hm, seen);
     r.fresh.slice(0, 10).forEach(function (x) {         // a long-closed orOS: at most 10 per tick
-      var txt = Core.reminderText(data, x.fup, today, state.lang);
+      var txt = Core.reminderText(data, x.fup, today, langBase());
       N.emit({ ns: "crm", key: "fup-" + x.key, type: "reminder",
                title: txt.title, body: txt.body, deepLink: "crm:" + x.fup.id });
     });
@@ -1667,7 +1676,7 @@
     if (!raw || !Array.isArray(raw.contacts) || !raw.contacts.length) return;
     var r = K.reminder(raw, pr, Date.now());
     if (!r) return;
-    var txt = K.reminderText(r, state.lang);
+    var txt = K.reminderText(r, langBase());
     N.emit({
       ns: "contacts",
       key: r.key,
@@ -3195,7 +3204,7 @@
       });
     },
     version: APP_VERSION,
-    lang: function () { return state.lang; },
+    lang: function () { return langBase(); },
     icon: function (id) {
       for (var i = 0; i < state.apps.length; i++) {
         if (state.apps[i].id === id) return ICONS[state.apps[i].icon] || "";
@@ -3207,7 +3216,7 @@
   // installed (the module is inert until then), the running app, the
   // way back to the desktop and a plain app open.
   window.orosStickiesEnv = {
-    lang: function () { return state.lang; },
+    lang: function () { return langBase(); },
     registered: function () {
       for (var i = 0; i < state.apps.length; i++) if (state.apps[i] && state.apps[i].id === "stickies") return true;
       return false;
@@ -3226,7 +3235,7 @@
     if (!searchReader) searchReader = S.makeReader(localStorage);
     return S.load(apps, APP_VERSION).then(function () {
       return S.run(window.orosSearchProviders, String(q || ""), {
-        lang: state.lang, readJSON: searchReader,
+        lang: langBase(), readJSON: searchReader,
         enabled: function (id) { return !!allow[id]; }
       });
     }).then(function (groups) {
@@ -3325,7 +3334,7 @@
     if (!C) return null;
     var U = window.UnitsCore, rates = null;
     if (U) { try { rates = U.storedRates(JSON.parse(localStorage.getItem(U.RATES_KEY))); } catch (e) { rates = null; } }
-    return C.parse(q, { today: cmdToday(), apps: cmdApps(), cal: window.OrosCalQuick, lang: state.lang,
+    return C.parse(q, { today: cmdToday(), apps: cmdApps(), cal: window.OrosCalQuick, lang: langBase(),
                         calc: window.CalcCore, units: U, rates: rates, send: window.OrosSendCore });
   }
   function cmdHistory() {
@@ -3344,7 +3353,7 @@
   function cmdForget() { try { localStorage.removeItem(CMD_HIST_KEY); } catch (e) {} }
   function cmdRun(cmd, q) {
     var C = window.OrosCommands;
-    var c = C ? C.call(cmd, state.lang) : null;
+    var c = C ? C.call(cmd, langBase()) : null;
     if (!c) return;
     if (typeof q === "string") cmdRemember(q);
     closeMenu();
@@ -3379,9 +3388,9 @@
     cmdModule().then(function () {
       closeMenu();
       window.orosCmdBar.open({
-        lang: function () { return state.lang; },
+        lang: function () { return langBase(); },
         parse: cmdParse,
-        describe: function (cmd) { return window.OrosCommands.describe(cmd, state.lang); },
+        describe: function (cmd) { return window.OrosCommands.describe(cmd, langBase()); },
         appName: cmdAppName,
         apps: cmdMatchApps,
         run: cmdRun,
@@ -3557,7 +3566,7 @@
       var cmd = cmdParse(q);
       if (!cmd || cmd.kind === "convert") return;     // conversions: the Unit Converter's own search row
       menuCmd = cmd;
-      var d = window.OrosCommands.describe(cmd, state.lang);
+      var d = window.OrosCommands.describe(cmd, langBase());
       var b = document.createElement("button");
       b.type = "button";
       b.className = "menu-cmd";
@@ -3672,7 +3681,7 @@
         if (!searchReader) searchReader = S.makeReader(localStorage);
         S.load(searchApps(), APP_VERSION).then(function () {
           return S.run(window.orosSearchProviders, q, {
-            lang: state.lang, readJSON: searchReader,
+            lang: langBase(), readJSON: searchReader,
             enabled: function (id) {
               for (var i = 0; i < state.apps.length; i++) {
                 if (state.apps[i].id === id) {
@@ -4165,7 +4174,7 @@
   // something shellSliceSet would accept (same validations).
   function shellCanon(name, v) {
     switch (name) {
-      case "lang":         return (v === "en" || v === "el") ? v : undefined;
+      case "lang":         return langKnown(v) ? v : undefined;
       case "theme":        return (v === "dark" || v === "light") ? v : undefined;
       case "skin":         return isValidSkin(v) ? v : undefined;
       case "wallpaper":    return (typeof v === "string" && findWallpaper(v)) ? v : undefined;
@@ -4438,7 +4447,7 @@
 
   function shellSliceSet(data) {
     if (!data) return;
-    if (data.lang  === "en" || data.lang  === "el") state.lang  = data.lang;
+    if (langKnown(data.lang)) state.lang = data.lang;
     if (data.theme === "dark" || data.theme === "light") state.theme = data.theme;
     if (isValidSkin(data.skin)) state.skin = data.skin;
     if (findWallpaper(data.wallpaper)) {
@@ -4559,7 +4568,14 @@
     applySkin();
     applyWallpaper();
     applyTheme();
-    applyLang();     // re-renders menu too
+    // A pack language that came from another device loads its shell
+    // pack first (i18n.js); English and Greek repaint at once.
+    if (window.orosI18n && state.lang !== "en" && state.lang !== "el") window.orosI18n.ensure(state.lang, "shell", function () {
+      window.orosI18n.table(window.OROS_TRANSLATIONS, "shell", state.lang);
+      applyLang();
+      langKeepOffline();
+    });
+    else applyLang();     // re-renders menu too
     // Deliberately NO noteLocalChange() here — pulled data must not
     // re-mark dirty, or pull → set → push → pull → … infinite loop.
   }
@@ -5759,12 +5775,63 @@
     setSyncMsgRaw("dim", window.t("update.checking"));
   }
 
-  function scToggleLang() {
-    state.lang = state.lang === "en" ? "el" : "en";
+  function scToggleLang() { setLangUser(langNext()); }
+
+  // The language button: the next of the languages on offer (English
+  // and Greek, plus every shown pack language and the active one).
+  function langNext() {
+    var list = window.orosI18n ? window.orosI18n.choices().map(function (l) { return l.code; }) : ["en", "el"];
+    var i = list.indexOf(state.lang);
+    return list[(i + 1) % list.length] || "en";
+  }
+
+  // A language picked on this device (button, shortcut, Settings).
+  // A pack language loads its shell pack first; open apps reload and
+  // load their own (i18n.js). The chosen language's files are then
+  // kept for offline use (langKeepOffline).
+  function setLangUser(code) {
+    if (!langKnown(code) || code === state.lang) return;
+    state.lang = code;
     localStorage.setItem("oros-lang", state.lang);
-    noteLocalChange();
-    applyLang();
-    refreshRunningApp();          // opened apps follow the language too
+    noteLocalChange();            // user action → sync engine
+    langApplyPack();
+  }
+  function langApplyPack() {
+    var I = window.orosI18n;
+    function go() {
+      if (I && window.OROS_TRANSLATIONS) I.table(window.OROS_TRANSLATIONS, "shell", state.lang);
+      applyLang();
+      refreshRunningApp();        // opened apps follow the language too
+      langKeepOffline();
+    }
+    if (I) I.ensure(state.lang, "shell", go); else go();
+  }
+
+  // A pack language's files (i18n/<code>/manifest.json, written by
+  // the coverage script, see the translator guide) are fetched once per release while
+  // online; the service worker keeps them in its language cache,
+  // which outlives releases, so the language works offline.
+  function langKeepOffline() {
+    var I = window.orosI18n, code = state.lang;
+    if (!I || code === "en" || code === "el" || !navigator.onLine) return;
+    // Only through the service worker (it keeps the copies); the first
+    // visit, before the worker controls the page, tries on the next start.
+    if (!navigator.serviceWorker || !navigator.serviceWorker.controller) return;
+    var mark = code + "@" + APP_VERSION;
+    try { if (localStorage.getItem("oros-i18n-kept") === mark) return; } catch (e) { return; }
+    fetch(I.root + "i18n/" + code + "/manifest.json", { cache: "no-cache" })
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function (m) {
+        var files = (m && Array.isArray(m.files) ? m.files : []).filter(function (f) {
+          return typeof f === "string" && /^[a-z0-9][a-z0-9/._-]{0,120}$/.test(f) && f.indexOf("..") === -1;
+        });
+        return Promise.all(files.map(function (f) {
+          var u = I.root + "i18n/" + code + "/" + f + (/\.js$/.test(f) ? "?v=" + APP_VERSION : "");
+          return fetch(u).catch(function () {});
+        }));
+      })
+      .then(function () { try { localStorage.setItem("oros-i18n-kept", mark); } catch (e) {} })
+      .catch(function () {});
   }
 
   function scReconnect() {
@@ -8930,6 +8997,7 @@
     return {
       version: APP_VERSION,
       lang: state.lang,
+      langs: window.orosI18n ? window.orosI18n.choices() : [{ code: "en", name: "English" }, { code: "el", name: "Ελληνικά" }],
       theme: state.theme,
       skin: state.skin,
       skins: SKINS.map(function (k) {
@@ -9005,7 +9073,7 @@
   function settingsSet(name, value) {
     switch (name) {
       case "lang":
-        if ((value === "en" || value === "el") && value !== state.lang) scToggleLang();
+        setLangUser(value);
         return;
       case "theme":      setThemeUser(value); return;
       case "skin":       setSkinUser(value); return;
@@ -9158,7 +9226,7 @@
     }
     return null;
   }
-  function soloName() { return window.orosSolo.nameOf(SOLO, state.lang); }
+  function soloName() { return window.orosSolo.nameOf(SOLO, langBase()); }
 
   // Window title, bar button and the host page's title.
   function soloPaint() {
@@ -9377,11 +9445,7 @@
   });
 
   document.getElementById("btn-lang").addEventListener("click", function () {
-    state.lang = state.lang === "en" ? "el" : "en";
-    localStorage.setItem("oros-lang", state.lang);
-    noteLocalChange();            // user action → sync engine
-    applyLang();
-    refreshRunningApp();          // v0.18.1b: open apps follow the toggle
+    setLangUser(langNext());      // v0.18.1b: open apps follow the toggle
   });
 
   // Unsynced-changes guard: warn on close when dirty AND online
@@ -9600,7 +9664,7 @@
     var apps = profilesApps();
     return P.show({
       mode: mode,
-      lang: state.lang,
+      lang: langBase(),
       apps: apps,
       shown: apps.filter(function (a) { return a.shown; }).map(function (a) { return a.id; }),
       done: function (r) {
@@ -10533,7 +10597,7 @@
       open: openApp,
       running: function () { return state.running; },
       icons: ICONS,
-      lang: function () { return state.lang; },
+      lang: function () { return langBase(); },
       label: function (app) {
         var k = "app." + app.id, v = window.t(k);
         return (v === k) ? app.name : v;
@@ -10546,6 +10610,7 @@
   applyWallpaper();
   applyTheme();
   applyLang();
+  langKeepOffline();
   // Seasonal decorations (seasonal.js, a shell component like pet.js):
   // snow, lights, pumpkins… over the wallpaper in the right season.
   // A single app has no desktop, so it gets none.
@@ -10553,7 +10618,7 @@
     window.orosSeasonal.attach({
       desktop: document.getElementById("oros-desktop"),
       running: function () { return !!state.running; },
-      lang: function () { return state.lang; },
+      lang: function () { return langBase(); },
       changed: function () { settingsNotify(); }
     });
   }
