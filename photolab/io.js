@@ -595,6 +595,28 @@
     }, function () { PL.busy(false); PL.toast(t("msg.wallpaperFail")); });
   }
 
+  // ---------- Send to someone (share wave 4, an album of one) ----------
+  // The flattened picture as JPEG, at most 2048 px; the shell's send
+  // window draws it again (no EXIF) and sends it as a link with an expiry.
+  function shareApi() {
+    try {
+      var s = window.parent && window.parent !== window && window.parent.orosShare;
+      return s && typeof s.open === "function" ? s : null;
+    } catch (e) { return null; }
+  }
+  function sendToSomeone() {
+    var api = shareApi();
+    if (!api || !st.doc) return;
+    var k = Math.min(1, 2048 / Math.max(st.doc.w, st.doc.h));
+    PL.busy(true);
+    render("jpg", 0.92, k).then(function (blob) {
+      PL.busy(false);
+      if (!blob) { PL.toast(t("msg.exportFail")); return; }
+      var name = C.cleanName(st.doc.name);
+      api.open({ kind: "album", data: { t: name }, photos: [{ blob: blob, name: fileName("jpg"), c: name }] });
+    }, function () { PL.busy(false); PL.toast(t("msg.exportFail")); });
+  }
+
   // ---------- Thumbnails ----------
   function saveThumb() {
     var fs = PL.fs(), d = st.doc;
@@ -643,6 +665,7 @@
     PICTURES: PICTURES, decode: decode, openPicture: openPicture, openPictureFile: openPictureFile,
     openDiskPath: openDiskPath, setClipboard: setClipboard, pasteFromMenu: pasteFromMenu,
     exportImage: exportImage, setWallpaper: setWallpaper, canWallpaper: function () { return !!wallApi(); },
+    sendToSomeone: sendToSomeone, canShare: function () { return !!shareApi(); },
     saveThumb: saveThumb, wire: wire, sendBack: sendBack, openLrPreset: openLrPreset,
     IMG_EXT: IMG_EXT, RAW_ACCEPT: RAW_ACCEPT, RAW_MAX: RAW_MAX, rawPixels: rawPixels, source: source,
     dialogHost: dialogHost, saveToPictures: saveToPictures,

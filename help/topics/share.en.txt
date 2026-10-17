@@ -1,5 +1,5 @@
 # Send to someone
-Send one thing from orOS to another person: a To-Do list, a note, a contact, an event, a recipe, some bookmarks, a Wiki article or a whole calendar. orOS puts it inside a link. You send the link any way you like, and the other person opens it in their browser, even if they don't use orOS.
+Send one thing from orOS to another person: a To-Do list, a note, a contact, an event, a recipe, some bookmarks, a Wiki article, a whole calendar or a photo album. orOS puts it inside a link. You send the link any way you like, and the other person opens it in their browser, even if they don't use orOS.
 
 ## Send something
 Look for the send button in these apps:
@@ -10,6 +10,8 @@ Look for the send button in these apps:
 - [Meal Planner](app:meals): `Share` on an open recipe.
 - [Bookmarks](app:bookmarks): `Send to someone…` in a bookmark's menu, or select several and tap `Send…`.
 - [Wiki](app:wiki): `Send to someone…` in an article's ⋯ menu. The text travels; pictures stay with you.
+- [Files](app:files): `Send photos to someone…` in the menu of a picture or a folder sends a photo album, up to 200 photos.
+- [Photo Lab](app:photolab): `File` › `Send to someone…` sends the picture you are editing.
 
 The `Send to someone` window shows what will travel. Then pick how to send it:
 - `Share…` opens your phone's or computer's share menu (Viber, WhatsApp, Signal, email and so on).
@@ -27,7 +29,7 @@ Tick `With an expiry` and pick `1 day`, `7 days` or `30 days`. Then orOS encrypt
 
 You can take a link back sooner. Open `My shared links`: it is a button in the `Send to someone` window, and also in [Settings](app:settings) › `System`. Each link shows when it expires. `Copy link` copies it again, and `Take back` deletes it from the server at once. The list follows you to your other devices through sync, so you can take a link back from any of them.
 
-Items too long for a plain link (a long note or Wiki article, a calendar with many events) always go this way: the window turns `With an expiry` on by itself and tells you why. A password works with an expiry too.
+Items too long for a plain link (a long note or Wiki article, a calendar with many events) and every photo album always go this way: the window turns `With an expiry` on by itself and tells you why. A password works with an expiry too.
 
 ## Open something you got
 Tap the link. A page opens with the item and these buttons:
@@ -36,6 +38,8 @@ Tap the link. A page opens with the item and these buttons:
 - `Download` saves it as a file other programs open too: a contact as .vcf, an event or a calendar as .ics, bookmarks as .html, a Wiki article as .md, the rest as .txt.
 
 A calendar opens on a month: tap a day to see its events, or switch to `List` for the whole month; ‹ and › move between months. Events with a time show in your own time zone. `Add to my orOS` opens [Calendar](app:calendar), which tells you how many events are new or changed before it saves them; adding the same calendar again later updates those events instead of doubling them.
+
+A photo album opens as a grid. Tap a photo to see it large; ‹ and › move between photos, and `Save photo` saves the one you are looking at.
 
 If you got a file instead of a link, open the link inside it, or use `Open a file` on that page.
 
@@ -66,4 +70,5 @@ A link with an expiry carries only the key after the # sign. The orOS server kee
 - A link with an expiry lasts 30 days at most.
 - A QR code holds only short links.
 - Photos of contacts, pictures in Wiki articles, labels, favourites and reminders are not sent. A calendar takes its labels' names and colours along, but not reminders, and an event's note up to 500 characters.
+- An album holds up to 200 photos and 25 MB. Each photo is made smaller (2048 px on its long side at most) and saved again as JPEG, so its hidden details (place, camera, time) stay with you. Pictures a browser cannot read (for example HEIC) are left out, and the window tells you how many.
 - A calendar holds up to 5,000 events; when there are more, the newest go. A sent calendar is a copy: later changes do not reach the other person, so send it again.

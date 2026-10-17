@@ -283,3 +283,17 @@ test("a whole calendar of 5,000 events travels with an expiry and opens whole", 
   const o = await R.open(r.code, { fetch: s.fetch });
   assert.deepEqual(K.pack(o.e.k, o.e.d), env);
 });
+
+test("an album of photos travels with an expiry, photo bytes intact, with a password too", async () => {
+  const s = setup();
+  const bin = new Uint8Array(1200000);
+  require("crypto").randomFillSync(bin);
+  bin.set([0xff, 0xd8, 0xff], 0); bin.set([0xff, 0xd8, 0xff], 600000);
+  const env = K.pack("album", { t: "Crete", p: [{ o: 0, n: 600000, m: "image/jpeg", c: "Beach" }, { o: 600000, n: 600000, m: "image/jpeg" }] });
+  const r = await R.create(env, { days: 7, password: "hunter22", bin, fetch: s.fetch, now: s.clock.now });
+  assert.ok(+r.code.split(".")[3] >= 5, "several pieces");
+  assert.deepEqual(await R.open(r.code, { fetch: s.fetch }), { error: "pass" });
+  const o = await R.open(r.code, { password: "hunter22", fetch: s.fetch });
+  assert.deepEqual(K.pack(o.e.k, o.e.d), env);
+  assert.deepEqual(Buffer.from(o.bin), Buffer.from(bin));
+});
