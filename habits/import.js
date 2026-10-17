@@ -379,6 +379,7 @@
   }
 
   // ---------- long CSV (Streaks, Habitify, generic) ----------
+  // i18n-inline-ok: Greek CSV column names are parser data, not UI text (this file has none).
   var NAME_COLS = ["Habit Name", "Habit", "Task Name", "Task", "Title", "Name", "Activity", "Item", "Goal", "Συνήθεια"];
   var DATE_COLS = ["Date", "Day", "Entry Date", "entry_date", "Completed Date", "Completion Date", "Completed At",
                    "Timestamp", "entry_timestamp", "Datetime", "Date Time", "Time", "Created At", "Ημερομηνία"];

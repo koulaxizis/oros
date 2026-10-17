@@ -2,8 +2,8 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 15162 of 27947 (54%)
-- Help pages: 53 of 144 (36%)
+- Strings: 16978 of 28237 (60%)
+- Help pages: 59 of 144 (40%)
 - Shown in the language list: yes
 
 Apps marked "English for now" do not load language packs yet: their
@@ -28,7 +28,7 @@ text is still written in the code. They switch over wave by wave
 | characters | English for now | 0 / 73 |
 | checkers | English for now | 0 / 72 |
 | chess | English for now | 0 / 401 |
-| chores | English for now | 0 / 156 |
+| chores | 100% | 192 / 192 |
 | connect4 | English for now | 0 / 62 |
 | contacts | 100% | 293 / 293 |
 | converter | English for now | 0 / 67 |
@@ -47,9 +47,9 @@ text is still written in the code. They switch over wave by wave
 | flow | English for now | 0 / 75 |
 | g2048 | English for now | 0 / 54 |
 | gamecenter | English for now | 0 / 99 |
-| garage | English for now | 0 / 380 |
+| garage | 100% | 422 / 422 |
 | gomoku | English for now | 0 / 57 |
-| habits | English for now | 0 / 159 |
+| habits | 100% | 173 / 173 |
 | hangman | English for now | 0 / 52 |
 | health | 100% | 597 / 597 |
 | help | 100% | 15 / 15 |
@@ -74,7 +74,7 @@ text is still written in the code. They switch over wave by wave
 | mixer | English for now | 0 / 59 |
 | mockups | 100% | 283 / 283 |
 | montage | 100% | 371 / 371 |
-| mood | English for now | 0 / 246 |
+| mood | 100% | 256 / 256 |
 | museum | English for now | 0 / 46 |
 | music | 100% | 432 / 432 |
 | names | English for now | 0 / 40 |
@@ -88,7 +88,7 @@ text is still written in the code. They switch over wave by wave
 | petworld | English for now | 0 / 252 |
 | photolab | 100% | 708 / 708 |
 | pixel | English for now | 0 / 101 |
-| plants | English for now | 0 / 163 |
+| plants | 100% | 218 / 218 |
 | podcasts | 100% | 290 / 290 |
 | pong | English for now | 0 / 64 |
 | prompter | English for now | 0 / 75 |
@@ -129,7 +129,7 @@ text is still written in the code. They switch over wave by wave
 | timesheet | 100% | 248 / 248 |
 | today | English for now | 0 / 82 |
 | todo | 100% | 208 / 208 |
-| travel | English for now | 0 / 422 |
+| travel | 100% | 555 / 555 |
 | trees | English for now | 0 / 76 |
 | typewriter | English for now | 0 / 46 |
 | units | English for now | 0 / 58 |
@@ -163,7 +163,6 @@ These show English until fixed (usually the English text changed).
 - help/characters.txt
 - help/checkers.txt
 - help/chess.txt
-- help/chores.txt
 - help/connect4.txt
 - help/converter.txt
 - help/crossword.txt
@@ -176,9 +175,7 @@ These show English until fixed (usually the English text changed).
 - help/flow.txt
 - help/g2048.txt
 - help/gamecenter.txt
-- help/garage.txt
 - help/gomoku.txt
-- help/habits.txt
 - help/hangman.txt
 - help/hexagon.txt
 - help/jigsaw.txt
@@ -193,7 +190,6 @@ These show English until fixed (usually the English text changed).
 - help/minesweeper.txt
 - help/minimalism.txt
 - help/mixer.txt
-- help/mood.txt
 - help/museum.txt
 - help/names.txt
 - help/netizen.txt
@@ -203,7 +199,6 @@ These show English until fixed (usually the English text changed).
 - help/petcare.txt
 - help/petworld.txt
 - help/pixel.txt
-- help/plants.txt
 - help/pong.txt
 - help/prompter.txt
 - help/pubdomain.txt
@@ -230,7 +225,6 @@ These show English until fixed (usually the English text changed).
 - help/tictactoe.txt
 - help/time.txt
 - help/today.txt
-- help/travel.txt
 - help/trees.txt
 - help/typewriter.txt
 - help/units.txt

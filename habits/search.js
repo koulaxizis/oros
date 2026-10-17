@@ -16,17 +16,36 @@
   var KEY = "oros-habits-data";
 
   function str(v) { return typeof v === "string" ? v.trim() : ""; }
-  function schedule(h, lang) {
+
+  // Its texts (keys of the "habits" pack). The shell runs this file,
+  // not the Habits page: a pack language shows the "habits" pack line
+  // when the shell has it, else English.
+  var S = {
+    en: {
+      "search.per.w": "{n} times / week", "search.per.m": "{n} times / month",
+      "search.daily": "Every day", "search.any": "Any day", "days.n": "{n} days / week",
+      "search.le": "at most {t}", "search.ge": "at least {t}"
+    },
+    el: {
+      "search.per.w": "{n} φορές / εβδομάδα", "search.per.m": "{n} φορές / μήνα",
+      "search.daily": "Καθημερινά", "search.any": "Οποιαδήποτε μέρα", "days.n": "{n} ημέρες / εβδομάδα",
+      "search.le": "το πολύ {t}", "search.ge": "τουλάχιστον {t}"
+    }
+  };
+  function strs(lang) {
+    var I = root && root.orosI18n;
+    return S[lang] || (I && lang ? I.table(S, "habits", lang) : S.en);
+  }
+  function schedule(h, L) {
     var per = h.per;
     if (Array.isArray(per) && (per[0] === "w" || per[0] === "m") && typeof per[1] === "number") {
-      if (per[0] === "w") return lang === "el" ? per[1] + " φορές / εβδομάδα" : per[1] + " times / week";
-      return lang === "el" ? per[1] + " φορές / μήνα" : per[1] + " times / month";
+      return L[per[0] === "w" ? "search.per.w" : "search.per.m"].replace("{n}", String(per[1]));
     }
     var days = h.days;
     var n = Array.isArray(days) ? days.length : 0;
-    if (n >= 7) return lang === "el" ? "Καθημερινά" : "Every day";
-    if (!n) return lang === "el" ? "Οποιαδήποτε μέρα" : "Any day";
-    return lang === "el" ? n + " ημέρες / εβδομάδα" : n + " days / week";
+    if (n >= 7) return L["search.daily"];
+    if (!n) return L["search.any"];
+    return L["days.n"].replace("{n}", String(n));
   }
 
   var PROVIDER = {
@@ -35,17 +54,16 @@
     search: function (ctx) {
       var d = ctx.readJSON(KEY), out = [];
       if (!d || !Array.isArray(d.habits)) return out;
-      var lang = ctx.lang === "el" ? "el" : "en";
+      var L = strs(ctx.lang);
       d.habits.forEach(function (h) {
         if (!h || typeof h.id !== "string" || !h.id || h.del) return;
         var name = str(h.name);
         if (!name) return;
-        var text = schedule(h, lang);
+        var text = schedule(h, L);
         var num = h.num;
         if (num && typeof num === "object" && typeof num.t === "number" && num.t > 0) {
           var unit = str(num.u);
-          text += " · " + (num.c === "le" ? (lang === "el" ? "το πολύ " : "at most ") : (lang === "el" ? "τουλάχιστον " : "at least ")) +
-                  num.t + (unit ? " " + unit : "");
+          text += " · " + L[num.c === "le" ? "search.le" : "search.ge"].replace("{t}", num.t + (unit ? " " + unit : ""));
         }
         out.push({ id: h.id, title: name, text: text, target: { habit: h.id } });
       });

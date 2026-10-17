@@ -1,0 +1,44 @@
+# Pflanzenpflege
+Pflanzenpflege führt für jede deiner Pflanzen einen Gießplan und erinnert dich, wenn sie Durst hat. Sie kann auch Düngen, Besprühen und Umtopfen verfolgen.
+
+## Erste Schritte
+Tippe oder klicke auf `Pflanze hinzufügen` (oder oben auf `Pflanze`). Wähle eine `Art` aus der Liste fertiger Pflanzen, um passende Abstände und einen Tipp einzutragen, oder nimm `Andere / eigene`. Gib ihr einen `Name`, ein `Symbol`, einen `Raum oder Platz` und sag unter `Wo`, ob sie `Drinnen` oder `Draußen` steht. Stell `Gießen alle (Tage)` ein und, wenn du willst, `Im Winter alle (Tage, 0 = gleich)`. Unter `Mehr Pflege` findest du Düngen, Besprühen und Umtopfen. Bei einer neuen Pflanze kannst du eintragen, wann sie `Zuletzt gegossen` wurde.
+
+## Heute
+`Heute` zeigt, was `Überfällig` ist, was `Heute` fällig ist und was in den `Nächste 7 Tage` kommt.
+- `Erledigt` markiert die Aufgabe als heute erledigt, mit `Rückgängig` für ein paar Sekunden.
+- `Alle gießen (n)` gießt alles, was fällig ist, in einem Schritt.
+- Die Schaltfläche mit den drei Punkten öffnet weitere Möglichkeiten: `1 Tag verschieben`, `2 Tage verschieben`, `Diesmal überspringen`, `Als erledigt markieren` und `Pflanze öffnen`.
+
+Hast du Pflanzen in mehr als einem Raum, filtern Raum-Chips oben beide Tabs.
+
+## Meine Pflanzen
+`Meine Pflanzen` zeigt für jede Pflanze eine Karte mit dem nächsten Gießen. Ab sechs Pflanzen erscheint `Pflanzen suchen…`.
+
+Tippe auf eine Pflanze, um ihre Details zu sehen: den Plan mit dem nächsten Tag jeder Aufgabe, wie oft du im Schnitt wirklich gießt, einen Streifen `Letzte 30 Tage` und den `Verlauf`. Du kannst einen Eintrag im Verlauf entfernen, die Pflanze `Bearbeiten` oder `Löschen` (mit `Rückgängig`).
+
+## Wetterhinweise
+Wenn du [Wetter](app:weather) nutzt, liest Pflanzenpflege für deine Pflanzen draußen die letzte Vorhersage auf diesem Gerät. Wird heute Regen erwartet, siehst du ein Banner mit `Gießen draußen überspringen`; an einem sehr heißen Tag schlägt sie vor, früher nach ihnen zu sehen. Pflanzenpflege selbst geht nie ins Netz.
+
+## orOS-Datei speichern und öffnen
+In den `Einstellungen` speichert unter `Deine Pflanzen` die Option `orOS-Datei (.orosplants)` jede Pflanze (Plan, Raum, Notizen) mit ihrem Pflegeverlauf als eine `.orosplants`-Datei, zum Beispiel um sie ohne Synchronisierung auf ein anderes Gerät zu bringen oder eine Kopie aufzuheben. Die Erinnerungszeit, die Erdhalbkugel und dein Pl@ntNet-Schlüssel bleiben auf jedem Gerät. Die Datei ist ein einfaches ZIP: Entpackt enthält sie die Pflanzen als `content.json` sowie `preview/plants.md`, `preview/plants.csv` und `preview/history.csv` für andere Programme. Sie ist nicht verschlüsselt, also bewahre sie sicher auf.
+
+`orOS-Datei öffnen…` (oder `Entpackter orOS-Ordner…`, oder „Öffnen mit“ orOS am Computer) zeigt, wie viele Pflanzen und Verlaufseinträge neu sind und wie viele schon da sind; dann fügt `Hinzufügen` nur die neuen hinzu, mit ihren eigenen IDs: Öffnest du dieselbe Datei noch einmal, kommt nichts hinzu. Eine schon vorhandene Pflanze bleibt, wie sie ist, und eine, die du hier gelöscht hast, bleibt gelöscht; eine Datei löscht nie etwas. Hake `Mit neueren Versionen aktualisieren` an, damit Pflanzen, die in der Datei später geändert wurden, deine Kopie ersetzen. `Rückgängig` in der Meldung entfernt, was hinzugefügt wurde.
+
+## Synchronisierung und Sicherung
+Deine Pflanzen (mit ihren wissenschaftlichen Namen), Pläne und der Verlauf werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. Die Erinnerungszeit, die Erdhalbkugel, der gewählte Raum und der offene Tab bleiben auf jedem Gerät.
+
+In den `Einstellungen` speichert `Exportieren` deine Pflanzen in eine Datei, und `Importieren` führt eine Datei mit dem zusammen, was du hast. Eine orOS-Datei (siehe oben) bringt Pflanzen und Verlauf von Gerät zu Gerät.
+
+## Tastenkürzel
+- [[Left]] / [[Right]] auf den Tabs wechseln zwischen `Heute` und `Meine Pflanzen`.
+
+## Tipps
+- Wähle in den `Einstellungen` die Stunde der `Tägliche Erinnerung` oder `Aus`. Eine Benachrichtigung am Tag nennt die Pflanzen, die Pflege brauchen. Siehe [Benachrichtigungen](help:t/notifications).
+- Stell deine `Erdhalbkugel (für den Winterabstand)` ein, damit das Gießen im Winter in den richtigen Monaten beginnt.
+- Gieß- und Fälligkeitstage erscheinen auch im [Kalender](app:calendar) unter `Pflanzen`.
+
+## Grenzen
+- Erinnerungen erscheinen, solange orOS offen ist, auch wenn diese App geschlossen ist. Ist orOS geschlossen, warten sie, bis du es wieder öffnest.
+- Wetterhinweise funktionieren nur, wenn die Wetter-App auf diesem Gerät eine aktuelle Vorhersage hat.
+- Verlauf, der älter als zwei Jahre ist, wird entfernt.

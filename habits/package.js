@@ -113,9 +113,30 @@
     if (!c.v) return false;
     return h.num.c === "le" ? sum(c) <= h.num.t : sum(c) >= h.num.t;
   }
-  var WD = { en: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"], el: ["Δευ", "Τρί", "Τετ", "Πέμ", "Παρ", "Σάβ", "Κυρ"] };
+  // Text of the habits.md preview (same keys and English as habits.js,
+  // pack "habits"). recordpkg passes "en" or "el"; a pack language is
+  // read from orosI18n (German preview in a German orOS).
+  var S = {
+    en: {
+      "app.name": "Habits", "md.week": "week", "md.month": "month", "md.anyday": "any day",
+      "md.everyday": "every day", "md.checkoffs": "check-offs: {n}",
+      "day.0": "Mon", "day.1": "Tue", "day.2": "Wed", "day.3": "Thu", "day.4": "Fri", "day.5": "Sat", "day.6": "Sun"
+    },
+    el: {
+      "app.name": "Συνήθειες", "md.week": "εβδομάδα", "md.month": "μήνα", "md.anyday": "οποιαδήποτε μέρα",
+      "md.everyday": "κάθε μέρα", "md.checkoffs": "ολοκληρώσεις: {n}",
+      "day.0": "Δευ", "day.1": "Τρί", "day.2": "Τετ", "day.3": "Πέμ", "day.4": "Παρ", "day.5": "Σάβ", "day.6": "Κυρ"
+    }
+  };
+  function strs(lang) {
+    var I = typeof window !== "undefined" && window.orosI18n;
+    if (lang === "el") return S.el;
+    var code = I ? I.lang() : "en";
+    if (!I || code === "en" || code === "el") return S.en;
+    return S[code] || I.table(S, "habits", code);
+  }
   function previews(state, lang) {
-    var el = lang === "el", byId = {}, count = {};
+    var L = strs(lang), byId = {}, count = {};
     var habits = (state.habits || []).slice().sort(function (a, b) { return a.name < b.name ? -1 : (a.name > b.name ? 1 : 0); });
     habits.forEach(function (h) { byId[h.id] = h; count[h.id] = 0; });
     var comps = (state.comps || []).filter(function (c) { return byId[c.habitId]; }).sort(function (a, b) {
@@ -128,15 +149,15 @@
       csv.push([c.date, h.name, done ? "yes" : "no", h.num && c.v ? sum(c) : "", h.num ? h.num.u : "",
                 c.sk && c.sk[0] === 1 ? "yes" : "", c.nt ? c.nt[0] : ""].map(csvCell).join(","));
     });
-    var md = ["# " + (el ? "Συνήθειες" : "Habits"), ""];
+    var md = ["# " + L["app.name"], ""];
     habits.forEach(function (h) {
       var bits = [];
-      if (h.per) bits.push(h.per[1] + "× / " + (h.per[0] === "w" ? (el ? "εβδομάδα" : "week") : (el ? "μήνα" : "month")));
-      else if (!h.days.length) bits.push(el ? "οποιαδήποτε μέρα" : "any day");
-      else if (h.days.length === 7) bits.push(el ? "κάθε μέρα" : "every day");
-      else bits.push(h.days.map(function (d) { return WD[el ? "el" : "en"][d]; }).join(", "));
+      if (h.per) bits.push(h.per[1] + "× / " + (h.per[0] === "w" ? L["md.week"] : L["md.month"]));
+      else if (!h.days.length) bits.push(L["md.anyday"]);
+      else if (h.days.length === 7) bits.push(L["md.everyday"]);
+      else bits.push(h.days.map(function (d) { return L["day." + d]; }).join(", "));
       if (h.num) bits.push((h.num.c === "le" ? "≤ " : "≥ ") + h.num.t + (h.num.u ? " " + h.num.u : ""));
-      bits.push((el ? "ολοκληρώσεις: " : "check-offs: ") + count[h.id]);
+      bits.push(L["md.checkoffs"].replace("{n}", String(count[h.id])));
       md.push("- " + h.name.replace(/\s+/g, " ") + " (" + bits.join(" · ") + ")");
     });
     return { "habits.md": md.join("\n") + "\n", "checkins.csv": csv.join("\r\n") + "\r\n" };

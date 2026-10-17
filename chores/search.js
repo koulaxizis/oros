@@ -16,8 +16,10 @@
   "use strict";
   var KEY = "oros-chores-data";
   var FREQ = {
-    en: { d: "Every day", w: "Every week", mo: "Every month", n: "Every {n} days", wd: "On weekdays" },
-    el: { d: "Κάθε μέρα", w: "Κάθε εβδομάδα", mo: "Κάθε μήνα", n: "Κάθε {n} μέρες", wd: "Συγκεκριμένες μέρες" }
+    en: { d: "Every day", w: "Every week", mo: "Every month", n: "Every {n} days", wd: "On weekdays",
+          "noname.task": "Unnamed chore", "noname.member": "Unnamed member" },
+    el: { d: "Κάθε μέρα", w: "Κάθε εβδομάδα", mo: "Κάθε μήνα", n: "Κάθε {n} μέρες", wd: "Συγκεκριμένες μέρες",
+          "noname.task": "Δουλειά χωρίς όνομα", "noname.member": "Μέλος χωρίς όνομα" }
   };
 
   function str(v) { return typeof v === "string" ? v.trim() : ""; }
@@ -32,7 +34,7 @@
     id: "chores",
     keys: [KEY],
     search: function (ctx) {
-      var d = ctx.readJSON(KEY), out = [], el = ctx.lang === "el";
+      var d = ctx.readJSON(KEY), out = [], L = ctx.lang === "el" ? FREQ.el : FREQ.en;
       if (!d || typeof d !== "object") return out;
       var tombs = d.tombs && typeof d.tombs === "object" ? d.tombs : {};
       function gone(x) {
@@ -46,7 +48,7 @@
       tasks.forEach(function (k) {
         out.push({
           id: k.id,
-          title: str(k.name) || (el ? "Δουλειά χωρίς όνομα" : "Unnamed chore"),
+          title: str(k.name) || L["noname.task"],
           text: [freqText(k.freq, ctx.lang),
                  arr(k.who).map(function (id) { return names[id] || ""; }).filter(Boolean).join(", ")]
             .filter(Boolean).join(" · "),
@@ -56,7 +58,7 @@
       members.forEach(function (m) {
         out.push({
           id: m.id,
-          title: names[m.id] || (el ? "Μέλος χωρίς όνομα" : "Unnamed member"),
+          title: names[m.id] || L["noname.member"],
           text: tasks.filter(function (k) { return !arr(k.who).length || arr(k.who).indexOf(m.id) >= 0; })
             .map(function (k) { return str(k.name); }).filter(Boolean).join(", "),
           target: { member: m.id }

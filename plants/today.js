@@ -18,6 +18,13 @@
     en: { water: "water", fert: "feed", mist: "mist", repot: "repot", rain: "rain today, may not need water" },
     el: { water: "πότισμα", fert: "λίπανση", mist: "ψέκασμα", repot: "μεταφύτευση", rain: "βροχή σήμερα, ίσως δεν θέλει πότισμα" }
   };
+  // Pack "plants": the shell runs this file, so a pack language reads
+  // the "plants" pack when the shell has it, else English.
+  function words(lang) {
+    var I = root && root.orosI18n;
+    if (I && I.known(lang) && !W[lang]) I.table(W, "plants", lang);
+    return W[lang] || W.en;
+  }
 
   var PROVIDER = {
     id: "plants",
@@ -25,7 +32,7 @@
     collect: function (ctx) {
       var C = root.OrosPlantsCore, raw = ctx.readJSON(KEY);
       if (!C || !raw || !Array.isArray(raw.plants) || !raw.plants.length) return [];
-      var w = W[ctx.lang] || W.en;
+      var w = words(ctx.lang);
       var prefs = C.readPrefs(ctx.readJSON("oros-plants-prefs"));
       var data = C.merge(raw, raw, ctx.now);
       var wx = null;

@@ -14,7 +14,7 @@
 // API (window.OrosGarageCore):
 //   TYPES, FUELS, ITEMS, RENEWALS, COST_CATS, DATA_VER, ID_RE
 //   ymdOf, isYmd, dayNum, ymdFromDay, addDays, addMonths
-//   cleanText, parseNum(str, lang)
+//   cleanText, parseNum(str, lang), commaDecimal(lang), NAMES (en/el table)
 //   norm* (strict: invalid rows are dropped), merge(A, B, nowMs)
 //   hasFuel(v), itemsFor(type), itemName(item, lang), defaultPlans(type, fuel)
 //   readings(data, vid), currentKm(data, vid), kmPerDay(data, vid, today)
@@ -120,36 +120,122 @@
     other:    { for: "mtbp", km: 0,    mo: 0 }
   };
   var ITEM_IDS = Object.keys(ITEMS);
-  // Item names [en, el]: here, so the app and the Calendar feed share them.
-  var ITEM_NAMES = {
-    oil: ["Oil change", "Λάδια"],
-    ofilter: ["Oil filter", "Φίλτρο λαδιού"],
-    afilter: ["Air filter", "Φίλτρο αέρα"],
-    cabin: ["Cabin filter", "Φίλτρο καμπίνας"],
-    ffilter: ["Fuel filter", "Φίλτρο καυσίμου"],
-    plugs: ["Spark plugs", "Μπουζί"],
-    brakes: ["Brakes", "Φρένα"],
-    timing: ["Timing belt", "Ιμάντας χρονισμού"],
-    belt: ["Drive belt", "Ιμάντας κίνησης"],
-    chain: ["Chain", "Αλυσίδα"],
-    lube: ["Chain lube", "Λίπανση αλυσίδας"],
-    battery: ["Battery", "Μπαταρία"],
-    coolant: ["Coolant", "Αντιψυκτικό"],
-    gearbox: ["Gearbox oil", "Λάδι κιβωτίου"],
-    ac: ["Air conditioning", "Κλιματισμός"],
-    rotation: ["Tyre rotation", "Εναλλαγή ελαστικών"],
-    tyres: ["Tyres / tubes", "Λάστιχα / σαμπρέλες"],
-    wipers: ["Wipers", "Υαλοκαθαριστήρες"],
-    impeller: ["Impeller", "Φτερωτή"],
-    anodes: ["Anodes", "Ανόδια"],
-    antifoul: ["Antifouling", "Υφαλόχρωμα"],
-    cables: ["Cables", "Ντίζες"],
-    gears: ["Gears", "Ταχύτητες"],
-    tune: ["Tune-up", "Γενικός έλεγχος"],
-    general: ["General service", "Γενικό σέρβις"],
-    other: ["Other", "Άλλο"]
+  // Names of service items ("item.*"), renewals ("ren.*") and the
+  // words of alertLine: here, so the app, the shell's reminder and
+  // the Calendar feed share them. Same keys and English as
+  // garage.js (one "garage" pack). A pack language (../i18n.js,
+  // when loaded) gets English + the "garage" pack; in Node: English.
+  var NAMES = {
+    en: {
+      "item.oil": "Oil change",
+      "item.ofilter": "Oil filter",
+      "item.afilter": "Air filter",
+      "item.cabin": "Cabin filter",
+      "item.ffilter": "Fuel filter",
+      "item.plugs": "Spark plugs",
+      "item.brakes": "Brakes",
+      "item.timing": "Timing belt",
+      "item.belt": "Drive belt",
+      "item.chain": "Chain",
+      "item.lube": "Chain lube",
+      "item.battery": "Battery",
+      "item.coolant": "Coolant",
+      "item.gearbox": "Gearbox oil",
+      "item.ac": "Air conditioning",
+      "item.rotation": "Tyre rotation",
+      "item.tyres": "Tyres / tubes",
+      "item.wipers": "Wipers",
+      "item.impeller": "Impeller",
+      "item.anodes": "Anodes",
+      "item.antifoul": "Antifouling",
+      "item.cables": "Cables",
+      "item.gears": "Gears",
+      "item.tune": "Tune-up",
+      "item.general": "General service",
+      "item.other": "Other",
+      "ren.kteo": "Roadworthiness test (KTEO)",
+      "ren.ins": "Insurance",
+      "ren.tax": "Road tax",
+      "ren.kek": "Emissions card",
+      "ren.road": "Roadside assistance",
+      "ren.lic": "Driving licence",
+      "ren.other": "Other",
+      "alert.inKm": "in {n} km",
+      "alert.tyres": "tyres",
+      "due.in": "in {n} days",
+      "due.late": "{n} days late",
+      "due.today": "today",
+      "due.tomorrow": "tomorrow",
+      "exp.ago": "expired {n} days ago",
+      "exp.ago1": "expired yesterday",
+      "plan.over": "{n} km over",
+      "tyre.old": "old",
+      "tyre.worn": "worn"
+    },
+    el: {
+      "item.oil": "Λάδια",
+      "item.ofilter": "Φίλτρο λαδιού",
+      "item.afilter": "Φίλτρο αέρα",
+      "item.cabin": "Φίλτρο καμπίνας",
+      "item.ffilter": "Φίλτρο καυσίμου",
+      "item.plugs": "Μπουζί",
+      "item.brakes": "Φρένα",
+      "item.timing": "Ιμάντας χρονισμού",
+      "item.belt": "Ιμάντας κίνησης",
+      "item.chain": "Αλυσίδα",
+      "item.lube": "Λίπανση αλυσίδας",
+      "item.battery": "Μπαταρία",
+      "item.coolant": "Αντιψυκτικό",
+      "item.gearbox": "Λάδι κιβωτίου",
+      "item.ac": "Κλιματισμός",
+      "item.rotation": "Εναλλαγή ελαστικών",
+      "item.tyres": "Λάστιχα / σαμπρέλες",
+      "item.wipers": "Υαλοκαθαριστήρες",
+      "item.impeller": "Φτερωτή",
+      "item.anodes": "Ανόδια",
+      "item.antifoul": "Υφαλόχρωμα",
+      "item.cables": "Ντίζες",
+      "item.gears": "Ταχύτητες",
+      "item.tune": "Γενικός έλεγχος",
+      "item.general": "Γενικό σέρβις",
+      "item.other": "Άλλο",
+      "ren.kteo": "ΚΤΕΟ",
+      "ren.ins": "Ασφάλεια",
+      "ren.tax": "Τέλη κυκλοφορίας",
+      "ren.kek": "Κάρτα καυσαερίων",
+      "ren.road": "Οδική βοήθεια",
+      "ren.lic": "Δίπλωμα οδήγησης",
+      "ren.other": "Άλλο",
+      "alert.inKm": "σε {n} km",
+      "alert.tyres": "λάστιχα",
+      "due.in": "σε {n} μέρες",
+      "due.late": "{n} μέρες πίσω",
+      "due.today": "σήμερα",
+      "due.tomorrow": "αύριο",
+      "exp.ago": "έληξε πριν {n} μέρες",
+      "exp.ago1": "έληξε χθες",
+      "plan.over": "πέρασαν {n} km",
+      "tyre.old": "παλιά",
+      "tyre.worn": "φαγωμένα"
+    }
   };
-  function itemName(it, lang) { var n = ITEM_NAMES[it]; return n ? n[lang === "el" ? 1 : 0] : String(it); }
+  function names(lang) {
+    var tb = NAMES[lang];
+    if (!tb && typeof window !== "undefined" && window.orosI18n && lang) tb = window.orosI18n.table(NAMES, "garage", lang);
+    return tb || NAMES.en;
+  }
+  function word(key, lang, n) {
+    var w = names(lang)[key] || NAMES.en[key] || key;
+    return n === undefined ? w : w.split("{n}").join(String(n));
+  }
+  // [en, el] per id (nameMatch, other apps)
+  function pairs(prefix, ids) {
+    var o = {};
+    ids.forEach(function (id) { o[id] = [NAMES.en[prefix + id], NAMES.el[prefix + id]]; });
+    return o;
+  }
+  var ITEM_NAMES = pairs("item.", ITEM_IDS);
+  function itemName(it, lang) { return has(ITEMS, it) ? word("item." + it, lang) : String(it); }
   // Plans a new vehicle starts with, per class (all editable / removable)
   var DEFAULT_PLANS = {
     m: ["oil", "afilter", "cabin", "brakes", "timing", "battery"],
@@ -164,16 +250,8 @@
     road:  { every: 12 }, lic: { every: 0 },  other: { every: 12 }
   };
   var RENEWAL_IDS = Object.keys(RENEWALS);
-  var RENEWAL_NAMES = {
-    kteo: ["Roadworthiness test (KTEO)", "ΚΤΕΟ"],
-    ins: ["Insurance", "Ασφάλεια"],
-    tax: ["Road tax", "Τέλη κυκλοφορίας"],
-    kek: ["Emissions card", "Κάρτα καυσαερίων"],
-    road: ["Roadside assistance", "Οδική βοήθεια"],
-    lic: ["Driving licence", "Δίπλωμα οδήγησης"],
-    other: ["Other", "Άλλο"]
-  };
-  function renewalName(kind, lang) { var n = RENEWAL_NAMES[kind]; return n ? n[lang === "el" ? 1 : 0] : String(kind); }
+  var RENEWAL_NAMES = pairs("ren.", RENEWAL_IDS);
+  function renewalName(kind, lang) { return has(RENEWALS, kind) ? word("ren." + kind, lang) : String(kind); }
   var WARN_DEFAULT = [30, 7, 1];
   var COST_CATS = ["toll", "park", "wash", "fine", "parts", "acc", "kteo", "ins", "tax", "kek", "road", "lic", "rent", "other"];
 
@@ -226,7 +304,13 @@
   // "1.234,5" · "1,234.5" · "42,3" · "42.3" · "1 234" → number, or
   // null. With both separators the LAST one is the decimal mark.
   // With only one kind: a comma is decimal; a dot is decimal too,
-  // except in Greek where "1.234" (groups of exactly 3) is thousands.
+  // except in Greek (and other comma-decimal languages, such as
+  // German) where "1.234" (groups of exactly 3) is thousands.
+  function commaDecimal(lang) {
+    if (lang === "el") return true;
+    if (!lang || lang === "en") return false;
+    try { return new Intl.NumberFormat(lang).format(1.5).indexOf(",") >= 0; } catch (e) { return false; }
+  }
   function parseNum(str, lang) {
     if (typeof str === "number") return isFinite(str) ? str : null;
     if (typeof str !== "string") return null;
@@ -245,7 +329,7 @@
         s = s.split(",").join("");
       } else s = s.replace(",", ".");
     } else if (ld >= 0) {
-      if (s.indexOf(".") !== ld || (lang === "el" && /^-?\d{1,3}(\.\d{3})+$/.test(s))) {
+      if (s.indexOf(".") !== ld || (commaDecimal(lang) && /^-?\d{1,3}(\.\d{3})+$/.test(s))) {
         if (!/^-?\d{1,3}(\.\d{3})+$/.test(s)) return null;
         s = s.split(".").join("");
       }
@@ -690,15 +774,17 @@
   // One line per alert for the shell's grouped reminder:
   // "Golf: Insurance in 5 days" · "Golf: Oil change, 300 km over".
   function alertLine(a, data, lang) {
-    var el = lang === "el", v = vehicle(data, a.v), name = v ? v.name : "";
-    function km(n) { try { return n.toLocaleString(el ? "el-GR" : "en-GB"); } catch (e) { return String(n); } }
+    var v = vehicle(data, a.v), name = v ? v.name : "";
+    var I = typeof window !== "undefined" && window.orosI18n;
+    var loc = I ? I.locale(lang) : (lang === "el" ? "el-GR" : "en-GB");
+    function km(n) { try { return n.toLocaleString(loc); } catch (e) { return String(n); } }
     var what = "", when = "";
     function days(n) {
-      if (n === 0) return el ? "σήμερα" : "today";
-      if (n === 1) return el ? "αύριο" : "tomorrow";
-      if (n > 1) return el ? "σε " + n + " μέρες" : "in " + n + " days";
-      if (n === -1) return el ? "έληξε χθες" : "expired yesterday";
-      return el ? "έληξε πριν " + (-n) + " μέρες" : "expired " + (-n) + " days ago";
+      if (n === 0) return word("due.today", lang);
+      if (n === 1) return word("due.tomorrow", lang);
+      if (n > 1) return word("due.in", lang, n);
+      if (n === -1) return word("exp.ago1", lang);
+      return word("exp.ago", lang, -n);
     }
     if (a.type === "renewal") {
       var r = null;
@@ -710,14 +796,13 @@
       ((data && data.plans) || []).forEach(function (x) { if (x.id === a.id) p = x; });
       what = p && p.item === "other" && p.label ? p.label : itemName(p ? p.item : "other", lang);
       if (a.leftKm !== null && a.leftKm !== undefined && (a.leftKm <= SOON_KM || a.left === null)) {
-        when = a.leftKm > 0 ? (el ? "σε " + km(a.leftKm) + " km" : "in " + km(a.leftKm) + " km")
-                            : (el ? "πέρασαν " + km(-a.leftKm) + " km" : km(-a.leftKm) + " km over");
+        when = a.leftKm > 0 ? word("alert.inKm", lang, km(a.leftKm)) : word("plan.over", lang, km(-a.leftKm));
       } else if (a.left !== null && a.left !== undefined) {
-        when = a.left < 0 ? (el ? (-a.left) + " μέρες πίσω" : (-a.left) + " days late") : days(a.left);
+        when = a.left < 0 ? word("due.late", lang, -a.left) : days(a.left);
       }
     } else {
-      what = el ? "λάστιχα" : "tyres";
-      when = a.level === "worn" ? (el ? "φαγωμένα" : "worn") : (el ? "παλιά" : "old");
+      what = word("alert.tyres", lang);
+      when = word(a.level === "worn" ? "tyre.worn" : "tyre.old", lang);
     }
     return name + ": " + what + (when ? (a.type === "tyre" ? " " : ", ") + when : "");
   }
@@ -885,7 +970,7 @@
     MAX_VEHICLES: MAX_VEHICLES, KM_MAX: KM_MAX, C_MAX: C_MAX, Q_MAX: Q_MAX, TOMB_DAYS: TOMB_DAYS,
     SOON_KM: SOON_KM, SOON_DAYS: SOON_DAYS,
     ymdOf: ymdOf, isYmd: isYmd, dayNum: dayNum, ymdFromDay: ymdFromDay, addDays: addDays, addMonths: addMonths,
-    cleanText: cleanText, parseNum: parseNum,
+    cleanText: cleanText, parseNum: parseNum, commaDecimal: commaDecimal, NAMES: NAMES,
     normVehicle: normVehicle, normFuel: normFuel, normService: normService, normPlan: normPlan,
     normTyre: normTyre, normRenewal: normRenewal, normCost: normCost, normOdo: normOdo,
     normSettings: normSettings, merge: merge,

@@ -14,13 +14,25 @@
 (function (root) {
   "use strict";
   var KEY = "oros-plants-data";
+  // Same keys and English as plants.js (orosI18n packs: pack "plants").
+  // The shell runs this file: a pack language reads the "plants" pack
+  // when the shell has it, else English.
+  var S = {
+    en: { "search.unnamed": "Unnamed plant", "search.out": "Outdoors" },
+    el: { "search.unnamed": "Φυτό χωρίς όνομα", "search.out": "Εξωτερικό" }
+  };
+  function words(lang) {
+    var I = root && root.orosI18n;
+    if (I && I.known(lang) && !S[lang]) I.table(S, "plants", lang);
+    return S[lang] || S.en;
+  }
 
   function str(v) { return typeof v === "string" ? v.trim() : ""; }
   function species(sp, lang) {
     var core = root && root.OrosPlantsCore;
     var pr = sp && core && core.PRESETS && Object.prototype.hasOwnProperty.call(core.PRESETS, sp)
       ? core.PRESETS[sp] : null;
-    var pair = pr && (lang === "el" ? pr.el : pr.en);
+    var pair = pr && (pr[lang] || pr.en);
     return pair && typeof pair[0] === "string" ? pair[0] : "";
   }
 
@@ -28,18 +40,18 @@
     id: "plants",
     keys: [KEY],
     search: function (ctx) {
-      var d = ctx.readJSON(KEY), out = [];
+      var d = ctx.readJSON(KEY), out = [], w = words(ctx.lang);
       if (!d || !Array.isArray(d.plants)) return out;
       var tombs = d.tombs && typeof d.tombs === "object" ? d.tombs : {};
       d.plants.forEach(function (p) {
         if (!p || typeof p.id !== "string") return;
         if (typeof tombs[p.id] === "number" && tombs[p.id] >= (Number(p.m) || 0)) return;
-        var name = str(p.name) || (ctx.lang === "el" ? "Φυτό χωρίς όνομα" : "Unnamed plant");
+        var name = str(p.name) || w["search.unnamed"];
         out.push({
           id: p.id,
           title: name,
           text: [str(p.room), species(p.sp, ctx.lang), str(p.sci),
-                 p.out === 1 ? (ctx.lang === "el" ? "Εξωτερικό" : "Outdoors") : "",
+                 p.out === 1 ? w["search.out"] : "",
                  str(p.notes)].filter(Boolean).join(" · "),
           target: p.id
         });

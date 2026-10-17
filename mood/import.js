@@ -29,6 +29,8 @@
 // run or rendered as HTML (mood.js shows it with textContent).
 // Needs OrosImportKit (../importkit.js) and, for ZIPs, AtelierZip.
 // UMD: window.OrosMoodImport in the browser, module.exports in Node.
+// i18n-inline-ok: the Greek (and German) words below are file data the
+// importer recognises, not UI text (labels come from mood.js tables).
 // ============================================================
 (function (root) {
   "use strict";
@@ -58,11 +60,11 @@
 
   // ---------- mood words → step ----------
   var WORDS = {
-    1: ["rad", "great", "excellent", "awesome", "amazing", "fantastic", "super", "ecstatic", "very good", "τέλεια", "τελεια", "φανταστικά", "φανταστικα", "υπέροχα", "υπεροχα"],
-    2: ["good", "happy", "fine", "nice", "well", "καλά", "καλα", "καλή", "καλη"],
-    3: ["meh", "ok", "okay", "neutral", "so-so", "so so", "average", "normal", "μέτρια", "μετρια", "έτσι κι έτσι", "ετσι κι ετσι", "ουδέτερα"],
-    4: ["bad", "sad", "low", "down", "poor", "not good", "άσχημα", "ασχημα", "κακά", "κακα"],
-    5: ["awful", "terrible", "horrible", "very bad", "worst", "miserable", "χάλια", "χαλια", "απαίσια", "απαισια"]
+    1: ["rad", "great", "excellent", "awesome", "amazing", "fantastic", "super", "ecstatic", "very good", "τέλεια", "τελεια", "φανταστικά", "φανταστικα", "υπέροχα", "υπεροχα", "sehr gut", "großartig", "fantastisch"],
+    2: ["good", "happy", "fine", "nice", "well", "καλά", "καλα", "καλή", "καλη", "gut"],
+    3: ["meh", "ok", "okay", "neutral", "so-so", "so so", "average", "normal", "μέτρια", "μετρια", "έτσι κι έτσι", "ετσι κι ετσι", "ουδέτερα", "naja", "mittel"],
+    4: ["bad", "sad", "low", "down", "poor", "not good", "άσχημα", "ασχημα", "κακά", "κακα", "schlecht", "nicht gut"],
+    5: ["awful", "terrible", "horrible", "very bad", "worst", "miserable", "χάλια", "χαλια", "απαίσια", "απαισια", "furchtbar", "schrecklich", "sehr schlecht", "mies"]
   };
   var WORD_STEP = {};
   Object.keys(WORDS).forEach(function (g) { WORDS[g].forEach(function (w) { WORD_STEP[w] = +g; }); });
@@ -88,15 +90,15 @@
 
   // ---------- feeling names → built-in key ----------
   var EMO_SYN = {
-    happy: ["happy", "joy", "joyful", "content", "grateful", "cheerful", "glad", "loved", "proud", "χαρούμενος", "χαρούμενη", "χαρά"],
-    calm: ["calm", "relaxed", "peaceful", "serene", "at peace", "chill", "ήρεμος", "ήρεμη", "ηρεμία"],
-    excited: ["excited", "energetic", "motivated", "hopeful", "inspired", "enthusiastic", "elevated", "ενθουσιασμένος", "ενθουσιασμένη"],
-    sad: ["sad", "down", "lonely", "depressed", "unhappy", "hopeless", "low", "λυπημένος", "λυπημένη", "λύπη"],
-    angry: ["angry", "irritable", "irritated", "frustrated", "annoyed", "mad", "θυμωμένος", "θυμωμένη", "θυμός"],
-    anxious: ["anxious", "worried", "nervous", "scared", "afraid", "fearful", "panicked", "αγχωμένος", "αγχωμένη", "άγχος"],
-    tired: ["tired", "exhausted", "sleepy", "fatigued", "drained", "κουρασμένος", "κουρασμένη", "κούραση"],
-    stressed: ["stressed", "overwhelmed", "under pressure", "tense", "πιεσμένος", "πιεσμένη", "στρες"],
-    numb: ["numb", "empty", "bored", "indifferent", "apathetic", "άδειος", "άδεια"]
+    happy: ["happy", "joy", "joyful", "content", "grateful", "cheerful", "glad", "loved", "proud", "χαρούμενος", "χαρούμενη", "χαρά", "glücklich", "fröhlich", "froh"],
+    calm: ["calm", "relaxed", "peaceful", "serene", "at peace", "chill", "ήρεμος", "ήρεμη", "ηρεμία", "ruhig", "entspannt", "gelassen"],
+    excited: ["excited", "energetic", "motivated", "hopeful", "inspired", "enthusiastic", "elevated", "ενθουσιασμένος", "ενθουσιασμένη", "aufgeregt", "begeistert", "motiviert"],
+    sad: ["sad", "down", "lonely", "depressed", "unhappy", "hopeless", "low", "λυπημένος", "λυπημένη", "λύπη", "traurig", "einsam"],
+    angry: ["angry", "irritable", "irritated", "frustrated", "annoyed", "mad", "θυμωμένος", "θυμωμένη", "θυμός", "wütend", "gereizt", "verärgert"],
+    anxious: ["anxious", "worried", "nervous", "scared", "afraid", "fearful", "panicked", "αγχωμένος", "αγχωμένη", "άγχος", "ängstlich", "besorgt", "nervös"],
+    tired: ["tired", "exhausted", "sleepy", "fatigued", "drained", "κουρασμένος", "κουρασμένη", "κούραση", "müde", "erschöpft"],
+    stressed: ["stressed", "overwhelmed", "under pressure", "tense", "πιεσμένος", "πιεσμένη", "στρες", "gestresst", "überfordert"],
+    numb: ["numb", "empty", "bored", "indifferent", "apathetic", "άδειος", "άδεια", "leer", "gelangweilt"]
   };
   var EMO_KEY = {};
   Object.keys(EMO_SYN).forEach(function (k) { EMO_SYN[k].forEach(function (w) { EMO_KEY[w] = k; }); });

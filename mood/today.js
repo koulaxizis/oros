@@ -12,7 +12,13 @@
 (function (root) {
   "use strict";
   var KEY = "oros-mood-data";
-  var TXT = { en: "Mood check-in", el: "Καταγραφή διάθεσης" };
+  var TXT = { en: { "today.checkin": "Mood check-in" }, el: { "today.checkin": "Καταγραφή διάθεσης" } };
+  // A pack language: English + the mood pack, when one is loaded.
+  function title(lang) {
+    var I = typeof window !== "undefined" && window.orosI18n;
+    if (I && lang && !TXT[lang]) I.table(TXT, "mood", lang);
+    return (TXT[lang] || TXT.en)["today.checkin"];
+  }
 
   var PROVIDER = {
     id: "mood",
@@ -21,7 +27,7 @@
       var C = root.OrosMoodCore, raw = ctx.readJSON(KEY);
       if (!C || !C.hasAny(raw) || C.hasOn(raw, ctx.today)) return [];
       return [{ id: "checkin:" + ctx.today, due: ctx.today, kind: "task",
-                title: TXT[ctx.lang] || TXT.en, target: { checkin: true } }];
+                title: title(ctx.lang), target: { checkin: true } }];
     },
     open: function (target, win) {
       if (typeof win.__orosOpenMood === "function") win.__orosOpenMood("checkin");
