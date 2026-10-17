@@ -891,6 +891,8 @@
         { scope: "syncInterval", forId: "f-y.interval" }));
       host.appendChild(c2);
 
+      if (y.canRestore) host.appendChild(backupsCard(y));
+
       var c3 = card(null);
       c3.appendChild(actions(
         button(t("y.changePass"), "y.changePass", function () { act("sync.changePass"); }),
@@ -900,6 +902,80 @@
         }, "danger")));
       host.appendChild(c3);
     }
+  }
+
+  // A43: the cloud's daily backups, newest first, each with Restore
+  // (two taps). A backup sealed with an older passphrase asks for it
+  // here; that field, like the unlock one, lives only in memory.
+  var oldPass = { value: "" };
+  function backupsCard(y) {
+    var c = card(t("y.backups"));
+    c.appendChild(el("p", "hint", t("y.backups.hint")));
+    var b = y.backups;
+    if (!b) {
+      c.appendChild(actions(button(t("y.backups.show"), "y.backups.show", function () { act("sync.backups.load"); })));
+      return c;
+    }
+    if (b.err) c.appendChild(el("div", "msg msg-err", b.err));
+    if (b.loading && !b.list.length) c.appendChild(el("div", "hint", t("y.backups.loading")));
+    else if (!b.list.length && !b.err) c.appendChild(el("div", "hint", t("y.backups.none")));
+    var locale = LANG === "el" ? "el-GR" : "en-GB";
+    b.list.forEach(function (e, i) {
+      var d = new Date(e.at);
+      var when = isNaN(d.getTime()) ? e.name : d.toLocaleString(locale, { dateStyle: "medium", timeStyle: "short" });
+      var size = e.size > 0 ? (e.size < 1048576 ? Math.max(1, Math.round(e.size / 1024)) + " KB"
+                                                 : (e.size / 1048576).toFixed(1) + " MB") : "";
+      var r = el("div", "row backup-row");
+      var head = el("div", "row-head");
+      head.appendChild(el("div", "row-label", when));
+      r.appendChild(head);
+      if (size) r.appendChild(el("div", "hint", size));
+      var ctl = el("div", "row-ctl");
+      if (y.restoring === e.name) {
+        var w = button(t("y.backups.restoring"), "y.restore:" + i, function () {});
+        w.disabled = true;
+        ctl.appendChild(w);
+      } else {
+        var rb = confirmBtn(t("y.backups.restore"), t("y.backups.restore.confirm"), "y.restore:" + i, function () {
+          act("sync.restore", { name: e.name });
+        });
+        if (y.restoring) rb.disabled = true;
+        ctl.appendChild(rb);
+      }
+      r.appendChild(ctl);
+      if (y.oldPassFor === e.name && !y.restoring) r.appendChild(oldPassForm(e.name));
+      c.appendChild(r);
+    });
+    return c;
+  }
+  function oldPassForm(name) {
+    var form = el("form", "pass");
+    form.setAttribute("autocomplete", "off");
+    var lab = el("label", "row-label", t("y.backups.old"));
+    lab.htmlFor = "f-oldpass";
+    form.appendChild(lab);
+    var inp = el("input");
+    inp.id = "f-oldpass";
+    inp.type = "password";
+    inp.autocomplete = "off";
+    inp.spellcheck = false;
+    inp.value = oldPass.value;
+    inp.setAttribute("data-k", "oldpass");
+    inp.addEventListener("input", function () { oldPass.value = inp.value; });
+    var ir = el("div", "pass-row");
+    ir.appendChild(inp);
+    form.appendChild(ir);
+    var go = el("button", "btn primary", t("y.backups.old.go"));
+    go.type = "submit";
+    go.setAttribute("data-k", "y.backups.old.go");
+    form.appendChild(actions(go));
+    form.addEventListener("submit", function (ev) {
+      ev.preventDefault();
+      var pw = oldPass.value;
+      oldPass.value = "";
+      if (pw) act("sync.restore", { name: name, old: pw });
+    });
+    return form;
   }
 
   // ---------- 7. Section: Backups ----------

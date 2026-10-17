@@ -48,6 +48,9 @@
     // sync UI state
     syncUserEmail:   null,
     syncMsg:         null,   // { kind: "ok"|"err"|"dim", text: "…" }
+    syncBackups:     null,   // A43: { loading, list: [{ name, at, size }], err } once Settings asked
+    syncRestoring:   null,   // A43: name of the backup being restored
+    syncOldPassFor:  null,   // A43: backup that needs its old passphrase
     syncAutoErr:     null,   // SY-L2: why the last background sync failed (cleared by a success)
 
     // auto-backup mode: "off" | "daily" | "weekly" | "monthly"
@@ -5265,6 +5268,7 @@
     if (typeof S.disconnectRevoke !== "function") {
       S.disconnect();
       state.syncUserEmail = null;
+      state.syncBackups = null;
       renderMenu();
       return;
     }
@@ -5273,10 +5277,65 @@
     S.disconnectRevoke(5000).then(function (r) {
       syncDisconnecting = false;
       state.syncUserEmail = null;
+      state.syncBackups = null;
       state.syncAutoErr = null;
       setSyncMsg("ok", syncDisconnectKey(r));
     });
   }
+  // A43: the cloud backups for Settings › Sync, and Restore.
+  function syncBackupsLoad() {
+    var S = window.orosSync;
+    if (!S || typeof S.listBackups !== "function" || !S.isConnected()) return;
+    state.syncBackups = { loading: true, list: (state.syncBackups && state.syncBackups.list) || [] };
+    settingsNotify();
+    S.listBackups().then(function (list) {
+      state.syncBackups = { loading: false, list: Array.prototype.map.call(list || [], function (e) {
+        return { name: String(e.name), at: String(e.at || ""), size: +e.size || 0 };
+      }) };
+    }, function (err) {
+      state.syncBackups = { loading: false, list: [], err: window.t(S.errorKey(err)) };
+    }).then(settingsNotify);
+  }
+  function syncRestore(arg) {
+    var S = window.orosSync;
+    if (!S || typeof S.restoreBackup !== "function" || state.syncRestoring) return;
+    state.syncRestoring = arg.name;
+    state.syncOldPassFor = null;
+    setSyncMsgRaw("dim", window.t("sync.restore.working"));
+    S.restoreBackup(arg.name, arg.old || undefined).then(function (r) {
+      state.syncRestoring = null;
+      state.syncAutoErr = null;
+      setSyncMsg(r.failed && r.failed.length ? "err" : "ok",
+        r.failed && r.failed.length ? "sync.err.applyfull" : "sync.restore.done");
+      syncBackupsLoad();
+    }, function (err) {
+      state.syncRestoring = null;
+      var key = S.errorKey(err);
+      if (key === "sync.err.restore-oldpass" || key === "sync.err.restore-oldpass-wrong") {
+        state.syncOldPassFor = arg.name;
+      }
+      setSyncMsg("err", key);
+    });
+  }
+  // Local rescue copies (sync.js asks for one before every rollback):
+  // /internal/Rescue on this device's orOS disk, importable from
+  // Settings › Backups like any backup file.
+  function syncRescueSink(text) {
+    var F = window.orosFS;
+    if (!F || typeof F.writeText !== "function") return Promise.resolve(false);
+    var dir = "/internal/Rescue";
+    var file = dir + "/orOS-rescue-" + new Date().toISOString().replace(/[:.]/g, "-") + ".json";
+    return Promise.resolve(typeof F.mkdir === "function" ? F.mkdir(dir) : null)
+      .catch(function () {})
+      .then(function () { return F.writeText(file, text); })
+      .then(function () { return true; }, function () { return false; });
+  }
+  // A restore made on another device reached this one.
+  function syncRestoredNotice(info) {
+    if (!info || info.here) return;
+    setSyncMsg("ok", info.rescued ? "sync.restore.followed" : "sync.restore.followed.nocopy");
+  }
+
   function syncDisconnectKey(r) {
     if (r.revoked) return "sync.disc.revoked";
     if (r.offline) return r.provider === "webdav" ? "sync.disc.offline.dav" : "sync.disc.offline";
@@ -7238,6 +7297,10 @@
     if (window.orosSync && typeof window.orosSync.onApplyFailed === "function") {
       window.orosSync.onApplyFailed(syncApplyFailNotice);
     }
+    if (window.orosSync && typeof window.orosSync.setRescueSink === "function") {
+      window.orosSync.setRescueSink(syncRescueSink);
+      window.orosSync.onRestored(syncRestoredNotice);
+    }
 
     // Subtle auto-sync feedback: the status dot pulses while the engine
     // pushes in the background. No messages, no interruptions.
@@ -8849,6 +8912,14 @@
         interval: getSafeInterval(),
         intervals: [0, 1, 3, 5, 15],
         minPass: MIN_PASS_LEN,
+        canRestore: !!(S && typeof S.restoreBackup === "function"),
+        backups: (connected && state.syncBackups) ? {
+          loading: !!state.syncBackups.loading,
+          list: state.syncBackups.list.slice(),
+          err: state.syncBackups.err || null
+        } : null,
+        restoring: state.syncRestoring,
+        oldPassFor: state.syncOldPassFor,
         msg: state.syncMsg ? { kind: state.syncMsg.kind, text: state.syncMsg.text }
            : (state.syncAutoErr ? { kind: "err", text: state.syncAutoErr } : null)
       },
@@ -8945,6 +9016,12 @@
       case "sync.forget":     syncForgetHere(); return;
       case "sync.changePass": if (S && S.isConnected() && S.hasPassphrase()) showChangePassDialog(); return;
       case "sync.disconnect": syncDisconnectUser(); return;
+      case "sync.backups.load": syncBackupsLoad(); return;
+      case "sync.restore":
+        if (S && S.isConnected() && S.hasPassphrase() && arg && typeof arg.name === "string") {
+          syncRestore({ name: arg.name, old: typeof arg.old === "string" ? arg.old : "" });
+        }
+        return;
       // Folder picker and permission prompts need a user gesture: the
       // app calls these straight from its click handler (the gesture
       // of a same-origin frame counts for the shell window too).

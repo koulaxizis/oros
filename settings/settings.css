@@ -213,6 +213,7 @@ button:focus-visible, select:focus-visible, input:focus-visible, .page-title:foc
 .row-ctl > .btn + .btn { margin-left: 8px; }
 a.btn { text-decoration: none; color: inherit; display: inline-flex; align-items: center; }
 .row > .folder, .row > .actions, .row > .hint.warn, .row > .seg { grid-column: 1 / -1; }
+.row > .pass { grid-column: 1 / -1; }   /* A43: old passphrase of a cloud backup */
 
 .scope {
   font-size: 11px;
