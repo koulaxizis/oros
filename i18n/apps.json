@@ -343,6 +343,12 @@
    ]
   },
   {
+   "app": "solitaire",
+   "files": [
+    "solitaire/solitaire.js"
+   ]
+  },
+  {
    "app": "spreadsheet",
    "files": [
     "spreadsheet/convert.js",
