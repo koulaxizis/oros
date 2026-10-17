@@ -1,0 +1,32 @@
+# Hexagon-Puzzle
+Ein großes Sechseck wurde in Teile aus 3 bis 6 Feldern zerschnitten. Die Teile liegen gemischt und gedreht in der Ablage. Setz sie alle wieder ins Sechseck.
+
+## So wird gespielt
+Zieh ein Teil aus der Ablage aufs Brett; es rastet im Raster ein. Passt es dort nicht, wo du es loslässt, siehst du `Das passt dort nicht`.
+
+- Tippe ein Teil an oder klicke es mit rechts, um es um 60° zu drehen. Die Tasten `Nach rechts drehen (R)` und `Nach links drehen (E)` drehen das Teil, das du zuletzt gewählt hast.
+- Zieh ein abgelegtes Teil, um es zu verschieben, oder zieh es vom Brett, um es zurück in die Ablage zu legen.
+- `Tipp (H)` legt ein Teil dorthin, wo die App es ausgeschnitten hat.
+- `Alle Teile zurück in die Ablage` leert das Brett.
+
+Das Puzzle ist gelöst, wenn das Brett voll ist. Jede Anordnung, die es füllt, zählt, nicht nur der ursprüngliche Schnitt.
+
+## Steuerung
+- Ziehen mit der Maus oder dem Finger; tippen oder Rechtsklick zum Drehen.
+- [[1]] bis [[9]] nehmen ein Teil aus der Ablage.
+- Mit einem Teil in der Hand bewegen die Pfeiltasten es, [[R]] und [[E]] drehen es, [[Enter]] legt es ab und [[Esc]] legt es zurück.
+- [[Enter]] auf einem abgelegten Teil nimmt es wieder auf.
+- [[H]] gibt einen Tipp; [[N]] startet ein neues Puzzle (`Neues Puzzle (N)`), mit einer Taste `Rückgängig`, die das alte zurückholt.
+
+## Stufen und Wertung
+`Leicht`, `Mittel` und `Schwer` legen die Größe des Sechsecks fest: 19, 37 oder 61 Felder. Wenn du die Stufe änderst, beginnt ein neues Puzzle.
+
+Die Uhr startet mit deinem ersten Zug und läuft nur, solange die App zu sehen ist. Ein angefangenes Puzzle bleibt auf diesem Gerät und wartet beim nächsten Mal auf dich. `Rekorde` zeigt deine Bestzeit und wie viele Puzzles du auf jeder Stufe gelöst hast.
+
+>! Ein Puzzle, das du mit Tipp gelöst hast, zählt als gelöst, kann aber keine Bestzeit setzen.
+
+## Synchronisierung
+Deine Bestzeiten und gelösten Puzzles werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. `Rekorde zurücksetzen` in `Rekorde` löscht sie nach einer Bestätigung auf allen Geräten. Die Stufe, das angefangene Puzzle und die Ton-Taste bleiben auf diesem Gerät.
+
+## Tipps
+- Lässt sich ein Teil auf dem Brett nicht drehen, weil kein Platz ist (`Hier ist kein Platz zum Drehen: zieh es erst heraus`), zieh es heraus, dreh es und leg es wieder ab.
