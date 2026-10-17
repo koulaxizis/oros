@@ -1,0 +1,105 @@
+{
+ "source": "tests/bundle-storage.test.js slice()",
+ "base": {
+  "ver": 1,
+  "ents": [
+   {
+    "id": "seed-sp-home",
+    "type": "space",
+    "name": "",
+    "bi": {
+     "en": "Home",
+     "el": "Σπίτι"
+    },
+    "parentId": null,
+    "pos": 0,
+    "mtime": 0,
+    "del": false
+   },
+   {
+    "id": "room01ab",
+    "type": "room",
+    "name": "Garage",
+    "bi": null,
+    "parentId": "seed-sp-home",
+    "pos": 0,
+    "mtime": 1799999999000,
+    "del": false
+   },
+   {
+    "id": "furn01ab",
+    "type": "furniture",
+    "name": "Metal shelf",
+    "bi": null,
+    "parentId": "room01ab",
+    "pos": 0,
+    "mtime": 1799999999000,
+    "del": false,
+    "note": "left wall"
+   },
+   {
+    "id": "posn01ab",
+    "type": "position",
+    "name": "Box 1",
+    "bi": null,
+    "parentId": "furn01ab",
+    "pos": 0,
+    "mtime": 1799999999000,
+    "del": false,
+    "tags": [
+     "Seasonal"
+    ]
+   },
+   {
+    "id": "item01ab",
+    "type": "item",
+    "name": "Drill",
+    "bi": null,
+    "parentId": "posn01ab",
+    "pos": 0,
+    "mtime": 1799999999000,
+    "del": false,
+    "qty": 2,
+    "note": "=HYPERLINK(\"x\")",
+    "tags": [
+     "tools",
+     "DIY"
+    ],
+    "val": 2550,
+    "bought": "2025-03-01",
+    "warr": "2027-03-01",
+    "ph": [
+     "item01ab-abcd12.jpg"
+    ],
+    "rc": "item01ab-efgh34.pdf"
+   },
+   {
+    "id": "item02ab",
+    "type": "item",
+    "name": "Tent, 4 people",
+    "bi": null,
+    "parentId": "posn01ab",
+    "pos": 0,
+    "mtime": 1799999999000,
+    "del": false,
+    "qty": 1,
+    "lent": {
+     "to": "Γιώργος",
+     "on": "2026-09-01",
+     "due": "2026-10-01"
+    }
+   },
+   {
+    "id": "gone01ab",
+    "type": "item",
+    "name": "Old lamp",
+    "bi": null,
+    "parentId": "posn01ab",
+    "pos": 0,
+    "mtime": 1799999999500,
+    "del": true,
+    "qty": 1
+   }
+  ]
+ }
+}

@@ -735,7 +735,8 @@
       "icon": "music",
       "url": "music/",
       "search": "search.js",
-      "type": "internal"
+      "type": "internal",
+      "today": "today.js"
     },
     {
       "id": "mixer",

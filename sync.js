@@ -904,9 +904,9 @@
 
   // ---------- SYNC PROVIDER CONTRACT (WebDAV W1) ----------
   // The engine (pull, push, backups, wipe, passphrase change) and the
-  // Vault reach the cloud ONLY through `provider`. Dropbox is today's
-  // only provider; a second one (WebDAV) implements the same object.
-  //   id                         — "dropbox"
+  // Vault reach the cloud ONLY through `provider`: dropboxProvider
+  // (the default) or webdavProvider (WebDAV W2), one at a time.
+  //   id                         — "dropbox" | "webdav"
   //   restore()                  — boot: load saved credentials
   //   isConnected() → bool
   //   connect()                  — start sign-in (may navigate away)
@@ -954,6 +954,473 @@
   };
 
   var provider = dropboxProvider;
+
+  // ---------- WebDAV provider (WebDAV W2) ----------
+  // Nextcloud, ownCloud, Synology, QNAP or any WebDAV server this
+  // browser may reach directly: the server must answer CORS for this
+  // origin and expose the ETag header (W3 adds the relay for servers
+  // that do not). Same blob, same Vault, same rules as Dropbox:
+  //   ETag = revision; create only = If-None-Match: *; replace only
+  //   that revision = If-Match: <etag>; refused = 412 (A36, SY-D4).
+  // connectWebdav() proves all of this on the real server before it
+  // saves anything (davProbe): a server that ignores the conditions
+  // would let two devices overwrite each other in silence.
+  // Layout under <url><dir> (default "/orOS"): orOS-data.json,
+  // orOS-backup-*.json, vault/<key>. The app password stays on this
+  // device in localStorage, like the Dropbox tokens; it is never in a
+  // synced slice and a factory reset removes it (oros-* sweep).
+  var DAV_CONF_KEY = "oros-dav-conf";      // { url, user, dir }
+  var DAV_PASS_KEY = "oros-dav-pass";
+  var DAV_ROOT     = "vault";
+  var DAV_PROPFIND = '<?xml version="1.0" encoding="utf-8"?><d:propfind xmlns:d="DAV:"><d:prop>' +
+    "<d:resourcetype/><d:getcontentlength/><d:getlastmodified/><d:getetag/></d:prop></d:propfind>";
+  var davConf = null;
+  var davPass = null;
+
+  function davRestore() {
+    davConf = null;
+    davPass = null;
+    try {
+      var c = JSON.parse(localStorage.getItem(DAV_CONF_KEY) || "null");
+      var p = localStorage.getItem(DAV_PASS_KEY);
+      if (c && typeof c.url === "string" && typeof c.user === "string" && p) {
+        davConf = { url: c.url, user: c.user, dir: typeof c.dir === "string" ? c.dir : "/orOS" };
+        davPass = p;
+      }
+    } catch (e) { davConf = null; davPass = null; }
+  }
+
+  function davDisconnect() {
+    davConf = null;
+    davPass = null;
+    localStorage.removeItem(DAV_CONF_KEY);
+    localStorage.removeItem(DAV_PASS_KEY);
+  }
+
+  // A folder typed by the user → "/a/b" (no "..", no empty parts).
+  function davNormDir(d) {
+    var parts = String(d == null ? "" : d).split("/").filter(function (x) { return x !== "" && x !== "."; });
+    if (parts.some(function (x) { return x === ".."; })) throw new Error("dav-url");
+    if (!parts.length) parts = ["orOS"];
+    return "/" + parts.join("/");
+  }
+
+  // https only (an https page cannot call http anyway); plain http is
+  // accepted for this computer only (a local test server).
+  function davNormConf(form) {
+    var u;
+    try { u = new URL(String((form && form.url) || "").trim()); } catch (e) { throw new Error("dav-url"); }
+    var local = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(u.hostname);
+    if (u.protocol !== "https:" && !(u.protocol === "http:" && local)) throw new Error("dav-url");
+    if (u.username || u.password || u.search || u.hash) throw new Error("dav-url");
+    return {
+      url: u.origin + u.pathname.replace(/\/+$/, ""),
+      user: String((form && form.user) || "").trim(),
+      dir: davNormDir(form && form.dir)
+    };
+  }
+
+  function davEnc(rel) {
+    return String(rel).split("/").map(function (x) { return encodeURIComponent(x); }).join("/");
+  }
+  function davBaseUrl(conf) { return conf.url + davEnc(conf.dir); }
+  function davUrl(conf, rel) { return davBaseUrl(conf) + (rel ? "/" + davEnc(rel) : ""); }
+
+  function davAuth(user, pass) {
+    return "Basic " + b64encode(new TextEncoder().encode(user + ":" + pass).buffer);
+  }
+
+  // One request. opts: { headers, body, abs (full URL), conf, pass }.
+  // A request that never lands (offline, or refused by CORS — the
+  // browser cannot tell them apart) rejects "network error: …".
+  function davReq(method, rel, opts) {
+    opts = opts || {};
+    var conf = opts.conf || davConf, pass = opts.conf ? opts.pass : davPass;
+    if (!conf) return Promise.reject(new Error("not-connected"));
+    var h = { "Authorization": davAuth(conf.user, pass) };
+    var extra = opts.headers || {};
+    Object.keys(extra).forEach(function (k) { h[k] = extra[k]; });
+    return fetch(opts.abs || davUrl(conf, rel), {
+      method: method, headers: h, body: opts.body, credentials: "omit", cache: "no-store"
+    }).catch(function (err) {
+      if (err instanceof TypeError) throw new Error("network error: " + (err.message || "unknown"));
+      throw err;
+    });
+  }
+
+  function davOk(res, what) {
+    if (res.status === 401 || res.status === 403) throw new Error("auth failed: " + res.status);
+    if (!res.ok) throw new Error(what + " failed: " + res.status);
+    return res;
+  }
+
+  // Quoted, exactly as the server compares it in If-Match. A weak
+  // ETag (W/"…") never matches If-Match: davProbe refuses such servers.
+  function davEtag(v) {
+    if (typeof v !== "string") return undefined;
+    v = v.trim();
+    if (!v) return undefined;
+    if (/^W\//.test(v) || v.charAt(0) === '"') return v;
+    return '"' + v + '"';
+  }
+  function davEtagOf(res) { return davEtag(res.headers.get("ETag") || ""); }
+
+  // ---- multistatus parsing (no DOMParser: tolerant of any prefix) ----
+  function davXmlText(s) {
+    return String(s || "").replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
+      .replace(/&(lt|gt|quot|apos|amp|#\d+|#x[0-9a-f]+);/gi, function (m, e) {
+        var l = e.toLowerCase();
+        if (l === "lt") return "<"; if (l === "gt") return ">"; if (l === "quot") return '"';
+        if (l === "apos") return "'"; if (l === "amp") return "&";
+        var n = l.charAt(1) === "x" ? parseInt(l.slice(2), 16) : parseInt(l.slice(1), 10);
+        return n > 0 && n < 0x110000 ? String.fromCodePoint(n) : "";
+      }).trim();
+  }
+  function davTag(s, name) {
+    var m = new RegExp("<(?:[A-Za-z0-9_-]+:)?" + name + "(?:\\s[^>]*)?>([\\s\\S]*?)</(?:[A-Za-z0-9_-]+:)?" + name + ">", "i").exec(s);
+    return m ? m[1] : "";
+  }
+  function davHasTag(s, name) {
+    return new RegExp("<(?:[A-Za-z0-9_-]+:)?" + name + "[\\s/>]", "i").test(s);
+  }
+  function davPathOf(href) {
+    var p = href;
+    var m = /^https?:\/\/[^/]+(\/[^?#]*)?/i.exec(href);
+    if (m) p = m[1] || "/";
+    try { p = decodeURIComponent(p); } catch (e) {}
+    return p.replace(/\/+$/, "");
+  }
+
+  // Children of the folder `rel` under the base: [{ rel, name, dir,
+  // size, modified, etag }]. null = the folder does not exist.
+  function davChildren(rel) {
+    var basePath = davPathOf(davBaseUrl(davConf));
+    var self = basePath + (rel ? "/" + rel : "");
+    return davReq("PROPFIND", rel, {
+      headers: { "Depth": "1", "Content-Type": "application/xml; charset=utf-8" },
+      body: DAV_PROPFIND
+    }).then(function (res) {
+      if (res.status === 404) return null;
+      davOk(res, "list");
+      return res.text();
+    }).then(function (xml) {
+      if (xml === null) return null;
+      var out = [];
+      var re = /<(?:[A-Za-z0-9_-]+:)?response[\s>][\s\S]*?<\/(?:[A-Za-z0-9_-]+:)?response>/gi, m;
+      while ((m = re.exec(xml))) {
+        var r = m[0];
+        var p = davPathOf(davXmlText(davTag(r, "href")));
+        if (p === self || p.indexOf(self + "/") !== 0) continue;
+        var childRel = p.slice(basePath.length + 1);
+        out.push({
+          rel: childRel,
+          name: childRel.split("/").pop(),
+          dir: davHasTag(davTag(r, "resourcetype"), "collection"),
+          size: parseInt(davXmlText(davTag(r, "getcontentlength")), 10) || 0,
+          modified: davXmlText(davTag(r, "getlastmodified")),
+          etag: davEtag(davXmlText(davTag(r, "getetag")))
+        });
+      }
+      return out;
+    });
+  }
+
+  // MKCOL every missing folder from the base down to `rel` (the base
+  // folder itself included). 405 = already there.
+  function davMkcols(conf, pass, rel) {
+    var parts = conf.dir.split("/").filter(Boolean).map(function (x, i, a) {
+      return { abs: conf.url + davEnc("/" + a.slice(0, i + 1).join("/")) };
+    });
+    var acc = [];
+    String(rel || "").split("/").filter(Boolean).forEach(function (x) {
+      acc.push(x);
+      parts.push({ abs: davUrl(conf, acc.join("/")) });
+    });
+    return parts.reduce(function (chain, p) {
+      return chain.then(function () {
+        return davReq("MKCOL", null, { abs: p.abs + "/", conf: conf, pass: pass }).then(function (res) {
+          if (res.ok || res.status === 405) return;
+          davOk(res, "mkcol");
+        });
+      });
+    }, Promise.resolve());
+  }
+
+  function davParentOf(rel) {
+    var i = rel.lastIndexOf("/");
+    return i === -1 ? "" : rel.slice(0, i);
+  }
+
+  // PUT with a condition; a missing parent folder (409 / 404) is
+  // created once and the write tried again.
+  function davPut(rel, body, cond) {
+    var h = { "Content-Type": "application/octet-stream" };
+    if (cond === null) h["If-None-Match"] = "*";
+    else if (typeof cond === "string" && cond) h["If-Match"] = cond;
+    function put() { return davReq("PUT", rel, { headers: h, body: body }); }
+    return put().then(function (res) {
+      if (res.status !== 409 && res.status !== 404) return res;
+      return davMkcols(davConf, davPass, davParentOf(rel)).then(put);
+    });
+  }
+
+  function davGetText(rel) {
+    return davReq("GET", rel).then(function (res) {
+      if (res.status === 404) return null;
+      davOk(res, "download");
+      return res.text();
+    });
+  }
+
+  function davDelete(rel, dir) {
+    return davReq("DELETE", null, { abs: davUrl(davConf, rel) + (dir ? "/" : "") }).then(function (res) {
+      if (res.ok || res.status === 404) return true;
+      davOk(res, "delete");
+      return true;
+    });
+  }
+
+  var BLOB_NAME = BLOB_PATH.slice(1);
+
+  function davBlobGet() {
+    return davReq("GET", BLOB_NAME).then(function (res) {
+      if (res.status === 404) return { text: null, rev: null };
+      davOk(res, "download");
+      var rev = davEtagOf(res);
+      return res.text().then(function (text) { return { text: text, rev: rev }; });
+    });
+  }
+
+  function davBlobPut(text, rev) {
+    return davPut(BLOB_NAME, text, rev).then(function (res) {
+      if (res.status === 412) throw new Error("cloud-changed");
+      davOk(res, "upload");
+      return { rev: davEtagOf(res) };
+    });
+  }
+
+  function davBackupCopy(name) {
+    return davReq("COPY", BLOB_NAME, {
+      headers: { "Destination": davUrl(davConf, name), "Overwrite": "F" }
+    }).then(function (res) { return !!res.ok; });
+  }
+
+  function davBackupList() {
+    return davChildren("").then(function (list) {
+      return (list || []).filter(function (e) {
+        return !e.dir && e.name.indexOf(BACKUP_PREFIX.slice(1)) === 0;
+      }).map(function (e) { return { name: e.name, size: e.size, modified: e.modified }; });
+    });
+  }
+
+  function davWipeAll() {
+    return davChildren("").catch(function () { return null; }).then(function (list) {
+      var doomed = [{ rel: BLOB_NAME, dir: false }, { rel: DAV_ROOT, dir: true }];
+      (list || []).forEach(function (e) {
+        if (e.name.indexOf("orOS-") === 0 && e.rel !== BLOB_NAME) doomed.push({ rel: e.rel, dir: e.dir });
+      });
+      return doomed.reduce(function (chain, d) {
+        return chain.then(function () { return davDelete(d.rel, d.dir).catch(function () {}); });
+      }, Promise.resolve()).then(function () { return doomed.length; });
+    });
+  }
+
+  // Nextcloud can delete the app password that signs these requests;
+  // other servers have no such call (the user removes it there).
+  function davRevoke(timeoutMs) {
+    if (!davConf || !/\/remote\.php\//.test(davConf.url)) return Promise.resolve(false);
+    var origin = davConf.url.replace(/^(https?:\/\/[^/]+).*$/, "$1");
+    var call = davReq("DELETE", null, {
+      abs: origin + "/ocs/v2.php/core/apppassword",
+      headers: { "OCS-APIRequest": "true" }
+    }).then(function (res) { return !!res.ok; }).catch(function () { return false; });
+    if (!timeoutMs) return call;
+    return Promise.race([call, new Promise(function (r) {
+      setTimeout(function () { r(false); }, timeoutMs);
+    })]);
+  }
+
+  function davAccount() {
+    if (!davConf) return Promise.reject(new Error("not-connected"));
+    var host = davConf.url.replace(/^https?:\/\/([^/]+).*$/, "$1");
+    return Promise.resolve({ email: davConf.user + "@" + host, name: davConf.user });
+  }
+
+  function davKey(key) { return DAV_ROOT + "/" + String(key).replace(/^\/+/, ""); }
+
+  var davStorage = {
+    putObject: function (key, blob, knownRev) {
+      return davPut(davKey(key), blob, knownRev).then(function (res) {
+        if (res.status === 412 && knownRev !== undefined) throw new Error("storage-conflict");
+        return davOk(res, "upload");
+      });
+    },
+    getObject: function (key) {
+      return davReq("GET", davKey(key)).then(function (res) {
+        if (res.status === 404) return null;
+        davOk(res, "download");
+        return res.arrayBuffer();
+      });
+    },
+    deleteObject: function (key) { return davDelete(davKey(key), false); },
+    // Every object key under `prefix` (folders walked one level at a
+    // time: many servers refuse Depth: infinity).
+    listPrefix: function (prefix) {
+      var out = [];
+      function walk(rel) {
+        return davChildren(rel).then(function (list) {
+          return (list || []).reduce(function (chain, e) {
+            return chain.then(function () {
+              if (e.dir) return walk(e.rel);
+              var k = e.rel.slice(DAV_ROOT.length + 1);
+              if (k.indexOf(prefix || "") === 0) out.push(k);
+            });
+          }, Promise.resolve());
+        });
+      }
+      return walk(DAV_ROOT).then(function () { return out; });
+    },
+    getRevision: function (key) {
+      return davReq("HEAD", davKey(key)).then(function (res) {
+        if (res.status === 404) return null;
+        davOk(res, "metadata");
+        return davEtagOf(res) || "";
+      });
+    }
+  };
+
+  // Proves, on the real server and before anything is saved, every
+  // promise the engine relies on. Rejects with a "dav-…" reason the
+  // shell turns into one sentence (sync.err.dav-…).
+  function davProbe(conf, pass) {
+    var o = { conf: conf, pass: pass };
+    var name = ".oros-probe-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    var abs = davUrl(conf, name);
+    function req(method, headers, body, url) {
+      return davReq(method, null, { abs: url || abs, conf: conf, pass: pass, headers: headers, body: body });
+    }
+    function fail(code) { throw new Error(code); }
+    var etag;
+    return req("PROPFIND", { "Depth": "0", "Content-Type": "application/xml; charset=utf-8" }, DAV_PROPFIND, conf.url + "/")
+      .then(function (res) {
+        if (res.status === 401 || res.status === 403) fail("dav-auth");
+        if (res.status !== 207) fail("dav-notdav");
+        return davMkcols(conf, pass, "").catch(function (e) {
+          if (/^auth failed/.test(e.message)) fail("dav-auth");
+          fail("dav-readonly");
+        });
+      })
+      .then(function () { return req("PUT", { "If-None-Match": "*" }, "1"); })
+      .then(function (res) {
+        if (!res.ok) fail("dav-readonly");
+        return req("PUT", { "If-None-Match": "*" }, "2");
+      })
+      .then(function (res) {
+        if (res.status !== 412) fail("dav-conditions");
+        return req("GET");
+      })
+      .then(function (res) {
+        if (!res.ok) fail("dav-readonly");
+        etag = davEtagOf(res);
+        if (!etag) fail("dav-etag");
+        if (/^W\//.test(etag)) fail("dav-conditions");
+        return req("PUT", { "If-Match": '"oros-probe-wrong"' }, "3");
+      })
+      .then(function (res) {
+        if (res.status !== 412) fail("dav-conditions");
+        return req("PUT", { "If-Match": etag }, "4");
+      })
+      .then(function (res) {
+        if (!res.ok) fail("dav-conditions");
+        return req("HEAD");
+      })
+      .then(function (res) {
+        var e2 = res.ok ? davEtagOf(res) : undefined;
+        if (!e2) fail("dav-etag");
+        // Two writes of the same size within one second: an ETag made
+        // of the size and a whole-second time (some servers) stays the
+        // same, and a stale device's If-Match would then still pass.
+        if (e2 === etag) fail("dav-conditions");
+        return req("PUT", { "If-Match": e2 }, "5");
+      })
+      .then(function (res) {
+        if (!res.ok) fail("dav-conditions");
+      })
+      .catch(function (err) {
+        var m = (err && err.message) || "";
+        if (/^network error/.test(m)) throw new Error("dav-unreachable");
+        if (/^auth failed/.test(m)) throw new Error("dav-auth");
+        throw err;
+      })
+      .finally(function () {
+        return req("DELETE").catch(function () {});
+      });
+  }
+
+  var webdavProvider = {
+    id:             "webdav",
+    restore:        davRestore,
+    isConnected:    function () { return !!(davConf && davPass); },
+    connect:        function () { return Promise.reject(new Error("not-connected")); },   // see connectWebdav()
+    handleRedirect: function () { return Promise.resolve(false); },
+    disconnect:     davDisconnect,
+    account:        davAccount,
+    blobGet:        davBlobGet,
+    blobRead:       function () { return davGetText(BLOB_NAME); },
+    blobPut:        davBlobPut,
+    backupCopy:     davBackupCopy,
+    backupList:     davBackupList,
+    backupGet:      davGetText,
+    backupDelete:   function (name) { return davDelete(name, false); },
+    wipeAll:        davWipeAll,
+    revoke:         davRevoke,
+    storage:        davStorage
+  };
+
+  // ---------- Provider choice ----------
+  // One provider at a time, chosen on this device (never synced).
+  // CLOUD_ID_KEY names the cloud this device last synced with: when
+  // it changes (Dropbox → WebDAV, another WebDAV server), the Vault's
+  // local picture of "the cloud" (manifest cache, revision, seed flag)
+  // belongs to the OLD cloud. It is dropped, so the new cloud gets
+  // this device's whole disk and nothing is read as a remote
+  // deletion; the blob engine is marked dirty so the first sync
+  // uploads everything even when nothing changed here.
+  var PROVIDER_KEY = "oros-sync-provider";
+  var CLOUD_ID_KEY = "oros-sync-cloud-id";
+  var VAULT_CLOUD_KEYS = ["oros-vault-manifest", "oros-vault-rev", "oros-vault-absent-at",
+                          "oros-vault-seeded", "oros-vault-conflicts"];
+  var PROVIDERS = { dropbox: dropboxProvider, webdav: webdavProvider };
+
+  function pickProvider() {
+    var id = null;
+    try { id = localStorage.getItem(PROVIDER_KEY); } catch (e) {}
+    return PROVIDERS[id] || dropboxProvider;
+  }
+
+  function useProvider(id) {
+    provider = PROVIDERS[id] || dropboxProvider;
+    try {
+      if (provider === dropboxProvider) localStorage.removeItem(PROVIDER_KEY);
+      else localStorage.setItem(PROVIDER_KEY, provider.id);
+    } catch (e) {}
+  }
+
+  // Before W2 every device synced with Dropbox, so a device without
+  // the key is on "dropbox" already.
+  function noteCloud(id) {
+    var prev = null;
+    try { prev = localStorage.getItem(CLOUD_ID_KEY); } catch (e) {}
+    if (prev === id || (prev === null && id === "dropbox")) {
+      try { localStorage.setItem(CLOUD_ID_KEY, id); } catch (e) {}
+      return false;
+    }
+    VAULT_CLOUD_KEYS.forEach(function (k) { try { localStorage.removeItem(k); } catch (e) {} });
+    try { localStorage.setItem(CLOUD_ID_KEY, id); } catch (e) {}
+    return true;
+  }
+
+  function davCloudId(conf) { return "webdav:" + conf.user + "@" + conf.url + conf.dir; }
 
   // Storage facade for vault.js (orosSync.storage): engine gates
   // first, then the provider. Callers may pass bytes or a Blob.
@@ -2405,12 +2872,43 @@
     return provider.isConnected();
   }
 
+  // Sign in to Dropbox (navigates away). While connected it only
+  // renews the active provider's sign-in.
   function connect() {
+    if (!isConnected()) useProvider("dropbox");
     return provider.connect();
+  }
+
+  // WebDAV W2: { url, user, pass, dir } → probe the server, then save
+  // and switch to it. Rejects with "dav-…" (errorKey → one sentence);
+  // nothing is saved on failure.
+  function connectWebdav(form) {
+    if (suspended)     return Promise.reject(new Error("engine-suspended"));
+    if (isConnected()) return Promise.reject(new Error("dav-connected"));
+    var conf;
+    try { conf = davNormConf(form); } catch (e) { return Promise.reject(e); }
+    var pass = String((form && form.pass) || "");
+    if (!conf.user || !pass) return Promise.reject(new Error("dav-missing"));
+    return davProbe(conf, pass).then(function () {
+      try {
+        localStorage.setItem(DAV_CONF_KEY, JSON.stringify(conf));
+        localStorage.setItem(DAV_PASS_KEY, pass);
+      } catch (e) {
+        davDisconnect();
+        throw new Error("storage-full");
+      }
+      davConf = conf;
+      davPass = pass;
+      useProvider("webdav");
+      cloudRev = undefined;
+      if (noteCloud(davCloudId(conf))) markDirty();
+      return davAccount();
+    });
   }
 
   function disconnect() {
     provider.disconnect();
+    useProvider("dropbox");     // the default again
     passphrase   = null;
     cloudRev     = undefined;   // SY-D1: another account = another cloud
   }
@@ -2451,7 +2949,9 @@
   }
 
   // ---------- Boot sequence ----------
-  provider.restore();
+  dropboxProvider.restore();
+  webdavProvider.restore();
+  provider = pickProvider();
 
   // Hydrate persisted slice proxies BEFORE any pull/push can fire —
   // this is what makes app slices travel while apps are closed. And
@@ -2461,7 +2961,16 @@
   purgeRetired();
   hydratePersistedSlices();
 
-  var redirectHandled = provider.handleRedirect();
+  // Only Dropbox signs in through a redirect; landing back from it
+  // makes Dropbox this device's provider.
+  var redirectHandled = dropboxProvider.handleRedirect().then(function (ok) {
+    if (ok) {
+      if (provider !== dropboxProvider) davDisconnect();
+      useProvider("dropbox");
+      if (noteCloud("dropbox")) markDirty();
+    }
+    return ok;
+  });
 
   // Vault unlock chain: after redirect handling settles, unseal + auto-engine
   var vaultUnlocked = redirectHandled.then(function () {
@@ -2477,6 +2986,8 @@
   window.orosSync = {
     // Lifecycle
     connect:            connect,
+    connectWebdav:      connectWebdav,    // WebDAV W2: ({ url, user, pass, dir })
+    getProvider:        function () { return provider.id; },
     disconnect:         disconnect,
     isConnected:         isConnected,
     getUserInfo:        function () { return provider.account(); },
@@ -2572,6 +3083,8 @@
       if (msg === "engine-suspended")   return "sync.err.suspended";
       if (msg === "storage-full")       return "sync.err.storage";   // SY-Q1
       if (/blob version/.test(msg)) return "sync.err.version";
+      if (/^dav-/.test(msg))          return "sync.err." + msg;     // WebDAV W2 connect reasons
+      if (/^auth failed/.test(msg))   return "sync.err.auth";
       if (/token|401|400/.test(msg)) return "sync.err.auth";
       if (name === "OperationError" || /OperationError/.test(msg)) return "sync.err.passphrase";
       return "sync.err.generic";
