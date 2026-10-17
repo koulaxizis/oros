@@ -50,3 +50,20 @@ jobs:
           name: qa-report-${{ matrix.shard }}
           path: qa-report-${{ matrix.shard }}.json
           if-no-files-found: ignore
+
+  # App Kit (docs/app-kit): a PR that adds an app folder must follow the
+  # app contract. Static checks, release guards and the per-app tests; the
+  # browser part is the "apps" job above (an app with no baseline is strict).
+  new-apps:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check every app this PR adds
+        run: node .github/app-kit/check-app.js --added-since origin/${{ github.base_ref }} --no-browser

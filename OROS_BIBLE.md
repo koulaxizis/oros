@@ -2370,6 +2370,7 @@ Outside contributors build apps through the kit, and every app joins only as cod
   - the help, direct-link, i18n, release-guards, deeplink-receivers, search* and `tests/<id>*` tests;
   - the quality gate `.github/qa/smoke.js --only <id>` when Playwright is installed.
   Every app on main passes the static part (tested).
+- K2: `quality.yml` job `new-apps` runs `check-app.js --added-since origin/<base> --no-browser` on every PR. It checks each root app folder the PR adds that is registered or carries the DL-1 snippet, so a forgotten registration fails; standalone pages are skipped. The `apps` shards open the new app in Chromium, strict because it has no baseline. `--added-since` with no new app exits 0.
 - Contributor PRs never touch `APP_VERSION`, the changelog or `CACHE_VERSION`. The maintainer adds them at merge, through the merge queue as usual.
 
 ### Credits register (third-party) [verified 2026-10-09, refreshed after #49]
