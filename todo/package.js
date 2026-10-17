@@ -125,10 +125,17 @@
     var s = v == null ? "" : String(v);
     return /[",\r\n]/.test(s) || /^[=+\-@\t]/.test(s) ? '"' + (/^[=+\-@\t]/.test(s) ? "'" : "") + s.replace(/"/g, '""') + '"' : s;
   }
+  // The heading of tasks.md. The kit passes "el" or "en"; a pack
+  // language (orosI18n, ../i18n.js, browser only) reads the "todo" pack.
+  var STR = {
+    en: { "pkg.tasks": "Tasks" },
+    el: { "pkg.tasks": "Εργασίες" }
+  };
   function previews(state, lang) {
-    var el = lang === "el", labels = {};
+    var code = lang === "el" ? "el" : "en", I = root && root.orosI18n, labels = {};
+    if (code === "en" && I) { code = I.lang(); if (code !== "el" && code !== "en") I.table(STR, "todo", code); }
     (state.labels || []).forEach(function (lb) { labels[lb.id] = lb.name; });
-    var md = ["# " + (el ? "Εργασίες" : "Tasks"), ""];
+    var md = ["# " + (STR[code] || STR.en)["pkg.tasks"], ""];
     var csv = [["list", "task", "done", "due", "priority", "labels", "notes"].join(",")];
     (state.lists || []).forEach(function (l) {
       md.push("## " + (l.name || "—"), "");

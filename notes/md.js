@@ -33,13 +33,13 @@
     u = String(u || "").trim();
     if (u.charAt(0) === "<" && u.charAt(u.length - 1) === ">") u = u.slice(1, -1).trim();
     if (!u || u.length > 2048) return null;
-    if (/[\s\u0000-\u001f\u007f<>"`]/.test(u)) return null;
+    if (/[\s\u0000-\u001f\u007f<>\u0022\u0060]/.test(u)) return null;
     if (!/^(https?:\/\/[^\/]|mailto:[^\/])/i.test(u)) return null;
     return u;
   }
 
   function isWs(c) { return c === "" || /\s/.test(c); }
-  function isAlnum(c) { return !!c && /[0-9A-Za-zÀ-ɏͰ-Ͽἀ-῿Ѐ-ӿ]/.test(c); }
+  function isAlnum(c) { return !!c && /[0-9A-Za-z\u00c0-\u024f\u0370-\u03ff\u1f00-\u1fff\u0400-\u04ff]/.test(c); }
 
   // ---------- 1a. inline ----------
   function wikiParts(inner) {

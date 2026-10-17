@@ -54,11 +54,17 @@
   watchPalette();
 
   /* ---------- 1. i18n ---------- */
+  // orosI18n (../i18n.js): the full language code, a pack language included.
   var LANG = "en";
-  try {
+  if (window.orosI18n) LANG = window.orosI18n.lang();
+  else try {
     if (window.parent && window.parent.orosLang) LANG = window.parent.orosLang;
     else if (localStorage.getItem("oros-lang")) LANG = localStorage.getItem("oros-lang");
   } catch (e) {}
+  // "el" or "en" for shared modules that pick between two inline texts.
+  var LB = LANG === "el" ? "el" : "en";
+  // Dates and numbers (de-DE for German, …).
+  function loc() { return window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB"); }
 
   var STR = {
     en: {
@@ -75,6 +81,33 @@
       "wd": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
       "months": ["January", "February", "March", "April", "May", "June",
                  "July", "August", "September", "October", "November", "December"],
+      // Weekdays from Sunday, months as in "5 March" (Greek: genitive).
+      "wd.full": ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+      "wd.short": ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+      "mon.gen": ["January", "February", "March", "April", "May", "June",
+                  "July", "August", "September", "October", "November", "December"],
+      "date.long": "{wd} {d} {m} {y}",
+      // Repeat rules: "Every 2 weeks on Mon, Wed, 10 times". {d} = weekday;
+      // nthN.* = the same for a Saturday (Greek neuter).
+      "rr.D1": "Daily", "rr.Dn": "Every {n} days",
+      "rr.W1": "Weekly", "rr.Wn": "Every {n} weeks",
+      "rr.M1": "Monthly", "rr.Mn": "Every {n} months",
+      "rr.Y1": "Yearly", "rr.Yn": "Every {n} years",
+      "rr.days": "{s} on {d}",
+      "rr.nth": "{s} on {x}",
+      "rr.mday": "{s} on day {n}",
+      "rr.ynth": "{s} on {x} of {m}",
+      "rr.yday": "{s} on {n} {m}",
+      "rr.count1": "{s}, 1 time",
+      "rr.countN": "{s}, {n} times",
+      "rr.until": "{s}, until {d}",
+      "rp.nth": "On {x}",
+      "rp.nthm": "On {x} of {m}",
+      "rp.yday": "On {n} {m}",
+      "nth.1": "the first {d}", "nth.2": "the second {d}", "nth.3": "the third {d}",
+      "nth.4": "the fourth {d}", "nth.5": "the fifth {d}", "nth.-1": "the last {d}",
+      "nthN.1": "the first {d}", "nthN.2": "the second {d}", "nthN.3": "the third {d}",
+      "nthN.4": "the fourth {d}", "nthN.5": "the fifth {d}", "nthN.-1": "the last {d}",
       "day.today": "Today", "wx.day": "Forecast: {t}",
       "ev.add": "Add",
       "ev.dlg.new": "New event",
@@ -274,6 +307,30 @@
       "months": ["Ιανουάριος", "Φεβρουάριος", "Μάρτιος", "Απρίλιος",
                  "Μάιος", "Ιούνιος", "Ιούλιος", "Αύγουστος",
                  "Σεπτέμβριος", "Οκτώβριος", "Νοέμβριος", "Δεκέμβριος"],
+      "wd.full": ["Κυριακή", "Δευτέρα", "Τρίτη", "Τετάρτη", "Πέμπτη", "Παρασκευή", "Σάββατο"],
+      "wd.short": ["Κυρ", "Δευ", "Τρί", "Τετ", "Πέμ", "Παρ", "Σάβ"],
+      "mon.gen": ["Ιανουαρίου", "Φεβρουαρίου", "Μαρτίου", "Απριλίου", "Μαΐου", "Ιουνίου",
+                  "Ιουλίου", "Αυγούστου", "Σεπτεμβρίου", "Οκτωβρίου", "Νοεμβρίου", "Δεκεμβρίου"],
+      "date.long": "{wd} {d} {m} {y}",
+      "rr.D1": "Καθημερινά", "rr.Dn": "Κάθε {n} ημέρες",
+      "rr.W1": "Εβδομαδιαία", "rr.Wn": "Κάθε {n} εβδομάδες",
+      "rr.M1": "Μηνιαία", "rr.Mn": "Κάθε {n} μήνες",
+      "rr.Y1": "Ετήσια", "rr.Yn": "Κάθε {n} χρόνια",
+      "rr.days": "{s}: {d}",
+      "rr.nth": "{s}, {x}",
+      "rr.mday": "{s}, στις {n}",
+      "rr.ynth": "{s}, {x} του {m}",
+      "rr.yday": "{s}, στις {n} {m}",
+      "rr.count1": "{s}, 1 φορά",
+      "rr.countN": "{s}, {n} φορές",
+      "rr.until": "{s}, έως {d}",
+      "rp.nth": "{x}",
+      "rp.nthm": "{x} του {m}",
+      "rp.yday": "Στις {n} {m}",
+      "nth.1": "την πρώτη {d}", "nth.2": "τη δεύτερη {d}", "nth.3": "την τρίτη {d}",
+      "nth.4": "την τέταρτη {d}", "nth.5": "την πέμπτη {d}", "nth.-1": "την τελευταία {d}",
+      "nthN.1": "το πρώτο {d}", "nthN.2": "το δεύτερο {d}", "nthN.3": "το τρίτο {d}",
+      "nthN.4": "το τέταρτο {d}", "nthN.5": "το πέμπτο {d}", "nthN.-1": "το τελευταίο {d}",
       "day.today": "Σήμερα", "wx.day": "Πρόγνωση: {t}",
       "ev.add": "Προσθήκη",
       "ev.dlg.new": "Νέο συμβάν",
@@ -690,6 +747,27 @@
       "mm.ofolder": "Αποσυμπιεσμένος φάκελος orOS…"
     }
   });
+  // A pack language (German, …): STR[LANG] = English + the pack, and
+  // weekday / month names from Intl in that language's locale.
+  if (window.orosI18n) {
+    window.orosI18n.table(STR, "calendar", LANG);
+    if (LANG !== "en" && LANG !== "el" && STR[LANG]) (function (T) {
+      try {
+        var L = loc(), wl = new Intl.DateTimeFormat(L, { weekday: "long" }),
+            ws = new Intl.DateTimeFormat(L, { weekday: "short" }),
+            ml = new Intl.DateTimeFormat(L, { month: "long" });
+        var full = [], short = [], mons = [];
+        for (var i = 0; i < 7; i++) {           // 2023-01-01 was a Sunday
+          var d = new Date(2023, 0, 1 + i, 12);
+          full.push(wl.format(d)); short.push(ws.format(d));
+        }
+        for (var m = 0; m < 12; m++) mons.push(ml.format(new Date(2023, m, 1, 12)));
+        T["wd.full"] = full; T["wd.short"] = short;
+        T.wd = short.slice(1).concat(short[0]);  // Monday first
+        T.months = mons; T["mon.gen"] = mons;
+      } catch (e) { /* no Intl: English names */ }
+    })(STR[LANG]);
+  }
   function t(k) {
     return (STR[LANG] && STR[LANG][k] !== undefined) ? STR[LANG][k]
          : (STR.en[k] !== undefined ? STR.en[k] : k);
@@ -1287,25 +1365,17 @@ function transientNote(title, body) {
   }
 
   // Human text of a rule ("Every 2 weeks on Mon, Wed, 10 times").
-  var WD_FULL = {
-    en: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
-    el: ["Κυριακή", "Δευτέρα", "Τρίτη", "Τετάρτη", "Πέμπτη", "Παρασκευή", "Σάββατο"]
-  };
-  var WD_SHORT = {
-    en: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
-    el: ["Κυρ", "Δευ", "Τρί", "Τετ", "Πέμ", "Παρ", "Σάβ"]
-  };
-  var MONTH_GEN_EL = ["Ιανουαρίου", "Φεβρουαρίου", "Μαρτίου", "Απριλίου", "Μαΐου", "Ιουνίου",
-    "Ιουλίου", "Αυγούστου", "Σεπτεμβρίου", "Οκτωβρίου", "Νοεμβρίου", "Δεκεμβρίου"];
-  var ORD = {
-    en: { 1: "first", 2: "second", 3: "third", 4: "fourth", 5: "fifth", "-1": "last" },
-    elF: { 1: "την πρώτη", 2: "τη δεύτερη", 3: "την τρίτη", 4: "την τέταρτη", 5: "την πέμπτη", "-1": "την τελευταία" },
-    elN: { 1: "το πρώτο", 2: "το δεύτερο", 3: "το τρίτο", 4: "το τέταρτο", 5: "το πέμπτο", "-1": "το τελευταίο" }
-  };
+  function fill(k, v) {
+    var s = t(k);
+    Object.keys(v).forEach(function (n) { s = s.split("{" + n + "}").join(String(v[n])); });
+    return s;
+  }
+  function wdFull(i) { return t("wd.full")[i]; }
+  function wdShort(i) { return t("wd.short")[i]; }
+  function monGen(i) { return t("mon.gen")[i]; }
   // "the last Friday" / «την τελευταία Παρασκευή»
   function nthText(pos, wday) {
-    if (LANG === "el") return (wday === 6 ? ORD.elN : ORD.elF)[pos] + " " + WD_FULL.el[wday];
-    return "the " + ORD.en[pos] + " " + WD_FULL.en[wday];
+    return fill((wday === 6 ? "nthN." : "nth.") + pos, { d: wdFull(wday) });
   }
   function shortDate(s) {
     var p = s.split("-");
@@ -1313,36 +1383,28 @@ function transientNote(title, body) {
   }
   function recurText(r, date) {
     if (!validRecur(r)) return "";
-    var el = LANG === "el", L = el ? "el" : "en";
     var N = OCC.everyOf(r);
-    var base = {
-      en: { D: ["Daily", "Every {n} days"], W: ["Weekly", "Every {n} weeks"],
-            M: ["Monthly", "Every {n} months"], Y: ["Yearly", "Every {n} years"] },
-      el: { D: ["Καθημερινά", "Κάθε {n} ημέρες"], W: ["Εβδομαδιαία", "Κάθε {n} εβδομάδες"],
-            M: ["Μηνιαία", "Κάθε {n} μήνες"], Y: ["Ετήσια", "Κάθε {n} χρόνια"] }
-    }[L][r.freq];
-    var s = (N > 1 ? base[1] : base[0]).replace("{n}", String(N));
+    var s = fill("rr." + r.freq + (N > 1 ? "n" : "1"), { n: N });
     var p = (date || "").split("-");
     var nth = (r.pos === -1 || (r.pos >= 1 && r.pos <= 5)) && r.wday >= 0 && r.wday <= 6;
     var wdays = (r.freq === "W" && Array.isArray(r.byday) && r.byday.length) ? r.byday
       : (r.freq === "W" && p.length === 3 ? [OCC.wdOf(date)] : null);
     if (wdays) {
       var ds = wdays.slice().sort(function (a, b) { return ((a + 6) % 7) - ((b + 6) % 7); });
-      s += (el ? ": " : " on ") + ds.map(function (x) { return WD_SHORT[L][x]; }).join(", ");
+      s = fill("rr.days", { s: s, d: ds.map(wdShort).join(", ") });
     } else if (r.freq === "M" && nth) {
-      s += el ? ", " + nthText(r.pos, r.wday) : " on " + nthText(r.pos, r.wday);
+      s = fill("rr.nth", { s: s, x: nthText(r.pos, r.wday) });
     } else if (r.freq === "M" && p.length === 3) {
-      s += el ? ", στις " + (+p[2]) : " on day " + (+p[2]);
+      s = fill("rr.mday", { s: s, n: +p[2] });
     } else if (r.freq === "Y" && p.length === 3) {
       var mi = +p[1] - 1;
-      if (nth) s += el ? ", " + nthText(r.pos, r.wday) + " του " + MONTH_GEN_EL[mi]
-                       : " on " + nthText(r.pos, r.wday) + " of " + t("months")[mi];
-      else s += el ? ", στις " + (+p[2]) + " " + MONTH_GEN_EL[mi] : " on " + (+p[2]) + " " + t("months")[mi];
+      if (nth) s = fill("rr.ynth", { s: s, x: nthText(r.pos, r.wday), m: monGen(mi) });
+      else s = fill("rr.yday", { s: s, n: +p[2], m: monGen(mi) });
     }
     if (typeof r.count === "number" && r.count > 0) {
-      s += el ? ", " + r.count + (r.count === 1 ? " φορά" : " φορές") : ", " + r.count + (r.count === 1 ? " time" : " times");
+      s = fill(r.count === 1 ? "rr.count1" : "rr.countN", { s: s, n: r.count });
     } else if (r.until) {
-      s += (el ? ", έως " : ", until ") + shortDate(r.until);
+      s = fill("rr.until", { s: s, d: shortDate(r.until) });
     }
     return s;
   }
@@ -1942,7 +2004,7 @@ function transientNote(title, body) {
     if (!labelVisible("lbl-feed-sky")) return [];
     var Core = window.OrosSkyCore;
     if (!Core) return [];
-    return Core.feedFor(dateStr, LANG === "el" ? "el" : "en").map(function (r, i) {
+    return Core.feedFor(dateStr, LB).map(function (r, i) {
       var d = new Date(r.t);
       return {
         id: "sky-" + dateStr + "-" + i,          // per-render key, never stored
@@ -2269,7 +2331,7 @@ function transientNote(title, body) {
     if (!labelVisible("lbl-feed-baby")) return [];
     var d = babyData();
     if (!d || !d.kids.length) return [];
-    return window.orosBabyCore.calendarRows(d, dateStr, LANG === "el" ? "el" : "en").map(function (r) {
+    return window.orosBabyCore.calendarRows(d, dateStr, LB).map(function (r) {
       return {
         id: "bbf-" + r.id,                      // per-render key, never stored
         title: r.title,
@@ -2314,7 +2376,7 @@ function transientNote(title, body) {
             var st = Core.planStatus(p, d, today);
             if (!st.when && st.level !== "due") return;
             var item = p.item === "other" && p.label ? p.label : t("feed.garage.service");
-            if (p.item !== "other") item = Core.itemName(p.item, LANG);
+            if (p.item !== "other") item = Core.itemName(p.item, LB);
             rows.push({ day: !st.when || st.when < today ? today : st.when, id: p.id, key: "p" + p.id,
               title: t("feed.garage.svc").replace("{vehicle}", names[p.v]).replace("{what}", item) });
           });
@@ -2379,7 +2441,7 @@ function transientNote(title, body) {
       if (r.day !== dateStr) return;
       var title = r.kind === "trip"
         ? (r.of > 1 ? t("feed.travel.day").replace("{name}", r.name).replace("{n}", r.n).replace("{of}", r.of) : r.name)
-        : Core.entryTitle(r.entry, LANG);
+        : Core.entryTitle(r.entry, LB);
       out.push({
         id: "trv-" + r.key,                     // per-render key, never stored
         title: title,
@@ -2410,7 +2472,7 @@ function transientNote(title, body) {
       try {
         var raw = JSON.parse(localStorage.getItem(MEALS_DATA_KEY));
         if (raw && typeof raw === "object" && raw.pl && typeof raw.pl === "object") {
-          var plan = Core.planByDay(raw, LANG), rows = {};
+          var plan = Core.planByDay(raw, LB), rows = {};
           Object.keys(plan).forEach(function (day) {
             rows[day] = plan[day].map(function (r) {
               return { key: r.slot, order: r.order, title: (r.name || t("feed.meals." + r.slot)) + ": " + r.what.join(", ") };
@@ -2464,7 +2526,7 @@ function transientNote(title, body) {
   function budgetMoney(cents, cur) {
     if (!budgetCache.fmt || budgetCache.fmtCur !== cur || budgetCache.fmtLang !== LANG) {
       try {
-        budgetCache.fmt = new Intl.NumberFormat(LANG === "el" ? "el-GR" : "en-GB", { style: "currency", currency: cur });
+        budgetCache.fmt = new Intl.NumberFormat(loc(), { style: "currency", currency: cur });
       } catch (e) {
         budgetCache.fmt = { format: function (v) { return v.toFixed(2) + " " + cur; } };
       }
@@ -2479,7 +2541,7 @@ function transientNote(title, body) {
     if (!F || !labelVisible("lbl-feed-budget")) return [];
     var d = budgetData();
     if (!d) return [];
-    return F.rowsOn(d, dateStr, todayYMD(), LANG).map(function (r) {
+    return F.rowsOn(d, dateStr, todayYMD(), LB).map(function (r) {
       return {
         id: "bud-" + r.id + "-" + dateStr,      // per-render key, never stored
         title: (r.name ? r.name + " " : "") + (r.k === "o" ? "\u2212" : "+") + budgetMoney(r.a, r.cur),
@@ -2519,7 +2581,7 @@ function transientNote(title, body) {
     return days[dateStr].map(function (r) {
       return {
         id: "shf-" + r.k + "-" + r.item + "-" + dateStr,   // per-render key, never stored
-        title: window.OrosShelfFeed.label(r.k, r.title, LANG),
+        title: window.OrosShelfFeed.label(r.k, r.title, LB),
         labelId: "lbl-feed-shelf",
         start: null,                                     // all-day
         _feed: true,
@@ -2563,7 +2625,7 @@ function transientNote(title, body) {
           .replace(/ · $/, "").slice(0, 120),
         labelId: "lbl-feed-inv",
         start: null,                             // all-day
-        note: C.fmtMoney(C.balance(data, d), d.cur, LANG),
+        note: C.fmtMoney(C.balance(data, d), d.cur, LB),
         _feed: true,
         _openAt: { app: "invoices", target: { invoice: d.id } }
       };
@@ -2830,10 +2892,9 @@ function transientNote(title, body) {
   }
 
   function longDate(s) {
-    var p = s.split("-"), L = LANG === "el" ? "el" : "en";
+    var p = s.split("-");
     var wd = new Date(+p[0], +p[1] - 1, +p[2]).getDay();
-    var mon = L === "el" ? MONTH_GEN_EL[+p[1] - 1] : t("months")[+p[1] - 1];
-    return WD_FULL[L][wd] + " " + (+p[2]) + " " + mon + " " + p[0];
+    return fill("date.long", { wd: wdFull(wd), d: +p[2], m: monGen(+p[1] - 1), y: p[0] });
   }
 
   function renderTitle() {
@@ -3924,11 +3985,11 @@ function transientNote(title, body) {
      days / weeks / months / years, weekdays, and day-of-month or
      Nth-weekday. "Ends": never, on a date, or after N times. */
   function repPresets(date) {
-    var wd = OCC.wdOf(date), L = LANG === "el" ? "el" : "en";
+    var wd = OCC.wdOf(date);
     var nth = OCC.posOf(date, false), last = OCC.posOf(date, true) === -1;
     var list = [
       { k: "D", r: { freq: "D" } },
-      { k: "W", r: { freq: "W" }, txt: t("rep.weeklyOn").replace("{d}", WD_FULL[L][wd]) },
+      { k: "W", r: { freq: "W" }, txt: t("rep.weeklyOn").replace("{d}", wdFull(wd)) },
       { k: "WD", r: { freq: "W", byday: [1, 2, 3, 4, 5] }, txt: t("rep.weekdays") },
       { k: "W2", r: { freq: "W", interval: 2 } },
       { k: "M", r: { freq: "M" } }
@@ -3974,9 +4035,8 @@ function transientNote(title, body) {
     var sel = $("ev-rep-mode");
     if (!sel) return;
     var date = dlgDate(), wd = OCC.wdOf(date), p = date.split("-");
-    var unit = $("ev-rep-unit").value, L = LANG === "el";
+    var unit = $("ev-rep-unit").value, mon = monGen(+p[1] - 1);
     var nth = OCC.posOf(date, false), last = OCC.posOf(date, true) === -1;
-    var mon = unit === "Y" ? (L ? " του " + MONTH_GEN_EL[+p[1] - 1] : " of " + t("months")[+p[1] - 1]) : "";
     sel.textContent = "";
     var add = function (k, txt) {
       var o = document.createElement("option");
@@ -3985,11 +4045,14 @@ function transientNote(title, body) {
       sel.appendChild(o);
     };
     add("day", unit === "Y"
-      ? (L ? "Στις " + (+p[2]) + " " + MONTH_GEN_EL[+p[1] - 1] : "On " + (+p[2]) + " " + t("months")[+p[1] - 1])
+      ? fill("rp.yday", { n: +p[2], m: mon })
       : t("rep.onDay").replace("{n}", String(+p[2])));
     var cap = function (s) { return s.charAt(0).toUpperCase() + s.slice(1); };
-    if (nth >= 1 && nth <= 5) add("nth", (L ? cap(nthText(nth, wd)) : "On " + nthText(nth, wd)) + mon);
-    if (last) add("last", (L ? cap(nthText(-1, wd)) : "On " + nthText(-1, wd)) + mon);
+    var onNth = function (pos) {
+      return cap(unit === "Y" ? fill("rp.nthm", { x: nthText(pos, wd), m: mon }) : fill("rp.nth", { x: nthText(pos, wd) }));
+    };
+    if (nth >= 1 && nth <= 5) add("nth", onNth(nth));
+    if (last) add("last", onNth(-1));
     sel.value = keep;
     if (sel.value !== keep) sel.value = "day";
   }
@@ -3998,13 +4061,12 @@ function transientNote(title, body) {
     var row = $("ev-rep-days");
     if (!row) return;
     row.textContent = "";
-    var L = LANG === "el" ? "el" : "en";
     [1, 2, 3, 4, 5, 6, 0].forEach(function (d) {
       var b = document.createElement("button");
       b.type = "button";
       b.className = "rep-day" + (repDays.indexOf(d) !== -1 ? " on" : "");
-      b.textContent = WD_SHORT[L][d];
-      b.title = WD_FULL[L][d];
+      b.textContent = wdShort(d);
+      b.title = wdFull(d);
       b.setAttribute("aria-pressed", repDays.indexOf(d) !== -1 ? "true" : "false");
       b.addEventListener("click", function () {
         var i = repDays.indexOf(d);
@@ -4348,8 +4410,8 @@ function transientNote(title, body) {
     } catch (e) { return false; }
   }
   function mailFromEvent(ev, ymd) {
-    var loc = LANG === "el" ? "el-GR" : "en-GB";
-    var when = new Date(dparse(ymd)).toLocaleDateString(loc, { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+    var lc = loc();
+    var when = new Date(dparse(ymd)).toLocaleDateString(lc, { weekday: "long", day: "numeric", month: "long", year: "numeric" });
     if (ev.start) when += ", " + ev.start + (ev.end ? "\u2013" + ev.end : "");
     var lines = [ev.title, when];
     if (ev.location) lines.push(ev.location);
@@ -5199,7 +5261,7 @@ function transientNote(title, body) {
     else if (!on) msg = t("ph.off");
     else if (last.err) msg = t("ph.err").replace("{e}", last.err);
     else if (!last.at) msg = t("ph.wait");
-    else msg = t("ph.last").replace("{t}", new Date(last.at).toLocaleString(LANG === "el" ? "el-GR" : "en-GB",
+    else msg = t("ph.last").replace("{t}", new Date(last.at).toLocaleString(loc(),
       { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }))
       .replace("{n}", String(last.n)).replace("{what}", t("ph.what"));
     $("ph-stat").textContent = msg;
@@ -5421,7 +5483,7 @@ function transientNote(title, body) {
       giBusy = false;
       console.warn("calendar: Google import failed:", e && e.code);
       giShow("none");
-      giStat(GI.message(e, LANG));
+      giStat(GI.message(e, LB));
     });
   }
   if ($("mm-google") && $("gi-dlg")) {
@@ -5954,7 +6016,7 @@ function transientNote(title, body) {
   }
   function fmtStamp(ms) {
     try {
-      return new Date(ms).toLocaleString(LANG === "el" ? "el-GR" : "en-GB",
+      return new Date(ms).toLocaleString(loc(),
         { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hour12: false });
     } catch (e) { return ""; }
   }
@@ -6640,10 +6702,10 @@ function transientNote(title, body) {
   // the shell engine's calRemWhen: "20 Sep · 09:30", locale-aware).
   function remStartLabel(due) {
     var startTs = due.remTs + due.ev.remindMin * 60000;
-    var loc = LANG === "el" ? "el-GR" : "en-GB";
+    var lc = loc();
     var d = new Date(startTs);
-    return d.toLocaleDateString(loc, { day: "2-digit", month: "short" }) +
-      " · " + d.toLocaleTimeString(loc, { hour: "2-digit", minute: "2-digit" });
+    return d.toLocaleDateString(lc, { day: "2-digit", month: "short" }) +
+      " · " + d.toLocaleTimeString(lc, { hour: "2-digit", minute: "2-digit" });
   }
 
   /* ---------- 8b. In-app reminder check ----------

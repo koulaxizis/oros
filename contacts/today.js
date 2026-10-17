@@ -25,6 +25,8 @@
     collect: function (ctx) {
       var C = root.OrosContactDates, raw = ctx.readJSON(KEY);
       if (!C || !raw || !Array.isArray(raw.contacts)) return [];
+      var I = root.orosI18n;
+      if (I && ctx.lang && !W[ctx.lang]) I.table(W, "contacts", ctx.lang);
       var w = W[ctx.lang] || W.en, out = [];
       for (var d = 0; d <= ctx.horizon; d++) {
         var day = ctx.addDays(ctx.today, d);

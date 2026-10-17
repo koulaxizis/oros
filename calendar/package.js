@@ -40,10 +40,20 @@
   // Untouched seed labels (mtime 0) are stored with one English name
   // (calendar.js SEED_NAMES); the preview names them in its language.
   var SEED_NAMES = {
-    "lbl-personal": ["Personal", "Προσωπικό"],
-    "lbl-work": ["Work", "Εργασία"],
-    "lbl-family": ["Family", "Οικογένεια"]
+    "lbl-personal": ["Personal", "lbl.personal"],
+    "lbl-work": ["Work", "lbl.work"],
+    "lbl-family": ["Family", "lbl.family"]
   };
+  // The preview's texts (the same keys and English as calendar.js STR).
+  var STR = {
+    en: { "lbl.personal": "Personal", "lbl.work": "Work", "lbl.family": "Family", "ev.untitled": "(untitled)" },
+    el: { "lbl.personal": "Προσωπικό", "lbl.work": "Εργασία", "lbl.family": "Οικογένεια", "ev.untitled": "(χωρίς τίτλο)" }
+  };
+  function str(lang, k) {
+    var I = typeof window !== "undefined" && window.orosI18n;
+    var tbl = STR[lang] || (I ? I.table(STR, "calendar", lang) : null) || STR.en;
+    return tbl[k] !== undefined ? tbl[k] : STR.en[k];
+  }
   var YMD = /^\d{4}-\d{2}-\d{2}$/;
   var HM = /^([01]\d|2[0-3]):[0-5]\d$/;
 
@@ -127,7 +137,7 @@
   }
 
   function labelName(l, lang) {
-    if (l && l.mtime === 0 && SEED_NAMES[l.id]) return SEED_NAMES[l.id][lang === "el" ? 1 : 0];
+    if (l && l.mtime === 0 && SEED_NAMES[l.id]) return str(lang, SEED_NAMES[l.id][1]);
     return l ? String(l.name || "") : "";
   }
   function previews(state, lang) {
@@ -136,7 +146,7 @@
     (state.labels || []).forEach(function (l) { byId[l.id] = l; });
     return {
       "calendar.ics": ICS.build(state.events || [], {
-        untitled: lang === "el" ? "(χωρίς τίτλο)" : "(untitled)",
+        untitled: str(lang, "ev.untitled"),
         label: function (id) { return byId[id] ? labelName(byId[id], lang) : null; }
       }) + "\r\n"
     };

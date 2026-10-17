@@ -334,9 +334,6 @@
       "notes.title.ph":      "Title",
       "notes.text.ph":       "Start typing…",
       "menu.exportPage":     "Export page (.txt)",
-      "menu.exportNotebook": "Export notebook (.zip)",
-      "menu.exportCurrent":  "Current notebook (.zip)",
-      "menu.exportAll":      "All notebooks (.zip)",
       "book.plusTitle":      "New notebook",
       "search.placeholder":  "Search pages…",
 	  "search.hint": "Type at least 2 characters",
@@ -401,9 +398,6 @@
       "notes.title.ph":      "Τίτλος",
       "notes.text.ph":       "Ξεκίνα να γράφεις…",
       "menu.exportPage":     "Εξαγωγή σελίδας (.txt)",
-      "menu.exportNotebook": "Εξαγωγή σημειωματαρίου (.zip)",
-      "menu.exportCurrent":  "Τρέχον σημειωματάριο (.zip)",
-      "menu.exportAll":      "Όλα τα σημειωματάρια (.zip)",
       "book.plusTitle":      "Νέο σημειωματάριο",
       "search.placeholder":  "Αναζήτηση σε σελίδες…",
 	  "search.hint": "Πληκτρολόγησε τουλάχιστον 2 χαρακτήρες",
@@ -518,11 +512,22 @@
   });
   var MD = window.OrosNotesMd;
   // Device-local names the daily note and templates are found by
-  // (either language: a notebook may be shared by devices in both).
-  var DAILY_NAMES = ["daily", "ημερήσιες"];
-  var TEMPLATE_NAMES = ["templates", "πρότυπα"];
+  // (English, Greek and this device's language: a notebook may be
+  // shared by devices in several languages). key: "daily.parent" or
+  // "tpl.parent".
+  function namesOf(key) {
+    var out = [];
+    [STRINGS.en, STRINGS.el, STRINGS[LANG]].forEach(function (d) {
+      var v = d && d[key] ? String(d[key]).trim().toLowerCase() : "";
+      if (v && out.indexOf(v) === -1) out.push(v);
+    });
+    return out;
+  }
 
+  // orosI18n (../i18n.js): the full language code, a pack language
+  // included (the shell's, then ?lang=, then oros-lang).
   function detectLang() {
+    if (window.orosI18n) return window.orosI18n.lang();
     try {
       var p = (window.parent && window.parent.orosLang) || window.orosLang;
       return (p === "el") ? "el" : "en";
@@ -2117,7 +2122,7 @@
   // Filename sanitizer — strips filesystem-hostile chars
   function sanitizeFilename(name) {
     var s = (name || "").trim()
-      .replace(/[\\/:*?"<>|]/g, "")
+      .replace(/[\\/:*?\x22<>|]/g, "")
       .replace(/\s+/g, " ")
       .slice(0, 80);
     return s || "Untitled";
@@ -2923,10 +2928,10 @@
   function titleKey(p) { return String((p && p.title) || "").trim().toLowerCase(); }
 
   // Template pages: everything under a top-level page named Templates
-  // (or Πρότυπα), in any notebook — this notebook's first.
+  // (or its Greek / German name), in any notebook — this notebook's first.
   function templatePages() {
     var roots = state.pages.filter(function (p) {
-      return !p.parent && TEMPLATE_NAMES.indexOf(titleKey(p)) !== -1;
+      return !p.parent && namesOf("tpl.parent").indexOf(titleKey(p)) !== -1;
     });
     var out = [], seen = {};
     function walk(id, depth) {
@@ -2952,7 +2957,7 @@
     closeMenus();
     var nbId = currentNbId(), now = new Date(), day = MD.ymd(now);
     var parent = state.pages.filter(function (p) {
-      return p.nb === nbId && !p.parent && DAILY_NAMES.indexOf(titleKey(p)) !== -1;
+      return p.nb === nbId && !p.parent && namesOf("daily.parent").indexOf(titleKey(p)) !== -1;
     })[0];
     if (!parent) {
       // A fixed id per notebook: two devices that make it before they
@@ -2964,7 +2969,7 @@
       return p.nb === nbId && p.parent === parent.id && titleKey(p) === day;
     })[0];
     if (!page) {
-      var tpl = templatePages().filter(function (p) { return DAILY_NAMES.indexOf(titleKey(p)) !== -1; })[0];
+      var tpl = templatePages().filter(function (p) { return namesOf("daily.parent").indexOf(titleKey(p)) !== -1; })[0];
       var text = MD.fillTemplate(tpl ? tpl.text : t("daily.tpl"), { date: day, time: MD.hm(now), title: day });
       var id = "dly-" + nbId + "-" + day.replace(/-/g, "");
       page = insertPage(nbId, parent.id, day, text, pageById(id) ? null : id);
@@ -4058,7 +4063,7 @@
       if (e.key === "Escape") { closeMenus(); closeFloating(); }
     });
 	
-	// Contract Β: shell-owned combos (Ctrl+Alt+Shift+*) — canonical
+	// Contract B: shell-owned combos (Ctrl+Alt+Shift+*) — canonical
     // capture-phase forwarding (parity with todo/kanban/writer).
     document.addEventListener("keydown", function (e) {
       if (!(e.ctrlKey || e.metaKey) || !e.altKey || !e.shiftKey) return;
@@ -4085,6 +4090,8 @@
     console.log("notes.js v" + (m ? m[1] : "?") + " boot");
   })();
 
+  // Every table addition above is in: STRINGS[LANG] for a pack language.
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "notes", LANG);
   loadPrefs();
   loadData();
   applyI18n();

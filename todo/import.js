@@ -608,9 +608,9 @@
   // ---------- dialog (browser) ----------
   var S = {
     en: {
-      btn: "Import a file…", title: "Import a file",
-      intro: "Bring tasks from a file another app exported: Todoist (project CSV or backup ZIP), TickTick (backup CSV), Google Tasks (Takeout), todo.txt, iCalendar to-dos (.ics) or Remember The Milk (JSON backup). Nothing is sent anywhere.",
-      reading: "Reading the file…",
+      "imp.btn": "Import a file…", "imp.title": "Import a file",
+      "imp.intro": "Bring tasks from a file another app exported: Todoist (project CSV or backup ZIP), TickTick (backup CSV), Google Tasks (Takeout), todo.txt, iCalendar to-dos (.ics) or Remember The Milk (JSON backup). Nothing is sent anywhere.",
+      "imp.reading": "Reading the file…",
       found: "Found: {s} · {n} task(s) in {l} list(s)",
       pick: "Lists to import", row: "{a} new · {s} already here", withDone: "Include completed tasks (ticked)",
       plan: "{l} new list(s), {a} new task(s), {d} of them completed, {s} subtask(s) · {same} already here",
@@ -632,12 +632,12 @@
       "err.unknown": "This file doesn't look like an export To-Do can read.",
       "err.big": "This file is too big to import.",
       "err.read": "Couldn't read this file.",
-      go: "Import", done: "Imported from {s}: {a} new", cancel: "Cancel", close: "Close"
+      go: "Import", "imp.done": "Imported from {s}: {a} new", cancel: "Cancel", close: "Close"
     },
     el: {
-      btn: "Εισαγωγή αρχείου…", title: "Εισαγωγή αρχείου",
-      intro: "Φέρε εργασίες από ένα αρχείο εξαγωγής άλλης εφαρμογής: Todoist (CSV έργου ή ZIP αντιγράφου ασφαλείας), TickTick (CSV αντιγράφου), Google Tasks (Takeout), todo.txt, εκκρεμότητες iCalendar (.ics) ή Remember The Milk (αντίγραφο JSON). Δεν στέλνεται τίποτα πουθενά.",
-      reading: "Ανάγνωση αρχείου…",
+      "imp.btn": "Εισαγωγή αρχείου…", "imp.title": "Εισαγωγή αρχείου",
+      "imp.intro": "Φέρε εργασίες από ένα αρχείο εξαγωγής άλλης εφαρμογής: Todoist (CSV έργου ή ZIP αντιγράφου ασφαλείας), TickTick (CSV αντιγράφου), Google Tasks (Takeout), todo.txt, εκκρεμότητες iCalendar (.ics) ή Remember The Milk (αντίγραφο JSON). Δεν στέλνεται τίποτα πουθενά.",
+      "imp.reading": "Ανάγνωση αρχείου…",
       found: "Βρέθηκαν: {s} · {n} εργασία/ες σε {l} λίστα/ες",
       pick: "Λίστες για εισαγωγή", row: "{a} νέες · {s} υπάρχουν ήδη", withDone: "Μαζί με τις ολοκληρωμένες εργασίες (με τικ)",
       plan: "{l} νέα/ες λίστα/ες, {a} νέα/ες εργασία/ες, από αυτές {d} ολοκληρωμένη/ες, {s} υποεργασία/ες · {same} υπάρχουν ήδη",
@@ -659,14 +659,16 @@
       "err.unknown": "Αυτό το αρχείο δεν μοιάζει με εξαγωγή που διαβάζει το To-Do.",
       "err.big": "Το αρχείο είναι πολύ μεγάλο για εισαγωγή.",
       "err.read": "Δεν ήταν δυνατή η ανάγνωση του αρχείου.",
-      go: "Εισαγωγή", done: "Εισαγωγή από {s}: {a} νέα", cancel: "Άκυρο", close: "Κλείσιμο"
+      go: "Εισαγωγή", "imp.done": "Εισαγωγή από {s}: {a} νέα", cancel: "Άκυρο", close: "Κλείσιμο"
     }
   };
   // product names (the same in both languages)
   var NAMES = { todoist: "Todoist", ticktick: "TickTick", gtasks: "Google Tasks", todotxt: "todo.txt", ics: "iCalendar", rtm: "Remember The Milk" };
   var A = null;
   function t(k, params) {
-    var tab = S[A && A.lang === "el" ? "el" : "en"];
+    // orosI18n (../i18n.js): a pack language gets S[code] (English + the "todo" pack).
+    var code = A && A.lang ? A.lang : "en";
+    var tab = S[code] || (typeof window !== "undefined" && window.orosI18n ? window.orosI18n.table(S, "todo", code) : S.en);
     var s = tab[k] !== undefined ? tab[k] : S.en[k];
     return s.replace(/\{(\w+)\}/g, function (m, n) { return params && params[n] !== undefined ? String(params[n]) : m; });
   }
@@ -715,8 +717,8 @@
     var form = el("form");
     form.method = "dialog";
     dlg.appendChild(form);
-    form.appendChild(el("h3", "", t("title")));
-    var head = el("p", "hint", t("reading"));
+    form.appendChild(el("h3", "", t("imp.title")));
+    var head = el("p", "hint", t("imp.reading"));
     form.appendChild(head);
     var pickBox = el("div", "gt-pick");
     pickBox.hidden = true;
@@ -729,7 +731,7 @@
     var closeBtn = button(t("cancel"), "", function () { dlg.close(); });
     var go = button(t("go"), "primary", function () {
       if (!pl || !pl.items.add.length) return;
-      if (A.apply(pl, t("done", { s: NAMES[parsed.source], a: pl.items.add.length }))) dlg.close();
+      if (A.apply(pl, t("imp.done", { s: NAMES[parsed.source], a: pl.items.add.length }))) dlg.close();
     });
     go.hidden = true;
     go.setAttribute("data-k", "fimp.go");
@@ -813,7 +815,7 @@
     init: function (a) { A = a; },
     open: open, openFile: openFile,
     has: function () { return typeof document !== "undefined" && !!root.OrosImportKit; },
-    label: function () { return t("btn"); }
+    label: function () { return t("imp.btn"); }
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.OrosTodoImport = api;

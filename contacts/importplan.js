@@ -2,6 +2,7 @@
 // orOS Contacts — import review plan (contacts/importplan.js)
 // ============================================================
 // Pure helpers, no DOM, no storage (also loaded by the node tests).
+// i18n-inline-ok: Greek letter folding for name matching (data, no UI text)
 // Every import path (vCard / CSV file, "From phone", a .vcf handed
 // over by the shell, "From an account") goes through one review:
 //

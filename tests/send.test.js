@@ -50,10 +50,10 @@ test("items and table: caps, junk dropped, nothing usable → null", () => {
 test("the sheet offers installed apps only, never the sender, in ORDER", () => {
   const text = { title: "T", text: "hello\nworld" };
   assert.deepEqual(C.appsFor("text", text, ALL, "notes"),
-    ["todo", "writer", "mail", "kanban", "slides", "wiki", "mindmap", "prompter", "assistant", "texttools", "textcase"]);
+    ["todo", "writer", "mail", "kanban", "slides", "wiki", "mindmap", "prompter", "flashcards", "assistant", "texttools", "textcase"]);
   assert.deepEqual(C.appsFor("text", text, ["writer", "mail", "calculator"], ""), ["writer", "mail"]);
   assert.deepEqual(C.appsFor("link", { url: "https://a.b" }, ALL, "bookmarks"), ["notes", "todo", "writer", "mail", "kanban", "assistant"]);
-  assert.deepEqual(C.appsFor("items", { items: ["a"] }, ALL, ""), ["notes", "todo", "writer", "mail", "kanban", "slides", "spreadsheet", "wiki", "mindmap", "texttools"]);
+  assert.deepEqual(C.appsFor("items", { items: ["a"] }, ALL, ""), ["notes", "todo", "writer", "mail", "kanban", "slides", "spreadsheet", "wiki", "mindmap", "flashcards", "texttools"]);
   assert.deepEqual(C.appsFor("table", { rows: [["a"]] }, ALL, ""), ["writer", "mail", "spreadsheet", "texttools"]);
   assert.deepEqual(C.appsFor("text", { text: "" }, ALL, ""), []);
 });
@@ -130,7 +130,8 @@ test("every receiver's app code takes the target it is sent", () => {
     mindmap: ["mindmap/mindmap.js", ["t.pasteText", "t.pasteText.text"]],
     kanban: ["kanban/kanban.js", ["tg.addCards", "T.asCards"]],
     prompter: ["prompter/prompter.js", ["tg.newPrompt", "tg.newPrompt.text"]],
-    layout: ["layout/layout.js", ["placeImage"]]
+    layout: ["layout/layout.js", ["placeImage"]],
+    flashcards: ["flashcards/app.js", ["target.make", "FlashcardsMake"]]
   };
   assert.deepEqual(Object.keys(need).sort(), Object.keys(C.RECEIVERS).sort());
   for (const app of Object.keys(need)) {
@@ -159,6 +160,21 @@ test("senders: Writer, Notes, Wiki, Mail, Bookmarks, Feeds and the office apps c
     "pixel/pixel.js", "photolab/io.js", "atelier/io.js"]) {
     assert.match(src(f), /orosSend/, f);
   }
+});
+
+test("Flashcards takes text, lists, articles and two-column tables (Flashcards wave 4)", () => {
+  assert.deepEqual(C.target("flashcards", "text", { title: "Spanish", text: "hola :: hello" }), { make: { title: "Spanish", text: "hola :: hello" } });
+  assert.deepEqual(C.target("flashcards", "items", { title: "L", items: [{ text: "perro", note: "dog\nanimal" }, "gato"] }),
+    { make: { title: "L", text: "perro :: dog animal\ngato" } });
+  // An article from Reader: its text rides in the note; a bare link has nothing to learn.
+  assert.deepEqual(C.target("flashcards", "link", { url: "https://a.b", title: "News", note: "The ==sun== is a star." }),
+    { make: { title: "News", text: "The ==sun== is a star." } });
+  assert.equal(C.target("flashcards", "link", { url: "https://a.b", title: "News" }), null);
+  // A table: row 1 is the heading row; at least one later row needs two cells.
+  assert.deepEqual(C.target("flashcards", "table", { name: "W", rows: [["Word", "Meaning"], ["perro", "dog"]] }),
+    { make: { title: "W", rows: [["Word", "Meaning"], ["perro", "dog"]] } });
+  assert.equal(C.target("flashcards", "table", { rows: [["Word", "Meaning"], ["perro", ""]] }), null);
+  assert.ok(C.appsFor("table", { rows: [["a", "b"]] }, ALL, "").includes("flashcards"));
 });
 
 test("Layout takes one picture from the disk (wave 5)", () => {

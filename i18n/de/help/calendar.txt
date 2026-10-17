@@ -1,0 +1,127 @@
+# Kalender
+Der Kalender speichert deine Termine mit Uhrzeiten, Orten, Labels, Wiederholungen und Erinnerungen. Er zeigt auch Daten aus deinen anderen orOS-Apps, etwa Geburtstage aus Kontakte und fällige Aufgaben aus Aufgaben, damit du alles an einem Ort siehst.
+
+## Erste Schritte
+Der Kalender öffnet sich im aktuellen Monat, mit heute ausgewählt. Tippe oder klicke auf einen Tag, um seine Termine unter dem Raster zu sehen, und drücke dann `Hinzufügen`, um an diesem Tag einen Termin anzulegen. Mit ‹ und › gehst du zurück und vor, mit `Heute` springst du zurück.
+
+Wechsle mit den Knöpfen unter dem Titel zwischen `Tag`, `Woche`, `Monat`, `Jahr` und `Agenda`:
+- `Tag` zeigt einen Tag als Stundenraster, mit ganztägigen Terminen in einem Streifen oben und einer Linie bei der aktuellen Uhrzeit. Tippe oder klicke auf eine leere Stunde, um einen Termin zu dieser Zeit hinzuzufügen.
+- `Woche` zeigt sieben Tage nebeneinander.
+- `Jahr` zeigt die 12 Monate klein, mit einem Punkt unter Tagen mit Terminen. Tippe auf einen Tag, um ihn in `Tag` zu öffnen, oder auf den Namen eines Monats, um diesen Monat zu öffnen.
+- `Agenda` listet, was in den nächsten 30 Tagen ansteht; `Mehr anzeigen` fügt weitere Tage hinzu.
+
+## Schnell hinzufügen
+`Schnell hinzufügen` neben `Hinzufügen` nimmt eine Zeile, so geschrieben, wie du es sagen würdest, auf Englisch oder Griechisch, und öffnet das Terminfenster ausgefüllt, damit du es vor dem Speichern prüfen kannst. Zum Beispiel:
+- "Coffee with Nikos Thursday 6pm at Syntagma"
+- "Καφές με Νίκο Πέμπτη 6μμ στο Σύνταγμα"
+- "dentist 15/11 9:30"
+- "every Monday gym 7am"
+- "αύριο 10-12 σύσκεψη"
+
+Es versteht Tage ("today", "tomorrow", "Friday", "next Friday", "in 3 days", "15/11", "15 Nov", «αύριο», «την άλλη Τρίτη», «3 Μαΐου»), Uhrzeiten und Zeiträume ("6pm", "18:30", "10-12", "at 7", «στις 9 το βράδυ», «6μμ»), Wiederholungen ("every Monday", "every weekday", "every 2 weeks", "monthly", «κάθε Δευτέρα», «τις Τρίτες», «καθημερινά») und einen Ort nach "at", "@" oder «στο / στη / στην». Was übrig bleibt, wird der Titel. Während du tippst, zeigt eine kurze Vorschau, was erkannt wurde. Daten beginnen mit dem Tag (15/11 ist der 15. November). Eine Stunde von 1 bis 6 ohne Zusatz gilt als Nachmittag ("at 3" ist 15:00); schreib "3am" oder «3 το πρωί» für den Morgen.
+
+## Termine hinzufügen und bearbeiten
+Das Terminfenster hat:
+- `Titel`. Das ist das einzige Pflichtfeld.
+- `Ganztägig` oder eine `Uhrzeit`: Wähle einen Beginn und, wenn du willst, ein Ende (`Kein Ende`). Du kannst eine Uhrzeit eintippen oder aus der Liste wählen.
+- `Beginnt am (Tag)` und `Endet am (Tag)`: Setz einen späteren Endtag für einen Termin, der mehrere Tage dauert, etwa eine Reise oder eine Konferenz.
+- `Zeitzone` (nur Termine mit Uhrzeit): Lass sie auf `Dieses Gerät` oder wähle die Zone des Termins, zum Beispiel für einen Anruf mit jemandem in New York. Der Kalender zeigt den Termin zu deiner eigenen Ortszeit, mit einem kleinen ◷ und der ursprünglichen Uhrzeit darunter.
+- `Wiederholen`: täglich, wöchentlich am Wochentag des Termins, jeden Werktag (Mo–Fr), alle 2 Wochen, monatlich am selben Datum oder am selben Wochentag (etwa „am zweiten Dienstag“ oder „am letzten Freitag“) oder jährlich. `Benutzerdefiniert…` lässt dich alle N Tage, Wochen, Monate oder Jahre wählen, mehrere Wochentage, und bei Monaten entweder den Tag des Monats oder den Wochentag. `Wiederholung endet`: `Nie`, `An einem Datum` oder `Nach` einer Anzahl von Malen. Eine kurze Zusammenfassung unter der Auswahl sagt, was du gewählt hast. Ein Serientermin kann auch mehrere Tage dauern, etwa ein 3-tägiger Kurs jeden Monat.
+- `Erinnerung`: von 5 Minuten bis 5 Tage vorher.
+- `Ort`, ein Label und eine `Notiz`.
+
+Tippe oder klicke auf einen Termin, um ihn zu bearbeiten. Bei einem Serientermin wirst du zuerst gefragt: `Dieser Termin` oder `Ganze Serie`. `Termin löschen` fragt nach einer Bestätigung, danach erscheint für ein paar Sekunden ein Knopf `Rückgängig`. `QR-Code` im selben Fenster öffnet den [QR-Generator](app:qr) mit einem Code für den Termin, den Handys in ihren eigenen Kalender übernehmen können. `E-Mail` (wenn [Mail](app:mail) ein Konto hat) öffnet eine neue Nachricht zum Termin: sein Titel als Betreff, Datum, Uhrzeit, Ort und Notizen als Text und alle im Termin stehenden E-Mail-Adressen als Empfänger. `Senden…` schickt den Termin als Link an jemanden: Die Person sieht ihn in jedem Browser und kann ihn in ihren Kalender übernehmen (ein einzelner Termin einer Serie geht als dieser eine Tag). `Zeit erfassen` (wenn [Zeiterfassung](app:timesheet) installiert ist) startet dort einen Timer mit dem Namen des Termins; läuft schon ein Timer, bleibt er unberührt.
+
+Wenn [Wetter](app:weather) eine Vorhersage für deine Stadt hat, zeigen die betroffenen Tage ein kleines Wettersymbol (Woche und Tag zeigen auch Höchst- und Tiefstwert). Es stammt aus dem, was Wetter schon auf dieses Gerät geladen hat; der Kalender schaut nie online nach.
+
+Am Computer kannst du einen Termin in der Ansicht `Monat` auf einen anderen Tag ziehen, oder in `Woche` in die Spalte eines anderen Tages, um ihn zu verschieben. Ein mehrtägiger Termin wird als Ganzes verschoben. Bei einem Serientermin wirst du gefragt, ob du `Dieser Termin` oder die `Ganze Serie` verschieben willst; `Rückgängig` setzt ihn zurück.
+
+Tippe oder klicke auf einen Ort, um ihn in [Karten](app:maps) zu öffnen. Karten kann auch eine geplante Route als neuen Termin an den Kalender schicken.
+
+## Labels und Feeds
+Die Chips über dem Kalender sind deine Labels. Am Anfang hast du `Privat`, `Arbeit` und `Familie`. Tippe oder klicke auf einen Chip, um diese Termine aus- oder einzublenden. `＋ Labels verwalten` lässt dich Labels hinzufügen, umbenennen, umfärben und löschen; ein Label, das noch von Terminen benutzt wird, kann nicht gelöscht werden. Auf einem Handy sind die Chips hinter einem Knopf `Labels & Feeds` zusammengefaltet, der zeigt, wie viele an sind; tippe darauf, um die Liste zu öffnen oder zu schließen. Dein Gerät merkt sich, ob du sie offen gelassen hast.
+
+Andere Apps fügen schreibgeschützte Zeilen hinzu, jede mit eigenem Chip, damit du sie ausblenden kannst:
+- `Geburtstage`, `Jahrestage` und `Eigener Feed` aus [Kontakte](app:contacts).
+- `Aufgaben`: unerledigte Aufgaben an ihrem Fälligkeitstag, aus [Aufgaben](app:todo).
+- `Kanban`-Karten mit Fälligkeitsdatum, erledigte `Gewohnheiten`, `Stimmung`-Einträge, `Zyklus`-Perioden, `Training`, `Pflanzen`-Pflege und Momente von `Bildschirmtier`.
+- `Garage`: Verlängerungen und fällige Inspektionen aus [Garage](app:garage).
+- `Budget`: anstehende wiederkehrende Einträge aus [Budget](app:budget).
+- `Tiergesundheit`: Impfungen, Entwurmung, Besuche, nächste Fälligkeiten und Geburtstage aus [Tier-Gesundheitspass](app:petcare).
+- `Kunden`: offene Nachfassaktionen und der erwartete Abschlusstag offener Deals, aus [CRM](app:crm).
+- `Reisen`: Reisetage und Reiseplan-Einträge mit Uhrzeit aus [Reisen](app:travel).
+- `Baby`: Meilensteine, Impfungen, Arztbesuche und das Alter in Monaten aus [Baby](app:baby).
+- `Hausarbeit` aus [Hausarbeitsrad](app:chores); nur deine, wenn du dort gewählt hast, wer du bist.
+- `Arbeitszeit`: Zeit pro Projekt und Tag aus [Zeiterfassung](app:timesheet).
+- `Mahlzeiten`, geplant im [Essensplaner](app:meals), etwa „Abendessen: Fasolada“.
+- `Todestage` aus [Stammbaum](app:familytree), etwa „Maria · 10 Jahre seit dem Tod“, für Personen mit genauem Todesdatum.
+- `Rechnungen`: unbezahlte Rechnungen an ihrem Fälligkeitstag, aus [Rechnungen](app:invoices).
+- `Medienregal`: der Tag, an dem du ein Buch, einen Film, ein Album oder ein Spiel beendet hast, und Erscheinungstermine auf deiner Wunschliste, aus [Medienregal](app:shelf).
+- `Feiertage` (griechische gesetzliche Feiertage), `Namenstage` deiner Kontakte und `Welttage` wie internationale Gedenktage.
+- `Mond & Himmel`: Mondphasen, Tagundnachtgleichen und Sonnenwenden, Meteorschauer und Finsternisse aus [Mond & Himmel](app:sky). Dieser Feed ist anfangs aus: Tippe oder klicke auf seinen Chip, um ihn einzuschalten.
+- `Medikamente`: der erste und letzte Tag einer Medikamenteneinnahme und der Tag, an dem ein gezähltes Medikament ausgeht, aus [Gesundheit](app:health). Gesundheitsdaten sind privat, daher ist auch dieser anfangs aus.
+- `Arzttermine`: deine Arzttermine zu ihrer Uhrzeit und der Tag, an dem die nächste Impfdosis fällig ist, aus dem Tab `Akte` von [Gesundheit](app:health). Auch dieser ist anfangs aus.
+
+Ein Tipp auf eine Feed-Zeile öffnet die App, aus der sie kommt. Ändern kannst du sie dort.
+
+## Einen Kalender abonnieren
+`Mehr` › `Kalender abonnieren…` fügt einen Kalender hinzu, den jemand als .ics-Adresse veröffentlicht (sie beginnt mit webcal:// oder https://), etwa einen Teamkalender, Schulferien, Spielpläne oder die „geheime Adresse im iCal-Format“ eines Google- oder Outlook-Kalenders. Füge die Adresse ein, gib ihm einen Namen und eine Farbe, wenn du willst, und drücke `Abonnieren`. Seine Termine erscheinen schreibgeschützt mit eigenem Chip, wie die anderen Feeds. Tippe auf einen, um ihn ganz zu sehen; `In meinen Kalender kopieren` öffnet ihn als neuen eigenen Termin.
+
+Der Kalender liest einen abonnierten Kalender, wenn du ihn öffnest (wenn es mehr als eine halbe Stunde her ist), und alle 3 Stunden, solange er offen bleibt; `Aktualisieren` liest ihn sofort. Offline siehst du die letzte Kopie. Viele Server lassen den Browser den Kalender direkt lesen. Die anderen werden über das orOS-Relay gelesen, das der [Reader](app:feeds) benutzt, mit seiner Adresse aus den `Einstellungen` des Readers oder aus [Mail](app:mail); ohne eine sagt dir das Fenster Bescheid. Im selben Fenster kannst du ein Abo umbenennen, auf seinen Punkt tippen, um die Farbe zu ändern, oder es mit `Entfernen` löschen (`Rückgängig` holt es zurück).
+
+## Freie Zeiten teilen
+`Mehr` › `Freie Zeiten teilen…` erstellt einen Link mit den Zeiten, in denen du frei bist, damit jemand eine auswählen kann, wie bei einer Buchungsseite. Wähle, wofür es ist, die Dauer (15 Minuten bis 2 Stunden), wie viele Tage im Voraus (3 bis 30), die Tageszeiten und ob Samstag und Sonntag zählen. Dein Name und deine E-Mail kommen aus deinem [Mail](app:mail)-Konto, wenn es eines gibt. Das Fenster sagt, wie viele freie Zeiten es gefunden hat, und `Link erstellen…` öffnet [An jemanden senden](help:t/share), wo du den Link kopierst, teilst oder per E-Mail schickst.
+
+Freie Zeiten werden auf diesem Gerät aus deinen eigenen Terminen mit Uhrzeit und aus den abonnierten Kalendern berechnet, die du einblendest; ganztägige Termine (Geburtstage, Feiertage) blockieren keine Zeit, und vergangene Zeiten werden weggelassen. Die andere Person öffnet den Link in jedem Browser, sieht die Zeiten in ihrer eigenen Zeitzone, wählt eine aus und bekommt `Zum Kalender hinzufügen (.ics)`, `Zu meinem orOS hinzufügen` und eine für sie geschriebene E-Mail an dich mit der gewählten Zeit. Nichts wird von selbst gebucht: Du bestätigst die Zeit, wenn die E-Mail ankommt. Wie bei jedem geteilten Link reisen die Zeiten im Link mit; kein Server speichert sie.
+
+## Deinen Kalender an jemanden senden
+`Mehr` › `Kalender an jemanden senden…` packt deine eigenen Termine in einen Link: alle oder die eines Labels, ganz oder nur einige Daten (`Dieser Monat`, `Nächste 3 Monate`, `Dieses Jahr` oder `Daten wählen…`). Das Fenster sagt, wie viele Termine gesendet werden; `Weiter` öffnet [An jemanden senden](help:t/share), wo du den Link kopierst, teilst oder per E-Mail schickst, ein Passwort hinzufügst oder wählst, wie lange er gilt. Termine aus Abos und anderen Apps (Geburtstage, Zyklus, Gewohnheiten) bleiben hier. Ein Kalender mit vielen Terminen geht als Link mit Ablaufdatum. Die andere Person sieht ihn Monat für Monat in jedem Browser und kann ihn als .ics-Datei in ihren Kalender oder in ihr orOS übernehmen.
+
+## Drucken
+`Mehr` › `Drucken…` druckt die Ansicht, die du gerade siehst, `Tag`, `Woche`, `Monat`, `Jahr` oder `Agenda`, auf einer sauberen weißen Seite: den Monat als Tabelle mit Uhrzeiten und Titeln, Woche und Agenda als Listen pro Tag, das Jahr als 12 kleine Monate mit fett gedruckten Tagen, an denen Termine sind. Für ein PDF wähle „Als PDF speichern“ als Drucker.
+
+## Aus Google Kalender importieren
+`Mehr` › `Aus Google Kalender importieren…` kopiert deine Termine einmalig von Google. Melde dich im kleinen Fenster bei Google an; orOS liest deine Kalender (nur lesend), listet sie mit der Anzahl neuer oder schon vorhandener Termine auf und gibt den Zugriff sofort an Google zurück: Nichts wird gespeichert, kein Passwort und kein Zugriff, und bei Google ändert sich nichts. Deine eigenen Kalender sind anfangs angehakt; Feiertage, Geburtstage und Kalender anderer Personen nicht. Drücke `Importieren`, um die angehakten in einem Rutsch zu speichern; die folgende Meldung hat `Rückgängig`.
+
+Termine kommen so herein, wie ein .ics-Import sie bringt: Uhrzeiten und Zeitzonen, ganztägige und mehrtägige Termine, Wiederholungen (mit übersprungenen und verschobenen Daten), Orte, Notizen und die erste Erinnerung, die zu den Auswahlmöglichkeiten des Kalenders passt. Jeder Kalender wird ein Label mit seinem Namen oder nutzt dein Label mit demselben Namen. Ein erneuter Import fügt nur hinzu, was fehlt; vorhandene Termine bleiben, wie sie sind. Google muss das für orOS freigeschaltet haben; antwortet es mit 403, ist der Dienst noch nicht eingeschaltet. Für deine eigene Google-App-ID trag sie in [Kontakte](app:contacts) › `Aus einem Konto` › `Eigene App-ID verwenden` ein.
+
+## Suche und Statistik
+Das Suchfeld durchsucht Titel, Notiz und Ort deiner eigenen Termine und listet jeden Treffer nach Datum. `Statistik` zeigt, wie viele Termine du hast, wie viele in die nächsten 30 Tage fallen, wie viele sich wiederholen, und eine Aufschlüsselung nach Label.
+
+## Auf diesem Handy (Android-App)
+In der orOS-Android-App legt `Auf diesem Handy` deine Termine mit ihren Erinnerungen und Labelfarben im eigenen Kalender des Handys als Kalender „orOS“ ab, damit auch andere Kalender-Apps und Widgets sie zeigen. Schalte `Auf diesem Handy zeigen` ein und tippe auf `Zugriff erlauben` (Android fragt einmal). Serientermine bleiben Serien, und jede Änderung hier wird übernommen. Es funktioniert in beide Richtungen: Termine, die du im Kalender „orOS“ des Handys hinzufügst, änderst oder löschst, kommen beim nächsten Öffnen von orOS in orOS an (die neueste Änderung gewinnt, wenn beide Seiten geändert wurden). Ändern oder Absagen eines einzelnen Termins einer Serie am Handy überspringt diesen Tag in der Serie und fügt ihn bei einer Änderung als Einzeltermin hinzu. Feed-Zeilen kommen in einen eigenen, schreibgeschützten Kalender „orOS feeds“ (Feiertage, Namenstage und die Daten der anderen Apps, von zwei Wochen zurück bis sechs Monate voraus), außer Labels, die du hier ausgeblendet hast; sie werden bei jedem Öffnen des Kalenders aktualisiert. „Zum Kalender hinzufügen“ in anderen Apps und .ics-Links können auch orOS öffnen (wähle orOS, wenn Android fragt): Ein neuer Termin öffnet sich ausgefüllt, oder der Import fragt zuerst. Schaltest du den Schalter aus, wird der orOS-Kalender wieder vom Handy entfernt. Der Knopf erscheint nur in der Android-App, und die Wahl gilt nur für dieses Handy.
+
+## Eine orOS-Datei speichern und öffnen
+Drücke `Mehr` und dann `orOS-Datei (.oroscal)`, um alle deine eigenen Termine und Labels als eine `.oroscal`-Datei zu speichern, zum Beispiel um sie ohne Synchronisierung auf ein anderes Gerät zu bringen oder eine Kopie zu behalten. Die Datei ist ein normales ZIP: Entpackt enthält sie die Termine als `content.json` plus `preview/calendar.ics`, das andere Kalender-Apps öffnen. Sie ist nicht verschlüsselt, also bewahre sie sicher auf. Abonnierte Kalender, die Google-Anmeldung und die Einstellungen dieses Geräts sind nicht in der Datei, Feed-Zeilen nie.
+
+`orOS-Datei öffnen…` (oder `Entpackter orOS-Ordner…`, oder „Öffnen mit“ orOS am Computer) zeigt, wie viele Termine und Labels neu und wie viele schon hier sind; dann fügt `Hinzufügen` nur die neuen hinzu, mit ihren eigenen IDs: Dieselbe Datei erneut zu öffnen, fügt nichts hinzu. Ein Termin, der schon hier ist, behält, was du hier eingegeben hast, und ein Termin, den du hier gelöscht hast, bleibt gelöscht; eine Datei löscht nie etwas. Hake `Mit neueren Versionen aktualisieren` an, damit Termine, die in der Datei später geändert wurden, die Kopie der Datei übernehmen. `Rückgängig` in der Meldung entfernt, was hinzugefügt wurde.
+
+## Synchronisierung und Sicherung
+Deine Termine, Labels und Abos (Adresse, Name, Farbe) werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. Die Termine eines abonnierten Kalenders werden nicht synchronisiert: Jedes Gerät liest sie selbst von der Adresse und behält seine eigene Kopie (nur auf diesem Gerät). Welche deiner eigenen Labels du ausgeblendet hast, wird nicht gespeichert: Beim nächsten Mal werden wieder alle angezeigt. Die Chips `Feiertage`, `Namenstage`, `Welttage`, `Arbeitszeit`, `Mond & Himmel`, `Medikamente` und `Arzttermine` merken sich, ob sie an oder aus sind, nur auf diesem Gerät. Feed-Zeilen werden nie im Kalender gespeichert; sie kommen aus den eigenen Daten der anderen Apps.
+
+`Exportieren` speichert deine eigenen Termine als .ics-Datei, die andere Kalender-Apps öffnen können, mit Wiederholungen, Labels und Erinnerungen. Feed-Zeilen und abonnierte Kalender sind nicht enthalten.
+
+`Importieren` neben `Exportieren` liest eine .ics-Datei aus Google Kalender, Outlook, deinem Handy oder einem anderen orOS-Kalender. Bevor etwas gespeichert wird, siehst du, wie viele Termine neu, aktualisiert oder schon im Kalender sind, und wählst `Importieren` oder `Abbrechen`. Importierst du dieselbe Datei erneut, werden diese Termine aktualisiert statt kopiert. Eine Kategorie in der Datei wird einem deiner Labels mit demselben Namen zugeordnet; neue Labels entstehen nicht. Abgesagte Termine werden übersprungen. Ist orOS auf einem Computer installiert, kannst du eine .ics-Datei auch direkt von deinem Gerät mit `Öffnen mit` öffnen; siehe [Dateien öffnen](help:t/install).
+
+Für eine vollständige Kopie siehe [Sicherung](help:t/backup).
+
+## Tastenkürzel
+- [[←]] / [[→]] gehen zum vorherigen oder nächsten Tag, zur vorherigen oder nächsten Woche, zum Monat, Jahr oder zur Agenda-Seite.
+- [[Esc]] leert die Suche.
+- In den Uhrzeitfeldern bewegen [[↑]] / [[↓]] durch die Liste, und [[Enter]] wählt eine Uhrzeit.
+
+## Tipps
+- Erinnerungen erscheinen in orOS, auch wenn der Kalender selbst geschlossen ist, solange orOS offen ist. Siehe [Benachrichtigungen](help:t/notifications).
+- Eine Erinnerung zu öffnen, bringt dich direkt zum Termin.
+
+## Grenzen
+- Erinnerungen können nicht ausgelöst werden, wenn der Browser oder der orOS-Tab geschlossen ist.
+- Abonnierte Kalender werden gelesen, solange der Kalender offen ist (beim Öffnen und alle 3 Stunden), nicht im Hintergrund. Ein Server, der Browser blockiert, braucht das orOS-Relay. Ein Abo behält bis zu 3000 Termine; einmalige Termine, die vor mehr als einem Jahr endeten, werden weggelassen, und seine Termine haben keine Erinnerungen.
+- Schnell hinzufügen liest Englisch und Griechisch, mit dem Tag zuerst. Wenn etwas falsch erkannt wird, korrigiere es vor dem Speichern im Terminfenster.
+- Freie Zeiten kommen nur aus dem Kalender dieses Geräts und kennen keine anderen Kalender, die du hier nicht abonniert hast. Wer eine Zeit wählt, antwortet dir per E-Mail; nichts aktualisiert sich von selbst, und der Link behält die Zeiten, die er beim Erstellen hatte.
+- Ziehen funktioniert nur mit der Maus, nicht per Touch. Öffne am Handy stattdessen den Termin und ändere seine Tage.
+- Auf einem Handy sind die Tage in `Jahr` klein; tippe auf den Namen des Monats, um ihn größer zu öffnen.
+- Beim Import kommt ein Serientermin, dessen Regel der Kalender nicht abbilden kann (zum Beispiel „der 1. und 3. Montag“, mehrere Tage des Monats oder nach Kalenderwoche), nur mit seinem ersten Datum herein, ebenso eine stündliche Regel. Die Vorschau sagt dir, wie viele.
+- Exportierte Zeitzonen werden nur mit Namen geschrieben. Die meisten Kalender-Apps verstehen sie; ein paar ältere zeigen die Uhrzeit vielleicht in ihrer eigenen Zone.
+- Auf einer älteren orOS-Version, die noch nicht aktualisiert wurde, erscheinen die neueren Wiederholungsoptionen und Zeitzonen vereinfacht, bis sie aktualisiert.
+- Ein Termin mit Zeitzone, den du im eigenen Kalender des Handys bearbeitest, behält seine Zone erst, nachdem orOS die Änderung zurückgelesen hat. Eine Datei kann höchstens 5000 Termine bringen und höchstens 5 MB groß sein.

@@ -1,6 +1,12 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.03.00
+- Flashcards: make cards from Notes, Wiki, Writer, Reader or Spreadsheet with Send to an app, see cards waiting in Today, and an optional daily study reminder.
+
+## Version 3.02.00
+- Notes, To-Do, Calendar, Contacts and Kanban are now in German.
+
 ## Version 3.01.00
 - Multitasking (experimental, off by default): turn it on in Settings › System and apps you leave stay open in the background, back where you left them.
 
