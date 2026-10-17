@@ -1,0 +1,60 @@
+# Benachrichtigungen, Wecker und Erinnerungen
+orOS kann dir Wecker, Kalender-Erinnerungen, fällige Aufgaben und mehr melden. Diese Seite erklärt, wo Benachrichtigungen erscheinen, wie du sie einrichtest und was funktioniert, während orOS geschlossen ist.
+
+## Wo Benachrichtigungen erscheinen
+Neue Benachrichtigungen erscheinen für ein paar Sekunden auf dem Bildschirm (standardmäßig unten rechts). Sie landen auch im Posteingang: Tippe oder klicke in der oberen Leiste auf die Glocke, um ihn zu öffnen. Die Zahl auf der Glocke zählt die ungelesenen. Wenn du das Menü öffnest, schließen sich die Benachrichtigungen, und die Glocke schließt das Menü. Tippe auf eine Benachrichtigung, um zu öffnen, worauf sie zeigt; der Posteingang schließt sich dabei. Oder leere die Liste mit `Alle löschen`. Alte Benachrichtigungen werden nach 7 Tagen entfernt.
+
+## Einstellungen für Benachrichtigungen
+Öffne das Menü, wähle `Einstellungen` und geh zu `Benachrichtigungen`:
+
+- Der Schalter `Benachrichtigungen` schaltet alle Benachrichtigungen ein oder aus.
+- `Test senden` zeigt ein Beispiel, damit du siehst, wie es aussieht.
+- `Position auf dem Bildschirm`, `Stil`, `Ton`, `Lautstärke` und `Bleibt sichtbar` ändern, wo Pop-ups erscheinen, wie sie aussehen, welchen Ton sie machen (standardmäßig `Keiner`; deine Melodien aus dem [Klingelton-Komponisten](app:ringtones) stehen auch in der Liste, so können Erinnerungen aus Gewohnheiten, Gesundheit und jeder anderen App damit klingeln) und wie lange sie bleiben.
+- `Ruhezeiten` hält Pop-ups und Töne zwischen den Uhrzeiten `Von` und `Bis` fern (standardmäßig 22:00 bis 08:00). Benachrichtigungen kommen trotzdem im Posteingang an.
+- Unter `Welche Apps benachrichtigen dürfen` kannst du Benachrichtigungen für einzelne Apps ausschalten. `orOS` steht für Meldungen von orOS selbst, etwa zu Synchronisierung und Updates.
+
+Diese Einstellungen reisen mit der [Synchronisierung](help:t/sync) mit, sie sind also auf all deinen Geräten gleich.
+
+## Wecker
+Wecker stellst du in der App [Zeit](app:time). Wenn ein Wecker klingelt, erscheint oben rechts auf dem Bildschirm ein Feld mit `Wecker`, und es piept. Tippe auf `Schlummern 9 Min.`, um ihn in 9 Minuten wieder zu hören, oder auf `Schließen`, um ihn zu stoppen. Nach 30 Sekunden hört er von selbst auf und bleibt in deinem Posteingang.
+
+Wecker gehören zu orOS, nicht zur App Zeit, deshalb klingeln sie in jeder App und auf dem Desktop. Das Wecker-Feld erscheint auch während der Ruhezeiten.
+
+## Kalender-Erinnerungen
+Wähle in der App [Kalender](app:calendar) eine Zeit bei `Erinnerung`, wenn du einen Termin hinzufügst oder bearbeitest. Die Erinnerung kommt zu dieser Zeit als Benachrichtigung an, auch wenn der Kalender geschlossen ist. Öffnest du orOS nach der Erinnerungszeit, aber vor Beginn des Termins, bekommst du sie trotzdem. Hat der Termin schon begonnen, wird sie übersprungen.
+
+Auch andere Apps senden Erinnerungen, zum Beispiel für fällige oder überfällige Aufgaben in [Aufgaben](app:todo). Jede hat ihren eigenen Schalter unter `Welche Apps benachrichtigen dürfen`.
+
+## Wenn orOS geschlossen ist
+>! orOS läuft in deinem Browser, deshalb **klingelt oder erscheint ohne den Schalter unten nichts, solange orOS geschlossen ist**. Wecker und Erinnerungen funktionieren dann nur, solange orOS in einem Tab oder als installierte App offen ist, auch im Hintergrund.
+
+### Benachrichtigungen bei geschlossenem orOS (optional)
+`Einstellungen` › `Benachrichtigungen` › `Benachrichtigungen bei geschlossenem orOS` ist **aus**, bis du es einschaltest, und du schaltest es auf jedem Gerät einzeln ein. Wenn es an ist, kommen diese auch bei geschlossenem orOS an:
+
+- Wecker und Timer aus [Zeit](app:time).
+- Erinnerungen aus [Kalender](app:calendar).
+- Fällige Aufgaben aus [Aufgaben](app:todo) (um 09:00) sowie Erinnerungen aus [Wasser](app:water), [Gewohnheiten](app:habits) und [Gesundheit](app:health).
+
+So funktioniert es: orOS legt die Erinnerungen der nächsten 7 Tage im orOS-Relay ab, und zur jeweiligen Zeit schickt das Relay sie an den Push-Dienst deines Browsers, der dein Gerät weckt. Der Push-Dienst gehört dem Hersteller deines Browsers: **Google** in Chrome und auf Android, **Microsoft** in Edge, **Mozilla** in Firefox. Jede Erinnerung wird zuerst auf deinem Gerät verschlüsselt, daher sehen Push-Dienst und Relay nur ein verschlüsseltes Paket und den Zeitpunkt, an dem es gesendet wird, nie den Inhalt. Änderst oder löschst du eine Erinnerung auf einem deiner Geräte, ändert sich die wartende Kopie auch oder verschwindet. Öffne orOS ab und zu, damit es die kommenden Tage hinzufügen kann.
+
+Gut zu wissen:
+- Auf einem Computer muss der Browser im Hintergrund weiterlaufen, das orOS-Fenster selbst darf aber geschlossen sein. Chrome und Edge unter Windows machen das standardmäßig. Unter Linux und in Firefox lass den Browser offen.
+- Android-Handys bekommen sie auch bei geschlossenem Chrome. In der orOS-App für Android ist dieser Schalter ausgeblendet, weil die App Erinnerungen selbst klingeln lässt (siehe unten).
+- Der Ton ist der Benachrichtigungston deines Systems, nicht der orOS-Klingelton. Wecker bleiben auf dem Bildschirm, bis du darauf tippst.
+- Solange orOS auf dem Bildschirm ist, zeigt es Erinnerungen selbst an, du bekommst also nie dieselbe doppelt.
+- `Test senden` prüft, ob es funktioniert: Der Test kommt einen Moment später über den Push-Dienst an, auch wenn orOS offen ist.
+- Schaltest du den Schalter aus, werden die wartenden Erinnerungen vom Relay gelöscht. Unter dem Schalter siehst du jedes Gerät, auf dem er an ist; `Entfernen` schaltet ihn auch für dieses Gerät aus, egal wo du gerade bist.
+
+Auf Handys ohne den Schalter pausieren Browser oft Seiten, die nicht auf dem Bildschirm sind. Für einen Wecker, der wirklich wichtig ist, nimm zusätzlich den Wecker deines Handys.
+
+## Mit der orOS-App für Android
+In der orOS-App für Android gibt es unter `Einstellungen` › `Benachrichtigungen` den Punkt `Erinnerungen über die Android-App`. Schalte ihn ein und tippe auf `Erlauben`. Dann lässt das Handy diese selbst klingeln, auch wenn orOS geschlossen ist:
+
+- Wecker und Timer aus [Zeit](app:time), mit dem Weckton des Handys, bis du sie beendest.
+- Erinnerungen aus [Wasser](app:water).
+- Fällige Aufgaben aus [Aufgaben](app:todo), um 09:00 am jeweiligen Tag.
+
+Tippe auf eine, um orOS dort zu öffnen, worauf sie zeigt. Die App kennt die nächsten zwei Tage, also öffne orOS ab und zu. Meldet Android, dass Erinnerungen ein paar Minuten zu spät kommen können, tippe noch einmal auf `Erlauben` und schalte Wecker für orOS ein. Solange orOS auf dem Bildschirm ist, zeigt es Erinnerungen wie gewohnt selbst an. Kalendertermine klingeln stattdessen über den Kalender des Handys (siehe die Hilfe zu [Kalender](app:calendar)).
+
+## Systembenachrichtigungen
+Wenn dein Browser es erlaubt, zeigt orOS Benachrichtigungen auch über dein System an, damit du sie siehst, während orOS im Hintergrund ist. orOS fragt nach dieser Erlaubnis erst, wenn du einen Kalendertermin mit Erinnerung speicherst. Du kannst sie auch jederzeit in den Website-Einstellungen deines Browsers erlauben oder blockieren. Ein Klick auf eine solche Benachrichtigung holt orOS nach vorn und öffnet, worauf sie zeigt, zum Beispiel den Termin. Ohne diese Erlaubnis erscheinen Benachrichtigungen trotzdem in orOS.

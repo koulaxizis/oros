@@ -96,9 +96,13 @@ test("locale, choices and plural forms", () => {
   assert.equal(r.I.locale("el"), "el-GR");
   assert.equal(r.I.base(), "en");
   assert.equal(r.I.base("el"), "el");
-  // Hidden languages are offered only while active.
+  // Shown languages are always offered (partial ones marked); hidden
+  // ones only while active.
   assert.ok(r.I.choices().some((l) => l.code === "de" && l.partial));
-  assert.ok(!load({ stored: "en" }).I.choices().some((l) => l.code === "de"));
+  const en = load({ stored: "en" }).I;
+  for (const l of en.LANGS) {
+    assert.equal(en.choices().some((c) => c.code === l.code), l.status !== "hidden", l.code);
+  }
   const tbl = { "n.one": "1 page", "n.some": "{n} pages" };
   assert.equal(r.I.plural(tbl, "n", 1), "1 page");
   assert.equal(r.I.plural(tbl, "n", 5), "{n} pages");

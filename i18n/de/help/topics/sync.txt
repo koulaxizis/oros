@@ -1,0 +1,91 @@
+# Synchronisierung zwischen Geräten
+Die Synchronisierung hält deine orOS-Daten auf jedem Gerät gleich, über dein eigenes Dropbox-Konto oder deinen eigenen WebDAV-Server (Nextcloud, ownCloud, Synology, QNAP und andere). Alles wird auf deinem Gerät verschlüsselt, bevor es das Gerät verlässt, die Cloud speichert also immer nur unlesbare Daten.
+
+## Dropbox verbinden
+1. Öffne das Menü, wähle `Einstellungen` und geh zu `Synchronisierung`.
+2. Tippe oder klicke auf `Mit Dropbox verbinden` und melde dich bei Dropbox an. orOS bekommt nur seinen eigenen App-Ordner in deiner Dropbox, sonst nichts.
+3. Zurück in orOS tippst du eine Passphrase in das Feld `Passphrase` und tippst auf `Entsperren`.
+4. Setz den Haken bei `Auf diesem Gerät merken`, wenn du sie nicht bei jedem Öffnen von orOS eintippen willst.
+
+Beim ersten Mal braucht deine Passphrase mindestens 10 Zeichen.
+
+## Einen WebDAV- oder Nextcloud-Server verbinden
+1. Tippe in `Einstellungen` › `Synchronisierung` auf `WebDAV / Nextcloud nutzen`.
+2. Fülle die `Serveradresse` aus (sie muss mit https:// beginnen; bei Nextcloud sieht sie so aus: `https://your.cloud/remote.php/dav/files/your-name`), deinen `Benutzername` und ein `App-Passwort`, und wähle einen `Ordner auf dem Server` (standardmäßig orOS).
+3. Tippe auf `Testen und verbinden`. orOS prüft zuerst den Server und speichert nichts, wenn eine Prüfung fehlschlägt.
+4. Tippe deine Passphrase ein und tippe auf `Entsperren`, wie bei Dropbox.
+
+Nutze ein App-Passwort, nicht dein Hauptpasswort: In Nextcloud findest du es unter Einstellungen › Sicherheit › Geräte & Sitzungen. orOS behält es nur auf diesem Gerät. Bei Nextcloud löscht ein Zurücksetzen auf Werkseinstellungen dieses App-Passwort auch auf dem Server; bei anderen Servern entfernst du es dort selbst.
+
+Der Server muss orOS die Dateiversionen zeigen (ETag) und verhindern, dass zwei Geräte sich gegenseitig überschreiben; orOS lehnt einen Server ab, der das nicht kann, und sagt, welche Prüfung fehlgeschlagen ist.
+
+### Server, die den Browser nicht verbinden lassen
+Viele Server (Synology, ownCloud, eine Nextcloud ohne die App WebAppPassword) lassen keine Webseite mit sich sprechen (CORS). Dann meldet `Testen und verbinden`, dass der Server nicht geantwortet hat. Schalte `Über das orOS-Relay` ein und versuch es noch einmal.
+
+>! Auch mit dem Relay bleiben deine Daten Ende-zu-Ende-verschlüsselt: Das Relay sieht nur unlesbare Dateien. Aber dein App-Passwort geht bei jeder Anfrage durch das orOS-Relay. Es wird dort nie gespeichert oder protokolliert. Willst du das nicht, lass deinen Server orOS direkt zu: Bei Nextcloud erledigt das die kostenlose App WebAppPassword; auf deinem eigenen Server erlaubst du die Adresse von orOS und gibst den ETag-Header frei.
+
+Das Relay erreicht öffentliche https-Server auf Port 443, 5006 (Synology), 8443 oder 9443 und nimmt Dateien bis 95 MB auf einmal an. Bei Nextcloud werden große Dateien sowieso in Stücken hochgeladen. Einen Server in deinem Heimnetz ohne öffentliche Adresse erreichst du so nicht.
+
+### Mit Nextcloud anmelden
+Bei Nextcloud musst du kein App-Passwort selbst erstellen:
+1. Gib die Adresse deiner Nextcloud ein (etwa `https://your.cloud`) und tippe auf `Mit Nextcloud anmelden`.
+2. Ein Tab öffnet die Anmeldeseite deiner Nextcloud. Melde dich dort an und erlaube orOS den Zugriff.
+3. orOS bekommt ein eigenes App-Passwort und verbindet sich. Dein Hauptpasswort tippst du nur auf der Seite deines Servers ein.
+
+Nextcloud braucht für diesen Schritt meist `Über das orOS-Relay`. Die Freigabe muss innerhalb von 20 Minuten erfolgen; `Anmeldung abbrechen` beendet das Warten.
+
+Ein Gerät nutzt immer nur eine Cloud. Wechselt ein Gerät zu einer neuen Cloud, wird bei der nächsten Synchronisierung alles darauf dorthin hochgeladen; die alte Cloud behält ihre Kopie.
+
+### Zu einer anderen Cloud umziehen
+`Zu WebDAV / Nextcloud umziehen` (wenn du Dropbox nutzt) und `Zu Dropbox umziehen` (wenn du einen Server nutzt) kopieren deine ganze Cloud in die andere: die Synchronisierungsdaten und jede Datei im Tresor, auch Drive-Ordner, die dieses Gerät nur in der Cloud aufbewahrt. Die Dateien werden so kopiert, wie sie sind, also weiter verschlüsselt, und dieselbe Passphrase öffnet sie.
+1. Öffne auf einem Gerät `Einstellungen` › `Synchronisierung` und wähle den Umzug. Für einen Server füllst du dasselbe Formular aus wie beim Verbinden; für Dropbox meldest du dich an.
+2. Der neue Ort muss leer sein: ein leerer Ordner auf dem Server oder eine Dropbox ohne orOS-Daten. Sonst wird nichts umgezogen.
+3. Wähle dann auf jedem anderen Gerät `Trennen` und verbinde dich mit derselben Passphrase mit der neuen Cloud.
+
+Die alte Cloud bleibt, wie sie war, samt ihren Sicherungen, bis du sie selbst löschst.
+
+### Anleitungen für Server
+- **Nextcloud**: Die Adresse ist `https://your.cloud/remote.php/dav/files/USERNAME`. Nutze `Mit Nextcloud anmelden` oder erstelle ein App-Passwort unter Einstellungen › Sicherheit › Geräte & Sitzungen. Mit der App WebAppPassword verbindet sich der Browser direkt; sonst schalte `Über das orOS-Relay` ein.
+- **Synology**: Installiere `WebDAV Server` aus dem Paket-Zentrum und schalte HTTPS ein (Port 5006). Die Adresse ist `https://your-nas-address:5006/`, gefolgt von einem freigegebenen Ordner wie `/home`. Das NAS braucht eine öffentliche Adresse und ein gültiges Zertifikat (zum Beispiel Synology DDNS mit Let's Encrypt), und `Über das orOS-Relay` muss eingeschaltet sein.
+- **ownCloud**: Die Adresse ist `https://your.cloud/remote.php/dav/files/USERNAME`. Erstelle einen App-Passcode unter Einstellungen › Sicherheit und schalte `Über das orOS-Relay` ein.
+
+## Deine Passphrase
+Die Passphrase verschlüsselt deine Daten auf diesem Gerät. Sie verlässt das Gerät nie, und weder Dropbox noch sonst jemand kann deine Daten ohne sie lesen.
+
+>! Schreib deine Passphrase an einem sicheren Ort auf. Sie kann nicht wiederhergestellt oder zurückgesetzt werden. Vergisst du sie, kann niemand die Daten in der Cloud entschlüsseln, auch du nicht. Die Daten, die schon auf jedem Gerät sind, bleiben dort, also exportiere eine Sicherung von einem Gerät, das sie noch hat (siehe [Sicherung und Wiederherstellung](help:t/backup)).
+
+- `Passphrase ändern` verschlüsselt deine Cloud-Daten mit einer neuen Passphrase. Danach braucht jedes Gerät die neue.
+- Wurde die Passphrase auf einem anderen Gerät geändert, siehst du `Passphrase auf einem anderen Gerät geändert?`. Tippe dort die neue ein.
+- `Passphrase hier vergessen` (oder `Dieses Gerät vergessen`, wenn sie gemerkt war) entfernt sie von diesem Gerät. Deine Daten bleiben.
+- `Trennen` meldet dieses Gerät von Dropbox oder dem WebDAV-Server ab; tippe zweimal, um es zu bestätigen. Deine Daten bleiben auf dem Gerät.
+
+## Der Sync-Punkt
+Der kleine Punkt in der oberen Leiste zeigt, wie es um die Synchronisierung steht. Am Computer zeigst du mit der Maus darauf, um seine Beschriftung zu sehen:
+
+- Blassgrau: `Sync: nicht verbunden`
+- Leerer Ring: `Sync: verbunden – Passphrase gesperrt`
+- Grau: `Sync: alles aktuell`
+- Pulsierend: `Sync: läuft…`
+- Kurz grün: `Sync: fertig`
+- Orange: `Sync: Änderungen noch nicht synchronisiert`
+- Rot: `Sync: letzter Versuch fehlgeschlagen`
+
+Tippe oder klicke auf den Punkt, um sofort zu synchronisieren. Ist die Synchronisierung nicht verbunden oder gesperrt, öffnet der Punkt `Einstellungen` bei `Synchronisierung`, damit du dich verbinden oder deine Passphrase eintippen kannst.
+
+## Wann die Synchronisierung läuft
+Die Synchronisierung läuft von selbst: wenn orOS startet, ein paar Sekunden nachdem du etwas änderst, wenn du zum Tab zurückkommst, wenn deine Verbindung zurück ist, und alle paar Minuten (`Automatisch synchronisieren`, standardmäßig alle 3 Min., oder `Aus`). Wenn du den Tab verlässt, sendet orOS deine neuesten Änderungen. Willst du orOS mit noch nicht gesendeten Änderungen schließen, fragt dein Browser dich vorher.
+
+## Konflikte
+Du kannst auf zwei Geräten gleichzeitig bearbeiten, sogar offline. Wenn sie sich treffen, führt orOS die Änderungen zusammen, statt ein Gerät das andere überschreiben zu lassen. Wurde dieselbe Notiz oder Datei an zwei Stellen geändert, bleiben beide Versionen erhalten.
+
+Haben sich die Daten einer App auf zwei Geräten geändert, während die App geschlossen war, bekommst du einen Hinweis wie `Notizen: Änderungen warten auf diesem Gerät`. Öffne einfach diese App, und die Änderungen werden zusammengeführt.
+
+## Von Hand senden und holen
+In `Einstellungen` unter `Synchronisierung` holt `Aus der Cloud holen` die neuesten Daten, und `In die Cloud senden` sendet deine. Tastenkürzel:
+
+- [[Ctrl+Alt+Shift+O]] aus der Cloud holen
+- [[Ctrl+Alt+Shift+P]] in die Cloud senden
+- [[Ctrl+Alt+Shift+R]] Dropbox verbinden oder neu verbinden
+
+## Ein zweites Gerät hinzufügen
+Öffne orOS auf dem anderen Gerät, öffne `Einstellungen`, tippe auf `Mit Dropbox verbinden`, melde dich beim **selben** Dropbox-Konto an und tippe **dieselbe** Passphrase ein. Deine Daten kommen herunter und werden mit dem zusammengeführt, was schon da ist. Etwas hat nicht geklappt? Sieh unter [Fehlerbehebung](help:t/troubleshooting) nach.

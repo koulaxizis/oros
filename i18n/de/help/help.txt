@@ -1,0 +1,20 @@
+# Hilfe
+Die orOS-Anleitung: wie orOS funktioniert und wie du jede App nutzt, auf Englisch und Griechisch, auch offline.
+
+## Erste Schritte
+- Öffne die **Hilfe** über das Menü oder tippe auf den Knopf **?** in der oberen Leiste. In einer App öffnet **?** direkt die Seite dieser App.
+- Am Computer kannst du auch [[Ctrl+Alt+Shift+H]] drücken.
+- Auf einem breiten Bildschirm steht die Liste der Seiten links. Auf dem Handy siehst du zuerst die Liste; tippe auf eine Seite, um sie zu lesen, und nutze den Zurück-Pfeil, um zur Liste zurückzukehren.
+
+## Finde, was du brauchst
+- **Anleitung** enthält die allgemeinen Themen: erste Schritte, Synchronisierung, Sicherung, Tastenkürzel und mehr.
+- Darunter hat jede App ihre eigene Seite, gruppiert wie im Menü. Eine App mit `bald` hat noch keine Seite.
+- Tippe ins Suchfeld, um alle Seiten auf einmal zu durchsuchen. Akzente und Großschreibung spielen keine Rolle, also findet `συγχρονισμος` auch `συγχρονισμός`. Drücke [[/]], um ins Suchfeld zu springen, und [[Esc]], um es zu leeren.
+- Ein Treffer öffnet die Seite beim passenden Abschnitt.
+- Auf der Seite einer App öffnet der Knopf neben dem Titel diese App.
+
+## Synchronisierung und Sicherung
+Die Hilfe speichert nichts und synchronisiert nicht. Ihre Seiten kommen mit orOS selbst, also werden sie mit orOS aktualisiert und funktionieren offline, sobald orOS einmal online geöffnet wurde.
+
+## Tipps
+> Fehlt dir etwas, oder hast du eine falsche Seite gefunden? Sag es uns auf [GitHub](https://github.com/koulaxizis/oros/issues).

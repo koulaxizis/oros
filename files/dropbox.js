@@ -48,13 +48,16 @@
   var PV_TEXT = 512 * 1024;               // same caps as the disk preview
   var PV_IMAGE = 10 * 1024 * 1024;
 
+  // orosI18n (../i18n.js): the full language code, a pack language included.
   var LANG = (function () {
+    if (window.orosI18n) return window.orosI18n.lang();
     try { return localStorage.getItem("oros-lang") === "el" ? "el" : "en"; } catch (e) { return "en"; }
   })();
+  var LOC = window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB");
 
   var STRINGS = {
     en: {
-      "tree":        "Dropbox",
+      "dbx.tree":        "Dropbox",
       "up":          "Go to parent folder",
       "refresh":     "Refresh",
       "account":     "Dropbox account",
@@ -103,14 +106,14 @@
       "pv.none":     "No preview for this file. Download it to open it.",
       "pv.big":      "This file is too large to preview ({n}). Download it instead.",
       "pv.fail":     "The file couldn't be read from Dropbox.",
-      "pv.notUtf8":  "This file is not UTF-8 text. Download it to open it.",
+      "dbx.notUtf8":  "This file is not UTF-8 text. Download it to open it.",
       "pv.noDl":     "Dropbox does not allow downloading this file (for example a Paper doc).",
       "dl.started":  "Download started",
       "dl.fail":     "Download failed",
       "disk":        "Files",
       "sel.n":       "{n} selected",
       "sel.all":     "Select all",
-      "sel.one":     "Select",
+      "dbx.selOne":     "Select",
       "sel.clear":   "Clear selection",
       "x.copy":      "Copy to orOS disk",
       "x.move":      "Move to orOS disk",
@@ -158,7 +161,7 @@
       "e.root":      "Dropbox"
     },
     el: {
-      "tree":        "Dropbox",
+      "dbx.tree":        "Dropbox",
       "up":          "Μετάβαση στον γονικό φάκελο",
       "refresh":     "Ανανέωση",
       "account":     "Λογαριασμός Dropbox",
@@ -207,14 +210,14 @@
       "pv.none":     "Δεν υπάρχει προεπισκόπηση για αυτό το αρχείο. Κατέβασέ το για να το ανοίξεις.",
       "pv.big":      "Το αρχείο είναι πολύ μεγάλο για προεπισκόπηση ({n}). Κατέβασέ το.",
       "pv.fail":     "Το αρχείο δεν διαβάστηκε από το Dropbox.",
-      "pv.notUtf8":  "Το αρχείο δεν είναι κείμενο UTF-8. Κατέβασέ το για να το ανοίξεις.",
+      "dbx.notUtf8":  "Το αρχείο δεν είναι κείμενο UTF-8. Κατέβασέ το για να το ανοίξεις.",
       "pv.noDl":     "Το Dropbox δεν επιτρέπει τη λήψη αυτού του αρχείου (π.χ. έγγραφο Paper).",
       "dl.started":  "Ξεκίνησε η λήψη",
       "dl.fail":     "Η λήψη απέτυχε",
       "disk":        "Αρχεία",
       "sel.n":       "{n} επιλεγμένα",
       "sel.all":     "Επιλογή όλων",
-      "sel.one":     "Επιλογή",
+      "dbx.selOne":     "Επιλογή",
       "sel.clear":   "Καθαρισμός επιλογής",
       "x.copy":      "Αντιγραφή στον δίσκο orOS",
       "x.move":      "Μεταφορά στον δίσκο orOS",
@@ -262,6 +265,8 @@
       "e.root":      "Dropbox"
     }
   };
+
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "files", LANG);
 
   function t(k, vars) {
     var s = (STRINGS[LANG] && STRINGS[LANG][k]) || STRINGS.en[k] || k;
@@ -790,7 +795,7 @@
     list.forEach(function (c, i) {
       if (i) nav.appendChild(el("span", "crumb-sep", "/"));
       var last = i === list.length - 1;
-      var b = el("button", "crumb" + (last ? " current" : ""), i ? c.name : t("tree"));
+      var b = el("button", "crumb" + (last ? " current" : ""), i ? c.name : t("dbx.tree"));
       b.type = "button";
       if (!last) b.addEventListener("click", function () { go(c.path); });
       nav.appendChild(b);
@@ -863,7 +868,7 @@
   function fmtDate(r) {
     if (r.dir || !r.mtime) return "-";
     try {
-      return new Date(r.mtime).toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB", { day: "2-digit", month: "2-digit", year: "2-digit" });
+      return new Date(r.mtime).toLocaleDateString(LOC, { day: "2-digit", month: "2-digit", year: "2-digit" });
     } catch (e) { return "-"; }
   }
 
@@ -910,7 +915,7 @@
       ck.type = "button";
       ck.setAttribute("role", "checkbox");
       ck.setAttribute("aria-checked", sel[r.lower] ? "true" : "false");
-      ck.setAttribute("aria-label", t("sel.one") + ": " + r.name);
+      ck.setAttribute("aria-label", t("dbx.selOne") + ": " + r.name);
       ck.disabled = isLocked;
       ck.addEventListener("click", function (e) {
         e.stopPropagation();
@@ -1003,7 +1008,7 @@
     var info = el("div", "pv-info");
     info.appendChild(el("strong", "", r.name));
     info.appendChild(el("span", "pv-meta", (C.parentPath(r.path) || "/") + " · " + fmtSize(r) +
-      (r.mtime ? " · " + new Date(r.mtime).toLocaleString(LANG === "el" ? "el-GR" : "en-GB",
+      (r.mtime ? " · " + new Date(r.mtime).toLocaleString(LOC,
         { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) : "")));
     head.appendChild(info);
     var acts = el("div", "pv-actions");
@@ -1050,7 +1055,7 @@
       }
       return blob.arrayBuffer().then(function (buf) {
         var s;
-        try { s = new TextDecoder("utf-8", { fatal: true }).decode(buf); } catch (e) { msg(t("pv.notUtf8")); return; }
+        try { s = new TextDecoder("utf-8", { fatal: true }).decode(buf); } catch (e) { msg(t("dbx.notUtf8")); return; }
         body.innerHTML = "";
         body.appendChild(el("pre", "", s));
       });
@@ -1597,7 +1602,7 @@
     var g = el("span", "glyph");
     g.innerHTML = ICON.box;
     node.appendChild(g);
-    node.appendChild(el("span", "tname", t("tree")));
+    node.appendChild(el("span", "tname", t("dbx.tree")));
     function open() { if (ctx && ctx.closeDrawer) ctx.closeDrawer(); enter(active ? cwd : (readJSON(VIEW_LS) || {}).path || ""); }
     node.addEventListener("click", open);
     node.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } });

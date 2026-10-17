@@ -1,0 +1,33 @@
+# Deine Daten und Dateien
+orOS speichert nichts auf einem eigenen Server, und es gibt kein Konto. Alles, was du erstellst, liegt in deinem Browser, auf dem Gerät, das du gerade nutzt. Diese Seite erklärt, wo es liegt und wie du es sicher aufbewahrst.
+
+## Wo deine Daten liegen
+Deine App-Daten (Notizen, Aufgaben, Termine, Einstellungen und so weiter) liegen im eigenen Speicher dieses Browsers auf diesem Gerät. Dateien in der App [Dateien](app:files) liegen in einem separaten Speicherbereich desselben Browsers.
+
+Das heißt:
+- Ein anderer Browser auf demselben Gerät hat sein eigenes, separates orOS.
+- Ein anderes Gerät sieht deine Daten nicht, außer du schaltest die [Synchronisierung](help:t/sync) ein.
+- orOS bittet den Browser, seinen Speicher zu behalten, damit er nicht geleert wird, um Platz zu schaffen. Ob der Browser zustimmt, entscheidet er selbst.
+
+## Dateien und Synchronisierung
+Ist die Synchronisierung an, wird jede Datei in der App Dateien von selbst synchronisiert, verschlüsselt, auch wenn die App Dateien geschlossen ist. Die App Dateien zeigt, wie es läuft: `Disk synchronisiert`, `Änderungen warten auf Synchronisierung` oder `Disk-Synchronisierung nicht verfügbar` (Synchronisierung ist aus oder gesperrt).
+
+Wurde dieselbe Datei auf zwei Geräten geändert, bleiben beide Versionen erhalten. Die Version des anderen Geräts erscheint neben deiner, mit „conflict“ und einem Datum im Namen, und du siehst `Eine Datei wurde auf zwei Geräten geändert — beide Versionen wurden behalten`. Leere Ordner werden nicht synchronisiert.
+
+## Wenn der Speicher voll ist
+Browser geben jeder Website begrenzt Platz für App-Daten, in den meisten Browsern etwa 5 MB, geteilt von allen orOS-Apps. Ist er voll, werden neue Änderungen eventuell nicht gespeichert, und die Synchronisierung pausiert vielleicht, damit nichts überschrieben wird. Du siehst dann:
+
+`Browserspeicher ist voll — Synchronisierung pausiert, damit nichts überschrieben wird. Schaffe Platz (exportieren, dann alte Daten löschen)`
+
+Um das zu beheben, [exportiere zuerst eine Sicherung](help:t/backup) und lösche dann, was du nicht mehr brauchst, etwa alte Einträge in den Apps, die du am meisten nutzt.
+
+## Browserdaten löschen
+>! Wenn du die Browserdaten für diese Website löschst (Cookies und Websitedaten, Verlauf mit Websitedaten oder „Speicher löschen“), **löschst du orOS auf diesem Gerät**: jede App, jede Einstellung und jede Datei. War die Synchronisierung an, sind deine Daten noch in der Cloud und kommen zurück, wenn du dich wieder mit deiner Passphrase verbindest. Wenn nicht, kann sie nur eine Sicherungsdatei zurückholen.
+
+Bevor du Browserdaten löschst, deinen Browser zurücksetzt oder das Gerät wechselst, [exportiere eine Sicherung](help:t/backup).
+
+## Private Fenster
+In einem privaten oder Inkognito-Fenster löscht der Browser alles, wenn du das Fenster schließt. orOS funktioniert dort, aber deine Daten sind beim nächsten Mal nicht mehr da. Nutze ein normales Fenster für alles, was du behalten willst, oder exportiere vor dem Schließen.
+
+## Deine Daten mitnehmen
+Deine Daten gehören immer dir. `Sicherungsdatei exportieren` in den [Einstellungen](app:settings) speichert alles in einer Datei, die du aufbewahren oder auf einem anderen Gerät in orOS importieren kannst. Um stattdessen alles zu löschen, siehe [Auf Werkseinstellungen zurücksetzen](help:t/reset).
