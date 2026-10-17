@@ -640,6 +640,9 @@
     var p = parentWin();
     try { return p && p.orosPush && typeof p.orosPush.enable === "function" ? p.orosPush : null; } catch (e) { return null; }
   }
+  function isBrave() {
+    try { return !!(navigator.brave && typeof navigator.brave.isBrave === "function"); } catch (e) { return false; }
+  }
   function secWebPush(host) {
     var W = webPush();
     if (!W || phone()) return;
@@ -647,6 +650,7 @@
     var c = card(null);
     if (!W.supported()) {
       c.appendChild(row(t("n.push"), el("span", "hint", t("n.push.unsupported")), {}));
+      if (isBrave()) c.appendChild(el("div", "hint", t("n.push.brave")));
       host.appendChild(c);
       return;
     }
@@ -668,6 +672,8 @@
     if (st.on && st.err && st.err !== "rate") c.appendChild(el("div", "hint", t("n.push.failed")));
     // The relay's code ("nopush", "rate", "network"…) tells what to fix.
     if (pushNote) c.appendChild(el("div", "hint", t(pushNote) + (pushCode && pushNote === "n.push.unavailable" ? " (" + pushCode + ")" : "")));
+    // Brave turns its push service off by default (it runs through Google).
+    if (pushNote === "n.push.unsupported" && isBrave()) c.appendChild(el("div", "hint", t("n.push.brave")));
     var devs = W.devices ? W.devices() : [];
     if (devs.length) {
       var dl = el("div", "checks");
