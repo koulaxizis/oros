@@ -18,6 +18,12 @@
    ]
   },
   {
+   "app": "aura",
+   "files": [
+    "aura/aura.js"
+   ]
+  },
+  {
    "app": "baby",
    "files": [
     "baby/baby.js",
@@ -64,6 +70,12 @@
    ]
   },
   {
+   "app": "calculator",
+   "files": [
+    "calculator/calculator.js"
+   ]
+  },
+  {
    "app": "calendar",
    "files": [
     "calendar/calendar.js",
@@ -78,6 +90,13 @@
     "certificates/core.js",
     "certificates/search.js",
     "certificates/verify.js"
+   ]
+  },
+  {
+   "app": "characters",
+   "files": [
+    "characters/characters.js",
+    "characters/search.js"
    ]
   },
   {
@@ -118,6 +137,13 @@
    ]
   },
   {
+   "app": "converter",
+   "files": [
+    "converter/converter.js",
+    "converter/core.js"
+   ]
+  },
+  {
    "app": "crm",
    "files": [
     "crm/core.js",
@@ -140,6 +166,12 @@
     "cycle/package.js",
     "cycle/search.js",
     "cycle/today.js"
+   ]
+  },
+  {
+   "app": "device",
+   "files": [
+    "device/device.js"
    ]
   },
   {
@@ -283,6 +315,12 @@
    ]
   },
   {
+   "app": "labels",
+   "files": [
+    "labels/labels.js"
+   ]
+  },
+  {
    "app": "layout",
    "files": [
     "layout/layout.js",
@@ -355,6 +393,21 @@
    ]
   },
   {
+   "app": "minimalism",
+   "files": [
+    "minimalism/content.js",
+    "minimalism/minimalism.js",
+    "minimalism/search.js",
+    "minimalism/today.js"
+   ]
+  },
+  {
+   "app": "mixer",
+   "files": [
+    "mixer/mixer.js"
+   ]
+  },
+  {
    "app": "mockups",
    "files": [
     "mockups/mockups.js",
@@ -379,6 +432,12 @@
    ]
   },
   {
+   "app": "museum",
+   "files": [
+    "museum/museum.js"
+   ]
+  },
+  {
    "app": "music",
    "files": [
     "music/host.js",
@@ -386,6 +445,18 @@
     "music/open.js",
     "music/search.js",
     "music/today.js"
+   ]
+  },
+  {
+   "app": "names",
+   "files": [
+    "names/names.js"
+   ]
+  },
+  {
+   "app": "netizen",
+   "files": [
+    "netizen/netizen.js"
    ]
   },
   {
@@ -416,9 +487,22 @@
    ]
   },
   {
+   "app": "oracle",
+   "files": [
+    "oracle/oracle.js",
+    "oracle/prophecies.js"
+   ]
+  },
+  {
    "app": "photolab",
    "files": [
     "photolab/strings.js"
+   ]
+  },
+  {
+   "app": "pixel",
+   "files": [
+    "pixel/pixel.js"
    ]
   },
   {
@@ -448,6 +532,19 @@
    ]
   },
   {
+   "app": "prompter",
+   "files": [
+    "prompter/prompter.js"
+   ]
+  },
+  {
+   "app": "pubdomain",
+   "files": [
+    "pubdomain/pubdomain.js",
+    "pubdomain/rules.js"
+   ]
+  },
+  {
    "app": "radio",
    "files": [
     "radio/radio.js",
@@ -458,6 +555,13 @@
    "app": "reversi",
    "files": [
     "reversi/reversi.js"
+   ]
+  },
+  {
+   "app": "ringtones",
+   "files": [
+    "ringtones/core.js",
+    "ringtones/ringtones.js"
    ]
   },
   {
@@ -576,9 +680,22 @@
    ]
   },
   {
+   "app": "television",
+   "files": [
+    "television/search.js",
+    "television/television.js"
+   ]
+  },
+  {
    "app": "tetris",
    "files": [
     "tetris/tetris.js"
+   ]
+  },
+  {
+   "app": "textcase",
+   "files": [
+    "textcase/textcase.js"
    ]
   },
   {
@@ -594,6 +711,13 @@
     "timesheet/search.js",
     "timesheet/timesheet.js",
     "timesheet/today.js"
+   ]
+  },
+  {
+   "app": "today",
+   "files": [
+    "today/agg.js",
+    "today/today.js"
    ]
   },
   {
@@ -617,6 +741,31 @@
    ]
   },
   {
+   "app": "trees",
+   "files": [
+    "trees/trees.js"
+   ]
+  },
+  {
+   "app": "typewriter",
+   "files": [
+    "typewriter/typewriter.js"
+   ]
+  },
+  {
+   "app": "units",
+   "files": [
+    "units/core.js",
+    "units/units.js"
+   ]
+  },
+  {
+   "app": "wallpaper",
+   "files": [
+    "wallpaper/wallpaper.js"
+   ]
+  },
+  {
    "app": "water",
    "files": [
     "water/core.js",
@@ -627,6 +776,12 @@
    "app": "whack",
    "files": [
     "whack/whack.js"
+   ]
+  },
+  {
+   "app": "wheel",
+   "files": [
+    "wheel/wheel.js"
    ]
   },
   {
@@ -648,6 +803,13 @@
    "app": "xeri",
    "files": [
     "xeri/xeri.js"
+   ]
+  },
+  {
+   "app": "zen",
+   "files": [
+    "zen/core.js",
+    "zen/zen.js"
    ]
   }
  ]
