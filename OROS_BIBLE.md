@@ -7651,3 +7651,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Multitasking (experimental, off by default): with the switch on, a top-bar button with a count shows your open apps and switches between them, also with Ctrl+Alt+Shift+W; on phones it opens a bottom sheet where swiping a card closes an app; open apps get a dot in the menu and the Dock.
 - Files: `shell.js`, `launcher.js`, `style.css`, `translations.js`, `i18n/de/shell.js`, help shortcuts topic (EN/EL/DE), `settings/help.*.txt`, `tests/multitask.test.js`.
   - Tests: full suite green; multitask gate 130 apps 0 problems; axe on the switcher; Chromium 1280 EN / 360 EL. Not tested: real phones (swipe), Firefox, Safari.
+
+### 2026-10-17 — Languages L3b: Writer, Spreadsheet, Slides, Sticky Notes and Mind map in German (#507) — 3.05.00
+- Writer, Spreadsheet, Slides, Sticky Notes and Mind map are now in German: packs in `i18n/de/`, inline texts moved into {en, el} tables, and each of the five `index.html` loads `../i18n.js` before its own scripts; English still fills any missing line.
+- Files: `i18n/de/**`, `writer/`, `spreadsheet/`, `slides/`, `stickies/`, `mindmap/` (index.html + scripts), `.github/i18n/inline-baseline.json`, `i18n/apps.json`.
+  - Tests: full suite green; Chromium 360 de / el / en. Not tested: a German native reader's review, Safari, phones.
