@@ -1,0 +1,52 @@
+# Klingelton-Komponist
+Schreib eine Melodie Note für Note, wie auf den alten Handys, hör sie dir an und nimm sie als Klingelton mit.
+
+## Erste Schritte
+Drück eine Taste auf der Handy-Tastatur, und die Note wird geschrieben und gespielt. Die Melodie erscheint auf einem kleinen Notensystem und darunter als kurze Noten wie `8e6`: die Länge, die Note und die Oktave.
+- `Länge` und `Oktave` legen fest, wie die nächste Note wird.
+- Die Wiedergabetaste oben rechts spielt die Melodie ab der ausgewählten Note und stoppt sie.
+- Die Klaviertaste oben tauscht die Tastatur gegen ein Klavier.
+
+## Die Handy-Tastatur
+- `1` bis `7` schreiben die Noten C D E F G A B (do re mi fa sol la si). `0` schreibt eine Pause.
+- `8` macht die ausgewählte Note kürzer und `9` länger.
+- `*` setzt die ausgewählte Note eine Oktave höher, reihum von 4 bis 7.
+- `#` setzt ein Kreuz auf die ausgewählte Note oder nimmt es weg. E und B haben kein Kreuz.
+- Auf einer Computertastatur gehen dieselben Tasten, und auch die Buchstaben C bis B schreiben Noten. `.` fügt einen Punkt hinzu (halb so lang dazu), `+` und `-` verschieben eine Note um einen Halbton, die Leertaste spielt und stoppt.
+
+## Bearbeiten
+- Tippe oder klicke auf eine Note im Notensystem oder in der Liste, um sie auszuwählen. Neue Noten kommen nach der ausgewählten.
+- Die Pfeile verschieben die Auswahl, und `Note löschen` entfernt die ausgewählte Note.
+- Rückgängig und Wiederholen sind oben, und mit [[Ctrl+Z]] und [[Ctrl+Y]].
+- Gib der Melodie oben auf dem Bildschirm einen Namen.
+
+## Tempo und Klang
+- `Tempo` legt fest, wie schnell die Melodie spielt, in Schlägen pro Minute.
+- `Klang` wählt `Handy-Piepton`, `Sanft` oder `Glocke`.
+- `Immer wieder abspielen` spielt die Melodie, bis du sie stoppst.
+
+## Meine Melodien und fertige Melodien
+- `Melodie speichern` legt sie unter `Meine Melodien` ab. Änderungen an einer geöffneten gespeicherten Melodie werden laufend gespeichert.
+- `Neue Melodie` beginnt eine leere.
+- In der Liste spielt die Wiedergabetaste eine Melodie, ohne sie zu öffnen. Die Kopiertaste macht ein Duplikat, und das × löscht sie; `Rückgängig` holt sie zurück.
+- `Fertige Melodien` sind alte gemeinfreie Melodien zum Loslegen. Tippst du auf eine, öffnet sie sich als neue Melodie.
+
+## Nimm sie mit
+- `WAV herunterladen` speichert die Melodie als Tondatei, die du auf deinem Handy als Klingelton einstellen kannst.
+- `RTTTL herunterladen` und `RTTTL kopieren` geben die Melodie als RTTTL-Text aus, das Format alter Handys.
+- `RTTTL importieren` liest einen Klingelton als RTTTL-Text, eingefügt oder aus einer .txt- oder .rtttl-Datei.
+- Eine Melodie, die du in Studio mit `Klingelton machen` schickst, öffnet sich hier mit ihrem Text in `RTTTL importieren`; drück `Importieren`, um sie zu behalten.
+- `orOS-Datei (.orostone)` speichert die Melodie mit Name, Tempo und Klang. Eine .orostone ist eine offene ZIP-Datei: Entpack sie, und du findest `content.json` (die Melodie), `preview/tone.rtttl` (RTTTL-Text) und, bei einer Melodie bis zu einer Minute, `preview/tone.wav`. Öffne eine mit `Datei öffnen` in `RTTTL importieren` oder hol eine entpackte mit `Entpackter orOS-Ordner…` zurück; sie kommt als neue Melodie zu `Meine Melodien`.
+
+## Synchronisierung und Sicherung
+- `Meine Melodien` sind über die orOS-Synchronisierung auf all deinen Geräten da.
+- Tastatur oder Klavier, die Notennamen, die Lautstärke und die nächste Länge und Oktave bleiben nur auf diesem Gerät.
+
+## Tipps
+> Wähle unter `Notennamen` `C D E` oder `Do Re Mi`, je nachdem, was du gelernt hast.
+- RTTTL-Klingeltöne aus dem Internet kannst du importieren und dann ändern.
+
+## Grenzen
+- Bis zu 200 gespeicherte Melodien, jede mit bis zu 255 Noten, wie auf den alten Handys.
+- Die Noten reichen von Oktave 4 bis Oktave 7, und es klingt immer nur eine Note.
+- Wird dieselbe Melodie auf zwei Geräten geändert, bevor sie sich synchronisieren, gewinnt die neueste Änderung.
