@@ -1319,6 +1319,7 @@ var PRECACHE_URLS = [
   "flashcards/app.js",
   "flashcards/core.js",
   "flashcards/fsrs.js",
+  "flashcards/media.js",
   "flashcards/search.js",
   "flashcards/help.en.txt",
   "flashcards/help.el.txt",

@@ -20,6 +20,18 @@ Learn anything with cards: a question on the front, the answer on the back. Flas
 - `Fill in the gap`: write a sentence, select a word and press `Make a gap`. The word is hidden when you study and you fill it in. Every gap number makes its own card; `Gap with the same number` hides several words on the same card. A gap can carry a hint: `{{c1::Athens::city}}` shows "[city]".
 Tags (words separated by spaces) help you find cards later.
 
+## Pictures, sounds and formatting
+- Under each field of a card, `Picture` and `Sound file` add files from your device. You can also paste a picture into a field or drop files on it. Up to 6 per field.
+- `Record` records your voice with the microphone; press it again to stop. Recordings stay on your devices.
+- Pictures are made smaller (1600 pixels at most) and saved without their hidden details such as the place they were taken. Sounds can be up to 10 MB.
+- The buttons above the fields add simple formatting: `**bold**`, `*italic*`, and lines that start with `- ` or `1. ` become lists.
+- When a card shows, its sounds play by themselves. Turn this off in the settings at the top.
+- A picture or sound added on another device shows "Not on this device yet" until Vault Drive has copied it.
+
+## Read aloud
+- The 🔊 button on a card reads it aloud with a voice installed on your device. Voices that send the text to an online service are never used, so the button only appears when your device has its own voices.
+- In `Deck settings`, `Voice for the front` and `Voice for the back` pick the language of each side. `Automatic` reads Greek text in Greek and other text in the app language.
+
 ## Studying
 After `Show answer`, pick one of four buttons. Each one shows when you will see the card again:
 - `Again`: you forgot. The card comes back in a few minutes.
@@ -27,6 +39,10 @@ After `Show answer`, pick one of four buttons. Each one shows when you will see 
 - `Good`: you remembered.
 - `Easy`: you knew it at once.
 Be honest: the schedule learns from your answers. `Undo` takes back the last answer. `Edit` fixes a mistake on the card you are looking at.
+The `⋯` button has two more actions for the card on screen:
+- `Hide until tomorrow` puts the card away for the rest of the study day.
+- `Suspend card` keeps the card out of study until you resume it in `Browse`. Its schedule is kept.
+`Undo` takes these back too.
 New cards come one per day for each note, so the two cards of a reversed note appear on different days.
 
 ### How much to remember
@@ -35,15 +51,26 @@ New cards come one per day for each note, so the two cards of a reversed note ap
 ### The study day
 A study day starts at 04:00, so studying after midnight still counts for the day before. You can change the hour with the settings button at the top.
 
+## Browse all cards
+`Browse` at the top lists every card, one row per card. Narrow the list with the search box, a deck, a tag or a state (new, learning, due today, review later, hidden, suspended). Tick cards (or the box at the top for all of them) to:
+- `Move` their notes to another deck,
+- `Add tag` or `Remove tag`,
+- `Suspend` or `Resume` them,
+- `Delete` their notes.
+Tap a row to edit the card.
+
 ## Sync and backup
 - Decks and settings travel with orOS sync, encrypted.
 - Cards and answers are files in the `Flashcards` folder of the orOS disk ([Files](app:files)), and Vault Drive copies them to your other devices. Each device writes only its own files, so two devices can study offline at the same time and every answer is kept.
+- Pictures and sounds are files in `Flashcards/Media`, named by their content, so the same picture added on two devices is one file.
 - The schedule of each card is worked out again from your answers on every device, so it is the same everywhere.
 
 ## Keyboard shortcuts
 - [[Space]] or [[Enter]]: show the answer.
 - [[1]] [[2]] [[3]] [[4]]: Again, Hard, Good, Easy. After the answer is shown, [[Space]] also means Good.
 - [[Ctrl+Z]]: undo the last answer.
+- [[R]]: read the card aloud.
+- [[-]]: hide the card until tomorrow.
 - [[Ctrl+Enter]]: save the card in the card window.
 - [[Esc]]: close a window, or go back.
 
@@ -51,5 +78,6 @@ A study day starts at 04:00, so studying after midnight still counts for the day
 - The menu's search box finds your decks and cards by their words. Choosing one opens it in Flashcards.
 
 ## Limits
-- Pictures, sound and importing Anki decks come in later versions.
+- Importing Anki decks comes in a later version.
+- Recording needs a microphone and your permission; how voices sound depends on your device.
 - Without the orOS disk (the app opened on its own, outside orOS) cards are not saved.
