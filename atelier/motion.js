@@ -162,7 +162,7 @@
       count: list.length,
       aspect: doc.setup.w / doc.setup.h,
       startAt: idx,
-      lang: AT.LANG,
+      lang: AT.BASE,
       live: function (i, t) { return hasVid[i] || t < intro[i] + 0.1; },
       renderSlide: function (i, canvas, cssW, cssH, t) {
         var sc = canvas.width / doc.setup.w;

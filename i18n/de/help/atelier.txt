@@ -1,0 +1,124 @@
+# Atelier
+Gestalte Beiträge, Storys, Flyer, Plakate, Karten und mehr, von einer leeren Seite oder einer fertigen Vorlage aus, und lade sie als PNG, JPG, PDF oder PowerPoint herunter (um in Canva daran weiterzuarbeiten).
+
+## Erste Schritte
+Tippe oder klicke unter `Was möchtest du gestalten?` auf eine Größe, zum Beispiel einen quadratischen Beitrag oder ein A4-Plakat, oder wähle `Eigene Größe` und gib deine eigene Breite und Höhe in Pixeln (Bildschirm) oder Millimetern (Druck) ein. Du kannst auch mit einem der 50 Designs unter `Mit einer Vorlage beginnen` starten (Beiträge, Storys, Präsentationen, Plakate, Flyer, Visitenkarten, Einladungen, Lebensläufe, Urkunden, Speisekarten, Diagramme, Logos): Wähle mit den Schaltflächen darüber eine Art oder tippe in `Vorlagen suchen` (auf Deutsch, Englisch oder Griechisch, mit oder ohne Akzente), und `Alle zeigen` listet den Rest. Ihre Texte erscheinen in deiner Sprache. Deine Arbeit wird laufend gespeichert und erscheint unter `Deine Designs`.
+
+## Elemente hinzufügen und bearbeiten
+- Der Seitenbereich (auf dem Handy die Tabs unten) hat `Vorlagen`, `Elemente`, `Text`, `KI`, `Quellen`, `Uploads` und `Hintergrund`.
+- `Elemente` hat Formen, Linien und Pfeile sowie Icons, die du auf Englisch oder Griechisch suchen kannst.
+- `Text` fügt eine Überschrift, eine Unterüberschrift oder Fließtext hinzu und hat fertige `Stile` wie Neon, Schatten und gebogenen Text.
+- `Elemente` › `Tabellen und Diagramme` fügt eine Tabelle oder ein Säulen-, Balken-, Linien-, Kreis- oder Ringdiagramm hinzu. `Tabelle bearbeiten` und `Diagramm bearbeiten` öffnen ein Raster zum Eintippen (du kannst Zellen aus einer Tabelle einfügen); eine Tabelle hat Kopfzeile, fette erste Spalte, gebänderte Zeilen, Linien und Spaltenbreiten, ein Diagramm einen Titel, eine Legende und `Reihen in` Spalten oder Zeilen. Die Leiste über der Arbeitsfläche legt Schrift, Größe und Farben fest. Eine Tabelle verkleinert ihren Text, damit er in ihr Feld passt.
+- Der Tab `Vorlagen` hat dieselbe Bibliothek mit ihren Arten und der Suche; eine Vorlage ersetzt den Inhalt der aktuellen Seite.
+- Tippe oder klicke auf ein Element, um es auszuwählen. Zieh es zum Verschieben, nutze die Griffe zum Skalieren und den runden Griff darunter zum Drehen. Hilfslinien helfen beim Ausrichten.
+- Tippe einen ausgewählten Text noch einmal an oder doppelklicke ihn, um darin zu schreiben.
+- Die Leiste über der Arbeitsfläche passt sich deiner Auswahl an: Schrift, Größe, Farbe, `Effekte`, `Transparenz`, `Position`, `Sperren`, `Duplizieren` und `Löschen`.
+- Die Schrift-Schaltfläche eines Textes öffnet `Schriften`: Noto Sans, Serif und Mono sind immer verfügbar, und `Weitere Schriften (Fontsource)` hat Hunderte kostenloser Schriften (setz ein Häkchen bei `Nur Schriften mit griechischen Buchstaben` für griechischen Text). Eine Schrift wird beim ersten Benutzen heruntergeladen und funktioniert danach offline auf diesem Gerät; fehlende Buchstaben erscheinen in Sans. Ein anderes Gerät lädt sie herunter, wenn es das Design öffnet.
+
+## Fotos
+- `Uploads` › `Bild hochladen` fügt ein Foto von diesem Gerät oder aus Dateien hinzu.
+- Mit einem ausgewählten Foto bekommst du `Filter`, `Anpassen` (Helligkeit, Kontrast, Wärme und mehr), `Form`, um es als Kreis, Stern oder andere Form zuzuschneiden, `Spiegeln` und `Ersetzen`.
+- Mit `Zuschneiden` oder einem Doppelklick auf das Foto verschiebst und zoomst du das Foto in seinem Rahmen.
+- `Hintergrund` kann das ausgewählte Foto als Seitenhintergrund verwenden.
+- `Im Fotolabor bearbeiten` öffnet das Foto für tiefere Änderungen im Fotolabor (Ebenen, Retusche, Auswahlen). Tippe dort auf `Fertig`, und du kommst mit dem neuen Bild im selben Rahmen zum Design zurück; das Fotolabor-Projekt bleibt, du kannst es also später wieder ändern. `Rückgängig` holt das frühere Bild zurück.
+
+## Freie Fotos, Illustrationen und Icons
+`Quellen` durchsucht offene Bibliotheken: Openverse und Wikimedia Commons für Fotos und Illustrationen, Iconify für Icons und Cliparts. Pixabay und Pexels erscheinen ebenfalls, sobald du unter `Schlüssel für Pixabay und Pexels` deinen eigenen kostenlosen Schlüssel einträgst. Tippe oder klicke auf ein Ergebnis, um es hinzuzufügen.
+- Standardmäßig siehst du nur Stücke, die du für alles nutzen darfst, auch kommerziell, und verändern darfst. `Lizenzen mit Einschränkungen zeigen` fügt den Rest hinzu, markiert mit `Einschränkungen`.
+- Was du hinzufügst, wird einmal heruntergeladen und mit deinem Design gespeichert, danach funktioniert es also offline. Urheber und Lizenz landen unter `Mehr` › `Quellenangaben`: Behalte sie bei deinem Design, wenn eine Lizenz eine Namensnennung verlangt.
+- Die Suche braucht eine Internetverbindung.
+
+## Seiten
+Der Streifen unter der Arbeitsfläche zeigt die Seiten deines Designs. `+` fügt eine Seite hinzu; jede Seite hat `Seite duplizieren`, `Nach links`, `Nach rechts` und `Seite löschen`.
+
+## Markenkit
+- `Markenkit` in der Seitenleiste bewahrt deine Farben, Schriften und Logos auf und synchronisiert sie auf all deine Geräte.
+- Farben: `Farbe hinzufügen` oder `Aus diesem Design`; tippe auf eine Farbe, um sie auf die Auswahl anzuwenden. Sie erscheinen außerdem in jedem Farbbereich ganz oben als `Markenfarben`.
+- Schriften: Wähle einen Text und tippe auf `Auswahl übernehmen` neben `Überschrift`, `Unterüberschrift` oder `Fließtext`. Der Bereich `Text` fügt dann Text in diesen Schriften hinzu.
+- Logos: `Logo hinzufügen` bewahrt ein Bild auf; tippe darauf, um es zu platzieren. `Bearbeiten` zeigt `×` zum Entfernen von Farben und Logos.
+- Farbfelder: `Farbfelder importieren (.ase, .aco)` übernimmt die Farben einer Farbfelddatei aus Illustrator, Photoshop oder InDesign (Gruppen werden aufgelöst, CMYK und Lab werden zu Bildschirmfarben). `Als Farbfelder speichern (.ase)` speichert deine Markenfarben als eine Gruppe, die Adobe-Apps laden können. Ein Adobe-Konto ist nicht nötig.
+
+## Animieren und präsentieren
+- `Animieren` › `Magisch animieren` › `Alle Seiten animieren` animiert das ganze Design mit einem Tipp: Die Überschrift steigt auf, andere Texte blenden ein, kleine Bilder, Icons und kurze Beschriftungen ploppen auf, große Hintergrundformen und Fotos bleiben still, und jede Seite bleibt lange genug zum Lesen (mehr Wörter, länger); zwischen den Seiten nutzt es `Überblenden`, bei einem Querformat-Design mit mehreren Seiten `Drücken`. Es arbeitet mit Regeln, ohne KI, und nichts wird gesendet. `Rückgängig` nimmt es zurück; `Alle Animationen entfernen` löscht jeden Auftritt.
+- Wähle ein Element und tippe oder klicke auf `Animieren`, um ihm einen Auftritt zu geben: `Einblenden`, `Aufsteigen`, `Aufploppen`, `Wischen` oder, bei Text, `Schreibmaschine`. Die Elemente treten nacheinander auf, die unterste Ebene zuerst.
+- Ohne Auswahl legt `Animieren` fest, wie lange die Seite gezeigt wird und mit welchem Übergang sie kommt (`Überblenden`, `Schieben`, `Drücken`, `Zoomen` oder `Keiner`).
+- `Abspielen` zeigt die Animation der Seite als Vorschau auf der Arbeitsfläche.
+- `Mehr` › `Präsentieren (Vollbild)` zeigt die Seiten als Diashow: Pfeiltasten, ein Presenter oder ein Wischen wechseln die Seiten, [[Esc]] beendet sie.
+
+## Video und Ton
+- `Uploads` › `Video oder Ton hinzufügen` nimmt eine MP4-, WebM-, MP3-, M4A-, OGG- oder WAV-Datei (Videos bis 100 MB, Töne bis 30 MB). Ein Video wird zu einem Element, das du wie ein Foto verschieben, zuschneiden, maskieren, filtern und animieren kannst; ein Ton wird zum Ton der aktuellen Seite.
+- Wähle ein Video und tippe auf `Video`, um es zu kürzen, seinen Ton auszuschalten, die Lautstärke einzustellen, festzulegen, ob es am Ende erneut abspielt, oder die Seite so lange zu zeigen wie das Video.
+- Ohne Auswahl legt `Animieren` › `Seitenton` die Lautstärke fest und wo der Ton beginnt. `Auf allen Seiten verwenden` gibt jeder Seite denselben Ton, der dann von Seite zu Seite weiterläuft.
+- Videos und Töne laufen bei `Abspielen` und unter `Herunterladen` › `Video` (mit Ton). Ein GIF zeigt das bewegte Video ohne Ton. Die Diashow spielt die Videos und den Seitenton ebenfalls ab und zeigt die Auftritte jeder Seite. Bilder, PDF und PowerPoint nutzen das erste Bild des Videos.
+- Video- und Tondateien bleiben auf deiner orOS-Disk und werden wie deine Fotos mit Vault Drive synchronisiert, große Dateien belegen also auf jedem Gerät Platz.
+
+## Serienerstellung
+- Schreib Felder in geschweiften Klammern in ein Textfeld oder eine Tabelle, etwa {name} oder {date}, und wähle dann `Mehr` › `Serienerstellung…`.
+- Füge eine Liste ein (eine aus einer Tabelle kopierte Tabelle oder ein Name pro Zeile) oder öffne eine CSV- oder Excel-Datei. Die erste Zeile enthält die Spaltennamen; eine Spalte füllt das Feld mit demselben Namen, und du kannst ändern, welche Spalte wohin geht.
+- Wähle ein eigenes Design für jede Zeile oder ein Design mit einer Seite pro Zeile, bereit, um es mit `Herunterladen` als ein einziges PDF zu speichern.
+- Ein Name, der zu lang für sein Feld ist, bekommt eine kleinere Schrift, bis hinunter auf 60 %. Bis zu 200 Zeilen auf einmal.
+
+## Herunterladen und teilen
+- `Herunterladen` erstellt ein PNG (normal, ×2 oder ×3, auf Wunsch mit transparentem Hintergrund), ein JPG, ein PDF zum Drucken mit 150 oder 300 dpi oder eine PowerPoint-Datei (siehe unten).
+- Im PDF sind Texte echter Text in den eingebetteten Schriften (du kannst sie markieren, durchsuchen und kopieren), und Formen, Linien und Tabellen bleiben in jeder Vergrößerung scharf. Fotos, Icons, Diagramme, Verläufe und Texteffekte, die ein PDF nicht ausdrücken kann (Leuchten, Unschärfe), werden Element für Element zu Bildern mit den gewählten 150 oder 300 dpi; ein Text mit einem Zeichen, das den Schriften fehlt (zum Beispiel einem Emoji), wird ebenfalls zum Bild. Setz ein Häkchen bei `Ganze Seiten als Bilder` für das alte PDF mit genauem Aussehen.
+- `Video` (MP4 oder WebM, je nachdem, was dein Browser aufnimmt) und `GIF` machen aus den Seiten einen Film mit ihren Animationen und Übergängen. Ein Video wird in Echtzeit aufgenommen, lass den Tab also offen, bis es gespeichert ist.
+- `Mehr` › `Größe ändern…` erstellt das Design in anderen Größen, zum Beispiel einen quadratischen Beitrag als Story und als Banner. Wähle eine oder mehrere Größen (oder eine eigene Größe): Die Elemente werden für jede neu platziert, was am Rand ist, bleibt am Rand, Balken und Fotos über die ganze Seite werden gestreckt, und nichts wird verzerrt. Mit `Dieses Design behalten und eine Kopie in jeder Größe erstellen` wird jede Größe ein neues Design neben diesem (im selben Ordner); ohne ändert dieses Design selbst seine Größe (`Rückgängig` macht es rückgängig).
+- `Mehr` › `Buch-Mockup erstellen` schickt das Design als Umschlag eines 3D-Buchs an Mockups: Seite 1 ist die Vorderseite, Seite 2 die Rückseite, Seite 3 der Buchrücken, und eine breite Seite ist ein ganzer Umschlag. In Mockups bringt `In Atelier öffnen` das fertige Bild als neues Design zurück.
+- `Mehr` › `Senden an…` speichert die aktuelle Seite als PNG in Bilder und schickt sie weiter: an Mail als Anhang, an Seitenlayout auf eine Seite oder an jemanden.
+- `Mehr` › `Als Paket speichern (.orosdesign)` erstellt eine Datei mit dem Design, seinen Bildern und Clips. Es ist eine offene ZIP-Datei: Entpacke sie, und du findest `content.json` (das Design), `media` (seine Bilder und Clips) und ein Vorschaubild.
+
+## KI
+- Der Tab `KI` schreibt für dich. `Ideen für diese Seite` liefert drei Ideen mit neuen Wörtern für jedes Textfeld der Seite (und neuen Farben, wenn `Auch neue Farben` angehakt ist), das Layout bleibt: Sag, worum es im Design geht, und tippe dann auf eine Idee, um sie auszuprobieren, oder auf eine andere; `Rückgängig` holt deine eigene zurück.
+- `Neuen Text schreiben` fügt ein Textfeld mit Wörtern hinzu, die nach deinem Wunsch geschrieben sind. Ein ausgewählter Text hat `Mit KI schreiben` in der Leiste über der Arbeitsfläche: für mich schreiben, kürzer, länger, Rechtschreibung korrigieren, förmlicher, freundlicher oder zwischen Griechisch und Englisch übersetzen. Du siehst die Antwort zuerst und wählst `Übernehmen`.
+- `Bild aus Text` erstellt Bilder aus einer Beschreibung: Schreib, was du willst, wähle einen Stil (Foto, Illustration, Aquarell, 3D, Skizze, Pixel-Art), ein Format und die Anzahl, dann `Bilder erstellen`. Tippe unter dem Bild, das dir gefällt, auf `Zur Seite hinzufügen`; mit einem ausgewählten Foto tauscht `Foto ersetzen` es aus. Die Bilder kommen von der Bild-KI, die im Assistenten gewählt ist (`Einstellungen` › `Bilder`): standardmäßig Pollinations (kostenlos, ohne Schlüssel), oder Hugging Face, OpenAI, Stability AI oder Stable Diffusion WebUI / Forge auf deinem eigenen Computer; der Assistent zeigt Schritt für Schritt, wie du jeden einschaltest. Nur deine Beschreibung geht an diesen Dienst, direkt von diesem Gerät.
+- `Design aus einer Beschreibung` (die Leiste oben auf der Startseite von Atelier): Beschreib, was du gestalten willst („ein Instagram-Beitrag zur Eröffnung einer Bäckerei in Hamburg“), und tippe auf `Gestalten`. Atelier wählt drei passende Vorlagen nach der Art des Designs, die du nennst (Beitrag, Story, Plakat, Flyer, Speisekarte, Einladung…), und die KI, die du im Assistenten eingerichtet hast, schreibt ihre Texte und wählt Farben. Mit einem Markenkit werden seine Farben und Schriften verwendet; `Ein passendes Foto dahinter setzen` legt ein abgedunkeltes Foto von Openverse mit seiner Quellenangabe hinter das Design. Tippe auf ein Ergebnis, um es als neues Design zu öffnen. Nur deine Beschreibung und die Texte der Vorlagen gehen an die KI.
+- Die Wörter kommen von der KI, die du in der App Assistent eingerichtet hast: dein eigener Schlüssel für Claude, ChatGPT, Gemini und andere, ein kostenloser Online-Anbieter, ein Modellserver auf deinem Computer, das eingebaute Modell des Browsers oder das Modell im Browser des Assistenten (WebLLM). Nur der jeweilige Text geht dorthin, direkt von diesem Gerät; mit den Modellen des Browsers verlässt nichts das Gerät. Ein Modell im Browser wird einmal im Assistenten heruntergeladen (Einstellungen › Modell im Browser) und braucht WebGPU (ein aktuelles Chrome oder Edge); die erste Antwort nach dem Öffnen von Atelier dauert etwas länger, während das Modell lädt.
+- `Magischer Radierer` (bei einem ausgewählten Foto oder im Tab `KI`): Male mit dem Finger oder der Maus über etwas und tippe auf `Radieren`; die Stelle wird aus der Umgebung aufgefüllt. Male und radiere so oft du willst, dann `Übernehmen`. Am besten klappt es bei kleinen und mittleren Dingen (eine Person im Hintergrund, ein Kabel, ein Schild); eine sehr große Fläche wird unscharf.
+- `Magisch greifen` macht das Hauptmotiv des Fotos zu einem eigenen Element obenauf, das du verschieben, skalieren oder löschen kannst, und füllt das Loch, das es im Foto hinterlässt. `Rückgängig` stellt alles wieder her.
+- Beide laufen auf diesem Gerät, und das Bild wird nirgendwohin gesendet. Beim ersten Mal laden sie die Werkzeuge herunter (etwa 40 MB, einschließlich des Hintergrund-Werkzeugs), danach funktionieren sie offline; `Bildwerkzeuge entfernen` im Tab `KI` gibt den Platz wieder frei.
+- `Magisch bearbeiten` (bei einem ausgewählten Foto oder im Tab `KI`): Male über einen Teil des Fotos, schreib, was dort sein soll („ein roter Regenschirm“, „blauer Himmel“), und tippe auf `Erstellen`; nur dieser Teil wird neu gezeichnet. `Magisch erweitern` vergrößert das Foto, bis es seinen Rahmen füllt, auf ein neues Format (Quadrat, 4:5, 3:2, 16:9, 9:16) oder einfach mehr drumherum, und zeichnet, was jenseits seiner Ränder liegt; du kannst sagen, was drumherum ist, und `Erneut versuchen` liefert eine andere Version. Beide brauchen eine Bild-KI, die einen bemalten Teil füllen kann, gewählt im Assistenten (`Einstellungen` › `Bilder`): OpenAI, Stability AI oder Stable Diffusion WebUI / Forge auf deinem eigenen Computer. Der Teil des Fotos (oder zum Erweitern das Foto) und deine Worte gehen an diesen Dienst, direkt von diesem Gerät. `Rückgängig` holt das Foto zurück.
+- `Hintergrund entfernen` (bei einem ausgewählten Foto oder im Tab `KI`) behält das Hauptmotiv und macht den Rest transparent. Es läuft auf diesem Gerät, und das Bild wird nirgendwohin gesendet. Beim ersten Mal lädt es das Werkzeug herunter (etwa 16 MB), danach funktioniert es offline; `Mehr behalten · weniger behalten` passt den Rand an, bevor du es anwendest. Das Originalbild bleibt in `Uploads`, und `Rückgängig` holt es zurück.
+
+## Import aus Canva und anderen Dateien
+`Importieren` auf der Startseite bietet `Aus einer Datei (.pptx, Bild, Paket)…`, `Aus einem entpackten Paketordner…` (eine entpackte .orosdesign-Datei, auch nachdem du darin ein Bild geändert hast) und `Aus deinem Canva-Konto…`.
+
+Mit `Aus deinem Canva-Konto…` verbindest du dich einmal (`Mit Canva verbinden` öffnet ein Canva-Fenster, in dem du dich anmeldest und den Zugriff erlaubst), dann hakst du die gewünschten Designs an und tippst auf `Importieren`. Jedes wird aus Canva als PowerPoint exportiert und als neues Design geöffnet; bereits übernommene Designs zeigen `importiert`. Mit einem Häkchen bei `Früher importierte Designs ersetzen` wird eine frühere Kopie durch die neue ersetzt (Änderungen an dieser Kopie hier gehen verloren). Wenn einige Designs scheitern, sagt die Meldung warum, und `Fehlgeschlagene erneut versuchen` versucht nur diese erneut; ein Design, das Canva nicht als PowerPoint exportieren kann (manche Video-Designs und Docs), kommt auf diesem Weg nicht herüber. Deine Canva-Anmeldung bleibt auf diesem Gerät; `Trennen` vergisst sie. Dafür brauchst du das Internet und das orOS-Relay mit eingerichteter Canva-Verbindung.
+
+Eine Datei öffnet sich als neues Design:
+- Ein Atelier-Paket (.orosdesign).
+- Eine PowerPoint-Datei (.pptx). Um ein Canva-Design herüberzuholen, öffne es in Canva und wähle `Teilen` › `Herunterladen` › `Microsoft PowerPoint`, dann importiere diese Datei. Texte bleiben bearbeitbar, Formen, Linien und Fotos kommen mit, eine Seite pro Folie.
+- Ein Bild (PNG, JPG, WebP oder SVG) wird zu einem Design in seiner Größe.
+
+>! Manches kommt aus PowerPoint nicht mit: Diagramme, Tabellen, Video, Animationen und einige Texteffekte. Eine Schrift kommt als dieselbe freie Schrift von Fontsource mit, wenn es sie gibt (sie wird beim ersten Mal heruntergeladen); andere, etwa Canva Sans oder Arial, werden zur ähnlichsten von Ateliers eigenen Schriften. Die Meldung nach dem Import sagt, wie viele Elemente ausgelassen wurden.
+
+## Ein Design zu Canva oder PowerPoint bringen
+`Herunterladen` › `PowerPoint` speichert das Design als .pptx-Datei, eine Folie pro Seite, in der Größe des Designs. Wähle in Canva `Design erstellen` › `Hochladen` (oder zieh die Datei auf die Startseite von Canva); PowerPoint, Keynote, Google Präsentationen und LibreOffice öffnen sie direkt. Kein Konto und kein Schlüssel nötig.
+- Texte bleiben bearbeitbare Textfelder mit Schrift, Größe, Farbe, Ausrichtung, Zeilenhöhe und Zeichenabstand; ein Schatten bleibt ein Schatten.
+- Formen, Linien mit ihren Pfeilspitzen, Fotos mit Zuschnitt, Form und Transparenz sowie der Seitenhintergrund bleiben bearbeitbar.
+- Icons, gebogener Text, andere Texteffekte (Neon, Kontur, Echo und so weiter), Fotos mit Filter oder Anpassungen, Tabellen, Diagramme und Videos kommen als Bilder, sie sehen also gleich aus, lassen sich dort aber nicht bearbeiten. Die Meldung nach dem Speichern sagt, wie viele.
+>! Die andere App nutzt ihre eigene Kopie jeder Schrift: Hat sie sie nicht, zeigt sie eine ähnliche, und ein Text kann etwas anders umbrechen. Animationen, Seitenzeiten und Töne bleiben in Atelier.
+- `Mehr` › `Quellenangaben` listet die Werke anderer, die dein Design nutzt.
+
+## Synchronisierung und Sicherung
+Designs werden mit der orOS-Synchronisierung abgeglichen. Hochgeladene Bilder werden einmal auf der orOS-Disk gespeichert und wie deine anderen Dateien mit Vault Drive synchronisiert; auf einem anderen Gerät kann ein Foto `Wird synchronisiert…` zeigen, bis es ankommt.
+- **Ordner:** Die Zeile über deinen Designs zeigt `Alle` und deine Ordner; `+ Neuer Ordner` legt einen an. Um Designs in einen Ordner zu legen, tippe auf `Auswählen`, wähle sie und tippe auf `Verschieben`, oder nutze bei einem Design `⋯` › `In Ordner verschieben…`. Ein Design, das du bei geöffnetem Ordner erstellst, landet darin. Das `⋯` neben dem geöffneten Ordner benennt ihn um oder löscht ihn; beim Löschen eines Ordners bleiben seine Designs erhalten. Ordner werden mit deinen anderen Geräten synchronisiert.
+- Um mehrere Designs auf einmal zu löschen, tippe über `Deine Designs` auf `Auswählen`, wähle sie (oder `Alle auswählen`, oder `Aus Canva` für jedes Design aus einem Canva-Import) und tippe auf `Löschen`. `Rückgängig` in der Meldung holt sie alle zurück.
+- Wenn ein Design, das du löschst, Bilder, Videos oder Töne hat, die sonst nichts nutzt, fragt `Löschen` zuerst nach, mit einem Kästchen, um auch diese Dateien zu löschen (standardmäßig aus). Dateien, die ein anderes Design, Folien oder Seitenlayout noch nutzt, bleiben immer erhalten; gelöschte Dateien lassen sich nicht zurückholen.
+- `Dateien` (auch `Uploads` › `Dateien verwalten…`) listet alle Bilder, Videos und Töne auf diesem Gerät, die größten zuerst. Dateien, die kein Design nutzt, kannst du auswählen und löschen, um Platz zu schaffen; Dateien, die noch in einem Design stecken, hier oder in Folien oder Seitenlayout, nicht.
+
+## Tastenkürzel
+- [[Ctrl+Z]] rückgängig, [[Ctrl+Shift+Z]] oder [[Ctrl+Y]] wiederholen.
+- [[Ctrl+C]], [[Ctrl+X]], [[Ctrl+V]] kopieren, ausschneiden und einfügen; [[Ctrl+D]] duplizieren; [[Ctrl+A]] alles auswählen.
+- Pfeiltasten verschieben die Auswahl, mit [[Shift]] in größeren Schritten. [[Delete]] entfernt sie.
+- [[Enter]] bearbeitet den ausgewählten Text oder schneidet das ausgewählte Foto zu; [[Esc]] beendet die Bearbeitung oder hebt die Auswahl auf.
+- [[Ctrl+=]] und [[Ctrl+-]] zoomen; [[Ctrl+0]] passt die Seite an den Bildschirm an. Halte [[Space]] gedrückt und zieh, um dich zu bewegen.
+
+## Tipps
+> Zieh mit der Maus über einen leeren Teil der Seite, um mehrere Elemente mit einem Rahmen auszuwählen; Shift-Klick erweitert die Auswahl.
+> Eckgriffe behalten die Proportionen; bei Text ändern sie auch die Schriftgröße.
+
+## Grenzen
+- Im PDF sind Diagramme, Icons, Fotos und Effekte wie Leuchten und Unschärfe Bilder, und ein Text mit einem Zeichen, das keine der Schriften hat (zum Beispiel ein Emoji), ist ein Bild dieses Textes; gebogener Text ist echter Text, Buchstabe für Buchstabe.
+- Eine Tabelle hat bis zu 30 Zeilen und 10 Spalten, ein Diagramm bis zu 30 Zeilen und 8 Reihen. Zellen lassen sich nicht verbinden, und die Farben eines Diagramms folgen dem Farbschema (du kannst keinen einzelnen Balken einfärben).
+- Hier erstellte Tabellen und Diagramme erscheinen in einer älteren orOS-Version auf einem anderen Gerät erst nach dem Update, und wenn du das Design dort vor dem Update änderst, können sie verschwinden.
+- Ein Design aus einem neueren orOS zeigt `Braucht ein neueres orOS` und öffnet sich erst, wenn dieses Gerät aktualisiert ist. Ein Element einer Art, die diese Version nicht kennt, erscheint als graues Feld mit denselben Worten: Es bleibt, wie es ist, und du kannst es nicht auswählen oder exportieren.

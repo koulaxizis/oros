@@ -52,7 +52,7 @@
     st.busy = true; st.error = "";
     if (!more) { st.page = 1; st.items = []; st.more = false; }
     AT.renderDrawer();
-    MEDIA.search(src, st.kind, st.q, { page: st.page, restricted: st.restricted, lang: AT.LANG }, env()).then(function (res) {
+    MEDIA.search(src, st.kind, st.q, { page: st.page, restricted: st.restricted, lang: AT.BASE }, env()).then(function (res) {
       if (my !== st.seq) return;
       st.busy = false;
       st.error = res.error || "";

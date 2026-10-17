@@ -30,26 +30,55 @@
 (function (root) {
   "use strict";
 
+  // Category names: one table (a pack language adds its own, ../i18n.js).
+  var S = {
+    en: {
+      "icat.people": "People & feelings",
+      "icat.nature": "Nature & weather",
+      "icat.animals": "Animals",
+      "icat.food": "Food & drink",
+      "icat.celebrate": "Celebrations",
+      "icat.travel": "Travel & places",
+      "icat.work": "Work & school",
+      "icat.money": "Shopping & money",
+      "icat.tech": "Technology",
+      "icat.media": "Media & art",
+      "icat.sport": "Sport & games",
+      "icat.health": "Health",
+      "icat.arrows": "Arrows",
+      "icat.symbols": "Symbols"
+    },
+    el: {
+      "icat.people": "Άνθρωποι & συναισθήματα",
+      "icat.nature": "Φύση & καιρός",
+      "icat.animals": "Ζώα",
+      "icat.food": "Φαγητό & ποτό",
+      "icat.celebrate": "Γιορτές",
+      "icat.travel": "Ταξίδια & μέρη",
+      "icat.work": "Δουλειά & σχολείο",
+      "icat.money": "Αγορές & χρήματα",
+      "icat.tech": "Τεχνολογία",
+      "icat.media": "Μέσα & τέχνη",
+      "icat.sport": "Αθλητισμός & παιχνίδια",
+      "icat.health": "Υγεία",
+      "icat.arrows": "Βέλη",
+      "icat.symbols": "Σύμβολα"
+    }
+  };
+  var I18N = typeof window !== "undefined" && window.orosI18n;
+  var LANG = I18N ? I18N.lang() : "en";
+  if (I18N) I18N.table(S, "atelier", LANG);
+  var PACK = LANG !== "en" && LANG !== "el" && S[LANG] ? S[LANG] : null;
+
   var ICONS = {
     source: { name: "Tabler Icons", version: "3.49.0", license: "MIT", url: "https://tabler.io/icons" },
     view: 24,
-    // [id, EN name, EL name]
-    cats: [
-      ["people", "People & feelings", "Άνθρωποι & συναισθήματα"],
-      ["nature", "Nature & weather", "Φύση & καιρός"],
-      ["animals", "Animals", "Ζώα"],
-      ["food", "Food & drink", "Φαγητό & ποτό"],
-      ["celebrate", "Celebrations", "Γιορτές"],
-      ["travel", "Travel & places", "Ταξίδια & μέρη"],
-      ["work", "Work & school", "Δουλειά & σχολείο"],
-      ["money", "Shopping & money", "Αγορές & χρήματα"],
-      ["tech", "Technology", "Τεχνολογία"],
-      ["media", "Media & art", "Μέσα & τέχνη"],
-      ["sport", "Sport & games", "Αθλητισμός & παιχνίδια"],
-      ["health", "Health", "Υγεία"],
-      ["arrows", "Arrows", "Βέλη"],
-      ["symbols", "Symbols", "Σύμβολα"]
-    ],
+    // [id, EN name, EL name] (+ row[LANG] for a pack language)
+    cats: ["people", "nature", "animals", "food", "celebrate", "travel", "work", "money", "tech", "media", "sport", "health", "arrows", "symbols"].map(function (id) {
+      var k = "icat." + id, row = [id, S.en[k], S.el[k]];
+      if (PACK) row[LANG] = PACK[k];
+      return row;
+    }),
     // [id, categories, EN keywords, EL keywords, path data[]]
     list: [
       ["mood-smile", ["people"], "mood smile happy smiling glad positive emoji smiley face emotion feeling reaction", "χαμόγελο χαρά", ["M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0", "M9 10l.01 0", "M15 10l.01 0", "M9.5 15a3.5 3.5 0 0 0 5 0"]],

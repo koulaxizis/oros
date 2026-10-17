@@ -102,10 +102,8 @@
       "mx.same": "Η φωτογραφία έχει ήδη αυτό το σχήμα: διάλεξε άλλο.", "mx.done": "Η φωτογραφία επεκτάθηκε"
     }
   };
-  Object.keys(STR).forEach(function (l) {
-    AT.STRINGS[l] = AT.STRINGS[l] || {};
-    Object.keys(STR[l]).forEach(function (k) { AT.STRINGS[l][k] = STR[l][k]; });
-  });
+  // into Atelier's strings; a pack language gets its lines (core.js AT.addStrings)
+  AT.addStrings(STR);
 
   function canvas(w, h) { var c = document.createElement("canvas"); c.width = Math.max(1, Math.round(w)); c.height = Math.max(1, Math.round(h)); return c; }
   function blobOf(cv, type) {

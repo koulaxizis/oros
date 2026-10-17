@@ -41,10 +41,8 @@
       "mg.grabNone": "Δεν βρέθηκε καθαρό θέμα σε αυτή τη φωτογραφία.", "mg.video": "Όχι για βίντεο.", "mg.pick": "Διάλεξε πρώτα μια φωτογραφία στη σελίδα."
     }
   };
-  Object.keys(STR).forEach(function (l) {
-    AT.STRINGS[l] = AT.STRINGS[l] || {};
-    Object.keys(STR[l]).forEach(function (k) { AT.STRINGS[l][k] = STR[l][k]; });
-  });
+  // into Atelier's strings; a pack language gets its lines (core.js AT.addStrings)
+  AT.addStrings(STR);
 
   function photo(id) {
     var it = AT.doc && M.find(AT.doc.items, id);

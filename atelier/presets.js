@@ -9,43 +9,118 @@
 (function (root) {
   "use strict";
 
+  // Names: one table (a pack language adds its own, ../i18n.js).
+  var S = {
+    en: {
+      "sgrp.social": "Social media",
+      "sgrp.video": "Video & slides",
+      "sgrp.print": "Print",
+      "sgrp.brand": "Brand & web",
+      "size.ig-post": "Instagram post",
+      "size.ig-portrait": "Instagram portrait",
+      "size.story": "Story / Reel",
+      "size.fb-post": "Facebook post",
+      "size.fb-cover": "Facebook cover",
+      "size.x-post": "X / Bluesky post",
+      "size.li-banner": "LinkedIn banner",
+      "size.pin": "Pinterest pin",
+      "size.yt-thumb": "YouTube thumbnail",
+      "size.yt-banner": "YouTube banner",
+      "size.slides": "Presentation 16:9",
+      "size.slides-43": "Presentation 4:3",
+      "size.video-hd": "Video 1080p",
+      "size.poster-a3": "Poster A3",
+      "size.poster-a4": "Poster / flyer A4",
+      "size.flyer-a5": "Flyer A5",
+      "size.invite": "Invitation 5×7 in",
+      "size.card-post": "Postcard",
+      "size.card-biz": "Business card",
+      "size.menu": "Menu A4",
+      "size.cv": "CV / resume A4",
+      "size.certificate": "Certificate A4",
+      "size.logo": "Logo",
+      "size.web-banner": "Web banner",
+      "size.email-head": "Email header",
+      "size.wallpaper-d": "Desktop wallpaper",
+      "size.wallpaper-m": "Phone wallpaper"
+    },
+    el: {
+      "sgrp.social": "Μέσα κοινωνικής δικτύωσης",
+      "sgrp.video": "Βίντεο & παρουσιάσεις",
+      "sgrp.print": "Έντυπα",
+      "sgrp.brand": "Brand & web",
+      "size.ig-post": "Ανάρτηση Instagram",
+      "size.ig-portrait": "Κάθετη ανάρτηση Instagram",
+      "size.story": "Story / Reel",
+      "size.fb-post": "Ανάρτηση Facebook",
+      "size.fb-cover": "Εξώφυλλο Facebook",
+      "size.x-post": "Ανάρτηση X / Bluesky",
+      "size.li-banner": "Banner LinkedIn",
+      "size.pin": "Pin στο Pinterest",
+      "size.yt-thumb": "Μικρογραφία YouTube",
+      "size.yt-banner": "Banner YouTube",
+      "size.slides": "Παρουσίαση 16:9",
+      "size.slides-43": "Παρουσίαση 4:3",
+      "size.video-hd": "Βίντεο 1080p",
+      "size.poster-a3": "Αφίσα A3",
+      "size.poster-a4": "Αφίσα / φέιγ βολάν A4",
+      "size.flyer-a5": "Φέιγ βολάν A5",
+      "size.invite": "Πρόσκληση 5×7 in",
+      "size.card-post": "Καρτ ποστάλ",
+      "size.card-biz": "Επαγγελματική κάρτα",
+      "size.menu": "Μενού A4",
+      "size.cv": "Βιογραφικό A4",
+      "size.certificate": "Πιστοποιητικό A4",
+      "size.logo": "Λογότυπο",
+      "size.web-banner": "Banner ιστοσελίδας",
+      "size.email-head": "Κεφαλίδα email",
+      "size.wallpaper-d": "Ταπετσαρία υπολογιστή",
+      "size.wallpaper-m": "Ταπετσαρία κινητού"
+    }
+  };
+  var I = typeof window !== "undefined" && window.orosI18n;
+  var LANG = I ? I.lang() : "en";
+  if (I) I.table(S, "atelier", LANG);
+  var PACK = LANG !== "en" && LANG !== "el" && S[LANG] ? S[LANG] : null;
+  // [id, EN, EL] plus row[LANG] for a pack language (core.js AT.lbl3)
+  function named(row, k, at) {
+    row.splice(at, 0, S.en[k], S.el[k]);
+    if (PACK) row[LANG] = PACK[k];
+    return row;
+  }
+
   var PRESETS = {
-    groups: [
-      ["social", "Social media", "Μέσα κοινωνικής δικτύωσης"],
-      ["video", "Video & slides", "Βίντεο & παρουσιάσεις"],
-      ["print", "Print", "Έντυπα"],
-      ["brand", "Brand & web", "Brand & web"]
-    ],
+    groups: ["social", "video", "print", "brand"].map(function (id) { return named([id], "sgrp." + id, 1); }),
     // [id, group, EN, EL, width, height, unit "px" | "mm"]
     list: [
-      ["ig-post",     "social", "Instagram post",      "Ανάρτηση Instagram",        1080, 1080, "px"],
-      ["ig-portrait", "social", "Instagram portrait",  "Κάθετη ανάρτηση Instagram", 1080, 1350, "px"],
-      ["story",       "social", "Story / Reel",        "Story / Reel",              1080, 1920, "px"],
-      ["fb-post",     "social", "Facebook post",       "Ανάρτηση Facebook",         1200, 630,  "px"],
-      ["fb-cover",    "social", "Facebook cover",      "Εξώφυλλο Facebook",         1640, 624,  "px"],
-      ["x-post",      "social", "X / Bluesky post",    "Ανάρτηση X / Bluesky",      1600, 900,  "px"],
-      ["li-banner",   "social", "LinkedIn banner",     "Banner LinkedIn",           1584, 396,  "px"],
-      ["pin",         "social", "Pinterest pin",       "Pin στο Pinterest",         1000, 1500, "px"],
-      ["yt-thumb",    "video",  "YouTube thumbnail",   "Μικρογραφία YouTube",       1280, 720,  "px"],
-      ["yt-banner",   "video",  "YouTube banner",      "Banner YouTube",            2560, 1440, "px"],
-      ["slides",      "video",  "Presentation 16:9",   "Παρουσίαση 16:9",           1920, 1080, "px"],
-      ["slides-43",   "video",  "Presentation 4:3",    "Παρουσίαση 4:3",            1024, 768,  "px"],
-      ["video-hd",    "video",  "Video 1080p",         "Βίντεο 1080p",              1920, 1080, "px"],
-      ["poster-a3",   "print",  "Poster A3",           "Αφίσα A3",                  297,  420,  "mm"],
-      ["poster-a4",   "print",  "Poster / flyer A4",   "Αφίσα / φέιγ βολάν A4",     210,  297,  "mm"],
-      ["flyer-a5",    "print",  "Flyer A5",            "Φέιγ βολάν A5",             148,  210,  "mm"],
-      ["invite",      "print",  "Invitation 5×7 in",   "Πρόσκληση 5×7 in",          127,  178,  "mm"],
-      ["card-post",   "print",  "Postcard",            "Καρτ ποστάλ",               148,  105,  "mm"],
-      ["card-biz",    "print",  "Business card",       "Επαγγελματική κάρτα",       85,   55,   "mm"],
-      ["menu",        "print",  "Menu A4",             "Μενού A4",                  210,  297,  "mm"],
-      ["cv",          "print",  "CV / resume A4",      "Βιογραφικό A4",             210,  297,  "mm"],
-      ["certificate", "print",  "Certificate A4",      "Πιστοποιητικό A4",          297,  210,  "mm"],
-      ["logo",        "brand",  "Logo",                "Λογότυπο",                  500,  500,  "px"],
-      ["web-banner",  "brand",  "Web banner",          "Banner ιστοσελίδας",        1920, 600,  "px"],
-      ["email-head",  "brand",  "Email header",        "Κεφαλίδα email",            600,  200,  "px"],
-      ["wallpaper-d", "brand",  "Desktop wallpaper",   "Ταπετσαρία υπολογιστή",     1920, 1080, "px"],
-      ["wallpaper-m", "brand",  "Phone wallpaper",     "Ταπετσαρία κινητού",        1080, 2340, "px"]
-    ],
+      ["ig-post",     "social", 1080, 1080, "px"],
+      ["ig-portrait", "social", 1080, 1350, "px"],
+      ["story",       "social", 1080, 1920, "px"],
+      ["fb-post",     "social", 1200, 630,  "px"],
+      ["fb-cover",    "social", 1640, 624,  "px"],
+      ["x-post",      "social", 1600, 900,  "px"],
+      ["li-banner",   "social", 1584, 396,  "px"],
+      ["pin",         "social", 1000, 1500, "px"],
+      ["yt-thumb",    "video",  1280, 720,  "px"],
+      ["yt-banner",   "video",  2560, 1440, "px"],
+      ["slides",      "video",  1920, 1080, "px"],
+      ["slides-43",   "video",  1024, 768,  "px"],
+      ["video-hd",    "video",  1920, 1080, "px"],
+      ["poster-a3",   "print",  297,  420,  "mm"],
+      ["poster-a4",   "print",  210,  297,  "mm"],
+      ["flyer-a5",    "print",  148,  210,  "mm"],
+      ["invite",      "print",  127,  178,  "mm"],
+      ["card-post",   "print",  148,  105,  "mm"],
+      ["card-biz",    "print",  85,   55,   "mm"],
+      ["menu",        "print",  210,  297,  "mm"],
+      ["cv",          "print",  210,  297,  "mm"],
+      ["certificate", "print",  297,  210,  "mm"],
+      ["logo",        "brand",  500,  500,  "px"],
+      ["web-banner",  "brand",  1920, 600,  "px"],
+      ["email-head",  "brand",  600,  200,  "px"],
+      ["wallpaper-d", "brand",  1920, 1080, "px"],
+      ["wallpaper-m", "brand",  1080, 2340, "px"]
+    ].map(function (p) { return named(p, "size." + p[0], 2); }),
     // Custom size limits (editor units; designkit pages are 36..14400 pt).
     custom: { px: [36, 8000], mm: [13, 1200] },
     PX_PER_MM: 96 / 25.4

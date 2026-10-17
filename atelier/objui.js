@@ -25,7 +25,7 @@
     var bg = doc && AX.background(doc, it.pg);
     return bg && bg.ax.k === "shape" && !bg.ax.g ? bg.ax.fc : (bg && bg.ax.g ? bg.ax.g.a : "#ffffff");
   }
-  function specOf(doc, it) { return OB.chartSpec(it, { pageBg: pageBg(doc, it), lang: AT.LANG }); }
+  function specOf(doc, it) { return OB.chartSpec(it, { pageBg: pageBg(doc, it), lang: AT.BASE }); }
   function words() { return { empty: t("ch.empty"), series: t("ch.series"), other: t("ch.other") }; }
   function svgOf(spec) { return OB.chartSvg(K, spec, words()); }
   // pixels per SVG px for `scale` device px per point
