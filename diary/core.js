@@ -363,7 +363,7 @@
       var day = data.days[k], l = longOf(data, k);
       var f = fold((day ? day.t : "") + "\n" + l.md + "\n" + (l.loc && l.loc.n ? l.loc.n : ""));
       if (words.every(function (w) { return f.indexOf(w) >= 0; })) {
-        out.push({ ymd: k, t: day ? day.t : oneLine(l.md.replace(/[#*_>`\[\]()-]+/g, " "), 120), e: day ? day.e : "" });
+        out.push({ ymd: k, t: day ? day.t : oneLine(l.md.replace(/[#*_>\x60\[\]()-]+/g, " "), 120), e: day ? day.e : "" });
       }
     });
     return out;
@@ -497,12 +497,30 @@
     if (data && data.days && data.days[today] && cleanText(data.days[today].t)) return null;
     return { key: "write-" + today, day: today };
   }
+  // The reminder (shown by the shell). Pack "diary" (../i18n.js) adds
+  // other languages where it is loaded; English otherwise.
+  var STR = {
+    en: {
+      "rem.title": "One-Sentence Diary",
+      "rem.body": "One sentence about today?",
+      "rem.streak": "One sentence about today? A {n}-day streak."
+    },
+    el: {
+      "rem.title": "Ημερολόγιο μιας πρότασης",
+      "rem.body": "Μία φράση για σήμερα;",
+      "rem.streak": "Μία φράση για σήμερα; Σερί {n} ημερών."
+    }
+  };
+  function strOf(lang) {
+    var L = typeof lang === "string" && lang ? lang : "en";
+    var I = root && root.orosI18n;
+    if (!STR[L] && I && typeof I.table === "function") I.table(STR, "diary", L);
+    return STR[L] || STR.en;
+  }
   function reminderText(lang, st) {
-    var el = lang === "el";
-    var title = el ? "Ημερολόγιο μιας πρότασης" : "One-Sentence Diary";
-    var body = el ? "Μία φράση για σήμερα;" : "One sentence about today?";
-    if (st && st.current > 1) body += el ? " Σερί " + st.current + " ημερών." : " A " + st.current + "-day streak.";
-    return { title: title, body: body };
+    var S = strOf(lang);
+    var body = st && st.current > 1 ? S["rem.streak"].replace("{n}", String(st.current)) : S["rem.body"];
+    return { title: S["rem.title"], body: body };
   }
 
   function fileName(ext, today) { return "diary-" + (today || "all") + "." + ext; }

@@ -1,0 +1,88 @@
+# Wetter
+
+Aktuelles Wetter, amtliche Warnungen, Regen in den nächsten 2 Stunden, die nächsten 48 Stunden, eine 7-Tage-Vorhersage, eine Regenkarte und Luftqualität mit Pollen für die Städte, die du auswählst. Die App arbeitet mit der kleinen Wetteranzeige in der oberen Leiste von orOS zusammen.
+
+## Erste Schritte
+
+Tippe oben auf den Namen der Stadt, um `Städte` zu öffnen. Gib einen Namen in `Name der Stadt…` ein (Vorschläge erscheinen ab dem dritten Buchstaben), wähle dann einen Vorschlag oder drücke `Hinzufügen`. `Meinen Standort verwenden` fügt den Ort hinzu, an dem du bist, nachdem dein Browser um Erlaubnis gefragt hat.
+
+Wenn du das Wetter in der oberen Leiste schon eingerichtet hast, wird seine Stadt für dich hinzugefügt.
+
+## Die Vorhersage lesen
+
+- Die große Temperatur kommt mit einem kurzen Hinweis wie `Schirm nicht vergessen` oder `Hohe UV-Werte – Sonnenschutz auftragen`. Fahre mit der Maus über das Symbol, um die Wetterlage zu sehen.
+- Darunter: `Gefühlt`, `Luftfeuchte`, `Wind`, `UV-Index`, `Sonne` (Sonnenaufgang → Sonnenuntergang) und `Luftqualität` (Europäischer AQI). Fahre mit der Maus über UV oder Luftqualität, um die Skala zu sehen.
+- `Nächste 48 Stunden` scrollt seitlich. `7-Tage-Vorhersage` zeigt Tiefst- und Höchstwerte und die Regenwahrscheinlichkeit.
+- Tippe auf die große Temperatur, um zwischen °C und °F zu wechseln (der Wind wechselt dann auch zwischen km/h und mph).
+
+## Amtliche Warnungen
+
+Über der Vorhersage siehst du die amtlichen Wetterwarnungen für das Gebiet deiner Stadt von MeteoAlarm, dem europäischen Dienst der nationalen Wetterdienste (in Griechenland die Warnungen der HNMS). Jede Warnung hat ihre Farbe (gelb, orange, rot), sagt, worum es geht, nennt das Gebiet und wann sie beginnt und endet.
+
+- Tippe auf eine Warnung für die Details in deiner Sprache, wenn der Wetterdienst sie liefert (Beschreibung, was zu tun ist), und `Auf MeteoAlarm öffnen`.
+- Die App schätzt dein Gebiet anhand der Stadt. `Warnungen anderswo in …` listet den Rest des Landes; tippe dort bei einer Warnung auf `Mein Gebiet`, um dieses Gebiet für diese Stadt zu verwenden (es wird mit der Stadt synchronisiert). `Gebiet vergessen` kehrt zur Schätzung zurück.
+- In `Städte` unter `Amtliche Warnungen`: `MeteoAlarm-Warnungen zeigen` (standardmäßig an) und `Benachrichtigen`: `Aus` (Standard), `Orange und Rot` oder `Alle Warnungen`. orOS sendet dann pro Warnung eine [Benachrichtigung](help:t/notifications) für die Stadt in der Taskleiste, auch wenn Wetter geschlossen ist. Beide Einstellungen gelten nur für dieses Gerät.
+- Manche Browser können MeteoAlarm nicht direkt lesen. Die App nutzt dann das orOS-Relay, das du in [Mail](app:mail) eingerichtet hast, falls es eines gibt; ohne Relay sagt der Dialog `Städte` das, und es erscheinen keine Warnungen.
+
+## Regen in den nächsten 2 Stunden
+
+`Nächste 2 Stunden` zeigt den Regen (oder Schnee) alle 15 Minuten als kleine Balken, mit einem Satz wie `Regen in ~30 Min.`, `Leichter Regen hört in ~45 Min. auf` oder `Kein Regen in den nächsten 2 Stunden`.
+
+## Regenkarte
+
+Unter der 7-Tage-Vorhersage öffnet `Regenkarte zeigen` eine Karte, wo es geregnet hat, mit deiner Stadt (dem Punkt) in der Mitte und dem Satelliten-Regenbild der NASA über einer OpenStreetMap-Karte.
+
+- Es ist eine **Satellitenschätzung des Regens (NASA IMERG), ein paar Stunden alt – kein Live-Radar**. Das neueste Bild ist meist 5 bis 7 Stunden alt.
+- Der Schieberegler geht durch die letzten 12 halben Stunden (6 Stunden). Darunter siehst du die Zeit des Bildes in der Zeit deiner Stadt und wie lange das her ist. Die Wiedergabetaste läuft einmal durch alle Bilder.
+- Die Farbleiste zeigt Regen in mm pro Stunde, von leicht (grün) bis stark (dunkelrot). Schnee hat eigene Farben, von hellblau bis lila.
+- Verschiebe und zoome die Karte wie gewohnt. Das Regenbild ist grob (etwa 10 km), aus der Nähe wird es also unscharf.
+- Erst wenn du die Karte öffnest, wird etwas heruntergeladen. `Regenkarte ausblenden` schließt sie. Offline siehst du statt einer Karte eine Meldung und `Erneut versuchen`.
+
+## Luft & Pollen
+
+- Drei Tage mit dem schlechtesten Europäischen AQI des Tages, dem Schadstoff, der ihn bestimmt, und den stärksten Pollen (Erle, Birke, Gräser, Beifuß, Olive, Ambrosia: gering, mäßig, hoch, sehr hoch).
+- Die Balken zeigen die nächsten 24 Stunden; tippe auf einen, um AQI, PM2.5, PM10, O₃ und NO₂ (µg/m³) und die Pollenwerte zu sehen.
+
+## Vorhersagemodell
+
+- Unter `Vorhersagemodell` wählst du das Wettermodell: `Automatisch (beste Wahl)` (Standard), ECMWF IFS, DWD ICON, NOAA GFS, Météo-France, UK Met Office, MET Norway, GEM oder JMA. Die Wahl gilt nur für dieses Gerät.
+- `Modelle vergleichen` zeichnet die Höchstwerte (durchgezogene Linien) und Tiefstwerte (gestrichelt) von bis zu drei Modellen für 7 Tage, darunter den täglichen Regen jedes Modells. Wähle die Modelle in den drei Listen.
+
+## Mehr als eine Stadt
+
+- Wische auf der Vorhersage nach links oder rechts, um die Stadt zu wechseln, oder tippe auf die Punkte neben dem Namen der Stadt.
+- Tippe in `Städte` auf eine Stadt, um sie zu zeigen. Das × (`Stadt löschen`) entfernt sie, und du bekommst `Rückgängig`.
+
+## Wetter in der oberen Leiste
+
+Die obere Leiste zeigt ein Wettersymbol und die Temperatur einer deiner Städte. Das ist standardmäßig an. Du änderst es hier, im Dialog `Städte`, unter `Taskleiste`:
+
+- `Wetter in der Taskleiste zeigen` blendet es ein oder aus. Diese Einstellung gilt nur für dieses Gerät.
+- Die Stecknadel neben einer Stadt (`Diese Stadt in der Taskleiste zeigen`) wählt die Stadt, die die obere Leiste zeigt. Ist keine Stadt angeheftet, zeigt sie die erste Stadt der Liste. Löschst du die angeheftete Stadt, wird sie gelöst.
+- Ein Tippen auf das Wetter in der oberen Leiste öffnet diese App. Tippe in Wetter noch einmal darauf, um zum Desktop zurückzukehren.
+- Wenn die App dieselbe Stadt abruft, zeigt die obere Leiste dieselben Zahlen.
+- Offline zeigt die obere Leiste eine durchgestrichene Wolke und keine Temperatur.
+- Morgens (8:00–12:00) kann orOS eine [Benachrichtigung](help:t/notifications) senden, wenn der Tag Aufmerksamkeit braucht, etwa bei Gewitter, Nebel, Regen, hohem UV, Hitze oder Kälte. Ein angenehmer Tag bleibt still.
+
+## Aktualisierung und offline
+
+Die Vorhersage wird aktualisiert, wenn du die App öffnest oder zu ihr zurückkehrst, höchstens alle 30 Minuten. Die Aktualisieren-Taste oben rechts holt sie sofort. Ohne Verbindung siehst du `Offline – letzter bekannter Stand` und die letzten Daten, die die App bekommen hat. Sie erfindet nie Zahlen.
+
+## Synchronisierung und Sicherung
+
+Deine Städte (mit dem gewählten Warngebiet), die angezeigte Stadt und deine Wahl °C/°F werden über die [orOS-Synchronisierung](help:t/sync) synchronisiert. Das Vorhersagemodell, die Warn-Einstellungen und die heruntergeladenen Warnungen bleiben auf diesem Gerät. Die Einstellungen des Wetters in der oberen Leiste werden mit den übrigen orOS-Einstellungen synchronisiert. Heruntergeladene Vorhersagen bleiben auf diesem Gerät. Wetter hat keinen Import oder Export.
+
+## Tipps
+
+- Füge Zuhause, Arbeit und Urlaubsorte hinzu und wische dann zwischen ihnen.
+- Der Bereich Sonne & Mond in [Zeit](app:time) nutzt den Ort des Wetters in der oberen Leiste für Sonnenaufgang und -untergang.
+
+## Grenzen
+
+- Die Daten kommen von [Open-Meteo](https://open-meteo.com/), das kein Konto braucht. Es erhält die Städtenamen, nach denen du suchst, und die Koordinaten deiner Städte. Luftqualität und Pollen kommen vom Copernicus Atmosphere Monitoring Service über Open-Meteo; Pollen nur in Europa und während der Saison.
+- Warnungen kommen von [MeteoAlarm](https://meteoalarm.org/) (EUMETNET) und gelten nur für dessen europäische Länder. MeteoAlarm erhält nur das Land. Die eigene Seite des nationalen Wetterdienstes ist die offizielle Quelle; eine Warnung kann MeteoAlarm etwas später erreichen.
+- Die Gebietsschätzung vergleicht Namen und kann falsch sein; wähle dann `Mein Gebiet`. Du kannst nur ein Gebiet wählen, das gerade eine Warnung hat.
+- Außerhalb von Mitteleuropa und Nordamerika wird der 15-Minuten-Regen aus stündlichen Daten berechnet und ist daher ungenauer. Manche Modelle haben keine 15-Minuten-Daten: `Nächste 2 Stunden` wird dann ausgeblendet.
+- Die Regenkarte kommt von [NASA GIBS](https://nasa-gibs.github.io/gibs-api-docs/) (IMERG, kostenlos, kein Konto) über Kacheln von [OpenStreetMap](https://www.openstreetmap.org/copyright). Sie erhalten nur den Kartenausschnitt, den du ansiehst, nicht den Namen deiner Stadt. Das Bild ist eine Satellitenschätzung von vor ein paar Stunden, kein Radar: Es kann leichte oder kurze Schauer verpassen und zeigt nicht, was gerade fällt.
+- Wenn Luftqualität oder ein anderer Wert nicht abrufbar ist, siehst du stattdessen —.
+- Hinweise sind kurze Faustregeln, keine amtlichen Warnungen; die amtlichen stehen im Warnbanner.

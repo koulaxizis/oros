@@ -53,8 +53,9 @@
       return l === "el" ? "el" : "en";
     } catch (e) { return "en"; }
   }
-  var LANG = appLang();
-  var LOCALE = LANG === "el" ? "el-GR" : "en-GB";
+  // orosI18n (../i18n.js): the full language code, a pack language included.
+  var LANG = window.orosI18n ? window.orosI18n.lang() : appLang();
+  var LOCALE = window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB");
 
   var STRINGS = {
     en: {
@@ -75,7 +76,7 @@
       "f.year": "Year",
       "ph.today": "One sentence about today…", "ph.day": "One sentence about this day…",
       "ph.search": "Search your days",
-      "st.saved": "Saved", "st.saving": "Saving…", "st.empty": "",
+      "st.saved": "Saved", "st.saving": "Saving…",
       "count.left": "{n} left",
       "emoji.none": "No emoji", "emoji.pick": "Emoji {e}",
       "sec.otd": "On this day",
@@ -175,7 +176,7 @@
       "f.year": "Έτος",
       "ph.today": "Μία φράση για σήμερα…", "ph.day": "Μία φράση για αυτή τη μέρα…",
       "ph.search": "Αναζήτηση στις μέρες σου",
-      "st.saved": "Αποθηκεύτηκε", "st.saving": "Αποθήκευση…", "st.empty": "",
+      "st.saved": "Αποθηκεύτηκε", "st.saving": "Αποθήκευση…",
       "count.left": "Απομένουν {n}",
       "emoji.none": "Χωρίς emoji", "emoji.pick": "Emoji {e}",
       "sec.otd": "Σαν σήμερα",
@@ -257,6 +258,8 @@
       "draft.keep": "Κράτα το", "draft.drop": "Απόρριψη"
     }
   };
+
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "diary", LANG);
 
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;
@@ -1979,7 +1982,7 @@
       }).catch(function () { return "bad"; });
   }
   var recFile = RP && DPK && window.OrosBundle ? RP.ui(DPK.DESC, {
-    lang: function () { return LANG; },
+    lang: function () { return LANG === "el" ? "el" : "en"; },
     get: function () { return DPK.forKit(sliceGet()); },
     title: function () { return t("app.name"); },
     // media/: every photo the long entries name, read from the orOS

@@ -246,7 +246,7 @@
     var pop = $("sel-pop");
     pop.textContent = "";
     for (var c = 0; c < C.NCOLORS; c++) (function (c) {
-      var b = LIB.btn("swatch c" + c, t("hl.color", { name: C.COLOR_NAMES[LIB.LANG][c] }), "", function () { highlight(c, false); });
+      var b = LIB.btn("swatch c" + c, t("hl.color", { name: C.colorName(c, LIB.LANG) }), "", function () { highlight(c, false); });
       pop.appendChild(b);
     })(c);
     pop.appendChild(LIB.btn("icon-btn", t("hl.note"), UI.note, function () { highlight(0, true); }));
@@ -305,7 +305,7 @@
     var pop = $("mark-pop");
     pop.textContent = "";
     for (var c = 0; c < C.NCOLORS; c++) (function (c) {
-      var b = LIB.btn("swatch c" + c + (k.c === c ? " on" : ""), t("hl.color", { name: C.COLOR_NAMES[LIB.LANG][c] }), "", function () {
+      var b = LIB.btn("swatch c" + c + (k.c === c ? " on" : ""), t("hl.color", { name: C.colorName(c, LIB.LANG) }), "", function () {
         hidePop();
         LIB.putMark({ id: id, c: c });
         marksChanged();

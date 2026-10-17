@@ -106,7 +106,7 @@
       var pct = C.progressOf(s, b.id);
       csv.push([b.title, b.by || "", C.fmtLabel(b), b.year || "", b.pages || "", pct ? Math.floor(pct / 10) : 0,
                 b.fin || "", (b.tags || []).join("; "), c.hl, c.bm, c.n].map(csvCell).join(","));
-      if (c.hl + c.bm) md.push(C.exportMarkdown(b, marks, el ? "el" : "en", null, null));
+      if (c.hl + c.bm) md.push(C.exportMarkdown(b, marks, lang || "en", null, null));
     });
     var out = { "books.csv": csv.join("\r\n") + "\r\n" };
     if (md.length) out["notes.md"] = md.join("\n---\n\n");

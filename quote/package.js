@@ -143,18 +143,32 @@
     var total = QC && typeof QC.total === "function" ? QC.total(q) : sub;
     return { sub: sub, total: total };
   }
+  // The preview's words ("md." keys: one pack "quote" with quote.js
+  // and accept.js). English and Greek inline; any other language from
+  // the "quote" pack when ../i18n.js is loaded (never in node).
   var L = {
-    en: { quotes: "Quotes", templates: "Templates", client: "Client", date: "Date", due: "Due", status: "Status",
-          code: "Code", desc: "Description", qty: "Qty", price: "Unit price", disc: "Disc %", vat: "VAT %",
-          sub: "Subtotal", gdisc: "Discount", total: "Total (with VAT)", payment: "Payment terms", notes: "Notes",
-          inst: "Instalments", accepted: "Accepted by", none: "No quotes.",
-          st: { draft: "Draft", sent: "Sent", accepted: "Accepted", rejected: "Rejected", expired: "Expired" } },
-    el: { quotes: "Προσφορές", templates: "Πρότυπα", client: "Πελάτης", date: "Ημερομηνία", due: "Λήξη", status: "Κατάσταση",
-          code: "Κωδικός", desc: "Περιγραφή", qty: "Ποσ.", price: "Τιμή μονάδας", disc: "Έκπτ. %", vat: "ΦΠΑ %",
-          sub: "Υποσύνολο", gdisc: "Έκπτωση", total: "Σύνολο (με ΦΠΑ)", payment: "Όροι πληρωμής", notes: "Σημειώσεις",
-          inst: "Δόσεις", accepted: "Αποδοχή από", none: "Καμία προσφορά.",
-          st: { draft: "Πρόχειρη", sent: "Απεστάλη", accepted: "Αποδεκτή", rejected: "Απορρίφθηκε", expired: "Έληξε" } }
+    en: { "md.quotes": "Quotes", "md.templates": "Templates", "md.client": "Client", "md.date": "Date", "md.due": "Due", "md.status": "Status",
+          "md.code": "Code", "md.desc": "Description", "md.qty": "Qty", "md.price": "Unit price", "md.disc": "Disc %", "md.vat": "VAT %",
+          "md.sub": "Subtotal", "md.gdisc": "Discount", "md.total": "Total (with VAT)", "md.payment": "Payment terms", "md.notes": "Notes",
+          "md.inst": "Instalments", "md.accepted": "Accepted by", "md.none": "No quotes.",
+          "md.st.draft": "Draft", "md.st.sent": "Sent", "md.st.accepted": "Accepted", "md.st.rejected": "Rejected", "md.st.expired": "Expired" },
+    el: { "md.quotes": "Προσφορές", "md.templates": "Πρότυπα", "md.client": "Πελάτης", "md.date": "Ημερομηνία", "md.due": "Λήξη", "md.status": "Κατάσταση",
+          "md.code": "Κωδικός", "md.desc": "Περιγραφή", "md.qty": "Ποσ.", "md.price": "Τιμή μονάδας", "md.disc": "Έκπτ. %", "md.vat": "ΦΠΑ %",
+          "md.sub": "Υποσύνολο", "md.gdisc": "Έκπτωση", "md.total": "Σύνολο (με ΦΠΑ)", "md.payment": "Όροι πληρωμής", "md.notes": "Σημειώσεις",
+          "md.inst": "Δόσεις", "md.accepted": "Αποδοχή από", "md.none": "Καμία προσφορά.",
+          "md.st.draft": "Πρόχειρη", "md.st.sent": "Απεστάλη", "md.st.accepted": "Αποδεκτή", "md.st.rejected": "Απορρίφθηκε", "md.st.expired": "Έληξε" }
   };
+  // { quotes, …, st: { draft, … } } for the language.
+  function words(lang) {
+    var I = typeof window !== "undefined" && window.orosI18n;
+    var tb = L[lang] || (I && typeof lang === "string" ? I.table(L, "quote", lang) : L.en);
+    var w = { st: {} };
+    Object.keys(L.en).forEach(function (k) {
+      var v = tb[k] !== undefined ? tb[k] : L.en[k];
+      if (k.indexOf("md.st.") === 0) w.st[k.slice(6)] = v; else w[k.slice(3)] = v;
+    });
+    return w;
+  }
   function offerMd(out, q, w, clients, isTpl) {
     var c = q.currency || "EUR", head = isTpl ? (q.name || "—") : [q.num, clients[q.clientId]].filter(Boolean).join(" — ") || "—";
     out.push("## " + md(head), "");
@@ -187,7 +201,7 @@
     if (q.notes) out.push("**" + w.notes + "**", "", String(q.notes).trim(), "");
   }
   function previews(state, lang) {
-    var w = L[lang === "el" ? "el" : "en"], s = isObj(state) ? state : {}, clients = {};
+    var w = words(lang), s = isObj(state) ? state : {}, clients = {};
     (s.clients || []).forEach(function (c) { if (isObj(c)) clients[c.id] = c.name || ""; });
     var out = ["# " + w.quotes, ""];
     if (!(s.quotes || []).length) out.push(w.none, "");

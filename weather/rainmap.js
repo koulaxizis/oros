@@ -20,6 +20,9 @@
   var R = window.OrosRainMapCore || null;
   var LANG = "en";
   try { LANG = localStorage.getItem("oros-lang") === "el" ? "el" : "en"; } catch (e) {}
+  // orosI18n (../i18n.js): the full language code, a pack language included.
+  if (window.orosI18n) LANG = window.orosI18n.lang();
+  var LOC = window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB");
   var APP_V = (function () {
     var m = ((document.currentScript && document.currentScript.src) || "").match(/[?&]v=([^&#]+)/);
     return m ? m[1] : "1";
@@ -33,7 +36,7 @@
       "note": "Satellite estimate of rain (NASA IMERG), a few hours old — not live radar.",
       "loading": "Loading the rain map…",
       "finding": "Looking for the newest satellite picture…",
-      "offline": "You're offline. The rain map needs a connection; open it again when you're back online.",
+      "map.offline": "You're offline. The rain map needs a connection; open it again when you're back online.",
       "fail": "The rain map could not be loaded. Check your connection and try again.",
       "nodata": "NASA GIBS has no recent rain picture right now. Try again later.",
       "tiles": "Some parts of the map could not be loaded.",
@@ -58,7 +61,7 @@
       "note": "Δορυφορική εκτίμηση της βροχής (NASA IMERG), λίγων ωρών — όχι ζωντανό ραντάρ.",
       "loading": "Φόρτωση του χάρτη βροχής…",
       "finding": "Αναζήτηση της πιο πρόσφατης δορυφορικής εικόνας…",
-      "offline": "Είσαι εκτός σύνδεσης. Ο χάρτης βροχής θέλει σύνδεση· άνοιξέ τον ξανά όταν επανέλθει.",
+      "map.offline": "Είσαι εκτός σύνδεσης. Ο χάρτης βροχής θέλει σύνδεση· άνοιξέ τον ξανά όταν επανέλθει.",
       "fail": "Δεν φορτώθηκε ο χάρτης βροχής. Έλεγξε τη σύνδεση και δοκίμασε ξανά.",
       "nodata": "Η NASA GIBS δεν έχει πρόσφατη εικόνα βροχής αυτή τη στιγμή. Δοκίμασε αργότερα.",
       "tiles": "Κάποια σημεία του χάρτη δεν φορτώθηκαν.",
@@ -77,6 +80,7 @@
       "here": "Η πόλη σου"
     }
   };
+  if (window.orosI18n) window.orosI18n.table(STR, "weather", LANG);
   function t(k) { var p = STR[LANG] || STR.en; return p[k] !== undefined ? p[k] : (STR.en[k] || k); }
   function $(id) { return document.getElementById(id); }
   function mk(tag, cls, text) {
@@ -173,7 +177,7 @@
     var off = typeof tz === "number" ? tz : -new Date().getTimezoneOffset() * 60;
     // The start of the half hour, in the city's clock (as Worldview).
     var d = new Date(ms + off * 1000);
-    var wd = d.toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB", { weekday: "short", timeZone: "UTC" });
+    var wd = d.toLocaleDateString(LOC, { weekday: "short", timeZone: "UTC" });
     var h = R.hoursAgo(ms, Date.now());
     return wd + " " + pad(d.getUTCHours()) + ":" + pad(d.getUTCMinutes()) + " · " +
       (h < 1 ? t("ago0") : h === 1 ? t("ago1") : t("ago").replace("{h}", String(h)));
@@ -232,7 +236,7 @@
     $("rain-attrib").textContent = t("imagery") + " · © OpenStreetMap contributors";
     buildLegend();
     paintPlay();
-    window.addEventListener("offline", function () { if (open) { stopPlay(); msg("offline"); } });
+    window.addEventListener("offline", function () { if (open) { stopPlay(); msg("map.offline"); } });
     window.addEventListener("online", function () { if (open && !rainLayer) show(); else if (open) msg(tileErr ? "tiles" : ""); });
   }
   function paintToggle() {
@@ -279,7 +283,7 @@
     open = true;
     paintToggle();
     $("rain-body").hidden = false;
-    if (!navigator.onLine) { $("rain-map-wrap").hidden = true; msg("offline", true); return; }
+    if (!navigator.onLine) { $("rain-map-wrap").hidden = true; msg("map.offline", true); return; }
     busy = true;
     msg("loading");
     ensureLeaflet().then(function (L) {
@@ -326,10 +330,10 @@
       rainLayer = L.tileLayer(R.tileTemplate(frames[frames.length - 1]), {
         maxNativeZoom: R.MAX_NATIVE_ZOOM, maxZoom: 9, opacity: 0.75,
         attribution: '<a href="https://nasa-gibs.github.io/gibs-api-docs/" target="_blank" rel="noopener noreferrer">' +
-          (LANG === "el" ? "Εικόνες: NASA GIBS / IMERG" : "Imagery: NASA GIBS / IMERG") + "</a>"
+          t("imagery") + "</a>"
       }).addTo(lmap);
       rainLayer.on("tileerror", function () {
-        if (!tileErr) { tileErr = true; if (navigator.onLine) msg("tiles"); else msg("offline"); }
+        if (!tileErr) { tileErr = true; if (navigator.onLine) msg("tiles"); else msg("map.offline"); }
       });
       rainLayer.on("load", function () { if (!tileErr) msg(""); });
       lmap.setView(center, city ? 5 : 2);

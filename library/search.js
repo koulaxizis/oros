@@ -11,6 +11,19 @@
 (function (root) {
   "use strict";
   var KEY = "oros-library-data";
+  // Words of the hits. Other languages come from the "library" pack
+  // when the shell has it loaded (orosI18n.table); English otherwise.
+  var WORDS = {
+    en: { "search.untitled": "Untitled", "search.hl": "Highlight", "search.bm": "Bookmark" },
+    el: { "search.untitled": "Χωρίς τίτλο", "search.hl": "Υπογράμμιση", "search.bm": "Σελιδοδείκτης" }
+  };
+  function words(lang) {
+    lang = String(lang || "en");
+    if (!WORDS[lang]) {
+      try { if (root && root.orosI18n) root.orosI18n.table(WORDS, "library", lang); } catch (e) {}
+    }
+    return WORDS[lang] || WORDS.en;
+  }
 
   function str(v) { return typeof v === "string" ? v.replace(/\s+/g, " ").trim() : ""; }
   function arr(a) { return Array.isArray(a) ? a : []; }
@@ -20,13 +33,13 @@
     id: "library",
     keys: [KEY],
     search: function (ctx) {
-      var d = ctx.readJSON(KEY), out = [], el = ctx.lang === "el";
+      var d = ctx.readJSON(KEY), out = [], W = words(ctx.lang);
       if (!d || !Array.isArray(d.books)) return out;
       var tombs = d.tombs && typeof d.tombs === "object" ? d.tombs : {};
       var titles = {};
       d.books.forEach(function (b) {
         if (!b || typeof b.id !== "string" || hidden(tombs, b)) return;
-        titles[b.id] = str(b.title) || (el ? "Χωρίς τίτλο" : "Untitled");
+        titles[b.id] = str(b.title) || W["search.untitled"];
         out.push({
           id: b.id,
           title: titles[b.id],
@@ -40,7 +53,7 @@
         if (k.k !== "hl" && !str(k.n)) return;
         out.push({
           id: k.id,
-          title: titles[k.b] + " · " + (k.k === "hl" ? (el ? "Υπογράμμιση" : "Highlight") : (el ? "Σελιδοδείκτης" : "Bookmark")),
+          title: titles[k.b] + " · " + (k.k === "hl" ? W["search.hl"] : W["search.bm"]),
           text: [str(k.q).slice(0, 300), str(k.n).slice(0, 300)].filter(Boolean).join(" · "),
           target: { book: k.b, loc: k.loc }
         });

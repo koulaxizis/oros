@@ -51,6 +51,7 @@
 
   // ---------- 1. Constants, i18n, helpers ----------
   function appLang() {
+    if (window.orosI18n) return window.orosI18n.lang();
     try {
       var l = localStorage.getItem("oros-lang") ||
               (window.parent && window.parent.orosLang) || "en";
@@ -185,6 +186,8 @@
       "oros.save": "Αρχείο orOS (.orosscores)", "oros.open": "Άνοιγμα αρχείου orOS…", "oros.folder": "Αποσυμπιεσμένος φάκελος orOS…"
     }
   };
+  if (typeof window !== "undefined" && window.orosI18n) window.orosI18n.table(STRINGS, "scores", LANG);
+  function loc() { return typeof window !== "undefined" && window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB"); }
 
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;
@@ -416,7 +419,7 @@
     if (typeof v === "number") return String(v);
     var s = String(v == null ? "" : v);
     if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
-    return '"' + s.replace(/"/g, '""') + '"';
+    return '"' + s.split('"').join('""') + '"';
   }
   function csvLines(rows) {
     return "﻿" + rows.map(function (r) { return r.map(csvCell).join(","); }).join("\r\n") + "\r\n";
@@ -517,7 +520,7 @@
     return p(d.getDate()) + "/" + p(d.getMonth() + 1) + "/" + d.getFullYear();
   }
   function fmtNum(v) {
-    return (v < 0 ? "−" : "") + Math.abs(v).toLocaleString(LANG === "el" ? "el-GR" : "en-GB");
+    return (v < 0 ? "−" : "") + Math.abs(v).toLocaleString(loc());
   }
   function seatColor(name) {
     var k = nameKey(name);
@@ -778,7 +781,7 @@
     });
     tb.appendChild(body);
     var tfoot = el("tfoot"), fr = el("tr");
-    var th0 = el("th", "rn", "Σ");
+    var th0 = el("th", "rn", "\u03a3"); // the sum sign, not text
     th0.scope = "row";
     th0.setAttribute("aria-label", t("sheet.total"));
     fr.appendChild(th0);
@@ -1508,7 +1511,7 @@
     function para(text, cls) { body.appendChild(el("p", cls || "imp-p", text)); }
     var ds = function (k) {
       var p = k.split("-");
-      return new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB",
+      return new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString(loc(),
         { day: "numeric", month: "short", year: "numeric" });
     };
     para(t("imp.src", { s: IMP_SRC[res.source] || res.source }), "imp-p imp-src");
@@ -1578,7 +1581,7 @@
   function initRecFile() {
     if (!RP || !SPK || !window.OrosBundle) return;
     recFile = RP.ui(SPK.DESC, {
-      lang: function () { return LANG; },
+      lang: function () { return LANG === "el" ? "el" : "en"; },
       get: function () { return mergeScores(data, data); },
       title: function () { return t("app"); },
       set: function (next, info) {

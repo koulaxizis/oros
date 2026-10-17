@@ -1,0 +1,58 @@
+# Stammbaum
+Stammbaum zeichnet deine Familie rund um eine Person: ihre Vorfahren darüber, ihre Nachkommen darunter, Partner und Geschwister daneben. Du kannst mehrere Stammbäume führen, mit unvollständigen Daten, mehreren Ehen sowie Adoptiv- oder Stiefeltern.
+
+## Erste Schritte
+Der erste Bildschirm bietet `Person hinzufügen`, `Aus Kontakten` (baut den Stammbaum aus den Familienbeziehungen, die du in [Kontakte](app:contacts) eingetragen hast) oder `JSON importieren`.
+
+Tippe oder klicke auf eine Person, um ihre Karte an der Seite zu öffnen. Tippe oder klicke doppelt auf jemanden oder nutze `Hier zentrieren`, um die Person in die Mitte des Stammbaums zu holen.
+
+## Personen und Verwandte hinzufügen
+Auf der Karte einer Person bietet `Verwandte hinzufügen` die Optionen `Elternteil`, `Partner`, `Kind` und `Geschwister`. Bei einem Kind wählst du den anderen Elternteil (`Kind mit…`) oder `Kein anderer Elternteil / unbekannt`.
+
+`Bearbeiten` öffnet die Person: `Vorname(n)`, `Nachname`, `Geburtsname`, `Geschlecht`, `Geburt` und `Tod` mit `Datum` und `Ort`, `Verstorben`, `Notiz` und `Foto`. Daten können vollständig oder unvollständig sein (`TT.MM.JJJJ, MM.JJJJ oder JJJJ`) und als `ungefähr`, `vor` oder `nach` markiert werden.
+
+Im Editor kannst du außerdem:
+- Festlegen, welcher Art jeder Elternteil ist: `leiblich`, `adoptiert`, `Pflege` oder `Stief`.
+- `Partnerschaften` hinzufügen, jeweils `Verheiratet`, `Partner`, `Geschieden` oder `Unbekannt`, mit Daten für `Von` und `Bis`.
+- Mit `Aus Kontakten ausfüllen…` einen Kontakt verknüpfen. Die Karte bietet dann `In Kontakten öffnen` und `Aus dem Kontakt ergänzen`.
+
+`Löschen` entfernt eine Person, mit `Rückgängig` für ein paar Sekunden.
+
+## Im Stammbaum bewegen
+- Die Schaltflächen oben wechseln zwischen `Familie`, `Vorfahren` und `Nachkommen`. `Generationen…` im Menü `Mehr` legt fest, wie viele Generationen nach oben und unten gezeigt werden.
+- Ziehe zum Verschieben, ziehe mit zwei Fingern auseinander oder scrolle zum Zoomen, oder nutze die Zoom-Schaltflächen. `An Bildschirm anpassen` zeigt die ganze Ansicht.
+- `Personen` listet alle im Stammbaum auf, mit `Suchen…`.
+- Kommt jemand zweimal vor (zum Beispiel Cousin und Cousine, die geheiratet haben), ist die Kopie gestrichelt: `Wird in dieser Ansicht auch anderswo gezeigt`.
+
+## Stammbäume
+Tippe oben auf den Namen des Stammbaums, um zu wechseln, mit `Neuer Stammbaum` einen neuen anzulegen oder einen umzubenennen oder zu löschen.
+
+## Synchronisierung und Sicherung
+Deine Stammbäume, Personen, Beziehungen und Fotos werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. Der geöffnete Stammbaum, die Person in der Mitte, die Ansicht und die Export-Einstellungen bleiben auf jedem Gerät.
+
+Im Menü `Mehr`:
+- `Bild exportieren (SVG, PNG, Druck)…` exportiert `Diese Ansicht` oder die `Ganze Familie`, in hellen oder dunklen Farben, mit oder ohne Daten und Fotos. `Angaben zu Lebenden ausblenden` lässt Daten und Fotos lebender Personen weg. Speichere als `SVG`, `PNG`, `Drucken` oder `In Dateien speichern` (in den Ordner `Family Tree` in [Dateien](app:files)).
+- `Diesen Stammbaum sichern (JSON)` oder `Alle Stammbäume sichern (JSON)` und `JSON importieren…`. Ein Import wird mit deinen Daten zusammengeführt.
+- `orOS-Datei (.orostree)` speichert diesen Stammbaum als eine offene Datei, die nach ihm benannt ist: seine Personen, Familien, Daten, Orte, Notizen und Fotos. Es ist eine ZIP-Datei: Entpackst du sie, findest du `content.json` (den Stammbaum), `media` (die Fotos), `preview/tree.ged` (derselbe Stammbaum als GEDCOM, für andere Genealogie-Programme) und `preview/thumbnail.png` (ein Bild des Diagramms). `GEDCOM, Gramps oder .orostree importieren…` und `JSON importieren…` öffnen sie nach einer Vorschau wieder als neuen Stammbaum, ebenso das Öffnen der Datei mit orOS aus deinem System (`Öffnen mit…`); deine Stammbäume werden dabei nie verändert. `Entpackter orOS-Ordner…` holt eine entpackte .orostree zurück, auch wenn du darin eine Datei geändert hast, etwa ein ausgetauschtes Foto.
+- `GEDCOM exportieren…` speichert diesen Stammbaum als .ged-Datei (GEDCOM 5.5.1) für andere Genealogie-Programme, mit `Herunterladen` oder `In Dateien speichern`, und kann die Angaben zu Lebenden ausblenden. `GEDCOM, Gramps oder .orostree importieren…` holt eine .ged-Datei (bis 15 MB) nach einer Vorschau als neuen Stammbaum herein, und du kannst das rückgängig machen.
+
+## Aus Gramps importieren
+`GEDCOM, Gramps oder .orostree importieren…` liest auch einen Gramps-Stammbaum. Öffne in Gramps den Stammbaum, wähle Stammbäume, dann Exportieren…, und wähle „Gramps XML“ (eine `.gramps`-Datei); ein unkomprimierter `.xml`-Export geht auch. Wähle die Datei hier aus (bis 15 MB) und prüfe die Vorschau.
+
+- Übernommen werden Personen (Namen, Geschlecht, Geburt, Tod, Orte und Notizen), Paare (verheiratet, Partner, geschieden, mit ihren Daten) und Kinder (leiblich, adoptiert, Stief, Pflege). Quellen, Medien, andere Ereignisse und Familiennotizen bleiben weg.
+- Der erste Import legt einen neuen Stammbaum an, der nach der Datei benannt ist. Importierst du später einen neueren Export desselben Gramps-Stammbaums, kommt er in denselben Stammbaum und fügt nur die Personen und Familien hinzu, die du noch nicht hast; die vorhandenen bleiben, wie du sie gelassen hast.
+- Direkt nach dem Import macht `Rückgängig` alles wieder rückgängig.
+
+## Tastenkürzel
+- [[+]] und [[-]] zoomen, [[0]] passt den Stammbaum an den Bildschirm an.
+- Pfeiltasten verschieben.
+- [[Esc]] schließt die Karte der Person.
+
+## Tipps
+- Verknüpfungen mit Kontakte lesen nur aus Kontakte; Stammbaum ändert deine Kontakte nie.
+- Die Karte eines verknüpften Kontakts in [Kontakte](app:contacts) hat eine Schaltfläche `Stammbaum`, die dich direkt zu dieser Person zurückbringt.
+- Jedes Jahr am Tag eines genauen Todesdatums zeigt [Kalender](app:calendar) eine Zeile unter `Todestage`, etwa „Maria · 10 Jahre seit dem Tod“. Tippe darauf, um die Person hier zu öffnen.
+- Eine Verknüpfung, durch die jemand sein eigener Vorfahre würde, wird abgelehnt.
+
+## Grenzen
+- Alle Fotos zusammen teilen sich 1 MB.

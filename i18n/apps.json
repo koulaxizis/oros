@@ -45,6 +45,13 @@
    ]
   },
   {
+   "app": "bookmarks",
+   "files": [
+    "bookmarks/bookmarks.js",
+    "bookmarks/platforms.js"
+   ]
+  },
+  {
    "app": "breakout",
    "files": [
     "breakout/breakout.js"
@@ -175,6 +182,15 @@
    ]
   },
   {
+   "app": "diary",
+   "files": [
+    "diary/core.js",
+    "diary/diary.js",
+    "diary/journal.js",
+    "diary/package.js"
+   ]
+  },
+  {
    "app": "dice",
    "files": [
     "dice/dice.js"
@@ -184,6 +200,15 @@
    "app": "dots",
    "files": [
     "dots/dots.js"
+   ]
+  },
+  {
+   "app": "familytree",
+   "files": [
+    "familytree/familytree.js",
+    "familytree/ft-core.js",
+    "familytree/search.js",
+    "familytree/today.js"
    ]
   },
   {
@@ -326,6 +351,14 @@
     "layout/layout.js",
     "layout/pdfin.js",
     "layout/search.js"
+   ]
+  },
+  {
+   "app": "library",
+   "files": [
+    "library/core.js",
+    "library/search.js",
+    "library/strings.js"
    ]
   },
   {
@@ -494,6 +527,12 @@
    ]
   },
   {
+   "app": "petworld",
+   "files": [
+    "petworld/petworld.js"
+   ]
+  },
+  {
    "app": "photolab",
    "files": [
     "photolab/strings.js"
@@ -545,6 +584,21 @@
    ]
   },
   {
+   "app": "qr",
+   "files": [
+    "qr/qr.js"
+   ]
+  },
+  {
+   "app": "quote",
+   "files": [
+    "quote/accept.js",
+    "quote/package.js",
+    "quote/quote.js",
+    "quote/search.js"
+   ]
+  },
+  {
    "app": "radio",
    "files": [
     "radio/radio.js",
@@ -571,10 +625,31 @@
    ]
   },
   {
+   "app": "scanpdf",
+   "files": [
+    "scanpdf/scanpdf.js"
+   ]
+  },
+  {
+   "app": "scores",
+   "files": [
+    "scores/package.js",
+    "scores/scores.js"
+   ]
+  },
+  {
    "app": "settings",
    "files": [
     "settings/core.js",
     "settings/search.js"
+   ]
+  },
+  {
+   "app": "share",
+   "files": [
+    "share/kinds.js",
+    "share/send.js",
+    "share/view.js"
    ]
   },
   {
@@ -605,6 +680,14 @@
    "app": "simon",
    "files": [
     "simon/simon.js"
+   ]
+  },
+  {
+   "app": "sky",
+   "files": [
+    "sky/core.js",
+    "sky/sky.js",
+    "sky/stars.js"
    ]
   },
   {
@@ -665,6 +748,15 @@
     "stock/shop.js",
     "stock/stock.js",
     "stock/today.js"
+   ]
+  },
+  {
+   "app": "storage",
+   "files": [
+    "storage/core.js",
+    "storage/package.js",
+    "storage/search.js",
+    "storage/storage.js"
    ]
   },
   {
@@ -770,6 +862,15 @@
    "files": [
     "water/core.js",
     "water/water.js"
+   ]
+  },
+  {
+   "app": "weather",
+   "files": [
+    "weather/core.js",
+    "weather/rainmap.js",
+    "weather/today.js",
+    "weather/weather.js"
    ]
   },
   {

@@ -159,12 +159,17 @@
     var f = /^[=+\-@\t\r]/.test(s);
     return f || /[",\r\n]/.test(s) ? '"' + (f ? "'" : "") + s.replace(/"/g, '""') + '"' : s;
   }
+  // the title of diary.md (recordpkg asks for "en" or "el")
+  var PSTR = {
+    en: { "rem.title": "One-Sentence Diary" },
+    el: { "rem.title": "Ημερολόγιο μιας πρότασης" }
+  };
   function previews(state, lang) {
     var el = lang === "el", days = isObj(state.days) ? state.days : {}, long = isObj(state.long) ? state.long : {};
     var keys = {};
     Object.keys(days).forEach(function (k) { keys[k] = 1; });
     Object.keys(long).forEach(function (k) { keys[k] = 1; });
-    var md = ["# " + (el ? "Ημερολόγιο μιας πρότασης" : "One-Sentence Diary"), ""];
+    var md = ["# " + PSTR[el ? "el" : "en"]["rem.title"], ""];
     var csv = ["date,text,emoji"];
     Object.keys(keys).sort(cmpStr).forEach(function (k) {
       var d = days[k], L = long[k] || {};

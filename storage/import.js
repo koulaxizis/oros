@@ -55,8 +55,9 @@
   var ACCEPT = ".csv,.tsv,.txt,text/csv,text/plain";
   var SRC_NAME = { homebox: "Homebox", sortly: "Sortly" };
   var LEVEL_ORDER = ["space", "room", "furniture", "position"];
-  var GENERAL = { en: "General", el: "Γενικά" };
-  var IMPORTED = { en: "Imported", el: "Εισαγωγή" };
+  // bilingual seed names, from core.js's texts
+  var GENERAL = core().seedPair("seed.general");
+  var IMPORTED = core().seedPair("seed.imported");
 
   function str(v) { return v == null ? "" : String(v); }
   function low(v) { return str(v).trim().toLowerCase(); }
@@ -72,15 +73,15 @@
 
   // Generic column guesses, best name first.
   var GUESS = {
-    name: ["name", "item", "item name", "title", "object", "thing", "product", "όνομα", "αντικείμενο", "είδος", "περιγραφή είδους"],
-    loc: ["location", "location path", "path", "place", "where", "folder", "τοποθεσία", "θέση", "χώρος", "φάκελος"],
-    room: ["room", "δωμάτιο"],
-    furn: ["furniture", "shelf", "cabinet", "cupboard", "έπιπλο", "ράφι", "ντουλάπι"],
-    box: ["box", "container", "bin", "drawer", "position", "κουτί", "συρτάρι", "κιβώτιο"],
-    qty: ["quantity", "qty", "count", "amount", "pieces", "pcs", "ποσότητα", "τεμάχια", "πλήθος"],
-    note: ["notes", "note", "comments", "comment", "description", "details", "σημειώσεις", "σημείωση", "περιγραφή", "σχόλια"],
-    tags: ["tags", "labels", "tag", "label", "category", "ετικέτες", "κατηγορία"],
-    val: ["value", "price", "cost", "purchase price", "αξία", "τιμή", "κόστος"]
+    name: ["name", "item", "item name", "title", "object", "thing", "product", "όνομα", "αντικείμενο", "είδος", "περιγραφή είδους", "artikel", "gegenstand", "bezeichnung"],
+    loc: ["location", "location path", "path", "place", "where", "folder", "τοποθεσία", "θέση", "χώρος", "φάκελος", "ort", "standort", "pfad", "ordner"],
+    room: ["room", "δωμάτιο", "raum", "zimmer"],
+    furn: ["furniture", "shelf", "cabinet", "cupboard", "έπιπλο", "ράφι", "ντουλάπι", "möbel", "regal", "schrank"],
+    box: ["box", "container", "bin", "drawer", "position", "κουτί", "συρτάρι", "κιβώτιο", "kiste", "schublade", "behälter"],
+    qty: ["quantity", "qty", "count", "amount", "pieces", "pcs", "ποσότητα", "τεμάχια", "πλήθος", "menge", "anzahl", "stück"],
+    note: ["notes", "note", "comments", "comment", "description", "details", "σημειώσεις", "σημείωση", "περιγραφή", "σχόλια", "notizen", "notiz", "beschreibung", "kommentar"],
+    tags: ["tags", "labels", "tag", "label", "category", "ετικέτες", "κατηγορία", "schlagwörter", "kategorie"],
+    val: ["value", "price", "cost", "purchase price", "αξία", "τιμή", "κόστος", "wert", "preis", "kosten"]
   };
 
   // ---------- small helpers ----------

@@ -288,7 +288,7 @@
   }
   function escHtml(s) {
     return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+      .replace(/>/g, "&gt;").replace(/\x22/g, "&quot;");
   }
   function stripTags(s) { return String(s || "").replace(/<[^>]*>/g, ""); }
   function oneLine(s) { return String(s || "").replace(/\s+/g, " ").trim(); }

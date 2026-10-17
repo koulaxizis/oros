@@ -41,7 +41,9 @@
   var VIEWS = ["hourglass", "ancestors", "descendants"];
 
   // ---------- 1. Constants, i18n, helpers ----------
+  // orosI18n (../i18n.js): the full language code, a pack language included.
   function appLang() {
+    if (window.orosI18n) return window.orosI18n.lang();
     try {
       var l = localStorage.getItem("oros-lang") ||
               (window.parent && window.parent.orosLang) || "en";
@@ -210,6 +212,8 @@
       "toast.nothingNew": "Δεν υπάρχει κάτι να συμπληρωθεί: τα πεδία έχουν ήδη τιμή"
     }
   };
+
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "familytree", LANG);
 
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;
@@ -901,7 +905,7 @@
     function dateRow(ev, withPlace) {
       var wrap = el("div", "date-row");
       var q = sel(FT.QUALS.map(function (k) { return [k, t("q." + k)]; }), ev ? ev.q : "");
-      var d = inp(ev && ev.d ? FT.fmtD(ev.d) : "", 20, t("ed.dateHint"));
+      var d = inp(ev && ev.d ? FT.fmtDate({ d: ev.d }, LANG) : "", 20, t("ed.dateHint"));
       d.inputMode = "numeric";
       wrap.appendChild(field(t("ed.date"), d));
       wrap.appendChild(field(" ", q));
@@ -991,7 +995,7 @@
         if (!family.value.trim()) family.value = FT.line(c.family, FT.NAME_LEN);
         if (!birth.d.value.trim()) {
           var pl = FT.planFromContacts({ contacts: [c], deleted: [] }, c.id);
-          if (pl[0] && pl[0].birth) birth.d.value = FT.fmtD(pl[0].birth);
+          if (pl[0] && pl[0].birth) birth.d.value = FT.fmtDate({ d: pl[0].birth }, LANG);
         }
         drawContact();
         drawPhoto();
@@ -1411,7 +1415,7 @@
       if (x.cid === start.id) cb.disabled = true;
       boxes.push(cb);
       lab.appendChild(cb);
-      lab.appendChild(el("span", "", (x.name || t("unnamed")) + (x.birth ? " · " + FT.fmtD(x.birth) : "")));
+      lab.appendChild(el("span", "", (x.name || t("unnamed")) + (x.birth ? " · " + FT.fmtDate({ d: x.birth }, LANG) : "")));
       li.appendChild(lab);
       ul.appendChild(li);
     });
@@ -1529,7 +1533,7 @@
     showToast(t("toast.exported"));
   }
   function fileBase(name) {
-    var s = String(name || "family-tree").replace(/[\\\/:*?"<>|\u0000-\u001f]+/g, "-").replace(/\s+/g, " ").trim();
+    var s = String(name || "family-tree").replace(/[\\\/:*?\x22<>|\u0000-\u001f]+/g, "-").replace(/\s+/g, " ").trim();
     return (s || "family-tree").slice(0, 60);
   }
   function stampDate() {

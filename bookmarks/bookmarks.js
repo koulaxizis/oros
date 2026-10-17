@@ -57,7 +57,7 @@ function uid() {
 function esc(s) {
   return String(s == null ? "" : s)
     .replace(/&/g, "&amp;").replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    .replace(/>/g, "&gt;").replace(/\x22/g, "&quot;");
 }
 
 /* Canonical JSON string for deterministic tie-breaks. */
@@ -188,6 +188,7 @@ const STR = {
     "imp.go": "Import",
     "imp.toobig": "This file is too big to import (over 60 MB).",
     "imp.lz4": "Firefox's automatic .jsonlz4 backups are compressed: in Firefox use Library › Import and Backup › Backup… to save a .json file.",
+    "imp.f.archive": "Archive",
     "imp.f.fftoolbar": "Bookmarks Toolbar",
     "imp.f.ffother": "Other Bookmarks",
     "imp.f.ffmobile": "Mobile Bookmarks",
@@ -392,6 +393,7 @@ const STR = {
     "imp.go": "Εισαγωγή",
     "imp.toobig": "Το αρχείο είναι πολύ μεγάλο για εισαγωγή (πάνω από 60 MB).",
     "imp.lz4": "Τα αυτόματα αντίγραφα .jsonlz4 του Firefox είναι συμπιεσμένα: στο Firefox, Βιβλιοθήκη › Εισαγωγή και αντίγραφα ασφαλείας › Αντίγραφο ασφαλείας… για να αποθηκεύσεις αρχείο .json.",
+    "imp.f.archive": "Αρχείο",
     "imp.f.fftoolbar": "Γραμμή εργαλείων σελιδοδεικτών",
     "imp.f.ffother": "Άλλοι σελιδοδείκτες",
     "imp.f.ffmobile": "Σελιδοδείκτες κινητού",
@@ -520,10 +522,14 @@ const STR = {
 
 let LANG = "en";
 (function detectLang() {
+  // orosI18n (../i18n.js): the full language code, a pack language included.
+  if (window.orosI18n) { LANG = window.orosI18n.lang(); return; }
   try { LANG = window.parent.orosLang || "en"; } catch (e) { /* standalone */ }
   if (LANG !== "el") LANG =
     (localStorage.getItem("oros-lang") === "el") ? "el" : "en";
 })();
+if (window.orosI18n) window.orosI18n.table(STR, "bookmarks", LANG);
+const LOC = window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB");
 
 function t(key, vars) {
   let s = (STR[LANG] && STR[LANG][key]) != null ? STR[LANG][key]
@@ -2936,7 +2942,7 @@ function deleteFolderNow() {
    the created date come along; links already here are skipped. */
 function importNames() {
   return {
-    pocket: "Pocket", archive: LANG === "el" ? "Αρχείο" : "Archive",
+    pocket: "Pocket", archive: t("imp.f.archive"),
     "ff.toolbar": t("imp.f.fftoolbar"), "ff.other": t("imp.f.ffother"), "ff.mobile": t("imp.f.ffmobile"),
     "cr.bar": t("imp.f.crbar"), "cr.mobile": t("imp.f.crmobile")
   };
@@ -2987,7 +2993,7 @@ function importPlan(res) {
 }
 
 function importDate(ms) {
-  return new Date(ms).toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB",
+  return new Date(ms).toLocaleDateString(LOC,
     { year: "numeric", month: "short", day: "numeric" });
 }
 
@@ -3247,7 +3253,7 @@ async function importFile(file) {
    /internal/Bookmarks/Archive are not in the file for now. */
 const RP = window.OrosRecordPkg || null, BPK = window.OrosBookmarksPackage || null;
 const recFile = RP && BPK && window.OrosBundle ? RP.ui(BPK.DESC, {
-  lang: () => LANG,
+  lang: () => LANG === "el" ? "el" : "en",
   get: () => canonState(state),
   title: () => t("app.name"),
   set: (next, info) => {
@@ -3267,7 +3273,7 @@ const recFile = RP && BPK && window.OrosBundle ? RP.ui(BPK.DESC, {
     /* parents first: platformUndo empties the inner folders first */
     back.folders.sort((a, b) => K.pathIds(state.folders, a).length - K.pathIds(state.folders, b).length);
     platformUndo(back);
-    showToast(RP.str(LANG, "undone"));
+    showToast(RP.str(LANG === "el" ? "el" : "en", "undone"));
   },
   /* a browser's or app's file picked here goes to the usual import */
   notBundle: (file) => importFile(file),
@@ -3562,7 +3568,7 @@ function showCopy() {
     if (!rec) { readerMsg(t("arc.missing")); return; }
     const clean = window.orosFeedsSanitize(rec.html, { base: rec.url || it.url, images: arch.img === 1 });
     $("#rd-meta").textContent = hostOf(it.url) + " · " +
-      t("arc.when", { d: new Date(arch.at).toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB",
+      t("arc.when", { d: new Date(arch.at).toLocaleDateString(LOC,
         { day: "numeric", month: "short", year: "numeric" }) });
     const body = $("#rd-body");
     body.textContent = "";

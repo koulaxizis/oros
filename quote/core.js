@@ -115,7 +115,8 @@
   function fmtMoney(n, cur, lang, codeOnly) {
     cur = curOk(cur) ? cur : "EUR";
     n = typeof n === "number" && isFinite(n) ? n : 0;
-    var loc = lang === "el" ? "el-GR" : "en-GB";
+    var I = typeof window !== "undefined" && window.orosI18n;
+    var loc = lang === "el" ? "el-GR" : (I && typeof lang === "string" && lang !== "en" ? I.locale(lang) : "en-GB");
     var k = loc + cur + (codeOnly ? "c" : "");
     if (!(k in NF)) {
       try { NF[k] = new Intl.NumberFormat(loc, { style: "currency", currency: cur, currencyDisplay: codeOnly ? "code" : "symbol" }); }
@@ -123,7 +124,7 @@
     }
     if (NF[k]) return NF[k].format(n);
     var s = Math.abs(n).toFixed(2);
-    if (lang === "el") s = s.replace(".", ",");
+    if (loc !== "en-GB") s = s.replace(".", ",");
     return (n < 0 ? "-" : "") + s + " " + cur;
   }
   // The currency's decimals (2 when Intl doesn't know it).

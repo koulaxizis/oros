@@ -1,0 +1,43 @@
+# Mond & Himmel
+Sieh, was der Himmel heute Nacht von deinem Ort aus zeigt: den Mond, wie er aussieht, wann er auf- und untergeht, wann es dunkel wird und welche Planeten und Sterne du sehen kannst. Alles funktioniert offline.
+
+## Erste Schritte
+Mond & Himmel nutzt den Ort der Karte „Sonne & Mond“ in [Zeit](app:time) oder den der Wetter-App, wenn Zeit keinen hat. Hat keine von beiden einen Ort, tippe oder klicke auf `Ort in Zeit festlegen` oder auf `Geräteort nutzen (nur dieses Mal)`, nur für diesen Besuch.
+- Die Stecknadel-Taste oben öffnet Zeit, wo du den Ort für beide Apps änderst.
+- Mit dem Datumsfeld oben reist du zu einem anderen Tag, zum Beispiel einem Geburtstag. `Heute` bringt dich zurück.
+- Die Mond-Taste schaltet die rote Nachtansicht ein (siehe Tipps).
+
+## Heute Nacht
+- Der Mond, wie du ihn siehst, so geneigt, wie er von deinem Ort aus aussieht, mit dem beleuchteten Anteil, seinem Alter, seiner Entfernung und dem nächsten Voll- und Neumond.
+- `Mond`: Mondaufgang und Monduntergang und wo er gerade steht.
+- `Sonne`: Sonnenaufgang, Sonnenuntergang, ihr höchster Stand und die Tageslänge.
+- `Wann es dunkel wird`: wann die Dämmerung endet, wann der Horizont verblasst und wann der Himmel bis zum Morgen ganz dunkel ist.
+- `Licht für Fotos`: die goldenen und blauen Stunden, morgens und abends.
+- `Planeten heute Nacht`: Merkur bis Saturn, wann du schauen solltest, in welche Richtung, wie hoch und wie hell.
+- `Demnächst`: die nächsten Voll- und Neumonde, Meteorströme und Finsternisse. Tippe oder klicke auf einen Eintrag, um diesen Tag zu sehen.
+
+## Himmelskarte
+Die Kuppel über dir: Norden oben, Osten links, als ob du auf dem Rücken liegst, mit dem Kopf nach Norden. Sie zeigt den Mond, die Planeten, etwa 290 helle Sterne und 34 Sternbilder.
+- Tippe oder klicke auf einen Stern, einen Planeten oder den Mond, um Name, Höhe über dem Horizont und Richtung zu sehen.
+- Bewege den Schieberegler, um zuzusehen, wie sich der Himmel durch die Nacht dreht; `Jetzt` bringt ihn zurück.
+- `Sternbilder` zeigt oder verbirgt die Linien.
+- `Was am Himmel steht (Liste)` nennt die hellen Objekte über dem Horizont als Text.
+
+## Monat
+Jeder Tag zeigt den Mond, wie er an diesem Abend aussieht. Punkte markieren die Tage mit etwas Besonderem: die vier Hauptphasen, Tagundnachtgleichen und Sonnenwenden, Höhepunkte von Meteorströmen und Finsternisse. Unter dem Raster listet `Diesen Monat` sie auf, mit der Angabe, ob eine Finsternis von deinem Ort aus zu sehen ist und ob ein heller Mond einen Meteorstrom stört. Tippe oder klicke auf einen Tag, um ihn in `Heute Nacht` zu öffnen.
+
+## Kalender und Zeit
+- Im [Kalender](app:calendar) kannst du den Feed `Mond & Himmel` einschalten: Mondphasen, Tagundnachtgleichen und Sonnenwenden, Meteorströme und Finsternisse erscheinen an ihren Tagen. Anfangs ist er aus. Tippe oder klicke auf eine Zeile, um diesen Tag hier zu öffnen.
+- Die Karte „Sonne & Mond“ in Zeit hat eine Taste `Mehr in Mond & Himmel`.
+
+## Synchronisierung und Sicherung
+Hier muss nichts synchronisiert werden. Der Ort kommt aus Zeit, das ihn synchronisiert. Der offene Tab, die rote Nachtansicht und die Sternbildlinien bleiben auf diesem Gerät.
+
+## Tipps
+> Schalte draußen in der Nacht die rote Nachtansicht ein: Alles wird gedämpft rot, so bleiben deine Augen an die Dunkelheit gewöhnt.
+- Planeten funkeln nicht wie Sterne; so kannst du sie schnell unterscheiden.
+
+## Grenzen
+- Zeiten folgen der Zeitzone deines Geräts, auch für einen Ort in einer anderen Zone.
+- Zeiten stimmen auf etwa eine Minute und Positionen auf Bruchteile eines Grades; Hügel und Gebäude an deinem Horizont werden nicht berücksichtigt.
+- Finsternisse sind von 2026 bis 2035 aufgeführt.

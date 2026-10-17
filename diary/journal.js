@@ -101,90 +101,125 @@
   }
 
   // ---------- Prompts and templates ----------
-  var PROMPTS = {
-    en: [
-      "What made you smile today?",
-      "What are three things you are grateful for?",
-      "What did you learn today?",
-      "Who made a difference to your day, and how?",
-      "What was the hardest moment today, and how did you handle it?",
-      "What would you like to remember about today in a year?",
-      "What drained your energy today, and what gave it back?",
-      "What is one small thing you did well?",
-      "What surprised you today?",
-      "What are you looking forward to tomorrow?",
-      "What did you notice outside today?",
-      "If today had a title, what would it be?",
-      "What did you do just for yourself?",
-      "What would you do differently if you lived today again?",
-      "What conversation stayed with you?",
-      "What made you feel calm today?",
-      "Which worry turned out smaller than you thought?",
-      "What did your body tell you today?",
-      "What kindness did you give or receive?",
-      "What is on your mind as the day ends?",
-      "What did you eat that you enjoyed?",
-      "Where did you feel most like yourself today?",
-      "What is one thing you want to let go of?",
-      "What made you laugh?",
-      "What are you proud of this week?",
-      "What did you put off, and why?",
-      "Describe one moment of today in detail.",
-      "What would you tell a friend who had your day?",
-      "What song, book or film fits today?",
-      "What do you need more of right now?"
-    ],
-    el: [
-      "Τι σε έκανε να χαμογελάσεις σήμερα;",
-      "Ποια τρία πράγματα σε κάνουν να νιώθεις ευγνωμοσύνη;",
-      "Τι έμαθες σήμερα;",
-      "Ποιος έκανε τη διαφορά στη μέρα σου, και πώς;",
-      "Ποια ήταν η πιο δύσκολη στιγμή σήμερα, και πώς την αντιμετώπισες;",
-      "Τι θα ήθελες να θυμάσαι από τη σημερινή μέρα σε έναν χρόνο;",
-      "Τι σου πήρε ενέργεια σήμερα, και τι σου την έδωσε πίσω;",
-      "Ποιο μικρό πράγμα έκανες καλά;",
-      "Τι σε ξάφνιασε σήμερα;",
-      "Τι περιμένεις με χαρά για αύριο;",
-      "Τι πρόσεξες έξω σήμερα;",
-      "Αν η σημερινή μέρα είχε τίτλο, ποιος θα ήταν;",
-      "Τι έκανες μόνο για τον εαυτό σου;",
-      "Τι θα έκανες αλλιώς αν ζούσες ξανά τη σημερινή μέρα;",
-      "Ποια κουβέντα σού έμεινε;",
-      "Τι σε ηρέμησε σήμερα;",
-      "Ποια ανησυχία βγήκε μικρότερη απ' όσο νόμιζες;",
-      "Τι σου είπε το σώμα σου σήμερα;",
-      "Ποια καλοσύνη έδωσες ή δέχτηκες;",
-      "Τι έχεις στο μυαλό σου καθώς τελειώνει η μέρα;",
-      "Τι έφαγες και το απόλαυσες;",
-      "Πού ένιωσες περισσότερο ο εαυτός σου σήμερα;",
-      "Τι θέλεις να αφήσεις πίσω σου;",
-      "Τι σε έκανε να γελάσεις;",
-      "Για τι είσαι περήφανος ή περήφανη αυτή την εβδομάδα;",
-      "Τι ανέβαλες, και γιατί;",
-      "Περίγραψε μια στιγμή της μέρας με λεπτομέρειες.",
-      "Τι θα έλεγες σε έναν φίλο που είχε τη δική σου μέρα;",
-      "Ποιο τραγούδι, βιβλίο ή ταινία ταιριάζει στη σημερινή μέρα;",
-      "Τι χρειάζεσαι περισσότερο αυτή τη στιγμή;"
-    ]
-  };
-  var TEMPLATES = {
-    gratitude: {
-      en: { name: "Gratitude", text: "## Grateful for\n\n1. \n2. \n3. \n\n## One good moment\n\n" },
-      el: { name: "Ευγνωμοσύνη", text: "## Νιώθω ευγνωμοσύνη για\n\n1. \n2. \n3. \n\n## Μια καλή στιγμή\n\n" }
+  // ---------- Texts: prompts, templates, weather words ----------
+  // Pack "diary" (../i18n.js) adds other languages; English otherwise.
+  var STR = {
+    en: {
+      "prompt.01": "What made you smile today?",
+      "prompt.02": "What are three things you are grateful for?",
+      "prompt.03": "What did you learn today?",
+      "prompt.04": "Who made a difference to your day, and how?",
+      "prompt.05": "What was the hardest moment today, and how did you handle it?",
+      "prompt.06": "What would you like to remember about today in a year?",
+      "prompt.07": "What drained your energy today, and what gave it back?",
+      "prompt.08": "What is one small thing you did well?",
+      "prompt.09": "What surprised you today?",
+      "prompt.10": "What are you looking forward to tomorrow?",
+      "prompt.11": "What did you notice outside today?",
+      "prompt.12": "If today had a title, what would it be?",
+      "prompt.13": "What did you do just for yourself?",
+      "prompt.14": "What would you do differently if you lived today again?",
+      "prompt.15": "What conversation stayed with you?",
+      "prompt.16": "What made you feel calm today?",
+      "prompt.17": "Which worry turned out smaller than you thought?",
+      "prompt.18": "What did your body tell you today?",
+      "prompt.19": "What kindness did you give or receive?",
+      "prompt.20": "What is on your mind as the day ends?",
+      "prompt.21": "What did you eat that you enjoyed?",
+      "prompt.22": "Where did you feel most like yourself today?",
+      "prompt.23": "What is one thing you want to let go of?",
+      "prompt.24": "What made you laugh?",
+      "prompt.25": "What are you proud of this week?",
+      "prompt.26": "What did you put off, and why?",
+      "prompt.27": "Describe one moment of today in detail.",
+      "prompt.28": "What would you tell a friend who had your day?",
+      "prompt.29": "What song, book or film fits today?",
+      "prompt.30": "What do you need more of right now?",
+      "tpl.gratitude.name": "Gratitude",
+      "tpl.gratitude.text": "## Grateful for\n\n1. \n2. \n3. \n\n## One good moment\n\n",
+      "tpl.review.name": "Daily review",
+      "tpl.review.text": "## What went well\n\n- \n\n## What was hard\n\n- \n\n## What I learned\n\n- \n\n## Tomorrow\n\n- \n",
+      "tpl.morning.name": "Morning pages",
+      "tpl.morning.text": "## Today I want to\n\n- \n\n## I am looking forward to\n\n- \n\n## A kind word to myself\n\n",
+      "cond.clear": "Clear sky",
+      "cond.partly": "Partly cloudy",
+      "cond.overcast": "Overcast",
+      "cond.fog": "Fog",
+      "cond.drizzle": "Drizzle",
+      "cond.rain": "Rain",
+      "cond.snow": "Snow",
+      "cond.showers": "Showers",
+      "cond.snowshowers": "Snow showers",
+      "cond.storm": "Thunderstorm",
+      "cond.cloudy": "Cloudy"
     },
-    review: {
-      en: { name: "Daily review", text: "## What went well\n\n- \n\n## What was hard\n\n- \n\n## What I learned\n\n- \n\n## Tomorrow\n\n- \n" },
-      el: { name: "Ανασκόπηση μέρας", text: "## Τι πήγε καλά\n\n- \n\n## Τι ήταν δύσκολο\n\n- \n\n## Τι έμαθα\n\n- \n\n## Αύριο\n\n- \n" }
-    },
-    morning: {
-      en: { name: "Morning pages", text: "## Today I want to\n\n- \n\n## I am looking forward to\n\n- \n\n## A kind word to myself\n\n" },
-      el: { name: "Πρωινές σελίδες", text: "## Σήμερα θέλω να\n\n- \n\n## Περιμένω με χαρά\n\n- \n\n## Μια καλή κουβέντα στον εαυτό μου\n\n" }
+    el: {
+      "prompt.01": "Τι σε έκανε να χαμογελάσεις σήμερα;",
+      "prompt.02": "Ποια τρία πράγματα σε κάνουν να νιώθεις ευγνωμοσύνη;",
+      "prompt.03": "Τι έμαθες σήμερα;",
+      "prompt.04": "Ποιος έκανε τη διαφορά στη μέρα σου, και πώς;",
+      "prompt.05": "Ποια ήταν η πιο δύσκολη στιγμή σήμερα, και πώς την αντιμετώπισες;",
+      "prompt.06": "Τι θα ήθελες να θυμάσαι από τη σημερινή μέρα σε έναν χρόνο;",
+      "prompt.07": "Τι σου πήρε ενέργεια σήμερα, και τι σου την έδωσε πίσω;",
+      "prompt.08": "Ποιο μικρό πράγμα έκανες καλά;",
+      "prompt.09": "Τι σε ξάφνιασε σήμερα;",
+      "prompt.10": "Τι περιμένεις με χαρά για αύριο;",
+      "prompt.11": "Τι πρόσεξες έξω σήμερα;",
+      "prompt.12": "Αν η σημερινή μέρα είχε τίτλο, ποιος θα ήταν;",
+      "prompt.13": "Τι έκανες μόνο για τον εαυτό σου;",
+      "prompt.14": "Τι θα έκανες αλλιώς αν ζούσες ξανά τη σημερινή μέρα;",
+      "prompt.15": "Ποια κουβέντα σού έμεινε;",
+      "prompt.16": "Τι σε ηρέμησε σήμερα;",
+      "prompt.17": "Ποια ανησυχία βγήκε μικρότερη απ' όσο νόμιζες;",
+      "prompt.18": "Τι σου είπε το σώμα σου σήμερα;",
+      "prompt.19": "Ποια καλοσύνη έδωσες ή δέχτηκες;",
+      "prompt.20": "Τι έχεις στο μυαλό σου καθώς τελειώνει η μέρα;",
+      "prompt.21": "Τι έφαγες και το απόλαυσες;",
+      "prompt.22": "Πού ένιωσες περισσότερο ο εαυτός σου σήμερα;",
+      "prompt.23": "Τι θέλεις να αφήσεις πίσω σου;",
+      "prompt.24": "Τι σε έκανε να γελάσεις;",
+      "prompt.25": "Για τι είσαι περήφανος ή περήφανη αυτή την εβδομάδα;",
+      "prompt.26": "Τι ανέβαλες, και γιατί;",
+      "prompt.27": "Περίγραψε μια στιγμή της μέρας με λεπτομέρειες.",
+      "prompt.28": "Τι θα έλεγες σε έναν φίλο που είχε τη δική σου μέρα;",
+      "prompt.29": "Ποιο τραγούδι, βιβλίο ή ταινία ταιριάζει στη σημερινή μέρα;",
+      "prompt.30": "Τι χρειάζεσαι περισσότερο αυτή τη στιγμή;",
+      "tpl.gratitude.name": "Ευγνωμοσύνη",
+      "tpl.gratitude.text": "## Νιώθω ευγνωμοσύνη για\n\n1. \n2. \n3. \n\n## Μια καλή στιγμή\n\n",
+      "tpl.review.name": "Ανασκόπηση μέρας",
+      "tpl.review.text": "## Τι πήγε καλά\n\n- \n\n## Τι ήταν δύσκολο\n\n- \n\n## Τι έμαθα\n\n- \n\n## Αύριο\n\n- \n",
+      "tpl.morning.name": "Πρωινές σελίδες",
+      "tpl.morning.text": "## Σήμερα θέλω να\n\n- \n\n## Περιμένω με χαρά\n\n- \n\n## Μια καλή κουβέντα στον εαυτό μου\n\n",
+      "cond.clear": "Καθαρός ουρανός",
+      "cond.partly": "Λίγες νεφώσεις",
+      "cond.overcast": "Συννεφιά",
+      "cond.fog": "Ομίχλη",
+      "cond.drizzle": "Ψιλή βροχή",
+      "cond.rain": "Βροχή",
+      "cond.snow": "Χιόνι",
+      "cond.showers": "Μπόρες",
+      "cond.snowshowers": "Χιονοπτώσεις",
+      "cond.storm": "Καταιγίδα",
+      "cond.cloudy": "Νεφελώδης"
     }
+  };
+  function strOf(lang) {
+    var L = typeof lang === "string" && lang ? lang : "en";
+    var I = root && root.orosI18n;
+    if (!STR[L] && I && typeof I.table === "function") I.table(STR, "diary", L);
+    return STR[L] || STR.en;
+  }
+  var PROMPT_KEYS = Object.keys(STR.en).filter(function (k) { return k.indexOf("prompt.") === 0; });
+  // the built-in questions per language (EN and EL; others through strOf)
+  var PROMPTS = {
+    en: PROMPT_KEYS.map(function (k) { return STR.en[k]; }),
+    el: PROMPT_KEYS.map(function (k) { return STR.el[k]; })
   };
   var TEMPLATE_IDS = ["gratitude", "review", "morning"];
   function template(id, lang) {
-    var t = TEMPLATES[id];
-    return t ? (t[lang === "el" ? "el" : "en"]) : null;
+    if (TEMPLATE_IDS.indexOf(id) < 0) return null;
+    var S = strOf(lang);
+    return { name: S["tpl." + id + ".name"], text: S["tpl." + id + ".text"] };
   }
   function hashStr(s) {
     var h = 2166136261;
@@ -195,7 +230,8 @@
   // built-in set of the language plus the user's own prompts; `skip`
   // walks to the next ones ("Another question").
   function promptPool(lang, own) {
-    var base = PROMPTS[lang === "el" ? "el" : "en"].map(function (t) { return { t: t }; });
+    var S = strOf(lang);
+    var base = PROMPT_KEYS.map(function (k) { return { t: S[k] }; });
     return base.concat((own || []).map(function (p) { return { t: p.t, own: true, id: p.id }; }));
   }
   function dailyPrompt(ymd, lang, own, skip) {
@@ -238,7 +274,7 @@
     return o;
   }
   function geoUrl(name, lang) {
-    return "https://geocoding-api.open-meteo.com/v1/search?count=1&language=" + (lang === "el" ? "el" : "en") +
+    return "https://geocoding-api.open-meteo.com/v1/search?count=1&language=" + (/^[a-z]{2}$/.test(String(lang)) ? lang : "en") +
       "&name=" + encodeURIComponent(String(name || "").trim());
   }
   function parseGeo(d) {
@@ -248,19 +284,19 @@
   }
   // WMO code → condition (same grouping as the Weather app) and emoji.
   function wxText(code, lang) {
-    var c = Number(code) || 0, en, el;
-    if (c === 0) { en = "Clear sky"; el = "Καθαρός ουρανός"; }
-    else if (c === 1 || c === 2) { en = "Partly cloudy"; el = "Λίγες νεφώσεις"; }
-    else if (c === 3) { en = "Overcast"; el = "Συννεφιά"; }
-    else if (c === 45 || c === 48) { en = "Fog"; el = "Ομίχλη"; }
-    else if (c >= 51 && c <= 57) { en = "Drizzle"; el = "Ψιλή βροχή"; }
-    else if (c >= 58 && c <= 67) { en = "Rain"; el = "Βροχή"; }
-    else if (c >= 71 && c <= 77) { en = "Snow"; el = "Χιόνι"; }
-    else if (c >= 80 && c <= 82) { en = "Showers"; el = "Μπόρες"; }
-    else if (c === 85 || c === 86) { en = "Snow showers"; el = "Χιονοπτώσεις"; }
-    else if (c >= 95) { en = "Thunderstorm"; el = "Καταιγίδα"; }
-    else { en = "Cloudy"; el = "Νεφελώδης"; }
-    return lang === "el" ? el : en;
+    var c = Number(code) || 0, k;
+    if (c === 0) k = "clear";
+    else if (c === 1 || c === 2) k = "partly";
+    else if (c === 3) k = "overcast";
+    else if (c === 45 || c === 48) k = "fog";
+    else if (c >= 51 && c <= 57) k = "drizzle";
+    else if (c >= 58 && c <= 67) k = "rain";
+    else if (c >= 71 && c <= 77) k = "snow";
+    else if (c >= 80 && c <= 82) k = "showers";
+    else if (c === 85 || c === 86) k = "snowshowers";
+    else if (c >= 95) k = "storm";
+    else k = "cloudy";
+    return strOf(lang)["cond." + k];
   }
   function wxEmoji(code) {
     var c = Number(code) || 0;

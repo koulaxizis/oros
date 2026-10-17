@@ -55,7 +55,7 @@
       inBad: "The shared item could not be read.",
       failed: "Something went wrong. Try again.",
       mailPass: "The password comes separately.",
-      exp: "With an expiry", expDays: { 1: "1 day", 7: "7 days", 30: "30 days" },
+      exp: "With an expiry", "exp.1": "1 day", "exp.7": "7 days", "exp.30": "30 days",
       warnExp: "Stored encrypted on the orOS server until it expires; the server cannot read it. You can take it back in My shared links.",
       forced: "Too long for a plain link, so it is stored encrypted with an expiry.",
       full: "The orOS server has no room right now. Try a shorter expiry or try later.",
@@ -63,7 +63,7 @@
       nostore: "Links with an expiry are not available right now.",
       net: "Could not reach the orOS server. Check your connection and try again.",
       mine: "My shared links", none: "No links with an expiry yet.",
-      until: "Until {d}", revoke: "Take back", sure: "Sure? Take back", revoked: "Taken back. The link no longer opens.",
+      outUntil: "Until {d}", revoke: "Take back", sure: "Sure? Take back", revoked: "Taken back. The link no longer opens.",
       revokeFail: "Could not take it back. Check your connection and try again.", locked: "with password",
       preparing: "Preparing photos… {n} of {all}", noPhotos: "None of these pictures could be read.",
       albumWarn: "Photos are made smaller (2048 px at most) and lose their hidden details (place, camera, time) before they leave.",
@@ -85,7 +85,7 @@
       inBad: "Δεν ήταν δυνατό να διαβαστεί αυτό που σου έστειλαν.",
       failed: "Κάτι πήγε στραβά. Δοκίμασε ξανά.",
       mailPass: "Τον κωδικό θα τον πάρεις χωριστά.",
-      exp: "Με λήξη", expDays: { 1: "1 μέρα", 7: "7 μέρες", 30: "30 μέρες" },
+      exp: "Με λήξη", "exp.1": "1 μέρα", "exp.7": "7 μέρες", "exp.30": "30 μέρες",
       warnExp: "Αποθηκεύεται κρυπτογραφημένο στον server του orOS μέχρι να λήξει· ο server δεν μπορεί να το διαβάσει. Μπορείς να το πάρεις πίσω από «Οι σύνδεσμοί μου».",
       forced: "Είναι πολύ μεγάλο για απλό σύνδεσμο, οπότε αποθηκεύεται κρυπτογραφημένο με λήξη.",
       full: "Ο server του orOS δεν έχει χώρο αυτή τη στιγμή. Δοκίμασε μικρότερη λήξη ή αργότερα.",
@@ -93,16 +93,43 @@
       nostore: "Οι σύνδεσμοι με λήξη δεν είναι διαθέσιμοι αυτή τη στιγμή.",
       net: "Δεν ήταν δυνατή η σύνδεση με τον server του orOS. Έλεγξε τη σύνδεσή σου και δοκίμασε ξανά.",
       mine: "Οι σύνδεσμοί μου", none: "Δεν υπάρχουν ακόμη σύνδεσμοι με λήξη.",
-      until: "Έως {d}", revoke: "Ανάκληση", sure: "Σίγουρα; Ανάκληση", revoked: "Ανακλήθηκε. Ο σύνδεσμος δεν ανοίγει πια.",
+      outUntil: "Έως {d}", revoke: "Ανάκληση", sure: "Σίγουρα; Ανάκληση", revoked: "Ανακλήθηκε. Ο σύνδεσμος δεν ανοίγει πια.",
       revokeFail: "Η ανάκληση απέτυχε. Έλεγξε τη σύνδεσή σου και δοκίμασε ξανά.", locked: "με κωδικό",
       preparing: "Ετοιμάζω τις φωτογραφίες… {n} από {all}", noPhotos: "Καμία από αυτές τις εικόνες δεν διαβάστηκε.",
       albumWarn: "Οι φωτογραφίες μικραίνουν (έως 2048 px) και χάνουν τα κρυφά στοιχεία τους (τοποθεσία, κάμερα, ώρα) πριν φύγουν.",
       skipped: "Έμειναν έξω: {n} που δεν διαβάστηκαν.", cut: "Χωράνε μόνο οι πρώτες {n} φωτογραφίες (έως 25 MB ή 200 φωτογραφίες)."
     }
   };
-  function lang() { return window.orosLang === "el" ? "el" : "en"; }
+  // The shell's language (a pack language too: orosI18n, ../i18n.js).
+  // The shell loads only its own pack, so withPack() fetches the
+  // "share" pack (shared with kinds.js and view.js) before a window
+  // opens; until it is here, English.
+  function lang() {
+    var I = window.orosI18n;
+    if (I) { try { return I.lang(); } catch (e) {} }
+    return window.orosLang === "el" ? "el" : "en";
+  }
+  function strs() {
+    var l = lang(), I = window.orosI18n;
+    if (!STR[l] && I) I.table(STR, "share", l);
+    return STR[l] || STR.en;
+  }
+  function withPack(fn) {
+    var l = lang(), I = window.orosI18n;
+    if (!I || l === "en" || l === "el" || typeof I.ensure !== "function") { fn(); return; }
+    var done = false;
+    function go() {
+      if (done) return;
+      done = true;
+      delete STR[l];
+      if (K && typeof K.resetPacks === "function") K.resetPacks();
+      fn();
+    }
+    try { I.ensure(l, "share", go); } catch (e) { go(); }
+    setTimeout(go, 4000);   // offline and not cached: English
+  }
   function T(k, p) {
-    var s = (STR[lang()] || STR.en)[k];
+    var s = strs()[k];
     if (typeof s !== "string") return s;
     Object.keys(p || {}).forEach(function (x) { s = s.split("{" + x + "}").join(String(p[x])); });
     return s;
@@ -249,7 +276,7 @@
              } };
   }
   function fmtDay(ms) {
-    return new Date(ms).toLocaleString(lang() === "el" ? "el-GR" : "en-GB",
+    return new Date(ms).toLocaleString(K.locale ? K.locale(lang()) : (lang() === "el" ? "el-GR" : "en-GB"),
       { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
   }
   function errText(e) {
@@ -272,7 +299,7 @@
     items.forEach(function (it) {
       var li = el("li");
       li.appendChild(el("div", "osh-t", it.t || S.untitled));
-      li.appendChild(el("div", "osh-m", [S[it.k] || it.k, T("until", { d: fmtDay(it.x) })].concat(it.p ? [T("locked")] : []).join(" · ")));
+      li.appendChild(el("div", "osh-m", [S[it.k] || it.k, T("outUntil", { d: fmtDay(it.x) })].concat(it.p ? [T("locked")] : []).join(" · ")));
       var acts = el("div", "osh-acts");
       acts.appendChild(btn(T("copy"), "", function () {
         copy(baseUrl() + "#" + it.c).then(function (ok) { toast(ok ? T("copied") : T("copyFail")); });
@@ -376,7 +403,7 @@
         expLab.appendChild(el("span", "", T("exp")));
         body.appendChild(expLab);
         R.DAYS.forEach(function (n) {
-          var b = btn(T("expDays")[n], "", function () {
+          var b = btn(T("exp." + n), "", function () {
             days = n;
             [].forEach.call(dayRow.children, function (x) { x.setAttribute("aria-pressed", x === b ? "true" : "false"); });
           });
@@ -594,5 +621,9 @@
     window.__orosOpenAt(go.app, go.target);
   }
 
-  window.__orosShareImpl = { open: open, links: links, deliver: deliver };
+  window.__orosShareImpl = {
+    open: function (opts) { withPack(function () { open(opts); }); },
+    links: function () { withPack(links); },
+    deliver: function (sh) { withPack(function () { deliver(sh); }); }
+  };
 })();
