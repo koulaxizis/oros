@@ -2,8 +2,8 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 4157 of 26836 (15%)
-- Help pages: 27 of 144 (18%)
+- Strings: 5994 of 26914 (22%)
+- Help pages: 31 of 144 (21%)
 - Shown in the language list: yes
 
 Apps marked "English for now" do not load language packs yet: their
@@ -32,7 +32,7 @@ text is still written in the code. They switch over wave by wave
 | connect4 | English for now | 0 / 62 |
 | contacts | 100% | 293 / 293 |
 | converter | English for now | 0 / 67 |
-| crm | English for now | 0 / 417 |
+| crm | 100% | 444 / 444 |
 | crossword | English for now | 0 / 170 |
 | cycle | English for now | 0 / 178 |
 | device | English for now | 0 / 123 |
@@ -54,7 +54,7 @@ text is still written in the code. They switch over wave by wave
 | health | English for now | 0 / 595 |
 | help | 100% | 15 / 15 |
 | hexagon | English for now | 0 / 59 |
-| invoices | English for now | 0 / 512 |
+| invoices | 100% | 531 / 531 |
 | jigsaw | English for now | 0 / 85 |
 | kanban | 100% | 272 / 272 |
 | labels | English for now | 0 / 88 |
@@ -116,7 +116,7 @@ text is still written in the code. They switch over wave by wave
 | spot | English for now | 0 / 54 |
 | spreadsheet | 100% | 355 / 355 |
 | stickies | 100% | 124 / 124 |
-| stock | English for now | 0 / 600 |
+| stock | 100% | 614 / 614 |
 | storage | English for now | 0 / 166 |
 | studio | English for now | 0 / 381 |
 | sudoku | English for now | 0 / 139 |
@@ -126,7 +126,7 @@ text is still written in the code. They switch over wave by wave
 | texttools | English for now | 0 / 315 |
 | tictactoe | English for now | 0 / 53 |
 | time | English for now | 0 / 408 |
-| timesheet | English for now | 0 / 230 |
+| timesheet | 100% | 248 / 248 |
 | today | English for now | 0 / 82 |
 | todo | 100% | 208 / 208 |
 | travel | English for now | 0 / 422 |
@@ -170,7 +170,6 @@ These show English until fixed (usually the English text changed).
 - help/chores.txt
 - help/connect4.txt
 - help/converter.txt
-- help/crm.txt
 - help/crossword.txt
 - help/cycle.txt
 - help/device.txt
@@ -190,7 +189,6 @@ These show English until fixed (usually the English text changed).
 - help/hangman.txt
 - help/health.txt
 - help/hexagon.txt
-- help/invoices.txt
 - help/jigsaw.txt
 - help/labels.txt
 - help/layout.txt
@@ -243,7 +241,6 @@ These show English until fixed (usually the English text changed).
 - help/solitaire.txt
 - help/split.txt
 - help/spot.txt
-- help/stock.txt
 - help/storage.txt
 - help/studio.txt
 - help/sudoku.txt
@@ -253,7 +250,6 @@ These show English until fixed (usually the English text changed).
 - help/texttools.txt
 - help/tictactoe.txt
 - help/time.txt
-- help/timesheet.txt
 - help/today.txt
 - help/travel.txt
 - help/trees.txt
