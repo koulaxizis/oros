@@ -50,7 +50,7 @@
       return l === "el" ? "el" : "en";
     } catch (e) { return "en"; }
   }
-  var LANG = appLang();
+  var LANG = window.orosI18n ? window.orosI18n.lang() : appLang();
 
   var STRINGS = {
     en: {
@@ -96,7 +96,8 @@
       "prec.many": "Wikidata gives more than one date of death ({a} – {b}).",
       "noDeath": "Wikidata lists no date of death.",
       "wiki": "Wikipedia", "wikidata": "Wikidata",
-      "toast.clear": "Recent searches cleared"
+      "toast.clear": "Recent searches cleared",
+      "date.jan1": "1 Jan {y}", "date.dec31": "31 Dec {y}", "year.bc": "{y} BC"
     },
     el: {
       "title": "Υπολογιστής Κοινού Κτήματος", "subtitle": "Πνευματικά δικαιώματα ανά χώρα",
@@ -141,9 +142,12 @@
       "prec.many": "Η Wikidata δίνει περισσότερες από μία ημερομηνίες θανάτου ({a} – {b}).",
       "noDeath": "Η Wikidata δεν έχει ημερομηνία θανάτου.",
       "wiki": "Wikipedia", "wikidata": "Wikidata",
-      "toast.clear": "Τα πρόσφατα καθαρίστηκαν"
+      "toast.clear": "Τα πρόσφατα καθαρίστηκαν",
+      "date.jan1": "01/01/{y}", "date.dec31": "31/12/{y}", "year.bc": "{y} π.Χ."
     }
   };
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "pubdomain", LANG);
+  if (PD && PD.useLang) PD.useLang(LANG);
 
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;
@@ -170,10 +174,12 @@
   function pad(n) { return (n < 10 ? "0" : "") + n; }
   function todayDate() { var d = new Date(); return { y: d.getFullYear(), m: d.getMonth() + 1, d: d.getDate() }; }
   var MONTHS_EN = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  function fmtJan1(y) { return LANG === "el" ? "01/01/" + y : "1 Jan " + y; }
-  function fmtDec31(y) { return LANG === "el" ? "31/12/" + y : "31 Dec " + y; }
-  function yearText(y) { return y < 0 ? (-y) + (LANG === "el" ? " π.Χ." : " BC") : String(y); }
-  function cmpName(a, b) { return a.localeCompare(b, LANG === "el" ? "el" : "en"); }
+  function fmtJan1(y) { return t("date.jan1", { y: y }); }
+  function fmtDec31(y) { return t("date.dec31", { y: y }); }
+  function yearText(y) { return y < 0 ? t("year.bc", { y: -y }) : String(y); }
+  function cmpName(a, b) {
+    return a.localeCompare(b, window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el" : "en"));
+  }
   function isYear(v) { return typeof v === "number" && isFinite(v) && Math.floor(v) === v && v > -5000 && v < 10000; }
 
   // BOOT MARKER
@@ -233,11 +239,19 @@
     return apiGet("item", {
       action: "wbgetentities", ids: ids.join("|"),
       props: "labels|descriptions|claims|sitelinks",
-      languages: "el|en", sitefilter: "elwiki|enwiki"
+      languages: wikiLangs().join("|"),
+      sitefilter: wikiLangs().map(function (l) { return l + "wiki"; }).join("|")
     }).then(function (j) { return (j && j.entities && typeof j.entities === "object") ? j.entities : {}; });
   }
 
   // ---------- 3. Wikidata: parsing (pure) ----------
+  // Wikidata labels and Wikipedia links: the app's language first,
+  // then English and Greek.
+  function wikiLangs() {
+    if (LANG === "el") return ["el", "en"];
+    if (LANG === "en" || !/^[a-z]{2,3}$/.test(LANG)) return ["en", "el"];
+    return [LANG, "en", "el"];
+  }
   var QID = /^Q[1-9]\d{0,11}$/;
   var HUMAN = "Q5";
   var CREATOR_PROPS = ["P50", "P170", "P86", "P57", "P58", "P87", "P676"];
@@ -256,7 +270,7 @@
 
   function langText(map) {
     if (!map || typeof map !== "object") return "";
-    var order = LANG === "el" ? ["el", "en"] : ["en", "el"];
+    var order = wikiLangs();
     for (var i = 0; i < order.length; i++) {
       var v = map[order[i]];
       if (v && typeof v.value === "string" && v.value) return v.value;
@@ -334,7 +348,7 @@
   function wikiLink(ent) {
     var sl = ent && ent.sitelinks;
     if (!sl || typeof sl !== "object") return null;
-    var order = LANG === "el" ? ["el", "en"] : ["en", "el"];
+    var order = wikiLangs();
     for (var i = 0; i < order.length; i++) {
       var s = sl[order[i] + "wiki"];
       if (s && typeof s.title === "string" && s.title && s.title.length < 300) {

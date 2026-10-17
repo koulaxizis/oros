@@ -46,7 +46,8 @@
       return l === "el" ? "el" : "en";
     } catch (e) { return "en"; }
   }
-  var LANG = appLang();
+  // orosI18n (../i18n.js): the full language code, a pack language included.
+  var LANG = window.orosI18n ? window.orosI18n.lang() : appLang();
 
   var STRINGS = {
     en: {
@@ -124,6 +125,9 @@
       "toast.noAudio": "Αυτός ο browser δεν παίζει ήχο"
     }
   };
+
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "ringtones", LANG);
+  var SOLF = C.solfegeOf(LANG);      // solfège names in the UI language
 
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;
@@ -351,7 +355,7 @@
   function noteLabel(note) {
     var len = t("lenname." + note.d) + (note.dot ? " " + t("dotted") : "");
     if (C.isRest(note)) return t("rest") + ", " + len;
-    var nm = (solfege() ? C.SOLFEGE : C.LETTERS)[note.n].replace("#", "");
+    var nm = (solfege() ? SOLF : C.LETTERS)[note.n].replace("#", "");
     if (!solfege()) nm = nm.toUpperCase();
     var sharp = C.LETTERS[note.n].indexOf("#") > 0 ? " " + t("sharp") : "";
     return nm + sharp + " " + note.o + ", " + len;
@@ -359,7 +363,8 @@
 
   function secs(notes, bpm) {
     var s = (C.totalMs(notes, bpm) / 1000).toFixed(1);
-    return LANG === "el" ? s.replace(".", ",") : s;
+    var loc = window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB");
+    return (+s).toLocaleString(loc, { minimumFractionDigits: 1, maximumFractionDigits: 1, useGrouping: false });
   }
   function renderHead() {
     $("title-view").textContent = song.name || t("app.name");
@@ -451,7 +456,7 @@
       var b = el("button", "tok" + (i === cursor - 1 ? " sel" : "") + (i === playingIdx ? " on" : ""));
       b.type = "button";
       b.setAttribute("role", "listitem");
-      var txt = nt.d + (C.isRest(nt) ? "–" : C.noteName(nt, solfege()).toLowerCase()) + (nt.dot ? "." : "");
+      var txt = nt.d + (C.isRest(nt) ? "–" : (solfege() ? SOLF[nt.n] + nt.o : C.noteName(nt, false)).toLowerCase()) + (nt.dot ? "." : "");
       b.textContent = txt;
       b.setAttribute("aria-label", (i + 1) + ". " + noteLabel(nt));
       if (i === cursor - 1) b.setAttribute("aria-current", "true");
@@ -521,7 +526,7 @@
       b.type = "button";
       var o = prefs.oct + (s === 12 ? 1 : 0), n = s % 12;
       if (o > 7) { b.disabled = true; }
-      var lbl = solfege() ? C.SOLFEGE[n] : C.LETTERS[n].toUpperCase();
+      var lbl = solfege() ? SOLF[n] : C.LETTERS[n].toUpperCase();
       b.appendChild(el("span", "pl", lbl));
       setLabel(b, lbl + " " + o);
       b.addEventListener("click", function () { insertNote(C.mkNote(n, Math.min(o, 7), prefs.len)); });
@@ -532,7 +537,7 @@
       var b = el("button", "pk b");
       b.type = "button";
       var pos = { 1: 0, 3: 1, 6: 3, 8: 4, 10: 5 }[s];
-      var lbl = (solfege() ? C.SOLFEGE[s] : C.LETTERS[s].toUpperCase());
+      var lbl = (solfege() ? SOLF[s] : C.LETTERS[s].toUpperCase());
       setLabel(b, lbl + " " + prefs.oct);
       b.addEventListener("click", function () { insertNote(C.mkNote(s, prefs.oct, prefs.len)); });
       b.style.gridColumn = (pos * 2 + 2) + " / span 2";
@@ -785,10 +790,10 @@
       var li = el("li", "row");
       var open = el("button", "row-open");
       open.type = "button";
-      open.appendChild(el("span", "row-title", p[LANG] || p.en));
-      setLabel(open, t("item.open") + ": " + (p[LANG] || p.en));
+      open.appendChild(el("span", "row-title", C.presetName(p, LANG)));
+      setLabel(open, t("item.open") + ": " + (C.presetName(p, LANG)));
       open.addEventListener("click", function () {
-        startFrom(p[LANG] || p.en, p.bpm, C.parseNotes(p.notes), "square");
+        startFrom(C.presetName(p, LANG), p.bpm, C.parseNotes(p.notes), "square");
         playNotes(song.notes, song.bpm, song.voice, 0, null);
       });
       li.appendChild(open);
@@ -888,7 +893,7 @@
     if (!song.notes.length) { showToast(t("toast.empty")); return; }
     var B = window.OrosBundle;
     var x = cur ? cur : { id: C.newId(Math.random), m: Date.now(), name: song.name, bpm: song.bpm, voice: song.voice, notes: C.notesText(song.notes) };
-    var opts = C.toneBundle(x, { title: songTitle(), lang: LANG, rate: WAV_RATE,
+    var opts = C.toneBundle(x, { title: songTitle(), lang: LANG === "el" ? "el" : "en", rate: WAV_RATE,
       gain: Math.pow(prefs.vol / 100, 0.5) || 0.5, date: new Date() });
     if (!B || !opts) { showToast(t("toast.saveFail")); return; }
     B.write(opts).then(function (bytes) {

@@ -42,4 +42,4 @@ The `Help` button at the top shows these shortcuts too.
 
 ## Limits
 - There's no import; the JSON export can't be loaded back into the app. To restore, use an orOS [backup](help:t/backup).
-- The Markdown export's headings are in English.
+- The Markdown export's headings follow the app's language.

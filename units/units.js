@@ -52,8 +52,8 @@
       return l === "el" ? "el" : "en";
     } catch (e) { return "en"; }
   }
-  var LANG = appLang();
-  var LOCALE = LANG === "el" ? "el-GR" : "en-GB";
+  var LANG = window.orosI18n ? window.orosI18n.lang() : appLang();
+  var LOCALE = window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB");
 
   var STRINGS = {
     en: {
@@ -129,6 +129,7 @@
       "aria.unit": "Μονάδα: {name}"
     }
   };
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "units", LANG);
 
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;
@@ -339,7 +340,7 @@
     renderRecent();
   }
 
-  function ingName(id) { var g = C.ingredient(id); return g ? (LANG === "el" ? g[3] : g[2]) : ""; }
+  function ingName(id) { return C.ingredientName(id, LANG); }
 
   function renderFormula() {
     var line = "", o = opts();
@@ -845,7 +846,7 @@
     var sel = $("ing");
     sel.innerHTML = "";
     C.INGREDIENTS.forEach(function (g) {
-      var o = el("option", "", LANG === "el" ? g[3] : g[2]);
+      var o = el("option", "", C.ingredientName(g[0], LANG));
       o.value = g[0];
       sel.appendChild(o);
     });

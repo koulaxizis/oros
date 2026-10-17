@@ -52,9 +52,11 @@
       return l === "el" ? "el" : "en";
     } catch (e) { return "en"; }
   }
-  var LANG = appLang();
-  var LOCALE = LANG === "el" ? "el-GR" : "en-GB";
-  var DEC = LANG === "el" ? "," : ".";
+  // orosI18n (../i18n.js): the full language code, a pack language included.
+  var LANG = window.orosI18n ? window.orosI18n.lang() : appLang();
+  var LOCALE = window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB");
+  var DEC = ".";
+  try { DEC = (1.5).toLocaleString(LOCALE).charAt(1) === "," ? "," : "."; } catch (e) { DEC = LANG === "el" ? "," : "."; }
 
   var STRINGS = {
     en: {
@@ -101,7 +103,7 @@
       "d.points": "yes, {n} points", "d.dark": "System dark mode", "d.motion": "Reduce motion",
       "d.mode": "Running as", "d.installed": "Installed app", "d.tab": "Browser tab",
       "o.version": "orOS version", "o.cache": "Offline copy", "o.apps": "Apps",
-      "o.lang": "Language", "o.theme": "Theme", "o.dark": "Dark", "o.light": "Light",
+      "o.lang": "Language", "o.langName": "English", "o.theme": "Theme", "o.dark": "Dark", "o.light": "Light",
       "o.browser": "Browser (approx.)", "o.os": "System (approx.)", "o.cores": "CPU cores",
       "o.memory": "Memory", "o.memoryV": "about {n} GB", "o.tz": "Time zone",
       "o.locale": "Browser language", "o.secure": "Secure connection (HTTPS)",
@@ -162,7 +164,7 @@
       "d.points": "ναι, {n} σημεία", "d.dark": "Σκούρο θέμα συστήματος", "d.motion": "Λιγότερη κίνηση",
       "d.mode": "Τρέχει ως", "d.installed": "Εγκατεστημένη εφαρμογή", "d.tab": "Καρτέλα browser",
       "o.version": "Έκδοση orOS", "o.cache": "Offline αντίγραφο", "o.apps": "Εφαρμογές",
-      "o.lang": "Γλώσσα", "o.theme": "Θέμα", "o.dark": "Σκούρο", "o.light": "Φωτεινό",
+      "o.lang": "Γλώσσα", "o.langName": "Ελληνικά", "o.theme": "Θέμα", "o.dark": "Σκούρο", "o.light": "Φωτεινό",
       "o.browser": "Browser (περίπου)", "o.os": "Σύστημα (περίπου)", "o.cores": "Πυρήνες CPU",
       "o.memory": "Μνήμη", "o.memoryV": "περίπου {n} GB", "o.tz": "Ζώνη ώρας",
       "o.locale": "Γλώσσα browser", "o.secure": "Ασφαλής σύνδεση (HTTPS)",
@@ -180,6 +182,8 @@
       "r.header": "Αναφορά συσκευής orOS · {date}"
     }
   };
+
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "device", LANG);
 
   function t(key, vars) {
     var s = (STRINGS[LANG] && STRINGS[LANG][key]) || STRINGS.en[key] || key;
@@ -597,7 +601,7 @@
       [t("o.cache"), swState() ? (offline ? t("o.swOn") + " · " + offline : t("o.swOn")) : t("o.swOff"),
         swState() ? "ok" : "warn-t"],
       [t("o.apps"), apps.length ? num(apps.length) : t("unknown")],
-      [t("o.lang"), LANG === "el" ? "Ελληνικά" : "English"],
+      [t("o.lang"), ((window.orosI18n && window.orosI18n.info(LANG)) || {}).name || t("o.langName")],
       [t("o.theme"), theme],
       [t("o.browser"), u.browser ? (u.browser + (u.version ? " " + u.version : "")) : t("unknown")],
       [t("o.os"), u.os ? (u.os + (u.osVersion ? " " + u.osVersion : "")) : t("unknown")],

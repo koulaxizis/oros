@@ -1,0 +1,49 @@
+# Aura-Maler
+Mal mit Licht. Zieh einen Finger, einen Stift oder die Maus über die dunkle Leinwand, und leuchtende Striche folgen, wie auf einem Foto mit langer Belichtung. Wo sich Farben kreuzen, leuchten sie heller.
+
+## Erste Schritte
+Fang einfach an, auf der Leinwand zu zeichnen. Jeder Strich kommt zum Werk dazu; `Rückgängig` und `Wiederholen` oben gehen einen Schritt zurück und vor, und der Papierkorb-Button leert die Leinwand (`Rückgängig` in der Meldung holt sie zurück).
+- Keine Idee, wo du anfangen sollst? Der Stern-Button, `Überraschung: ein zufälliges Werk`, macht ein Werk für dich und malt es vor deinen Augen.
+- `Pinsel ausblenden` klappt die Werkzeuge weg; `Pinsel` holt sie zurück. Auf dem Handy bleibt die Leinwand oben, während du durch die Werkzeuge scrollst.
+
+## Pinsel
+- `Glühen`: eine weiche Linie mit Lichthof. `Neon`: ein dünner, heller Kern. `Funken`: Pünktchen fliegen vom Strich weg. `Nebel`: eine breite, dunstige Farbwolke. `Band`: ein flaches Band, das in Kurven breiter und schmaler wird.
+- `Größe` und `Helligkeit` stellen den Pinsel ein. Schnelle Bewegung ergibt eine dünnere Linie, langsame eine vollere. Mit einem Stift wird der Strich breiter, je fester du drückst.
+
+## Farbe
+- Wähle eine Palette (`Polarlicht`, `Sonnenuntergang`, `Ozean`, `Neon` oder `Feuer`) und eine ihrer Farben, oder eine beliebige Farbe mit dem Farb-Button daneben.
+- `Regenbogen` ändert die Farbe entlang jedes Strichs, und jeder neue Strich beginnt mit einer anderen Farbe.
+
+## Symmetrie
+`Spiegel` wiederholt jeden Strich auf der anderen Seite. `×4`, `×6`, `×8` und `×12` machen aus der Leinwand ein Kaleidoskop mit so vielen Strahlen. Jeder Strich behält die Symmetrie, mit der er gemalt wurde.
+
+## Hintergrund und Spiel
+- `Hintergrund`: `Schwarz`, `Tiefblau`, `Nachtviolett` oder `Hell`. Auf dem hellen Hintergrund mischen sich die Farben wie Aquarell.
+- Ist `Striche verblassen` angehakt, verblassen neue Striche nach ein paar Sekunden, zum Malen ohne Ende. Verblassende Striche werden nicht gespeichert.
+
+## Meine Werke
+- Gib einen Namen ein und tippe auf `Speichern`. Änderungen an einem geöffneten gespeicherten Werk, auch am Namen, werden laufend gespeichert.
+- Der Button oben links zeigt `Meine Werke`: Öffne, dupliziere (Kopier-Button) oder lösche (×) ein Werk; `Rückgängig` holt es zurück.
+- Eine ungespeicherte Leinwand bleibt auf diesem Gerät, bis du sie speicherst oder eine `Neu` anfängst.
+
+## Herunterladen, Wiedergabe und Hintergrundbild
+- Wähle `Bildschirmgröße` oder `Doppelt` und tippe auf `PNG`, um das Bild herunterzuladen.
+- `Wiedergabe` malt das Werk noch einmal, Strich für Strich, so wie du es gemacht hast. Tippe auf die Leinwand oder auf `Wiedergabe stoppen`, um anzuhalten.
+- `Als Hintergrundbild` macht das Werk zum orOS-Hintergrundbild dieses Geräts. Es erscheint hier in den Einstellungen als `Eigenes`; andere Geräte behalten ihr eigenes Hintergrundbild. Wählst du auf diesem Gerät ein anderes Hintergrundbild, wird das Werk wieder weggelegt.
+
+## Synchronisierung und Sicherung
+- `Meine Werke` folgen dir über die orOS-Synchronisierung auf alle deine Geräte. Werke werden als Striche gespeichert, nicht als Bilder, und werden deshalb auf jedem Bildschirm scharf neu gezeichnet.
+- Pinsel, Farbe, Symmetrie, Hintergrund, die Verblassen-Einstellung und die ungespeicherte Leinwand bleiben auf diesem Gerät.
+
+## Tastenkürzel
+- [[Ctrl+Z]]: rückgängig. [[Ctrl+Y]] oder [[Ctrl+Shift+Z]]: wiederholen.
+- [[1]] bis [[5]]: die fünf Pinsel. [[S]]: die nächste Symmetrie.
+- `[` und `]`: kleinerer oder größerer Pinsel.
+- [[Esc]]: eine Wiedergabe stoppen oder `Meine Werke` schließen.
+
+## Tipps
+> Probier zuerst `×8` mit `Nebel` und darüber `Neon`: Ein paar Striche ergeben ein Mandala.
+
+## Grenzen
+- Bis zu 4.000 Punkte pro Werk und 60 gespeicherte Werke. Der Zähler unter `Speichern` zeigt, wie voll ein Werk ist.
+- Wird dasselbe Werk auf zwei Geräten geändert, bevor sie synchronisieren, gewinnt die neueste Änderung.

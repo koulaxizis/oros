@@ -46,186 +46,508 @@
   function cmpStr(x, y) { return x < y ? -1 : (x > y ? 1 : 0); }
   function own(o, k) { return Object.prototype.hasOwnProperty.call(o, k); }
 
+  // Names of categories, units and Cooking ingredients (UI text),
+  // keyed "cat.<id>", "unit.<cat>.<id>", "ingr.<id>". Pack "units".
+  var NAMES = {
+    en: {
+      "cat.length": "Length",
+      "unit.length.nm": "Nanometre",
+      "unit.length.um": "Micrometre",
+      "unit.length.mm": "Millimetre",
+      "unit.length.cm": "Centimetre",
+      "unit.length.dm": "Decimetre",
+      "unit.length.m": "Metre",
+      "unit.length.km": "Kilometre",
+      "unit.length.in": "Inch",
+      "unit.length.ft": "Foot",
+      "unit.length.yd": "Yard",
+      "unit.length.mi": "Mile",
+      "unit.length.nmi": "Nautical mile",
+      "unit.length.pichys": "Builder's cubit (0.75 m)",
+      "cat.mass": "Weight",
+      "unit.mass.mg": "Milligram",
+      "unit.mass.g": "Gram",
+      "unit.mass.kg": "Kilogram",
+      "unit.mass.t": "Tonne",
+      "unit.mass.ct": "Carat",
+      "unit.mass.oz": "Ounce",
+      "unit.mass.ozt": "Troy ounce",
+      "unit.mass.lb": "Pound",
+      "unit.mass.st": "Stone",
+      "unit.mass.shton": "Short ton (US)",
+      "unit.mass.lgton": "Long ton (UK)",
+      "unit.mass.oka": "Oka (traditional)",
+      "unit.mass.drami": "Drachm (1/400 oka)",
+      "cat.volume": "Volume",
+      "unit.volume.ml": "Millilitre",
+      "unit.volume.cl": "Centilitre",
+      "unit.volume.dl": "Decilitre",
+      "unit.volume.L": "Litre",
+      "unit.volume.cm3": "Cubic centimetre",
+      "unit.volume.m3": "Cubic metre",
+      "unit.volume.in3": "Cubic inch",
+      "unit.volume.ft3": "Cubic foot",
+      "unit.volume.usfloz": "Fluid ounce (US)",
+      "unit.volume.ukfloz": "Fluid ounce (UK)",
+      "unit.volume.uspt": "Pint (US)",
+      "unit.volume.ukpt": "Pint (UK)",
+      "unit.volume.usqt": "Quart (US)",
+      "unit.volume.usgal": "Gallon (US)",
+      "unit.volume.ukgal": "Gallon (UK)",
+      "unit.volume.bbl": "Barrel (oil)",
+      "cat.temp": "Temperature",
+      "unit.temp.C": "Celsius",
+      "unit.temp.F": "Fahrenheit",
+      "unit.temp.K": "Kelvin",
+      "unit.temp.R": "Rankine",
+      "cat.area": "Area",
+      "unit.area.mm2": "Square millimetre",
+      "unit.area.cm2": "Square centimetre",
+      "unit.area.m2": "Square metre",
+      "unit.area.ha": "Hectare",
+      "unit.area.km2": "Square kilometre",
+      "unit.area.in2": "Square inch",
+      "unit.area.ft2": "Square foot",
+      "unit.area.yd2": "Square yard",
+      "unit.area.acre": "Acre",
+      "unit.area.mi2": "Square mile",
+      "unit.area.strema": "Stremma",
+      "cat.speed": "Speed",
+      "unit.speed.mps": "Metre per second",
+      "unit.speed.kmh": "Kilometre per hour",
+      "unit.speed.mph": "Mile per hour",
+      "unit.speed.fts": "Foot per second",
+      "unit.speed.kn": "Knot",
+      "cat.cooking": "Cooking",
+      "unit.cooking.tsp": "Teaspoon (5 ml)",
+      "unit.cooking.tbsp": "Tablespoon (15 ml)",
+      "unit.cooking.cup": "Cup (250 ml)",
+      "unit.cooking.ustsp": "Teaspoon (US)",
+      "unit.cooking.ustbsp": "Tablespoon (US)",
+      "unit.cooking.uscup": "Cup (US)",
+      "unit.cooking.cfloz": "Fluid ounce (US)",
+      "unit.cooking.cml": "Millilitre",
+      "unit.cooking.cliter": "Litre",
+      "unit.cooking.g": "Gram",
+      "unit.cooking.ckg": "Kilogram",
+      "unit.cooking.coz": "Ounce",
+      "unit.cooking.clb": "Pound",
+      "cat.time": "Time",
+      "unit.time.ms": "Millisecond",
+      "unit.time.s": "Second",
+      "unit.time.min": "Minute",
+      "unit.time.h": "Hour",
+      "unit.time.d": "Day",
+      "unit.time.wk": "Week",
+      "unit.time.mo": "Month (average)",
+      "unit.time.yr": "Year (average)",
+      "cat.data": "Data",
+      "unit.data.bit": "Bit",
+      "unit.data.B": "Byte",
+      "unit.data.kB": "Kilobyte",
+      "unit.data.MB": "Megabyte",
+      "unit.data.GB": "Gigabyte",
+      "unit.data.TB": "Terabyte",
+      "unit.data.PB": "Petabyte",
+      "unit.data.Mbit": "Megabit",
+      "unit.data.Gbit": "Gigabit",
+      "unit.data.KiB": "Kibibyte",
+      "unit.data.MiB": "Mebibyte",
+      "unit.data.GiB": "Gibibyte",
+      "unit.data.TiB": "Tebibyte",
+      "cat.fuel": "Fuel economy",
+      "unit.fuel.l100": "Litres per 100 km",
+      "unit.fuel.kml": "Kilometres per litre",
+      "unit.fuel.mpgus": "Miles per gallon (US)",
+      "unit.fuel.mpguk": "Miles per gallon (UK)",
+      "cat.pressure": "Pressure",
+      "unit.pressure.Pa": "Pascal",
+      "unit.pressure.hPa": "Hectopascal",
+      "unit.pressure.kPa": "Kilopascal",
+      "unit.pressure.MPa": "Megapascal",
+      "unit.pressure.mbar": "Millibar",
+      "unit.pressure.bar": "Bar",
+      "unit.pressure.atm": "Atmosphere",
+      "unit.pressure.psi": "Pound per square inch",
+      "unit.pressure.mmHg": "Millimetre of mercury",
+      "unit.pressure.inHg": "Inch of mercury",
+      "cat.energy": "Energy",
+      "unit.energy.J": "Joule",
+      "unit.energy.kJ": "Kilojoule",
+      "unit.energy.MJ": "Megajoule",
+      "unit.energy.cal": "Calorie",
+      "unit.energy.kcal": "Kilocalorie",
+      "unit.energy.Wh": "Watt-hour",
+      "unit.energy.kWh": "Kilowatt-hour",
+      "unit.energy.BTU": "British thermal unit",
+      "cat.power": "Power",
+      "unit.power.W": "Watt",
+      "unit.power.kW": "Kilowatt",
+      "unit.power.MW": "Megawatt",
+      "unit.power.PS": "Metric horsepower",
+      "unit.power.hp": "Horsepower (mechanical)",
+      "unit.power.btuh": "BTU per hour",
+      "cat.angle": "Angle",
+      "unit.angle.deg": "Degree",
+      "unit.angle.rad": "Radian",
+      "unit.angle.grad": "Gradian",
+      "unit.angle.arcmin": "Arcminute",
+      "unit.angle.arcsec": "Arcsecond",
+      "unit.angle.turn": "Full turn",
+      "cat.currency": "Currency",
+      "ingr.water": "Water",
+      "ingr.milk": "Milk",
+      "ingr.oil": "Oil",
+      "ingr.butter": "Butter",
+      "ingr.flour": "Flour",
+      "ingr.sugar": "Sugar",
+      "ingr.icing": "Icing sugar",
+      "ingr.rice": "Rice (uncooked)",
+      "ingr.honey": "Honey",
+      "ingr.salt": "Salt",
+      "ingr.cocoa": "Cocoa powder"
+    },
+    el: {
+      "cat.length": "Μήκος",
+      "unit.length.nm": "Νανόμετρο",
+      "unit.length.um": "Μικρόμετρο",
+      "unit.length.mm": "Χιλιοστό",
+      "unit.length.cm": "Εκατοστό",
+      "unit.length.dm": "Δεκατόμετρο",
+      "unit.length.m": "Μέτρο",
+      "unit.length.km": "Χιλιόμετρο",
+      "unit.length.in": "Ίντσα",
+      "unit.length.ft": "Πόδι",
+      "unit.length.yd": "Γιάρδα",
+      "unit.length.mi": "Μίλι",
+      "unit.length.nmi": "Ναυτικό μίλι",
+      "unit.length.pichys": "Τεκτονικός πήχης (0,75 m)",
+      "cat.mass": "Βάρος",
+      "unit.mass.mg": "Χιλιοστόγραμμο",
+      "unit.mass.g": "Γραμμάριο",
+      "unit.mass.kg": "Κιλό",
+      "unit.mass.t": "Τόνος",
+      "unit.mass.ct": "Καράτι",
+      "unit.mass.oz": "Ουγγιά",
+      "unit.mass.ozt": "Ουγγιά troy",
+      "unit.mass.lb": "Λίβρα",
+      "unit.mass.st": "Stone",
+      "unit.mass.shton": "Κοντός τόνος (ΗΠΑ)",
+      "unit.mass.lgton": "Μακρύς τόνος (ΗΒ)",
+      "unit.mass.oka": "Οκά (παραδοσιακή)",
+      "unit.mass.drami": "Δράμι (1/400 οκάς)",
+      "cat.volume": "Όγκος",
+      "unit.volume.ml": "Χιλιοστόλιτρο",
+      "unit.volume.cl": "Εκατοστόλιτρο",
+      "unit.volume.dl": "Δεκατόλιτρο",
+      "unit.volume.L": "Λίτρο",
+      "unit.volume.cm3": "Κυβικό εκατοστό",
+      "unit.volume.m3": "Κυβικό μέτρο",
+      "unit.volume.in3": "Κυβική ίντσα",
+      "unit.volume.ft3": "Κυβικό πόδι",
+      "unit.volume.usfloz": "Υγρή ουγγιά (ΗΠΑ)",
+      "unit.volume.ukfloz": "Υγρή ουγγιά (ΗΒ)",
+      "unit.volume.uspt": "Πίντα (ΗΠΑ)",
+      "unit.volume.ukpt": "Πίντα (ΗΒ)",
+      "unit.volume.usqt": "Κουάρτ (ΗΠΑ)",
+      "unit.volume.usgal": "Γαλόνι (ΗΠΑ)",
+      "unit.volume.ukgal": "Γαλόνι (ΗΒ)",
+      "unit.volume.bbl": "Βαρέλι (πετρελαίου)",
+      "cat.temp": "Θερμοκρασία",
+      "unit.temp.C": "Κελσίου",
+      "unit.temp.F": "Φαρενάιτ",
+      "unit.temp.K": "Κέλβιν",
+      "unit.temp.R": "Ράνκιν",
+      "cat.area": "Επιφάνεια",
+      "unit.area.mm2": "Τετραγωνικό χιλιοστό",
+      "unit.area.cm2": "Τετραγωνικό εκατοστό",
+      "unit.area.m2": "Τετραγωνικό μέτρο",
+      "unit.area.ha": "Εκτάριο",
+      "unit.area.km2": "Τετραγωνικό χιλιόμετρο",
+      "unit.area.in2": "Τετραγωνική ίντσα",
+      "unit.area.ft2": "Τετραγωνικό πόδι",
+      "unit.area.yd2": "Τετραγωνική γιάρδα",
+      "unit.area.acre": "Άκρ",
+      "unit.area.mi2": "Τετραγωνικό μίλι",
+      "unit.area.strema": "Στρέμμα",
+      "cat.speed": "Ταχύτητα",
+      "unit.speed.mps": "Μέτρα ανά δευτερόλεπτο",
+      "unit.speed.kmh": "Χιλιόμετρα ανά ώρα",
+      "unit.speed.mph": "Μίλια ανά ώρα",
+      "unit.speed.fts": "Πόδια ανά δευτερόλεπτο",
+      "unit.speed.kn": "Κόμβος",
+      "cat.cooking": "Μαγειρική",
+      "unit.cooking.tsp": "Κουταλάκι γλυκού (5 ml)",
+      "unit.cooking.tbsp": "Κουταλιά σούπας (15 ml)",
+      "unit.cooking.cup": "Φλιτζάνι (250 ml)",
+      "unit.cooking.ustsp": "Κουταλάκι (ΗΠΑ)",
+      "unit.cooking.ustbsp": "Κουταλιά (ΗΠΑ)",
+      "unit.cooking.uscup": "Φλιτζάνι (ΗΠΑ)",
+      "unit.cooking.cfloz": "Υγρή ουγγιά (ΗΠΑ)",
+      "unit.cooking.cml": "Χιλιοστόλιτρο",
+      "unit.cooking.cliter": "Λίτρο",
+      "unit.cooking.g": "Γραμμάριο",
+      "unit.cooking.ckg": "Κιλό",
+      "unit.cooking.coz": "Ουγγιά",
+      "unit.cooking.clb": "Λίβρα",
+      "cat.time": "Χρόνος",
+      "unit.time.ms": "Χιλιοστό του δευτερολέπτου",
+      "unit.time.s": "Δευτερόλεπτο",
+      "unit.time.min": "Λεπτό",
+      "unit.time.h": "Ώρα",
+      "unit.time.d": "Μέρα",
+      "unit.time.wk": "Εβδομάδα",
+      "unit.time.mo": "Μήνας (μέσος)",
+      "unit.time.yr": "Έτος (μέσο)",
+      "cat.data": "Δεδομένα",
+      "unit.data.bit": "Bit",
+      "unit.data.B": "Byte",
+      "unit.data.kB": "Kilobyte",
+      "unit.data.MB": "Megabyte",
+      "unit.data.GB": "Gigabyte",
+      "unit.data.TB": "Terabyte",
+      "unit.data.PB": "Petabyte",
+      "unit.data.Mbit": "Megabit",
+      "unit.data.Gbit": "Gigabit",
+      "unit.data.KiB": "Kibibyte",
+      "unit.data.MiB": "Mebibyte",
+      "unit.data.GiB": "Gibibyte",
+      "unit.data.TiB": "Tebibyte",
+      "cat.fuel": "Κατανάλωση καυσίμου",
+      "unit.fuel.l100": "Λίτρα ανά 100 km",
+      "unit.fuel.kml": "Χιλιόμετρα με ένα λίτρο",
+      "unit.fuel.mpgus": "Μίλια ανά γαλόνι (ΗΠΑ)",
+      "unit.fuel.mpguk": "Μίλια ανά γαλόνι (ΗΒ)",
+      "cat.pressure": "Πίεση",
+      "unit.pressure.Pa": "Πασκάλ",
+      "unit.pressure.hPa": "Εκτοπασκάλ",
+      "unit.pressure.kPa": "Κιλοπασκάλ",
+      "unit.pressure.MPa": "Μεγαπασκάλ",
+      "unit.pressure.mbar": "Μιλιμπάρ",
+      "unit.pressure.bar": "Μπαρ",
+      "unit.pressure.atm": "Ατμόσφαιρα",
+      "unit.pressure.psi": "Λίβρες ανά τετρ. ίντσα",
+      "unit.pressure.mmHg": "Χιλιοστά υδραργύρου",
+      "unit.pressure.inHg": "Ίντσες υδραργύρου",
+      "cat.energy": "Ενέργεια",
+      "unit.energy.J": "Τζάουλ",
+      "unit.energy.kJ": "Κιλοτζάουλ",
+      "unit.energy.MJ": "Μεγατζάουλ",
+      "unit.energy.cal": "Θερμίδα",
+      "unit.energy.kcal": "Κιλοθερμίδα",
+      "unit.energy.Wh": "Βατώρα",
+      "unit.energy.kWh": "Κιλοβατώρα",
+      "unit.energy.BTU": "BTU",
+      "cat.power": "Ισχύς",
+      "unit.power.W": "Βατ",
+      "unit.power.kW": "Κιλοβάτ",
+      "unit.power.MW": "Μεγαβάτ",
+      "unit.power.PS": "Ίππος (μετρικός)",
+      "unit.power.hp": "Ίππος (μηχανικός)",
+      "unit.power.btuh": "BTU ανά ώρα",
+      "cat.angle": "Γωνία",
+      "unit.angle.deg": "Μοίρα",
+      "unit.angle.rad": "Ακτίνιο",
+      "unit.angle.grad": "Βαθμός (grad)",
+      "unit.angle.arcmin": "Πρώτο λεπτό",
+      "unit.angle.arcsec": "Δεύτερο λεπτό",
+      "unit.angle.turn": "Πλήρης στροφή",
+      "cat.currency": "Νομίσματα",
+      "ingr.water": "Νερό",
+      "ingr.milk": "Γάλα",
+      "ingr.oil": "Λάδι",
+      "ingr.butter": "Βούτυρο",
+      "ingr.flour": "Αλεύρι",
+      "ingr.sugar": "Ζάχαρη",
+      "ingr.icing": "Ζάχαρη άχνη",
+      "ingr.rice": "Ρύζι (άβραστο)",
+      "ingr.honey": "Μέλι",
+      "ingr.salt": "Αλάτι",
+      "ingr.cocoa": "Κακάο"
+    }
+  };
+
   // ---------- Categories + units ----------
-  // u: [id, factor, symbol, EN name, EL name, group, extra aliases]
+  // u: [id, factor, symbol, group, extra aliases]; names in NAMES
   // group: "m" metric (SI), "i" imperial / US, "o" other
   // Extra aliases are "|"-separated (plural forms, other spellings).
   var CATS = [
-    { id: "length", base: "m", en: "Length", el: "Μήκος", def: ["km", "mi"], u: [
-      ["nm",  1e-9,       "nm",  "Nanometre",  "Νανόμετρο",   "m", "nanometer|nanometers|νανόμετρα"],
-      ["um",  1e-6,       "µm",  "Micrometre", "Μικρόμετρο",  "m", "μm|micron|micrometer|micrometers|μικρά|μικρόμετρα"],
-      ["mm",  0.001,      "mm",  "Millimetre", "Χιλιοστό",    "m", "millimeter|millimeters|χιλιοστά|χιλιοστόμετρο"],
-      ["cm",  0.01,       "cm",  "Centimetre", "Εκατοστό",    "m", "centimeter|centimeters|εκατοστά|πόντος|πόντοι|εκ"],
-      ["dm",  0.1,        "dm",  "Decimetre",  "Δεκατόμετρο", "m", "decimeter|decimeters|δεκατόμετρα"],
-      ["m",   1,          "m",   "Metre",      "Μέτρο",       "m", "meter|meters|metres|μέτρα|μ"],
-      ["km",  1000,       "km",  "Kilometre",  "Χιλιόμετρο",  "m", "kilometer|kilometers|kilometres|χιλιόμετρα|χλμ|χιλιομετρο"],
-      ["in",  0.0254,     "in",  "Inch",       "Ίντσα",       "i", "inches|ίντσες|\""],
-      ["ft",  0.3048,     "ft",  "Foot",       "Πόδι",        "i", "feet|foots|πόδια|'"],
-      ["yd",  0.9144,     "yd",  "Yard",       "Γιάρδα",      "i", "yards|γιάρδες"],
-      ["mi",  1609.344,   "mi",  "Mile",       "Μίλι",        "i", "miles|μίλια"],
-      ["nmi", 1852,       "nmi", "Nautical mile", "Ναυτικό μίλι", "o", "nautical miles|ναυτικά μίλια|nm mile"],
-      ["pichys", 0.75,    "πήχ.", "Builder's cubit (0.75 m)", "Τεκτονικός πήχης (0,75 m)", "o", "πήχης|πήχεις|πήχη|pichys|cubit"]
+    { id: "length", base: "m", def: ["km", "mi"], u: [
+      ["nm",  1e-9,       "nm", "m", "nanometer|nanometers|νανόμετρα"],
+      ["um",  1e-6,       "µm", "m", "μm|micron|micrometer|micrometers|μικρά|μικρόμετρα"],
+      ["mm",  0.001,      "mm", "m", "millimeter|millimeters|χιλιοστά|χιλιοστόμετρο"],
+      ["cm",  0.01,       "cm", "m", "centimeter|centimeters|εκατοστά|πόντος|πόντοι|εκ"],
+      ["dm",  0.1,        "dm", "m", "decimeter|decimeters|δεκατόμετρα"],
+      ["m",   1,          "m", "m", "meter|meters|metres|μέτρα|μ"],
+      ["km",  1000,       "km", "m", "kilometer|kilometers|kilometres|χιλιόμετρα|χλμ|χιλιομετρο"],
+      ["in",  0.0254,     "in", "i", "inches|ίντσες|\""],
+      ["ft",  0.3048,     "ft", "i", "feet|foots|πόδια|'"],
+      ["yd",  0.9144,     "yd", "i", "yards|γιάρδες"],
+      ["mi",  1609.344,   "mi", "i", "miles|μίλια"],
+      ["nmi", 1852,       "nmi", "o", "nautical miles|ναυτικά μίλια|nm mile"],
+      ["pichys", 0.75,    "πήχ.", "o", "πήχης|πήχεις|πήχη|pichys|cubit"]
     ] },
-    { id: "mass", base: "kg", en: "Weight", el: "Βάρος", def: ["kg", "lb"], u: [
-      ["mg",  1e-6,          "mg",  "Milligram", "Χιλιοστόγραμμο", "m", "milligrams|milligramme|χιλιοστόγραμμα"],
-      ["g",   0.001,         "g",   "Gram",      "Γραμμάριο",      "m", "grams|gramme|grammes|γραμμάρια|γρ|gr"],
-      ["kg",  1,             "kg",  "Kilogram",  "Κιλό",           "m", "kilograms|kilo|kilos|kilogramme|κιλά|χιλιόγραμμο|χιλιόγραμμα"],
-      ["t",   1000,          "t",   "Tonne",     "Τόνος",          "m", "tonnes|metric ton|metric tons|τόνοι|τόνους"],
-      ["ct",  0.0002,        "ct",  "Carat",     "Καράτι",         "o", "carats|καράτια"],
-      ["oz",  0.028349523125, "oz", "Ounce",     "Ουγγιά",         "i", "ounces|ουγγιές"],
-      ["ozt", 0.0311034768,  "oz t", "Troy ounce", "Ουγγιά troy",  "o", "troy ounces|troy oz|ozt"],
-      ["lb",  0.45359237,    "lb",  "Pound",     "Λίβρα",          "i", "pounds|lbs|λίβρες"],
-      ["st",  6.35029318,    "st",  "Stone",     "Stone",          "i", "stones"],
-      ["shton", 907.18474,   "US t", "Short ton (US)", "Κοντός τόνος (ΗΠΑ)", "i", "short ton|short tons|us ton|us tons"],
-      ["lgton", 1016.0469088, "UK t", "Long ton (UK)", "Μακρύς τόνος (ΗΒ)", "i", "long ton|long tons|uk ton|uk tons"],
-      ["oka", 1.2829,        "οκ.", "Oka (traditional)", "Οκά (παραδοσιακή)", "o", "οκά|οκάδες|οκα|oka|okes"],
-      ["drami", 0.00320725,  "δρ.", "Drachm (1/400 oka)", "Δράμι (1/400 οκάς)", "o", "δράμι|δράμια|dram|drachm"]
+    { id: "mass", base: "kg", def: ["kg", "lb"], u: [
+      ["mg",  1e-6,          "mg", "m", "milligrams|milligramme|χιλιοστόγραμμα"],
+      ["g",   0.001,         "g", "m", "grams|gramme|grammes|γραμμάρια|γρ|gr"],
+      ["kg",  1,             "kg", "m", "kilograms|kilo|kilos|kilogramme|κιλά|χιλιόγραμμο|χιλιόγραμμα"],
+      ["t",   1000,          "t", "m", "tonnes|metric ton|metric tons|τόνοι|τόνους"],
+      ["ct",  0.0002,        "ct", "o", "carats|καράτια"],
+      ["oz",  0.028349523125, "oz", "i", "ounces|ουγγιές"],
+      ["ozt", 0.0311034768,  "oz t", "o", "troy ounces|troy oz|ozt"],
+      ["lb",  0.45359237,    "lb", "i", "pounds|lbs|λίβρες"],
+      ["st",  6.35029318,    "st", "i", "stones"],
+      ["shton", 907.18474,   "US t", "i", "short ton|short tons|us ton|us tons"],
+      ["lgton", 1016.0469088, "UK t", "i", "long ton|long tons|uk ton|uk tons"],
+      ["oka", 1.2829,        "οκ.", "o", "οκά|οκάδες|οκα|oka|okes"],
+      ["drami", 0.00320725,  "δρ.", "o", "δράμι|δράμια|dram|drachm"]
     ] },
-    { id: "volume", base: "L", en: "Volume", el: "Όγκος", def: ["L", "usgal"], u: [
-      ["ml",   0.001,          "ml",  "Millilitre", "Χιλιοστόλιτρο", "m", "milliliter|milliliters|millilitres|mL|χιλιοστόλιτρα|μλ"],
-      ["cl",   0.01,           "cl",  "Centilitre", "Εκατοστόλιτρο", "m", "centiliter|centiliters|εκατοστόλιτρα"],
-      ["dl",   0.1,            "dl",  "Decilitre",  "Δεκατόλιτρο",   "m", "deciliter|deciliters|δεκατόλιτρα"],
-      ["L",    1,              "L",   "Litre",      "Λίτρο",         "m", "l|liter|liters|litres|λίτρα|λτ"],
-      ["cm3",  0.001,          "cm³", "Cubic centimetre", "Κυβικό εκατοστό", "m", "cm3|cc|cubic centimeter|cubic centimeters|κυβικά εκατοστά"],
-      ["m3",   1000,           "m³",  "Cubic metre", "Κυβικό μέτρο", "m", "m3|cubic meter|cubic meters|cubic metres|κυβικά μέτρα|κυβικά"],
-      ["in3",  0.016387064,    "in³", "Cubic inch", "Κυβική ίντσα",  "i", "in3|cubic inches|κυβικές ίντσες"],
-      ["ft3",  28.316846592,   "ft³", "Cubic foot", "Κυβικό πόδι",   "i", "ft3|cubic feet|κυβικά πόδια"],
-      ["usfloz", 0.0295735295625, "fl oz", "Fluid ounce (US)", "Υγρή ουγγιά (ΗΠΑ)", "i", "fl oz|floz|fluid ounce|fluid ounces|us fl oz"],
-      ["ukfloz", 0.0284130625, "UK fl oz", "Fluid ounce (UK)", "Υγρή ουγγιά (ΗΒ)", "i", "uk fl oz|imperial fl oz"],
-      ["uspt", 0.473176473,    "pt",  "Pint (US)",  "Πίντα (ΗΠΑ)",   "i", "pint|pints|us pint|us pints|πίντα|πίντες"],
-      ["ukpt", 0.56826125,     "UK pt", "Pint (UK)", "Πίντα (ΗΒ)",   "i", "uk pint|uk pints|imperial pint"],
-      ["usqt", 0.946352946,    "qt",  "Quart (US)", "Κουάρτ (ΗΠΑ)",  "i", "quart|quarts|us quart"],
-      ["usgal", 3.785411784,   "gal", "Gallon (US)", "Γαλόνι (ΗΠΑ)", "i", "gallon|gallons|us gal|us gallon|us gallons|γαλόνι|γαλόνια"],
-      ["ukgal", 4.54609,       "UK gal", "Gallon (UK)", "Γαλόνι (ΗΒ)", "i", "uk gallon|uk gallons|imperial gallon|imperial gallons"],
-      ["bbl",  158.987294928,  "bbl", "Barrel (oil)", "Βαρέλι (πετρελαίου)", "o", "barrel|barrels|βαρέλι|βαρέλια"]
+    { id: "volume", base: "L", def: ["L", "usgal"], u: [
+      ["ml",   0.001,          "ml", "m", "milliliter|milliliters|millilitres|mL|χιλιοστόλιτρα|μλ"],
+      ["cl",   0.01,           "cl", "m", "centiliter|centiliters|εκατοστόλιτρα"],
+      ["dl",   0.1,            "dl", "m", "deciliter|deciliters|δεκατόλιτρα"],
+      ["L",    1,              "L", "m", "l|liter|liters|litres|λίτρα|λτ"],
+      ["cm3",  0.001,          "cm³", "m", "cm3|cc|cubic centimeter|cubic centimeters|κυβικά εκατοστά"],
+      ["m3",   1000,           "m³", "m", "m3|cubic meter|cubic meters|cubic metres|κυβικά μέτρα|κυβικά"],
+      ["in3",  0.016387064,    "in³", "i", "in3|cubic inches|κυβικές ίντσες"],
+      ["ft3",  28.316846592,   "ft³", "i", "ft3|cubic feet|κυβικά πόδια"],
+      ["usfloz", 0.0295735295625, "fl oz", "i", "fl oz|floz|fluid ounce|fluid ounces|us fl oz"],
+      ["ukfloz", 0.0284130625, "UK fl oz", "i", "uk fl oz|imperial fl oz"],
+      ["uspt", 0.473176473,    "pt", "i", "pint|pints|us pint|us pints|πίντα|πίντες"],
+      ["ukpt", 0.56826125,     "UK pt", "i", "uk pint|uk pints|imperial pint"],
+      ["usqt", 0.946352946,    "qt", "i", "quart|quarts|us quart"],
+      ["usgal", 3.785411784,   "gal", "i", "gallon|gallons|us gal|us gallon|us gallons|γαλόνι|γαλόνια"],
+      ["ukgal", 4.54609,       "UK gal", "i", "uk gallon|uk gallons|imperial gallon|imperial gallons"],
+      ["bbl",  158.987294928,  "bbl", "o", "barrel|barrels|βαρέλι|βαρέλια"]
     ] },
-    { id: "temp", base: "K", en: "Temperature", el: "Θερμοκρασία", def: ["C", "F"], neg: true, u: [
-      ["C", "fn", "°C", "Celsius",    "Κελσίου",    "m", "c|celsius|centigrade|κελσίου|βαθμοί κελσίου|βαθμούς κελσίου"],
-      ["F", "fn", "°F", "Fahrenheit", "Φαρενάιτ",   "i", "f|fahrenheit|φαρενάιτ"],
-      ["K", "fn", "K",  "Kelvin",     "Κέλβιν",     "m", "k|kelvin|kelvins|κέλβιν"],
-      ["R", "fn", "°R", "Rankine",    "Ράνκιν",     "o", "rankine"]
+    { id: "temp", base: "K", def: ["C", "F"], neg: true, u: [
+      ["C", "fn", "°C", "m", "c|celsius|centigrade|κελσίου|βαθμοί κελσίου|βαθμούς κελσίου"],
+      ["F", "fn", "°F", "i", "f|fahrenheit|φαρενάιτ"],
+      ["K", "fn", "K", "m", "k|kelvin|kelvins|κέλβιν"],
+      ["R", "fn", "°R", "o", "rankine"]
     ] },
-    { id: "area", base: "m2", en: "Area", el: "Επιφάνεια", def: ["m2", "ft2"], u: [
-      ["mm2", 1e-6,           "mm²", "Square millimetre", "Τετραγωνικό χιλιοστό", "m", "mm2|square millimeters|τετραγωνικά χιλιοστά"],
-      ["cm2", 1e-4,           "cm²", "Square centimetre", "Τετραγωνικό εκατοστό", "m", "cm2|square centimeters|τετραγωνικά εκατοστά"],
-      ["m2",  1,              "m²",  "Square metre",      "Τετραγωνικό μέτρο",    "m", "m2|sqm|square meter|square meters|square metres|τετραγωνικά|τετραγωνικά μέτρα|τμ|τ.μ."],
-      ["ha",  10000,          "ha",  "Hectare",           "Εκτάριο",              "m", "hectares|εκτάρια"],
-      ["km2", 1e6,            "km²", "Square kilometre",  "Τετραγωνικό χιλιόμετρο", "m", "km2|square kilometers|square kilometres|τετραγωνικά χιλιόμετρα"],
-      ["in2", 0.00064516,     "in²", "Square inch",       "Τετραγωνική ίντσα",    "i", "in2|sq in|square inches"],
-      ["ft2", 0.09290304,     "ft²", "Square foot",       "Τετραγωνικό πόδι",     "i", "ft2|sq ft|sqft|square feet"],
-      ["yd2", 0.83612736,     "yd²", "Square yard",       "Τετραγωνική γιάρδα",   "i", "yd2|sq yd|square yards"],
-      ["acre", 4046.8564224,  "ac",  "Acre",              "Άκρ",                  "i", "acres|ac"],
-      ["mi2", 2589988.110336, "mi²", "Square mile",       "Τετραγωνικό μίλι",     "i", "mi2|sq mi|square miles"],
-      ["strema", 1000,        "στρ.", "Stremma",          "Στρέμμα",              "o", "στρέμμα|στρέμματα|στρεμμα|stremma|stremmata|στρ"]
+    { id: "area", base: "m2", def: ["m2", "ft2"], u: [
+      ["mm2", 1e-6,           "mm²", "m", "mm2|square millimeters|τετραγωνικά χιλιοστά"],
+      ["cm2", 1e-4,           "cm²", "m", "cm2|square centimeters|τετραγωνικά εκατοστά"],
+      ["m2",  1,              "m²", "m", "m2|sqm|square meter|square meters|square metres|τετραγωνικά|τετραγωνικά μέτρα|τμ|τ.μ."],
+      ["ha",  10000,          "ha", "m", "hectares|εκτάρια"],
+      ["km2", 1e6,            "km²", "m", "km2|square kilometers|square kilometres|τετραγωνικά χιλιόμετρα"],
+      ["in2", 0.00064516,     "in²", "i", "in2|sq in|square inches"],
+      ["ft2", 0.09290304,     "ft²", "i", "ft2|sq ft|sqft|square feet"],
+      ["yd2", 0.83612736,     "yd²", "i", "yd2|sq yd|square yards"],
+      ["acre", 4046.8564224,  "ac", "i", "acres|ac"],
+      ["mi2", 2589988.110336, "mi²", "i", "mi2|sq mi|square miles"],
+      ["strema", 1000,        "στρ.", "o", "στρέμμα|στρέμματα|στρεμμα|stremma|stremmata|στρ"]
     ] },
-    { id: "speed", base: "m/s", en: "Speed", el: "Ταχύτητα", def: ["kmh", "mph"], u: [
-      ["mps", 1,               "m/s",  "Metre per second",    "Μέτρα ανά δευτερόλεπτο", "m", "m/s|meters per second|metres per second"],
-      ["kmh", 1 / 3.6,         "km/h", "Kilometre per hour",  "Χιλιόμετρα ανά ώρα",     "m", "km/h|kmh|kph|kilometers per hour|χλμ/ώρα|χιλιόμετρα την ώρα"],
-      ["mph", 0.44704,         "mph",  "Mile per hour",       "Μίλια ανά ώρα",          "i", "mi/h|miles per hour|μίλια την ώρα"],
-      ["fts", 0.3048,          "ft/s", "Foot per second",     "Πόδια ανά δευτερόλεπτο", "i", "ft/s|fps|feet per second"],
-      ["kn",  1852 / 3600,     "kn",   "Knot",                "Κόμβος",                 "o", "knot|knots|kt|κόμβοι|κόμβους"]
+    { id: "speed", base: "m/s", def: ["kmh", "mph"], u: [
+      ["mps", 1,               "m/s", "m", "m/s|meters per second|metres per second"],
+      ["kmh", 1 / 3.6,         "km/h", "m", "km/h|kmh|kph|kilometers per hour|χλμ/ώρα|χιλιόμετρα την ώρα"],
+      ["mph", 0.44704,         "mph", "i", "mi/h|miles per hour|μίλια την ώρα"],
+      ["fts", 0.3048,          "ft/s", "i", "ft/s|fps|feet per second"],
+      ["kn",  1852 / 3600,     "kn", "o", "knot|knots|kt|κόμβοι|κόμβους"]
     ] },
-    { id: "cooking", base: "L", en: "Cooking", el: "Μαγειρική", def: ["cup", "g"], dens: true, u: [
-      ["tsp",   0.005,          "tsp",  "Teaspoon (5 ml)",    "Κουταλάκι γλυκού (5 ml)", "m", "teaspoon|teaspoons|κουταλάκι|κουταλάκια|κ.γ."],
-      ["tbsp",  0.015,          "tbsp", "Tablespoon (15 ml)", "Κουταλιά σούπας (15 ml)", "m", "tablespoon|tablespoons|κουταλιά|κουταλιές|κ.σ."],
-      ["cup",   0.25,           "cup",  "Cup (250 ml)",       "Φλιτζάνι (250 ml)",       "m", "cups|metric cup|φλιτζάνι|φλιτζάνια|κούπα|κούπες"],
-      ["ustsp", 0.00492892159375, "US tsp", "Teaspoon (US)",  "Κουταλάκι (ΗΠΑ)",         "i", "us tsp|us teaspoon"],
-      ["ustbsp", 0.01478676478125, "US tbsp", "Tablespoon (US)", "Κουταλιά (ΗΠΑ)",     "i", "us tbsp|us tablespoon"],
-      ["uscup", 0.2365882365,   "US cup", "Cup (US)",         "Φλιτζάνι (ΗΠΑ)",          "i", "us cup|us cups"],
-      ["cfloz", 0.0295735295625, "fl oz", "Fluid ounce (US)", "Υγρή ουγγιά (ΗΠΑ)",       "i", "fl oz|floz|fluid ounce|fluid ounces"],
-      ["cml",   0.001,          "ml",   "Millilitre",         "Χιλιοστόλιτρο",           "m", "ml|milliliter|milliliters|χιλιοστόλιτρα"],
-      ["cliter", 1,              "L",    "Litre",              "Λίτρο",                   "m", "l|liter|liters|λίτρα"],
-      ["g",     "w0.001",       "g",    "Gram",               "Γραμμάριο",               "m", "grams|γραμμάρια|γρ|gr"],
-      ["ckg",   "w1",           "kg",   "Kilogram",           "Κιλό",                    "m", "kg|kilo|kilos|κιλά"],
-      ["coz",   "w0.028349523125", "oz", "Ounce",             "Ουγγιά",                  "i", "oz|ounces|ουγγιές"],
-      ["clb",   "w0.45359237",  "lb",   "Pound",              "Λίβρα",                   "i", "lb|pounds|λίβρες"]
+    { id: "cooking", base: "L", def: ["cup", "g"], dens: true, u: [
+      ["tsp",   0.005,          "tsp", "m", "teaspoon|teaspoons|κουταλάκι|κουταλάκια|κ.γ."],
+      ["tbsp",  0.015,          "tbsp", "m", "tablespoon|tablespoons|κουταλιά|κουταλιές|κ.σ."],
+      ["cup",   0.25,           "cup", "m", "cups|metric cup|φλιτζάνι|φλιτζάνια|κούπα|κούπες"],
+      ["ustsp", 0.00492892159375, "US tsp", "i", "us tsp|us teaspoon"],
+      ["ustbsp", 0.01478676478125, "US tbsp", "i", "us tbsp|us tablespoon"],
+      ["uscup", 0.2365882365,   "US cup", "i", "us cup|us cups"],
+      ["cfloz", 0.0295735295625, "fl oz", "i", "fl oz|floz|fluid ounce|fluid ounces"],
+      ["cml",   0.001,          "ml", "m", "ml|milliliter|milliliters|χιλιοστόλιτρα"],
+      ["cliter", 1,              "L", "m", "l|liter|liters|λίτρα"],
+      ["g",     "w0.001",       "g", "m", "grams|γραμμάρια|γρ|gr"],
+      ["ckg",   "w1",           "kg", "m", "kg|kilo|kilos|κιλά"],
+      ["coz",   "w0.028349523125", "oz", "i", "oz|ounces|ουγγιές"],
+      ["clb",   "w0.45359237",  "lb", "i", "lb|pounds|λίβρες"]
     ] },
-    { id: "time", base: "s", en: "Time", el: "Χρόνος", def: ["h", "min"], u: [
-      ["ms",   0.001,     "ms",  "Millisecond", "Χιλιοστό του δευτερολέπτου", "m", "milliseconds|msec"],
-      ["s",    1,         "s",   "Second",      "Δευτερόλεπτο", "m", "sec|secs|seconds|δευτερόλεπτα|δευτ"],
-      ["min",  60,        "min", "Minute",      "Λεπτό",        "m", "minutes|mins|λεπτά"],
-      ["h",    3600,      "h",   "Hour",        "Ώρα",          "m", "hr|hrs|hours|ώρες|ωρες"],
-      ["d",    86400,     "d",   "Day",         "Μέρα",         "m", "day|days|μέρες|ημέρα|ημέρες"],
-      ["wk",   604800,    "wk",  "Week",        "Εβδομάδα",     "m", "week|weeks|εβδομάδες"],
-      ["mo",   2629746,   "mo",  "Month (average)", "Μήνας (μέσος)", "o", "month|months|μήνας|μήνες"],
-      ["yr",   31556952,  "yr",  "Year (average)",  "Έτος (μέσο)",   "o", "year|years|y|έτος|έτη|χρόνος|χρόνια"]
+    { id: "time", base: "s", def: ["h", "min"], u: [
+      ["ms",   0.001,     "ms", "m", "milliseconds|msec"],
+      ["s",    1,         "s", "m", "sec|secs|seconds|δευτερόλεπτα|δευτ"],
+      ["min",  60,        "min", "m", "minutes|mins|λεπτά"],
+      ["h",    3600,      "h", "m", "hr|hrs|hours|ώρες|ωρες"],
+      ["d",    86400,     "d", "m", "day|days|μέρες|ημέρα|ημέρες"],
+      ["wk",   604800,    "wk", "m", "week|weeks|εβδομάδες"],
+      ["mo",   2629746,   "mo", "o", "month|months|μήνας|μήνες"],
+      ["yr",   31556952,  "yr", "o", "year|years|y|έτος|έτη|χρόνος|χρόνια"]
     ] },
-    { id: "data", base: "B", en: "Data", el: "Δεδομένα", def: ["GB", "MB"], u: [
-      ["bit",  0.125,          "bit", "Bit",       "Bit",       "m", "bits"],
-      ["B",    1,              "B",   "Byte",      "Byte",      "m", "bytes"],
-      ["kB",   1e3,            "kB",  "Kilobyte",  "Kilobyte",  "m", "kb|kilobytes"],
-      ["MB",   1e6,            "MB",  "Megabyte",  "Megabyte",  "m", "mb|megabytes"],
-      ["GB",   1e9,            "GB",  "Gigabyte",  "Gigabyte",  "m", "gb|gigabytes|giga"],
-      ["TB",   1e12,           "TB",  "Terabyte",  "Terabyte",  "m", "tb|terabytes"],
-      ["PB",   1e15,           "PB",  "Petabyte",  "Petabyte",  "m", "pb|petabytes"],
-      ["Mbit", 125000,         "Mbit", "Megabit",  "Megabit",   "m", "mbit|mbits|megabits|mb/s"],
-      ["Gbit", 125000000,      "Gbit", "Gigabit",  "Gigabit",   "m", "gbit|gbits|gigabits"],
-      ["KiB",  1024,           "KiB", "Kibibyte",  "Kibibyte",  "o", "kib|kibibytes"],
-      ["MiB",  1048576,        "MiB", "Mebibyte",  "Mebibyte",  "o", "mib|mebibytes"],
-      ["GiB",  1073741824,     "GiB", "Gibibyte",  "Gibibyte",  "o", "gib|gibibytes"],
-      ["TiB",  1099511627776,  "TiB", "Tebibyte",  "Tebibyte",  "o", "tib|tebibytes"]
+    { id: "data", base: "B", def: ["GB", "MB"], u: [
+      ["bit",  0.125,          "bit", "m", "bits"],
+      ["B",    1,              "B", "m", "bytes"],
+      ["kB",   1e3,            "kB", "m", "kb|kilobytes"],
+      ["MB",   1e6,            "MB", "m", "mb|megabytes"],
+      ["GB",   1e9,            "GB", "m", "gb|gigabytes|giga"],
+      ["TB",   1e12,           "TB", "m", "tb|terabytes"],
+      ["PB",   1e15,           "PB", "m", "pb|petabytes"],
+      ["Mbit", 125000,         "Mbit", "m", "mbit|mbits|megabits|mb/s"],
+      ["Gbit", 125000000,      "Gbit", "m", "gbit|gbits|gigabits"],
+      ["KiB",  1024,           "KiB", "o", "kib|kibibytes"],
+      ["MiB",  1048576,        "MiB", "o", "mib|mebibytes"],
+      ["GiB",  1073741824,     "GiB", "o", "gib|gibibytes"],
+      ["TiB",  1099511627776,  "TiB", "o", "tib|tebibytes"]
     ] },
-    { id: "fuel", base: "L/100km", en: "Fuel economy", el: "Κατανάλωση καυσίμου", def: ["l100", "mpgus"], u: [
-      ["l100",  "fn", "L/100 km", "Litres per 100 km", "Λίτρα ανά 100 km", "m", "l/100km|l/100 km|l100km|λίτρα τα 100"],
-      ["kml",   "fn", "km/L",     "Kilometres per litre", "Χιλιόμετρα με ένα λίτρο", "m", "km/l|kmpl|χλμ/λίτρο"],
-      ["mpgus", "fn", "mpg",      "Miles per gallon (US)", "Μίλια ανά γαλόνι (ΗΠΑ)", "i", "mpg|us mpg|mpg us"],
-      ["mpguk", "fn", "UK mpg",   "Miles per gallon (UK)", "Μίλια ανά γαλόνι (ΗΒ)",  "i", "uk mpg|mpg uk|imperial mpg"]
+    { id: "fuel", base: "L/100km", def: ["l100", "mpgus"], u: [
+      ["l100",  "fn", "L/100 km", "m", "l/100km|l/100 km|l100km|λίτρα τα 100"],
+      ["kml",   "fn", "km/L", "m", "km/l|kmpl|χλμ/λίτρο"],
+      ["mpgus", "fn", "mpg", "i", "mpg|us mpg|mpg us"],
+      ["mpguk", "fn", "UK mpg", "i", "uk mpg|mpg uk|imperial mpg"]
     ] },
-    { id: "pressure", base: "Pa", en: "Pressure", el: "Πίεση", def: ["bar", "psi"], u: [
-      ["Pa",   1,                 "Pa",   "Pascal",      "Πασκάλ",          "m", "pa|pascal|pascals"],
-      ["hPa",  100,               "hPa",  "Hectopascal", "Εκτοπασκάλ",      "m", "hpa|hectopascals"],
-      ["kPa",  1000,              "kPa",  "Kilopascal",  "Κιλοπασκάλ",      "m", "kpa|kilopascals"],
-      ["MPa",  1e6,               "MPa",  "Megapascal",  "Μεγαπασκάλ",      "m", "mpa|megapascals"],
-      ["mbar", 100,               "mbar", "Millibar",    "Μιλιμπάρ",        "m", "millibar|millibars"],
-      ["bar",  1e5,               "bar",  "Bar",         "Μπαρ",            "m", "bars|μπαρ"],
-      ["atm",  101325,            "atm",  "Atmosphere",  "Ατμόσφαιρα",      "o", "atmospheres|ατμόσφαιρες"],
-      ["psi",  6894.757293168361, "psi",  "Pound per square inch", "Λίβρες ανά τετρ. ίντσα", "i", "lbf/in2|pounds per square inch"],
-      ["mmHg", 133.322387415,     "mmHg", "Millimetre of mercury", "Χιλιοστά υδραργύρου", "o", "mmhg|torr|χιλιοστά στήλης υδραργύρου"],
-      ["inHg", 3386.388640341,    "inHg", "Inch of mercury", "Ίντσες υδραργύρου", "i", "inhg|inches of mercury"]
+    { id: "pressure", base: "Pa", def: ["bar", "psi"], u: [
+      ["Pa",   1,                 "Pa", "m", "pa|pascal|pascals"],
+      ["hPa",  100,               "hPa", "m", "hpa|hectopascals"],
+      ["kPa",  1000,              "kPa", "m", "kpa|kilopascals"],
+      ["MPa",  1e6,               "MPa", "m", "mpa|megapascals"],
+      ["mbar", 100,               "mbar", "m", "millibar|millibars"],
+      ["bar",  1e5,               "bar", "m", "bars|μπαρ"],
+      ["atm",  101325,            "atm", "o", "atmospheres|ατμόσφαιρες"],
+      ["psi",  6894.757293168361, "psi", "i", "lbf/in2|pounds per square inch"],
+      ["mmHg", 133.322387415,     "mmHg", "o", "mmhg|torr|χιλιοστά στήλης υδραργύρου"],
+      ["inHg", 3386.388640341,    "inHg", "i", "inhg|inches of mercury"]
     ] },
-    { id: "energy", base: "J", en: "Energy", el: "Ενέργεια", def: ["kcal", "kJ"], u: [
-      ["J",    1,                "J",    "Joule",          "Τζάουλ",        "m", "j|joules"],
-      ["kJ",   1000,             "kJ",   "Kilojoule",      "Κιλοτζάουλ",    "m", "kj|kilojoules"],
-      ["MJ",   1e6,              "MJ",   "Megajoule",      "Μεγατζάουλ",    "m", "mj|megajoules"],
-      ["cal",  4.184,            "cal",  "Calorie",        "Θερμίδα",       "o", "calorie|calories|θερμίδες"],
-      ["kcal", 4184,             "kcal", "Kilocalorie",    "Κιλοθερμίδα",   "o", "kilocalorie|kilocalories|κιλοθερμίδες"],
-      ["Wh",   3600,             "Wh",   "Watt-hour",      "Βατώρα",        "m", "wh|watt hour|watt hours|βατώρες"],
-      ["kWh",  3.6e6,            "kWh",  "Kilowatt-hour",  "Κιλοβατώρα",    "m", "kwh|kilowatt hour|kilowatt hours|κιλοβατώρες"],
-      ["BTU",  1055.05585262,    "BTU",  "British thermal unit", "BTU",     "i", "btu|btus"]
+    { id: "energy", base: "J", def: ["kcal", "kJ"], u: [
+      ["J",    1,                "J", "m", "j|joules"],
+      ["kJ",   1000,             "kJ", "m", "kj|kilojoules"],
+      ["MJ",   1e6,              "MJ", "m", "mj|megajoules"],
+      ["cal",  4.184,            "cal", "o", "calorie|calories|θερμίδες"],
+      ["kcal", 4184,             "kcal", "o", "kilocalorie|kilocalories|κιλοθερμίδες"],
+      ["Wh",   3600,             "Wh", "m", "wh|watt hour|watt hours|βατώρες"],
+      ["kWh",  3.6e6,            "kWh", "m", "kwh|kilowatt hour|kilowatt hours|κιλοβατώρες"],
+      ["BTU",  1055.05585262,    "BTU", "i", "btu|btus"]
     ] },
-    { id: "power", base: "W", en: "Power", el: "Ισχύς", def: ["kW", "hp"], u: [
-      ["W",    1,                     "W",     "Watt",               "Βατ",               "m", "w|watts|βατ"],
-      ["kW",   1000,                  "kW",    "Kilowatt",           "Κιλοβάτ",           "m", "kw|kilowatts|κιλοβάτ"],
-      ["MW",   1e6,                   "MW",    "Megawatt",           "Μεγαβάτ",           "m", "mw|megawatts"],
-      ["PS",   735.49875,             "PS",    "Metric horsepower",  "Ίππος (μετρικός)",  "o", "ps|cv|metric hp|ίπποι|ίππους|άλογα"],
-      ["hp",   745.69987158227022,    "hp",    "Horsepower (mechanical)", "Ίππος (μηχανικός)", "i", "bhp|horsepower"],
-      ["btuh", 0.29307107017222,      "BTU/h", "BTU per hour",       "BTU ανά ώρα",       "i", "btu/h|btuh|btu per hour"]
+    { id: "power", base: "W", def: ["kW", "hp"], u: [
+      ["W",    1,                     "W", "m", "w|watts|βατ"],
+      ["kW",   1000,                  "kW", "m", "kw|kilowatts|κιλοβάτ"],
+      ["MW",   1e6,                   "MW", "m", "mw|megawatts"],
+      ["PS",   735.49875,             "PS", "o", "ps|cv|metric hp|ίπποι|ίππους|άλογα"],
+      ["hp",   745.69987158227022,    "hp", "i", "bhp|horsepower"],
+      ["btuh", 0.29307107017222,      "BTU/h", "i", "btu/h|btuh|btu per hour"]
     ] },
-    { id: "angle", base: "deg", en: "Angle", el: "Γωνία", def: ["deg", "rad"], neg: true, u: [
-      ["deg",    1,                  "°",    "Degree",      "Μοίρα",           "m", "deg|degrees|μοίρες"],
-      ["rad",    180 / Math.PI,      "rad",  "Radian",      "Ακτίνιο",         "m", "radian|radians|ακτίνια"],
-      ["grad",   0.9,                "gon",  "Gradian",     "Βαθμός (grad)",   "o", "grad|grads|gradians|gon"],
-      ["arcmin", 1 / 60,             "′",    "Arcminute",   "Πρώτο λεπτό",     "o", "arcmin|arcminutes|πρώτα λεπτά"],
-      ["arcsec", 1 / 3600,           "″",    "Arcsecond",   "Δεύτερο λεπτό",   "o", "arcsec|arcseconds"],
-      ["turn",   360,                "turn", "Full turn",   "Πλήρης στροφή",   "o", "turns|rev|revolution|revolutions|στροφές|στροφή"]
+    { id: "angle", base: "deg", def: ["deg", "rad"], neg: true, u: [
+      ["deg",    1,                  "°", "m", "deg|degrees|μοίρες"],
+      ["rad",    180 / Math.PI,      "rad", "m", "radian|radians|ακτίνια"],
+      ["grad",   0.9,                "gon", "o", "grad|grads|gradians|gon"],
+      ["arcmin", 1 / 60,             "′", "o", "arcmin|arcminutes|πρώτα λεπτά"],
+      ["arcsec", 1 / 3600,           "″", "o", "arcsec|arcseconds"],
+      ["turn",   360,                "turn", "o", "turns|rev|revolution|revolutions|στροφές|στροφή"]
     ] },
-    { id: "currency", base: "EUR", en: "Currency", el: "Νομίσματα", def: ["EUR", "USD"], money: true, u: [] }
+    { id: "currency", base: "EUR", def: ["EUR", "USD"], money: true, u: [] }
   ];
 
   // Ingredients for Cooking (volume ⇄ weight), grams per millilitre.
-  // Approximate kitchen values; the app says so.
+  // Approximate kitchen values; the app says so. [id, g/ml]; the EN
+  // and EL names (NAMES "ingr.<id>") are added as [2] and [3] below.
   var INGREDIENTS = [
-    ["water",  1.0,   "Water",            "Νερό"],
-    ["milk",   1.03,  "Milk",             "Γάλα"],
-    ["oil",    0.92,  "Oil",              "Λάδι"],
-    ["butter", 0.96,  "Butter",           "Βούτυρο"],
-    ["flour",  0.53,  "Flour",            "Αλεύρι"],
-    ["sugar",  0.85,  "Sugar",            "Ζάχαρη"],
-    ["icing",  0.5,   "Icing sugar",      "Ζάχαρη άχνη"],
-    ["rice",   0.85,  "Rice (uncooked)",  "Ρύζι (άβραστο)"],
-    ["honey",  1.42,  "Honey",            "Μέλι"],
-    ["salt",   1.2,   "Salt",             "Αλάτι"],
-    ["cocoa",  0.42,  "Cocoa powder",     "Κακάο"]
+    ["water",  1.0],
+    ["milk",   1.03],
+    ["oil",    0.92],
+    ["butter", 0.96],
+    ["flour",  0.53],
+    ["sugar",  0.85],
+    ["icing",  0.5],
+    ["rice",   0.85],
+    ["honey",  1.42],
+    ["salt",   1.2],
+    ["cocoa",  0.42]
   ];
 
   // ECB reference currencies (frankfurter.dev); EUR is the base.
@@ -245,15 +567,41 @@
   var CAT_BY_ID = {};
   CATS.forEach(function (c) {
     CAT_BY_ID[c.id] = c;
+    c.en = NAMES.en["cat." + c.id]; c.el = NAMES.el["cat." + c.id];
     c.units = c.u.map(function (r) {
-      var u = { id: r[0], cat: c.id, sym: r[2], en: r[3], el: r[4], g: r[5],
-                al: (r[6] ? r[6].split("|") : []) };
+      var k = "unit." + c.id + "." + r[0];
+      var u = { id: r[0], cat: c.id, sym: r[2], en: NAMES.en[k], el: NAMES.el[k], key: k, g: r[3],
+                al: (r[4] ? r[4].split("|") : []) };
       if (typeof r[1] === "number") u.f = r[1];
       else if (typeof r[1] === "string" && r[1].charAt(0) === "w") { u.w = parseFloat(r[1].slice(1)); }   // weight in kg (cooking)
       else u.fn = true;
       return u;
     });
   });
+
+  INGREDIENTS.forEach(function (g) { g.push(NAMES.en["ingr." + g[0]], NAMES.el["ingr." + g[0]]); });
+
+  // Names in a pack language (German...): NAMES[lang] is built from
+  // the "units" pack by orosI18n.table (English where it has no line).
+  function names(lang) {
+    if (lang === "el") return NAMES.el;
+    if (lang && lang !== "en" && !NAMES[lang] && typeof window !== "undefined" && window.orosI18n) {
+      try { window.orosI18n.table(NAMES, "units", lang); } catch (e) {}
+    }
+    return NAMES[lang] || NAMES.en;
+  }
+  function nameOf(key, lang) { var t = names(lang); return t[key] !== undefined ? t[key] : NAMES.en[key]; }
+  function ingredientName(id, lang) { return own(NAMES.en, "ingr." + id) ? nameOf("ingr." + id, lang) : ""; }
+  // Locale and decimal mark of a language (German writes 1,5 like Greek).
+  function locOf(lang) {
+    if (typeof window !== "undefined" && window.orosI18n) return window.orosI18n.locale(lang);
+    return lang === "el" ? "el-GR" : "en-GB";
+  }
+  function commaDecimal(lang) {
+    if (lang === "el") return true;
+    if (!lang || lang === "en") return false;
+    try { return new Intl.NumberFormat(locOf(lang)).format(1.5).indexOf(",") >= 0; } catch (e) { return false; }
+  }
 
   function cat(id) { return own(CAT_BY_ID, id) ? CAT_BY_ID[id] : null; }
 
@@ -384,7 +732,7 @@
     var sep = hasDot ? "." : (hasCom ? "," : "");
     if (!sep) return tok;
     var parts = tok.split(sep);
-    var groupSep = lang === "el" ? "." : ",";
+    var groupSep = commaDecimal(lang) ? "." : ",";
     if (parts.length > 2) {                               // 1.000.000
       for (var i = 1; i < parts.length; i++) if (parts[i].length !== 3) return null;
       return parts.join("");
@@ -467,8 +815,8 @@
   function formatNumber(v, prec, lang, group) {
     if (!isNum(v)) return "";
     prec = clampPrec(prec);
-    var loc = lang === "el" ? "el-GR" : "en-GB";
-    var dec = lang === "el" ? "," : ".";
+    var loc = locOf(lang);
+    var dec = commaDecimal(lang) ? "," : ".";
     if (v === 0) return "0";
     var r = Number(v.toPrecision(prec));
     var a = Math.abs(r);
@@ -493,11 +841,11 @@
   }
   function unitName(u, lang) {
     if (u.cat === "currency") return currencyName(u.id, lang);
-    return lang === "el" ? u.el : u.en;
+    return u.key ? nameOf(u.key, lang) : (lang === "el" ? u.el : u.en);
   }
   var DN = {};
   function currencyName(code, lang) {
-    var loc = lang === "el" ? "el" : "en";
+    var loc = lang === "el" ? "el" : (lang && lang !== "en" ? locOf(lang) : "en");
     try {
       if (!DN[loc] && typeof Intl !== "undefined" && Intl.DisplayNames) DN[loc] = new Intl.DisplayNames([loc], { type: "currency" });
       var n = DN[loc] ? DN[loc].of(code) : "";
@@ -505,11 +853,12 @@
     } catch (e) {}
     return code;
   }
-  function catName(c, lang) { return lang === "el" ? c.el : c.en; }
+  function catName(c, lang) { return c && c.id ? nameOf("cat." + c.id, lang) : ""; }
 
   // Every way a unit can be written, folded. Names in both languages.
   function aliasesOf(u) {
     var list = [u.id, u.sym, u.en, u.el].concat(u.al);
+    Object.keys(NAMES).forEach(function (l) { if (u.key && l !== "en" && l !== "el" && NAMES[l][u.key]) list.push(NAMES[l][u.key]); });
     if (u.en.indexOf("(") < 0) list.push(u.en + "s");
     if (u.cat === "currency") list.push(currencyName(u.id, "en"), currencyName(u.id, "el"));
     var seen = {}, out = [];
@@ -835,7 +1184,7 @@
     CATS: CATS, INGREDIENTS: INGREDIENTS,
     cat: cat, unitsOf: unitsOf, unit: unit, convert: convert, needsDensity: needsDensity, ingredient: ingredient,
     parseInput: parseInput, formatNumber: formatNumber, clampPrec: clampPrec,
-    fold: fold, unitName: unitName, catName: catName, currencyName: currencyName,
+    fold: fold, unitName: unitName, catName: catName, currencyName: currencyName, ingredientName: ingredientName,
     aliasesOf: aliasesOf, matchUnits: matchUnits, parseQuery: parseQuery, partnerOf: partnerOf,
     favId: favId, recId: recId, mergeData: mergeData, emptyData: emptyData,
     toggleFav: toggleFav, isFav: isFav, addRecent: addRecent, clearRecent: clearRecent,

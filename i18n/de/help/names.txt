@@ -1,0 +1,52 @@
+# Namensgenerator
+Der Namensgenerator denkt sich Namen für deine Ecken im Web, dein Profil und deine Geschichten aus: Nutzernamen, verspielte Titel, Fantasienamen mit Beinamen und Namen für Haustiere, Teams und Projekte. Behalte die, die dir gefallen, als Favoriten.
+
+## Erste Schritte
+Beim Öffnen der App bekommst du gleich 8 neue Namen. Tippe oder klicke auf `Neue Namen` (oder drücke [[Enter]] oder [[Space]]) für weitere 8, alle verschieden.
+
+Neben jedem Namen:
+- legt die Kopieren-Schaltfläche ihn in die Zwischenablage;
+- fügt der Stern (`Behalten`) ihn zu deinen `Favoriten` hinzu. Tippe noch einmal auf den Stern, um ihn zu entfernen;
+- startet `Auf eine Netizen-ID-Karte` bei Handles und Titeln eine neue Karte in [Netizen-ID](app:netizen): Ein Handle wird zum Nutzernamen, ein Titel zum Motto. `Rückgängig` dort nimmt die Karte zurück;
+- öffnet `Neue Figur in Figuren` bei Hoheiten eine neue Figur mit diesem Namen in [Figuren](app:characters). Gespeichert wird erst, wenn du dort auf Speichern drückst.
+
+## Modi
+Wähle oben einen Modus aus den Tabs:
+- `Handles`: Nutzernamen fürs Web, ein Adjektiv plus ein Nomen in lateinischen Buchstaben, bis zu 24 Zeichen. Sie werden mit „@“ angezeigt, aber ohne kopiert.
+- `Titel`: Beinamen für dein Profil, etwa eine Rolle mit Adjektiv oder „of something“.
+- `Hoheiten`: ein erfundener Fantasiename plus ein Beiname.
+- `Haustiere`: ein Name für einen neuen Freund, manchmal mit einem Titel wie „Captain“.
+- `Teams`: ein Adjektiv und ein Nomen im Plural, für einen Verein oder einen Quizabend.
+- `Projekte`: ein Codename, manchmal nach „Project“, „Operation“ oder „Codename“.
+
+Jeder Modus behält seine eigene Liste, solange die App offen ist, ein Tabwechsel wirft also nichts weg.
+
+## Wörter und Stil
+Unter `Wörter` wählst du `Englisch` oder `Griechisch`. Die Namen gibt es nur in diesen beiden Sprachen; auf Deutsch startet die App mit `Englisch`. Mit `Griechisch` werden Handles in einfachem Greeklish geschrieben (zum Beispiel fengari), und griechische Titel und Beinamen passen zum Geschlecht des Namens. Auch griechische Team- und Projektnamen stimmen überein.
+
+Nur für `Handles` fügt `Stil` optionale Extras hinzu; schalte beliebige ein:
+- `Leet (a→4)` tauscht einige Buchstaben gegen Zahlen (a→4, e→3, i→1, o→0, s→5, t→7).
+- `Trennzeichen (_ -)` setzt `_` oder `-` zwischen die beiden Wörter.
+- `Zahlen` hängt am Ende eine Zahl an.
+
+Eine geänderte Wort- oder Stiloption erzeugt sofort neue Namen.
+
+## Favoriten
+`Favoriten` sind nach Modus gruppiert, die neuesten zuerst, mit einer Anzahl oben. Kopiere einen einzelnen Namen oder mit `Alle kopieren` alle Favoriten, einen pro Zeile. Die ×-Schaltfläche entfernt einen Favoriten; eine `Rückgängig`-Schaltfläche bleibt ein paar Sekunden stehen.
+
+## Synchronisierung und Sicherung
+Deine Favoriten werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten abgeglichen; derselbe Name mit Stern auf zwei Geräten zählt einmal. Modus, Sprache und Stil bleiben auf jedem Gerät, und die Namenslisten selbst werden nie gespeichert.
+
+Es gibt keinen Import oder Export; nutze die orOS-[Sicherung](help:t/backup), um eine Kopie aufzubewahren.
+
+## Tastenkürzel
+- [[Enter]] oder [[Space]]: neue Namen (wenn keine Schaltfläche den Fokus hat).
+- Pfeiltasten auf den Modus-Tabs: zum nächsten oder vorherigen Modus.
+
+## Tipps
+- Prüfe, ob ein Handle auf der gewünschten Website frei ist, bevor du dich darin verliebst.
+- Mit `Alle kopieren` fügst du deine Auswahl in [Notizen](app:notes) oder eine Nachricht ein.
+
+## Grenzen
+- Du kannst bis zu 1.000 Favoriten behalten.
+- Du kannst keinen Namen bearbeiten oder eigene Wörter eingeben; die App wählt aus ihren eingebauten Wortlisten.

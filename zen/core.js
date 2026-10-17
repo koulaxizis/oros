@@ -121,11 +121,17 @@
 
   var ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.5"/><circle cx="12" cy="12" r="8" opacity=".55"/></svg>';
   function readJSON(k) { try { return JSON.parse(root.localStorage.getItem(k)); } catch (e) { return null; } }
+  // The Habits feed row: Habits reads name / hint as { en, el } (the
+  // feed contract), so the row keeps its EN/EL names in every language.
+  var FEED_T = {
+    en: { "feed.name": "Micro-Zen", "feed.hint": "A finished breathing session in Micro-Zen" },
+    el: { "feed.name": "Μίκρο-Ζεν", "feed.hint": "Μια ολοκληρωμένη συνεδρία αναπνοής στο Μίκρο-Ζεν" }
+  };
   var FEED = {
     id: "zen",
     app: "zen",
-    name: { en: "Micro-Zen", el: "Μίκρο-Ζεν" },
-    hint: { en: "A finished breathing session in Micro-Zen", el: "Μια ολοκληρωμένη συνεδρία αναπνοής στο Μίκρο-Ζεν" },
+    name: { en: FEED_T.en["feed.name"], el: FEED_T.el["feed.name"] },
+    hint: { en: FEED_T.en["feed.hint"], el: FEED_T.el["feed.hint"] },
     color: "#7fb7a4",
     icon: ICON,
     keys: [ZEN_KEY, PATS_KEY],

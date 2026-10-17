@@ -30,6 +30,8 @@
 
   // ---------- 1. i18n ----------
   function lang() {
+    // orosI18n (../i18n.js): the full language code, a pack language included.
+    if (window.orosI18n) return window.orosI18n.lang();
     // Shell doctrine: iframe apps read localStorage["oros-lang"]
     // directly (initPrefs writes it on every boot and toggle; the
     // shell re-opens the iframe on language change). Parent window
@@ -237,34 +239,45 @@
   // whether the current result is right or wrong.
   var TROLL_STRINGS = {
     en: {
-      "calc.history": "Receipts of my crimes",
-      "calc.history.empty": "You haven't annoyed me yet.",
-      "calc.troll.hint": "Trust me. I'm a calculator.",
-      "toast.true": "Fine, take your correct answer. Nerd.",
-      "toast.false.1": "Math is hard. You understand, right?",
-      "toast.false.2": "I did the math. Probably. Mostly. Trust me.",
-      "toast.false.3": "That's the answer. Any other calculator would agree*.\n*terms apply",
-      "toast.false.4": "Rounded for your convenience. Generously.",
-      "toast.false.5": "Confidently calculated. Confidence is free."
+      "troll.calc.history": "Receipts of my crimes",
+      "troll.calc.history.empty": "You haven't annoyed me yet.",
+      "troll.calc.troll.hint": "Trust me. I'm a calculator.",
+      "troll.toast.true": "Fine, take your correct answer. Nerd.",
+      "troll.toast.false.1": "Math is hard. You understand, right?",
+      "troll.toast.false.2": "I did the math. Probably. Mostly. Trust me.",
+      "troll.toast.false.3": "That's the answer. Any other calculator would agree*.\n*terms apply",
+      "troll.toast.false.4": "Rounded for your convenience. Generously.",
+      "troll.toast.false.5": "Confidently calculated. Confidence is free.",
+      "troll.welcome": "I'll take good care of you… my way."
     },
     el: {
-      "calc.history": "Αποδείξεις των εγκλημάτων μου",
-      "calc.history.empty": "Δεν με έχεις εκνευρίσει ακόμα.",
-      "calc.troll.hint": "Έμπισέ με. Είμαι αριθμομηχανή.",
-      "toast.true": "Πάλι καλά που το πήρες σωστό. Φροντισμένος/η.",
-      "toast.false.1": "Τα μαθηματικά είναι δύσκολα. Με καταλαβαίνεις, έτσι;",
-      "toast.false.2": "Το υπολόγισα. Πιθανόν. Κυρίως. Έμπισέ με.",
-      "toast.false.3": "Αυτή είναι η απάντηση. Οποιαδήποτε άλλη αριθμομηχανή θα συμφωνούσε*.\n*με όρους",
-      "toast.false.4": "Στρογγυλοποιήθηκε για την ευκολία σου. Γενναιόδωρα.",
-      "toast.false.5": "Υπολογίστηκε με σιγουριά. Η σιγουριά είναι δωρεάν."
+      "troll.calc.history": "Αποδείξεις των εγκλημάτων μου",
+      "troll.calc.history.empty": "Δεν με έχεις εκνευρίσει ακόμα.",
+      "troll.calc.troll.hint": "Έμπισέ με. Είμαι αριθμομηχανή.",
+      "troll.toast.true": "Πάλι καλά που το πήρες σωστό. Φροντισμένος/η.",
+      "troll.toast.false.1": "Τα μαθηματικά είναι δύσκολα. Με καταλαβαίνεις, έτσι;",
+      "troll.toast.false.2": "Το υπολόγισα. Πιθανόν. Κυρίως. Έμπισέ με.",
+      "troll.toast.false.3": "Αυτή είναι η απάντηση. Οποιαδήποτε άλλη αριθμομηχανή θα συμφωνούσε*.\n*με όρους",
+      "troll.toast.false.4": "Στρογγυλοποιήθηκε για την ευκολία σου. Γενναιόδωρα.",
+      "troll.toast.false.5": "Υπολογίστηκε με σιγουριά. Η σιγουριά είναι δωρεάν.",
+      "troll.welcome": "Θα σε φροντίσω… με τον δικό μου τρόπο."
     }
   };
 
+  // A pack language: STRINGS[code] and TROLL_STRINGS[code] (pack "calculator").
+  if (window.orosI18n) {
+    window.orosI18n.table(STRINGS, "calculator", lang());
+    window.orosI18n.table(TROLL_STRINGS, "calculator", lang());
+  }
+  function strs() { return STRINGS[lang()] || STRINGS.en; }
+  function trolls() { return TROLL_STRINGS[lang()] || TROLL_STRINGS.en; }
+
+  // Troll mode overrides a key with its "troll." twin when there is one.
   function t(key) {
-    if (state.troll && TROLL_STRINGS[lang()][key]) {
-      return TROLL_STRINGS[lang()][key];
+    if (state.troll && trolls()["troll." + key]) {
+      return trolls()["troll." + key];
     }
-    return STRINGS[lang()][key] || STRINGS.en[key] || key;
+    return strs()[key] || STRINGS.en[key] || trolls()[key] || TROLL_STRINGS.en[key] || key;
   }
 
   // ---------- 2. Palette bridge (mood.js canonical) ----------
@@ -952,13 +965,13 @@
   // In troll mode, EVERY action gets commentary — even the honest
   // answers. Snark always; only the TRUTH varies.
   function trollToast(honest) {
-    var pack = TROLL_STRINGS[lang()];
+    var pack = trolls();
     var key;
     if (honest) {
-      key = "toast.true";
+      key = "troll.toast.true";
     } else {
-      var pool = ["toast.false.1", "toast.false.2", "toast.false.3",
-                  "toast.false.4", "toast.false.5"];
+      var pool = ["troll.toast.false.1", "troll.toast.false.2", "troll.toast.false.3",
+                  "troll.toast.false.4", "troll.toast.false.5"];
       key = pool[Math.floor(Math.random() * pool.length)];
     }
     transientNote(pack[key], "");
@@ -970,10 +983,7 @@
     persist(true);
     render();
     if (state.troll) {
-      transientNote(t("calc.troll"),
-        lang() === "el"
-          ? "Θα σε φροντίσω… με τον δικό μου τρόπο."
-          : "I'll take good care of you… my way.");
+      transientNote(t("calc.troll"), t("troll.welcome"));
     }
   }
 
@@ -1379,7 +1389,7 @@
   function tx(key, x) { return t(key).replace("{x}", x == null ? "" : String(x)); }
   function errText(code, detail) {
     var k = "calc.err." + code;
-    var s = STRINGS[lang()][k] || STRINGS.en[k];
+    var s = strs()[k] || STRINGS.en[k];
     return s ? tx(k, detail) : t("calc.err.syntax");
   }
   function coarse() {
@@ -1520,7 +1530,7 @@
     ["log₂", "fn:log2", "2ˣ", "ins:2^(", "fn"], ["mod", "ins: mod ", null, null, "fn"],
     ["x²", "ins:²", "x³", "ins:³", "fn"], ["xʸ", "ins:^", null, null, "fn"], ["√", "ins:√(", null, null, "fn"],
     ["∛", "ins:∛(", null, null, "fn"], ["ʸ√x", "fn:root", null, null, "fn"],
-    ["π", "ins:π", null, null, "fn"], ["e", "ins:e", null, null, "fn"], ["n!", "ins:!", null, null, "fn"],
+    ["\u03c0", "ins:\u03c0", null, null, "fn"], ["e", "ins:e", null, null, "fn"], ["n!", "ins:!", null, null, "fn"],
     ["%", "ins:%", null, null, "fn"], ["EE", "ins:E", null, null, "fn"],
     ["(", "ins:(", null, null, "fn"], [")", "ins:)", null, null, "fn"], ["|x|", "fn:abs", null, null, "fn"],
     ["1/x", "act:inv", null, null, "fn"], ["÷", "ins:÷", null, null, "op"],
@@ -2393,7 +2403,7 @@
                  "ln-amt", "ln-rate", "ln-term", "ln-unit", "sv-start", "sv-month", "sv-rate", "sv-years", "sv-freq"];
   var finLast = { loan: null, save: null };
 
-  function locale() { return lang() === "el" ? "el-GR" : "en-GB"; }
+  function locale() { return window.orosI18n ? window.orosI18n.locale(lang()) : (lang() === "el" ? "el-GR" : "en-GB"); }
   function fmtMoney(v) {
     try { return new Intl.NumberFormat(locale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v); }
     catch (e) { return v.toFixed(2); }

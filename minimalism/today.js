@@ -13,8 +13,15 @@
 (function (root) {
   "use strict";
   var KEY = "oros-minimalism-data";
-  var TXT = { en: { t: "Today's proposal", s: "Done or skip, in the app" },
-              el: { t: "Η πρόταση της ημέρας", s: "Έγινε ή παράλειψη, στην εφαρμογή" } };
+  var TXT = { en: { "today.title": "Today's proposal", "today.text": "Done or skip, in the app" },
+              el: { "today.title": "Η πρόταση της ημέρας", "today.text": "Έγινε ή παράλειψη, στην εφαρμογή" } };
+  // Pack "minimalism": the shell runs this file, so a pack language reads
+  // the "minimalism" pack when the shell has it, else English.
+  function words(lang) {
+    var I = root && root.orosI18n;
+    if (I && I.known && I.known(lang) && !TXT[lang]) I.table(TXT, "minimalism", lang);
+    return TXT[lang] || TXT.en;
+  }
 
   var PROVIDER = {
     id: "minimalism",
@@ -22,8 +29,8 @@
     collect: function (ctx) {
       var C = root.OrosMinimalismCore, raw = ctx.readJSON(KEY);
       if (!C || !C.hasAny(raw) || C.engagedOn(raw, ctx.today)) return [];
-      var w = TXT[ctx.lang] || TXT.en;
-      return [{ id: "day:" + ctx.today, due: ctx.today, kind: "task", title: w.t, text: w.s,
+      var w = words(ctx.lang);
+      return [{ id: "day:" + ctx.today, due: ctx.today, kind: "task", title: w["today.title"], text: w["today.text"],
                 target: { day: ctx.today } }];
     },
     open: function (target, win) {

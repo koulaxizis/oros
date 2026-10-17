@@ -39,7 +39,44 @@
   var DEFAULT      = { bpm: 120, voice: "square" };
 
   var LETTERS  = ["c", "c#", "d", "d#", "e", "f", "f#", "g", "g#", "a", "a#", "b"];
-  var SOLFEGE  = ["ντο", "ντο#", "ρε", "ρε#", "μι", "φα", "φα#", "σολ", "σολ#", "λα", "λα#", "σι"];
+  // Names of the ready tunes and the solfège note names, per language
+  // (a pack language: orosI18n.table, pack "ringtones").
+  var NAMES = {
+    en: {
+      "solfege.list": "do,do#,re,re#,mi,fa,fa#,sol,sol#,la,la#,si",
+      "preset.granvals": "Gran Vals (Tárrega)",
+      "preset.elise": "Für Elise (Beethoven)",
+      "preset.joy": "Ode to Joy (Beethoven)",
+      "preset.mountain": "In the Hall of the Mountain King (Grieg)",
+      "preset.jingle": "Jingle Bells",
+      "preset.twinkle": "Twinkle, Twinkle, Little Star",
+      "preset.jacques": "Frère Jacques"
+    },
+    el: {
+      "solfege.list": "ντο,ντο#,ρε,ρε#,μι,φα,φα#,σολ,σολ#,λα,λα#,σι",
+      "preset.granvals": "Gran Vals (Τάρεγκα)",
+      "preset.elise": "Για την Ελίζα (Μπετόβεν)",
+      "preset.joy": "Ωδή στη Χαρά (Μπετόβεν)",
+      "preset.mountain": "Στη σπηλιά του βασιλιά του βουνού (Γκριγκ)",
+      "preset.jingle": "Jingle Bells",
+      "preset.twinkle": "Λάμπει, λάμπει τ' αστεράκι",
+      "preset.jacques": "Frère Jacques"
+    }
+  };
+  // The Greek solfège (the default for Greek, and what noteName writes).
+  var SOLFEGE  = NAMES.el["solfege.list"].split(",");
+  // Solfège names in a language: "en", "el" or a pack language.
+  function solfegeOf(lang) {
+    var I = typeof window !== "undefined" && window.orosI18n;
+    var tb = NAMES[lang] || (I ? I.table(NAMES, "ringtones", lang) : null) || NAMES.en;
+    return String(tb["solfege.list"] || NAMES.en["solfege.list"]).split(",");
+  }
+  // Name of a ready tune in a language.
+  function presetName(p, lang) {
+    var I = typeof window !== "undefined" && window.orosI18n;
+    var tb = NAMES[lang] || (I ? I.table(NAMES, "ringtones", lang) : null) || NAMES.en;
+    return tb["preset." + p.key] || NAMES.en["preset." + p.key] || p.en;
+  }
   var NATURALS = [0, 2, 4, 5, 7, 9, 11];        // keys 1..7: c d e f g a b
 
   function isInt(v) { return typeof v === "number" && isFinite(v) && Math.floor(v) === v; }
@@ -241,19 +278,19 @@
 
   // ---------- Ready tunes (public domain, written out here) ----------
   var PRESETS = [
-    { key: "granvals", en: "Gran Vals (Tárrega)", el: "Gran Vals (Τάρεγκα)", bpm: 180,
+    { key: "granvals", en: NAMES.en["preset.granvals"], el: NAMES.el["preset.granvals"], bpm: 180,
       notes: "8e6,8d6,4f#5,4g#5,8c#6,8b5,4d5,4e5,8b5,8a5,4c#5,4e5,2a5" },
-    { key: "elise", en: "Für Elise (Beethoven)", el: "Για την Ελίζα (Μπετόβεν)", bpm: 125,
+    { key: "elise", en: NAMES.en["preset.elise"], el: NAMES.el["preset.elise"], bpm: 125,
       notes: "8e6,8d#6,8e6,8d#6,8e6,8b5,8d6,8c6,4a5.,8c5,8e5,8a5,4b5.,8e5,8g#5,8b5,4c6.,8e5,8e6,8d#6,8e6,8d#6,8e6,8b5,8d6,8c6,4a5.,8c5,8e5,8a5,4b5.,8e5,8c6,8b5,2a5" },
-    { key: "joy", en: "Ode to Joy (Beethoven)", el: "Ωδή στη Χαρά (Μπετόβεν)", bpm: 120,
+    { key: "joy", en: NAMES.en["preset.joy"], el: NAMES.el["preset.joy"], bpm: 120,
       notes: "4e5,4e5,4f5,4g5,4g5,4f5,4e5,4d5,4c5,4c5,4d5,4e5,4e5.,8d5,2d5,4e5,4e5,4f5,4g5,4g5,4f5,4e5,4d5,4c5,4c5,4d5,4e5,4d5.,8c5,2c5" },
-    { key: "mountain", en: "In the Hall of the Mountain King (Grieg)", el: "Στη σπηλιά του βασιλιά του βουνού (Γκριγκ)", bpm: 140,
+    { key: "mountain", en: NAMES.en["preset.mountain"], el: NAMES.el["preset.mountain"], bpm: 140,
       notes: "8b4,8c#5,8d5,8e5,8f#5,8d5,4f#5,8f5,8c#5,4f5,8e5,8c5,4e5,8b4,8c#5,8d5,8e5,8f#5,8d5,8f#5,8b5,8a5,8f#5,8d5,8f#5,2a5" },
-    { key: "jingle", en: "Jingle Bells", el: "Jingle Bells", bpm: 180,
+    { key: "jingle", en: NAMES.en["preset.jingle"], el: NAMES.el["preset.jingle"], bpm: 180,
       notes: "4e5,4e5,2e5,4e5,4e5,2e5,4e5,4g5,4c5.,8d5,1e5,4f5,4f5,4f5.,8f5,4f5,4e5,4e5,8e5,8e5,4g5,4g5,4f5,4d5,1c5" },
-    { key: "twinkle", en: "Twinkle, Twinkle, Little Star", el: "Λάμπει, λάμπει τ' αστεράκι", bpm: 120,
+    { key: "twinkle", en: NAMES.en["preset.twinkle"], el: NAMES.el["preset.twinkle"], bpm: 120,
       notes: "4c5,4c5,4g5,4g5,4a5,4a5,2g5,4f5,4f5,4e5,4e5,4d5,4d5,2c5,4g5,4g5,4f5,4f5,4e5,4e5,2d5,4g5,4g5,4f5,4f5,4e5,4e5,2d5,4c5,4c5,4g5,4g5,4a5,4a5,2g5,4f5,4f5,4e5,4e5,4d5,4d5,2c5" },
-    { key: "jacques", en: "Frère Jacques", el: "Frère Jacques", bpm: 120,
+    { key: "jacques", en: NAMES.en["preset.jacques"], el: NAMES.el["preset.jacques"], bpm: 120,
       notes: "4c5,4d5,4e5,4c5,4c5,4d5,4e5,4c5,4e5,4f5,2g5,4e5,4f5,2g5,8g5,8a5,8g5,8f5,4e5,4c5,8g5,8a5,8g5,8f5,4e5,4c5,4c5,4g4,2c5,4c5,4g4,2c5" }
   ];
 
@@ -361,7 +398,7 @@
     TONE_MIME: TONE_MIME, toneBundle: toneBundle, toneFromBundle: toneFromBundle,
     MAX_NOTES: MAX_NOTES, MAX_MELODIES: MAX_MELODIES, MAX_NAME: MAX_NAME, MIN_BPM: MIN_BPM, MAX_BPM: MAX_BPM,
     ID_RE: ID_RE, LENGTHS: LENGTHS, OCTAVES: OCTAVES, VOICES: VOICES, DEFAULT: DEFAULT,
-    LETTERS: LETTERS, SOLFEGE: SOLFEGE, NATURALS: NATURALS, PRESETS: PRESETS,
+    LETTERS: LETTERS, SOLFEGE: SOLFEGE, solfegeOf: solfegeOf, presetName: presetName, NATURALS: NATURALS, PRESETS: PRESETS,
     mkNote: mkNote, isRest: isRest, freq: freq, durMs: durMs, totalMs: totalMs, noteName: noteName,
     token: token, parseToken: parseToken, parseNotes: parseNotes, notesText: notesText,
     parseRTTTL: parseRTTTL, toRTTTL: toRTTTL,

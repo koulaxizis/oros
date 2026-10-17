@@ -1,0 +1,30 @@
+# Orakel
+Stell dem Orakel eine Frage und erhalte eine Weissagung. Jede Weissagung ist wahr. Keine davon hilft.
+
+## Eine Frage stellen
+Gib deine Frage in das Feld ein und drücke [[Enter]] oder tippe auf `Orakel fragen`. Rauch steigt auf, und die Antwort erscheint Buchstabe für Buchstabe. Ist in deinen Geräteeinstellungen „Bewegung reduzieren“ aktiv, erscheint sie sofort.
+- Das Orakel liest ein paar Wörter deiner Frage, auf Englisch oder Griechisch, und antwortet zu Zeit, Liebe, Arbeit und Geld, Ja-oder-Nein-Fragen oder allem anderen. Auf Deutsch antwortet das Orakel mit seinen englischen Weissagungen.
+- Dieselbe Frage am selben Tag bekommt immer dieselbe Antwort: Das Orakel ändert seine Meinung nicht. Morgen sagt es vielleicht etwas anderes.
+- Eine leere Frage bekommt keine Antwort.
+
+## Orakel des Tages
+Die Karte oben zeigt eine Weissagung für heute. Sie ist auf all deinen Geräten gleich und wechselt um Mitternacht.
+
+## Behalten, kopieren und teilen
+Unter jeder Antwort:
+- Der Stern fügt sie zu `Favoriten` hinzu. Favoriten werden mit der orOS-Synchronisierung abgeglichen und begleiten dich so auf all deine Geräte. Das × neben einem Favoriten entfernt ihn, und `Rückgängig` holt ihn zurück.
+- `Kopieren` kopiert Frage und Antwort als Text.
+- `Als Bild speichern` erstellt eine quadratische PNG-Karte mit der Frage und der Weissagung.
+
+## Letzte Fragen
+`Letzte Fragen` listet deine letzten 100 Fragen mit ihren Antworten. Sie bleiben nur auf diesem Gerät und werden nicht synchronisiert. Tippe oder klicke auf eine, um sie wieder zu sehen. Das × entfernt eine, und `Leeren` entfernt alle; `Rückgängig` holt sie zurück.
+
+## Ton
+Die Lautsprecher-Schaltfläche oben schaltet den Gong ein oder aus. Am Anfang ist er aus.
+
+## Tastenkürzel
+- [[Enter]] im Fragefeld stellt die Frage.
+- [[/]] springt in das Fragefeld.
+
+## Tipps
+> Frag dasselbe mit anderen Worten, um mehr von dem zu hören, was das Orakel weiß.

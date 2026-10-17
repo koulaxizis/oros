@@ -1,0 +1,32 @@
+# Minimalismus
+Minimalismus gibt dir jeden Tag einen kleinen, angeleiteten Schritt zu einem leichteren Leben, in zwei Bereichen: `Physisch` (dein Zuhause und deine Dinge) und `Digital` (dein Handy, dein Posteingang und deine Bildschirme). Es gibt keinen Druck: Tage, an denen du die App nicht öffnest, zählen nicht gegen dich.
+
+## Erste Schritte
+Öffne `Heute`. Die Karte zeigt das Datum, den Tag des 365-Tage-Programms (`Tag … von 365`) und zwei Vorschläge, einen `Physisch` und einen `Digital`, jeweils mit einer kurzen Begründung, warum er hilft.
+
+Wenn du einen erledigt hast, tippe oder klicke auf `Erledigt`. Wenn er nichts für dich ist, wähle `Überspringen`.
+
+## Die Tageskarte
+- Alle bekommen am selben Datum denselben Vorschlag, auf jedem Gerät. Das Programm folgt dem Kalender, Tag 1 ist also um den 1. Januar, und jeder Monat hat sein eigenes Thema. Nach einem Jahr beginnt es einfach von vorn.
+- `Überspringen` fragt `Warum überspringen?`: Wähle `Nicht heute` oder `Passt nicht zu mir` oder gib einen eigenen Grund ein. Überspringen hat keine Strafe.
+- Ist ein Vorschlag markiert, zeigt er `Erledigt` oder `Übersprungen`, mit `Rückgängig`, falls du es dir anders überlegst.
+
+## Serien
+Jeder Bereich hat seine eigene Serie (`Tage in Folge`), angezeigt unter der Karte. Jedes `Erledigt` fügt einen Tag hinzu. Tage, an denen du die App nie geöffnet hast, werden einfach ignoriert; nur ein bewusstes `Überspringen` beendet eine Serie.
+
+## Verlauf
+`Verlauf` listet die `Letzte 30 Tage` auf, an denen etwas markiert ist, mit einem P und einem D für die beiden Bereiche. Tippe oder klicke auf einen Tag, um seine Vorschläge wieder zu sehen; `Zurück zu heute` bringt dich zur aktuellen Karte. Vergangene Tage kannst du ansehen, aber nicht markieren.
+
+## Tägliche Erinnerung
+Unten in `Verlauf` stellt `Tägliche Erinnerung` eine Uhrzeit zwischen 06:00 und 22:00 ein. Hast du bis dahin nichts markiert, schickt dir orOS eine Erinnerung; ein Tippen darauf öffnet die heutige Karte. Sie startet erst, nachdem du die App mindestens einmal benutzt hast, und nur, solange orOS geöffnet ist. Siehe [Benachrichtigungen](help:t/notifications).
+
+## Synchronisierung und Sicherung
+Deine markierten Tage, Gründe fürs Überspringen und die Uhrzeit der Erinnerung werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten abgeglichen. Die Vorschläge selbst werden nicht gespeichert; jedes Gerät ermittelt sie aus dem Datum. Es gibt keinen Import oder Export; nutze die orOS-[Sicherung](help:t/backup), um eine Kopie aufzubewahren.
+
+## Tipps
+- Mach den Schritt gleich; die meisten dauern ein paar Minuten.
+- Passt ein Vorschlag nicht zu deinem Leben, überspringe ihn mit `Passt nicht zu mir` und komm morgen für einen neuen wieder.
+
+## Grenzen
+- Du kannst nur die heutigen Vorschläge markieren; verpasste Tage kannst du nicht nachholen.
+- Die Vorschläge folgen dem Kalender, du kannst also keinen anderen wählen und das Programm nicht mitten im Jahr bei Tag 1 beginnen.

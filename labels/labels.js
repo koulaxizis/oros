@@ -63,7 +63,8 @@
       return l === "el" ? "el" : "en";
     } catch (e) { return "en"; }
   }
-  var LANG = appLang();
+  // orosI18n (../i18n.js): the full language code, a pack language included.
+  var LANG = window.orosI18n ? window.orosI18n.lang() : appLang();
 
   var STRINGS = {
     en: {
@@ -153,6 +154,8 @@
       "csv.text": "Κείμενο"
     }
   };
+
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "labels", LANG);
 
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;
@@ -965,7 +968,7 @@
     if (!list.length) { showToast(t("toast.empty")); return; }
     if (!B) { showToast(t("toast.saveFail")); return; }
     flush();
-    var opts = C.labelsBundle(list, { copies: prefs.copies, lang: LANG, date: new Date(), name: csvName,
+    var opts = C.labelsBundle(list, { copies: prefs.copies, lang: LANG === "el" ? "el" : "en", date: new Date(), name: csvName,
       csvHead: [t("csv.text"), t("sec.tape"), t("sec.width"), t("sec.cut"), t("sec.margin")] });
     if (!opts) { showToast(t("toast.empty")); return; }
     thumbBlob(opts.content.labels, function (png) {

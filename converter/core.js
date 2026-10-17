@@ -122,8 +122,24 @@
   }
   // "/internal/Converted/2026-10-15"
   function diskDir(d) { return ROOT + "/" + DISK_DIR + "/" + dateStamp(d); }
+  // The ZIP's name, in the app's language. Pack "converter".
+  var NAMES = {
+    en: { "zip.name": "orOS converted {date}" },
+    el: { "zip.name": "orOS μετατροπές {date}" }
+  };
+  var W = typeof window !== "undefined" ? window : null;
+  function names(lang) {
+    if (lang && !NAMES[lang] && W && W.orosI18n) { try { W.orosI18n.table(NAMES, "converter", lang); } catch (e) {} }
+    return NAMES[lang] || NAMES.en;
+  }
+  // German, like Greek, writes 1,5 (decimal comma).
+  function commaDecimal(lang) {
+    if (lang === "el") return true;
+    if (!lang || lang === "en" || !W || !W.orosI18n) return false;
+    try { return new Intl.NumberFormat(W.orosI18n.locale(lang)).format(1.5).indexOf(",") !== -1; } catch (e) { return false; }
+  }
   function zipName(d, lang) {
-    return (lang === "el" ? "orOS μετατροπές " : "orOS converted ") + dateStamp(d) + ".zip";
+    return names(lang)["zip.name"].split("{date}").join(dateStamp(d)) + ".zip";
   }
 
   function fmtSize(bytes, lang) {
@@ -131,7 +147,7 @@
     var i = 0;
     while (n >= 1024 && i < u.length - 1) { n /= 1024; i++; }
     var s = i === 0 ? String(Math.round(n)) : (n >= 100 ? String(Math.round(n)) : n.toFixed(1));
-    if (lang === "el") s = s.replace(".", ",");
+    if (commaDecimal(lang)) s = s.replace(".", ",");
     return s + " " + u[i];
   }
 

@@ -1,0 +1,109 @@
+# Rechner
+Ein Alltagsrechner mit fünf Modi: `Standard` mit Speichertasten, `Wissenschaftlich` mit Klammern und Funktionen, `Graphen` für bis zu vier Funktionen, `Programmierer` für Hex und Binär und `Finanzen` für MwSt., Prozente, Kredite und Sparen. Er führt einen Verlauf deiner Ergebnisse und hat zum Spaß einen `Troll-Modus`, der dich neckt und manchmal eine leicht falsche Antwort gibt.
+
+## Erste Schritte
+Wähle einen Modus in der Leiste unter dem Titel. Auf einem schmalen Bildschirm sind die Namen gekürzt (`Basis`, `Wiss.`, `Graph`, `Prog`, `Geld`). Die App merkt sich den Modus, den du zuletzt auf diesem Gerät benutzt hast.
+
+In `Standard` tippst oder klickst du die Tasten oder schreibst auf deiner Tastatur. Gib eine Zahl ein, einen Operator (`÷`, `×`, `−`, `+`), eine weitere Zahl und dann `=`. Standard arbeitet wie ein Taschenrechner, in der Reihenfolge deiner Eingabe: `2 + 3 ×` ergibt erst 5 und multipliziert dann. Für Klammern und Punkt vor Strich nimm `Wissenschaftlich`.
+
+- `AC` löscht die aktuelle Rechnung; ⌫ löscht die letzte Ziffer.
+- `%` allein teilt durch 100 (50 % ergibt 0,5). Nach einem Operator wirkt es wie beim Handyrechner: `200 + 10 %` ergibt 220.
+- `Ans` holt das letzte Ergebnis zurück.
+- Tippe oder klicke auf das große Ergebnis, um es zu kopieren.
+- `Senden an…` oben gibt das Ergebnis (mit seiner Rechnung, direkt nach `=`) an eine andere App weiter, etwa Notizen oder Texteditor. Es erscheint in `Standard`, `Wissenschaftlich` und `Programmierer`.
+
+## Speicher und Zusatzfunktionen
+- `M+` addiert die Zahl auf dem Bildschirm zum Speicher, `MR` holt sie zurück und `MC` löscht sie.
+- `fx` zeigt oder verbirgt eine Zusatzzeile: `√`, `x²`, `1/x` und `±`. Die App merkt sich deine Wahl.
+
+## Wissenschaftlicher Modus
+Tipp einen ganzen Ausdruck in die Zeile oder bau ihn mit den Tasten und drück dann `=` oder [[Enter]]. Beim Tippen erscheint die Antwort grau darunter. Es gilt die übliche Rechenreihenfolge: Klammern, dann Potenzen, dann `×` `÷` `mod`, dann `+` `−`. Also ergibt `2 + 3 × 4` 14 und `-2^2` ergibt −4.
+
+- Klammern: `(` und `)`. Eine am Ende offene Klammer wird für dich geschlossen.
+- Vor einer Klammer, einer Konstante oder einer Funktion kannst du `×` weglassen: `2π`, `3(4+1)`, `2sin(30)`.
+- Potenzen und Wurzeln: `x²`, `x³` (mit `2nd`), `xʸ` (`^`), `√`, `∛` und `ʸ√x`, geschrieben `root(32; 5)` für die fünfte Wurzel aus 32.
+- Trigonometrie: `sin`, `cos`, `tan` und mit `2nd` ihre Umkehrfunktionen. `DEG` wechselt zwischen Grad, Bogenmaß (`RAD`) und Gon (`GRAD`). Hyperbolisch: `sinh`, `cosh`, `tanh` und ihre Umkehrfunktionen.
+- Logarithmen: `log` (Basis 10), `ln`, `log₂`; `log(8; 2)` nimmt jede Basis. Mit `2nd`: `eˣ`, `10ˣ`, `2ˣ`.
+- `n!` Fakultät, `%` Prozent, `π`, `e`, `|x|` (Betrag), `⌊x⌋` (abrunden), `⌈x⌉` (aufrunden), `mod`, `rand` (eine Zufallszahl von 0 bis 1), `1/x`, `±`.
+- `EE` tippt einen Exponenten: `1.5E3` ist 1500. Sehr große und sehr kleine Ergebnisse werden genauso gezeigt, etwa `1.5e20`.
+- Außerdem bekannt: `round`, `trunc`, `sign`, `exp`, `ncr(5; 2)`, `npr(5; 2)`, `max(a; b)`, `min(a; b)`.
+- Trenne die Werte einer Funktion mit `;`. Das Dezimalzeichen kannst du als `.` oder `,` tippen.
+- `Ans` ist das letzte Ergebnis. Nach `=` rechnet ein Operator mit dem Ergebnis weiter, und eine Ziffer beginnt eine neue Rechnung.
+- [[↑]] und [[↓]] in der Zeile holen frühere Rechnungen aus dem Verlauf zurück.
+- Ergebnisse werden auf 15 gültige Stellen gerundet, deshalb ergibt `0.1 + 0.2` 0,3.
+
+Auf einem Touchscreen tippen die Tasten in die Zeile, ohne die Handytastatur zu öffnen. Tippe auf ⌨, um stattdessen mit der Tastatur zu schreiben, zum Beispiel für Einheitenumrechnungen.
+
+## Einheiten und Währungen
+Schreib in `Wissenschaftlich` eine Umrechnung mit `to`, `in`, `σε` oder `→` zwischen zwei Einheiten:
+
+- `3 ft to cm`, `100 km/h in m/s`, `2*3 ft σε in`, `ft to m` (ein Fuß).
+- `20 EUR to USD` rechnet Geld mit den Wechselkursen des [Einheitenrechners](help:a/units) um. Hat dieses Gerät noch keine Kurse, holt der Rechner sie, wenn du online bist.
+- Die Einheiten und ihre Namen auf Englisch und Griechisch sind die des Einheitenrechners. Tassen in Gramm braucht eine Zutat, nimm dafür den Einheitenrechner.
+
+## Graphenmodus
+Tipp bis zu vier Funktionen von `x` ein, etwa `sin(x)` oder `x^2 - 2`; jede hat ihre eigene Farbe. Der Graph ändert sich beim Tippen, und eine Funktion mit Fehler wird rot markiert, mit dem Grund.
+
+- Zieh, um den Graphen zu verschieben. Dreh das Mausrad oder zieh zwei Finger auseinander, um zu zoomen. Die Tasten `+`, `−` und ⌂ vergrößern, verkleinern und setzen die Ansicht zurück.
+- Tippe auf eine Kurve oder fahr mit der Maus über den Graphen, um ihr zu folgen: Der Punkt und seine Koordinaten erscheinen in der Ecke.
+- Die Liste neben dem Graphen zeigt die Nullstellen, tiefsten und höchsten Punkte jeder Funktion und wo sich zwei Funktionen schneiden, für den sichtbaren Teil. Tippe auf einen Eintrag, um ihn im Graphen zu markieren.
+- Die Taste `RAD` legt die Winkeleinheit des Graphen fest (Bogenmaß, Grad oder Gon), getrennt vom wissenschaftlichen Modus.
+- Mit ausgewähltem Graphen: Pfeiltasten verschieben ihn, [[+]] und [[-]] zoomen, [[0]] setzt die Ansicht zurück.
+
+## Programmierermodus
+Ganzzahlrechnung in hexadezimal, dezimal, oktal und binär.
+
+- Tippe auf `HEX`, `DEC`, `OCT` oder `BIN`, um die Basis für die Eingabe zu wählen. Der Wert wird immer in allen vier gezeigt.
+- Die Taste für die Wortbreite wechselt zwischen `QWORD` (64 Bit), `DWORD` (32), `WORD` (16) und `BYTE` (8). Ergebnisse laufen bei dieser Größe über, und negative Zahlen nutzen das Zweierkomplement.
+- Operatoren: `+ − × ÷` (Division ohne Rest), `mod`, `AND`, `OR`, `XOR`, `NOT`, `NAND`, `NOR` und die Verschiebungen `«` und `»`. Du kannst auch `&`, `|`, `^`, `~`, `<<`, `>>` tippen und Präfixe wie `0x1F` oder `0b101`.
+- `Bits` zeigt jedes Bit des Werts. Tippe auf ein Bit, um es umzuschalten. `Tasten` holt das Tastenfeld zurück.
+
+## Finanzmodus
+- `MwSt.`: Tipp einen Betrag ein und wähle `MwSt. hinzufügen` oder `MwSt. abziehen`. Der Satz beginnt bei 24 %, mit Tasten für die griechischen Sätze 24 %, 13 % und 6 %, oder tipp deinen eigenen ein.
+- `Prozent`: die prozentuale Änderung von einer Zahl zur anderen, ein Prozentsatz einer Zahl und wie viel Prozent eine Zahl von einer anderen ist.
+- `Kredit`: Betrag, Jahreszins und Laufzeit in Jahren oder Monaten ergeben die Monatsrate, den gezahlten Gesamtbetrag und die Zinsen gesamt, mit einer Tabelle Monat für Monat. `CSV exportieren` speichert die Tabelle.
+- `Sparen`: ein Startbetrag, eine monatliche Einzahlung, der Jahreszins und die Jahre ergeben den Endbetrag, mit einer Tabelle pro Jahr. Die Zinsen kommen monatlich oder jährlich dazu.
+
+Die Zahlen, die du in Finanzen eintippst, bleiben auf diesem Gerät, bis du sie änderst.
+
+>! Die Finanzwerkzeuge liefern Schätzungen zur Planung. Die Zahlen einer Bank können wegen Gebühren, Rundung und der genauen Daten leicht abweichen.
+
+## Verlauf
+Jedes Ergebnis aus `Standard` und `Wissenschaftlich` kommt in den `Verlauf`, das neueste zuerst (bis zu 50 Einträge). Tippe oder klicke auf einen Eintrag, um sein Ergebnis wiederzuverwenden. `CSV` speichert den Verlauf als Tabellendatei, das älteste zuerst. `Leeren` leert den Verlauf sofort, ohne zu fragen.
+
+Auf einem breiten Bildschirm kannst du den linken Rand des Verlaufs ziehen, um ihn breiter oder schmaler zu machen.
+
+## Troll-Modus
+Tippe oder klicke auf `Troll-Modus`, um ihn ein- oder auszuschalten. Solange er an ist, kommt jede Antwort in `Standard` und `Wissenschaftlich` mit einem frechen Kommentar, und ab und zu liegt das Ergebnis heimlich ein paar Prozent daneben (nie zweimal hintereinander). Falsche Antworten landen auch im Verlauf. Graphen, Programmierer und Finanzen geben immer ehrliche Antworten.
+
+Klick mit rechts oder drück lange auf einem Touchscreen auf die Taste `Troll-Modus`, um einzustellen, wie oft er lügt: `Dezent`, `Ausgewogen` oder `Hemmungslos`. Die Punkte auf der Taste zeigen die Stufe.
+
+>! Nimm den Troll-Modus für nichts, was wichtig ist, etwa Geld oder Messungen.
+
+## Synchronisierung und Sicherung
+Dein Verlauf, der Speicherwert, die `fx`-Zeile und die Einstellungen des Troll-Modus werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten abgeglichen. Der Modus, die Winkeleinheiten, die Funktionen des Graphen, die Programmierer-Einstellungen, die Finanzzahlen und die Breite des Verlaufs bleiben auf jedem Gerät. `Ans` und die Rechnung auf dem Bildschirm werden nicht gespeichert.
+
+Neben dem CSV-Export hält die orOS-[Sicherung](help:t/backup) eine Kopie von allem.
+
+## Tastenkürzel
+- [[Alt+1]] bis [[Alt+5]] wechseln den Modus (Standard, Wissenschaftlich, Graphen, Programmierer, Finanzen), wenn dein Browser sie nicht selbst nutzt. In der Modusleiste wechseln auch [[←]] und [[→]].
+- Ziffern und Ziffernblock, [[.]] oder [[,]] für das Dezimalzeichen, [[+]] [[-]] [[*]] [[/]] für die Operatoren.
+- [[Enter]] oder [[=]] rechnet das Ergebnis aus.
+- [[Backspace]] löscht die letzte Ziffer; [[Esc]] oder [[Delete]] löscht alles.
+- [[%]] Prozent, [[A]] für `Ans` (Standard).
+- In Wissenschaftlich und Programmierer kannst du sofort tippen: Die Tasten gehen in die Zeile. [[↑]] [[↓]] holen den Verlauf zurück (Wissenschaftlich).
+- [[Ctrl+Z]] macht in Standard deinen letzten Tastendruck rückgängig (nur einen Schritt).
+- [[Ctrl+Alt+Shift+C]] öffnet den Rechner von überall in orOS; siehe [Tastenkürzel](help:t/shortcuts).
+
+## Tipps
+- Für eine laufende Summe drück nach jedem Ergebnis `M+` und am Ende `MR`.
+- Tippe in Wissenschaftlich auf das große Ergebnis, um es zu kopieren.
+- Wenn du orOS als App installierst, bietet ein langer Druck auf sein Symbol (unter Android und Windows) den Rechner als Schnellstart an; siehe [Installieren](help:t/install).
+
+## Grenzen
+- `Standard` rechnet Schritt für Schritt, in der Reihenfolge deiner Eingabe; nimm `Wissenschaftlich` für Klammern und Punkt vor Strich. Eine Zahl in Standard kann bis zu 15 Ziffern haben.
+- Ergebnisse sind gewöhnliche Gleitkommazahlen, auf 15 gültige Stellen gerundet, keine exakten Brüche; sehr große Ganzzahlen verlieren ihre letzten Ziffern.
+- Schreib `x` nur in Graphen; Wissenschaftlich hat außer `Ans` keine Variablen.
+- Der Graph findet Nullstellen, Extrempunkte und Schnittpunkte aus Stichproben des sichtbaren Teils, deshalb können zwei sehr nahe Punkte oder ein Punkt, an dem die Kurve die Achse nur berührt, fehlen. Zoom hinein, um mehr zu sehen.
+- Programmierer arbeitet nur mit ganzen Zahlen, bis zu 64 Bit.
+- Die Währungsumrechnung braucht Wechselkurse, die mindestens einmal online geholt wurden; danach nutzt sie die letzten Kurse.

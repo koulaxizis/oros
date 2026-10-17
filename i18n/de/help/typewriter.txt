@@ -1,0 +1,37 @@
+# Schreibmaschine
+Schreib auf einem Blatt Papier, das sich wie bei einer echten Schreibmaschine nach oben rollt, mit nichts auf dem Bildschirm außer deinen Worten.
+
+## Erste Schritte
+Öffne die App und fang an zu tippen. Die Zeile, in der du schreibst, bleibt in der Mitte des Bildschirms, und das Papier rollt beim Schreiben nach oben. Deine Seite wird laufend gespeichert und erscheint unter `Seiten`.
+- Die Wörter der Seite werden oben unter ihrem Titel gezählt.
+- Die Seiten-Schaltfläche oben links zeigt oder verbirgt die Seitenleiste. Auf dem Handy öffnet sie sich als Schublade.
+- Die Vollbild-Schaltfläche lässt nur das Papier auf dem Bildschirm.
+
+## Schreibmaschinenmodus
+Der Schreibmaschinenmodus ist anfangs an und funktioniert wie das echte Gerät:
+- Nichts wird gelöscht. Die Rücktaste tippt ein X über den letzten Buchstaben, und jede weitere Rücktaste geht in derselben Zeile einen Buchstaben weiter zurück.
+- Du tippst nur vorwärts: Der Cursor bleibt am Ende der Seite.
+- Korrigiert die Tastatur deines Handys ein Wort, wird das alte Wort durchgestrichen und das korrigierte dahinter getippt.
+Die Schreibmaschinen-Schaltfläche oben schaltet den Modus aus. Dann funktioniert die Seite wie ein normales Textfeld, in dem du dich bewegen und löschen kannst. Schalte ihn jederzeit wieder ein.
+
+## Seiten
+- `Neue Seite` beginnt ein frisches Blatt. Es wird gespeichert, sobald du etwas tippst.
+- Tippe oder klicke auf eine Seite in der Liste, um sie zu öffnen, und auf das × daneben, um sie zu löschen; `Rückgängig` holt sie zurück.
+- Unter `Diese Seite` kannst du der Seite einen `Titel` und ein `Wortziel` geben. Mit einem Ziel füllt sich beim Schreiben ein dünner Balken unter der oberen Leiste.
+
+## Papier, Ton und Drucken
+- `Papier` legt die Farbe des Blatts fest: `orOS` folgt deinen orOS-Farben, oder wähle `Weiß`, `Creme` oder `Nacht`.
+- Die Lautsprecher-Schaltfläche schaltet die Geräusche der Tasten, die Glocke kurz vor dem Zeilenende und den Wagenrücklauf ein. Der Ton ist anfangs aus.
+- Unter `Mitnehmen`: `Text kopieren` und `.txt herunterladen` geben dir den Text ohne die durchgestrichenen Buchstaben; `Drucken` druckt die Seite so, wie sie aussieht, mit ihren X-Zeichen. `An Texteditor senden` öffnet denselben Text als neues Dokument im [Texteditor](app:writer), mit dem Seitentitel, bereit zum Bearbeiten und Formatieren; die Seite hier bleibt, wie sie ist.
+
+## Synchronisierung und Sicherung
+- Deine Seiten begleiten dich über die orOS-Synchronisierung auf all deine Geräte.
+- Schreibmaschinenmodus, Ton, Papier und die Seitenleiste bleiben nur auf diesem Gerät.
+
+## Tipps
+> Setz ein Wortziel und verbirg die Seitenleiste für eine Schreibsitzung ohne Ablenkungen.
+- Die Buchstaben sind ein wenig ungleichmäßig eingefärbt, wie auf Papier. Derselbe Buchstabe an derselben Stelle sieht immer gleich aus.
+
+## Grenzen
+- Bis zu 200 Seiten mit je bis zu 200.000 Zeichen.
+- Wird dieselbe Seite auf zwei Geräten geändert, bevor sie synchronisieren, gewinnt die neueste Änderung.

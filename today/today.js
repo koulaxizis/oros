@@ -53,7 +53,9 @@
       return localStorage.getItem("oros-lang") === "el" ? "el" : "en";
     } catch (e) { return "en"; }
   }
-  var LANG = appLang();
+  // orosI18n (../i18n.js): the full language code, a pack language included.
+  var LANG = window.orosI18n ? window.orosI18n.lang() : appLang();
+  function loc() { return window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB"); }
   var I18N = {
     en: {
       app: "Today", refresh: "Refresh", settings: "Settings", close: "Close",
@@ -142,6 +144,7 @@
       "none.water": "Τίποτα από το Νερό ακόμη. Άνοιξέ το για να αρχίσεις να μετράς."
     }
   };
+  if (window.orosI18n) window.orosI18n.table(I18N, "today", LANG);
   function t(k, vars) {
     var s = (I18N[LANG] && I18N[LANG][k]) || I18N.en[k] || k;
     if (vars) Object.keys(vars).forEach(function (v) { s = s.split("{" + v + "}").join(String(vars[v])); });
@@ -178,7 +181,7 @@
     if (!m) return "";
     var d = new Date(+m[1], +m[2] - 1, +m[3], 12);
     try {
-      return d.toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB",
+      return d.toLocaleDateString(loc(),
         { weekday: "long", day: "numeric", month: "long", year: "numeric" });
     } catch (e) { return ymd; }
   }
@@ -189,7 +192,7 @@
     if (!m) return ymd;
     var d = new Date(+m[1], +m[2] - 1, +m[3], 12);
     try {
-      return d.toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB", { weekday: "long", day: "numeric", month: "long" });
+      return d.toLocaleDateString(loc(), { weekday: "long", day: "numeric", month: "long" });
     } catch (e) { return ymd; }
   }
 
@@ -368,19 +371,19 @@
   function paintClocks() {
     var nodes = document.querySelectorAll(".clock-time");
     if (!nodes.length) { if (clockTimer) { clearInterval(clockTimer); clockTimer = 0; } return; }
-    var now = new Date(), loc = LANG === "el" ? "el-GR" : "en-GB";
+    var now = new Date(), lc = loc();
     [].forEach.call(nodes, function (n) {
       var opts = { hour: "2-digit", minute: "2-digit", hour12: false };
       if (n.getAttribute("data-sec")) opts.second = "2-digit";
       var s;
-      try { s = now.toLocaleTimeString(loc, opts); } catch (e) { s = now.toTimeString().slice(0, 5); }
+      try { s = now.toLocaleTimeString(lc, opts); } catch (e) { s = now.toTimeString().slice(0, 5); }
       if (n.textContent !== s) n.textContent = s;
     });
     [].forEach.call(document.querySelectorAll(".clock-date"), function (n) {
       var o = n.getAttribute("data-long") ? { weekday: "long", day: "numeric", month: "long", year: "numeric" }
                                           : { weekday: "short", day: "numeric", month: "short" };
       var s;
-      try { s = now.toLocaleDateString(loc, o); } catch (e) { s = ""; }
+      try { s = now.toLocaleDateString(lc, o); } catch (e) { s = ""; }
       if (n.textContent !== s) n.textContent = s;
     });
     if (!clockTimer) clockTimer = setInterval(paintClocks, 1000);

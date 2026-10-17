@@ -1,0 +1,43 @@
+# Glücksrad
+Du kannst dich nicht entscheiden? Schreib deine Optionen aufs Rad, dreh es und lass das Schicksal wählen. Behalte die Räder, die du oft nutzt, oder starte mit einem fertigen Set.
+
+## Erste Schritte
+Ein neues Rad beginnt mit zwei leeren Zeilen unter `Optionen`. Gib in jede eine Option ein, oder tippe bei `Option hinzufügen…` und drücke [[Enter]] oder die Taste **+**. Das Rad ändert sich beim Tippen mit. Zum Drehen brauchst du mindestens zwei Optionen, und du kannst bis zu 30 haben, jede mit bis zu 50 Zeichen.
+
+Tippe oder klicke dann auf `Drehen!` in der Mitte des Rads, tippe oder wische auf dem Rad selbst, oder drücke [[Space]] oder [[Enter]].
+
+## Drehen und Ergebnisse
+Der Gewinner wird fair und zufällig gezogen, bevor sich das Rad dreht; die Drehung landet nur auf ihm. Während sich das Rad dreht, kannst du die Optionen nicht bearbeiten.
+
+Wenn es stoppt, zeigt `Das Rad hat entschieden` den Gewinner, mit Konfetti. Von dort:
+- `Noch mal drehen` dreht noch einmal.
+- `Vom Rad nehmen` entfernt den Gewinner, praktisch, um Namen einzeln zu ziehen. Mit `Rückgängig` kannst du ihn zurückholen. Das gibt es nicht, wenn nur noch zwei Optionen übrig sind.
+- `Schließen` geht zurück zum Rad.
+
+Der Zeiger klickt bei jedem Segment und spielt am Ende eine kurze Melodie. Die Taste `Ton` in der Symbolleiste schaltet das aus oder ein (anfangs an).
+
+## Optionen bearbeiten
+- Füge mehrere Zeilen auf einmal ins Hinzufügen-Feld oder in eine Zeile ein: Jede Zeile wird eine Option.
+- Ziehe eine Option an ihrem Griff, um sie zu verschieben, oder drücke [[Alt+Up]] oder [[Alt+Down]] in ihrer Zeile.
+- Das ✕ neben einer Zeile entfernt sie. Leere Zeilen verschwinden, wenn du sie verlässt.
+- `Optionen mischen` bringt die Reihenfolge durcheinander.
+- Die Taste `×1` neben einer Zeile stellt die Chance der Option ein: Tippe für `×2` (doppelt) oder `×3` (dreifach), und noch einmal für zurück zu `×1`. Eine gewichtete Option bekommt ein breiteres Stück vom Rad, so siehst du ihre größere Chance. Gewichte werden mit gespeicherten Rädern behalten und mit ihnen synchronisiert.
+
+## Fertige Sets und deine Räder
+`Fertige Sets` hat Räder zum Starten: `Ja / Nein`, `Was essen wir`, `Wochentage`, `Zahlen 1–10`, `Kopf oder Zahl`, `Hausarbeit`, `Filmabend`, `Was mache ich` und `Wer fängt an`. Ein Set öffnet sich als neues, ungespeichertes Rad, daher ändern sich deine gespeicherten nie.
+
+`Rad speichern` gibt dem offenen Rad einen Namen und behält es unter `Meine Räder` (bis zu 40). Änderungen an einem gespeicherten Rad werden beim Tippen automatisch gespeichert. Neben jedem gespeicherten Rad kannst du es umbenennen, kopieren oder löschen; Löschen lässt sich ein paar Sekunden lang rückgängig machen. `Neues Rad` startet ein leeres.
+
+`Gewinner` listet die letzten 50 Gewinner des offenen Rads mit Uhrzeit. `Leeren` leert die Liste, mit `Rückgängig`.
+
+## Synchronisierung und Sicherung
+Deine gespeicherten Räder werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. Die Gewinnerliste, das ungespeicherte Rad und die Toneinstellung bleiben auf diesem Gerät. Es gibt keinen Import oder Export; die orOS-[Sicherung](help:t/backup) enthält deine Räder.
+
+## Tastenkürzel
+- [[Space]] oder [[Enter]] dreht das Rad (wenn du nicht gerade in ein Feld tippst).
+- [[Enter]] im Hinzufügen-Feld fügt die Option hinzu; in einer Zeile springt es zur nächsten Zeile.
+- [[Alt+Up]] / [[Alt+Down]] verschiebt die aktuelle Option.
+
+## Tipps
+- Um Hausarbeit fair zu verteilen, dreh, nutze `Vom Rad nehmen` und dreh weiter, bis alle eine haben.
+- Wenn du auf deinem Gerät Bewegungen reduzierst, ist die Drehung kurz und es gibt kein Konfetti.

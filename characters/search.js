@@ -15,9 +15,11 @@
   var KEY = "oros-characters-data";
   var REL = {
     en: { friend: "Friend", family: "Family", lover: "Lover", rival: "Rival",
-          enemy: "Enemy", mentor: "Mentor", ally: "Ally", other: "Other" },
+          enemy: "Enemy", mentor: "Mentor", ally: "Ally", other: "Other",
+          unnamed: "Unnamed" },
     el: { friend: "Φίλος/η", family: "Οικογένεια", lover: "Ερωτική", rival: "Αντίζηλος/η",
-          enemy: "Εχθρός/η", mentor: "Μέντορας", ally: "Σύμμαχος/η", other: "Άλλο" }
+          enemy: "Εχθρός/η", mentor: "Μέντορας", ally: "Σύμμαχος/η", other: "Άλλο",
+          unnamed: "Χωρίς όνομα" }
   };
 
   function str(v) { return typeof v === "string" ? v.replace(/\s+/g, " ").trim() : ""; }
@@ -39,8 +41,11 @@
         var t = Object.prototype.hasOwnProperty.call(tomb, x.id) ? Number(tomb[x.id]) || 0 : 0;
         return !t || (Number(x.mtime) || 0) > t;
       }
-      var el = ctx.lang === "el", labels = el ? REL.el : REL.en;
-      var unnamed = el ? "Χωρίς όνομα" : "Unnamed";
+      // A pack language reads the characters pack when the shell has it
+      // loaded (orosI18n.table), else English.
+      var I = root && root.orosI18n;
+      var labels = REL[ctx.lang] || (I && ctx.lang ? I.table(REL, "characters", ctx.lang) : REL.en);
+      var unnamed = labels.unnamed;
       var names = {};
       rows(d.characters).forEach(function (c) {
         if (!c || typeof c.id !== "string" || !c.id || !alive(c)) return;

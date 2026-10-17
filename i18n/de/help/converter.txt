@@ -1,0 +1,44 @@
+# orOS Konverter
+Wandle viele Dokumente und Tabellen auf einmal in orOS-Dateien um. Ein Word- oder OpenDocument-Text wird zu einer `.orosdoc`, die sich im Texteditor öffnet; eine Excel-, OpenDocument- oder CSV-Tabelle wird zu einer `.orossheet`, die sich in Tabelle öffnet. Das Ergebnis ist dieselbe Datei, die die App selbst beim Export in eine orOS-Datei erstellt, daher geht nichts verloren. Deine Originaldateien werden nie verändert.
+
+## Erste Schritte
+1. Lege Dateien oder einen ganzen Ordner auf der App ab, oder drücke `Dateien hinzufügen` oder `Ordner hinzufügen`.
+2. Jede Datei bekommt eine Zeile: ihren Namen, ihre Größe und was aus ihr wird (`→ .orosdoc`, `→ .orossheet`) oder `Nicht unterstützt`.
+3. Wähle, wohin die orOS-Dateien kommen (siehe unten).
+4. Drücke `Umwandeln`. Die Dateien werden nacheinander umgewandelt; jede Zeile zeigt ihren Fortschritt, dann `Fertig` oder was schiefging.
+5. `Öffnen` in einer fertigen Zeile öffnet die neue Datei in ihrer App.
+
+## Was umgewandelt wird
+- Dokumente → `.orosdoc` (Texteditor): .docx, .odt, .rtf, .html, .htm, .md, .markdown und .txt.
+- Tabellen → `.orossheet` (Tabelle): .xlsx, .xls, .ods und .csv.
+- Anki-Kartenpakete → `.oroscards` (Karteikarten): .apkg und .colpkg, mit ihren Bildern, Tönen und dem Lernverlauf.
+Weitere Dateiarten (Folien, Designs, Mindmaps, Boards) kommen in späteren Versionen.
+
+## Wohin die Dateien kommen
+- `Alle als .zip herunterladen`: eine .zip mit allen umgewandelten Dateien, heruntergeladen, wenn die Liste fertig ist. `.zip herunterladen` lädt sie noch einmal.
+- `In einem Ordner in Dateien speichern`: Jede Datei kommt nach Dateien › Converted › das heutige Datum, sobald sie fertig ist. Ein Name, den es schon gibt, bekommt eine Nummer, etwa „Report (2).orosdoc“. `In Dateien zeigen` öffnet den Ordner.
+- `Jede Datei einzeln speichern`: Jede fertige Zeile bekommt eine Taste `Speichern`; `Alle speichern` speichert sie nacheinander.
+Hinzugefügte Ordner behalten ihre Unterordner in der .zip und in Dateien.
+Die App merkt sich deine Wahl auf diesem Gerät.
+
+## Aus Dateien
+Wähle in Dateien ein oder mehrere Dokumente oder Tabellen aus und wähle `In orOS umwandeln` im Menü oder in der Auswahlleiste. Der Konverter öffnet sich mit diesen Dateien in der Liste.
+
+## Wenn eine Datei nicht umgewandelt wird
+- `Nicht unterstützt`: Der Konverter kennt diese Dateiart nicht. Dateien in einem hinzugefügten Ordner, die er nicht umwandeln kann, werden ausgelassen; die Liste sagt, wie viele.
+- `Die Datei konnte nicht gelesen werden`: Die Datei ist beschädigt, oder ihr Name sagt .docx oder .xlsx, obwohl sie etwas anderes ist.
+- `Das ist schon eine orOS-Datei.`: Es gibt nichts umzuwandeln.
+- `Diese Datei ist zu groß zum Umwandeln.`: Die Datei ist größer, als ihre App öffnen kann.
+- Manche Dateien werden mit Hinweisen umgewandelt (zum Beispiel zu einer Funktion, die die App nicht hat). Öffne die Hinweise unter der Zeile, um sie zu lesen.
+- `Erneut versuchen` setzt eine fehlgeschlagene Zeile zurück in die Liste; `Stopp` hält nach der Datei an, die gerade umgewandelt wird.
+
+## Tastenkürzel
+- [[Ctrl+O]]: Dateien hinzufügen.
+- [[Ctrl+Enter]]: die Taste unten (`Umwandeln`, `.zip herunterladen`, …).
+
+## Datenschutz und Synchronisierung
+Alles passiert auf deinem Gerät; keine Datei wird irgendwohin gesendet. Der Konverter speichert keine eigenen Daten und hat nichts zu synchronisieren: Die orOS-Dateien, die du in Dateien speicherst, werden wie der Rest von Dateien synchronisiert, wenn Vault Drive an ist. Nur deine Ausgabewahl wird gespeichert, auf diesem Gerät.
+
+## Grenzen
+- Dateien werden einzeln nacheinander umgewandelt, daher dauert eine lange Liste eine Weile; lass die App offen, bis sie fertig ist.
+- Passwortgeschützte Dokumente und Tabellen lassen sich nicht umwandeln. Öffne sie in ihrem eigenen Programm und speichere sie zuerst ohne Passwort.

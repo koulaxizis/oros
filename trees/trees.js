@@ -49,7 +49,7 @@
       return l === "el" ? "el" : "en";
     } catch (e) { return "en"; }
   }
-  var LANG = appLang();
+  var LANG = window.orosI18n ? window.orosI18n.lang() : appLang();
 
   var STRINGS = {
     en: {
@@ -119,6 +119,8 @@
       "live.grown": "Νέο δέντρο: {seed}"
     }
   };
+
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "trees", LANG);
 
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;
@@ -295,9 +297,12 @@
     requestAnimationFrame(function () { renderQueued = false; render(); });
   }
 
+  // Season and ink go lower case inside the sentence in English and
+  // Greek; other languages (German nouns) keep the label as it is.
+  function inSentence(s) { return LANG === "en" || LANG === "el" ? s.toLowerCase() : s; }
   function describe(r) {
-    return t("aria.tree", { sp: t("sp." + r.sp), season: t("season." + r.season).toLowerCase(),
-                            br: r.br, ink: t("ink." + r.ink).toLowerCase() });
+    return t("aria.tree", { sp: t("sp." + r.sp), season: inSentence(t("season." + r.season)),
+                            br: r.br, ink: inSentence(t("ink." + r.ink)) });
   }
 
   // ---------- 4. The tree being made ----------

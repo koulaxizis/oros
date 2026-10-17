@@ -1,0 +1,52 @@
+# Mikro-Zen
+Mikro-Zen ist ein Atemkreis für eine Minute oder ein paar Minuten Ruhe. Folge dem Kreis, wenn er wächst und schrumpft, und sieh zu, wie sich deine ruhigen Minuten summieren.
+
+## Erste Schritte
+Wähle ein `Muster` und eine `Dauer` und tippe oder klicke dann auf den Kreis oder den Start-Button. Nach einem kurzen Countdown `Mach dich bereit` wächst der Kreis, während du `Einatmen`, ruht, während du `Halten`, und schrumpft, während du `Ausatmen`. Die Wörter im Kreis sagen dir, in welcher Phase du bist.
+
+Wenn die Sitzung endet, siehst du `Gut gemacht` mit deinen Atemzügen und der Zeit. `Noch einmal` beginnt eine weitere; `Schließen` geht zurück.
+
+## Muster und Dauer
+- `Box`: 4-4-4-4, ein, halten, aus, halten. Gut für das Gleichgewicht.
+- `Entspannen`: 4-7-8, 4 ein, 7 halten, 8 aus. Gemacht zum Runterkommen vor dem Schlafen.
+- `Kohärent`: 5,5 Sekunden ein und 5,5 aus, ein gleichmäßiger Rhythmus ohne Pausen.
+- Dein eigenes: `+ Mein Muster` öffnet einen kleinen Editor. Gib ihm einen Namen und die Sekunden für `Einatmen`, `Halten (voll)`, `Ausatmen` und `Halten (leer)`, in halben Sekunden (ein Halten von 0 wird übersprungen). Es kommt mit seinem Rhythmus in die Liste, etwa 4-2-6. Wähle es aus und tippe auf `Dieses Muster bearbeiten`, um es zu ändern oder zu löschen (`Rückgängig` holt es zurück). Du kannst bis zu 12 haben, und sie werden mit allen deinen Geräten synchronisiert.
+
+`Dauer` kann 1, 3, 5 oder 10 Minuten sein. Eine Sitzung endet immer mit einem ganzen Atemzug, die Zeit liegt also nahe an dem, was du gewählt hast, aber nicht genau darauf. Muster oder Dauer kannst du während einer Sitzung nicht ändern; pausiere zuerst.
+
+## Während einer Sitzung
+- Tippe auf den Kreis oder den Start-Button, um zu pausieren und weiterzumachen. Die Sitzung pausiert auch von selbst, wenn du die App verlässt.
+- Der Beenden-Button hört früher auf. Jeder ganze Atemzug, den du geschafft hast, zählt trotzdem; hörst du vor dem ersten vollen Atemzug auf, wird nichts gespeichert.
+- Der Lautsprecher-Button oben schaltet `Sanfte Töne` ein oder aus, einen sanften Klang bei jedem Phasenwechsel und einen Gong am Ende.
+- Auf Handys, die es unterstützen, fügt ein Button `Vibration` bei jedem Phasenwechsel ein kurzes Summen hinzu.
+- Während eine Sitzung läuft, versucht orOS, deinen Bildschirm wach zu halten.
+
+## Deine Ruhe
+`Deine Ruhe` zeigt deine Minuten `Heute` und `Diese Woche`, deine `Serie` an Tagen hintereinander mit einer Sitzung, deine gesamten `Sitzungen` und ein kleines Diagramm der letzten 7 Tage. Eine Serie bleibt bis Mitternacht bestehen, auch wenn du heute noch nicht geatmet hast.
+
+`Statistik zurücksetzen` setzt Minuten, Sitzungen und die Serie nach einer Bestätigung auf null zurück.
+
+Ist `In Gewohnheiten zeigen` angehakt (anfangs ist es das), zeigt [Gewohnheiten](app:habits) eine Zeile `Micro-Zen`, die sich an jedem Tag mit einer abgeschlossenen Sitzung selbst abhakt. Nimm den Haken weg, um die Zeile auf allen deinen Geräten auszublenden.
+
+## Sitzungen importieren
+Hol deine Meditationszeit aus einer anderen App. Drück unter `Deine Ruhe` auf `Sitzungen importieren` und wähle die Datei. Mikro-Zen zeigt, wie viele Sitzungen es gefunden hat, an wie vielen Tagen, welche Daten sie abdecken und wie viele Tage schon da sind. Hat die Datei Aktivitäten (Meditation, Yoga…), nimm den Haken bei denen weg, die nicht zählen sollen. Drück auf `Importieren`; eine Meldung sagt dir, wie viele Sitzungen hinzugekommen sind, und ihr Button `Rückgängig` nimmt den Import auf allen deinen Geräten zurück.
+
+So exportierst du:
+- **Insight Timer**: Öffne auf der Website oder in der App deine Profileinstellungen und such nach dem Export deiner Sitzungen als CSV. Die Datei hat `Started At`, `Duration`, `Preset` und `Activity`; Daten mit dem Tag zuerst und mit dem Monat zuerst werden beide verstanden.
+- **Jede CSV**: eine Spalte mit Datum (oder Datum und Uhrzeit) und eine Spalte mit Minuten, etwa `date,minutes`. Eine Spalte `seconds` oder eine Dauer wie `0:10:00` geht auch.
+
+Importierte Zeit zählt bei `Heute`, `Diese Woche`, der Serie und `Sitzungen` und in Gewohnheiten, wenn Mikro-Zen dort erscheint; Atemzüge werden nicht gezählt. Importierst du dieselbe Datei noch einmal, auch auf einem anderen Gerät, wird nie eine Sitzung doppelt gezählt, und ein neuerer Export fügt nur das Neue hinzu. `Statistik zurücksetzen` löscht auch importierte Zeit. Die Datei wird auf deinem Gerät gelesen; nichts wird irgendwohin hochgeladen außer über deine eigene Synchronisierung.
+
+## Synchronisierung und Sicherung
+Deine Statistik wird über die [orOS-Synchronisierung](help:t/sync) synchronisiert und über alle deine Geräte zusammengezählt, und ein Zurücksetzen löscht sie überall. Deine eigenen Muster und `In Gewohnheiten zeigen` werden auch synchronisiert. Gewähltes Muster, Dauer, Töne und Vibration bleiben auf jedem Gerät. Mikro-Zen hat keinen eigenen Export; deine Statistik ist Teil der orOS-[Sicherung](help:t/backup). Um Sitzungen aus einer anderen App zu holen, siehe den Abschnitt oben.
+
+## Tastenkürzel
+- [[Space]] startet, pausiert oder setzt fort.
+- [[Esc]] beendet die Sitzung.
+
+## Tipps
+- `Entspannen` ist das langsamste Muster, mit einem langen Ausatmen. Probier es im Bett mit gedimmtem Bildschirm.
+- Wenn dein System weniger Bewegung wünscht, bleibt der Kreis still, und nur sein Licht und seine Wörter ändern sich.
+
+## Grenzen
+- Mikro-Zen speichert nur Summen pro Tag, keine Liste einzelner Sitzungen.

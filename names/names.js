@@ -43,7 +43,9 @@
   var W           = window.NAME_WORDS;
 
   // ---------- 1. Constants, i18n, helpers ----------
+  // orosI18n (../i18n.js): the full language code, a pack language included.
   function appLang() {
+    if (window.orosI18n) return window.orosI18n.lang();
     try {
       var l = localStorage.getItem("oros-lang") ||
               (window.parent && window.parent.orosLang) || "en";
@@ -90,6 +92,8 @@
       "toast.full": "Τα αγαπημένα γέμισαν ({n})", "toast.save": "Δεν αποθηκεύτηκε: ο χώρος είναι γεμάτος"
     }
   };
+
+  if (typeof window !== "undefined" && window.orosI18n) window.orosI18n.table(STRINGS, "names", LANG);
 
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;
@@ -430,7 +434,8 @@
     p = (p && typeof p === "object") ? p : {};
     prefs = {
       mode: MODES.indexOf(p.mode) >= 0 ? p.mode : "handle",
-      words: p.words === "el" || p.words === "en" ? p.words : LANG,
+      // word lists exist in English and Greek; any other language starts with English
+      words: p.words === "el" || p.words === "en" ? p.words : (LANG === "el" ? "el" : "en"),
       leet: p.leet === 1 ? 1 : 0,
       sep: p.sep === 1 ? 1 : 0,
       num: p.num === 1 ? 1 : 0
@@ -592,6 +597,7 @@
       li.style.setProperty("--i", i);
       var txt = el("span", "name", shown(mode, s));
       if (mode !== "handle" && prefs.words === "el") txt.lang = "el";
+      else if (mode !== "handle" && LANG !== "en") txt.lang = "en";
       li.appendChild(txt);
       var c = iconBtn("copy-btn", ICON.copy, t("btn.copy") + ": " + shown(mode, s));
       c.addEventListener("click", function () { copyOne(s); });

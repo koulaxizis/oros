@@ -55,7 +55,8 @@
       return l === "el" ? "el" : "en";
     } catch (e) { return "en"; }
   }
-  var LANG = appLang();
+  // orosI18n (../i18n.js): the full language code, a pack language included.
+  var LANG = window.orosI18n ? window.orosI18n.lang() : appLang();
 
   var STRINGS = {
     en: {
@@ -177,6 +178,8 @@
       "toast.namedHere": "Το όνομα μπήκε σε αυτή την κάρτα"
     }
   };
+
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "netizen", LANG);
 
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;

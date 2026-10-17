@@ -215,13 +215,21 @@ var STRINGS = {
   }
 };
 
+// orosI18n (../i18n.js): the full language code, a pack language
+// included (it reads the shell's orosLang, then oros-lang).
 function activeLang(){
+  if(window.orosI18n) return window.orosI18n.lang();
   try{ return (window.parent && window.parent.orosLang) || window.orosLang || "en"; }
   catch(e){ return window.orosLang || "en"; }
 }
+function loc(){
+  var l = activeLang();
+  return window.orosI18n ? window.orosI18n.locale(l) : (l === "el" ? "el-GR" : "en-GB");
+}
 
 function t(key){
-  var pack = STRINGS[activeLang()] || STRINGS.en;
+  var lang = activeLang();
+  var pack = STRINGS[lang] || (window.orosI18n ? window.orosI18n.table(STRINGS, "television", lang) : STRINGS.en);
   return pack[key] !== undefined ? pack[key]
        : (STRINGS.en[key] !== undefined ? STRINGS.en[key] : key);
 }
@@ -459,7 +467,7 @@ function openFromShell(payload){
 
 window.__orosTelevisionOpen = function(payload){ openFromShell(payload); };
 
-/* ===== CONTRACT Β — shortcut forwarding ===== */
+/* ===== CONTRACT B — shortcut forwarding ===== */
 
 document.addEventListener("keydown", function(e){
   if(!(e.ctrlKey || e.metaKey) || !e.altKey || !e.shiftKey) return;
@@ -1382,7 +1390,7 @@ function renderGuide(box){
   bar.className = "tvg-bar";
   var lbl = document.createElement("strong");
   var dateTxt = "";
-  try{ dateTxt = new Date(now).toLocaleDateString(activeLang() === "el" ? "el-GR" : "en-GB", { weekday: "long", day: "numeric", month: "long" }); }catch(e){ dateTxt = C.ymd(now); }
+  try{ dateTxt = new Date(now).toLocaleDateString(loc(), { weekday: "long", day: "numeric", month: "long" }); }catch(e){ dateTxt = C.ymd(now); }
   lbl.textContent = t("guide.today") + " · " + dateTxt;
   bar.appendChild(lbl);
   var nowBtn = document.createElement("button");

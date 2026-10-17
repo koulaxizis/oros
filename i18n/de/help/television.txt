@@ -1,0 +1,55 @@
+# Fernsehen
+Fernsehen spielt kostenlose Live-TV-Sender aus aller Welt, gelistet im Community-Verzeichnis iptv-org, und die Sender deiner eigenen M3U-Playlists. Stöbere oder suche, filtere nach Land, Kategorie und Sprache, markiere deine Lieblingssender mit einem Stern und sieh in einem XMLTV-Programmführer, was jetzt und danach läuft.
+
+## Erste Schritte
+Beim ersten Mal lädt die App das Senderverzeichnis herunter (`Sender werden geladen…`); das kann einen Moment dauern. Dann zeigt `Stöbern` die Sender als Karten. Tippe oder klicke auf eine Karte, um sie im Player anzusehen. `Mehr laden` unten zeigt die nächsten.
+
+## Sender finden
+- Tippe mindestens drei Buchstaben in `Sender suchen…`, um Vorschläge zu sehen; wähle einen mit [[↑]] / [[↓]] und [[Enter]], oder drücke [[Enter]], um die ganze Liste zu durchsuchen.
+- Die Menüs `Land`, `Kategorie` und `Sprache` grenzen die Liste ein. Wähle `Alle Länder`, `Alle Kategorien` oder `Alle Sprachen`, um einen Filter zu löschen.
+
+## Ansehen
+Der Player zeigt den Namen des Senders, sein Land und seine Etiketten sowie Knöpfe für Abspielen/Pause, Stumm, Lautstärke, Favorit, `Website des Senders öffnen` und `Vollbild`. Schließe ihn mit dem Schließen-Knopf, mit einem Klick daneben oder mit [[Esc]].
+
+Manche Sender haben mehrere Streams. Fällt einer aus, versucht die App von selbst den nächsten (`Stream fehlgeschlagen – nächster wird versucht…`). Hat ein Sender mehr als einen Stream, kannst du im Menü `Andere Streams` selbst einen wählen. Funktioniert nichts, bekommst du eine Benachrichtigung, dass der Sender auf diesem Gerät nicht abspielbar ist.
+
+## Deine eigenen Playlists
+Öffne `Listen & Programme` (oben rechts), um eine M3U-Playlist hinzuzufügen: Füge ihre Adresse ein und drücke `Hinzufügen`, oder drücke `Datei öffnen…`, um eine `.m3u`-Datei zu wählen. `Meine Listen` zeigt dann ihre Sender; das Menü `Gruppe` grenzt sie nach den Gruppen der Playlist ein, und das Suchfeld durchsucht sie. Tippe auf einen Sender, um ihn im selben Player anzusehen, und markiere ihn wie jeden anderen Sender mit einem Stern.
+
+- Eine Playlist-Adresse wird einmal am Tag neu heruntergeladen; `Aktualisieren` in `Listen & Programme` holt sie sofort, `Alle aktualisieren` holt jede Adresse und jeden Programmführer.
+- Nennt eine Playlist ihren eigenen Programmführer, wird er für dich hinzugefügt.
+- Der Papierkorb-Knopf entfernt eine Playlist oder einen Programmführer.
+
+## Programmführer
+Füge einen XMLTV-Programmführer auf dieselbe Weise in `Listen & Programme` hinzu (eine Adresse oder `Datei öffnen…` für eine `.xml`- oder `.xml.gz`-Datei). Sender werden über ihre `tvg-id` (oder die Sender-ID des Verzeichnisses) zugeordnet, dann über den Namen.
+
+- Jede Senderkarte zeigt die laufende Sendung, wie weit sie ist und was `Danach` kommt; der Player zeigt dieselbe Zeile.
+- `Programm` zeigt die heutige Zeitleiste: eine Zeile pro Sender mit Programm, eine rote Linie bei der aktuellen Uhrzeit und `Jetzt`, um dorthin zurückzuspringen. Tippe auf einen Sendernamen, um ihn anzusehen; tippe auf eine Sendung für ihre Details und `Ansehen`.
+- Das Menü `Gruppe` und das Suchfeld grenzen auch die Zeilen ein.
+
+## Favoriten und zuletzt gesehene Sender
+Tippe auf den Stern (☆) einer Karte oder auf den Favoriten-Knopf im Player, um einen Sender zu `Favoriten` hinzuzufügen; tippe erneut, um ihn zu entfernen. `Zuletzt` listet die letzten 20 Sender, die du gesehen hast.
+
+## Synchronisierung und Sicherung
+Deine Lieblingssender und die Adressen deiner Playlists und Programmführer werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert; jedes Gerät lädt die Inhalte selbst herunter. Geöffnete Dateien bleiben auf diesem Gerät. Zuletzt gesehene Sender sowie Lautstärke und Stummschaltung bleiben ebenfalls auf diesem Gerät; das Senderverzeichnis und deine Playlists werden hier einen Tag lang behalten, eine Programmführer-Adresse für den Tag, an dem sie heruntergeladen wurde. Es gibt keinen Export; Favoriten und Adressen sind Teil der orOS-[Sicherung](help:t/backup).
+
+## Tastenkürzel
+Im Player:
+- [[Space]] spielt ab oder pausiert.
+- [[M]] schaltet stumm oder den Ton wieder an.
+- [[F]] schaltet Vollbild um.
+- [[↑]] / [[↓]] machen lauter oder leiser.
+- [[Esc]] schließt den Player.
+
+## Tipps
+- Streams kommen und gehen. Spielt ein Sender heute nicht, versuch es später noch einmal oder wähle einen anderen Stream.
+- Zum Ansehen brauchst du eine Verbindung; ohne zeigt die App, was sie zuletzt geladen hat.
+
+## Grenzen
+- Sender und Streams kommen von iptv-org, einer freien Community-Liste. Viele können offline sein, in deinem Land gesperrt oder in einem Format, das dein Browser nicht abspielen kann (`Dieses Streamformat wird hier nicht unterstützt`).
+- Ist das Verzeichnis nicht erreichbar (keine Verbindung oder ein Inhaltsblocker), bleibt die Liste leer.
+- iptv-org veröffentlicht keine fertigen Programmführer, daher kommt das Programm nur aus XMLTV-Adressen oder -Dateien, die du hinzufügst.
+- Viele Playlist- und Programmseiten lassen einen Browser nicht mitlesen (`Diese Website lässt den Browser nicht mitlesen…`). Mit eingerichtetem Mail-Relay liest die App sie darüber (bis zu 5 MB pro Download); andernfalls lade die Datei herunter und öffne sie.
+- `http://`-Streams spielen nicht, wenn orOS über `https://` läuft, und Streams, die einen besonderen Referrer oder User-Agent brauchen, spielen eventuell gar nicht.
+- Eine geöffnete Programmdatei behält die Sendungen vom Vortag bis eine Woche voraus; öffne danach eine neuere Datei. Die Zeitleiste zeigt nur heute und höchstens 150 Sender auf einmal.
+- Die Wiedergabe stoppt, wenn du den Player oder die App schließt.

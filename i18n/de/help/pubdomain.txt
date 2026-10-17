@@ -1,0 +1,68 @@
+# Gemeinfreiheits-Rechner
+
+Finde heraus, wann ein Buch, ein Lied, ein Gemälde oder ein Film frei nutzbar wird, in Griechenland und in 20 weiteren Ländern.
+
+## Erste Schritte
+
+Gib einen Urheber oder ein Werk ins Suchfeld ein (`Urheber oder Werk, z. B. Kazantzakis`) und wähle ein Ergebnis. Die App liest die Daten aus Wikidata und zeigt:
+
+- den Urheber oder das Werk, mit Geburts- und Todesjahr und Links zu `Wikipedia` und `Wikidata`;
+- eine Karte für `Mein Land` mit der Antwort;
+- die Liste `In anderen Ländern`.
+
+Die Länderliste und die Regeln sind in der App gespeichert, daher braucht die Antwort keine Verbindung. Nur die Suche braucht eine.
+
+## Urheber oder Werk nachschlagen
+
+- Wähle eine Person, um zu sehen, wann alles frei ist, was sie geschrieben oder geschaffen hat. Wähle ein Werk (einen Roman, einen Film, ein Lied), um zu sehen, wann dieses Werk frei ist. Bei einem Werk sucht die App seine Urheber, und wer zuletzt starb, zählt.
+- Suche auf Deutsch, Griechisch oder Englisch. Die Ergebnisse zeigen die Beschreibung aus Wikidata; so unterscheidest du Personen mit gleichem Namen.
+- Deine letzten 10 Suchen erscheinen unter `Zuletzt`. Tippe auf eine, um sie erneut nachzuschlagen, oder auf `Leeren`, um sie zu vergessen.
+
+## Daten selbst eingeben
+
+Tippe auf die Stift-Taste (`Daten selbst eingeben`), um das Formular zu öffnen. Es funktioniert offline.
+
+1. Wähle `Ein Urheber`, `Mehrere Urheber` oder `Anonym`.
+2. Gib jedes `Todesjahr` ein oder hake `Lebt noch` an. Bei `Mehrere Urheber` nutzt du `+ Urheber hinzufügen`. Füge bei einem Film Regie, Drehbuch, Dialogbuch und die Komposition der Filmmusik hinzu.
+3. Gib, wenn du willst, das `Jahr der Erstveröffentlichung` ein. Anonyme Werke brauchen es, und in den Vereinigten Staaten zählt es.
+
+Die Antwort aktualisiert sich beim Tippen. Tippe noch einmal auf den Stift, um das Formular zu schließen.
+
+## Die Antwort lesen
+
+Jedes Land zeigt eine von vier Antworten:
+
+- `Gemeinfrei` (✓), mit dem Datum, ab dem das Werk frei ist. Werke werden am 1. Januar nach Ablauf der Frist frei.
+- `Geschützt` (©), mit dem letzten geschützten Tag und der Zahl der verbleibenden Jahre.
+- `Vielleicht frei` (?), wenn die Antwort von etwas abhängt, das die App nicht weiß: einem genauen Todesdatum oder, in den Vereinigten Staaten, dem Erscheinungsjahr eines Werks.
+- `Unklar` (–), wenn ein Datum fehlt. Die Karte sagt, welches.
+
+Unter der Antwort siehst du die Regel (zum Beispiel `Regel: 70 Jahre nach dem Tod`), Gesetz und Artikel, Hinweise zu diesem Land und einen Link `Quelle` zu dem Text, an dem die Regel geprüft wurde.
+
+>! Eine Regel mit dem Hinweis `Diese Regel wurde noch nicht an der Quelle geprüft.` beruht auf Sekundärquellen. Prüfe sie, bevor du dich darauf verlässt.
+
+## Andere Länder
+
+- Wähle dein Land unter `Mein Land`. Voreingestellt ist Griechenland, und deine Wahl bleibt auf diesem Gerät.
+- `A–Z` sortiert die Liste nach Namen, `Freie zuerst` stellt die Länder, in denen das Werk frei ist, nach oben.
+- Tippe auf ein Land, um seine Regel, Hinweise und Quelle zu sehen.
+
+## Synchronisierung und Sicherung
+
+Nichts in dieser App wird synchronisiert oder gesichert: Dein Land, die Sortierung und deine letzten Suchen bleiben auf diesem Gerät. Unter [orOS-Synchronisierung](help:t/sync) siehst du, welche Apps synchronisieren.
+
+## Tastenkürzel
+
+- [[/]] springt ins Suchfeld. [[Esc]] leert es.
+- [[↓]] wechselt vom Suchfeld in die Ergebnisse, [[↑]] / [[↓]] bewegen sich darin und [[Enter]] wählt eines.
+
+## Tipps
+
+- Nennt Wikidata nur das Jahrzehnt des Todes oder mehr als ein Datum, warnt dich die Karte, und die Antwort wird zu einem Zeitraum.
+- Eine Person ohne Todesdatum, die vor weniger als 110 Jahren geboren wurde, gilt als lebend.
+
+## Grenzen
+
+- Das ist Information, keine Rechtsberatung. Die Antwort gilt für das Originalwerk: Übersetzungen, neue Ausgaben mit Anmerkungen, Bearbeitungen, Aufnahmen und Fotos eines Werks haben eigene Rechte.
+- Manche Sonderfälle werden erklärt, aber nicht berechnet: Frankreichs Kriegsverlängerungen, Russlands 4 zusätzliche Jahre für Kriegsveteranen, Japans Kriegsverlängerung und die US-Regeln zu Vermerk und Verlängerung.
+- Die Suche sendet, was du eingibst, an [Wikidata](https://www.wikidata.org/); dafür brauchst du kein Konto.

@@ -54,7 +54,8 @@
       return l === "el" ? "el" : "en";
     } catch (e) { return "en"; }
   }
-  var LANG = appLang();
+  // orosI18n (../i18n.js): the full language code, a pack language included.
+  var LANG = window.orosI18n ? window.orosI18n.lang() : appLang();
 
   var STRINGS = {
     en: {
@@ -141,6 +142,8 @@
     }
   };
 
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "aura", LANG);
+
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;
     var s = p[key] !== undefined ? p[key] : (STRINGS.en[key] !== undefined ? STRINGS.en[key] : key);
@@ -164,7 +167,7 @@
     try { return window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) { return false; }
   }
   function now() { return (window.performance && performance.now) ? performance.now() : Date.now(); }
-  function num(n) { try { return n.toLocaleString(LANG === "el" ? "el-GR" : "en-GB"); } catch (e) { return String(n); } }
+  function num(n) { try { return n.toLocaleString(window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB")); } catch (e) { return String(n); } }
 
   // BOOT MARKER
   (function () {

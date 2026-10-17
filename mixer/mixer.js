@@ -50,7 +50,7 @@
       return l === "el" ? "el" : "en";
     } catch (e) { return "en"; }
   }
-  var LANG = appLang();
+  var LANG = window.orosI18n ? window.orosI18n.lang() : appLang();
 
   var STRINGS = {
     en: {
@@ -101,6 +101,7 @@
       "live.on": "{ch}: ανοιχτό", "live.off": "{ch}: κλειστό", "live.playing": "Παίζει", "live.paused": "Σε παύση"
     }
   };
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "mixer", LANG);
 
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;

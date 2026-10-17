@@ -15,8 +15,25 @@
   "use strict";
   var KEY = "oros-minimalism-data";
   var YMD = /^(\d{4})-(\d{2})-(\d{2})$/;
-  var PRESET = { "Not today": 1, "Doesn't fit me": 1,
-                 "Όχι σήμερα": 1, "Δεν μου ταιριάζει": 1 };
+  // Same keys and English as minimalism.js (orosI18n packs: pack "minimalism").
+  var S = {
+    en: { "lvl.phys": "Physical", "lvl.dig": "Digital", "status.skip": "Skipped",
+          "skip.r1": "Not today", "skip.r2": "Doesn't fit me" },
+    el: { "lvl.phys": "Φυσικός", "lvl.dig": "Ψηφιακός", "status.skip": "Παραλείφθηκε",
+          "skip.r1": "Όχι σήμερα", "skip.r2": "Δεν μου ταιριάζει" }
+  };
+  // The shell runs this file: a pack language reads the "minimalism"
+  // pack when the shell has it, else English.
+  function words(lang) {
+    var I = root && root.orosI18n;
+    if (I && I.known && I.known(lang) && !S[lang]) I.table(S, "minimalism", lang);
+    return S[lang] || S.en;
+  }
+  // The preset skip reasons, in every language loaded so far, are not user text.
+  function isPreset(reason) {
+    for (var l in S) if (S[l] && (S[l]["skip.r1"] === reason || S[l]["skip.r2"] === reason)) return true;
+    return false;
+  }
 
   function str(v) { return typeof v === "string" ? v.trim() : ""; }
 
@@ -27,18 +44,18 @@
       var d = ctx.readJSON(KEY), out = [];
       if (!d || !Array.isArray(d.days)) return out;
       var tomb = d.deleted && typeof d.deleted === "object" ? d.deleted : {};
-      var el = ctx.lang === "el";
+      var w = words(ctx.lang);
       d.days.forEach(function (e) {
         if (!e || typeof e.id !== "string" || e.status !== "skip") return;
         var ts = tomb[e.id];
         if (typeof ts === "number" && (Number(e.mtime) || 0) <= ts) return;
         var reason = str(e.reason), m = YMD.exec(str(e.date));
-        if (!reason || PRESET[reason] || !m) return;
-        var lvl = e.level === "dig" ? (el ? "Ψηφιακός" : "Digital") : (el ? "Φυσικός" : "Physical");
+        if (!reason || isPreset(reason) || !m) return;
+        var lvl = e.level === "dig" ? w["lvl.dig"] : w["lvl.phys"];
         out.push({
           id: e.id,
           title: reason,
-          text: (el ? "Παραλείφθηκε" : "Skipped") + " · " + lvl,
+          text: w["status.skip"] + " · " + lvl,
           when: new Date(+m[1], +m[2] - 1, +m[3], 12).getTime(),
           target: m[0]
         });
