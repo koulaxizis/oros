@@ -12,6 +12,12 @@ var SCRIPT_V = "";
 
 (function(){
 "use strict";
+// Q6 CSP: no inline handlers. A logo marked data-drop-on-error removes
+// itself when it fails to load (error does not bubble: capture phase).
+document.addEventListener("error", function(e){
+  var t = e.target;
+  if(t && t.tagName === "IMG" && t.hasAttribute("data-drop-on-error")) t.remove();
+}, true);
 
 /* ===== CONFIG ===== */
 
@@ -1705,7 +1711,7 @@ function createStationCard(station){
     logoHtml = '<div class="rx-logo" style="position:relative;">' + esc(initials) +
       '<img src="' + esc(station.favicon) + '" alt="" loading="lazy" ' +
       'style="position:absolute;left:0;top:0;width:100%;height:100%;object-fit:contain;" ' +
-      'onerror="this.remove()"></div>';
+      'data-drop-on-error></div>';
   }
   
   var metaStr = "";

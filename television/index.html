@@ -2,21 +2,22 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob: 'wasm-unsafe-eval' 'sha256-5Vh45PaI0nIc/a1jF95XCyr5DLP9S6M7lV7I2AM5/TE='; style-src 'self' 'unsafe-inline'; img-src 'self' https: data: blob:; media-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https: wss: data: blob: http://localhost:* http://127.0.0.1:*; worker-src 'self' blob:; frame-src 'self' https: blob: data:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
   <!-- DL-1: a direct link to this app opens it inside the orOS shell -->
   <script>if (window.top === window.self && !/[?&]standalone\b/.test(location.search)) location.replace("../?open=television" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Television</title>
-  <link rel="stylesheet" href="television.css?v=2.90.00">
+  <link rel="stylesheet" href="television.css?v=2.91.00">
   <!-- hls.js: STATIC tag, requested unversioned so the sw.js precache
        entry matches (Part II sw.js contract: dynamically loaded
        assets must be requested WITHOUT a query string). -->
-  <script src="../vendor/hls.light.min.js?v=2.90.00"></script>
+  <script src="../vendor/hls.light.min.js?v=2.91.00"></script>
   <!-- Wave 43: the Reader's shared network layer (direct, then the Mail
        relay) for playlist / guide addresses, and the pure logic. -->
-  <script src="../feeds/core.js?v=2.90.00" defer></script>
-  <script src="../feeds/fetch.js?v=2.90.00" defer></script>
-  <script src="core.js?v=2.90.00" defer></script>
-  <script src="television.js?v=2.90.00" defer></script>
+  <script src="../feeds/core.js?v=2.91.00" defer></script>
+  <script src="../feeds/fetch.js?v=2.91.00" defer></script>
+  <script src="core.js?v=2.91.00" defer></script>
+  <script src="television.js?v=2.91.00" defer></script>
 </head>
 <body>
   <div id="tv-app">
