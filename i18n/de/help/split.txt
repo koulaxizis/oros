@@ -1,0 +1,83 @@
+# Kosten teilen
+Kosten teilen behält den Überblick über gemeinsame Ausgaben in einer Gruppe: eine Reise, eine WG, ein Abend unterwegs. Trag ein, wer was bezahlt hat, und die App rechnet aus, wer wem etwas schuldet und mit welchen wenigsten Zahlungen alles ausgeglichen ist.
+
+## Erste Schritte
+1. Tippe oder klicke auf `Neue Gruppe`. Gib ihr einen `Name`, eine `Währung` und eine `Farbe`.
+2. Füge unter `Personen` alle hinzu, auch dich selbst, mit `Hinzufügen`. Tippe neben deinem eigenen Namen auf `Ich`. `Aus Kontakten` wählt Personen aus [Kontakte](app:contacts), und `Aus einer Reise` fügt die Reisenden einer Reise aus [Reisen](app:travel) hinzu. Diese Tasten erscheinen nur, wenn diese Apps etwas anzubieten haben. In Reisen öffnet `An Kosten teilen senden` diesen Dialog schon ausgefüllt mit Name, Währung und Reisenden der Reise; nichts wird gespeichert, bis du auf `Speichern` tippst.
+3. Tippe auf `Speichern` und dann auf `Ausgabe`, um die erste Ausgabe hinzuzufügen.
+
+Der Startbildschirm listet deine Gruppen, die mit der neuesten Aktivität zuerst, und zeigt, wie viel du zurückbekommst oder schuldest. Archivierte Gruppen sind unter `Archiviert` zusammengeklappt. `Alle Gruppen` bringt dich dorthin zurück.
+
+## Ausgaben hinzufügen
+Eine Ausgabe hat `Wofür`, `Betrag`, `Datum`, `Kategorie` und `Bezahlt von`. Wenn mehr als eine Person bezahlt hat, wähle `Mehrere Personen…` und gib ein, was jede gegeben hat.
+
+Wähle unter `Aufteilung`, wer sie teilt (`Alle` oder Namen antippen), und wie:
+- `Gleich`: gleich viel für alle Gewählten.
+- `Beträge`: Gib den genauen Teil jeder Person ein.
+- `Anteile`: zum Beispiel 2 Anteile für ein Paar, 1 für eine Einzelperson.
+- `%`: Prozente, die zusammen 100 ergeben.
+- `Posten`: ein Beleg nach Posten, siehe unten.
+
+Eine Zeile unter der Aufteilung zeigt, was `Noch aufzuteilen` ist oder wie viel `zu viel` ist, und sagt `Passt`, wenn alles stimmt. Bei `Beträge` teilt `Rest gleich aufteilen` den Rest unter allen auf, deren Feld noch leer ist (gib 0 für alle ein, die nicht dabei sind). Ungerade Cent gehen immer nach derselben festen Regel, damit jedes Handy dieselben Zahlen zeigt. Füge optional eine `Notiz` hinzu und dann `Speichern`. Tippe oder klicke auf eine Ausgabe, um sie zu bearbeiten oder zu löschen; nach dem Löschen bleibt ein paar Sekunden lang eine Taste `Rückgängig`.
+
+## Andere Währungen
+Wähle neben `Betrag` die Option `Bezahlt in Währung`, zum Beispiel Dollar auf einer Reise nach New York. Die App füllt den `Wechselkurs` der Europäischen Zentralbank ein (dieselben Kurse wie im [Einheitenrechner](app:units)) und zeigt den Betrag in der Währung der Gruppe. Du kannst einen anderen Kurs eingeben, zum Beispiel den auf deiner Kartenabrechnung; `EZB-Kurs verwenden` stellt den offiziellen wieder her.
+
+Beträge der Zahlenden, genaue Beträge und Belegposten gibst du in der gewählten Währung ein. Die Ausgabe wird mit ursprünglichem Betrag, Währung und Kurs gespeichert, damit sich die Salden nie ändern, wenn sich die Kurse später bewegen. Offline werden die letzten Kurse auf diesem Gerät verwendet; gibt es noch keine, gib den Kurs ein.
+
+## Belege nach Posten
+Wähle `Posten` unter `Aufteilung`. Gib für jede Zeile des Belegs den Posten und seinen Preis ein und tippe an, wer ihn hatte (`Alle` für gemeinsame). Füge `Steuer` und `Trinkgeld` hinzu, wenn der Beleg sie hat: Sie werden im Verhältnis zu dem geteilt, was jede Person hatte. Die Belegsumme muss zum `Betrag` passen; `… als Betrag verwenden` übernimmt sie.
+
+## Wiederkehrende Ausgaben
+Wähle für Miete, Rechnungen oder Abos beim Hinzufügen der Ausgabe `Jede Woche`, `Jeden Monat` oder `Jedes Jahr` unter `Wiederholen`, und optional ein Datum unter `Bis`. Sie erscheint jedes Mal an ihrem Datum in der Liste, mit derselben Aufteilung; ein Monatsende-Datum bleibt am Monatsende. `Wiederkehrend` oben in der Liste zeigt jede Serie mit ihrem nächsten Datum. Tippe auf eine, um sie zu ändern (Änderungen gelten ab dem nächsten Mal) oder für `Wiederholung stoppen`; die schon hinzugefügten bleiben. Eine gelöschte einzelne Ausgabe kommt nie zurück.
+
+## Belegfotos
+`Foto hinzufügen` bewahrt ein Bild des Belegs bei der Ausgabe auf. Es wird in [Dateien](app:files) im Ordner Split/Receipts gespeichert und neu gezeichnet, sodass Standort- und Kameradaten entfernt sind. Es reist mit Vault Drive zwischen deinen eigenen Geräten und in einer orOS-Datei der Gruppe (siehe unten); Freunde, denen du die JSON-Gruppendatei schickst, bekommen das Foto nicht. Wenn du die Ausgabe löschst, wird auch das Foto gelöscht.
+
+## Ausgaben finden
+Der Tab `Ausgaben` hat `Ausgaben durchsuchen…` und Filter für `Kategorie`, `Mit Beteiligung von` jemandem und `Nur Zahlungen`.
+
+## Salden und Ausgleichen
+`Salden` zeigt, was jede Person bezahlt hat, ihren Anteil und ob sie Geld zurückbekommt oder schuldet. `Ausgleichen` listet die wenigsten Zahlungen, mit denen alle quitt sind. Wenn jemand zahlt, tippe neben dieser Zahlung auf `Bezahlt`, oder auf `Zahlung erfassen` für jeden anderen Betrag.
+
+Wenn du festlegst, wer du bist, zeigt die Gruppe `Ausgaben der Gruppe`, `Dein Anteil` und `Dein Saldo`. Wenn du eine Ausgabe bearbeitest, an der du beteiligt bist, schickt `Meinen Anteil zu Budget hinzufügen` deinen Teil (in der Währung der Gruppe) als neuen Eintrag an [Budget](app:budget), den du prüfst und speicherst.
+
+## Mit Freunden teilen
+Im Menü `Mehr` einer Gruppe:
+- `Übersicht teilen`: ein kurzer Text mit Summen und wer wem zahlt, zum Kopieren oder, auf dem Handy, zum Teilen.
+- `Gruppendatei senden`: eine Datei, die deine Freunde in ihrem eigenen orOS mit `Gruppendatei importieren…` aus dem Menü `Mehr` auf dem Startbildschirm öffnen. Hin und her geschickte Dateien werden zusammengeführt und zählen eine Ausgabe nie doppelt. Jede Person wählt auf ihrem eigenen Gerät, wer sie ist.
+- `Exportieren (CSV, PDF)`: eine CSV für deutsches Excel oder andere Apps oder eine PDF-Übersicht. In orOS legt `In Tabelle öffnen` dieselbe Tabelle in ein neues Blatt der Tabelle, mit Summen unter den Beträgen.
+- `Gruppe und Personen`, `Gruppe archivieren` und `Gruppe löschen`.
+
+## Eine orOS-Datei speichern und öffnen
+Auf dem Startbildschirm speichert `orOS-Datei (.orossplit)` im Menü `Mehr` jede Gruppe mit ihren Personen, Ausgaben, Zahlungen, wiederkehrenden Ausgaben und Belegfotos als eine `.orossplit`-Datei. In einer Gruppe speichert `Diese Gruppe als orOS-Datei (.orossplit)` nur diese Gruppe: die Datei, die du deinen Freunden schickst. Die Datei ist ein einfaches ZIP: Entpackt enthält sie die Gruppen als `content.json`, die Fotos in `media/` und eine CSV pro Gruppe in `preview/` (wie bei `Exportieren (CSV, PDF)`) für andere Programme. Wer du in einer Gruppe bist, steht nie darin. Sie ist nicht verschlüsselt, bewahre sie also sicher auf.
+
+`orOS-Datei öffnen…` (oder `Entpackter orOS-Ordner…` oder „Öffnen mit“ orOS auf dem Computer) zeigt, wie viele Einträge neu sind und wie viele schon da sind, dann fügt `Hinzufügen` nur die neuen hinzu, mit eigenen IDs: Dieselbe Datei noch einmal zu öffnen fügt nichts hinzu. Eine Ausgabe, die schon da ist, bleibt, wie sie ist, und eine, die du hier gelöscht hast, bleibt gelöscht; eine Datei löscht nie etwas. Wenn ein Freund die Gruppe erneut schickt, hake `Mit neueren Versionen aktualisieren` an, damit die Ausgaben, Zahlungen und Namen, die er später geändert hat, deine Kopie ersetzen. Ein Belegfoto wird nur in Dateien gespeichert, wenn es dort noch nicht ist. `Rückgängig` in der Meldung entfernt, was hinzugefügt wurde, und stellt wieder her, was aktualisiert wurde. Eine JSON-Gruppendatei oder Sicherung, die du hier wählst, öffnet sich wie mit `Gruppendatei importieren…`.
+
+## Aus Splitwise, Tricount oder Settle Up importieren
+`Aus Splitwise, Tricount, Settle Up importieren…` steht im Menü `Mehr`, auf dem Startbildschirm und in einer Gruppe. Wähle die Datei, die du exportiert hast:
+- Splitwise: Öffne die Gruppe, dann die Einstellungen (Zahnrad) und `Als Tabelle exportieren`. Du bekommst eine CSV mit dem Nettobetrag jeder Person pro Ausgabe; Zahlungen kommen als Zahlungen herein.
+- Tricount: Öffne im Tricount die Einstellungen oder das Menü `…` und wähle den Export nach Excel (oder CSV). Ausgaben, Geldüberweisungen und Einnahmen kommen herein, mit dem Anteil jeder Person.
+- Settle Up: Öffne in der Gruppe das Menü und exportiere die Transaktionen (CSV oder Excel). Wer bezahlt hat, für wen mit Gewichtung, Überweisungen und der Wechselkurs werden gelesen.
+
+Bevor etwas gespeichert wird, siehst du die Quelle, den Gruppennamen (du kannst ihn ändern), wie viele Ausgaben und Zahlungen hinzukommen, die Daten und was ausgelassen wird. Unter `Personen` kannst du jemanden umbenennen oder zwei Personen denselben Namen geben, um sie zusammenzuführen. Die App prüft dann, ob die Salden wie in der anderen App herauskommen, und warnt dich, wenn sie um mehr als 0,01 abweichen. `Importieren` erstellt in einem Schritt eine neue Gruppe, und `Rückgängig` nimmt alles zurück.
+
+Wenn du später erneut exportierst und die neue Datei in dieselbe Gruppe importierst, kommen nur die fehlenden Zeilen hinzu; eine Ausgabe, die du hier gelöscht hast, bleibt gelöscht. Zeilen in einer anderen Währung als der der Gruppe werden nur importiert, wenn die Datei einen Wechselkurs hat.
+
+## Synchronisierung und Sicherung
+Alle Gruppen, Personen, Ausgaben, Zahlungen und wiederkehrenden Ausgaben werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen eigenen Geräten synchronisiert. Die offene Gruppe, der Tab und das CSV-Format bleiben auf jedem Gerät. Das Menü des Startbildschirms hat `Sicherung (JSON)` und `Aus Sicherung wiederherstellen`, das mit dem Vorhandenen zusammenführt; die orOS-[Sicherung](help:t/backup) umfasst Kosten teilen ebenfalls.
+
+## Tastenkürzel
+- [[N]]: neue Ausgabe in einer Gruppe oder neue Gruppe auf dem Startbildschirm.
+- [[B]]: zwischen `Ausgaben` und `Salden` wechseln.
+- [[←]] und [[→]] auf den Tabs: Tab wechseln.
+
+## Tipps
+- Archiviere eine Gruppe, sobald alle quitt sind; sie ist aus dem Weg, aber nichts geht verloren.
+
+## Grenzen
+- Salden werden in der Währung der Gruppe geführt. Wenn du die Währung einer Gruppe änderst, werden die vorhandenen Beträge nicht umgerechnet.
+- Wechselkurse sind die neuesten EZB-Kurse auf diesem Gerät, nicht der Kurs am Tag der Ausgabe; gib den Kurs ein, wenn du einen genauen brauchst. Zum Abrufen der Kurse wird frankfurter.dev kontaktiert, und nur dann, wenn du eine andere Währung wählst und die Kurse hier älter als 6 Stunden sind.
+- Ein Belegfoto pro Ausgabe; wiederkehrende Ausgaben haben kein Foto. Bis zu 60 Posten pro Beleg und 50 wiederkehrende Ausgaben pro Gruppe.
+- Wer noch eine ältere orOS-Version hat, sieht diese Ausgaben als einfache Beträge in der Währung der Gruppe (die Salden bleiben richtig), verliert aber Posten, ursprüngliche Währung und Foto, wenn er eine bearbeitet.
+- Bis zu 30 Personen pro Gruppe und 200 Gruppen.

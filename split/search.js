@@ -17,10 +17,16 @@
   var YMD = /^(\d{4})-(\d{2})-(\d{2})$/;
   var CAT = {
     en: { food: "Food & drinks", groc: "Groceries", stay: "Accommodation", trans: "Transport",
-          bills: "Bills & rent", fun: "Activities", other: "Other" },
+          bills: "Bills & rent", fun: "Activities", other: "Other", "g.unnamed": "Unnamed group" },
     el: { food: "Φαγητό & ποτό", groc: "Σούπερ μάρκετ", stay: "Διαμονή", trans: "Μεταφορές",
-          bills: "Λογαριασμοί & ενοίκιο", fun: "Δραστηριότητες", other: "Άλλα" }
+          bills: "Λογαριασμοί & ενοίκιο", fun: "Δραστηριότητες", other: "Άλλα", "g.unnamed": "Ομάδα χωρίς όνομα" }
   };
+  // The shell runs this file, not the Split page: a pack language shows
+  // the "split" pack lines when the shell has them, else English.
+  function catsFor(lang) {
+    var I = root && root.orosI18n;
+    return CAT[lang] || (I && lang ? I.table(CAT, "split", lang) : null) || CAT.en;
+  }
 
   function str(v) { return typeof v === "string" ? v.trim() : ""; }
   function arr(a) { return Array.isArray(a) ? a : []; }
@@ -37,7 +43,7 @@
       var d = ctx.readJSON(KEY), out = [];
       if (!d || !Array.isArray(d.groups)) return out;
       var tombs = d.tombs && typeof d.tombs === "object" ? d.tombs : {};
-      var cats = CAT[ctx.lang === "el" ? "el" : "en"];
+      var cats = catsFor(ctx.lang);
       function dead(kind, x) {
         var ts = tombs[kind + ":" + x.id];
         return typeof ts === "number" && ts >= (Number(x.m) || 0);
@@ -58,7 +64,7 @@
         var g = groups[gid];
         out.push({
           id: "g:" + gid,
-          title: str(g.n) || (ctx.lang === "el" ? "Ομάδα χωρίς όνομα" : "Unnamed group"),
+          title: str(g.n) || cats["g.unnamed"] || CAT.en["g.unnamed"],
           text: (names[gid] || []).filter(Boolean).join(" · "),
           when: typeof g.m === "number" ? g.m : 0,
           target: { group: gid }

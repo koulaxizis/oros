@@ -379,12 +379,12 @@
   var COLS = {
     en: { date: "Date", type: "Type", title: "What for", cat: "Category", amount: "Amount", cur: "Currency",
           by: "Paid by", share: "Share: {p}", note: "Note", orig: "Original amount", ocur: "Original currency",
-          rate: "Rate", exp: "Expense", pay: "Payment", unknown: "Unknown",
+          rate: "Rate", exp: "Expense", pay: "Payment", unknownName: "Unknown",
           food: "Food & drinks", groc: "Groceries", stay: "Accommodation", trans: "Transport",
           bills: "Bills & rent", fun: "Activities", other: "Other" },
     el: { date: "Ημερομηνία", type: "Τύπος", title: "Για τι", cat: "Κατηγορία", amount: "Ποσό", cur: "Νόμισμα",
           by: "Πλήρωσε", share: "Μερίδιο: {p}", note: "Σημείωση", orig: "Αρχικό ποσό", ocur: "Αρχικό νόμισμα",
-          rate: "Ισοτιμία", exp: "Έξοδο", pay: "Πληρωμή", unknown: "Άγνωστος",
+          rate: "Ισοτιμία", exp: "Έξοδο", pay: "Πληρωμή", unknownName: "Άγνωστος",
           food: "Φαγητό & ποτό", groc: "Σούπερ μάρκετ", stay: "Διαμονή", trans: "Μεταφορές",
           bills: "Λογαριασμοί & ενοίκιο", fun: "Δραστηριότητες", other: "Άλλα" }
   };
@@ -400,8 +400,15 @@
     var neg = c < 0, a = Math.abs(c);
     return (neg ? "-" : "") + Math.floor(a / 100) + decSep + pad2(a % 100);
   }
+  // A decimal comma? ("el" yes, "en" no, a pack language by its locale.)
+  function decComma(lang) {
+    if (lang === "el") return true;
+    if (!lang || lang === "en") return false;
+    var I = typeof window !== "undefined" && window.orosI18n;
+    try { return (1.5).toLocaleString(I ? I.locale(lang) : lang).indexOf(",") >= 0; } catch (e) { return false; }
+  }
   function centsToInput(c, lang) {
-    return (Math.floor(c / 100)) + (c % 100 ? (lang === "el" ? "," : ".") + pad2(c % 100) : "");
+    return (Math.floor(c / 100)) + (c % 100 ? (decComma(lang) ? "," : ".") + pad2(c % 100) : "");
   }
   function buildCsv(head, rows, fmt) {
     var sep = fmt === "excel" ? ";" : ",", dec = fmt === "excel" ? "," : ".";
@@ -415,10 +422,12 @@
   }
   // One group as the app's Export CSV (exportCsv in split.js)
   function groupCsv(state, g, lang) {
-    var L = COLS[lang === "el" ? "el" : "en"], fmt = lang === "el" ? "excel" : "std";
+    var I = typeof window !== "undefined" && window.orosI18n;
+    if (I && lang && !COLS[lang]) I.table(COLS, "split", lang);
+    var L = COLS[lang] || COLS.en, fmt = decComma(lang) ? "excel" : "std";
     var names = {};
     (state.people || []).forEach(function (p) { names[p.id] = p.n; });
-    var name = function (id) { return hasOwn.call(names, id) ? names[id] : L.unknown; };
+    var name = function (id) { return hasOwn.call(names, id) ? names[id] : L.unknownName; };
     var people = (state.people || []).filter(function (p) { return groupOf(p.id) === g.id; })
       .sort(function (a, b) { return a.n.localeCompare(b.n) || cmpStr(a.id, b.id); });
     var head = [L.date, L.type, L.title, L.cat, L.amount, L.cur, L.by]
