@@ -7639,3 +7639,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Notes, To-Do, Calendar, Contacts and Kanban are now in German: packs in `i18n/de/`, and each of the five `index.html` loads `../i18n.js` before its own scripts; English still fills any missing line.
 - Files: `i18n/de/{notes,todo,calendar,contacts,kanban}.js` and their help, 5 `index.html`, `i18n/apps.json`, `i18n/de/STATUS.md`.
   - Tests: full suite green; Chromium 360 de / el. Not tested: a German native reader's review, Safari, phones.
+
+### 2026-10-17 — Flashcards, wave 4: cards from other apps, Today line, study reminder (#505) — 3.03.00
+- Flashcards: make cards from Notes, Wiki, Writer, Reader or Spreadsheet with Send to an app (`flashcards/make.js`, send/core.js target), see cards waiting in Today (`flashcards/today.js`, shell loads `flashcards/due.js`), and an optional daily study reminder through orOS notifications.
+- Files: `flashcards/{index.html,app.js,make.js,due.js,today.js,help.*.txt}`, `send/core.js`, `notifications.js`, `shell.js`, root `index.html`, precache, `tests/flashcards-make.test.js`, `tests/send.test.js`.
+  - Tests: full suite green; Chromium 1280 EN / 360 EL. Not tested: the reminder with orOS closed (Web Push), real phones, Safari.
