@@ -7738,3 +7738,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Settings explains how to turn on notifications with orOS closed in Brave, which blocks push by default; the Notifications help page says the same.
 - Files: `settings/settings.js`, `settings/core.js`, `help/topics/notifications.{en,el}.txt`.
   - Tests: 4777/4777; Chromium E2E. Not tested: Brave itself.
+
+### 2026-10-17 — Languages L7b: the other 25 games in German (#524) — 3.15.00
+- The other 25 games, from Connect Four to Dice & Coin, are now in German: packs in `i18n/de/`, inline texts moved into {en, el} tables, and each `index.html` loads `../i18n.js` before its own scripts. English still fills any missing line.
+- Files: `i18n/de/**`, the 25 game folders (index.html + scripts), `i18n/apps.json`.
+  - Tests: 4777/4777; Chromium 360 de / el. Not tested: a German native reader's review, real phone, Safari.
