@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.07.00
+- Flashcards: see your progress (heatmap, true retention, 30-day forecast), export decks as .oroscards or CSV and open them on any device; the orOS Converter turns Anki decks into .oroscards.
+
 ## Version 3.06.00
 - Multitasking (experimental): on wide screens put two apps side by side with Beside in the Open apps list, and drag the bar between them to share the width.
 
