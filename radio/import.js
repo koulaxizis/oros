@@ -152,6 +152,7 @@
     }
     return c.done();
   }
+  // i18n-inline-ok: the Greek CSV column names below are parser data (headers of imported files), not UI text
   var CSV_NAME = ["name", "station", "station name", "title", "όνομα", "σταθμός"];
   var CSV_URL = ["url", "stream", "stream url", "streamurl", "url_resolved", "link", "address", "location", "διεύθυνση"];
   var CSV_LOGO = ["logo", "favicon", "icon", "image", "tvg-logo"];

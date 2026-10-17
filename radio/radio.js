@@ -249,13 +249,24 @@ var STRINGS = {
   }
 };
 
+// orosI18n (../i18n.js): the full language code, a pack language
+// (e.g. "de") included; the old shell lookup stays as the fallback.
 function activeLang(){
+  if(window.orosI18n) return window.orosI18n.lang();
   try{ return (window.parent && window.parent.orosLang) || window.orosLang || "en"; }
   catch(e){ return window.orosLang || "en"; }
 }
+if(window.orosI18n) window.orosI18n.table(STRINGS, "radio", activeLang());
+
+// Dates and times in the user's language.
+function activeLocale(){
+  var l = activeLang();
+  return window.orosI18n ? window.orosI18n.locale(l) : (l === "el" ? "el-GR" : "en-GB");
+}
 
 function t(key){
-  var pack = STRINGS[activeLang()] || STRINGS.en;
+  var l = activeLang();
+  var pack = STRINGS[l] || (window.orosI18n ? window.orosI18n.table(STRINGS, "radio", l) : null) || STRINGS.en;
   return pack[key] !== undefined ? pack[key]
        : (STRINGS.en[key] !== undefined ? STRINGS.en[key] : key);
 }
@@ -2137,7 +2148,7 @@ function alarmsApi(){
 }
 
 function fmtAlarm(at){
-  var d = new Date(at), loc = activeLang() === "el" ? "el-GR" : "en-GB";
+  var d = new Date(at), loc = activeLocale();
   var time = d.toLocaleTimeString(loc, { hour: "2-digit", minute: "2-digit" });
   var today = new Date(); today.setHours(0, 0, 0, 0);
   var days = Math.floor((new Date(at).setHours(0, 0, 0, 0) - today.getTime()) / 86400000);
@@ -2334,7 +2345,7 @@ function openHistory(){
   if(!list.length) b.appendChild(el("p", "rx-note", t("hist.empty")));
   else{
     var ul = el("ul", "rx-hist");
-    var loc = activeLang() === "el" ? "el-GR" : "en-GB", today = new Date().toDateString();
+    var loc = activeLocale(), today = new Date().toDateString();
     list.forEach(function(h){
       var li = el("li"), d = new Date(h.t);
       li.appendChild(el("span", "rx-hist-t", (d.toDateString() === today ? "" : d.toLocaleDateString(loc, { day: "numeric", month: "short" }) + " ") +
