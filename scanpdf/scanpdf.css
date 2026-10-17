@@ -11,6 +11,7 @@
      6. Busy, drag veil, toast, screen-reader helper
      5b. Options, signatures
      5c. Page editor
+     5d. Scanner
      7. Mobile + touch adaptations
      8. Reduced motion
    ============================================================ */
@@ -475,6 +476,157 @@ body.editing #toast { top: auto; bottom: calc(48px + env(safe-area-inset-bottom,
 .ov.on .ov-h { display: block; }
 .ed-hint { padding: 6px 12px calc(8px + env(safe-area-inset-bottom, 0px)); text-align: center; }
 
+/* ---------- 5d. Scanner ---------- */
+#scanner {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  display: flex;
+  flex-direction: column;
+  background: #0b0a08;
+  color: var(--text);
+}
+#scanner.flash .sc-stage::after { content: ""; position: absolute; inset: 0; background: #fff; opacity: 0.6; pointer-events: none; }
+.sc-view { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.sc-stage {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+#sc-video { width: 100%; height: 100%; object-fit: contain; background: #000; }
+#sc-outline { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.sc-tip {
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  transform: translateX(-50%);
+  max-width: calc(100% - 24px);
+  padding: 6px 12px;
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 13px;
+  text-align: center;
+  pointer-events: none;
+}
+.sc-tip:empty { display: none; }
+.sc-msg {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 24px;
+  text-align: center;
+  background: var(--bg);
+  font-size: 14px;
+}
+.sc-msg p { max-width: 420px; }
+.sc-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--bar-bg);
+  border-top: 1px solid var(--border);
+}
+.sc-shootbar { justify-content: center; position: relative; gap: 18px; }
+.sc-shoot {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 4px solid #fff;
+  background: var(--accent);
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.4);
+  flex-shrink: 0;
+}
+.sc-shoot:disabled { opacity: 0.35; cursor: default; }
+.sc-shoot:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.sc-auto { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; cursor: pointer; min-height: 36px; }
+.sc-auto input { accent-color: var(--accent); width: 20px; height: 20px; margin: 0; }
+#sc-torch.on { color: var(--accent); }
+.sc-strip {
+  display: flex;
+  gap: 8px;
+  padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0px));
+  overflow-x: auto;
+  background: var(--bar-bg);
+}
+.sc-strip li { flex-shrink: 0; }
+.sc-thumb {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 72px;
+  padding: 2px;
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  background: #fff;
+  overflow: hidden;
+}
+.sc-thumb:hover, .sc-thumb:focus-visible { border-color: var(--accent); outline: none; }
+.sc-thumb canvas { max-width: 100%; max-height: 100%; }
+.sc-num {
+  position: absolute;
+  left: 2px;
+  bottom: 2px;
+  min-width: 18px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: var(--accent);
+  color: var(--bg);
+  font-size: 11px;
+  font-weight: 800;
+}
+.sc-tip-top { padding: 8px 12px 0; text-align: center; }
+.sc-adjbox { position: relative; flex-shrink: 0; }
+#sc-photo { display: block; width: 100%; height: 100%; }
+.sc-quad { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.sc-quad polygon { fill: rgba(212, 175, 55, 0.16); stroke: #d4af37; stroke-width: 2; }
+.sc-h {
+  position: absolute;
+  width: 36px;
+  height: 36px;
+  margin: -18px 0 0 -18px;
+  border-radius: 50%;
+  border: 3px solid #d4af37;
+  background: rgba(255, 255, 255, 0.35);
+  touch-action: none;
+  cursor: grab;
+}
+.sc-h:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+.sc-loupe {
+  position: absolute;
+  border-radius: 50%;
+  border: 3px solid #d4af37;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  z-index: 2;
+}
+#sc-result { display: block; background: #fff; box-shadow: 0 2px 14px rgba(0, 0, 0, 0.5); }
+.sc-filters { display: flex; gap: 6px; padding: 8px 12px; overflow-x: auto; background: var(--bar-bg); border-top: 1px solid var(--border); }
+.chip {
+  flex-shrink: 0;
+  min-height: 34px;
+  padding: 4px 14px;
+  border: 1px solid var(--border);
+  border-radius: 17px;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 700;
+}
+.chip[aria-checked="true"] { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+.chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
 /* ---------- 6. Busy, drag veil, toast, screen-reader helper ---------- */
 #busy {
   position: fixed;
@@ -582,6 +734,7 @@ body.editing #toast { top: auto; bottom: calc(48px + env(safe-area-inset-bottom,
   .ed-tools .btn { min-width: 44px; padding: 4px 10px; }
   .ed-props .btn span { display: none; }
   .ed-stage { padding: 8px; }
+  .sc-bar { padding-left: 8px; padding-right: 8px; }
 }
 @media (pointer: coarse) {
   .icon-btn { width: 44px; height: 44px; }
@@ -590,6 +743,8 @@ body.editing #toast { top: auto; bottom: calc(48px + env(safe-area-inset-bottom,
   .pen { width: 40px; height: 40px; right: 10px; }
   .swatch { width: 36px; height: 36px; }
   .ov-h { width: 30px; height: 30px; right: -15px; bottom: -15px; }
+  .sc-h { width: 44px; height: 44px; margin: -22px 0 0 -22px; }
+  .chip { min-height: 40px; }
 }
 @media (max-width: 380px) and (pointer: coarse) {
   .sel-btns .icon-btn { width: 40px; }

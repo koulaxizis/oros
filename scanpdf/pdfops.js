@@ -6,7 +6,8 @@
 //     streams can't be copied), "bad" (not a readable PDF).
 // build(lib, srcs, pages, prefs, meta) -> Promise<Uint8Array>
 //     srcs: { <id>: { kind: "pdf", doc } | { kind: "image",
-//             img: { bytes, type "jpg"|"png", w, h } } }
+//             img: { bytes, type "jpg"|"png", w, h }, scan (a
+//             scanned page: its own shape, no margin) } }
 //     pages: the page list (core.js), in output order, with the
 //            additions of each page (p.ov: signatures, text).
 //     meta: { title, opts (core.readDocOpts: page numbers,
@@ -53,7 +54,7 @@
       var pg = s.doc.getPage(p.idx), b = pg.getCropBox();
       return { W: b.width, H: b.height, R: C.normRot(pg.getRotation().angle + (p.rot || 0)), bx: b.x, by: b.y };
     }
-    var size = C.pageFor(s.img.w, s.img.h, prefs);
+    var size = C.pageFor(s.img.w, s.img.h, C.prefsFor(s, prefs));
     return { W: size[0], H: size[1], R: C.normRot(p.rot || 0), bx: 0, by: 0 };
   }
   function geomOf(lib, page, rot) {
@@ -156,8 +157,8 @@
               return decorate(lib, out, page, geomOf(lib, page, rot), p, i, pages.length, opts, font, images);
             }
             return embed(p.src).then(function (emb) {
-              var w = s.img.w, h = s.img.h, size = C.pageFor(w, h, P);
-              var r = C.fitRect(w, h, size[0], size[1], P.margin);
+              var PP = C.prefsFor(s, P), w = s.img.w, h = s.img.h, size = C.pageFor(w, h, PP);
+              var r = C.fitRect(w, h, size[0], size[1], PP.margin);
               page = out.addPage(size);
               page.drawImage(emb, { x: r.x, y: r.y, width: r.w, height: r.h });
               if (p.rot) page.setRotation(lib.degrees(C.normRot(p.rot)));
