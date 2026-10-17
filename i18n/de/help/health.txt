@@ -1,0 +1,126 @@
+# Gesundheit
+Gesundheit hält deine Messungen von zu Hause an einem Ort: Blutdruck, Gewicht, Blutzucker, Schlaf, Ruhepuls, Temperatur, Sauerstoff und jede Messart, die du selbst hinzufügst. Die App führt auch eine Liste der Medikamente, die du nimmst, erinnert dich an jede Dosis, zählt den Restbestand und lässt dich Symptome festhalten. Ihre `Akte` enthält deinen Notfallpass, deine Arzttermine, Impfungen und Dokumente wie Laborbefunde. Sie zeigt Verläufe und erstellt einen übersichtlichen Bericht für deinen Arzt.
+
+>! Gesundheit zeichnet auf, sie stellt keine Diagnosen und ist keine medizinische Beratung. Der Notfallpass zeigt nur, was du eingegeben hast: Er ersetzt nicht die Unterlagen deines Arztes. Die App prüft keine Dosen und keine Wechselwirkungen zwischen Medikamenten. Nimm deine Medikamente so, wie es dir dein Arzt oder deine Apotheke gesagt hat, und sprich mit ihnen, wenn dich etwas beunruhigt.
+
+## Erste Schritte
+Der Tab `Werte` hat eine Karte pro Messart. Tippe oder klicke auf **+** auf einer Karte, um eine Messung hinzuzufügen: Datum und Uhrzeit sind schon auf jetzt gesetzt, du gibst also nur den Wert ein. Tippe oder klicke auf die Karte selbst, um ihr Diagramm zu sehen.
+
+Jede Messung kann eine `Notiz` und `Tags` haben (trenne sie mit Kommas, z. B. nach Kaffee). Öffne zuerst die `Einstellungen`, wenn du andere Einheiten möchtest (kg oder lb, mg/dL oder mmol/L, °C oder °F) oder deine Größe eingeben willst, die nur für den BMI verwendet wird.
+
+## Messungen
+- `Blutdruck`: oberer und unterer Wert, optional Puls, `Arm` und `Haltung`.
+- `Gewicht`: mit deinem BMI, sobald deine Größe eingetragen ist.
+- `Blutzucker`: wähle `Wann` (`Nüchtern`, `Vor dem Essen`, `2 Std. nach dem Essen`, `Vor dem Schlafen` oder `Beliebig`); die Bereiche hängen davon ab.
+- `Schlaf`: wann du ins Bett gegangen bist, wann du aufgewacht bist und optional die `Qualität` von 1 bis 5.
+- `Ruhepuls`, `Temperatur`, `Sauerstoff (SpO₂)`.
+
+Das Abzeichen an jeder Messung (`Im Bereich`, `Grenzwertig`, `Hoch` usw.) folgt gängigen Tabellen: ESC/ESH 2023 für Blutdruck, ADA für Blutzucker, WHO für BMI. Wenn dir dein Arzt andere Zielwerte genannt hat, trag sie in den Einstellungen der Messart ein; dann gelten diese.
+
+### Eigene Messarten
+Tippe oder klicke auf `Eigene Messart hinzufügen` für alles andere, etwa Cholesterin oder Taillenumfang. Gib ihr einen `Name`, optional eine `Einheit`, die Zahl der `Nachkommastellen` und, wenn du willst, einen Zielbereich. Wenn du eine eigene Messart löschst, werden auch ihre Messungen auf jedem synchronisierten Gerät gelöscht; `Rückgängig` holt beides zurück.
+
+### Erinnerungen
+In den Einstellungen einer Messart: `Uhrzeit hinzufügen` (bis zu vier). Eine Glocke auf der Karte zeigt, dass sie Erinnerungen hat. Die Erinnerung erscheint ab dieser Uhrzeit vier Stunden lang in deinen orOS-Benachrichtigungen; eine Messung bis zu einer Stunde vor der Uhrzeit zählt, damit du nicht doppelt erinnert wirst. Tippe auf die Benachrichtigung, um eine neue Messung zu öffnen. Siehe [Benachrichtigungen](help:t/notifications).
+
+## Medikamente
+Der Tab `Medikamente` hat drei Ansichten: `Heute`, `Meine Medikamente` und `Verlauf`.
+
+### Ein Medikament hinzufügen
+Tippe oder klicke auf `Medikament hinzufügen` und fülle aus:
+- `Name` und, wenn du willst, die `Stärke` (z. B. 500 mg) und die `Form` (Tablette, Kapsel, Flüssigkeit in ml, Tropfen, Inhalator, Spritze, Creme, Pflaster und mehr).
+- `Dosis`: wie viel du jedes Mal nimmst, z. B. 1 oder 0,5 Tabletten.
+- `Wie oft`: `Jeden Tag`, `An bestimmten Tagen` (wähle die Wochentage), `Alle paar Tage` (alle 2 Tage, alle 3 Tage…) oder `Bei Bedarf`. Bei den ersten drei fügst du die `Uhrzeiten` hinzu, zu denen du es nimmst (bis zu acht).
+- `Beginn` und optional ein `Ende` für eine Behandlung, etwa ein Antibiotikum für 7 Tage.
+- `Zu diesen Uhrzeiten erinnern` und eine `Notiz` (z. B. zum Essen).
+
+Tippe oder klicke in `Meine Medikamente` auf ein Medikament, um es zu ändern. Wenn du seine Uhrzeiten oder Tage änderst, behalten die Tage davor den alten Plan, damit dein Verlauf stimmt. `Absetzen` beendet die Einnahme heute und behält den Verlauf; `Wieder einnehmen` holt es zurück. Wenn du ein Medikament löschst, wird auch sein Dosisverlauf auf jedem synchronisierten Gerät gelöscht; `Rückgängig` holt es zurück.
+
+### Heute
+`Heute` listet jede Dosis des Tages nach Uhrzeit auf. Wähle bei jeder `Genommen`, `Auslassen` oder `Schlummern` (10 Minuten, 30 Minuten oder 1 Stunde). Eine Dosis, die mehr als 30 Minuten über ihrer Uhrzeit liegt, wird rot als `Verspätet` markiert. Nachdem du eine Dosis markiert hast, kannst du mit `Ändern` die Uhrzeit der Einnahme oder die Menge korrigieren, und `Rückgängig` nimmt die Markierung zurück. Medikamente, die du `Bei Bedarf` nimmst, haben eine eigene Liste mit `Dosis nehmen` und der heutigen Anzahl.
+
+### Bestand und Nachfüllen
+Hake bei einem Medikament `Restbestand zählen` an und gib ein, wie viele du gerade hast. Jede als `Genommen` markierte Dosis zieht ihre Menge ab, und die Liste zeigt, wie viele noch übrig sind und für etwa wie viele Tage. Wenn ein Medikament innerhalb der Tage aufgebraucht sein wird, die du in `So viele Tage vor dem Aufbrauchen warnen` gewählt hast (standardmäßig 7), erscheint oben in `Heute` und in deinen orOS-Benachrichtigungen ein Hinweis. `Aufgefüllt +30` (deine Packungsgröße) fügt eine neue Packung hinzu. Wenn die Zahl abweicht, gib beim Medikament einfach die richtige Zahl neu ein.
+
+### Verlauf und Einnahmetreue
+`Verlauf` zeigt für die letzten 7, 30 oder 90 Tage, wie viele der fälligen Dosen du genommen hast, pro Medikament und insgesamt, sowie jede Dosis nach Tag: `Genommen um` eine Uhrzeit, `Ausgelassen` oder `Verpasst`. Eine Dosis zählt, sobald sie 30 Minuten über ihrer Uhrzeit liegt oder markiert ist. Tippe oder klicke auf eine Dosis, um sie nachträglich zu markieren oder zu ändern.
+
+### Medikament-Erinnerungen
+Zu jeder Dosis-Uhrzeit bekommst du vier Stunden lang eine orOS-Benachrichtigung, sofern du sie noch nicht markiert hast; nach `Schlummern` kommt sie wieder, wenn das Schlummern endet. Tippe darauf, um `Heute` zu öffnen. In der orOS-Android-App mit erlaubten Handy-Erinnerungen (Einstellungen › `Verbundene Dienste`) klingeln Dosen auf dem Handy, auch wenn orOS geschlossen ist. Dosen eines gerade hinzugefügten Medikaments, die vor dem Hinzufügen fällig waren, werden weder erinnert noch als verpasst gezählt. Die offenen Dosen von heute und knapp werdende Medikamente erscheinen auch in [Heute](app:today).
+
+## Symptome
+Die Karte `Symptome` in `Werte` hält fest, wie es dir geht: Tippe oder klicke auf **+**, wähle das Symptom, stelle die `Intensität` von 1 bis 10 ein und füge, wenn du willst, eine Notiz oder Tags hinzu. Kopfschmerzen, Übelkeit, Schwindel, Müdigkeit, Schmerzen, Husten, Atemnot und Herzklopfen sind vorbereitet; wähle `Eigenes Symptom…`, um ein anderes hinzuzufügen. In den `Einstellungen` kannst du Symptome ausblenden, die du nicht brauchst, und deine eigenen umbenennen oder löschen (mit ihren Einträgen; `Rückgängig` holt sie zurück).
+
+Symptome erscheinen im `Verlauf`, haben ein eigenes Diagramm in `Kurven` (wähle das Symptom in der Liste) und können in den Bericht aufgenommen werden.
+
+## Verlauf, Diagramme und Bericht
+- `Verlauf` listet jede Messung und jedes Symptom nach Tag auf, die neuesten zuerst, mit einem Filter pro Messart und einem für `Symptome`. Tippe oder klicke auf eine Zeile, um sie zu bearbeiten oder zu löschen.
+- `Kurven` zeigt 7, 30, 90 Tage, 1 Jahr oder alles, mit schattiertem Zielbereich. Blutdruck trennt morgens und abends, Blutzucker lässt sich nach Zeitpunkt zeigen, Gewicht bekommt einen 7-Tage-Durchschnitt. Unter dem Diagramm siehst du Durchschnitt, Tiefst- und Höchstwert und `Zahlen als Tabelle`. Hake `Symptome und Dosen zeigen` an, um kleine Markierungen unter dem Diagramm einer Messart zu sehen: Punkte für Symptome (blau leicht, gelb mittel, rot stark) und Striche für genommene Dosen; fahre mit der Maus über eine Markierung, um zu sehen, was sie ist.
+- `Bericht` erstellt ein Blatt für deinen Arzt: Wähle den Zeitraum, die Messungen, `Medikamente (Liste und genommene Dosen)`, `Symptome` und ob Notizen dazukommen. `Drucken oder als PDF speichern` öffnet das Druckfenster deines Browsers; `Tabelle (CSV)` speichert dieselben Messungen, Symptome und Dosen als Datei. In orOS öffnet `In Tabelle öffnen` (hier und in `Einstellungen` → `Exportieren`) dieselben Zeilen als neues Blatt in Tabelle.
+
+## Akte
+Der Tab `Akte` hat vier Ansichten: `Notfallpass`, `Termine`, `Impfungen` und `Dokumente`.
+
+### Notfallpass
+Wie der Notfallpass auf einem Handy: was jemand wissen sollte, der dir im Notfall hilft. Tippe oder klicke auf `Bearbeiten` für deinen Namen, dein Geburtsdatum, `Blutgruppe`, `Organspender` und `Medizinische Hinweise` (z. B. Herzschrittmacher, Kontaktlinsen). Füge dann deine `Allergien` (mit `Schweregrad` und Reaktion), deine `Erkrankungen` und deine `Notfallkontakte` hinzu. `Aus Kontakte` übernimmt eine Person und eine Telefonnummer aus [Kontakte](app:contacts); du kannst sie auch eintippen. Die Medikamente, die du gerade nimmst, werden ebenfalls gezeigt, außer du nimmst den Haken bei `Meine aktuellen Medikamente zeigen` heraus.
+
+- `Notfallpass zeigen` füllt den Bildschirm mit großem, klarem Text, den du einem Arzt oder Ersthelfer zeigen kannst, mit einer `Anrufen`-Schaltfläche für jeden Notfallkontakt. Der Bildschirm bleibt an, solange er offen ist, wo der Browser das erlaubt.
+- `QR-Code zeigen` fügt einen QR-Code mit dem Wichtigsten als einfachem Text hinzu: Eine Handykamera liest ihn, ohne online zu gehen. Wenn es viel ist, fallen die Hinweise und die letzten Medikamente aus dem Code weg (der Bildschirm darüber zeigt trotzdem alles).
+- `Notfallkarte` druckt eine Karte im Scheckkartenformat, Vorder- und Rückseite nebeneinander, zum Ausschneiden und Falten; sie trägt den QR-Code, wenn du ihn eingeschaltet hast. Im Druckfenster kannst du sie auch als PDF speichern.
+
+### Termine
+`Termin hinzufügen` mit `Arzt/Ärztin`, `Fachgebiet`, Datum und Uhrzeit, optional `Dauer`, dem `Ort` und einer Notiz. `Erinnern` von der Uhrzeit selbst bis zu zwei Tage vorher. `Auf der Karte zeigen` öffnet den Ort in [Karten](app:maps). Termine erscheinen in [Heute](app:today) und, wenn du es einschaltest, im Kalender.
+
+### Impfungen
+Füge jede Impfung mit dem Tag hinzu, an dem sie gegeben wurde, und, falls es eine gibt, wann die `Nächste Dosis` fällig ist. Du bekommst eine Woche vorher und am Tag selbst eine Erinnerung. Wenn du die nächste Dosis bekommst, tippe oder klicke auf `Erneut geimpft`: Das legt einen neuen Eintrag mit demselben Namen an, und der alte erinnert nicht mehr. Eine bald fällige Impfung erscheint auch in Heute.
+
+### Dokumente
+Bewahre Laborbefunde, Rezepte, Bildgebung, Arztbriefe und andere Unterlagen auf: einen `Titel`, die `Art`, das Datum, eine Notiz und bis zu sechs Fotos oder PDFs. Fotos werden verkleinert und verlieren ihre Standortdaten; PDFs dürfen bis zu 10 MB groß sein. Die Dateien liegen in [Dateien](app:files), Ordner `Health`, nicht in der Synchronisierung deiner Messungen: Sie kommen über Vault Drive auf deine anderen Geräte. Eine Datei, die noch nicht auf einem Gerät ist, zeigt `Nicht auf diesem Gerät`. Wenn du ein Dokument löschst, werden seine Dateien entfernt, sobald die Zeit für `Rückgängig` abgelaufen ist.
+
+## Kalender
+In [Kalender](app:calendar) zeigt der Chip `Medikamente` den ersten und letzten Tag einer Behandlung und den Tag, an dem ein gezähltes Medikament aufgebraucht ist. Der Chip `Arzttermine` zeigt deine Termine zu ihrer Uhrzeit und den Tag, an dem die nächste Dosis einer Impfung fällig ist. Beide sind anfangs aus: Tippe oder klicke auf einen Chip, um ihn einzuschalten.
+
+## Gewichte aus Training
+Wenn du dein Körpergewicht in [Training](app:fitness) festhältst, erscheinen diese Gewichte in Gesundheit als hohle Punkte mit `aus Training`. Gesundheit liest sie nur: Um eines zu ändern, öffne Training. Du kannst das in den `Einstellungen` ausschalten.
+
+## Schritte und Health Connect
+`Schritte` hat eine Messung pro Tag. Du kannst sie eintippen oder von der orOS-Android-App holen lassen: Schalte `Health Connect` in Einstellungen › `Verbundene Dienste` ein und erlaube es. orOS übernimmt dann die Schritte jedes Tages aus Health Connect, das sie von deinem Handy, deiner Uhr oder anderen Gesundheits-Apps sammelt. Die Zahl von heute steigt, während du orOS nutzt.
+
+Derselbe Schalter bringt auch Messungen, die andere Apps und Geräte in Health Connect ablegen: Gewicht, Ruhepuls, Schlaf, Blutdruck, Blutzucker und Sauerstoff. Jede wird hier einmal zu einer normalen Messung; wenn du sie in Gesundheit änderst oder löschst, bleibt das so. orOS liest diese Werte nur aus Health Connect und schreibt sie nie dorthin. Wenn du Health Connect schon früher erlaubt hast, öffne den Schalter noch einmal, um die neuen Arten zu erlauben. Derselbe Schalter sendet deine Getränke aus [Wasser](app:water) und deine Einheiten aus [Training](app:fitness) an Health Connect und holt Getränke und Trainings aus deinen anderen Apps zurück, für die letzten 30 Tage.
+
+## Aus einer anderen App importieren
+Wähle in `Einstellungen` → `Importieren` → `Aus einer anderen App…` einen Export aus einer anderen Gesundheits-App. Gesundheit zeigt zuerst, was es gefunden hat (wie viele Messungen jeder Art, die Daten, was schon hier ist und was weggelassen wird), und importiert erst, wenn du bestätigst. Deine eigenen Messungen werden nie geändert, importierte bekommen den Namen der App als Tag, und wenn du dieselbe Datei noch einmal importierst, kommt nur hinzu, was fehlt. `Rückgängig` in der Meldung direkt danach entfernt den ganzen Import.
+- **Withings**: Öffne in Health Mate dein Profil oder die Einstellungen und wähle `Meine Daten herunterladen`; du bekommst eine E-Mail mit einer ZIP-Datei. Wähle die ZIP-Datei oder nur `weight.csv` oder `bp.csv` daraus.
+- **OMRON connect**: Suche im Menü oder Profil der App nach `Daten exportieren` / `Als CSV teilen` und wähle diese CSV-Datei. Daten im Format Tag/Monat oder Monat/Tag werden beide verstanden.
+- **Samsung Health**: In Samsung Health › Einstellungen `Persönliche Daten herunterladen`; das Handy speichert einen Ordner mit CSV-Dateien (Interner Speicher › Download › Samsung Health). Packe den Ordner als ZIP oder wähle eine einzelne Datei wie `com.samsung.health.weight….csv`.
+- **Apple Health**: Tippe in der Health-App auf dein Bild, dann auf `Alle Gesundheitsdaten exportieren`, und schicke `export.zip` an dieses Gerät. Wähle die ZIP-Datei oder die `export.xml` darin. Große Exporte werden Stück für Stück gelesen und können daher eine Minute dauern.
+
+Gesundheit übernimmt Blutdruck, Gewicht, Blutzucker, Ruhepuls, Temperatur und Sauerstoff. Pfund werden zu Kilogramm, mmol/L zu mg/dL und °F zu °C (du siehst weiter deine eigenen Einheiten). Körperfett, Muskeln, Wasser und Größe werden nicht übernommen. Enthält eine Datei nur Herzfrequenzwerte, wird jeder Tag zu einem Ruhewert: dem niedrigsten des Tages.
+
+## Synchronisierung und Sicherung
+Messungen, deine eigenen Messarten, Zielwerte, Erinnerungen, Medikamente, Dosen, Nachfüllungen, Symptome, dein Notfallpass, Termine, Impfungen, Dokumente (ohne ihre Dateien) und Einstellungen werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. Jede Dosis ist ein eigener Eintrag: Markierst du dieselbe Dosis auf zwei Geräten, gilt die spätere Markierung; Nachfüllungen von zwei Geräten zählen beide. Der offene Tab, die Diagrammauswahl, die Berichtsoptionen und ob der QR-Code gezeigt wird, bleiben auf diesem Gerät.
+
+In `Einstellungen` → `Exportieren` kannst du `Alle Messungen (CSV)` oder eine `Sicherung (JSON)` speichern (auch mit Medikamenten und Symptomen). `Aus Sicherung wiederherstellen (zusammenführen)` führt eine Sicherung mit dem zusammen, was du schon hast. Für eine vollständige Kopie von orOS siehe [Sicherung](help:t/backup).
+
+## orOS-Datei (.oroshealth)
+In `Einstellungen` → `Exportieren` speichert `orOS-Datei (.oroshealth)` ganz Gesundheit als eine Datei: Messungen, deine eigenen Messarten und Zielwerte, Medikamente, Dosen, Nachfüllungen, Symptome, Allergien, Erkrankungen, Notfallkontakte, Impfungen, Termine, Dokumente mit ihren Fotos und PDFs, deinen Notfallpass und die Einstellungen. Darin liegen auch `readings.csv` für eine Tabellenkalkulation und `health.md` zum Lesen. Die Datei ist nicht verschlüsselt: Sie enthält deine Gesundheitsdaten, also bewahre sie sicher auf und schicke sie nur an Menschen, denen du vertraust.
+
+`orOS-Datei öffnen…` (oder ein Doppelklick auf die Datei in Dateien) fügt hinzu, was dieses Gerät noch nicht hat, ohne etwas zu löschen: Der Dialog zeigt, wie viele Einträge neu sind. Ein Eintrag, der schon hier ist oder den du hier gelöscht hast, bleibt, wie er ist; hake `Mit neueren Versionen aktualisieren` an, um die neueren Kopien der Datei zu übernehmen, wenn du deine eigenen Daten zwischen Geräten umziehst. Deine Einstellungen und dein Notfallpass hier bleiben, wie sie sind. Erinnerungen kommen ausgeschaltet an: Schalte sie für die Medikamente, Messarten, Impfungen und Termine ein, an die du erinnert werden willst. `Rückgängig` in der Meldung nimmt die hinzugefügten Einträge wieder heraus. Dieselbe Datei zweimal zu öffnen, fügt nichts hinzu. `Entpackter orOS-Ordner…` öffnet eine Datei, die jemand entpackt hat.
+
+## Tastenkürzel
+- [[1]] bis [[6]] wechseln zwischen den sechs Tabs (nicht beim Tippen).
+- [[Esc]] schließt einen Dialog.
+
+## Tipps
+- Eine Notiz wie „nach Kaffee“ oder ein Tag wie „mit Medikament“ macht ungewöhnliche Werte beim Arzt leichter erklärbar.
+- Blende Messarten, die du nie nutzt, in den `Einstellungen` aus; ausgeblendete Messarten erinnern dich nicht.
+- Nimm den Bericht mit angehakten `Medikamente` zu deinem Termin mit: Er listet, was du nimmst und wie regelmäßig du es genommen hast.
+- Drucke die `Notfallkarte` neu, nachdem du ein Medikament oder eine Allergie geändert hast: Das Papier aktualisiert sich nicht von selbst.
+
+## Grenzen
+- Erinnerungen für Messungen erscheinen nur, solange orOS geöffnet ist; eine Uhrzeit, die mehr als vier Stunden verpasst wurde, wird übersprungen. Medikamentendosen, Termine und Impfungen klingeln auch über die orOS-Android-App bei geschlossenem orOS, für die nächsten zwei Tage ab dem letzten Öffnen von orOS; im Browser brauchen auch sie ein geöffnetes orOS.
+- Der Notfallpass lebt in orOS: Er ist nicht auf dem Sperrbildschirm deines Handys, also braucht, wer dir hilft, dein entsperrtes Handy oder die gedruckte Karte.
+- Gesundheit hat keine Medikamentendatenbank: Die App kennt keine Dosierungen, Wechselwirkungen oder Nebenwirkungen und prüft nicht, was du eingibst.
+- Der Restbestand ist nur so genau wie die Dosen, die du markierst; vergleiche ihn ab und zu mit der Packung.
+- Abgesehen von dem, was über Health Connect in der orOS-Android-App kommt, werden Messungen von Hand eingegeben oder aus dem Export einer anderen App importiert: keine direkte Verbindung zu Geräten.
+- Die `Sicherung (JSON)` speichert die Namen der Dokumentdateien, nicht die Dateien selbst: Kopiere den Ordner `Health` in Dateien oder nutze Vault Drive, um sie zu behalten.

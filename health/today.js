@@ -20,16 +20,27 @@
 (function (root) {
   "use strict";
   var KEY = "oros-health-data";
-  var NAMES = {
-    en: { bp: "Blood pressure", wt: "Weight", gl: "Blood sugar", sl: "Sleep",
-          hr: "Resting heart rate", tp: "Temperature", o2: "Oxygen (SpO₂)", st: "Steps" },
-    el: { bp: "Πίεση", wt: "Βάρος", gl: "Σάκχαρο", sl: "Ύπνος",
-          hr: "Σφυγμοί ηρεμίας", tp: "Θερμοκρασία", o2: "Οξυγόνο (SpO₂)", st: "Βήματα" }
+  // Same keys as health.js. A pack language: English + the health
+  // pack, when one is loaded (else English).
+  var TXT = {
+    en: { "t.bp": "Blood pressure", "t.wt": "Weight", "t.gl": "Blood sugar", "t.sl": "Sleep",
+          "t.hr": "Resting heart rate", "t.tp": "Temperature", "t.o2": "Oxygen (SpO₂)", "t.st": "Steps",
+          "td.reading": "Reading", "td.med": "Medicine",
+          "td.lowDays": "runs out in about {d} days", "td.none": "none left", "td.low": "running low",
+          "td.lowDay": "runs out in about a day",
+          "td.vax": "Vaccine dose", "td.appt": "Doctor's appointment" },
+    el: { "t.bp": "Πίεση", "t.wt": "Βάρος", "t.gl": "Σάκχαρο", "t.sl": "Ύπνος",
+          "t.hr": "Σφυγμοί ηρεμίας", "t.tp": "Θερμοκρασία", "t.o2": "Οξυγόνο (SpO₂)", "t.st": "Βήματα",
+          "td.reading": "Μέτρηση", "td.med": "Φάρμακο",
+          "td.lowDays": "φτάνει για περίπου {d} μέρες", "td.none": "τελείωσε", "td.low": "τελειώνει",
+          "td.lowDay": "φτάνει για περίπου μία μέρα",
+          "td.vax": "Δόση εμβολίου", "td.appt": "Ραντεβού με γιατρό" }
   };
-  var TXT = { en: "Reading", el: "Μέτρηση" };
-  var MED = { en: "Medicine", el: "Φάρμακο" };
-  var LOW = { en: ["runs out in about {d} days", "none left", "running low", "runs out in about a day"],
-              el: ["φτάνει για περίπου {d} μέρες", "τελείωσε", "τελειώνει", "φτάνει για περίπου μία μέρα"] };
+  function words(lang) {
+    var I = typeof window !== "undefined" && window.orosI18n;
+    if (I && lang && !TXT[lang]) I.table(TXT, "health", lang);
+    return TXT[lang] || TXT.en;
+  }
 
   function pad2(n) { return (n < 10 ? "0" : "") + n; }
 
@@ -40,10 +51,10 @@
       if (r.state === "taken" || r.state === "skipped") return;
       var hm = pad2(Math.floor(r.tm / 60)) + ":" + pad2(r.tm % 60);
       out.push({ id: "dose@" + r.key, due: ctx.today, time: hm, title: r.med.n + (r.med.s ? " " + r.med.s : ""),
-                 text: MED[lang], kind: "task", target: { meds: true } });
+                 text: words(lang)["td.med"], kind: "task", target: { meds: true } });
     });
     C.lowStock(d, ctx.now).forEach(function (x) {
-      var w = LOW[lang], txt = x.left <= 0 ? w[1] : x.days === null ? w[2] : x.days < 2 ? w[3] : w[0].replace("{d}", x.days);
+      var w = words(lang), txt = x.left <= 0 ? w["td.none"] : x.days === null ? w["td.low"] : x.days < 2 ? w["td.lowDay"] : w["td.lowDays"].replace("{d}", x.days);
       out.push({ id: "low@" + x.md, due: null, time: null, title: x.med.n + (x.med.s ? " " + x.med.s : "") + ": " + txt,
                  text: "", kind: "info", target: { meds: true } });
     });
@@ -54,8 +65,6 @@
   // at their time, and vaccinations whose next dose is due by the
   // horizon (up to 30 days late) as tasks. Open the appointment /
   // vaccination in Health (__orosOpenAt("health", {appt} | {vax})).
-  var VAX = { en: "Vaccine dose", el: "Δόση εμβολίου" };
-  var APPT = { en: "Doctor's appointment", el: "Ραντεβού με γιατρό" };
   function recRows(C, d, ctx, lang) {
     if (typeof C.recordOn !== "function") return [];
     var out = [], horizon = typeof ctx.horizon === "number" ? ctx.horizon : 3;
@@ -65,14 +74,14 @@
         if (r.k !== "ap") return;
         var a = r.ap, x = new Date(a.at);
         out.push({ id: "ap@" + a.id, due: day, time: pad2(x.getHours()) + ":" + pad2(x.getMinutes()),
-                   title: a.dr && a.sp ? a.dr + " · " + a.sp : (a.dr || a.sp), text: APPT[lang] + (a.pl ? " · " + a.pl : ""),
+                   title: a.dr && a.sp ? a.dr + " · " + a.sp : (a.dr || a.sp), text: words(lang)["td.appt"] + (a.pl ? " · " + a.pl : ""),
                    kind: "event", target: { appt: a.id } });
       });
     }
     var last = C.ymdAdd(ctx.today, horizon), first = C.ymdAdd(ctx.today, -30);
     C.vaxOpen(d).forEach(function (v) {
       if (v.nx > last || v.nx < first) return;
-      out.push({ id: "vx@" + v.id, due: v.nx, time: null, title: v.n, text: VAX[lang], kind: "task", target: { vax: v.id } });
+      out.push({ id: "vx@" + v.id, due: v.nx, time: null, title: v.n, text: words(lang)["td.vax"], kind: "task", target: { vax: v.id } });
     });
     return out;
   }
@@ -83,18 +92,18 @@
     collect: function (ctx) {
       var C = root.OrosHealthCore, raw = ctx.readJSON(KEY);
       if (!C || typeof C.timesOn !== "function" || !raw || typeof raw !== "object") return [];
-      var d = C.merge(raw, raw), lang = ctx.lang === "el" ? "el" : "en";
+      var d = C.merge(raw, raw), lang = typeof ctx.lang === "string" && ctx.lang ? ctx.lang : "en";
       if (C.ymdOf(ctx.now) !== ctx.today) return [];
       return C.timesOn(d, ctx.now).filter(function (s) { return !s.done; }).map(function (s) {
         var row = C.typeRow(d, s.t);
-        var name = C.isBuiltin(s.t) ? NAMES[lang][s.t] : (row && row.n) || s.t;
+        var name = C.isBuiltin(s.t) ? words(lang)["t." + s.t] : (row && row.n) || s.t;
         var hm = pad2(Math.floor(s.min / 60)) + ":" + pad2(s.min % 60);
         return {
           id: s.t + "@" + hm,
           due: ctx.today,
           time: hm,
           title: name,
-          text: TXT[lang],
+          text: words(lang)["td.reading"],
           kind: "task",
           target: { kind: s.t }
         };

@@ -29,22 +29,27 @@
   "use strict";
   var KEY = "oros-health-data";
   var ID_RE = /^[a-z0-9-]{1,40}$/;
-  var BUILTIN = {
-    bp: { en: "Blood pressure",     el: "Πίεση" },
-    wt: { en: "Weight",             el: "Βάρος" },
-    gl: { en: "Blood sugar",        el: "Σάκχαρο" },
-    sl: { en: "Sleep",              el: "Ύπνος" },
-    hr: { en: "Resting heart rate", el: "Σφυγμοί ηρεμίας" },
-    tp: { en: "Temperature",        el: "Θερμοκρασία" },
-    o2: { en: "Oxygen (SpO₂)",      el: "Οξυγόνο (SpO₂)" },
-    st: { en: "Steps",              el: "Βήματα" }
+  var BUILTIN = { bp: 1, wt: 1, gl: 1, sl: 1, hr: 1, tp: 1, o2: 1, st: 1 };
+  var SYMS = { ha: 1, na: 1, dz: 1, ft: 1, pn: 1, cg: 1, br: 1, pl: 1 };
+  // Same keys as health.js. A pack language: English + the health
+  // pack, when one is loaded (else English).
+  var TXT = {
+    en: { "t.bp": "Blood pressure", "t.wt": "Weight", "t.gl": "Blood sugar", "t.sl": "Sleep",
+          "t.hr": "Resting heart rate", "t.tp": "Temperature", "t.o2": "Oxygen (SpO₂)", "t.st": "Steps",
+          "sy.ha": "Headache", "sy.na": "Nausea", "sy.dz": "Dizziness", "sy.ft": "Tiredness",
+          "sy.pn": "Pain", "sy.cg": "Cough", "sy.br": "Shortness of breath", "sy.pl": "Palpitations",
+          "td.reading": "Reading" },
+    el: { "t.bp": "Πίεση", "t.wt": "Βάρος", "t.gl": "Σάκχαρο", "t.sl": "Ύπνος",
+          "t.hr": "Σφυγμοί ηρεμίας", "t.tp": "Θερμοκρασία", "t.o2": "Οξυγόνο (SpO₂)", "t.st": "Βήματα",
+          "sy.ha": "Πονοκέφαλος", "sy.na": "Ναυτία", "sy.dz": "Ζάλη", "sy.ft": "Κούραση",
+          "sy.pn": "Πόνος", "sy.cg": "Βήχας", "sy.br": "Δύσπνοια", "sy.pl": "Αίσθημα παλμών",
+          "td.reading": "Μέτρηση" }
   };
-  var SYMS = {
-    ha: { en: "Headache", el: "Πονοκέφαλος" }, na: { en: "Nausea", el: "Ναυτία" },
-    dz: { en: "Dizziness", el: "Ζάλη" }, ft: { en: "Tiredness", el: "Κούραση" },
-    pn: { en: "Pain", el: "Πόνος" }, cg: { en: "Cough", el: "Βήχας" },
-    br: { en: "Shortness of breath", el: "Δύσπνοια" }, pl: { en: "Palpitations", el: "Αίσθημα παλμών" }
-  };
+  function words(lang) {
+    var I = typeof window !== "undefined" && window.orosI18n;
+    if (I && lang && !TXT[lang]) I.table(TXT, "health", lang);
+    return TXT[lang] || TXT.en;
+  }
 
   function str(v) { return typeof v === "string" ? v.trim() : ""; }
 
@@ -54,7 +59,7 @@
     search: function (ctx) {
       var d = ctx.readJSON(KEY), out = [];
       if (!d || !Array.isArray(d.en)) return out;
-      var lang = ctx.lang === "el" ? "el" : "en";
+      var W = words(typeof ctx.lang === "string" && ctx.lang ? ctx.lang : "en");
       var tombs = d.tombs && typeof d.tombs === "object" ? d.tombs : {};
       function gone(c, x) {
         var ts = tombs[c + ":" + x.id];
@@ -65,7 +70,7 @@
         if (ty && typeof ty.id === "string" && !gone("ty", ty)) types[ty.id] = ty;
       });
       function kindName(tid) {
-        if (BUILTIN[tid]) return BUILTIN[tid][lang];
+        if (BUILTIN[tid] === 1) return W["t." + tid];
         return types[tid] ? str(types[tid].n) : "";
       }
       d.en.forEach(function (e) {
@@ -77,7 +82,7 @@
         if (!note && !tags.length) return;
         out.push({
           id: e.id,
-          title: kindName(e.t) || (lang === "el" ? "Μέτρηση" : "Reading"),
+          title: kindName(e.t) || W["td.reading"],
           text: [note, tags.join(", ")].filter(Boolean).join(" · "),
           when: typeof e.at === "number" ? e.at : 0,
           target: { entry: e.id }
@@ -98,7 +103,7 @@
       });
       (Array.isArray(d.sy) ? d.sy : []).forEach(function (e) {
         if (!e || typeof e.id !== "string" || typeof e.k !== "string" || gone("sy", e)) return;
-        var k = sk[e.k], name = SYMS[e.k] ? SYMS[e.k][lang] : (k ? str(k.n) : "");
+        var k = sk[e.k], name = SYMS[e.k] === 1 ? W["sy." + e.k] : (k ? str(k.n) : "");
         if (!name || (k && k.h)) return;
         var tags = (Array.isArray(e.g) ? e.g : []).map(str).filter(Boolean), note = str(e.n);
         if (!note && !tags.length) return;
