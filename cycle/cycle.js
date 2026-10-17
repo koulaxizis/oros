@@ -34,7 +34,10 @@
   var DATA_VER    = 1;
 
   // ---------- 1. Constants, i18n, vocabularies, helpers ----------
-  var LANG = localStorage.getItem("oros-lang") === "el" ? "el" : "en";
+  // orosI18n (../i18n.js): the full language code, a pack language included.
+  var LANG = window.orosI18n ? window.orosI18n.lang() : (localStorage.getItem("oros-lang") === "el" ? "el" : "en");
+  // Dates and numbers in the active language ("de-DE" for German).
+  function loc() { return window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB"); }
 
   var STRINGS = {
     en: {
@@ -197,7 +200,33 @@
       "pkg.save":     "orOS file (.oroscycle)",
       "pkg.saveTip":  "Save every period, day, symptom and medication as one orOS file (not encrypted)",
       "pkg.open":     "Open orOS file…",
-      "pkg.folder":   "Unzipped orOS folder…"
+      "pkg.folder":   "Unzipped orOS folder…",
+      "seed.sym.cramps":      "Cramps",
+      "seed.sym.headache":    "Headache",
+      "seed.sym.migraine":    "Migraine",
+      "seed.sym.nausea":      "Nausea",
+      "seed.sym.breast":      "Breast tenderness",
+      "seed.sym.back":        "Back pain",
+      "seed.sym.fatigue":     "Fatigue",
+      "seed.sym.acne":        "Acne",
+      "seed.sym.bloating":    "Bloating",
+      "seed.sym.moodswings":  "Mood swings",
+      "seed.sym.insomnia":    "Insomnia",
+      "seed.med.paracetamol": "Paracetamol",
+      "seed.med.ibuprofen":   "Ibuprofen",
+      "seed.med.naproxen":    "Naproxen",
+      "seed.med.heatpad":     "Heat pad",
+      "xemo.happy":           "Happy",
+      "xemo.calm":            "Calm",
+      "xemo.excited":         "Excited",
+      "xemo.sad":             "Sad",
+      "xemo.angry":           "Angry",
+      "xemo.anxious":         "Anxious",
+      "xemo.tired":           "Tired",
+      "xemo.stressed":        "Stressed",
+      "xemo.numb":            "Numb",
+      "search.day":       "Cycle day",
+      "unit.days":        "{n}d"
     },
     el: {
       "app.title":     "Κύκλος",
@@ -359,9 +388,36 @@
       "pkg.save":      "Αρχείο orOS (.oroscycle)",
       "pkg.saveTip":   "Αποθήκευση όλων των περιόδων, ημερών, συμπτωμάτων και φαρμάκων σε ένα αρχείο orOS (χωρίς κρυπτογράφηση)",
       "pkg.open":      "Άνοιγμα αρχείου orOS…",
-      "pkg.folder":    "Αποσυμπιεσμένος φάκελος orOS…"
+      "pkg.folder":    "Αποσυμπιεσμένος φάκελος orOS…",
+      "seed.sym.cramps":      "Σπασμοί",
+      "seed.sym.headache":    "Πονοκέφαλος",
+      "seed.sym.migraine":    "Ημικρανία",
+      "seed.sym.nausea":      "Ναυτία",
+      "seed.sym.breast":      "Ευαισθησία στήθους",
+      "seed.sym.back":        "Πόνος στη μέση",
+      "seed.sym.fatigue":     "Κούραση",
+      "seed.sym.acne":        "Ακμή",
+      "seed.sym.bloating":    "Φούσκωμα",
+      "seed.sym.moodswings":  "Ακαθοριστία διάθεσης",
+      "seed.sym.insomnia":    "Αϋπνία",
+      "seed.med.paracetamol": "Παρακεταμόλη",
+      "seed.med.ibuprofen":   "Ιβουπροφαίνη",
+      "seed.med.naproxen":    "Ναπροξένη",
+      "seed.med.heatpad":     "Θερμοφόρα",
+      "xemo.happy":           "Χαρούμενος",
+      "xemo.calm":            "Ήρεμος",
+      "xemo.excited":         "Ενθουσιασμένος",
+      "xemo.sad":             "Λυπημένος",
+      "xemo.angry":           "Θυμωμένος",
+      "xemo.anxious":         "Αγχωμένος",
+      "xemo.tired":           "Κουρασμένος",
+      "xemo.stressed":        "Πιεσμένος",
+      "xemo.numb":            "Άδειος",
+      "search.day":       "Ημέρα κύκλου",
+      "unit.days":        "{n}d"
     }
   };
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "cycle", LANG);
 
   function t(key) {
     var p = STRINGS[LANG] || STRINGS.en;
@@ -373,27 +429,22 @@
   // the user AFTER birth (they live in STATE once seeded, not in
   // this constant). Bilingual ids (bi) so a Greek device and an
   // English device converge to the SAME chip after sync.
+  // Each seed is a key of STRINGS: its en / el texts are the saved
+  // bi, the active language's text the first label.
   var SYM_SEED = [
-    { en: "Cramps",            el: "Σπασμοί" },
-    { en: "Headache",          el: "Πονοκέφαλος" },
-    { en: "Migraine",          el: "Ημικρανία" },
-    { en: "Nausea",            el: "Ναυτία" },
-    { en: "Breast tenderness", el: "Ευαισθησία στήθους" },
-    { en: "Back pain",         el: "Πόνος στη μέση" },
-    { en: "Fatigue",           el: "Κούραση" },
-    { en: "Acne",              el: "Ακμή" },
-    { en: "Bloating",          el: "Φούσκωμα" },
-    { en: "Mood swings",       el: "Ακαθοριστία διάθεσης" },
-    { en: "Insomnia",          el: "Αϋπνία" }
+    "seed.sym.cramps", "seed.sym.headache", "seed.sym.migraine", "seed.sym.nausea",
+    "seed.sym.breast", "seed.sym.back", "seed.sym.fatigue", "seed.sym.acne",
+    "seed.sym.bloating", "seed.sym.moodswings", "seed.sym.insomnia"
   ];
 
   // Pain-relief presets — same vocabulary model as symptoms.
   var MED_SEED = [
-    { en: "Paracetamol", el: "Παρακεταμόλη" },
-    { en: "Ibuprofen",   el: "Ιβουπροφαίνη" },
-    { en: "Naproxen",    el: "Ναπροξένη" },
-    { en: "Heat pad",    el: "Θερμοφόρα" }
+    "seed.med.paracetamol", "seed.med.ibuprofen", "seed.med.naproxen", "seed.med.heatpad"
   ];
+  // English seed text → its key: in a pack language a seed chip (it
+  // still carries its en / el bi) shows in that language.
+  var SEED_BY_EN = {};
+  SYM_SEED.concat(MED_SEED).forEach(function (k) { SEED_BY_EN[STRINGS.en[k]] = k; });
 
   function pad(n) { return (n < 10 ? "0" : "") + n; }
   function $(id) { return document.getElementById(id); }
@@ -446,13 +497,13 @@
     };
     // Seeds — ONCE per fresh install; deterministic ids so two
     // fresh installs that sync do NOT union into duplicate chips
-    s.cols.sym = SYM_SEED.map(function (v, i) {
-      return { id: "seed-sym-" + i, label: LANG === "el" ? v.el : v.en,
-               bi: { en: v.en, el: v.el }, mtime: 0, pos: i };
+    s.cols.sym = SYM_SEED.map(function (k, i) {
+      return { id: "seed-sym-" + i, label: t(k),
+               bi: { en: STRINGS.en[k], el: STRINGS.el[k] }, mtime: 0, pos: i };
     });
-    s.cols.med = MED_SEED.map(function (v, i) {
-      return { id: "seed-med-" + i, label: LANG === "el" ? v.el : v.en,
-               bi: { en: v.en, el: v.el }, mtime: 0, pos: i };
+    s.cols.med = MED_SEED.map(function (k, i) {
+      return { id: "seed-med-" + i, label: t(k),
+               bi: { en: STRINGS.en[k], el: STRINGS.el[k] }, mtime: 0, pos: i };
     });
     return s;
   }
@@ -573,6 +624,7 @@
   function colLabel(v) {
     if (!v) return "";
     if (v.bi && v.bi[LANG]) return v.bi[LANG];
+    if (v.bi && SEED_BY_EN[v.bi.en]) return t(SEED_BY_EN[v.bi.en]);   // a pack language
     return v.label;
   }
 
@@ -1162,7 +1214,7 @@
     head.appendChild(zoomOut);
     var zv = document.createElement("span");
     zv.className = "zoom-val";
-    zv.textContent = timelineZoom + "d";
+    zv.textContent = t("unit.days").replace("{n}", timelineZoom);
     head.appendChild(zv);
     var zoomIn = document.createElement("button");
     zoomIn.type = "button";
@@ -1212,9 +1264,9 @@
     // WHERE AM I? — the two anchors every timeline needs: a
     // date-range caption under the controls and a month axis on
     // the strip itself. Without them the bars float in a vacuum.
-    var loc = LANG === "el" ? "el-GR" : "en-GB";
+    var dl = loc();
     var dstr = function (ts, o) {
-      return new Date(ts).toLocaleDateString(loc, o);
+      return new Date(ts).toLocaleDateString(dl, o);
     };
     var cap = document.createElement("div");
     cap.className = "tl-range";
@@ -1236,7 +1288,7 @@
           mk.className = "tl-mk";
           mk.style.left = pct + "%";
           mk.textContent =
-            walk.toLocaleDateString(loc, { month: "short" });
+            walk.toLocaleDateString(dl, { month: "short" });
           axis.appendChild(mk);
         }
       }
@@ -1484,7 +1536,7 @@
     dh.appendChild(back);
     var ttl = document.createElement("span");
     ttl.textContent = new Date(ts).toLocaleDateString(
-      LANG === "el" ? "el-GR" : "en-GB",
+      loc(),
       { weekday: "long", day: "numeric", month: "long" });
     dh.appendChild(ttl);
     host.appendChild(dh);
@@ -1938,7 +1990,7 @@
   }
   function fmtBbt(h) {
     var s = (h / 100).toFixed(2);
-    return LANG === "el" ? s.replace(".", ",") : s;
+    return (1.5).toLocaleString(loc()).indexOf(",") >= 0 ? s.replace(".", ",") : s;   // decimal comma (el, de)
   }
   function renderFertilityFields(host, dayId, ts, rec) {
     var h = document.createElement("h2");
@@ -2020,8 +2072,8 @@
   function startPeriodAt(ts) {
     var clash = state.periods.some(function (p) {
       var end = (p.end === null) ? Infinity : p.end;
-      // Η νέα περίοδος είναι ongoing ([ts, ∞)): επικαλύπτει
-      // ΟΠΟΙΑΔΗΠΟΤΕ περίοδο που δεν έχει τελειώσει πριν το ts.
+      // The new period is ongoing ([ts, ∞)): it overlaps ANY
+      // period that has not ended before ts.
       return ts <= end;
     });
     if (clash) { transientNote(t("per.warn")); return; }
@@ -2288,7 +2340,7 @@
   function dayHaystack(d) {
     var bits = [];
     bits.push(new Date(d.day).toLocaleDateString(
-      LANG === "el" ? "el-GR" : "en-GB",
+      loc(),
       { weekday: "short", day: "numeric", month: "short", year: "numeric" }));
     (d.sym || []).forEach(function (sid) {
       var v = colValById("sym", sid);
@@ -2321,7 +2373,7 @@
         var when = document.createElement("span");
         when.className = "dr-when";
         when.textContent = new Date(d.day).toLocaleDateString(
-          LANG === "el" ? "el-GR" : "en-GB",
+          loc(),
           { weekday: "short", day: "numeric", month: "short" });
         li.appendChild(when);
 
@@ -2590,12 +2642,12 @@
       var pv = document.createElement("div");
       pv.className = "recap-val";
       pv.textContent = new Date(pr.start).toLocaleDateString(
-        LANG === "el" ? "el-GR" : "en-GB",
+        loc(),
         { weekday: "short", day: "numeric", month: "short" });
       var plb = document.createElement("div");
       plb.className = "recap-lab";
       plb.textContent = t("ins.avg.per") + " ~" +
-        (Math.round((pr.end - pr.start) / DAY_MS) + 1) + "d";
+        t("unit.days").replace("{n}", Math.round((pr.end - pr.start) / DAY_MS) + 1);
       pk.appendChild(pv); pk.appendChild(plb);
       prw.appendChild(pk);
       pc.appendChild(prw);
@@ -2745,7 +2797,7 @@
       var obs = obsOf(c0, today);
       var est = CC.fertility(dayKey(c0), obs, past, dayKey(today));
       var dOpt = { weekday: "short", day: "numeric", month: "short" };
-      var ds = function (k) { return new Date(dayTsFromKey(k)).toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB", dOpt); };
+      var ds = function (k) { return new Date(dayTsFromKey(k)).toLocaleDateString(loc(), dOpt); };
       var big = line(est.end ? t("fert.range").replace("{a}", ds(est.start)).replace("{b}", ds(est.end))
                              : t("fert.open").replace("{a}", ds(est.start)), "recap-val fert-val");
       big.setAttribute("aria-live", "polite");
@@ -2851,22 +2903,12 @@
   // same origin, shared localStorage, defensive parse, zero
   // writes — ever.
   var MOOD_KEY = "oros-mood-data";
-  var XEMO_LABEL = {
-    happy:    { en: "Happy",    el: "Χαρούμενος" },
-    calm:     { en: "Calm",     el: "Ήρεμος" },
-    excited:  { en: "Excited",  el: "Ενθουσιασμένος" },
-    sad:      { en: "Sad",      el: "Λυπημένος" },
-    angry:    { en: "Angry",    el: "Θυμωμένος" },
-    anxious:  { en: "Anxious",  el: "Αγχωμένος" },
-    tired:    { en: "Tired",    el: "Κουρασμένος" },
-    stressed: { en: "Stressed", el: "Πιεσμένος" },
-    numb:     { en: "Numb",     el: "Άδειος" }
-  };
+  // labels: STRINGS "xemo.<key>"
+  var XEMO_KEYS = ["happy", "calm", "excited", "sad", "angry", "anxious", "tired", "stressed", "numb"];
   var XPOS = { happy: 1, calm: 1, excited: 1 };   // mood's POS_EMOS mirror
 
   function xemoLabel(k) {
-    var v = XEMO_LABEL[k];
-    return v ? (v[LANG] || v.en) : k;
+    return XEMO_KEYS.indexOf(k) >= 0 ? t("xemo." + k) : k;
   }
 
   function readMoodEntries() {
@@ -3040,7 +3082,7 @@
   }
   function showImportPreview(res, pl) {
     var dOpt = { day: "numeric", month: "short", year: "numeric" };
-    var ds = function (k) { return new Date(dayTsFromKey(k)).toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB", dOpt); };
+    var ds = function (k) { return new Date(dayTsFromKey(k)).toLocaleDateString(loc(), dOpt); };
     var st = pl.stats;
     var dlg = document.createElement("dialog");
     dlg.className = "rst-dlg imp-dlg";
@@ -3169,7 +3211,7 @@
   // added records the app's own way (tombstones, so they sync).
   var RP = window.OrosRecordPkg || null, CPK = window.OrosCyclePackage || null, recDropped = 0;
   var recFile = RP && CPK && window.OrosBundle ? RP.ui(CPK.DESC, {
-    lang: function () { return LANG; },
+    lang: function () { return LANG === "el" ? "el" : "en"; },
     get: function () { return mergeCycleStates(state, state); },
     title: function () { return t("app.title"); },
     set: function (next, info) {
@@ -3365,7 +3407,7 @@
       doc.setFont(FONT, "normal");
       var W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight();
       var M = 48, y = M, page = 1;
-      var loc = LANG === "el" ? "el-GR" : "en-GB";
+      var dl = loc();
 
       var footer = function () {
         doc.setFontSize(8); doc.setTextColor(150);
@@ -3398,7 +3440,7 @@
         y += w.length * 13 + 4;
       };
       var dstr = function (ts) {
-        return new Date(ts).toLocaleDateString(loc,
+        return new Date(ts).toLocaleDateString(dl,
           { day: "numeric", month: "short", year: "numeric" });
       };
 
@@ -3412,7 +3454,7 @@
       doc.text(t("rep.title"), M, M + 6);
       doc.setFontSize(9); doc.setTextColor(130);
       y = M + 28;
-      doc.text(rangeLbl + " · " + new Date().toLocaleString(loc), M, y);
+      doc.text(rangeLbl + " · " + new Date().toLocaleString(dl), M, y);
       y += 18;
 
       // 1. overview — the three cycle facts + variability
@@ -3442,7 +3484,7 @@
             need(15);
             var to = (p.end === null) ? t("per.ongoing") : dstr(p.end);
             var dur = (p.end === null) ? "—" :
-              ((Math.round((p.end - p.start) / DAY_MS) + 1) + "d");
+              t("unit.days").replace("{n}", Math.round((p.end - p.start) / DAY_MS) + 1);
             doc.setFontSize(10); doc.setTextColor(25);
             doc.text((i + 1) + ".", M + 8, y);
             doc.text(dstr(p.start) + " – " + to, M + 28, y);

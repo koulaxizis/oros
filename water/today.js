@@ -8,8 +8,6 @@
 // ============================================================
 (function (root) {
   "use strict";
-  var W = { en: "Water: {a} of {g}", el: "Νερό: {a} από {g}" };
-
   var PROVIDER = {
     id: "water",
     keys: ["oros-water-data"],
@@ -19,8 +17,8 @@
       var data = C.parse(ctx.readRaw(C.STORAGE_KEY));
       if (!data || !C.hasAny(data)) return [];
       var goal = C.goalFor(data, ctx.today), total = C.dayTotal(data, ctx.today);
-      return [{ id: "day", kind: "info", title: (W[ctx.lang] || W.en)
-        .replace("{a}", C.fmtAmount(total, data.prefs, ctx.lang)).replace("{g}", C.fmtAmount(goal, data.prefs, ctx.lang)) }];
+      return [{ id: "day", kind: "info", title: C.text(ctx.lang, "today.line",
+        { a: C.fmtAmount(total, data.prefs, ctx.lang), g: C.fmtAmount(goal, data.prefs, ctx.lang) }) }];
     },
     open: function (target, win) {
       if (typeof win.__orosOpenApp === "function") win.__orosOpenApp("water");

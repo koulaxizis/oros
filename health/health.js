@@ -49,7 +49,15 @@
       return l === "el" ? "el" : "en";
     } catch (e) { return "en"; }
   }
-  var LANG = appLang();
+  // orosI18n (../i18n.js): the full language code, a pack language included.
+  var LANG = window.orosI18n ? window.orosI18n.lang() : appLang();
+  // Decimal comma (Greek, German, …): numbers, typed values and CSV.
+  var COMMA = (function () {
+    try {
+      var loc = window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB");
+      return (1.5).toLocaleString(loc).indexOf(",") >= 0;
+    } catch (e) { return LANG === "el"; }
+  })();
 
   var STRINGS = {
     en: {
@@ -58,7 +66,7 @@
       "btn.settings": "Settings",
       "t.bp": "Blood pressure", "t.wt": "Weight", "t.gl": "Blood sugar", "t.sl": "Sleep",
       "t.hr": "Resting heart rate", "t.tp": "Temperature", "t.o2": "Oxygen (SpO₂)", "t.st": "Steps",
-      "u.bpm": "bpm", "u.h": "h", "u.st": "steps",
+      "u.bpm": "bpm", "u.h": "h", "u.st": "steps", "u.dur": "{h}h {m}m",
       "home.add": "Add", "home.never": "No readings yet", "home.own": "Add your own kind",
       "home.ownHint": "For example cholesterol, INR or waist size.",
       "home.disclaimer": "Health records, it does not diagnose. The colours follow common tables (ESC/ESH 2023 for blood pressure, ADA for blood sugar, WHO for BMI) or the targets you set. For anything that worries you, talk to your doctor.",
@@ -146,7 +154,7 @@
       "btn.settings": "Ρυθμίσεις",
       "t.bp": "Πίεση", "t.wt": "Βάρος", "t.gl": "Σάκχαρο", "t.sl": "Ύπνος",
       "t.hr": "Σφυγμοί ηρεμίας", "t.tp": "Θερμοκρασία", "t.o2": "Οξυγόνο (SpO₂)", "t.st": "Βήματα",
-      "u.bpm": "bpm", "u.h": "ώ", "u.st": "βήματα",
+      "u.bpm": "bpm", "u.h": "ώ", "u.st": "βήματα", "u.dur": "{h} ώ {m} λ",
       "home.add": "Νέα", "home.never": "Καμία μέτρηση ακόμα", "home.own": "Πρόσθεσε δικό σου είδος",
       "home.ownHint": "Για παράδειγμα χοληστερίνη, INR ή περίμετρος μέσης.",
       "home.disclaimer": "Η Υγεία καταγράφει, δεν κάνει διάγνωση. Τα χρώματα ακολουθούν γνωστούς πίνακες (ESC/ESH 2023 για την πίεση, ADA για το σάκχαρο, ΠΟΥ για τον ΔΜΣ) ή τους στόχους που όρισες. Για ό,τι σε ανησυχεί, μίλα με τον γιατρό σου.",
@@ -455,6 +463,7 @@
     Object.keys(STRINGS_MEDS[l]).forEach(function (k) { STRINGS[l][k] = STRINGS_MEDS[l][k]; });
     Object.keys(STRINGS_REC[l]).forEach(function (k) { STRINGS[l][k] = STRINGS_REC[l][k]; });
   });
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "health", LANG);
 
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;
@@ -505,7 +514,7 @@
     var neg = s.charAt(0) === "-";
     if (neg) s = s.slice(1);
     var parts = s.split(".");
-    var sep = LANG === "el" ? "." : ",", mark = LANG === "el" ? "," : ".";
+    var sep = COMMA ? "." : ",", mark = COMMA ? "," : ".";
     parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, sep);
     return (neg ? "−" : "") + parts.join(mark);
   }
@@ -516,7 +525,7 @@
     var s = (Math.round(v * p) / p).toFixed(dec);
     if (dec > 0) s = s.replace(/\.?0+$/, "");
     if (s === "-0") s = "0";
-    return LANG === "el" ? s.replace(".", ",") : s;
+    return COMMA ? s.replace(".", ",") : s;
   }
   // "12,5", "12.5", " 12 " → 12.5. neg allows a leading minus (own kinds).
   function parseNum(str, neg) {
@@ -581,7 +590,7 @@
   }
   function fmtDur(min) {
     var h = Math.floor(min / 60), m = min % 60;
-    return LANG === "el" ? h + " ώ " + pad2(m) + " λ" : h + "h " + pad2(m) + "m";
+    return t("u.dur", { h: h, m: pad2(m) });
   }
   // The main value of a reading, with its unit: "128/82 mmHg", "78.4 kg"
   function fmtValue(e) {
@@ -655,7 +664,7 @@
     var n = Math.round(toDisp(k, v) * p) / p;
     if (raw) return n;
     var s = String(n);
-    return LANG === "el" ? s.replace(".", ",") : s;
+    return COMMA ? s.replace(".", ",") : s;
   }
   // entries: readings; more: [{ at, cells }] (symptoms, doses), in the
   // same columns, sorted in by time. → rows, heading first.
@@ -682,7 +691,7 @@
     return rows;
   }
   function buildCsv(entries, more) {
-    var sep = LANG === "el" ? ";" : ",";
+    var sep = COMMA ? ";" : ",";
     return "﻿" + exportRows(entries, more).map(function (r) {
       return r.map(function (c) { return csvCell(c, sep); }).join(sep);
     }).join("\r\n") + "\r\n";
@@ -4026,7 +4035,7 @@
       }).catch(function () { return false; });
   }
   var recFile = RP && HPK && window.OrosBundle ? RP.ui(HPK.DESC, {
-    lang: function () { return LANG; },
+    lang: function () { return LANG === "el" ? "el" : "en"; },
     get: function () { return sliceGet(); },
     title: function () { return t("app"); },
     // media/: every file the documents name, read from the orOS disk;

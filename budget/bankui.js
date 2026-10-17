@@ -31,7 +31,7 @@
       ac: "Budget account", cols: "Columns and format",
       sep: "Separator", sepTab: "Tab", enc: "Text encoding", encAuto: "Automatic: {e}",
       e_utf8: "UTF-8", e_1253: "Greek (Windows-1253)", e_88597: "Greek (ISO-8859-7)", e_1252: "Western (Windows-1252)",
-      cd: "Date", df: "Date order", cp: "Description", cm: "Extra text", none: "None",
+      cd: "Date", df: "Date order", cp: "Description", cm: "Extra text", colNone: "None",
       amtMode: "Amounts", amtOne: "One column", amtTwo: "Debit and credit columns",
       ca: "Amount", cs: "Debit/credit marker", cdb: "Debit (money out)", ccr: "Credit (money in)",
       dec: "Number format", inv: "Expenses are positive in this file (reverse signs)",
@@ -85,7 +85,7 @@
       ac: "Λογαριασμός εδώ", cols: "Στήλες και μορφή",
       sep: "Διαχωριστικό", sepTab: "Tab", enc: "Κωδικοποίηση κειμένου", encAuto: "Αυτόματα: {e}",
       e_utf8: "UTF-8", e_1253: "Ελληνικά (Windows-1253)", e_88597: "Ελληνικά (ISO-8859-7)", e_1252: "Δυτικά (Windows-1252)",
-      cd: "Ημερομηνία", df: "Σειρά ημερομηνίας", cp: "Περιγραφή", cm: "Επιπλέον κείμενο", none: "Καμία",
+      cd: "Ημερομηνία", df: "Σειρά ημερομηνίας", cp: "Περιγραφή", cm: "Επιπλέον κείμενο", colNone: "Καμία",
       amtMode: "Ποσά", amtOne: "Μία στήλη", amtTwo: "Στήλες χρέωσης και πίστωσης",
       ca: "Ποσό", cs: "Ένδειξη χρέωσης/πίστωσης", cdb: "Χρέωση (έξοδα)", ccr: "Πίστωση (έσοδα)",
       dec: "Μορφή αριθμών", inv: "Τα έξοδα είναι θετικά σε αυτό το αρχείο (αντιστροφή προσήμου)",
@@ -128,8 +128,10 @@
       appDone: "Εισήχθησαν {n} κινήσεις από {app}", appDoneC: "Εισήχθησαν {n} κινήσεις από {app} · νέες κατηγορίες: {c}"
     }
   };
+  // orosI18n (../i18n.js): S[<pack language>] from the pack "budget".
+  if (root.orosI18n) root.orosI18n.table(S, "budget", root.orosI18n.lang());
   function t(k, p) {
-    var tab = S[A && A.lang === "el" ? "el" : "en"];
+    var tab = (A && S[A.lang]) || S.en;
     var s = tab[k] !== undefined ? tab[k] : S.en[k] !== undefined ? S.en[k] : k;
     return s.replace(/\{(\w+)\}/g, function (m, n) { return p && p[n] !== undefined ? String(p[n]) : m; });
   }
@@ -509,7 +511,7 @@
     }
     function colSelect(key, withNone) {
       var pairs = [];
-      if (withNone) pairs.push([-1, t("none")]);
+      if (withNone) pairs.push([-1, t("colNone")]);
       for (var i = 0; i < (st.hd ? st.hd.width : 0); i++) pairs.push([i, colLabel(i)]);
       var s = sel(null, pairs, st.map[key]);
       if (s.value !== String(st.map[key])) s.value = withNone ? "-1" : "0";

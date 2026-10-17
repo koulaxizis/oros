@@ -12,7 +12,13 @@
 // ============================================================
 (function (root) {
   "use strict";
-  var W = { en: "Medicine", el: "Φάρμακο" };
+  // Same key and English as baby.js (one "baby" pack).
+  var W = { en: { "t.med": "Medicine" }, el: { "t.med": "Φάρμακο" } };
+  function medWord(lang) {
+    var I = typeof window !== "undefined" && window.orosI18n;
+    if (I && lang && !W[lang]) I.table(W, "baby", lang);
+    return (W[lang] || W.en)["t.med"];
+  }
 
   var PROVIDER = {
     id: "baby",
@@ -39,7 +45,7 @@
         var due = C.reminderDue(data, { med: rem.med, mt: rem.mt }, Math.max(ctx.now, at.getTime()));
         due.forEach(function (x) {
           if (x.kind !== "med") return;
-          out.push({ id: x.key, due: ctx.today, time: rem.med, kind: "task", title: rem.mt || (W[ctx.lang] || W.en),
+          out.push({ id: x.key, due: ctx.today, time: rem.med, kind: "task", title: rem.mt || medWord(ctx.lang),
                      target: { kid: C.liveKids(data)[0].id } });
         });
       }

@@ -16,11 +16,12 @@
   "use strict";
   var KEY = "oros-cycle-data";
   var LATE_MAX = 14;
+  // Keys of the "cycle" pack ("today." = this file's own).
   var TXT = {
-    en: { soon: "Period expected", late: "Period seems late", late1: "Expected 1 day ago", lateN: "Expected {n} days ago",
-          est: "An estimate from your history" },
-    el: { soon: "Αναμένεται περίοδος", late: "Η περίοδος φαίνεται να αργεί", late1: "Αναμενόταν πριν 1 ημέρα",
-          lateN: "Αναμενόταν πριν {n} ημέρες", est: "Εκτίμηση από το ιστορικό σου" }
+    en: { "today.soon": "Period expected", "today.late": "Period seems late", "today.late1": "Expected 1 day ago",
+          "today.lateN": "Expected {n} days ago", "today.est": "An estimate from your history" },
+    el: { "today.soon": "Αναμένεται περίοδος", "today.late": "Η περίοδος φαίνεται να αργεί", "today.late1": "Αναμενόταν πριν 1 ημέρα",
+          "today.lateN": "Αναμενόταν πριν {n} ημέρες", "today.est": "Εκτίμηση από το ιστορικό σου" }
   };
 
   var PROVIDER = {
@@ -31,13 +32,14 @@
       if (!C || !raw || !Array.isArray(raw.periods)) return [];
       var pr = C.nextPrediction(raw.periods);
       if (!pr) return [];
-      var w = TXT[ctx.lang] || TXT.en, ymd = C.ymdOf(pr.start), d = ctx.diff(ctx.today, ymd);
+      if (!TXT[ctx.lang] && root.orosI18n && ctx.lang) root.orosI18n.table(TXT, "cycle", ctx.lang);
+      var T = TXT[ctx.lang] || TXT.en, ymd = C.ymdOf(pr.start), d = ctx.diff(ctx.today, ymd);
       if (d > ctx.horizon || d < -LATE_MAX) return [];
       if (d >= 0) {
-        return [{ id: "pred:" + ymd, due: ymd, kind: "event", title: w.soon, text: w.est, target: { day: ymd } }];
+        return [{ id: "pred:" + ymd, due: ymd, kind: "event", title: T["today.soon"], text: T["today.est"], target: { day: ymd } }];
       }
-      return [{ id: "late:" + ymd, due: ctx.today, kind: "info", title: w.late,
-                text: -d === 1 ? w.late1 : w.lateN.replace("{n}", -d), target: { day: ymd } }];
+      return [{ id: "late:" + ymd, due: ctx.today, kind: "info", title: T["today.late"],
+                text: -d === 1 ? T["today.late1"] : T["today.lateN"].replace("{n}", -d), target: { day: ymd } }];
     },
     open: function (target, win) {
       var day = target && typeof target.day === "string" ? target.day : "";

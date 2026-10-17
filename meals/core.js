@@ -121,45 +121,30 @@
 
   // ---------- 3. Units + quantities ----------
   // fam: units of one family add up (f = size in the family's base).
+  // en / el / de: the words the line parser reads (de: German
+  // recipes). How a unit is shown is UNIT_TXT below.
   var UNITS = {
-    g:     { fam: "mass",  f: 1,    en: ["g", "gr", "gram", "grams"],                 el: ["γρ.", "γρ", "γρα", "γραμμάρια", "γραμμάριο", "γραμ.", "g", "gr"],
-             lab: { en: ["g", "g"], el: ["γρ.", "γρ."] } },
-    kg:    { fam: "mass",  f: 1000, en: ["kg", "kgs", "kilo", "kilos", "kilogram", "kilograms"], el: ["κιλό", "κιλά", "κιλο", "kg", "κ."],
-             lab: { en: ["kg", "kg"], el: ["κιλό", "κιλά"] } },
-    ml:    { fam: "vol",   f: 1,    en: ["ml", "milliliter", "milliliters", "millilitre", "millilitres"], el: ["ml", "μλ", "μλ."],
-             lab: { en: ["ml", "ml"], el: ["ml", "ml"] } },
-    l:     { fam: "vol",   f: 1000, en: ["l", "liter", "liters", "litre", "litres", "lt"], el: ["λίτρο", "λίτρα", "λτ.", "λτ", "l", "lt"],
-             lab: { en: ["l", "l"], el: ["λίτρο", "λίτρα"] } },
+    g:     { fam: "mass",  f: 1,    en: ["g", "gr", "gram", "grams"],                 el: ["γρ.", "γρ", "γρα", "γραμμάρια", "γραμμάριο", "γραμ.", "g", "gr"], de: ["gramm"] },
+    kg:    { fam: "mass",  f: 1000, en: ["kg", "kgs", "kilo", "kilos", "kilogram", "kilograms"], el: ["κιλό", "κιλά", "κιλο", "kg", "κ."], de: ["kilogramm"] },
+    ml:    { fam: "vol",   f: 1,    en: ["ml", "milliliter", "milliliters", "millilitre", "millilitres"], el: ["ml", "μλ", "μλ."] },
+    l:     { fam: "vol",   f: 1000, en: ["l", "liter", "liters", "litre", "litres", "lt"], el: ["λίτρο", "λίτρα", "λτ.", "λτ", "l", "lt"] },
     tsp:   { fam: "spoon", f: 1,    en: ["tsp", "tsp.", "teaspoon", "teaspoons"],
-             el: ["κουταλάκι του γλυκού", "κουταλάκια του γλυκού", "κουτ. γλυκού", "κ.γ.", "κγ", "κουταλάκι", "κουταλάκια"],
-             lab: { en: ["tsp", "tsp"], el: ["κ.γ.", "κ.γ."] } },
+             el: ["κουταλάκι του γλυκού", "κουταλάκια του γλυκού", "κουτ. γλυκού", "κ.γ.", "κγ", "κουταλάκι", "κουταλάκια"], de: ["tl", "tl.", "teelöffel"] },
     tbsp:  { fam: "spoon", f: 3,    en: ["tbsp", "tbsp.", "tbs", "tablespoon", "tablespoons"],
-             el: ["κουταλιά της σούπας", "κουταλιές της σούπας", "κουτ. σούπας", "κ.σ.", "κσ", "κουταλιά", "κουταλιές"],
-             lab: { en: ["tbsp", "tbsp"], el: ["κ.σ.", "κ.σ."] } },
-    cup:   { fam: "spoon", f: 48,   en: ["cup", "cups"], el: ["φλιτζάνι", "φλιτζάνια", "φλ.", "κούπα", "κούπες"],
-             lab: { en: ["cup", "cups"], el: ["φλιτζάνι", "φλιτζάνια"] } },
-    pinch: { fam: null, f: 1, en: ["pinch", "pinches"], el: ["πρέζα", "πρέζες"],
-             lab: { en: ["pinch", "pinches"], el: ["πρέζα", "πρέζες"] } },
-    clove: { fam: null, f: 1, en: ["clove", "cloves"], el: ["σκελίδα", "σκελίδες"],
-             lab: { en: ["clove", "cloves"], el: ["σκελίδα", "σκελίδες"] } },
-    can:   { fam: null, f: 1, en: ["can", "cans", "tin", "tins"], el: ["κονσέρβα", "κονσέρβες", "κουτί", "κουτιά"],
-             lab: { en: ["can", "cans"], el: ["κονσέρβα", "κονσέρβες"] } },
-    bunch: { fam: null, f: 1, en: ["bunch", "bunches"], el: ["ματσάκι", "ματσάκια", "μάτσο", "μάτσα"],
-             lab: { en: ["bunch", "bunches"], el: ["ματσάκι", "ματσάκια"] } },
-    pack:  { fam: null, f: 1, en: ["pack", "packs", "packet", "packets"], el: ["πακέτο", "πακέτα", "συσκευασία", "συσκευασίες"],
-             lab: { en: ["pack", "packs"], el: ["πακέτο", "πακέτα"] } },
-    slice: { fam: null, f: 1, en: ["slice", "slices"], el: ["φέτα", "φέτες"],
-             lab: { en: ["slice", "slices"], el: ["φέτα", "φέτες"] } },
-    pc:    { fam: null, f: 1, en: ["pc", "pcs", "piece", "pieces"], el: ["τεμ.", "τεμ", "τεμάχιο", "τεμάχια", "τμχ"],
-             lab: { en: ["", ""], el: ["", ""] } },
+             el: ["κουταλιά της σούπας", "κουταλιές της σούπας", "κουτ. σούπας", "κ.σ.", "κσ", "κουταλιά", "κουταλιές"], de: ["el", "el.", "esslöffel"] },
+    cup:   { fam: "spoon", f: 48,   en: ["cup", "cups"], el: ["φλιτζάνι", "φλιτζάνια", "φλ.", "κούπα", "κούπες"], de: ["tasse", "tassen"] },
+    pinch: { fam: null, f: 1, en: ["pinch", "pinches"], el: ["πρέζα", "πρέζες"], de: ["prise", "prisen"] },
+    clove: { fam: null, f: 1, en: ["clove", "cloves"], el: ["σκελίδα", "σκελίδες"], de: ["zehe", "zehen"] },
+    can:   { fam: null, f: 1, en: ["can", "cans", "tin", "tins"], el: ["κονσέρβα", "κονσέρβες", "κουτί", "κουτιά"], de: ["dose", "dosen"] },
+    bunch: { fam: null, f: 1, en: ["bunch", "bunches"], el: ["ματσάκι", "ματσάκια", "μάτσο", "μάτσα"], de: ["bund"] },
+    pack:  { fam: null, f: 1, en: ["pack", "packs", "packet", "packets"], el: ["πακέτο", "πακέτα", "συσκευασία", "συσκευασίες"], de: ["packung", "packungen", "pck.", "päckchen"] },
+    slice: { fam: null, f: 1, en: ["slice", "slices"], el: ["φέτα", "φέτες"], de: ["scheibe", "scheiben"] },
+    pc:    { fam: null, f: 1, en: ["pc", "pcs", "piece", "pieces"], el: ["τεμ.", "τεμ", "τεμάχιο", "τεμάχια", "τμχ"], de: ["stück", "stk.", "stk"] },
     // US units (since wave 2): they add up with g / ml in the shopping
     // list and convert both ways (see convertQty).
-    oz:    { fam: "mass",  f: 28.3495, en: ["oz", "oz.", "ounce", "ounces"], el: ["ουγγιά", "ουγγιές", "ουγκιά", "ουγκιές", "oz"],
-             lab: { en: ["oz", "oz"], el: ["oz", "oz"] } },
-    lb:    { fam: "mass",  f: 453.592, en: ["lb", "lb.", "lbs", "lbs.", "pound", "pounds"], el: ["λίβρα", "λίβρες", "lb"],
-             lab: { en: ["lb", "lb"], el: ["lb", "lb"] } },
-    floz:  { fam: "vol",   f: 29.5735, en: ["fl oz", "fl. oz.", "fl. oz", "fl.oz.", "fl.oz", "fluid ounce", "fluid ounces"], el: ["fl oz"],
-             lab: { en: ["fl oz", "fl oz"], el: ["fl oz", "fl oz"] } }
+    oz:    { fam: "mass",  f: 28.3495, en: ["oz", "oz.", "ounce", "ounces"], el: ["ουγγιά", "ουγγιές", "ουγκιά", "ουγκιές", "oz"] },
+    lb:    { fam: "mass",  f: 453.592, en: ["lb", "lb.", "lbs", "lbs.", "pound", "pounds"], el: ["λίβρα", "λίβρες", "lb"] },
+    floz:  { fam: "vol",   f: 29.5735, en: ["fl oz", "fl. oz.", "fl. oz", "fl.oz.", "fl.oz", "fluid ounce", "fluid ounces"], el: ["fl oz"] }
   };
   // Millilitres in one spoon-family unit, for conversion only (the
   // metric spoon: 5 ml, 15 ml, a 240 ml cup).
@@ -168,18 +153,76 @@
   // Every alias, folded, longest first (so "κ.σ." wins over "κ.").
   var ALIASES = [];
   UNIT_IDS.forEach(function (id) {
-    UNITS[id].en.concat(UNITS[id].el).forEach(function (a) {
+    UNITS[id].en.concat(UNITS[id].el, UNITS[id].de || []).forEach(function (a) {
       var fa = fold(a);
       if (!ALIASES.some(function (x) { return x.a === fa; })) ALIASES.push({ a: fa, u: id });
     });
   });
   ALIASES.sort(function (x, y) { return y.a.length - x.a.length || cmpStr(x.a, y.a); });
 
+  // Units as shown: unit.<id> (one) and unit.<id>.pl (more than one);
+  // a piece (pc) has no label.
+  var UNIT_TXT = {
+    en: {
+      "unit.g": "g", "unit.g.pl": "g",
+      "unit.kg": "kg", "unit.kg.pl": "kg",
+      "unit.ml": "ml", "unit.ml.pl": "ml",
+      "unit.l": "l", "unit.l.pl": "l",
+      "unit.tsp": "tsp", "unit.tsp.pl": "tsp",
+      "unit.tbsp": "tbsp", "unit.tbsp.pl": "tbsp",
+      "unit.cup": "cup", "unit.cup.pl": "cups",
+      "unit.pinch": "pinch", "unit.pinch.pl": "pinches",
+      "unit.clove": "clove", "unit.clove.pl": "cloves",
+      "unit.can": "can", "unit.can.pl": "cans",
+      "unit.bunch": "bunch", "unit.bunch.pl": "bunches",
+      "unit.pack": "pack", "unit.pack.pl": "packs",
+      "unit.slice": "slice", "unit.slice.pl": "slices",
+      "unit.oz": "oz", "unit.oz.pl": "oz",
+      "unit.lb": "lb", "unit.lb.pl": "lb",
+      "unit.floz": "fl oz", "unit.floz.pl": "fl oz"
+    },
+    el: {
+      "unit.g": "γρ.", "unit.g.pl": "γρ.",
+      "unit.kg": "κιλό", "unit.kg.pl": "κιλά",
+      "unit.ml": "ml", "unit.ml.pl": "ml",
+      "unit.l": "λίτρο", "unit.l.pl": "λίτρα",
+      "unit.tsp": "κ.γ.", "unit.tsp.pl": "κ.γ.",
+      "unit.tbsp": "κ.σ.", "unit.tbsp.pl": "κ.σ.",
+      "unit.cup": "φλιτζάνι", "unit.cup.pl": "φλιτζάνια",
+      "unit.pinch": "πρέζα", "unit.pinch.pl": "πρέζες",
+      "unit.clove": "σκελίδα", "unit.clove.pl": "σκελίδες",
+      "unit.can": "κονσέρβα", "unit.can.pl": "κονσέρβες",
+      "unit.bunch": "ματσάκι", "unit.bunch.pl": "ματσάκια",
+      "unit.pack": "πακέτο", "unit.pack.pl": "πακέτα",
+      "unit.slice": "φέτα", "unit.slice.pl": "φέτες",
+      "unit.oz": "oz", "unit.oz.pl": "oz",
+      "unit.lb": "lb", "unit.lb.pl": "lb",
+      "unit.floz": "fl oz", "unit.floz.pl": "fl oz"
+    }
+  };
+  // A text table in a language: en / el inline, a pack language
+  // (window.orosI18n, the page's "meals" pack) English + the pack.
+  function texts(tbl, lang) {
+    if (tbl[lang]) return tbl[lang];
+    var I = root && root.orosI18n;
+    return I && typeof lang === "string" && lang ? I.table(tbl, "meals", lang) : tbl.en;
+  }
+  // Sort locale and decimal separator for a language code.
+  function locOf(lang) {
+    if (lang === "el" || lang === "en" || !lang) return lang === "el" ? "el" : "en";
+    var I = root && root.orosI18n;
+    return I ? I.locale(lang) : "en";
+  }
+  function decSep(lang) {
+    if (lang === "el") return ",";
+    if (!lang || lang === "en") return ".";
+    try { return (1.5).toLocaleString(locOf(lang)).charAt(1) === "," ? "," : "."; } catch (e) { return "."; }
+  }
+
   function unitLabel(u, q, lang) {
-    var U = UNITS[u];
-    if (!U) return "";
-    var l = U.lab[lang === "el" ? "el" : "en"];
-    return (q !== null && q !== undefined && q > 1) ? l[1] : l[0];
+    if (!UNITS[u] || u === "pc") return "";
+    var l = texts(UNIT_TXT, lang);
+    return (q !== null && q !== undefined && q > 1) ? l["unit." + u + ".pl"] : l["unit." + u];
   }
 
   var GLYPHS = { "½": 0.5, "¼": 0.25, "¾": 0.75, "⅓": 1 / 3, "⅔": 2 / 3, "⅛": 0.125, "⅜": 0.375, "⅝": 0.625, "⅞": 0.875,
@@ -234,7 +277,7 @@
   // no fractions.
   function fmtQty(q, lang, metric) {
     if (q === null || q === undefined || !isFinite(q)) return "";
-    var sep = lang === "el" ? "," : ".";
+    var sep = decSep(lang);
     if (metric) {
       var r = q >= 100 ? Math.round(q / 5) * 5 : (q >= 10 ? Math.round(q) : Math.round(q * 10) / 10);
       return String(r).replace(".", sep);
@@ -928,11 +971,18 @@
   // ---------- 11. Shopping list ----------
   // Computed from the plan, never stored. Only ticks, manual items and
   // the aisle / pantry choices are data.
-  var PANTRY_PAIRS = [["salt", "αλάτι"], ["pepper", "πιπέρι"], ["water", "νερό"]];
-  // The two keys of a pair act as one: the newest choice on either wins.
+  // One entry per thing, its word in English, Greek and German (the
+  // ready German recipes say "Salz"): the keys of an entry act as one.
+  var PANTRY_PAIRS = [["salt", "αλάτι", "salz"], ["pepper", "πιπέρι", "pfeffer"], ["water", "νερό", "wasser"]];
+  // Their names in the settings list.
+  var PAIR_TXT = {
+    en: { "pair.salt": "salt", "pair.pepper": "pepper", "pair.water": "water" },
+    el: { "pair.salt": "αλάτι", "pair.pepper": "πιπέρι", "pair.water": "νερό" }
+  };
+  // The newest choice on any key of an entry wins.
   var PAIR_OF = {};
   PANTRY_PAIRS.forEach(function (p) {
-    var keys = [keyOf(p[0]), keyOf(p[1])];
+    var keys = p.map(keyOf);
     keys.forEach(function (k) { PAIR_OF[k] = keys; });
   });
   function inPantry(data, k) {
@@ -949,9 +999,9 @@
   function pantryList(data, lang) {
     var out = [], seen = {};
     PANTRY_PAIRS.forEach(function (p) {
-      var keys = [keyOf(p[0]), keyOf(p[1])];
+      var keys = p.map(keyOf);
       keys.forEach(function (k) { seen[k] = 1; });
-      if (inPantry(data, keys[0])) out.push({ keys: keys, name: p[lang === "el" ? 1 : 0] });
+      if (inPantry(data, keys[0])) out.push({ keys: keys, name: texts(PAIR_TXT, lang)["pair." + p[0]] || p[0] });
     });
     Object.keys(data.pn || {}).sort(cmpStr).forEach(function (k) {
       if (seen[k] || !inPantry(data, k)) return;
@@ -1042,7 +1092,7 @@
     });
     items.sort(function (x, y) {
       return (AISLES.indexOf(x.aisle) - AISLES.indexOf(y.aisle)) ||
-             fold(x.name).localeCompare(fold(y.name), lang === "el" ? "el" : "en") || cmpStr(x.key, y.key);
+             fold(x.name).localeCompare(fold(y.name), locOf(lang)) || cmpStr(x.key, y.key);
     });
     var ex = Object.keys(excluded).sort(cmpStr).map(function (k) { return { key: k, name: excluded[k] }; });
     return { items: items, excluded: ex, days: days };
@@ -1100,106 +1150,99 @@
   // changes one (R28): an EN and an EL device never fight over them
   // (SS-2). Ids never change.
   var SEEDS = [
-    { id: "s-fasolada", e: "🫘", c: "soup", sv: 4, pt: 15, ct: 90, dt: ["vegan", "veg", "pesc", "gf", "lf", "nut", "fast"],
-      en: { t: "Fasolada (bean soup)", tg: ["Greek"],
-            ig: "500 g dried white beans, soaked overnight\n2 carrots, sliced\n2 celery stalks, chopped\n1 onion, chopped\n2 tbsp tomato paste\n120 ml olive oil\nsalt\npepper",
-            st: ["Drain the beans, cover with fresh water and boil for 5 minutes. Drain again.",
-                 "Put the beans back with 2 litres of water, the onion, carrots and celery. Simmer for 60 minutes.",
-                 "Stir in the tomato paste and the olive oil, season and cook for 25 minutes more, until the beans are soft."] },
-      el: { t: "Φασολάδα", tg: ["Ελληνική"],
-            ig: "500 γρ. ξερά φασόλια, μουλιασμένα από το βράδυ\n2 καρότα, σε ροδέλες\n2 κλωνάρια σέλινο, ψιλοκομμένα\n1 κρεμμύδι, ψιλοκομμένο\n2 κ.σ. πελτές ντομάτας\n120 ml ελαιόλαδο\nαλάτι\nπιπέρι",
-            st: ["Στραγγίζουμε τα φασόλια, τα σκεπάζουμε με νερό και τα βράζουμε 5 λεπτά. Τα ξαναστραγγίζουμε.",
-                 "Τα βάζουμε πάλι στην κατσαρόλα με 2 λίτρα νερό, το κρεμμύδι, τα καρότα και το σέλινο. Σιγοβράζουμε 60 λεπτά.",
-                 "Προσθέτουμε τον πελτέ και το ελαιόλαδο, αλατοπιπερώνουμε και βράζουμε άλλα 25 λεπτά, μέχρι να μαλακώσουν."] } },
-    { id: "s-gemista", e: "🫑", c: "main", sv: 4, pt: 30, ct: 75, dt: ["vegan", "veg", "pesc", "gf", "lf", "nut", "fast"],
-      en: { t: "Gemista (stuffed vegetables)", tg: ["Greek", "Oven"],
-            ig: "4 tomatoes\n4 green peppers\n200 g rice\n1 onion, grated\n1 bunch parsley, chopped\n1 bunch mint, chopped\n3 potatoes, in wedges\n150 ml olive oil\nsalt\npepper",
-            st: ["Cut a lid off the tomatoes and peppers and scoop out the tomato flesh. Blend the flesh.",
-                 "Mix the rice, onion, herbs, half the oil, the tomato flesh, salt and pepper.",
-                 "Fill the vegetables, put the lids back and place them in a baking dish with the potatoes around them.",
-                 "Pour over the rest of the oil and a glass of water. Bake at 180 °C for 75 minutes."] },
-      el: { t: "Γεμιστά", tg: ["Ελληνική", "Φούρνος"],
-            ig: "4 ντομάτες\n4 πράσινες πιπεριές\n200 γρ. ρύζι\n1 κρεμμύδι, τριμμένο\n1 ματσάκι μαϊντανός, ψιλοκομμένος\n1 ματσάκι δυόσμος, ψιλοκομμένος\n3 πατάτες, σε κυδωνάτες\n150 ml ελαιόλαδο\nαλάτι\nπιπέρι",
-            st: ["Κόβουμε καπάκι στις ντομάτες και στις πιπεριές και αδειάζουμε τη σάρκα των ντοματών. Τη χτυπάμε στο μπλέντερ.",
-                 "Ανακατεύουμε το ρύζι, το κρεμμύδι, τα μυρωδικά, το μισό λάδι, τη σάρκα, αλάτι και πιπέρι.",
-                 "Γεμίζουμε τα λαχανικά, τα σκεπάζουμε με τα καπάκια και τα βάζουμε σε ταψί με τις πατάτες γύρω.",
-                 "Περιχύνουμε με το υπόλοιπο λάδι και ένα ποτήρι νερό. Ψήνουμε στους 180 °C για 75 λεπτά."] } },
-    { id: "s-bolognese", e: "🍝", c: "main", sv: 4, pt: 10, ct: 40, dt: ["nut"],
-      en: { t: "Spaghetti bolognese", tg: ["Quick"],
-            ig: "500 g spaghetti\n500 g minced beef\n1 onion, chopped\n2 cloves garlic, chopped\n1 can chopped tomatoes\n2 tbsp olive oil\n1 bay leaf\n50 g grated parmesan\nsalt\npepper",
-            st: ["Heat the oil and soften the onion and garlic for 5 minutes.",
-                 "Add the mince and brown it, breaking it up.",
-                 "Add the tomatoes, the bay leaf, salt and pepper. Simmer for 30 minutes.",
-                 "Boil the spaghetti in salted water as the packet says and serve with the sauce and the cheese."] },
-      el: { t: "Μακαρόνια με κιμά", tg: ["Γρήγορο"],
-            ig: "500 γρ. σπαγγέτι\n500 γρ. κιμάς μοσχαρίσιος\n1 κρεμμύδι, ψιλοκομμένο\n2 σκελίδες σκόρδο, ψιλοκομμένες\n1 κονσέρβα ντομάτα κονκασέ\n2 κ.σ. ελαιόλαδο\n1 φύλλο δάφνης\n50 γρ. τριμμένο κεφαλοτύρι\nαλάτι\nπιπέρι",
-            st: ["Ζεσταίνουμε το λάδι και σοτάρουμε το κρεμμύδι και το σκόρδο για 5 λεπτά.",
-                 "Ρίχνουμε τον κιμά και τον σοτάρουμε μέχρι να ροδίσει, σπάζοντάς τον.",
-                 "Προσθέτουμε την ντομάτα, τη δάφνη, αλάτι και πιπέρι. Σιγοβράζουμε 30 λεπτά.",
-                 "Βράζουμε τα μακαρόνια σε αλατισμένο νερό όπως γράφει η συσκευασία και σερβίρουμε με τη σάλτσα και το τυρί."] } },
-    { id: "s-horiatiki", e: "🥗", c: "salad", sv: 2, pt: 15, ct: 0, dt: ["veg", "pesc", "gf", "keto", "lowcarb", "nut"],
-      en: { t: "Greek salad (horiatiki)", tg: ["Greek", "No cooking"],
-            ig: "3 tomatoes, in wedges\n1 cucumber, sliced\n1 red onion, in rings\n1 green pepper, in rings\n10 olives\n200 g feta\n1 tsp oregano\n4 tbsp olive oil\nsalt",
-            st: ["Put the tomatoes, cucumber, onion and pepper in a bowl and salt them lightly.",
-                 "Add the olives and the feta in one piece on top.",
-                 "Sprinkle with oregano and pour the olive oil over."] },
-      el: { t: "Χωριάτικη σαλάτα", tg: ["Ελληνική", "Χωρίς μαγείρεμα"],
-            ig: "3 ντομάτες, σε κομμάτια\n1 αγγούρι, σε ροδέλες\n1 κόκκινο κρεμμύδι, σε ροδέλες\n1 πράσινη πιπεριά, σε ροδέλες\n10 ελιές\n200 γρ. φέτα\n1 κ.γ. ρίγανη\n4 κ.σ. ελαιόλαδο\nαλάτι",
-            st: ["Βάζουμε σε μπολ τις ντομάτες, το αγγούρι, το κρεμμύδι και την πιπεριά και τα αλατίζουμε ελαφρά.",
-                 "Προσθέτουμε τις ελιές και από πάνω τη φέτα ολόκληρη.",
-                 "Πασπαλίζουμε με ρίγανη και περιχύνουμε με το ελαιόλαδο."] } },
-    { id: "s-omelette", e: "🍳", c: "breakfast", sv: 1, pt: 5, ct: 5, dt: ["veg", "pesc", "gf", "keto", "lowcarb", "nut"],
-      en: { t: "Cheese omelette", tg: ["Quick"],
-            ig: "3 eggs\n2 tbsp milk\n1 tbsp butter\n30 g grated cheese\nsalt\npepper",
-            st: ["Beat the eggs with the milk, salt and pepper.",
-                 "Melt the butter in a pan over medium heat and pour in the eggs.",
-                 "When the edges set, add the cheese, fold in half and cook for 1 minute more."] },
-      el: { t: "Ομελέτα με τυρί", tg: ["Γρήγορο"],
-            ig: "3 αυγά\n2 κ.σ. γάλα\n1 κ.σ. βούτυρο\n30 γρ. τριμμένο τυρί\nαλάτι\nπιπέρι",
-            st: ["Χτυπάμε τα αυγά με το γάλα, αλάτι και πιπέρι.",
-                 "Λιώνουμε το βούτυρο σε τηγάνι σε μέτρια φωτιά και ρίχνουμε τα αυγά.",
-                 "Όταν πήξουν οι άκρες, βάζουμε το τυρί, διπλώνουμε στη μέση και ψήνουμε άλλο 1 λεπτό."] } },
-    { id: "s-fakes", e: "🍲", c: "soup", sv: 4, pt: 10, ct: 50, dt: ["vegan", "veg", "pesc", "gf", "lf", "nut", "fast"],
-      en: { t: "Lentil soup (fakes)", tg: ["Greek"],
-            ig: "500 g brown lentils\n1 onion, chopped\n3 cloves garlic\n2 bay leaves\n1 tbsp tomato paste\n100 ml olive oil\n2 tbsp vinegar\nsalt\npepper",
-            st: ["Rinse the lentils, cover with water, boil for 5 minutes and drain.",
-                 "Add 1.5 litres of water, the onion, garlic and bay leaves. Simmer for 30 minutes.",
-                 "Stir in the tomato paste and the olive oil, season and cook for 15 minutes more.",
-                 "Add the vinegar at the end, off the heat."] },
-      el: { t: "Φακές σούπα", tg: ["Ελληνική"],
-            ig: "500 γρ. φακές ψιλές\n1 κρεμμύδι, ψιλοκομμένο\n3 σκελίδες σκόρδο\n2 φύλλα δάφνης\n1 κ.σ. πελτές ντομάτας\n100 ml ελαιόλαδο\n2 κ.σ. ξίδι\nαλάτι\nπιπέρι",
-            st: ["Ξεπλένουμε τις φακές, τις σκεπάζουμε με νερό, τις βράζουμε 5 λεπτά και τις στραγγίζουμε.",
-                 "Προσθέτουμε 1,5 λίτρο νερό, το κρεμμύδι, το σκόρδο και τη δάφνη. Σιγοβράζουμε 30 λεπτά.",
-                 "Ρίχνουμε τον πελτέ και το ελαιόλαδο, αλατοπιπερώνουμε και βράζουμε άλλα 15 λεπτά.",
-                 "Στο τέλος, εκτός φωτιάς, προσθέτουμε το ξίδι."] } },
-    { id: "s-lemon-chicken", e: "🍗", c: "main", sv: 4, pt: 15, ct: 75, dt: ["gf", "lf", "nut"],
-      en: { t: "Lemon chicken with potatoes", tg: ["Oven"],
-            ig: "1.5 kg chicken, in pieces\n1 kg potatoes, in wedges\n2 lemons, juiced\n100 ml olive oil\n3 cloves garlic\n1 tsp oregano\n200 ml water\nsalt\npepper",
-            st: ["Put the chicken and potatoes in a baking dish.",
-                 "Whisk the lemon juice, oil, garlic, oregano, salt and pepper and pour over.",
-                 "Add the water and bake at 200 °C for 75 minutes, turning once."] },
-      el: { t: "Κοτόπουλο λεμονάτο με πατάτες", tg: ["Φούρνος"],
-            ig: "1,5 κιλό κοτόπουλο, σε μερίδες\n1 κιλό πατάτες, σε κυδωνάτες\n2 λεμόνια, ο χυμός τους\n100 ml ελαιόλαδο\n3 σκελίδες σκόρδο\n1 κ.γ. ρίγανη\n200 ml νερό\nαλάτι\nπιπέρι",
-            st: ["Βάζουμε το κοτόπουλο και τις πατάτες σε ταψί.",
-                 "Χτυπάμε τον χυμό λεμονιού, το λάδι, το σκόρδο, τη ρίγανη, αλάτι και πιπέρι και περιχύνουμε.",
-                 "Προσθέτουμε το νερό και ψήνουμε στους 200 °C για 75 λεπτά, γυρίζοντας μία φορά."] } },
-    { id: "s-yogurt-honey", e: "🍯", c: "dessert", sv: 1, pt: 3, ct: 0, dt: ["veg", "pesc", "gf"],
-      en: { t: "Yogurt with honey and walnuts", tg: ["Quick", "No cooking"],
-            ig: "200 g Greek yogurt\n2 tbsp honey\n30 g walnuts, chopped",
-            st: ["Put the yogurt in a bowl, pour the honey over and sprinkle with the walnuts."] },
-      el: { t: "Γιαούρτι με μέλι και καρύδια", tg: ["Γρήγορο", "Χωρίς μαγείρεμα"],
-            ig: "200 γρ. στραγγιστό γιαούρτι\n2 κ.σ. μέλι\n30 γρ. καρύδια, χοντροκομμένα",
-            st: ["Βάζουμε το γιαούρτι σε μπολ, το περιχύνουμε με το μέλι και πασπαλίζουμε με τα καρύδια."] } }
+    { id: "s-fasolada", e: "🫘", c: "soup", sv: 4, pt: 15, ct: 90, dt: ["vegan", "veg", "pesc", "gf", "lf", "nut", "fast"] },
+    { id: "s-gemista", e: "🫑", c: "main", sv: 4, pt: 30, ct: 75, dt: ["vegan", "veg", "pesc", "gf", "lf", "nut", "fast"] },
+    { id: "s-bolognese", e: "🍝", c: "main", sv: 4, pt: 10, ct: 40, dt: ["nut"] },
+    { id: "s-horiatiki", e: "🥗", c: "salad", sv: 2, pt: 15, ct: 0, dt: ["veg", "pesc", "gf", "keto", "lowcarb", "nut"] },
+    { id: "s-omelette", e: "🍳", c: "breakfast", sv: 1, pt: 5, ct: 5, dt: ["veg", "pesc", "gf", "keto", "lowcarb", "nut"] },
+    { id: "s-fakes", e: "🍲", c: "soup", sv: 4, pt: 10, ct: 50, dt: ["vegan", "veg", "pesc", "gf", "lf", "nut", "fast"] },
+    { id: "s-lemon-chicken", e: "🍗", c: "main", sv: 4, pt: 15, ct: 75, dt: ["gf", "lf", "nut"] },
+    { id: "s-yogurt-honey", e: "🍯", c: "dessert", sv: 1, pt: 3, ct: 0, dt: ["veg", "pesc", "gf"] }
   ];
+  // Their texts: seed.<id without "s-">.t (title), .tg (tags, ", "
+  // between), .ig (one ingredient per line) and .st (one step per
+  // line). A pack language gets English + the "meals" pack.
+  var SEED_TXT = {
+    en: {
+      "seed.fasolada.t": "Fasolada (bean soup)",
+      "seed.fasolada.tg": "Greek",
+      "seed.fasolada.ig": "500 g dried white beans, soaked overnight\n2 carrots, sliced\n2 celery stalks, chopped\n1 onion, chopped\n2 tbsp tomato paste\n120 ml olive oil\nsalt\npepper",
+      "seed.fasolada.st": "Drain the beans, cover with fresh water and boil for 5 minutes. Drain again.\nPut the beans back with 2 litres of water, the onion, carrots and celery. Simmer for 60 minutes.\nStir in the tomato paste and the olive oil, season and cook for 25 minutes more, until the beans are soft.",
+      "seed.gemista.t": "Gemista (stuffed vegetables)",
+      "seed.gemista.tg": "Greek, Oven",
+      "seed.gemista.ig": "4 tomatoes\n4 green peppers\n200 g rice\n1 onion, grated\n1 bunch parsley, chopped\n1 bunch mint, chopped\n3 potatoes, in wedges\n150 ml olive oil\nsalt\npepper",
+      "seed.gemista.st": "Cut a lid off the tomatoes and peppers and scoop out the tomato flesh. Blend the flesh.\nMix the rice, onion, herbs, half the oil, the tomato flesh, salt and pepper.\nFill the vegetables, put the lids back and place them in a baking dish with the potatoes around them.\nPour over the rest of the oil and a glass of water. Bake at 180 °C for 75 minutes.",
+      "seed.bolognese.t": "Spaghetti bolognese",
+      "seed.bolognese.tg": "Quick",
+      "seed.bolognese.ig": "500 g spaghetti\n500 g minced beef\n1 onion, chopped\n2 cloves garlic, chopped\n1 can chopped tomatoes\n2 tbsp olive oil\n1 bay leaf\n50 g grated parmesan\nsalt\npepper",
+      "seed.bolognese.st": "Heat the oil and soften the onion and garlic for 5 minutes.\nAdd the mince and brown it, breaking it up.\nAdd the tomatoes, the bay leaf, salt and pepper. Simmer for 30 minutes.\nBoil the spaghetti in salted water as the packet says and serve with the sauce and the cheese.",
+      "seed.horiatiki.t": "Greek salad (horiatiki)",
+      "seed.horiatiki.tg": "Greek, No cooking",
+      "seed.horiatiki.ig": "3 tomatoes, in wedges\n1 cucumber, sliced\n1 red onion, in rings\n1 green pepper, in rings\n10 olives\n200 g feta\n1 tsp oregano\n4 tbsp olive oil\nsalt",
+      "seed.horiatiki.st": "Put the tomatoes, cucumber, onion and pepper in a bowl and salt them lightly.\nAdd the olives and the feta in one piece on top.\nSprinkle with oregano and pour the olive oil over.",
+      "seed.omelette.t": "Cheese omelette",
+      "seed.omelette.tg": "Quick",
+      "seed.omelette.ig": "3 eggs\n2 tbsp milk\n1 tbsp butter\n30 g grated cheese\nsalt\npepper",
+      "seed.omelette.st": "Beat the eggs with the milk, salt and pepper.\nMelt the butter in a pan over medium heat and pour in the eggs.\nWhen the edges set, add the cheese, fold in half and cook for 1 minute more.",
+      "seed.fakes.t": "Lentil soup (fakes)",
+      "seed.fakes.tg": "Greek",
+      "seed.fakes.ig": "500 g brown lentils\n1 onion, chopped\n3 cloves garlic\n2 bay leaves\n1 tbsp tomato paste\n100 ml olive oil\n2 tbsp vinegar\nsalt\npepper",
+      "seed.fakes.st": "Rinse the lentils, cover with water, boil for 5 minutes and drain.\nAdd 1.5 litres of water, the onion, garlic and bay leaves. Simmer for 30 minutes.\nStir in the tomato paste and the olive oil, season and cook for 15 minutes more.\nAdd the vinegar at the end, off the heat.",
+      "seed.lemon-chicken.t": "Lemon chicken with potatoes",
+      "seed.lemon-chicken.tg": "Oven",
+      "seed.lemon-chicken.ig": "1.5 kg chicken, in pieces\n1 kg potatoes, in wedges\n2 lemons, juiced\n100 ml olive oil\n3 cloves garlic\n1 tsp oregano\n200 ml water\nsalt\npepper",
+      "seed.lemon-chicken.st": "Put the chicken and potatoes in a baking dish.\nWhisk the lemon juice, oil, garlic, oregano, salt and pepper and pour over.\nAdd the water and bake at 200 °C for 75 minutes, turning once.",
+      "seed.yogurt-honey.t": "Yogurt with honey and walnuts",
+      "seed.yogurt-honey.tg": "Quick, No cooking",
+      "seed.yogurt-honey.ig": "200 g Greek yogurt\n2 tbsp honey\n30 g walnuts, chopped",
+      "seed.yogurt-honey.st": "Put the yogurt in a bowl, pour the honey over and sprinkle with the walnuts."
+    },
+    el: {
+      "seed.fasolada.t": "Φασολάδα",
+      "seed.fasolada.tg": "Ελληνική",
+      "seed.fasolada.ig": "500 γρ. ξερά φασόλια, μουλιασμένα από το βράδυ\n2 καρότα, σε ροδέλες\n2 κλωνάρια σέλινο, ψιλοκομμένα\n1 κρεμμύδι, ψιλοκομμένο\n2 κ.σ. πελτές ντομάτας\n120 ml ελαιόλαδο\nαλάτι\nπιπέρι",
+      "seed.fasolada.st": "Στραγγίζουμε τα φασόλια, τα σκεπάζουμε με νερό και τα βράζουμε 5 λεπτά. Τα ξαναστραγγίζουμε.\nΤα βάζουμε πάλι στην κατσαρόλα με 2 λίτρα νερό, το κρεμμύδι, τα καρότα και το σέλινο. Σιγοβράζουμε 60 λεπτά.\nΠροσθέτουμε τον πελτέ και το ελαιόλαδο, αλατοπιπερώνουμε και βράζουμε άλλα 25 λεπτά, μέχρι να μαλακώσουν.",
+      "seed.gemista.t": "Γεμιστά",
+      "seed.gemista.tg": "Ελληνική, Φούρνος",
+      "seed.gemista.ig": "4 ντομάτες\n4 πράσινες πιπεριές\n200 γρ. ρύζι\n1 κρεμμύδι, τριμμένο\n1 ματσάκι μαϊντανός, ψιλοκομμένος\n1 ματσάκι δυόσμος, ψιλοκομμένος\n3 πατάτες, σε κυδωνάτες\n150 ml ελαιόλαδο\nαλάτι\nπιπέρι",
+      "seed.gemista.st": "Κόβουμε καπάκι στις ντομάτες και στις πιπεριές και αδειάζουμε τη σάρκα των ντοματών. Τη χτυπάμε στο μπλέντερ.\nΑνακατεύουμε το ρύζι, το κρεμμύδι, τα μυρωδικά, το μισό λάδι, τη σάρκα, αλάτι και πιπέρι.\nΓεμίζουμε τα λαχανικά, τα σκεπάζουμε με τα καπάκια και τα βάζουμε σε ταψί με τις πατάτες γύρω.\nΠεριχύνουμε με το υπόλοιπο λάδι και ένα ποτήρι νερό. Ψήνουμε στους 180 °C για 75 λεπτά.",
+      "seed.bolognese.t": "Μακαρόνια με κιμά",
+      "seed.bolognese.tg": "Γρήγορο",
+      "seed.bolognese.ig": "500 γρ. σπαγγέτι\n500 γρ. κιμάς μοσχαρίσιος\n1 κρεμμύδι, ψιλοκομμένο\n2 σκελίδες σκόρδο, ψιλοκομμένες\n1 κονσέρβα ντομάτα κονκασέ\n2 κ.σ. ελαιόλαδο\n1 φύλλο δάφνης\n50 γρ. τριμμένο κεφαλοτύρι\nαλάτι\nπιπέρι",
+      "seed.bolognese.st": "Ζεσταίνουμε το λάδι και σοτάρουμε το κρεμμύδι και το σκόρδο για 5 λεπτά.\nΡίχνουμε τον κιμά και τον σοτάρουμε μέχρι να ροδίσει, σπάζοντάς τον.\nΠροσθέτουμε την ντομάτα, τη δάφνη, αλάτι και πιπέρι. Σιγοβράζουμε 30 λεπτά.\nΒράζουμε τα μακαρόνια σε αλατισμένο νερό όπως γράφει η συσκευασία και σερβίρουμε με τη σάλτσα και το τυρί.",
+      "seed.horiatiki.t": "Χωριάτικη σαλάτα",
+      "seed.horiatiki.tg": "Ελληνική, Χωρίς μαγείρεμα",
+      "seed.horiatiki.ig": "3 ντομάτες, σε κομμάτια\n1 αγγούρι, σε ροδέλες\n1 κόκκινο κρεμμύδι, σε ροδέλες\n1 πράσινη πιπεριά, σε ροδέλες\n10 ελιές\n200 γρ. φέτα\n1 κ.γ. ρίγανη\n4 κ.σ. ελαιόλαδο\nαλάτι",
+      "seed.horiatiki.st": "Βάζουμε σε μπολ τις ντομάτες, το αγγούρι, το κρεμμύδι και την πιπεριά και τα αλατίζουμε ελαφρά.\nΠροσθέτουμε τις ελιές και από πάνω τη φέτα ολόκληρη.\nΠασπαλίζουμε με ρίγανη και περιχύνουμε με το ελαιόλαδο.",
+      "seed.omelette.t": "Ομελέτα με τυρί",
+      "seed.omelette.tg": "Γρήγορο",
+      "seed.omelette.ig": "3 αυγά\n2 κ.σ. γάλα\n1 κ.σ. βούτυρο\n30 γρ. τριμμένο τυρί\nαλάτι\nπιπέρι",
+      "seed.omelette.st": "Χτυπάμε τα αυγά με το γάλα, αλάτι και πιπέρι.\nΛιώνουμε το βούτυρο σε τηγάνι σε μέτρια φωτιά και ρίχνουμε τα αυγά.\nΌταν πήξουν οι άκρες, βάζουμε το τυρί, διπλώνουμε στη μέση και ψήνουμε άλλο 1 λεπτό.",
+      "seed.fakes.t": "Φακές σούπα",
+      "seed.fakes.tg": "Ελληνική",
+      "seed.fakes.ig": "500 γρ. φακές ψιλές\n1 κρεμμύδι, ψιλοκομμένο\n3 σκελίδες σκόρδο\n2 φύλλα δάφνης\n1 κ.σ. πελτές ντομάτας\n100 ml ελαιόλαδο\n2 κ.σ. ξίδι\nαλάτι\nπιπέρι",
+      "seed.fakes.st": "Ξεπλένουμε τις φακές, τις σκεπάζουμε με νερό, τις βράζουμε 5 λεπτά και τις στραγγίζουμε.\nΠροσθέτουμε 1,5 λίτρο νερό, το κρεμμύδι, το σκόρδο και τη δάφνη. Σιγοβράζουμε 30 λεπτά.\nΡίχνουμε τον πελτέ και το ελαιόλαδο, αλατοπιπερώνουμε και βράζουμε άλλα 15 λεπτά.\nΣτο τέλος, εκτός φωτιάς, προσθέτουμε το ξίδι.",
+      "seed.lemon-chicken.t": "Κοτόπουλο λεμονάτο με πατάτες",
+      "seed.lemon-chicken.tg": "Φούρνος",
+      "seed.lemon-chicken.ig": "1,5 κιλό κοτόπουλο, σε μερίδες\n1 κιλό πατάτες, σε κυδωνάτες\n2 λεμόνια, ο χυμός τους\n100 ml ελαιόλαδο\n3 σκελίδες σκόρδο\n1 κ.γ. ρίγανη\n200 ml νερό\nαλάτι\nπιπέρι",
+      "seed.lemon-chicken.st": "Βάζουμε το κοτόπουλο και τις πατάτες σε ταψί.\nΧτυπάμε τον χυμό λεμονιού, το λάδι, το σκόρδο, τη ρίγανη, αλάτι και πιπέρι και περιχύνουμε.\nΠροσθέτουμε το νερό και ψήνουμε στους 200 °C για 75 λεπτά, γυρίζοντας μία φορά.",
+      "seed.yogurt-honey.t": "Γιαούρτι με μέλι και καρύδια",
+      "seed.yogurt-honey.tg": "Γρήγορο, Χωρίς μαγείρεμα",
+      "seed.yogurt-honey.ig": "200 γρ. στραγγιστό γιαούρτι\n2 κ.σ. μέλι\n30 γρ. καρύδια, χοντροκομμένα",
+      "seed.yogurt-honey.st": "Βάζουμε το γιαούρτι σε μπολ, το περιχύνουμε με το μέλι και πασπαλίζουμε με τα καρύδια."
+    }
+  };
   var SEED_IDS = SEEDS.map(function (s) { return s.id; });
   // A ready recipe in the given language, as a recipe with m = 0.
   function seedRecipe(id, lang) {
     for (var i = 0; i < SEEDS.length; i++) {
       var s = SEEDS[i];
       if (s.id !== id) continue;
-      var L = s[lang === "el" ? "el" : "en"];
-      return normRecipe({ id: s.id, m: 0, t: L.t, e: s.e, c: s.c, sv: s.sv, pt: s.pt, ct: s.ct, dt: s.dt,
-                          tg: L.tg, ig: textToIngs(L.ig), st: L.st, no: "", src: "", fv: 0 });
+      var L = texts(SEED_TXT, lang), k = "seed." + s.id.slice(2) + ".";
+      return normRecipe({ id: s.id, m: 0, t: L[k + "t"], e: s.e, c: s.c, sv: s.sv, pt: s.pt, ct: s.ct, dt: s.dt,
+                          tg: String(L[k + "tg"] || "").split(/\s*,\s*/).filter(Boolean), ig: textToIngs(L[k + "ig"]),
+                          st: String(L[k + "st"] || "").split("\n").filter(function (x) { return x.trim(); }),
+                          no: "", src: "", fv: 0 });
     }
     return null;
   }

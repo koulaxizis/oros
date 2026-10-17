@@ -76,20 +76,39 @@
     h:     [250, 600]             // mm
   };
   var DEFAULT_PREFS = { wu: "kg", tu: "c", vu: "ml" };
-  var MILESTONES = [
-    ["smile",  "First smile",            "Πρώτο χαμόγελο"],
-    ["laugh",  "First laugh",            "Πρώτο γέλιο"],
-    ["head",   "Holds head up",          "Κρατά το κεφάλι"],
-    ["roll",   "Rolls over",             "Γυρίζει μπρούμυτα"],
-    ["sit",    "Sits without support",   "Κάθεται χωρίς στήριξη"],
-    ["solid",  "First solid food",       "Πρώτη στερεή τροφή"],
-    ["tooth",  "First tooth",            "Πρώτο δόντι"],
-    ["crawl",  "Crawls",                 "Μπουσουλάει"],
-    ["stand",  "Stands with support",    "Στέκεται με στήριξη"],
-    ["word",   "First word",             "Πρώτη λέξη"],
-    ["wave",   "Waves bye-bye",          "Κάνει «γεια»"],
-    ["walk",   "First steps",            "Πρώτα βήματα"]
-  ];
+  // Ready milestones, in order. Labels: MS_W (key "ms.<id>").
+  var MS_W = {
+    en: {
+      "ms.smile": "First smile",
+      "ms.laugh": "First laugh",
+      "ms.head": "Holds head up",
+      "ms.roll": "Rolls over",
+      "ms.sit": "Sits without support",
+      "ms.solid": "First solid food",
+      "ms.tooth": "First tooth",
+      "ms.crawl": "Crawls",
+      "ms.stand": "Stands with support",
+      "ms.word": "First word",
+      "ms.wave": "Waves bye-bye",
+      "ms.walk": "First steps"
+    },
+    el: {
+      "ms.smile": "Πρώτο χαμόγελο",
+      "ms.laugh": "Πρώτο γέλιο",
+      "ms.head": "Κρατά το κεφάλι",
+      "ms.roll": "Γυρίζει μπρούμυτα",
+      "ms.sit": "Κάθεται χωρίς στήριξη",
+      "ms.solid": "Πρώτη στερεή τροφή",
+      "ms.tooth": "Πρώτο δόντι",
+      "ms.crawl": "Μπουσουλάει",
+      "ms.stand": "Στέκεται με στήριξη",
+      "ms.word": "Πρώτη λέξη",
+      "ms.wave": "Κάνει «γεια»",
+      "ms.walk": "Πρώτα βήματα"
+    }
+  };
+  // [id, English label] (the shape baby.js and the tests read).
+  var MILESTONES = ["smile", "laugh", "head", "roll", "sit", "solid", "tooth", "crawl", "stand", "word", "wave", "walk"].map(function (k) { return [k, MS_W.en["ms." + k]]; });
   var MS_KEYS = MILESTONES.map(function (x) { return x[0]; });
   var MARK_TYPES = ["ms", "vac", "doc"];
   var ID_RE  = /^[a-z0-9]{6,60}$/;
@@ -542,11 +561,20 @@
     var rest = Math.round((d - anchor(months)) / DAY_MS);
     return { days: days, months: months, rest: rest };
   }
+  // A word table for a language: English and Greek inline; any other
+  // language (a pack, i18n.js) is English overlaid with the "baby"
+  // pack, built once. Every table here shares the pack with baby.js,
+  // so its keys carry their own prefix (age., rep., rem., cal., ms.).
+  function words(T, lang) {
+    var I = typeof window !== "undefined" && window.orosI18n;
+    if (I && lang && !T[lang]) I.table(T, "baby", lang);
+    return T[lang] || T.en;
+  }
   var AGE_W = {
-    en: { born: "Due", d1: "1 day", dN: "{n} days", wk: "{w} wk", wkd: "{w} wk {d} d",
-          mo1: "1 month", moN: "{n} months", mod: "{n} mo {d} d", yr: "{y} yr", yrm: "{y} yr {m} mo", day0: "Newborn" },
-    el: { born: "Αναμένεται", d1: "1 ημέρας", dN: "{n} ημερών", wk: "{w} εβδ.", wkd: "{w} εβδ. {d} ημ.",
-          mo1: "1 μηνός", moN: "{n} μηνών", mod: "{n} μην. {d} ημ.", yr: "{y} ετών", yrm: "{y} ετ. {m} μην.", day0: "Νεογέννητο" }
+    en: { "age.born": "Due", "age.d1": "1 day", "age.dN": "{n} days", "age.wk": "{w} wk", "age.wkd": "{w} wk {d} d",
+          "age.mo1": "1 month", "age.moN": "{n} months", "age.mod": "{n} mo {d} d", "age.yr": "{y} yr", "age.yrm": "{y} yr {m} mo", "age.day0": "Newborn" },
+    el: { "age.born": "Αναμένεται", "age.d1": "1 ημέρας", "age.dN": "{n} ημερών", "age.wk": "{w} εβδ.", "age.wkd": "{w} εβδ. {d} ημ.",
+          "age.mo1": "1 μηνός", "age.moN": "{n} μηνών", "age.mod": "{n} μην. {d} ημ.", "age.yr": "{y} ετών", "age.yrm": "{y} ετ. {m} μην.", "age.day0": "Νεογέννητο" }
   };
   // One pass: a value that itself contains "{x}" (a child's name)
   // is never filled again.
@@ -556,19 +584,19 @@
     });
   }
   function fmtAge(birth, key, lang) {
-    var w = AGE_W[lang] || AGE_W.en, a = age(birth, key);
+    var w = words(AGE_W, lang), a = age(birth, key);
     if (!a) return "";
-    if (a.days < 0) return w.born;
-    if (a.days === 0) return w.day0;
-    if (a.days === 1) return w.d1;
-    if (a.days < 14) return fill(w.dN, { n: a.days });
+    if (a.days < 0) return w["age.born"];
+    if (a.days === 0) return w["age.day0"];
+    if (a.days === 1) return w["age.d1"];
+    if (a.days < 14) return fill(w["age.dN"], { n: a.days });
     if (a.months < 3) {
       var wk = Math.floor(a.days / 7), dd = a.days % 7;
-      return dd ? fill(w.wkd, { w: wk, d: dd }) : fill(w.wk, { w: wk });
+      return dd ? fill(w["age.wkd"], { w: wk, d: dd }) : fill(w["age.wk"], { w: wk });
     }
-    if (a.months < 24) return a.rest ? fill(w.mod, { n: a.months, d: a.rest }) : fill(a.months === 1 ? w.mo1 : w.moN, { n: a.months });
+    if (a.months < 24) return a.rest ? fill(w["age.mod"], { n: a.months, d: a.rest }) : fill(a.months === 1 ? w["age.mo1"] : w["age.moN"], { n: a.months });
     var y = Math.floor(a.months / 12), m = a.months % 12;
-    return m ? fill(w.yrm, { y: y, m: m }) : fill(w.yr, { y: y });
+    return m ? fill(w["age.yrm"], { y: y, m: m }) : fill(w["age.yr"], { y: y });
   }
   // Age in months as a decimal (chart x axis).
   function ageMonths(birth, key) {
@@ -576,7 +604,10 @@
     return (d - b) / DAY_MS / 30.4375;
   }
 
-  function locale(lang) { return lang === "el" ? "el-GR" : "en-GB"; }
+  function locale(lang) {
+    var I = typeof window !== "undefined" && window.orosI18n;
+    return I ? I.locale(lang) : (lang === "el" ? "el-GR" : "en-GB");
+  }
   function fmtNum(n, lang, dec) {
     try {
       return new Intl.NumberFormat(locale(lang),
@@ -613,7 +644,7 @@
   }
   function msLabel(key, lang) {
     for (var i = 0; i < MILESTONES.length; i++) {
-      if (MILESTONES[i][0] === key) return lang === "el" ? MILESTONES[i][2] : MILESTONES[i][1];
+      if (MILESTONES[i][0] === key) return words(MS_W, lang)["ms." + key] || MILESTONES[i][1];
     }
     return key;
   }
@@ -661,60 +692,60 @@
 
   var SUM_W = {
     en: {
-      title: "{name} · summary for the paediatrician", born: "Born {d} ({age})",
-      avg: "Daily average, last {n} days:", none: "No full day logged in the last 7 days yet.",
-      feeds: "Feeds: {n} (breast {b} min, bottle {ml})", sleep: "Sleep: {h} h (night {nh} h)",
-      nappies: "Nappies: {w} wet, {d} dirty", growth: "Latest measurements:",
-      w: "Weight {v} ({d})", l: "Length {v} ({d})", h: "Head {v} ({d})",
-      ms: "Milestones:", vac: "Vaccines:", foot: "Made with orOS Baby. Not medical advice."
+      "rep.title": "{name} · summary for the paediatrician", "rep.born": "Born {d} ({age})",
+      "rep.avg": "Daily average, last {n} days:", "rep.none": "No full day logged in the last 7 days yet.",
+      "rep.feeds": "Feeds: {n} (breast {b} min, bottle {ml})", "rep.sleep": "Sleep: {h} h (night {nh} h)",
+      "rep.nappies": "Nappies: {w} wet, {d} dirty", "rep.growth": "Latest measurements:",
+      "rep.w": "Weight {v} ({d})", "rep.l": "Length {v} ({d})", "rep.h": "Head {v} ({d})",
+      "rep.ms": "Milestones:", "rep.vac": "Vaccines:", "rep.foot": "Made with orOS Baby. Not medical advice."
     },
     el: {
-      title: "{name} · σύνοψη για τον παιδίατρο", born: "Γεννήθηκε {d} ({age})",
-      avg: "Μέσος όρος ημέρας, τελευταίες {n} ημέρες:", none: "Δεν υπάρχει ακόμα ολόκληρη μέρα με καταγραφές τις τελευταίες 7 ημέρες.",
-      feeds: "Ταΐσματα: {n} (θηλασμός {b} λεπτά, μπιμπερό {ml})", sleep: "Ύπνος: {h} ώρες (νύχτα {nh} ώρες)",
-      nappies: "Πάνες: {w} βρεγμένες, {d} λερωμένες", growth: "Τελευταίες μετρήσεις:",
-      w: "Βάρος {v} ({d})", l: "Μήκος {v} ({d})", h: "Κεφάλι {v} ({d})",
-      ms: "Ορόσημα:", vac: "Εμβόλια:", foot: "Από την εφαρμογή Μωρό του orOS. Δεν είναι ιατρική συμβουλή."
+      "rep.title": "{name} · σύνοψη για τον παιδίατρο", "rep.born": "Γεννήθηκε {d} ({age})",
+      "rep.avg": "Μέσος όρος ημέρας, τελευταίες {n} ημέρες:", "rep.none": "Δεν υπάρχει ακόμα ολόκληρη μέρα με καταγραφές τις τελευταίες 7 ημέρες.",
+      "rep.feeds": "Ταΐσματα: {n} (θηλασμός {b} λεπτά, μπιμπερό {ml})", "rep.sleep": "Ύπνος: {h} ώρες (νύχτα {nh} ώρες)",
+      "rep.nappies": "Πάνες: {w} βρεγμένες, {d} λερωμένες", "rep.growth": "Τελευταίες μετρήσεις:",
+      "rep.w": "Βάρος {v} ({d})", "rep.l": "Μήκος {v} ({d})", "rep.h": "Κεφάλι {v} ({d})",
+      "rep.ms": "Ορόσημα:", "rep.vac": "Εμβόλια:", "rep.foot": "Από την εφαρμογή Μωρό του orOS. Δεν είναι ιατρική συμβουλή."
     }
   };
   function summary(data, kid, todayKey, lang, now) {
-    var w = SUM_W[lang] || SUM_W.en, k = findIn(data.kids, kid);
+    var w = words(SUM_W, lang), k = findIn(data.kids, kid);
     if (!k || k.del) return "";
     var p = data.prefs, out = [];
-    out.push(fill(w.title, { name: k.n }));
-    out.push(fill(w.born, { d: k.b, age: fmtAge(k.b, todayKey, lang) }));
+    out.push(fill(w["rep.title"], { name: k.n }));
+    out.push(fill(w["rep.born"], { d: k.b, age: fmtAge(k.b, todayKey, lang) }));
     out.push("");
     var a = averages(data, kid, todayKey, 7, now);
-    if (!a) out.push(w.none);
+    if (!a) out.push(w["rep.none"]);
     else {
-      out.push(fill(w.avg, { n: a.days }));
-      out.push("- " + fill(w.feeds, { n: fmtNum(a.feeds, lang, 1), b: fmtNum(a.breastMin, lang), ml: fmtVol(Math.round(a.bottleMl), p, lang) }));
-      out.push("- " + fill(w.sleep, { h: fmtNum(a.sleepMin / 60, lang, 1), nh: fmtNum(a.nightMin / 60, lang, 1) }));
-      out.push("- " + fill(w.nappies, { w: fmtNum(a.wet, lang, 1), d: fmtNum(a.dirty, lang, 1) }));
+      out.push(fill(w["rep.avg"], { n: a.days }));
+      out.push("- " + fill(w["rep.feeds"], { n: fmtNum(a.feeds, lang, 1), b: fmtNum(a.breastMin, lang), ml: fmtVol(Math.round(a.bottleMl), p, lang) }));
+      out.push("- " + fill(w["rep.sleep"], { h: fmtNum(a.sleepMin / 60, lang, 1), nh: fmtNum(a.nightMin / 60, lang, 1) }));
+      out.push("- " + fill(w["rep.nappies"], { w: fmtNum(a.wet, lang, 1), d: fmtNum(a.dirty, lang, 1) }));
     }
     var g = kidGrowth(data, kid), lw = null, ll = null, lh = null;
     g.forEach(function (x) { if (x.g) lw = x; if (x.l) ll = x; if (x.h) lh = x; });
     if (lw || ll || lh) {
       out.push("");
-      out.push(w.growth);
-      if (lw) out.push("- " + fill(w.w, { v: fmtWeight(lw.g, p, lang), d: lw.d }));
-      if (ll) out.push("- " + fill(w.l, { v: fmtLen(ll.l, lang), d: ll.d }));
-      if (lh) out.push("- " + fill(w.h, { v: fmtLen(lh.h, lang), d: lh.d }));
+      out.push(w["rep.growth"]);
+      if (lw) out.push("- " + fill(w["rep.w"], { v: fmtWeight(lw.g, p, lang), d: lw.d }));
+      if (ll) out.push("- " + fill(w["rep.l"], { v: fmtLen(ll.l, lang), d: ll.d }));
+      if (lh) out.push("- " + fill(w["rep.h"], { v: fmtLen(lh.h, lang), d: lh.d }));
     }
     var ms = kidMarks(data, kid, "ms");
     if (ms.length) {
       out.push("");
-      out.push(w.ms);
+      out.push(w["rep.ms"]);
       ms.forEach(function (x) { out.push("- " + x.d + " " + (x.key ? msLabel(x.key, lang) : x.tx)); });
     }
     var vac = kidMarks(data, kid, "vac");
     if (vac.length) {
       out.push("");
-      out.push(w.vac);
+      out.push(w["rep.vac"]);
       vac.forEach(function (x) { out.push("- " + x.d + " " + x.tx); });
     }
     out.push("");
-    out.push(w.foot);
+    out.push(w["rep.foot"]);
     return out.join("\n");
   }
 
@@ -772,23 +803,23 @@
     return out;
   }
   var REM_W = {
-    en: { h: "{h} h", hm: "{h} h {m} min", feed: "Feed time?", feedB: "{n}: last feed {x} ago, at {t}.",
-          med: "Medicine time", medB: "Daily medicine or vitamin, {t}.", medL: "{l}, {t}." },
-    el: { h: "{h} ώρ.", hm: "{h} ώρ. {m} λεπ.", feed: "Ώρα για τάισμα;", feedB: "{n}: τελευταίο τάισμα πριν από {x}, στις {t}.",
-          med: "Ώρα για το φάρμακο", medB: "Καθημερινό φάρμακο ή βιταμίνη, {t}.", medL: "{l}, {t}." }
+    en: { "rem.h": "{h} h", "rem.hm": "{h} h {m} min", "rem.feed": "Feed time?", "rem.feedB": "{n}: last feed {x} ago, at {t}.",
+          "rem.med": "Medicine time", "rem.medB": "Daily medicine or vitamin, {t}.", "rem.medL": "{l}, {t}." },
+    el: { "rem.h": "{h} ώρ.", "rem.hm": "{h} ώρ. {m} λεπ.", "rem.feed": "Ώρα για τάισμα;", "rem.feedB": "{n}: τελευταίο τάισμα πριν από {x}, στις {t}.",
+          "rem.med": "Ώρα για το φάρμακο", "rem.medB": "Καθημερινό φάρμακο ή βιταμίνη, {t}.", "rem.medL": "{l}, {t}." }
   };
   function gapWords(ms, w) {
     var min = Math.max(0, Math.floor(ms / 60000)), h = Math.floor(min / 60), m = min % 60;
-    return fill(m ? w.hm : w.h, { h: h, m: m });
+    return fill(m ? w["rem.hm"] : w["rem.h"], { h: h, m: m });
   }
   function reminderText(item, rem, lang, now) {
-    var w = REM_W[lang] || REM_W.en, t = now instanceof Date ? now.getTime() : now;
+    var w = words(REM_W, lang), t = now instanceof Date ? now.getTime() : now;
     if (item.kind === "feed") {
-      return { title: w.feed,
-               body: fill(w.feedB, { n: item.kid.n, x: gapWords(t - item.last.ts, w), t: fmtClock(item.last.ts) }) };
+      return { title: w["rem.feed"],
+               body: fill(w["rem.feedB"], { n: item.kid.n, x: gapWords(t - item.last.ts, w), t: fmtClock(item.last.ts) }) };
     }
     rem = readRem(rem);
-    return { title: w.med, body: rem.mt ? fill(w.medL, { l: rem.mt, t: rem.med }) : fill(w.medB, { t: rem.med }) };
+    return { title: w["rem.med"], body: rem.mt ? fill(w["rem.medL"], { l: rem.mt, t: rem.med }) : fill(w["rem.medB"], { t: rem.med }) };
   }
 
   // ---------- 8. Calendar feed (phase 2) ----------
@@ -797,28 +828,28 @@
   // child's age: every month up to 2 years, then each birthday.
   // Rows are computed, never stored.
   var CAL_W = {
-    en: { ms: "{n}: {x}", vac: "{n}: vaccine, {x}", doc: "{n}: doctor, {x}",
-          mo1: "{n} is 1 month old today", moN: "{n} is {m} months old today", bday: "🎂 {n} turns {y}" },
-    el: { ms: "{n}: {x}", vac: "{n}: εμβόλιο, {x}", doc: "{n}: γιατρός, {x}",
-          mo1: "{n}: κλείνει σήμερα 1 μηνός", moN: "{n}: κλείνει σήμερα {m} μηνών", bday: "🎂 {n}: γενέθλια ({y})" }
+    en: { "cal.ms": "{n}: {x}", "cal.vac": "{n}: vaccine, {x}", "cal.doc": "{n}: doctor, {x}",
+          "cal.mo1": "{n} is 1 month old today", "cal.moN": "{n} is {m} months old today", "cal.bday": "🎂 {n} turns {y}" },
+    el: { "cal.ms": "{n}: {x}", "cal.vac": "{n}: εμβόλιο, {x}", "cal.doc": "{n}: γιατρός, {x}",
+          "cal.mo1": "{n}: κλείνει σήμερα 1 μηνός", "cal.moN": "{n}: κλείνει σήμερα {m} μηνών", "cal.bday": "🎂 {n}: γενέθλια ({y})" }
   };
   function calendarRows(data, key, lang) {
-    var w = CAL_W[lang] || CAL_W.en, out = [], kids = {};
+    var w = words(CAL_W, lang), out = [], kids = {};
     if (!validDay(key)) return out;
     liveKids(data).forEach(function (k) {
       kids[k.id] = k;
       var a = age(k.b, key);
       if (!a || a.days <= 0 || a.rest !== 0 || a.months < 1) return;
       var title;
-      if (a.months % 12 === 0) title = fill(w.bday, { n: k.n, y: a.months / 12 });
-      else if (a.months < 24) title = fill(a.months === 1 ? w.mo1 : w.moN, { n: k.n, m: a.months });
+      if (a.months % 12 === 0) title = fill(w["cal.bday"], { n: k.n, y: a.months / 12 });
+      else if (a.months < 24) title = fill(a.months === 1 ? w["cal.mo1"] : w["cal.moN"], { n: k.n, m: a.months });
       else return;
       out.push({ id: "age-" + k.id + "-" + key, kid: k.id, kind: "age", title: title });
     });
     data.mk.forEach(function (x) {
       if (x.del || x.d !== key || !kids[x.k]) return;
       var what = x.key ? msLabel(x.key, lang) : x.tx;
-      out.push({ id: x.id, kid: x.k, kind: x.t, title: fill(w[x.t], { n: kids[x.k].n, x: what }) });
+      out.push({ id: x.id, kid: x.k, kind: x.t, title: fill(w["cal." + x.t], { n: kids[x.k].n, x: what }) });
     });
     var order = { age: 0, ms: 1, vac: 2, doc: 3 };
     return out.sort(function (x, y) { return order[x.kind] - order[y.kind] || cmpStr(x.id, y.id); });

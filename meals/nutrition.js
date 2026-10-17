@@ -19,6 +19,8 @@
 // 4 g, a pinch 0.4 g, a slice 25 g, a bunch 40 g. A pack has no weight.
 // No DOM, no storage, no network. Node tests load it after core.js.
 // API: window.OrosMealsNutrition (end of file).
+// i18n-inline-ok: the Greek here is matching data (ingredient names
+// and unit words the table and the quantity reader know), no UI text.
 // ============================================================
 (function (root) {
   "use strict";
@@ -347,7 +349,7 @@
   var FIELDS = "code,product_name,product_name_en,product_name_el,generic_name,brands,quantity,nutriments";
   function offSearchUrl(q, lang) {
     return OFF + "/cgi/search.pl?search_terms=" + encodeURIComponent(String(q || "").slice(0, 80)) +
-      "&search_simple=1&action=process&json=1&page_size=12&lc=" + (lang === "el" ? "el" : "en") + "&fields=" + FIELDS;
+      "&search_simple=1&action=process&json=1&page_size=12&lc=" + (/^[a-z]{2}$/.test(lang || "") ? lang : "en") + "&fields=" + FIELDS;
   }
   function offProductUrl(code) {
     return OFF + "/api/v2/product/" + encodeURIComponent(code) + ".json?lc=" + "en" + "&fields=" + FIELDS;

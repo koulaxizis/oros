@@ -264,11 +264,36 @@
   }
 
   // ---------- 4. Formatting ----------
+  // Text shared by the app, the shell (reminders, Today) and Habits
+  // (feed row). Pack languages get WORDS[code] in the Water app only
+  // (the shell and Habits pass "el"/"en" or fall back to English).
   var WORDS = {
-    en: { glass1: "glass", glassN: "glasses" },
-    el: { glass1: "ποτήρι", glassN: "ποτήρια" }
+    en: {
+      glass1: "glass", glassN: "glasses",
+      "rem.title": "Time for some water", "rem.body": "Today: {a} of {g}. {left} to go.",
+      "feed.name": "Water", "feed.hint": "Daily goal in the Water app",
+      "today.line": "Water: {a} of {g}"
+    },
+    el: {
+      glass1: "ποτήρι", glassN: "ποτήρια",
+      "rem.title": "Ώρα για λίγο νερό", "rem.body": "Σήμερα: {a} από {g}. Μένουν {left}.",
+      "feed.name": "Νερό", "feed.hint": "Ημερήσιος στόχος στην εφαρμογή Νερό",
+      "today.line": "Νερό: {a} από {g}"
+    }
   };
-  function locale(lang) { return lang === "el" ? "el-GR" : "en-GB"; }
+  var I18N = typeof window !== "undefined" && window.orosI18n ? window.orosI18n : null;
+  if (I18N) I18N.table(WORDS, "water");
+  function words(lang) { return WORDS[lang] || WORDS.en; }
+  function text(lang, key, params) {
+    var s = words(lang)[key];
+    if (s === undefined) s = WORDS.en[key] !== undefined ? WORDS.en[key] : key;
+    if (params) Object.keys(params).forEach(function (k) { s = s.split("{" + k + "}").join(String(params[k])); });
+    return s;
+  }
+  function locale(lang) {
+    if (I18N) return I18N.locale(lang);
+    return lang === "el" ? "el-GR" : "en-GB";
+  }
   function fmtNum(n, lang, dec) {
     try {
       return new Intl.NumberFormat(locale(lang),
@@ -283,7 +308,7 @@
   }
   function unitWord(ml, prefs, lang) {
     if (prefs.unit === "glass") {
-      var w = WORDS[lang] || WORDS.en;
+      var w = words(lang);
       return Math.round(ml / prefs.glass * 10) / 10 === 1 ? w.glass1 : w.glassN;
     }
     return prefs.unit === "oz" ? "fl oz" : "ml";
@@ -319,15 +344,11 @@
     };
   }
   function reminderText(due, prefs, lang) {
-    var el = lang === "el";
     var left = Math.max(0, due.goal - due.total);
     return {
-      title: el ? "Ώρα για λίγο νερό" : "Time for some water",
-      body: el
-        ? "Σήμερα: " + amount(due.total, prefs, lang) + " από " + fmtAmount(due.goal, prefs, lang) +
-          ". Μένουν " + fmtAmount(left, prefs, lang) + "."
-        : "Today: " + amount(due.total, prefs, lang) + " of " + fmtAmount(due.goal, prefs, lang) +
-          ". " + fmtAmount(left, prefs, lang) + " to go."
+      title: text(lang, "rem.title"),
+      body: text(lang, "rem.body", { a: amount(due.total, prefs, lang), g: fmtAmount(due.goal, prefs, lang),
+        left: fmtAmount(left, prefs, lang) })
     };
   }
 
@@ -340,8 +361,8 @@
   var FEED = {
     id: "water",
     app: "water",
-    name: { en: "Water", el: "Νερό" },
-    hint: { en: "Daily goal in the Water app", el: "Ημερήσιος στόχος στην εφαρμογή Νερό" },
+    name: { en: WORDS.en["feed.name"], el: WORDS.el["feed.name"] },
+    hint: { en: WORDS.en["feed.hint"], el: WORDS.el["feed.hint"] },
     color: "#4fc4cf",
     icon: DROP,
     keys: [STORAGE_KEY],
@@ -379,7 +400,7 @@
     hasAny: hasAny, totals: totals, dayTotal: dayTotal, daySips: daySips, firstDay: firstDay,
     goalFor: goalFor, setGoal: setGoal, metDays: metDays, streaks: streaks,
     average: average, goalRate: goalRate,
-    amount: amount, unitWord: unitWord, fmtAmount: fmtAmount, fmtNum: fmtNum, fmtMinutes: fmtMinutes,
+    amount: amount, unitWord: unitWord, text: text, fmtAmount: fmtAmount, fmtNum: fmtNum, fmtMinutes: fmtMinutes,
     reminderDue: reminderDue, reminderText: reminderText,
     FEED: FEED, toCsv: toCsv, toTable: toTable
   };

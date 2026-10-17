@@ -1,0 +1,56 @@
+# Wasser
+Wasser hilft dir, über den Tag genug zu trinken. Trag jedes Glas und jede Flasche mit einem Tipp ein, sieh zu, wie sich das Glas bis zu deinem Tagesziel füllt, und schau, wie es dir in den letzten Tagen und Wochen ergangen ist.
+
+## Erste Schritte
+Wasser öffnet mit dem heutigen Tag. Das große Glas zeigt, wie viel du getrunken hast, dein Ziel, den Prozentsatz und wie viel noch fehlt. Dein Ziel liegt am Anfang bei 2.000 ml; ändere es in den `Einstellungen` (das Zahnrad).
+
+Tippe oder klicke jedes Mal, wenn du trinkst, auf einen der Knöpfe unter dem Glas:
+- `+1 Glas` fügt ein Glas hinzu (250 ml, solange du es nicht änderst).
+- `+ Flasche` fügt eine Flasche hinzu (500 ml, solange du es nicht änderst).
+- Mit `Andere Menge` gibst du eine beliebige Menge ein oder wählst eine fertige wie 330 ml oder 1 Liter.
+
+Gleich nachdem du ein Getränk hinzugefügt hast, erscheint für ein paar Sekunden ein Knopf `Rückgängig`.
+
+## Einträge und vergangene Tage
+Die Getränke von heute stehen mit ihrer Uhrzeit unter `Einträge`. Tippe oder klicke auf einen Eintrag, um Menge oder Uhrzeit zu ändern oder ihn zu `Löschen`.
+
+Mit ‹ und › oben wechselst du zu einem anderen Tag, mit dem Datumsknopf kommst du zurück zu heute. Hast du gestern etwas vergessen, geh zu diesem Tag und füge es dort hinzu; die Uhrzeit kannst du danach korrigieren.
+
+## Verlauf
+Neben dem Tag (auf dem Handy darunter) siehst du:
+- `Übersicht`: deine aktuellen `Tage in Folge`, deine `Beste Serie`, den `Schnitt (7 Tage)` und den Anteil der `Tage im Ziel`.
+- `Diese Woche`: ein Balken für jeden Tag, Montag bis Sonntag.
+- Eine Monats-Heatmap: Je dunkler der Tag, desto näher warst du an deinem Ziel. Tippe oder klicke auf einen Tag, um ihn zu öffnen.
+
+## Einstellungen
+- `Tagesziel (ml)`. Ein neues Ziel gilt ab heute; vergangene Tage behalten ihres. `Vorschlagen` gibt dir ein Startziel nach deinem Gewicht (etwa 33 ml pro kg). Dein Gewicht wird nicht gespeichert.
+- `Glas (ml)` und `Flasche (ml)`: die Größen der beiden Schnellknöpfe.
+- `Mengen zeigen in` `ml`, `Gläser` oder `fl oz`.
+- `In Gewohnheiten zeigen`: fügt in [Gewohnheiten](app:habits) eine schreibgeschützte Zeile „Wasser“ hinzu, abgehakt an den Tagen, an denen du dein Ziel erreichst.
+
+## Erinnerungen
+Erinnerungen sind am Anfang aus. Schalte sie mit dem Knopf `Erinnerungen` oben ein oder in den `Einstellungen`, wo du auch die Uhrzeiten (`Von`, `Bis`) und `Höchstens alle` wählst. Du bekommst nur dann eine Erinnerung, wenn du zurückliegst: zum Beispiel nach der Hälfte deiner Stunden mit weniger als der Hälfte deines Ziels. Ein Tipp darauf öffnet Wasser. Siehe [Benachrichtigungen](help:t/notifications).
+
+## Health Connect
+Schalte in der orOS-App für Android unter Einstellungen › `Verbundene Dienste` `Health Connect` ein. Dann gehen deine Getränke der letzten 30 Tage an Health Connect, und Getränke, die du in anderen Gesundheits-Apps einträgst, kommen in Wasser an. Ein Getränk aus einer anderen App, das du hier löschst, kommt nicht wieder.
+
+## orOS-Datei speichern und öffnen
+In den `Einstellungen` unter `Daten` speichert `orOS-Datei (.oroswater)` jedes Getränk und jedes Tagesziel als eine `.oroswater`-Datei, zum Beispiel um sie ohne Synchronisierung auf ein anderes Gerät zu bringen oder um eine Kopie aufzuheben. Deine Einstellungen (Glas- und Flaschengröße, Einheit, Erinnerungen) bleiben auf jedem Gerät. Die Datei ist ein normales ZIP: Entpackt enthält sie die Getränke als `content.json` plus `preview/drinks.csv` (Datum, Uhrzeit, ml) für andere Programme. Sie ist nicht verschlüsselt, bewahre sie also sicher auf.
+
+`orOS-Datei öffnen…` (oder `Entpackter orOS-Ordner…`, oder „Öffnen mit“ orOS am Computer) zeigt, wie viele Getränke und Ziele neu und wie viele schon da sind; dann fügt `Hinzufügen` nur die neuen hinzu, mit ihren eigenen IDs: Dieselbe Datei noch einmal zu öffnen, fügt nichts hinzu. Ein schon vorhandenes Getränk bleibt, wie es ist, ein hier gelöschtes bleibt gelöscht, und ein Tag, der hier schon sein eigenes Ziel hat, behält es; eine Datei löscht nie etwas. Hake `Mit neueren Versionen aktualisieren` an, damit Einträge, die in der Datei später geändert wurden, deine Kopie ersetzen. `Rückgängig` in der Meldung entfernt das Hinzugefügte.
+
+## Synchronisierung und Sicherung
+Deine Getränke, Ziele und Einstellungen werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. Welchen Monat die Heatmap zeigt, bleibt auf diesem Gerät. `CSV exportieren` (in den `Einstellungen`) speichert jedes Getränk mit Datum, Uhrzeit und Menge, und innerhalb von orOS öffnet `In Tabelle öffnen` dieselben Getränke als neues Blatt in Tabelle, mit der Summe in ml; eine orOS-Datei (siehe oben) hält Getränke und Ziele zusammen. Für eine vollständige Kopie siehe [Sicherung](help:t/backup).
+
+## Tastenkürzel
+- [[+]] fügt ein Glas hinzu.
+- [[←]] / [[→]] gehen zum vorigen oder nächsten Tag.
+- [[Ctrl+Z]] macht das gerade hinzugefügte Getränk rückgängig.
+
+## Tipps
+- Auch andere Getränke als Wasser zählen; trag ein, was du verfolgen möchtest.
+- Das Ziel ist ein grober Richtwert, kein medizinischer Rat.
+
+## Grenzen
+- Erinnerungen kommen nicht, wenn der Browser oder der orOS-Tab geschlossen ist.
+- Wasser kann keine CSV-Dateien importieren.

@@ -1,0 +1,107 @@
+# Essensplaner
+Der Essensplaner bewahrt deine Rezepte auf, plant die Mahlzeiten der Woche und macht daraus die Einkaufsliste. Er weiß auch, was du zu Hause hast (den Vorrat), schlägt vor, was du damit kochen kannst, schätzt die Nährwerte pro Portion und hat einen Kochmodus, der dich Schritt für Schritt durch ein Rezept führt.
+
+## Erste Schritte
+Es gibt vier Tabs: `Rezepte`, `Woche`, `Einkauf` und `Vorrat`. Du startest mit ein paar fertigen Rezepten. Füg eigene mit `Neues Rezept` hinzu oder hol sie mit `Importieren` herein: über die Adresse einer Rezeptseite, aus kopiertem Text oder aus einem Export einer anderen Rezept-App (Paprika, Mela, Recipe Keeper, Crouton und mehr). Zutaten und Schritte werden für dich erkannt, und du prüfst sie vor dem Speichern.
+
+Öffne `Einstellungen` (das Zahnrad), um `Unsere Ernährung`, die `Mahlzeiten des Tages`, `Woche beginnt am` und das, was `Immer im Haus` ist, festzulegen.
+
+## Rezepte
+Im Editor tippst du `Zutaten, eine pro Zeile` (etwa „200 g Feta, zerbröselt“; eine Zeile wie „Für die Soße:“ beginnt eine Gruppe) und `Schritte, einer pro Zeile`. Füg Portionen, Vorbereitungs- und Kochzeit, einen Gang, Tags, Notizen und eine Quelle hinzu. `Aus den Zutaten vorschlagen` hakt die `Passende Ernährungsweisen` an; Keto, Low Carb und Rohkost prüfst du selbst.
+
+Öffne ein Rezept, um es zu sehen. Die Tasten + und − ändern die Portionen und rechnen jede Menge um, auch Spannen („2–3 Eier“ für 4 wird „4–6 Eier“ für 8). `Wie geschrieben`, `Metrisch` und `US` wählen die Einheiten: `Metrisch` macht aus Tassen, Unzen und Pfund ml und g, `US` macht aus g und ml Unzen, Pfund, Tassen und Löffel, und Ofentemperaturen wechseln zwischen °C und °F. Die Wahl gilt auf diesem Gerät und auch im Kochmodus und auf der Einkaufsliste. Von dort kannst du `Kochen`, es als `Gekocht` markieren (siehe Vorrat unten), `Zum Plan hinzufügen`, `Bearbeiten`, `Teilen`, `Drucken`, `Duplizieren` oder `Löschen` (mit `Rückgängig`), und mit dem Stern behältst du es in deinen Favoriten. `Teilen` öffnet `An jemanden senden`: Das Rezept geht als Link, der sich in jedem Browser öffnet, und jemand mit orOS kann es in die eigenen Rezepte übernehmen; `Als Text senden` schickt stattdessen reinen Text.
+
+Unter den Zutaten zeigt `Pro Portion` eine Schätzung von Kalorien, Eiweiß, Kohlenhydraten und Fett (siehe Nährwerte unten).
+
+Das Suchfeld findet Rezepte nach Namen. Tipp Zutaten mit Kommas getrennt (etwa „Eier, Spinat“), um Rezepte zu finden, die sie verwenden. `★ Favoriten` und `Passt zu unserer Ernährung` filtern die Liste.
+
+## Importieren
+`Importieren` öffnet ein Fenster mit drei Wegen:
+
+- `Webadresse eines Rezepts`: Tipp oder füge die Adresse der Seite ein und drück `Abrufen`. Die meisten Rezeptseiten beschreiben ihre Rezepte auf eine standardisierte Weise (schema.org), und diese Beschreibung wird gelesen: Titel, Portionen, Zeiten, Zutaten, Schritte, Tags und der Link zum Foto. Seiten, die Apps nicht lesen lassen, laufen über das orOS-Relay, das du in [Mail](app:mail) oder [Reader](app:feeds) einrichtest; ohne Relay kopierst du stattdessen den Text des Rezepts.
+- `Rezept einfügen`: Text von irgendwo wird in Zutaten und Schritte aufgeteilt. Du kannst auch den Quelltext (HTML) einer Seite oder ihr JSON einfügen.
+- `Datei öffnen…`: ein Export aus einer anderen Rezept-App (siehe unten), eine gespeicherte Webseite (.html) oder JSON.
+
+Ein einzelnes Rezept öffnet sich im Editor, damit du es vor dem `Speichern` prüfen kannst. Mehrere öffnen sich in einer Liste: Hak die an, die du willst, und drück `Hinzufügen`; Titel, die du schon hast, sind nicht angehakt. Die Seite selbst wird nie angezeigt oder ausgeführt: Nur ihre Rezeptdaten werden gelesen. Fotos bleiben auf ihrer Website, als Link `Foto` unter `Quelle`.
+
+## Aus anderen Rezept-Apps importieren
+Exportiere aus der anderen App und öffne die Datei dann hier mit `Importieren` → `Datei öffnen…`. Eine Datei mit mehreren Rezepten öffnet eine Liste, die sagt, woher sie kommen, wie viele es sind und welche schon hier sind; hak die an, die du willst, und drück `Hinzufügen`. Sie werden in einem Schritt hinzugefügt, und `Rückgängig` in der Meldung nimmt sie alle wieder heraus. Importierst du dieselbe Datei noch einmal, kommt nur hinzu, was fehlt: Ein schon importiertes Rezept wird nie geändert oder doppelt hinzugefügt. Fotos werden nicht übernommen (ein Weblink zu einem Foto bleibt erhalten).
+
+- Paprika: Wähle in der Rezeptliste die Rezepte aus und nutze Exportieren (oder Datei > Exportieren am Computer); du bekommst eine .paprikarecipes-Datei.
+- Mela: Wähle Rezepte aus, dann Teilen oder Exportieren; du bekommst .melarecipe (eins) oder .melarecipes (mehrere).
+- Recipe Keeper: Einstellungen > Exportieren (oder Sicherung), wähle den HTML/ZIP-Export; öffne die .zip so, wie sie ist.
+- Nextcloud Cookbook: Lade in Nextcloud Files den Ordner Recipes herunter (er kommt als .zip mit einer recipe.json im Ordner jedes Rezepts).
+- Cooklang: Öffne eine .cook-Datei oder pack mehrere in eine .zip.
+- Crouton: Teile ein Rezept oder exportiere deine Rezepte; du bekommst .crumb-Dateien (mehrere können in eine .zip).
+- MyCookbook: Einstellungen > Exportieren oder eine Sicherung; du bekommst eine .mcb-Datei.
+- Mealie: bei einem Rezept Als JSON herunterladen, oder der Datenexport (.zip). Tandoor: der Export als Default/JSON (.zip).
+
+Die Menüs unterscheiden sich je nach Version; such nach Exportieren, Teilen oder Sicherung.
+
+## Kochmodus
+`Kochen` zeigt einen Schritt nach dem anderen. Oben änderst du Portionen und Einheiten; die Zutatenliste passt sich an. Nennt ein Schritt eine Zeit, erscheint dafür eine Timer-Taste. Der Bildschirm bleibt an, solange du kochst. Beim letzten Schritt nimmt `Gekocht` das Verwendete aus dem Vorrat.
+
+## Woche
+Jeder Tag hat eine Zeile für jede Mahlzeit. Tipp oder klick auf einen leeren Platz, um ein Rezept hinzuzufügen, oder schreib etwas wie „Auswärts“ oder „Reste“. Tipp auf eine Mahlzeit, um das Rezept zu öffnen, die Portionen zu ändern, sie zu verschieben oder zu entfernen. Am Computer kannst du Mahlzeiten auch zwischen Plätzen ziehen.
+
+- `Letzte Woche kopieren` füllt diese Woche aus der vorherigen.
+- `Lücken füllen` setzt Rezepte, die zu deiner Ernährung passen, in die leeren Plätze, Favoriten zuerst.
+- `Woche leeren` leert sie, mit `Rückgängig`.
+
+Mahlzeiten, die nicht zu deiner Ernährung passen, zeigen ein ⚠. Neben jedem Tag schätzt „≈ 1.850 kcal“ diesen Tag für eine Person: eine Portion jedes geplanten Rezepts. Fahr mit der Maus darüber oder drück lange darauf für Eiweiß, Kohlenhydrate und Fett.
+
+## Einkauf
+Die Einkaufsliste zählt jede für die Woche geplante Zutat zusammen, nach Abteilungen im Supermarkt gruppiert: Obst & Gemüse, Fleisch, Fisch, Milchprodukte & Eier, Backwaren, Vorratsschrank, Gewürze, Tiefkühl, Getränke und Haushalt. Die Abteilung wird aus den Wörtern erraten, auf Englisch und Griechisch („frozen peas“ kommen zu Tiefkühl, „baking paper“ zu Haushalt). Dieselbe Zutat in mehreren Rezepten wird eine Zeile, und die Mengen werden zusammengezählt, wenn das geht (g mit kg und Unzen, ml mit Litern, Löffel mit Tassen). Was du immer da hast, wird weggelassen und unten aufgeführt, wo du es zurückholen kannst. Hak Artikel ab, während du sie kaufst. `Ab heute` lässt die schon vergangenen Tage weg. Nutze `Artikel hinzufügen…` für Extras, und die Optionen eines Artikels, um seine `Abteilung` zu ändern (für diesen Artikel gemerkt und synchronisiert), ihn als `Hab ich immer da` zu markieren oder ihn zu `Entfernen`. `Kopieren` und `Teilen` senden die Liste als Text.
+
+Mit Dingen im Vorrat rückt eine Zeile, die der Vorrat abdeckt, unten zu `Schon zu Hause`: Sie wird nicht gezählt, kopiert oder gesendet, und du kannst sie trotzdem abhaken. Eine Zeile, die nur teilweise da ist, sagt, wie viel du hast („zu Hause: 200 g“). Hakst du eine Zeile ab, legt `In den Vorrat` in der Meldung sie in den Vorrat; `Abgehaktes in den Vorrat` macht das für jede abgehakte Zeile, die noch nicht dort ist.
+
+In orOS legt `In Tabelle öffnen` im Tab Woche den Wochenplan (Datum, Tag, Mahlzeit, Gericht, Portionen) in ein neues Blatt der [Tabelle](app:spreadsheet); dieselbe Taste im Tab Einkauf schickt die Einkaufsliste (Abteilung, Artikel, Menge, Rezepte, gekauft).
+
+In orOS fragt `Ins Budget` im Tab Einkauf, was du bezahlt hast, und öffnet eine neue Lebensmittel-Ausgabe in [Budget](app:budget), mit dem heutigen Datum; gespeichert wird sie erst, wenn du dort auf Speichern drückst.
+
+`In Aufgaben` schickt die nicht abgehakten Artikel an die Liste `Einkäufe` in [Aufgaben](app:todo), jeweils mit den Rezepten, für die sie sind. Aufgaben zeigt sie dir zuerst: Du kannst eine andere Liste wählen, und Artikel, die schon darauf stehen, sind nicht angehakt. Nichts wird hinzugefügt, bis du `Hinzufügen` drückst, und deine Haken hier ändern sich nicht.
+
+## Vorrat
+Der Tab `Vorrat` ist das, was du zu Hause hast, danach, wo es aufbewahrt wird: `Kühlschrank`, `Gefrierfach` oder `Schrank`. Tipp ins Feld, was du hast, etwa „1 l Milch“ oder „6 Eier“, und drück Enter; ein Artikel mit demselben Namen und ohne Mindesthaltbarkeitsdatum bekommt einfach die zusätzliche Menge. Tipp auf einen Artikel, um Name, Menge, Ort oder `Mindestens haltbar bis` zu ändern oder ihn zu `Entfernen`. Was innerhalb von drei Tagen sein Datum erreicht oder darüber ist, steht zuerst unter `Bald verbrauchen`.
+
+- `Barcode` liest den Barcode eines Produkts mit der Kamera (in Browsern, die das können, etwa Chrome auf Android) oder nimmt die Nummer, die du eintippst, und schlägt sie bei [Open Food Facts](https://world.openfoodfacts.org) nach: Name und Packungsgröße füllen den Artikel für dich aus. Einen schon hinzugefügten Barcode erkennt die App ohne Internet.
+- `Was kann ich kochen?` listet deine Rezepte danach, wie viel von jedem schon zu Hause ist, und nennt, was fehlt; `Fehlendes auf die Liste` setzt das auf die Einkaufsliste dieser Woche. Rezepte, die etwas verwenden, das bald weg muss, kommen bei Gleichstand zuerst.
+- `Gekocht` (in einem Rezept und beim letzten Schritt des Kochmodus) zeigt, was für die gekochten Portionen aus dem Vorrat genommen wird: Hak jede Zeile an oder ab und drück dann `Aus dem Vorrat nehmen`. Vorher ändert sich nichts, und `Rückgängig` legt es zurück. Was aufgebraucht ist, verlässt den Vorrat.
+
+In den `Einstellungen` kann `Erinnerung ans MHD` eine orOS-Benachrichtigung senden, ab der Uhrzeit, die du wählst, am Tag bevor etwas sein Mindesthaltbarkeitsdatum erreicht, und am Tag selbst. Sie ist aus, bis du sie einschaltest, auf jedem Gerät.
+
+## Nährwerte
+Die Menge jeder Zutat wird in Gramm umgerechnet (Gewichte genau; Tassen, Löffel und ml danach, wie schwer das Lebensmittel ist; Stücke nach einem üblichen Stückgewicht, etwa 50 g für ein Ei) und mit ihren Kalorien, Eiweiß, Kohlenhydraten und Fett pro 100 g multipliziert. Die Werte kommen aus einer eingebauten Tabelle mit etwa 180 gängigen Lebensmitteln (aus dem öffentlichen FoodData Central des USDA), die offline funktioniert. `Zutaten prüfen` zeigt, wie jede gezählt wurde; `Ändern` wählt eine andere Zeile der Tabelle, sucht bei [Open Food Facts](https://world.openfoodfacts.org) nach einem Produkt, lässt die Zutat weg oder legt die Gramm pro Stück fest. Deine Wahl wird für diese Zutat in jedem Rezept gemerkt und synchronisiert. Zutaten ohne Menge, wie „Salz“, werden nicht gezählt. `Nährwertschätzungen anzeigen` in den `Einstellungen` blendet alles auf diesem Gerät aus. Die eingebaute Tabelle kennt Zutaten auf Englisch und Griechisch.
+
+Die Zahlen sind eine Schätzung, die dir beim Planen hilft, keine Ernährungs- oder medizinische Beratung.
+
+## Synchronisierung und Sicherung
+Rezepte, der Wochenplan, die Haken beim Einkauf, deine zusätzlichen Artikel, der Vorrat, deine Nährwert-Zuordnungen und die Einstellungen werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert, sodass zwei Handys dieselbe Liste abhaken können. Der offene Tab, die Filter, die Einheiten, die MHD-Erinnerung und die Anzeige der Nährwerte bleiben auf jedem Gerät. Die `Einstellungen` haben `Exportieren (JSON)` und `Importieren (JSON)`; ein Import führt zusammen und löscht nie. Die orOS-[Sicherung](help:t/backup) deckt diese App auch ab.
+
+## Eine orOS-Datei speichern und öffnen
+In `Einstellungen` › `Speichern und öffnen` speichert `orOS-Datei (.orosmeals)` deine Rezepte, den Wochenplan, die Haken und zusätzlichen Artikel beim Einkauf, den Vorrat und die „immer zu Hause“-Auswahl als eine `.orosmeals`-Datei, zum Beispiel um sie ohne Synchronisierung auf ein anderes Gerät zu bringen oder jemandem deine Rezepte zu geben. Die Datei ist ein einfaches ZIP: Entpackt enthält sie die Daten als `content.json` plus `preview/recipes.md` (jedes Rezept als Text) und `preview/shopping.txt` (die Einkaufsliste der angezeigten Woche). Einstellungen, Abteilungs- und Nährwert-Zuordnungen sind nicht in der Datei. Sie ist nicht verschlüsselt, also bewahre sie sicher auf.
+
+`orOS-Datei öffnen…` (oder `Entpackter orOS-Ordner…`, oder „Öffnen mit“ orOS am Computer) zeigt, wie viele Einträge neu und wie viele schon hier sind; dann fügt `Hinzufügen` nur die neuen hinzu, mit ihren eigenen IDs: Dieselbe Datei erneut zu öffnen, fügt nichts hinzu. Ein Rezept oder eine Planzelle, die schon hier ist, bleibt, wie sie ist, und was du hier gelöscht hast, bleibt gelöscht; eine Datei löscht nie etwas. Hake `Mit neueren Versionen aktualisieren` an, damit Einträge, die in der Datei später geändert wurden, deine Kopie ersetzen. `Rückgängig` in der Meldung entfernt, was hinzugefügt wurde.
+
+`Als Kopie öffnen…` fügt nur die Rezepte der Datei hinzu, jedes als neues Rezept mit neuer ID, auch Rezepte, die du schon hast: Nutze es, wenn eine Datei eine Sammlung von Rezepten zum Loslegen ist. `Rückgängig` entfernt die Kopien.
+
+## Tastenkürzel
+- [[1]], [[2]], [[3]], [[4]]: `Rezepte`, `Woche`, `Einkauf`, `Vorrat`.
+- [[N]]: neues Rezept. [[/]]: Rezepte suchen.
+- [[←]] und [[→]]: vorherige oder nächste Woche; im Kochmodus vorheriger oder nächster Schritt.
+
+## Tipps
+- Füg Salz, Öl und die anderen Grundzutaten zu `Immer im Haus` hinzu, damit die Liste kurz bleibt; sie zählen auch bei `Was kann ich kochen?` als vorhanden.
+- Benenne Vorratsartikel so wie in deinen Rezepten: „Feta“ findet „Feta Dodoni“, aber ein Artikel auf Englisch passt nicht zu einem Rezept auf Griechisch.
+- Geplante Mahlzeiten können im [Kalender](app:calendar) unter dem Chip `Mahlzeiten` erscheinen; ein Tipp darauf öffnet diese Woche hier.
+
+## Grenzen
+- Die Ernährungsprüfung schaut nur auf die Namen der Zutaten; prüf bei Allergien immer die Etiketten.
+- Timer laufen nur, solange der Essensplaner offen ist.
+- Der Import liest Seiten, die ihr Rezept auf die übliche schema.org-Weise beschreiben; bei anderen Seiten kopierst du den Text und fügst ihn ein.
+- Die Umrechnung nutzt eine 240-ml-Tasse und Löffel mit 5 ml / 15 ml; ein Gewicht kann kein Volumen werden (eine Tasse Mehl bleibt eine Tasse).
+- Eine Spanne zählt auf der Einkaufsliste mit ihrem oberen Ende, damit es reicht.
+- Nährwerte sind eine Schätzung aus Namen und Mengen der Zutaten, keine Ernährungsberatung. Die eingebauten Werte gelten für Lebensmittel wie gekauft (roh, trocken); griechische Käsesorten ohne USDA-Eintrag nutzen den nächstliegenden.
+- Open Food Facts, Barcode-Abfragen und Suchen brauchen Internet; die Daten stammen von Freiwilligen und können fehlen oder falsch sein. Daten von Open Food Facts stehen unter der Open Database License (ODbL).
+- Die Kamera liest Barcodes nur in Browsern mit eingebautem Barcode-Leser (etwa Chrome auf Android); anderswo tippst du die Nummer ein.
+- Vorrat und Rezepte werden über den Namen abgeglichen; lassen sich Einheiten nicht vergleichen (eine „Packung“ gegen Gramm), zählt die Zeile als teilweise vorhanden.

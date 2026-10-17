@@ -146,9 +146,9 @@
           donor: "Organ donor", yes: "Yes", no: "No", notes: "Medical notes", al: "Allergies", cn: "Conditions",
           md: "Medicines", ec: "Emergency contacts", vx: "Vaccinations", ap: "Appointments", dc: "Documents",
           since: "since", next: "next dose", stopped: "stopped", asNeeded: "as needed", files: "files",
-          sev: ["", "mild", "moderate", "severe"],
-          t: { bp: "Blood pressure", wt: "Weight", gl: "Blood sugar", sl: "Sleep", hr: "Resting heart rate",
-               tp: "Temperature", o2: "Oxygen (SpO₂)", st: "Steps" },
+          "pkg.sev.1": "mild", "pkg.sev.2": "moderate", "pkg.sev.3": "severe",
+          "t.bp": "Blood pressure", "t.wt": "Weight", "t.gl": "Blood sugar", "t.sl": "Sleep", "t.hr": "Resting heart rate",
+          "t.tp": "Temperature", "t.o2": "Oxygen (SpO₂)", "t.st": "Steps",
           note1: "Made by orOS Health. This file is not encrypted." },
     el: { date: "Ημερομηνία", time: "Ώρα", kind: "Μέτρηση", value: "Τιμή", unit: "Μονάδα", dia: "Διαστολική",
           pulse: "Σφυγμοί", note: "Σημείωση", tags: "Ετικέτες", h: "ώ", bpm: "παλμοί/λεπτό", steps: "βήματα",
@@ -156,11 +156,27 @@
           donor: "Δωρητής οργάνων", yes: "Ναι", no: "Όχι", notes: "Ιατρικές σημειώσεις", al: "Αλλεργίες", cn: "Παθήσεις",
           md: "Φάρμακα", ec: "Επαφές έκτακτης ανάγκης", vx: "Εμβόλια", ap: "Ραντεβού", dc: "Έγγραφα",
           since: "από", next: "επόμενη δόση", stopped: "διακόπηκε", asNeeded: "όταν χρειάζεται", files: "αρχεία",
-          sev: ["", "ήπια", "μέτρια", "σοβαρή"],
-          t: { bp: "Πίεση", wt: "Βάρος", gl: "Σάκχαρο", sl: "Ύπνος", hr: "Σφυγμοί ηρεμίας",
-               tp: "Θερμοκρασία", o2: "Οξυγόνο (SpO₂)", st: "Βήματα" },
+          "pkg.sev.1": "ήπια", "pkg.sev.2": "μέτρια", "pkg.sev.3": "σοβαρή",
+          "t.bp": "Πίεση", "t.wt": "Βάρος", "t.gl": "Σάκχαρο", "t.sl": "Ύπνος", "t.hr": "Σφυγμοί ηρεμίας",
+          "t.tp": "Θερμοκρασία", "t.o2": "Οξυγόνο (SpO₂)", "t.st": "Βήματα",
           note1: "Φτιάχτηκε από την Υγεία του orOS. Το αρχείο δεν είναι κρυπτογραφημένο." }
   };
+  // The kit passes "el" or "en"; a pack language (orosI18n, ../i18n.js,
+  // browser only) reads the "health" pack. → the language code.
+  function langOf(lang) {
+    var code = lang === "el" ? "el" : "en", I = root && root.orosI18n;
+    if (code === "en" && I && typeof I.lang === "function") {
+      var c = I.lang();
+      if (c !== "el" && c !== "en") { if (!WORDS[c]) I.table(WORDS, "health", c); if (WORDS[c]) code = c; }
+    }
+    return code;
+  }
+  // Decimal comma (Greek, German, …): CSV wants ";" then.
+  function commaOf(code) {
+    if (code === "el") return true;
+    if (code === "en") return false;
+    try { return (1.5).toLocaleString(root.orosI18n.locale(code)).indexOf(",") >= 0; } catch (e) { return false; }
+  }
   // Greek Excel wants ";" and a decimal comma; a cell a spreadsheet
   // would run as a formula gets an apostrophe in front.
   function csvCell(v, sep) {
@@ -177,8 +193,8 @@
   function hmOf(ms) { var d = new Date(ms); return pad2(d.getHours()) + ":" + pad2(d.getMinutes()); }
   function line(s) { return String(s == null ? "" : s).replace(/\s+/g, " ").trim(); }
 
-  function readingsCsv(s, el) {
-    var C = core(), W = WORDS[el ? "el" : "en"], sep = el ? ";" : ",", set = C.settingsOf(s);
+  function readingsCsv(s, code) {
+    var C = core(), W = WORDS[code] || WORDS.en, el = commaOf(code), sep = el ? ";" : ",", set = C.settingsOf(s);
     var types = {};
     (s.ty || []).forEach(function (ty) { types[ty.id] = ty; });
     function valueOf(e) {
@@ -197,7 +213,7 @@
     }
     var rows = [[W.date, W.time, W.kind, W.value, W.unit, W.dia, W.pulse, W.note, W.tags]];
     (s.en || []).slice().sort(function (a, b) { return a.at - b.at || cmpStr(a.id, b.id); }).forEach(function (e) {
-      var ty = types[e.t], name = W.t[e.t] || (ty ? ty.n : e.t), vu = valueOf(e);
+      var ty = types[e.t], name = W["t." + e.t] || (ty ? ty.n : e.t), vu = valueOf(e);
       rows.push([ymdOf(e.at), hmOf(e.at), name, vu[0], vu[1], e.t === "bp" ? e.v[1] : "",
                  e.t === "bp" && e.v[2] ? e.v[2] : "", line(e.n), (e.g || []).join(", ")]);
     });
@@ -205,8 +221,8 @@
     return "﻿" + rows.map(function (r) { return r.map(function (c) { return csvCell(c, sep); }).join(sep); }).join("\r\n") + "\r\n";
   }
 
-  function healthMd(s, el) {
-    var W = WORDS[el ? "el" : "en"], out = ["# " + W.head, "", "_" + W.note1 + "_", ""];
+  function healthMd(s, code) {
+    var W = WORDS[code] || WORDS.en, out = ["# " + W.head, "", "_" + W.note1 + "_", ""];
     function sec(title, items) {
       if (!items.length) return;
       out.push("## " + title, "");
@@ -224,7 +240,7 @@
     sec(W.id, id);
     function byName(a, b) { return cmpStr(String(a.n).toLowerCase(), String(b.n).toLowerCase()) || cmpStr(a.id, b.id); }
     sec(W.al, (s.al || []).slice().sort(byName).map(function (a) {
-      return line(a.n) + (a.sv ? " (" + W.sev[a.sv] + ")" : "") + (a.r ? ": " + line(a.r) : "");
+      return line(a.n) + (a.sv ? " (" + W["pkg.sev." + a.sv] + ")" : "") + (a.r ? ": " + line(a.r) : "");
     }));
     sec(W.cn, (s.cn || []).slice().sort(byName).map(function (c) { return line(c.n) + (c.sd ? " (" + W.since + " " + c.sd + ")" : ""); }));
     sec(W.md, (s.md || []).slice().sort(byName).map(function (m) {
@@ -244,8 +260,8 @@
     return out.join("\n");
   }
   function previews(state, lang) {
-    var s = isObj(state) ? state : {}, el = lang === "el", out = { "health.md": healthMd(s, el) };
-    var csv = readingsCsv(s, el);
+    var s = isObj(state) ? state : {}, code = langOf(lang), out = { "health.md": healthMd(s, code) };
+    var csv = readingsCsv(s, code);
     if (csv) out["readings.csv"] = csv;
     return out;
   }

@@ -11,9 +11,10 @@
 (function (root) {
   "use strict";
   var KEY = "oros-fitness-data";
-  var DAY_N = { en: "Day {n}", el: "Ημέρα {n}" };
-  var EX = { en: "{n} exercises", el: "{n} ασκήσεις" };
-  var EX1 = { en: "1 exercise", el: "1 άσκηση" };
+  var W = {
+    en: { "today.day": "Day {n}", "today.ex": "{n} exercises", "today.ex1": "1 exercise" },
+    el: { "today.day": "Ημέρα {n}", "today.ex": "{n} ασκήσεις", "today.ex1": "1 άσκηση" }
+  };
 
   var PROVIDER = {
     id: "fitness",
@@ -21,18 +22,20 @@
     collect: function (ctx) {
       var C = root.OrosFitnessCore, raw = ctx.readJSON(KEY);
       if (!C || !raw) return [];
-      var lang = ctx.lang === "el" ? "el" : "en";
+      // A pack language: English + the fitness pack, when one is loaded.
+      if (ctx.lang && !W[ctx.lang] && root.orosI18n) root.orosI18n.table(W, "fitness", ctx.lang);
+      var w = W[ctx.lang] || W.en;
       return C.plannedOn(raw, ctx.today).filter(function (r) {
         return !C.doneOn(raw, ctx.today, r.pg.id, r.day.id);
       }).map(function (r) {
         var idx = r.pg.days.indexOf(r.day) + 1, n = r.day.it.length;
-        var dayName = typeof r.day.n === "string" && r.day.n ? r.day.n : DAY_N[lang].replace("{n}", idx);
+        var dayName = typeof r.day.n === "string" && r.day.n ? r.day.n : w["today.day"].replace("{n}", idx);
         var pgName = typeof r.pg.n === "string" ? r.pg.n : "";
         return {
           id: r.pg.id + "/" + r.day.id,
           due: ctx.today,
           title: dayName,
-          text: (pgName ? pgName + " · " : "") + (n === 1 ? EX1[lang] : EX[lang].replace("{n}", n)),
+          text: (pgName ? pgName + " · " : "") + (n === 1 ? w["today.ex1"] : w["today.ex"].replace("{n}", n)),
           kind: "task",
           target: { train: true }
         };

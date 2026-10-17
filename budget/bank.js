@@ -253,6 +253,14 @@
     if (/^(c|cr|credit|π|πι|πιστωση|\+)$/.test(f)) return 1;
     return 0;
   }
+  // Does the language of the app write 12,50 (el, de, ...)? orosI18n
+  // (../i18n.js, in the browser) gives the locale of a pack language.
+  function decComma(lang) {
+    if (lang === "el") return true;
+    if (!lang || lang === "en" || lang === "en-us") return false;
+    var I = typeof window !== "undefined" && window.orosI18n;
+    try { return new Intl.NumberFormat(I ? I.locale(lang) : lang).format(1.5).indexOf(",") >= 0; } catch (e) { return false; }
+  }
   // Guess the mapping from the header and some data rows.
   // → { cd, cp, cm, ca, cdb, ccr, cs, df, dec } (column indexes, -1 = none)
   function guessMap(rows, hd, lang) {
@@ -310,7 +318,7 @@
     m.df = detectDateOrder(dates, lang === "en-us" ? "mdy" : "dmy");
     var money = [];
     data.forEach(function (r) { [m.ca, m.cdb, m.ccr].forEach(function (c) { if (c >= 0 && r[c]) money.push(r[c]); }); });
-    m.dec = detectDec(money, lang === "el" ? "," : ".");
+    m.dec = detectDec(money, decComma(lang) ? "," : ".");
     return m;
   }
   // Rows of a CSV table → items { line, d, amt (signed cents), text, err? }.

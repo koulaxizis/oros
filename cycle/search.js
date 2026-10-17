@@ -24,6 +24,19 @@
       .filter(Boolean)[0] || "";
   }
 
+  // The one text of its own (same key and English as cycle.js). The
+  // shell runs this file, not the Cycle page: a pack language shows
+  // the "cycle" pack line when the shell has it, else English.
+  var S = {
+    en: { "search.day": "Cycle day" },
+    el: { "search.day": "Ημέρα κύκλου" }
+  };
+  function cycleDay(lang) {
+    var I = root && root.orosI18n;
+    var tab = S[lang] || (I && lang ? I.table(S, "cycle", lang) : S.en);
+    return (tab && tab["search.day"]) || S.en["search.day"];
+  }
+
   var PROVIDER = {
     id: "cycle",
     keys: [KEY],
@@ -55,7 +68,7 @@
           return names.med[m.med] || "";
         }).filter(Boolean);
         var title = firstLine(note).slice(0, 60) || sym.join(", ") ||
-                    (lang === "el" ? "Ημέρα κύκλου" : "Cycle day");
+                    cycleDay(ctx.lang);
         out.push({
           id: r.id,
           title: title,

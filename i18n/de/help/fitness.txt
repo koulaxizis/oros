@@ -1,0 +1,92 @@
+# Training
+Training ist ein Trainingstagebuch: Folge einem Plan oder trainiere frei, hake deine Sätze unterwegs ab und sieh zu, wie deine Rekorde und dein Fortschritt wachsen.
+
+## Erste Schritte
+Unten findest du die Tabs `Trainieren`, `Verlauf`, `Fortschritt`, `Pläne` und `Körper`. Wähle unter `Trainieren` `Leeres Training`, um Übungen unterwegs hinzuzufügen, oder `Starten` einen Tag aus einem deiner Pläne. Ist ein Plantag für den heutigen Wochentag festgelegt, erscheint er unter `Heute`.
+
+Ein Training läuft weiter, während du die Tabs wechselst oder die App schließt; `Training fortsetzen` bringt dich zurück.
+
+## Während eines Trainings
+- `Übung hinzufügen` öffnet die `Übungsbibliothek`. Suche, wähle eine Übung oder lege eine `Neue Übung` mit `Muskelgruppe` und `Messart` an: `Gewicht × Wdh.`, `Wiederholungen`, `Zeit` oder `Distanz + Zeit`.
+- Die Sätze werden aus `Letztes Mal` ausgefüllt. Ändere die Zahlen und hake einen Satz ab, wenn er erledigt ist. `Satz hinzufügen` fügt einen hinzu; du kannst auch einen `Aufwärmsatz` hinzufügen.
+- Hat beim letzten Mal jeder Satz das obere Ende seines Wiederholungsziels erreicht, schlägt ein Chip `Versuch …` ein höheres Gewicht vor. Tippe darauf, um es für jeden Satz zu nehmen.
+- Ein abgehakter Satz startet den Pausentimer. Nutze `−15 s`, `+15 s` oder `Überspringen`. Am Ende der Pause kann ein Ton kommen oder das Gerät vibrieren.
+- Neue Rekorde wie `Schwerstes Gewicht` oder `Bestes geschätztes 1RM` erscheinen sofort.
+
+`Beenden` schließt das Training ab; nicht abgehakte Sätze werden weggelassen. Danach siehst du eine Zusammenfassung mit `Dauer`, `Volumen`, `Sätze` und `Neue Rekorde`. `Training verwerfen` wirft es weg.
+
+## Verlauf und Fortschritt
+`Verlauf` listet die abgeschlossenen Trainings. Filtere nach Übung oder Plan oder nutze `Notizen durchsuchen`. Öffne ein Training, um es zu `Bearbeiten` oder mit `Training löschen` zu entfernen, mit `Rückgängig`.
+
+`Fortschritt` zeigt ein Diagramm für eine `Übung`, einen `Messwert` (etwa `Geschätztes 1RM`, `Volumen` oder `Pace (min/km)`) und einen `Zeitraum`, dazu deine `Rekorde`, `Trainings pro Woche`, `Sätze pro Muskelgruppe, diese Woche` und `Trainingstage, letzte 12 Monate`. `Als Tabelle zeigen` gibt die Zahlen als Text aus.
+
+## Pläne und Körper
+Kopiere unter `Pläne` einen der `Fertige Pläne` (`Ganzkörper 3×`, `Oberkörper / Unterkörper`, `Drücken / Ziehen / Beine`) mit `Zu meinen Plänen kopieren` oder erstelle einen `Neuer Plan`. Ein Plan hat Tage, jeder mit Übungen, Sätzen, Wiederholungen, einem optionalen Gewicht, Pausenzeit und `Wochentage`.
+
+Unter `Körper` trägt `Messung hinzufügen` `Körpergewicht`, `Taille`, `Brust` oder `Arm` ein.
+
+## Supersätze und Zirkel
+Tippe auf den Verbinden-Knopf einer Übung (`Supersatz mit der nächsten Übung`), um sie mit der darunter zu verbinden. Zwei verbundene Übungen sind ein `Supersatz`, drei oder mehr ein `Zirkel`. Du kannst sie in einem Plantag oder während eines Trainings verbinden.
+
+Während des Trainings teilen sich die verbundenen Übungen einen Kasten mit `Runde 1 von 3`. Hake einen Satz ab, und die nächste Übung derselben Runde wird markiert; der Pausentimer startet erst am Ende der Runde (`Pause nach der Runde`, die Pause der letzten Übung der Gruppe). Der Verlauf zeigt die Gruppe, und Rekorde zählen jeden Satz wie gewohnt.
+
+## Progressionspläne
+Unter `Pläne` richtet `Neuer Progressionsplan` einen Plan ein, der die Sätze und Gewichte jeder Einheit für dich berechnet:
+- `5/3/1 (Wendler)`: Tage für Schulterdrücken, Kreuzheben, Bankdrücken und Kniebeuge; Wochen mit 5ern, 3ern und 5/3/1, dann eine Deload-Woche. Gib für jede Übung ein `Trainingsmaximum` ein (etwa 90 % deines 1RM). Nach jedem 4-Wochen-Zyklus steigt das Trainingsmaximum um einen Schritt; hat ein `+`-Satz im Zyklus seine Wiederholungen verfehlt, sinkt diese Übung stattdessen um 10 %. `Boring But Big` fügt 5 × 10 mit 50 % hinzu.
+- `GZCLP`: vier Tage in drei Stufen. Gib dein `5-Wdh.-Maximum` ein: T1 beginnt bei 85 %, T2 bei 65 %. Eine verfehlte T1-Einheit geht bei gleichem Gewicht von 5×3+ zu 6×2+ zu 10×1+ und beginnt dann wieder bei 85 %; T2 geht von 3×10 zu 3×8 zu 3×6. T3 steigt, wenn der letzte Satz 25 Wiederholungen erreicht.
+- `Linear 5×5`: Tage A und B. Jede Einheit mit allen Sätzen bei 5 Wiederholungen legt Gewicht drauf; dreimal hintereinander verfehlt nimmt 10 % weg.
+
+`+`-Sätze heißen so viele Wiederholungen wie möglich: Trag ein, wie viele du geschafft hast. Die Schritte sind dein `Schritt, Oberkörper` und `Schritt, Unterkörper` aus den Einstellungen, und jedes Gewicht wird auf den gewählten Scheibenschritt gerundet (`Gewichte runden auf`). Die nächste Einheit erscheint unter `Trainieren`; `Starten` sie, und `Beenden` bringt den Plan weiter, mit einer Zusammenfassung, was sich nächstes Mal ändert. Ein Plan zählt jede Einheit einmal. `Werte ändern` bearbeitet die Trainingsmaxima oder Gewichte; `Diese Einheit überspringen` geht ohne sie weiter.
+
+## Gehen, Laufen und Radfahren draußen
+Wähle unter `Trainieren` bei `Outdoor-Aktivität` `Spaziergang`, `Lauf` oder `Radfahrt`. Training zeichnet deine Route mit dem Standort dieses Geräts auf und zeigt `Distanz`, `Zeit`, `Pace` (oder `Tempo` beim Radfahren), den aktuellen Kilometer oder die Meile, eine Routenvorschau und deine `Zwischenzeiten`. `Pause` und `Fortsetzen` lassen die Pause aus Zeit und Distanz heraus. `Beenden` speichert es als Training mit `Laufen`, `Gehen` oder `Radfahren`, sodass Rekorde und Fortschrittsdiagramme es einbeziehen. Öffne es im `Verlauf`, um Route und Zwischenzeiten zu sehen, oder nutze `GPX exportieren`, um es in Karten oder einer anderen App zu verwenden.
+
+> Lass den Bildschirm an und Training offen. Die meisten Browser stoppen den Standort, wenn der Bildschirm ausgeht oder die App in den Hintergrund geht; die Route springt dann in einer geraden Linie von dort, wo sie aufgehört hat, bis dahin, wo sie wieder beginnt.
+
+## Übungsbilder
+`Bild zeigen` (der Bild-Knopf an einer Übung, auch in der `Übungsbibliothek`) sucht auf [wger.de](https://wger.de), einer freien Übungsdatenbank, nach einem Bild der Übung. Es wird nur auf deinen Wunsch geholt und dann auf diesem Gerät behalten. Urheber und Lizenz (CC BY-SA) stehen neben dem Bild, mit einem Link zur Quelle. Die Suche geht nach dem Namen, das Bild kann also eine Variante zeigen; `Von diesem Gerät entfernen` vergisst es.
+
+## Trainings importieren
+Bring deinen Verlauf aus einer anderen Trainings-App oder von deiner Uhr mit. Wähle in den `Einstellungen` `Trainings importieren (Strong, Hevy, FitNotes, JEFIT, FIT, TCX, GPX)` und dann die Datei. So exportierst du (die Namen sind die der jeweiligen App):
+- **Strong**: `Settings` › `Export Strong Data` (CSV).
+- **Hevy**: `Settings` › `Export & Import Data` › `Export Workouts` (CSV).
+- **FitNotes**: `Settings` › `Spreadsheet Export` (CSV). Die Sätze eines Tages werden zu einem Training.
+- **JEFIT**: auf der JEFIT-Website oder in der App der Datenexport unter deinem Profil oder den Einstellungen (ein CSV mit Abschnitten, die mit `###` beginnen). JEFIT schreibt seine Einheiten nicht mit, wähle sie also in der Zusammenfassung.
+- **Garmin**: eine Aktivität als `.fit` (Garmin Connect, eine Aktivität › das Zahnradmenü › `Export Original`) oder das ganze Konto (Account › Data Management › `Export Your Data`, ein ZIP).
+- **Strava**: eine Aktivität als `.gpx` oder `.tcx` (eine Aktivität › `…` › `Export GPX` / `Export Original`) oder `Settings` › `My Account` › `Download or Delete Your Account` › `Request Your Archive` (ein ZIP).
+- Jede andere App oder Uhr, die `.fit`-, `.tcx`- oder `.gpx`-Dateien speichert, einzeln oder in einem ZIP.
+
+Die Zusammenfassung zeigt die Quelle, wie viele Trainings oder Aktivitäten, die Daten, welche Übungen hier gefunden wurden und welche neu sind, und was übersprungen wird. Nennt die Datei ihre Einheiten nicht, wähle unter `Gewichte und Distanzen in dieser Datei` `Metrisch (kg, km, cm)` oder `Imperial (lb, mi, in)`. Tippe oder klicke auf `Importieren`; die Meldung danach hat `Rückgängig`.
+
+Aufwärmsätze bleiben Aufwärmsätze, Notizen kommen mit, und Rekorde, Diagramme, Kalender und Gewohnheiten beziehen die importierten Trainings sofort ein. Läufe, Spaziergänge und Radfahrten behalten ihre Route (ausgedünnt, wie die, die du hier aufzeichnest) mit Distanz und Zeit; Schwimmen und Rudern bekommen Distanz und Zeit; andere Sportarten kommen mit ihrer Zeit und einer Notiz (Kalorien, Durchschnittspuls). Importierst du dieselbe Datei noch einmal, wird übersprungen, was schon hier ist, und eine Aktivität, die innerhalb einer Minute nach einem vorhandenen Training beginnt (hier aufgezeichnet oder aus Health Connect), wird ebenfalls übersprungen. Ein Training, das du löschst, kommt nicht zurück, außer du hakst `Auch … Trainings zurückholen, die nach einem früheren Import gelöscht wurden` an.
+
+> Neue Übungen landen in der `Übungsbibliothek`, wo du sie umbenennen oder ihre Muskelgruppe ändern kannst. Sehr große Exporte behalten nur die Routen der ersten paar hundert Aktivitäten, damit die Synchronisierung leicht bleibt; der Rest kommt ohne Route.
+
+## Health Connect
+Schalte in der orOS-App für Android in den Einstellungen › `Verbundene Dienste` `Health Connect` ein. Deine abgeschlossenen Trainings der letzten 30 Tage gehen dann als Krafttraining an Health Connect, und Trainings von deiner Uhr oder aus anderen Apps (ein Lauf, eine Radfahrt, Schwimmen) kommen mit ihren Zeiten und ohne Übungen herein. Ein Training aus einer anderen App, das du hier löschst, kommt nicht zurück.
+
+## orOS-Datei speichern und öffnen
+In den `Einstellungen` speichert `orOS-Datei (.orosworkouts)` deine eigenen Übungen, Pläne, Progressionspläne, abgeschlossenen Trainings (mit ihren Routen) und Körpermessungen als eine `.orosworkouts`-Datei, zum Beispiel um sie ohne Synchronisierung auf ein anderes Gerät zu bringen oder eine Kopie aufzubewahren. Deine Einstellungen (Einheiten, Gewichtsschritte, Standardpause, `Trainings in Gewohnheiten zeigen`) und ein noch laufendes Training bleiben auf diesem Gerät, und nichts aus Health Connect oder einem anderen verbundenen Dienst ist in der Datei. Die Datei ist ein einfaches ZIP: Entpackt enthält sie die Einträge als `content.json` und dazu `preview/workouts.md` und `preview/workouts.csv` (eine Zeile pro Satz, in kg und km) für andere Programme. Sie enthält Gesundheitsdaten und Routen und ist nicht verschlüsselt, also bewahre sie sicher auf.
+
+`orOS-Datei öffnen…` (oder `Entpackter orOS-Ordner…`, oder „Öffnen mit“ orOS am Computer) zeigt, wie viele Einträge neu und wie viele schon hier sind; dann fügt `Hinzufügen` nur die neuen hinzu, mit eigenen IDs: Dieselbe Datei noch einmal zu öffnen, fügt nichts hinzu. Ein vorhandener Eintrag (auch eine Körpermessung desselben Tages) bleibt, wie er ist, einer, den du hier gelöscht hast, bleibt gelöscht, und eine Datei löscht nie etwas. Hake `Mit neueren Versionen aktualisieren` an, damit später geänderte Einträge in der Datei deine Kopie ersetzen. `Rückgängig` in der Meldung nimmt zurück, was hinzugefügt wurde.
+
+## Synchronisierung und Sicherung
+Deine Übungen, Pläne, Progressionspläne, Trainings (mit ihren Routen), Körpermessungen und Einstellungen werden über die [orOS-Synchronisierung](help:t/sync) synchronisiert. Ein laufendes Training erreicht die Synchronisierung alle paar Minuten, sodass du es auf einem anderen Gerät beenden kannst. Der offene Tab, die Diagrammauswahl, der Pausentimer und die Übungsbilder bleiben auf diesem Gerät.
+
+Speichere unter `Einstellungen` › `Exportieren` `Alle Sätze (CSV)` oder eine `Sicherung (JSON)`. `Aus Sicherung wiederherstellen` führt eine Sicherung mit dem zusammen, was du schon hast. In orOS öffnet `In Tabelle öffnen` dieselben Sätze als neues Blatt in Tabelle, mit Summen unter Wiederholungen, Zeit und Distanz.
+
+## Tastenkürzel
+- [[1]] bis [[5]] wechseln zwischen den fünf Tabs (wenn du nicht gerade tippst).
+
+## Tipps
+- Wähle in den `Einstellungen` `Metrisch (kg, km, cm)` oder `Imperial (lb, mi, in)`, die Gewichtsschritte für die Vorschläge und deine `Standardpause (s)`.
+- Abgeschlossene Trainings erscheinen im [Kalender](app:calendar) und als automatische Zeile in [Gewohnheiten](app:habits). Schalte die Zeile in Gewohnheiten mit `Trainings in Gewohnheiten zeigen` aus.
+- Körpergewichte erscheinen auch in [Gesundheit](app:health).
+
+## Grenzen
+- Der Pausentimer läuft nur auf dem Gerät, auf dem du trainierst.
+- Der Gewichtsvorschlag ist nur ein Hinweis für Übungen mit `Gewicht × Wdh.`.
+- Outdoor-Einheiten zeichnen nur auf, solange Training auf dem Bildschirm offen ist; der Browser kann den Standort stoppen, wenn der Bildschirm aus ist. Die Routenvorschau ist eine Linie ohne Karte darunter.
+- Progressionspläne folgen den festen Übungen ihrer Vorlage; füge während des Trainings nach Belieben weitere Übungen hinzu.
+- Bilder brauchen beim ersten Mal eine Internetverbindung, und wger.de hat vielleicht nicht für jede Übung eines.
+- Ältere orOS-Versionen auf deinen anderen Geräten kennen keine Supersätze, Progressionspläne oder Routen; aktualisiere jedes Gerät, damit sie erhalten bleiben.

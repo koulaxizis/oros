@@ -16,9 +16,11 @@
   var KEY = "oros-budget-data";
   var KIND = { en: { o: "Expense", i: "Income" }, el: { o: "Έξοδο", i: "Έσοδο" } };
 
+  // orosI18n (the shell's ../i18n.js): a pack language included.
+  function i18n() { return typeof window !== "undefined" && window.orosI18n; }
   function money(cents, cur, lang) {
     try {
-      return new Intl.NumberFormat(lang === "el" ? "el-GR" : "en-GB", { style: "currency", currency: cur }).format(cents / 100);
+      return new Intl.NumberFormat(i18n() ? i18n().locale(lang) : (lang === "el" ? "el-GR" : "en-GB"), { style: "currency", currency: cur }).format(cents / 100);
     } catch (e) {
       return (cents / 100).toFixed(2) + " " + cur;
     }
@@ -30,7 +32,9 @@
     collect: function (ctx) {
       var F = root.OrosBudgetFeed, raw = ctx.readJSON(KEY);
       if (!F || !raw || typeof raw !== "object" || !Array.isArray(raw.rec) || !raw.rec.length) return [];
-      var lang = ctx.lang === "el" ? "el" : "en", out = [];
+      var I = i18n(), lang = ctx.lang || "en", out = [];
+      if (I && !KIND[lang]) I.table(KIND, "budget", lang);
+      if (!KIND[lang]) lang = "en";
       for (var i = 0; i <= ctx.horizon; i++) {
         var day = ctx.addDays(ctx.today, i);
         F.rowsOn(raw, day, ctx.today, lang).forEach(function (r) {

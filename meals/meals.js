@@ -67,8 +67,8 @@
       return l === "el" ? "el" : "en";
     } catch (e) { return "en"; }
   }
-  var LANG = appLang();
-  var LOCALE = LANG === "el" ? "el-GR" : "en-GB";
+  var LANG = window.orosI18n ? window.orosI18n.lang() : appLang();
+  var LOCALE = window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB");
 
   var STRINGS = {
     en: {
@@ -201,7 +201,8 @@
       "nu.day": "≈ {k} kcal per person", "nu.dayPart": "≈ {k} kcal per person (some meals have no estimate)",
       "nu.credit": "Nutrition: our table from USDA FoodData Central (public domain) and Open Food Facts (ODbL, openfoodfacts.org). An estimate only, not dietary advice.",
       "s.nu": "Show nutrition estimates", "s.nt": "Best-before reminder", "s.ntHint": "An orOS notification the day before something in the pantry reaches its best-before date, and on the day. On this device.",
-      "s.ntOff": "Off", "s.ntAt": "at {h}:00", "s.credits": "Data sources"
+      "s.ntOff": "Off", "s.ntAt": "at {h}:00", "s.credits": "Data sources",
+      "tabs.aria": "Sections", "rc.hours": "{n} h"
     },
     el: {
       "app.name": "Συνταγές & Μενού", "tab.rc": "Συνταγές", "tab.wk": "Εβδομάδα", "tab.sh": "Ψώνια", "btn.settings": "Ρυθμίσεις",
@@ -333,9 +334,11 @@
       "nu.day": "≈ {k} kcal ανά άτομο", "nu.dayPart": "≈ {k} kcal ανά άτομο (κάποια γεύματα χωρίς εκτίμηση)",
       "nu.credit": "Θρεπτικά: ο πίνακάς μας από το USDA FoodData Central (κοινό κτήμα) και το Open Food Facts (ODbL, openfoodfacts.org). Μόνο εκτίμηση, όχι διατροφική συμβουλή.",
       "s.nu": "Εμφάνιση εκτίμησης θρεπτικών", "s.nt": "Υπενθύμιση λήξης", "s.ntHint": "Μια ειδοποίηση του orOS την προηγούμενη μέρα πριν λήξει κάτι από το κελάρι, και την ίδια μέρα. Σε αυτή τη συσκευή.",
-      "s.ntOff": "Όχι", "s.ntAt": "στις {h}:00", "s.credits": "Πηγές δεδομένων"
+      "s.ntOff": "Όχι", "s.ntAt": "στις {h}:00", "s.credits": "Πηγές δεδομένων",
+      "tabs.aria": "Ενότητες", "rc.hours": "{n} ώρ."
     }
   };
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "meals", LANG);
 
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;
@@ -707,7 +710,7 @@
       return hay.indexOf(fq) >= 0;
     });
     list.sort(function (a, b) {
-      return (b.fv - a.fv) || C.fold(a.t).localeCompare(C.fold(b.t), LANG) || (a.id < b.id ? -1 : 1);
+      return (b.fv - a.fv) || C.fold(a.t).localeCompare(C.fold(b.t), LOCALE) || (a.id < b.id ? -1 : 1);
     });
     return list;
   }
@@ -1773,7 +1776,7 @@
       all.sort(function (a, b) {
         var fa = C.fits(a, dt) ? 1 : 0, fb = C.fits(b, dt) ? 1 : 0;
         var ca = course.indexOf(a.c) >= 0 ? 1 : 0, cb = course.indexOf(b.c) >= 0 ? 1 : 0;
-        return (fb - fa) || (b.fv - a.fv) || (cb - ca) || C.fold(a.t).localeCompare(C.fold(b.t), LANG);
+        return (fb - fa) || (b.fv - a.fv) || (cb - ca) || C.fold(a.t).localeCompare(C.fold(b.t), LOCALE);
       });
       all.forEach(function (r) {
         var b = el("button", "pick-row");
@@ -2099,7 +2102,7 @@
   function fmtMins(m) {
     if (m < 60) return t("rc.min", { n: m });
     var h = Math.floor(m / 60), r = m % 60;
-    return h + (LANG === "el" ? " ώρ." : " h") + (r ? " " + t("rc.min", { n: r }) : "");
+    return t("rc.hours", { n: h }) + (r ? " " + t("rc.min", { n: r }) : "");
   }
   // Timers live in this frame only (a page reload forgets them).
   var timers = [], timerTick = null;
@@ -2322,7 +2325,7 @@
     return li;
   }
   function sortByName(list) {
-    return list.slice().sort(function (a, b) { return C.fold(a.n).localeCompare(C.fold(b.n), LANG) || (a.id < b.id ? -1 : 1); });
+    return list.slice().sort(function (a, b) { return C.fold(a.n).localeCompare(C.fold(b.n), LOCALE) || (a.id < b.id ? -1 : 1); });
   }
   function renderPantry() {
     var box = $("pa-list"), fl = $("pa-filters");
@@ -2861,7 +2864,7 @@
     var tr = el("div", "add-row");
     var sel = el("select");
     sel.setAttribute("aria-label", t("nu.useTbl"));
-    var rowsAll = N.rows().sort(function (a, b) { return C.fold(tblName(a)).localeCompare(C.fold(tblName(b)), LANG); });
+    var rowsAll = N.rows().sort(function (a, b) { return C.fold(tblName(a)).localeCompare(C.fold(tblName(b)), LOCALE); });
     var selId = cur && cur.s === "tbl" ? cur.t : (auto ? auto.id : "");
     rowsAll.forEach(function (row) {
       var o = el("option", "", tblName(row) + " · " + fmtNum(row.k, 0) + " kcal");
@@ -3192,7 +3195,7 @@
         recAdded = null;
         commit();
         renderAll();
-        showToast(RP.str(LANG, "undone"));
+        showToast(RP.str(LANG === "el" ? "el" : "en", "undone"));
       },
       toast: function (text, undo) { if (undo) undoToast(text, undo); else showToast(text); }
     };
@@ -3478,13 +3481,13 @@
 
   // ---------- 15. Wiring & boot ----------
   function applyI18n() {
-    document.title = (LANG === "el" ? "Συνταγές & Μενού" : "Meal Planner") + " · orOS";
+    document.title = t("app.name") + " · orOS";
     TABS.forEach(function (x) { $("tab-" + x).textContent = t("tab." + x); });
     var sb = $("set-btn");
     sb.innerHTML = UI.gear;
     sb.setAttribute("aria-label", t("btn.settings"));
     sb.title = t("btn.settings");
-    $("tabs").setAttribute("aria-label", LANG === "el" ? "Ενότητες" : "Sections");
+    $("tabs").setAttribute("aria-label", t("tabs.aria"));
     $("rc-search").placeholder = t("rc.search");
     $("rc-search").setAttribute("aria-label", t("rc.search"));
     $("rc-new").innerHTML = UI.plus + "<span></span>";

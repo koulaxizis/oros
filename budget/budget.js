@@ -52,6 +52,8 @@
 
   // ---------- 1. Constants, i18n, helpers ----------
   function appLang() {
+    // orosI18n (../i18n.js): the full language code, a pack language included.
+    if (window.orosI18n) return window.orosI18n.lang();
     try {
       var l = localStorage.getItem("oros-lang") ||
               (window.parent && window.parent.orosLang) || "en";
@@ -59,7 +61,7 @@
     } catch (e) { return "en"; }
   }
   var LANG = appLang();
-  var LOCALE = LANG === "el" ? "el-GR" : "en-GB";
+  var LOCALE = window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB");
 
   var STRINGS = {
     en: {
@@ -156,7 +158,16 @@
       "rc.textGo": "Use this amount", "rc.textNone": "No amount found in this text", "rc.textFound": "Total found: {a}",
       "rec.remind": "Remind me", "rec.rOff": "No reminder", "rec.r0": "On the day of the charge", "rec.r1": "1 day before", "rec.rN": "{n} days before",
       "acc.cur": "Currency of the account", "acc.netw": "Net worth", "xf.ta": "Arrived ({c})",
-      "notif.sub": "Upcoming charge", "notif.subBody": "{n}: {a} {w}", "notif.w0": "today", "notif.w1": "tomorrow", "notif.wN": "on {d}"
+      "notif.sub": "Upcoming charge", "notif.subBody": "{n}: {a} {w}", "notif.w0": "today", "notif.w1": "tomorrow", "notif.wN": "on {d}",
+      // month and weekday names (section 6: monthLabel, dayLabel)
+      "month.1": "January", "month.2": "February", "month.3": "March", "month.4": "April", "month.5": "May", "month.6": "June",
+      "month.7": "July", "month.8": "August", "month.9": "September", "month.10": "October", "month.11": "November", "month.12": "December",
+      "monthGen.1": "January", "monthGen.2": "February", "monthGen.3": "March", "monthGen.4": "April", "monthGen.5": "May", "monthGen.6": "June",
+      "monthGen.7": "July", "monthGen.8": "August", "monthGen.9": "September", "monthGen.10": "October", "monthGen.11": "November", "monthGen.12": "December",
+      "monthShort.1": "Jan", "monthShort.2": "Feb", "monthShort.3": "Mar", "monthShort.4": "Apr", "monthShort.5": "May", "monthShort.6": "Jun", "monthShort.7": "Jul", "monthShort.8": "Aug", "monthShort.9": "Sep", "monthShort.10": "Oct", "monthShort.11": "Nov", "monthShort.12": "Dec",
+      "wd.0": "Sunday", "wd.1": "Monday", "wd.2": "Tuesday", "wd.3": "Wednesday", "wd.4": "Thursday", "wd.5": "Friday", "wd.6": "Saturday",
+      "wdAcc.0": "Sunday", "wdAcc.1": "Monday", "wdAcc.2": "Tuesday", "wdAcc.3": "Wednesday", "wdAcc.4": "Thursday", "wdAcc.5": "Friday", "wdAcc.6": "Saturday",
+      "date.month": "{m} {y}", "date.dm": "{d} {m}", "date.day": "{w} {dm}"
     },
     el: {
       "app": "Έσοδα & Έξοδα",
@@ -252,9 +263,19 @@
       "rc.textGo": "Χρήση αυτού του ποσού", "rc.textNone": "Δεν βρέθηκε ποσό σε αυτό το κείμενο", "rc.textFound": "Βρέθηκε σύνολο: {a}",
       "rec.remind": "Υπενθύμιση", "rec.rOff": "Χωρίς υπενθύμιση", "rec.r0": "Την ημέρα της χρέωσης", "rec.r1": "1 ημέρα πριν", "rec.rN": "{n} ημέρες πριν",
       "acc.cur": "Νόμισμα λογαριασμού", "acc.netw": "Καθαρή περιουσία", "xf.ta": "Έφτασαν ({c})",
-      "notif.sub": "Επερχόμενη χρέωση", "notif.subBody": "{n}: {a} {w}", "notif.w0": "σήμερα", "notif.w1": "αύριο", "notif.wN": "στις {d}"
+      "notif.sub": "Επερχόμενη χρέωση", "notif.subBody": "{n}: {a} {w}", "notif.w0": "σήμερα", "notif.w1": "αύριο", "notif.wN": "στις {d}",
+      "month.1": "\u0399\u03b1\u03bd\u03bf\u03c5\u03ac\u03c1\u03b9\u03bf\u03c2", "month.2": "\u03a6\u03b5\u03b2\u03c1\u03bf\u03c5\u03ac\u03c1\u03b9\u03bf\u03c2", "month.3": "\u039c\u03ac\u03c1\u03c4\u03b9\u03bf\u03c2", "month.4": "\u0391\u03c0\u03c1\u03af\u03bb\u03b9\u03bf\u03c2", "month.5": "\u039c\u03ac\u03b9\u03bf\u03c2", "month.6": "\u0399\u03bf\u03cd\u03bd\u03b9\u03bf\u03c2",
+      "month.7": "\u0399\u03bf\u03cd\u03bb\u03b9\u03bf\u03c2", "month.8": "\u0391\u03cd\u03b3\u03bf\u03c5\u03c3\u03c4\u03bf\u03c2", "month.9": "\u03a3\u03b5\u03c0\u03c4\u03ad\u03bc\u03b2\u03c1\u03b9\u03bf\u03c2", "month.10": "\u039f\u03ba\u03c4\u03ce\u03b2\u03c1\u03b9\u03bf\u03c2", "month.11": "\u039d\u03bf\u03ad\u03bc\u03b2\u03c1\u03b9\u03bf\u03c2", "month.12": "\u0394\u03b5\u03ba\u03ad\u03bc\u03b2\u03c1\u03b9\u03bf\u03c2",
+      "monthGen.1": "\u0399\u03b1\u03bd\u03bf\u03c5\u03b1\u03c1\u03af\u03bf\u03c5", "monthGen.2": "\u03a6\u03b5\u03b2\u03c1\u03bf\u03c5\u03b1\u03c1\u03af\u03bf\u03c5", "monthGen.3": "\u039c\u03b1\u03c1\u03c4\u03af\u03bf\u03c5", "monthGen.4": "\u0391\u03c0\u03c1\u03b9\u03bb\u03af\u03bf\u03c5", "monthGen.5": "\u039c\u03b1\u0390\u03bf\u03c5", "monthGen.6": "\u0399\u03bf\u03c5\u03bd\u03af\u03bf\u03c5",
+      "monthGen.7": "\u0399\u03bf\u03c5\u03bb\u03af\u03bf\u03c5", "monthGen.8": "\u0391\u03c5\u03b3\u03bf\u03cd\u03c3\u03c4\u03bf\u03c5", "monthGen.9": "\u03a3\u03b5\u03c0\u03c4\u03b5\u03bc\u03b2\u03c1\u03af\u03bf\u03c5", "monthGen.10": "\u039f\u03ba\u03c4\u03c9\u03b2\u03c1\u03af\u03bf\u03c5", "monthGen.11": "\u039d\u03bf\u03b5\u03bc\u03b2\u03c1\u03af\u03bf\u03c5", "monthGen.12": "\u0394\u03b5\u03ba\u03b5\u03bc\u03b2\u03c1\u03af\u03bf\u03c5",
+      "monthShort.1": "\u0399\u03b1\u03bd", "monthShort.2": "\u03a6\u03b5\u03b2", "monthShort.3": "\u039c\u03b1\u03c1", "monthShort.4": "\u0391\u03c0\u03c1", "monthShort.5": "\u039c\u03ac\u03b9", "monthShort.6": "\u0399\u03bf\u03c5\u03bd", "monthShort.7": "\u0399\u03bf\u03c5\u03bb", "monthShort.8": "\u0391\u03c5\u03b3", "monthShort.9": "\u03a3\u03b5\u03c0", "monthShort.10": "\u039f\u03ba\u03c4", "monthShort.11": "\u039d\u03bf\u03b5", "monthShort.12": "\u0394\u03b5\u03ba",
+      "wd.0": "\u039a\u03c5\u03c1\u03b9\u03b1\u03ba\u03ae", "wd.1": "\u0394\u03b5\u03c5\u03c4\u03ad\u03c1\u03b1", "wd.2": "\u03a4\u03c1\u03af\u03c4\u03b7", "wd.3": "\u03a4\u03b5\u03c4\u03ac\u03c1\u03c4\u03b7", "wd.4": "\u03a0\u03ad\u03bc\u03c0\u03c4\u03b7", "wd.5": "\u03a0\u03b1\u03c1\u03b1\u03c3\u03ba\u03b5\u03c5\u03ae", "wd.6": "\u03a3\u03ac\u03b2\u03b2\u03b1\u03c4\u03bf",
+      "wdAcc.0": "\u039a\u03c5\u03c1\u03b9\u03b1\u03ba\u03ae", "wdAcc.1": "\u0394\u03b5\u03c5\u03c4\u03ad\u03c1\u03b1", "wdAcc.2": "\u03a4\u03c1\u03af\u03c4\u03b7", "wdAcc.3": "\u03a4\u03b5\u03c4\u03ac\u03c1\u03c4\u03b7", "wdAcc.4": "\u03a0\u03ad\u03bc\u03c0\u03c4\u03b7", "wdAcc.5": "\u03a0\u03b1\u03c1\u03b1\u03c3\u03ba\u03b5\u03c5\u03ae", "wdAcc.6": "\u03a3\u03ac\u03b2\u03b2\u03b1\u03c4\u03bf",
+      "date.month": "{m} {y}", "date.dm": "{d} {m}", "date.day": "{w} {dm}"
     }
   };
+
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "budget", LANG);
 
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;
@@ -267,29 +288,10 @@
     return s;
   }
 
-  var MONTHS = {
-    en: ["January", "February", "March", "April", "May", "June", "July", "August",
-         "September", "October", "November", "December"],
-    el: ["Ιανουάριος", "Φεβρουάριος", "Μάρτιος", "Απρίλιος", "Μάιος", "Ιούνιος", "Ιούλιος",
-         "Αύγουστος", "Σεπτέμβριος", "Οκτώβριος", "Νοέμβριος", "Δεκέμβριος"]
-  };
-  var MONTHS_GEN = {   // "8 October" / «8 Οκτωβρίου»
-    en: MONTHS.en,
-    el: ["Ιανουαρίου", "Φεβρουαρίου", "Μαρτίου", "Απριλίου", "Μαΐου", "Ιουνίου", "Ιουλίου",
-         "Αυγούστου", "Σεπτεμβρίου", "Οκτωβρίου", "Νοεμβρίου", "Δεκεμβρίου"]
-  };
-  var MONTHS_SHORT = {
-    en: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
-    el: ["Ιαν", "Φεβ", "Μαρ", "Απρ", "Μάι", "Ιουν", "Ιουλ", "Αυγ", "Σεπ", "Οκτ", "Νοε", "Δεκ"]
-  };
-  var WEEKDAYS = {
-    en: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
-    el: ["Κυριακή", "Δευτέρα", "Τρίτη", "Τετάρτη", "Πέμπτη", "Παρασκευή", "Σάββατο"]
-  };
-  var WEEKDAYS_ACC = {   // "every Monday" / «κάθε Δευτέρα»
-    en: WEEKDAYS.en,
-    el: ["Κυριακή", "Δευτέρα", "Τρίτη", "Τετάρτη", "Πέμπτη", "Παρασκευή", "Σάββατο"]
-  };
+  // Month and weekday names live in STRINGS: "month.1".."month.12",
+  // "monthGen.*" ("8 October" / «8 Οκτωβρίου»), "monthShort.*",
+  // "wd.0".."wd.6" (Sunday first), "wdAcc.*" ("every Monday" / «κάθε Δευτέρα»).
+  function monthName(m) { return t("month." + m); }
 
   function $(id) { return document.getElementById(id); }
   function cmpStr(x, y) { return x < y ? -1 : (x > y ? 1 : 0); }
@@ -355,11 +357,21 @@
     for (var i = 1; i < g.length; i++) if (g[i].length !== 3) return false;
     return true;
   }
+  // Does the language write "12,50" (el, de, ...) rather than "12.50"?
+  // orosI18n (../i18n.js, in the browser) gives a pack language's locale.
+  function decComma(lang) {
+    if (lang === "el") return true;
+    if (!lang || lang === "en") return false;
+    var I = typeof window !== "undefined" && window.orosI18n;
+    try { return new Intl.NumberFormat(I ? I.locale(lang) : lang).format(1.5).indexOf(",") >= 0; } catch (e) { return false; }
+  }
   // Cents → plain input text in the user's language ("12,50" / "12.50").
   function centsToInput(c, lang) {
-    var s = (Math.floor(c / 100)) + (c % 100 ? (lang === "el" ? "," : ".") + pad2(c % 100) : "");
+    var s = (Math.floor(c / 100)) + (c % 100 ? (decComma(lang) ? "," : ".") + pad2(c % 100) : "");
     return s;
   }
+  // The amount field's placeholder in the user's language.
+  function zeroAmt(lang) { return decComma(lang) ? "0,00" : "0.00"; }
   // Cents → "12.50" / "12,50" for CSV (no thousands separators).
   function centsPlain(c, decSep) {
     var neg = c < 0, a = Math.abs(c);
@@ -451,6 +463,7 @@
           "o-gift": "Δώρα", "o-other": "Άλλα", "i-salary": "Μισθός", "i-free": "Ελεύθερο επάγγελμα",
           "i-gift": "Δώρα", "i-other": "Άλλα" }
   };
+  if (typeof window !== "undefined" && window.orosI18n) window.orosI18n.table(SEED_NAMES, "budget", LANG);
   var SEED_BY_ID = {};
   SEEDS.forEach(function (s) { SEED_BY_ID[s.id] = s; });
 
@@ -912,7 +925,7 @@
     p = (p && typeof p === "object") ? p : {};
     prefs = {
       tab: TABS.indexOf(p.tab) >= 0 ? p.tab : "list",
-      csv: p.csv === "std" || p.csv === "excel" ? p.csv : (LANG === "el" ? "excel" : "std"),
+      csv: p.csv === "std" || p.csv === "excel" ? p.csv : (decComma(LANG) ? "excel" : "std"),
       rv: p.rv === "subs" ? "subs" : "all",                                     // Recurring tab: all | subscriptions
       nh: isInt(p.nh) && p.nh >= -1 && p.nh <= 23 ? p.nh : 9                   // subscription reminders: hour, -1 = off here
     };
@@ -1034,14 +1047,20 @@
     var off = fxState === "failed" || (navigator.onLine === false && UC && UC.ratesStale(rates, Date.now()));
     return t(off ? "fx.off" : "fx.of", { d: dateShort(rates.date) });
   }
-  function monthLabel(mk) { return MONTHS[LANG][+mk.slice(5, 7) - 1] + " " + mk.slice(0, 4); }
-  function monthShort(mk) { return MONTHS_SHORT[LANG][+mk.slice(5, 7) - 1]; }
+  function monthLabel(mk) { return t("date.month", { m: monthName(+mk.slice(5, 7)), y: mk.slice(0, 4) }); }
+  function monthShort(mk) { return t("monthShort." + (+mk.slice(5, 7))); }
+  function dayMonth(p) { return t("date.dm", { d: p.d, m: t("monthGen." + p.m) }); }
   function dayLabel(ymd) {
-    var p = parseYmd(ymd);
-    return WEEKDAYS[LANG][weekday(ymd)] + " " + p.d + " " + MONTHS_GEN[LANG][p.m - 1];
+    return t("date.day", { w: t("wd." + weekday(ymd)), dm: dayMonth(parseYmd(ymd)) });
   }
-  function dateShort(ymd) {   // dd/mm/yyyy (Greek) or dd/mm/yyyy (en-GB)
+  function dateShort(ymd) {   // dd/mm/yyyy (Greek, en-GB); a pack language: its locale (de: dd.mm.yyyy)
     var p = parseYmd(ymd);
+    if (LANG !== "en" && LANG !== "el") {
+      try {
+        return new Intl.DateTimeFormat(LOCALE, { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "UTC" })
+          .format(new Date(Date.UTC(p.y, p.m - 1, p.d)));
+      } catch (e) {}
+    }
     return pad2(p.d) + "/" + pad2(p.m) + "/" + p.y;
   }
 
@@ -1431,8 +1450,8 @@
   // Recurring tab
   function recWhen(r) {
     var p = parseYmd(r.s);
-    if (r.f === "w") return t("rec.every.w", { d: WEEKDAYS_ACC[LANG][weekday(r.s)] });
-    if (r.f === "y") return t("rec.every.y", { d: p.d + " " + MONTHS_GEN[LANG][p.m - 1] });
+    if (r.f === "w") return t("rec.every.w", { d: t("wdAcc." + weekday(r.s)) });
+    if (r.f === "y") return t("rec.every.y", { d: dayMonth(p) });
     return t("rec.every.m", { d: p.d });
   }
   function remindLabel(nd) {
@@ -1848,7 +1867,7 @@
     amt.autocomplete = "off";
     amt.className = "amt-in";
     amt.value = x ? centsToInput(foreign0 ? x.oa : x.a, LANG) : pre && pre.a ? centsToInput(pre.a, LANG) : "";
-    amt.placeholder = LANG === "el" ? "0,00" : "0.00";
+    amt.placeholder = zeroAmt(LANG);
     var date = el("input");
     date.type = "date";
     date.value = x ? x.d : pre && pre.d ? pre.d : pre ? today : (mkOf(today) === viewMk ? today : viewMk + "-01");
@@ -1886,7 +1905,7 @@
     var inMain = el("input");
     inMain.inputMode = "decimal";
     inMain.autocomplete = "off";
-    inMain.placeholder = LANG === "el" ? "0,00" : "0.00";
+    inMain.placeholder = zeroAmt(LANG);
     inMain.value = foreign0 ? centsToInput(x.a, LANG) : "";
     inMain.addEventListener("input", function () { mainTouched = true; });
     var mainF = field(t("f.inMain", { c: main }), inMain, "bd-inmain");
@@ -1901,7 +1920,7 @@
       var r = oc === null ? null : fx(oc, c, main);
       if (!mainTouched && r !== null && r > 0) inMain.value = centsToInput(r, LANG);
       var one = fx(100000, c, main);
-      fxLine.textContent = (one !== null ? t("fx.rate", { a: c, r: (one / 100000).toFixed(4).replace(".", LANG === "el" ? "," : "."), b: main }) + " · " : "") + fxNote();
+      fxLine.textContent = (one !== null ? t("fx.rate", { a: c, r: (one / 100000).toFixed(4).replace(".", decComma(LANG) ? "," : "."), b: main }) + " · " : "") + fxNote();
     }
     curSel.addEventListener("change", function () {
       curTouched = true;
@@ -2344,7 +2363,7 @@
   function importCats() {
     return cats().map(function (c) {
       var o = { id: c.id, k: c.k, name: c.name };
-      if (c.seed) o.alt = [SEED_NAMES.en[c.id], SEED_NAMES.el[c.id]];
+      if (c.seed) o.alt = [SEED_NAMES.en[c.id], SEED_NAMES.el[c.id]].concat(LANG !== "en" && LANG !== "el" && SEED_NAMES[LANG] ? [SEED_NAMES[LANG][c.id]] : []);
       return o;
     });
   }
@@ -2439,7 +2458,7 @@
     drop("rec", function () { return d.rec.length > MAX_REC; });
   }
   var recFile = RP && BPK && window.OrosBundle ? RP.ui(BPK.DESC, {
-    lang: function () { return LANG; },
+    lang: function () { return LANG === "el" ? "el" : "en"; },   // recordpkg.js: "en" | "el"
     get: function () { return sliceGet(); },
     title: function () { return t("app"); },
     // media/: every receipt the entries name, read from the orOS disk;
@@ -2574,7 +2593,8 @@
       commit: commit, renderAll: renderAll, undoToast: undoToast, showToast: showToast, live: live, tt: t,
       money: money, moneyShort: moneyShort, moneyPlain: moneyPlain, monthLabel: monthLabel, monthShort: monthShort, dateShort: dateShort,
       viewMk: function () { return viewMk; }, today: function () { return today; }, setMonth: setMonth, mkAdd: mkAdd, cur: cur,
-      centsToInput: function (c) { return centsToInput(c, LANG); }, parseAmount: parseAmount, parseSigned: parseSigned,
+      centsToInput: function (c) { return centsToInput(c, LANG); }, zeroAmt: function () { return zeroAmt(LANG); },
+      parseAmount: parseAmount, parseSigned: parseSigned,
       normText: normText, newId: newId, accs: accs, accName: accName, tombstone: tombstone, untomb: untomb,
       startCash: startCash, limitOf: budOf, accBalanceMain: accBalanceMain, recDialog: recDialog, recWhen: recWhen,
       icon: function (k) { return UI[k] || ""; },
@@ -2681,7 +2701,7 @@
     amt.inputMode = "decimal";
     amt.autocomplete = "off";
     amt.value = r ? centsToInput(r.a, LANG) : "";
-    amt.placeholder = LANG === "el" ? "0,00" : "0.00";
+    amt.placeholder = zeroAmt(LANG);
     var sel = catSelect(k0, r ? r.c : (k0 === "o" ? "o-home" : "i-salary"));
     var note = el("input");
     note.maxLength = NOTE_LEN;
@@ -2871,7 +2891,7 @@
     var open = el("input");
     open.inputMode = "decimal";
     open.autocomplete = "off";
-    open.placeholder = LANG === "el" ? "0,00" : "0.00";
+    open.placeholder = zeroAmt(LANG);
     open.value = a && a.o ? (a.o < 0 ? "-" : "") + centsToInput(Math.abs(a.o), LANG) : "";
     var err = errLine();
     var curSel = el("select");
@@ -2968,7 +2988,7 @@
     amt.inputMode = "decimal";
     amt.autocomplete = "off";
     amt.className = "amt-in";
-    amt.placeholder = LANG === "el" ? "0,00" : "0.00";
+    amt.placeholder = zeroAmt(LANG);
     amt.value = x ? centsToInput(x.a, LANG) : "";
     var date = el("input");
     date.type = "date";
@@ -2989,7 +3009,7 @@
     var ta = el("input");
     ta.inputMode = "decimal";
     ta.autocomplete = "off";
-    ta.placeholder = LANG === "el" ? "0,00" : "0.00";
+    ta.placeholder = zeroAmt(LANG);
     ta.value = x && x.ta ? centsToInput(x.ta, LANG) : "";
     var taTouched = !!(x && x.ta);
     ta.addEventListener("input", function () { taTouched = true; });

@@ -92,18 +92,24 @@
 
   // ---------- previews ----------
   var WORDS = {
-    en: { title: "Recipes", serv: "{n} servings", ings: "Ingredients", steps: "Steps", src: "Source" },
-    el: { title: "Συνταγές", serv: "{n} μερίδες", ings: "Υλικά", steps: "Εκτέλεση", src: "Πηγή" }
+    en: { "pkg.title": "Recipes", "pkg.serv": "{n} servings", "pkg.ings": "Ingredients", "pkg.steps": "Steps", "pkg.src": "Source" },
+    el: { "pkg.title": "Συνταγές", "pkg.serv": "{n} μερίδες", "pkg.ings": "Υλικά", "pkg.steps": "Εκτέλεση", "pkg.src": "Πηγή" }
   };
+  // en / el inline; a pack language: English + the "meals" pack.
+  function words(lang) {
+    var I = typeof window !== "undefined" && window.orosI18n;
+    var w = WORDS[lang] || (I && lang ? I.table(WORDS, "meals", lang) : WORDS.en);
+    return { title: w["pkg.title"], serv: w["pkg.serv"], ings: w["pkg.ings"], steps: w["pkg.steps"], src: w["pkg.src"] };
+  }
   // One recipe as plain text, in the words of the app's "Copy" (meals.js
   // recipeText), for when the app gives no formatter (Node).
   function recipeTextOf(r, lang) {
-    var w = WORDS[lang === "el" ? "el" : "en"];
+    var w = words(lang);
     var out = [(r.e ? r.e + " " : "") + r.t, w.serv.replace("{n}", r.sv), "", w.ings + ":"];
     var g = "";
     (r.ig || []).forEach(function (ing) {
       if (ing.g && ing.g !== g) { g = ing.g; out.push(g + ":"); }
-      out.push("- " + C.ingToLine(ing, lang === "el" ? "el" : "en", 1, ""));
+      out.push("- " + C.ingToLine(ing, lang, 1, ""));
     });
     if (r.st && r.st.length) {
       out.push("", w.steps + ":");
@@ -116,7 +122,7 @@
   // recipes.md: a heading per recipe, then its text (the text's first
   // line, the title, becomes the heading).
   function previews(state, lang, fmt) {
-    var w = WORDS[lang === "el" ? "el" : "en"], out = {};
+    var w = words(lang), out = {};
     var rc = (isObj(state) && Array.isArray(state.rc) ? state.rc : []).slice().sort(function (a, b) {
       return String(a.t).localeCompare(String(b.t));
     });

@@ -33,6 +33,9 @@
           m: "Κάθε μήνα", w: "Κάθε εβδομάδα", y: "Κάθε χρόνο" }
   };
 
+  function decComma(locale) {
+    try { return new Intl.NumberFormat(locale).format(1.5).indexOf(",") >= 0; } catch (e) { return false; }
+  }
   function str(v) { return typeof v === "string" ? v.trim() : ""; }
   function arr(a) { return Array.isArray(a) ? a : []; }
   function dayMs(s) {
@@ -46,7 +49,11 @@
     search: function (ctx) {
       var d = ctx.readJSON(KEY), out = [];
       if (!d || typeof d !== "object") return out;
-      var lang = ctx.lang === "el" ? "el" : "en", w = WORDS[lang], seeds = SEED_NAMES[lang];
+      // orosI18n (the shell's ../i18n.js): a pack language included.
+      var I = typeof window !== "undefined" && window.orosI18n, lang = ctx.lang || "en";
+      if (I && !WORDS[lang]) { I.table(WORDS, "budget", lang); I.table(SEED_NAMES, "budget", lang); }
+      if (!WORDS[lang] || !SEED_NAMES[lang]) lang = "en";
+      var w = WORDS[lang], seeds = SEED_NAMES[lang], dec = lang === "el" || (I && lang !== "en" && decComma(I.locale(lang)));
       var tombs = d.tombs && typeof d.tombs === "object" ? d.tombs : {};
       var cur = d.set && typeof d.set.cur === "string" ? d.set.cur : "EUR";
       function dead(kind, x) {
@@ -67,7 +74,7 @@
       function money(a) {
         if (typeof a !== "number" || !isFinite(a)) return "";
         var s = (a / 100).toFixed(2);
-        return (lang === "el" ? s.replace(".", ",") : s) + " " + cur;
+        return (dec ? s.replace(".", ",") : s) + " " + cur;
       }
       arr(d.tx).forEach(function (x) {
         if (!x || typeof x.id !== "string" || dead("tx", x)) return;

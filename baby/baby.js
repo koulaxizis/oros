@@ -44,7 +44,10 @@
   var KID_COLORS = ["#e98aa8", "#6fb7e8", "#f2b45a", "#7fcf9a", "#b49af0", "#ef8a6a"];
 
   // ---------- 1. i18n + helpers ----------
+  // The language: orosI18n (../i18n.js) knows the pack languages too;
+  // the old en/el read stays as a fallback.
   function appLang() {
+    if (window.orosI18n) return window.orosI18n.lang();
     try {
       var l = localStorage.getItem("oros-lang") ||
               (window.parent && window.parent.orosLang) || "en";
@@ -88,7 +91,7 @@
       "dlg.cancel": "Cancel", "dlg.save": "Save", "dlg.add": "Add", "dlg.del": "Delete", "dlg.close": "Close",
       "dlg.start": "Start", "dlg.end": "End", "dlg.time": "Time", "dlg.endNote": "Leave the end empty while it is still going.",
       "dlg.ml": "Amount (ml)", "dlg.oz": "Amount (fl oz)", "dlg.kind": "Kind", "dlg.side": "Side", "dlg.note": "Note (optional)",
-      "dlg.food": "Food", "dlg.reaction": "How it went", "dlg.medName": "Medicine and dose", "dlg.tempC": "Temperature (°C)",
+      "dlg.food": "Food", "dlg.reaction": "How it went", "dlg.medName": "Medicine and dose", "dlg.medPh": "e.g. Vitamin D, 1 drop", "dlg.tempC": "Temperature (°C)",
       "dlg.tempF": "Temperature (°F)", "dlg.min": "Minutes", "dlg.text": "Note", "dlg.lmin": "Left (min)", "dlg.rmin": "Right (min)",
       "dlg.lastSide": "Last side",
       "dlg.feedStart": "Start a feed", "dlg.feedPast": "Log a past feed", "dlg.sleepPast": "Log a past sleep",
@@ -106,7 +109,7 @@
       "set.restore": "Restore from backup", "set.restoreNote": "A restore merges: it adds and updates, it never removes what is here.",
       "set.summary": "Summary for the paediatrician",
       "set.rem": "Reminders on this device", "set.remFeed": "Feed reminder", "set.remOff": "Off",
-      "set.remAfter": "{x} after the last feed", "set.remMed": "Daily medicine or vitamin", "set.remMedName": "Name (optional)",
+      "set.remAfter": "{x} after the last feed", "set.remH": "{h} h", "set.remMed": "Daily medicine or vitamin", "set.remMedName": "Name (optional)",
       "set.remMedHint": "Leave the time empty to turn it off.",
       "set.remNote": "Reminders come from orOS, on this device only, and only while orOS is open (the Baby app itself can be closed). Each parent turns them on on their own device.",
       "set.note": "orOS Baby keeps a log; it is not medical advice. If you are worried about your baby, call your paediatrician.",
@@ -180,7 +183,7 @@
       "dlg.cancel": "Άκυρο", "dlg.save": "Αποθήκευση", "dlg.add": "Προσθήκη", "dlg.del": "Διαγραφή", "dlg.close": "Κλείσιμο",
       "dlg.start": "Έναρξη", "dlg.end": "Λήξη", "dlg.time": "Ώρα", "dlg.endNote": "Άφησε τη λήξη κενή όσο συνεχίζεται.",
       "dlg.ml": "Ποσότητα (ml)", "dlg.oz": "Ποσότητα (fl oz)", "dlg.kind": "Είδος", "dlg.side": "Πλευρά", "dlg.note": "Σημείωση (προαιρετικά)",
-      "dlg.food": "Τροφή", "dlg.reaction": "Πώς πήγε", "dlg.medName": "Φάρμακο και δόση", "dlg.tempC": "Θερμοκρασία (°C)",
+      "dlg.food": "Τροφή", "dlg.reaction": "Πώς πήγε", "dlg.medName": "Φάρμακο και δόση", "dlg.medPh": "π.χ. Βιταμίνη D, 1 σταγόνα", "dlg.tempC": "Θερμοκρασία (°C)",
       "dlg.tempF": "Θερμοκρασία (°F)", "dlg.min": "Λεπτά", "dlg.text": "Σημείωση", "dlg.lmin": "Αριστερά (λεπτά)", "dlg.rmin": "Δεξιά (λεπτά)",
       "dlg.lastSide": "Τελευταία πλευρά",
       "dlg.feedStart": "Ξεκίνα θηλασμό", "dlg.feedPast": "Καταγραφή προηγούμενου θηλασμού", "dlg.sleepPast": "Καταγραφή προηγούμενου ύπνου",
@@ -198,7 +201,7 @@
       "set.restore": "Επαναφορά από αντίγραφο", "set.restoreNote": "Η επαναφορά συγχωνεύει: προσθέτει και ενημερώνει, δεν σβήνει τίποτα από όσα υπάρχουν.",
       "set.summary": "Σύνοψη για τον παιδίατρο",
       "set.rem": "Υπενθυμίσεις σε αυτή τη συσκευή", "set.remFeed": "Υπενθύμιση ταΐσματος", "set.remOff": "Όχι",
-      "set.remAfter": "{x} μετά το τελευταίο τάισμα", "set.remMed": "Καθημερινό φάρμακο ή βιταμίνη", "set.remMedName": "Όνομα (προαιρετικό)",
+      "set.remAfter": "{x} μετά το τελευταίο τάισμα", "set.remH": "{h} ώρες", "set.remMed": "Καθημερινό φάρμακο ή βιταμίνη", "set.remMedName": "Όνομα (προαιρετικό)",
       "set.remMedHint": "Άφησε την ώρα κενή για να το κλείσεις.",
       "set.remNote": "Οι υπενθυμίσεις έρχονται από το orOS, μόνο σε αυτή τη συσκευή και μόνο όσο το orOS είναι ανοιχτό (η εφαρμογή Μωρό μπορεί να είναι κλειστή). Κάθε γονιός τις ανοίγει στη δική του συσκευή.",
       "set.note": "Το Μωρό κρατά ημερολόγιο· δεν είναι ιατρική συμβουλή. Αν ανησυχείς για το μωρό, πάρε τον παιδίατρό σου.",
@@ -239,6 +242,7 @@
       "imp.empty": "Δεν βρέθηκαν καταγραφές σε αυτό το αρχείο.", "imp.big": "Το αρχείο είναι πολύ μεγάλο για εισαγωγή."
     }
   };
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "baby", LANG);
 
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;
@@ -258,7 +262,7 @@
     if (text !== undefined && text !== null) n.textContent = text;
     return n;
   }
-  function locale() { return LANG === "el" ? "el-GR" : "en-GB"; }
+  function locale() { return window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB"); }
   function num(n, dec) { return C.fmtNum(n, LANG, dec); }
   function clock(ts) { return C.fmtClock(ts); }
   function pad(n) { return (n < 10 ? "0" : "") + n; }
@@ -537,8 +541,7 @@
     } catch (e) {}
   }
   function remHours(min) {
-    var h = Math.floor(min / 60), half = min % 60 ? (LANG === "el" ? ",5" : ".5") : "";
-    return h + half + (LANG === "el" ? " ώρες" : " h");
+    return t("set.remH", { h: num(min / 60, min % 60 ? 1 : 0) });
   }
 
   // ---------- 4. Render: toolbar, nav, today ----------
@@ -1428,7 +1431,7 @@
       focus = pa;
     } else if (type === "med") {
       var mn = textInput(cur ? cur.tx : "", C.LIM.text);
-      mn.placeholder = LANG === "el" ? "π.χ. Βιταμίνη D, 1 σταγόνα" : "e.g. Vitamin D, 1 drop";
+      mn.placeholder = t("dlg.medPh");
       form.appendChild(field(t("dlg.medName"), mn));
       get.med = function (o) { o.tx = mn.value; return !!C.cleanText(mn.value, C.LIM.text); };
       focus = mn;
@@ -2020,7 +2023,7 @@
   // does, so the removal syncs too.
   var RP = window.OrosRecordPkg || null, BPK = window.OrosBabyPackage || null;
   var recFile = RP && BPK && window.OrosBundle ? RP.ui(BPK.DESC, {
-    lang: function () { return LANG; },
+    lang: function () { return LANG === "el" ? "el" : "en"; },
     get: function () { return C.normalize(data); },
     title: function () { return t("app"); },
     set: function (next) {

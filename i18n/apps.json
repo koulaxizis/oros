@@ -18,6 +18,28 @@
    ]
   },
   {
+   "app": "baby",
+   "files": [
+    "baby/baby.js",
+    "baby/core.js",
+    "baby/search.js",
+    "baby/today.js"
+   ]
+  },
+  {
+   "app": "budget",
+   "files": [
+    "budget/bankui.js",
+    "budget/budget.js",
+    "budget/feed.js",
+    "budget/package.js",
+    "budget/payments.js",
+    "budget/planui.js",
+    "budget/search.js",
+    "budget/today.js"
+   ]
+  },
+  {
    "app": "calendar",
    "files": [
     "calendar/calendar.js",
@@ -55,6 +77,15 @@
    ]
   },
   {
+   "app": "cycle",
+   "files": [
+    "cycle/cycle.js",
+    "cycle/package.js",
+    "cycle/search.js",
+    "cycle/today.js"
+   ]
+  },
+  {
    "app": "feeds",
    "files": [
     "feeds/feeds.js",
@@ -73,11 +104,29 @@
    ]
   },
   {
+   "app": "fitness",
+   "files": [
+    "fitness/core.js",
+    "fitness/fitness.js",
+    "fitness/search.js",
+    "fitness/today.js"
+   ]
+  },
+  {
    "app": "flashcards",
    "files": [
     "flashcards/app.js",
     "flashcards/convert.js",
     "flashcards/due.js"
+   ]
+  },
+  {
+   "app": "health",
+   "files": [
+    "health/health.js",
+    "health/package.js",
+    "health/search.js",
+    "health/today.js"
    ]
   },
   {
@@ -118,6 +167,17 @@
     "mail/notify.js",
     "mail/search.js",
     "mail/today.js"
+   ]
+  },
+  {
+   "app": "meals",
+   "files": [
+    "meals/core.js",
+    "meals/meals.js",
+    "meals/package.js",
+    "meals/pantry.js",
+    "meals/search.js",
+    "meals/today.js"
    ]
   },
   {
@@ -286,6 +346,13 @@
     "todo/package.js",
     "todo/platforms.js",
     "todo/todo.js"
+   ]
+  },
+  {
+   "app": "water",
+   "files": [
+    "water/core.js",
+    "water/water.js"
    ]
   },
   {

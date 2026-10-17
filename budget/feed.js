@@ -116,6 +116,8 @@
       var c = cats[i];
       if (c && c.id === id && typeof c.name === "string" && c.name.trim()) return text(c.name, 30);
     }
+    var I = typeof window !== "undefined" && window.orosI18n;   // a pack language (../i18n.js)
+    if (I && lang && !SEED_NAMES[lang]) I.table(SEED_NAMES, "budget", lang);
     return (SEED_NAMES[lang] || SEED_NAMES.en)[id] || "";
   }
 

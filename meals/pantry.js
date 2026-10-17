@@ -152,9 +152,16 @@
     if (shopItem.manual) return { st: "none", items: [] };
     return coverParts(items, shopItem.name, shopParts(shopItem.am));
   }
-  // "500 g + 1 l" for the items of a match.
+  // "500 g + 1 l" for the items of a match. "some" (pa.some, the same
+  // key and English as meals.js) for an item with no amount.
+  var HAVE = {
+    en: { "pa.some": "some" },
+    el: { "pa.some": "υπάρχει" }
+  };
   function haveText(list, lang) {
-    var c = C(), some = lang === "el" ? "υπάρχει" : "some";
+    var I = root && root.orosI18n;
+    var T = HAVE[lang] || (I && lang ? I.table(HAVE, "meals", lang) : HAVE.en);
+    var c = C(), some = T["pa.some"];
     return list.map(function (it) { return it.q === null ? some : c.fmtIngQty(niceAmount(it.q, it.u), lang, 1, ""); }).join(" + ");
   }
   // A shopping line as a pantry draft: one kind of amount → that
