@@ -42,12 +42,21 @@
   // BUILTIN_EMOS and its emo.* strings).
   var BUILTIN_COL = { happy: "#87cf3e", calm: "#51a2da", excited: "#8c5ec7", sad: "#5277c3",
     angry: "#e06c75", anxious: "#e0a44c", tired: "#9aa0ae", stressed: "#ff7043", numb: "#6d4aff" };
+  // Keys as in mood.js (one "mood" pack): emo.<key>.
   var NAMES = {
-    en: { happy: "Happy", calm: "Calm", excited: "Excited", sad: "Sad", angry: "Angry",
-          anxious: "Anxious", tired: "Tired", stressed: "Stressed", numb: "Numb" },
-    el: { happy: "Χαρούμενος", calm: "Ήρεμος", excited: "Ενθουσιασμένος", sad: "Λυπημένος",
-          angry: "Θυμωμένος", anxious: "Αγχωμένος", tired: "Κουρασμένος", stressed: "Πιεσμένος", numb: "Άδειος" }
+    en: { "emo.happy": "Happy", "emo.calm": "Calm", "emo.excited": "Excited", "emo.sad": "Sad",
+          "emo.angry": "Angry", "emo.anxious": "Anxious", "emo.tired": "Tired", "emo.stressed": "Stressed",
+          "emo.numb": "Numb" },
+    el: { "emo.happy": "Χαρούμενος", "emo.calm": "Ήρεμος", "emo.excited": "Ενθουσιασμένος",
+          "emo.sad": "Λυπημένος", "emo.angry": "Θυμωμένος", "emo.anxious": "Αγχωμένος",
+          "emo.tired": "Κουρασμένος", "emo.stressed": "Πιεσμένος", "emo.numb": "Άδειος" }
   };
+  // A pack language: English + the mood pack, when one is loaded.
+  function namesFor(lang) {
+    var I = typeof window !== "undefined" && window.orosI18n;
+    if (I && lang && !NAMES[lang]) I.table(NAMES, "mood", lang);
+    return NAMES[lang] || NAMES.en;
+  }
   // vocab.emo → { id: newest def } (a raw copy may hold stale twins)
   function emoDefs(raw) {
     var list = raw && raw.vocab && Array.isArray(raw.vocab.emo) ? raw.vocab.emo : [], out = {};
@@ -60,7 +69,7 @@
   function str(v, max) { return typeof v === "string" ? v.replace(/\s+/g, " ").trim().slice(0, max) : ""; }
   function dayMoods(raw, ymd, lang) {
     var del = raw && raw.deleted && typeof raw.deleted === "object" ? raw.deleted : {};
-    var names = NAMES[lang] || NAMES.en, defs = null, out = [], at = {};
+    var names = namesFor(lang), defs = null, out = [], at = {};
     entries(raw).filter(function (e) {
       if (!e || typeof e.ts !== "number" || ymdOf(e.ts) !== ymd) return false;
       var tomb = del[e.id];
@@ -75,7 +84,7 @@
         at[m.k] = out.length;
         out.push({
           k: m.k,
-          label: str(d.lab, 40) || names[m.k] || "?",
+          label: str(d.lab, 40) || names["emo." + m.k] || "?",
           col: typeof d.col === "string" && /^#[0-9a-f]{6}$/i.test(d.col) ? d.col : (BUILTIN_COL[m.k] || "#9aa0ae"),
           ic: str(d.ic, 16),
           i: n

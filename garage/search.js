@@ -26,6 +26,17 @@
   var KEY = "oros-garage-data";
   var YMD = /^(\d{4})-(\d{2})-(\d{2})$/;
 
+  // Its own texts (same keys and English as garage.js). The shell runs
+  // this file, not the Garage page: a pack language shows the "garage"
+  // pack line when the shell has it, else English.
+  var S = {
+    en: { "search.unnamed": "Unnamed vehicle", "search.tyres": "Tyres", "kind.service": "Service" },
+    el: { "search.unnamed": "Όχημα χωρίς όνομα", "search.tyres": "Ελαστικά", "kind.service": "Σέρβις" }
+  };
+  function words(lang) {
+    var I = root && root.orosI18n;
+    return S[lang] || (I && lang ? I.table(S, "garage", lang) : null) || S.en;
+  }
   function str(v) { return typeof v === "string" ? v.trim() : ""; }
   function arr(a) { return Array.isArray(a) ? a : []; }
   function dayMs(s) {
@@ -50,7 +61,7 @@
     id: "garage",
     keys: [KEY],
     search: function (ctx) {
-      var d = ctx.readJSON(KEY), out = [], el = ctx.lang === "el";
+      var d = ctx.readJSON(KEY), out = [], W = words(ctx.lang);
       if (!d || !Array.isArray(d.vehicles)) return out;
       var tombs = d.tombs && typeof d.tombs === "object" ? d.tombs : {};
       function gone(x) {
@@ -60,7 +71,7 @@
       var veh = {};
       d.vehicles.forEach(function (v) {
         if (gone(v) || v.arch === 1) return;
-        var name = str(v.name) || (el ? "Όχημα χωρίς όνομα" : "Unnamed vehicle");
+        var name = str(v.name) || W["search.unnamed"];
         veh[v.id] = name;
         out.push({
           id: v.id,
@@ -99,7 +110,7 @@
       rows(d.tyres, function (t, vn) {
         return {
           id: t.id,
-          title: str(t.label) || (el ? "Ελαστικά" : "Tyres"),
+          title: str(t.label) || W["search.tyres"],
           text: [str(t.brand), str(t.size), str(t.n), vn].filter(Boolean).join(" · "),
           target: t.id
         };
@@ -108,7 +119,7 @@
         return {
           id: s.id,
           title: arr(s.items).map(function (it) { return itemName(it, ctx.lang); })
-            .filter(Boolean).join(", ") || (el ? "Σέρβις" : "Service"),
+            .filter(Boolean).join(", ") || W["kind.service"],
           text: [str(s.shop), str(s.n), vn].filter(Boolean).join(" · "),
           when: dayMs(s.d),
           target: s.v

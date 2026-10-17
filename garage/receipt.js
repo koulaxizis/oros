@@ -18,6 +18,7 @@
 //   num(str) → number | null (receipt number: the LAST . or , is
 //     the decimal point, earlier ones group thousands)
 // ============================================================
+// i18n-inline-ok: Greek fuel brands and receipt words (parser data, no UI text)
 (function (root) {
   "use strict";
 

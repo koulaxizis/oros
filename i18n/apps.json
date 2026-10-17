@@ -57,6 +57,14 @@
    ]
   },
   {
+   "app": "chores",
+   "files": [
+    "chores/chores.js",
+    "chores/package.js",
+    "chores/search.js"
+   ]
+  },
+  {
    "app": "contacts",
    "files": [
     "contacts/contacts.js",
@@ -118,6 +126,25 @@
     "flashcards/app.js",
     "flashcards/convert.js",
     "flashcards/due.js"
+   ]
+  },
+  {
+   "app": "garage",
+   "files": [
+    "garage/core.js",
+    "garage/garage.js",
+    "garage/import.js",
+    "garage/package.js",
+    "garage/search.js"
+   ]
+  },
+  {
+   "app": "habits",
+   "files": [
+    "habits/habits.js",
+    "habits/package.js",
+    "habits/search.js",
+    "habits/steps.js"
    ]
   },
   {
@@ -203,6 +230,16 @@
    ]
   },
   {
+   "app": "mood",
+   "files": [
+    "mood/core.js",
+    "mood/mood.js",
+    "mood/package.js",
+    "mood/search.js",
+    "mood/today.js"
+   ]
+  },
+  {
    "app": "music",
    "files": [
     "music/host.js",
@@ -237,6 +274,16 @@
    "app": "photolab",
    "files": [
     "photolab/strings.js"
+   ]
+  },
+  {
+   "app": "plants",
+   "files": [
+    "plants/core.js",
+    "plants/package.js",
+    "plants/plants.js",
+    "plants/search.js",
+    "plants/today.js"
    ]
   },
   {
@@ -346,6 +393,16 @@
     "todo/package.js",
     "todo/platforms.js",
     "todo/todo.js"
+   ]
+  },
+  {
+   "app": "travel",
+   "files": [
+    "travel/booking.js",
+    "travel/core.js",
+    "travel/search.js",
+    "travel/today.js",
+    "travel/travel.js"
    ]
   },
   {

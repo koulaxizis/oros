@@ -41,7 +41,9 @@
   var KIND_COLOR = { water: "#4dabf7", fert: "#8bc34a", mist: "#2ec4b6", repot: "#c8a96e" };
 
   // ---------- 1. Constants, i18n, helpers ----------
+  // orosI18n (../i18n.js): the full language code, a pack language included.
   function appLang() {
+    if (window.orosI18n) return window.orosI18n.lang();
     try {
       var l = localStorage.getItem("oros-lang") ||
               (window.parent && window.parent.orosLang) || "en";
@@ -49,7 +51,7 @@
     } catch (e) { return "en"; }
   }
   var LANG = appLang();
-  var LOCALE = LANG === "el" ? "el-GR" : "en-GB";
+  var LOCALE = window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB");
 
   var STRINGS = {
     en: {
@@ -123,7 +125,8 @@
       "toast.exported": "Exported", "toast.imported": "Imported: {n} plants",
       "toast.badFile": "This is not a Plant Care file",
       "confirm.del": "Delete {name} and its history?", "confirm.yes": "Delete",
-      "live.done": "{kind} done for {name}"
+      "live.done": "{kind} done for {name}",
+      "app.title": "Plant Care"
     },
     el: {
       "tab.today": "Σήμερα", "tab.plants": "Τα φυτά μου", "btn.add": "Φυτό", "btn.addAria": "Νέο φυτό",
@@ -196,9 +199,11 @@
       "toast.exported": "Η εξαγωγή έγινε", "toast.imported": "Εισαγωγή: {n} φυτά",
       "toast.badFile": "Αυτό δεν είναι αρχείο Φροντίδας φυτών",
       "confirm.del": "Διαγραφή του «{name}» και του ιστορικού του;", "confirm.yes": "Διαγραφή",
-      "live.done": "{kind} έγινε για {name}"
+      "live.done": "{kind} έγινε για {name}",
+      "app.title": "Φροντίδα φυτών"
     }
   };
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "plants", LANG);
 
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;
@@ -1327,9 +1332,9 @@
   // hemisphere, the Pl@ntNet key) are device-local and never in a file.
   var RP = window.OrosRecordPkg || null, PPK = window.OrosPlantsPackage || null;
   var recFile = RP && PPK && window.OrosBundle ? RP.ui(PPK.DESC, {
-    lang: function () { return LANG; },
+    lang: function () { return LANG === "el" ? "el" : "en"; },
     get: function () { return canonical(data); },
-    title: function () { return LANG === "el" ? "Φροντίδα φυτών" : "Plant Care"; },
+    title: function () { return t("app.title"); },
     set: function (next) {
       if (!next || typeof next !== "object" || !Array.isArray(next.plants)) return;
       data = canonical(next);
@@ -1600,7 +1605,7 @@
     ab.title = t("btn.addAria");
     $("search").placeholder = t("search");
     $("search").setAttribute("aria-label", t("search"));
-    document.title = (LANG === "el" ? "Φροντίδα φυτών" : "Plant Care") + " · orOS";
+    document.title = t("app.title") + " · orOS";
   }
 
   function wire() {

@@ -19,7 +19,7 @@
     collect: function (ctx) {
       var C = root.OrosTravelCore, raw = ctx.readJSON(KEY);
       if (!C || !raw) return [];
-      var w = W[ctx.lang] || W.en, last = ctx.addDays(ctx.today, ctx.horizon), out = [], names = {};
+      var w = W[ctx.lang] || (typeof ctx.lang === "string" && root.orosI18n ? root.orosI18n.table(W, "travel", ctx.lang) : W.en), last = ctx.addDays(ctx.today, ctx.horizon), out = [], names = {};
       var trips = C.trips(raw);
       trips.forEach(function (t) { names[t.id] = C.label(t) || ""; });
       C.feedRows(trips).forEach(function (r) {

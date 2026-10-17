@@ -334,40 +334,109 @@
   // w/ww water summer/winter, f fertilize, mi mist (days, 0 = off),
   // out: usually grown outdoors. Written for orOS, general care.
   var PRESETS = {
-    pothos:     { em: "🌿", w: 7,  ww: 12, f: 30, mi: 0, out: 0, en: ["Pothos", "Water when the top soil is dry. Tolerates low light."], el: ["Πόθος", "Πότισε όταν στεγνώσει η επιφάνεια. Αντέχει σε λίγο φως."] },
-    monstera:   { em: "🌿", w: 7,  ww: 14, f: 30, mi: 7, out: 0, en: ["Monstera", "Bright indirect light; let the top 3 cm dry out."], el: ["Μονστέρα", "Άπλετο έμμεσο φως· άσε τα πρώτα 3 εκ. να στεγνώσουν."] },
-    snake:      { em: "🪴", w: 14, ww: 30, f: 60, mi: 0, out: 0, en: ["Snake plant", "Very little water, never soggy soil."], el: ["Σανσεβιέρια", "Πολύ λίγο νερό, ποτέ λασπωμένο χώμα."] },
-    zz:         { em: "🪴", w: 14, ww: 28, f: 60, mi: 0, out: 0, en: ["ZZ plant", "Stores water in its roots; let it dry fully."], el: ["Ζαμιοκούλκας", "Κρατά νερό στις ρίζες· άσ' το να στεγνώσει τελείως."] },
-    ficus:      { em: "🌳", w: 7,  ww: 12, f: 30, mi: 0, out: 0, en: ["Ficus", "Steady spot, no drafts; it drops leaves when moved."], el: ["Φίκος", "Σταθερή θέση χωρίς ρεύματα· ρίχνει φύλλα όταν τον μετακινείς."] },
-    spider:     { em: "🌱", w: 5,  ww: 10, f: 30, mi: 0, out: 0, en: ["Spider plant", "Keep the soil lightly moist."], el: ["Χλωρόφυτο", "Κράτα το χώμα ελαφρά υγρό."] },
-    peace:      { em: "🌸", w: 5,  ww: 8,  f: 30, mi: 7, out: 0, en: ["Peace lily", "Droops when thirsty and recovers after a drink."], el: ["Σπαθίφυλλο", "Γέρνει όταν διψά και συνέρχεται μόλις ποτιστεί."] },
-    orchid:     { em: "🌸", w: 7,  ww: 12, f: 14, mi: 3, out: 0, en: ["Orchid", "Soak the pot for 10 minutes, then drain well."], el: ["Ορχιδέα", "Βύθισε τη γλάστρα 10 λεπτά και στράγγιξε καλά."] },
-    fern:       { em: "🌿", w: 3,  ww: 5,  f: 30, mi: 2, out: 0, en: ["Fern", "Likes humidity; never let it dry out."], el: ["Φτέρη", "Θέλει υγρασία· μην την αφήνεις να στεγνώσει."] },
-    calathea:   { em: "🍃", w: 5,  ww: 8,  f: 30, mi: 3, out: 0, en: ["Calathea", "Filtered or rested water; humid air."], el: ["Καλαθέα", "Φιλτραρισμένο ή «ξεκουρασμένο» νερό, υγρός αέρας."] },
-    aloe:       { em: "🌵", w: 14, ww: 30, f: 90, mi: 0, out: 0, en: ["Aloe vera", "Deep water, then let it dry completely."], el: ["Αλόη", "Πότισμα σε βάθος, μετά να στεγνώσει εντελώς."] },
-    cactus:     { em: "🌵", w: 14, ww: 35, f: 60, mi: 0, out: 0, en: ["Cactus", "Almost no water in winter."], el: ["Κάκτος", "Σχεδόν καθόλου νερό τον χειμώνα."] },
-    succulent:  { em: "🪴", w: 10, ww: 21, f: 60, mi: 0, out: 0, en: ["Succulent", "Soak and dry; lots of light."], el: ["Παχύφυτο", "Πότισμα και στέγνωμα· πολύ φως."] },
-    rubber:     { em: "🌳", w: 7,  ww: 14, f: 30, mi: 0, out: 0, en: ["Rubber plant", "Wipe the leaves; water when half dry."], el: ["Καουτσούκ", "Σκούπιζε τα φύλλα· πότισε όταν στεγνώσει στη μέση."] },
-    dracaena:   { em: "🌴", w: 10, ww: 14, f: 30, mi: 0, out: 0, en: ["Dracaena", "Sensitive to fluoride; let it dry between waterings."], el: ["Δράκαινα", "Ευαίσθητη στο φθόριο· άσ' τη να στεγνώνει ανάμεσα."] },
-    begonia:    { em: "🌺", w: 4,  ww: 7,  f: 14, mi: 0, out: 0, en: ["Begonia", "Water the soil, not the leaves."], el: ["Βιγόνια", "Πότιζε το χώμα, όχι τα φύλλα."] },
-    violet:     { em: "💜", w: 5,  ww: 7,  f: 14, mi: 0, out: 0, en: ["African violet", "Water from below with room-temperature water."], el: ["Αφρικανική βιολέτα", "Πότισμα από κάτω, με νερό θερμοκρασίας δωματίου."] },
-    basil:      { em: "🌿", w: 2,  ww: 3,  f: 14, mi: 0, out: 1, en: ["Basil", "Daily in heat; pinch the flowers."], el: ["Βασιλικός", "Καθημερινά στη ζέστη· κόβε τα λουλούδια."] },
-    mint:       { em: "🌱", w: 2,  ww: 4,  f: 30, mi: 0, out: 1, en: ["Mint", "Loves moist soil; keep it in its own pot."], el: ["Δυόσμος", "Θέλει υγρό χώμα· σε δική του γλάστρα."] },
-    rosemary:   { em: "🌿", w: 7,  ww: 14, f: 60, mi: 0, out: 1, en: ["Rosemary", "Drought-tolerant; full sun."], el: ["Δεντρολίβανο", "Αντέχει την ξηρασία· πλήρης ήλιος."] },
-    lavender:   { em: "💜", w: 7,  ww: 21, f: 90, mi: 0, out: 1, en: ["Lavender", "Little water, lots of sun, poor soil."], el: ["Λεβάντα", "Λίγο νερό, πολύς ήλιος, φτωχό χώμα."] },
-    geranium:   { em: "🌺", w: 3,  ww: 10, f: 14, mi: 0, out: 1, en: ["Geranium", "Water when the soil surface is dry."], el: ["Γεράνι", "Πότισε όταν στεγνώσει η επιφάνεια."] },
-    tomato:     { em: "🍅", w: 1,  ww: 0,  f: 14, mi: 0, out: 1, en: ["Tomato", "Deep, regular watering at the base."], el: ["Ντομάτα", "Τακτικό, βαθύ πότισμα στη βάση."] },
-    bougainvillea: { em: "🌺", w: 4, ww: 14, f: 30, mi: 0, out: 1, en: ["Bougainvillea", "Flowers best when kept slightly dry."], el: ["Βουκαμβίλια", "Ανθίζει καλύτερα όταν μένει λίγο στεγνή."] },
-    citrus:     { em: "🍋", w: 4,  ww: 10, f: 30, mi: 0, out: 1, en: ["Lemon tree (pot)", "Deep watering; good drainage."], el: ["Λεμονιά (γλάστρα)", "Πότισμα σε βάθος, καλή αποστράγγιση."] },
-    olive:      { em: "🫒", w: 7,  ww: 21, f: 60, mi: 0, out: 1, en: ["Olive (pot)", "Hardy; let it dry between waterings."], el: ["Ελιά (γλάστρα)", "Ανθεκτική· άσ' τη να στεγνώνει ανάμεσα."] }
+    pothos:     { em: "🌿", w: 7,  ww: 12, f: 30, mi: 0, out: 0 },
+    monstera:   { em: "🌿", w: 7,  ww: 14, f: 30, mi: 7, out: 0 },
+    snake:      { em: "🪴", w: 14, ww: 30, f: 60, mi: 0, out: 0 },
+    zz:         { em: "🪴", w: 14, ww: 28, f: 60, mi: 0, out: 0 },
+    ficus:      { em: "🌳", w: 7,  ww: 12, f: 30, mi: 0, out: 0 },
+    spider:     { em: "🌱", w: 5,  ww: 10, f: 30, mi: 0, out: 0 },
+    peace:      { em: "🌸", w: 5,  ww: 8,  f: 30, mi: 7, out: 0 },
+    orchid:     { em: "🌸", w: 7,  ww: 12, f: 14, mi: 3, out: 0 },
+    fern:       { em: "🌿", w: 3,  ww: 5,  f: 30, mi: 2, out: 0 },
+    calathea:   { em: "🍃", w: 5,  ww: 8,  f: 30, mi: 3, out: 0 },
+    aloe:       { em: "🌵", w: 14, ww: 30, f: 90, mi: 0, out: 0 },
+    cactus:     { em: "🌵", w: 14, ww: 35, f: 60, mi: 0, out: 0 },
+    succulent:  { em: "🪴", w: 10, ww: 21, f: 60, mi: 0, out: 0 },
+    rubber:     { em: "🌳", w: 7,  ww: 14, f: 30, mi: 0, out: 0 },
+    dracaena:   { em: "🌴", w: 10, ww: 14, f: 30, mi: 0, out: 0 },
+    begonia:    { em: "🌺", w: 4,  ww: 7,  f: 14, mi: 0, out: 0 },
+    violet:     { em: "💜", w: 5,  ww: 7,  f: 14, mi: 0, out: 0 },
+    basil:      { em: "🌿", w: 2,  ww: 3,  f: 14, mi: 0, out: 1 },
+    mint:       { em: "🌱", w: 2,  ww: 4,  f: 30, mi: 0, out: 1 },
+    rosemary:   { em: "🌿", w: 7,  ww: 14, f: 60, mi: 0, out: 1 },
+    lavender:   { em: "💜", w: 7,  ww: 21, f: 90, mi: 0, out: 1 },
+    geranium:   { em: "🌺", w: 3,  ww: 10, f: 14, mi: 0, out: 1 },
+    tomato:     { em: "🍅", w: 1,  ww: 0,  f: 14, mi: 0, out: 1 },
+    bougainvillea: { em: "🌺", w: 4, ww: 14, f: 30, mi: 0, out: 1 },
+    citrus:     { em: "🍋", w: 4,  ww: 10, f: 30, mi: 0, out: 1 },
+    olive:      { em: "🫒", w: 7,  ww: 21, f: 60, mi: 0, out: 1 }
   };
+  // Names and tips of the ready species: one { en, el } table (pack
+  // "plants"; a pack language also gets PRESETS[id][code] from it).
+  // Keys "sp.<id>" (name) and "sp.<id>.tip".
+  var SPECIES = {
+    en: {
+      "sp.pothos": "Pothos", "sp.pothos.tip": "Water when the top soil is dry. Tolerates low light.",
+      "sp.monstera": "Monstera", "sp.monstera.tip": "Bright indirect light; let the top 3 cm dry out.",
+      "sp.snake": "Snake plant", "sp.snake.tip": "Very little water, never soggy soil.",
+      "sp.zz": "ZZ plant", "sp.zz.tip": "Stores water in its roots; let it dry fully.",
+      "sp.ficus": "Ficus", "sp.ficus.tip": "Steady spot, no drafts; it drops leaves when moved.",
+      "sp.spider": "Spider plant", "sp.spider.tip": "Keep the soil lightly moist.",
+      "sp.peace": "Peace lily", "sp.peace.tip": "Droops when thirsty and recovers after a drink.",
+      "sp.orchid": "Orchid", "sp.orchid.tip": "Soak the pot for 10 minutes, then drain well.",
+      "sp.fern": "Fern", "sp.fern.tip": "Likes humidity; never let it dry out.",
+      "sp.calathea": "Calathea", "sp.calathea.tip": "Filtered or rested water; humid air.",
+      "sp.aloe": "Aloe vera", "sp.aloe.tip": "Deep water, then let it dry completely.",
+      "sp.cactus": "Cactus", "sp.cactus.tip": "Almost no water in winter.",
+      "sp.succulent": "Succulent", "sp.succulent.tip": "Soak and dry; lots of light.",
+      "sp.rubber": "Rubber plant", "sp.rubber.tip": "Wipe the leaves; water when half dry.",
+      "sp.dracaena": "Dracaena", "sp.dracaena.tip": "Sensitive to fluoride; let it dry between waterings.",
+      "sp.begonia": "Begonia", "sp.begonia.tip": "Water the soil, not the leaves.",
+      "sp.violet": "African violet", "sp.violet.tip": "Water from below with room-temperature water.",
+      "sp.basil": "Basil", "sp.basil.tip": "Daily in heat; pinch the flowers.",
+      "sp.mint": "Mint", "sp.mint.tip": "Loves moist soil; keep it in its own pot.",
+      "sp.rosemary": "Rosemary", "sp.rosemary.tip": "Drought-tolerant; full sun.",
+      "sp.lavender": "Lavender", "sp.lavender.tip": "Little water, lots of sun, poor soil.",
+      "sp.geranium": "Geranium", "sp.geranium.tip": "Water when the soil surface is dry.",
+      "sp.tomato": "Tomato", "sp.tomato.tip": "Deep, regular watering at the base.",
+      "sp.bougainvillea": "Bougainvillea", "sp.bougainvillea.tip": "Flowers best when kept slightly dry.",
+      "sp.citrus": "Lemon tree (pot)", "sp.citrus.tip": "Deep watering; good drainage.",
+      "sp.olive": "Olive (pot)", "sp.olive.tip": "Hardy; let it dry between waterings."
+    },
+    el: {
+      "sp.pothos": "Πόθος", "sp.pothos.tip": "Πότισε όταν στεγνώσει η επιφάνεια. Αντέχει σε λίγο φως.",
+      "sp.monstera": "Μονστέρα", "sp.monstera.tip": "Άπλετο έμμεσο φως· άσε τα πρώτα 3 εκ. να στεγνώσουν.",
+      "sp.snake": "Σανσεβιέρια", "sp.snake.tip": "Πολύ λίγο νερό, ποτέ λασπωμένο χώμα.",
+      "sp.zz": "Ζαμιοκούλκας", "sp.zz.tip": "Κρατά νερό στις ρίζες· άσ' το να στεγνώσει τελείως.",
+      "sp.ficus": "Φίκος", "sp.ficus.tip": "Σταθερή θέση χωρίς ρεύματα· ρίχνει φύλλα όταν τον μετακινείς.",
+      "sp.spider": "Χλωρόφυτο", "sp.spider.tip": "Κράτα το χώμα ελαφρά υγρό.",
+      "sp.peace": "Σπαθίφυλλο", "sp.peace.tip": "Γέρνει όταν διψά και συνέρχεται μόλις ποτιστεί.",
+      "sp.orchid": "Ορχιδέα", "sp.orchid.tip": "Βύθισε τη γλάστρα 10 λεπτά και στράγγιξε καλά.",
+      "sp.fern": "Φτέρη", "sp.fern.tip": "Θέλει υγρασία· μην την αφήνεις να στεγνώσει.",
+      "sp.calathea": "Καλαθέα", "sp.calathea.tip": "Φιλτραρισμένο ή «ξεκουρασμένο» νερό, υγρός αέρας.",
+      "sp.aloe": "Αλόη", "sp.aloe.tip": "Πότισμα σε βάθος, μετά να στεγνώσει εντελώς.",
+      "sp.cactus": "Κάκτος", "sp.cactus.tip": "Σχεδόν καθόλου νερό τον χειμώνα.",
+      "sp.succulent": "Παχύφυτο", "sp.succulent.tip": "Πότισμα και στέγνωμα· πολύ φως.",
+      "sp.rubber": "Καουτσούκ", "sp.rubber.tip": "Σκούπιζε τα φύλλα· πότισε όταν στεγνώσει στη μέση.",
+      "sp.dracaena": "Δράκαινα", "sp.dracaena.tip": "Ευαίσθητη στο φθόριο· άσ' τη να στεγνώνει ανάμεσα.",
+      "sp.begonia": "Βιγόνια", "sp.begonia.tip": "Πότιζε το χώμα, όχι τα φύλλα.",
+      "sp.violet": "Αφρικανική βιολέτα", "sp.violet.tip": "Πότισμα από κάτω, με νερό θερμοκρασίας δωματίου.",
+      "sp.basil": "Βασιλικός", "sp.basil.tip": "Καθημερινά στη ζέστη· κόβε τα λουλούδια.",
+      "sp.mint": "Δυόσμος", "sp.mint.tip": "Θέλει υγρό χώμα· σε δική του γλάστρα.",
+      "sp.rosemary": "Δεντρολίβανο", "sp.rosemary.tip": "Αντέχει την ξηρασία· πλήρης ήλιος.",
+      "sp.lavender": "Λεβάντα", "sp.lavender.tip": "Λίγο νερό, πολύς ήλιος, φτωχό χώμα.",
+      "sp.geranium": "Γεράνι", "sp.geranium.tip": "Πότισε όταν στεγνώσει η επιφάνεια.",
+      "sp.tomato": "Ντομάτα", "sp.tomato.tip": "Τακτικό, βαθύ πότισμα στη βάση.",
+      "sp.bougainvillea": "Βουκαμβίλια", "sp.bougainvillea.tip": "Ανθίζει καλύτερα όταν μένει λίγο στεγνή.",
+      "sp.citrus": "Λεμονιά (γλάστρα)", "sp.citrus.tip": "Πότισμα σε βάθος, καλή αποστράγγιση.",
+      "sp.olive": "Ελιά (γλάστρα)", "sp.olive.tip": "Ανθεκτική· άσ' τη να στεγνώνει ανάμεσα."
+    }
+  };
+  var I18N = typeof window !== "undefined" && window.orosI18n ? window.orosI18n : null;
+  var SP_LANG = I18N ? I18N.lang() : "en";
+  if (I18N && SP_LANG !== "en" && SP_LANG !== "el") I18N.table(SPECIES, "plants", SP_LANG);
+  Object.keys(PRESETS).forEach(function (id) {
+    Object.keys(SPECIES).forEach(function (code) {
+      PRESETS[id][code] = [SPECIES[code]["sp." + id], SPECIES[code]["sp." + id + ".tip"]];
+    });
+  });
   var PRESET_IDS = Object.keys(PRESETS);
 
   // ---------- Assistant prefill (asNew, BR-W8-6: prefill, not data) ----------
   // x = { name, species?, room? | location?, waterDays?, note? }. Every
   // field is cleaned to the editor's own limits, unknown fields are
   // ignored, no name → null. species = a ready species (its id or its
-  // name in either language) → sp; anything else is kept as the
+  // name in English, Greek or the pack language) → sp; anything else is kept as the
   // scientific name (sci). w = null leaves the editor's default.
   function asNewPrefill(x) {
     if (!x || typeof x !== "object" || Array.isArray(x)) return null;
@@ -377,7 +446,9 @@
     if (spIn) {
       var k = spIn.toLowerCase();
       PRESET_IDS.forEach(function (id) {
-        if (!sp && (id === k || PRESETS[id].en[0].toLowerCase() === k || PRESETS[id].el[0].toLowerCase() === k)) sp = id;
+        if (!sp && (id === k || Object.keys(SPECIES).some(function (code) {
+          return String(SPECIES[code]["sp." + id]).toLowerCase() === k;
+        }))) sp = id;
       });
       if (!sp) sci = spIn;
     }

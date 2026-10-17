@@ -57,7 +57,8 @@
       return l === "el" ? "el" : "en";
     } catch (e) { return "en"; }
   }
-  var LANG = appLang();
+  // orosI18n (../i18n.js): the full language code, a pack language included.
+  var LANG = window.orosI18n ? window.orosI18n.lang() : appLang();
 
   var STRINGS = {
     en: {
@@ -117,8 +118,13 @@
       "set.kitchen": "Kitchen", "set.clean": "Weekly cleaning", "set.pet": "Pet", "set.home": "Around the house",
       "home.file": "Save and open", "file.save": "orOS file (.oroschores)", "file.open": "Open orOS file…",
       "file.folder": "Unzipped orOS folder…",
-      "dow": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-      "months": ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+      "dow.0": "Mon", "dow.1": "Tue", "dow.2": "Wed", "dow.3": "Thu", "dow.4": "Fri", "dow.5": "Sat", "dow.6": "Sun",
+      "month.0": "January", "month.1": "February", "month.2": "March", "month.3": "April", "month.4": "May", "month.5": "June",
+      "month.6": "July", "month.7": "August", "month.8": "September", "month.9": "October", "month.10": "November", "month.11": "December",
+      "seed.kitchen.0": "Dishes", "seed.kitchen.1": "Wipe the counters", "seed.kitchen.2": "Take out the trash", "seed.kitchen.3": "Clean the fridge",
+      "seed.clean.0": "Vacuum", "seed.clean.1": "Mop the floors", "seed.clean.2": "Bathroom", "seed.clean.3": "Dusting", "seed.clean.4": "Change the sheets", "seed.clean.5": "Laundry",
+      "seed.pet.0": "Feed the pet", "seed.pet.1": "Walk the dog", "seed.pet.2": "Clean the litter or cage",
+      "seed.home.0": "Groceries", "seed.home.1": "Water the plants", "seed.home.2": "Recycling", "seed.home.3": "Windows"
     },
     el: {
       "app": "Τροχός δουλειών",
@@ -177,10 +183,16 @@
       "set.kitchen": "Κουζίνα", "set.clean": "Εβδομαδιαίο καθάρισμα", "set.pet": "Κατοικίδιο", "set.home": "Γύρω από το σπίτι",
       "home.file": "Αποθήκευση και άνοιγμα", "file.save": "Αρχείο orOS (.oroschores)", "file.open": "Άνοιγμα αρχείου orOS…",
       "file.folder": "Αποσυμπιεσμένος φάκελος orOS…",
-      "dow": ["Δευ", "Τρί", "Τετ", "Πέμ", "Παρ", "Σάβ", "Κυρ"],
-      "months": ["Ιανουάριος", "Φεβρουάριος", "Μάρτιος", "Απρίλιος", "Μάιος", "Ιούνιος", "Ιούλιος", "Αύγουστος", "Σεπτέμβριος", "Οκτώβριος", "Νοέμβριος", "Δεκέμβριος"]
+      "dow.0": "Δευ", "dow.1": "Τρί", "dow.2": "Τετ", "dow.3": "Πέμ", "dow.4": "Παρ", "dow.5": "Σάβ", "dow.6": "Κυρ",
+      "month.0": "Ιανουάριος", "month.1": "Φεβρουάριος", "month.2": "Μάρτιος", "month.3": "Απρίλιος", "month.4": "Μάιος", "month.5": "Ιούνιος",
+      "month.6": "Ιούλιος", "month.7": "Αύγουστος", "month.8": "Σεπτέμβριος", "month.9": "Οκτώβριος", "month.10": "Νοέμβριος", "month.11": "Δεκέμβριος",
+      "seed.kitchen.0": "Πιάτα", "seed.kitchen.1": "Πάγκοι και τραπέζι", "seed.kitchen.2": "Σκουπίδια", "seed.kitchen.3": "Καθάρισμα ψυγείου",
+      "seed.clean.0": "Σκούπα", "seed.clean.1": "Σφουγγάρισμα", "seed.clean.2": "Μπάνιο", "seed.clean.3": "Ξεσκόνισμα", "seed.clean.4": "Αλλαγή σεντονιών", "seed.clean.5": "Πλυντήριο ρούχων",
+      "seed.pet.0": "Φαγητό στο κατοικίδιο", "seed.pet.1": "Βόλτα τον σκύλο", "seed.pet.2": "Άμμος ή κλουβί",
+      "seed.home.0": "Ψώνια", "seed.home.1": "Πότισμα", "seed.home.2": "Ανακύκλωση", "seed.home.3": "Τζάμια"
     }
   };
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "chores", LANG);
 
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;
@@ -347,8 +359,9 @@
   function applySet(id) {
     var have = {}, added = 0, today = dnToYmd(localDn(new Date())), base = Date.now();
     data.tasks.forEach(function (tk) { have[tk.name.toLowerCase()] = true; });
-    SETS[id].forEach(function (x) {
-      var name = x[LANG] || x.en;
+    SETS[id].forEach(function (x, i) {
+      // en/el from core.js; a pack language from the "seed.<set>.<i>" keys.
+      var name = x[LANG] || (STRINGS[LANG] && STRINGS[LANG]["seed." + id + "." + i]) || x.en;
       if (have[name.toLowerCase()] || data.tasks.length >= MAX_TASKS) return;
       data.tasks.push({ id: newId(), m: base + added, name: name, icon: x.icon, freq: JSON.parse(JSON.stringify(x.freq)),
                         weight: x.weight, mode: "rr", who: [], start: today, off: nextOff(x.freq.k) });
@@ -610,19 +623,19 @@
   function pad2(n) { return (n < 10 ? "0" : "") + n; }
   function fmtDay(n, withDow) {
     var ymd = dnToYmd(n), d = ymd.slice(8, 10), m = ymd.slice(5, 7);
-    return (withDow ? t("dow")[dow(n)] + " " : "") + d + "/" + m;
+    return (withDow ? t("dow." + dow(n)) + " " : "") + d + "/" + m;
   }
   function periodLabel(grp, p, two) {
     if (grp === "w") return two ? [fmtDay(p), fmtDay(p + 6)] : [fmtDay(p) + " – " + fmtDay(p + 6)];
     if (grp === "mo") {
       var mi = monthIdx(p);
-      return two ? [t("months")[mi % 12], String(Math.floor(mi / 12))] : [t("months")[mi % 12] + " " + Math.floor(mi / 12)];
+      return two ? [t("month." + (mi % 12)), String(Math.floor(mi / 12))] : [t("month." + (mi % 12)) + " " + Math.floor(mi / 12)];
     }
-    return two ? [t("dow")[dow(p)], fmtDay(p)] : [fmtDay(p, true)];
+    return two ? [t("dow." + dow(p)), fmtDay(p)] : [fmtDay(p, true)];
   }
   function freqLabel(f) {
     if (f.k === "n") return t("freq.nShort", { n: f.n });
-    if (f.k === "wd") return f.d.map(function (d) { return t("dow")[d]; }).join(" · ");
+    if (f.k === "wd") return f.d.map(function (d) { return t("dow." + d); }).join(" · ");
     return t("freq." + f.k);
   }
   function memberChip(id) {
@@ -1145,7 +1158,7 @@
     var nFld = field(t("dlg.every"), nIn);
     form.appendChild(nFld);
     var days = (cur.freq.d || [5]).slice();
-    var dFld = chipGroup(t("dlg.days"), [0, 1, 2, 3, 4, 5, 6].map(function (d) { return { v: d, label: t("dow")[d] }; }),
+    var dFld = chipGroup(t("dlg.days"), [0, 1, 2, 3, 4, 5, 6].map(function (d) { return { v: d, label: t("dow." + d) }; }),
       days, false, function (v) { var i = days.indexOf(v); if (i >= 0) days.splice(i, 1); else days.push(v); });
     form.appendChild(dFld);
     function showFreq() { nFld.hidden = fsel.value !== "n"; dFld.hidden = fsel.value !== "wd"; }

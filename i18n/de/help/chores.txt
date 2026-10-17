@@ -1,0 +1,56 @@
+# Hausarbeitsrad
+Das Hausarbeitsrad verteilt die Hausarbeit fair. Füge die Leute zu Hause und die Hausarbeiten hinzu, und das Rad dreht sich jeden Tag, jede Woche oder jeden Monat weiter, damit die Arbeit reihum geht. Hake Hausarbeiten ab, tausche oder überspring eine, wenn etwas dazwischenkommt, und sieh, wer seinen Teil macht.
+
+## Erste Schritte
+Öffne `Zuhause`:
+1. Gib unter `Mitglieder` einen Namen in `Mitglied hinzufügen…` ein und drück [[Enter]] oder die +-Taste. Füge alle hinzu, die sich die Hausarbeit teilen.
+2. Drück unter `Hausarbeiten` auf `Neue Hausarbeit` oder wähle eines der `Fertige Sets` (`Küche`, `Wochenputz`, `Haustier`, `Rund ums Haus`), um mehrere auf einmal hinzuzufügen.
+3. Wähle dich selbst in `Wer bist du auf diesem Gerät?`, damit deine Hausarbeiten zuerst kommen.
+
+## Mitglieder und Hausarbeiten
+Die Stift-Taste bei einem Mitglied ändert `Name`, `Farbe` und `Symbol`. Die Pfeile verschieben es in der Reihenfolge nach oben oder unten. Unter `Weg (das Rad überspringt sie)` legst du für eine Reise die Daten `Von` und `Bis` fest; das Rad überspringt die Person, und ihre Runde geht weiter, sobald sie zurück ist. `Wieder da` löscht die Daten.
+
+Eine Hausarbeit hat einen Namen und ein Symbol und:
+- `Wie oft`: `Jeden Tag`, `Alle N Tage`, `An bestimmten Tagen` (du wählst die Tage), `Jede Woche` oder `Jeden Monat`, und das Datum, an dem sie `Beginnt`.
+- `Aufwand`: `Leicht`, `Mittel` oder `Schwer`, 1, 2 oder 3 Punkte wert.
+- `Wer mitmacht`. Keine Auswahl heißt: alle.
+- `Wer sie bekommt`: `Reihum` (die nächste Person der Reihe), `Ausgeglichen` (wer in den letzten 4 Wochen die wenigsten Punkte hat) oder `Drehen` (jedes Mal eine faire Zufallsauslosung).
+
+Wenn du ein Mitglied oder eine Hausarbeit löschst, erscheint für ein paar Sekunden eine Taste `Rückgängig`.
+
+## Das Rad
+`Rad` zeigt zwei Ringe: außen die Mitglieder, innen die Reihum-Hausarbeiten dieses Zeitraums, jeweils neben der Person, die sie hat. Wähle `Täglich`, `Wöchentlich` oder `Monatlich` und sieh mit `Zurück` und `Weiter`, wer davor oder danach dran ist; `Jetzt` bringt dich zurück. Die Liste unter dem Rad sagt dasselbe in Worten.
+
+## Heute und Woche
+`Heute` listet die heutigen Hausarbeiten nach Person, mit einem Fortschrittsbalken. Hake das Kästchen ab, wenn eine Hausarbeit erledigt ist; die Punkte bekommt, wer sie hatte. Schalte `Nur meine` ein, um die der anderen auszublenden.
+
+Mit der ⋯-Taste bei einer Hausarbeit wählst du unter `Erledigt von`, wer sie gemacht hat, kannst sie `Diesmal abgeben`, `Diesmal überspringen` oder als `Nicht erledigt` markieren. Solange eine Hausarbeit noch offen ist, fügt `An Aufgaben senden` sie als Erinnerung zur offenen Liste in [Aufgaben](app:todo) hinzu; wenn du sie dort abhakst, wird sie hier nicht abgehakt. `Drehen`-Hausarbeiten warten unter `Wartet aufs Drehen`, bis jemand auf `Rad drehen` drückt.
+
+Unerledigte Hausarbeiten bleiben 7 Tage als `verspätet` auf der Liste. `Woche` zeigt die ganze Woche Tag für Tag, mit den wöchentlichen und monatlichen Hausarbeiten oben.
+
+## Erinnerung und Kalender
+Wähle in `Zuhause` unter `Wer bist du auf diesem Gerät?` dich selbst und dann eine Uhrzeit für die `Tägliche Erinnerung`. Einmal am Tag schickt orOS eine Nachricht mit deinen Hausarbeiten für diesen Tag, nur auf diesem Gerät, und ein Tippen darauf öffnet `Heute`. Wähle `Aus`, um sie zu beenden. Siehe auch [Benachrichtigungen](help:t/notifications).
+
+[Kalender](app:calendar) kann die Hausarbeiten unter dem Chip `Hausarbeit` zeigen; wenn du gewählt hast, wer du bist, nur deine. Ein Tippen auf eine öffnet diesen Tag hier.
+
+## Statistik
+Für `Diese Woche`, `Diesen Monat` oder `12 Monate` siehst du für jedes Mitglied die Punkte, erledigte und verpasste Hausarbeiten und die Serie, mit einer Marke für den fairen Anteil. `Verlauf (90 Tage)` listet, was erledigt wurde.
+
+## Eine orOS-Datei speichern und öffnen
+In `Zuhause` unter `Speichern und öffnen` speichert `orOS-Datei (.oroschores)` alle Mitglieder, Hausarbeiten und alles Abgehakte, Übersprungene oder Abgegebene als eine `.oroschores`-Datei, zum Beispiel um sie ohne Synchronisierung auf ein anderes Gerät zu bringen oder eine Kopie zu behalten. Die Datei ist ein einfaches ZIP: Entpackt enthält sie die Daten als `content.json` sowie `preview/chores.md`, `preview/chores.csv` und `preview/history.csv` für andere Programme. Sie ist nicht verschlüsselt, also bewahre sie sicher auf.
+
+`orOS-Datei öffnen…` (oder `Entpackter orOS-Ordner…`, oder „Öffnen mit“ orOS am Computer) zeigt, wie viele Einträge neu und wie viele schon hier sind; dann fügt `Hinzufügen` nur die neuen hinzu, mit ihren eigenen IDs: Dieselbe Datei erneut zu öffnen, fügt nichts hinzu. Ein Mitglied oder eine Hausarbeit, die schon hier ist, bleibt, wie sie ist, und was du hier gelöscht hast, bleibt gelöscht; eine Datei löscht nie etwas. Hake `Mit neueren Versionen aktualisieren` an, damit Mitglieder und Hausarbeiten, die in der Datei später geändert wurden, deine Kopie ersetzen. `Rückgängig` in der Meldung entfernt, was hinzugefügt wurde.
+
+## Synchronisierung und Sicherung
+Mitglieder, Hausarbeiten und alles Abgehakte, Übersprungene oder Abgegebene werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert, sodass der ganze Haushalt es auf den eigenen Handys nutzen kann. Wer du auf diesem Gerät bist, der offene Tab und `Nur meine` bleiben auf jedem Gerät. Für eine Kopie speichere eine orOS-Datei (siehe oben) oder nutze die orOS-[Sicherung](help:t/backup).
+
+## Tastenkürzel
+- [[←]] und [[→]]: Rad drehen oder Woche wechseln.
+- [[N]]: neue Hausarbeit.
+
+## Tipps
+- Nimm `Ausgeglichen` für Hausarbeiten, die niemand mag; sie gehen an die Person, die zuletzt am wenigsten gemacht hat.
+
+## Grenzen
+- Bis zu 12 Mitglieder und 40 Hausarbeiten.
+- Die tägliche Erinnerung erscheint nur, solange orOS auf dem Gerät geöffnet ist.

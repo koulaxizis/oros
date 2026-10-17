@@ -570,7 +570,7 @@ dialog h3 { margin: 0 0 12px; font-size: 14px; }
 .range-row { display: flex; gap: 6px; }
 .stat-cards {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
 }
 .stat-card {
@@ -594,6 +594,8 @@ dialog h3 { margin: 0 0 12px; font-size: 14px; }
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-top: 2px;
+  overflow-wrap: break-word;   /* long words (German) stay inside the card */
+  hyphens: auto;
 }
 .stat-h {
   font-size: 12px;

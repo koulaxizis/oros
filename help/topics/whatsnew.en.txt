@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.13.00
+- Garage, Plant Care, Chore Wheel, Habits, Mood and Travel are now in German.
+
 ## Version 3.12.00
 - Budget, Meal Planner, Water, Workouts, Health, Baby and Cycle are now in German.
 
