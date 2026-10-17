@@ -10,6 +10,8 @@
 //              get / set / merge while hidden (converge.js sweep; only a
 //              throw counts here, convergence itself is converge.js's)
 //   switcher   the top-bar switcher button shows, counting 2 open apps
+//   split      it opens beside the other app (side by side) in the same
+//              window, and goes back to the background when that ends
 //   back       opening the app again shows the same window (the mark is
 //              still there: no reload), visible again
 //   errors     no uncaught error or console error while the app is hidden
@@ -99,6 +101,27 @@ async function main() {
         if (h.mark !== "m") add("back", "hidden frame lost its window (reloaded)");
         const sw = await page.evaluate(() => { const b = document.getElementById("mt-btn"); return b && !b.hidden ? b.textContent : null; });
         if (sw !== "2") add("switcher", "bar button " + (sw === null ? "hidden" : "says " + sw) + " with 2 apps open");
+        // side by side (1280 px wide): the hidden app opens beside, same window
+        let split = await page.evaluate((id) => {
+          document.getElementById("mt-btn").click();
+          const b = document.querySelector('#mt-sw .mt-sw-row[data-app="' + id + '"] .mt-sw-split');
+          if (!b) return "no beside button";
+          b.click();
+          return "";
+        }, app.id);
+        if (!split) {
+          await page.waitForTimeout(700);   // the app lays itself out at half width
+          split = await page.evaluate((id) => {
+            const f = document.querySelector('#oros-running iframe[data-oros-side="' + id + '"]');
+            if (!f) return "no side frame";
+            let st = "";
+            try { st = f.contentWindow.__qaMark === "m" && f.contentDocument.visibilityState === "visible" && f.offsetWidth > 300 ? "" : "side pane reloaded, hidden or too narrow"; } catch (e) { st = "side pane unreachable"; }
+            document.querySelector("#mt-divider .mt-unsplit").click();
+            const g = document.querySelector('#oros-running iframe[data-oros-app="' + id + '"]');
+            return st || (g && g.style.display === "none" ? "" : "not back in the background after side by side");
+          }, app.id);
+        }
+        if (split) add("split", split);
         for (const name of names) {
           const res = await page.evaluate(sweepSlice, { name, fixture: null })
             .catch((e) => [{ kind: "throws", detail: "sweep: " + String(e.message).split("\n")[0] }]);

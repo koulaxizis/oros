@@ -202,7 +202,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 
 **There is NO `window.__orosNotify`** in shell.js or notifications.js (0.38.12). Older Bible text used it; see the Part X audit item.
 
-### App frames (multitasking, waves M1-M3)
+### App frames (multitasking, waves M1-M4)
 
 Multitasking (several live app frames) is an approved EXPERIMENT, off by default, per device (Chris 2026-10-17; plan `/mnt/project-files/multitasking/plan.md`). With it off, the shell must behave exactly as with the single `#app-frame`. Since M1 every shell path that talks to a running app goes through one place in `shell.js` (section 10a):
 - `appFrames()` every live app frame, `appFrameOf(id)` the frame showing app `id` (or null), `appLive(id)`. A bridge that pushes into a running app is `if (appLive("x")) { var f = appFrameOf("x"); … }`, never `state.running.id === "x"` + `getElementById("app-frame")` (guarded by `tests/multitask.test.js`). `state.running` stays "the app in front".
@@ -217,6 +217,8 @@ Multitasking (several live app frames) is an approved EXPERIMENT, off by default
 - Quality gate: `.github/qa/multitask.js` opens each app with the switch on, leaves it, checks it is hidden and alive, sweeps its merge slices while hidden (a throw fails), opens it again (same window) and fails on errors in between. `smoke.js` and the rest read `OROS_MULTITASK=1` for a run with the switch on.
 
 **Wave M3 (switcher, `shell.js` section 10c).** `mtOpenList()` = the app in front, then the hidden ones (left last first); `mtClose(id)` closes one for good (the front one through `returnToDesktop` with `mtNoKeep`), `mtCloseAll()`. Every change calls `mtChanged()` → `mtPaint()`: the bar button `#mt-btn` (in `.bar-left` after the menu button; shown only while an app waits behind, with the count), class `mt-open` on `#app-menu .menu-item[data-app]`, and `orosLauncher.refresh()` (host `isOpen(id)` → Dock class `open`, a dim dot). `Ctrl+Alt+Shift+W` (`SC_DEFS` "w") and the button open `#mt-sw`: a dialog (≤ 600 px a bottom sheet) with a row per app (icon, name, "In front" / time since left, × close), "Close all", keys ↑ ↓ / Enter / Delete / Esc, the app left last focused (shortcut + Enter = back to it); touch: swipe a row sideways past a third to close it. Switch off: the dialog says where to turn it on; SOLO: nothing. Strings `mt.sw.*` in `translations.js` + `i18n/de/shell.js`.
+
+**Wave M4 (side by side, from 1024 px).** `mt.side = { app, el }`: a live frame beside the front one (`data-oros-side`, visible, no `id`); `appFrames` / `appFrameOf` / `__orosAppDocs` include it, `appShow(id)` on it focuses it. `#oros-running.mt-split` is a CSS grid (front `order:0`, `#mt-divider` 1, side 2; frames are NEVER moved in the DOM, that reloads them). `mtSideOpen(app)`: a hidden app keeps its window, any other opens fresh; from the switcher ("beside" on a background row; "pick" on the front row sets `mt.pickSide`, and the next app chosen in the open menu goes beside; "stop" on the side row). `mtSideEnd(keep)`: the side app goes back to the background (or closes if not keepable); called at home, below 1024 px (resize), on switch-off / `mtDropAll`. Closing the front app while split gives the side app the screen (no reload). Divider: drag or ←/→ (Shift = 10), Home = 50 %, 25-75 %, its × ends the split; the pane with the keys gets `mt-focus` (outline). The side app counts in `mtFit`. Drag and drop between the panes is only the browser's own (not built or tested in M4).
 
 ### `shell.js` [verified 2026-10-05, `APP_VERSION` 0.39.06]
 
@@ -7656,3 +7658,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Writer, Spreadsheet, Slides, Sticky Notes and Mind map are now in German: packs in `i18n/de/`, inline texts moved into {en, el} tables, and each of the five `index.html` loads `../i18n.js` before its own scripts; English still fills any missing line.
 - Files: `i18n/de/**`, `writer/`, `spreadsheet/`, `slides/`, `stickies/`, `mindmap/` (index.html + scripts), `.github/i18n/inline-baseline.json`, `i18n/apps.json`.
   - Tests: full suite green; Chromium 360 de / el / en. Not tested: a German native reader's review, Safari, phones.
+
+### 2026-10-17 — Multitasking M4: two apps side by side (#508) — 3.06.00
+- Multitasking (experimental, off by default): on screens from 1024 px, put two apps side by side from the open-apps list ("beside") or the menu, drag the bar between them to share the width; the app in focus has an outline.
+- Files: `shell.js`, `style.css`, `translations.js`, `i18n/de/shell.js`, `settings/help.*.txt`, `.github/qa/multitask.js` (gate also checks side by side), `tests/multitask.test.js`, Bible.
+  - Tests: full suite green; multitask gate 130 apps 0 problems (also side by side); axe; Chromium 1280 EN / EL. Not tested: Firefox, Safari, touch screens.

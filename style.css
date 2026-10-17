@@ -1307,6 +1307,38 @@ body {
 }
 @media (prefers-reduced-motion: reduce) { .mt-sw-row { transition: none; } }
 
+/* Multitasking wave M4 — two apps side by side (>= 1024 px, shell.js
+   10b/10c). Frames never move in the DOM; the grid order places them. */
+#mt-divider { display: none; }
+#oros-running.mt-split.active {
+  display: grid;
+  grid-template-columns: minmax(0, var(--mt-left, 1fr)) 12px minmax(0, var(--mt-right, 1fr));
+  grid-template-rows: 100%;
+}
+#oros-running.mt-split > #app-frame { order: 0; }
+#oros-running.mt-split > #mt-divider {
+  order: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+  background: var(--border); cursor: col-resize; touch-action: none;
+}
+#oros-running.mt-split > iframe[data-oros-side] { order: 2; }
+#oros-running.mt-split > iframe.mt-focus { outline: 2px solid var(--accent); outline-offset: -2px; }
+#oros-running.mt-dragging > iframe { pointer-events: none; }
+#mt-divider .mt-grip { width: 8px; height: 44px; border-radius: 4px; background: var(--text-dim); opacity: 0.6; outline: none; }
+#mt-divider .mt-grip:focus-visible { background: var(--accent); opacity: 1; }
+#mt-divider .mt-unsplit {
+  width: 24px; height: 24px; padding: 0; border-radius: 50%; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--panel-bg); color: var(--text); border: 1px solid var(--border);
+}
+#mt-divider .mt-unsplit:hover, #mt-divider .mt-unsplit:focus-visible { background: var(--accent-soft); }
+.mt-sw-split {
+  flex: 0 0 auto; width: 40px; height: 44px; border: none; background: transparent;
+  color: var(--text-dim); border-radius: 9px; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.mt-sw-split:hover, .mt-sw-split:focus-visible { background: var(--accent-soft); color: var(--text); }
+.mt-sw-split.on { color: var(--accent); }
+
 /* Help phase 3 — first-run tour of the top bar (shell.js startTour).
    The ring's huge shadow dims everything but the button it frames. */
 #oros-tour {
