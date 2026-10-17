@@ -8,7 +8,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Scanner &amp; PDF · orOS</title>
 
-  <link rel="stylesheet" href="scanpdf.css?v=2.92.00">
+  <link rel="stylesheet" href="scanpdf.css?v=2.93.00">
 
 </head>
 <body>
@@ -66,11 +66,41 @@
   <footer id="foot" hidden>
     <div id="foot-info" class="foot-info"></div>
     <div class="foot-btns">
-      <button type="button" id="pic-btn" class="btn" hidden></button>
+      <button type="button" id="opt-btn" class="btn" data-i18n="btn.options">Options</button>
       <button type="button" id="split-btn" class="btn" data-i18n="btn.split">Split</button>
       <button type="button" id="save-btn" class="btn primary" data-i18n="btn.save">Save PDF</button>
     </div>
   </footer>
+
+  <div id="editor" role="dialog" aria-modal="true" aria-labelledby="ed-title" hidden>
+    <header class="ed-bar">
+      <button type="button" id="ed-cancel" class="icon-btn"></button>
+      <span id="ed-title" class="ed-title"></span>
+      <button type="button" id="ed-done" class="btn primary" data-i18n="btn.done">Done</button>
+    </header>
+    <div class="ed-tools">
+      <button type="button" id="ed-prev" class="icon-btn"></button>
+      <button type="button" id="ed-next" class="icon-btn"></button>
+      <span class="spacer"></span>
+      <button type="button" id="ed-sig" class="btn small"></button>
+      <button type="button" id="ed-text" class="btn small"></button>
+      <button type="button" id="ed-date" class="btn small"></button>
+    </div>
+    <div id="ed-props" class="ed-props" hidden>
+      <input type="text" id="ed-input" maxlength="200" spellcheck="false">
+      <div id="ed-colors" class="ed-colors" role="group">
+        <button type="button" class="swatch" data-color="black"></button>
+        <button type="button" class="swatch" data-color="blue"></button>
+        <button type="button" class="swatch" data-color="red"></button>
+      </div>
+      <button type="button" id="ed-all" class="btn small"></button>
+      <button type="button" id="ed-del" class="btn small"></button>
+    </div>
+    <div id="ed-stage" class="ed-stage">
+      <div id="ed-page" class="ed-page"><canvas id="ed-canvas"></canvas><div id="ed-layer"></div></div>
+    </div>
+    <p class="ed-hint hint small" data-i18n="ed.hint"></p>
+  </div>
 
   <div id="modal-veil" hidden>
     <div id="modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
@@ -88,11 +118,11 @@
   <div id="live" class="sr-only" aria-live="polite"></div>
   <div id="toast" role="status"></div>
 
-  <script src="../vendor/pdf-lib/pdf-lib.min.js?v=2.92.00"></script>
-  <script src="core.js?v=2.92.00"></script>
-  <script src="pdfops.js?v=2.92.00"></script>
-  <script src="../bundle.js?v=2.92.00"></script>
-  <script src="scanpdf.js?v=2.92.00"></script>
+  <script src="../vendor/pdf-lib/pdf-lib.min.js?v=2.93.00"></script>
+  <script src="core.js?v=2.93.00"></script>
+  <script src="pdfops.js?v=2.93.00"></script>
+  <script src="../bundle.js?v=2.93.00"></script>
+  <script src="scanpdf.js?v=2.93.00"></script>
 
 </body>
 </html>

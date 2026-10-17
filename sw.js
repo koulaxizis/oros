@@ -1322,6 +1322,7 @@ var PRECACHE_URLS = [
   "scanpdf/help.en.txt",
   "scanpdf/help.el.txt",
   "vendor/pdf-lib/pdf-lib.min.js",
+  "vendor/pdf-lib/fontkit.umd.min.js",
   "google-import.js",
   "enrich.js",
   "enrichui.js",

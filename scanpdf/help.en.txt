@@ -1,5 +1,5 @@
 # Scanner & PDF
-Put PDFs together, take them apart and set their pages in order, and make a PDF from pictures. Everything happens on your device: nothing is uploaded, and your own files are never changed. Scanning with the camera and making scanned pages searchable come in later versions.
+Put PDFs together, take them apart and set their pages in order, sign them, number their pages, make them smaller, and make a PDF from pictures. Everything happens on your device: nothing is uploaded, and your own files are never changed. Scanning with the camera and making scanned pages searchable come in later versions.
 
 ## Getting started
 1. Drop PDFs or pictures on the app, or press `Add PDFs or pictures`.
@@ -28,6 +28,27 @@ The buttons of the bar work on the selected pages:
 To move a page by dragging, take it with the mouse, or on a touch screen by the handle with the six dots in its corner. Selected pages move together when you drag one of them.
 `Undo` and `Redo` at the top step back and forward through every change.
 
+## Signing and adding text
+Every page has a pen button in its corner. It opens the page large, in the page editor:
+- `Signature` puts your signature on the page. The first time, you make one:
+  - `Draw`: sign in the box with your finger, a pen or the mouse.
+  - `Type`: write your name and it is set in a handwriting-like font.
+  - `Photo`: choose a photo of your signature on white paper; the paper becomes see-through and only the ink stays.
+  Choose black or blue ink. With `Keep it on this device for next time` ticked, the signature is saved for the next document (up to 6). The next time, `Signature` shows them to choose from, and the bin on each one deletes it.
+- `Text` adds a line of text. Type it in the field above the page and choose black, blue or red.
+- `Date` adds today's date.
+Drag what you added into place. Drag the round handle on its corner to make it bigger or smaller. `Put on every page` copies it to the same place on every other page (for initials on each page). `Remove` takes it away.
+The arrows next to the title go to the previous and next page. `Done` keeps everything you added; the cross at the top leaves without keeping it. `Undo` on the main screen takes back everything one `Done` added.
+A page with additions has a filled pen button. Additions turn with the page when you rotate it later.
+Text is written into the PDF as real text (with the Noto Sans font, Greek included); a signature is a picture.
+
+## Page numbers, watermark and details
+The `Options` button at the bottom sets what goes on every page of the PDFs you save or split:
+- `Page numbers`: where (bottom or top, left, centre or right), the style (3 or 3 / 12) and the first number. Each part of a split is numbered on its own.
+- `Watermark`: a word or two written large and pale across every page, such as COPY or DRAFT. Choose how strong it is.
+- `Document details`: the title and author shown in the PDF's properties.
+The cards show the page numbers and the watermark as they will be. These choices last until you close the app; picture page choices (below) are also here.
+
 ## Merging PDFs
 Add two or more PDFs (and pictures, if you like): their pages are put one after the other. Arrange them, then press `Save PDF`. The text, pictures and links of each page stay as they were. Bookmarks and form fields of the original files are not carried into the new PDF.
 
@@ -39,7 +60,7 @@ Press `Split` and choose how:
 The window shows how many PDFs come out. They go into one .zip on your device, or into a folder in Files › PDF named after the file. The split always follows the list as it is now, so you can arrange the pages first.
 
 ## Pictures to PDF
-Add pictures and press `Save PDF`. The button `Picture pages` at the bottom sets how a picture becomes a page:
+Add pictures and press `Save PDF`. `Picture pages` in `Options` sets how a picture becomes a page:
 - Page size: A4, Letter, or the picture's shape (no empty space around it).
 - Orientation: as the picture, portrait or landscape.
 - Margin: none, small or normal.
@@ -49,6 +70,11 @@ The picture is placed in the middle, as large as fits. The app remembers these c
 `Save PDF` asks for a file name and where it goes:
 - `On this device`: the usual save window of your browser, or a download.
 - `In Files › PDF`: the PDF goes into Files. When the name is taken, it gets a number, such as "Report (2).pdf".
+
+## Making a PDF smaller
+`Make it smaller` in the save window shrinks a PDF for email or upload forms:
+- `A little (sharpest)`, `Medium` or `A lot (for email)`: the more it shrinks, the softer the pages look.
+Every page becomes a picture, so its text can no longer be selected or searched. Scanned pages and photos shrink the most. When the result would not be smaller (a PDF of plain text often is not), the PDF is saved as it was and the app tells you. Your choice is remembered on this device.
 
 ## From Files
 In Files, select one or more PDFs, or several pictures, and choose `Open in Scanner & PDF` in the menu or in the selection bar. The app opens with their pages, in the order of the selection.
@@ -61,9 +87,13 @@ In Files, select one or more PDFs, or several pictures, and choose `Open in Scan
 - [[Left]] and [[Right]]: go to the page before or after.
 - [[Ctrl+Left]] and [[Ctrl+Right]]: move the page (or the selected pages) one place.
 - [[Space]]: select the page; [[Delete]]: delete the selected pages; [[Esc]]: select none.
+- [[E]]: open the page editor for the page.
+In the page editor:
+- [[Tab]] goes from one addition to the next; [[Left]], [[Right]], [[Up]] and [[Down]] move it ([[Shift]] for bigger steps); [[+]] and [[-]] make it bigger or smaller; [[Delete]] removes it.
+- [[PageUp]] and [[PageDown]]: the previous and next page. [[Esc]]: let go of the addition, or leave.
 
 ## Privacy and sync
-Everything happens on your device; no file is sent anywhere. The app keeps no data of its own and has nothing to sync: PDFs you save into Files are synced like the rest of Files when Vault Drive is on. Only your choices (picture pages, where to save) are kept, on this device.
+Everything happens on your device; no file is sent anywhere. The app keeps no data of its own and has nothing to sync: PDFs you save into Files are synced like the rest of Files when Vault Drive is on. Only your choices (picture pages, where to save, how much smaller) and the signatures you keep are kept, on this device. Signatures are never synced, on purpose: they stay on the device where you made them.
 
 ## Limits
 - PDFs locked with a password can't be changed: their pages can't be copied without it.

@@ -9,9 +9,16 @@
      4. Footer
      5. Dialog
      6. Busy, drag veil, toast, screen-reader helper
+     5b. Options, signatures
+     5c. Page editor
      7. Mobile + touch adaptations
      8. Reduced motion
    ============================================================ */
+
+/* Fonts the PDF text is drawn with (precached), so the editor and the
+   thumbnails show text as the PDF will have it. */
+@font-face { font-family: "ScanPdfSans"; src: url("../vendor/noto/NotoSans-Regular.ttf") format("truetype"); font-display: swap; }
+@font-face { font-family: "ScanPdfSig"; font-style: italic; src: url("../vendor/noto/NotoSerif-Italic.ttf") format("truetype"); font-display: swap; }
 
 /* ---------- 1. Palette fallback + reset + toolbar ---------- */
 :root {
@@ -237,6 +244,25 @@ ul { list-style: none; }
 .card.mark-before::before { left: -8px; }
 .card.mark-after::after { right: -8px; }
 .add-more { display: flex; justify-content: center; margin-top: 16px; }
+.pen {
+  position: absolute;
+  right: 12px;
+  bottom: 36px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--panel-bg);
+  color: var(--text-dim);
+  box-shadow: 0 1px 4px var(--shadow);
+}
+.pen svg { width: 16px; height: 16px; }
+.pen:hover { color: var(--accent); border-color: var(--accent); }
+.pen:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.card.has-ov .pen { background: var(--accent); border-color: var(--accent); color: var(--bg); }
 
 /* ---------- 4. Footer ---------- */
 #foot {
@@ -252,7 +278,7 @@ ul { list-style: none; }
 }
 .foot-info { flex: 1 1 160px; min-width: 0; font-size: 12.5px; color: var(--text-dim); }
 .foot-btns { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; margin-left: auto; }
-#pic-btn { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+#opt-btn.on { border-color: var(--accent); color: var(--accent); }
 
 /* ---------- 5. Dialog ---------- */
 #modal-veil {
@@ -312,6 +338,142 @@ ul { list-style: none; }
 .form .opt input.num-in { width: 72px; min-height: 32px; }
 .preview { overflow-wrap: anywhere; }
 .preview.bad { color: var(--danger); }
+
+/* ---------- 5b. Options, signatures ---------- */
+.opt-sec { display: flex; flex-direction: column; gap: 8px; padding-top: 12px; border-top: 1px solid var(--border); }
+.opt-sec h3 { font-size: 14px; font-weight: 800; }
+.opt-fields { display: flex; flex-direction: column; gap: 8px; }
+.opt input[type=checkbox] { accent-color: var(--accent); flex-shrink: 0; width: 22px; height: 22px; margin: 0; }
+.opt:has(input[type=checkbox]:checked) { border-color: var(--accent); background: var(--accent-soft); }
+.opt-t { min-width: 0; overflow-wrap: anywhere; }
+.opt:has(input[type=checkbox]) { flex-wrap: nowrap; }
+.opt:has(input[type=checkbox]) .opt-t { flex: 1 1 0; }
+body.editing #toast { top: auto; bottom: calc(48px + env(safe-area-inset-bottom, 0px)); }
+.seg-row { flex-direction: row; flex-wrap: wrap; }
+.seg-row legend { width: 100%; }
+.seg-row .opt { flex: 1 1 auto; }
+.sig-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.sig-cell { position: relative; min-width: 0; }
+.sig-pick {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 84px;
+  padding: 8px;
+  background: #fff;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+}
+.sig-pick:hover, .sig-pick:focus-visible { border-color: var(--accent); outline: none; }
+.sig-pick img { max-width: 100%; max-height: 100%; }
+.sig-del { position: absolute; top: 2px; right: 2px; background: var(--panel-bg); width: 30px; height: 30px; }
+.sig-pad {
+  display: block;
+  width: 100%;
+  aspect-ratio: 3 / 1;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  touch-action: none;
+}
+.sig-pad.drawable { cursor: crosshair; background: #fff linear-gradient(transparent calc(75% - 1px), #c9c9c9 calc(75% - 1px), #c9c9c9 75%, transparent 75%); }
+.sig-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ---------- 5c. Page editor ---------- */
+#editor {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+.ed-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  padding-top: calc(8px + env(safe-area-inset-top, 0px));
+  background: var(--bar-bg);
+  border-bottom: 1px solid var(--border);
+}
+.ed-title { flex: 1 1 auto; min-width: 0; font-size: 15px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ed-tools, .ed-props {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--bar-bg);
+  border-bottom: 1px solid var(--border);
+}
+.ed-tools .btn svg, .ed-props .btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+#ed-input {
+  flex: 1 1 160px;
+  min-width: 0;
+  min-height: 34px;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+}
+#ed-input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.ed-colors { display: flex; gap: 4px; }
+.swatch { width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--border); }
+.swatch[data-color="black"] { background: #121217; }
+.swatch[data-color="blue"] { background: #1a3b99; }
+.swatch[data-color="red"] { background: #bf1a1f; }
+.swatch[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+.swatch:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+#ed-del:hover:not(:disabled) { color: var(--danger); border-color: var(--danger); }
+.ed-stage {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 12px;
+}
+.ed-page { position: relative; flex-shrink: 0; background: #fff; box-shadow: 0 2px 14px var(--shadow); }
+.ed-page.loading { background: #fff linear-gradient(90deg, #fff, #eee, #fff); }
+#ed-canvas { display: block; width: 100%; height: 100%; }
+#ed-layer { position: absolute; inset: 0; overflow: hidden; touch-action: none; }
+.ov {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: move;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  outline: 1px dashed transparent;
+}
+.ov:hover { outline-color: rgba(26, 59, 153, 0.5); }
+.ov.on { outline: 2px solid var(--accent); outline-offset: 2px; }
+.ov:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.ov img { width: 100%; height: 100%; pointer-events: none; }
+.ov-txt { font-family: "ScanPdfSans", "Noto Sans", sans-serif; line-height: 1.2; white-space: pre; pointer-events: none; }
+.ov-h {
+  position: absolute;
+  right: -11px;
+  bottom: -11px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  background: var(--accent);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  cursor: nwse-resize;
+  display: none;
+}
+.ov.on .ov-h { display: block; }
+.ed-hint { padding: 6px 12px calc(8px + env(safe-area-inset-bottom, 0px)); text-align: center; }
 
 /* ---------- 6. Busy, drag veil, toast, screen-reader helper ---------- */
 #busy {
@@ -415,12 +577,19 @@ ul { list-style: none; }
   #foot { padding-left: 10px; padding-right: 10px; }
   .foot-btns { width: 100%; }
   .foot-btns .btn { flex: 1 1 auto; }
-  #pic-btn { flex-basis: 100%; }
+  .ed-bar, .ed-tools, .ed-props { padding-left: 8px; padding-right: 8px; }
+  .ed-tools .btn span { display: none; }
+  .ed-tools .btn { min-width: 44px; padding: 4px 10px; }
+  .ed-props .btn span { display: none; }
+  .ed-stage { padding: 8px; }
 }
 @media (pointer: coarse) {
   .icon-btn { width: 44px; height: 44px; }
   .btn, .opt { min-height: 44px; }
   .grip { width: 40px; height: 40px; top: 6px; right: 4px; }
+  .pen { width: 40px; height: 40px; right: 10px; }
+  .swatch { width: 36px; height: 36px; }
+  .ov-h { width: 30px; height: 30px; right: -15px; bottom: -15px; }
 }
 @media (max-width: 380px) and (pointer: coarse) {
   .sel-btns .icon-btn { width: 40px; }
