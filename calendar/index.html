@@ -28,6 +28,7 @@
           <div id="more-menu" class="more-menu" hidden>
             <button id="mm-subs" type="button" data-i18n="mm.subs"></button>
             <button id="mm-free" type="button" data-i18n="mm.free"></button>
+            <button id="mm-send" type="button" data-i18n="mm.send" hidden></button>
             <button id="mm-google" type="button" data-i18n="mm.google" hidden></button>
             <button id="mm-print" type="button" data-i18n="mm.print"></button>
             <!-- .oroscal: the orOS file of every event and label -->
@@ -299,6 +300,33 @@
     <div class="dlg-row">
       <button id="sv-copy" type="button" class="btn" data-i18n="sv.copy"></button>
       <button id="sv-close" type="button" class="btn prim" data-i18n="ph.close"></button>
+    </div>
+  </dialog>
+
+  <!-- Send a whole calendar or a date range (share wave 3, kind "cal") -->
+  <dialog id="scal-dlg" aria-labelledby="scal-dlg-title">
+    <h3 id="scal-dlg-title" data-i18n="sc.title"></h3>
+    <p class="del-text" data-i18n="sc.text"></p>
+    <div class="ev-form">
+      <label for="sc-lbl" data-i18n="sc.which"></label>
+      <select id="sc-lbl"></select>
+      <label for="sc-range" data-i18n="sc.range"></label>
+      <select id="sc-range"></select>
+      <div id="sc-dates" class="date-pair" hidden>
+        <div>
+          <label for="sc-from" data-i18n="sc.from"></label>
+          <input id="sc-from" type="date">
+        </div>
+        <div>
+          <label for="sc-to" data-i18n="sc.to"></label>
+          <input id="sc-to" type="date">
+        </div>
+      </div>
+    </div>
+    <p id="sc-sum" class="span-hint" aria-live="polite"></p>
+    <div class="dlg-row">
+      <button id="sc-go" type="button" class="btn prim" data-i18n="sc.go"></button>
+      <button id="sc-no" type="button" class="btn" data-i18n="ev.cancel"></button>
     </div>
   </dialog>
 
