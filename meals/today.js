@@ -11,9 +11,11 @@
 (function (root) {
   "use strict";
   var KEY = "oros-meals-data";
+  // Same keys and English as meals.js. A pack language: English + the
+  // "meals" pack, when the shell has it loaded.
   var SLOT = {
-    en: { b: "Breakfast", l: "Lunch", d: "Dinner", s: "Snack", x: "Extra" },
-    el: { b: "Πρωινό", l: "Μεσημεριανό", d: "Βραδινό", s: "Σνακ", x: "Άλλο" }
+    en: { "slot.b": "Breakfast", "slot.l": "Lunch", "slot.d": "Dinner", "slot.s": "Snack", "slot.x": "Extra" },
+    el: { "slot.b": "Πρωινό", "slot.l": "Μεσημεριανό", "slot.d": "Βραδινό", "slot.s": "Σνακ", "slot.x": "Άλλο" }
   };
 
   var PROVIDER = {
@@ -22,13 +24,14 @@
     collect: function (ctx) {
       var C = root.OrosMealsCore, raw = ctx.readJSON(KEY);
       if (!C || typeof C.planByDay !== "function" || !raw) return [];
+      if (!SLOT[ctx.lang] && root.orosI18n && ctx.lang) root.orosI18n.table(SLOT, "meals", ctx.lang);
       var names = SLOT[ctx.lang] || SLOT.en;
       var rows = C.planByDay(raw, ctx.lang)[ctx.today] || [];
       return rows.slice().sort(function (a, b) { return a.order - b.order; }).map(function (r) {
         return {
           id: ctx.today + ":" + r.slot,
           due: ctx.today,
-          title: (r.name || names[r.slot] || r.slot) + ": " + r.what.join(", "),
+          title: (r.name || names["slot." + r.slot] || r.slot) + ": " + r.what.join(", "),
           kind: "info",
           target: { day: ctx.today }
         };

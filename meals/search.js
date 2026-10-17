@@ -24,11 +24,23 @@
   function str(v) { return typeof v === "string" ? v.trim() : ""; }
   function arr(a) { return Array.isArray(a) ? a : []; }
 
+  // Its one text of its own. The shell runs this file, not the Meal
+  // Planner page: a pack language shows the "meals" pack line when the
+  // shell has it, else English.
+  var S = {
+    en: { "rc.untitled": "Untitled recipe" },
+    el: { "rc.untitled": "Συνταγή χωρίς τίτλο" }
+  };
+  function texts(lang) {
+    var I = root && root.orosI18n;
+    return S[lang] || (I && lang ? I.table(S, "meals", lang) : S.en);
+  }
+
   var PROVIDER = {
     id: "meals",
     keys: [KEY],
     search: function (ctx) {
-      var d = ctx.readJSON(KEY), out = [], el = ctx.lang === "el";
+      var d = ctx.readJSON(KEY), out = [], w = texts(ctx.lang);
       if (!d || typeof d !== "object") return out;
       var tombs = d.tombs && typeof d.tombs === "object" ? d.tombs : {};
       arr(d.rc).forEach(function (r) {
@@ -39,7 +51,7 @@
         }).filter(Boolean).join(", ");
         out.push({
           id: r.id,
-          title: str(r.t) || (el ? "Συνταγή χωρίς τίτλο" : "Untitled recipe"),
+          title: str(r.t) || w["rc.untitled"],
           text: [arr(r.tg).map(str).filter(Boolean).join(", "), ings, str(r.no),
                  arr(r.st).map(str).filter(Boolean).join(" "), str(r.src)]
             .filter(Boolean).join(" · "),
