@@ -1,5 +1,5 @@
 // ============================================================
-// orOS designkit — model.js (v1.1.0)
+// orOS designkit — model.js (v1.2.0)
 // The document model shared by Layout and Atelier: page presets and
 // units, new documents with seeds, strict normalization (the same
 // code cleans storage, sync pulls and imported packages), and the
@@ -27,6 +27,17 @@
 // copies of the app drop path items they do not know when they read a
 // document, but the merge is a union, so the items come back from
 // any newer copy: nothing is deleted.
+// Forward compatibility (model level 2, wave L0): setup, pages,
+// masters, items, stories, paragraphs, runs, styles, swatches and
+// guides may carry an extension bag `ext` that every copy from level 2
+// on keeps byte for byte (normX: JSON values only, keys sorted,
+// capped; an invalid bag is dropped whole, never trimmed). Every
+// field added after level 2 lives inside `ext`, so a copy that does not
+// know it still keeps it. Atelier `ax` of a kind this copy does not
+// know is kept as `axu`. On an equal `m` the copy that carries such
+// preserved data wins (better()), so a device still running older
+// code cannot strip it from the others. setup.ext.mv = the lowest model
+// level that may edit the document (needsNewer()).
 // Units: points. Exposes orosDK.model (browser) or module.exports.
 // ============================================================
 (function (root) {
@@ -36,6 +47,7 @@
   var PT_PER = { pt: 1, mm: 72 / 25.4, in: 72 };
   var MAX_COORD = 20000, MAX_ITEMS = 5000, MAX_PAGES = 999, MAX_TEXT = 400000;
   var HIST = 50;
+  var MODEL_LEVEL = 2;
 
   // ---------- 1. Presets ----------
   // [id, width mm, height mm] (portrait); "post" is in px at 72 dpi.
@@ -100,9 +112,82 @@
   function touch(ent, now) { ent.m = Math.max(stamp(now), (ent.m || 0) + 1); return ent; }
 
   // ---------- 3. Normalizers ----------
+  // Extension bag `ext` (not `x`: items and frames use x for their
+  // position): kept exactly as it is or dropped whole. Plain
+  // JSON (objects with keys ^[a-z][a-zA-Z0-9]{0,23}$, arrays ≤ 1000,
+  // strings ≤ 4000 without control characters other than tab / line
+  // breaks, finite numbers, booleans, null), depth ≤ 6, canonical
+  // (keys sorted at every level), at most `max` characters of JSON.
+  // A later wave normalizes its own keys and then runs normX, so its
+  // output is already what this function keeps.
+  var X_KEY = /^[a-z][a-zA-Z0-9]{0,23}$/, X_STR = 4000, X_ARR = 1000, X_DEPTH = 6;
+  var X_MAX = 8192, X_MAX_SETUP = 65536, AXU_MAX = 16384;
+  var X_CTRL = /[\u0000-\u0008\u000B\u000C\u000E-\u001F]/;
+  function xVal(v, depth) {
+    if (v === null || typeof v === "boolean") return v;
+    if (typeof v === "number") { if (!isFinite(v)) throw X_BAD; return v; }
+    if (typeof v === "string") { if (v.length > X_STR || X_CTRL.test(v)) throw X_BAD; return v; }
+    if (depth >= X_DEPTH || typeof v !== "object") throw X_BAD;
+    if (Array.isArray(v)) {
+      if (v.length > X_ARR) throw X_BAD;
+      return v.map(function (e) { return xVal(e, depth + 1); });
+    }
+    if (Object.prototype.toString.call(v) !== "[object Object]") throw X_BAD;   // plain objects (any window)
+    var keys = Object.keys(v).sort(cmpStr), o = {};
+    keys.forEach(function (k) {
+      if (!X_KEY.test(k)) throw X_BAD;
+      o[k] = xVal(v[k], depth + 1);
+    });
+    return o;
+  }
+  var X_BAD = {};
+  function normX(v, max) {
+    if (!v || typeof v !== "object" || Array.isArray(v)) return null;
+    try {
+      var o = xVal(v, 0);
+      if (!Object.keys(o).length || JSON.stringify(o).length > (max || X_MAX)) return null;
+      return o;
+    } catch (e) {
+      if (e === X_BAD) return null;
+      throw e;
+    }
+  }
+  function withX(o, src, max) {
+    var x = src && normX(src.ext, max);
+    if (x) o.ext = x;
+    return o;
+  }
+  // The `ext` keys of an entity that `known` does not list (for a
+  // "made with a newer orOS" notice).
+  function unknownX(ent, known) {
+    var x = ent && ent.ext;
+    if (!x) return [];
+    return Object.keys(x).filter(function (k) { return (known || []).indexOf(k) < 0; });
+  }
+  // The lowest model level allowed to edit the document (setup.ext.mv).
+  function minLevel(doc) {
+    var mv = doc && doc.setup && doc.setup.ext && doc.setup.ext.mv;
+    return typeof mv === "number" && mv % 1 === 0 && mv > 1 ? mv : 1;
+  }
+  function needsNewer(doc) { return minLevel(doc) > MODEL_LEVEL; }
+  // True when the entity (or a paragraph / run of a story, or a doc's
+  // setup) carries data kept for a newer copy: decides equal-m ties.
+  function keepsMore(e) {
+    if (!e) return false;
+    if (e.ext || e.axu || (e.setup && e.setup.ext)) return true;
+    var ps = e.paras;
+    if (Array.isArray(ps)) {
+      for (var i = 0; i < ps.length; i++) {
+        if (ps[i].ext) return true;
+        for (var j = 0; j < ps[i].runs.length; j++) if (ps[i].runs[j].ext) return true;
+      }
+    }
+    return false;
+  }
+
   function normSetup(s) {
     s = s && typeof s === "object" ? s : {};
-    return {
+    return withX({
       w: num(s.w, 36, 14400, 595.276), h: num(s.h, 36, 14400, 841.89),
       unit: oneOf(s.unit, ["mm", "pt", "in"], "mm"),
       bleed: num(s.bleed, 0, 72, 8.504),
@@ -111,17 +196,17 @@
       cols: int(s.cols, 1, 20, 1), gut: num(s.gut, 0, 500, 12),
       facing: bit(s.facing),
       preset: typeof s.preset === "string" && /^[a-z0-9]{1,12}$/.test(s.preset) ? s.preset : "custom"
-    };
+    }, s, X_MAX_SETUP);
   }
 
   function normPage(p) {
     if (!p || !isId(p.id)) return null;
-    return { id: p.id, m: stamp(p.m), pos: num(p.pos, -1e12, 1e12, 0), ms: isId(p.ms) ? p.ms : "" };
+    return withX({ id: p.id, m: stamp(p.m), pos: num(p.pos, -1e12, 1e12, 0), ms: isId(p.ms) ? p.ms : "" }, p);
   }
   function normMaster(p) {
     if (!p || !isId(p.id)) return null;
     var pre = str(p.pre, 3).replace(/[^A-Za-zΑ-Ωα-ω0-9]/g, "").toUpperCase() || "A";
-    return { id: p.id, m: stamp(p.m), name: nameOf(p.name, 60), pre: pre };
+    return withX({ id: p.id, m: stamp(p.m), name: nameOf(p.name, 60), pre: pre }, p);
   }
 
   var ITEM_TYPES = ["text", "img", "rect", "ell", "line", "path"];
@@ -179,8 +264,13 @@
   // It runs inside normItem, so storage, merge and imports all keep
   // the extras. Nothing registered (Layout): `ax` is dropped as
   // before.
-  var itemExt = null;
-  function setItemExt(fn) { itemExt = typeof fn === "function" ? fn : null; }
+  var itemExt = null, itemKnown = null;
+  // known(k): true when the app knows the extras kind k; extras of an
+  // unknown kind are kept as `axu` instead of being dropped.
+  function setItemExt(fn, known) {
+    itemExt = typeof fn === "function" ? fn : null;
+    itemKnown = itemExt && typeof known === "function" ? known : null;
+  }
   function normItem(it) {
     if (!it || !isId(it.id) || ITEM_TYPES.indexOf(it.t) < 0 || !isId(it.pg)) return null;
     var o = {
@@ -227,11 +317,18 @@
     // a page's own copy of a master item ("detached here"): the
     // master item stops showing on that page
     if (isId(it.ov) && it.ov !== it.id) o.ov = it.ov;
-    if (itemExt && it.ax && typeof it.ax === "object") {
-      var ax = itemExt(it.ax, o);
+    if (itemExt) {
+      // `axu`: Atelier extras of a kind this copy does not know, kept
+      // as they are (a newer copy turns them back into `ax`)
+      var raw = it.ax && typeof it.ax === "object" ? it.ax : it.axu && typeof it.axu === "object" ? it.axu : null;
+      var ax = raw ? itemExt(raw, o) : null;
       if (ax && typeof ax === "object") o.ax = ax;
+      else if (raw && typeof raw.k === "string" && itemKnown && !itemKnown(raw.k)) {
+        var axu = normX(raw, AXU_MAX);
+        if (axu) o.axu = axu;
+      }
     }
-    return o;
+    return withX(o, it);
   }
 
   function normRun(r) {
@@ -247,9 +344,12 @@
     if (bit(r.b)) o.b = 1;
     if (bit(r.i)) o.i = 1;
     if (bit(r.u)) o.u = 1;
-    return o;
+    return withX(o, r);
   }
-  function sameFmt(a, b) { return !a.f && !b.f && a.cs === b.cs && a.b === b.b && a.i === b.i && a.u === b.u; }
+  function sameFmt(a, b) {
+    return !a.f && !b.f && a.cs === b.cs && a.b === b.b && a.i === b.i && a.u === b.u &&
+      JSON.stringify(a.ext || null) === JSON.stringify(b.ext || null);
+  }
   function normPara(p) {
     if (!p || typeof p !== "object") return null;
     var runs = [];
@@ -260,7 +360,7 @@
       if (last && sameFmt(last, n)) last.t += n.t;     // coalesce
       else runs.push(n);
     });
-    return { ps: isId(p.ps) ? p.ps : "ps-base", runs: runs };
+    return withX({ ps: isId(p.ps) ? p.ps : "ps-base", runs: runs }, p);
   }
   function normStory(s) {
     if (!s || !isId(s.id)) return null;
@@ -276,7 +376,7 @@
       if (v && v < m && !seen[v]) { seen[v] = 1; h.push(v); }
     });
     h.sort(function (a, b) { return b - a; });
-    return { id: s.id, m: m, h: h.slice(0, HIST), paras: paras };
+    return withX({ id: s.id, m: m, h: h.slice(0, HIST), paras: paras }, s);
   }
 
   function normPs(s) {
@@ -292,7 +392,7 @@
     ["fi", "li", "ri"].forEach(function (k) { if (s[k] !== undefined) o[k] = num(s[k], -1000, 1000, 0); });
     if (s.track !== undefined) o.track = num(s.track, -500, 2000, 0);
     if (s.color !== undefined && isId(s.color)) o.color = s.color;
-    return o;
+    return withX(o, s);
   }
   function normCs(s) {
     if (!s || !isId(s.id)) return null;
@@ -303,7 +403,7 @@
     ["b", "i", "u", "caps"].forEach(function (k) { if (s[k] !== undefined) o[k] = bit(s[k]); });
     if (s.track !== undefined) o.track = num(s.track, -500, 2000, 0);
     if (s.color !== undefined && isId(s.color)) o.color = s.color;
-    return o;
+    return withX(o, s);
   }
   function normSwatch(s) {
     if (!s || !isId(s.id)) return null;
@@ -312,11 +412,11 @@
     var vals = mode === "rgb"
       ? [int(v[0], 0, 255, 0), int(v[1], 0, 255, 0), int(v[2], 0, 255, 0)]
       : [num(v[0], 0, 100, 0), num(v[1], 0, 100, 0), num(v[2], 0, 100, 0), num(v[3], 0, 100, 100)];
-    return { id: s.id, m: stamp(s.m), name: nameOf(s.name, 60), mode: mode, v: vals };
+    return withX({ id: s.id, m: stamp(s.m), name: nameOf(s.name, 60), mode: mode, v: vals }, s);
   }
   function normGuide(g) {
     if (!g || !isId(g.id) || !isId(g.pg)) return null;
-    return { id: g.id, m: stamp(g.m), pg: g.pg, o: oneOf(g.o, ["v", "h"], "v"), p: num(g.p, -MAX_COORD, MAX_COORD, 0) };
+    return withX({ id: g.id, m: stamp(g.m), pg: g.pg, o: oneOf(g.o, ["v", "h"], "v"), p: num(g.p, -MAX_COORD, MAX_COORD, 0) }, g);
   }
   function normRec(r) {
     if (!r || !isId(r.id)) return null;
@@ -331,6 +431,10 @@
   function canon(o) { return JSON.stringify(o); }
   function better(a, b) {   // true when a beats b (LWW)
     if (a.m !== b.m) return a.m > b.m;
+    // equal m: the copy that keeps data for newer code wins over one
+    // that an older copy stripped (wave L0), then the larger JSON
+    var ka = keepsMore(a), kb = keepsMore(b);
+    if (ka !== kb) return ka;
     return canon(a) > canon(b);
   }
 
@@ -389,7 +493,7 @@
       if (txt.trim()) recOut.push({ id: "rc-" + (lose.id.split("-")[1] + lose.m.toString(36)).slice(0, 24), m: lose.m, sid: lose.id, t: txt });
     }
     h.sort(function (a, b) { return b - a; });
-    return { id: win.id, m: win.m, h: h.slice(0, HIST), paras: win.paras };
+    return withX({ id: win.id, m: win.m, h: h.slice(0, HIST), paras: win.paras }, win);
   }
 
   function textApi() {
@@ -570,7 +674,8 @@
   function docBytes(doc) { return JSON.stringify(doc).length; }
 
   var api = {
-    DATA_VER: DATA_VER, PT_PER: PT_PER, PRESETS: PRESETS, MAX_ITEMS: MAX_ITEMS, MAX_PAGES: MAX_PAGES,
+    DATA_VER: DATA_VER, MODEL_LEVEL: MODEL_LEVEL, PT_PER: PT_PER,
+    normX: normX, unknownX: unknownX, minLevel: minLevel, needsNewer: needsNewer, keepsMore: keepsMore, PRESETS: PRESETS, MAX_ITEMS: MAX_ITEMS, MAX_PAGES: MAX_PAGES,
     preset: preset, toUnit: toUnit, fromUnit: fromUnit, label: label, nameOf: nameOf,
     newId: newId, touch: touch, isId: isId, cmpStr: cmpStr, setItemExt: setItemExt, parsePath: parsePath, pathText: pathText, normGrad: normGrad,
     normSetup: normSetup, normItem: normItem, normStory: normStory, normPs: normPs, normCs: normCs,

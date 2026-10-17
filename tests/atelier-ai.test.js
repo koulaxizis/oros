@@ -218,3 +218,17 @@ test("editpic.parse: only well-formed keys and asset paths", () => {
   const core = fs.readFileSync(path.join(ROOT, "atelier/core.js"), "utf8");
   assert.match(core, /tg\.editedPicture[\s\S]{0,80}AT\.editPic\.back\(tg\.editedPicture\)/);
 });
+
+// ---------- the Assistant's in-browser model (WebLLM) ----------
+test("ai.js: WebLLM uses the Assistant's library and worker, never downloads", () => {
+  const src = fs.readFileSync(path.join(ROOT, "atelier/ai.js"), "utf8");
+  const lib = /WL_SRC = "\.\.\/(vendor\/webllm\/[^"]+)"/.exec(src);
+  const wk = /WL_WORKER = "\.\.\/(assistant\/[^"]+)"/.exec(src);
+  assert.ok(lib && fs.existsSync(path.join(ROOT, lib[1])), "library path");
+  assert.ok(wk && fs.existsSync(path.join(ROOT, wk[1])), "worker path");
+  // the worker imports the same library file
+  assert.ok(fs.readFileSync(path.join(ROOT, wk[1]), "utf8").includes(path.basename(lib[1])));
+  // a model that is not cached is refused before the engine is created
+  assert.match(src, /if \(!yes\) throw err\("wlget"\);\s*return wlEngine/);
+  assert.match(src, /cf\.p\.kind === "webllm"\) return wlAsk/);
+});
