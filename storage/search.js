@@ -22,13 +22,24 @@
     return e.tags.map(str).filter(Boolean).slice(0, 10).map(function (x) { return "#" + x; }).join(" ");
   }
 
+  // Pack "storage" (../i18n.js) adds other languages when it is loaded.
+  var S = {
+    en: { "search.unnamed": "Unnamed", "search.lent": "Lent to {who}" },
+    el: { "search.unnamed": "Χωρίς όνομα", "search.lent": "Δανεισμένο σε {who}" }
+  };
+  function sOf(lang) {
+    var I = root && root.orosI18n;
+    if (!S[lang] && I && typeof I.table === "function" && typeof lang === "string" && lang) I.table(S, "storage", lang);
+    return S[lang] || S.en;
+  }
+
   var PROVIDER = {
     id: "storage",
     keys: [KEY],
     search: function (ctx) {
       var d = ctx.readJSON(KEY), out = [];
       if (!d || !Array.isArray(d.ents)) return out;
-      var el = ctx.lang === "el", byId = {};
+      var el = ctx.lang === "el", byId = {}, txt = sOf(ctx.lang), C = root && root.OrosStorageCore;
       d.ents.forEach(function (e) {
         if (e && typeof e.id === "string" && TYPES[e.type] && !byId[e.id]) byId[e.id] = e;
       });
@@ -36,6 +47,7 @@
         var n = str(e.name);
         if (n) return n;
         var bi = e.bi && typeof e.bi === "object" ? e.bi : {};
+        if (!el && C && typeof C.nameOf === "function" && ctx.lang !== "en") return str(C.nameOf({ bi: bi }, ctx.lang));
         return str(el ? bi.el || bi.en : bi.en || bi.el);
       }
       // the names of the live ancestors, root first; null when the
@@ -58,9 +70,9 @@
         if (!path) return;
         out.push({
           id: e.id,
-          title: nameOf(e) || (el ? "Χωρίς όνομα" : "Unnamed"),
+          title: nameOf(e) || txt["search.unnamed"],
           text: [path.filter(Boolean).join(" › "), str(e.note), tagsOf(e),
-                 e.type === "item" && e.lent && str(e.lent.to) ? (el ? "Δανεισμένο σε " : "Lent to ") + str(e.lent.to) : ""]
+                 e.type === "item" && e.lent && str(e.lent.to) ? txt["search.lent"].replace("{who}", str(e.lent.to)) : ""]
             .filter(Boolean).join(" · "),
           when: typeof e.mtime === "number" ? e.mtime : 0,
           target: { id: e.id }
