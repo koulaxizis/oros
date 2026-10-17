@@ -18,7 +18,11 @@
 //     tombstones (R5, R17, R26); clearing a line deletes the day
 //   - device-local (R10): oros-diary-prefs (reminder), the open tab
 // Deep link: __orosOpenAt("diary", { day: "YYYY-MM-DD" }) opens a day
-// (reminder, universal search).
+// (reminder, universal search); { write: { date, text } } (Mood's
+// "Write about it") opens that day's longer entry with the text
+// added but NOT saved (BR-W8-6: Keep, or any edit, saves it).
+// Under the day's title, the feelings Mood logged that day (read-only
+// from oros-mood-data through the shell's OrosMoodCore.dayMoods).
 // Sections:
 //   1. Constants, i18n, helpers
 //   2. Storage + prefs
@@ -147,7 +151,11 @@
       "lock.on": "PIN lock on", "lock.off": "PIN lock removed",
       "lock.title": "The diary is locked", "lock.pin": "PIN", "lock.go": "Unlock",
       "lock.wrong": "Wrong PIN", "lock.wait": "Too many tries. Wait {n} s", "lock.unsupported": "This browser cannot check a PIN here",
-      "lock.note": "Forgot the PIN? It lives only on this device: clearing orOS's site data removes it (and every other local setting); with sync on, your days come back from the cloud."
+      "lock.note": "Forgot the PIN? It lives only on this device: clearing orOS's site data removes it (and every other local setting); with sync on, your days come back from the cloud.",
+      // Everyday interop: Mood's feelings of the day, a hand-over from Mood
+      "mood.lbl": "Mood", "mood.open": "Open Mood for this day: {list}",
+      "draft.note": "From Mood, not saved yet: edit it, or keep it as it is.",
+      "draft.keep": "Keep", "draft.drop": "Discard"
     },
     el: {
       "app.name": "Ημερολόγιο μιας πρότασης",
@@ -243,7 +251,10 @@
       "lock.on": "Το κλείδωμα PIN ενεργοποιήθηκε", "lock.off": "Το PIN αφαιρέθηκε",
       "lock.title": "Το ημερολόγιο είναι κλειδωμένο", "lock.pin": "PIN", "lock.go": "Ξεκλείδωμα",
       "lock.wrong": "Λάθος PIN", "lock.wait": "Πολλές προσπάθειες. Περίμενε {n} δευτ.", "lock.unsupported": "Αυτό το πρόγραμμα περιήγησης δεν μπορεί να ελέγξει PIN εδώ",
-      "lock.note": "Ξέχασες το PIN; Υπάρχει μόνο σε αυτή τη συσκευή: η διαγραφή των δεδομένων ιστότοπου του orOS το αφαιρεί (μαζί με κάθε άλλη τοπική ρύθμιση)· με ενεργό συγχρονισμό, οι μέρες σου επιστρέφουν από το cloud."
+      "lock.note": "Ξέχασες το PIN; Υπάρχει μόνο σε αυτή τη συσκευή: η διαγραφή των δεδομένων ιστότοπου του orOS το αφαιρεί (μαζί με κάθε άλλη τοπική ρύθμιση)· με ενεργό συγχρονισμό, οι μέρες σου επιστρέφουν από το cloud.",
+      "mood.lbl": "Διάθεση", "mood.open": "Άνοιγμα της Διάθεσης γι' αυτή τη μέρα: {list}",
+      "draft.note": "Από τη Διάθεση, δεν έχει αποθηκευτεί ακόμα: άλλαξέ το ή κράτα το όπως είναι.",
+      "draft.keep": "Κράτα το", "draft.drop": "Απόρριψη"
     }
   };
 
@@ -471,6 +482,7 @@
     renderCount();
     renderEmojis();
     renderLate();
+    renderMoodDay();
     renderLong();
     renderOtd();
     renderStats();
@@ -891,10 +903,12 @@
     $("long").hidden = !open;
     if (!open) return;
     var L = C.longOf(data, day), ta = $("long-md");
-    if (!(document.activeElement === ta && longTimer && longDay === day)) ta.value = L.md;
+    var dr = longDraft && longDraft.day === day;
+    if (!(document.activeElement === ta && longTimer && longDay === day)) ta.value = dr ? longDraft.md : L.md;
     ta.placeholder = t("long.ph");
     $("long-del").hidden = !C.hasLong(data, day);
-    if (longDay !== day) $("long-status").textContent = "";
+    if (longDay !== day) $("long-status").textContent = dr ? t("draft.note") : "";
+    $("long-keep").hidden = $("long-drop").hidden = !dr;
     renderMode();
     renderPrompt();
     renderPhotos(L);
@@ -965,6 +979,7 @@
     longDay = null;
   }
   function onLongInput() {
+    dropDraft();                           // an edit: the text is the user's now
     longDay = day;
     clearTimeout(longTimer);
     $("long-status").textContent = t("st.saving");
@@ -984,6 +999,7 @@
   }
 
   function clearLong() {
+    dropDraft();
     flushLong();
     var snap = C.longOf(data, day), ymd = day, now = Date.now();
     ["md", "ph", "loc", "wx"].forEach(function (f) {
@@ -1004,6 +1020,75 @@
       calDirty = yearDirty = true;
       openDay(ymd);
     });
+  }
+
+  // ---- Mood's "Write about it" (BR-W8-6: a hand-over only prefills) ----
+  // The text goes into the textarea only; no save timer starts, so
+  // flush/pagehide/sync write nothing. "Keep" (or any edit, which
+  // starts the normal autosave) saves it; "Discard" or a new
+  // hand-over drops it. Session memory, never stored.
+  var longDraft = null;                    // { day, md }
+  function dropDraft() {
+    if (!longDraft) return;
+    longDraft = null;
+    $("long-keep").hidden = $("long-drop").hidden = true;
+    $("long-status").textContent = "";
+  }
+  function applyWrite(w) {
+    if (!w || typeof w !== "object" || !C.isYmd(w.date)) return;
+    var text = C.cleanMd(typeof w.text === "string" ? w.text : "");
+    openDay(w.date);
+    if (!text) return;
+    longShown[day] = true;
+    longMode = "write";
+    longDraft = { day: day, md: C.cleanMd(J.insertBlock(C.longOf(data, day).md, text)) };
+    renderLong();
+    var ta = $("long-md"), L = ta.value.length;
+    ta.focus();
+    try { ta.setSelectionRange(L, L); } catch (e) {}
+  }
+  function keepDraft() {
+    if (!longDraft || longDraft.day !== day) return;
+    longDay = day;
+    dropDraft();
+    commitLong();                          // the textarea as it stands
+  }
+
+  // ---- Mood of the day (read-only; nothing when Mood is not here) ----
+  var MOOD_KEY = "oros-mood-data";
+  function moodApi() {
+    try {
+      var p = window.parent;
+      if (!p || p === window || typeof p.__orosOpenAt !== "function") return null;
+      if (!p.OrosMoodCore || typeof p.OrosMoodCore.dayMoods !== "function") return null;
+      if (typeof p.orosAssistInstalled === "function" &&
+          !p.orosAssistInstalled().some(function (a) { return a && a.id === "mood"; })) return null;
+      return p;
+    } catch (e) { return null; }
+  }
+  function renderMoodDay() {
+    var b = $("mood-day"), p = moodApi(), list = [];
+    if (p) {
+      try { list = p.OrosMoodCore.dayMoods(JSON.parse(localStorage.getItem(MOOD_KEY) || "null"), day, LANG) || []; }
+      catch (e) { list = []; }
+    }
+    b.hidden = !list.length;
+    b.textContent = "";
+    if (!list.length) return;
+    b.appendChild(el("span", "mood-lbl", t("mood.lbl")));
+    list.forEach(function (m) {
+      var it = el("span", "mood-it");
+      var dot = el("span", "mood-dot");
+      dot.style.background = /^#[0-9a-f]{6}$/i.test(m.col) ? m.col : "var(--text-dim)";
+      it.appendChild(dot);
+      it.appendChild(document.createTextNode((m.ic ? m.ic + " " : "") + m.label));
+      b.appendChild(it);
+    });
+    setLabel(b, t("mood.open", { list: list.map(function (m) { return m.label; }).join(", ") }));
+  }
+  function openMoodDay() {
+    var p = moodApi();
+    if (p) p.__orosOpenAt("mood", { day: day });
   }
 
   // ---- prompts and templates ----
@@ -1991,13 +2076,25 @@
     var f = fileWaiting;
     fileWaiting = null;
     if (f && recFile && !locked) recFile.openFile(f);
+    var w = writeWaiting;
+    writeWaiting = null;
+    if (w && !locked) applyWrite(w);
+  }
+  // { write } while the PIN lock is up waits for the unlock (never
+  // shown or prefilled behind the lock screen)
+  var writeWaiting = null;
+  function openWriteTarget(w) {
+    if (lockRec && (locked || !booted)) { writeWaiting = w; return; }
+    applyWrite(w);
   }
 
-  // Deep link: { day } opens that day (reminder, universal search).
+  // Deep link: { day } opens that day (reminder, universal search);
+  // { write: { date, text } } (Mood) prefills that day's longer entry.
   // "Open with" an .orosdiary file (fileopen.js): { openFile: { token } },
   // the File taken once with window.parent.__orosTakeFile(token)
   function openTarget(target) {
     if (target && typeof target === "object" && target.openFile) { openFileTarget(target.openFile); return; }
+    if (target && typeof target === "object" && target.write) { openWriteTarget(target.write); return; }
     if (!target || typeof target !== "object") { openDay(todayYmd()); return; }
     openDay(C.isYmd(target.day) ? target.day : C.writingDay(data, new Date()).day, true);
   }
@@ -2081,6 +2178,10 @@
     });
     $("prompt-next").addEventListener("click", function () { promptSkip++; renderPrompt(); });
     $("long-del").addEventListener("click", clearLong);
+    $("long-keep").addEventListener("click", keepDraft);
+    $("long-drop").addEventListener("click", function () { dropDraft(); renderLong(); });
+    $("mood-day").addEventListener("click", openMoodDay);
+    window.addEventListener("storage", function (e) { if (e.key === MOOD_KEY || e.key === null) renderMoodDay(); });
     $("loc-btn").addEventListener("click", function () { if ($("loc-edit").hidden) openLocEdit(); else closeLocEdit(); });
     $("loc-geo").addEventListener("click", useMyPosition);
     $("loc-save").addEventListener("click", saveLoc);

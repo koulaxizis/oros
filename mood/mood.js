@@ -1157,6 +1157,18 @@ function mergeMoodStates(A, B) {
   STRINGS.el["rel.now"] = "μόλις τώρα";
   STRINGS.el["rel.min"] = "πριν {n} λ";
   STRINGS.el["rel.hr"]  = "πριν {n} ώ";
+  // Everyday interop: one day's entries (Diary's mood line opens
+  // Mood at { day }), and "Write about it" hands an entry to Diary
+  STRINGS.en["day.only"] = "Only {d}";
+  STRINGS.en["day.all"]  = "Show all days";
+  STRINGS.en["day.none"] = "No entries on this day.";
+  STRINGS.en["wr.btn"]   = "Write about it";
+  STRINGS.en["wr.head"]  = "Mood: {m}";
+  STRINGS.el["day.only"] = "Μόνο {d}";
+  STRINGS.el["day.all"]  = "Όλες οι μέρες";
+  STRINGS.el["day.none"] = "Καμία καταχώρηση αυτή τη μέρα.";
+  STRINGS.el["wr.btn"]   = "Γράψε γι' αυτό";
+  STRINGS.el["wr.head"]  = "Διάθεση: {m}";
 
   function relTime(ts) {
     var m = Math.floor((Date.now() - ts) / 60000);
@@ -2278,7 +2290,9 @@ function mergeMoodStates(A, B) {
     list.innerHTML = "";
     var q = searchQ.trim().toLowerCase();
     var shown = 0;
+    var wr = diaryBridge();
     state.entries.forEach(function (e) {
+      if (dayFilter && dayKey(e.ts) !== dayFilter) return; // { day } deep link
       if (q && searchHaystack(e).indexOf(q) < 0) return;   // search scans ALL
       if (shown >= 30) return;                             // display cap stays
       shown++;
@@ -2341,6 +2355,16 @@ function mergeMoodStates(A, B) {
       eb.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg>';
       eb.addEventListener("click", function () { editEntry(e.id); });
       btns.appendChild(eb);
+      if (wr) {                             // "Write about it" → Diary (prefill only)
+        var wb = document.createElement("button");
+        wb.type = "button";
+        wb.className = "e-act";
+        wb.title = t("wr.btn");
+        wb.setAttribute("aria-label", t("wr.btn"));
+        wb.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5V5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M8 7h7M8 11h5"/></svg>';
+        wb.addEventListener("click", function () { writeInDiary(e); });
+        btns.appendChild(wb);
+      }
       var db = document.createElement("button");
       db.type = "button";
       db.className = "e-act del";
@@ -2354,12 +2378,66 @@ function mergeMoodStates(A, B) {
       list.appendChild(li);
     });
     // #5: explicit no-results state when the query matches nothing
-    if (q && !shown) {
+    if ((q || dayFilter) && !shown) {
       var nr = document.createElement("li");   // li inside ul — valid HTML
       nr.id = "empty-note";
-      nr.textContent = t("ent.noRes").replace("{q}", searchQ.trim());
+      nr.textContent = q ? t("ent.noRes").replace("{q}", searchQ.trim()) : t("day.none");
       list.appendChild(nr);
     }
+  }
+
+  // ---- Everyday interop (BR-W8-6) ----
+  // { day: "YYYY-MM-DD" } (Diary's mood line): the Entries tab showing
+  // only that day, with a "Show all days" way out. View state only.
+  var dayFilter = null;
+  function openDayEntries(ymd) {
+    showTab("entries");                   // clears any older day first
+    dayFilter = ymd;
+    renderRecent();
+    var mm = $("moodmain");
+    if (mm) mm.scrollTop = 0; else window.scrollTo(0, 0);
+  }
+  function renderDayBar(sec, list) {
+    var bar = document.getElementById("ent-day");
+    if (!dayFilter) { if (bar) bar.remove(); return; }
+    if (!bar) {
+      bar = document.createElement("div");
+      bar.id = "ent-day";
+      sec.insertBefore(bar, list);
+    }
+    bar.textContent = "";
+    var lb = document.createElement("span");
+    lb.className = "ent-day-lbl";
+    var p = dayFilter.split("-");
+    lb.textContent = t("day.only").replace("{d}", new Date(+p[0], +p[1] - 1, +p[2])
+      .toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" }));
+    bar.appendChild(lb);
+    var all = document.createElement("button");
+    all.type = "button";
+    all.className = "link-btn";
+    all.textContent = t("day.all");
+    all.addEventListener("click", function () { dayFilter = null; renderRecent(); });
+    bar.appendChild(all);
+  }
+  // "Write about it": Diary opens that entry's day with the longer
+  // entry PREFILLED (Diary contract { write: { date, text } }); Diary
+  // saves nothing until the user edits or keeps it there.
+  function diaryBridge() {
+    try {
+      var p = window.parent;
+      if (!p || p === window || typeof p.__orosOpenAt !== "function") return null;
+      if (typeof p.orosAssistInstalled === "function" &&
+          !p.orosAssistInstalled().some(function (a) { return a && a.id === "diary"; })) return null;
+      return p;
+    } catch (e) { return null; }
+  }
+  function writeInDiary(e) {
+    var p = diaryBridge();
+    if (!p || !e) return;
+    var names = (e.emotions || []).map(function (m) { return emoLabel(m.k); }).join(", ");
+    var text = names ? t("wr.head").replace("{m}", names) : "";
+    if (e.note) text += (text ? "\n\n" : "") + e.note;
+    p.__orosOpenAt("diary", { write: { date: dayKey(e.ts), text: text } });
   }
 
   function renderRecent() {
@@ -2373,6 +2451,7 @@ function mergeMoodStates(A, B) {
     if (!state.entries.length) {           // #15: message, not a blank panel
       var staleSr = document.getElementById("ent-search");   // #N4
       if (staleSr) staleSr.remove();
+      renderDayBar(sec, list);
       var emp = document.createElement("div");
       emp.id = "empty-note";
       emp.textContent = t("ent.empty");
@@ -2397,6 +2476,7 @@ function mergeMoodStates(A, B) {
       });
       sec.insertBefore(sr, list);
     }
+    renderDayBar(sec, list);
 
     fillEntryList();
   }
@@ -2448,6 +2528,7 @@ function mergeMoodStates(A, B) {
 
   function showTab(tab) {
     viewMode = tab;
+    dayFilter = null;                     // a tab tap shows every day again
     applyView();
   }
 
@@ -5186,11 +5267,14 @@ function mergeMoodStates(A, B) {
 
   // Single app (solo.js) icon shortcut { checkin: true }: the capture
   // tab, as the check-in reminder opens it.
+  // Diary's mood line { day: "YYYY-MM-DD" }: that day's entries.
   // "Open with" an .orosmood file (fileopen.js): { openFile: { token } },
   // the File taken once with window.parent.__orosTakeFile(token)
   window.__orosOpenAt = function (tg) {
     if (tg && typeof tg === "object" && tg.openFile) { if (recFile) recFile.openTarget(tg.openFile); return; }
     if (tg && typeof tg === "object" && tg.checkin === true) __orosMoodOpen("checkin");
+    else if (tg && typeof tg === "object" && typeof tg.day === "string" &&
+             /^\d{4}-\d{2}-\d{2}$/.test(tg.day)) openDayEntries(tg.day);
   };
   try {
     if (window.parent && window.parent !== window && typeof window.parent.__orosTakeTarget === "function")

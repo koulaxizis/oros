@@ -64,6 +64,8 @@ Your entries, your own locations, people and triggers, your feelings and activit
 
 ## Tips
 - Your entries show up in [Calendar](app:calendar) on their day; opening one there brings you back here to edit it.
+- In `Entries`, the book button (`Write about it`) opens that day in [Diary](app:diary) with your feelings and note filled in; nothing is saved there until you keep it.
+- Diary shows the feelings of each day under its date; tapping them brings you here to that day's entries (`Show all days` lists everything again).
 - Once you have entries, orOS reminds you once a day if you haven't logged anything that day. Turn it off in [Notifications](help:t/notifications).
 
 ## Limits

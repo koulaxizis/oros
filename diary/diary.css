@@ -191,6 +191,13 @@ h2, h3 {
   min-width: 0;
 }
 .day-sub { display: flex; justify-content: center; align-items: center; gap: 10px; min-height: 32px; margin-top: -8px; }
+/* Mood of the day: one quiet line under the date */
+.mood-day { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 4px 10px; max-width: 100%; margin: -2px auto 8px; padding: 4px 10px; background: none; border: 1px solid transparent; border-radius: 999px; color: var(--text-dim); font: inherit; font-size: 12px; cursor: pointer; }
+.mood-day:hover { border-color: var(--border); color: var(--text); }
+.mood-day:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.mood-lbl { font-weight: 600; }
+.mood-it { display: inline-flex; align-items: center; gap: 5px; min-width: 0; overflow-wrap: anywhere; }
+.mood-dot { flex: none; width: 8px; height: 8px; border-radius: 50%; }
 .late {
   display: flex;
   flex-wrap: wrap;

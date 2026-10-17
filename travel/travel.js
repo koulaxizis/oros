@@ -171,7 +171,7 @@
       "menu.remOff": "Turn reminders off", "menu.remOn": "Turn reminders on",
       "toast.remOff": "Reminders off on this device", "toast.remOn": "Reminders on: the evening before you leave and before departures",
       "wx.title": "Forecast for {place}", "wx.at": "updated {time}", "wx.later": "The forecast shows up 7 days before the trip.",
-      "wx.nf": "No forecast: the destination was not found.", "wx.fail": "No forecast right now.",
+      "wx.day": "Forecast: {t}", "wx.nf": "No forecast: the destination was not found.", "wx.fail": "No forecast right now.",
       "wx.rain": "Rain likely on {day}. Add an umbrella?", "wx.add": "Add", "wx.no": "No thanks", "wx.umbrella": "Umbrella",
       "wx.c.clear": "Clear", "wx.c.part": "Partly cloudy", "wx.c.cloud": "Cloudy", "wx.c.fog": "Fog",
       "wx.c.rain": "Rain", "wx.c.snow": "Snow", "wx.c.storm": "Thunderstorm", "wx.pp": "Chance of rain {n}%",
@@ -317,7 +317,7 @@
       "menu.remOff": "Απενεργοποίηση υπενθυμίσεων", "menu.remOn": "Ενεργοποίηση υπενθυμίσεων",
       "toast.remOff": "Οι υπενθυμίσεις σβήστηκαν σε αυτή τη συσκευή", "toast.remOn": "Υπενθυμίσεις: το βράδυ πριν φύγεις και πριν από τις αναχωρήσεις",
       "wx.title": "Πρόγνωση για {place}", "wx.at": "ενημέρωση {time}", "wx.later": "Η πρόγνωση εμφανίζεται 7 μέρες πριν το ταξίδι.",
-      "wx.nf": "Χωρίς πρόγνωση: ο προορισμός δεν βρέθηκε.", "wx.fail": "Η πρόγνωση δεν είναι διαθέσιμη τώρα.",
+      "wx.day": "Πρόγνωση: {t}", "wx.nf": "Χωρίς πρόγνωση: ο προορισμός δεν βρέθηκε.", "wx.fail": "Η πρόγνωση δεν είναι διαθέσιμη τώρα.",
       "wx.rain": "Πιθανή βροχή {day}. Να μπει ομπρέλα;", "wx.add": "Προσθήκη", "wx.no": "Όχι, ευχαριστώ", "wx.umbrella": "Ομπρέλα",
       "wx.c.clear": "Αίθριος", "wx.c.part": "Λίγα σύννεφα", "wx.c.cloud": "Συννεφιά", "wx.c.fog": "Ομίχλη",
       "wx.c.rain": "Βροχή", "wx.c.snow": "Χιόνι", "wx.c.storm": "Καταιγίδα", "wx.pp": "Πιθανότητα βροχής {n}%",
@@ -1772,7 +1772,8 @@
     }
     $("plan-msg").hidden = trip.plan.length > 0;
     var stays = trip.plan.filter(function (p) { return p.kind === "stay" && isYmd(p.day); });
-    planSections(trip).forEach(function (s) {
+    var sections = planSections(trip), dayWx = planWx(trip, sections);
+    sections.forEach(function (s) {
       var marks = [];
       if (s.day) {
         stays.forEach(function (st) {
@@ -1786,6 +1787,15 @@
       var sec = el("section", "pday" + (s.day === todayYmd() ? " today" : ""));
       var h = el("div", "pday-h");
       h.appendChild(el("h3", "", s.label));
+      var w = s.day && dayWx[s.day];
+      if (w) {
+        var wl = t("wx.day", { t: w.label });
+        var wx = el("span", "pday-wx", (w.icon ? w.icon + " " : "") + w.label);
+        wx.setAttribute("role", "img");
+        wx.setAttribute("aria-label", wl);
+        wx.title = wl;
+        h.appendChild(wx);
+      }
       h.appendChild(iconBtn("mini", UI.plus, s.undated ? t("plan.add") : t("plan.addDay", { day: fmtDay(s.day) }),
         function () { planDialog(null, s.undated ? "" : s.day); }));
       sec.appendChild(h);
@@ -1805,6 +1815,23 @@
       sec.appendChild(ul);
       host.appendChild(sec);
     });
+  }
+
+  // Each itinerary day's forecast from the Weather app's own cache
+  // (weather/days.js, read-only, no fetch): the saved city near the
+  // trip's point, or near the destination the forecast strip already
+  // geocoded. No point, no near city or an old cache: nothing.
+  function planWx(trip, sections) {
+    var W = window.OrosWeatherDays;
+    if (!W || typeof W.forDates !== "function") return {};
+    var g = trip.geo;
+    if (!g && trip.dest) {
+      var c = wxLoad().by[wxQuery(trip)];
+      if (c && wxNum(c.lat) !== null && wxNum(c.lon) !== null) g = { lat: c.lat, lon: c.lon };
+    }
+    if (!g) return {};
+    var days = sections.map(function (s) { return s.day; }).filter(isYmd);
+    try { return W.forDates(days, { lat: g.lat, lon: g.lon }) || {}; } catch (e) { return {}; }
   }
 
   function entryRow(trip, p, untimed) {

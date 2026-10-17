@@ -57,6 +57,8 @@ With things in the pantry, a line the pantry covers moves to `At home already` a
 
 Inside orOS, `Open in Spreadsheet` in the Week tab puts the week's plan (date, day, meal, dish, servings) in a new sheet of the [Spreadsheet](app:spreadsheet); the same button in the Shopping tab sends the shopping list (aisle, item, quantity, recipes, bought).
 
+Inside orOS, `Add to Budget` in the Shopping tab asks what you paid and opens a new Groceries expense in [Budget](app:budget), dated today; it's saved only when you press Save there.
+
 `To To-Do` sends the unticked items to the `Groceries` list in [To-Do](app:todo), each with the recipes it is for. To-Do shows them first: you can pick another list, and items already on it start unticked. Nothing is added until you press `Add`, and your ticks here don't change.
 
 ## Pantry

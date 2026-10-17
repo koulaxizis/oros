@@ -75,7 +75,7 @@
       "wd": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
       "months": ["January", "February", "March", "April", "May", "June",
                  "July", "August", "September", "October", "November", "December"],
-      "day.today": "Today",
+      "day.today": "Today", "wx.day": "Forecast: {t}",
       "ev.add": "Add",
       "ev.dlg.new": "New event",
       "ev.dlg.edit": "Edit event",
@@ -93,6 +93,7 @@
       "ev.cancel": "Cancel",
       "ev.delete": "Delete event",
       "ev.qr": "QR code",
+      "ev.track": "Track time",
       "ev.mail": "Email",
       "ev.share": "Send…",
       "ev.delete.confirm": "Delete this event?",
@@ -273,7 +274,7 @@
       "months": ["Ιανουάριος", "Φεβρουάριος", "Μάρτιος", "Απρίλιος",
                  "Μάιος", "Ιούνιος", "Ιούλιος", "Αύγουστος",
                  "Σεπτέμβριος", "Οκτώβριος", "Νοέμβριος", "Δεκέμβριος"],
-      "day.today": "Σήμερα",
+      "day.today": "Σήμερα", "wx.day": "Πρόγνωση: {t}",
       "ev.add": "Προσθήκη",
       "ev.dlg.new": "Νέο συμβάν",
       "ev.dlg.edit": "Επεξεργασία συμβάντος",
@@ -291,6 +292,7 @@
       "ev.cancel": "Άκυρο",
       "ev.delete": "Διαγραφή συμβάντος",
       "ev.qr": "Κωδικός QR",
+      "ev.track": "Χρονομέτρηση",
       "ev.mail": "Email",
       "ev.share": "Αποστολή…",
       "ev.delete.confirm": "Να διαγραφεί αυτό το συμβάν;",
@@ -2896,9 +2898,25 @@ function transientNote(title, body) {
     else openDlg(src);
   }
 
+  // Weather on days (app links wave 6): the Weather app's cached
+  // forecast, read only, never fetched (../weather/days.js).
+  function wxDays(dates) {
+    try { return window.OrosWeatherDays ? window.OrosWeatherDays.forDates(dates) || {} : {}; }
+    catch (e) { return {}; }
+  }
+  function wxChip(w, cls, withTemp) {
+    var sp = document.createElement("span");
+    sp.className = cls;
+    sp.textContent = withTemp ? w.icon + " " + w.label : w.icon;
+    sp.title = t("wx.day").replace("{t}", w.label);
+    sp.setAttribute("aria-label", sp.title);
+    return sp;
+  }
+
   function renderGrid() {
     var grid = $("cal-grid");
     grid.textContent = "";
+    var wxDates = [];
 
     // Monday-first offset: getDay(): Sun=0..Sat=6 → Mon-first index.
     var first = new Date(viewYear, viewMonth, 1);
@@ -2941,6 +2959,7 @@ function transientNote(title, body) {
       num.className = "cal-num";
       num.textContent = dayNum;
       btn.appendChild(num);
+      wxDates.push([cellDate, btn]);
 
       var dots = document.createElement("span");
       dots.className = "ev-dot-row";
@@ -2960,6 +2979,8 @@ function transientNote(title, body) {
 
       grid.appendChild(btn);
     }
+    var wx = wxDays(wxDates.map(function (x) { return x[0]; }));
+    wxDates.forEach(function (x) { if (wx[x[0]]) x[1].appendChild(wxChip(wx[x[0]], "cal-wx", false)); });
   }
 
   /* ---------- 4b. Week view ---------- */
@@ -2988,6 +3009,8 @@ function transientNote(title, body) {
       dn.className = "wk-dnum";
       dn.textContent = t("wd")[i] + " " + (+p[2]);
       head.appendChild(dn);
+      var wxd = wxDays([dayYmd])[dayYmd];
+      if (wxd) head.appendChild(wxChip(wxd, "wk-wx", true));
       col.appendChild(head);
 
       var body = document.createElement("div");
@@ -3788,6 +3811,8 @@ function transientNote(title, body) {
     var txt = d.getDate() + " " + t("months")[d.getMonth()];
     if (selDate === todayYMD()) txt += " — " + t("day.today");
     head.textContent = txt;
+    var wxs = wxDays([selDate])[selDate];
+    if (wxs) head.appendChild(wxChip(wxs, "day-wx", true));
     renderNamedayLine();
 
     var ul = $("ev-list");
@@ -4290,6 +4315,27 @@ function transientNote(title, body) {
     });
   }
 
+  // Timesheet: "Track time" starts a Timesheet timer named after the
+  // SAVED event (__orosOpenAt("timesheet", { startTimer: { title } });
+  // the user's own click, like Start there; a running timer is kept).
+  // Shown inside orOS only, and only when the shell lists Timesheet
+  // among the installed apps (orosAssistInstalled).
+  var dlgTrack = null, tsInstalled = false;
+  if (shellOpenAt()) {
+    try {
+      var inst = window.parent.orosAssistInstalled;
+      tsInstalled = typeof inst === "function" && inst().some(function (a) { return a && a.id === "timesheet"; });
+    } catch (e) {}
+  }
+  if ($("ev-track")) {
+    $("ev-track").addEventListener("click", function () {
+      var p = shellOpenAt(), title = dlgTrack;
+      if (!p || !title) return;
+      $("ev-dlg").close();     // unsaved edits are left behind, like Cancel
+      p.__orosOpenAt("timesheet", { startTimer: { title: title } });
+    });
+  }
+
   // Mail: "Email" writes a message about the SAVED event (orOS Mail
   // compose receiver: a prefilled draft, never sent by itself). To =
   // the addresses written in the event; shown only when Mail has an
@@ -4402,6 +4448,10 @@ function transientNote(title, body) {
     if (dlgQr && occ) dlgQr.date = occ;
     var qrBtn = $("ev-qr");
     if (qrBtn) qrBtn.hidden = !(dlgQr && shellOpenAt());
+    dlgTrack = existing && tsInstalled && shellOpenAt()
+      ? String(existing.title || t("ev.untitled")).replace(/\s+/g, " ").trim().slice(0, 200) : null;
+    var trackBtn = $("ev-track");
+    if (trackBtn) trackBtn.hidden = !dlgTrack;
     dlgMail = existing && shellOpenAt() && mailReady()
       ? mailFromEvent(localView(existing, occ), occ ? OCC.instance(existing, occ).date : OCC.instance(existing, existing.date).date) : null;
     dlgShare = existing && shareApi() ? sharePayload(existing, occ) : null;

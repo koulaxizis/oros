@@ -9,6 +9,7 @@ Type a number in `From` and the result appears in `To` as you type. It also work
 - The ⇄ button swaps the two units.
 - The line under the fields shows the rule used, for example `1 mi = 1.609344 km`.
 - The copy button copies the result. [[Esc]] clears the field you are in.
+- `Send to…` (the paper plane next to it) sends the conversion, like `5 km = 3.107 mi`, to another app, such as Notes.
 
 ## Typing numbers
 - Use a comma or a point for decimals: `1,5` and `1.5` are the same. With both, the last one is the decimal point (`1.234,5`).
