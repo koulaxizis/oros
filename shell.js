@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "2.75.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "2.76.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -4997,6 +4997,20 @@
     }
   }
 
+  // WebDAV W2: test the server, then sync through it. The password
+  // goes straight to sync.js; the shell keeps nothing of it.
+  function syncConnectDav(form) {
+    var S = window.orosSync;
+    if (!S || typeof S.connectWebdav !== "function" || S.isConnected()) return;
+    setSyncMsgRaw("dim", window.t("sync.dav.testing"));
+    S.connectWebdav({ url: form.url, user: form.user, pass: form.pass, dir: form.dir })
+      .then(function (acc) {
+        state.syncUserEmail = (acc && acc.email) || null;
+        setSyncMsg("ok", "sync.dav.ok");
+      })
+      .catch(handleSyncError);
+  }
+
   function syncDisconnectUser() {
     if (!window.orosSync) return;
     window.orosSync.disconnect();
@@ -8512,6 +8526,8 @@
         connected: connected,
         unlocked: unlocked,
         email: connected ? (state.syncUserEmail || null) : null,
+        provider: (S && typeof S.getProvider === "function") ? S.getProvider() : "dropbox",
+        davAvailable: !!(S && typeof S.connectWebdav === "function"),
         dirty: !!(unlocked && S.isDirty()),
         hasVault: !!(connected && S.hasDeviceVault()),
         interval: getSafeInterval(),
@@ -8594,6 +8610,9 @@
     var S = window.orosSync;
     switch (name) {
       case "sync.connect":    if (S && !S.isConnected()) S.connect(); return;
+      case "sync.connectDav":
+        if (arg && typeof arg.url === "string" && typeof arg.pass === "string") syncConnectDav(arg);
+        return;
       case "sync.unlock":
         if (S && S.isConnected() && !S.hasPassphrase() && arg && typeof arg.pw === "string") {
           syncUnlock(arg.pw, !!arg.remember);
