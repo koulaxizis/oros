@@ -103,10 +103,15 @@
   var cache = { acct: "", products: null, plan: null, orders: null, ost: "open" };
 
   function open(api) {
-    var LANG = api.lang === "el" ? "el" : "en";
-    var LOCALE = LANG === "el" ? "el-GR" : "en-GB";
+    // orosI18n (../i18n.js): the full language code, a pack language included.
+    var LANG = window.orosI18n ? window.orosI18n.lang() : (api.lang === "el" ? "el" : "en");
+    var LOCALE = window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB");
+    // shared modules (links/woo.js) pick between their en/el texts
+    var BASE = LANG === "el" ? "el" : "en";
+    if (window.orosI18n && !STR[LANG]) window.orosI18n.table(STR, "stock", LANG);
     function t(k, vars) {
-      var s = STR[LANG][k] !== undefined ? STR[LANG][k] : (STR.en[k] !== undefined ? STR.en[k] : k);
+      var tb = STR[LANG] || STR.en;
+      var s = tb[k] !== undefined ? tb[k] : (STR.en[k] !== undefined ? STR.en[k] : k);
       if (vars) Object.keys(vars).forEach(function (n) { s = s.split("{" + n + "}").join(String(vars[n])); });
       return s;
     }
@@ -386,11 +391,11 @@
       }));
       var P = window.parent;
       if (P && typeof P.__orosOpenAt === "function") {
-        a.appendChild(button(t("invoice"), "", function () { P.__orosOpenAt("invoices", { "new": W.invoicePrefill(o, cache.acct, LANG) }); }));
-        var log = W.crmLog(o, LANG, moneyIn(o.total, o.cur));
+        a.appendChild(button(t("invoice"), "", function () { P.__orosOpenAt("invoices", { "new": W.invoicePrefill(o, cache.acct, BASE) }); }));
+        var log = W.crmLog(o, BASE, moneyIn(o.total, o.cur));
         if (log) a.appendChild(button(t("crm"), "", function () { P.__orosOpenAt("crm", { log: log }); }));
       }
-      var bud = W.budgetPrefill(o, LANG);
+      var bud = W.budgetPrefill(o, BASE);
       if (bud && P && typeof P.__orosOpenBudgetNew === "function") {
         a.appendChild(button(t("budget"), "", function () { P.__orosOpenBudgetNew(bud); }));
       }

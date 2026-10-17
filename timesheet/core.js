@@ -606,7 +606,41 @@
     var h = Math.floor(total / 3600), mi = Math.floor(total / 60) % 60, se = total % 60;
     return h + ":" + pad(mi) + (secs ? ":" + pad(se) : "");
   }
-  function locale(lang) { return lang === "el" ? "el-GR" : "en-GB"; }
+  // Words in exports (CSV head, Yes/No, a quote line without a
+  // project). orOS pack "timesheet" (../i18n.js) for other languages;
+  // under Node (tests) only en/el.
+  var I18N = typeof window !== "undefined" && window.orosI18n ? window.orosI18n : null;
+  var STRINGS = {
+    en: {
+      "exp.date": "Date", "exp.start": "Start", "exp.end": "End", "exp.duration": "Duration",
+      "exp.hours": "Hours", "exp.client": "Client", "exp.project": "Project",
+      "exp.desc": "Description", "exp.task": "Task", "exp.tags": "Tags", "exp.billable": "Billable",
+      "exp.rate": "Rate", "exp.amount": "Amount", "exp.billed": "Billed",
+      "exp.yes": "Yes", "exp.no": "No", "noProject": "No project"
+    },
+    el: {
+      "exp.date": "Ημερομηνία", "exp.start": "Έναρξη", "exp.end": "Λήξη", "exp.duration": "Διάρκεια",
+      "exp.hours": "Ώρες", "exp.client": "Πελάτης", "exp.project": "Έργο",
+      "exp.desc": "Περιγραφή", "exp.task": "Εργασία", "exp.tags": "Ετικέτες", "exp.billable": "Χρεώσιμο",
+      "exp.rate": "Χρέωση/ώρα", "exp.amount": "Ποσό", "exp.billed": "Τιμολογήθηκε",
+      "exp.yes": "Ναι", "exp.no": "Όχι", "noProject": "Χωρίς έργο"
+    }
+  };
+  if (I18N) I18N.table(STRINGS, "timesheet", I18N.lang());
+  function words(lang) {
+    if (!STRINGS[lang] && I18N && lang) I18N.table(STRINGS, "timesheet", lang);
+    return STRINGS[lang] || STRINGS.en;
+  }
+  function locale(lang) {
+    return I18N && lang ? I18N.locale(lang) : (lang === "el" ? "el-GR" : "en-GB");
+  }
+  // Decimal comma in exports and money inputs: el, and any language
+  // whose numbers use one (de); English keeps the point.
+  function comma(lang) {
+    if (lang === "el") return true;
+    if (!lang || lang === "en") return false;
+    try { return new Intl.NumberFormat(locale(lang)).format(1.5).indexOf(",") >= 0; } catch (e) { return false; }
+  }
   function fmtHours(ms, lang) {
     try {
       return new Intl.NumberFormat(locale(lang), { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -622,7 +656,7 @@
   function moneyInput(cents, lang) {
     if (!cents) return "";
     var whole = Math.floor(cents / 100), dec = cents % 100;
-    return dec ? whole + (lang === "el" ? "," : ".") + pad(dec) : String(whole);
+    return dec ? whole + (comma(lang) ? "," : ".") + pad(dec) : String(whole);
   }
   function hhmm(ts) { var d = new Date(ts); return pad(d.getHours()) + ":" + pad(d.getMinutes()); }
 
@@ -637,9 +671,19 @@
   // One row per piece (as in the report), `;` separated with a BOM so
   // spreadsheet apps read Greek right; decimals follow the language.
   function exportHead(lang) {
-    return lang === "el"
-      ? ["Ημερομηνία", "Έναρξη", "Λήξη", "Διάρκεια", "Ώρες", "Πελάτης", "Έργο", "Περιγραφή", "Εργασία", "Ετικέτες", "Χρεώσιμο", "Χρέωση/ώρα", "Ποσό", "Τιμολογήθηκε"]
-      : ["Date", "Start", "End", "Duration", "Hours", "Client", "Project", "Description", "Task", "Tags", "Billable", "Rate", "Amount", "Billed"];
+    var w = words(lang);
+    return ["date", "start", "end", "duration", "hours", "client", "project", "desc", "task", "tags", "billable", "rate", "amount", "billed"]
+      .map(function (k) { return w["exp." + k]; });
+  }
+  // A CSV date: YYYY-MM-DD (en), DD/MM/YYYY (el), else the language's
+  // numeric date (de: DD.MM.YYYY).
+  function csvDate(k, lang) {
+    if (lang === "en" || !lang) return k;
+    var d = keyDate(k);
+    if (lang !== "el") {
+      try { return new Intl.DateTimeFormat(locale(lang), { day: "2-digit", month: "2-digit", year: "numeric" }).format(d); } catch (e) {}
+    }
+    return pad(d.getDate()) + "/" + pad(d.getMonth() + 1) + "/" + d.getFullYear();
   }
   // The report's pieces in the range and filter, oldest first.
   function exportPieces(data, fromKey, toKey, f, now) {
@@ -649,9 +693,9 @@
     }).sort(function (a, b) { return a.s - b.s || cmpStr(a.x.id, b.x.id); });
   }
   function toCsv(data, fromKey, toKey, f, now, lang) {
-    var el = lang === "el";
-    var dec = function (n, d) { var s = n.toFixed(d); return el ? s.replace(".", ",") : s; };
-    var yes = el ? "Ναι" : "Yes", no = el ? "Όχι" : "No";
+    var cm = comma(lang), w = words(lang);
+    var dec = function (n, d) { var s = n.toFixed(d); return cm ? s.replace(".", ",") : s; };
+    var yes = w["exp.yes"], no = w["exp.no"];
     var lines = [exportHead(lang).map(csvCell).join(";")];
     var prefs = data.prefs;
     var rows = exportPieces(data, fromKey, toKey, f, now);
@@ -660,8 +704,7 @@
       var b = billable(data, x.p);
       var ms = roundMs(pc.e - pc.s, prefs.round, prefs.rup);
       var rate = b ? rateOf(data, x.p) : 0;
-      var d = keyDate(pc.k);
-      var dateText = el ? pad(d.getDate()) + "/" + pad(d.getMonth() + 1) + "/" + d.getFullYear() : pc.k;
+      var dateText = csvDate(pc.k, lang);
       lines.push([
         dateText, hhmm(pc.s), pc.e === dayStart(addDays(pc.k, 1)) ? "24:00" : hhmm(pc.e),
         fmtDur(ms), dec(ms / HOUR, 2),
@@ -676,8 +719,8 @@
   // numbers for hours, rate and amount, dates as YYYY-MM-DD.
   // → [heading, ...rows]
   function toTable(data, fromKey, toKey, f, now, lang) {
-    var el = lang === "el";
-    var yes = el ? "Ναι" : "Yes", no = el ? "Όχι" : "No";
+    var w = words(lang);
+    var yes = w["exp.yes"], no = w["exp.no"];
     var prefs = data.prefs;
     return [exportHead(lang)].concat(exportPieces(data, fromKey, toKey, f, now).map(function (pc) {
       var x = pc.x, p = project(data, x.p), c = projectClient(data, p);
@@ -709,7 +752,7 @@
       if (!r.billMs) return;
       var p = project(data, r.key), c = projectClient(data, p);
       clients[c ? c.id : ""] = c ? c.name : "";
-      var name = p ? p.name : (lang === "el" ? "Χωρίς έργο" : "No project");
+      var name = p ? p.name : words(lang).noProject;
       items.push({
         d: name + " · " + range,
         q: Math.round(r.billMs / HOUR * 100) / 100,
@@ -725,7 +768,11 @@
   function fmtRange(fromKey, toKey, lang) {
     var a = keyDate(fromKey), b = keyDate(toKey);
     var dm = function (d) { return pad(d.getDate()) + "/" + pad(d.getMonth() + 1); };
-    if (lang !== "el") {
+    if (lang !== "el" && lang && lang !== "en") {
+      var fmt = null;
+      try { fmt = new Intl.DateTimeFormat(locale(lang), { day: "numeric", month: "short" }); } catch (e) {}
+      if (fmt) dm = function (d) { return fmt.format(d); };
+    } else if (lang !== "el") {
       dm = function (d) { return d.getDate() + " " + ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][d.getMonth()]; };
     }
     var sep = lang === "el" ? "/" : " ";

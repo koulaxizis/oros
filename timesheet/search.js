@@ -14,6 +14,10 @@
 (function (root) {
   "use strict";
   var KEY = "oros-timesheet-data";
+  var STRINGS = {
+    en: { "search.noName": "Unnamed project", "search.noClient": "Unnamed client" },
+    el: { "search.noName": "Έργο χωρίς όνομα", "search.noClient": "Πελάτης χωρίς όνομα" }
+  };
 
   function str(v) { return typeof v === "string" ? v.trim() : ""; }
   function live(a) {
@@ -28,7 +32,7 @@
     search: function (ctx) {
       var d = ctx.readJSON(KEY), out = [];
       if (!d || typeof d !== "object") return out;
-      var el = ctx.lang === "el";
+      var w = STRINGS[ctx.lang] || STRINGS.en;
       var clients = {}, projects = {};
       live(d.clients).forEach(function (c) { clients[c.id] = c; });
       live(d.projects).forEach(function (p) { projects[p.id] = p; });
@@ -40,7 +44,7 @@
         if (c) (projNames[c.id] = projNames[c.id] || []).push(str(p.name));
         out.push({
           id: "p:" + p.id,
-          title: str(p.name) || (el ? "Έργο χωρίς όνομα" : "Unnamed project"),
+          title: str(p.name) || w["search.noName"],
           text: c ? str(c.name) : "",
           when: typeof p.m === "number" ? p.m : 0,
           target: { project: p.id }
@@ -50,7 +54,7 @@
         var c = clients[id];
         out.push({
           id: "c:" + c.id,
-          title: str(c.name) || (el ? "Πελάτης χωρίς όνομα" : "Unnamed client"),
+          title: str(c.name) || w["search.noClient"],
           text: (projNames[c.id] || []).filter(Boolean).join(" · "),
           when: typeof c.m === "number" ? c.m : 0,
           target: { client: c.id }

@@ -40,7 +40,11 @@
     id: "crm",
     keys: [KEY],
     search: function (ctx) {
-      var d = ctx.readJSON(KEY), out = [], L = ctx.lang === "el" ? "el" : "en";
+      var d = ctx.readJSON(KEY), out = [], L = ctx.lang || "en";
+      // a pack language (../i18n.js): STAGE[L] = English + the "crm" pack
+      var I = typeof window !== "undefined" && window.orosI18n;
+      if (I && !STAGE[L]) I.table(STAGE, "crm", L);
+      if (!STAGE[L]) L = "en";
       if (!d || !Array.isArray(d.cust)) return out;
       var tombs = d.tombs && typeof d.tombs === "object" ? d.tombs : {};
       function gone(x) {
@@ -71,7 +75,7 @@
       rows(d.deals, function (x, cn) {
         var own = stg[x.stage];
         var stage = (own && own.name) || STAGE[L][x.stage] || "";
-        var val = typeof x.val === "number" && x.val > 0 ? (x.val / 100).toLocaleString(L === "el" ? "el-GR" : "en-GB") : "";
+        var val = typeof x.val === "number" && x.val > 0 ? (x.val / 100).toLocaleString(I ? I.locale(L) : (L === "el" ? "el-GR" : "en-GB")) : "";
         return {
           id: x.id,
           title: str(x.title),

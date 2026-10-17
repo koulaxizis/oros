@@ -1,0 +1,77 @@
+# Zeiterfassung
+Die Zeiterfassung misst die Zeit, die du für deine Arbeit brauchst, pro Projekt und Kunde. Starte einen Timer oder trag Zeit manuell ein, dann sieh dir deine Woche an und erstelle Berichte mit Stunden und Beträgen.
+
+## Erste Schritte
+Wähle auf dem Tab `Timer` ein Projekt (oder lass `Kein Projekt`), tippe ins Feld `Woran arbeitest du?` und drück `Starten`. Drück `Stoppen`, wenn du fertig bist. Der Timer läuft weiter, auch wenn die App geschlossen ist, und du siehst ihn auch auf deinen anderen Geräten.
+
+Unter dem Timer siehst du die Einträge des Tages und seine Summe. Mit den Pfeilen gehst du zu anderen Tagen; die Datumsschaltfläche bringt dich zurück zu heute. Tippe oder klicke auf einen Eintrag, um ihn zu bearbeiten, oder setze mit seiner ▶-Schaltfläche dieselbe Arbeit mit einem neuen Timer fort.
+
+Läuft ein Timer länger als 10 Stunden, fragt dich ein Banner, ob du vergessen hast, ihn zu stoppen: `Endzeit korrigieren` oder `Passt so`. orOS schickt außerdem einmal eine Benachrichtigung, auch wenn die Zeiterfassung geschlossen ist.
+
+Solange ein Timer läuft, zeigt ein Uhr-Chip in der oberen Leiste von orOS, wie lange er schon läuft; fahr mit der Maus darüber für Projekt und Startzeit. Ein Klick öffnet ein kleines Menü: `Timer stoppen`, `Zeiterfassung öffnen` und, nach einer Abwesenheit, dieselben Auswahlmöglichkeiten wie im Banner unten. So kannst du den Timer aus jeder App stoppen. Überall in orOS startet oder stoppt [[Ctrl+Alt+Shift+T]] den Timer (siehe [Tastenkürzel](help:t/shortcuts)).
+
+## Zeit eintragen und bearbeiten
+`Zeit manuell eintragen` öffnet `Zeit eintragen`. Gib `Startdatum`, `Beginn` und `Ende` an oder nur eine `Dauer` wie 1:30, 1,5 (Stunden) oder 90m. In einem Eintrag kannst du auch `Abgerechnet` ankreuzen, eine `Aufgabe` angeben (frühere Aufgaben des Projekts werden vorgeschlagen) und `Tags`, durch Kommas getrennt (Tags, die du schon nutzt, erscheinen als Schaltflächen zum Hinzufügen). `Löschen` entfernt ihn, mit einer Schaltfläche `Rückgängig` für ein paar Sekunden.
+
+## Woche
+Der Tab `Woche` zeigt ein Raster mit Stunden pro Projekt und Tag, mit Summen. Tippe oder klicke auf einen Tag, um ihn im Tab `Timer` zu öffnen.
+
+## Berichte
+Wähle unter `Berichte` einen `Zeitraum` (diese Woche, letzter Monat, dieses Jahr oder `Benutzerdefiniert`), filtere dann nach `Kunde`, `Projekt`, `Abrechenbar`, `Abgerechnet` und `Tag` (sobald du Tags nutzt) und `Gruppieren nach` Projekt, Kunde, Aufgabe, Tag oder Datum. Ein Eintrag mit mehreren Tags zählt unter jedem Tag; die Summe zählt ihn einmal. Du siehst `Stunden`, `Abrechenbar` (die abrechenbaren Stunden) und den `Betrag`.
+
+- `CSV exportieren` speichert den Bericht für eine Tabellenkalkulation.
+- Innerhalb von orOS öffnet `In Tabelle öffnen` dieselben Zeilen als neues Blatt in Tabelle, mit Summen unter Stunden und Betrag.
+- `Angebot erstellen` macht aus dem Bericht ein neues [Angebot](app:quote): eine Zeile pro abrechenbarem Projekt mit Satz, mit den Stunden als Menge und dem Stundensatz als Preis. Der Kunde wird eingetragen, wenn der Zeitraum nur einen hat. Das Angebot übernimmt die Währung der Zeiterfassung, egal welche.
+- `Rechnung erstellen` übernimmt dieselben Zeilen in eine neue Rechnung in [Rechnungen](app:invoices), in jeder Währung. Prüfe sie dort, dann speichere oder stelle sie aus.
+- `… als abgerechnet markieren` markiert alle abrechenbaren Einträge des Berichts als abgerechnet, damit du das nächste Mal nach `Nicht abgerechnet` filtern kannst. Auf dieselbe Weise hebst du die Markierung wieder auf.
+
+## Projekte und Kunden
+Lege unter `Projekte` ein `Neues Projekt` oder einen Kunden (`Neuer Kunde`) an. Ein Projekt hat `Name`, `Kunde`, `Farbe`, `Stundensatz`, ein optionales `Stundenbudget` (z. B. 40 oder 12:30) und `Abrechenbar`. Mit Budget zeigt das Projekt einen Balken der verbrauchten Stunden: Er wird ab 90 % golden und rot, wenn das Budget überschritten ist. Lass den Satz leer, um den Satz des Kunden zu nutzen oder den Standard aus den `Einstellungen`. Ein Projekt mit Einträgen lässt sich nicht löschen; kreuze stattdessen `Archiviert` an, um es im Timer auszublenden und seine Zeit zu behalten.
+
+## Einstellungen
+Die Zahnrad-Schaltfläche öffnet die `Einstellungen`: `Währung`, `Standard-Stundensatz`, ein `Tagesziel` (als Balken unter dem Tag angezeigt) und `Rundung in Berichten`. Die Rundung ändert nur Berichte und CSV; deine Einträge behalten die genauen Zeiten.
+
+### Abwesenheit
+Kreuze `Bei laufendem Timer nach Abwesenheit fragen` an und stelle `Abwesend mindestens (Minuten)` ein (standardmäßig 10). orOS merkt dann, wenn das Gerät im Ruhezustand oder der Deckel zugeklappt war und, in Chrome und Edge, wenn du Tastatur und Maus verlassen hast (erlaube die „Inaktivitätserkennung“, wenn der Browser fragt). Wenn du zurückkommst, sagt ein Banner, wann du weg warst, mit drei Möglichkeiten: `Behalten` lässt die Zeit drin, `Herausnehmen` beendet den Eintrag, als du gegangen bist, und setzt ab deiner Rückkehr mit einem neuen fort, und `Herausnehmen und stoppen` beendet ihn, als du gegangen bist. Der Uhr-Chip in der oberen Leiste zeigt einen Punkt und bietet dieselben Möglichkeiten aus jeder App. Die Einstellung gilt nur auf diesem Gerät.
+
+### Umzug aus einer anderen App
+`Aus anderer App importieren` in den `Einstellungen` holt einen Export aus Toggl Track, Clockify, Harvest, Kimai oder Jira Tempo, als CSV oder Excel (.xlsx), mit Aufgaben und Tags. Zuerst siehst du, was die Datei enthält: neue Einträge, schon vorhandene Einträge, neue Projekte und Kunden und Zeilen, die nicht lesbar waren. Nichts ändert sich, bis du auf `Importieren` tippst.
+- Der Import fügt nur Einträge hinzu. Dieselbe Datei ein zweites Mal fügt nichts hinzu, und gelöschte Einträge bleiben bei einem neuen Import gelöscht.
+- Projekte und Kunden mit demselben Namen wie deine werden mit ihnen zusammengeführt.
+- Wenn die Datumsangaben in beide Richtungen passen könnten, wähle Tag/Monat oder Monat/Tag unter `Datumsformat in der Datei`.
+- Harvest hat Stunden, aber keine Startzeiten, deshalb werden die Einträge jedes Tages ab 09:00 nacheinander eingetragen.
+- Kimai: `Times` › `Export`, wähle CSV oder Excel. Customer wird zum Kunden, Activity zur Aufgabe und der Stundensatz zum Satz eines neuen Projekts.
+- Jira Tempo: Öffne einen Worklogs-Bericht (`Tempo` › `Reports` › `Logged time`), dann `Export` › CSV. Vorgangsschlüssel und Zusammenfassung werden zur Aufgabe; Tage ohne Startzeit werden ab 09:00 eingetragen.
+- Bei einer Datei mit der Zeit mehrerer Personen (Kimai, Tempo) wählst du `Wessen Einträge`.
+- Die Meldung nach einem Import hat `Rückgängig`, das die importierten Einträge auf allen Geräten wieder entfernt.
+
+## Synchronisierung und Sicherung
+Einträge, der laufende Timer, Projekte, Kunden und Einstellungen werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. Der offene Tab, das zuletzt genutzte Projekt und die Berichtsfilter bleiben auf jedem Gerät.
+
+In den `Einstellungen` speichert `Sichern (JSON)` alles in einer Datei, und `Aus Sicherung wiederherstellen` führt eine Sicherung mit deinen Daten zusammen: Nichts wird ersetzt oder geht verloren. Die [Sicherung](help:t/backup) von orOS enthält auch die Zeiterfassung.
+
+## orOS-Datei speichern und öffnen
+In den `Einstellungen` speichert `orOS-Datei (.oroshours)` alle Kunden, Projekte und abgeschlossenen Einträge als eine `.oroshours`-Datei, zum Beispiel um deine Zeit ohne Synchronisierung auf ein anderes Gerät zu bringen oder eine Kopie aufzubewahren. Ein noch laufender Timer wird nicht gespeichert: Stopp ihn zuerst, um ihn mitzunehmen. Die Datei ist ein normales ZIP: Entpackt enthält sie deine Zeit als `content.json` plus `preview/hours.csv` (dieselben Spalten wie `CSV exportieren`) für Tabellenkalkulationen. Sie ist nicht verschlüsselt, also bewahre sie sicher auf.
+
+`orOS-Datei öffnen…` (oder `Entpackter orOS-Ordner…` oder „Öffnen mit“ orOS auf dem Computer) zeigt, wie viele Datensätze neu und wie viele schon vorhanden sind, dann fügt `Hinzufügen` nur die neuen hinzu, mit ihren eigenen IDs: Dieselbe Datei noch einmal zu öffnen fügt nichts hinzu. Ein vorhandener Eintrag bleibt, wie er ist, und einer, den du hier gelöscht hast, bleibt gelöscht; eine Datei löscht nie etwas, und dein laufender Timer und deine Einstellungen bleiben, wie sie sind. Kreuze `Mit neueren Versionen aktualisieren` an, damit Einträge, die in der Datei später geändert wurden, deine Kopie ersetzen. `Rückgängig` in der Meldung entfernt, was hinzugefügt wurde.
+
+## Pomodoro
+Wähle in [Zeit](app:time) → `Pomodoro` unter `Fokus in der Zeiterfassung erfassen` ein Projekt: Jede Fokusphase erscheint dann hier als Aufgabe „Pomodoro“ in diesem Projekt (eine Meldung sagt dir, wenn neue ankommen). Phasen werden hinzugefügt, wenn die Zeiterfassung das nächste Mal auf demselben Gerät geöffnet ist; danach werden sie wie jeder Eintrag mit deinen anderen Geräten synchronisiert.
+
+## Tastenkürzel
+- [[S]] startet oder stoppt den Timer.
+- [[N]] trägt Zeit manuell ein.
+- [[←]] / [[→]] gehen zum vorherigen oder nächsten Tag (oder zur Woche unter `Woche`).
+- [[Enter]] im Beschreibungsfeld startet den Timer.
+- [[Ctrl+Alt+Shift+T]] startet oder stoppt den Timer von überall in orOS.
+- [[Ctrl+Z]] macht das letzte Löschen oder die letzte Änderung rückgängig, die `Rückgängig` angeboten hat.
+
+## Tipps
+- [Kalender](app:calendar) kann deine Zeit unter dem Chip `Arbeitszeit` zeigen: eine Zeile pro Projekt und Tag, etwa „Website · 2:15“. Ein Tipp auf eine Zeile öffnet diesen Tag hier.
+- `Zeit erfassen` bei einem Termin im [Kalender](app:calendar) startet hier einen Timer mit dem Namen des Termins (mit dem gleichnamigen Projekt, falls du eins hast). Läuft schon ein Timer, läuft er weiter.
+- Zum Starten brauchst du kein Projekt: Zeit ohne Projekt wird gespeichert, und du kannst sie später zuordnen.
+- Wurden auf zwei Geräten gleichzeitig Timer gestartet, laufen beide weiter und du kannst jeden einzeln stoppen.
+
+## Grenzen
+- Ein einzelner Eintrag darf höchstens 366 Tage lang sein.
+- Die Inaktivitätserkennung für Tastatur und Maus funktioniert nur in Chrome und Edge und nur, solange orOS in einem Tab oder Fenster offen ist; andere Browser erkennen nur ein Gerät im Ruhezustand.

@@ -59,7 +59,9 @@
   var MAX_SHOWN = 300;
 
   // ---------- 1. Constants, i18n, helpers ----------
+  // orosI18n (../i18n.js): the full language code, a pack language included.
   function appLang() {
+    if (window.orosI18n) return window.orosI18n.lang();
     try {
       var l = localStorage.getItem("oros-lang") ||
               (window.parent && window.parent.orosLang) || "en";
@@ -67,7 +69,13 @@
     } catch (e) { return "en"; }
   }
   var LANG = appLang();
-  var LOCALE = LANG === "el" ? "el-GR" : "en-GB";
+  var LOCALE = window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB");
+  // Decimal comma (Greek, German, …): core.parseNum reads "1.234,5" for
+  // "el" and "1,234.5" for "en"; typed values are shown the same way.
+  var COMMA = (function () {
+    try { return (1.5).toLocaleString(LOCALE).indexOf(",") >= 0; } catch (e) { return LANG === "el"; }
+  })();
+  var NUM = COMMA ? "el" : "en";
 
   var STRINGS = {
     en: {
@@ -416,6 +424,8 @@
     }
   };
 
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "stock", LANG);
+
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;
     var s = p[key] !== undefined ? p[key] : (STRINGS.en[key] !== undefined ? STRINGS.en[key] : key);
@@ -494,7 +504,7 @@
   }
   // what the user typed → thousandths, rounded to the unit's decimals; null = invalid
   function readQty(input, item, allowNeg) {
-    var v = C.parseNum(String(input.value || "").trim(), LANG);
+    var v = C.parseNum(String(input.value || "").trim(), NUM);
     if (v === null) return null;
     if (v < 0 && !allowNeg) return null;
     var dec = decOf(item), q = Math.round(v * Math.pow(10, dec)) * Math.pow(10, 3 - dec);
@@ -504,12 +514,12 @@
     if (q === null || q === undefined) return "";
     var dec = decOf(item), v = q / 1000;
     var s = dec ? String(Math.round(v * Math.pow(10, dec)) / Math.pow(10, dec)) : String(Math.round(v));
-    return LANG === "el" ? s.replace(".", ",") : s;
+    return COMMA ? s.replace(".", ",") : s;
   }
   function readCents(input) {
     var s = String(input.value || "").trim();
     if (!s) return 0;
-    var v = C.parseNum(s, LANG);
+    var v = C.parseNum(s, NUM);
     if (v === null || v < 0) return null;
     var c = Math.round(v * 100);
     return c > C.C_MAX ? null : c;
@@ -517,7 +527,7 @@
   function centsStr(c) {
     if (!c) return "";
     var s = (c / 100).toFixed(2);
-    return LANG === "el" ? s.replace(".", ",") : s;
+    return COMMA ? s.replace(".", ",") : s;
   }
 
   (function bootMarker() {
@@ -2972,7 +2982,7 @@
     }));
     acts.appendChild(button(t("ed.cancel"), "", function () { dlg.close(); }));
     acts.appendChild(button(t("ed.save"), "primary", function () {
-      var ld = lead.value.trim() ? C.parseNum(lead.value.trim(), LANG) : 0;
+      var ld = lead.value.trim() ? C.parseNum(lead.value.trim(), NUM) : 0;
       if (ld === null || ld < 0 || ld > 365) { err.textContent = t("ed.badNum"); err.hidden = false; return; }
       var row = C.normSup({ id: x.id, m: x.m || 0, name: name.value, person: person.value, tel: tel.value,
         email: email.value, vatno: vatno.value, lead: Math.round(ld), note: note.value });
@@ -3375,7 +3385,8 @@
   }
   function unitNames() {
     var n = {};
-    C.UNIT_IDS.forEach(function (u) { n[u] = C.unitName(u, LANG); });
+    // English or Greek, like the headers: core.importPlan reads those words back
+    C.UNIT_IDS.forEach(function (u) { n[u] = C.unitName(u, LANG === "el" ? "el" : "en"); });
     return n;
   }
   function exportProducts() {
@@ -3431,7 +3442,7 @@
   // the Archive folder) and, on open, re-drawn like an added photo.
   var RP = window.OrosRecordPkg || null, SPK = window.OrosStockPackage || null;
   var recFile = RP && SPK && window.OrosBundle ? RP.ui(SPK.DESC, {
-    lang: function () { return LANG; },
+    lang: function () { return LANG === "el" ? "el" : "en"; },
     get: function () { return canonical(data); },
     title: function () { return t("app"); },
     // the photos' bytes: media/<sha256>.jpg, each row told its key
@@ -3612,7 +3623,7 @@
     showDialog(dlg);
   }
   function importCsvDialog(text) {
-    var opts = { lang: LANG, newId: newId, now: Date.now(), today: todayYmd(), setQty: false };
+    var opts = { lang: LANG === "el" ? "el" : "en", newId: newId, now: Date.now(), today: todayYmd(), setQty: false };
     var plan = C.importPlan(data, text, opts);
     if (!plan.ok) { showToast(t("imp.bad")); return; }
     var probe = C.importPlan(data, text, Object.assign({}, opts, { setQty: true }));

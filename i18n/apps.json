@@ -19,6 +19,16 @@
    ]
   },
   {
+   "app": "crm",
+   "files": [
+    "crm/core.js",
+    "crm/crm.js",
+    "crm/platforms.js",
+    "crm/search.js",
+    "crm/webform.js"
+   ]
+  },
+  {
    "app": "files",
    "files": [
     "files/drive.js",
@@ -39,6 +49,16 @@
    "app": "help",
    "files": [
     "help/help.js"
+   ]
+  },
+  {
+   "app": "invoices",
+   "files": [
+    "invoices/invoices.js",
+    "invoices/mydata-ui.js",
+    "invoices/package.js",
+    "invoices/search.js",
+    "invoices/today.js"
    ]
   },
   {
@@ -100,6 +120,26 @@
    "files": [
     "stickies/host.js",
     "stickies/stickies.js"
+   ]
+  },
+  {
+   "app": "stock",
+   "files": [
+    "stock/core.js",
+    "stock/package.js",
+    "stock/pos.js",
+    "stock/shop.js",
+    "stock/stock.js",
+    "stock/today.js"
+   ]
+  },
+  {
+   "app": "timesheet",
+   "files": [
+    "timesheet/core.js",
+    "timesheet/search.js",
+    "timesheet/timesheet.js",
+    "timesheet/today.js"
    ]
   },
   {

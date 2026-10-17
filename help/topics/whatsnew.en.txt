@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.08.00
+- Invoices, CRM, Timesheet and Stock are now in German.
+
 ## Version 3.07.00
 - Flashcards: see your progress (heatmap, true retention, 30-day forecast), export decks as .oroscards or CSV and open them on any device; the orOS Converter turns Anki decks into .oroscards.
 
