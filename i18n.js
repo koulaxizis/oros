@@ -98,6 +98,24 @@
     packs[code][app] = clean;
   }
 
+  // A translator's own lines (Settings › Help translate), kept on this
+  // device only: { <code>: { <app>: { key: text } } }. They go over the
+  // pack's, through the same checks.
+  var LOCAL_KEY = "oros-i18n-local";
+  function local(code, app) {
+    try {
+      var all = JSON.parse(localStorage.getItem(LOCAL_KEY) || "null");
+      var t = all && all[code] && all[code][app];
+      return t && typeof t === "object" && !Array.isArray(t) ? t : null;
+    } catch (e) { return null; }
+  }
+  function packOf(code, app) {
+    var out = {}, f = (packs[code] && packs[code][app]) || {}, l = local(code, app) || {};
+    Object.keys(f).forEach(function (k) { out[k] = f[k]; });
+    Object.keys(l).forEach(function (k) { if (typeof l[k] === "string") out[k] = l[k]; });
+    return out;
+  }
+
   // tables = an app's { en: {…}, el: {…} }. For a pack language, adds
   // tables[code] = English overlaid with the pack's fitting values, so
   // the app's usual lookup (STRINGS[LANG][key] || STRINGS.en[key])
@@ -106,7 +124,7 @@
     code = code || lang();
     if (!tables || !tables.en) return {};
     if (INLINE[code]) return tables[code] || tables.en;
-    var en = tables.en, p = (packs[code] && packs[code][app]) || {};
+    var en = tables.en, p = packOf(code, app);
     var out = {};
     Object.keys(en).forEach(function (k) { out[k] = fits(en[k], p[k]) ? p[k] : en[k]; });
     tables[code] = out;
@@ -117,7 +135,7 @@
   function coverage(tables, app, code) {
     if (!tables || !tables.en) return 0;
     if (INLINE[code]) return 1;
-    var en = tables.en, p = (packs[code] && packs[code][app]) || {};
+    var en = tables.en, p = packOf(code, app);
     var keys = Object.keys(en), n = 0;
     keys.forEach(function (k) { if (fits(en[k], p[k])) n++; });
     return keys.length ? n / keys.length : 1;
@@ -164,7 +182,7 @@
   window.orosI18n = {
     LANGS: LANGS, known: known, info: info, lang: lang, base: base, locale: locale, dir: dir,
     choices: choices, table: table, coverage: coverage, plural: plural, fits: fits,
-    helpPath: helpPath, ensure: ensure, packUrl: packUrl, root: root
+    helpPath: helpPath, ensure: ensure, packUrl: packUrl, root: root, ver: ver, LOCAL_KEY: LOCAL_KEY
   };
 
   // Start-up: write the pack(s) named in data-app before the app's scripts.

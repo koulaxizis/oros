@@ -131,3 +131,25 @@ test("CI pack check: only data, real keys, same placeholders and tags", () => {
   assert.match(found, /c is still the English sentence/);
   assert.match(found, /unknown key z/);
 });
+
+test("a translator's own lines (this device) go over the pack, through the same checks", () => {
+  const SRC2 = SRC;
+  const store = {
+    "oros-lang": "de",
+    "oros-i18n-local": JSON.stringify({ de: { notes: { a: "Lokal", b: "ohne Zahl", c: 5 } } })
+  };
+  const win = {
+    localStorage: { getItem: (k) => (k in store ? store[k] : null) },
+    location: { search: "" },
+    document: { readyState: "complete", currentScript: null, write: () => {} }
+  };
+  win.window = win; win.parent = win; win.top = win;
+  vm.runInNewContext(SRC2, win);
+  win.orosPack("de", "notes", { a: "Datei", d: "Datei d" });
+  const T = { en: { a: "A", b: "{n} pages", c: "C", d: "D" }, el: {} };
+  const de = win.orosI18n.table(T, "notes");
+  assert.equal(de.a, "Lokal");
+  assert.equal(de.b, "{n} pages", "a local line that breaks the rules shows English");
+  assert.equal(de.c, "C");
+  assert.equal(de.d, "Datei d");
+});

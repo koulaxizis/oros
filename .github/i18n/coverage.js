@@ -3,7 +3,8 @@
 // complete).
 //   node .github/i18n/coverage.js            report + rewrite each
 //                                            i18n/<code>/STATUS.md and
-//                                            manifest.json
+//                                            manifest.json, and
+//                                            i18n/apps.json
 //   node .github/i18n/coverage.js --baseline lower inline-baseline.json
 //                                            to the current counts
 // STATUS.md is for translators (what is left, per app). manifest.json is
@@ -102,6 +103,7 @@ function main() {
     console.log("inline-baseline.json: " + Object.keys(next).length + " files, " + Object.values(next).reduce((a, n) => a + n, 0) + " texts");
     return;
   }
+  fs.writeFileSync(path.join(S.ROOT, "i18n", "apps.json"), JSON.stringify(S.packIndex(all), null, 1) + "\n");
   for (const lang of S.langs()) {
     if (lang.code === "en" || lang.code === "el") continue;
     const dir = path.join(S.ROOT, "i18n", lang.code);
