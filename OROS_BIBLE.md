@@ -7692,3 +7692,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Photo Lab, Atelier, Layout, Montage and Mockups are now in German: packs in `i18n/de/`, inline texts moved into {en, el} tables, and each `index.html` loads `../i18n.js` before its own scripts; English still fills any missing line.
 - Files: `i18n/de/**`, `photolab/`, `atelier/`, `layout/`, `montage/`, `mockups/` (index.html + scripts), `.github/i18n/inline-baseline.json`, `i18n/apps.json`.
   - Tests: full suite green; Chromium 360 de / el / en. Not tested: a German native reader's review, Safari, phones.
+
+### 2026-10-17 — Languages L5b: Studio, Music, Radio, Podcasts, Reader and Media Shelf in German (#515) — 3.11.00
+- Studio, Music, Radio, Podcasts, Reader and Media Shelf are now in German: packs in `i18n/de/`, inline texts moved into {en, el} tables, and each `index.html` loads `../i18n.js` before its own scripts; English still fills any missing line.
+- Files: `i18n/de/**`, `studio/`, `music/`, `radio/`, `podcasts/`, `feeds/`, `shelf/` (index.html + scripts), `.github/i18n/inline-baseline.json`, `i18n/apps.json`.
+  - Tests: full suite green; Chromium 360 de / el. Not tested: a German native reader's review, audio playback in German UI on phones, Safari.
