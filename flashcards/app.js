@@ -24,7 +24,7 @@
   var STORAGE_KEY = "oros-flashcards-data";
   var DEV_KEY = "oros-flashcards-dev";        // device-local: this device's file id, never synced
   var PREFS_KEY = "oros-flashcards-prefs";    // device-local: last deck, last card kind
-  var C = window.FlashcardsCore, F = window.FlashcardsFsrs;
+  var C = window.FlashcardsCore, F = window.FlashcardsFsrs, M = window.FlashcardsMedia;
 
   // ---------- 1. Language (every string in English and Greek) ----------
   var STR = {
@@ -74,7 +74,37 @@
       "full": "This device is out of storage space. The change was not saved.",
       "diskFail": "The card could not be written to the orOS disk.",
       "u.m": "{n} min", "u.h": "{n} h", "u.d": "{n} d", "u.mo": "{n} mo", "u.y": "{n} y",
-      "ret.pct": "{n}%"
+      "ret.pct": "{n}%",
+      "btn.browse": "Browse", "btn.moreActions": "More actions", "btn.bury": "Hide until tomorrow",
+      "btn.suspend": "Suspend card", "btn.speak": "Read aloud",
+      "btn.bold": "Bold", "btn.italic": "Italic", "btn.list": "List", "btn.numbers": "Numbered list",
+      "btn.image": "Picture", "btn.audio": "Sound file", "btn.record": "Record", "btn.stop": "Stop {t}",
+      "btn.remove": "Remove", "btn.apply": "Apply",
+      "dlg.browse": "All cards",
+      "br.tag": "Tag", "br.state": "State", "br.allDecks": "All decks", "br.allTags": "All tags", "br.allStates": "Any state",
+      "br.move": "Move", "br.tagAdd": "Add tag", "br.tagDel": "Remove tag", "br.suspend": "Suspend", "br.resume": "Resume",
+      "br.count": "{n} cards", "br.sel": "{s} of {n} selected", "br.none": "No card matches these filters.",
+      "br.empty": "No cards yet. Press Add card.",
+      "br.moveTo": "Move the notes of {n} cards to", "br.tagName": "Tag",
+      "br.confDel": "Delete {n} notes ({c} cards)? Their answers are kept but no longer counted.",
+      "br.done": "Done: {n} cards",
+      "s.sus": "Suspended", "s.bury": "Hidden until tomorrow", "s.new": "New", "s.learn": "Learning",
+      "s.due": "Due today", "s.rev": "Review later",
+      "buried": "Hidden until tomorrow", "suspended": "Card suspended. Find it again in Browse.",
+      "undoneAct": "Undone",
+      "f.media": "Pictures and sounds", "f.vq": "Voice for the front", "f.va": "Voice for the back",
+      "f.vAuto": "Automatic", "f.vNone": "This device has no voices installed for Read aloud. Voices come with the operating system.",
+      "f.autoplay": "Play card sounds by themselves",
+      "f.fmtHint": "**bold**, *italic*, lines starting with - or 1. become lists.",
+      "m.missing": "Not on this device yet",
+      "m.badtype": "Pictures (JPEG, PNG, WebP, GIF) and sounds (MP3, OGG, Opus, M4A, WAV, WebM) only.",
+      "m.toobig": "The file is too big (sounds up to 10 MB).",
+      "m.badimage": "This picture could not be read.",
+      "m.full": "At most 6 pictures and sounds per field.",
+      "m.nomic": "The microphone is not available. Allow it in the browser to record.",
+      "m.saveFail": "A picture or sound could not be written to the orOS disk.",
+      "m.recMax": "Recording stopped at 5 minutes.",
+      "v.none": "No installed voice reads this language on this device."
     },
     el: {
       "app.name": "Κάρτες μελέτης",
@@ -122,7 +152,37 @@
       "full": "Ο χώρος αποθήκευσης της συσκευής γέμισε. Η αλλαγή δεν αποθηκεύτηκε.",
       "diskFail": "Η κάρτα δεν γράφτηκε στον δίσκο του orOS.",
       "u.m": "{n} λεπ.", "u.h": "{n} ώρ.", "u.d": "{n} ημ.", "u.mo": "{n} μήν.", "u.y": "{n} έτ.",
-      "ret.pct": "{n}%"
+      "ret.pct": "{n}%",
+      "btn.browse": "Όλες οι κάρτες", "btn.moreActions": "Περισσότερες ενέργειες", "btn.bury": "Κρύψ' την ως αύριο",
+      "btn.suspend": "Αναστολή κάρτας", "btn.speak": "Ανάγνωση",
+      "btn.bold": "Έντονα", "btn.italic": "Πλάγια", "btn.list": "Λίστα", "btn.numbers": "Αριθμημένη λίστα",
+      "btn.image": "Εικόνα", "btn.audio": "Αρχείο ήχου", "btn.record": "Ηχογράφηση", "btn.stop": "Τέλος {t}",
+      "btn.remove": "Αφαίρεση", "btn.apply": "Εφαρμογή",
+      "dlg.browse": "Όλες οι κάρτες",
+      "br.tag": "Ετικέτα", "br.state": "Κατάσταση", "br.allDecks": "Όλες οι τράπουλες", "br.allTags": "Όλες οι ετικέτες", "br.allStates": "Κάθε κατάσταση",
+      "br.move": "Μετακίνηση", "br.tagAdd": "Πρόσθεσε ετικέτα", "br.tagDel": "Βγάλε ετικέτα", "br.suspend": "Αναστολή", "br.resume": "Επαναφορά",
+      "br.count": "{n} κάρτες", "br.sel": "{s} από {n} επιλεγμένες", "br.none": "Καμία κάρτα δεν ταιριάζει σε αυτά τα φίλτρα.",
+      "br.empty": "Δεν υπάρχουν κάρτες ακόμα. Πάτησε Νέα κάρτα.",
+      "br.moveTo": "Μετακίνηση των σημειώσεων {n} καρτών στην τράπουλα", "br.tagName": "Ετικέτα",
+      "br.confDel": "Να διαγραφούν {n} σημειώσεις ({c} κάρτες); Οι απαντήσεις τους μένουν αλλά δεν μετράνε πια.",
+      "br.done": "Έγινε: {n} κάρτες",
+      "s.sus": "Σε αναστολή", "s.bury": "Κρυμμένη ως αύριο", "s.new": "Νέα", "s.learn": "Σε εκμάθηση",
+      "s.due": "Επανάληψη σήμερα", "s.rev": "Επανάληψη αργότερα",
+      "buried": "Κρυμμένη ως αύριο", "suspended": "Η κάρτα μπήκε σε αναστολή. Τη βρίσκεις ξανά στο Όλες οι κάρτες.",
+      "undoneAct": "Αναιρέθηκε",
+      "f.media": "Εικόνες και ήχοι", "f.vq": "Φωνή για το μπροστά μέρος", "f.va": "Φωνή για το πίσω μέρος",
+      "f.vAuto": "Αυτόματα", "f.vNone": "Η συσκευή δεν έχει εγκατεστημένες φωνές για ανάγνωση. Οι φωνές έρχονται με το λειτουργικό σύστημα.",
+      "f.autoplay": "Οι ήχοι της κάρτας παίζουν μόνοι τους",
+      "f.fmtHint": "**έντονα**, *πλάγια*, γραμμές που ξεκινούν με - ή 1. γίνονται λίστες.",
+      "m.missing": "Δεν έχει φτάσει ακόμα σε αυτή τη συσκευή",
+      "m.badtype": "Μόνο εικόνες (JPEG, PNG, WebP, GIF) και ήχοι (MP3, OGG, Opus, M4A, WAV, WebM).",
+      "m.toobig": "Το αρχείο είναι πολύ μεγάλο (ήχοι ως 10 MB).",
+      "m.badimage": "Η εικόνα δεν διαβάστηκε.",
+      "m.full": "Το πολύ 6 εικόνες και ήχοι ανά πεδίο.",
+      "m.nomic": "Το μικρόφωνο δεν είναι διαθέσιμο. Επίτρεψέ το στον browser για να ηχογραφήσεις.",
+      "m.saveFail": "Μια εικόνα ή ένας ήχος δεν γράφτηκε στον δίσκο του orOS.",
+      "m.recMax": "Η ηχογράφηση σταμάτησε στα 5 λεπτά.",
+      "v.none": "Καμία εγκατεστημένη φωνή δεν διαβάζει αυτή τη γλώσσα σε αυτή τη συσκευή."
     }
   };
 
@@ -399,17 +459,20 @@
     $("home").hidden = v !== "home";
     $("deck-view").hidden = v !== "deck";
     $("study").hidden = v !== "study";
+    $("browse").hidden = v !== "browse";
     $("back-btn").hidden = v === "home";
+    $("browse-btn").hidden = v === "study" || v === "browse";
     $("new-deck-btn").hidden = v !== "home";
     $("add-card-btn").hidden = v === "study";
     $("settings-btn").hidden = v === "study";
-    if (v !== "study") stopLaterTimer();
+    if (v !== "study") { stopLaterTimer(); M.stopSpeaking(); closeMenu(); }
     render();
   }
   function render() {
     if (view === "home") renderHome();
     else if (view === "deck") renderDeck();
     else if (view === "study") renderStudyCounts();
+    else if (view === "browse") renderBrowse();
   }
 
   function renderHome() {
@@ -458,6 +521,8 @@
   }
   function cardState(key) {
     var c = sched[key];
+    if (c && c.sus) return t("s.sus");
+    if (c && c.bury && c.bury >= C.dayStart(Date.now(), slice.set.ro)) return t("s.bury");
     if (!c || !c.card.st) return t("st.new");
     if (c.card.st === 1 || c.card.st === 3) return t("st.learn");
     if (c.card.due < C.dayEnd(Date.now(), slice.set.ro)) return t("st.today");
@@ -506,6 +571,193 @@
     else $("deck-empty").textContent = t("deck.empty");
   }
 
+  // ---------- 7b. Card browser: filters + actions on many cards ----------
+  var br = { from: "home", sel: {}, shown: 300, hits: [] };
+  var STATES = ["new", "learn", "due", "rev", "bury", "sus"];
+  function openBrowse(deckId) {
+    br.from = view === "deck" ? "deck" : "home";
+    br.sel = {};
+    br.shown = 300;
+    $("br-q").value = "";
+    $("br-tag").value = "";
+    $("br-state").value = "";
+    fillBrowseSelects();
+    $("br-deck").value = deckId && (deckById(deckId) || deckId === C.DEFAULT_DECK) ? deckId : "";
+    show("browse");
+  }
+  function setOptions(sel, opts) {
+    var keep = sel.value;
+    sel.textContent = "";
+    opts.forEach(function (o) { var op = el("option", "", o[1]); op.value = o[0]; sel.appendChild(op); });
+    sel.value = opts.some(function (o) { return o[0] === keep; }) ? keep : "";
+  }
+  function allTags() {
+    var seen = {};
+    C.liveNotes(notes).forEach(function (n) { n.tg.forEach(function (x) { seen[x.toLowerCase()] = seen[x.toLowerCase()] || x; }); });
+    return Object.keys(seen).sort().map(function (k) { return seen[k]; });
+  }
+  function fillBrowseSelects() {
+    var decks = [["", t("br.allDecks")]].concat(deckOptions(null));
+    if (hasOrphans()) decks.push([C.DEFAULT_DECK, t("home.unsorted")]);
+    setOptions($("br-deck"), decks);
+    setOptions($("br-tag"), [["", t("br.allTags")]].concat(allTags().map(function (x) { return [x, "#" + x]; })));
+    setOptions($("br-state"), [["", t("br.allStates")]].concat(STATES.map(function (x) { return [x, t("s." + x)]; })));
+  }
+  function browseHits() {
+    var now = Date.now(), ro = slice.set.ro;
+    var dk = $("br-deck").value, ids = dk ? C.subtree(slice, dk) : null;
+    var tag = $("br-tag").value.toLowerCase(), state = $("br-state").value;
+    var words = fold($("br-q").value).split(/\s+/).filter(Boolean);
+    var hay = {};
+    return Object.keys(sched).filter(function (k) {
+      var c = sched[k], n = c.note;
+      if (ids && !ids[c.deck]) return false;
+      if (tag && !n.tg.some(function (x) { return x.toLowerCase() === tag; })) return false;
+      if (state && C.cardStatus(c, now, ro) !== state) return false;
+      if (!words.length) return true;
+      if (!hay[n.id]) hay[n.id] = fold([C.noteTitle(n), C.plain(n.f.a || ""), C.plain(n.f.e || ""), n.tg.join(" ")].join(" "));
+      return words.every(function (w) { return hay[n.id].indexOf(w) >= 0; });
+    }).sort(function (a, b) {
+      var A = sched[a], B = sched[b];
+      return B.note.m - A.note.m || (A.note.id < B.note.id ? -1 : A.note.id > B.note.id ? 1 : A.ord - B.ord);
+    });
+  }
+  function selCount() { return Object.keys(br.sel).length; }
+  function renderBrowse() {
+    $("title").textContent = t("dlg.browse");
+    fillBrowseSelects();
+    var hits = br.hits = browseHits(), now = Date.now();
+    Object.keys(br.sel).forEach(function (k) { if (!sched[k]) delete br.sel[k]; });
+    var list = $("br-list");
+    list.textContent = "";
+    hits.slice(0, br.shown).forEach(function (k) {
+      var c = sched[k], n = c.note;
+      var li = el("li");
+      li.tabIndex = 0;
+      li.dataset.key = k;
+      var cb = el("input");
+      cb.type = "checkbox";
+      cb.checked = !!br.sel[k];
+      cb.setAttribute("aria-label", C.plain(C.cardText(n, c.ord).front).slice(0, 80));
+      cb.addEventListener("click", function (ev) { ev.stopPropagation(); });
+      cb.addEventListener("change", function () {
+        if (cb.checked) br.sel[k] = 1; else delete br.sel[k];
+        li.classList.toggle("sel", cb.checked);
+        browseBar();
+      });
+      li.classList.toggle("sel", cb.checked);
+      li.appendChild(cb);
+      var front = C.plain(C.cardText(n, c.ord).front).replace(/\s+/g, " ").trim();
+      var name = el("span", "name", front || (n.md ? "🖼" : "…"));
+      var st = C.cardStatus(c, now, slice.set.ro);
+      var sub = t("s." + st) + " · " + deckName(c.deck) + " · " + t("kind." + n.k);
+      if (n.tg.length) sub += " · " + n.tg.map(function (x) { return "#" + x; }).join(" ");
+      name.appendChild(el("span", "sub", sub));
+      li.appendChild(name);
+      if (st === "sus") li.classList.add("dim");
+      li.addEventListener("click", function () { noteDialog(n.id); });
+      li.addEventListener("keydown", function (ev) {
+        if (ev.target !== li) return;
+        if (ev.code === "Enter") noteDialog(n.id);
+        else if (ev.code === "Space") { ev.preventDefault(); cb.checked = !cb.checked; cb.dispatchEvent(new Event("change")); }
+      });
+      list.appendChild(li);
+    });
+    $("br-more").hidden = hits.length <= br.shown;
+    var any = Object.keys(sched).length > 0;
+    $("br-empty").hidden = hits.length > 0;
+    $("br-empty").textContent = any ? t("br.none") : t("br.empty");
+    browseBar();
+  }
+  function browseBar() {
+    var s = selCount(), n = br.hits.length;
+    $("br-count").textContent = s ? t("br.sel", { s: s, n: n }) : t("br.count", { n: n });
+    $("br-acts").hidden = !s;
+    var all = $("br-all");
+    var inHits = br.hits.filter(function (k) { return br.sel[k]; }).length;
+    all.checked = n > 0 && inHits === n;
+    all.indeterminate = inHits > 0 && inHits < n;
+  }
+  function selKeys() { return Object.keys(br.sel).filter(function (k) { return sched[k]; }).sort(); }
+  function selNotes() {
+    var seen = {}, out = [];
+    selKeys().forEach(function (k) { var id = sched[k].note.id; if (!seen[id]) { seen[id] = 1; out.push(sched[k].note); } });
+    return out;
+  }
+  function bulkDone(count) {
+    br.sel = {};
+    toast(t("br.done", { n: count }));
+    renderBrowse();
+  }
+  // New versions of the selected notes; `edit` changes a copy, returns false to skip.
+  function bulkNotes(edit) {
+    var now = Date.now(), out = [], count = selKeys().length;
+    selNotes().forEach(function (n) {
+      var v = JSON.parse(JSON.stringify(n));
+      if (edit(v) === false) return;
+      v.m = Math.max(now, n.m + 1);
+      v = C.normNote(v);
+      if (v) out.push(v);
+    });
+    if (out.length) saveNotes(out);
+    bulkDone(count);
+  }
+  function bulkFlag(f) {
+    var keys = selKeys(), now = Date.now();
+    keys.forEach(function (k) { addReviewRow({ i: rowId(now), c: k, t: now, f: f }); });
+    sched = C.schedule(slice, notes, reviews, F);
+    bulkDone(keys.length);
+  }
+  function bulkMove() {
+    var decks = deckOptions(null);
+    if (!decks.length) { toast(t("need.deck")); return; }
+    var sel = select(decks, decks[0][0]);
+    var body = el("div");
+    var l = el("label", "field");
+    l.appendChild(el("span", "", t("br.moveTo", { n: selKeys().length })));
+    l.appendChild(sel);
+    body.appendChild(l);
+    openDialog(t("br.move"), body, { okText: t("br.move"), ok: function () {
+      var to = sel.value;
+      closeDialog();
+      bulkNotes(function (v) { if (v.dk === to) return false; v.dk = to; });
+    } });
+  }
+  function bulkTag(add) {
+    var body = el("div"), box;
+    if (add) box = input("text", "", C.LIMITS.tag);
+    else {
+      var have = {};
+      selNotes().forEach(function (n) { n.tg.forEach(function (x) { have[x] = 1; }); });
+      var list = Object.keys(have).sort();
+      if (!list.length) { toast(t("br.none")); return; }
+      box = select(list.map(function (x) { return [x, "#" + x]; }), list[0]);
+    }
+    body.appendChild(field("br.tagName", box));
+    openDialog(t(add ? "br.tagAdd" : "br.tagDel"), body, { okText: t("btn.apply"), ok: function () {
+      var tag = C.normTags([box.value])[0];
+      if (!tag) { box.focus(); return; }
+      var low = tag.toLowerCase();
+      closeDialog();
+      bulkNotes(function (v) {
+        var has = v.tg.some(function (x) { return x.toLowerCase() === low; });
+        if (add) { if (has) return false; v.tg.push(tag); }
+        else { if (!has) return false; v.tg = v.tg.filter(function (x) { return x.toLowerCase() !== low; }); }
+      });
+    } });
+  }
+  function bulkDelete() {
+    var ns = selNotes();
+    if (!ns.length) return;
+    var cards = 0;
+    ns.forEach(function (n) { cards += C.ords(n).length; });
+    confirmBox(t("br.confDel", { n: ns.length, c: cards }), t("btn.delete"), function () {
+      var now = Date.now();
+      saveNotes(ns.map(function (n) { return { id: n.id, m: Math.max(now, n.m + 1), del: 1 }; }));
+      bulkDone(cards);
+    });
+  }
+
   // ---------- 7. Study ----------
   var study = { deck: "", key: "", shownAt: 0, back: false, undo: [], last: "" };
   var laterTimer = 0;
@@ -542,10 +794,12 @@
     study.back = false;
     renderStudyCounts();
     var has = !!key;
+    if (!has) { stopSounds(); M.stopSpeaking(); }
     $("card-box").hidden = !has;
     $("study-foot").hidden = !has;
     $("done-box").hidden = has;
     $("edit-cur-btn").hidden = !has;
+    $("more-btn").hidden = !has;
     if (!has) {
       $("done-text").textContent = q.next ? t("study.later", { t: new Date(q.next).toLocaleTimeString(locale(), { hour: "2-digit", minute: "2-digit" }) })
         : (study.undo.length ? t("study.done") : t("study.empty"));
@@ -558,28 +812,132 @@
     $("grade-btns").hidden = true;
     $("show-btn").focus({ preventScroll: true });
   }
+  // Formatted text (core fmtBlocks / fmtInline) as DOM nodes; text only through text nodes.
+  function drawRuns(parent, text) {
+    C.fmtInline(text).forEach(function (r) {
+      var node = document.createTextNode(r.t);
+      if (r.i) { var em = el("em"); em.appendChild(node); node = em; }
+      if (r.b) { var st = el("strong"); st.appendChild(node); node = st; }
+      if (r.gap || r.ans) { var sp = el("span", r.gap ? "gap" : "ans"); sp.appendChild(node); node = sp; }
+      parent.appendChild(node);
+    });
+  }
+  function drawText(box, text) {
+    C.fmtBlocks(text).forEach(function (b) {
+      if (b.k === "p") {
+        var p = el("div", "para");
+        b.lines.forEach(function (ln, i) { if (i) p.appendChild(el("br")); drawRuns(p, ln); });
+        box.appendChild(p);
+        return;
+      }
+      var list = el(b.k);
+      if (b.k === "ol" && b.start !== 1) list.start = b.start;
+      b.items.forEach(function (it) { var li = el("li"); drawRuns(li, it); list.appendChild(li); });
+      box.appendChild(list);
+    });
+  }
+  // Pictures and sounds of one field. Returns the audio elements, in order.
+  function drawMedia(box, names) {
+    var auds = [];
+    (names || []).forEach(function (name) {
+      var kind = C.mediaKind(name);
+      if (!kind) return;
+      var node;
+      if (kind === "img") { node = el("img", "m-img"); node.alt = ""; node.decoding = "async"; }
+      else { node = el("audio", "m-aud"); node.controls = true; node.preload = "auto"; auds.push(node); }
+      box.appendChild(node);
+      M.url(fsApi(), name).then(function (u) {
+        if (u) { node.src = u; return; }
+        var miss = el("span", "m-miss", t("m.missing"));
+        if (node.parentNode) node.parentNode.replaceChild(miss, node);
+      });
+    });
+    return auds;
+  }
+  // One side of a card; returns its audio elements.
   function drawSide(box, note, ord, back) {
     box.textContent = "";
-    if (note.k === "cloze") {
-      C.clozeSegments(note.f.x, ord, back).forEach(function (s) {
-        if ("t" in s) box.appendChild(document.createTextNode(s.t));
-        else if ("a" in s) box.appendChild(el("span", "ans", s.a));
-        else box.appendChild(el("span", "gap", "[" + (s.h || "…") + "]"));
-      });
-      if (back && note.f.e) box.appendChild(el("span", "extra", note.f.e));
-      return;
-    }
-    var txt = C.cardText(note, ord);
-    box.textContent = back ? txt.back : txt.front;
+    var auds = [];
+    C.sideMarked(note, ord, back).forEach(function (part) {
+      var wrap = el("div", part.field === "e" ? "extra" : "fld");
+      drawText(wrap, part.text);
+      box.appendChild(wrap);
+      if (note.md && note.md[part.field]) {
+        var mbox = el("div", "media");
+        auds = auds.concat(drawMedia(mbox, note.md[part.field]));
+        box.appendChild(mbox);
+      }
+    });
+    return auds;
+  }
+  // Card sounds play one after the other (device setting, on by default).
+  var playSeq = 0;
+  function autoplay(auds) {
+    var my = ++playSeq;
+    if (prefs().auto === false || !auds.length) return;
+    (function play(i) {
+      if (i >= auds.length || my !== playSeq || view !== "study") return;
+      var a = auds[i];
+      function go() {
+        if (my !== playSeq) return;
+        a.onended = function () { play(i + 1); };
+        var pr = a.play();
+        if (pr && pr.catch) pr.catch(function () { /* blocked or not loaded */ });
+      }
+      if (a.src) go(); else a.addEventListener("loadedmetadata", go, { once: true });
+    })(0);
+  }
+  function stopSounds() {
+    playSeq++;
+    [].forEach.call(document.querySelectorAll("#card-box audio"), function (a) { try { a.pause(); } catch (e) { /* none */ } });
   }
   function drawCard() {
     var c = sched[study.key];
     if (!c) return;
+    stopSounds();
+    M.stopSpeaking();
     var cloze = c.note.k === "cloze";
-    drawSide($("side-front"), c.note, c.ord, cloze && study.back);
+    var auds = drawSide($("side-front"), c.note, c.ord, cloze && study.back);
     $("side-line").hidden = !study.back || cloze;
     $("side-back").hidden = !study.back || cloze;
-    if (study.back && !cloze) drawSide($("side-back"), c.note, c.ord, true);
+    if (study.back && !cloze) auds = drawSide($("side-back"), c.note, c.ord, true);
+    else if (!cloze) $("side-back").textContent = "";
+    $("speak-btn").hidden = !M.hasVoices();
+    autoplay(auds);
+  }
+  // Read aloud what is showing: the front, or the answer once shown.
+  function speakSide() {
+    var c = sched[study.key];
+    if (view !== "study" || !c) return;
+    var d = deckById(c.deck);
+    var parts = C.sideMarked(c.note, c.ord, study.back).map(function (p) {
+      return { text: C.plain(p.text), lang: C.fieldLang(c.note, p.field, d ? d.cfg : null, LANG) };
+    });
+    stopSounds();
+    if (!M.speak(parts)) toast(t("v.none"));
+  }
+  // ⋯ menu on the study screen.
+  function closeMenu() {
+    if (!$("study-menu").hidden) { $("study-menu").hidden = true; $("more-btn").setAttribute("aria-expanded", "false"); }
+  }
+  function toggleMenu() {
+    var open = $("study-menu").hidden;
+    $("study-menu").hidden = !open;
+    $("more-btn").setAttribute("aria-expanded", open ? "true" : "false");
+    if (open) $("bury-btn").focus();
+  }
+  // Bury (until the study day ends) or suspend the card on screen: a flag row, undoable.
+  function flagCard(f) {
+    closeMenu();
+    if (view !== "study" || !study.key) return;
+    var c = sched[study.key], now = Date.now();
+    var row = { i: rowId(now), c: study.key, t: now, f: f };
+    addReviewRow(row);
+    if (c) { if (f === "s") c.sus = true; else c.bury = now; }
+    study.undo.push({ row: row.i, key: study.key, flag: true });
+    if (study.undo.length > 50) study.undo.shift();
+    toast(t(f === "s" ? "suspended" : "buried"));
+    nextCard();
   }
   function showAnswer() {
     if (view !== "study" || !study.key || study.back) return;
@@ -619,7 +977,7 @@
     addReviewRow({ i: rowId(now), u: u.row, t: now });
     sched = C.schedule(slice, notes, reviews, F);
     study.last = "";
-    toast(t("undone"));
+    toast(t(u.flag ? "undoneAct" : "undone"));
     stopLaterTimer();
     if (sched[u.key]) {
       study.key = u.key;
@@ -629,6 +987,7 @@
       $("study-foot").hidden = false;
       $("done-box").hidden = true;
       $("edit-cur-btn").hidden = false;
+      $("more-btn").hidden = false;
       renderStudyCounts();
       drawCard();
       $("show-btn").hidden = false;
@@ -648,12 +1007,18 @@
     if (opts.alt) $("dlg-alt").textContent = opts.altText;
     $("dlg-del").hidden = !opts.del;
     $("dlg-cancel").hidden = !!opts.noCancel;
+    if (dlg && dlg !== opts && dlg.onClose) dlg.onClose();
     dlg = opts;
     $("veil").hidden = false;
     var first = b.querySelector("input, select, textarea");
     (first || $("dlg-ok")).focus();
   }
-  function closeDialog() { $("veil").hidden = true; dlg = null; }
+  function closeDialog() {
+    var d = dlg;
+    $("veil").hidden = true;
+    dlg = null;
+    if (d && d.onClose) d.onClose();
+  }
   function field(labelKey, input) {
     var l = el("label", "field");
     l.appendChild(el("span", "", t(labelKey)));
@@ -713,12 +1078,27 @@
     var ret = select(rets.sort().map(function (r) { return [String(r), t("ret.pct", { n: Math.round(r * 100) })]; }), String(cfg.ret));
     body.appendChild(field("f.ret", ret));
     body.appendChild(el("p", "hint", t("f.retHint")));
+    // Read aloud: the language of each side (local voices only).
+    var langs = C.voiceLangs(M.voices()), vq = null, va = null;
+    if (langs.length) {
+      var opts = [["", t("f.vAuto")]].concat(langs.map(function (l) { return [l, langName(l)]; }));
+      [cfg.vq, cfg.va].forEach(function (v) {
+        if (v && !opts.some(function (o) { return o[0] === v; })) opts.push([v, langName(v)]);
+      });
+      var vtwo = el("div", "two");
+      vq = select(opts, cfg.vq || "");
+      va = select(opts, cfg.va || "");
+      vtwo.appendChild(field("f.vq", vq));
+      vtwo.appendChild(field("f.va", va));
+      body.appendChild(vtwo);
+    } else body.appendChild(el("p", "hint", t("f.vNone")));
     openDialog(t(id ? "dlg.deck" : "dlg.newDeck"), body, {
       okText: t(id ? "btn.save" : "btn.create"),
       ok: function () {
         var n = name.value.replace(/\s+/g, " ").trim();
         if (!n) { toast(t("need.name")); name.focus(); return; }
         var c = { nd: +nd.value, rd: +rd.value, ret: +ret.value };
+        if (vq) { c.vq = vq.value; c.va = va.value; }
         var now = Date.now();
         if (id) saveSlice(C.updateDeck(slice, id, { n: n, par: par.value, cfg: c }, now));
         else {
@@ -731,6 +1111,12 @@
       },
       del: id ? function () { deleteDeck(id); } : null
     });
+  }
+  function langName(tag) {
+    try {
+      var nm = new Intl.DisplayNames([locale()], { type: "language" }).of(tag);
+      return nm && nm !== tag ? nm + " (" + tag + ")" : tag;
+    } catch (e) { return tag; }
   }
   function deleteDeck(id) {
     var d = deckById(id);
@@ -754,9 +1140,17 @@
     for (var h = 0; h < 24; h++) hours.push([String(h), (h < 10 ? "0" : "") + h + ":00"]);
     var ro = select(hours, String(slice.set.ro));
     body.appendChild(field("f.dayStart", ro));
+    var auto = el("label", "check");
+    var cb = el("input");
+    cb.type = "checkbox";
+    cb.checked = prefs().auto !== false;
+    auto.appendChild(cb);
+    auto.appendChild(el("span", "", t("f.autoplay")));
+    body.appendChild(auto);
     body.appendChild(el("p", "hint", t("f.where")));
     openDialog(t("dlg.settings"), body, {
       ok: function () {
+        setPref("auto", cb.checked);
         if (+ro.value !== slice.set.ro) saveSlice(C.setDayStart(slice, +ro.value, Date.now()));
         closeDialog();
       }
@@ -783,24 +1177,188 @@
     var a = textarea(n && n.k !== "cloze" ? n.f.a : (preset && preset.a) || "");
     var x = textarea(n && n.k === "cloze" ? n.f.x : (preset && preset.x) || "");
     var e = textarea(n && n.k === "cloze" ? n.f.e : "");
+    var areas = { q: q, a: a, x: x, e: e };
+    // Pictures and sounds per field: names in `media`, new files (not on the disk yet) in `fresh`.
+    var media = { q: [], a: [], x: [], e: [] }, fresh = {};
+    if (n && n.md) Object.keys(n.md).forEach(function (k) { media[k] = n.md[k].slice(); });
+    var strips = {};
+    function mediaStrip(k) {
+      var box = el("div", "media-edit");
+      var items = el("div", "media-items");
+      var btns = el("div", "media-btns");
+      [["btn.image", "image/*"], ["btn.audio", "audio/*"]].forEach(function (b) {
+        var bt = el("button", "chip small", t(b[0]));
+        bt.type = "button";
+        bt.addEventListener("click", function () { pickFiles(k, b[1]); });
+        btns.appendChild(bt);
+      });
+      if (M.canRecord()) {
+        var rb = el("button", "chip small rec", t("btn.record"));
+        rb.type = "button";
+        rb.addEventListener("click", function () { toggleRecord(k, rb); });
+        btns.appendChild(rb);
+      }
+      box.appendChild(items);
+      box.appendChild(btns);
+      strips[k] = items;
+      drawStrip(k);
+      // Paste or drop a picture or sound straight into the field.
+      areas[k].addEventListener("paste", function (ev) {
+        var files = ev.clipboardData && ev.clipboardData.files;
+        if (files && files.length) { ev.preventDefault(); addFiles(k, files); }
+      });
+      [areas[k], box].forEach(function (target) {
+        target.addEventListener("dragover", function (ev) {
+          if (ev.dataTransfer && [].indexOf.call(ev.dataTransfer.types || [], "Files") >= 0) ev.preventDefault();
+        });
+        target.addEventListener("drop", function (ev) {
+          var files = ev.dataTransfer && ev.dataTransfer.files;
+          if (files && files.length) { ev.preventDefault(); addFiles(k, files); }
+        });
+      });
+      return box;
+    }
+    function drawStrip(k) {
+      var items = strips[k];
+      if (!items) return;
+      items.textContent = "";
+      media[k].forEach(function (name, i) {
+        var it = el("div", "media-it");
+        if (C.mediaKind(name) === "img") {
+          var img = el("img"); img.alt = "";
+          M.url(fsApi(), name).then(function (u) { if (u) img.src = u; else it.replaceChild(el("span", "m-miss", t("m.missing")), img); });
+          it.appendChild(img);
+        } else {
+          var au = el("audio"); au.controls = true; au.preload = "metadata";
+          M.url(fsApi(), name).then(function (u) { if (u) au.src = u; else it.replaceChild(el("span", "m-miss", t("m.missing")), au); });
+          it.appendChild(au);
+        }
+        var rm = el("button", "icon-btn rm");
+        rm.type = "button";
+        rm.textContent = "✕";
+        rm.setAttribute("aria-label", t("btn.remove"));
+        rm.title = t("btn.remove");
+        rm.addEventListener("click", function () { media[k].splice(i, 1); drawStrip(k); });
+        it.appendChild(rm);
+        items.appendChild(it);
+      });
+    }
+    function addFiles(k, files) {
+      [].slice.call(files).forEach(function (f) {
+        if (media[k].length >= C.MEDIA_MAX) { toast(t("m.full")); return; }
+        M.prepare(f).then(function (item) {
+          if (media[k].indexOf(item.name) >= 0) return;
+          if (media[k].length >= C.MEDIA_MAX) { toast(t("m.full")); return; }
+          fresh[item.name] = item;
+          media[k].push(item.name);
+          drawStrip(k);
+        }, function (err) {
+          var code = err && err.code;
+          toast(t(code === "toobig" ? "m.toobig" : code === "badimage" ? "m.badimage" : "m.badtype"));
+        });
+      });
+    }
+    var picker = el("input");
+    picker.type = "file";
+    picker.multiple = true;
+    picker.hidden = true;
+    var pickFor = "q";
+    picker.addEventListener("change", function () {
+      if (picker.files && picker.files.length) addFiles(pickFor, picker.files);
+      picker.value = "";
+    });
+    function pickFiles(k, accept) { pickFor = k; picker.accept = accept; picker.click(); }
+    // One recording at a time; the button shows the time and stops it.
+    var rec = null;
+    function toggleRecord(k, btn) {
+      if (rec) {
+        var r = rec; rec = null;
+        clearInterval(r.tick);
+        r.btn.textContent = t("btn.record");
+        r.btn.classList.remove("on");
+        r.handle.stop().then(function (file) { addFiles(r.k, [file]); });
+        return;
+      }
+      M.record(function () { toast(t("m.recMax")); if (rec) toggleRecord(rec.k, rec.btn); }).then(function (handle) {
+        var start = Date.now();
+        rec = { k: k, btn: btn, handle: handle, tick: 0 };
+        btn.classList.add("on");
+        function upd() {
+          var s = Math.floor((Date.now() - start) / 1000);
+          btn.textContent = t("btn.stop", { t: Math.floor(s / 60) + ":" + (s % 60 < 10 ? "0" : "") + (s % 60) });
+        }
+        upd();
+        rec.tick = setInterval(upd, 500);
+      }, function () { toast(t("m.nomic")); });
+    }
+    function stopRecording() {
+      if (!rec) return;
+      clearInterval(rec.tick);
+      rec.handle.cancel();
+      rec = null;
+    }
+    // Formatting buttons act on the field last used.
+    var lastArea = kind === "cloze" ? x : q;
+    [q, a, x, e].forEach(function (ar) { ar.addEventListener("focus", function () { lastArea = ar; }); });
+    var fbar = el("div", "fmt-bar");
+    [["btn.bold", "B", "b"], ["btn.italic", "I", "i"], ["btn.list", "•", "ul"], ["btn.numbers", "1.", "ol"]].forEach(function (f) {
+      var b = el("button", "chip small fmt-" + f[2], f[1]);
+      b.type = "button";
+      b.setAttribute("aria-label", t(f[0]));
+      b.title = t(f[0]);
+      b.addEventListener("mousedown", function (ev) { ev.preventDefault(); });   // keep the selection
+      b.addEventListener("click", function () { applyFormat(lastArea, f[2]); });
+      fbar.appendChild(b);
+    });
+    fbar.appendChild(el("span", "hint", t("f.fmtHint")));
+    function applyFormat(ar, how) {
+      var s = ar.selectionStart, en = ar.selectionEnd, v = ar.value, ins;
+      if (how === "b" || how === "i") {
+        var mk = how === "b" ? "**" : "*";
+        var mid = v.slice(s, en);
+        ins = mk + (mid || "…") + mk;
+        ar.value = v.slice(0, s) + ins + v.slice(en);
+        ar.focus();
+        if (mid) ar.setSelectionRange(s + ins.length, s + ins.length);
+        else ar.setSelectionRange(s + mk.length, s + mk.length + 1);
+        return;
+      }
+      var ls = v.lastIndexOf("\n", s - 1) + 1, le = v.indexOf("\n", en);
+      if (le < 0) le = v.length;
+      var lines = v.slice(ls, le).split("\n").map(function (line, i) {
+        var bare = line.replace(/^\s*(?:[-•]|\d{1,4}[.)])\s+/, "");
+        return (how === "ul" ? "- " : (i + 1) + ". ") + bare;
+      });
+      ins = lines.join("\n");
+      ar.value = v.slice(0, ls) + ins + v.slice(le);
+      ar.focus();
+      ar.setSelectionRange(ls + ins.length, ls + ins.length);
+    }
     var fq = field("f.front", q), fa = field("f.back", a), fx = field("f.text", x), fe = field("f.extra", e);
+    fq.appendChild(mediaStrip("q")); fa.appendChild(mediaStrip("a"));
+    fx.appendChild(mediaStrip("x")); fe.appendChild(mediaStrip("e"));
     var bar = el("div", "cloze-bar");
     var cz = el("button", "chip", t("btn.cloze")); cz.type = "button";
     var cz2 = el("button", "chip", t("btn.clozeSame")); cz2.type = "button";
     bar.appendChild(cz); bar.appendChild(cz2);
     bar.appendChild(el("p", "hint", t("f.clozeHint")));
-    [fq, fa, fx, bar, fe].forEach(function (f) { body.appendChild(f); });
+    [fbar, fq, fa, fx, bar, fe, picker].forEach(function (f) { body.appendChild(f); });
     var tags = input("text", n ? n.tg.join(" ") : "", 600);
     body.appendChild(field("f.tags", tags));
     function sync() {
       var c = kindSel.value === "cloze";
       fq.hidden = fa.hidden = c;
       fx.hidden = fe.hidden = bar.hidden = !c;
+      if (lastArea.closest && lastArea.closest(".field").hidden) lastArea = c ? x : q;
     }
     kindSel.addEventListener("change", function () {
-      // Carry the text over when the type changes.
+      // Carry the text and the media over when the type changes.
       if (kindSel.value === "cloze" && !x.value && q.value) x.value = q.value + (a.value ? "\n" + a.value : "");
       if (kindSel.value !== "cloze" && !q.value && x.value) q.value = x.value.replace(/\{\{c\d+::([\s\S]*?)(?:::[\s\S]*?)?\}\}/g, "$1");
+      var to = kindSel.value === "cloze" ? [["q", "x"], ["a", "e"]] : [["x", "q"], ["e", "a"]];
+      to.forEach(function (pr) {
+        if (!media[pr[1]].length && media[pr[0]].length) { media[pr[1]] = media[pr[0]].slice(); drawStrip(pr[1]); }
+      });
       sync();
     });
     function makeGap(same) {
@@ -822,15 +1380,25 @@
       if (k === "cloze") {
         if (!C.clozeNums(x.value).length) { toast(t("need.cloze")); x.focus(); return null; }
         v.f = { x: x.value, e: e.value };
+        v.md = { x: media.x, e: media.e };
       } else {
-        if (!q.value.trim()) { toast(t("need.front")); q.focus(); return null; }
+        if (!q.value.trim() && !media.q.length) { toast(t("need.front")); q.focus(); return null; }
         v.f = { q: q.value, a: a.value };
+        v.md = { q: media.q, a: media.a };
       }
       return C.normNote(v);
     }
     function store(v) {
       setPref("kind", v.k);
       setPref("deck", v.dk);
+      // New pictures and sounds this note uses go to the disk first.
+      var Fs = fsApi(), names = [];
+      if (v.md) Object.keys(v.md).forEach(function (k) { v.md[k].forEach(function (nm) { if (fresh[nm]) names.push(nm); }); });
+      if (names.length && disk && Fs && typeof Fs.write === "function") {
+        writeChain = writeChain.then(function () {
+          return Promise.all(names.map(function (nm) { return M.write(Fs, fresh[nm]); }));
+        }).catch(function (err) { console.warn("[flashcards] media write failed", err); toast(t("m.saveFail")); });
+      }
       saveNotes([v]);
       toast(t("saved"));
     }
@@ -838,6 +1406,7 @@
       ok: function () {
         var v = collect();
         if (!v) return;
+        stopRecording();
         store(v);
         closeDialog();
         if (view === "study") { if (sched[study.key]) drawCard(); else nextCard(); }
@@ -845,12 +1414,16 @@
       alt: n ? null : function () {
         var v = collect();
         if (!v) return;
+        stopRecording();
         store(v);
         n = null;
         q.value = a.value = x.value = e.value = "";
+        media = { q: [], a: [], x: [], e: [] };
+        Object.keys(strips).forEach(drawStrip);
         (kindSel.value === "cloze" ? x : q).focus();
       },
       altText: t("btn.saveNext"),
+      onClose: stopRecording,
       del: n ? function () {
         confirmBox(t("conf.note"), t("btn.delete"), function () {
           saveNotes([{ id: n.id, m: Math.max(Date.now(), n.m + 1), del: 1 }]);
@@ -864,12 +1437,38 @@
   // ---------- 9. Wiring ----------
   function goBack() {
     if (!$("veil").hidden) { closeDialog(); return; }
+    if (view === "browse") { if (br.from === "deck" && curDeck) show("deck"); else show("home"); return; }
     if (view === "study") { flushReviews(); if (curDeck && study.deck) openDeck(study.deck); else show("home"); }
     else if (view === "deck") show("home");
   }
   function wire() {
     $("back-btn").addEventListener("click", goBack);
     $("new-deck-btn").addEventListener("click", function () { deckDialog(""); });
+    $("browse-btn").addEventListener("click", function () { openBrowse(view === "deck" ? curDeck : ""); });
+    ["br-deck", "br-tag", "br-state"].forEach(function (id) {
+      $(id).addEventListener("change", function () { br.shown = 300; renderBrowse(); });
+    });
+    $("br-q").addEventListener("input", function () { br.shown = 300; renderBrowse(); });
+    $("br-more").addEventListener("click", function () { br.shown += 300; renderBrowse(); });
+    $("br-all").addEventListener("change", function () {
+      var on = $("br-all").checked;
+      br.hits.forEach(function (k) { if (on) br.sel[k] = 1; else delete br.sel[k]; });
+      renderBrowse();
+    });
+    $("br-move").addEventListener("click", bulkMove);
+    $("br-tagadd").addEventListener("click", function () { bulkTag(true); });
+    $("br-tagdel").addEventListener("click", function () { bulkTag(false); });
+    $("br-sus").addEventListener("click", function () { bulkFlag("s"); });
+    $("br-res").addEventListener("click", function () { bulkFlag("r"); });
+    $("br-del").addEventListener("click", bulkDelete);
+    $("more-btn").addEventListener("click", function (ev) { ev.stopPropagation(); toggleMenu(); });
+    $("bury-btn").addEventListener("click", function () { flagCard("b"); });
+    $("suspend-btn").addEventListener("click", function () { flagCard("s"); });
+    $("speak-btn").addEventListener("click", speakSide);
+    document.addEventListener("click", function (ev) {
+      if (!$("study-menu").hidden && !$("study-menu").contains(ev.target)) closeMenu();
+    });
+    M.onVoices(function () { if (view === "study" && study.key) $("speak-btn").hidden = !M.hasVoices(); });
     $("first-deck-btn").addEventListener("click", function () { deckDialog(""); });
     $("add-card-btn").addEventListener("click", function () { noteDialog(""); });
     $("settings-btn").addEventListener("click", settingsDialog);
@@ -910,10 +1509,15 @@
       }
       var tag = (e.target && e.target.tagName) || "";
       if (/^(INPUT|TEXTAREA|SELECT)$/.test(tag)) return;
+      if (e.code === "Escape" && !$("study-menu").hidden) { e.preventDefault(); closeMenu(); $("more-btn").focus(); return; }
       if (e.code === "Escape" && view !== "home") { e.preventDefault(); goBack(); return; }
       if (view !== "study") return;
       if ((e.ctrlKey || e.metaKey) && e.code === "KeyZ") { e.preventDefault(); undoAnswer(); return; }
       if (e.ctrlKey || e.metaKey || e.altKey) return;
+      if (!study.key) return;
+      if (e.code === "KeyR") { e.preventDefault(); speakSide(); return; }
+      if (e.code === "Minus" || e.code === "NumpadSubtract") { e.preventDefault(); flagCard("b"); return; }
+      if (/^(BUTTON)$/.test(tag) && $("study-menu").contains(e.target)) return;
       if (!study.back && (e.code === "Space" || e.code === "Enter" || e.code === "NumpadEnter")) { e.preventDefault(); showAnswer(); return; }
       var m = /^(?:Digit|Numpad)([1-4])$/.exec(e.code);
       if (m && study.back) { e.preventDefault(); answer(+m[1]); return; }

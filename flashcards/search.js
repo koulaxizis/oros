@@ -15,7 +15,11 @@
   var CLOZE_RE = /\{\{c\d{1,3}::([\s\S]*?)(?:::[\s\S]*?)?\}\}/g;
   var MAX_FILES = 400;
 
-  function flat(s) { return String(s || "").replace(CLOZE_RE, "$1").replace(/\s+/g, " ").trim(); }
+  // Plain text: cloze marks, **bold** / *italic* marks and list bullets out.
+  function flat(s) {
+    return String(s || "").replace(CLOZE_RE, "$1").replace(/^\s*(?:[-\u2022]|\d{1,4}[.)])\s+/gm, "")
+      .replace(/\*\*(?=\S)([\s\S]*?\S)\*\*/g, "$1").replace(/\*(?=\S)([^*\n]*?\S)\*/g, "$1").replace(/\s+/g, " ").trim();
+  }
 
   // Newest version of every note id across the files.
   function readNotes(fs) {

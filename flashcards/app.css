@@ -235,7 +235,70 @@ body.studying #toast { top: 12px; bottom: auto; }
   clip: rect(0 0 0 0); white-space: nowrap;
 }
 
+/* ---------- Wave 2: formatting, media, menu, browser ---------- */
+.side .fld + .media, .side .extra + .media { margin-top: 10px; }
+.side .para + .para, .side .para + ul, .side .para + ol, .side ul + .para, .side ol + .para { margin-top: 8px; }
+.side ul, .side ol { display: inline-block; text-align: left; margin: 6px 0; padding-left: 1.4em; }
+.side li + li { margin-top: 2px; }
+.side .extra ul, .side .extra ol { font-size: 16px; }
+.media { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.m-img { display: block; max-width: 100%; max-height: 42vh; border-radius: 8px; object-fit: contain; }
+.m-aud { width: min(100%, 360px); }
+.m-miss { display: inline-block; padding: 4px 10px; border: 1px dashed var(--border); border-radius: 8px; font-size: 13px; color: var(--text-dim); }
+#card-box { position: relative; }
+.speak { position: absolute; top: 6px; right: 6px; min-height: 36px; min-width: 36px; font-size: 16px; }
+#card-box .side:first-of-type { padding: 0 30px; }
+.menu-wrap { position: relative; }
+.menu {
+  position: absolute; right: 0; top: calc(100% + 4px); z-index: 40;
+  display: flex; flex-direction: column; min-width: 220px; padding: 4px;
+  border: 1px solid var(--border); border-radius: 8px; background: var(--bg);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .35);
+}
+.menu[hidden] { display: none; }
+.menu button {
+  min-height: 40px; padding: 6px 12px; border: 0; border-radius: 6px; background: none;
+  color: var(--text); font: inherit; text-align: left; cursor: pointer;
+}
+.menu button:hover, .menu button:focus-visible { background: var(--accent-soft); }
+.chip.small { min-height: 34px; padding: 4px 10px; font-size: 14px; }
+.fmt-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 10px; }
+.fmt-bar .hint { margin: 0; font-size: 13px; flex-basis: 100%; }
+.fmt-b { font-weight: 800; }
+.fmt-i { font-style: italic; }
+.media-edit { margin-top: 6px; }
+.media-items { display: flex; flex-wrap: wrap; gap: 6px; }
+.media-items:empty { display: none; }
+.media-it { position: relative; display: flex; align-items: center; gap: 4px; max-width: 100%; padding: 4px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel-bg); }
+.media-it img { display: block; height: 64px; max-width: 120px; object-fit: cover; border-radius: 4px; }
+.media-it audio { width: min(220px, 60vw); height: 36px; }
+.media-it .rm { min-height: 32px; min-width: 32px; font-size: 14px; }
+.media-btns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.chip.rec.on { border-color: var(--danger); color: var(--danger); font-variant-numeric: tabular-nums; }
+.check { display: flex; align-items: center; gap: 8px; min-height: 40px; margin-bottom: 8px; cursor: pointer; }
+.check input { width: 20px; height: 20px; accent-color: var(--accent); }
+
+.br-filters { display: grid; grid-template-columns: 2fr repeat(3, minmax(0, 1fr)); gap: 6px; margin-bottom: 8px; }
+.br-filters input, .br-filters select {
+  width: 100%; min-width: 0; min-height: 40px; padding: 8px 10px;
+  border: 1px solid var(--border); border-radius: 8px; background: var(--panel-bg); color: var(--text); font: inherit;
+}
+.br-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 8px; min-height: 40px; }
+.br-all { display: flex; align-items: center; gap: 8px; min-height: 40px; padding-left: 10px; color: var(--text-dim); cursor: pointer; }
+.br-all input, #br-list input[type=checkbox] { width: 20px; height: 20px; flex: none; accent-color: var(--accent); }
+.br-acts { display: flex; flex-wrap: wrap; gap: 6px; margin-left: auto; }
+#br-list li.sel { border-color: var(--accent); background: var(--accent-soft); }
+#br-list li.dim .name { opacity: .6; }
+#br-more { margin-top: 10px; }
+#browse-btn .ic { display: none; font-size: 17px; line-height: 1; }
+
 @media (max-width: 480px) {
+  .br-filters { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .br-filters input { grid-column: 1 / -1; }
+  .br-acts { margin-left: 0; }
+  #browse-btn { min-width: 40px; padding: 6px 8px; }
+  #browse-btn .lb { display: none; }
+  #browse-btn .ic { display: inline; }
   #new-deck-btn { display: none; }
   #card-box { font-size: 20px; padding: 16px 12px; }
   .two { grid-template-columns: minmax(0, 1fr); }
