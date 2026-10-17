@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.76.00
+- Sync can now go through your own WebDAV server (Nextcloud, ownCloud, Synology, QNAP): Settings › Sync › Use WebDAV / Nextcloud.
+
 ## Version 2.75.00
 - Files opens documents, spreadsheets, songs and videos straight in the orOS app that reads them (Open with…), plays songs in Music, and sends files to Mail.
 
