@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.77.00
+- Notifications with orOS closed (optional): turn it on per device in Settings › Notifications and alarms and reminders arrive even when orOS is closed.
+
 ## Version 2.76.00
 - Sync can now go through your own WebDAV server (Nextcloud, ownCloud, Synology, QNAP): Settings › Sync › Use WebDAV / Nextcloud.
 

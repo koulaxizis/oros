@@ -26,9 +26,26 @@ In the [Calendar](app:calendar) app, choose a `Reminder` time when you add or ed
 Other apps send reminders too, for example tasks that are due or overdue in [To-Do](app:todo). Each one has its own switch under `Which apps may notify`.
 
 ## When orOS is closed
->! orOS runs inside your browser, so **nothing rings or pops up while orOS is closed**. Alarms and reminders only work while orOS is open in a tab or as an installed app, even if it's in the background.
+>! orOS runs inside your browser, so **without the switch below nothing rings or pops up while orOS is closed**. Alarms and reminders then only work while orOS is open in a tab or as an installed app, even if it's in the background.
 
-On phones, browsers often pause pages that aren't on screen. For an alarm that really matters, keep orOS open, or use your phone's own alarm as a backup.
+### Notifications with orOS closed (optional)
+`Settings` › `Notifications` › `Notifications with orOS closed` is **off** until you turn it on, and you turn it on separately on each device. With it on, these arrive even when orOS is closed:
+
+- [Time](app:time) alarms and timers.
+- [Calendar](app:calendar) reminders.
+- [To-Do](app:todo) tasks that are due (at 09:00), [Water](app:water), [Habits](app:habits) and [Health](app:health) reminders.
+
+How it works: orOS keeps the next 7 days of reminders on the orOS relay, and at each one's time the relay sends it to your browser's push service, which wakes your device. The push service belongs to your browser's maker: **Google** in Chrome and on Android, **Microsoft** in Edge, **Mozilla** in Firefox. Each reminder is encrypted on your device first, so the push service and the relay see only an encrypted packet and the time it's sent, never what it says. Change or delete a reminder on any of your devices and the waiting copy changes or goes away too. Open orOS now and then so it can add the days ahead.
+
+Good to know:
+- On a computer the browser has to keep running in the background, although the orOS window itself can be closed. Chrome and Edge on Windows do this by default. On Linux and in Firefox, keep the browser open.
+- Android phones get them even with Chrome closed. In the orOS Android app this switch is hidden, because the app rings reminders itself (see below).
+- The sound is your system's notification sound, not the orOS ringtone. Alarms stay on screen until you tap them.
+- While orOS is on screen, it shows reminders itself, so you never get the same one twice.
+- `Send a test` checks that it works: the test arrives through the push service a moment later, even with orOS open.
+- Turning the switch off deletes the waiting reminders from the relay. Below the switch you see every device that has it on; `Remove` turns it off for that device too, from wherever you are.
+
+On phones without the switch, browsers often pause pages that aren't on screen. For an alarm that really matters, use your phone's own alarm as a backup.
 
 ## With the orOS Android app
 In the orOS app for Android, `Settings` › `Notifications` has `Reminders through the Android app`. Turn it on and tap `Allow`. The phone then rings these on its own, even when orOS is closed:

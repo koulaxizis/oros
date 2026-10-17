@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "2.76.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "2.77.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -5823,6 +5823,10 @@
         { name: "Cloudflare Workers", url: "https://workers.cloudflare.com/",
           by: "Cloudflare, Inc.", lic: { en: "Runs the orOS mail relay (code in relay/); D1 keeps encrypted share links with an expiry", el: "Τρέχει το relay αλληλογραφίας του orOS (κώδικας στο relay/)· το D1 κρατά κρυπτογραφημένους συνδέσμους με λήξη" },
           en: "Mail: IMAP over HTTPS, nothing stored", el: "Αλληλογραφία: IMAP μέσω HTTPS, δεν αποθηκεύεται τίποτα" },
+        { name: "Web Push: Google FCM, Mozilla Push, Microsoft WNS", url: "https://www.rfc-editor.org/rfc/rfc8030",
+          by: "Google LLC; Mozilla Foundation; Microsoft Corporation (your browser's)", lic: { en: "Their terms; only with the switch on", el: "Οι όροι τους· μόνο με ανοιχτό το διακόπτη" },
+          en: "Optional notifications with orOS closed, encrypted on the device (Settings › Notifications)",
+          el: "Προαιρετικές ειδοποιήσεις με κλειστό orOS, κρυπτογραφημένες στη συσκευή (Ρυθμίσεις › Ειδοποιήσεις)" },
         { name: "WooCommerce REST API", url: "https://woocommerce.github.io/woocommerce-rest-api-docs/",
           by: "Automattic; your own shop", lic: { en: "Your own shop and keys", el: "Το δικό σου κατάστημα και κλειδιά" },
           en: "Connected services: shop stock and orders (Stock)", el: "Συνδεδεμένες υπηρεσίες: απόθεμα και παραγγελίες καταστήματος (Απόθεμα)" },
