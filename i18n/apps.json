@@ -48,6 +48,14 @@
    ]
   },
   {
+   "app": "mindmap",
+   "files": [
+    "mindmap/mindmap.js",
+    "mindmap/mm-core.js",
+    "mindmap/search.js"
+   ]
+  },
+  {
    "app": "notes",
    "files": [
     "notes/notes.js",
@@ -69,6 +77,31 @@
    ]
   },
   {
+   "app": "slides",
+   "files": [
+    "slides/app.js",
+    "slides/core.js",
+    "slides/search.js"
+   ]
+  },
+  {
+   "app": "spreadsheet",
+   "files": [
+    "spreadsheet/convert.js",
+    "spreadsheet/functions.js",
+    "spreadsheet/platforms.js",
+    "spreadsheet/search.js",
+    "spreadsheet/spreadsheet.js"
+   ]
+  },
+  {
+   "app": "stickies",
+   "files": [
+    "stickies/host.js",
+    "stickies/stickies.js"
+   ]
+  },
+  {
    "app": "todo",
    "files": [
     "todo/gtasks.js",
@@ -76,6 +109,15 @@
     "todo/package.js",
     "todo/platforms.js",
     "todo/todo.js"
+   ]
+  },
+  {
+   "app": "writer",
+   "files": [
+    "writer/convert.js",
+    "writer/search.js",
+    "writer/spell-worker.js",
+    "writer/writer.js"
    ]
   }
  ]

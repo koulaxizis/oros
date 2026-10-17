@@ -1,0 +1,91 @@
+# Mindmap
+Mit Mindmap ordnest du deine Ideen: eine Idee in der Mitte, Zweige drumherum. Die Anordnung ist immer aufgeräumt (als Mindmap, Organigramm, Baum oder Zeitleiste), du denkst also nur an die Ideen. Du kannst so viele Mindmaps haben, wie du willst, sie gestalten und Zweig für Zweig präsentieren.
+
+## Erste Schritte
+- Tippe auf `Neue Mindmap`, gib die `Zentrale Idee` ein und tippe auf `OK`. Oder tippe auf `Beispiel zeigen`, um dich erst umzusehen.
+- Tippe oder klicke auf einen Knoten, um ihn auszuwählen. Die Leiste unten hat `Kind`, `Geschwister`, `Bearbeiten`, `Details`, `Stil`, `Einklappen` und `Löschen`.
+- Um den Text zu ändern, tippe oder klicke doppelt auf den Knoten, oder tippe ihn noch einmal an, wenn er ausgewählt ist. [[Shift+Enter]] beginnt eine neue Zeile.
+- Der Text in der Mitte ist der Titel der Mindmap.
+
+## Die Mindmap aufbauen
+- Zieh einen Knoten auf einen anderen, um ihn dorthin zu verschieben. Lass ihn auf der Mitte eines Knotens los, damit er ein Kind wird, oder knapp darüber oder darunter, um ihn davor oder dahinter zu setzen. Der ganze Zweig wandert mit.
+- Zieh einen Knoten auf eine leere Stelle, und er bleibt dort, mit seinem ganzen Zweig. `Zurück an seinen Platz` in seinem Menü macht das rückgängig, und `Aufräumen (alle zurück an ihren Platz)` im Menü `Mehr` setzt alle Knoten zurück.
+- Halte einen Knoten gedrückt (oder klicke mit der rechten Maustaste) für mehr: `Als erledigt markieren`, `Nach oben`, `Nach unten`, `Stil kopieren`, `Stil einfügen`, `Rahmen oder Zusammenfassung…`, `Als Text kopieren`, `Liste hier einfügen…`, `Diesen Zweig exportieren…`, `Ab hier präsentieren` und `Zweig löschen`.
+- `Details…` enthält `Emoji oder Symbol` (mit Schnellsymbolen wie Stern, Fragezeichen oder Priorität 1 bis 3), `Zweigfarbe`, `Notiz`, `Link (Webadresse)` und `Bild`.
+- `Liste einfügen…` macht aus einer Liste Zweige: eine Idee pro Zeile, mit Einrückungen (oder Markdown-Listen `- ` und `#`-Überschriften) für die Ebenen.
+- Zieh die leere Fläche, um dich zu bewegen, zoome mit zwei Fingern oder den Zoom-Tasten, und tippe auf `An Bildschirm anpassen`, um die ganze Mindmap zu sehen.
+
+## Stil und Anordnung
+- `Stil` in der unteren Leiste (oder `Stil…` im Menü eines Knotens) legt die `Form` (Rechteck, abgerundet, Pille, Ellipse, Raute, Sechseck, unterstrichen oder nur Text), die `Füllung` (keine, hell oder voll), den `Rand` (keiner, dünn, dick oder gestrichelt), die `Textgröße` und `Fetter Text` fest. `Auf ganzen Zweig anwenden` gibt allem unter dem Knoten dasselbe Aussehen, und `Stil zurücksetzen` holt das automatische zurück.
+- `Stil kopieren` im Menü eines Knotens und dann `Stil einfügen` bei einem anderen Knoten gibt ihm dasselbe Aussehen.
+- `Anordnung…` im Menü `Mehr` ordnet die ganze Mindmap als `Mindmap` (Zweige auf beiden Seiten), `Mindmap nach rechts`, `Organigramm` (von oben nach unten), `Baum` (eingerückte Liste) oder `Zeitleiste` (Hauptzweige in einer Reihe, ihre Ideen darunter) an. Jede Anordnung bleibt aufgeräumt, und die Pfeiltasten folgen ihr.
+- Im Organigramm und in der Zeitleiste lässt du einen gezogenen Knoten auf dem linken oder rechten Teil eines anderen los, um ihn davor oder dahinter zu setzen.
+
+## Rahmen und Zusammenfassungen
+- `Rahmen oder Zusammenfassung…` im Menü eines Knotens fasst Ideen zusammen, die nebeneinander stehen. Hake die Ideen an, die dazugehören, und gib ihr, wenn du willst, eine Beschriftung (etwa „Phase 1“) und eine Farbe.
+- Ein `Rahmen` zieht einen Kasten um die Ideen und alles darunter. Eine `Zusammenfassung` zeichnet eine geschweifte Klammer neben sie, mit ihrer Beschriftung.
+- Tippe auf die Linie oder die Beschriftung eines Rahmens, um ihn auszuwählen. Die Leiste unten hat dann `Bearbeiten` und `Löschen`.
+
+## Präsentieren
+- `Präsentieren` im Menü `Mehr` (oder `Ab hier präsentieren` im Menü eines Knotens) zeigt die Mindmap im Vollbild, eine Idee nach der anderen: zuerst die Mitte, dann jeden Zweig von oben nach unten. Der letzte Schritt zeigt die ganze Mindmap.
+- Tippe auf die rechte Bildschirmseite oder wische nach links, um weiterzugehen, tippe auf die linke Seite oder wische nach rechts, um zurückzugehen. Die Tasten unten tun dasselbe, und das X beendet die Präsentation.
+- Mit Tastatur: [[→]], [[↓]] oder [[Space]] gehen weiter, [[←]] oder [[↑]] zurück, [[Home]] und [[End]] springen an den Anfang oder das Ende, [[Esc]] beendet.
+- Ein eingeklappter Zweig ist ein Schritt. Klapp ihn erst aus, wenn du zeigen willst, was darin ist.
+
+## Verbindungen und Bilder
+- Um zwei Ideen auf verschiedenen Zweigen zu verbinden, wähle `Mit anderem Knoten verbinden…` im Menü eines Knotens und tippe dann auf den anderen Knoten. Du kannst der Verbindung eine Beschriftung geben, etwa „hängt ab von“.
+- Tippe auf eine Verbindung, um sie auszuwählen. Die Leiste unten hat dann `Beschriftung`, `Umkehren` und `Verbindung löschen`.
+- `Bild wählen` in `Details…` setzt ein kleines Bild über den Text. Bilder werden beim Hinzufügen verkleinert, und alle Bilder zusammen dürfen etwa 1 MB belegen.
+
+## In anderen Apps nutzen
+- `An Aufgaben senden…` im Menü eines Knotens macht aus dem Zweig eine neue Liste in [Aufgaben](app:todo). Jede Idee wird eine Aufgabe, und ihre Notiz kommt mit. Erledigte Ideen bleiben außen vor, und Aufgaben fragt dich, bevor etwas hinzugefügt wird.
+- `Als Notiz speichern` macht eine neue Seite in [Notizen](app:notes) mit dem Zweig als eingerückter Liste, samt Notizen und Links. `Mindmap als Notiz speichern` im Menü `Mehr` tut dasselbe für die ganze Mindmap.
+- `Folien aus diesem Zweig…` (oder `Folien aus dieser Mindmap…` im Menü `Mehr`) beginnt eine Präsentation in [Folien](app:slides). Der Zweig wird zur Titelfolie, jede Hauptidee zu einer Folie, tiefere Ideen zu Aufzählungspunkten und Notizen zu Sprechernotizen. Folien fragt dich zuerst nach einem Design.
+
+## Gliederung und Suche
+- `Gliederung` zeigt dieselbe Mindmap als eingerückte Liste, damit tippst du schneller. [[Enter]] fügt eine Zeile hinzu, [[Tab]] und [[Shift+Tab]] ändern die Ebene, und [[Backspace]] in einer leeren Zeile entfernt sie.
+- `Suchen` durchsucht Text und Notizen der offenen Mindmap. Die Pfeile springen von Treffer zu Treffer und klappen dabei eingeklappte Zweige auf.
+
+## Deine Mindmaps
+Tippe oben links auf den Namen der Mindmap für `Deine Mindmaps`. Dort kannst du eine Mindmap öffnen, umbenennen, duplizieren oder löschen. Das Menü `Mehr` hat außerdem `Anordnung…`, `Alle ausklappen` und `Hauptzweige einklappen`.
+
+## Synchronisierung und Sicherung
+Mit der [orOS-Synchronisierung](help:t/sync) kommen deine Mindmaps und alle Knoten auf deine anderen Geräte, mit Stilen, Rahmen, Zusammenfassungen und Anordnung. Welche Mindmap offen ist, die Ansicht und welche Zweige eingeklappt sind, bleibt auf diesem Gerät.
+
+- `Exportieren…` macht ein Bild (PNG oder SVG), Markdown, OPML, JSON oder eine `orOS-Datei (.orosmind)` aus der ganzen Mindmap oder einem Zweig. Du kannst sie speichern, in [Dateien](app:files) speichern, drucken oder als Text kopieren.
+- Eine `orOS-Datei (.orosmind)` enthält eine ganze Mindmap mit allem darin: Verbindungen, Bildern, Stilen, Rahmen, Zusammenfassungen und Anordnung. Sie ist eine offene ZIP-Datei: Entpackst du sie, findest du `content.json` (die Mindmap), `media` (ihre Bilder) sowie `preview/map.md` und `preview/map.opml`, die Gliederung für andere Programme. Beim Öffnen entsteht eine neue Mindmap; deine anderen Mindmaps bleiben unberührt. `Entpackter orOS-Ordner…` im Menü `Mehr` öffnet so eine Datei, nachdem sie entpackt wurde, auch wenn du darin ein Bild geändert hast.
+- `Importieren (orOS, FreeMind, XMind, SimpleMind, MindManager, OPML, Markdown, Text, JSON)…` holt Mindmaps aus FreeMind, Freeplane, XMind (nur das erste Blatt), SimpleMind und MindManager sowie Gliederungen aus anderen Apps als neue Mindmap herein (siehe unten). Ihre Pfeile werden zu Verbindungen. Eine JSON-Sicherung wird mit deinen Mindmaps zusammengeführt: Neuere Änderungen bleiben, und nichts, was du gelöscht hast, kommt zurück.
+- `Alle Mindmaps sichern (JSON)` speichert alles in einer Datei. Deine Mindmaps sind auch Teil der orOS-[Sicherungen](help:t/backup).
+
+## Aus anderen Apps importieren
+Jeder Import macht eine neue Mindmap und öffnet sie; deine anderen Mindmaps bleiben unberührt. Die Meldung danach hat eine Schaltfläche `Rückgängig`, die die neue Mindmap wieder entfernt.
+
+- **FreeMind / Freeplane** (.mm): Speichere die Mindmap wie gewohnt und importiere die .mm-Datei.
+- **XMind** (.xmind): Importiere die .xmind-Datei so, wie sie ist. Nur das erste Blatt kommt herein.
+- **SimpleMind** (.smmx): Teile oder exportiere die Mindmap in SimpleMind als SimpleMind-Datei (.smmx), oder nimm die Datei aus ihrem Speicherordner. Ideen, Notizen, Links, Häkchen und Querverbindungen kommen herein.
+- **MindManager** (.mmap): Speichere die Mindmap als .mmap-Datei (das übliche Format). Themen, Notizen, Links, Farben, erledigte Aufgaben und Beziehungen kommen herein; frei schwebende Themen nicht.
+- **Markdown** (.md): Dateien aus Markmap, Obsidian, Logseq und anderen Markdown-Notizen. Überschriften und verschachtelte Listen werden zu Zweigen; die erste Überschrift wird die Mitte (oder der Dateiname, wenn es mehrere gibt). Links, Fettschrift und andere Formatierung werden zu reinem Text (der erste Weblink eines Knotens bleibt als sein Link), und Logseq-Eigenschaften wie „collapsed:: true“ werden weggelassen. Nutze in Logseq `Seite exportieren` und wähle Text, oder nimm die .md-Datei aus dem Ordner pages.
+- **Text** (.txt): eine Idee pro Zeile, mit Tabs oder Leerzeichen für die Ebenen. So eine Liste kannst du auch mit `Liste einfügen…` einfügen.
+- **OPML** (.opml): der Gliederungs-Export der meisten Outliner.
+
+## Tastenkürzel
+- [[Tab]] fügt ein Kind hinzu, [[Enter]] ein Geschwister, [[F2]] oder einfach Lostippen bearbeitet den ausgewählten Knoten.
+- [[Delete]] löscht den Zweig, [[Space]] klappt ihn ein oder aus, die Pfeiltasten bewegen dich in der Mindmap.
+- [[Alt+↑]] und [[Alt+↓]] schieben einen Knoten unter seinen Geschwistern nach oben oder unten.
+- [[Ctrl+Z]] und [[Ctrl+Y]] machen rückgängig und wiederholen, [[Ctrl+F]] sucht, [[Ctrl+C]] und [[Ctrl+V]] kopieren einen Zweig als Text oder fügen eine Liste ein.
+- Beim Präsentieren: [[→]] und [[←]] gehen weiter und zurück, [[Esc]] beendet.
+
+## Tipps
+- Starte schnell in der `Gliederung` und wechsle dann zu `Karte`, um die Form zu sehen.
+- Nimm eine Farbe pro Hauptzweig; seine Kinder übernehmen sie.
+- Eine Raute oder eine volle Füllung hebt die wichtigsten Ideen hervor; eine Zusammenfassungsklammer sagt schnell, worauf eine Gruppe von Ideen hinausläuft.
+- Aus Versehen etwas gelöscht? Die Meldung hat eine Schaltfläche `Rückgängig`, und [[Ctrl+Z]] geht auch.
+
+## Grenzen
+- Knoten, die du selbst platzierst, können andere Knoten überdecken; `Aufräumen (alle zurück an ihren Platz)` bringt das in Ordnung.
+- Verbindungen, Bilder, Stile, Rahmen und Zusammenfassungen erscheinen nicht in der Ansicht `Gliederung`, und Markdown- und OPML-Exporte lassen sie weg (JSON behält alles; PNG und SVG zeigen sie).
+- Ein Rahmen umfasst alles zwischen der ersten und der letzten angehakten Idee, auch eine Idee dazwischen, die du nicht angehakt hast.
+- Formen, Rahmen, Zusammenfassungen und Bilder in Dateien aus FreeMind, XMind, SimpleMind und MindManager werden nicht importiert (Ideen, Notizen, Links und Farben schon). Eine sehr große MindManager-Mindmap passt eventuell nicht in die Import-Grenzen.
+- Ein Gerät mit einer älteren orOS-Version zeigt diese Mindmaps im klassischen Aussehen, bis es aktualisiert wird; nichts geht verloren.
+- Wenn zwei Geräte gleichzeitig Knoten so verschieben, dass es sich widerspricht, kann ein Knoten mit gestrichelter Linie unter der Mitte zurückkommen. Zieh ihn dahin, wo er hingehört, oder wähle `Hier lassen`.
+- Eine sehr große Mindmap kann für PNG zu groß sein; exportiere stattdessen als SVG.

@@ -55,7 +55,9 @@
   SL.STORAGE_KEY = STORAGE_KEY;
 
   // ---------- 1. Constants, i18n ----------
+  // orosI18n (../i18n.js): the full language code, a pack language included.
   function appLang() {
+    if (window.orosI18n) return window.orosI18n.lang();
     try {
       var l = localStorage.getItem("oros-lang") ||
               (window.parent && window.parent.orosLang) || "en";
@@ -63,6 +65,8 @@
     } catch (e) { return "en"; }
   }
   var LANG = SL.LANG = appLang();
+  // "el" or "en" for shared modules that pick between two inline strings.
+  SL.LANG_BASE = LANG === "el" ? "el" : "en";
 
   var STRINGS = {
     en: {
@@ -354,6 +358,10 @@
       "btn.delete": "Διαγραφή", "btn.undo": "Αναίρεση", "btn.apply": "Εφαρμογή", "btn.done": "Τέλος"
     }
   };
+  if (window.orosI18n) {
+    window.orosI18n.table(STRINGS, "slides", LANG);
+    C.names(LANG);   // core.js NAMES (themes, layouts, templates): same pack
+  }
   SL.STRINGS = STRINGS;
   function t(key, vars) {
     var s = (STRINGS[LANG] && STRINGS[LANG][key]) || STRINGS.en[key] || key;
@@ -361,7 +369,11 @@
     return s;
   }
   SL.t = t;
-  SL.label = function (obj) { return obj && (obj[LANG] || obj.en) || ""; };
+  // A name of core.js ({ k, en, el }): its NAMES line in this language.
+  SL.label = function (obj) {
+    var v = obj && obj.k ? C.names(LANG)[obj.k] : null;
+    return v || obj && (obj[LANG] || obj.en) || "";
+  };
 
   // BOOT MARKER
   try { console.log("[orOS] slides app v1.0.0 booted"); } catch (e) {}
@@ -477,7 +489,10 @@
   function fmtDate(ms, short) {
     var d = new Date(ms);
     var dd = ("0" + d.getDate()).slice(-2), mm = ("0" + (d.getMonth() + 1)).slice(-2);
-    var day = LANG === "el" ? dd + "/" + mm + "/" + d.getFullYear() : d.getFullYear() + "-" + mm + "-" + dd;
+    var day = LANG === "el" ? dd + "/" + mm + "/" + d.getFullYear()
+      : LANG !== "en" && window.orosI18n   // a pack language: its own date order (de: 17.10.2026)
+        ? d.toLocaleDateString(window.orosI18n.locale(LANG), { day: "2-digit", month: "2-digit", year: "numeric" })
+        : d.getFullYear() + "-" + mm + "-" + dd;
     if (short) return day;
     return day + " " + ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2);
   }
@@ -1060,12 +1075,12 @@
   // inside the menu click: Google's sign-in window needs it.
   function fromGoogleSlides() {
     var GM = window.OrosGoogleMedia;
-    var job = GM.pickDoc("presentation", LANG);
+    var job = GM.pickDoc("presentation", SL.LANG_BASE);
     SL.toast(t("imp.gslidesWait"));
     job.then(function (f) {
       if (f) return SL.io.openFile(f);
     }, function (e) {
-      var msg = GM.docMessage(e, LANG);
+      var msg = GM.docMessage(e, SL.LANG_BASE);
       if (msg) SL.toast(msg);
     });
   }

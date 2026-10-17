@@ -17,6 +17,7 @@
   var READ_WPM = 230;     // silent reading, adult average
   var SPEAK_WPM = 130;    // reading aloud
 
+  // i18n-inline-ok: the Greek question mark is sentence punctuation (data, no UI text)
   function terms(lang) {
     // Greek question mark: ";" (U+003B as typed) and U+037E
     return lang === "el" ? ".!?…;;" : ".!?…";

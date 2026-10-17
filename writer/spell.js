@@ -29,6 +29,7 @@
   "use strict";
 
   /* ---------- small text helpers ---------- */
+  // i18n-inline-ok: Greek accent folding for the spell checker (data, no UI text)
   var GREEK_RE = /[Ͱ-Ͽἀ-῿]/;
   var LATIN_RE = /[A-Za-zÀ-ɏ]/;
   var UPPER_RE = /\p{Lu}/u, LOWER_RE = /\p{Ll}/u;

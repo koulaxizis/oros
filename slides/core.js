@@ -144,26 +144,104 @@
     }
   }
 
+  // ---------- 3b. Names (UI text of themes, layouts, templates) ----------
+  // The one { en, el } table of this file: names shown in the pickers
+  // and the template outlines (seeded into a new deck in the chosen
+  // language, then ordinary user content). A pack language (i18n.js)
+  // adds NAMES[<code>] through names(lang); in Node it stays en/el.
+  var NAMES = {
+    en: {
+      "theme.light": "Light",
+      "theme.dark": "Dark",
+      "theme.ocean": "Ocean",
+      "theme.forest": "Forest",
+      "theme.sunset": "Sunset",
+      "theme.paper": "Paper",
+      "theme.tech": "Terminal",
+      "theme.bold": "Bold",
+      "layout.title": "Title",
+      "layout.content": "Title and content",
+      "layout.section": "Section header",
+      "layout.two": "Two columns",
+      "layout.compare": "Comparison",
+      "layout.imgtext": "Picture and text",
+      "layout.photo": "Full picture",
+      "layout.quote": "Quote",
+      "layout.blank": "Blank",
+      "tpl.project": "Project update",
+      "tpl.project.md": "# Project update\nTeam name · date\n\n# Where we are\n- Done since last time\n- In progress\n- Blocked\n\n# Numbers\n- Budget used\n- Milestones met\n\n# Next steps\n1. First step\n2. Second step\n3. Third step\n\n# Questions\n> Leave time for questions.",
+      "tpl.report": "Report",
+      "tpl.report.md": "# Report title\nAuthor · date\n\n# Summary\nThe main finding in one sentence.\n\n# Background\n- Why we looked into it\n- What we already knew\n\n# Findings\n- Finding one\n- Finding two\n--\n- What it means\n- What it changes\n\n# Recommendations\n1. Recommendation\n2. Recommendation",
+      "tpl.lesson": "Lesson",
+      "tpl.lesson.md": "# Lesson title\nClass · teacher\n\n# Today we will\n- Learn one idea\n- Try it ourselves\n- Check what stuck\n\n# The idea\nExplain it in plain words.\n> An example from everyday life helps.\n\n# Let's try\n1. Exercise one\n2. Exercise two\n\n# Recap\n- Key point\n- Key point",
+      "tpl.pitch": "Pitch",
+      "tpl.pitch.md": "# Product name\nOne line that says what it does\n\n# The problem\n- Who has it\n- How often\n- What it costs them\n\n# Our solution\nWhat we built and why it works.\n\n# Why now\n- What changed\n\n# The ask\n- What we need\n- What you get",
+      "tpl.album": "Photo album",
+      "tpl.album.md": "# Our trip\nPlace · year\n\n# Day one\n\n# Day two\n\n# The best moment\n\n# Thank you",
+      "tpl.event": "Event",
+      "tpl.event.md": "# Event name\nDate · place\n\n# Programme\n- 18:00 Welcome\n- 18:30 Talk\n- 19:30 Music\n\n# Who is coming\n- Guest\n- Guest\n\n# How to get there\nAddress and transport.\n\n# See you there!"
+    },
+    el: {
+      "theme.light": "Φωτεινό",
+      "theme.dark": "Σκοτεινό",
+      "theme.ocean": "Ωκεανός",
+      "theme.forest": "Δάσος",
+      "theme.sunset": "Ηλιοβασίλεμα",
+      "theme.paper": "Χαρτί",
+      "theme.tech": "Τερματικό",
+      "theme.bold": "Έντονο",
+      "layout.title": "Τίτλος",
+      "layout.content": "Τίτλος και περιεχόμενο",
+      "layout.section": "Ενότητα",
+      "layout.two": "Δύο στήλες",
+      "layout.compare": "Σύγκριση",
+      "layout.imgtext": "Εικόνα και κείμενο",
+      "layout.photo": "Εικόνα σε όλη τη διαφάνεια",
+      "layout.quote": "Παράθεση",
+      "layout.blank": "Κενή",
+      "tpl.project": "Ενημέρωση έργου",
+      "tpl.project.md": "# Ενημέρωση έργου\nΟμάδα · ημερομηνία\n\n# Πού βρισκόμαστε\n- Τι ολοκληρώθηκε\n- Τι είναι σε εξέλιξη\n- Τι έχει κολλήσει\n\n# Αριθμοί\n- Προϋπολογισμός που χρησιμοποιήθηκε\n- Ορόσημα που πιάσαμε\n\n# Επόμενα βήματα\n1. Πρώτο βήμα\n2. Δεύτερο βήμα\n3. Τρίτο βήμα\n\n# Ερωτήσεις\n> Άφησε χρόνο για ερωτήσεις.",
+      "tpl.report": "Αναφορά",
+      "tpl.report.md": "# Τίτλος αναφοράς\nΣυντάκτης · ημερομηνία\n\n# Σύνοψη\nΤο βασικό εύρημα σε μία πρόταση.\n\n# Πλαίσιο\n- Γιατί το εξετάσαμε\n- Τι ξέραμε ήδη\n\n# Ευρήματα\n- Πρώτο εύρημα\n- Δεύτερο εύρημα\n--\n- Τι σημαίνει\n- Τι αλλάζει\n\n# Προτάσεις\n1. Πρόταση\n2. Πρόταση",
+      "tpl.lesson": "Μάθημα",
+      "tpl.lesson.md": "# Τίτλος μαθήματος\nΤάξη · εκπαιδευτικός\n\n# Σήμερα θα\n- Μάθουμε μια ιδέα\n- Τη δοκιμάσουμε\n- Δούμε τι κρατήσαμε\n\n# Η ιδέα\nΕξήγησέ τη με απλά λόγια.\n> Βοηθά ένα παράδειγμα από την καθημερινότητα.\n\n# Ας δοκιμάσουμε\n1. Πρώτη άσκηση\n2. Δεύτερη άσκηση\n\n# Ανακεφαλαίωση\n- Βασικό σημείο\n- Βασικό σημείο",
+      "tpl.pitch": "Παρουσίαση ιδέας",
+      "tpl.pitch.md": "# Όνομα προϊόντος\nΜία γραμμή που λέει τι κάνει\n\n# Το πρόβλημα\n- Ποιος το έχει\n- Πόσο συχνά\n- Τι του κοστίζει\n\n# Η λύση μας\nΤι φτιάξαμε και γιατί δουλεύει.\n\n# Γιατί τώρα\n- Τι άλλαξε\n\n# Τι ζητάμε\n- Τι χρειαζόμαστε\n- Τι κερδίζετε",
+      "tpl.album": "Άλμπουμ φωτογραφιών",
+      "tpl.album.md": "# Το ταξίδι μας\nΤόπος · χρονιά\n\n# Πρώτη μέρα\n\n# Δεύτερη μέρα\n\n# Η καλύτερη στιγμή\n\n# Ευχαριστούμε",
+      "tpl.event": "Εκδήλωση",
+      "tpl.event.md": "# Όνομα εκδήλωσης\nΗμερομηνία · χώρος\n\n# Πρόγραμμα\n- 18:00 Υποδοχή\n- 18:30 Ομιλία\n- 19:30 Μουσική\n\n# Ποιοι έρχονται\n- Καλεσμένος\n- Καλεσμένη\n\n# Πώς θα έρθετε\nΔιεύθυνση και συγκοινωνία.\n\n# Σας περιμένουμε!"
+    }
+  };
+  // { k, en, el }: k is the NAMES key; en/el stay for tests and the
+  // .pptx layout names (always English).
+  function nm(k) { return { k: k, en: NAMES.en[k], el: NAMES.el[k] }; }
+  // The names table of a language (English for an unknown one).
+  function names(lang) {
+    if (!NAMES[lang] && typeof window !== "undefined" && window.orosI18n) window.orosI18n.table(NAMES, "slides", lang);
+    return NAMES[lang] || NAMES.en;
+  }
+
   // ---------- 4. Themes ----------
   // Roles: bg background, fg text, mu muted text, sf surface (boxes,
   // table rows), a1-a3 accents. Fonts are designkit families (Noto with
   // Greek). Every fg/bg and mu/bg pair passes WCAG AA (tests check it).
   var THEMES = [
-    { id: "light",  name: { en: "Light",  el: "Φωτεινό" },   ff: "sans",  tf: "sans",
+    { id: "light",  name: nm("theme.light"),   ff: "sans",  tf: "sans",
       c: { bg: "#ffffff", fg: "#1f2328", mu: "#57606a", sf: "#f3f4f6", a1: "#2563eb", a2: "#0f766e", a3: "#b45309" } },
-    { id: "dark",   name: { en: "Dark",   el: "Σκοτεινό" },  ff: "sans",  tf: "sans",
+    { id: "dark",   name: nm("theme.dark"),  ff: "sans",  tf: "sans",
       c: { bg: "#111827", fg: "#f9fafb", mu: "#9ca3af", sf: "#1f2937", a1: "#60a5fa", a2: "#34d399", a3: "#fbbf24" } },
-    { id: "ocean",  name: { en: "Ocean",  el: "Ωκεανός" },   ff: "sans",  tf: "sans",
+    { id: "ocean",  name: nm("theme.ocean"),   ff: "sans",  tf: "sans",
       c: { bg: "#0b3954", fg: "#f1faff", mu: "#a9cfe3", sf: "#124a6b", a1: "#5fd3f3", a2: "#ffd166", a3: "#ef8a8a" } },
-    { id: "forest", name: { en: "Forest", el: "Δάσος" },     ff: "sans",  tf: "serif",
+    { id: "forest", name: nm("theme.forest"),     ff: "sans",  tf: "serif",
       c: { bg: "#f4f1e8", fg: "#1e3a2b", mu: "#4f6357", sf: "#e6e0cf", a1: "#2f6b45", a2: "#9a5b13", a3: "#7a3e65" } },
-    { id: "sunset", name: { en: "Sunset", el: "Ηλιοβασίλεμα" }, ff: "sans", tf: "sans",
+    { id: "sunset", name: nm("theme.sunset"), ff: "sans", tf: "sans",
       c: { bg: "#fff4ec", fg: "#3b1f17", mu: "#7a4f42", sf: "#ffe3d1", a1: "#c2410c", a2: "#be185d", a3: "#6d28d9" } },
-    { id: "paper",  name: { en: "Paper",  el: "Χαρτί" },     ff: "serif", tf: "serif",
+    { id: "paper",  name: nm("theme.paper"),     ff: "serif", tf: "serif",
       c: { bg: "#fbfaf7", fg: "#26231f", mu: "#625c53", sf: "#f0ede6", a1: "#8b1e1e", a2: "#1f4e79", a3: "#5a6b2f" } },
-    { id: "tech",   name: { en: "Terminal", el: "Τερματικό" }, ff: "mono", tf: "mono",
+    { id: "tech",   name: nm("theme.tech"), ff: "mono", tf: "mono",
       c: { bg: "#0d1117", fg: "#e6edf3", mu: "#8b949e", sf: "#161b22", a1: "#3fb950", a2: "#58a6ff", a3: "#d29922" } },
-    { id: "bold",   name: { en: "Bold",   el: "Έντονο" },    ff: "sans",  tf: "sans",
+    { id: "bold",   name: nm("theme.bold"),    ff: "sans",  tf: "sans",
       c: { bg: "#fde047", fg: "#111111", mu: "#3f3f46", sf: "#facc15", a1: "#1d4ed8", a2: "#b91c1c", a3: "#065f46" } }
   ];
   var THEME_IDS = THEMES.map(function (t) { return t.id; });
@@ -195,36 +273,36 @@
   // Placeholders: x and w are fractions of the slide width, y and h are
   // units of the 1000-unit height. al: l/c/r/j, va: t/m/b.
   var LAYOUTS = [
-    { id: "title",   name: { en: "Title", el: "Τίτλος" }, ph: [
+    { id: "title",   name: nm("layout.title"), ph: [
       { role: "title", x: 0.08, y: 300, w: 0.84, h: 230, al: "c", va: "b" },
       { role: "sub",   x: 0.08, y: 560, w: 0.84, h: 140, al: "c", va: "t" } ] },
-    { id: "content", name: { en: "Title and content", el: "Τίτλος και περιεχόμενο" }, ph: [
+    { id: "content", name: nm("layout.content"), ph: [
       { role: "title", x: 0.06, y: 60,  w: 0.88, h: 140, al: "l", va: "m" },
       { role: "body",  x: 0.06, y: 230, w: 0.88, h: 690, al: "l", va: "t" } ] },
-    { id: "section", name: { en: "Section header", el: "Ενότητα" }, ph: [
+    { id: "section", name: nm("layout.section"), ph: [
       { role: "title", x: 0.08, y: 330, w: 0.84, h: 220, al: "l", va: "b" },
       { role: "sub",   x: 0.08, y: 580, w: 0.84, h: 120, al: "l", va: "t" } ] },
-    { id: "two",     name: { en: "Two columns", el: "Δύο στήλες" }, ph: [
+    { id: "two",     name: nm("layout.two"), ph: [
       { role: "title", x: 0.06, y: 60,  w: 0.88, h: 140, al: "l", va: "m" },
       { role: "body",  x: 0.06, y: 230, w: 0.43, h: 690, al: "l", va: "t" },
       { role: "body2", x: 0.51, y: 230, w: 0.43, h: 690, al: "l", va: "t" } ] },
-    { id: "compare", name: { en: "Comparison", el: "Σύγκριση" }, ph: [
+    { id: "compare", name: nm("layout.compare"), ph: [
       { role: "title", x: 0.06, y: 60,  w: 0.88, h: 140, al: "l", va: "m" },
       { role: "cap",   x: 0.06, y: 230, w: 0.43, h: 80,  al: "l", va: "m" },
       { role: "body",  x: 0.06, y: 320, w: 0.43, h: 600, al: "l", va: "t" },
       { role: "cap2",  x: 0.51, y: 230, w: 0.43, h: 80,  al: "l", va: "m" },
       { role: "body2", x: 0.51, y: 320, w: 0.43, h: 600, al: "l", va: "t" } ] },
-    { id: "imgtext", name: { en: "Picture and text", el: "Εικόνα και κείμενο" }, ph: [
+    { id: "imgtext", name: nm("layout.imgtext"), ph: [
       { role: "title", x: 0.06, y: 60,  w: 0.88, h: 140, al: "l", va: "m" },
       { role: "img",   x: 0.06, y: 230, w: 0.43, h: 690 },
       { role: "body",  x: 0.53, y: 230, w: 0.41, h: 690, al: "l", va: "t" } ] },
-    { id: "photo",   name: { en: "Full picture", el: "Εικόνα σε όλη τη διαφάνεια" }, ph: [
+    { id: "photo",   name: nm("layout.photo"), ph: [
       { role: "img",   x: 0,    y: 0,   w: 1,    h: 1000 },
       { role: "cap",   x: 0.06, y: 830, w: 0.88, h: 120, al: "l", va: "b" } ] },
-    { id: "quote",   name: { en: "Quote", el: "Παράθεση" }, ph: [
+    { id: "quote",   name: nm("layout.quote"), ph: [
       { role: "quote", x: 0.12, y: 230, w: 0.76, h: 420, al: "c", va: "m" },
       { role: "cap",   x: 0.12, y: 680, w: 0.76, h: 100, al: "c", va: "t" } ] },
-    { id: "blank",   name: { en: "Blank", el: "Κενή" }, ph: [] }
+    { id: "blank",   name: nm("layout.blank"), ph: [] }
   ];
   var LAYOUT_IDS = LAYOUTS.map(function (l) { return l.id; });
   function layoutById(id) {
@@ -1171,24 +1249,12 @@
   // Ready decks, written as outlines in both languages (R15: a template
   // becomes ordinary user content in the chosen language once used).
   var TEMPLATES = [
-    { id: "project", th: "light", name: { en: "Project update", el: "Ενημέρωση έργου" },
-      en: "# Project update\nTeam name · date\n\n# Where we are\n- Done since last time\n- In progress\n- Blocked\n\n# Numbers\n- Budget used\n- Milestones met\n\n# Next steps\n1. First step\n2. Second step\n3. Third step\n\n# Questions\n> Leave time for questions.",
-      el: "# Ενημέρωση έργου\nΟμάδα · ημερομηνία\n\n# Πού βρισκόμαστε\n- Τι ολοκληρώθηκε\n- Τι είναι σε εξέλιξη\n- Τι έχει κολλήσει\n\n# Αριθμοί\n- Προϋπολογισμός που χρησιμοποιήθηκε\n- Ορόσημα που πιάσαμε\n\n# Επόμενα βήματα\n1. Πρώτο βήμα\n2. Δεύτερο βήμα\n3. Τρίτο βήμα\n\n# Ερωτήσεις\n> Άφησε χρόνο για ερωτήσεις." },
-    { id: "report", th: "paper", name: { en: "Report", el: "Αναφορά" },
-      en: "# Report title\nAuthor · date\n\n# Summary\nThe main finding in one sentence.\n\n# Background\n- Why we looked into it\n- What we already knew\n\n# Findings\n- Finding one\n- Finding two\n--\n- What it means\n- What it changes\n\n# Recommendations\n1. Recommendation\n2. Recommendation",
-      el: "# Τίτλος αναφοράς\nΣυντάκτης · ημερομηνία\n\n# Σύνοψη\nΤο βασικό εύρημα σε μία πρόταση.\n\n# Πλαίσιο\n- Γιατί το εξετάσαμε\n- Τι ξέραμε ήδη\n\n# Ευρήματα\n- Πρώτο εύρημα\n- Δεύτερο εύρημα\n--\n- Τι σημαίνει\n- Τι αλλάζει\n\n# Προτάσεις\n1. Πρόταση\n2. Πρόταση" },
-    { id: "lesson", th: "forest", name: { en: "Lesson", el: "Μάθημα" },
-      en: "# Lesson title\nClass · teacher\n\n# Today we will\n- Learn one idea\n- Try it ourselves\n- Check what stuck\n\n# The idea\nExplain it in plain words.\n> An example from everyday life helps.\n\n# Let's try\n1. Exercise one\n2. Exercise two\n\n# Recap\n- Key point\n- Key point",
-      el: "# Τίτλος μαθήματος\nΤάξη · εκπαιδευτικός\n\n# Σήμερα θα\n- Μάθουμε μια ιδέα\n- Τη δοκιμάσουμε\n- Δούμε τι κρατήσαμε\n\n# Η ιδέα\nΕξήγησέ τη με απλά λόγια.\n> Βοηθά ένα παράδειγμα από την καθημερινότητα.\n\n# Ας δοκιμάσουμε\n1. Πρώτη άσκηση\n2. Δεύτερη άσκηση\n\n# Ανακεφαλαίωση\n- Βασικό σημείο\n- Βασικό σημείο" },
-    { id: "pitch", th: "dark", name: { en: "Pitch", el: "Παρουσίαση ιδέας" },
-      en: "# Product name\nOne line that says what it does\n\n# The problem\n- Who has it\n- How often\n- What it costs them\n\n# Our solution\nWhat we built and why it works.\n\n# Why now\n- What changed\n\n# The ask\n- What we need\n- What you get",
-      el: "# Όνομα προϊόντος\nΜία γραμμή που λέει τι κάνει\n\n# Το πρόβλημα\n- Ποιος το έχει\n- Πόσο συχνά\n- Τι του κοστίζει\n\n# Η λύση μας\nΤι φτιάξαμε και γιατί δουλεύει.\n\n# Γιατί τώρα\n- Τι άλλαξε\n\n# Τι ζητάμε\n- Τι χρειαζόμαστε\n- Τι κερδίζετε" },
-    { id: "album", th: "dark", name: { en: "Photo album", el: "Άλμπουμ φωτογραφιών" },
-      en: "# Our trip\nPlace · year\n\n# Day one\n\n# Day two\n\n# The best moment\n\n# Thank you",
-      el: "# Το ταξίδι μας\nΤόπος · χρονιά\n\n# Πρώτη μέρα\n\n# Δεύτερη μέρα\n\n# Η καλύτερη στιγμή\n\n# Ευχαριστούμε" },
-    { id: "event", th: "sunset", name: { en: "Event", el: "Εκδήλωση" },
-      en: "# Event name\nDate · place\n\n# Programme\n- 18:00 Welcome\n- 18:30 Talk\n- 19:30 Music\n\n# Who is coming\n- Guest\n- Guest\n\n# How to get there\nAddress and transport.\n\n# See you there!",
-      el: "# Όνομα εκδήλωσης\nΗμερομηνία · χώρος\n\n# Πρόγραμμα\n- 18:00 Υποδοχή\n- 18:30 Ομιλία\n- 19:30 Μουσική\n\n# Ποιοι έρχονται\n- Καλεσμένος\n- Καλεσμένη\n\n# Πώς θα έρθετε\nΔιεύθυνση και συγκοινωνία.\n\n# Σας περιμένουμε!" }
+    { id: "project", th: "light", name: nm("tpl.project"), en: NAMES.en["tpl.project.md"], el: NAMES.el["tpl.project.md"] },
+    { id: "report", th: "paper", name: nm("tpl.report"), en: NAMES.en["tpl.report.md"], el: NAMES.el["tpl.report.md"] },
+    { id: "lesson", th: "forest", name: nm("tpl.lesson"), en: NAMES.en["tpl.lesson.md"], el: NAMES.el["tpl.lesson.md"] },
+    { id: "pitch", th: "dark", name: nm("tpl.pitch"), en: NAMES.en["tpl.pitch.md"], el: NAMES.el["tpl.pitch.md"] },
+    { id: "album", th: "dark", name: nm("tpl.album"), en: NAMES.en["tpl.album.md"], el: NAMES.el["tpl.album.md"] },
+    { id: "event", th: "sunset", name: nm("tpl.event"), en: NAMES.en["tpl.event.md"], el: NAMES.el["tpl.event.md"] }
   ];
   function templateById(id) {
     for (var i = 0; i < TEMPLATES.length; i++) if (TEMPLATES[i].id === id) return TEMPLATES[i];
@@ -1200,9 +1266,9 @@
     newId = newId || defaultNewId;
     var tp = templateById(tplId);
     if (!tp) return null;
-    var L = lang === "el" ? "el" : "en";
-    var d = newDeck(data, { t: tp.name[L], th: tp.th }, now, newId);
-    applyOutline(data, d.id, tp[L], now, newId);
+    var N = names(lang);
+    var d = newDeck(data, { t: N[tp.name.k] || tp.name.en, th: tp.th }, now, newId);
+    applyOutline(data, d.id, N[tp.name.k + ".md"] || tp.en, now, newId);
     if (tp.id === "album") {
       deckSlides(data, d.id).forEach(function (s, i, all) {
         if (i > 0 && i < all.length - 1) applyLayout(data, s.id, "photo", now, newId);
@@ -1234,6 +1300,6 @@
     pushRecovered: pushRecovered, dropRecovered: dropRecovered,
     applyLayout: applyLayout, setAspect: setAspect, setNotes: setNotes, setItemParas: setItemParas,
     parseOutline: parseOutline, formatOutline: formatOutline, applyOutline: applyOutline,
-    fromTemplate: fromTemplate
+    fromTemplate: fromTemplate, NAMES: NAMES, names: names
   };
 })(typeof window !== "undefined" ? window : this);

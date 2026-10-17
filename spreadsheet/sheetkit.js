@@ -977,7 +977,7 @@ function importBook(wb, o) {
    Greek; null for an empty sheet */
 function csvField(v) {
   v = String(v);
-  return /[",;\r\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+  return /[\x22,;\r\n]/.test(v) ? '"' + v.replace(/\x22/g, '""') + '"' : v;
 }
 function sheetCSV(sid, cells, valueOf) {
   var maxR = -1, maxC = -1, pref = sid + "|", k, p;

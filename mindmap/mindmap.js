@@ -49,7 +49,9 @@
   var UNDO_MAX = 100;
 
   // ---------- 1. Constants, i18n, helpers ----------
+  // orosI18n (../i18n.js): the full language code, a pack language included.
   function appLang() {
+    if (window.orosI18n) return window.orosI18n.lang();
     try {
       var l = localStorage.getItem("oros-lang") ||
               (window.parent && window.parent.orosLang) || "en";
@@ -254,6 +256,7 @@
       "pres.start": "Προβολή: τα βελάκια ή ένα πάτημα προχωρούν, το Esc τελειώνει", "pres.overview": "Όλος ο χάρτης"
     }
   };
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "mindmap", LANG);
 
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;

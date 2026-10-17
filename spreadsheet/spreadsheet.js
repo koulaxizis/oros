@@ -25,8 +25,13 @@ var LANG = "en";
 try {
   var pl = null;
   try { pl = window.parent && window.parent.orosLang; } catch (e) {}
-  LANG = pl || localStorage.getItem("oros-lang") || "en";
+  /* orosI18n (../i18n.js): the full language code, a pack language included */
+  LANG = window.orosI18n ? window.orosI18n.lang() : (pl || localStorage.getItem("oros-lang") || "en");
 } catch (e) {}
+/* "el" / "en" for code that picks between the two inline languages */
+var LANG2 = LANG === "el" ? "el" : "en";
+/* the locale for numbers and dates */
+function loc() { return window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB"); }
 
 (function () {
   var m = (document.currentScript && document.currentScript.src || "")
@@ -246,6 +251,8 @@ var STRINGS = {
     "rg.mode": "Επιλογή περιοχής…", "rg.tap": "Πάτησε το τελευταίο κελί της περιοχής"
   }
 };
+
+if (window.orosI18n) window.orosI18n.table(STRINGS, "spreadsheet", LANG);
 
 function t(k) {
   var d = STRINGS[LANG] || STRINGS.en;
@@ -2274,7 +2281,7 @@ function structural(axis, at, n) {
   var sheet = getActiveSheet(), sid = actSID, k;
   var cur = axis === "r" ? sheet.rows : sheet.cols, max = axis === "r" ? MAX_ROWS : MAX_COLS;
   if (n > 0 && cur + n > max) {
-    notifyTransient(t("max.dims").replace("{r}", MAX_ROWS.toLocaleString(LANG)).replace("{c}", MAX_COLS));
+    notifyTransient(t("max.dims").replace("{r}", MAX_ROWS.toLocaleString(loc())).replace("{c}", MAX_COLS));
     return;
   }
   function pointsHere(hostSid) {
@@ -2378,7 +2385,7 @@ function addRowsCols(axis, n) {
   var sh = getActiveSheet();
   var cur = axis === "r" ? sh.rows : sh.cols, max = axis === "r" ? MAX_ROWS : MAX_COLS;
   if (cur >= max) {
-    notifyTransient(t("max.dims").replace("{r}", MAX_ROWS.toLocaleString(LANG)).replace("{c}", MAX_COLS));
+    notifyTransient(t("max.dims").replace("{r}", MAX_ROWS.toLocaleString(loc())).replace("{c}", MAX_COLS));
     return;
   }
   var before = dimsOf(sh);
@@ -2459,7 +2466,7 @@ function openSheetMenu(anchor) {
   item(lef === rig ? t("col.del1").replace("{a}", colName(lef)) : t("col.del").replace("{a}", colName(lef)).replace("{b}", colName(rig)), deleteCols, fullRows && sh.cols > 26);
   sep();
   item(t("add.rows").replace("{n}", 100), function () { addRowsCols("r", 100); }, sh.rows >= MAX_ROWS);
-  item(t("add.rows").replace("{n}", (1000).toLocaleString(LANG)), function () { addRowsCols("r", 1000); }, sh.rows >= MAX_ROWS);
+  item(t("add.rows").replace("{n}", (1000).toLocaleString(loc())), function () { addRowsCols("r", 1000); }, sh.rows >= MAX_ROWS);
   item(t("add.cols").replace("{n}", 10), function () { addRowsCols("c", 10); }, sh.cols >= MAX_COLS);
   m.addEventListener("click", function (e) { e.stopPropagation(); });
   m.addEventListener("keydown", function (e) {
@@ -3276,7 +3283,7 @@ function toggleXlImportMenu(btn) {
    by ../files/gmedia.js, then the usual Excel import. Runs inside the
    menu click: Google's sign-in window needs it. */
 function xlFromGoogle() {
-  var GM = window.OrosGoogleMedia, lang = LANG === "el" ? "el" : "en";
+  var GM = window.OrosGoogleMedia, lang = LANG2;
   var job = GM.pickDoc("spreadsheet", lang);
   notifyTransient(t("gd.wait"));
   job.then(function (f) {
@@ -4233,7 +4240,7 @@ function pasteRows(rows, merges, withFmt) {
   queueSave();
   renderGrid();
   renderSelection();
-  if (cut) notifyTransient(t("max.dims").replace("{r}", MAX_ROWS.toLocaleString(LANG)).replace("{c}", MAX_COLS));
+  if (cut) notifyTransient(t("max.dims").replace("{r}", MAX_ROWS.toLocaleString(loc())).replace("{c}", MAX_COLS));
   try { $("grid-wrap").focus({ preventScroll: true }); } catch (e) {}
 }
 

@@ -1,0 +1,65 @@
+# Haftnotizen
+Kleine farbige Notizen, die auf dem orOS-Desktop sitzen. Eine Notiz kann zu einer Zeit deiner Wahl klingeln, und sie kann von selbst verblassen, wenn du sie nicht mehr brauchst.
+
+## Erste Schritte
+- Drück den runden `+`-Knopf unten links auf dem Desktop, klick mit der rechten Maustaste auf eine freie Stelle des Desktops (oder drück lange darauf) und wähle `Neue Haftnotiz`, oder drück [[Ctrl+Alt+Shift+N]]. Du kannst auch in der App auf `Neue Notiz` drücken.
+- Schreib deine Notiz. Sie wird beim Tippen gespeichert. Klick neben die Notiz oder drück [[Esc]], wenn du fertig bist. Eine neue Notiz, die du leer lässt, verschwindet von selbst.
+- Zeilen, die mit `[ ]` beginnen, werden zu Kästchen zum Abhaken. Hake sie direkt auf der Notiz ab.
+
+## Auf dem Desktop
+- Zieh eine Notiz an ihrem oberen Streifen. Zieh an ihrer unteren rechten Ecke, um sie größer oder kleiner zu machen. Ein Klick auf eine Notiz holt sie nach vorn.
+- Der Knopf `Einklappen` klappt eine Notiz zu einem kleinen Reiter mit ihrer ersten Zeile ein; `Ausklappen` öffnet sie wieder.
+- Auf dem Handy sind die Notizen eine Reihe von Karten oben auf dem Desktop. Wisch durch die Reihe und tipp auf eine Karte, um sie zu öffnen.
+- Wo eine Notiz sitzt und wie groß sie ist, bleibt auf jedem Gerät, denn Handy und Computer haben unterschiedliche Bildschirme.
+- Zu viele Notizen über deinen Symbolen? Klick mit der rechten Maustaste auf den Desktop und wähle `Haftnotizen aufräumen`.
+
+## Klingeln zu einer Zeit
+Öffne die Optionen einer Notiz (der Knopf `…`, oder tipp auf dem Handy auf die Karte) und wähle `Klingeln`: `In 15 Minuten`, `In 1 Stunde`, `Am Abend um 20:00`, `Morgen um 09:00` oder `Zu einer Zeit meiner Wahl…`.
+- Zu dieser Zeit wackelt die Notiz, ein Ton erklingt und eine Meldung landet in der Glocke.
+- `Fertig` beendet das Klingeln. `10 Min. schlummern` klingelt in zehn Minuten noch einmal.
+- `Wiederholen` (sobald ein Klingeln eingestellt ist): `Jeden Tag`, `Jeden Werktag (Mo–Fr)` oder `Jede Woche`. `Fertig` schiebt das Klingeln dann auf seine nächste Zeit, und Schlummern ändert den Plan nicht. Eine wiederholte Notiz verschwindet nie bei `Fertig`.
+- Der Ton folgt der Benachrichtigungslautstärke und den Ruhezeiten, und du kannst Haftnotizen in den [Einstellungen](app:settings) › `Benachrichtigungen` ausschalten.
+
+## Verschwinden
+Im selben Fenster lässt `Verschwinden` eine Notiz von selbst verblassen: `In 1 Stunde`, `Am Ende des Tages`, `Morgen am Ende des Tages`, `In einer Woche` oder `Zu einer Zeit meiner Wahl…`.
+- Hake `Auch verschwinden, wenn ich beim Klingeln auf „Fertig“ tippe` an, für eine Erinnerung, die verschwindet, sobald du sie erledigt hast.
+- Eine verblasste Notiz wird nicht sofort gelöscht. Sie wartet 7 Tage unter `Verblasst` in der App, wo `Wiederherstellen` sie zurück auf den Desktop legt.
+
+## An andere Apps senden
+Im selben Fenster:
+- `An Aufgaben senden` öffnet [Aufgaben](app:todo) mit der Notiz zum Hinzufügen: Jede offene `[ ]`-Zeile wird eine Aufgabe; eine Notiz ohne Kästchen wird eine Aufgabe (die erste Zeile, der Rest als ihre Notiz). Nichts wird hinzugefügt, bis du dort `Hinzufügen` drückst.
+- `In Notizen kopieren` legt eine neue Seite in [Notizen](app:notes) an, mit der ersten Zeile der Notiz als Titel. Die Haftnotiz bleibt, wie sie ist.
+
+## Von überall finden
+- Das Suchfeld im Menü findet deine Haftnotizen über ihre Wörter (verblasste Notizen nicht). Wählst du eine, kommt sie auf dem Desktop nach vorn.
+- [Heute](app:today) zeigt die Notizen, die heute und in den nächsten Tagen klingeln, und ein Klingeln, das du noch nicht beantwortet hast, als überfällig. Wiederholte Klingeln zeigen auch ihre nächsten Zeiten.
+
+## Die App
+- `Auf dem Desktop` zeigt jede Notiz, die neueste zuerst, mit einem Suchfeld. `Bearbeiten` öffnet die Notiz, `Zeigen` bringt dich zu ihr auf den Desktop, `Löschen` entfernt sie (`Rückgängig` in der Meldung holt sie zurück).
+- `Verblasst` zeigt die verblassten Notizen und wann jede gelöscht wird.
+
+## Einstellungen
+Der Zahnrad-Knopf öffnet die Einstellungen für dieses Gerät:
+- `Haftnotizen auf dem Desktop zeigen`: Schalte es aus für einen aufgeräumten Desktop. Die Notizen klingeln trotzdem, und du bearbeitest sie in der App.
+- `Klingelton`: `Glocke`, `Ding-Dong`, `Windspiel`, `Kein Ton` oder jede Melodie, die du im [Klingelton-Komponisten](app:ringtones) geschrieben hast (sie spielt bis zu 15 Sekunden). Mit `Abspielen` hörst du sie dir an. Wird die Melodie später gelöscht, spielt stattdessen die Glocke.
+- `Leiser Ton, wenn eine Notiz verblasst` und die Farbe neuer Notizen.
+- `Desktop aufräumen` und `Als Text exportieren`.
+
+## orOS-Datei speichern und öffnen
+In den Einstellungen (dem Zahnrad) speichert `orOS-Datei (.orosstickies)` jede Notiz auf dem Desktop (Text, Farbe, Klingel- und Verschwindezeiten) als eine `.orosstickies`-Datei, zum Beispiel um sie ohne Synchronisierung auf ein anderes Gerät zu bringen oder eine Kopie aufzubewahren. Die Datei ist ein einfaches ZIP: Entpackt enthält sie die Notizen als `content.json` und dazu `preview/notes.txt` (derselbe Text wie bei `Als Text exportieren`) für andere Programme. Sie ist nicht verschlüsselt, also bewahre sie sicher auf. Verblasste Notizen, der Platz jeder Notiz auf dem Desktop und die Einstellungen bleiben auf diesem Gerät.
+
+`orOS-Datei öffnen…` (oder `Entpackter orOS-Ordner…`, oder „Öffnen mit“ orOS am Computer) zeigt, wie viele Notizen neu und wie viele schon da sind; dann fügt `Hinzufügen` nur die neuen hinzu, mit ihren eigenen IDs: Dieselbe Datei noch einmal zu öffnen, fügt nichts hinzu. Eine schon vorhandene Notiz bleibt, wie sie ist, und eine hier gelöschte bleibt gelöscht; eine Datei löscht nie etwas. Hake `Mit neueren Versionen aktualisieren` an, damit Notizen, die in der Datei später geändert wurden, deine Kopie ersetzen. Neue Notizen finden einen freien Platz auf dem Desktop. `Rückgängig` in der Meldung entfernt das Hinzugefügte.
+
+## Synchronisierung und Sicherung
+- Die Notizen (Text, Farbe, Klingel- und Verschwindezeiten) folgen dir über die orOS-Synchronisierung auf jedes Gerät, verschlüsselt wie deine übrigen Daten. Sie sind auch in der vollständigen Sicherung.
+- Platz und Größe jeder Notiz sowie die Einstellungen bleiben auf jedem Gerät.
+- Ändert sich dieselbe Notiz auf zwei Geräten, bevor sie synchronisieren, behält jeder Teil (Text, Farbe, Zeiten) seine neueste Änderung.
+
+## Tastenkürzel
+- [[Ctrl+Alt+Shift+N]]: eine neue Haftnotiz, von überall in orOS.
+- [[Enter]] auf einer ausgewählten Notiz: mit dem Tippen beginnen. [[Esc]]: mit dem Tippen aufhören.
+
+## Grenzen
+- Notizen klingeln und verblassen nur, solange orOS offen ist. Ist orOS geschlossen, wartet ein verpasstes Klingeln ohne Ton in der Glocke, bis du es das nächste Mal öffnest.
+- Ein Browser spielt Ton erst ab, nachdem du seit dem Öffnen etwas auf der Seite angetippt oder getippt hast.
+- Bis zu 60 Notizen auf dem Desktop, je 1.000 Zeichen, nur reiner Text.
