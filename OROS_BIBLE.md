@@ -7509,3 +7509,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Android widgets: a magnifier button opens the command bar (new APK).
 - Files: `android/` widget layouts, drawable, strings EN/EL, `phone.js` (`cmd` in the QUICK allow-list), `shell.js`, Bible.
   - Tests: full suite green; Android build green on GitHub; Chromium 360 EL `/?phone-quick=cmd`. Not tested: a real phone (needs a new APK); at the smallest Quick add widget size the text buttons may be shortened with "…".
+
+### 2026-10-17 — WebDAV W4: move a device's cloud between Dropbox and WebDAV (#485) — 2.86.00
+- Sync: move your whole cloud between Dropbox and a WebDAV / Nextcloud server from Settings, Vault and Drive files included, still encrypted.
+- Files: `sync.js`, `shell.js`, `translations.js`, `settings/{settings,core}.js`, help sync EN/EL, Bible.
+  - Tests: full suite green (new `tests/sync-move.test.js`); real Chromium 1280 EN / 360 EL. Not tested: a real Dropbox account and a real Nextcloud from the cloud container.
