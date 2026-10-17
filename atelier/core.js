@@ -1260,7 +1260,7 @@
   function openDoc(id) {
     var d = findDoc(id);
     if (!d) return;
-    // A newer model level (setup.x.mv): never opened, so never written here.
+    // A newer model level (setup.ext.mv): never opened, so never written here.
     if (M.needsNewer(d)) { toast(t("unk.doc")); return; }
     AT.doc = d;
     undoStack = []; redoStack = []; gesture = null;

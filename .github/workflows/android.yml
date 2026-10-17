@@ -58,6 +58,32 @@ jobs:
         with:
           gradle-version: 8.11.1
 
+      # orOS Drive (DRIVE-A): the Go core of koulaxizis/oros-drive at a
+      # pinned commit, bound with gomobile into the library the orOS
+      # flavour embeds (app/libs/orosdrive.aar, not committed). Moving
+      # the pin is a deliberate change, like any dependency update.
+      # F-Droid and other builds without the library get the app
+      # without the Drive screen (build.gradle driveLib).
+      - uses: actions/checkout@v4
+        with:
+          repository: koulaxizis/oros-drive
+          ref: bd591858d09670341273e5f0429098d3e947ea04
+          path: oros-drive-src
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: oros-drive-src/go.mod
+          cache-dependency-path: oros-drive-src/go.sum
+      - name: Build the orOS Drive library (gomobile)
+        working-directory: oros-drive-src
+        run: |
+          go install golang.org/x/mobile/cmd/gomobile golang.org/x/mobile/cmd/gobind
+          export ANDROID_NDK_HOME="$ANDROID_NDK_LATEST_HOME"
+          mkdir -p ../android/app/libs
+          # Phones (arm64, arm) and x86_64 Chromebooks; no 32-bit x86.
+          gomobile bind -target=android/arm64,android/arm,android/amd64 -androidapi 24 -javapkg online.useoros.drive -o ../android/app/libs/orosdrive.aar ./mobile
+          # Without it Gradle builds the app without Drive: never here.
+          test -s ../android/app/libs/orosdrive.aar
+
       # The runner image ships the Android SDK (ANDROID_HOME); Gradle
       # fetches a missing platform or build-tools on its own.
       - name: Generate manifests and resources (orOS + single apps)
