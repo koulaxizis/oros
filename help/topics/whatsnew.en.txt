@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.69.00
+- Send to an app: Writer, Notes, Wiki, Mail, Bookmarks and Reader can hand text or a link to another orOS app (Notes, To-Do, Writer, Mail, Spreadsheet, Wiki, Assistant…), which opens it ready to save.
+
 ## Version 2.68.01
 - Prompter: Use now opens the prompt in Writer as a new document, and the Cancel and Factory reset buttons no longer touch.
 
