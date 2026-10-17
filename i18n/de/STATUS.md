@@ -2,8 +2,8 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 18562 of 28241 (65%)
-- Help pages: 72 of 144 (50%)
+- Strings: 20010 of 28241 (70%)
+- Help pages: 97 of 144 (67%)
 - Shown in the language list: yes
 
 Apps marked "English for now" do not load language packs yet: their
@@ -19,8 +19,8 @@ text is still written in the code. They switch over wave by wave
 | backgammon | 100% | 91 / 91 |
 | battleship | 100% | 102 / 102 |
 | bookmarks | English for now | 0 / 231 |
-| breakout | English for now | 0 / 55 |
-| bubble | English for now | 0 / 53 |
+| breakout | 100% | 55 / 55 |
+| bubble | 100% | 53 / 53 |
 | budget | 100% | 555 / 555 |
 | calculator | English for now | 0 / 133 |
 | calendar | 100% | 370 / 370 |
@@ -29,7 +29,7 @@ text is still written in the code. They switch over wave by wave
 | checkers | 100% | 72 / 72 |
 | chess | 100% | 405 / 405 |
 | chores | 100% | 192 / 192 |
-| connect4 | English for now | 0 / 62 |
+| connect4 | 100% | 62 / 62 |
 | contacts | 100% | 293 / 293 |
 | converter | English for now | 0 / 67 |
 | crm | 100% | 444 / 444 |
@@ -37,37 +37,37 @@ text is still written in the code. They switch over wave by wave
 | cycle | 100% | 203 / 203 |
 | device | English for now | 0 / 123 |
 | diary | English for now | 0 / 187 |
-| dice | English for now | 0 / 52 |
-| dots | English for now | 0 / 54 |
+| dice | 100% | 52 / 52 |
+| dots | 100% | 54 / 54 |
 | familytree | English for now | 0 / 197 |
 | feeds | 100% | 325 / 325 |
 | files | 100% | 343 / 343 |
 | fitness | 100% | 413 / 413 |
 | flashcards | 0% | 0 / 263 |
 | flow | 100% | 75 / 75 |
-| g2048 | English for now | 0 / 54 |
+| g2048 | 100% | 54 / 54 |
 | gamecenter | 100% | 99 / 99 |
 | garage | 100% | 422 / 422 |
-| gomoku | English for now | 0 / 57 |
+| gomoku | 100% | 57 / 57 |
 | habits | 100% | 173 / 173 |
-| hangman | English for now | 0 / 52 |
+| hangman | 100% | 52 / 52 |
 | health | 100% | 597 / 597 |
 | help | 100% | 15 / 15 |
-| hexagon | English for now | 0 / 59 |
+| hexagon | 100% | 59 / 59 |
 | invoices | 100% | 531 / 531 |
-| jigsaw | English for now | 0 / 85 |
+| jigsaw | 100% | 85 / 85 |
 | kanban | 100% | 272 / 272 |
 | labels | English for now | 0 / 88 |
 | layout | 100% | 415 / 415 |
 | library | English for now | 0 / 307 |
-| lightsout | English for now | 0 / 51 |
-| mahjong | English for now | 0 / 69 |
+| lightsout | 100% | 51 / 51 |
+| mahjong | 100% | 69 / 69 |
 | mail | 100% | 495 / 495 |
-| mancala | English for now | 0 / 60 |
+| mancala | 100% | 60 / 60 |
 | maps | English for now | 0 / 810 |
-| mastermind | English for now | 0 / 73 |
+| mastermind | 100% | 73 / 73 |
 | meals | 100% | 448 / 448 |
-| memory | English for now | 0 / 76 |
+| memory | 100% | 76 / 76 |
 | mindmap | 100% | 278 / 278 |
 | minesweeper | 100% | 75 / 75 |
 | minimalism | English for now | 0 / 32 |
@@ -90,15 +90,15 @@ text is still written in the code. They switch over wave by wave
 | pixel | English for now | 0 / 101 |
 | plants | 100% | 218 / 218 |
 | podcasts | 100% | 290 / 290 |
-| pong | English for now | 0 / 64 |
+| pong | 100% | 64 / 64 |
 | prompter | English for now | 0 / 75 |
 | pubdomain | English for now | 0 / 66 |
 | qr | English for now | 0 / 248 |
 | quote | English for now | 0 / 216 |
 | radio | 100% | 103 / 103 |
-| reversi | English for now | 0 / 60 |
+| reversi | 100% | 60 / 60 |
 | ringtones | English for now | 0 / 99 |
-| rps | English for now | 0 / 59 |
+| rps | 100% | 59 / 59 |
 | scanpdf | English for now | 0 / 270 |
 | scores | English for now | 0 / 147 |
 | settings | 100% | 480 / 480 |
@@ -106,14 +106,14 @@ text is still written in the code. They switch over wave by wave
 | shelf | 100% | 291 / 291 |
 | shell | 100% | 452 / 452 |
 | signature | 100% | 219 / 219 |
-| simon | English for now | 0 / 49 |
+| simon | 100% | 49 / 49 |
 | sky | English for now | 0 / 149 |
-| slider | English for now | 0 / 37 |
+| slider | 100% | 37 / 37 |
 | slides | 100% | 418 / 418 |
-| snake | English for now | 0 / 52 |
+| snake | 100% | 52 / 52 |
 | solitaire | 100% | 102 / 102 |
 | split | English for now | 0 / 334 |
-| spot | English for now | 0 / 54 |
+| spot | 100% | 54 / 54 |
 | spreadsheet | 100% | 355 / 355 |
 | stickies | 100% | 124 / 124 |
 | stock | 100% | 614 / 614 |
@@ -121,10 +121,10 @@ text is still written in the code. They switch over wave by wave
 | studio | 100% | 381 / 381 |
 | sudoku | 100% | 139 / 139 |
 | television | English for now | 0 / 81 |
-| tetris | English for now | 0 / 59 |
+| tetris | 100% | 59 / 59 |
 | textcase | English for now | 0 / 91 |
 | texttools | English for now | 0 / 315 |
-| tictactoe | English for now | 0 / 53 |
+| tictactoe | 100% | 53 / 53 |
 | time | English for now | 0 / 408 |
 | timesheet | 100% | 248 / 248 |
 | today | English for now | 0 / 82 |
@@ -136,7 +136,7 @@ text is still written in the code. They switch over wave by wave
 | wallpaper | English for now | 0 / 71 |
 | water | 100% | 94 / 94 |
 | weather | English for now | 0 / 152 |
-| whack | English for now | 0 / 49 |
+| whack | 100% | 49 / 49 |
 | wheel | English for now | 0 / 68 |
 | wiki | English for now | 0 / 392 |
 | wordle | 100% | 76 / 76 |
@@ -155,31 +155,16 @@ These show English until fixed (usually the English text changed).
 - help/assistant.txt
 - help/aura.txt
 - help/bookmarks.txt
-- help/breakout.txt
-- help/bubble.txt
 - help/calculator.txt
 - help/characters.txt
-- help/connect4.txt
 - help/converter.txt
 - help/device.txt
 - help/diary.txt
-- help/dice.txt
-- help/dots.txt
 - help/familytree.txt
 - help/flashcards.txt
-- help/g2048.txt
-- help/gomoku.txt
-- help/hangman.txt
-- help/hexagon.txt
-- help/jigsaw.txt
 - help/labels.txt
 - help/library.txt
-- help/lightsout.txt
-- help/mahjong.txt
-- help/mancala.txt
 - help/maps.txt
-- help/mastermind.txt
-- help/memory.txt
 - help/minimalism.txt
 - help/mixer.txt
 - help/museum.txt
@@ -190,28 +175,19 @@ These show English until fixed (usually the English text changed).
 - help/petcare.txt
 - help/petworld.txt
 - help/pixel.txt
-- help/pong.txt
 - help/prompter.txt
 - help/pubdomain.txt
 - help/qr.txt
 - help/quote.txt
-- help/reversi.txt
 - help/ringtones.txt
-- help/rps.txt
 - help/scanpdf.txt
 - help/scores.txt
-- help/simon.txt
 - help/sky.txt
-- help/slider.txt
-- help/snake.txt
 - help/split.txt
-- help/spot.txt
 - help/storage.txt
 - help/television.txt
-- help/tetris.txt
 - help/textcase.txt
 - help/texttools.txt
-- help/tictactoe.txt
 - help/time.txt
 - help/today.txt
 - help/trees.txt
@@ -219,7 +195,6 @@ These show English until fixed (usually the English text changed).
 - help/units.txt
 - help/wallpaper.txt
 - help/weather.txt
-- help/whack.txt
 - help/wheel.txt
 - help/wiki.txt
 - help/wordsearch.txt
