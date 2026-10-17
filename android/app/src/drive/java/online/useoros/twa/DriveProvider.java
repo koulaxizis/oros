@@ -1,9 +1,15 @@
 package online.useoros.twa;
 
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.database.MatrixCursor;
 import android.net.Uri;
+import android.os.Build;
 import android.os.CancellationSignal;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -76,6 +82,7 @@ public class DriveProvider extends DocumentsProvider {
     }
 
     private boolean ready() {
+        if (!DriveCore.everSignedIn(getContext())) return false;
         try {
             JSONObject s = new JSONObject(drive().status());
             return s.optBoolean("signedIn") && s.optBoolean("unlocked");
@@ -237,9 +244,11 @@ public class DriveProvider extends DocumentsProvider {
                         changed(id);
                     } else {
                         Log.w(TAG, "write of " + id + " not finished: " + e);
+                        notSaved(id, String.valueOf(e.getMessage()));
                     }
                 } catch (Exception ex) {
                     Log.w(TAG, "upload of " + id + " failed: " + ex);
+                    notSaved(id, String.valueOf(ex.getMessage()));
                 } finally {
                     //noinspection ResultOfMethodCallIgnored
                     tmp.delete();
@@ -250,6 +259,34 @@ public class DriveProvider extends DocumentsProvider {
         } catch (Exception e) {
             throw notFound(e);
         }
+    }
+
+    private static final String CHANNEL = "oros-drive";
+
+    /** A save that did not reach orOS: the app that wrote it thinks it
+     *  is saved, so tell the person (if notifications are allowed). */
+    private void notSaved(String id, String why) {
+        Context c = getContext();
+        NotificationManager nm = c.getSystemService(NotificationManager.class);
+        if (nm == null || !nm.areNotificationsEnabled()) return;
+        if (Build.VERSION.SDK_INT >= 26) {
+            nm.createNotificationChannel(new NotificationChannel(CHANNEL, c.getString(R.string.drive_channel),
+                    NotificationManager.IMPORTANCE_DEFAULT));
+        }
+        PendingIntent open = PendingIntent.getActivity(c, 0, new Intent(c, DriveActivity.class),
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        String text = c.getString(R.string.drive_not_saved_text, id.substring(id.lastIndexOf('/') + 1), why);
+        Notification.Builder b = (Build.VERSION.SDK_INT >= 26
+                ? new Notification.Builder(c, CHANNEL)
+                : new Notification.Builder(c))
+                .setSmallIcon(R.drawable.ic_stat_oros)
+                .setContentTitle(c.getString(R.string.drive_not_saved_title))
+                .setContentText(text)
+                .setStyle(new Notification.BigTextStyle().bigText(text))
+                .setAutoCancel(true)
+                .setContentIntent(open)
+                .setCategory(Notification.CATEGORY_ERROR);
+        nm.notify(id, 2, b.build());
     }
 
     private static void copy(File from, File to) throws Exception {
