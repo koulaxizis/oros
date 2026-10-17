@@ -1,0 +1,48 @@
+# Tastenkürzel
+orOS hat eine Reihe von Tastenkürzeln, die überall funktionieren: auf dem Desktop und in den meisten Apps. Alle nutzen dieselben drei Tasten plus einen Buchstaben: [[Ctrl+Alt+Shift]].
+
+## Alle Tastenkürzel
+- [[Ctrl+Alt+Shift+P]]: `In die Cloud senden erzwingen`
+- [[Ctrl+Alt+Shift+O]]: `Aus der Cloud holen erzwingen`
+- [[Ctrl+Alt+Shift+S]]: `Sicherung jetzt in Ordner exportieren`
+- [[Ctrl+Alt+Shift+X]]: `Datenbank exportieren`
+- [[Ctrl+Alt+Shift+I]]: `Über orOS + Tastenkürzel`
+- [[Ctrl+Alt+Shift+U]]: `Nach Updates suchen`
+- [[Ctrl+Alt+Shift+L]]: `Sprache wechseln`
+- [[Ctrl+Alt+Shift+R]]: `Cloud-Synchronisierung verbinden / neu verbinden`
+- [[Ctrl+Alt+Shift+C]]: `Rechner öffnen`
+- [[Ctrl+Alt+Shift+F]]: `Apps und Daten durchsuchen` (öffnet das Menü mit dem Cursor im Suchfeld)
+- [[Ctrl+Alt+Shift+H]]: `Hilfe zur offenen App`
+- [[Ctrl+Alt+Shift+T]]: `Timer der Zeiterfassung starten / stoppen`
+- [[Ctrl+Alt+Shift+A]]: `Assistent öffnen`
+- [[Ctrl+Alt+Shift+Y]]: `Heute öffnen, die Übersicht deines Tages`
+- [[Ctrl+Alt+Shift+N]]: `Neue Haftnotiz`
+- [[Ctrl+Alt+Shift+K]]: `Befehlsleiste (auch Ctrl+K)`
+
+## Was jedes Kürzel macht
+### Synchronisierung und Sicherung
+- **Senden** schickt deine Daten jetzt in die Cloud, und **Holen** holt jetzt den neuesten Stand aus der Cloud. Beides braucht eine verbundene [Synchronisierung](help:t/sync); sonst siehst du `Cloud-Synchronisierung ist nicht verbunden`.
+- **Sicherung jetzt in Ordner exportieren** schreibt eine Sicherungsdatei in deinen Sicherungsordner. Dafür muss `Automatische Sicherung` in den `Einstellungen` an sein und ein `Sicherungsordner` gewählt sein. In Browsern, die keinen Sicherungsordner nutzen können (etwa Firefox, Safari und Handys), speichert es stattdessen eine Sicherungsdatei, wie `Sicherungsdatei exportieren`.
+- **Datenbank exportieren** speichert alle deine orOS-Daten in einer Datei, genau wie `Sicherungsdatei exportieren` in den `Einstellungen`. Siehe [Sicherung](help:t/backup).
+- **Cloud-Synchronisierung verbinden / neu verbinden** startet die Verbindung mit Dropbox, wenn du nicht verbunden bist. Bist du verbunden, fragt es noch einmal nach der Erlaubnis für deinen Sicherungsordner, falls der Browser sie entzogen hat.
+
+### Alles andere
+- **Über orOS + Tastenkürzel** öffnet das Fenster „Über“, mit der Version, den Online-Diensten, dieser Liste der Tastenkürzel und dem [Zurücksetzen auf Werkseinstellungen](help:t/reset). Drücke es noch einmal oder [[Esc]], um es zu schließen.
+- **Nach Updates suchen** sucht sofort nach einer neuen Version. Siehe [Installieren](help:t/install).
+- **Sprache wechseln** wechselt zwischen Englisch und Griechisch.
+- **Rechner öffnen** öffnet den [Rechner](app:calculator).
+- **Timer der Zeiterfassung starten / stoppen** öffnet die [Zeiterfassung](app:timesheet) und startet den Timer oder stoppt den laufenden. Solange ein Timer läuft, zeigt die obere Leiste, wie lange er schon läuft; klicke darauf, um die Zeiterfassung zu öffnen.
+- **Neue Haftnotiz** legt eine neue [Haftnotiz](app:stickies) auf den Desktop, bereit zum Tippen. Auf einem Handy oder aus einer App heraus öffnet sie die Notiz in einem Fenster.
+- **Befehlsleiste** öffnet eine kleine Leiste über dem Bildschirm, in die du einen Befehl wie `dentist tomorrow 10` oder `buy milk` tippst. [[Ctrl+K]] macht dasselbe, außer in Notizen und Wiki, wo [[Ctrl+K]] deren eigene Suche ist. Siehe [Das Menü](help:t/menu#commands).
+- **Hilfe zur offenen App** öffnet die Hilfe auf der Seite der App, die du gerade nutzt. Auf dem Desktop öffnet sie die Startseite der Hilfe.
+
+## Mac und Tastaturbelegungen
+Auf einem Mac nimmst du [[Control+Option+Shift]] plus den Buchstaben. [[Cmd]] funktioniert auch anstelle von [[Control]]. Das Fenster „Über“ zeigt die Tasten als ⌃⌥⇧.
+
+Tastenkürzel richten sich nach der Position der Taste, nicht nach dem Buchstaben, den sie tippt. Sie funktionieren also auch mit einer griechischen Tastaturbelegung gleich.
+
+## Wenn Tastenkürzel nicht funktionieren
+- Tastenkürzel greifen nicht, während du in ein Textfeld tippst, damit sie nie stören, wenn du schreibst. Klicke zuerst außerhalb des Felds.
+- Ein paar Apps geben Tastenkürzel noch nicht weiter. Geh zurück zum Desktop und versuch es noch einmal.
+
+> Apps haben auch eigene Tastenkürzel. Du findest sie auf der Hilfeseite jeder App.

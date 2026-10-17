@@ -8,7 +8,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Scanner &amp; PDF · orOS</title>
 
-  <link rel="stylesheet" href="scanpdf.css?v=2.95.00">
+  <link rel="stylesheet" href="scanpdf.css?v=2.97.00">
 
 </head>
 <body>
@@ -21,6 +21,7 @@
     <span class="spacer"></span>
     <button type="button" id="undo-btn" class="icon-btn" disabled></button>
     <button type="button" id="redo-btn" class="icon-btn" disabled></button>
+    <button type="button" id="scan-btn" class="icon-btn"></button>
     <button type="button" id="add-btn" class="icon-btn"></button>
     <button type="button" id="clear-btn" class="icon-btn" hidden></button>
   </header>
@@ -47,7 +48,8 @@
         <p class="drop-title" data-i18n="drop.title">Drop PDFs or pictures here</p>
         <p class="drop-hint hint small" data-i18n="drop.hint"></p>
         <div class="drop-btns">
-          <button type="button" id="add-files" class="btn primary" data-i18n="btn.add">Add PDFs or pictures</button>
+          <button type="button" id="scan-start" class="btn primary" data-i18n="btn.scan">Scan with the camera</button>
+          <button type="button" id="add-files" class="btn" data-i18n="btn.add">Add PDFs or pictures</button>
         </div>
         <p class="hint small local" data-i18n="drop.local"></p>
       </section>
@@ -56,6 +58,7 @@
         <p id="pages-hint" class="hint small" data-i18n="pages.hint"></p>
         <ul id="grid" class="grid" aria-labelledby="title-main"></ul>
         <div class="add-more">
+          <button type="button" id="scan-more" class="btn" data-i18n="btn.scan">Scan with the camera</button>
           <button type="button" id="add-more" class="btn" data-i18n="btn.addMore">Add more</button>
         </div>
       </section>
@@ -102,6 +105,67 @@
     <p class="ed-hint hint small" data-i18n="ed.hint"></p>
   </div>
 
+  <div id="scanner" role="dialog" aria-modal="true" aria-labelledby="sc-title" hidden>
+    <header class="ed-bar">
+      <button type="button" id="sc-close" class="icon-btn"></button>
+      <span id="sc-title" class="ed-title" data-i18n="sc.title">Scan</span>
+      <button type="button" id="sc-done" class="btn primary" hidden></button>
+    </header>
+
+    <div id="sc-cam" class="sc-view">
+      <div id="sc-camstage" class="sc-stage">
+        <video id="sc-video" playsinline muted></video>
+        <canvas id="sc-outline" aria-hidden="true"></canvas>
+        <p id="sc-tip" class="sc-tip" aria-live="polite"></p>
+        <div id="sc-msg" class="sc-msg" hidden>
+          <p id="sc-msg-text"></p>
+          <button type="button" id="sc-msg-photos" class="btn primary" data-i18n="sc.photos">Choose photos</button>
+        </div>
+      </div>
+      <div class="sc-bar sc-shootbar">
+        <button type="button" id="sc-photos" class="icon-btn"></button>
+        <label class="sc-auto" id="sc-auto-l"><input type="checkbox" id="sc-auto" checked><span data-i18n="sc.auto">Auto</span></label>
+        <button type="button" id="sc-shoot" class="sc-shoot"></button>
+        <button type="button" id="sc-torch" class="icon-btn" hidden></button>
+      </div>
+      <ul id="sc-strip" class="sc-strip"></ul>
+    </div>
+
+    <div id="sc-adjust" class="sc-view" hidden>
+      <p class="sc-tip-top hint small" data-i18n="sc.adjust"></p>
+      <div id="sc-adjstage" class="sc-stage">
+        <div id="sc-adjbox" class="sc-adjbox">
+          <canvas id="sc-photo"></canvas>
+          <svg id="sc-quad" class="sc-quad" aria-hidden="true"><polygon id="sc-poly"></polygon></svg>
+          <button type="button" class="sc-h" data-i="0"></button>
+          <button type="button" class="sc-h" data-i="1"></button>
+          <button type="button" class="sc-h" data-i="2"></button>
+          <button type="button" class="sc-h" data-i="3"></button>
+          <canvas id="sc-loupe" class="sc-loupe" width="240" height="240" hidden></canvas>
+        </div>
+      </div>
+      <div class="sc-bar">
+        <button type="button" id="sc-whole" class="btn small" data-i18n="sc.whole">Whole picture</button>
+        <button type="button" id="sc-retake" class="btn small" data-i18n="sc.retake">Take again</button>
+        <span class="spacer"></span>
+        <button type="button" id="sc-next" class="btn primary" data-i18n="sc.next">Next</button>
+      </div>
+    </div>
+
+    <div id="sc-review" class="sc-view" hidden>
+      <div id="sc-revstage" class="sc-stage"><canvas id="sc-result"></canvas></div>
+      <div id="sc-filters" class="sc-filters" role="radiogroup"></div>
+      <div class="sc-bar">
+        <button type="button" id="sc-rotl" class="icon-btn"></button>
+        <button type="button" id="sc-rotr" class="icon-btn"></button>
+        <button type="button" id="sc-corners" class="btn small" data-i18n="sc.corners">Corners</button>
+        <button type="button" id="sc-del" class="icon-btn danger" hidden></button>
+        <span class="spacer"></span>
+        <button type="button" id="sc-keep" class="btn primary" data-i18n="sc.keep">Keep page</button>
+      </div>
+    </div>
+  </div>
+
   <div id="modal-veil" hidden>
     <div id="modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
       <h2 id="modal-title"></h2>
@@ -118,11 +182,12 @@
   <div id="live" class="sr-only" aria-live="polite"></div>
   <div id="toast" role="status"></div>
 
-  <script src="../vendor/pdf-lib/pdf-lib.min.js?v=2.95.00"></script>
-  <script src="core.js?v=2.95.00"></script>
-  <script src="pdfops.js?v=2.95.00"></script>
-  <script src="../bundle.js?v=2.95.00"></script>
-  <script src="scanpdf.js?v=2.95.00"></script>
+  <script src="../vendor/pdf-lib/pdf-lib.min.js?v=2.97.00"></script>
+  <script src="core.js?v=2.97.00"></script>
+  <script src="scan.js?v=2.97.00"></script>
+  <script src="pdfops.js?v=2.97.00"></script>
+  <script src="../bundle.js?v=2.97.00"></script>
+  <script src="scanpdf.js?v=2.97.00"></script>
 
 </body>
 </html>

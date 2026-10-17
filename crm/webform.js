@@ -20,7 +20,7 @@
   "use strict";
 
   var DEV_KEY = "oros-crm-wf";
-  var DEFAULT_RELAY = "https://oros-mail-relay.koulaxizis-25b.workers.dev";   // = mail.js, newsletter/engine.js
+  var DEFAULT_RELAY = "https://oros-mail-relay.koulaxizis.workers.dev";   // = mail.js, newsletter/engine.js
   var CALL_TIMEOUT = 45000;
   var AUTO_EVERY = 10 * 60 * 1000;    // a check on opening CRM, at most this often
   var MAX_PAGES = 10;                 // pulls per check (100 messages each)

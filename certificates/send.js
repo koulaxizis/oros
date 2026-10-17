@@ -19,7 +19,7 @@
   "use strict";
 
   var VERSION = "1.0.0";
-  var DEFAULT_RELAY = "https://oros-mail-relay.koulaxizis-25b.workers.dev";   // = mail.js
+  var DEFAULT_RELAY = "https://oros-mail-relay.koulaxizis.workers.dev";   // = mail.js
   var SEND_TIMEOUT = 120000, MIN_GAP = 2000;
   var MAX_RAW = 10 * 1024 * 1024;   // the relay's limit for a message (decoded)
   var PER_HOUR = { def: 60, min: 5, max: 500 };

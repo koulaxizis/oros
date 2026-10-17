@@ -57,7 +57,7 @@
   var KEY = "oros-mail-data";
   var MARKS_KEY = "oros-mail-notify";
   var DB_NAME = "oros-mail";
-  var DEFAULT_RELAY = "https://oros-mail-relay.koulaxizis-25b.workers.dev";   // = mail.js
+  var DEFAULT_RELAY = "https://oros-mail-relay.koulaxizis.workers.dev";   // = mail.js
   var EVERY_MS = 3 * 60 * 1000;
   var BACKOFF_MAX = 30 * 60 * 1000;
   var CALL_TIMEOUT = 45000;

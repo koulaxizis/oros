@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "2.95.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "2.97.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -4807,7 +4807,22 @@
     } catch (e) {}
   }
 
+  // The relay moved to another Cloudflare account (2.9x). A relay
+  // address saved by hand that is the old default goes back to "" (=
+  // orOS's own relay); the newer stamp carries it to the other devices.
+  var OLD_RELAY_RE = /^https:\/\/oros-mail-relay\.koulaxizis-25b\.workers\.dev\/*$/i;
+  function migrateMailRelay() {
+    var d = mailProxySliceGet();
+    var r = d && d.relay;
+    if (!r || typeof r.url !== "string" || !OLD_RELAY_RE.test(r.url.trim())) return false;
+    d.relay = { url: "", m: Math.max(Date.now(), (Number(r.m) || 0) + 1) };
+    mailProxySliceSet(d);
+    if (window.orosSync && typeof window.orosSync.markDirty === "function") window.orosSync.markDirty();
+    return true;
+  }
+
   function registerMailProxySlice() {
+    migrateMailRelay();
     if (window.orosSync) {
       window.orosSync.registerSlice(
         "mail", mailProxySliceGet, mailProxySliceSet,
@@ -5780,10 +5795,15 @@
 
   // The language button: the next of the languages on offer (English
   // and Greek, plus every shown pack language and the active one).
+  // The bar button toggles English and the last other language picked
+  // on this device (Greek until another is picked); Settings lists all.
+  var LANG_ALT_LS = "oros-lang-alt";
   function langNext() {
-    var list = window.orosI18n ? window.orosI18n.choices().map(function (l) { return l.code; }) : ["en", "el"];
-    var i = list.indexOf(state.lang);
-    return list[(i + 1) % list.length] || "en";
+    if (state.lang !== "en") return "en";
+    var alt = null;
+    try { alt = localStorage.getItem(LANG_ALT_LS); } catch (e) {}
+    var shown = window.orosI18n ? window.orosI18n.choices().map(function (l) { return l.code; }) : ["en", "el"];
+    return alt && alt !== "en" && shown.indexOf(alt) !== -1 ? alt : "el";
   }
 
   // A language picked on this device (button, shortcut, Settings).
@@ -5792,8 +5812,10 @@
   // kept for offline use (langKeepOffline).
   function setLangUser(code) {
     if (!langKnown(code) || code === state.lang) return;
+    var alt = code !== "en" ? code : state.lang;
     state.lang = code;
     localStorage.setItem("oros-lang", state.lang);
+    if (alt !== "en") try { localStorage.setItem(LANG_ALT_LS, alt); } catch (e) {}
     noteLocalChange();            // user action → sync engine
     langApplyPack();
   }

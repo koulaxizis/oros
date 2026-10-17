@@ -1,0 +1,74 @@
+# Datenschutz und Offline-Nutzung
+orOS ist dafür gebaut, dass deine Daten dir gehören. Es gibt keine Konten, keine Cookies und kein Tracking, und orOS funktioniert weiter, wenn die Verbindung weg ist.
+
+Die vollständige Datenschutzerklärung steht im Web: [useoros.online/privacy.html](https://useoros.online/privacy.html).
+
+## Deine Daten bleiben in deinem Browser
+Alles, was du in orOS erstellst, wird in diesem Browser auf diesem Gerät gespeichert. Es gibt keinen orOS-Server, der es sammelt. orOS nutzt keine Cookies und keinerlei Tracking oder Analyse.
+
+Vorlesen ([Bibliothek](app:library), Sprachansagen in [Karten](app:maps)) nutzt nur Stimmen, die auf diesem Gerät installiert sind, der Text wird also nirgendwohin gesendet. orOS hat keine Spracheingabe.
+
+Weil die Daten im Browser liegen, hat jeder Browser und jedes Gerät seine eigene Kopie. Für dieselben Daten überall nutze die [Synchronisierung](help:t/sync). Für eine Kopie zur Sicherheit nutze [Sicherungen](help:t/backup).
+
+In der Android-App von orOS können [Kontakte](app:contacts) und [Kalender](app:calendar) deine Kontakte und Termine auch in den Kontakten und im Kalender des Handys zeigen (`Auf diesem Handy`). Sie landen nur auf diesem Handy, nie auf einem Server, und andere Apps auf dem Handy, denen du das Lesen von Kontakten oder Kalendern erlaubt hast, können sie dort sehen. Schaltest du den Schalter aus, werden sie entfernt.
+
+>! Wenn du die Daten dieser Website in den Browsereinstellungen löschst, sind deine orOS-Daten auf diesem Gerät weg. Sorge vorher für eine Sicherung oder die Synchronisierung.
+
+## Verschlüsselte Synchronisierung
+Die Synchronisierung ist freiwillig und nutzt dein eigenes Dropbox-Konto. orOS arbeitet dort nur in seinem eigenen App-Ordner.
+
+Bevor etwas dein Gerät verlässt, verschlüsselt orOS es mit deiner Passphrase (`Passphrase zur Verschlüsselung`). Die Passphrase verlässt dieses Gerät nie, Dropbox kann deine Daten also nicht lesen. Eine neue Passphrase braucht mindestens 10 Zeichen.
+
+- Setzt du den Haken bei `Auf diesem Gerät merken`, bleibt die Passphrase verschlossen in diesem Browser, und du musst sie nicht jedes Mal eintippen. `Auf diesem Gerät vergessen` entfernt sie.
+- Niemand kann eine verlorene Passphrase wiederherstellen, auch orOS nicht. Schreib sie an einem sicheren Ort auf.
+
+>! Dateien, die du mit `Sicherungsdatei exportieren` speicherst, und Sicherungen in deinem Sicherungsordner (`Sicherungsordner`) sind **nicht** verschlüsselt. Bewahre sie sicher auf.
+
+## Online-Dienste, die manche Apps nutzen
+orOS selbst läuft auf deinem Gerät, aber manche Apps brauchen das Internet für das, was sie zeigen. Sie fragen diese Dienste nur, wenn du die jeweilige Funktion nutzt:
+- Wetter (und das Wetter in der oberen Leiste): Open-Meteo für Vorhersagen, Ortssuche und Luftqualität (Copernicus CAMS), MeteoAlarm für amtliche Warnungen und, nur wenn du die Regenkarte öffnest, NASA GIBS (Satellitenbilder vom Regen, IMERG) mit Kartenkacheln von OpenStreetMap.
+- [Radio](app:radio): Radio Browser, eine von der Community gepflegte Senderliste. Die Sender spielen von ihren eigenen Servern.
+- [Karten](app:maps): Kartenbilder von OpenStreetMap, OpenTopoMap und Esri, Ortssuche mit Photon, Routen von OSRM und FOSSGIS, Transitous für den Nahverkehr und AWS Terrain Tiles für die Höhen einer geplanten Strecke. `Entdecken` fragt die Overpass API, Wikipedia und Panoramax nach der Gegend, die du dir ansiehst. Hinweise, Ortsänderungen, Quests und das Hochladen von GPS-Tracks laufen über die OpenStreetMap-API und die Overpass API, nur wenn du sie nutzt; zum Schreiben brauchst du ein eigenes OpenStreetMap-Konto. `Offline-Karten` lädt eine Gegend deiner Wahl aus den OpenStreetMap-Builds von Protomaps herunter. Die Hilfe zu Karten zeigt, was jeder Dienst erhält.
+- [Fernsehen](app:television): iptv-org, eine von der Community gepflegte Kanalliste. Die Kanäle spielen von ihren eigenen Servern.
+- [Atelier](app:atelier): Openverse, Wikimedia Commons, Iconify und Fontsource für freie Fotos, Symbole und Schriften; Pixabay und Pexels nur mit deinem eigenen Schlüssel.
+- [Medienregal](app:shelf): Open Library und MusicBrainz, nur wenn du auf `Details online suchen` tippst. Gesendet werden nur der Titel und die Urheberin oder der Urheber, die du eingetippt hast. Details und Bilder können auch von Wikidata und Wikimedia Commons kommen; Filme und Serien von TMDB nur mit deinem eigenen Schlüssel.
+- [Einheitenrechner](app:units): Frankfurter für die Wechselkurse der Europäischen Zentralbank, nur wenn du `Währung` öffnest oder auf `Kurse aktualisieren` tippst.
+- [Budget](app:budget): dieselben Frankfurter-Kurse, nur wenn ein Konto oder ein Eintrag in einer anderen Währung ist (höchstens alle 6 Stunden). Über dein Geld wird nichts gesendet.
+- [Gemeinfreiheits-Rechner](app:pubdomain): Wikidata für Autorinnen, Autoren und ihre Werke.
+- [Reader](app:feeds) und [Podcasts](app:podcasts): die Websites, deren Feeds du hinzufügst.
+- [Essensplaner](app:meals): die Rezeptseiten, deren Adressen du einfügst, und Open Food Facts, wenn du ein Lebensmittel suchst oder einen Barcode für die Nährwerte scannst.
+- [Training](app:fitness): wger für Übungsbilder, nur wenn du die Details einer Übung öffnest.
+- [Montage](app:montage): Hugging Face, einmal, um das Sprachmodell für `Untertitel erstellen` herunterzuladen, nur wenn du darauf drückst. Dein Ton verlässt das Gerät nie.
+- [Podcasts](app:podcasts): gpodder.net oder deine eigene Nextcloud, nur wenn du sie zur Synchronisierung verbindest.
+- [Mail](app:mail): dein eigener Mail-Anbieter, über das orOS-Relay, das deine Mails nur durchreicht und nichts behält.
+- [Wiki](app:wiki): Wikipedia, nur wenn du `Mit Wikipedia beginnen` nutzt; gesendet wird nur der Titel, den du eintippst.
+- [Bibliothek](app:library): Wiktionary, nur für `Nachschlagen` und erst nach deiner Zustimmung; gesendet wird nur das Wort. `Online-Kataloge` liest Project Gutenberg, Standard Ebooks oder einen OPDS-Katalog, den du hinzufügst.
+- [Newsletter](app:newsletter): dein eigenes Mail-Konto oder dein Versanddienst, über das orOS-Relay; `Domain prüfen` fragt das öffentliche DNS von Cloudflare nach den SPF-, DKIM- und DMARC-Einträgen deiner Domain.
+- [CRM](app:crm): nur wenn du ein `Webformular` erstellst: Was Besucher damit senden, geht verschlüsselt für dein CRM über das orOS-Relay und bleibt dort höchstens 30 Tage, bis dein CRM es abholt.
+- [Assistent](app:assistant): nur der KI-Dienst deiner Wahl, mit deinem eigenen Schlüssel, direkt aus deinem Browser.
+- [Schach](app:chess): die öffentlichen Daten von Chess.com, nur wenn du `Online-Konten` öffnest; gesendet wird nur der Benutzername, den du eintippst, nie ein Passwort. Lichess nur, wenn du es dort nutzt: Du meldest dich auf lichess.org an (orOS sieht das Passwort nie), die Anmeldung wird auf diesem Gerät versiegelt und nie synchronisiert, und eine Partie geht nur an Lichess, wenn du auf `Diese Partie auf Lichess analysieren` drückst oder auf Lichess spielst (nachdem du auf `Spielen erlauben` gedrückt hast).
+- Synchronisierung: Dropbox, nur wenn du es verbindest.
+
+Manche Apps können auch mit Konten arbeiten, die du schon anderswo hast, aber erst, nachdem du sie in [Einstellungen](app:settings) › `Verbundene Dienste` verbunden hast:
+- [Bestand](app:stock): dein eigener WooCommerce-Shop.
+- [Rechnungen](app:invoices): dein Konto bei timologisi.online, um Belege an myDATA zu senden.
+- [Newsletter](app:newsletter): dein Konto bei MailerLite, Mailchimp oder Brevo, um Abonnenten zu synchronisieren.
+- [CRM](app:crm): dein Konto bei HubSpot, Pipedrive, Invoice Ninja oder Odoo, gelesen, um Kunden und Deals zu übernehmen.
+- [Budget](app:budget): dein Konto bei Stripe oder Invoice Ninja, gelesen, um Zahlungen zu übernehmen.
+- [Aufgaben](app:todo): dein Todoist-Konto (Projekte und Aufgaben) oder dein GitHub-Konto (die offenen Issues, die dir zugewiesen sind), nur gelesen.
+- [Kanban](app:kanban): dein Trello-Konto (ein Board) oder dein GitHub-Konto (die Issues eines Repositorys), nur gelesen.
+- [Lesezeichen](app:bookmarks): dein Konto bei Raindrop.io, gelesen, um Lesezeichen zu übernehmen.
+- [Notizen](app:notes), [Tabelle](app:spreadsheet) und [Kanban](app:kanban): deine Notion-Integration, gelesen, um die Seiten und Datenbanken zu übernehmen, die du mit ihr geteilt hast.
+
+orOS spricht direkt aus deinem Browser mit ihnen, oder über das orOS-Relay, wenn der Dienst Browsern nicht antwortet. Mailchimp, HubSpot, Stripe und Notion laufen immer über das Relay, das nichts behält. Deine Schlüssel bleiben in Verbundene Dienste.
+
+Bei [Kontakte](app:contacts) › `Aus einem Konto` ist es anders: Du meldest dich einmal bei Google oder Microsoft an, dein Browser liest deine Kontakte direkt von dort, und der Zugriff endet gleich nach dem Lesen (bei Google wird er zurückgezogen, bei Microsoft vergessen, und er läuft innerhalb einer Stunde ab). Nichts wird behalten, und kein Server von orOS ist beteiligt.
+
+`Gerätestandort verwenden` und andere Standort-Schaltflächen fragen deinen Browser zuerst um Erlaubnis. Die vollständige Liste mit Mitwirkenden und Lizenzen findest du in [Einstellungen](app:settings) unter `Über orOS, Mitwirkende und Lizenzen`.
+
+## Offline arbeiten
+orOS speichert sich und seine Apps auf deinem Gerät, deshalb öffnet und funktioniert es auch ohne Verbindung: Deine Apps, deine Daten und deine Einstellungen sind alle da.
+
+- Was das Internet braucht, wartet darauf. Das Wettersymbol zeigt eine durchgestrichene Wolke statt einer erfundenen Temperatur, und Online-Dienste wie Karten, Radio- und TV-Kataloge kommen zurück, sobald du online bist.
+- Änderungen, die du offline machst, bleiben auf dem Gerät. Mit eingeschalteter Synchronisierung werden sie gesendet, sobald du wieder online bist.
+- Wurde eine App noch nicht für die Offline-Nutzung gespeichert, siehst du stattdessen eine kurze Meldung. Öffne sie einmal, während du online bist.

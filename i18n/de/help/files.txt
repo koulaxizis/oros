@@ -1,0 +1,140 @@
+# Dateien
+Dateien ist die orOS-Disk: Ordner und Dateien, die in diesem Browser liegen. Importiere Dateien, sieh dir Text an und bearbeite ihn, durchsuche Inhalte, pack ZIP-Dateien ein und aus, lade Kopien herunter und finde mit eingeschalteter orOS-Synchronisierung dieselbe Disk auf deinen anderen Geräten.
+
+## Erste Schritte
+Links stehen die Ordner, rechts der Inhalt des aktuellen Ordners. Auf dem Handy öffnet die Ordner-Taste oben den Baum. Mit dem Pfad oder dem Pfeil nach oben gehst du zurück.
+
+- Oben im Baum zeigt `Zuletzt` die Dateien, die du zuletzt geöffnet oder geändert hast, und `Favoriten` die Ordner und Dateien, die du angeheftet hast. Der `Papierkorb` steht unter deinen Ordnern.
+- Tippe oder klicke auf eine Zeile, um sie auszuwählen. Am Computer öffnest du einen Ordner oder eine Datei per Doppelklick. Auf einem Touchscreen tippst du einmal zum Auswählen und noch einmal auf dieselbe Zeile zum Öffnen.
+- Die Tasten der Symbolleiste sind `Dateien importieren`, `Neuer Ordner`, `Neue Datei`, `Umbenennen`, `Löschen` und `Weitere Aktionen`.
+- Die Taste rechts neben dem Suchfeld wechselt zwischen `Listenansicht` und `Rasteransicht`. Das Raster zeigt kleine Bilder von Fotos und von der ersten Seite von PDFs. Jedes Gerät merkt sich seine eigene Wahl.
+- Der Hauptordner zeigt außerdem `Zuletzt verwendet`, die letzten 10 Dateien, die du geöffnet oder geändert hast.
+
+## Dateien und Ordner verwalten
+- `Neuer Ordner` und `Neue Datei` fragen nach einem Namen. Ein Name darf / \ : * ? " < > | nicht enthalten.
+- Wähle mehrere Elemente mit Strg+Klick (Cmd+Klick auf dem Mac) aus, oder einen Bereich mit Umschalt+Klick.
+- Klicke mit der rechten Maustaste auf ein Element, oder wähle es aus und tippe auf `Weitere Aktionen`, für `Vorschau`, `Zu Favoriten hinzufügen`, `Herunterladen`, `Verschieben nach…`, `Kopieren nach…`, `Als ZIP komprimieren`, `Hier entpacken` (ZIP-Dateien), `Namen kopieren`, `Pfad kopieren`, `Inhalt kopieren` (nur Textdateien), `Umbenennen` und `Löschen`.
+- `In orOS umwandeln` (im Menü und in der Auswahlleiste) erscheint, wenn die Auswahl Dokumente oder Tabellen enthält, die der [orOS Konverter](app:converter) in orOS-Dateien umwandeln kann (.docx, .odt, .xlsx, .csv und mehr). Es öffnet den Konverter mit diesen Dateien; deine Dateien hier bleiben, wie sie sind.
+- `In Scanner & PDF öffnen` (im Menü und in der Auswahlleiste) erscheint, wenn die Auswahl ein PDF oder mehrere Bilder enthält. Es öffnet [Scanner & PDF](app:scanpdf) mit ihren Seiten, zum Zusammenfügen, Teilen oder Ordnen, oder um aus den Bildern ein PDF zu machen; deine Dateien hier bleiben, wie sie sind.
+- Am Computer kannst du Elemente auch auf einen Ordner im Baum ziehen, um sie dorthin zu verschieben, oder auf den `Papierkorb`.
+- Tippe auf die Spaltenköpfe `Name`, `Größe` oder `Geändert`, um zu sortieren; tippe noch einmal, um die Reihenfolge umzukehren.
+
+### Mehrere Elemente auf einem Touchscreen auswählen
+- Tippe auf das Kästchen links neben den Spaltenköpfen (`Auswählen`), oder halte den Finger eine halbe Sekunde auf einer Zeile.
+- Jedes Tippen hakt jetzt eine Zeile an oder ab. Die Leiste unten zeigt, wie viele ausgewählt sind, und bietet `Alle auswählen`, `Zu Favoriten hinzufügen` (ein Element), `Als ZIP komprimieren`, `Verschieben nach…`, `Kopieren nach…` und `Löschen`.
+- Tippe auf `Fertig` (oder drücke Esc), um den Auswahlmodus zu verlassen.
+
+### Favoriten
+- `Zu Favoriten hinzufügen` heftet einen Ordner oder eine Datei oben im Baum an. Tippe dort auf den Stern daneben, oder wähle `Aus Favoriten entfernen`, um sie wieder zu lösen.
+- Favoriten folgen einer Umbenennung oder Verschiebung in Dateien und werden mit deinen anderen Geräten synchronisiert. Ein Favorit, der ein Gerät noch nicht erreicht hat, erscheint blass.
+
+### ZIP-Dateien
+- `Als ZIP komprimieren` packt die ausgewählten Dateien und Ordner in eine .zip daneben, benannt nach dem Element (oder "Archiv.zip" bei mehreren). Text und andere Dateien werden komprimiert, wo der Browser es kann; Fotos, Videos und andere schon komprimierte Dateien werden so gespeichert, wie sie sind.
+- Öffne eine .zip, um zu sehen, was drin ist. `Entpacken` (oder `Hier entpacken` im Menü) packt sie in einen neuen Ordner daneben aus. Eine Datei überschreibt nie etwas: vergebene Namen bekommen " (1)".
+
+## Papierkorb
+`Löschen` verschiebt Elemente in den `Papierkorb`, statt sie zu vernichten. Du kannst sie 30 Tage lang zurückholen.
+
+- Öffne den `Papierkorb` im Baum. Jedes Element zeigt, aus welchem Ordner es kam und wann es gelöscht wurde.
+- Wähle Elemente aus und tippe auf `Wiederherstellen`, um sie in ihren Ordner zurückzulegen (der Ordner wird neu angelegt, wenn er weg ist; ein vergebener Name bekommt " (1)"), oder auf `Endgültig löschen`.
+- `Papierkorb leeren` löscht alles darin auf einmal. Elemente, die älter als 30 Tage sind, werden automatisch endgültig gelöscht.
+- Mit eingeschalteter orOS-Synchronisierung ist der Papierkorb auf allen deinen Geräten derselbe: Eine gelöschte Datei verschwindet auch dort aus ihrem Ordner und erscheint in deren Papierkorb, und wenn du sie auf irgendeinem Gerät wiederherstellst, ist sie überall wieder da.
+
+>! `Endgültig löschen`, `Papierkorb leeren` und Umschalt+Entf lassen sich nicht rückgängig machen. Andere Apps, die ihre eigenen Dateien auf der Disk löschen, nutzen den Papierkorb nicht.
+
+## Importieren, ansehen und bearbeiten
+- Tippe auf `Dateien importieren`, um eine oder mehrere Dateien auszuwählen, oder zieh Dateien von deinem Computer auf die Liste. Gibt es schon eine Datei mit demselben Namen, wähle `Überschreiben` oder `Beide behalten`.
+- Öffne eine Datei, um ihre Vorschau zu sehen. Bilder (PNG, JPG, GIF, WebP, BMP, ICO, AVIF) werden als Bilder gezeigt. Markdown-Dateien werden formatiert gezeigt, mit einer Taste `Quelltext` für den reinen Text.
+- Tippe auf `Bearbeiten`, um eine Textdatei zu ändern, und auf `Speichern`, um sie auf die Disk zu schreiben. Markdown-Dateien zeigen neben dem Editor eine Live-Vorschau. Schließt du mit ungespeicherten Änderungen, wirst du erst gewarnt; schließ noch einmal, um sie zu verwerfen.
+
+## Eine Datei in einer anderen App öffnen
+- Eine Datei, die die Vorschau nicht zeigen kann (ein Word- oder orOS-Dokument, eine Tabelle, ein Lied, ein Video, ein E-Book…), öffnet sich direkt in der orOS-App, die sie liest, wenn du doppelt darauf klickst, oder auf einem Touchscreen zweimal tippst. Text, Bilder und ZIP-Dateien öffnen sich weiter in der Vorschau.
+- Die Vorschau hat `In … öffnen` (eine App liest die Datei) oder `Öffnen mit…` (mehrere tun es: wähle eine aus, und hake `Immer diese App verwenden` an, damit die Frage beim nächsten Mal wegfällt). Auch per Rechtsklick auf eine Datei oder über `Weitere Aktionen` gibt es `Öffnen mit…`.
+- Lieder spielen in [Musik](app:music). Ein Lied außerhalb des Ordners `Musik` wird zuerst dorthin kopiert, damit Musik es behält.
+- `An eine App senden…` im selben Menü hängt die ausgewählten Dateien (bis zu 10) an eine neue Nachricht in [Mail](app:mail) an.
+- `Fotos an jemanden senden…` (Rechtsklick oder langes Drücken auf ein Bild oder einen Ordner) macht einen Fotoalbum-Link aus den ausgewählten Bildern und den Bildern direkt in den ausgewählten Ordnern, bis zu 200. Die Fotos werden verkleinert und verlieren ihre versteckten Angaben (Ort, Kamera, Zeit), bevor sie das Gerät verlassen; siehe [An jemanden senden](help:t/share).
+- Die App öffnet ihre eigene Kopie: Die Datei auf der Disk ändert sich erst, wenn du sie dort speicherst.
+
+## Aus Google Drive und Google Fotos
+- `Dateien importieren` › `Aus Google Drive` oder `Aus Google Fotos`. Melde dich im kleinen Fenster bei Google an und wähle die Dateien dann in Googles eigener Auswahl aus (bei Fotos zuerst `Google Fotos öffnen` drücken, auswählen, dann `Fertig`).
+- orOS sieht nur, was du auswählst, liest es einmal und gibt die Anmeldung sofort wieder frei; nichts bleibt verbunden. Bevor etwas gespeichert wird, siehst du eine Liste mit Größen und Summe, und was weggelassen wird.
+- Die Dateien kommen in den Ordner "Aus Google Drive importiert" oder "Aus Google Fotos importiert" und werden wie jede andere Datei synchronisiert. `Rückgängig` in der Meldung entfernt genau die Dateien, die hereingekommen sind.
+- Google Docs, Sheets, Slides und Drawings kommen als .docx, .xlsx, .pptx und .png an. Ordner, Forms, Sites und My Maps werden weggelassen.
+- Wählst du dieselben Dateien noch einmal, kommt nur hinzu, was fehlt: Eine Datei mit demselben Namen und derselben Größe im Ordner wird weggelassen.
+- Aus Google Drive funktioniert mit der eigenen Google-App von orOS. Mit deiner eigenen App-ID (Kontakte › Aus einem Konto › Eigene App-ID verwenden) erscheint es erst, wenn du dort auch deinen eigenen Google-API-Schlüssel einträgst. Antwortet Google mit 403, sind die Google Drive API und die Google Picker API (oder die Google Photos Picker API) in diesem Google-Cloud-Projekt noch nicht eingeschaltet.
+
+## Suchen
+- Tippe in `In diesem Ordner suchen…`. Die Suche geht durch den aktuellen Ordner und alle seine Unterordner. Groß- und Kleinschreibung und griechische Akzente spielen keine Rolle.
+- Standardmäßig werden Namen durchsucht. Schalte `Inhalte` ein, um auch in Textdateien (TXT, Markdown, CSV, JSON, HTML, Code und mehr) und PDFs zu suchen. Eine Zeile zeigt, wie weit die Suche ist, und jeder Treffer in einer Datei zeigt einen Ausschnitt mit den gefundenen Wörtern.
+- Die ersten 100 Ergebnisse werden gezeigt; `Mehr anzeigen` fügt die nächsten 100 hinzu.
+- Tippe auf einen Ordner, um ihn zu öffnen, oder auf eine Datei, um ihren Ordner zu öffnen und ihre Vorschau zu sehen.
+
+## Deine Dropbox
+Unter `Dateien` im Ordnerbaum zeigt `Dropbox` deine ganze Dropbox, nicht nur die orOS-Disk. Das ist freiwillig und funktioniert auf jedem Gerät für sich.
+
+- Tippe auf `Dropbox`, dann auf `Dropbox verbinden`, und erlaube den Zugriff im Dropbox-Fenster. Die orOS-Synchronisierung ist davon nicht betroffen: Sie nutzt weiter ihren eigenen Ordner.
+- Blättere durch Ordner, suche Namen mit `In Dropbox suchen…` und sortiere nach `Name`, `Größe` oder `Geändert`. Tippe auf eine Datei, um ihre Vorschau zu sehen (Text und Bilder), und auf `Herunterladen`, um eine Kopie zu speichern.
+- Der eigene Ordner der orOS-Synchronisierung zeigt ein Schloss. Sein Inhalt ist verschlüsselt und nur die orOS-Synchronisierung liest ihn, deshalb wird er nicht aufgelistet.
+- Die Konto-Taste oben rechts zeigt deinen Dropbox-Namen und `Dropbox trennen`.
+
+### In die orOS-Disk kopieren oder verschieben
+Die orOS-Disk ist der verschlüsselte Ort: Mit eingeschalteter orOS-Synchronisierung wird jede Datei darauf verschlüsselt, bevor sie dein Gerät verlässt.
+
+- Hake die Kästchen neben Dateien oder Ordnern an (das Kästchen im Kopf wählt alles Angezeigte aus), dann wähle `Auf orOS-Disk kopieren` oder `Auf orOS-Disk verschieben`. Die Vorschau einer Datei hat dieselben zwei Tasten.
+- Wähle den Ordner auf der Disk, prüf die Zusammenfassung und tippe auf `Starten`. Ordner kommen mit allem, was darin ist.
+- Eine Kopie ersetzt nie eine Datei auf der Disk: Ist der Name vergeben, bekommt die neue Datei " (1)".
+- `Verschieben` entfernt jedes Dropbox-Original erst, wenn seine verschlüsselte Kopie in der orOS-Synchronisierung bestätigt ist. Die Originale kommen in die gelöschten Dateien von Dropbox, wo du sie 30 Tage lang wiederherstellen kannst. Eine Datei, die sich während des Verschiebens in Dropbox geändert hat, bleibt dort.
+- Zum Verschieben muss die orOS-Synchronisierung verbunden und entsperrt sein. Kopieren geht auch ohne.
+- `Beenden` stoppt eine Übertragung: Schon kopierte Dateien bleiben auf der Disk und kein Original wird entfernt. Wird eine Übertragung unterbrochen (Tab geschlossen, keine Verbindung), bietet Dateien beim nächsten Mal an, sie `Fortsetzen`.
+
+### Von der orOS-Disk an Dropbox senden
+- Wähle auf der Disk Dateien oder Ordner aus und dann `An Dropbox senden…` (Rechtsklick-Menü oder Auswahlleiste).
+- Wähle den Dropbox-Ordner, tippe auf `Hierher senden` und dann auf `Starten`. Dateien zeigt dann diesen Dropbox-Ordner.
+- Dropbox bekommt normale, unverschlüsselte Kopien, damit du sie teilen kannst. In orOS bleiben die Dateien, wie sie sind.
+- In Dropbox wird nichts überschrieben: Ist der Name vergeben, bekommt die Kopie " (1)". Der eigene Ordner der orOS-Synchronisierung kann nicht gewählt werden, und der Papierkorb wird nie gesendet.
+
+- Um stattdessen eine eigene Dropbox-App zu nutzen, öffne `Eigenen App-Key verwenden`: Erstelle eine Dropbox-App mit vollem Dropbox-Zugriff, hake die gezeigten Berechtigungen an, füge die gezeigte Weiterleitungsadresse hinzu und gib den App-Key ein.
+
+> Dateien gehen direkt zwischen diesem Browser und Dropbox hin und her. Die Verbindung wird nur auf diesem Gerät gespeichert und nicht synchronisiert.
+
+## orOS Drive
+- `orOS Drive` in der Ordnerliste zeigt die Ordner, die du mit der App orOS Drive von deinen Computern und Handys spiegelst.
+- Sie bleiben in der Cloud, bis du sie öffnest, damit dieses Gerät nicht vollläuft. Ein Wolken-Zeichen neben einem Namen bedeutet, dass die Datei noch nicht auf diesem Gerät ist.
+- Beim Öffnen wird eine Datei heruntergeladen, und ab dann bleibt sie hier aktuell. Öffnest du sie von einer anderen Stelle in Dateien, geht das genauso, sobald sie heruntergeladen ist.
+- `Auf diesem Gerät behalten` lädt den ganzen Ordner herunter und behält ihn. `Speicher freigeben` entfernt die heruntergeladenen Kopien eines Ordners von diesem Gerät; auf deinen anderen Geräten und in der Cloud wird nichts gelöscht. Dateien, die du hier geändert und noch nicht synchronisiert hast, bleiben immer.
+- Löschst du eine heruntergeladene Datei in Dateien, wird sie überall gelöscht, auch auf dem Computer, von dem sie kam.
+- In der orOS-App für Android öffnet die Handy-Taste orOS Drive auf dem Handy: Wähle Ordner des Handys aus, und sie werden genauso gespiegelt, im Hintergrund alle 15 Minuten (nur im WLAN, außer du änderst es).
+- In der orOS-App für Android mit angemeldetem und entsperrtem orOS Drive erscheint die ganze orOS-Disk auch als «orOS» in der Dateien-App des Handys und in jeder App, die Dateien öffnet oder speichert. Eine Datei wird heruntergeladen, wenn du sie öffnest, und hochgeladen, wenn die App sie speichert; hat sie sich in der Zwischenzeit in orOS geändert, werden beide Versionen behalten.
+
+## Synchronisierung und Sicherung
+Die Disk liegt in diesem Browser. Wenn die [orOS-Synchronisierung](help:t/sync) verbunden und entsperrt ist, synchronisiert Vault Drive sie Datei für Datei, ob Dateien offen ist oder nicht. Namen und Inhalte werden verschlüsselt, bevor sie dein Gerät verlassen.
+
+- Die Anzeige in der Statusleiste zeigt `Disk synchronisiert`, `Änderungen warten auf Synchronisierung` oder `Disk-Synchronisierung nicht verfügbar`.
+- Wurde dieselbe Datei auf zwei Geräten geändert, werden beide Versionen behalten. Die andere Kopie bekommt "(conflict" plus Datum und Uhrzeit in ihren Namen.
+- Favoriten und der Papierkorb werden synchronisiert. Deine Sortierung, Listen- oder Rasteransicht, der Schalter `Inhalte`, der letzte Ordner, `Zuletzt` und die Speicheranzeige bleiben auf diesem Gerät.
+- orOS-[Sicherungen](help:t/backup) enthalten die ganze Disk, samt Papierkorb. Für eine einzelne Datei nimm `Herunterladen`.
+
+## Tastenkürzel
+- [[Enter]] öffnet den ausgewählten Ordner oder die ausgewählte Datei.
+- [[Space]] fügt die markierte Zeile zur Auswahl hinzu oder entfernt sie daraus.
+- [[Delete]] verschiebt die Auswahl nach einer Bestätigung in den Papierkorb. Im Papierkorb löscht es endgültig.
+- [[Shift+Delete]] löscht die Auswahl nach einer Bestätigung endgültig.
+- [[Esc]] schließt die Vorschau oder verlässt den Auswahlmodus.
+
+## Tipps
+- Die Symbolleiste zeigt, wie viel Platz deine Dateien belegen, zum Beispiel "120 KB belegt". Elemente im Papierkorb zählen mit, bis er geleert ist.
+- Um auf dem Handy Dateien zu verschieben, nimm `Verschieben nach…`. Ziehen geht nur mit der Maus.
+- Um einen ganzen Ordner irgendwohin zu schicken, komprimiere ihn als ZIP und lade die .zip herunter.
+
+## Grenzen
+- Textvorschauen gehen bis 512 KB und Bilder bis 10 MB. Größere Dateien kannst du trotzdem herunterladen.
+- Dateien, die kein UTF-8-Text sind, kannst du hier nicht bearbeiten. Lade sie stattdessen herunter.
+- Die Suche in Dateien liest Textdateien bis 4 MB und PDFs bis 30 MB (die ersten 300 Seiten); größere oder unlesbare Dateien werden übersprungen und gezählt. Gescannte PDFs ohne Textebene lassen sich nicht durchsuchen.
+- Eine neue ZIP fasst bis zu 10.000 Dateien und 300 MB. Eine ZIP öffnet sich hier bis 300 MB, mit bis zu 20.000 Dateien, insgesamt 1 GB und 80 MB pro Datei nach dem Entpacken. Verschlüsselte und ZIP64-Archive werden nicht unterstützt, leere Ordner in einer ZIP werden nicht neu angelegt, und Dateinamen werden als UTF-8 gelesen (sehr alte Windows-ZIPs zeigen eventuell seltsame Namen).
+- Rasterbilder werden jedes Mal auf diesem Gerät erzeugt und nicht gespeichert. Nur Bilder und PDFs bis 20 MB bekommen eins.
+- `Zuletzt` behält die letzten 30 Dateien auf diesem Gerät.
+- Ein leerer Ordner, der auf einem Gerät in den Papierkorb kommt, erreicht den Papierkorb der anderen, ohne in deren Ordnern zu sein, weil leere Ordner nicht synchronisiert werden.
+- Sehr große Dateien synchronisieren langsam, weil jede am Stück verschlüsselt wird.
+- Die Dropbox-Ansicht braucht eine Internetverbindung.
+- Eine Übertragung, in beide Richtungen, umfasst bis zu 1000 Dateien und 1 GB, und Dateien bis je 300 MB (die Disk verschlüsselt jede Datei komplett im Speicher).
+- Ein Import aus Google umfasst bis zu 100 Dateien, 100 MB pro Datei und insgesamt 500 MB. Google exportiert Docs, Sheets und Slides nur bis 10 MB.

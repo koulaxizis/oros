@@ -36,7 +36,7 @@
   var DEV_KEY = "oros-newsletter-dev";
   var OLD_PREFS_KEY = "oros-newsletter-prefs";
   var DB_NAME = "oros-newsletter";
-  var DEFAULT_RELAY = "https://oros-mail-relay.koulaxizis-25b.workers.dev";   // = mail.js
+  var DEFAULT_RELAY = "https://oros-mail-relay.koulaxizis.workers.dev";   // = mail.js
   var CALL_TIMEOUT = 45000, SEND_TIMEOUT = 120000;
   var INBOX_EVERY = 10 * 60 * 1000;
   var IDLE_EVERY = 5 * 60 * 1000;

@@ -986,7 +986,7 @@
   var DAV_CONF_KEY = "oros-dav-conf";      // { url, user, dir, relay? }
   var DAV_PASS_KEY = "oros-dav-pass";
   var DAV_ROOT     = "vault";
-  var DAV_RELAY    = "https://oros-mail-relay.koulaxizis-25b.workers.dev/dav";   // = mail.js
+  var DAV_RELAY    = "https://oros-mail-relay.koulaxizis.workers.dev/dav";   // = mail.js
   var DAV_PROPFIND = '<?xml version="1.0" encoding="utf-8"?><d:propfind xmlns:d="DAV:"><d:prop>' +
     "<d:resourcetype/><d:getcontentlength/><d:getlastmodified/><d:getetag/></d:prop></d:propfind>";
   var davConf = null;

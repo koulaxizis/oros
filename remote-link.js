@@ -33,7 +33,7 @@
   var RID_RE = /^[0-9a-f]{32}$/;
   var NS_RE = /^[a-z0-9-]{3,40}$/;
   var MAX_MSG = 12000;                 // characters of one app message
-  var RELAY = "https://oros-mail-relay.koulaxizis-25b.workers.dev";   // = mail.js
+  var RELAY = "https://oros-mail-relay.koulaxizis.workers.dev";   // = mail.js
 
   var PEEK_DIRECT = 66, PEEK_RELAY = 200;   // host: effect interfaces' live data
 

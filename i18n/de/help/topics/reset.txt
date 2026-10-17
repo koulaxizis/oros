@@ -1,0 +1,29 @@
+# Zurücksetzen auf Werkseinstellungen
+Das Zurücksetzen auf Werkseinstellungen löscht alles, was orOS gespeichert hat, und startet es neu, als hättest du es nie benutzt. Nutze es, wenn du sauber neu anfangen willst oder bevor du ein Gerät an jemand anderen weitergibst.
+
+>! Das Zurücksetzen ist endgültig und lässt sich nicht rückgängig machen. Es löscht auch deine orOS-Daten in der Cloud. Wenn du vielleicht etwas zurückhaben willst, nutze vorher `Sicherungsdatei exportieren` in den `Einstellungen` und behalte die Datei.
+
+## Wo du es findest
+1. Öffne das Menü und wähle `Einstellungen`.
+2. Geh zu `System`.
+3. Die Schaltfläche `Auf Werkseinstellungen zurücksetzen` ist ganz unten auf dieser Seite. Auch das Fenster `Über orOS + Tastenkürzel` ([[Ctrl+Alt+Shift+I]]) hat eine Schaltfläche, die dich dorthin bringt.
+
+## So funktioniert es
+1. Tippe oder klicke auf `Auf Werkseinstellungen zurücksetzen`.
+2. Die Schaltfläche wird zu `Zum Löschen von allem erneut tippen`. Der Hinweis darunter erklärt, was gelöscht wird.
+3. Tippe oder klicke noch einmal darauf, um zu bestätigen. Tust du das nicht, wird sie nach 10 Sekunden wieder normal, und nichts passiert.
+4. Du siehst `Wird gelöscht…`. Dann startet orOS frisch neu.
+
+## Was gelöscht wird
+- **Auf diesem Gerät:** alle deine orOS-Daten und Einstellungen in jeder App. Dazu gehören deine Dateien, eine gemerkte Passphrase, dein Hintergrundbild `Eigenes` und gespeicherte Kartenbereiche.
+- **In der Cloud:** Ist dieses Gerät mit Dropbox verbunden, werden alle orOS-Daten und ihre Cloud-Sicherungen gelöscht, und dieses Gerät wird von Dropbox getrennt.
+- **In deinem Sicherungsordner:** die orOS-Sicherungsdateien im gewählten `Sicherungsordner`, solange orOS noch die Erlaubnis für diesen Ordner hat.
+
+## Was nicht gelöscht wird
+- **Deine anderen Geräte.** Sie behalten ihre eigene Kopie deiner Daten, und wenn sie noch mit der Synchronisierung verbunden sind, können sie sie wieder in die Cloud hochladen. Setze auch jedes von ihnen zurück, wenn alles weg sein soll.
+- **Dateien, die du exportiert hast**, mit `Sicherungsdatei exportieren` oder [[Ctrl+Alt+Shift+X]], egal wo du sie gespeichert hast.
+- **Die Cloud-Kopie, wenn dieses Gerät nicht** mit Dropbox verbunden ist oder sie beim Zurücksetzen nicht erreicht.
+- **Dateien im Sicherungsordner**, wenn der Browser orOS die Erlaubnis für diesen Ordner entzogen hatte.
+- **orOS selbst.** Wenn du es als App installiert hast, bleibt es installiert. Nur deine Daten verschwinden.
+
+> Nach dem Zurücksetzen kannst du deine Daten mit `Sicherungsdatei importieren` in den `Einstellungen` zurückholen, wenn du eine exportierte Datei behalten hast. Siehe [Sicherung](help:t/backup).

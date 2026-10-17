@@ -13,7 +13,7 @@
 (function (root) {
   "use strict";
 
-  var VERSION = "1.1.0";
+  var VERSION = "1.2.0";
   var PREFS_KEY = "oros-scanpdf-prefs";      // device-local (R10), never synced
   var SIGS_KEY = "oros-scanpdf-sigs";        // device-local (R10), never synced
   var MAX_SIGS = 6;
@@ -172,6 +172,13 @@
     var base = PT[p.size];
     var wantLand = p.orient === "landscape" || (p.orient === "auto" && land);
     return wantLand ? [base[1], base[0]] : [base[0], base[1]];
+  }
+  // A scanned page (camera or photo, straightened) is the page itself:
+  // its own shape, no margin, whatever the Picture pages choices say.
+  function prefsFor(src, prefs) {
+    var p = readPrefs(prefs);
+    if (src && src.scan) { p.size = "fit"; p.margin = "none"; }
+    return p;
   }
   // Where the picture goes on that page: centred, as big as fits.
   function fitRect(w, h, pw, ph, margin) {
@@ -556,7 +563,7 @@
     extOf: extOf, kindOf: kindOf, sniff: sniff, exifOrientation: exifOrientation,
     cleanName: cleanName, baseName: baseName, outName: outName, withPdf: withPdf, uniqueName: uniqueName,
     diskDir: diskDir, zipName: zipName, sizeLabel: sizeLabel,
-    readPrefs: readPrefs, pageFor: pageFor, fitRect: fitRect,
+    readPrefs: readPrefs, pageFor: pageFor, fitRect: fitRect, prefsFor: prefsFor,
     normRot: normRot, clonePages: clonePages, moveStep: moveStep, moveTo: moveTo, rotate: rotate,
     remove: remove, duplicate: duplicate, pagesOf: pagesOf, usedSources: usedSources,
     history: history, record: record, undo: undo, redo: redo,
