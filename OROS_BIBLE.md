@@ -7439,3 +7439,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - orOS Drive on the phone: Android's Files app and file pickers no longer load the Drive core for people who never signed in, and a file that could not be saved to orOS now shows a "Not saved to orOS" notification instead of only a log line.
 - Files: `android/app/src/drive/**` (DriveCore, DriveProvider, strings EN/EL), Bible DRIVE-A, tests.
   - Tests: full suite green; Android build green on GitHub. Not tested: a real phone (needs a new APK).
+
+### 2026-10-17 — Command bar K1: commands in the menu search + Ctrl+K bar (#475) — 2.79.00
+- Command bar: type «ραντεβού αύριο 10 οδοντίατρος», «γάλα στη λίστα» or «ξόδεψα 12€ καφές» (or the English equivalents) in the menu search, or press Ctrl+K over any app; the app opens with the form filled in, nothing is saved until you save there.
+- Files: `commands/core.js`, `commands/bar.js` (new, precached), `shell.js`, `style.css`, translations, help menu + shortcuts EN/EL, Bible.
+  - Tests: full suite green (new `tests/commands.test.js`); real Chromium 1280 EN / 360 EL. Not tested: a real phone, hardware keyboards other than the desktop test.
