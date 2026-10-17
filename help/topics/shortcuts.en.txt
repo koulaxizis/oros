@@ -18,6 +18,7 @@ orOS has a set of keyboard shortcuts that work everywhere: on the desktop and in
 - [[Ctrl+Alt+Shift+Y]]: `Open Today, the summary of your day`
 - [[Ctrl+Alt+Shift+N]]: `New sticky note`
 - [[Ctrl+Alt+Shift+K]]: `Command bar (also Ctrl+K)`
+- [[Ctrl+Alt+Shift+W]]: `Switch between open apps (multitasking)`
 
 ## What each one does
 ### Sync and backup
@@ -34,6 +35,7 @@ orOS has a set of keyboard shortcuts that work everywhere: on the desktop and in
 - **Start / stop the Timesheet timer** opens [Timesheet](app:timesheet) and starts the timer, or stops the one that is running. While a timer runs, the top bar shows how long it has been going; click it to open Timesheet.
 - **New sticky note** puts a new [sticky note](app:stickies) on the desktop, ready for you to type. On a phone, or from inside an app, it opens the note in a window.
 - **Command bar** opens a small bar over the screen where you type a command such as `dentist tomorrow 10` or `buy milk`. [[Ctrl+K]] does the same, except in Notes and Wiki, where [[Ctrl+K]] is their own search. See [The menu](help:t/menu#commands).
+- **Switch between open apps** lists the apps that are open with [multitasking](help:a/settings) on: the one in front and the ones waiting in the background. The app you left last is already selected, so the shortcut and then [[Enter]] takes you straight back to it. With multitasking off, it tells you where to turn it on.
 - **Help for the open app** opens Help at the page of the app you are using. On the desktop, it opens Help's start page.
 
 ## Mac and keyboard layouts
