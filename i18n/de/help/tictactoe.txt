@@ -1,0 +1,26 @@
+# Tic-Tac-Toe
+Das klassische Spiel mit Kreisen und Kreuzen auf einem 3×3-Brett: Bring drei deiner Zeichen in eine Reihe, um zu gewinnen. Spiel gegen den Computer oder mit jemandem auf einem Gerät.
+
+## So wird gespielt
+Wer zuerst zieht, spielt X, der andere O. Tippe oder klicke auf ein leeres Feld, um dein Zeichen zu setzen. Drei in einer Reihe, waagerecht, senkrecht oder diagonal, gewinnen, und eine Linie wird durch sie gezogen; ist das Brett voll ohne drei in einer Reihe, ist es unentschieden.
+
+Wähle in der Werkzeugleiste `Gegen Computer` oder `2 Spieler`. Gegen den Computer wählst du unter `Erster Zug`, wer anfängt: `Du beginnst`, `Computer beginnt` oder `Abwechselnd`. Bei 2 Spielern beginnt abwechselnd jeder, und eine laufende Serie wird mitgezählt.
+
+## Steuerung
+- Tippe oder klicke auf ein Feld, um dort zu spielen. Am Computer zeigt die Maus dein Zeichen vorher an.
+- `Zug zurück (Z)` nimmt den letzten Zug zurück; gegen den Computer geht es zurück bis zu deinem Zug. Nach dem Ende eines Spiels geht das nicht mehr.
+- `Neues Spiel (N)` startet neu. Lief gerade ein Spiel, erscheint für ein paar Sekunden ein Knopf `Rückgängig`, der es zurückholt.
+- Der Lautsprecher-Knopf schaltet den Ton an oder aus (am Anfang aus).
+- Tasten: [[1]] bis [[9]] spielen ein Feld wie auf dem Ziffernblock ([[7]] ist oben links, [[3]] unten rechts), die Pfeiltasten wechseln das Feld, und [[Enter]] oder [[Space]] spielt das gewählte, [[N]] ist ein neues Spiel, und [[Z]] oder [[Ctrl+Z]] nimmt zurück.
+
+## Stufen und Wertung
+Der Computer hat drei Stufen. `Leicht` nimmt einen Sieg, wenn er ihn sieht, und spielt sonst zufällig. `Mittel` blockt auch deine Drohungen, aber eine doppelte Drohung schlägt ihn. `Schwer` spielt perfekt und verliert nie: Mehr als ein Unentschieden ist nicht drin.
+
+`Bilanz` zeigt deine Siege, Niederlagen und Unentschieden gegen den Computer für jede Stufe (`Gewonnen · verloren · unentschieden`) und die 2-Spieler-Serie. `Bilanz zurücksetzen` löscht sie, nachdem du bestätigt hast.
+
+## Synchronisierung
+Deine Bilanz gegen den Computer wird über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert, und ein Zurücksetzen löscht sie überall. Das laufende Spiel, die 2-Spieler-Serie, deine Einstellungen und der Ton bleiben auf diesem Gerät. Ein Spiel, das du mittendrin verlässt, ist noch da, wenn du zurückkommst.
+
+## Tipps
+- Um `Mittel` zu schlagen, baue zwei Reihen auf einmal auf (eine Gabel): Er kann nur eine blocken.
+- Gegen `Schwer` versuch, jedes Spiel unentschieden zu machen. Das ist ein perfektes Ergebnis.
