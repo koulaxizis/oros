@@ -1,0 +1,36 @@
+# Fehlerbehebung
+Funktioniert etwas nicht wie erwartet? Fang hier an. Die meisten Probleme löst ein Neuladen oder ein kurzer Blick in die Einstellungen der Synchronisierung.
+
+## Ein Update erscheint nicht
+orOS aktualisiert sich selbst. Es sucht nach einer neuen Version, wenn es sich öffnet, jede Stunde und wenn du zu seinem Tab zurückkehrst. Die neue Version lädt im Hintergrund, und orOS lädt in einem sicheren Moment neu: wenn du auf dem Desktop bist, keine App offen ist, das Menü geschlossen ist und nichts mehr zu synchronisieren ist. Danach siehst du `orOS wurde aktualisiert auf` und die Versionsnummer.
+
+Um sofort zu prüfen, drücke [[Ctrl+Alt+Shift+U]] (`Nach Updates suchen`). Du siehst `Suche nach Updates…`. Geh dann zurück zum Desktop und schließ das Menü. `Nach Updates suchen` findest du auch in den `Einstellungen` unter `System`. Du kannst orOS auch ganz schließen und wieder öffnen.
+
+## Nach einem Update sieht etwas kaputt aus
+Schließ alle orOS-Tabs oder -Fenster und öffne orOS wieder, oder lade die Seite neu. Ein Neuladen ändert nichts an deinen Daten.
+
+Bist du offline und eine App zeigt `Offline – diese App wurde noch nicht für die Offline-Nutzung gespeichert.`, verbinde dich einmal mit dem Internet und öffne die App noch einmal.
+
+## Fehlermeldungen der Synchronisierung
+- `Nicht mit Dropbox verbunden` oder `Cloud-Synchronisierung ist nicht verbunden`: Verbinde dich in den `Einstellungen` unter `Synchronisierung` oder drücke [[Ctrl+Alt+Shift+R]].
+- `Gib zuerst deine Passphrase ein`: Tippe deine Passphrase in den `Einstellungen` unter `Synchronisierung` ein und tippe auf `Entsperren`, oder tippe auf den Sync-Punkt.
+- `Passphrase auf einem anderen Gerät geändert?`: orOS konnte die Cloud-Daten mit seiner Passphrase nicht entschlüsseln. Tippe die aktuelle Passphrase ein. Bist du sicher, dass sie stimmt, aktualisiere auch dieses Gerät, denn ein älteres orOS kann keine Daten lesen, die ein neueres gespeichert hat.
+- `Dropbox-Autorisierung fehlgeschlagen – neu verbinden`: Drücke [[Ctrl+Alt+Shift+R]] oder nutze `Trennen` und dann `Dropbox verbinden`.
+- `Synchronisierung fehlgeschlagen – prüfe deine Verbindung`: Prüfe dein Internet. orOS versucht es von selbst noch einmal.
+- `Synchronisierung läuft bereits – versuch es gleich noch mal`: Alles in Ordnung. Warte einen Moment.
+- `Die Cloud-Daten nutzen eine nicht unterstützte Version`: Die Cloud-Daten wurden von einer anderen orOS-Version gespeichert. Aktualisiere all deine Geräte.
+- `Eine neue Passphrase braucht mindestens 10 Zeichen`: Wähle eine längere Passphrase.
+- `Der Browser-Speicher ist voll – die Synchronisierung ist pausiert, damit nichts überschrieben wird…`: Siehe [Deine Daten und Dateien](help:t/data).
+
+Bleibt der Sync-Punkt orange, sind deine Änderungen noch nicht in der Cloud. Tippe oder klicke auf den Punkt, um es jetzt zu versuchen. Mehr unter [Synchronisierung zwischen Geräten](help:t/sync).
+
+## Der Speicher ist voll
+Dein Browser gibt orOS nur begrenzt Platz. [Exportiere eine Sicherung](help:t/backup) und lösche dann Daten, die du nicht mehr brauchst. Siehe [Deine Daten und Dateien](help:t/data).
+
+## Benachrichtigungen erscheinen nicht
+Prüfe in den `Einstellungen` unter `Benachrichtigungen`, ob der Schalter `Benachrichtigungen` an ist, ob die App unter `Welche Apps benachrichtigen dürfen` an ist und ob `Ruhezeiten` nicht an ist. Denk daran, dass orOS offen sein muss, damit Wecker und Erinnerungen funktionieren. Siehe [Benachrichtigungen, Wecker und Erinnerungen](help:t/notifications).
+
+## Ein Problem melden
+Stimmt immer noch etwas nicht, eröffne ein Issue auf GitHub: [github.com/koulaxizis/oros/issues](https://github.com/koulaxizis/oros/issues). Schreib dazu, welchen Browser und welches Gerät du nutzt, was du getan hast und was passiert ist.
+
+>! Veröffentliche nie deine Passphrase oder eine Sicherungsdatei. Sicherungsdateien sind nicht verschlüsselt und enthalten alle deine Daten.

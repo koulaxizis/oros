@@ -1,6 +1,21 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.98.00
+- Flashcards: pictures and sounds on cards (pick, paste, drop or record), Read aloud with your device's own voices, a Browse list with actions on many cards, hide until tomorrow and suspend, bold, italic and lists.
+
+## Version 2.97.00
+- German (Deutsch) is in the language list: the top bar, menu, Settings, Help and Files are in German, other apps follow.
+
+## Version 2.96.00
+- Scanner & PDF: scan paper pages with the camera. The app finds the page, takes the picture by itself when you hold still, straightens it and takes out shadows, with Document, Grey, Black & white or Photo looks. Fix the corners with a magnifier, scan many pages in a row, or use photos you already have. Nothing leaves your device.
+
+## Version 2.95.01
+- The relay moved to its new home: Mail, Newsletter, sharing, Web Push and the other online features use the new address; a saved old address updates itself.
+
+## Version 2.95.00
+- New app Flashcards, in the new Learning category: decks, three card types (basic, basic and reversed, fill in the gap) and study with the FSRS method, so each card comes back just before you would forget it. Every answer is kept when two devices study offline.
+
 ## Version 2.94.00
 - Help translate orOS: Settings › Language & search › Help translate shows each line in English and Greek with a box for your language. Your lines show in orOS at once, stay on your device, and you can send them as a file for review.
 

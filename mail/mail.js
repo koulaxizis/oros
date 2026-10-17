@@ -61,7 +61,7 @@
   var DATA_VER      = 1;
   // The orOS relay (Christos's Worker, relay/). Settings can override
   // it per user (synced); an empty override falls back to this.
-  var DEFAULT_RELAY = "https://oros-mail-relay.koulaxizis-25b.workers.dev";
+  var DEFAULT_RELAY = "https://oros-mail-relay.koulaxizis.workers.dev";
   var PAGE          = 50;
   var KEEP_HEADS    = 500;              // per folder
   var KEEP_BODIES   = 200;              // messages

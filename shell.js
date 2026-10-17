@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "2.94.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "2.98.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -170,6 +170,7 @@
     budget: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2v-2"/><path d="M16 8h5v8h-5a4 4 0 0 1 0-8z"/><circle cx="16.5" cy="12" r="0.6" fill="currentColor"/></svg>',
     qr: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14v1M14 20h1M18 18h3v3M17 21h0"/></svg>',
     converter: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M8 13h8l-2.5-2.5"/><path d="M16 17H8l2.5 2.5"/></svg>',
+    flashcards: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="3" width="14" height="14" rx="2"/><path d="M17 17v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h2"/><path d="M12 8h4M12 12h4"/></svg>',
     scanpdf: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>',
     files: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 3v18"/></svg>',
     pubdomain: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M14.8 9.2a4 4 0 1 0 0 5.6"/><line x1="5" y1="5" x2="19" y2="19"/></svg>',
@@ -4806,7 +4807,22 @@
     } catch (e) {}
   }
 
+  // The relay moved to another Cloudflare account (2.9x). A relay
+  // address saved by hand that is the old default goes back to "" (=
+  // orOS's own relay); the newer stamp carries it to the other devices.
+  var OLD_RELAY_RE = /^https:\/\/oros-mail-relay\.koulaxizis-25b\.workers\.dev\/*$/i;
+  function migrateMailRelay() {
+    var d = mailProxySliceGet();
+    var r = d && d.relay;
+    if (!r || typeof r.url !== "string" || !OLD_RELAY_RE.test(r.url.trim())) return false;
+    d.relay = { url: "", m: Math.max(Date.now(), (Number(r.m) || 0) + 1) };
+    mailProxySliceSet(d);
+    if (window.orosSync && typeof window.orosSync.markDirty === "function") window.orosSync.markDirty();
+    return true;
+  }
+
   function registerMailProxySlice() {
+    migrateMailRelay();
     if (window.orosSync) {
       window.orosSync.registerSlice(
         "mail", mailProxySliceGet, mailProxySliceSet,
@@ -5779,10 +5795,15 @@
 
   // The language button: the next of the languages on offer (English
   // and Greek, plus every shown pack language and the active one).
+  // The bar button toggles English and the last other language picked
+  // on this device (Greek until another is picked); Settings lists all.
+  var LANG_ALT_LS = "oros-lang-alt";
   function langNext() {
-    var list = window.orosI18n ? window.orosI18n.choices().map(function (l) { return l.code; }) : ["en", "el"];
-    var i = list.indexOf(state.lang);
-    return list[(i + 1) % list.length] || "en";
+    if (state.lang !== "en") return "en";
+    var alt = null;
+    try { alt = localStorage.getItem(LANG_ALT_LS); } catch (e) {}
+    var shown = window.orosI18n ? window.orosI18n.choices().map(function (l) { return l.code; }) : ["en", "el"];
+    return alt && alt !== "en" && shown.indexOf(alt) !== -1 ? alt : "el";
   }
 
   // A language picked on this device (button, shortcut, Settings).
@@ -5791,8 +5812,10 @@
   // kept for offline use (langKeepOffline).
   function setLangUser(code) {
     if (!langKnown(code) || code === state.lang) return;
+    var alt = code !== "en" ? code : state.lang;
     state.lang = code;
     localStorage.setItem("oros-lang", state.lang);
+    if (alt !== "en") try { localStorage.setItem(LANG_ALT_LS, alt); } catch (e) {}
     noteLocalChange();            // user action → sync engine
     langApplyPack();
   }
@@ -6056,6 +6079,9 @@
     {
       en: "Word lists and data", el: "Λίστες λέξεων και δεδομένα",
       items: [
+        { name: "FSRS-6 (ts-fsrs 5.4.2)", url: "https://github.com/open-spaced-repetition/ts-fsrs",
+          by: "Open Spaced Repetition", lic: "MIT",
+          en: "The method that schedules the cards (Flashcards, own rewrite checked against ts-fsrs)", el: "Η μέθοδος που προγραμματίζει τις κάρτες (Κάρτες μελέτης, δική μας υλοποίηση ελεγμένη με το ts-fsrs)" },
         { name: "EFF Diceware word lists", url: "https://www.eff.org/dice",
           by: "Electronic Frontier Foundation", lic: "CC BY 3.0 US",
           en: "Passphrases (Passwords)", el: "Φράσεις-κλειδιά (Κωδικοί)" },

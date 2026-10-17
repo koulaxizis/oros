@@ -1,0 +1,32 @@
+# Häufige Fragen
+Kurze Antworten auf häufige Fragen. Jede verweist auf eine Seite mit mehr Details.
+
+## Über orOS
+
+### Ist orOS kostenlos und Open Source?
+Ja. orOS ist kostenlos, Open Source und selbst hostbar. Es gibt keine Cookies und kein Tracking. Der Quellcode liegt auf GitHub: [github.com/koulaxizis/oros](https://github.com/koulaxizis/oros).
+
+### Funktioniert es offline?
+Ja. orOS speichert sich auf deinem Gerät, also öffnet es sich und funktioniert ohne Internet. Apps, die Live-Infos holen, etwa Wetter, Radio, Fernsehen und Karten, brauchen für diesen Teil eine Verbindung. Siehe [Fehlerbehebung](help:t/troubleshooting), wenn eine App meldet, dass sie noch nicht für die Offline-Nutzung gespeichert wurde.
+
+### Wie installiere ich es?
+Wenn dein Browser es anbietet, erscheint `orOS installieren` im Menü und `orOS als App installieren` in den `Einstellungen` unter `System`. Tippe oder klicke darauf, um orOS wie eine normale App zu deinem Startbildschirm oder Desktop hinzuzufügen. Siehe [orOS installieren](help:t/install).
+
+## Deine Daten
+
+### Wo sind meine Daten?
+In deinem Browser, auf dem Gerät, das du gerade nutzt. orOS speichert nichts auf einem eigenen Server, und es gibt kein Konto. Siehe [Deine Daten und Dateien](help:t/data).
+
+### Wie bekomme ich meine Daten heraus?
+Öffne die `Einstellungen`, geh zu `Sicherungen` und tippe auf `Sicherungsdatei exportieren`. Du bekommst eine Datei mit allem, auch deinen Dateien. Denk daran, dass sie nicht verschlüsselt ist. Siehe [Sicherung und Wiederherstellung](help:t/backup).
+
+## Synchronisierung
+
+### Kann ich orOS auf zwei Geräten nutzen?
+Ja. Verbinde auf jedem Gerät dasselbe Dropbox-Konto und nutze dieselbe Passphrase, dann bleiben deine Daten im Gleichklang. Siehe [Synchronisierung zwischen Geräten](help:t/sync).
+
+### Ist die Synchronisierung verschlüsselt?
+Ja. Deine Daten werden auf deinem Gerät mit deiner Passphrase verschlüsselt, bevor sie zu Dropbox gehen. Dropbox speichert nur verschlüsselte Daten und kann sie nicht lesen. Deine Passphrase verlässt nie dein Gerät.
+
+### Was, wenn ich meine Passphrase verliere?
+Sie lässt sich nicht wiederherstellen, und ohne sie kann niemand deine Cloud-Daten entschlüsseln. Die Daten auf deinen Geräten sind noch da, also exportiere sofort eine Sicherung von einem davon. Dann siehe [Synchronisierung zwischen Geräten](help:t/sync).

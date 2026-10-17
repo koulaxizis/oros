@@ -1,0 +1,74 @@
+# An jemanden senden
+Sende eine Sache aus orOS an eine andere Person: eine Aufgabenliste, eine Notiz, einen Kontakt, einen Termin, ein Rezept, ein paar Lesezeichen, einen Wiki-Artikel, einen ganzen Kalender oder ein Fotoalbum. orOS packt es in einen Link. Du sendest den Link, wie du willst, und die andere Person öffnet ihn in ihrem Browser, auch wenn sie orOS nicht nutzt.
+
+## Etwas senden
+Such in diesen Apps nach der Senden-Schaltfläche:
+- [Aufgaben](app:todo): Die Papierflieger-Schaltfläche über der Liste sendet die geöffnete Liste.
+- [Notizen](app:notes): die Papierflieger-Schaltfläche neben dem Seitentitel oder `An jemanden senden…` im Seitenmenü.
+- [Kontakte](app:contacts): `Teilen` auf der Karte eines Kontakts.
+- [Kalender](app:calendar): `Senden…` in einem gespeicherten Termin; `Mehr` › `Kalender an jemanden senden…` für alle deine Termine, ein Label oder nur bestimmte Daten (diesen Monat, die nächsten 3 Monate, dieses Jahr oder Daten deiner Wahl); und `Mehr` › `Freie Zeiten teilen…` für einen Link, über den jemand eine deiner freien Zeiten auswählt und dir per E-Mail antwortet.
+- [Essensplaner](app:meals): `Teilen` bei einem geöffneten Rezept.
+- [Lesezeichen](app:bookmarks): `An jemanden senden…` im Menü eines Lesezeichens, oder wähle mehrere aus und tippe auf `Senden…`.
+- [Wiki](app:wiki): `An jemanden senden…` im ⋯-Menü eines Artikels. Der Text reist mit; Bilder bleiben bei dir.
+- [Dateien](app:files): `Fotos an jemanden senden…` im Menü eines Bildes oder Ordners sendet ein Fotoalbum mit bis zu 200 Fotos.
+- [Fotolabor](app:photolab): `Datei` › `An jemanden senden…` sendet das Bild, das du gerade bearbeitest.
+
+Das Fenster `An jemanden senden` zeigt, was mitgeschickt wird. Dann wählst du, wie du es sendest:
+- `Teilen…` öffnet das Teilen-Menü deines Handys oder Computers (Viber, WhatsApp, Signal, E-Mail und so weiter).
+- `Link kopieren` kopiert ihn, damit du ihn überall einfügen kannst.
+- `QR-Code` zeigt einen Code, den die andere Person von deinem Bildschirm scannen kann.
+- `E-Mail` schreibt in [Mail](app:mail) eine Nachricht mit dem Link (wenn du ein Mail-Konto eingerichtet hast).
+- `Als Datei speichern` speichert eine kleine Textdatei mit dem Link, die du überall anhängen kannst.
+- `Als Text senden` (Kontakte und Rezepte) sendet einfachen Text, wie bisher.
+
+## Mit einem Passwort schützen
+Setz den Haken bei `Mit Passwort schützen` und tippe ein Passwort mit mindestens 6 Zeichen ein. Dann zeigt der Link allein nichts: Die andere Person braucht auch das Passwort. Sag es ihr auf anderem Weg, persönlich oder am Telefon, nicht in derselben Nachricht wie den Link.
+
+## Mit Ablaufdatum, und zurücknehmen
+Setz den Haken bei `Mit Ablaufdatum` und wähle `1 Tag`, `7 Tage` oder `30 Tage`. Dann verschlüsselt orOS die Sache auf deinem Gerät und bewahrt sie bis zu diesem Tag auf dem orOS-Server auf. Der Link enthält den Schlüssel, der Server kann also nicht lesen, was er aufbewahrt. Wenn der Tag kommt, wird die Sache gelöscht, und der Link öffnet sich nicht mehr.
+
+Du kannst einen Link auch früher zurücknehmen. Öffne `Meine geteilten Links`: Das ist eine Schaltfläche im Fenster `An jemanden senden` und auch in [Einstellungen](app:settings) › `System`. Bei jedem Link steht, wann er abläuft. `Link kopieren` kopiert ihn noch einmal, und `Zurücknehmen` löscht ihn sofort vom Server. Die Liste folgt dir über die Synchronisierung auf deine anderen Geräte, du kannst einen Link also von jedem davon zurücknehmen.
+
+Sachen, die für einen einfachen Link zu lang sind (eine lange Notiz oder ein langer Wiki-Artikel, ein Kalender mit vielen Terminen), und jedes Fotoalbum gehen immer diesen Weg: Das Fenster schaltet `Mit Ablaufdatum` von selbst ein und sagt dir, warum. Ein Passwort funktioniert auch mit Ablaufdatum.
+
+## Etwas öffnen, das du bekommen hast
+Tippe auf den Link. Eine Seite mit der Sache und diesen Schaltflächen öffnet sich:
+- `Zu meinem orOS hinzufügen` öffnet die passende App mit der Sache. Aufgaben, Kontakte, Kalender, Essensplaner und Lesezeichen zeigen sie dir, bevor etwas gespeichert wird; Notizen erstellt eine neue Seite; Wiki öffnet den Artikel in seinem Editor, und er wird gespeichert, wenn du auf `Speichern` drückst.
+- `Text kopieren` kopiert sie als einfachen Text.
+- `Herunterladen` speichert sie als Datei, die auch andere Programme öffnen: einen Kontakt als .vcf, einen Termin oder Kalender als .ics, Lesezeichen als .html, einen Wiki-Artikel als .md, alles andere als .txt.
+
+Ein Kalender öffnet sich bei einem Monat: Tippe auf einen Tag, um seine Termine zu sehen, oder wechsle zu `Liste` für den ganzen Monat; ‹ und › blättern zwischen den Monaten. Termine mit Uhrzeit erscheinen in deiner eigenen Zeitzone. `Zu meinem orOS hinzufügen` öffnet [Kalender](app:calendar), der dir sagt, wie viele Termine neu oder geändert sind, bevor er sie speichert; fügst du denselben Kalender später noch einmal hinzu, werden diese Termine aktualisiert statt verdoppelt.
+
+Ein Fotoalbum öffnet sich als Raster. Tippe auf ein Foto, um es groß zu sehen; ‹ und › blättern zwischen den Fotos, und `Foto speichern` speichert das Foto, das du gerade ansiehst.
+
+Hast du statt eines Links eine Datei bekommen, öffne den Link darin oder nutze `Datei öffnen` auf dieser Seite.
+
+## An eine andere App von dir senden
+`An eine App senden…` gibt etwas an eine andere App deines eigenen orOS weiter, wie das Teilen-Menü eines Handys. Nichts verlässt dein Gerät.
+- [Texteditor](app:writer): Die Pfeil-Schaltfläche in der Werkzeugleiste sendet den markierten Text oder das ganze Dokument.
+- [Notizen](app:notes): `An eine App senden…` im Seitenmenü sendet die Seite oder den Text, den du darin markiert hast.
+- [Wiki](app:wiki): `An eine App senden…` im ⋯-Menü eines Artikels.
+- [Mail](app:mail): `Andere App…` unter den Apps einer Nachricht.
+- [Lesezeichen](app:bookmarks): `An eine App senden…` im Menü eines Lesezeichens.
+- [Reader](app:feeds): `Andere App…`, wenn du einen Artikel sendest.
+- [Tabelle](app:spreadsheet): `An eine App senden…` im Tabellenmenü (⋯ oder Rechtsklick) sendet die markierten Zellen oder die ganze Tabelle, wenn eine Zelle markiert ist.
+- [Folien](app:slides): `An eine App senden…` unter Mehr sendet die Gliederung der Präsentation.
+- [Mindmap](app:mindmap): `An eine App senden…` im Menü einer Idee sendet diesen Zweig als eingerückte Liste.
+- [Kanban](app:kanban): `Senden…` in einer Karte und `Karten senden…` in den Einstellungen einer Spalte.
+
+Das Fenster zeigt nur die Apps, die es annehmen können: Text geht an Notizen, Aufgaben (eine Aufgabe pro Zeile), Texteditor, Mail, Wiki, den Assistenten, Textwerkzeuge, Groß/Klein, Folien (jede Überschrift wird eine Folie), Mindmap, Kanban (eine Karte pro Zeile), Schreibimpulse (als neuer Impuls) und, bei einer kurzen Zeile, Etiketten; ein Link geht auch an Lesezeichen; eine Tabelle geht an den Texteditor als Tabelle, an Tabelle als neues Blatt und an Mail. Die App öffnet sich mit dem ausgefüllten Inhalt, und nichts wird gespeichert, bis du es dort speicherst. `An jemanden senden…` im selben Fenster erstellt einen Link für eine andere Person, wie oben beschrieben.
+
+## Datenschutz
+Ein einfacher Link trägt die Sache im Teil nach dem #-Zeichen, den Browser nie an einen Server senden. Kein orOS-Server sieht sie, und nichts wird irgendwo gespeichert außer im Link.
+
+Ein Link mit Ablaufdatum trägt nach dem #-Zeichen nur den Schlüssel. Der orOS-Server bewahrt die verschlüsselte Sache auf, bis sie abläuft, und sieht nie den Schlüssel, den Titel oder den Inhalt.
+
+>! Wer den Link hat, kann ihn öffnen, außer er ist mit einem Passwort geschützt. Ein einfacher Link kann nicht zurückgenommen werden und läuft nicht ab; nutze `Mit Ablaufdatum`, wenn du ihn vielleicht zurücknehmen willst.
+
+## Grenzen
+- Sehr lange Sachen gehen als Link mit Ablaufdatum, der beim Senden und beim Öffnen durch die andere Person eine Verbindung zum orOS-Server braucht.
+- Ein Link mit Ablaufdatum hält höchstens 30 Tage.
+- Ein QR-Code fasst nur kurze Links.
+- Fotos von Kontakten, Bilder in Wiki-Artikeln, Labels, Favoriten und Erinnerungen werden nicht gesendet. Ein Kalender nimmt die Namen und Farben seiner Labels mit, aber keine Erinnerungen, und die Notiz eines Termins bis 500 Zeichen.
+- Ein Album fasst bis zu 200 Fotos und 25 MB. Jedes Foto wird verkleinert (höchstens 2048 px an der langen Seite) und neu als JPEG gespeichert, seine versteckten Details (Ort, Kamera, Zeit) bleiben also bei dir. Bilder, die ein Browser nicht lesen kann (zum Beispiel HEIC), werden weggelassen, und das Fenster sagt dir, wie viele.
+- Ein Kalender fasst bis zu 5.000 Termine; sind es mehr, fallen die neuesten weg. Ein gesendeter Kalender ist eine Kopie: Spätere Änderungen erreichen die andere Person nicht, sende ihn also noch einmal.

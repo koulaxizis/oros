@@ -80,7 +80,9 @@
 
   // ---------- 1. Constants, i18n, helpers ----------
 
-  var LANG = localStorage.getItem("oros-lang") === "el" ? "el" : "en";
+  // orosI18n (../i18n.js): the full language code, a pack language included.
+  var LANG = window.orosI18n ? window.orosI18n.lang() : (localStorage.getItem("oros-lang") === "el" ? "el" : "en");
+  var LOC = window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB");
 
   var STRINGS = {
     en: {
@@ -540,6 +542,8 @@
       "gi.popup":      "Το παράθυρο μπλοκαρίστηκε. Επίτρεψε τα αναδυόμενα για το orOS και πάτα ξανά το κουμπί."
     }
   };
+
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "files", LANG);
 
   function t(key) {
     var p = STRINGS[LANG] || STRINGS.en;
@@ -1286,7 +1290,7 @@
   function fmtDateCol(e) {
     if (e.dir || !e.mtime) return "-";
     try {
-      return new Date(e.mtime).toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB",
+      return new Date(e.mtime).toLocaleDateString(LOC,
         { day: "2-digit", month: "2-digit", year: "2-digit" });
     } catch (x) { return "-"; }
   }
@@ -1303,7 +1307,7 @@
       if (a.dir !== b.dir) return a.dir ? -1 : 1;
       var cmp = 0;
       if (field === "name") {
-        cmp = a.name.toLowerCase().localeCompare(b.name.toLowerCase(), LANG === "el" ? "el" : "en");
+        cmp = a.name.toLowerCase().localeCompare(b.name.toLowerCase(), LOC);
       } else if (field === "size") {
         var sa = a.size || 0, sb = b.size || 0;
         cmp = sa === sb ? 0 : sa < sb ? -1 : 1;
@@ -3580,7 +3584,7 @@
       '<span class="pv-meta">' + escapeHtml(parentOf(path)) +
       (size ? " · " + fmtKB(size) : "") +
       (mtime ? " · " + new Date(mtime).toLocaleString(
-        LANG === "el" ? "el-GR" : "en-GB",
+        LOC,
         { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) : "") +
       "</span>";
     head.appendChild(hinfo);
@@ -4013,7 +4017,7 @@
     sec.className = "quick";
     sec.appendChild(makeSpecialNode("recent", t("tree.recent"), CLOCK_SVG));
     var live = CORE.favLive(favs).slice().sort(function (a, b) {
-      return baseName(a.p).toLowerCase().localeCompare(baseName(b.p).toLowerCase(), LANG === "el" ? "el" : "en");
+      return baseName(a.p).toLowerCase().localeCompare(baseName(b.p).toLowerCase(), LOC);
     });
     if (live.length) {
       var h = document.createElement("div");

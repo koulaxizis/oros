@@ -21,9 +21,12 @@
 
   var VIEW_LS = "oros-files-drive-view";
 
+  // orosI18n (../i18n.js): the full language code, a pack language included.
   var LANG = (function () {
+    if (window.orosI18n) return window.orosI18n.lang();
     try { return localStorage.getItem("oros-lang") === "el" ? "el" : "en"; } catch (e) { return "en"; }
   })();
+  var LOC = window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB");
 
   var STRINGS = {
     en: {
@@ -85,6 +88,8 @@
       "phone":      "Αντικατόπτριση φακέλων αυτού του κινητού"
     }
   };
+
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "files", LANG);
 
   function t(k, vars) {
     var s = (STRINGS[LANG] && STRINGS[LANG][k]) || STRINGS.en[k] || k;
@@ -276,7 +281,7 @@
       })).then(function () {
         return out.sort(function (a, b) {
           if (a.dir !== b.dir) return a.dir ? -1 : 1;
-          return a.name.localeCompare(b.name, LANG === "el" ? "el" : "en");
+          return a.name.localeCompare(b.name, LOC);
         });
       });
     });
@@ -286,7 +291,7 @@
   function fmtDate(r) {
     if (r.dir || !r.mtime) return "-";
     try {
-      return new Date(r.mtime).toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB", { day: "2-digit", month: "2-digit", year: "2-digit" });
+      return new Date(r.mtime).toLocaleDateString(LOC, { day: "2-digit", month: "2-digit", year: "2-digit" });
     } catch (e) { return "-"; }
   }
 
