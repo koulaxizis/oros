@@ -7493,3 +7493,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Sync tells you when it needs you: a full storage or an expired sign-in puts one line a day in the bell, and Disconnect also cancels this device's access at Dropbox or Nextcloud.
 - Files: `sync.js`, `shell.js`, `notifications.js`, `translations.js`, Bible.
   - Tests: full suite green (new `tests/sync-silent-fail.test.js`); real Chromium shell 1280 EN / 360 EL. Not tested: a real Dropbox / Nextcloud token revoke from the cloud container.
+
+### 2026-10-17 — Command bar K3: the Android widgets open the command bar (#484) — 2.85.01
+- Android widgets: a magnifier button opens the command bar (new APK).
+- Files: `android/` widget layouts, drawable, strings EN/EL, `phone.js` (`cmd` in the QUICK allow-list), `shell.js`, Bible.
+  - Tests: full suite green; Android build green on GitHub; Chromium 360 EL `/?phone-quick=cmd`. Not tested: a real phone (needs a new APK); at the smallest Quick add widget size the text buttons may be shortened with "…".
