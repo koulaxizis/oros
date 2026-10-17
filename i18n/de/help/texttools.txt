@@ -1,0 +1,56 @@
+# Textwerkzeuge
+Textwerkzeuge räumt reinen Text und einfache Tabellen auf und ordnet sie neu: Zeilen sortieren, Duplikate entfernen, Leerzeichen trimmen, Zeilen nummerieren, das Trennzeichen einer CSV ändern, suchen und ersetzen, E-Mails oder Links herausziehen, Text kodieren und zwei Texte vergleichen. Füge deinen Text ein, wähle ein Werkzeug, und das Ergebnis erscheint sofort.
+
+## Erste Schritte
+1. Füge deinen Text in das Feld `Text` ein oder tippe ihn, oder tippe bzw. klicke auf die Ordner-Schaltfläche, um eine Datei zu öffnen (.txt, .csv, .tsv, .md und ähnliche, bis 5 MB). Die Zwischenablage-Schaltfläche fügt ein, was du kopiert hast.
+2. Wähle oben eine Gruppe (`Zeilen`, `Aufräumen`, `Nummern`, `Spalten`, `Suchen`, `Kodieren`, `Vergleichen`) und dann ein Werkzeug.
+3. Stelle seine Optionen ein. Das Feld `Ergebnis` folgt, während du tippst.
+4. `Kopieren` kopiert das Ergebnis, `Speichern` speichert es als Datei, und `Als Text verwenden` schiebt es nach oben in das Feld `Text`, damit du weiter daran arbeiten kannst.
+
+Wenn orOS installiert ist, kannst du eine .txt-, .csv- oder .tsv-Datei auch direkt aus dem Menü `Öffnen mit` deines Computers oder über `Teilen` auf Android mit Textwerkzeuge öffnen. Texteditor, Notizen, Mindmap und Tabelle öffnen diese Dateien auch, daher fragt orOS, welche App du willst; setze den Haken bei `Immer`, damit es nicht mehr fragt. [Einstellungen](app:settings) › `Dateien öffnen` ändert diese Wahl.
+
+Unter dem Text siehst du, wie viele Zeichen, Wörter und Zeilen er hat. Tippe oder klicke auf diese Zeile für mehr: Sätze, Absätze, Lesezeit und die häufigsten Wörter.
+
+## Werkzeuge
+- `Zeilen`: `Sortieren` (A → Z mit Griechisch und Englisch in der richtigen Reihenfolge, natürliche Reihenfolge, damit 2 vor 10 kommt, nach Zahl, nach Länge oder zufällig), `Umkehren`, `Duplikate entfernen`, `Nur Duplikate`, `Zeilen zählen`, `Leere Zeilen entfernen`, `Eine leere Zeile`, `Zeilen behalten / entfernen`, die einen Text enthalten, damit beginnen oder enden, `Zeilen verbinden` und `In Zeilen teilen`.
+- `Aufräumen`: `Leerzeichen trimmen`, `Leerzeichen kürzen`, `Tabs ↔ Leerzeichen`, `Zeilen zusammenführen` (eine Zeile pro Absatz), `Zeilen umbrechen`, `Versteckte Zeichen` (unsichtbare Zeichen, seltsame Leerzeichen, typografische Anführungszeichen) und `Zeilenenden` (LF oder CRLF für Windows).
+- `Nummern`: `Zeilen nummerieren` mit eigenem Start, Schritt und Stil, `Nummern / Punkte entfernen` und `Präfix / Suffix` mit fertigen Vorlagen wie Aufzählungspunkten oder «…».
+- `Spalten` für CSV-ähnliche Tabellen: `Trennzeichen ändern` (Komma, Semikolon, Tabulator, senkrechter Strich oder dein eigenes; Anführungszeichen werden beachtet), `Spalten wählen` (zum Beispiel 3,1 oder 2-4, in der Reihenfolge, in der du sie schreibst), `Zeilen ↔ Spalten`, `Markdown-Tabelle` und `JSON`.
+- `Suchen`: `Suchen und ersetzen`, mit Optionen, um Groß/Klein oder griechische Akzente zu ignorieren, ganze Wörter zu finden oder ein Muster zu nutzen (regulärer Ausdruck, mit $1 für Gruppen). `Extrahieren` listet die E-Mails, Links, Telefonnummern, Zahlen, #Hashtags oder @Namen im Text auf, eine pro Zeile, auf Wunsch jede nur einmal.
+- `Kodieren`: `URL` (Ελλάδα wird zu %CE%95… und zurück), `Base64` (der ganze Text oder jede Zeile), `HTML-Entitäten` (&amp; und &#233; und zurück) und `Slug`, das einen Titel in einen webtauglichen Namen wie kali-chronia verwandelt.
+- `Vergleichen`: `Texte vergleichen` stellt deinen Text Zeile für Zeile neben einen zweiten. Füge den zweiten Text in das Feld `Vergleichen mit` unter den Optionen ein oder öffne eine Datei dafür; die Pfeil-Schaltfläche tauscht die beiden Texte. Mit `-` markierte Zeilen stehen nur in deinem Text, mit `+` markierte nur im zweiten. Du kannst nur die Änderungen anzeigen, nur hinzugefügte oder entfernte Zeilen oder nur die Zeilen, die beide Texte gemeinsam haben.
+
+`Groß/Klein ignorieren` und `Akzente ignorieren` ändern nur, wie Zeilen verglichen werden; dein Text behält seine eigenen Buchstaben. Um Großbuchstaben oder Akzente zu ändern, nutze Groß/Klein.
+
+In Feldern für Trennzeichen, Präfix und Suffix bedeutet `\t` einen Tabulator und `\n` eine neue Zeile.
+
+## Schritte und Rezepte
+Jedes Werkzeug ist ein Schritt. Tippe auf `+ Schritt`, um einen weiteren hinzuzufügen: Der Text durchläuft die Schritte der Reihe nach, zum Beispiel `Leerzeichen trimmen`, dann `Duplikate entfernen`, dann `Sortieren`. Tippe oder klicke auf einen Schritt, um ihn zu ändern; der Pfeil schiebt ihn nach oben, × entfernt ihn (`Rückgängig` holt ihn zurück).
+
+`Als Rezept speichern` behält die Schritte unter einem Namen. Öffne oben `Rezepte`, um ein Rezept wieder zu verwenden, umzubenennen oder zu löschen. Wenn du die Schritte eines geöffneten Rezepts änderst, speichert `Aktualisieren` die Änderung.
+
+## An andere Apps senden
+`Senden` gibt das Ergebnis an eine andere orOS-App weiter:
+- [Notizen](app:notes): eine neue Seite mit dem Ergebnis.
+- [Tabelle](app:spreadsheet): ein neues Blatt, eine Zeile pro Zeile und eine Spalte pro Feld.
+- [Aufgaben](app:todo): eine Aufgabe pro Zeile. Aufgaben zeigt sie zuerst an und fügt sie erst hinzu, wenn du bestätigst.
+- Groß/Klein, wenn es installiert ist.
+
+## Synchronisierung und Sicherung
+Deine Rezepte werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. In `Rezepte` kannst du sie auch in eine Datei `Exportieren` und auf einem anderen Gerät `Importieren`; importierte Rezepte kommen zu deinen dazu.
+
+>! Dein Text wird nie auf dem Gerät gespeichert und nie synchronisiert. Er bleibt nur, solange orOS offen ist, also speichere oder sende das Ergebnis, bevor du den Browser schließt.
+
+## Tastenkürzel
+- [[Ctrl+Enter]]: die Schritte jetzt ausführen.
+
+## Tipps
+- Du räumst eine Liste aus einem Onlineshop oder einer E-Mail auf? Probiere `Versteckte Zeichen`, dann `Leerzeichen trimmen`, dann `Duplikate entfernen`.
+- Für eine Excel-Datei auf Griechisch (oder Deutsch) ändere das Trennzeichen auf `Semikolon ;`, bevor du sie dort öffnest.
+
+## Grenzen
+- Bis zu 2.000.000 Zeichen Text. Über 200.000 ist das Ergebnis nicht live: tippe auf `Anwenden` (oder [[Ctrl+Enter]]).
+- Ein Muster, das länger als zwei Sekunden läuft, wird gestoppt.
+- Der Text bei `Vergleichen mit` wird nicht in Rezepten gespeichert; wie dein Text bleibt er nur, solange orOS offen ist. Wenn zwei lange Texte fast überall verschieden sind, markiert der Vergleich eventuell ein paar Zeilen mehr als nötig als geändert.
+- Bis zu 100 Rezepte mit je bis zu 30 Schritten.
+- Notizen erhält bis zu 20.000 Zeichen, Tabelle bis zu 500 Zeilen und 64 Spalten, Aufgaben bis zu 200 Aufgaben.
