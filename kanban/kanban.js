@@ -109,6 +109,16 @@
       "card.info.value":  "Value",
       "card.delete":      "Delete",
       "card.duplicate":   "Duplicate",
+      "card.send":        "Send…",
+      "col.send":         "Send cards…",
+      "send.none":        "This column has no cards to send.",
+      "add.title":        "Add {n} cards",
+      "add.one":          "Add 1 card",
+      "add.board":        "Board",
+      "add.col":          "Column",
+      "add.more":         "and {n} more",
+      "add.btn":          "Add",
+      "toast.added":      "Cards added",
       "card.gone":        "This card was deleted on another device",
       "toast.quota":      "Storage is full — changes are not saved on this device",
       "dup.suffix":       " (copy)",
@@ -325,6 +335,16 @@
       "card.info.value":  "Τιμή",
       "card.delete":      "Διαγραφή",
       "card.duplicate":   "Αντίγραφο",
+      "card.send":        "Αποστολή…",
+      "col.send":         "Στείλε τις κάρτες…",
+      "send.none":        "Αυτή η στήλη δεν έχει κάρτες για αποστολή.",
+      "add.title":        "Προσθήκη {n} καρτών",
+      "add.one":          "Προσθήκη 1 κάρτας",
+      "add.board":        "Πίνακας",
+      "add.col":          "Στήλη",
+      "add.more":         "και {n} ακόμα",
+      "add.btn":          "Προσθήκη",
+      "toast.added":      "Οι κάρτες προστέθηκαν",
       "card.gone":        "Η κάρτα διαγράφηκε σε άλλη συσκευή",
       "toast.quota":      "Ο χώρος αποθήκευσης γέμισε — οι αλλαγές δεν αποθηκεύονται σε αυτή τη συσκευή",
       "dup.suffix":       " (αντίγραφο)",
@@ -5483,6 +5503,129 @@
     q.focus();
     try { q.scrollIntoView({ block: "nearest", inline: "nearest" }); } catch (e) {}
   }
+  // "Send to an app" (shell send/, BR-SEND), receiving side: target
+  // { addCards: { title?, cards: [{ title, notes? }] } } (T.asCards
+  // cleans it) opens a dialog that names the board and column; nothing
+  // is written until the user presses Add (BR-W8-6). The cards go to
+  // the top of that column in the order they came, with an Undo toast.
+  function addCardsDialog(x) {
+    var v = T.asCards(x);
+    if (!v || document.querySelector("dialog[open]")) return;
+    var boards = state.boards.filter(function (b) { return !b.archived && !isTpl(b) && b.columns.length; });
+    if (!boards.length) return;
+    var stale = $("dlg-addcards");
+    if (stale) stale.remove();
+    var dlg = document.createElement("dialog");
+    dlg.id = "dlg-addcards";
+    var form = document.createElement("form");
+    form.method = "dialog";
+    var h = document.createElement("h3");
+    h.textContent = v.cards.length === 1 ? t("add.one") : t("add.title", { n: v.cards.length });
+    form.appendChild(h);
+    var ul = document.createElement("ul");
+    ul.className = "add-list";
+    v.cards.slice(0, 6).forEach(function (c) {
+      var li = document.createElement("li");
+      li.textContent = c.title;
+      ul.appendChild(li);
+    });
+    if (v.cards.length > 6) {
+      var more = document.createElement("li");
+      more.className = "add-more";
+      more.textContent = t("add.more", { n: v.cards.length - 6 });
+      ul.appendChild(more);
+    }
+    form.appendChild(ul);
+    function field(id, key) {
+      var lb = document.createElement("label");
+      lb.setAttribute("for", id);
+      lb.textContent = t(key);
+      var sel = document.createElement("select");
+      sel.id = id;
+      form.appendChild(lb);
+      form.appendChild(sel);
+      return sel;
+    }
+    var bSel = field("add-board", "add.board"), cSel = field("add-col", "add.col");
+    var cur = currentBoard();
+    boards.forEach(function (b) {
+      var o = document.createElement("option");
+      o.value = b.id;
+      o.textContent = b.name;
+      if (cur && b.id === cur.id) o.selected = true;
+      bSel.appendChild(o);
+    });
+    function fillCols() {
+      cSel.textContent = "";
+      var b = boardByIdIn(state.boards, bSel.value);
+      (b ? b.columns : []).forEach(function (c) {
+        var o = document.createElement("option");
+        o.value = c.id;
+        o.textContent = c.name;
+        cSel.appendChild(o);
+      });
+    }
+    bSel.addEventListener("change", fillCols);
+    fillCols();
+    var menu = document.createElement("menu");
+    var no = document.createElement("button");
+    no.type = "button";
+    no.textContent = t("confirm.no");
+    no.addEventListener("click", function () { dlg.close(); });
+    var sp = document.createElement("span");
+    sp.className = "spacer";
+    var yes = document.createElement("button");
+    yes.type = "submit";
+    yes.textContent = t("add.btn");
+    menu.appendChild(no); menu.appendChild(sp); menu.appendChild(yes);
+    form.appendChild(menu);
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var b = boardByIdIn(state.boards, bSel.value), col = b ? b.columns.filter(function (c) { return c.id === cSel.value; })[0] : null;
+      dlg.close();
+      if (!b || !col) return;
+      pushUndo("toast.added");
+      var made = v.cards.map(function (c) {
+        var card = newCardObj(c.title);
+        card.notes = c.notes;
+        return card;
+      });
+      col.cards = made.concat(col.cards);
+      col.cards.forEach(function (c, i) { c.pos = i; });
+      col.om = Date.now();
+      if (b.id !== state.activeBoardId) switchBoard(b.id);
+      save(); renderAll();
+    });
+    dlg.addEventListener("close", function () { dlg.remove(); });
+    dlg.appendChild(form);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+  }
+
+  // "Send to an app", sending side: the card open in the dialog (its
+  // subtasks go under its notes), or every card of a column.
+  function sendApi() {
+    try { return window.parent !== window && window.parent.orosSend ? window.parent.orosSend : null; }
+    catch (e) { return null; }
+  }
+  function cardItem(c) {
+    var note = String(c.notes || "");
+    var subs = (c.subtasks || []).map(function (st) { return (st.completed ? "[x] " : "- ") + st.text; }).join("\n");
+    if (subs) note = note ? note + "\n" + subs : subs;
+    return { text: c.text, note: note };
+  }
+  function sendCard() {
+    var api = sendApi(), card = editingCard();
+    if (!api || !card) return;
+    api.open({ kind: "items", data: { title: card.text, items: [cardItem(card)] } });
+  }
+  function sendColumn() {
+    var api = sendApi(), col = colById(editingColId);
+    if (!api || !col) return;
+    if (!col.cards.length) { notifyTransient(t("send.none")); return; }
+    api.open({ kind: "items", data: { title: col.name, items: col.cards.map(cardItem) } });
+  }
+
   // Target { openFile: { token } }: an .orosboard from the system's
   // "Open with" (shell fileopen.js), taken once from the shell and read
   // as the import reads one: always a NEW board with fresh ids, with
@@ -5505,6 +5648,7 @@
     if (!tg || typeof tg !== "object" || !state) return;
     if (tg.openFile) { openFileTarget(tg.openFile); return; }
     if (tg.asNew) { newCardFrom(tg.asNew); return; }
+    if (tg.addCards) { addCardsDialog(tg.addCards); return; }
     if (tg.quickAdd === true) { quickAddFirst(); return; }
     if (typeof tg.board === "string" && typeof tg.col === "string" && typeof tg.card === "string") {
       window.__orosKanbanOpen(tg);
@@ -5732,6 +5876,12 @@
     var dupBtn = $("c-duplicate");
     if (dupBtn) {
       dupBtn.addEventListener("click", duplicateCard);
+    }
+    // Send to an app (BR-SEND): only inside orOS
+    var cSend = $("c-send"), colSend = $("col-send");
+    if (sendApi()) {
+      if (cSend) { cSend.hidden = false; cSend.addEventListener("click", sendCard); }
+      if (colSend) { colSend.hidden = false; colSend.addEventListener("click", sendColumn); }
     }
 
     // --- Column dialog ---

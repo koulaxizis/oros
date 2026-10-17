@@ -1163,6 +1163,22 @@
     SL.on("assets", function () { assetsTick++; refreshAll(); });
   }
 
+  // "Send to an app" (shell send/, BR-SEND): the deck's outline (one
+  // "# " heading a slide, "- " bullets) to Notes, Writer, Mail…
+  function sendApi() {
+    try { return window.parent !== window && window.parent.orosSend ? window.parent.orosSend : null; }
+    catch (e) { return null; }
+  }
+  function sendDeck() {
+    var api = sendApi();
+    if (!api || !SL.deck) return;
+    if (ED.flushOutline) ED.flushOutline();
+    var dk = SL.data().decks[SL.deck] || {};
+    var text = C.formatOutline(SL.data(), SL.deck);
+    if (!text.trim()) { SL.toast(t("send.empty")); return; }
+    api.open({ kind: "text", data: { title: String(dk.t || ""), text: text } });
+  }
+
   function moreMenu(anchor) {
     var rec = SL.recovered(SL.deck).length;
     SL.menu(anchor, [
@@ -1177,6 +1193,7 @@
       { label: t("more.png"), disabled: !ED.cur, fn: function () { SL.io.exportPng(ED.cur); } },
       { label: t("more.pkg"), fn: function () { SL.io.exportPackage(SL.deck); } },
       { label: t("more.pptx"), fn: function () { SL.io.exportPptx(SL.deck); } },
+      sendApi() ? { label: t("more.sendApp"), fn: sendDeck } : null,
       rec ? { sep: true } : null,
       rec ? { label: t("more.rec", { n: rec }), fn: SL.dlg.recovered } : null,
       { sep: true },
