@@ -7488,3 +7488,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Open in Spreadsheet in twelve more apps: Timesheet, Workouts, Health, Water, Mood, Garage, Invoices, CRM, Library, Media Shelf, Split and Meals open their data as a new sheet.
 - Files: the twelve apps' scripts + help EN/EL, Bible.
   - Tests: full suite green (new `tests/interop-sheets.test.js`); real Chromium. Not tested: a real phone.
+
+### 2026-10-17 — Quality gate Q4: no silent sync failure + Disconnect revokes access (#483) — 2.85.00
+- Sync tells you when it needs you: a full storage or an expired sign-in puts one line a day in the bell, and Disconnect also cancels this device's access at Dropbox or Nextcloud.
+- Files: `sync.js`, `shell.js`, `notifications.js`, `translations.js`, Bible.
+  - Tests: full suite green (new `tests/sync-silent-fail.test.js`); real Chromium shell 1280 EN / 360 EL. Not tested: a real Dropbox / Nextcloud token revoke from the cloud container.
