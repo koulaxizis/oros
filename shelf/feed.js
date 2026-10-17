@@ -32,10 +32,39 @@
   var ID_RE = /^[a-z0-9]{6,40}$/;   // same as shelf.js
   var MAX_ROWS = 20000;
 
+  // One flat { en, el } table for the Calendar label and the reading
+  // reminder (orosI18n packs: pack "shelf"). The Calendar and the shell
+  // run this file: a pack language reads the "shelf" pack when that
+  // page has it loaded, else English.
   var TEXT = {
-    en: { d: "Finished: {t}", r: "Release: {t}" },
-    el: { d: "Τελείωσα: {t}", r: "Κυκλοφορία: {t}" }
+    en: {
+      "feed.d": "Finished: {t}", "feed.r": "Release: {t}",
+      "remind.t.book": "Time to read", "remind.t.film": "Time to watch", "remind.t.series": "Time to watch",
+      "remind.t.album": "Time to listen", "remind.t.podcast": "Time to listen", "remind.t.game": "Time to play",
+      "remind.u.book": "page", "remind.u.audio": "minute", "remind.u.series": "episode",
+      "remind.u.podcast": "episode", "remind.u.game": "hour",
+      "remind.at": "{t} · {u} {v}", "remind.of": "{t} · {u} {v} of {n}", "remind.go": "{t} · pick up where you left off"
+    },
+    el: {
+      "feed.d": "Τελείωσα: {t}", "feed.r": "Κυκλοφορία: {t}",
+      "remind.t.book": "Ώρα για διάβασμα", "remind.t.film": "Ώρα για ταινία", "remind.t.series": "Ώρα για σειρά",
+      "remind.t.album": "Ώρα για μουσική", "remind.t.podcast": "Ώρα για podcast", "remind.t.game": "Ώρα για παιχνίδι",
+      "remind.u.book": "σελίδα", "remind.u.audio": "λεπτό", "remind.u.series": "επεισόδιο",
+      "remind.u.podcast": "επεισόδιο", "remind.u.game": "ώρα",
+      "remind.at": "{t} · {u} {v}", "remind.of": "{t} · {u} {v} από {n}", "remind.go": "{t} · συνέχισε από εκεί που σταμάτησες"
+    }
   };
+  // orosI18n (../i18n.js), browser only: the full language code.
+  function i18n() { return typeof window !== "undefined" && window.orosI18n; }
+  function text(lang) {
+    var I = i18n();
+    if (I && I.known(lang) && !TEXT[lang]) I.table(TEXT, "shelf", lang);
+    return TEXT[lang] || TEXT.en;
+  }
+  function locOf(lang) {
+    var I = i18n();
+    return I ? I.locale(lang) : (lang === "el" ? "el-GR" : "en-GB");
+  }
 
   function str(v, n) {
     return typeof v === "string" ? v.replace(/[\u0000-\u001f\u007f]+/g, " ").trim().slice(0, n) : "";
@@ -82,20 +111,6 @@
   // ---------- Reading reminder ----------
   var REM_KEY = "oros-shelf-rem";
   var REM_HOUR = 20;
-  var REM_TEXT = {
-    en: {
-      t: { book: "Time to read", film: "Time to watch", series: "Time to watch", album: "Time to listen",
-           podcast: "Time to listen", game: "Time to play" },
-      u: { book: "page", audio: "minute", series: "episode", podcast: "episode", game: "hour" },
-      at: "{t} · {u} {v}", of: "{t} · {u} {v} of {n}", go: "{t} · pick up where you left off"
-    },
-    el: {
-      t: { book: "Ώρα για διάβασμα", film: "Ώρα για ταινία", series: "Ώρα για σειρά", album: "Ώρα για μουσική",
-           podcast: "Ώρα για podcast", game: "Ώρα για παιχνίδι" },
-      u: { book: "σελίδα", audio: "λεπτό", series: "επεισόδιο", podcast: "επεισόδιο", game: "ώρα" },
-      at: "{t} · {u} {v}", of: "{t} · {u} {v} από {n}", go: "{t} · συνέχισε από εκεί που σταμάτησες"
-    }
-  };
   // Placeholders filled with a function, so "$&" in a title stays text.
   function fill(tpl, vals) {
     return tpl.replace(/\{([a-z])\}/g, function (m, k) { return Object.prototype.hasOwnProperty.call(vals, k) ? String(vals[k]) : m; });
@@ -155,17 +170,17 @@
   }
 
   function reminderText(due, lang) {
-    var tx = REM_TEXT[lang] || REM_TEXT.en;
-    var title = tx.t[due.type] || tx.t.book;
-    var unit = tx.u[due.type === "book" && due.fmt === "a" ? "audio" : due.type];
-    var tpl = unit && due.v > 0 ? (due.size >= due.v ? tx.of : tx.at) : tx.go;
-    var n = function (x) { return Number(x).toLocaleString(lang === "el" ? "el-GR" : "en-GB"); };
+    var tx = text(lang);
+    var title = tx["remind.t." + due.type] || tx["remind.t.book"];
+    var unit = tx["remind.u." + (due.type === "book" && due.fmt === "a" ? "audio" : due.type)];
+    var tpl = unit && due.v > 0 ? (due.size >= due.v ? tx["remind.of"] : tx["remind.at"]) : tx["remind.go"];
+    var n = function (x) { return Number(x).toLocaleString(locOf(lang)); };
     return { title: title, body: fill(tpl, { t: due.title, u: unit || "", v: n(due.v), n: n(due.size) }) };
   }
 
   function label(k, title, lang) {
-    var tx = TEXT[lang] || TEXT.en;
-    return fill(tx[k] || tx.d, { t: title });
+    var tx = text(lang);
+    return fill(tx["feed." + k] || tx["feed.d"], { t: title });
   }
 
   var api = { byDay: byDay, label: label, REM_KEY: REM_KEY, readRem: readRem,

@@ -190,12 +190,31 @@
     return f || /[",\r\n]/.test(s) ? '"' + (f ? "'" : "") + s.replace(/"/g, '""') + '"' : s;
   }
   function stars(r) { return r ? (r / 2).toString() : ""; }
+  // One flat { en, el } table, same keys and English as shelf.js
+  // (orosI18n packs: pack "shelf").
+  var WORDS = {
+    en: {
+      "app": "Media Shelf", "goal.head": "Goals",
+      "types.book": "Books", "types.film": "Films", "types.series": "Series",
+      "types.album": "Music", "types.podcast": "Podcasts", "types.game": "Games",
+      "st.want": "Want", "tab.now": "Now", "st.done": "Done", "st.drop": "Dropped"
+    },
+    el: {
+      "app": "Το ράφι μου", "goal.head": "Στόχοι",
+      "types.book": "Βιβλία", "types.film": "Ταινίες", "types.series": "Σειρές",
+      "types.album": "Μουσική", "types.podcast": "Podcasts", "types.game": "Παιχνίδια",
+      "st.want": "Θέλω", "tab.now": "Τώρα", "st.done": "Ολοκληρώθηκε", "st.drop": "Το παράτησα"
+    }
+  };
+  function words(lang) {
+    var I = typeof window !== "undefined" && window.orosI18n;
+    if (I && I.known(lang) && !WORDS[lang]) I.table(WORDS, "shelf", lang);
+    return WORDS[lang] || WORDS.en;
+  }
   function previews(state, lang) {
-    var el = lang === "el";
-    var TN = el ? { book: "Βιβλία", film: "Ταινίες", series: "Σειρές", album: "Μουσική", podcast: "Podcasts", game: "Παιχνίδια" }
-                : { book: "Books", film: "Films", series: "Series", album: "Music", podcast: "Podcasts", game: "Games" };
-    var SN = el ? { want: "Θέλω", now: "Τώρα", done: "Ολοκληρώθηκε", drop: "Το παράτησα" }
-                : { want: "Want", now: "Now", done: "Done", drop: "Dropped" };
+    var w = words(lang);
+    var TN = {}, SN = { want: w["st.want"], now: w["tab.now"], done: w["st.done"], drop: w["st.drop"] };
+    TYPES.forEach(function (tp) { TN[tp] = w["types." + tp]; });
     var items = (state && Array.isArray(state.items) ? state.items : []).slice()
       .sort(function (a, b) { return cmpStr(fold(a.title), fold(b.title)) || cmpStr(a.id, b.id); });
     // the latest start and finish of each title
@@ -205,7 +224,7 @@
       if (s.k === "s" && s.d > l.s) l.s = s.d;
       if (s.k === "d" && s.d > l.d) l.d = s.d;
     });
-    var md = ["# " + (el ? "Το ράφι μου" : "Media Shelf"), ""];
+    var md = ["# " + w["app"], ""];
     var csv = [["type", "title", "by", "year", "status", "rating", "favourite", "tags", "started", "finished", "review"].join(",")];
     TYPES.forEach(function (tp) {
       var list = items.filter(function (it) { return it.type === tp; });
@@ -226,7 +245,7 @@
     var gk = state && isObj(state.goals) ? Object.keys(state.goals).sort(cmpStr) : [];
     var gl = gk.filter(function (k) { return state.goals[k].n > 0; });
     if (gl.length) {
-      md.push("## " + (el ? "Στόχοι" : "Goals"), "");
+      md.push("## " + w["goal.head"], "");
       gl.forEach(function (k) {
         var m = GOAL_RE.exec(k);
         md.push("- " + m[1] + " · " + TN[m[2]] + ": " + state.goals[k].n);

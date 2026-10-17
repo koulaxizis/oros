@@ -14,10 +14,20 @@
 (function (root) {
   "use strict";
   var KEY = "oros-shelf-data";
-  var TYPE = {
-    en: { book: "Book", film: "Film", series: "Series", album: "Music", podcast: "Podcast", game: "Game" },
-    el: { book: "Βιβλίο", film: "Ταινία", series: "Σειρά", album: "Μουσική", podcast: "Podcast", game: "Παιχνίδι" }
+  // Same keys and English as shelf.js (orosI18n packs: pack "shelf").
+  // The shell runs this file: a pack language reads the "shelf" pack
+  // when the shell has it, else English.
+  var S = {
+    en: { "type.book": "Book", "type.film": "Film", "type.series": "Series", "type.album": "Music",
+          "type.podcast": "Podcast", "type.game": "Game", "item.untitled": "Untitled" },
+    el: { "type.book": "Βιβλίο", "type.film": "Ταινία", "type.series": "Σειρά", "type.album": "Μουσική",
+          "type.podcast": "Podcast", "type.game": "Παιχνίδι", "item.untitled": "Χωρίς τίτλο" }
   };
+  function words(lang) {
+    var I = root && root.orosI18n;
+    if (I && I.known(lang) && !S[lang]) I.table(S, "shelf", lang);
+    return S[lang] || S.en;
+  }
 
   function str(v) { return typeof v === "string" ? v.trim() : ""; }
   function arr(a) { return Array.isArray(a) ? a : []; }
@@ -26,7 +36,7 @@
     id: "shelf",
     keys: [KEY],
     search: function (ctx) {
-      var d = ctx.readJSON(KEY), out = [], el = ctx.lang === "el";
+      var d = ctx.readJSON(KEY), out = [], w = words(ctx.lang);
       if (!d || !Array.isArray(d.items)) return out;
       var tombs = d.tombs && typeof d.tombs === "object" ? d.tombs : {};
       d.items.forEach(function (it) {
@@ -34,8 +44,8 @@
         if (typeof tombs[it.id] === "number" && tombs[it.id] >= (Number(it.m) || 0)) return;
         out.push({
           id: it.id,
-          title: str(it.title) || (el ? "Χωρίς τίτλο" : "Untitled"),
-          text: [(el ? TYPE.el : TYPE.en)[it.type] || "", str(it.by),
+          title: str(it.title) || w["item.untitled"],
+          text: [(typeof it.type === "string" && w["type." + it.type]) || "", str(it.by),
                  typeof it.year === "number" && it.year > 0 ? String(it.year) : "",
                  str(it.plat), arr(it.tags).map(str).filter(Boolean).join(", "),
                  str(it.rev), str(it.src)].filter(Boolean).join(" · "),

@@ -1,0 +1,97 @@
+# Medienregal
+Das Medienregal ist deine Wunschliste und dein Tracker für Bücher, Filme, Serien, Musik, Podcasts und Spiele. Merk dir, was du ausprobieren willst, verfolge deinen Fortschritt, bewerte, was du beendest, und sieh dein Jahr in Zahlen.
+
+## Erste Schritte
+Tippe oder klicke auf `Hinzufügen` (oder `Ersten Titel hinzufügen`). Wähle die `Art`, dann trag den `Titel` ein und, wenn du magst, den Schöpfer (`Autor`, `Regie`, `Künstler`…), `Jahr`, Umfang (Seiten, Folgen, Stunden…), `Tags (durch Komma getrennt)`, `Wo ich davon gehört habe`, ein `Erscheinungsdatum (optional)` und eine `Coverfarbe`. Bücher haben außerdem ein `Format`: `Gedruckt`, `E-Book` oder `Hörbuch`; Spiele eine `Plattform`. Wähle den `Status` und tippe auf `Speichern`. Jeder Titel bekommt ein erzeugtes Cover mit seinen Initialen.
+
+## Tabs, Suche und Sortierung
+- `Jetzt`: was du gerade liest, schaust, hörst oder spielst.
+- `Wunschliste`: was du noch angehen willst. Öffne einen Titel und tippe auf `Hohe Priorität`, um ihn zu markieren; markierte Titel kommen beim Sortieren nach `Neueste` zuerst.
+- `Verlauf`: beendete und abgebrochene Titel.
+- `Statistik`: dein Jahr in Zahlen.
+
+Die Chips filtern nach Art. `Titel, Schöpfer, Tag suchen…` sucht auch in Plattform und Quelle und ignoriert Akzente. Sortiere nach `Neueste`, `Titel`, `Schöpfer`, `Bewertung` oder `Jahr`.
+
+## Fortschritt
+Tippe auf einen Titel, um ihn zu öffnen. Starte ihn mit einer Schaltfläche wie `Lesen beginnen` oder `Spielen beginnen`. Dann trag ein, wo du bist: die Seite bei Büchern, Minuten bei Hörbüchern, Folgen bei Serien und Podcasts, Stunden bei Spielen. Tippe auf `Aktualisieren` oder nutze `+1 Folge` oder `+1 Stunde`.
+
+Du siehst einen Fortschrittsbalken mit Prozent und, sobald genug Daten da sind, wie lange du in deinem Tempo noch brauchst. Wenn du am Ende ankommst, bietet die App `Als fertig markieren` an. Du kannst einen Titel auch `Aufgeben`, `Zurück auf die Wunschliste` setzen, `Fortsetzen` oder neu starten (`Nochmal lesen`, `Nochmal schauen`…). Der Verlauf in einem Titel listet jeden Start, Fortschritt und Abschluss; du kannst einen Eintrag entfernen.
+
+Bücher, die du aus der [Bibliothek](app:library) mit `Zum Medienregal hinzufügen` hinzufügst, sind verknüpft: Ihre Seiten folgen bei jedem Öffnen des Medienregals deinem Lesestand dort, ein in der Bibliothek beendetes Buch wird hier als fertig markiert, und `In Bibliothek lesen` öffnet es an deiner Stelle.
+
+## Bewertung und Rezension
+Bewerte mit fünf Sternen in halben Schritten: Tippe auf die linke oder rechte Hälfte eines Sterns. Markiere einen `Favorit` mit dem Herz und schreib eine `Rezension / Notizen`.
+
+## Statistik und Ziele
+Wähle mit den Pfeilen ein Jahr. `Statistik` zeigt, was du pro Art beendet hast, `Gelesene Seiten` (gedruckt und E-Books), `Ø Bewertung`, ein Diagramm `Nach Monat`, `Top-Schöpfer` und `Top-Tags`. Mit `Ziele festlegen` setzt du für das Jahr ein Ziel pro Art, und die App sagt dir, ob du vor oder hinter dem Plan liegst. Unter jedem Ziel siehst du auch, wie viele noch fehlen und wie viele Tage bleiben, das nötige Tempo (etwa so viele pro Woche und pro Monat, bei Büchern etwa so viele Seiten pro Tag, nach der Länge der Bücher, die du liest) und wo du im jetzigen Tempo landest.
+
+`Lesen` (das Jahr) zählt die Seiten zusammen, die du in deinen Büchern eingetragen hast: `Gelesene Seiten`, `Seiten pro Tag`, `Lesetage`, `Tage in Folge`, deinen besten Tag (`Bester Tag`) und ein kleines Diagramm `Die letzten 30 Tage`. Es zählt, was du mit `Aktualisieren` einträgst, also trag ab und zu deine Seite ein.
+
+Wenn du für dieses Jahr ein Buchziel hast, steht es auch oben in `Jetzt` (`Leseziel`… mit Balken); tippe darauf, um `Statistik` zu öffnen.
+
+## Details online suchen und der Kalender
+Bei Büchern und Alben sucht `Details online suchen` im Formular den eingegebenen Titel (und den Schöpfer, falls vorhanden) bei Open Library (Bücher) oder MusicBrainz (Musik). Es läuft nur, wenn du darauf tippst, und beim ersten Mal sagt es dir, was gesendet wird: nur dieser Text. Wähle einen Treffer, um Titel, Schöpfer, Jahr, Seiten oder Titelanzahl und bei Alben das Erscheinungsdatum auszufüllen; prüf es und tippe auf `Speichern`.
+
+Filme und Serien werden auf Wikidata gesucht, ohne Konto und ohne Schlüssel. Wähle einen Treffer, um den Titel (in deiner Sprache, wenn Wikidata ihn hat), Regie oder Schöpfer, das Jahr, die Laufzeit oder die Zahl der Folgen und, wenn vorhanden, ein Coverbild von Wikimedia Commons auszufüllen. Die Details sind CC0; jedes Bild behält seine eigene freie Lizenz, und die Seite des Titels zeigt, wer es gemacht hat, die Lizenz und einen Link zu seiner Commons-Seite (`Cover:` … · `Wikimedia Commons`). `Cover entfernen` im Formular geht zurück zum erzeugten Cover.
+
+Mit einem kostenlosen TMDB-Konto kannst du auch TMDB durchsuchen, das mehr Poster hat: `Mehr` → `Film- und Seriendetails (TMDB-Schlüssel)`, füge deinen eigenen API-Schlüssel (v3) oder Read Access Token ein und tippe auf `Speichern`. Über den Treffern erscheint dann ein Schalter `Suchen auf` (`Wikidata` / `TMDB`). Der Schlüssel bleibt auf diesem Gerät: Er wird nicht synchronisiert und nur an TMDB gesendet, nur wenn du suchst. Titel, die aus TMDB ausgefüllt wurden, zeigen „Dieses Produkt nutzt die TMDB-API, ist aber nicht von TMDB unterstützt oder zertifiziert.“
+
+Podcasts und Spiele trägst du von Hand ein.
+
+Im [Kalender](app:calendar) zeigt der Chip `Medienregal` den Tag, an dem du jeden Titel beendet hast (auch nochmal Geschautes und Gelesenes), und das Erscheinungsdatum von Titeln auf deiner Wunschliste. Tippe auf eine Zeile, um den Titel hier zu öffnen.
+
+## Lese-Erinnerung
+`Mehr` → `Lese-Erinnerung` schaltet einen sanften Stups pro Tag ein, ab der Uhrzeit, die du wählst (anfangs 20:00). Er kommt nur, wenn etwas unter `Jetzt` steht und du an dem Tag nichts eingetragen hast, und nennt den Titel, an dem du warst, mit deinem Fortschritt, etwa „Dune · Seite 212 von 604“. Tippe darauf, um den Titel zu öffnen. Sie ist aus, bis du sie einschaltest, gilt pro Gerät und kommt, während orOS offen ist; Ruhezeiten und der Schalter `Medienregal` in den Benachrichtigungseinstellungen gelten weiter.
+
+## Aus anderer App importieren
+Hol deine bestehenden Listen mit `Mehr` → `Aus anderer App importieren`. Wähle die Exportdatei; du kannst mehrere auf einmal wählen, und eine ZIP funktioniert so, wie sie ist.
+- **Goodreads:** auf der Goodreads-Website My Books → Import and export → Export library; wähle die CSV.
+- **Letterboxd:** auf der Letterboxd-Website Settings → Data → Export your data; wähle die ZIP oder ihre CSV-Dateien (`watchlist`, `watched`, `ratings`, `diary`, `reviews`).
+- **StoryGraph:** auf der StoryGraph-Website dein Profilmenü → Manage account → Export StoryGraph library; wähle die CSV.
+- **IMDb:** auf IMDb Your ratings oder deine Watchlist öffnen, dann das Menü ⋯ → Export; wähle `ratings.csv` und / oder `watchlist.csv`.
+- **Trakt:** auf der Trakt-Website Settings → Data → Export your data; wähle die ZIP oder ihre JSON-Dateien (`watched-movies`, `watched-shows`, `ratings-…`, `watchlist-…`, `history-…`).
+- **TV Time:** TV Time hat keinen Export-Knopf; fordere deine Daten an (eine DSGVO-Anfrage in den Einstellungen der App oder beim Support) und wähle die CSV-Dateien, die du bekommst, oder ihre ZIP.
+- **MyAnimeList:** auf MyAnimeList Profile → Export (oder Import / Export) → Export My List, für die Anime- und die Manga-Liste; wähle die `.xml`- oder die `.xml.gz`-Datei.
+- **Discogs:** auf Discogs deine Collection (oder Wantlist) → Export; wähle die CSV, die per E-Mail kommt oder heruntergeladen wird.
+- **BoardGameGeek:** auf BoardGameGeek deine Collection → Export (der CSV-Download unten auf der Sammlungsseite); wähle die CSV.
+
+Bevor etwas hinzugefügt wird, zeigt eine Vorschau, woher die Titel kommen, wie viele pro Art und Status gefunden wurden, den Zeitraum der Daten, was ausgelassen wird und wie viele schon in deinem Regal sind. Schon vorhandene Titel werden übersprungen (gleicher Titel und Schöpfer, bei Filmen und Serien auch gleicher Titel und Jahr, oder schon früher importiert), also fügt ein zweiter Import derselben Datei nichts hinzu, und nichts von dir wird geändert. Tippe auf die Import-Schaltfläche, um den Rest hinzuzufügen, oder auf `Abbrechen`. Direkt nach einem Import nimmt `Rückgängig` alles zurück.
+
+Was übernommen wird:
+- Goodreads-Regale werden zum Status (`read`, `currently-reading`, `to-read`; ein Regal wie `did-not-finish` wird abgebrochen), mit deiner Bewertung, Rezension, Seiten, Format, dem Tag des Abschlusses und deinen anderen Regalen als Tags. Aus Letterboxd bekommst du die Watchlist, jedes protokollierte Schauen mit Datum (nochmal Geschautes zählt), deine Bewertung, Rezension und Tags.
+- StoryGraph: read → Gelesen, currently reading → Lese ich, to read → Will ich, did not finish → Abgebrochen, mit den Daten jedes Lesens, deinen Sternen (Viertelsterne werden auf halbe Sterne gerundet), Format, Rezension und Tags.
+- IMDb: Was du bewertet hast, wird Gesehen am Tag der Bewertung, deine 1–10 als halbe Sterne (8 = vier Sterne); die Watchlist wird Will ich. Filme, Serien, Videospiele und Podcasts kommen rein; einzelne Folgen werden ausgelassen.
+- Trakt: gesehene Filme werden Gesehen; eine Serie mit gesehenen Folgen läuft mit der Zahl der gesehenen Folgen (Gesehen, wenn jede ausgestrahlte Folge gesehen ist); Bewertungen werden Sterne; die Watchlist wird Will ich. Ein auf IMDb und Trakt bewerteter Film ist ein Titel.
+- TV Time: verfolgte Serien werden Will ich, Serien mit gesehenen Folgen laufen mit der Zahl der gesehenen, gesehene Filme werden Gesehen.
+- MyAnimeList: Completed → fertig, Watching / Reading / On-Hold → läuft, Plan to Watch / Read → Will ich, Dropped → abgebrochen. Anime-Filme werden Filme, andere Anime Serien (mit Folgen), Manga Bücher; sie bekommen den Tag `anime` oder `manga` und deine MAL-Tags.
+- Discogs: Deine Sammlung wird Musik, gehört am Tag, an dem sie in die Sammlung kam, mit deiner Bewertung und dem Format (Vinyl, CD…) als Tag; eine Wantlist wird Will ich.
+- BoardGameGeek: gespielte oder bewertete Spiele werden durchgespielte Spiele mit der Plattform `Brettspiel`; Spiele im Besitz, auf der Wunschliste und want-to-play werden Will ich.
+
+## Aus Google Books importieren
+`Mehr` › `Aus Google Books importieren` kopiert die Bücher in deinen Google-Books-Regalen einmalig. Melde dich im kleinen Fenster bei Google an; orOS liest deine Regale und gibt Google den Zugriff sofort zurück: Nichts wird behalten, und nichts ändert sich bei Google. Google Books hat keine Nur-Lesen-Berechtigung, deshalb bittet Google darum, deine Bücher zu „verwalten“; orOS liest sie nur. Dieselbe Vorschau wie beim Goodreads-Import zeigt, was hereinkommt und was schon in deinem Regal ist; `Importieren` speichert es, mit `Rückgängig`.
+
+`Have read` wird Gelesen, `Reading now` Lese ich und `To read` Will ich; `Favorites` gibt das ♥, `My eBooks` setzt das Format auf E-Book, und deine eigenen Regale werden Tags. Jedes Buch kommt mit Titel, Autoren, Jahr und Seitenzahl; Cover und ISBNs werden nicht übernommen. Ein Buch, das schon in deinem Regal ist (gleicher Titel und Autor), wird übersprungen, also fügt ein erneuter Import nur hinzu, was fehlt. Google muss das für orOS freigeschaltet haben; antwortet es mit 403, ist der Dienst noch nicht eingeschaltet. Für eine eigene Google-App-ID stell sie in [Kontakte](app:contacts) › `Aus einem Konto` › `Eigene App-ID verwenden` ein.
+
+## Synchronisierung und Sicherung
+Deine Titel, Fortschritte, Bewertungen, Rezensionen und Ziele werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. Cover und ihre Angaben werden mit dem Titel synchronisiert. Der offene Tab, der Artfilter, die Sortierung und dein TMDB-Schlüssel bleiben auf jedem Gerät für sich.
+
+Im Menü `Mehr` speichert `Exportieren (JSON)` dein Regal in eine Datei, und `Importieren (JSON)` führt eine Datei ein, ohne etwas zu ersetzen. Innerhalb von orOS legt `In Tabelle öffnen` im selben Menü deine ganze Liste (Art, Titel, Schöpfer, Status, Bewertung, Daten…) in ein neues Blatt der Tabelle.
+
+## orOS-Datei (.orosshelf)
+Im Menü `Mehr` speichert `orOS-Datei (.orosshelf)` jeden Titel (Bücher, Filme, Serien, Musik, Podcasts, Spiele), seinen Verlauf (Starts, Fortschritt, Abschlüsse, Abbrüche) und deine Jahresziele als eine `.orosshelf`-Datei, etwa um sie ohne Synchronisierung auf ein anderes Gerät zu bringen oder eine Kopie zu behalten. `orOS-Datei öffnen…` (oder die Datei in Dateien mit „Öffnen mit“ öffnen) fügt nur die Titel, Verlaufseinträge und Ziele hinzu, die dieses Gerät noch nicht hat: Was schon hier ist oder hier gelöscht wurde, bleibt, wie es ist, außer du hakst „Mit neueren Versionen aktualisieren“ an. Ein Fenster zeigt zuerst die Anzahl, und `Rückgängig` nimmt die hinzugefügten Einträge zurück. `Entpackter orOS-Ordner…` öffnet dieselbe Datei, nachdem sie entpackt wurde. Dein Tab, Filter und Sortierung, die Lese-Erinnerung und dein TMDB-Schlüssel bleiben auf jedem Gerät für sich. Die Datei ist eine einfache ZIP: Entpackt enthält sie das Regal als `content.json` plus `preview/shelf.md` und `preview/shelf.csv` für andere Programme. Sie ist nicht verschlüsselt, also bewahre sie sicher auf.
+
+## Tastenkürzel
+- [[/]] springt ins Suchfeld; [[Esc]] leert es dort.
+- [[N]] fügt einen neuen Titel hinzu.
+- Auf den Sternen: Pfeiltasten ändern die Bewertung um einen halben Stern, [[1]] bis [[5]] setzen ganze Sterne, [[0]] löscht sie.
+
+## Tipps
+- Nutze Tags wie `Sommer` oder `Buchclub` und finde sie später mit der Suche.
+- Füll `Wo ich davon gehört habe` aus, um dir zu merken, wer dir einen Titel empfohlen hat; die Suche findet das auch.
+
+## Grenzen
+- Die Lese-Erinnerung braucht ein offenes orOS; es gibt keinen Push-Server.
+- Coverbilder gibt es nur für Filme und Serien, die du online suchst (Wikimedia Commons oder TMDB), und sie laden beim Anzeigen von diesen Seiten; offline oder bei Büchern, Musik, Podcasts und Spielen siehst du das erzeugte Cover.
+- Die Online-Suche hat keine Quelle für Podcasts oder Spiele.
+- TMDB funktioniert nur mit deinem eigenen Schlüssel; orOS hat keinen zum Teilen.
+- Seiten pro Tag zählen die Seiten, die du in Büchern einträgst, plus den Rest eines Buchs, wenn du es als fertig markierst; Hörbücher zählen nicht mit.
