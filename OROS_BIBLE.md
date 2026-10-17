@@ -2377,6 +2377,7 @@ Outside contributors build apps through the kit, and every app joins only as cod
   - the help, direct-link, i18n, release-guards, deeplink-receivers, search* and `tests/<id>*` tests;
   - the quality gate `.github/qa/smoke.js --only <id>` when Playwright is installed.
   Every app on main passes the static part (tested).
+- K2: `quality.yml` job `new-apps` runs `check-app.js --added-since origin/<base> --no-browser` on every PR. It checks each root app folder the PR adds that is registered or carries the DL-1 snippet, so a forgotten registration fails; standalone pages are skipped. The `apps` shards open the new app in Chromium, strict because it has no baseline. `--added-since` with no new app exits 0.
 - Contributor PRs never touch `APP_VERSION`, the changelog or `CACHE_VERSION`. The maintainer adds them at merge, through the merge queue as usual.
 
 ### Credits register (third-party) [verified 2026-10-09, refreshed after #49]
@@ -7414,4 +7415,9 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 ### 2026-10-17 — Quality gate Q2: two-device sync convergence sweep (#469) — CI only, no APP_VERSION
 - Quality gate Q2: CI sweeps every sync merge function with two simulated devices (diverge, endless upload, lost record); closes A5 as an automated check.
 - Files: `.github/qa/{converge.js,make-fixtures.js,fixtures/*.json,baseline.json,smoke.js}`, `.github/workflows/quality.yml`, `tests/quality-gate.test.js`, Bible.
+  - Tests: full suite green; quality.yml green on GitHub. Nothing shipped to users.
+
+### 2026-10-17 — App Kit K2: the quality gate checks every app a PR adds (#472) — CI only, no APP_VERSION
+- App Kit K2: the quality gate checks every app a PR adds with check-app.js (registration, precache, help, DL-1, palette, sync, safety).
+- Files: `.github/workflows/quality.yml` (job `new-apps`), `.github/app-kit/check-app.js`, `docs/app-kit/README.md`, `tests/app-kit.test.js`, Bible.
   - Tests: full suite green; quality.yml green on GitHub. Nothing shipped to users.
