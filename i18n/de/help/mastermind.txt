@@ -1,0 +1,35 @@
+# Mastermind
+Knack den verdeckten Farbcode in 10 Versuchen. Nach jedem Tipp zeigen dir kleine Wertungsstifte, wie nah du dran bist.
+
+## So wird gespielt
+Füll die Stifte der aktuellen Reihe mit Farben und drück dann `Prüfen`.
+- Ein voller Wertungsstift heißt: richtige Farbe am richtigen Platz.
+- Ein hohler Wertungsstift heißt: richtige Farbe am falschen Platz.
+- Die Wertungsstifte sagen nicht, welchen deiner Stifte sie meinen. Wiederholte Farben werden genau gezählt.
+
+Knack den Code in höchstens 10 Versuchen, um zu gewinnen; sonst wird der Code gezeigt. `Spielregeln` in der Werkzeugleiste ist eine kurze Erinnerung.
+
+Jede Farbe hat auch ein eigenes Symbol und eine Nummer, du musst Farben also nie nur am Farbton unterscheiden.
+
+## Steuerung
+- Tippe oder klicke auf eine Farbe, um sie in den gewählten Stift zu setzen; die Auswahl springt dann zum nächsten leeren Stift.
+- Tippe auf einen Stift, um ihn zu wählen, und nochmal, um ihn zu leeren.
+- `Löschen` leert den gewählten Stift, `Prüfen` wertet die Reihe.
+- [[1]] bis [[8]] wählen eine Farbe nach ihrer Nummer, [[←]] [[→]] wechseln zwischen den Stiften, [[Backspace]] löscht, [[Enter]] prüft, [[N]] startet ein neues Spiel.
+
+Eine Reihe mit leeren Stiften kann nicht geprüft werden.
+
+## Stufen und Wertung
+- `Leicht`: 4 Stifte, 6 Farben, ohne Wiederholung.
+- `Mittel`: 4 Stifte, 6 Farben, mit Wiederholung.
+- `Schwer`: 5 Stifte, 8 Farben, mit Wiederholung.
+
+Die Statusleiste zeigt deinen Versuch und deinen Bestwert (die wenigsten Versuche) für die Stufe. `Rekorde` listet pro Stufe die gewonnenen Spiele, deinen Bestwert und deine durchschnittliche Zahl an Versuchen.
+
+## Synchronisierung
+Deine Rekorde werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. `Rekorde zurücksetzen` löscht sie nach einer Bestätigung auf allen Geräten. Das laufende Spiel, die gewählte Stufe und der Ton bleiben auf diesem Gerät.
+
+## Tipps
+- Auch eine halb gefüllte Reihe bleibt erhalten: Schließ die App und mach später weiter.
+- Aus Versehen ein neues Spiel gestartet oder die Stufe gewechselt? Tippe in der Meldung, die erscheint, auf `Rückgängig`.
+- Auf `Leicht` können die ersten Tipps je vier verschiedene Farben nutzen, um schnell herauszufinden, welche Farben im Code sind.
