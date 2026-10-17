@@ -55,6 +55,10 @@ You need Node 22 and a static web server (`python3 -m http.server` will do).
    Chromium at 360 and 1280 px, in English and Greek. Fix every `✗`. A `!` is
    a warning: read it and decide.
 
+On every pull request that adds an app folder, CI runs the same check
+(`check-app.js --added-since`) and opens the new app in Chromium. An app with
+no entries in the quality gate's baseline must have no problems at all.
+
 Then open a pull request. Say what the app does, what you tested by hand
 (phone, desktop, offline, two devices syncing) and what you could not test.
 

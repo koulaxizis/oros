@@ -103,6 +103,8 @@ var STRINGS = {
     "max.dims": "A sheet holds at most {r} rows and {c} columns",
     "fx.list": "Functions", "fx.search": "Search functions",
     "menu.label": "Sheet menu",
+    "menu.sendApp": "Send to an app…",
+    "send.empty": "There is nothing to send: the selected cells are empty.",
     "tb.fmt": "Cell format: fill, borders, wrap, merge, rules", "tb.chart": "Insert chart",
     "fill.title": "Fill colour", "fill.none": "No fill",
     "bd.out": "Outline border", "bd.all": "All borders", "bd.bot": "Bottom border", "bd.none": "No borders",
@@ -205,6 +207,8 @@ var STRINGS = {
     "max.dims": "Ένα φύλλο χωράει έως {r} γραμμές και {c} στήλες",
     "fx.list": "Συναρτήσεις", "fx.search": "Αναζήτηση συναρτήσεων",
     "menu.label": "Μενού φύλλου",
+    "menu.sendApp": "Στείλε σε εφαρμογή…",
+    "send.empty": "Δεν υπάρχει κάτι για αποστολή: τα επιλεγμένα κελιά είναι κενά.",
     "tb.fmt": "Μορφή κελιού: γέμισμα, περιγράμματα, αναδίπλωση, συγχώνευση, κανόνες", "tb.chart": "Εισαγωγή γραφήματος",
     "fill.title": "Χρώμα γεμίσματος", "fill.none": "Χωρίς γέμισμα",
     "bd.out": "Εξωτερικό περίγραμμα", "bd.all": "Όλα τα περιγράμματα", "bd.bot": "Κάτω περίγραμμα", "bd.none": "Χωρίς περιγράμματα",
@@ -2385,6 +2389,41 @@ function addRowsCols(axis, n) {
   rebuildKeepSel();
 }
 
+/* "Send to an app" (shell send/, BR-SEND): the selected cells, or the
+   whole sheet when one cell is selected, as a table (what the cells
+   show, not their formulas) to Writer, Mail, Text Tools…            */
+var SEND_ROWS = 500, SEND_COLS = 64;
+function sendApi() {
+  try { return window.parent !== window && window.parent.orosSend ? window.parent.orosSend : null; }
+  catch (e) { return null; }
+}
+function sendSelection() {
+  var api = sendApi();
+  if (!api) return;
+  if (editing) commitEdit(0, 0);
+  var top = selTop(), bot = selBottom(), lef = selLeft(), rig = selRight();
+  if (!selIsRange()) {
+    var ex = sheetExtent(actSID);
+    top = 0; lef = 0; bot = ex.rows - 1; rig = ex.cols - 1;
+  }
+  bot = Math.min(bot, top + SEND_ROWS - 1);
+  rig = Math.min(rig, lef + SEND_COLS - 1);
+  var rows = [], any = false;
+  for (var r = top; r <= bot; r++) {
+    var row = [];
+    for (var c = lef; c <= rig; c++) {
+      var v = displayVal(r, c);
+      if (v !== "") any = true;
+      row.push(v);
+    }
+    rows.push(row);
+  }
+  while (rows.length && rows[rows.length - 1].every(function (v) { return v === ""; })) rows.pop();
+  if (!any || !rows.length) { notifyTransient(t("send.empty")); return; }
+  var sh = getActiveSheet();
+  api.open({ kind: "table", data: { name: displayName(sh), rows: rows } });
+}
+
 function openSheetMenu(anchor) {
   if (editing) commitEdit(0, 0);
   closePops();
@@ -2404,6 +2443,7 @@ function openSheetMenu(anchor) {
   var fzr = normFz(sh.fz, sh) || { r: 0, c: 0 };
   item(t("rg.mode"), function () { RANGE_MODE = true; notifyTransient(t("rg.tap")); });
   sep();
+  if (sendApi()) { item(t("menu.sendApp"), sendSelection); sep(); }
   if (selR > 0 && selR + 1 <= FZ_MAX_R) item(t("fz.rows").replace("{n}", selR + 1), function () { setFreeze(selR + 1, fzr.c); });
   else item(t("fz.top"), function () { setFreeze(1, fzr.c); }, fzr.r === 1);
   if (selC + 1 <= FZ_MAX_C) item(selC === 0 ? t("fz.col1") : t("fz.cols").replace("{c}", colName(selC)), function () { setFreeze(fzr.r, selC + 1); }, selC === 0 && fzr.c === 1);

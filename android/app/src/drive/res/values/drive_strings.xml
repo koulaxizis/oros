@@ -54,4 +54,7 @@
     <string name="drive_files_text">The whole orOS disk appears as «orOS» in the Files app and in every app that opens or saves files. A file downloads when you open it and uploads when the app saves it. If it was changed in orOS meanwhile, both versions are kept.</string>
     <string name="drive_cache">Downloaded copies: %1$s</string>
     <string name="drive_clear_cache">Clear downloaded copies</string>
+    <string name="drive_channel">orOS Drive</string>
+    <string name="drive_not_saved_title">Not saved to orOS</string>
+    <string name="drive_not_saved_text">%1$s could not be saved to orOS (%2$s). Save it again from the app you used.</string>
 </resources>

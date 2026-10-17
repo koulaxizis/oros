@@ -16,6 +16,7 @@
 //           POST /v1  { op: "shr", act, id, ... }  (share links with an expiry, see share.js)
 //           /s/<id>/<i> PUT / GET one encrypted piece of a shared item (share.js)
 //           POST /v1  { op: "push", act, id, tok, ... }  (notifications with orOS closed, see push.js)
+//           /dav      WebDAV pass-through, target in X-Oros-Target (Sync through WebDAV, see dav.js)
 //           /nl/...   public sign-up form and one-click unsubscribe (newsletter.js)
 //           /crm/f/<k> public CRM contact form (crmform.js)
 // Response: { ok:true, data } | { ok:false, error:{ code, msg } }
@@ -33,6 +34,7 @@ import { validExt, runExt, EXT_LIMITS } from "./ext.js";
 import { handleRemote, ROOM_RE } from "./remote.js";
 import { validShr, runShr, handlePiece, ShrError } from "./share.js";
 import { validPush, runPush, PushError } from "./push.js";
+import { handleDav } from "./dav.js";
 
 export const LIMITS = {
   bodyBytes: 64 * 1024,        // request JSON
@@ -222,6 +224,12 @@ export async function handle(request, env, connectFn, now, fetchFn) {
   // with their own rate limit and headers.
   if (url.pathname.startsWith("/s/")) {
     return handlePiece(request, env, url, okOrigin, request.headers.get("CF-Connecting-IP") || "", now || Date.now());
+  }
+
+  // Sync through WebDAV: one WebDAV request to the server named in
+  // X-Oros-Target (relay/dav.js), with its own CORS and rate limit.
+  if (url.pathname === "/dav") {
+    return handleDav(request, env, okOrigin, request.headers.get("CF-Connecting-IP") || "", now || Date.now(), fetchFn);
   }
 
   if (request.method === "OPTIONS") {

@@ -1,6 +1,18 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.80.00
+- Office apps send to each other: a Spreadsheet selection becomes a Writer table, and text becomes slides, a mind map, Kanban cards or a Prompter prompt (Send to an app in Spreadsheet, Slides, Mind map and Kanban).
+
+## Version 2.79.00
+- Command bar: type «dentist tomorrow 10», «bread to the shopping list» or «spent 12€ coffee» in the menu search, or press Ctrl+K over any app; the app opens with the form filled in.
+
+## Version 2.78.01
+- orOS Drive on the phone: a file that could not be saved to orOS now shows a notification, and file pickers stay light until you sign in to orOS Drive.
+
+## Version 2.78.00
+- Send to someone: send a whole calendar or a date range from Calendar › More. It opens month by month in any browser, as an .ics file or straight into orOS.
+
 ## Version 2.77.00
 - Notifications with orOS closed (optional): turn it on per device in Settings › Notifications and alarms and reminders arrive even when orOS is closed.
 

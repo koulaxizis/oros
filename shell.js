@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "2.77.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "2.80.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -3253,6 +3253,134 @@
     } else openAppById("assistant");
   }
 
+  // ---------- Command bar (commands/, strategy §10, BR-CMD) ----------
+  // One line of words → one action in an app, on the device, no AI
+  // (commands/core.js). Two ways in: the first row of the menu search
+  // (Enter runs it) and a small bar over any app (commands/bar.js):
+  // Ctrl+K, and Ctrl+Alt+Shift+K everywhere (SC_DEFS). Notes and Wiki
+  // keep their own Ctrl+K (their search). Both files load on first use.
+  var CMD_OWN_CTRLK = { notes: true, wiki: true };
+  var cmdLoad = null;
+  function cmdModule() {
+    if (window.OrosCommands && window.orosCmdBar && window.OrosCalQuick) return Promise.resolve(window.OrosCommands);
+    if (!cmdLoad) {
+      var load = function (src) {
+        return new Promise(function (resolve, reject) {
+          var sc = document.createElement("script");
+          sc.src = src + "?v=" + APP_VERSION;
+          sc.onload = resolve;
+          sc.onerror = reject;
+          document.head.appendChild(sc);
+        });
+      };
+      cmdLoad = Promise.all([
+        window.OrosCalQuick ? null : load("calendar/quickadd.js"),
+        window.OrosCommands ? null : load("commands/core.js"),
+        window.orosCmdBar ? null : load("commands/bar.js")
+      ]).then(function () {
+        if (!window.OrosCommands || !window.orosCmdBar) throw new Error("commands missing");
+        return window.OrosCommands;
+      });
+      cmdLoad.catch(function () { cmdLoad = null; });
+    }
+    return cmdLoad;
+  }
+  function cmdAppName(id) {
+    var k = "app." + id, v = window.t(k);
+    if (v !== k) return v;
+    for (var i = 0; i < state.apps.length; i++) if (state.apps[i].id === id) return state.apps[i].name || id;
+    return id;
+  }
+  function cmdToday() {
+    var d = new Date(), m = d.getMonth() + 1, dd = d.getDate();
+    return d.getFullYear() + "-" + (m < 10 ? "0" : "") + m + "-" + (dd < 10 ? "0" : "") + dd;
+  }
+  // The installed apps with the names a user may type (EN, EL, apps.json).
+  function cmdApps() {
+    return state.apps.filter(function (a) { return a && a.type === "internal"; }).map(function (a) {
+      var names = [a.name, cmdAppName(a.id)];
+      var TR = window.OROS_TRANSLATIONS || {}, en = TR.en, el = TR.el;
+      if (en && en["app." + a.id]) names.push(en["app." + a.id]);
+      if (el && el["app." + a.id]) names.push(el["app." + a.id]);
+      return { id: a.id, names: names };
+    });
+  }
+  // null until commands/ is loaded (the menu row then waits for it).
+  function cmdParse(q) {
+    var C = window.OrosCommands;
+    if (!C) return null;
+    return C.parse(q, { today: cmdToday(), apps: cmdApps(), cal: window.OrosCalQuick });
+  }
+  function cmdRun(cmd) {
+    var C = window.OrosCommands;
+    var c = C ? C.call(cmd, state.lang) : null;
+    if (!c) return;
+    closeMenu();
+    if (c.fn === "openAppById") { openAppById(c.args[0]); return; }
+    var f = window[c.fn];
+    if (typeof f === "function") f.apply(window, c.args);
+  }
+  function cmdMatchApps(q) {
+    var fq = menuFold(q.trim());
+    if (!fq) return [];
+    var hits = [];
+    cmdApps().forEach(function (a) {
+      var best = -1;
+      a.names.forEach(function (n) {
+        var at = menuFold(String(n || "")).indexOf(fq);
+        if (at >= 0 && (best < 0 || at < best)) best = at;
+      });
+      if (best >= 0) hits.push({ id: a.id, name: cmdAppName(a.id), at: best });
+    });
+    hits.sort(function (x, y) { return x.at - y.at || x.name.localeCompare(y.name); });
+    return hits;
+  }
+  function openCmdBar(text) {
+    if (SOLO) return;
+    cmdModule().then(function () {
+      closeMenu();
+      window.orosCmdBar.open({
+        lang: function () { return state.lang; },
+        parse: cmdParse,
+        describe: function (cmd) { return window.OrosCommands.describe(cmd, state.lang); },
+        appName: cmdAppName,
+        apps: cmdMatchApps,
+        run: cmdRun,
+        openApp: openAppById,
+        ask: hasApp("assistant") ? function (q) { openAssistant(q); } : null
+      }, text);
+    }, function () {
+      notifySys("dim", state.lang === "el"
+        ? "Η γραμμή εντολών δεν φορτώθηκε. Έλεγξε τη σύνδεση και δοκίμασε ξανά."
+        : "The command bar did not load. Check the connection and try again.");
+    });
+  }
+  // Ctrl+K (Cmd+K on a Mac), from the desktop or from inside an app.
+  function cmdIsCtrlK(e) {
+    return (e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.code === "KeyK";
+  }
+  document.addEventListener("keydown", function (e) {
+    if (!cmdIsCtrlK(e) || e.defaultPrevented) return;
+    if (window.orosCmdBar && window.orosCmdBar.isOpen()) return;
+    e.preventDefault();
+    openCmdBar();
+  });
+  (function () {
+    var frame = document.getElementById("app-frame");
+    if (!frame) return;
+    frame.addEventListener("load", function () {
+      var w;
+      try { w = frame.contentWindow; if (!w || !w.document) return; } catch (e) { return; }   // not same-origin
+      w.addEventListener("keydown", function (e) {
+        if (!cmdIsCtrlK(e)) return;
+        if (state.running && CMD_OWN_CTRLK[state.running.id]) return;   // the app's own Ctrl+K
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        openCmdBar();
+      }, true);
+    });
+  })();
+
   // Ctrl+Alt+Shift+F: the menu opens with the cursor in the field,
   // from the desktop or from inside an app.
   function openMenuSearch() {
@@ -3368,6 +3496,52 @@
 
     menu.appendChild(heading);
 
+    // Command bar: when the line is a command, its row comes first
+    // and Enter runs it (commands/core.js, loaded on the first query).
+    var cmdHost = document.createElement("div");
+    cmdHost.id = "menu-cmd";
+    menu.insertBefore(cmdHost, heading);
+    var menuCmd = null;
+    function renderCmdRow() {
+      cmdHost.textContent = "";
+      menuCmd = null;
+      var q = menuQuery.trim();
+      if (!q || SOLO) return;
+      if (!window.OrosCommands) {
+        cmdModule().then(function () { if (cmdHost.isConnected && menuQuery.trim() === q) renderCmdRow(); }, function () {});
+        return;
+      }
+      var cmd = cmdParse(q);
+      if (!cmd) return;
+      menuCmd = cmd;
+      var d = window.OrosCommands.describe(cmd, state.lang);
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "menu-cmd";
+      var v = document.createElement("span");
+      v.className = "menu-cmd-verb";
+      v.textContent = d.verb + (cmd.kind === "open" ? " " + cmdAppName(cmd.app) : "");
+      b.appendChild(v);
+      if (d.detail) {
+        var dt = document.createElement("span");
+        dt.className = "menu-cmd-detail";
+        dt.textContent = d.detail;
+        b.appendChild(dt);
+      }
+      if (cmd.kind !== "open") {
+        var ap = document.createElement("span");
+        ap.className = "menu-cmd-app";
+        ap.textContent = "→ " + cmdAppName(cmd.app);
+        b.appendChild(ap);
+      }
+      b.addEventListener("click", function () { cmdRun(cmd); });
+      b.addEventListener("keydown", function (e) {
+        if (e.key === "ArrowDown") { var n = menuNavItems(); if (n[1]) { e.preventDefault(); n[1].focus(); } }
+        else if (e.key === "ArrowUp") { e.preventDefault(); search.focus(); }
+      });
+      cmdHost.appendChild(b);
+    }
+
     var appsHost = document.createElement("div");
     appsHost.id = "menu-apps";
     menu.appendChild(appsHost);
@@ -3381,12 +3555,16 @@
 
     search.addEventListener("input", function () {
       menuQuery = search.value;
+      renderCmdRow();
       renderAppList();
       scheduleDataSearch();
     });
     search.addEventListener("keydown", function (e) {
       if (e.key === "Enter") {
-        if (firstMatch) {
+        if (menuCmd) {
+          e.preventDefault();
+          cmdRun(menuCmd);
+        } else if (firstMatch) {
           e.preventDefault();
           openApp(firstMatch);
         } else {
@@ -3399,6 +3577,7 @@
       } else if (e.key === "Escape" && search.value) {
         e.stopPropagation();          // clear first; next Escape closes the menu
         search.value = menuQuery = "";
+        renderCmdRow();
         renderAppList();
         scheduleDataSearch();
       }
@@ -3409,7 +3588,7 @@
     function menuNavItems() {
       if (!menuQuery.trim()) return [];
       return Array.prototype.slice.call(
-        menu.querySelectorAll("#menu-apps .menu-item, #menu-results button"));
+        menu.querySelectorAll("#menu-cmd button, #menu-apps .menu-item, #menu-results button"));
     }
     function onNavKey(e) {
       if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
@@ -3600,6 +3779,7 @@
       appendAsk(host, q);
     }
 
+    renderCmdRow();
     renderAppList();
     scheduleDataSearch();
     if (keepSearch && keepSearch.focus) {
@@ -6244,7 +6424,8 @@
     { key: "t", label: "sc.desc.timer",      fn: scTimesheetToggle },
     { key: "a", label: "sc.desc.assistant",  fn: function() { openAssistant(); } },
     { key: "y", label: "sc.desc.today",      fn: function() { openAppById("today"); } },
-    { key: "n", label: "sc.desc.stickies",   fn: scNewSticky }
+    { key: "n", label: "sc.desc.stickies",   fn: scNewSticky },
+    { key: "k", label: "sc.desc.cmdbar",     fn: function() { openCmdBar(); } }
   ];
 
   // Public contract consumed by iframe apps (same-origin, so this
