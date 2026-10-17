@@ -129,19 +129,28 @@
     var p = d.split("-");
     return p.length === 3 ? p[2] + "/" + p[1] + "/" + p[0] : (p.length === 2 ? p[1] + "/" + p[0] : p[0]);
   }
+  // Date words of the cards and forms. English and Greek inline; any
+  // other language from the "familytree" pack (../i18n.js), when it is
+  // loaded in this window (never in node).
   var QWORD = {
-    en: { abt: "c. ", bef: "before ", aft: "after " },
-    el: { abt: "περ. ", bef: "πριν ", aft: "μετά " }
+    en: { "dq.abt": "c. ", "dq.bef": "before ", "dq.aft": "after ", "dq.abtShort": "c.", "span.born": "b. ", "date.sep": "/" },
+    el: { "dq.abt": "περ. ", "dq.bef": "πριν ", "dq.aft": "μετά ", "dq.abtShort": "περ.", "span.born": "γ. ", "date.sep": "/" }
   };
+  function qw(lang) {
+    if (QWORD[lang]) return QWORD[lang];
+    var I = typeof window !== "undefined" && window.orosI18n;
+    return I && typeof lang === "string" ? I.table(QWORD, "familytree", lang) : QWORD.en;
+  }
   function fmtDate(x, lang) {
     if (!x || !validD(x.d)) return "";
-    var w = (QWORD[lang] || QWORD.en)[x.q] || "";
-    return w + fmtD(x.d);
+    var w = qw(lang), q = x.q ? w["dq." + x.q] || "" : "";
+    var s = fmtD(x.d);
+    return q + (w["date.sep"] && w["date.sep"] !== "/" ? s.split("/").join(w["date.sep"]) : s);
   }
   function yearOf(x, lang) {
     if (!x || !validD(x.d)) return "";
     var y = String(+x.d.slice(0, 4));
-    if (x.q === "abt") return (lang === "el" ? "περ." : "c.") + y;
+    if (x.q === "abt") return qw(lang)["dq.abtShort"] + y;
     if (x.q === "bef") return "<" + y;
     if (x.q === "aft") return ">" + y;
     return y;
@@ -153,7 +162,7 @@
       if (b || d) return (b || "?") + "–" + (d || "?");
       return "†";
     }
-    return b ? (lang === "el" ? "γ. " : "b. ") + b : "";
+    return b ? qw(lang)["span.born"] + b : "";
   }
 
   // ---------- 3. Normalizers ----------
@@ -674,7 +683,7 @@
   // opts: { lang, hideLiving, photos, dates, unknown }
   function scene(lay, data, treeId, opts) {
     opts = opts || {};
-    var lang = opts.lang === "el" ? "el" : "en";
+    var lang = typeof opts.lang === "string" ? opts.lang : "en";
     var ix = index(data, treeId);
     var items = [];
     lay.links.forEach(function (l) { items.push({ tag: "path", cls: l.cls, a: { d: pathD(l.segs) } }); });

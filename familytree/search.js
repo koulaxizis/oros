@@ -23,11 +23,24 @@
     return /^\d{4}/.test(d) ? d.slice(0, 4) : "";
   }
 
+  // The one text of its own (same key and English as familytree.js).
+  // The shell runs this file: a pack language shows the "familytree"
+  // pack line when the shell has it, else English.
+  var S = {
+    en: { "unnamed": "(no name)" },
+    el: { "unnamed": "(χωρίς όνομα)" }
+  };
+  function unnamed(lang) {
+    var I = root && root.orosI18n;
+    var tab = S[lang] || (I && lang ? I.table(S, "familytree", lang) : S.en);
+    return tab.unnamed || S.en.unnamed;
+  }
+
   var PROVIDER = {
     id: "familytree",
     keys: [KEY],
     search: function (ctx) {
-      var d = ctx.readJSON(KEY), out = [], el = ctx.lang === "el";
+      var d = ctx.readJSON(KEY), out = [];
       if (!d || !Array.isArray(d.people)) return out;
       var tombs = d.tombs && typeof d.tombs === "object" ? d.tombs : {};
       function gone(x) {
@@ -39,7 +52,7 @@
       d.people.forEach(function (p) {
         if (gone(p) || typeof p.tree !== "string" || !(p.tree in trees)) return;
         var name = [str(p.given), str(p.family)].filter(Boolean).join(" ") ||
-                   (el ? "(χωρίς όνομα)" : "(no name)");
+                   unnamed(ctx.lang);
         var by = year(p.birth), dy = year(p.death);
         out.push({
           id: p.id,
