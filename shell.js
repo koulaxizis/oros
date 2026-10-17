@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "2.70.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "2.71.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -5508,6 +5508,9 @@
         { name: "U²-Net (u2netp model)", url: "https://github.com/xuebinqin/U-2-Net",
           by: "Xuebin Qin & contributors", lic: "Apache-2.0",
           en: "The background removal model (Atelier)", el: "Το μοντέλο αφαίρεσης φόντου (Ατελιέ)" },
+        { name: "MI-GAN (512 Places2 model)", url: "https://github.com/Picsart-AI-Research/MI-GAN",
+          by: "Picsart AI Research", lic: "MIT",
+          en: "Filling a part of a picture: Magic eraser and Magic grab (Atelier)", el: "Γέμισμα μέρους μιας εικόνας: Μαγική γόμα και Μαγική λαβή (Ατελιέ)" },
         { name: "Tesseract.js 7.0.0 + tesseract.js-core 6.1.2", url: "https://github.com/naptha/tesseract.js",
           by: "Project Naptha, Google (Tesseract OCR) & contributors", lic: "Apache-2.0",
           en: "Reading text from a business card photo, on the device (Contacts); text of photos and scanned PDFs (Assistant)", el: "Ανάγνωση κειμένου από φωτογραφία κάρτας, στη συσκευή (Επαφές)· κείμενο φωτογραφιών και σκαναρισμένων PDF (Βοηθός)" },
@@ -5777,6 +5780,9 @@
         { name: "Pollinations", url: "https://pollinations.ai/",
           by: "Pollinations.AI", lic: { en: "Their terms, your own key (free plan)", el: "Οι όροι τους, με δικό σου κλειδί (δωρεάν πλάνο)" },
           en: "AI chat you choose (Assistant)", el: "Συζήτηση με το AI που διαλέγεις (Βοηθός)" },
+        { name: "Pollinations, Hugging Face, OpenAI, Stability AI, Stable Diffusion WebUI / Forge", url: "https://pollinations.ai/",
+          by: "Each provider or project", lic: { en: "Their terms; Pollinations free with no key, the others with your own key or your own computer", el: "Οι όροι τους· το Pollinations δωρεάν χωρίς κλειδί, τα άλλα με δικό σου κλειδί ή στον υπολογιστή σου" },
+          en: "Image AI you choose: Image from text (Atelier)", el: "AI εικόνας που διαλέγεις: Εικόνα από κείμενο (Ατελιέ)" },
         { name: "Cloudflare Workers", url: "https://workers.cloudflare.com/",
           by: "Cloudflare, Inc.", lic: { en: "Runs the orOS mail relay (code in relay/); D1 keeps encrypted share links with an expiry", el: "Τρέχει το relay αλληλογραφίας του orOS (κώδικας στο relay/)· το D1 κρατά κρυπτογραφημένους συνδέσμους με λήξη" },
           en: "Mail: IMAP over HTTPS, nothing stored", el: "Αλληλογραφία: IMAP μέσω HTTPS, δεν αποθηκεύεται τίποτα" },
