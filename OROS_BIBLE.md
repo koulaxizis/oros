@@ -7451,3 +7451,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Office apps send to each other: a Spreadsheet selection becomes a Writer table, text becomes slides, a mind map, Kanban cards or a Prompter prompt (Send to an app in Spreadsheet, Slides, Mind map and Kanban).
 - Files: `send/core.js`, `writer/writer.js`, `slides/{app,editor}.js`, `mindmap/mindmap.js`, `kanban/{kanban,tools}.js`, `kanban/kanban.css`, `prompter/prompter.js`, `spreadsheet/spreadsheet.js`, Bible.
   - Tests: full suite green; real Chromium 1280 EN / 360 EL. Not tested: a real phone, Safari.
+
+### 2026-10-17 — WebDAV W3 (relay): /dav pass-through for servers without CORS (#477) — relay only, no APP_VERSION
+- WebDAV W3 (relay): /dav passes WebDAV requests to the user's own server when it sends no CORS headers (opt-in on the client, next PR).
+- Files: `relay/dav.js` (new), `relay/core.js`, `relay/README.md`, `tests/dav-relay.test.js`, Bible. Mail thread (relay owner) OK at 06cfaea.
+  - Tests: full suite green; real workerd (wrangler dev) against WsgiDAV. Not tested: a real Nextcloud / Synology through the deployed relay.
