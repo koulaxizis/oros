@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.98.01
+- Behind the scenes: groundwork for an experimental multitasking mode. Nothing changes for you yet.
+
 ## Version 2.98.00
 - Flashcards: pictures and sounds on cards (pick, paste, drop or record), Read aloud with your device's own voices, a Browse list with actions on many cards, hide until tomorrow and suspend, bold, italic and lists.
 
