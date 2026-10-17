@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.72.00
+- Send to someone: links with an expiry (1, 7 or 30 days), stored encrypted and taken back any time from My shared links; long notes and Wiki articles can now be sent.
+
 ## Version 2.71.01
 - Maps: public transport now says when an area's timetables are out of date (Athens, for now).
 
