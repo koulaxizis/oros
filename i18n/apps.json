@@ -47,6 +47,14 @@
    ]
   },
   {
+   "app": "mindmap",
+   "files": [
+    "mindmap/mindmap.js",
+    "mindmap/mm-core.js",
+    "mindmap/search.js"
+   ]
+  },
+  {
    "app": "notes",
    "files": [
     "notes/notes.js",
@@ -65,6 +73,31 @@
    "app": "shell",
    "files": [
     "translations.js"
+   ]
+  },
+  {
+   "app": "slides",
+   "files": [
+    "slides/app.js",
+    "slides/core.js",
+    "slides/search.js"
+   ]
+  },
+  {
+   "app": "spreadsheet",
+   "files": [
+    "spreadsheet/convert.js",
+    "spreadsheet/functions.js",
+    "spreadsheet/platforms.js",
+    "spreadsheet/search.js",
+    "spreadsheet/spreadsheet.js"
+   ]
+  },
+  {
+   "app": "stickies",
+   "files": [
+    "stickies/host.js",
+    "stickies/stickies.js"
    ]
   },
   {
