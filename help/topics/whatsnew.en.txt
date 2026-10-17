@@ -1,6 +1,12 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.71.01
+- Maps: public transport now says when an area's timetables are out of date (Athens, for now).
+
+## Version 2.71.00
+- Atelier gets Magic eraser and Magic grab (on the device), Image from text, Magic edit and Magic expand (with the image AI you choose in Assistant › Settings › Pictures: Pollinations, free, by default), Design from a description and Magic animate.
+
 ## Version 2.70.00
 - New app Scanner & PDF (Office): merge PDFs, split them (each page, every few pages or page ranges), delete, duplicate, turn and drag pages into order, and make a PDF from pictures. Everything happens on your device. In Files, select PDFs or pictures and choose Open in Scanner & PDF. Camera scanning comes next.
 
