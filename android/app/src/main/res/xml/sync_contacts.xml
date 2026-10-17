@@ -3,4 +3,4 @@
     android:contentAuthority="com.android.contacts"
     android:accountType="@string/account_type"
     android:supportsUploading="true"
-    android:userVisible="false" />
+    android:userVisible="true" />

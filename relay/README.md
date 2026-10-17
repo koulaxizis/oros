@@ -27,6 +27,7 @@ Mail app (browser) ──HTTPS/JSON──▶ relay (Worker) ──IMAP over TLS�
 | `crmform.js` | CRM's public contact form (`/crm/f/<k>`) and op `crmf`, kept in the same D1 until the user's CRM picks the messages up (see below) |
 | `share.js` | "Send to someone" links with an expiry: op `shr` and `/s/<id>/<i>`, encrypted pieces kept in their own D1 until they expire or are revoked (see below) |
 | `remote.js` | Studio Remote's meeting rooms: a Durable Object that joins two WebSockets (see below) |
+| `push.js` | Notifications with orOS closed (op `push`): one Durable Object per device holding its encrypted reminders, sent by Web Push at their time (see below) |
 | `wrangler.toml` | Worker name and `ALLOWED_ORIGINS` |
 
 Tests: `tests/mail.test.js` (Node, runs in CI) drives `core.js` +
@@ -515,6 +516,73 @@ The Durable Object is declared at the top level of `wrangler.toml`
 (binding plus a `new_sqlite_classes` migration, free plan), so the
 normal deploy from `main` creates it. The room reads no env and no
 secrets, and never logs frames.
+
+## Notifications with orOS closed (op `push`)
+
+Optional, off by default: a device turns it on in Settings ›
+Notifications. That device then has a box here, one SQLite Durable
+Object (`PushBox`, binding `PUSH`) named by a random id the page made.
+The box holds the device's push endpoint and its next reminders.
+
+The page encrypts every reminder itself (RFC 8291, aes128gcm, with the
+subscription's own keys) before it is sent. A box therefore keeps only an
+opaque key, a time, a TTL and a packet it cannot read. At that time its
+alarm signs a VAPID token (RFC 8292, ES256) and POSTs the packet to the
+push service: Google FCM for Chrome and Android, Microsoft WNS for Edge,
+Mozilla for Firefox. The service wakes the device's service worker.
+These services see the endpoint, the time and the size, never the
+content. No cron job and no D1 are involved: each box sets one alarm,
+for its next reminder.
+
+| act | Fields | Returns |
+|---|---|---|
+| `key` | | `{ key }`, the VAPID public key for `pushManager.subscribe` |
+| `sub` | `id`, `tok`, `endpoint` | `{ ok }` (creates the box, or changes the endpoint of the same `tok`) |
+| `set` | `id`, `tok`, `items[{ k, at, ct, ttl? }]` | `{ n }`. The whole schedule, replaced in one transaction. |
+| `test` | `id`, `tok`, `ct` | `{ sent }` (one packet now) |
+| `del` | `id`, `tok` | `{ ok }` (the box is erased) |
+
+Rules:
+- `id` is exactly 22 base64url characters and `tok` exactly 43, both
+  from the page's `crypto.getRandomValues`. The box keeps only the
+  SHA-256 of `tok` and compares it in constant time. A wrong `tok` and a
+  missing box get the same answer, `gone`.
+- The endpoint is parsed with `URL`. It must be https, with no port, no
+  user or password and no fragment, and its path must match
+  `^/[A-Za-z0-9._~:/%-]+$` (≤ 1 KB). The host must be one of
+  `fcm.googleapis.com`, `updates.push.services.mozilla.com`,
+  `web.push.apple.com`, or end in `.push.services.mozilla.com`,
+  `.notify.windows.com` or `.push.apple.com`. The endpoint is checked at
+  `sub` and again before every send. Redirects are never followed
+  (`redirect: "manual"`).
+- Limits: 300 reminders, each packet ≤ 4096 base64url characters
+  (about 3 KB). `at` is at most 8 days ahead and `ttl` 60–3600 s
+  (default 900). `sub` is allowed 5 times per IP per day, `test` once
+  per box per 30 s and `set` 60 times per box per hour.
+- The push request carries `TTL` and `Urgency: high`, and a VAPID JWT
+  with `aud` = the endpoint's origin and `exp` 12 h ahead, cached in the
+  box's memory.
+- What the push service answers:
+  - 2xx: sent.
+  - 404 or 410: the subscription is dead and the box deletes itself.
+  - 429 or 5xx: tried again in 30 s, then in 2 min, then dropped.
+  - Anything else (413, other 4xx, a redirect): that reminder is dropped.
+- A reminder more than 10 minutes late when the alarm runs (the relay
+  was down) is dropped, never rung late. The device's own engine shows
+  missed items the next time orOS opens.
+- A box with no `set` for 30 days deletes itself (`deleteAll` +
+  `deleteAlarm`).
+- Errors are fixed codes (`nopush`, `gone`, `rate`, `bad-request`,
+  `nostore`). They never carry an exception's text or the push service's
+  body. Nothing is logged.
+
+Secrets (Cloudflare dashboard → the Worker → Settings → Variables and
+Secrets, type *Secret*):
+- `VAPID_PRIVATE`: the P-256 key pair as a JWK, `{"kty":"EC","crv":"P-256","d":…,"x":…,"y":…}`.
+- `VAPID_SUBJECT`: `mailto:` + an address the push services can write to.
+
+Without them every `push` request answers 503 `nopush`, and Settings
+shows the switch as unavailable.
 
 ## Rules it enforces
 

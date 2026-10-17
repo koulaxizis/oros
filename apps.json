@@ -267,6 +267,14 @@
       "type": "internal"
     },
     {
+      "id": "scanpdf",
+      "name": "Scanner & PDF",
+      "category": "Office",
+      "icon": "scanpdf",
+      "url": "scanpdf/",
+      "type": "internal"
+    },
+    {
       "id": "quote",
       "name": "Quote",
       "category": "Business",
@@ -727,7 +735,8 @@
       "icon": "music",
       "url": "music/",
       "search": "search.js",
-      "type": "internal"
+      "type": "internal",
+      "today": "today.js"
     },
     {
       "id": "mixer",

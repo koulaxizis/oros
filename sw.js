@@ -20,7 +20,7 @@
 // GitHub Action should stamp just the version number; we prepend
 // the oros-v prefix here for cache namespace separation.
 
-var CACHE_VERSION = "oros-v2.69.02";
+var CACHE_VERSION = "oros-v2.77.00";
 var SHELL_CACHE   = "oros-shell-" + CACHE_VERSION;
 var RUNTIME_CACHE = "oros-runtime-" + CACHE_VERSION;
 // WebLLM's library (vendor/webllm, about 7 MB, loaded only when the
@@ -180,9 +180,11 @@ var PRECACHE_URLS = [
   "./pet.css",
   "./pet.js",
   "./launcher.js",
+  "./profiles.js",
   "./seasonal.js",
   "./fileopen.js",
   "./phone.js",
+  "./webpush.js",
   "./vault.js",
   "./remote-link.js",
   "./translations.js",
@@ -1093,6 +1095,7 @@ var PRECACHE_URLS = [
   "assistant/index.html",
   "assistant/assistant.css",
   "assistant/core.js",
+  "assistant/imgai.js",
   "assistant/summary.js",
   "assistant/assistant.js",
   "assistant/import.js",
@@ -1105,6 +1108,8 @@ var PRECACHE_URLS = [
   "share/kinds.js",
   "share/send.js",
   "share/view.js",
+  "share/relay.js",
+  "share/out.js",
   "send/core.js",
   "send/sheet.js",
   "settings/",
@@ -1231,8 +1236,13 @@ var PRECACHE_URLS = [
   "atelier/relayout.js",
   "atelier/aitext.js",
   "atelier/cutout.js",
+  "atelier/inpaint.js",
   "atelier/ai.js",
   "atelier/editpic.js",
+  "atelier/magic.js",
+  "atelier/imagine.js",
+  "atelier/magicai.js",
+  "atelier/magicdesign.js",
   "atelier/bulk.js",
   "atelier/clips.js",
   "atelier/video.js",
@@ -1294,6 +1304,15 @@ var PRECACHE_URLS = [
   "converter/converter.js",
   "converter/help.en.txt",
   "converter/help.el.txt",
+  "scanpdf/",
+  "scanpdf/index.html",
+  "scanpdf/scanpdf.css",
+  "scanpdf/core.js",
+  "scanpdf/pdfops.js",
+  "scanpdf/scanpdf.js",
+  "scanpdf/help.en.txt",
+  "scanpdf/help.el.txt",
+  "vendor/pdf-lib/pdf-lib.min.js",
   "google-import.js",
   "enrich.js",
   "enrichui.js",
@@ -1343,7 +1362,9 @@ var PRECACHE_URLS = [
   "music/library.js",
   "music/open.js",
   "music/servers.js",
+  "music/mixes.js",
   "music/music.js",
+  "music/today.js",
   "radio/",
   "radio/index.html",
   "radio/search.js",
@@ -2189,13 +2210,13 @@ self.addEventListener("fetch", function (event) {
   // this release's own precache copy (releaseCopy). Everything else
   // goes to the network; the loose ignoreSearch match across caches
   // stays in the network-FAILURE branch only (offline best effort).
-  // Atelier's background tool (vendor/ort + vendor/u2netp, about
-  // 16 MB) is fetched once and kept in Atelier's own IndexedDB
+  // Atelier's picture tools (vendor/ort + vendor/u2netp + vendor/migan,
+  // about 16 + 27 MB) are fetched once and kept in Atelier's own IndexedDB
   // (atelier/cutout.js): no second copy in the runtime cache. The same
   // for Writer's spelling dictionaries (vendor/hunspell, kept by
   // writer/spell-worker.js in IndexedDB). Other lazy vendor files
   // (tesseract, libarchive, libraw, rnnoise) use the runtime cache.
-  if (/\/vendor\/(ort|u2netp|hunspell)\//.test(url.pathname)) return;
+  if (/\/vendor\/(ort|u2netp|migan|hunspell)\//.test(url.pathname)) return;
   // WebLLM: cache-first in its own cache, matched without ?v=. The
   // file name carries the library version (web-llm-<version>.js), so
   // a new version is a cache miss; storing it drops the old copy.
@@ -2242,4 +2263,44 @@ self.addEventListener("fetch", function (event) {
       });   // releaseCopy
     })
   );
+});
+// ---- Notifications with orOS closed (webpush.js, relay/push.js) ----
+// The packet was encrypted by the page for this subscription; the
+// browser has decrypted it already. While an orOS window is on screen
+// the in-app engine rings, so nothing is shown here. Otherwise one
+// notification, tag = the shell's dedupKey, so an in-app one for the
+// same reminder replaces it instead of doubling.
+self.addEventListener("push", function (event) {
+  var d = null;
+  try { d = event.data ? event.data.json() : null; } catch (e) { d = null; }
+  if (!d || d.v !== 1 || typeof d.title !== "string" || typeof d.k !== "string") return;
+  event.waitUntil(self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(function (list) {
+    var onScreen = list.some(function (c) { return c.visibilityState === "visible"; });
+    if (onScreen && d.ns !== "system") return;
+    var alarm = d.kind === "alarm";
+    return self.registration.showNotification("orOS — " + d.title.slice(0, 120), {
+      body: typeof d.body === "string" ? d.body.slice(0, 240) : "",
+      tag: d.k.slice(0, 200),
+      renotify: alarm,
+      requireInteraction: alarm,
+      vibrate: alarm ? [400, 200, 400, 200, 400] : [200],
+      icon: "./icons/icon-192.png",
+      badge: "./icons/icon-192.png",
+      timestamp: typeof d.at === "number" ? d.at : Date.now(),
+      data: { link: typeof d.link === "string" ? d.link.slice(0, 200) : "" }
+    });
+  }));
+});
+
+self.addEventListener("notificationclick", function (event) {
+  var link = (event.notification.data && event.notification.data.link) || "";
+  event.notification.close();
+  event.waitUntil(self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(function (list) {
+    var c = list.filter(function (w) { return new URL(w.url).origin === self.location.origin; })[0];
+    if (c) {
+      if (link) c.postMessage({ t: "oros-push-open", link: link });
+      return c.focus();
+    }
+    return self.clients.openWindow("./" + (link ? "?phone-open=" + encodeURIComponent(link) : ""));
+  }));
 });

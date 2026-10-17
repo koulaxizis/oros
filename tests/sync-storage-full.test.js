@@ -51,7 +51,8 @@ test("a mailbox copy that cannot be saved blocks the push: the other device's wo
     "B's version parked on A once storage allows it");
 });
 
-test("a token refresh on a full store still yields a usable token", async () => {
+test("a token refresh on a full store still yields a usable token",
+  { skip: process.env.OROS_CLOUD === "webdav" && "Dropbox tokens only" }, async () => {
   const db = new FakeDropbox();
   let refreshes = 0;
   const A = await createDevice(db, "A", { "oros-db-expiry": "1" }, {   // token expired: next call refreshes
