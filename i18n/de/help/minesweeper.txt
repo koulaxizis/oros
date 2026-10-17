@@ -1,0 +1,40 @@
+# Minesweeper
+Öffne jede Zelle, unter der keine Mine liegt. Jede Zahl sagt dir, wie viele der acht Zellen um sie herum eine Mine verbergen, so kannst du herausfinden, wo sie liegen, und sie mit einer Flagge markieren.
+
+## So spielst du
+Tippe oder klicke auf eine beliebige Zelle, um zu beginnen. Die erste Zelle ist immer sicher und öffnet einen Bereich, weil die Minen erst danach verteilt werden.
+
+- Eine leere Zelle öffnet ihre Nachbarn von selbst.
+- Setze eine Flagge auf eine Zelle, unter der sicher eine Mine liegt. `Minen` zählt beim Markieren herunter.
+- Tippe oder klicke auf eine Zahl, deren Minen alle markiert sind, um alle anderen Zellen um sie herum auf einmal zu öffnen.
+- Öffnest du eine Mine, ist das Spiel vorbei (`Bumm! Eine Mine`). Öffnest du jede sichere Zelle, hast du gewonnen (`Geräumt!`).
+
+Eine Zelle mit Flagge öffnet sich nicht aus Versehen; entferne zuerst die Flagge.
+
+## Steuerung
+- Tippen oder Klicken öffnet eine Zelle.
+- Rechtsklick, oder langes Drücken auf einem Touchscreen, setzt oder entfernt eine Flagge.
+- Die Flaggen-Schaltfläche schaltet den Flaggenmodus ein (`Flaggenmodus an: Tippen setzt Flagge`) und aus.
+- Die Pfeiltasten bewegen dich auf dem Feld; [[Space]] oder [[Enter]] öffnet; [[F]] setzt eine Flagge.
+- [[N]] oder `Neues Spiel (N)` startet ein neues Spiel. Verlässt du ein angefangenes Spiel, erscheint kurz eine Schaltfläche `Rückgängig`, um es zurückzuholen.
+
+Auf großen Feldern wechselt die Zoom-Schaltfläche zwischen `Feld einpassen` und `Größere Zellen (Feld scrollen)`; bei größeren Zellen ziehst du, um dich zu bewegen. Die Uhr läuft nur, solange die App zu sehen ist, und ein angefangenes Spiel bleibt für das nächste Mal auf diesem Gerät.
+
+## Stufen und Wertung
+- `Anfänger`: 9×9 mit 10 Minen.
+- `Fortgeschritten`: 16×16 mit 40 Minen.
+- `Experte`: 30×16 mit 99 Minen, auf einem hohen Bildschirm hochkant gedreht.
+
+Wechselst du die Stufe, beginnt ein neues Spiel. `Rekorde` zeigt pro Stufe deine beste Siegzeit, gewonnene und gespielte Spiele.
+
+### Tagesfeld
+Die Kalender-Schaltfläche öffnet das `Tagesfeld`: Alle bekommen am selben Datum dasselbe fortgeschrittene Feld (16×16, 40 Minen), mit demselben bereits geöffneten sicheren Bereich als Start. Es wird auf deinem Gerät aus dem Datum erstellt, funktioniert also offline, und um Mitternacht deiner Ortszeit kommt ein neues. Ein Punkt auf der Schaltfläche heißt, dass das heutige Feld noch wartet. Die Uhr startet mit deinem ersten Zug.
+
+Das Tagesfeld hat nur einen Versuch: Das erste Ergebnis zählt, Sieg oder Niederlage. Gewinne an aufeinanderfolgenden Tagen, um eine Serie aufzubauen; `Rekorde` zeigt die gespielten und gewonnenen Tagesfelder, deine Serie und deine beste Serie. `Teilen` sendet dein Ergebnis ohne Spoiler: deine Zeit, die gefundenen Minen und ein Quadrat pro Mine (grün für gefunden, schwarz für nicht gefunden und eine Explosion, wo sie hochging). Auf dem Handy öffnet sich das Teilen-Menü, sonst wird der Text kopiert. `Alle Spiele` öffnet das [Spielecenter](help:a/gamecenter), wenn es installiert ist.
+
+## Synchronisierung
+Deine Rekorde und Tagesergebnisse werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. `Rekorde zurücksetzen` in `Rekorde` löscht sie nach deiner Bestätigung auf allen Geräten. Stufe, Zoom, das angefangene Spiel und die Ton-Schaltfläche bleiben auf diesem Gerät.
+
+## Tipps
+- Eine 1 neben einer einzigen geschlossenen Zelle heißt, dass diese Zelle eine Mine ist: Setze eine Flagge.
+- Nutze den Klick auf Zahlen, um um fertige Zahlen herum schnell aufzuräumen; das spart viele Tipper.

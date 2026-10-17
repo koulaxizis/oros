@@ -85,6 +85,8 @@
   var SOLVE_NODES = 60000;                  // solver budget per count
 
   // ---------- 1. Constants, i18n, helpers ----------
+  // UI language: the full code (a pack language such as "de" included).
+  // The word lists stay EN/EL: a pack language plays with English words.
   function appLang() {
     try {
       var l = localStorage.getItem("oros-lang") ||
@@ -92,7 +94,9 @@
       return l === "el" ? "el" : "en";
     } catch (e) { return "en"; }
   }
-  var LANG = appLang();
+  var LANG = window.orosI18n ? window.orosI18n.lang() : appLang();
+  var WORD_LANG = LANG === "el" ? "el" : "en";
+  function loc() { return window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB"); }
 
   var STRINGS = {
     en: {
@@ -402,6 +406,8 @@
       "res.bestI": "Καλύτερος χρόνος"
     }
   };
+
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "crossword", LANG);
 
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;
@@ -1010,7 +1016,7 @@
 
   // ---------- 4. Device-local prefs + session ----------
   // mode "i" = an imported crossword (imp = its library id).
-  var prefs = { lang: LANG, mode: "d", size: "m", theme: "random", imp: "" };
+  var prefs = { lang: WORD_LANG, mode: "d", size: "m", theme: "random", imp: "" };
 
   function themeOk(th) { return th === "random" || THEME_IDS.indexOf(th) >= 0; }
   function loadPrefs() {
@@ -1818,7 +1824,7 @@
   }
   function langName(l) { return t(l === "el" ? "lang.elLong" : "lang.enLong"); }
   function fmtDate(ts) {
-    try { return new Date(ts).toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB"); }
+    try { return new Date(ts).toLocaleDateString(loc()); }
     catch (e) { return ""; }
   }
   function bestText(s) {

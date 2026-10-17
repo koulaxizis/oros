@@ -1,0 +1,44 @@
+# Schiffe versenken
+Finde und versenke die Flotte des Computers, bevor er deine versenkt. Beide Flotten verstecken sich auf 10×10-Meeren, und ihr gebt abwechselnd je einen Schuss ab.
+
+## So wird gespielt
+Jede Flotte hat fünf Schiffe: `Flugzeugträger` (5 Felder), `Schlachtschiff` (4), `Kreuzer` (3), `U-Boot` (3) und `Zerstörer` (2).
+
+Platziere zuerst deine Flotte unter `Platziere deine Schiffe`:
+1. Wähle ein Schiff im Dock und tippe oder klicke dann auf das Feld, an dem es beginnen soll (sein oberes oder linkes Ende). Am Rand rückt es zurück, damit es passt.
+2. `Drehen` wechselt zwischen waagerecht und senkrecht. Tippe ein platziertes Schiff an, um es wieder aufzunehmen.
+3. `Zufall` platziert die ganze Flotte für dich, `Leeren` räumt das Meer.
+4. Sind alle fünf Schiffe drin, drück auf `Start`.
+
+Dann schießt du auf `Feindliche Gewässer`: Du schießt zuerst. Treffer, Fehlschüsse und versenkte Schiffe werden markiert, und der Computer antwortet auf jeden Schuss auf `Deine Flotte`. Versenke alle fünf feindlichen Schiffe, um zu gewinnen. Am Ende wird die feindliche Flotte gezeigt.
+
+## Steuerung
+- Mit der Maus zeigt das Darüberfahren, wo ein Schiff hinkäme (rot, wenn es nicht geht).
+- [[←]] [[↑]] [[→]] [[↓]] bewegen den Cursor, [[Enter]] oder [[Space]] platziert ein Schiff oder schießt.
+- [[R]] dreht, [[Backspace]] nimmt das Schiff unter dem Cursor auf, und [[Enter]] startet das Spiel, sobald die Flotte bereit ist.
+- [[N]] startet ein neues Spiel.
+
+## Stufen und Wertung
+- `Leicht`: Der Computer schießt zufällig.
+- `Mittel`: Er sucht, kreist dann einen Treffer ein und folgt der Linie.
+- `Schwer`: Er berechnet, wo deine übrigen Schiffe am wahrscheinlichsten liegen.
+
+Schalte in `Optionen` die Einstellung `Schiffe dürfen sich nicht berühren` ein, damit die Schiffe beider Flotten Abstand halten, auch an den Ecken. Während einer Schlacht gilt die Änderung ab dem nächsten Spiel. `Bilanz` zeigt Siege, Niederlagen und deine wenigsten Schüsse bei einem Sieg, je Stufe.
+
+## Zwei Geräte
+Spiel gegen jemanden mit eigenem Handy, Tablet oder Computer. Drück auf `Auf zwei Geräten spielen` (die Schaltfläche mit zwei Bildschirmen): Einer wählt `Show a code`, der andere `Enter a code` und tippt den 6-stelligen Code ein oder scannt den QR-Code, und das erste Gerät lässt das andere mit `Allow` herein. Solange ihr verbunden seid, steht `Two devices` in der Werkzeugleiste; drück darauf, um die Verbindung zu sehen oder mit `Leave the game` zu gehen. Diese Schaltflächen für zwei Geräte sind noch englisch.
+- Jeder platziert seine eigene Flotte und drückt `Start`; die Schlacht beginnt, wenn beide Flotten bereit sind, und wer zuerst schießt, wechselt von Spiel zu Spiel. Das Gerät, das den Code gezeigt hat, legt `Schiffe dürfen sich nicht berühren` fest.
+- Deine Flotte verlässt dein Gerät nicht, solange das Spiel läuft: Jeder Schuss wird vom anderen Gerät beantwortet, das ein Schiff erst zeigt, wenn es versenkt ist. Am Ende werden euch beide Flotten gezeigt und mit jeder Antwort verglichen; passen sie nicht, sagt das Ergebnis es.
+- `Neues Spiel` startet auf dem Gerät, das den Code gezeigt hat, das nächste Spiel; auf dem anderen Gerät fragt es nach einem, wenn ein Spiel vorbei ist.
+- Lädt ein Gerät neu oder verliert es das Netz, wartet das Spiel und geht dort weiter, wo es war, sobald es zurück ist (bis zu einem Tag).
+- Züge gehen direkt zwischen den beiden Geräten im selben Netz oder verschlüsselt über das orOS-Relay; online wird nichts gespeichert.
+
+Grenzen: nur zwei Spieler, jeder auf seinem eigenen Gerät mit orOS in diesem Spiel geöffnet. Spiele auf zwei Geräten zählen nicht für deine Bilanz, und die Stufen-Schaltflächen sind so lange ausgeblendet. `Leave the game` beendet es auf beiden Geräten und holt das Spiel zurück, das du auf diesem Gerät hattest.
+
+## Synchronisierung
+Deine Bilanz wird über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. `Bilanz zurücksetzen` löscht sie nach einer Bestätigung auf allen Geräten. Das laufende Spiel, die Stufe, `Optionen` und die Toneinstellung bleiben auf diesem Gerät.
+
+## Tipps
+- Das Spiel wird beim Spielen gespeichert; öffne die App erneut, um weiterzuspielen.
+- Versehentlich ein neues Spiel gestartet oder die Stufe geändert? Tippe in der Meldung auf `Rückgängig`.
+- Ist `Schiffe dürfen sich nicht berühren` an, sind die Felder rund um ein versenktes Schiff leer: Verschwende dort keine Schüsse.

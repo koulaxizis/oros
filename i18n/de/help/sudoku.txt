@@ -1,0 +1,56 @@
+# Sudoku
+Fülle das 9×9-Gitter so, dass jede Zeile, jede Spalte und jede 3×3-Box die Ziffern 1 bis 9 genau einmal enthält. Jedes Rätsel wird frisch auf deinem Gerät erstellt, funktioniert offline und hat genau eine Lösung.
+
+## So spielst du
+Tippe oder klicke auf eine Zelle, dann auf eine Ziffer im Ziffernfeld unter dem Gitter. Jede Zifferntaste zeigt, wie viele dieser Ziffer noch fehlen. Die Ziffern des Rätsels selbst (die Vorgaben) lassen sich nicht ändern.
+
+Zeile, Spalte und Box der gewählten Zelle leuchten auf, ebenso jede Zelle mit derselben Ziffer.
+
+- `Notizen` schaltet den Notizmodus ein: Ziffern kommen dann als kleine Bleistiftnotizen in die Zelle.
+- `Löschen` leert die Zelle.
+- `Rückgängig` und `Wiederholen` gehen durch deine Züge zurück und vor.
+- `Tipp` füllt eine richtige Zelle für dich aus.
+
+## Steuerung
+- Die Pfeiltasten bewegen dich im Gitter.
+- [[1]] bis [[9]] tragen eine Ziffer ein; [[Shift]] plus Ziffer schreibt eine Notiz.
+- [[Backspace]], [[Delete]] oder [[0]] löschen.
+- [[N]] schaltet Notizen ein oder aus.
+- [[U]] oder [[Z]] machen rückgängig; [[R]] oder [[Y]] wiederholen.
+- [[H]] gibt einen Tipp.
+
+`Neues Rätsel` erstellt ein neues. Verlässt du ein angefangenes Rätsel, erscheint kurz eine Schaltfläche `Rückgängig`, um es zurückzuholen. Die Uhr läuft nur, solange die App zu sehen ist, und ein angefangenes Rätsel bleibt für das nächste Mal auf diesem Gerät.
+
+## Stufen und Wertung
+`Leicht`, `Mittel`, `Schwer` und `Experte` unterscheiden sich in den Lösungstechniken, die sie brauchen, von einfachen Singles bis zu Mustern wie X-Wing. Wechselst du die Stufe, entsteht ein neues Rätsel.
+
+`Killer` fügt Käfige hinzu: Gruppen von Zellen in einem gestrichelten Rahmen, mit einer kleinen Summe in der Ecke. Die Ziffern eines Käfigs ergeben zusammen diese Summe und wiederholen sich darin nie. Ein Killer-Rätsel gibt wenige oder gar keine Ziffern vor; die Käfige reichen, und jedes hat genau eine Lösung.
+
+Unter `Optionen`:
+- `Fehler zeigen`: Eine Ziffer, die nicht zur Lösung passt, wird rot.
+- `Notizen automatisch löschen`: Eine Ziffer entfernt sich aus den Notizen ihrer Zeile, Spalte und Box.
+
+`Rekorde` zeigt pro Stufe deine Bestzeit, die gelösten Rätsel und wie viele davon ohne Tipps.
+
+>! Ein Rätsel, bei dem du einen Tipp genutzt hast, zählt als gelöst, kann aber keine Bestzeit setzen.
+
+### Tagesrätsel
+Die Kalender-Schaltfläche öffnet das `Tagesrätsel`: Alle bekommen am selben Datum dasselbe mittlere Rätsel. Es wird auf deinem Gerät aus dem Datum erstellt, funktioniert also offline, und um Mitternacht deiner Ortszeit kommt ein neues. Ein Punkt auf der Schaltfläche heißt, dass das heutige Rätsel noch wartet.
+
+Löse es an aufeinanderfolgenden Tagen, um eine Serie aufzubauen. Ist es gelöst, siehst du deine Zeit, Tipps und Serie; `Rekorde` zeigt die gelösten Tagesrätsel, deine Serie und deine beste Serie. `Teilen` sendet dein Ergebnis ohne Spoiler: deine Zeit und ein 3×3-Gitter, ein grünes Quadrat für jede Box, die du allein gelöst hast, und ein gelbes, wo du einen Tipp genutzt hast. Auf dem Handy öffnet sich das Teilen-Menü, sonst wird der Text kopiert.
+
+`Alle Spiele` (in `Rekorde` und nach einem Tagesrätsel) öffnet das [Spielecenter](help:a/gamecenter), wenn es installiert ist.
+
+## Rätsel importieren
+Die Schaltfläche mit der Ablage in der Werkzeugleiste öffnet `Importierte Rätsel`. Füge Rätsel in das Feld ein und drücke `Prüfen`, oder nutze `Datei öffnen…`. Gelesen werden:
+- ein Rätsel pro Zeile, 81 Zeichen: Ziffern 1–9 für die Vorgaben und `0`, `.` oder `-` für leere Zellen (Leerzeichen, `|` und `+` werden ignoriert, ebenso alles nach der 81. Zelle, etwa ein Name oder eine Bewertung). Sammlungen von Rätselseiten und Foren kommen meist so, bis zu 500 auf einmal.
+- ein 9×9-Gitter über neun Zeilen, mit oder ohne Trennlinien wie `---+---+---`: Simple-Sudoku-Dateien `.ss` und gedruckte Gitter.
+- SadMan-Sudoku-Dateien `.sdk` (die Beschreibung `#D` wird zum Namen des Rätsels).
+
+Die Vorschau sagt, wie viele Rätsel gefunden wurden, wie viele neu, schon importiert oder doppelt sind und welche warum übersprungen wurden: dieselbe Ziffer zweimal in einer Zeile, Spalte oder Box, oder keine Lösung. Ein Rätsel mit mehr als einer Lösung wird behalten und markiert („hat N Lösungen“); dort zählt jede gültige Füllung als gelöst. `Importieren` speichert sie, und `Rückgängig` in der folgenden Meldung nimmt sie wieder heraus. Jedes wird mit seinen Vorgaben und seiner Bestzeit aufgelistet; `Spielen` oder `Nächstes ungelöstes` startet es, und das Rätsel, das du verlässt, bekommt das übliche `Rückgängig`. Importierte Rätsel haben ihre eigene Bestzeit und ändern die Rekorde der Stufen nicht.
+
+## Synchronisierung
+Deine Rekorde, Tagesergebnisse und importierten Rätsel werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. `Rekorde zurücksetzen` in `Rekorde` löscht sie nach deiner Bestätigung auf allen Geräten. Stufe, Optionen, das angefangene Rätsel und die Ton-Schaltfläche bleiben auf diesem Gerät.
+
+## Tipps
+- Nutze Notizen auf schwereren Stufen: Trage die Kandidaten einer Box mit Bleistift ein und suche dann die Zelle, in der nur einer übrig ist.

@@ -1,0 +1,36 @@
+# Kreuzworträtsel
+Ein Kreuzworträtsel zum Einsetzen, ganz ohne Hinweise: Du bekommst die Liste der Wörter, nach Länge sortiert, und setzt sie alle so ins Gitter, dass jede Kreuzung stimmt. Spiel das Tagesrätsel oder so viele Rätsel, wie du willst.
+
+## So wird gespielt
+Die Wörter zum Einsetzen stehen neben dem Gitter, nach Länge gruppiert (`5 Buchstaben` und so weiter). Ein paar Buchstaben sind vorgegeben. Tippe oder klicke auf ein Feld und schreib los; tippst du noch einmal auf dasselbe Feld, wechselst du zwischen waagerecht und senkrecht. Ein Wort, das an seinem Platz ist, wird in der Liste abgehakt. Das Rätsel ist gelöst, wenn alle Wörter passen; hat ein Rätsel mehr als eine Lösung, zählt jede Füllung, in die alle Wörter passen.
+
+Die Wörter gibt es auf Englisch oder Griechisch, du wählst sie mit `EN` / `ΕΛ` in der Werkzeugleiste. Auf Deutsch spielst du mit den englischen Wörtern und der englischen Tastatur. Griechische Wörter stehen in Großbuchstaben ohne Akzente, ein End-ς wird als Σ geschrieben. Du kannst Griechisch auf einer englischen Tastatur tippen und umgekehrt, weil die Tasten nach ihrer Position zählen, oder du nimmst die Bildschirmtastatur.
+
+## Bedienung
+- `Täglich` oder `Frei`, und im freien Spiel die Größe: `9×9` (8–10 Wörter), `13×13` (14–18) oder `17×17` (22–28).
+- `Wörter`: `Zufällige Wörter` oder die Wörter eines Themas wie `Tiere` oder `Essen`.
+- `Prüfen und aufdecken`: `Buchstaben prüfen`, `Wort prüfen`, `Alles prüfen` (falsche Buchstaben werden rot) und `Buchstaben aufdecken`.
+
+Tastatur:
+- Tippe Buchstaben; [[Backspace]] löscht rückwärts, [[Delete]] leert das Feld.
+- Die Pfeiltasten bewegen dich; [[Space]] wechselt zwischen waagerecht und senkrecht; [[Tab]] und [[Shift+Tab]] springen zum nächsten oder vorigen Wort.
+- [[Shift+L]] Buchstaben prüfen, [[Shift+W]] Wort prüfen, [[Shift+A]] alles prüfen, [[Shift+R]] Buchstaben aufdecken, [[Shift+N]] neues Rätsel.
+
+## Stufen und Wertung
+`Täglich` ist ein mittelgroßes Kreuzworträtsel pro Tag, auf jedem Gerät dasselbe. `Statistik` zeigt die gelösten Tage, deine Serie, die beste Serie und die beste Tageszeit, dazu wie viele Rätsel du im freien Spiel gelöst hast und deine Bestzeit für jede Größe. Deckst du einen Buchstaben auf, gibt es für dieses Rätsel keinen Rekord; Prüfen kostet nichts. `Statistik zurücksetzen` löscht alles.
+
+Nach dem Tagesrätsel schickt `Teilen` dein Ergebnis ohne Spoiler: deine Zeit und ein Feld pro Wort, grün für ein Wort, das du allein gefunden hast, gelb für ein Wort mit aufgedecktem Buchstaben. Auf dem Handy öffnet sich das Teilen-Menü, sonst wird der Text kopiert. `Alle Spiele` öffnet das [Spielecenter](help:a/gamecenter), wenn es installiert ist.
+
+## Importierte Kreuzworträtsel
+Die Taste mit der Download-Ablage in der Werkzeugleiste öffnet `Importierte Kreuzworträtsel`: Kreuzworträtsel mit Hinweisen, die du aus einer Datei holst, gespielt mit nummerierten Feldern und Hinweisen für waagerecht und senkrecht. `Datei importieren…` liest:
+- Across Lite-Dateien (`.puz`), das Format, das die meisten Zeitungen und unabhängigen Rätselseiten zum Herunterladen anbieten (achte auf „Across Lite“ oder „.puz“ neben dem Rätsel). Ein Rätsel, das in Across Lite gesperrt ist (scrambled), musst du dort erst entsperren und speichern.
+- `.ipuz`-Dateien, ein offenes Format, das viele Rätselprogramme und -seiten exportieren (oft unter Download oder Export).
+
+Du siehst Titel, Autor, Größe und Zahl der Hinweise, bevor etwas gespeichert wird; `Importieren und spielen` fügt das Rätsel der Liste hinzu und öffnet es, und `Rückgängig` in der folgenden Meldung nimmt es wieder heraus. Dieselbe Datei wird nie zweimal hinzugefügt. Der Hinweis zum aktuellen Wort steht über dem Gitter; tippe auf einen Hinweis, um dorthin zu springen. `Prüfen und aufdecken` vergleicht mit der Lösung aus der Datei. Felder mit mehr als einem Buchstaben (Rebus) nehmen den ersten Buchstaben und zeigen den ganzen Eintrag, sobald das Rätsel gelöst ist; eingekreiste Felder sind markiert. Jedes importierte Kreuzworträtsel hat seinen eigenen Fortschritt und seine eigene Bestzeit und ändert die Rekorde von `Täglich` und `Freies Spiel` nicht. Mit `Frei` oder `Täglich` kommst du zurück.
+
+## Synchronisierung
+Deine Tagesergebnisse, Rekorde im freien Spiel und importierten Kreuzworträtsel werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten abgeglichen. Hast du das heutige Rätsel schon auf einem anderen Gerät gelöst, siehst du dessen Zeit. Angefangene Rätsel und deine Einstellungen bleiben auf diesem Gerät.
+
+## Tipps
+- Fang mit Längen an, zu denen es nur ein Wort gibt.
+- Die Themen und Wortlisten sind dieselben wie in der [Wortsuche](help:a/wordsearch).
