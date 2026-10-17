@@ -186,3 +186,22 @@ test("itinText and itinTrack (Save as track, GPX round trip)", () => {
   assert.equal(X.itinTrack(null), null);
   assert.equal(iso("2026-10-13T10:00:00Z"), "2026-10-13T10:00:00.000Z");
 });
+
+test("stale timetables: nearest stops and verdict", () => {
+  const stops = [
+    { id: "far", lat: 37.99, lon: 23.74 }, { id: "near", lat: 37.9701, lon: 23.7201 },
+    { id: "mid", lat: 37.972, lon: 23.722 }, { id: "", lat: 37.97, lon: 23.72 }, { id: "bad", lat: 200, lon: 0 }
+  ];
+  assert.deepEqual(X.nearestStops(stops, A.lat, A.lon, 2).map((s) => s.id), ["near", "mid"]);
+  assert.equal(X.nearestStops(stops, A.lat, A.lon, 99).length, 3);
+  assert.deepEqual(X.nearestStops(null, A.lat, A.lon), []);
+  assert.deepEqual(X.nearestStops(stops, NaN, 0), []);
+  // Stale only when there are stops and none has any departure.
+  assert.equal(X.staleVerdict([0, 0, 0]), true);
+  assert.equal(X.staleVerdict([0, 1]), false);
+  assert.equal(X.staleVerdict([]), false);
+  assert.equal(X.staleVerdict(null), false);
+  // The departures request for the check: open-ended, one row.
+  assert.equal(X.stoptimesUrl(B, "v6", { stopId: "gr-Athens-Bus_61593", n: 1 }),
+    B + "v6/stoptimes?stopId=gr-Athens-Bus_61593&n=1");
+});

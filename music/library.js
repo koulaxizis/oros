@@ -14,7 +14,8 @@
 //     music folder (with their .lrc lyrics files), and deletes songs
 //     from the device;
 //   - finds a song's lyrics: the .lrc file next to it, or the lyrics
-//     inside its tags.
+//     inside its tags;
+//   - keeps a cover found online for an album that has none.
 // ============================================================
 (function (w) {
   "use strict";
@@ -189,6 +190,23 @@
     if (!F) return Promise.resolve("");
     return F.read(p).then(function (blob) { return readFileTags(blob, p, "auto"); }).then(function (tg) { return (tg && tg.ly) || ""; }, function () { return ""; });
   }
+  // A cover found online (Cover Art Archive) for an album that has
+  // none: re-drawn like the covers inside files, then set on the
+  // album's songs (and the year, when they have none). → Promise<bool>
+  function setAlbumArt(list, blob, year) {
+    if (!list || !list.length || !blob || !ST) return Promise.resolve(false);
+    return blob.arrayBuffer().then(function (ab) { return makeArt({ data: new Uint8Array(ab) }); }).then(function (jpg) {
+      if (!jpg) return false;
+      var id = artIdFor(list[0], list[0].k);
+      return ST.putArt(id, jpg).then(function () {
+        return ST.putTracks(list.map(function (r) {
+          var o = Object.assign({}, r, { art: id });
+          if (!o.y && year > 0) o.y = year;
+          return o;
+        }));
+      }).then(function () { return true; });
+    }).catch(function () { return false; });
+  }
   // files: [File] (webkitRelativePath kept as sub-folders). → { saved, skipped, paths }
   function addFiles(files, onProgress) {
     var F = fs();
@@ -215,5 +233,5 @@
     return F.rm(p).then(function () { return ST.delTracks([p]); });
   }
 
-  w.OrosMusicLibrary = { ROOT: ROOT, scan: scan, addFiles: addFiles, removeFile: removeFile, readFileTags: readFileTags, lrcFor: lrcFor, tagLyrics: tagLyrics, fs: fs };
+  w.OrosMusicLibrary = { ROOT: ROOT, scan: scan, addFiles: addFiles, removeFile: removeFile, readFileTags: readFileTags, lrcFor: lrcFor, tagLyrics: tagLyrics, setAlbumArt: setAlbumArt, fs: fs };
 })(window);

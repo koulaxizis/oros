@@ -159,7 +159,7 @@
   };
   var KIT_IDS = ["ollama", "lmstudio", "llamacpp", "jan", "localai", "vllm", "koboldcpp"];
   // Web search services that take a key of their own (section 3e).
-  var KEY_EXTRA = ["tavily"];
+  var KEY_EXTRA = ["tavily", "stability"];   // stability: image AI (imgai.js)
   var KEY_IDS = PROV_IDS.concat(KEY_EXTRA);
   var SEARCH_IDS = ["auto", "wiki", "tavily", "searx"];
 

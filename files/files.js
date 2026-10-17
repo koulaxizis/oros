@@ -244,6 +244,7 @@
       "menu.zip":      "Compress to ZIP",
       "menu.extract":  "Extract here",
       "menu.convert":  "Convert to orOS",
+      "menu.pdfTools": "Open in Scanner & PDF",
       "zip.archive":   "Archive",
       "zip.working":   "Compressing… {n} of {t}",
       "zip.done":      "Created \"{name}\"",
@@ -469,6 +470,7 @@
       "menu.zip":      "Συμπίεση σε ZIP",
       "menu.extract":  "Αποσυμπίεση εδώ",
       "menu.convert":  "Μετατροπή σε orOS",
+      "menu.pdfTools": "Άνοιγμα στο Σαρωτής & PDF",
       "zip.archive":   "Συμπιεσμένο",
       "zip.working":   "Συμπίεση… {n} από {t}",
       "zip.done":      "Δημιουργήθηκε το «{name}»",
@@ -596,6 +598,8 @@
     '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M10 4h2M10 7h2M10 10h2M10 13h2"/><rect x="9" y="15" width="4" height="4" rx="1"/></svg>';
   var CONVERT_SVG =
     '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h13l-3-3M20 17H7l3 3"/></svg>';
+  var PDFTOOLS_SVG =
+    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>';
   var UNZIP_SVG =
     '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/><path d="M12 10v6M9 13l3 3 3-3"/></svg>';
   var GRID_SVG =
@@ -839,6 +843,28 @@
     if (items.length) api.open({ kind: "files", data: { items: items } });
   }
 
+  // "Open in Scanner & PDF": the selected PDFs and pictures (merge,
+  // split, pictures to PDF), only when that app is installed.
+  var PDFTOOLS_EXT = ["pdf", "jpg", "jpeg", "png", "webp", "gif", "bmp", "avif"];
+  function pdfToolPaths() {
+    var env = null;
+    try { env = window.parent && window.parent !== window ? window.parent.orosTodayEnv : null; } catch (e) {}
+    if (!env || typeof env.apps !== "function" ||
+        !env.apps().some(function (a) { return a && a.id === "scanpdf"; })) return [];
+    var dirs = {};
+    lastEntries.forEach(function (e) { if (e.dir) dirs[entryPath(e)] = true; });
+    var paths = selectionPaths().filter(function (p) {
+      return !dirs[p] && !CORE.isTrashPath(p) && PDFTOOLS_EXT.indexOf(CORE.extOf(baseName(p))) !== -1;
+    });
+    // pictures alone are Photo Lab's; at least one PDF, or several pictures
+    var pdfs = paths.filter(function (p) { return CORE.extOf(baseName(p)) === "pdf"; }).length;
+    return pdfs || paths.length > 1 ? paths : [];
+  }
+  function openPdfTools() {
+    var paths = pdfToolPaths();
+    if (!paths.length) return;
+    try { window.parent.__orosOpenAt("scanpdf", { paths: paths }); } catch (e) {}
+  }
   // Rows of the Recent and Trash views carry their own full path.
   function entryPath(e) { return e.path || join(cwd, e.name); }
 
@@ -3172,6 +3198,9 @@
     if (convertiblePaths().length) {
       ctxMenu.appendChild(mkItem(CONVERT_SVG, "menu.convert", convertSelection));
     }
+    if (pdfToolPaths().length) {
+      ctxMenu.appendChild(mkItem(PDFTOOLS_SVG, "menu.pdfTools", openPdfTools));
+    }
     ctxMenu.appendChild(hr());
     ctxMenu.appendChild(mkItem("", "menu.copyName", function () {
       copyToClipboard(p, "name");
@@ -3808,9 +3837,12 @@
     pvBodySet('<div class="pv-loading">' + escapeHtml(t("status.loading")) + "</div>");
     FS().read(path).then(function (data) {
       var blob;
-      if (data instanceof Blob) {                    // #FA2 FIX: fs.js returns Blob
+      // The Blob comes from the shell's realm (window.parent.orosFS), so
+      // `instanceof Blob` is false inside the app frame: check the tag.
+      var tag = Object.prototype.toString.call(data);
+      if (tag === "[object Blob]" || tag === "[object File]") {
         blob = data;
-      } else if (data instanceof ArrayBuffer) {
+      } else if (tag === "[object ArrayBuffer]") {
         blob = new Blob([data]);
       } else if (data && typeof data.length === "number" && !(typeof data === "string")) {
         blob = new Blob([new Uint8Array(data)]);
@@ -4534,6 +4566,7 @@
     }));
     bar.appendChild(selBtn("sb-zip", ZIP_SVG, "menu.zip", function () { zipCreate(selectionPaths()); }));
     bar.appendChild(selBtn("sb-conv", CONVERT_SVG, "menu.convert", convertSelection));
+    bar.appendChild(selBtn("sb-pdf", PDFTOOLS_SVG, "menu.pdfTools", openPdfTools));
     bar.appendChild(selBtn("sb-move", MV_SVG, "menu.moveTo", function () { openPickerDialog("move"); }));
     bar.appendChild(selBtn("sb-copy", CP_SVG, "menu.copyTo", function () { openPickerDialog("copy"); }));
     if (dbx() && dbx().exportFrom) {
@@ -4565,6 +4598,8 @@
     show("sb-zip", !trash, n > 0);
     var conv = !trash && n > 0 && convertiblePaths().length > 0;
     show("sb-conv", conv, conv);
+    var pdft = !trash && n > 0 && pdfToolPaths().length > 0;
+    show("sb-pdf", pdft, pdft);
     show("sb-move", !trash, n > 0);
     show("sb-copy", !trash, n > 0);
     show("sb-dbx", !trash, n > 0);

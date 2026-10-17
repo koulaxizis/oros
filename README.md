@@ -97,6 +97,13 @@ python3 -m http.server 8000
   is listed in [`CREDITS.md`](CREDITS.md) and in the app (Info →
   Credits & licences). A change that adds one updates both.
 
+## Contributing
+
+Fixes and new apps are welcome as pull requests; Christos decides what goes
+in, so open an issue with the idea first. See [`CONTRIBUTING.md`](CONTRIBUTING.md).
+To build an app, the [orOS App Kit](docs/app-kit/README.md) has the app
+contract, a template and a local check that runs the same guards as CI.
+
 ## How orOS is made
 
 For full transparency:

@@ -22,6 +22,13 @@ The `Send to someone` window shows what will travel. Then pick how to send it:
 ## Lock it with a password
 Tick `Lock with a password` and type a password of at least 6 characters. Then the link alone shows nothing: the other person needs the password too. Tell it to them another way, in person or by phone, not in the same message as the link.
 
+## With an expiry, and taking it back
+Tick `With an expiry` and pick `1 day`, `7 days` or `30 days`. Then orOS encrypts the item on your device and keeps it on the orOS server until that day. The link holds the key, so the server cannot read what it keeps. When the day comes, the item is deleted and the link no longer opens.
+
+You can take a link back sooner. Open `My shared links`: it is a button in the `Send to someone` window, and also in [Settings](app:settings) › `System`. Each link shows when it expires. `Copy link` copies it again, and `Take back` deletes it from the server at once. The list follows you to your other devices through sync, so you can take a link back from any of them.
+
+Items too long for a plain link (a long note or Wiki article) always go this way: the window turns `With an expiry` on by itself and tells you why. A password works with an expiry too.
+
 ## Open something you got
 Tap the link. A page opens with the item and these buttons:
 - `Add to my orOS` opens the right app with the item ready. To-Do, Contacts, Calendar, Meal Planner and Bookmarks show it to you before anything is saved; Notes makes a new page; Wiki opens the article in its editor, and it is saved when you press `Save`.
@@ -42,11 +49,14 @@ If you got a file instead of a link, open the link inside it, or use `Open a fil
 The window lists only the apps that can take it: text goes to Notes, To-Do (one task per line), Writer, Mail, Wiki, the Assistant, Text Tools, Case Converter and, for one short line, Label Maker; a link also goes to Bookmarks. The app opens with it filled in, and nothing is saved until you save it there. `Send to someone…` in the same window makes a link for another person, as described above.
 
 ## Privacy
-The item travels inside the part of the link after the # sign, which browsers never send to a server. No orOS server sees it and nothing is stored anywhere except in the link.
+A plain link carries the item in the part after the # sign, which browsers never send to a server. No orOS server sees it and nothing is stored anywhere except in the link.
 
->! Anyone who has the link can open it, unless it is locked with a password. A sent link cannot be taken back and does not expire.
+A link with an expiry carries only the key after the # sign. The orOS server keeps the encrypted item until it expires and never sees the key, the title or what is inside.
+
+>! Anyone who has the link can open it, unless it is locked with a password. A plain link cannot be taken back and does not expire; use `With an expiry` when you may want to take it back.
 
 ## Limits
-- Very long items (a huge list or note) can be too long for a link. orOS tells you, and `Save as file` still works.
+- Very long items go as a link with an expiry, which needs a connection to the orOS server when you send and when the other person opens it.
+- A link with an expiry lasts 30 days at most.
 - A QR code holds only short links.
 - Photos of contacts, pictures in Wiki articles, labels, favourites and reminders are not sent.
