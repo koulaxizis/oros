@@ -7528,3 +7528,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Sync: restore one of the last 7 cloud backups from Settings › Sync; every device takes it, and today's data is kept as a rescue copy.
 - Files: `sync.js`, `shell.js`, `translations.js`, `settings/{settings,core}.js`, `settings/settings.css`, Bible.
   - Tests: full suite green; real Chromium 360 EN/EL with two devices. Not tested: a real Dropbox / Nextcloud backup restore from the cloud container.
+
+### 2026-10-17 — Maps: live OASA bus arrivals at Athens stops, relay op oasa (#489) — 2.89.00
+- Maps: Athens bus stops show live arrivals from OASA Telematics, through the orOS relay (op `oasa`).
+- Files: `maps/transit-core.js`, `maps/transit.js`, `maps/maps.css`, `relay/oasa.js` (new), `relay/core.js`, `relay/README.md`, credits (CREDITS.md, CREDIT_GROUPS, Part VIII), Maps help EN/EL, Bible. Mail thread (relay owner) OK at 039ba7b.
+  - Tests: full suite green (new `tests/oasa-relay.test.js`, transit tests extended); Chromium transit E2E incl. 360 EL. Not tested: the live OASA service from the cloud container.
