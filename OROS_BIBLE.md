@@ -7464,3 +7464,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Quality gate Q3: CI checks accessibility with axe-core (critical/serious, 92 known) and a size budget (precache +10 %, each app's first open +20 %). A stamp that adds precache files must stay under budget, or raise `budget.json` in the same PR.
 - Files: `.github/qa/**`, `.github/workflows/quality.yml`, `tests/quality-gate.test.js`, Bible §G.
   - Tests: full suite green; quality.yml green on GitHub. Nothing shipped to users.
+
+### 2026-10-17 — Send to someone: photo albums from Files and Photo Lab, share wave 4 (#479) — 2.81.00
+- Send to someone: photo albums from Files and Photo Lab, up to 200 photos, made smaller and without hidden location details, as a link with an expiry.
+- Files: `share/album.js` (new, precached), `share/{kinds,relay,send,view}.js`, `share/share.css`, `files/files.js`, `photolab/{io,panels,strings}.js`, `shell.js`, help share + Files + Photo Lab EN/EL, Bible.
+  - Tests: full suite green (new `tests/share-album.test.js`); real Chromium 1280 EN / 360 EL. Not tested: the live relay from the cloud container, a real phone.
