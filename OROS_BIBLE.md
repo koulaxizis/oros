@@ -7679,3 +7679,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Certificates, Email Signature, Newsletter and Mail are now in German: packs in `i18n/de/`, inline texts moved into {en, el} tables (also the shell-loaded `mail/{notify,compose}.js`, `newsletter/{core,render,runner}.js` and the Certificates verify page), and each `index.html` loads `../i18n.js` before its own scripts; English still fills any missing line.
 - Files: `i18n/de/**`, `certificates/`, `signature/`, `newsletter/`, `mail/` (index.html + scripts), `.github/i18n/inline-baseline.json`, `i18n/apps.json`.
   - Tests: full suite green; Chromium 360 de / el / en. Not tested: a German native reader's review, live Mail and Newsletter sending, Safari, phones.
+
+### 2026-10-17 — Android app: Calendar reminders ring with orOS closed (#512) — 3.09.01
+- Android app: Calendar reminders now ring with orOS closed, also when your events are not copied to the phone's Calendar (`phone.js` adds Calendar rows from `orosPush.calendarRows` (webpush.js) to the app's own reminder list while the events are not copied to the phone's Calendar, so nothing rings twice); no new APK needed.
+- Files: `phone.js`, `webpush.js`, `tests/webpush.test.js`.
+  - Tests: full suite green; Chromium bridge check. Not tested: a real phone with orOS closed.
