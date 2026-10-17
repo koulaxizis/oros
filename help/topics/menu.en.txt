@@ -27,6 +27,18 @@ If nothing matches, you'll see `No matching apps`.
 
 You can also search from your browser's address bar. Add a site search (custom search engine) in your browser settings with your orOS address followed by `?search=%s`; orOS then opens with your words already in this box.
 
+## Commands
+Type what you want to do, in English or Greek, and the first row of the search shows the action. Press [[Enter]] or tap it. Nothing is saved yet: the app opens with the form filled in, and you check it and press `Save`.
+- `dentist tomorrow 10`, `meeting Friday 3pm at the office`: a new event in [Calendar](app:calendar). A line with a day and a time is enough.
+- `buy milk, eggs`, `bread to the shopping list`: the shopping list in [To-Do](app:todo).
+- `todo call Nikos`, `remind me to pay the rent`: a new task in To-Do.
+- `spent 12€ coffee`, `12€ coffee`, `paid 30 fuel yesterday`, `got 500 salary`: an expense or income in [Budget](app:budget), with the category guessed from the words.
+- `note: wifi code 1234`: a new page in [Notes](app:notes).
+- `a glass of water`: one glass in [Water](app:water), right away.
+- `open maps`: opens that app.
+
+The same commands work in a small bar over any app: press [[Ctrl+K]] (in Notes and Wiki, [[Ctrl+Alt+Shift+K]]). Anything that is not a command is a normal search, and with the [Assistant](app:assistant) installed the last row asks it. Commands are understood on your device; nothing is sent anywhere.
+
 ## Choose which apps the menu shows
 Too many apps? Hide the ones you don't use. Open [Settings](app:settings) and choose `Menu`:
 - Untick an app to hide it, tick it again to bring it back. `Find an app` narrows the list.
