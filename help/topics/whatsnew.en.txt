@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.67.00
+- Writer, Spreadsheet and Slides can bring in one file straight from Google Docs, Sheets or Slides: pick it and it opens as a normal orOS file.
+
 ## Version 2.66.00
 - orOS Drive on the phone: the orOS Android app can mirror folders from your phone into the Vault, so they show in Files › orOS Drive on your other devices. It syncs every 15 minutes, on Wi-Fi only unless you change it. The F-Droid version comes without it for now.
 
