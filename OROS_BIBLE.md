@@ -7476,3 +7476,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Command bar: timers and alarms, Kanban cards, habits done, send to an app, sums and unit conversions you can copy, and your recent commands.
 - Files: `commands/{core,bar}.js`, `shell.js`, `time/{time,astro}.js`, `habits/habits.js`, help menu EN/EL, Bible.
   - Tests: full suite green (`tests/commands.test.js` extended); real Chromium 1280 EN / 360 EL. Not tested: a real phone.
+
+### 2026-10-17 — Sync: WebDAV through the orOS relay + Sign in with Nextcloud + big files in pieces, WebDAV W3 client (#481) — 2.83.00
+- Sync with WebDAV: servers that block the browser now work through the orOS relay (optional, relay `/dav` from #477), Nextcloud users can sign in without typing a password (Login Flow v2), and big files go up in pieces.
+- Files: `sync.js`, `shell.js`, `translations.js`, `settings/{settings,core}.js`, help sync + Settings EN/EL, Bible.
+  - Tests: full suite green (`tests/sync-webdav.test.js` extended); real Chromium through a real workerd relay (EL 360 / EN 1280). Not tested: a real Nextcloud / Synology / QNAP, the deployed relay from the cloud container, phones.
