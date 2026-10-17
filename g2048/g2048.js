@@ -65,7 +65,7 @@
       return l === "el" ? "el" : "en";
     } catch (e) { return "en"; }
   }
-  var LANG = appLang();
+  var LANG = window.orosI18n ? window.orosI18n.lang() : appLang();
 
   var STRINGS = {
     en: {
@@ -175,6 +175,7 @@
       "toast.timeUp": "Τέλος χρόνου: ξεκίνα νέο παιχνίδι (N)"
     }
   };
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "g2048", LANG);
 
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;
@@ -200,7 +201,7 @@
   }
 
   function fmtNum(v) {
-    try { return Number(v).toLocaleString(LANG === "el" ? "el-GR" : "en-US"); }
+    try { return Number(v).toLocaleString(window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-US")); }
     catch (e) { return String(v); }
   }
 

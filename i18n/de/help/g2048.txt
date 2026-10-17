@@ -1,0 +1,34 @@
+# 2048
+Schiebe die Felder auf dem Spielfeld und verbinde gleiche Zahlen, bis du ein 2048-Feld hast. Danach kannst du für mehr Punkte weiterspielen, wenn du magst.
+
+## So wird gespielt
+Jeder Zug schiebt alle Felder so weit wie möglich in eine Richtung. Treffen sich zwei Felder mit derselben Zahl, werden sie zu einem Feld mit ihrer Summe, und die Summe kommt zu deinen Punkten. Ein Feld verbindet sich pro Zug nur einmal.
+
+Nach jedem Zug, der das Spielfeld ändert, erscheint ein neues Feld: meist eine 2, manchmal eine 4. Das Spiel ist vorbei, wenn das Spielfeld voll ist und kein Zug mehr etwas verbinden kann (`Keine Züge mehr`).
+
+Wenn du das Ziel erreichst, fragt `Du hast 2048 erreicht!`, ob du `Weiterspielen` oder `Hier aufhören` willst.
+
+## Steuerung
+- Pfeiltasten oder [[W]] [[A]] [[S]] [[D]] schieben die Felder.
+- Auf einem Touchscreen wischst du auf dem Spielfeld.
+- [[U]] oder `Rückgängig (U)` nimmt deinen letzten Zug zurück. Nur der letzte Zug lässt sich rückgängig machen.
+- [[N]] oder `Neues Spiel (N)` startet ein neues Spiel. Verlässt du so ein laufendes Spiel, erscheint kurz ein Knopf `Rückgängig`, der es zurückholt.
+
+Ein laufendes Spiel bleibt auf diesem Gerät und wartet auf dich, wenn du 2048 das nächste Mal öffnest.
+
+## Stufen und Punkte
+Wähle die Spielfeldgröße in der Werkzeugleiste: `3×3`, `4×4` (der Klassiker) oder `5×5`. Ein Wechsel startet ein neues Spiel. Bei `3×3` ist das Ziel 512, weil 2048 nicht hineinpasst.
+
+Neben der Größe wählst du `Klassisch` oder `Auf Zeit`. Ein Spiel auf Zeit gibt dir 2 Minuten, und die Uhr startet mit deinem ersten Zug. Sie pausiert, solange orOS im Hintergrund ist. In den letzten 10 Sekunden wird sie bernsteinfarben, und bei null siehst du `Zeit abgelaufen` mit deinen Punkten.
+
+Jede Größe und jeder Modus hat eigene Rekorde. `Rekorde` zeigt deine höchste Punktzahl, dein bestes Feld, deine gespielten Spiele und wie viele davon das Ziel erreicht haben.
+
+>! Wenn du Rückgängig benutzt, zählt das Spiel trotzdem als gespielt, kann aber keinen Punkte- oder Feldrekord aufstellen.
+
+## Synchronisierung
+Deine Rekorde werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. `Rekorde löschen` in `Rekorde` löscht sie nach einer Bestätigung auf allen Geräten. Spielfeldgröße, laufendes Spiel und Ton-Knopf bleiben auf diesem Gerät.
+
+## Tipps
+- Halte dein größtes Feld in einer Ecke und baue darauf zu.
+- Nutze möglichst nur zwei oder drei Richtungen, damit das Eckfeld nicht herausgeschoben wird.
+- `5×5` gibt dir mehr Platz; `3×3` ist ein schnelles, enges Spiel.
