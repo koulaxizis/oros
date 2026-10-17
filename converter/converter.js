@@ -55,7 +55,7 @@
       return l === "el" ? "el" : "en";
     } catch (e) { return "en"; }
   }
-  var LANG = appLang();
+  var LANG = window.orosI18n ? window.orosI18n.lang() : appLang();
 
   var STRINGS = {
     en: {
@@ -155,6 +155,7 @@
       "aria.progress": "Μετατροπή του {name}"
     }
   };
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "converter", LANG);
 
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;
@@ -636,7 +637,7 @@
       r.p = 0; renderRow(r);
       var lastPaint = 0;
       return mod.convert(file, {
-        lang: LANG,
+        lang: LANG === "el" ? "el" : "en",
         onProgress: function (x) {
           var v = Math.max(0, Math.min(1, Number(x) || 0)), now = Date.now();
           r.p = v;
