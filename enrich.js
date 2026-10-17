@@ -61,7 +61,7 @@
 (function (root) {
   "use strict";
 
-  var DEFAULT_RELAY = "https://oros-mail-relay.koulaxizis-25b.workers.dev";   // = mail.js
+  var DEFAULT_RELAY = "https://oros-mail-relay.koulaxizis.workers.dev";   // = mail.js
   var GRAVATAR_API = "https://api.gravatar.com/v3/profiles/";
   var MAX_PAGES = 4;          // pages read per record
   var MAX_LINKS = 12;         // link suggestions per record
