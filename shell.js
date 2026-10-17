@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "2.65.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "2.68.02";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -5683,6 +5683,9 @@
         { name: "Funkwhale", url: "https://www.funkwhale.audio/",
           by: "The Funkwhale collective", lic: { en: "AGPL-3.0 (server); public pods or your own", el: "AGPL-3.0 (server)· δημόσια pods ή το δικό σου" },
           en: "Federated music libraries (Music)", el: "Ομοσπονδιακές μουσικές βιβλιοθήκες (Μουσική)" },
+        { name: "LRCLIB", url: "https://lrclib.net/",
+          by: "The LRCLIB project and its contributors", lic: { en: "Free API, no key; lyrics are their writers' works", el: "Δωρεάν API χωρίς κλειδί· οι στίχοι ανήκουν στους δημιουργούς τους" },
+          en: "Song lyrics, only when you ask (Music)", el: "Στίχοι τραγουδιών, μόνο όταν το ζητήσεις (Μουσική)" },
         { name: "iptv-org", url: "https://github.com/iptv-org/iptv",
           by: "iptv-org contributors", lic: "Unlicense (public domain)",
           en: "Channel directory (Television)", el: "Κατάλογος καναλιών (Τηλεόραση)" },
@@ -5771,7 +5774,7 @@
           by: "Pollinations.AI", lic: { en: "Their terms, your own key (free plan)", el: "Οι όροι τους, με δικό σου κλειδί (δωρεάν πλάνο)" },
           en: "AI chat you choose (Assistant)", el: "Συζήτηση με το AI που διαλέγεις (Βοηθός)" },
         { name: "Cloudflare Workers", url: "https://workers.cloudflare.com/",
-          by: "Cloudflare, Inc.", lic: { en: "Runs the orOS mail relay (code in relay/)", el: "Τρέχει το relay αλληλογραφίας του orOS (κώδικας στο relay/)" },
+          by: "Cloudflare, Inc.", lic: { en: "Runs the orOS mail relay (code in relay/); D1 keeps encrypted share links with an expiry", el: "Τρέχει το relay αλληλογραφίας του orOS (κώδικας στο relay/)· το D1 κρατά κρυπτογραφημένους συνδέσμους με λήξη" },
           en: "Mail: IMAP over HTTPS, nothing stored", el: "Αλληλογραφία: IMAP μέσω HTTPS, δεν αποθηκεύεται τίποτα" },
         { name: "WooCommerce REST API", url: "https://woocommerce.github.io/woocommerce-rest-api-docs/",
           by: "Automattic; your own shop", lic: { en: "Your own shop and keys", el: "Το δικό σου κατάστημα και κλειδιά" },
