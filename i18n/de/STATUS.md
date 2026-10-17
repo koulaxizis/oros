@@ -2,8 +2,8 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 12528 of 27706 (45%)
-- Help pages: 46 of 144 (31%)
+- Strings: 15162 of 27947 (54%)
+- Help pages: 53 of 144 (36%)
 - Shown in the language list: yes
 
 Apps marked "English for now" do not load language packs yet: their
@@ -15,13 +15,13 @@ text is still written in the code. They switch over wave by wave
 | assistant | English for now | 0 / 490 |
 | atelier | 100% | 1210 / 1210 |
 | aura | English for now | 0 / 84 |
-| baby | English for now | 0 / 304 |
+| baby | 100% | 324 / 324 |
 | backgammon | English for now | 0 / 91 |
 | battleship | English for now | 0 / 102 |
 | bookmarks | English for now | 0 / 231 |
 | breakout | English for now | 0 / 55 |
 | bubble | English for now | 0 / 53 |
-| budget | English for now | 0 / 496 |
+| budget | 100% | 555 / 555 |
 | calculator | English for now | 0 / 133 |
 | calendar | 100% | 370 / 370 |
 | certificates | 100% | 391 / 391 |
@@ -34,7 +34,7 @@ text is still written in the code. They switch over wave by wave
 | converter | English for now | 0 / 67 |
 | crm | 100% | 444 / 444 |
 | crossword | English for now | 0 / 170 |
-| cycle | English for now | 0 / 178 |
+| cycle | 100% | 203 / 203 |
 | device | English for now | 0 / 123 |
 | diary | English for now | 0 / 187 |
 | dice | English for now | 0 / 52 |
@@ -42,7 +42,7 @@ text is still written in the code. They switch over wave by wave
 | familytree | English for now | 0 / 197 |
 | feeds | 100% | 325 / 325 |
 | files | 100% | 343 / 343 |
-| fitness | English for now | 0 / 344 |
+| fitness | 100% | 413 / 413 |
 | flashcards | 0% | 0 / 263 |
 | flow | English for now | 0 / 75 |
 | g2048 | English for now | 0 / 54 |
@@ -51,7 +51,7 @@ text is still written in the code. They switch over wave by wave
 | gomoku | English for now | 0 / 57 |
 | habits | English for now | 0 / 159 |
 | hangman | English for now | 0 / 52 |
-| health | English for now | 0 / 595 |
+| health | 100% | 597 / 597 |
 | help | 100% | 15 / 15 |
 | hexagon | English for now | 0 / 59 |
 | invoices | 100% | 531 / 531 |
@@ -66,7 +66,7 @@ text is still written in the code. They switch over wave by wave
 | mancala | English for now | 0 / 60 |
 | maps | English for now | 0 / 810 |
 | mastermind | English for now | 0 / 73 |
-| meals | English for now | 0 / 387 |
+| meals | 100% | 448 / 448 |
 | memory | English for now | 0 / 76 |
 | mindmap | 100% | 278 / 278 |
 | minesweeper | English for now | 0 / 75 |
@@ -134,7 +134,7 @@ text is still written in the code. They switch over wave by wave
 | typewriter | English for now | 0 / 46 |
 | units | English for now | 0 / 58 |
 | wallpaper | English for now | 0 / 71 |
-| water | English for now | 0 / 89 |
+| water | 100% | 94 / 94 |
 | weather | English for now | 0 / 152 |
 | whack | English for now | 0 / 49 |
 | wheel | English for now | 0 / 68 |
@@ -154,13 +154,11 @@ These show English until fixed (usually the English text changed).
 
 - help/assistant.txt
 - help/aura.txt
-- help/baby.txt
 - help/backgammon.txt
 - help/battleship.txt
 - help/bookmarks.txt
 - help/breakout.txt
 - help/bubble.txt
-- help/budget.txt
 - help/calculator.txt
 - help/characters.txt
 - help/checkers.txt
@@ -169,13 +167,11 @@ These show English until fixed (usually the English text changed).
 - help/connect4.txt
 - help/converter.txt
 - help/crossword.txt
-- help/cycle.txt
 - help/device.txt
 - help/diary.txt
 - help/dice.txt
 - help/dots.txt
 - help/familytree.txt
-- help/fitness.txt
 - help/flashcards.txt
 - help/flow.txt
 - help/g2048.txt
@@ -184,7 +180,6 @@ These show English until fixed (usually the English text changed).
 - help/gomoku.txt
 - help/habits.txt
 - help/hangman.txt
-- help/health.txt
 - help/hexagon.txt
 - help/jigsaw.txt
 - help/labels.txt
@@ -194,7 +189,6 @@ These show English until fixed (usually the English text changed).
 - help/mancala.txt
 - help/maps.txt
 - help/mastermind.txt
-- help/meals.txt
 - help/memory.txt
 - help/minesweeper.txt
 - help/minimalism.txt
@@ -241,7 +235,6 @@ These show English until fixed (usually the English text changed).
 - help/typewriter.txt
 - help/units.txt
 - help/wallpaper.txt
-- help/water.txt
 - help/weather.txt
 - help/whack.txt
 - help/wheel.txt
