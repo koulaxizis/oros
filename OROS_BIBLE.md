@@ -7396,3 +7396,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Files opens documents, spreadsheets, songs and videos straight in the orOS app that reads them (Open with…), plays songs in Music, and sends files to Mail.
 - Files: `files/files.js`, `fileopen.js`, `music/{music,library}.js`, `send/{core,sheet}.js`, Files help EN/EL, Bible.
   - Tests: full suite green (new `tests/interop-files.test.js`); real Chromium 1280 EN / 360 EL. Not tested: a real phone, Safari.
+
+### 2026-10-17 — Sync through WebDAV / Nextcloud, WebDAV W2 (#468) — 2.76.00
+- Sync can now go through your own WebDAV server (Nextcloud, ownCloud, Synology, QNAP): Settings › Sync › Use WebDAV / Nextcloud. Dropbox stays the default.
+- Files: `sync.js` (WebDAV provider behind the provider contract + lifecycle), `shell.js`, `translations.js`, Settings, `device/device.js`, help sync + Settings EN/EL, Bible.
+  - Tests: full suite green (new `tests/sync-webdav.test.js`); real Chromium with a real WebDAV server and two devices, Settings form 390 EL / 1280 EN. Not tested: a real Nextcloud / Synology / QNAP, phones.
