@@ -178,6 +178,10 @@
 
   // Subscribers for subtle auto-sync feedback (shell status dot pulse)
   var autoListeners = [];
+  // A37 / A69c — listeners told which slices the last apply could not
+  // write (a full store or a setter that threw): fn(names).
+  var applyFailListeners = [];
+  var lastApplyFailed = [];
 
   // Engine guards: never two pushes/pulls racing each other
   var pushInFlight = false;
@@ -2380,6 +2384,7 @@
     storeFailed = false;                    // SY-Q1: this apply parks everything again
     var applied = 0;
     var cloudStaleAny = false;
+    var failed = [];                        // A37: slices not written (quota, setter threw)
 
     if (payload.shell && slices.shell) {
       var rs = applySlice("shell", payload.shell);
@@ -2389,7 +2394,7 @@
           settleApplied("shell", rs, payload.shell);
           if (rs.baselineCandidate !== null) recordBaseline("shell", rs.baselineCandidate);
           applied++;
-        } catch (e) {}
+        } catch (e) { failed.push("shell"); }
       } else if (rs.baselineCandidate !== null) {
         // Clean no-op apply: refresh/keep the baseline honest —
         // same convergence-reset contract as the apps branch below.
@@ -2411,7 +2416,7 @@
               settleApplied(name, ra, data);
               if (ra.baselineCandidate !== null) recordBaseline(name, ra.baselineCandidate);
               applied++;
-            } catch (e) {}
+            } catch (e) { failed.push(name); }
           } else if (ra.baselineCandidate !== null) {
             // Clean no-op (local == remote == synced content): keep the
             // baseline honest. This is also the convergence reset for
@@ -2441,6 +2446,19 @@
     // winning content is always what reaches the cloud, never
     // an artifact of apply-order.
     if (cloudStaleAny) markDirty();
+
+    // A37 / A69c: say which slices did not land, instead of dropping
+    // the failure. A mailbox copy that could not be kept (SY-Q1) is a
+    // failure of the same kind (the store is full). Nothing else
+    // changes: a slice not written keeps no baseline, so the next pull
+    // tries it again.
+    if (storeFailed && failed.indexOf("mailbox") === -1) failed.push("mailbox");
+    lastApplyFailed = failed;
+    if (failed.length) {
+      applyFailListeners.forEach(function (fn) {
+        try { fn(failed.slice()); } catch (e) {}
+      });
+    }
 
     return applied;
   }
@@ -2604,7 +2622,7 @@
         var applied = applyPayload(payload);
         lastSuccessfulPullAt = Date.now(); // passphrase PROVEN against cloud
         cloudRev = cloud.rev;              // may be undefined (fallback race) → push re-learns
-        return { ok: true, empty: false, applied: applied };
+        return { ok: true, empty: false, applied: applied, failed: lastApplyFailed.slice() };
       });
     });
   }
@@ -3118,6 +3136,25 @@
     cloudRev     = undefined;   // SY-D1: another account = another cloud
   }
 
+  // SEC-2 / A71a — the user's Disconnect: first ask the provider to
+  // cancel this device's access (Dropbox auth/token/revoke, Nextcloud
+  // deletes the app password; best effort, bounded by timeoutMs), then
+  // forget everything locally. Offline: forget locally and say so.
+  // Never rejects: { provider, revoked, offline }. The local clear
+  // always happens, whatever the server answered.
+  function disconnectRevoke(timeoutMs) {
+    var id = provider.id;
+    if (!isConnected()) return Promise.resolve({ provider: id, revoked: false, offline: false });
+    var offline = (typeof navigator !== "undefined" && navigator.onLine === false);
+    var ask = offline ? Promise.resolve(false)
+                      : Promise.resolve().then(function () { return provider.revoke(timeoutMs || 5000); })
+                          .catch(function () { return false; });
+    return ask.then(function (revoked) {
+      disconnect();
+      return { provider: id, revoked: !!revoked, offline: offline };
+    });
+  }
+
   // Extended unlock: setPassphrase(pw, remember)
   // remember=true seals pw into the device vault (opt-in per device).
   function setPassphrase(pw, remember) {
@@ -3196,6 +3233,7 @@
     cancelNextcloud:    cancelNextcloud,
     getProvider:        function () { return provider.id; },
     disconnect:         disconnect,
+    disconnectRevoke:   disconnectRevoke, // SEC-2: revoke at the provider, then forget locally
     isConnected:         isConnected,
     getUserInfo:        function () { return provider.account(); },
     redirectHandled:    redirectHandled,
@@ -3253,6 +3291,9 @@
 
     // Auto-sync feedback (optional, for UI status pulse)
     onAutoSync:         function (fn) { if (typeof fn === "function") autoListeners.push(fn); },
+    // A37: fn(names) when a pull or import could not write some slices
+    // (the browser's storage is full, or an app's setter threw).
+    onApplyFailed:      function (fn) { if (typeof fn === "function") applyFailListeners.push(fn); },
 
     // Engine kick (manual triggers from shell, e.g. after manual unlock)
     kickAutoEngine:     function () {
