@@ -187,6 +187,25 @@ test("launch: waits for the app list, hands over a one-shot token", async () => 
   assert.equal(w.__orosTakeFile("__proto__"), null);
 });
 
+test("openInside (Files): the app gets a copy made in the shell, not the caller's File", async () => {
+  // Files is replaced by the app it opens; a File made in its frame
+  // can no longer be read there (bug: Photo Lab stayed on its home).
+  const { w, calls } = fakeWindow();
+  w.orosFileOpen.ready();
+  const f = { name: "Photo.jpg", size: 10, type: "image/jpeg", lastModified: 5 };
+  w.orosFileOpen.openInside(f, false);
+  assert.equal(calls.length, 1);
+  const [, app, target] = calls[0];
+  assert.equal(app, "photolab");
+  const got = w.__orosTakeFile(target.openFile.token);
+  assert.ok(got instanceof w.File);
+  assert.notEqual(got, f);
+  assert.equal(got.parts.length, 1);
+  assert.equal(got.parts[0], f);
+  assert.equal(got.name, "Photo.jpg");
+  assert.equal(got.type, "image/jpeg");
+});
+
 test("launch: several files open the first and say so; too big and unknown are refused", async () => {
   const { w, calls, launch } = fakeWindow();
   w.orosFileOpen.ready();

@@ -420,6 +420,15 @@
     return Date.now() - h.at > TOKEN_TTL ? null : h.file;
   };
 
+  // A File made in an app's frame dies with that frame: Files is
+  // replaced by the app it opens, so the app could not read it any
+  // more. A copy made here, in the shell, outlives the caller.
+  function ownFile(file) {
+    try {
+      return new w.File([file], String(file.name || "file"), { type: file.type || "", lastModified: file.lastModified || Date.now() });
+    } catch (e) { return file; }
+  }
+
   function openWith(app, file) {
     if (typeof w.__orosOpenAt !== "function") return;
     var name = String(file.name || "").slice(0, 255), key = textKey(app, extOf(name));
@@ -597,6 +606,7 @@
     // chooser (ask: true always shows the chooser).
     openInside: function (file, ask) {
       if (!file) return;
+      file = ownFile(file);
       var c = chooseInside(file.name, loadPrefs());
       if (!c) { notice(T("unknown")); return; }
       if (ask && c.app && insideFor(c.ext).length > 1) c = { ask: insideFor(c.ext), ext: c.ext };
