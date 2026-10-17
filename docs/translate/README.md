@@ -108,6 +108,11 @@ it into the tables, and `tests/i18n.test.js` keeps new code from adding more
   `orosI18n.table(STRINGS, "<id>")`, then look keys up as before
   (`STRINGS[LANG][key]`, English fallback).
 - Dates and numbers: `orosI18n.locale()` instead of `el ? "el-GR" : "en-GB"`.
+- Shared modules at the root (`recordpkg.js`, `remote-play.js`, …) have a
+  pack of their own named after the file: `orosI18n.table(STRINGS, "recordpkg")`,
+  and every page that loads the module lists it too:
+  `data-app="quote,recordpkg"`. A shared folder (`cardkit/`, `designkit/`)
+  works the same way under its folder name.
 - Plurals: `orosI18n.plural(table, "key", n)` reads `key.one` / `key.few` /
   `key.many` / `key.other` (the language's rules), else `key.one` / `key.some`.
 - Every visible text goes into the `{ en, el }` table. No

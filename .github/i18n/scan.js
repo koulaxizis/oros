@@ -45,15 +45,17 @@ function langs() {
 
 // ---- Apps and their English tables ----
 // A pack is named after the app that loads it (data-app on its i18n.js
-// tag): "shell" is translations.js, any other name is an app folder, and
-// its keys are every English key of the tables in that folder.
+// tag): "shell" is translations.js, any other name is an app folder (its
+// keys are every English key of the tables in that folder) or a shared
+// module at the root, <name>.js, that pages using it list in data-app.
 const ALL_FILES = () => jsFiles().map((rel) => ({ rel, tables: tables(rel) }));
+
+const owns = (app, rel) => app === "shell" ? rel === "translations.js" : rel.startsWith(app + "/") || rel === app + ".js";
 
 function appKeys(app, all) {
   const keys = new Map();
   for (const f of all || ALL_FILES()) {
-    const own = app === "shell" ? f.rel === "translations.js" : f.rel.startsWith(app + "/");
-    if (!own) continue;
+    if (!owns(app, f.rel)) continue;
     for (const t of f.tables) for (const [k, v] of t.en) if (!keys.has(k)) keys.set(k, v);
   }
   return keys;
@@ -149,7 +151,7 @@ function packIndex(all) {
   const out = [];
   for (const app of names.sort()) {
     const files = (all || ALL_FILES()).filter((f) => f.tables.length &&
-      (app === "shell" ? f.rel === "translations.js" : f.rel.startsWith(app + "/"))).map((f) => f.rel).sort();
+      owns(app, f.rel)).map((f) => f.rel).sort();
     if (files.length) out.push({ app, files });
   }
   return { apps: out };
@@ -208,6 +210,6 @@ function inlineGreek(rel, tbls) {
 
 module.exports = {
   ROOT, SKIP, jsFiles, skipToken, blockEnd, entries, tables, sentence, GREEK, line, unquote,
-  langs, appKeys, packApps, packIndex, readPack, checkPack, packIssues, packFiles, helpPages, manifest, inlineGreek,
+  langs, owns, appKeys, packApps, packIndex, readPack, checkPack, packIssues, packFiles, helpPages, manifest, inlineGreek,
   placeholders, tags: tagsOf, ALL_FILES
 };
