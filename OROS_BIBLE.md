@@ -7658,3 +7658,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Writer, Spreadsheet, Slides, Sticky Notes and Mind map are now in German: packs in `i18n/de/`, inline texts moved into {en, el} tables, and each of the five `index.html` loads `../i18n.js` before its own scripts; English still fills any missing line.
 - Files: `i18n/de/**`, `writer/`, `spreadsheet/`, `slides/`, `stickies/`, `mindmap/` (index.html + scripts), `.github/i18n/inline-baseline.json`, `i18n/apps.json`.
   - Tests: full suite green; Chromium 360 de / el / en. Not tested: a German native reader's review, Safari, phones.
+
+### 2026-10-17 — Multitasking M4: two apps side by side (#508) — 3.06.00
+- Multitasking (experimental, off by default): on screens from 1024 px, put two apps side by side from the open-apps list ("beside") or the menu, drag the bar between them to share the width; the app in focus has an outline.
+- Files: `shell.js`, `style.css`, `translations.js`, `i18n/de/shell.js`, `settings/help.*.txt`, `.github/qa/multitask.js` (gate also checks side by side), `tests/multitask.test.js`, Bible.
+  - Tests: full suite green; multitask gate 130 apps 0 problems (also side by side); axe; Chromium 1280 EN / EL. Not tested: Firefox, Safari, touch screens.
