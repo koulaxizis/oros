@@ -7482,3 +7482,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Sync with WebDAV: servers that block the browser now work through the orOS relay (optional, relay `/dav` from #477), Nextcloud users can sign in without typing a password (Login Flow v2), and big files go up in pieces.
 - Files: `sync.js`, `shell.js`, `translations.js`, `settings/{settings,core}.js`, help sync + Settings EN/EL, Bible.
   - Tests: full suite green (`tests/sync-webdav.test.js` extended); real Chromium through a real workerd relay (EL 360 / EN 1280). Not tested: a real Nextcloud / Synology / QNAP, the deployed relay from the cloud container, phones.
+
+### 2026-10-17 — App interop wave 4: record apps open in Spreadsheet (#482) — 2.84.00
+- Open in Spreadsheet in twelve more apps: Timesheet, Workouts, Health, Water, Mood, Garage, Invoices, CRM, Library, Media Shelf, Split and Meals open their data as a new sheet.
+- Files: the twelve apps' scripts + help EN/EL, Bible.
+  - Tests: full suite green (new `tests/interop-sheets.test.js`); real Chromium. Not tested: a real phone.
