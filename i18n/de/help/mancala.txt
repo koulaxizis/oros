@@ -1,0 +1,31 @@
+# Mancala
+Mancala ist hier Kalah, das Spiel, bei dem du Samen säst: zwei Reihen mit je sechs Mulden und an jedem Ende ein Speicher. Spiel gegen den Computer oder gegen jemanden am selben Gerät.
+
+## So wird gespielt
+Deine Mulden sind die untere Reihe, dein Speicher ist die große Mulde rechts von dir. Wähle eine deiner Mulden: Ihre Samen werden einzeln gegen den Uhrzeigersinn in die nächsten Mulden und in deinen eigenen Speicher gesät, aber nie in den Speicher deines Gegners.
+
+- Landet der letzte Samen in deinem Speicher, ziehst du nochmal.
+- Landet der letzte Samen in einer leeren Mulde auf deiner Seite und liegen in der Mulde gegenüber Samen, kommen beide in deinen Speicher.
+- Hat eine Seite keine Samen mehr, endet das Spiel und alle übrigen Samen kommen in den Speicher ihres Besitzers. Der vollere Speicher gewinnt.
+
+## Steuerung
+Tippe oder klicke auf eine deiner Mulden, um sie zu säen. In der Werkzeugleiste findest du:
+- `Gegen Computer` oder `2 Spieler`. Gegen den Computer wählst du auch die Stufe und unter `Erster Zug`: `Du beginnst`, `Computer beginnt` oder `Abwechselnd`.
+- `Samen pro Mulde`: 3, 4, 5 oder 6.
+- `Neues Spiel (N)`, `Zug zurücknehmen (Z)`, `Bilanz` und die Ton-Taste.
+
+Wenn du Modus, Stufe, ersten Zug oder Samen änderst, beginnt ein neues Spiel. Gegen den Computer nimmt Rückgängig auch seine Antwort zurück. Startest du mitten im Spiel ein neues, holt eine Taste `Rückgängig` das alte für ein paar Sekunden zurück.
+
+Tastatur:
+- [[1]] bis [[6]] säen die Mulden der Seite am Zug, von links gezählt.
+- Die Pfeiltasten wechseln zwischen den Mulden; [[Enter]] oder [[Space]] sät die aktuelle.
+- [[N]] neues Spiel, [[Z]] oder [[Ctrl+Z]] rückgängig.
+
+## Stufen und Wertung
+Der Computer spielt `Leicht`, `Mittel` oder `Schwer`. `Bilanz` zeigt deine Siege, Niederlagen und Unentschieden gegen ihn für jede Stufe, und `Bilanz zurücksetzen` löscht sie. Im Modus `2 Spieler` führt das Ergebnisfenster einen laufenden `Serie`-Stand.
+
+## Synchronisierung
+Deine Bilanz gegen den Computer wird über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert, und die Spiele aller Geräte werden zusammengezählt. Das laufende Spiel, die 2-Spieler-Serie, deine Einstellungen und der Ton bleiben auf diesem Gerät. `Bilanz zurücksetzen` löscht die Bilanz auf allen Geräten.
+
+## Tipps
+- Such eine Mulde, deren Samen genau in deinem Speicher enden: Du ziehst nochmal und kannst manchmal mehrere Züge aneinanderreihen.
