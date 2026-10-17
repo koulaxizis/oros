@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.73.00
+- New users choose what the menu shows: Everything (first and chosen), or Home, Work, School, Creating, Games and any app by hand. You can change it later in Settings › Menu › Choose a profile.
+
 ## Version 2.72.01
 - orOS Drive on the phone: the whole orOS disk now appears as «orOS» in Android's Files app and in every file picker (orOS Android app; not in the F-Droid version for now).
 
