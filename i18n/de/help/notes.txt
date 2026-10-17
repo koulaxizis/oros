@@ -1,0 +1,104 @@
+# Notizen
+Notizen ist ein Notizbuch, das als Baum von Seiten aufgebaut ist. Du schreibst reinen Text mit etwas Markdown und siehst ihn formatiert, wann immer du willst. Verschachtle Seiten ineinander, verlinke sie wie in einem Wiki, führe eine Notiz für jeden Tag, versieh Seiten mit Labels und halte getrennte Notizbücher für verschiedene Bereiche deines Lebens.
+
+## Erste Schritte
+Dein erstes Notizbuch heißt `Notizen`. Tippe oder klicke auf die Taste **+** unter dem Seitenbaum, um eine Seite hinzuzufügen, gib dann einen `Titel` ein und schreib los im großen Textfeld. Es gibt keine Speichern-Taste: Notizen speichert, während du tippst.
+
+Über dem Text sitzt eine kleine Symbolleiste: fett, kursiv, Überschrift, Liste, Kontrollkästchen, Link und Code. Ihre zwei Tasten rechts schalten die Seite zwischen `Bearbeiten` und `Vorschau` um; auf einem breiten Bildschirm zeigt eine dritte, `Nebeneinander`, beides zugleich. Jedes Gerät merkt sich seine eigene Wahl.
+
+Auf dem Handy ist der Baum beim Schreiben ausgeblendet. Tippe auf die Taste ☰ (`Baum zeigen`) neben dem Titel, um ihn zurückzuholen; wenn du eine Seite wählst, schließt er sich wieder. Auf einem breiteren Bildschirm kannst du die Trennlinie zwischen Baum und Seite ziehen, um den Baum breiter oder schmaler zu machen.
+
+## Seiten und der Baum
+Klicke mit rechts auf eine Seite im Baum, halte sie auf einem Touchscreen gedrückt oder tippe auf die Taste ⋮ oben rechts in der offenen Seite, um ihr Menü zu öffnen:
+- `Neue Unterseite` fügt eine Seite in diese ein.
+- `Umbenennen`, `Nach oben`, `Nach unten`.
+- Mit `Verschieben nach…` wählst du eine andere übergeordnete Seite oder `Oberste Ebene`.
+- `Oben anheften` hält die Seite an erster Stelle unter ihren Nachbarn; `Lösen` macht das rückgängig.
+- `Labels` fügt Labels hinzu oder entfernt sie.
+- `Neue Seite aus Vorlage…` (siehe Tägliche Notiz und Vorlagen unten).
+- `Seite exportieren (.txt)`, `Seite exportieren (.md)`, `Notizbuch exportieren (.txt, .zip)` und `Notizbuch exportieren (.md, .zip)`.
+- `An jemanden senden…` sendet die Seite als Link, der sich in jedem Browser öffnet. Die Papierflieger-Taste neben dem Seitentitel macht dasselbe.
+- `Löschen` entfernt die Seite, nachdem du bestätigt hast.
+
+Am Computer kannst du eine Seite im Baum auch ziehen und auf einer anderen Seite ablegen, um sie zur Unterseite zu machen, oder auf einer freien Fläche, um sie auf die oberste Ebene zu verschieben.
+
+## Formatierung und Vorschau
+Seiten werden als reiner Text gespeichert, daher ändert sich an deinen Notizen nichts, wenn du die Ansicht wechselst. In der `Vorschau` wird dieses Markdown formatiert angezeigt:
+- `# Überschrift`, `## Kleinere Überschrift` (bis zu sechs Ebenen).
+- `**fett**`, `*kursiv*`, `~~durchgestrichen~~` und Backticks um ein Wort für Code.
+- Zeilen, die mit `- ` oder `1. ` beginnen, ergeben Listen; rücke sie ein, um sie zu verschachteln.
+- `- [ ] zu erledigen` und `- [x] erledigt` ergeben Kontrollkästchen. Tippe in der `Vorschau` auf eines, um es abzuhaken; der Text ändert sich mit.
+- `> ` beginnt ein Zitat, drei Backticks in einer eigenen Zeile beginnen und beenden einen Codeblock, `---` zeichnet eine Linie.
+- Tabellen: eine Zeile wie `| Name | Telefon |`, dann `|---|---|`, dann eine Zeile pro Eintrag.
+- `[Text](https://example.org)` ergibt einen Link; Adressen, die mit http:// oder https:// beginnen, werden von selbst zu Links. Links öffnen sich in einem neuen Tab.
+
+Die Tasten der Symbolleiste fügen das für dich um den markierten Text oder an der Schreibmarke ein. Drück eine Taste noch einmal, um es wieder zu entfernen.
+
+## Tägliche Notiz und Vorlagen
+Die Kalender-Taste neben dem Titel (`Notiz von heute`) öffnet die Seite für heute, betitelt wie `2026-10-14`, unter einer Seite namens `Täglich` oben im aktuellen Notizbuch. Beide werden beim ersten Mal angelegt; später öffnet sich dieselbe Seite.
+
+Vorlagen sind Seiten unter einer Seite namens `Vorlagen` (in einem beliebigen Notizbuch). Die Vorlagen-Taste unter dem Baum oder `Neue Seite aus Vorlage…` im Seitenmenü listet sie auf; wähle eine, gib der neuen Seite einen Titel, und ihr Text wird hineinkopiert. In einer Vorlage wird `{{date}}` zum heutigen Datum, `{{time}}` zur Uhrzeit und `{{title}}` zum Titel der neuen Seite. Eine Vorlage namens `Täglich` wird statt der eingebauten für die tägliche Notiz verwendet.
+
+## Links zwischen Seiten
+Schreib einen Seitentitel in doppelte eckige Klammern, etwa `[[Shopping]]`, um auf ihn zu verlinken. `[[Shopping|the list]]` zeigt „the list“, öffnet aber Shopping. Unter dem Text siehst du `Links` (Seiten, auf die diese verlinkt) und `Rückverweise` (Seiten, die hierher verlinken, aus jedem Notizbuch). Tippe oder klicke auf einen Link, hier oder in der `Vorschau`, um diese Seite zu öffnen.
+
+Welche Seite ein Link öffnet:
+- `[[Page]]` öffnet die Seite mit diesem Titel im selben Notizbuch. Gibt es keine, öffnet er die eine Seite mit diesem Titel in einem anderen Notizbuch. Haben mehrere andere Notizbücher eine, öffnet sich die Suche, damit du wählen kannst.
+- `[[Notebook/Page]]` öffnet Page im Notizbuch mit diesem Namen.
+- Hat noch keine Seite diesen Titel, legt der Link sie an: als Unterseite der Seite, auf der du bist, oder oben im genannten Notizbuch.
+
+## Labels und Suche
+Gib im Menü `Labels` einer Seite einen Namen in `Neues Label…` ein, wähle eine Farbe und drück `Hinzufügen`. Tippe auf ein Label, um es der Seite hinzuzufügen oder es zu entfernen; das × neben einem Label löscht es. Labels erscheinen als farbige Punkte im Baum und als Chips über dem Text. Jedes Notizbuch hat seine eigenen Labels.
+
+Die Label-Taste unter dem Baum öffnet `Alle Labels`: jedes Label mit seiner Seitenzahl. Tippe auf eines, um seine Seiten aufzulisten.
+
+Die Such-Taste (oder [[Ctrl+K]]) durchsucht Titel und Text im aktuellen Notizbuch. Hake `Alle Notizbücher` an, um alle zu durchsuchen; jedes Ergebnis zeigt dann sein Notizbuch. Gib mindestens 2 Zeichen ein; Treffer im Titel kommen zuerst.
+
+## Notizbücher
+Wähle ein Notizbuch aus der Liste oben im Baum. Die Buch-Taste mit Plus unter dem Baum (`Neues Notizbuch`) legt eines an. Die Taste ⋯ neben der Liste (oder ein Rechtsklick auf die Liste) bietet `Notizbuch umbenennen` und `Notizbuch löschen`. Wenn du ein Notizbuch löschst, werden alle seine Seiten und Labels entfernt.
+
+## Import aus anderen Notiz-Apps
+- Die Hochladen-Taste unter dem Baum (oder `Notizen importieren…` im Notizbuch-Menü `⋯`) holt Notizen aus:
+  - **Obsidian**: `Ordner wählen…` und den Vault-Ordner wählen, oder `Dateien wählen…` und eine .zip davon wählen.
+  - **Standard Notes**: In Standard Notes Preferences › Backups › Download backup, Decrypted wählen; dann `Dateien wählen…` und diese Datei (oder die .zip) wählen.
+  - **Evernote**: In Evernote die Notizen oder ein Notizbuch markieren › Export › .enex; dann `Dateien wählen…` und eine oder mehrere .enex-Dateien wählen (jede Datei wird eine Seite mit ihren Notizen darunter).
+  - **Google Keep**: Auf takeout.google.com nur Keep wählen und die .zip herunterladen; dann `Dateien wählen…` und sie wählen. Listen werden zu To-dos, Labels bleiben Labels.
+  - **Simplenote**: Settings › Tools › Export notes; dann die .zip wählen.
+  - **Joplin**: File › Export all › JEX; dann die .jex-Datei wählen. Notizbücher behalten ihre Verschachtelung, Links zwischen Notizen funktionieren weiter.
+  - **Ein beliebiger Ordner oder eine .zip mit .md- / .txt-Dateien**: Bear, Logseq, Notion (Markdown-Export), Typora, iA Writer, Zettlr oder ein .md-Export von orOS.
+- Bevor etwas geschrieben wird, siehst du, was kommt: neue Seiten, Labels und was draußen bleibt. `Importieren` legt alles in ein neues Notizbuch, das nach der Quelle benannt ist; `Rückgängig` in der Meldung nimmt es wieder heraus.
+- Ordner werden zu Seiten mit Unterseiten (eine Notiz, die wie ihr Ordner heißt, wird zur Seite dieses Ordners), Tags (`#tag` und `tags:` am Anfang) werden zu Labels, `[[links]]` funktionieren weiter, angeheftete Notizen bleiben angeheftet, archivierte Notizen aus Standard Notes kommen unter `Archiv`, der Papierkorb bleibt draußen.
+- Importiere dieselbe Quelle so oft du willst: Neue Notizen kommen herein, nichts wird doppelt. Notizen, die du dort geändert hast, ändern sich hier nur, wenn du `Text früher importierter Seiten ersetzen` anhakst. Seiten, die du hier gelöscht hast, kommen nicht zurück.
+- Nur Text kommt herein: Bilder und andere Anhänge bleiben draußen (ein eingebettetes Bild erscheint als sein Name). Alles wird auf diesem Gerät gelesen; nichts wird hochgeladen.
+
+## Import aus Notion
+- Erstelle in Notion eine eigene Integration (notion.so/profile/integrations › New integration, Internal, nur Inhalte lesen) und teile dann die gewünschten Seiten mit ihr: Öffne eine Seite, ••• › Connections › die Integration hinzufügen (ihre Unterseiten kommen mit).
+- Verbinde Notion in den [Einstellungen](app:settings) › `Verbundene Dienste` mit dem Secret der Integration.
+- Dann zeigt die Wolken-Taste unter dem Baum, `Aus Notion importieren…` › `Konto lesen`, was hereinkommt, und `Importieren` holt es in ein Notizbuch namens Notion (`Rückgängig` in der Meldung nimmt es zurück). Unterseiten bleiben unter ihrer Seite. Der Text behält Überschriften, Listen, To-dos, Zitate, Code und Tabellen als Markdown; Datenbankzeilen, Kommentare und Notions eigene Dateien bleiben in Notion.
+- Importiere erneut, so oft du willst: Neue Seiten kommen herein. Seiten, die du in Notion geändert hast, ändern sich hier nur, wenn du `Text früher importierter Seiten ersetzen` anhakst, und das ersetzt deine Änderungen hier an diesen Seiten. Gelöschte Seiten kommen nicht zurück, außer du hakst `Hier Gelöschtes zurückholen` an.
+- orOS liest Notion nur: Dort ändert sich nichts. Notion antwortet Browsern nicht direkt, daher läuft das Lesen über das orOS-Relay, das nichts speichert; ein großer Workspace braucht ein bis zwei Minuten.
+
+## Synchronisierung und Sicherung
+Notizbücher, Seiten und Labels werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten abgeglichen. Welche Seite offen ist, welche Zweige des Baums aufgeklappt sind und die Breite des Baums bleiben auf diesem Gerät.
+
+Wird dieselbe Seite auf zwei Geräten bearbeitet, bevor sie synchronisieren, bleiben beide Versionen erhalten: Eine davon erscheint im Baum mit dem Vermerk `Konfliktkopie`. Vergleiche sie, behalte, was du brauchst, und lösch die andere.
+
+Die Herunterladen-Taste unter dem Baum exportiert das Notizbuch als .zip mit Dateien, mit Ordnern für Seiten, die Unterseiten haben: `Aktuelles Notizbuch (.txt, .zip)` für reinen Text oder `Aktuelles Notizbuch (.md, .zip)` für Markdown-Dateien, die andere Apps wie Obsidian öffnen. Mit mehr als einem Notizbuch bietet sie auch `Alle Notizbücher` an, und bei offener Seite nur diese Seite. Für eine vollständige Kopie von orOS siehe [Sicherung](help:t/backup).
+
+`orOS-Datei (.orosnotes)` (im selben Menü und im Menü `⋯` einer Seite) speichert das aktuelle Notizbuch als eine Datei: seine Seiten, Unterseiten, Labels und Anheftungen. Eine .orosnotes ist eine offene ZIP-Datei: Entpackst du sie, findest du `content.json` (das Notizbuch) und `preview`, mit `index.md` (der Gliederung) und einer .md-Datei pro Seite, die jede Markdown-App öffnet. Öffne sie mit `Notizen importieren…` › `Dateien wählen…` oder auf deinem Gerät mit „Öffnen mit“ orOS: Sie kommt immer als neues Notizbuch herein, und `Rückgängig` in der Meldung nimmt sie wieder heraus. `Entpackter orOS-Ordner…` im selben Fenster holt eine entpackte .orosnotes zurück, auch wenn du ihre Dateien geändert hast.
+
+## Tastenkürzel
+- [[Ctrl+K]] öffnet die Suche ([[Cmd+K]] auf dem Mac).
+- [[Enter]] in der Suche öffnet das erste Ergebnis.
+- [[Ctrl+B]] und [[Ctrl+I]] machen den markierten Text fett oder kursiv ([[Cmd]] auf dem Mac).
+- [[Esc]] schließt Suche, Menüs und das Label-Feld.
+
+## Tipps
+- Links unterscheiden nicht zwischen Groß- und Kleinschreibung, daher findet `[[shopping]]` „Shopping“.
+- Ein `\` vor einem Zeichen zeigt es, wie es ist: `\*nicht kursiv\*`.
+
+## Grenzen
+- Noch keine Bilder oder Anhänge: Ein in Markdown geschriebenes Bild erscheint als Link.
+- HTML, das du in eine Seite tippst, wird als Text gezeigt, nie ausgeführt.
+- `Nebeneinander` braucht ein Fenster, das mindestens 900 Pixel breit ist.
+- Exportierte Dateien enden mit einer kurzen Zeile „Made with orOS“.
