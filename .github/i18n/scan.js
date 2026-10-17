@@ -155,6 +155,31 @@ function packIndex(all) {
   return { apps: out };
 }
 
+// Lines a translator should look at, per language. Not errors for the
+// app (orOS shows English for any line that does not fit), so tests only
+// print them and STATUS.md lists them: an English text that changed its
+// {placeholders} or tags, a key that is gone, a help page whose links
+// differ from the English one.
+function helpMarks(s) {
+  return [...new Set((s.match(/\]\((?:app|topic|help|tour|https?):[^)]+\)|\[\[[^\]]+\]\]/g) || []).map((m) => m.replace(/^\]/, "")))].sort().join(" ");
+}
+function packIssues(code, all) {
+  const out = [];
+  for (const f of packFiles(code)) {
+    if (!/^[a-z0-9][a-z0-9-]*\.js$/.test(f)) continue;
+    const p = readPack("i18n/" + code + "/" + f);
+    if (!p.error) out.push(...checkPack(p, appKeys(p.app, all)));
+  }
+  const files = new Set(packFiles(code));
+  for (const h of helpPages()) {
+    if (!files.has(h.pack)) continue;
+    const en = fs.readFileSync(path.join(ROOT, h.en), "utf8");
+    const tr = fs.readFileSync(path.join(ROOT, "i18n", code, h.pack), "utf8");
+    if (helpMarks(en) !== helpMarks(tr)) out.push(code + "/" + h.pack + ": links or key caps differ from " + h.en);
+  }
+  return out;
+}
+
 // What the shell downloads for offline use (manifest.json).
 function manifest(code) {
   return { code, files: packFiles(code).filter((f) => f !== "manifest.json" && f !== "STATUS.md") };
@@ -183,6 +208,6 @@ function inlineGreek(rel, tbls) {
 
 module.exports = {
   ROOT, SKIP, jsFiles, skipToken, blockEnd, entries, tables, sentence, GREEK, line, unquote,
-  langs, appKeys, packApps, packIndex, readPack, checkPack, packFiles, helpPages, manifest, inlineGreek,
+  langs, appKeys, packApps, packIndex, readPack, checkPack, packIssues, packFiles, helpPages, manifest, inlineGreek,
   placeholders, tags: tagsOf, ALL_FILES
 };

@@ -49,7 +49,9 @@ The keys and the English text come from the app's `{ en: { … } }` table
   key for different English, the tests ask the developer to rename one.
 
 A value that breaks a rule is never shown: orOS falls back to English for
-that line, and the pull request's tests say what to fix.
+that line. The tests list it in the pull request's log, and `STATUS.md`
+lists it under "Lines to fix" (this also catches lines that stopped
+fitting because the English text changed).
 
 ## Translating inside orOS
 
@@ -84,7 +86,8 @@ Open orOS with `?lang=<code>` (for example `https://useoros.online/?lang=de`).
 A new language stays out of the language list ("hidden" in `i18n.js`)
 until the shell, Settings and Help are translated (every string and every
 guide page); then it is shown, marked as partly translated until every app
-is. The tests refuse a shown language that misses one of them.
+is. A shown language may lag a little behind new English text (the tests
+list what is missing); below 95% the tests ask to hide it again.
 
 German (`de`) was drafted by Claude and needs review by native speakers:
 corrections are welcome as pull requests or from Help translate.
