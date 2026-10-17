@@ -7717,3 +7717,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - `LICENSE` is now the unchanged MIT text, so GitHub detects the licence. The note about third-party licences stays in `CREDITS.md`.
 - Files: `LICENSE`.
   - Tests: full suite green. No code changes.
+
+### 2026-10-17 — Languages L7a: Game Center and 12 games in German (#520) — 3.14.00
+- Game Center, Solitaire, Xeri, Chess, Backgammon, Checkers, Battleship, Crossword, Wordle, Sudoku, Minesweeper, Nonogram and Flow Free are now in German: packs and help pages in `i18n/de/`, inline texts moved into {en, el} tables, and each `index.html` loads `../i18n.js` before its own scripts. English still fills any missing line.
+- Files: `i18n/de/**`, `gamecenter/`, the 12 game folders (index.html + scripts), `gamekit/daily.js`, `gamecenter.css`, `.github/i18n/inline-baseline.json`, `i18n/apps.json`.
+  - Tests: 4776/4776; Chromium 360 de / el / en. Not tested: a German native reader's review, real phone, Safari, online multiplayer in German.
