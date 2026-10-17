@@ -20,7 +20,7 @@
 
   var S = {
     en: {
-      btn: "Import from Notion…", title: "Import from Notion",
+      btn: "Import from Notion…", "plat.title": "Import from Notion",
       intro: "Bring the Notion databases you shared with your integration here, one sheet per database: row 1 holds the property names, then one row per entry, as plain values (text, numbers, dates, TRUE/FALSE). orOS only reads Notion: nothing there changes.",
       none: "Connect Notion in Settings › Connected services first.",
       openSettings: "Open Connected services", noShell: "Open Spreadsheet from the orOS desktop to import from Notion.",
@@ -45,7 +45,7 @@
       close: "Close", "p.notion": "Notion"
     },
     el: {
-      btn: "Εισαγωγή από Notion…", title: "Εισαγωγή από Notion",
+      btn: "Εισαγωγή από Notion…", "plat.title": "Εισαγωγή από Notion",
       intro: "Φέρε εδώ τις βάσεις δεδομένων του Notion που μοιράστηκες με την ενσωμάτωσή σου, ένα φύλλο για κάθε βάση: η γραμμή 1 έχει τα ονόματα των ιδιοτήτων και μετά μία γραμμή για κάθε εγγραφή, ως απλές τιμές (κείμενο, αριθμοί, ημερομηνίες, TRUE/FALSE). Το orOS μόνο διαβάζει το Notion: εκεί δεν αλλάζει τίποτα.",
       none: "Σύνδεσε πρώτα το Notion στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.",
       openSettings: "Άνοιγμα Συνδεδεμένων υπηρεσιών", noShell: "Άνοιξε το Υπολογιστικό φύλλο από την επιφάνεια εργασίας του orOS για εισαγωγή από το Notion.",
@@ -70,8 +70,10 @@
       close: "Κλείσιμο", "p.notion": "Notion"
     }
   };
+  // orosI18n (../i18n.js): S[code] for a pack language (the app's LANG)
+  if (root.orosI18n) root.orosI18n.table(S, "spreadsheet");
   function t(k, params) {
-    var tab = S[A && A.lang === "el" ? "el" : "en"];
+    var tab = (A && S[A.lang]) || S.en;
     var s = tab[k] !== undefined ? tab[k] : S.en[k] !== undefined ? S.en[k] : k;
     return s.replace(/\{(\w+)\}/g, function (m, n) { return params && params[n] !== undefined ? String(params[n]) : m; });
   }
@@ -183,7 +185,7 @@
     form.method = "dialog";
     form.autocomplete = "off";
     dlg.appendChild(form);
-    form.appendChild(el("h3", "", t("title")));
+    form.appendChild(el("h3", "", t("plat.title")));
     form.appendChild(el("p", "hint", t("intro")));
     var menu = el("menu");
     var closeBtn = button(t("close"), "", function () { dlg.close(); });

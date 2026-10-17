@@ -1,0 +1,156 @@
+# Tabelle
+Tabelle ist ein einfaches Raster für Listen, Budgets und Summen, mit Formeln, mehreren Blättern pro Arbeitsmappe und CSV-, Excel- und LibreOffice-Dateien.
+
+## Erste Schritte
+Ein neues Blatt hat 100 Zeilen und die Spalten A bis Z. Ein Blatt kann auf 10.000 Zeilen und 104 Spalten (A bis CZ) wachsen: siehe Zeilen, Spalten und fixierte Bereiche.
+
+- Tippe oder klicke auf eine Zelle, um sie auszuwählen, und fang an zu tippen. [[Enter]] speichert und geht nach unten, [[Tab]] geht nach rechts, [[Esc]] bricht ab.
+- Um eine Zelle zu ändern, doppelklicke sie oder drück [[Enter]] oder [[F2]]. Auf einem Touchscreen tippst du eine Zelle an, um sie auszuwählen, und tippst noch einmal, um sie zu bearbeiten.
+- Die Leiste oben zeigt den Zellnamen (zum Beispiel A1) und ihren Inhalt nach ƒx. Du kannst auch dort bearbeiten und [[Enter]] drücken.
+
+## Formeln
+Beginne eine Zelle mit =, um eine Formel zu schreiben, zum Beispiel =A1*2 oder =SUM(B2:B10).
+
+- Operatoren: + - * / ^, & zum Verbinden von Text, % für Prozent, ein Minuszeichen davor (=-A1) und = <> < > <= >= zum Vergleichen (das Ergebnis ist TRUE oder FALSE).
+- Bezüge: A1, Bereiche wie A1:C5, ganze Spalten wie A:A, feste Bezüge wie $A$1 und Zellen auf einem anderen Blatt wie Sheet2!A1 (oder 'Mein Blatt'!A1, wenn der Name Leerzeichen hat).
+- Trenne Argumente mit einem Komma oder Semikolon. Text kommt in doppelte Anführungszeichen; schreib "" für ein Anführungszeichen im Text.
+- Fehler stehen in der Zelle, zum Beispiel #DIV/0! (Division durch null), #REF! (ein Bezug, den es nicht gibt), #N/A (nichts gefunden) oder #NAME? (eine unbekannte Funktion).
+- Wenn du eine Formel kopierst und einfügst, wandern ihre Bezüge mit, wie in anderen Tabellenprogrammen ($-Teile bleiben).
+
+## Funktionen
+Über 100 Funktionen funktionieren wie in Excel und Google Sheets, mit ihren englischen Namen. Tippe auf ƒx neben der Formelleiste für die ganze Liste mit einer Zeile zu jeder; während du =SU… tippst, erscheint eine kurze Liste: Nimm die Pfeiltasten und [[Tab]] oder tippe auf einen Namen.
+
+- Summen und Bedingungen: SUM, AVERAGE, COUNT, COUNTA, COUNTBLANK, SUMIF, SUMIFS, COUNTIF, COUNTIFS, AVERAGEIF, AVERAGEIFS, MAXIFS, MINIFS, SUMPRODUCT.
+- Bedingungen schreibst du wie ">5", "<>bezahlt", "a*" (* beliebiger Text, ? ein Zeichen) oder als Zelle.
+- Nachschlagen: VLOOKUP, HLOOKUP, XLOOKUP, INDEX, MATCH, CHOOSE.
+- Logik und Fehler: IF, IFS, SWITCH, AND, OR, NOT, IFERROR, IFNA, ISBLANK, ISNUMBER, ISTEXT, ISERROR.
+- Text: LEN, LEFT, RIGHT, MID, UPPER, LOWER, PROPER, TRIM, SUBSTITUTE, FIND, SEARCH, TEXT, VALUE, TEXTJOIN, CONCAT, REPT.
+- Mathematik und Statistik: ROUND, ROUNDUP, ROUNDDOWN, INT, MOD, POWER, SQRT, PRODUCT, MEDIAN, MODE, STDEV, VAR, LARGE, SMALL, RANK, PI, RAND, RANDBETWEEN.
+- Geld: PMT, FV, PV, NPER, NPV.
+- TEXT(Wert; "0.00") schreibt eine Zahl als Text in einem Muster: 0, 0.00, #,##0, 0%, dd/mm/yyyy und so weiter.
+
+## Datumswerte
+Datumswerte sind Tageszahlen, wie in Excel: 1 ist der 31. Dezember 1899, also ergibt die Differenz zweier Daten die Tage dazwischen.
+
+- TODAY, NOW, DATE, YEAR, MONTH, DAY, WEEKDAY, DAYS, DATEDIF, EDATE, EOMONTH, NETWORKDAYS und WORKDAY arbeiten damit.
+- Eine Zelle mit =TODAY(), =DATE(…) und Ähnlichem zeigt von selbst ein Datum. Für andere Zellen wähle `Datum` unter `Zahlenformat`: 2026-10-14 auf Englisch und Deutsch, 14/10/2026 auf Griechisch.
+- Ein Datum, das du tippst, wie 2026-10-14 oder 14/10/2026, bleibt so, wie du es getippt hast (Text). Datumsfunktionen lesen es trotzdem (Tag zuerst: 14/10/2026 ist der 14. Oktober), und DATEVALUE macht daraus eine Tageszahl.
+
+## Formatieren und bearbeiten
+- Wähle einen Bereich aus, indem du mit der Maus ziehst oder [[Shift]] und die Pfeiltasten nimmst. Auf einem Touchscreen hältst du eine Zelle kurz gedrückt und ziehst dann; oder wähle `Bereich auswählen…` im Blattmenü und tippe auf die letzte Zelle.
+- Die Symbolleiste hat Rückgängig, Wiederholen, Kopieren, Ausschneiden, Einfügen, fett, kursiv, unterstrichen, Ausrichtung, `Zahlenformat` (`auto`, 123, 123.00, %, €, `Datum`), `Textfarbe`, `Formatierung entfernen` und den Zellformat-Knopf (siehe Füllung, Rahmen und verbundene Zellen).
+- Tippe auf einen Spaltenbuchstaben oder eine Zeilennummer, um die ganze Spalte oder Zeile auszuwählen.
+- [[Delete]] oder [[Backspace]] leert die ausgewählten Zellen.
+- Zieh den rechten Rand eines Spaltenkopfs, um die Spalte breiter oder schmaler zu machen, und den unteren Rand einer Zeilennummer, um die Zeile höher zu machen. Das geht auch mit dem Finger.
+
+## Füllung, Rahmen und verbundene Zellen
+Der Zellformat-Knopf neben `Formatierung entfernen` hat:
+
+- `Füllfarbe` (ein Hintergrund für die Zellen) und `Keine Füllung`.
+- `Außenrahmen`, `Alle Rahmen`, `Unterer Rahmen` und `Keine Rahmen`.
+- `Textumbruch`: Langer Text bricht in Zeilen um und die Zeile wächst mit.
+- `Oben ausrichten`, `Mittig ausrichten` und `Unten ausrichten`.
+- `Zellen verbinden`, `Horizontal verbinden` (jede Zeile für sich), `Vertikal verbinden` (jede Spalte für sich) und `Verbindung aufheben`. Nur der Wert oben links bleibt. Eine Verbindung umfasst höchstens 500 Zeilen.
+- `Bedingte Formatierung…` (siehe unten).
+
+## Ausfüllkästchen
+Das kleine Quadrat unten rechts an der Auswahl ist das Ausfüllkästchen. Zieh es nach unten, oben, links oder rechts, mit der Maus oder dem Finger:
+
+- Zahlen in einem Muster (1, 2 oder 10, 20) werden fortgesetzt; eine einzelne Zahl wird kopiert (halte [[Ctrl]] beim Ziehen, um stattdessen hochzuzählen).
+- Datumswerte gehen tageweise weiter oder im Abstand zwischen ihnen. Wochentage und Monate gehen auf Englisch und Griechisch weiter (Monday, Tuesday… oder Ιαν, Φεβ…), ebenso Text, der auf eine Zahl endet, wie Posten 1, Posten 2.
+- Formeln werden mit verschobenen Bezügen kopiert, wie beim Kopieren und Einfügen.
+- Alles andere wird wiederholt. [[Ctrl+Z]] macht das Ausfüllen rückgängig.
+
+## Bedingte Formatierung
+`Bedingte Formatierung…` im Zellformat-Menü listet die Regeln dieses Blatts. `Regel hinzufügen` erstellt eine neue für die ausgewählten Zellen (oder gib einen Bereich wie B2:B20 ein):
+
+- `Größer als`, `Kleiner als`, `Zwischen`, `Gleich`, `Text enthält`, `Oberste` / `Unterste` N Werte und `Doppelte Werte` färben die passenden Zellen mit einer Füllung, einer Textfarbe oder fett.
+- `Farbskala` schattiert jede Zahl von der kleinsten bis zur größten mit zwei oder drei Farben.
+- `Datenbalken` zeichnet in jede Zelle einen Balken, so lang wie ihr Wert.
+- Wenn sich Regeln überschneiden, gewinnt die weiter oben in der Liste. Der Pfeil schiebt eine Regel nach oben.
+- Regeln folgen den Werten, wenn sie sich ändern, und erreichen deine anderen Geräte per Synchronisierung.
+
+## Diagramme
+Wähle die Daten mit ihren Überschriften aus, zum Beispiel A1:C5, und drück den Diagramm-Knopf.
+
+- Wähle `Säulen`, `Balken`, `Linie`, `Kreis`, `Ring` oder `Punkte` und gib ihm einen Titel, Achsentitel und Farben. Eine erste Zeile oder Spalte mit Text gibt die Namen der Reihen und der Kategorien; `Reihen in` wählt Spalten oder Zeilen.
+- Das Diagramm schwebt über dem Blatt. Zieh es, um es zu verschieben; zieh an seiner Ecke, um die Größe zu ändern. Tippe darauf, um seine Knöpfe zu zeigen: bearbeiten (oder doppelklicken), `PNG`, `SVG` und löschen. [[Delete]] löscht das ausgewählte Diagramm und [[Ctrl+Z]] holt es zurück.
+- Ein Diagramm folgt seinen Zellen: Ändere eine Zahl, und das Diagramm ändert sich mit. Durch einen Filter ausgeblendete Zeilen werden weggelassen. Es nutzt die Farben deines Designs, hell oder dunkel.
+- Diagramme erreichen deine anderen Geräte per Synchronisierung.
+
+## Kopieren und Einfügen mit anderen Apps
+- [[Ctrl+C]] oder der Kopieren-Knopf legt die ausgewählten Zellen als Text mit Tabs und als Tabelle in die Zwischenablage, damit sie sich in Excel, Google Sheets, LibreOffice, Word oder eine E-Mail einfügen lassen.
+- [[Ctrl+V]] fügt in Excel, Google Sheets oder LibreOffice kopierte Zellen ein, mit fett, kursiv, Farben, Füllungen und verbundenen Zellen, soweit die andere App sie mitschickt. Einfacher Text mit Tabs oder Zeilen wird auch in Zellen eingefügt.
+- Was du hier kopierst und hier einfügst, behält seine Formeln (ihre Bezüge wandern mit) und alle Formate.
+- Der Einfügen-Knopf bittet den Browser, die Zwischenablage zu lesen. Wenn der Browser ablehnt, drück stattdessen [[Ctrl+V]].
+
+## Sortieren und filtern
+- `Sortieren A bis Z` und `Sortieren Z bis A` sortieren die ausgewählten Zellen nach der Spalte des Cursors. Mit einer ausgewählten Zelle sortieren sie die Tabelle drumherum; eine erste Zeile mit Überschriften (Text über Zahlen, oder fett) bleibt oben. Leere Zellen kommen ans Ende. [[Ctrl+Z]] macht es rückgängig.
+- `Filter` setzt einen Knopf auf jede Überschrift der Tabelle. Tippe darauf, um nur einige Werte zu behalten oder Zeilen, deren Text ein Wort enthält. Die Statusleiste zeigt, wie viele Zeilen ausgeblendet sind; tippe dort auf ✕ oder noch einmal auf `Filter`, um alle zu zeigen.
+- Filter sind eine Ansicht nur auf diesem Gerät: Sie erreichen deine anderen Geräte nicht, und nichts wird gelöscht.
+
+## Zeilen, Spalten und fixierte Bereiche
+Der Knopf `Zeilen, Spalten, Fixieren` (oder ein Rechtsklick ins Raster) hat:
+
+- `Oberste Zeile fixieren`, `Zeilen 1–N fixieren` (bis zum Cursor), `Spalte A fixieren` / `Spalten A–X fixieren` und `Fixierung aufheben`. Fixierte Zeilen und Spalten bleiben beim Scrollen sichtbar, auch auf dem Handy. Sie erreichen deine anderen Geräte per Synchronisierung.
+- `Zeile oberhalb einfügen` / `unterhalb`, `Spalte links einfügen` / `rechts` und `Zeile löschen` / `Spalte löschen` für die ausgewählten Zeilen oder Spalten. Formeln, die auf verschobene Zellen zeigen, folgen ihnen; eine Formel, die auf eine gelöschte Zelle zeigte, zeigt #REF!. [[Ctrl+Z]] macht es rückgängig.
+- `100 Zeilen am Ende hinzufügen`, `1.000 Zeilen am Ende hinzufügen` und `10 Spalten hinzufügen`.
+- Diagramme und Regeln der bedingten Formatierung wandern mit ihren Zellen, wenn du Zeilen und Spalten einfügst oder löschst, und ihre Bereiche wachsen oder schrumpfen mit.
+
+## Blätter
+Die Reiter unten sind deine Blätter.
+
+- `Neues Blatt` (der Knopf +) fügt eins hinzu.
+- Doppelklicke einen Reiter oder halte ihn auf einem Touchscreen gedrückt, um ihn umzubenennen.
+- Tippe auf ✕ an einem Reiter und innerhalb von 3 Sekunden noch einmal auf ✕, um das Blatt zu löschen. Das letzte Blatt kann nicht gelöscht werden.
+
+## Synchronisierung und Sicherung
+Mit der [orOS-Synchronisierung](help:t/sync) erreichen deine Blätter, Zellen, Formatierung (mit Füllungen, Rahmen und verbundenen Zellen), Spaltenbreiten, Zeilenhöhen, fixierten Bereiche, Diagramme und Regeln der bedingten Formatierung deine anderen Geräte. Text und Formatierung derselben Zelle werden getrennt zusammengeführt, sodass ein auf einem Gerät getippter Wert und auf einem anderen gesetztes Fett beide erhalten bleiben. Jedes Diagramm und jede Regel synchronisiert sich einzeln: Ein auf einem Gerät hinzugefügtes Diagramm und eine auf einem anderen hinzugefügte Regel bleiben beide.
+
+Diese bleiben auf diesem Gerät: welches Blatt offen ist, Filter, die Kopier-Zwischenablage und der Rückgängig-Verlauf.
+
+Import und Export (Knöpfe unten rechts):
+- `CSV importieren` fügt die Datei als neues Blatt hinzu. Kommas, Semikolons und Tabs werden von selbst erkannt.
+- `CSV exportieren` speichert das offene Blatt, jede Zelle so, wie du sie getippt hast (Formeln bleiben Formeln).
+- `Excel / Calc / orOS importieren`, dann `Datei öffnen (.xlsx, .ods, .xls, .orossheet)…`, fügt jedes Blatt der Datei als neues Blatt hinzu. Nichts, was schon hier ist, wird ersetzt.
+- `Excel / Calc / orOS importieren`, dann `Aus Google Sheets…`, meldet dich bei Google an, lässt dich eine Tabelle in Google Drive wählen (ein Google Sheet oder eine XLSX-, XLS- oder ODS-Datei dort) und fügt ihre Blätter genauso hinzu. orOS sieht nur diese Datei, und die Anmeldung endet gleich danach.
+- `Excel / Calc / orOS exportieren` speichert alle Blätter als `Excel (.xlsx)`, `LibreOffice Calc (.ods)` oder `orOS-Datei (.orossheet)`. Excel und Calc bekommen Spaltenbreiten, Zeilenhöhen und verbundene Zellen.
+- Die .orossheet-Datei behält alles: Formeln, Formatierung, Diagramme, bedingte Formatierung und jedes Blatt. Sie ist eine offene ZIP-Datei: Entpack sie und du findest `content.json` (die Arbeitsmappe) und in `preview` eine CSV pro Blatt mit den angezeigten Werten, die jedes Tabellenprogramm öffnet. `Entpackter orOS-Ordner…` holt eine entpackte .orossheet zurück.
+
+## Aus Notion importieren
+Der Knopf `Notion` (Wolke) daneben holt die Notion-Datenbanken, die du mit deiner Notion-Integration geteilt hast, ein Blatt pro Datenbank. Verbinde Notion zuerst unter [Einstellungen](app:settings) › `Verbundene Dienste`, öffne dann in Notion jede Datenbank, ••• › `Connections`, und füge deine Integration hinzu.
+- `Konto lesen` listet, was kommen würde: neue Blätter, aktualisierte, unveränderte. Dann `Importieren`.
+- Zeile 1 enthält die Namen der Eigenschaften in fett (der Titel zuerst), dann eine Zeile pro Eintrag: Text, Zahlen, Daten (`2026-10-13 09:30`, ein Zeitraum mit →), Kontrollkästchen als `TRUE`/`FALSE`, Tags mit Kommas verbunden, eine Relation als Anzahl der verknüpften Einträge.
+- Jeder Wert ist einfacher Text: Einer, der mit = + - oder @ beginnt, bekommt einen Apostroph, damit er nie als Formel läuft.
+- Importiere erneut, um neue Datenbanken zu holen. Ein Blatt, das schon früher kam, bleibt, wie es ist, außer du setzt das Häkchen bei `Werte früher importierter Blätter ersetzen`: Dann werden seine Werte die der Datenbank (deine Änderungen darin werden ersetzt; Name und Formate bleiben).
+- Ein Blatt, das du hier gelöscht hast, kommt nicht zurück, außer du setzt das Häkchen bei `Hier Gelöschtes zurückholen`.
+- `Rückgängig` in der Meldung nimmt den Import zurück.
+- orOS liest Notion nur: Dort ändert sich nichts. Notion antwortet keinen Browsern, daher läuft das Lesen über das orOS-Relay (das nichts speichert). Bis zu 20 Datenbanken mit je 499 Zeilen; Seiten, Kommentare und Dateien bleiben in Notion ([Notizen](app:notes) holt Seiten).
+
+Siehe auch [Sicherung](help:t/backup).
+
+## Tastenkürzel
+- Pfeiltasten bewegen; [[Shift]] + Pfeile wählen einen Bereich; [[PageUp]] und [[PageDown]] springen eine Bildschirmseite.
+- [[Enter]] oder [[F2]] bearbeitet die Zelle; [[Tab]] geht nach rechts; [[Esc]] bricht das Bearbeiten ab.
+- [[Ctrl+Z]] rückgängig, [[Ctrl+Y]] oder [[Ctrl+Shift+Z]] wiederholen.
+- [[Ctrl+C]], [[Ctrl+X]], [[Ctrl+V]] kopieren, ausschneiden und einfügen, auch mit anderen Apps.
+- [[Delete]] auf einem ausgewählten Diagramm löscht es.
+- [[Ctrl+B]], [[Ctrl+I]], [[Ctrl+U]] fett, kursiv, unterstrichen.
+- Auf einem Mac nimmst du Cmd statt Ctrl.
+
+## Tipps
+- Fang auf einer ausgewählten Zelle an zu tippen, um ihren Inhalt sofort zu ersetzen.
+- Nimm ein anderes Blatt für Rohdaten und beziehe dich darauf mit Sheet2!A1.
+- Auf dem Handy öffnet langes Drücken auf eine Zelle, ohne sie zu bewegen, das Blattmenü.
+
+## Grenzen
+- Ein Blatt hat höchstens 10.000 Zeilen × 104 Spalten (A bis CZ); Importe werden dort begrenzt.
+- Ein Diagramm zeigt bis zu 8 Reihen und 1.000 Punkte; ein Kreis- oder Ringdiagramm fasst Stücke nach dem 8. unter Andere zusammen.
+- Diagramme, Füllungen, Rahmen, Umbruch und bedingte Formatierung werden nicht in Excel-, Calc- oder CSV-Dateien gespeichert (eine .orossheet behält sie) (verbundene Zellen, Spaltenbreiten und Zeilenhöhen schon). Aus Excel, Sheets und LibreOffice bringt ein Einfügen Füllungen, Farben und fett mit, aber keine Rahmen oder Regeln.
+- Verbundene Zellen wachsen nicht, wenn du darin Zeilen oder Spalten einfügst; die Verbindung behält ihre Größe.
+- Umgebrochene Zeilen wachsen mit, wenn du den Umbruch einschaltest; eine Zeile, deren Text du später änderst, behält ihre Höhe, bis du sie erneut umbrichst oder ihren Rand ziehst.
+- Solange eines deiner Geräte noch ein älteres orOS hat, zeigt es keine Diagramme, Regeln, Zeilenhöhen, Füllungen, Rahmen, Umbrüche oder verbundenen Zellen, und die beiden Geräte schicken die Arbeitsmappe womöglich ein paar Mal hin und her, bis beide aktualisiert sind. Das aktualisierte Gerät behält sie, außer wo das ältere dasselbe geändert hat: Ein dort gesetztes Format an einer Zelle verwirft deren Füllung, Rahmen, Umbruch und Verbindung, und eine dort geänderte Blatteinstellung (Name, Spaltenbreite) verwirft seine Zeilenhöhen.
+- Matrixformeln, {1,2}-Konstanten, benannte Bereiche und Pivot-Tabellen werden nicht unterstützt. Eine Formel aus Excel, die eine Funktion nutzt, die orOS nicht kennt, zeigt weiter den Wert, den Excel gespeichert hat.
+- Zeilen einfügen oder löschen verschiebt Zellen: Wenn ein anderes Gerät dieselben Zellen vor der Synchronisierung bearbeitet, bleibt seine Änderung an der alten Stelle.
+- Der Rückgängig-Verlauf wird gelöscht, wenn die Synchronisierung Änderungen bringt, und das Löschen eines Blatts lässt sich nicht rückgängig machen.
+- Excel- und Calc-Dateien brauchen eine Hilfsbibliothek; wenn sie noch nicht geladen ist, brauchst du eventuell eine Internetverbindung.
