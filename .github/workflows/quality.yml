@@ -1,0 +1,52 @@
+name: Quality gate
+
+# Opens every app of apps.json in Chromium (360 + 1280 px, EN + EL) and fails
+# on NEW console errors, horizontal scroll at 360, missing help pages or
+# English text left in the Greek UI. Known problems live in
+# .github/qa/baseline.json (may only shrink). Playwright is installed here
+# only and never ships with orOS. See OROS_BIBLE.md "Quality gate".
+
+on:
+  pull_request:
+    paths-ignore: ['**/*.md', 'android/**', '.github/workflows/android.yml', '.github/workflows/fdroid.yml', 'relay/**']
+  push:
+    branches: [main]
+    paths-ignore: ['**/*.md', 'android/**', 'relay/**']
+  schedule:
+    - cron: '17 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  apps:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    env:
+      LANG: C.UTF-8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Playwright (CI only)
+        run: |
+          npm install --prefix .github/qa --no-audit --no-fund
+          .github/qa/node_modules/.bin/playwright install --with-deps chromium
+      - name: Open every app
+        run: node .github/qa/smoke.js --shard ${{ matrix.shard }}/4 --out qa-report-${{ matrix.shard }}.json
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa-report-${{ matrix.shard }}
+          path: qa-report-${{ matrix.shard }}.json
+          if-no-files-found: ignore

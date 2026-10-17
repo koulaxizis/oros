@@ -37,6 +37,17 @@ Tap the link. A page opens with the item and these buttons:
 
 If you got a file instead of a link, open the link inside it, or use `Open a file` on that page.
 
+## Send to another app of yours
+`Send to an app…` hands something to another app of your own orOS, like the share menu of a phone. Nothing leaves your device.
+- [Writer](app:writer): the arrow button in the toolbar sends the selected text, or the whole document.
+- [Notes](app:notes): `Send to an app…` in the page menu sends the page, or the text you selected in it.
+- [Wiki](app:wiki): `Send to an app…` in an article's ⋯ menu.
+- [Mail](app:mail): `Another app…` among a message's apps.
+- [Bookmarks](app:bookmarks): `Send to an app…` in a bookmark's menu.
+- [Reader](app:feeds): `Another app…` when you send an article.
+
+The window lists only the apps that can take it: text goes to Notes, To-Do (one task per line), Writer, Mail, Wiki, the Assistant, Text Tools, Case Converter and, for one short line, Label Maker; a link also goes to Bookmarks. The app opens with it filled in, and nothing is saved until you save it there. `Send to someone…` in the same window makes a link for another person, as described above.
+
 ## Privacy
 A plain link carries the item in the part after the # sign, which browsers never send to a server. No orOS server sees it and nothing is stored anywhere except in the link.
 

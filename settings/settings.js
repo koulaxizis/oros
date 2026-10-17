@@ -1035,9 +1035,9 @@
     if (!accts.length && !svc.add) c0.appendChild(el("p", "msg msg-dim", t("v.none")));
     if (!svc.add) {
       c0.appendChild(actions(button(t("v.add"), "v.add", function () {
-        svc.add = { p: "woo", name: "", site: "", ck: "", cs: "", key: "", env: "test", vat: "", db: "", err: "" };
+        svc.add = { p: null, q: "", name: "", site: "", ck: "", cs: "", key: "", env: "test", vat: "", db: "", err: "" };
         render();
-        var f = $("f-v-name");
+        var f = $("f-v-q");
         if (f) f.focus();
       }, "primary")));
     }
@@ -1050,14 +1050,124 @@
       host.appendChild(acctCard(Lk, a, plats[a.p]));
     });
   }
+  // The service picker: tiles grouped by what they are for, a coloured
+  // monogram each (no third-party logos), a search box and how many
+  // accounts of that service this orOS already has.
+  var SVC_GROUPS = [
+    { id: "shop", ps: ["woo", "tol", "ininja", "stripe"] },
+    { id: "mail", ps: ["mlite", "mchimp", "brevo"] },
+    { id: "crm", ps: ["hubspot", "pdrive", "odoo"] },
+    { id: "work", ps: ["todoist", "trello", "github", "notion", "raindrop"] }
+  ];
+  // monogram per service; its brand colour is in settings.css (.svc-mark.m-<id>)
+  var SVC_MARK = {
+    woo: "Wo", tol: "t", ininja: "IN", stripe: "S", mlite: "ML", mchimp: "M", brevo: "B",
+    hubspot: "H", pdrive: "P", odoo: "O", todoist: "Td", trello: "Tr", github: "GH", notion: "N", raindrop: "R"
+  };
+  function svcMark(p, name) {
+    var m = SVC_MARK[p];
+    var b = el("span", "svc-mark " + (m ? "m-" + p : "plain"), m || String(name || p).charAt(0).toUpperCase());
+    b.setAttribute("aria-hidden", "true");
+    return b;
+  }
+  function svcApps(plat) { return (plat.apps || []).map(appName).join(", "); }
+  function svcFind(q, plat) {
+    q = String(q || "").trim().toLowerCase();
+    if (!q) return true;
+    var lab = t("v.plat." + plat.id);
+    return (plat.name + " " + svcApps(plat) + " " + (lab === "v.plat." + plat.id ? "" : lab) + " " + plat.id).toLowerCase().indexOf(q) >= 0;
+  }
+  function pickerCard(Lk) {
+    var f = svc.add;
+    var c = card(t("v.pick"));
+    var plats = Lk.platforms(), byId = {}, count = {};
+    plats.forEach(function (p) { byId[p.id] = p; });
+    Lk.list().forEach(function (a) { count[a.p] = (count[a.p] || 0) + 1; });
+    var srch = el("input", "svc-search");
+    srch.id = "f-v-q";
+    srch.type = "text";
+    srch.autocomplete = "off";
+    srch.spellcheck = false;
+    srch.placeholder = t("v.pick.search");
+    srch.setAttribute("aria-label", t("v.pick.search"));
+    srch.setAttribute("data-k", "v-q");
+    srch.value = f.q || "";
+    c.appendChild(srch);
+    var none = el("p", "msg msg-dim svc-none");
+    var groups = [], seen = {};
+    SVC_GROUPS.forEach(function (g) {
+      var ps = g.ps.filter(function (id) { return byId[id]; });
+      ps.forEach(function (id) { seen[id] = 1; });
+      if (ps.length) groups.push({ id: g.id, ps: ps });
+    });
+    var rest = plats.filter(function (p) { return !seen[p.id]; }).map(function (p) { return p.id; });
+    if (rest.length) groups.push({ id: "other", ps: rest });
+    var blocks = [];
+    groups.forEach(function (g) {
+      var sec = el("div", "svc-group");
+      sec.appendChild(el("h4", "svc-group-title", t("v.grp." + g.id)));
+      var grid = el("div", "svc-grid");
+      var tiles = g.ps.map(function (id) {
+        var plat = byId[id];
+        var b = el("button", "svc-tile");
+        b.type = "button";
+        b.setAttribute("data-k", "v.pick:" + id);
+        b.appendChild(svcMark(id, plat.name));
+        var txt = el("span", "svc-txt");
+        txt.appendChild(el("span", "svc-name", plat.name));
+        txt.appendChild(el("span", "svc-apps", svcApps(plat)));
+        b.appendChild(txt);
+        var n = count[id] || 0;
+        if (n) b.appendChild(el("span", "svc-on", n > 1 ? t("v.pick.on.n", { n: n }) : t("v.pick.on")));
+        b.setAttribute("aria-label", plat.name + ", " + t("v.pick.for", { apps: svcApps(plat) }) + (n ? ", " + (n > 1 ? t("v.pick.on.n", { n: n }) : t("v.pick.on")) : ""));
+        b.addEventListener("click", function () {
+          f.p = id;
+          f.err = "";
+          render();
+          var nm = $("f-v-name");
+          if (nm) nm.focus();
+        });
+        grid.appendChild(b);
+        return { b: b, plat: plat };
+      });
+      sec.appendChild(grid);
+      c.appendChild(sec);
+      blocks.push({ sec: sec, tiles: tiles });
+    });
+    c.appendChild(none);
+    // filter in place: no re-render, so typing never loses its place
+    function filter() {
+      var any = false;
+      blocks.forEach(function (bk) {
+        var vis = 0;
+        bk.tiles.forEach(function (x) { var ok = svcFind(f.q, x.plat); x.b.hidden = !ok; if (ok) vis++; });
+        bk.sec.hidden = !vis;
+        if (vis) any = true;
+      });
+      none.hidden = any;
+      none.textContent = any ? "" : t("v.pick.none", { q: String(f.q || "").trim() });
+    }
+    srch.addEventListener("input", function () { f.q = srch.value; filter(); });
+    filter();
+    c.appendChild(actions(button(t("v.cancel"), "v.cancel", function () { svc.add = null; render(); })));
+    return c;
+  }
   function addCard(Lk) {
     var f = svc.add;
+    if (!f.p) return pickerCard(Lk);
     var c = card(t("v.add"));
     var form = el("form", "pass");
     form.setAttribute("autocomplete", "off");
     form.noValidate = true;                       // "shop.example.gr" is fine: core normalises it
-    var plats = Lk.platforms().map(function (p) { return { value: p.id, label: t("v.plat." + p.id) === "v.plat." + p.id ? p.name : t("v.plat." + p.id) }; });
-    form.appendChild(labelled(t("v.platform"), "v-p", select(plats, f.p, "v-p", function (v) { f.p = v; f.err = ""; render(); })));
+    var chosen = Lk.platforms().filter(function (x) { return x.id === f.p; })[0] || { id: f.p, name: f.p, apps: [] };
+    var head = el("div", "svc-chosen");
+    head.appendChild(svcMark(chosen.id, chosen.name));
+    var ht = el("span", "svc-txt");
+    ht.appendChild(el("span", "svc-name", chosen.name));
+    ht.appendChild(el("span", "svc-apps", t("v.pick.for", { apps: svcApps(chosen) })));
+    head.appendChild(ht);
+    head.appendChild(button(t("v.pick.change"), "v.pick.change", function () { f.p = null; f.err = ""; render(); var q = $("f-v-q"); if (q) q.focus(); }));
+    form.appendChild(head);
     var pHint = t("v.plat." + f.p + ".hint");
     if (pHint !== "v.plat." + f.p + ".hint") form.appendChild(el("div", "hint", pHint));
     var pName = (Lk.platforms().filter(function (x) { return x.id === f.p; })[0] || {}).name;
