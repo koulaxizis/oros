@@ -7515,3 +7515,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Sync: move your whole cloud between Dropbox and a WebDAV / Nextcloud server from Settings, Vault and Drive files included, still encrypted.
 - Files: `sync.js`, `shell.js`, `translations.js`, `settings/{settings,core}.js`, help sync EN/EL, Bible.
   - Tests: full suite green (new `tests/sync-move.test.js`); real Chromium 1280 EN / 360 EL. Not tested: a real Dropbox account and a real Nextcloud from the cloud container.
+
+### 2026-10-17 — App links wave 5: pictures and sound (#486) — 2.87.00
+- Pixel wallpaper; Send to… for Pixel, Photo Lab and Atelier pictures (Mail, Layout); Studio → Music and → Ringtone Composer; your melodies as notification and timer sounds.
+- Files: `shell.js`, `notifications.js`, `stickies/host.js`, `send/core.js`, Pixel, Layout, Photo Lab, Atelier, Studio, Ringtones, Time, Settings, help EN/EL, Bible.
+  - Tests: full suite green (new interop-pictures / picsend / sound / melodies tests); real Chromium 1280 EN / 360 EL. Not tested: a real phone, sound by ear.
