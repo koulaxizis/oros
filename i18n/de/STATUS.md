@@ -2,8 +2,8 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 0 of 26253 (0%)
-- Help pages: 0 of 144 (0%)
+- Strings: 0 of 26457 (0%)
+- Help pages: 0 of 145 (0%)
 - Shown in the language list: not yet (try it with ?lang=de)
 
 Apps marked "English for now" do not load language packs yet: their
@@ -43,6 +43,7 @@ text is still written in the code. They switch over wave by wave
 | feeds | English for now | 0 / 319 |
 | files | English for now | 0 / 340 |
 | fitness | English for now | 0 / 344 |
+| flashcards | 0% | 0 / 90 |
 | flow | English for now | 0 / 75 |
 | g2048 | English for now | 0 / 54 |
 | gamecenter | English for now | 0 / 99 |
@@ -98,12 +99,12 @@ text is still written in the code. They switch over wave by wave
 | reversi | English for now | 0 / 60 |
 | ringtones | English for now | 0 / 99 |
 | rps | English for now | 0 / 59 |
-| scanpdf | English for now | 0 / 104 |
+| scanpdf | English for now | 0 / 191 |
 | scores | English for now | 0 / 147 |
-| settings | 0% | 0 / 450 |
+| settings | 0% | 0 / 475 |
 | share | English for now | 0 / 152 |
 | shelf | English for now | 0 / 285 |
-| shell | 0% | 0 / 431 |
+| shell | 0% | 0 / 433 |
 | signature | English for now | 0 / 195 |
 | simon | English for now | 0 / 49 |
 | sky | English for now | 0 / 149 |
@@ -176,6 +177,7 @@ text is still written in the code. They switch over wave by wave
 - help/feeds.txt
 - help/files.txt
 - help/fitness.txt
+- help/flashcards.txt
 - help/flow.txt
 - help/g2048.txt
 - help/gamecenter.txt
