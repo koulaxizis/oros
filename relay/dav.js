@@ -103,6 +103,16 @@ export async function handleDav(request, env, okOrigin, ip, now, fetchFn) {
     }) });
   }
   if (!okOrigin) return refuse(403, "origin", "");
+  // A stream that breaks (the browser goes away, the server cuts off)
+  // is the relay's "upstream", never an exception out of handle().
+  try {
+    return await forward(request, okOrigin, ip, now, fetchFn);
+  } catch (e) {
+    return refuse(502, "upstream", okOrigin);
+  }
+}
+
+async function forward(request, okOrigin, ip, now, fetchFn) {
   const method = request.method;
   if (!METHODS[method]) return refuse(405, "method", okOrigin);
   const t = davTarget(request.headers.get("X-Oros-Target"));
@@ -155,6 +165,7 @@ export async function handleDav(request, env, okOrigin, ip, now, fetchFn) {
     let loc = "";
     try { loc = new URL(up.headers.get("Location") || "", t.url).href; } catch (e) {}
     if (loc) out["X-Oros-Location"] = loc;
+    if (up.body) { try { await up.body.cancel(); } catch (e) {} }
     return new Response(null, { status: 200, headers: out });
   }
   for (const name of RES_HEADERS) {
@@ -167,6 +178,6 @@ export async function handleDav(request, env, okOrigin, ip, now, fetchFn) {
     delete out["Content-Length"];
     return new Response(body, { status: up.status, headers: out });
   }
-  const nobody = method === "HEAD" || up.status === 204 || up.status === 304;
+  const nobody = method === "HEAD" || [101, 204, 205, 304].indexOf(up.status) >= 0;   // new Response() refuses a body on these
   return new Response(nobody ? null : up.body, { status: up.status, headers: out });
 }

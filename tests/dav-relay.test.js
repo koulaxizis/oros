@@ -172,6 +172,21 @@ test("upstream failures and timeouts answer a fixed code, never the error's text
   assert.equal(err.res.status, 500, "an upstream error passes as its status");
 });
 
+test("a broken stream or an answer without a body never throws out of handle()", async () => {
+  const broken = () => new ReadableStream({ pull(c) { c.error(new Error("connection reset")); } });
+  const pf = await call({ method: "PROPFIND", body: broken(), duplex: "half" });
+  assert.equal(pf.res.status, 502);
+  assert.equal(pf.res.headers.get("X-Oros-Error"), "upstream");
+  const login = await call({ method: "POST", target: "https://cloud.example.com/index.php/login/v2",
+    upstream: () => new Response(broken()) });
+  assert.equal(login.res.headers.get("X-Oros-Error"), "upstream");
+  for (const status of [204, 205, 304]) {
+    const r = await call({ upstream: () => ({ status, headers: new Headers({ ETag: '"e"' }), body: broken() }) });
+    assert.equal(r.res.status, status);
+    assert.equal(r.res.headers.get("ETag"), '"e"');
+  }
+});
+
 test("CORS: OPTIONS answers only for orOS; other origins get 403 and nothing is fetched", async () => {
   const pre = await call({ method: "OPTIONS" });
   assert.equal(pre.res.status, 204);
