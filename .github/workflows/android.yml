@@ -67,7 +67,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: koulaxizis/oros-drive
-          ref: bd591858d09670341273e5f0429098d3e947ea04
+          ref: acc39caae5f9ae2e97b1eebdac314b529fbe0a16
           path: oros-drive-src
       - uses: actions/setup-go@v5
         with:

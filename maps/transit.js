@@ -51,6 +51,7 @@
       "pick.hint": "Tap the map to choose the point.",
       "noloc": "Your location is not available. Pick the start on the map.",
       "none": "No connection found for this time. Try a later time or nearby points.",
+      "stale": "The timetables Transitous has for this area are out of date: the stops here show no departures at all. Search again once Transitous refreshes them.",
       "err": "The public transport service did not answer. Try again in a while.",
       "err.net": "Public transport could not be reached from here. Check your connection.",
       "offline": "You are offline. Public transport needs a connection.",
@@ -79,7 +80,7 @@
       "zoom.live": "Zoom out a little to see vehicles.",
       "credit": "Timetables: Transitous and its open data sources",
       "credit.osm": "Map data © OpenStreetMap contributors",
-      "beta": "Coverage depends on open timetables: city buses, metro, tram and trains in Athens and Thessaloniki, Hellenic Train, and much of Europe.",
+      "beta": "Coverage depends on open timetables: city buses in Thessaloniki, Hellenic Train, and much of Europe. Athens is listed, but its timetables at Transitous are out of date for now.",
       "ctx.to": "Public transport to here",
       "ctx.board": "Departures nearby",
       "near.none": "No stop found close to this point.",
@@ -101,6 +102,7 @@
       "pick.hint": "Πάτησε στον χάρτη για να διαλέξεις το σημείο.",
       "noloc": "Η θέση σου δεν είναι διαθέσιμη. Διάλεξε την αφετηρία στον χάρτη.",
       "none": "Δεν βρέθηκε δρομολόγιο για αυτή την ώρα. Δοκίμασε αργότερα ή κοντινά σημεία.",
+      "stale": "Τα δρομολόγια που έχει το Transitous για αυτή την περιοχή δεν είναι ενημερωμένα: οι στάσεις εδώ δεν δείχνουν καμία αναχώρηση. Ξαναψάξε όταν το Transitous τα ανανεώσει.",
       "err": "Η υπηρεσία ΜΜΜ δεν απάντησε. Δοκίμασε ξανά σε λίγο.",
       "err.net": "Η υπηρεσία ΜΜΜ δεν είναι προσβάσιμη από εδώ. Έλεγξε τη σύνδεσή σου.",
       "offline": "Δεν έχεις σύνδεση. Τα ΜΜΜ χρειάζονται σύνδεση.",
@@ -129,7 +131,7 @@
       "zoom.live": "Απομάκρυνε λίγο τον χάρτη για να δεις οχήματα.",
       "credit": "Δρομολόγια: Transitous και οι ανοιχτές πηγές του",
       "credit.osm": "Δεδομένα χάρτη © OpenStreetMap contributors",
-      "beta": "Η κάλυψη εξαρτάται από ανοιχτά δρομολόγια: λεωφορεία, μετρό, τραμ και τρένα σε Αθήνα και Θεσσαλονίκη, Hellenic Train και μεγάλο μέρος της Ευρώπης.",
+      "beta": "Η κάλυψη εξαρτάται από ανοιχτά δρομολόγια: αστικά λεωφορεία στη Θεσσαλονίκη, Hellenic Train και μεγάλο μέρος της Ευρώπης. Η Αθήνα υπάρχει, αλλά τα δρομολόγιά της στο Transitous δεν είναι ενημερωμένα προς το παρόν.",
       "ctx.to": "Με ΜΜΜ ως εδώ",
       "ctx.board": "Αναχωρήσεις κοντά",
       "near.none": "Δεν βρέθηκε στάση κοντά σε αυτό το σημείο.",
@@ -357,7 +359,7 @@
           plan.at = { from: f, to: tt };         // resolved points (share link)
           plan.its = p.its;
           plan.prev = p.prev; plan.next = p.next;
-          if (!p.its.length) plan.err = t("none");
+          if (!p.its.length) { plan.err = t("none"); staleCheck(my, f, tt); }
           render();
         }, function (e) {
           if (my !== planSeq) return;
@@ -367,6 +369,28 @@
         });
       });
     });
+  }
+
+  // Nothing found: if the stops near both ends have no departure at
+  // all (open-ended), the area's timetables are out of date at the
+  // source, so say that instead of "try a later time".
+  function staleCheck(my, f, tt) {
+    var d = 0.004, ids = [];
+    function near(p) {
+      return api(function (v) { return X.stopsUrl(BASE, v, { s: p.lat - d, w: p.lon - d * 1.3, n: p.lat + d, e: p.lon + d * 1.3 }, LANG); })
+        .then(function (j) { X.nearestStops(X.normStops(j), p.lat, p.lon, 2).forEach(function (s) { if (ids.indexOf(s.id) < 0) ids.push(s.id); }); });
+    }
+    Promise.all([near(f), near(tt)]).then(function () {
+      if (my !== planSeq || !ids.length) return null;
+      return Promise.all(ids.map(function (id) {
+        return api(function (v) { return X.stoptimesUrl(BASE, v, { stopId: id, n: 1 }); })
+          .then(function (j) { return X.normStopTimes(j).rows.length; });
+      }));
+    }).then(function (counts) {
+      if (my !== planSeq || plan.its.length || !X.staleVerdict(counts)) return;
+      plan.err = t("stale");
+      render();
+    }, function () { /* the plain "none" stays */ });
   }
 
   // ---------- departures ----------

@@ -307,6 +307,7 @@
       "page.newchild":      "New sub-page",
       "page.delete":        "Delete",
       "page.share":         "Send to someone…",
+      "page.sendApp":       "Send to an app…",
       "page.share.empty":   "This page is empty: nothing to send",
       "page.rename":        "Rename",
       "page.move.up":       "Move up",
@@ -373,6 +374,7 @@
       "page.newchild":      "Νέα υποσελίδα",
       "page.delete":        "Διαγραφή",
       "page.share":         "Στείλε σε κάποιον…",
+      "page.sendApp":       "Στείλε σε εφαρμογή…",
       "page.share.empty":   "Η σελίδα είναι άδεια: δεν υπάρχει κάτι να στείλεις",
       "page.rename":        "Μετονομασία",
       "page.move.up":       "Μετακίνηση πάνω",
@@ -1055,6 +1057,28 @@
     var title = String(page.title || "").trim(), text = String(page.text || "");
     if (!text.trim() && (!title || title === t("page.untitled"))) { notifyTransient(t("page.share.empty")); return; }
     api.open({ kind: "note", data: { t: title, x: text } });
+  }
+
+  // "Send to an app" (shell send/, BR-SEND): the page, or the text
+  // selected in it, to another app of this orOS (Writer, To-Do, Mail…).
+  function sendApi() {
+    try { return window.parent !== window && window.parent.orosSend ? window.parent.orosSend : null; }
+    catch (e) { return null; }
+  }
+  function sendPage(page) {
+    var api = sendApi();
+    if (!api || !page) return;
+    var title = String(page.title || "").trim(), text = String(page.text || "");
+    var ta = document.getElementById("page-text");
+    if (ta && prefs.current === page.id && ta.selectionEnd > ta.selectionStart) {
+      text = ta.value.slice(ta.selectionStart, ta.selectionEnd);
+    }
+    if (title === t("page.untitled")) title = "";
+    if (!text.trim()) text = title;
+    if (!text.trim()) { notifyTransient(t("page.share.empty")); return; }
+    var item = { kind: "text", data: { title: title, text: text } };
+    if (shareApi()) item.share = { kind: "note", data: { t: title, x: text } };
+    api.open(item);
   }
 
   function renderEditor() {
@@ -3071,6 +3095,7 @@
     ];
     if (!bundleReady()) actions = actions.filter(function (a) { return a[0] !== t("menu.exportOros"); });
     if (shareApi()) actions.splice(actions.length - 1, 0, [t("page.share"), function () { sharePage(page); }]);
+    if (sendApi()) actions.splice(actions.length - 1, 0, [t("page.sendApp"), function () { sendPage(page); }]);
     actions.forEach(function (pair) {
       var b = document.createElement("button");
       b.className = "node-menu-item";

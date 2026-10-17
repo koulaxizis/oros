@@ -11,7 +11,10 @@ import android.os.Bundle;
  * Contacts and Calendar list an account's data only when the account
  * has a sync adapter for them. There is nothing to sync from here: the
  * data lives encrypted in orOS and only the open page can read it, so
- * PhoneBridge writes whenever the page sends a snapshot.
+ * PhoneBridge writes whenever the page sends a snapshot. The adapters
+ * are visible in Settings › Accounts › orOS: each kind has its switch
+ * (PhoneBridge leaves a kind alone while it is off) and "Last synced",
+ * which PhoneBridge refreshes with a short run after each write.
  */
 class NoopSyncAdapter extends AbstractThreadedSyncAdapter {
     private static NoopSyncAdapter instance;
