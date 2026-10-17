@@ -1,0 +1,29 @@
+# Pong
+Zwei Schläger, ein Ball: bring den Ball am anderen Schläger vorbei, um zu punkten. Spiel gegen den Computer oder mit jemandem am selben Gerät.
+
+## So wird gespielt
+Drück `Start` (oder [[Space]]), um zu beginnen. Bewege deinen Schläger, um den Ball zurückzuspielen; wer ihn verpasst, gibt der anderen Seite einen Punkt. Der Aufschlag wechselt zwischen den beiden Seiten. Wer zuerst die Zielpunktzahl erreicht, gewinnt: wähle `Bis 7` oder `Bis 11` in der Leiste.
+
+Wo der Ball deinen Schläger trifft, bestimmt den Abprallwinkel: nahe am Rand fliegt er steiler weg. Jeder Rückschlag macht den Ball etwas schneller.
+
+Auf einem hohen Bildschirm, etwa einem aufrecht gehaltenen Handy, ist das Feld gedreht: dein Schläger ist unten.
+
+## Steuerung
+- Maus: bewege sie über das Feld, und dein Schläger folgt.
+- Touch: zieh auf dem Feld. Bei 2 Spielern zieht jeder auf seiner eigenen Hälfte.
+- Tasten gegen den Computer: [[W]] / [[S]] oder [[↑]] / [[↓]] (auf einem gedrehten Feld [[A]] / [[D]] oder [[←]] / [[→]]).
+- Tasten bei 2 Spielern: [[W]] / [[S]] bewegen den linken Schläger und [[↑]] / [[↓]] den rechten (auf einem gedrehten Feld [[A]] / [[D]] den unteren und [[←]] / [[→]] den oberen).
+- [[P]], [[Space]] oder [[Esc]] pausieren und spielen weiter; [[N]] startet ein neues Spiel.
+
+Das Spiel pausiert von selbst, wenn du woandershin wechselst, und zählt beim Weiterspielen 3-2-1 herunter. Ein laufendes Spiel bleibt auf diesem Gerät und kommt pausiert zurück. Startest du mitten in einem Spiel ein neues, holt ein Knopf `Rückgängig` es für ein paar Sekunden zurück.
+
+## Level und Punkte
+Wähle `Gegen PC` mit `Leicht`, `Mittel` oder `Schwer`, oder `2 Spieler`. Der Computer ist schlagbar, besonders auf den leichteren Stufen. Ein anderer Modus, eine andere Stufe oder ein anderes Ziel startet ein neues Spiel.
+
+`Rekorde` zeigt deine Siege, Niederlagen und deinen besten Abstand gegen den Computer für jede Stufe und wie viele Spiele zu zweit du gespielt hast. `Rekorde zurücksetzen` löscht sie.
+
+## Synchronisierung
+Deine Rekorde werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert, wobei die Spiele aller Geräte zusammengezählt werden; `Rekorde zurücksetzen` löscht sie überall. Das laufende Spiel, deine Einstellungen und der Ton bleiben auf diesem Gerät.
+
+## Tipps
+- Triff den Ball mit dem Rand deines Schlägers, damit der Winkel schwer zu erreichen ist.
