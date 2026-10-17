@@ -7599,3 +7599,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Flashcards: pictures and sounds on cards (pick, paste, drop or record; stored once by content under `/internal/Flashcards/Media/`, pictures redrawn without EXIF/location, no SVG), Read aloud with the device's own voices only (`localService === true`, NO GOOGLE LOGGING rule), a Browse list with actions on many cards (move, tags, suspend, resume, delete), Hide until tomorrow and Suspend on the study screen, bold, italic and lists in fields.
 - Files: `flashcards/{index.html,app.css,app.js,core.js,media.js,help.*.txt}`, Bible registry row, tests, What's new.
   - Tests: full suite green; Chromium 1280 EN / 360 EL. Not tested: recording on real phones, voices on Safari, very large media folders over Vault Drive.
+
+### 2026-10-17 — Multitasking M1: one place for app frames, sync over live frame documents (#499) — 2.98.01
+- Groundwork for experimental multitasking (Chris approved the plan 2026-10-17 12:25, /mnt/project-files/multitasking/plan.md): one place for app frames in the shell (`appFrameOf` / `appLive`, 30 bridges moved to it), SY-D5 sync keeps hidden frames live instead of one frame; nothing changes for users (the switch comes in M2). Memory and writer audits in `.github/qa/memory.js` and `.github/qa/writers.js`.
+- Files: `shell.js`, `sync.js`, `mail/notify.js`, `.github/qa/{memory,writers}.js`, `tests/multitask.test.js`, Bible.
+  - Tests: full suite green (9 new in `tests/multitask.test.js`); Chromium shell E2E. Not tested: real phones, Firefox, Safari.
