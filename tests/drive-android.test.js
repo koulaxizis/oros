@@ -72,3 +72,20 @@ test("android.yml builds the library from a pinned oros-drive commit", () => {
   assert.match(pg, /-keep class go\.\*\* \{ \*; \}/);
   assert.match(pg, /-keep class online\.useoros\.drive\.\*\* \{ \*; \}/);
 });
+
+test("wave 5: the disk is a documents provider only the system can bind, shown while unlocked", () => {
+  const m = read("android", "app", "src", "drive", "AndroidManifest.xml");
+  assert.match(m, /<provider android:name="\.DriveProvider"\s+android:authorities="\$\{applicationId\}\.drive"\s+android:grantUriPermissions="true"\s+android:exported="true"\s+android:permission="android\.permission\.MANAGE_DOCUMENTS">/);
+  assert.match(m, /<action android:name="android\.content\.action\.DOCUMENTS_PROVIDER" \/>/);
+  const p = read(...JAVA, "DriveProvider.java");
+  assert.match(p, /extends DocumentsProvider/);
+  assert.match(p, /getPackageName\(\) \+ "\.drive"/);
+  assert.match(p, /signedIn"\) && s\.optBoolean\("unlocked"\)/);
+  // Ids stay inside the disk.
+  assert.match(p, /id\.startsWith\(ROOT \+ "\/"\)\) \|\| id\.contains\("\/\.\.\/"\)/);
+  // A write uploads on close with the hash it started from (conflict copies).
+  assert.match(p, /d\.diskPut\(id, tmp\.getAbsolutePath\(\), base\)/);
+  const a = read(...JAVA, "DriveActivity.java");
+  assert.match(a, /DriveProvider\.rootsChanged\(this\)/);
+  assert.match(a, /Drive::diskClearCache/);
+});

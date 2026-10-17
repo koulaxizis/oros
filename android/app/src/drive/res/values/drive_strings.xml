@@ -49,4 +49,9 @@
     <string name="drive_activity">Activity</string>
     <string name="drive_cancel">Cancel</string>
     <string name="drive_unavailable">orOS Drive could not start: %1$s</string>
+    <string name="drive_files_summary">Your encrypted orOS disk</string>
+    <string name="drive_files_title">orOS in the Files app</string>
+    <string name="drive_files_text">The whole orOS disk appears as «orOS» in the Files app and in every app that opens or saves files. A file downloads when you open it and uploads when the app saves it. If it was changed in orOS meanwhile, both versions are kept.</string>
+    <string name="drive_cache">Downloaded copies: %1$s</string>
+    <string name="drive_clear_cache">Clear downloaded copies</string>
 </resources>
