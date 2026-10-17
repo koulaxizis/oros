@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "2.72.01";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "2.73.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -8531,6 +8531,7 @@
       dock: settingsDock(),
       seasonal: settingsSeasonal(),
       menu: settingsMenuApps(),
+      menuProfiles: !!profilesL(),
       apps: state.apps.filter(function (a) { return a && a.type === "internal"; })
         .map(function (a) { return a.id; }),
       shortcuts: SC_DEFS.map(function (d) {
@@ -8630,6 +8631,7 @@
       // Menu apps: show or hide every app at once (one change, one push).
       case "menu.showAll":    if (settingsMenuL()) settingsMenuL().setMenuHidden(settingsMenuIds(), false); return;
       case "menu.hideAll":    if (settingsMenuL()) settingsMenuL().setMenuHidden(settingsMenuIds(), true); return;
+      case "menu.profiles":   showProfiles("settings"); return;
       // The app arms and confirms first (two taps, like the Info modal);
       // this is the same wipe, with no button of its own to update.
       case "reset":           scFactoryReset({ disabled: false, textContent: "" }); return;
@@ -9062,15 +9064,83 @@
     try {
       if (localStorage.getItem(TOUR_DONE) === "1") return;
       localStorage.setItem(TOUR_KEY, "1");
+      if (profilesWanted()) localStorage.setItem(PROFILE_KEY, "1");
     } catch (e) { return; }
     tourMaybe();
+  }
+
+  // First-run profiles (profiles.js, strategy §9): before the tour, a
+  // new user chooses which apps the menu shows. "Everything" is first
+  // and chosen; Continue, X or Escape with it change nothing. Not on a
+  // device that already has menu choices (pulled or made) or is
+  // connected to sync: that user is not new, only this device is.
+  // profiles.js loads on first use (first run or Settings), never at boot.
+  var PROFILE_KEY = "oros-profile-pending";
+  var profilesLoad = null;
+  function profilesL() {
+    var L = window.orosLauncher;
+    return (L && typeof L.presetMenuHidden === "function" && typeof L.menuStored === "function") ? L : null;
+  }
+  function profilesModule() {
+    if (window.orosProfiles) return Promise.resolve(window.orosProfiles);
+    if (!profilesLoad) {
+      profilesLoad = new Promise(function (resolve, reject) {
+        var s = document.createElement("script");
+        s.src = "profiles.js?v=" + APP_VERSION;
+        s.onload = function () { if (window.orosProfiles) resolve(window.orosProfiles); else reject(new Error("profiles missing")); };
+        s.onerror = reject;
+        document.head.appendChild(s);
+      });
+      profilesLoad.catch(function () { profilesLoad = null; });
+    }
+    return profilesLoad;
+  }
+  function profilesWanted() {
+    if (SOLO) return false;
+    var L = profilesL();
+    if (!L || L.menuStored()) return false;
+    var S = window.orosSync;
+    return !(S && typeof S.isConnected === "function" && S.isConnected());
+  }
+  function profilesApps() {
+    return settingsMenuApps() || [];
+  }
+  // mode "first": then the tour; "settings": from Settings › Menu.
+  var profilesBusy = false;   // loading or on screen: the tour waits
+  function showProfiles(mode, after) {
+    var L = profilesL();
+    if (!L || profilesBusy) return;
+    profilesBusy = true;
+    var then = function (r) { profilesBusy = false; if (after) after(r); };
+    profilesModule().then(function (P) {
+      if (!showProfilesNow(P, L, mode, then)) then();
+    }, function () { then(); });
+  }
+  function showProfilesNow(P, L, mode, after) {
+    var apps = profilesApps();
+    return P.show({
+      mode: mode,
+      lang: state.lang,
+      apps: apps,
+      shown: apps.filter(function (a) { return a.shown; }).map(function (a) { return a.id; }),
+      done: function (r) {
+        if (r && r.hidden) {
+          if (mode === "first") L.presetMenuHidden(r.hidden);
+          else {
+            L.setMenuHidden(r.hidden, true);
+            L.setMenuHidden(r.shown, false);
+          }
+        }
+        if (after) after(r);
+      }
+    });
   }
 
   function tourMaybe() {
     if (SOLO) return;                  // the tour shows the desktop's top bar
     var pending;
     try { pending = localStorage.getItem(TOUR_KEY) === "1"; } catch (e) { pending = false; }
-    if (!pending || tourBox) return;
+    if (!pending || tourBox || profilesBusy) return;
     var tries = 0;
     (function wait() {
       // Splash still up, apps.json not in yet, or an app on screen.
@@ -9079,6 +9149,22 @@
         setTimeout(wait, 250);
         return;
       }
+      var prof = false;
+      try { prof = localStorage.getItem(PROFILE_KEY) === "1"; } catch (e) {}
+      if (prof && profilesWanted()) {
+        showProfiles("first", function (r) {
+          try { localStorage.removeItem(PROFILE_KEY); } catch (e) {}
+          if (r && r.already) {
+            // Not a new user: no tour; their apps and menu come with sync.
+            try { localStorage.removeItem(TOUR_KEY); localStorage.setItem(TOUR_DONE, "1"); } catch (e) {}
+            if (typeof window.__orosOpenAt === "function") window.__orosOpenAt("settings", { section: "sync" });
+            return;
+          }
+          startTour();
+        });
+        return;
+      }
+      try { localStorage.removeItem(PROFILE_KEY); } catch (e) {}
       startTour();
     })();
   }
@@ -9090,7 +9176,9 @@
   }
 
   function tourSteps() {
-    var steps = [{ key: "welcome" }, { key: "menu", target: "btn-menu" }];
+    var L = window.orosLauncher;
+    var someHidden = !!(L && typeof L.menuHiddenIds === "function" && L.menuHiddenIds().length);
+    var steps = [{ key: "welcome" }, { key: "menu", target: "btn-menu", body: someHidden ? "tour.menu.bodyHidden" : "" }];
     if (tourVisible(document.getElementById("sync-dot-btn"))) steps.push({ key: "sync", target: "sync-dot-btn" });
     if (tourVisible(document.getElementById("oros-taskbar-bell"))) steps.push({ key: "bell", target: "oros-taskbar-bell" });
     if (tourVisible(document.getElementById("btn-lang"))) steps.push({ key: "lang", target: "btn-lang" });
