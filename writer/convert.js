@@ -160,8 +160,13 @@
 
   function convert(file, opts) {
     opts = opts || {};
-    var lang = opts.lang === "el" ? "el" : "en";
-    var L = TEXT[lang];
+    // Any language code; a pack language (orosI18n, ../i18n.js) reads the
+    // "writer" pack when it is loaded, else English. The page and bundle
+    // keep "el" / "en".
+    var code = typeof opts.lang === "string" ? opts.lang : "en";
+    if (!TEXT[code] && root.orosI18n) root.orosI18n.table(TEXT, "writer", code);
+    var L = TEXT[code] || TEXT.en;
+    var lang = code === "el" ? "el" : "en";
     var progress = function (v) { if (typeof opts.onProgress === "function") { try { opts.onProgress(v); } catch (e) {} } };
     var warnings = [];
     return Promise.resolve().then(function () {

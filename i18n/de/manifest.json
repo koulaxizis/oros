@@ -26,11 +26,13 @@
   "help/topics/start.txt",
   "help/topics/sync.txt",
   "help/topics/troubleshooting.txt",
+  "help/writer.txt",
   "help.js",
   "kanban.js",
   "notes.js",
   "settings.js",
   "shell.js",
-  "todo.js"
+  "todo.js",
+  "writer.js"
  ]
 }

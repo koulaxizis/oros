@@ -1,0 +1,81 @@
+# Texteditor
+Der Texteditor ist ein Textverarbeitungsprogramm mit Tabs, Fußnoten, Kommentaren, Versionsverlauf und Export nach Word, PDF und mehr.
+
+## Erste Schritte
+Schreib einfach los; alles speichert sich von selbst.
+
+- Jedes offene Dokument ist ein Tab. Tippe auf `+` (`Neues Dokument`) für ein neues oder drücke [[Ctrl+Alt+T]].
+- Doppelklicke auf einen Tab oder drücke [[F2]], um dem Dokument einen Titel zu geben.
+- Einen Tab zu schließen löscht nichts. Die Taste `Dokumente` links von den Tabs listet alle Dokumente auf, mit Suche, zum Öffnen oder Löschen (einige Sekunden lang mit `Rückgängig`).
+
+## Schreiben und formatieren
+- Die Symbolleiste hat Rückgängig und Wiederholen, eine Liste der Absatzformate (`Standardtext`, `Überschrift 1` bis `Überschrift 4`, `Zitat`, `Codeblock`), fett, kursiv, unterstrichen, durchgestrichen, Einzug, Listen, Ausrichtung, `Horizontale Linie` und `Seitenumbruch`.
+- `Sonderzeichen` fügt griechische Buchstaben, Mathematik, Pfeile, Währungen, Satzzeichen, Symbole und Emoji ein.
+- `Einfügen` (die Plus-Taste neben der Liste der Absatzformate) fügt einen Link, ein Bild, eine Tabelle, eine horizontale Linie, einen Seitenumbruch, eine Fußnote oder Sonderzeichen ein, auch auf Handys und Tablets. Am Computer öffnet Alt+Rechtsklick in den Text auch ein Schnellmenü mit Formatierung, `Link einfügen`, `Bild einfügen` und `Tabelle einfügen`.
+- Steht der Cursor in einer Tabelle, erscheint unter der Symbolleiste eine Leiste mit Tabellenwerkzeugen: `Zeile oberhalb`, `Zeile unterhalb`, `Spalte links`, `Spalte rechts`, `Zeile löschen`, `Spalte löschen`, `Kopfzeile` und `Tabelle löschen`.
+- Eingefügte Bilder, etwa Bildschirmfotos, werden verkleinert, um Platz zu sparen.
+- `Suchen und ersetzen` (oder [[Ctrl+F]]) bietet `Groß-/Kleinschreibung`, `Ganzes Wort`, einen Formatfilter (zum Beispiel `Nur fett`), `Ersetzen` und `Alle ersetzen`. Rückgängig nimmt eine Ersetzung zurück; direkt nach `Alle ersetzen` nimmt ein einziges Rückgängig alles zurück.
+- In den `Einstellungen` macht `Intelligente Typografie` aus -- einen Gedankenstrich, aus ... eine Ellipse und aus geraden Anführungszeichen typografische. `Autokorrektur-Regeln` ersetzt Text wie (c) durch ©, wenn du die Leertaste drückst. Du kannst eigene Regeln hinzufügen.
+
+## Fokus und Statistik
+- `Ansicht` (die Augen-Taste) hat den `Fokusmodus`: Tabs und Symbolleisten verschwinden, und der ganze Text wird blasser außer dem Absatz, in dem du bist, oder dem Satz mit `Fokus auf den Satz`. Beende ihn mit der runden ×-Taste, [[Esc]] oder [[Ctrl+Alt+F]].
+- `Schreibmaschinen-Scrollen` hält die Zeile, in der du tippst, in der Mitte des Bildschirms.
+- `Wortzahl anzeigen` zeigt eine kleine Wortzahl in der Ecke (bei einer Auswahl auch deren Wörter). Tippe darauf oder auf `Statistik…` für Wörter, Zeichen mit und ohne Leerzeichen, Absätze, Sätze, Lesezeit und Sprechzeit, für das Dokument und die Auswahl.
+- Diese Ansichtseinstellungen gelten pro Gerät; sie werden nicht synchronisiert.
+
+## Rechtschreibung, Änderungen verfolgen und Serienbrief
+- Die Taste `Überprüfen` (AB mit Häkchen) enthält Rechtschreibung, Änderungsverfolgung und Serienbrief.
+- `Rechtschreibung prüfen` unterstreicht falsch geschriebene englische und griechische Wörter mit einer roten Wellenlinie. Klicke mit rechts auf ein Wort (oder tippe auf dem Handy darauf) für Vorschläge, `Zu meinem Wörterbuch hinzufügen` oder `Ignorieren`. Die Unterstreichungen gibt es nur auf dem Bildschirm: Sie werden nicht gespeichert, gedruckt oder exportiert.
+- `Rechtschreibung dieses Dokuments` bietet vier Möglichkeiten. `Englisch und Griechisch (automatisch)` prüft jedes Wort in seinem eigenen Alphabet. Die anderen sind `Nur Englisch`, `Nur Griechisch` und `Dieses Dokument nicht prüfen`. Griechische Wörter werden mit ihren Akzenten geprüft: "καλημερα" wird markiert und "καλημέρα" als Erstes vorgeschlagen. Wörter in Großbuchstaben brauchen keine Akzente.
+- `Mein Wörterbuch…` listet die Wörter auf, die du hinzugefügt hast; dort kannst du Wörter hinzufügen oder entfernen. Dein Wörterbuch wird mit deinen anderen Geräten synchronisiert.
+- Die Wörterbücher werden geladen, wenn sie zum ersten Mal gebraucht werden (etwa 0,2 MB für Englisch und 2,1 MB für Griechisch), und funktionieren dann offline. Bis dahin, oder wenn die Rechtschreibprüfung in den `Einstellungen` aus ist, nutzt der Browser seine eigene Rechtschreibprüfung, falls er eine hat.
+- `Änderungen verfolgen` markiert, was du tippst, als Einfügung (unterstrichen) und was du löschst, als Löschung (durchgestrichen). Jede Änderung trägt deinen Namen und die Uhrzeit, in einer Farbe pro Autor. Lege deinen Namen in den `Einstellungen` unter `Dein Name für verfolgte Änderungen` fest; sonst wird der Name des Geräts verwendet.
+- `Änderungen…` öffnet die Änderungsleiste. Tippe auf eine Änderung, um sie im Text zu finden. Jede Änderung hat `Annehmen` und `Ablehnen`, und die Leiste hat `Alle annehmen` und `Alle ablehnen`.
+- Verfolgte Änderungen werden mit dem Dokument gespeichert und synchronisiert. Der Word-Export (.docx) behält sie als Word-Änderungen, und Word-Dateien mit verfolgten Änderungen öffnen sich mit ihnen. Die anderen Exportformate speichern den Text so, als wären alle Änderungen angenommen.
+- `Serienbrief…` füllt Platzhalter wie {{Name}} oder {{City}} in deinem Dokument. Die Daten kommen aus [Kontakte](app:contacts) (alle Kontakte oder ein Label) oder aus einer CSV-Datei. Ein Feld ist grün, wenn die Daten es haben, und rot, wenn nicht. Mit den Pfeilen siehst du jeden Datensatz in der Vorschau.
+- Das Ergebnis kann `Ein PDF`, `Ein PDF pro Datensatz (ZIP)` oder `Ein neues Dokument` sein, mit einem Seitenumbruch zwischen den Datensätzen. Aus Kontakte kannst du FullName, FirstName, LastName, Company, JobTitle, Email, Phone, Address, City, PostalCode, Country und Birthday verwenden. Griechische Namen wie {{Όνομα}} oder {{Πόλη}} funktionieren auch.
+
+## Notizen, Kommentare und Gliederung
+- `Fußnoten`: Tippe auf `Fußnote hinzufügen`, um an der Cursorstelle eine nummerierte Anmerkung zu setzen, und schreib sie in der Seitenleiste.
+- `Kommentare`: Markiere etwas Text, dann `Kommentar hinzufügen`. Ein Kommentar muss in einem Absatz bleiben.
+- `Inhaltsverzeichnis` listet deine Überschriften auf. Tippe auf eine, um dorthin zu springen, oder auf `In den Text einfügen`, um ein Inhaltsverzeichnis in den Text zu setzen.
+- `Dokument-Metadaten` enthält `Titel`, `Autor`, `Tags` und `Kategorie`.
+- `Seiteneinstellungen` legt `Papierformat`, `Ränder (mm)`, `Kopfzeile` und `Fußzeile` fest.
+
+## Versionen, Vorlagen und Ziele
+- `Versionsverlauf` speichert automatische Versionen, während du schreibst (höchstens eine alle 5 Minuten, die neuesten 8). Tippe auf `Schnappschuss`, um selbst eine zu speichern; die werden nie entfernt. `Wiederherstellen` speichert den aktuellen Text zuerst als Schnappschuss.
+- `Vorlagen` enthält vorinstallierte (`Aufsatz`, `Formeller Brief`, `Romankapitel`, `Drehbuch`, `Gedicht`, `Besprechungsnotizen`, `Leer`) und deine eigenen. `Verwenden` beginnt damit ein neues Dokument; `Aktuelles als Vorlage speichern` fügt eine eigene hinzu.
+- `Schreibziel` setzt ein Ziel in Wörtern, Zeichen, Absätzen, Minuten oder Wörtern pro Sitzung. Ein Balken unten zeigt deinen Fortschritt. Mit `Nach dem Ziel Bearbeitung sperren` stoppt das Tippen, sobald du es erreichst.
+
+## Importieren und exportieren
+- `Exportieren` speichert das Dokument als reinen Text, Markdown, HTML, RTF, Word (.docx), PDF oder als orOS-Texteditor-Datei (.orosdoc, die Bilder, Fußnoten, Kommentare und Metadaten behält). Eine .orosdoc ist eine offene ZIP-Datei: Entpacke sie und du findest `content.json` (das Dokument), `media` (seine Bilder) und `preview/document.html`, das sich in jedem Browser öffnet. `Datenbank (JSON)` speichert alle deine Dokumente, Vorlagen und Einstellungen.
+- Das PDF behält Überschriften, fett, kursiv, unterstrichen, durchgestrichen, Links, Ausrichtung, Listen, Zitate, Code, Tabellen und Bilder und nutzt Papierformat, Ränder, Kopf- und Fußzeile aus den `Seiteneinstellungen`, mit Seitenzahlen.
+- `Importieren` öffnet OROSDOC-, DOCX-, ODT-, RTF-, HTML-, TXT- und MD-Dateien. Du wählst `Neuer Tab (empfohlen)`, `An aktuelles anhängen` oder `Aktuelles ersetzen`. Du kannst eine Datei auch auf den Texteditor ziehen. `Entpackten .orosdoc-Ordner öffnen…` holt eine entpackte .orosdoc zurück, auch wenn du darin ein Bild geändert hast.
+- `Aus Google Docs…` im selben Dialog meldet dich bei Google an, lässt dich ein Dokument in Google Drive wählen (ein Google-Dokument oder dort eine DOCX-, ODT-, RTF-, TXT-, MD- oder HTML-Datei) und holt es auf dieselbe Weise herein; ein Google-Dokument kommt als DOCX. orOS sieht nur diese Datei, und die Anmeldung endet gleich danach.
+- In [Schreibmaschine](app:typewriter) öffnet `An Texteditor senden` eine Seite hier als neues Dokument.
+- Eine `Datenbank (JSON)`-Datei zu importieren führt sie zusammen. Dokumente, die es nur hier gibt, bleiben erhalten, und wenn ein Dokument abweicht, kommt der ältere Text in den `Versionsverlauf`.
+
+## Synchronisierung und Sicherung
+Mit der [orOS-Synchronisierung](help:t/sync) erreichen deine Dokumente (Text, Fußnoten, Kommentare, Versionen, Ziele, Seiteneinstellungen, verfolgte Änderungen, Rechtschreibsprache), Vorlagen, Autokorrektur-Regeln, dein Rechtschreib-Wörterbuch und deine Einstellungen deine anderen Geräte. Welche Tabs offen sind, bleibt auf jedem Gerät. Ein Dokument zu löschen entfernt es überall. Siehe auch [Sicherung](help:t/backup).
+
+## Tastenkürzel
+- [[Ctrl+S]] speichert sofort (der Texteditor speichert auch von selbst).
+- [[Ctrl+F]] Suchen und ersetzen.
+- [[Ctrl+Alt+T]] neues Dokument, [[Ctrl+Alt+W]] aktuellen Tab schließen.
+- [[F2]] aktuelles Dokument umbenennen.
+- [[Ctrl+Alt+F]] Fokusmodus ein oder aus.
+- [[Ctrl+Z]] direkt nach `Alle ersetzen` nimmt alle Ersetzungen auf einmal zurück.
+
+## Tipps
+- Ist der Assistent installiert, schickt die Funkel-Taste den markierten Text (oder das ganze Dokument) an den Assistenten, um ihn zusammenzufassen, umzuformulieren oder zu korrigieren. Nichts wird gesendet, bevor du dort auf `Senden` drückst; kopiere die Antwort mit `Kopieren` zurück.
+- Nutze Überschriftenformate: Aus ihnen entsteht das Inhaltsverzeichnis. Mach vor großen Änderungen einen `Schnappschuss`.
+
+## Grenzen
+- Ändern zwei Geräte den Text desselben Dokuments vor dem Synchronisieren, gewinnt der neuere Text.
+- Der RTF-Import übernimmt nur den Text.
+- Tabellenwerkzeuge (Zeilen und Spalten hinzufügen oder löschen, die Kopfzeile) lassen sich nicht mit Rückgängig zurücknehmen.
+- Der Satzfokus braucht einen aktuellen Browser; ältere heben stattdessen den ganzen Absatz hervor.
+- In einem PDF werden fette und kursive Buchstaben außerhalb des lateinischen und griechischen Alphabets (zum Beispiel Kyrillisch) in der normalen Schrift gezeichnet, fett mit verstärkter Linie; verbundene Tabellenzellen werden als einzelne Zellen gezeichnet; ein Bild von einer anderen Website erscheint eventuell nur als Platzhalter.
+- Die Rechtschreibprüfung kennt nur Englisch und Griechisch. Sie überspringt Wörter mit Ziffern, gemischter Groß- und Kleinschreibung (wie iPhone) und Großbuchstaben-Wörter mit höchstens vier Buchstaben (wie NASA). Lange zusammengesetzte Wörter, die nicht im Wörterbuch stehen, werden markiert. `Ignorieren` gilt, bis du den Texteditor schließt.
+- Die Änderungsverfolgung erfasst nur getippten und gelöschten Text. Absätze teilen oder verbinden und Formatänderungen werden nicht verfolgt, und Text, den du beim Verfolgen einfügst, kommt als reiner Text hinein. Während die Verfolgung an ist, arbeiten Rückgängig und Wiederholen in ganzen Schritten des Tippens oder Löschens.
+- Beim Serienbrief darf ein Platzhalter nicht durch Formatierung geteilt sein (zum Beispiel halb fett). PDF-Ausgaben enden bei 500 Datensätzen. Das neue Dokument behält nur den Text, ohne Fußnoten oder Kommentare.

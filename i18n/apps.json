@@ -76,6 +76,15 @@
     "todo/platforms.js",
     "todo/todo.js"
    ]
+  },
+  {
+   "app": "writer",
+   "files": [
+    "writer/convert.js",
+    "writer/search.js",
+    "writer/spell-worker.js",
+    "writer/writer.js"
+   ]
   }
  ]
 }
