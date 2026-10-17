@@ -7362,3 +7362,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - App Kit K1: `docs/app-kit/` guide + contract, template app, `.github/app-kit/new-app.js` and `check-app.js` (local check with the CI guards), CONTRIBUTING.md (Chris decides what goes in).
 - Files: `docs/app-kit/**`, `.github/app-kit/{new-app,check-app}.js`, `.github/workflows/tests.yml`, CONTRIBUTING.md, README.md, `tests/app-kit.test.js`, Bible.
   - Tests: full suite green; a scaffolded app checked in the Chromium shell 360 EL / 1280 EN. Nothing shipped to users.
+
+### 2026-10-17 — Send to someone: links with an expiry + My shared links, share wave 2 (#463) — 2.72.00
+- Send to someone: links with an expiry (1, 7 or 30 days), stored encrypted on the relay and taken back any time from My shared links; long notes and Wiki articles can now be sent. The list of links travels as sync slice `shareOut`.
+- Files: `share/relay.js`, `share/out.js` (new, precached), `share/send.js`, `share/view.js`, `share/index.html`, `shell.js`, Settings, help share topic EN/EL, Bible.
+  - Tests: full suite green (new `tests/share-expiry.test.js`); real Chromium 1280 EN / 360 EL + two-device sync. Not tested: the live relay from the cloud container, a real phone.
