@@ -1,0 +1,39 @@
+# Backgammon
+Klassisches Backgammon (Πόρτες im griechischen Τάβλι): Zieh deine 15 Steine einmal ums Brett und trag sie alle als Erster ab. Spiel gegen den Computer oder gegen jemanden am selben Gerät.
+
+## So wird gespielt
+Zu Beginn würfelt jede Seite mit einem Würfel, und die höhere Zahl spielt beide. Danach würfelst du in deinem Zug mit zwei Würfeln und ziehst für jeden Würfel einen Stein; ein Pasch wird viermal gespielt.
+
+- Ein einzelner gegnerischer Stein (ein Blot) kann geschlagen werden: Er kommt auf die Bar, und sein Besitzer muss ihn erst wieder ins Spiel bringen, bevor er etwas anderes zieht.
+- Sind alle deine Steine in deinem Heimfeld, trägst du sie mit der genauen Augenzahl ab oder mit einem höheren Würfel von deinem höchsten Feld.
+- Du musst so viele Würfel nutzen wie möglich; lässt sich nur einer der beiden spielen, muss es der höhere sein. Ohne gültigen Zug verfällt der Zug.
+
+Wer als Erster alle 15 abgetragen hat, gewinnt 1 Punkt, ein Gammon (2 Punkte), wenn die andere Seite noch keinen abgetragen hat, und ein Backgammon (3 Punkte), wenn die andere Seite außerdem noch einen Stein auf der Bar oder im Heimfeld des Siegers hat.
+
+## Bedienung
+Drück `Würfeln`, tipp oder klick dann auf einen deiner Steine und danach auf eines der leuchtenden Ziele, oder zieh den Stein dorthin. `Zurück` nimmt jeden Schritt deines Zugs zurück, und `Fertig` beendet ihn. Das Brett zeigt die Pips jeder Seite.
+
+In der Werkzeugleiste stehen `Gegen Computer` oder `2 Spieler` und die Stufe. Gegen den Computer spielst du Weiß.
+
+Tastatur:
+- [[Space]] oder [[R]] würfelt; die Pfeiltasten gehen durch die Steine, die ziehen können, und dann durch ihre Ziele; [[Enter]] zieht; [[Esc]] bricht ab.
+- [[Enter]] beendet den Zug; [[Z]], [[Backspace]] oder [[Ctrl+Z]] nehmen einen Schritt zurück; [[N]] neues Spiel.
+
+## Stufen und Punkte
+Der Computer spielt `Leicht`, `Mittel` oder `Schwer`. `Bilanz` zeigt deine Siege und Niederlagen gegen ihn pro Stufe, mit den gewonnenen und verlorenen Punkten. Bei `2 Spieler` führt das Ergebnisfenster einen laufenden Stand unter `Punkte`. `Bilanz zurücksetzen` löscht sie.
+
+## Zwei Geräte
+Spiel gegen jemanden mit eigenem Handy, Tablet oder Computer. Drück `Auf zwei Geräten spielen` (der Knopf mit zwei Bildschirmen): Einer von euch wählt `Show a code`, der andere `Enter a code` und tippt den 6-stelligen Code ein oder scannt den QR-Code, und das erste Gerät lässt das andere mit `Allow` herein. Solange ihr verbunden seid, steht `Two devices` in der Werkzeugleiste; drück darauf, um die Verbindung zu sehen oder mit `Leave the game` das Spiel zu verlassen.
+- Das Gerät, das den Code gezeigt hat, spielt Weiß. Jeder würfelt selbst und zieht in seinem eigenen Zug; das andere Gerät sieht jeden Zug sofort.
+- `Neues Spiel` auf dem Gerät, das den Code gezeigt hat, startet das nächste Spiel (es fragt vorher, wenn ein Spiel läuft); auf dem anderen Gerät bittet es um eins, wenn ein Spiel vorbei ist.
+- Lädt ein Gerät neu oder verliert es das Netz, wartet das Spiel und geht weiter, wo es war, sobald es zurück ist (bis zu einem Tag).
+- Die Züge gehen direkt zwischen den beiden Geräten im selben Netz oder versiegelt über das orOS-Relay; online wird nichts gespeichert.
+
+Grenzen: nur zwei Spieler, jeder auf seinem eigenen Gerät mit orOS in diesem Spiel. Spiele auf zwei Geräten zählen nicht zur Bilanz, und die Stufen-Knöpfe sind währenddessen ausgeblendet. `Leave the game` beendet es auf beiden Geräten und holt das Spiel zurück, das du auf diesem Gerät hattest. Die Knöpfe zum Verbinden der Geräte sind noch auf Englisch.
+
+## Synchronisierung
+Deine Bilanz gegen den Computer wird über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert und zählt die Spiele aller Geräte zusammen; `Bilanz zurücksetzen` löscht sie überall. Das laufende Spiel, der 2-Spieler-Stand, deine Einstellungen und der Ton bleiben auf diesem Gerät.
+
+## Tipps
+- Lass keine einzelnen Steine in leichter Reichweite stehen.
+- Es gibt keinen Verdopplungswürfel.
