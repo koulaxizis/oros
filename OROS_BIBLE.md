@@ -202,7 +202,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 
 **There is NO `window.__orosNotify`** in shell.js or notifications.js (0.38.12). Older Bible text used it; see the Part X audit item.
 
-### App frames (multitasking, waves M1-M2)
+### App frames (multitasking, waves M1-M3)
 
 Multitasking (several live app frames) is an approved EXPERIMENT, off by default, per device (Chris 2026-10-17; plan `/mnt/project-files/multitasking/plan.md`). With it off, the shell must behave exactly as with the single `#app-frame`. Since M1 every shell path that talks to a running app goes through one place in `shell.js` (section 10a):
 - `appFrames()` every live app frame, `appFrameOf(id)` the frame showing app `id` (or null), `appLive(id)`. A bridge that pushes into a running app is `if (appLive("x")) { var f = appFrameOf("x"); … }`, never `state.running.id === "x"` + `getElementById("app-frame")` (guarded by `tests/multitask.test.js`). `state.running` stays "the app in front".
@@ -215,6 +215,8 @@ Multitasking (several live app frames) is an approved EXPERIMENT, off by default
 - `MT_CLOSE_ON_LEAVE` apps close on leave as before: the M1 writer scan's "check" list (another window writes their data), camera / microphone users, Passwords, Settings. A new app that is written from another window, holds a device or unlocks secrets goes in that list.
 - A bridge that opens an app (`appShow(id)` before `appFrameOf(id)`) brings a hidden one to the front; background pushes (Timesheet tracker, the cycle check) stay hidden. A language change, an update reload or switching off closes every hidden app (`mtDropAll`).
 - Quality gate: `.github/qa/multitask.js` opens each app with the switch on, leaves it, checks it is hidden and alive, sweeps its merge slices while hidden (a throw fails), opens it again (same window) and fails on errors in between. `smoke.js` and the rest read `OROS_MULTITASK=1` for a run with the switch on.
+
+**Wave M3 (switcher, `shell.js` section 10c).** `mtOpenList()` = the app in front, then the hidden ones (left last first); `mtClose(id)` closes one for good (the front one through `returnToDesktop` with `mtNoKeep`), `mtCloseAll()`. Every change calls `mtChanged()` → `mtPaint()`: the bar button `#mt-btn` (in `.bar-left` after the menu button; shown only while an app waits behind, with the count), class `mt-open` on `#app-menu .menu-item[data-app]`, and `orosLauncher.refresh()` (host `isOpen(id)` → Dock class `open`, a dim dot). `Ctrl+Alt+Shift+W` (`SC_DEFS` "w") and the button open `#mt-sw`: a dialog (≤ 600 px a bottom sheet) with a row per app (icon, name, "In front" / time since left, × close), "Close all", keys ↑ ↓ / Enter / Delete / Esc, the app left last focused (shortcut + Enter = back to it); touch: swipe a row sideways past a third to close it. Switch off: the dialog says where to turn it on; SOLO: nothing. Strings `mt.sw.*` in `translations.js` + `i18n/de/shell.js`.
 
 ### `shell.js` [verified 2026-10-05, `APP_VERSION` 0.39.06]
 

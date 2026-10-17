@@ -528,6 +528,7 @@
     ".ld-dk:focus-visible .ld-tile{outline:2px solid var(--accent);outline-offset:2px}",
     ".ld-dot{width:4px;height:4px;border-radius:50%;margin-top:3px;background:transparent}",
     ".ld-dk.run .ld-dot{background:var(--accent)}",
+    ".ld-dk.open .ld-dot{background:var(--text-dim)}",
     ".ld-dk.drag{opacity:.55}",
     ".ld-tip{position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);white-space:nowrap;",
     "padding:4px 9px;border-radius:7px;font-size:12px;background:var(--panel-bg);color:var(--text);",
@@ -1034,7 +1035,7 @@
       var app = appById(id);
       var b = doc.createElement("button");
       b.type = "button";
-      b.className = "ld-dk" + (run === id ? " run" : "");
+      b.className = "ld-dk" + (run === id ? " run" : (host.isOpen && host.isOpen(id) ? " open" : ""));
       b.setAttribute("data-app", id);
       b.setAttribute("aria-label", labelOf(app));
       if (run === id) b.setAttribute("aria-current", "true");
@@ -1165,7 +1166,7 @@
 
   // ---------- 12. Public API ----------
   // host = { apps(), open(app), running(), label(app), icons, lang(), desktop,
-  //          menuChanged() }
+  //          menuChanged(), isOpen(id) optional: alive behind (multitasking) }
   function attach(h) {
     if (host) return;
     host = h || {};

@@ -9,6 +9,7 @@
 //   sync       every merge slice the app registered still runs its
 //              get / set / merge while hidden (converge.js sweep; only a
 //              throw counts here, convergence itself is converge.js's)
+//   switcher   the top-bar switcher button shows, counting 2 open apps
 //   back       opening the app again shows the same window (the mark is
 //              still there: no reload), visible again
 //   errors     no uncaught error or console error while the app is hidden
@@ -96,6 +97,8 @@ async function main() {
         const h = mineNow[0];
         if (h.display !== "none" || h.vis !== "hidden") add("hidden", "display " + h.display + ", visibilityState " + h.vis);
         if (h.mark !== "m") add("back", "hidden frame lost its window (reloaded)");
+        const sw = await page.evaluate(() => { const b = document.getElementById("mt-btn"); return b && !b.hidden ? b.textContent : null; });
+        if (sw !== "2") add("switcher", "bar button " + (sw === null ? "hidden" : "says " + sw) + " with 2 apps open");
         for (const name of names) {
           const res = await page.evaluate(sweepSlice, { name, fixture: null })
             .catch((e) => [{ kind: "throws", detail: "sweep: " + String(e.message).split("\n")[0] }]);
