@@ -123,29 +123,51 @@
   }
 
   // ---------- preview: the app's Export CSV (garage.js exportCsv) ----------
-  var WORDS = {
+  // Same keys and English as garage.js (one "garage" pack); WORDS[lang]
+  // = { kind, cat, head } is built from it.
+  var CSV_WORDS = {
     en: {
-      kind: { fuel: "Fuel", charge: "Charging", service: "Service", cost: "Expense", odo: "Km reading" },
-      cat: { toll: "Tolls", park: "Parking", wash: "Wash", fine: "Fines", parts: "Parts", acc: "Accessories",
-             kteo: "KTEO", ins: "Insurance", tax: "Road tax", kek: "Emissions card", road: "Roadside assistance",
-             lic: "Driving licence", rent: "Rental", other: "Other" },
-      head: ["Date", "Vehicle", "Kind", "Details", "Km", "Quantity", "Cost ({c})", "Notes"]
+      "kind.fuel": "Fuel", "kind.charge": "Charging", "kind.service": "Service", "kind.cost": "Expense", "kind.odo": "Km reading",
+      "cat.toll": "Tolls", "cat.park": "Parking", "cat.wash": "Wash", "cat.fine": "Fines", "cat.parts": "Parts", "cat.acc": "Accessories",
+      "cat.kteo": "KTEO", "cat.ins": "Insurance", "cat.tax": "Road tax", "cat.kek": "Emissions card", "cat.road": "Roadside assistance",
+      "cat.lic": "Driving licence", "cat.rent": "Rental", "cat.other": "Other",
+      "csv.date": "Date", "csv.vehicle": "Vehicle", "csv.kind": "Kind", "csv.details": "Details", "csv.km": "Km",
+      "csv.qty": "Quantity", "csv.cost": "Cost ({c})", "csv.notes": "Notes"
     },
     el: {
-      kind: { fuel: "Καύσιμα", charge: "Φόρτιση", service: "Σέρβις", cost: "Έξοδο", odo: "Χιλιόμετρα" },
-      cat: { toll: "Διόδια", park: "Στάθμευση", wash: "Πλύσιμο", fine: "Πρόστιμα", parts: "Ανταλλακτικά", acc: "Αξεσουάρ",
-             kteo: "ΚΤΕΟ", ins: "Ασφάλεια", tax: "Τέλη κυκλοφορίας", kek: "Κάρτα καυσαερίων", road: "Οδική βοήθεια",
-             lic: "Δίπλωμα οδήγησης", rent: "Ενοικίαση", other: "Άλλο" },
-      head: ["Ημερομηνία", "Όχημα", "Είδος", "Λεπτομέρειες", "Km", "Ποσότητα", "Κόστος ({c})", "Σημειώσεις"]
+      "kind.fuel": "Καύσιμα", "kind.charge": "Φόρτιση", "kind.service": "Σέρβις", "kind.cost": "Έξοδο", "kind.odo": "Χιλιόμετρα",
+      "cat.toll": "Διόδια", "cat.park": "Στάθμευση", "cat.wash": "Πλύσιμο", "cat.fine": "Πρόστιμα", "cat.parts": "Ανταλλακτικά", "cat.acc": "Αξεσουάρ",
+      "cat.kteo": "ΚΤΕΟ", "cat.ins": "Ασφάλεια", "cat.tax": "Τέλη κυκλοφορίας", "cat.kek": "Κάρτα καυσαερίων", "cat.road": "Οδική βοήθεια",
+      "cat.lic": "Δίπλωμα οδήγησης", "cat.rent": "Ενοικίαση", "cat.other": "Άλλο",
+      "csv.date": "Ημερομηνία", "csv.vehicle": "Όχημα", "csv.kind": "Είδος", "csv.details": "Λεπτομέρειες", "csv.km": "Km",
+      "csv.qty": "Ποσότητα", "csv.cost": "Κόστος ({c})", "csv.notes": "Σημειώσεις"
     }
   };
+  var KINDS = ["fuel", "charge", "service", "cost", "odo"];
+  var CATS = ["toll", "park", "wash", "fine", "parts", "acc", "kteo", "ins", "tax", "kek", "road", "lic", "rent", "other"];
+  var HEAD = ["date", "vehicle", "kind", "details", "km", "qty", "cost", "notes"];
+  // lang: "en", "el" or a pack language (window.orosI18n, when loaded;
+  // in Node: English)
+  function wordsOf(lang) {
+    var tb = CSV_WORDS[lang];
+    if (!tb && typeof window !== "undefined" && window.orosI18n && lang) tb = window.orosI18n.table(CSV_WORDS, "garage", lang);
+    tb = tb || CSV_WORDS.en;
+    var w = { kind: {}, cat: {}, head: [] };
+    KINDS.forEach(function (k) { w.kind[k] = tb["kind." + k]; });
+    CATS.forEach(function (k) { w.cat[k] = tb["cat." + k]; });
+    HEAD.forEach(function (k) { w.head.push(tb["csv." + k]); });
+    return w;
+  }
+  var WORDS = { en: wordsOf("en"), el: wordsOf("el") };
   // core.csvCell puts an apostrophe before = + - @ tab CR (no formulas)
   function csvText(data, lang) {
-    var C = core(), el = lang === "el", W = WORDS[el ? "el" : "en"], d = isObj(data) ? data : {};
+    var C = core(), d = isObj(data) ? data : {};
+    var L = typeof lang === "string" && lang ? lang : "en", W = WORDS[L] || wordsOf(L);
+    var el = C.commaDecimal ? C.commaDecimal(L) : L === "el";   // decimal comma and ";"
     var cur = isObj(d.settings) && typeof d.settings.cur === "string" ? d.settings.cur : "EUR";
     var names = {};
     Object.keys(W.kind).forEach(function (k) { names[k] = W.kind[k]; });
-    C.ITEM_IDS.forEach(function (it) { names[it] = C.itemName(it, el ? "el" : "en"); });
+    C.ITEM_IDS.forEach(function (it) { names[it] = C.itemName(it, L); });
     C.COST_CATS.forEach(function (c) { names[c] = W.cat[c]; });
     var sep = el ? ";" : ",";
     var lines = [W.head.map(function (h) { return C.csvCell(h.replace("{c}", cur)); }).join(sep)];

@@ -52,8 +52,11 @@
       return l === "el" ? "el" : "en";
     } catch (e) { return "en"; }
   }
-  var LANG = appLang();
-  var LOCALE = LANG === "el" ? "el-GR" : "en-GB";
+  // orosI18n (../i18n.js): the shell's language, any pack language too
+  var LANG = window.orosI18n ? window.orosI18n.lang() : appLang();
+  var LOCALE = window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB");
+  // CSV numbers with a decimal comma (and ";" between cells): el, de…
+  var CSV_COMMA = C.commaDecimal(LANG);
 
   var STRINGS = {
     en: {
@@ -180,7 +183,9 @@
       "imp.done": "Imported {n} entries", "imp.undone": "Import undone",
       "imp.bad": "This file could not be read as a vehicle log", "imp.empty": "No entries found in this file",
       "imp.big": "This file is too large to import",
-      "live.added": "{what} added"
+      "live.added": "{what} added",
+      "csv.date": "Date", "csv.vehicle": "Vehicle", "csv.kind": "Kind", "csv.details": "Details", "csv.km": "Km",
+      "csv.qty": "Quantity", "csv.cost": "Cost ({c})", "csv.notes": "Notes"
     },
     el: {
       "app": "Γκαράζ",
@@ -306,9 +311,12 @@
       "imp.done": "Εισήχθησαν {n} εγγραφές", "imp.undone": "Η εισαγωγή αναιρέθηκε",
       "imp.bad": "Το αρχείο δεν διαβάζεται ως ημερολόγιο οχήματος", "imp.empty": "Δεν βρέθηκαν εγγραφές στο αρχείο",
       "imp.big": "Το αρχείο είναι πολύ μεγάλο για εισαγωγή",
-      "live.added": "Προστέθηκε: {what}"
+      "live.added": "Προστέθηκε: {what}",
+      "csv.date": "Ημερομηνία", "csv.vehicle": "Όχημα", "csv.kind": "Είδος", "csv.details": "Λεπτομέρειες", "csv.km": "Km",
+      "csv.qty": "Ποσότητα", "csv.cost": "Κόστος ({c})", "csv.notes": "Σημειώσεις"
     }
   };
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "garage", LANG);
 
   function t(key, params) {
     if (key.indexOf("item.") === 0) return C.itemName(key.slice(5), LANG);   // names live in core.js
@@ -2035,7 +2043,7 @@
     acts.appendChild(button(t("lb.html"), "", function () {
       var r = report();
       if (!r) return;
-      var name = ("orOS-logbook-" + v.name).replace(/[\\/:*?"<>|\s]+/g, "-").slice(0, 60) + "-" + todayYmd() + ".html";
+      var name = ("orOS-logbook-" + v.name).replace(/[\\/:*?\x22<>|\s]+/g, "-").slice(0, 60) + "-" + todayYmd() + ".html";
       saveText(L.page(r, logbookFmt()), name, "text/html", "HTML", ".html");
     }));
     acts.appendChild(button(t("lb.print"), "primary", function () {
@@ -2691,9 +2699,8 @@
     return names;
   }
   function csvHead() {
-    return LANG === "el"
-      ? ["Ημερομηνία", "Όχημα", "Είδος", "Λεπτομέρειες", "Km", "Ποσότητα", "Κόστος (" + data.settings.cur + ")", "Σημειώσεις"]
-      : ["Date", "Vehicle", "Kind", "Details", "Km", "Quantity", "Cost (" + data.settings.cur + ")", "Notes"];
+    return [t("csv.date"), t("csv.vehicle"), t("csv.kind"), t("csv.details"), t("csv.km"), t("csv.qty"),
+            t("csv.cost", { c: data.settings.cur }), t("csv.notes")];
   }
   // "Open in Spreadsheet" (Bible BR-S1): the Export CSV rows as a new
   // sheet in the orOS Spreadsheet, numbers as numbers, a SUM under the
@@ -2708,11 +2715,11 @@
     go("spreadsheet", { newSheet: { name: t("app") + " " + todayYmd(), rows: [csvHead()].concat(rows), sum: [6] } });
   }
   function exportCsv() {
-    var sep = LANG === "el" ? ";" : ",";
+    var sep = CSV_COMMA ? ";" : ",";
     var lines = [csvHead().map(C.csvCell).join(sep)];
     C.csvRows(data, csvNames()).forEach(function (r) {
       lines.push(r.map(function (v) {
-        if (typeof v === "number" && LANG === "el") return String(v).replace(".", ",");
+        if (typeof v === "number" && CSV_COMMA) return String(v).replace(".", ",");
         return C.csvCell(v);
       }).join(sep));
     });

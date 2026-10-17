@@ -582,6 +582,12 @@
   }
   function cents(x) { return x !== null && isFinite(x) && x > 0 ? Math.round(x * 100) : 0; }
 
+  // The fallback name of a new vehicle (garage.js passes its own
+  // t("imp.newName") as opts.newName; same key and English).
+  var NEW_NAME = {
+    en: { "imp.newName": "Imported vehicle" },
+    el: { "imp.newName": "Εισαγόμενο όχημα" }
+  };
   function plan(res, data, opts) {
     opts = opts || {};
     var vk = opts.vk !== undefined ? opts.vk : ((res.vehicles && res.vehicles[0]) || {}).key || "";
@@ -597,7 +603,7 @@
     }
     if (!veh) {
       var type = "car", fuel = has(C.FUELS, src.fuel) && src.fuel ? src.fuel : "petrol";
-      var nm = src.name || [src.make, src.model].filter(Boolean).join(" ") || opts.newName || (lang === "el" ? "Εισαγόμενο όχημα" : "Imported vehicle");
+      var nm = src.name || [src.make, src.model].filter(Boolean).join(" ") || opts.newName || NEW_NAME[lang]["imp.newName"];
       vehicle = C.normVehicle({
         id: vid, m: 0, name: nm, type: type, fuel: fuel, make: src.make || "", model: src.model || "",
         year: src.year || 0, plate: src.plate || "", tank: vol === "l" ? (src.tank || 0) : Math.round((src.tank || 0) * VOL[vol]),

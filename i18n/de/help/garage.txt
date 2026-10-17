@@ -1,0 +1,68 @@
+# Garage
+Garage hält Tanken, Service, Reifen, Kosten und Erneuerungen für jedes deiner Fahrzeuge fest, vom Auto oder Boot bis zum Fahrrad. Es berechnet Verbrauch und Kosten pro km und erinnert dich vor KTEO, Versicherung oder dem nächsten Service.
+
+## Erste Schritte
+Tippe oder klicke auf `Fahrzeug hinzufügen`. Wähle einen `Typ` (Auto, Motorrad, Roller, Transporter, Lkw, Wohnmobil, Traktor, Boot, Fahrrad, E-Bike, E-Scooter oder Sonstiges), gib ihm einen `Name` und fülle aus, was du möchtest: `Marke`, `Modell`, `Baujahr`, `Kennzeichen`, `Kraftstoff`, Tank- oder Akkugröße und `Kilometerstand jetzt (km)`. Lass `Üblichen Serviceplan anlegen (änderbar)` angehakt, um mit einem fertigen Serviceplan zu starten. Fahrräder und E-Scooter haben keinen Kraftstoff, nur Wartung.
+
+Mit mehr als einem Fahrzeug wechselt eine Leiste unter der Werkzeugleiste zwischen ihnen.
+
+## Tanken, Service und Kosten eintragen
+Die Schaltfläche `Neu` oder die Schnellknöpfe in `Übersicht` bieten:
+- `Tanken` oder `Laden`: Gib zwei von Menge, Preis und Gesamt ein, der dritte Wert wird berechnet. Nimm den Haken bei `Vollgetankt` weg, wenn du nur teilweise tankst, und hake `Ich habe die letzte Tankfüllung nicht eingetragen` an, wenn du eine ausgelassen hast, damit der Verbrauch stimmt.
+- `Service`: Wähle `Was gemacht wurde` aus der Liste, mit Kosten und `Werkstatt / Geschäft`.
+- `Ausgabe`: Maut, Parken, Wäsche, Bußgelder, Ersatzteile und mehr.
+- `Kilometerstand`: nur der Kilometerzähler.
+
+Einträge für Tanken, Service und Ausgaben können bis zu 6 Belegfotos behalten: Nutze `Belegfoto hinzufügen` unter `Belege`. Der Verlauf markiert sie mit 📎 und der Zahl der Fotos. Sie liegen in [Dateien](app:files), im Ordner Garage/Receipts.
+
+In `Tanken` oder `Laden` nimmt `Beleg lesen` den Text eines Belegs (einfügen oder abtippen) und füllt Datum, Menge, Preis pro Liter oder kWh, Gesamt und Tankstelle aus, bei griechischen oder englischen Belegen. Alles passiert auf diesem Gerät; prüfe die Werte und tippe dann auf `Speichern`.
+
+Im selben Menü kannst du eine Erneuerung, einen Punkt im Serviceplan, einen Reifensatz oder ein weiteres Fahrzeug hinzufügen.
+
+## Übersicht
+`Übersicht` zeigt das Fahrzeug, `Demnächst`, Kacheln für Verbrauch, Kosten in diesem Monat, Kosten pro km und km pro Monat, dann:
+- `Erneuerungen`: KTEO, Versicherung, Kfz-Steuer, Abgaskarte, Pannenhilfe, Führerschein oder Sonstiges, jeweils mit Ablaufdatum und `Erinnern vorher (Tage)`. Wenn du erneuerst, tippe auf `Erneuert`, gib ein, was du bezahlt hast, und der neue Ablauf wird gesetzt (mit `Rückgängig`).
+- `Serviceplan`: Punkte, die alle so und so viele km und/oder Monate fällig sind. Tippe auf `Erledigt`, um den Service mit diesem Punkt schon ausgewählt einzutragen.
+- `Reifen`: Sätze nach Saison, mit DOT-Alter, Profil und gefahrenen km. `Montieren` wechselt den Satz am Fahrzeug.
+
+`→ Aufgaben` neben `Demnächst` schickt diese Punkte als Aufgaben an [Aufgaben](app:todo), etwa „KTEO-Termin buchen“ mit dem Ablaufdatum in der Notiz. Der Editor einer Erneuerung oder eines Serviceplan-Punkts hat auch eine Schaltfläche `Aufgaben` für genau diesen Punkt. Aufgaben zeigt sie zuerst und fragt, bevor etwas hinzugefügt wird.
+
+## Verlauf und Statistik
+`Verlauf` listet jeden Eintrag Monat für Monat, mit Filtern nach Art und dem Verbrauch jeder vollen Tankfüllung. Tippe auf einen Eintrag, um ihn zu bearbeiten oder zu löschen.
+
+`Statistik` umfasst `12 Monate`, `Dieses Jahr` oder `Gesamt`: Gesamtkosten, gefahrene km, Kosten pro km, Durchschnittsverbrauch und -preis sowie Diagramme zu Kosten pro Monat, Verbrauch, Kraftstoffpreis und `Wohin das Geld geht`. `Als Tabelle zeigen` macht aus einem Diagramm eine Tabelle.
+
+## Logbuch-Bericht
+`Logbuch` auf der Fahrzeugkarte (oder `Logbuch-Bericht` in `Einstellungen`) bringt die ganze Geschichte des Fahrzeugs auf eine Seite: das Fahrzeug, eine Übersicht, jeden Service, Erneuerungen und Reifen. Hake `Tank- und Ladevorgänge` oder `Sonstige Kosten` an, um sie aufzunehmen, und nimm den Haken bei `Bezahlte Beträge zeigen` weg, um die Preise wegzulassen, zum Beispiel wenn du das Auto verkaufst. `Drucken oder als PDF speichern` öffnet das Druckfenster (wähle „Als PDF speichern“ als Drucker für ein PDF); `Als HTML speichern` speichert eine Datei, die du in jedem Browser öffnen kannst.
+
+## Aus einer anderen App importieren
+In `Einstellungen` liest `Aus einer anderen App importieren` den Export eines anderen Fahrzeugtagebuchs. Wähle die Datei (eine .csv oder eine .zip mit mehreren) und prüfe dann die Vorschau: welches Fahrzeug in der Datei, `Hinzufügen zu` einem vorhandenen oder einem neuen Fahrzeug (benannt nach der Datei, wenn sie einen Namen hat) und die Einheiten der Datei. Garage speichert km und Liter, Meilen und Gallonen werden also umgerechnet. Tankfüllungen werden zu Tank-Einträgen (voll, teilweise, nach einer fehlenden Tankfüllung), Services zu Service-Einträgen und sonstige Kosten zu Ausgaben nach Kategorie. Ein Eintrag, der schon da ist (gleiches Datum, Kilometerstand und Betrag), wird übersprungen, und derselbe Import noch einmal fügt nichts hinzu. `Rückgängig` in der Meldung nimmt den ganzen Import zurück.
+- Fuelio: Settings, Backup & sync (oder Dropbox- / Google-Drive-Sync) speichert `vehicle-1-sync.csv`, eine Datei pro Fahrzeug, mit Tankfüllungen und Kosten.
+- Drivvo: Menu, Export (oder Settings, Export data) in eine CSV-Datei mit Tankfüllungen, Ausgaben und Services. Einnahmen werden ausgelassen.
+- Fuelly: Öffne auf der Fuelly-Website dein Konto, Export, und lade die CSV herunter. Meilen und US-Gallonen werden umgerechnet; wähle UK-Gallonen, wenn dein Auto imperiale erfasst hat.
+- aCar: Menu, Backup & Restore, Export to CSV, und wähle die Datei mit den Tankfüllungen (oder den Service-Einträgen).
+- LubeLogger: Öffne bei einem Fahrzeug die Einträge Gas, Service, Repair, Upgrade oder Tax und nutze Export to CSV; importiere eine Datei nach der anderen in dasselbe Fahrzeug.
+
+## Synchronisierung und Sicherung
+Fahrzeuge, Einträge, Erneuerungen, Pläne, Reifen und deine Währung werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. Belegfotos reisen getrennt, mit der Vault-Drive-Synchronisierung; bis sie ankommen, zeigt ein Foto `Nicht auf diesem Gerät`. Die Uhrzeit der Erinnerung, die Verbrauchseinheit, die Reifengrenzen und der offene Tab bleiben auf jedem Gerät.
+
+In `Einstellungen`: `CSV exportieren`, `Sicherung exportieren` (JSON) und `Sicherung wiederherstellen`. Ein Import wird mit dem zusammengeführt, was du hast. Innerhalb von orOS öffnet `In Tabelle öffnen` dieselben Zeilen wie `CSV exportieren` in einem neuen Blatt in [Tabelle](app:spreadsheet), mit den Gesamtkosten unten.
+
+## orOS-Datei speichern und öffnen
+In `Einstellungen` speichert `orOS-Datei (.orosgarage)` jedes Fahrzeug, jeden Tank- und Ladevorgang, Service, Serviceplan, Reifensatz, jede Erneuerung, Ausgabe und jeden Kilometerstand als eine `.orosgarage`-Datei, mit den Belegfotos darin: zum Beispiel, um deine Fahrzeuge ohne Synchronisierung auf ein anderes Gerät zu bringen oder eine Kopie zu behalten. Die Uhrzeit der Erinnerung, die Verbrauchseinheit und die Reifengrenzen bleiben auf diesem Gerät. Die Datei ist ein normales ZIP: Entpackt enthält sie die Einträge als `content.json`, die Fotos in `media/` und `preview/log.csv` (dieselbe CSV wie `CSV exportieren`) für andere Programme. Sie ist nicht verschlüsselt, also bewahre sie sicher auf.
+
+`orOS-Datei öffnen…` (oder `Entpackter orOS-Ordner…`, oder „Öffnen mit“ orOS am Computer) zeigt, wie viele Einträge neu und wie viele schon hier sind; dann fügt `Hinzufügen` nur die neuen hinzu, mit eigenen IDs: Dieselbe Datei noch einmal zu öffnen, fügt nichts hinzu. Ein vorhandener Eintrag bleibt, wie er ist, und einer, den du hier gelöscht hast, bleibt gelöscht; eine Datei löscht nie etwas. Hake `Mit neueren Versionen aktualisieren` an, damit später in der Datei geänderte Einträge deine Kopie ersetzen. Ein Reifensatz aus der Datei wird nicht an einem Fahrzeug montiert, das hier schon einen montierten Satz hat. Belegfotos kommen nur nach Garage/Receipts, wenn sie dort noch fehlen, mit denselben Prüfungen wie beim Hinzufügen von Hand. `Rückgängig` in der Meldung entfernt, was hinzugefügt wurde.
+
+## Tastenkürzel
+- [[Left]] / [[Right]] auf den Tabs wechseln zwischen `Übersicht`, `Verlauf` und `Statistik`.
+
+## Tipps
+- In einem Eintrag öffnet `Zu Budget hinzufügen` eine fertige Ausgabe in [Budget](app:budget); du prüfst sie und speicherst sie dort.
+- Erneuerungen und Service-Termine erscheinen auch in [Kalender](app:calendar) unter `Garage`.
+- Wähle die Uhrzeit für `Tägliche Erinnerung` in `Einstellungen`. Siehe [Benachrichtigungen](help:t/notifications).
+- `Archivieren` ein verkauftes Fahrzeug: Der Verlauf bleibt, die Erinnerungen hören auf.
+
+## Grenzen
+- Erinnerungen erscheinen, solange orOS offen ist, auch wenn diese App zu ist. Ist orOS geschlossen, warten sie, bis du es wieder öffnest.
+- Service-Intervalle sind nur typische Werte. Die Betriebsanleitung deines Fahrzeugs geht vor.
+- `Beleg lesen` arbeitet in dieser Version mit dem Text des Belegs, nicht mit einem Foto. Belege mit ungewöhnlichem Aufbau werden vielleicht nur teilweise gelesen: Prüfe die Werte vor dem Speichern.
