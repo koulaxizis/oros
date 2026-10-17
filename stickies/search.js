@@ -14,6 +14,20 @@
   "use strict";
   var KEY = "oros-stickies-data";
   var NAME = { en: "Sticky note", el: "Post-it" };
+  // The fallback title: "note" of the stickies pack for a pack language
+  // (host.js loads that pack in the shell), else English or Greek.
+  function name(l) {
+    if (l === "el" || l === "en") return NAME[l];
+    var I = root && root.orosI18n;
+    if (!I) return NAME.en;
+    var tab = I.table({ en: { note: NAME.en } }, "stickies", l);
+    return tab.note || NAME.en;
+  }
+  function langOf(ctx) {
+    var I = root && root.orosI18n;
+    if (I && ctx.lang !== "el") { try { return I.lang(); } catch (e) {} }
+    return ctx.lang === "el" ? "el" : "en";
+  }
 
   function core() {
     if (root && root.StickiesCore) return root.StickiesCore;
@@ -29,9 +43,9 @@
     search: function (ctx) {
       var C = core(), d = ctx.readJSON(KEY);
       if (!C || !d) return [];
-      var lang = ctx.lang === "el" ? "el" : "en";
+      var lang = langOf(ctx);
       return C.live(C.merge(d, null)).filter(function (n) { return n.text.trim(); }).map(function (n) {
-        var hit = { id: n.id, title: C.firstLine(n.text) || NAME[lang], text: n.text.replace(/\s+/g, " ").trim(), target: { note: n.id } };
+        var hit = { id: n.id, title: C.firstLine(n.text) || name(lang), text: n.text.replace(/\s+/g, " ").trim(), target: { note: n.id } };
         if (n.ring) hit.when = n.ring.at;
         return hit;
       });
