@@ -1,3 +1,4 @@
+// i18n-inline-ok: Greek wiki and MediaWiki syntax words (parser data, no UI text)
 // ============================================================
 // orOS Wiki — import.js: import from other wikis (v1.0.0, wave 4)
 // Pure (no DOM writes, no storage), so the app and the Node tests run

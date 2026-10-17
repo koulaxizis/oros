@@ -1,3 +1,4 @@
+// i18n-inline-ok: Greek Wikipedia template and parameter names (parser data); UI text is in CREDIT
 // ============================================================
 // orOS Wiki — io.js: import / export converters (v1.0.0, wave 3)
 // Pure text in, text out (no DOM, no storage), so the app and the
@@ -656,19 +657,22 @@
   }
 
   var CREDIT = {
-    en: { h: "Source", body: "This article starts from “{a}” on Wikipedia, written by {who} and shared under {lic}. It was copied on {d} ({rev}); both texts may have changed since. If you share this article, share it under the same licence.",
-      who: "its authors", rev: "this version" },
-    el: { h: "Πηγή", body: "Το άρθρο ξεκινά από το «{a}» της Βικιπαίδειας, γραμμένο από {who} και διαθέσιμο με την άδεια {lic}. Αντιγράφηκε στις {d} ({rev}) και από τότε μπορεί να έχουν αλλάξει και τα δύο κείμενα. Αν το μοιραστείς, μοιράσου το με την ίδια άδεια.",
-      who: "τους συντάκτες του", rev: "αυτή η έκδοση" }
+    en: { "credit.h": "Source", "credit.body": "This article starts from “{a}” on Wikipedia, written by {who} and shared under {lic}. It was copied on {d} ({rev}); both texts may have changed since. If you share this article, share it under the same licence.",
+      "credit.who": "its authors", "credit.rev": "this version" },
+    el: { "credit.h": "Πηγή", "credit.body": "Το άρθρο ξεκινά από το «{a}» της Βικιπαίδειας, γραμμένο από {who} και διαθέσιμο με την άδεια {lic}. Αντιγράφηκε στις {d} ({rev}) και από τότε μπορεί να έχουν αλλάξει και τα δύο κείμενα. Αν το μοιραστείς, μοιράσου το με την ίδια άδεια.",
+      "credit.who": "τους συντάκτες του", "credit.rev": "αυτή η έκδοση" }
   };
   function wpCredit(o) {
-    var L = CREDIT[o.ui === "el" ? "el" : "en"], host = "https://" + wpHost(o.lang);
+    // o.ui: the reader's language; a pack language (../i18n.js) adds its table.
+    var ui = typeof o.ui === "string" && o.ui ? o.ui : "en";
+    if (typeof window !== "undefined" && window.orosI18n) window.orosI18n.table(CREDIT, "wiki", ui);
+    var L = CREDIT[ui] || CREDIT.en, host = "https://" + wpHost(o.lang);
     var enc = wpEnc(o.title);
     var a = "[" + str(o.title).replace(/[\[\]]/g, "") + "](" + host + "/wiki/" + enc + ")";
-    var who = "[" + L.who + "](" + host + "/w/index.php?title=" + enc + "&action=history)";
+    var who = "[" + L["credit.who"] + "](" + host + "/w/index.php?title=" + enc + "&action=history)";
     var lic = "[CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)";
-    var rev = o.revid ? "[" + L.rev + "](" + host + "/w/index.php?oldid=" + o.revid + ")" : L.rev;
-    return "== " + L.h + " ==\n\n" + L.body.replace("{a}", a).replace("{who}", who).replace("{lic}", lic).replace("{d}", str(o.date)).replace("{rev}", rev);
+    var rev = o.revid ? "[" + L["credit.rev"] + "](" + host + "/w/index.php?oldid=" + o.revid + ")" : L["credit.rev"];
+    return "== " + L["credit.h"] + " ==\n\n" + L["credit.body"].replace("{a}", a).replace("{who}", who).replace("{lic}", lic).replace("{d}", str(o.date)).replace("{rev}", rev);
   }
   // The whole starting text: converted article + the credit section.
   function fromWikipedia(ans, o) {

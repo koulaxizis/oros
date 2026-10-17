@@ -1,3 +1,4 @@
+// i18n-inline-ok: Greek wiki syntax aliases (parser data, no UI text)
 // ============================================================
 // orOS Wiki — universal search provider (v1.1.0)
 // Loaded by the shell on the first menu search (apps.json

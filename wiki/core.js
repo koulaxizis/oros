@@ -1,3 +1,4 @@
+// i18n-inline-ok: Greek wiki syntax aliases (parser data, no UI text)
 // ============================================================
 // orOS Wiki — pure core (v1.2.0)
 // Shared by the app (wiki.js), the search provider and the tests.
@@ -878,11 +879,12 @@
     return pre.concat(mid).slice(0, max || 8);
   }
   // Rename: optional redirect from the old title.
-  function welcomeText(lang) {
-    return lang === "el"
-      ? "Καλώς ήρθες στο wiki σου. Εδώ γράφεις ό,τι θέλεις να θυμάσαι, σε άρθρα που συνδέονται μεταξύ τους.\n\n## Πρώτα βήματα\n- Πάτα **Επεξεργασία** για να αλλάξεις αυτή τη σελίδα.\n- Γράψε έναν τίτλο σε διπλές αγκύλες, όπως [[Το πρώτο μου άρθρο]], και πάτα τον για να γράψεις το άρθρο.\n- Βάλε ένα άρθρο σε κατηγορία με [[:Κατηγορία:Παράδειγμα|Κατηγορία:Παράδειγμα]] στο κείμενό του.\n"
-      : "Welcome to your wiki. Write down what you want to remember, in articles that link to each other.\n\n## First steps\n- Press **Edit** to change this page.\n- Write a title in double square brackets, like [[My first article]], and tap it to write that article.\n- File an article in a category with [[:Category:Example|Category:Example]] in its text.\n";
-  }
+  // Wiki syntax word for a category link, in the language whose
+  // aliases the parser knows (others write the English word).
+  function catWord(lang) { return lang === "el" ? "Κατηγορία" : "Category"; }
+  // Wikipedia editions offered by "Start from Wikipedia" (own names).
+  var WP_LANGS = [["el", "Ελληνικά"], ["en", "English"], ["de", "Deutsch"], ["fr", "Français"], ["es", "Español"],
+                  ["it", "Italiano"], ["pt", "Português"], ["nl", "Nederlands"]];
 
   // ---------- 7. Diff ----------
   // Longest common subsequence on arrays, after trimming the common
@@ -1499,7 +1501,7 @@
     sectionRange: sectionRange, getSection: getSection, setSection: setSection,
     plainText: plainText, snippet: snippet, live: live, titleIndex: titleIndex, byId: byId, wikiById: wikiById,
     info: info, resolve: resolve, backlinks: backlinks, wanted: wanted, categories: categories,
-    search: search, suggest: suggest, byTitle: byTitle, welcomeText: welcomeText,
+    search: search, suggest: suggest, byTitle: byTitle, catWord: catWord, WP_LANGS: WP_LANGS,
     diffSeq: diffSeq, diffText: diffText, diffStats: diffStats, diffContext: diffContext,
     render: render, renderInline: renderInline, renderBlocks: renderBlocks, renderToc: renderToc,
     revDir: revDir, revName: revName, revPath: revPath, parseRevName: parseRevName, revFile: revFile, parseRevFile: parseRevFile,
