@@ -69,7 +69,8 @@
   function dateLabel(day, lang) {
     var d = new Date(EPOCH_UTC + day * DAY_MS);
     try {
-      return d.toLocaleDateString(lang === "el" ? "el-GR" : "en-GB", { day: "numeric", month: "short", timeZone: "UTC" });
+      var loc = typeof window !== "undefined" && window.orosI18n ? window.orosI18n.locale(lang) : (lang === "el" ? "el-GR" : "en-GB");
+      return d.toLocaleDateString(loc, { day: "numeric", month: "short", timeZone: "UTC" });
     } catch (e) { return dateStr(day); }
   }
 

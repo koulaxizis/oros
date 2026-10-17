@@ -22,13 +22,13 @@ Tastatur: [[1]] bis [[6]] spielen diese Karte aus deiner Hand; ist eine Karte au
 Der Computer spielt `Leicht`, `Mittel` oder `Schwer`; wenn du die Stufe wechselst, beginnt ein neues Match. `Rekorde` zeigt für jede Stufe deine Matches und Siege, deine Xeri und Bube-auf-Bube und deine beste Runde. `Rekorde zurücksetzen` löscht sie.
 
 ## Zwei Geräte
-Spiel gegen jemanden mit eigenem Handy, Tablet oder Computer. Drück `Auf zwei Geräten spielen` (die Taste mit zwei Bildschirmen): Einer von euch wählt `Code zeigen`, der andere `Code eingeben` und tippt den 6-stelligen Code ein oder scannt den QR-Code, und das erste Gerät lässt das andere mit `Erlauben` herein. Solange ihr verbunden seid, steht `Zwei Geräte` in der Werkzeugleiste; drück darauf, um die Verbindung zu sehen oder `Spiel verlassen` zu wählen.
+Spiel gegen jemanden mit eigenem Handy, Tablet oder Computer. Drück `Auf zwei Geräten spielen` (die Taste mit zwei Bildschirmen): Einer von euch wählt `Show a code`, der andere `Enter a code` und tippt den 6-stelligen Code ein oder scannt den QR-Code, und das erste Gerät lässt das andere mit `Allow` herein. Solange ihr verbunden seid, steht `Two devices` in der Werkzeugleiste; drück darauf, um die Verbindung zu sehen oder `Leave the game` zu wählen. Diese Tasten des Zwei-Geräte-Dialogs sind noch Englisch.
 - Das Gerät, das den Code gezeigt hat, mischt, teilt aus und führt das Match. Jedes Gerät zeigt nur die eigene Hand: Die andere Hand und der Stapel zeigen nur, wie viele Karten darin sind, nie welche.
 - `Nächste Runde` und ein neues Match richten sich nach dem Gerät, das den Code gezeigt hat; das andere Gerät fragt danach.
 - Lädt ein Gerät neu oder verliert es das Netz, wartet das Spiel und geht dort weiter, wo es war, sobald es zurück ist (bis zu einem Tag lang).
 - Die Züge gehen direkt zwischen den beiden Geräten im selben Netz oder versiegelt über das orOS-Relay; online wird nichts gespeichert.
 
-Grenzen: nur zwei Spieler, jeder auf seinem eigenen Gerät mit orOS in diesem Spiel offen. Spiele auf zwei Geräten zählen nicht für deine Rekorde, und die Stufen-Tasten sind solange ausgeblendet. `Spiel verlassen` beendet es auf beiden Geräten und holt das Spiel zurück, das du auf diesem Gerät hattest.
+Grenzen: nur zwei Spieler, jeder auf seinem eigenen Gerät mit orOS in diesem Spiel offen. Spiele auf zwei Geräten zählen nicht für deine Rekorde, und die Stufen-Tasten sind solange ausgeblendet. `Leave the game` beendet es auf beiden Geräten und holt das Spiel zurück, das du auf diesem Gerät hattest.
 
 ## Synchronisierung
 Deine Rekorde werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert, und die Matches aller Geräte werden zusammengezählt; `Rekorde zurücksetzen` löscht sie überall. Das laufende Match, deine Stufe und Regeln und die Ton-Einstellung bleiben auf diesem Gerät.
