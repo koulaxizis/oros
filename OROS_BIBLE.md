@@ -7674,3 +7674,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Invoices, CRM, Timesheet and Stock are now in German: packs in `i18n/de/`, inline texts moved into {en, el} tables, and each `index.html` loads `../i18n.js` before its own scripts; English still fills any missing line.
 - Files: `i18n/de/**`, `invoices/`, `crm/`, `timesheet/`, `stock/` (index.html + scripts), `.github/i18n/inline-baseline.json`, `i18n/apps.json`.
   - Tests: full suite green; Chromium 360 de / el. Not tested: a German native reader's review, Safari, phones.
+
+### 2026-10-17 — Languages L4b: Certificates, Email Signature, Newsletter and Mail in German (#511) — 3.09.00
+- Certificates, Email Signature, Newsletter and Mail are now in German: packs in `i18n/de/`, inline texts moved into {en, el} tables (also the shell-loaded `mail/{notify,compose}.js`, `newsletter/{core,render,runner}.js` and the Certificates verify page), and each `index.html` loads `../i18n.js` before its own scripts; English still fills any missing line.
+- Files: `i18n/de/**`, `certificates/`, `signature/`, `newsletter/`, `mail/` (index.html + scripts), `.github/i18n/inline-baseline.json`, `i18n/apps.json`.
+  - Tests: full suite green; Chromium 360 de / el / en. Not tested: a German native reader's review, live Mail and Newsletter sending, Safari, phones.
