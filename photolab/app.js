@@ -40,20 +40,26 @@
   var SAVE_MS = 1500;
 
   // ---------- i18n ----------
+  // orosI18n (../i18n.js): the full language code, a pack language included.
   function appLang() {
+    if (window.orosI18n) return window.orosI18n.lang();
     try {
       var l = localStorage.getItem("oros-lang") || (window.parent && window.parent.orosLang) || "en";
       return l === "el" ? "el" : "en";
     } catch (e) { return "en"; }
   }
   PL.LANG = appLang();
+  PL.LOC = window.orosI18n ? window.orosI18n.locale(PL.LANG) : (PL.LANG === "el" ? "el-GR" : "en-GB");
+  // "el" or "en", for shared modules that pick between two inline tables.
+  PL.BASE = PL.LANG === "el" ? "el" : "en";
+  if (window.orosI18n) window.orosI18n.table(window.PL_STRINGS, "photolab", PL.LANG);
   PL.t = function (key, params) {
     var S = window.PL_STRINGS, p = S[PL.LANG] || S.en;
     var s = p[key] !== undefined ? p[key] : (S.en[key] !== undefined ? S.en[key] : key);
     if (params) Object.keys(params).forEach(function (k) { s = s.split("{" + k + "}").join(String(params[k])); });
     return s;
   };
-  PL.num = function (n) { try { return n.toLocaleString(PL.LANG === "el" ? "el-GR" : "en-GB"); } catch (e) { return String(n); } };
+  PL.num = function (n) { try { return n.toLocaleString(PL.LOC); } catch (e) { return String(n); } };
 
   // ---------- DOM helpers ----------
   PL.$ = function (id) { return document.getElementById(id); };
@@ -352,9 +358,15 @@
     }, (raw.surface ? [L.id] : []).concat(L.mk ? [L.mk.id] : []));
     return L;
   };
+  // The UI name of a list item { id, en, el? } (blend modes, size
+  // presets, looks, shapes): the table's "<kind>.<id>", else its own en.
+  PL.listName = function (kind, item) {
+    var k = kind + "." + item.id, S = window.PL_STRINGS;
+    return S.en[k] !== undefined ? PL.t(k) : (item[PL.BASE] || item.en);
+  };
   PL.shapeName = function (id) {
     var list = PL.FX.SHAPES;
-    for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i][PL.LANG] || list[i].en;
+    for (var i = 0; i < list.length; i++) if (list[i].id === id) return PL.listName("shape", list[i]);
     return PL.t("layer.shape");
   };
   // Crop the canvas to r (doc px). Layers keep their pixels outside

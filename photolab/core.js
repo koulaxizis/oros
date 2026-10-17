@@ -64,35 +64,35 @@
   // Canvas 2D globalCompositeOperation names: native, so the screen
   // and the export blend the same way.
   var BLENDS = [
-    { id: "normal",      op: "source-over", en: "Normal",      el: "Κανονική" },
-    { id: "multiply",    op: "multiply",    en: "Multiply",    el: "Πολλαπλασιασμός" },
-    { id: "screen",      op: "screen",      en: "Screen",      el: "Οθόνη" },
-    { id: "overlay",     op: "overlay",     en: "Overlay",     el: "Επικάλυψη" },
-    { id: "darken",      op: "darken",      en: "Darken",      el: "Σκούρυνση" },
-    { id: "lighten",     op: "lighten",     en: "Lighten",     el: "Φωτισμός" },
-    { id: "dodge",       op: "color-dodge", en: "Color dodge", el: "Αποφυγή χρώματος" },
-    { id: "burn",        op: "color-burn",  en: "Color burn",  el: "Κάψιμο χρώματος" },
-    { id: "hard",        op: "hard-light",  en: "Hard light",  el: "Σκληρό φως" },
-    { id: "soft",        op: "soft-light",  en: "Soft light",  el: "Απαλό φως" },
-    { id: "difference",  op: "difference",  en: "Difference",  el: "Διαφορά" },
-    { id: "exclusion",   op: "exclusion",   en: "Exclusion",   el: "Αποκλεισμός" },
-    { id: "hue",         op: "hue",         en: "Hue",         el: "Απόχρωση" },
-    { id: "saturation",  op: "saturation",  en: "Saturation",  el: "Κορεσμός" },
-    { id: "color",       op: "color",       en: "Color",       el: "Χρώμα" },
-    { id: "luminosity",  op: "luminosity",  en: "Luminosity",  el: "Φωτεινότητα" }
+    { id: "normal",      op: "source-over", en: "Normal" },
+    { id: "multiply",    op: "multiply",    en: "Multiply" },
+    { id: "screen",      op: "screen",      en: "Screen" },
+    { id: "overlay",     op: "overlay",     en: "Overlay" },
+    { id: "darken",      op: "darken",      en: "Darken" },
+    { id: "lighten",     op: "lighten",     en: "Lighten" },
+    { id: "dodge",       op: "color-dodge", en: "Color dodge" },
+    { id: "burn",        op: "color-burn",  en: "Color burn" },
+    { id: "hard",        op: "hard-light",  en: "Hard light" },
+    { id: "soft",        op: "soft-light",  en: "Soft light" },
+    { id: "difference",  op: "difference",  en: "Difference" },
+    { id: "exclusion",   op: "exclusion",   en: "Exclusion" },
+    { id: "hue",         op: "hue",         en: "Hue" },
+    { id: "saturation",  op: "saturation",  en: "Saturation" },
+    { id: "color",       op: "color",       en: "Color" },
+    { id: "luminosity",  op: "luminosity",  en: "Luminosity" }
   ];
   var BLEND_IDS = BLENDS.map(function (b) { return b.id; });
 
   // New-document presets (px). "dpi" only changes the name shown.
   var PRESETS = [
-    { id: "hd",      w: 1920, h: 1080, en: "Full HD 1920 × 1080",       el: "Full HD 1920 × 1080" },
-    { id: "square",  w: 1080, h: 1080, en: "Square post 1080 × 1080",   el: "Τετράγωνη ανάρτηση 1080 × 1080" },
-    { id: "story",   w: 1080, h: 1920, en: "Story 1080 × 1920",         el: "Story 1080 × 1920" },
-    { id: "phone",   w: 1440, h: 3120, en: "Phone wallpaper 1440 × 3120", el: "Ταπετσαρία κινητού 1440 × 3120" },
-    { id: "a4",      w: 2480, h: 3508, en: "A4 at 300 dpi",             el: "A4 στα 300 dpi" },
-    { id: "a5",      w: 1748, h: 2480, en: "A5 at 300 dpi",             el: "A5 στα 300 dpi" },
-    { id: "web",     w: 1200, h: 630,  en: "Web banner 1200 × 630",     el: "Banner ιστού 1200 × 630" },
-    { id: "icon",    w: 512,  h: 512,  en: "Icon 512 × 512",            el: "Εικονίδιο 512 × 512" }
+    { id: "hd",      w: 1920, h: 1080, en: "Full HD 1920 × 1080" },
+    { id: "square",  w: 1080, h: 1080, en: "Square post 1080 × 1080" },
+    { id: "story",   w: 1080, h: 1920, en: "Story 1080 × 1920" },
+    { id: "phone",   w: 1440, h: 3120, en: "Phone wallpaper 1440 × 3120" },
+    { id: "a4",      w: 2480, h: 3508, en: "A4 at 300 dpi" },
+    { id: "a5",      w: 1748, h: 2480, en: "A5 at 300 dpi" },
+    { id: "web",     w: 1200, h: 630,  en: "Web banner 1200 × 630" },
+    { id: "icon",    w: 512,  h: 512,  en: "Icon 512 × 512" }
   ];
 
   function isInt(v) { return typeof v === "number" && isFinite(v) && Math.floor(v) === v; }
