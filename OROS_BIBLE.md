@@ -7458,3 +7458,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - WebDAV W3 (relay): /dav passes WebDAV requests to the user's own server when it sends no CORS headers (opt-in on the client, next PR).
 - Files: `relay/dav.js` (new), `relay/core.js`, `relay/README.md`, `tests/dav-relay.test.js`, Bible. Mail thread (relay owner) OK at 06cfaea.
   - Tests: full suite green; real workerd (wrangler dev) against WsgiDAV. Not tested: a real Nextcloud / Synology through the deployed relay.
+
+### 2026-10-17 — Quality gate Q3: accessibility baseline + size budget (#478) — CI only, no APP_VERSION
+- Quality gate Q3: CI checks accessibility with axe-core (critical/serious, 92 known) and a size budget (precache +10 %, each app's first open +20 %). A stamp that adds precache files must stay under budget, or raise `budget.json` in the same PR.
+- Files: `.github/qa/**`, `.github/workflows/quality.yml`, `tests/quality-gate.test.js`, Bible §G.
+  - Tests: full suite green; quality.yml green on GitHub. Nothing shipped to users.
