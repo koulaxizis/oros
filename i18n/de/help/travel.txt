@@ -1,0 +1,93 @@
+# Reisen
+Reisen hält jede Reise an einem Ort: Daten und Reisende, eine Packliste, die sich der Reisedauer anpasst, einen Reiseplan Tag für Tag mit deinen Buchungen und Tickets, eine Karte der Orte, ein Budget, ein Tagebuch und deine Notizen.
+
+## Erste Schritte
+Tippe oder klicke auf `Neue Reise`. Fülle `Name`, `Reiseziel`, die Daten (`Von`, `Bis`) und `Reisende (durch Komma getrennt)` aus. Unter `Packliste beginnen mit` hakst du die Vorlagen an, die du willst; `Das Wichtigste` und `Vor der Abreise` sind schon angehakt. Tippe auf `Erstellen`.
+
+Die Reiseliste ordnet deine Reisen in `Gerade unterwegs`, `Demnächst`, `Noch ohne Datum` und `Vergangene Reisen`, jeweils mit Countdown und wie viel schon gepackt ist. `Zurück` (oder [[Esc]]) bringt dich zur Liste.
+
+## Packen
+Tippe in `Sache hinzufügen…` und drücke [[Enter]]. Hake Sachen ab, sobald sie im Koffer sind. Tippe oder klicke auf eine Sache, um `Menge`, `Gruppe`, `Wer nimmt es mit` und `Notiz` zu ändern oder sie zu löschen (mit `Rückgängig`).
+
+Mengen können der Reise folgen: Wähle `Pro Tag` oder `1 alle N Tage` statt `Fest`, dann ändert sich die Zahl mit den Reisedaten.
+
+- `Noch zu packen` blendet aus, was schon gepackt ist.
+- `Sachen zeigen von` filtert nach Reisenden.
+- `Aus einer Vorlage` fügt die Sachen einer Vorlage hinzu; nur Fehlendes kommt dazu.
+- `Alle Häkchen entfernen` löscht jedes Häkchen, praktisch für die Heimreise.
+
+## Reiseplan
+`Zum Reiseplan hinzufügen` fügt `Flug`, `Zug`, `Bus`, `Fähre`, `Auto`, `Mietwagen`, `Unterkunft`, `Aktivität`, `Ticket`, `Essen` oder `Sonstiges` hinzu, mit Tag, Uhrzeiten, Orten und `Buchungscode`. Einträge sind nach Tagen gruppiert. Eine `Unterkunft` erscheint in jeder Nacht, die sie abdeckt, und Nächte ohne Unterkunft werden markiert. Orte haben `In Karten öffnen`, das sie in [Karten](app:maps) öffnet.
+
+`Notizen` ist freier Text für Adressen, Telefonnummern oder das WLAN-Passwort. Auf einem breiten Bildschirm stehen Packliste und Reiseplan nebeneinander.
+
+## Buchungen und Tickets
+Ein Eintrag kann auch den `Anbieter`, die `Flug- oder Zugnummer`, den `Preis` mit seiner `Währung` und die Buchung selbst enthalten. Ein `Mietwagen` hat Tage und Uhrzeiten für `Abholung` und `Rückgabe` sowie den `Abholort`.
+
+Unter `Tickets und Dokumente` hält `PDF oder Foto anhängen` eine Bordkarte, einen Hotelgutschein oder den QR-Code eines Tickets beim Eintrag, bis zu 10 pro Eintrag. Dateien liegen auf dem orOS-Speicher, in [Dateien](app:files) im Ordner `Travel`. Nur echte PDF-Dateien und Fotos werden angenommen (höchstens 20 MB); Fotos werden ohne versteckte Angaben wie den Standort neu gespeichert. Tippe auf ein Vorschaubild, um es zu `Öffnen` oder eine `Kopie speichern`. Der Reiseplan zeigt eine Büroklammer mit der Anzahl der Dateien, und der `.ics`-Export listet sie auf.
+
+## Buchung aus einer E-Mail importieren
+Buchungs-E-Mails von Airlines, Hotels, Bahn, Mietwagen- und Ticketseiten enthalten die Buchung meist in einer Form, die Apps lesen können (schema.org). Es gibt zwei Wege:
+
+- Öffne in [Mail](app:mail) die E-Mail, dann `Andere Apps` › `Buchung zu Reisen`. Das erscheint nur, wenn die E-Mail Buchungsdaten hat.
+- Im Reiseplan `Buchung importieren`: `E-Mail-Datei öffnen` (.eml oder .html) oder die E-Mail unter `Oder die E-Mail einfügen (HTML)` einfügen, dann `Lesen`.
+
+Reisen listet auf, was es gefunden hat: Flüge (eine Zeile pro Teilstrecke), Unterkünfte, Züge, Busse, Fähren, Mietwagen, Tickets und Restaurantreservierungen, mit Uhrzeiten, Orten, Buchungscode und Preis. Wähle die Reise unter `Zur Reise hinzufügen` (oder `Eine neue Reise`), entferne die Häkchen bei allem, was du nicht willst, und tippe auf `Hinzufügen`. Zeilen mit `Schon im Reiseplan` sind nicht angehakt, ebenso `Storniert`; `außerhalb der Reisedaten` ist nur ein Hinweis. Die E-Mail wird nur gelesen: Nichts darin wird ausgeführt, und nichts wird hinzugefügt, bis du auf `Hinzufügen` tippst.
+
+## Karte
+`Karte` zeigt die Orte der Reise auf einer Karte, eine Farbe pro Tag, mit nummerierten Stopps, verbunden in der Reihenfolge des Tages. Wähle `Alle Tage` oder einen Tag.
+
+`Auf der Karte finden` sucht die Orte, die noch keinen Punkt haben (Titel, Adressen, Flughäfen und Bahnhöfe), auf OpenStreetMap, mit derselben Suche wie [Karten](app:maps). Es läuft nur, wenn du darauf tippst, braucht eine Verbindung, und die Punkte werden mit der Reise gespeichert, sodass die Karte danach offline funktioniert (bis auf die Kartenkacheln). Der Dialog eines Eintrags zeigt `Auf der Karte` mit seinem Punkt; ändere den Ort oder tippe auf `Punkt entfernen`, um ihn neu zu suchen.
+
+- `Als Track in Karten speichern` schickt den Tag (oder die ganze Reise) an Karten, das ihn zu `Meine Tracks` hinzufügt.
+- `GPX exportieren` speichert die Orte als GPX-Datei für jede Karten-App. Das Menü `Mehr` der Reise hat auch `Reiseplan exportieren (GPX)`.
+
+## Budget und Kosten teilen
+`Budget` vergleicht, was du geplant hast, mit dem, was du ausgegeben hast, pro Kategorie (`Transport`, `Unterkunft`, `Essen & Trinken`, `Aktivitäten & Tickets`, `Einkäufe`, `Sonstiges`), in der Währung der Reise. `Budget festlegen` trägt die geplanten Beträge ein. `Ausgabe hinzufügen` hält fest, was du ausgibst, mit Kategorie, Tag und wer bezahlt hat. Buchungen mit Preis zählen auch, unter ihrer Kategorie. Du siehst, was übrig ist (oder drüber), die Summe und den Betrag pro Person.
+
+`Mit „Kosten teilen“ aufteilen` (auch im Menü `Mehr` der Reise) öffnet [Kosten teilen](app:split) mit einer neuen Gruppe, die nach der Reise benannt ist, mit ihrer Währung und ihren Reisenden. In Kosten teilen wird nichts gespeichert, bis du dort auf `Speichern` tippst.
+
+## Tagebuch
+`Tagebuch` ist eine Zeitleiste der Reise, eine Karte pro Tag, mit dem, was für diesen Tag geplant war. `Schreiben` fügt den Text des Tages hinzu, `Fotos` (bis zu 24) und einen `Track aus Karten`, der als kleine Skizze mit `In Karten zeigen` erscheint. `Nur Tage mit Einträgen` blendet die leeren Tage aus. `Tag leeren` leert ihn.
+
+## Vorlagen
+`Vorlagen` listet 10 fertige (`Das Wichtigste`, `Strand`, `Städtetrip`, `Geschäftsreise`, `Wandern & Camping`, `Ski`, `Mit Baby`, `Nur Handgepäck`, `Roadtrip`, `Vor der Abreise`) und `Meine Vorlagen`. Du kannst eine fertige Vorlage bearbeiten oder ausblenden; `Fertige Vorlagen wiederherstellen` bringt sie zurück, wie sie waren. `Neue Vorlage` erstellt deine eigene, oder nutze `Als Vorlage speichern` in einer Reise.
+
+## Vorhersage, Erinnerungen und Spritkosten
+- Ab 7 Tagen vor einer Reise zeigt die Reiseseite die `Vorhersage für` dein Reiseziel, Tag für Tag. Wenn Regen wahrscheinlich ist, fragt orOS `Regenschirm einpacken?`; `Hinzufügen` setzt `Regenschirm` auf die Packliste. Die Vorhersage kommt von Open-Meteo und bleibt 3 Stunden auf diesem Gerät.
+- orOS erinnert dich am Abend vor der Abreise (ab 18:00), 3 Stunden vor einem Flug und 1 Stunde vor einem Zug, Bus oder einer Fähre. Die Erinnerung öffnet die Reise. `Mehr` in der Reiseliste hat `Erinnerungen ausschalten` und `Erinnerungen einschalten`, nur für dieses Gerät. Siehe auch [Benachrichtigungen](help:t/notifications).
+- `Spritkosten mit dem Auto` im Menü `Mehr` einer Reise rechnet die Kosten einer Autofahrt aus: Gib `Strecke einfach (km)` ein, hake `Hin und zurück` an, wenn du das brauchst, und dazu Verbrauch und Preis (pro Liter oder pro kWh für ein Elektroauto). Wenn du Tankfüllungen in [Garage](app:garage) einträgst, wähle das Auto unter `Fahrzeug (aus Garage)`, dann werden Verbrauch und letzter Preis ausgefüllt. Du siehst die Summe und die Kosten pro Person; `Zu den Notizen` speichert sie in den Reisenotizen.
+- Reiseplan-Tage zeigen auch die Vorhersage aus [Wetter](app:weather) (Symbol und Höchst- / Tiefstwert), wenn eine in Wetter gespeicherte Stadt in der Nähe der Reise liegt und ihre Vorhersage aktuell ist. Dafür wird nichts heruntergeladen.
+- Reisen erscheinen auch in [Kalender](app:calendar) unter dem Chip `Reisen`: jeder Reisetag und jeder Reiseplan-Eintrag mit Uhrzeit. Tippst du auf einen, öffnet sich die Reise hier.
+
+## Teilen und exportieren
+Das Menü `Mehr` einer Reise hat `Reise bearbeiten`, `Als Text kopieren` (`Als Text teilen` auf dem Handy), `Für einen Kalender exportieren (.ics)`, `Reiseplan exportieren (GPX)`, `Mit „Kosten teilen“ aufteilen`, `Spritkosten mit dem Auto`, `Drucken`, `Reise kopieren` (mit neuen Daten, nichts gepackt) und `Reise löschen`. Der `.ics`-Export und der Text enthalten Anbieter, Nummer, Buchungscode und Preis.
+
+Im selben Menü gibt es `„Vor der Abreise“ an Aufgaben senden` und `„Noch zu packen“ an Aufgaben senden`: Die offenen Sachen werden eine neue Liste in [Aufgaben](app:todo), das sie dir zeigt, bevor etwas hinzugefügt wird. Es ist eine Kopie, Abhaken in Aufgaben ändert die Reise also nicht.
+
+In der Reiseliste hat `Mehr` die Punkte `Alles exportieren (JSON)` und `Importieren (orOS-Datei oder JSON)`. Ein JSON-Import wird mit deinen Reisen zusammengeführt und überschreibt nichts.
+
+Das Menü `Mehr` einer Reise hat auch `orOS-Datei (.orostrip)`: die ganze Reise in einer Datei, mit Packliste, Reiseplan, Budget, Ausgaben, Tagebuch, Notizen, angehängten Tickets und Tagebuchfotos. Es ist eine ZIP-Datei: Darin ist `preview/trip.md` die Reise als lesbarer Text, `trip.ics` ihre Daten für jeden Kalender und `places.gpx` ihre Kartenpunkte. Öffne sie mit `Importieren (orOS-Datei oder JSON)` oder über `Öffnen mit` › orOS im System; sie kommt immer als neue Reise herein (`Rückgängig` in der Meldung entfernt sie). `Entpackter orOS-Ordner…` im selben Menü öffnet so eine Datei, nachdem sie entpackt wurde, zum Beispiel um ein Foto auszutauschen.
+
+`Aus Polarsteps oder TripIt importieren` (auch in diesem Menü) holt Reisen aus diesen Apps und zeigt zuerst, was es gefunden hat: pro Reise die Einträge und Tagebuchtage, die dazukommen, und was schon da ist. Nichts, was du schon hast, ändert sich, ein erneuter Import derselben Datei fügt nur Fehlendes hinzu, und `Rückgängig` in der Meldung direkt danach entfernt den ganzen Import.
+- Polarsteps: Fordere in den Kontoeinstellungen der App deine Daten an („Download my data“) und wähle die .zip-Datei, die du per E-Mail bekommst. Jeder Step wird ein Reiseplan-Eintrag mit seinem Ort auf der Karte, und die Step-Texte kommen ins Tagebuch. Fotos und die aufgezeichnete Route werden nicht importiert.
+- TripIt: Öffne in den Einstellungen von TripIt den Kalender-Feed und speichere ihn als .ics-Datei (oder exportiere eine Reise in einen Kalender). Das Ereignis für die ganze Reise wird zur Reise; Flüge, Hotels (Check-in bis Check-out), Züge, Mietwagen und Restaurants werden Einträge, alles andere ein Eintrag `Sonstiges` mit seinem Text als Notiz. Zeiten in UTC erscheinen in der Zeitzone dieses Geräts.
+
+## Synchronisierung und Sicherung
+Reisen, Packlisten, Reisepläne, Kartenpunkte, Budgets, Ausgaben, Tagebuchtexte und deine Vorlagen werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. Ein Häkchen auf dem Handy und eine Änderung am Computer bleiben beide erhalten. Angehängte Dateien und Tagebuchfotos liegen auf dem orOS-Speicher und kommen über Vault Drive auf deine anderen Geräte; bis dahin zeigen sie `Noch nicht auf diesem Gerät`. Die offene Reise, der Tab, der Kartentag und die Filter bleiben auf jedem Gerät. Neben dem JSON-Export hält die orOS-[Sicherung](help:t/backup) eine Kopie.
+
+## Tastenkürzel
+- [[Enter]] in `Sache hinzufügen…`: die Sache hinzufügen.
+- [[Esc]]: zurück zur Reiseliste oder ein Menü schließen.
+
+## Tipps
+- Vor einer regelmäßigen Reise nutzt du `Reise kopieren` bei der vom letzten Jahr: Die Liste bleibt, und der Reiseplan wandert zu den neuen Daten.
+- Speichere deine eigene Lieblings-Packliste einmal als Vorlage und beginne jede Reise damit.
+
+## Grenzen
+- Bis zu 200 Reisen und 60 Vorlagen; pro Reise bis zu 300 angehängte Dateien (10 pro Eintrag, 24 Fotos pro Tagebuchtag) und 1.000 Ausgaben.
+- Erinnerungen erscheinen nur, solange orOS auf dem Gerät geöffnet ist. Nutze den `.ics`-Export, um eine Reise in eine andere Kalender-App zu übernehmen.
+- Die Vorhersage braucht eine Verbindung und ein Reiseziel, das Open-Meteo findet.
+- Der Import liest nur E-Mails mit Buchungsdaten (schema.org). Bestätigungen als reiner Text, PDFs und die Anhänge der E-Mail werden nicht gelesen; trag sie von Hand ein und hänge das PDF an.
+- Die Ortssuche auf der Karte braucht eine Verbindung und kann Orte verfehlen, die OpenStreetMap nicht kennt; die Linien auf der Karte sind gerade Linien zwischen den Stopps, keine Straßenrouten.
+- Das Budget rechnet keine Währungen um: Beträge in anderen Währungen werden getrennt angezeigt.

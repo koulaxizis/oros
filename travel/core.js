@@ -53,8 +53,16 @@
       packed: "η βαλίτσα είναι έτοιμη", at: "{what} στις {time}", ref: "κράτηση {ref}"
     }
   };
+  // Any language code: English and Greek inline, a pack language
+  // through orosI18n (the "travel" pack, when the page loaded it;
+  // else English).
+  function strs(lang) {
+    if (STR[lang]) return STR[lang];
+    if (typeof lang === "string" && root && root.orosI18n) return root.orosI18n.table(STR, "travel", lang);
+    return STR.en;
+  }
   function s(lang, key, params) {
-    var v = (STR[lang === "el" ? "el" : "en"])[key];
+    var v = strs(lang)[key];
     if (params) Object.keys(params).forEach(function (k) { v = v.split("{" + k + "}").join(String(params[k])); });
     return v;
   }

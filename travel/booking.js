@@ -39,12 +39,18 @@
   var STR = {
     en: { seat: "Seat {v}", gate: "Gate {v}", term: "Terminal {v}", plat: "Platform {v}", coach: "Coach {v}",
           pax: "Passenger: {v}", party: "Party of {v}", tel: "Tel. {v}", drop: "Return at: {v}",
-          board: "Boarding {v}", ticket: "Ticket {v}", taxi: "Taxi", car: "Car hire", res: "Booking" },
+          board: "Boarding {v}", ticketNo: "Ticket {v}", taxi: "Taxi", carHire: "Car hire", res: "Booking" },
     el: { seat: "Θέση {v}", gate: "Πύλη {v}", term: "Τερματικός {v}", plat: "Αποβάθρα {v}", coach: "Βαγόνι {v}",
           pax: "Επιβάτης: {v}", party: "Άτομα: {v}", tel: "Τηλ. {v}", drop: "Επιστροφή στο: {v}",
-          board: "Επιβίβαση {v}", ticket: "Εισιτήριο {v}", taxi: "Ταξί", car: "Ενοικίαση αυτοκινήτου", res: "Κράτηση" }
+          board: "Επιβίβαση {v}", ticketNo: "Εισιτήριο {v}", taxi: "Ταξί", carHire: "Ενοικίαση αυτοκινήτου", res: "Κράτηση" }
   };
-  function s(lang, k, v) { return (STR[lang === "el" ? "el" : "en"][k]).replace("{v}", v); }
+  // Any language code: a pack language through orosI18n (the "travel"
+  // pack), else English. Node tests run without window.
+  function s(lang, k, v) {
+    var T = STR[lang];
+    if (!T && typeof lang === "string" && typeof window !== "undefined" && window.orosI18n) T = window.orosI18n.table(STR, "travel", lang);
+    return ((T || STR.en)[k]).replace("{v}", v);
+  }
 
   // ---------- small value helpers ----------
   function clean(v, max) {
@@ -310,7 +316,7 @@
       var company = obj(rf.rentalCompany) || obj(r.provider);
       if (company) e.prov = txt(company.name, 60);
       var car = [txt(rf.brand, 30), txt(rf.model, 30) || txt(rf.name, 60)].filter(Boolean).join(" ");
-      e.title = clean([e.prov || s(lang, "car", ""), car].filter(Boolean).join(" · "), 100);
+      e.title = clean([e.prov || s(lang, "carHire", ""), car].filter(Boolean).join(" · "), 100);
       e.place = placeText(r.pickupLocation);
       var pu = dt(r.pickupTime), dr = dt(r.dropoffTime);
       e.day = pu.day; e.t1 = pu.time; e.day2 = dr.day; e.t2 = dr.time;
@@ -341,7 +347,7 @@
       e.t2 = ee.time;
       x = seatOf(r);
       if (x.seat) e.note.push(s(lang, "seat", x.seat));
-      if (x.ticket) e.note.push(s(lang, "ticket", x.ticket));
+      if (x.ticket) e.note.push(s(lang, "ticketNo", x.ticket));
       addPax(e, r, lang);
     } else {
       e.title = txt(rf.name, 100) || s(lang, "res", "").trim();

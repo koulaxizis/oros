@@ -34,7 +34,9 @@
 (function () {
   "use strict";
 
+  // orosI18n (../i18n.js): the full language code, a pack language included.
   function appLang() {
+    if (window.orosI18n) return window.orosI18n.lang();
     try {
       var l = localStorage.getItem("oros-lang") ||
               (window.parent && window.parent.orosLang) || "en";
@@ -375,6 +377,7 @@
       "impx.none": "Δεν βρέθηκε ταξίδι Polarsteps ή TripIt σε αυτό το αρχείο", "impx.big": "Αυτό το αρχείο είναι πολύ μεγάλο για εισαγωγή"
     }
   };
+  if (typeof window !== "undefined" && window.orosI18n) window.orosI18n.table(STRINGS, "travel", LANG);
 
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;
@@ -386,7 +389,9 @@
     }
     return s;
   }
-  function locale() { return LANG === "el" ? "el-GR" : "en-GB"; }
+  function locale() {
+    return typeof window !== "undefined" && window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB");
+  }
 
   function cmpStr(x, y) { return x < y ? -1 : (x > y ? 1 : 0); }
   function isInt(v) { return typeof v === "number" && isFinite(v) && Math.floor(v) === v; }
@@ -638,89 +643,227 @@
   function emptyData() { return { ver: DATA_VER, trips: [], tpls: [], tombs: {} }; }
 
   // ----- Ready templates (R15 bilingual, R16 fixed ids; never stored until changed) -----
-  // item: [en, el, group, qty, rule mode, rule n]
+  // Names in SEED_STR (the "travel" pack has them for other languages).
+  // template: { en: English name, el: its SEED_STR key, items } (Greek and
+  // pack languages read the name there; the English stays for the tests)
+  // item: [English name, SEED_STR key, group, qty, rule mode, rule n]
+  var SEED_STR = {
+    en: {
+      "seed.t.basic": "Essentials", "seed.underwear": "Underwear", "seed.socks": "Socks", "seed.tshirts": "T-shirts",
+      "seed.trousers": "Trousers", "seed.sleepwear": "Sleepwear",
+      "seed.sweaterorlightjacket": "Sweater or light jacket", "seed.comfortableshoes": "Comfortable shoes",
+      "seed.toothbrushandtoothpaste": "Toothbrush and toothpaste", "seed.deodorant": "Deodorant",
+      "seed.shampooandshowergel": "Shampoo and shower gel", "seed.comborhairbrush": "Comb or hairbrush",
+      "seed.mymedicines": "My medicines", "seed.painkillers": "Painkillers", "seed.phonecharger": "Phone charger",
+      "seed.powerbank": "Power bank", "seed.headphones": "Headphones", "seed.idcardorpassport": "ID card or passport",
+      "seed.walletandcards": "Wallet and cards", "seed.somecash": "Some cash",
+      "seed.ticketsandbookings": "Tickets and bookings", "seed.housekeys": "House keys",
+      "seed.sunglasses": "Sunglasses", "seed.waterbottle": "Water bottle", "seed.t.beach": "Beach",
+      "seed.swimsuit": "Swimsuit", "seed.shorts": "Shorts", "seed.flipflops": "Flip-flops", "seed.sunhat": "Sun hat",
+      "seed.sunscreen": "Sunscreen", "seed.aftersun": "After-sun", "seed.insectrepellent": "Insect repellent",
+      "seed.beachtowel": "Beach towel", "seed.beachbag": "Beach bag", "seed.maskandsnorkel": "Mask and snorkel",
+      "seed.waterproofphonepouch": "Waterproof phone pouch", "seed.abook": "A book", "seed.t.city": "City break",
+      "seed.walkingshoes": "Walking shoes", "seed.outfitforanightout": "Outfit for a night out",
+      "seed.daybackpack": "Day backpack", "seed.compactumbrella": "Compact umbrella",
+      "seed.traveladapter": "Travel adapter", "seed.camera": "Camera",
+      "seed.museumandtransportpasses": "Museum and transport passes", "seed.t.business": "Business",
+      "seed.suitorsmartoutfit": "Suit or smart outfit", "seed.shirts": "Shirts", "seed.formalshoes": "Formal shoes",
+      "seed.belt": "Belt", "seed.laptopandcharger": "Laptop and charger",
+      "seed.presentationadapterhdmiusbc": "Presentation adapter (HDMI / USB-C)", "seed.businesscards": "Business cards",
+      "seed.notebookandpen": "Notebook and pen", "seed.t.hiking": "Hiking & camping",
+      "seed.hikingboots": "Hiking boots", "seed.rainjacket": "Rain jacket", "seed.fleece": "Fleece",
+      "seed.quickdryshirts": "Quick-dry shirts", "seed.hikingsocks": "Hiking socks", "seed.backpack": "Backpack",
+      "seed.tent": "Tent", "seed.sleepingbag": "Sleeping bag", "seed.sleepingmat": "Sleeping mat",
+      "seed.headlamp": "Headlamp", "seed.mapandcompass": "Map and compass", "seed.pocketknife": "Pocket knife",
+      "seed.rubbishbags": "Rubbish bags", "seed.firstaidkit": "First aid kit", "seed.waterlitres": "Water (litres)",
+      "seed.energysnacks": "Energy snacks", "seed.t.ski": "Ski", "seed.skijacket": "Ski jacket",
+      "seed.skitrousers": "Ski trousers", "seed.thermalbaselayers": "Thermal base layers", "seed.skisocks": "Ski socks",
+      "seed.gloves": "Gloves", "seed.beanie": "Beanie", "seed.neckwarmer": "Neck warmer", "seed.goggles": "Goggles",
+      "seed.helmet": "Helmet", "seed.handwarmers": "Hand warmers", "seed.lipbalm": "Lip balm",
+      "seed.skipass": "Ski pass", "seed.t.baby": "With a baby", "seed.diapers": "Diapers",
+      "seed.wipespacks": "Wipes (packs)", "seed.bodysuits": "Bodysuits", "seed.babysleepwear": "Baby sleepwear",
+      "seed.bibs": "Bibs", "seed.bottles": "Bottles", "seed.formulaorbabyfood": "Formula or baby food",
+      "seed.pacifier": "Pacifier", "seed.changingmat": "Changing mat", "seed.favouritetoy": "Favourite toy",
+      "seed.stroller": "Stroller", "seed.babycarrier": "Baby carrier", "seed.carseat": "Car seat",
+      "seed.thermometer": "Thermometer", "seed.babyfevermedicine": "Baby fever medicine",
+      "seed.babysunscreen": "Baby sunscreen", "seed.t.carryon": "Carry-on only",
+      "seed.liquidsbag100mlbottles": "Liquids bag (100 ml bottles)",
+      "seed.travelsizetoiletries": "Travel-size toiletries", "seed.neckpillow": "Neck pillow",
+      "seed.earplugsandeyemask": "Earplugs and eye mask", "seed.boardingpass": "Boarding pass",
+      "seed.penforforms": "Pen (for forms)", "seed.snacksforthetrip": "Snacks for the trip", "seed.t.road": "Road trip",
+      "seed.drivinglicence": "Driving licence", "seed.cardocumentsandinsurance": "Car documents and insurance",
+      "seed.cashfortolls": "Cash for tolls", "seed.phoneholder": "Phone holder", "seed.carcharger": "Car charger",
+      "seed.reflectivevestandwarningtriangle": "Reflective vest and warning triangle",
+      "seed.motionsicknesstablets": "Motion sickness tablets", "seed.waterandsnacks": "Water and snacks",
+      "seed.t.before": "Before I leave", "seed.onlinecheckin": "Online check-in",
+      "seed.downloadofflinemapsandtickets": "Download offline maps and tickets",
+      "seed.chargephoneandpowerbank": "Charge phone and power bank", "seed.watertheplants": "Water the plants",
+      "seed.arrangecareforpets": "Arrange care for pets", "seed.emptythefridge": "Empty the fridge",
+      "seed.takeouttherubbish": "Take out the rubbish", "seed.unplugappliances": "Unplug appliances",
+      "seed.turnoffthewater": "Turn off the water", "seed.lockwindowsanddoors": "Lock windows and doors",
+      "seed.setanoutofofficereply": "Set an out-of-office reply"
+    },
+    el: {
+      "seed.t.basic": "Τα βασικά", "seed.underwear": "Εσώρουχα", "seed.socks": "Κάλτσες", "seed.tshirts": "Μπλουζάκια",
+      "seed.trousers": "Παντελόνια", "seed.sleepwear": "Πιτζάμες",
+      "seed.sweaterorlightjacket": "Ζακέτα ή ελαφρύ μπουφάν", "seed.comfortableshoes": "Άνετα παπούτσια",
+      "seed.toothbrushandtoothpaste": "Οδοντόβουρτσα και οδοντόκρεμα", "seed.deodorant": "Αποσμητικό",
+      "seed.shampooandshowergel": "Σαμπουάν και αφρόλουτρο", "seed.comborhairbrush": "Χτένα ή βούρτσα",
+      "seed.mymedicines": "Τα φάρμακά μου", "seed.painkillers": "Παυσίπονα", "seed.phonecharger": "Φορτιστής κινητού",
+      "seed.powerbank": "Powerbank", "seed.headphones": "Ακουστικά", "seed.idcardorpassport": "Ταυτότητα ή διαβατήριο",
+      "seed.walletandcards": "Πορτοφόλι και κάρτες", "seed.somecash": "Λίγα μετρητά",
+      "seed.ticketsandbookings": "Εισιτήρια και κρατήσεις", "seed.housekeys": "Κλειδιά του σπιτιού",
+      "seed.sunglasses": "Γυαλιά ηλίου", "seed.waterbottle": "Παγούρι", "seed.t.beach": "Παραλία",
+      "seed.swimsuit": "Μαγιό", "seed.shorts": "Σορτσάκια", "seed.flipflops": "Σαγιονάρες", "seed.sunhat": "Καπέλο",
+      "seed.sunscreen": "Αντηλιακό", "seed.aftersun": "Ενυδατική για μετά τον ήλιο",
+      "seed.insectrepellent": "Εντομοαπωθητικό", "seed.beachtowel": "Πετσέτα θαλάσσης",
+      "seed.beachbag": "Τσάντα θαλάσσης", "seed.maskandsnorkel": "Μάσκα και αναπνευστήρας",
+      "seed.waterproofphonepouch": "Αδιάβροχη θήκη κινητού", "seed.abook": "Ένα βιβλίο", "seed.t.city": "City break",
+      "seed.walkingshoes": "Παπούτσια για περπάτημα", "seed.outfitforanightout": "Ρούχα για έξοδο",
+      "seed.daybackpack": "Σακίδιο ημέρας", "seed.compactumbrella": "Μικρή ομπρέλα",
+      "seed.traveladapter": "Αντάπτορας πρίζας", "seed.camera": "Φωτογραφική μηχανή",
+      "seed.museumandtransportpasses": "Κάρτες μουσείων και συγκοινωνιών", "seed.t.business": "Επαγγελματικό",
+      "seed.suitorsmartoutfit": "Κοστούμι ή επίσημο ντύσιμο", "seed.shirts": "Πουκάμισα",
+      "seed.formalshoes": "Επίσημα παπούτσια", "seed.belt": "Ζώνη", "seed.laptopandcharger": "Laptop και φορτιστής",
+      "seed.presentationadapterhdmiusbc": "Αντάπτορας για παρουσίαση (HDMI / USB-C)",
+      "seed.businesscards": "Επαγγελματικές κάρτες", "seed.notebookandpen": "Σημειωματάριο και στυλό",
+      "seed.t.hiking": "Πεζοπορία & κάμπινγκ", "seed.hikingboots": "Ορειβατικά παπούτσια",
+      "seed.rainjacket": "Αδιάβροχο μπουφάν", "seed.fleece": "Fleece",
+      "seed.quickdryshirts": "Μπλούζες που στεγνώνουν γρήγορα", "seed.hikingsocks": "Κάλτσες πεζοπορίας",
+      "seed.backpack": "Σακίδιο", "seed.tent": "Σκηνή", "seed.sleepingbag": "Υπνόσακος",
+      "seed.sleepingmat": "Υπόστρωμα", "seed.headlamp": "Φακός κεφαλής", "seed.mapandcompass": "Χάρτης και πυξίδα",
+      "seed.pocketknife": "Σουγιάς", "seed.rubbishbags": "Σακούλες σκουπιδιών",
+      "seed.firstaidkit": "Φαρμακείο πρώτων βοηθειών", "seed.waterlitres": "Νερό (λίτρα)",
+      "seed.energysnacks": "Σνακ ενέργειας", "seed.t.ski": "Σκι", "seed.skijacket": "Μπουφάν σκι",
+      "seed.skitrousers": "Παντελόνι σκι", "seed.thermalbaselayers": "Ισοθερμικά", "seed.skisocks": "Κάλτσες σκι",
+      "seed.gloves": "Γάντια", "seed.beanie": "Σκούφος", "seed.neckwarmer": "Περιλαίμιο", "seed.goggles": "Μάσκα σκι",
+      "seed.helmet": "Κράνος", "seed.handwarmers": "Θερμαντικά χεριών", "seed.lipbalm": "Βάλσαμο για τα χείλη",
+      "seed.skipass": "Ski pass", "seed.t.baby": "Με μωρό", "seed.diapers": "Πάνες",
+      "seed.wipespacks": "Μωρομάντηλα (πακέτα)", "seed.bodysuits": "Φορμάκια", "seed.babysleepwear": "Πιτζαμάκια",
+      "seed.bibs": "Σαλιάρες", "seed.bottles": "Μπιμπερό", "seed.formulaorbabyfood": "Γάλα ή βρεφικές τροφές",
+      "seed.pacifier": "Πιπίλα", "seed.changingmat": "Αλλαξιέρα", "seed.favouritetoy": "Το αγαπημένο παιχνίδι",
+      "seed.stroller": "Καρότσι", "seed.babycarrier": "Μάρσιπος", "seed.carseat": "Κάθισμα αυτοκινήτου",
+      "seed.thermometer": "Θερμόμετρο", "seed.babyfevermedicine": "Αντιπυρετικό για μωρά",
+      "seed.babysunscreen": "Παιδικό αντηλιακό", "seed.t.carryon": "Μόνο χειραποσκευή",
+      "seed.liquidsbag100mlbottles": "Σακουλάκι υγρών (μπουκαλάκια 100 ml)",
+      "seed.travelsizetoiletries": "Καλλυντικά σε μικρή συσκευασία", "seed.neckpillow": "Μαξιλάρι λαιμού",
+      "seed.earplugsandeyemask": "Ωτοασπίδες και μάσκα ύπνου", "seed.boardingpass": "Κάρτα επιβίβασης",
+      "seed.penforforms": "Στυλό (για έντυπα)", "seed.snacksforthetrip": "Σνακ για τη διαδρομή",
+      "seed.t.road": "Οδικό ταξίδι", "seed.drivinglicence": "Δίπλωμα οδήγησης",
+      "seed.cardocumentsandinsurance": "Άδεια κυκλοφορίας και ασφάλεια", "seed.cashfortolls": "Μετρητά για διόδια",
+      "seed.phoneholder": "Βάση κινητού", "seed.carcharger": "Φορτιστής αυτοκινήτου",
+      "seed.reflectivevestandwarningtriangle": "Γιλέκο και τρίγωνο",
+      "seed.motionsicknesstablets": "Χάπια για τη ναυτία", "seed.waterandsnacks": "Νερό και σνακ",
+      "seed.t.before": "Πριν φύγω", "seed.onlinecheckin": "Online check-in",
+      "seed.downloadofflinemapsandtickets": "Κατέβασε χάρτες και εισιτήρια για χρήση εκτός σύνδεσης",
+      "seed.chargephoneandpowerbank": "Φόρτισε κινητό και powerbank", "seed.watertheplants": "Πότισε τα φυτά",
+      "seed.arrangecareforpets": "Κανόνισε ποιος θα προσέχει τα ζώα", "seed.emptythefridge": "Άδειασε το ψυγείο",
+      "seed.takeouttherubbish": "Βγάλε τα σκουπίδια", "seed.unplugappliances": "Βγάλε τις συσκευές από την πρίζα",
+      "seed.turnoffthewater": "Κλείσε τον γενικό του νερού", "seed.lockwindowsanddoors": "Κλείδωσε πόρτες και παράθυρα",
+      "seed.setanoutofofficereply": "Βάλε αυτόματη απάντηση στο email"
+    }
+  };
+  if (typeof window !== "undefined" && window.orosI18n) window.orosI18n.table(SEED_STR, "travel", LANG);
+  function seedName(en, key) { var p = SEED_STR[LANG] || SEED_STR.en; return p[key] || en; }
   var SEEDS = {
-    "tpl-basic": { en: "Essentials", el: "Τα βασικά", items: [
-      ["Underwear", "Εσώρουχα", "clothes", 1, "day", 1], ["Socks", "Κάλτσες", "clothes", 1, "day", 1],
-      ["T-shirts", "Μπλουζάκια", "clothes", 1, "every", 2], ["Trousers", "Παντελόνια", "clothes", 1, "every", 4],
-      ["Sleepwear", "Πιτζάμες", "clothes", 1], ["Sweater or light jacket", "Ζακέτα ή ελαφρύ μπουφάν", "clothes", 1],
-      ["Comfortable shoes", "Άνετα παπούτσια", "clothes", 1],
-      ["Toothbrush and toothpaste", "Οδοντόβουρτσα και οδοντόκρεμα", "toilet", 1], ["Deodorant", "Αποσμητικό", "toilet", 1],
-      ["Shampoo and shower gel", "Σαμπουάν και αφρόλουτρο", "toilet", 1], ["Comb or hairbrush", "Χτένα ή βούρτσα", "toilet", 1],
-      ["My medicines", "Τα φάρμακά μου", "health", 1], ["Painkillers", "Παυσίπονα", "health", 1],
-      ["Phone charger", "Φορτιστής κινητού", "tech", 1], ["Power bank", "Powerbank", "tech", 1], ["Headphones", "Ακουστικά", "tech", 1],
-      ["ID card or passport", "Ταυτότητα ή διαβατήριο", "docs", 1], ["Wallet and cards", "Πορτοφόλι και κάρτες", "docs", 1],
-      ["Some cash", "Λίγα μετρητά", "docs", 1], ["Tickets and bookings", "Εισιτήρια και κρατήσεις", "docs", 1],
-      ["House keys", "Κλειδιά του σπιτιού", "misc", 1], ["Sunglasses", "Γυαλιά ηλίου", "misc", 1],
-      ["Water bottle", "Παγούρι", "misc", 1]
+    "tpl-basic": { en: "Essentials", el: "seed.t.basic", items: [
+      ["Underwear", "seed.underwear", "clothes", 1, "day", 1], ["Socks", "seed.socks", "clothes", 1, "day", 1],
+      ["T-shirts", "seed.tshirts", "clothes", 1, "every", 2], ["Trousers", "seed.trousers", "clothes", 1, "every", 4],
+      ["Sleepwear", "seed.sleepwear", "clothes", 1],
+      ["Sweater or light jacket", "seed.sweaterorlightjacket", "clothes", 1],
+      ["Comfortable shoes", "seed.comfortableshoes", "clothes", 1],
+      ["Toothbrush and toothpaste", "seed.toothbrushandtoothpaste", "toilet", 1],
+      ["Deodorant", "seed.deodorant", "toilet", 1], ["Shampoo and shower gel", "seed.shampooandshowergel", "toilet", 1],
+      ["Comb or hairbrush", "seed.comborhairbrush", "toilet", 1], ["My medicines", "seed.mymedicines", "health", 1],
+      ["Painkillers", "seed.painkillers", "health", 1], ["Phone charger", "seed.phonecharger", "tech", 1],
+      ["Power bank", "seed.powerbank", "tech", 1], ["Headphones", "seed.headphones", "tech", 1],
+      ["ID card or passport", "seed.idcardorpassport", "docs", 1],
+      ["Wallet and cards", "seed.walletandcards", "docs", 1], ["Some cash", "seed.somecash", "docs", 1],
+      ["Tickets and bookings", "seed.ticketsandbookings", "docs", 1], ["House keys", "seed.housekeys", "misc", 1],
+      ["Sunglasses", "seed.sunglasses", "misc", 1], ["Water bottle", "seed.waterbottle", "misc", 1]
     ] },
-    "tpl-beach": { en: "Beach", el: "Παραλία", items: [
-      ["Swimsuit", "Μαγιό", "clothes", 2], ["Shorts", "Σορτσάκια", "clothes", 1, "every", 3],
-      ["Flip-flops", "Σαγιονάρες", "clothes", 1], ["Sun hat", "Καπέλο", "clothes", 1],
-      ["Sunscreen", "Αντηλιακό", "toilet", 1], ["After-sun", "Ενυδατική για μετά τον ήλιο", "toilet", 1],
-      ["Insect repellent", "Εντομοαπωθητικό", "health", 1], ["Beach towel", "Πετσέτα θαλάσσης", "gear", 1],
-      ["Beach bag", "Τσάντα θαλάσσης", "gear", 1], ["Mask and snorkel", "Μάσκα και αναπνευστήρας", "gear", 1],
-      ["Waterproof phone pouch", "Αδιάβροχη θήκη κινητού", "tech", 1], ["A book", "Ένα βιβλίο", "misc", 1]
+    "tpl-beach": { en: "Beach", el: "seed.t.beach", items: [
+      ["Swimsuit", "seed.swimsuit", "clothes", 2], ["Shorts", "seed.shorts", "clothes", 1, "every", 3],
+      ["Flip-flops", "seed.flipflops", "clothes", 1], ["Sun hat", "seed.sunhat", "clothes", 1],
+      ["Sunscreen", "seed.sunscreen", "toilet", 1], ["After-sun", "seed.aftersun", "toilet", 1],
+      ["Insect repellent", "seed.insectrepellent", "health", 1], ["Beach towel", "seed.beachtowel", "gear", 1],
+      ["Beach bag", "seed.beachbag", "gear", 1], ["Mask and snorkel", "seed.maskandsnorkel", "gear", 1],
+      ["Waterproof phone pouch", "seed.waterproofphonepouch", "tech", 1], ["A book", "seed.abook", "misc", 1]
     ] },
-    "tpl-city": { en: "City break", el: "City break", items: [
-      ["Walking shoes", "Παπούτσια για περπάτημα", "clothes", 1], ["Outfit for a night out", "Ρούχα για έξοδο", "clothes", 1],
-      ["Day backpack", "Σακίδιο ημέρας", "gear", 1], ["Compact umbrella", "Μικρή ομπρέλα", "gear", 1],
-      ["Travel adapter", "Αντάπτορας πρίζας", "tech", 1], ["Camera", "Φωτογραφική μηχανή", "tech", 1],
-      ["Museum and transport passes", "Κάρτες μουσείων και συγκοινωνιών", "docs", 1]
+    "tpl-city": { en: "City break", el: "seed.t.city", items: [
+      ["Walking shoes", "seed.walkingshoes", "clothes", 1],
+      ["Outfit for a night out", "seed.outfitforanightout", "clothes", 1],
+      ["Day backpack", "seed.daybackpack", "gear", 1], ["Compact umbrella", "seed.compactumbrella", "gear", 1],
+      ["Travel adapter", "seed.traveladapter", "tech", 1], ["Camera", "seed.camera", "tech", 1],
+      ["Museum and transport passes", "seed.museumandtransportpasses", "docs", 1]
     ] },
-    "tpl-business": { en: "Business", el: "Επαγγελματικό", items: [
-      ["Suit or smart outfit", "Κοστούμι ή επίσημο ντύσιμο", "clothes", 1], ["Shirts", "Πουκάμισα", "clothes", 1, "day", 1],
-      ["Formal shoes", "Επίσημα παπούτσια", "clothes", 1], ["Belt", "Ζώνη", "clothes", 1],
-      ["Laptop and charger", "Laptop και φορτιστής", "tech", 1], ["Presentation adapter (HDMI / USB-C)", "Αντάπτορας για παρουσίαση (HDMI / USB-C)", "tech", 1],
-      ["Business cards", "Επαγγελματικές κάρτες", "docs", 1], ["Notebook and pen", "Σημειωματάριο και στυλό", "misc", 1]
+    "tpl-business": { en: "Business", el: "seed.t.business", items: [
+      ["Suit or smart outfit", "seed.suitorsmartoutfit", "clothes", 1],
+      ["Shirts", "seed.shirts", "clothes", 1, "day", 1], ["Formal shoes", "seed.formalshoes", "clothes", 1],
+      ["Belt", "seed.belt", "clothes", 1], ["Laptop and charger", "seed.laptopandcharger", "tech", 1],
+      ["Presentation adapter (HDMI / USB-C)", "seed.presentationadapterhdmiusbc", "tech", 1],
+      ["Business cards", "seed.businesscards", "docs", 1], ["Notebook and pen", "seed.notebookandpen", "misc", 1]
     ] },
-    "tpl-hiking": { en: "Hiking & camping", el: "Πεζοπορία & κάμπινγκ", items: [
-      ["Hiking boots", "Ορειβατικά παπούτσια", "clothes", 1], ["Rain jacket", "Αδιάβροχο μπουφάν", "clothes", 1],
-      ["Fleece", "Fleece", "clothes", 1], ["Quick-dry shirts", "Μπλούζες που στεγνώνουν γρήγορα", "clothes", 1, "every", 2],
-      ["Hiking socks", "Κάλτσες πεζοπορίας", "clothes", 1, "day", 1], ["Backpack", "Σακίδιο", "gear", 1],
-      ["Tent", "Σκηνή", "gear", 1], ["Sleeping bag", "Υπνόσακος", "gear", 1], ["Sleeping mat", "Υπόστρωμα", "gear", 1],
-      ["Headlamp", "Φακός κεφαλής", "gear", 1], ["Map and compass", "Χάρτης και πυξίδα", "gear", 1],
-      ["Pocket knife", "Σουγιάς", "gear", 1], ["Rubbish bags", "Σακούλες σκουπιδιών", "gear", 2],
-      ["First aid kit", "Φαρμακείο πρώτων βοηθειών", "health", 1], ["Water (litres)", "Νερό (λίτρα)", "food", 2, "day", 2],
-      ["Energy snacks", "Σνακ ενέργειας", "food", 1, "day", 2]
+    "tpl-hiking": { en: "Hiking & camping", el: "seed.t.hiking", items: [
+      ["Hiking boots", "seed.hikingboots", "clothes", 1], ["Rain jacket", "seed.rainjacket", "clothes", 1],
+      ["Fleece", "seed.fleece", "clothes", 1], ["Quick-dry shirts", "seed.quickdryshirts", "clothes", 1, "every", 2],
+      ["Hiking socks", "seed.hikingsocks", "clothes", 1, "day", 1], ["Backpack", "seed.backpack", "gear", 1],
+      ["Tent", "seed.tent", "gear", 1], ["Sleeping bag", "seed.sleepingbag", "gear", 1],
+      ["Sleeping mat", "seed.sleepingmat", "gear", 1], ["Headlamp", "seed.headlamp", "gear", 1],
+      ["Map and compass", "seed.mapandcompass", "gear", 1], ["Pocket knife", "seed.pocketknife", "gear", 1],
+      ["Rubbish bags", "seed.rubbishbags", "gear", 2], ["First aid kit", "seed.firstaidkit", "health", 1],
+      ["Water (litres)", "seed.waterlitres", "food", 2, "day", 2],
+      ["Energy snacks", "seed.energysnacks", "food", 1, "day", 2]
     ] },
-    "tpl-ski": { en: "Ski", el: "Σκι", items: [
-      ["Ski jacket", "Μπουφάν σκι", "clothes", 1], ["Ski trousers", "Παντελόνι σκι", "clothes", 1],
-      ["Thermal base layers", "Ισοθερμικά", "clothes", 1, "every", 2], ["Ski socks", "Κάλτσες σκι", "clothes", 1, "day", 1],
-      ["Gloves", "Γάντια", "clothes", 1], ["Beanie", "Σκούφος", "clothes", 1], ["Neck warmer", "Περιλαίμιο", "clothes", 1],
-      ["Goggles", "Μάσκα σκι", "gear", 1], ["Helmet", "Κράνος", "gear", 1], ["Hand warmers", "Θερμαντικά χεριών", "gear", 2],
-      ["Sunscreen", "Αντηλιακό", "toilet", 1], ["Lip balm", "Βάλσαμο για τα χείλη", "toilet", 1],
-      ["Ski pass", "Ski pass", "docs", 1]
+    "tpl-ski": { en: "Ski", el: "seed.t.ski", items: [
+      ["Ski jacket", "seed.skijacket", "clothes", 1], ["Ski trousers", "seed.skitrousers", "clothes", 1],
+      ["Thermal base layers", "seed.thermalbaselayers", "clothes", 1, "every", 2],
+      ["Ski socks", "seed.skisocks", "clothes", 1, "day", 1], ["Gloves", "seed.gloves", "clothes", 1],
+      ["Beanie", "seed.beanie", "clothes", 1], ["Neck warmer", "seed.neckwarmer", "clothes", 1],
+      ["Goggles", "seed.goggles", "gear", 1], ["Helmet", "seed.helmet", "gear", 1],
+      ["Hand warmers", "seed.handwarmers", "gear", 2], ["Sunscreen", "seed.sunscreen", "toilet", 1],
+      ["Lip balm", "seed.lipbalm", "toilet", 1], ["Ski pass", "seed.skipass", "docs", 1]
     ] },
-    "tpl-baby": { en: "With a baby", el: "Με μωρό", items: [
-      ["Diapers", "Πάνες", "baby", 1, "day", 6], ["Wipes (packs)", "Μωρομάντηλα (πακέτα)", "baby", 1, "every", 3],
-      ["Bodysuits", "Φορμάκια", "baby", 1, "day", 2], ["Baby sleepwear", "Πιτζαμάκια", "baby", 1, "every", 2],
-      ["Bibs", "Σαλιάρες", "baby", 3], ["Bottles", "Μπιμπερό", "baby", 2], ["Formula or baby food", "Γάλα ή βρεφικές τροφές", "baby", 1],
-      ["Pacifier", "Πιπίλα", "baby", 2], ["Changing mat", "Αλλαξιέρα", "baby", 1], ["Favourite toy", "Το αγαπημένο παιχνίδι", "baby", 1],
-      ["Stroller", "Καρότσι", "baby", 1], ["Baby carrier", "Μάρσιπος", "baby", 1], ["Car seat", "Κάθισμα αυτοκινήτου", "baby", 1],
-      ["Thermometer", "Θερμόμετρο", "health", 1], ["Baby fever medicine", "Αντιπυρετικό για μωρά", "health", 1],
-      ["Baby sunscreen", "Παιδικό αντηλιακό", "toilet", 1]
+    "tpl-baby": { en: "With a baby", el: "seed.t.baby", items: [
+      ["Diapers", "seed.diapers", "baby", 1, "day", 6], ["Wipes (packs)", "seed.wipespacks", "baby", 1, "every", 3],
+      ["Bodysuits", "seed.bodysuits", "baby", 1, "day", 2],
+      ["Baby sleepwear", "seed.babysleepwear", "baby", 1, "every", 2], ["Bibs", "seed.bibs", "baby", 3],
+      ["Bottles", "seed.bottles", "baby", 2], ["Formula or baby food", "seed.formulaorbabyfood", "baby", 1],
+      ["Pacifier", "seed.pacifier", "baby", 2], ["Changing mat", "seed.changingmat", "baby", 1],
+      ["Favourite toy", "seed.favouritetoy", "baby", 1], ["Stroller", "seed.stroller", "baby", 1],
+      ["Baby carrier", "seed.babycarrier", "baby", 1], ["Car seat", "seed.carseat", "baby", 1],
+      ["Thermometer", "seed.thermometer", "health", 1], ["Baby fever medicine", "seed.babyfevermedicine", "health", 1],
+      ["Baby sunscreen", "seed.babysunscreen", "toilet", 1]
     ] },
-    "tpl-carryon": { en: "Carry-on only", el: "Μόνο χειραποσκευή", items: [
-      ["Liquids bag (100 ml bottles)", "Σακουλάκι υγρών (μπουκαλάκια 100 ml)", "toilet", 1],
-      ["Travel-size toiletries", "Καλλυντικά σε μικρή συσκευασία", "toilet", 1], ["Neck pillow", "Μαξιλάρι λαιμού", "gear", 1],
-      ["Earplugs and eye mask", "Ωτοασπίδες και μάσκα ύπνου", "gear", 1], ["Boarding pass", "Κάρτα επιβίβασης", "docs", 1],
-      ["Pen (for forms)", "Στυλό (για έντυπα)", "misc", 1], ["Snacks for the trip", "Σνακ για τη διαδρομή", "food", 1]
+    "tpl-carryon": { en: "Carry-on only", el: "seed.t.carryon", items: [
+      ["Liquids bag (100 ml bottles)", "seed.liquidsbag100mlbottles", "toilet", 1],
+      ["Travel-size toiletries", "seed.travelsizetoiletries", "toilet", 1],
+      ["Neck pillow", "seed.neckpillow", "gear", 1], ["Earplugs and eye mask", "seed.earplugsandeyemask", "gear", 1],
+      ["Boarding pass", "seed.boardingpass", "docs", 1], ["Pen (for forms)", "seed.penforforms", "misc", 1],
+      ["Snacks for the trip", "seed.snacksforthetrip", "food", 1]
     ] },
-    "tpl-road": { en: "Road trip", el: "Οδικό ταξίδι", items: [
-      ["Driving licence", "Δίπλωμα οδήγησης", "docs", 1], ["Car documents and insurance", "Άδεια κυκλοφορίας και ασφάλεια", "docs", 1],
-      ["Cash for tolls", "Μετρητά για διόδια", "docs", 1], ["Phone holder", "Βάση κινητού", "tech", 1],
-      ["Car charger", "Φορτιστής αυτοκινήτου", "tech", 1], ["Reflective vest and warning triangle", "Γιλέκο και τρίγωνο", "gear", 1],
-      ["First aid kit", "Φαρμακείο πρώτων βοηθειών", "health", 1], ["Motion sickness tablets", "Χάπια για τη ναυτία", "health", 1],
-      ["Water and snacks", "Νερό και σνακ", "food", 1]
+    "tpl-road": { en: "Road trip", el: "seed.t.road", items: [
+      ["Driving licence", "seed.drivinglicence", "docs", 1],
+      ["Car documents and insurance", "seed.cardocumentsandinsurance", "docs", 1],
+      ["Cash for tolls", "seed.cashfortolls", "docs", 1], ["Phone holder", "seed.phoneholder", "tech", 1],
+      ["Car charger", "seed.carcharger", "tech", 1],
+      ["Reflective vest and warning triangle", "seed.reflectivevestandwarningtriangle", "gear", 1],
+      ["First aid kit", "seed.firstaidkit", "health", 1],
+      ["Motion sickness tablets", "seed.motionsicknesstablets", "health", 1],
+      ["Water and snacks", "seed.waterandsnacks", "food", 1]
     ] },
-    "tpl-before": { en: "Before I leave", el: "Πριν φύγω", items: [
-      ["Online check-in", "Online check-in", "before", 1], ["Download offline maps and tickets", "Κατέβασε χάρτες και εισιτήρια για χρήση εκτός σύνδεσης", "before", 1],
-      ["Charge phone and power bank", "Φόρτισε κινητό και powerbank", "before", 1], ["Water the plants", "Πότισε τα φυτά", "before", 1],
-      ["Arrange care for pets", "Κανόνισε ποιος θα προσέχει τα ζώα", "before", 1], ["Empty the fridge", "Άδειασε το ψυγείο", "before", 1],
-      ["Take out the rubbish", "Βγάλε τα σκουπίδια", "before", 1], ["Unplug appliances", "Βγάλε τις συσκευές από την πρίζα", "before", 1],
-      ["Turn off the water", "Κλείσε τον γενικό του νερού", "before", 1], ["Lock windows and doors", "Κλείδωσε πόρτες και παράθυρα", "before", 1],
-      ["Set an out-of-office reply", "Βάλε αυτόματη απάντηση στο email", "before", 1]
+    "tpl-before": { en: "Before I leave", el: "seed.t.before", items: [
+      ["Online check-in", "seed.onlinecheckin", "before", 1],
+      ["Download offline maps and tickets", "seed.downloadofflinemapsandtickets", "before", 1],
+      ["Charge phone and power bank", "seed.chargephoneandpowerbank", "before", 1],
+      ["Water the plants", "seed.watertheplants", "before", 1],
+      ["Arrange care for pets", "seed.arrangecareforpets", "before", 1],
+      ["Empty the fridge", "seed.emptythefridge", "before", 1],
+      ["Take out the rubbish", "seed.takeouttherubbish", "before", 1],
+      ["Unplug appliances", "seed.unplugappliances", "before", 1],
+      ["Turn off the water", "seed.turnoffthewater", "before", 1],
+      ["Lock windows and doors", "seed.lockwindowsanddoors", "before", 1],
+      ["Set an out-of-office reply", "seed.setanoutofofficereply", "before", 1]
     ] }
   };
   var SEED_IDS = ["tpl-basic", "tpl-before", "tpl-beach", "tpl-city", "tpl-business", "tpl-hiking", "tpl-ski",
@@ -730,9 +873,9 @@
   function seedTpl(id) {
     var s = SEEDS[id];
     return {
-      id: id, kind: "seed", name: s[LANG] || s.en,
+      id: id, kind: "seed", name: seedName(s.en, s.el),
       items: s.items.map(function (it) {
-        return { name: LANG === "el" ? it[1] : it[0], grp: "@" + it[2], qty: it[3], rule: it[4] ? { m: it[4], n: it[5] } : null };
+        return { name: seedName(it[0], it[1]), grp: "@" + it[2], qty: it[3], rule: it[4] ? { m: it[4], n: it[5] } : null };
       })
     };
   }
@@ -967,7 +1110,7 @@
     return s;
   }
   function xmlEsc(v) {
-    return String(v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;");
+    return String(v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\x22/g, "&quot;").replace(/\x27/g, "&apos;");
   }
   // GPX 1.1: every point as a waypoint, each day as one track segment
   // joining its points in order (straight lines: the plan, not a road route).
@@ -1091,7 +1234,7 @@
     return L.join("\n") + "\n";
   }
   // preview/trip.md of an .orostrip: the whole trip, readable anywhere.
-  function mdEsc(s) { return String(s).replace(/([\\`*_\[\]<>#|])/g, "\\$1"); }
+  function mdEsc(s) { return String(s).replace(/([\\\x60*_\[\]<>#|])/g, "\\$1"); }   // \x60 = backtick
   function tripMd(trip) {
     var L = ["# " + mdEsc(trip.name || trip.dest || t("app")), ""];
     var dates = [fmtRange(trip), nightsText(trip)].filter(Boolean).join(" · ");
@@ -3915,7 +4058,7 @@
   var PKG = window.OrosTravelPackage || null;
   function bundleReady() { return !!(PKG && window.OrosBundle); }
   function fileTitle(s) {
-    return String(s || "").replace(/[\u0000-\u001f\u007f\/\\:*?"<>|]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 80) || "Trip";
+    return String(s || "").replace(/[\u0000-\u001f\u007f\/\\:*?\x22<>|]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 80) || "Trip";
   }
   function exportOros(id) {
     commitNotes();

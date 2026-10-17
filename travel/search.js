@@ -23,9 +23,10 @@
   var YMD = /^(\d{4})-(\d{2})-(\d{2})$/;
   var KIND = {
     en: { flight: "Flight", train: "Train", bus: "Bus", ferry: "Ferry", car: "Car", rental: "Car hire", ticket: "Ticket",
-          stay: "Stay", activity: "Activity", food: "Food", other: "Other" },
+          stay: "Stay", activity: "Activity", food: "Food", other: "Other", "search.untitled": "Untitled trip" },
     el: { flight: "Πτήση", train: "Τρένο", bus: "Λεωφορείο", ferry: "Πλοίο", car: "Αυτοκίνητο", rental: "Ενοικίαση αυτοκινήτου",
-          ticket: "Εισιτήριο", stay: "Διαμονή", activity: "Δραστηριότητα", food: "Φαγητό", other: "Άλλο" }
+          ticket: "Εισιτήριο", stay: "Διαμονή", activity: "Δραστηριότητα", food: "Φαγητό", other: "Άλλο",
+          "search.untitled": "Ταξίδι χωρίς όνομα" }
   };
 
   function str(v) { return typeof v === "string" ? v.trim() : ""; }
@@ -44,7 +45,10 @@
     id: "travel",
     keys: [KEY],
     search: function (ctx) {
-      var d = ctx.readJSON(KEY), out = [], el = ctx.lang === "el";
+      var d = ctx.readJSON(KEY), out = [], K = KIND[ctx.lang];
+      // a pack language: the "travel" pack when loaded, else English
+      if (!K && typeof ctx.lang === "string" && root && root.orosI18n) K = root.orosI18n.table(KIND, "travel", ctx.lang);
+      K = K || KIND.en;
       if (!d || !Array.isArray(d.trips)) return out;
       var tombs = d.tombs && typeof d.tombs === "object" ? d.tombs : {};
       function gone(x) {
@@ -53,7 +57,7 @@
       }
       d.trips.forEach(function (tr) {
         if (gone(tr)) return;
-        var tname = str(tr.name) || str(tr.dest) || (el ? "Ταξίδι χωρίς όνομα" : "Untitled trip");
+        var tname = str(tr.name) || str(tr.dest) || K["search.untitled"];
         out.push({
           id: tr.id,
           title: tname,
@@ -65,7 +69,7 @@
         });
         arr(tr.plan).forEach(function (p) {
           if (gone(p)) return;
-          var kind = (el ? KIND.el : KIND.en)[p.kind] || (el ? KIND.el.other : KIND.en.other);
+          var kind = K[p.kind] || K.other;
           var route = [str(p.from), str(p.to)].filter(Boolean).join(" → ");
           out.push({
             id: p.id,
