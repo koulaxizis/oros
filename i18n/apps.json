@@ -1,0 +1,29 @@
+{
+ "apps": [
+  {
+   "app": "flashcards",
+   "files": [
+    "flashcards/app.js"
+   ]
+  },
+  {
+   "app": "help",
+   "files": [
+    "help/help.js"
+   ]
+  },
+  {
+   "app": "settings",
+   "files": [
+    "settings/core.js",
+    "settings/search.js"
+   ]
+  },
+  {
+   "app": "shell",
+   "files": [
+    "translations.js"
+   ]
+  }
+ ]
+}
