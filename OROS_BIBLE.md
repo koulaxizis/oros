@@ -7445,3 +7445,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Command bar: type «ραντεβού αύριο 10 οδοντίατρος», «γάλα στη λίστα» or «ξόδεψα 12€ καφές» (or the English equivalents) in the menu search, or press Ctrl+K over any app; the app opens with the form filled in, nothing is saved until you save there.
 - Files: `commands/core.js`, `commands/bar.js` (new, precached), `shell.js`, `style.css`, translations, help menu + shortcuts EN/EL, Bible.
   - Tests: full suite green (new `tests/commands.test.js`); real Chromium 1280 EN / 360 EL. Not tested: a real phone, hardware keyboards other than the desktop test.
+
+### 2026-10-17 — App interop wave 3: office apps send to each other (#476) — 2.80.00
+- Office apps send to each other: a Spreadsheet selection becomes a Writer table, text becomes slides, a mind map, Kanban cards or a Prompter prompt (Send to an app in Spreadsheet, Slides, Mind map and Kanban).
+- Files: `send/core.js`, `writer/writer.js`, `slides/{app,editor}.js`, `mindmap/mindmap.js`, `kanban/{kanban,tools}.js`, `kanban/kanban.css`, `prompter/prompter.js`, `spreadsheet/spreadsheet.js`, Bible.
+  - Tests: full suite green; real Chromium 1280 EN / 360 EL. Not tested: a real phone, Safari.
