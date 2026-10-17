@@ -184,6 +184,8 @@
       "pv.openWith":     "Open with…",
       "menu.openWith":   "Open with…",
       "menu.sendApp":    "Send to an app…",
+      "menu.sendAlbum":  "Send photos to someone…",
+      "album.none":      "No pictures in what you selected.",
       "pv.edit":         "Edit",
       "pv.previewMd":    "Live preview",
       "pv.editSource":   "Source",
@@ -410,6 +412,8 @@
       "pv.openWith":     "Άνοιγμα με…",
       "menu.openWith":   "Άνοιγμα με…",
       "menu.sendApp":    "Στείλε σε εφαρμογή…",
+      "menu.sendAlbum":  "Στείλε φωτογραφίες σε κάποιον…",
+      "album.none":      "Δεν υπάρχουν εικόνες σε ό,τι επέλεξες.",
       "pv.edit":         "Επεξεργασία",
       "pv.previewMd":    "Ζωντανή προεπισκόπηση",
       "pv.editSource":   "Πηγή",
@@ -840,7 +844,44 @@
     lastEntries.forEach(function (e) { if (e.dir) dirs[entryPath(e)] = true; });
     var items = selectionPaths().filter(function (p) { return !dirs[p]; }).slice(0, 10)
       .map(function (p) { return { path: p, name: baseName(p) }; });
-    if (items.length) api.open({ kind: "files", data: { items: items } });
+    if (!items.length) return;
+    // Pictures among them can also go to a person as an album.
+    var pics = items.filter(function (it) { return isImageExt(it.name); });
+    var opts = { kind: "files", data: { items: items } };
+    if (pics.length && shareApi()) opts.share = { kind: "album", data: { t: "" }, photos: pics };
+    api.open(opts);
+  }
+  // "Send photos to someone…" (share wave 4, kind "album"): the selected
+  // pictures, and the pictures right inside selected folders, ≤ 200.
+  // The shell draws every photo again (no EXIF / GPS) before it leaves.
+  function shareApi() {
+    try { return window.parent !== window && window.parent.orosShare ? window.parent.orosShare : null; }
+    catch (e) { return null; }
+  }
+  function sendAlbum() {
+    var api = shareApi();
+    if (!api) return;
+    var dirs = {};
+    lastEntries.forEach(function (e) { if (e.dir) dirs[entryPath(e)] = true; });
+    var paths = selectionPaths(), folders = paths.filter(function (p) { return dirs[p]; });
+    var photos = paths.filter(function (p) { return !dirs[p] && isImageExt(baseName(p)); })
+      .map(function (p) { return { path: p, name: baseName(p) }; });
+    var chain = Promise.resolve();
+    folders.forEach(function (dir) {
+      chain = chain.then(function () {
+        if (photos.length >= 200) return;
+        return fsList(dir).then(function (list) {
+          list.forEach(function (e) {
+            if (!e.dir && isImageExt(e.name) && photos.length < 200) photos.push({ path: join(dir, e.name), name: e.name });
+          });
+        }, function () {});
+      });
+    });
+    chain.then(function () {
+      if (!photos.length) { transientNote(t("album.none")); return; }
+      var title = folders.length === 1 && paths.length === 1 ? baseName(folders[0]) : "";
+      api.open({ kind: "album", data: { t: title }, photos: photos });
+    });
   }
 
   // "Open in Scanner & PDF": the selected PDFs and pictures (merge,
@@ -3181,6 +3222,10 @@
     }));
     if (!p.dir && sendApi()) {
       ctxMenu.appendChild(mkItem(APP_SVG, "menu.sendApp", sendSelection));
+    }
+    if (view !== "trash" && shareApi() && (p.dir || isImageExt(p.name) ||
+        selectionPaths().some(function (x) { return isImageExt(baseName(x)); }))) {
+      ctxMenu.appendChild(mkItem(APP_SVG, "menu.sendAlbum", sendAlbum));
     }
     if (dbx() && dbx().exportFrom) {
       ctxMenu.appendChild(mkItem(dbx().icon || "", "menu.toDropbox", function () {

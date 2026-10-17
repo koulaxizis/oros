@@ -52,6 +52,7 @@ Folders are on the left, the current folder's contents on the right. On a phone,
 - The preview has `Open in …` (one app reads the file) or `Open with…` (several do: pick one, and tick `Always use this app` to skip the question next time). Right-click a file, or use `More actions`, for `Open with…` too.
 - Songs play in [Music](app:music). A song outside the `Music` folder is copied there first, so Music keeps it.
 - `Send to an app…` in the same menu attaches the selected files (up to 10) to a new message in [Mail](app:mail).
+- `Send photos to someone…` (right-click or long-press a picture or a folder) makes a photo album link from the selected pictures and the pictures right inside the selected folders, up to 200. The photos are made smaller and lose their hidden details (place, camera, time) before they leave; see [Send to someone](help:t/share).
 - The app opens its own copy: the file on the disk does not change until you save it there.
 
 ## From Google Drive and Google Photos
