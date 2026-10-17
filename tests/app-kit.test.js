@@ -15,7 +15,7 @@ const { spawnSync } = require("child_process");
 const ROOT = path.join(__dirname, "..");
 const KIT = path.join(ROOT, ".github", "app-kit");
 const TPL = path.join(ROOT, "docs", "app-kit", "template");
-const { checkApp } = require(path.join(KIT, "check-app.js"));
+const { checkApp, addedAppIds } = require(path.join(KIT, "check-app.js"));
 const read = (p) => fs.readFileSync(path.join(ROOT, p), "utf8");
 
 // A tiny checkout with one other app, so a category exists.
@@ -98,6 +98,15 @@ test("the check names the usual mistakes", () => {
   edit("index.html", "open=pocket", "open=notes");
   assert.ok(errors(checkApp(dir, "pocket")).some((x) => x.startsWith("DL-1:")));
   assert.ok(checkApp(dir, "pocket").some((r) => r.level === "warn" && r.msg.includes("pocket/extra.js")));
+});
+
+test("quality.yml checks only registered app folders a branch adds", () => {
+  const apps = [{ id: "pocket", type: "internal" }, { id: "notes", type: "internal" }, { id: "web", type: "external" }];
+  assert.deepEqual(addedAppIds(["pocket/index.html", "pocket/app.js", "notes/new.js", "docs/app-kit/template/index.html",
+    "draft/index.html", "web/index.html", "pocket/sub/index.html", ""], apps), ["pocket"]);
+  // An app with the direct-link snippet but no apps.json entry is checked (and fails registration).
+  assert.deepEqual(addedAppIds(["forgot/index.html", "page/index.html"], apps, (id) => id === "forgot"), ["forgot"]);
+  assert.match(read(".github/workflows/quality.yml"), /check-app\.js --added-since origin\/\$\{\{ github\.base_ref \}\}/);
 });
 
 test("every app on main passes the kit's static check", () => {

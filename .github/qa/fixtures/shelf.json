@@ -1,0 +1,85 @@
+{
+ "source": "tests/bundle-shelf.test.js slice()",
+ "base": {
+  "ver": 1,
+  "items": [
+   {
+    "id": "item000001",
+    "m": 1799999999100,
+    "a": 1799999999100,
+    "type": "book",
+    "title": "Dune",
+    "by": "Frank Herbert",
+    "year": 1965,
+    "size": 600,
+    "fmt": "p",
+    "plat": "",
+    "st": "done",
+    "prio": 0,
+    "rate": 9,
+    "fav": 1,
+    "tags": [
+     "sf"
+    ],
+    "rev": "Great.\nReally.",
+    "src": "",
+    "col": 0,
+    "cov": "https://upload.wikimedia.org/x/dune.jpg",
+    "lib": "b0123456789abcdef"
+   },
+   {
+    "id": "item000002",
+    "m": 1799999999200,
+    "a": 1799999999200,
+    "type": "film",
+    "title": "=HYPERLINK(\"x\")",
+    "by": "",
+    "year": 0,
+    "size": 0,
+    "fmt": "",
+    "plat": "",
+    "st": "want",
+    "prio": 0,
+    "rate": 0,
+    "fav": 0,
+    "tags": [],
+    "rev": "",
+    "src": "",
+    "col": 0
+   }
+  ],
+  "sess": [
+   {
+    "id": "sess000001",
+    "m": 1799999999100,
+    "it": "item000001",
+    "k": "s",
+    "d": "2026-01-02"
+   },
+   {
+    "id": "sess000002",
+    "m": 1799999999100,
+    "it": "item000001",
+    "k": "p",
+    "d": "2026-01-05",
+    "v": 300
+   },
+   {
+    "id": "sess000003",
+    "m": 1799999999100,
+    "it": "item000001",
+    "k": "d",
+    "d": "2026-01-10"
+   }
+  ],
+  "goals": {
+   "2026-book": {
+    "m": 1799999999500,
+    "n": 24
+   }
+  },
+  "tombs": {
+   "itemgone01": 1799999999900
+  }
+ }
+}

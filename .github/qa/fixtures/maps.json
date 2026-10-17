@@ -1,0 +1,101 @@
+{
+ "source": "tests/bundle-maps.test.js sample()",
+ "base": {
+  "title": "Athens <weekend>",
+  "places": [
+   {
+    "id": "p37.975200,23.730200",
+    "name": "Κάβα \"Νο 1\"",
+    "sub": "Πλάκα",
+    "lat": 37.9752,
+    "lon": 23.7302,
+    "mtime": 100
+   },
+   {
+    "id": "p37.971500,23.726700",
+    "name": "Acropolis",
+    "sub": "",
+    "lat": 37.9715,
+    "lon": 23.7267,
+    "mtime": 200
+   }
+  ],
+  "groups": {
+   "gabcd1": {
+    "name": "Food",
+    "color": "#e06c75",
+    "m": 1
+   },
+   "gzzzz9": {
+    "name": "Unused",
+    "color": "#61afef",
+    "m": 1
+   }
+  },
+  "pins": {
+   "p37.975200,23.730200": "gabcd1"
+  },
+  "tracks": [
+   {
+    "entry": {
+     "id": "abc123def",
+     "m": 1780300800005,
+     "name": "Morning hike",
+     "color": "#61afef",
+     "folder": "Hikes",
+     "hidden": 1,
+     "start": 1780300800000,
+     "dur": 120000,
+     "moving": 120000,
+     "dist": 425,
+     "up": 5,
+     "down": 0,
+     "n": 3,
+     "bbox": [
+      37.95,
+      23.8,
+      37.953,
+      23.803
+     ],
+     "prev": "obsfF_mgpCwQwQ",
+     "src": "rec"
+    },
+    "tr": {
+     "name": "Υμηττός",
+     "segs": [
+      [
+       [
+        37.95,
+        23.8,
+        210,
+        1780300800000
+       ],
+       [
+        37.951,
+        23.801,
+        215,
+        1780300860000
+       ],
+       [
+        37.953,
+        23.803,
+        null,
+        1780300920000
+       ]
+      ]
+     ],
+     "wpts": [
+      {
+       "lat": 37.95,
+       "lon": 23.8,
+       "ele": null,
+       "t": null,
+       "name": "Start"
+      }
+     ],
+     "trace": "https://www.openstreetmap.org/user/me/traces/123"
+    }
+   }
+  ]
+ }
+}

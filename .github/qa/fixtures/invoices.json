@@ -1,0 +1,237 @@
+{
+ "source": "tests/bundle-invoices.test.js slice()",
+ "base": {
+  "ver": 1,
+  "prof": {
+   "name": "Acme",
+   "trade": "",
+   "job": "",
+   "addr": "",
+   "country": "",
+   "afm": "123456789",
+   "doy": "",
+   "phone": "",
+   "email": "",
+   "web": "",
+   "iban": "GR16 0110 1250 0000 0001 2300 695",
+   "logo": "",
+   "cur": "EUR",
+   "vat": 24,
+   "days": 30,
+   "wht": 0,
+   "plang": "",
+   "terms": "",
+   "footer": "",
+   "m": 1799999991000,
+   "paylink": "https://buy.stripe.com/x"
+  },
+  "series": [
+   {
+    "id": "ser-inv",
+    "kind": "inv",
+    "prefix": "INV",
+    "year": 1,
+    "digits": 4,
+    "m": 1799999992000
+   }
+  ],
+  "clients": [
+   {
+    "id": "cli-alpha",
+    "name": "=HYPERLINK(\"x\")",
+    "afm": "999999999",
+    "doy": "",
+    "job": "",
+    "addr": "",
+    "country": "",
+    "email": "",
+    "phone": "",
+    "note": "",
+    "m": 1799999993000,
+    "apikey": "sk_live_123"
+   },
+   {
+    "id": "cli-gone1",
+    "m": 1799999999990,
+    "del": 1
+   }
+  ],
+  "docs": [
+   {
+    "id": "doc-draft1",
+    "kind": "inv",
+    "st": "draft",
+    "ser": "",
+    "seq": 0,
+    "num": "",
+    "date": "",
+    "due": "",
+    "cur": "EUR",
+    "cli": "",
+    "c": {
+     "name": "Beta",
+     "job": "",
+     "addr": "",
+     "country": "",
+     "afm": "",
+     "doy": "",
+     "email": "",
+     "phone": ""
+    },
+    "lines": [
+     {
+      "code": "",
+      "d": "Hosting",
+      "q": 1,
+      "unit": "",
+      "p": 5000,
+      "disc": 0,
+      "vat": 24
+     }
+    ],
+    "gDisc": 0,
+    "wht": 0,
+    "exempt": "",
+    "terms": "",
+    "notes": "",
+    "ref": "",
+    "crm": "",
+    "mark": "",
+    "file": "",
+    "sent": "",
+    "plang": "",
+    "m": 1799999995000
+   },
+   {
+    "id": "doc-ext001",
+    "kind": "ext",
+    "st": "issued",
+    "ser": "",
+    "seq": 0,
+    "num": "A-77",
+    "date": "2026-02-01",
+    "due": "",
+    "cur": "EUR",
+    "cli": "",
+    "c": {
+     "name": "Gamma",
+     "job": "",
+     "addr": "",
+     "country": "",
+     "afm": "111111111",
+     "doy": "",
+     "email": "",
+     "phone": ""
+    },
+    "lines": [],
+    "gDisc": 0,
+    "wht": 0,
+    "exempt": "",
+    "terms": "",
+    "notes": "",
+    "ref": "",
+    "crm": "",
+    "mark": "",
+    "file": "",
+    "sent": "",
+    "plang": "",
+    "xnet": 10000,
+    "xvat": 2400,
+    "m": 1799999996000
+   },
+   {
+    "id": "doc-gone01",
+    "m": 1799999999995,
+    "del": 1
+   },
+   {
+    "id": "doc-issued1",
+    "kind": "inv",
+    "st": "issued",
+    "ser": "ser-inv",
+    "seq": 1,
+    "num": "INV-2026-0001",
+    "date": "2026-03-01",
+    "due": "2026-03-31",
+    "cur": "EUR",
+    "cli": "cli-alpha",
+    "c": {
+     "name": "Alpha SA",
+     "job": "",
+     "addr": "",
+     "country": "",
+     "afm": "999999999",
+     "doy": "",
+     "email": "",
+     "phone": ""
+    },
+    "lines": [
+     {
+      "code": "",
+      "d": "Design",
+      "q": 2,
+      "unit": "",
+      "p": 10000,
+      "disc": 0,
+      "vat": 24
+     }
+    ],
+    "gDisc": 0,
+    "wht": 0,
+    "exempt": "",
+    "terms": "",
+    "notes": "",
+    "ref": "",
+    "crm": "",
+    "mark": "400001",
+    "file": "/internal/Invoices/INV-2026-0001.pdf",
+    "sent": "",
+    "plang": "",
+    "m": 1799999994000,
+    "mds": "ok",
+    "mdx": "acc1"
+   }
+  ],
+  "pays": [
+   {
+    "id": "pay-one001",
+    "doc": "doc-issued1",
+    "date": "2026-03-10",
+    "amt": 12400,
+    "how": "bank",
+    "note": "+cmd",
+    "bud": 0,
+    "m": 1799999997000
+   }
+  ],
+  "tpls": [
+   {
+    "id": "tpl-month1",
+    "name": "Monthly",
+    "kind": "inv",
+    "cli": "",
+    "cur": "EUR",
+    "lines": [
+     {
+      "code": "",
+      "d": "Retainer",
+      "q": 1,
+      "unit": "",
+      "p": 100000,
+      "disc": 0,
+      "vat": 24
+     }
+    ],
+    "gDisc": 0,
+    "wht": 0,
+    "exempt": "",
+    "terms": "",
+    "notes": "",
+    "rep": "",
+    "next": "",
+    "dom": 0,
+    "m": 1799999998000
+   }
+  ]
+ }
+}

@@ -566,10 +566,13 @@
   //           doses, doctor's appointments, vaccinations)
   //   lang: "en" | "el"; alarmTitle / todoTitle / habitsTitle /
   //   healthTitle: the shell's words
+  //   hours / max (optional): horizon and row cap, REM_HOURS and 100
+  //   unless given (Web Push asks for a week, webpush.js)
   var REM_HOURS = 48, TODO_HOUR = 9;
   function reminderRows(src, now) {
     src = src || {};
-    var el = src.lang === "el", end = now + REM_HOURS * 3600000, rows = [];
+    var hours = src.hours > 0 && src.hours <= 192 ? src.hours : REM_HOURS;
+    var el = src.lang === "el", end = now + hours * 3600000, rows = [], days = Math.ceil(hours / 24) + 1;
     function dayAt(ms, add, h) { var d = new Date(ms); d.setHours(h || 0, 0, 0, 0); d.setDate(d.getDate() + add); return d.getTime(); }
     var alarmTitle = str(src.alarmTitle, 60) || (el ? "Ξυπνητήρι" : "Alarm");
     (Array.isArray(src.alarms) ? src.alarms : []).forEach(function (a) {
@@ -578,7 +581,7 @@
       if (a.repeat === "daily") {
         while (t <= now && guard++ < 4000) { var d = new Date(t); d.setDate(d.getDate() + 1); t = d.getTime(); }
       }
-      for (var n = 0; n < 3 && t <= end; n++) {
+      for (var n = 0; n < days && t <= end; n++) {
         if (t > now) rows.push({ id: "time:alarm-" + a.id + "-" + ymdLocal(t), at: t, kind: "alarm", ns: "time",
                                  title: alarmTitle, body: str(a.label, 60) || alarmTitle,
                                  link: a.id.indexOf("tmr-") === 0 ? "time:timer" : "time:alarms" });   // Time wave 5: kitchen timers
@@ -601,7 +604,7 @@
     }
     var T = src.todo;
     if (T && T.core && T.data && typeof T.core.dueSummary === "function") {
-      for (var dd = 0; dd < 3; dd++) {
+      for (var dd = 0; dd < days; dd++) {
         var at = dayAt(now, dd, TODO_HOUR);
         if (at <= now || at > end) continue;
         var ymd = ymdLocal(at), sum = T.core.dueSummary(T.data, ymd);
@@ -619,7 +622,7 @@
       try { hix = HB.core.index(HB.data); } catch (e) { hix = null; }
       (hix ? HB.core.living(HB.data) : []).forEach(function (h) {
         if (typeof h.rem !== "number") return;
-        for (var hd = 0; hd < 3; hd++) {
+        for (var hd = 0; hd < days; hd++) {
           var hDay = new Date(dayAt(now, hd, 0));
           hDay.setHours(Math.floor(h.rem / 60), h.rem % 60, 0, 0);
           var hAt = hDay.getTime();
@@ -663,7 +666,7 @@
       });
     }
     rows.sort(function (a, b) { return a.at - b.at || (a.id < b.id ? -1 : 1); });
-    return rows.slice(0, 100);
+    return rows.slice(0, src.max > 0 ? src.max : 100);
   }
 
   // Home-screen widget (v4): the Today summary (today/host.js build)
@@ -1183,6 +1186,13 @@
       if (o && root.orosNotifs && typeof root.orosNotifs.openLink === "function") root.orosNotifs.openLink(o);
       var q = phoneQuick; phoneQuick = null;
       if (q && typeof root.__orosOpenAt === "function") root.__orosOpenAt(q[0], q[1]);
+    },
+    // The same reminder rows, for Web Push (webpush.js): a longer
+    // horizon, rung by the browser's push service instead of the app.
+    reminderRows: function (now, hours, max) {
+      var src = reminderSource();
+      src.hours = hours; src.max = max;
+      return reminderRows(src, now);
     },
     // True when the app was given this reminder (shell dedupKey): the
     // shell then shows it in orOS only, never as a second OS one.

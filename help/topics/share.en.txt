@@ -1,12 +1,12 @@
 # Send to someone
-Send one thing from orOS to another person: a To-Do list, a note, a contact, an event, a recipe, some bookmarks or a Wiki article. orOS puts it inside a link. You send the link any way you like, and the other person opens it in their browser, even if they don't use orOS.
+Send one thing from orOS to another person: a To-Do list, a note, a contact, an event, a recipe, some bookmarks, a Wiki article or a whole calendar. orOS puts it inside a link. You send the link any way you like, and the other person opens it in their browser, even if they don't use orOS.
 
 ## Send something
 Look for the send button in these apps:
 - [To-Do](app:todo): the paper-plane button above the list sends the open list.
 - [Notes](app:notes): the paper-plane button next to the page title, or `Send to someone…` in the page menu.
 - [Contacts](app:contacts): `Share` on a contact's card.
-- [Calendar](app:calendar): `Send…` in a saved event, and `More` › `Share free times…` for a link where someone picks one of your free times and emails you back.
+- [Calendar](app:calendar): `Send…` in a saved event; `More` › `Send calendar to someone…` for all your events, one label, or only some dates (this month, the next 3 months, this year or dates you choose); and `More` › `Share free times…` for a link where someone picks one of your free times and emails you back.
 - [Meal Planner](app:meals): `Share` on an open recipe.
 - [Bookmarks](app:bookmarks): `Send to someone…` in a bookmark's menu, or select several and tap `Send…`.
 - [Wiki](app:wiki): `Send to someone…` in an article's ⋯ menu. The text travels; pictures stay with you.
@@ -27,13 +27,15 @@ Tick `With an expiry` and pick `1 day`, `7 days` or `30 days`. Then orOS encrypt
 
 You can take a link back sooner. Open `My shared links`: it is a button in the `Send to someone` window, and also in [Settings](app:settings) › `System`. Each link shows when it expires. `Copy link` copies it again, and `Take back` deletes it from the server at once. The list follows you to your other devices through sync, so you can take a link back from any of them.
 
-Items too long for a plain link (a long note or Wiki article) always go this way: the window turns `With an expiry` on by itself and tells you why. A password works with an expiry too.
+Items too long for a plain link (a long note or Wiki article, a calendar with many events) always go this way: the window turns `With an expiry` on by itself and tells you why. A password works with an expiry too.
 
 ## Open something you got
 Tap the link. A page opens with the item and these buttons:
 - `Add to my orOS` opens the right app with the item ready. To-Do, Contacts, Calendar, Meal Planner and Bookmarks show it to you before anything is saved; Notes makes a new page; Wiki opens the article in its editor, and it is saved when you press `Save`.
 - `Copy text` copies it as plain text.
-- `Download` saves it as a file other programs open too: a contact as .vcf, an event as .ics, bookmarks as .html, a Wiki article as .md, the rest as .txt.
+- `Download` saves it as a file other programs open too: a contact as .vcf, an event or a calendar as .ics, bookmarks as .html, a Wiki article as .md, the rest as .txt.
+
+A calendar opens on a month: tap a day to see its events, or switch to `List` for the whole month; ‹ and › move between months. Events with a time show in your own time zone. `Add to my orOS` opens [Calendar](app:calendar), which tells you how many events are new or changed before it saves them; adding the same calendar again later updates those events instead of doubling them.
 
 If you got a file instead of a link, open the link inside it, or use `Open a file` on that page.
 
@@ -63,4 +65,5 @@ A link with an expiry carries only the key after the # sign. The orOS server kee
 - Very long items go as a link with an expiry, which needs a connection to the orOS server when you send and when the other person opens it.
 - A link with an expiry lasts 30 days at most.
 - A QR code holds only short links.
-- Photos of contacts, pictures in Wiki articles, labels, favourites and reminders are not sent.
+- Photos of contacts, pictures in Wiki articles, labels, favourites and reminders are not sent. A calendar takes its labels' names and colours along, but not reminders, and an event's note up to 500 characters.
+- A calendar holds up to 5,000 events; when there are more, the newest go. A sent calendar is a copy: later changes do not reach the other person, so send it again.

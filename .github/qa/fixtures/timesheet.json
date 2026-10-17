@@ -1,0 +1,88 @@
+{
+ "source": "tests/bundle-timesheet.test.js slice()",
+ "base": {
+  "ver": 1,
+  "clients": [
+   {
+    "id": "cliacme01",
+    "name": "Acme",
+    "rate": 5000,
+    "m": 1792201782826
+   },
+   {
+    "id": "cligone01",
+    "m": 1792201783626,
+    "del": 1
+   }
+  ],
+  "projects": [
+   {
+    "id": "prjint001",
+    "name": "=Internal",
+    "client": "",
+    "color": 0,
+    "rate": 0,
+    "bill": 0,
+    "arch": 0,
+    "m": 1792201783026
+   },
+   {
+    "id": "prjweb001",
+    "name": "Website",
+    "client": "cliacme01",
+    "color": 2,
+    "rate": 0,
+    "bill": 1,
+    "arch": 0,
+    "budget": 600,
+    "m": 1792201782926
+   }
+  ],
+  "entries": [
+   {
+    "id": "entaaa001",
+    "p": "prjweb001",
+    "desc": "Home page",
+    "s": 1791795600000,
+    "e": 1791802800000,
+    "billed": 0,
+    "task": "Design",
+    "tags": [
+     "ui"
+    ],
+    "m": 1792201783126
+   },
+   {
+    "id": "entbbb002",
+    "p": "prjint001",
+    "desc": "@team sync",
+    "s": 1791806400000,
+    "e": 1791808200000,
+    "billed": 1,
+    "m": 1792201783226
+   },
+   {
+    "id": "entgone04",
+    "m": 1792201783426,
+    "del": 1
+   },
+   {
+    "id": "entrun003",
+    "p": "prjweb001",
+    "desc": "still going",
+    "s": 1792198183726,
+    "e": 0,
+    "billed": 0,
+    "m": 1792201783326
+   }
+  ],
+  "prefs": {
+   "cur": "USD",
+   "rate": 4000,
+   "goal": 480,
+   "round": 15,
+   "rup": 1
+  },
+  "pm": 1792201782726
+ }
+}

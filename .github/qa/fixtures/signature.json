@@ -1,0 +1,115 @@
+{
+ "source": "tests/bundle-signature.test.js slice()",
+ "base": {
+  "ver": 1,
+  "sigs": [
+   {
+    "id": "saaaaaa01",
+    "m": 1792201842700,
+    "nm": "Work saaaaaa01",
+    "lang": "en",
+    "tpl": "classic",
+    "f": {
+     "name": "Maria Smith",
+     "pron": "",
+     "title": "Sales",
+     "dept": "",
+     "company": "Acme",
+     "vat": "",
+     "phone": "+30 210 0000000",
+     "mobile": "",
+     "email": "maria@example.com",
+     "web": "acme.example",
+     "addr": "",
+     "line": "",
+     "legal": ""
+    },
+    "so": [
+     {
+      "k": "linkedin",
+      "u": "https://linkedin.com/in/maria"
+     }
+    ],
+    "cta": {
+     "t": "Book",
+     "u": "https://acme.example/book"
+    },
+    "st": {
+     "acc": "#2b6cb0",
+     "txt": "#333333",
+     "font": "arial",
+     "size": 13,
+     "shape": "square",
+     "div": 1,
+     "icons": 1,
+     "lab": "l",
+     "logoW": 120,
+     "photoW": 72
+    },
+    "im": {
+     "logo": {
+      "a": "c414cd0e204de974f73753c7e28d7638e7b3691bb8b1a2bab6b25bb7fed7ce77.png",
+      "u": "https://acme.example/logo.png",
+      "w": 1,
+      "h": 1
+     },
+     "photo": {
+      "u": "https://acme.example/me.jpg",
+      "w": 10,
+      "h": 10
+     }
+    },
+    "qr": 1
+   },
+   {
+    "id": "saaaaaa02",
+    "m": 1792201842700,
+    "nm": "Greek",
+    "lang": "el",
+    "tpl": "classic",
+    "f": {
+     "name": "Maria Smith",
+     "pron": "",
+     "title": "Sales",
+     "dept": "",
+     "company": "Acme",
+     "vat": "",
+     "phone": "+30 210 0000000",
+     "mobile": "",
+     "email": "maria@example.com",
+     "web": "acme.example",
+     "addr": "",
+     "line": "",
+     "legal": ""
+    },
+    "so": [
+     {
+      "k": "linkedin",
+      "u": "https://linkedin.com/in/maria"
+     }
+    ],
+    "cta": {
+     "t": "Book",
+     "u": "https://acme.example/book"
+    },
+    "st": {
+     "acc": "#2b6cb0",
+     "txt": "#333333",
+     "font": "arial",
+     "size": 13,
+     "shape": "square",
+     "div": 1,
+     "icons": 1,
+     "lab": "l",
+     "logoW": 120,
+     "photoW": 72
+    },
+    "im": {},
+    "qr": 1
+   }
+  ],
+  "tombs": {
+   "sgone0001": 1792201843200
+  }
+ }
+}

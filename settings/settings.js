@@ -507,6 +507,7 @@
     })));
     host.appendChild(c1);
     secPhoneReminders(host);
+    secWebPush(host);
 
     var c2 = card(null);
     c2.appendChild(row(t("n.position"), select(C.POSITIONS.map(function (p) {
@@ -620,6 +621,63 @@
     host.appendChild(c);
   }
 
+  // Notifications with orOS closed (webpush.js): optional, off by
+  // default, per device; hidden in the Android app (it rings itself).
+  var pushOff = null, pushNote = "";
+  function webPush() {
+    var p = parentWin();
+    try { return p && p.orosPush && typeof p.orosPush.enable === "function" ? p.orosPush : null; } catch (e) { return null; }
+  }
+  function secWebPush(host) {
+    var W = webPush();
+    if (!W || phone()) return;
+    if (!pushOff) pushOff = W.onChange(function () { render(); });
+    var c = card(null);
+    if (!W.supported()) {
+      c.appendChild(row(t("n.push"), el("span", "hint", t("n.push.unsupported")), {}));
+      host.appendChild(c);
+      return;
+    }
+    var st = W.state();
+    c.appendChild(row(t("n.push"), switchBtn(st.on, "n.push", function (v) {
+      pushNote = "";
+      (v ? W.enable() : W.disable()).catch(function (e) {
+        var code = e && e.code;
+        pushNote = code === "denied" ? "n.push.denied" : (code === "unsupported" || code === "nosubscribe") ? "n.push.unsupported" : "n.push.unavailable";
+        render();
+      }).then(function () { render(); });
+    }, t("n.push")), { hint: t("n.push.hint") }));
+    c.appendChild(el("div", "hint", t("n.push.desktop")));
+    if (st.on && st.at) {
+      c.appendChild(el("div", "hint", t("n.push.status", { n: st.n,
+        when: new Date(st.at).toLocaleString(document.documentElement.lang || undefined, { dateStyle: "short", timeStyle: "short" }) })));
+    }
+    if (st.on && st.err && st.err !== "rate") c.appendChild(el("div", "hint", t("n.push.failed")));
+    if (pushNote) c.appendChild(el("div", "hint", t(pushNote)));
+    var devs = W.devices ? W.devices() : [];
+    if (devs.length) {
+      var dl = el("div", "checks");
+      c.appendChild(el("div", "hint", t("n.push.devices")));
+      devs.forEach(function (d) {
+        var line = el("div", "pair");
+        line.appendChild(el("span", "pair-label", (d.name || "?") + (d.self ? " (" + t("n.push.this") + ")" : "")));
+        line.appendChild(button(t("n.push.remove"), "n.push.remove:" + d.id, function () {
+          W.remove(d.id).then(function () { render(); });
+        }));
+        dl.appendChild(line);
+      });
+      c.appendChild(dl);
+    }
+    if (st.on) {
+      c.appendChild(actions(button(t("n.push.test"), "n.push.test", function () {
+        W.test(t("n.push.test.title"), t("n.push.test.body")).then(function () {
+          pushNote = "n.push.test.sent"; render();
+        }, function () { pushNote = "n.push.unavailable"; render(); });
+      })));
+    }
+    host.appendChild(c);
+  }
+
   // In the orOS Android app only (BR-PHONE v5): Health Connect.
   function secPhoneHealth(host) {
     var P = phone();
@@ -656,10 +714,58 @@
   // The passphrase lives only in this field and in the shell call;
   // it survives repaints in memory and is cleared once used.
   var pass = { value: "", shown: false, remember: null };
+  // WebDAV W2: the server form. The password stays in memory only
+  // until it is handed to the shell.
+  var dav = { open: false, url: "", user: "", pass: "", dir: "orOS" };
+
+  function davInput(key, label, type, ph, auto) {
+    var wrap = el("div", "dav-field");
+    var lab = el("label", "row-label", label);
+    lab.htmlFor = "f-dav-" + key;
+    wrap.appendChild(lab);
+    var inp = el("input");
+    inp.id = "f-dav-" + key;
+    inp.type = type;
+    inp.autocomplete = auto;
+    inp.spellcheck = false;
+    inp.setAttribute("autocapitalize", "off");
+    if (ph) inp.placeholder = ph;
+    inp.value = dav[key];
+    inp.setAttribute("data-k", "dav-" + key);
+    inp.addEventListener("input", function () { dav[key] = inp.value; });
+    wrap.appendChild(inp);
+    return wrap;
+  }
+
+  function davForm() {
+    var form = el("form", "pass dav-form");
+    form.setAttribute("autocomplete", "off");
+    form.appendChild(el("div", "hint", t("y.dav.hint")));
+    form.appendChild(davInput("url", t("y.dav.url"), "url", t("y.dav.url.ph"), "url"));
+    form.appendChild(davInput("user", t("y.dav.user"), "text", "", "username"));
+    form.appendChild(davInput("pass", t("y.dav.pass"), "password", "", "current-password"));
+    form.appendChild(davInput("dir", t("y.dav.dir"), "text", "orOS", "off"));
+    var go = el("button", "btn primary", t("y.dav.go"));
+    go.type = "submit";
+    go.setAttribute("data-k", "y.dav.go");
+    form.appendChild(actions(go, button(t("y.dav.cancel"), "y.dav.cancel", function () {
+      dav.open = false;
+      dav.pass = "";
+      render();
+    })));
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var arg = { url: dav.url, user: dav.user, pass: dav.pass, dir: dav.dir };
+      dav.pass = "";
+      act("sync.connectDav", arg);
+    });
+    return form;
+  }
 
   function secSync(host, s) {
     var y = s.sync;
     var st = C.syncState(y);
+    if (st !== "off") { dav.open = false; dav.pass = ""; }
     var c1 = card(null);
     var status = el("div", "status status-" + st);
     status.appendChild(el("span", "dot"));
@@ -667,14 +773,28 @@
     txt.appendChild(el("div", "status-main",
       st === "off" ? t("y.status.off") : st === "locked" ? t("y.status.locked") :
       st === "dirty" ? t("y.status.dirty") : t("y.status.on")));
-    if (y.email) txt.appendChild(el("div", "hint", y.email));
+    if (y.email) {
+      txt.appendChild(el("div", "hint",
+        t(y.provider === "webdav" ? "y.via.webdav" : "y.via.dropbox", { who: y.email })));
+    }
     status.appendChild(txt);
     c1.appendChild(status);
 
     if (st === "off") {
       if (y.available) {
         c1.appendChild(el("p", "hint", t("y.connect.hint")));
-        c1.appendChild(actions(button(t("y.connect"), "y.connect", function () { act("sync.connect"); }, "primary")));
+        if (dav.open && y.davAvailable) {
+          c1.appendChild(davForm());
+        } else {
+          c1.appendChild(actions(
+            button(t("y.connect"), "y.connect", function () { act("sync.connect"); }, "primary"),
+            y.davAvailable ? button(t("y.dav"), "y.dav", function () {
+              dav.open = true;
+              render();
+              var f = $("f-dav-url");
+              if (f) f.focus();
+            }) : null));
+        }
       }
     } else if (st === "locked") {
       var form = el("form", "pass");
