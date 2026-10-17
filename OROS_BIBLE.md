@@ -7427,3 +7427,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Send to someone: send a whole calendar or a date range from Calendar › More; it opens month by month in any browser, as .ics or into orOS (new share kind `cal`).
 - Files: `share/{kinds,send,view}.js`, `share/share.css`, `share/index.html`, `calendar/calendar.js`, `calendar/calendar.css`, `calendar/index.html`, help, Bible.
   - Tests: full suite green; real Chromium 1280 EN / 360 EL. Not tested: a real phone, the live relay from the cloud container.
+
+### 2026-10-17 — orOS Drive on the phone: pickers skip the core before sign-in + "Not saved to orOS" notification (#474) — 2.78.01
+- orOS Drive on the phone: Android's Files app and file pickers no longer load the Drive core for people who never signed in, and a file that could not be saved to orOS now shows a "Not saved to orOS" notification instead of only a log line.
+- Files: `android/app/src/drive/**` (DriveCore, DriveProvider, strings EN/EL), Bible DRIVE-A, tests.
+  - Tests: full suite green; Android build green on GitHub. Not tested: a real phone (needs a new APK).
