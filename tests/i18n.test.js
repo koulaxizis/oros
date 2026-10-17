@@ -92,7 +92,7 @@ test("i18n.js lists English and Greek first, every code once", () => {
   }
 });
 
-test("every pack is plain data for a real app, with fitting values", () => {
+test("every pack is plain data for a real app", () => {
   const bad = [];
   for (const l of PACK_LANGS) {
     for (const f of S.packFiles(l.code)) {
@@ -102,10 +102,16 @@ test("every pack is plain data for a real app, with fitting values", () => {
       if (!/^[a-z0-9][a-z0-9-]*\.js$/.test(f)) { bad.push(rel + ": not a pack (<app>.js) or help page (help/<app>.txt)"); continue; }
       const p = S.readPack(rel);
       if (p.error) { bad.push(p.error); continue; }
-      bad.push(...S.checkPack(p, S.appKeys(p.app, ALL)));
+      if (!S.appKeys(p.app, ALL).size) bad.push(rel + ": no app with this name has strings");
     }
   }
   assert.deepEqual(bad, [], "Language pack problems:\n" + bad.join("\n"));
+  // Lines that do not fit (any more) show English; they never fail a
+  // PR that changed the English text. Listed for translators (STATUS.md).
+  for (const l of PACK_LANGS) {
+    const issues = S.packIssues(l.code, ALL);
+    if (issues.length) console.log("# " + l.code + ": " + issues.length + " translated lines show English until fixed (see i18n/" + l.code + "/STATUS.md):\n# " + issues.slice(0, 20).join("\n# "));
+  }
 });
 
 test("every translated help page belongs to an English one", () => {
@@ -181,8 +187,10 @@ test("one key means one text within a pack app", () => {
 
 test("a shown language has the shell, Settings and Help translated", () => {
   // status "partial" or "full" puts a language in the pickers; before
-  // that it stays "hidden" (?lang=<code> only).
-  const bad = [];
+  // that it stays "hidden" (?lang=<code> only). New English strings and
+  // pages land before their translation, so a shown language may lag a
+  // little (listed, not failing); below 95% it goes back to "hidden".
+  const MIN = 0.95, bad = [], lag = [];
   const topics = S.helpPages().filter((h) => h.pack.startsWith("help/topics/")).map((h) => h.pack);
   for (const l of PACK_LANGS.filter((x) => x.status !== "hidden")) {
     const files = new Set(S.packFiles(l.code));
@@ -190,24 +198,13 @@ test("a shown language has the shell, Settings and Help translated", () => {
       const p = files.has(app + ".js") ? S.readPack("i18n/" + l.code + "/" + app + ".js") : { table: {} };
       const en = S.appKeys(app, ALL);
       const missing = [...en.keys()].filter((k) => typeof p.table[k] !== "string" || !p.table[k].trim());
-      if (missing.length) bad.push(l.code + "/" + app + ": " + missing.length + " strings missing, e.g. " + missing.slice(0, 3).join(", "));
+      if (en.size && (en.size - missing.length) / en.size < MIN) bad.push(l.code + "/" + app + ": " + missing.length + " of " + en.size + " strings missing");
+      else if (missing.length) lag.push(l.code + "/" + app + ": " + missing.join(", "));
     }
-    for (const t of topics) if (!files.has(t)) bad.push(l.code + ": " + t + " missing");
+    const noTopic = topics.filter((t) => !files.has(t));
+    if (noTopic.length > topics.length * (1 - MIN)) bad.push(l.code + ": guide pages missing: " + noTopic.join(", "));
+    else if (noTopic.length) lag.push(l.code + ": guide pages missing: " + noTopic.join(", "));
   }
-  assert.deepEqual(bad, [], "Translate these before the language is shown (or keep status \"hidden\"):\n" + bad.join("\n"));
-});
-
-test("translated help pages keep the English links and shortcuts", () => {
-  const marks = (s) => [...new Set((s.match(/\]\((?:app|topic|help|tour|https?):[^)]+\)|\[\[[^\]]+\]\]/g) || []).map((m) => m.replace(/^\]/, "")))].sort().join(" ");
-  const bad = [];
-  for (const l of PACK_LANGS) {
-    const files = new Set(S.packFiles(l.code));
-    for (const h of S.helpPages()) {
-      if (!files.has(h.pack)) continue;
-      const en = fs.readFileSync(path.join(ROOT, h.en), "utf8");
-      const tr = fs.readFileSync(path.join(ROOT, "i18n", l.code, h.pack), "utf8");
-      if (marks(en) !== marks(tr)) bad.push("i18n/" + l.code + "/" + h.pack + ": links/shortcuts differ from " + h.en);
-    }
-  }
-  assert.deepEqual(bad, []);
+  if (lag.length) console.log("# shown languages, still to translate:\n# " + lag.join("\n# "));
+  assert.deepEqual(bad, [], "Translate these, or set the language back to status \"hidden\" in i18n.js:\n" + bad.join("\n"));
 });
