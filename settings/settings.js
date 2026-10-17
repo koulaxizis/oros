@@ -503,6 +503,7 @@
     })));
     host.appendChild(c1);
     secPhoneReminders(host);
+    secWebPush(host);
 
     var c2 = card(null);
     c2.appendChild(row(t("n.position"), select(C.POSITIONS.map(function (p) {
@@ -612,6 +613,63 @@
     } else if (on && !st.exact) {
       c.appendChild(el("div", "hint", t("n.phone.exact")));
       c.appendChild(actions(button(t("n.phone.allow"), "n.phone.exact", function () { P.askPermission("reminders"); })));
+    }
+    host.appendChild(c);
+  }
+
+  // Notifications with orOS closed (webpush.js): optional, off by
+  // default, per device; hidden in the Android app (it rings itself).
+  var pushOff = null, pushNote = "";
+  function webPush() {
+    var p = parentWin();
+    try { return p && p.orosPush && typeof p.orosPush.enable === "function" ? p.orosPush : null; } catch (e) { return null; }
+  }
+  function secWebPush(host) {
+    var W = webPush();
+    if (!W || phone()) return;
+    if (!pushOff) pushOff = W.onChange(function () { render(); });
+    var c = card(null);
+    if (!W.supported()) {
+      c.appendChild(row(t("n.push"), el("span", "hint", t("n.push.unsupported")), {}));
+      host.appendChild(c);
+      return;
+    }
+    var st = W.state();
+    c.appendChild(row(t("n.push"), switchBtn(st.on, "n.push", function (v) {
+      pushNote = "";
+      (v ? W.enable() : W.disable()).catch(function (e) {
+        var code = e && e.code;
+        pushNote = code === "denied" ? "n.push.denied" : (code === "unsupported" || code === "nosubscribe") ? "n.push.unsupported" : "n.push.unavailable";
+        render();
+      }).then(function () { render(); });
+    }, t("n.push")), { hint: t("n.push.hint") }));
+    c.appendChild(el("div", "hint", t("n.push.desktop")));
+    if (st.on && st.at) {
+      c.appendChild(el("div", "hint", t("n.push.status", { n: st.n,
+        when: new Date(st.at).toLocaleString(document.documentElement.lang || undefined, { dateStyle: "short", timeStyle: "short" }) })));
+    }
+    if (st.on && st.err && st.err !== "rate") c.appendChild(el("div", "hint", t("n.push.failed")));
+    if (pushNote) c.appendChild(el("div", "hint", t(pushNote)));
+    var devs = W.devices ? W.devices() : [];
+    if (devs.length) {
+      var dl = el("div", "checks");
+      c.appendChild(el("div", "hint", t("n.push.devices")));
+      devs.forEach(function (d) {
+        var line = el("div", "pair");
+        line.appendChild(el("span", "pair-label", (d.name || "?") + (d.self ? " (" + t("n.push.this") + ")" : "")));
+        line.appendChild(button(t("n.push.remove"), "n.push.remove:" + d.id, function () {
+          W.remove(d.id).then(function () { render(); });
+        }));
+        dl.appendChild(line);
+      });
+      c.appendChild(dl);
+    }
+    if (st.on) {
+      c.appendChild(actions(button(t("n.push.test"), "n.push.test", function () {
+        W.test(t("n.push.test.title"), t("n.push.test.body")).then(function () {
+          pushNote = "n.push.test.sent"; render();
+        }, function () { pushNote = "n.push.unavailable"; render(); });
+      })));
     }
     host.appendChild(c);
   }
