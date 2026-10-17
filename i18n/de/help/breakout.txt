@@ -1,0 +1,36 @@
+# Breakout
+Lass den Ball von deinem Schläger abprallen und zerschlag alle Steine. Räumst du ein Level ab, geht es zum nächsten.
+
+## So wird gespielt
+Drück `Start` und schlag dann den Ball ab. Er prallt von den Wänden, den Steinen und deinem Schläger ab. Wo der Ball den Schläger trifft, bestimmt den Winkel: nahe der Mitte fliegt er fast gerade nach oben, nahe den Enden zur Seite. Jeder Treffer mit dem Schläger macht den Ball etwas schneller.
+
+Manche Steine brauchen zwei oder drei Treffer; ihre Farbe zeigt, wie viele noch fehlen. Kommt der Ball an deinem Schläger vorbei, verlierst du ein Leben. Du startest mit 3 Leben, und das Spiel endet, wenn alle weg sind.
+
+## Steuerung
+- **Maus:** der Schläger folgt dem Zeiger; klick zum Abschlagen.
+- **Touch:** zieh irgendwo, um den Schläger zu bewegen; tipp zum Abschlagen.
+- **Tastatur:** [[←]] [[→]] oder [[A]] [[D]] bewegen den Schläger, [[Space]] oder [[↑]] schlägt ab.
+- [[P]] oder [[Esc]] (oder `Pause (P)`) pausiert und spielt weiter; [[Space]] pausiert auch, solange der Ball fliegt.
+- [[N]] startet ein neues Spiel.
+
+Das Spiel pausiert auch, wenn du woandershin wechselst. Beim Weiterspielen zählt es zuerst 3-2-1 herunter.
+
+## Level und Punkte
+Es gibt 8 Level, jedes mit eigener Anordnung der Steine. Nach dem achten geht es von vorn los, jede Runde 15 % schneller.
+
+Jeder Treffer auf einen Stein bringt 10 Punkte, und ein abgeräumtes Level bringt 100 × die Levelnummer dazu.
+
+Mit `Power-ups` (Standard) lassen zerschlagene Steine manchmal eine Kapsel fallen. Fang sie mit dem Schläger:
+- `Breiter Schläger` für 15 Sekunden.
+- `Langsamer Ball` für 10 Sekunden.
+- `Extraleben`, bis zu 5 Leben.
+
+Wähle `Ohne Power-ups` für das einfache Spiel. Jeder Modus hat eigene Rekorde: `Rekorde` zeigt die beste Punktzahl mit Datum, das höchste erreichte Level und die gespielten Spiele.
+
+## Synchronisierung
+Deine Rekorde werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. `Rekorde zurücksetzen` löscht sie nach einer Bestätigung auf allen Geräten. Das laufende Spiel, die Wahl der Power-ups und der Ton bleiben auf diesem Gerät.
+
+## Tipps
+- Ein laufendes Spiel bleibt erhalten und öffnet sich pausiert, damit nichts passiert, bevor du bereit bist.
+- Aus Versehen ein neues Spiel gestartet oder den Modus gewechselt? Tipp in der Meldung auf `Rückgängig`.
+- Triff den Ball mit dem Rand des Schlägers, um ihn in die Ecken zu schicken.
