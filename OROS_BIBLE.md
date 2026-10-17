@@ -7684,3 +7684,6 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Android app: Calendar reminders now ring with orOS closed, also when your events are not copied to the phone's Calendar (`phone.js` adds Calendar rows from `orosPush.calendarRows` (webpush.js) to the app's own reminder list while the events are not copied to the phone's Calendar, so nothing rings twice); no new APK needed.
 - Files: `phone.js`, `webpush.js`, `tests/webpush.test.js`.
   - Tests: full suite green; Chromium bridge check. Not tested: a real phone with orOS closed.
+
+### 2026-10-17 — orOS Drive on the phone: Android build uses oros-drive main 242b375 (#513) — CI only, no APP_VERSION
+- `.github/workflows/android.yml` builds the Drive core from oros-drive main 242b375 (oros-drive PR #1 merged, Chris 17:15) instead of the earlier pin. Tests: drive-android tests; Android build in CI.
