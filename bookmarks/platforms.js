@@ -66,7 +66,9 @@
     }
   };
   function t(k, params) {
-    var tab = S[A && A.lang === "el" ? "el" : "en"];
+    // Any other language: the "bookmarks" pack (../i18n.js), else English.
+    var code = A && A.lang, I = root.orosI18n;
+    var tab = S[code] || (I && typeof code === "string" ? I.table(S, "bookmarks", code) : S.en);
     var s = tab[k] !== undefined ? tab[k] : S.en[k] !== undefined ? S.en[k] : k;
     return s.replace(/\{(\w+)\}/g, function (m, n) { return params && params[n] !== undefined ? String(params[n]) : m; });
   }
