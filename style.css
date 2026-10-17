@@ -1228,6 +1228,85 @@ body {
   body.app-running #help-btn:not([hidden]) ~ #btn-lang { display: none; }
 }
 
+/* Multitasking wave M3 — app switcher (shell.js section 10c). */
+#mt-btn {
+  background: transparent; border: none; cursor: pointer;
+  height: 44px; min-width: 40px; padding: 0 6px; margin-left: 2px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 3px;
+  border-radius: 8px; color: var(--text-dim);
+}
+#mt-btn[hidden] { display: none; }
+#mt-btn:hover { background: var(--accent-soft); color: var(--text); }
+#mt-btn .mt-count {
+  font-size: 11px; font-weight: 700; color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+.menu-item.mt-open::after {
+  content: ""; flex: 0 0 auto; width: 6px; height: 6px; margin-left: auto;
+  border-radius: 50%; background: var(--accent);
+}
+#mt-sw {
+  position: fixed; inset: 0; z-index: 1300;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex; align-items: center; justify-content: center; padding: 16px;
+}
+.mt-sw-box {
+  width: min(440px, 100%); max-height: 80dvh;
+  display: flex; flex-direction: column;
+  background: var(--panel-bg); color: var(--text);
+  border: 1px solid var(--border); border-radius: 12px;
+  box-shadow: 0 16px 48px var(--shadow); padding: 14px 14px 12px;
+}
+.mt-sw-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.mt-sw-head h2 { flex: 1; min-width: 0; margin: 0; font-size: 16px; font-weight: 800; }
+.mt-sw-n {
+  font-size: 12px; font-weight: 700; color: var(--accent);
+  background: var(--accent-soft); border-radius: 6px; padding: 1px 7px; vertical-align: 2px;
+}
+.mt-sw-list { overflow-y: auto; display: flex; flex-direction: column; gap: 4px; min-height: 0; }
+.mt-sw-row {
+  display: flex; align-items: center; gap: 4px;
+  border: 1px solid var(--border); border-radius: 10px;
+  touch-action: pan-y; transition: transform 0.15s ease, opacity 0.15s ease;
+}
+.mt-sw-front { border-color: var(--accent); }
+.mt-sw-go {
+  flex: 1; min-width: 0; min-height: 48px; display: flex; align-items: center; gap: 10px;
+  background: transparent; border: none; color: var(--text); font: inherit;
+  text-align: left; padding: 6px 10px; border-radius: 9px; cursor: pointer;
+}
+.mt-sw-go:hover, .mt-sw-go:focus-visible { background: var(--accent-soft); }
+.mt-sw-go .app-ico { flex: 0 0 auto; display: inline-flex; color: var(--accent); }
+.mt-sw-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; }
+.mt-sw-when { flex: 0 0 auto; font-size: 12px; color: var(--text-dim); }
+.mt-sw-go:hover .mt-sw-when, .mt-sw-go:focus-visible .mt-sw-when { color: var(--text); }
+.mt-sw-x {
+  flex: 0 0 auto; width: 44px; height: 44px; border: none; background: transparent;
+  color: var(--text-dim); border-radius: 9px; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.mt-sw-x:hover, .mt-sw-x:focus-visible { background: var(--accent-soft); color: var(--text); }
+.mt-sw-foot { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+.mt-sw-keys { flex: 1; min-width: 0; font-size: 11.5px; color: var(--text-dim); }
+.mt-sw-empty { margin: 6px 2px 4px; font-size: 13px; color: var(--text-dim); line-height: 1.5; }
+.mt-sw-done, .mt-sw-all, .mt-sw-set {
+  min-height: 36px; padding: 6px 12px; border-radius: 8px; cursor: pointer; font: inherit; font-size: 13px;
+  background: transparent; color: var(--text); border: 1px solid var(--border);
+}
+.mt-sw-set { margin-left: auto; background: var(--accent); color: var(--bg); border-color: var(--accent); font-weight: 700; }
+.mt-sw-all[hidden] { display: none; }
+/* Phones: the list is a sheet from the bottom ("Recents"). */
+@media (max-width: 600px) {
+  #mt-sw { align-items: flex-end; padding: 0; }
+  .mt-sw-box {
+    width: 100%; max-height: 75dvh; border-radius: 16px 16px 0 0; border-bottom: none;
+    padding: 12px 12px calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+  .mt-sw-keys { display: none; }
+  .mt-sw-all { margin-left: auto; }
+}
+@media (prefers-reduced-motion: reduce) { .mt-sw-row { transition: none; } }
+
 /* Help phase 3 — first-run tour of the top bar (shell.js startTour).
    The ring's huge shadow dims everything but the button it frames. */
 #oros-tour {

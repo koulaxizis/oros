@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "3.03.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "3.04.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -3994,7 +3994,8 @@
 
         cats[cat].forEach(function (app) {
           var btn = document.createElement("button");
-          btn.className = "menu-item";
+          btn.className = "menu-item" + (mtActive() && appLive(app.id) ? " mt-open" : "");
+          btn.setAttribute("data-app", app.id);
           if (!firstMatch && q) firstMatch = app;
           var label = appLabelOf(app);
           if (ICONS[app.icon]) {
@@ -6763,7 +6764,8 @@
     { key: "a", label: "sc.desc.assistant",  fn: function() { openAssistant(); } },
     { key: "y", label: "sc.desc.today",      fn: function() { openAppById("today"); } },
     { key: "n", label: "sc.desc.stickies",   fn: scNewSticky },
-    { key: "k", label: "sc.desc.cmdbar",     fn: function() { openCmdBar(); } }
+    { key: "k", label: "sc.desc.cmdbar",     fn: function() { openCmdBar(); } },
+    { key: "w", label: "sc.desc.switcher",   fn: function() { mtSwitcher(); } }
   ];
 
   // Public contract consumed by iframe apps (same-origin, so this
@@ -9491,6 +9493,11 @@
   // Heavy apps take two slots (declared + measured in M1).
   var MT_HEAVY = { atelier: 1, maps: 1, photolab: 1, layout: 1, montage: 1, scanpdf: 1, studio: 1, assistant: 1 };
   var mt = { hidden: [] };   // { app, el, at } of each hidden live app
+  var mtOnChange = null;     // set by the switcher (10c): repaint on change
+  var mtNoKeep = false;      // the switcher closes the app in front
+  function mtChanged() {
+    if (typeof mtOnChange === "function") { try { mtOnChange(); } catch (e) {} }
+  }
 
   function mtOn() {
     try { return localStorage.getItem(MT_KEY) === "1"; } catch (e) { return false; }
@@ -9594,6 +9601,32 @@
   function mtDropAll() {
     var l = mtList();
     while (l.length) mtDrop(l.shift().el);
+    mtChanged();
+  }
+  // Open apps for the switcher: the one in front, then the hidden ones,
+  // the one left last first. { app, at, front }
+  function mtOpenList() {
+    var out = [];
+    if (state.running && state.running.type === "internal") out.push({ app: state.running, at: 0, front: true });
+    mtList().slice().sort(function (a, b) { return b.at - a.at; }).forEach(function (r) {
+      out.push({ app: r.app, at: r.at, front: false });
+    });
+    return out;
+  }
+  // Close one open app for good (switcher ×, swipe).
+  function mtClose(id) {
+    if (state.running && state.running.id === id) {
+      mtNoKeep = true;
+      try { returnToDesktop(); } finally { mtNoKeep = false; }
+      return;
+    }
+    var r = mtTake(id);
+    if (r) mtDrop(r.el);
+    mtChanged();
+  }
+  function mtCloseAll() {
+    mtDropAll();
+    if (state.running) mtClose(state.running.id);
   }
   // openApp with multitasking on: `prev` was in front, `app` comes.
   function mtSwitch(prev, app, at) {
@@ -9614,7 +9647,7 @@
   // returnToDesktop with multitasking on: keep the app alive if it may.
   function mtLeave(prev) {
     var front = document.getElementById("app-frame");
-    if (prev && mtKeepable(prev) && mtHasDoc(front)) {
+    if (prev && !mtNoKeep && mtKeepable(prev) && mtHasDoc(front)) {
       mtHide(front, prev);
       mtNewFrame();
       mtFit(null);
@@ -9628,6 +9661,7 @@
       else localStorage.removeItem(MT_KEY);
     } catch (e) {}
     if (!on) mtDropAll();
+    else mtChanged();
   }
   function mtSnapshot() {
     if (SOLO) return null;
@@ -9648,6 +9682,7 @@
     if (mtActive()) mtSwitch(prev, app, at);
     else document.getElementById("app-frame").src = app.url + (at || "");   // at: DL-1 launchAppSuffix only
     if (typeof window.t === "function") frameTitle();
+    mtChanged();
     document.getElementById("oros-running").classList.add("active");
     document.getElementById("oros-desktop").style.display = "none";
     var mb = document.getElementById("btn-menu");
@@ -9667,6 +9702,7 @@
     state.running = null;
     document.body.classList.remove("app-running");
     if (!(mtActive() && mtLeave(prev))) document.getElementById("app-frame").src = "about:blank";
+    mtChanged();
     document.getElementById("oros-running").classList.remove("active");
     document.getElementById("oros-desktop").style.display = "";
     var mb = document.getElementById("btn-menu");
@@ -9678,6 +9714,197 @@
     if (window.orosSeasonal) window.orosSeasonal.refresh();   // decorations move again
     tourMaybe();   // a first-run tour put off by a launch-param app
   }
+
+  // ---------- 10c. App switcher (multitasking, wave M3) ----------
+  // The open apps of 10b in one list: the bar button (shown while
+  // another app is open behind the one you see, with the count),
+  // Ctrl+Alt+Shift+W, and a dot on open apps in the menu and the Dock.
+  // Desktop: a centred panel, arrows / Enter / Delete / Esc; the app
+  // you left last has the focus, so the shortcut + Enter goes back to
+  // it. Phone (<= 600px): the same list as a sheet from the bottom,
+  // swipe a card sideways to close that app. Off (or SOLO): the button
+  // never shows and the shortcut says how to turn multitasking on.
+  var mtSw = null;   // { ov, close } while the switcher is open
+
+  function mtLabel(app) {
+    var k = "app." + app.id, v = window.t(k);
+    return (v === k) ? app.name : v;
+  }
+  function mtAgo(at) {
+    var s = Math.max(0, Math.round((Date.now() - at) / 1000));
+    if (s < 60) return window.t("mt.sw.justnow");
+    var rtf = null;
+    try { rtf = new Intl.RelativeTimeFormat(state.lang || "en", { numeric: "auto" }); } catch (e) {}
+    var m = Math.round(s / 60), h = Math.round(s / 3600);
+    if (!rtf) return m < 60 ? m + " min" : h + " h";
+    return m < 60 ? rtf.format(-m, "minute") : rtf.format(-h, "hour");
+  }
+  // Bar button, menu rows and Dock follow every change of the list.
+  function mtPaint() {
+    var on = mtActive();
+    var n = on ? mtOpenList().length : 0;
+    var btn = document.getElementById("mt-btn");
+    if (btn) {
+      var show = on && mtList().length > 0;
+      if (btn.hidden === show) { btn.hidden = !show; queueFitBar(); }
+      var c = btn.querySelector(".mt-count");
+      if (c) c.textContent = String(n);
+      btn.setAttribute("aria-label", window.t("mt.sw.btn").replace("{n}", n));
+    }
+    Array.prototype.forEach.call(document.querySelectorAll("#app-menu .menu-item[data-app]"), function (b) {
+      b.classList.toggle("mt-open", on && appLive(b.getAttribute("data-app")));
+    });
+    if (window.orosLauncher) window.orosLauncher.refresh();
+    if (mtSw) mtSwRender();
+  }
+  mtOnChange = mtPaint;
+
+  function mtSwClose() {
+    if (!mtSw) return;
+    var o = mtSw;
+    mtSw = null;
+    o.ov.remove();
+    document.removeEventListener("keydown", o.onKey, true);
+    if (o.back && o.back.focus && document.contains(o.back)) { try { o.back.focus(); } catch (e) {} }
+  }
+  function mtSwGo(app) {
+    mtSwClose();
+    if (state.running && state.running.id === app.id) return;
+    openApp(app);
+  }
+  function mtSwRender() {
+    var box = mtSw.ov.querySelector(".mt-sw-list");
+    var list = mtOpenList();
+    var focusId = document.activeElement && document.activeElement.closest &&
+      document.activeElement.closest(".mt-sw-row") ? document.activeElement.closest(".mt-sw-row").getAttribute("data-app") : null;
+    box.textContent = "";
+    mtSw.ov.querySelector(".mt-sw-n").textContent = String(list.length);
+    mtSw.ov.querySelector(".mt-sw-all").hidden = !list.length;
+    if (!list.length) {
+      var em = document.createElement("p");
+      em.className = "mt-sw-empty";
+      em.textContent = window.t("mt.sw.empty");
+      box.appendChild(em);
+    }
+    list.forEach(function (it) {
+      var row = document.createElement("div");
+      row.className = "mt-sw-row" + (it.front ? " mt-sw-front" : "");
+      row.setAttribute("role", "listitem");
+      row.setAttribute("data-app", it.app.id);
+      var go = document.createElement("button");
+      go.type = "button";
+      go.className = "mt-sw-go";
+      go.innerHTML = '<span class="app-ico">' + (ICONS[it.app.icon] || "") + '</span>' +
+        '<span class="mt-sw-name"></span><span class="mt-sw-when"></span>';
+      go.querySelector(".mt-sw-name").textContent = mtLabel(it.app);
+      go.querySelector(".mt-sw-when").textContent = it.front ? window.t("mt.sw.now") : mtAgo(it.at);
+      if (it.front) go.setAttribute("aria-current", "true");
+      go.addEventListener("click", function () { if (!row.__mtSwiped) mtSwGo(it.app); });
+      var x = document.createElement("button");
+      x.type = "button";
+      x.className = "mt-sw-x";
+      x.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+      var xl = window.t("mt.sw.close").replace("{app}", mtLabel(it.app));
+      x.setAttribute("aria-label", xl);
+      x.title = xl;
+      x.addEventListener("click", function () { mtClose(it.app.id); });
+      row.appendChild(go);
+      row.appendChild(x);
+      mtSwSwipe(row, it.app.id);
+      box.appendChild(row);
+    });
+    var rows = box.querySelectorAll(".mt-sw-go");
+    var want = null;
+    if (focusId) want = box.querySelector('.mt-sw-row[data-app="' + focusId + '"] .mt-sw-go');
+    if (!want && rows.length) want = rows[list.length > 1 && list[0].front ? 1 : 0];
+    if (!want) want = mtSw.ov.querySelector(".mt-sw-done");
+    if (want) want.focus();
+  }
+  // Phone: drag a card sideways past a third of its width to close it.
+  function mtSwSwipe(row, id) {
+    var x0 = null, dx = 0, pid = null;
+    row.addEventListener("pointerdown", function (e) {
+      if (e.pointerType === "mouse" || e.target.closest(".mt-sw-x")) return;
+      x0 = e.clientX; dx = 0; pid = e.pointerId; row.__mtSwiped = false;
+    });
+    row.addEventListener("pointermove", function (e) {
+      if (x0 === null || e.pointerId !== pid) return;
+      dx = e.clientX - x0;
+      if (Math.abs(dx) > 8) { row.__mtSwiped = true; row.style.transform = "translateX(" + dx + "px)"; row.style.opacity = String(Math.max(0.2, 1 - Math.abs(dx) / row.offsetWidth)); }
+    });
+    function end() {
+      if (x0 === null) return;
+      x0 = null;
+      if (Math.abs(dx) > row.offsetWidth / 3) { mtClose(id); return; }
+      row.style.transform = ""; row.style.opacity = "";
+      setTimeout(function () { row.__mtSwiped = false; }, 0);
+    }
+    row.addEventListener("pointerup", end);
+    row.addEventListener("pointercancel", end);
+  }
+  function mtSwitcher() {
+    if (SOLO) return;
+    if (mtSw) { mtSwClose(); return; }
+    closeMenu();
+    var ov = document.createElement("div");
+    ov.id = "mt-sw";
+    ov.setAttribute("role", "dialog");
+    ov.setAttribute("aria-modal", "true");
+    ov.setAttribute("aria-labelledby", "mt-sw-title");
+    var on = mtActive();
+    ov.innerHTML =
+      '<div class="mt-sw-box">' +
+        '<div class="mt-sw-head"><h2 id="mt-sw-title">' + escapeHtml(window.t("mt.sw.title")) +
+          (on ? ' <span class="mt-sw-n"></span>' : '') + '</h2>' +
+          '<button type="button" class="mt-sw-done">' + escapeHtml(window.t("mt.sw.done")) + '</button></div>' +
+        (on ? '<div class="mt-sw-list" role="list"></div>' +
+          '<div class="mt-sw-foot"><span class="mt-sw-keys">' + escapeHtml(window.t("mt.sw.keys")) + '</span>' +
+          '<button type="button" class="mt-sw-all">' + escapeHtml(window.t("mt.sw.all")) + '</button></div>'
+        : '<p class="mt-sw-empty">' + escapeHtml(window.t("mt.sw.off")) + '</p>' +
+          '<div class="mt-sw-foot"><button type="button" class="mt-sw-set">' + escapeHtml(window.t("mt.sw.settings")) + '</button></div>') +
+      '</div>';
+    function onKey(e) {
+      if (!mtSw) return;
+      if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); mtSwClose(); return; }
+      if (!ov.contains(document.activeElement)) return;
+      var rows = Array.prototype.slice.call(ov.querySelectorAll(".mt-sw-go"));
+      var i = rows.indexOf(document.activeElement.closest(".mt-sw-row") ? document.activeElement.closest(".mt-sw-row").querySelector(".mt-sw-go") : null);
+      if ((e.key === "ArrowDown" || e.key === "ArrowUp") && rows.length) {
+        e.preventDefault();
+        var j = i < 0 ? 0 : (i + (e.key === "ArrowDown" ? 1 : rows.length - 1)) % rows.length;
+        rows[j].focus();
+      } else if ((e.key === "Delete" || e.key === "Backspace") && i >= 0) {
+        e.preventDefault();
+        mtClose(rows[i].closest(".mt-sw-row").getAttribute("data-app"));
+      }
+    }
+    ov.addEventListener("click", function (e) { if (e.target === ov) mtSwClose(); });
+    ov.querySelector(".mt-sw-done").addEventListener("click", mtSwClose);
+    if (on) ov.querySelector(".mt-sw-all").addEventListener("click", function () { mtCloseAll(); });
+    else ov.querySelector(".mt-sw-set").addEventListener("click", function () {
+      mtSwClose();
+      if (window.orosSettings) window.orosSettings.open("system");
+    });
+    document.body.appendChild(ov);
+    document.addEventListener("keydown", onKey, true);
+    mtSw = { ov: ov, onKey: onKey, back: document.activeElement };
+    if (on) mtSwRender();
+    else ov.querySelector(".mt-sw-set").focus();
+  }
+
+  (function () {
+    var left = document.querySelector("#oros-bar .bar-left");
+    if (!left || SOLO) return;
+    var btn = document.createElement("button");
+    btn.id = "mt-btn";
+    btn.type = "button";
+    btn.hidden = true;
+    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="3" width="14" height="12" rx="2"/><path d="M17 19H5a2 2 0 0 1-2-2V8"/></svg><span class="mt-count">0</span>';
+    btn.setAttribute("data-i18n-title", "mt.sw.tip");
+    btn.setAttribute("title", window.t("mt.sw.tip"));
+    btn.addEventListener("click", function (e) { e.stopPropagation(); mtSwitcher(); });
+    left.appendChild(btn);
+  })();
 
   // ---------- 11. Menu open/close ----------
   // The bell's panel never sees a menu-button click (the button stops
@@ -10904,6 +11131,7 @@
       apps: function () { return state.apps; },
       open: openApp,
       running: function () { return state.running; },
+      isOpen: function (id) { return mtActive() && appLive(id); },   // multitasking: alive behind
       icons: ICONS,
       lang: function () { return langBase(); },
       label: function (app) {

@@ -96,11 +96,11 @@ function sandbox(opts) {
   ctx.window = ctx;
   vm.createContext(ctx);
   vm.runInContext(SHELL.slice(start, end) +
-    "\nthis.h = { appFrames, appFrameOf, appLive, mtSlots, mtSwitch, mtLeave, mtKeepable, mtSetUser, mtSnapshot, mtActive, mtList };" +
+    "\nthis.h = { appFrames, appFrameOf, appLive, mtSlots, mtSwitch, mtLeave, mtKeepable, mtSetUser, mtSnapshot, mtActive, mtList, mtOpenList, mtClose, mtCloseAll };" +
     // the parts of openApp / returnToDesktop that touch frames
     "\nthis.open = function (app, at) { var prev = state.running; state.running = app; if (mtActive()) mtSwitch(prev, app, at); else document.getElementById('app-frame').src = app.url + (at || ''); };" +
     "\nthis.home = function () { var prev = state.running; state.running = null; if (!(mtActive() && mtLeave(prev))) document.getElementById('app-frame').src = 'about:blank'; };" +
-    "\nthis.openApp = this.open;", ctx);
+    "\nthis.openApp = this.open; this.returnToDesktop = this.home;", ctx);
   ctx.running = running;
   return ctx;
 }
@@ -210,6 +210,46 @@ test("shell: reopening the app in front reloads it, as before", () => {
   c.open(app("notes"));
   c.open(app("notes"), "#x");
   assert.deepEqual(c.running.children[0].loads, ["notes/", "notes/#x"]);
+});
+
+test("shell switcher: the list is the app in front, then the ones left last first; closing one or all", () => {
+  const c = sandbox({ storage: { "oros-multitask": "1" }, mem: 8 });
+  const h = c.h;
+  const ids = () => Array.from(h.mtOpenList(), (r) => r.app.id + (r.front ? "*" : ""));
+  c.open(app("notes"));
+  c.open(app("todo"));
+  h.mtList().forEach((r) => { r.at -= 1000; });   // todo is left later than notes
+  c.open(app("writer"));
+  assert.deepEqual(ids(), ["writer*", "todo", "notes"]);
+  h.mtClose("todo");
+  assert.deepEqual(ids(), ["writer*", "notes"]);
+  assert.equal(h.appLive("todo"), false);
+  h.mtClose("writer");                      // the app in front closes for good, it is not kept
+  assert.deepEqual(ids(), ["notes"]);
+  assert.equal(c.state.running, null);
+  assert.equal(c.document.getElementById("app-frame").src, "about:blank");
+  c.open(app("calculator"));
+  h.mtCloseAll();
+  assert.deepEqual(ids(), []);
+  assert.equal(c.running.children.length, 1, "one empty frame, as at boot");
+});
+
+test("shell switcher: Ctrl+Alt+Shift+W, the bar button and the menu / Dock marks", () => {
+  const defs = SHELL.slice(SHELL.indexOf("var SC_DEFS = ["), SHELL.indexOf("];", SHELL.indexOf("var SC_DEFS = [")));
+  assert.match(defs, /key: "w", label: "sc\.desc\.switcher",\s*fn: function\(\) \{ mtSwitcher\(\); \}/);
+  assert.match(SHELL, /mtOnChange = mtPaint;/);
+  assert.match(SHELL, /btn\.id = "mt-btn";/);
+  assert.match(SHELL, /isOpen: function \(id\) \{ return mtActive\(\) && appLive\(id\); \}/);
+  assert.match(fs.readFileSync(path.join(ROOT, "launcher.js"), "utf8"), /host\.isOpen && host\.isOpen\(id\) \? " open"/);
+  // every visible string exists in English, Greek and German
+  const tr = fs.readFileSync(path.join(ROOT, "translations.js"), "utf8");
+  const de = fs.readFileSync(path.join(ROOT, "i18n/de/shell.js"), "utf8");
+  const keys = [...new Set([...SHELL.matchAll(/window\.t\("(mt\.sw\.[a-z]+)"\)/g)].map((m) => m[1]))].concat(["sc.desc.switcher", "mt.sw.tip"]);
+  assert.ok(keys.length >= 10);
+  keys.forEach((k) => {
+    assert.equal(tr.split('"' + k + '"').length - 1, 2, k + " in translations.js EN + EL");
+    assert.ok(de.includes('"' + k + '"'), k + " in i18n/de/shell.js");
+  });
 });
 
 // A frame document as sync.js sees it: its window makes the functions.

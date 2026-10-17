@@ -18,6 +18,7 @@ orOS hat eine Reihe von Tastenkürzeln, die überall funktionieren: auf dem Desk
 - [[Ctrl+Alt+Shift+Y]]: `Heute öffnen, die Übersicht deines Tages`
 - [[Ctrl+Alt+Shift+N]]: `Neue Haftnotiz`
 - [[Ctrl+Alt+Shift+K]]: `Befehlsleiste (auch Ctrl+K)`
+- [[Ctrl+Alt+Shift+W]]: `Zwischen offenen Apps wechseln (Multitasking)`
 
 ## Was jedes Kürzel macht
 ### Synchronisierung und Sicherung
@@ -34,6 +35,7 @@ orOS hat eine Reihe von Tastenkürzeln, die überall funktionieren: auf dem Desk
 - **Timer der Zeiterfassung starten / stoppen** öffnet die [Zeiterfassung](app:timesheet) und startet den Timer oder stoppt den laufenden. Solange ein Timer läuft, zeigt die obere Leiste, wie lange er schon läuft; klicke darauf, um die Zeiterfassung zu öffnen.
 - **Neue Haftnotiz** legt eine neue [Haftnotiz](app:stickies) auf den Desktop, bereit zum Tippen. Auf einem Handy oder aus einer App heraus öffnet sie die Notiz in einem Fenster.
 - **Befehlsleiste** öffnet eine kleine Leiste über dem Bildschirm, in die du einen Befehl wie `dentist tomorrow 10` oder `buy milk` tippst. [[Ctrl+K]] macht dasselbe, außer in Notizen und Wiki, wo [[Ctrl+K]] deren eigene Suche ist. Siehe [Das Menü](help:t/menu#commands).
+- **Zwischen offenen Apps wechseln** zeigt die Apps, die mit eingeschaltetem [Multitasking](help:a/settings) offen sind: die im Vordergrund und die im Hintergrund. Die zuletzt verlassene App ist schon ausgewählt, also bringt dich die Tastenkombination und dann [[Enter]] direkt zu ihr zurück. Ist Multitasking aus, sagt sie dir, wo du es einschaltest.
 - **Hilfe zur offenen App** öffnet die Hilfe auf der Seite der App, die du gerade nutzt. Auf dem Desktop öffnet sie die Startseite der Hilfe.
 
 ## Mac und Tastaturbelegungen
