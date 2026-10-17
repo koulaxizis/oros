@@ -84,6 +84,19 @@ public class PhoneBridge {
 
     static final String DIAG_KEY = "diag-trail";
 
+    /** orOS Drive (DRIVE-A) lives in the orOS flavour only (app/src/oros). */
+    static final String DRIVE_ACTIVITY = "online.useoros.twa.DriveActivity";
+
+    /** Whether this app can mirror phone folders (orOS Drive). */
+    static boolean hasDrive(Context c) {
+        try {
+            return c.getPackageManager().getActivityInfo(
+                    new android.content.ComponentName(c, DRIVE_ACTIVITY), 0) != null;
+        } catch (android.content.pm.PackageManager.NameNotFoundException e) {
+            return false;
+        }
+    }
+
     /** Diagnostic builds (workflow input "diag") save each bridge step
      *  with its clock time; DiagActivity shows them. Toasts
      *  and notifications proved unreliable for this (Android drops
@@ -271,6 +284,7 @@ public class PhoneBridge {
             o.put("exact", Reminders.exact(app));
             o.put("widgets", Widgets.count(app));
             o.put("health", HealthBridge.status(app));
+            o.put("drive", hasDrive(app));
             o.put("app", BuildConfig.VERSION_NAME);
         } catch (JSONException ignored) {
         }

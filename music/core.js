@@ -5,7 +5,8 @@
 // WAV), track keys, text folding for search, the synced data model
 // (likes + playlists) and its merge, the play queue (shuffle,
 // repeat, "next up") and the library views (albums, artists,
-// genres, folders).
+// genres, folders), lyrics (LRC) and the sound settings
+// (equalizer presets, ReplayGain, crossfade curves).
 // No DOM, no storage, no fetch. Node tests load it as is (it
 // attaches OrosMusicCore to its global).
 //
@@ -19,6 +20,8 @@
 //   7. Mutations (stamp at the mutation site, R27)
 //   8. Queue
 //   9. Library views
+//  10. Lyrics (.lrc, LRCLIB)
+//  11. Sound: equalizer, volume normalisation, settings
 // ============================================================
 (function (root) {
   "use strict";
@@ -173,6 +176,34 @@
     var j = b.indexOf(0, o);
     return j;
   }
+  // TXXX (description + value) and USLT (language, description, text):
+  // the two strings after the encoding byte and `skip` - 1 more bytes.
+  function id3Pair(fr, skip, legacy) {
+    if (fr.length < skip + 1) return null;
+    var enc = fr[0], de = strEnd(fr, skip, enc);
+    if (de < 0) return null;
+    var dec = function (b) {
+      if (enc === 1) return utf16(b, false);
+      if (enc === 2) return utf16(b, true);
+      if (enc === 3) return utf8(b);
+      return decodeLegacy(b, legacy);
+    };
+    var vs = de + (enc === 1 || enc === 2 ? 2 : 1), ve = strEnd(fr, vs, enc);
+    return [dec(fr.subarray(skip, de)), dec(fr.subarray(vs, ve < 0 ? fr.length : ve))];
+  }
+  // ReplayGain from a tag (any format): "-6.53 dB", peak "0.98".
+  // Opus R128 gains are Q7.8 relative to -23 LUFS (ReplayGain = +5 dB).
+  function rgTag(out, k, v) {
+    k = String(k || "").toUpperCase().trim();
+    var n = parseFloat(String(v || "").replace(",", "."));
+    if (!isFinite(n)) return;
+    var f = { REPLAYGAIN_TRACK_GAIN: "rgT", REPLAYGAIN_ALBUM_GAIN: "rgA", REPLAYGAIN_TRACK_PEAK: "rpT", REPLAYGAIN_ALBUM_PEAK: "rpA" }[k];
+    if (k === "R128_TRACK_GAIN") { f = "rgT"; n = n / 256 + 5; }
+    else if (k === "R128_ALBUM_GAIN") { f = "rgA"; n = n / 256 + 5; }
+    if (!f || out[f] != null) return;
+    if (f.charAt(1) === "g" ? n < -60 || n > 30 : n <= 0 || n > 10) return;
+    out[f] = Math.round(n * 100) / 100;
+  }
   function id3Picture(fr, v22) {
     var enc = fr[0], o = 1, mime;
     if (v22) { mime = ascii(fr, 1, 3).toLowerCase() === "png" ? "image/png" : "image/jpeg"; o = 4; }
@@ -212,7 +243,15 @@
       var key = { TIT2: "t", TT2: "t", TPE1: "a", TP1: "a", TPE2: "aa", TP2: "aa", TALB: "al", TAL: "al",
         TRCK: "n", TRK: "n", TPOS: "dn", TPA: "dn", TCON: "g", TCO: "g", TYER: "y", TYE: "y", TDRC: "y", TLEN: "len" }[id];
       if (key) { if (!out[key]) out[key] = id3Text(fr, legacy); continue; }
-      if (id === "APIC" || id === "PIC") { var p = id3Picture(fr, v22); if (p) out.pics.push(p); }
+      if (id === "APIC" || id === "PIC") { var p = id3Picture(fr, v22); if (p) out.pics.push(p); continue; }
+      if (id === "TXXX" || id === "TXX") {
+        var tx = id3Pair(fr, 1, legacy);
+        // Some taggers keep lyrics in TXXX (LYRICS, UNSYNCEDLYRICS, USLT).
+        if (tx && /^(LYRICS|UNSYNCEDLYRICS|USLT)$/i.test(tx[0].trim())) { if (!out.ly) out.ly = tx[1]; }
+        else if (tx) rgTag(out, tx[0], tx[1]);
+        continue;
+      }
+      if ((id === "USLT" || id === "ULT") && !out.ly) { var ly = id3Pair(fr, 4, legacy); if (ly) out.ly = ly[1]; }
     }
     return out;
   }
@@ -275,8 +314,9 @@
         continue;
       }
       var key = { TITLE: "t", ARTIST: "a", ALBUMARTIST: "aa", "ALBUM ARTIST": "aa", ALBUM: "al", TRACKNUMBER: "n",
-        DISCNUMBER: "dn", GENRE: "g", DATE: "y", YEAR: "y" }[k];
+        DISCNUMBER: "dn", GENRE: "g", DATE: "y", YEAR: "y", LYRICS: "ly", UNSYNCEDLYRICS: "ly" }[k];
       if (key && !out[key]) out[key] = utf8(kv.subarray(eq + 1));
+      else if (/^(REPLAYGAIN_|R128_)/.test(k)) rgTag(out, k, ascii(kv, eq + 1, kv.length - eq - 1));
     }
   }
   function base64(s) {
@@ -396,7 +436,14 @@
             var data = null;
             boxes(b, s4, e4, function (t5, s5, e5) { if (t5 === "data") { data = { type: u32be(b, s5) & 0xffffff, v: b.subarray(s5 + 8, e5) }; return false; } });
             if (!data) return;
-            var key = { "©nam": "t", "©ART": "a", "aART": "aa", "©alb": "al", "©day": "y", "©gen": "g" }[item];
+            if (item === "----") {
+              // iTunes free-form item: "name" box, then data (ReplayGain).
+              var nm = "";
+              boxes(b, s4, e4, function (t5, s5, e5) { if (t5 === "name") { nm = utf8(b.subarray(s5 + 4, e5)); return false; } });
+              if (nm) rgTag(out, nm, utf8(data.v));
+              return;
+            }
+            var key = { "©nam": "t", "©ART": "a", "aART": "aa", "©alb": "al", "©day": "y", "©gen": "g", "©lyr": "ly" }[item];
             if (key) { if (!out[key]) out[key] = utf8(data.v); return; }
             if (item === "trkn" && data.v.length >= 4) out.n = String((data.v[2] << 8) | data.v[3]);
             else if (item === "disk" && data.v.length >= 4) out.dn = String((data.v[2] << 8) | data.v[3]);
@@ -435,7 +482,8 @@
   // (last bytes, for ID3v1 / Ogg length; optional), moov: Uint8Array
   // (MP4 moov box found with mp4Box; optional), size, name }
   // opts.legacy = "auto" | "el" | "latin" (old 8-bit tags).
-  // → { t, a, aa, al, n, dn, g, y, dur, pic: {mime, data} | null, fmt }
+  // → { t, a, aa, al, n, dn, g, y, dur, pic: {mime, data} | null, fmt,
+  //     rg: { tg, tp, ag, ap } | null (ReplayGain), ly: lyrics text | "" }
   function stem(name) {
     var base = String(name || "").split("/").pop().replace(/\.[^.]+$/, "");
     return clean(base.replace(/_/g, " "));
@@ -448,6 +496,12 @@
     var parts = s.split(/\s+[-–—]\s+/);
     if (parts.length >= 2) { out.a = clean(parts[0]); out.t = clean(parts.slice(1).join(" - ")); }
     return out;
+  }
+  // { tg, tp, ag, ap } (dB, peak) or null.
+  function rgOf(r) {
+    var o = {}, any = false;
+    [["rgT", "tg"], ["rpT", "tp"], ["rgA", "ag"], ["rpA", "ap"]].forEach(function (x) { if (typeof r[x[0]] === "number") { o[x[1]] = r[x[0]]; any = true; } });
+    return any && (o.tg != null || o.ag != null) ? o : null;
   }
   function readTags(src, opts) {
     var legacy = (opts && opts.legacy) || "auto";
@@ -478,7 +532,8 @@
     var t = clean(r.t) || nm.t || "", a = clean(r.a) || nm.a || "";
     return {
       t: t, a: a, aa: clean(r.aa), al: clean(r.al), n: num(r.n) || nm.n || 0, dn: num(r.dn), g: genreName(r.g), y: year(r.y),
-      dur: r.dur > 0 && isFinite(r.dur) ? Math.round(r.dur) : 0, pic: pic ? { mime: pic.mime, data: pic.data } : null, fmt: fmt
+      dur: r.dur > 0 && isFinite(r.dur) ? Math.round(r.dur) : 0, pic: pic ? { mime: pic.mime, data: pic.data } : null, fmt: fmt,
+      rg: rgOf(r), ly: typeof r.ly === "string" && r.ly.trim() ? r.ly.replace(/\r\n?/g, "\n").trim().slice(0, 30000) : ""
     };
   }
   // A track's key is the same on every device for the same song:
@@ -899,8 +954,122 @@
     return (h ? h + ":" + (m < 10 ? "0" : "") : "") + m + ":" + (x < 10 ? "0" : "") + x;
   }
 
+  // ---------- 10. Lyrics (.lrc, LRCLIB) ----------
+  // LRC: "[mm:ss.xx]line" (several stamps on one line allowed),
+  // [offset:+ms], header tags ([ar:], [ti:]…) and word stamps
+  // <mm:ss.xx> (dropped). → { lines: [{ t seconds, s text }] sorted,
+  // or [] when the text has no stamps; plain: the text without stamps }
+  var LRC_TS = /\[(\d{1,3}):(\d{1,2})(?:[.:](\d{1,3}))?\]/g;
+  function parseLrc(text) {
+    text = String(text || "").replace(/\r\n?/g, "\n").slice(0, 200000);
+    var lines = [], plain = [], off = 0;
+    text.split("\n").forEach(function (raw) {
+      var ln = raw.trim(), m;
+      var head = /^\[([a-z#]+):(.*)\]$/i.exec(ln);
+      if (head && !/^\d/.test(head[1])) { if (head[1].toLowerCase() === "offset") off = parseInt(head[2], 10) || 0; return; }
+      var stamps = [], last = 0;
+      LRC_TS.lastIndex = 0;
+      while ((m = LRC_TS.exec(ln)) && m.index === last) {
+        var frac = m[3] ? +m[3] / Math.pow(10, m[3].length) : 0;
+        stamps.push(+m[1] * 60 + +m[2] + frac);
+        last = LRC_TS.lastIndex;
+      }
+      var body = ln.slice(last).replace(/<\d{1,3}:\d{1,2}(?:[.:]\d{1,3})?>/g, "").replace(/\s+/g, " ").trim();
+      if (stamps.length) stamps.forEach(function (t) { lines.push({ t: t, s: body }); });
+      plain.push(body);
+    });
+    if (lines.length) {
+      lines.forEach(function (x) { x.t = Math.max(0, Math.round((x.t - off / 1000) * 100) / 100); });
+      lines.sort(function (a, b) { return a.t - b.t; });
+    }
+    // Plain text: no runs of empty lines, none at the ends.
+    var p = plain.join("\n").replace(/\n{3,}/g, "\n\n").trim();
+    return { lines: lines, plain: p };
+  }
+  // Index of the line sung at t (seconds), -1 before the first.
+  function lrcAt(lines, t) {
+    var lo = 0, hi = (lines || []).length - 1, at = -1;
+    while (lo <= hi) { var mid = (lo + hi) >> 1; if (lines[mid].t <= t + 0.05) { at = mid; lo = mid + 1; } else hi = mid - 1; }
+    return at;
+  }
+  // The best LRCLIB search hit for a song: same title and artist
+  // (folded), duration within 3 s when both are known; synced first.
+  function lrclibPick(list, item) {
+    var t = fold(item.t), a = fold(item.a), best = null, bestScore = -1;
+    (Array.isArray(list) ? list : []).forEach(function (x) {
+      if (!x || typeof x !== "object") return;
+      if (fold(x.trackName || x.name) !== t) return;
+      var xa = fold(x.artistName);
+      if (a && xa !== a && xa.indexOf(a) < 0 && a.indexOf(xa) < 0) return;
+      var dd = item.d && x.duration ? Math.abs(item.d - x.duration) : 0;
+      if (dd > 3) return;
+      var sc = (x.syncedLyrics ? 4 : 0) + (x.plainLyrics ? 2 : 0) + (x.instrumental ? 1 : 0) - dd / 10;
+      if (sc > bestScore) { best = x; bestScore = sc; }
+    });
+    return best;
+  }
+
+  // ---------- 11. Sound: equalizer, volume normalisation, settings ----------
+  var EQ_HZ = [31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
+  var EQ_PRESETS = {
+    flat: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    bass: [6, 5, 4, 2, 0, 0, 0, 0, 0, 0],
+    treble: [0, 0, 0, 0, 0, 1, 2, 4, 5, 6],
+    vocal: [-2, -2, -1, 1, 3, 4, 3, 1, 0, -1],
+    rock: [4, 3, 2, 0, -1, -1, 1, 2, 3, 4],
+    pop: [-1, 1, 3, 4, 3, 0, -1, -1, 1, 2],
+    jazz: [3, 2, 1, 2, -1, -1, 0, 1, 2, 3],
+    classical: [3, 2, 1, 0, 0, 0, -1, -1, 1, 3],
+    electronic: [5, 4, 1, 0, -2, 1, 0, 1, 4, 5],
+    loud: [5, 3, 0, 0, -1, 0, 0, 0, 3, 5],
+    small: [6, 5, 3, 1, 0, 0, 0, 0, -1, -2],
+    night: [-3, -2, -1, 0, 0, 0, 0, -1, -2, -3]
+  };
+  var SLEEP_MIN = [5, 10, 15, 30, 45, 60, 90];
+  // Device-local sound settings ("oros-music-sound"): eq { on, p preset
+  // | "custom", g [10 dB] }, xf crossfade seconds (0 = off, up to 12),
+  // gap preload the next song (gapless), rg "off"|"auto"|"track"|
+  // "album", pre dB added to ReplayGain (-6 … +6).
+  function normSound(o) {
+    o = o && typeof o === "object" ? o : {};
+    var e = o.eq && typeof o.eq === "object" ? o.eq : {};
+    var p = typeof e.p === "string" && (EQ_PRESETS[e.p] || e.p === "custom") ? e.p : "flat";
+    var g = Array.isArray(e.g) && e.g.length === EQ_HZ.length ? e.g.map(function (x) { x = Math.round(+x * 2) / 2; return isFinite(x) ? Math.max(-12, Math.min(12, x)) : 0; })
+      : (EQ_PRESETS[p] || EQ_PRESETS.flat).slice();
+    var xf = Math.round(+o.xf);
+    return {
+      eq: { on: e.on ? 1 : 0, p: p, g: g },
+      xf: isFinite(xf) ? Math.max(0, Math.min(12, xf)) : 0,
+      gap: o.gap === 0 ? 0 : 1,
+      rg: ["off", "auto", "track", "album"].indexOf(o.rg) >= 0 ? o.rg : "auto",
+      pre: isFinite(+o.pre) ? Math.max(-6, Math.min(6, Math.round(+o.pre))) : 0
+    };
+  }
+  // Volume factor for a song's ReplayGain: track or album gain (auto =
+  // album when the queue plays an album), plus pre-amp, kept under the
+  // peak so it never clips; 1 when the song has no gain tags.
+  function rgFactor(rg, mode, fromAlbum, pre) {
+    if (!rg || typeof rg !== "object" || mode === "off") return 1;
+    var useAlbum = mode === "album" || (mode === "auto" && fromAlbum);
+    var g = useAlbum && typeof rg.ag === "number" ? rg.ag : typeof rg.tg === "number" ? rg.tg : rg.ag;
+    var pk = useAlbum && typeof rg.ap === "number" ? rg.ap : typeof rg.tp === "number" ? rg.tp : rg.ap;
+    if (typeof g !== "number" || !isFinite(g)) return 1;
+    var f = Math.pow(10, (g + (+pre || 0)) / 20);
+    if (typeof pk === "number" && pk > 0) f = Math.min(f, 1 / pk);
+    return Math.max(0.05, Math.min(4, f));
+  }
+  // Pre-amp (dB) that keeps an equalizer curve from clipping.
+  function eqPreamp(g) {
+    var mx = 0;
+    (g || []).forEach(function (x) { if (x > mx) mx = x; });
+    return -mx;
+  }
+  // Crossfade gain curves (equal power): out at x, in at x (0…1).
+  function fadeOut(x) { x = Math.max(0, Math.min(1, x)); return Math.cos(x * Math.PI / 2); }
+  function fadeIn(x) { x = Math.max(0, Math.min(1, x)); return Math.sin(x * Math.PI / 2); }
+
   var api = {
-    VERSION: "1.3.0", DATA_VER: DATA_VER, LIM: LIM, GENRES: GENRES, REPEAT: REPEAT, AUDIO_EXT: AUDIO_EXT,
+    VERSION: "1.4.0", DATA_VER: DATA_VER, LIM: LIM, GENRES: GENRES, REPEAT: REPEAT, AUDIO_EXT: AUDIO_EXT,
     clean: clean, fold: fold, hash: hash, newId: newId, decodeLegacy: decodeLegacy, looksGreek: looksGreek, utf16: utf16,
     sniffImage: sniffImage, genreName: genreName, fromName: fromName, stem: stem,
     id3Size: id3Size, parseId3v2: parseId3v2, parseId3v1: parseId3v1, mp3Duration: mp3Duration,
@@ -914,7 +1083,10 @@
     qClearUp: qClearUp, qJump: qJump, qUpcoming: qUpcoming,
     albums: albums, artists: artists, genres: genres, folderView: folderView, sortTracks: sortTracks, search: search,
     words: words, matches: matches, resolver: resolver, refOf: refOf, itemOf: itemOf, isRemote: isRemote, isServer: isServer, addPlay: addPlay, fmtTime: fmtTime,
-    byTrackNo: byTrackNo, collator: collator
+    byTrackNo: byTrackNo, collator: collator,
+    parseLrc: parseLrc, lrcAt: lrcAt, lrclibPick: lrclibPick,
+    EQ_HZ: EQ_HZ, EQ_PRESETS: EQ_PRESETS, SLEEP_MIN: SLEEP_MIN, normSound: normSound, rgFactor: rgFactor, eqPreamp: eqPreamp,
+    fadeOut: fadeOut, fadeIn: fadeIn
   };
   root.OrosMusicCore = api;
   if (typeof module !== "undefined" && module.exports) module.exports = { OrosMusicCore: api };

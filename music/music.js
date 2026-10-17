@@ -10,7 +10,9 @@
 //   - the music files are on the orOS disk, /internal/Music
 //     (library.js scans them; store.js keeps the device index)
 //   - device-local: prefs "oros-music-prefs" (tab, library view,
-//     sort, old-tag encoding)
+//     sort, old-tag encoding, LRCLIB yes/no), lyrics found online
+//     "oros-music-lyrics"; the sound settings live in the host
+//     ("oros-music-sound": equalizer, crossfade, ReplayGain)
 // Sections:
 //   1. Constants, i18n, helpers
 //   2. Host (attach / inject into the shell)
@@ -19,6 +21,7 @@
 //   5. Views: home, search, library, pages
 //   6. Rows, cards, menus
 //   7. Player bar + full player + queue
+//  7b. Lyrics, sound, sleep timer
 //   8. Dialogs, toasts, keyboard (Contract Β)
 //   9. Palette
 //  10. Wiring & boot
@@ -137,7 +140,24 @@
       "imp.done": "Playlist “{n}” created: {k}.", "imp.miss": "{n} entries were not found and were left out.", "imp.none": "None of the songs of this playlist could be found.",
       "feed.ph": "Address of the feed (https://…)", "feed.add": "Add", "feed.none": "This feed has no songs.", "feed.err": "This address is not a feed.",
       "feed.added": "Feed added.", "feed.kind": "Music feed", "feed.remove": "Remove feed", "feed.removed": "Feed removed.", "feed.site": "Open website",
-      "info.server": "Server", "m.page": "Open page"
+      "info.server": "Server", "m.page": "Open page",
+      "ly.btn": "Lyrics", "ly.wait": "Looking for lyrics…", "ly.none": "No lyrics found for this song.", "ly.instr": "This song is instrumental.",
+      "ly.err": "LRCLIB did not answer. Try again later.", "ly.offline": "You are offline, so Music cannot look for lyrics online.",
+      "ly.askT": "Find lyrics online?", "ly.ask": "Music can ask LRCLIB (lrclib.net, free and open) for the lyrics. It sends only the song's title, artist, album and length.",
+      "ly.yes": "Look up lyrics", "ly.no": "Not now", "ly.from": "Lyrics: {s}", "ly.file": "the .lrc file next to the song", "ly.tags": "the song's tags",
+      "ly.plain": "These lyrics have no timing, so they do not follow the song.", "ly.retry": "Look again",
+      "snd.btn": "Sound", "snd.title": "Sound", "snd.eq": "Equalizer", "snd.preset": "Preset", "snd.custom": "Custom",
+      "snd.eqHint": "The equalizer works on songs on this device, songs saved offline and songs from WebDAV or Dropbox. Songs that stream from other sites play without it.",
+      "snd.eqOff": "This song streams from another site, so the equalizer does not change it.",
+      "snd.xf": "Crossfade", "snd.xfOff": "Off", "snd.xfS": "{n} s", "snd.gap": "Gapless playback (the next song is loaded before this one ends)",
+      "snd.rg": "Same volume for every song (ReplayGain)", "snd.rgOff": "Off", "snd.rgAuto": "Automatic (album gain when you play an album)",
+      "snd.rgTrack": "Track gain", "snd.rgAlbum": "Album gain", "snd.rgHint": "It uses the ReplayGain tags in your files. Songs without them keep their volume.",
+      "snd.reset": "Reset", "snd.hz": "{n} Hz", "snd.khz": "{n} kHz",
+      "eq.flat": "Flat", "eq.bass": "Bass boost", "eq.treble": "Treble boost", "eq.vocal": "Vocal", "eq.rock": "Rock", "eq.pop": "Pop", "eq.jazz": "Jazz",
+      "eq.classical": "Classical", "eq.electronic": "Electronic", "eq.loud": "Loudness", "eq.small": "Small speakers", "eq.night": "Late night (soft)",
+      "sl.btn": "Sleep timer", "sl.title": "Sleep timer", "sl.min": "{n} minutes", "sl.end": "End of this song", "sl.off": "Turn off the timer",
+      "sl.left": "Stops in {n}", "sl.leftEnd": "Stops after this song", "sl.set": "The music stops in {n}.", "sl.setEnd": "The music stops after this song.",
+      "sl.cleared": "Sleep timer off.", "s.lrclib": "Look up lyrics online (LRCLIB)", "s.lrclibHint": "Sends the title, artist, album and length of the song you open lyrics for."
     },
     el: {
       "app": "Μουσική",
@@ -238,7 +258,24 @@
       "imp.done": "Δημιουργήθηκε η λίστα «{n}»: {k}.", "imp.miss": "{n} εγγραφές δεν βρέθηκαν και αφέθηκαν έξω.", "imp.none": "Δεν βρέθηκε κανένα τραγούδι αυτής της λίστας.",
       "feed.ph": "Διεύθυνση του feed (https://…)", "feed.add": "Προσθήκη", "feed.none": "Αυτό το feed δεν έχει τραγούδια.", "feed.err": "Αυτή η διεύθυνση δεν είναι feed.",
       "feed.added": "Το feed προστέθηκε.", "feed.kind": "Feed μουσικής", "feed.remove": "Αφαίρεση feed", "feed.removed": "Το feed αφαιρέθηκε.", "feed.site": "Άνοιγμα ιστότοπου",
-      "info.server": "Server", "m.page": "Άνοιγμα σελίδας"
+      "info.server": "Server", "m.page": "Άνοιγμα σελίδας",
+      "ly.btn": "Στίχοι", "ly.wait": "Ψάχνω τους στίχους…", "ly.none": "Δεν βρέθηκαν στίχοι για αυτό το τραγούδι.", "ly.instr": "Αυτό το τραγούδι είναι ορχηστρικό.",
+      "ly.err": "Το LRCLIB δεν απάντησε. Δοκίμασε ξανά αργότερα.", "ly.offline": "Είσαι εκτός σύνδεσης, οπότε η Μουσική δεν μπορεί να ψάξει στίχους online.",
+      "ly.askT": "Να βρω τους στίχους online;", "ly.ask": "Η Μουσική μπορεί να ζητήσει τους στίχους από το LRCLIB (lrclib.net, δωρεάν και ανοιχτό). Στέλνει μόνο τον τίτλο, τον καλλιτέχνη, το άλμπουμ και τη διάρκεια του τραγουδιού.",
+      "ly.yes": "Βρες τους στίχους", "ly.no": "Όχι τώρα", "ly.from": "Στίχοι: {s}", "ly.file": "το αρχείο .lrc δίπλα στο τραγούδι", "ly.tags": "οι ετικέτες του τραγουδιού",
+      "ly.plain": "Αυτοί οι στίχοι δεν έχουν χρόνους, οπότε δεν ακολουθούν το τραγούδι.", "ly.retry": "Ψάξε ξανά",
+      "snd.btn": "Ήχος", "snd.title": "Ήχος", "snd.eq": "Ισοσταθμιστής", "snd.preset": "Προεπιλογή", "snd.custom": "Δική μου",
+      "snd.eqHint": "Ο ισοσταθμιστής δουλεύει στα τραγούδια αυτής της συσκευής, σε όσα αποθήκευσες για χωρίς σύνδεση και σε όσα έρχονται από WebDAV ή Dropbox. Τα τραγούδια που παίζουν από άλλους ιστότοπους παίζουν χωρίς αυτόν.",
+      "snd.eqOff": "Αυτό το τραγούδι παίζει από άλλον ιστότοπο, οπότε ο ισοσταθμιστής δεν το αλλάζει.",
+      "snd.xf": "Crossfade (σβήσιμο από το ένα στο άλλο)", "snd.xfOff": "Ανενεργό", "snd.xfS": "{n} δευτ.", "snd.gap": "Αναπαραγωγή χωρίς κενά (το επόμενο τραγούδι φορτώνει πριν τελειώσει αυτό)",
+      "snd.rg": "Ίδια ένταση σε όλα τα τραγούδια (ReplayGain)", "snd.rgOff": "Ανενεργό", "snd.rgAuto": "Αυτόματα (ένταση άλμπουμ όταν παίζεις άλμπουμ)",
+      "snd.rgTrack": "Ένταση τραγουδιού", "snd.rgAlbum": "Ένταση άλμπουμ", "snd.rgHint": "Χρησιμοποιεί τις ετικέτες ReplayGain των αρχείων σου. Τα τραγούδια χωρίς αυτές κρατούν την ένταση που έχουν.",
+      "snd.reset": "Επαναφορά", "snd.hz": "{n} Hz", "snd.khz": "{n} kHz",
+      "eq.flat": "Επίπεδο", "eq.bass": "Περισσότερα μπάσα", "eq.treble": "Περισσότερα πρίμα", "eq.vocal": "Φωνή", "eq.rock": "Ροκ", "eq.pop": "Ποπ", "eq.jazz": "Τζαζ",
+      "eq.classical": "Κλασική", "eq.electronic": "Ηλεκτρονική", "eq.loud": "Loudness", "eq.small": "Μικρά ηχεία", "eq.night": "Αργά το βράδυ (απαλό)",
+      "sl.btn": "Χρονοδιακόπτης ύπνου", "sl.title": "Χρονοδιακόπτης ύπνου", "sl.min": "{n} λεπτά", "sl.end": "Στο τέλος αυτού του τραγουδιού", "sl.off": "Κλείσε τον χρονοδιακόπτη",
+      "sl.left": "Σταματά σε {n}", "sl.leftEnd": "Σταματά μετά από αυτό το τραγούδι", "sl.set": "Η μουσική σταματά σε {n}.", "sl.setEnd": "Η μουσική σταματά μετά από αυτό το τραγούδι.",
+      "sl.cleared": "Ο χρονοδιακόπτης ύπνου έκλεισε.", "s.lrclib": "Αναζήτηση στίχων online (LRCLIB)", "s.lrclibHint": "Στέλνει τον τίτλο, τον καλλιτέχνη, το άλμπουμ και τη διάρκεια του τραγουδιού που ανοίγεις τους στίχους του."
     }
   };
   function t(k, v) {
@@ -304,12 +341,15 @@
     dl: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>',
     server: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/></svg>',
     rss: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a9 9 0 0 1 9 9M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1.5"/></svg>',
+    lyrics: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h10M4 10h10M4 14h6"/><path d="M18 18V6l3-1"/><circle cx="16" cy="18" r="2"/></svg>',
+    eq: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 4v16M12 4v16M18 4v16"/><path d="M4 14h4M10 8h4M16 16h4"/></svg>',
+    moon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>',
     grip: '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/></svg>'
   };
 
   // Device-local view prefs (R10): never synced.
   var prefs = (function () {
-    var p = { tab: "home", lib: "pl", sort: "title", legacy: "auto", open: true, osrc: "all" };
+    var p = { tab: "home", lib: "pl", sort: "title", legacy: "auto", open: true, osrc: "all", ly: "" };
     try {
       var o = JSON.parse(localStorage.getItem(PREFS_KEY) || "null");
       if (o && typeof o === "object") {
@@ -319,6 +359,7 @@
         if (["auto", "el", "latin"].indexOf(o.legacy) >= 0) p.legacy = o.legacy;
         if (o.open === false) p.open = false;
         if (["all", "jm", "ia", "ov", "cc"].indexOf(o.osrc) >= 0) p.osrc = o.osrc;
+        if (o.ly === "on" || o.ly === "off") p.ly = o.ly;
       }
     } catch (e) {}
     return p;
@@ -1150,7 +1191,7 @@
     var inp = document.createElement("input");
     inp.type = "file";
     inp.multiple = true;
-    inp.accept = "audio/*,.mp3,.m4a,.aac,.ogg,.oga,.opus,.flac,.wav,.webm";
+    inp.accept = "audio/*,.mp3,.m4a,.aac,.ogg,.oga,.opus,.flac,.wav,.webm,.lrc";
     if (folder) { inp.setAttribute("webkitdirectory", ""); inp.setAttribute("directory", ""); }
     inp.style.display = "none";
     inp.addEventListener("change", function () { var f = [].slice.call(inp.files || []); inp.remove(); if (f.length) addFiles(f); });
@@ -1951,14 +1992,18 @@
     var fromN = el("span", "fp-from-n");
     from.appendChild(fromN);
     head.appendChild(from);
-    var qBtn = button(t("queue"), "icon-btn", function () { showQ = !showQ; dlg._paint(true); }, I.queue);
+    var lyBtn = button(t("ly.btn"), "icon-btn", function () { showLy = !showLy; if (showLy) showQ = false; dlg._paint(true); }, I.lyrics);
+    var qBtn = button(t("queue"), "icon-btn", function () { showQ = !showQ; if (showQ) showLy = false; dlg._paint(true); }, I.queue);
+    head.appendChild(lyBtn);
     head.appendChild(qBtn);
     dlg.appendChild(head);
     var body = el("div", "fp-body");
     var artBox = el("div", "fp-art");
     var qBox = el("div", "fp-queue");
+    var lyBox = el("div", "fp-lyrics");
     body.appendChild(artBox);
     body.appendChild(qBox);
+    body.appendChild(lyBox);
     dlg.appendChild(body);
     var meta = el("div", "fp-meta");
     var tx = el("div", "fp-text");
@@ -2000,7 +2045,19 @@
     vr.addEventListener("input", function () { H.setVolume(vr.value / 100); });
     vol.appendChild(vr);
     dlg.appendChild(vol);
-    var showQ = false, lastK = "";
+    var extra = el("div", "fp-extra");
+    var pillBtn = function (label, fn, icon) {
+      var b = button(label, "pill fp-pill", fn);
+      b.innerHTML = icon;
+      b.appendChild(el("span", "", label));
+      return b;
+    };
+    var sndBtn = pillBtn(t("snd.btn"), soundDlg, I.eq);
+    var slBtn = pillBtn(t("sl.btn"), sleepDlg, I.moon);
+    extra.appendChild(sndBtn); extra.appendChild(slBtn);
+    extra.hidden = !hasSound();
+    dlg.appendChild(extra);
+    var showQ = false, showLy = false, lastK = "", lyP = null;
     dlg._paint = function (full) {
       var st = H.getState(), c = st.cur;
       if (!c) { dlg.close(); return; }
@@ -2019,9 +2076,17 @@
         like.classList.toggle("on", liked);
         like.setAttribute("aria-label", liked ? t("unlike") : t("like"));
         body.classList.toggle("q-on", showQ);
+        body.classList.toggle("ly-on", showLy);
         qBtn.classList.toggle("on", showQ);
+        lyBtn.classList.toggle("on", showLy);
         if (showQ) paintQueue(qBox);
+        lyP = showLy ? lyPanel(lyBox, c) : null;
       }
+      if (lyP) lyP.tick(st.pos);
+      var sl = sleepLeft(st);
+      slBtn.classList.toggle("on", !!sl);
+      slBtn.lastChild.textContent = sl || t("sl.btn");
+      sndBtn.classList.toggle("on", hasSound() && !!H.sound().eq.on);
       ply.innerHTML = st.playing ? I.pause : I.play;
       ply.setAttribute("aria-label", st.playing ? t("pause") : t("play"));
       shf.classList.toggle("on", !!st.shf);
@@ -2080,6 +2145,253 @@
     li.appendChild(main);
     if (typeof upIdx === "number") li.appendChild(button(t("q.remove"), "icon-btn", function () { H.removeUp(upIdx); var b = li.closest(".fp-queue"); if (b) paintQueue(b); }, I.x));
     return li;
+  }
+
+  // ---------- 7b. Lyrics, sound, sleep timer (wave 5) ----------
+  // Lyrics: the .lrc file next to a song on this device, then the
+  // lyrics in its tags, then LRCLIB (opt-in; only title, artist, album
+  // and length go out). Found lyrics and misses are kept on this
+  // device ("oros-music-lyrics", the 150 newest; misses for a week).
+  var LY_KEY = "oros-music-lyrics", LY_MAX = 150, LY_MISS = 7 * 86400000;
+  var LRCLIB = "https://lrclib.net/api/";
+  function lyCache() {
+    try { var o = JSON.parse(localStorage.getItem(LY_KEY) || "null"); return o && typeof o === "object" ? o : {}; } catch (e) { return {}; }
+  }
+  function lyPut(k, rec) {
+    var all = lyCache();
+    rec.m = Date.now();
+    all[k] = rec;
+    var keys = Object.keys(all).sort(function (a, b) { return (all[b].m || 0) - (all[a].m || 0); });
+    keys.slice(LY_MAX).forEach(function (x) { delete all[x]; });
+    for (var n = keys.length; n > 0; n--) {
+      try { localStorage.setItem(LY_KEY, JSON.stringify(all)); return; }
+      catch (e) { delete all[keys[n - 1]]; }      // storage full: drop the oldest
+    }
+  }
+  function lyOf(text, src) { var r = C.parseLrc(text); return r.lines.length || r.plain ? { lines: r.lines, plain: r.plain, src: src } : null; }
+  function recOf(p) { for (var i = 0; i < tracks.length; i++) if (tracks[i].p === p) return tracks[i]; return null; }
+  // → Promise<{ lines, plain, src } | { instr } | { ask } | { none } | { err }>
+  function lyricsFor(c, online) {
+    var local = !c.p || !LIB ? Promise.resolve(null) : LIB.lrcFor(c.p).then(function (txt) {
+      if (txt && lyOf(txt, "file")) return lyOf(txt, "file");
+      var rec = recOf(c.p);
+      return rec && rec.ly ? LIB.tagLyrics(c.p).then(function (tx) { return tx ? lyOf(tx, "tags") : null; }) : null;
+    });
+    return local.then(function (found) {
+      if (found) return found;
+      var hit = lyCache()[c.k];
+      if (hit && !hit.n) return hit.i ? { instr: 1 } : lyOf(hit.s || hit.p || "", "lrclib") || { none: 1 };
+      if (hit && hit.n && Date.now() - hit.m < LY_MISS && !online) return { none: 1 };
+      if (prefs.ly !== "on" && !online) return prefs.ly === "off" ? { none: 1 } : { ask: 1 };
+      if (navigator.onLine === false) return { err: "offline" };
+      return lrclib(c);
+    });
+  }
+  function lrclib(c) {
+    var q = function (o) { return Object.keys(o).filter(function (k) { return o[k]; }).map(function (k) { return k + "=" + encodeURIComponent(o[k]); }).join("&"); };
+    var get = function (u) {
+      return fetch(LRCLIB + u, { credentials: "omit", referrerPolicy: "no-referrer" }).then(function (r) {
+        if (r.status === 404) return null;
+        if (!r.ok) throw new Error("http");
+        return r.json();
+      });
+    };
+    var one = q({ track_name: c.t, artist_name: c.a, album_name: c.al, duration: c.d ? String(Math.round(c.d)) : "" });
+    var keep = function (x) {
+      if (!x) { lyPut(c.k, { n: 1 }); return { none: 1 }; }
+      var rec = { s: typeof x.syncedLyrics === "string" ? x.syncedLyrics.slice(0, 30000) : "", p: typeof x.plainLyrics === "string" ? x.plainLyrics.slice(0, 30000) : "", i: x.instrumental ? 1 : 0 };
+      if (!rec.s && !rec.p && !rec.i) { lyPut(c.k, { n: 1 }); return { none: 1 }; }
+      lyPut(c.k, rec);
+      return rec.i && !rec.s && !rec.p ? { instr: 1 } : lyOf(rec.s || rec.p, "lrclib") || { none: 1 };
+    };
+    return (c.al && c.d ? get("get?" + one) : Promise.resolve(null)).then(function (x) {
+      if (x) return keep(x);
+      return get("search?" + q({ track_name: c.t, artist_name: c.a })).then(function (list) { return keep(C.lrclibPick(list, c)); });
+    }).catch(function () { return { err: "net" }; });
+  }
+  // The lyrics panel of the full player. → { tick(pos) }
+  function lyPanel(box, c) {
+    var my = {}, lines = null, at = -2, rows = [];
+    box.textContent = "";
+    box.appendChild(el("p", "empty", t("ly.wait")));
+    var show = function (r) {
+      if (box._for !== c.k) return;
+      box.textContent = "";
+      if (r.ask) {
+        var ask = el("div", "ly-ask");
+        ask.appendChild(el("h3", "q-h", t("ly.askT")));
+        ask.appendChild(el("p", "dim small", t("ly.ask")));
+        var bt = el("div", "dlg-btns");
+        bt.appendChild(button(t("ly.no"), "txt-btn", function () { prefs.ly = "off"; savePrefs(); show({ none: 1 }); }));
+        bt.appendChild(button(t("ly.yes"), "txt-btn accent", function () { prefs.ly = "on"; savePrefs(); go(true); }));
+        ask.appendChild(bt);
+        box.appendChild(ask);
+        return;
+      }
+      if (r.err || r.none || r.instr) {
+        box.appendChild(el("p", "empty", t(r.instr ? "ly.instr" : r.err === "offline" ? "ly.offline" : r.err ? "ly.err" : "ly.none")));
+        if (r.err || (r.none && prefs.ly !== "off" && navigator.onLine !== false)) box.appendChild(el("div", "dlg-btns center")).appendChild(button(t("ly.retry"), "txt-btn", function () { go(true); }));
+        return;
+      }
+      var wrap = el("div", "ly-text" + (r.lines.length ? " synced" : ""));
+      if (r.lines.length) {
+        lines = r.lines;
+        rows = lines.map(function (x) {
+          var b = el("button", "ly-l", x.s || "♪");
+          b.type = "button";
+          b.addEventListener("click", function () { H.seekTo(x.t); });
+          wrap.appendChild(b);
+          return b;
+        });
+      } else {
+        wrap.appendChild(el("p", "ly-plain", r.plain));
+        box.appendChild(wrap);
+        box.appendChild(el("p", "dim small ly-src", t("ly.plain")));
+        wrap = null;
+      }
+      if (wrap) box.appendChild(wrap);
+      var src = el("p", "dim small ly-src");
+      if (r.src === "lrclib") {
+        src.appendChild(document.createTextNode(t("ly.from", { s: "" })));
+        var a = el("button", "link", "LRCLIB");
+        a.type = "button";
+        a.addEventListener("click", function () { openExt("https://lrclib.net/"); });
+        src.appendChild(a);
+      } else src.textContent = t("ly.from", { s: t(r.src === "file" ? "ly.file" : "ly.tags") });
+      box.appendChild(src);
+      at = -2;
+      my.tick(H.getState().pos);
+    };
+    var go = function (online) {
+      box._for = c.k;
+      box.textContent = "";
+      box.appendChild(el("p", "empty", t("ly.wait")));
+      lyricsFor(c, online).then(show, function () { show({ err: "net" }); });
+    };
+    my.tick = function (pos) {
+      if (!lines) return;
+      var i = C.lrcAt(lines, pos);
+      if (i === at) return;
+      if (rows[at]) rows[at].classList.remove("on");
+      at = i;
+      if (rows[i]) {
+        rows[i].classList.add("on");
+        var r = rows[i];
+        box.scrollTop = Math.max(0, r.offsetTop - box.clientHeight / 2 + r.offsetHeight / 2);
+      }
+    };
+    go(false);
+    return my;
+  }
+  function hasSound() { return !!(H && typeof H.sound === "function"); }
+  function eqLabel(hz) { return hz >= 1000 ? t("snd.khz", { n: hz / 1000 }) : t("snd.hz", { n: hz }); }
+  function soundDlg() {
+    if (!hasSound()) return;
+    var dlg = makeDialog("mu-sound", "menu-dlg sound-dlg");
+    dlg.appendChild(el("h2", "dlg-title", t("snd.title")));
+    var s = H.sound();
+    // Equalizer
+    var eqOn = el("label", "check");
+    var cb = el("input"); cb.type = "checkbox"; cb.checked = !!s.eq.on;
+    eqOn.appendChild(cb); eqOn.appendChild(el("span", "", t("snd.eq")));
+    dlg.appendChild(eqOn);
+    var lab = el("label", "field");
+    lab.appendChild(el("span", "dim small", t("snd.preset")));
+    var sel = el("select");
+    Object.keys(C.EQ_PRESETS).concat(["custom"]).forEach(function (k) {
+      var o = el("option", "", t(k === "custom" ? "snd.custom" : "eq." + k)); o.value = k; sel.appendChild(o);
+    });
+    sel.value = s.eq.p;
+    lab.appendChild(sel);
+    dlg.appendChild(lab);
+    var bands = el("div", "eq-bands"), ranges = [];
+    C.EQ_HZ.forEach(function (hz, i) {
+      var row = el("label", "eq-band");
+      row.appendChild(el("span", "eq-hz small", eqLabel(hz)));
+      var r = el("input");
+      r.type = "range"; r.min = "-12"; r.max = "12"; r.step = "1"; r.value = String(s.eq.g[i]);
+      r.setAttribute("aria-label", t("snd.eq") + " " + eqLabel(hz));
+      var v = el("span", "eq-v small", (s.eq.g[i] > 0 ? "+" : "") + s.eq.g[i]);
+      r.addEventListener("input", function () {
+        var g = ranges.map(function (x) { return +x.value; });
+        v.textContent = (+r.value > 0 ? "+" : "") + r.value;
+        sel.value = "custom";
+        H.setSound({ eq: { on: 1, p: "custom", g: g } });
+        cb.checked = true; paintOn();
+      });
+      ranges.push(r);
+      row.appendChild(r); row.appendChild(v);
+      bands.appendChild(row);
+    });
+    dlg.appendChild(bands);
+    var eqNote = el("p", "dim small", t("snd.eqHint"));
+    dlg.appendChild(eqNote);
+    var paintOn = function () {
+      var st = H.getState(), on = cb.checked;
+      bands.classList.toggle("off", !on);
+      eqNote.textContent = on && st.cur && !st.eq ? t("snd.eqOff") : t("snd.eqHint");
+    };
+    var setBands = function (g) { ranges.forEach(function (r, i) { r.value = String(g[i]); r.nextSibling.textContent = (g[i] > 0 ? "+" : "") + g[i]; }); };
+    cb.addEventListener("change", function () { H.setSound({ eq: { on: cb.checked ? 1 : 0 } }); paintOn(); });
+    sel.addEventListener("change", function () {
+      var g = C.EQ_PRESETS[sel.value] ? C.EQ_PRESETS[sel.value].slice() : ranges.map(function (x) { return +x.value; });
+      setBands(g);
+      cb.checked = true;
+      H.setSound({ eq: { on: 1, p: sel.value, g: g } });
+      paintOn();
+    });
+    // Crossfade + gapless
+    var xl = el("label", "field");
+    var xt = el("span", "dim small");
+    var xr = el("input"); xr.type = "range"; xr.min = "0"; xr.max = "12"; xr.step = "1"; xr.value = String(s.xf);
+    var xLabel = function () { xt.textContent = t("snd.xf") + ": " + (+xr.value ? t("snd.xfS", { n: xr.value }) : t("snd.xfOff")); };
+    xLabel();
+    xr.addEventListener("input", xLabel);
+    xr.addEventListener("change", function () { H.setSound({ xf: +xr.value }); });
+    xl.appendChild(xt); xl.appendChild(xr);
+    dlg.appendChild(xl);
+    var gl = el("label", "check");
+    var gc = el("input"); gc.type = "checkbox"; gc.checked = !!s.gap;
+    gc.addEventListener("change", function () { H.setSound({ gap: gc.checked ? 1 : 0 }); });
+    gl.appendChild(gc); gl.appendChild(el("span", "", t("snd.gap")));
+    dlg.appendChild(gl);
+    // ReplayGain
+    var rl = el("label", "field");
+    rl.appendChild(el("span", "dim small", t("snd.rg")));
+    var rs = el("select");
+    [["off", "snd.rgOff"], ["auto", "snd.rgAuto"], ["track", "snd.rgTrack"], ["album", "snd.rgAlbum"]].forEach(function (x) {
+      var o = el("option", "", t(x[1])); o.value = x[0]; rs.appendChild(o);
+    });
+    rs.value = s.rg;
+    rs.addEventListener("change", function () { H.setSound({ rg: rs.value }); });
+    rl.appendChild(rs);
+    dlg.appendChild(rl);
+    dlg.appendChild(el("p", "dim small", t("snd.rgHint")));
+    var row = el("div", "dlg-btns");
+    row.appendChild(button(t("snd.reset"), "txt-btn", function () {
+      H.setSound({ eq: { on: 0, p: "flat", g: C.EQ_PRESETS.flat.slice() }, xf: 0, gap: 1, rg: "auto", pre: 0 });
+      dlg.close(); soundDlg();
+    }));
+    row.appendChild(button(t("close"), "txt-btn accent", function () { dlg.close(); }));
+    dlg.appendChild(row);
+    openDialog(dlg);
+    paintOn();
+  }
+  function sleepLeft(st) {
+    var s = st && st.sleep;
+    if (!s) return "";
+    if (s.end) return t("sl.leftEnd");
+    if (!s.at) return "";
+    var ms = Math.max(0, s.at - Date.now()), m = Math.ceil(ms / 60000);
+    return t("sl.left", { n: m > 1 ? t("sl.min", { n: m }) : C.fmtTime(ms / 1000) });
+  }
+  function sleepDlg() {
+    if (!hasSound()) return;
+    var st = H.getState(), items = [];
+    if (st.sleep && (st.sleep.at || st.sleep.end)) items.push([t("sl.off"), function () { H.sleep(0); showToast(t("sl.cleared")); }, true]);
+    C.SLEEP_MIN.forEach(function (n) { items.push([t("sl.min", { n: n }), function () { H.sleep(n); showToast(t("sl.set", { n: t("sl.min", { n: n }) })); }]); });
+    items.push([t("sl.end"), function () { H.sleep("end"); showToast(t("sl.setEnd")); }]);
+    menuDlg(items, t("sl.title"), sleepLeft(st));
   }
 
   // ---------- 8. Dialogs, toasts, keyboard ----------
@@ -2174,7 +2486,16 @@
         }));
       }
     }
+    var ll = el("label", "check");
+    var lc = el("input");
+    lc.type = "checkbox"; lc.checked = prefs.ly === "on";
+    lc.addEventListener("change", function () { prefs.ly = lc.checked ? "on" : "off"; savePrefs(); });
+    ll.appendChild(lc);
+    ll.appendChild(el("span", "", t("s.lrclib")));
+    dlg.appendChild(ll);
+    dlg.appendChild(el("p", "dim small", t("s.lrclibHint")));
     var col = el("div", "menu-col");
+    if (hasSound()) col.appendChild(button(t("snd.title"), "", function () { dlg.close(); soundDlg(); }));
     col.appendChild(button(t("s.rescan"), "", function () { dlg.close(); rescan(true); }));
     col.appendChild(el("p", "dim small", t("s.rescanHint")));
     col.appendChild(button(t("s.folder"), "", function () { dlg.close(); openInFiles(); }));

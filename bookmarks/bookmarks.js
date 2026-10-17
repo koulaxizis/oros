@@ -220,6 +220,7 @@ const STR = {
     "sel.delete": "Delete",
     "sel.share": "Send…",
     "ctx.share": "Send to someone…",
+    "ctx.sendApp": "Send to an app…",
     "many.added": "{n} bookmark(s) added to {f}",
     "many.none": "You already have all of these",
     "sel.done": "Done",
@@ -423,6 +424,7 @@ const STR = {
     "sel.delete": "Διαγραφή",
     "sel.share": "Αποστολή…",
     "ctx.share": "Στείλε σε κάποιον…",
+    "ctx.sendApp": "Στείλε σε εφαρμογή…",
     "many.added": "Μπήκαν {n} σελιδοδείκτες στον φάκελο «{f}»",
     "many.none": "Τους έχεις ήδη όλους",
     "sel.done": "Τέλος",
@@ -1655,6 +1657,20 @@ function shareItems(ids) {
   api.open({ kind: "links", data: { t: fld && fld.id !== ROOT_FOLDER ? folderName(fld) : "", i: items } });
 }
 
+/* "Send to an app" (shell send/, BR-SEND): one bookmark as a link to
+   Notes, To-Do, Mail…; "Send to someone" rides along as one entry. */
+function sendApi() {
+  try { return window.parent !== window && window.parent.orosSend ? window.parent.orosSend : null; }
+  catch (e) { return null; }
+}
+function sendItemToApp(id) {
+  const api = sendApi(), it = state.items[id];
+  if (!api || !it) return;
+  const item = { kind: "link", data: { url: it.url, title: it.title || "", note: it.note || "" } };
+  if (shareApi()) item.share = { kind: "links", data: { t: "", i: [{ u: it.url, t: it.title, n: it.note }] } };
+  api.open(item);
+}
+
 /* "Add to my orOS" with several links: { addMany: { folder, items } }.
    The person already saw the list on the receiving page and asked for
    it; they land in a folder of that name (created when missing) and
@@ -2385,6 +2401,7 @@ function showCtxMenu(id, x, y) {
   row(t("ctx.open"), () => openItem(id));
   row(t("ctx.open_maps"), () => openInMaps(it)); // NEW: Open in Maps integration
   row(t("ctx.edit"), () => openItemDialog(id));
+  if (sendApi()) row(t("ctx.sendApp"), () => sendItemToApp(id));
   if (shareApi()) row(t("ctx.share"), () => shareItems([id]));
   row(it.fav ? t("fav.remove") : t("fav.add"), () => toggleFav(id));
   const sep = document.createElement("div");

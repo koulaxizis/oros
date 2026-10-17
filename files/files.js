@@ -3716,9 +3716,12 @@
     pvBodySet('<div class="pv-loading">' + escapeHtml(t("status.loading")) + "</div>");
     FS().read(path).then(function (data) {
       var blob;
-      if (data instanceof Blob) {                    // #FA2 FIX: fs.js returns Blob
+      // The Blob comes from the shell's realm (window.parent.orosFS), so
+      // `instanceof Blob` is false inside the app frame: check the tag.
+      var tag = Object.prototype.toString.call(data);
+      if (tag === "[object Blob]" || tag === "[object File]") {
         blob = data;
-      } else if (data instanceof ArrayBuffer) {
+      } else if (tag === "[object ArrayBuffer]") {
         blob = new Blob([data]);
       } else if (data && typeof data.length === "number" && !(typeof data === "string")) {
         blob = new Blob([new Uint8Array(data)]);

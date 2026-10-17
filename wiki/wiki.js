@@ -219,7 +219,7 @@
       "wp.edit": "Check the text, then press Save. Keep the Source section at the end: it names the authors and the licence.",
       "wp.replace": "Replace what you wrote with the Wikipedia article?", "wp.replaceBtn": "Replace",
       "ed.wp": "Start from Wikipedia",
-      "menu.send": "Send to someone…", "send.noPics": "Pictures stay here: the link carries the text.",
+      "menu.sendApp": "Send to an app…", "menu.send": "Send to someone…", "send.noPics": "Pictures stay here: the link carries the text.",
       "toast.noShare": "Sending needs orOS: open Wiki inside orOS.", "sum.recv": "Received with a link",
       "sum.notes": "Imported from Notes", "sum.md": "Imported from Markdown",
       "site.main": "Main page", "site.all": "All articles", "site.cats": "Categories", "site.cat": "Category: {t}",
@@ -392,7 +392,7 @@
       "wp.edit": "Έλεγξε το κείμενο και πάτα Αποθήκευση. Κράτα την ενότητα Πηγή στο τέλος: γράφει τους συντάκτες και την άδεια.",
       "wp.replace": "Να αντικατασταθεί ό,τι έγραψες με το άρθρο της Βικιπαίδειας;", "wp.replaceBtn": "Αντικατάσταση",
       "ed.wp": "Ξεκίνα από τη Βικιπαίδεια",
-      "menu.send": "Στείλε σε κάποιον…", "send.noPics": "Οι εικόνες μένουν εδώ: ο σύνδεσμος παίρνει το κείμενο.",
+      "menu.sendApp": "Στείλε σε εφαρμογή…", "menu.send": "Στείλε σε κάποιον…", "send.noPics": "Οι εικόνες μένουν εδώ: ο σύνδεσμος παίρνει το κείμενο.",
       "toast.noShare": "Η αποστολή θέλει το orOS: άνοιξε το Wiki μέσα από το orOS.", "sum.recv": "Ήρθε με σύνδεσμο",
       "sum.notes": "Εισαγωγή από τις Σημειώσεις", "sum.md": "Εισαγωγή από Markdown",
       "site.main": "Κεντρική σελίδα", "site.all": "Όλα τα άρθρα", "site.cats": "Κατηγορίες", "site.cat": "Κατηγορία: {t}",
@@ -2356,6 +2356,20 @@
     if (C.images(C.parseDoc(a.x)).length) toast(t("send.noPics"));
     api.open({ kind: "wiki", data: { t: a.t, x: x }, text: a.t + "\n\n" + C.plainText(x) });
   }
+  // --- Send to an app (shell send/, BR-SEND): the article as plain text
+  // to Notes, Writer, Mail…; "Send to someone" rides along as one entry.
+  function sendApi() {
+    try { return window.parent !== window && window.parent.orosSend ? window.parent.orosSend : null; } catch (e) { return null; }
+  }
+  function sendAppArt(a) {
+    var api = sendApi();
+    if (!api) return;
+    var text = C.plainText(a.x);
+    if (!String(text).trim()) text = a.t;
+    var item = { kind: "text", data: { title: a.t, text: text } };
+    if (shareApi() && IO()) item.share = { kind: "wiki", data: { t: a.t, x: IO().shareText(a.x) } };
+    api.open(item);
+  }
   // From a link someone sent: a new article in the editor, not saved yet.
   function receiveArt(o) {
     var w = curWiki();
@@ -2842,6 +2856,7 @@
       [t("menu.copy"), function () { copyText(a.x); }]
     ];
     if (w && w.main !== a.id) items.push([t("menu.main"), function () { w.main = a.id; w.m = now(w.m); persist(); toast(t("toast.main")); render(); }]);
+    if (sendApi()) items.push([t("menu.sendApp"), function () { sendAppArt(a); }]);
     items.push([t("menu.send"), function () { sendArt(a); }]);
     items.push([t("menu.print"), function () { printArt(a); }]);
     items.push([t("menu.pdf"), function () { pdfArt(a); }]);
