@@ -2,6 +2,8 @@
 // orOS App Kit: check one app against the orOS app contract
 // (docs/app-kit/contract.md) with the same guards CI runs.
 //   node .github/app-kit/check-app.js <id> [--no-tests] [--no-browser]
+//   node .github/app-kit/check-app.js --added-since <git ref>   (every app
+//     folder the branch adds; quality.yml runs this on each PR)
 // 1. static checks of the app folder and its registration;
 // 2. the release guards (stamp-assets.js in check mode, G2-G5);
 // 3. the repo tests that cover every app (help, direct link, Greek
@@ -199,17 +201,47 @@ function runNode(args, env) {
   return spawnSync(process.execPath, args, { cwd: ROOT, encoding: "utf8", env: Object.assign({}, process.env, env || {}) });
 }
 
+// App ids whose folder a branch adds: a new <id>/index.html at the root
+// that apps.json registers, or that carries the direct-link snippet (an
+// app whose registration was forgotten). Other new pages (a standalone
+// page like download/) are left alone. isApp(id) reads the page.
+function addedAppIds(addedPaths, apps, isApp) {
+  const known = new Set((apps || []).filter((a) => a.type === "internal").map((a) => a.id));
+  return [...new Set(addedPaths.map((f) => (/^([a-z][a-z0-9-]*)\/index\.html$/.exec(f.trim()) || [])[1])
+    .filter((id) => id && (known.has(id) || (isApp && isApp(id)))))].sort();
+}
+
+function idsAddedSince(ref) {
+  const d = spawnSync("git", ["diff", "--name-only", "--diff-filter=A", ref + "...HEAD"], { cwd: ROOT, encoding: "utf8" });
+  if (d.status !== 0) { console.error("git diff against " + ref + " failed:\n" + d.stderr); process.exit(2); }
+  let apps = [];
+  try { apps = JSON.parse(read(ROOT, "apps.json")).apps || []; } catch (e) {}
+  return addedAppIds(d.stdout.split("\n"), apps, (id) => {
+    try { return DL_RE.test(read(ROOT, id + "/index.html")); } catch (e) { return false; }
+  });
+}
+
 function main() {
   const argv = process.argv.slice(2);
-  const id = argv.find((a) => !a.startsWith("--"));
-  if (!id) { console.error("usage: node .github/app-kit/check-app.js <id> [--no-tests] [--no-browser]"); process.exit(2); }
+  const si = argv.indexOf("--added-since");
+  let ids;
+  if (si >= 0) {
+    ids = idsAddedSince(argv[si + 1] || "origin/main");
+    if (!ids.length) { console.log("orOS App Kit check: this branch adds no app"); process.exit(0); }
+  } else {
+    ids = argv.filter((a) => !a.startsWith("--")).slice(0, 1);
+  }
+  if (!ids.length) { console.error("usage: node .github/app-kit/check-app.js <id> [--no-tests] [--no-browser]\n       node .github/app-kit/check-app.js --added-since <git ref> [--no-tests] [--no-browser]"); process.exit(2); }
   let failed = 0;
   const line = (ok, rule, msg) => console.log((ok === true ? "✓" : ok === "warn" ? "!" : "✗") + " " + rule.padEnd(10) + " " + msg);
 
-  console.log("orOS App Kit check: " + id + "\n");
-  for (const r of checkApp(ROOT, id)) {
-    line(r.ok || (r.level === "warn" ? "warn" : false), r.rule, r.msg);
-    if (r.level === "error") failed++;
+  for (const id of ids) {
+    console.log("orOS App Kit check: " + id + "\n");
+    for (const r of checkApp(ROOT, id)) {
+      line(r.ok || (r.level === "warn" ? "warn" : false), r.rule, r.msg);
+      if (r.level === "error") failed++;
+    }
+    console.log("");
   }
 
   const g = runNode([path.join(".github", "scripts", "stamp-assets.js")], { OROS_CHECK: "1", OROS_VERSION: "" });
@@ -220,7 +252,7 @@ function main() {
     const tests = ["help", "direct-link", "i18n", "release-guards", "deeplink-receivers"]
       .map((n) => "tests/" + n + ".test.js").filter((f) => exists(ROOT, f));
     fs.readdirSync(path.join(ROOT, "tests")).forEach((f) => {
-      if ((f.startsWith(id + ".") || f.startsWith(id + "-")) && f.endsWith(".test.js")) tests.push("tests/" + f);
+      if (ids.some((id) => f.startsWith(id + ".") || f.startsWith(id + "-")) && f.endsWith(".test.js")) tests.push("tests/" + f);
       if (/^search[\w-]*\.test\.js$/.test(f)) tests.push("tests/" + f);
     });
     const t = runNode(["--test", "--test-reporter=dot"].concat([...new Set(tests)]));
@@ -238,15 +270,16 @@ function main() {
     if (!exists(ROOT, smoke)) line("warn", "browser", "quality gate not in this checkout yet, browser check skipped");
     else if (!hasPw) line("warn", "browser", "skipped: install Playwright with  npm install --prefix .github/qa  (or set QA_CHROMIUM)");
     else {
-      const b = runNode([smoke, "--only", id]);
+      const b = runNode([smoke, "--only", ids.join(",")]);
       if (b.status === 0) line(true, "browser", "quality gate: 360/1280 px, EN/EL, no new problems");
       else { failed++; line(false, "browser", "quality gate found problems:\n" + (b.stdout + b.stderr).trim().split("\n").slice(-30).map((l) => "    " + l).join("\n")); }
     }
   }
 
-  console.log("\n" + (failed ? "✗ " + failed + " problem(s) to fix" : "✓ " + id + " follows the orOS app contract"));
+  const who = ids.join(", ");
+  console.log("\n" + (failed ? "✗ " + failed + " problem(s) to fix" : "✓ " + who + (ids.length > 1 ? " follow" : " follows") + " the orOS app contract"));
   process.exit(failed ? 1 : 0);
 }
 
-module.exports = { checkApp, callArgs };
+module.exports = { checkApp, callArgs, addedAppIds };
 if (require.main === module) main();

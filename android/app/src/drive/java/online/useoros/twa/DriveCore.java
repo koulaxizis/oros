@@ -63,6 +63,13 @@ public final class DriveCore {
         return drive;
     }
 
+    /** False until the person has signed in on this phone once: the
+     *  secrets store is empty. Cheap, so a file picker asking for roots
+     *  does not load the Go core for people who never set up Drive. */
+    static boolean everSignedIn(Context c) {
+        return !c.getApplicationContext().getSharedPreferences(KeystoreSecrets.PREFS, Context.MODE_PRIVATE).getAll().isEmpty();
+    }
+
     private DriveCore() {}
 
     // ---------- Folders over the Storage Access Framework ----------
@@ -322,9 +329,10 @@ public final class DriveCore {
      *  Keystore, kept in private preferences. */
     static final class KeystoreSecrets implements Secrets {
         private static final String ALIAS = "oros-drive-secrets";
+        static final String PREFS = "oros-drive-secrets";
         private final SharedPreferences prefs;
 
-        KeystoreSecrets(Context app) { prefs = app.getSharedPreferences("oros-drive-secrets", Context.MODE_PRIVATE); }
+        KeystoreSecrets(Context app) { prefs = app.getSharedPreferences(PREFS, Context.MODE_PRIVATE); }
 
         private static SecretKey key() throws Exception {
             KeyStore ks = KeyStore.getInstance("AndroidKeyStore");

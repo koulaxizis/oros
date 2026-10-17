@@ -1,0 +1,151 @@
+{
+ "source": "tests/bundle-mindmap.test.js sample()",
+ "base": {
+  "ver": 1,
+  "maps": [
+   {
+    "id": "mapA",
+    "m": 5,
+    "sides": "right"
+   },
+   {
+    "id": "other",
+    "m": 5,
+    "sides": "both"
+   }
+  ],
+  "nodes": [
+   {
+    "id": "a1",
+    "m": 6,
+    "map": "mapA",
+    "parent": "mapA-r",
+    "ord": "V",
+    "text": "Alpha",
+    "emoji": "⭐",
+    "color": "red",
+    "note": "a note",
+    "url": "https://example.org/",
+    "done": true
+   },
+   {
+    "id": "a2",
+    "m": 7,
+    "map": "mapA",
+    "parent": "a1",
+    "ord": "V",
+    "text": "Beta",
+    "emoji": "",
+    "color": "",
+    "note": "",
+    "url": "",
+    "done": false
+   },
+   {
+    "id": "a3",
+    "m": 8,
+    "map": "mapA",
+    "parent": "mapA-r",
+    "ord": "W",
+    "text": "Gamma",
+    "emoji": "",
+    "color": "",
+    "note": "",
+    "url": "",
+    "done": false
+   },
+   {
+    "id": "mapA-r",
+    "m": 5,
+    "map": "mapA",
+    "parent": "",
+    "ord": "",
+    "text": "Plan",
+    "emoji": "",
+    "color": "",
+    "note": "",
+    "url": "",
+    "done": false
+   },
+   {
+    "id": "other-r",
+    "m": 5,
+    "map": "other",
+    "parent": "",
+    "ord": "",
+    "text": "Other map",
+    "emoji": "",
+    "color": "",
+    "note": "",
+    "url": "",
+    "done": false
+   }
+  ],
+  "links": [
+   {
+    "id": "l1",
+    "m": 5,
+    "map": "mapA",
+    "from": "a2",
+    "to": "a3",
+    "label": "then"
+   }
+  ],
+  "pos": [
+   {
+    "id": "a3",
+    "m": 5,
+    "map": "mapA",
+    "dx": 40,
+    "dy": -10
+   }
+  ],
+  "imgs": [
+   {
+    "id": "a1",
+    "m": 5,
+    "map": "mapA",
+    "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+    "w": 1,
+    "h": 1
+   }
+  ],
+  "styles": [
+   {
+    "id": "a1",
+    "m": 5,
+    "map": "mapA",
+    "shape": "pill",
+    "fill": "solid",
+    "border": "",
+    "size": "l",
+    "bold": true
+   }
+  ],
+  "frames": [
+   {
+    "id": "f1",
+    "m": 5,
+    "map": "mapA",
+    "nodes": [
+     "a1",
+     "a3"
+    ],
+    "kind": "brace",
+    "label": "both",
+    "color": "teal"
+   }
+  ],
+  "layouts": [
+   {
+    "id": "mapA",
+    "m": 5,
+    "map": "mapA",
+    "kind": "org"
+   }
+  ],
+  "tombs": {
+   "gone": 3
+  }
+ }
+}

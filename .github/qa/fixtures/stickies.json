@@ -1,0 +1,64 @@
+{
+ "source": "tests/bundle-stickies.test.js slice()",
+ "base": {
+  "ver": 1,
+  "notes": [
+   {
+    "id": "sn-aaa",
+    "text": "Buy milk\n[ ] eggs",
+    "color": "pink",
+    "ring": {
+     "at": 1800003600000
+    },
+    "vanish": null,
+    "faded": 0,
+    "ct": 1799999999100,
+    "fm": {
+     "text": 1799999999100,
+     "color": 1799999999100,
+     "ring": 1799999999200,
+     "vanish": 0,
+     "faded": 0
+    }
+   },
+   {
+    "id": "sn-bbb",
+    "text": "=SUM(A1)",
+    "color": "blue",
+    "ring": null,
+    "vanish": {
+     "at": 0,
+     "onDone": true
+    },
+    "faded": 0,
+    "ct": 1799999999300,
+    "fm": {
+     "text": 1799999999300,
+     "color": 1799999999300,
+     "ring": 0,
+     "vanish": 1799999999300,
+     "faded": 0
+    }
+   },
+   {
+    "id": "sn-faded",
+    "text": "old",
+    "color": "yellow",
+    "ring": null,
+    "vanish": null,
+    "faded": 1799999999500,
+    "ct": 1799999998000,
+    "fm": {
+     "text": 1799999998000,
+     "color": 1799999998000,
+     "ring": 0,
+     "vanish": 0,
+     "faded": 1799999999500
+    }
+   }
+  ],
+  "tombs": {
+   "sn-gone": 1799999999900
+  }
+ }
+}

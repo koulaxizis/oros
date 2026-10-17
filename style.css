@@ -695,6 +695,16 @@ body {
 .menu-search input:focus { border-color: var(--accent); }
 .menu-search input::placeholder { color: var(--text-dim); }
 .menu-search-none { padding: 14px 10px; font-size: 12.5px; }
+.menu-cmd {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; width: 100%; min-height: 44px;
+  margin: 0 0 6px; padding: 7px 10px; box-sizing: border-box; text-align: left; cursor: pointer;
+  border: 1px solid var(--accent); border-radius: 8px; background: var(--accent-soft); color: var(--text);
+  font: inherit; font-size: 13px;
+}
+.menu-cmd:hover, .menu-cmd:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.menu-cmd-verb { font-weight: 600; color: var(--accent); }
+.menu-cmd-detail { flex: 1 1 140px; min-width: 0; color: var(--text); overflow-wrap: anywhere; }
+.menu-cmd-app { font-size: 11.5px; color: var(--text-dim); }
 
 /* Menu apps — "N hidden apps · Choose apps" under the list */
 .menu-hidden-row {

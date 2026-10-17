@@ -128,6 +128,7 @@
       "menu.slides": "Make slides from this map…", "toast.noBridge": "That app can't take it yet",
       "toast.todoNone": "Nothing to send (done items are left out)", "toast.todoMany": "Too many items for one list (at most {n})",
       "toast.slidesBig": "This branch is too big for one deck",
+      "ctx.sendApp": "Send to an app…",
       "ctx.notes": "Save as a note", "menu.notes": "Save the map as a note",
       "toast.notesBig": "This branch is too long for one note", "toast.notesSent": "Saved “{name}” in Notes",
       "det.pic": "Picture", "det.picAdd": "Choose picture", "det.picDel": "Remove picture",
@@ -224,6 +225,7 @@
       "menu.slides": "Παρουσίαση από τον χάρτη…", "toast.noBridge": "Αυτή η εφαρμογή δεν μπορεί να το δεχτεί ακόμα",
       "toast.todoNone": "Δεν υπάρχει κάτι να σταλεί (όσα έγιναν μένουν έξω)", "toast.todoMany": "Πάρα πολλά για μία λίστα (έως {n})",
       "toast.slidesBig": "Το κλαδί είναι πολύ μεγάλο για μία παρουσίαση",
+      "ctx.sendApp": "Στείλε σε εφαρμογή…",
       "ctx.notes": "Αποθήκευση ως σημείωση", "menu.notes": "Αποθήκευση του χάρτη ως σημείωση",
       "toast.notesBig": "Το κλαδί είναι πολύ μεγάλο για μία σημείωση", "toast.notesSent": "Το «{name}» αποθηκεύτηκε στις Σημειώσεις",
       "det.pic": "Εικόνα", "det.picAdd": "Επιλογή εικόνας", "det.picDel": "Αφαίρεση εικόνας",
@@ -1944,6 +1946,7 @@
     items.push(["ctx.todo", function () { sendToTodo(id); }]);
     items.push(["ctx.notes", function () { sendToNotes(id); }]);
     if (has) items.push(["ctx.slides", function () { sendToSlides(id); }]);
+    if (sendApi()) items.push(["ctx.sendApp", function () { sendBranch(id); }]);
     items.push(["ctx.present", function () { startPresent(id); }]);
     if (!root) items.push(["ctx.delete", function () { deleteNode(id); }, "danger"]);
     openMenuAt(items, x, y, null, false, fromPress);
@@ -3145,6 +3148,18 @@
     var text = slidesOutline(id);
     if (text.length > SLIDES_MAX || (R.kids[id] || []).length + 1 > 300) { showToast(t("toast.slidesBig")); return; }
     openIn("slides", { outline: text, title: M.title(R.N[id].text, 120) || t("untitled") });
+  }
+
+  // "Send to an app" (shell send/, BR-SEND): the branch as an indented
+  // outline (as Copy gives it) to Writer, Kanban, Mail…
+  function sendApi() {
+    try { return window.parent !== window && window.parent.orosSend ? window.parent.orosSend : null; }
+    catch (e) { return null; }
+  }
+  function sendBranch(id) {
+    var api = sendApi();
+    if (!api || !R || !R.N[id]) return;
+    api.open({ kind: "text", data: { title: M.title(R.N[id].text, 200) || t("untitled"), text: M.toOutline(subR(id)) } });
   }
 
   var NOTES_MAX = 20000;

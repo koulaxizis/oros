@@ -1,0 +1,89 @@
+{
+ "source": "tests/bundle-chores.test.js slice()",
+ "base": {
+  "ver": 1,
+  "members": [
+   {
+    "id": "memberaaa1",
+    "m": 1792201782682,
+    "name": "Anna",
+    "color": 0,
+    "icon": "👩",
+    "away": null,
+    "order": 0,
+    "om": 0
+   },
+   {
+    "id": "memberbbb2",
+    "m": 1792201782782,
+    "name": "Bob",
+    "color": 1,
+    "icon": "",
+    "away": [
+     "2026-12-01",
+     "2026-12-05"
+    ],
+    "order": 1,
+    "om": 1792201782782
+   }
+  ],
+  "tasks": [
+   {
+    "id": "taskdish01",
+    "m": 1792201782882,
+    "name": "Dishes",
+    "icon": "🍽️",
+    "freq": {
+     "k": "d"
+    },
+    "weight": 1,
+    "mode": "rr",
+    "who": [],
+    "start": "2026-01-01",
+    "off": 0
+   },
+   {
+    "id": "tasktrash2",
+    "m": 1792201782982,
+    "name": "=cmd",
+    "icon": "",
+    "freq": {
+     "k": "wd",
+     "d": [
+      0,
+      3
+     ]
+    },
+    "weight": 2,
+    "mode": "bal",
+    "who": [
+     "memberaaa1",
+     "memberbbb2"
+    ],
+    "start": "2026-01-01",
+    "off": 1
+   }
+  ],
+  "done": {
+   "taskdish01|2026-10-16": [
+    1,
+    "memberaaa1",
+    1792201783082
+   ],
+   "taskdish01|2026-10-17": [
+    2,
+    "",
+    1792201783182
+   ]
+  },
+  "set": {
+   "taskdish01|2026-10-17": [
+    "memberbbb2",
+    1792201783282
+   ]
+  },
+  "tombs": {
+   "taskgone01": 1792201783482
+  }
+ }
+}

@@ -1,0 +1,200 @@
+{
+ "source": "tests/bundle-mood.test.js slice()",
+ "base": {
+  "ver": 3,
+  "trigSeeded": true,
+  "sm": 1799999999990,
+  "om": 1799999999980,
+  "entries": [
+   {
+    "id": "e2",
+    "ts": 1799996400000,
+    "mtime": 1799999999500,
+    "emotions": [
+     {
+      "k": "c-joyx1",
+      "i": 4
+     }
+    ],
+    "loc": "loc-gym",
+    "person": null,
+    "trig": null,
+    "note": "=HYPERLINK(\"x\")",
+    "trigger": "",
+    "acts": [
+     "c-runx1"
+    ],
+    "water": null,
+    "food": null,
+    "sleep": "no",
+    "move": null,
+    "som": null,
+    "caf": null,
+    "alc": null,
+    "scr": null,
+    "meds": null,
+    "meditate": null,
+    "read": null,
+    "tv": null,
+    "music": null,
+    "games": null,
+    "cook": null,
+    "walk": null,
+    "nap": null,
+    "journal": null,
+    "chores": null,
+    "bedtime": null,
+    "outdoor": null
+   },
+   {
+    "id": "e1",
+    "ts": 1799910000000,
+    "mtime": 1799999999100,
+    "emotions": [
+     {
+      "k": "happy",
+      "i": 5
+     },
+     {
+      "k": "calm",
+      "i": 3
+     }
+    ],
+    "loc": "seed-loc-0",
+    "person": "seed-per-1",
+    "trig": null,
+    "note": "good day\nreally",
+    "trigger": "",
+    "fm": {
+     "water": null,
+     "food": null,
+     "sleep": null,
+     "move": null,
+     "som": null,
+     "caf": null,
+     "alc": null,
+     "scr": null,
+     "meds": null,
+     "meditate": null,
+     "read": null,
+     "tv": null,
+     "music": null,
+     "games": null,
+     "cook": null,
+     "walk": null,
+     "nap": null,
+     "journal": null,
+     "chores": null,
+     "bedtime": null,
+     "outdoor": null,
+     "emotions": 1799999999100,
+     "loc": 0,
+     "person": 0,
+     "trig": 0,
+     "note": 1799999999100
+    },
+    "water": "yes",
+    "food": null,
+    "sleep": null,
+    "move": null,
+    "som": null,
+    "caf": null,
+    "alc": null,
+    "scr": null,
+    "meds": null,
+    "meditate": null,
+    "read": null,
+    "tv": null,
+    "music": null,
+    "games": null,
+    "cook": null,
+    "walk": null,
+    "nap": null,
+    "journal": null,
+    "chores": null,
+    "bedtime": null,
+    "outdoor": null
+   }
+  ],
+  "cols": {
+   "loc": [
+    {
+     "id": "seed-loc-0",
+     "label": "At home",
+     "bi": {
+      "en": "At home",
+      "el": "Στο σπίτι"
+     },
+     "mtime": 0,
+     "pos": 0
+    },
+    {
+     "id": "loc-gym",
+     "label": "Gym",
+     "mtime": 1799999999200,
+     "pos": 1
+    }
+   ],
+   "trig": [],
+   "person": [
+    {
+     "id": "seed-per-1",
+     "label": "Partner",
+     "bi": {
+      "en": "Partner",
+      "el": "Σύντροφος"
+     },
+     "mtime": 0,
+     "pos": 0
+    }
+   ]
+  },
+  "deleted": {
+   "e-gone": 1799999999900,
+   "seed-per-0": 5
+  },
+  "vocab": {
+   "emo": [
+    {
+     "id": "c-joyx1",
+     "mtime": 1799999999300,
+     "lab": "Joy",
+     "ic": "✨",
+     "col": "#87cf3e"
+    }
+   ],
+   "act": [
+    {
+     "id": "c-runx1",
+     "mtime": 1799999999300,
+     "lab": "Run"
+    }
+   ],
+   "ao": {
+    "ids": [
+     "c-runx1",
+     "water"
+    ],
+    "m": 1799999999300
+   },
+   "rs": 1799900000001
+  },
+  "goals": [
+   {
+    "id": "g1",
+    "act": "c-runx1",
+    "n": 3,
+    "per": "w",
+    "mtime": 1799999999400
+   },
+   {
+    "id": "g0",
+    "act": "water",
+    "n": 2,
+    "per": "w",
+    "mtime": 1799999999950,
+    "x": 1
+   }
+  ]
+ }
+}
