@@ -57,5 +57,22 @@ Songs from a server go into `Liked songs` and your playlists like any other. The
 
 `Add a music feed (RSS)` adds a feed with songs, for example a Podcasting 2.0 music feed (Wavlake and others) or any RSS or Atom feed with audio. The feed's page lists its songs; its ⋯ button has `Add to playlist`, `Open website` and `Remove feed`. Feeds are kept on this device.
 
+## Lyrics
+`Lyrics` (the lines button at the top of the full player) shows the words of the playing song. Lines with timing follow the song: the line being sung is bright, and tapping a line jumps there. Music looks first for a `.lrc` file with the same name next to the song in `Files › Music` (add it together with the song, or drop it in the folder), then for lyrics inside the song's tags.
+
+For other songs Music can ask LRCLIB (lrclib.net, a free and open lyrics library). It asks you once; it sends only the title, artist, album and length of the song you open lyrics for. Lyrics found online are kept on this device. Turn it on or off with `Look up lyrics online (LRCLIB)` in the settings.
+
+## Sound
+`Sound` in the full player (also in the settings) has:
+- `Equalizer`: ten bands from 31 Hz to 16 kHz, with presets (Bass boost, Vocal, Rock, Late night and more) or your own curve. It works on songs on this device, songs saved offline and songs from WebDAV or Dropbox; songs that stream from other sites play without it, because their sites do not allow it.
+- `Crossfade`: the end of a song fades into the next one, up to 12 seconds. Very short songs are not faded.
+- `Gapless playback`: the next song is loaded before this one ends, so live albums and mixes run on without a pause. It is on unless you turn it off.
+- `Same volume for every song (ReplayGain)`: uses the ReplayGain tags in your files so loud and quiet songs play at the same level. `Automatic` uses the album's level while you play an album. Songs without the tags keep their volume.
+
+These settings stay on this device.
+
+## Sleep timer
+`Sleep timer` in the full player stops the music after 5 to 90 minutes, or at the end of the playing song. The last ten seconds fade out. The button shows how long is left; choose `Turn off the timer` to cancel it.
+
 ## Keys
 Space plays or pauses, ← and → move 10 seconds, Shift+← and Shift+→ go to the previous or next song, S turns shuffle on or off, R changes repeat and L likes the song.

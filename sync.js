@@ -740,61 +740,241 @@
     return page(null);
   }
 
-  var storageAdapter = {
+  // Raw Dropbox implementation of the storage contract. The engine's
+  // facade (storageAdapter, below the provider) checks the engine
+  // gates first and hands every call one whole Blob.
+  var dropboxStorage = {
     putObject: function (key, blob, knownRev) {
-      return adapterEnsureConnected().then(function () {
-        if (!(blob instanceof Blob)) blob = new Blob([blob]);
-        var path = adapterPath(key);
-        // knownRev: undefined = unconditional (immutable content-
-        // addressed objects), null = "must not exist yet", string =
-        // "must still be at this revision" (SY-D4, adapterCommit).
-        // A refused conditional write rejects with "storage-conflict".
-        var doUpload = (blob.size > SINGLE_SHOT_MAX)
-          ? function () { return adapterUploadSession(path, blob, knownRev); }
-          : function () {
-              // SY-2: the single-shot leg returned the raw Response and
-              // nobody looked at it — a 401/429/507 resolved as success
-              // (the session leg already throws). Same contract now.
-              return adapterUploadOnce(path, blob, knownRev).then(function (res) {
-                if (res.status === 409 && knownRev !== undefined) {
-                  return uploadConflict(res).then(function (c) {
-                    throw new Error(c.conflict ? "storage-conflict"
-                                               : "upload failed: 409 " + c.summary);
-                  });
-                }
-                if (!res.ok) throw new Error("upload failed: " + res.status);
-                return res;
-              });
-            };
-        return doUpload();
+      var path = adapterPath(key);
+      // knownRev: undefined = unconditional (immutable content-
+      // addressed objects), null = "must not exist yet", string =
+      // "must still be at this revision" (SY-D4, adapterCommit).
+      // A refused conditional write rejects with "storage-conflict".
+      if (blob.size > SINGLE_SHOT_MAX) return adapterUploadSession(path, blob, knownRev);
+      // SY-2: the single-shot leg returned the raw Response and
+      // nobody looked at it — a 401/429/507 resolved as success
+      // (the session leg already throws). Same contract now.
+      return adapterUploadOnce(path, blob, knownRev).then(function (res) {
+        if (res.status === 409 && knownRev !== undefined) {
+          return uploadConflict(res).then(function (c) {
+            throw new Error(c.conflict ? "storage-conflict"
+                                       : "upload failed: 409 " + c.summary);
+          });
+        }
+        if (!res.ok) throw new Error("upload failed: " + res.status);
+        return res;
       });
     },
 
     getObject: function (key) {
-      return adapterEnsureConnected().then(function () {
-        return contentDownload(adapterPath(key)).then(function (res) {
-          if (res.status === 409) return null;   // missing — honest null
-          if (!res.ok) throw new Error("download failed: " + res.status);
-          return res.arrayBuffer();              // BINARY — never .text()
-        });
+      return contentDownload(adapterPath(key)).then(function (res) {
+        if (res.status === 409) return null;   // missing — honest null
+        if (!res.ok) throw new Error("download failed: " + res.status);
+        return res.arrayBuffer();              // BINARY — never .text()
       });
     },
 
     deleteObject: function (key) {
-      return adapterEnsureConnected().then(function () {
-        return rpc("files/delete_v2", { path: adapterPath(key) }).then(function (res) {
-          if (res.ok || res.status === 409) return true;  // gone = deleted
-          throw new Error("delete failed: " + res.status);
-        });
+      return rpc("files/delete_v2", { path: adapterPath(key) }).then(function (res) {
+        if (res.ok || res.status === 409) return true;  // gone = deleted
+        throw new Error("delete failed: " + res.status);
       });
     },
 
-    listPrefix: function (prefix) {
-      return adapterEnsureConnected().then(function () { return adapterList(prefix); });
-    },
+    listPrefix: function (prefix) { return adapterList(prefix); },
 
+    getRevision: function (key) { return adapterRevision(key); }
+  };
+
+  // ---------- Dropbox: blob, backups, wipe, revoke ----------
+  // SY-D1: conditional blob upload. Resolves { rev } (rev undefined =
+  // the provider did not tell us); a refused write rejects with
+  // "cloud-changed", any other failure with "upload failed: …".
+  function dropboxBlobPut(text, rev) {
+    return contentUpload(BLOB_PATH, text, rev).then(function (res) {
+      if (res.status === 409) {
+        return uploadConflict(res).then(function (c) {
+          throw new Error(c.conflict ? "cloud-changed"
+                                     : "upload failed: 409 " + c.summary);
+        });
+      }
+      if (!res.ok) throw new Error("upload failed: " + res.status);
+      return res.json().catch(function () { return null; }).then(function (meta) {
+        return { rev: (meta && typeof meta.rev === "string" && meta.rev) ? meta.rev : undefined };
+      });
+    });
+  }
+
+  // Blob text only (no revision): null = empty cloud.
+  function dropboxBlobRead() {
+    return contentDownload(BLOB_PATH).then(function (res) {
+      if (res.status === 409) return null;
+      if (!res.ok) throw new Error("download failed: " + res.status);
+      return res.text();
+    });
+  }
+
+  // Backups live next to the blob as "orOS-backup-<stamp>.json".
+  // Names travel WITHOUT a leading slash.
+  function dropboxBackupCopy(name) {
+    return rpc("files/copy_v2", { from_path: BLOB_PATH, to_path: "/" + name })
+      .then(function (res) { return !!(res && res.ok); });
+  }
+
+  // Resolves [{ name, size, modified }] (unsorted); [] when the
+  // folder cannot be listed.
+  function dropboxBackupList() {
+    return rpc("files/list_folder", { path: "", recursive: false })
+      .then(function (res) { return res.ok ? res.json() : { entries: [] }; })
+      .then(function (listing) {
+        return (listing.entries || [])
+          .filter(function (e) { return e.name && e.name.indexOf(BACKUP_PREFIX.slice(1)) === 0; })
+          .map(function (e) {
+            return { name: e.name, size: e.size || 0, modified: e.server_modified || "" };
+          });
+      });
+  }
+
+  function dropboxBackupGet(name) {
+    return contentDownload("/" + name).then(function (res) {
+      if (res.status === 409) return null;
+      if (!res.ok) throw new Error("download failed: " + res.status);
+      return res.text();
+    });
+  }
+
+  function dropboxBackupDelete(name) {
+    return rpc("files/delete_v2", { path: "/" + name }).then(function (res) {
+      if (res.ok || res.status === 409) return true;
+      throw new Error("delete failed: " + res.status);
+    });
+  }
+
+  // Factory reset: delete every orOS file (blob, backups, the Vault
+  // Drive folder). Best-effort per file. Resolves the number of paths.
+  function dropboxWipeAll() {
+    function delAll(paths) {
+      return paths.reduce(function (chain, p) {
+        return chain.then(function () {
+          return rpc("files/delete_v2", { path: p }).catch(function () {});
+        });
+      }, Promise.resolve());
+    }
+
+    return rpc("files/list_folder", { path: "", recursive: false })
+      .then(function (res) { return res.ok ? res.json() : { entries: [] }; })
+      .catch(function () { return { entries: [] }; })
+      .then(function (listing) {
+        // SY-1: ADAPTER_ROOT ("/vault") is a FOLDER, so the name
+        // filter below never matched it: every Vault Drive object
+        // and its manifest survived a "brand new OS" reset. One
+        // delete_v2 on the folder removes it recursively (409 when
+        // it never existed — harmless).
+        var paths = [BLOB_PATH, ADAPTER_ROOT];   // direct delete even if listing failed
+        (listing.entries || []).forEach(function (e) {
+          if (e.path_lower && e.name && e.name.indexOf("orOS-") === 0 &&
+              paths.indexOf(e.path_lower) === -1) paths.push(e.path_lower);
+        });
+        return delAll(paths).then(function () { return paths.length; });
+      });
+  }
+
+  // Server-side revoke of this device's token. Never rejects:
+  // resolves true / false. timeoutMs (optional) gives up waiting.
+  function dropboxRevoke(timeoutMs) {
+    var call = rpc("auth/token/revoke", {})
+      .then(function (res) { return !!res.ok; })
+      .catch(function () { return false; });
+    if (!timeoutMs) return call;
+    return Promise.race([call, new Promise(function (r) {
+      setTimeout(function () { r(false); }, timeoutMs);
+    })]);
+  }
+
+  function dropboxDisconnect() {
+    accessToken  = null;
+    refreshToken = null;
+    tokenExpiry  = 0;
+    cachedAccount = null;
+    localStorage.removeItem("oros-db-access");
+    localStorage.removeItem("oros-db-refresh");
+    localStorage.removeItem("oros-db-expiry");
+    localStorage.removeItem("oros-db-account");
+  }
+
+  // ---------- SYNC PROVIDER CONTRACT (WebDAV W1) ----------
+  // The engine (pull, push, backups, wipe, passphrase change) and the
+  // Vault reach the cloud ONLY through `provider`. Dropbox is today's
+  // only provider; a second one (WebDAV) implements the same object.
+  //   id                         — "dropbox"
+  //   restore()                  — boot: load saved credentials
+  //   isConnected() → bool
+  //   connect()                  — start sign-in (may navigate away)
+  //   handleRedirect() → Promise<bool>  — finish a sign-in on boot
+  //   disconnect()               — forget credentials on this device
+  //   account() → Promise<{ email, name }>
+  //   blobGet() → Promise<{ text, rev }>
+  //       text null + rev null = empty cloud; rev undefined = the
+  //       provider could not vouch for a revision (push re-learns).
+  //       Text and rev MUST describe the same content (SY-D1).
+  //   blobRead() → Promise<text|null>   — no revision needed
+  //   blobPut(text, rev) → Promise<{ rev }>
+  //       rev null = create only, string = replace only that
+  //       revision, enforced by the server itself (A36).
+  //       Refused → rejects "cloud-changed".
+  //   backupCopy(name) → Promise<bool>  — server-side copy of the blob
+  //   backupList() → Promise<[{ name, size, modified }]>
+  //   backupGet(name) → Promise<text|null>
+  //   backupDelete(name) → Promise<true>
+  //   wipeAll() → Promise<number>       — every orOS file + the Vault
+  //   revoke(timeoutMs?) → Promise<bool> — never rejects
+  //   storage                    — the Vault Drive object contract
+  // Network failures reject with "network error: …"; auth failures
+  // carry the status (errorKey maps both). The blob stays an opaque
+  // ciphertext string: providers never parse it, so new envelope
+  // fields travel untouched.
+  var dropboxProvider = {
+    id:             "dropbox",
+    restore:        restoreTokens,
+    isConnected:    function () { return !!(accessToken || refreshToken); },
+    connect:        startOAuth,
+    handleRedirect: handleOAuthRedirect,
+    disconnect:     dropboxDisconnect,
+    account:        getUserInfo,
+    blobGet:        fetchCloudBlob,
+    blobRead:       dropboxBlobRead,
+    blobPut:        dropboxBlobPut,
+    backupCopy:     dropboxBackupCopy,
+    backupList:     dropboxBackupList,
+    backupGet:      dropboxBackupGet,
+    backupDelete:   dropboxBackupDelete,
+    wipeAll:        dropboxWipeAll,
+    revoke:         dropboxRevoke,
+    storage:        dropboxStorage
+  };
+
+  var provider = dropboxProvider;
+
+  // Storage facade for vault.js (orosSync.storage): engine gates
+  // first, then the provider. Callers may pass bytes or a Blob.
+  var storageAdapter = {
+    putObject: function (key, blob, knownRev) {
+      return adapterEnsureConnected().then(function () {
+        if (!(blob instanceof Blob)) blob = new Blob([blob]);
+        return provider.storage.putObject(key, blob, knownRev);
+      });
+    },
+    getObject: function (key) {
+      return adapterEnsureConnected().then(function () { return provider.storage.getObject(key); });
+    },
+    deleteObject: function (key) {
+      return adapterEnsureConnected().then(function () { return provider.storage.deleteObject(key); });
+    },
+    listPrefix: function (prefix) {
+      return adapterEnsureConnected().then(function () { return provider.storage.listPrefix(prefix); });
+    },
     getRevision: function (key) {
-      return adapterEnsureConnected().then(function () { return adapterRevision(key); });
+      return adapterEnsureConnected().then(function () { return provider.storage.getRevision(key); });
     }
   };
 
@@ -1721,12 +1901,9 @@
   
   // ---------- Backups ----------
   function backupExistingRemote() {
-    return rpc("files/copy_v2", {
-      from_path: BLOB_PATH,
-      to_path:   BACKUP_PREFIX + new Date().toISOString().replace(/[:.]/g, "-") + ".json"
-    })
-      .then(function (res) { return !!(res && res.ok); })   // SY-D2: a refused
-                                // copy (409 = nothing to copy) is NOT a backup
+    var name = BACKUP_PREFIX.slice(1) + new Date().toISOString().replace(/[:.]/g, "-") + ".json";
+    return provider.backupCopy(name)   // SY-D2: a refused copy (nothing
+                                       // to copy) is NOT a backup
       .catch(function () { return false; });   // nothing pushed yet — fine
   }
 
@@ -1751,19 +1928,14 @@
   }
 
   function pruneBackups() {
-    return rpc("files/list_folder", { path: "", recursive: false })
-      .then(function (res) {
-        if (!res.ok) return [];
-        return res.json();
-      })
-      .then(function (listing) {
-        var backups = (listing.entries || [])
-          .filter(function (e) { return e.name && e.name.indexOf("orOS-backup-") === 0; })
+    return provider.backupList()
+      .then(function (list) {
+        var backups = list.slice()
           .sort(function (a, b) { return a.name < b.name ? 1 : -1; });
 
         var doomed = backups.slice(MAX_BACKUPS);
         return Promise.all(doomed.map(function (f) {
-          return rpc("files/delete_v2", { path: f.path_lower }).catch(function () {});
+          return provider.backupDelete(f.name).catch(function () {});
         }));
       })
       .catch(function () { /* best-effort */ });
@@ -1845,23 +2017,19 @@
     if (Date.now() - lastSuccessfulPullAt < PULL_TRUST_MS) {
       return Promise.resolve();
     }
-    return contentDownload(BLOB_PATH)
-      .then(function (res) {
-        // 409 = empty cloud (nothing to protect). ANY OTHER non-ok
+    return provider.blobRead()
+      .then(function (text) {
+        // null = empty cloud (nothing to protect). ANY OTHER failure
         // is an INCONCLUSIVE check — a server error must NOT be
         // laundered into "empty cloud = free to overwrite": that
         // re-opens the exact Trap-3 hole this guard exists to close
         // (stale local passphrase + indeterminate cloud → overwrite).
         // Reject → the push refuses to run; the next attempt rechecks.
-        // SY1: 409 IS conclusive — arm the trust window so pushes on
+        // SY1: empty IS conclusive — arm the trust window so pushes on
         // a persistently empty cloud don't re-download every time
         // (pull() already does this in its own empty branch).
-        if (res.status === 409) {
-          lastSuccessfulPullAt = Date.now();
-          return null;
-        }
-        if (!res.ok) throw new Error("download failed: " + res.status);
-        return res.text();
+        if (text === null) lastSuccessfulPullAt = Date.now();
+        return text;
       })
       .then(function (blobText) {
         if (!blobText) return;
@@ -1879,7 +2047,7 @@
   // entry gates). cloudRev moves ONLY after the blob was decrypted
   // and applied — a rev we could not read or apply is never ours.
   function syncDown() {
-    return fetchCloudBlob().then(function (cloud) {
+    return provider.blobGet().then(function (cloud) {
       if (!cloud.text) {
         lastSuccessfulPullAt = Date.now();   // empty cloud — any passphrase OK
         cloudRev = null;
@@ -1986,24 +2154,15 @@
         return maybeBackup();           // SY-D2
       })
       .then(function () {
-        return contentUpload(BLOB_PATH, encryptedText, revAtCollect);
-      })
-      .then(function (res) {
-        if (res.status === 409) {
-          return uploadConflict(res).then(function (c) {
-            if (c.conflict) {
-              cloudRev = undefined;     // the cloud moved — look again
-              throw new Error("cloud-changed");
-            }
-            throw new Error("upload failed: 409 " + c.summary);
+        return provider.blobPut(encryptedText, revAtCollect)
+          .catch(function (err) {
+            if (err && err.message === "cloud-changed") cloudRev = undefined;   // the cloud moved — look again
+            throw err;
           });
-        }
-        if (!res.ok) throw new Error("upload failed: " + res.status);
-        return res.json().catch(function () { return null; });
       })
-      .then(function (meta) {
+      .then(function (put) {
         // The blob in the cloud is now exactly our payload.
-        cloudRev = (meta && typeof meta.rev === "string" && meta.rev) ? meta.rev : undefined;
+        cloudRev = put.rev;
         // v0.8: the push that just succeeded IS the moment "what the
         // cloud holds" and "what the local slices hold" became one.
         // Record the baselines for every slice we just uploaded —
@@ -2200,7 +2359,7 @@
   //   1. suspend (nothing new can fire)
   //   2. wait out any in-flight push/reconcile (bounded 3s)
   //   3. DELETE every orOS file in the app folder (blob + backups)
-  //   4. REVOKE this device's authorization at Dropbox (server-side)
+  //   4. REVOKE this device's authorization at the provider (server-side)
   //   5. disconnect() locally (tokens, account cache, passphrase)
   // Works WITHOUT a passphrase — deletion and revoke never decrypt.
   // Resolves { wiped: n, revoked: bool } even when not connected
@@ -2228,63 +2387,32 @@
     return waitFlight(3000).then(function () {
       if (!isConnected()) return { wiped: 0, revoked: false };
 
-      function delAll(paths) {
-        return paths.reduce(function (chain, p) {
-          return chain.then(function () {
-            return rpc("files/delete_v2", { path: p }).catch(function () {});
-          });
-        }, Promise.resolve());
-      }
-
-      return rpc("files/list_folder", { path: "", recursive: false })
-        .then(function (res) { return res.ok ? res.json() : { entries: [] }; })
-        .catch(function () { return { entries: [] }; })
-        .then(function (listing) {
-          // SY-1: ADAPTER_ROOT ("/vault") is a FOLDER, so the name
-          // filter below never matched it: every Vault Drive object
-          // and its manifest survived a "brand new OS" reset. One
-          // delete_v2 on the folder removes it recursively (409 when
-          // it never existed — harmless).
-          var paths = [BLOB_PATH, ADAPTER_ROOT];   // direct delete even if listing failed
-          (listing.entries || []).forEach(function (e) {
-            if (e.path_lower && e.name && e.name.indexOf("orOS-") === 0 &&
-                paths.indexOf(e.path_lower) === -1) paths.push(e.path_lower);
-          });
-          var revoked = false;
-          return delAll(paths)
-            .then(function () {
-              return rpc("auth/token/revoke", {})
-                .then(function (res) { revoked = !!res.ok; })
-                .catch(function () { revoked = false; });
-            })
-            .then(function () {
-              disconnect();
-              return { wiped: paths.length, revoked: revoked };
-            });
+      var wiped = 0;
+      return provider.wipeAll()
+        .then(function (n) {
+          wiped = n;
+          return provider.revoke();
+        })
+        .then(function (revoked) {
+          disconnect();
+          return { wiped: wiped, revoked: revoked };
         });
     });
   }
 
   // ---------- Connection lifecycle ----------
   function isConnected() {
-    return !!(accessToken || refreshToken);
+    return provider.isConnected();
   }
 
   function connect() {
-    return startOAuth();
+    return provider.connect();
   }
 
   function disconnect() {
-    accessToken  = null;
-    refreshToken = null;
-    tokenExpiry  = 0;
-    cachedAccount = null;
+    provider.disconnect();
     passphrase   = null;
     cloudRev     = undefined;   // SY-D1: another account = another cloud
-    localStorage.removeItem("oros-db-access");
-    localStorage.removeItem("oros-db-refresh");
-    localStorage.removeItem("oros-db-expiry");
-    localStorage.removeItem("oros-db-account");
   }
 
   // Extended unlock: setPassphrase(pw, remember)
@@ -2323,7 +2451,7 @@
   }
 
   // ---------- Boot sequence ----------
-  restoreTokens();
+  provider.restore();
 
   // Hydrate persisted slice proxies BEFORE any pull/push can fire —
   // this is what makes app slices travel while apps are closed. And
@@ -2333,7 +2461,7 @@
   purgeRetired();
   hydratePersistedSlices();
 
-  var redirectHandled = handleOAuthRedirect();
+  var redirectHandled = provider.handleRedirect();
 
   // Vault unlock chain: after redirect handling settles, unseal + auto-engine
   var vaultUnlocked = redirectHandled.then(function () {
@@ -2351,7 +2479,7 @@
     connect:            connect,
     disconnect:         disconnect,
     isConnected:         isConnected,
-    getUserInfo:        getUserInfo,
+    getUserInfo:        function () { return provider.account(); },
     redirectHandled:    redirectHandled,
     vaultUnlocked:      vaultUnlocked,    // promise<bool>: true if auto-unlocked
 
@@ -2416,7 +2544,7 @@
     },
 
     // Wave 2 — Vault Drive: unified storage adapter (provider-
-    // agnostic surface, Dropbox implementation) + vault crypto.
+    // agnostic surface over `provider.storage`) + vault crypto.
     storage: storageAdapter,
     vaultCrypto: {
       sha256Hex:    sha256Hex,     // ArrayBuffer → hex digest (content addressing)
@@ -2484,7 +2612,7 @@
       // download and the re-encrypted upload is refused instead of
       // being silently replaced by the older content.
       var cpRev;
-      return fetchCloudBlob()
+      return provider.blobGet()
         .then(function (cloud) {
           // Empty cloud → text null: fall through to the empty-cloud
           // branch BELOW. setPassphrase + markDirty happen there,
@@ -2548,16 +2676,9 @@
               return encryptBlob(payload).then(function (encrypted) {
                 if (cpRev === undefined) throw new Error("cloud-rev-unknown");
                 return backupExistingRemote().then(function () {
-                  return contentUpload(BLOB_PATH, encrypted, cpRev);
+                  return provider.blobPut(encrypted, cpRev);
                 })
-                  .then(function (uploadRes) {
-                    if (uploadRes.status === 409) {
-                      return uploadConflict(uploadRes).then(function (c) {
-                        throw new Error(c.conflict ? "cloud-changed"
-                                                   : "upload failed: 409 " + c.summary);
-                      });
-                    }
-                    if (!uploadRes.ok) throw new Error("upload failed: " + uploadRes.status);
+                  .then(function () {
                     // SY-D1: the cloud now holds the OLD remote content
                     // re-encrypted — not necessarily what this device
                     // last applied. Unknown → the next push pulls first.
