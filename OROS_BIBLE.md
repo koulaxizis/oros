@@ -7470,3 +7470,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Send to someone: photo albums from Files and Photo Lab, up to 200 photos, made smaller and without hidden location details, as a link with an expiry.
 - Files: `share/album.js` (new, precached), `share/{kinds,relay,send,view}.js`, `share/share.css`, `files/files.js`, `photolab/{io,panels,strings}.js`, `shell.js`, help share + Files + Photo Lab EN/EL, Bible.
   - Tests: full suite green (new `tests/share-album.test.js`); real Chromium 1280 EN / 360 EL. Not tested: the live relay from the cloud container, a real phone.
+
+### 2026-10-17 — Command bar K2: timers, alarms, Kanban, habits, send, answers, history (#480) — 2.82.00
+- Command bar: timers and alarms, Kanban cards, habits done, send to an app, sums and unit conversions you can copy, and your recent commands.
+- Files: `commands/{core,bar}.js`, `shell.js`, `time/{time,astro}.js`, `habits/habits.js`, help menu EN/EL, Bible.
+  - Tests: full suite green (`tests/commands.test.js` extended); real Chromium 1280 EN / 360 EL. Not tested: a real phone.
