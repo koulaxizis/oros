@@ -44,7 +44,7 @@
 (function (root) {
   "use strict";
 
-  var RELAY = "https://oros-mail-relay.koulaxizis-25b.workers.dev";   // = mail.js
+  var RELAY = "https://oros-mail-relay.koulaxizis.workers.dev";   // = mail.js
   var PIECE = 262144;               // bytes of one piece on the relay (relay/share.js SHR_LIMITS.chunk)
   var MAX_PIECES = 200;
   var MAX_PLAIN = 4194304;          // bytes after decompression (bomb guard)

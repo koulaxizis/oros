@@ -3425,7 +3425,7 @@
   }
 
   // what remote.js needs from here: the console, nothing else
-  var RELAY = "https://oros-mail-relay.koulaxizis-25b.workers.dev";   // = mail.js
+  var RELAY = "https://oros-mail-relay.koulaxizis.workers.dev";   // = mail.js
   var peakBuf = null;
   function peakOf(an) {
     if (!an) return 0;
