@@ -1,0 +1,35 @@
+# Vier gewinnt
+Wirf Steine in ein Spielbrett mit 7 Spalten und 6 Reihen. Wer zuerst vier in einer Reihe hat, waagerecht, senkrecht oder diagonal, gewinnt. Spiel gegen den Computer oder mit einer Freundin oder einem Freund auf einem Gerät.
+
+## So wird gespielt
+Tippe oder klicke auf eine Spalte, um deinen Stein einzuwerfen; er fällt auf den untersten freien Platz. Ihr seid abwechselnd dran, bis jemand vier Steine in einer Reihe hat oder das Brett voll ist (unentschieden).
+
+Wähle in der Werkzeugleiste `Gegen Computer` oder `2 Spieler`. Gegen den Computer wählst du unter `Erster Zug`, wer anfängt: `Du beginnst`, `Computer beginnt` oder `Abwechselnd`. Bei 2 Spielern beginnt abwechselnd jeder, und eine laufende Serie wird mitgezählt.
+
+## Steuerung
+- Tippe oder klicke auf eine Spalte, um dort zu spielen. Am Computer zeigt dir die Maus über einer Spalte, wo der Stein landet.
+- `Zug zurück (Z)` nimmt den letzten Zug zurück. Gegen den Computer geht es zurück bis zu deinem Zug. Nach dem Ende eines Spiels geht das nicht mehr.
+- `Neues Spiel (N)` startet neu. Lief gerade ein Spiel, erscheint für ein paar Sekunden ein Knopf `Rückgängig`, der es zurückholt.
+- Der Lautsprecher-Knopf schaltet den Ton an oder aus (am Anfang aus).
+- Tasten: [[1]] bis [[7]] werfen einen Stein in diese Spalte, die Pfeiltasten links und rechts wechseln die Spalte, und [[Enter]] oder [[Space]] spielt die gewählte, [[N]] ist ein neues Spiel, und [[Z]] oder [[Ctrl+Z]] nimmt zurück.
+
+## Stufen und Wertung
+Der Computer hat drei Stufen: `Leicht` nimmt einen Sieg, wenn er ihn sieht, spielt sonst aber locker; `Mittel` denkt ein paar Züge voraus; `Schwer` rechnet viel tiefer und ist schwer zu schlagen.
+
+`Bilanz` zeigt deine Siege, Niederlagen und Unentschieden gegen den Computer für jede Stufe (`Gewonnen · verloren · unentschieden`) und die 2-Spieler-Serie. `Bilanz zurücksetzen` löscht sie, nachdem du bestätigt hast.
+
+## Zwei Geräte
+Spiel gegen jemanden mit eigenem Handy, Tablet oder Computer. Drück `Auf zwei Geräten spielen` (der Knopf mit zwei Bildschirmen): Einer von euch wählt `Show a code`, der andere `Enter a code` und tippt den 6-stelligen Code ein oder scannt den QR-Code, und das erste Gerät lässt das andere mit `Allow` herein. Solange ihr verbunden seid, steht `Two devices` in der Werkzeugleiste; drück darauf, um die Verbindung zu sehen oder mit `Leave the game` aufzuhören. Diese Knöpfe für zwei Geräte sind vorerst noch auf Englisch.
+- Das Gerät, das den Code gezeigt hat, beginnt das erste Spiel; danach wechselt der erste Zug, und die Serie steht auf beiden Geräten.
+- Jedes Gerät spielt nur, wenn es dran ist. `Neues Spiel` auf dem Gerät, das den Code gezeigt hat, startet das nächste Spiel (es fragt vorher, wenn gerade ein Spiel läuft); auf dem anderen Gerät bittet es um eins, wenn ein Spiel vorbei ist.
+- Lädt ein Gerät neu oder verliert es das Netz, wartet das Spiel und geht dort weiter, wo es war, sobald das Gerät zurück ist (bis zu einem Tag lang).
+- Die Züge gehen direkt zwischen den beiden Geräten im selben Netz oder verschlüsselt über das orOS-Relay; online wird nichts gespeichert.
+
+Grenzen: nur zwei Spieler, jeder auf seinem eigenen Gerät mit orOS in diesem Spiel geöffnet. Spiele auf zwei Geräten zählen nicht für deine Bilanz, und die Stufen-Knöpfe sind solange ausgeblendet. `Leave the game` beendet es auf beiden Geräten und holt das Spiel zurück, das du auf diesem Gerät hattest.
+
+## Synchronisierung
+Deine Bilanz gegen den Computer wird über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert, und ein Zurücksetzen löscht sie überall. Das laufende Spiel, die 2-Spieler-Serie, deine Einstellungen und der Ton bleiben auf diesem Gerät. Ein Spiel, das du mittendrin verlässt, ist noch da, wenn du zurückkommst.
+
+## Tipps
+- Spalten in der Mitte gehören zu mehr Viererreihen, darum sind sie meist der beste Anfang.
+- Achte auf zwei Drohungen auf einmal: Die andere Seite kann nur eine davon blocken.
