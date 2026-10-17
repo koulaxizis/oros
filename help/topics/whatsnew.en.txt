@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.69.02
+- Files: big folders in grid view no longer overlap, and pictures open again. Atelier: when you delete a design you can tick a box to delete its unused files too.
+
 ## Version 2.69.01
 - Settings: Connect a service now shows tiles grouped by purpose, with a search box, instead of a plain list.
 
