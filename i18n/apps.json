@@ -1,6 +1,23 @@
 {
  "apps": [
   {
+   "app": "atelier",
+   "files": [
+    "atelier/ai.js",
+    "atelier/bulk.js",
+    "atelier/core.js",
+    "atelier/imagine.js",
+    "atelier/library/icons.js",
+    "atelier/magic.js",
+    "atelier/magicai.js",
+    "atelier/magicdesign.js",
+    "atelier/presets.js",
+    "atelier/search.js",
+    "atelier/templates-more.js",
+    "atelier/templates.js"
+   ]
+  },
+  {
    "app": "calendar",
    "files": [
     "calendar/calendar.js",
@@ -78,6 +95,14 @@
    ]
   },
   {
+   "app": "layout",
+   "files": [
+    "layout/layout.js",
+    "layout/pdfin.js",
+    "layout/search.js"
+   ]
+  },
+  {
    "app": "mail",
    "files": [
     "mail/mail.js",
@@ -92,6 +117,20 @@
     "mindmap/mindmap.js",
     "mindmap/mm-core.js",
     "mindmap/search.js"
+   ]
+  },
+  {
+   "app": "mockups",
+   "files": [
+    "mockups/mockups.js",
+    "mockups/search.js"
+   ]
+  },
+  {
+   "app": "montage",
+   "files": [
+    "montage/montage.js",
+    "montage/search.js"
    ]
   },
   {
@@ -113,6 +152,12 @@
     "notes/notes.js",
     "notes/platforms.js",
     "notes/search.js"
+   ]
+  },
+  {
+   "app": "photolab",
+   "files": [
+    "photolab/strings.js"
    ]
   },
   {

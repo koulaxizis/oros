@@ -2,8 +2,8 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 7719 of 27081 (28%)
-- Help pages: 35 of 144 (24%)
+- Strings: 10706 of 27607 (38%)
+- Help pages: 40 of 144 (27%)
 - Shown in the language list: yes
 
 Apps marked "English for now" do not load language packs yet: their
@@ -13,7 +13,7 @@ text is still written in the code. They switch over wave by wave
 | App | Translated | Strings |
 |---|---|---|
 | assistant | English for now | 0 / 490 |
-| atelier | English for now | 0 / 744 |
+| atelier | 100% | 1210 / 1210 |
 | aura | English for now | 0 / 84 |
 | baby | English for now | 0 / 304 |
 | backgammon | English for now | 0 / 91 |
@@ -58,7 +58,7 @@ text is still written in the code. They switch over wave by wave
 | jigsaw | English for now | 0 / 85 |
 | kanban | 100% | 272 / 272 |
 | labels | English for now | 0 / 88 |
-| layout | English for now | 0 / 415 |
+| layout | 100% | 415 / 415 |
 | library | English for now | 0 / 307 |
 | lightsout | English for now | 0 / 51 |
 | mahjong | English for now | 0 / 69 |
@@ -72,8 +72,8 @@ text is still written in the code. They switch over wave by wave
 | minesweeper | English for now | 0 / 75 |
 | minimalism | English for now | 0 / 32 |
 | mixer | English for now | 0 / 59 |
-| mockups | English for now | 0 / 283 |
-| montage | English for now | 0 / 369 |
+| mockups | 100% | 283 / 283 |
+| montage | 100% | 371 / 371 |
 | mood | English for now | 0 / 246 |
 | museum | English for now | 0 / 46 |
 | music | English for now | 0 / 372 |
@@ -86,7 +86,7 @@ text is still written in the code. They switch over wave by wave
 | passwords | English for now | 0 / 321 |
 | petcare | English for now | 0 / 317 |
 | petworld | English for now | 0 / 252 |
-| photolab | English for now | 0 / 650 |
+| photolab | 100% | 708 / 708 |
 | pixel | English for now | 0 / 101 |
 | plants | English for now | 0 / 163 |
 | podcasts | English for now | 0 / 264 |
@@ -153,7 +153,6 @@ These show English until fixed (usually the English text changed).
 ## Help pages not translated yet
 
 - help/assistant.txt
-- help/atelier.txt
 - help/aura.txt
 - help/baby.txt
 - help/backgammon.txt
@@ -190,7 +189,6 @@ These show English until fixed (usually the English text changed).
 - help/hexagon.txt
 - help/jigsaw.txt
 - help/labels.txt
-- help/layout.txt
 - help/library.txt
 - help/lightsout.txt
 - help/mahjong.txt
@@ -202,8 +200,6 @@ These show English until fixed (usually the English text changed).
 - help/minesweeper.txt
 - help/minimalism.txt
 - help/mixer.txt
-- help/mockups.txt
-- help/montage.txt
 - help/mood.txt
 - help/museum.txt
 - help/music.txt
@@ -214,7 +210,6 @@ These show English until fixed (usually the English text changed).
 - help/passwords.txt
 - help/petcare.txt
 - help/petworld.txt
-- help/photolab.txt
 - help/pixel.txt
 - help/plants.txt
 - help/podcasts.txt
