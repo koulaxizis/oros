@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "2.81.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "2.82.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -3259,11 +3259,17 @@
   // (commands/core.js). Two ways in: the first row of the menu search
   // (Enter runs it) and a small bar over any app (commands/bar.js):
   // Ctrl+K, and Ctrl+Alt+Shift+K everywhere (SC_DEFS). Notes and Wiki
-  // keep their own Ctrl+K (their search). Both files load on first use.
+  // keep their own Ctrl+K (their search). Both files load on first use,
+  // with the engines they borrow (Calendar quick add, Calculator, Unit
+  // Converter, "Send to an app"); a missing engine only drops its kind.
+  // The last commands run are a device-local list (CMD_HIST_KEY, never
+  // synced) that the bar shows while its field is empty.
   var CMD_OWN_CTRLK = { notes: true, wiki: true };
+  var CMD_HIST_KEY = "oros-cmd-history", CMD_HIST_MAX = 12;
   var cmdLoad = null;
   function cmdModule() {
-    if (window.OrosCommands && window.orosCmdBar && window.OrosCalQuick) return Promise.resolve(window.OrosCommands);
+    if (window.OrosCommands && window.orosCmdBar && window.OrosCalQuick && window.CalcCore && window.UnitsCore &&
+        window.OrosSendCore) return Promise.resolve(window.OrosCommands);
     if (!cmdLoad) {
       var load = function (src) {
         return new Promise(function (resolve, reject) {
@@ -3274,10 +3280,14 @@
           document.head.appendChild(sc);
         });
       };
+      var opt = function (src) { return load(src).catch(function () {}); };
       cmdLoad = Promise.all([
         window.OrosCalQuick ? null : load("calendar/quickadd.js"),
         window.OrosCommands ? null : load("commands/core.js"),
-        window.orosCmdBar ? null : load("commands/bar.js")
+        window.orosCmdBar ? null : load("commands/bar.js"),
+        window.CalcCore ? null : opt("calculator/core.js"),
+        window.UnitsCore ? null : opt("units/core.js"),
+        window.OrosSendCore ? null : opt("send/core.js")
       ]).then(function () {
         if (!window.OrosCommands || !window.orosCmdBar) throw new Error("commands missing");
         return window.OrosCommands;
@@ -3310,14 +3320,39 @@
   function cmdParse(q) {
     var C = window.OrosCommands;
     if (!C) return null;
-    return C.parse(q, { today: cmdToday(), apps: cmdApps(), cal: window.OrosCalQuick });
+    var U = window.UnitsCore, rates = null;
+    if (U) { try { rates = U.storedRates(JSON.parse(localStorage.getItem(U.RATES_KEY))); } catch (e) { rates = null; } }
+    return C.parse(q, { today: cmdToday(), apps: cmdApps(), cal: window.OrosCalQuick, lang: state.lang,
+                        calc: window.CalcCore, units: U, rates: rates, send: window.OrosSendCore });
   }
-  function cmdRun(cmd) {
+  function cmdHistory() {
+    try {
+      var l = JSON.parse(localStorage.getItem(CMD_HIST_KEY));
+      return Array.isArray(l) ? l.filter(function (x) { return typeof x === "string" && x && x.length <= 300; }).slice(0, CMD_HIST_MAX) : [];
+    } catch (e) { return []; }
+  }
+  function cmdRemember(q) {
+    q = String(q || "").replace(/\s+/g, " ").trim();
+    if (!q || q.length > 300) return;
+    var l = cmdHistory().filter(function (x) { return x !== q; });
+    l.unshift(q);
+    try { localStorage.setItem(CMD_HIST_KEY, JSON.stringify(l.slice(0, CMD_HIST_MAX))); } catch (e) {}
+  }
+  function cmdForget() { try { localStorage.removeItem(CMD_HIST_KEY); } catch (e) {} }
+  function cmdRun(cmd, q) {
     var C = window.OrosCommands;
     var c = C ? C.call(cmd, state.lang) : null;
     if (!c) return;
+    if (typeof q === "string") cmdRemember(q);
     closeMenu();
     if (c.fn === "openAppById") { openAppById(c.args[0]); return; }
+    if (c.fn === "copy") {
+      var el = state.lang === "el", txt = String(c.args[0]);
+      var done = function () { notifySys("dim", (el ? "Αντιγράφηκε: " : "Copied: ") + txt); };
+      try { navigator.clipboard.writeText(txt).then(done, function () { notifySys("dim", txt); }); }
+      catch (e) { notifySys("dim", txt); }
+      return;
+    }
     var f = window[c.fn];
     if (typeof f === "function") f.apply(window, c.args);
   }
@@ -3348,6 +3383,8 @@
         apps: cmdMatchApps,
         run: cmdRun,
         openApp: openAppById,
+        history: cmdHistory,
+        forget: cmdForget,
         ask: hasApp("assistant") ? function (q) { openAssistant(q); } : null
       }, text);
     }, function () {
@@ -3513,7 +3550,7 @@
         return;
       }
       var cmd = cmdParse(q);
-      if (!cmd) return;
+      if (!cmd || cmd.kind === "convert") return;     // conversions: the Unit Converter's own search row
       menuCmd = cmd;
       var d = window.OrosCommands.describe(cmd, state.lang);
       var b = document.createElement("button");
@@ -3532,10 +3569,10 @@
       if (cmd.kind !== "open") {
         var ap = document.createElement("span");
         ap.className = "menu-cmd-app";
-        ap.textContent = "→ " + cmdAppName(cmd.app);
+        ap.textContent = d.hint || "→ " + cmdAppName(cmd.app);
         b.appendChild(ap);
       }
-      b.addEventListener("click", function () { cmdRun(cmd); });
+      b.addEventListener("click", function () { cmdRun(cmd, q); });
       b.addEventListener("keydown", function (e) {
         if (e.key === "ArrowDown") { var n = menuNavItems(); if (n[1]) { e.preventDefault(); n[1].focus(); } }
         else if (e.key === "ArrowUp") { e.preventDefault(); search.focus(); }
@@ -3564,7 +3601,7 @@
       if (e.key === "Enter") {
         if (menuCmd) {
           e.preventDefault();
-          cmdRun(menuCmd);
+          cmdRun(menuCmd, menuQuery);
         } else if (firstMatch) {
           e.preventDefault();
           openApp(firstMatch);

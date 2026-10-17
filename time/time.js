@@ -1337,6 +1337,33 @@
     tmrRender();
     return true;
   }
+  // Command bar (commands/core.js, BR-CMD): { timer: { sec, label } }
+  // starts a timer at once (the user's Enter in the bar is the Start
+  // tap; Reset / ✕ undo it); { alarm: { at "HH:MM", label, daily } }
+  // only fills the Alarm form, the user still presses Add. Called by
+  // astro.js's __orosOpenAt receiver; true when the target was ours.
+  window.__orosTimeCmd = function (tg) {
+    if (!tg || typeof tg !== "object") return false;
+    if (tg.timer && typeof tg.timer === "object") {
+      var sec = tg.timer.sec;
+      if (typeof sec !== "number" || !(sec >= 1) || sec > 360000) return true;
+      if (typeof window.__orosTimeOpen === "function") window.__orosTimeOpen("timer");
+      tmrAddNew(Math.round(sec) * 1000, typeof tg.timer.label === "string" ? tg.timer.label.replace(/[\u0000-\u001f\u007f]/g, " ").slice(0, 40) : "");
+      return true;
+    }
+    if (tg.alarm && typeof tg.alarm === "object") {
+      var at = tg.alarm.at;
+      if (typeof at !== "string" || !/^([01]\d|2[0-3]):[0-5]\d$/.test(at)) return true;
+      if (typeof window.__orosTimeOpen === "function") window.__orosTimeOpen("alarm");
+      $("al-time").value = at;
+      $("al-label").value = typeof tg.alarm.label === "string" ? tg.alarm.label.replace(/[\u0000-\u001f\u007f]/g, " ").slice(0, 60) : "";
+      $("al-daily").checked = tg.alarm.daily === true;
+      try { $("al-add").focus(); } catch (e) {}
+      return true;
+    }
+    return false;
+  };
+
   function tmrBtn(cls, text, fn, label) {
     var b = document.createElement("button");
     b.type = "button";
