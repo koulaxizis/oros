@@ -1,0 +1,95 @@
+{
+ "source": "tests/bundle-notes.test.js sampleState()",
+ "base": {
+  "notebooks": [
+   {
+    "id": "nb1",
+    "name": "Δουλειά",
+    "mtime": 100,
+    "pos": 0
+   },
+   {
+    "id": "nb2",
+    "name": "Other",
+    "mtime": 5,
+    "pos": 1
+   }
+  ],
+  "labels": [
+   {
+    "id": "l1",
+    "nb": "nb1",
+    "name": "urgent",
+    "color": "#e06c75",
+    "mtime": 50,
+    "pos": 1
+   },
+   {
+    "id": "l2",
+    "nb": "nb2",
+    "name": "elsewhere",
+    "color": "#ecc75f",
+    "mtime": 50,
+    "pos": 2
+   }
+  ],
+  "pages": [
+   {
+    "id": "p2",
+    "nb": "nb1",
+    "parent": "p1",
+    "title": "Child",
+    "text": "- [ ] task\n[[Root page]]",
+    "mtime": 300,
+    "pos": 0,
+    "labels": [],
+    "pinned": false
+   },
+   {
+    "id": "p1",
+    "nb": "nb1",
+    "parent": null,
+    "title": "Root page",
+    "text": "# Hi\n\n**bold**",
+    "mtime": 200,
+    "pos": 1,
+    "labels": [
+     "l1"
+    ],
+    "pinned": false
+   },
+   {
+    "id": "p3",
+    "nb": "nb1",
+    "parent": null,
+    "title": "Σημείωση",
+    "text": "κείμενο",
+    "mtime": 150,
+    "pos": 2,
+    "labels": [],
+    "pinned": true,
+    "h": [
+     "x"
+    ],
+    "ct": 1,
+    "st": 1
+   },
+   {
+    "id": "px",
+    "nb": "nb2",
+    "parent": null,
+    "title": "Not this one",
+    "text": "",
+    "mtime": 1,
+    "pos": 0,
+    "labels": [
+     "l2"
+    ],
+    "pinned": false
+   }
+  ],
+  "tombs": {
+   "gone": 1
+  }
+ }
+}

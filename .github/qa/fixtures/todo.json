@@ -1,0 +1,112 @@
+{
+ "source": "tests/bundle-todo.test.js slice()",
+ "base": {
+  "ver": 3,
+  "sm": 5,
+  "om": 7,
+  "activeList": "tdl-general",
+  "hideCompleted": true,
+  "deleted": {
+   "t-gone": 1799999999900,
+   "tdl-groceries": 0
+  },
+  "labels": [
+   {
+    "id": "lb-home",
+    "name": "home",
+    "color": "#e06c75",
+    "mtime": 1799999999100,
+    "om": 0,
+    "pos": 0
+   }
+  ],
+  "lists": [
+   {
+    "id": "tdl-general",
+    "name": "General",
+    "mtime": 1799999999200,
+    "om": 1,
+    "pos": 0,
+    "recurrence": null,
+    "fm": {
+     "name": 1799999999200,
+     "cycle": 0
+    },
+    "items": [
+     {
+      "id": "t1",
+      "text": "Buy milk",
+      "done": false,
+      "due": "2026-10-20",
+      "notes": "2 l",
+      "labels": [
+       "lb-home"
+      ],
+      "info": [
+       {
+        "id": "f1",
+        "label": "Shop",
+        "value": "AB"
+       }
+      ],
+      "recurrence": null,
+      "mtime": 1799999999300,
+      "om": 0,
+      "pos": 0,
+      "fm": {
+       "text": 1799999999300,
+       "done": 0,
+       "due": 0,
+       "notes": 0,
+       "labels": 0,
+       "info": 0,
+       "recurrence": 0
+      },
+      "prio": 1,
+      "xf": {
+       "prio": 1799999999300
+      },
+      "subs": [
+       {
+        "id": "s1",
+        "text": "check fridge",
+        "done": true,
+        "mtime": 1799999999300
+       }
+      ]
+     },
+     {
+      "id": "t2",
+      "text": "=cmd",
+      "done": true,
+      "due": null,
+      "notes": "",
+      "labels": [],
+      "info": [],
+      "recurrence": null,
+      "mtime": 1799999999400,
+      "om": 0,
+      "pos": 1,
+      "fm": {
+       "text": 1799999999400,
+       "done": 1799999999400,
+       "due": 0,
+       "notes": 0,
+       "labels": 0,
+       "info": 0,
+       "recurrence": 0
+      }
+     }
+    ]
+   }
+  ],
+  "filters": [
+   {
+    "id": "flt1",
+    "name": "x",
+    "mtime": 1
+   }
+  ],
+  "fom": 1
+ }
+}
