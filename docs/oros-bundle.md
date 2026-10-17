@@ -61,6 +61,7 @@ The format is free and open (MIT, like orOS). Reader and writer: [`bundle.js`](.
 | `.orossignature` | Signature | `application/x-oros-signature` |
 | `.orosnewsletter` | Newsletter | `application/x-oros-newsletter` |
 | `.orosinventory` | Storage | `application/x-oros-inventory` |
+| `.oroscards` | Flashcards | `application/x-oros-cards` |
 
 The record apps (To-Do to Storage) follow the rules in "Record apps" below. More apps follow; each gets its own extension (`.oros` + one short English word) and MIME type `application/x-oros-<word>`.
 
