@@ -129,7 +129,8 @@ test("every receiver's app code takes the target it is sent", () => {
     slides: ["slides/app.js", ["tg.outline", "tg.title"]],
     mindmap: ["mindmap/mindmap.js", ["t.pasteText", "t.pasteText.text"]],
     kanban: ["kanban/kanban.js", ["tg.addCards", "T.asCards"]],
-    prompter: ["prompter/prompter.js", ["tg.newPrompt", "tg.newPrompt.text"]]
+    prompter: ["prompter/prompter.js", ["tg.newPrompt", "tg.newPrompt.text"]],
+    layout: ["layout/layout.js", ["placeImage"]]
   };
   assert.deepEqual(Object.keys(need).sort(), Object.keys(C.RECEIVERS).sort());
   for (const app of Object.keys(need)) {
@@ -154,7 +155,16 @@ test("shell and sheet: loaded on demand, no innerHTML from data", () => {
 
 test("senders: Writer, Notes, Wiki, Mail, Bookmarks, Feeds and the office apps call orosSend", () => {
   for (const f of ["writer/writer.js", "notes/notes.js", "wiki/wiki.js", "mail/mail.js", "bookmarks/bookmarks.js", "feeds/feeds.js",
-    "spreadsheet/spreadsheet.js", "slides/editor.js", "mindmap/mindmap.js", "kanban/kanban.js"]) {
+    "spreadsheet/spreadsheet.js", "slides/editor.js", "mindmap/mindmap.js", "kanban/kanban.js",
+    "pixel/pixel.js", "photolab/io.js", "atelier/io.js"]) {
     assert.match(src(f), /orosSend/, f);
   }
+});
+
+test("Layout takes one picture from the disk (wave 5)", () => {
+  const one = { items: [{ path: "/internal/Pictures/cat.png", name: "cat.png" }] };
+  assert.deepEqual(C.appsFor("files", one, ALL, ""), ["mail", "layout"]);
+  assert.deepEqual(C.target("layout", "files", one), { placeImage: { path: "/internal/Pictures/cat.png", name: "cat.png" } });
+  assert.equal(C.target("layout", "files", { items: [{ path: "/internal/Docs/a.pdf", name: "a.pdf" }] }), null);
+  assert.equal(C.target("layout", "files", { items: [one.items[0], { path: "/internal/Pictures/b.jpg", name: "b.jpg" }] }), null);
 });

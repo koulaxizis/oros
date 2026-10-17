@@ -419,9 +419,14 @@
     // Sound (if enabled) — NOT-R4: transient toasts are instant
     // feedback to a click the user JUST made; a chime on "Working…"
     // is noise, not information.
-    if (soundType !== 'none' && SOUNDS[soundType] &&
-        item.type !== 'transient') {
-      playTone(SOUNDS[soundType], 'sine', 0.2);
+    if (soundType !== 'none' && item.type !== 'transient') {
+      // "rt:<id>": a Ringtone Composer melody (stickies/host.js,
+      // window.orosMelodies), at most 8 s; a deleted one chimes
+      if (/^rt:[A-Za-z0-9_-]{1,64}$/.test(soundType) && window.orosMelodies) {
+        window.orosMelodies.play(soundType.slice(3), function () { playTone(SOUNDS.chime, 'sine', 0.2); }, 8);
+      } else if (SOUNDS[soundType]) {
+        playTone(SOUNDS[soundType], 'sine', 0.2);
+      }
     }
     
     // Wave 6 — native Web Notification: OS-level deliverability when

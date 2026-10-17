@@ -10,7 +10,7 @@
 //     checked against its hash and decoded before it is stored.
 //   - PNG / JPG of one page (72, 150 or 300 dpi, at most 16 MP).
 //   - Scribus .sla / .sla.gz import (layout/sla.js) into a new document.
-//   - Place image, import plain text.
+//   - Place image, import plain text, a picture sent from another app.
 // All file I/O goes through orosDialog (R33).
 // ============================================================
 (function () {
@@ -414,6 +414,44 @@
     });
   }
 
+  // A picture from another app ("Send to…" → the deep link
+  // { placeImage }): a new image frame on the current page, as large as
+  // the margins allow with the picture's proportions, centred, one Undo
+  // step. No document open → a new one with the New document defaults,
+  // named after the picture.
+  var IMG_MAX = 50 * 1024 * 1024;
+  function placeFromBlob(blob, name) {
+    name = String(name || "").slice(0, 120);
+    if (!blob || !blob.size || blob.size > IMG_MAX) { LY.toast(t("img.fail")); return Promise.resolve(false); }
+    var file = new File([blob], name || "picture", { type: blob.type || "" });
+    return A.importFile(file).then(function (res) {
+      if (!LY.doc) {
+        var s = LY.newDocSetup();
+        s.name = name.replace(/\.[^.]+$/, "").trim() || t("doc.untitled");
+        LY.createDoc(s);
+        if (!LY.doc) return false;
+      }
+      LY.flushStory && LY.flushStory();
+      var P0 = ED.curP(), made = null;
+      if (!P0) { LY.toast(t("img.fail")); return false; }
+      LY.op(function (doc, now) {
+        var mb = ED.marginBox(doc, P0.side);
+        var k = Math.min(mb.w / res.w, mb.h / res.h), w = res.w * k, h = res.h * k;
+        made = ED.addItem(doc, { t: "img", pg: P0.id, side: P0.master ? P0.side : "",
+                                 x: mb.x + (mb.w - w) / 2, y: mb.y + (mb.h - h) / 2, w: w, h: h }, now);
+        if (!made) return false;
+        made.a = res.id; made.nm = res.name; made.iw = res.w; made.ih = res.h;
+      });
+      if (!made) return false;
+      ED.select([made.id]);
+      LY.toast(t("img.sent"));
+      return true;
+    }, function (e) {
+      LY.toast(e && e.message === "nofs" ? t("img.nofs") : t("img.fail"));
+      return false;
+    });
+  }
+
   // ---------- Text ----------
   // Plain text: one paragraph per line (blank lines dropped), into the
   // selected text frame's story (appended), or a new frame filling
@@ -456,7 +494,7 @@
 
   LY.io = {
     exportPdf: exportPdf, exportImage: exportImage, exportPackage: exportPackage, importPackage: importPackage, importFolder: importFolder, openFile: openFile,
-    placeImage: placeImage, importText: importText,
+    placeImage: placeImage, importText: importText, placeFromBlob: placeFromBlob,
     // for the data merge (mergeui.js)
     saveBlob: saveBlob, pickFile: pickFile, loadJsPDF: loadJsPDF, fileName: fileName
   };

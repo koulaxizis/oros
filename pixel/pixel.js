@@ -70,7 +70,9 @@
       "btn.undo": "Undo (Ctrl+Z)", "btn.redo": "Redo (Ctrl+Y)",
       "grid": "Face, {n} by {n} pixels", "px": "Row {r}, column {c}: {col}",
       "btn.png": "PNG", "btn.svg": "SVG", "btn.copyImg": "Copy image", "exp.px": "{n} px",
-      "btn.netizen": "Use in Netizen ID",
+      "btn.netizen": "Use in Netizen ID", "btn.wall": "Use as wallpaper", "btn.send": "Send to…",
+      "toast.wall": "The face is your wallpaper now", "toast.wallFail": "Could not set the wallpaper",
+      "toast.sendFail": "Could not save the picture to send",
       "btn.save": "Save to the Museum", "museum.empty": "No faces saved yet. Saved faces follow you to all your devices.",
       "item.open": "Open", "item.rename": "Rename", "item.delete": "Delete",
       "rename.title": "Rename", "rename.ok": "Save", "cancel": "Cancel",
@@ -116,7 +118,9 @@
       "btn.undo": "Αναίρεση (Ctrl+Z)", "btn.redo": "Επανάληψη (Ctrl+Y)",
       "grid": "Πρόσωπο, {n} επί {n} pixel", "px": "Γραμμή {r}, στήλη {c}: {col}",
       "btn.png": "PNG", "btn.svg": "SVG", "btn.copyImg": "Αντιγραφή εικόνας", "exp.px": "{n} px",
-      "btn.netizen": "Βάλ' το στο Netizen ID",
+      "btn.netizen": "Βάλ' το στο Netizen ID", "btn.wall": "Ταπετσαρία", "btn.send": "Αποστολή σε…",
+      "toast.wall": "Το πρόσωπο έγινε η ταπετσαρία σου", "toast.wallFail": "Δεν μπήκε η ταπετσαρία",
+      "toast.sendFail": "Δεν αποθηκεύτηκε η εικόνα για αποστολή",
       "btn.save": "Αποθήκευση στο Μουσείο", "museum.empty": "Δεν υπάρχουν ακόμα αποθηκευμένα πρόσωπα. Σε ακολουθούν σε όλες τις συσκευές σου.",
       "item.open": "Άνοιγμα", "item.rename": "Μετονομασία", "item.delete": "Διαγραφή",
       "rename.title": "Μετονομασία", "rename.ok": "Αποθήκευση", "cancel": "Άκυρο",
@@ -1096,6 +1100,91 @@
     try { sh.__orosOpenAt("netizen", { avatar: toNetizen(f, colorsOf(f)) }); } catch (e) {}
   }
 
+  // "Use as wallpaper": a picture shaped like the screen (the shell
+  // draws it with background-size: cover), the face background all
+  // over and the face crisp in the middle, a whole multiple of n at
+  // about 60% of the shorter side.
+  function wallApi() {
+    try {
+      var w = window.parent && window.parent !== window && window.parent.orosWallpaper;
+      return w && typeof w.setImage === "function" ? w : null;
+    } catch (e) { return null; }
+  }
+  function wallBlob(f) {
+    return new Promise(function (resolve, reject) {
+      try {
+        var sc = window.parent.screen || window.screen, dpr = window.parent.devicePixelRatio || 1;
+        var W = Math.round((sc.width || 1280) * dpr), H = Math.round((sc.height || 800) * dpr);
+        var k = Math.min(1, 3840 / Math.max(W, H));
+        W = Math.max(1, Math.round(W * k)); H = Math.max(1, Math.round(H * k));
+        var n = f.n, px = Math.max(1, Math.floor(Math.min(W, H) * 0.6 / n));
+        var size = px * n, ox = Math.floor((W - size) / 2), oy = Math.floor((H - size) / 2);
+        var grid = faceGrid(f), cols = colorsOf(f), bg = toHex(cols[0]) || "#000000";
+        var cv = document.createElement("canvas");
+        cv.width = W; cv.height = H;
+        var ctx = cv.getContext("2d");
+        ctx.imageSmoothingEnabled = false;
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, W, H);
+        for (var i = 0; i < n * n; i++) {
+          var c = +grid.charAt(i);
+          if (c === 0) continue;                    // the background is already there
+          ctx.fillStyle = cols[c];
+          ctx.fillRect(ox + (i % n) * px, oy + Math.floor(i / n) * px, px, px);
+        }
+        cv.toBlob(function (b) {
+          cv.width = cv.height = 0;
+          if (b) resolve({ blob: b, bg: bg }); else reject(new Error("toBlob"));
+        }, "image/png");
+      } catch (e) { reject(e); }
+    });
+  }
+  function setWallpaper() {
+    var api = wallApi();
+    if (!api) return;
+    wallBlob(prefs.face).then(function (r) {
+      var job;
+      try { job = api.setImage(r.blob, { bg: r.bg }); } catch (e) { job = null; }
+      return Promise.resolve(job).then(function (ok) { showToast(t(ok ? "toast.wall" : "toast.wallFail")); });
+    }).then(null, function () { showToast(t("toast.wallFail")); });
+  }
+
+  // "Send to…": the face as a PNG (~512 px) in /internal/Pictures (a
+  // free name: " (2)", " (3)"…), then the shell's send sheet with that
+  // file; also to a person as an album of one when sharing is there.
+  var PICTURES = "/internal/Pictures";
+  function sendApi() {
+    try { return window.parent !== window && window.parent.orosSend ? window.parent.orosSend : null; }
+    catch (e) { return null; }
+  }
+  function shareApi() {
+    try { return window.parent !== window && window.parent.orosShare ? window.parent.orosShare : null; }
+    catch (e) { return null; }
+  }
+  function diskFs() {
+    try { return window.parent !== window && window.parent.orosFS ? window.parent.orosFS : null; }
+    catch (e) { return null; }
+  }
+  function sendTo() {
+    var api = sendApi(), fs = diskFs(), f = prefs.face, base = fileBase(f);
+    if (!api) return;
+    if (!fs) { showToast(t("toast.sendFail")); return; }
+    function tryName(n) {
+      var p = PICTURES + "/" + (n ? base + " (" + n + ")" : base) + ".png";
+      return fs.stat(p).then(function () { return n < 99 ? tryName(n ? n + 1 : 2) : Promise.reject(new Error("name")); },
+                             function () { return p; });
+    }
+    pngBlob(f, exportPx(f.n, 512)).then(function (blob) {
+      return Promise.resolve(fs.mkdir(PICTURES)).then(null, function () {}).then(function () { return tryName(0); })
+        .then(function (p) { return Promise.resolve(fs.write(p, blob)).then(function () { return p; }); });
+    }).then(function (p) {
+      var it = { path: p, name: p.split("/").pop() };
+      var opts = { kind: "files", data: { items: [it] } };
+      if (shareApi()) opts.share = { kind: "album", data: { t: "" }, photos: [{ path: it.path, name: it.name }] };
+      api.open(opts);
+    }).then(null, function () { showToast(t("toast.sendFail")); });
+  }
+
   function copySeed() {
     var s = prefs.face.s;
     var p = (navigator.clipboard && navigator.clipboard.writeText)
@@ -1574,6 +1663,10 @@
     $("copyimg-btn").addEventListener("click", copyImage);
     $("netizen-btn").hidden = !shellWin();
     $("netizen-btn").addEventListener("click", sendToNetizen);
+    $("wall-btn").hidden = !wallApi();
+    $("wall-btn").addEventListener("click", setWallpaper);
+    $("send-btn").hidden = !sendApi();
+    $("send-btn").addEventListener("click", sendTo);
     $("save-btn").addEventListener("click", saveCurrent);
     var ib = $("imp-btn");
     if (IMP && window.OrosImportKit) ib.addEventListener("click", startImport);

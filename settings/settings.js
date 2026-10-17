@@ -487,6 +487,13 @@
   }
 
   // ---------- 5. Section: Notifications ----------
+  // [{ id, name }] of Ringtone Composer (shell, stickies/host.js)
+  function melodyList() {
+    var p = parentWin();
+    try { return p && p.orosMelodies && typeof p.orosMelodies.list === "function" ? p.orosMelodies.list() : []; }
+    catch (e) { return []; }
+  }
+
   function nSet(name, value) {
     var N = notifs();
     if (N) N.setSetting(name, value);
@@ -518,9 +525,13 @@
       return { value: v, label: v.charAt(0).toUpperCase() + v.slice(1) };
     }), N.getSetting("style", "oros"), "n.style", function (v) { nSet("style", v); }),
       { forId: "f-n.style" }));
-    c2.appendChild(row(t("n.sound"), select(C.SOUNDS.map(function (v) {
+    // the built-in sounds, then the Ringtone Composer melodies ("rt:<id>")
+    var sndCur = String(N.getSetting("sound", "none")), sndOpts = C.SOUNDS.map(function (v) {
       return { value: v, label: t("n.sound." + v) };
-    }), N.getSetting("sound", "none"), "n.sound", function (v) { nSet("sound", v); }),
+    });
+    melodyList().forEach(function (m) { sndOpts.push({ value: "rt:" + m.id, label: t("n.sound.rt", { name: m.name || "…" }) }); });
+    if (/^rt:/.test(sndCur) && !sndOpts.some(function (o) { return o.value === sndCur; })) sndOpts.push({ value: sndCur, label: t("n.sound.gone") });
+    c2.appendChild(row(t("n.sound"), select(sndOpts, sndCur, "n.sound", function (v) { nSet("sound", v); }),
       { forId: "f-n.sound" }));
 
     var volWrap = el("div", "range");

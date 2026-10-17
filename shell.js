@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "2.86.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "2.87.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -7418,18 +7418,29 @@
     try {
       var list = JSON.parse(localStorage.getItem("oros-time-timers"));
       for (var i = 0; Array.isArray(list) && i < list.length; i++) {
-        if (list[i] && list[i].aid === a.id && ALARM_SOUNDS[list[i].sound]) return list[i].sound;
+        if (list[i] && list[i].aid === a.id && (ALARM_SOUNDS[list[i].sound] || ALARM_RT.test(list[i].sound))) return list[i].sound;
       }
     } catch (e) {}
     return "beep";
   }
+  // A timer can also ring with a Ringtone Composer melody, "rt:<id>"
+  // (stickies/host.js window.orosMelodies; gone → the beep).
+  var ALARM_RT = /^rt:[A-Za-z0-9_-]{1,64}$/;
+  function alarmVoice(name) {
+    if (ALARM_RT.test(name) && window.orosMelodies) {
+      window.orosMelodies.play(name.slice(3), function () { alarmPip("beep"); }, 15);
+      return;
+    }
+    alarmPip(name);
+  }
   // Preview for the Time app's sound pickers (same voices).
   window.orosAlarmSound = function (name) {
-    if (typeof name === "string" && ALARM_SOUNDS[name]) alarmPip(name);
+    if (typeof name === "string" && (ALARM_SOUNDS[name] || ALARM_RT.test(name))) alarmVoice(name);
   };
 
   function alarmStopRing() {
     if (alarmRing.timer) { clearInterval(alarmRing.timer); alarmRing.timer = null; }
+    try { if (window.orosMelodies) window.orosMelodies.stop(); } catch (e) {}
     var ov = document.getElementById("alarm-toast");
     if (ov) ov.remove();
   }
@@ -7517,8 +7528,9 @@
     el.appendChild(snoozeBtn);
     el.appendChild(btn);
     document.body.appendChild(el);
-    alarmPip(voice);
-    alarmRing.timer = setInterval(function () { alarmPip(voice); }, 1500);
+    alarmVoice(voice);
+    // a melody (≤ 15 s) plays again after a pause, the pips every 1.5 s
+    alarmRing.timer = setInterval(function () { alarmVoice(voice); }, ALARM_RT.test(voice) ? 17000 : 1500);
     setTimeout(function () {
       if (document.getElementById("alarm-toast")) alarmStopRing();
     }, 30000);

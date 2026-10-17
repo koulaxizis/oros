@@ -125,7 +125,7 @@
       "n.pos.top-left": "Top left", "n.pos.top": "Top", "n.pos.top-right": "Top right",
       "n.pos.right": "Right", "n.pos.bottom-right": "Bottom right", "n.pos.bottom": "Bottom",
       "n.pos.bottom-left": "Bottom left", "n.pos.left": "Left",
-      "n.sound.none": "None", "n.sound.bell": "Bell", "n.sound.ding": "Ding", "n.sound.chime": "Chime",
+      "n.sound.none": "None", "n.sound.bell": "Bell", "n.sound.ding": "Ding", "n.sound.chime": "Chime", "n.sound.rt": "♪ {name}", "n.sound.gone": "A deleted melody (a chime plays)",
       "n.none": "Notifications are not available in this orOS version.",
 
       "y.status.off": "Not connected. Your data lives only on this device.",
@@ -412,7 +412,7 @@
       "n.pos.top-left": "Πάνω αριστερά", "n.pos.top": "Πάνω", "n.pos.top-right": "Πάνω δεξιά",
       "n.pos.right": "Δεξιά", "n.pos.bottom-right": "Κάτω δεξιά", "n.pos.bottom": "Κάτω",
       "n.pos.bottom-left": "Κάτω αριστερά", "n.pos.left": "Αριστερά",
-      "n.sound.none": "Κανένας", "n.sound.bell": "Καμπάνα", "n.sound.ding": "Ντινγκ", "n.sound.chime": "Κουδουνάκι",
+      "n.sound.none": "Κανένας", "n.sound.bell": "Καμπάνα", "n.sound.ding": "Ντινγκ", "n.sound.chime": "Κουδουνάκι", "n.sound.rt": "♪ {name}", "n.sound.gone": "Μελωδία που σβήστηκε (παίζει κουδουνάκι)",
       "n.none": "Οι ειδοποιήσεις δεν υπάρχουν σε αυτή την έκδοση του orOS.",
 
       "y.status.off": "Χωρίς σύνδεση. Τα δεδομένα σου υπάρχουν μόνο σε αυτή τη συσκευή.",
