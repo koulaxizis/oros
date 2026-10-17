@@ -1,0 +1,50 @@
+# Netizen-ID
+Mach dir deinen eigenen „Ausweis“ fürs Internet: einen Benutzernamen, einen Pixel-Avatar, deine Links und ein paar Worte über dich, gestaltet als Karte in der Größe einer Bankkarte, mit Vorder- und Rückseite. Alles außer dem Benutzernamen ist freiwillig.
+
+## Erste Schritte
+Gib einen `Benutzername` ein (das einzige Pflichtfeld). Die Karte ändert sich beim Tippen. Auf einem breiten Bildschirm stehen Formular und Karte nebeneinander; auf dem Handy wechselst du zwischen den Tabs `Bearbeiten` und `Karte`.
+
+Das Formular hat diese Abschnitte:
+- `Identität`: `Anzeigename`, `Pronomen`, `Ort`, `Sprachen` und `Netizen seit (Jahr)`.
+- `Pixel-Avatar`: siehe unten.
+- `Kontakt`: `E-Mail`, `Telefon` und `Website`.
+- `Websites & soziale Netzwerke`: bis zu 8 Links, jeder mit einer Bezeichnung. Schieb sie nach oben oder unten oder entferne sie.
+- `Über mich & Motto`: ein kurzer Text über dich und ein einzeiliges Motto.
+- `Tags & Eigenschaften`: bis zu 12 Tags; drück [[Enter]] oder tipp ein Komma, um einen hinzuzufügen.
+- `Kartenstil`: `orOS` (folgt deinen orOS-Farben), `Terminal`, `Papier`, `Minze` oder `Rosé`.
+
+### Ein Feld zeigen oder verbergen
+Jedes freiwillige Feld und der Avatar haben eine Augentaste. Ein verborgenes Feld bleibt im Formular gespeichert, steht aber nicht auf der Karte, im Freigabelink und in der vCard.
+
+## Pixel-Avatar
+Der Avatar ist ein Gesicht aus 12×12 Pixeln. `Neues Gesicht` zeichnet ein zufälliges (du kannst es rückgängig machen). Um Pixel zu ändern, wähle eine Farbe und tippe oder zieh auf dem Raster; `Hintergrund / Radierer` löscht ein Pixel. Mit der Tastatur nimmst du die Pfeiltasten auf dem Raster und [[Enter]] oder [[Space]] zum Malen. `Transparenter Hintergrund` lässt den Hintergrund durchsichtig.
+
+Auch ein Gesicht aus [Pixel-Avatar](app:pixel) kann dein Avatar sein: Drück dort `In Netizen-ID verwenden`, und es ersetzt den Avatar der Karte, die hier offen ist (mit `Rückgängig`). Es behält seine eigenen 8 Farben, also werden die Farbfelder zu `Farbe 2` bis `Farbe 8`. `Neues Gesicht` geht zurück zu einem erzeugten Gesicht.
+
+## Die Karte
+Tippe oder klicke auf die Karte oder nimm `Karte umdrehen`, um die andere Seite zu sehen. Vorne stehen Avatar, Benutzername, Name, Angaben und Motto; hinten der Text über dich, Tags, Kontaktdaten und Links.
+
+### QR-Code
+Hak unter `Kontakt` `QR-Code auf der Rückseite` an, um einen QR-Code auf die Rückseite der Karte zu setzen. Eine Handykamera, die ihn scannt, bietet an, dich als Kontakt zu speichern, mit Name, Benutzername, E-Mail, Telefon und Website (nur die, die auf der Karte sichtbar sind). Er reist mit der Karte in Exporten und im Freigabelink.
+
+### Mehrere Karten
+Bewahre bis zu 20 Karten auf, zum Beispiel eine für die Arbeit und eine fürs Gaming. Wähle eine Karte unter `Karten` und nimm `Neue Karte`, `Karte duplizieren` oder `Karte löschen` (mit `Rückgängig`).
+
+## Teilen und exportieren
+`Exportieren` bietet die Seite, die du gerade siehst, als `Karte · PNG` oder `Karte · SVG`, beide Seiten als `Karte · PDF (beide Seiten)`, den Avatar als `Avatar · PNG` oder `Avatar · SVG` und `Kontakt · vCard (.vcf)` für Adressbücher. `Mich zu orOS-Kontakten hinzufügen` gibt dieselbe vCard an [Kontakte](app:contacts), das fragt, bevor es dich hinzufügt. `Kartenbild kopieren` legt ein Bild der Karte in die Zwischenablage.
+
+`Freigabelink` macht einen Link, der die Karte selbst enthält. Wer ihn öffnet, sieht eine Karte zum Ansehen, die sich umdrehen lässt, mit einer Taste, um Netizen-ID zu öffnen.
+
+>! Der Freigabelink enthält alles, was auf der Karte zu sehen ist, also kann jeder, der ihn hat, es lesen. Verborgene Felder bleiben draußen, und nichts wird an einen Server gesendet.
+
+## Synchronisierung und Sicherung
+Deine Karten werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten abgeglichen. Die offene Karte, der Tab auf dem Handy und die gezeigte Seite bleiben auf jedem Gerät. Die Exporte oben sind deine Kopien außerhalb von orOS; einen Import gibt es nicht, aber die orOS-[Sicherung](help:t/backup) enthält deine Karten.
+
+## Tipps
+- Kein Benutzername in Sicht? Im [Namensgenerator](app:names) startet `Auf eine Netizen-ID-Karte` neben einem Handle oder Titel eine neue Karte damit.
+- Verbirg Telefon und E-Mail, bevor du eine Karte öffentlich teilst, und lass sie auf einer Karte sichtbar, die du Freunden als vCard gibst.
+- Probier `Neues Gesicht` ein paar Mal, bis dir eins gefällt, und feil es dann Pixel für Pixel aus.
+
+## Grenzen
+- Bis zu 20 Karten, 8 Links und 12 Tags pro Karte. Der Text über dich hat bis zu 280 Zeichen und das Motto bis zu 100.
+- `Kartenbild kopieren` geht nicht in jedem Browser.
