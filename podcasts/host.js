@@ -31,6 +31,40 @@
   var LOCAL_SAVE_MS = 5000;
   var doc = w.document;
 
+  // ---------- Texts (this file runs in the shell window) ----------
+  // Shares the "podcasts" pack with podcasts.js (same key = same
+  // English). The shell loads only its own pack, so a pack language
+  // fetches this one on first need (orosI18n.ensure); until then English.
+  var HS = {
+    en: {
+      "host.full": "Storage is full: podcast changes were not saved.",
+      "host.pause": "Pause: {t}", "host.play": "Play: {t}"
+    },
+    el: {
+      "host.full": "Ο χώρος αποθήκευσης γέμισε: τα podcasts δεν αποθηκεύτηκαν.",
+      "host.pause": "Παύση: {t}", "host.play": "Αναπαραγωγή: {t}"
+    }
+  };
+  function hlang() {
+    var I = w.orosI18n;
+    if (I) { try { return I.lang(); } catch (x) {} }
+    return w.orosLang === "el" ? "el" : "en";
+  }
+  var packAsked = {};
+  function ht(k, v) {
+    var l = hlang(), I = w.orosI18n, tab = HS[l];
+    if (!tab && I) {
+      tab = I.table(HS, "podcasts", l);
+      if (!packAsked[l] && typeof I.ensure === "function") {
+        packAsked[l] = true;
+        try { I.ensure(l, "podcasts", function () { if (l !== "en" && l !== "el") delete HS[l]; }); } catch (x) {}
+      }
+    }
+    var s = (tab && tab[k]) || HS.en[k] || k;
+    if (v) Object.keys(v).forEach(function (n) { s = s.split("{" + n + "}").join(String(v[n])); });
+    return s;
+  }
+
   // ---------- Data (synced slice) ----------
   function readData() {
     try {
@@ -46,8 +80,7 @@
       // R30: never swallow a failed write; one toast per session.
       if (!quotaWarned) {
         quotaWarned = true;
-        note(w.orosLang === "el" ? "Ο χώρος αποθήκευσης γέμισε: τα podcasts δεν αποθηκεύτηκαν." :
-          "Storage is full: podcast changes were not saved.");
+        note(ht("host.full"));
       }
     }
   }
@@ -610,8 +643,7 @@
       bar.insertBefore(el, doc.getElementById("rx-tray-chip") || doc.getElementById("btn-lang"));
     }
     var on = !audio.paused, err = !!flags.error;
-    var el2 = w.orosLang === "el";
-    var title = (on ? (el2 ? "Παύση: " : "Pause: ") : (el2 ? "Αναπαραγωγή: " : "Play: ")) + cur.title + " · " + cur.show;
+    var title = ht(on ? "host.pause" : "host.play", { t: cur.title + " · " + cur.show });
     el.setAttribute("data-state", err ? "err" : on ? "on" : "off");
     el.title = title;                         // property: plain text, safe
     el.setAttribute("aria-label", title);

@@ -26,6 +26,16 @@
   var feedsCache = null;       // { at, idb, byId }
 
   function str(v) { return typeof v === "string" ? v.replace(/\s+/g, " ").trim() : ""; }
+  // Shares the "podcasts" pack with podcasts.js (same key = same English).
+  var W = {
+    en: { "search.noShow": "Untitled podcast", "search.noEp": "Untitled episode" },
+    el: { "search.noShow": "Podcast χωρίς όνομα", "search.noEp": "Επεισόδιο χωρίς τίτλο" }
+  };
+  function word(lang, k) {
+    var I = typeof window !== "undefined" && window.orosI18n;
+    if (I && lang && !W[lang]) I.table(W, "podcasts", lang);
+    return (W[lang] || W.en)[k] || W.en[k];
+  }
 
   // All rows of one store, read-only; null when there is none.
   function readStore(name, store) {
@@ -88,7 +98,7 @@
       var t = tombs[s.id];
       if (typeof t === "number" && t >= (typeof s.m === "number" ? s.m : 0)) return;
       var url = str(s.url);
-      var name = str(s.title) || url || (ctx.lang === "el" ? "Podcast χωρίς όνομα" : "Untitled podcast");
+      var name = str(s.title) || url || word(ctx.lang, "search.noShow");
       out.push({
         id: s.id,
         title: name,
@@ -96,7 +106,7 @@
         target: { show: s.id }
       });
       (eps[s.id] || []).forEach(function (e) {
-        var title = e.title || (ctx.lang === "el" ? "Επεισόδιο χωρίς τίτλο" : "Untitled episode");
+        var title = e.title || word(ctx.lang, "search.noEp");
         // every word in the title or the show name, one in the title
         // (the show's own name alone does not list all its episodes)
         var ft = fold(title), hay = ft + " " + fold(name), inTitle = !words.length;

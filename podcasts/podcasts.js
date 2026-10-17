@@ -71,18 +71,21 @@
   var PAGE = 50;
 
   // ---------- 1. Constants, i18n, helpers ----------
+  // orosI18n (../i18n.js): the full language code, a pack language included.
   function appLang() {
+    if (window.orosI18n) return window.orosI18n.lang();
     try {
       var l = localStorage.getItem("oros-lang") || (window.parent && window.parent.orosLang) || "en";
       return l === "el" ? "el" : "en";
     } catch (e) { return "en"; }
   }
   var LANG = appLang();
+  function loc() { return window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB"); }
   var STRINGS = {
     en: {
       "app": "Podcasts",
       "tab.now": "Listening", "tab.new": "New", "tab.lib": "Library", "tab.dl": "Downloads", "tab.find": "Discover",
-      "btn.refresh": "Refresh", "btn.add": "Add podcast", "btn.more": "More", "btn.back": "Back",
+      "btn.refresh": "Refresh", "btn.add": "Add podcast", "btn.more": "More", "btn.back": "Back", "btn.retry": "Try again",
       "now.playing": "Now playing", "now.next": "Up next", "now.cont": "Continue listening",
       "empty.now": "Nothing playing. Pick an episode from New or your Library.",
       "empty.next": "The queue is empty. Use “Play next” or “Add to queue” on any episode.",
@@ -185,7 +188,7 @@
     el: {
       "app": "Podcasts",
       "tab.now": "Ακρόαση", "tab.new": "Νέα", "tab.lib": "Βιβλιοθήκη", "tab.dl": "Λήψεις", "tab.find": "Εύρεση",
-      "btn.refresh": "Ανανέωση", "btn.add": "Προσθήκη podcast", "btn.more": "Περισσότερα", "btn.back": "Πίσω",
+      "btn.refresh": "Ανανέωση", "btn.add": "Προσθήκη podcast", "btn.more": "Περισσότερα", "btn.back": "Πίσω", "btn.retry": "Δοκίμασε ξανά",
       "now.playing": "Παίζει τώρα", "now.next": "Επόμενα", "now.cont": "Συνέχισε να ακούς",
       "empty.now": "Δεν παίζει τίποτα. Διάλεξε επεισόδιο από τα Νέα ή τη Βιβλιοθήκη.",
       "empty.next": "Η ουρά είναι άδεια. Πάτησε «Παίξε μετά» ή «Στην ουρά» σε ένα επεισόδιο.",
@@ -286,6 +289,8 @@
       "g.offDone": "Αποσυνδέθηκε. Δεν διαγράφηκε τίποτα."
     }
   };
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "podcasts", LANG);
+  if (window.orosI18n && C && C.GENRE_NAMES) window.orosI18n.table(C.GENRE_NAMES, "podcasts", LANG);
   function t(k, v) {
     var s = (STRINGS[LANG] && STRINGS[LANG][k]) || STRINGS.en[k] || k;
     if (v) Object.keys(v).forEach(function (n) { s = s.split("{" + n + "}").join(String(v[n])); });
@@ -333,7 +338,7 @@
     if (diff === 0) return t("today");
     if (diff === 1) return t("yesterday");
     try {
-      dateFmt = dateFmt || new Intl.DateTimeFormat(LANG === "el" ? "el-GR" : "en-GB", { day: "numeric", month: "short", year: "numeric" });
+      dateFmt = dateFmt || new Intl.DateTimeFormat(loc(), { day: "numeric", month: "short", year: "numeric" });
       var s = dateFmt.format(d);
       return d.getFullYear() === today.getFullYear() ? s.replace(/\s*\d{4}$/, "") : s;
     } catch (e) { return d.toISOString().slice(0, 10); }
@@ -1764,7 +1769,7 @@
   }
   function countryName(cc) {
     try {
-      countryName.dn = countryName.dn || new Intl.DisplayNames([LANG === "el" ? "el" : "en"], { type: "region" });
+      countryName.dn = countryName.dn || new Intl.DisplayNames([loc()], { type: "region" });
       return countryName.dn.of(cc.toUpperCase()) || cc.toUpperCase();
     } catch (e) { return cc.toUpperCase(); }
   }
@@ -1870,7 +1875,7 @@
       grid.appendChild(b);
     };
     tile("", "⭐", t("br.allGenres"));
-    C.GENRES.forEach(function (g) { tile(g.id, g.ic, LANG === "el" ? g.el : g.en); });
+    C.GENRES.forEach(function (g) { tile(g.id, g.ic, C.genreName(g.id, LANG)); });
     main.appendChild(grid);
   }
   function renderCountries(main) {
@@ -2445,7 +2450,7 @@
     var box = $("g-status");
     if (!box) return;
     var c = gCfg();
-    box.textContent = gState.msg || (gOn() ? (c.last ? t("g.last", { d: fmtDate(c.last) + " " + new Date(c.last).toLocaleTimeString(LANG === "el" ? "el-GR" : "en-GB", { hour: "2-digit", minute: "2-digit" }) }) : t("g.never")) : "");
+    box.textContent = gState.msg || (gOn() ? (c.last ? t("g.last", { d: fmtDate(c.last) + " " + new Date(c.last).toLocaleTimeString(loc(), { hour: "2-digit", minute: "2-digit" }) }) : t("g.never")) : "");
     [].forEach.call(document.querySelectorAll("#pc-gp .g-act"), function (b) { b.disabled = gState.busy; });
   }
   function gpodderDlg() {
