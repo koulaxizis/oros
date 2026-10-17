@@ -298,3 +298,16 @@ test("idle 30 days: the box deletes itself; del forgets it; errors never carry t
   assert.equal(r.body.error.code, "nostore");
   assert.ok(!JSON.stringify(r.body).includes("secret"));
 });
+
+test("alarm without the secrets keeps the rows and looks again in an hour", async () => {
+  const { env, w } = await freshEnv();
+  const now = Date.now();
+  await call(env, { act: "sub", id: ID, tok: TOK, endpoint: EP }, now);
+  const { st, box } = w.boxes.get(ID);
+  st.rows.set("waiting1", { k: "waiting1", at: now - 10, ct: CT, ttl: 900, tries: 0 });
+  box.env = { ALLOWED_ORIGINS: ORIGIN };
+  await box.alarm();
+  assert.equal(w.sent.length, 0);
+  assert.equal(st.rows.size, 1);
+  assert.ok(st.alarm >= now + 3590000);
+});

@@ -267,6 +267,10 @@ export class PushBox {
     const now = Date.now(), m = this.meta();
     if (!m) { await this.wipe(); return; }
     if (now - m.last >= PUSH_LIMITS.idleMs) { await this.wipe(); return; }
+    if (!vapidReady(this.env)) {          // secrets missing: keep everything, look again in an hour
+      await this.state.storage.setAlarm(now + 3600000);
+      return;
+    }
     const due = this.sql.exec(SQL.due, now, PUSH_LIMITS.batch).toArray();
     for (const r of due) {
       if (now - r.at > PUSH_LIMITS.lateMs) { this.sql.exec(SQL.drop, r.k); continue; }
@@ -306,6 +310,7 @@ export class PushBox {
       });
     } catch (e) { return "retry"; }
     const s = r.status;
+    try { if (r.body && typeof r.body.cancel === "function") r.body.cancel(); } catch (e) {}   // never read
     if (s >= 200 && s < 300) return "sent";
     if (s === 404 || s === 410) return "gone";
     if (s === 429 || s >= 500) return "retry";
