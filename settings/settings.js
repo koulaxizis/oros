@@ -716,7 +716,8 @@
   var pass = { value: "", shown: false, remember: null };
   // WebDAV W2: the server form. The password stays in memory only
   // until it is handed to the shell.
-  var dav = { open: false, url: "", user: "", pass: "", dir: "orOS", relay: false };
+  // W4: move = the same form moves this device's Dropbox cloud.
+  var dav = { open: false, move: false, url: "", user: "", pass: "", dir: "orOS", relay: false };
 
   function davInput(key, label, type, ph, auto) {
     var wrap = el("div", "dav-field");
@@ -743,6 +744,7 @@
   function davForm(y) {
     var form = el("form", "pass dav-form");
     form.setAttribute("autocomplete", "off");
+    if (dav.move) form.appendChild(el("div", "hint", t("y.move.dav.hint")));
     form.appendChild(el("div", "hint", t("y.dav.hint")));
     form.appendChild(davInput("url", t("y.dav.url"), "url", t("y.dav.url.ph"), "url"));
     form.appendChild(davInput("dir", t("y.dav.dir"), "text", "orOS", "off"));
@@ -760,17 +762,18 @@
       form.appendChild(actions(y.ncWaiting
         ? button(t("y.dav.nc.cancel"), "y.dav.nc.cancel", function () { act("sync.cancelNc"); })
         : button(t("y.dav.nc"), "y.dav.nc", function () {
-            act("sync.connectNc", { url: dav.url, dir: dav.dir, relay: dav.relay });
+            act("sync.connectNc", { url: dav.url, dir: dav.dir, relay: dav.relay, move: dav.move });
           })));
       form.appendChild(el("div", "hint", t("y.dav.nc.hint")));
     }
     form.appendChild(davInput("user", t("y.dav.user"), "text", "", "username"));
     form.appendChild(davInput("pass", t("y.dav.pass"), "password", "", "current-password"));
-    var go = el("button", "btn primary", t("y.dav.go"));
+    var go = el("button", "btn primary", t(dav.move ? "y.move.go" : "y.dav.go"));
     go.type = "submit";
-    go.setAttribute("data-k", "y.dav.go");
+    go.setAttribute("data-k", dav.move ? "y.move.go" : "y.dav.go");
     form.appendChild(actions(go, button(t("y.dav.cancel"), "y.dav.cancel", function () {
       dav.open = false;
+      dav.move = false;
       dav.pass = "";
       render();
     })));
@@ -778,7 +781,7 @@
       e.preventDefault();
       var arg = { url: dav.url, user: dav.user, pass: dav.pass, dir: dav.dir, relay: dav.relay };
       dav.pass = "";
-      act("sync.connectDav", arg);
+      act(dav.move ? "sync.moveDav" : "sync.connectDav", arg);
     });
     return form;
   }
@@ -786,7 +789,11 @@
   function secSync(host, s) {
     var y = s.sync;
     var st = C.syncState(y);
-    if (st !== "off") { dav.open = false; dav.pass = ""; }
+    // The form connects while off and moves while on; a change of
+    // state (connected, moved) closes it.
+    var formFor = st === "off" ? "connect" : st === "locked" ? "" : "move";
+    if (dav.open && formFor !== (dav.move ? "move" : "connect")) { dav.open = false; dav.move = false; dav.pass = ""; }
+    if (dav.move && y.provider !== "dropbox") { dav.open = false; dav.move = false; dav.pass = ""; }
     var c1 = card(null);
     var status = el("div", "status status-" + st);
     status.appendChild(el("span", "dot"));
@@ -875,6 +882,21 @@
       c1.appendChild(actions(
         button(t("y.pull"), "y.pull", function () { act("sync.pull"); }),
         button(t("y.push"), "y.push", function () { act("sync.push"); })));
+      // WebDAV W4: move this cloud to the other provider.
+      if (y.moveAvailable && dav.move && dav.open) {
+        c1.appendChild(davForm(y));
+      } else if (y.moveAvailable && y.provider === "dropbox" && y.davAvailable) {
+        c1.appendChild(actions(button(t("y.move.dav"), "y.move.dav", function () {
+          dav.open = true;
+          dav.move = true;
+          render();
+          var f = $("f-dav-url");
+          if (f) f.focus();
+        })));
+      } else if (y.moveAvailable && y.provider === "webdav") {
+        c1.appendChild(actions(button(t("y.move.db"), "y.move.db", function () { act("sync.moveDb"); })));
+        c1.appendChild(el("div", "hint", t("y.move.db.hint")));
+      }
     }
     if (y.msg && y.msg.text) {
       var m = el("div", "msg msg-" + (y.msg.kind === "err" ? "err" : y.msg.kind === "ok" ? "ok" : "dim"), y.msg.text);

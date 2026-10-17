@@ -604,6 +604,7 @@
 
   function adapterEnsureConnected() {
     if (suspended)      return Promise.reject(new Error("engine-suspended"));
+    if (moving)         return Promise.reject(new Error("push already in flight"));   // W4 move
     if (!isConnected()) return Promise.reject(new Error("not-connected"));
     return Promise.resolve();
   }
@@ -3050,9 +3051,14 @@
         try { return decodeURIComponent(m[1]); } catch (e) { return conf.user; }
       });
   }
+  // form.move (W4): the app password then moves this device's Dropbox
+  // cloud to the server (moveToWebdav) instead of connecting.
   function connectNextcloud(form, open) {
+    var move = !!(form && form.move);
     if (suspended)     return Promise.reject(new Error("engine-suspended"));
-    if (isConnected()) return Promise.reject(new Error("dav-connected"));
+    if (move ? provider !== dropboxProvider || !isConnected() : isConnected()) {
+      return Promise.reject(new Error(move ? "move-not-connected" : "dav-connected"));
+    }
     var conf;
     try { conf = davNormConf({ url: form && form.url, user: "-", dir: form && form.dir, relay: form && form.relay }); }
     catch (e) { return Promise.reject(e); }
@@ -3104,7 +3110,7 @@
       var c = { url: server, user: got.loginName, relay: relay };
       return ncUserId(c, got.appPassword);
     }).then(function (uid) {
-      return connectWebdav({
+      return (move ? moveToWebdav : connectWebdav)({
         url: server + "/remote.php/dav/files/" + encodeURIComponent(uid),
         user: cred.loginName, pass: cred.appPassword, dir: form && form.dir, relay: relay
       }).catch(function (err) {
@@ -3127,6 +3133,163 @@
     ncJob.cancelled = true;
     if (ncJob.wake) ncJob.wake();
     ncJob = null;
+  }
+
+  // ---------- Moving to the other provider (WebDAV W4) ----------
+  // Copies this orOS cloud, as it is, to the other provider: the sync
+  // file and every Vault object (Drive files kept in the cloud only
+  // included), byte for byte. Nothing is decrypted, so no passphrase
+  // is needed and the new cloud opens with the same one. The old cloud
+  // is left as it was (its backups stay there); every other device
+  // moves with the same button, or connects to the new cloud.
+  //   Dropbox → WebDAV: moveToWebdav(form), one call.
+  //   WebDAV → Dropbox: moveToDropbox() signs in to Dropbox (the page
+  //   navigates away) with MOVE_KEY set; back on boot the copy runs
+  //   before the engine starts and moveDone reports it.
+  // The engine lock is held for the whole copy and the Vault's calls
+  // are refused as busy, so nothing new lands on the old cloud half-
+  // way. The target must hold no orOS data ("move-target-used").
+  var MOVE_KEY = "oros-sync-move";          // "dropbox" while signing in to move there
+  var moving = false;
+  var moveListeners = [];
+  function moveEmit(done, total) {
+    moveListeners.forEach(function (fn) { try { fn({ done: done, total: total }); } catch (e) {} });
+  }
+  function sameBytes(a, b) {
+    if (!a || !b || a.byteLength !== b.byteLength) return false;
+    var x = new Uint8Array(a), y = new Uint8Array(b);
+    for (var i = 0; i < x.length; i++) if (x[i] !== y[i]) return false;
+    return true;
+  }
+  // The manifest goes last: until it is there the new cloud's Vault
+  // reads as empty, never as files without content. Small files are
+  // read back whole; objects (content-addressed, sealed) must exist.
+  function copyCloud(src, dst) {
+    var text;
+    return Promise.all([src.blobGet(), dst.blobGet(), dst.storage.listPrefix("")]).then(function (r) {
+      if (r[1].text != null || r[2].length) throw new Error("move-target-used");
+      if (r[0].text == null) throw new Error("move-empty");
+      text = r[0].text;
+      return src.storage.listPrefix("");
+    }).then(function (list) {
+      var keys = list.filter(function (k) { return k !== "manifest.json"; });
+      if (list.length !== keys.length) keys.push("manifest.json");
+      var total = keys.length + 1, done = 0;
+      moveEmit(0, total);
+      return keys.reduce(function (chain, k) {
+        return chain.then(function () {
+          return src.storage.getObject(k).then(function (buf) {
+            if (!buf) throw new Error("move-verify");
+            return dst.storage.putObject(k, new Blob([buf])).then(function () {
+              if (k.indexOf("/") >= 0) {
+                return dst.storage.getRevision(k).then(function (rev) {
+                  if (rev === null) throw new Error("move-verify");
+                });
+              }
+              return dst.storage.getObject(k).then(function (back) {
+                if (!sameBytes(buf, back)) throw new Error("move-verify");
+              });
+            });
+          }).then(function () { moveEmit(++done, total); });
+        });
+      }, Promise.resolve()).then(function () {
+        return dst.blobPut(text, null);
+      }).then(function () {
+        return dst.blobRead();
+      }).then(function (back) {
+        if (back !== text) throw new Error("move-verify");
+        moveEmit(total, total);
+        return { files: keys.length };
+      });
+    });
+  }
+  function moveBusy() {
+    if (suspended) return Promise.reject(new Error("engine-suspended"));
+    if (moving || pushInFlight || pullInFlight || reconcileInFlight) {
+      return Promise.reject(new Error("push already in flight"));
+    }
+    return null;
+  }
+  function holdEngine(run) {
+    moving = true;
+    pushInFlight = true;
+    return Promise.resolve().then(run).finally(function () {
+      moving = false;
+      pushInFlight = false;
+    });
+  }
+
+  // form = the WebDAV form ({ url, user, pass, dir, relay? }). Resolves
+  // the new account; on failure this device stays on Dropbox.
+  function moveToWebdav(form) {
+    var busy = moveBusy();
+    if (busy) return busy;
+    if (provider !== dropboxProvider || !isConnected()) return Promise.reject(new Error("move-not-connected"));
+    var conf;
+    try { conf = davNormConf(form); } catch (e) { return Promise.reject(e); }
+    var pass = String((form && form.pass) || "");
+    if (!conf.user || !pass) return Promise.reject(new Error("dav-missing"));
+    return holdEngine(function () {
+      return davProbe(conf, pass).then(function () {
+        davConf = conf;
+        davPass = pass;
+        return copyCloud(dropboxProvider, webdavProvider);
+      }).then(function () {
+        try {
+          localStorage.setItem(DAV_CONF_KEY, JSON.stringify(conf));
+          localStorage.setItem(DAV_PASS_KEY, pass);
+        } catch (e) {
+          throw new Error("storage-full");
+        }
+        return dropboxRevoke(3000);
+      }).then(function () {
+        dropboxDisconnect();
+        useProvider("webdav");
+        cloudRev = undefined;
+        if (noteCloud(davCloudId(conf))) markDirty();
+        return davAccount();
+      }).catch(function (err) {
+        if (provider !== webdavProvider) davDisconnect();
+        throw err;
+      });
+    });
+  }
+
+  function moveToDropbox() {
+    var busy = moveBusy();
+    if (busy) return busy;
+    if (provider !== webdavProvider || !isConnected()) return Promise.reject(new Error("move-not-connected"));
+    try { localStorage.setItem(MOVE_KEY, "dropbox"); } catch (e) { return Promise.reject(new Error("storage-full")); }
+    return dropboxProvider.connect();
+  }
+
+  // Back from the Dropbox sign-in that moveToDropbox() started. A
+  // failed copy forgets the new Dropbox sign-in: the device stays on
+  // WebDAV as it was. Resolves null (nothing to do), { moved } or
+  // { error } (errorKey turns it into one sentence).
+  function finishMoveToDropbox() {
+    var want = null;
+    try { want = localStorage.getItem(MOVE_KEY); localStorage.removeItem(MOVE_KEY); } catch (e) {}
+    if (want !== "dropbox") return Promise.resolve(null);
+    if (suspended || provider !== webdavProvider || !davConf || !dropboxProvider.isConnected()) {
+      return Promise.resolve(null);                // the sign-in did not finish
+    }
+    return holdEngine(function () {
+      return copyCloud(webdavProvider, dropboxProvider);
+    }).then(function () {
+      return davRevoke(3000).then(function () {
+        davDisconnect();
+        useProvider("dropbox");
+        cloudRev = undefined;
+        if (noteCloud("dropbox")) markDirty();
+        return { moved: "dropbox" };
+      });
+    }, function (err) {
+      return dropboxRevoke(3000).then(function () {
+        dropboxDisconnect();
+        return { error: err };
+      });
+    });
   }
 
   function disconnect() {
@@ -3206,6 +3369,9 @@
   // Only Dropbox signs in through a redirect; landing back from it
   // makes Dropbox this device's provider.
   var redirectHandled = dropboxProvider.handleRedirect().then(function (ok) {
+    var moveTo = null;
+    try { moveTo = localStorage.getItem(MOVE_KEY); } catch (e) {}
+    if (ok && moveTo === "dropbox" && provider === webdavProvider) return ok;   // W4: finishMoveToDropbox()
     if (ok) {
       if (provider !== dropboxProvider) davDisconnect();
       useProvider("dropbox");
@@ -3214,8 +3380,11 @@
     return ok;
   });
 
+  // W4: a move to Dropbox finishes before the engine starts.
+  var moveDone = redirectHandled.then(finishMoveToDropbox);
+
   // Vault unlock chain: after redirect handling settles, unseal + auto-engine
-  var vaultUnlocked = redirectHandled.then(function () {
+  var vaultUnlocked = moveDone.then(function () {
     return unlockFromVault().then(function (ok) {
       // Start auto engine only when we can actually sync
       startAutoEngine();
@@ -3231,6 +3400,10 @@
     connectWebdav:      connectWebdav,    // WebDAV W2: ({ url, user, pass, dir, relay? })
     connectNextcloud:   connectNextcloud, // WebDAV W3: ({ url, dir, relay? }, open(loginUrl))
     cancelNextcloud:    cancelNextcloud,
+    moveToWebdav:       moveToWebdav,     // WebDAV W4: Dropbox → WebDAV (the WebDAV form)
+    moveToDropbox:      moveToDropbox,    // WebDAV W4: WebDAV → Dropbox (signs in, navigates away)
+    moveDone:           moveDone,         // promise: null | { moved } | { error }
+    onMove:             function (fn) { if (typeof fn === "function") moveListeners.push(fn); },
     getProvider:        function () { return provider.id; },
     disconnect:         disconnect,
     disconnectRevoke:   disconnectRevoke, // SEC-2: revoke at the provider, then forget locally
@@ -3332,6 +3505,7 @@
       if (msg === "storage-full")       return "sync.err.storage";   // SY-Q1
       if (/blob version/.test(msg)) return "sync.err.version";
       if (/^dav-/.test(msg))          return "sync.err." + msg;     // WebDAV W2 connect reasons
+      if (/^move-/.test(msg))         return "sync.err." + msg;     // WebDAV W4 move reasons
       if (/^auth failed/.test(msg))   return "sync.err.auth";
       if (/token|401|400/.test(msg)) return "sync.err.auth";
       if (name === "OperationError" || /OperationError/.test(msg)) return "sync.err.passphrase";
