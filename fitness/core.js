@@ -59,11 +59,17 @@
     });
   }
 
+  // The Habits row's name and hint (Habits shows them in its own
+  // language, English for a pack language).
+  var TXT = {
+    en: { "feed.name": "Workouts", "feed.hint": "A finished workout in the Workouts app" },
+    el: { "feed.name": "Προπόνηση", "feed.hint": "Μια ολοκληρωμένη προπόνηση στην εφαρμογή Προπόνηση" }
+  };
   var FEED = {
     id: "fitness",
     app: "fitness",
-    name: { en: "Workouts", el: "Προπόνηση" },
-    hint: { en: "A finished workout in the Workouts app", el: "Μια ολοκληρωμένη προπόνηση στην εφαρμογή Προπόνηση" },
+    name: { en: TXT.en["feed.name"], el: TXT.el["feed.name"] },
+    hint: { en: TXT.en["feed.hint"], el: TXT.el["feed.hint"] },
     color: "#f28c5a",
     icon: ICON,
     keys: [STORAGE_KEY],

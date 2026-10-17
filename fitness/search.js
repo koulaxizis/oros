@@ -20,6 +20,10 @@
   var KEY = "oros-fitness-data";
   var ID_RE = /^[a-z0-9-]{1,40}$/;
 
+  var W = {
+    en: { "search.workout": "Workout" },
+    el: { "search.workout": "Προπόνηση" }
+  };
   function str(v) { return typeof v === "string" ? v.trim() : ""; }
   function arr(a) { return Array.isArray(a) ? a : []; }
 
@@ -29,7 +33,9 @@
     search: function (ctx) {
       var d = ctx.readJSON(KEY), out = [];
       if (!d || typeof d !== "object") return out;
-      var lang = ctx.lang === "el" ? "el" : "en";
+      // A pack language: English + the fitness pack, when one is loaded.
+      if (ctx.lang && !W[ctx.lang] && root.orosI18n) root.orosI18n.table(W, "fitness", ctx.lang);
+      var txt = W[ctx.lang] || W.en;
       var tombs = d.tombs && typeof d.tombs === "object" ? d.tombs : {};
       function live(c, x) {
         if (!x || typeof x.id !== "string" || !x.id) return false;
@@ -57,7 +63,7 @@
         });
         out.push({
           id: "wo:" + w.id,
-          title: str(w.ti) || (lang === "el" ? "Προπόνηση" : "Workout"),
+          title: str(w.ti) || txt["search.workout"],
           text: [str(w.n), pgName[w.p] || "", names.join(", ")].filter(Boolean).join(" · "),
           when: typeof w.st === "number" ? w.st : 0,
           target: w.id

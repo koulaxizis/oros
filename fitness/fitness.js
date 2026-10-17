@@ -70,7 +70,8 @@
       return l === "el" ? "el" : "en";
     } catch (e) { return "en"; }
   }
-  var LANG = appLang();
+  // orosI18n (../i18n.js): the full language code, a pack language included.
+  var LANG = window.orosI18n ? window.orosI18n.lang() : appLang();
 
   var STRINGS = {
     en: {
@@ -345,6 +346,19 @@
     }
   };
 
+  if (typeof window !== "undefined" && window.orosI18n) window.orosI18n.table(STRINGS, "fitness", LANG);
+  // Dates, numbers and sorting in the language's locale.
+  function loc() {
+    return typeof window !== "undefined" && window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB");
+  }
+  // "el" or "en" for shared modules that pick between two inline texts.
+  var LANG2 = LANG === "el" ? "el" : "en";
+  // A decimal comma (Greek, German, ...) instead of a decimal point.
+  var DEC_COMMA = LANG === "el";
+  if (LANG !== "el" && LANG !== "en") {
+    try { DEC_COMMA = (1.5).toLocaleString(loc()).indexOf(",") >= 0; } catch (e) { DEC_COMMA = false; }
+  }
+
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;
     var s = p[key] !== undefined ? p[key] : (STRINGS.en[key] !== undefined ? STRINGS.en[key] : key);
@@ -384,96 +398,205 @@
   // Ids are language-independent (Spreadsheet SS-2): the name is
   // painted per language at render time. A ready exercise reaches
   // the slice only when the user hides or edits it.
-  // [id, group, kind, English, Greek]
+  // Names of the ready exercises, programs and program days, per
+  // language (keys "seed.<exercise id>", "seed.<program id>" and
+  // "seed.<program id>.<day id>"; pack languages through orosI18n).
+  var SEED_STR = {
+    en: {
+      "seed.x-bench": "Bench press",
+      "seed.x-incline": "Incline bench press",
+      "seed.x-dbbench": "Dumbbell bench press",
+      "seed.x-dbfly": "Dumbbell fly",
+      "seed.x-pushup": "Push-up",
+      "seed.x-dips": "Dips",
+      "seed.x-deadlift": "Deadlift",
+      "seed.x-row": "Barbell row",
+      "seed.x-dbrow": "Dumbbell row",
+      "seed.x-pullup": "Pull-up",
+      "seed.x-chinup": "Chin-up",
+      "seed.x-pulldown": "Lat pulldown",
+      "seed.x-cablerow": "Seated cable row",
+      "seed.x-backext": "Back extension",
+      "seed.x-ohp": "Overhead press",
+      "seed.x-dbshoulder": "Dumbbell shoulder press",
+      "seed.x-latraise": "Lateral raise",
+      "seed.x-facepull": "Face pull",
+      "seed.x-rearfly": "Rear delt fly",
+      "seed.x-curl": "Barbell curl",
+      "seed.x-dbcurl": "Dumbbell curl",
+      "seed.x-hammer": "Hammer curl",
+      "seed.x-pushdown": "Triceps pushdown",
+      "seed.x-skull": "Skull crusher",
+      "seed.x-ohext": "Overhead triceps extension",
+      "seed.x-closebench": "Close-grip bench press",
+      "seed.x-squat": "Squat",
+      "seed.x-frontsquat": "Front squat",
+      "seed.x-legpress": "Leg press",
+      "seed.x-lunge": "Lunge",
+      "seed.x-bulgarian": "Bulgarian split squat",
+      "seed.x-goblet": "Goblet squat",
+      "seed.x-rdl": "Romanian deadlift",
+      "seed.x-legcurl": "Leg curl",
+      "seed.x-legext": "Leg extension",
+      "seed.x-calf": "Calf raise",
+      "seed.x-hipthrust": "Hip thrust",
+      "seed.x-bridge": "Glute bridge",
+      "seed.x-plank": "Plank",
+      "seed.x-sideplank": "Side plank",
+      "seed.x-crunch": "Crunch",
+      "seed.x-legraise": "Hanging leg raise",
+      "seed.x-twist": "Russian twist",
+      "seed.x-abwheel": "Ab wheel rollout",
+      "seed.x-run": "Running",
+      "seed.x-walk": "Walking",
+      "seed.x-bike": "Cycling",
+      "seed.x-rowerg": "Rowing machine",
+      "seed.x-swim": "Swimming",
+      "seed.x-rope": "Jump rope",
+      "seed.x-burpee": "Burpee",
+      "seed.x-kbswing": "Kettlebell swing",
+      "seed.x-clean": "Power clean",
+      "seed.p-full": "Full Body 3×",
+      "seed.p-ul": "Upper / Lower",
+      "seed.p-ppl": "Push / Pull / Legs",
+      "seed.p-full.a": "Full Body A",
+      "seed.p-full.b": "Full Body B",
+      "seed.p-ul.u": "Upper",
+      "seed.p-ul.l": "Lower",
+      "seed.p-ppl.push": "Push",
+      "seed.p-ppl.pull": "Pull",
+      "seed.p-ppl.legs": "Legs"
+    },
+    el: {
+      "seed.x-bench": "Πιέσεις πάγκου",
+      "seed.x-incline": "Πιέσεις σε κεκλιμένο πάγκο",
+      "seed.x-dbbench": "Πιέσεις πάγκου με αλτήρες",
+      "seed.x-dbfly": "Ανοίγματα με αλτήρες",
+      "seed.x-pushup": "Κάμψεις",
+      "seed.x-dips": "Βυθίσεις",
+      "seed.x-deadlift": "Άρση θανάτου",
+      "seed.x-row": "Κωπηλατική με μπάρα",
+      "seed.x-dbrow": "Κωπηλατική με αλτήρα",
+      "seed.x-pullup": "Έλξεις",
+      "seed.x-chinup": "Έλξεις με ανάποδη λαβή",
+      "seed.x-pulldown": "Έλξεις τροχαλίας",
+      "seed.x-cablerow": "Κωπηλατική τροχαλίας",
+      "seed.x-backext": "Εκτάσεις ραχιαίων",
+      "seed.x-ohp": "Πιέσεις ώμων",
+      "seed.x-dbshoulder": "Πιέσεις ώμων με αλτήρες",
+      "seed.x-latraise": "Πλάγιες εκτάσεις",
+      "seed.x-facepull": "Face pull",
+      "seed.x-rearfly": "Ανοίγματα οπίσθιων ώμων",
+      "seed.x-curl": "Κάμψεις δικεφάλων με μπάρα",
+      "seed.x-dbcurl": "Κάμψεις δικεφάλων με αλτήρες",
+      "seed.x-hammer": "Κάμψεις σφυριού",
+      "seed.x-pushdown": "Εκτάσεις τρικεφάλων στην τροχαλία",
+      "seed.x-skull": "Γαλλικές πιέσεις",
+      "seed.x-ohext": "Εκτάσεις τρικεφάλων πάνω από το κεφάλι",
+      "seed.x-closebench": "Πιέσεις πάγκου με κλειστή λαβή",
+      "seed.x-squat": "Καθίσματα",
+      "seed.x-frontsquat": "Μπροστινά καθίσματα",
+      "seed.x-legpress": "Πρέσα ποδιών",
+      "seed.x-lunge": "Προβολές",
+      "seed.x-bulgarian": "Βουλγάρικα καθίσματα",
+      "seed.x-goblet": "Καθίσματα goblet",
+      "seed.x-rdl": "Ρουμανική άρση θανάτου",
+      "seed.x-legcurl": "Κάμψεις ποδιών",
+      "seed.x-legext": "Εκτάσεις ποδιών",
+      "seed.x-calf": "Άνοδοι γαστροκνημίων",
+      "seed.x-hipthrust": "Ώθηση ισχίων",
+      "seed.x-bridge": "Γέφυρα γλουτών",
+      "seed.x-plank": "Σανίδα",
+      "seed.x-sideplank": "Πλάγια σανίδα",
+      "seed.x-crunch": "Κοιλιακοί",
+      "seed.x-legraise": "Ανυψώσεις ποδιών σε κρέμαση",
+      "seed.x-twist": "Ρώσικες περιστροφές",
+      "seed.x-abwheel": "Ρόδα κοιλιακών",
+      "seed.x-run": "Τρέξιμο",
+      "seed.x-walk": "Περπάτημα",
+      "seed.x-bike": "Ποδήλατο",
+      "seed.x-rowerg": "Κωπηλατική μηχανή",
+      "seed.x-swim": "Κολύμπι",
+      "seed.x-rope": "Σχοινάκι",
+      "seed.x-burpee": "Burpees",
+      "seed.x-kbswing": "Αιωρήσεις kettlebell",
+      "seed.x-clean": "Power clean",
+      "seed.p-full": "Όλο το σώμα 3×",
+      "seed.p-ul": "Πάνω / Κάτω",
+      "seed.p-ppl": "Ώθηση / Έλξη / Πόδια",
+      "seed.p-full.a": "Όλο το σώμα Α",
+      "seed.p-full.b": "Όλο το σώμα Β",
+      "seed.p-ul.u": "Πάνω σώμα",
+      "seed.p-ul.l": "Κάτω σώμα",
+      "seed.p-ppl.push": "Ώθηση",
+      "seed.p-ppl.pull": "Έλξη",
+      "seed.p-ppl.legs": "Πόδια"
+    }
+  };
+  if (typeof window !== "undefined" && window.orosI18n) window.orosI18n.table(SEED_STR, "fitness", LANG);
+  // [id, group, kind] + English and Greek names from SEED_STR
   var SEED_EX = [
-    ["x-bench", "chest", "wr", "Bench press", "Πιέσεις πάγκου"],
-    ["x-incline", "chest", "wr", "Incline bench press", "Πιέσεις σε κεκλιμένο πάγκο"],
-    ["x-dbbench", "chest", "wr", "Dumbbell bench press", "Πιέσεις πάγκου με αλτήρες"],
-    ["x-dbfly", "chest", "wr", "Dumbbell fly", "Ανοίγματα με αλτήρες"],
-    ["x-pushup", "chest", "r", "Push-up", "Κάμψεις"],
-    ["x-dips", "chest", "r", "Dips", "Βυθίσεις"],
-    ["x-deadlift", "back", "wr", "Deadlift", "Άρση θανάτου"],
-    ["x-row", "back", "wr", "Barbell row", "Κωπηλατική με μπάρα"],
-    ["x-dbrow", "back", "wr", "Dumbbell row", "Κωπηλατική με αλτήρα"],
-    ["x-pullup", "back", "r", "Pull-up", "Έλξεις"],
-    ["x-chinup", "back", "r", "Chin-up", "Έλξεις με ανάποδη λαβή"],
-    ["x-pulldown", "back", "wr", "Lat pulldown", "Έλξεις τροχαλίας"],
-    ["x-cablerow", "back", "wr", "Seated cable row", "Κωπηλατική τροχαλίας"],
-    ["x-backext", "back", "r", "Back extension", "Εκτάσεις ραχιαίων"],
-    ["x-ohp", "shoulders", "wr", "Overhead press", "Πιέσεις ώμων"],
-    ["x-dbshoulder", "shoulders", "wr", "Dumbbell shoulder press", "Πιέσεις ώμων με αλτήρες"],
-    ["x-latraise", "shoulders", "wr", "Lateral raise", "Πλάγιες εκτάσεις"],
-    ["x-facepull", "shoulders", "wr", "Face pull", "Face pull"],
-    ["x-rearfly", "shoulders", "wr", "Rear delt fly", "Ανοίγματα οπίσθιων ώμων"],
-    ["x-curl", "biceps", "wr", "Barbell curl", "Κάμψεις δικεφάλων με μπάρα"],
-    ["x-dbcurl", "biceps", "wr", "Dumbbell curl", "Κάμψεις δικεφάλων με αλτήρες"],
-    ["x-hammer", "biceps", "wr", "Hammer curl", "Κάμψεις σφυριού"],
-    ["x-pushdown", "triceps", "wr", "Triceps pushdown", "Εκτάσεις τρικεφάλων στην τροχαλία"],
-    ["x-skull", "triceps", "wr", "Skull crusher", "Γαλλικές πιέσεις"],
-    ["x-ohext", "triceps", "wr", "Overhead triceps extension", "Εκτάσεις τρικεφάλων πάνω από το κεφάλι"],
-    ["x-closebench", "triceps", "wr", "Close-grip bench press", "Πιέσεις πάγκου με κλειστή λαβή"],
-    ["x-squat", "legs", "wr", "Squat", "Καθίσματα"],
-    ["x-frontsquat", "legs", "wr", "Front squat", "Μπροστινά καθίσματα"],
-    ["x-legpress", "legs", "wr", "Leg press", "Πρέσα ποδιών"],
-    ["x-lunge", "legs", "wr", "Lunge", "Προβολές"],
-    ["x-bulgarian", "legs", "wr", "Bulgarian split squat", "Βουλγάρικα καθίσματα"],
-    ["x-goblet", "legs", "wr", "Goblet squat", "Καθίσματα goblet"],
-    ["x-rdl", "legs", "wr", "Romanian deadlift", "Ρουμανική άρση θανάτου"],
-    ["x-legcurl", "legs", "wr", "Leg curl", "Κάμψεις ποδιών"],
-    ["x-legext", "legs", "wr", "Leg extension", "Εκτάσεις ποδιών"],
-    ["x-calf", "legs", "wr", "Calf raise", "Άνοδοι γαστροκνημίων"],
-    ["x-hipthrust", "glutes", "wr", "Hip thrust", "Ώθηση ισχίων"],
-    ["x-bridge", "glutes", "r", "Glute bridge", "Γέφυρα γλουτών"],
-    ["x-plank", "core", "t", "Plank", "Σανίδα"],
-    ["x-sideplank", "core", "t", "Side plank", "Πλάγια σανίδα"],
-    ["x-crunch", "core", "r", "Crunch", "Κοιλιακοί"],
-    ["x-legraise", "core", "r", "Hanging leg raise", "Ανυψώσεις ποδιών σε κρέμαση"],
-    ["x-twist", "core", "r", "Russian twist", "Ρώσικες περιστροφές"],
-    ["x-abwheel", "core", "r", "Ab wheel rollout", "Ρόδα κοιλιακών"],
-    ["x-run", "cardio", "dt", "Running", "Τρέξιμο"],
-    ["x-walk", "cardio", "dt", "Walking", "Περπάτημα"],
-    ["x-bike", "cardio", "dt", "Cycling", "Ποδήλατο"],
-    ["x-rowerg", "cardio", "dt", "Rowing machine", "Κωπηλατική μηχανή"],
-    ["x-swim", "cardio", "dt", "Swimming", "Κολύμπι"],
-    ["x-rope", "cardio", "t", "Jump rope", "Σχοινάκι"],
-    ["x-burpee", "full", "r", "Burpee", "Burpees"],
-    ["x-kbswing", "full", "wr", "Kettlebell swing", "Αιωρήσεις kettlebell"],
-    ["x-clean", "full", "wr", "Power clean", "Power clean"]
-  ];
+    ["x-bench", "chest", "wr"], ["x-incline", "chest", "wr"], ["x-dbbench", "chest", "wr"],
+    ["x-dbfly", "chest", "wr"], ["x-pushup", "chest", "r"], ["x-dips", "chest", "r"],
+    ["x-deadlift", "back", "wr"], ["x-row", "back", "wr"], ["x-dbrow", "back", "wr"],
+    ["x-pullup", "back", "r"], ["x-chinup", "back", "r"], ["x-pulldown", "back", "wr"],
+    ["x-cablerow", "back", "wr"], ["x-backext", "back", "r"], ["x-ohp", "shoulders", "wr"],
+    ["x-dbshoulder", "shoulders", "wr"], ["x-latraise", "shoulders", "wr"], ["x-facepull", "shoulders", "wr"],
+    ["x-rearfly", "shoulders", "wr"], ["x-curl", "biceps", "wr"], ["x-dbcurl", "biceps", "wr"],
+    ["x-hammer", "biceps", "wr"], ["x-pushdown", "triceps", "wr"], ["x-skull", "triceps", "wr"],
+    ["x-ohext", "triceps", "wr"], ["x-closebench", "triceps", "wr"], ["x-squat", "legs", "wr"],
+    ["x-frontsquat", "legs", "wr"], ["x-legpress", "legs", "wr"], ["x-lunge", "legs", "wr"],
+    ["x-bulgarian", "legs", "wr"], ["x-goblet", "legs", "wr"], ["x-rdl", "legs", "wr"],
+    ["x-legcurl", "legs", "wr"], ["x-legext", "legs", "wr"], ["x-calf", "legs", "wr"],
+    ["x-hipthrust", "glutes", "wr"], ["x-bridge", "glutes", "r"], ["x-plank", "core", "t"],
+    ["x-sideplank", "core", "t"], ["x-crunch", "core", "r"], ["x-legraise", "core", "r"],
+    ["x-twist", "core", "r"], ["x-abwheel", "core", "r"], ["x-run", "cardio", "dt"],
+    ["x-walk", "cardio", "dt"], ["x-bike", "cardio", "dt"], ["x-rowerg", "cardio", "dt"],
+    ["x-swim", "cardio", "dt"], ["x-rope", "cardio", "t"], ["x-burpee", "full", "r"],
+    ["x-kbswing", "full", "wr"], ["x-clean", "full", "wr"]
+  ].map(function (r) { return r.concat([SEED_STR.en["seed." + r[0]], SEED_STR.el["seed." + r[0]]]); });
   var SEED_MAP = {};
-  SEED_EX.forEach(function (r) { SEED_MAP[r[0]] = { id: r[0], g: r[1], k: r[2], en: r[3], el: r[4] }; });
+  SEED_EX.forEach(function (r) { SEED_MAP[r[0]] = { id: r[0], g: r[1], k: r[2], en: r[3], el: r[4], key: "seed." + r[0] }; });
   // Lower-body lifts take the larger progression step.
   var LOWER_IDS = { "x-deadlift": 1 };
 
   // Ready programs. Item: [exercise, sets, reps, repsTo, seconds, rest]
   function I(e, s, r, r2, sec, rest) { return { e: e, s: s, r: r || 0, r2: r2 || 0, t: sec || 0, w: 0, rest: rest || 0 }; }
   var SEED_PG = [
-    { id: "p-full", en: "Full Body 3×", el: "Όλο το σώμα 3×", days: [
-      { id: "a", en: "Full Body A", el: "Όλο το σώμα Α", wd: [0, 4], it: [
+    { id: "p-full", days: [
+      { id: "a", wd: [0, 4], it: [
         I("x-squat", 3, 5, 0, 0, 180), I("x-bench", 3, 5, 0, 0, 180), I("x-row", 3, 5, 0, 0, 150), I("x-plank", 3, 0, 0, 45, 60)] },
-      { id: "b", en: "Full Body B", el: "Όλο το σώμα Β", wd: [2], it: [
+      { id: "b", wd: [2], it: [
         I("x-squat", 3, 5, 0, 0, 180), I("x-ohp", 3, 5, 0, 0, 150), I("x-deadlift", 1, 5, 0, 0, 180), I("x-pullup", 3, 6, 10, 0, 120)] }
     ] },
-    { id: "p-ul", en: "Upper / Lower", el: "Πάνω / Κάτω", days: [
-      { id: "u", en: "Upper", el: "Πάνω σώμα", wd: [0, 3], it: [
+    { id: "p-ul", days: [
+      { id: "u", wd: [0, 3], it: [
         I("x-bench", 4, 6, 8, 0, 150), I("x-row", 4, 6, 8, 0, 150), I("x-ohp", 3, 8, 10, 0, 120),
         I("x-pulldown", 3, 10, 12, 0, 90), I("x-curl", 3, 10, 12, 0, 60), I("x-pushdown", 3, 10, 12, 0, 60)] },
-      { id: "l", en: "Lower", el: "Κάτω σώμα", wd: [1, 4], it: [
+      { id: "l", wd: [1, 4], it: [
         I("x-squat", 4, 6, 8, 0, 180), I("x-rdl", 3, 8, 10, 0, 150), I("x-legpress", 3, 10, 12, 0, 120),
         I("x-legcurl", 3, 10, 12, 0, 90), I("x-calf", 4, 12, 15, 0, 60), I("x-plank", 3, 0, 0, 60, 60)] }
     ] },
-    { id: "p-ppl", en: "Push / Pull / Legs", el: "Ώθηση / Έλξη / Πόδια", days: [
-      { id: "push", en: "Push", el: "Ώθηση", wd: [0, 3], it: [
+    { id: "p-ppl", days: [
+      { id: "push", wd: [0, 3], it: [
         I("x-bench", 4, 6, 8, 0, 150), I("x-incline", 3, 8, 10, 0, 120), I("x-ohp", 3, 8, 10, 0, 120),
         I("x-latraise", 3, 12, 15, 0, 60), I("x-pushdown", 3, 10, 12, 0, 60)] },
-      { id: "pull", en: "Pull", el: "Έλξη", wd: [1, 4], it: [
+      { id: "pull", wd: [1, 4], it: [
         I("x-deadlift", 3, 5, 0, 0, 180), I("x-pullup", 3, 6, 10, 0, 120), I("x-row", 3, 8, 10, 0, 120),
         I("x-facepull", 3, 12, 15, 0, 60), I("x-curl", 3, 10, 12, 0, 60)] },
-      { id: "legs", en: "Legs", el: "Πόδια", wd: [2, 5], it: [
+      { id: "legs", wd: [2, 5], it: [
         I("x-squat", 4, 6, 8, 0, 180), I("x-rdl", 3, 8, 10, 0, 150), I("x-legpress", 3, 10, 12, 0, 120),
         I("x-legcurl", 3, 10, 12, 0, 90), I("x-calf", 4, 12, 15, 0, 60)] }
     ] }
   ];
+  // Names from SEED_STR: key, en, el on every program and day.
+  SEED_PG.forEach(function (p) {
+    function fill(o, key) { o.key = key; o.en = SEED_STR.en[key]; o.el = SEED_STR.el[key]; }
+    fill(p, "seed." + p.id);
+    p.days.forEach(function (d) { fill(d, "seed." + p.id + "." + d.id); });
+  });
+  // A ready exercise, program or day's name in the current language.
+  function seedName(o) { return (SEED_STR[LANG] || SEED_STR.en)[o.key] || o.en; }
 
   // ---------- 3. Model: normalize, merge ----------
   // data = {
@@ -708,7 +831,7 @@
     var s = (Math.round(v * p) / p).toFixed(dec);
     if (dec > 0) s = s.replace(/\.?0+$/, "");
     var parts = s.split(".");
-    var sep = LANG === "el" ? "." : ",", mark = LANG === "el" ? "," : ".";
+    var sep = DEC_COMMA ? "." : ",", mark = DEC_COMMA ? "," : ".";
     parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, sep);
     return parts.join(mark);
   }
@@ -781,7 +904,7 @@
     if (!row && !seed) return { id: id, name: "?", g: "full", k: "wr", h: 0, seed: false, known: false };
     return {
       id: id,
-      name: (row && row.n) || (seed ? (LANG === "el" ? seed.el : seed.en) : "?"),
+      name: (row && row.n) || (seed ? seedName(seed) : "?"),
       g: row ? row.g : seed.g,
       k: seed ? seed.k : row.k,
       h: row ? row.h : 0,
@@ -990,10 +1113,10 @@
     return rows;
   }
   function buildCsv(d) {
-    var sep = LANG === "el" ? ";" : ",";
+    var sep = DEC_COMMA ? ";" : ",";
     var rows = exportRows(d, function (v, dec) {
       var p = Math.pow(10, dec), s = String(Math.round(v * p) / p);
-      return LANG === "el" ? s.replace(".", ",") : s;
+      return DEC_COMMA ? s.replace(".", ",") : s;
     });
     return "﻿" + rows.map(function (r) {
       return r.map(function (c) { return csvCell(c, sep); }).join(sep);
@@ -1013,7 +1136,7 @@
                     bike: "x-bike", cycling: "x-bike", swim: "x-swim", swimming: "x-swim", row: "x-rowerg" };
   function logExercises(d) {
     return allExercises(d).filter(function (i) { return i.k === "t" || i.k === "dt"; })
-      .sort(function (a, b) { return a.name.localeCompare(b.name); });
+      .sort(function (a, b) { return a.name.localeCompare(b.name, loc()); });
   }
   function normAsNew(d, x, today) {
     if (!x || typeof x !== "object") return null;
@@ -1021,7 +1144,7 @@
     if (want) {
       logExercises(d).forEach(function (i) {
         var sd = SEED_MAP[i.id];
-        if (i.name.toLowerCase() === want || (sd && (sd.en.toLowerCase() === want || sd.el.toLowerCase() === want))) { ex = i.id; n++; }
+        if (i.name.toLowerCase() === want || (sd && (sd.en.toLowerCase() === want || sd.el.toLowerCase() === want || seedName(sd).toLowerCase() === want))) { ex = i.id; n++; }
       });
       if (n !== 1) ex = n ? "" : (LOG_ALIAS[want] || "");
     }
@@ -1500,7 +1623,15 @@
     if (!d) return ys;
     var wd = withDay ? t("day." + wdIdx(d)) + " " : "";
     if (LANG === "el") return wd + d.getDate() + " " + MONTHS_GEN[d.getMonth()] + " " + d.getFullYear();
+    if (LANG !== "en") {
+      try { return wd + d.toLocaleDateString(loc(), { day: "numeric", month: "short", year: "numeric" }); } catch (e) {}
+    }
     return wd + MONTHS.en[d.getMonth()].slice(0, 3) + " " + d.getDate() + ", " + d.getFullYear();
+  }
+  // A month's full name ("Oktober" in German) for month headings.
+  function monthName(i) {
+    if (MONTHS[LANG]) return MONTHS[LANG][i];
+    try { return new Date(2026, i, 1).toLocaleDateString(loc(), { month: "long" }); } catch (e) { return MONTHS.en[i]; }
   }
   function fmtShort(ys) {
     var d = parseYmd(ys);
@@ -1659,7 +1790,6 @@
     for (var i = 0; i < SEED_PG.length; i++) if (SEED_PG[i].id === id) return SEED_PG[i];
     return null;
   }
-  function seedName(o) { return LANG === "el" ? o.el : o.en; }
   // A program day in one shape, own or ready: { pg, day, name, pgName }
   function dayRef(pgId, dayId) {
     var p = findRow("pg", pgId), sp = p ? null : seedPg(pgId), days = p ? p.days : (sp ? sp.days : []);
@@ -2252,7 +2382,7 @@
       });
       GROUPS.forEach(function (g) {
         var rows = all.filter(function (x) { return x.g === g; })
-                      .sort(function (a, b) { return a.name.localeCompare(b.name, LANG); });
+                      .sort(function (a, b) { return a.name.localeCompare(b.name, loc()); });
         if (!rows.length) return;
         list.appendChild(el("div", "pick-g", t("g." + g)));
         rows.forEach(function (x) {
@@ -3111,7 +3241,7 @@
         if (mk !== month) {
           month = mk;
           var cnt = rows.filter(function (r) { return r.d.slice(0, 7) === mk; }).length;
-          list.appendChild(el("h3", "month-h", MONTHS[LANG][+mk.slice(5) - 1] + " " + mk.slice(0, 4) + " · " + t("hist.count", { n: cnt })));
+          list.appendChild(el("h3", "month-h", monthName(+mk.slice(5) - 1) + " " + mk.slice(0, 4) + " · " + t("hist.count", { n: cnt })));
         }
         var b = el("button", "hist-card");
         b.type = "button";
@@ -3138,7 +3268,7 @@
     var ids = {};
     wos.forEach(function (w) { w.x.forEach(function (e) { ids[e.e] = 1; }); });
     return Object.keys(ids).map(function (id) { return exInfo(data, id); })
-      .sort(function (a, b) { return a.name.localeCompare(b.name, LANG); });
+      .sort(function (a, b) { return a.name.localeCompare(b.name, loc()); });
   }
 
   function workoutDialog(id) {
@@ -3562,7 +3692,7 @@
     var months = {};
     Object.keys(counts).forEach(function (k) { months[k.slice(0, 7)] = (months[k.slice(0, 7)] || 0) + counts[k]; });
     s4.appendChild(tableFor([t("body.date"), t("prog.count")],
-      Object.keys(months).sort().reverse().slice(0, 12).map(function (k) { return [MONTHS[LANG][+k.slice(5) - 1] + " " + k.slice(0, 4), String(months[k])]; })));
+      Object.keys(months).sort().reverse().slice(0, 12).map(function (k) { return [monthName(+k.slice(5) - 1) + " " + k.slice(0, 4), String(months[k])]; })));
     v.appendChild(s4);
   }
 
@@ -3573,7 +3703,7 @@
     setTitle(t("tab.programs"));
     var s = section(t("pg.title"));
     if (!data.pg.length) s.appendChild(hint(t("pg.empty")));
-    data.pg.slice().sort(function (a, b) { return a.n.localeCompare(b.n, LANG); }).forEach(function (p) {
+    data.pg.slice().sort(function (a, b) { return a.n.localeCompare(b.n, loc()); }).forEach(function (p) {
       s.appendChild(pgCard(p.n, p.days.map(function (d, i) { return dayRef(p.id, d.id) || { name: t("pg.dayN", { n: i + 1 }), day: d }; }), [
         iconBtn("mini", UI.edit, t("pg.edit") + ": " + p.n, function () { pgDraft = JSON.parse(JSON.stringify(p)); render(); }),
         iconBtn("mini danger", UI.trash, t("pg.del") + ": " + p.n, function () {
@@ -3950,7 +4080,7 @@
   // so their tombstones sync.
   var RP = window.OrosRecordPkg || null, FPK = window.OrosFitnessPackage || null;
   var recFile = RP && FPK && window.OrosBundle ? RP.ui(FPK.withNames(function (id) { return exInfo(data, id).name; }), {
-    lang: function () { return LANG; },
+    lang: function () { return LANG2; },
     get: function () { return mergeFit(data, data); },
     title: function () { return t("app"); },
     set: function (next) {
@@ -3967,7 +4097,7 @@
       });
       if (any) saveNow(false);
       render();
-      showToast(RP.str(LANG, "undone"));
+      showToast(RP.str(LANG2, "undone"));
     },
     toast: function (text, undo) {
       if (undo) undoToast(text, undo);
@@ -4212,7 +4342,7 @@
       list.innerHTML = "";
       var all = allExercises(data);
       GROUPS.forEach(function (g) {
-        var rows = all.filter(function (x) { return x.g === g; }).sort(function (a, b) { return a.name.localeCompare(b.name, LANG); });
+        var rows = all.filter(function (x) { return x.g === g; }).sort(function (a, b) { return a.name.localeCompare(b.name, loc()); });
         if (!rows.length) return;
         list.appendChild(el("div", "pick-g", t("g." + g)));
         rows.forEach(function (x) {
