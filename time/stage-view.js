@@ -81,8 +81,9 @@
 
   // create(root, {lang}) -> { paint(state, now), node }
   function create(root, opts) {
-    var lang = (opts && opts.lang === "el") ? "el" : "en";
-    var S = STR[lang];
+    var lang = (opts && opts.lang) || "en";
+    if (window.orosI18n) window.orosI18n.table(STR, "time", lang);
+    var S = STR[lang] || STR.en;
     function tr(k, v) { var s = S[k]; if (v) Object.keys(v).forEach(function (x) { s = s.split("{" + x + "}").join(v[x]); }); return s; }
 
     var wrap = el("div", "sv", root);

@@ -1,0 +1,81 @@
+# Zeit
+
+Eine große Uhr in fünf Stilen, eine Weltuhr mit Besprechungsplaner, Sonnenaufgang, Sonnenuntergang und Mondphase, dazu Wecker, Küchentimer, eine Stoppuhr mit Runden, ein Pomodoro-Timer und ein Bühnentimer für Konferenzen. Tippe auf die Uhr in der oberen Leiste von orOS, um die App zu öffnen.
+
+## Erste Schritte
+
+Wähle unter der großen Uhr einen Stil: `Digital`, `Analog`, `Binär`, `Klapp` oder `Neon`. Unter der Uhr siehst du das heutige Datum und deine Abweichung von UTC. Alles nutzt das 24-Stunden-Format.
+
+## Weltuhr
+
+- Tippe auf einen Schnell-Chip (`+ Athens`, `+ London`, `+ New York`, `+ Tokyo`) oder auf `Hinzufügen` und gib eine Stadt oder eine Zeitzone ein, auf Englisch oder Griechisch (Akzente spielen keine Rolle). Über 500 Städte sind eingebaut, dazu jede Zeitzone, die dein Browser kennt. Tippe auf ein Ergebnis, um es hinzuzufügen.
+- Jede Zeile zeigt die Uhrzeit dort und wie sie sich zu deiner verhält, zum Beispiel „Heute, +3 Std.“ oder „Morgen, −7 Std.“.
+- Doppelklicke auf einen Namen, um ihn zu ändern (`Zone ändern`). Das × löscht ihn (`Zone löschen`). Eine Zeile ist eine Zeitzone: Wählst du eine andere Stadt in derselben Zone, wird die Zeile umbenannt.
+
+## Besprechungsplaner
+
+Finde eine Stunde, die Menschen an verschiedenen Orten passt.
+
+- Tippe auf `Anzeigen` neben `Besprechungsplaner`. Er beginnt mit deiner eigenen Zeitzone und den ersten Orten deiner Weltuhr. `Ort hinzufügen` fügt weitere hinzu (bis zu 6), und das × entfernt einen (mindestens 2 bleiben).
+- Jeder Ort bekommt einen 24-Stunden-Streifen für das gewählte `Datum`, so ausgerichtet, dass eine Spalte überall derselbe Moment ist. Grün ist Arbeitszeit (`Arbeit von` … `bis`, Montag bis Freitag), schlicht ist wach (07:00–22:00), grau ist Nacht. Ein ★ über einer Spalte heißt: Alle sind bei der Arbeit.
+- Tippe auf eine Stunde oder nutze [[←]] und [[→]], um den Beginn zu wählen, und wähle die `Dauer`. Der Kasten darunter zeigt den Zeitraum an jedem Ort.
+- `Zum Kalender hinzufügen` öffnet einen neuen Termin in [Kalender](app:calendar) mit Beginn und Ende in deiner Zeit und den Uhrzeiten aller Orte in der Notiz. Gespeichert wird erst, wenn du den Termin dort speicherst. `Kopieren` kopiert dieselben Zeilen für eine E-Mail oder einen Chat.
+- Die Orte, die Arbeitszeit und die Dauer bleiben auf diesem Gerät.
+
+## Sonne & Mond
+
+Dieser Bereich zeigt `Sonnenaufgang`, `Sonnenuntergang`, `Sonnenhöchststand`, `Tageslänge`, wo die Sonne gerade steht, `Mondalter`, die Mondphase und ihre `Beleuchtung`. Alles wird auf deinem Gerät berechnet, es funktioniert also offline.
+
+Es nutzt die Wetterstadt der oberen Leiste: die in [Wetter](help:a/weather) angeheftete Stadt oder deine erste Stadt dort. Für einen anderen Ort tippst du auf `Standort festlegen`, gibst `Breitengrad` und `Längengrad` ein oder tippst auf `Gerätestandort verwenden`, dann auf `Speichern`. `Wetter-Standort verwenden` kehrt zum Wetter-Standort zurück. Nutzt du den Gerätestandort, ohne ihn zu speichern, bleibt er nur, bis du die App schließt.
+
+## Wecker und Timer
+
+- **`Wecker`**: Stell eine Uhrzeit ein, füge bei Bedarf eine `Bezeichnung…` hinzu, hake `Täglich` für jeden Tag an und tippe dann auf `Wecker hinzufügen`. Eine Uhrzeit, die heute schon vorbei ist, gilt für morgen. Das × löscht einen Wecker.
+- **`Timer`**: Gib ihm bei Bedarf einen Namen (zum Beispiel „Nudeln“), stell Stunden, Minuten und Sekunden ein, wähle einen Ton (`Piepton`, `Gong`, `Glocke`, `Digital` oder `Sanft`, oder eine deiner Melodien aus dem [Klingelton-Komponist](help:a/ringtones)) und tippe auf `Start`. Ein Chip wie `+ 5 Min.` startet sofort einen. Mehrere Timer können gleichzeitig laufen, jeder in einer eigenen Karte mit Fortschrittsbalken: `Pause` und `Fortsetzen`, `+1 Min.`, `Zurücksetzen`, und das × löscht ihn. Tippe auf den Namen, um ihn umzubenennen, oder ändere seinen Ton in der Karte. Wenn ein Timer abläuft, klingelt er mit seinem eigenen Ton, und seine Karte zählt, wie lange das her ist; `Neu starten` lässt ihn noch einmal laufen. Timer laufen weiter, wenn du Zeit oder orOS schließt. In der letzten Minute eines Timers von 2 Minuten oder mehr füllt der Countdown den Bildschirm. Tippe darauf oder drück [[Esc]], um ihn auszublenden (der Timer läuft weiter).
+- **`Stoppuhr`**: `Start` und `Stopp`, `Runde`, während sie läuft, `Zurücksetzen`, wenn sie steht. Runden werden mit der neuesten zuerst aufgelistet, mit Rundenzeit und Gesamtzeit, und die schnellste und langsamste sind markiert. `Runden kopieren` kopiert sie als Text, und `CSV speichern` speichert sie für eine Tabelle. Die Stoppuhr zählt weiter, wenn du Zeit oder orOS schließt, und ihre Runden bleiben.
+- **`Pomodoro`**: Stell die Minuten für `Arbeit` und `Pause` ein und tippe auf `Start`. Wenn eine `Fokus`-Phase endet, ist eine `Pause` startbereit, und so weiter. Der Zähler zeigt, wie viele Einheiten du geschafft hast. `Zurücksetzen` kehrt zu `Fokus` zurück. Ist `Fokus in Zeiterfassung eintragen` auf ein Projekt (oder `Kein Projekt`) gestellt, kommt jede `Fokus`-Phase als Aufgabe „Pomodoro“ in die [Zeiterfassung](app:timesheet), auch wenn du Zeit schließt; hörst du früher auf, werden die Minuten eingetragen, die du fokussiert warst. Die Wahl bleibt auf diesem Gerät.
+
+Wenn ein Wecker, ein Timer oder eine Pomodoro-Phase endet, zeigt orOS einen Kasten mit `Schlummern 9 Min.` und `Schließen` und spielt einen Ton (ein Timer seinen eigenen). Er hört nach 30 Sekunden von selbst auf und landet auch in deinen [Benachrichtigungen](help:t/notifications). Er klingelt in jeder App, nicht nur in Zeit. In der orOS-App für Android klingeln Wecker und Timer auch bei geschlossenem orOS, wenn Erinnerungen über die App eingeschaltet sind (siehe [Benachrichtigungen](help:t/notifications)).
+
+## Bühnentimer für Konferenzen
+
+Der Tab `Bühne` ist ein Timer für Vorträge, Podien und Shows, mit einem Ablauf und einem großen Countdown, den der Redner aus der Ferne lesen kann.
+
+- **Veranstaltung:** Tippe auf `Neue Veranstaltung` und gib ihr einen `Name`, ein `Datum` und bei Bedarf die Uhrzeit, zu der sie `Beginnt um`. Leg fest, wann die Uhr gelb und rot wird (`Gelb bei (Min. übrig)`, `Rot bei (Min. übrig)`) und ob sie `Blinken, wenn die Zeit um ist` soll. `Veranstaltungseinstellungen` ändert das später; `Veranstaltung duplizieren` kopiert eine Veranstaltung mit ihrem Ablauf (praktisch als Vorlage).
+- **Ablauf:** `Punkt hinzufügen` fügt einen Vortrag oder eine Pause mit `Titel`, `Redner` und `Dauer` hinzu. Die `Art` ist `Countdown`, `Aufwärts zählen`, `Bis zu einer Uhrzeit` (zum Beispiel eine Kaffeepause bis 11:00) oder `Uhrzeit`. Jeder Punkt kann eigene Zeiten für Gelb und Rot und `Notizen (nur für dich)` haben. Hake `Nächsten Punkt bei null von selbst starten` für Pausen an, die nahtlos weitergehen sollen. Tippe auf einen Punkt, um ihn zu bearbeiten, auf ↑ und ↓, um ihn zu verschieben, auf ▶, um von ihm aus zu starten.
+- **Laufen lassen:** `Start`, `Pause` und `Fortsetzen` steuern die Uhr des aktuellen Punkts, `Weiter ▶` geht weiter (und startet den nächsten, wenn die Uhr lief), `◀ Zurück` geht zurück, `−1 Min.` und `+1 Min.` ändern die Restzeit (Taste halten für fünf Minuten), und `Punkt neu starten` startet den aktuellen Punkt noch einmal. Ist die Zeit um, zählt die Uhr in Rot mit Minuszeichen weiter, damit du siehst, wie weit ein Redner überzogen hat.
+- **Zeitplan:** Mit einer Anfangszeit zeigt jeder Punkt, wann er geplant war und, farbig, wann er jetzt voraussichtlich beginnt. Die Zeile über der Uhr zeigt das geplante und erwartete Ende des Tages und wie viele Minuten du im Verzug oder voraus bist.
+- **Bühnenansicht:** `Bühnenansicht` füllt den Bildschirm nur mit der großen Uhr, dem Titel, dem Redner, einem Fortschrittsbalken, dem nächsten Punkt und der Uhrzeit, immer auf Schwarz. Beweg die Maus oder tippe, um `Schwarzer Bildschirm`, `Vollbild` und `Schließen` zu zeigen.
+- **Tasten und Presenter:** [[Space]] Start oder Pause, [[→]] oder [[Page Down]] weiter, [[←]] oder [[Page Up]] zurück, [[+]] und [[−]] eine Minute, [[B]] schwarzer Bildschirm, [[M]] Nachricht an oder aus, [[F]] Bühnenansicht, [[Esc]] schließt sie. Presenter senden Bild auf und Bild ab, funktionieren also als Zurück und Weiter.
+- **Nachricht an den Redner:** Gib eine Nachricht ein und tippe auf `Zeigen` (oder [[Enter]]), oder tippe auf eine fertige wie `Bitte zum Schluss kommen` oder `Jetzt Fragen`. Wähle eine `Farbe` und hake `Blinken` an, damit sie auffällt; `Ausblenden` nimmt sie weg. `Speichern` behält deine eigenen Nachrichten als Chips (sie werden synchronisiert); das × löscht eine.
+- **Bühnenanzeige auf einem zweiten Bildschirm:** `Bühnenanzeige öffnen` öffnet das Bild für den Redner in einem eigenen Fenster. In Chrome oder Edge mit zwei Monitoren wandert es von selbst auf den anderen Bildschirm (der Browser fragt einmal); sonst zieh es dorthin. Doppelklicke darauf oder drück [[F]] für Vollbild. Es läuft weiter, auch wenn du Zeit schließt oder eine andere App öffnest, und `Schwarzer Bildschirm` schaltet es dunkel.
+- **Bühnenausgabe:** `Layout` ist `Uhr, Titel und Nächstes`, `Nur Uhr` oder `Uhr und Ablauf`. `Spiegeln (für einen Bildschirm, der über eine Spiegelung gesehen wird)` spiegelt das Bild. `Logo…` setzt dein Logo in die Ecke; es bleibt auf diesem Gerät. Der Kasten über den Schaltflächen zeigt die Nachricht und den schwarzen Bildschirm so, wie die Bühne sie sieht.
+- **Ton:** Hake `Ton bei Gelb, Rot und null (dieses Gerät)` für einen kurzen Piepton bei jedem Wechsel an. Er ist standardmäßig aus, weil der Laptop auf der Bühne oft an den Lautsprechern hängt.
+- **Ein anderes Gerät:** Unter `Andere Geräte` koppelt `Gerät verbinden` ein Handy, Tablet, einen Laptop oder einen Smart-TV-Browser mit diesem Computer. Wähle, was es tun soll: `Fernbedienung` (Start, Pause, Weiter, ± Minute, schwarzer Bildschirm und Nachrichten vom Handy), `Bühnenanzeige` (das Bild für den Redner auf einem Bildschirm auf der Bühne) oder `Moderation` (sieht die Uhr und den Ablauf und kann dir Bitten wie `Bitte noch 1 Minute` schicken, ändert aber nichts). Dann `Code anzeigen`. Öffne auf dem anderen Gerät orOS › Zeit › Bühne › `Mit Code beitreten` und gib den 6-stelligen Code ein, oder scanne den QR-Code. Jedes Gerät braucht hier ein `Erlauben`, und jedes bekommt seinen eigenen Code; bis zu sechs gleichzeitig. Eine Bitte der Moderation erscheint über den Schaltflächen: `Dem Redner zeigen` bringt sie auf die Bühne, `OK` schließt sie, und die Moderation sieht, dass du sie gelesen hast. Gekoppelte Geräte kommen nach einem Neuladen von selbst zurück; `Verlassen` auf dem Gerät oder × hier beendet eine Kopplung.
+- **Schnell hinzufügen:** Unter dem Ablauf fügt `Schnell hinzufügen` fertige Punkte ans Ende an: `Vortrag 20`, `Keynote 20 + Fragerunde 10`, `Podium 45`, `Kaffeepause 15` und `Mittagessen 60`. Tippe darauf, um sie umzubenennen.
+- **Import:** `Importieren…` fügt einen Ablauf ans Ende der geöffneten Veranstaltung an und ersetzt nie, was schon da ist. `Aus einer CSV-Datei` liest die Spalten title, speaker, duration und start, in dieser Reihenfolge oder unter einer Kopfzeile, die sie benennt (auf Englisch oder Griechisch; eine als CSV gespeicherte Tabelle funktioniert). Eine Dauer ist in Minuten (`20`), `mm:ss` (`12:30`), `h:mm:ss` oder `1h 30m`; eine Zeile ohne Dauer dauert bis zum Beginn der nächsten Zeile. `Aus einem Kalendertag` übernimmt die Termine mit Uhrzeit dieses Tages aus dem orOS-Kalender in ihrer Reihenfolge und macht aus den Lücken dazwischen Pausen. Du siehst, was gefunden wurde, bevor du auf `Hinzufügen` tippst.
+- **Export und Bericht:** `CSV exportieren` speichert den Ablauf (Importieren liest ihn wieder ein). `Bericht` vergleicht bei jedem Punkt geplanten und tatsächlichen Beginn und Dauer, mit der Summe drüber oder drunter; `CSV herunterladen` speichert ihn, und `Drucken / PDF` druckt ihn (wähle im Druckdialog „Als PDF speichern“ für eine Datei). Die tatsächlichen Zeiten hat dieses Gerät aufgezeichnet, während die Uhr lief.
+- **Festes Ende:** In `Veranstaltungseinstellungen` ist `Muss enden bis (festes Ende)` die Uhrzeit, über die der Tag nicht hinausgehen darf, zum Beispiel wenn der Raum frei sein muss. Die Zeile über der Uhr sagt dann, wie viele Minuten gekürzt werden müssen, um pünktlich zu enden.
+- **Suche und Heute:** Die orOS-Suche findet Veranstaltungen, Vorträge und Redner und öffnet den Tab Bühne darauf. Am Tag einer Veranstaltung zeigt die Seite Heute die nächste Einheit und wann sie voraussichtlich beginnt (später, wenn der Tag im Verzug ist); Veranstaltungen an den kommenden Tagen erscheinen zu ihrer Anfangszeit.
+
+## Synchronisierung und Sicherung
+
+Über die [orOS-Synchronisierung](help:t/sync) werden synchronisiert: der Uhrenstil, die Zonen der Weltuhr, die Pomodoro-Längen und der Einheitenzähler, der manuelle Standort von Sonne & Mond und deine Wecker (sie reisen mit den orOS-Einstellungen). Bühnenveranstaltungen und ihre Abläufe werden auch synchronisiert; der laufende Punkt, seine Uhr, die Tonwahl und was der Bühnenbildschirm zeigt (Nachricht, schwarzer Bildschirm, Layout, Logo) bleiben auf diesem Gerät, damit ein Handy zu Hause nie die Uhr auf der Bühne verstellt. Timer, die Stoppuhr und ihre Runden, die Orte des Besprechungsplaners und eine laufende Pomodoro-Phase bleiben auf diesem Gerät; ein Timer klingelt nur auf dem Gerät, auf dem du ihn gestartet hast. Nur der Bühnenablauf hat einen Import und einen Export (CSV), und die Stoppuhr-Runden einen CSV-Export; der Rest von Zeit hat keinen.
+
+## Tipps
+
+- Eine Pomodoro-Phase, die endet, während Zeit geschlossen ist, zählt trotzdem, wenn du die App wieder öffnest.
+- Tägliche Wecker eignen sich für Routinen wie Medikamente oder eine Dehnpause.
+- Benenne in der Küche jeden Timer nach dem Gericht und gib ihm einen eigenen Ton, dann weißt du, welcher klingelt.
+- Im Besprechungsplaner sind die Spalten mit ★ die einfache Wahl.
+
+## Grenzen
+
+- Im Browser klingeln Wecker und Timer nur, solange orOS offen ist (in einem Browser-Tab oder als installierte App). War orOS zu dem Zeitpunkt geschlossen, klingeln sie, sobald du es wieder öffnest. Die orOS-App für Android klingelt bei geschlossenem orOS, wenn Erinnerungen über die App eingeschaltet sind, mit dem Weckton des Handys statt dem eigenen Ton des Timers.
+- Die Städteliste ist eingebaut (etwa 550 Städte). Jeder andere Ort wird über seine Zeitzone gefunden, zum Beispiel „Jujuy“ oder „America/Jujuy“. Die Liste der Zeitzonen kommt von deinem Browser.
+- Der Besprechungsplaner zählt überall Montag bis Freitag als Arbeitstage und nutzt für jeden Ort dieselbe Arbeitszeit.
+- Bis zu 20 Timer und 999 Runden.
+- Die Bühnenuhr läuft, solange Zeit offen ist. Schließt du Zeit, läuft die Uhr beim nächsten Öffnen mit der richtigen Zeit weiter, aber Töne und „Nächsten Punkt von selbst starten“ gibt es nur, solange die App offen ist.
+- Das Fenster der Bühnenanzeige braucht erlaubte Pop-ups für orOS. Es zeigt, was dieses Gerät speichert, gehört also auf einen Bildschirm am selben Computer.
+- Gekoppelte Geräte brauchen Zeit offen auf dem Computer und eine Internetverbindung für den ersten Kontakt (das orOS-Relay). Im selben WLAN sprechen sie dann direkt miteinander; sonst trägt das Relay alles, verschlüsselt mit einem Schlüssel aus dem Code. Das Logo wird nicht an andere Geräte gesendet.
+- Der Bericht und die Karte in Heute nutzen die Zeiten, die dieses Gerät aufgezeichnet hat. Lief die Uhr auf einem anderen Computer, ist sein Bericht auf diesem Computer.

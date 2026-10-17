@@ -10,8 +10,10 @@
 (function () {
   "use strict";
 
+  // orosI18n (../i18n.js): the full language code, a pack language included.
   var LANG = "en";
-  try {
+  if (window.orosI18n) LANG = window.orosI18n.lang();
+  else try {
     if (window.parent && window.parent.orosLang) LANG = window.parent.orosLang;
     else if (localStorage.getItem("oros-lang")) LANG = localStorage.getItem("oros-lang");
   } catch (e) {}
@@ -88,6 +90,8 @@
       "astro.more": "Περισσότερα στο Σελήνη & Ουρανός"
     }
   };
+  if (window.orosI18n) window.orosI18n.table(STR, "time", LANG);
+  function loc() { return window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB"); }
   function t(k) {
     return (STR[LANG] && STR[LANG][k] !== undefined) ? STR[LANG][k]
          : (STR.en[k] !== undefined ? STR.en[k] : k);
@@ -235,7 +239,7 @@
     var d = new Date();
     d.setUTCHours(0, 0, 0, 0);
     d.setUTCMinutes(Math.round(min));
-    return d.toLocaleTimeString(LANG === "el" ? "el-GR" : "en-GB",
+    return d.toLocaleTimeString(loc(),
       { hour: "2-digit", minute: "2-digit", hour12: false });
   }
 

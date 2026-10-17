@@ -1,3 +1,4 @@
+// i18n-inline-ok: Greek letters in the search fold (data, no UI text)
 // ============================================================
 // orOS Time — clock core (v1.0.0, wave 5)
 // Pure logic for the world clock search, the meeting planner, the
