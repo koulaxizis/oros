@@ -176,6 +176,7 @@
       "b.hint": "A backup file is NOT encrypted. Keep it somewhere safe.",
 
       "l.lang": "Language", "l.search": "Menu search looks in",
+      "l.lang.partial": "This language is partly translated: what is not translated yet shows in English.",
       "l.search.hint": "The search field at the top of the menu also finds text inside these apps.",
       "l.search.none": "No app offers search yet.",
 
@@ -470,6 +471,7 @@
       "b.hint": "Το αρχείο αντιγράφου ΔΕΝ είναι κρυπτογραφημένο. Φύλαξέ το σε ασφαλές μέρος.",
 
       "l.lang": "Γλώσσα", "l.search": "Η αναζήτηση του μενού ψάχνει σε",
+      "l.lang.partial": "Η γλώσσα έχει μεταφραστεί εν μέρει: ό,τι δεν έχει μεταφραστεί ακόμα εμφανίζεται στα αγγλικά.",
       "l.search.hint": "Το πεδίο αναζήτησης στην κορυφή του μενού βρίσκει και κείμενο μέσα σε αυτές τις εφαρμογές.",
       "l.search.none": "Καμία εφαρμογή δεν προσφέρει ακόμα αναζήτηση.",
 
@@ -619,10 +621,19 @@
     }
   };
 
-  function langOf(v) { return v === "el" ? "el" : "en"; }
+  // English, Greek, or a pack language (i18n.js, in the browser only).
+  function langOf(v) {
+    if (v === "el" || v === "en") return v;
+    var I = root && root.orosI18n;
+    return I && I.known(v) ? v : "en";
+  }
+  function tableOf(lang) {
+    var l = langOf(lang);
+    return STRINGS[l] || root.orosI18n.table(STRINGS, "settings", l);
+  }
 
   function t(lang, key, vars) {
-    var s = STRINGS[langOf(lang)][key];
+    var s = tableOf(lang)[key];
     if (s === undefined) s = STRINGS.en[key];
     if (s === undefined) return key;
     if (vars) {
@@ -656,7 +667,7 @@
   // shown names in the UI language.
   function menuGroups(apps, query, lang) {
     var q = fold(String(query || "").trim());
-    var loc = langOf(lang);
+    var I = root && root.orosI18n, loc = I ? I.locale(langOf(lang)) : langOf(lang);
     var cmp = function (a, b) {
       var r = 0;
       try { r = a.localeCompare(b, loc, { sensitivity: "base" }); } catch (e) { r = 0; }

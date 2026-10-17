@@ -53,6 +53,7 @@
   function appLang() {
     try {
       var p = parentWin();
+      if (window.orosI18n) return window.orosI18n.lang();
       if (p && (p.orosLang === "el" || p.orosLang === "en")) return p.orosLang;
       return localStorage.getItem("oros-lang") === "el" ? "el" : "en";
     } catch (e) { return "en"; }
@@ -1048,9 +1049,16 @@
   // ---------- 8. Section: Language & search ----------
   function secLanguage(host, s) {
     var c1 = card(t("l.lang"), "lang");
-    c1.appendChild(segmented([
-      { value: "en", label: "English" }, { value: "el", label: "Ελληνικά" }
-    ], s.lang, "lang", function (v) { set("lang", v); }, t("l.lang")));
+    // Each language under its own name; a pack language that is not
+    // complete yet says so (the rest shows in English).
+    var langs = Array.isArray(s.langs) && s.langs.length ? s.langs
+      : [{ code: "en", name: "English" }, { code: "el", name: "Ελληνικά" }];
+    c1.appendChild(segmented(langs.map(function (l) {
+      return { value: l.code, label: l.name };
+    }), s.lang, "lang", function (v) { set("lang", v); }, t("l.lang")));
+    langs.forEach(function (l) {
+      if (l.code === s.lang && l.partial) c1.appendChild(el("p", "hint", t("l.lang.partial")));
+    });
     host.appendChild(c1);
 
     var c2 = card(t("l.search"), "search");

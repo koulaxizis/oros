@@ -895,3 +895,7 @@ window.t = function (key) {
           ? window.OROS_TRANSLATIONS.en[key]
           : key);
 };
+
+// A pack language (i18n.js): the shell's table is English overlaid
+// with i18n/<code>/shell.js. window.t above then reads it as usual.
+if (window.orosI18n) window.orosI18n.table(window.OROS_TRANSLATIONS, "shell");

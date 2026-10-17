@@ -112,8 +112,16 @@ Every string a user can see exists in both languages, in a table like
 translation, never a copy of the English. If you do not write Greek, say so in
 the pull request and ask for help with the Greek text. Do not leave it out.
 
+Never write visible text in code as `lang === "el" ? "…" : "…"`: a third
+language cannot translate it. Other languages come from translators' packs
+(`i18n/<code>/<id>.js`, see [`docs/translate`](../translate/README.md)); load
+`../i18n.js` first in `index.html` with `data-app="<id>"` so your app can use
+them.
+
 **Check:** `tests/i18n.test.js` (run by `check-app`). The quality gate also
 looks for English left on the Greek screen.
+It also fails a new file that writes Greek text outside the `{ en, el }`
+tables.
 
 ## 8. Help pages (Checklist B 14)
 
