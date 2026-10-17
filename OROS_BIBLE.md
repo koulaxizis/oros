@@ -7669,3 +7669,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Flashcards: a Stats view (heatmap, true retention, 30-day forecast; `flashcards/stats.js`), export decks as `.oroscards` (Open bundle format; Export / Import / Open with, `flashcards/package.js`, bundle.js TYPES, fileopen.js, manifest file handler) or CSV, and open them on any device; the Converter turns Anki decks (.apkg/.colpkg) into `.oroscards` (`flashcards/convert.js`, converter registry).
 - Files: `flashcards/{index.html,app.css,app.js,core.js,stats.js,package.js,convert.js,help.*.txt}`, `bundle.js`, `fileopen.js`, `manifest.webmanifest`, `converter/{registry.js,help.*.txt}`, `docs/oros-bundle.md`, precache, tests.
   - Tests: full suite green; Chromium 1280 EN / 360 EL. Not tested: opening .oroscards from the OS file manager on every platform, Safari, phones.
+
+### 2026-10-17 — Languages L4a: Invoices, CRM, Timesheet and Stock in German (#510) — 3.08.00
+- Invoices, CRM, Timesheet and Stock are now in German: packs in `i18n/de/`, inline texts moved into {en, el} tables, and each `index.html` loads `../i18n.js` before its own scripts; English still fills any missing line.
+- Files: `i18n/de/**`, `invoices/`, `crm/`, `timesheet/`, `stock/` (index.html + scripts), `.github/i18n/inline-baseline.json`, `i18n/apps.json`.
+  - Tests: full suite green; Chromium 360 de / el. Not tested: a German native reader's review, Safari, phones.
