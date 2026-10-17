@@ -7664,3 +7664,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Multitasking (experimental, off by default): on screens from 1024 px, put two apps side by side from the open-apps list ("beside") or the menu, drag the bar between them to share the width; the app in focus has an outline.
 - Files: `shell.js`, `style.css`, `translations.js`, `i18n/de/shell.js`, `settings/help.*.txt`, `.github/qa/multitask.js` (gate also checks side by side), `tests/multitask.test.js`, Bible.
   - Tests: full suite green; multitask gate 130 apps 0 problems (also side by side); axe; Chromium 1280 EN / EL. Not tested: Firefox, Safari, touch screens.
+
+### 2026-10-17 — Flashcards, wave 5: stats, .oroscards files, CSV export, Anki in the Converter (#509) — 3.07.00
+- Flashcards: a Stats view (heatmap, true retention, 30-day forecast; `flashcards/stats.js`), export decks as `.oroscards` (Open bundle format; Export / Import / Open with, `flashcards/package.js`, bundle.js TYPES, fileopen.js, manifest file handler) or CSV, and open them on any device; the Converter turns Anki decks (.apkg/.colpkg) into `.oroscards` (`flashcards/convert.js`, converter registry).
+- Files: `flashcards/{index.html,app.css,app.js,core.js,stats.js,package.js,convert.js,help.*.txt}`, `bundle.js`, `fileopen.js`, `manifest.webmanifest`, `converter/{registry.js,help.*.txt}`, `docs/oros-bundle.md`, precache, tests.
+  - Tests: full suite green; Chromium 1280 EN / 360 EL. Not tested: opening .oroscards from the OS file manager on every platform, Safari, phones.
