@@ -7351,3 +7351,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Atelier: Magic eraser and Magic grab on the device (MI-GAN 512, ONNX Runtime Web, downloaded on first use); Image from text, Magic edit and Magic expand with the image AI chosen in Assistant › Settings › Pictures (Pollinations free by default; Hugging Face, OpenAI, Stability AI, SD WebUI/Forge with the user's own key or computer); Design from a description; Magic animate.
 - Files: `assistant/imgai.js` + Assistant settings, `atelier/{inpaint,magic,imagine,magicai,magicdesign}.js`, `atelier/{ai,core,panels,cutout,motion}.js`, `vendor/migan/` (runtime-cached, not precached), credits (CREDITS.md, CREDIT_GROUPS, Part VIII), help EN/EL.
   - Tests: full suite green (new atelier-magic, atelier-magicai, atelier-magicdesign, imgai tests); real Chromium 1280/360 EN/EL with mocked providers. Not tested: real image providers (not reachable from the cloud container), the MI-GAN model on a real GPU/phone.
+
+### 2026-10-17 — App Kit K1: guide, contract, template and checks for community apps (#462) — docs + CI only, no APP_VERSION
+- App Kit K1: `docs/app-kit/` guide + contract, template app, `.github/app-kit/new-app.js` and `check-app.js` (local check with the CI guards), CONTRIBUTING.md (Chris decides what goes in).
+- Files: `docs/app-kit/**`, `.github/app-kit/{new-app,check-app}.js`, `.github/workflows/tests.yml`, CONTRIBUTING.md, README.md, `tests/app-kit.test.js`, Bible.
+  - Tests: full suite green; a scaffolded app checked in the Chromium shell 360 EL / 1280 EN. Nothing shipped to users.
