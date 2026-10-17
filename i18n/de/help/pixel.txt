@@ -1,0 +1,60 @@
+# Pixel-Avatar
+Pixel-Avatar macht kleine symmetrische Pixelgesichter aus einem Startwort, einem beliebigen Wort. Dasselbe Startwort ergibt immer dasselbe Gesicht, auf jedem Gerät und in jeder Größe. Mal von Hand darüber, exportiere es als Bild und bewahre deine Lieblinge im Museum auf.
+
+## Erste Schritte
+Tipp ein Wort in das Feld `Startwort` (`Ein beliebiges Wort, z. B. dein Name`), und das Gesicht ändert sich beim Tippen. `Neues Gesicht` wählt ein zufälliges Startwort für dich. Die Kopiertaste neben dem Feld kopiert das Startwort, damit du es teilen oder später wieder eintippen kannst.
+
+Die Zeile unter dem App-Namen zeigt das Startwort, die Größe und `von Hand bearbeitet`, sobald du auf dem Gesicht gemalt hast.
+
+## Form und Farben
+- `Größe`: `8×8`, `12×12` oder `16×16`. Es ist dieselbe Person in jeder Größe, nur mit mehr oder weniger Details.
+- `Palette`: `Klassisch`, `Pastell`, `Game Boy`, `Neon`, `Sepia`, `Schwarz-Weiß`, `Ozean` und `orOS`, die den Farben deines orOS-Designs folgt.
+- Die Taste neben `Palette` wechselt zwischen `Transparenter Hintergrund` und `Farbiger Hintergrund`.
+
+## Von Hand malen
+Wähle unter `Malen` eine der 8 Farben (`Hintergrund`, `Haut`, `Schatten`, `Haare`, `Augen`, `Mund`, `Kleidung`, `Akzent`) und tippe, klicke oder zieh dann über das Gesicht. Mit transparentem Hintergrund macht Malen mit `Hintergrund` diese Pixel durchsichtig.
+
+Die Pfeile oben sind `Rückgängig` und `Wiederholen`. `Zurück zum Startwort` entfernt alle deine Handbearbeitungen.
+
+>! Wenn du die Größe oder das Startwort änderst, beginnt alles wieder beim einfachen Gesicht, ohne deine Malerei. Nimm `Rückgängig`, wenn du das nicht wolltest.
+
+## Export
+Wähle unter `Export` eine Exportgröße und dann:
+- `PNG` speichert ein klares Bild mit scharfen Pixeln;
+- `SVG` speichert ein Vektorbild;
+- `Bild kopieren` legt ein PNG in die Zwischenablage;
+- `In Netizen-ID verwenden` macht das Gesicht zum Avatar der Karte, die in [Netizen-ID](app:netizen) offen ist, mit seinen Farben. Gesichter mit 8 oder 16 Pixeln werden auf Netizens 12×12 umgerechnet;
+- `Als Hintergrundbild` macht das Gesicht zu deinem orOS-Hintergrundbild, scharf in der Mitte des Bildschirms auf seiner Hintergrundfarbe;
+- `Senden an…` speichert das Gesicht als PNG in `/internal/Pictures` und gibt es an eine andere App oder Person weiter.
+
+Ein transparenter Hintergrund bleibt in PNG und SVG durchsichtig.
+
+## orOS-Datei
+`orOS-Datei (.orospixel)` unter `Export` speichert das Gesicht auf dem Tisch als eine offene Datei, benannt nach seinem Museumsnamen (oder seinem Startwort): Startwort, Größe, Palette und deine Malerei. Sie ist ein ZIP: Entpack sie, und du findest `content.json` (das Gesicht), `preview/face.png` und `preview/face.svg`, die jeder Bildbetrachter öffnet, und `preview/thumbnail.png`. `Sprite oder Palette öffnen…` öffnet sie wieder, genauso wie das Öffnen der Datei mit orOS aus deinem System (`Öffnen mit`); `Entpackter orOS-Ordner…` unter dem Gesicht holt eine entpackte .orospixel zurück, auch wenn du eine Datei darin geändert hast. Das Gesicht kommt auf den Tisch und wird dem Museum als neues Gesicht hinzugefügt (außer dasselbe Gesicht ist schon da); `Rückgängig` in der Meldung nimmt beides zurück.
+
+## Import aus anderen Apps
+`Sprite oder Palette öffnen…` unter dem Gesicht liest eine Datei aus einer anderen Pixel-Art-App. Eine Vorschau zeigt, was in der Datei ist und welches Gesicht daraus wird, bevor sich etwas ändert.
+- **Aseprite** (`.aseprite`, `.ase`): Öffne einfach deine Sprite-Datei oder nimm File › Save As. Ebenen werden zusammengefügt (ausgeblendete bleiben weg, Deckkraft bleibt); bei mehreren Frames wählst du einen.
+- **Piskel** (`.piskel`): File › Save (oder Export › Download .piskel file).
+- **Paletten**: GIMP (`.gpl`), Lospec (`.hex`, aus dem Download-Menü der Palette), Paint.NET (`.txt`), JASC / Paint Shop Pro (`.pal`) und Adobe-Farbfelder (`.ase`, über Swatches › Save Swatches for Exchange).
+
+Ein Sprite wird das Gesicht auf dem Tisch: bis zu 16×16 (auf die Zeichnung zugeschnitten und verkleinert, wenn es größer ist) in 8 Farben, durchsichtige Pixel bleiben erhalten. Eine Palette gibt dem aktuellen Gesicht ihre ersten 8 Farben. Die Farben erscheinen als `Importiert` unter `Palette`; eine andere Palette ersetzt sie. `Rückgängig` holt das alte Gesicht zurück, und `Im Museum speichern` behält das neue.
+
+## Museum
+`Im Museum speichern` behält das aktuelle Gesicht, die Palette und die Malerei. Tippe oder klicke auf ein Gesicht im `Museum`, um es zurück auf den Tisch zu holen. Jedes hat die Tasten `Umbenennen` und `Löschen`; nach dem Löschen bleibt ein paar Sekunden lang eine Taste `Rückgängig`.
+
+## Synchronisierung und Sicherung
+Das Museum wird über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten abgeglichen. Das Gesicht auf dem Tisch, die Malfarbe und die Exportgröße bleiben auf diesem Gerät. Nutze die orOS-[Sicherung](help:t/backup), um eine Kopie zu behalten; eine orOS-Datei hält ein Gesicht zum Teilen oder Umziehen, und PNG und SVG bringen ein Gesicht anderswohin.
+
+## Tastenkürzel
+- [[R]] neues Gesicht, [[P]] nächste Palette, [[D]] PNG speichern.
+- [[Ctrl+Z]] rückgängig, [[Ctrl+Y]] oder [[Ctrl+Shift+Z]] wiederholen.
+- Auf dem Gesicht: Pfeiltasten wechseln zwischen den Pixeln, [[Home]] und [[End]] springen an den Anfang oder das Ende der Zeile, [[Space]] oder [[Enter]] malt das Pixel.
+
+## Tipps
+- Nimm deinen Namen oder Spitznamen als Startwort: Jeder kann dein Gesicht mit demselben Wort zurückholen.
+- Ein PNG ist ein schönes Profilbild für [Kontakte](app:contacts) oder deine Konten.
+
+## Grenzen
+- Das Museum fasst bis zu 200 Gesichter, und dasselbe Gesicht lässt sich nur einmal speichern.
+- Startwörter und Namen können bis zu 40 Zeichen lang sein.

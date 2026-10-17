@@ -28,7 +28,7 @@
 //   9. UI
 //  10. Export + copy
 //  11. Dialogs + toasts
-//  12. Keyboard (Contract Β)
+//  12. Keyboard (Contract B)
 //  13. Sync slice + palette
 //  14. Wiring & boot
 // ============================================================
@@ -54,7 +54,8 @@
       return l === "el" ? "el" : "en";
     } catch (e) { return "en"; }
   }
-  var LANG = appLang();
+  // orosI18n (../i18n.js): the full language code, a pack language included.
+  var LANG = window.orosI18n ? window.orosI18n.lang() : appLang();
 
   var STRINGS = {
     en: {
@@ -154,6 +155,8 @@
       "live.new": "Νέο πρόσωπο από τη λέξη {s}", "keys": "R νέο πρόσωπο · P επόμενη παλέτα · D λήψη PNG"
     }
   };
+
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "pixel", LANG);
 
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;
@@ -1523,7 +1526,7 @@
 
   // ---------- 12. Keyboard ----------
   function wireKeyboard() {
-    // Contract Β: forward Ctrl+Alt+Shift shortcuts to the shell (capture)
+    // Contract B: forward Ctrl+Alt+Shift shortcuts to the shell (capture)
     document.addEventListener("keydown", function (e) {
       if (!(e.ctrlKey || e.metaKey) || !e.altKey || !e.shiftKey) return;
       var p = null;
