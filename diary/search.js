@@ -34,7 +34,8 @@
   function dateTitle(ymd, lang) {
     var m = YMD.exec(ymd), d = new Date(+m[1], +m[2] - 1, +m[3], 12);
     try {
-      return d.toLocaleDateString(lang === "el" ? "el-GR" : "en-GB",
+      var I = root && root.orosI18n;
+      return d.toLocaleDateString(I ? I.locale(lang) : (lang === "el" ? "el-GR" : "en-GB"),
         { weekday: "short", day: "numeric", month: "long", year: "numeric" });
     } catch (e) { return ymd; }
   }
@@ -49,7 +50,7 @@
       if (lock && typeof lock === "object" && lock.h) return out;
       var tombs = d.tombs && typeof d.tombs === "object" ? d.tombs : {};
       var long = d.long && typeof d.long === "object" ? d.long : {};
-      var lang = ctx.lang === "el" ? "el" : "en";
+      var lang = typeof ctx.lang === "string" && ctx.lang ? ctx.lang : "en";
       var seen = {};
       function push(k, m, text) {
         seen[k] = 1;

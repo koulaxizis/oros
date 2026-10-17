@@ -60,13 +60,20 @@
       safety: "Η απάντησή σου έχει ένα «αποτύπωμα» της προσφοράς που είδες, ώστε ο αποστολέας να ξέρει ότι είναι αυτή που έστειλε."
     }
   };
+  // orosI18n (../i18n.js): a chosen pack language (oros-lang, ?lang=);
+  // else, as before, English or Greek by the browser (a customer
+  // without orOS has no oros-lang).
   var LANG = (function () {
+    var c = window.orosI18n ? window.orosI18n.lang() : "en";
+    if (c !== "en") return c;
     try {
       var l = localStorage.getItem("oros-lang");
       if (l === "el" || l === "en") return l;
     } catch (e) {}
     return /^el\b/i.test(navigator.language || "") ? "el" : "en";
   })();
+  if (window.orosI18n) window.orosI18n.table(STR, "quote", LANG);
+  var LOC = window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB");
   function t(k, p) {
     var s = (STR[LANG] || STR.en)[k];
     if (s === undefined) s = STR.en[k] || k;
@@ -129,13 +136,17 @@
   }
   function money(n, c) { return QC ? QC.fmtMoney(n, c, LANG) : n.toFixed(2) + " " + c; }
   function num(n) {
-    try { return new Intl.NumberFormat(LANG === "el" ? "el-GR" : "en-GB", { maximumFractionDigits: 3 }).format(n); }
+    try { return new Intl.NumberFormat(LOC, { maximumFractionDigits: 3 }).format(n); }
     catch (e) { return String(n); }
   }
   function day(ymd) {
     if (!ymd) return "—";
     var p = ymd.split("-");
-    return LANG === "el" ? +p[2] + "/" + +p[1] + "/" + p[0] : p[2] + "/" + p[1] + "/" + p[0];
+    if (LANG === "el") return +p[2] + "/" + +p[1] + "/" + p[0];
+    if (LANG === "en") return p[2] + "/" + p[1] + "/" + p[0];
+    try {
+      return new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString(LOC, { day: "numeric", month: "numeric", year: "numeric" });
+    } catch (e) { return p[2] + "/" + p[1] + "/" + p[0]; }
   }
   function todayYmd() {
     var d = new Date(), p = function (n) { return (n < 10 ? "0" : "") + n; };

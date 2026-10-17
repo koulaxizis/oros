@@ -1,0 +1,96 @@
+# Lesezeichen
+
+Speichere Weblinks in Ordnern, versieh sie mit Tags, behalte eine lesbare Kopie und finde sie schnell wieder.
+
+## Erste Schritte
+
+Füge einen Link in die Leiste oben ein (`Link einfügen — oder Link | Titel`) und drücke [[Enter]] oder tippe auf die Schaltfläche +. `https://` musst du nicht eingeben, das wird für dich ergänzt. Um dem Lesezeichen gleich einen Titel zu geben, hänge ein `|` und den Titel an, zum Beispiel `example.com | Meine Seite`.
+
+Der Link kommt in den geöffneten Ordner. In `Alle` kommt er nach `Unsortiert`. Hast du die Adresse schon gespeichert, blinkt die Leiste und ein Hinweis sagt dir, in welchem Ordner sie ist.
+
+Tippe oder klicke auf eine Zeile, um den Link in einem neuen Tab zu öffnen.
+
+## Ordner
+
+- Tippe auf das + neben den Ordner-Tabs, um einen `Neuer Ordner` anzulegen. Die Tabs sind deine obersten Ordner.
+- Ordner können in Ordnern liegen, so tief du willst. Ist ein Ordner geöffnet, zeigt der Streifen unter dem Suchfeld seinen Pfad (tippe auf einen Teil, um wieder nach oben zu gehen), seine Unterordner als Chips und `Neuer Unterordner`.
+- `Alle` zeigt jedes Lesezeichen. `Unsortiert` ist der Standardordner und kann nicht gelöscht oder in einen anderen Ordner gelegt werden.
+- Um den geöffneten Ordner umzubenennen, zu verschieben oder zu löschen, nutze die Schaltfläche ⋮ (`Ordneroptionen`) oder doppelklicke auf seinen Tab. `In` legt fest, wo der Ordner liegt: `Oberste Ebene (ein Tab)` oder ein anderer Ordner. Ein Ordner kann nicht in sich selbst oder einen seiner eigenen Unterordner kommen.
+- Klicke mit der rechten Maustaste auf einen Tab oder einen Unterordner-Chip (am Telefon lange drücken) für `Umbenennen`, `Nach links`, `Nach rechts`, `Verschieben in…` und `Neuer Unterordner`. Am Computer ziehst du einen Tab auf einen anderen, um sie zu tauschen, einen Tab oder Chip auf einen Unterordner-Chip oder einen Teil des Pfads, um ihn hineinzulegen, und einen Chip auf einen Tab, um ihn dorthin zu legen (auf `Alle`, um einen Tab daraus zu machen).
+- `Ordner löschen` verlangt ein zweites Tippen. Der Inhalt rückt eine Ebene nach oben: Unterordner kommen zum übergeordneten Ordner, Lesezeichen in den übergeordneten Ordner (aus einem obersten Ordner nach `Unsortiert`). Du bekommst `Rückgängig`.
+
+## Bearbeiten, verschieben und Favoriten
+
+Jede Zeile hat einen Stern (Favoriten), einen Stift (`Bearbeiten`) und eine Schaltfläche zum Öffnen. Im Bearbeitungsfenster kannst du `Titel`, `Adresse`, `Beschreibung`, `Tags` und `Ordner` ändern oder das Lesezeichen `Löschen`. Unter dem Formular siehst du die letzte Link-Prüfung und Schaltflächen für `Link prüfen` und die gespeicherte Kopie. `In Reader folgen` öffnet [Reader](app:feeds), um den Neuigkeiten dieser Website zu folgen. `QR-Code` öffnet den [QR-Generator](app:qr) mit einem Code für die gespeicherte Adresse.
+
+Klicke mit der rechten Maustaste auf eine Zeile (am Telefon lange drücken) für ein Menü mit `Öffnen`, `In Karten öffnen`, `Bearbeiten`, `Zu Favoriten hinzufügen`, `An jemanden senden…` (das Lesezeichen als Link, der in jedem Browser aufgeht), `Lesbare Kopie speichern` oder `Gespeicherte Kopie lesen`, `Link prüfen`, `Verschieben nach…` (eine Liste aller deiner Ordner) und `Löschen`. Am Computer kannst du eine Zeile auch auf einen Ordner-Tab, einen Unterordner-Chip oder einen Teil des Pfads ziehen. Legst du sie auf `Alle` ab, kommt sie nach `Unsortiert`.
+
+Lesezeichen mit Stern erscheinen als Kacheln unter `Favoriten` oben in der Liste. `In Karten öffnen` sucht in [Karten](app:maps) nach Titel und Beschreibung des Lesezeichens.
+
+## Lesbare Kopie
+
+`Lesbare Kopie speichern` bewahrt den Artikel einer Seite zum späteren Lesen auf, auch offline, so wie [Reader](app:feeds) einen ganzen Artikel zeigt: den Haupttext der Seite, ohne Menüs, Werbung, Skripte oder Formulare. Ein Buchsymbol in der Zeile öffnet ihn.
+
+- Die Kopie ist eine Datei auf dem orOS-Speicher, in [Dateien](app:files) › `Bookmarks` › `Archive`. Sie gehört nicht zu den Synchronisierungsdaten der Lesezeichen: Sie erreicht deine anderen Geräte mit Vault Drive, wie jede andere Datei.
+- `Bilder behalten` legt die Bilder in die Kopie, damit sie auch offline erscheinen. Bilder, die eine Website den Browser nicht lesen lässt, bleiben Links, die nur online erscheinen. Ohne diese Option ist die Kopie nur Text.
+- Im Lesemodus: `Originalseite`, `Erneut speichern` (für eine geänderte Seite) und `Kopie entfernen`. Löschst du ein Lesezeichen, wird auch seine Kopie entfernt, sobald die Zeit für `Rückgängig` vorbei ist.
+- Seiten, die das Relay brauchen: Viele Websites lassen sich nur über das Relay lesen, das in [Reader](app:feeds) oder [Mail](app:mail) eingestellt ist. Ohne Relay können diese Seiten nicht gespeichert werden.
+
+## Suche, Tags und Sortierung
+
+- Das Suchfeld sucht in allen Ordnern: Titel, Adressen, Beschreibungen, Tags und Ordnernamen.
+- Füge Tags im Bearbeitungsfenster hinzu: Gib einen ein und drücke [[Enter]] oder ein Komma. [[Backspace]] in einem leeren Feld entfernt das letzte Tag.
+- Tippe in einer Zeile auf ein Tag, um nur Lesezeichen mit diesem Tag zu zeigen. Tippe auf weitere Tags, um weiter einzugrenzen. Die Tag-Schaltfläche (`Alle Tags`) listet jedes Tag mit Anzahl auf, und `Filter löschen` setzt den Filter zurück.
+- Das Sortiermenü bietet `Neueste`, `Titel A–Z` und `Meistbesucht`.
+
+## Aufräumen
+
+- Die Schaltfläche `Aufräumen` (zwei Quadrate) bietet `Links in diesem Ordner prüfen` (mit seinen Unterordnern), `Alle Links prüfen`, `Defekte und umgezogene Links zeigen` und `Doppelte Lesezeichen`.
+- Die Link-Prüfung läuft nur, wenn du sie startest, zehn Links auf einmal mit kurzer Pause dazwischen, höchstens 500 pro Durchlauf; `Stoppen` beendet sie. Eine verschwundene Seite (404, 410) oder eine Website, die nicht antwortet, wird als `Defekt` markiert; eine Seite, die dich jetzt woandershin schickt, als `Umgezogen`, und `Neue Adresse verwenden` (Zeilenmenü oder Bearbeitungsfenster) aktualisiert das Lesezeichen. Eine Website, die Robots abweist oder eine Weile nicht erreichbar ist, ist `Nicht geprüft` und zählt nicht als defekt.
+- `Doppelte Lesezeichen` findet Adressen, die mehr als einmal gespeichert sind. http und https, `www.`, ein Schrägstrich am Ende, die Reihenfolge der Query und Tracking-Teile wie `utm_source` oder `fbclid` gelten als dieselbe Adresse. `In das älteste zusammenführen, … entfernen` behält die älteste Kopie und gibt ihr alle Tags, alle Beschreibungen und den Stern; oder nutze `Auswahl anwenden` / `Alle anwenden`.
+- `Lesezeichen auswählen` (die Schaltfläche mit dem Kästchen) lässt dich mehrere Zeilen abhaken und `Verschieben nach…`, `Senden…` (alle in einem Link) oder `Löschen` auf alle anwenden. `Fertig` beendet die Auswahl. Während du suchst oder filterst, ist sie aus.
+- Löschen, Verschieben, Zusammenführen und Importieren zeigen ein paar Sekunden lang eine Meldung mit `Rückgängig`.
+
+## Aus anderen Apps importieren
+
+`Lesezeichen importieren` (die Schaltfläche mit dem Pfeil nach unten › `Aus einem Browser oder einer App (HTML, CSV, JSON)…`) liest auch die Dateien von Später-lesen-Apps und Browser-Sicherungen. Es erkennt selbst, was für eine Datei es ist, und zeigt zuerst eine Vorschau: woher die Datei kommt, wie viele Lesezeichen und Ordner neu sind, wann sie gespeichert wurden und wie viele schon hier sind oder keine Webadressen sind (beide werden übersprungen). Es kommen nur die Links und ihre Angaben, nie die gespeicherten Seiten. Importiere dieselbe Datei so oft du willst: Es kommt nur hinzu, was fehlt. `Rückgängig` in der Meldung macht den Import rückgängig.
+
+- **Instapaper**: Auf der Website Settings › Export › `Download .CSV file`. Links kommen in einen Ordner `Instapaper`, Archive in `Instapaper` › `Archiv`, deine eigenen Ordner in `Instapaper`; Starred werden Favoriten und die markierte Textstelle wird zur Beschreibung.
+- **wallabag**: Öffne in wallabag eine Liste (zum Beispiel Alle Einträge), dann das Exportmenü › `JSON`. Einträge kommen in `wallabag` (archivierte in `wallabag` › `Archiv`), markierte werden Favoriten, Tags kommen mit. Der gespeicherte Artikeltext wird nicht importiert.
+- **Linkwarden**: Settings › Data › `Export data` (eine JSON-Sicherung). Jede Sammlung wird ein Ordner, Untersammlungen werden verschachtelt; Beschreibungen und Tags kommen mit.
+- **linkding**: Settings › Export liefert eine HTML-Datei (wird wie jede Browser-Datei gelesen); eine JSON-Liste aus seiner API (`results` mit `tag_names`) geht auch und kommt nach `Unsortiert`.
+- **Firefox**: Lesezeichen › Lesezeichen verwalten (Bibliothek) › Importieren und Sichern › `Sichern…` speichert eine `.json`-Datei. Die Lesezeichen des Menüs kommen auf die oberste Ebene, die Symbolleiste und Weitere Lesezeichen werden Ordner, Unterordner behalten ihre Struktur; Tags und Beschreibungen kommen mit. Intelligente Ordner und Trennlinien werden übersprungen. Die automatischen `.jsonlz4`-Sicherungen sind komprimiert und können nicht gelesen werden: Nutze `Sichern…` oder den HTML-Export.
+- **Chrome, Edge, Brave, Vivaldi**: Im Lesezeichen-Manager liefert ⋮ › `Lesezeichen exportieren` eine HTML-Datei. Die eigene Datei `Bookmarks` des Browsers (in seinem Profilordner) geht auch: Die Lesezeichenleiste wird ein Ordner, Weitere Lesezeichen kommen auf die oberste Ebene.
+- **Safari**: Ablage › Exportieren › `Lesezeichen…` liefert eine HTML-Datei.
+
+## orOS-Datei speichern und öffnen
+
+`Lesezeichen exportieren` (die Schaltfläche mit dem Pfeil nach oben) › `orOS-Datei (.orosbookmarks)` speichert jedes Lesezeichen und jeden Ordner (mit Verschachtelung, Tags, Beschreibungen, Favoriten, Besuchen und Link-Prüfungen) als eine `.orosbookmarks`-Datei, zum Beispiel um sie ohne Synchronisierung auf ein anderes Gerät zu bringen oder eine Kopie aufzubewahren. Die Datei ist eine einfache ZIP-Datei: Entpackt enthält sie die Lesezeichen als `content.json` und dazu `preview/bookmarks.html`, eine Lesezeichendatei, die jeder Browser importiert. Sie ist nicht verschlüsselt, bewahre sie also sicher auf.
+
+`Lesezeichen importieren` (die Schaltfläche mit dem Pfeil nach unten) › `orOS-Datei öffnen…` (oder `Entpackter orOS-Ordner…` oder „Öffnen mit“ orOS am Computer) zeigt, wie viele Lesezeichen und Ordner neu und wie viele schon da sind; dann fügt `Hinzufügen` nur die neuen hinzu, mit ihren eigenen IDs: Dieselbe Datei erneut zu öffnen, fügt nichts hinzu. Ein schon vorhandenes Lesezeichen bleibt, wie es ist, und eines, das du hier gelöscht hast, bleibt gelöscht; eine Datei löscht nie etwas. Hake `Mit neueren Versionen aktualisieren` an, damit Lesezeichen, die in der Datei später geändert wurden, deine Kopie ersetzen. `Rückgängig` in der Meldung entfernt, was hinzugefügt wurde.
+
+- Die gespeicherten lesbaren Kopien (die Seiten in `Bookmarks` › `Archive`) sind vorerst nicht in der Datei: Sie können groß sein. Kopiere diesen Ordner in [Dateien](app:files), wenn du sie auf dem anderen Gerät brauchst.
+- Ein Lesezeichen mit derselben Adresse, aber einer anderen ID (auf jedem Gerät getrennt gespeichert) kommt als zweite Kopie herein; `Aufräumen` › `Doppelte Lesezeichen` führt sie zusammen.
+
+## Synchronisierung und Sicherung
+
+Lesezeichen, Ordner und ihre Verschachtelung, Tags, Favoriten, Link-Prüfungen und welche Lesezeichen eine gespeicherte Kopie haben, werden über die [orOS-Synchronisierung](help:t/sync) synchronisiert. Eine Link-Prüfung überschreibt nie eine Änderung, die auf einem anderen Gerät gemacht wurde. Die Kopien selbst sind Dateien (siehe `Lesbare Kopie`). Deine Sortierung und die Einstellung `Bilder behalten` bleiben auf diesem Gerät.
+
+- **Import**: `Lesezeichen importieren` liest die Lesezeichen-HTML-Datei eines Browsers, von Raindrop, Pinboard oder Linkding, den Export von Pocket (die HTML-Datei oder die CSV), die CSV von Raindrop und die Dateien unter `Aus anderen Apps importieren`. Ordner behalten ihre Verschachtelung und werden über den Namen zugeordnet oder angelegt; Tags, Beschreibungen, Favoriten und das Speicherdatum jedes Links kommen mit. Pocket-Links kommen in einen Ordner `Pocket`, archivierte in `Pocket` › `Archiv`. Adressen, die du schon hast, werden übersprungen. `Rückgängig` in der Meldung macht den ganzen Import rückgängig.
+- **Aus Raindrop.io**: Verbinde Raindrop.io in den [Einstellungen](app:settings) › `Verbundene Dienste` mit einem Test-Token; dann zeigt die Cloud-Schaltfläche `Aus Raindrop.io importieren…` › `Konto lesen`, was hereinkommt, und `Importieren` holt es (`Rückgängig` in der Meldung macht es rückgängig). Jede Sammlung wird ein Ordner (ein Ordner mit gleichem Namen wird verwendet, verschachtelte Sammlungen werden eigene Ordner), mit Titeln, Notizen (oder dem Seitenauszug), Tags und Favoriten; Links, die du schon hast, werden übersprungen. Importiere erneut, so oft du willst: Es kommen nur neue Lesezeichen, und mit `Früher Importiertes aktualisieren` folgen Titel und Notiz denen in Raindrop und neue Tags werden hinzugefügt. Gelöschte Lesezeichen kommen nicht zurück, außer du hakst `Hier Gelöschtes zurückholen` an. orOS liest Raindrop nur: Dort ändert sich nichts.
+- **Export**: `Lesezeichen exportieren` (die Schaltfläche mit dem Pfeil nach oben) › `Lesezeichen-HTML (.html)` speichert `oros-bookmarks.html` mit dem ganzen Ordnerbaum, Tags, Beschreibungen und Daten, für einen Browser, Raindrop, Pinboard, Linkding oder orOS.
+
+Für eine Kopie all deiner orOS-Daten siehe [Sicherung](help:t/backup).
+
+## Tipps
+
+- Der farbige Buchstabe in jeder Zeile wird auf deinem Gerät erzeugt. orOS lädt keine Website-Symbole herunter, daher kontaktiert das Öffnen der Liste keine Websites. Nur `Link prüfen`, die Link-Prüfungen und `Lesbare Kopie speichern` kontaktieren die Websites, und nur wenn du es willst.
+
+## Grenzen
+
+- Nur http- und https-Links können gespeichert werden.
+- Favoriten, Besuche, Link-Prüfungen und gespeicherte Kopien sind nicht in der Exportdatei.
+- Gespeicherte Kopien brauchen orOS (sie liegen auf dem orOS-Speicher): Lesezeichen, allein außerhalb von orOS geöffnet, kann sie weder anlegen noch zeigen.
+- Eine lesbare Kopie behält den Artikeltext, nicht die ganze Seite: Seiten, die per Skript gebaut werden, hinter einem Login oder einer Bezahlschranke liegen, haben vielleicht keinen Text zum Behalten.
+- Die Raindrop-CSV gibt verschachtelte Sammlungen als `Parent / Child` an; eine Sammlung, deren eigener Name ein `/` enthält, wird zu zwei Ordnern.
+- Eine Link-Prüfung sieht, was ein Robot sieht: Manche Websites antworten ihm mit „verboten“, obwohl die Seite im Browser funktioniert (angezeigt als `Nicht geprüft`).

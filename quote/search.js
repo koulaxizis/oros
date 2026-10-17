@@ -26,6 +26,19 @@
     return typeof ts !== "number" || (Number(x.mtime) || 0) > ts;
   }
 
+  // The one text of its own (same key and English as quote.js). The
+  // shell runs this file: a pack language shows the "quote" pack line
+  // when the shell has it, else English.
+  var S = {
+    en: { "search.untitled": "Untitled quote" },
+    el: { "search.untitled": "Προσφορά χωρίς αριθμό" }
+  };
+  function untitled(lang) {
+    var I = root && root.orosI18n;
+    var tab = S[lang] || (I && lang ? I.table(S, "quote", lang) : S.en);
+    return tab["search.untitled"] || S.en["search.untitled"];
+  }
+
   var PROVIDER = {
     id: "quote",
     keys: [KEY],
@@ -43,7 +56,7 @@
         var cname = c ? str(c.name) : "";
         var num = str(q.num);
         var title = [num, cname].filter(Boolean).join(" · ") ||
-                    (ctx.lang === "el" ? "Προσφορά χωρίς αριθμό" : "Untitled quote");
+                    untitled(ctx.lang);
         var items = arr(q.items).map(function (it) {
           return it ? [str(it.code), str(it.desc)].filter(Boolean).join(" ") : "";
         });

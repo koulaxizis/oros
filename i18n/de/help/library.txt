@@ -1,0 +1,84 @@
+# Bibliothek
+Die Bibliothek ist dein E-Book-Reader. Öffne EPUB-, PDF- und FB2-Bücher sowie CBZ- und CBR-Comics von der orOS-Disk oder aus kostenlosen Online-Katalogen, behalte deine Stelle auf jedem Gerät und markiere, setze Lesezeichen und mach Notizen beim Lesen.
+
+## Erste Schritte
+Bücher, die schon auf der orOS-Disk sind, erscheinen von selbst: Die Bibliothek sucht bei jedem Öffnen nach EPUB-, PDF-, FB2- (auch `.fb2.zip`), CBZ- und CBR-Dateien. Um mehr hinzuzufügen, tippe oder klicke auf `Hinzufügen` und wähle `Von diesem Gerät…`, `Von der orOS-Disk…` oder `Aus Online-Katalogen…`. Bücher von diesem Gerät werden in den Ordner `Books` der Disk kopiert. Du kannst auch Dateien ins Fenster ziehen oder ein Buch aus Dateien mit der Bibliothek öffnen.
+
+Tippe auf ein Cover, um zu lesen. Die Reihe `Weiterlesen` oben bringt dich zurück an die Stelle, an der du aufgehört hast.
+
+## Online-Kataloge
+`Hinzufügen` → `Aus Online-Katalogen…` öffnet kostenlose E-Book-Kataloge (OPDS). Zwei sind integriert: Project Gutenberg, mit Suchfeld, und die neuesten Veröffentlichungen von Standard Ebooks. Öffne einen Katalog, stöbere in seinen Bereichen oder nutze `In diesem Katalog suchen`, öffne ein Buch und drück das gewünschte Format (EPUB, PDF, CBZ…). Das Buch wird im Ordner `Books` der Disk gespeichert und deiner Bibliothek hinzugefügt; `Lesen` in der Meldung öffnet es.
+
+Um einen weiteren Katalog hinzuzufügen, gib seine OPDS-Adresse (OPDS 1 oder 2) unter `Katalog hinzufügen` ein, wenn du willst mit einem Namen. Deine eigenen Kataloge folgen dir auf deine anderen Geräte; die Papierkorb-Schaltfläche daneben entfernt einen.
+
+Beim ersten Mal sagt dir die Bibliothek, was online geht: nur die Seiten, die du öffnest, und die Wörter, nach denen du suchst, gesendet an die Website des Katalogs. Manche Websites lassen einen Browser nicht direkt lesen; die Bibliothek liest sie dann über das orOS-Relay, falls du eins in [Mail](app:mail) eingerichtet hast. Ohne Relay sagen diese Kataloge das und lassen sich nicht lesen.
+
+## Finden und ordnen
+Die Chips filtern nach `Am Lesen`, `Nicht begonnen`, `Gelesen`, `EPUB` oder `PDF` (und `FB2` und `Comics`, sobald du solche Bücher hast). `Titel, Autor, Tag suchen…` ignoriert Akzente. Sortiere nach `Zuletzt gelesen`, `Titel`, `Autor` oder `Fortschritt` und wechsle zwischen Covern und einer Liste.
+
+Die Info-Schaltfläche auf einem Cover öffnet die Details des Buchs, wo du Titel, Autor und Tags `Bearbeiten`, `Als gelesen markieren`, `Notizen exportieren`, `Aus der Bibliothek entfernen` oder `Datei löschen` kannst.
+
+`Zum Medienregal hinzufügen` in den Details eines Buchs stellt es als E-Book in dein [Medienregal](app:shelf). Von da an folgt das Regal deinem Lesefortschritt hier (es aktualisiert sich, wenn du es öffnest), und wenn du das Buch hier beendest, ist es auch dort beendet. Ist es schon dort, heißt die Schaltfläche `Im Medienregal öffnen`.
+
+## Lesen
+- Blättere mit den Pfeilen unten, durch Tippen auf den linken oder rechten Rand oder durch Wischen. Tippe in die Mitte, um die Leisten aus- oder einzublenden.
+- Der Schieberegler springt an jede Stelle im Buch.
+- `Inhalt` listet die Kapitel; `Im Buch suchen` findet jeden Treffer.
+- `Leseeinstellungen` ändert Textgröße, Schrift (`Die des Buchs`, `Serif` oder `Serifenlos`), Zeilenabstand, Ränder, Blocksatz, Silbentrennung, `Seiten` oder `Scrollen`, zwei Seiten auf breiten Bildschirmen und das Design (`orOS`, `Papier`, `Sepia`, `Nacht`). PDFs haben Zoom (`Breite anpassen`, `Ganze Seite`) und `Nachtseiten`.
+
+## Nachschlagen und fragen
+Wähle ein Wort aus und nimm `Nachschlagen` in der Leiste: Seine Bedeutungen kommen von Wiktionary. Beim ersten Mal fragt die Bibliothek, bevor sie online geht; nur das Wort wird an wiktionary.org gesendet, und unter den Bedeutungen kannst du das Nachschlagen wieder ausschalten. `In Wiktionary öffnen` zeigt den ganzen Eintrag.
+
+`Assistent fragen` öffnet den orOS-[Assistenten](app:assistant) mit einer fertigen Frage: was das Wort in seinem Satz bedeutet oder was eine ausgewählte Passage bedeutet. Die Details eines Buchs haben `Assistent fragen` zum ganzen Buch, ohne Spoiler über deine Stelle hinaus. Nichts wird gesendet, bis du es dort sendest.
+
+## Vorlesen
+Die Lautsprecher-Schaltfläche unten links (`Vorlesen`) liest dir das Buch ab der Seite auf dem Bildschirm vor, mit den eigenen Stimmen deines Geräts: Nichts wird irgendwohin gesendet. Der gerade gelesene Satz ist markiert und die Seiten blättern von selbst, sodass deine Stelle beim Zuhören mitwandert.
+
+Während des Vorlesens ersetzen seine Steuerelemente die untere Leiste: `Pause`, `Vorheriger Satz`, `Nächster Satz`, das Tempo (tippe darauf, um von 0,8× bis 2× zu wechseln) und `Vorlesen beenden`. Blätterst du in der Pause auf eine andere Seite, geht es von dort weiter. Die Stimme folgt der Sprache des Buchs und ist immer eine auf deinem Gerät installierte. Manche Browser bieten auch Online-Stimmen an (in Chrome die mit dem Namen "Google …"); die Bibliothek nutzt sie nie, weil sie den Text an ihren Server senden. Hat dein Gerät keine Stimme für die Sprache des Buchs, sagt die Bibliothek das und liest nicht; du kannst in den Sprachausgabe-Einstellungen deines Systems eine Stimme hinzufügen.
+
+## Lesestatistik
+`Mehr` › `Lesestatistik` zeigt, wie lange du heute, in den letzten sieben Tagen und insgesamt gelesen hast, wie viele Tage in Folge, einen Balken für jeden Tag der letzten zwei Wochen und die Zeit in jedem Buch, mit etwa der Restzeit bei deinem Tempo. Die Details eines Buchs zeigen dasselbe für dieses Buch.
+
+Die Zeit zählt, während ein Buch offen ist und du blätterst, auswählst oder zuhörst; nach fünf Minuten ohne all das stoppt sie, bis du weitermachst. Jedes Gerät zählt zu denselben Summen. Die Übersicht in [Heute](app:today) zeigt das Buch, das du liest, die heutige Zeit und deine Serie; tippe darauf, um weiterzulesen.
+
+## Markierungen, Notizen und Lesezeichen
+Wähle Text aus und nimm eine von vier Farben, um ihn zu markieren. In derselben Leiste kannst du `Notiz hinzufügen`, `Kopieren` oder `Im Buch finden`. Tippe auf eine Markierung, um ihre Farbe zu ändern, die Notiz zu bearbeiten oder sie zu löschen. Die Lesezeichen-Schaltfläche oben markiert die Seite.
+
+`Notizen und Markierungen` listet sie alle, mit Filtern, und `Notizen exportieren` speichert sie als Markdown-Text auf der Disk, als Download oder in der Zwischenablage. Die Datei beginnt mit Titel, Autor, der Zahl der Markierungen und Notizen und dem Datum, dann folgt jede Markierung als Zitat unter ihrem Kapitel, mit ihrer Stelle im Buch und deiner Notiz darunter, bereit für Obsidian oder jede Markdown-App. Im selben Fenster macht `An Notizen senden` eine Seite mit deinen Markierungen und Notizen in [Notizen](app:notes), im selben Markdown.
+
+### Markierungen aus einem anderen Reader importieren
+`Mehr` › `Markierungen importieren…` fügt die Markierungen, Notizen und Lesezeichen, die du in einem anderen Reader gemacht hast, zu denselben Büchern in deiner Bibliothek hinzu:
+- **Kindle**: Schließ den Kindle an einen Computer an und nimm `My Clippings.txt` aus seinem Ordner `documents`.
+- **KOReader**: Öffne ein Buch, dann Menü › Markierungen exportieren, als JSON oder Markdown (ein Buch oder alle Bücher).
+- **Readwise**: auf readwise.io Export › CSV.
+
+Ein Buch wird an seinem Titel erkannt, und am Autor, wenn beide Seiten einen haben; Akzente und Großschreibung spielen keine Rolle. Jede Markierung wird gesetzt, indem ihre Wörter im Buch gesucht werden, die Datei des Buchs muss also auf diesem Gerät sein. Eine Notiz, die Kindle separat speichert, kommt zu ihrer Markierung. In einem PDF werden eine Markierung, deren Wörter nicht gefunden werden, und ein Lesezeichen zu einem Lesezeichen ihrer Seite mit Zitat und Notiz.
+
+Die Vorschau listet für jedes Buch, was hinzugefügt wird, was schon da ist und was übersprungen wird: Markierungen, deren Wörter nicht in dieser Ausgabe stehen, und Bücher, die noch nicht in deiner Bibliothek sind (füg sie zuerst hinzu und importiere dann noch einmal). `Importieren` fügt alles auf einmal hinzu, mit `Rückgängig` für ein paar Sekunden. Importierst du dieselbe Datei noch einmal, kommt nur hinzu, was fehlt.
+
+## Synchronisierung und Sicherung
+Mit orOS-Synchronisierung folgen dir deine Bücherliste, Lesestelle, Markierungen, Notizen, Lesezeichen und Lesezeit auf jedes Gerät. Die Buchdateien reisen über die Synchronisierung der orOS-Disk. Wurde ein Buch woanders hinzugefügt und ist seine Datei noch nicht angekommen, erscheint es als nicht auf diesem Gerät; fügst du hier dieselbe Datei hinzu, bleibt deine Stelle erhalten, weil die Bibliothek ein Buch an seinem Inhalt erkennt. Leseeinstellungen und das Vorlesetempo bleiben auf jedem Gerät.
+
+## Eine orOS-Datei speichern und öffnen
+`Mehr` › `orOS-Datei (.oroslibrary)` speichert deine Bücherliste (Titel, Autoren, Tags, Daten des Beendens), wo du in jedem Buch aufgehört hast, jede Markierung, Notiz und jedes Lesezeichen sowie die hinzugefügten Kataloge als eine `.oroslibrary`-Datei, zum Beispiel um sie ohne Synchronisierung auf ein anderes Gerät zu bringen oder eine Kopie zu behalten. Die Buchdateien selbst sind nicht darin (sie reisen über die orOS-Disk), ebenso wenig Cover, Lesezeit, Leseeinstellungen oder eine Katalogadresse mit Anmeldung oder Schlüssel. Die Datei ist eine einfache ZIP: Entpackt enthält sie die Einträge als `content.json` sowie `preview/books.csv` und `preview/notes.md` für andere Programme. Sie ist nicht verschlüsselt, bewahr sie also sicher auf.
+
+In orOS legt `Mehr` › `In Tabelle öffnen` dieselbe Bücherliste (Titel, Autor, Format, Seiten, Fortschritt, Datum des Beendens, Tags, Zahl der Markierungen) in ein neues Blatt der Tabelle, mit Summen unter den Seiten und den Markierungen.
+
+`Mehr` › `orOS-Datei öffnen…` (oder `Entpackter orOS-Ordner…`, die Datei ins Fenster ziehen oder „Öffnen mit“ orOS auf dem Computer) zeigt, wie viele Einträge neu sind und wie viele schon hier, dann fügt `Hinzufügen` nur die neuen hinzu, mit ihren eigenen IDs: Öffnest du dieselbe Datei noch einmal, kommt nichts hinzu. Ein Buch, eine Markierung oder eine Lesestelle, die schon hier ist, bleibt, wie sie ist, und was du hier gelöscht hast, bleibt gelöscht; eine Datei löscht nie etwas. Hak `Mit neueren Versionen aktualisieren` an, damit Einträge, die in der Datei später geändert wurden, deine Kopie ersetzen. `Rückgängig` in der Meldung nimmt das Hinzugefügte zurück. Ein Buch, dessen Datei nicht auf diesem Gerät ist, erscheint als nicht auf diesem Gerät, bis du die Datei hinzufügst.
+
+## Tastenkürzel
+- [[→]] / [[←]], [[PageDown]] / [[PageUp]], [[Space]]: nächste / vorherige Seite
+- [[B]]: Lesezeichen, [[T]]: Inhalt, [[N]]: Notizen, [[S]]: vorlesen oder pausieren
+- [[Ctrl+F]]: im Buch suchen
+- [[Esc]]: ein Popup oder die Seitenleiste schließen
+
+## Tipps
+> Auf einem breiten Bildschirm bleibt die Seitenleiste neben der Seite offen, und die Bibliothek merkt sich das.
+
+## Grenzen
+- Kopiergeschützte Bücher (DRM) lassen sich nicht öffnen.
+- Bücher über 50 MB lassen sich nicht hinzufügen; Comics (CBZ, CBR) dürfen bis zu 200 MB groß sein.
+- Passwortgeschützte CBR-Comics lassen sich nicht öffnen. Das erste CBR, das du öffnest, lädt einen Reader für RAR-Dateien von etwa 1 MB, das braucht also beim ersten Mal eine Verbindung.
+- Kataloge, die eine Anmeldung verlangen (etwa der vollständige Katalog von Standard Ebooks für seine Unterstützer), lassen sich nicht lesen. Über das Relay darf ein Download bis zu 5 MB groß sein.
+- Ein Comic zeigt eine Seite auf einmal; es hat keinen Text zum Suchen, Markieren oder Vorlesen.
+- PDFs ohne Textebene (Scans) lassen sich lesen, aber nicht durchsuchen oder markieren.

@@ -1,0 +1,66 @@
+# Angebot
+Mit Angebot schreibst du Preisangebote für deine Kunden: Positionen mit Rabatten und USt., Zahlungsbedingungen, Raten und ein PDF zum Versenden.
+
+## Erste Schritte
+Der Tab `Erstellen` ist ein leeres Angebot. Es bekommt automatisch eine Nummer wie OFF-2026-001; der runde Pfeil neben `Angebot Nr.` gibt ihm erneut die nächste freie Nummer. Fülle `Datum`, `Fällig`, `Status` und `Währung` aus und tippe dann auf `Speichern`. Jede Währung geht: Die gängigen stehen oben in der Liste, und Beträge werden so gezeigt, wie die Währung sie schreibt (beim Yen zum Beispiel ohne Nachkommastellen).
+
+Bis du auf `Speichern` tippst, ist ein neues Angebot ein Entwurf, der nur auf diesem Gerät liegt. Schließt du die App, wird er beim nächsten Mal wiederhergestellt. Nach dem ersten Speichern wird jede Änderung beim Tippen gespeichert.
+
+Ein Angebot kann auch in einer anderen App beginnen: `Angebot erstellen` in einem Bericht der [Zeiterfassung](app:timesheet) füllt ein neues Angebot für dich aus. Prüfe es und tippe auf `Speichern`.
+
+## Kunden
+Tippe oder klicke auf `Kunde wählen`, um einen Kunden auszuwählen, oder auf das **+** daneben, um einen hinzuzufügen. `Kundendaten` enthält `Name`, `E-Mail`, `Telefon`, `Adresse` und `Steuer-Nr. / USt-IdNr.`. Der Stift bearbeitet den gewählten Kunden; `Löschen` in diesem Fenster entfernt den Kunden nach einer Bestätigung.
+
+## Positionen und Summen
+Tippe auf **+** neben `Positionen`, um eine Zeile mit `Code/SKU`, `Beschreibung`, `Menge`, `Einzelpreis`, `Rabatt %` und `USt. %` hinzuzufügen. Beträge kannst du mit Komma oder Punkt eingeben.
+
+Unter den Positionen siehst du `Zwischensumme`, `USt.` und `Gesamt`. `Rabatt (%)` zieht einen Rabatt vom ganzen Angebot ab. Änderst du dort `USt. (%)`, gilt derselbe Satz für jede Zeile, und neue Zeilen übernehmen ihn auch.
+
+`Summe anzeigen in` zeigt die Summe zusätzlich in einer anderen Währung, zum Tageskurs der Europäischen Zentralbank (dieselben Kurse wie im [Einheitenrechner](app:units)). Das ist nur eine Orientierung für dich: Angebot, PDF und E-Mail bleiben in der Währung des Angebots. Die Auswahl bleibt auf diesem Gerät.
+
+### Raten
+Lege unter `Raten` eine `Anzahl` fest und tippe auf `Erzeugen`, um die Summe gleichmäßig aufzuteilen. Danach kannst du jedes Datum und jeden `Betrag` ändern; eine Zeile darunter sagt dir, ob die Summe zum Gesamtbetrag passt.
+
+## Zahlungsbedingungen, Notizen und Vorlagen
+Tippe oder klicke auf eine Zahlungsvorlage (`Banküberweisung`, `PayPal`, `IRIS`, `Bar`), um ihren Text zu den `Zahlungsbedingungen` hinzuzufügen. Mit dem Stift änderst du die Texte der Vorlagen, zum Beispiel um deine IBAN einzutragen. Nutze `Notizen` für alle anderen Bedingungen.
+
+`Als Vorlage speichern` legt Positionen, Rabatt, Zahlungsbedingungen, Notizen und Raten unter einem Namen ab. Die Schaltfläche `Vorlagenbibliothek` öffnet deine Vorlagen, wo du mit `Verwenden` von einer ausgehst. `Duplizieren` erstellt eine Kopie mit neuer Nummer und dem Status `Entwurf`. Bei einem als `Angenommen` markierten Angebot öffnet `Rechnung erstellen` eine neue Rechnung in [Rechnungen](app:invoices) mit demselben Kunden und denselben Positionen; prüfe sie dort und stelle sie aus.
+
+## Deine Angebote, PDF und E-Mail
+Der Tab `Angebote` listet alle deine Angebote auf. Suche nach Nummer, Kunde, Position, Notizen oder Zahlungsbedingungen, und filtere mit dem Trichter nach Status. Tippe oder klicke auf ein Angebot, um es zu öffnen.
+
+Ist ein Angebot geöffnet, kannst du mit den Schaltflächen oben:
+- `PDF exportieren`: das Angebot als A4-PDF speichern.
+- `Per E-Mail senden`: Hast du ein Konto in [Mail](app:mail), öffnet sich dort eine neue Nachricht mit der Adresse des Kunden, der Angebotsnummer, dem Fälligkeitsdatum und der Summe, und das PDF ist schon angehängt. Ohne Mail-Konto öffnet sich stattdessen dein eigenes E-Mail-Programm, und du hängst das PDF selbst an.
+
+## Annahme per Link
+Dein Kunde kann ein Angebot online annehmen, ohne Konto und ohne dass etwas auf einem Server gespeichert wird.
+
+1. Speichere das Angebot und tippe auf `Zur Annahme senden`. Gib deinen Namen oder deine Firma ein und, wenn du willst, deine E-Mail für die Antwort, dann `Link erstellen`.
+2. Sende den Link: `Link kopieren`, `Teilen…` oder `E-Mail mit PDF` (die Nachricht enthält das PDF und den Link).
+3. Dein Kunde öffnet den Link in einem beliebigen Browser, sieht das Angebot, gibt seinen Namen ein und tippt auf `Annehmen`. Er bekommt einen Antwort-Link, den er dir zurückschickt.
+4. Öffne den Antwort-Link, oder tippe auf `Annahme erfassen` und füge ihn ein. orOS prüft ihn gegen das gesendete Angebot und bietet `Als angenommen markieren` an, danach `Rechnung erstellen`.
+
+Das ganze Angebot steckt im Link (nach dem `#`, den Browser nie an einen Server senden). Jeder Link trägt einen Zufallscode und einen Fingerabdruck (SHA-256) des Angebots; die Antwort muss beides zurückbringen. Eine Antwort zählt also nur für genau die Version, die du gesendet hast: Hat jemand den Inhalt des Links verändert, oder hast du das Angebot geändert und einen neuen Link erstellt, sagt orOS dir das und zählt sie nicht.
+
+## Synchronisierung und Sicherung
+Angebote, Kunden, Vorlagen und Zahlungsvorlagen werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. Ein nicht gespeicherter Entwurf und das zuletzt geöffnete Angebot bleiben auf diesem Gerät. Die orOS-[Sicherung](help:t/backup) bewahrt eine Kopie von allem.
+
+## orOS-Datei speichern und öffnen
+Im Tab `Angebote` öffnet die Ordner-Schaltfläche `Speichern und öffnen`. `orOS-Datei (.orosquote)` speichert jedes Angebot (mit Positionen und Raten), jeden Kunden und jede Vorlage als eine `.orosquote`-Datei, zum Beispiel um sie ohne Synchronisierung auf ein anderes Gerät zu bringen oder einer Kollegin deine Angebote zu geben. Die Datei ist eine einfache ZIP-Datei: Entpackt enthält sie die Daten als `content.json` und dazu `preview/quotes.md` (jedes Angebot und jede Vorlage als Text, mit Summen). Die Zahlungsvorlagen und die Codes der Annahme-Links bleiben auf diesem Gerät und sind nicht in der Datei. Sie ist nicht verschlüsselt, bewahre sie also sicher auf.
+
+`orOS-Datei öffnen…` (oder `Entpackter orOS-Ordner…` oder „Öffnen mit“ orOS am Computer) zeigt, wie viele Einträge neu und wie viele schon da sind; dann fügt `Hinzufügen` nur die neuen hinzu, mit ihren eigenen IDs: Dieselbe Datei erneut zu öffnen, fügt nichts hinzu. Ein schon vorhandenes Angebot bleibt, wie es ist, und eines, das du hier gelöscht hast, bleibt gelöscht; eine Datei löscht nie etwas. Hake `Mit neueren Versionen aktualisieren` an, damit Angebote, die in der Datei später geändert wurden, deine Kopie ersetzen. `Rückgängig` in der Meldung entfernt, was hinzugefügt wurde.
+
+`Als Kopie öffnen…` fügt die Angebote und Vorlagen der Datei als neue hinzu, auch solche, die du schon hast: Jedes Angebot bekommt eine neue Nummer und beginnt als `Entwurf`. Nutze das, wenn eine Datei eine Sammlung von Angeboten als Ausgangspunkt ist. Kunden kommen wie gewohnt hinzu (nur die, die du noch nicht hast). `Rückgängig` entfernt die Kopien.
+
+## Tastenkürzel
+- [[Alt+N]] beginnt ein neues Angebot (wenn du nicht gerade in ein Feld tippst).
+
+## Tipps
+- orOS erinnert dich, wenn ein als `Gesendet` oder `Angenommen` markiertes Angebot innerhalb von zwei Tagen fällig oder überfällig ist; ein Tipp auf die Erinnerung öffnet das Angebot. Siehe [Benachrichtigungen](help:t/notifications).
+- Halte den Status aktuell: Stelle ihn auf `Abgelehnt` oder `Abgelaufen`, dann hören die Erinnerungen auf.
+
+## Grenzen
+- Die Summe in einer anderen Währung dient nur zur Information und braucht eine Verbindung für die Tageskurse (die letzten bleiben für die Offline-Nutzung erhalten).
+- Das PDF wird nur in [Mail](app:mail) automatisch angehängt; bei einem anderen E-Mail-Programm hängst du es selbst an. Sehr große Angebote können auch zu lang für einen Annahme-Link sein: Sende dann das PDF.
+- Die Annahme per Link ist keine Unterschrift: Sie beweist, dass die Antwort zum gesendeten Angebot passt, nicht, wer den Namen eingegeben hat. Jeder mit dem Link kann das Angebot sehen. Für eine verbindliche Vereinbarung bitte um eine unterschriebene Kopie.

@@ -1,0 +1,101 @@
+# Inventar
+Inventar ist eine Haushaltsliste: Es hilft dir, dir zu merken, wo du Dinge hingelegt hast, was sie wert sind und wer sie ausgeliehen hat. Du baust es in Ebenen auf, von einem Bereich bis hinunter zum Regal oder zur Schublade, wo jeder Gegenstand liegt.
+
+## Erste Schritte
+Inventar hat fünf Ebenen, jede in der vorherigen:
+1. Bereich, etwa deine Wohnung, ein Ferienhaus oder ein Lagerraum. Du beginnst mit einem namens `Zuhause`.
+2. Raum, etwa die Küche.
+3. Möbel, etwa ein Kleiderschrank.
+4. Position, etwa das oberste Regalbrett, die zweite Schublade oder eine Kiste.
+5. Gegenstände, die Dinge selbst.
+
+Tippe oder klicke auf einen Bereich, um ihn zu öffnen. Die Schaltfläche oben rechts fügt etwas zur Ebene hinzu, in der du bist: `Bereich hinzufügen`, `Raum hinzufügen`, `Möbel hinzufügen`, `Position hinzufügen` oder `Gegenstand hinzufügen` (auf dem Handy zeigt sie nur `+`). Gib einen `Name` ein und drücke `Speichern`.
+
+## Navigieren
+- Tippe oder klicke auf eine Karte, um hineinzugehen.
+- `‹ Zurück` bringt dich eine Ebene nach oben; mit dem Pfad oben springst du zu jeder Ebene darüber.
+- Auf einem breiten Bildschirm steht an der Seite ein Baum mit all deinen Bereichen, Räumen, Möbeln und Positionen, damit du direkt zu jedem springen kannst.
+
+Jede Karte zeigt, wie viel darin ist, etwa `3 darin` oder `5 Gegenstände`, und was es wert ist, wenn du Werte eingetragen hast.
+
+## Gegenstände
+Ein Gegenstand hat einen `Name`, eine `Menge` und eine `Notiz (optional)`, zum Beispiel „nur im Winter“ oder „Batterien AA“. Mit den Tasten − und + am Gegenstand änderst du die Menge; sie fällt nie unter 1.
+
+Der Stift an einem Gegenstand öffnet `Bearbeiten`, wo du außerdem ausfüllen kannst:
+- `Tags (optional, durch Kommas getrennt)`, etwa `tools, camping`. Die Suche findet sie.
+- `Wert pro Stück (optional)`, etwa `25` oder `25,50`. Inventar multipliziert ihn mit der Menge.
+- `Kaufdatum` und `Garantie bis`.
+- `Fotos`: bis zu 4 Bilder. Drücke `+` und wähle oder mache ein Foto.
+- `Beleg`: ein Bild oder PDF, mit `Beleg anhängen`.
+
+Fotos und Belege liegen auf dem orOS-Speicher, in Dateien › Storage, nicht in deinen Daten. Inventar zeichnet jedes Bild neu, bevor es gespeichert wird, daher fallen Standort- und Kameraangaben im Foto weg. Vault Drive kopiert die Dateien auf deine anderen Geräte; bis dahin zeigt ein Foto dort `?`.
+
+Auch Bereiche, Räume, Möbel und Positionen können eine Notiz und Tags haben, zum Beispiel „Weihnachtsdeko“ an einer Kiste.
+
+## Umbenennen und löschen
+Jede Karte hat einen Stift zum `Umbenennen` (`Bearbeiten` bei Gegenständen). `⋯` an einer Karte hat `Löschen`. Wenn du einen Bereich, einen Raum, ein Möbelstück oder eine Position löschst, wird auch alles darin gelöscht, deshalb fragt Inventar immer zuerst.
+
+>! Löschen lässt sich nicht rückgängig machen. Wenn du einen ganzen Bereich löschst, verschwinden auch alle seine Räume und Gegenstände sowie deren Fotos und Belege auf diesem Gerät.
+
+## Suche
+Die Lupe oben durchsucht alle Ebenen auf einmal: Namen, Notizen, Tags und die Person, der du etwas verliehen hast. Jedes Ergebnis zeigt, wo es ist, etwa `Zuhause › Garage › Metallregal › Kiste 1`. Tippe auf ein Ergebnis, um dorthin zu gehen; ein Gegenstand öffnet seine Position und leuchtet auf, damit du ihn findest.
+
+Die Suche im orOS-Menü findet deine Inventar-Gegenstände ebenfalls, mit ihren Tags.
+
+## Verschieben
+Drücke `⋯` an einer Karte und wähle `Verschieben…`. Ein Baum zeigt jeden möglichen Ort: Ein Gegenstand kommt in eine Position, eine Position an ein Möbelstück, ein Möbelstück in einen Raum und ein Raum in einen Bereich. Wähle einen, und es zieht mit allem darin um. `Rückgängig` in der Meldung stellt es zurück.
+
+Bereiche lassen sich nicht verschieben, und nichts kann in sich selbst verschoben werden.
+
+## Wert
+Eine Leiste oben zeigt den Wert des Orts, an dem du bist (`Gesamtwert` auf der ersten Ebene), und wie viele Gegenstände er enthält. Die Währung stellst du in `⋯` › `Einstellungen…` ein.
+
+## Verleihen
+Drücke `⋯` an einem Gegenstand und wähle `Verleihen…`. Fülle `Verliehen an` aus (oder wähle jemanden mit `Aus Kontakte`), `Verliehen am` und, wenn du magst, `Rückgabe bis (optional)`. Der Gegenstand zeigt dann „Verliehen an Giorgos am 14. Okt. 2026“.
+
+`⋯` oben › `Verliehen` listet alles, was du verliehen hast, das früheste Rückgabedatum zuerst; überfällige sind rot. Drücke `Zurückgegeben`, wenn du es zurückbekommst; `Rückgängig` in der Meldung holt die Ausleihe zurück, falls du dich vertippt hast.
+
+## QR-Etiketten für Kisten
+`⋯` oben › `QR-Etiketten drucken…` druckt einen A4-Bogen mit 24 Etiketten (70 × 37 mm), eins für jeden Bereich, Raum, jedes Möbelstück oder jede Position, die du ankreuzt. Jedes Etikett hat den Namen des Orts, wo er ist, und einen QR-Code. `⋯` an einer Karte › `QR-Etikett…` druckt nur dieses eine.
+
+Scanne ein Etikett mit der Handykamera, und orOS öffnet Inventar an diesem Ort. Wo der Browser Codes selbst lesen kann (Chrome auf Android), macht `⋯` › `Etikett scannen` dasselbe direkt in Inventar.
+
+> Ein Etikett zeigt auf die orOS-Adresse, von der aus du es gedruckt hast. Wenn du orOS unter einer anderen Adresse nutzt, drucke die Etiketten neu.
+
+## Erinnerungen
+`⋯` › `Einstellungen…` › `Erinnerungen auf diesem Gerät` schaltet Erinnerungen ab der gewählten Stunde ein. Inventar sagt dir dann 30 und 7 Tage vor dem Ende einer Garantie und am Tag selbst Bescheid, und am Rückgabetag von etwas, das du verliehen hast. Erinnerungen sind aus, bis du sie einschaltest, auf jedem Gerät einzeln; sie kommen wie jede andere [Benachrichtigung](help:t/notifications).
+
+## Aus einer anderen App importieren
+`⋯` › `Importieren (Homebox, Sortly, CSV)…` holt eine Haushaltsliste herein:
+- Homebox: `Tools` › `Export inventory` liefert eine CSV. Labels werden zu Tags; Kaufpreis, Kaufdatum und Garantieende bleiben erhalten; Beschreibung, Notizen, Hersteller, Seriennummer und Shop kommen in die Notiz. Verkaufte Gegenstände werden ausgelassen.
+- Sortly: `Export` (oder `Reports` › als CSV exportieren). Der Ordnerpfad wird zum Ort; Variante, Einheit, Mindestbestand und Barcode kommen in die Notiz.
+- Jede andere CSV: eine Spalte für den Namen und, falls vorhanden, Ort, Menge und Notizen. Die Vorschau zeigt, welche Spalten verwendet wurden.
+
+Inventar hat immer Bereich › Raum › Möbel › Position. Ein Ort wie `Garage/Shelf 1/Box 3` füllt diese von oben, unter dem Bereich, den du in `Orte einordnen unter` wählst; tiefere Teile kommen zum Namen der Position, und fehlende Ebenen werden zu einem Ort namens Allgemein. Orte mit gleichem Namen werden wiederverwendet. Der Import fügt nur hinzu: Was schon da ist, bleibt, wie es ist, und dieselbe Datei zweimal fügt nichts hinzu. Die Meldung danach hat `Rückgängig`.
+
+## Eine orOS-Datei speichern und öffnen
+`⋯` › `orOS-Datei (.orosinventory)` speichert alle Bereiche, Räume, Möbel, Positionen und Gegenstände als eine `.orosinventory`-Datei, mit den Fotos und Belegen darin: zum Beispiel, um dein Inventar ohne Synchronisierung auf ein anderes Gerät zu bringen oder eine Kopie aufzubewahren. Die Währung und die Erinnerungsstunde bleiben auf diesem Gerät. Die Datei ist ein einfaches ZIP: Entpackt enthält sie die Einträge als `content.json`, die Fotos und Belege in `media/` und `preview/inventory.csv` (Spalten, die der CSV-Import von Inventar wieder liest) und `preview/inventory.md` für andere Programme. Sie ist nicht verschlüsselt, bewahre sie also sicher auf.
+
+`⋯` › `orOS-Datei öffnen…` (oder `Entpackter orOS-Ordner…` oder „Öffnen mit“ orOS am Computer) zeigt, wie viele Einträge neu und wie viele schon da sind; dann fügt `Hinzufügen` nur die neuen hinzu, mit ihren eigenen IDs: Dieselbe Datei erneut zu öffnen, fügt nichts hinzu. Ein schon vorhandener Eintrag bleibt, wie er ist, und einer, den du hier gelöscht hast, bleibt gelöscht; eine Datei löscht nie etwas. Hake `Mit neueren Versionen aktualisieren` an, damit Einträge, die in der Datei später geändert wurden, deine Kopie ersetzen. Etwas, dessen Ort du hier gelöscht hast, wird ausgelassen. Fotos und Belege kommen nur nach Dateien › Storage, wenn sie noch nicht dort sind, mit denselben Prüfungen wie beim Hinzufügen von Hand. `Rückgängig` in der Meldung entfernt, was hinzugefügt wurde.
+
+## Synchronisierung und Sicherung
+Alles, was du hinzufügst, wird über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. Die orOS-[Sicherung](help:t/backup) bewahrt eine Kopie auf; eine orOS-Datei (oben) bewahrt eine nur von Inventar auf.
+
+## Tastenkürzel
+- [[Enter]] auf einer ausgewählten Karte öffnet sie.
+- [[/]] öffnet die Suche.
+- [[Esc]] geht eine Ebene nach oben oder verlässt die Suche.
+
+## Tipps
+- Benenne Positionen so, wie du sie laut beschreiben würdest („oberes Regal, links“), damit sie auch in einem Jahr noch Sinn ergeben.
+- Nutze die Notiz für Details, die du sonst vergisst, etwa eine Größe oder einen Batterietyp.
+- Vergib Tags nach Zweck (`camping`, `winter`, `tools`) und suche nach dem Tag, um die Dinge aus allen Räumen zu sammeln.
+- Kleb auf jede Kiste ein QR-Etikett: Ein Scan zeigt, was drin ist, ohne sie zu öffnen.
+
+## Grenzen
+- Notizen haben höchstens 300 Zeichen; bis zu 10 Tags mit je 30 Zeichen.
+- Bis zu 4 Fotos und ein Beleg pro Gegenstand; ein PDF-Beleg darf bis zu 10 MB groß sein.
+- Eine Währung für alle Werte, auf jedem Gerät gewählt; Beträge werden nicht umgerechnet.
+- Erinnerungen kommen nur, solange orOS offen ist; ein Garantieende, das mehr als eine Woche zurückliegt, wird nicht nachträglich gemeldet.
+- Das Scannen in Inventar braucht einen Browser mit eingebautem Code-Leser (Chrome auf Android); anderswo nutze die Kamera-App des Handys.
+- Ein Gerät mit einem älteren orOS behält deine Gegenstände, verwirft aber beim Speichern die neuen Details (Tags, Wert, Daten, Fotos, Ausleihen). Aktualisiere jedes Gerät.

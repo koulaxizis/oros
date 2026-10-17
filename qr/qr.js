@@ -67,7 +67,9 @@
       return l === "el" ? "el" : "en";
     } catch (e) { return "en"; }
   }
-  var LANG = appLang();
+  // orosI18n (../i18n.js): the full language code, a pack language included.
+  var LANG = window.orosI18n ? window.orosI18n.lang() : appLang();
+  function loc() { return window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB"); }
 
   var STRINGS = {
     en: {
@@ -267,6 +269,8 @@
       "bulk.sheet": "Ετικέτες QR"
     }
   };
+
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "qr", LANG);
 
   function has(key) { return (STRINGS[LANG] && STRINGS[LANG][key] !== undefined) || STRINGS.en[key] !== undefined; }
   function t(key, params) {
@@ -1198,7 +1202,7 @@
           region: adr ? str(adr.region) : "", country: adr ? str(adr.country) : ""
         }
       };
-    }).sort(function (a, b) { return a.main.localeCompare(b.main, LANG === "el" ? "el" : "en"); });
+    }).sort(function (a, b) { return a.main.localeCompare(b.main, loc()); });
   }
 
   function todayYmd() {
@@ -1207,7 +1211,7 @@
   }
   function fmtDate(ymd) {
     try {
-      return new Date(ymd + "T00:00:00").toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB",
+      return new Date(ymd + "T00:00:00").toLocaleDateString(loc(),
         { day: "numeric", month: "short", year: "numeric" });
     } catch (e) { return ymd; }
   }
@@ -1246,7 +1250,7 @@
     return Object.keys(d.items).map(function (id) { return d.items[id]; })
       .filter(function (it) { return it && typeof it.id === "string" && !dead[it.id] && /^https?:\/\//i.test(str(it.url)); })
       .map(function (it) { return { id: it.id, main: str(it.title) || str(it.url), sub: str(it.url), fields: { url: str(it.url) } }; })
-      .sort(function (a, b) { return a.main.localeCompare(b.main, LANG === "el" ? "el" : "en"); });
+      .sort(function (a, b) { return a.main.localeCompare(b.main, loc()); });
   }
 
   var PICK_SRC = { url: bookmarkRows, vcard: contactRows, event: eventRows };
@@ -1785,7 +1789,7 @@
         b.appendChild(el("span", "pick-main", first));
         var when = "";
         try {
-          when = new Date(h.at).toLocaleString(LANG === "el" ? "el-GR" : "en-GB",
+          when = new Date(h.at).toLocaleString(loc(),
             { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
         } catch (e) {}
         b.appendChild(el("span", "pick-sub", t("kind." + r.kind) + (when ? " · " + when : "")));

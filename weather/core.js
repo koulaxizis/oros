@@ -75,7 +75,7 @@
   function fold(s) {
     s = str(s).toLowerCase();
     try { s = s.normalize("NFD").replace(/[\u0300-\u036f]/g, ""); } catch (e) {}
-    s = s.replace(/[α-ως]/g, function (c) { return GR[c] || c; });
+    s = s.replace(/[\u03b1-\u03c9]/g, function (c) { return GR[c] || c; });
     s = s.replace(/ph/g, "f").replace(/th/g, "t").replace(/ch/g, "h").replace(/c/g, "k")
          .replace(/y/g, "i").replace(/w/g, "v").replace(/[^a-z0-9]+/g, " ")
          .replace(/([a-z])\1+/g, "$1");
@@ -244,7 +244,7 @@
     if (!/<alert[\s>]/i.test(s)) return null;
     var infos = tagAll(s, "info");
     if (!infos.length) return null;
-    var want = lang === "el" ? "el" : "en";
+    var want = typeof lang === "string" && /^[a-z]{2}/i.test(lang) ? lang.slice(0, 2).toLowerCase() : "en";
     function langOf(i) { return tagText(i, "language").toLowerCase(); }
     var pick = null;
     infos.forEach(function (i) { if (!pick && langOf(i).indexOf(want) === 0) pick = i; });
@@ -334,24 +334,59 @@
     return out;
   }
 
-  var LEVEL_WORD = {
-    en: { 2: "Yellow", 3: "Orange", 4: "Red" },
-    el: { 2: "Κίτρινη", 3: "Πορτοκαλί", 4: "Κόκκινη" }
+  // Texts of the warning titles and the rain sentence. Pack "weather"
+  // (../i18n.js) adds other languages; the shell, which loads core.js
+  // without the pack, shows English for them.
+  var STR = {
+    en: {
+      "level.2": "Yellow", "level.3": "Orange", "level.4": "Red",
+      "warn.title": "{level} warning: {kind}",
+      "kind.wind": "wind", "kind.snow": "snow or ice", "kind.storm": "thunderstorms", "kind.fog": "fog",
+      "kind.heat": "high temperatures", "kind.cold": "low temperatures", "kind.coast": "coastal event",
+      "kind.fire": "forest fire risk", "kind.avalanche": "avalanches", "kind.rain": "rain",
+      "kind.flood": "flooding", "kind.other": "weather",
+      "dur.min": "{n} min", "dur.hour": "{n} hour", "dur.hours": "{n} hours",
+      "nc.dry": "No rain in the next {t}",
+      "nc.start.rain": "Rain starts in ~{t}", "nc.start.light": "Light rain starts in ~{t}",
+      "nc.start.heavy": "Heavy rain starts in ~{t}", "nc.start.snow": "Snow starts in ~{t}",
+      "nc.stop.rain": "Rain stops in ~{t}", "nc.stop.light": "Light rain stops in ~{t}",
+      "nc.stop.heavy": "Heavy rain stops in ~{t}", "nc.stop.snow": "Snow stops in ~{t}",
+      "nc.all.rain": "Rain for the next {t}", "nc.all.light": "Light rain for the next {t}",
+      "nc.all.heavy": "Heavy rain for the next {t}", "nc.all.snow": "Snow for the next {t}"
+    },
+    el: {
+      "level.2": "Κίτρινη", "level.3": "Πορτοκαλί", "level.4": "Κόκκινη",
+      "warn.title": "{level} προειδοποίηση: {kind}",
+      "kind.wind": "άνεμοι", "kind.snow": "χιόνι ή πάγος", "kind.storm": "καταιγίδες", "kind.fog": "ομίχλη",
+      "kind.heat": "υψηλές θερμοκρασίες", "kind.cold": "χαμηλές θερμοκρασίες", "kind.coast": "παράκτια φαινόμενα",
+      "kind.fire": "κίνδυνος πυρκαγιάς", "kind.avalanche": "χιονοστιβάδες", "kind.rain": "βροχή",
+      "kind.flood": "πλημμύρες", "kind.other": "καιρός",
+      "dur.min": "{n} λεπτά", "dur.hour": "{n} ώρα", "dur.hours": "{n} ώρες",
+      "nc.dry": "Χωρίς βροχή τις επόμενες {t}",
+      "nc.start.rain": "Βροχή σε ~{t}", "nc.start.light": "Ασθενής βροχή σε ~{t}",
+      "nc.start.heavy": "Έντονη βροχή σε ~{t}", "nc.start.snow": "Χιόνι σε ~{t}",
+      "nc.stop.rain": "Η βροχή σταματά σε ~{t}", "nc.stop.light": "Η βροχή σταματά σε ~{t}",
+      "nc.stop.heavy": "Η βροχή σταματά σε ~{t}", "nc.stop.snow": "Το χιόνι σταματά σε ~{t}",
+      "nc.all.rain": "Βροχή όλες τις επόμενες {t}", "nc.all.light": "Ασθενής βροχή όλες τις επόμενες {t}",
+      "nc.all.heavy": "Έντονη βροχή όλες τις επόμενες {t}", "nc.all.snow": "Χιόνι όλες τις επόμενες {t}"
+    }
   };
-  var KIND_WORD = {
-    en: { wind: "wind", snow: "snow or ice", storm: "thunderstorms", fog: "fog", heat: "high temperatures",
-          cold: "low temperatures", coast: "coastal event", fire: "forest fire risk", avalanche: "avalanches",
-          rain: "rain", flood: "flooding", other: "weather" },
-    el: { wind: "άνεμοι", snow: "χιόνι ή πάγος", storm: "καταιγίδες", fog: "ομίχλη", heat: "υψηλές θερμοκρασίες",
-          cold: "χαμηλές θερμοκρασίες", coast: "παράκτια φαινόμενα", fire: "κίνδυνος πυρκαγιάς", avalanche: "χιονοστιβάδες",
-          rain: "βροχή", flood: "πλημμύρες", other: "καιρός" }
-  };
+  function strOf(lang) {
+    var L = typeof lang === "string" && lang ? lang : "en";
+    var I = root.orosI18n;
+    if (!STR[L] && I && typeof I.table === "function") I.table(STR, "weather", L);
+    return STR[L] || STR.en;
+  }
+  function tr(lang, key, vars) {
+    var s = strOf(lang)[key];
+    if (s === undefined) s = STR.en[key];
+    return String(s).replace(/\{(\w+)\}/g, function (all, k) { return vars && vars[k] !== undefined ? String(vars[k]) : all; });
+  }
   // "Orange warning: thunderstorms" / "Πορτοκαλί προειδοποίηση: καταιγίδες"
   function warnTitle(w, lang) {
-    var L = lang === "el" ? "el" : "en";
-    var lv = LEVEL_WORD[L][w.level] || LEVEL_WORD[L][2];
-    var k = KIND_WORD[L][w.kind] || KIND_WORD[L].other;
-    return lv + (L === "el" ? " προειδοποίηση: " : " warning: ") + k;
+    var lv = STR.en["level." + w.level] !== undefined ? w.level : 2;
+    var k = STR.en["kind." + w.kind] !== undefined ? w.kind : "other";
+    return tr(lang, "warn.title", { level: tr(lang, "level." + lv), kind: tr(lang, "kind." + k) });
   }
 
   // ---------- 3. Rain in the next two hours ----------
@@ -400,31 +435,19 @@
   }
   function durText(m, L) {
     m = roundMin(m);
-    if (m < 60) return m + " " + (L === "el" ? "λεπτά" : "min");
+    if (m < 60) return tr(L, "dur.min", { n: m });
     var h = Math.floor(m / 60), r = m % 60;
-    if (L === "el") return h + (h === 1 ? " ώρα" : " ώρες") + (r ? " " + r + " λεπτά" : "");
-    return h + (h === 1 ? " hour" : " hours") + (r ? " " + r + " min" : "");
+    return tr(L, h === 1 ? "dur.hour" : "dur.hours", { n: h }) + (r ? " " + tr(L, "dur.min", { n: r }) : "");
   }
-  var RATE = {
-    en: { light: "Light ", moderate: "", heavy: "Heavy " },
-    el: { light: "Ασθενής ", moderate: "", heavy: "Έντονη " }
-  };
   // One sentence: "Rain starts in ~30 min", "Light rain stops in ~45 min",
   // "Rain for the next 2 hours", "No rain in the next 2 hours".
   function nowcastText(nc, lang, horizonMin) {
-    var L = lang === "el" ? "el" : "en", hz = durText(horizonMin || 120, L);
+    var hz = durText(horizonMin || 120, lang);
     if (!nc) return "";
-    if (nc.state === "dry") return L === "el" ? "Χωρίς βροχή τις επόμενες " + hz : "No rain in the next " + hz;
-    var what;
-    if (L === "el") {
-      if (nc.state === "stop") return (nc.snow ? "Το χιόνι" : "Η βροχή") + " σταματά σε ~" + durText(nc.min, L);
-      what = nc.snow ? "Χιόνι" : (RATE.el[nc.rate] || "") + (nc.rate && nc.rate !== "moderate" ? "βροχή" : "Βροχή");
-      if (nc.state === "all") return what + " όλες τις επόμενες " + hz;
-      return what + " σε ~" + durText(nc.min, L);
-    }
-    what = nc.snow ? "Snow" : (RATE.en[nc.rate] || "") + (nc.rate && nc.rate !== "moderate" ? "rain" : "Rain");
-    if (nc.state === "all") return what + " for the next " + hz;
-    return what + (nc.state === "start" ? " starts in ~" : " stops in ~") + durText(nc.min, L);
+    if (nc.state === "dry") return tr(lang, "nc.dry", { t: hz });
+    var what = nc.snow ? "snow" : (nc.rate === "light" || nc.rate === "heavy" ? nc.rate : "rain");
+    var st = nc.state === "all" || nc.state === "stop" ? nc.state : "start";
+    return tr(lang, "nc." + st + "." + what, { t: st === "all" ? hz : durText(nc.min, lang) });
   }
 
   // ---------- 4. Air quality + pollen ----------

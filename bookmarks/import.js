@@ -88,7 +88,7 @@
     if (isArr(v)) raw = v;
     else if (typeof v === "string") {
       var s = v.trim();
-      if (/^\[/.test(s)) { var j = kit().json(s); raw = isArr(j) ? j : s.replace(/[\[\]"]/g, "").split(","); }
+      if (/^\[/.test(s)) { var j = kit().json(s); raw = isArr(j) ? j : s.replace(/[\[\]\x22]/g, "").split(","); }
       else raw = s.split(/[,|]/);
     }
     var seen = {}, out = [];

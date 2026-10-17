@@ -133,7 +133,7 @@
     var i = 0;
     while (n >= 1024 && i < u.length - 1) { n /= 1024; i++; }
     var s = (i === 0 ? String(Math.round(n)) : n.toFixed(n < 10 ? 1 : 0));
-    if (lang === "el") s = s.replace(".", ",");
+    if (lang === "el" || lang === "de") s = s.replace(".", ",");   // decimal comma
     return s + " " + u[i];
   }
 

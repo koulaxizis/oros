@@ -229,12 +229,58 @@
     };
   }
 
+  // ---------- texts ----------
+  // Seed place names (saved as a bilingual pair { en, el } until the
+  // first rename) and the reminder lines. Pack "storage" (../i18n.js)
+  // adds other languages; the shell, which loads core.js without the
+  // pack, shows English for them.
+  var STR = {
+    en: {
+      "seed.home": "Home",
+      "seed.general": "General",
+      "seed.imported": "Imported",
+      "alert.due": "{name}: due back from {who} today",
+      "alert.late": "{name}: due back from {who} (late)",
+      "alert.days": "{name}: warranty ends in {n} days",
+      "alert.tomorrow": "{name}: warranty ends tomorrow",
+      "alert.today": "{name}: warranty ends today",
+      "alert.ended": "{name}: warranty has ended"
+    },
+    el: {
+      "seed.home": "Σπίτι",
+      "seed.general": "Γενικά",
+      "seed.imported": "Εισαγωγή",
+      "alert.due": "{name}: επιστροφή από {who} σήμερα",
+      "alert.late": "{name}: επιστροφή από {who} (καθυστερεί)",
+      "alert.days": "{name}: η εγγύηση λήγει σε {n} ημέρες",
+      "alert.tomorrow": "{name}: η εγγύηση λήγει αύριο",
+      "alert.today": "{name}: η εγγύηση λήγει σήμερα",
+      "alert.ended": "{name}: η εγγύηση έληξε"
+    }
+  };
+  var SEED_KEY = { "Home": "seed.home", "General": "seed.general", "Imported": "seed.imported" };
+  function i18n() { return root && root.orosI18n && typeof root.orosI18n.table === "function" ? root.orosI18n : null; }
+  function strOf(lang) {
+    var L = typeof lang === "string" && lang ? lang : "en", I = i18n();
+    if (!STR[L] && I) I.table(STR, "storage", L);
+    return STR[L] || STR.en;
+  }
+  function tr(lang, key, vars) {
+    var s = strOf(lang)[key];
+    if (s === undefined) s = STR.en[key];
+    return String(s).replace(/\{(\w+)\}/g, function (all, k) { return vars && has(vars, k) ? String(vars[k]) : all; });
+  }
+  // the bilingual pair a seed place is saved with
+  function seedPair(key) { return { en: STR.en[key] || "", el: STR.el[key] || "" }; }
+
   // ---------- index + paths ----------
   function nameOf(e, lang) {
     if (!e) return "";
     if (e.name) return e.name;
-    if (e.bi) return lang === "el" ? (e.bi.el || e.bi.en) : (e.bi.en || e.bi.el);
-    return "";
+    if (!e.bi) return "";
+    if (lang === "el") return e.bi.el || e.bi.en;
+    if (lang && lang !== "en" && has(SEED_KEY, e.bi.en)) return tr(lang, SEED_KEY[e.bi.en]);
+    return e.bi.en || e.bi.el;
   }
   // { byId, kids: {parentId|"": [live child, …] sorted by pos} }
   function index(ents) {
@@ -428,16 +474,13 @@
     });
   }
   function alertLine(a, x, lang) {
-    var I = idx(x), e = I.byId[a.id], name = nameOf(e, lang), el = lang === "el";
+    var I = idx(x), e = I.byId[a.id], name = nameOf(e, lang);
     if (a.kind === "l") {
       var who = e && e.lent ? e.lent.to : "";
-      return el ? name + ": επιστροφή από " + who + (a.days < 0 ? " (καθυστερεί)" : " σήμερα")
-                : name + ": due back from " + who + (a.days < 0 ? " (late)" : " today");
+      return tr(lang, a.days < 0 ? "alert.late" : "alert.due", { name: name, who: who });
     }
-    if (a.days > 1) return el ? name + ": η εγγύηση λήγει σε " + a.days + " ημέρες" : name + ": warranty ends in " + a.days + " days";
-    if (a.days === 1) return el ? name + ": η εγγύηση λήγει αύριο" : name + ": warranty ends tomorrow";
-    if (a.days === 0) return el ? name + ": η εγγύηση λήγει σήμερα" : name + ": warranty ends today";
-    return el ? name + ": η εγγύηση έληξε" : name + ": warranty has ended";
+    if (a.days > 1) return tr(lang, "alert.days", { name: name, n: a.days });
+    return tr(lang, a.days === 1 ? "alert.tomorrow" : (a.days === 0 ? "alert.today" : "alert.ended"), { name: name });
   }
 
   // ---------- device-local prefs (oros-storage-prefs) ----------
@@ -452,7 +495,8 @@
   function money(cents, cur, lang) {
     var v = (cents || 0) / 100, c = CURRENCIES.indexOf(cur) >= 0 ? cur : "EUR";
     try {
-      return new Intl.NumberFormat(lang === "el" ? "el-GR" : "en-GB", { style: "currency", currency: c }).format(v);
+      var I = i18n(), loc = I ? I.locale(lang) : (lang === "el" ? "el-GR" : "en-GB");
+      return new Intl.NumberFormat(loc, { style: "currency", currency: c }).format(v);
     } catch (e) { return v.toFixed(2) + " " + c; }
   }
 
@@ -508,7 +552,7 @@
     cleanTags: cleanTags, cleanCents: cleanCents, parseMoney: parseMoney, cleanLent: cleanLent,
     cleanPhotos: cleanPhotos, extras: extras,
     mergeRow: mergeRow, mergeEnts: mergeEnts, prunePayload: prunePayload, mergeData: mergeData,
-    nameOf: nameOf, index: index, chain: chain, pathNames: pathNames, isAlive: isAlive, descendants: descendants,
+    nameOf: nameOf, seedPair: seedPair, index: index, chain: chain, pathNames: pathNames, isAlive: isAlive, descendants: descendants,
     search: search, moveError: moveError, moveTargets: moveTargets,
     totals: totals, lentList: lentList,
     alerts: alerts, toNotify: toNotify, alertLine: alertLine,

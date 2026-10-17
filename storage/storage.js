@@ -45,7 +45,9 @@
            (localStorage.getItem("oros-lang") === "el" ? "el" : "en");
     if (LANG !== "el" && LANG !== "en") LANG = "en";
   } catch (e) { /* cross-origin edge — default EN */ }
-  var LOCALE = LANG === "el" ? "el-GR" : "en-GB";
+  // orosI18n (../i18n.js): the full language code, a pack language included.
+  if (window.orosI18n) LANG = window.orosI18n.lang();
+  var LOCALE = window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB");
 
   // ===== STRINGS =====
   var STRINGS = {
@@ -197,6 +199,8 @@
       "imp.l.qty":        "Quantity", "imp.l.maker": "Make", "imp.l.serial": "Serial no.", "imp.l.from": "Bought from",
       "imp.l.lifetime":   "Lifetime warranty", "imp.l.warranty": "Warranty", "imp.l.insured": "Insured",
       "imp.l.min":        "Min level", "imp.l.code": "Barcode",
+      "err.full":         "Browser storage is full",
+      "pkg.title":        "Storage",
       // settings
       "settings":         "Settings",
       "set.cur":          "Currency",
@@ -351,6 +355,8 @@
       "imp.l.qty":        "Ποσότητα", "imp.l.maker": "Κατασκευαστής", "imp.l.serial": "Σειριακός αριθμός", "imp.l.from": "Αγορά από",
       "imp.l.lifetime":   "Εγγύηση εφ' όρου ζωής", "imp.l.warranty": "Εγγύηση", "imp.l.insured": "Ασφαλισμένο",
       "imp.l.min":        "Ελάχιστο", "imp.l.code": "Barcode",
+      "err.full":         "Ο χώρος του browser γέμισε",
+      "pkg.title":        "Αποθήκη",
       "settings":         "Ρυθμίσεις",
       "set.cur":          "Νόμισμα",
       "set.remind":       "Υπενθυμίσεις σε αυτή τη συσκευή",
@@ -364,6 +370,8 @@
       "type.item":        "Αντικείμενο"
     }
   };
+
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "storage", LANG);
 
   function t(key, vars) {
     var p = STRINGS[LANG] || {};
@@ -405,7 +413,7 @@
 
   // ===== SEEDS (bilingual until first rename) =====
   var SEEDS = [
-    { id: "seed-sp-home", type: "space", bi: { en: "Home", el: "Σπίτι" }, pos: 0 }
+    { id: "seed-sp-home", type: "space", bi: C.seedPair("seed.home"), pos: 0 }
   ];
 
   function uid() {
@@ -485,7 +493,7 @@
     try { localStorage.setItem(DATA_KEY, JSON.stringify(db)); }
     catch (e) {
       console.error("[orOS] storage: persist failed:", e);
-      if (!persistWarned) { persistWarned = true; notifyTransient("⚠ " + (LANG === "el" ? "Ο χώρος του browser γέμισε" : "Browser storage is full")); }
+      if (!persistWarned) { persistWarned = true; notifyTransient("⚠ " + t("err.full")); }
     }
   }
 
@@ -2384,9 +2392,9 @@
       }).catch(function () { return false; });
   }
   var recFile = RP && SPK && window.OrosBundle ? RP.ui(SPK.DESC, {
-    lang: function () { return LANG; },
+    lang: function () { return LANG === "el" ? "el" : "en"; },
     get: function () { return JSON.parse(JSON.stringify(db)); },
-    title: function () { return LANG === "el" ? "Αποθήκη" : "Storage"; },
+    title: function () { return t("pkg.title"); },
     // media/: every photo and receipt the live rows name, read from the
     // orOS disk; state.phs / state.rcs = { "<file name>": "<media key>" }
     // go into content.json

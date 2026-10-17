@@ -61,6 +61,8 @@
   })();
 
   function appLang() {
+    // orosI18n (../i18n.js): the full language code, a pack language included.
+    if (window.orosI18n) return window.orosI18n.lang();
     try {
       var l = localStorage.getItem("oros-lang") ||
               (window.parent && window.parent.orosLang) || "en";
@@ -315,6 +317,9 @@
       "idx.forget": "Ξέχασέ τα", "idx.forgot": "Η λίστα για την αναζήτηση άδειασε."
     }
   };
+
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "scanpdf", LANG);
+  var LOC = window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB");
 
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;
@@ -1669,7 +1674,7 @@
     else if (o) focusOv(o.id);
   }
   function today() {
-    try { return new Date().toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB"); }
+    try { return new Date().toLocaleDateString(LOC); }
     catch (e) { return new Date().toISOString().slice(0, 10); }
   }
   function focusOv(id) { var n = id && ovNode(id); if (n) n.focus({ preventScroll: true }); }

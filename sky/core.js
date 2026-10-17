@@ -622,6 +622,7 @@
           qua: "Τεταρτημορίδες", lyr: "Λυρίδες", eta: "Ήτα Υδροχοΐδες", sda: "Νότιες Δέλτα Υδροχοΐδες",
           per: "Περσείδες", dra: "Δρακονίδες", ori: "Ωριωνίδες", leo: "Λεοντίδες", gem: "Διδυμίδες", urs: "Αρκτίδες" }
   };
+  if (typeof window !== "undefined" && window.orosI18n) window.orosI18n.table(FEED_TXT, "sky");
   function feedText(lang, key) {
     var T = FEED_TXT[lang] || FEED_TXT.en;
     return T[key] !== undefined ? T[key] : FEED_TXT.en[key];

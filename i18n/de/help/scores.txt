@@ -1,0 +1,64 @@
+# Punktezähler
+Der Punktezettel für Spiele am Tisch: Backgammon, Kartenspiele, Pokerchips oder alles andere, was du in Punkten zählst. Trag die Punkte jeder Runde ein, und der Punktezähler rechnet sie zusammen, zeigt, wer führt, und merkt sich, wer gewinnt.
+
+## Erste Schritte
+Tippe oder klicke auf `Neue Partie`. Wähle ein `Spiel`: ein fertiges (`Backgammon`, `Prefa`, `Xeri`, `Biriba`, `Poker (Chips)`, `Freie Wertung`) oder ein eigenes unter `Meine`. Dann stell ein:
+- `Name` der Partie.
+- `Spieler oder Teams`: 2 bis 8. Namen, die du schon benutzt hast, werden vorgeschlagen, jeder mit seiner eigenen Farbe.
+- `Ziel (0 = kein Ziel)`: die Punktzahl, die gewinnt, zum Beispiel 5 bei Backgammon oder 51 bei Xeri.
+- `Niedrigste Summe gewinnt`, für Spiele, bei denen weniger Punkte besser sind.
+- `Schnelltasten (bis zu 4, z. B. 1, 5, 10)`: Tasten, die einen festen Betrag zu den Punkten eines Spielers addieren.
+
+Drück `Starten`, um den Punktezettel zu öffnen.
+
+## Eine Partie zählen
+### Runden hinzufügen
+Unter dem Zettel gibt es für jeden Spieler ein Feld. Tipp die Punkte ein (negative Zahlen gehen auch; die Taste ± dreht das Vorzeichen um) oder nutze die Schnelltasten, und drück dann `Runde hinzufügen`. [[Enter]] springt zum Feld des nächsten Spielers, und im letzten fügt es die Runde hinzu.
+
+Die Zeile `Summe` zeigt jeden Stand; der Führende ist hervorgehoben, und mit einem Ziel siehst du, wie viele Punkte jedem Spieler noch fehlen (`noch N`).
+
+### Eine Runde korrigieren
+Tippe oder klicke im Zettel auf eine Runde, um ihre Punkte zu ändern oder sie zu `Löschen`. Eine gelöschte Runde holst du ein paar Sekunden lang mit `Rückgängig` zurück.
+
+### Beenden
+Erreicht jemand das Ziel, erscheint `Wir haben einen Sieger`: Wähle `Partie beenden` oder `Weiterspielen`. Ohne Ziel nimm `Partie beenden` im Menü `Partie-Optionen`. Im selben Menü gibt es `Partie bearbeiten` (Name, Spielernamen, Ziel und „Niedrigste gewinnt“; die Zahl der Spieler bleibt fest), `Partie wieder öffnen`, `CSV exportieren` und `Partie löschen` (mit `Rückgängig`).
+
+### Rundentimer
+Die Taste `Rundentimer` zeigt für jede Runde einen Countdown, von 15 Sekunden bis 10 Minuten. Drück auf Start; wenn die Zeit um ist, piept es und auf Handys, die das können, vibriert es. Anfangs ist er aus.
+
+## Vorlagen, Verlauf und Statistik
+Hake beim Start einer Partie `Als meine Vorlage speichern` an, um ihre Einstellungen zu behalten. Behältst du den Namen eines fertigen Spiels, ersetzt deine Version es; mit einem anderen Namen wird es eine eigene Vorlage unter `Meine`, die du dort auch löschen kannst.
+
+`Laufend` listet die laufenden Partien, `Verlauf` die beendeten, und `Statistik` zeigt für jeden Spieler, wie viele Partien er `Gespielt` hat, seine `Siege` und `Sieg-%`, für `Alle Spiele` oder ein Spiel. In der Statistik kannst du auch einen Namen aus den Vorschlägen entfernen.
+
+## Synchronisierung und Sicherung
+Partien, Runden, deine Vorlagen und Spielernamen werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. Der offene Tab, eine angefangene, noch nicht hinzugefügte Runde und der Rundentimer bleiben auf diesem Gerät.
+
+`CSV exportieren` speichert eine Partie (aus ihrem Menü) oder deinen ganzen Verlauf (aus `Verlauf`) als Tabellendatei. Die orOS-[Sicherung](help:t/backup) behält alles.
+
+## Eine orOS-Datei speichern und öffnen
+Im `Verlauf` speichert `orOS-Datei (.orosscores)` alle Partien (laufende und beendete, mit allen Runden), deine eigenen Vorlagen und die Spielernamen als eine `.orosscores`-Datei, zum Beispiel, um sie ohne Synchronisierung auf ein anderes Gerät zu bringen oder eine Kopie aufzubewahren. Die Datei ist ein einfaches ZIP: Entpackt enthält sie die Daten als `content.json` plus `preview/history.csv` (dasselbe wie `CSV exportieren`) und `preview/rounds.csv` (jede Runde jeder Partie) für andere Programme. Sie ist nicht verschlüsselt, bewahre sie also sicher auf.
+
+`orOS-Datei öffnen…` (oder `Entpackter orOS-Ordner…`, oder „Öffnen mit“ orOS am Computer) zeigt, wie viele Datensätze neu und wie viele schon hier sind; dann fügt `Hinzufügen` nur die neuen hinzu, mit ihren eigenen IDs: Dieselbe Datei erneut zu öffnen, fügt nichts hinzu. Eine Partie, die schon hier ist, bleibt, wie sie ist, und eine, die du hier gelöscht hast, bleibt gelöscht; eine Datei löscht nie etwas. Hake `Mit neueren Versionen aktualisieren` an, damit Datensätze, die in der Datei später geändert wurden, deine Kopie ersetzen. Ein Spieler, dessen Namen du schon hast, wird nicht doppelt hinzugefügt. `Rückgängig` in der Meldung entfernt, was hinzugefügt wurde.
+
+## Aus BG Stats importieren
+`Importieren` (im `Verlauf`) liest deine Partien aus BG Stats. Exportiere in BG Stats eine Sicherung oder deine Partien (unter Einstellungen, Backup oder Export) als `.bgsplay`- oder `.json`-Datei und wähle sie dann hier; ein `.zip` mit dieser Datei darin geht auch.
+
+Zuerst siehst du eine Vorschau: wie viele Partien neu sind, welchen Zeitraum sie abdecken, wie viele Spieler neu sind und was ausgelassen wird. Jede Partie wird eine beendete Partie mit dem Namen des Spiels und einer Runde mit den Endständen. Hat eine Partie keine Punkte, bekommen die Sieger 1 Punkt und alle anderen 0, damit die `Statistik` die Siege trotzdem zählt. Spiele, bei denen die niedrigste Punktzahl gewinnt, bleiben so.
+
+- Spieler werden über den Namen den vorhandenen zugeordnet (Groß- und Kleinschreibung egal); neue Namen werden Vorschläge.
+- Partien mit nur einem Spieler oder mehr als 8 und Partien, die in BG Stats als ignoriert markiert sind, werden ausgelassen. Orte, Kommentare, Dauer und Teams werden nicht übernommen.
+- Importierst du dieselbe Datei noch einmal, kommen nur Partien dazu, die du noch nicht hast; nichts, was du schon hast, ändert sich.
+- Direkt nach dem Import nimmt `Rückgängig` alles zurück, auf jedem synchronisierten Gerät.
+
+## Tastenkürzel
+- [[Enter]] in einem Punktefeld springt zum nächsten Spieler und fügt dann die Runde hinzu.
+- [[Esc]] in einer Partie geht zurück zur Liste.
+- Die Pfeiltasten links und rechts wechseln zwischen den Tabs `Laufend`, `Verlauf` und `Statistik`.
+
+## Tipps
+- Nimm Teams für Partnerspiele: Jedes Team ist ein „Spieler“ auf dem Zettel.
+
+## Grenzen
+- Punkte sind ganze Zahlen.
+- Bis zu 500 Runden pro Partie und 40 Vorlagen.

@@ -25,7 +25,7 @@
   function longDay(ymd) {
     var p = ymd.split("-");
     try {
-      return new Date(+p[0], +p[1] - 1, +p[2], 12).toLocaleDateString(LIB.LANG === "el" ? "el-GR" : "en-GB", { weekday: "short", day: "numeric", month: "short" });
+      return new Date(+p[0], +p[1] - 1, +p[2], 12).toLocaleDateString(LIB.loc(), { weekday: "short", day: "numeric", month: "short" });
     } catch (e) { return ymd; }
   }
 

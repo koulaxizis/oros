@@ -680,10 +680,50 @@
       .sort(function (a, b) { return pos[b.id].m - pos[a.id].m || cmpStr(a.id, b.id); })
       .slice(0, n || 3);
   }
-  var COLOR_NAMES = {
-    en: ["Yellow", "Green", "Blue", "Pink"],
-    el: ["Κίτρινο", "Πράσινο", "Μπλε", "Ροζ"]
+  // Words this file writes (exports, the Today line, the Assistant
+  // question). Other languages come from the "library" pack through
+  // orosI18n.table (../i18n.js) when it is loaded; English otherwise.
+  var WORDS = {
+    en: {
+      "color.0": "Yellow", "color.1": "Green", "color.2": "Blue", "color.3": "Pink",
+      "md.bookmark": "Bookmark", "md.author": "Author: {a}", "md.counts": "Highlights: {h} · Notes: {n}",
+      "md.exported": "Exported: {d} from orOS Library", "md.none": "No highlights or notes.",
+      "md.more": "… and {n} more: Library's “Export notes” has them all.",
+      "q.open": "“", "q.close": "”",
+      "today.reading": "Reading “{t}” · {p}%", "today.min": "{m} min today", "today.streak": "{n} days in a row",
+      "ask.passage": "In the book “{t}”{by}, explain this passage to me: what it means and its context. Don't reveal anything from later in the book.",
+      "ask.word": "In the book “{t}”{by}, what does “{w}” mean in this sentence?",
+      "ask.book": "Tell me about the book “{t}”{by}{y}: what it is about, its themes and its background. I've read {p}% of it, so no spoilers beyond that.",
+      "ask.by": " by {a}"
+    },
+    el: {
+      "color.0": "Κίτρινο", "color.1": "Πράσινο", "color.2": "Μπλε", "color.3": "Ροζ",
+      "md.bookmark": "Σελιδοδείκτης", "md.author": "Συγγραφέας: {a}", "md.counts": "Υπογραμμίσεις: {h} · Σημειώσεις: {n}",
+      "md.exported": "Εξαγωγή: {d} από τη Βιβλιοθήκη του orOS", "md.none": "Δεν υπάρχουν σημειώσεις.",
+      "md.more": "… και {n} ακόμη: η «Εξαγωγή σημειώσεων» της Βιβλιοθήκης τα έχει όλα.",
+      "q.open": "«", "q.close": "»",
+      "today.reading": "Διαβάζεις «{t}» · {p}%", "today.min": "{m} λεπ. σήμερα", "today.streak": "{n} μέρες στη σειρά",
+      "ask.passage": "Στο βιβλίο «{t}»{by}, εξήγησέ μου αυτό το απόσπασμα: τι σημαίνει και ποιο είναι το πλαίσιό του. Μη μου αποκαλύψεις τίποτα από τη συνέχεια του βιβλίου.",
+      "ask.word": "Στο βιβλίο «{t}»{by}, τι σημαίνει «{w}» σε αυτή την πρόταση;",
+      "ask.book": "Πες μου για το βιβλίο «{t}»{by}: τι πραγματεύεται, τα θέματά του και το πλαίσιό του. Έχω διαβάσει το {p}%, οπότε χωρίς αποκαλύψεις πέρα από αυτό.",
+      "ask.by": " ({a})"
+    }
   };
+  // The word table for a language code ("en", "el", "de", …).
+  function words(lang) {
+    lang = String(lang || "en");
+    if (!WORDS[lang]) {
+      try {
+        if (typeof window !== "undefined" && window.orosI18n) window.orosI18n.table(WORDS, "library", lang);
+      } catch (e) {}
+    }
+    return WORDS[lang] || WORDS.en;
+  }
+  function fill(s, params) {
+    Object.keys(params).forEach(function (k) { s = s.split("{" + k + "}").join(String(params[k])); });
+    return s;
+  }
+  function colorName(c, lang) { return words(lang)["color." + (c || 0)] || ""; }
   // Markdown of a book's highlights, notes and bookmarks, in book order:
   // a "## section" heading when the chapter changes, each highlight as a
   // block quote with its colour (and where it is, when known), the note
@@ -691,7 +731,7 @@
   // how many, the export date), as Readwise / KOReader exports do.
   function mdParts(book, marks, lang, labels) {
     labels = labels || {};
-    var el = lang === "el";
+    var W = words(lang);
     var hl = sortMarks(marks.filter(function (k) { return k.b === book.id; }));
     var lastSec = null, blocks = [];
     hl.forEach(function (k) {
@@ -700,9 +740,9 @@
       if (sec && sec !== lastSec) { lines.push("", "## " + mdLine(sec)); lastSec = sec; }
       var where = typeof k.pct === "number" && k.pct > 0 ? " · " + Math.floor(k.pct / 10) + "%" : "";
       if (k.k === "bm") {
-        lines.push("", (el ? "🔖 Σελιδοδείκτης" : "🔖 Bookmark") + (k.q ? ": " + squash(k.q).slice(0, 120) : "") + where);
+        lines.push("", ("🔖 " + W["md.bookmark"]) + (k.q ? ": " + squash(k.q).slice(0, 120) : "") + where);
       } else {
-        var name = (COLOR_NAMES[el ? "el" : "en"][k.c || 0] || "");
+        var name = colorName(k.c, lang);
         lines.push("", "> " + squash(k.q || "").replace(/\n/g, " "), "", "*" + name + where + "*");
       }
       if (k.n) lines.push("", k.n.trim());
@@ -712,7 +752,7 @@
   }
   function mdLine(s) { return String(s || "").replace(/\s+/g, " ").trim(); }
   function mdHead(book, blocks, lang, opts, withTitle) {
-    var el = lang === "el", out = withTitle ? ["# " + mdLine(book.title || "?")] : [];
+    var W = words(lang), out = withTitle ? ["# " + mdLine(book.title || "?")] : [];
     if (!(opts && opts.date)) {
       if (book.by) out.push("", "*" + mdLine(book.by) + "*");
       return out;
@@ -720,16 +760,16 @@
     var nh = 0, nn = 0;
     blocks.forEach(function (x) { if (x.hl) nh++; if (x.note) nn++; });
     var meta = [];
-    if (book.by) meta.push((el ? "- Συγγραφέας: " : "- Author: ") + mdLine(book.by));
-    meta.push((el ? "- Υπογραμμίσεις: " : "- Highlights: ") + nh + (el ? " · Σημειώσεις: " : " · Notes: ") + nn);
-    meta.push((el ? "- Εξαγωγή: " : "- Exported: ") + opts.date + (el ? " από τη Βιβλιοθήκη του orOS" : " from orOS Library"));
+    if (book.by) meta.push("- " + fill(W["md.author"], { a: mdLine(book.by) }));
+    meta.push("- " + fill(W["md.counts"], { h: nh, n: nn }));
+    meta.push("- " + fill(W["md.exported"], { d: opts.date }));
     if (out.length) out.push("");
     return out.concat(meta);
   }
   function exportMarkdown(book, marks, lang, labels, opts) {
     var blocks = mdParts(book, marks, lang, labels);
     var out = mdHead(book, blocks, lang, opts, true);
-    if (!blocks.length) out.push("", lang === "el" ? "Δεν υπάρχουν σημειώσεις." : "No highlights or notes.");
+    if (!blocks.length) out.push("", words(lang)["md.none"]);
     blocks.forEach(function (x) { out = out.concat(x.lines); });
     return out.join("\n") + "\n";
   }
@@ -739,7 +779,7 @@
   // fit is counted in the last line. → { text, left }
   function notesMarkdown(book, marks, lang, opts) {
     opts = opts || {};
-    var max = opts.max || 20000, el = lang === "el";
+    var max = opts.max || 20000;
     var blocks = mdParts(book, marks, lang, opts.labels);
     var out = mdHead(book, blocks, lang, opts, false);
     var size = out.join("\n").length, left = 0;
@@ -750,8 +790,7 @@
       out = out.concat(x.lines);
       size += add;
     });
-    if (left) out.push("", el ? "… και " + left + " ακόμη: η «Εξαγωγή σημειώσεων» της Βιβλιοθήκης τα έχει όλα."
-      : "… and " + left + " more: Library's “Export notes” has them all.");
+    if (left) out.push("", fill(words(lang)["md.more"], { n: left }));
     return { text: out.join("\n").replace(/^\n+/, "") + "\n", left: left };
   }
   // The same as plain text for a Notes page (Notes takes plain text,
@@ -760,7 +799,7 @@
   // fit is counted in the last line. → { text, left }
   function notesPlain(book, marks, lang, max) {
     max = max || 20000;
-    var el = lang === "el";
+    var W = words(lang);
     var out = book.by ? [book.by] : [];
     var list = sortMarks(marks.filter(function (k) { return k.b === book.id && (k.k === "hl" || k.n); }));
     var lastSec = null, size = out.join("\n").length, left = 0;
@@ -770,7 +809,7 @@
       var sec = k.lbl || "";
       if (sec && sec !== lastSec) lines.push("", sec);
       lines.push("", k.k === "bm" ? "🔖 " + squash(k.q || "").trim().slice(0, 120)
-        : "• " + (el ? "«" : "“") + squash(k.q || "").trim() + (el ? "»" : "”"));
+        : "• " + W["q.open"] + squash(k.q || "").trim() + W["q.close"]);
       if (k.n) k.n.trim().split("\n").forEach(function (l) { lines.push("  " + l); });
       var add = lines.join("\n").length + 1;
       if (size + add > max - 120) { left = 1; return; }
@@ -778,8 +817,7 @@
       size += add;
       if (sec) lastSec = sec;
     });
-    if (left) out.push("", el ? "… και " + left + " ακόμη: η «Εξαγωγή σημειώσεων» της Βιβλιοθήκης τα έχει όλα."
-      : "… and " + left + " more: Library's “Export notes” has them all.");
+    if (left) out.push("", fill(words(lang)["md.more"], { n: left }));
     return { text: out.join("\n").replace(/^\n+/, ""), left: left };
   }
   function estPages(chars) { return Math.max(1, Math.round((chars || 0) / 1500)); }
@@ -989,21 +1027,17 @@
   // The book you're reading (opened in the last 14 days, not finished)
   // with its progress, today's reading time and the streak. → { book,
   // title } or null.
-  var TODAY_WORDS = {
-    en: { reading: "Reading “{t}” · {p}%", today: "{m} min today", streak: "{n} days in a row" },
-    el: { reading: "Διαβάζεις «{t}» · {p}%", today: "{m} λεπ. σήμερα", streak: "{n} μέρες στη σειρά" }
-  };
   function todayLine(state, today, nowMs, lang) {
     var b = continueList(state, 1)[0];
     if (!b) return null;
     var p = state.pos[b.id];
     if (!(nowMs - p.m < 14 * 86400000)) return null;
-    var W = TODAY_WORDS[lang === "el" ? "el" : "en"];
+    var W = words(lang);
     var title = b.title.length > 80 ? b.title.slice(0, 79) + "…" : b.title;
-    var parts = [W.reading.replace("{t}", title).replace("{p}", Math.floor(p.pct / 10))];
+    var parts = [fill(W["today.reading"], { t: title, p: Math.floor(p.pct / 10) })];
     var sum = statsSummary(state.stats, today, 1);
-    if (sum.today >= 60) parts.push(W.today.replace("{m}", Math.round(sum.today / 60)));
-    if (sum.streak >= 2) parts.push(W.streak.replace("{n}", sum.streak));
+    if (sum.today >= 60) parts.push(fill(W["today.min"], { m: Math.round(sum.today / 60) }));
+    if (sum.streak >= 2) parts.push(fill(W["today.streak"], { n: sum.streak }));
     return { book: b.id, title: parts.join(" · ") };
   }
 
@@ -1301,28 +1335,20 @@
   }
   // The question handed to the Assistant (__orosOpenAt("assistant",
   // { ask })), at most 2000 characters; nothing is sent until you do.
-  var ASK_WORDS = {
-    en: { passage: "In the book “{t}”{by}, explain this passage to me: what it means and its context. Don't reveal anything from later in the book.",
-          word: "In the book “{t}”{by}, what does “{w}” mean in this sentence?",
-          book: "Tell me about the book “{t}”{by}{y}: what it is about, its themes and its background. I've read {p}% of it, so no spoilers beyond that." },
-    el: { passage: "Στο βιβλίο «{t}»{by}, εξήγησέ μου αυτό το απόσπασμα: τι σημαίνει και ποιο είναι το πλαίσιό του. Μη μου αποκαλύψεις τίποτα από τη συνέχεια του βιβλίου.",
-          word: "Στο βιβλίο «{t}»{by}, τι σημαίνει «{w}» σε αυτή την πρόταση;",
-          book: "Πες μου για το βιβλίο «{t}»{by}: τι πραγματεύεται, τα θέματά του και το πλαίσιό του. Έχω διαβάσει το {p}%, οπότε χωρίς αποκαλύψεις πέρα από αυτό." }
-  };
   function askText(kind, book, opts, lang) {
     opts = opts || {};
-    var el = lang === "el", W = ASK_WORDS[el ? "el" : "en"];
+    var el = lang === "el", W = words(lang);
     // Greek names can't be put in the genitive here: "(author, year)"
     var by = el ? (book.by || book.year ? " (" + [book.by, kind === "book" ? book.year : ""].filter(Boolean).join(", ") + ")" : "")
-      : book.by ? " by " + book.by : "";
+      : book.by ? fill(W["ask.by"], { a: book.by }) : "";
     var y = !el && book.year ? " (" + book.year + ")" : "";
-    var head = W[kind].replace("{t}", book.title).replace("{by}", by).replace("{y}", y)
+    var head = W["ask." + kind].replace("{t}", book.title).replace("{by}", by).replace("{y}", y)
       .replace("{p}", Math.floor((opts.pct || 0) / 10)).replace("{w}", opts.word || "");
     var quote = squash(opts.quote || "").trim();
     if (!quote) return head.slice(0, 2000);
     var room = 2000 - head.length - 4;
     if (quote.length > room) quote = quote.slice(0, Math.max(0, room - 1)) + "…";
-    return head + "\n\n" + (el ? "«" : "“") + quote + (el ? "»" : "”");
+    return head + "\n\n" + W["q.open"] + quote + W["q.close"];
   }
 
   var api = {
@@ -1338,7 +1364,7 @@
     parseOpf: parseOpf, parseNav: parseNav, parseNcx: parseNcx, cleanText: cleanText,
     viewBooks: viewBooks, continueList: continueList, progressOf: progressOf, exportMarkdown: exportMarkdown, notesMarkdown: notesMarkdown, notesPlain: notesPlain,
     estPages: estPages, estPagesBytes: estPagesBytes, shelfItemOf: shelfItemOf, shelfTarget: shelfTarget,
-    COLOR_NAMES: COLOR_NAMES,
+    colorName: colorName,
     speechParts: speechParts, speechText: speechText, guessLang: guessLang, localVoice: localVoice,
     mergeStats: mergeStats, statsEmpty: statsEmpty, addReading: addReading, statsSummary: statsSummary,
     bookSeconds: bookSeconds, todayLine: todayLine,

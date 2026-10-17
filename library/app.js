@@ -35,12 +35,16 @@
 
   // ---------- i18n ----------
   function appLang() {
+    // orosI18n (../i18n.js): the full language code, a pack language included.
+    if (window.orosI18n) return window.orosI18n.lang();
     try {
       var l = localStorage.getItem("oros-lang") || (window.parent && window.parent.orosLang) || "en";
       return l === "el" ? "el" : "en";
     } catch (e) { return "en"; }
   }
   LIB.LANG = appLang();
+  if (window.orosI18n) window.orosI18n.table(window.LIB_STRINGS, "library", LIB.LANG);
+  LIB.loc = function () { return window.orosI18n ? window.orosI18n.locale(LIB.LANG) : (LIB.LANG === "el" ? "el-GR" : "en-GB"); };
   document.documentElement.lang = LIB.LANG;     // Greek uppercase labels drop their accents
   LIB.t = function (key, params) {
     var S = window.LIB_STRINGS, p = S[LIB.LANG] || S.en;
@@ -48,15 +52,15 @@
     if (params) Object.keys(params).forEach(function (k) { s = s.split("{" + k + "}").join(String(params[k])); });
     return s;
   };
-  LIB.num = function (n) { try { return Number(n).toLocaleString(LIB.LANG === "el" ? "el-GR" : "en-GB"); } catch (e) { return String(n); } };
+  LIB.num = function (n) { try { return Number(n).toLocaleString(LIB.loc()); } catch (e) { return String(n); } };
   LIB.size = function (b) {
     if (!(b > 0)) return "";
     if (b < 1024 * 1024) return LIB.num(Math.max(1, Math.round(b / 1024))) + " KB";
-    return (Math.round(b / 1024 / 102.4) / 10).toLocaleString(LIB.LANG === "el" ? "el-GR" : "en-GB") + " MB";
+    return (Math.round(b / 1024 / 102.4) / 10).toLocaleString(LIB.loc()) + " MB";
   };
   LIB.date = function (ms) {
     try {
-      return new Date(ms).toLocaleDateString(LIB.LANG === "el" ? "el-GR" : "en-GB", { day: "numeric", month: "short", year: "numeric" });
+      return new Date(ms).toLocaleDateString(LIB.loc(), { day: "numeric", month: "short", year: "numeric" });
     } catch (e) { return ""; }
   };
 
@@ -457,7 +461,7 @@
   var RP = window.OrosRecordPkg || null, LPK = window.OrosLibraryPackage || null;
   var recAdded = null;            // what the last open added: { books, marks, cats, pos } id → m
   var recFile = RP && LPK && window.OrosBundle ? RP.ui(LPK.DESC, {
-    lang: function () { return LIB.LANG; },
+    lang: function () { return LIB.LANG === "el" ? "el" : "en"; },
     get: function () { return sliceGet(); },
     title: function () { return LIB.t("app.name"); },
     set: function (next) {

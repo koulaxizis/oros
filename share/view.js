@@ -25,21 +25,21 @@
       bad: "This link is damaged or incomplete. Ask for it again, or for the file.",
       big: "This is too big to open.",
       crypto: "This browser cannot open locked links.",
-      locked: "This is locked with a password.", pass: "Password", unlock: "Open", wrong: "Wrong password.",
-      add: "Add to my orOS", copy: "Copy text", download: "Download", openFile: "Open a file",
-      addHint: { list: "Opens To-Do with the items ready to add.", note: "Makes a new page in Notes.",
-        contact: "Opens Contacts and asks before saving.", event: "Opens Calendar and asks before saving.",
-        recipe: "Opens the Meal Planner with the recipe ready to save.", links: "Opens Bookmarks.",
-        wiki: "Opens Wiki with the article ready to save.",
-        cal: "Opens Calendar, shows how many events are new and asks before saving." },
-      dl: { contact: "Download (.vcf)", event: "Add to calendar (.ics)", links: "Download (.html)", wiki: "Download (.md)",
-        cal: "Add to calendar (.ics)" },
+      lockedMsg: "This is locked with a password.", pass: "Password", unlock: "Open", wrong: "Wrong password.",
+      add: "Add to my orOS", copyText: "Copy text", download: "Download", openFile: "Open a file",
+      "addHint.list": "Opens To-Do with the items ready to add.", "addHint.note": "Makes a new page in Notes.",
+      "addHint.contact": "Opens Contacts and asks before saving.", "addHint.event": "Opens Calendar and asks before saving.",
+      "addHint.recipe": "Opens the Meal Planner with the recipe ready to save.", "addHint.links": "Opens Bookmarks.",
+      "addHint.wiki": "Opens Wiki with the article ready to save.",
+      "addHint.cal": "Opens Calendar, shows how many events are new and asks before saving.",
+      "dl.contact": "Download (.vcf)", "dl.event": "Add to calendar (.ics)", "dl.links": "Download (.html)", "dl.wiki": "Download (.md)",
+      "dl.cal": "Add to calendar (.ics)",
       calMonth: "Month", calList: "List", calPrev: "Previous month", calNext: "Next month",
       calNoneDay: "Nothing on this day.", calNoneMonth: "Nothing this month.",
       calZone: "Times are in your time zone ({z}).", calAllDay: "all day",
       alHint: "Tap a photo to see it large and save it.", alSave: "Save photo", alClose: "Close",
       alPrev: "Previous photo", alNext: "Next photo", alOf: "{i} of {n}", alBad: "{n} photos could not be shown.",
-      copied: "Copied", copyFail: "Could not copy",
+      copiedShort: "Copied", copyFailShort: "Could not copy",
       tickHint: "Ticks here are only for you and are not saved.",
       phone: "Phone", email: "Email", address: "Address", web: "Website", im: "Chat",
       noFile: "No orOS link in that file.",
@@ -50,7 +50,7 @@
       slHint: "Nothing is booked until the sender gets your answer.",
       gone: "This link has expired or the sender took it back.",
       net: "Could not reach the orOS server. Check your connection and try again.", retry: "Try again",
-      until: "Available until {d}",
+      availUntil: "Available until {d}", refs: "References", docTitle: "orOS · Shared with you",
       privRelay: "This came encrypted from the orOS server and was opened here with the key in the link. The server cannot see what is inside."
     },
     el: {
@@ -62,21 +62,21 @@
       bad: "Ο σύνδεσμος είναι χαλασμένος ή κομμένος. Ζήτα τον ξανά ή ζήτα το αρχείο.",
       big: "Είναι πολύ μεγάλο για να ανοίξει.",
       crypto: "Αυτός ο browser δεν ανοίγει κλειδωμένους συνδέσμους.",
-      locked: "Είναι κλειδωμένο με κωδικό.", pass: "Κωδικός", unlock: "Άνοιγμα", wrong: "Λάθος κωδικός.",
-      add: "Πρόσθεσέ το στο orOS μου", copy: "Αντιγραφή κειμένου", download: "Λήψη", openFile: "Άνοιγμα αρχείου",
-      addHint: { list: "Ανοίγει το To-Do με τα είδη έτοιμα για προσθήκη.", note: "Φτιάχνει νέα σελίδα στις Σημειώσεις.",
-        contact: "Ανοίγει τις Επαφές και ρωτά πριν αποθηκεύσει.", event: "Ανοίγει το Ημερολόγιο και ρωτά πριν αποθηκεύσει.",
-        recipe: "Ανοίγει το Πλάνο γευμάτων με τη συνταγή έτοιμη για αποθήκευση.", links: "Ανοίγει τους Σελιδοδείκτες.",
-        wiki: "Ανοίγει το Wiki με το άρθρο έτοιμο για αποθήκευση.",
-        cal: "Ανοίγει το Ημερολόγιο, δείχνει πόσα γεγονότα είναι καινούργια και ρωτά πριν αποθηκεύσει." },
-      dl: { contact: "Λήψη (.vcf)", event: "Προσθήκη σε ημερολόγιο (.ics)", links: "Λήψη (.html)", wiki: "Λήψη (.md)",
-        cal: "Προσθήκη σε ημερολόγιο (.ics)" },
+      lockedMsg: "Είναι κλειδωμένο με κωδικό.", pass: "Κωδικός", unlock: "Άνοιγμα", wrong: "Λάθος κωδικός.",
+      add: "Πρόσθεσέ το στο orOS μου", copyText: "Αντιγραφή κειμένου", download: "Λήψη", openFile: "Άνοιγμα αρχείου",
+      "addHint.list": "Ανοίγει το To-Do με τα είδη έτοιμα για προσθήκη.", "addHint.note": "Φτιάχνει νέα σελίδα στις Σημειώσεις.",
+      "addHint.contact": "Ανοίγει τις Επαφές και ρωτά πριν αποθηκεύσει.", "addHint.event": "Ανοίγει το Ημερολόγιο και ρωτά πριν αποθηκεύσει.",
+      "addHint.recipe": "Ανοίγει το Πλάνο γευμάτων με τη συνταγή έτοιμη για αποθήκευση.", "addHint.links": "Ανοίγει τους Σελιδοδείκτες.",
+      "addHint.wiki": "Ανοίγει το Wiki με το άρθρο έτοιμο για αποθήκευση.",
+      "addHint.cal": "Ανοίγει το Ημερολόγιο, δείχνει πόσα γεγονότα είναι καινούργια και ρωτά πριν αποθηκεύσει.",
+      "dl.contact": "Λήψη (.vcf)", "dl.event": "Προσθήκη σε ημερολόγιο (.ics)", "dl.links": "Λήψη (.html)", "dl.wiki": "Λήψη (.md)",
+      "dl.cal": "Προσθήκη σε ημερολόγιο (.ics)",
       calMonth: "Μήνας", calList: "Λίστα", calPrev: "Προηγούμενος μήνας", calNext: "Επόμενος μήνας",
       calNoneDay: "Τίποτα αυτή τη μέρα.", calNoneMonth: "Τίποτα αυτόν τον μήνα.",
       calZone: "Οι ώρες είναι στη ζώνη ώρας σου ({z}).", calAllDay: "όλη μέρα",
       alHint: "Πάτα μια φωτογραφία για να τη δεις μεγάλη και να την αποθηκεύσεις.", alSave: "Αποθήκευση φωτογραφίας", alClose: "Κλείσιμο",
       alPrev: "Προηγούμενη φωτογραφία", alNext: "Επόμενη φωτογραφία", alOf: "{i} από {n}", alBad: "{n} φωτογραφίες δεν εμφανίστηκαν.",
-      copied: "Αντιγράφηκε", copyFail: "Η αντιγραφή απέτυχε",
+      copiedShort: "Αντιγράφηκε", copyFailShort: "Η αντιγραφή απέτυχε",
       tickHint: "Τα τικ εδώ είναι μόνο για σένα και δεν αποθηκεύονται.",
       phone: "Τηλέφωνο", email: "Email", address: "Διεύθυνση", web: "Ιστότοπος", im: "Chat",
       noFile: "Δεν βρέθηκε σύνδεσμος orOS σε αυτό το αρχείο.",
@@ -87,17 +87,29 @@
       slHint: "Τίποτα δεν κλείνεται μέχρι ο αποστολέας να πάρει την απάντησή σου.",
       gone: "Ο σύνδεσμος έληξε ή ο αποστολέας τον ανακάλεσε.",
       net: "Δεν ήταν δυνατή η σύνδεση με τον server του orOS. Έλεγξε τη σύνδεσή σου και δοκίμασε ξανά.", retry: "Δοκίμασε ξανά",
-      until: "Διαθέσιμο έως {d}",
+      availUntil: "Διαθέσιμο έως {d}", refs: "Παραπομπές", docTitle: "orOS · Σου το έστειλαν",
       privRelay: "Ήρθε κρυπτογραφημένο από τον server του orOS και άνοιξε εδώ με το κλειδί του συνδέσμου. Ο server δεν βλέπει τι έχει μέσα."
     }
   };
+  // The orOS language of this browser (a pack language too, through
+  // ../i18n.js and its "share" pack); without one, Greek for a Greek
+  // browser, else English.
   var LANG = (function () {
+    var I = window.orosI18n;
+    if (I) {
+      var c = I.lang();
+      if (c !== "en") return c;
+      try { if (localStorage.getItem("oros-lang") === "en") return "en"; } catch (e) {}
+      if (/[?&]lang=en(?:&|$)/.test(location.search)) return "en";
+    }
     try {
       var l = localStorage.getItem("oros-lang");
       if (l === "el" || l === "en") return l;
     } catch (e) {}
     return /^el\b/i.test(navigator.language || "") ? "el" : "en";
   })();
+  if (window.orosI18n) window.orosI18n.table(STR, "share", LANG);
+  var LOC = window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB");
   function t(k) { return (STR[LANG] || STR.en)[k]; }
 
   // ---------- Palette ----------
@@ -188,7 +200,7 @@
     var C = window.WikiCore;
     if (!C) return el("p", "pre", x);
     var box = el("div", "wk");
-    box.appendChild(C.render(document, C.parseDoc(x), { refs: LANG === "el" ? "Παραπομπές" : "References" }));
+    box.appendChild(C.render(document, C.parseDoc(x), { refs: t("refs") }));
     [].slice.call(box.querySelectorAll("a")).forEach(function (a) {
       if (a.classList.contains("xl")) return;
       var sp = el("span", a.className, a.textContent);
@@ -299,7 +311,7 @@
   function dayHead(ymd) {
     var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ymd);
     try {
-      return new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB",
+      return new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString(LOC,
         { weekday: "long", day: "numeric", month: "long" });
     } catch (e) { return ymd; }
   }
@@ -341,7 +353,7 @@
     }
     c.appendChild(pick);
     var acts = el("div", "acts");
-    acts.appendChild(btn(t("copy"), "", function () { copyText(K.text(env, LANG, helpers)); }));
+    acts.appendChild(btn(t("copyText"), "", function () { copyText(K.text(env, LANG, helpers)); }));
     c.appendChild(acts);
   }
   function picked(c, env, x, pick) {
@@ -491,7 +503,7 @@
   }
   function renderCal(c, env) {
     var d = env.d, O = window.OrosCalOccur, S = K.strings(LANG);
-    var loc = LANG === "el" ? "el-GR" : "en-GB";
+    var loc = LOC;
     var meta = [d.ev.length === 1 ? S.cal1 : S.calN.replace("{n}", d.ev.length), K.calRange(d, LANG)].filter(Boolean).join(" · ");
     c.appendChild(el("p", "meta", meta));
     if (!O) return;
@@ -675,20 +687,20 @@
   function actions(c, env) {
     var acts = el("div", "acts");
     acts.appendChild(btn(t("add"), "prim", function () { addToOros(env); }));
-    acts.appendChild(btn(t("copy"), "", function () { copyText(K.text(env, LANG, helpers)); }));
+    acts.appendChild(btn(t("copyText"), "", function () { copyText(K.text(env, LANG, helpers)); }));
     var f = K.file(env, LANG);
-    acts.appendChild(btn((t("dl")[env.k]) || t("download"), "", function () { download(f); }));
+    acts.appendChild(btn(t("dl." + env.k) || t("download"), "", function () { download(f); }));
     c.appendChild(acts);
-    c.appendChild(el("p", "hint", t("addHint")[env.k]));
+    c.appendChild(el("p", "hint", t("addHint." + env.k)));
   }
   function addToOros(env) {
     try {
       sessionStorage.setItem("oros-share-in", JSON.stringify({ at: Date.now(), k: env.k, d: env.d }));
-    } catch (e) { toast(t("copyFail")); return; }
+    } catch (e) { toast(t("copyFailShort")); return; }
     location.href = "../?share-in=1";
   }
   function copyText(s) {
-    var ok = function () { toast(t("copied")); }, bad = function () { toast(t("copyFail")); };
+    var ok = function () { toast(t("copiedShort")); }, bad = function () { toast(t("copyFailShort")); };
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(s).then(ok, bad);
       return;
@@ -744,13 +756,13 @@
       if (!env) { stateMsg("bad", true); return; }
       render(env, r.bin || null);
       var d = new Date(r.x);
-      $("card").appendChild(el("p", "hint", t("until").replace("{d}", d.toLocaleString(LANG === "el" ? "el-GR" : "en-GB",
+      $("card").appendChild(el("p", "hint", t("availUntil").replace("{d}", d.toLocaleString(LOC,
         { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }))));
     });
   }
   function askPass(code, wrong) {
     var c = card();
-    c.appendChild(el("h1", "", t("locked")));
+    c.appendChild(el("h1", "", t("lockedMsg")));
     var f = el("form", "pass");
     var inp = el("input");
     inp.type = "password";
@@ -819,7 +831,7 @@
       var v = t(n.getAttribute("data-i18n"));
       if (typeof v === "string") n.textContent = v;
     });
-    if (LANG === "el") document.title = "orOS · Σου το έστειλαν";
+    if (LANG !== "en") document.title = t("docTitle");
   }
 
   inheritPalette();

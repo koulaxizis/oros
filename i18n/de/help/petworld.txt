@@ -1,0 +1,50 @@
+# Tierwelt
+Ein Pixelwald, in dem dein Bildschirm-Haustier lebt, dasselbe Tier wie dein Desktop-Begleiter. Kümmere dich darum, leg einen Garten an, schick es auf Ausflüge, bau ihm ein Nest und spielt zusammen.
+
+## Erste Schritte
+Die Werkzeugleiste zeigt den Namen deines Tiers (antippen oder anklicken zum Umbenennen), wie viele Tage es schon bei dir ist, und einen Schalter, der das Tier auch auf dem Desktop zeigt oder ausblendet. Darunter sind drei Anzeigen: `Futter`, `Laune` und `Energie`; eine Anzeige wird rot, wenn sie niedrig ist.
+
+Tipp oder klick das Tier an, um es zu streicheln, oder tipp auf den Boden, um es zu rufen. Ein schlafendes Tier liegt unter der alten Eiche.
+
+## Pflege und Futter
+- `Füttern`: Trockenfutter ist immer gratis. Sobald du Essen aus dem Garten hast, wählst du, was du gibst: `Karotte` bringt Energie, `Erdbeere` viel Freude, `Pilz` und `Apfel` beides. Jedes Tier hat ein Lieblingsessen.
+- `Kraulen` muntert es auf.
+- `Schlaf` / `Wecken` bringt es ins Bett oder weckt es. Ein ausgeruhtes Tier geht nicht schlafen.
+
+## Garten, Ausflüge und das Nest
+### Garten
+Mit `Garten` (oder durch Antippen eines Beets) kannst du einen Samen aus dem `Rucksack` `Pflanzen`, ihn einmal `Gießen`, damit er ein Viertel schneller wächst, ihn `Ernten`, wenn er reif ist, oder das Beet `Ausgraben`. Karotten brauchen 4 Stunden, Erdbeeren 8, Pilze 12, Sonnenblumen 24 und ein Apfelbaum 72, danach trägt er jeden Tag Früchte. Ernten bringen meist Samen zurück. Du beginnst mit vier Beeten; auf höheren Levels kommen weitere dazu.
+
+### Ausflüge
+`Ausflug` schickt das Tier für 15, 30 oder 60 Minuten echte Zeit auf Erkundung. Es muss wach und nicht zu müde sein. Es bringt Material fürs Nest mit, manchmal Samen oder einen Schatz. Solange es weg ist, kannst du es nicht füttern oder streicheln.
+
+### Nest
+`Nest` (oder Antippen des Platzes unter der Eiche) baut ein Zuhause in fünf Stufen, danach vier Dekos, aus Material von Ausflügen. Ist es fertig, schläft dein Tier darin.
+
+## Spiele
+`Spielen` hat drei Spiele. Das Tier muss wach, zu Hause und nicht ganz ohne Energie sein.
+- `Fang es`: 30 Sekunden fallende Blätter und Eicheln. Tipp oder zieh dorthin, wo das Tier hinlaufen soll.
+- `Verstecken`: Das Tier versteckt sich hinter einem Busch; achte auf seinen Schwanz. Drei falsche Büsche, und es ist vorbei.
+- `Mach mir nach`: Das Tier tanzt Schritte vor (springen, links, rechts, ducken); mach sie nach. Ein Fehler, und es ist vorbei.
+
+`Stopp` oder [[Esc]] beendet ein Spiel vorzeitig.
+
+## Fortschritt und Basar
+Das Level-Feld in der Werkzeugleiste öffnet deinen Fortschritt: Level (1 bis 20), XP, was das nächste Level freischaltet, und 13 Erfolge.
+
+Spiele, Ausflüge und Ernten bringen Eicheln. Gib sie im `Waldbasar` für Samen und Accessoires aus (Schleife, Schal, Zylinder, Brille, Blumenkranz, Glöckchenhalsband). Manches gibt es erst auf höheren Levels. Dein Tier trägt Accessoires auch auf dem Desktop; mit `Anziehen` und `Ausziehen` wechselst du sie.
+
+## Synchronisierung und Sicherung
+Dein Wald wird über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert: Garten, Rucksack, Nest, Ausflüge, Spielrekorde, Fortschritt und Outfit. Das Tier selbst teilst du mit dem Desktop-Begleiter. Wechselt das Tier, fragt Tierwelt, ob du den `Wald behalten` oder `Neu anfangen` willst. Es gibt keinen Import oder Export; die orOS-[Sicherung](help:t/backup) enthält alles.
+
+## Tastenkürzel
+- [[F]] füttert Trockenfutter, [[P]] streichelt, [[S]] schläft oder weckt.
+- [[G]] Garten, [[B]] Rucksack, [[W]] Ausflug, [[N]] Nest, [[Y]] Spielen, [[L]] Fortschritt, [[A]] Basar.
+- Die Pfeiltasten links und rechts lassen das Tier laufen; in Spielen bewegen oder antworten sie.
+
+## Tipps
+- Gieß gleich nach dem Pflanzen: Das geht nur einmal pro Wachstum.
+- Nur der einstündige Ausflug kann einen Schatz bringen.
+
+## Grenzen
+- Tierwelt funktioniert nur in orOS, nicht allein.

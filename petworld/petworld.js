@@ -78,7 +78,9 @@
       return l === "el" ? "el" : "en";
     } catch (e) { return "en"; }
   }
-  var LANG = appLang();
+  // orosI18n (../i18n.js): the full language code, a pack language included.
+  function curLang() { return window.orosI18n ? window.orosI18n.lang() : appLang(); }
+  var LANG = curLang();
 
   var STRINGS = {
     en: {
@@ -93,7 +95,7 @@
       "scene.awake": "{name} in the forest, {when}. Tap {name} to pat, tap the ground to call.",
       "scene.asleep": "{name} sleeps under the old oak, {when}.",
       "when.night": "night", "when.dawn": "dawn", "when.day": "daytime", "when.dusk": "dusk",
-      "say.asleep": ["Zzz...", "Shh... sleeping", "Zzz... five more minutes..."],
+      "say.asleep.1": "Zzz...", "say.asleep.2": "Shh... sleeping", "say.asleep.3": "Zzz... five more minutes...",
       "live.fed": "{name} ate",
       "live.pat": "{name} was patted",
       "live.sleep": "{name} went to sleep",
@@ -161,7 +163,7 @@
       "toast.back": "{name} is back! Found: {list}",
       "toast.backEmpty": "{name} is back!",
       "toast.away": "{name} is on a walk. Back at {time}",
-      "say.back": ["I'm back!", "What a walk!", "Look what I found!"],
+      "say.back.1": "I'm back!", "say.back.2": "What a walk!", "say.back.3": "Look what I found!",
       "scene.away": "The forest, {when}. {name} is out on a walk, back at {time}.",
       "nest.title": "Nest", "nest.stage": "Stage {k} of 5",
       "nest.none": "No nest yet. Gather materials on walks and build it stage by stage.",
@@ -240,7 +242,7 @@
       "scene.awake": "{name} στο δάσος, {when}. Πάτα πάνω του για χάδι ή στο έδαφος για να έρθει.",
       "scene.asleep": "{name} κοιμάται κάτω από τη γέρικη βελανιδιά, {when}.",
       "when.night": "νύχτα", "when.dawn": "χαράματα", "when.day": "μέρα", "when.dusk": "σούρουπο",
-      "say.asleep": ["Zzz...", "Σςς... κοιμάμαι", "Zzz... πέντε λεπτά ακόμα..."],
+      "say.asleep.1": "Zzz...", "say.asleep.2": "Σςς... κοιμάμαι", "say.asleep.3": "Zzz... πέντε λεπτά ακόμα...",
       "live.fed": "{name}: έφαγε",
       "live.pat": "{name}: πήρε χάδια",
       "live.sleep": "{name}: πήγε για ύπνο",
@@ -308,7 +310,7 @@
       "toast.back": "{name}: γύρισε! Βρήκε: {list}",
       "toast.backEmpty": "{name}: γύρισε!",
       "toast.away": "{name}: σε βόλτα. Γυρνά στις {time}",
-      "say.back": ["Γύρισα!", "Τι ωραία βόλτα!", "Δες τι βρήκα!"],
+      "say.back.1": "Γύρισα!", "say.back.2": "Τι ωραία βόλτα!", "say.back.3": "Δες τι βρήκα!",
       "scene.away": "Το δάσος, {when}. {name}: σε βόλτα, γυρνά στις {time}.",
       "nest.title": "Φωλιά", "nest.stage": "Στάδιο {k} από 5",
       "nest.none": "Δεν υπάρχει ακόμα φωλιά. Μάζεψε υλικά στις βόλτες και χτίσ' τη στάδιο στάδιο.",
@@ -377,6 +379,8 @@
     }
   };
 
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "petworld", LANG);
+
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;
     var v = p[key] !== undefined ? p[key] : (STRINGS.en[key] !== undefined ? STRINGS.en[key] : key);
@@ -384,6 +388,12 @@
       Object.keys(params).forEach(function (k) { v = v.split("{" + k + "}").join(String(params[k])); });
     }
     return v;
+  }
+  // A few lines to pick from: "<key>.1" … "<key>.<n>".
+  function lines(key, n) {
+    var out = [];
+    for (var i = 1; i <= n; i++) out.push(t(key + "." + i));
+    return out;
   }
   function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
   function $(id) { return document.getElementById(id); }
@@ -2295,7 +2305,7 @@
   function doPat() {
     var b = bridge();
     if (!b || !snap || awayToast()) return;
-    if (snap.asleep) { say(pick(t("say.asleep"))); return; }
+    if (snap.asleep) { say(pick(lines("say.asleep", 3))); return; }
     try { snap = b.pat(); } catch (e) { return; }
     pet.mode = "happy"; pet.timer = 2200; pet.target = null;
     addHearts();
@@ -2346,7 +2356,7 @@
     if (plot) { gardenDialog(plot.id); return; }
     if (nestAt(x, y)) { nestDialog(); return; }
     if (away) return;
-    if (snap.asleep) { say(pick(t("say.asleep"))); return; }
+    if (snap.asleep) { say(pick(lines("say.asleep", 3))); return; }
     if (pet.mode === "eat" || pet.mode === "happy") return;
     walkTo(x - petWidth() / 2);
   }
@@ -2768,7 +2778,7 @@
     var msg = list ? t("toast.back", { name: snap.name, list: list }) : t("toast.backEmpty", { name: snap.name });
     showToast(msg);
     announce(msg);
-    say(pick(t("say.back")));
+    say(pick(lines("say.back", 3)));
     // older finished walks of THIS device's row fold into its sum
     var dev = deviceId(), folded = foldWalks(nest, dev, Date.now());
     if (folded !== nest) { nest = folded; saveNest(); }
@@ -3385,7 +3395,11 @@
     // The pet changed elsewhere (companion HUD, another device's sync).
     window.addEventListener("storage", function (e) {
       if (e.key === PET_KEY) tick();
-      else if (e.key === "oros-lang") { LANG = appLang(); paintStatic(); tick(); }
+      else if (e.key === "oros-lang") {
+        LANG = curLang();
+        if (window.orosI18n) window.orosI18n.table(STRINGS, "petworld", LANG);
+        paintStatic(); tick();
+      }
     });
     document.addEventListener("visibilitychange", function () {
       if (document.visibilityState === "visible") { tick(); startLoop(); }
