@@ -37,7 +37,7 @@
   var KEY = "oros-links-data";
   var PREFS_KEY = "oros-links-prefs";
   var DB_NAME = "oros-links";
-  var DEFAULT_RELAY = "https://oros-mail-relay.koulaxizis-25b.workers.dev";   // = mail.js
+  var DEFAULT_RELAY = "https://oros-mail-relay.koulaxizis.workers.dev";   // = mail.js
   var TIMEOUT = 30000;
   var TIMEOUT_BY = { tol: 75000 };                // SendInvoices waits for AADE and the PDF
   function timeoutOf(p) { return TIMEOUT_BY[p] || TIMEOUT; }

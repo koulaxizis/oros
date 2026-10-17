@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "2.95.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "2.95.01";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -4807,7 +4807,22 @@
     } catch (e) {}
   }
 
+  // The relay moved to another Cloudflare account (2.9x). A relay
+  // address saved by hand that is the old default goes back to "" (=
+  // orOS's own relay); the newer stamp carries it to the other devices.
+  var OLD_RELAY_RE = /^https:\/\/oros-mail-relay\.koulaxizis-25b\.workers\.dev\/*$/i;
+  function migrateMailRelay() {
+    var d = mailProxySliceGet();
+    var r = d && d.relay;
+    if (!r || typeof r.url !== "string" || !OLD_RELAY_RE.test(r.url.trim())) return false;
+    d.relay = { url: "", m: Math.max(Date.now(), (Number(r.m) || 0) + 1) };
+    mailProxySliceSet(d);
+    if (window.orosSync && typeof window.orosSync.markDirty === "function") window.orosSync.markDirty();
+    return true;
+  }
+
   function registerMailProxySlice() {
+    migrateMailRelay();
     if (window.orosSync) {
       window.orosSync.registerSlice(
         "mail", mailProxySliceGet, mailProxySliceSet,

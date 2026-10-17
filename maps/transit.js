@@ -439,7 +439,7 @@
   // ---------- OASA live arrivals (Athens buses, through the relay) ----------
   // OASA Telematics sends no CORS headers, so the orOS relay asks it
   // (op "oasa"). The relay is the one Mail uses (its own, if set).
-  var DEFAULT_RELAY = "https://oros-mail-relay.koulaxizis-25b.workers.dev";   // = mail.js
+  var DEFAULT_RELAY = "https://oros-mail-relay.koulaxizis.workers.dev";   // = mail.js
   var oasaRoutes = {};             // stop code → { route code: { line, descr } } (this session)
   function relayAddr() {
     try {

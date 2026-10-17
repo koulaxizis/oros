@@ -266,7 +266,7 @@ test("the shell loads out.js at boot and relay.js before send.js; the page loads
   const csp = /http-equiv="Content-Security-Policy" content="([^"]+)"/.exec(page);
   assert.ok(csp);
   assert.match(csp[1], /script-src 'self';/);
-  assert.match(csp[1], /connect-src 'self' https:\/\/oros-mail-relay\.koulaxizis-25b\.workers\.dev;/);
+  assert.match(csp[1], /connect-src 'self' https:\/\/oros-mail-relay\.koulaxizis\.workers\.dev;/);
   assert.doesNotMatch(csp[1], /unsafe/);
   // the page's relay address is the one relay.js uses
   assert.ok(csp[1].includes(R.RELAY));
