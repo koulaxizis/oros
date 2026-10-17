@@ -7,7 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>One-Sentence Diary · orOS</title>
 
-  <link rel="stylesheet" href="diary.css?v=2.89.00">
+  <link rel="stylesheet" href="diary.css?v=2.90.00">
 
 </head>
 <body>
@@ -40,6 +40,8 @@
         <span id="day-rel" class="hint"></span>
         <button type="button" id="today-btn" class="link-btn" data-i18n="btn.today" hidden>Back to today</button>
       </div>
+      <!-- The feelings Mood logged this day (read-only; opens Mood there) -->
+      <button type="button" id="mood-day" class="mood-day" hidden></button>
 
       <div id="late" class="late" hidden>
         <span id="late-lbl" data-i18n="late.q">After midnight. This line is for:</span>
@@ -89,6 +91,8 @@
         <div class="line-foot">
           <span id="long-status" class="hint small" aria-live="polite"></span>
           <span class="spacer"></span>
+          <button type="button" id="long-keep" class="link-btn" data-i18n="draft.keep" hidden>Keep</button>
+          <button type="button" id="long-drop" class="link-btn danger" data-i18n="draft.drop" hidden>Discard</button>
           <button type="button" id="long-del" class="link-btn danger" data-i18n="long.del" hidden>Clear the long entry</button>
         </div>
         <p class="hint small" data-i18n="long.mdhint"></p>
@@ -268,15 +272,15 @@
   <div id="live" class="sr-only" aria-live="polite"></div>
   <div id="toast" role="status"></div>
 
-  <script src="../atelier/zip.js?v=2.89.00"></script>
-  <script src="../importkit.js?v=2.89.00"></script>
-  <script src="core.js?v=2.89.00"></script>
-  <script src="journal.js?v=2.89.00"></script>
-  <script src="import.js?v=2.89.00"></script>
-  <script src="../bundle.js?v=2.89.00"></script>
-  <script src="../recordpkg.js?v=2.89.00"></script>
-  <script src="package.js?v=2.89.00"></script>
-  <script src="diary.js?v=2.89.00"></script>
+  <script src="../atelier/zip.js?v=2.90.00"></script>
+  <script src="../importkit.js?v=2.90.00"></script>
+  <script src="core.js?v=2.90.00"></script>
+  <script src="journal.js?v=2.90.00"></script>
+  <script src="import.js?v=2.90.00"></script>
+  <script src="../bundle.js?v=2.90.00"></script>
+  <script src="../recordpkg.js?v=2.90.00"></script>
+  <script src="package.js?v=2.90.00"></script>
+  <script src="diary.js?v=2.90.00"></script>
 
 </body>
 </html>

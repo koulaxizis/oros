@@ -91,6 +91,9 @@
       "sh.pantry": "I always have it", "sh.remove": "Remove", "sh.from.recipes": "for {list}",
       "sheet.open": "Open in Spreadsheet", "sheet.cap": "Only the first {n} rows fit in one sheet",
       "sheet.weekNone": "Nothing planned this week", "sheet.shopNone": "Nothing to buy this week",
+      "bud.btn": "Add to Budget", "bud.title": "How much did you pay?", "bud.amt": "Amount",
+      "bud.bad": "Type an amount above zero, e.g. 12,50", "bud.note": "Shopping: {n} items",
+      "bud.go": "Continue in Budget", "bud.fail": "Budget couldn't open this", "bud.none": "The list is empty",
       "sheet.date": "Date", "sheet.day": "Day", "sheet.meal": "Meal", "sheet.dish": "Dish", "sheet.serv": "Servings",
       "sheet.item": "Item", "sheet.qty": "Quantity", "sheet.for": "For", "sheet.done": "Bought",
       "aisle.produce": "Fruit & vegetables", "aisle.meat": "Meat", "aisle.fish": "Fish & seafood", "aisle.dairy": "Dairy & eggs",
@@ -220,6 +223,9 @@
       "sh.pantry": "Το έχω πάντα", "sh.remove": "Αφαίρεση", "sh.from.recipes": "για {list}",
       "sheet.open": "Άνοιγμα στο Υπολογιστικό φύλλο", "sheet.cap": "Χωρούν μόνο οι πρώτες {n} γραμμές σε ένα φύλλο",
       "sheet.weekNone": "Δεν υπάρχει τίποτα προγραμματισμένο αυτή την εβδομάδα", "sheet.shopNone": "Τίποτα για ψώνια αυτή την εβδομάδα",
+      "bud.btn": "Στον Προϋπολογισμό", "bud.title": "Πόσα πλήρωσες;", "bud.amt": "Ποσό",
+      "bud.bad": "Γράψε ένα ποσό πάνω από μηδέν, π.χ. 12,50", "bud.note": "Ψώνια: {n} είδη",
+      "bud.go": "Συνέχεια στον Προϋπολογισμό", "bud.fail": "Ο Προϋπολογισμός δεν μπόρεσε να το ανοίξει", "bud.none": "Η λίστα είναι άδεια",
       "sheet.date": "Ημερομηνία", "sheet.day": "Ημέρα", "sheet.meal": "Γεύμα", "sheet.dish": "Φαγητό", "sheet.serv": "Μερίδες",
       "sheet.item": "Είδος", "sheet.qty": "Ποσότητα", "sheet.for": "Για", "sheet.done": "Τα πήρα",
       "aisle.produce": "Φρούτα & λαχανικά", "aisle.meat": "Κρέας", "aisle.fish": "Ψάρια & θαλασσινά", "aisle.dairy": "Γαλακτοκομικά & αυγά",
@@ -1018,6 +1024,50 @@
     if (!rows.length) { showToast(t("sheet.shopNone")); return; }
     openInSheet(t("tab.sh") + " " + view.wk,
       [t("sh.aisle"), t("sheet.item"), t("sheet.qty"), t("sheet.for"), t("sheet.done")], rows);
+  }
+
+  // "Add to Budget" (Bible BR-B1): the list has no prices, so a small
+  // dialog asks what was paid; Budget opens its New expense form
+  // prefilled (Groceries, today) and stores nothing until Save there.
+  // The note counts the ticked items (bought), or all when none is.
+  function budgetBridge() {
+    try {
+      var p = window.parent;
+      return p && p !== window && typeof p.__orosOpenBudgetNew === "function" ? p.__orosOpenBudgetNew : null;
+    } catch (e) { return null; }
+  }
+  function shopToBudget() {
+    if (!budgetBridge()) return;
+    var all = shopList().items, got = all.filter(function (it) { return it.done; });
+    var items = got.length ? got : all;
+    if (!items.length) { showToast(t("bud.none")); return; }
+    var dlg = makeDialog("ml-bud");
+    dlg.appendChild(el("div", "dlg-title", t("bud.title")));
+    var form = el("form", "edit-form");
+    form.method = "dialog";
+    var fA = el("input");
+    fA.inputMode = "decimal"; fA.maxLength = 20; fA.autocomplete = "off"; fA.placeholder = "0,00";
+    form.appendChild(labeled(t("bud.amt"), fA));
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("e.cancel"), "", function () { dlg.close(); }));
+    var ok = button(t("bud.go"), "primary", null);
+    ok.type = "submit";
+    acts.appendChild(ok);
+    form.appendChild(acts);
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var a = C.parseAmount(fA.value);
+      if (a === null) { showToast(t("bud.bad")); fA.focus(); return; }
+      var n = t("bud.note", { n: items.length }) + " · " + items.map(function (it) { return it.name; }).join(", ");
+      if (n.length > 500) n = n.slice(0, 499) + "…";
+      var open = budgetBridge(), res = false;
+      dlg.close();
+      try { res = open ? open({ k: "o", a: a, c: "o-groc", d: today(), n: n, src: "meals" }) : false; } catch (e2) {}
+      if (res === false) showToast(t("bud.fail"));
+    });
+    dlg.appendChild(form);
+    showDialog(dlg);
+    fA.focus();
   }
 
   function renderAll() {
@@ -3455,6 +3505,7 @@
     $("sh-share").textContent = t("sh.share");
     $("sh-todo").textContent = t("sh.todo");
     $("sh-sheet").textContent = t("sheet.open");
+    $("sh-bud").textContent = t("bud.btn");
     $("sh-uncheck").textContent = t("sh.uncheck");
     $("sh-pantry").textContent = t("sh.tickedToPantry");
     $("pa-add-in").placeholder = t("pa.add");
@@ -3495,6 +3546,8 @@
     $("sh-todo").addEventListener("click", sendToTodo);
     $("sh-sheet").hidden = !shellOpenAt();
     $("sh-sheet").addEventListener("click", shopToSheet);
+    $("sh-bud").hidden = !budgetBridge();
+    $("sh-bud").addEventListener("click", shopToBudget);
     $("sh-uncheck").addEventListener("click", function () {
       var l = shopList();
       l.items.concat(l.home).forEach(function (it) { if (it.done) setTick(it, false); });

@@ -68,6 +68,7 @@ In [Time](app:time) → `Pomodoro`, pick a project under `Log focus in Timesheet
 
 ## Tips
 - [Calendar](app:calendar) can show your time under the `Work time` chip: one row per project per day, such as "Website · 2:15". Tapping a row opens that day here.
+- `Track time` on an event in [Calendar](app:calendar) starts a timer here named after the event (with the project of the same name, if you have one). If a timer is already running, it keeps running.
 - You don't need a project to start: time without a project is kept, and you can assign it later.
 - If timers were started on two devices at once, both keep running and you can stop each one.
 

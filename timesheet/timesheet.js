@@ -131,7 +131,7 @@
       "imp.tempo": "Project Name → project · Account Customer → client · issue key and summary → task · Work Description → description. A work date without a time is placed from 09:00, one entry after another.",
       "imp.undone": "Import undone",
       "toast.save": "Could not save: storage is full", "toast.started": "Started: {p}",
-      "toast.stopped": "Stopped: {p}, {d}", "toast.started": "Started: {p}", "toast.added": "Added {d}", "toast.deleted": "Entry deleted",
+      "toast.stopped": "Stopped: {p}, {d}", "toast.started": "Started: {p}", "toast.alreadyRunning": "A timer is already running. Stop it first.", "toast.added": "Added {d}", "toast.deleted": "Entry deleted",
       "toast.saved": "Saved", "toast.undo": "Undo", "toast.badTime": "The end must be after the start",
       "toast.badDur": "Could not read that duration", "toast.badMoney": "Could not read that amount",
       "toast.badName": "Give it a name", "toast.overlap": "Saved. It overlaps another entry.",
@@ -230,7 +230,7 @@
       "imp.tempo": "Project Name → έργο · Account Customer → πελάτης · κλειδί και τίτλος θέματος → εργασία · Work Description → περιγραφή. Μια μέρα χωρίς ώρα μπαίνει από τις 09:00, η μία καταγραφή μετά την άλλη.",
       "imp.undone": "Η εισαγωγή αναιρέθηκε",
       "toast.save": "Η αποθήκευση απέτυχε: ο χώρος γέμισε", "toast.started": "Ξεκίνησε: {p}",
-      "toast.stopped": "Σταμάτησε: {p}, {d}", "toast.started": "Ξεκίνησε: {p}", "toast.added": "Προστέθηκε {d}", "toast.deleted": "Η καταγραφή διαγράφηκε",
+      "toast.stopped": "Σταμάτησε: {p}, {d}", "toast.started": "Ξεκίνησε: {p}", "toast.alreadyRunning": "Ήδη μετράει ένα χρονόμετρο. Σταμάτησέ το πρώτα.", "toast.added": "Προστέθηκε {d}", "toast.deleted": "Η καταγραφή διαγράφηκε",
       "toast.saved": "Αποθηκεύτηκε", "toast.undo": "Αναίρεση", "toast.badTime": "Η λήξη πρέπει να είναι μετά την έναρξη",
       "toast.badDur": "Δεν κατάλαβα αυτή τη διάρκεια", "toast.badMoney": "Δεν κατάλαβα αυτό το ποσό",
       "toast.badName": "Δώσε ένα όνομα", "toast.overlap": "Αποθηκεύτηκε. Επικαλύπτεται με άλλη καταγραφή.",
@@ -2320,9 +2320,15 @@
 
   // Universal search deep link (shell __orosOpenAt / __orosTakeTarget):
   // target { entry } | { project } | { client } | { day } (Calendar
-  // feed row, Wave 4: the Timer tab on that day). An entry: the Timer
-  // tab on its day, then its dialog; a project or a client: the
-  // Projects tab, then its dialog. Unknown ids or an open dialog → no-op.
+  // feed row, Wave 4: the Timer tab on that day) | { startTimer: { title,
+  // note? } } (Calendar's "Track time" on an event: the user's own click
+  // there, like pressing Start). An entry: the Timer tab on its day,
+  // then its dialog; a project or a client: the Projects tab, then its
+  // dialog. startTimer: the Timer tab; with no timer running, a new one
+  // starts with the title (≤ 200, " · note" appended) as its description
+  // and the project whose name is the title (case-insensitive, trimmed,
+  // not archived) or none; a running timer is never stopped, only shown
+  // with a toast. Unknown ids or an open dialog → no-op.
   function openSearchTarget(t) {
     // "Open with" an .oroshours file (fileopen.js): { openFile: { token } },
     // the File taken once with window.parent.__orosTakeFile(token)
@@ -2331,6 +2337,7 @@
     // Single app icon shortcuts: start/stop the timer, a new entry.
     if (t.toggle) { window.__orosTimesheetToggle(); return; }
     if (t.newEntry) { setTab("timer"); entryDialog(null, null); return; }
+    if (t.startTimer && typeof t.startTimer === "object") { startFromTarget(t.startTimer); return; }
     if (typeof t.entry === "string") {
       var x = findEntry(t.entry);
       if (!x) return;
@@ -2349,6 +2356,23 @@
       setTab("timer");
       goDay(t.day);
     }
+  }
+  function startFromTarget(st) {
+    var title = C.cleanText(typeof st.title === "string" ? st.title : "", 200);
+    if (!title) return;
+    setTab("timer");
+    if (C.running(data).length) {
+      goDay(todayKey());
+      showToast(t("toast.alreadyRunning"));
+      return;
+    }
+    var note = C.cleanText(typeof st.note === "string" ? st.note : "", C.LIM.desc);
+    var key = title.toLowerCase(), pid = "";
+    C.live(data.projects).forEach(function (p) {
+      if (!pid && !p.arch && String(p.name || "").trim().toLowerCase() === key) pid = p.id;
+    });
+    startTimer(pid, note ? title + " · " + note : title);
+    showToast(t("toast.started", { p: pid ? projLabel(pid) : title }));
   }
   window.__orosOpenAt = openSearchTarget;
   try {

@@ -10,6 +10,7 @@ In `Standard`, tap or click the keys, or type on your keyboard. Enter a number, 
 - `%` on its own divides by 100 (50 % gives 0.5). After an operator it works like a phone calculator: `200 + 10 %` gives 220.
 - `Ans` brings back the last result.
 - Tap or click the big result to copy it.
+- `Send to…` at the top passes the result (with its calculation, right after `=`) to another app, such as Notes or Writer. It shows in `Standard`, `Scientific` and `Programmer`.
 
 ## Memory and extra functions
 - `M+` adds the number on screen to memory, `MR` brings it back and `MC` clears it.
