@@ -1,5 +1,5 @@
 // ============================================================
-// orOS — commands/bar.js (command bar, shell side, v1.0.0)
+// orOS — commands/bar.js (command bar, shell side, v1.1.0)
 // Loaded by shell.js on first use (with commands/core.js and
 // calendar/quickadd.js), never at boot. A small bar in the middle of
 // the screen, over whatever is open (Ctrl+K, Ctrl+Alt+Shift+K):
@@ -7,13 +7,16 @@
 //      10:00 · Dentist → Calendar"); Enter runs it;
 //   2. the apps whose name matches; Enter opens the first;
 //   3. "Ask the Assistant: «…»" when the Assistant is installed.
+// An answer (calc, unit conversion) is a command row whose Enter copies.
+// With the field empty: the last commands run (device-local, newest
+// first); a click puts one back in the field to look at before Enter.
 // Escape or a click outside closes it. The menu search field shows the
 // same command row (shell.js); this bar is the quick way in from an app.
 // Text only through textContent; the line is never run.
 // window.orosCmdBar.open(host, text?)  host = {
 //   lang(), parse(q) → cmd|null, describe(cmd) → {verb, detail},
-//   appName(id), apps(q) → [{ id, name }], run(cmd), openApp(id),
-//   ask: null | function (q) }
+//   appName(id), apps(q) → [{ id, name }], run(cmd, q), openApp(id),
+//   ask: null | function (q), history() → [line], forget() }
 // ============================================================
 (function () {
   "use strict";
@@ -21,10 +24,10 @@
   var STR = {
     en: { label: "Command or search", ph: "Type a command or an app… e.g. dentist tomorrow 10",
           ask: "Ask the Assistant: «{q}»", none: "Nothing found. Try “buy milk” or “spent 12€ coffee”.",
-          close: "Close", apps: "Apps" },
+          close: "Close", apps: "Apps", recent: "Recent commands", forget: "Clear the list" },
     el: { label: "Εντολή ή αναζήτηση", ph: "Γράψε μια εντολή ή εφαρμογή… π.χ. οδοντίατρος αύριο 10",
           ask: "Ρώτα τον Βοηθό: «{q}»", none: "Δεν βρέθηκε τίποτα. Δοκίμασε «γάλα στη λίστα» ή «ξόδεψα 12€ καφές».",
-          close: "Κλείσιμο", apps: "Εφαρμογές" }
+          close: "Κλείσιμο", apps: "Εφαρμογές", recent: "Πρόσφατες εντολές", forget: "Καθαρισμός λίστας" }
   };
 
   var CSS = [
@@ -45,6 +48,9 @@
     "#oros-cmdbar .cb-row.cb-cmd .cb-verb{color:var(--accent)}",
     "#oros-cmdbar .cb-head{margin:6px 10px 2px;font-size:12px;color:var(--text-dim)}",
     "#oros-cmdbar .cb-none{margin:10px;font-size:13px;color:var(--text-dim)}",
+    "#oros-cmdbar .cb-past .cb-verb{font-weight:400;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+    "#oros-cmdbar .cb-forget .cb-verb{font-weight:400;font-size:13px;color:var(--text-dim)}",
+    "#oros-cmdbar .cb-cmd .cb-verb{overflow-wrap:anywhere}",
     "@media (max-width:480px){#oros-cmdbar{padding-top:8px}}"
   ].join("");
 
@@ -124,12 +130,23 @@
       list.textContent = "";
       rows = [];
       var q = input.value.trim();
-      if (!q) { pick(0); return; }
+      if (!q) {
+        var past = host.history ? host.history() : [];
+        if (past.length) {
+          list.appendChild(el("div", "cb-head", L.recent));
+          past.forEach(function (line) {
+            row("cb-past", line, "", "", function () { input.value = line; paint(); input.focus(); });
+          });
+          row("cb-forget", L.forget, "", "", function () { if (host.forget) host.forget(); paint(); input.focus(); });
+        }
+        pick(0);
+        return;
+      }
       var cmd = host.parse(q);
       if (cmd) {
         var d = host.describe(cmd);
         row("cb-cmd", d.verb + (cmd.kind === "open" ? " " + host.appName(cmd.app) : ""), d.detail,
-            cmd.kind === "open" ? "" : "→ " + host.appName(cmd.app), function () { close(); host.run(cmd); });
+            cmd.kind === "open" ? "" : d.hint || "→ " + host.appName(cmd.app), function () { close(); host.run(cmd, q); });
       }
       var apps = host.apps(q).slice(0, 6);
       if (apps.length) {

@@ -121,6 +121,8 @@ class FakeDropbox {
 // is missing, MKCOL, PROPFIND Depth 0/1, COPY, recursive DELETE, and
 // Nextcloud's app-password delete (logged as "revoke").
 const DAV_URL = "https://dav.test/remote.php/dav/files/u";
+const DAV_UPLOADS = "https://dav.test/remote.php/dav/uploads/u";
+const DAV_RELAY = "https://oros-mail-relay.koulaxizis-25b.workers.dev/dav";
 // Bytes as stored; .text for the sync tests, .data for the vault tests.
 class DavFile {
   constructor(data, rev) { this.data = data; this.rev = rev; }
@@ -179,12 +181,38 @@ class FakeWebDAV {
       const method = opts.method || "GET";
       const h = opts.headers || {};
       const u = String(url);
-      const want = "Basic " + Buffer.from(this.user + ":" + this.pass).toString("base64");
+      if (u === DAV_RELAY) {                     // the orOS relay (relay/dav.js), when the user turned it on
+        const target = h["X-Oros-Target"];
+        const inner = Object.assign({}, h);
+        delete inner["X-Oros-Target"];
+        this.log.push({ device, op: "relay", method, target });
+        if (this.relayRefuses) return textResponse(400, this.relayRefuses, { "X-Oros-Error": this.relayRefuses });
+        return this.fetchFor(device)(target, Object.assign({}, opts, { headers: inner, viaRelay: true }));
+      }
+      if (this.noCors && !opts.viaRelay) throw new TypeError("Failed to fetch");   // no CORS headers
+      if (u === "https://dav.test/index.php/login/v2" && method === "POST") {   // Nextcloud Login Flow v2
+        this.log.push({ device, op: "login-start" });
+        return textResponse(200, JSON.stringify({ login: "https://dav.test/login/v2/flow/abc",
+          poll: { token: "tok-1", endpoint: "https://dav.test/index.php/login/v2/poll" } }));
+      }
+      if (u === "https://dav.test/index.php/login/v2/poll" && method === "POST") {
+        this.log.push({ device, op: "login-poll" });
+        if (String(opts.body) !== "token=tok-1" || !this.loginApproved) return textResponse(404, "");
+        this.loginApproved = false;              // Nextcloud answers once
+        return textResponse(200, JSON.stringify({ server: "https://dav.test", loginName: this.loginName || this.user, appPassword: this.pass }));
+      }
+      const want = "Basic " + Buffer.from((this.loginName || this.user) + ":" + this.pass).toString("base64");
       if (h.Authorization !== want) return textResponse(401, "");
       if (u === "https://dav.test/ocs/v2.php/core/apppassword" && method === "DELETE") {
         this.log.push({ device, op: "revoke", status: 200 });
         return textResponse(200, "");
       }
+      if (u === "https://dav.test/remote.php/dav/" && method === "PROPFIND") {
+        return textResponse(207, '<?xml version="1.0"?><d:multistatus xmlns:d="DAV:"><d:response><d:href>/remote.php/dav/</d:href>' +
+          "<d:propstat><d:prop><d:current-user-principal><d:href>/remote.php/dav/principals/users/" + this.user +
+          "/</d:href></d:current-user-principal></d:prop><d:status>HTTP/1.1 200 OK</d:status></d:propstat></d:response></d:multistatus>");
+      }
+      if (u.indexOf(DAV_UPLOADS + "/") === 0) return this.chunked(device, method, h, u.slice(DAV_UPLOADS.length + 1), opts.body);
       if (u.indexOf(DAV_URL) !== 0) throw new TypeError("Failed to fetch");
       let p = decodeURIComponent(u.slice(DAV_URL.length)).replace(/\/+$/, "");
       if (p === DAV_DIR.slice(0, p.length) && p.length < DAV_DIR.length) {      // the account root
@@ -254,6 +282,44 @@ class FakeWebDAV {
       }
       throw new Error("FakeWebDAV: unhandled " + method + " " + p);
     };
+  }
+
+  // Nextcloud chunked upload: MKCOL uploads/u/<id>, PUT <id>/<n>,
+  // MOVE <id>/.file → Destination (409 when its parent folder is
+  // missing), DELETE <id>. noChunking = a server that refuses it;
+  // chunkCors = one whose CORS lets no chunk request through.
+  async chunked(device, method, h, rest, body) {
+    if (this.chunkCors) throw new TypeError("Failed to fetch");
+    const [id, part] = rest.replace(/\/+$/, "").split("/");
+    this.chunkDirs = this.chunkDirs || new Map();
+    const dest = h.Destination && decodeURIComponent(String(h.Destination).slice(DAV_URL.length + DAV_DIR.length));
+    if (method === "MKCOL" && !part) {
+      if (this.noChunking) return textResponse(405, "");
+      this.chunkDirs.set(id, new Map());
+      this.log.push({ device, op: "chunk-start", path: dest, status: 201 });
+      return textResponse(201, "");
+    }
+    const parts = this.chunkDirs.get(id);
+    if (method === "DELETE" && !part) {
+      this.chunkDirs.delete(id);
+      return textResponse(parts ? 204 : 404, "");
+    }
+    if (!parts) return textResponse(404, "");
+    if (method === "PUT" && part) {
+      parts.set(part, await davBytes(body));
+      this.log.push({ device, op: "chunk", path: dest, part, size: parts.get(part).length, status: 201 });
+      return textResponse(201, "");
+    }
+    if (method === "MOVE" && part === ".file") {
+      if (!this.dirs.has(dest.slice(0, dest.lastIndexOf("/")))) return textResponse(409, "");
+      const data = Buffer.concat([...parts.keys()].sort().map((k) => parts.get(k)));
+      const cur = this.files.get(dest);
+      const rev = this.put(dest, data);
+      this.chunkDirs.delete(id);
+      this.log.push({ device, op: "upload", path: dest, status: 200, created: !cur, chunks: parts.size });
+      return textResponse(cur ? 204 : 201, "", { ETag: rev });
+    }
+    throw new Error("FakeWebDAV: unhandled chunk " + method + " " + rest);
   }
 
   // p null = the account root; else "" (the sync folder) or "/rel".

@@ -9,12 +9,24 @@
 //   "σημείωση: …" · "note …"                                → Notes
 //   "ένα ποτήρι νερό" · "drank water"                       → Water
 //   "άνοιξε χάρτες" · "open budget"                         → that app
+//   "χρονόμετρο 10 λεπτά μακαρόνια" · "timer 1h30m"         → Time (starts)
+//   "ξυπνητήρι 7:00" · "wake me at 6:30 daily"              → Time (alarm form)
+//   "κάρτα στο kanban: …" · "card fix the door"             → Kanban
+//   "συνήθεια διάβασμα έγινε" · "habit run done"            → Habits (tick)
+//   "νέα συνήθεια …" · "new habit …"                        → Habits (form)
+//   "στείλε … στο writer" · "send … to mail"                → BR-SEND receiver
+//   "12*3+4" · "√2" · "5 μίλια σε χλμ" · "100 usd to eur"   → an answer (copy)
 // Anything else → null (the caller searches as usual).
 //
 // parse(text, opts) → null | { kind, app, data }
 //   opts = { today: "YYYY-MM-DD", apps: [{ id, names: [..] }] (installed),
-//            cal: OrosCalQuick (calendar/quickadd.js) }
-//   kind  event | todo | expense | income | note | water | open
+//            cal: OrosCalQuick (calendar/quickadd.js), lang: "en" | "el",
+//            calc: CalcCore (calculator/core.js), units: UnitsCore
+//            (units/core.js), rates: UnitsCore.storedRates(…) | null,
+//            send: OrosSendCore (send/core.js) }; every engine is
+//            optional: without it, its kind is never returned.
+//   kind  event | todo | expense | income | note | water | open |
+//         timer | alarm | card | habit | newhabit | send | calc | convert
 //   data  the fields of that kind, already clean and capped:
 //     event   { date, title, start, end, dateEnd, location, recur }
 //     todo    { list: "tdl-groceries" | "", items: [{ text }] }
@@ -22,6 +34,10 @@
 //     note    { title, text }
 //     water   {}
 //     open    { id }
+//     timer   { sec, label }           alarm   { at: "HH:MM", label, daily }
+//     card    { title }                habit / newhabit   { name }
+//     send    { to, kind: "text" | "link", text }
+//     calc / convert  { text: "12*3+4 = 40", answer: "40" }
 // call(cmd, lang) → { fn, args } the bridge the shell calls:
 //   __orosOpenCalendarNew (BR-W8), __orosOpenAt("todo", {addItems})
 //   (BR-TD-ADD), __orosOpenBudgetNew (BR-B1), __orosOpenAt("notes",
@@ -29,14 +45,20 @@
 //   a form or a prefill; nothing is saved until the user saves there
 //   (BR-W8-6). Water's {sip} is the one exception: the user's Enter in
 //   the bar is the confirmation, the same as the app's own button.
-// describe(cmd, lang) → { verb, detail } for the preview row.
+//   K2: __orosOpenAt("time", {timer}) starts a timer and
+//   __orosOpenAt("habits", {tick}) ticks today (both one tap away
+//   from undo in the app, like Water); {alarm} fills Time's alarm
+//   form, {asNew} the Kanban / Habits forms; send → the BR-SEND
+//   receiver's own target; calc / convert → { fn: "copy", args: [answer] }.
+// describe(cmd, lang) → { verb, detail, hint? } for the preview row
+//   (hint replaces "→ app" when set).
 // The text is never run and never becomes HTML. No DOM, no storage.
 // Node tests load it as is (tests/commands.test.js).
 // ============================================================
 (function (root) {
   "use strict";
 
-  var VER = "1.0.0";
+  var VER = "1.1.0";
   var MAX_IN = 300;              // longer lines are searches, not commands
   var MAX_TITLE = 200;
   var MAX_ITEM = 300;
@@ -174,10 +196,12 @@
     };
   }
 
+  var CUR_TO = /\s(?:to|σε|in|into)\s+(?:€|\$|£|eur|usd|gbp|chf|jpy|cad|aud|try|sek|nok|dkk|pln|czk|huf|ron|bgn|cny|ευρω|δολαρια?|λιρεσ?)$/;
   // "12€ καφές" with no verb: an expense too (a sum with a currency mark).
   function parseBareMoney(text, f, today) {
     if (!/^(?:€|\$|£)?\s*\d/.test(f) && !/\d\s*(?:€|\$|£|ευρω|eur)\b/.test(f)) return null;
     if (!/(€|\$|£|ευρω|eur)/.test(f)) return null;
+    if (CUR_TO.test(f)) return null;  // "100 usd σε eur": a conversion (Unit Converter), never an expense
     var mo = money(f);
     if (!mo) return null;
     var cut = text.slice(0, mo.at) + " " + text.slice(mo.at + mo.len);
@@ -271,6 +295,180 @@
     return id ? { kind: "open", app: id, data: { id: id } } : null;
   }
 
+  // ---------- K2: Time ----------
+  // Durations: "10 λεπτά", "1h30m", "90 sec", "μισή ώρα", "1,5 ώρα".
+  var DUR = /(\d{1,3}(?:[.,]\d{1,2})?)\s*(δευτερολεπτα|δευτερολεπτο|δευτ|sec(?:ond)?s?|s|λεπτα|λεπτο|λεπτ|λ|min(?:ute)?s?|m|ωρεσ|ωρα|ωρ|ω|h(?:ou)?rs?|h)(?![a-zα-ω])/g;
+  var DUR_WORDS = [
+    [/(^|\s)(?:μιαμιση|ενα(?:μ|ν)ιση|1,5) ωρα(?=\s|$)/, 5400],
+    [/(^|\s)(?:μιση ωρα|μισαωρο|half an hour|half hour)(?=\s|$)/, 1800],
+    [/(^|\s)(?:ενα τεταρτο|τεταρτο|a quarter of an hour|quarter of an hour|quarter hour)(?=\s|$)/, 900]
+  ];
+  // → { sec, rest } (rest = the text with the durations cut out) | null
+  function duration(text, bareMin) {
+    var f = fold(text), sec = 0, cuts = [], m;
+    DUR_WORDS.forEach(function (w) {
+      var x = w[0].exec(f);
+      if (x) { sec += w[1]; cuts.push([x.index + x[1].length, x.index + x[0].length]); }
+    });
+    DUR.lastIndex = 0;
+    while ((m = DUR.exec(f))) {
+      var n = parseFloat(m[1].replace(",", ".")), u = m[2].charAt(0);
+      var k = (u === "δ" || u === "s") ? 1 : (u === "ω" || u === "h") ? 3600 : 60;
+      sec += n * k;
+      cuts.push([m.index, m.index + m[0].length]);
+    }
+    if (!cuts.length && bareMin) {
+      var b = /(^|\s)(\d{1,3})(?=\s|$)/.exec(f);
+      if (b) { sec = +b[2] * 60; cuts.push([b.index + b[1].length, b.index + b[0].length]); }
+    }
+    sec = Math.round(sec);
+    if (!cuts.length || sec < 1 || sec > 360000) return null;
+    cuts.sort(function (a, c) { return c[0] - a[0]; });
+    var rest = text;
+    cuts.forEach(function (c) { rest = rest.slice(0, c[0]) + " " + rest.slice(c[1]); });
+    return { sec: sec, rest: rest };
+  }
+  W.timer = ["βαλε αντιστροφη μετρηση", "αντιστροφη μετρηση", "βαλε χρονομετρο", "χρονομετρο", "set a timer for",
+             "set a timer", "set timer", "start a timer", "timer", "countdown"];
+  W.alarm = ["βαλε ξυπνητηρι", "ξυπνητηρι", "ξυπνησε με", "ξυπνα με", "set an alarm for", "set an alarm", "set alarm",
+             "wake me up at", "wake me up", "wake me at", "wake me", "alarm"];
+  var TIMER_TAIL = /\s+(?:χρονομετρο|αντιστροφη μετρηση|timer)$/;
+  var DAILY = /(^|\s)(?:καθε μερα|καθε πρωι|καθημερινα|daily|every day|every morning)(?=\s|$)/;
+
+  function parseTimer(text, f) {
+    var n = lead(f, W.timer), body = text;
+    if (n >= 0) body = text.slice(n);
+    else {
+      var tl = TIMER_TAIL.exec(f);
+      if (!tl) return null;
+      body = text.slice(0, tl.index);
+    }
+    var du = duration(body, true);
+    if (!du) return null;
+    return { kind: "timer", app: "time", data: { sec: du.sec, label: cap(trimJunk(du.rest).slice(0, 40)) } };
+  }
+
+  function parseAlarm(text, f) {
+    var n = lead(f, W.alarm);
+    if (n < 0) return null;
+    var body = text.slice(n), bf = f.slice(n);
+    // "ξυπνητήρι σε 10 λεπτά" / "wake me in 20 min": a timer.
+    if (/^\s*(?:σε|in)\s/.test(bf)) {
+      var du = duration(body.replace(/^\s*\S+/, ""), false);
+      if (du) return { kind: "timer", app: "time", data: { sec: du.sec, label: cap(trimJunk(du.rest).slice(0, 40)) } };
+    }
+    var daily = false, dm = DAILY.exec(bf);
+    if (dm) { daily = true; body = body.slice(0, dm.index + dm[1].length) + " " + body.slice(dm.index + dm[0].length); bf = fold(body); }
+    var tm = /(^|\s)(?:(?:στισ|at)\s+|@\s*)?([01]?\d|2[0-3])(?:[:.]([0-5]\d))?\s*(π\.?μ\.?|μ\.?μ\.?|am|pm|a\.m\.|p\.m\.)?(?=\s|$)/.exec(bf);
+    if (!tm) return null;
+    var h = +tm[2], mi = tm[3] ? +tm[3] : 0, ap = tm[4] ? tm[4].replace(/\./g, "") : "";
+    if (ap) {
+      if (h < 1 || h > 12) return null;
+      if (ap === "pm" || ap === "μμ") h = h === 12 ? 12 : h + 12;
+      else if (h === 12) h = 0;
+    }
+    var rest = body.slice(0, tm.index + tm[1].length) + " " + body.slice(tm.index + tm[0].length);
+    return { kind: "alarm", app: "time",
+             data: { at: (h < 10 ? "0" : "") + h + ":" + (mi < 10 ? "0" : "") + mi,
+                     label: cap(trimJunk(rest).slice(0, 60)), daily: daily } };
+  }
+
+  // ---------- K2: Kanban, Habits ----------
+  W.card = ["νεα καρτα στο kanban", "καρτα στο kanban", "νεα καρτα", "καρτα", "kanban", "new card", "add a card", "card"];
+  var CARD_TAIL = /\s+(?:στο|to|on|in)\s+(?:the |my )?kanban$/;
+  function parseCard(text, f) {
+    var n = lead(f, W.card), body;
+    if (n >= 0) body = text.slice(n);
+    else {
+      var tl = CARD_TAIL.exec(f);
+      if (!tl) return null;
+      body = text.slice(0, tl.index);
+      var an = lead(fold(trimJunk(body)), ["βαλε", "προσθεσε", "add", "put"]);
+      if (an >= 0) body = trimJunk(body).slice(an);
+    }
+    var t = trimJunk(body).slice(0, MAX_ITEM);
+    return t ? { kind: "card", app: "kanban", data: { title: cap(t) } } : null;
+  }
+  W.newHabit = ["νεα συνηθεια", "new habit"];
+  W.habit = ["συνηθεια", "habit", "τσεκαρε", "tick"];
+  var HABIT_DONE = /\s+(?:εγινε|εκανα|ολοκληρωθηκε|τσεκ|done|ok|completed|ticked|✓)$/;
+  function parseHabit(text, f) {
+    var n = lead(f, W.newHabit);
+    if (n >= 0) {
+      var nm = trimJunk(text.slice(n)).slice(0, 200);
+      return nm ? { kind: "newhabit", app: "habits", data: { name: cap(nm) } } : null;
+    }
+    n = lead(f, W.habit);
+    if (n < 0) return null;
+    var body = text.slice(n), dn = HABIT_DONE.exec(fold(body));
+    var tick = f.indexOf("τσεκαρε") === 0 || f.indexOf("tick") === 0;
+    if (dn) body = body.slice(0, dn.index);
+    else if (!tick) return null;
+    var name = trimJunk(body).slice(0, 200);
+    return name ? { kind: "habit", app: "habits", data: { name: name } } : null;
+  }
+
+  // ---------- K2: "Send to an app" (BR-SEND) ----------
+  W.send = ["στειλε", "μοιρασου", "send", "share"];
+  function parseSend(text, f, apps, SC) {
+    if (!SC || typeof SC.accepts !== "function") return null;
+    var n = lead(f, W.send);
+    if (n < 0) return null;
+    var re = /\s(?:στο|στη|στην|στον|σε|to)\s/g, m, best = null;
+    while ((m = re.exec(f))) {
+      if (m.index < n) continue;
+      var want = fold(trimJunk(text.slice(m.index + m[0].length)));
+      if (!want) continue;
+      (apps || []).forEach(function (a) {
+        if (best && best.at < m.index) return;
+        if (!a || SC.ORDER.indexOf(a.id) < 0) return;
+        [a.id].concat(a.names || []).forEach(function (nm) {
+          if (!best && fold(String(nm || "")) === want) best = { at: m.index, to: a.id };
+        });
+      });
+      if (best) break;
+    }
+    if (!best) return null;
+    var payload = text.slice(n, best.at).replace(/^[\s:]+/, "").trim();
+    if (!payload) return null;
+    var kind = /^https?:\/\/\S+$/i.test(payload) ? "link" : "text";
+    var d = kind === "link" ? { url: payload } : { text: payload };
+    if (!SC.accepts(best.to, kind, SC.norm(kind, d))) return null;
+    return { kind: "send", app: best.to, data: { to: best.to, kind: kind, text: payload.slice(0, MAX_TEXT) } };
+  }
+
+  // ---------- K2: answers (Calculator, Unit Converter engines) ----------
+  var CALC_FN = /(?:sqrt|sin|cos|tan|log|ln|abs|pi)/g;
+  function parseCalc(text, CC) {
+    if (!CC || typeof CC.calc !== "function") return null;
+    var s = text.replace(/×/g, "*").replace(/÷/g, "/").replace(/,/g, ".");
+    if (!/^[\d\s.+\-*\/^()%π√!]+$/.test(s.toLowerCase().replace(CALC_FN, ""))) return null;
+    if (!/\d/.test(s)) return null;
+    // A real sum, not a number, a phone (210-1234567) or a date (18/10).
+    var op = /(\d|\)|π)\s*[+*^%]|√|!|[a-z]\(|\s[\-\/]\s|\)\s*[\-\/]|[\-\/]\s*\(/i.test(s) ||
+             /\d[\-\/]\d.*[+*^]|[+*^].*\d[\-\/]\d/.test(s);
+    if (!op) return null;
+    var r = CC.calc(s, {});
+    if (!r || !r.ok) return null;
+    var ans = CC.formatNum(r.v);
+    if (ans == null) return null;
+    return { kind: "calc", app: "calculator", data: { text: clean(text) + " = " + ans, answer: ans } };
+  }
+  function parseConvert(text, U, rates, lang) {
+    if (!U || typeof U.parseQuery !== "function") return null;
+    var q = U.parseQuery(text, lang, rates || null);
+    if (!q) return null;
+    var to = q.to || U.partnerOf(q.cat, q.from);
+    var ing = U.ingredient ? U.ingredient("water") : null;
+    var r = U.convert(q.cat, q.from, to, q.v, { rates: rates || null, dens: ing ? ing[1] : undefined });
+    var a = U.unit(q.cat, q.from, rates), b = U.unit(q.cat, to, rates);
+    if (!r || !r.ok || !a || !b) return null;
+    var right = U.formatNumber(r.v, 6, lang, true);
+    return { kind: "convert", app: "units",
+             data: { text: U.formatNumber(q.v, 6, lang, true) + " " + a.sym + " = " + right + " " + b.sym,
+                     answer: U.formatNumber(r.v, 6, "en", false) + " " + b.sym } };
+  }
+
   function has(apps, id) {
     if (!Array.isArray(apps)) return true;    // no list given: assume yes (tests)
     for (var i = 0; i < apps.length; i++) if (apps[i] && apps[i].id === id) return true;
@@ -285,8 +483,14 @@
     if (!t || t.length > MAX_IN) return null;
     var f = fold(t);
     var apps = o.apps;
+    var lang = o.lang === "el" ? "el" : "en";
     var tries = [
       function () { return parseOpen(t, f, apps); },
+      function () { return parseSend(t, f, apps, o.send); },
+      function () { return parseTimer(t, f); },
+      function () { return parseAlarm(t, f); },
+      function () { return parseCard(t, f); },
+      function () { return parseHabit(t, f); },
       function () { return WATER.test(f) ? { kind: "water", app: "water", data: {} } : null; },
       function () { return parseMoney(t, f, today, "spent", false); },
       function () { return parseMoney(t, f, today, "earned", true); },
@@ -294,8 +498,12 @@
       function () { return parseTodo(t, f); },
       function () { return parseList(t, f); },
       function () { return lead(f, W.event) >= 0 ? parseEvent(t, f, today, o.cal, true) : null; },
+      // "100 usd σε eur": a conversion, not a 100 € expense.
+      function () { return /\s(?:to|σε|in|into)\s|→|=/.test(f) ? parseConvert(t, o.units, o.rates, lang) : null; },
       function () { return parseBareMoney(t, f, today); },
-      function () { return parseEvent(t, f, today, o.cal, false); }
+      function () { return parseEvent(t, f, today, o.cal, false); },
+      function () { return parseCalc(t, o.calc); },
+      function () { return parseConvert(t, o.units, o.rates, lang); }
     ];
     for (var i = 0; i < tries.length; i++) {
       var r = null;
@@ -346,19 +554,58 @@
         return { fn: "__orosOpenAt", args: ["water", { sip: "glass" }] };
       case "open":
         return (typeof d.id === "string" && /^[a-z0-9][a-z0-9_-]{0,47}$/.test(d.id)) ? { fn: "openAppById", args: [d.id] } : null;
+      case "timer": {
+        var sec = d.sec;
+        if (typeof sec !== "number" || Math.floor(sec) !== sec || sec < 1 || sec > 360000) return null;
+        return { fn: "__orosOpenAt", args: ["time", { timer: { sec: sec, label: clean(String(d.label || "")).slice(0, 40) } }] };
+      }
+      case "alarm":
+        if (!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(d.at || "")) return null;
+        return { fn: "__orosOpenAt", args: ["time", { alarm: { at: d.at, label: clean(String(d.label || "")).slice(0, 60), daily: d.daily === true } }] };
+      case "card":
+        if (!d.title) return null;
+        return { fn: "__orosOpenAt", args: ["kanban", { asNew: { title: clean(String(d.title)).slice(0, MAX_ITEM) } }] };
+      case "habit":
+        if (!d.name) return null;
+        return { fn: "__orosOpenAt", args: ["habits", { tick: { name: clean(String(d.name)).slice(0, 200) } }] };
+      case "newhabit":
+        if (!d.name) return null;
+        return { fn: "__orosOpenAt", args: ["habits", { asNew: { name: clean(String(d.name)).slice(0, 200) } }] };
+      case "send": {
+        var SC = sendCore();
+        if (!SC || (d.kind !== "text" && d.kind !== "link") || typeof d.text !== "string") return null;
+        var pl = d.kind === "link" ? { url: d.text } : { text: d.text.slice(0, MAX_TEXT) };
+        var tg = SC.target(d.to, d.kind, pl, el ? "Γραμμή εντολών" : "Command bar");
+        return tg ? { fn: "__orosOpenAt", args: [d.to, tg] } : null;
+      }
+      case "calc":
+      case "convert":
+        return typeof d.answer === "string" && d.answer ? { fn: "copy", args: [d.answer.slice(0, 200)] } : null;
     }
     return null;
+  }
+  // send/core.js: the shell's copy, or Node's (tests).
+  var SEND_CORE = null;
+  function sendCore() {
+    if (SEND_CORE) return SEND_CORE;
+    if (root && root.OrosSendCore) return (SEND_CORE = root.OrosSendCore);
+    if (typeof require === "function") { try { SEND_CORE = require("../send/core.js"); } catch (e) {} }
+    return SEND_CORE;
   }
 
   // ---------- Preview text ----------
   var STR = {
     en: { event: "New event", todo: "Add to To-Do", groc: "Add to the shopping list", expense: "New expense",
           income: "New income", note: "New note", water: "A glass of water", open: "Open",
+          timer: "Start a timer", alarm: "New alarm", daily: "every day", card: "New Kanban card", habit: "Tick a habit",
+          newhabit: "New habit", send: "Send", copy: "Copy",
           allDay: "all day", cats: { "o-eat": "Eating out", "o-groc": "Groceries", "o-trans": "Transport", "o-bills": "Bills",
           "o-home": "Rent & home", "o-health": "Health", "o-fun": "Entertainment", "o-cloth": "Clothing", "o-gift": "Gifts",
           "o-other": "Other", "i-salary": "Salary", "i-free": "Freelance", "i-gift": "Gifts", "i-other": "Other" } },
     el: { event: "Νέο συμβάν", todo: "Προσθήκη στο To-Do", groc: "Στη λίστα για ψώνια", expense: "Νέο έξοδο",
           income: "Νέο έσοδο", note: "Νέα σημείωση", water: "Ένα ποτήρι νερό", open: "Άνοιγμα",
+          timer: "Έναρξη αντίστροφης μέτρησης", alarm: "Νέο ξυπνητήρι", daily: "κάθε μέρα", card: "Νέα κάρτα Kanban",
+          habit: "Τσεκάρισμα συνήθειας", newhabit: "Νέα συνήθεια", send: "Αποστολή", copy: "Αντιγραφή",
           allDay: "όλη μέρα", cats: { "o-eat": "Φαγητό έξω", "o-groc": "Σούπερ μάρκετ", "o-trans": "Μεταφορές", "o-bills": "Λογαριασμοί",
           "o-home": "Ενοίκιο & σπίτι", "o-health": "Υγεία", "o-fun": "Ψυχαγωγία", "o-cloth": "Ρούχα", "o-gift": "Δώρα",
           "o-other": "Άλλα", "i-salary": "Μισθός", "i-free": "Ελεύθερο επάγγελμα", "i-gift": "Δώρα", "i-other": "Άλλα" } }
@@ -373,6 +620,10 @@
   function euros(c, lang) {
     var v = (c / 100).toFixed(2);
     return (lang === "el" ? v.replace(".", ",") : v) + " €";
+  }
+  function hms(sec) {
+    var h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), x = sec % 60;
+    return (h ? h + ":" + (m < 10 ? "0" : "") : "") + m + ":" + (x < 10 ? "0" : "") + x;
   }
   function describe(cmd, lang) {
     var lg = lang === "el" ? "el" : "en", S = STR[lg], d = cmd && cmd.data || {};
@@ -390,6 +641,14 @@
       case "note": return { verb: S.note, detail: d.title };
       case "water": return { verb: S.water, detail: "" };
       case "open": return { verb: S.open, detail: "" };
+      case "timer": return { verb: S.timer, detail: [hms(d.sec), d.label].filter(Boolean).join(" · ") };
+      case "alarm": return { verb: S.alarm, detail: [d.at, d.daily ? S.daily : "", d.label].filter(Boolean).join(" · ") };
+      case "card": return { verb: S.card, detail: d.title };
+      case "habit": return { verb: S.habit, detail: d.name };
+      case "newhabit": return { verb: S.newhabit, detail: d.name };
+      case "send": return { verb: S.send, detail: d.text.length > 80 ? d.text.slice(0, 79) + "…" : d.text };
+      case "calc":
+      case "convert": return { verb: d.text, detail: "", hint: S.copy };
     }
     return { verb: "", detail: "" };
   }

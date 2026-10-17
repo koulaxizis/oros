@@ -36,6 +36,13 @@ Type what you want to do, in English or Greek, and the first row of the search s
 - `note: wifi code 1234`: a new page in [Notes](app:notes).
 - `a glass of water`: one glass in [Water](app:water), right away.
 - `open maps`: opens that app.
+- `timer 10 min pasta`, `timer 1h30m`: starts a timer in [Time](app:time) right away. `alarm 7:00`, `wake me at 6:30 every day`: fills in a new alarm, and you press `Add`.
+- `card fix the door`, `fix the door to kanban`: a new card in [Kanban](app:kanban).
+- `habit reading done`: ticks today in [Habits](app:habits) (tap the day again to undo). `new habit running` opens a new habit.
+- `send hello world to writer`: hands the text or link to that app, like `Send to an app`.
+- `12*3+4`, `√2`, `5 miles to km`, `100 usd to eur`: the answer appears in the row. Press [[Enter]] to copy it.
+
+In the bar, before you type, your last commands are listed; tap one to use it again. This list stays on this device only, and `Clear the list` empties it.
 
 The same commands work in a small bar over any app: press [[Ctrl+K]] (in Notes and Wiki, [[Ctrl+Alt+Shift+K]]). Anything that is not a command is a normal search, and with the [Assistant](app:assistant) installed the last row asks it. Commands are understood on your device; nothing is sent anywhere.
 
