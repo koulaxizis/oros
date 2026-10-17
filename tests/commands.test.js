@@ -115,3 +115,106 @@ test("describe: both languages, every kind", () => {
   assert.equal(C.describe(P("ξόδεψα 12,5€ καφές"), "el").detail.indexOf("12,50 €"), 0);
   assert.equal(C.describe(P("dentist fri 9:30"), "en").detail, "Fri 23/10 · 09:30 · Dentist");
 });
+
+// ---------- K2: Time, Kanban, Habits, Send, answers, history ----------
+const fs = require("fs");
+const CC = require(path.join(__dirname, "..", "calculator", "core.js"));
+const U = require(path.join(__dirname, "..", "units", "core.js"));
+const SC = require(path.join(__dirname, "..", "send", "core.js"));
+const APPS2 = APPS.concat(["time", "kanban", "habits", "writer", "calculator", "units"].map((id) => ({
+  id, names: { writer: ["Writer", "Κειμενογράφος"], time: ["Time", "Ώρα"] }[id] || [],
+})));
+const P2 = (s, lang) => C.parse(s, { today: TODAY, apps: APPS2, cal: Q, calc: CC, units: U, send: SC, lang: lang || "en" });
+const read = (f) => fs.readFileSync(path.join(__dirname, "..", f), "utf8");
+
+test("K2 timers: duration words in both languages, a label, Time's {timer}", () => {
+  const cases = [
+    ["χρονόμετρο 10 λεπτά μακαρόνια", 600, "Μακαρόνια"], ["timer 1h30m", 5400, ""],
+    ["set a timer for 90 sec", 90, ""], ["pasta 8 min timer", 480, "Pasta"],
+    ["βάλε αντίστροφη μέτρηση μισή ώρα", 1800, ""], ["χρονόμετρο 25", 1500, ""],
+    ["ξυπνητήρι σε 20 λεπτά", 1200, ""], ["timer 2 hours 15 minutes tea", 8100, "Tea"],
+  ];
+  for (const [s, sec, label] of cases) {
+    const r = P2(s);
+    assert.deepEqual([r && r.kind, r && r.data.sec, r && r.data.label], ["timer", sec, label], s);
+  }
+  assert.deepEqual(C.call(P2("timer 5 min eggs"), "en"),
+    { fn: "__orosOpenAt", args: ["time", { timer: { sec: 300, label: "Eggs" } }] });
+  assert.equal(C.describe(P2("timer 1h30m"), "en").detail, "1:30:00");
+  assert.equal(P2("timer"), null);
+  assert.equal(C.call({ kind: "timer", data: { sec: 0 } }), null);
+  assert.equal(C.call({ kind: "timer", data: { sec: 1e9 } }), null);
+});
+
+test("K2 alarms: a clock time, am/pm, every day → Time's alarm form", () => {
+  let r = P2("ξυπνητήρι 7:00");
+  assert.deepEqual([r.kind, r.data.at, r.data.daily], ["alarm", "07:00", false]);
+  r = P2("wake me at 6:30 pm every day gym");
+  assert.deepEqual([r.data.at, r.data.daily, r.data.label], ["18:30", true, "Gym"]);
+  r = P2("ξύπνα με στις 7 κάθε μέρα");
+  assert.deepEqual([r.data.at, r.data.daily], ["07:00", true]);
+  assert.equal(P2("alarm 12 am").data.at, "00:00");
+  assert.deepEqual(C.call(P2("alarm 7"), "en"),
+    { fn: "__orosOpenAt", args: ["time", { alarm: { at: "07:00", label: "", daily: false } }] });
+  assert.equal(P2("alarm 25"), null);
+  assert.equal(C.call({ kind: "alarm", data: { at: "7" } }), null);
+});
+
+test("K2 Kanban cards and habits", () => {
+  let r = P2("κάρτα στο kanban: φτιάξε την πόρτα");
+  assert.deepEqual([r.kind, r.data.title], ["card", "Φτιάξε την πόρτα"]);
+  assert.equal(P2("add fix door to kanban").data.title, "Fix door");
+  assert.deepEqual(C.call(r, "el"), { fn: "__orosOpenAt", args: ["kanban", { asNew: { title: "Φτιάξε την πόρτα" } }] });
+  r = P2("συνήθεια διάβασμα έγινε");
+  assert.deepEqual([r.kind, r.data.name], ["habit", "διάβασμα"]);
+  assert.deepEqual(C.call(P2("habit run done")).args, ["habits", { tick: { name: "run" } }]);
+  assert.equal(P2("tick meditation").data.name, "meditation");
+  assert.equal(P2("habit run"), null);           // no "done": a search
+  r = P2("νέα συνήθεια τρέξιμο");
+  assert.deepEqual(C.call(r).args, ["habits", { asNew: { name: "Τρέξιμο" } }]);
+});
+
+test("K2 send: text or link to a BR-SEND receiver by its name", () => {
+  let r = P2("στείλε γεια σου κόσμε στο κειμενογράφο");
+  assert.equal(r, null);                          // not the receiver's name
+  r = P2("στείλε γεια σου κόσμε στο writer");
+  assert.deepEqual([r.kind, r.app, r.data.kind, r.data.text], ["send", "writer", "text", "γεια σου κόσμε"]);
+  assert.deepEqual(C.call(r, "el"), { fn: "__orosOpenAt", args: ["writer", SC.target("writer", "text", { text: "γεια σου κόσμε" }, "Γραμμή εντολών")] });
+  r = P2("send https://example.com to notes");
+  assert.equal(r.data.kind, "link");
+  assert.equal(P2("send hello to maps"), null);   // Maps takes nothing
+  assert.equal(C.parse("send x to writer", { apps: APPS2 }), null);   // no send engine: no command
+});
+
+test("K2 answers: sums and conversions copy, phones and dates stay searches", () => {
+  let r = P2("12*3+4");
+  assert.deepEqual([r.kind, r.data.answer], ["calc", "40"]);
+  assert.deepEqual(C.call(r), { fn: "copy", args: ["40"] });
+  assert.equal(C.describe(r, "el").hint, "Αντιγραφή");
+  assert.equal(P2("(3+4)*2").data.answer, "14");
+  assert.equal(P2("12 - 3").data.answer, "9");
+  assert.equal(P2("2^10").data.answer, "1024");
+  for (const s of ["210-1234567", "18/10", "2026", "-5", "15/11"]) assert.equal(P2(s), null, s);
+  r = P2("5 μίλια σε χλμ", "el");
+  assert.deepEqual([r.kind, r.data.text, r.data.answer], ["convert", "5 mi = 8,04672 km", "8.04672 km"]);
+  r = P2("100 usd to eur");
+  assert.equal(r, null);                          // no stored rates: no currency answer, and never an expense
+  r = C.parse("100 usd to eur", { apps: APPS2, units: U, rates: U.storedRates({ base: "EUR", date: TODAY, at: 1, rates: { USD: 1.25 } }) });
+  assert.deepEqual([r.kind, r.data.answer], ["convert", "80 EUR"]);
+  assert.equal(P2("12€ καφές").kind, "expense");
+  assert.equal(C.parse("12*3", { apps: APPS2 }), null);   // no engine: no answer
+});
+
+test("K2 receivers read the targets the bar sends", () => {
+  const time = read("time/time.js"), astro = read("time/astro.js");
+  assert.match(time, /window\.__orosTimeCmd = function/);
+  assert.match(time, /tg\.timer/);
+  assert.match(time, /tg\.alarm/);
+  assert.match(astro, /__orosTimeCmd/);
+  assert.match(astro, /pending\.timer \|\| pending\.alarm/);
+  assert.match(read("habits/habits.js"), /t\.tick\) \{ tickByName\(t\.tick\)/);
+  assert.match(read("kanban/kanban.js"), /tg\.asNew\) \{ newCardFrom\(tg\.asNew\)/);
+  const sh = read("shell.js");
+  assert.match(sh, /CMD_HIST_KEY = "oros-cmd-history"/);
+  assert.doesNotMatch(read("sync.js"), /oros-cmd-history/);   // device-local, never synced
+});

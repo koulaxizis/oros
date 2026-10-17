@@ -1,6 +1,12 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.82.00
+- Command bar: timers and alarms, Kanban cards, habits done, send to an app, sums and unit conversions you can copy, and your recent commands.
+
+## Version 2.81.00
+- Send to someone: photo albums from Files and Photo Lab, up to 200 photos, made smaller and without hidden location details, as a link with an expiry.
+
 ## Version 2.80.00
 - Office apps send to each other: a Spreadsheet selection becomes a Writer table, and text becomes slides, a mind map, Kanban cards or a Prompter prompt (Send to an app in Spreadsheet, Slides, Mind map and Kanban).
 

@@ -81,6 +81,9 @@
       "toast.deleted":   "Habit deleted",
       "toast.name.req":  "Name is required",
       "toast.merged":   "Updated from sync",
+      "toast.ticked":   "Done today: {n}",
+      "toast.already":  "Already done today: {n}",
+      "toast.nohabit":  "No habit called “{n}”",
       "day.0": "Mon", "day.1": "Tue", "day.2": "Wed", "day.3": "Thu",
       "day.4": "Fri", "day.5": "Sat", "day.6": "Sun",
       "dkey.0": "M", "dkey.1": "T", "dkey.2": "W", "dkey.3": "T",
@@ -229,6 +232,9 @@
       "toast.deleted":   "Η συνήθεια διαγράφτηκε",
       "toast.name.req":  "Απαιτείται όνομα",
       "toast.merged":   "Ενημερώθηκε από συγχρονισμό",
+      "toast.ticked":   "Έγινε σήμερα: {n}",
+      "toast.already":  "Έχει ήδη γίνει σήμερα: {n}",
+      "toast.nohabit":  "Δεν υπάρχει συνήθεια «{n}»",
       "day.0": "Δευ", "day.1": "Τρί", "day.2": "Τετ", "day.3": "Πέμ",
       "day.4": "Παρ", "day.5": "Σάβ", "day.6": "Κυρ",
       "dkey.0": "Δ", "dkey.1": "Τ", "dkey.2": "Τ", "dkey.3": "Π",
@@ -2643,6 +2649,36 @@
   //   it) opens the new-habit dialog prefilled; no name → no-op.
   //   "Open with" an .oroshabits file (fileopen.js): { openFile: { token } },
   //   the File taken once with window.parent.__orosTakeFile(token).
+  // Command bar (BR-CMD) { tick: { name } }: today's tick of the habit
+  // with that name (accents and case ignored; else the one habit whose
+  // name starts with it), as a tap on today's dot: yes / no habits are
+  // ticked (a toast says so; one more tap undoes it), measurable ones,
+  // skipped days and fixed habits not due today open the day dialog.
+  // No match or an open dialog → no-op.
+  function foldName(s) {
+    s = String(s || "").toLowerCase();
+    if (s.normalize) s = s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    return s.replace(/ς/g, "σ").replace(/\s+/g, " ").trim();
+  }
+  function tickByName(x) {
+    var want = foldName(x && typeof x.name === "string" ? x.name.slice(0, 200) : "");
+    if (!want || document.querySelector("dialog[open]")) return;
+    var hs = livingHabits(), h = null, part = [];
+    hs.forEach(function (c) {
+      var n = foldName(c.name);
+      if (n === want) h = h || c;
+      else if (n.indexOf(want) === 0) part.push(c);
+    });
+    if (!h && part.length === 1) h = part[0];
+    if (!h) { toast(fmt("toast.nohabit", x.name.slice(0, 60))); return; }
+    var dk = todayKey(), d = new Date();
+    if (isDone(h.id, dk) && !isNum(h)) { toast(fmt("toast.already", h.name)); return; }
+    if (isNum(h) || (isSkipped(h.id, dk) && !isDone(h.id, dk)) ||
+        (HC.isFixed(h) && !isScheduledOn(h, d))) { openDayDialog(h, dk); return; }
+    toggleComp(h, d);
+    render();
+    toast(fmt("toast.ticked", h.name));
+  }
   function openSearchTarget(t) {
     if (t && t.openFile) { if (recFile) recFile.openTarget(t.openFile); return; }
     // Single app (solo.js) icon shortcut { add: true }: a blank New habit.
@@ -2650,6 +2686,7 @@
       if (!document.querySelector("dialog[open]")) openHabitDialog(null);
       return;
     }
+    if (t && t.tick) { tickByName(t.tick); return; }
     if (t && t.asNew) {
       var pre = M.asNew(t.asNew);
       if (pre && !document.querySelector("dialog[open]")) openHabitDialog(null, pre);

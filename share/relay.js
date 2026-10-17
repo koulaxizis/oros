@@ -12,7 +12,10 @@
 // salt, 600,000)): the link alone is useless, the password alone too.
 //
 // Plain text of the item: [flag] + JSON { v:1, x: expiry ms, e: the
-// BR-SHARE envelope {v,k,d} }, deflated when flag = 1. It is cut into
+// BR-SHARE envelope {v,k,d} }, deflated when flag = 1. Flag 2 (an
+// album, share wave 4): [2] + u32 big-endian length L + L bytes of
+// deflated JSON + a byte run of photos ("bin", not compressed: they
+// are JPEG already). It is cut into
 // pieces; piece i = iv (12) ‖ AES-GCM(text, AAD "orOS share|<id>|i|n"),
 // at most PIECE bytes, so the relay cannot swap, drop or reorder them.
 // The sender keeps a revoke secret (32 bytes) that never goes into the
@@ -26,14 +29,14 @@
 //   RELAY, PIECE, MAX_PIECES, MAX_PLAIN, DAYS, ITER
 //   parse(code)                       → { kind:"r1"|"q1", id, key, n, salt? } | null
 //   isLocked(code)                    → true for q1
-//   pack(env, exp)                    → Promise<plain bytes>
+//   pack(env, exp, bin?)              → Promise<plain bytes>
 //   seal(key, id, plain, pw?, salt?)  → Promise<[piece bytes]>
 //   unseal(key, id, pieces, pw?, salt?) → Promise<plain bytes> (throws "pass" / "bad")
-//   unpack(plain)                     → Promise<{ x, e }> (throws "bad" / "big")
-//   create(env, { days, password?, now?, fetch?, relay? })
+//   unpack(plain)                     → Promise<{ x, e, bin? }> (throws "bad" / "big")
+//   create(env, { days, password?, bin?, now?, fetch?, relay? })
 //                                     → Promise<{ code, id, del, exp }>
 //   open(code, { password?, now?, fetch?, relay? })
-//                                     → Promise<{ e, x } | { error }>
+//                                     → Promise<{ e, x, bin? } | { error }>
 //        error: "gone" (missing, expired or revoked) | "pass" | "bad" | "big" | "net"
 //   revoke(id, del, { fetch?, relay? }) → Promise<true> (throws "net")
 // create() throws Error(code): "full" | "rate" | "nostore" | "net" | "bad".
@@ -130,8 +133,19 @@
   function aad(id, i, n) { return utf8("orOS share|" + id + "|" + i + "|" + n); }
 
   // ---------- plain text ----------
-  function pack(env, exp) {
+  function pack(env, exp, bin) {
     var raw = utf8(JSON.stringify({ v: 1, x: exp, e: env }));
+    if (bin) {
+      if (!hasZip()) return Promise.reject(new Error("bad"));
+      return deflate(raw).then(function (z) {
+        var out = new Uint8Array(5 + z.length + bin.length);
+        out[0] = 2;
+        new DataView(out.buffer).setUint32(1, z.length);
+        out.set(z, 5);
+        out.set(bin, 5 + z.length);
+        return out;
+      });
+    }
     if (!hasZip()) return Promise.resolve(withFlag(0, raw));
     return deflate(raw).then(function (z) { return withFlag(1, z); });
   }
@@ -141,15 +155,22 @@
     return out;
   }
   function unpack(plain) {
-    if (!plain || !plain.length || (plain[0] !== 0 && plain[0] !== 1)) return Promise.reject(new Error("bad"));
-    var body = plain.subarray(1);
-    var p = plain[0] === 1 ? (hasZip() ? inflate(body) : Promise.reject(new Error("bad"))) : Promise.resolve(body);
+    if (!plain || !plain.length || plain[0] > 2) return Promise.reject(new Error("bad"));
+    var body = plain.subarray(1), bin = null;
+    if (plain[0] === 2) {
+      if (plain.length < 5) return Promise.reject(new Error("bad"));
+      var L = new DataView(plain.buffer, plain.byteOffset + 1, 4).getUint32(0);
+      if (L < 1 || 5 + L > plain.length) return Promise.reject(new Error("bad"));
+      body = plain.subarray(5, 5 + L);
+      bin = plain.subarray(5 + L);
+    }
+    var p = plain[0] !== 0 ? (hasZip() ? inflate(body) : Promise.reject(new Error("bad"))) : Promise.resolve(body);
     return p.then(function (bytes) {
       if (bytes.length > MAX_PLAIN) throw new Error("big");
       var o;
       try { o = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes)); } catch (e) { throw new Error("bad"); }
       if (!o || o.v !== 1 || typeof o.x !== "number" || !o.e || typeof o.e !== "object") throw new Error("bad");
-      return { x: o.x, e: o.e };
+      return bin ? { x: o.x, e: o.e, bin: bin } : { x: o.x, e: o.e };
     });
   }
 
@@ -215,7 +236,7 @@
     var password = opts.password ? String(opts.password) : "";
     var salt = password ? b64u(rand(16)) : "";
     var pieces;
-    return pack(env, exp).then(function (plain) {
+    return pack(env, exp, opts.bin || null).then(function (plain) {
       return seal(key, id, plain, password, salt);
     }).then(function (p) {
       pieces = p;

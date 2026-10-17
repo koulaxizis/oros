@@ -1,8 +1,8 @@
 // ============================================================
 // orOS "Send to someone" — share/kinds.js (pure core, v1.0.0)
 // One item (a To-Do list, a note, a contact, an event, a recipe,
-// a few bookmarks, a Calendar's free times, a Wiki article or a whole
-// calendar / date range of the Calendar)
+// a few bookmarks, a Calendar's free times, a Wiki article, a whole
+// calendar / date range of the Calendar, or a photo album)
 // travels INSIDE a link:
 //   https://useoros.online/share/#1.<base64url of deflate-raw JSON>
 //   https://useoros.online/share/#p1.<base64url of salt|iv|AES-GCM>
@@ -38,12 +38,17 @@
 //   slotEvent(d, day, min, lang)   → that time as "event" data (.ics, Calendar)
 //   slotMail(d, day, min, lang)    → mailto: link back to the sender, or ""
 //   calIcs(d, lang)                → a whole "cal" item as one .ics
+//   RELAY_ONLY                     → kinds that only travel as a link with
+//                                    an expiry ("album": its photos ride
+//                                    beside the JSON, share/relay.js)
+//   photoType(bytes)               → "image/jpeg" | "image/png" | "image/webp" | ""
 // ============================================================
 (function (root) {
   "use strict";
 
   var VER = 1;
-  var KINDS = ["list", "note", "contact", "event", "recipe", "links", "slots", "wiki", "cal"];
+  var KINDS = ["list", "note", "contact", "event", "recipe", "links", "slots", "wiki", "cal", "album"];
+  var RELAY_ONLY = ["album"];
   var MAX_LINK = 32768;          // characters of the code after "#"
   var MAX_JSON = 262144;         // bytes after decompression (bomb guard)
   var ITER = 600000;             // PBKDF2 rounds for password links
@@ -67,7 +72,8 @@
       slotLen: "{n} min", slotWith: "With {n}", slotSubj: "Booking: {t}, {w}",
       slotBody: "Hello{n},\n\nI'd like to take this time:\n{t}\n{w}\n\nThanks!",
       slotZone: "{w} ({z} time)",
-      cal: "Calendar", calT: "Calendar", calN: "{n} events", cal1: "1 event", calFrom: "from {d}", calTo: "to {d}"
+      cal: "Calendar", calT: "Calendar", calN: "{n} events", cal1: "1 event", calFrom: "from {d}", calTo: "to {d}",
+      album: "Album", albumT: "Photos", albumN: "{n} photos", album1: "1 photo", photo: "Photo {n}"
     },
     el: {
       list: "Λίστα", note: "Σημείωμα", contact: "Επαφή", event: "Γεγονός", recipe: "Συνταγή", links: "Σύνδεσμοι", wiki: "Άρθρο wiki",
@@ -83,7 +89,8 @@
       slotLen: "{n}′", slotWith: "Με: {n}", slotSubj: "Κράτηση: {t}, {w}",
       slotBody: "Γεια σου{n},\n\nΘα ήθελα να κλείσω αυτή την ώρα:\n{t}\n{w}\n\nΕυχαριστώ!",
       slotZone: "{w} (ώρα {z})",
-      cal: "Ημερολόγιο", calT: "Ημερολόγιο", calN: "{n} γεγονότα", cal1: "1 γεγονός", calFrom: "από {d}", calTo: "έως {d}"
+      cal: "Ημερολόγιο", calT: "Ημερολόγιο", calN: "{n} γεγονότα", cal1: "1 γεγονός", calFrom: "από {d}", calTo: "έως {d}",
+      album: "Άλμπουμ", albumT: "Φωτογραφίες", albumN: "{n} φωτογραφίες", album1: "1 φωτογραφία", photo: "Φωτογραφία {n}"
     }
   };
   function L(lang) { return S[lang] || S.en; }
@@ -331,7 +338,38 @@
     o.ev = ev;
     return o;
   }
-  var NORM = { list: normList, note: normNote, contact: normContact, event: normEvent, recipe: normRecipe, links: normLinks, slots: normSlots, wiki: normWiki, cal: normCal };
+  // A photo album (share wave 4): only the list travels in the JSON;
+  // the photos (re-drawn by the sender, so no EXIF / GPS) ride beside
+  // it in the relay item as one byte run, each at [o, o + n).
+  var PHOTO_MIME = ["image/jpeg", "image/png", "image/webp"];
+  var ALBUM_MAX = 200, PHOTO_MAX = 8388608, ALBUM_BYTES = 26214400;
+  function normAlbum(d) {
+    var p = [], total = 0;
+    arr(d.p, ALBUM_MAX).forEach(function (x) {
+      if (!x || typeof x !== "object") return;
+      var o = num(x.o, 0, ALBUM_BYTES), n = num(x.n, 1, PHOTO_MAX);
+      var w = num(x.w, 1, 8192), h = num(x.h, 1, 8192);
+      if (o === null || n === null || o % 1 || n % 1 || o + n > ALBUM_BYTES || PHOTO_MIME.indexOf(x.m) < 0) return;
+      if (total + n > ALBUM_BYTES) return;
+      total += n;
+      var q = { o: o, n: n, m: x.m };
+      if (w !== null && h !== null && !(w % 1) && !(h % 1)) { q.w = w; q.h = h; }
+      var c = line(x.c, 300);
+      if (c) q.c = c;
+      p.push(q);
+    });
+    if (!p.length) return null;
+    return { t: line(d.t, 120), p: p };
+  }
+  // The first bytes say what a photo is; anything else (SVG, HTML…) is not shown.
+  function photoType(b) {
+    if (!b || b.length < 12) return "";
+    if (b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return "image/jpeg";
+    if (b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47 && b[4] === 0x0d && b[5] === 0x0a) return "image/png";
+    if (b[0] === 0x52 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x46 && b[8] === 0x57 && b[9] === 0x45 && b[10] === 0x42 && b[11] === 0x50) return "image/webp";
+    return "";
+  }
+  var NORM = { list: normList, note: normNote, contact: normContact, event: normEvent, recipe: normRecipe, links: normLinks, slots: normSlots, wiki: normWiki, cal: normCal, album: normAlbum };
   function norm(kind, data) {
     if (!NORM[kind] || !data || typeof data !== "object" || Array.isArray(data)) return null;
     try { return NORM[kind](data); } catch (e) { return null; }
@@ -403,6 +441,7 @@
   function encode(env, password) {
     var e = unpack(env);
     if (!e) return Promise.reject(new Error("bad"));
+    if (RELAY_ONLY.indexOf(e.k) >= 0) return Promise.reject(new Error("big"));
     var raw = new TextEncoder().encode(JSON.stringify(e));
     // The receiving page refuses more than MAX_JSON: such an item can
     // only travel with an expiry (share/relay.js).
@@ -479,7 +518,7 @@
   function titleOf(env, lang) {
     var d = env.d, s = L(lang);
     var t = env.k === "contact" ? contactName(d) : d.t;
-    return t || (env.k === "links" ? s.sharedLinks : env.k === "slots" ? s.slotsT : env.k === "cal" ? s.calT : s.untitled);
+    return t || (env.k === "links" ? s.sharedLinks : env.k === "slots" ? s.slotsT : env.k === "cal" ? s.calT : env.k === "album" ? s.albumT : s.untitled);
   }
   function fmtDate(ymd, lang) {
     var m = YMD_RE.exec(ymd);
@@ -519,6 +558,7 @@
       d.s.forEach(function (x) { cnt += x.m.length; });
       return s.slots + " \u00ab" + name + "\u00bb \u00b7 " + (cnt === 1 ? s.slots1 : fill(s.slotsN, { n: cnt }));
     }
+    if (env.k === "album") return s.album + " \u00ab" + name + "\u00bb \u00b7 " + (d.p.length === 1 ? s.album1 : fill(s.albumN, { n: d.p.length }));
     if (env.k === "cal") return s.cal + " \u00ab" + name + "\u00bb \u00b7 " + (d.ev.length === 1 ? s.cal1 : fill(s.calN, { n: d.ev.length }));
     return s[env.k] + " \u00ab" + name + "\u00bb";
   }
@@ -586,6 +626,9 @@
       });
       if (d.tz) out.push("(" + d.tz + ")");
       if (d.m) out.push("", s.email + ": " + d.m);
+    } else if (env.k === "album") {
+      out.push(d.p.length === 1 ? s.album1 : fill(s.albumN, { n: d.p.length }));
+      d.p.forEach(function (x, i) { if (x.c) out.push((i + 1) + ". " + x.c); });
     } else if (env.k === "cal") {
       var rg = calRange(d, lang);
       if (rg) out.push(rg);
@@ -748,6 +791,7 @@
     if (env.k === "cal") return { app: "calendar", target: { importIcs: { name: fileName(d.t || s.calT, ".ics"), text: calIcs(d, lang) } } };
     if (env.k === "wiki") return { app: "wiki", target: { addArticle: { t: d.t, x: d.x } } };
     if (env.k === "slots") return null;          // a time is picked on the page first (slotEvent)
+    if (env.k === "album") return null;          // photos are saved one by one on the page
     if (d.i.length === 1) return { app: "bookmarks", target: { add: { url: d.i[0].u, title: d.i[0].t } } };
     return { app: "bookmarks", target: { addMany: { folder: d.t || s.sharedLinks, items: d.i.map(function (it) { return { url: it.u, title: it.t }; }) } } };
   }
@@ -816,7 +860,7 @@
   }
 
   var api = {
-    VER: VER, KINDS: KINDS, MAX_LINK: MAX_LINK, MAX_JSON: MAX_JSON, ITER: ITER,
+    VER: VER, KINDS: KINDS, RELAY_ONLY: RELAY_ONLY, photoType: photoType, MAX_LINK: MAX_LINK, MAX_JSON: MAX_JSON, ITER: ITER,
     norm: norm, pack: pack, encode: encode, decode: decode, isLocked: isLocked, codeFromHash: codeFromHash,
     summary: summary, title: titleOf, text: text, file: file, target: target,
     whenText: whenText, repeatText: repeatText, addrText: addrText, contactName: contactName,
