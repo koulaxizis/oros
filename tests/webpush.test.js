@@ -106,10 +106,11 @@ test("phone reminderRows: a week when asked, the two days as before otherwise", 
   assert.equal(Phone.reminderRows(Object.assign({ hours: 168, max: 3 }, src), now).length, 3);
 });
 
-test("Android app: Calendar reminders ring natively only while events are not copied to the phone's Calendar", () => {
+test("Android app: Calendar reminders always ring natively; the phone Calendar copies carry no reminder", () => {
   const ph = fs.readFileSync(path.join(__dirname, "..", "phone.js"), "utf8");
   assert.ok(/concat\(calendarReminders\(now\)\)/.test(ph), "the reminders snapshot includes Calendar");
-  assert.ok(/prefs\(\)\.calendar && appState && appState\.calendar === "granted"\) return \[\]/.test(ph), "skipped when the phone's Calendar rings them");
+  assert.ok(!/appState\.calendar === "granted"\) return \[\]/.test(ph), "not skipped when the events are copied to the phone");
+  assert.ok(/remind: null,/.test(ph), "the copies carry no Android reminder (no double ring)");
   assert.ok(/localStorage\.getItem\("oros-calendar-data"\)/.test(ph.slice(ph.indexOf("function pushReminders"))), "a Calendar change re-sends the reminders");
   const wp = fs.readFileSync(path.join(__dirname, "..", "webpush.js"), "utf8");
   assert.ok(/root\.orosPush = \{\s*calendarRows: calendarRows/.test(wp), "webpush.js shares calendarRows");

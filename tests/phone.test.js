@@ -73,7 +73,7 @@ test("calendar: all-day, multi-day, timed and overnight events", () => {
   assert.equal(c.dtstart, Date.parse("2026-10-20T18:30:00+03:00"));
   assert.equal(c.dtend, Date.parse("2026-10-20T20:00:00+03:00"));
   assert.equal(c.tz, "Europe/Athens");
-  assert.equal(c.remind, 15);
+  assert.equal(c.remind, null);                                // orOS rings it, not the phone Calendar
   assert.equal(c.loc, "Hall");
   assert.equal(d.dtend, Date.parse("2026-10-21T02:00:00+03:00"));
   assert.equal(e.dtend, e.dtstart);                             // no end: zero length
@@ -174,6 +174,16 @@ test("phone → orOS: new, edited and deleted events (v2)", () => {
   assert.equal(trip.remindMin, null);
   assert.equal(res.blob.events.length, 2);
   assert.equal(blob.events.length, 2, "input untouched");
+});
+
+test("phone → orOS: an edit on the phone keeps orOS's reminder (the copy carries none)", () => {
+  const blob = { events: [{ id: "e1", date: "2026-10-14", start: "10:00", end: "11:00", title: "A", labelId: null, recur: null, remindMin: 30, mtime: 1 }] };
+  const at = (h, m) => new Date(2026, 9, 14, h, m).getTime();
+  const kept = P.applyCalendarChanges(blob, [{ ref: "r1", op: "upsert", id: "e1", title: "B", allDay: false, dtstart: at(10, 0), dtend: at(11, 0), remind: -1 }], 9);
+  assert.equal(kept.blob.events[0].remindMin, 30);
+  assert.equal(kept.blob.events[0].title, "B");
+  const added = P.applyCalendarChanges(blob, [{ ref: "r1", op: "upsert", id: "e1", title: "A", allDay: false, dtstart: at(10, 0), dtend: at(11, 0), remind: 5 }], 9);
+  assert.equal(added.blob.events[0].remindMin, 5);
 });
 
 test("phone → orOS: series edits, occurrences and RRULE round trip (v2)", () => {
