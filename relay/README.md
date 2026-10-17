@@ -26,6 +26,7 @@ Mail app (browser) ──HTTPS/JSON──▶ relay (Worker) ──IMAP over TLS�
 | `newsletter.js` | Newsletter's public sign-up form and one-click unsubscribe, kept in D1 until the list's orOS pulls them (see below) |
 | `crmform.js` | CRM's public contact form (`/crm/f/<k>`) and op `crmf`, kept in the same D1 until the user's CRM picks the messages up (see below) |
 | `share.js` | "Send to someone" links with an expiry: op `shr` and `/s/<id>/<i>`, encrypted pieces kept in their own D1 until they expire or are revoked (see below) |
+| `oasa.js` | Maps' `oasa` operation: live bus arrivals at Athens stops from OASA Telematics, which sends no CORS headers; fixed host, exact `act` allowlist, digit-only stop codes, 64 KB / 8 s, JSON only, 15 s shared cache (see below) |
 | `remote.js` | Studio Remote's meeting rooms: a Durable Object that joins two WebSockets (see below) |
 | `push.js` | Notifications with orOS closed (op `push`): one Durable Object per device holding its encrypted reminders, sent by Web Push at their time (see below) |
 | `dav.js` | Sync through WebDAV: `/dav` passes one WebDAV request to the user's own server when that server sends no CORS headers (see below) |
@@ -678,3 +679,18 @@ npx wrangler dev        # http://127.0.0.1:8787
 Add `http://localhost:<port>` of your local orOS to `ALLOWED_ORIGINS`
 first. Mail accepts `http://127.0.0.1:…` and `http://localhost:…` as a
 relay address for this purpose only.
+
+## Maps: live bus arrivals in Athens (op `oasa`)
+
+`POST /v1 { op: "oasa", act, p1 }` with `act` one of `getStopArrivals`,
+`getRoutesForStop`, `getStopNameAndXY` and `p1` an OASA stop code
+(`^\d{1,10}$`). The relay builds `https://telematics.oasa.gr/api/?act=<act>&p1=<p1>`
+itself, GETs it without cookies and without following redirects
+(a 3xx is an error), with an 8 s timeout, reads at most 64 KB and
+returns the parsed JSON (`null` when no bus is coming). Errors are
+fixed codes: `upstream`, `timeout`, `too-big`, `bad-request`; the
+upstream text is never passed on and nothing is logged. Answers sit
+in `caches.default` for 15 s per URL. OASA answers requests from
+Greece only, so this works when the request reaches Cloudflare's
+Athens location (a US location times out; checked 2026-10-17). Code:
+`oasa.js`; tests: `tests/oasa-relay.test.js`.
