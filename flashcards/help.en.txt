@@ -51,6 +51,13 @@ New cards come one per day for each note, so the two cards of a reversed note ap
 ### The study day
 A study day starts at 04:00, so studying after midnight still counts for the day before. You can change the hour with the settings button at the top.
 
+## Import from Anki and other apps
+`Import` (on the list of decks) brings in cards from a file:
+- **Anki decks** (`.apkg`, and whole collections `.colpkg`), old and new Anki versions. Decks, tags, pictures and sounds come along. Cloze notes stay fill-in-the-gap cards, and "Basic and reversed" stays reversed.
+- **Your Anki study history**: tick `Bring my study history`, and each card carries on from where Anki left it. Suspended cards stay suspended.
+- **Text files** (`.csv`, `.tsv`, `.txt`), for example Anki's "Notes in plain text" export or a Quizlet export: one card per line. Choose which column is the front, the back and the tags, the card type and the deck. A front with `{{c1::…}}` becomes a fill-in-the-gap card.
+Importing the same Anki deck again adds only what is new. Nothing in the file is ever run: card styles and scripts are left out, and the text keeps bold, italic and lists.
+
 ## Browse all cards
 `Browse` at the top lists every card, one row per card. Narrow the list with the search box, a deck, a tag or a state (new, learning, due today, review later, hidden, suspended). Tick cards (or the box at the top for all of them) to:
 - `Move` their notes to another deck,
@@ -78,6 +85,5 @@ Tap a row to edit the card.
 - The menu's search box finds your decks and cards by their words. Choosing one opens it in Flashcards.
 
 ## Limits
-- Importing Anki decks comes in a later version.
 - Recording needs a microphone and your permission; how voices sound depends on your device.
 - Without the orOS disk (the app opened on its own, outside orOS) cards are not saved.

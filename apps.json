@@ -272,6 +272,7 @@
       "category": "Office",
       "icon": "scanpdf",
       "url": "scanpdf/",
+      "search": "search.js",
       "type": "internal"
     },
     {

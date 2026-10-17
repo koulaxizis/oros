@@ -56,6 +56,9 @@ jobs:
       - name: First-open size budget
         if: success() || failure()
         run: node .github/qa/budget.js --shard ${{ matrix.shard }}/4 --out qa-budget-${{ matrix.shard }}.json
+      - name: Every app with multitasking on (experimental switch)
+        if: success() || failure()
+        run: node .github/qa/multitask.js --shard ${{ matrix.shard }}/4 --out qa-mt-${{ matrix.shard }}.json
       - name: Precache size budget
         if: matrix.shard == 1 && (success() || failure())
         env:

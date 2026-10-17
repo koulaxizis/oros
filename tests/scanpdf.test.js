@@ -125,10 +125,10 @@ test("names: clean, base, output parts, unique, .pdf added once", () => {
 });
 
 test("prefs: defaults and unknown values", () => {
-  assert.deepEqual(C.readPrefs(null), { size: "a4", orient: "auto", margin: "small", dest: "device", cmp: "off" });
-  assert.deepEqual(C.readPrefs({ size: "fit", orient: "landscape", margin: "none", dest: "files", cmp: "medium", x: 1 }),
-    { size: "fit", orient: "landscape", margin: "none", dest: "files", cmp: "medium" });
-  assert.deepEqual(C.readPrefs({ size: "a3", orient: 9, margin: "<b>", dest: "cloud", cmp: "max" }), C.readPrefs(null));
+  assert.deepEqual(C.readPrefs(null), { size: "a4", orient: "auto", margin: "small", dest: "device", cmp: "off", ocr: "ell+eng", read: "auto" });
+  assert.deepEqual(C.readPrefs({ size: "fit", orient: "landscape", margin: "none", dest: "files", cmp: "medium", ocr: "eng", read: "on", x: 1 }),
+    { size: "fit", orient: "landscape", margin: "none", dest: "files", cmp: "medium", ocr: "eng", read: "on" });
+  assert.deepEqual(C.readPrefs({ size: "a3", orient: 9, margin: "<b>", dest: "cloud", cmp: "max", ocr: "fra", read: 1 }), C.readPrefs(null));
 });
 
 // ---------- core: picture pages ----------

@@ -1,5 +1,5 @@
 # Scanner & PDF
-Scan paper pages with the camera, put PDFs together, take them apart and set their pages in order, sign them, number their pages, make them smaller, and make a PDF from pictures. Everything happens on your device: nothing is uploaded, and your own files are never changed. Making scanned pages searchable comes in a later version.
+Scan paper pages with the camera, put PDFs together, take them apart and set their pages in order, sign them, number their pages, make them smaller, read the text of scanned pages so the PDF can be searched, and make a PDF from pictures. Everything happens on your device: nothing is uploaded, and your own files are never changed.
 
 ## Getting started
 1. Drop PDFs or pictures on the app, or press `Add PDFs or pictures`.
@@ -89,7 +89,19 @@ The picture is placed in the middle, as large as fits. The app remembers these c
 ## Making a PDF smaller
 `Make it smaller` in the save window shrinks a PDF for email or upload forms:
 - `A little (sharpest)`, `Medium` or `A lot (for email)`: the more it shrinks, the softer the pages look.
-Every page becomes a picture, so its text can no longer be selected or searched. Scanned pages and photos shrink the most. When the result would not be smaller (a PDF of plain text often is not), the PDF is saved as it was and the app tells you. Your choice is remembered on this device.
+Every page becomes a picture, so its own text can no longer be selected. With `Make it searchable` ticked, the text is read first and kept under the pictures, so the smaller PDF can still be searched. Scanned pages and photos shrink the most. When the result would not be smaller (a PDF of plain text often is not), the PDF is saved as it was and the app tells you. Your choice is remembered on this device.
+
+## Reading text: searchable PDFs
+A scanned page or a picture is only a picture of words: you can't search it or copy from it. The app can read the words on the device and put them under each page as invisible text, the way office scanners do.
+- `Read text` at the bottom reads the pages and shows their text, page by page. Choose the language (`Greek and English`, `Greek` or `English`) and, when pages are selected, whether to read only those.
+- `Copy the text` puts it on the clipboard; `Send to an app` hands it to Notes, Writer or another orOS app.
+- `Make it searchable` in the save window reads what is not read yet and puts the text under each page. It is ticked by itself when the list has scanned pages or pages already read; the app remembers when you change it.
+- A page that was read shows a small T next to its number.
+Reading takes a few seconds a page. A bar shows how far it got; `Stop` (or [[Esc]]) ends it and keeps the pages read so far. Pages of a PDF that already has text are not read again: their own text is used.
+The first time, the text recognition engine (Tesseract, about 7 MB with Greek and English) is downloaded from orOS's own site; after that it works offline. The pictures never leave your device. Recognition is good on clean, straight, well-lit pages and weaker on handwriting, small print or photos taken at an angle, so check what matters.
+
+## Finding saved PDFs in orOS search
+PDFs you save into Files › PDF can be found in the orOS search by their name and by the text read from them. Choosing one opens it here. The list stays on this device (up to 100 PDFs) and is never synced; a PDF you delete or move in Files drops out. `Forget them` in `Options` empties it.
 
 ## From Files
 In Files, select one or more PDFs, or several pictures, and choose `Open in Scanner & PDF` in the menu or in the selection bar. The app opens with their pages, in the order of the selection.
@@ -109,9 +121,10 @@ In the page editor:
 In the scanner:
 - [[Tab]] goes through the buttons; on a corner, [[Left]], [[Right]], [[Up]] and [[Down]] move it ([[Shift]] for bigger steps).
 - [[Esc]] steps back, and on the camera leaves the scanner.
+While text is read, [[Esc]] stops it.
 
 ## Privacy and sync
-Everything happens on your device; no file is sent anywhere. The app keeps no data of its own and has nothing to sync: PDFs you save into Files are synced like the rest of Files when Vault Drive is on. Only your choices (picture pages, where to save, how much smaller, Auto in the scanner) and the signatures you keep are kept, on this device. Signatures are never synced, on purpose: they stay on the device where you made them.
+Everything happens on your device; no file is sent anywhere. The app keeps no data of its own and has nothing to sync: PDFs you save into Files are synced like the rest of Files when Vault Drive is on. Only your choices (picture pages, where to save, how much smaller, Auto in the scanner, the reading language, Make it searchable), the list of saved PDFs for search and the signatures you keep are kept, on this device. Signatures are never synced, on purpose: they stay on the device where you made them.
 
 ## Limits
 - PDFs locked with a password can't be changed: their pages can't be copied without it.

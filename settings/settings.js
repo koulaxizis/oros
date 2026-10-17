@@ -1668,6 +1668,17 @@
       host.appendChild(c3);
     }
 
+    // Multitasking: an experiment, off by default, this device only.
+    if (s.multitask) {
+      var mtc = card(t("mt.title"), "multitask");
+      var h3 = mtc.querySelector("h3");
+      if (h3) h3.parentNode.insertBefore(el("span", "scope badge-exp", t("mt.badge")), h3.nextSibling);
+      mtc.appendChild(row(t("mt.on"), switchBtn(!!s.multitask.on, "multitask", function (v) { set("multitask", v); }, t("mt.on")),
+        { hint: t("mt.hint", { n: s.multitask.slots }) }));
+      if (s.multitask.on && s.multitask.open) mtc.appendChild(el("p", "hint", t("mt.open", { n: s.multitask.open })));
+      host.appendChild(mtc);
+    }
+
     var c4 = card(t("x.reset"));
     c4.classList.add("danger-card");
     c4.appendChild(el("p", "hint", t("x.reset.hint")));

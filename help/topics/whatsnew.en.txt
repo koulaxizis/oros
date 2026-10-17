@@ -1,6 +1,15 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.01.00
+- Multitasking (experimental, off by default): turn it on in Settings › System and apps you leave stay open in the background, back where you left them.
+
+## Version 3.00.00
+- Flashcards: Import cards brings in Anki decks (.apkg, .colpkg) with pictures, sounds and your study history, and CSV/TSV/TXT files such as Quizlet exports.
+
+## Version 2.99.00
+- Scanner & PDF: make scans searchable. Read text reads the words on scanned pages and pictures (Greek and English, on your device) and shows them to copy or send to Notes or Writer. Saved PDFs get the text as an invisible layer, so you can search and copy in any PDF reader, even after making them smaller. PDFs you save into Files now turn up in orOS search by their text.
+
 ## Version 2.98.01
 - Behind the scenes: groundwork for an experimental multitasking mode. Nothing changes for you yet.
 
