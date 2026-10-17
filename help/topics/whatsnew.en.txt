@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.78.01
+- orOS Drive on the phone: a file that could not be saved to orOS now shows a notification, and file pickers stay light until you sign in to orOS Drive.
+
 ## Version 2.78.00
 - Send to someone: send a whole calendar or a date range from Calendar › More. It opens month by month in any browser, as an .ics file or straight into orOS.
 
