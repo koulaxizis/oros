@@ -7748,3 +7748,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - 25 more tools, from Minimalism to Calculator, are now in German: packs in `i18n/de/`, inline texts moved into {en, el} tables, and each `index.html` loads `../i18n.js` before its own scripts. English still fills any missing line.
 - Files: `i18n/de/**`, the 25 tool folders (index.html + scripts, including Today's `agg.js` and `host.js`), `.github/i18n/inline-baseline.json`, `i18n/apps.json`.
   - Tests: 4786/4786; Chromium 360 de / el. Not tested: a German native reader's review, real phone, Safari.
+
+### 2026-10-17 — Languages L8b: 13 more apps in German (#526) — 3.17.00
+- 13 more apps are now in German, among them Weather, Library, Scanner & PDF, QR and Bookmarks: packs in `i18n/de/`, inline texts moved into {en, el} tables, and each page loads `../i18n.js` before its own scripts. English still fills any missing line.
+- Files: `i18n/de/**`, the 13 app folders (index.html + scripts, `share/index.html`, `quote/accept.html`), `.github/i18n/inline-baseline.json`, `i18n/apps.json`.
+  - Tests: 4786/4786; Chromium 360 de / el. Not tested: a German native reader's review, real phone, Safari.
