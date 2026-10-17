@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "2.67.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "2.68.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -5625,6 +5625,9 @@
         { name: "Funkwhale", url: "https://www.funkwhale.audio/",
           by: "The Funkwhale collective", lic: { en: "AGPL-3.0 (server); public pods or your own", el: "AGPL-3.0 (server)· δημόσια pods ή το δικό σου" },
           en: "Federated music libraries (Music)", el: "Ομοσπονδιακές μουσικές βιβλιοθήκες (Μουσική)" },
+        { name: "LRCLIB", url: "https://lrclib.net/",
+          by: "The LRCLIB project and its contributors", lic: { en: "Free API, no key; lyrics are their writers' works", el: "Δωρεάν API χωρίς κλειδί· οι στίχοι ανήκουν στους δημιουργούς τους" },
+          en: "Song lyrics, only when you ask (Music)", el: "Στίχοι τραγουδιών, μόνο όταν το ζητήσεις (Μουσική)" },
         { name: "iptv-org", url: "https://github.com/iptv-org/iptv",
           by: "iptv-org contributors", lic: "Unlicense (public domain)",
           en: "Channel directory (Television)", el: "Κατάλογος καναλιών (Τηλεόραση)" },
