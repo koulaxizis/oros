@@ -56,6 +56,7 @@
       "custom.badge":        "✦",
       "btn.use":             "Use",
       "btn.copy":            "Copy",
+      "btn.useTitle":        "Open this prompt in Writer as a new document",
       "btn.toggle":          "Variation",
       "btn.favorite":        "Star",
       "btn.unfavorite":      "Unstar",
@@ -132,6 +133,7 @@
       "custom.badge":        "✦",
       "btn.use":             "Χρήση",
       "btn.copy":            "Αντιγραφή",
+      "btn.useTitle":        "Άνοιγμα του θέματος στον Κειμενογράφο ως νέο έγγραφο",
       "btn.toggle":          "Παραλλαγή",
       "btn.favorite":         "Αγαπημένο",
       "btn.unfavorite":      "Αφαίρεση",
@@ -857,6 +859,17 @@
     else { state.completed[id]=freshStamp(now, id, TOMB_DONE); }   // fresh ts beats tombstone
     state.sm=now; save(); renderAll();
   }
+  // "Use": open the prompt in Writer as a new document (Writer's
+  // deep link { newDoc }, same as Typewriter's "Send to Writer").
+  // Outside the shell (standalone tab) there is no Writer to open,
+  // so it falls back to the clipboard.
+  function useInWriter(p, text){
+    var sh=null;
+    try{ if(window.parent!==window && typeof window.parent.__orosOpenAt==="function") sh=window.parent; }catch(e){}
+    if(!sh){ copyText(text); return; }
+    try{ sh.__orosOpenAt("writer", { newDoc: { title: catLabel(p.cat), text: text } }); }
+    catch(e){ copyText(text); }
+  }
   function copyText(text){
     if(navigator.clipboard){ navigator.clipboard.writeText(text).then(function(){ notifyTransient(t("saved.toast")); }); }
     else { var ta=document.createElement("textarea"); ta.value=text; document.body.appendChild(ta); ta.select(); try{ document.execCommand("copy"); notifyTransient(t("saved.toast")); }catch(e){} document.body.removeChild(ta);}
@@ -1044,7 +1057,10 @@
     var y=document.createElement("button");
     y.type="button"; y.className="prim danger"; y.textContent=t("custom.delete");
     y.addEventListener("click", function(){ dlg.close(); dlg.remove(); deleteCustom(id); });
-    dlg.appendChild(c); dlg.appendChild(y);
+    var row=document.createElement("div");
+    row.className="dlg-actions";
+    row.appendChild(c); row.appendChild(y);
+    dlg.appendChild(row);
     dlg.addEventListener("close", function(){ dlg.remove(); });   // Esc too
     document.body.appendChild(dlg);
     dlg.showModal();
@@ -1275,7 +1291,10 @@ document.body.appendChild(loader);
       useBtn.type="button";
       useBtn.className="primary";
       useBtn.textContent=t("btn.use");
-      useBtn.addEventListener("click", function(){ copyText(LANG==="el"? p.el : p.en); });
+      useBtn.title=t("btn.useTitle");
+      useBtn.addEventListener("click", function(){
+        useInWriter(p, (LANG==="el"? p.el : p.en)+(showVar? "\n\n"+varText : ""));
+      });
       acts.appendChild(useBtn);
 
       var copyBtn=document.createElement("button");
@@ -1513,7 +1532,10 @@ document.body.appendChild(loader);
     var y=document.createElement("button");
     y.type="button"; y.className="prim danger"; y.textContent=t("rst.btn");
     y.addEventListener("click", function(){ factoryReset(); });
-    settingsModal.appendChild(c); settingsModal.appendChild(y);
+    var row=document.createElement("div");
+    row.className="dlg-actions";
+    row.appendChild(c); row.appendChild(y);
+    settingsModal.appendChild(row);
     settingsModal.addEventListener("close", function(){ if(settingsModal){ settingsModal.remove(); settingsModal=null; } });   // Esc too (async event — buttons null it first)
     document.body.appendChild(settingsModal);
     settingsModal.showModal();

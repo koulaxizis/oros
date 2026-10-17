@@ -121,6 +121,7 @@ const STRINGS = {
     'tt.chars': 'Special characters',
     'tt.settings': 'Settings',
     'tt.ask': 'Ask the Assistant about the selected text',
+    'tt.sendApp': 'Send to an app (the selected text, or the whole document)',
     'ask.m.sum': 'Summarize', 'ask.m.rephrase': 'Rephrase', 'ask.m.fix': 'Fix spelling & grammar',
     'ask.m.other': 'Ask something else…', 'ask.empty': 'Write or select some text first',
     'ask.sum': 'Summarize this text from my document:',
@@ -312,6 +313,8 @@ const STRINGS = {
     'io.imported': 'Imported',
     'io.importfailed': 'Could not parse this file',
     'io.pickFolder': 'Open an unzipped .orosdoc folder…',
+    'io.gdocs': 'From Google Docs…',
+    'io.gdocsWait': 'Sign in to Google, then pick one document.',
     'io.newer': 'This file was made by a newer orOS. Update orOS to open it.',
     'io.dbConfirm': 'Merge this Writer backup? Its documents, templates and settings come back; documents that exist only here are kept.',
     'io.dbKept': 'Backup merged. {n} document(s) differed: the newer text is kept, the other copy is in Version history.',
@@ -470,6 +473,7 @@ const STRINGS = {
     'tt.chars': 'Ειδικοί χαρακτήρες',
     'tt.settings': 'Ρυθμίσεις',
     'tt.ask': 'Ρώτα τον Βοηθό για το επιλεγμένο κείμενο',
+    'tt.sendApp': 'Στείλε σε εφαρμογή (το επιλεγμένο κείμενο ή όλο το έγγραφο)',
     'ask.m.sum': 'Σύνοψη', 'ask.m.rephrase': 'Αναδιατύπωση', 'ask.m.fix': 'Διόρθωση ορθογραφίας και γραμματικής',
     'ask.m.other': 'Άλλη ερώτηση…', 'ask.empty': 'Γράψε ή επίλεξε πρώτα κείμενο',
     'ask.sum': 'Κάνε μια σύνοψη αυτού του κειμένου από το έγγραφό μου:',
@@ -661,6 +665,8 @@ const STRINGS = {
     'io.imported': 'Εισήχθη',
     'io.importfailed': 'Δεν ήταν δυνατή η ανάγνωση του αρχείου',
     'io.pickFolder': 'Άνοιγμα αποσυμπιεσμένου φακέλου .orosdoc…',
+    'io.gdocs': 'Από το Google Docs…',
+    'io.gdocsWait': 'Συνδέσου στη Google και διάλεξε ένα έγγραφο.',
     'io.newer': 'Το αρχείο φτιάχτηκε από νεότερο orOS. Ενημέρωσε το orOS για να το ανοίξεις.',
     'io.dbConfirm': 'Συγχώνευση αυτού του αντιγράφου ασφαλείας; Τα έγγραφα, τα πρότυπα και οι ρυθμίσεις του επανέρχονται· όσα έγγραφα υπάρχουν μόνο εδώ διατηρούνται.',
     'io.dbKept': 'Το αντίγραφο συγχωνεύτηκε. {n} έγγραφα διέφεραν: κρατήθηκε το νεότερο κείμενο και το άλλο αντίγραφο μπήκε στο Ιστορικό εκδόσεων.',
@@ -838,6 +844,7 @@ const ICONS = {
   close:  '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg>',
   plus:   '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 3v10M3 8h10"/></svg>',
   lorem:  '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 4.5h11"/><path d="M2.5 8h7"/><path d="M2.5 11.5h9"/></svg>',
+  sendApp: '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2h5v5"/><path d="M14 2L7.5 8.5"/><path d="M12 9.5V13a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3.5"/></svg>',
   ask:    '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1.8l1.4 3.6 3.6 1.4-3.6 1.4L8 11.8 6.6 8.2 3 6.8l3.6-1.4z"/><path d="M12.5 10.5l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6z"/></svg>',
   settings:'<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="2.2"/><path d="M8 1.8v1.8M8 12.4v1.8M2.7 8h1.8M11.5 8h1.8M4.2 4.2l1.3 1.3M10.5 10.5l1.3 1.3M11.8 4.2l-1.3 1.3M5.5 10.5l-1.3 1.3"/></svg>',
   docs:   '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4.5a1 1 0 0 1 1-1h3l1.5 1.5H13a1 1 0 0 1 1 1V12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1z"/></svg>',
@@ -2012,6 +2019,22 @@ function bindToolbar() {
     binds['btn-ask'] = () => openAskMenu(askBtn);
   }
 
+  // btn-send-app — "Send to an app" (shell send/, BR-SEND): only inside
+  // an orOS that has it; placed before btn-settings.
+  if (sendApi() && !document.getElementById('btn-send-app')) {
+    const sendBtn = document.createElement('button');
+    sendBtn.type = 'button';
+    sendBtn.id = 'btn-send-app';
+    sendBtn.className = 'tb-btn';
+    sendBtn.title = t('tt.sendApp');
+    sendBtn.setAttribute('aria-label', t('tt.sendApp'));
+    sendBtn.innerHTML = ICONS.sendApp;
+    if (setBtn.parentNode) setBtn.parentNode.insertBefore(sendBtn, setBtn);
+    else EL.toolbar.appendChild(sendBtn);
+    sendBtn.addEventListener('mousedown', e => e.preventDefault());   // keep the selection
+    binds['btn-send-app'] = () => sendToApp();
+  }
+
   Object.keys(binds).forEach(id => {
     const btn = document.getElementById(id);
     if (btn) btn.addEventListener('click', binds[id]);
@@ -3097,6 +3120,30 @@ function askSourceText() {
   }
   text = text.replace(/\r\n?/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
   return text.length > ASK_MAX ? text.slice(0, ASK_MAX) + '…' : text;
+}
+function sendApi() {
+  try { return window.parent !== window && window.parent.orosSend ? window.parent.orosSend : null; }
+  catch (e) { return null; }
+}
+const SEND_MAX = 200000;
+function sendToApp() {
+  const api = sendApi();
+  if (!api) return;
+  const sel = window.getSelection();
+  let text = '';
+  if (sel && sel.rangeCount && !sel.getRangeAt(0).collapsed &&
+      EL.editor.contains(sel.getRangeAt(0).commonAncestorContainer)) {
+    text = sel.toString();
+  } else if (lastEditorRange && !lastEditorRange.collapsed) {
+    text = lastEditorRange.toString();
+  } else {
+    text = EL.editor.innerText || '';
+  }
+  text = text.replace(/\r\n?/g, '\n').replace(/\n{3,}/g, '\n\n').trim().slice(0, SEND_MAX);
+  if (!text) { showToast(t('ask.empty')); return; }
+  const doc = activeDoc();
+  const title = doc && typeof doc.title === 'string' ? doc.title : '';
+  api.open({ kind: 'text', data: { title: title, text: text } });
 }
 function askAssistant(kind) {
   const text = askSourceText();
@@ -7297,6 +7344,31 @@ function openImportDialog(prefile) {
   folder.textContent = t('io.pickFolder');
   folder.addEventListener('click', ioPickFolder);
   if (window.OrosBundle) body.appendChild(folder);
+
+  // One Google Doc (or a .docx / .odt in Drive) straight in
+  // (../google-import.js + ../files/gmedia.js). Google's picker is a
+  // layer of this page, so this dialog closes first and the picked
+  // file comes back through the same dialog, like a dropped file.
+  const GM = window.OrosGoogleMedia;
+  if (GM && GM.docReady()) {
+    const gd = document.createElement('button');
+    gd.type = 'button';
+    gd.className = 'io-link-btn';
+    gd.textContent = t('io.gdocs');
+    gd.addEventListener('click', () => {
+      const lang = window.orosLang === 'el' ? 'el' : 'en';
+      const job = GM.pickDoc('document', lang, { picking: () => { if (dlg.open) dlg.close(); } });
+      showToast(t('io.gdocsWait'));
+      job.then(file => {
+        if (dlg.open) dlg.close();
+        if (file) openImportDialog(file);
+      }, e => {
+        const msg = GM.docMessage(e, lang);
+        if (msg) showToast(msg);
+      });
+    });
+    body.appendChild(gd);
+  }
 
   const busy = document.createElement('div');
   busy.className = 'io-busy';

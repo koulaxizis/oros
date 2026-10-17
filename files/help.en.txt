@@ -94,6 +94,7 @@ The orOS disk is the encrypted place: with orOS sync on, every file on it is enc
 - Opening a file downloads it, and from then on it stays up to date here. Opening it from another place in Files works the same way once it is downloaded.
 - `Keep on this device` downloads the whole folder and keeps it. `Free up space` removes the downloaded copies of a folder from this device; nothing is deleted from your other devices or from the cloud. Files you changed here and haven't synced yet always stay.
 - Deleting a downloaded file in Files deletes it everywhere, including on the computer it came from.
+- In the orOS Android app, the phone button opens orOS Drive on the phone: pick folders of the phone and they are mirrored the same way, in the background every 15 minutes (on Wi-Fi only, unless you change it).
 
 ## Sync and backup
 The disk lives in this browser. When [orOS sync](help:t/sync) is connected and unlocked, Vault Drive syncs it file by file, whether Files is open or not. Names and contents are encrypted before they leave your device.
