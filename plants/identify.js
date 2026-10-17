@@ -10,7 +10,7 @@
 // API (window.OrosPlantsIdentify, module.exports under Node):
 //   ENDPOINT, ATTRIBUTION, SITE
 //   keyOk(key) → bool (the shape of a Pl@ntNet key)
-//   url(key, lang) → the request URL (lang "el" / "en"; key encoded)
+//   url(key, lang) → the request URL (lang "el" / "de" / "en"; key encoded)
 //   results(json, max) → [{ sci, author, common: [..], family, genus, score }]
 //     (score 0–1, best first, at most max (default 5), junk dropped)
 //   remaining(json) → number | null (identifications left today)
@@ -34,7 +34,9 @@
   function keyOk(key) { return typeof key === "string" && KEY_RE.test(key.trim()); }
 
   function url(key, lang) {
-    var l = lang === "el" ? "el" : "en";
+    // Pl@ntNet knows Greek and German common names too; any other
+    // language asks in English.
+    var l = lang === "el" || lang === "de" ? lang : "en";
     return ENDPOINT + "?api-key=" + encodeURIComponent(String(key || "").trim()) +
       "&lang=" + l + "&nb-results=5&include-related-images=false&no-reject=false";
   }
