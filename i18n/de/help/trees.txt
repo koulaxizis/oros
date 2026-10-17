@@ -1,0 +1,47 @@
+# Baumzeichner
+Bewege ein paar Regler, und auf dem Bildschirm wächst ein Baum, wie von Hand gezeichnet. Jeder Startwert ergibt einen etwas anderen Baum, und derselbe Startwert mit denselben Einstellungen ergibt immer denselben.
+
+## Erste Schritte
+Beim Öffnen der App steht schon ein Baum da. Tippe oder klicke auf `Neuer Baum` (oder auf den Würfel, `Neuer Baum (R)`) für einen anderen Startwert und sieh ihm beim Wachsen zu.
+- `Startwert` ist ein beliebiges Wort oder eine Zahl. Gib deinen Namen ein, und du bekommst deinen eigenen Baum.
+- `Einstellungen ausblenden` klappt die Einstellungen weg, damit der Baum mehr Platz hat; `Einstellungen` holt sie zurück. Auf dem Handy bleibt der Baum oben, während du durch die Einstellungen scrollst.
+
+## Den Baum formen
+- `Baumart`: `Eiche`, `Weide`, `Zypresse`, `Olivenbaum`, `Bonsai` oder `Wild`. Die Wahl stellt auch die Regler passend ein.
+- `Jahreszeit`: Blüten im `Frühling`, volles Laub im `Sommer`, orange Blätter, die im `Herbst` fallen, kahle Äste mit Schnee im `Winter`. Zypresse, Olivenbaum und Bonsai behalten ihr Laub das ganze Jahr.
+- `Äste` legt fest, wie oft sich die Äste teilen, von 4 bis 11.
+- `Winkel` legt fest, wie weit sich die Äste öffnen.
+- `Zufall` reicht von ordentlich und gleichmäßig bis wild.
+- `Blätter` legt fest, wie voll die Krone ist. Bei 0 ist der Baum kahl.
+- `Wind` biegt den Baum nach links oder rechts. Ist `Äste bewegen sich im Wind` angehakt, wiegen sich die Äste auch sanft. Sie bleiben still, wenn dein System weniger Bewegung wünscht.
+- `Boden`: `Keiner`, `Gras` oder `Hügel`.
+
+## Zeichenstile
+`Gezeichnet mit` legt fest, wie der Baum aussieht: `Bleistift` auf Papier, schwarze `Tusche`, `Kreide` auf einer Tafel oder `Farbe`, mit einem Himmel, der sich mit der Jahreszeit ändert.
+
+## Meine Bäume
+- Gib neben `Baum speichern` einen Namen ein und speichere den Baum; ohne Namen nimmt er den Startwert. Änderungen an einem geöffneten gespeicherten Baum, auch am Namen, werden laufend gespeichert.
+- Tippe oben links auf den Bäume-Knopf, um `Meine Bäume` zu zeigen. Tippe auf einen Baum, um ihn zu öffnen, nutze den Kopieren-Knopf, um ihn zu duplizieren, oder das ×, um ihn zu löschen; `Rückgängig` holt ihn zurück.
+- Gespeichert werden nur die Einstellungen, kein Bild, daher braucht ein gespeicherter Baum fast keinen Platz.
+
+## Herunterladen und Hintergrundbild
+- Wähle ein Format (`Hochformat`, `Quadrat` oder `Querformat`) und tippe auf `PNG` für ein großes Bild oder `SVG` für saubere Linien, die du in jeder Größe drucken oder in einem Zeichenprogramm öffnen kannst.
+- `Bild kopieren` legt das Bild in die Zwischenablage, wo dein Browser das erlaubt.
+- `Als Hintergrundbild` macht den Baum zu deinem orOS-Desktop-Hintergrund. Er wird passend für jeden deiner Bildschirme gezeichnet, in Farben, die zu Stil und Jahreszeit passen. Palette und mehr änderst du im [Hintergrundbild-Generator](app:wallpaper) unter dem Stil `Baum`.
+
+## Synchronisierung und Sicherung
+- `Meine Bäume` folgen dir über die orOS-Synchronisierung auf alle deine Geräte.
+- Der Baum auf dem Bildschirm, die Wind-Einstellung, das Bildformat und ob die Einstellungen offen sind, bleiben auf diesem Gerät.
+
+## Tastenkürzel
+- [[R]]: ein neuer Baum (nicht beim Tippen in einem Feld).
+- Pfeiltasten auf einer Reihe von Auswahlen oder einem Regler ändern sie.
+- [[Enter]] im Namensfeld speichert den Baum.
+
+## Tipps
+> Probier denselben Startwert in allen vier Jahreszeiten: Es ist derselbe Baum durch das Jahr.
+
+## Grenzen
+- Bis zu 200 gespeicherte Bäume.
+- Sehr große Bäume werden auf ein paar tausend Äste und Blätter begrenzt, damit sie schnell gezeichnet werden.
+- Wird derselbe Baum auf zwei Geräten geändert, bevor sie synchronisieren, gewinnt die neueste Änderung.
