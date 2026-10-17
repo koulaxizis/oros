@@ -2358,6 +2358,20 @@ Decided by Chris 2026-10-16 23:35 (thread "Συνεργασία εφαρμογώ
 14. Guide pages `<app>/help.en.txt` + `help.el.txt` (R38), precached in `sw.js`; remove the id from `PENDING` in `tests/help.test.js` if listed.
 15. Direct-link snippet (DL-1, Part II "Direct app links") as the first script in `<app>/index.html`, with the app's own id; `tests/direct-link.test.js` checks it.
 
+### App Kit: community apps (2026-10-17, Chris approved strategy item 11)
+
+Outside contributors build apps through the kit, and every app joins only as code in this repository through a reviewed PR. Nothing loads apps from a URL at run time, so the "no execution of imported code" rule holds. Chris decides what goes in (`CONTRIBUTING.md`).
+- `docs/app-kit/README.md` (quick start) + `docs/app-kit/contract.md`: this Checklist B, written for someone who has not read the Bible, one chapter per rule with the check that enforces it. **Any change to Checklist B updates `contract.md` in the same PR.** `tests/app-kit.test.js` fails when a Checklist B step has no `Checklist B <n>` chapter.
+- `docs/app-kit/template/`: a small synced list app (`core.js` pure model with a symmetric merge and tombstones, `app.js`, `search.js`, help EN/EL, `myapp.test.js`). It is not served or precached, and the stamp/guard scan sees root folders only.
+- `node .github/app-kit/new-app.js <id> "<EN>" "<EL>"` copies the template to `<id>/` + `tests/<id>.test.js`. It prints the `apps.json` / `sw.js` / `ICONS` / `translations.js` lines and never writes the shared files.
+- `node .github/app-kit/check-app.js <id> [--no-tests] [--no-browser]` runs:
+  - static checks: registration, precache of everything the page loads, DL-1, G3, R38 outline, 5-argument `registerSlice`, a read-only search provider, no `eval` / `new Function` / remote code, no Google host outside `GOOGLE_APPROVED` (the approved one-time imports, Gemini, Mail look-alikes);
+  - `stamp-assets.js` with `OROS_CHECK=1`;
+  - the help, direct-link, i18n, release-guards, deeplink-receivers, search* and `tests/<id>*` tests;
+  - the quality gate `.github/qa/smoke.js --only <id>` when Playwright is installed.
+  Every app on main passes the static part (tested).
+- Contributor PRs never touch `APP_VERSION`, the changelog or `CACHE_VERSION`. The maintainer adds them at merge, through the merge queue as usual.
+
 ### Credits register (third-party) [verified 2026-10-09, refreshed after #49]
 
 Where credits live: `CREDITS.md` (repo root, full table with copyright + licence links), Info modal → "Credits & licences / Ευχαριστίες & άδειες" (`CREDIT_GROUPS` + `wireCreditsSection()` in `shell.js`, collapsible `<details>`, DOM-built, fixed URLs only) and our own footer line (`wireOwnCredits()`): "Designed with <3 by Christos Koulaxizis. Assisted by Lumo. Audited by Claude." (EL translated). Licence texts shipped: `fonts/OFL.txt` (Nunito), `vendor/NotoSans-OFL.txt`, `passwords/THIRD-PARTY.txt`, `tests/vendor/jsQR.LICENSE`, the MIT notice in `atelier/library/icons.js`. orOS itself: MIT (`LICENSE`, Chris 2026-10-09); `README.md` states who builds orOS (Christos; Lumo assisted; Claude audits and writes PRs, Christos merges). The old `sc.info.extsvc*` rows stay as the short "External services" summary.
@@ -7342,3 +7356,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Maps: public transport says when an area's timetables are out of date (Athens at Transitous for now), with a coverage text.
 - Files: `maps/transit-core.js`, `maps/transit.js`, Bible.
   - Tests: full suite green; Chromium transit E2E incl. 360 EL. Not tested: a real phone, live Transitous from the cloud container.
+
+### 2026-10-17 — App Kit K1: guide, contract, template and checks for community apps (#462) — docs + CI only, no APP_VERSION
+- App Kit K1: `docs/app-kit/` guide + contract, template app, `.github/app-kit/new-app.js` and `check-app.js` (local check with the CI guards), CONTRIBUTING.md (Chris decides what goes in).
+- Files: `docs/app-kit/**`, `.github/app-kit/{new-app,check-app}.js`, `.github/workflows/tests.yml`, CONTRIBUTING.md, README.md, `tests/app-kit.test.js`, Bible.
+  - Tests: full suite green; a scaffolded app checked in the Chromium shell 360 EL / 1280 EN. Nothing shipped to users.
