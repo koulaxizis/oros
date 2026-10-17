@@ -1532,6 +1532,8 @@ var HELP = {
     ISNONTEXT: "Αν η τιμή δεν είναι κείμενο", TRUE: "Η τιμή TRUE (αληθές)", FALSE: "Η τιμή FALSE (ψευδές)"
   }
 };
+/* a pack language (i18n.js, browser only): HELP[code] = English + the pack */
+if (typeof window !== "undefined" && window.orosI18n) window.orosI18n.table(HELP, "spreadsheet");
 /* argument hints shown next to the name */
 var SIG = {
   SUMIF: "range; criteria; [sum_range]", SUMIFS: "sum_range; range1; criteria1; …", COUNTIF: "range; criteria",

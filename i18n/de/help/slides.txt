@@ -1,0 +1,76 @@
+# Folien
+Erstelle Präsentationen mit Designs und fertigen Layouts, schreib sie als Gliederung und führe sie im Vollbild mit deinen Notizen vor.
+
+## Erste Schritte
+Tippe oder klicke auf `Neue Präsentation`. Wähle ein Design für eine leere Präsentation oder eine der fertigen Vorlagen (`Projektstand`, `Bericht`, `Unterricht`, `Pitch`, `Fotoalbum`, `Veranstaltung`). Wähle zuerst `16:9 breit` oder `4:3`; du kannst das später unter `Design und Größe…` ändern, ohne etwas zu verlieren.
+
+Andere orOS-Apps können eine Gliederung hierher senden. Folien zeigt dann `Neue Präsentation aus einer Gliederung` mit dem Titel und der Zahl der Folien; wähle ein Design, um sie zu erstellen. Vorher wird nichts erstellt.
+
+## Folien und Layouts
+- Die Leiste zeigt alle Folien. Tippe auf eine, um sie zu bearbeiten; `+` fügt eine Folie mit dem gewählten Layout hinzu.
+- Klicke mit der rechten Maustaste auf eine Folie oder halte sie auf dem Handy gedrückt, für `Folie duplizieren`, `Layout…`, `In der Vorführung ausblenden`, `Nach vorne`, `Nach hinten` und `Folie löschen`. Zieh Folien in der Leiste, um ihre Reihenfolge zu ändern.
+- Ein Layout hat Platzhalter wie `Titel hinzufügen` und `Bild hinzufügen`. Wechselst du das Layout, bleiben Text und Bilder erhalten.
+
+## Text, Bilder und Formen
+- Doppelklicke auf ein Textfeld oder tippe auf ein ausgewähltes, um darin zu schreiben. Die kleine Leiste hat Fett, Kursiv, Unterstrichen, Aufzählung, Nummerierung, Einzug, Farbe und `Fertig`. [[Tab]] und [[Shift+Tab]] ändern die Aufzählungsebene.
+- Text, der nicht passt, wird von selbst kleiner (`Text verkleinern, damit er passt`); ein roter Rahmen heißt, dass er immer noch nicht passt.
+- `Bild` fügt ein Foto von diesem Gerät oder aus Dateien hinzu. Unter `Format` kannst du es füllen oder einpassen, zoomen, in seinem Rahmen verschieben und eine Beschreibung hinzufügen.
+- Rechtecke, Ellipsen und Linien nehmen Designfarben an, ein neues Design färbt sie also mit um.
+- Zieh zum Verschieben, nutze die Griffe zum Skalieren oder Drehen. Hilfslinien helfen beim Ausrichten.
+
+## Tabellen und Diagramme
+- `Tabelle` fügt eine Tabelle hinzu und öffnet `Tabelle bearbeiten`: Schreib in die Zellen, [[Enter]] geht eine Zeile nach unten, [[Shift+Enter]] beginnt eine neue Zeile in der Zelle, und `+ Zeile`, `− Zeile`, `+ Spalte`, `− Spalte` ändern ihre Größe (bis zu 20 Zeilen und 10 Spalten). Unter `Format` wählst du `Kopfzeile`, `Gebänderte Zeilen`, die Kopfzeilenfarbe, die Schrift, die Größe, die Textfarbe und die `Linien` (alle, nur Zeilen oder keine). Ist eine Zelle zu voll, wird der Text von selbst kleiner.
+- `Diagramm` fügt ein Diagramm hinzu und öffnet `Diagramm bearbeiten`: Säulen, Balken, Linie, Kreis, Ring oder Punkte, ein Titel, die Legende und ein kleines Raster für die Daten. Die erste Zeile enthält die Namen der Reihen, die erste Spalte die Kategorien; Zahlen dürfen als `1.234,5` oder `1,234.5` geschrieben sein. Das Diagramm zeichnet dieselbe Engine wie die Diagramme in der App Tabelle, in den Farben des Designs.
+- Doppelklicke auf eine Tabelle oder ein Diagramm (oder tippe auf ein ausgewähltes), um es wieder zu bearbeiten.
+
+## Gruppen
+Wähle zwei oder mehr Objekte aus (zieh einen Rahmen um sie oder klicke mit [[Shift]]) und drück `Gruppieren` unter `Format` oder [[Ctrl+G]]. Eine Gruppe wird als Ganzes ausgewählt, verschoben, skaliert, ausgerichtet und animiert; `Gruppierung aufheben` oder [[Ctrl+Shift+G]] nimmt sie auseinander. Kopien einer Gruppe sind eine neue Gruppe.
+
+## Animationen
+- `Übergang` im Bereich der Folie: keiner, Überblenden, Hereinschieben, Schieben, Wischen oder Zoom, mit seiner `Dauer (s)`. `Auf alle Folien anwenden` übernimmt beides.
+- Wähle ein Objekt aus und gib ihm unter `Format` › `Animation` seinen `Eingang`: `Erscheinen`, `Einblenden`, `Hineinfliegen` (von unten, links, rechts oder oben) oder `Hineinzoomen`. `Start` ist `Beim Klicken`, `Mit vorheriger` oder `Nach vorheriger`; du kannst die `Dauer (s)` und eine `Verzögerung (s)` festlegen. Ein Textfeld kann `Aufzählungspunkte einzeln` hereinbringen.
+- Die kleinen Zahlen auf der Folie sind die Klicks. `Animationsreihenfolge` im Bereich der Folie listet alle Animationen auf; die Pfeile verschieben eine nach vorne oder hinten, und `Vorschau` spielt sie auf der Folie ab.
+- In der Vorführung bringt ein Klick, eine Pfeiltaste oder das Handy die nächste Animation; zurück zeigt die vorherige, und von der ersten Animation einer Folie aus kommt die vorherige Folie fertig aufgebaut zurück.
+- Wünscht dein Gerät weniger Bewegung (reduzierte Bewegung), erscheinen Übergänge und Animationen ohne Bewegung.
+
+## Drei Ansichten
+- `Folie`: eine Folie mit der Leiste und deinen `Notizen`.
+- `Sortierung`: alle Folien als Raster, zum Umsortieren, Ausblenden oder Löschen.
+- `Gliederung`: die ganze Präsentation als Text. Eine Zeile mit `#` am Anfang ist eine neue Folie, `- ` ist ein Aufzählungspunkt (zwei Leerzeichen pro Ebene), `1. ` ist nummeriert, `--` beginnt die zweite Spalte und `> ` ist eine Notiz.
+
+## Vorführen
+`Vorführen` startet die Vorführung im Vollbild. Nutze die Pfeiltasten, die Leertaste, einen Presenter oder tippe auf die Seiten des Bildschirms. [[B]] oder [[W]] schaltet den Bildschirm schwarz oder weiß, eine Zahl und [[Enter]] springen zu dieser Folie, [[L]] zeigt einen Laserpointer, [[N]] zeigt deine Notizen, [[Esc]] beendet die Vorführung. `Mit Referentenansicht vorführen` öffnet die Folien in einem zweiten Fenster für den Beamer, während du die nächste Folie (oder die nächste Animation), deine Notizen und einen Timer siehst.
+
+## Mit deinem Handy steuern
+Drück in der Vorführung `Handy` in der Leiste (oder in der Referentenansicht). Ein Code, ein QR-Code und ein Link erscheinen. Öffne auf dem Handy orOS › Folien und tippe auf dem Startbildschirm auf die Handy-Schaltfläche (`Handy-Fernbedienung`) oder scanne den QR-Code und gib den Code ein; drück auf dem vorführenden Gerät `Erlauben`. Das Handy hat dann große Schaltflächen `Weiter` und `Zurück`, `Schwarzer Bildschirm`, `Weißer Bildschirm` und `Erste Folie`, die Foliennummer, die restlichen Animationen, die Zeit und deine Notizen. Die beiden Geräte sprechen im selben WLAN direkt miteinander oder über das orOS-Relay mit Ende-zu-Ende-Verschlüsselung. Die Kopplung bleibt drei Tage bestehen, ein Neuladen verbindet also von selbst neu; `Trennen` auf dem Handy oder `Handy trennen` auf dem vorführenden Gerät beendet sie.
+
+## Synchronisierung und Sicherung
+Präsentationen werden mit der orOS-Synchronisierung synchronisiert. Bilder liegen einmal als Dateien auf der orOS-Disk und werden über Vault Drive synchronisiert. Wird derselbe Text auf zwei Geräten gleichzeitig geändert, bleibt die neuere Fassung, und die andere wird unter `Mehr` › `Wiederhergestellter Text` aufbewahrt. `Als Paket speichern (.orosslides)` erstellt eine Datei mit der Präsentation und ihren Bildern; `Datei öffnen` › `Eine Datei (.orosslides, .pptx, .odp, .md)…` öffnet sie als neue Präsentation. Das Paket ist eine offene ZIP-Datei: Entpackst du sie, findest du `content.json` (die Präsentation), `media` (ihre Bilder) und ein Vorschaubild. `Datei öffnen` › `Einen entpackten Paketordner…` holt so einen Ordner zurück, auch nachdem du darin ein Bild geändert hast. `PDF exportieren` und `PDF mit Notizen` erstellen PDFs; `Diese Folie als PNG speichern` speichert ein Bild einer Folie.
+
+## PowerPoint-Dateien
+- `Mehr` › `Als PowerPoint speichern (.pptx)` oder `Als PowerPoint speichern` im Menü einer Präsentation auf dem Startbildschirm erstellt eine Datei, die sich in PowerPoint, LibreOffice Impress, Google Präsentationen und Keynote öffnen lässt. Text bleibt bearbeitbar, mit Aufzählungen, Ebenen, Fett, Kursiv, Unterstrichen, Farben, Größen und Ausrichtung; Bilder behalten Zuschnitt und abgerundete Ecken; Rechtecke, Ellipsen und Linien, Tabellen, Gruppen, Hintergründe, Notizen, ausgeblendete Folien, Übergänge und Animationen kommen mit, und Diagramme gehen als Bilder mit. Titel und Textplatzhalter bleiben Platzhalter, und Designfarben bleiben Designfarben.
+- `Datei öffnen` auf dem Startbildschirm öffnet eine `.pptx` als neue Präsentation. Ihre Bilder werden auf der orOS-Disk gespeichert wie Bilder, die du selbst hinzufügst. Text behält Absätze und Formatierung, auch wenn er aus dem Folienlayout oder dem Master kommt; Tabellen bleiben Tabellen, Gruppen bleiben Gruppen (eine Ebene), Eingangsanimationen kommen mit (andere werden zu `Einblenden`), andere Formen werden zum nächstliegenden Rechteck oder zur Ellipse, und Folien in anderer Größe werden in 16:9 oder 4:3 eingepasst.
+- `Datei öffnen` › `Aus Google Präsentationen…` meldet dich bei Google an, lässt dich eine Präsentation in Google Drive auswählen (eine Google-Präsentation oder eine PPTX-, ODP- oder Markdown-Datei dort) und öffnet sie genauso als neue Präsentation. orOS sieht nur diese Datei, und die Anmeldung endet gleich danach.
+- Diagramme, SmartArt, Video, Ton und eingebettete Objekte werden nicht übernommen: Ein gestrichelter Rahmen mit ihrem Namen markiert die Stelle.
+
+## LibreOffice Impress und Markdown
+- `Datei öffnen` öffnet auch eine LibreOffice-Impress-Präsentation (`.odp` oder eine flache `.fodp`). Nutze in LibreOffice Datei › Speichern unter und behalte den Typ ODF-Präsentation. Folien, Titel, Textfelder mit ihren Listen und ihrer Formatierung, Bilder, Rechtecke, Ellipsen, Linien, Tabellen, Hintergründe, ausgeblendete Folien und Notizen kommen mit; Diagramme und eingebettete Objekte werden mit einem gestrichelten Rahmen markiert.
+- Auch Markdown-Präsentationen (`.md`) öffnen sich: Marp (Front Matter `marp: true`; in VS Code oder Marp CLI ist es die `.md`-Datei selbst), reveal.js-Markdown (die `.md`-Datei oder die reveal.js-Seite, die sie enthält) und einfaches Markdown mit `---` zwischen den Folien. Überschriften werden Folientitel, Listen werden Aufzählungen mit ihren Ebenen, Tabellen werden Tabellen, HTML-Kommentare und `Note:`-Zeilen werden Notizen, und ein Marp-Bild mit `bg` ist der Folienhintergrund.
+- Bilder kommen nur mit, wenn sie in der Datei stecken (in der `.odp` oder als Daten ins Markdown geschrieben). Folien lädt keine Bilder aus dem Web und liest keine anderen Dateien; ihre Adressen kommen in die Notizen.
+- Zuerst siehst du, was die Datei enthält und was draußen bleibt; `Öffnen` erstellt eine neue Präsentation, und `Rückgängig` in der Meldung nimmt sie wieder weg. An deinen vorhandenen Präsentationen ändert sich nichts.
+
+## Tastenkürzel
+- [[Ctrl+Z]] / [[Ctrl+Y]]: rückgängig / wiederholen
+- [[Ctrl+M]]: neue Folie
+- [[Ctrl+D]]: duplizieren, [[Ctrl+C]] / [[Ctrl+V]]: Objekte kopieren / einfügen
+- [[Ctrl+G]] / [[Ctrl+Shift+G]]: gruppieren / Gruppierung aufheben
+- [[Page Up]] / [[Page Down]]: vorherige / nächste Folie
+- [[F5]]: von Anfang an vorführen, [[Shift+F5]]: ab dieser Folie
+
+## Grenzen
+- Eine PowerPoint-Datei behält eine Schriftgröße pro Textfeld, Noto Sans, Serif oder Mono statt ihrer Schriften und keine Verläufe, Schatten oder 3D-Effekte. Die Fußzeile (Foliennummer, Datum, Text) wird nicht darin gespeichert. Ein Diagramm geht als Bild hinein, lässt sich dort also nicht bearbeiten und kommt nicht als Diagramm zurück. Die Länge eines Übergangs wird zu PowerPoints schnell, mittel oder langsam. Ausgangs- und Hervorhebungseffekte sowie Animationspfade in einer PowerPoint-Datei werden weggelassen, und verbundene Tabellenzellen werden getrennt.
+- Ein Bild, das dieses Gerät noch nicht erreicht hat (wird noch synchronisiert), fehlt in einer gespeicherten PowerPoint-Datei; Folien sagt dir, wie viele.
+- Vollbild gibt es für Webseiten auf dem iPhone nicht; die Vorführung füllt stattdessen die App.
+- Gruppen haben eine Ebene (keine Gruppen in Gruppen). Tabellen haben keine verbundenen Zellen und eine Textgröße; Diagramme haben keine Achseneinstellungen.
+- Animationen sind nur Eingänge (kein Ausgang, keine Hervorhebung, keine Animationspfade). Die Handy-Fernbedienung braucht Folien geöffnet auf dem vorführenden Gerät, und sie zeigt deine Notizen, nicht das Folienbild.
+- Die Präsentation mit deiner Stimme als Video aufzunehmen ist nicht möglich.

@@ -86,10 +86,17 @@ function syncApi() {
 }
 // The shell re-opens the app on a language toggle, so one boot-time
 // mirror keeps every existing window.orosLang read in this file valid.
+// orosI18n (../i18n.js): the full language code, a pack language included.
 try {
-  window.orosLang = (window.parent && window.parent.orosLang) ||
-                    localStorage.getItem('oros-lang') || 'en';
+  window.orosLang = window.orosI18n ? window.orosI18n.lang() :
+                    ((window.parent && window.parent.orosLang) ||
+                     localStorage.getItem('oros-lang') || 'en');
 } catch (e) { window.orosLang = 'en'; }
+// Locale for dates and numbers (el-GR, en-GB, de-DE …).
+function loc() {
+  return window.orosI18n ? window.orosI18n.locale(window.orosLang)
+                         : (window.orosLang === 'el' ? 'el-GR' : 'en-GB');
+}
 
 /* ===== SECTION 2: STRINGS (EN / EL — Bible: EN default, EL full) ===== */
 const STRINGS = {
@@ -273,6 +280,12 @@ const STRINGS = {
     'tpl.builtin.notes.d': 'Date, attendees, agenda, decisions, action items.',
     'tpl.builtin.blank': 'Blank',
     'tpl.builtin.blank.d': 'An empty page.',
+    'tpl.builtin.essay.html': '<h1>Essay title</h1><p>Introduction…</p><h2>Section</h2><p>Body…</p><h2>Conclusion</h2><p>Summing up…</p>',
+    'tpl.builtin.letter.html': '<p style="text-align:right">City, date</p><p>Recipient<br>Address</p><p>Dear Sir or Madam,</p><p>Body…</p><p>Sincerely,<br>Your name</p>',
+    'tpl.builtin.novel.html': '<h1>Chapter One</h1><p>Narrative…</p><p>* * *</p><p>Next scene…</p>',
+    'tpl.builtin.screenplay.html': '<p><strong>FADE IN:</strong></p><h3>INT. ROOM — DAY</h3><p>Action description.</p><p><strong>CHARACTER</strong><br>(dialogue)</p>',
+    'tpl.builtin.poem.html': '<h1>Poem title</h1><p>First stanza…</p><p>&nbsp;</p><p>Second stanza…</p>',
+    'tpl.builtin.notes.html': '<h1>Meeting notes</h1><p>Date / attendees…</p><h2>Agenda</h2><ul><li>Item…</li></ul><h2>Decisions</h2><ul><li>Decision…</li></ul><h2>Action items</h2><ul><li>Who — what — when…</li></ul>',
     'tpl.confirmDel': 'Delete template "{name}"?',
     'tpl.confirmOverwrite': 'A template with this name exists — overwrite?',
     'ver.confirmRestore': 'Restore this version? Current content will be replaced.',
@@ -625,6 +638,12 @@ const STRINGS = {
     'tpl.builtin.notes.d': 'Ημερομηνία, συμμετέχοντες, ατζέντα, αποφάσεις, ενέργειες.',
     'tpl.builtin.blank': 'Κενό',
     'tpl.builtin.blank.d': 'Μια κενή σελίδα.',
+    'tpl.builtin.essay.html': '<h1>Τίτλος δοκιμίου</h1><p>Εισαγωγή…</p><h2>Ενότητα</h2><p>Κύριο μέρος…</p><h2>Συμπέρασμα</h2><p>Σύνοψη…</p>',
+    'tpl.builtin.letter.html': '<p style="text-align:right">Πόλη, ημερομηνία</p><p>Παραλήπτης<br>Διεύθυνση</p><p>Αξιότιμε κύριε / Αξιότιμη κυρία,</p><p>Κείμενο…</p><p>Με εκτίμηση,<br>Το όνομά σας</p>',
+    'tpl.builtin.novel.html': '<h1>Κεφάλαιο πρώτο</h1><p>Αφήγηση…</p><p>* * *</p><p>Επόμενη σκηνή…</p>',
+    'tpl.builtin.screenplay.html': '<p><strong>ΑΝΟΙΓΜΑ:</strong></p><h3>ΕΣΩΤ. ΔΩΜΑΤΙΟ — ΜΕΡΑ</h3><p>Περιγραφή δράσης.</p><p><strong>ΧΑΡΑΚΤΗΡΑΣ</strong><br>(διάλογος)</p>',
+    'tpl.builtin.poem.html': '<h1>Τίτλος ποιήματος</h1><p>Πρώτη στροφή…</p><p>&nbsp;</p><p>Δεύτερη στροφή…</p>',
+    'tpl.builtin.notes.html': '<h1>Σημειώσεις σύσκεψης</h1><p>Ημερομηνία / συμμετέχοντες…</p><h2>Ατζέντα</h2><ul><li>Θέμα…</li></ul><h2>Αποφάσεις</h2><ul><li>Απόφαση…</li></ul><h2>Ενέργειες</h2><ul><li>Ποιος — τι — πότε…</li></ul>',
     'tpl.confirmDel': 'Διαγραφή προτύπου «{name}»;',
     'tpl.confirmOverwrite': 'Υπάρχει πρότυπο με αυτό το όνομα — αντικατάσταση;',
     'ver.confirmRestore': 'Επαναφορά αυτής της έκδοσης; Το τρέχον περιεχόμενο θα αντικατασταθεί.',
@@ -799,9 +818,10 @@ const STRINGS = {
   }
 };
 
+if (window.orosI18n) window.orosI18n.table(STRINGS, 'writer', window.orosLang);
+
 function t(key) {
-  const lang = (window.orosLang === 'el') ? 'el' : 'en';
-  const pack = STRINGS[lang] || STRINGS.en;
+  const pack = STRINGS[window.orosLang] || STRINGS.en;
   return pack[key] !== undefined ? pack[key]
        : (STRINGS.en[key] !== undefined ? STRINGS.en[key] : key);
 }
@@ -826,7 +846,7 @@ const ICONS = {
   hr:     '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="2" y1="8" x2="14" y2="8"/><circle cx="5" cy="8" r="0.8" fill="currentColor"/><circle cx="8" cy="8" r="0.8" fill="currentColor"/><circle cx="11" cy="8" r="0.8" fill="currentColor"/></svg>',
   pageBreak:'<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 3h8v3H4z" fill="currentColor" stroke="none"/><line x1="2" y1="9" x2="14" y2="9" stroke-dasharray="1.5 1.5"/><line x1="2" y1="13" x2="6" y2="13"/><line x1="8" y1="13" x2="14" y2="13"/></svg>',
   find:   '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="7" r="5"/><line x1="12" y1="12" x2="14.5" y2="14.5"/></svg>',
-  chars:  '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="4" height="4" rx="1"/><rect x="9" y="3" width="4" height="4" rx="1"/><rect x="3" y="9" width="4" height="4" rx="1"/><rect x="9" y="9" width="4" height="4" rx="1"/><text x="5" y="6.5" font-size="4" text-anchor="middle" fill="currentColor" stroke="none">Σ</text><text x="11" y="6.5" font-size="4" text-anchor="middle" fill="currentColor" stroke="none">A</text><text x="5" y="12.5" font-size="4" text-anchor="middle" fill="currentColor" stroke="none">1</text><text x="11" y="12.5" font-size="4" text-anchor="middle" fill="currentColor" stroke="none">+</text></svg>',
+  chars:  '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="4" height="4" rx="1"/><rect x="9" y="3" width="4" height="4" rx="1"/><rect x="3" y="9" width="4" height="4" rx="1"/><rect x="9" y="9" width="4" height="4" rx="1"/><text x="5" y="6.5" font-size="4" text-anchor="middle" fill="currentColor" stroke="none">&#931;</text><text x="11" y="6.5" font-size="4" text-anchor="middle" fill="currentColor" stroke="none">A</text><text x="5" y="12.5" font-size="4" text-anchor="middle" fill="currentColor" stroke="none">1</text><text x="11" y="12.5" font-size="4" text-anchor="middle" fill="currentColor" stroke="none">+</text></svg>',
   check:  '<svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4,7 7,11 12,5"/></svg>',
   trash:  '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h8"/><path d="M6 7v6M10 7v6"/><path d="M3 4h10"/><path d="M7 4V3h2v1"/></svg>',
   prev:   '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="10,3 5,8 10,13"/></svg>',
@@ -1022,8 +1042,7 @@ function editorHTMLForSave() {
 }
 
 function applyI18n() {
-  document.documentElement.lang =
-    (window.orosLang === 'el') ? 'el' : 'en';
+  document.documentElement.lang = window.orosLang || 'en';
   document.title = t('app.name');
   EL.editor.setAttribute('data-placeholder', t('editor.placeholder'));
   document.querySelectorAll('[data-i18n]').forEach(el => {
@@ -2205,7 +2224,7 @@ function updateStylesSelect() {
 
 /* ===== SECTION 12: KEYBOARD SHORTCUTS (Bible: avoid browser-reserved combos) ===== */
 function bindShortcuts() {
-  // Contract Β — forward Ctrl+Alt+Shift+letter to the shell (capture)
+  // Contract B — forward Ctrl+Alt+Shift+letter to the shell (capture)
   document.addEventListener('keydown', function (e) {
     if (!(e.ctrlKey || e.metaKey) || !e.altKey || !e.shiftKey) return;
     let p = null;
@@ -2218,7 +2237,7 @@ function bindShortcuts() {
   document.addEventListener('keydown', (e) => {
     if (e.shiftKey && e.altKey) return;   // Ctrl+Alt+Shift = shell territory
     // Ctrl/Cmd + S — manual save trigger (feedback only — autosave runs anyway)
-    // e.code = physical key: e.key is 'σ' under the Greek layout (R12)
+    // e.code = physical key: e.key is a Greek letter (sigma) under the Greek layout (R12)
     if ((e.ctrlKey || e.metaKey) && !e.altKey && e.code === 'KeyS') {
       e.preventDefault();
       flushSave();
@@ -3854,7 +3873,7 @@ function selectionFragmentText() {
 
 function fmtMinutes(min) {
   const m = WC.roundMinutes(min);
-  return m.lt1 ? t('stats.lt1') : t('stats.min').replace('{n}', m.n.toLocaleString(appLang()));
+  return m.lt1 ? t('stats.lt1') : t('stats.min').replace('{n}', m.n.toLocaleString(loc()));
 }
 
 function updateWcChip() {
@@ -3875,7 +3894,7 @@ function updateWcChip() {
   const selTxt = (sel && sel.rangeCount && !sel.getRangeAt(0).collapsed &&
     EL.editor.contains(sel.getRangeAt(0).commonAncestorContainer)) ? selectionFragmentText() : '';
   const s = selTxt ? WC.countWords(selTxt) : 0;
-  const L = appLang();
+  const L = loc();
   wcChip.textContent = s
     ? t('wc.sel').replace('{s}', s.toLocaleString(L)).replace('{n}', n.toLocaleString(L))
     : t('docs.words').replace('{n}', n.toLocaleString(L));
@@ -3883,11 +3902,11 @@ function updateWcChip() {
 
 /* ----- STATISTICS ----- */
 function openStatsDialog() {
-  const L = appLang();
+  const L = appLang();   // sentence rules (core.js): "el" or "en"
   const doc = WC.textStats(blockText(EL.editor), L);
   const selTxt = selectionFragmentText();
   const sel = selTxt.trim() ? WC.textStats(selTxt, L) : null;
-  const num = v => esc(v.toLocaleString(L));
+  const num = v => esc(v.toLocaleString(loc()));
   const rows = [
     ['stats.words', s => num(s.words)],
     ['stats.chars', s => num(s.chars)],
@@ -4613,7 +4632,7 @@ function renderCommentsPanel() {
 function formatTs(ts) {
   if (!ts) return '';
   const d = new Date(ts);
-  const lang = (window.orosLang === 'el') ? 'el-GR' : 'en-GB';
+  const lang = loc();
   return d.toLocaleDateString(lang) + ' ' +
          d.toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit' });
 }
@@ -4964,35 +4983,21 @@ function toggleTocPanel() {
    entity with tombstones (see slice patch below). Rendering grids
    built-ins + customs immediately, no manual refresh. */
 
-// R15: built-ins carry BOTH languages; the active one is used at insert time.
+// R15: a built-in's html is a table key (tpl.builtin.<id>.html); the
+// active language's text is used at insert time.
 const TPL_BUILTIN = [
-  { id: 'essay', builtin: true, name: 'tpl.builtin.essay', desc: 'tpl.builtin.essay.d', html: {
-    en: '<h1>Essay title</h1><p>Introduction…</p><h2>Section</h2><p>Body…</p><h2>Conclusion</h2><p>Summing up…</p>',
-    el: '<h1>Τίτλος δοκιμίου</h1><p>Εισαγωγή…</p><h2>Ενότητα</h2><p>Κύριο μέρος…</p><h2>Συμπέρασμα</h2><p>Σύνοψη…</p>' } },
-  { id: 'letter', builtin: true, name: 'tpl.builtin.letter', desc: 'tpl.builtin.letter.d', html: {
-    en: '<p style="text-align:right">City, date</p><p>Recipient<br>Address</p><p>Dear Sir or Madam,</p><p>Body…</p><p>Sincerely,<br>Your name</p>',
-    el: '<p style="text-align:right">Πόλη, ημερομηνία</p><p>Παραλήπτης<br>Διεύθυνση</p><p>Αξιότιμε κύριε / Αξιότιμη κυρία,</p><p>Κείμενο…</p><p>Με εκτίμηση,<br>Το όνομά σας</p>' } },
-  { id: 'novel', builtin: true, name: 'tpl.builtin.novel', desc: 'tpl.builtin.novel.d', html: {
-    en: '<h1>Chapter One</h1><p>Narrative…</p><p>* * *</p><p>Next scene…</p>',
-    el: '<h1>Κεφάλαιο πρώτο</h1><p>Αφήγηση…</p><p>* * *</p><p>Επόμενη σκηνή…</p>' } },
-  { id: 'screenplay', builtin: true, name: 'tpl.builtin.screenplay', desc: 'tpl.builtin.screenplay.d', html: {
-    en: '<p><strong>FADE IN:</strong></p><h3>INT. ROOM — DAY</h3><p>Action description.</p><p><strong>CHARACTER</strong><br>(dialogue)</p>',
-    el: '<p><strong>ΑΝΟΙΓΜΑ:</strong></p><h3>ΕΣΩΤ. ΔΩΜΑΤΙΟ — ΜΕΡΑ</h3><p>Περιγραφή δράσης.</p><p><strong>ΧΑΡΑΚΤΗΡΑΣ</strong><br>(διάλογος)</p>' } },
-  { id: 'poem', builtin: true, name: 'tpl.builtin.poem', desc: 'tpl.builtin.poem.d', html: {
-    en: '<h1>Poem title</h1><p>First stanza…</p><p>&nbsp;</p><p>Second stanza…</p>',
-    el: '<h1>Τίτλος ποιήματος</h1><p>Πρώτη στροφή…</p><p>&nbsp;</p><p>Δεύτερη στροφή…</p>' } },
-  { id: 'notes', builtin: true, name: 'tpl.builtin.notes', desc: 'tpl.builtin.notes.d', html: {
-    en: '<h1>Meeting notes</h1><p>Date / attendees…</p><h2>Agenda</h2><ul><li>Item…</li></ul><h2>Decisions</h2><ul><li>Decision…</li></ul><h2>Action items</h2><ul><li>Who — what — when…</li></ul>',
-    el: '<h1>Σημειώσεις σύσκεψης</h1><p>Ημερομηνία / συμμετέχοντες…</p><h2>Ατζέντα</h2><ul><li>Θέμα…</li></ul><h2>Αποφάσεις</h2><ul><li>Απόφαση…</li></ul><h2>Ενέργειες</h2><ul><li>Ποιος — τι — πότε…</li></ul>' } },
-  { id: 'blank', builtin: true, name: 'tpl.builtin.blank', desc: 'tpl.builtin.blank.d', html: { en: '', el: '' } }
+  { id: 'essay', builtin: true, name: 'tpl.builtin.essay', desc: 'tpl.builtin.essay.d', html: 'tpl.builtin.essay.html' },
+  { id: 'letter', builtin: true, name: 'tpl.builtin.letter', desc: 'tpl.builtin.letter.d', html: 'tpl.builtin.letter.html' },
+  { id: 'novel', builtin: true, name: 'tpl.builtin.novel', desc: 'tpl.builtin.novel.d', html: 'tpl.builtin.novel.html' },
+  { id: 'screenplay', builtin: true, name: 'tpl.builtin.screenplay', desc: 'tpl.builtin.screenplay.d', html: 'tpl.builtin.screenplay.html' },
+  { id: 'poem', builtin: true, name: 'tpl.builtin.poem', desc: 'tpl.builtin.poem.d', html: 'tpl.builtin.poem.html' },
+  { id: 'notes', builtin: true, name: 'tpl.builtin.notes', desc: 'tpl.builtin.notes.d', html: 'tpl.builtin.notes.html' },
+  { id: 'blank', builtin: true, name: 'tpl.builtin.blank', desc: 'tpl.builtin.blank.d', html: '' }
 ];
 
 function tplHtml(tpl) {
-  if (tpl.html && typeof tpl.html === 'object') {
-    const lang = (window.orosLang === 'el') ? 'el' : 'en';
-    return tpl.html[lang] || tpl.html.en || '';
-  }
-  return tpl.html || '';
+  if (tpl.builtin) return tpl.html ? t(tpl.html) : '';
+  return typeof tpl.html === 'string' ? tpl.html : '';
 }
 
 function allTemplates() {

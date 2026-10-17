@@ -14,6 +14,16 @@
   "use strict";
   var KEY = "oros-writer-data";
   var cache = {};       // id → { m: mtime, len: html length, text }
+  var TEXT = {
+    en: { "tab.untitled": "Untitled" },
+    el: { "tab.untitled": "Χωρίς τίτλο" }
+  };
+  // The shell's language; a pack language reads the "writer" pack when
+  // it is loaded, else English.
+  function text(lang) {
+    if (!TEXT[lang] && root.orosI18n && typeof lang === "string") root.orosI18n.table(TEXT, "writer", lang);
+    return TEXT[lang] || TEXT.en;
+  }
 
   function str(v) { return typeof v === "string" ? v.trim() : ""; }
 
@@ -54,7 +64,7 @@
           c = cache[doc.id] = { m: doc.mtime, len: html.length, text: plain(html) };
         }
         var title = str(doc.title) || c.text.slice(0, 32).trim() ||
-                    (ctx.lang === "el" ? "Χωρίς τίτλο" : "Untitled");
+                    text(ctx.lang)["tab.untitled"];
         out.push({
           id: doc.id,
           title: title,

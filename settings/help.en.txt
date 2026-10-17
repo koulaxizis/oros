@@ -26,6 +26,8 @@ Next to each card you'll see where it applies: `All devices` means it travels wi
 
 While an app waits in the background, the top bar shows a button next to the menu button with the number of open apps; [[Ctrl+Alt+Shift+W]] does the same. It lists them with the time you left each one: choose one to go back to it, close one with its ×, or close them all. Use the arrow keys, [[Enter]], [[Delete]] and [[Esc]] on a keyboard; on a phone the list comes up from the bottom and you swipe a card sideways to close that app. In the menu and the Dock, a dot marks the apps that are open.
 
+On a screen at least 1024 pixels wide you can put two apps side by side. In the list of open apps, press the split button next to an app in the background to open it beside the one in front, or the one next to the app in front to choose the other app from the menu. Drag the bar between them to share the width (or focus it and use the arrow keys); the keys go to the side you clicked last, which has a coloured outline. The × on the bar, going back to the desktop, or a narrower window ends side by side, and the app on the right waits in the background.
+
 ### Other ways in
 - Tap the sync dot in the top bar while sync isn't connected or is locked: Settings opens at `Sync`.
 - The `About orOS + shortcuts` window has a button that opens `System`, where the factory reset is.

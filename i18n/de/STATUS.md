@@ -2,8 +2,8 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 2599 of 26840 (9%)
-- Help pages: 22 of 144 (15%)
+- Strings: 4157 of 26901 (15%)
+- Help pages: 27 of 144 (18%)
 - Shown in the language list: yes
 
 Apps marked "English for now" do not load language packs yet: their
@@ -68,7 +68,7 @@ text is still written in the code. They switch over wave by wave
 | mastermind | English for now | 0 / 73 |
 | meals | English for now | 0 / 387 |
 | memory | English for now | 0 / 76 |
-| mindmap | English for now | 0 / 262 |
+| mindmap | 100% | 278 / 278 |
 | minesweeper | English for now | 0 / 75 |
 | minimalism | English for now | 0 / 32 |
 | mixer | English for now | 0 / 59 |
@@ -104,18 +104,18 @@ text is still written in the code. They switch over wave by wave
 | settings | 100% | 480 / 480 |
 | share | English for now | 0 / 152 |
 | shelf | English for now | 0 / 285 |
-| shell | 100% | 446 / 446 |
+| shell | 100% | 452 / 452 |
 | signature | English for now | 0 / 195 |
 | simon | English for now | 0 / 49 |
 | sky | English for now | 0 / 149 |
 | slider | English for now | 0 / 37 |
-| slides | English for now | 0 / 389 |
+| slides | 100% | 418 / 418 |
 | snake | English for now | 0 / 52 |
 | solitaire | English for now | 0 / 102 |
 | split | English for now | 0 / 334 |
 | spot | English for now | 0 / 54 |
-| spreadsheet | English for now | 0 / 353 |
-| stickies | English for now | 0 / 122 |
+| spreadsheet | 100% | 355 / 355 |
+| stickies | 100% | 124 / 124 |
 | stock | English for now | 0 / 600 |
 | storage | English for now | 0 / 166 |
 | studio | English for now | 0 / 381 |
@@ -140,7 +140,7 @@ text is still written in the code. They switch over wave by wave
 | wheel | English for now | 0 / 68 |
 | wiki | English for now | 0 / 392 |
 | wordle | English for now | 0 / 76 |
-| writer | English for now | 0 / 371 |
+| writer | 100% | 377 / 377 |
 | xeri | English for now | 0 / 108 |
 | zen | English for now | 0 / 89 |
 
@@ -203,7 +203,6 @@ These show English until fixed (usually the English text changed).
 - help/mastermind.txt
 - help/meals.txt
 - help/memory.txt
-- help/mindmap.txt
 - help/minesweeper.txt
 - help/minimalism.txt
 - help/mixer.txt
@@ -240,13 +239,10 @@ These show English until fixed (usually the English text changed).
 - help/simon.txt
 - help/sky.txt
 - help/slider.txt
-- help/slides.txt
 - help/snake.txt
 - help/solitaire.txt
 - help/split.txt
 - help/spot.txt
-- help/spreadsheet.txt
-- help/stickies.txt
 - help/stock.txt
 - help/storage.txt
 - help/studio.txt
@@ -271,6 +267,5 @@ These show English until fixed (usually the English text changed).
 - help/wiki.txt
 - help/wordle.txt
 - help/wordsearch.txt
-- help/writer.txt
 - help/xeri.txt
 - help/zen.txt

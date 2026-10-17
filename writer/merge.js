@@ -100,6 +100,7 @@
 
   /* ----- Contacts ----- */
   // Column names (English) and the other names a placeholder may use.
+  // i18n-inline-ok: Greek column-name aliases for CSV headers (data, no UI text)
   var CONTACT_COLS = [
     ["FullName", ["Name", "Full name", "Ονοματεπώνυμο", "Όνομα και επώνυμο"]],
     ["FirstName", ["Given name", "First", "Όνομα"]],

@@ -48,6 +48,8 @@ class FakeFrame {
     this.parentNode = null;
     this.loads = [];
     this._doc = doc || null;
+    const cls = new Set();
+    this.classList = { add: (c) => cls.add(c), remove: (c) => cls.delete(c), contains: (c) => cls.has(c), toggle: (c, on) => (on ? cls.add(c) : cls.delete(c)) };
   }
   get id() { return this.attrs.id || ""; }
   set id(v) { this.attrs.id = v; }
@@ -76,7 +78,8 @@ function sandbox(opts) {
   const end = SHELL.indexOf("  function openApp(app, at) {");
   assert.ok(start > 0 && end > start);
   const store = new Map(Object.entries(opts.storage || {}));
-  const running = { children: [], appendChild(f) { f.parentNode = this; this.children.push(f); }, removeChild(f) { this.children.splice(this.children.indexOf(f), 1); f.parentNode = null; } };
+  const rcls = new Set();
+  const running = { classList: { add: (c) => rcls.add(c), remove: (c) => rcls.delete(c), contains: (c) => rcls.has(c) }, children: [], appendChild(f) { f.parentNode = this; this.children.push(f); }, removeChild(f) { this.children.splice(this.children.indexOf(f), 1); f.parentNode = null; } };
   const first = new FakeFrame();
   first.id = "app-frame";
   running.appendChild(first);
@@ -96,7 +99,7 @@ function sandbox(opts) {
   ctx.window = ctx;
   vm.createContext(ctx);
   vm.runInContext(SHELL.slice(start, end) +
-    "\nthis.h = { appFrames, appFrameOf, appLive, mtSlots, mtSwitch, mtLeave, mtKeepable, mtSetUser, mtSnapshot, mtActive, mtList, mtOpenList, mtClose, mtCloseAll };" +
+    "\nthis.h = { appFrames, appFrameOf, appLive, mtSlots, mtSwitch, mtLeave, mtKeepable, mtSetUser, mtSnapshot, mtActive, mtList, mtOpenList, mtClose, mtCloseAll, mtSideOpen, mtSideEnd, mt };" +
     // the parts of openApp / returnToDesktop that touch frames
     "\nthis.open = function (app, at) { var prev = state.running; state.running = app; if (mtActive()) mtSwitch(prev, app, at); else document.getElementById('app-frame').src = app.url + (at || ''); };" +
     "\nthis.home = function () { var prev = state.running; state.running = null; if (!(mtActive() && mtLeave(prev))) document.getElementById('app-frame').src = 'about:blank'; };" +
@@ -244,12 +247,58 @@ test("shell switcher: Ctrl+Alt+Shift+W, the bar button and the menu / Dock marks
   // every visible string exists in English, Greek and German
   const tr = fs.readFileSync(path.join(ROOT, "translations.js"), "utf8");
   const de = fs.readFileSync(path.join(ROOT, "i18n/de/shell.js"), "utf8");
-  const keys = [...new Set([...SHELL.matchAll(/window\.t\("(mt\.sw\.[a-z]+)"\)/g)].map((m) => m[1]))].concat(["sc.desc.switcher", "mt.sw.tip"]);
+  const keys = [...new Set([...SHELL.matchAll(/window\.t\("(mt\.(?:sw|split)\.[a-z]+)"\)/g)].map((m) => m[1]))]
+    .concat(["sc.desc.switcher", "mt.sw.tip", "mt.sw.split.beside", "mt.sw.split.pick", "mt.sw.split.stop"]);
   assert.ok(keys.length >= 10);
   keys.forEach((k) => {
     assert.equal(tr.split('"' + k + '"').length - 1, 2, k + " in translations.js EN + EL");
     assert.ok(de.includes('"' + k + '"'), k + " in i18n/de/shell.js");
   });
+});
+
+test("shell side by side: a background app opens beside the one in front, live, and steps back after", () => {
+  const c = sandbox({ storage: { "oros-multitask": "1" }, mem: 8, width: 1280 });
+  const h = c.h;
+  c.open(app("notes"));
+  const notes = c.running.children[0];
+  c.open(app("todo"));
+  assert.equal(h.mtSideOpen(app("notes")), true);
+  assert.equal(notes.getAttribute("data-oros-side"), "notes");
+  assert.equal(notes.style.display, "");
+  assert.deepEqual(notes.loads, ["notes/"], "same window, no reload");
+  assert.equal(c.running.classList.contains("mt-split"), true);
+  assert.equal(h.appFrameOf("notes"), notes);
+  assert.equal(h.appFrames().length, 2);
+  assert.equal(c.__orosAppDocs().length, 2);
+  assert.deepEqual(Array.from(h.mtOpenList(), (r) => r.app.id + (r.front ? "*" : r.side ? "|" : "")), ["todo*", "notes|"]);
+  assert.equal(h.mtSideOpen(app("todo")), false, "not the app in front");
+  h.mtSideEnd(true);
+  assert.equal(c.running.classList.contains("mt-split"), false);
+  assert.equal(notes.getAttribute("data-oros-app"), "notes", "back in the background");
+  assert.equal(notes.style.display, "none");
+  // a fresh app beside; closing the one in front gives the side app the screen
+  assert.equal(h.mtSideOpen(app("writer")), true);
+  const writer = h.appFrameOf("writer");
+  h.mtClose("todo");
+  assert.equal(c.state.running.id, "writer");
+  assert.equal(c.document.getElementById("app-frame"), writer);
+  assert.deepEqual(writer.loads, ["writer/"], "no reload");
+  assert.equal(h.appLive("todo"), false, "closed, not kept");
+  assert.equal(h.mt.side, null);
+});
+
+test("shell side by side: only from 1024 px wide, and switching off ends it", () => {
+  const narrow = sandbox({ storage: { "oros-multitask": "1" }, mem: 8, width: 900 });
+  narrow.open(app("notes"));
+  narrow.open(app("todo"));
+  assert.equal(narrow.h.mtSideOpen(app("notes")), false);
+  const c = sandbox({ storage: { "oros-multitask": "1" }, mem: 8, width: 1280 });
+  c.open(app("notes"));
+  c.open(app("todo"));
+  c.h.mtSideOpen(app("notes"));
+  c.h.mtSetUser(false);
+  assert.equal(c.h.mt.side, null);
+  assert.equal(c.running.children.length, 1);
 });
 
 // A frame document as sync.js sees it: its window makes the functions.

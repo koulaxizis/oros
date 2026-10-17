@@ -104,7 +104,7 @@
       aspect: C.widthOf(d.as) / C.H,
       hidden: list.map(function (s) { return s.hid; }),
       startAt: Math.max(0, Math.min(list.length - 1, opts.from || 0)),
-      lang: SL.LANG,
+      lang: SL.LANG_BASE,
       presenter: !!opts.presenter,
       renderSlide: function (i, canvas, w, h, t, step) {
         if (t === undefined) SL.renderFrame(list[i].id, canvas, canvas.width, { step: step || 0 });

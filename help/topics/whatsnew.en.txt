@@ -1,6 +1,12 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.06.00
+- Multitasking (experimental): on wide screens put two apps side by side with Beside in the Open apps list, and drag the bar between them to share the width.
+
+## Version 3.05.00
+- Writer, Spreadsheet, Slides, Sticky Notes and Mind Map are now in German.
+
 ## Version 3.04.00
 - Multitasking (experimental): see and switch between your open apps with the new Open apps button in the top bar or Ctrl+Alt+Shift+W; on phones swipe a card to close an app.
 

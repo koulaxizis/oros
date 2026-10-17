@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "3.04.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "3.06.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -9441,16 +9441,19 @@
   function appFrames() {
     var f = document.getElementById("app-frame");
     var out = f ? [f] : [];
+    if (mt && mt.side) out.push(mt.side.el);
     mtList().forEach(function (r) { out.push(r.el); });
     return out;
   }
   function appFrameOf(id) {
     if (state.running && state.running.id === id) return document.getElementById("app-frame");
+    if (mt && mt.side && mt.side.app.id === id) return mt.side.el;
     var r = mtFind(id);
     return r ? r.el : null;
   }
   function appLive(id) { return !!appFrameOf(id); }
   function appShow(id) {
+    if (mt && mt.side && mt.side.app.id === id) { mtSideFocus(); return; }
     var r = mtFind(id);
     if (r) openApp(r.app);
   }
@@ -9458,6 +9461,7 @@
     var out = [];
     var f = document.getElementById("app-frame");
     try { if (state.running && f && f.contentDocument) out.push(f.contentDocument); } catch (e) {}
+    try { if (mt && mt.side && mt.side.el.contentDocument) out.push(mt.side.el.contentDocument); } catch (e) {}
     mtList().forEach(function (r) {
       try { if (r.el.contentDocument) out.push(r.el.contentDocument); } catch (e) {}
     });
@@ -9492,7 +9496,10 @@
   };
   // Heavy apps take two slots (declared + measured in M1).
   var MT_HEAVY = { atelier: 1, maps: 1, photolab: 1, layout: 1, montage: 1, scanpdf: 1, studio: 1, assistant: 1 };
-  var mt = { hidden: [] };   // { app, el, at } of each hidden live app
+  var mt = { hidden: [], side: null, pickSide: false };
+  // hidden: { app, el, at } of each hidden live app
+  // side:   { app, el } of the app beside the one in front (wave M4)
+  // pickSide: the next app chosen in the menu opens beside
   var mtOnChange = null;     // set by the switcher (10c): repaint on change
   var mtNoKeep = false;      // the switcher closes the app in front
   function mtChanged() {
@@ -9556,9 +9563,9 @@
     } catch (e4) {}
   }
 
-  function mtNewFrame() {
+  function mtNewFrame(side) {
     var f = document.createElement("iframe");
-    f.id = "app-frame";
+    if (!side) f.id = "app-frame";
     f.setAttribute("title", "orOS application");
     document.getElementById("oros-running").appendChild(f);
     cmdWireFrame(f);
@@ -9590,6 +9597,7 @@
   function mtFit(front) {
     var slots = mtSlotsHere();
     var used = front ? mtWeight(front.id) : 0;
+    if (mt.side) used += mtWeight(mt.side.app.id);
     mt.hidden.forEach(function (r) { used += mtWeight(r.app.id); });
     mt.hidden.sort(function (a, b) { return a.at - b.at; });
     while (used > slots && mt.hidden.length) {
@@ -9599,15 +9607,67 @@
     }
   }
   function mtDropAll() {
+    mtSideEnd(false);
     var l = mtList();
     while (l.length) mtDrop(l.shift().el);
     mtChanged();
+  }
+
+  // ---- Side by side (wave M4): two apps, from 1024 px wide ----
+  // The app in front keeps #app-frame on the left; the side app is a
+  // live frame on the right (data-oros-side). Frames never move in the
+  // DOM (that would reload them): CSS grid order places them. Below
+  // 1024 px, at home, or when switched off, the side app goes back to
+  // the background (or closes if it may not stay open).
+  var MT_SPLIT_MIN = 1024;
+  function mtSplitFits() { return (window.innerWidth || 0) >= MT_SPLIT_MIN; }
+  function mtSideIs(id) { return !!(mt.side && mt.side.app.id === id); }
+  function mtSideShow(app, el) {
+    mt.side = { app: app, el: el };
+    el.removeAttribute("data-oros-app");
+    el.setAttribute("data-oros-side", app.id);
+    el.setAttribute("title", "orOS application");
+    el.style.display = "";
+    mtVis(el, false);
+    var run = document.getElementById("oros-running");
+    run.classList.add("mt-split");
+    if (typeof mtSplitPaint === "function") mtSplitPaint();
+  }
+  // Put `app` beside the app in front: a hidden live one keeps its
+  // window, any other opens fresh. The previous side app steps back.
+  function mtSideOpen(app, at) {
+    if (!mtActive() || !mtSplitFits() || !state.running || state.running.id === app.id || app.type !== "internal") return false;
+    if (mtSideIs(app.id)) { mtSideFocus(); return true; }
+    mtSideEnd(true);
+    var r = mtTake(app.id), el;
+    if (r) { el = r.el; if (at) el.src = app.url + at; }
+    else { el = mtNewFrame(true); el.src = app.url + (at || ""); }
+    mtSideShow(app, el);
+    mtFit(state.running);
+    mtChanged();
+    return true;
+  }
+  function mtSideEnd(keep) {
+    var sd = mt.side;
+    if (!sd) return;
+    mt.side = null;
+    sd.el.removeAttribute("data-oros-side");
+    var run = document.getElementById("oros-running");
+    if (run) run.classList.remove("mt-split");
+    appFrames().concat([sd.el]).forEach(function (f) { if (f.classList) f.classList.remove("mt-focus"); });
+    if (keep && mtKeepable(sd.app) && mtHasDoc(sd.el)) { mtHide(sd.el, sd.app); mtFit(state.running); }
+    else mtDrop(sd.el);
+  }
+  function mtSideFocus() {
+    if (!mt.side) return;
+    try { mt.side.el.contentWindow.focus(); } catch (e) {}
   }
   // Open apps for the switcher: the one in front, then the hidden ones,
   // the one left last first. { app, at, front }
   function mtOpenList() {
     var out = [];
     if (state.running && state.running.type === "internal") out.push({ app: state.running, at: 0, front: true });
+    if (mt.side) out.push({ app: mt.side.app, at: 0, front: false, side: true });
     mtList().slice().sort(function (a, b) { return b.at - a.at; }).forEach(function (r) {
       out.push({ app: r.app, at: r.at, front: false });
     });
@@ -9615,6 +9675,18 @@
   }
   // Close one open app for good (switcher ×, swipe).
   function mtClose(id) {
+    if (mtSideIs(id)) { mtSideEnd(false); mtChanged(); return; }
+    if (state.running && state.running.id === id && mt.side) {
+      // the side app takes the whole screen, as it is (no reload)
+      var sd = mt.side;
+      mt.side = null;
+      sd.el.removeAttribute("data-oros-side");
+      document.getElementById("oros-running").classList.remove("mt-split");
+      mt.hidden.push({ app: sd.app, el: sd.el, at: Date.now() });
+      mtNoKeep = true;
+      try { openApp(sd.app); } finally { mtNoKeep = false; }
+      return;
+    }
     if (state.running && state.running.id === id) {
       mtNoKeep = true;
       try { returnToDesktop(); } finally { mtNoKeep = false; }
@@ -9633,7 +9705,7 @@
     var front = document.getElementById("app-frame");
     if (prev && prev.id === app.id) { front.src = app.url + (at || ""); return; }   // reopen = reload, as before
     var back = mtTake(app.id);
-    if (prev && mtKeepable(prev) && mtHasDoc(front)) { mtHide(front, prev); front = null; }
+    if (prev && !mtNoKeep && mtKeepable(prev) && mtHasDoc(front)) { mtHide(front, prev); front = null; }
     if (back) {
       if (front) mtDrop(front);
       mtShow(back.el);
@@ -9669,6 +9741,13 @@
   }
 
   function openApp(app, at) {
+    var pick = mt.pickSide && document.getElementById("app-menu").classList.contains("open");
+    mt.pickSide = false;
+    if (mtActive() && app.type === "internal" && (mtSideIs(app.id) || pick) && mtSideOpen(app, at)) {
+      closeMenu();
+      menuReset();
+      return;
+    }
     closeMenu();
     menuReset();
     if (tourEnd) tourEnd();   // a notification or shortcut opened an app mid-tour
@@ -9699,6 +9778,7 @@
   function returnToDesktop() {
     if (SOLO && soloHome()) return;   // a single app has no desktop
     var prev = state.running;
+    mtSideEnd(true);   // home ends side by side; the side app waits behind
     state.running = null;
     document.body.classList.remove("app-running");
     if (!(mtActive() && mtLeave(prev))) document.getElementById("app-frame").src = "about:blank";
@@ -9797,7 +9877,7 @@
       go.innerHTML = '<span class="app-ico">' + (ICONS[it.app.icon] || "") + '</span>' +
         '<span class="mt-sw-name"></span><span class="mt-sw-when"></span>';
       go.querySelector(".mt-sw-name").textContent = mtLabel(it.app);
-      go.querySelector(".mt-sw-when").textContent = it.front ? window.t("mt.sw.now") : mtAgo(it.at);
+      go.querySelector(".mt-sw-when").textContent = it.front ? window.t("mt.sw.now") : it.side ? window.t("mt.sw.beside") : mtAgo(it.at);
       if (it.front) go.setAttribute("aria-current", "true");
       go.addEventListener("click", function () { if (!row.__mtSwiped) mtSwGo(it.app); });
       var x = document.createElement("button");
@@ -9809,6 +9889,8 @@
       x.title = xl;
       x.addEventListener("click", function () { mtClose(it.app.id); });
       row.appendChild(go);
+      var sb = mtSwSplitBtn(it);
+      if (sb) row.appendChild(sb);
       row.appendChild(x);
       mtSwSwipe(row, it.app.id);
       box.appendChild(row);
@@ -9842,6 +9924,105 @@
     row.addEventListener("pointerup", end);
     row.addEventListener("pointercancel", end);
   }
+  // Side by side (M4) from the list: "beside" on a background app, "add
+  // an app beside" on the one in front (the menu picks it), "stop" on
+  // the side app. Only from 1024 px wide.
+  function mtSwSplitBtn(it) {
+    if (!mtSplitFits()) return null;
+    var kind = it.side ? "stop" : it.front ? (mt.side ? "" : "pick") : "beside";
+    if (!kind) return null;
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "mt-sw-split" + (it.side ? " on" : "");
+    b.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M12 4v16"/></svg>';
+    var l = window.t("mt.sw.split." + kind).replace("{app}", mtLabel(it.app));
+    b.setAttribute("aria-label", l);
+    b.title = l;
+    b.addEventListener("click", function (e) {
+      e.stopPropagation();   // the menu's outside-click would close it again
+      if (kind === "stop") { mtSideEnd(true); mtChanged(); return; }
+      mtSwClose();
+      if (kind === "beside") { mtSideOpen(it.app); return; }
+      mt.pickSide = true;
+      openMenuSearch();
+    });
+    return b;
+  }
+
+  // The divider between the two apps: drag (or arrow keys) to share
+  // the width, 25 % to 75 %; its button ends side by side. The pane you
+  // click last gets the keys (the browser does that) and an outline.
+  var mtSplitAt = 50;
+  function mtSplitPaint() {
+    var run = document.getElementById("oros-running");
+    var d = document.getElementById("mt-divider");
+    if (!d) {
+      d = document.createElement("div");
+      d.id = "mt-divider";
+      d.innerHTML = '<span class="mt-grip" role="separator" aria-orientation="vertical" aria-valuemin="25" aria-valuemax="75" tabindex="0"></span>' +
+        '<button type="button" class="mt-unsplit">' +
+        '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>';
+      d.querySelector(".mt-unsplit").addEventListener("click", function (e) {
+        e.stopPropagation();
+        mtSideEnd(true);
+        mtChanged();
+      });
+      d.addEventListener("pointerdown", function (e) {
+        if (e.target.closest(".mt-unsplit")) return;
+        e.preventDefault();
+        run.classList.add("mt-dragging");      // frames would swallow the pointer
+        try { d.setPointerCapture(e.pointerId); } catch (e2) {}
+        function move(ev) {
+          var r = run.getBoundingClientRect();
+          mtSplitSet((ev.clientX - r.left) / r.width * 100);
+        }
+        function up() {
+          run.classList.remove("mt-dragging");
+          d.removeEventListener("pointermove", move);
+          d.removeEventListener("pointerup", up);
+          d.removeEventListener("pointercancel", up);
+        }
+        d.addEventListener("pointermove", move);
+        d.addEventListener("pointerup", up);
+        d.addEventListener("pointercancel", up);
+      });
+      d.querySelector(".mt-grip").addEventListener("keydown", function (e) {
+        var step = e.shiftKey ? 10 : 5;
+        if (e.key === "ArrowLeft") { e.preventDefault(); mtSplitSet(mtSplitAt - step); }
+        else if (e.key === "ArrowRight") { e.preventDefault(); mtSplitSet(mtSplitAt + step); }
+        else if (e.key === "Home") { e.preventDefault(); mtSplitSet(50); }
+      });
+      run.appendChild(d);
+    }
+    var l = window.t("mt.split.divider"), g = d.querySelector(".mt-grip");
+    g.setAttribute("aria-label", l);
+    d.title = l;
+    var u = window.t("mt.split.end");
+    d.querySelector(".mt-unsplit").setAttribute("aria-label", u);
+    d.querySelector(".mt-unsplit").title = u;
+    mtSplitSet(mtSplitAt);
+  }
+  function mtSplitSet(pct) {
+    mtSplitAt = Math.round(Math.max(25, Math.min(75, pct)));
+    var run = document.getElementById("oros-running");
+    run.style.setProperty("--mt-left", mtSplitAt + "fr");
+    run.style.setProperty("--mt-right", (100 - mtSplitAt) + "fr");
+    var g = document.querySelector("#mt-divider .mt-grip");
+    if (g) g.setAttribute("aria-valuenow", String(mtSplitAt));
+  }
+  // Outline on the pane that has the keys.
+  function mtSplitFocus() {
+    if (!mt.side) return;
+    var a = document.activeElement, front = document.getElementById("app-frame");
+    if (a !== front && a !== mt.side.el) return;
+    front.classList.toggle("mt-focus", a === front);
+    mt.side.el.classList.toggle("mt-focus", a === mt.side.el);
+  }
+  window.addEventListener("blur", function () { setTimeout(mtSplitFocus, 0); });
+  window.addEventListener("resize", function () {
+    if (mt.side && !mtSplitFits()) { mtSideEnd(true); mtChanged(); }
+  });
+
   function mtSwitcher() {
     if (SOLO) return;
     if (mtSw) { mtSwClose(); return; }

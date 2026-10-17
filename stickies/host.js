@@ -68,7 +68,7 @@
       note: "Sticky note", "new": "New sticky note", tidy: "Tidy up sticky notes", app: "Open Sticky Notes",
       more: "Note options", fold: "Fold", unfold: "Unfold", ph: "Write something…",
       done: "Done", snooze: "Snooze 10 min", close: "Close", del: "Delete", undo: "Undo",
-      deleted: "Sticky note deleted", empty: "(empty)",
+      deleted: "Sticky note deleted", "note.empty": "(empty)",
       color: "Colour", text: "Text",
       "c.yellow": "Yellow", "c.pink": "Pink", "c.green": "Green", "c.blue": "Blue", "c.orange": "Orange", "c.lilac": "Lilac",
       ring: "Ring", "r.off": "Does not ring", "r.15m": "In 15 minutes", "r.1h": "In 1 hour", "r.evening": "In the evening at 20:00",
@@ -91,7 +91,7 @@
       note: "Post-it", "new": "Νέο post-it", tidy: "Τακτοποίηση των post-it", app: "Άνοιγμα της εφαρμογής Post-it",
       more: "Επιλογές για το post-it", fold: "Δίπλωμα", unfold: "Ξεδίπλωμα", ph: "Γράψε κάτι…",
       done: "Έγινε", snooze: "Ξανά σε 10 λεπτά", close: "Κλείσιμο", del: "Διαγραφή", undo: "Αναίρεση",
-      deleted: "Το post-it διαγράφηκε", empty: "(κενό)",
+      deleted: "Το post-it διαγράφηκε", "note.empty": "(κενό)",
       color: "Χρώμα", text: "Κείμενο",
       "c.yellow": "Κίτρινο", "c.pink": "Ροζ", "c.green": "Πράσινο", "c.blue": "Μπλε", "c.orange": "Πορτοκαλί", "c.lilac": "Λιλά",
       ring: "Κουδούνισμα", "r.off": "Δεν χτυπάει", "r.15m": "Σε 15 λεπτά", "r.1h": "Σε 1 ώρα", "r.evening": "Το βράδυ στις 20:00",
@@ -113,9 +113,30 @@
   };
 
   function env() { return root.orosStickiesEnv || null; }
-  function lang() { var e = env(); try { return e && e.lang() === "el" ? "el" : "en"; } catch (x) { return "en"; } }
+  // orosI18n (../i18n.js, loaded by the shell): the full language
+  // code, a pack language included; else the shell's "el" / "en".
+  function lang() {
+    var I = root.orosI18n;
+    if (I) { try { return I.lang(); } catch (x) {} }
+    var e = env(); try { return e && e.lang() === "el" ? "el" : "en"; } catch (x) { return "en"; }
+  }
+  // A pack language: English + the stickies pack. The shell loads only
+  // its own pack, so this one is fetched on first need; once it is in,
+  // the table is rebuilt and the next tick redraws the notes.
+  var packAsked = {};
+  function strings(l) {
+    if (STRINGS[l]) return STRINGS[l];
+    var I = root.orosI18n;
+    if (!I) return STRINGS.en;
+    var tab = I.table(STRINGS, "stickies", l);
+    if (!packAsked[l] && typeof I.ensure === "function") {
+      packAsked[l] = true;
+      try { I.ensure(l, "stickies", function () { if (l !== "en" && l !== "el") delete STRINGS[l]; shownLang = ""; }); } catch (x) {}
+    }
+    return tab;
+  }
   function T(k, p) {
-    var tab = STRINGS[lang()] || STRINGS.en;
+    var tab = strings(lang()) || STRINGS.en;
     var s = tab[k] !== undefined ? tab[k] : (STRINGS.en[k] !== undefined ? STRINGS.en[k] : k);
     if (p) Object.keys(p).forEach(function (n) { s = s.split("{" + n + "}").join(String(p[n])); });
     return s;
@@ -137,7 +158,7 @@
     if (svg) b.innerHTML = svg;                  // static markup from ICON only
     return b;
   }
-  function locale() { return lang() === "el" ? "el-GR" : "en-GB"; }
+  function locale() { var I = root.orosI18n; return I ? I.locale(lang()) : (lang() === "el" ? "el-GR" : "en-GB"); }
   function hm(d) {
     try { return d.toLocaleTimeString(locale(), { hour: "2-digit", minute: "2-digit", hour12: false }); }
     catch (e) { return ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2); }
@@ -633,7 +654,7 @@
     var b = el("div", "sn-body");
     b.tabIndex = 0;
     b.setAttribute("role", "button");
-    b.setAttribute("aria-label", T("note") + ": " + (C.firstLine(n.text) || T("empty")));
+    b.setAttribute("aria-label", T("note") + ": " + (C.firstLine(n.text) || T("note.empty")));
     if (!n.text) { b.appendChild(el("span", "sn-ph", T("ph"))); return b; }
     C.lines(n.text).forEach(function (l, i) {
       if (!l.box) { b.appendChild(el("div", "sn-line", l.text)); return; }
@@ -701,9 +722,9 @@
     open.type = "button";
     open.appendChild(el("div", "sn-txt", n.text ? C.lines(n.text).map(function (l) {
       return l.box ? (l.done ? "☑ " : "☐ ") + l.text : l.text;
-    }).join("\n") : T("empty")));
+    }).join("\n") : T("note.empty")));
     if (n.ring || n.vanish) open.appendChild(flagsFor(n, now));
-    open.setAttribute("aria-label", T("note") + ": " + (C.firstLine(n.text) || T("empty")));
+    open.setAttribute("aria-label", T("note") + ": " + (C.firstLine(n.text) || T("note.empty")));
     open.addEventListener("click", function () { openEditor(n.id); });
     card.appendChild(open);
     if (C.isRinging(n, now)) card.appendChild(ringBar(n, now));
@@ -1333,7 +1354,7 @@
         if (N && typeof N.emit === "function") {
           N.emit({
             ns: "stickies", key: "ring-" + n.id + "-" + n.ring.at, type: "reminder",
-            title: T("note"), body: C.firstLine(n.text) || T("empty"), deepLink: "stickies:" + n.id
+            title: T("note"), body: C.firstLine(n.text) || T("note.empty"), deepLink: "stickies:" + n.id
           });
         }
       } catch (e) {}
@@ -1427,6 +1448,8 @@
 
   function boot() {
     registerSlice();
+    // a pack language: fetch the stickies pack now, before the first note or editor
+    try { strings(lang()); } catch (e) {}
     // a melody chime: have its core ready before the first ring
     if (RT_RE.test(prefs().sound)) setTimeout(function () { if (registered()) rtCore(); }, 4000);
     if (mq) {
