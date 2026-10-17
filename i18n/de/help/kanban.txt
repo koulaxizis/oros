@@ -1,0 +1,92 @@
+# Kanban
+Kanban hilft dir, Arbeit vom Anfang bis zum Ende zu verfolgen: Karten wandern über Spalten wie Zu erledigen, In Arbeit und Erledigt. Du kannst mehrere Boards führen, eines pro Projekt.
+
+## Erste Schritte
+Ein neues Board hat drei Spalten: Zu erledigen, In Arbeit und Erledigt.
+
+- Tippe unten in einer Spalte in `Karte hinzufügen…` und drück [[Enter]] oder den Knopf +. Neue Karten landen oben in der Spalte.
+- Halte eine Karte gedrückt und zieh sie, um sie umzusortieren oder in eine andere Spalte zu bringen. Das geht mit der Maus oder dem Finger.
+- Tippe oder klicke auf eine Karte, um sie zu öffnen.
+
+## Karten
+Der Dialog `Karte` speichert, während du tippst. Er hat:
+- `Text` und `Notizen`.
+- `Fällig`: ein Datum. Die Karte zeigt `Heute`, `Morgen` oder `Überfällig`, wenn es nah ist oder vorbei.
+- `Labels`: Tippe auf `Labels hinzufügen / verwalten`, um Labels zu wählen oder ein neues mit Farbe anzulegen.
+- `Unteraufgaben`: eine Checkliste. Die Karte zeigt, wie viele erledigt sind, zum Beispiel 2/5.
+- `Weitere Infos`: eigene Felder, jedes mit einem Namen (`Feld`) und einem `Wert`.
+- `Spalte`: verschiebt die Karte in eine andere Spalte, praktisch auf dem Handy.
+- `Bahn`: ein freier Name wie „Team A“, den die Swimlanes nutzen (siehe unten).
+- `Anhänge` und `Titelbild`: siehe unten.
+
+`Duplizieren` macht eine Kopie der Karte. `Löschen` fragt vorher, und die Meldung danach hat ein paar Sekunden lang einen Knopf `Rückgängig`.
+
+## Spalten und Boards
+- `Spalte hinzufügen` (das + oben) fügt eine Spalte hinzu. Tippe auf den Stift (oder doppelklicke auf den Titel), um die `Spalteneinstellungen` zu öffnen: umbenennen, ein `WIP-Limit` setzen, Regeln hinzufügen oder `Spalte löschen`, was auch ihre Karten entfernt.
+- Mit einem `WIP-Limit` zeigt die Spalte, wie voll sie ist, zum Beispiel 3/5, und wird orange, wenn sie mehr Karten enthält als erlaubt. Das ist nur eine Warnung: Du kannst trotzdem Karten hinzufügen.
+- Zieh eine Spalte an ihrem Kopf, um sie zu verschieben.
+- Der Knopf oben links zeigt das aktuelle Board. Tippe darauf, um das Board zu wechseln, oder zieh Boards in dieser Liste, um sie umzusortieren. Doppelklicke darauf, um das Board umzubenennen.
+- Daneben: `Neues Board`, `Aus anderen Apps importieren` und `Boards verwalten...`.
+- In `Boards verwalten...` kannst du die Farbe eines Boards ändern, es umbenennen, duplizieren, archivieren oder löschen. Archivierte Boards verschwinden aus der Board-Liste, behalten aber ihre Daten, und du kannst sie dort wiederherstellen. Mindestens ein Board muss aktiv bleiben.
+
+## Ansichten und Swimlanes
+Der Ansichtsknopf neben `Nach Label filtern` öffnet `Ansicht und Board-Optionen`. Die gewählte Ansicht bleibt pro Board auf diesem Gerät.
+- `Board`: die Spalten.
+- `Tabelle`: alle Karten in einer sortierbaren Liste. Tippe auf eine Spaltenüberschrift, um danach zu sortieren; die Liste `Spalte` in jeder Zeile verschiebt die Karte.
+- `Zeitleiste`: Karten mit Fälligkeit auf einer Reihe von Tagen, heute hervorgehoben. Zieh eine Karte entlang der Tage, um ihre Fälligkeit zu ändern. Karten ohne Fälligkeit werden darunter gezählt.
+- `Swimlanes` teilt das Board in Zeilen quer über die Spalten: `Nach Label` (eine Zeile pro Label, dazu `Kein Label`) oder `Nach Bahn` (eine Zeile pro Bahnname, dazu `Keine Bahn`). Zieh eine Karte in eine andere Zeile, um ihr Label oder ihre Bahn zu ändern.
+
+## Anhänge und Titelbild
+- In einer Karte hängt `Datei hinzufügen` Fotos oder andere Dateien an (bis 10 MB pro Datei, 20 pro Karte). Sie liegen auf dem orOS-Speicher unter Dateien › Kanban › Attachments.
+- Fotos werden verkleinert (höchstens 1600 Pixel an der langen Seite) und neu gespeichert, dabei fallen Kamera- und Standortdaten weg. Andere Dateien bleiben, wie sie sind.
+- Tippe auf einen Anhang, um ihn anzusehen, zu `Öffnen`, eine `Kopie speichern` oder ihn zu `Entfernen`. Nur Fotos und PDFs werden in orOS angezeigt.
+- `Titelbild`: eine Farbe oder eines der Fotos der Karte (`Als Titelbild verwenden`), oben auf der Karte.
+
+## Automationen
+- In den `Spalteneinstellungen` kann `Wenn eine Karte hier ankommt` alle Unteraufgaben abhaken, die Fälligkeit auf heute setzen, ein Label hinzufügen und die Karte nach oben schieben. Ein kleiner Blitz an der Spalte zeigt, dass sie Regeln hat.
+- `Automationen…` im Ansichtsmenü listet die Regeln des Boards und hat noch eine: Wenn eine Fälligkeit verstreicht, das Label „Überfällig“ hinzufügen. Karten in der letzten Spalte (meist Erledigt) bleiben unberührt, und wenn du das Label von einer Karte nimmst, kommt es für dasselbe Datum nicht wieder.
+- Regeln gehören zum Board, also werden sie mit deinen anderen Geräten synchronisiert.
+
+## Export, Import und Vorlagen
+- `orOS-Datei (.orosboard)` speichert das Board als eine offene Datei mit seinem Namen: Spalten, Karten, Labels, Regeln und die Anhänge selbst. Es ist ein ZIP: Entpackst du es, findest du `content.json` (das Board), `media` (die Anhänge) sowie `preview/board.md` und `preview/board.csv`, die jeder Texteditor oder jede Tabellenkalkulation öffnet. `Aus anderen Apps importieren` öffnet sie wieder als neues Board, ebenso das Öffnen der Datei mit orOS aus deinem System (`Öffnen mit`). `Entpackter orOS-Ordner…` im selben Dialog holt eine entpackte .orosboard zurück, auch wenn du darin eine Datei geändert hast.
+- `Board exportieren (JSON)` speichert eine Datei mit dem ganzen Board: Spalten, Karten, Labels, Regeln und die Anhänge selbst (bis 25 MB insgesamt). `Aus anderen Apps importieren` liest diese Datei als neues Board zurück, so kannst du ein Board auch an jemand anderen weitergeben.
+- `Karten exportieren (CSV)` speichert die Karten als Tabelle für eine Tabellenkalkulation, eine Zeile pro Karte mit Spalte, Labels, Fälligkeit, Bahn und Unteraufgaben.
+- `Als Vorlage speichern…` behält Spalten, Labels, WIP-Limits, Regeln und Karten des Boards (ohne Fälligkeiten, Anhänge und Häkchen).
+- `Neues Board aus Vorlage…` startet ein Board aus einer deiner Vorlagen oder einer mitgelieferten: Persönlich, Software-Sprint oder Redaktionsplan. Dort kannst du auch deine eigenen Vorlagen löschen.
+
+## Suchen und filtern
+- `Suche…` zeigt nur Karten, deren Text, Notizen, Fälligkeit, weitere Infos, Bahn, Anhangnamen oder Labelnamen passen.
+- `Nach Label filtern` zeigt nur Karten mit einem der gewählten Labels. Dort kannst du ein Label auch löschen; es wird aus allen Karten entfernt.
+
+## Synchronisierung und Sicherung
+Mit der [orOS-Synchronisierung](help:t/sync) kommen alle deine Boards, Spalten, Karten und Labels, dazu Archivstatus, Farben, WIP-Limits, Regeln und Vorlagen, auf deine anderen Geräte. Änderungen an verschiedenen Teilen derselben Karte auf zwei Geräten bleiben beide erhalten: zum Beispiel ein Verschieben auf dem Handy und eine Textänderung am Laptop. Welches Board offen ist, die Ansicht und die Swimlanes bleiben auf diesem Gerät, Suche und Filter werden nicht synchronisiert.
+
+- Karten mit Fälligkeit erscheinen auch im [Kalender](app:calendar) als ganztägige Termine, angezeigt als „Spalte · Kartentext“. Karten auf archivierten Boards fehlen dort.
+- `Aus anderen Apps importieren` liest eine orOS-Datei (.orosboard), ein aus orOS Kanban exportiertes Board (JSON), JSON-Exporte von Kanri und Trello sowie Exporte aus Asana, Jira, ClickUp, WeKan und Planka. Jede Datei wird ein eigenes Board, benannt nach dem Projekt, und deine bestehenden Boards werden nie geändert. Vor dem Import zeigt eine Vorschau, was gefunden wurde, wohin es geht und was schon da ist.
+- Asana: Öffne im Projekt das Menü neben dem Namen › `Export/Print` › `CSV` (oder `JSON`). Abschnitte werden Spalten, erledigte Aufgaben kommen in eine Spalte `Erledigt`, Unteraufgaben bleiben Unteraufgaben, Tags werden Labels, und zuständige Person, Startdatum und Abhängigkeiten kommen in `Weitere Infos`.
+- Jira: Wähle in der Vorgangssuche (Filters › `View all issues`) die Vorgänge, dann `Export` › `Export CSV (all fields)`. Jeder Status wird eine Spalte (To Do, In Progress und Done in dieser Reihenfolge, andere dazwischen) und jeder Vorgang eine Karte „KEY-12 Zusammenfassung“, mit der Beschreibung als Notizen, seinen Labels sowie Typ, Priorität, zuständiger Person, Melder, übergeordnetem Vorgang und Sprint in `Weitere Infos`.
+- ClickUp: In einer List oder einem Space `Settings` (•••) › `Export` › `CSV`, oder Settings › `Import/Export` › deinen Workspace exportieren. Jeder Status wird eine Spalte; Checklisten und Unteraufgaben werden Unteraufgaben, Tags werden Labels.
+- WeKan: Board-Menü (☰) › `Export board` (JSON). Listen werden Spalten, mit den Labels, Fälligkeiten und Checklisten der Karten; archivierte Listen und Karten bleiben weg.
+- Planka: Planka hat noch keinen Export-Knopf; gelesen wird ein Board, wie die Planka-API es liefert (`/api/boards/ID`, JSON): Listen, Karten, Labels, Fälligkeiten und Aufgaben.
+- Es kann auch direkt aus einem verbundenen Konto lesen: ein Trello-Board, die Issues eines GitHub-Repositorys oder eine Notion-Datenbank. Verbinde zuerst Trello (API-Schlüssel und Token), GitHub (ein persönliches Zugriffstoken) oder Notion (das Secret deiner Integration) unter [Einstellungen](app:settings) › `Verbundene Dienste`, wähle dann in `Aus anderen Apps importieren` das Konto, `Boards zeigen` (oder `Repositorys zeigen`, `Datenbanken zeigen`), wähle eines aus und tippe auf `Lesen`.
+- Ein GitHub-Repository wird ein Board mit zwei Spalten, `Offen` und `Geschlossen`. Jedes Issue ist eine Karte „#12 Titel“ mit seinem Text als Notizen, seinen Labels, dem Datum seines Meilensteins als Fälligkeit und seinen „- [ ]“-Zeilen als Unteraufgaben. Pull Requests bleiben weg.
+- Eine Notion-Datenbank wird ein Board mit einer Spalte für jede Option ihrer ersten Eigenschaft `Status` (oder ihrer ersten `Select`), dazu `Kein Status` für Einträge ohne. Jeder Eintrag ist eine Karte mit seinem Titel, mit seinem ersten Datum als Fälligkeit, seiner ersten Mehrfachauswahl als Labels und seinen übrigen Eigenschaften als Zeilen „Name: Wert“ in den Notizen, am Ende sein Notion-Link. Teile die Datenbank in Notion zuerst mit deiner Integration (••• › `Connections`).
+- Liest du dasselbe Board (oder einen neueren Export desselben Projekts) später noch einmal, kommen nur neue Karten, Spalten und Labels dazu. Karten, die du schon hast, bleiben, wie du sie gelassen hast, und gelöschte kommen nicht zurück. orOS liest Trello, GitHub und Notion nur: Dort ändert sich nichts.
+- Deine Boards sind auch in den orOS-[Sicherungen](help:t/backup) enthalten. Die Anhänge sind Dateien auf dem orOS-Speicher, sie gehen also mit dem Speicher mit.
+
+## Tastenkürzel
+- [[Alt+B]] legt ein neues Board an (nicht, während du in einem Feld tippst oder ein Dialog offen ist).
+- [[Enter]] fügt die Karte, Unteraufgabe oder das Label hinzu, das du gerade getippt hast.
+
+## Tipps
+- Nutze Labels für Arten von Arbeit (Bug, Idee, dringend) und den Filter, um dich auf eine Art zu konzentrieren.
+- Archiviere das Board eines fertigen Projekts, statt es zu löschen.
+- Löschen und Importieren zeigen ein paar Sekunden lang einen Knopf `Rückgängig`. Nutze ihn, wenn du es dir anders überlegst.
+
+## Grenzen
+- Wird derselbe Teil einer Karte (zum Beispiel ihr Text oder ihre Fälligkeit) auf zwei Geräten vor dem Synchronisieren geändert, gewinnt die neuere Änderung.
+- Eine Karte, die auf einem Gerät mit älterer orOS-Version geändert wurde, gilt als ganz geändert, dort kann also die neuere ganze Karte gewinnen.
+- Anhänge schickt die orOS-Synchronisierung nicht mit: Sie kommen über Vault Drive mit dem orOS-Speicher auf deine anderen Geräte. Bis dahin zeigt die Karte „Nicht auf diesem Gerät“.
+- Nur Fotos und PDFs lassen sich in orOS ansehen; andere Anhänge kannst du nur speichern.
+- Die Regel „Überfällig“ lässt Karten in der letzten Spalte in Ruhe und läuft nur, solange Kanban offen ist.
+- In einer älteren orOS-Version erscheinen Vorlagen als archivierte Boards.

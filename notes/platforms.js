@@ -73,7 +73,7 @@
     }
   };
   function t(k, params) {
-    var tab = S[A && A.lang === "el" ? "el" : "en"];
+    var tab = (A && S[A.lang]) || S.en;
     var s = tab[k] !== undefined ? tab[k] : S.en[k] !== undefined ? S.en[k] : k;
     return s.replace(/\{(\w+)\}/g, function (m, n) { return params && params[n] !== undefined ? String(params[n]) : m; });
   }
@@ -308,7 +308,11 @@
   }
 
   root.OrosNotesPlatforms = {
-    init: function (api) { A = api; },
+    init: function (api) {
+      A = api;
+      // a pack language (../i18n.js): S[lang] = English + the "notes" pack
+      if (A && A.lang && root.orosI18n) root.orosI18n.table(S, "notes", A.lang);
+    },
     open: open,
     has: function () { return !!links() && !!M; },
     label: function () { return t("btn"); },

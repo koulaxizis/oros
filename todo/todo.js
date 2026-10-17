@@ -49,7 +49,8 @@
 
   // ---------- 1. Constants, i18n, helpers ----------
   // Language comes from the shell (same-origin, shared localStorage).
-  var LANG = localStorage.getItem("oros-lang") === "el" ? "el" : "en";
+  // orosI18n (../i18n.js): the full language code, a pack language included.
+  var LANG = window.orosI18n ? window.orosI18n.lang() : (localStorage.getItem("oros-lang") === "el" ? "el" : "en");
 
   var STRINGS = {
     en: {
@@ -173,7 +174,11 @@
       "flt.text":       "Text contains",
       "flt.delete":     "Delete filter",
       "confirm.fltdel": "Delete this saved filter? Its tasks stay where they are.",
-      "toast.fltdel":   "Filter deleted"
+      "toast.fltdel":   "Filter deleted",
+      "seed.general":   "General",
+      "seed.groceries": "Groceries",
+      "wd.0": "Sunday", "wd.1": "Monday", "wd.2": "Tuesday", "wd.3": "Wednesday",
+      "wd.4": "Thursday", "wd.5": "Friday", "wd.6": "Saturday"
     },
     el: {
       "aria.lists": "Λίστες",
@@ -296,19 +301,32 @@
       "flt.text":       "Το κείμενο περιέχει",
       "flt.delete":     "Διαγραφή φίλτρου",
       "confirm.fltdel": "Διαγραφή αυτού του αποθηκευμένου φίλτρου; Οι εργασίες του μένουν όπου είναι.",
-      "toast.fltdel":   "Το φίλτρο διαγράφηκε"
+      "toast.fltdel":   "Το φίλτρο διαγράφηκε",
+      "seed.general":   "Γενικά",
+      "seed.groceries": "Ψώνια",
+      "wd.0": "Κυριακή", "wd.1": "Δευτέρα", "wd.2": "Τρίτη", "wd.3": "Τετάρτη",
+      "wd.4": "Πέμπτη", "wd.5": "Παρασκευή", "wd.6": "Σάββατο"
     }
   };
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "todo", LANG);
+
+  // Dates and numbers: the language's locale (de-DE for German).
+  function loc() {
+    return window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB");
+  }
 
   function t(key) {
     var p = STRINGS[LANG] || STRINGS.en;
     return p[key] !== undefined ? p[key] : (STRINGS.en[key] !== undefined ? STRINGS.en[key] : key);
   }
 
-  var WEEKDAY_KEYS = {
-    en: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
-    el: ["Κυριακή", "Δευτέρα", "Τρίτη", "Τετάρτη", "Πέμπτη", "Παρασκευή", "Σάββατο"]
-  };
+  // Weekday names: shown with t("wd.N"); the quick-add parser reads the
+  // English and Greek ones (German date words are not parsed).
+  var WEEKDAY_KEYS = { en: [], el: [] };
+  for (var wdi = 0; wdi < 7; wdi++) {
+    WEEKDAY_KEYS.en.push(STRINGS.en["wd." + wdi]);
+    WEEKDAY_KEYS.el.push(STRINGS.el["wd." + wdi]);
+  }
   // Lookup words for the quick-add parser (lowercased, accents stripped)
   var WEEKDAY_WORDS = {};
   ["en", "el"].forEach(function (l) {
@@ -350,8 +368,7 @@
     if (diff === 0)  return t("due.today");
     if (diff === 1)  return t("due.tomorrow");
     var d = isoToDate(iso);
-    var loc = LANG === "el" ? "el-GR" : "en-GB";
-    return d.toLocaleDateString(loc, { day: "numeric", month: "short" });
+    return d.toLocaleDateString(loc(), { day: "numeric", month: "short" });
   }
 
   function uid() {
@@ -545,8 +562,8 @@
       deleted: {},
       labels: [],
       lists: [
-        mkSeed("tdl-general", LANG === "el" ? "Γενικά" : "General", 0),
-        mkSeed("tdl-groceries", LANG === "el" ? "Ψώνια" : "Groceries", 1)
+        mkSeed("tdl-general", t("seed.general"), 0),
+        mkSeed("tdl-groceries", t("seed.groceries"), 1)
       ]
     };
   }
@@ -1709,7 +1726,7 @@
     var s = t("recur.every") + " " + rec.every + " " + t("unit." + rec.unit);
     if (rec.after === true) return s + " · " + t("recur.after.short");
     if (rec.unit === "week" && typeof rec.weekday === "number") {
-      s += " · " + WEEKDAY_KEYS[LANG][rec.weekday];
+      s += " · " + t("wd." + rec.weekday);
     }
     return s;
   }
@@ -1837,10 +1854,10 @@
   function populateWeekdaySelects() {
     [$("f-weekday"), $("l-weekday")].forEach(function (sel) {
       sel.innerHTML = "";
-      WEEKDAY_KEYS[LANG].forEach(function (name, idx) {
+      WEEKDAY_KEYS.en.forEach(function (name, idx) {
         var o = document.createElement("option");
         o.value = String(idx);
-        o.textContent = name;
+        o.textContent = t("wd." + idx);
         sel.appendChild(o);
       });
       sel.value = "1";   // Monday default
@@ -2732,7 +2749,7 @@
     if (list.recurrence && list.nextReset) {
       var d = isoToDate(list.nextReset);
       el.textContent = t("recur.list.next") + " " +
-        d.toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB",
+        d.toLocaleDateString(loc(),
                              { day: "numeric", month: "short", year: "numeric" });
     } else {
       el.textContent = "";
@@ -3864,7 +3881,7 @@
   // removes the added records the way importUndo does.
   var RP = window.OrosRecordPkg || null, TPK = window.OrosTodoPackage || null;
   var recFile = RP && TPK && window.OrosBundle ? RP.ui(TPK.DESC, {
-    lang: function () { return LANG; },
+    lang: function () { return LANG === "el" ? "el" : "en"; },
     get: function () { return canonState(state); },
     title: function () { return "To-Do"; },
     set: function (next, info) {
@@ -3954,11 +3971,12 @@
   // text is already open in the chosen list start unticked.
   var ADD_MAX = 200, ADD_TEXT = 300, ADD_NOTE = 1000, ADD_NAME = 60;
   var ADD_STRINGS = {
-    en: { title: "Add to To-Do", from: "From {app}", list: "List", newl: "New list: {name}",
-          dup: "already on the list", go: "Add {n}", none: "Nothing ticked", added: "{n} added to {list}" },
-    el: { title: "Προσθήκη στο To-Do", from: "Από: {app}", list: "Λίστα", newl: "Νέα λίστα: {name}",
-          dup: "υπάρχει ήδη στη λίστα", go: "Προσθήκη {n}", none: "Δεν τσεκάρισες τίποτα", added: "{n} μπήκαν στη λίστα «{list}»" }
+    en: { "add.title": "Add to To-Do", from: "From {app}", list: "List", newl: "New list: {name}",
+          dup: "already on the list", "add.go": "Add {n}", "add.none": "Nothing ticked", added: "{n} added to {list}" },
+    el: { "add.title": "Προσθήκη στο To-Do", from: "Από: {app}", list: "Λίστα", newl: "Νέα λίστα: {name}",
+          dup: "υπάρχει ήδη στη λίστα", "add.go": "Προσθήκη {n}", "add.none": "Δεν τσεκάρισες τίποτα", added: "{n} μπήκαν στη λίστα «{list}»" }
   };
+  if (typeof window !== "undefined" && window.orosI18n) window.orosI18n.table(ADD_STRINGS, "todo", LANG);
   function addT(k, p) {
     var s = (ADD_STRINGS[LANG] || ADD_STRINGS.en)[k];
     Object.keys(p || {}).forEach(function (x) { s = s.split("{" + x + "}").join(String(p[x])); });
@@ -4006,7 +4024,7 @@
     form.method = "dialog";
     form.autocomplete = "off";
     var h = document.createElement("h3");
-    h.textContent = addT("title");
+    h.textContent = addT("add.title");
     form.appendChild(h);
     if (p.from) {
       var fr = document.createElement("p");
@@ -4081,7 +4099,7 @@
     }
     function count() {
       var n = boxes.filter(function (b) { return b.cb.checked; }).length;
-      go.textContent = addT("go", { n: n });
+      go.textContent = addT("add.go", { n: n });
       go.disabled = !n;
     }
     boxes.forEach(function (b) { b.cb.addEventListener("change", function () { b.touched = true; }); });
@@ -4090,7 +4108,7 @@
     form.addEventListener("submit", function (e) {
       e.preventDefault();
       var pick = boxes.filter(function (b) { return b.cb.checked; });
-      if (!pick.length) { showToast(addT("none"), false); return; }
+      if (!pick.length) { showToast(addT("add.none"), false); return; }
       var list = sel.value === NEW ? null : listById(sel.value);
       if (!list) {                  // a new list, or the list was deleted by a sync meanwhile
         list = freshList(p.newList || t("new.list"));

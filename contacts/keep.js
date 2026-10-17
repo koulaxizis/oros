@@ -133,13 +133,22 @@
     };
   }
 
+  var REM = {
+    en: { "keep.rem.title": "Time to reach out", "keep.rem.body": "Get back in touch with: {names}",
+          "keep.rem.more": "{names} and {n} more" },
+    el: { "keep.rem.title": "Ώρα να τα πείτε", "keep.rem.body": "Μιλήστε ξανά με: {names}",
+          "keep.rem.more": "{names} και {n} ακόμα" }
+  };
   function reminderText(r, lang) {
-    var el = lang === "el";
+    var I = typeof window !== "undefined" && window.orosI18n;
+    if (I && !REM[lang]) I.table(REM, "contacts", lang);
+    var w = REM[lang] || REM.en;
     var shown = r.names.slice(0, 3).join(", ");
-    if (r.count > 3) shown += el ? " και " + (r.count - 3) + " ακόμα" : " and " + (r.count - 3) + " more";
+    var more = String(r.count - 3);
+    if (r.count > 3) shown = w["keep.rem.more"].replace("{n}", more).replace("{names}", function () { return shown; });
     return {
-      title: el ? "Ώρα να τα πείτε" : "Time to reach out",
-      body: (el ? "Μιλήστε ξανά με: " : "Get back in touch with: ") + shown
+      title: w["keep.rem.title"],
+      body: w["keep.rem.body"].replace("{names}", function () { return shown; })
     };
   }
 

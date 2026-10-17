@@ -18,25 +18,25 @@
 
   var S = {
     en: {
-      btn: "Import from Todoist or GitHub…", title: "Import tasks",
-      intro: "Bring your Todoist projects and open tasks here: each project with open tasks becomes a list, with due dates, descriptions as notes, labels and priority. orOS only reads Todoist: nothing there changes.",
+      "pf.btn": "Import from Todoist or GitHub…", "pf.title": "Import tasks",
+      "pf.intro": "Bring your Todoist projects and open tasks here: each project with open tasks becomes a list, with due dates, descriptions as notes, labels and priority. orOS only reads Todoist: nothing there changes.",
       "intro.github": "Bring the open GitHub issues assigned to you here: each repository becomes a list, each issue a task \"#12 Title\" with its text and link as notes, its labels, and its milestone's date as due date. Pull requests stay out. orOS only reads GitHub: nothing there changes.",
-      none: "Connect Todoist or GitHub in Settings › Connected services first.",
+      "pf.none": "Connect Todoist or GitHub in Settings › Connected services first.",
       openSettings: "Open Connected services", noShell: "Open To-Do from the orOS desktop to import from Todoist or GitHub.",
       acct: "Account", upd: "Update what was imported before, where it changed there",
       updHint: "Only Todoist's fields: text, notes, due date and priority; labels are only added. Ticks, other labels, extra info and repeats here are never touched.",
       "updHint.github": "Only GitHub's fields: text, notes and due date; labels are only added. Ticks, other labels, extra info and repeats here are never touched. An issue closed there stays as it is here.",
       revive: "Bring back what was deleted here",
-      read: "Read the account", reading: "Reading {what}… {n}",
+      read: "Read the account", "pf.reading": "Reading {what}… {n}",
       "k.projects": "projects", "k.tasks": "tasks",
-      plan: "{l} new lists, {a} new tasks · {u} updated · {s} unchanged",
+      "pf.plan": "{l} new lists, {a} new tasks · {u} updated · {s} unchanged",
       here: "{n} already open here with the same text: skipped.",
       gone: "{n} deleted here earlier: not brought back.",
-      rec: "{n} repeating tasks come in with their next date only; set Repeat here if you want it.",
+      "pf.rec": "{n} repeating tasks come in with their next date only; set Repeat here if you want it.",
       sub: "{n} subtasks come in as tasks, right after their parent.",
-      capped: "The account has more than {n} {what}; only the first {n} were read.",
-      nothing: "Nothing new: To-Do already has everything.",
-      go: "Import", done: "Imported from {p}: {a} new, {u} updated", prio: "Priority",
+      "pf.capped": "The account has more than {n} {what}; only the first {n} were read.",
+      "pf.nothing": "Nothing new: To-Do already has everything.",
+      go: "Import", "pf.done": "Imported from {p}: {a} new, {u} updated", prio: "Priority",
       "err.auth": "{p} refused the token. Check it in Settings › Connected services.",
       "err.keys": "This device doesn't have the account's token yet. Enter it in Settings › Connected services.",
       "err.offline": "You're offline.",
@@ -45,25 +45,25 @@
       close: "Close", "p.todoist": "Todoist", "p.github": "GitHub"
     },
     el: {
-      btn: "Εισαγωγή από Todoist ή GitHub…", title: "Εισαγωγή εργασιών",
-      intro: "Φέρε εδώ τα projects και τις ανοιχτές εργασίες σου από το Todoist: κάθε project με ανοιχτές εργασίες γίνεται λίστα, με προθεσμίες, περιγραφές ως σημειώσεις, ετικέτες και προτεραιότητα. Το orOS μόνο διαβάζει το Todoist: εκεί δεν αλλάζει τίποτα.",
+      "pf.btn": "Εισαγωγή από Todoist ή GitHub…", "pf.title": "Εισαγωγή εργασιών",
+      "pf.intro": "Φέρε εδώ τα projects και τις ανοιχτές εργασίες σου από το Todoist: κάθε project με ανοιχτές εργασίες γίνεται λίστα, με προθεσμίες, περιγραφές ως σημειώσεις, ετικέτες και προτεραιότητα. Το orOS μόνο διαβάζει το Todoist: εκεί δεν αλλάζει τίποτα.",
       "intro.github": "Φέρε εδώ τα ανοιχτά issues του GitHub που σου έχουν ανατεθεί: κάθε αποθετήριο γίνεται λίστα, κάθε issue εργασία «#12 Τίτλος» με το κείμενο και τον σύνδεσμό του ως σημειώσεις, τις ετικέτες του και την ημερομηνία του milestone ως προθεσμία. Τα pull requests μένουν έξω. Το orOS μόνο διαβάζει το GitHub: εκεί δεν αλλάζει τίποτα.",
-      none: "Σύνδεσε πρώτα το Todoist ή το GitHub στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.",
+      "pf.none": "Σύνδεσε πρώτα το Todoist ή το GitHub στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.",
       openSettings: "Άνοιγμα Συνδεδεμένων υπηρεσιών", noShell: "Άνοιξε το To-Do από την επιφάνεια εργασίας του orOS για εισαγωγή από το Todoist ή το GitHub.",
       acct: "Λογαριασμός", upd: "Ενημέρωση όσων ήρθαν παλιότερα, όπου άλλαξαν εκεί",
       updHint: "Μόνο τα πεδία του Todoist: κείμενο, σημειώσεις, προθεσμία και προτεραιότητα· οι ετικέτες μόνο προστίθενται. Τα τικ, οι άλλες ετικέτες, οι επιπλέον πληροφορίες και οι επαναλήψεις εδώ δεν αλλάζουν ποτέ.",
       "updHint.github": "Μόνο τα πεδία του GitHub: κείμενο, σημειώσεις και προθεσμία· οι ετικέτες μόνο προστίθενται. Τα τικ, οι άλλες ετικέτες, οι επιπλέον πληροφορίες και οι επαναλήψεις εδώ δεν αλλάζουν ποτέ. Ένα issue που έκλεισε εκεί μένει όπως είναι εδώ.",
       revive: "Επαναφορά όσων διαγράφηκαν εδώ",
-      read: "Ανάγνωση λογαριασμού", reading: "Ανάγνωση: {what}… {n}",
+      read: "Ανάγνωση λογαριασμού", "pf.reading": "Ανάγνωση: {what}… {n}",
       "k.projects": "projects", "k.tasks": "εργασίες",
-      plan: "{l} νέες λίστες, {a} νέες εργασίες · {u} ενημερώνονται · {s} χωρίς αλλαγή",
+      "pf.plan": "{l} νέες λίστες, {a} νέες εργασίες · {u} ενημερώνονται · {s} χωρίς αλλαγή",
       here: "{n} είναι ήδη ανοιχτές εδώ με το ίδιο κείμενο: παραλείπονται.",
       gone: "{n} διαγράφηκαν εδώ παλιότερα: δεν επανέρχονται.",
-      rec: "{n} επαναλαμβανόμενες εργασίες έρχονται μόνο με την επόμενη ημερομηνία τους· βάλε Επανάληψη εδώ αν τη θέλεις.",
+      "pf.rec": "{n} επαναλαμβανόμενες εργασίες έρχονται μόνο με την επόμενη ημερομηνία τους· βάλε Επανάληψη εδώ αν τη θέλεις.",
       sub: "{n} υποεργασίες έρχονται ως εργασίες, αμέσως μετά τη γονική τους.",
-      capped: "Ο λογαριασμός έχει πάνω από {n} {what}· διαβάστηκαν μόνο τα πρώτα {n}.",
-      nothing: "Τίποτα νέο: το To-Do τα έχει ήδη όλα.",
-      go: "Εισαγωγή", done: "Εισαγωγή από {p}: {a} νέα, {u} ενημερώθηκαν", prio: "Προτεραιότητα",
+      "pf.capped": "Ο λογαριασμός έχει πάνω από {n} {what}· διαβάστηκαν μόνο τα πρώτα {n}.",
+      "pf.nothing": "Τίποτα νέο: το To-Do τα έχει ήδη όλα.",
+      go: "Εισαγωγή", "pf.done": "Εισαγωγή από {p}: {a} νέα, {u} ενημερώθηκαν", prio: "Προτεραιότητα",
       "err.auth": "Το {p} απέρριψε το token. Έλεγξέ το στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.",
       "err.keys": "Αυτή η συσκευή δεν έχει ακόμα το token του λογαριασμού. Πέρασέ το στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.",
       "err.offline": "Είσαι εκτός σύνδεσης.",
@@ -73,7 +73,9 @@
     }
   };
   function t(k, params) {
-    var tab = S[A && A.lang === "el" ? "el" : "en"];
+    // orosI18n (../i18n.js): a pack language gets S[code] (English + the "todo" pack).
+    var code = A && A.lang ? A.lang : "en";
+    var tab = S[code] || (typeof window !== "undefined" && window.orosI18n ? window.orosI18n.table(S, "todo", code) : S.en);
     var s = tab[k] !== undefined ? tab[k] : S.en[k] !== undefined ? S.en[k] : k;
     return s.replace(/\{(\w+)\}/g, function (m, n) { return params && params[n] !== undefined ? String(params[n]) : m; });
   }
@@ -148,8 +150,8 @@
     form.method = "dialog";
     form.autocomplete = "off";
     dlg.appendChild(form);
-    form.appendChild(el("h3", "", t("title")));
-    var intro = el("p", "hint", t("intro"));
+    form.appendChild(el("h3", "", t("pf.title")));
+    var intro = el("p", "hint", t("pf.intro"));
     form.appendChild(intro);
     var menu = el("menu");
     var closeBtn = button(t("close"), "", function () { dlg.close(); });
@@ -160,7 +162,7 @@
     }
     var Lk = links(), accts = accounts();
     if (!Lk || !accts.length) {
-      form.appendChild(el("p", "", Lk ? t("none") : t("noShell")));
+      form.appendChild(el("p", "", Lk ? t("pf.none") : t("noShell")));
       menu.appendChild(closeBtn);
       menu.appendChild(el("span", "spacer"));
       if (Lk) menu.appendChild(button(t("openSettings"), "", function () {
@@ -191,7 +193,7 @@
     form.appendChild(updHint);
     function forAcct() {                             // the intro and hint of the chosen account's platform
       var a = byId[sel.value], gh = a && a.p === "github";
-      intro.textContent = t(gh ? "intro.github" : "intro");
+      intro.textContent = t(gh ? "intro.github" : "pf.intro");
       updHint.textContent = t(gh ? "updHint.github" : "updHint");
     }
     forAcct();
@@ -218,12 +220,12 @@
       plan = M.plan(A.data(), got, { p: acct.p, acct: acct.id, upd: upd.box.checked, revive: rev.box.checked, prio: t("prio") });
       var n = M.count(plan);
       msg.textContent = "";
-      capped.forEach(function (k) { line(t("capped", { n: M.MAX[k], what: t("k." + k) })); });
-      if (!n.add && !n.upd) line(t("nothing"));
-      else msg.appendChild(el("p", "", t("plan", { l: plan.lists.add.length, a: plan.items.add.length, u: n.upd, s: plan.same })));
+      capped.forEach(function (k) { line(t("pf.capped", { n: M.MAX[k], what: t("k." + k) })); });
+      if (!n.add && !n.upd) line(t("pf.nothing"));
+      else msg.appendChild(el("p", "", t("pf.plan", { l: plan.lists.add.length, a: plan.items.add.length, u: n.upd, s: plan.same })));
       if (plan.here) line(t("here", { n: plan.here }));
       if (plan.gone) line(t("gone", { n: plan.gone }));
-      if (plan.rec) line(t("rec", { n: plan.rec }));
+      if (plan.rec) line(t("pf.rec", { n: plan.rec }));
       if (plan.sub) line(t("sub", { n: plan.sub }));
       go.textContent = t("go");
       go.disabled = !n.add && !n.upd;
@@ -234,8 +236,8 @@
       busy = true;
       go.disabled = true;
       sel.disabled = true;
-      msg.textContent = t("reading", { what: t("k." + M.KINDS[acct.p][0]), n: 0 });
-      readAll(acct, function (k, n) { msg.textContent = t("reading", { what: t("k." + k), n: n }); }).then(function (r) {
+      msg.textContent = t("pf.reading", { what: t("k." + M.KINDS[acct.p][0]), n: 0 });
+      readAll(acct, function (k, n) { msg.textContent = t("pf.reading", { what: t("k." + k), n: n }); }).then(function (r) {
         busy = false;
         sel.disabled = false;
         got = r.got;
@@ -251,7 +253,7 @@
     function apply() {
       var n = M.count(plan);
       if (!n.add && !n.upd) return;
-      if (!A.apply(plan, t("done", { p: t("p." + acct.p), a: n.add, u: n.upd }))) return;
+      if (!A.apply(plan, t("pf.done", { p: t("p." + acct.p), a: n.add, u: n.upd }))) return;
       dlg.close();
     }
     show();
@@ -262,6 +264,6 @@
     init: function (api) { A = api; },
     open: open,
     has: function () { return !!links() && !!M; },
-    label: function () { return t("btn"); }
+    label: function () { return t("pf.btn"); }
   };
 })(typeof window !== "undefined" ? window : this);

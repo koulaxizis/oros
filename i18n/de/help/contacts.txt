@@ -1,0 +1,106 @@
+# Kontakte
+Kontakte ist dein Adressbuch: Namen, Telefonnummern, E-Mails, Adressen, Geburtstage und die Verbindungen zwischen Menschen. Geburtstage und andere Daten erscheinen von selbst im [Kalender](app:calendar).
+
+## Erste Schritte
+Tippe auf `Hinzufügen`, um einen Kontakt anzulegen. Du brauchst mindestens einen Namen oder eine `Firma`; alles andere ist optional. Tippe auf `Speichern`, wenn du fertig bist.
+
+Tippe oder klicke in der Liste auf einen Kontakt, um seine Karte zu öffnen. Auf der Karte kannst du anrufen, eine E-Mail schreiben oder eine Website besuchen, indem du darauf tippst (eine E-Mail öffnet eine neue Nachricht in [Mail](app:mail), wenn Mail auf diesem Gerät ein Konto hat). Tippe auf eine Adresse, um sie in [Karten](app:maps) zu öffnen, und ändere den Kontakt mit `Kontakt bearbeiten`. Favoriten stehen oben in der Liste, danach alle anderen alphabetisch.
+
+## Kontakte hinzufügen und bearbeiten
+Das Kontaktfenster hat:
+- `Vorname`, `Zweiter Vorname`, `Nachname`, `Spitzname`, `Firma`, `Position`.
+- Beliebig viele Einträge für `Telefone`, `E-Mails`, `Adressen`, `Websites` und `Messenger`, jeweils mit einem Typ wie `Mobil`, `Privat` oder `Arbeit`. Mit den `＋`-Tasten fügst du weitere hinzu.
+- `Ereignisse`: `Geburtstag`, `Jahrestag` oder `Eigenes` (gib ihm einen Namen, zum Beispiel einen Namenstag). Gib das Datum als Jahr-Monat-Tag ein, etwa `1975-03-17`, oder nur Monat-Tag, etwa `03-17`, wenn du das Jahr nicht kennst.
+- `Beziehungen`: verknüpfe einen anderen Kontakt als `Ehepartner/in`, `Elternteil`, `Freund/in`, `Kollege/Kollegin` und so weiter. Der andere Kontakt zeigt die Verknüpfung auch, unter `Von anderen Kontakten verknüpft`.
+- `In Kontakt bleiben`: alle paar Wochen oder Monate (siehe unten). Lass es auf `Aus`, wenn du keine Erinnerung willst.
+- `Labels`, `Favorit`, ein `Bild` (die Initialen oder ein `8-Bit-Avatar`: tippe auf `Ein anderes` für ein neues Gesicht) und eine `Notiz`. `Bilder` oben ändert alle Kontakte auf einmal: `Initialen für alle` oder `8-Bit-Avatar für alle` (ein Gesicht, das ein Kontakt schon hat, bleibt), mit `Rückgängig`. Kontakte speichert keine Fotos, so bleibt dein Adressbuch klein und synchronisiert schnell.
+
+`Kontakt löschen` fragt nach einer Bestätigung, und danach erscheint für ein paar Sekunden eine `Rückgängig`-Taste.
+
+`Teilen` auf der Karte öffnet `An jemanden senden`: Sende den Kontakt als Link, der sich in jedem Browser öffnet (die Person kann ihn auf ihrem Telefon speichern oder zu ihrem eigenen orOS hinzufügen), oder wähle `Als Text senden` für einfachen Text wie bisher. Foto, Labels und Beziehungen werden nicht gesendet.
+
+## In Kontakt bleiben
+Die Karte jedes Kontakts hat einen Bereich `In Kontakt bleiben`. `Letzter Kontakt` zeigt, wann ihr zuletzt Kontakt hattet: der letzte Eintrag, den du notiert hast, oder der Tag, an dem du auf `Heute kontaktiert` getippt hast.
+
+`＋ Eintragen` notiert einen Kontakt: einen `Anruf`, ein `Treffen`, eine `Nachricht`, ein `Geschenk` oder eine `Notiz`, mit Datum und ein paar Worten dazu. Die Einträge erscheinen auf der Karte unter `Verlauf`, der neueste zuerst. Tippe auf einen, um ihn zu ändern oder zu löschen (`Rückgängig` holt einen gelöschten zurück). Ein Eintrag mit einem Datum in der Zukunft zählt noch nicht als Kontakt.
+
+Für eine Erinnerung öffne `Kontakt bearbeiten` und stelle `In Kontakt bleiben` auf alle paar Wochen oder Monate. Wenn seit dem letzten Kontakt so viel Zeit vergangen ist, erscheint die Person unter `⏰ Melden` über der Liste, wer am längsten wartet, zuerst, und neben ihrem Namen steht ein ⏰. Jemand ohne Eintrag zählt ab dem Tag, an dem du es eingestellt hast.
+
+Unter `Melden` kannst du auch `Erinnern um` einschalten und eine Uhrzeit wählen: Ab dieser Uhrzeit erscheint an Tagen, an denen jemand fällig ist, ein Hinweis in orOS. Ein Tipp darauf öffnet die Karte der Person oder die Liste `Melden`, wenn es mehrere sind. Die Erinnerung ist aus, bis du sie einschaltest, und Schalter und Uhrzeit bleiben auf diesem Gerät. orOS muss offen sein, damit der Hinweis erscheint; war es zu dieser Uhrzeit geschlossen, kommt er, wenn du orOS an diesem Tag das nächste Mal öffnest.
+
+## Visitenkarte scannen
+`Karte scannen` macht aus einer Visitenkarte einen neuen Kontakt. Tippe auf `Foto aufnehmen` (auf dem Telefon öffnet sich die Kamera) oder `Bild auswählen`. orOS liest den Text der Karte auf diesem Gerät und zeigt ihn unter `Text von der Karte`, wo du ihn korrigieren kannst. `Neuen Kontakt ausfüllen` öffnet einen neuen Kontakt mit Name, Firma, Position, Telefonnummern, E-Mails, Website und Adresse, die es gefunden hat; prüfe ihn und tippe auf `Speichern`. Zeilen, die es nicht zuordnen konnte, landen in der `Notiz`.
+
+Zum Lesen des Texts braucht es die Texterkennung (etwa 7 MB, Englisch und Griechisch). Beim ersten Mal auf jedem Gerät sagt orOS das und lädt sie erst herunter, wenn du auf `Herunterladen und lesen` tippst. Sie kommt von der orOS-Website, nicht von einer anderen Firma, und das Bild verlässt dein Gerät nie.
+
+Du kannst den Text der Karte auch selbst eintippen oder einfügen (zum Beispiel aus einer anderen Scan-App) und auf `Neuen Kontakt ausfüllen` tippen.
+
+## Suche, Labels und Favoriten
+Das Suchfeld findet Kontakte nach Name, Spitzname, Firma, Position, Notiz, E-Mail oder Telefonnummer. Es ignoriert griechische Akzente und versteht griechische Namen in lateinischer Schreibweise, also findet `dionisis` „Διονύσης“. Drei oder mehr Ziffern finden eine Telefonnummer, egal wie sie geschrieben ist. Die Suche nach einem Namen findet auch Personen, die mit dieser Person verknüpft sind.
+
+Über der Liste wechseln `Alle` und `★ Favoriten` zwischen allen und deinen Favoriten. Die Label-Chips blenden Kontakte mit diesem Label aus oder ein; zu Beginn gibt es `Privat`, `Arbeit` und `Familie`. Mit `＋ Labels verwalten` kannst du Labels hinzufügen, umbenennen, umfärben und löschen; ein Label, das noch verwendet wird, lässt sich nicht löschen.
+
+## Duplikate
+`Duplikate` sucht nach Kontakten, die wahrscheinlich dieselbe Person sind: `Gleiche Telefonnummer` oder `Gleiche E-Mail` (aufgeführt als `Sichere Treffer`) und `Ähnlicher Name` (`Mögliche Treffer`). Tippe oder klicke auf einen Kontakt in einer Gruppe, um `Duplikate zusammenführen` zu öffnen: Es zeigt den kombinierten Kontakt. Mit `Hauptkontakt tauschen` wählst du, welcher als Grundlage bleibt, dann `Jetzt zusammenführen`. Direkt danach kannst du `Rückgängig` tippen.
+
+## Importieren, überspringen und zusammenführen
+Jeder Import öffnet zuerst `Import prüfen`, egal ob er aus einer Datei, `Vom Telefon`, `Aus einem Konto` oder aus einer mit orOS geöffneten .vcf kommt.
+
+Eine CSV-Datei von irgendwoher (Outlook, Excel, ein anderes Adressbuch, eine selbst erstellte Liste) öffnet zuerst `Spalten zuordnen`: Für jede Spalte siehst du ihren Namen und ein Beispiel, und orOS hat anhand der Spaltennamen schon geraten, was sie enthält, auf Englisch oder Griechisch (`First name`, `Επώνυμο`, `Κινητό`, `Τ.Κ.`…). Ändere jede Vermutung, setze eine Spalte auf `Überspringen` oder wähle den Typ einer Telefonnummer, E-Mail, Website oder Adresse. Entferne den Haken bei `Die erste Zeile enthält die Spaltennamen`, wenn die Datei direkt mit Kontakten beginnt. Enthält eine Spalte Geburtstage, legt `Datumsangaben` fest, ob der Tag zuerst steht (wie in Griechenland üblich) oder der Monat. Die Vorschau zeigt die ersten Kontakte so, wie sie gelesen werden; `Weiter` bringt dich zu `Import prüfen`. Eine aus Google Kontakte exportierte CSV wird direkt gelesen, ohne diesen Schritt.
+
+`Import prüfen` sortiert die gelesenen Kontakte in drei Gruppen:
+- `Neu`: Hier passt niemand. Wähle für jeden `Hinzufügen` oder `Überspringen`.
+- `Andere Details`: Ein Kontakt hier hat dieselbe E-Mail, dieselbe Telefonnummer (mit oder ohne Ländervorwahl) oder denselben Vor- und Nachnamen, und der Import bringt etwas Neues. Du siehst, was er ergänzt und welche Werte abweichen, zum Beispiel `Company: Alpha Inc → Alpha Ltd`. `Zusammenführen, meine behalten` ergänzt die fehlenden Details und behält deine Werte; `Zusammenführen, importierte nehmen` ergänzt sie und übernimmt die importierten Werte, wo sie abweichen. Du kannst auch `Separat hinzufügen` oder `Überspringen` wählen. `Wenn ein Detail abweicht` legt die Wahl für alle auf einmal fest.
+- `Schon vorhanden, übersprungen`: identische Kontakte, die bleiben, wie sie sind.
+
+Ein Kontakt mit demselben Namen, aber anderen Telefonnummern und E-Mails wird als wahrscheinlich andere Person markiert und separat hinzugefügt, außer du wählst Zusammenführen. Es wird nie etwas gelöscht, und `Rückgängig` direkt nach dem Import stellt alles wieder her, wie es war.
+
+## Aus einem Konto (Google)
+`Aus einem Konto` kopiert deine Kontakte einmal von Google. Tippe auf `Google` und melde dich im kleinen Fenster an; orOS liest deine Kontakte mit ihren Gruppen (sie werden zu Labels), zeigt `Import prüfen` und beendet die Verbindung sofort. Es wird kein Passwort und kein Zugriff gespeichert: Der Google-Zugriff wird entzogen, sobald das Lesen endet. Führe es erneut aus, wann immer du neue Kontakte holen willst; identische werden übersprungen. Die Prüfung zählt, wie viele gelesen wurden; eine Person, die im Konto doppelt steht (gleicher Name und gleiche Telefonnummer oder E-Mail), wird zu einer zusammengefasst, daher kann orOS am Ende weniger Kontakte haben, als das Konto zeigt.
+
+iCloud, Yahoo und andere Dienste: Exportiere deine Kontakte dort als .vcf-Datei und nutze `Importieren`.
+
+Microsoft (Outlook.com, Hotmail, Microsoft 365) bietet orOS vorerst nicht an. Unter `Eigene App-ID verwenden` kannst du deine eigene OAuth-App (Google oder Microsoft) mit der dort gezeigten Adresse registrieren und ihre Client-ID einfügen; sie bleibt auf diesem Gerät, und ihre Taste erscheint.
+
+## Aus Online-Quellen aktualisieren
+`Online aktualisieren` (obere Leiste) prüft die Kontakte, die gerade in der Liste stehen; suche also zuerst oder wähle ein Label, um nur einige zu prüfen. `Aus Online-Quellen aktualisieren` im Fenster eines Kontakts prüft nur diesen. orOS sucht nur dort, wohin der Kontakt schon zeigt: das öffentliche Profil, das die Person für ihre eigene E-Mail bei Gravatar angelegt hat (gesendet wird nur ein codierter Fingerabdruck der Adresse), und die im Kontakt gespeicherte Website oder Linkseite (Linktree, bio.link, Carrd und ähnliche), einmal gelesen wie von einem Besucher, und die öffentlichen GitHub-, Bluesky- oder Mastodon-Profile, auf die diese zeigen (ihre offenen APIs, ohne Anmeldung), sowie Wikidata-Einträge, die die eigene Website oder die Profile des Kontakts nennen. Für ein Unternehmen (ein Kontakt nur mit Firmennamen) sucht es auch in OpenStreetMap nach Name und Ort aus der Adresse oder nach der Telefonnummer. Daraus kann es Links zu Profilen, Telefonnummern, E-Mail-Adressen, einen Geburtstag, eine Position, eine Firma und eine Adresse vorschlagen, sofern sie veröffentlicht sind.
+Jeder Vorschlag zeigt, woher er kommt und wie sicher er ist: `sicher`, wenn er über etwas gefunden wurde, das nur dieser Kontakt hat (die eigene E-Mail, eine Seite mit der eigenen Telefonnummer oder E-Mail, ein verifiziertes Konto), oder an zwei Stellen; `wahrscheinlich`, wenn er von der eigenen Seite kommt und nichts widerspricht; und `prüfen`, wenn der dort gefundene Name jemand anderem gehört. Zeilen mit `prüfen` sind anfangs nicht angehakt. Nichts ändert sich, bis du auf `Auswahl übernehmen` tippst, nichts Vorhandenes wird ersetzt, und `Rückgängig` stellt die Kontakte wieder her.
+Wenn du einen einzelnen Eintrag prüfst, bietet das Fenster auch DuckDuckGo-Suchlinks (Web, LinkedIn, Facebook, Instagram, X, TikTok), die du selbst öffnest. Wenn der Assistent mit deinem eigenen SearXNG-Server sucht, werden dort auch einige Einträge auf einmal nach Name gesucht; diese Ergebnisse sind anfangs immer nicht angehakt. Facebook, Instagram, LinkedIn, X und TikTok werden nie gelesen, weil ihre Bedingungen das verbieten; ein anderswo gefundener Link zu ihnen bleibt als Link erhalten. orOS sucht nie nur nach dem Namen oder nach dem Gesicht einer Person. Eine E-Mail, die mehrere Kontakte teilen, wird nicht verwendet. Seiten, die ein Browser nicht lesen darf, werden über das orOS-Relay geholt, das nichts speichert.
+## Auf diesem Telefon (Android-App)
+In der orOS-Android-App legt `Auf diesem Telefon` deine orOS-Kontakte in die Kontakte des Telefons, damit Telefon-App und eingehende Anrufe ihre Namen zeigen. Schalte `Auf diesem Telefon anzeigen` ein und tippe auf `Zugriff erlauben` (Android fragt einmal). Die Kontakte landen in einem Konto „orOS“ und folgen jeder Änderung, die du hier machst. Es funktioniert in beide Richtungen: Wenn du einen davon in der Kontakte-App des Telefons bearbeitest oder löschst oder dort einen neuen Kontakt im Konto „orOS“ speicherst, kommt die Änderung beim nächsten Öffnen von orOS in orOS Kontakte an. Labels, Beziehungen und Messenger bleiben, wie sie in orOS sind, und ein Foto vom Telefon wird nur verwendet, wenn der Kontakt hier keins hat. Manche Kontakte-Apps (zum Beispiel Fossify Contacts) lassen dich für einen neuen Kontakt das Konto „orOS“ wählen; andere bieten nur ihr eigenes Konto an. Schaltest du den Schalter aus, werden sie wieder vom Telefon entfernt.
+
+Auch andere Apps können Kontakte an orOS senden. Wenn eine Telefon-App „Kontakt hinzufügen“ oder „Kontakt erstellen“ anbietet (nach einem Anruf von einer unbekannten Nummer, aus Viber oder einem anderen Messenger) oder eine .vcf-Datei öffnet, wähle orOS. Der Kontakt öffnet sich in `Import prüfen`, und nichts wird gespeichert, bis du bestätigst. Die Taste erscheint nicht im Browser, nur in der Android-App, und die Wahl bleibt nur auf diesem Telefon.
+
+## orOS-Datei speichern und öffnen
+`orOS-Datei (.oroscontacts)` in der oberen Leiste speichert alle Kontakte (mit ihren Einträgen) und alle Labels als eine `.oroscontacts`-Datei, zum Beispiel um sie ohne Synchronisierung auf ein anderes Gerät zu bringen oder eine Kopie aufzubewahren. Die Datei ist ein einfaches ZIP: Entpackt enthält sie die Kontakte als `content.json` plus `preview/contacts.vcf`, das andere Adressbücher öffnen. Sie enthält keine Fotos (Kontakte speichert keine) und nichts von `Aus einem Konto`. Sie ist nicht verschlüsselt und enthält persönliche Daten, also bewahre sie sicher auf.
+
+`orOS-Datei öffnen…` (oder `Entpackter orOS-Ordner…` oder „Öffnen mit“ orOS auf dem Computer) zeigt, wie viele Kontakte und Labels neu sind und wie viele schon da sind; dann fügt `Hinzufügen` nur die neuen hinzu, mit ihren eigenen IDs: Öffnest du dieselbe Datei noch einmal, kommt nichts hinzu. Ein schon vorhandener Kontakt bleibt, wie er ist, und einer, den du hier gelöscht hast, bleibt gelöscht; eine Datei löscht nie etwas. Hake `Mit neueren Versionen aktualisieren` an, damit Kontakte, die in der Datei später geändert wurden, deine Kopie ersetzen. `Rückgängig` in der Meldung entfernt, was hinzugefügt wurde. Um Kontakte aus einem anderen Adressbuch zu holen, nutze stattdessen `Importieren` mit einer .vcf- oder CSV-Datei.
+
+## Synchronisierung und Sicherung
+Deine Kontakte und Labels werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. Jedes Detail eines Kontakts wird einzeln synchronisiert: Fügst du am Computer eine Telefonnummer hinzu und änderst gleichzeitig am Telefon die Notiz, bleiben beide Änderungen erhalten. Auch die notierten Einträge werden einzeln synchronisiert, und ein auf einem Gerät gelöschter wird auf den anderen gelöscht. Welche Labels du ausgeblendet hast und der Schalter für die Erinnerung werden nicht synchronisiert.
+
+- `Importieren` liest eine vCard-Datei (.vcf) oder eine CSV-Datei und öffnet `Import prüfen` (siehe oben). Danach siehst du eine Liste dessen, was hinzugefügt, zusammengeführt oder übersprungen wurde. Mit auf einem Computer installiertem orOS kannst du eine .vcf-Datei auch mit `Öffnen mit` öffnen; orOS zeigt vor dem Import dieselbe Prüfung (siehe [Dateien öffnen](help:t/install)).
+- `Vom Telefon` (nur in Chrome auf Android) öffnet die Kontaktliste deines Telefons. Wähle die Personen, die du willst; nur diese kommen in orOS an, mit Namen, Telefonnummern und E-Mails, und Adressen, wenn das Telefon sie teilt. Sie laufen durch dieselbe `Import prüfen`.
+- `Exportieren` speichert alle deine Kontakte als .vcf-Datei, die andere Adressbücher öffnen können.
+- `JSON exportieren` speichert eine vollständige Kopie deiner Kontakte. `JSON importieren` stellt sie wieder her; es kombiniert sie mit dem, was du hast, und behält von jedem Kontakt die neuere Version.
+
+Siehe auch [Sicherung](help:t/backup).
+
+## Tastenkürzel
+- [[Ctrl+F]] (oder [[Cmd+F]]) springt ins Suchfeld.
+- [[Alt+N]] legt einen neuen Kontakt an.
+- [[Esc]] schließt die Kontaktkarte oder das offene Fenster.
+
+## Tipps
+- Geburtstage, Jahrestage und eigene Daten erscheinen jedes Jahr im [Kalender](app:calendar). Ein Tipp darauf öffnet den Kontakt hier.
+- `Stammbaum` auf der Karte eines Kontakts öffnet diese Person im [Stammbaum](app:familytree). Ist noch niemand im Stammbaum mit dem Kontakt verknüpft, bietet er an, stattdessen einen Stammbaum aus deinen Kontakten zu erstellen.
+- `QR-Code` auf der Karte eines Kontakts öffnet den [QR-Generator](app:qr) mit einem Kontaktcode (vCard) für diese Person, bereit zum Speichern oder Drucken. Der Kontakt selbst wird nicht geändert.
+
+## Grenzen
+- `JSON importieren` nimmt nur Dateien an, die mit `JSON exportieren` in orOS Kontakte erstellt wurden.
+- Der CSV-Import liest pro Kontakt eine Adresse je Typ (privat, Arbeit, andere) und einen einzigen Geburtstag.
+- Das Lesen von Visitenkarten klappt am besten mit einem scharfen, geraden, gut beleuchteten Foto einer gedruckten Karte. QR-Codes liest es nicht, und seine Vermutungen (welche Zeile der Name ist, welche die Firma) können falsch sein, also prüfe das Formular vor dem Speichern. Griechische Großbuchstaben kommen ohne Akzente.
+- Die Erinnerung `Melden` erscheint nur, während orOS offen ist (oder wenn du es später am selben Tag öffnest).
+- Ein Gerät mit einer älteren orOS-Version kennt `In Kontakt bleiben` nicht: Bearbeitest du dort einen Kontakt, funktioniert das weiter, aber ein gleichzeitig auf diesem Gerät geänderter Rhythmus kann verloren gehen.
+- Kontakte speichert keine Fotos: Importe, das Telefon und alte Sicherungen bringen keine mit. `Aus einem Konto` liest nur deine eigenen Kontakte (nicht Googles „Weitere Kontakte“ oder ein Firmenverzeichnis).
+- `Vom Telefon` erscheint nur in Chrome auf Android, weil andere Browser die Kontaktliste des Telefons nicht öffnen können.

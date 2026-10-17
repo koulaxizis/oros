@@ -1,6 +1,12 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.02.00
+- Notes, To-Do, Calendar, Contacts and Kanban are now in German.
+
+## Version 3.01.00
+- Multitasking (experimental, off by default): turn it on in Settings › System and apps you leave stay open in the background, back where you left them.
+
 ## Version 3.00.00
 - Flashcards: Import cards brings in Anki decks (.apkg, .colpkg) with pictures, sounds and your study history, and CSV/TSV/TXT files such as Quizlet exports.
 

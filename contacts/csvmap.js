@@ -2,6 +2,7 @@
 // orOS Contacts — any CSV with a column mapping
 // (contacts/csvmap.js, window.OrosContactsCsv)
 // ============================================================
+// i18n-inline-ok: Greek CSV headers, month words and letter folding (data, no UI text)
 // Pure helpers, no DOM, no storage (also loaded by the node tests).
 // Google's own CSV ("Phone 1 - Value"…) keeps its automatic reader
 // in contacts.js; every other CSV (Outlook, Excel, a CRM, a list

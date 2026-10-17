@@ -68,11 +68,15 @@
   watchPalette();
 
   /* ---------- 1. i18n ---------- */
+  // orosI18n (../i18n.js): the full language code, a pack language included.
   var LANG = "en";
-  try {
+  if (window.orosI18n) LANG = window.orosI18n.lang();
+  else try {
     if (window.parent && window.parent.orosLang) LANG = window.parent.orosLang;
     else if (localStorage.getItem("oros-lang")) LANG = localStorage.getItem("oros-lang");
   } catch (e) {}
+  // Dates, numbers and collation: the language's locale.
+  function loc() { return window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB"); }
 
   var STR = {
     en: {
@@ -356,6 +360,10 @@
       "oros.save": "orOS file (.oroscontacts)",
       "oros.open": "Open orOS file…",
       "oros.folder": "Unzipped orOS folder…",
+      "addr.ph.street": "12 Crusaders St…",
+      "addr.ph.city": "Serres",
+      "addr.ph.region": "Central Macedonia",
+      "addr.ph.country": "Greece",
     },
     el: {
       "app.contacts.self": "Επαφές",
@@ -637,9 +645,14 @@
       "sc.check": "Έλεγξε τα στοιχεία και πάτησε Αποθήκευση",
       "oros.save": "Αρχείο orOS (.oroscontacts)",
       "oros.open": "Άνοιγμα αρχείου orOS…",
-      "oros.folder": "Αποσυμπιεσμένος φάκελος orOS…"
+      "oros.folder": "Αποσυμπιεσμένος φάκελος orOS…",
+      "addr.ph.street": "Φ. Ερυθρών Σταυροφόρων 12…",
+      "addr.ph.city": "Σέρρες",
+      "addr.ph.region": "Κεντρική Μακεδονία",
+      "addr.ph.country": "Ελλάδα"
     }
   };
+  if (window.orosI18n) window.orosI18n.table(STR, "contacts", LANG);
   function t(k) {
     return (STR[LANG] && STR[LANG][k] !== undefined) ? STR[LANG][k]
          : (STR.en[k] !== undefined ? STR.en[k] : k);
@@ -1459,7 +1472,7 @@
       if (reach && due[a.id].due !== due[b.id].due) return due[a.id].due < due[b.id].due ? -1 : 1;
       if (a.starred !== b.starred) return a.starred ? -1 : 1;
       // Accent-insensitive collation: "Ήλιος" sorts with H, not last.
-      var la = greekFold(displayName(a)).localeCompare(greekFold(displayName(b)), LANG);
+      var la = greekFold(displayName(a)).localeCompare(greekFold(displayName(b)), loc());
       return la !== 0 ? la : (a.id < b.id ? -1 : 1);
     });
 
@@ -1859,7 +1872,7 @@ function fmtYmd(ymd) {
   if (!ymd) return "";
   var p = ymd.split("-");
   try {
-    return new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB",
+    return new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString(loc(),
       { day: "numeric", month: "short", year: "numeric" });
   } catch (e) { return ymd; }
 }
@@ -2419,11 +2432,11 @@ document.addEventListener("keydown", function (e) {
 
     var fields = document.createElement("div");
     fields.className = "mf-addr-fields";
-    [["street", 120, "Φ. Ερυθρών Σταυροφόρων 12 / 12 Crusaders St…"],
-     ["city", 60, "Serres"],
+    [["street", 120, t("addr.ph.street")],
+     ["city", 60, t("addr.ph.city")],
      ["zip", 20, "621 00"],
-     ["region", 60, "Central Macedonia / Κεντρική Μακεδονία"],
-     ["country", 60, "Greece / Ελλάδα"]].forEach(function (def) {
+     ["region", 60, t("addr.ph.region")],
+     ["country", 60, t("addr.ph.country")]].forEach(function (def) {
       var inp = document.createElement("input");
       inp.type = "text";
       inp.className = "mf-af-" + def[0];
@@ -4551,7 +4564,7 @@ document.addEventListener("keydown", function (e) {
     else if (!on) msg = t("ph.off");
     else if (last.err) msg = t("ph.err").replace("{e}", last.err);
     else if (!last.at) msg = t("ph.wait");
-    else msg = t("ph.last").replace("{t}", new Date(last.at).toLocaleString(LANG === "el" ? "el-GR" : "en-GB",
+    else msg = t("ph.last").replace("{t}", new Date(last.at).toLocaleString(loc(),
       { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }))
       .replace("{n}", String(last.n)).replace("{what}", t("ph.what"));
     $("ph-stat").textContent = msg;
@@ -5058,7 +5071,7 @@ document.addEventListener("keydown", function (e) {
       var lines = [];
       // Alphabetical export (deterministic, merge-order agnostic).
       var sorted = state.contacts.slice().sort(function (a, b) {
-        return greekFold(displayName(a)).localeCompare(greekFold(displayName(b)), LANG);
+        return greekFold(displayName(a)).localeCompare(greekFold(displayName(b)), loc());
       });
       sorted.forEach(function (c) {
         contactToVcard(c).forEach(function (l) {
