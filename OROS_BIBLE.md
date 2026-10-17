@@ -7337,3 +7337,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Atelier: Magic eraser and Magic grab on the device (MI-GAN 512, ONNX Runtime Web, downloaded on first use); Image from text, Magic edit and Magic expand with the image AI chosen in Assistant › Settings › Pictures (Pollinations free by default; Hugging Face, OpenAI, Stability AI, SD WebUI/Forge with the user's own key or computer); Design from a description; Magic animate.
 - Files: `assistant/imgai.js` + Assistant settings, `atelier/{inpaint,magic,imagine,magicai,magicdesign}.js`, `atelier/{ai,core,panels,cutout,motion}.js`, `vendor/migan/` (runtime-cached, not precached), credits (CREDITS.md, CREDIT_GROUPS, Part VIII), help EN/EL.
   - Tests: full suite green (new atelier-magic, atelier-magicai, atelier-magicdesign, imgai tests); real Chromium 1280/360 EN/EL with mocked providers. Not tested: real image providers (not reachable from the cloud container), the MI-GAN model on a real GPU/phone.
+
+### 2026-10-17 — Maps transit: out-of-date timetables notice + Athens coverage (#461) — 2.71.01
+- Maps: public transport says when an area's timetables are out of date (Athens at Transitous for now), with a coverage text.
+- Files: `maps/transit-core.js`, `maps/transit.js`, Bible.
+  - Tests: full suite green; Chromium transit E2E incl. 360 EL. Not tested: a real phone, live Transitous from the cloud container.
