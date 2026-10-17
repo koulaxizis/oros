@@ -50,11 +50,11 @@ test("items and table: caps, junk dropped, nothing usable → null", () => {
 test("the sheet offers installed apps only, never the sender, in ORDER", () => {
   const text = { title: "T", text: "hello\nworld" };
   assert.deepEqual(C.appsFor("text", text, ALL, "notes"),
-    ["todo", "writer", "mail", "wiki", "assistant", "texttools", "textcase"]);
+    ["todo", "writer", "mail", "kanban", "slides", "wiki", "mindmap", "prompter", "assistant", "texttools", "textcase"]);
   assert.deepEqual(C.appsFor("text", text, ["writer", "mail", "calculator"], ""), ["writer", "mail"]);
-  assert.deepEqual(C.appsFor("link", { url: "https://a.b" }, ALL, "bookmarks"), ["notes", "todo", "writer", "mail", "assistant"]);
-  assert.deepEqual(C.appsFor("items", { items: ["a"] }, ALL, ""), ["notes", "todo", "writer", "mail", "spreadsheet", "wiki", "texttools"]);
-  assert.deepEqual(C.appsFor("table", { rows: [["a"]] }, ALL, ""), ["writer", "spreadsheet", "texttools"]);
+  assert.deepEqual(C.appsFor("link", { url: "https://a.b" }, ALL, "bookmarks"), ["notes", "todo", "writer", "mail", "kanban", "assistant"]);
+  assert.deepEqual(C.appsFor("items", { items: ["a"] }, ALL, ""), ["notes", "todo", "writer", "mail", "kanban", "slides", "spreadsheet", "wiki", "mindmap", "texttools"]);
+  assert.deepEqual(C.appsFor("table", { rows: [["a"]] }, ALL, ""), ["writer", "mail", "spreadsheet", "texttools"]);
   assert.deepEqual(C.appsFor("text", { text: "" }, ALL, ""), []);
 });
 
@@ -93,7 +93,7 @@ test("targets are each app's own deep-link shapes", () => {
 
   const table = { name: "Hours", rows: [["Day", "h"], ["Mon", 3]], sum: [1] };
   assert.deepEqual(C.target("spreadsheet", "table", table), { newSheet: { name: "Hours", rows: [["Day", "h"], ["Mon", 3]], sum: [1] } });
-  assert.deepEqual(C.target("writer", "table", table), { newDoc: { title: "Hours", text: "Day\th\nMon\t3" } });
+  assert.deepEqual(C.target("writer", "table", table), { newDoc: { title: "Hours", rows: [["Day", "h"], ["Mon", 3]] } });
 });
 
 test("caps follow each receiver's own limit", () => {
@@ -116,7 +116,7 @@ test("summary line in both languages", () => {
 test("every receiver's app code takes the target it is sent", () => {
   const need = {
     notes: ["notes/notes.js", ["t.add", "t.add.title", "t.add.text"]],
-    writer: ["writer/writer.js", ["t.newDoc", "t.newDoc.text", "t.newDoc.title"]],
+    writer: ["writer/writer.js", ["t.newDoc", "t.newDoc.text", "t.newDoc.title", "t.newDoc.rows"]],
     todo: ["todo/todo.js", ["addItems"]],
     mail: ["mail/mail.js", ["target.compose", "c.subject", "c.body"]],
     assistant: ["assistant/assistant.js", ["tg.ask"]],
@@ -125,7 +125,12 @@ test("every receiver's app code takes the target it is sent", () => {
     spreadsheet: ["spreadsheet/spreadsheet.js", ["tg.newSheet", "p.rows", "p.sum"]],
     texttools: ["texttools/texttools.js", ["tg.text"]],
     textcase: ["textcase/textcase.js", ["target.text"]],
-    labels: ["labels/labels.js", ["target.text"]]
+    labels: ["labels/labels.js", ["target.text"]],
+    slides: ["slides/app.js", ["tg.outline", "tg.title"]],
+    mindmap: ["mindmap/mindmap.js", ["t.pasteText", "t.pasteText.text"]],
+    kanban: ["kanban/kanban.js", ["tg.addCards", "T.asCards"]],
+    prompter: ["prompter/prompter.js", ["tg.newPrompt", "tg.newPrompt.text"]],
+    layout: ["layout/layout.js", ["placeImage"]]
   };
   assert.deepEqual(Object.keys(need).sort(), Object.keys(C.RECEIVERS).sort());
   for (const app of Object.keys(need)) {
@@ -148,8 +153,18 @@ test("shell and sheet: loaded on demand, no innerHTML from data", () => {
   assert.doesNotMatch(src("send/core.js"), /innerHTML|localStorage|sessionStorage|fetch\(/);
 });
 
-test("senders: Writer, Notes, Wiki, Mail, Bookmarks and Feeds call orosSend", () => {
-  for (const f of ["writer/writer.js", "notes/notes.js", "wiki/wiki.js", "mail/mail.js", "bookmarks/bookmarks.js", "feeds/feeds.js"]) {
+test("senders: Writer, Notes, Wiki, Mail, Bookmarks, Feeds and the office apps call orosSend", () => {
+  for (const f of ["writer/writer.js", "notes/notes.js", "wiki/wiki.js", "mail/mail.js", "bookmarks/bookmarks.js", "feeds/feeds.js",
+    "spreadsheet/spreadsheet.js", "slides/editor.js", "mindmap/mindmap.js", "kanban/kanban.js",
+    "pixel/pixel.js", "photolab/io.js", "atelier/io.js"]) {
     assert.match(src(f), /orosSend/, f);
   }
+});
+
+test("Layout takes one picture from the disk (wave 5)", () => {
+  const one = { items: [{ path: "/internal/Pictures/cat.png", name: "cat.png" }] };
+  assert.deepEqual(C.appsFor("files", one, ALL, ""), ["mail", "layout"]);
+  assert.deepEqual(C.target("layout", "files", one), { placeImage: { path: "/internal/Pictures/cat.png", name: "cat.png" } });
+  assert.equal(C.target("layout", "files", { items: [{ path: "/internal/Docs/a.pdf", name: "a.pdf" }] }), null);
+  assert.equal(C.target("layout", "files", { items: [one.items[0], { path: "/internal/Pictures/b.jpg", name: "b.jpg" }] }), null);
 });

@@ -1,0 +1,73 @@
+{
+ "source": "tests/bundle-plants.test.js slice()",
+ "base": {
+  "ver": 1,
+  "plants": [
+   {
+    "id": "plantaaa01",
+    "m": 1792201842677,
+    "name": "Monty",
+    "sp": "monstera",
+    "room": "Kitchen",
+    "sci": "Monstera deliciosa",
+    "out": 0,
+    "em": "",
+    "w": 7,
+    "ww": 14,
+    "f": 0,
+    "mi": 7,
+    "r": 0,
+    "st": "2026-10-07",
+    "sn": {},
+    "notes": "By the window"
+   },
+   {
+    "id": "plantaaa02",
+    "m": 1792201842677,
+    "name": "Basil",
+    "sp": "basil",
+    "room": "Kitchen",
+    "out": 1,
+    "em": "",
+    "w": 2,
+    "ww": 0,
+    "f": 0,
+    "mi": 0,
+    "r": 0,
+    "st": "2026-10-07",
+    "sn": {},
+    "notes": ""
+   }
+  ],
+  "log": [
+   {
+    "id": "logaaa0001",
+    "p": "plantaaa01",
+    "k": "water",
+    "d": "2026-10-07",
+    "s": 0,
+    "m": 1792201842777
+   },
+   {
+    "id": "logaaa0002",
+    "p": "plantaaa01",
+    "k": "water",
+    "d": "2026-10-14",
+    "s": 0,
+    "m": 1792201842877
+   },
+   {
+    "id": "logaaa0003",
+    "p": "plantaaa02",
+    "k": "water",
+    "d": "2026-10-14",
+    "s": 1,
+    "m": 1792201842977
+   }
+  ],
+  "tombs": {
+   "loggone001": 1792201843177,
+   "plantgone1": 1792201843177
+  }
+ }
+}

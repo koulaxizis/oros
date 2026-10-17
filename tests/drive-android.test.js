@@ -72,3 +72,35 @@ test("android.yml builds the library from a pinned oros-drive commit", () => {
   assert.match(pg, /-keep class go\.\*\* \{ \*; \}/);
   assert.match(pg, /-keep class online\.useoros\.drive\.\*\* \{ \*; \}/);
 });
+
+test("wave 5: the disk is a documents provider only the system can bind, shown while unlocked", () => {
+  const m = read("android", "app", "src", "drive", "AndroidManifest.xml");
+  assert.match(m, /<provider android:name="\.DriveProvider"\s+android:authorities="\$\{applicationId\}\.drive"\s+android:grantUriPermissions="true"\s+android:exported="true"\s+android:permission="android\.permission\.MANAGE_DOCUMENTS">/);
+  assert.match(m, /<action android:name="android\.content\.action\.DOCUMENTS_PROVIDER" \/>/);
+  const p = read(...JAVA, "DriveProvider.java");
+  assert.match(p, /extends DocumentsProvider/);
+  assert.match(p, /getPackageName\(\) \+ "\.drive"/);
+  assert.match(p, /signedIn"\) && s\.optBoolean\("unlocked"\)/);
+  // Ids stay inside the disk.
+  assert.match(p, /id\.startsWith\(ROOT \+ "\/"\)\) \|\| id\.contains\("\/\.\.\/"\)/);
+  // A write uploads on close with the hash it started from (conflict copies).
+  assert.match(p, /d\.diskPut\(id, tmp\.getAbsolutePath\(\), base\)/);
+  const a = read(...JAVA, "DriveActivity.java");
+  assert.match(a, /DriveProvider\.rootsChanged\(this\)/);
+  assert.match(a, /Drive::diskClearCache/);
+});
+
+test("wave 5 follow-up: pickers don't load the core before sign-in; a failed save is told", () => {
+  const p = read(...JAVA, "DriveProvider.java");
+  const ready = p.slice(p.indexOf("private boolean ready()"), p.indexOf("public Cursor queryRoots"));
+  assert.ok(ready.indexOf("DriveCore.everSignedIn") >= 0 && ready.indexOf("everSignedIn") < ready.indexOf("drive()"));
+  const core = read(...JAVA, "DriveCore.java");
+  assert.match(core, /static boolean everSignedIn\(Context c\)/);
+  assert.match(core, /getSharedPreferences\(KeystoreSecrets\.PREFS/);
+  assert.equal((p.match(/notSaved\(id, /g) || []).length, 2);
+  assert.match(p, /areNotificationsEnabled\(\)/);
+  for (const dir of ["values", "values-el"]) {
+    const x = read("android", "app", "src", "drive", "res", dir, "drive_strings.xml");
+    for (const k of ["drive_channel", "drive_not_saved_title", "drive_not_saved_text"]) assert.match(x, new RegExp(`name="${k}"`));
+  }
+});

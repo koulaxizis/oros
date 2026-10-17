@@ -64,6 +64,7 @@ The strip under the canvas shows the pages of your design. `+` adds a page; each
 - `Video` (MP4 or WebM, whichever your browser records) and `GIF` turn the pages into a film with their animations and transitions. A video records in real time, so keep the tab open until it is saved.
 - `More` › `Resize…` makes the design in other sizes, for example a square post as a story and a banner. Tick one or more sizes (or a custom size): the elements are placed again for each one, so things at the edges stay at the edges, bars and photos across the page stretch, and nothing is distorted. With `Keep this design, make a copy in each size` on, each size becomes a new design next to this one (in the same folder); with it off, this design itself changes size (`Undo` brings it back).
 - `More` › `Make a book mockup` sends the design to Mockups as the cover of a 3D book: page 1 is the front, page 2 the back, page 3 the spine, and one wide page is a full wrap. In Mockups, `Open in Atelier` brings the finished picture back as a new design.
+- `More` › `Send to…` saves the current page as a PNG in Pictures and sends it on: to Mail as an attachment, to Layout onto a page, or to someone.
 - `More` › `Save as package (.orosdesign)` makes one file with the design, its images and clips. It is an open ZIP file: unzip it and you find `content.json` (the design), `media` (its pictures and clips) and a thumbnail.
 
 ## AI

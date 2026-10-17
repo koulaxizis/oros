@@ -1,0 +1,113 @@
+{
+ "source": "tests/bundle-quote.test.js slice()",
+ "base": {
+  "ver": 1,
+  "om": 5,
+  "activeQuoteId": "q1",
+  "deleted": {
+   "q-gone": 1799999999900
+  },
+  "quotes": [
+   {
+    "id": "q1",
+    "num": "OFF-2026-001",
+    "clientId": "c1",
+    "status": "sent",
+    "date": "2026-10-01",
+    "dueDate": "2026-10-30",
+    "currency": "EUR",
+    "items": [
+     {
+      "id": "q1-i1",
+      "code": "A1",
+      "desc": "Design | layout",
+      "qty": 2,
+      "price": 100,
+      "disc": 10,
+      "vat": 24
+     }
+    ],
+    "gDisc": 0,
+    "payment": "50% upfront",
+    "notes": "=HYPERLINK(\"x\")",
+    "instalments": [
+     {
+      "id": "q1-n1",
+      "date": "2026-11-01",
+      "amount": 223.2
+     }
+    ],
+    "mtime": 1799999999500,
+    "pos": 0,
+    "share": {
+     "tok": "secret-token",
+     "h": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+     "at": 1799999999600,
+     "f": "Me",
+     "fe": "me@x"
+    },
+    "acc": {
+     "n": "Client Person",
+     "at": 1799999999700,
+     "h": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    }
+   }
+  ],
+  "clients": [
+   {
+    "id": "c1",
+    "name": "ACME",
+    "email": "a@acme",
+    "phone": "",
+    "address": "Street 1",
+    "taxId": "123",
+    "mtime": 1799999999100,
+    "pos": 0
+   }
+  ],
+  "templates": [
+   {
+    "id": "t1",
+    "num": "",
+    "clientId": "c1",
+    "status": "draft",
+    "date": "2026-10-01",
+    "dueDate": "2026-10-30",
+    "currency": "EUR",
+    "items": [
+     {
+      "id": "t1-i1",
+      "code": "A1",
+      "desc": "Design | layout",
+      "qty": 2,
+      "price": 100,
+      "disc": 10,
+      "vat": 24
+     }
+    ],
+    "gDisc": 0,
+    "payment": "50% upfront",
+    "notes": "=HYPERLINK(\"x\")",
+    "instalments": [
+     {
+      "id": "t1-n1",
+      "date": "2026-11-01",
+      "amount": 223.2
+     }
+    ],
+    "mtime": 1799999999500,
+    "pos": 0,
+    "name": "Website"
+   }
+  ],
+  "payMethods": [
+   {
+    "id": "pm-bank",
+    "method": "bank",
+    "text": "IBAN: GR00",
+    "mtime": 0,
+    "pos": 0
+   }
+  ]
+ }
+}

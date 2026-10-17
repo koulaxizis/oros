@@ -995,11 +995,17 @@
     body.appendChild(g4);
   }
 
+  // The New document defaults: one A4 page, 15 mm margins, 3 mm bleed
+  // (also a picture sent from another app, io.js placeFromBlob).
+  function newDocSetup() {
+    var a4 = M.preset("a4");
+    return { w: a4.w, h: a4.h, unit: "mm", bleed: 3 * M.PT_PER.mm, mt: 15 * M.PT_PER.mm, mb: 15 * M.PT_PER.mm,
+             mi: 15 * M.PT_PER.mm, mo: 15 * M.PT_PER.mm, cols: 1, gut: 5 * M.PT_PER.mm, facing: 0, preset: "a4", pages: 1 };
+  }
+  LY.newDocSetup = newDocSetup;
   function newDocDlg() {
     var lang = LY.LANG, TP = window.orosDK.templates || { LIST: [] };
-    var a4 = M.preset("a4");
-    var s = { w: a4.w, h: a4.h, unit: "mm", bleed: 3 * M.PT_PER.mm, mt: 15 * M.PT_PER.mm, mb: 15 * M.PT_PER.mm,
-              mi: 15 * M.PT_PER.mm, mo: 15 * M.PT_PER.mm, cols: 1, gut: 5 * M.PT_PER.mm, facing: 0, preset: "a4", pages: 1 };
+    var s = newDocSetup();
     var pick = "";
     LY.openDialog(t("new.title"), function (body, close) {
       var name = el("input", "inp"); name.type = "text"; name.maxLength = 120; name.value = t("doc.untitled");

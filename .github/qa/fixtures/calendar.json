@@ -1,0 +1,103 @@
+{
+ "source": "tests/bundle-calendar.test.js slice()",
+ "base": {
+  "ver": 1,
+  "labels": [
+   {
+    "id": "lbl-family",
+    "name": "Family",
+    "color": "#9ece6a",
+    "mtime": 0
+   },
+   {
+    "id": "lbl-gym",
+    "name": "Gym",
+    "color": "#e06c75",
+    "mtime": 1799999999100
+   },
+   {
+    "id": "lbl-personal",
+    "name": "Personal",
+    "color": "#d4af37",
+    "mtime": 0
+   },
+   {
+    "id": "lbl-work",
+    "name": "Work",
+    "color": "#7aa2f7",
+    "mtime": 0
+   }
+  ],
+  "events": [
+   {
+    "id": "ev1",
+    "date": "2026-10-20",
+    "dateEnd": null,
+    "start": "09:00",
+    "end": "10:30",
+    "title": "Dentist",
+    "note": "bring card\nfloor 2",
+    "location": "Main St; 4",
+    "labelId": "lbl-personal",
+    "recur": null,
+    "remindMin": 60,
+    "mtime": 1799999999300
+   },
+   {
+    "id": "ev2",
+    "date": "2026-10-05",
+    "dateEnd": null,
+    "start": null,
+    "end": null,
+    "title": "=HYPERLINK(1)",
+    "note": "",
+    "location": "",
+    "labelId": "lbl-gym",
+    "recur": {
+     "freq": "W",
+     "interval": 1,
+     "until": null,
+     "exdates": [
+      "2026-10-12"
+     ]
+    },
+    "remindMin": null,
+    "mtime": 1799999999400
+   },
+   {
+    "id": "ev3",
+    "date": "2026-11-01",
+    "dateEnd": "2026-11-03",
+    "start": "18:00",
+    "end": "12:00",
+    "title": "Trip",
+    "note": "",
+    "location": "",
+    "labelId": null,
+    "recur": null,
+    "remindMin": null,
+    "mtime": 1799999999500,
+    "tz": "Europe/Athens"
+   }
+  ],
+  "deleted": [
+   {
+    "id": "ev-gone",
+    "mtime": 1799999999900
+   },
+   {
+    "id": "lbl-old",
+    "mtime": 1799999999900
+   }
+  ],
+  "subs": [
+   {
+    "id": "sub1",
+    "url": "https://calendar.example.com/private-SECRETKEY/basic.ics",
+    "name": "Work",
+    "color": "#7aa2f7",
+    "mtime": 1799999999950
+   }
+  ]
+ }
+}

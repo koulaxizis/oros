@@ -721,6 +721,52 @@
     }, true);
   }
 
+  // ---------- Send to… (the shell's sheet: Mail, Layout, a person) ----------
+  // The current page as PNG (as Download draws it, long side ≤ 4096 px),
+  // saved in /internal/Pictures first: the receivers take a disk path.
+  var PICTURES = "/internal/Pictures";
+  function parentApi(name) {
+    try { return window.parent !== window && window.parent[name] ? window.parent[name] : null; }
+    catch (e) { return null; }
+  }
+  function canSend() { return !!(parentApi("orosSend") && parentApi("orosFS")); }
+  function savePicture(fs, blob, name) {
+    var dot = name.lastIndexOf("."), base = name.slice(0, dot), ext = name.slice(dot);
+    function tryName(n) {
+      var p = PICTURES + "/" + base + (n > 1 ? " (" + n + ")" : "") + ext;
+      return fs.stat(p).then(function (s) {
+        if (!s) return p;
+        return n < 99 ? tryName(n < 2 ? 2 : n + 1) : Promise.reject(new Error("name"));
+      }, function () { return p; });
+    }
+    return fs.mkdir(PICTURES).then(null, function () {}).then(function () { return tryName(1); })
+      .then(function (p) { return fs.write(p, blob).then(function () { return p; }); });
+  }
+  function sendTo() {
+    var doc = AT.doc, api = parentApi("orosSend"), fs = parentApi("orosFS");
+    if (!doc || !api || !fs || exporting) return;
+    var pg = M.pagesInOrder(doc).filter(function (p) { return p.id === ED.pg; })[0] || M.pagesInOrder(doc)[0];
+    if (!pg) return;
+    ED.exitText();
+    exporting = true;
+    var k = Math.min(1, 4096 / Math.max(doc.setup.w, doc.setup.h));
+    prepare(doc, safeScale(doc, k)).then(function () {
+      return toBlob(renderForExport(doc, pg, k, false), "image/png");
+    }).then(function (b) {
+      return savePicture(fs, b, fileName(doc, ".png"));
+    }).then(function (p) {
+      exporting = false;
+      var it = { path: p, name: p.split("/").pop() };
+      var opts = { kind: "files", data: { items: [it] } };
+      if (parentApi("orosShare")) opts.share = { kind: "album", data: { t: "" }, photos: [it] };
+      api.open(opts);
+    }, function (e) {
+      exporting = false;
+      try { console.error("[orOS] atelier: send failed", e); } catch (x) {}
+      AT.toast(t("send.fail"));
+    });
+  }
+
   // ---------- Editor bar ----------
   function refreshBar() {
     $("ed-undo").disabled = !AT.canUndo();
@@ -755,6 +801,7 @@
         { label: t("more.bulk"), fn: function () { if (AT.bulk) AT.bulk.open(); } },
         { label: t("more.mockup"), disabled: !(AT.mockup && AT.mockup.can()), fn: function () { AT.mockup.open(); } },
         { label: t("more.pkg"), fn: function () { exportPackage(AT.doc); } },
+        { label: t("more.sendTo"), hide: !canSend(), fn: sendTo },
         { label: t("more.credits"), fn: creditsDialog },
         { sep: true },
         { label: t("more.selall"), fn: ED.selectAll },
@@ -770,6 +817,7 @@
 
   AT.io = {
     exportPackage: exportPackage, importAny: importAny, importFolder: importFolder, openFile: openFile, importPptx: importPptxFile, uploadImage: uploadImage,
-    placePhoto: placePhoto, pickFile: pickFile, saveBlob: saveBlob, exportDialog: exportDialog, resizeTo: resizeTo
+    placePhoto: placePhoto, pickFile: pickFile, saveBlob: saveBlob, exportDialog: exportDialog, resizeTo: resizeTo,
+    sendTo: sendTo, canSend: canSend
   };
 })();

@@ -1,6 +1,68 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.88.00
+- Sync: restore one of the last 7 cloud backups from Settings › Sync; every device takes it, and today's data is kept as a rescue copy.
+
+## Version 2.87.00
+- Pixel Avatar makes wallpapers; Send to… for pictures from Pixel Avatar, Photo Lab and Atelier (Mail, Layout); Studio sends to Music and to Ringtone Composer; your melodies can be the notification and timer sounds.
+
+## Version 2.86.00
+- Sync: move your whole cloud between Dropbox and a WebDAV / Nextcloud server from Settings, Vault and Drive files included, still encrypted.
+
+## Version 2.85.01
+- Android widgets: a magnifier button opens the command bar (needs the new orOS Android app).
+
+## Version 2.85.00
+- Sync tells you when it needs you: a full storage or an expired sign-in puts one line a day in the bell, and Disconnect also cancels this device's access at Dropbox or Nextcloud.
+
+## Version 2.84.00
+- Open in Spreadsheet in twelve more apps: Timesheet, Workouts, Health, Water, Mood, Garage, Invoices, CRM, Library, Media Shelf, Split and Meals open their data as a new sheet.
+
+## Version 2.83.00
+- Sync with WebDAV: servers that block the browser now work through the orOS relay (optional), Nextcloud users can sign in without typing a password, and big files go up in pieces.
+
+## Version 2.82.00
+- Command bar: timers and alarms, Kanban cards, habits done, send to an app, sums and unit conversions you can copy, and your recent commands.
+
+## Version 2.81.00
+- Send to someone: photo albums from Files and Photo Lab, up to 200 photos, made smaller and without hidden location details, as a link with an expiry.
+
+## Version 2.80.00
+- Office apps send to each other: a Spreadsheet selection becomes a Writer table, and text becomes slides, a mind map, Kanban cards or a Prompter prompt (Send to an app in Spreadsheet, Slides, Mind map and Kanban).
+
+## Version 2.79.00
+- Command bar: type «dentist tomorrow 10», «bread to the shopping list» or «spent 12€ coffee» in the menu search, or press Ctrl+K over any app; the app opens with the form filled in.
+
+## Version 2.78.01
+- orOS Drive on the phone: a file that could not be saved to orOS now shows a notification, and file pickers stay light until you sign in to orOS Drive.
+
+## Version 2.78.00
+- Send to someone: send a whole calendar or a date range from Calendar › More. It opens month by month in any browser, as an .ics file or straight into orOS.
+
+## Version 2.77.00
+- Notifications with orOS closed (optional): turn it on per device in Settings › Notifications and alarms and reminders arrive even when orOS is closed.
+
+## Version 2.76.00
+- Sync can now go through your own WebDAV server (Nextcloud, ownCloud, Synology, QNAP): Settings › Sync › Use WebDAV / Nextcloud.
+
+## Version 2.75.00
+- Files opens documents, spreadsheets, songs and videos straight in the orOS app that reads them (Open with…), plays songs in Music, and sends files to Mail.
+
+## Version 2.74.00
+- Music: Made for you on Home. A Daily mix, On repeat, Rewind and song radio are made on your device from what you play, and every year gets its own recap (top songs, artists and your biggest month). Today shows the recap or the Daily mix.
+- Music: bring your Spotify playlists and likes. Open the my_spotify_data.zip (or its JSON/CSV files) and Music finds the songs in your library, then (if you say yes) in free music online.
+- Music: find missing album covers online (MusicBrainz and the Cover Art Archive), add an album to Media Shelf, or send a free song to Montage.
+
+## Version 2.73.00
+- New users choose what the menu shows: Everything (first and chosen), or Home, Work, School, Creating, Games and any app by hand. You can change it later in Settings › Menu › Choose a profile.
+
+## Version 2.72.01
+- orOS Drive on the phone: the whole orOS disk now appears as «orOS» in Android's Files app and in every file picker (orOS Android app; not in the F-Droid version for now).
+
+## Version 2.72.00
+- Send to someone: links with an expiry (1, 7 or 30 days), stored encrypted and taken back any time from My shared links; long notes and Wiki articles can now be sent.
+
 ## Version 2.71.01
 - Maps: public transport now says when an area's timetables are out of date (Athens, for now).
 

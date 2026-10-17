@@ -1,0 +1,78 @@
+{
+ "source": "tests/bundle-bookmarks.test.js slice()",
+ "base": {
+  "ver": 1,
+  "deleted": {
+   "gone": 1799999999900
+  },
+  "settings": {
+   "x": 1
+  },
+  "folders": {
+   "unsorted": {
+    "id": "unsorted",
+    "name": "unsorted",
+    "pos": 0,
+    "modified": 0
+   },
+   "work": {
+    "id": "work",
+    "name": "Work",
+    "pos": 1,
+    "modified": 1799999999100
+   },
+   "docs": {
+    "id": "docs",
+    "name": "Docs",
+    "pos": 0,
+    "parent": "work",
+    "modified": 1799999999200
+   }
+  },
+  "items": {
+   "a": {
+    "id": "a",
+    "url": "https://a.example/x",
+    "title": "Alpha <b>",
+    "note": "line1\nline2",
+    "folderId": "docs",
+    "tags": [
+     "t1",
+     "t2"
+    ],
+    "status": "ok",
+    "visits": 3,
+    "lastVisit": 1799999999990,
+    "fav": true,
+    "pos": 0,
+    "added": 1799999999300,
+    "modified": 1799999999300,
+    "chk": {
+     "s": "ok",
+     "at": 1799999999950,
+     "code": 200
+    },
+    "arch": {
+     "at": 1799999999960,
+     "f": "a.html",
+     "n": 900
+    }
+   },
+   "b": {
+    "id": "b",
+    "url": "https://b.example",
+    "title": "B",
+    "note": "",
+    "folderId": "unsorted",
+    "tags": [],
+    "status": "ok",
+    "visits": 0,
+    "lastVisit": 0,
+    "fav": false,
+    "pos": 0,
+    "added": 1799999999400,
+    "modified": 1799999999400
+   }
+  }
+ }
+}

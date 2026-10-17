@@ -1,5 +1,5 @@
 # Sync across devices
-Sync keeps your orOS data the same on every device you use, through your own Dropbox account. Everything is encrypted on your device before it leaves, so Dropbox only ever stores scrambled data.
+Sync keeps your orOS data the same on every device you use, through your own Dropbox account or your own WebDAV server (Nextcloud, ownCloud, Synology, QNAP and others). Everything is encrypted on your device before it leaves, so the cloud only ever stores scrambled data.
 
 ## Connect Dropbox
 1. Open the menu, choose `Settings` and go to `Sync`.
@@ -9,6 +9,46 @@ Sync keeps your orOS data the same on every device you use, through your own Dro
 
 The first time, your passphrase needs at least 10 characters.
 
+## Connect a WebDAV or Nextcloud server
+1. In `Settings` › `Sync`, tap `Use WebDAV / Nextcloud`.
+2. Fill in the `Server address` (it must start with https://; for Nextcloud it looks like `https://your.cloud/remote.php/dav/files/your-name`), your `Username` and an `App password`, and pick a `Folder on the server` (orOS by default).
+3. Tap `Test and connect`. orOS checks the server first and saves nothing if a check fails.
+4. Type your passphrase and tap `Unlock`, as with Dropbox.
+
+Use an app password, not your main password: in Nextcloud it's under Settings › Security › Devices & sessions. orOS keeps it on this device only. On Nextcloud, a factory reset also deletes that app password from the server; on other servers, remove it there yourself.
+
+The server has to show orOS file versions (ETag) and protect against two devices overwriting each other; orOS refuses a server that doesn't, and says which check failed.
+
+### Servers that don't let the browser connect
+Many servers (Synology, ownCloud, a Nextcloud without the WebAppPassword app) don't let a web page talk to them (CORS). Then `Test and connect` says the server did not answer. Turn on `Through the orOS relay` and try again.
+
+>! With the relay, your data is still end-to-end encrypted: the relay only sees scrambled files. But your app password passes through the orOS relay on every request. It is never stored or logged there. If you'd rather not, let your server allow orOS directly: on Nextcloud the free WebAppPassword app does this; on your own server, allow orOS's address and expose the ETag header.
+
+The relay reaches public https servers on port 443, 5006 (Synology), 8443 or 9443, and takes files up to 95 MB at a time. On Nextcloud, big files go up in pieces anyway. A server on your home network without a public address can't be reached this way.
+
+### Sign in with Nextcloud
+On Nextcloud you don't have to make an app password yourself:
+1. Enter your Nextcloud's address (like `https://your.cloud`) and tap `Sign in with Nextcloud`.
+2. A tab opens your Nextcloud's sign-in page. Log in there and approve orOS.
+3. orOS gets its own app password and connects. Your main password is typed only on your server's page.
+
+Nextcloud usually needs `Through the orOS relay` for this step. The approval has to happen within 20 minutes; `Cancel sign-in` stops waiting.
+
+One device uses one cloud at a time. When a device moves to a new cloud, everything on it goes up there on the next sync; the old cloud keeps its copy.
+
+### Move to another cloud
+`Move to WebDAV / Nextcloud` (while on Dropbox) and `Move to Dropbox` (while on a server) copy your whole cloud to the other one: the sync data and every Vault file, including Drive folders this device keeps in the cloud only. The files are copied as they are, still encrypted, so the same passphrase opens them.
+1. On one device, open `Settings` › `Sync` and choose the move. For a server, fill in the same form as when connecting; for Dropbox, sign in.
+2. The new place must be empty: an empty folder on the server, or a Dropbox without orOS data. Otherwise nothing is moved.
+3. Then, on every other device, choose `Disconnect` and connect to the new cloud with the same passphrase.
+
+The old cloud is left as it was, with its backups, until you delete it yourself.
+
+### Server guides
+- **Nextcloud**: the address is `https://your.cloud/remote.php/dav/files/USERNAME`. Use `Sign in with Nextcloud`, or make an app password under Settings › Security › Devices & sessions. With the WebAppPassword app the browser connects directly; otherwise turn on `Through the orOS relay`.
+- **Synology**: install `WebDAV Server` from the Package Center and turn on HTTPS (port 5006). The address is `https://your-nas-address:5006/` followed by a shared folder, such as `/home`. The NAS needs a public address and a valid certificate (for example Synology DDNS with Let's Encrypt), and `Through the orOS relay` turned on.
+- **ownCloud**: the address is `https://your.cloud/remote.php/dav/files/USERNAME`. Make an app passcode under Settings › Security, and turn on `Through the orOS relay`.
+
 ## Your passphrase
 The passphrase encrypts your data on this device. It never leaves the device, and neither Dropbox nor anyone else can read your data without it.
 
@@ -17,7 +57,7 @@ The passphrase encrypts your data on this device. It never leaves the device, an
 - `Change passphrase` re-encrypts your cloud data with a new one. After that, every device needs the new passphrase.
 - If the passphrase was changed on another device, you'll see `Passphrase changed on another device?`. Type the new one there.
 - `Forget passphrase here` (or `Forget this device` when it was remembered) removes it from this device. Your data stays.
-- `Disconnect` signs this device out of Dropbox; tap it twice to confirm. Your data stays on the device.
+- `Disconnect` signs this device out of Dropbox or the WebDAV server; tap it twice to confirm. Your data stays on the device.
 
 ## The sync dot
 The small dot in the top bar shows how sync is doing. On a computer, point at it to see its label:

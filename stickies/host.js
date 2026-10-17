@@ -350,11 +350,13 @@
   }
   var rtNode = null;
   function stopMelody() { if (rtNode) { try { rtNode.stop(); } catch (e) {} rtNode = null; } }
-  function playMelody(id) {
+  // fb: what plays instead when the melody is gone (the bell); maxS:
+  // where a long melody fades out (RT_MAX_S)
+  function playMelody(id, fb, maxS) {
     rtCore().then(function (R) {
       var raw = rtRead(), m = null;
       try { if (R && raw) m = R.findMelody(R.mergeRingtones(raw, null), id); } catch (e) { m = null; }
-      if (!m) { play("bell"); return; }                 // gone (or no core): the bell instead
+      if (!m) { if (typeof fb === "function") fb(); else play("bell"); return; }   // gone (or no core)
       var a = ctx();
       if (!a) return;
       try {
@@ -362,7 +364,7 @@
         var v = volume();
         if (!v) return;
         var rate = 22050, smp = R.renderSamples(R.parseNotes(m.notes), m.bpm, m.voice, rate);
-        var max = rate * RT_MAX_S;
+        var max = rate * Math.min(RT_MAX_S, maxS > 0 ? maxS : RT_MAX_S);
         if (smp.length > max) {                         // a soft end instead of a cut
           smp = smp.subarray(0, max);
           for (var i = 0, f = Math.round(rate * 0.4); i < f; i++) smp[max - f + i] *= 1 - i / f;
@@ -1411,6 +1413,16 @@
       listeners.push(fn);
       return function () { var i = listeners.indexOf(fn); if (i >= 0) listeners.splice(i, 1); };
     }
+  };
+
+  // The melodies for every other sound picker of the shell (wave 5 of
+  // the app links): Settings › Notifications plays one for each
+  // notification, Time for an alarm or a timer. Read only, as above;
+  // values are stored as "rt:<id>" by whoever picks one.
+  root.orosMelodies = {
+    list: melodies,
+    play: function (id, fb, maxS) { playMelody(String(id || ""), fb, +maxS || 0); },
+    stop: stopMelody
   };
 
   function boot() {

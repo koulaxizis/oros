@@ -1,7 +1,8 @@
 // ============================================================
 // orOS "Send to someone" — share/view.js (the receiving page)
-// Opens the item inside the link (#1.… / #p1.…, see kinds.js) and
-// shows it. Works without orOS (copy, download); with orOS in this
+// Opens the item inside the link (#1.… / #p1.…, see kinds.js), or
+// fetches and decrypts a link with an expiry (#r1.… / #q1.…, see
+// relay.js: only ciphertext comes from the relay), and shows it. Works without orOS (copy, download); with orOS in this
 // browser "Add to my orOS" hands the item to the right app.
 // Hostile input: kinds.js normalizes everything, and this file only
 // ever writes text (textContent) and links it checked itself.
@@ -10,6 +11,7 @@
   "use strict";
 
   var K = window.OrosShareKinds;
+  var R = window.OrosShareRelay || null;
   var M = window.OrosMealsCore || null;
   var $ = function (id) { return document.getElementById(id); };
 
@@ -28,8 +30,15 @@
       addHint: { list: "Opens To-Do with the items ready to add.", note: "Makes a new page in Notes.",
         contact: "Opens Contacts and asks before saving.", event: "Opens Calendar and asks before saving.",
         recipe: "Opens the Meal Planner with the recipe ready to save.", links: "Opens Bookmarks.",
-        wiki: "Opens Wiki with the article ready to save." },
-      dl: { contact: "Download (.vcf)", event: "Add to calendar (.ics)", links: "Download (.html)", wiki: "Download (.md)" },
+        wiki: "Opens Wiki with the article ready to save.",
+        cal: "Opens Calendar, shows how many events are new and asks before saving." },
+      dl: { contact: "Download (.vcf)", event: "Add to calendar (.ics)", links: "Download (.html)", wiki: "Download (.md)",
+        cal: "Add to calendar (.ics)" },
+      calMonth: "Month", calList: "List", calPrev: "Previous month", calNext: "Next month",
+      calNoneDay: "Nothing on this day.", calNoneMonth: "Nothing this month.",
+      calZone: "Times are in your time zone ({z}).", calAllDay: "all day",
+      alHint: "Tap a photo to see it large and save it.", alSave: "Save photo", alClose: "Close",
+      alPrev: "Previous photo", alNext: "Next photo", alOf: "{i} of {n}", alBad: "{n} photos could not be shown.",
       copied: "Copied", copyFail: "Could not copy",
       tickHint: "Ticks here are only for you and are not saved.",
       phone: "Phone", email: "Email", address: "Address", web: "Website", im: "Chat",
@@ -38,7 +47,11 @@
       slZone: "Times are in your time zone ({z}).", slPicked: "You picked",
       slMail: "Email {n} to confirm", slMailAnon: "Email to confirm", slNoMail: "No email address came with these times: let the sender know another way.",
       slIcs: "Add to calendar (.ics)", slOros: "Add to my orOS", slOther: "Pick another time",
-      slHint: "Nothing is booked until the sender gets your answer."
+      slHint: "Nothing is booked until the sender gets your answer.",
+      gone: "This link has expired or the sender took it back.",
+      net: "Could not reach the orOS server. Check your connection and try again.", retry: "Try again",
+      until: "Available until {d}",
+      privRelay: "This came encrypted from the orOS server and was opened here with the key in the link. The server cannot see what is inside."
     },
     el: {
       "top.sub": "Σου το έστειλαν", "state.loading": "Άνοιγμα…",
@@ -54,8 +67,15 @@
       addHint: { list: "Ανοίγει το To-Do με τα είδη έτοιμα για προσθήκη.", note: "Φτιάχνει νέα σελίδα στις Σημειώσεις.",
         contact: "Ανοίγει τις Επαφές και ρωτά πριν αποθηκεύσει.", event: "Ανοίγει το Ημερολόγιο και ρωτά πριν αποθηκεύσει.",
         recipe: "Ανοίγει το Πλάνο γευμάτων με τη συνταγή έτοιμη για αποθήκευση.", links: "Ανοίγει τους Σελιδοδείκτες.",
-        wiki: "Ανοίγει το Wiki με το άρθρο έτοιμο για αποθήκευση." },
-      dl: { contact: "Λήψη (.vcf)", event: "Προσθήκη σε ημερολόγιο (.ics)", links: "Λήψη (.html)", wiki: "Λήψη (.md)" },
+        wiki: "Ανοίγει το Wiki με το άρθρο έτοιμο για αποθήκευση.",
+        cal: "Ανοίγει το Ημερολόγιο, δείχνει πόσα γεγονότα είναι καινούργια και ρωτά πριν αποθηκεύσει." },
+      dl: { contact: "Λήψη (.vcf)", event: "Προσθήκη σε ημερολόγιο (.ics)", links: "Λήψη (.html)", wiki: "Λήψη (.md)",
+        cal: "Προσθήκη σε ημερολόγιο (.ics)" },
+      calMonth: "Μήνας", calList: "Λίστα", calPrev: "Προηγούμενος μήνας", calNext: "Επόμενος μήνας",
+      calNoneDay: "Τίποτα αυτή τη μέρα.", calNoneMonth: "Τίποτα αυτόν τον μήνα.",
+      calZone: "Οι ώρες είναι στη ζώνη ώρας σου ({z}).", calAllDay: "όλη μέρα",
+      alHint: "Πάτα μια φωτογραφία για να τη δεις μεγάλη και να την αποθηκεύσεις.", alSave: "Αποθήκευση φωτογραφίας", alClose: "Κλείσιμο",
+      alPrev: "Προηγούμενη φωτογραφία", alNext: "Επόμενη φωτογραφία", alOf: "{i} από {n}", alBad: "{n} φωτογραφίες δεν εμφανίστηκαν.",
       copied: "Αντιγράφηκε", copyFail: "Η αντιγραφή απέτυχε",
       tickHint: "Τα τικ εδώ είναι μόνο για σένα και δεν αποθηκεύονται.",
       phone: "Τηλέφωνο", email: "Email", address: "Διεύθυνση", web: "Ιστότοπος", im: "Chat",
@@ -64,7 +84,11 @@
       slZone: "Οι ώρες είναι στη ζώνη ώρας σου ({z}).", slPicked: "Διάλεξες",
       slMail: "Email για επιβεβαίωση ({n})", slMailAnon: "Email για επιβεβαίωση", slNoMail: "Δεν ήρθε διεύθυνση email με τις ώρες: ενημέρωσε τον αποστολέα με άλλον τρόπο.",
       slIcs: "Προσθήκη σε ημερολόγιο (.ics)", slOros: "Πρόσθεσέ το στο orOS μου", slOther: "Άλλη ώρα",
-      slHint: "Τίποτα δεν κλείνεται μέχρι ο αποστολέας να πάρει την απάντησή σου."
+      slHint: "Τίποτα δεν κλείνεται μέχρι ο αποστολέας να πάρει την απάντησή σου.",
+      gone: "Ο σύνδεσμος έληξε ή ο αποστολέας τον ανακάλεσε.",
+      net: "Δεν ήταν δυνατή η σύνδεση με τον server του orOS. Έλεγξε τη σύνδεσή σου και δοκίμασε ξανά.", retry: "Δοκίμασε ξανά",
+      until: "Διαθέσιμο έως {d}",
+      privRelay: "Ήρθε κρυπτογραφημένο από τον server του orOS και άνοιξε εδώ με το κλειδί του συνδέσμου. Ο server δεν βλέπει τι έχει μέσα."
     }
   };
   var LANG = (function () {
@@ -173,7 +197,7 @@
     [].slice.call(box.querySelectorAll("img, .ref-up")).forEach(function (n) { n.remove(); });
     return box;
   }
-  function render(env) {
+  function render(env, bin) {
     var c = card(), d = env.d, S = K.strings(LANG);
     c.appendChild(el("p", "kind", S[env.k]));
     c.appendChild(el("h1", "", env.k === "recipe" && d.e ? d.e + " " + K.title(env, LANG) : K.title(env, LANG)));
@@ -250,6 +274,11 @@
     } else if (env.k === "slots") {
       renderSlots(c, env);
       return;
+    } else if (env.k === "album") {
+      renderAlbum(c, env, bin);
+      return;
+    } else if (env.k === "cal") {
+      renderCal(c, env);
     } else if (env.k === "links") {
       var lu = el("ul", "items links");
       d.i.forEach(function (it) {
@@ -342,6 +371,298 @@
     try { box.scrollIntoView({ block: "nearest" }); } catch (e) {}
   }
 
+  // ---------- An album: a grid, one photo large ----------
+  // Each photo is its own slice of the item's byte run; it is shown only
+  // when its first bytes say JPEG / PNG / WebP, from a blob: URL.
+  var albumUrls = [];
+  function renderAlbum(c, env, bin) {
+    var d = env.d, S = K.strings(LANG);
+    albumUrls.forEach(function (u) { URL.revokeObjectURL(u); });
+    albumUrls = [];
+    var photos = [], bad = 0;
+    d.p.forEach(function (x) {
+      var bytes = bin && x.o + x.n <= bin.length ? bin.subarray(x.o, x.o + x.n) : null;
+      var type = bytes ? K.photoType(bytes) : "";
+      if (!type) { bad++; return; }
+      var url = URL.createObjectURL(new Blob([bytes], { type: type }));
+      albumUrls.push(url);
+      photos.push({ url: url, type: type, c: x.c || "", w: x.w, h: x.h });
+    });
+    c.appendChild(el("p", "meta", photos.length === 1 ? S.album1 : S.albumN.replace("{n}", photos.length)));
+    if (bad) c.appendChild(el("p", "hint", t("alBad").replace("{n}", bad)));
+    var grid = el("div", "al-grid");
+    photos.forEach(function (ph, i) {
+      var b = btn("", "al-cell", function () { lightbox(photos, i, b); });
+      var im = el("img");
+      im.src = ph.url;
+      im.alt = ph.c || S.photo.replace("{n}", i + 1);
+      im.loading = "lazy";
+      im.decoding = "async";
+      b.appendChild(im);
+      b.setAttribute("aria-label", im.alt);
+      grid.appendChild(b);
+    });
+    c.appendChild(grid);
+    if (photos.length) c.appendChild(el("p", "hint", t("alHint")));
+  }
+  function photoName(ph, i) {
+    var base = (ph.c || "").replace(/[\\\/:*?"<>|\u0000-\u001f]/g, " ").replace(/\s+/g, " ").trim().slice(0, 60);
+    var ext = ph.type === "image/png" ? ".png" : ph.type === "image/webp" ? ".webp" : ".jpg";
+    return (base || "orOS photo " + (i + 1)) + ext;
+  }
+  function lightbox(photos, at, from) {
+    var S = K.strings(LANG), i = at;
+    var box = el("div", "al-box");
+    box.setAttribute("role", "dialog");
+    box.setAttribute("aria-modal", "true");
+    var img = el("img"), cap = el("p", "al-cap"), count = el("span", "al-count");
+    var bar = el("div", "al-bar");
+    var prev = btn("\u2039", "al-nav", function () { go(-1); });
+    var next = btn("\u203a", "al-nav", function () { go(1); });
+    prev.setAttribute("aria-label", t("alPrev"));
+    next.setAttribute("aria-label", t("alNext"));
+    var save = btn(t("alSave"), "prim", function () {
+      var a = el("a");
+      a.href = photos[i].url;
+      a.download = photoName(photos[i], i);
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    });
+    var close = btn(t("alClose"), "", shut);
+    bar.appendChild(prev);
+    bar.appendChild(count);
+    bar.appendChild(next);
+    bar.appendChild(save);
+    bar.appendChild(close);
+    var stage = el("div", "al-stage");
+    stage.appendChild(img);
+    box.appendChild(stage);
+    box.appendChild(cap);
+    box.appendChild(bar);
+    stage.addEventListener("click", function (e) { if (e.target === stage) shut(); });
+    function go(n) { i = (i + n + photos.length) % photos.length; show(); }
+    function show() {
+      var ph = photos[i];
+      img.src = ph.url;
+      img.alt = ph.c || S.photo.replace("{n}", i + 1);
+      cap.textContent = ph.c;
+      cap.hidden = !ph.c;
+      count.textContent = t("alOf").replace("{i}", i + 1).replace("{n}", photos.length);
+      prev.hidden = next.hidden = photos.length < 2;
+    }
+    function key(e) {
+      if (e.key === "Escape") shut();
+      else if (e.key === "ArrowLeft") go(-1);
+      else if (e.key === "ArrowRight") go(1);
+    }
+    function shut() {
+      document.removeEventListener("keydown", key);
+      box.remove();
+      document.body.classList.remove("al-open");
+      try { from.focus(); } catch (e) {}
+    }
+    document.addEventListener("keydown", key);
+    document.body.classList.add("al-open");
+    document.body.appendChild(box);
+    show();
+    close.focus();
+  }
+
+  // ---------- A calendar: month grid or list, one month at a time ----------
+  // Occurrences come from the Calendar's own rules (calendar/occur.js);
+  // timed events are converted from the sender's zone to this one.
+  function pad2(n) { return (n < 10 ? "0" : "") + n; }
+  function ymdOf(y, m, d) { var x = new Date(Date.UTC(y, m, d)); return x.getUTCFullYear() + "-" + pad2(x.getUTCMonth() + 1) + "-" + pad2(x.getUTCDate()); }
+  function calItems(d) {
+    var O = window.OrosCalOccur;
+    if (!O) return [];
+    return d.ev.map(function (e) {
+      var ce = { date: e.d, dateEnd: e.de || null, start: e.s || null, end: e.s ? (e.e || null) : null,
+                 tz: e.s ? (e.z || d.tz || null) : null, recur: null };
+      if (e.r) {
+        var r = null;
+        if (e.r.x) { var fr = O.fromRrule(e.r.x, e.d); r = fr && fr.recur ? fr.recur : null; }
+        else r = { freq: e.r.f, interval: e.r.i, until: e.r.u || null };
+        if (r) { r.exdates = e.xd || []; ce.recur = O.normRecur(r, e.d); }
+      }
+      return { e: e, c: ce };
+    });
+  }
+  function renderCal(c, env) {
+    var d = env.d, O = window.OrosCalOccur, S = K.strings(LANG);
+    var loc = LANG === "el" ? "el-GR" : "en-GB";
+    var meta = [d.ev.length === 1 ? S.cal1 : S.calN.replace("{n}", d.ev.length), K.calRange(d, LANG)].filter(Boolean).join(" · ");
+    c.appendChild(el("p", "meta", meta));
+    if (!O) return;
+    var items = calItems(d), lb = d.lb || [];
+    if (lb.some(function (l) { return l.n; })) {
+      var leg = el("div", "cal-leg");
+      lb.forEach(function (l) {
+        if (!l.n) return;
+        var chip = el("span", "chip"), dot = el("i", "dot");
+        if (l.c) dot.style.background = l.c;
+        chip.appendChild(dot);
+        chip.appendChild(document.createTextNode(l.n));
+        leg.appendChild(chip);
+      });
+      c.appendChild(leg);
+    }
+    var zoneNote = el("p", "hint");
+    zoneNote.hidden = true;
+    c.appendChild(zoneNote);
+    // The month to open on: today's when it is inside the range, else
+    // the range's first, else the earliest event's.
+    var today = (function () { var n = new Date(); return ymdOf(n.getFullYear(), n.getMonth(), n.getDate()); })();
+    var first = d.f || d.ev.reduce(function (a, e) { return !a || e.d < a ? e.d : a; }, "");
+    var start = (!d.f || today >= d.f) && (!d.u || today <= d.u) ? today : first;
+    var ym = { y: +start.slice(0, 4), m: +start.slice(5, 7) - 1 };
+    var mode = "month", sel = null;
+
+    var bar = el("div", "cal-bar");
+    var prev = btn("\u2039", "cal-arrow", function () { step(-1); });
+    var next = btn("\u203a", "cal-arrow", function () { step(1); });
+    prev.setAttribute("aria-label", t("calPrev"));
+    next.setAttribute("aria-label", t("calNext"));
+    var head = el("h2", "cal-head");
+    head.setAttribute("aria-live", "polite");
+    var tabs = el("div", "cal-tabs");
+    tabs.setAttribute("role", "group");
+    var tMonth = btn(t("calMonth"), "", function () { mode = "month"; draw(); });
+    var tList = btn(t("calList"), "", function () { mode = "list"; draw(); });
+    tabs.appendChild(tMonth);
+    tabs.appendChild(tList);
+    bar.appendChild(prev);
+    bar.appendChild(head);
+    bar.appendChild(next);
+    c.appendChild(bar);
+    c.appendChild(tabs);
+    var box = el("div", "cal-box");
+    c.appendChild(box);
+
+    var minYm = d.f ? +d.f.slice(0, 4) * 12 + +d.f.slice(5, 7) - 1 : -Infinity;
+    var maxYm = d.u ? +d.u.slice(0, 4) * 12 + +d.u.slice(5, 7) - 1 : Infinity;
+    function step(n) {
+      var v = ym.y * 12 + ym.m + n;
+      if (v < minYm || v > maxYm) return;
+      ym = { y: Math.floor(v / 12), m: v % 12 };
+      sel = null;
+      draw();
+    }
+    // day → [{ e, inst }] for the device days [from, to], inside the range.
+    function collect(from, to) {
+      var lo = d.f && d.f > from ? d.f : from, hi = d.u && d.u < to ? d.u : to, by = {}, zoned = false;
+      if (lo > hi) return { by: by, zoned: false };
+      items.forEach(function (it) {
+        O.instancesBetween(it.c, lo, hi, function (inst) {
+          if (inst.zoned) zoned = true;
+          var day = inst.date < lo ? lo : inst.date, last = inst.dateEnd && inst.dateEnd < hi ? inst.dateEnd : (inst.dateEnd ? hi : inst.date);
+          for (var g = 0; day <= last && g < 62; g++) {
+            (by[day] = by[day] || []).push({ e: it.e, inst: inst });
+            day = O.addDays(day, 1);
+          }
+          return true;
+        });
+      });
+      Object.keys(by).forEach(function (k) {
+        by[k].sort(function (a, b) {
+          var sa = a.inst.start && a.inst.date === k ? a.inst.start : "", sb = b.inst.start && b.inst.date === k ? b.inst.start : "";
+          return sa < sb ? -1 : sa > sb ? 1 : 0;
+        });
+      });
+      return { by: by, zoned: zoned };
+    }
+    function color(e) { var l = typeof e.b === "number" ? lb[e.b] : null; return l && l.c ? l.c : ""; }
+    function evRow(x, day) {
+      var li = el("li"), dot = el("i", "dot");
+      var col = color(x.e);
+      if (col) dot.style.background = col;
+      li.appendChild(dot);
+      var tm = !x.inst.start ? t("calAllDay")
+        : (x.inst.date === day ? x.inst.start : "\u2026") + (x.inst.end && (x.inst.dateEnd || x.inst.date) === day ? "\u2013" + x.inst.end : "");
+      li.appendChild(el("span", "tm", tm));
+      var w = el("span", "what", x.e.t || S.untitled);
+      if (x.e.l) w.appendChild(el("small", "", x.e.l));
+      li.appendChild(w);
+      return li;
+    }
+    function dayList(by, day, emptyKey) {
+      var list = by[day] || [];
+      if (!list.length) return el("p", "state", t(emptyKey));
+      var ul = el("ul", "cal-evs");
+      list.forEach(function (x) { ul.appendChild(evRow(x, day)); });
+      return ul;
+    }
+    function dayHead2(day) {
+      var p = day.split("-");
+      try { return new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString(loc, { weekday: "long", day: "numeric", month: "long" }); }
+      catch (e) { return day; }
+    }
+    function draw() {
+      tMonth.setAttribute("aria-pressed", mode === "month" ? "true" : "false");
+      tList.setAttribute("aria-pressed", mode === "list" ? "true" : "false");
+      var v = ym.y * 12 + ym.m;
+      prev.disabled = v <= minYm;
+      next.disabled = v >= maxYm;
+      try { head.textContent = new Date(ym.y, ym.m, 1).toLocaleDateString(loc, { month: "long", year: "numeric" }); }
+      catch (e) { head.textContent = ym.y + "-" + pad2(ym.m + 1); }
+      var mFirst = ymdOf(ym.y, ym.m, 1), mLast = ymdOf(ym.y, ym.m + 1, 0);
+      var gFirst = O.addDays(mFirst, -((O.wdOf(mFirst) + 6) % 7));
+      var gLast = O.addDays(mLast, (7 - O.wdOf(mLast)) % 7);
+      var got = collect(mode === "month" ? gFirst : mFirst, mode === "month" ? gLast : mLast), by = got.by;
+      var zone = myZone();
+      zoneNote.hidden = !(got.zoned && zone);
+      zoneNote.textContent = zone ? t("calZone").replace("{z}", zone) : "";
+      box.textContent = "";
+      if (mode === "list") {
+        var days = Object.keys(by).filter(function (k) { return k >= mFirst && k <= mLast; }).sort();
+        if (!days.length) { box.appendChild(el("p", "state", t("calNoneMonth"))); return; }
+        days.forEach(function (k) {
+          box.appendChild(el("h2", "", dayHead2(k)));
+          box.appendChild(dayList(by, k, "calNoneDay"));
+        });
+        return;
+      }
+      var grid = el("div", "cal-grid");
+      var mon = O.addDays("2024-01-01", 0);                   // a Monday
+      for (var w = 0; w < 7; w++) {
+        var wd = mon.split("-");
+        var name = "";
+        try { name = new Date(+wd[0], +wd[1] - 1, +wd[2] + w).toLocaleDateString(loc, { weekday: "narrow" }); } catch (e) {}
+        grid.appendChild(el("span", "wd", name));
+      }
+      if (!sel || sel < mFirst || sel > mLast) sel = today >= mFirst && today <= mLast ? today : mFirst;
+      for (var day = gFirst; day <= gLast; day = O.addDays(day, 1)) {
+        (function (day) {
+          var list = by[day] || [];
+          var b = btn("", "cal-day" + (day < mFirst || day > mLast ? " out" : "") + (day === today ? " today" : "") +
+            (day === sel ? " sel" : "") + ((d.f && day < d.f) || (d.u && day > d.u) ? " off" : ""), function () {
+            sel = day;
+            draw();
+          });
+          b.appendChild(el("span", "n", String(+day.slice(8))));
+          if (list.length) {
+            var dots = el("span", "dots");
+            list.slice(0, 3).forEach(function (x) {
+              var dt = el("i", "dot"), col = color(x.e);
+              if (col) dt.style.background = col;
+              dots.appendChild(dt);
+            });
+            if (list.length > 3) dots.appendChild(el("small", "", "+" + (list.length - 3)));
+            b.appendChild(dots);
+          }
+          b.setAttribute("aria-label", dayHead2(day) + (list.length ? ", " + (list.length === 1 ? S.cal1 : S.calN.replace("{n}", list.length)) : ""));
+          if (day === sel) b.setAttribute("aria-current", "date");
+          grid.appendChild(b);
+        })(day);
+      }
+      box.appendChild(grid);
+      box.appendChild(el("h2", "", dayHead2(sel)));
+      box.appendChild(dayList(by, sel, "calNoneDay"));
+    }
+    draw();
+  }
+
   function ingLine(ing) {
     if (M && typeof M.ingToLine === "function") {
       try { return M.ingToLine(ing, LANG, 1); } catch (e) {}
@@ -395,11 +716,36 @@
 
   // ---------- Opening ----------
   function show(code, password) {
+    if (R && R.parse(code)) { showRelay(code, password); return; }
     K.decode(code, password).then(function (r) {
       if (r.env) { render(r.env); return; }
       if (r.error === "pass") { askPass(code, !!password); return; }
       stateMsg(r.error === "big" ? "big" : (r.error === "crypto" ? "crypto" : "bad"), true);
       if (r.error === "bad") fileOffer($("card"));
+    });
+  }
+  // A link with an expiry: the pieces come from the relay, the key
+  // from the link; what opens goes through the same normalizers.
+  function showRelay(code, password) {
+    var p = $("privacy");
+    if (p) p.textContent = t("privRelay");
+    R.open(code, { password: password }).then(function (r) {
+      if (r.error === "pass") { askPass(code, !!password); return; }
+      if (r.error) {
+        var c = stateMsg(r.error === "gone" ? "gone" : r.error === "net" ? "net" : r.error === "big" ? "big" : "bad", true);
+        if (r.error === "net") {
+          var acts = el("div", "acts");
+          acts.appendChild(btn(t("retry"), "prim", function () { stateMsg("state.loading"); showRelay(code, password); }));
+          c.appendChild(acts);
+        }
+        return;
+      }
+      var env = r.e && r.e.v === 1 && typeof r.e.k === "string" ? K.pack(r.e.k, r.e.d) : null;
+      if (!env) { stateMsg("bad", true); return; }
+      render(env, r.bin || null);
+      var d = new Date(r.x);
+      $("card").appendChild(el("p", "hint", t("until").replace("{d}", d.toLocaleString(LANG === "el" ? "el-GR" : "en-GB",
+        { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }))));
     });
   }
   function askPass(code, wrong) {
@@ -439,7 +785,7 @@
       if (!f) return;
       if (f.size > 2 * 1024 * 1024) { toast(t("big")); return; }
       f.text().then(function (txt) {
-        var m = /\/share\/#((?:0|1|p1)\.[A-Za-z0-9_-]+)/.exec(txt);
+        var m = /\/share\/#((?:0|1|p1|r1|q1)\.[A-Za-z0-9_.-]+)/.exec(txt);
         if (!m) { toast(t("noFile")); return; }
         show(m[1]);
       }, function () { toast(t("noFile")); });
@@ -453,6 +799,10 @@
   }
   function route() {
     var code = K ? K.codeFromHash(location.hash) : "";
+    if (!code && R) {
+      var h = String(location.hash || "").replace(/^#/, "");
+      if (R.parse(h)) code = h;
+    }
     if (!K) { stateMsg("bad", true); return; }
     if (!code) {
       var c = stateMsg("empty");

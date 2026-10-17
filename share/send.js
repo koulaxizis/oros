@@ -7,11 +7,22 @@
 //                (optionally locked with a password) and offers Share,
 //                Copy link, QR code, Email (orOS Mail), Save as file
 //                and, when the app gave `text`, its old "send as text".
+//                "With an expiry" (BR-SHARE-RELAY, share/relay.js) puts
+//                the item on the orOS relay, encrypted, for 1 / 7 / 30
+//                days; items too long for a plain link always go that
+//                way. Such links are kept in "My shared links"
+//                (share/out.js, synced) where they can be revoked.
+//                An album (kind "album", share wave 4) comes as
+//                { kind: "album", data: { t }, photos: [{ blob? | path?,
+//                name?, c? }] }: share/album.js draws every photo again
+//                (no EXIF / GPS) and it always goes with an expiry.
+//   links()      the dialog straight on "My shared links" (Settings).
 //   deliver(sh)  "Add to my orOS" from the receiving page: the item
 //                waits in sessionStorage "oros-share-in" (this tab
 //                only, never synced) and goes to the app's existing
 //                receiver through __orosOpenAt.
-// Nothing is stored, nothing is synced, nothing goes to a server.
+// A plain link stores nothing anywhere; a link with an expiry stores
+// only ciphertext on the relay and its secrets in "My shared links".
 // ES5, like the shell. Strings EN/EL here (the shell's table stays
 // untouched).
 // ============================================================
@@ -19,6 +30,8 @@
   "use strict";
 
   var K = window.OrosShareKinds;
+  var R = window.OrosShareRelay;
+  var OUT = window.OrosShareOut;
   var IN_KEY = "oros-share-in";
   var MIN_PASS = 6;
   var EYE = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
@@ -41,7 +54,20 @@
       noApp: "This needs the {app} app, which is not in your orOS.",
       inBad: "The shared item could not be read.",
       failed: "Something went wrong. Try again.",
-      mailPass: "The password comes separately."
+      mailPass: "The password comes separately.",
+      exp: "With an expiry", expDays: { 1: "1 day", 7: "7 days", 30: "30 days" },
+      warnExp: "Stored encrypted on the orOS server until it expires; the server cannot read it. You can take it back in My shared links.",
+      forced: "Too long for a plain link, so it is stored encrypted with an expiry.",
+      full: "The orOS server has no room right now. Try a shorter expiry or try later.",
+      rate: "You have shared a lot today. Try again tomorrow.",
+      nostore: "Links with an expiry are not available right now.",
+      net: "Could not reach the orOS server. Check your connection and try again.",
+      mine: "My shared links", none: "No links with an expiry yet.",
+      until: "Until {d}", revoke: "Take back", sure: "Sure? Take back", revoked: "Taken back. The link no longer opens.",
+      revokeFail: "Could not take it back. Check your connection and try again.", locked: "with password",
+      preparing: "Preparing photos… {n} of {all}", noPhotos: "None of these pictures could be read.",
+      albumWarn: "Photos are made smaller (2048 px at most) and lose their hidden details (place, camera, time) before they leave.",
+      skipped: "Left out: {n} that could not be read.", cut: "Only the first {n} photos fit (25 MB or 200 photos at most)."
     },
     el: {
       title: "Στείλε σε κάποιον", close: "Κλείσιμο",
@@ -58,7 +84,20 @@
       noApp: "Χρειάζεται την εφαρμογή {app}, που δεν υπάρχει στο orOS σου.",
       inBad: "Δεν ήταν δυνατό να διαβαστεί αυτό που σου έστειλαν.",
       failed: "Κάτι πήγε στραβά. Δοκίμασε ξανά.",
-      mailPass: "Τον κωδικό θα τον πάρεις χωριστά."
+      mailPass: "Τον κωδικό θα τον πάρεις χωριστά.",
+      exp: "Με λήξη", expDays: { 1: "1 μέρα", 7: "7 μέρες", 30: "30 μέρες" },
+      warnExp: "Αποθηκεύεται κρυπτογραφημένο στον server του orOS μέχρι να λήξει· ο server δεν μπορεί να το διαβάσει. Μπορείς να το πάρεις πίσω από «Οι σύνδεσμοί μου».",
+      forced: "Είναι πολύ μεγάλο για απλό σύνδεσμο, οπότε αποθηκεύεται κρυπτογραφημένο με λήξη.",
+      full: "Ο server του orOS δεν έχει χώρο αυτή τη στιγμή. Δοκίμασε μικρότερη λήξη ή αργότερα.",
+      rate: "Μοιράστηκες πολλά σήμερα. Δοκίμασε ξανά αύριο.",
+      nostore: "Οι σύνδεσμοι με λήξη δεν είναι διαθέσιμοι αυτή τη στιγμή.",
+      net: "Δεν ήταν δυνατή η σύνδεση με τον server του orOS. Έλεγξε τη σύνδεσή σου και δοκίμασε ξανά.",
+      mine: "Οι σύνδεσμοί μου", none: "Δεν υπάρχουν ακόμη σύνδεσμοι με λήξη.",
+      until: "Έως {d}", revoke: "Ανάκληση", sure: "Σίγουρα; Ανάκληση", revoked: "Ανακλήθηκε. Ο σύνδεσμος δεν ανοίγει πια.",
+      revokeFail: "Η ανάκληση απέτυχε. Έλεγξε τη σύνδεσή σου και δοκίμασε ξανά.", locked: "με κωδικό",
+      preparing: "Ετοιμάζω τις φωτογραφίες… {n} από {all}", noPhotos: "Καμία από αυτές τις εικόνες δεν διαβάστηκε.",
+      albumWarn: "Οι φωτογραφίες μικραίνουν (έως 2048 px) και χάνουν τα κρυφά στοιχεία τους (τοποθεσία, κάμερα, ώρα) πριν φύγουν.",
+      skipped: "Έμειναν έξω: {n} που δεν διαβάστηκαν.", cut: "Χωράνε μόνο οι πρώτες {n} φωτογραφίες (έως 25 MB ή 200 φωτογραφίες)."
     }
   };
   function lang() { return window.orosLang === "el" ? "el" : "en"; }
@@ -101,6 +140,16 @@
     "#osh-dlg .osh-foot{display:flex;justify-content:flex-end;margin-top:12px}" +
     "#osh-dlg .osh-qr{display:flex;flex-direction:column;align-items:center;gap:10px}" +
     "#osh-dlg .osh-qr img{width:min(300px,100%);height:auto;background:#fff;border-radius:8px;image-rendering:pixelated}" +
+    "#osh-dlg .osh-days{display:flex;gap:6px;margin:0 0 8px 26px;flex-wrap:wrap}" +
+    "#osh-dlg .osh-days button{padding:6px 10px;border:1px solid var(--border);border-radius:999px;background:transparent;" +
+    "color:var(--text);font:inherit;font-size:12.5px;cursor:pointer}" +
+    "#osh-dlg .osh-days button[aria-pressed=true]{border-color:var(--accent);background:var(--accent-soft,transparent);font-weight:700}" +
+    "#osh-dlg .osh-foot{gap:8px;flex-wrap:wrap}" +
+    "#osh-dlg .osh-list{list-style:none;margin:0 0 8px;padding:0;display:flex;flex-direction:column;gap:8px}" +
+    "#osh-dlg .osh-list li{border:1px solid var(--border);border-radius:10px;padding:10px}" +
+    "#osh-dlg .osh-list .osh-t{font-weight:600;font-size:13.5px;overflow-wrap:anywhere}" +
+    "#osh-dlg .osh-list .osh-m{font-size:12px;color:var(--text-dim);margin:2px 0 8px}" +
+    "#osh-dlg .osh-list .osh-acts{grid-template-columns:1fr 1fr}" +
     "@media (max-width:420px){#osh-dlg .osh-acts{grid-template-columns:1fr}}";
   function ensureCss() {
     if (document.getElementById("osh-css")) return;
@@ -176,16 +225,11 @@
     return qrLoad;
   }
 
-  // ---------- The send dialog ----------
-  function open(opts) {
-    if (!K) return;
-    opts = opts || {};
-    var env = K.pack(opts.kind, opts.data);
-    if (!env) { toast(T("failed")); return; }
+  // ---------- The dialog frame ----------
+  function frame() {
     ensureCss();
     var stale = document.getElementById("osh-dlg");
     if (stale) { try { stale.close(); } catch (e) {} stale.remove(); }
-
     var dlg = el("dialog");
     dlg.id = "osh-dlg";
     dlg.style.setProperty("--osh-on-accent", onAccent());
@@ -196,18 +240,152 @@
     var body = el("div");
     dlg.appendChild(body);
     var foot = el("div", "osh-foot");
-    foot.appendChild(btn(T("close"), "", function () { dlg.close(); }));
     dlg.appendChild(foot);
+    return { dlg: dlg, h: h, body: body, foot: foot,
+             show: function () {
+               document.body.appendChild(dlg);
+               dlg.addEventListener("close", function () { dlg.remove(); });
+               dlg.showModal();
+             } };
+  }
+  function fmtDay(ms) {
+    return new Date(ms).toLocaleString(lang() === "el" ? "el-GR" : "en-GB",
+      { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+  }
+  function errText(e) {
+    var m = e && e.message;
+    return ["full", "rate", "nostore", "net"].indexOf(m) >= 0 ? T(m) : T("failed");
+  }
 
-    var cache = {};                       // password ("" = none) → code
+  // ---------- "My shared links" ----------
+  // back: when given, a Back button returns to the send window.
+  function linksView(f, back) {
+    f.h.textContent = T("mine");
+    f.body.textContent = "";
+    f.foot.textContent = "";
+    var msg = el("div", "osh-msg");
+    msg.setAttribute("role", "status");
+    var items = OUT ? OUT.list() : [];
+    if (!items.length) f.body.appendChild(el("p", "osh-warn", T("none")));
+    var ul = el("ul", "osh-list");
+    var S = K.strings(lang());
+    items.forEach(function (it) {
+      var li = el("li");
+      li.appendChild(el("div", "osh-t", it.t || S.untitled));
+      li.appendChild(el("div", "osh-m", [S[it.k] || it.k, T("until", { d: fmtDay(it.x) })].concat(it.p ? [T("locked")] : []).join(" · ")));
+      var acts = el("div", "osh-acts");
+      acts.appendChild(btn(T("copy"), "", function () {
+        copy(baseUrl() + "#" + it.c).then(function (ok) { toast(ok ? T("copied") : T("copyFail")); });
+      }));
+      var armed = false;
+      var rb = btn(T("revoke"), "", function () {
+        if (!armed) { armed = true; rb.textContent = T("sure"); return; }
+        rb.disabled = true;
+        R.revoke(it.id, it.d).then(function () {
+          OUT.markRevoked(it.id);
+          toast(T("revoked"));
+          linksView(f, back);
+        }, function () {
+          rb.disabled = false;
+          msg.className = "osh-msg err";
+          msg.textContent = T("revokeFail");
+        });
+      });
+      acts.appendChild(rb);
+      li.appendChild(acts);
+      ul.appendChild(li);
+    });
+    if (items.length) f.body.appendChild(ul);
+    f.body.appendChild(msg);
+    if (back) f.foot.appendChild(btn(T("back"), "", back));
+    f.foot.appendChild(btn(T("close"), "", function () { f.dlg.close(); }));
+  }
+  function links() {
+    if (!K || !R) return;
+    var f = frame();
+    linksView(f, null);
+    f.show();
+  }
+
+  // ---------- The send dialog ----------
+  function open(opts) {
+    if (!K) return;
+    opts = opts || {};
+    if (opts.kind === "album") { openAlbum(opts); return; }
+    var env = K.pack(opts.kind, opts.data);
+    if (!env) { toast(T("failed")); return; }
+    send(opts, env, null, null);
+  }
+  // An album: the photos are prepared first (share/album.js), then the
+  // usual window opens with "With an expiry" on for good.
+  function openAlbum(opts) {
+    var A = window.OrosShareAlbum;
+    if (!A || !R || !OUT) { toast(T("nostore")); return; }
+    var f = frame();
+    var msg = el("p", "osh-warn", T("preparing", { n: 0, all: (opts.photos || []).length }));
+    msg.setAttribute("role", "status");
+    f.body.appendChild(msg);
+    var stop = false;
+    f.foot.appendChild(btn(T("close"), "", function () { stop = true; f.dlg.close(); }));
+    f.show();
+    var fs = window.orosFS;
+    A.prepare(opts.photos || [], {
+      title: opts.data && opts.data.t,
+      read: function (p) { return fs && typeof fs.read === "function" ? fs.read(p) : Promise.resolve(null); },
+      onProgress: function (n, all) { msg.textContent = T("preparing", { n: n, all: all }); }
+    }).then(function (r) {
+      if (stop) return;
+      var env = r.data.p.length ? K.pack("album", r.data) : null;
+      if (!env) { msg.textContent = T("noPhotos"); return; }
+      var notes = [T("albumWarn")];
+      if (r.skipped) notes.push(T("skipped", { n: r.skipped }));
+      if (r.cut) notes.push(T("cut", { n: env.d.p.length }));
+      send(opts, env, r.bin, notes.join(" "), f);
+    }, function () { if (!stop) msg.textContent = T("failed"); });
+  }
+  // bin: an album's photo bytes (share/relay.js flag 2); note: a line
+  // shown under the warning; f: the frame already open.
+  function send(opts, env, bin, note, f0) {
+    var f = f0 || frame(), dlg = f.dlg, body = f.body;
+
+    var cache = {};                       // JSON [days (0 = plain link), password] → code
     var busy = false;
     var lockOn = false;
+    var expOn = !!bin, forced = !!bin, days = 7;
+    var canExp = !!(R && OUT);
 
     function main() {
+      f.h.textContent = T("title");
+      f.foot.textContent = "";
+      if (canExp) f.foot.appendChild(btn(T("mine"), "", function () { linksView(f, main); }));
+      f.foot.appendChild(btn(T("close"), "", function () { dlg.close(); }));
       body.textContent = "";
       body.appendChild(el("p", "osh-sum", K.summary(env, lang())));
-      var warn = el("p", "osh-warn", lockOn ? T("warnLock") : T("warn"));
+      var warn = el("p", "osh-warn");
       body.appendChild(warn);
+      if (note) body.appendChild(el("p", "osh-warn", note));
+      function warnText() { warn.textContent = expOn ? T("warnExp") : (lockOn ? T("warnLock") : T("warn")); }
+      warnText();
+
+      var expLab = el("label", "osh-lock"), ecb = el("input"), dayRow = el("div", "osh-days");
+      if (canExp) {
+        ecb.type = "checkbox";
+        ecb.checked = expOn;
+        ecb.disabled = forced;
+        expLab.appendChild(ecb);
+        expLab.appendChild(el("span", "", T("exp")));
+        body.appendChild(expLab);
+        R.DAYS.forEach(function (n) {
+          var b = btn(T("expDays")[n], "", function () {
+            days = n;
+            [].forEach.call(dayRow.children, function (x) { x.setAttribute("aria-pressed", x === b ? "true" : "false"); });
+          });
+          b.setAttribute("aria-pressed", n === days ? "true" : "false");
+          dayRow.appendChild(b);
+        });
+        dayRow.hidden = !expOn;
+        body.appendChild(dayRow);
+      }
 
       var lockLab = el("label", "osh-lock");
       var cb = el("input");
@@ -250,44 +428,67 @@
       body.appendChild(acts);
       var linkBtns = [bShare, bCopy, bQr, bMail].filter(Boolean);
 
+      ecb.addEventListener("change", function () {
+        expOn = ecb.checked;
+        dayRow.hidden = !expOn;
+        warnText();
+        check();
+      });
       cb.addEventListener("change", function () {
         lockOn = cb.checked;
         passRow.hidden = !lockOn;
-        warn.textContent = lockOn ? T("warnLock") : T("warn");
+        warnText();
         check();
         if (lockOn) pw.focus();
       });
       pw.addEventListener("input", function () { curPass = pw.value; check(); });
 
-      // Link-only buttons are off while the link is too long or the
+      // Link-only buttons are off while a plain link is too long or the
       // password too short; "Save as file" needs only a valid password.
+      // A plain link too long for a URL turns "With an expiry" on for good.
       function check() {
         msg.className = "osh-msg";
-        msg.textContent = "";
+        msg.textContent = forced && !bin ? T("forced") : "";
         var short = lockOn && curPass.length < MIN_PASS;
         if (short) { msg.textContent = T("passShort", { n: MIN_PASS }); }
         linkBtns.forEach(function (b) { b.disabled = short; });
         bFile.disabled = short;
-        if (short) return;
-        var key = lockOn ? curPass : "";
+        if (short || expOn) return;
+        var key = ck(0, lockOn ? curPass : "");
         if (cache[key]) sizeCheck(cache[key]);
-        else if (!lockOn) codeFor("").then(sizeCheck, function () {});
+        else if (!lockOn) codeFor(0, "").then(sizeCheck, tooBig);
+      }
+      // An item over the receiving page's MAX_JSON has no plain link at all.
+      function tooBig(e) {
+        if (e && e.message === "big") { sizeCheck(null); return true; }
+        return false;
       }
       function sizeCheck(code) {
-        var tooLong = code.length > K.MAX_LINK;
-        linkBtns.forEach(function (b) { b.disabled = tooLong; });
-        if (tooLong) { msg.className = "osh-msg err"; msg.textContent = T("long", { n: code.length }); }
+        if ((code && code.length <= K.MAX_LINK) || expOn) return;
+        if (canExp) {
+          forced = expOn = true;
+          ecb.checked = true;
+          ecb.disabled = true;
+          dayRow.hidden = false;
+          warnText();
+          msg.className = "osh-msg";
+          msg.textContent = T("forced");
+          return;
+        }
+        linkBtns.forEach(function (b) { b.disabled = true; });
+        msg.className = "osh-msg err";
+        msg.textContent = T("long", { n: code ? code.length : "> " + K.MAX_LINK });
       }
       function act(what) {
         if (busy) return;
         if (lockOn && curPass.length < MIN_PASS) { check(); pw.focus(); return; }
-        var key = lockOn ? curPass : "";
+        var d = expOn ? days : 0, pass = lockOn ? curPass : "";
         busy = true;
-        if (!cache[key]) msg.textContent = T("making");
-        codeFor(key).then(function (code) {
+        if (!cache[ck(d, pass)]) { msg.className = "osh-msg"; msg.textContent = T("making"); }
+        codeFor(d, pass).then(function (code) {
           busy = false;
-          msg.textContent = "";
-          if (what !== "file" && code.length > K.MAX_LINK) { sizeCheck(code); return; }
+          msg.textContent = forced && !bin ? T("forced") : "";
+          if (what !== "file" && !expOn && code.length > K.MAX_LINK) { sizeCheck(code); return; }
           var link = baseUrl() + "#" + code;
           if (what === "share") {
             navigator.share({ title: K.title(env, lang()), url: link }).catch(function () {});
@@ -302,10 +503,11 @@
           } else if (what === "file") {
             saveFile(link);
           }
-        }, function () {
+        }, function (e) {
           busy = false;
+          if (!d && tooBig(e)) return;
           msg.className = "osh-msg err";
-          msg.textContent = T("failed");
+          msg.textContent = errText(e);
         });
       }
       check();
@@ -313,9 +515,18 @@
     var curPass = "";
     var hasMail = typeof window.__orosOpenAt === "function" && mailReady();
 
-    function codeFor(key) {
+    // days 0 = a plain link; 1 / 7 / 30 = a link with an expiry, made
+    // once per (days, password) choice and kept in My shared links.
+    function ck(d, pass) { return JSON.stringify([d, pass]); }
+    function codeFor(d, pass) {
+      var key = ck(d, pass);
       if (cache[key]) return Promise.resolve(cache[key]);
-      return K.encode(env, key || undefined).then(function (code) { cache[key] = code; return code; });
+      if (!d) return K.encode(env, pass || undefined).then(function (code) { cache[key] = code; return code; });
+      return R.create(env, { days: d, password: pass || undefined, bin: bin || undefined }).then(function (r) {
+        OUT.add({ id: r.id, c: r.code, d: r.del, k: env.k, t: K.title(env, lang()), x: r.exp, a: Date.now(), p: pass ? 1 : 0 });
+        cache[key] = r.code;
+        return r.code;
+      });
     }
     function showQr(link) {
       qrLib().then(function (Q) {
@@ -333,8 +544,8 @@
       }, function () { toast(T("failed")); });
     }
     function saveFile(link) {
-      var f = K.file(env, lang());
-      var name = f.name.replace(/\.[a-z]+$/, "") + " (orOS).txt";
+      var fl = K.file(env, lang());
+      var name = fl.name.replace(/\.[a-z]+$/, "") + " (orOS).txt";
       var txt = K.summary(env, lang()) + "\n\n" + T("fileHead") + "\n" + link + "\n";
       var host = window.orosDialog;
       if (host && typeof host.saveFile === "function") {
@@ -354,9 +565,7 @@
     }
 
     main();
-    document.body.appendChild(dlg);
-    dlg.addEventListener("close", function () { dlg.remove(); });
-    dlg.showModal();
+    if (!f0) f.show();
   }
 
   // ---------- "Add to my orOS" ----------
@@ -385,5 +594,5 @@
     window.__orosOpenAt(go.app, go.target);
   }
 
-  window.__orosShareImpl = { open: open, deliver: deliver };
+  window.__orosShareImpl = { open: open, links: links, deliver: deliver };
 })();

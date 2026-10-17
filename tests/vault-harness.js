@@ -126,12 +126,20 @@ class MemoryStorage {
   get length() { return this.map.size; }
 }
 
-async function vaultDevice(dropbox, name) {
+// opts (WebDAV W4): seed = extra localStorage keys, fetch = this
+// device's fetch (e.g. one that reaches two clouds).
+async function vaultDevice(dropbox, name, opts) {
+  opts = opts || {};
   const localStorage = new MemoryStorage();
-  localStorage.setItem("oros-db-access", "token-" + name);
-  localStorage.setItem("oros-db-refresh", "refresh-" + name);
-  localStorage.setItem("oros-db-expiry", String(Date.now() + 864e5));
+  if (dropbox.kind === "webdav") {
+    for (const [k, v] of Object.entries(dropbox.seed(name))) localStorage.setItem(k, v);
+  } else {
+    localStorage.setItem("oros-db-access", "token-" + name);
+    localStorage.setItem("oros-db-refresh", "refresh-" + name);
+    localStorage.setItem("oros-db-expiry", String(Date.now() + 864e5));
+  }
   localStorage.setItem("oros-sync-interval", "0");
+  for (const [k, v] of Object.entries(opts.seed || {})) localStorage.setItem(k, v);
   const noop = () => {};
   const timers = [];
   const ctx = {
@@ -141,12 +149,12 @@ async function vaultDevice(dropbox, name) {
     location: { search: "", origin: "https://test.invalid", href: "" },
     history: { replaceState: noop },
     crypto: webcrypto,
-    fetch: dropbox.fetchFor(name),
+    fetch: opts.fetch || dropbox.fetchFor(name),
     console: { log: noop, info: noop, warn: noop, error: noop },
     setTimeout: (fn, ms) => { timers.push({ fn, ms }); return timers.length; },
     clearTimeout: noop, setInterval: () => 0, clearInterval: noop,
     addEventListener: noop,
-    TextEncoder, TextDecoder, URLSearchParams, Uint8Array, ArrayBuffer, Blob,
+    TextEncoder, TextDecoder, URL, URLSearchParams, Uint8Array, ArrayBuffer, Blob,
     btoa, atob, Promise, JSON, Date, Math, Error, TypeError, Object, Array
   };
   ctx.window = ctx;
@@ -187,4 +195,7 @@ async function cloudPaths(dev) {
   return Object.keys(JSON.parse(Buffer.from(plain).toString("utf8")).files).sort();
 }
 
-module.exports = { BinDropbox, vaultDevice, cloudPaths };
+// OROS_CLOUD=webdav: the same tests against the WebDAV provider.
+const BinCloud = process.env.OROS_CLOUD === "webdav" ? require("./harness").FakeWebDAV : BinDropbox;
+
+module.exports = { BinDropbox: BinCloud, vaultDevice, cloudPaths };

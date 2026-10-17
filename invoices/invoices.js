@@ -95,6 +95,7 @@
       "dash.vatHint": "For reference when you prepare your VAT return; your accountant has the final word.",
       "dash.rate": "Rate", "dash.base": "Net", "dash.vatAmt": "VAT", "dash.other": "Recorded",
       "dash.noTop": "No documents in this period.", "dash.csvDocs": "Export documents (CSV)", "dash.csvPays": "Export payments (CSV)",
+      "dash.sheet": "Open in Spreadsheet", "dash.sheetCap": "Only the first {n} documents fit in one sheet",
       "ed.new": "New {k}", "ed.draft": "{k} · draft", "ed.record": "Record an invoice", "ed.editRecord": "Edit record",
       "ed.subNew": "Not saved yet", "ed.subDraft": "Saved as a draft", "ed.subNext": "Will be {n} when issued",
       "ed.subRecord": "Issued elsewhere: tracked here only",
@@ -243,6 +244,7 @@
       "dash.vatHint": "Ενδεικτικά, για τη δήλωση ΦΠΑ· τον τελευταίο λόγο τον έχει ο λογιστής σου.",
       "dash.rate": "Συντελεστής", "dash.base": "Καθαρή αξία", "dash.vatAmt": "ΦΠΑ", "dash.other": "Καταχωρισμένα",
       "dash.noTop": "Κανένα παραστατικό σε αυτή την περίοδο.", "dash.csvDocs": "Εξαγωγή παραστατικών (CSV)", "dash.csvPays": "Εξαγωγή πληρωμών (CSV)",
+      "dash.sheet": "Άνοιγμα στο Υπολογιστικό φύλλο", "dash.sheetCap": "Χωρούν μόνο τα πρώτα {n} παραστατικά σε ένα φύλλο",
       "ed.new": "Νέο: {k}", "ed.draft": "{k} · πρόχειρο", "ed.record": "Καταχώριση τιμολογίου", "ed.editRecord": "Επεξεργασία καταχώρισης",
       "ed.subNew": "Δεν έχει αποθηκευτεί", "ed.subDraft": "Αποθηκευμένο ως πρόχειρο", "ed.subNext": "Με την έκδοση θα πάρει τον αριθμό {n}",
       "ed.subRecord": "Εκδόθηκε αλλού· εδώ μόνο παρακολουθείται",
@@ -873,6 +875,8 @@
     });
     tb.appendChild(tbody);
     $("csv-docs").textContent = t("dash.csvDocs");
+    $("sheet-docs").textContent = t("dash.sheet");
+    $("sheet-docs").hidden = !sheetShell();
     $("csv-pays").textContent = t("dash.csvPays");
   }
 
@@ -3293,12 +3297,37 @@
       text = C.paysCsv(data, k[0], k[1], [t("pay.date"), t("ed.num"), t("c.title"), t("pay.amt"), t("ed.cur"), t("pay.how"), t("pay.note")],
                        howName, LANG);
     } else {
-      text = C.docsCsv(data, k[0], k[1],
-        [t("ed.num"), t("ed.kind"), t("dash.range"), t("ed.date"), t("ed.due"), t("c.title"), t("c.afm"), t("ed.cur"),
-         t("tot.net"), t("tot.vatAll"), t("tot.total"), t("ed.wht"), t("tot.pay"), t("tot.paid"), t("tot.bal"), t("vw.mark")],
-        kindName, statusName, LANG, today);
+      text = C.docsCsv(data, k[0], k[1], docsHead(), kindName, statusName, LANG, today);
     }
     saveText(text, name, "text/csv", ".csv", "CSV");
+  }
+  function docsHead() {
+    return [t("ed.num"), t("ed.kind"), t("dash.range"), t("ed.date"), t("ed.due"), t("c.title"), t("c.afm"), t("ed.cur"),
+            t("tot.net"), t("tot.vatAll"), t("tot.total"), t("ed.wht"), t("tot.pay"), t("tot.paid"), t("tot.bal"), t("vw.mark")];
+  }
+  // "Open in Spreadsheet" (Bible BR-S1): the documents CSV of the
+  // dashboard period as a new sheet in the orOS Spreadsheet, amounts as
+  // numbers, dates YYYY-MM-DD. SUM rows under the amounts only when the
+  // period has one currency (a total over EUR + USD means nothing).
+  var SHEET_ROWS = 498;   // + heading + SUM row = the Spreadsheet's 500
+  function sheetShell() {
+    try { return window.parent !== window && typeof window.parent.__orosOpenAt === "function" ? window.parent : null; } catch (e) { return null; }
+  }
+  function openDocsInSheet() {
+    var shell = sheetShell();
+    if (!shell) return;
+    var k = rangeKeys(prefs.dash.range);
+    var rows = C.docsRows(data, k[0], k[1], kindName, statusName, todayKey());
+    if (!rows.length) { showToast(t("dash.noTop")); return; }
+    if (rows.length > SHEET_ROWS) { showToast(t("dash.sheetCap", { n: SHEET_ROWS })); rows = rows.slice(0, SHEET_ROWS); }
+    var m0 = C.DOCS_MONEY[0], m1 = C.DOCS_MONEY[1], curs = {}, sum = [], i;
+    rows = rows.map(function (r) {
+      curs[r[7]] = 1;
+      return r.map(function (v, j) { return j >= m0 && j <= m1 ? v / 100 : (v === undefined || v === null ? "" : v); });
+    });
+    if (Object.keys(curs).length === 1) for (i = m0; i <= m1; i++) sum.push(i);
+    var slug = k[0].slice(0, 4) === k[1].slice(0, 4) ? k[0] + "–" + k[1].slice(5) : k[0].slice(2) + "–" + k[1].slice(2);
+    shell.__orosOpenAt("spreadsheet", { newSheet: { name: t("app") + " " + slug, rows: [docsHead()].concat(rows), sum: sum } });
   }
   function exportBackup() {
     saveText(C.toBackup(data), "oros-invoices-backup-" + todayKey() + ".json", "application/json", ".json", "JSON");
@@ -3804,6 +3833,7 @@
       });
     });
     $("csv-docs").addEventListener("click", function () { exportCsv("docs"); });
+    $("sheet-docs").addEventListener("click", openDocsInSheet);
     $("csv-pays").addEventListener("click", function () { exportCsv("pays"); });
     $("ed-form").addEventListener("submit", function (e) { e.preventDefault(); });
     document.addEventListener("visibilitychange", function () {

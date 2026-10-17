@@ -918,9 +918,22 @@
 
   // Deep link (shell __orosOpenAt / __orosTakeTarget): { openFile:
   // { token } }, a file from the system's "Open with" (shell
-  // fileopen.js), taken once and read as the Import dialog reads one.
+  // fileopen.js), taken once and read as the Import dialog reads one |
+  // { importText: { text } }, RTTTL text from another app (Studio's
+  // "Make a ringtone"), at most 64 KB: it only fills the Import dialog,
+  // the user presses Import.
+  var MAX_IMPORT_TEXT = 65536;
   function openTarget(tg) {
-    if (!tg || typeof tg !== "object" || !tg.openFile || typeof tg.openFile.token !== "string") return;
+    if (!tg || typeof tg !== "object") return;
+    if (tg.importText && typeof tg.importText === "object") {
+      var tx = tg.importText.text;
+      if (typeof tx !== "string" || !tx.trim() || tx.length > MAX_IMPORT_TEXT) return;
+      if (!$("import-dlg").open) openImport();
+      $("import-text").value = tx;
+      $("import-err").textContent = "";
+      return;
+    }
+    if (!tg.openFile || typeof tg.openFile.token !== "string") return;
     var f = null;
     try {
       var p = window.parent;

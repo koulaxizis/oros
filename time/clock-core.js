@@ -225,6 +225,9 @@
 
   /* ---------- named timers ---------- */
   var SOUNDS = ["beep", "chime", "bell", "digital", "gentle"];
+  // or "rt:<id>": a Ringtone Composer melody (the shell plays it)
+  var RT_RE = /^rt:[A-Za-z0-9_-]{1,64}$/;
+  function soundOk(v) { return SOUNDS.indexOf(v) >= 0 || RT_RE.test(String(v)); }
   var MAX_TIMERS = 20, MAX_MS = 100 * HOUR, ID_RE = /^[a-z0-9]{4,24}$/;
   function num(v, lo, hi, d) { return (typeof v === "number" && isFinite(v)) ? Math.min(hi, Math.max(lo, Math.round(v))) : d; }
   function timerNorm(list) {
@@ -246,7 +249,7 @@
         left: num(t.left, 0, MAX_MS, dur),
         end: st === "run" || st === "done" ? end : 0,
         st: st,
-        sound: SOUNDS.indexOf(t.sound) >= 0 ? t.sound : "beep",
+        sound: soundOk(t.sound) ? t.sound : "beep",
         aid: (typeof t.aid === "string" && /^tmr-[a-z0-9-]{1,60}$/.test(t.aid)) ? t.aid : ""
       });
     });
@@ -255,7 +258,7 @@
   function timerNew(id, name, durMs, sound) {
     var d = num(durMs, 1000, MAX_MS, 60000);
     return { id: id, name: String(name || "").slice(0, 40), dur: d, tot: d, left: d, end: 0, st: "idle",
-             sound: SOUNDS.indexOf(sound) >= 0 ? sound : "beep", aid: "" };
+             sound: soundOk(sound) ? sound : "beep", aid: "" };
   }
   function copy(t, o) { var r = {}, k; for (k in t) r[k] = t[k]; for (k in o) r[k] = o[k]; return r; }
   // Time left (ms); negative after the end (how long it has been ringing).

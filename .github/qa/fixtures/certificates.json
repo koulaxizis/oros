@@ -1,0 +1,146 @@
+{
+ "source": "tests/bundle-certificates.test.js sample()",
+ "base": {
+  "ver": 1,
+  "evs": [
+   {
+    "id": "eaaaaaa1",
+    "m": 100,
+    "t": "Σεμινάριο Α",
+    "kind": "attend",
+    "lang": "el",
+    "sty": "classic",
+    "acc": "#8a6d3b",
+    "acc2": "#1f3a5f",
+    "font": "serif",
+    "size": "a4",
+    "orient": "l",
+    "d1": "2026-05-01",
+    "d2": "",
+    "idate": "",
+    "place": "",
+    "hours": "8",
+    "issuer": "Org",
+    "txt": {
+     "sub": "",
+     "head": "",
+     "pre": "",
+     "nm": "",
+     "body": "",
+     "foot": "",
+     "no": ""
+    },
+    "sigs": [
+     {
+      "n": "Director",
+      "r": "Role",
+      "a": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.jpg",
+      "w": 300,
+      "h": 100
+     },
+     {
+      "n": "No picture",
+      "r": ""
+     }
+    ],
+    "logo": {
+     "a": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.png",
+     "w": 200,
+     "h": 100
+    },
+    "seal": {
+     "a": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.png",
+     "w": 200,
+     "h": 100
+    },
+    "medal": 1,
+    "showNo": 1,
+    "qr": 1,
+    "onlyAt": 0,
+    "pre": "A-",
+    "next": 3
+   },
+   {
+    "id": "ebbbbbb2",
+    "m": 50,
+    "t": "Other",
+    "kind": "award",
+    "lang": "en",
+    "sty": "elegant",
+    "acc": "#b08d57",
+    "acc2": "#3d3d3d",
+    "font": "serif",
+    "size": "a4",
+    "orient": "l",
+    "d1": "",
+    "d2": "",
+    "idate": "",
+    "place": "",
+    "hours": "",
+    "issuer": "",
+    "txt": {
+     "sub": "",
+     "head": "",
+     "pre": "",
+     "nm": "",
+     "body": "",
+     "foot": "",
+     "no": ""
+    },
+    "sigs": [],
+    "logo": null,
+    "seal": null,
+    "medal": 1,
+    "showNo": 1,
+    "qr": 0,
+    "onlyAt": 0,
+    "pre": "",
+    "next": 1
+   }
+  ],
+  "ppl": [
+   {
+    "id": "paaaaaa1",
+    "m": 110,
+    "e": "eaaaaaa1",
+    "n": "Μαρία",
+    "em": "m@x.gr",
+    "g": "Άριστα",
+    "no": 1,
+    "iss": "2026-05-02",
+    "at": 1,
+    "ms": 1234,
+    "o": 2
+   },
+   {
+    "id": "paaaaaa2",
+    "m": 120,
+    "e": "eaaaaaa1",
+    "n": "=HYPERLINK(\"x\")",
+    "no": 2,
+    "rv": 1,
+    "o": 1
+   },
+   {
+    "id": "pbbbbbb1",
+    "m": 10,
+    "e": "ebbbbbb2",
+    "n": "Elsewhere",
+    "o": 0
+   }
+  ],
+  "tombs": {
+   "eccccc99": 5
+  },
+  "keys": [
+   {
+    "id": "kaaaaaa1",
+    "m": 1,
+    "made": 1,
+    "x": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "y": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "d": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+   }
+  ]
+ }
+}

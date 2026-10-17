@@ -1,0 +1,144 @@
+{
+ "source": "tests/bundle-familytree.test.js sample()",
+ "base": {
+  "ver": 1,
+  "trees": [
+   {
+    "id": "T1",
+    "m": 5,
+    "name": "Παππούδες / grandparents",
+    "home": "P1"
+   },
+   {
+    "id": "T2",
+    "m": 5,
+    "name": "Other",
+    "home": ""
+   }
+  ],
+  "people": [
+   {
+    "id": "P1",
+    "m": 6,
+    "tree": "T1",
+    "given": "Γιώργος",
+    "family": "Παπαδόπουλος",
+    "birthName": "",
+    "sex": "m",
+    "birth": {
+     "d": "1920-03-15",
+     "q": "",
+     "place": "Αθήνα"
+    },
+    "death": {
+     "d": "1990",
+     "q": "abt",
+     "place": ""
+    },
+    "dead": true,
+    "note": "Line one\nline two",
+    "photo": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+    "contact": "C1",
+    "parents": []
+   },
+   {
+    "id": "P2",
+    "m": 6,
+    "tree": "T1",
+    "given": "Maria",
+    "family": "Papa",
+    "birthName": "Ioannou",
+    "sex": "f",
+    "birth": {
+     "d": "1925",
+     "q": "bef",
+     "place": ""
+    },
+    "death": {
+     "d": "",
+     "q": "",
+     "place": ""
+    },
+    "dead": false,
+    "note": "",
+    "photo": "",
+    "contact": "",
+    "parents": []
+   },
+   {
+    "id": "P3",
+    "m": 7,
+    "tree": "T1",
+    "given": "Kid",
+    "family": "",
+    "birthName": "",
+    "sex": "x",
+    "birth": {
+     "d": "",
+     "q": "",
+     "place": ""
+    },
+    "death": {
+     "d": "",
+     "q": "",
+     "place": ""
+    },
+    "dead": false,
+    "note": "",
+    "photo": "",
+    "contact": "",
+    "parents": [
+     {
+      "u": "U1",
+      "kind": "adopted"
+     }
+    ]
+   },
+   {
+    "id": "Q1",
+    "m": 7,
+    "tree": "T2",
+    "given": "Elsewhere",
+    "family": "",
+    "birthName": "",
+    "sex": "u",
+    "birth": {
+     "d": "",
+     "q": "",
+     "place": ""
+    },
+    "death": {
+     "d": "",
+     "q": "",
+     "place": ""
+    },
+    "dead": false,
+    "note": "",
+    "photo": "",
+    "contact": "",
+    "parents": []
+   }
+  ],
+  "unions": [
+   {
+    "id": "U1",
+    "m": 8,
+    "tree": "T1",
+    "a": "P1",
+    "b": "P2",
+    "kind": "married",
+    "start": {
+     "d": "1948-06",
+     "q": ""
+    },
+    "end": {
+     "d": "",
+     "q": ""
+    }
+   }
+  ],
+  "tombs": {
+   "gone1": 3
+  }
+ }
+}

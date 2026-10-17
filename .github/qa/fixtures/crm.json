@@ -1,0 +1,110 @@
+{
+ "source": "tests/bundle-crm.test.js slice()",
+ "base": {
+  "ver": 1,
+  "cust": [
+   {
+    "id": "cust000001",
+    "m": 1799999999100,
+    "name": "Acme SA",
+    "kind": "co",
+    "st": "active",
+    "afm": "094014201",
+    "email": "a@acme.gr",
+    "tags": [
+     "tag0000001"
+    ],
+    "people": [
+     {
+      "c": "",
+      "n": "Maria",
+      "role": "CEO",
+      "phone": "210"
+     }
+    ]
+   },
+   {
+    "id": "cust000002",
+    "m": 1799999999200,
+    "name": "=HYPERLINK(\"x\")",
+    "kind": "person",
+    "st": "lead"
+   }
+  ],
+  "deals": [
+   {
+    "id": "deal000001",
+    "m": 1799999999300,
+    "cust": "cust000001",
+    "title": "Website",
+    "val": 150000,
+    "stage": "stage00001"
+   }
+  ],
+  "acts": [
+   {
+    "id": "acts000001",
+    "m": 1799999999400,
+    "cust": "cust000001",
+    "k": "call",
+    "at": 1799999999400,
+    "text": "Called"
+   }
+  ],
+  "fups": [
+   {
+    "id": "fups000001",
+    "m": 1799999999500,
+    "cust": "cust000001",
+    "d": "2027-01-10",
+    "text": "Send offer"
+   }
+  ],
+  "tags": [
+   {
+    "id": "tag0000001",
+    "m": 1799999999050,
+    "name": "VIP",
+    "col": 2
+   }
+  ],
+  "stg": [
+   {
+    "id": "new",
+    "m": 1799999999010,
+    "name": "Inbox"
+   },
+   {
+    "id": "stage00001",
+    "m": 1799999999010,
+    "name": "Demo",
+    "pos": 15
+   }
+  ],
+  "prefs": {
+   "pm": 1799999999000,
+   "cur": "USD",
+   "forget": 60
+  },
+  "wf": {
+   "m": 1799999999600,
+   "k": "abcdefghij123456",
+   "sec": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+   "priv": {
+    "kty": "RSA",
+    "alg": "RSA-OAEP-256",
+    "n": "nn",
+    "e": "AQAB",
+    "d": "SECRETD",
+    "p": "pp",
+    "q": "qq",
+    "dp": "dp",
+    "dq": "dq",
+    "qi": "qi"
+   }
+  },
+  "tombs": {
+   "gone000001": 1799999999900
+  }
+ }
+}

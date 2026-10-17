@@ -83,6 +83,7 @@
       "tm.none": "No timers yet. Set a time below and tap Start; several can run at once.",
       "tm.dflt": "Timer {n}", "tm.full": "Up to 20 timers.", "tm.preset": "{n} min",
       "snd.beep": "Beep", "snd.chime": "Chime", "snd.bell": "Bell", "snd.digital": "Digital", "snd.gentle": "Gentle",
+      "snd.melodies": "Your melodies (Ringtone Composer)", "snd.gone": "A deleted melody (beeps)",
       "st.start": "Start", "st.stop": "Stop", "st.reset": "Reset",
       "st.lap": "Lap", "st.laptime": "Lap time", "st.total": "Total", "st.title": "Stopwatch",
       "st.copy": "Copy laps", "st.csv": "Save CSV", "st.copied": "Copied",
@@ -127,6 +128,7 @@
       "tm.none": "Καμία αντίστροφη μέτρηση ακόμη. Όρισε χρόνο παρακάτω και πάτα Έναρξη· μπορούν να τρέχουν πολλές μαζί.",
       "tm.dflt": "Μέτρηση {n}", "tm.full": "Έως 20 αντίστροφες μετρήσεις.", "tm.preset": "{n} λεπτά",
       "snd.beep": "Μπιπ", "snd.chime": "Καμπανάκι", "snd.bell": "Καμπάνα", "snd.digital": "Ψηφιακό", "snd.gentle": "Απαλό",
+      "snd.melodies": "Οι μελωδίες σου (Συνθέτης ήχων κλήσης)", "snd.gone": "Μελωδία που σβήστηκε (μπιπ)",
       "st.start": "Έναρξη", "st.stop": "Διακοπή", "st.reset": "Επαναφορά",
       "st.lap": "Γύρος", "st.laptime": "Χρόνος γύρου", "st.total": "Σύνολο", "st.title": "Χρονόμετρο",
       "st.copy": "Αντιγραφή γύρων", "st.csv": "Αποθήκευση CSV", "st.copied": "Αντιγράφηκε",
@@ -1301,14 +1303,31 @@
     if (changed) tmrSave();
     return changed;
   }
+  // The voices, then the Ringtone Composer melodies ("rt:<id>", read
+  // through the shell's orosMelodies; a deleted one keeps its row).
+  function melodyList() {
+    try {
+      var M = window.parent && window.parent !== window && window.parent.orosMelodies;
+      return M && typeof M.list === "function" ? M.list() : [];
+    } catch (e) { return []; }
+  }
   function soundOptions(sel, cur) {
     sel.innerHTML = "";
-    CC.SOUNDS.forEach(function (s) {
+    var add = function (box, v, label) {
       var o = document.createElement("option");
-      o.value = s;
-      o.textContent = t("snd." + s);
-      sel.appendChild(o);
-    });
+      o.value = v;
+      o.textContent = label;
+      box.appendChild(o);
+    };
+    CC.SOUNDS.forEach(function (s) { add(sel, s, t("snd." + s)); });
+    var mel = melodyList(), gone = /^rt:/.test(cur || "") && !mel.some(function (m) { return "rt:" + m.id === cur; });
+    if (mel.length || gone) {
+      var g = document.createElement("optgroup");
+      g.label = t("snd.melodies");
+      mel.forEach(function (m) { add(g, "rt:" + m.id, m.name || "…"); });
+      if (gone) add(g, cur, t("snd.gone"));
+      sel.appendChild(g);
+    }
     sel.value = cur || "beep";
   }
   // Preview: the shell's alarm voices when inside orOS, else a beep.
@@ -1337,6 +1356,33 @@
     tmrRender();
     return true;
   }
+  // Command bar (commands/core.js, BR-CMD): { timer: { sec, label } }
+  // starts a timer at once (the user's Enter in the bar is the Start
+  // tap; Reset / ✕ undo it); { alarm: { at "HH:MM", label, daily } }
+  // only fills the Alarm form, the user still presses Add. Called by
+  // astro.js's __orosOpenAt receiver; true when the target was ours.
+  window.__orosTimeCmd = function (tg) {
+    if (!tg || typeof tg !== "object") return false;
+    if (tg.timer && typeof tg.timer === "object") {
+      var sec = tg.timer.sec;
+      if (typeof sec !== "number" || !(sec >= 1) || sec > 360000) return true;
+      if (typeof window.__orosTimeOpen === "function") window.__orosTimeOpen("timer");
+      tmrAddNew(Math.round(sec) * 1000, typeof tg.timer.label === "string" ? tg.timer.label.replace(/[\u0000-\u001f\u007f]/g, " ").slice(0, 40) : "");
+      return true;
+    }
+    if (tg.alarm && typeof tg.alarm === "object") {
+      var at = tg.alarm.at;
+      if (typeof at !== "string" || !/^([01]\d|2[0-3]):[0-5]\d$/.test(at)) return true;
+      if (typeof window.__orosTimeOpen === "function") window.__orosTimeOpen("alarm");
+      $("al-time").value = at;
+      $("al-label").value = typeof tg.alarm.label === "string" ? tg.alarm.label.replace(/[\u0000-\u001f\u007f]/g, " ").slice(0, 60) : "";
+      $("al-daily").checked = tg.alarm.daily === true;
+      try { $("al-add").focus(); } catch (e) {}
+      return true;
+    }
+    return false;
+  };
+
   function tmrBtn(cls, text, fn, label) {
     var b = document.createElement("button");
     b.type = "button";

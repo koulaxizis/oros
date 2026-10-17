@@ -141,6 +141,8 @@
       "goal.ahead": "{n} ahead of schedule", "goal.behind": "{n} behind schedule", "goal.on": "On schedule",
       "goal.done": "Goal reached!", "goal.hint": "Leave 0 for no goal.", "goal.none": "No goals for {y}.",
       "menu.export": "Export (JSON)", "menu.import": "Import (JSON)",
+      "sheet.open": "Open in Spreadsheet", "sheet.cap": "Only the first {n} rows fit in one sheet",
+      "sheet.empty": "Your shelf is empty", "sheet.by": "Creator", "sheet.tags": "Tags", "sheet.rev": "Review",
       "menu.csv": "Import from another app",
       "csv.title": "Import from another app", "csv.found": "Found {n} titles.",
       "csv.dup": "{n} already on your shelf: skipped.", "csv.none": "Nothing new to import.",
@@ -266,6 +268,8 @@
       "goal.ahead": "{n} μπροστά από το πρόγραμμα", "goal.behind": "{n} πίσω από το πρόγραμμα", "goal.on": "Στο πρόγραμμα",
       "goal.done": "Ο στόχος επιτεύχθηκε!", "goal.hint": "Άφησε 0 για κανέναν στόχο.", "goal.none": "Κανένας στόχος για το {y}.",
       "menu.export": "Εξαγωγή (JSON)", "menu.import": "Εισαγωγή (JSON)",
+      "sheet.open": "Άνοιγμα στο Υπολογιστικό φύλλο", "sheet.cap": "Χωρούν μόνο οι πρώτες {n} γραμμές σε ένα φύλλο",
+      "sheet.empty": "Το ράφι σου είναι άδειο", "sheet.by": "Δημιουργός", "sheet.tags": "Ετικέτες", "sheet.rev": "Κριτική",
       "menu.csv": "Εισαγωγή από άλλη εφαρμογή",
       "csv.title": "Εισαγωγή από άλλη εφαρμογή", "csv.found": "Βρέθηκαν {n} τίτλοι.",
       "csv.dup": "{n} υπάρχουν ήδη στο ράφι σου: παραλείπονται.", "csv.none": "Τίποτα καινούργιο για εισαγωγή.",
@@ -2837,6 +2841,42 @@
     done();
   }
 
+  // "Open in Spreadsheet" (Bible BR-S1): every title as one row of a
+  // new sheet in the orOS Spreadsheet, the columns and order of the
+  // package's preview/shelf.csv (by type, then title). Shell only;
+  // rating in stars (0.5 steps) as a number, dates YYYY-MM-DD.
+  var SHEET_ROWS = 499;   // + heading = the Spreadsheet's 500
+  function openAtFn() {
+    try {
+      var p = window.parent;
+      return p && p !== window && typeof p.__orosOpenAt === "function" ? p : null;
+    } catch (e) { return null; }
+  }
+  function openInSheet() {
+    var p = openAtFn();
+    if (!p) return;
+    if (!data.items.length) { showToast(t("sheet.empty")); return; }
+    var items = data.items.slice().sort(function (a, b) {
+      return (TYPES.indexOf(a.type) - TYPES.indexOf(b.type)) || a.title.localeCompare(b.title, LANG) || cmpStr(a.id, b.id);
+    });
+    if (items.length > SHEET_ROWS) { showToast(t("sheet.cap", { n: SHEET_ROWS })); items = items.slice(0, SHEET_ROWS); }
+    // the latest start and finish of each title
+    var last = {};
+    data.sess.forEach(function (x) {
+      var l = last[x.it] || (last[x.it] = { s: "", d: "" });
+      if (x.k === "s" && x.d > l.s) l.s = x.d;
+      if (x.k === "d" && x.d > l.d) l.d = x.d;
+    });
+    var head = [t("f.type"), t("f.title"), t("sheet.by"), t("f.year"), t("f.status"), t("rate"), t("fav"),
+                t("sheet.tags"), t("hist.s"), t("hist.d"), t("sheet.rev")];
+    var rows = items.map(function (it) {
+      var l = last[it.id] || { s: "", d: "" };
+      return [t("type." + it.type), it.title, it.by, it.year || "", stLabel(it, it.st), it.rate ? it.rate / 2 : "",
+              it.fav ? "♥" : "", it.tags.join(", "), l.s, l.d, it.rev.replace(/\s*\n\s*/g, " ")];
+    });
+    p.__orosOpenAt("spreadsheet", { newSheet: { name: (t("app") + " " + today()).slice(0, 31), rows: [head].concat(rows) } });
+  }
+
   // An import is a merge: nothing on this device is replaced or lost.
   function importPayload(obj) {
     var inc = obj && typeof obj === "object" && obj.app === "oros-shelf" ? obj.data : obj;
@@ -3078,6 +3118,7 @@
     dlg.appendChild(el("div", "dlg-title", t("btn.more")));
     var col = el("div", "menu-col");
     col.appendChild(button(t("menu.export"), "", function () { dlg.close(); exportJson(); }));
+    if (openAtFn()) col.appendChild(button(t("sheet.open"), "", function () { dlg.close(); openInSheet(); }));
     col.appendChild(button(t("menu.import"), "", function () { dlg.close(); importJson(); }));
     // .orosshelf (section 11b)
     if (recFile) {
