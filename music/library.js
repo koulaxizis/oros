@@ -189,13 +189,13 @@
     if (!F) return Promise.resolve("");
     return F.read(p).then(function (blob) { return readFileTags(blob, p, "auto"); }).then(function (tg) { return (tg && tg.ly) || ""; }, function () { return ""; });
   }
-  // files: [File] (webkitRelativePath kept as sub-folders). → { saved, skipped }
+  // files: [File] (webkitRelativePath kept as sub-folders). → { saved, skipped, paths }
   function addFiles(files, onProgress) {
     var F = fs();
     if (!F) return Promise.reject(new Error("nofs"));
     // Lyrics files (.lrc) go next to their songs, under their own name.
     var list = [].slice.call(files || []).filter(function (f) { return f && (C.isAudioName(f.name) || isLrc(f)); });
-    var skipped = (files ? files.length : 0) - list.length, saved = 0, done = 0;
+    var skipped = (files ? files.length : 0) - list.length, saved = 0, done = 0, paths = [];
     return list.reduce(function (pr, f) {
       return pr.then(function () {
         var rel = String(f.webkitRelativePath || f.relPath || "").split("/").filter(Boolean).slice(0, -1).map(safeName);
@@ -204,10 +204,10 @@
           return isLrc(f) ? dir + "/" + safeName(f.name) : uniquePath(F, dir, safeName(f.name));
         }).then(function (p) {
           if (!p) { skipped++; return; }
-          return F.write(p, f).then(function () { if (!isLrc(f)) saved++; });
+          return F.write(p, f).then(function () { if (!isLrc(f)) { saved++; paths.push(p); } });
         }).catch(function () { skipped++; }).then(function () { done++; if (onProgress) onProgress(done, list.length); });
       });
-    }, Promise.resolve()).then(function () { return { saved: saved, skipped: skipped }; });
+    }, Promise.resolve()).then(function () { return { saved: saved, skipped: skipped, paths: paths }; });
   }
   function removeFile(p) {
     var F = fs();
