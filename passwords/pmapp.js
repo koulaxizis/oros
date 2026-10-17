@@ -38,7 +38,7 @@
       return l === "el" ? "el" : "en";
     } catch (e) { return "en"; }
   }
-  var LANG = appLang();
+  var LANG = window.orosI18n ? window.orosI18n.lang() : appLang();
 
   var STRINGS = {
     en: {
@@ -278,6 +278,7 @@
       "addon": "Το orOS δεν συμπληρώνει κωδικούς σε ιστότοπους. Αντίγραψέ τους από εδώ."
     }
   };
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "passwords", LANG);
 
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;
@@ -348,7 +349,7 @@
   }
   function fmtDate(ms) {
     try {
-      return new Date(ms).toLocaleString(LANG === "el" ? "el-GR" : "en-GB",
+      return new Date(ms).toLocaleString(window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB"),
         { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
     } catch (e) { return ""; }
   }
