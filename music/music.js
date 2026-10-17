@@ -16,7 +16,8 @@
 // Sections:
 //   1. Constants, i18n, helpers
 //   2. Host (attach / inject into the shell)
-//   3. Library index + covers
+//   3. Library index + covers (3b open catalogues, 3c my servers,
+//      3d mixes, my year, Spotify import, covers online, other apps)
 //   4. Actions (play, like, playlists, add, delete)
 //   5. Views: home, search, library, pages
 //   6. Rows, cards, menus
@@ -157,7 +158,24 @@
       "eq.classical": "Classical", "eq.electronic": "Electronic", "eq.loud": "Loudness", "eq.small": "Small speakers", "eq.night": "Late night (soft)",
       "sl.btn": "Sleep timer", "sl.title": "Sleep timer", "sl.min": "{n} minutes", "sl.end": "End of this song", "sl.off": "Turn off the timer",
       "sl.left": "Stops in {n}", "sl.leftEnd": "Stops after this song", "sl.set": "The music stops in {n}.", "sl.setEnd": "The music stops after this song.",
-      "sl.cleared": "Sleep timer off.", "s.lrclib": "Look up lyrics online (LRCLIB)", "s.lrclibHint": "Sends the title, artist, album and length of the song you open lyrics for."
+      "sl.cleared": "Sleep timer off.", "s.lrclib": "Look up lyrics online (LRCLIB)", "s.lrclibHint": "Sends the title, artist, album and length of the song you open lyrics for.",
+      "home.forYou": "Made for you", "kind.mix": "Mix", "mix.daily": "Daily mix", "mix.dailySub": "Songs you love and more, new every day",
+      "mix.repeat": "On repeat", "mix.repeatSub": "What you play most this month", "mix.rewind": "Repeat rewind", "mix.rewindSub": "Old favourites you have not played for a while",
+      "mix.radio": "Song radio", "mix.radioOf": "Radio: {s}", "mix.radioSub": "Songs like this one, from your music", "mix.empty": "Nothing here yet. Mixes are made from what you play on this device.",
+      "mix.save": "Save as playlist", "toast.mixSaved": "Saved as playlist “{n}”.", "m.radio": "Song radio", "m.montage": "Use in Montage", "m.shelf": "Add to Media Shelf",
+      "m.cover": "Find cover online", "toast.montage": "The song is in Files › Music › Free music and its credit is copied: paste it into your video's credits.",
+      "toast.montageFail": "Could not get the song.", "recap.title": "My year in music", "recap.titleY": "{y} in music", "recap.sub": "Made on this device from what you played here.",
+      "recap.minutes": "minutes of music", "recap.plays": "plays", "recap.songs": "different songs", "recap.topSongs": "Top songs", "recap.topArtists": "Top artists",
+      "recap.month": "Month with the most music: {m}", "recap.months": "Month by month", "recap.save": "Save top songs as a playlist", "recap.plName": "My top songs {y}", "recap.none": "No plays in this year yet.",
+      "imp.spotify": "Import from Spotify", "sp.title": "Import from Spotify",
+      "sp.how": "In Spotify, ask for a copy of your data (Account › Privacy settings › Download your data). Spotify e-mails you a ZIP file: choose it here, or the Playlist and YourLibrary .json files inside it. A CSV from Exportify or TuneMyMusic works too.",
+      "sp.hint": "Each Spotify playlist becomes a playlist here with the songs Music can play: songs on this device, on your servers or already in your music. Your liked songs become likes. Nothing is sent anywhere.",
+      "sp.pick": "Choose files", "sp.busy": "Reading…", "sp.none": "No playlists or liked songs in these files.", "sp.done": "Playlists made: {p}. Songs found in your music: {m} of {n}.",
+      "sp.likes": "Liked songs added: {n}.", "sp.missing": "Not found ({n})", "sp.copy": "Copy the list", "sp.liked": "Liked Songs (Spotify)",
+      "sp.online": "Look for the missing songs on Jamendo and your servers", "sp.onlineHint": "Sends each song's title and artist to Jamendo and to your own servers. Only exact matches are added.",
+      "sp.looking": "Looking… {d} of {n}", "sp.found": "More songs found and added: {n}.", "sp.zipErr": "Could not open this ZIP file.",
+      "cv.find": "Find missing covers online", "cv.hint": "Asks MusicBrainz and the Cover Art Archive for the covers of your albums that have none. Only album and artist names are sent.",
+      "cv.busy": "Looking for covers… {d} of {n}", "cv.done": "Covers found: {n}.", "cv.none": "No covers found.", "cv.all": "Every album has a cover.", "cv.one": "Cover found.", "cv.notOne": "No cover found for this album."
     },
     el: {
       "app": "Μουσική",
@@ -275,7 +293,24 @@
       "eq.classical": "Κλασική", "eq.electronic": "Ηλεκτρονική", "eq.loud": "Loudness", "eq.small": "Μικρά ηχεία", "eq.night": "Αργά το βράδυ (απαλό)",
       "sl.btn": "Χρονοδιακόπτης ύπνου", "sl.title": "Χρονοδιακόπτης ύπνου", "sl.min": "{n} λεπτά", "sl.end": "Στο τέλος αυτού του τραγουδιού", "sl.off": "Κλείσε τον χρονοδιακόπτη",
       "sl.left": "Σταματά σε {n}", "sl.leftEnd": "Σταματά μετά από αυτό το τραγούδι", "sl.set": "Η μουσική σταματά σε {n}.", "sl.setEnd": "Η μουσική σταματά μετά από αυτό το τραγούδι.",
-      "sl.cleared": "Ο χρονοδιακόπτης ύπνου έκλεισε.", "s.lrclib": "Αναζήτηση στίχων online (LRCLIB)", "s.lrclibHint": "Στέλνει τον τίτλο, τον καλλιτέχνη, το άλμπουμ και τη διάρκεια του τραγουδιού που ανοίγεις τους στίχους του."
+      "sl.cleared": "Ο χρονοδιακόπτης ύπνου έκλεισε.", "s.lrclib": "Αναζήτηση στίχων online (LRCLIB)", "s.lrclibHint": "Στέλνει τον τίτλο, τον καλλιτέχνη, το άλμπουμ και τη διάρκεια του τραγουδιού που ανοίγεις τους στίχους του.",
+      "home.forYou": "Φτιαγμένα για σένα", "kind.mix": "Μίξη", "mix.daily": "Μίξη της ημέρας", "mix.dailySub": "Τραγούδια που αγαπάς και άλλα, καινούρια κάθε μέρα",
+      "mix.repeat": "Σε επανάληψη", "mix.repeatSub": "Ό,τι παίζεις περισσότερο αυτόν τον μήνα", "mix.rewind": "Πίσω στα παλιά", "mix.rewindSub": "Παλιά αγαπημένα που έχεις καιρό να ακούσεις",
+      "mix.radio": "Ραδιόφωνο τραγουδιού", "mix.radioOf": "Ραδιόφωνο: {s}", "mix.radioSub": "Τραγούδια σαν αυτό, από τη μουσική σου", "mix.empty": "Τίποτα ακόμα. Οι μίξεις φτιάχνονται από ό,τι παίζεις σε αυτή τη συσκευή.",
+      "mix.save": "Αποθήκευση ως λίστα", "toast.mixSaved": "Αποθηκεύτηκε ως λίστα «{n}».", "m.radio": "Ραδιόφωνο τραγουδιού", "m.montage": "Χρήση στο Montage", "m.shelf": "Προσθήκη στο Media Shelf",
+      "m.cover": "Βρες εξώφυλλο online", "toast.montage": "Το τραγούδι είναι στα Αρχεία › Music › Free music και η αναφορά του αντιγράφηκε: επικόλλησέ τη στους τίτλους του βίντεό σου.",
+      "toast.montageFail": "Δεν ήταν δυνατό να έρθει το τραγούδι.", "recap.title": "Η χρονιά μου στη μουσική", "recap.titleY": "Το {y} στη μουσική", "recap.sub": "Φτιαγμένο σε αυτή τη συσκευή από ό,τι έπαιξες εδώ.",
+      "recap.minutes": "λεπτά μουσικής", "recap.plays": "αναπαραγωγές", "recap.songs": "διαφορετικά τραγούδια", "recap.topSongs": "Κορυφαία τραγούδια", "recap.topArtists": "Κορυφαίοι καλλιτέχνες",
+      "recap.month": "Μήνας με την περισσότερη μουσική: {m}", "recap.months": "Μήνα με τον μήνα", "recap.save": "Αποθήκευση των κορυφαίων ως λίστα", "recap.plName": "Τα κορυφαία μου {y}", "recap.none": "Δεν υπάρχουν ακόμα αναπαραγωγές για αυτή τη χρονιά.",
+      "imp.spotify": "Εισαγωγή από το Spotify", "sp.title": "Εισαγωγή από το Spotify",
+      "sp.how": "Στο Spotify, ζήτησε αντίγραφο των δεδομένων σου (Λογαριασμός › Ρυθμίσεις απορρήτου › Λήψη των δεδομένων σου). Το Spotify σού στέλνει με e-mail ένα αρχείο ZIP: διάλεξέ το εδώ, ή τα αρχεία Playlist και YourLibrary .json που έχει μέσα. Δουλεύει και ένα CSV από το Exportify ή το TuneMyMusic.",
+      "sp.hint": "Κάθε λίστα του Spotify γίνεται λίστα εδώ με τα τραγούδια που μπορεί να παίξει η Μουσική: τραγούδια αυτής της συσκευής, των servers σου ή όσα υπάρχουν ήδη στη μουσική σου. Τα αγαπημένα σου γίνονται αγαπημένα. Δεν στέλνεται τίποτα πουθενά.",
+      "sp.pick": "Διάλεξε αρχεία", "sp.busy": "Διαβάζω…", "sp.none": "Δεν υπάρχουν λίστες ή αγαπημένα σε αυτά τα αρχεία.", "sp.done": "Λίστες που φτιάχτηκαν: {p}. Τραγούδια που βρέθηκαν στη μουσική σου: {m} από {n}.",
+      "sp.likes": "Αγαπημένα που προστέθηκαν: {n}.", "sp.missing": "Δεν βρέθηκαν ({n})", "sp.copy": "Αντιγραφή της λίστας", "sp.liked": "Αγαπημένα (Spotify)",
+      "sp.online": "Ψάξε τα τραγούδια που λείπουν στο Jamendo και στους servers σου", "sp.onlineHint": "Στέλνει τον τίτλο και τον καλλιτέχνη κάθε τραγουδιού στο Jamendo και στους δικούς σου servers. Προστίθενται μόνο όσα ταιριάζουν ακριβώς.",
+      "sp.looking": "Ψάχνω… {d} από {n}", "sp.found": "Τραγούδια που βρέθηκαν ακόμα και προστέθηκαν: {n}.", "sp.zipErr": "Δεν άνοιξε αυτό το αρχείο ZIP.",
+      "cv.find": "Βρες τα εξώφυλλα που λείπουν online", "cv.hint": "Ζητά από το MusicBrainz και το Cover Art Archive τα εξώφυλλα των άλμπουμ σου που δεν έχουν. Στέλνονται μόνο ονόματα άλμπουμ και καλλιτεχνών.",
+      "cv.busy": "Ψάχνω εξώφυλλα… {d} από {n}", "cv.done": "Εξώφυλλα που βρέθηκαν: {n}.", "cv.none": "Δεν βρέθηκαν εξώφυλλα.", "cv.all": "Όλα τα άλμπουμ έχουν εξώφυλλο.", "cv.one": "Βρέθηκε εξώφυλλο.", "cv.notOne": "Δεν βρέθηκε εξώφυλλο για αυτό το άλμπουμ."
     }
   };
   function t(k, v) {
@@ -341,6 +376,7 @@
     dl: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>',
     server: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/></svg>',
     rss: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a9 9 0 0 1 9 9M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1.5"/></svg>',
+    chart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 20V12M10 20V6M15 20v-9M20 20V4"/></svg>',
     lyrics: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h10M4 10h10M4 14h6"/><path d="M18 18V6l3-1"/><circle cx="16" cy="18" r="2"/></svg>',
     eq: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 4v16M12 4v16M18 4v16"/><path d="M4 14h4M10 8h4M16 16h4"/></svg>',
     moon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>',
@@ -1062,6 +1098,359 @@
     feedStatus(m, k, host);
   }
 
+  // ---------- 3d. Mixes, my year, Spotify import, covers, other apps (wave 5b) ----------
+  // Mixes and the recap come from what was played on this device: the
+  // host's history (oros-music-local) and the yearly stats
+  // (oros-music-stats, written by the host once per counted play).
+  var MX = window.OrosMusicMixes || null;
+  var STATS_KEY = "oros-music-stats";
+  function stats() { try { return C.normStats(JSON.parse(localStorage.getItem(STATS_KEY) || "null")); } catch (e) { return C.normStats(null); } }
+  function likedMap() { var m = {}; C.likedList(D()).forEach(function (l) { if (l.on !== 0) m[l.k] = 1; }); return m; }
+  // Every song that can play here: the device's files, liked songs,
+  // playlist songs, recent songs and the songs of the stats.
+  function mixPool() {
+    var seen = {}, out = [];
+    var add = function (x) { var r = playable(x); if (r && r.k && !seen[r.k]) { seen[r.k] = 1; out.push(r); } };
+    tracks.forEach(add);
+    C.likedList(D()).forEach(add);
+    D().pls.forEach(function (p) { p.it.forEach(add); });
+    var h = H ? H.history() : null;
+    ((h && h.r) || []).forEach(add);
+    var st = stats();
+    Object.keys(st.y).forEach(function (y) { var Y = st.y[y]; Object.keys(Y.i).forEach(function (k) { add(Y.i[k]); }); });
+    return out;
+  }
+  var MIXES = { daily: ["mix.daily", "mix.dailySub"], repeat: ["mix.repeat", "mix.repeatSub"], rewind: ["mix.rewind", "mix.rewindSub"] };
+  function mixList(id, seed, pool) {
+    if (!MX) return [];
+    pool = pool || mixPool();
+    var h = (H && H.history()) || {}, now = Date.now();
+    if (id === "daily") return MX.daily(pool, h, likedMap(), now, 40);
+    if (id === "repeat") return MX.onRepeat(pool, h, now, 30);
+    if (id === "rewind") return MX.rewind(pool, h, now, 30);
+    if (id === "radio" && seed) return MX.radio(playable(seed) || seed, pool, D().pls, h, likedMap(), now, 50);
+    return [];
+  }
+  function recapYear() {
+    var ys = MX ? MX.years(stats()) : [];
+    return ys.length ? ys[0] : "";
+  }
+  function forYouSection(m) {
+    if (!MX) return;
+    var pool = mixPool(), row = el("div", "cards"), any = false;
+    Object.keys(MIXES).forEach(function (id) {
+      var list = mixList(id, null, pool);
+      if (list.length < (id === "daily" ? 8 : 3)) return;
+      any = true;
+      var src = { kind: "mix", id: id, n: t(MIXES[id][0]) };
+      row.appendChild(card(collage(list, ""), t(MIXES[id][0]), t(MIXES[id][1]), function () { openView({ kind: "mix", id: id }); },
+        function () { playRows(list, -1, src, false); }));
+    });
+    var y = recapYear(), r = y && MX.recap(stats(), y);
+    if (r && r.plays >= 10) {
+      any = true;
+      row.appendChild(card(cover("", "recap" + y, "", I.chart), t("recap.titleY", { y: y }), t("recap.title"), function () { openView({ kind: "recap", id: y }); }));
+    }
+    if (!any) return;
+    section(m, t("home.forYou")).appendChild(row);
+  }
+  function renderMix(m, v) {
+    var list = mixList(v.id, v.seed);
+    var title = v.id === "radio" ? t("mix.radioOf", { s: (v.seed && v.seed.t) || "" }) : t((MIXES[v.id] || ["kind.mix"])[0]);
+    var sub = v.id === "radio" ? t("mix.radioSub") : t((MIXES[v.id] || ["", "mix.empty"])[1]);
+    var src = { kind: "mix", id: v.id === "radio" ? "radio|" + (v.seed ? v.seed.k : "") : v.id, n: title };
+    var save = button(t("mix.save"), "icon-btn", function () {
+      var refs = list.map(C.refOf).filter(Boolean), name = title;
+      mutate(function (d, now) { return C.addPl(d, name, refs, now).data; });
+      showToast(t("toast.mixSaved", { n: name }));
+    }, I.plus);
+    pageHead(m, collage(list, "big"), t("kind.mix"), title, el("div", "ph-sub dim", [sub, list.length ? nSongs(list.length) : ""].filter(Boolean).join(" · ")),
+      list.length ? list : null, src, list.length ? [save] : null);
+    if (!list.length) { m.appendChild(el("p", "empty", t("mix.empty"))); return; }
+    m.appendChild(rowList(list, { src: src }));
+  }
+  function songRadio(r) {
+    var seed = C.itemOf(playable(r) || r);
+    if (r.g) seed.g = r.g;
+    openView({ kind: "mix", id: "radio", seed: seed, n: r.t });
+  }
+  // Month names as they stand alone (Greek dates would give "Οκτωβρίου").
+  var MONTHS = {
+    en: "January February March April May June July August September October November December".split(" "),
+    el: "Ιανουάριος Φεβρουάριος Μάρτιος Απρίλιος Μάιος Ιούνιος Ιούλιος Αύγουστος Σεπτέμβριος Οκτώβριος Νοέμβριος Δεκέμβριος".split(" ")
+  };
+  function monthName(i, long) {
+    var n = (MONTHS[LANG] || MONTHS.en)[i] || String(i + 1);
+    return long ? n : n.slice(0, 3);
+  }
+  function renderRecap(m, v) {
+    var st = stats(), ys = MX ? MX.years(st) : [], y = v.id && ys.indexOf(v.id) >= 0 ? v.id : ys[0];
+    var r = y && MX.recap(st, y);
+    m.appendChild(el("h1", "greet", t("recap.titleY", { y: y || new Date().getFullYear() })));
+    m.appendChild(el("p", "dim small", t("recap.sub")));
+    if (ys.length > 1) {
+      var chips = el("div", "chips");
+      ys.forEach(function (x) { var c = button(x, "chip" + (x === y ? " on" : ""), function () { view = { kind: "recap", id: x }; renderAll(); }); chips.appendChild(c); });
+      m.appendChild(chips);
+    }
+    if (!r) { m.appendChild(el("p", "empty", t("recap.none"))); return; }
+    var big = el("div", "rc-big");
+    [[r.minutes, "recap.minutes"], [r.plays, "recap.plays"], [r.distinct, "recap.songs"]].forEach(function (x) {
+      var b = el("div", "rc-num");
+      b.appendChild(el("span", "rc-n", x[0].toLocaleString(LANG === "el" ? "el-GR" : "en-GB")));
+      b.appendChild(el("span", "dim small", t(x[1])));
+      big.appendChild(b);
+    });
+    m.appendChild(big);
+    if (r.topMonth >= 0) m.appendChild(el("p", "rc-line", t("recap.month", { m: monthName(r.topMonth, true) })));
+    var rows = r.songs.map(function (s) { var x = playable(s.ref); return x ? Object.assign({}, x, { _ref: s.ref }) : Object.assign({ _missing: 1 }, s.ref); });
+    var src = { kind: "recap", id: String(y), n: t("recap.titleY", { y: y }) };
+    var sec = section(m, t("recap.topSongs"));
+    sec.appendChild(rowList(rows, { src: src, numbers: true }));
+    sec.appendChild(el("div", "dlg-btns")).appendChild(button(t("recap.save"), "txt-btn", function () {
+      var name = t("recap.plName", { y: y });
+      mutate(function (d, now) { return C.addPl(d, name, r.songs.map(function (s) { return s.ref; }), now).data; });
+      showToast(t("toast.mixSaved", { n: name }));
+    }));
+    if (r.artists.length) {
+      var sa = section(m, t("recap.topArtists"));
+      var ol = el("ol", "rc-artists");
+      r.artists.forEach(function (a) {
+        var li = el("li", "");
+        li.appendChild(artistLink(a.name, ""));
+        li.appendChild(el("span", "dim small", " · " + a.n + " " + t("recap.plays")));
+        ol.appendChild(li);
+      });
+      sa.appendChild(ol);
+    }
+    var sm = section(m, t("recap.months"));
+    var bars = el("div", "rc-bars"), mx = Math.max.apply(null, r.months.concat([1]));
+    r.months.forEach(function (n, i) {
+      var col = el("div", "rc-col");
+      col.title = monthName(i, true) + ": " + n;
+      var bar = el("span", "rc-bar" + (i === r.topMonth ? " top" : ""));
+      bar.style.height = Math.round(n / mx * 100) + "%";
+      col.appendChild(el("span", "rc-bw")).appendChild(bar);
+      col.appendChild(el("span", "dim small", monthName(i, false)));
+      bars.appendChild(col);
+    });
+    sm.appendChild(bars);
+  }
+
+  // Spotify import: the user's own export (ZIP, Playlist*.json,
+  // YourLibrary.json) or a CSV. Only songs Music can play are added;
+  // nothing is sent anywhere unless the user asks to look online.
+  var zipWait = null;
+  function zipLib() {
+    if (window.AtelierZip) return Promise.resolve(window.AtelierZip);
+    if (zipWait) return zipWait;
+    var ver = ((document.querySelector('script[src*="music.js"]') || {}).src || "").match(/\?v=[^"&]+/);
+    zipWait = new Promise(function (res, rej) {
+      var s = document.createElement("script");
+      s.src = "../atelier/zip.js" + (ver ? ver[0] : "");
+      s.onload = function () { if (window.AtelierZip) res(window.AtelierZip); else { zipWait = null; rej(new Error("zip")); } };
+      s.onerror = function () { zipWait = null; rej(new Error("zip")); };
+      document.head.appendChild(s);
+    });
+    return zipWait;
+  }
+  // [File] → Promise<[{ name, text }]>
+  function exportTexts(files) {
+    var out = [];
+    return files.reduce(function (p, f) {
+      return p.then(function () {
+        if (/\.zip$/i.test(f.name)) {
+          return Promise.all([zipLib(), f.arrayBuffer()]).then(function (r) {
+            var z = r[0].open(new Uint8Array(r[1]));
+            var names = z.names.filter(function (n) { return /(^|\/)(Playlist\d*|YourLibrary)\.json$/i.test(n); });
+            return names.reduce(function (q, n) { return q.then(function () { return z.text(n, 64 * 1024 * 1024).then(function (tx) { out.push({ name: n, text: tx }); }); }); }, Promise.resolve());
+          });
+        }
+        if (f.size > 64 * 1024 * 1024) return null;
+        return f.text().then(function (tx) { out.push({ name: f.name, text: tx }); });
+      });
+    }, Promise.resolve()).then(function () { return out; });
+  }
+  function spotifyDlg() {
+    if (!MX) return;
+    var dlg = makeDialog("mu-spotify", "menu-dlg");
+    dlg.appendChild(el("h2", "dlg-title", t("sp.title")));
+    var body = el("div", "");
+    body.appendChild(el("p", "small", t("sp.how")));
+    body.appendChild(el("p", "dim small", t("sp.hint")));
+    dlg.appendChild(body);
+    var msg = el("p", "sv-msg small");
+    dlg.appendChild(msg);
+    var row = el("div", "dlg-btns");
+    row.appendChild(button(t("close"), "txt-btn", function () { dlg.close(); }));
+    var pick = button(t("sp.pick"), "txt-btn accent", function () {
+      var inp = document.createElement("input");
+      inp.type = "file"; inp.multiple = true; inp.accept = ".zip,.json,.csv,application/zip,application/json,text/csv";
+      inp.style.display = "none";
+      inp.addEventListener("change", function () {
+        var files = [].slice.call(inp.files || []);
+        inp.remove();
+        if (!files.length) return;
+        msg.className = "sv-msg small"; msg.textContent = t("sp.busy");
+        pick.disabled = true;
+        exportTexts(files).then(function (texts) {
+          pick.disabled = false;
+          spotifyImport(texts, dlg, body, msg);
+        }, function () { pick.disabled = false; msg.className = "sv-msg small err"; msg.textContent = t("sp.zipErr"); });
+      });
+      document.body.appendChild(inp);
+      inp.click();
+    });
+    row.appendChild(pick);
+    dlg.appendChild(row);
+    openDialog(dlg);
+  }
+  function spotifyImport(texts, dlg, body, msg) {
+    var lists = [], liked = [];
+    texts.forEach(function (x) { var r = MX.parseExport(x.name, x.text); if (r) { lists = lists.concat(r.lists); liked = liked.concat(r.liked); } });
+    if (!lists.length && !liked.length) { msg.className = "sv-msg small err"; msg.textContent = t("sp.none"); return; }
+    var match = MX.matcher(mixPool()), total = 0, found = 0, missing = [], made = 0, likes = 0;
+    // Each list: { id (playlist made here) | like: true, miss: [entry] }
+    var jobs = [];
+    mutate(function (d, now) {
+      lists.forEach(function (l) {
+        var refs = [], miss = [];
+        l.it.forEach(function (e) { total++; var x = match(e); if (x) { found++; refs.push(C.refOf(x)); } else miss.push(e); });
+        var r = C.addPl(d, l.n, refs, now);
+        d = r.data; made++;
+        jobs.push({ id: r.id, n: l.n, miss: miss });
+      });
+      if (liked.length) {
+        var lm = [];
+        liked.forEach(function (e) { total++; var x = match(e); if (x) { found++; likes++; d = C.setLike(d, C.refOf(x), true, now); } else lm.push(e); });
+        jobs.push({ like: true, n: t("sp.liked"), miss: lm });
+      }
+      return d;
+    });
+    jobs.forEach(function (j) { j.miss.forEach(function (e) { missing.push({ e: e, j: j }); }); });
+    body.textContent = "";
+    var sum = el("p", "", t("sp.done", { p: made, m: found, n: total }) + (likes ? " " + t("sp.likes", { n: likes }) : ""));
+    body.appendChild(sum);
+    msg.textContent = "";
+    if (missing.length) {
+      var det = el("details", "sp-miss");
+      det.appendChild(el("summary", "", t("sp.missing", { n: missing.length })));
+      var ul = el("ul", "small");
+      missing.slice(0, 500).forEach(function (x) { ul.appendChild(el("li", "", (x.e.a ? x.e.a + " — " : "") + x.e.t + " · " + x.j.n)); });
+      det.appendChild(ul);
+      body.appendChild(det);
+      var bt = el("div", "menu-col");
+      bt.appendChild(button(t("sp.copy"), "", function () {
+        copyText(missing.map(function (x) { return (x.e.a ? x.e.a + " — " : "") + x.e.t; }).join("\n"), function () { showToast(t("toast.copied")); });
+      }));
+      if ((openOn() && O.jmTracks) || svLib().length) {
+        var on = button(t("sp.online"), "", function () { on.disabled = true; spotifyOnline(missing, msg); });
+        bt.appendChild(on);
+        bt.appendChild(el("p", "dim small", t("sp.onlineHint")));
+      }
+      body.appendChild(bt);
+    }
+    renderKeepScroll();
+  }
+  // The songs not found here, looked up one by one (at most 200) on
+  // the user's servers, then Jamendo; only exact matches are added.
+  function spotifyOnline(missing, msg) {
+    var todo = missing.slice(0, 200), n = todo.length, added = 0;
+    msg.className = "sv-msg small";
+    var look = function (e) {
+      var q = e.t + (e.a ? " " + e.a : "");
+      var srcs = svLib().map(function (x) { return function () { return SV.call(x.id, "search", q).then(function (r) { return r.songs || []; }); }; });
+      if (openOn() && O.jmTracks) srcs.push(function () { return O.jmTracks({ q: q }).then(function (r) { return r.tracks || []; }); });
+      return srcs.reduce(function (p, f) {
+        return p.then(function (hit) {
+          if (hit) return hit;
+          return f().then(function (list) { return MX.matcher(list)(e); }, function () { return null; });
+        });
+      }, Promise.resolve(null));
+    };
+    todo.reduce(function (p, x, i) {
+      return p.then(function () {
+        msg.textContent = t("sp.looking", { d: i + 1, n: n });
+        return look(x.e).then(function (hit) {
+          if (!hit) return;
+          added++;
+          var ref = C.refOf(hit);
+          mutate(function (d, now) { return x.j.like ? C.setLike(d, ref, true, now) : C.addToPl(d, x.j.id, [ref], now); });
+        });
+      });
+    }, Promise.resolve()).then(function () { msg.textContent = t("sp.found", { n: added }); renderKeepScroll(); });
+  }
+
+  // Covers from MusicBrainz + the Cover Art Archive for albums on this
+  // device that have none (only on a tap; album and artist names only).
+  var MB_GAP = 1100;          // MusicBrainz asks for one request a second
+  function findCover(al) {
+    var u = MX.mbUrl(al.n, al.a);
+    if (!u) return Promise.resolve(false);
+    return fetch(u, { credentials: "omit", referrerPolicy: "no-referrer", headers: { Accept: "application/json" } }).then(function (r) {
+      if (!r.ok) throw new Error("http");
+      return r.json();
+    }).then(function (j) {
+      var pick = MX.mbPick(j, al.n, al.a);
+      if (!pick) return false;
+      return fetch(MX.caaUrl(pick.id), { credentials: "omit", referrerPolicy: "no-referrer" }).then(function (r) {
+        if (!r.ok) return false;
+        return r.blob().then(function (b) { return b.size && b.size < 20e6 ? LIB.setAlbumArt(al.list, b, pick.year) : false; });
+      });
+    }).catch(function () { return false; });
+  }
+  var coverBusy = false;
+  function findCovers(list) {
+    if (coverBusy || !MX) return;
+    var todo = list.filter(function (a) { return !a.art && a.n; });
+    if (!todo.length) { showToast(t("cv.all")); return; }
+    coverBusy = true;
+    var n = 0;
+    todo.reduce(function (p, al, i) {
+      return p.then(function () {
+        if (todo.length > 1) localToast(t("cv.busy", { d: i + 1, n: todo.length }));
+        return findCover(al).then(function (ok) { if (ok) n++; return new Promise(function (r) { setTimeout(r, MB_GAP); }); });
+      });
+    }, Promise.resolve()).then(function () {
+      coverBusy = false;
+      return loadIndex();
+    }).then(function () {
+      renderKeepScroll();
+      showToast(todo.length === 1 ? t(n ? "cv.one" : "cv.notOne") : n ? t("cv.done", { n: n }) : t("cv.none"));
+    });
+  }
+  function albumMenu(al) {
+    var items = [[t("m.shelf"), function () { toShelf(al.n, al.a, al.y); }]];
+    if (!al.art && MX) items.push([t("m.cover"), function () { findCovers([al]); }]);
+    menuDlg(items, al.n, al.a);
+  }
+  // Other apps: Media Shelf (a new album entry, nothing saved until
+  // Save there) and Montage (a song file on the orOS disk).
+  function toShelf(title, by, year) {
+    openApp("shelf", { asNew: { kind: "album", title: title || "", by: by || "", year: year || 0, status: "listening" } });
+  }
+  // Open-catalogue songs that may be saved and changed (no "ND").
+  function montageOk(r) { return !!(r && (r.p || (isOpen(r) && r.off === 1 && r.li && !/(-nd|^lma)/.test(r.li)))); }
+  function toMontage(r) {
+    if (r.p) { openApp("montage", { openFile: r.p }); return; }
+    var F = LIB.fs();
+    if (!F || !montageOk(r)) return;
+    var got = ST.getOff(r.k).then(function (b) {
+      return b || fetch(r.u, { mode: "cors", credentials: "omit", referrerPolicy: "no-referrer" }).then(function (res) { if (!res.ok) throw new Error("http"); return res.blob(); });
+    });
+    got.then(function (b) {
+      if (!b || !b.size || b.size > 300e6 || /^text\//i.test(b.type || "")) throw new Error("type");
+      var ext = /ogg/i.test(b.type) ? ".ogg" : /flac/i.test(b.type) ? ".flac" : /wav/i.test(b.type) ? ".wav" : /mp4|m4a|aac/i.test(b.type) ? ".m4a" : ".mp3";
+      var dir = LIB.ROOT + "/Free music", name = ((r.a ? r.a + " - " : "") + r.t).replace(/[\\/:*?"<>|\u0000-\u001f]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 120) || "song";
+      var p = dir + "/" + name + ext;
+      return F.mkdir(dir).then(function () { return F.write(p, b); }).then(function () {
+        copyText(O.credit(r, LANG), function () {});
+        showToast(t("toast.montage"));
+        openApp("montage", { openFile: p });
+      });
+    }).catch(function () { showToast(t("toast.montageFail")); });
+  }
+
   // Paths in the queue follow renamed/moved files (same song key).
   function relinkQueue() {
     if (!H || typeof H.relink !== "function") return;
@@ -1215,7 +1604,8 @@
       [t("empty.files"), function () { pickFiles(false); }],
       [t("empty.folder"), function () { pickFiles(true); }],
       [t("lib.newPl"), function () { newPlaylist([], function (id) { openView({ kind: "pl", id: id }); }); }]
-    ].concat(SV ? [[t("sv.connect"), function () { connectDlg(); }], [t("sv.import"), importMenu], [t("sv.feedAdd"), feedDlg]] : []));
+    ].concat(SV ? [[t("sv.connect"), function () { connectDlg(); }], [t("sv.import"), importMenu], [t("sv.feedAdd"), feedDlg]] : [])
+      .concat(MX ? [[t("imp.spotify"), spotifyDlg]] : []));
   }
   function openInFiles() {
     var F = LIB.fs();
@@ -1341,6 +1731,7 @@
       });
       s1.appendChild(rowR);
     }
+    forYouSection(m);
     serverSection(m);
     var added = albumsAll().slice().sort(function (a, b) { return b.add - a.add; }).slice(0, 12);
     if (added.length) {
@@ -1625,7 +2016,8 @@
       sub.appendChild(artistLink(al.a));
       sub.appendChild(el("span", "dim", [al.y || "", nSongs(al.list.length), totalTime(al.list)].filter(Boolean).join(" · ")));
       pageHead(m, cover(al.art, al.n, "big"), t("kind.album"), al.n, sub, al.list, src,
-        [button(t("m.addPl"), "icon-btn", function () { addToPlaylist(al.list.map(C.refOf)); }, I.plus)]);
+        [button(t("m.addPl"), "icon-btn", function () { addToPlaylist(al.list.map(C.refOf)); }, I.plus),
+          button(t("more"), "icon-btn", function () { albumMenu(al); }, I.more)]);
       m.appendChild(rowList(al.list, { src: src, numbers: true, noArt: true, noAlbum: true }));
     } else if (v.kind === "artist") {
       var ar = artistsAll().filter(function (a) { return a.k === v.id; })[0];
@@ -1670,6 +2062,10 @@
       renderServer(m, v);
     } else if (SV && v.kind === "rss") {
       renderRss(m, v);
+    } else if (MX && v.kind === "mix") {
+      renderMix(m, v);
+    } else if (MX && v.kind === "recap") {
+      renderRecap(m, v);
     } else if (v.kind === "folder") {
       var crumbs = el("div", "crumbs dim small", v.id.replace(LIB.ROOT, "Music"));
       m.appendChild(crumbs);
@@ -1743,6 +2139,7 @@
         var items = [[t("m.credit"), function () { copyCredit({ s: sk0, t: al.n, a: al.a, li: al.li, pg: al.pg }); }]];
         if (al.pg) items.push([t("m.source", { s: srcName(sk0) }), function () { openExt(al.pg); }]);
         if (al.li) items.push([t("info.licence") + ": " + O.licLabel(al.li, LANG), function () { openExt(O.licUrl(al.li)); }]);
+        items.push([t("m.shelf"), function () { toShelf(al.n, al.a, al.y); }]);
         menuDlg(items, al.n, al.a);
       }, I.more));
       pageHead(m, cover(al.art, al.n, "big"), t("kind.album") + " · " + srcName(sk0), al.n, sub, f.list.length ? f.list : null, src, extra);
@@ -1826,6 +2223,8 @@
       items.push([t("m.addQueue"), function () { H.addLast([item]); showToast(t("toast.queued")); }]);
     }
     if (ref) items.push([t("m.addPl"), function () { addToPlaylist([ref]); }]);
+    if (item && MX) items.push([t("m.radio"), function () { songRadio(r); }]);
+    if (!r._missing && montageOk(r)) items.push([t("m.montage"), function () { toMontage(r); }]);
     var ak = r.p ? C.albumKey(r) : "";
     if (ak && !(view && view.kind === "album" && view.id === ak)) items.push([t("m.album"), function () { openView({ kind: "album", id: ak }); }]);
     var an = r.p ? (r.a || "") : "";
@@ -2496,6 +2895,10 @@
     dlg.appendChild(el("p", "dim small", t("s.lrclibHint")));
     var col = el("div", "menu-col");
     if (hasSound()) col.appendChild(button(t("snd.title"), "", function () { dlg.close(); soundDlg(); }));
+    if (MX && tracks.length) {
+      col.appendChild(button(t("cv.find"), "", function () { dlg.close(); findCovers(albumsAll()); }));
+      col.appendChild(el("p", "dim small", t("cv.hint")));
+    }
     col.appendChild(button(t("s.rescan"), "", function () { dlg.close(); rescan(true); }));
     col.appendChild(el("p", "dim small", t("s.rescanHint")));
     col.appendChild(button(t("s.folder"), "", function () { dlg.close(); openInFiles(); }));
@@ -2636,9 +3039,40 @@
   }
   // Deep links (shell __orosOpenAt / __orosTakeTarget): { album } |
   // { artist } | { pl } | { liked: 1 } | { track } (plays it) |
-  // { ia } (an Internet Archive album) | { jm } (a Jamendo album).
+  // { ia } (an Internet Archive album) | { jm } (a Jamendo album) |
+  // { playPath } (a song already under the music folder, from Files) |
+  // { openFile: { token } } (a song from elsewhere: Files' "Open with",
+  // shell fileopen.js; copied into the music folder, then played).
+  function playPath(p) {
+    // A scan already running (the one at boot) may have started before
+    // the file came in: then one more scan picks it up.
+    return rescan(false).then(function () { return byPath[p] ? null : rescan(false); }).then(function () {
+      var r = byPath[p];
+      if (r) playRows([r], 0, { kind: "song", id: r.k, n: r.t }, false);
+      else showToast(t("toast.cant"));
+    });
+  }
+  function openFileTarget(o) {
+    var f = null;
+    try {
+      var p = window.parent;
+      if (o && typeof o.token === "string" && p && p !== window && typeof p.__orosTakeFile === "function") f = p.__orosTakeFile(o.token);
+    } catch (e) { f = null; }
+    if (!f || !C.isAudioName(f.name)) { showToast(t("toast.cant")); return; }
+    if (!LIB.fs()) { showToast(t("toast.noFs")); return; }
+    LIB.addFiles([f]).then(function (r) {
+      if (!r.paths.length) { showToast(t("toast.cant")); return; }
+      showToast(t("toast.saved1"));
+      return playPath(r.paths[0]);
+    }, function () { showToast(t("toast.cant")); });
+  }
   function openTarget(tg) {
     if (!H || !tg || typeof tg !== "object" || document.querySelector("dialog[open]")) return;
+    if (tg.openFile && typeof tg.openFile === "object") { openFileTarget(tg.openFile); return; }
+    if (typeof tg.playPath === "string") {
+      if (tg.playPath.indexOf(LIB.ROOT + "/") === 0) playPath(tg.playPath);
+      return;
+    }
     view = null; history = [];
     if (typeof tg.album === "string") openView({ kind: "album", id: tg.album });
     else if (typeof tg.artist === "string") openView({ kind: "artist", id: tg.artist });
@@ -2646,6 +3080,8 @@
     else if (tg.liked) openView({ kind: "liked" });
     else if (typeof tg.ia === "string" && O) openView({ kind: "ia", id: tg.ia });
     else if (typeof tg.jm === "string" && O) openView({ kind: "jm", id: tg.jm });
+    else if (typeof tg.mix === "string" && MX && MIXES[tg.mix]) openView({ kind: "mix", id: tg.mix });
+    else if (/^\d{4}$/.test(String(tg.recap || "")) && MX) openView({ kind: "recap", id: String(tg.recap) });
     else if (typeof tg.track === "string") {
       var r = resolve({ k: tg.track });
       if (r) {

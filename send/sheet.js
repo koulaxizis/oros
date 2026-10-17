@@ -101,6 +101,7 @@
     if (kind === "text") return d.text;
     if (kind === "link") return d.url;
     if (kind === "items") return d.items.map(function (it) { return it.text; }).join("\n");
+    if (kind === "files") return d.items.map(function (f) { return f.path; }).join("\n");
     return d.rows.map(function (r) { return r.join("\t"); }).join("\n");
   }
 

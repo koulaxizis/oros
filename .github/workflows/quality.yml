@@ -2,7 +2,8 @@ name: Quality gate
 
 # Opens every app of apps.json in Chromium (360 + 1280 px, EN + EL) and fails
 # on NEW console errors, horizontal scroll at 360, missing help pages or
-# English text left in the Greek UI. Known problems live in
+# English text left in the Greek UI, and runs a two-device sync convergence
+# sweep on every merge function (converge.js). Known problems live in
 # .github/qa/baseline.json (may only shrink). Playwright is installed here
 # only and never ships with orOS. See OROS_BIBLE.md "Quality gate".
 
@@ -44,11 +45,14 @@ jobs:
           .github/qa/node_modules/.bin/playwright install --with-deps chromium
       - name: Open every app
         run: node .github/qa/smoke.js --shard ${{ matrix.shard }}/4 --out qa-report-${{ matrix.shard }}.json
+      - name: Sync convergence of every merge function
+        if: success() || failure()
+        run: node .github/qa/converge.js --shard ${{ matrix.shard }}/4 --out qa-sync-${{ matrix.shard }}.json
       - if: always()
         uses: actions/upload-artifact@v4
         with:
           name: qa-report-${{ matrix.shard }}
-          path: qa-report-${{ matrix.shard }}.json
+          path: qa-*-${{ matrix.shard }}.json
           if-no-files-found: ignore
 
   # App Kit (docs/app-kit): a PR that adds an app folder must follow the

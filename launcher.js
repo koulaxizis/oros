@@ -1,5 +1,5 @@
 // ============================================================
-// orOS — launcher.js (favourites: desktop shortcuts + Dock, menu apps, v1.3.0)
+// orOS — launcher.js (favourites: desktop shortcuts + Dock, menu apps, v1.4.0)
 // ------------------------------------------------------------
 // A shell component, like pet.js: it runs IN the shell document,
 // keeps its own storage and registers its own sync slice. shell.js
@@ -22,6 +22,8 @@
 //   • Menu apps (1.3.0): which apps the menu lists (Settings › Menu).
 //     A hidden app still opens from search, deep links, the desktop
 //     and the Dock. Synced as its own slice "menu" (section 1b).
+//     1.4.0: a first-run profile (profiles.js) hides apps through
+//     menuPreset (mtime 1: any real choice wins the merge).
 //
 // Data (synced, slice "launcher", key oros-launcher-data):
 //   { ver:1, items:[{ id, desk, dock, mtime }] }
@@ -43,7 +45,7 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.3.0";
+  var VER = "1.4.0";
   var DATA_KEY = "oros-launcher-data";
   var MENU_KEY = "oros-menu-apps";
   var MAX_ITEMS = 500;
@@ -236,9 +238,28 @@
     return menuNormalize({ apps: Object.keys(byId).map(function (id) { return byId[id]; }) });
   }
 
+  // First-run profile (profiles.js): hide `ids` with mtime 1, and only
+  // the apps that have no item yet. A choice the user ever made on any
+  // device (a real mtime) wins every merge over a profile's guess, so a
+  // second device picking a profile before it syncs never hides apps
+  // the user had chosen to show elsewhere.
+  function menuPreset(data, ids) {
+    var d = menuNormalize(data);
+    var byId = {};
+    d.apps.forEach(function (it) { byId[it.id] = it; });
+    var changed = false;
+    (Array.isArray(ids) ? ids : [ids]).forEach(function (id) {
+      if (typeof id !== "string" || !ID_RE.test(id) || byId[id]) return;
+      byId[id] = { id: id, hidden: true, mtime: 1 };
+      changed = true;
+    });
+    if (!changed) return d;
+    return menuNormalize({ apps: Object.keys(byId).map(function (id) { return byId[id]; }) });
+  }
+
   var model = { normalize: normalize, merge: merge, list: list, isPinned: isPinned, pin: pin, move: move, moveTo: moveTo, VER: VER, DATA_KEY: DATA_KEY,
                 menuNormalize: menuNormalize, menuMerge: menuMerge, menuHiddenIds: menuHiddenIds,
-                menuSetHidden: menuSetHidden, MENU_KEY: MENU_KEY };
+                menuSetHidden: menuSetHidden, menuPreset: menuPreset, MENU_KEY: MENU_KEY };
 
   if (typeof module !== "undefined" && module.exports) module.exports = model;
   if (!root || !root.document) return;
@@ -360,6 +381,24 @@
     if (api && typeof api.markDirty === "function") api.markDirty();
     menuChanged();
     return true;
+  }
+
+  // Public: a first-run profile's hidden apps (menuPreset). True when
+  // anything changed.
+  function presetMenuHidden(ids) {
+    var cur = menuLoad();
+    var next = menuPreset(cur, ids);
+    if (JSON.stringify(next) === JSON.stringify(cur)) return false;
+    menuStore(next);
+    var api = root.orosSync;
+    if (api && typeof api.markDirty === "function") api.markDirty();
+    menuChanged();
+    return true;
+  }
+
+  // Public: has this device any menu choice stored (or pulled)?
+  function menuStored() {
+    try { return !!root.localStorage.getItem(MENU_KEY); } catch (e) { return false; }
   }
 
   // ---------- 3. Dock preferences (DEVICE-LOCAL, never synced) ----------
@@ -1178,6 +1217,8 @@
     setPref: setPref,
     menuHidden: isMenuHidden,
     menuHiddenIds: function () { return menuHiddenIds(menuLoad()); },
-    setMenuHidden: setMenuHidden
+    setMenuHidden: setMenuHidden,
+    presetMenuHidden: presetMenuHidden,
+    menuStored: menuStored
   };
 })(typeof window !== "undefined" ? window : globalThis);

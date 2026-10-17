@@ -302,4 +302,4 @@ async function main() {
 
 if (require.main === module) main().catch((e) => { console.error(e); process.exit(2); });
 
-module.exports = { norm, readsEnglish, key };
+module.exports = { norm, readsEnglish, key, serve, loadPlaywright, ROOT };
