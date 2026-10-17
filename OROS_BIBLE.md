@@ -7561,7 +7561,7 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Files: `scanpdf/{index.html,scanpdf.css,core.js,pdfops.js,scanpdf.js,help.*.txt}`, `vendor/pdf-lib/fontkit.*`, `tests/scanpdf.test.js`, What's new, precache, credits.
   - Tests: `tests/scanpdf.test.js` 28 tests (new: display ↔ unturned page maps for every turn, overlays kept through undo/duplicate, doc options, page number places, signature list limits, Otsu + ink + crop, a signature on pages turned 0/90/180/270 lands where the editor showed it, Greek text + numbers + watermark with Noto embedded, compress output pages); full suite green; real Chromium in the shell at 1280 EN and 360 EL (draw / type / photo signatures, drag, keyboard, every page, options, 15 MB → 193 KB). Not tested: real phones (finger signing), Safari, very large PDFs with compress.
 
-### 2026-10-17 — Flashcards, wave 1: decks, cards, FSRS study (#PRNUM) — 2.94.00
+### 2026-10-17 — Flashcards, wave 1: decks, cards, FSRS study (#494) — 2.94.00
 - New app Flashcards (Κάρτες μελέτης) in the new category Learning (Μάθηση), Chris approved the plan and the category 2026-10-17 11:48: nested decks with per-deck limits and desired retention, Basic / Basic and reversed / Fill in the gap cards with tags, study with Again/Hard/Good/Easy, Undo, keyboard 1-4 + Space, day start setting.
 - Sync design: small slice for decks; notes and answers as one-writer files on the orOS disk (Vault Drive); schedules replayed through FSRS-6, never synced (Part III row).
 - Files: `flashcards/{index.html,app.css,app.js,core.js,fsrs.js,search.js,help.*.txt}`, apps.json, ICONS, translations (`category.learning`, `app.flashcards`), sw.js precache, credits (CREDITS.md, CREDIT_GROUPS, Part VIII), What's new, Bible.
