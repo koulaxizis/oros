@@ -2,6 +2,7 @@
 // orOS Contacts — business card text → contact fields
 // (contacts/cardtext.js, window.OrosContactsCard)
 // ============================================================
+// i18n-inline-ok: Greek parser words and letter folding (data, no UI text)
 // Pure helpers, no DOM, no storage (also loaded by the node tests).
 // The text comes from the on-device text recognition of a card
 // photo, or is pasted / typed by the person. Heuristics, English
