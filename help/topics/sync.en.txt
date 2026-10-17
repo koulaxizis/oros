@@ -17,7 +17,22 @@ The first time, your passphrase needs at least 10 characters.
 
 Use an app password, not your main password: in Nextcloud it's under Settings › Security › Devices & sessions. orOS keeps it on this device only. On Nextcloud, a factory reset also deletes that app password from the server; on other servers, remove it there yourself.
 
-The server has to let orOS connect from the browser (CORS) and show it file versions (ETag). On Nextcloud the free WebAppPassword app does this; on your own server, allow orOS's address and expose the ETag header. orOS also refuses a server that doesn't protect against two devices overwriting each other, and says which check failed.
+The server has to show orOS file versions (ETag) and protect against two devices overwriting each other; orOS refuses a server that doesn't, and says which check failed.
+
+### Servers that don't let the browser connect
+Many servers (Synology, ownCloud, a Nextcloud without the WebAppPassword app) don't let a web page talk to them (CORS). Then `Test and connect` says the server did not answer. Turn on `Through the orOS relay` and try again.
+
+>! With the relay, your data is still end-to-end encrypted: the relay only sees scrambled files. But your app password passes through the orOS relay on every request. It is never stored or logged there. If you'd rather not, let your server allow orOS directly: on Nextcloud the free WebAppPassword app does this; on your own server, allow orOS's address and expose the ETag header.
+
+The relay reaches public https servers on port 443, 5006 (Synology), 8443 or 9443, and takes files up to 95 MB at a time. On Nextcloud, big files go up in pieces anyway. A server on your home network without a public address can't be reached this way.
+
+### Sign in with Nextcloud
+On Nextcloud you don't have to make an app password yourself:
+1. Enter your Nextcloud's address (like `https://your.cloud`) and tap `Sign in with Nextcloud`.
+2. A tab opens your Nextcloud's sign-in page. Log in there and approve orOS.
+3. orOS gets its own app password and connects. Your main password is typed only on your server's page.
+
+Nextcloud usually needs `Through the orOS relay` for this step. The approval has to happen within 20 minutes; `Cancel sign-in` stops waiting.
 
 One device uses one cloud at a time. When a device moves to a new cloud, everything on it goes up there on the next sync; the old cloud keeps its copy.
 

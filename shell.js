@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "2.82.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "2.83.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -5221,12 +5221,38 @@
     var S = window.orosSync;
     if (!S || typeof S.connectWebdav !== "function" || S.isConnected()) return;
     setSyncMsgRaw("dim", window.t("sync.dav.testing"));
-    S.connectWebdav({ url: form.url, user: form.user, pass: form.pass, dir: form.dir })
+    S.connectWebdav({ url: form.url, user: form.user, pass: form.pass, dir: form.dir, relay: !!form.relay })
       .then(function (acc) {
         state.syncUserEmail = (acc && acc.email) || null;
         setSyncMsg("ok", "sync.dav.ok");
       })
       .catch(handleSyncError);
+  }
+
+  // WebDAV W3: Nextcloud Login Flow v2. The window opens on the click
+  // (a popup opened later is blocked) and gets the server's page once
+  // the server has answered.
+  function syncConnectNextcloud(form) {
+    var S = window.orosSync;
+    if (!S || typeof S.connectNextcloud !== "function" || S.isConnected()) return;
+    var w = null;
+    try { w = window.open("about:blank", "_blank"); } catch (e) { w = null; }
+    try { if (w) w.opener = null; } catch (e) {}
+    state.ncWaiting = true;
+    renderMenu();
+    S.connectNextcloud({ url: form.url, dir: form.dir, relay: !!form.relay }, function (url) {
+      setSyncMsgRaw("dim", window.t("sync.nc.waiting"));
+      if (w && !w.closed) w.location.href = url;
+      else window.open(url, "_blank", "noopener");
+    }).then(function (acc) {
+      state.ncWaiting = false;
+      state.syncUserEmail = (acc && acc.email) || null;
+      setSyncMsg("ok", "sync.dav.ok");
+    }, function (err) {
+      state.ncWaiting = false;
+      try { if (w && !w.closed && w.location.href === "about:blank") w.close(); } catch (e) {}
+      handleSyncError(err);
+    });
   }
 
   function syncDisconnectUser() {
@@ -8751,6 +8777,8 @@
         email: connected ? (state.syncUserEmail || null) : null,
         provider: (S && typeof S.getProvider === "function") ? S.getProvider() : "dropbox",
         davAvailable: !!(S && typeof S.connectWebdav === "function"),
+        ncAvailable: !!(S && typeof S.connectNextcloud === "function"),
+        ncWaiting: !!state.ncWaiting,
         dirty: !!(unlocked && S.isDirty()),
         hasVault: !!(connected && S.hasDeviceVault()),
         interval: getSafeInterval(),
@@ -8835,6 +8863,12 @@
       case "sync.connect":    if (S && !S.isConnected()) S.connect(); return;
       case "sync.connectDav":
         if (arg && typeof arg.url === "string" && typeof arg.pass === "string") syncConnectDav(arg);
+        return;
+      case "sync.connectNc":
+        if (arg && typeof arg.url === "string") syncConnectNextcloud(arg);
+        return;
+      case "sync.cancelNc":
+        if (S && typeof S.cancelNextcloud === "function") S.cancelNextcloud();
         return;
       case "sync.unlock":
         if (S && S.isConnected() && !S.hasPassphrase() && arg && typeof arg.pw === "string") {
