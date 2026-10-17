@@ -11,6 +11,7 @@ Turn many documents and spreadsheets into orOS files at once. A Word or OpenDocu
 ## What it converts
 - Documents → `.orosdoc` (Writer): .docx, .odt, .rtf, .html, .htm, .md, .markdown and .txt.
 - Spreadsheets → `.orossheet` (Spreadsheet): .xlsx, .xls, .ods and .csv.
+- Anki card packages → `.oroscards` (Flashcards): .apkg and .colpkg, with their pictures, sounds and study history.
 More kinds of files (slides, designs, mind maps, boards) come in later versions.
 
 ## Where the files go

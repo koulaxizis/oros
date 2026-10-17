@@ -61,7 +61,8 @@ test("every app in the table exists and takes a file through its deep link", () 
     crm: ["crm/crm.js"], timesheet: ["timesheet/timesheet.js"], quote: ["quote/quote.js"], split: ["split/split.js"],
     stock: ["stock/stock.js"], diary: ["diary/diary.js"], health: ["health/health.js"], fitness: ["fitness/fitness.js"],
     baby: ["baby/baby.js"], petcare: ["petcare/petcare.js"], plants: ["plants/plants.js"], garage: ["garage/garage.js"],
-    shelf: ["shelf/shelf.js"], signature: ["signature/signature.js"], newsletter: ["newsletter/newsletter.js"], storage: ["storage/storage.js"]
+    shelf: ["shelf/shelf.js"], signature: ["signature/signature.js"], newsletter: ["newsletter/newsletter.js"], storage: ["storage/storage.js"],
+    flashcards: ["flashcards/app.js"]
   };
   // Phase 4b: the record apps' bundle types are registered ahead of
   // their waves. An app listed here has no "Open with" receiver for its

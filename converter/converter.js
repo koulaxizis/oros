@@ -60,12 +60,12 @@
   var STRINGS = {
     en: {
       "app.name": "orOS Converter",
-      "app.sub": "Documents and spreadsheets into orOS files",
+      "app.sub": "Documents, spreadsheets and card decks into orOS files",
       "btn.clear": "Clear the list", "btn.files": "Add files", "btn.folder": "Add a folder",
       "btn.stop": "Stop", "btn.open": "Open", "btn.save": "Save", "btn.remove": "Remove",
       "btn.retry": "Try again",
       "drop.title": "Drop files or a folder here",
-      "drop.hint": "Documents ({doc}) and spreadsheets ({sheet}) become orOS files that open in their app with nothing lost. Your files are never changed.",
+      "drop.hint": "Documents ({doc}), spreadsheets ({sheet}) and Anki card decks ({cards}) become orOS files that open in their app with nothing lost. Your files are never changed.",
       "drop.veil": "Drop to add",
       "out.title": "Where the orOS files go",
       "out.zip": "Download all as .zip", "out.folder": "Save to a folder in Files", "out.each": "Save each file",
@@ -108,12 +108,12 @@
     },
     el: {
       "app.name": "Μετατροπέας orOS",
-      "app.sub": "Έγγραφα και υπολογιστικά φύλλα σε αρχεία orOS",
+      "app.sub": "Έγγραφα, υπολογιστικά φύλλα και τράπουλες καρτών σε αρχεία orOS",
       "btn.clear": "Καθαρισμός της λίστας", "btn.files": "Προσθήκη αρχείων", "btn.folder": "Προσθήκη φακέλου",
       "btn.stop": "Διακοπή", "btn.open": "Άνοιγμα", "btn.save": "Αποθήκευση", "btn.remove": "Αφαίρεση",
       "btn.retry": "Ξανά",
       "drop.title": "Άφησε εδώ αρχεία ή έναν φάκελο",
-      "drop.hint": "Τα έγγραφα ({doc}) και τα υπολογιστικά φύλλα ({sheet}) γίνονται αρχεία orOS που ανοίγουν στην εφαρμογή τους χωρίς απώλειες. Τα αρχεία σου δεν αλλάζουν ποτέ.",
+      "drop.hint": "Τα έγγραφα ({doc}), τα υπολογιστικά φύλλα ({sheet}) και οι τράπουλες καρτών Anki ({cards}) γίνονται αρχεία orOS που ανοίγουν στην εφαρμογή τους χωρίς απώλειες. Τα αρχεία σου δεν αλλάζουν ποτέ.",
       "drop.veil": "Άφησέ τα για προσθήκη",
       "out.title": "Πού πάνε τα αρχεία orOS",
       "out.zip": "Λήψη όλων ως .zip", "out.folder": "Αποθήκευση σε φάκελο στα Αρχεία", "out.each": "Αποθήκευση ενός ενός",
@@ -917,10 +917,11 @@
     document.title = t("app.name") + " · orOS";
     $("clear-btn").innerHTML = ICON.clear;
     setLabel($("clear-btn"), t("btn.clear"));
-    var doc = C.registry.byApp("writer"), sheet = C.registry.byApp("spreadsheet");
+    var doc = C.registry.byApp("writer"), sheet = C.registry.byApp("spreadsheet"), cards = C.registry.byApp("flashcards");
     $("drop-hint").textContent = t("drop.hint", {
       doc: doc ? doc.from.join(" ") : "",
-      sheet: sheet ? sheet.from.join(" ") : ""
+      sheet: sheet ? sheet.from.join(" ") : "",
+      cards: cards ? cards.from.join(" ") : ""
     });
   }
 

@@ -42,6 +42,8 @@
       <div class="deck-btns">
         <button type="button" id="study-btn" class="chip pri" data-i18n="btn.study">Study</button>
         <button type="button" id="deck-edit-btn" class="chip" data-i18n="btn.deckSettings">Deck settings</button>
+        <button type="button" id="deck-stats-btn" class="chip" data-i18n="btn.stats">Stats</button>
+        <button type="button" id="deck-export-btn" class="chip" data-i18n="btn.export">Export</button>
       </div>
       <p id="deck-note" class="hint"></p>
     </section>
@@ -80,6 +82,15 @@
     <ul id="br-list" class="rows"></ul>
     <button type="button" id="br-more" class="chip" hidden data-i18n="btn.more">Show more</button>
     <p id="br-empty" class="hint" hidden></p>
+  </main>
+
+  <!-- Stats: all decks or one deck -->
+  <main id="stats" class="view" hidden>
+    <div class="st-top">
+      <label for="st-scope" data-i18n="st.scope">Show</label>
+      <select id="st-scope"></select>
+    </div>
+    <div id="st-body"></div>
   </main>
 
   <!-- Study -->
@@ -143,6 +154,8 @@
   <script src="media.js?v=3.03.00"></script>
   <script src="make.js?v=3.03.00"></script>
   <script src="due.js?v=3.03.00"></script>
+  <script src="stats.js?v=3.03.00"></script>
+  <script src="package.js?v=3.03.00"></script>
   <script src="app.js?v=3.03.00"></script>
 
 </body>

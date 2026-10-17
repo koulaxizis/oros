@@ -107,7 +107,7 @@
       "v.none": "No installed voice reads this language on this device.",
       "btn.import": "Import", "btn.chooseFile": "Choose a file", "btn.importNow": "Import",
       "dlg.import": "Import cards",
-      "im.intro": "Anki decks (.apkg, .colpkg) or a text file with one card per line (CSV, TSV, TXT, also from Quizlet).",
+      "im.intro": "Anki decks (.apkg, .colpkg), orOS card files (.oroscards) or a text file with one card per line (CSV, TSV, TXT, also from Quizlet).",
       "im.reading": "Reading the file…",
       "im.media": "Pictures and sounds: {i} of {n}",
       "im.saving": "Saving the cards…",
@@ -135,7 +135,33 @@
       "mk.dup": "Already here",
       "mk.front": "Front", "mk.back": "Back", "mk.text": "Text with gaps",
       "mk.done": "Made {c} cards.",
-      "f.rem": "Remind me to study every day at", "f.remHint": "Only on this device, and only while cards are waiting. You can switch Flashcards notifications off in Settings > Notifications."
+      "f.rem": "Remind me to study every day at", "f.remHint": "Only on this device, and only while cards are waiting. You can switch Flashcards notifications off in Settings > Notifications.",
+      "btn.stats": "Stats", "btn.export": "Export", "btn.exportNow": "Export",
+      "st.title": "Stats", "st.scope": "Show", "st.all": "All decks",
+      "st.answers": "Answers today", "st.minutes": "Minutes today", "st.again": "Again today", "st.streak": "Days in a row",
+      "st.cards": "Cards", "st.new": "New", "st.learn": "Learning", "st.young": "Young", "st.mature": "Mature (21+ days)", "st.sus": "Suspended",
+      "st.ret": "True retention",
+      "st.retHint": "Of your answers to cards in review, the share that was not Again. Close to the aim you set means the schedule fits you.",
+      "st.d30": "Last 30 days", "st.allTime": "All time", "st.retOf": "{n} reviews", "st.retOf1": "1 review", "st.noRet": "No reviews yet",
+      "st.heat": "Study days (last 12 months)", "st.heatDay": "{d}: {n} answers",
+      "st.perDay": "Answers per day (last 30 days)", "st.lrn": "Learning", "st.rev": "Review", "st.dayBar": "{d}: {l} learning, {r} review",
+      "st.fc": "Reviews due (next 30 days)", "st.fcBar": "{d}: {n} due",
+      "st.ivl": "Intervals of the cards in review",
+      "iv.1d": "1 day", "iv.2-3d": "2-3 days", "iv.4-7d": "4-7 days", "iv.1-2w": "1-2 weeks", "iv.2-4w": "2-4 weeks",
+      "iv.1-3m": "1-3 months", "iv.3-6m": "3-6 months", "iv.6-12m": "6-12 months", "iv.1y+": "1 year +", "st.diff": "Difficulty (1 easiest, 10 hardest)", "st.bar": "{l}: {n} cards",
+      "st.avg": "Average time per answer: {s} seconds. Answers in all: {n}.",
+      "st.empty": "No answers yet. Study a deck and your progress shows here.",
+      "dlg.export": "Export cards", "ex.scope": "Cards from", "ex.format": "Format",
+      "ex.oros": "orOS file (.oroscards): cards, decks, pictures and sounds, to open in Flashcards on any device",
+      "ex.csv": "CSV text (front, back, tags, deck): for spreadsheets and other card apps; no pictures or sounds",
+      "ex.hist": "Include my study history, so the schedule continues where it is",
+      "ex.sum": "{n} notes ({c} cards).", "ex.none": "No cards to export.",
+      "ex.busy": "Making the file…", "ex.saved": "Saved {name}.",
+      "ex.miss": "{m} pictures or sounds are not on this device yet and were left out.",
+      "im.badOros": "This orOS file is not a Flashcards file.",
+      "ex.fail": "The file could not be made.", "st.max": "top {n}",
+      "im.histOros": "{r} answers from the study history in this file.",
+      "im.histBoxOros": "Bring the study history in this file, so each card's schedule continues from it"
     },
     el: {
       "app.name": "Κάρτες μελέτης",
@@ -216,7 +242,7 @@
       "v.none": "Καμία εγκατεστημένη φωνή δεν διαβάζει αυτή τη γλώσσα σε αυτή τη συσκευή.",
       "btn.import": "Εισαγωγή", "btn.chooseFile": "Διάλεξε αρχείο", "btn.importNow": "Εισαγωγή",
       "dlg.import": "Εισαγωγή καρτών",
-      "im.intro": "Τράπουλες Anki (.apkg, .colpkg) ή αρχείο κειμένου με μία κάρτα σε κάθε γραμμή (CSV, TSV, TXT, και από το Quizlet).",
+      "im.intro": "Τράπουλες Anki (.apkg, .colpkg), αρχεία καρτών orOS (.oroscards) ή αρχείο κειμένου με μία κάρτα σε κάθε γραμμή (CSV, TSV, TXT, και από το Quizlet).",
       "im.reading": "Διαβάζω το αρχείο…",
       "im.media": "Εικόνες και ήχοι: {i} από {n}",
       "im.saving": "Αποθηκεύω τις κάρτες…",
@@ -244,7 +270,33 @@
       "mk.dup": "Υπάρχει ήδη",
       "mk.front": "Μπροστά", "mk.back": "Πίσω", "mk.text": "Κείμενο με κενά",
       "mk.done": "Φτιάχτηκαν {c} κάρτες.",
-      "f.rem": "Θύμισέ μου να μελετήσω κάθε μέρα στις", "f.remHint": "Μόνο σε αυτή τη συσκευή και μόνο όταν περιμένουν κάρτες. Τις ειδοποιήσεις των Καρτών μελέτης τις κλείνεις από Ρυθμίσεις > Ειδοποιήσεις."
+      "f.rem": "Θύμισέ μου να μελετήσω κάθε μέρα στις", "f.remHint": "Μόνο σε αυτή τη συσκευή και μόνο όταν περιμένουν κάρτες. Τις ειδοποιήσεις των Καρτών μελέτης τις κλείνεις από Ρυθμίσεις > Ειδοποιήσεις.",
+      "btn.stats": "Στατιστικά", "btn.export": "Εξαγωγή", "btn.exportNow": "Εξαγωγή",
+      "st.title": "Στατιστικά", "st.scope": "Δείξε", "st.all": "Όλες οι τράπουλες",
+      "st.answers": "Απαντήσεις σήμερα", "st.minutes": "Λεπτά σήμερα", "st.again": "«Ξανά» σήμερα", "st.streak": "Μέρες στη σειρά",
+      "st.cards": "Κάρτες", "st.new": "Νέες", "st.learn": "Σε εκμάθηση", "st.young": "Νεαρές", "st.mature": "Ώριμες (21+ μέρες)", "st.sus": "Σε αναστολή",
+      "st.ret": "Πραγματική συγκράτηση",
+      "st.retHint": "Από τις απαντήσεις σου σε κάρτες σε επανάληψη, το ποσοστό που δεν ήταν «Ξανά». Κοντά στον στόχο που έβαλες σημαίνει ότι ο προγραμματισμός σού ταιριάζει.",
+      "st.d30": "Τελευταίες 30 μέρες", "st.allTime": "Από την αρχή", "st.retOf": "{n} επαναλήψεις", "st.retOf1": "1 επανάληψη", "st.noRet": "Καμία επανάληψη ακόμα",
+      "st.heat": "Μέρες μελέτης (τελευταίοι 12 μήνες)", "st.heatDay": "{d}: {n} απαντήσεις",
+      "st.perDay": "Απαντήσεις τη μέρα (τελευταίες 30 μέρες)", "st.lrn": "Εκμάθηση", "st.rev": "Επανάληψη", "st.dayBar": "{d}: {l} εκμάθηση, {r} επανάληψη",
+      "st.fc": "Επαναλήψεις που έρχονται (επόμενες 30 μέρες)", "st.fcBar": "{d}: {n} για επανάληψη",
+      "st.ivl": "Διαστήματα των καρτών σε επανάληψη",
+      "iv.1d": "1 μέρα", "iv.2-3d": "2-3 μέρες", "iv.4-7d": "4-7 μέρες", "iv.1-2w": "1-2 εβδομ.", "iv.2-4w": "2-4 εβδομ.",
+      "iv.1-3m": "1-3 μήνες", "iv.3-6m": "3-6 μήνες", "iv.6-12m": "6-12 μήνες", "iv.1y+": "1 χρόνος +", "st.diff": "Δυσκολία (1 η πιο εύκολη, 10 η πιο δύσκολη)", "st.bar": "{l}: {n} κάρτες",
+      "st.avg": "Μέσος χρόνος ανά απάντηση: {s} δευτερόλεπτα. Απαντήσεις συνολικά: {n}.",
+      "st.empty": "Καμία απάντηση ακόμα. Μελέτησε μια τράπουλα και η πρόοδός σου θα φανεί εδώ.",
+      "dlg.export": "Εξαγωγή καρτών", "ex.scope": "Κάρτες από", "ex.format": "Μορφή",
+      "ex.oros": "Αρχείο orOS (.oroscards): κάρτες, τράπουλες, εικόνες και ήχοι, για τις Κάρτες μελέτης σε οποιαδήποτε συσκευή",
+      "ex.csv": "Κείμενο CSV (μπροστά, πίσω, ετικέτες, τράπουλα): για λογιστικά φύλλα και άλλες εφαρμογές καρτών· χωρίς εικόνες και ήχους",
+      "ex.hist": "Μαζί και το ιστορικό μελέτης μου, ώστε ο προγραμματισμός να συνεχίσει από εκεί που είναι",
+      "ex.sum": "{n} σημειώσεις ({c} κάρτες).", "ex.none": "Δεν υπάρχουν κάρτες για εξαγωγή.",
+      "ex.busy": "Φτιάχνεται το αρχείο…", "ex.saved": "Αποθηκεύτηκε το {name}.",
+      "ex.miss": "{m} εικόνες ή ήχοι δεν έχουν φτάσει ακόμα σε αυτή τη συσκευή και έμειναν έξω.",
+      "im.badOros": "Αυτό το αρχείο orOS δεν είναι αρχείο των Καρτών μελέτης.",
+      "ex.fail": "Το αρχείο δεν φτιάχτηκε.", "st.max": "έως {n}",
+      "im.histOros": "{r} απαντήσεις από το ιστορικό μελέτης αυτού του αρχείου.",
+      "im.histBoxOros": "Φέρε και το ιστορικό μελέτης του αρχείου, ώστε ο προγραμματισμός κάθε κάρτας να συνεχίσει από αυτό"
     }
   };
 
@@ -546,10 +598,11 @@
     $("deck-view").hidden = v !== "deck";
     $("study").hidden = v !== "study";
     $("browse").hidden = v !== "browse";
+    $("stats").hidden = v !== "stats";
     $("back-btn").hidden = v === "home";
-    $("browse-btn").hidden = v === "study" || v === "browse";
+    $("browse-btn").hidden = v === "study" || v === "browse" || v === "stats";
     $("new-deck-btn").hidden = v !== "home";
-    $("add-card-btn").hidden = v === "study";
+    $("add-card-btn").hidden = v === "study" || v === "stats";
     $("settings-btn").hidden = v === "study";
     if (v !== "study") { stopLaterTimer(); M.stopSpeaking(); closeMenu(); }
     render();
@@ -559,6 +612,7 @@
     else if (view === "deck") renderDeck();
     else if (view === "study") renderStudyCounts();
     else if (view === "browse") renderBrowse();
+    else if (view === "stats") renderStats();
   }
 
   function renderHome() {
@@ -594,6 +648,14 @@
       ib.type = "button";
       ib.addEventListener("click", function (ev) { ev.stopPropagation(); importDialog(); });
       add.appendChild(ib);
+      var xb = el("button", "chip", t("btn.export"));
+      xb.type = "button";
+      xb.addEventListener("click", function (ev) { ev.stopPropagation(); exportDialog(""); });
+      add.appendChild(xb);
+      var sb = el("button", "chip", t("btn.stats"));
+      sb.type = "button";
+      sb.addEventListener("click", function (ev) { ev.stopPropagation(); openStats(""); });
+      add.appendChild(sb);
       add.style.cursor = "default";
       add.style.background = "none";
       add.style.border = "0";
@@ -846,6 +908,251 @@
       saveNotes(ns.map(function (n) { return { id: n.id, m: Math.max(now, n.m + 1), del: 1 }; }));
       bulkDone(cards);
     });
+  }
+
+  // ---------- 7c. Stats (stats.js): all decks or one deck ----------
+  var stats = { from: "home", deck: "" };
+  function openStats(deckId) {
+    stats.from = view === "deck" ? "deck" : "home";
+    stats.deck = deckId || "";
+    show("stats");
+  }
+  function dayLabel(ymd) {
+    var p = ymd.split("-");
+    return new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString(locale(), { day: "numeric", month: "short" });
+  }
+  function tile(label, value) {
+    var d = el("div", "st-tile");
+    d.appendChild(el("span", "st-val", String(value)));
+    d.appendChild(el("span", "st-lab", label));
+    return d;
+  }
+  function section(parent, titleKey) {
+    var sec = el("section", "st-sec");
+    sec.appendChild(el("h2", "", t(titleKey)));
+    parent.appendChild(sec);
+    return sec;
+  }
+  // Vertical bars: [{ parts: [{ n, cls }], tip }], with the first and last labels under them.
+  function bars(list, first, last) {
+    var max = 1;
+    list.forEach(function (b) { var s = 0; b.parts.forEach(function (p) { s += p.n; }); if (s > max) max = s; });
+    var box = el("div", "st-bars");
+    box.setAttribute("role", "img");
+    list.forEach(function (b) {
+      var col = el("div", "st-col");
+      col.title = b.tip;
+      b.parts.forEach(function (p) {
+        if (!p.n) return;
+        var seg = el("div", "st-seg " + (p.cls || ""));
+        seg.style.height = (p.n / max * 100) + "%";
+        col.appendChild(seg);
+      });
+      box.appendChild(col);
+    });
+    var wrap = el("div");
+    wrap.appendChild(box);
+    var ax = el("div", "st-axis");
+    ax.appendChild(el("span", "", first));
+    ax.appendChild(el("span", "", t("st.max", { n: max })));
+    ax.appendChild(el("span", "", last));
+    wrap.appendChild(ax);
+    return wrap;
+  }
+  // Horizontal bars with a label and a count: [{ label, n }]
+  function hbars(list) {
+    var max = 1;
+    list.forEach(function (b) { if (b.n > max) max = b.n; });
+    var box = el("div", "st-h");
+    list.forEach(function (b) {
+      var row = el("div", "st-hrow");
+      row.title = t("st.bar", { l: b.label, n: b.n });
+      row.appendChild(el("span", "st-hl", b.label));
+      var track = el("span", "st-ht");
+      var fill = el("span", "st-hf");
+      fill.style.width = (b.n / max * 100) + "%";
+      track.appendChild(fill);
+      row.appendChild(track);
+      row.appendChild(el("span", "st-hn", String(b.n)));
+      box.appendChild(row);
+    });
+    return box;
+  }
+  function renderStats() {
+    $("title").textContent = t("st.title");
+    var sel = $("st-scope");
+    setOptions(sel, [["", t("st.all")]].concat(deckOptions(null)).concat(hasOrphans() ? [[C.DEFAULT_DECK, t("home.unsorted")]] : []));
+    if (stats.deck && stats.deck !== C.DEFAULT_DECK && !deckById(stats.deck)) stats.deck = "";
+    sel.value = stats.deck;
+    var S = window.FlashcardsStats, body = $("st-body");
+    body.textContent = "";
+    if (!S) return;
+    var r = S.compute(C, F, slice, notes, reviews, { deckId: stats.deck || null, now: Date.now() });
+    var top = el("div", "st-tiles");
+    top.appendChild(tile(t("st.answers"), r.today.n));
+    top.appendChild(tile(t("st.minutes"), Math.round(r.today.ms / 60000)));
+    top.appendChild(tile(t("st.again"), r.today.again));
+    top.appendChild(tile(t("st.streak"), r.streak));
+    body.appendChild(top);
+
+    var cs = section(body, "st.cards"), ct = el("div", "st-tiles");
+    [["st.new", r.counts.fresh], ["st.learn", r.counts.learn], ["st.young", r.counts.young],
+     ["st.mature", r.counts.mature], ["st.sus", r.counts.sus]].forEach(function (x) { ct.appendChild(tile(t(x[0]), x[1])); });
+    cs.appendChild(ct);
+    if (!r.total) { body.appendChild(el("p", "hint st-empty", t("st.empty"))); return; }
+
+    var rs = section(body, "st.ret"), rt = el("div", "st-tiles");
+    [["st.d30", r.retention.d30], ["st.allTime", r.retention.all]].forEach(function (x) {
+      var p = S.pct(x[1]);
+      var n = x[1].n, what = p == null ? t("st.noRet") : n === 1 ? t("st.retOf1") : t("st.retOf", { n: n });
+      var tl = tile(t(x[0]) + " \u00b7 " + what, p == null ? "\u2013" : p.toLocaleString(locale()) + "%");
+      rt.appendChild(tl);
+    });
+    rs.appendChild(rt);
+    rs.appendChild(el("p", "hint", t("st.retHint")));
+
+    // A year of study days: 7 rows (Monday first), one column a week.
+    var hs = section(body, "st.heat"), grid = el("div", "st-heat");
+    grid.setAttribute("role", "img");
+    var p0 = r.heat[0].day.split("-"), lead = (new Date(+p0[0], +p0[1] - 1, +p0[2]).getDay() + 6) % 7;
+    for (var i = 0; i < lead; i++) grid.appendChild(el("span", "st-cell off"));
+    r.heat.forEach(function (h) {
+      var lv = !h.n ? 0 : Math.min(4, Math.ceil(h.n / r.heatMax * 4));
+      var c = el("span", "st-cell l" + lv);
+      c.title = t("st.heatDay", { d: dayLabel(h.day), n: h.n });
+      grid.appendChild(c);
+    });
+    hs.appendChild(grid);
+
+    var ps = section(body, "st.perDay");
+    var key = el("p", "st-key");
+    var k1 = el("span", "st-dot lrn"); key.appendChild(k1); key.appendChild(el("span", "", t("st.lrn")));
+    var k2 = el("span", "st-dot rev"); key.appendChild(k2); key.appendChild(el("span", "", t("st.rev")));
+    ps.appendChild(key);
+    ps.appendChild(bars(r.perDay.map(function (d) {
+      return { parts: [{ n: d.rev, cls: "rev" }, { n: d.learn, cls: "lrn" }], tip: t("st.dayBar", { d: dayLabel(d.day), l: d.learn, r: d.rev }) };
+    }), dayLabel(r.perDay[0].day), dayLabel(r.perDay[r.perDay.length - 1].day)));
+
+    var fs = section(body, "st.fc");
+    fs.appendChild(bars(r.forecast.map(function (d) {
+      return { parts: [{ n: d.n, cls: "rev" }], tip: t("st.fcBar", { d: dayLabel(d.day), n: d.n }) };
+    }), dayLabel(r.forecast[0].day), dayLabel(r.forecast[r.forecast.length - 1].day)));
+
+    section(body, "st.ivl").appendChild(hbars(r.intervals.map(function (b) { return { label: t("iv." + b.label), n: b.n }; })));
+    section(body, "st.diff").appendChild(hbars(r.difficulty));
+    body.appendChild(el("p", "hint", t("st.avg", { s: (Math.round(r.avgMs / 100) / 10).toLocaleString(locale()), n: r.total })));
+  }
+
+  // ---------- 7d. Export: .oroscards (package.js + bundle.js) or CSV ----------
+  function dialogHost() {
+    try { return window.orosDialog || (window.parent && window.parent.orosDialog) || null; } catch (e) { return window.orosDialog || null; }
+  }
+  function saveBlob(blob, name, mime, ext) {
+    var d = dialogHost();
+    if (d && typeof d.saveFile === "function") {
+      var acc = {};
+      acc[mime] = [ext];
+      return Promise.resolve(d.saveFile({ blob: blob, filename: name, mime: mime, types: [{ description: t("app.name") + " (" + ext + ")", accept: acc }] }))
+        .then(function (r) { return r && r.ok ? (r.name || name) : null; });
+    }
+    var url = URL.createObjectURL(blob), a = document.createElement("a");
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 1000);
+    return Promise.resolve(name);
+  }
+  function exportDialog(deckId) {
+    var P = window.FlashcardsPackage;
+    var body = el("div");
+    var scope = select([["", t("st.all")]].concat(deckOptions(null)).concat(hasOrphans() ? [[C.DEFAULT_DECK, t("home.unsorted")]] : []),
+      deckId && (deckById(deckId) || deckId === C.DEFAULT_DECK) ? deckId : "");
+    body.appendChild(field("ex.scope", scope));
+    var fmt = el("fieldset", "ex-fmt");
+    fmt.appendChild(el("legend", "", t("ex.format")));
+    function radio(value, key) {
+      var l = el("label", "check"), r = el("input");
+      r.type = "radio";
+      r.name = "ex-fmt";
+      r.value = value;
+      l.appendChild(r);
+      l.appendChild(el("span", "", t(key)));
+      fmt.appendChild(l);
+      return r;
+    }
+    var rOros = radio("oros", "ex.oros"), rCsv = radio("csv", "ex.csv");
+    rOros.checked = prefs().exFmt !== "csv";
+    rCsv.checked = !rOros.checked;
+    body.appendChild(fmt);
+    var hl = el("label", "check"), hist = el("input");
+    hist.type = "checkbox";
+    hist.checked = true;
+    hl.appendChild(hist);
+    hl.appendChild(el("span", "", t("ex.hist")));
+    body.appendChild(hl);
+    var sum = el("p", "hint");
+    sum.setAttribute("role", "status");
+    body.appendChild(sum);
+    var busy = false;
+    function current() { return P.build(C, slice, notes, reviews, { deckId: scope.value, history: rOros.checked && hist.checked, now: Date.now() }); }
+    function refresh() {
+      var b = current(), cards = 0;
+      b.content.notes.forEach(function (n) { cards += C.ords(n).length; });
+      sum.textContent = b.content.notes.length ? t("ex.sum", { n: b.content.notes.length, c: cards }) : t("ex.none");
+      hl.hidden = !rOros.checked;
+      $("dlg-ok").disabled = busy || !b.content.notes.length;
+    }
+    [scope, rOros, rCsv, hist].forEach(function (x) { x.addEventListener("change", refresh); });
+    openDialog(t("dlg.export"), body, {
+      okText: t("btn.exportNow"),
+      ok: function () {
+        if (busy) return;
+        var b = current();
+        if (!b.content.notes.length) return;
+        busy = true;
+        $("dlg-ok").disabled = true;
+        sum.textContent = t("ex.busy");
+        var title = scope.value ? deckName(scope.value) : t("app.name");
+        var csv = P.csv(C, b.content, slice);
+        setPref("exFmt", rCsv.checked ? "csv" : "oros");
+        var job;
+        if (rCsv.checked) {
+          job = saveBlob(new Blob([csv], { type: "text/csv" }), P.fileName(title, ".csv"), "text/csv", ".csv").then(function (n) { return { name: n, miss: 0 }; });
+        } else {
+          var Fs = fsApi(), media = {}, miss = 0, i = 0;
+          var readOne = function () {
+            if (i >= b.media.length) return Promise.resolve();
+            var name = b.media[i++];
+            if (!disk || !Fs) { miss++; return readOne(); }
+            return Promise.resolve(Fs.read(C.MEDIA_DIR + "/" + name)).then(function (blob) {
+              if (blob && blob.size) media[name] = blob; else miss++;
+            }, function () { miss++; }).then(readOne);
+          };
+          job = need("../bundle.js").then(readOne).then(function () {
+            return window.OrosBundle.writeBlob({
+              mime: P.MIME, app: "flashcards", schema: "flashcards/1", content: b.content,
+              meta: { title: title, language: LANG }, media: media,
+              preview: [{ name: "cards.csv", data: csv, type: "text/csv" }]
+            });
+          }).then(function (blob) {
+            return saveBlob(blob, P.fileName(title, P.EXT), P.MIME, P.EXT);
+          }).then(function (n) { return { name: n, miss: miss }; });
+        }
+        job.then(function (r) {
+          busy = false;
+          if (!r.name) { refresh(); return; }   // the save was cancelled: the dialog stays
+          closeDialog();
+          toast(t("ex.saved", { name: r.name }) + (r.miss ? " " + t("ex.miss", { m: r.miss }) : ""));
+        }, function (e) {
+          console.warn("[flashcards] export failed", e);
+          busy = false;
+          refresh();
+          sum.textContent = t("ex.fail");
+        });
+      }
+    });
+    refresh();
   }
 
   // ---------- 7. Study ----------
@@ -1588,7 +1895,8 @@
       count: function () { return Object.keys(made).length; }
     };
   }
-  function importDialog() {
+  // `file` (optional): a file to read at once ("Open with", a .oroscards from Files).
+  function importDialog(file) {
     var body = el("div");
     body.appendChild(el("p", "hint", t("im.intro")));
     var pick = el("button", "chip pri", t("btn.chooseFile"));
@@ -1596,7 +1904,7 @@
     var inp = el("input");
     inp.type = "file";
     inp.hidden = true;
-    inp.accept = ".apkg,.colpkg,.csv,.tsv,.txt,text/plain,text/csv,text/tab-separated-values";
+    inp.accept = ".apkg,.colpkg,.oroscards,.csv,.tsv,.txt,text/plain,text/csv,text/tab-separated-values,application/x-oros-cards";
     var status = el("p", "im-status");
     status.setAttribute("role", "status");
     var area = el("div", "im-area");
@@ -1627,7 +1935,13 @@
         var bytes = new Uint8Array(buf);
         var zip = bytes.length > 4 && bytes[0] === 0x50 && bytes[1] === 0x4b && bytes[2] === 3 && bytes[3] === 4;
         var base = String(file.name || "").replace(/\.[^.]*$/, "").trim() || t("app.name");
-        return readers().then(function () { return zip ? ankiStep(bytes, base) : textStep(bytes, base); });
+        if (zip) return need("../bundle.js").then(function () {
+          var mime = window.OrosBundle.sniff(bytes.subarray(0, 128));
+          if (mime === window.FlashcardsPackage.MIME) return pkgStep(bytes);
+          if (mime) { say(t("im.badOros")); return; }
+          return readers().then(function () { return ankiStep(bytes, base); });
+        });
+        return readers().then(function () { return textStep(bytes, base); });
       }).catch(function (e) {
         console.warn("[flashcards] import read failed", e);
         say(t("im.bad"));
@@ -1696,6 +2010,59 @@
         var list = p.notes.map(C.normNote).filter(Boolean);
         return Promise.all([list.length ? saveNotes(list) : true, addReviewRows(p.rows.map(C.normReview).filter(Boolean))]).then(function () {
           return { cards: p.cards, failed: failed };
+        });
+      });
+    }
+    // An .oroscards file: only what is not here yet (package.js plan).
+    function pkgStep(bytes) {
+      var P = window.FlashcardsPackage;
+      return window.OrosBundle.read(bytes, { mime: P.MIME }).then(function (res) {
+        var pkg = P.read(C, res.content);
+        if (!pkg) { say(t("im.badOros")); return; }
+        var probe = P.plan(C, pkg, { slice: slice, notes: notes, reviews: reviews, now: Date.now(), history: true });
+        var files = Object.keys(C.mediaInUse(C.foldNotes({}, probe.notes))).filter(function (k) { return res.media[k] && res.media[k].bytes; });
+        area.textContent = "";
+        area.appendChild(el("p", "", t("im.sum", { n: probe.notes.length, c: probe.cards, d: probe.decks })));
+        if (probe.answers) area.appendChild(el("p", "", t("im.histOros", { r: probe.answers })));
+        if (files.length) area.appendChild(el("p", "", t("im.mediaSum", { m: files.length })));
+        if (probe.skipped) area.appendChild(el("p", "hint", t("im.skip", { s: probe.skipped })));
+        var hist = el("input");
+        hist.type = "checkbox";
+        hist.checked = true;
+        if (probe.answers) {
+          var lab = el("label", "check");
+          lab.appendChild(hist);
+          lab.appendChild(el("span", "", t("im.histBoxOros")));
+          area.appendChild(lab);
+        }
+        say("");
+        if (!probe.notes.length && !probe.rows.length && !probe.decks) { area.textContent = ""; say(t("im.nothing")); return; }
+        job = { run: function () { return pkgRun(res, pkg, files, hist.checked); } };
+        $("dlg-ok").disabled = false;
+      });
+    }
+    function pkgRun(res, pkg, files, history) {
+      var P = window.FlashcardsPackage, Fs = fsApi(), map = {}, failed = 0, i = 0;
+      // A name the notes use that the file does not carry stays as it
+      // is: the picture may be here already, or arrive with sync.
+      Object.keys(C.mediaInUse(C.foldNotes({}, pkg.notes))).forEach(function (k) { if (!res.media[k]) map[k] = k; });
+      // Every picture is redrawn and every sound hashed again here (media.js), never taken as it is.
+      function nextMedia() {
+        if (i >= files.length) return Promise.resolve();
+        var name = files[i++], item = res.media[name];
+        say(t("im.media", { i: i, n: files.length }));
+        return M.prepare(new File([item.bytes], name, { type: item.type })).then(function (it) {
+          map[name] = it.name;
+          if (disk && Fs) return M.write(Fs, it);
+        }).catch(function () { failed++; }).then(nextMedia);
+      }
+      return nextMedia().then(function () {
+        say(t("im.saving"));
+        var p = P.plan(C, pkg, { slice: slice, notes: notes, reviews: reviews, now: Date.now(), history: history, mediaMap: map });
+        if (p.slice) saveSlice(C.merge(slice, p.slice));
+        var roots = pkg.decks.filter(function (x) { return !x.par || !pkg.decks.some(function (y) { return y.id === x.par; }); });
+        return Promise.all([p.notes.length ? saveNotes(p.notes) : true, p.rows.length ? addReviewRows(p.rows) : true]).then(function () {
+          return { cards: p.cards, failed: failed, deck: roots.length === 1 ? roots[0].id : "" };
         });
       });
     }
@@ -1784,6 +2151,7 @@
     });
     $("dlg-ok").disabled = true;
     pick.focus();
+    if (file && typeof file.arrayBuffer === "function") take(file);
   }
 
   // ---------- 8c. Cards from other apps ("Send to…" → Flashcards) ----------
@@ -1875,6 +2243,7 @@
   function goBack() {
     if (!$("veil").hidden) { closeDialog(); return; }
     if (view === "browse") { if (br.from === "deck" && curDeck) show("deck"); else show("home"); return; }
+    if (view === "stats") { if (stats.from === "deck" && curDeck) show("deck"); else show("home"); return; }
     if (view === "study") { flushReviews(); if (curDeck && study.deck) openDeck(study.deck); else show("home"); }
     else if (view === "deck") show("home");
   }
@@ -1907,11 +2276,14 @@
     });
     M.onVoices(function () { if (view === "study" && study.key) $("speak-btn").hidden = !M.hasVoices(); });
     $("first-deck-btn").addEventListener("click", function () { deckDialog(""); });
-    $("first-import-btn").addEventListener("click", importDialog);
+    $("first-import-btn").addEventListener("click", function () { importDialog(); });
     $("add-card-btn").addEventListener("click", function () { noteDialog(""); });
     $("settings-btn").addEventListener("click", settingsDialog);
     $("study-btn").addEventListener("click", function () { startStudy(curDeck); });
     $("deck-edit-btn").addEventListener("click", function () { deckDialog(curDeck); });
+    $("deck-stats-btn").addEventListener("click", function () { openStats(curDeck); });
+    $("deck-export-btn").addEventListener("click", function () { exportDialog(curDeck); });
+    $("st-scope").addEventListener("change", function () { stats.deck = $("st-scope").value; renderStats(); });
     $("filter").addEventListener("input", function () { shown = 300; renderDeck(); });
     $("more-cards").addEventListener("click", function () { shown += 300; renderDeck(); });
     $("show-btn").addEventListener("click", showAnswer);
@@ -1980,11 +2352,20 @@
 
   // ---------- 10. Deep link: search hits and other apps ----------
   // target = { deck } | { note } | { study: deckId } | { home: 1 } (Today)
-  // | { make: { title, text | rows } } ("Send to…"). Unknown ids are
+  // | { make: { title, text | rows } } ("Send to…")
+  // | { openFile: { token } } (an .oroscards file: "Open with", Files). Unknown ids are
   // ignored; nothing happens while a dialog is open (unsaved edits win).
   window.__orosOpenAt = function (target) {
     if (!target || typeof target !== "object" || !$("veil").hidden) return;
-    if (target.make) {
+    if (target.openFile) {
+      var f = null;
+      try {
+        var w = window.parent, o = target.openFile;
+        if (o && typeof o.token === "string" && w && w !== window && typeof w.__orosTakeFile === "function") f = w.__orosTakeFile(o.token);
+      } catch (e) { f = null; }
+      // What is already here is known only once the disk is read.
+      if (f) Promise.resolve(loading).then(function () { if ($("veil").hidden) importDialog(f); });
+    } else if (target.make) {
       var M = window.FlashcardsMake, found = M ? M.fromTarget(target.make) : null;
       if (!found) return;
       // Cards already here are found only once the disk is read.
