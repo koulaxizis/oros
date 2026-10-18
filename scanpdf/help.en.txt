@@ -1,5 +1,5 @@
 # Scanner & PDF
-Scan paper pages with the camera, put PDFs together, take them apart and set their pages in order, sign them, number their pages, make them smaller, read the text of scanned pages so the PDF can be searched, and make a PDF from pictures. Everything happens on your device: nothing is uploaded, and your own files are never changed.
+Scan paper pages with the camera, put PDFs together, take them apart and set their pages in order, sign them, write and draw on them, number their pages, make them smaller, read the text of scanned pages so the PDF can be searched, and make a PDF from pictures. Everything happens on your device: nothing is uploaded, and your own files are never changed.
 
 ## Getting started
 1. Drop PDFs or pictures on the app, or press `Add PDFs or pictures`.
@@ -50,12 +50,23 @@ Every page has a pen button in its corner. It opens the page large, in the page 
   - `Type`: write your name and it is set in a handwriting-like font.
   - `Photo`: choose a photo of your signature on white paper; the paper becomes see-through and only the ink stays.
   Choose black or blue ink. With `Keep it on this device for next time` ticked, the signature is saved for the next document (up to 6). The next time, `Signature` shows them to choose from, and the bin on each one deletes it.
-- `Text` adds a line of text. Type it in the field above the page and choose black, blue or red.
+- `Text` adds a line of text. Type it in the field above the page and choose its colour.
 - `Date` adds today's date.
 Drag what you added into place. Drag the round handle on its corner to make it bigger or smaller. `Put on every page` copies it to the same place on every other page (for initials on each page). `Remove` takes it away.
 The arrows next to the title go to the previous and next page. `Done` keeps everything you added; the cross at the top leaves without keeping it. `Undo` on the main screen takes back everything one `Done` added.
 A page with additions has a filled pen button. Additions turn with the page when you rotate it later.
 Text is written into the PDF as real text (with the Noto Sans font, Greek included); a signature is a picture.
+
+## Shapes, drawings and pictures
+The page editor also has:
+- `Shape`: choose `Box`, `Oval`, `Line`, `Arrow`, `Tick` or `Cross`. Drag the round handle on a box's corner to change its width and height; a line or arrow has a handle on each end, so you can point it anywhere.
+- `Pen`: draw or write by hand on the page with your finger, a stylus or the mouse. Every stroke you draw until you press `Pen` again becomes one drawing, which you can then move, resize, copy to every page or remove. `Undo the last stroke` takes back one stroke at a time.
+- `Highlighter`: the same, with a see-through yellow marker to highlight words.
+- `Cover`: a white box with no edge, to hide something on the page (choose black for a black bar).
+- `Picture`: put a picture on the page, such as a logo, a stamp or a photo. Pictures with see-through parts keep them.
+With a shape or drawing chosen, the bar above the page sets its colour (black, blue, red, green, yellow or white) and line width; a box or oval can also be filled with its colour (`Fill`).
+Shapes and drawings go into the PDF as sharp lines that stay clear at any zoom.
+A cover only hides what is under it: the page beneath is still in the PDF, and its text can still be selected and copied. To remove it for good, save with `Make it smaller` (the pages become pictures), in a document whose text you have not had read with `Make it searchable` (text read from a page is kept under it).
 
 ## Page numbers, watermark and details
 The `Options` button at the bottom sets what goes on every page of the PDFs you save or split:
@@ -117,7 +128,7 @@ In Files, select one or more PDFs, or several pictures, and choose `Open in Scan
 - [[E]]: open the page editor for the page.
 In the page editor:
 - [[Tab]] goes from one addition to the next; [[Left]], [[Right]], [[Up]] and [[Down]] move it ([[Shift]] for bigger steps); [[+]] and [[-]] make it bigger or smaller; [[Delete]] removes it.
-- [[PageUp]] and [[PageDown]]: the previous and next page. [[Esc]]: let go of the addition, or leave.
+- [[PageUp]] and [[PageDown]]: the previous and next page. [[Esc]]: stop drawing, let go of the addition, or leave.
 In the scanner:
 - [[Tab]] goes through the buttons; on a corner, [[Left]], [[Right]], [[Up]] and [[Down]] move it ([[Shift]] for bigger steps).
 - [[Esc]] steps back, and on the camera leaves the scanner.
@@ -130,3 +141,4 @@ Everything happens on your device; no file is sent anywhere. The app keeps no da
 - PDFs locked with a password can't be changed: their pages can't be copied without it.
 - A file can be up to 200 MB, and the list can hold up to 2,000 pages.
 - Large files take a moment to read and to save; keep the app open until it is done.
+- A page can carry up to 40 additions. A drawing holds up to 60 strokes; the next stroke starts a new drawing.

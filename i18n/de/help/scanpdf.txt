@@ -1,5 +1,5 @@
 # Scanner & PDF
-Papierseiten mit der Kamera scannen, PDFs zusammenführen, auseinandernehmen und ihre Seiten ordnen, sie signieren, ihre Seiten nummerieren, sie verkleinern, den Text gescannter Seiten lesen, damit das PDF durchsuchbar ist, und aus Bildern ein PDF machen. Alles passiert auf deinem Gerät: Nichts wird hochgeladen, und deine eigenen Dateien werden nie verändert.
+Papierseiten mit der Kamera scannen, PDFs zusammenführen, auseinandernehmen und ihre Seiten ordnen, sie signieren, darauf schreiben und zeichnen, ihre Seiten nummerieren, sie verkleinern, den Text gescannter Seiten lesen, damit das PDF durchsuchbar ist, und aus Bildern ein PDF machen. Alles passiert auf deinem Gerät: Nichts wird hochgeladen, und deine eigenen Dateien werden nie verändert.
 
 ## Erste Schritte
 1. Leg PDFs oder Bilder auf der App ab, oder drück `PDFs oder Bilder hinzufügen`.
@@ -50,12 +50,23 @@ Jede Seite hat in ihrer Ecke eine Stift-Schaltfläche. Sie öffnet die Seite gro
   - `Tippen`: Schreib deinen Namen, und er wird in einer handschriftähnlichen Schrift gesetzt.
   - `Foto`: Wähle ein Foto deiner Unterschrift auf weißem Papier; das Papier wird durchsichtig und nur die Tinte bleibt.
   Wähle schwarze oder blaue Tinte. Ist `Für das nächste Mal auf diesem Gerät behalten` angehakt, wird die Unterschrift für das nächste Dokument gespeichert (bis zu 6). Beim nächsten Mal zeigt `Unterschrift` sie zur Auswahl, und der Papierkorb an jeder löscht sie.
-- `Text` fügt eine Textzeile hinzu. Tippe sie in das Feld über der Seite und wähle Schwarz, Blau oder Rot.
+- `Text` fügt eine Textzeile hinzu. Tippe sie in das Feld über der Seite und wähle ihre Farbe.
 - `Datum` fügt das heutige Datum hinzu.
 Zieh das Hinzugefügte an seinen Platz. Zieh am runden Griff an seiner Ecke, um es größer oder kleiner zu machen. `Auf jede Seite setzen` kopiert es an dieselbe Stelle auf jeder anderen Seite (für Initialen auf jeder Seite). `Entfernen` nimmt es weg.
 Die Pfeile neben dem Titel gehen zur vorherigen und nächsten Seite. `Fertig` behält alles Hinzugefügte; das Kreuz oben verlässt den Editor, ohne es zu behalten. `Rückgängig` auf dem Hauptbildschirm nimmt alles zurück, was ein `Fertig` hinzugefügt hat.
 Eine Seite mit Ergänzungen hat eine ausgefüllte Stift-Schaltfläche. Ergänzungen drehen sich mit der Seite, wenn du sie später drehst.
 Text wird als echter Text ins PDF geschrieben (mit der Schrift Noto Sans, Griechisch inklusive); eine Unterschrift ist ein Bild.
+
+## Formen, Zeichnungen und Bilder
+Der Seiteneditor hat außerdem:
+- `Form`: Wähle `Rechteck`, `Oval`, `Linie`, `Pfeil`, `Häkchen` oder `Kreuz`. Zieh am runden Griff an der Ecke eines Rechtecks, um Breite und Höhe zu ändern; eine Linie oder ein Pfeil hat an jedem Ende einen Griff, damit du sie in jede Richtung zeigen lassen kannst.
+- `Stift`: Zeichne oder schreib von Hand auf die Seite, mit dem Finger, einem Eingabestift oder der Maus. Alle Striche, bis du wieder auf `Stift` drückst, werden eine Zeichnung, die du danach verschieben, vergrößern, auf jede Seite setzen oder entfernen kannst. `Letzten Strich rückgängig machen` nimmt einen Strich nach dem anderen zurück.
+- `Textmarker`: dasselbe, mit einem durchsichtigen gelben Marker, um Wörter hervorzuheben.
+- `Abdecken`: ein weißes Rechteck ohne Rand, um etwas auf der Seite zu verbergen (wähle Schwarz für einen schwarzen Balken).
+- `Bild`: Setz ein Bild auf die Seite, etwa ein Logo, einen Stempel oder ein Foto. Bilder mit durchsichtigen Stellen behalten sie.
+Ist eine Form oder Zeichnung ausgewählt, stellt die Leiste über der Seite ihre Farbe (Schwarz, Blau, Rot, Grün, Gelb oder Weiß) und die Linienstärke ein; ein Rechteck oder Oval kann auch mit seiner Farbe gefüllt werden (`Füllen`).
+Formen und Zeichnungen kommen als scharfe Linien ins PDF, die bei jeder Vergrößerung klar bleiben.
+Das Abdecken verbirgt nur, was darunter zu sehen ist: Die Seite bleibt im PDF, und ihr Text lässt sich weiterhin auswählen und kopieren. Um es endgültig zu entfernen, speichere mit `Verkleinern` (die Seiten werden zu Bildern), in einem Dokument, dessen Text du nicht mit `Durchsuchbar machen` hast lesen lassen (gelesener Text einer Seite bleibt unter ihr).
 
 ## Seitenzahlen, Wasserzeichen und Details
 Die Schaltfläche `Optionen` unten legt fest, was auf jede Seite der PDFs kommt, die du speicherst oder teilst:
@@ -117,7 +128,7 @@ Wähle in Dateien ein oder mehrere PDFs oder mehrere Bilder aus und wähle `In S
 - [[E]]: den Seiteneditor für die Seite öffnen.
 Im Seiteneditor:
 - [[Tab]] geht von einer Ergänzung zur nächsten; [[Left]], [[Right]], [[Up]] und [[Down]] verschieben sie ([[Shift]] für größere Schritte); [[+]] und [[-]] machen sie größer oder kleiner; [[Delete]] entfernt sie.
-- [[PageUp]] und [[PageDown]]: die vorherige und nächste Seite. [[Esc]]: die Ergänzung loslassen oder den Editor verlassen.
+- [[PageUp]] und [[PageDown]]: die vorherige und nächste Seite. [[Esc]]: mit dem Zeichnen aufhören, die Ergänzung loslassen oder den Editor verlassen.
 Im Scanner:
 - [[Tab]] geht durch die Schaltflächen; auf einer Ecke verschieben [[Left]], [[Right]], [[Up]] und [[Down]] sie ([[Shift]] für größere Schritte).
 - [[Esc]] geht einen Schritt zurück und verlässt bei der Kamera den Scanner.
@@ -130,3 +141,4 @@ Alles passiert auf deinem Gerät; keine Datei wird irgendwohin gesendet. Die App
 - Mit einem Passwort geschützte PDFs lassen sich nicht ändern: Ihre Seiten können ohne das Passwort nicht kopiert werden.
 - Eine Datei darf bis zu 200 MB groß sein, und die Liste fasst bis zu 2.000 Seiten.
 - Große Dateien brauchen einen Moment zum Lesen und Speichern; lass die App offen, bis es fertig ist.
+- Eine Seite fasst bis zu 40 Ergänzungen. Eine Zeichnung hat bis zu 60 Striche; der nächste Strich beginnt eine neue Zeichnung.

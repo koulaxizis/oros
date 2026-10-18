@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.38.00
+- Scanner & PDF: draw and mark up your pages. The page editor (the pen on each page) now adds shapes (box, oval, line, arrow, tick, cross), a pen for handwriting, a see-through highlighter, a white cover to hide something and pictures such as a logo or stamp. Pick from six colours, three line widths and fill; everything lands in the PDF as sharp lines, exactly where you put it.
+
 ## Version 3.37.00
 - Newsletter: richer blocks. Under More blocks: picture and text side by side, three columns, a gallery, a video (a picture of it with a play mark that opens the video), a table and an event card that can bring a calendar file. Save any block and use it again in every issue. New issues can start from three ready layouts: weekly news, announcement and product offer.
 
