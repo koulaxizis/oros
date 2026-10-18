@@ -1264,6 +1264,7 @@ var PRECACHE_URLS = [
   "atelier/ax.js",
   "atelier/blend.js",
   "atelier/anim.js",
+  "atelier/morph.js",
   "atelier/core.js",
   "atelier/draw.js",
   "atelier/editor.js",

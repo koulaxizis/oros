@@ -46,6 +46,9 @@
 //            nearer end's shape, so the file still opens.
 //   ext.bl   { g, a, b, n, i }: this shape is step i of n of blend g
 //            between items a and b (re-made by Blend › Update)
+// Since wave C2 (morph, atelier/morph.js):
+//   ext.mph  1 on a page background: the page morphs in from the page
+//            before it; ptr stays what older copies show instead
 // Defaults are omitted, keys come in one fixed order: the record is
 // canonical (R26), so equal designs give equal JSON on every device.
 // Pure: no DOM. Exposes window.AtelierAX (browser) or module.exports.
