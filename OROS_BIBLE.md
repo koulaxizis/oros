@@ -7753,3 +7753,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - 13 more apps are now in German, among them Weather, Library, Scanner & PDF, QR and Bookmarks: packs in `i18n/de/`, inline texts moved into {en, el} tables, and each page loads `../i18n.js` before its own scripts. English still fills any missing line.
 - Files: `i18n/de/**`, the 13 app folders (index.html + scripts, `share/index.html`, `quote/accept.html`), `.github/i18n/inline-baseline.json`, `i18n/apps.json`.
   - Tests: 4786/4786; Chromium 360 de / el. Not tested: a German native reader's review, real phone, Safari.
+
+### 2026-10-18 — Languages L8c: Maps, Assistant, Wiki, Time and four more in German (#527) — 3.18.00
+- Maps, Assistant, Wiki, Time, Passwords, Split, Text Tools and Pet Health Book are now in German: packs in `i18n/de/`, inline texts moved into {en, el} tables, and each page loads `../i18n.js` before its own scripts. English still fills any missing line.
+- Files: `i18n/de/**`, the 8 app folders (index.html + scripts, `time/display.html`, `maps/osm-callback.html`), `.github/i18n/inline-baseline.json`, `i18n/apps.json`.
+  - Tests: 4786/4786; Chromium 360 de / el. Not tested: a German native reader's review, real phone, Safari.
