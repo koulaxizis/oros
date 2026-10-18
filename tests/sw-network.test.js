@@ -136,9 +136,13 @@ test("navigation: a fast network wins and is stored", async () => {
   assert.equal(await (await c.match(BASE + "todo/")).text(), "fresh");
 });
 
+// SW-F2: a page of THIS release answers at once; the network-first
+// path below is for a page that only an older cache holds.
+const OLD_CACHE = "oros-runtime-oros-v0.0.1";
+
 test("navigation: a late answer after the timeout still refreshes the cache", async () => {
   const sw = loadSW(() => delay(120, html("late fresh")));
-  await seed(sw, sw.ctx.SHELL_CACHE, "./", "cached shell");
+  await seed(sw, OLD_CACHE, "./", "cached shell");
   const ev = fire(sw, new sw.Req("/", { mode: "navigate", destination: "document" }));
   assert.equal(await (await ev.answer).text(), "cached shell");
   await ev.settled();
@@ -297,8 +301,8 @@ test("a cached /shell.js?v= answers at once even when the network hangs", async 
 test("after one timeout the next network-first request answers from the cache at once", async () => {
   const sw = loadSW(() => never());
   sw.ctx.NET_TIMEOUT_MS = 300;
-  await seed(sw, sw.ctx.SHELL_CACHE, "./", "cached shell");
-  const c = await sw.caches.open(sw.ctx.SHELL_CACHE);
+  await seed(sw, OLD_CACHE, "./", "cached shell");
+  const c = await sw.caches.open(OLD_CACHE);
   await c.put("./apps.json", new Response('{"apps":[]}'));
   let t0 = Date.now();
   await fire(sw, new sw.Req("/", { mode: "navigate", destination: "document" })).answer;
@@ -313,12 +317,13 @@ test("a quick network answer ends the slow spell", async () => {
   let slow = true;
   const sw = loadSW(() => slow ? never() : Promise.resolve(new Response('{"apps":[1]}')));
   sw.ctx.NET_TIMEOUT_MS = 100;
-  const c = await sw.caches.open(sw.ctx.SHELL_CACHE);
+  const c = await sw.caches.open(OLD_CACHE);
   await c.put("./apps.json", new Response('{"apps":[]}'));
   await fire(sw, new sw.Req("/apps.json")).answer;            // times out → slow spell
   assert.ok(sw.ctx.netSlowUntil > Date.now());
   slow = false;
   const ev = fire(sw, new sw.Req("/apps.json"));
+  await ev.answer;
   await ev.settled();                                          // network came back quickly
   assert.equal(sw.ctx.netSlowUntil, 0);
   const res = await fire(sw, new sw.Req("/apps.json")).answer;
@@ -353,18 +358,34 @@ test("app frame: an older release's runtime copy does not count, the network is 
   assert.equal(await res.text(), "fresh");
 });
 
-test("app frame: the shell page in a frame (?solo=) stays network-first", async () => {
-  const sw = loadSW(() => Promise.resolve(html("fresh shell")));
-  await seed(sw, sw.ctx.SHELL_CACHE, "./", "cached shell");
-  const res = await fire(sw, new sw.Req("/?solo=calendar", { mode: "navigate", destination: "iframe" })).answer;
-  assert.equal(await res.text(), "fresh shell");
+test("shell page: this release's precached page answers at once, also with a query (SW-F2)", async () => {
+  for (const [u, dest] of [["/", "document"], ["/?source=pwa", "document"], ["/?solo=calendar", "iframe"]]) {
+    const sw = loadSW(() => never());
+    sw.ctx.NET_TIMEOUT_MS = 500;
+    await seed(sw, sw.ctx.SHELL_CACHE, "./", "this release");
+    const t0 = Date.now();
+    const res = await fire(sw, new sw.Req(u, { mode: "navigate", destination: dest })).answer;
+    assert.equal(await res.text(), "this release", u);
+    assert.ok(Date.now() - t0 < 200, u + " no network wait");
+    assert.equal(sw.fetchLog.length, 0, u + " no network request");
+  }
 });
 
-test("top window: an app page opened directly stays network-first", async () => {
+test("top window: an app page opened directly answers from this release too", async () => {
   const sw = loadSW(() => Promise.resolve(html("fresh")));
-  await seed(sw, sw.ctx.SHELL_CACHE, "./calendar/", "cached");
+  await seed(sw, sw.ctx.SHELL_CACHE, "./calendar/", "this release");
   const res = await fire(sw, new sw.Req("/calendar/?standalone", { mode: "navigate", destination: "document" })).answer;
-  assert.equal(await res.text(), "fresh");
+  assert.equal(await res.text(), "this release");
+});
+
+test("apps.json: this release's list answers at once; without one, network-first", async () => {
+  let sw = loadSW(() => never());
+  const c = await sw.caches.open(sw.ctx.SHELL_CACHE);
+  await c.put("./apps.json", new Response('{"apps":["this"]}'));
+  assert.equal(await (await fire(sw, new sw.Req("/apps.json")).answer).text(), '{"apps":["this"]}');
+  assert.equal(sw.fetchLog.length, 0);
+  sw = loadSW(() => Promise.resolve(new Response('{"apps":["net"]}')));
+  assert.equal(await (await fire(sw, new sw.Req("/apps.json")).answer).text(), '{"apps":["net"]}');
 });
 
 test("every app page and every script it loads is precached (SW-F1 opens it with no network)", () => {
