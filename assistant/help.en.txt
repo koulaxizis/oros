@@ -128,6 +128,7 @@ Right-click an empty spot of the desktop (on a phone or tablet, press and hold) 
 - In a task's text, `{date}` becomes today's date and `{clipboard}` the text you copied (read only when you tap the task).
 - `Edit this menu…` (also in the assistant's Settings, under `Desktop menu`) adds tasks and apps, puts them in order and removes them. `Restore the examples` brings back the three examples; your own items stay.
 - The menu syncs with your other devices. Tasks for the assistant hide on a device without it, apps hide where they are not installed.
+- The menu's Assistant items open a small Assistant window over the desktop. [[Ctrl+Alt+Shift+Q]] opens the same window from anywhere, also over an open app. Its buttons start a new conversation, open the conversation in the full Assistant (with your list of conversations), or close the window. When the full Assistant is already open, everything goes there instead.
 
 ## Privacy: what leaves your device
 - Your messages and the results you share go only to the service you chose, straight from your browser. No orOS server is in between. The line above the message box says where they go.
@@ -160,6 +161,7 @@ Bring your history from another AI chat. In the Assistant's settings, under `Thi
 - [[Enter]] sends, [[Shift+Enter]] starts a new line.
 - [[Esc]] stops an answer that is still coming.
 - [[Ctrl+Alt+Shift+A]] opens the assistant from anywhere in orOS.
+- [[Ctrl+Alt+Shift+Q]] opens it in a small window over what you are doing.
 
 ## Tips
 - `New chat` starts a fresh conversation; older ones are in the list on the left, or behind the menu button on a phone.

@@ -1,5 +1,5 @@
 // ============================================================
-// orOS — quickmenu.js (desktop menu: Assistant tasks + apps, v1.0.0)
+// orOS — quickmenu.js (desktop menu: Assistant tasks + apps, mini Assistant, v1.1.0)
 // ------------------------------------------------------------
 // A shell component, like launcher.js: it runs IN the shell document,
 // keeps its own storage and registers its own sync slice. shell.js
@@ -12,7 +12,7 @@
 //     desktop components add (Sticky Notes: window.__orosDeskItems),
 //     "Change wallpaper…" and "Edit this menu…".
 //   • A task is a text for the Assistant. Tapping it opens the
-//     Assistant with the text in the message box (deep link { ask });
+//     Assistant (the mini window) with the text in the message box (deep link { ask });
 //     nothing is sent unless the task says "Send on tap" ({ ask,
 //     send: 1 }), and then the Assistant's own consent rules
 //     (Ask first / never per app) still apply. {date} becomes today's
@@ -22,6 +22,11 @@
 //   • The editor (a dialog in the shell) adds, edits, orders and
 //     removes items; the Assistant's settings open it too
 //     (window.orosQuick.edit()).
+//   • 1.1.0: the mini window. The menu's Assistant items open the
+//     Assistant in a small panel (assistant/index.html?mini=1) over
+//     the desktop or an app, also with Ctrl+Alt+Shift+Q
+//     (orosQuick.mini()); "Open in the Assistant" goes on in the full
+//     app. When the full Assistant is already open, it gets them.
 //
 // Data (synced, slice "quickmenu", key oros-quick-menu):
 //   { ver:1, items:[{ id, k, n, p, app, send, o, d, m }] }
@@ -43,7 +48,7 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.0.0";
+  var VER = "1.1.0";
   var DATA_KEY = "oros-quick-menu";
   var MAX_ITEMS = 200;          // stored, tombstones included
   var MAX_SHOWN = 24;           // in the menu
@@ -308,18 +313,24 @@
   function openAt(appId, target) {
     if (typeof root.__orosOpenAt === "function") root.__orosOpenAt(appId, target);
   }
+  // The desktop menu's Assistant runs open in the mini window; the
+  // full app takes them when it is already open (never two at once).
+  function ask(target) {
+    if (assistantOpen()) { openAt("assistant", target); return; }
+    mini(target);
+  }
   function runItem(it) {
     if (it.k === "app") { var a = appById(it.app); if (a && host.open) host.open(a); return; }
     if (!hasAssistant()) return;
-    if (it.k === "brief") { openAt("assistant", { brief: 1 }); return; }
+    if (it.k === "brief") { ask({ brief: 1 }); return; }
     var text = textOf(it);
     var ctx = { date: today(), sel: "" };
     function go(clipOk) {
       var q = expand(text, ctx).trim();
-      if (!q) { openAt("assistant", null); return; }
+      if (!q) { ask(null); return; }
       var tg = { ask: q };
       if (it.send && clipOk) tg.send = 1;     // an unread clipboard waits in the box
-      openAt("assistant", tg);
+      ask(tg);
     }
     if (!needsClip(text)) { go(true); return; }
     var cb = root.navigator && root.navigator.clipboard;
@@ -365,7 +376,20 @@
     "border-radius:8px;background:var(--input-bg,var(--panel-bg));color:var(--text);width:100%;box-sizing:border-box}",
     "#qm-dlg textarea{min-height:110px;resize:vertical}",
     "#qm-dlg .qm-check{display:flex;align-items:center;gap:10px;min-height:40px;font-size:14px;cursor:pointer}",
-    "#qm-dlg .qm-check input{width:18px;height:18px;accent-color:var(--accent);margin:0}"
+    "#qm-dlg .qm-check input{width:18px;height:18px;accent-color:var(--accent);margin:0}",
+    // the mini window (z 960: over a running app at 900 and the Dock at 950, under the menu at 999)
+    "#qa-mini{position:fixed;z-index:960;right:16px;bottom:calc(16px + var(--tb-h,0px) + env(safe-area-inset-bottom,0px));",
+    "width:min(420px,calc(100vw - 32px));height:min(620px,calc(100vh - 88px));display:flex;flex-direction:column;overflow:hidden;",
+    "background:var(--panel-bg);border:1px solid var(--border);border-radius:14px;box-shadow:0 12px 40px var(--shadow)}",
+    "#qa-mini .qa-head{flex:0 0 auto;display:flex;align-items:center;gap:2px;padding:4px 4px 4px 14px;border-bottom:1px solid var(--border)}",
+    "#qa-mini .qa-title{flex:1;min-width:0;font-size:14px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+    "#qa-mini .qa-btn{flex:0 0 auto;width:40px;height:40px;display:inline-flex;align-items:center;justify-content:center;border:none;",
+    "border-radius:8px;background:transparent;color:var(--text);cursor:pointer}",
+    "#qa-mini .qa-btn:hover,#qa-mini .qa-btn:focus-visible{background:var(--accent-soft)}",
+    "#qa-mini .qa-btn svg{width:18px;height:18px}",
+    "#qa-mini iframe{flex:1 1 auto;width:100%;min-height:0;border:0;background:transparent}",
+    "@media (max-width:600px){#qa-mini{left:8px;right:8px;width:auto;bottom:calc(8px + env(safe-area-inset-bottom,0px));",
+    "height:calc(100% - 64px - env(safe-area-inset-top,0px))}}"
   ].join("");
   function injectCss() {
     if (doc.getElementById("qm-css")) return;
@@ -420,7 +444,7 @@
       inGroup++;
     }
     var items = list(load()).filter(usable).slice(0, MAX_SHOWN);
-    if (hasAssistant()) item(tr("ask"), IC_ASK, function () { openAt("assistant", null); });
+    if (hasAssistant()) item(tr("ask"), IC_ASK, function () { ask(null); });
     items.filter(function (it) { return it.k !== "app"; }).forEach(function (it) {
       item(nameOf(it), it.k === "brief" ? IC_ASK : IC_TASK, function () { runItem(it); }, it.send ? tr("sendMark") : "");
     });
@@ -688,9 +712,96 @@
     repaintEditor();
   }
 
-  // ---------- 8. Public API ----------
+  // ---------- 8. The mini window (quick access wave 2) ----------
+  // The same Assistant (assistant/index.html?mini=1) in a small panel
+  // over the desktop or an app: Ctrl+Alt+Shift+Q, or the desktop
+  // menu. "Open in the Assistant" closes it and opens the full app on
+  // the same conversation (the Assistant keeps the open one in its
+  // device prefs). The frame is removed on close, so there is never a
+  // second live Assistant; opening the full app closes the panel.
+  var panel = null, pending = null;
+  var IC_EXPAND = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>';
+  var IC_NEW = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>';
+  var IC_X = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>';
+
+  function assistantOpen() {
+    var r = host && host.running && host.running();
+    if (r && r.id === "assistant") return true;
+    return !!(host && host.isOpen && host.isOpen("assistant"));
+  }
+  function miniWin() {
+    var f = panel && panel.querySelector("iframe");
+    try { return f && f.contentWindow; } catch (e) { return null; }
+  }
+  function miniApi() {
+    var w = miniWin();
+    try { return w && w.__asMini ? w.__asMini : null; } catch (e) { return null; }
+  }
+  function headBtn(icon, label, fn) {
+    var b = el("button", "qa-btn");
+    b.type = "button";
+    b.innerHTML = icon;                      // static shell icon, not data
+    b.setAttribute("aria-label", label);
+    b.title = label;
+    b.addEventListener("click", fn);
+    return b;
+  }
+  function mini(target) {
+    if (!host || !hasAssistant()) return;
+    closeMenu(false);
+    if (panel) {
+      var api = miniApi(), w = miniWin();
+      if (api && w && typeof w.__orosOpenAt === "function") {
+        if (target && !w.__orosOpenAt(target) && api.busy()) toast(tr("miniBusy"));
+      } else if (target) pending = target;   // still starting: its boot takes it
+      try { panel.querySelector("iframe").focus(); } catch (e) {}
+      return;
+    }
+    pending = target || null;
+    panel = el("section");
+    panel.id = "qa-mini";
+    panel.setAttribute("role", "dialog");
+    panel.setAttribute("aria-label", tr("miniTitle"));
+    var head = el("div", "qa-head");
+    head.appendChild(el("span", "qa-title", tr("miniTitle")));
+    head.appendChild(headBtn(IC_NEW, tr("miniNew"), function () { var a = miniApi(); if (a && !a.busy()) a.newChat(); }));
+    head.appendChild(headBtn(IC_EXPAND, tr("miniFull"), function () {
+      var a = miniApi();
+      if (a && a.busy()) { toast(tr("miniBusy")); return; }
+      closeMini();
+      openAt("assistant", null);
+    }));
+    head.appendChild(headBtn(IC_X, tr("close"), function () { closeMini(); }));
+    panel.appendChild(head);
+    var f = el("iframe");
+    f.title = tr("miniTitle");
+    f.src = "assistant/index.html?mini=1";
+    panel.appendChild(f);
+    panel.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && e.target && e.target.closest && e.target.closest(".qa-head")) { e.preventDefault(); closeMini(); }
+    });
+    doc.body.appendChild(panel);
+    f.addEventListener("load", function () { try { f.focus(); } catch (e) {} });
+  }
+  function closeMini() {
+    if (!panel) return;
+    panel.remove();
+    panel = null;
+    pending = null;
+  }
+  // The Assistant's boot in the mini frame takes what it should do.
+  function takeMini() { var t = pending; pending = null; return t; }
+  function watchRunning() {
+    var run = doc.getElementById("oros-running");
+    if (!run || !root.MutationObserver) return;
+    new root.MutationObserver(function () { if (panel && assistantOpen()) closeMini(); })
+      .observe(run, { attributes: true, attributeFilter: ["class"], subtree: true });
+  }
+
+  // ---------- 9. Public API ----------
   // host = { desktop, apps(), open(app), label(app), icons, lang(),
-  //          running(), toast(msg) optional }
+  //          running() → the open app or null, isOpen(id) optional
+  //          (alive behind, multitasking), toast(msg) optional }
   function attach(h) {
     if (host) return;
     host = h || {};
@@ -698,6 +809,7 @@
     load();
     registerSync();
     if (host.desktop) wireDesktop();
+    watchRunning();
   }
 
   root.orosQuick = {
@@ -705,6 +817,8 @@
     model: model,
     attach: attach,
     edit: edit,
+    mini: function (target) { ask(target || null); },
+    takeMini: takeMini,
     // Sticky Notes leaves the desktop's right-click to this menu.
     ownsDesktop: function () { return !!(host && host.desktop); },
     items: function () { return list(load()).filter(usable).map(function (it) { return { id: it.id, k: it.k, name: nameOf(it) }; }); },

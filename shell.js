@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "3.25.01";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "3.26.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -6716,7 +6716,8 @@
     { key: "y", label: "sc.desc.today",      fn: function() { openAppById("today"); } },
     { key: "n", label: "sc.desc.stickies",   fn: scNewSticky },
     { key: "k", label: "sc.desc.cmdbar",     fn: function() { openCmdBar(); } },
-    { key: "w", label: "sc.desc.switcher",   fn: function() { mtSwitcher(); } }
+    { key: "w", label: "sc.desc.switcher",   fn: function() { mtSwitcher(); } },
+    { key: "q", label: "sc.desc.quickask",   fn: function() { if (window.orosQuick) window.orosQuick.mini(); else openAssistant(); } }
   ];
 
   // Public contract consumed by iframe apps (same-origin, so this
@@ -11246,7 +11247,8 @@
       desktop: document.getElementById("oros-desktop"),
       apps: function () { return state.apps; },
       open: openApp,
-      running: function () { return !!state.running; },
+      running: function () { return state.running || null; },
+      isOpen: function (id) { return mtActive() && appLive(id); },   // multitasking: alive behind
       icons: ICONS,
       lang: function () { return langBase(); },
       label: function (app) {

@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.26.00
+- Mini Assistant: the desktop menu's Assistant items and the new shortcut Ctrl+Alt+Shift+Q open a small Assistant window over the desktop or over any app. Ask, read the answer, then close it or carry on in the full Assistant with the same conversation.
+
 ## Version 3.25.01
 - German: the Android app's reminder status line in Settings › Notifications is now in German too.
 

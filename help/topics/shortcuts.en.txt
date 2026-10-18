@@ -19,6 +19,7 @@ orOS has a set of keyboard shortcuts that work everywhere: on the desktop and in
 - [[Ctrl+Alt+Shift+N]]: `New sticky note`
 - [[Ctrl+Alt+Shift+K]]: `Command bar (also Ctrl+K)`
 - [[Ctrl+Alt+Shift+W]]: `Switch between open apps (multitasking)`
+- [[Ctrl+Alt+Shift+Q]]: `Ask the Assistant in a small window`
 
 ## What each one does
 ### Sync and backup
