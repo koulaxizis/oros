@@ -7766,6 +7766,11 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Files: `translations.js`, `i18n/de/**` (new `commands` and `solo` packs), `.github/i18n/scan.js` (packs for shared root modules), `index.html` `data-app`, single-app host pages (regenerated with `tools/solo-manifests.js`), coverage files and inline baseline, one Bible sentence.
   - Tests: 4787/4787; Chromium 360 de / el. Not tested: a reminder firing in German, the install bar, a German native reader's review, real phone, Safari.
 
+### 2026-10-18 — Assistant: every Claude model in the model list (AS-MODELS) — 3.19.02
+- With Claude, Settings offered only three Opus models (Chris, 2026-10-18): the model box used a `<datalist>`, and browsers only suggest entries that match the text already in the box (the default `claude-opus-5-5`). The loaded models now show in a plain list under the box (`#as-model-pick`, every provider), and the list loads by itself when Settings open with a saved key (hosted providers only).
+- Files: `assistant/assistant.js` (+ `set.modelPick` EN/EL/DE in `i18n/de/assistant.js`), help EN/EL/DE, one Bible rule (AS-MODELS). sw.js precache: nothing new.
+  - Tests: 4792/4793 (1 skipped); Chromium 360 with a mocked Anthropic model list (Fable, Opus, Sonnet, Haiku all listed, picking Haiku saves it, list reloads on reopen). Not tested: a real Anthropic key, real phone, Safari.
+
 ### 2026-10-18 — Faster updates: only changed files are downloaded (SW-U1/SW-U2) — 3.19.01
 - Every release made each device download the whole offline copy again (46 MB, 1,658 files, all at once), and it competed with the page: after a release orOS showed an empty desktop for many seconds (Chris, 2026-10-18; 20 releases on 2026-10-17). sw.js now copies files whose content did not change from the previous release's cache (content hashes in `PRECACHE_HASH`, written by `stamp-assets.js` on main and checked in the worker before reuse) and downloads at most 4 files at a time at low priority.
 - Files: `sw.js`, `.github/scripts/stamp-assets.js`, `tests/sw-network.test.js`, `tests/release-guards.test.js`.
