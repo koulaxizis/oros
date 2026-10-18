@@ -138,6 +138,13 @@ Markiere Text in einer beliebigen orOS-App und klicke ihn mit rechts an, für ei
 - [[Shift]]+Rechtsklick behält das Menü des Browsers. Textfelder behalten ihren eigenen Rechtsklick (zum Ausschneiden und Einfügen); nutze dort den Knopf. Apps mit eigenem Rechtsklick-Menü, etwa Spreadsheet, behalten es. Writer hat dafür seinen eigenen Funkel-Knopf. Passwörter und Passwortfelder werden nie angeboten.
 - Du willst den Knopf nicht? Entferne den Haken bei `Assistent-Knopf unter Text zeigen, den ich markiere` in `Dieses Menü bearbeiten…` (pro Gerät).
 
+## Von außerhalb von orOS
+- Am Computer klickst du mit rechts auf das orOS-Symbol in der Taskleiste oder im Dock (unter Android drückst du lange auf das Symbol der orOS-App): `Ask the Assistant` öffnet orOS mit dem kleinen Assistentenfenster.
+- Teile Text oder einen Link aus einer anderen App mit orOS (`Teilen` unter Android): orOS fragt, wohin er soll, und der `Assistent` ist eine der Möglichkeiten. Ein Link kann wie bisher auch zu Lesezeichen, Notizen und den anderen Apps.
+- Mit dem Browser-Add-on `Send to orOS` (ab 1.1) markierst du Text auf einer beliebigen Seite und klickst ihn mit rechts an: `Ask the orOS Assistant about …` öffnet orOS mit dem Text im Feld des Assistenten. Der Text reist hinter dem `#` der Adresse, den Browser nie an einen Server senden.
+- In der Android-App: ein Assistenten-Knopf auf den Widgets `orOS Today` und `orOS quick add` und eine Kachel `orOS Assistant`, die du zu den Schnelleinstellungen hinzufügst (Benachrichtigungen herunterziehen, dann den Stift).
+- Jeder Weg öffnet den Assistenten nur mit dem Text bereit; nichts wird gesendet, bevor du `Senden` drückst.
+
 ## Datenschutz: was dein Gerät verlässt
 - Deine Nachrichten und die Ergebnisse, die du teilst, gehen nur an den gewählten Dienst, direkt aus deinem Browser. Kein orOS-Server ist dazwischen. Die Zeile über dem Nachrichtenfeld zeigt, wohin sie gehen.
 - Unter `Einstellungen` → `Deine Daten` wählst du pro App `Erst fragen`, `Immer teilen` oder `Nie`. Gesundheit, Stimmung, Zyklus, Baby und Budget stehen anfangs auf `Nie`. Mail und Passwörter werden nie angeboten.

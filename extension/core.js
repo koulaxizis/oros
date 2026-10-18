@@ -1,7 +1,8 @@
 /* Send to orOS: pure helpers shared by background.js and options.js
    (and tests/extension.test.js through module.exports). The add-on
    keeps no data of its own: it only opens orOS with the page's
-   address and title in the URL, and orOS asks before saving. */
+   address and title (or the text you selected) in the URL, and orOS
+   asks before saving or sending anything. */
 (function (root, factory) {
   if (typeof module === "object" && module.exports) module.exports = factory();
   else root.OrosExt = factory();
@@ -9,7 +10,7 @@
   "use strict";
 
   var DEFAULT_BASE = "https://useoros.online/";
-  var MAX_URL = 2048, MAX_TITLE = 256, MAX_QUERY = 200;
+  var MAX_URL = 2048, MAX_TITLE = 256, MAX_QUERY = 200, MAX_ASK = 8000;
 
   /* The orOS address from the options: https anywhere, plain http
      only on this machine (a local copy). Query and fragment drop,
@@ -58,8 +59,19 @@
     return q ? b + "?search=" + encodeURIComponent(q) : b;
   }
 
+  /* Right-click on selected text: "Ask the orOS Assistant". The text
+     rides in the fragment (#quick-ask=…), which never reaches a server;
+     orOS opens its Assistant with the text in the box and sends
+     nothing until you press Send (quickmenu.js, AS-OUT). */
+  function askUrl(base, text) {
+    var b = normBase(base) || DEFAULT_BASE;
+    var t = String(text == null ? "" : text).trim().slice(0, MAX_ASK);
+    return b + "#quick-ask" + (t ? "=" + encodeURIComponent(t) : "");
+  }
+
   return {
     DEFAULT_BASE: DEFAULT_BASE,
+    askUrl: askUrl,
     normBase: normBase,
     isSavable: isSavable,
     shareUrl: shareUrl,

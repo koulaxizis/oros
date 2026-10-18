@@ -108,3 +108,24 @@ test("orOS account: Contacts and Calendar sync have their switch and last-synced
   assert.match(bridge, /OrosAccount\.synced\(app, authority\)/);
   assert.match(bridge, /if \(!OrosAccount\.syncOn\(app, contacts \?/);
 });
+
+test("android: the Assistant tile and widget button open #quick-ask (AS-OUT)", () => {
+  assert.match(xml, /<service android:name="\.AskTile" android:exported="true"[^>]*android:permission="android\.permission\.BIND_QUICK_SETTINGS_TILE"/);
+  assert.ok(xml.includes("android.service.quicksettings.action.QS_TILE"));
+  const { REMOVE_NODES } = require(path.join(ROOT, "android", "tools", "gen.js"));
+  assert.ok(REMOVE_NODES.some(([t, n]) => t === "service" && n === ".AskTile"));    // single apps leave it out
+  const main = path.join(ROOT, "android", "app", "src", "main");
+  const java = (f) => fs.readFileSync(path.join(main, "java", "online", "useoros", "twa", f), "utf8");
+  assert.match(java("Widgets.java"), /\.fragment\("quick-ask"\)/);
+  assert.match(java("AskTile.java"), /Widgets\.ask\(this\)/);
+  for (const l of ["widget_quick.xml", "widget_today.xml"]) {
+    assert.ok(fs.readFileSync(path.join(main, "res", "layout", l), "utf8").includes('android:id="@+id/w_ask"'), l);
+  }
+  for (const v of ["values", "values-el"]) {
+    const s = fs.readFileSync(path.join(main, "res", v, "strings.xml"), "utf8");
+    assert.ok(s.includes('name="widget_ask"') && s.includes('name="tile_ask"'), v);
+  }
+  const first = (web.shortcuts || []).slice(0, 4).map((s) => s.url);
+  assert.ok(first.includes("/#quick-ask"), "the Ask shortcut reaches Android's four");
+  assert.ok(out["res/xml/shortcuts.xml"].includes('android:data="https://useoros.online/#quick-ask"'));
+});

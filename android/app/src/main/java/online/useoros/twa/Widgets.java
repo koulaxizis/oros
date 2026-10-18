@@ -84,7 +84,21 @@ final class Widgets {
         return PendingIntent.getActivity(c, word.hashCode(), i, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
     }
 
+    /** orOS with the Assistant's small window (quickmenu.js "#quick-ask",
+     *  AS-OUT): the widget's Assistant button and the Quick Settings tile. */
+    static Intent askIntent(Context c) {
+        Uri u = Uri.parse(c.getString(R.string.launchUrl)).buildUpon().fragment("quick-ask").build();
+        return new Intent(c, LauncherActivity.class).setAction(Intent.ACTION_VIEW).setData(u)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+    }
+
+    static PendingIntent ask(Context c) {
+        return PendingIntent.getActivity(c, "quick-ask".hashCode(), askIntent(c),
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+    }
+
     private static void buttons(Context c, RemoteViews v) {
+        v.setOnClickPendingIntent(R.id.w_ask, ask(c));
         v.setOnClickPendingIntent(R.id.w_cmd, open(c, "cmd"));
         v.setOnClickPendingIntent(R.id.w_add_task, open(c, "task"));
         v.setOnClickPendingIntent(R.id.w_add_water, open(c, "water"));

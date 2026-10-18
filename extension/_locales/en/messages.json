@@ -3,7 +3,7 @@
     "message": "Send to orOS"
   },
   "extDesc": {
-    "message": "Save the page you are on to orOS Bookmarks with one click, and search orOS from the address bar."
+    "message": "Save pages to orOS Bookmarks in one click, ask the orOS Assistant about text you select, search orOS from the address bar."
   },
   "actionTitle": {
     "message": "Save this page to orOS"
@@ -13,6 +13,9 @@
   },
   "menuLink": {
     "message": "Save link to orOS"
+  },
+  "menuAsk": {
+    "message": "Ask the orOS Assistant about “%s”"
   },
   "menuOpen": {
     "message": "Open orOS"
@@ -53,7 +56,10 @@
   "optHow4": {
     "message": "orOS opens in a new tab with the bookmark ready. Nothing is saved until you press Save there."
   },
+  "optHow5": {
+    "message": "Select text, right-click it: Ask the orOS Assistant. orOS opens its Assistant with the text in the message box; nothing is sent until you press Send."
+  },
   "optPrivacy": {
-    "message": "This add-on collects nothing and talks to no server. It only opens orOS with the page's address and title."
+    "message": "This add-on collects nothing and talks to no server. It only opens orOS with the page's address and title, or with the text you selected for the Assistant (in the part of the address that never leaves your browser)."
   }
 }

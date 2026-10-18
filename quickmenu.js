@@ -1,5 +1,5 @@
 // ============================================================
-// orOS — quickmenu.js (desktop menu: Assistant tasks + apps, mini Assistant, selected text, v1.2.0)
+// orOS — quickmenu.js (desktop menu: Assistant tasks + apps, mini Assistant, selected text, from outside, v1.3.0)
 // ------------------------------------------------------------
 // A shell component, like launcher.js: it runs IN the shell document,
 // keeps its own storage and registers its own sync slice. shell.js
@@ -38,6 +38,12 @@
 //     that set window.__orosNoSelAsk (Writer: its own Ask button), the
 //     Assistant, Passwords and password fields are left alone. A right-
 //     click the app takes for itself (preventDefault) stays the app's.
+//   • 1.3.0: from outside orOS. "#quick-ask" opens the mini window,
+//     "#quick-ask=<text>" with the text quoted in its box (the app
+//     icon's "Ask the Assistant" shortcut, the browser add-on's menu
+//     for selected text, the Android tile and widget). A fragment never
+//     reaches the server; it leaves the address bar at once, and the
+//     window opens once the app list is in (orosQuick.ready()).
 //
 // Data (synced, slice "quickmenu", key oros-quick-menu):
 //   { ver:1, items:[{ id, k, n, p, app, send, o, d, m }] }
@@ -59,7 +65,7 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.1.0";
+  var VER = "1.3.0";
   var DATA_KEY = "oros-quick-menu";
   var MAX_ITEMS = 200;          // stored, tombstones included
   var MAX_SHOWN = 24;           // in the menu
@@ -1037,6 +1043,41 @@
     root.addEventListener("resize", hideChip);
   }
 
+  // ---------- 10. From outside orOS (quick access wave 4) ----------
+  var launchWant = null, appsIn = false;
+  // "#quick-ask[=text]" → { sel } (text cleaned), else null. The
+  // fragment leaves the address bar at once.
+  function takeHash() {
+    var h = "";
+    try { h = String(root.location.hash || ""); } catch (e) { return null; }
+    var m = /^#quick-ask(?:=([\s\S]*))?$/.exec(h);
+    if (!m) return null;
+    try { root.history.replaceState(root.history.state, "", root.location.pathname + root.location.search); } catch (e) {}
+    var t = "";
+    try { t = decodeURIComponent((m[1] || "").replace(/\+/g, " ")); } catch (e) { t = ""; }
+    return { sel: cleanSel(t) };
+  }
+  function launch(w) {
+    if (!hasAssistant()) return;
+    if (!w.sel.text) { ask(null); return; }
+    selAsk(w.sel, function () { ask({ ask: expand(tr("selp.ask"), { sel: w.sel.text }) }); });
+  }
+  function wireHash() {
+    launchWant = takeHash();
+    root.addEventListener("hashchange", function () {
+      var w = takeHash();
+      if (!w) return;
+      if (appsIn) launch(w); else launchWant = w;
+    });
+  }
+  // The shell calls this once its app list is in.
+  function ready() {
+    appsIn = true;
+    var w = launchWant;
+    launchWant = null;
+    if (w) launch(w);
+  }
+
   // Ctrl+Alt+Shift+Q: with text selected in the app in front, the menu
   // of selected text; otherwise the mini window.
   function quick() {
@@ -1048,7 +1089,7 @@
     ask(null);
   }
 
-  // ---------- 10. Public API ----------
+  // ---------- 11. Public API ----------
   // host = { desktop, apps(), open(app), label(app), icons, lang(),
   //          running() → the open app or null, isOpen(id) optional
   //          (alive behind, multitasking), toast(msg) optional }
@@ -1060,6 +1101,7 @@
     registerSync();
     if (host.desktop) wireDesktop();
     wireFrames();
+    wireHash();
     watchRunning();
   }
 
@@ -1070,6 +1112,7 @@
     edit: edit,
     mini: function (target) { if (target) ask(target); else quick(); },
     takeMini: takeMini,
+    ready: ready,
     // Sticky Notes leaves the desktop's right-click to this menu.
     ownsDesktop: function () { return !!(host && host.desktop); },
     selChip: function (on) { if (on !== undefined) setChipOn(!!on); return chipOn(); },
