@@ -373,8 +373,8 @@ test("F-Droid store listing (FDROID-2): texts, categories, pictures and front pa
   fs.rmSync(tmp, { recursive: true, force: true });
   // Store-only changes republish the repository
   const wf = read(".github/workflows/fdroid.yml");
-  assert.match(wf, /paths: \['tools\/fdroid-metadata\.js', 'tools\/fdroid\/\*\*', '\.github\/workflows\/fdroid\.yml'\]/);
-  assert.match(wf, /tools\/fdroid-metadata\.js tools\/fdroid \|/);
+  assert.match(wf, /paths: \['tools\/fdroid-metadata\.js', 'tools\/fdroid-keep\.js', 'tools\/fdroid\/\*\*', '\.github\/workflows\/fdroid\.yml'\]/);
+  assert.match(wf, /tools\/fdroid-metadata\.js tools\/fdroid-keep\.js tools\/fdroid\n/);
   assert.match(wf, /cp -r "\$fd\/site\/\." "\$site\/"/);
 });
 
