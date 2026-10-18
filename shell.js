@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "3.38.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "3.39.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -6319,6 +6319,9 @@
         { name: "WooCommerce REST API", url: "https://woocommerce.github.io/woocommerce-rest-api-docs/",
           by: "Automattic; your own shop", lic: { k: "cr.lic.woocommerce-rest" },
           k: "cr.woocommerce-rest" },
+        { name: "Shopify Storefront API", url: "https://shopify.dev/docs/api/storefront",
+          by: "Shopify Inc.; your own shop", lic: { k: "cr.lic.woocommerce-rest" },
+          k: "cr.shopify-storefront" },
         { name: "MailerLite, Mailchimp, Brevo", url: "https://www.mailerlite.com/",
           by: "Each provider; your own account", lic: { k: "cr.lic.anthropic-openai" },
           k: "cr.mailerlite-mailchimp" },

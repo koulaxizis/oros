@@ -11,6 +11,8 @@
 //               Only published posts; only readers whose e-mail is
 //               not disabled and whose subscription is active (see
 //               subsSubstack for how "active" is read).
+//   - Shopify    Customers › Export (CSV): only customers who accept
+//               e-mail marketing (editor wave E4)
 //   - Buttondown Subscribers › Export (CSV: email, creation_date,
 //               notes, tags, subscriber_type …): only regular,
 //               premium and gifted readers (unactivated, unsubscribed,
@@ -105,6 +107,21 @@
     return out;
   }
 
+  // Shopify customer export (Customers › Export, CSV: Customer ID,
+  // First Name, Last Name, Email, Accepts Email Marketing … Tags; older
+  // exports say Accepts Marketing): only customers who accept e-mail
+  // marketing come in (editor wave E4).
+  function subsShopify(recs) {
+    var out = { people: [], pSkip: 0, pBad: 0 };
+    recs.slice(0, MAX_PEOPLE).forEach(function (r) {
+      if (!yes(K.get(r, ["accepts_email_marketing", "accepts_marketing"]))) { out.pSkip++; return; }
+      var name = [K.get(r, ["first_name"]), K.get(r, ["last_name"])].map(function (x) { return String(x || "").trim(); }).filter(Boolean).join(" ");
+      var p = person(K.get(r, ["email"]), name, String(K.get(r, ["tags"]) || "").split(","));
+      if (p) out.people.push(p); else out.pBad++;
+    });
+    return out;
+  }
+
   // ---------- 2. Past issues ----------
   function withPre(it, pre, key) {
     if (!it) return null;
@@ -157,6 +174,7 @@
     if (has(h, ["email"]) && has(h, ["email_disabled"]) && has(h, ["active_subscription"])) return "ss-subs";
     if (has(h, ["post_id"]) && has(h, ["is_published"])) return "ss-posts";
     if (has(h, ["email", "email_address"]) && has(h, ["subscriber_type"])) return "bd-subs";
+    if (has(h, ["email"]) && has(h, ["accepts_email_marketing", "accepts_marketing"]) && has(h, ["first_name"])) return "sh-subs";
     if (has(h, ["subject"]) && has(h, ["body"]) && (has(h, ["status"]) || has(h, ["email_type"]) || has(h, ["secondary_id"]))) return "bd-emails";
     return "";
   }
@@ -173,6 +191,7 @@
     if (kind === "ss-subs") return add(empty("substack"), subsSubstack(recs));
     if (kind === "ss-posts") return add(empty("substack"), postsSubstack(recs, {}));
     if (kind === "bd-subs") return add(empty("buttondown"), subsButtondown(recs, name));
+    if (kind === "sh-subs") return add(empty("shopify"), subsShopify(recs));
     return add(empty("buttondown"), emailsButtondownCsv(recs));
   }
   function fromZip(bytes) {
@@ -266,7 +285,7 @@
   }
 
   var api = { ACCEPT: ACCEPT, MAX_FILE: MAX_FILE, read: read, plan: plan, range: range, issueId: issueId,
-              kindOfCsv: kindOfCsv, subsSubstack: subsSubstack, subsButtondown: subsButtondown,
+              kindOfCsv: kindOfCsv, subsSubstack: subsSubstack, subsButtondown: subsButtondown, subsShopify: subsShopify,
               postsSubstack: postsSubstack, emailsButtondownCsv: emailsButtondownCsv };
   if (NODE) module.exports = api;
   else root.OrosNewsletterImport = api;

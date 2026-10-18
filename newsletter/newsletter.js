@@ -157,7 +157,7 @@
       "arc.archive": "Past issues (already sent)", "arc.drafts": "Drafts", "arc.do": "Import {n}", "arc.done": "Imported {n} issues",
       "arc.full": "Imported {n} issues: there is no room for more", "arc.bad": "This file can't be read",
       "i2.title": "Import from {s}", "i2.hint": "Subscribers join the list you pick, with the basis you choose. Posts become past issues (already sent, nobody gets an e-mail) or drafts; pictures stay at their web address.",
-      "i2.subs": "Subscribers: {n}", "i2.pSkip": "{n} left out: unsubscribed, not confirmed or no longer active there.",
+      "i2.subs": "Subscribers: {n}", "i2.pSkip": "{n} left out: unsubscribed, not confirmed or no longer active there.", "i2.pSkipShop": "{n} left out: they don't accept e-mail marketing in Shopify.",
       "i2.iss": "Past issues: {n}", "i2.iSkip": "{n} drafts or unpublished posts left out", "i2.iNoBody": "{n} without text",
       "i2.issSum": "{n} new issues · {h} already here", "i2.full": "no room for the rest",
       "i2.do": "Import", "i2.done": "Imported {s} subscribers and {i} issues",
@@ -232,6 +232,7 @@
       "ck.badBlock": "A button without text or link, or a picture block without a picture.",
       "ck.placeholder": "Something in braces isn't {first}, {name} or {first|…}.",
       "ck.noAudience": "Nobody to send to: no active subscriber matches.",
+      "ck.oldPrices": "Product prices were read from the shop more than a day ago: use Refresh prices in the product block.", "bk.prod": "Products",
       "sd.title": "Send", "sd.text": "{n} messages from {f} through {c}.",
       "sd.time": "At one message every {s} s it takes about {m} minutes; with up to {cap} a day it needs {d} days.",
       "sd.time1": "At one message every {s} s it takes about {m} minutes.",
@@ -360,7 +361,7 @@
       "arc.archive": "Παλιά τεύχη (ήδη σταλμένα)", "arc.drafts": "Πρόχειρα", "arc.do": "Εισαγωγή {n}", "arc.done": "Εισήχθησαν {n} τεύχη",
       "arc.full": "Εισήχθησαν {n} τεύχη: δεν χωράνε άλλα", "arc.bad": "Αυτό το αρχείο δεν διαβάζεται",
       "i2.title": "Εισαγωγή από {s}", "i2.hint": "Οι συνδρομητές μπαίνουν στη λίστα που διαλέγεις, με τη βάση που ορίζεις. Οι αναρτήσεις γίνονται παλιά τεύχη (ήδη σταλμένα, δεν φεύγει κανένα email) ή πρόχειρα· οι εικόνες μένουν στη διεύθυνσή τους στο διαδίκτυο.",
-      "i2.subs": "Συνδρομητές: {n}", "i2.pSkip": "{n} έμειναν έξω: διαγράφηκαν, δεν επιβεβαίωσαν ή δεν είναι πια ενεργοί εκεί.",
+      "i2.subs": "Συνδρομητές: {n}", "i2.pSkip": "{n} έμειναν έξω: διαγράφηκαν, δεν επιβεβαίωσαν ή δεν είναι πια ενεργοί εκεί.", "i2.pSkipShop": "{n} έμειναν έξω: δεν δέχονται email μάρκετινγκ στο Shopify.",
       "i2.iss": "Παλιά τεύχη: {n}", "i2.iSkip": "{n} πρόχειρα ή αδημοσίευτα έμειναν έξω", "i2.iNoBody": "{n} χωρίς κείμενο",
       "i2.issSum": "{n} νέα τεύχη · {h} υπάρχουν ήδη", "i2.full": "δεν χωράνε τα υπόλοιπα",
       "i2.do": "Εισαγωγή", "i2.done": "Εισήχθησαν {s} συνδρομητές και {i} τεύχη",
@@ -435,6 +436,7 @@
       "ck.badBlock": "Ένα κουμπί χωρίς κείμενο ή σύνδεσμο, ή block εικόνας χωρίς εικόνα.",
       "ck.placeholder": "Κάτι μέσα σε άγκιστρα δεν είναι {first}, {name} ή {first|…}.",
       "ck.noAudience": "Δεν υπάρχει παραλήπτης: κανένας ενεργός συνδρομητής δεν ταιριάζει.",
+      "ck.oldPrices": "Οι τιμές των προϊόντων διαβάστηκαν από το κατάστημα πριν από πάνω από μία μέρα: πάτα Ανανέωση τιμών στο block προϊόντων.", "bk.prod": "Προϊόντα",
       "sd.title": "Αποστολή", "sd.text": "{n} μηνύματα από {f} μέσω {c}.",
       "sd.time": "Με ένα μήνυμα κάθε {s} δλ. θέλει περίπου {m} λεπτά· με έως {cap} τη μέρα χρειάζεται {d} μέρες.",
       "sd.time1": "Με ένα μήνυμα κάθε {s} δλ. θέλει περίπου {m} λεπτά.",
@@ -724,6 +726,7 @@
     acts.appendChild(mini(t("subs.csv"), importCsv));
     acts.appendChild(mini(t("subs.contacts"), contactsDialog));
     if (crmPeople()) acts.appendChild(mini(t("subs.crm"), crmDialog));
+    if (Sh && Sh.hasWoo()) acts.appendChild(mini(shopT("shop.cust"), Sh.customers));
     if (P && P.has()) acts.appendChild(mini(P.label(), P.open));
     acts.appendChild(mini(t("subs.enrich"), function () { enrichNames(shownSubs); }));
     acts.appendChild(mini(t("subs.export"), exportCsv));
@@ -1093,6 +1096,7 @@
     put("issues", x);
     renderBlocks(x, $("blocks"));
     if ((b.k === "img" || b.k === "imgtxt" || b.k === "gallery") && !(C.picRefs(b)[0] || {}).f) pickImage(x, at);
+    else if (b.k === "prod" && !b.items.length && Sh) shopPick(x, at);
     else focusBlock(at);
   }
   // The other block kinds and the saved blocks (wave E3)
@@ -1358,7 +1362,7 @@
   // ---------- the block editor (wave E1) ----------
   var ADD_KINDS = ["h", "p", "img", "btn", "list", "quote", "hr", "sp", "cols"];
   // under "More blocks", with the saved blocks (wave E3)
-  var MORE_KINDS = ["head", "imgtxt", "gallery", "video", "cols3", "table", "event", "social", "foot"];
+  var MORE_KINDS = ["head", "imgtxt", "gallery", "prod", "video", "cols3", "table", "event", "social", "foot"];
   var SO = window.OrosNewsletterSocial;
   function newBlock(k, l) {
     switch (k) {
@@ -1375,6 +1379,7 @@
       case "imgtxt": return { k: "imgtxt", f: "", w: 600, h: 400, b: 0, alt: "", href: "", hd: "", t: "", bt: "", bh: "" };
       case "cols3": return { k: "cols3", a: "", b: "", c: "" };
       case "gallery": return { k: "gallery", items: [] };
+      case "prod": return { k: "prod", items: [], bt: "" };
       case "video": return { k: "video", f: "", w: 600, h: 400, b: 0, url: "", alt: "", t: "" };
       case "table": return { k: "table", rows: [["", ""], ["", ""]], hd: 1 };
       case "event": {
@@ -1811,6 +1816,31 @@
           card.appendChild(gb);
         });
         if ((b.items || []).length < 9) card.appendChild(mini("+ " + t("bk.galAdd"), function () { pickImage(x, i, -1); }));
+      } else if (b.k === "prod") {
+        // wave E4: products from a connected shop (newsletter/shop.js)
+        var pr = row();
+        pr.appendChild(field(t("bk.per"), selCtl([["1", "1"], ["2", "2"], ["3", "3"]], b.per === 1 || b.per === 3 ? b.per : 2, function (v) { setNow("per", v === "2" ? "" : +v); })));
+        var btIn = bind(inp("text", b.bt, 40), "bt");
+        btIn.placeholder = shopT("shop.btPh");
+        pr.appendChild(field(shopT("shop.bt"), btIn));
+        card.appendChild(pr);
+        if (!b.items.length) card.appendChild(el("p", "hint", shopT("shop.noItems")));
+        b.items.forEach(function (p, j) {
+          var pb = el("div", "btn-more prod-ed");
+          picRow(p, pb, function () { pickImage(x, i, j); }, function () {
+            snap(x);
+            b.items.splice(j, 1);
+            if (!b.items.length) { delete b.sh; delete b.acct; delete b.at; }
+            redraw();
+          }, shopT("shop.remove"));
+          pb.appendChild(el("p", "prod-line", p.name + (p.out ? " · " + shopT("shop.out") : p.price >= 0 ? " · " + money(p.price, p.cur) : "")));
+          card.appendChild(pb);
+        });
+        var pa = el("div", "prod-acts");
+        if (Sh && b.items.length < Sh.MAX) pa.appendChild(mini("+ " + shopT("shop.btn"), function () { flushIssue(); shopPick(x, i); }));
+        if (Sh && b.sh && b.items.length) pa.appendChild(mini(shopT("shop.refresh"), function () { flushIssue(); shopRefresh(x, i); }));
+        card.appendChild(pa);
+        if (b.sh && b.items.length) card.appendChild(el("p", "hint", b.at ? shopT("shop.at", { t: when(b.at) }) : shopT("shop.never")));
       } else if (b.k === "video") {
         card.appendChild(field(t("bk.videoUrl"), bind(inp("url", b.url, 2000), "url")));
         picRow(b, card, function () { pickImage(x, i); }, b.f ? function () { snap(x); b.f = ""; b.b = 0; redraw(); } : null, t("bk.noImgBtn"));
@@ -2999,24 +3029,74 @@
     var pick = host && typeof host.openFile === "function" ? host.openFile(acc) : localPickFile(acc);
     pick.then(function (file) {
       if (!file) return;
-      return shrink(file).then(function (r) {
-        var path = "/internal/Newsletter/img-" + C.randomId("", null) + ".jpg";
-        return fs.write(path, r.blob).then(function () {
-          var cur = C.issue(data, x.id), cb = cur && (onL2 ? cur.l2 : cur), xb = onL2 ? x.l2 : x;
-          var blk = xb && xb.blocks[i];
-          if (!cb || !blk || !cb.blocks[i] || cb.blocks[i].k !== blk.k || !(C.picRefs(blk).length || blk.k === "gallery")) return;
-          var ref = blk;
-          if (blk.k === "gallery") {
-            if (typeof j === "number" && j >= 0 && j < blk.items.length) ref = blk.items[j];
-            else if (blk.items.length < 9) { ref = { alt: "", href: "" }; blk.items.push(ref); }
-            else return;
-          }
-          ref.f = path; ref.w = r.w; ref.h = r.h; ref.b = r.blob.size;
-          put("issues", x);
-          if (view === "edit") renderBlocks(x, $("blocks"));
-        });
+      return storeImage(file).then(function (r) {
+        var cur = C.issue(data, x.id), cb = cur && (onL2 ? cur.l2 : cur), xb = onL2 ? x.l2 : x;
+        var blk = xb && xb.blocks[i];
+        if (!cb || !blk || !cb.blocks[i] || cb.blocks[i].k !== blk.k || !(C.picRefs(blk).length || blk.k === "gallery")) return;
+        var ref = blk;
+        if (blk.k === "gallery" || blk.k === "prod") {
+          if (typeof j === "number" && j >= 0 && j < blk.items.length) ref = blk.items[j];
+          else if (blk.k === "gallery" && blk.items.length < 9) { ref = { alt: "", href: "" }; blk.items.push(ref); }
+          else return;
+        }
+        ref.f = r.path; ref.w = r.w; ref.h = r.h; ref.b = r.b;
+        put("issues", x);
+        if (view === "edit") renderBlocks(x, $("blocks"));
       });
     })["catch"](function () { showToast(t("toast.imgBad")); });
+  }
+  // A picture (a picked file or a shop's product picture) shrunk and
+  // stored with the issues' pictures → { path, w, h, b }
+  function storeImage(blob) {
+    var fs = orosFS();
+    if (!fs) return Promise.reject(new Error("nodisk"));
+    return shrink(blob).then(function (r) {
+      var path = "/internal/Newsletter/img-" + C.randomId("", null) + ".jpg";
+      return fs.write(path, r.blob).then(function () { return { path: path, w: r.w, h: r.h, b: r.blob.size }; });
+    });
+  }
+  // ---------- products from a shop (wave E4, newsletter/shop.js) ----------
+  var Sh = window.OrosNewsletterShop || null;
+  function shopT(k, p) { return Sh ? Sh.t(k, p) : k; }
+  function money(c, cur) {
+    if (!(c >= 0)) return "";
+    try { return new Intl.NumberFormat(loc(), { style: "currency", currency: cur || "EUR" }).format(c / 100); }
+    catch (e) { return (c / 100).toFixed(2) + " " + (cur || ""); }
+  }
+  // the product block at index i of the version being edited, if it is still there
+  function liveProd(x, i) {
+    var cx = side(x), b = cx && cx.blocks[i];
+    return C.issue(data, x.id) && b && b.k === "prod" ? b : null;
+  }
+  function shopPick(x, i) {
+    var b = liveProd(x, i);
+    if (!b || !Sh) return;
+    Sh.pick(b, function (items, sh, acct) {
+      var cur = liveProd(x, i);
+      if (!cur || !items.length) return;
+      snap(x);
+      if (!cur.items.length || cur.acct !== acct) cur.items = [];
+      cur.items = cur.items.concat(items).slice(0, Sh.MAX);
+      cur.sh = sh; cur.acct = acct; cur.at = Date.now();
+      put("issues", x);
+      if (view === "edit") renderBlocks(x, $("blocks"));
+    });
+  }
+  function shopRefresh(x, i) {
+    var b = liveProd(x, i);
+    if (!b || !Sh) return;
+    Sh.refresh(b, function (items) {
+      var cur = liveProd(x, i);
+      if (!cur || cur.acct !== b.acct) return;
+      snap(x);
+      // a product removed meanwhile stays removed: only the ones still here change
+      var byId = {};
+      items.forEach(function (p) { byId[p.id] = p; });
+      cur.items = cur.items.map(function (p) { return p.id && byId[p.id] ? byId[p.id] : p; });
+      cur.at = Date.now();
+      put("issues", x);
+      if (view === "edit") renderBlocks(x, $("blocks"));
+    });
   }
   function shrink(file) {
     return new Promise(function (resolve, reject) {
@@ -3577,7 +3657,7 @@
   // through core.planImport, the same rules as every other import.
   // ONE write (saveNow: one merge, one dirty mark) and an Undo that
   // writes newer tombstones, so another device drops them too.
-  var I2_SRC = { substack: "Substack", buttondown: "Buttondown" };
+  var I2_SRC = { substack: "Substack", buttondown: "Buttondown", shopify: "Shopify" };
   function tryImport2(file) {
     var I2 = window.OrosNewsletterImport, K = window.OrosImportKit;
     if (!I2 || !K || !file) return Promise.resolve(false);
@@ -3610,7 +3690,7 @@
     }
     // subscribers
     f.subs = part(res.people.length > 0, res.people.length + res.pSkip + res.pBad > 0, t("i2.subs", { n: res.people.length }));
-    if (res.pSkip) dlg.appendChild(el("p", "hint", t("i2.pSkip", { n: res.pSkip })));
+    if (res.pSkip) dlg.appendChild(el("p", "hint", t(res.source === "shopify" ? "i2.pSkipShop" : "i2.pSkip", { n: res.pSkip })));
     f.basis = sel(C.BASES.map(function (b) { return [b, t("basis." + b)]; }), "consent");
     var bh = el("p", "hint", "");
     var bw = field(t("imp.basis"), f.basis);
@@ -3946,10 +4026,19 @@
       renderAll: function () { renderAll(); }
     });
   }
+  function initShop() {
+    if (!Sh) return;
+    Sh.init({
+      get lang() { return LANG; },
+      el: el, makeDialog: makeDialog, openDialog: openDialog, field: field, sel: sel, btn: btn, actionsRow: actionsRow,
+      toast: function (m) { showToast(m); }, money: money, storeImage: storeImage, pickPeople: pickPeople
+    });
+  }
   function boot() {
     findRunner();
     load();
     initPlatforms();
+    initShop();
     loadPrefs();
     applyI18n();
     wire();

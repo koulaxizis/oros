@@ -584,6 +584,7 @@
     "newsletter/render.js",
     "newsletter/runner.js",
     "newsletter/search.js",
+    "newsletter/shop.js",
     "newsletter/today.js"
    ]
   },

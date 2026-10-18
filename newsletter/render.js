@@ -30,7 +30,8 @@
       confText: "To confirm, send an e-mail to {a} with the subject: confirm {t}",
       test: "[Test] ",
       video: "Watch the video", ics: "The event is attached as a calendar file: open it to add it to your calendar.",
-      mon: "Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec"
+      mon: "Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec",
+      buy: "Buy now", soldOut: "Sold out"
     },
     el: {
       why: "Το λαμβάνεις επειδή έχεις εγγραφεί στο {l}.",
@@ -45,7 +46,8 @@
       confText: "Για επιβεβαίωση, στείλε email στο {a} με θέμα: confirm {t}",
       test: "[Δοκιμή] ",
       video: "Δες το βίντεο", ics: "Η εκδήλωση είναι συνημμένη ως αρχείο ημερολογίου: άνοιξέ το για να την προσθέσεις στο ημερολόγιό σου.",
-      mon: "ΙΑΝ ΦΕΒ ΜΑΡ ΑΠΡ ΜΑΪ ΙΟΥΝ ΙΟΥΛ ΑΥΓ ΣΕΠ ΟΚΤ ΝΟΕ ΔΕΚ"
+      mon: "ΙΑΝ ΦΕΒ ΜΑΡ ΑΠΡ ΜΑΪ ΙΟΥΝ ΙΟΥΛ ΑΥΓ ΣΕΠ ΟΚΤ ΝΟΕ ΔΕΚ",
+      buy: "Αγορά", soldOut: "Εξαντλήθηκε"
     }
   };
   function S(lang, k, p) {
@@ -340,8 +342,53 @@
                ";border-radius:8px\"><tr><td style=\"padding:16px\"><table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\"><tr>" +
                badge + "<td valign=\"top\" style=\"text-align:left\">" + info + "</td></tr></table></td></tr></table>";
       }
+      case "prod": return prodHtml(b, st, img, t);
     }
     return "";      // a block from a newer orOS: not drawn here
+  }
+  // A price in cents as the list's language writes money ("12,50 €",
+  // "€12.50"); "" when the shop didn't say.
+  function money(c, cur, lang) {
+    if (!(c >= 0)) return "";
+    try { return new Intl.NumberFormat(lang === "el" ? "el-GR" : "en-IE", { style: "currency", currency: cur || "EUR" }).format(c / 100); }
+    catch (e) { return (c / 100).toFixed(2) + " " + (cur || ""); }
+  }
+  // Product cards (wave E4): 1 per row = picture beside the text,
+  // 2 or 3 = cards that stack on a phone.
+  function prodHtml(b, st, img, t) {
+    var th = st.th, per = b.per === 1 || b.per === 3 ? b.per : 2;
+    var items = (b.items || []).filter(function (p) { return p.name && p.href; });
+    if (!items.length) return "";
+    var cw = per === 1 ? 258 : per === 3 ? 170 : 262, center = per !== 1;
+    var cards = items.map(function (p) {
+      var u = p.f && img ? img({ f: p.f }) : "";
+      var pim = u ? "<a href=\"" + esc(p.href) + "\"><img src=\"" + esc(u) + "\" alt=\"" + esc(p.alt || p.name) + "\" width=\"" + cw +
+        "\" style=\"display:block;width:100%;max-width:" + cw + "px;height:auto;border:0;border-radius:6px;margin:0 auto 10px\"></a>" : "";
+      var txt = "<p style=\"margin:0 0 6px;font-size:" + (per === 3 ? 15 : 17) + "px;line-height:1.3;font-weight:700;font-family:" + st.font + "\">" +
+        "<a href=\"" + esc(p.href) + "\" style=\"color:" + th.text + ";text-decoration:none\">" + esc(p.name) + "</a></p>";
+      if (p.t && per !== 3) txt += "<p style=\"margin:0 0 8px;font-size:14px;line-height:1.5;color:" + th.dim + "\">" + esc(p.t) + "</p>";
+      var now = money(p.price, p.cur, st.lang), was = p.was ? money(p.was, p.cur, st.lang) : "";
+      if (p.out) txt += "<p style=\"margin:0 0 10px;font-size:14px;font-weight:700;color:" + th.dim + "\">" + esc(S(st.lang, "soldOut")) + "</p>";
+      else if (now) {
+        txt += "<p style=\"margin:0 0 10px;font-size:16px;line-height:1.4\">" + (was ? "<span style=\"color:" + th.dim + ";text-decoration:line-through;font-size:14px\">" + esc(was) + "</span>&nbsp; " : "") +
+          "<strong style=\"color:" + (was ? st.accent : th.text) + "\">" + esc(now) + "</strong></p>";
+      }
+      // a sold-out product keeps its links but asks no one to buy it
+      var btn = p.out ? "" : "<table role=\"presentation\"" + (center ? " align=\"center\"" : "") + " cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"margin:0 " + (center ? "auto" : "0") + " 8px\"><tr>" +
+        buttonHtml({ t: b.bt ? t(b.bt) : S(st.lang, "buy"), href: p.href }, st, false, false) + "</tr></table>";
+      if (per === 1) {
+        var cell = function (h) { return "<div style=\"display:inline-block;vertical-align:middle;width:100%;max-width:258px;margin:0 4px 12px;text-align:left\">" + h + "</div>"; };
+        return "<div style=\"font-size:0;text-align:left;margin:0 0 8px\">" + (pim ? cell(pim) : "") + cell(txt + btn) + "</div>";
+      }
+      return "<div style=\"display:inline-block;vertical-align:top;width:100%;max-width:" + cw + "px;margin:0 3px 16px;text-align:center\">" + pim + txt + btn + "</div>";
+    });
+    return per === 1 ? cards.join("") : "<div style=\"font-size:0;text-align:center;margin:0 0 8px\">" + cards.join("") + "</div>";
+  }
+  function prodText(b, lang) {
+    return (b.items || []).filter(function (p) { return p.name && p.href; }).map(function (p) {
+      var now = p.out ? S(lang, "soldOut") : money(p.price, p.cur, lang);
+      return p.name + (now ? " \u2014 " + now + (p.was && !p.out ? " (" + money(p.was, p.cur, lang) + ")" : "") : "") + "\n" + p.href;
+    }).join("\n\n");
   }
   // A row of social icons (PNG pictures drawn when sending)
   function socialRow(b, sz, img, al, margin) {
@@ -383,7 +430,7 @@
       " style=\"margin:0 0 12px" + (b.bg ? ";background:" + b.bg + ";border-radius:6px" : "") + "\"><tr><td align=\"" + al + "\" style=\"text-align:" + al +
       ";padding:" + (b.pad || 0) + "px " + (b.bg ? 16 : 0) + "px\">" + inner + "</td></tr></table>";
   }
-  function blockText(b, sub) {
+  function blockText(b, sub, lang) {
     var t = function (s) { return personalize(s, sub); };
     switch (b.k) {
       case "h": { var h = inlineText(t(b.t)); return h + "\n" + new Array(Math.min(h.length, 60) + 1).join(b.lv === 3 ? "-" : "="); }
@@ -418,6 +465,7 @@
         if (!b.t || !C.validDay(b.d)) return "";
         return [t(b.t).toUpperCase(), b.d + (b.tm ? " " + b.tm + (b.te ? "\u2013" + b.te : "") : ""), b.loc ? t(b.loc) : "", b.sub ? paraText(t(b.sub)) : "",
                 b.bt && b.bh ? t(b.bt) + ": " + b.bh.replace(/^mailto:/i, "") : ""].filter(Boolean).join("\n");
+      case "prod": return prodText(b, lang);
     }
     return "";
   }
@@ -440,7 +488,7 @@
       "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"max-width:600px;background:" + th.card +
       (l.theme === "plain" ? "" : ";border-radius:12px;border-top:4px solid " + accent) + "\"><tr><td style=\"padding:" + th.pad + "px;font-family:" + st.font +
       ";color:" + th.text + ";text-align:left\">" + body + "</td></tr></table>" + foot + "</td></tr></table>";
-    var text = blocksOf(x).map(function (b) { return blockText(b, o.sub); }).filter(Boolean).join("\n\n") + "\n\n-- \n" + footText(o, lang);
+    var text = blocksOf(x).map(function (b) { return blockText(b, o.sub, lang); }).filter(Boolean).join("\n\n") + "\n\n-- \n" + footText(o, lang);
     var subj = personalize(x.subj, o.sub);
     return { subject: (o.test ? S(lang, "test") : "") + subj, html: html, text: text };
   }

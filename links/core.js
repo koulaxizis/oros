@@ -60,7 +60,7 @@
         { k: "ck", re: /^ck_[a-f0-9]{40}$/ },
         { k: "cs", re: /^cs_[a-f0-9]{40}$/ }
       ],
-      apps: ["stock"],
+      apps: ["stock", "newsletter"],
       probe: "/products?per_page=1"
     },
     // timologisi.online (Novus Conceptus): a Greek e-invoicing provider.
@@ -226,6 +226,20 @@
       apps: ["notes", "spreadsheet", "kanban"],
       probe: { m: "POST", path: "/search", body: { filter: { property: "object", value: "page" }, page_size: 1 } },
       relayOnly: true
+    },
+    // Newsletter wave E4: products from a Shopify shop through its
+    // Storefront API (GraphQL, the public Storefront access token the
+    // shop owner makes in a Headless or custom app). Read-only by
+    // nature, answers browsers: never through the relay (it doesn't
+    // know Shopify). Fixed queries only (SHOPIFY_Q).
+    shopify: {
+      name: "Shopify",
+      site: true,
+      root: "/api/2025-10",
+      keys: [{ k: "key", re: /^[a-f0-9]{32}$/ }],
+      apps: ["newsletter"],
+      probe: { m: "POST", path: "/graphql.json", body: { query: "{shop{name}}" } },
+      direct: true
     }
   };
   var PLATFORM_IDS = Object.keys(PLATFORMS);
@@ -267,6 +281,7 @@
     if (!validHost(host)) return null;
     var path = (m[2] || "").replace(/\/+$/, "").replace(/\/wp-json(\/.*)?$/i, "").replace(/\/api\/v1$/i, "").replace(/\/json\/2$/i, "");
     if (p === "odoo") path = path.replace(/\/(odoo|web)(\/.*)?$/i, "");
+    if (p === "shopify") path = "";               // the Storefront API is at the shop's root
     if (!BASE_RE.test(path) || /(^|\/)\.\.?(\/|$)/.test(path)) return null;
     return "https://" + host + path;
   }
@@ -429,8 +444,28 @@
     nt_flt: { property: "object", value: "page" },
     nt_dbf: { property: "object", value: "database" }
   };
+  // Shopify Storefront (Newsletter wave E4): the only queries orOS
+  // sends, compared as text like the Odoo bodies above.
+  var SF_PRODUCT = "id title handle onlineStoreUrl description availableForSale featuredImage{url altText width height} " +
+    "priceRange{minVariantPrice{amount currencyCode}} compareAtPriceRange{minVariantPrice{amount currencyCode}} collections(first:5){nodes{title}}";
+  var SHOPIFY_Q = {
+    shop: "{shop{name}}",
+    products: "query P($first:Int!,$after:String,$query:String){products(first:$first,after:$after,query:$query,sortKey:UPDATED_AT,reverse:true)" +
+      "{pageInfo{hasNextPage endCursor} nodes{" + SF_PRODUCT + "}}}",
+    nodes: "query N($ids:[ID!]!){nodes(ids:$ids){... on Product{" + SF_PRODUCT + "}}}"
+  };
+  Object.keys(SHOPIFY_Q).forEach(function (k) { ODOO["sf_" + k] = SHOPIFY_Q[k]; });
   var ODOO_J = {};
   Object.keys(ODOO).forEach(function (k) { ODOO_J[k] = JSON.stringify(ODOO[k]); });
+  // Storefront variables: a page size, a page marker, a search, ids
+  var SF_CUR = /^[A-Za-z0-9+\/=_:.-]{1,400}$/, SF_GID = /^gid:\/\/shopify\/Product\/[0-9]{1,20}$/;
+  function okSfVars(v) {
+    if (!onlyKeys(v, ["first", "after", "query", "ids"])) return false;
+    if (v.first !== undefined && !(isInt(v.first) && v.first >= 1 && v.first <= 50)) return false;
+    if (v.after !== undefined && v.after !== null && !(typeof v.after === "string" && SF_CUR.test(v.after))) return false;
+    if (v.query !== undefined && v.query !== null && !(typeof v.query === "string" && v.query.length <= 100 && !/[\u0000-\u001f\u007f]/.test(v.query))) return false;
+    return v.ids === undefined || listOf(v.ids, 1, 20, function (x) { return typeof x === "string" && SF_GID.test(x); });
+  }
   var EMAIL_RE = /^[^\s@<>"',;:\\\/()\[\]]{1,64}@[A-Za-z0-9-]{1,63}(\.[A-Za-z0-9-]{1,63})*\.[A-Za-z]{2,63}$/;
   function okEmail(v) { return typeof v === "string" && v.length <= 254 && EMAIL_RE.test(v); }
   function okName(v) { return typeof v === "string" && v.length <= 120 && !/[\u0000-\u001f\u007f]/.test(v); }
@@ -478,7 +513,15 @@
     odco: function (b) { return has(b, "fields"); },
     odq: function (b) { return has(b, "domain") && has(b, "fields") && has(b, "order"); },
     // Notion: search only with the "pages" filter
-    ntq: function (b) { return has(b, "filter"); }
+    ntq: function (b) { return has(b, "filter"); },
+    // Shopify: a query is always there; products with a page size,
+    // nodes with ids, the shop name with nothing
+    sfq: function (b) {
+      var v = b.variables || {};
+      if (b.query === SHOPIFY_Q.products) return has(v, "first") && !has(v, "ids");
+      if (b.query === SHOPIFY_Q.nodes) return has(v, "ids") && Object.keys(v).length === 1;
+      return !has(b, "variables");
+    }
   };
   var LIST_Q = { page: NUM, per_page: PER, orderby: ORDERBY, order: ORD };
   function q(extra) { var o = {}; Object.keys(LIST_Q).forEach(function (k) { o[k] = LIST_Q[k]; }); Object.keys(extra || {}).forEach(function (k) { o[k] = extra[k]; }); return o; }
@@ -494,7 +537,10 @@
       ["GET", /^\/orders$/, q({ status: WORDS, after: DT, modified_after: DT }), null],
       ["GET", /^\/orders\/[0-9]{1,12}$/, null, null],
       ["PUT", /^\/orders\/[0-9]{1,12}$/, null, { status: "status" }],
-      ["POST", /^\/orders\/[0-9]{1,12}\/notes$/, null, { note: "text", customer_note: "bool" }]
+      ["POST", /^\/orders\/[0-9]{1,12}\/notes$/, null, { note: "text", customer_note: "bool" }],
+      // Newsletter wave E4: the shop's customers become subscribers
+      ["GET", /^\/customers$/, q({ role: /^(all|customer)$/ }), null],
+      ["GET", /^\/data\/currencies\/current$/, null, null]
     ],
     tol: [
       ["GET", /^\/GetCreditsBalance$/, null, null],
@@ -569,6 +615,9 @@
       ["GET", /^\/collections\/childrens$/, {}, null],
       ["GET", /^\/raindrops\/0$/, { perpage: PER50, page: NUM }, null]
     ],
+    shopify: [
+      ["POST", /^\/graphql\.json$/, null, { query: "=sf_shop|sf_products|sf_nodes", variables: "sfvars" }, "sfq"]
+    ],
     notion: [
       ["POST", /^\/search$/, null, { filter: "=nt_flt|nt_dbf", page_size: "nlim", start_cursor: "ncur" }, "ntq"],
       ["GET", /^\/blocks\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/children$/, { page_size: PER, start_cursor: NT_ID }, null],
@@ -592,15 +641,28 @@
     if (kind === "ooff") return isInt(v) && v >= 0 && v <= 10000000;
     if (kind === "nlim") return isInt(v) && v >= 1 && v <= 100;
     if (kind === "ncur") return typeof v === "string" && NT_ID.test(v);
+    if (kind === "sfvars") return okSfVars(v);
     // "=a" or "=a|b": exactly one of the fixed values
     if (kind[0] === "=") return kind.slice(1).split("|").some(function (k) { return has(ODOO_J, k) && JSON.stringify(v) === ODOO_J[k]; });
     return false;
+  }
+  // A product picture of a WooCommerce shop (Newsletter wave E4):
+  // { m: "GET", path: "/wp-content/uploads/…/x.jpg", img: 1 }, the path
+  // from the site's address (not the API root), no query, no body, no
+  // keys sent with it. Used only through the relay, when the shop
+  // doesn't let a browser read its pictures.
+  var IMG_PATH = /^\/wp-content\/uploads(\/([A-Za-z0-9_~-]|%[89A-Fa-f][0-9A-Fa-f])([A-Za-z0-9._~-]|%[89A-Fa-f][0-9A-Fa-f]){0,150}){1,6}\.(jpe?g|png|gif|webp)$/i;
+  function checkImg(p, r) {
+    if (p !== "woo" || r.img !== 1 || r.m !== "GET" || r.body !== undefined) return "path";
+    if (typeof r.path !== "string" || r.path.length > 400 || !IMG_PATH.test(r.path) || /\.\./.test(r.path)) return "path";
+    return "";
   }
   // "" when the request may go, else the reason.
   function checkReq(p, r) {
     var rules = ALLOW[p];
     if (!rules) return "p";
     if (!r || typeof r !== "object") return "req";
+    if (r.img !== undefined) return checkImg(p, r);
     if (r.m !== "GET" && r.m !== "PUT" && r.m !== "POST") return "method";
     if (typeof r.path !== "string" || r.path.length > 400 || r.path[0] !== "/") return "path";
     if (/[#\\\s@]|%(?!2B|2F|3D)/.test(r.path) || r.path.indexOf("//") >= 0 || /(^|\/)\.\.?(\/|$|\?)/.test(r.path)) return "path";
@@ -670,6 +732,7 @@
     if (p === "github") return ["Authorization", "Bearer " + keys.key];
     if (p === "raindrop") return ["Authorization", "Bearer " + keys.key];
     if (p === "notion") return ["Authorization", "Bearer " + keys.key];
+    if (p === "shopify") return ["X-Shopify-Storefront-Access-Token", keys.key];
     return null;
   }
   // Headers a platform needs besides the key (no secrets here).
@@ -690,7 +753,7 @@
     ORDER_ST: ORDER_ST, NAME_LEN: NAME_LEN, VAT_RE: VAT_RE, DB_RE: DB_RE, TOL_TYPES: TOL_TYPES, ODOO: ODOO,
     validHost: validHost, normSite: normSite, siteParts: siteParts,
     normAcct: normAcct, merge: merge, live: live, find: find, checkKeys: checkKeys,
-    extId: extId, checkReq: checkReq, query: query, apiUrl: apiUrl, authHeader: authHeader, extraHeaders: extraHeaders, probeReq: probeReq, cleanText: cleanText,
+    extId: extId, checkReq: checkReq, SHOPIFY_Q: SHOPIFY_Q, query: query, apiUrl: apiUrl, authHeader: authHeader, extraHeaders: extraHeaders, probeReq: probeReq, cleanText: cleanText,
     okEmail: okEmail
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

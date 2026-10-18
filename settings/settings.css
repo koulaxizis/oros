@@ -505,6 +505,7 @@ a.btn { text-decoration: none; color: inherit; display: inline-flex; align-items
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
 }
 .svc-mark.m-woo { background: #7f54b3; }
+.svc-mark.m-shopify { background: #5e8e3e; }
 .svc-mark.m-tol { background: #0e6fb7; }
 .svc-mark.m-ininja { background: #2e7d5b; }
 .svc-mark.m-stripe { background: #635bff; }

@@ -187,6 +187,8 @@
       else if (b.k === "video" && b.url) out.push("[" + (mdText(b.t) || "\u25b6") + "](" + b.url.replace(/[()\s]/g, encodeURIComponent) + ")");
       else if (b.k === "table") out.push((b.rows || []).map(function (r) { return "| " + r.map(function (c) { return mdText(c).replace(/\|/g, "\\|"); }).join(" | ") + " |"; }).join("\n"));
       else if (b.k === "event") out.push(["**" + mdText(b.t) + "**", mdText(b.d + (b.tm ? " " + b.tm + (b.te ? "\u2013" + b.te : "") : "")), mdText(b.loc)].filter(Boolean).join("  \n"));
+      else if (b.k === "prod") out.push((b.items || []).filter(function (p) { return p.name && p.href; })
+        .map(function (p) { return "- [" + mdText(p.name) + "](" + p.href.replace(/[()\s]/g, encodeURIComponent) + ")"; }).join("\n"));
     });
     return out.filter(function (x) { return x !== ""; }).join("\n\n");
   }
