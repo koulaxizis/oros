@@ -134,6 +134,7 @@
       "bk.alt": "Description (for people who can't see it)", "bk.pick": "Choose picture", "bk.noImg": "No picture yet",
       "bk.imgMissing": "This picture isn't on this device yet (it syncs with the orOS disk).",
       "bk.up": "Move up", "bk.down": "Move down", "bk.remove": "Remove",
+      "bk.head": "Header", "bk.foot": "Footer", "bk.social": "Social icons", "bk.noLogo": "No logo", "bk.pickLogo": "Choose logo", "bk.noLogoBtn": "Remove logo", "bk.logoW": "Logo width", "bk.headT": "Name", "bk.headSub": "Line under the name (optional)", "bk.linkText": "Link text", "bk.linkRemove": "Remove this link", "bk.linkAdd": "Link", "bk.iconStyle": "Icons", "bk.ist.c": "Brand colours", "bk.ist.d": "Dark", "bk.ist.l": "Light (for dark backgrounds)", "bk.iconSize": "Size", "bk.network": "Network", "bk.netRemove": "Remove this network", "bk.netAdd": "Network", "bk.footHint": "Your address and the unsubscribe link are always added below the footer.", "bk.makeDefault": "Use in every new issue of this list", "bk.isDefault": "Used in every new issue of this list", "bk.defHeadDone": "New issues of this list start with this header", "bk.defFootDone": "New issues of this list end with this footer",
       "ed.undo": "Undo", "ed.redo": "Redo", "bk.list": "List", "bk.quote": "Quote", "bk.sp": "Space", "bk.drag": "Drag to move (or use the arrow keys)", "bk.newer": "Newer block", "bk.newerHint": "This block was made in a newer orOS. Update orOS on this device to see and edit it; it is kept as it is.", "bk.settings": "Block settings", "bk.dup": "Duplicate", "bk.full": "Too many blocks: remove one first", "bk.moved": "Moved to position {n}", "bk.level": "Size", "bk.listPh": "One item per line", "bk.listKind": "Kind", "bk.bullets": "Bullets", "bk.numbers": "Numbers", "bk.by": "Who said it (optional)", "bk.height": "Height", "bk.lineStyle": "Style", "bk.hr.solid": "Solid", "bk.hr.dashed": "Dashed", "bk.hr.dotted": "Dotted", "bk.thick": "Thickness", "bk.width": "Width", "bk.lineColor": "Own line colour", "bk.btnN": "Button {n}", "bk.btnRemove": "Remove this button", "bk.btnStyle": "Style", "bk.fill": "Filled", "bk.outline": "Outline", "bk.full100": "Full width", "bk.btnAdd": "Button next to it", "bk.align": "Alignment", "bk.al.left": "Left", "bk.al.center": "Centre", "bk.al.right": "Right", "bk.pad": "Space above and below", "bk.bg": "Background colour", "sty.font": "Font", "sty.font.sans": "Sans serif", "sty.font.serif": "Serif", "sty.font.mono": "Monospace", "sty.hs": "Headings", "sty.hs.s": "Small", "sty.hs.m": "Medium", "sty.hs.l": "Large", "sty.btn": "Buttons", "sty.btn.round": "Rounded", "sty.btn.square": "Square", "sty.btn.pill": "Pill", "sty.link": "Own link colour", "sty.bg": "Own e-mail background", "ck.newerBlock": "This issue has a block made in a newer orOS. Update orOS on this device before sending it.",
       "lists.rss": "RSS to e-mail",
       "rss.title": "RSS to e-mail", "rss.none": "No feeds yet. Pick one of your Reader feeds or any feed address, and orOS makes an issue from its new articles on the day you choose.",
@@ -335,6 +336,7 @@
       "bk.alt": "Περιγραφή (για όσους δεν τη βλέπουν)", "bk.pick": "Επιλογή εικόνας", "bk.noImg": "Δεν έχει μπει εικόνα",
       "bk.imgMissing": "Αυτή η εικόνα δεν υπάρχει ακόμα σε αυτή τη συσκευή (συγχρονίζεται με τον δίσκο του orOS).",
       "bk.up": "Μετακίνηση πάνω", "bk.down": "Μετακίνηση κάτω", "bk.remove": "Αφαίρεση",
+      "bk.head": "Κεφαλίδα", "bk.foot": "Υποσέλιδο", "bk.social": "Εικονίδια social", "bk.noLogo": "Χωρίς λογότυπο", "bk.pickLogo": "Επιλογή λογοτύπου", "bk.noLogoBtn": "Αφαίρεση λογοτύπου", "bk.logoW": "Πλάτος λογοτύπου", "bk.headT": "Όνομα", "bk.headSub": "Γραμμή κάτω από το όνομα (προαιρετικά)", "bk.linkText": "Κείμενο συνδέσμου", "bk.linkRemove": "Αφαίρεση αυτού του συνδέσμου", "bk.linkAdd": "Σύνδεσμος", "bk.iconStyle": "Εικονίδια", "bk.ist.c": "Χρώματα του κάθε δικτύου", "bk.ist.d": "Σκούρα", "bk.ist.l": "Ανοιχτά (για σκούρο φόντο)", "bk.iconSize": "Μέγεθος", "bk.network": "Δίκτυο", "bk.netRemove": "Αφαίρεση αυτού του δικτύου", "bk.netAdd": "Δίκτυο", "bk.footHint": "Η διεύθυνσή σου και ο σύνδεσμος κατάργησης εγγραφής μπαίνουν πάντα κάτω από το υποσέλιδο.", "bk.makeDefault": "Χρήση σε κάθε νέο τεύχος της λίστας", "bk.isDefault": "Μπαίνει σε κάθε νέο τεύχος της λίστας", "bk.defHeadDone": "Τα νέα τεύχη της λίστας θα ξεκινούν με αυτή την κεφαλίδα", "bk.defFootDone": "Τα νέα τεύχη της λίστας θα τελειώνουν με αυτό το υποσέλιδο",
       "ed.undo": "Αναίρεση", "ed.redo": "Επανάληψη", "bk.list": "Λίστα", "bk.quote": "Παράθεση", "bk.sp": "Κενό", "bk.drag": "Σύρε για μετακίνηση (ή με τα βελάκια)", "bk.newer": "Νεότερο block", "bk.newerHint": "Αυτό το block φτιάχτηκε σε νεότερο orOS. Ενημέρωσε το orOS σε αυτή τη συσκευή για να το δεις και να το αλλάξεις· μένει όπως είναι.", "bk.settings": "Ρυθμίσεις block", "bk.dup": "Διπλασιασμός", "bk.full": "Πάρα πολλά blocks: αφαίρεσε πρώτα ένα", "bk.moved": "Μετακινήθηκε στη θέση {n}", "bk.level": "Μέγεθος", "bk.listPh": "Ένα στοιχείο σε κάθε γραμμή", "bk.listKind": "Είδος", "bk.bullets": "Κουκκίδες", "bk.numbers": "Αριθμοί", "bk.by": "Ποιος το είπε (προαιρετικά)", "bk.height": "Ύψος", "bk.lineStyle": "Στυλ", "bk.hr.solid": "Συνεχής", "bk.hr.dashed": "Διακεκομμένη", "bk.hr.dotted": "Με τελείες", "bk.thick": "Πάχος", "bk.width": "Πλάτος", "bk.lineColor": "Δικό της χρώμα γραμμής", "bk.btnN": "Κουμπί {n}", "bk.btnRemove": "Αφαίρεση αυτού του κουμπιού", "bk.btnStyle": "Στυλ", "bk.fill": "Γεμάτο", "bk.outline": "Περίγραμμα", "bk.full100": "Σε όλο το πλάτος", "bk.btnAdd": "Κουμπί δίπλα", "bk.align": "Στοίχιση", "bk.al.left": "Αριστερά", "bk.al.center": "Κέντρο", "bk.al.right": "Δεξιά", "bk.pad": "Κενό πάνω και κάτω", "bk.bg": "Χρώμα φόντου", "sty.font": "Γραμματοσειρά", "sty.font.sans": "Χωρίς πατούρες", "sty.font.serif": "Με πατούρες", "sty.font.mono": "Σταθερού πλάτους", "sty.hs": "Επικεφαλίδες", "sty.hs.s": "Μικρές", "sty.hs.m": "Μεσαίες", "sty.hs.l": "Μεγάλες", "sty.btn": "Κουμπιά", "sty.btn.round": "Στρογγυλεμένα", "sty.btn.square": "Τετράγωνα", "sty.btn.pill": "Χάπι", "sty.link": "Δικό τους χρώμα συνδέσμων", "sty.bg": "Δικό του φόντο email", "ck.newerBlock": "Το τεύχος έχει block από νεότερο orOS. Ενημέρωσε το orOS σε αυτή τη συσκευή πριν το στείλεις.",
       "lists.rss": "RSS σε email",
       "rss.title": "RSS σε email", "rss.none": "Δεν υπάρχουν ροές ακόμα. Διάλεξε μια ροή από τον Αναγνώστη ή οποιαδήποτε διεύθυνση ροής, και το orOS φτιάχνει τεύχος από τα νέα άρθρα της τη μέρα που θέλεις.",
@@ -926,7 +928,8 @@
     var x = C.normIssue(tpl ? { id: C.randomId("i", null), m: 0, list: l.id, subj: tpl.subj, pre: tpl.pre, fmt: tpl.fmt,
                                 blocks: copy(tpl.blocks), md: tpl.md, l2: tpl.l2 ? copy(tpl.l2) : null }
       : { id: C.randomId("i", null), m: 0, list: l.id, fmt: "blocks",
-          blocks: [{ k: "h", t: "" }, { k: "p", t: t("seed.hi") }] });
+          blocks: [].concat(l.hf && l.hf.head ? [copy(l.hf.head)] : [], [{ k: "h", t: "" }, { k: "p", t: t("seed.hi") }],
+                            l.hf && l.hf.foot ? [copy(l.hf.foot)] : []) });
     put("issues", x);
     viewId = x.id;
     showView("edit");
@@ -1018,11 +1021,12 @@
         add.appendChild(mini("+ " + t("bk." + k), function () {
           if (cx.blocks.length >= C.LIM.blocks) return;
           snap(x);
-          cx.blocks.push(newBlock(k));
+          var at = k === "head" ? 0 : cx.blocks.length;
+          cx.blocks.splice(at, 0, newBlock(k, l));
           put("issues", x);
           renderBlocks(x, $("blocks"));
-          if (k === "img") pickImage(x, cx.blocks.length - 1);
-          else focusBlock(cx.blocks.length - 1);
+          if (k === "img") pickImage(x, at);
+          else focusBlock(at);
         }));
       });
       c2.appendChild(add);
@@ -1261,9 +1265,13 @@
   }
   var thumbs = {};      // path → object URL (this session)
   // ---------- the block editor (wave E1) ----------
-  var ADD_KINDS = ["h", "p", "list", "quote", "img", "btn", "hr", "sp", "cols"];
-  function newBlock(k) {
+  var ADD_KINDS = ["head", "h", "p", "list", "quote", "img", "btn", "hr", "sp", "cols", "social", "foot"];
+  var SO = window.OrosNewsletterSocial;
+  function newBlock(k, l) {
     switch (k) {
+      case "head": return { k: "head", f: "", w: 600, h: 200, b: 0, lw: 140, t: l ? l.name : "", sub: "", links: [] };
+      case "foot": return { k: "foot", t: "\u00a9 " + new Date().getFullYear() + " " + (l ? (l.fromName || l.name) : ""), items: [], st: "c" };
+      case "social": return { k: "social", items: [{ n: "facebook", href: "" }, { n: "instagram", href: "" }], st: "c", sz: 32 };
       case "hr": return { k: "hr" };
       case "sp": return { k: "sp", h: 24 };
       case "cols": return { k: "cols", a: "", b: "" };
@@ -1434,6 +1442,53 @@
     var cx = side(x);
     var l = C.list(data, x.list);
     var accent = (l && l.color) || "#2f6fde";
+    var redraw = function () { put("issues", x); renderBlocks(x, box); };
+    // up to 4 links under a header
+    var linksEditor = function (b, card) {
+      (b.links || []).forEach(function (lk, j) {
+        var lr = el("div", "link-row");
+        var lt = inp("text", lk.t, 60);
+        lt.placeholder = t("bk.linkText");
+        lt.setAttribute("aria-label", t("bk.linkText"));
+        lt.addEventListener("input", function () { typed(x); lk.t = lt.value; touchIssue(x); });
+        var lu = inp("url", lk.href, 2000);
+        lu.placeholder = "https://…";
+        lu.setAttribute("aria-label", t("bk.link"));
+        lu.addEventListener("input", function () { typed(x); lk.href = lu.value; touchIssue(x); });
+        lr.appendChild(lt); lr.appendChild(lu);
+        lr.appendChild(iconBtn(UI.x, t("bk.linkRemove"), function () { snap(x); b.links.splice(j, 1); redraw(); }));
+        card.appendChild(lr);
+      });
+      if ((b.links || []).length < 4) {
+        card.appendChild(mini("+ " + t("bk.linkAdd"), function () { snap(x); b.links = (b.links || []).concat([{ t: "", href: "" }]); redraw(); }));
+      }
+    };
+    // social links: one row per network
+    var socialEditor = function (b, card) {
+      var used = (b.items || []).map(function (it) { return it.n; });
+      (b.items || []).forEach(function (it, j) {
+        var sr = el("div", "link-row");
+        var ns = sel(SO.ORDER.filter(function (n) { return n === it.n || used.indexOf(n) < 0; }).map(function (n) { return [n, SO.NETS[n].name]; }), it.n);
+        ns.setAttribute("aria-label", t("bk.network"));
+        ns.addEventListener("change", function () { snap(x); it.n = ns.value; redraw(); });
+        var nu = inp(it.n === "email" ? "email" : "url", String(it.href || "").replace(/^mailto:/i, ""), 2000);
+        nu.placeholder = it.n === "email" ? "name@example.com" : "https://…";
+        nu.setAttribute("aria-label", t("bk.link") + ": " + SO.NETS[it.n].name);
+        nu.addEventListener("input", function () {
+          typed(x);
+          var v = nu.value.trim();
+          it.href = it.n === "email" && v && !/^mailto:/i.test(v) ? "mailto:" + v : v;
+          touchIssue(x);
+        });
+        sr.appendChild(ns); sr.appendChild(nu);
+        sr.appendChild(iconBtn(UI.x, t("bk.netRemove"), function () { snap(x); b.items.splice(j, 1); redraw(); }));
+        card.appendChild(sr);
+      });
+      var free = SO.ORDER.filter(function (n) { return used.indexOf(n) < 0; });
+      if (free.length) {
+        card.appendChild(mini("+ " + t("bk.netAdd"), function () { snap(x); b.items = (b.items || []).concat([{ n: free[0], href: "" }]); redraw(); }));
+      }
+    };
     cx.blocks.forEach(function (b, i) {
       var card = el("div", "blk");
       var head = el("div", "blk-head");
@@ -1592,6 +1647,51 @@
         card.appendChild(ir);
         card.appendChild(field(t("bk.alt"), bind(inp("text", b.alt, 300), "alt")));
         card.appendChild(field(t("bk.link"), bind(inp("url", b.href, 2000), "href")));
+      } else if (b.k === "head") {
+        var hr = el("div", "img-row");
+        var him = el("img", "img-thumb");
+        him.alt = "";
+        if (b.f) showThumb(b.f, him, hr); else hr.appendChild(el("span", "hint", t("bk.noLogo")));
+        hr.insertBefore(him, hr.firstChild);
+        hr.appendChild(mini(t("bk.pickLogo"), function () { pickImage(x, i); }));
+        if (b.f) hr.appendChild(mini(t("bk.noLogoBtn"), function () { snap(x); b.f = ""; b.b = 0; put("issues", x); renderBlocks(x, box); }));
+        card.appendChild(hr);
+        if (b.f) {
+          card.appendChild(field(t("bk.logoW"), selCtl([80, 100, 120, 140, 180, 240, 300].map(function (n) { return [String(n), n + " px"]; }), b.lw || 140,
+            function (v) { setNow("lw", Number(v)); })));
+        }
+        card.appendChild(field(t("bk.headT"), bind(inp("text", b.t, 120), "t")));
+        card.appendChild(field(t("bk.headSub"), bind(inp("text", b.sub, 200), "sub")));
+        linksEditor(b, card);
+      } else if (b.k === "social") {
+        var r6 = row();
+        r6.appendChild(field(t("bk.iconStyle"), selCtl(SO.STYLES.map(function (k) { return [k, t("bk.ist." + k)]; }), b.st || "c",
+          function (v) { setNow("st", v); })));
+        r6.appendChild(field(t("bk.iconSize"), selCtl(SO.SIZES.map(function (n) { return [String(n), n + " px"]; }), b.sz || 32,
+          function (v) { setNow("sz", Number(v)); })));
+        card.appendChild(r6);
+        socialEditor(b, card);
+      } else if (b.k === "foot") {
+        card.appendChild(bind(area(b.t, 3), "t"));
+        card.appendChild(el("p", "hint", t("bk.footHint")));
+        card.appendChild(field(t("bk.iconStyle"), selCtl(SO.STYLES.map(function (k) { return [k, t("bk.ist." + k)]; }), b.st || "c",
+          function (v) { setNow("st", v); })));
+        socialEditor(b, card);
+      }
+      if ((b.k === "head" || b.k === "foot") && l) {
+        var isDef = l.hf && l.hf[b.k] && JSON.stringify(l.hf[b.k]) === JSON.stringify(C.normBlock(b));
+        var defBtn = mini(isDef ? t("bk.isDefault") : t("bk.makeDefault"), function () {
+          var cur = C.list(data, l.id);
+          if (!cur) return;
+          var rec = copy(cur);
+          rec.hf = copy(cur.hf || {});
+          rec.hf[b.k] = C.normBlock(b);
+          put("lists", C.normList(rec));
+          l = C.list(data, l.id);
+          defBtn.textContent = t("bk.isDefault");
+          showToast(t(b.k === "head" ? "bk.defHeadDone" : "bk.defFootDone"));
+        });
+        card.appendChild(defBtn);
       }
       // alignment, padding, background: any block
       setBox = el("div", "blk-set");
@@ -2468,10 +2568,8 @@
     openDialog(dlg, to);
   }
   function imgBytes(x) {
-    var seen = {}, n = 0;
-    R.blocksOf(x).concat(x.l2 ? R.blocksOf(x.l2) : []).forEach(function (b) {
-      if (b.k === "img" && b.f && !seen[b.f]) { seen[b.f] = 1; n += b.b || 0; }
-    });
+    var n = 0;
+    C.picsOf(R.blocksOf(x).concat(x.l2 ? R.blocksOf(x.l2) : [])).forEach(function (q) { n += q.b || 2500; });   // an icon ≈ 2.5 KB
     return n;
   }
   // The pre-send check; with `send` it continues to the send dialog.
@@ -2693,7 +2791,7 @@
         var path = "/internal/Newsletter/img-" + C.randomId("", null) + ".jpg";
         return fs.write(path, r.blob).then(function () {
           var cur = C.issue(data, x.id), cb = cur && (onL2 ? cur.l2 : cur), xb = onL2 ? x.l2 : x;
-          if (!cb || !xb || !cb.blocks[i] || cb.blocks[i].k !== "img" || !xb.blocks[i]) return;
+          if (!cb || !xb || !cb.blocks[i] || (cb.blocks[i].k !== "img" && cb.blocks[i].k !== "head") || !xb.blocks[i]) return;
           xb.blocks[i].f = path; xb.blocks[i].w = r.w; xb.blocks[i].h = r.h; xb.blocks[i].b = r.blob.size;
           put("issues", x);
           if (view === "edit") renderBlocks(x, $("blocks"));

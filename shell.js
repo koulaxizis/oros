@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "3.35.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "3.36.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -6077,7 +6077,10 @@
           k: "cr.feather-icons" },
         { name: "Tabler Icons 3.49.0", url: "https://tabler.io/icons",
           by: "Paweł Kuna", lic: "MIT",
-          k: "cr.tabler-icons" }
+          k: "cr.tabler-icons" },
+        { name: "Simple Icons 16.35.0", url: "https://simpleicons.org/",
+          by: "Simple Icons collaborators", lic: "CC0 1.0",
+          k: "cr.simple-icons" }
       ]
     },
     {

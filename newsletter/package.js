@@ -114,7 +114,7 @@
     var seen = {}, out = [];
     function blocks(arr) {
       (Array.isArray(arr) ? arr : []).forEach(function (b) {
-        if (b && b.k === "img" && typeof b.f === "string" && IMG_PATH.test(b.f) && !seen[b.f]) { seen[b.f] = 1; out.push(b.f); }
+        if (b && (b.k === "img" || b.k === "head") && typeof b.f === "string" && IMG_PATH.test(b.f) && !seen[b.f]) { seen[b.f] = 1; out.push(b.f); }
       });
     }
     if (!isObj(state)) return out;
@@ -171,6 +171,11 @@
       else if (b.k === "hr") out.push("---");
       else if (b.k === "cols") { out.push(mdText(b.a)); out.push(mdText(b.b)); }
       else if (b.k === "img" && b.alt) out.push("*" + mdText(b.alt) + "*");
+      else if (b.k === "quote") out.push("> " + mdText(b.t).replace(/\n/g, "\n> ") + (b.by ? "\n> — " + mdText(b.by) : ""));
+      else if (b.k === "list") out.push(String(b.t || "").split("\n").filter(function (x) { return x.trim(); })
+        .map(function (x, i) { return (b.ord ? (i + 1) + ". " : "- ") + mdText(x.replace(/^\s*(?:[-\u2022*]|\d{1,3}[.)])\s+/, "")); }).join("\n"));
+      else if (b.k === "head") out.push([b.t ? "### " + mdText(b.t) : "", mdText(b.sub)].filter(Boolean).join("\n\n"));
+      else if (b.k === "foot") out.push(mdText(b.t));
     });
     return out.filter(function (x) { return x !== ""; }).join("\n\n");
   }

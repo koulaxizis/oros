@@ -153,3 +153,84 @@ test("an issue made only of spaces and lines has no body", () => {
   const d2 = model([issue([{ k: "quote", t: "Words" }])]);
   assert.ok(!C.preflight(d2, d2.issues[0], { chan: CHAN, inbox: true, aud: 1 }).some((r) => r.k === "noBody"));
 });
+
+// ---------------------------------------------------------------
+// Wave E2: header, footer, social icons, the list's own header/footer
+const S = require("../newsletter/social.js");
+function renderImg(blocks, list) {
+  const d = model([issue(blocks)], list);
+  return R.email({ issue: d.issues[0], list: d.lists[0], sub: null, lang: "en", img: (b) => "cid:" + b.f.replace(/[^a-z0-9]/gi, ""), unsub: "" });
+}
+
+test("E2: social items are one per known network, links fenced, e-mail becomes mailto", () => {
+  const b = C.normBlock({ k: "social", st: "q", sz: 7, items: [
+    { n: "x", href: "https://x.com/me" }, { n: "x", href: "https://x.com/two" }, { n: "myspace", href: "https://m.com" },
+    { n: "email", href: "me@example.com" }, { n: "facebook", href: "mailto:a@b.gr" }, { n: "youtube", href: "javascript:alert(1)" }] });
+  assert.deepEqual(b, { k: "social", items: [{ n: "x", href: "https://x.com/me" }, { n: "email", href: "mailto:me@example.com" },
+    { n: "facebook", href: "" }, { n: "youtube", href: "" }], st: "c", sz: 32 });
+  assert.deepEqual(C.picsOf([b]).map((p) => p.f), ["icon:x:c:32", "icon:email:c:32"]);
+  assert.equal(S.parse("icon:x:c:32").n, "x");
+  assert.equal(S.parse("icon:x:c:33"), null);
+  assert.equal(S.parse("icon:evil:c:32"), null);
+  assert.equal(S.ORDER.length, 14);
+  S.ORDER.forEach((n) => assert.ok(S.NETS[n].d || S.NETS[n].s || S.NETS[n].txt, n));
+});
+
+test("E2: header, footer and social render centred, with icons as pictures and a text twin", () => {
+  const e = renderImg([
+    { k: "head", f: "/internal/Newsletter/logo.png", w: 400, h: 100, lw: 120, t: "Noxpress", sub: "Weekly news",
+      links: [{ t: "Shop", href: "https://shop.gr" }, { t: "Blog", href: "https://shop.gr/blog" }] },
+    { k: "p", t: "Body" },
+    { k: "social", items: [{ n: "instagram", href: "https://instagram.com/n" }, { n: "mastodon", href: "" }], st: "d", sz: 40 },
+    { k: "foot", t: "© 2026 Noxpress", items: [{ n: "facebook", href: "https://fb.com/n" }], st: "l" }
+  ]);
+  assert.match(e.html, /<img src="cid:internalNewsletterlogopng" alt="Noxpress" width="120" height="30"/);
+  assert.match(e.html, /text-align:center[^"]*border-bottom/);
+  assert.match(e.html, />Noxpress<\/p>/);
+  assert.match(e.html, /<a href="https:\/\/shop\.gr"[^>]*>Shop<\/a>.*·.*<a href="https:\/\/shop\.gr\/blog"/);
+  assert.match(e.html, /<a href="https:\/\/instagram\.com\/n"><img src="cid:iconinstagramd40" alt="Instagram"[^>]*width="40"/);
+  assert.doesNotMatch(e.html, /mastodon/i);          // no link, no icon
+  assert.match(e.html, /<img src="cid:iconfacebookl24" alt="Facebook"/);
+  assert.match(e.html, /© 2026 Noxpress/);
+  assert.match(e.text, /NOXPRESS\nWeekly news\nShop: https:\/\/shop\.gr/);
+  assert.match(e.text, /Instagram: https:\/\/instagram\.com\/n/);
+  assert.match(e.text, /Facebook: https:\/\/fb\.com\/n\n\n© 2026 Noxpress/);
+});
+
+test("E2: alignment defaults to centre for the frame blocks; left is kept", () => {
+  assert.equal(C.normBlock({ k: "social", items: [], al: "center" }).al, undefined);
+  assert.equal(C.normBlock({ k: "social", items: [], al: "left" }).al, "left");
+  assert.equal(C.normBlock({ k: "p", t: "x", al: "left" }).al, undefined);
+  assert.equal(C.alignOf({ k: "foot" }), "center");
+  assert.equal(C.alignOf({ k: "p" }), "left");
+  const e = renderImg([{ k: "social", items: [{ n: "x", href: "https://x.com" }], al: "left", sz: 24 }]);
+  assert.doesNotMatch(e.html, /<table role="presentation" align="center" cellpadding/);
+});
+
+test("E2: preflight — frame blocks alone are no body; links without address are caught; API pictures", () => {
+  const frame = [{ k: "head", t: "Shop" }, { k: "foot", t: "©" }];
+  const d = model([issue(frame)]);
+  assert.ok(C.preflight(d, d.issues[0], { chan: CHAN, inbox: true, aud: 1 }).some((r) => r.k === "noBody"));
+  const d2 = model([issue([{ k: "p", t: "x" }, { k: "social", items: [{ n: "x", href: "" }] }])]);
+  assert.ok(C.preflight(d2, d2.issues[0], { chan: CHAN, inbox: true, aud: 1 }).some((r) => r.k === "badBlock"));
+  const d3 = model([issue([{ k: "p", t: "x" }, { k: "head", t: "S", links: [{ t: "Home", href: "" }] }])]);
+  assert.ok(C.preflight(d3, d3.issues[0], { chan: CHAN, inbox: true, aud: 1 }).some((r) => r.k === "badBlock"));
+  // Brevo's API can't carry inline pictures: social icons count
+  const api = Object.assign({}, CHAN, { via: "api" });
+  const d4 = model([issue([{ k: "p", t: "x" }, { k: "social", items: [{ n: "x", href: "https://x.com" }] }])]);
+  assert.ok(C.preflight(d4, d4.issues[0], { chan: C.normChan ? C.normChan(api) : api, inbox: true, aud: 1 }).some((r) => r.k === "apiImg"));
+});
+
+test("E2: a list keeps its own header and footer; anything else there is dropped", () => {
+  const d = model([], { m: 2, hf: { head: { k: "head", t: "Shop", links: [{ t: "A", href: "javascript:x" }] }, foot: { k: "p", t: "no" } } });
+  assert.deepEqual(d.lists[0].hf, { head: { k: "head", f: "", w: 600, h: 200, b: 0, lw: 140, t: "Shop", sub: "", links: [{ t: "A", href: "" }] } });
+  assert.equal(model([], { hf: { head: null, foot: "x" } }).lists[0].hf, undefined);
+  const m = C.mergeNewsletter(d, model());
+  assert.equal(m.lists[0].hf.head.t, "Shop");
+});
+
+test("E2: hostile text in header, footer and links is escaped", () => {
+  const e = renderImg([{ k: "head", t: "<script>x</script>", sub: "\"><img src=x>", links: [{ t: "<b>", href: "https://a.gr\"onclick=1" }] },
+                       { k: "foot", t: "<svg onload=1>" }]);
+  assert.doesNotMatch(e.html, /<script>|<svg|<img src=x|<b>|onclick/);
+});

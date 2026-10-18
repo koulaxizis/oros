@@ -399,6 +399,9 @@ input.bad, textarea.bad { border-color: var(--danger); box-shadow: 0 0 0 3px rgb
 .blk-drag:active { cursor: grabbing; }
 .blk-set { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border); }
 .blk-set[hidden] { display: none; }
+.link-row { display: flex; gap: 6px; align-items: center; margin: 0 0 6px; }
+.link-row > input, .link-row > select { flex: 1 1 0; min-width: 0; margin: 0 !important; }
+.link-row > select { flex: 0 0 130px; }
 .btn-more { margin: 8px 0; padding: 8px; border: 1px dashed var(--border); border-radius: 8px; }
 .color-opt { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .color-opt .check { flex: 1 1 auto; }
@@ -656,6 +659,9 @@ button.pick-row:hover { border-color: var(--accent); background: var(--accent-so
   .filters #sq { grid-column: 1 / -1; }
   .cols-ed { grid-template-columns: minmax(0, 1fr); }
   .blk-head { gap: 2px; }
+  .link-row { flex-wrap: wrap; }
+  .link-row > input { flex: 1 1 140px; }
+  .link-row > select { flex: 1 1 100%; }
   .blk-head .icon-btn.sm { width: 32px; flex: 0 0 32px; }
   .blk { padding: 8px; }
   .list-pick { flex: 1 1 100%; }
