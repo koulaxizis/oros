@@ -1,0 +1,23 @@
+orosPack("de", "recordpkg", {
+ "add": "Hinzufügen",
+ "added": "{n} neu: werden hinzugefügt",
+ "bad": "Diese Datei konnte nicht gelesen werden.",
+ "big": "Diese Datei ist zu groß.",
+ "cancel": "Abbrechen",
+ "done": "{n} aus „{name}“ hinzugefügt",
+ "doneUpd": "{n} hinzugefügt, {u} aktualisiert aus „{name}“",
+ "folder": "Entpackten Ordner öffnen…",
+ "newer": "Diese Datei stammt von einem neueren orOS. Aktualisiere orOS, um sie zu öffnen.",
+ "notEncrypted": "Diese Datei ist nicht verschlüsselt.",
+ "nothing": "Nichts hinzuzufügen: Alles aus dieser Datei ist schon hier oder wurde hier gelöscht.",
+ "open": "orOS-Datei öffnen…",
+ "save": "Als orOS-Datei speichern…",
+ "saved": "„{name}“ gespeichert. Die Datei ist nicht verschlüsselt: Bewahre sie sicher auf.",
+ "skipped": "{n} schon vorhanden: bleiben, wie sie sind",
+ "title": "„{name}“ öffnen",
+ "undone": "Rückgängig gemacht",
+ "update": "Mit neueren Versionen aktualisieren",
+ "updateHint": "Vorhandene Einträge übernehmen die Kopie aus der Datei, wenn sie neuer ist. Nichts wird gelöscht.",
+ "updated": "{n} in der Datei neuer: werden aktualisiert",
+ "wrong": "Das ist keine orOS-Datei von {app}."
+});

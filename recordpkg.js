@@ -372,8 +372,16 @@
       big: "Το αρχείο είναι πολύ μεγάλο."
     }
   };
+  // lang: "en", "el" or a pack language ("de"…): its table comes from
+  // i18n/<code>/recordpkg.js (pages that load this file list
+  // "recordpkg" in data-app), English for every missing line.
+  function strTable(lang) {
+    if (STRINGS[lang]) return STRINGS[lang];
+    var I = typeof window !== "undefined" && window.orosI18n;
+    return I && typeof lang === "string" && I.known(lang) ? I.table(STRINGS, "recordpkg", lang) : STRINGS.en;
+  }
   function str(lang, key, vars) {
-    var s = (STRINGS[lang === "el" ? "el" : "en"] || STRINGS.en)[key] || STRINGS.en[key] || key;
+    var s = strTable(lang)[key] || STRINGS.en[key] || key;
     if (vars) Object.keys(vars).forEach(function (k) { s = s.split("{" + k + "}").join(String(vars[k])); });
     return s;
   }
@@ -408,7 +416,14 @@
       try { if (typeof hooks.lang === "function") return hooks.lang() === "el" ? "el" : "en"; } catch (e) {}
       try { return w.localStorage.getItem("oros-lang") === "el" ? "el" : "en"; } catch (e) { return "en"; }
     }
-    function T(k, v) { return str(lang(), k, v); }
+    // the text language: Greek when the app says so, else the pack
+    // language of the page (i18n.js), else English
+    function uiLang() {
+      if (lang() === "el") return "el";
+      var c = w && w.orosI18n ? w.orosI18n.lang() : "en";
+      return c === "el" ? "en" : c;
+    }
+    function T(k, v) { return str(uiLang(), k, v); }
     function toast(text, undo) { try { if (typeof hooks.toast === "function") hooks.toast(text, undo || null); } catch (e) {} }
     function host() {
       try { return w.orosDialog || (w.parent && w.parent.orosDialog) || null; } catch (e) { return w.orosDialog || null; }
