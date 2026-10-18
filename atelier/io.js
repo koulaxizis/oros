@@ -2,7 +2,8 @@
 // orOS Atelier — files in and out + the editor bar (v1.0.0)
 //   - Download: PNG (optionally transparent), JPG, PDF, PowerPoint
 //     (.pptx, editable in Canva / PowerPoint: pptxout.js; what it
-//     can't keep editable is drawn here as a picture). Pages are
+//     can't keep editable is drawn here as a picture), Web page (a
+//     ZIP site: webout.js; photos, charts, blurred effects drawn here). Pages are
 //     drawn by draw.js at full resolution (what you see is what you
 //     get, effects and filters included); a PDF holds one image per
 //     page at 150 or 300 dpi (jsPDF, loaded on first use).
@@ -197,6 +198,34 @@
     });
   }
 
+  // Web page (webout.js): a ZIP with index.html, style.css, img/ and
+  // fonts/. Pictures at 2 px per point (sharp on phones), photos cut
+  // to their shape by the page itself.
+  var WEB_DPI = 144;
+  function nativeOfl() {
+    return fetch("../vendor/noto/OFL.txt", { credentials: "omit" }).then(function (r) { return r.ok ? r.text() : null; }, function () { return null; });
+  }
+  function exportWeb(doc, pages) {
+    var WB = window.AtelierWeb, ids = pages.map(function (p) { return p.id; });
+    var plan = WB.plan(doc, ids), pics = {}, chain = Promise.resolve(), ofl = null;
+    plan.filter(WB.needsPicture).forEach(function (p) {
+      var it = M.find(doc.items, p.id);
+      if (!it) return;
+      chain = chain.then(function () { return pictureOf(doc, it, p, WEB_DPI); }).then(function (pic) { pics[p.id] = pic; });
+    });
+    return chain.then(nativeOfl).then(function (txt) {
+      ofl = txt;
+      var out = WB.build(doc, {
+        pages: ids, title: doc.name || "", lang: AT.LANG,
+        credits: MEDIA ? MEDIA.credits(AX.credits(doc), AT.BASE) : [],
+        maxWidth: AT.isPrint(doc) ? doc.setup.w * 4 / 3 : doc.setup.w,
+        fontNote: t("exp.web")
+      }, { plan: plan, pictures: pics, ofl: ofl });
+      var zip = window.AtelierZip.write(out.files, new Date());
+      return saveBlob(new Blob([zip], { type: "application/zip" }), fileName(doc, " (web).zip"), "application/zip", "ZIP", ".zip");
+    }).then(function (ok) { return ok ? { web: 1 } : false; });
+  }
+
   // Every page of a design as files, not saved (automations, recipes.js):
   // o = { fmt png|jpg|pdf, scale, dpi } → [{ name, blob }]
   function renderFiles(doc, o) {
@@ -244,10 +273,12 @@
     }
     var pages = M.pagesInOrder(doc);
     if (o.pages === "cur") pages = pages.filter(function (p) { return p.id === ED.pg; });
-    var chain = prepare(doc, o.type === "pdf" ? o.dpi / 72 : o.type === "pptx" ? 3 : safeScale(doc, o.scale || 1));
+    var chain = prepare(doc, o.type === "pdf" ? o.dpi / 72 : o.type === "pptx" ? 3 : o.type === "web" ? WEB_DPI / 72 : safeScale(doc, o.scale || 1));
     var mime = o.type === "png" ? "image/png" : "image/jpeg";
     if (o.type === "pptx") {
       chain = chain.then(function () { return exportPptx(doc, pages); });
+    } else if (o.type === "web") {
+      chain = chain.then(function () { return exportWeb(doc, pages); });
     } else if (o.type === "pdf" && !o.flat && window.AtelierPDF) {
       chain = chain.then(loadJsPDF).then(function (J) { return exportPdf(doc, pages, o.dpi, J); });
     } else if (o.type === "pdf") {
@@ -289,6 +320,7 @@
     chain.then(function (ok) {
       exporting = false;
       if (ok && ok.pics) AT.toast(t("exp.pptxPics", { n: ok.pics }));
+      else if (ok && ok.web) AT.toast(AX.credits(doc).length ? t("exp.credits") : t("exp.webDone"));
       else if (ok) AT.toast(AX.credits(doc).length ? t("exp.credits") : t("exp.done"));
     }, function (e) {
       exporting = false;
@@ -303,7 +335,7 @@
     var print = AT.isPrint(doc), multi = doc.pages.length > 1;
     var st = { type: print ? "pdf" : "png", scale: 1, dpi: 300, transparent: false, pages: "all", side: 720, flat: false };
     var film = { video: 1, gif: 1 };
-    var types = ["png", "jpg", "pdf"].concat(window.AtelierPPTXOut ? ["pptx"] : [], AT.motion && AT.motion.canVideo() ? ["video"] : [], AT.motion ? ["gif"] : []);
+    var types = ["png", "jpg", "pdf"].concat(window.AtelierPPTXOut ? ["pptx"] : [], window.AtelierWeb && window.AtelierZip ? ["web"] : [], AT.motion && AT.motion.canVideo() ? ["video"] : [], AT.motion ? ["gif"] : []);
     AT.openDialog(t("exp.title"), function (body, close) {
       function render() {
         body.innerHTML = "";
@@ -324,7 +356,7 @@
         }
         body.appendChild(el("p", "hint", t("exp." + st.type + "Hint", { s: secs })));
         var opts = el("div", "pn-col");
-        if (st.type !== "pptx") body.appendChild(el("div", "fld-lbl", st.type === "pdf" && window.AtelierPDF ? t("exp.pdfPics") : t("exp.size")));
+        if (st.type !== "pptx" && st.type !== "web") body.appendChild(el("div", "fld-lbl", st.type === "pdf" && window.AtelierPDF ? t("exp.pdfPics") : t("exp.size")));
         function radio(name, label, on, fn) {
           var l = el("label", "chk");
           var r = el("input"); r.type = "radio"; r.name = name; r.checked = on;
@@ -339,8 +371,9 @@
             var fs = AT.motion.filmSize(doc, d);
             radio("side", fs.w + " × " + fs.h + " px", st.side === d, function () { st.side = d; });
           });
-        } else if (st.type === "pptx") {
-          // one size: the design's own (scaled as a whole only past PowerPoint's limits)
+        } else if (st.type === "pptx" || st.type === "web") {
+          // one size: the design's own (scaled as a whole only past PowerPoint's limits;
+          // a web page fits the screen it is shown on)
         } else if (print || st.type === "pdf") {
           [150, 300].forEach(function (d) {
             var ps = pixelSize(doc, d / 72);
@@ -378,7 +411,7 @@
             s2.appendChild(b);
           });
           body.appendChild(s2);
-          if (st.type !== "pdf" && !film[st.type] && st.pages === "all") body.appendChild(el("p", "hint", t("exp.zipNote")));
+          if (st.type !== "pdf" && st.type !== "web" && !film[st.type] && st.pages === "all") body.appendChild(el("p", "hint", t("exp.zipNote")));
         }
         if (AX.credits(doc).length) body.appendChild(el("p", "hint", t("exp.credits")));
         var act = el("div", "dlg-actions");

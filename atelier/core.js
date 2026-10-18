@@ -250,6 +250,10 @@
       "tl.all": "All", "tl.search": "Search templates", "tl.none": "No template matches.", "tl.count": "{n} templates", "tl.more": "Show all {n} templates",
       "exp.pdfFlat": "Whole pages as pictures (exact look, text can't be selected)",
       "exp.pdfPics": "Pictures and effects at",
+      "exp.web": "Web page", "exp.webHint": "A website made from your design: real text that search engines and screen readers read, every page one after the other, sized to any screen. You get a ZIP: upload what is inside to GitHub Pages, Netlify or your own server. No code runs in it.",
+      "exp.webDone": "Saved. Unzip it and upload the files to any web host.",
+      "ctx.link": "Link", "lnk.hint": "A web address, an e-mail (mailto:name@example.com), a phone (tel:+30…) or #p2 for page 2 of this design. It works in the web page and the PDF.",
+      "lnk.ph": "https://…", "lnk.save": "Save link", "lnk.remove": "Remove link", "lnk.bad": "This is not a link that can be used.",
       "dlg.rename": "Rename", "a11y.canvas": "Design canvas", "a11y.pages": "Pages",
       // designkit fx.js SHAPES names (a pack language translates them here)
       "shp.rect": "Square", "shp.rounded": "Rounded", "shp.circle": "Circle", "shp.triangle": "Triangle", "shp.rtriangle": "Right triangle", "shp.diamond": "Diamond", "shp.pentagon": "Pentagon", "shp.hexagon": "Hexagon", "shp.octagon": "Octagon", "shp.star": "Star", "shp.burst": "Badge", "shp.heart": "Heart", "shp.cross": "Cross", "shp.arrow": "Arrow", "shp.chevron": "Chevron", "shp.parallelogram": "Parallelogram", "shp.trapezoid": "Trapezoid", "shp.arch": "Arch", "shp.drop": "Drop", "shp.shield": "Shield", "shp.bubble": "Speech bubble",
@@ -457,6 +461,10 @@
       "tl.all": "Όλα", "tl.search": "Αναζήτηση προτύπων", "tl.none": "Κανένα πρότυπο δεν ταιριάζει.", "tl.count": "{n} πρότυπα", "tl.more": "Όλα τα πρότυπα ({n})",
       "exp.pdfFlat": "Ολόκληρες σελίδες ως εικόνες (ακριβής εμφάνιση, το κείμενο δεν επιλέγεται)",
       "exp.pdfPics": "Εικόνες και εφέ σε",
+      "exp.web": "Ιστοσελίδα", "exp.webHint": "Ένα site από το σχέδιό σου: πραγματικό κείμενο που διαβάζουν οι μηχανές αναζήτησης και οι αναγνώστες οθόνης, οι σελίδες η μία κάτω από την άλλη, στο μέγεθος κάθε οθόνης. Παίρνεις ένα ZIP: ανέβασε ό,τι έχει μέσα στο GitHub Pages, στο Netlify ή στον δικό σου server. Δεν τρέχει κανένας κώδικας μέσα του.",
+      "exp.webDone": "Αποθηκεύτηκε. Αποσυμπίεσέ το και ανέβασε τα αρχεία σε όποιον web host θέλεις.",
+      "ctx.link": "Σύνδεσμος", "lnk.hint": "Μια διεύθυνση web, ένα email (mailto:onoma@example.com), ένα τηλέφωνο (tel:+30…) ή #p2 για τη σελίδα 2 αυτού του σχεδίου. Λειτουργεί στην ιστοσελίδα και στο PDF.",
+      "lnk.ph": "https://…", "lnk.save": "Αποθήκευση συνδέσμου", "lnk.remove": "Αφαίρεση συνδέσμου", "lnk.bad": "Αυτός δεν είναι σύνδεσμος που μπορεί να χρησιμοποιηθεί.",
       "dlg.rename": "Μετονομασία", "a11y.canvas": "Καμβάς σχεδίου", "a11y.pages": "Σελίδες",
       // designkit fx.js SHAPES names (a pack language translates them here)
       "shp.rect": "Τετράγωνο", "shp.rounded": "Στρογγυλεμένο", "shp.circle": "Κύκλος", "shp.triangle": "Τρίγωνο", "shp.rtriangle": "Ορθογώνιο τρίγωνο", "shp.diamond": "Ρόμβος", "shp.pentagon": "Πεντάγωνο", "shp.hexagon": "Εξάγωνο", "shp.octagon": "Οκτάγωνο", "shp.star": "Αστέρι", "shp.burst": "Σήμα", "shp.heart": "Καρδιά", "shp.cross": "Σταυρός", "shp.arrow": "Βέλος", "shp.chevron": "Σιρίτι", "shp.parallelogram": "Παραλληλόγραμμο", "shp.trapezoid": "Τραπέζιο", "shp.arch": "Αψίδα", "shp.drop": "Σταγόνα", "shp.shield": "Ασπίδα", "shp.bubble": "Συννεφάκι",
@@ -571,6 +579,7 @@
     chart: '<path d="M4 20h16"/><path d="M7 16v-5M12 16V6M17 16v-8"/>',
     chartBar: '<path d="M4 4v16"/><path d="M4 7h9M4 12h14M4 17h6"/>',
     chartLine: '<path d="M4 20h16"/><path d="M4 16l5-6 4 3 7-8"/>',
+    link: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
     chartPie: '<path d="M12 3a9 9 0 1 0 9 9h-9z"/><path d="M15 3.5A9 9 0 0 1 20.5 9H15z"/>'
   };
   function icon(name) {
