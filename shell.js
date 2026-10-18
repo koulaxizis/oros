@@ -9201,7 +9201,17 @@
     }
     return null;
   }
-  function soloName() { return window.orosSolo.nameOf(SOLO, langBase()); }
+  // The single app's name in the shell's language; a pack language
+  // loads the "solo" pack once (i18n/<code>/solo.js), then repaints.
+  var soloPackAsked = "";
+  function soloName() {
+    var I = window.orosI18n;
+    if (I && state.lang !== "en" && state.lang !== "el" && soloPackAsked !== state.lang) {
+      soloPackAsked = state.lang;
+      I.ensure(state.lang, "solo", function () { if (SOLO) soloPaint(); });
+    }
+    return window.orosSolo.nameOf(SOLO, state.lang);
+  }
 
   // Window title, bar button and the host page's title.
   function soloPaint() {

@@ -41,186 +41,361 @@
   //   badge: what the icon badge counts (the shell's solo badge tick).
   var APPS = {
     notes: {
-      name: { en: "orOS Notes", el: "orOS Σημειώσεις" },
-      shortcuts: [{ do: "new", name: { en: "New page", el: "Νέα σελίδα" }, target: { newPage: true } }],
+      shortcuts: [{ do: "new", target: { newPage: true } }],
       share: "note"
     },
     calendar: {
-      name: { en: "orOS Calendar", el: "orOS Ημερολόγιο" },
-      shortcuts: [{ do: "new", name: { en: "New event", el: "Νέο συμβάν" }, calNew: true }],
+      shortcuts: [{ do: "new", calNew: true }],
       share: "event"
     },
     bookmarks: {
-      name: { en: "orOS Bookmarks", el: "orOS Σελιδοδείκτες" },
-      shortcuts: [{ do: "add", name: { en: "Add a bookmark", el: "Νέος σελιδοδείκτης" }, target: { quickAdd: true } }],
+      shortcuts: [{ do: "add", target: { quickAdd: true } }],
       share: "link"
     },
     todo: {
-      name: { en: "orOS To-Do", el: "orOS Εργασίες" },
-      shortcuts: [{ do: "new", name: { en: "New task", el: "Νέα εργασία" }, target: { quickAdd: true } }],
+      shortcuts: [{ do: "new", target: { quickAdd: true } }],
       share: "task",
       badge: "due"
     },
     // Wave 2: office apps.
     contacts: {
-      name: { en: "orOS Contacts", el: "orOS Επαφές" },
-      shortcuts: [{ do: "new", name: { en: "New contact", el: "Νέα επαφή" }, target: { newContact: true } }],
+      shortcuts: [{ do: "new", target: { newContact: true } }],
       share: "contact"
     },
     writer: {
-      name: { en: "orOS Writer", el: "orOS Κειμενογράφος" },
-      shortcuts: [{ do: "new", name: { en: "New document", el: "Νέο έγγραφο" }, target: { newBlank: true } }],
+      shortcuts: [{ do: "new", target: { newBlank: true } }],
       share: "doc"
     },
     spreadsheet: {
-      name: { en: "orOS Spreadsheet", el: "orOS Υπολογιστικά φύλλα" },
-      shortcuts: [{ do: "new", name: { en: "New sheet", el: "Νέο φύλλο" }, target: { newBlank: true } }],
+      shortcuts: [{ do: "new", target: { newBlank: true } }],
       share: "sheet"
     },
     kanban: {
-      name: { en: "orOS Kanban", el: "orOS Πίνακες Kanban" },
-      shortcuts: [{ do: "new", name: { en: "New card", el: "Νέα κάρτα" }, target: { quickAdd: true } }],
+      shortcuts: [{ do: "new", target: { quickAdd: true } }],
       share: "card"
     },
     mindmap: {
-      name: { en: "orOS Mind Map", el: "orOS Νοητικός χάρτης" },
-      shortcuts: [{ do: "new", name: { en: "New map", el: "Νέος χάρτης" }, target: { newMap: true } }],
+      shortcuts: [{ do: "new", target: { newMap: true } }],
       share: "map"
     },
     wiki: {
-      name: { en: "orOS Wiki", el: "orOS Wiki" },
-      shortcuts: [{ do: "new", name: { en: "New article", el: "Νέο άρθρο" }, target: { newArt: {} } }],
+      shortcuts: [{ do: "new", target: { newArt: {} } }],
       share: "article"
     },
     slides: {
-      name: { en: "orOS Slides", el: "orOS Παρουσιάσεις" },
-      shortcuts: [{ do: "new", name: { en: "New presentation", el: "Νέα παρουσίαση" }, target: { newDeck: true } }],
+      shortcuts: [{ do: "new", target: { newDeck: true } }],
       share: "outline"
     },
     // Wave 3: personal apps. Water, Diary, Mood, Health and Cycle take
     // no shares (nothing a shared text should become there).
     passwords: {
-      name: { en: "orOS Passwords", el: "orOS Κωδικοί" },
-      shortcuts: [{ do: "gen", name: { en: "Generate a password", el: "Νέος κωδικός" }, target: { gen: true } },
-                  { do: "new", name: { en: "New vault entry", el: "Νέα καταχώριση" }, target: { newEntry: {} } }],
+      shortcuts: [{ do: "gen", target: { gen: true } },
+                  { do: "new", target: { newEntry: {} } }],
       share: "login"
     },
     budget: {
-      name: { en: "orOS Budget", el: "orOS Έσοδα & Έξοδα" },
-      shortcuts: [{ do: "new", name: { en: "New expense", el: "Νέο έξοδο" }, target: { newTx: {} } }],
+      shortcuts: [{ do: "new", target: { newTx: {} } }],
       share: "expense"
     },
     habits: {
-      name: { en: "orOS Habits", el: "orOS Συνήθειες" },
-      shortcuts: [{ do: "new", name: { en: "New habit", el: "Νέα συνήθεια" }, target: { add: true } }],
+      shortcuts: [{ do: "new", target: { add: true } }],
       share: "habit"
     },
     water: {
-      name: { en: "orOS Water", el: "orOS Νερό" },
-      shortcuts: [{ do: "glass", name: { en: "Add a glass", el: "Ένα ποτήρι" }, target: { sip: "glass" } }]
+      shortcuts: [{ do: "glass", target: { sip: "glass" } }]
     },
     diary: {
-      name: { en: "orOS Diary", el: "orOS Ημερολόγιο μιας πρότασης" },
-      shortcuts: [{ do: "write", name: { en: "Write today's sentence", el: "Η σημερινή πρόταση" }, target: { write: true } }]
+      shortcuts: [{ do: "write", target: { write: true } }]
     },
     mood: {
-      name: { en: "orOS Mood", el: "orOS Διάθεση" },
-      shortcuts: [{ do: "log", name: { en: "Log my mood", el: "Πώς νιώθω" }, target: { checkin: true } }]
+      shortcuts: [{ do: "log", target: { checkin: true } }]
     },
     fitness: {
-      name: { en: "orOS Workouts", el: "orOS Προπόνηση" },
-      shortcuts: [{ do: "log", name: { en: "Log a workout", el: "Νέα προπόνηση" }, target: { logNew: true } }],
+      shortcuts: [{ do: "log", target: { logNew: true } }],
       share: "workout"
     },
     health: {
-      name: { en: "orOS Health", el: "orOS Υγεία" },
-      shortcuts: [{ do: "bp", name: { en: "New blood pressure", el: "Νέα πίεση" }, target: { add: "bp" } },
-                  { do: "wt", name: { en: "New weight", el: "Νέο βάρος" }, target: { add: "wt" } }]
+      shortcuts: [{ do: "bp", target: { add: "bp" } },
+                  { do: "wt", target: { add: "wt" } }]
     },
     cycle: {
-      name: { en: "orOS Cycle", el: "orOS Κύκλος" },
-      shortcuts: [{ do: "today", name: { en: "Log today", el: "Καταγραφή σήμερα" }, target: { today: true } }]
+      shortcuts: [{ do: "today", target: { today: true } }]
     },
     // Wave 4: tools and media.
     calculator: {
-      name: { en: "orOS Calculator", el: "orOS Αριθμομηχανή" },
-      shortcuts: [{ do: "sci", name: { en: "Scientific", el: "Επιστημονική" }, target: { mode: "sci" } },
-                  { do: "graph", name: { en: "Graphs", el: "Γραφήματα" }, target: { mode: "graph" } }]
+      shortcuts: [{ do: "sci", target: { mode: "sci" } },
+                  { do: "graph", target: { mode: "graph" } }]
     },
     time: {
-      name: { en: "orOS Time", el: "orOS Ώρα" },
-      shortcuts: [{ do: "timer", name: { en: "Timer", el: "Αντίστροφη μέτρηση" }, target: { pane: "timer" } },
-                  { do: "stopwatch", name: { en: "Stopwatch", el: "Χρονόμετρο" }, target: { pane: "stopwatch" } },
-                  { do: "alarms", name: { en: "Alarms", el: "Ξυπνητήρια" }, target: { pane: "alarms" } }]
+      shortcuts: [{ do: "timer", target: { pane: "timer" } },
+                  { do: "stopwatch", target: { pane: "stopwatch" } },
+                  { do: "alarms", target: { pane: "alarms" } }]
     },
     weather: {
-      name: { en: "orOS Weather", el: "orOS Καιρός" },
-      shortcuts: [{ do: "city", name: { en: "Add a city", el: "Νέα πόλη" }, target: { addCity: true } }]
+      shortcuts: [{ do: "city", target: { addCity: true } }]
     },
     maps: {
-      name: { en: "orOS Maps", el: "orOS Χάρτες" },
-      shortcuts: [{ do: "locate", name: { en: "My location", el: "Η θέση μου" }, target: { locate: true } },
-                  { do: "park", name: { en: "Where I parked", el: "Πού πάρκαρα" }, target: { park: true } }],
+      shortcuts: [{ do: "locate", target: { locate: true } },
+                  { do: "park", target: { park: true } }],
       share: "place"
     },
     feeds: {
-      name: { en: "orOS Reader", el: "orOS Αναγνώστης" },
-      shortcuts: [{ do: "add", name: { en: "Add a feed", el: "Νέα ροή" }, target: { addBlank: true } }],
+      shortcuts: [{ do: "add", target: { addBlank: true } }],
       share: "feed"
     },
     mail: {
-      name: { en: "orOS Mail", el: "orOS Αλληλογραφία" },
-      shortcuts: [{ do: "new", name: { en: "New mail", el: "Νέο μήνυμα" }, target: { compose: {} } }],
+      shortcuts: [{ do: "new", target: { compose: {} } }],
       share: "mail"
     },
     files: {
-      name: { en: "orOS Files", el: "orOS Αρχεία" },
       // (no "Add files": a file picker needs a tap inside the page)
-      shortcuts: [{ do: "folder", name: { en: "New folder", el: "Νέος φάκελος" }, target: { newFolder: true } }]
+      shortcuts: [{ do: "folder", target: { newFolder: true } }]
     },
     podcasts: {
-      name: { en: "orOS Podcasts", el: "orOS Podcasts" },
-      shortcuts: [{ do: "find", name: { en: "Find a podcast", el: "Εύρεση podcast" }, target: { find: true } }],
+      shortcuts: [{ do: "find", target: { find: true } }],
       share: "podcast"
     },
     radio: {
-      name: { en: "orOS Radio", el: "orOS Ραδιόφωνο" },
-      shortcuts: [{ do: "last", name: { en: "Play the last station", el: "Ο τελευταίος σταθμός" }, target: { play: "last" } }]
+      shortcuts: [{ do: "last", target: { play: "last" } }]
     },
     photolab: {
-      name: { en: "orOS Photo Lab", el: "orOS Εργαστήριο εικόνας" },
       // (no "Open a picture": a file picker needs a tap inside the page)
-      shortcuts: [{ do: "new", name: { en: "New picture", el: "Νέα εικόνα" }, target: { newPic: true } }]
+      shortcuts: [{ do: "new", target: { newPic: true } }]
     },
     // Wave 5: business.
     invoices: {
-      name: { en: "orOS Invoices", el: "orOS Τιμολόγια" },
-      shortcuts: [{ do: "invoice", name: { en: "New invoice", el: "Νέο τιμολόγιο" }, target: { newDoc: "inv" } },
-                  { do: "receipt", name: { en: "New receipt", el: "Νέα απόδειξη" }, target: { newDoc: "rcpt" } }],
+      shortcuts: [{ do: "invoice", target: { newDoc: "inv" } },
+                  { do: "receipt", target: { newDoc: "rcpt" } }],
       share: "invoice"
     },
     crm: {
-      name: { en: "orOS CRM", el: "orOS Πελάτες" },
-      shortcuts: [{ do: "new", name: { en: "New customer", el: "Νέος πελάτης" }, target: { newCust: true } }],
+      shortcuts: [{ do: "new", target: { newCust: true } }],
       share: "customer"
     },
     timesheet: {
-      name: { en: "orOS Timesheet", el: "orOS Ώρες εργασίας" },
-      shortcuts: [{ do: "timer", name: { en: "Start or stop the timer", el: "Έναρξη ή διακοπή χρονομέτρου" }, target: { toggle: true } },
-                  { do: "entry", name: { en: "New time entry", el: "Νέα καταχώριση" }, target: { newEntry: true } }]
+      shortcuts: [{ do: "timer", target: { toggle: true } },
+                  { do: "entry", target: { newEntry: true } }]
     },
     // Wave 6: every game in one app (Game Center is its home; a game
     // opened from it gets Back). files: other apps whose file types
     // this app's icon also opens (fileopen.js still routes them).
     gamecenter: {
-      name: { en: "orOS Games", el: "orOS Παιχνίδια" },
-      shortcuts: [{ do: "wordle", name: { en: "Today's Wordle", el: "Το σημερινό Wordle" }, target: { play: "wordle", daily: true } },
-                  { do: "crossword", name: { en: "Today's crossword", el: "Το σημερινό σταυρόλεξο" }, target: { play: "crossword", daily: true } },
-                  { do: "sudoku", name: { en: "Today's Sudoku", el: "Το σημερινό Sudoku" }, target: { play: "sudoku", daily: true } },
-                  { do: "chess", name: { en: "Chess", el: "Σκάκι" }, target: { play: "chess" } }],
+      shortcuts: [{ do: "wordle", target: { play: "wordle", daily: true } },
+                  { do: "crossword", target: { play: "crossword", daily: true } },
+                  { do: "sudoku", target: { play: "sudoku", daily: true } },
+                  { do: "chess", target: { play: "chess" } }],
       files: ["chess"]
     }
   };
+
+  // ---------- Words ----------
+  // App and shortcut names ("name.<id>", "sc.<id>.<do>") and the bars of
+  // the installed page. English and Greek here; any other language from
+  // the "solo" pack (i18n/<code>/solo.js) when i18n.js is on the page.
+  // The per-app manifests stay English (manifestFor).
+  var STR = {
+    en: { "name.notes": "orOS Notes",
+          "sc.notes.new": "New page",
+          "name.calendar": "orOS Calendar",
+          "sc.calendar.new": "New event",
+          "name.bookmarks": "orOS Bookmarks",
+          "sc.bookmarks.add": "Add a bookmark",
+          "name.todo": "orOS To-Do",
+          "sc.todo.new": "New task",
+          "name.contacts": "orOS Contacts",
+          "sc.contacts.new": "New contact",
+          "name.writer": "orOS Writer",
+          "sc.writer.new": "New document",
+          "name.spreadsheet": "orOS Spreadsheet",
+          "sc.spreadsheet.new": "New sheet",
+          "name.kanban": "orOS Kanban",
+          "sc.kanban.new": "New card",
+          "name.mindmap": "orOS Mind Map",
+          "sc.mindmap.new": "New map",
+          "name.wiki": "orOS Wiki",
+          "sc.wiki.new": "New article",
+          "name.slides": "orOS Slides",
+          "sc.slides.new": "New presentation",
+          "name.passwords": "orOS Passwords",
+          "sc.passwords.gen": "Generate a password",
+          "sc.passwords.new": "New vault entry",
+          "name.budget": "orOS Budget",
+          "sc.budget.new": "New expense",
+          "name.habits": "orOS Habits",
+          "sc.habits.new": "New habit",
+          "name.water": "orOS Water",
+          "sc.water.glass": "Add a glass",
+          "name.diary": "orOS Diary",
+          "sc.diary.write": "Write today's sentence",
+          "name.mood": "orOS Mood",
+          "sc.mood.log": "Log my mood",
+          "name.fitness": "orOS Workouts",
+          "sc.fitness.log": "Log a workout",
+          "name.health": "orOS Health",
+          "sc.health.bp": "New blood pressure",
+          "sc.health.wt": "New weight",
+          "name.cycle": "orOS Cycle",
+          "sc.cycle.today": "Log today",
+          "name.calculator": "orOS Calculator",
+          "sc.calculator.sci": "Scientific",
+          "sc.calculator.graph": "Graphs",
+          "name.time": "orOS Time",
+          "sc.time.timer": "Timer",
+          "sc.time.stopwatch": "Stopwatch",
+          "sc.time.alarms": "Alarms",
+          "name.weather": "orOS Weather",
+          "sc.weather.city": "Add a city",
+          "name.maps": "orOS Maps",
+          "sc.maps.locate": "My location",
+          "sc.maps.park": "Where I parked",
+          "name.feeds": "orOS Reader",
+          "sc.feeds.add": "Add a feed",
+          "name.mail": "orOS Mail",
+          "sc.mail.new": "New mail",
+          "name.files": "orOS Files",
+          "sc.files.folder": "New folder",
+          "name.podcasts": "orOS Podcasts",
+          "sc.podcasts.find": "Find a podcast",
+          "name.radio": "orOS Radio",
+          "sc.radio.last": "Play the last station",
+          "name.photolab": "orOS Photo Lab",
+          "sc.photolab.new": "New picture",
+          "name.invoices": "orOS Invoices",
+          "sc.invoices.invoice": "New invoice",
+          "sc.invoices.receipt": "New receipt",
+          "name.crm": "orOS CRM",
+          "sc.crm.new": "New customer",
+          "name.timesheet": "orOS Timesheet",
+          "sc.timesheet.timer": "Start or stop the timer",
+          "sc.timesheet.entry": "New time entry",
+          "name.gamecenter": "orOS Games",
+          "sc.gamecenter.wordle": "Today's Wordle",
+          "sc.gamecenter.crossword": "Today's crossword",
+          "sc.gamecenter.sudoku": "Today's Sudoku",
+          "sc.gamecenter.chess": "Chess",
+          "apk.note": "A new version of the {n} app is out. Update it where you installed it from (F-Droid, Droid-ify or Obtainium), or download the APK.",
+          "apk.get": "Download",
+          "apk.close": "Close",
+          "bar.ask": "Install {n} on this device",
+          "bar.btn": "Install",
+          "bar.how": "To install {n}: open the browser menu (⋮) and choose Install app or Add to Home screen.",
+          "bar.close": "Close",
+          "bar.win": "{n} opened inside an installed app, where it can't be installed. If it isn't installed yet, open this page in Chrome or Edge.",
+          "bar.chrome": "Open in Chrome",
+          "bar.apk": "Download the app (APK)" },
+    el: { "name.notes": "orOS Σημειώσεις",
+          "sc.notes.new": "Νέα σελίδα",
+          "name.calendar": "orOS Ημερολόγιο",
+          "sc.calendar.new": "Νέο συμβάν",
+          "name.bookmarks": "orOS Σελιδοδείκτες",
+          "sc.bookmarks.add": "Νέος σελιδοδείκτης",
+          "name.todo": "orOS Εργασίες",
+          "sc.todo.new": "Νέα εργασία",
+          "name.contacts": "orOS Επαφές",
+          "sc.contacts.new": "Νέα επαφή",
+          "name.writer": "orOS Κειμενογράφος",
+          "sc.writer.new": "Νέο έγγραφο",
+          "name.spreadsheet": "orOS Υπολογιστικά φύλλα",
+          "sc.spreadsheet.new": "Νέο φύλλο",
+          "name.kanban": "orOS Πίνακες Kanban",
+          "sc.kanban.new": "Νέα κάρτα",
+          "name.mindmap": "orOS Νοητικός χάρτης",
+          "sc.mindmap.new": "Νέος χάρτης",
+          "name.wiki": "orOS Wiki",
+          "sc.wiki.new": "Νέο άρθρο",
+          "name.slides": "orOS Παρουσιάσεις",
+          "sc.slides.new": "Νέα παρουσίαση",
+          "name.passwords": "orOS Κωδικοί",
+          "sc.passwords.gen": "Νέος κωδικός",
+          "sc.passwords.new": "Νέα καταχώριση",
+          "name.budget": "orOS Έσοδα & Έξοδα",
+          "sc.budget.new": "Νέο έξοδο",
+          "name.habits": "orOS Συνήθειες",
+          "sc.habits.new": "Νέα συνήθεια",
+          "name.water": "orOS Νερό",
+          "sc.water.glass": "Ένα ποτήρι",
+          "name.diary": "orOS Ημερολόγιο μιας πρότασης",
+          "sc.diary.write": "Η σημερινή πρόταση",
+          "name.mood": "orOS Διάθεση",
+          "sc.mood.log": "Πώς νιώθω",
+          "name.fitness": "orOS Προπόνηση",
+          "sc.fitness.log": "Νέα προπόνηση",
+          "name.health": "orOS Υγεία",
+          "sc.health.bp": "Νέα πίεση",
+          "sc.health.wt": "Νέο βάρος",
+          "name.cycle": "orOS Κύκλος",
+          "sc.cycle.today": "Καταγραφή σήμερα",
+          "name.calculator": "orOS Αριθμομηχανή",
+          "sc.calculator.sci": "Επιστημονική",
+          "sc.calculator.graph": "Γραφήματα",
+          "name.time": "orOS Ώρα",
+          "sc.time.timer": "Αντίστροφη μέτρηση",
+          "sc.time.stopwatch": "Χρονόμετρο",
+          "sc.time.alarms": "Ξυπνητήρια",
+          "name.weather": "orOS Καιρός",
+          "sc.weather.city": "Νέα πόλη",
+          "name.maps": "orOS Χάρτες",
+          "sc.maps.locate": "Η θέση μου",
+          "sc.maps.park": "Πού πάρκαρα",
+          "name.feeds": "orOS Αναγνώστης",
+          "sc.feeds.add": "Νέα ροή",
+          "name.mail": "orOS Αλληλογραφία",
+          "sc.mail.new": "Νέο μήνυμα",
+          "name.files": "orOS Αρχεία",
+          "sc.files.folder": "Νέος φάκελος",
+          "name.podcasts": "orOS Podcasts",
+          "sc.podcasts.find": "Εύρεση podcast",
+          "name.radio": "orOS Ραδιόφωνο",
+          "sc.radio.last": "Ο τελευταίος σταθμός",
+          "name.photolab": "orOS Εργαστήριο εικόνας",
+          "sc.photolab.new": "Νέα εικόνα",
+          "name.invoices": "orOS Τιμολόγια",
+          "sc.invoices.invoice": "Νέο τιμολόγιο",
+          "sc.invoices.receipt": "Νέα απόδειξη",
+          "name.crm": "orOS Πελάτες",
+          "sc.crm.new": "Νέος πελάτης",
+          "name.timesheet": "orOS Ώρες εργασίας",
+          "sc.timesheet.timer": "Έναρξη ή διακοπή χρονομέτρου",
+          "sc.timesheet.entry": "Νέα καταχώριση",
+          "name.gamecenter": "orOS Παιχνίδια",
+          "sc.gamecenter.wordle": "Το σημερινό Wordle",
+          "sc.gamecenter.crossword": "Το σημερινό σταυρόλεξο",
+          "sc.gamecenter.sudoku": "Το σημερινό Sudoku",
+          "sc.gamecenter.chess": "Σκάκι",
+          "apk.note": "Βγήκε νέα έκδοση της εφαρμογής {n}. Ενημέρωσέ τη από εκεί που την εγκατέστησες (F-Droid, Droid-ify ή Obtainium) ή κατέβασε το APK.",
+          "apk.get": "Λήψη",
+          "apk.close": "Κλείσιμο",
+          "bar.ask": "Εγκατάσταση του {n} σε αυτή τη συσκευή",
+          "bar.btn": "Εγκατάσταση",
+          "bar.how": "Για να εγκαταστήσεις το {n}: άνοιξε το μενού του browser (⋮) και πάτησε Εγκατάσταση εφαρμογής ή Προσθήκη στην αρχική οθόνη.",
+          "bar.close": "Κλείσιμο",
+          "bar.win": "Το {n} άνοιξε μέσα σε εγκατεστημένη εφαρμογή, όπου δεν γίνεται εγκατάσταση. Αν δεν το έχεις ήδη εγκαταστήσει, άνοιξε αυτή τη σελίδα στο Chrome ή στο Edge.",
+          "bar.chrome": "Άνοιγμα στο Chrome",
+          "bar.apk": "Λήψη της εφαρμογής (APK)" }
+  };
+  // The { en, el } name pairs on APPS, from the table, for the build
+  // tools that read them (android/tools/gen.js: widget labels).
+  Object.keys(APPS).forEach(function (id) {
+    APPS[id].name = { en: STR.en["name." + id], el: STR.el["name." + id] };
+    (APPS[id].shortcuts || []).forEach(function (s) {
+      s.name = { en: STR.en["sc." + id + "." + s.do], el: STR.el["sc." + id + "." + s.do] };
+    });
+  });
+  // One string in language l (en, el or a pack language), else English.
+  function tt(key, l) {
+    var I = root && root.orosI18n, tb = STR.en;
+    if (l === "en" || l === "el") tb = STR[l];
+    else if (I && I.known(l)) tb = I.table(STR, "solo", l);
+    return tb[key] !== undefined ? tb[key] : (STR.en[key] || "");
+  }
+  // The language the person chose (the shell's, else the stored one).
+  function storedLang(win) {
+    var I = root && root.orosI18n;
+    if (I) return I.lang();
+    var l = "en";
+    try { l = win.localStorage.getItem("oros-lang") || "en"; } catch (e) {}
+    return l;
+  }
 
   var ID_RE = /^[a-z0-9-]{1,40}$/;
   // Launch parameters the host hands to the shell frame unchanged
@@ -232,8 +407,7 @@
     return typeof id === "string" && ID_RE.test(id) && Object.prototype.hasOwnProperty.call(APPS, id);
   }
   function ids() { return Object.keys(APPS); }
-  function lang(l) { return l === "el" ? "el" : "en"; }
-  function nameOf(id, l) { return has(id) ? APPS[id].name[lang(l)] : ""; }
+  function nameOf(id, l) { return has(id) ? tt("name." + id, l) : ""; }
 
   // The installed page's path: "/notes/solo.html" → "notes".
   function idFromPath(pathname) {
@@ -429,9 +603,9 @@
     var a = APPS[id], scope = "/" + id + "/", page = scope + "solo.html";
     var icon = "/icons/solo/" + id;
     var m = {
-      name: a.name.en,
-      short_name: a.name.en.replace(/^orOS /, ""),
-      description: a.name.en + ": the orOS app on its own. Works offline, no cookies, no tracking; encrypted sync only if you turn it on.",
+      name: STR.en["name." + id],
+      short_name: STR.en["name." + id].replace(/^orOS /, ""),
+      description: STR.en["name." + id] + ": the orOS app on its own. Works offline, no cookies, no tracking; encrypted sync only if you turn it on.",
       id: page,
       start_url: page,
       scope: scope,
@@ -449,7 +623,8 @@
       dir: "ltr",
       categories: (base && base.categories) || ["productivity"],
       shortcuts: (a.shortcuts || []).map(function (s) {
-        return { name: s.name.en, short_name: s.name.en, url: page + "?do=" + s.do,
+        var sn = STR.en["sc." + id + "." + s.do];
+        return { name: sn, short_name: sn, url: page + "?do=" + s.do,
                  icons: [{ src: icon + "-192.png", sizes: "192x192", type: "image/png" }] };
       })
     };
@@ -599,10 +774,7 @@
     return /^\d{1,10}$/.test(v) ? Number(v) : 0;
   }
 
-  var APK_TEXT = {
-    en: { note: "A new version of the {n} app is out. Update it where you installed it from (F-Droid, Droid-ify or Obtainium), or download the APK.", get: "Download", close: "Close" },
-    el: { note: "Βγήκε νέα έκδοση της εφαρμογής {n}. Ενημέρωσέ τη από εκεί που την εγκατέστησες (F-Droid, Droid-ify ή Obtainium) ή κατέβασε το APK.", get: "Λήψη", close: "Κλείσιμο" }
-  };
+
   var APK_KEY = "oros-apk";           // { installed: {pkg: code}, seen: {pkg: code}, repo: {at, v} }
   var DAY = 864e5;
   // Remembers the installed versionCode (when the launch carried it) and,
@@ -639,9 +811,8 @@
     }, function () {});
   }
   function showApkBar(win, id) {
-    var doc = win.document, lng = "en";
-    try { lng = lang(win.localStorage.getItem("oros-lang")); } catch (e) {}
-    var T = APK_TEXT[lng];
+    var doc = win.document, lng = storedLang(win);
+    function T(k) { return tt("apk." + k, lng); }
     var bar = doc.createElement("div");
     bar.id = "solo-apk";
     bar.setAttribute("role", "status");
@@ -650,18 +821,18 @@
       "box-shadow:0 4px 18px rgba(0,0,0,.45)";
     var txt = doc.createElement("span");
     txt.style.flex = "1";
-    txt.textContent = T.note.replace("{n}", id === "oros" ? "orOS" : nameOf(id, lng));
+    txt.textContent = T("note").replace("{n}", id === "oros" ? "orOS" : nameOf(id, lng));
     bar.appendChild(txt);
     var a = doc.createElement("a");
     a.href = apkHref(id, win.navigator.userAgent, true, pkgOf(id));
     a.rel = "noopener";
-    a.textContent = T.get;
+    a.textContent = T("get");
     a.style.cssText = "border-radius:8px;padding:8px 14px;background:#c8a96e;color:#1b1a18;font-weight:600;text-decoration:none;white-space:nowrap";
     bar.appendChild(a);
     var x = doc.createElement("button");
     x.type = "button";
     x.textContent = "×";
-    x.setAttribute("aria-label", T.close);
+    x.setAttribute("aria-label", T("close"));
     x.style.cssText = "border:0;background:none;color:inherit;font-size:22px;line-height:1;padding:2px 6px";
     function close() { bar.remove(); }
     x.addEventListener("click", close);
@@ -690,18 +861,14 @@
   // app window instead (on Android the installed orOS or the orOS app
   // takes every link to this site) says so, with an "Open in Chrome"
   // button on Android.
-  var BAR_TEXT = {
-    en: { ask: "Install {n} on this device", btn: "Install", how: "To install {n}: open the browser menu (⋮) and choose Install app or Add to Home screen.", close: "Close",
-          win: "{n} opened inside an installed app, where it can't be installed. If it isn't installed yet, open this page in Chrome or Edge.", chrome: "Open in Chrome", apk: "Download the app (APK)" },
-    el: { ask: "Εγκατάσταση του {n} σε αυτή τη συσκευή", btn: "Εγκατάσταση", how: "Για να εγκαταστήσεις το {n}: άνοιξε το μενού του browser (⋮) και πάτησε Εγκατάσταση εφαρμογής ή Προσθήκη στην αρχική οθόνη.", close: "Κλείσιμο",
-          win: "Το {n} άνοιξε μέσα σε εγκατεστημένη εφαρμογή, όπου δεν γίνεται εγκατάσταση. Αν δεν το έχεις ήδη εγκαταστήσει, άνοιξε αυτή τη σελίδα στο Chrome ή στο Edge.", chrome: "Άνοιγμα στο Chrome", apk: "Λήψη της εφαρμογής (APK)" }
-  };
+
   function installBar(win, id, asked) {
-    var doc = win.document, bar = null, deferred = null, lng = "en", inWindow = false;
-    try { lng = lang(win.localStorage.getItem("oros-lang")); } catch (e) {}
+    var doc = win.document, bar = null, deferred = null, lng = storedLang(win), inWindow = false;
     try { inWindow = !win.matchMedia("(display-mode: browser)").matches; } catch (e) { return; }
     if (inWindow && !asked) return;
-    var T = BAR_TEXT[lng], name = nameOf(id, lng);
+    var name = nameOf(id, lng);
+    var T = {};
+    ["ask", "btn", "how", "close", "win", "chrome", "apk"].forEach(function (k) { T[k] = tt("bar." + k, lng); });
     function close() { if (bar) { bar.remove(); bar = null; } }
     function show(withButton) {
       close();
