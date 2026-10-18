@@ -623,7 +623,7 @@
     var h = window.parent.location.hash || "", mm = h.match(/^#stage-join=([0-9]{6})$/);
     if (mm) {
       code = mm[1];
-      window.parent.history.replaceState(null, "", window.parent.location.pathname + window.parent.location.search);
+      window.parent.history.replaceState(window.parent.history.state, "", window.parent.location.pathname + window.parent.location.search);
     }
   } catch (e) {}
   var j = readJSON(JOIN_KEY);

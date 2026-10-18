@@ -432,7 +432,7 @@
       var hs = root.parent.location.hash || "", mm = hs.match(/^#slides-remote=([0-9]{6})$/);
       if (mm) {
         code = mm[1];
-        root.parent.history.replaceState(null, "", root.parent.location.pathname + root.parent.location.search);
+        root.parent.history.replaceState(root.parent.history.state, "", root.parent.location.pathname + root.parent.location.search);
       }
     } catch (e) {}
     var j = readJSON(JOIN_KEY);
