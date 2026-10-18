@@ -1083,6 +1083,11 @@
       .sort(function (a, b) { return a.at - b.at; }).slice(0, 100);
     if (!send({ t: "reminders", seq: ++seq, items: items })) return;
     lastSent.reminders = key;
+    // Settings shows the next one, so a missing reminder can be told apart from a muted one.
+    var q = prefs(), cal = items.filter(function (r) { return r.ns === "calendar"; });
+    q.remNext = items.length ? { t: String(items[0].title || "").slice(0, 80), at: items[0].at } : null;
+    q.remCal = cal.length;
+    savePrefs(q);
     var h = handled(), keep = {};
     Object.keys(h).forEach(function (id) { if (h[id] > now - 2 * 86400000) keep[id] = h[id]; });
     items.forEach(function (r) { keep[r.id] = r.at; });
@@ -1234,8 +1239,9 @@
     state: function () { return appState; },
     enabled: function (kind) { return !!prefs()[kind]; },
     lastSync: function (kind) {
-      var p = prefs();
-      return { at: p[kind + "At"] || 0, n: p[kind + "N"] || 0, err: p[kind + "Err"] || "" };
+      var p = prefs(), o = { at: p[kind + "At"] || 0, n: p[kind + "N"] || 0, err: p[kind + "Err"] || "" };
+      if (kind === "reminders") { o.next = p.remNext || null; o.cal = p.remCal | 0; }
+      return o;
     },
     setEnabled: function (kind, on) {
       if (!KEYS[kind] && kind !== "reminders" && kind !== "health") return;
