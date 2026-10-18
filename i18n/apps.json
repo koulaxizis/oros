@@ -19,6 +19,7 @@
     "atelier/magicai.js",
     "atelier/magicdesign.js",
     "atelier/presets.js",
+    "atelier/recipes.js",
     "atelier/search.js",
     "atelier/templates-more.js",
     "atelier/templates.js"

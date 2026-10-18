@@ -223,6 +223,7 @@
       "resize.title": "Resize design", "resize.note": "Pick one or more sizes. Elements are placed again for each size: edges stay at the edges, bars and photos across the page stretch, nothing is distorted.",
       "resize.copies": "Keep this design, make a copy in each size", "resize.custom": "Custom size", "resize.w": "Width", "resize.h": "Height",
       "resize.go": "Resize ({n})", "resize.copy": "{name} · {size}", "resize.made": "{n} copies made.", "resize.open": "Open", "more.bulk": "Bulk create…",
+      "more.recipes": "Automations…", "more.record": "Record an automation", "rc.short": "Automations", "rc.runSel": "Automation ({n})",
       "resize.current": "current", "resize.one": "Resizing this design itself works with one size at a time.",
       "btn.cancel": "Cancel", "btn.ok": "OK", "btn.create": "Create", "btn.close": "Close", "btn.undo": "Undo",
       "btn.apply": "Apply", "btn.reset": "Reset", "btn.save": "Save",
@@ -429,6 +430,7 @@
       "resize.title": "Αλλαγή μεγέθους", "resize.note": "Διάλεξε ένα ή περισσότερα μεγέθη. Τα στοιχεία τοποθετούνται ξανά για κάθε μέγεθος: ό,τι είναι στις άκρες μένει στις άκρες, οι μπάρες και οι φωτογραφίες που πιάνουν όλη τη σελίδα απλώνονται, τίποτα δεν παραμορφώνεται.",
       "resize.copies": "Κράτα αυτό το σχέδιο και φτιάξε αντίγραφο σε κάθε μέγεθος", "resize.custom": "Δικό σου μέγεθος", "resize.w": "Πλάτος", "resize.h": "Ύψος",
       "resize.go": "Αλλαγή μεγέθους ({n})", "resize.copy": "{name} · {size}", "resize.made": "Φτιάχτηκαν {n} αντίγραφα.", "resize.open": "Άνοιγμα", "more.bulk": "Μαζική δημιουργία…",
+      "more.recipes": "Αυτοματισμοί…", "more.record": "Εγγραφή αυτοματισμού", "rc.short": "Αυτοματισμοί", "rc.runSel": "Αυτοματισμός ({n})",
       "resize.current": "τρέχον", "resize.one": "Η αλλαγή μεγέθους του ίδιου του σχεδίου γίνεται με ένα μέγεθος τη φορά.",
       "btn.cancel": "Άκυρο", "btn.ok": "OK", "btn.create": "Δημιουργία", "btn.close": "Κλείσιμο", "btn.undo": "Αναίρεση",
       "btn.apply": "Εφαρμογή", "btn.reset": "Επαναφορά", "btn.save": "Αποθήκευση",
@@ -517,6 +519,8 @@
 
   var ICONS = {
     back: '<path d="M15 5l-7 7 7 7"/>',
+    up: '<path d="M6 15l6-6 6 6"/>',
+    down: '<path d="M6 9l6 6 6-6"/>',
     undo: '<path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/>',
     redo: '<path d="M15 14l5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/>',
     plus: '<path d="M12 5v14M5 12h14"/>', minus: '<path d="M5 12h14"/>',
@@ -803,8 +807,8 @@
 
   // Make the open doc look like `target` with fresh stamps.
   function withoutM(e) { var o = {}; Object.keys(e).forEach(function (k) { if (k !== "m" && k !== "h") o[k] = e[k]; }); return o; }
-  function applyState(target) {
-    var cur = AT.doc, t0 = now();
+  function applyState(target, curDoc) {
+    var cur = curDoc || AT.doc, t0 = now();
     var nd = JSON.parse(JSON.stringify(cur));
     if (cur.name !== target.name || JSON.stringify(cur.setup) !== JSON.stringify(target.setup)) {
       nd.name = target.name; nd.setup = target.setup; nd.m = Math.max(t0, cur.m + 1);
@@ -843,6 +847,26 @@
     undoStack.push(JSON.stringify(AT.doc));
     replaceDoc(applyState(JSON.parse(snap)));
     commit();
+  };
+  // A design changed outside the editor (an automation): saved; the
+  // open design keeps an undo step for it. restoreDoc(id, snapshot)
+  // brings a design back to an earlier copy as new edits (synced).
+  AT.putDoc = function (nd) {
+    var i = -1;
+    data.docs.forEach(function (d, j) { if (d.id === nd.id) i = j; });
+    if (i < 0) return false;
+    nd = M.normDoc(nd);
+    if (JSON.stringify(nd) === JSON.stringify(data.docs[i])) return false;
+    var open = AT.doc && AT.doc.id === nd.id;
+    if (open) { AT.endGesture(); pushUndo(JSON.stringify(AT.doc)); AT.doc = nd; }
+    data.docs[i] = nd;
+    if (open) commit(); else save();
+    return true;
+  };
+  AT.restoreDoc = function (id, snap) {
+    var d = findDoc(id);
+    if (!d || !snap) return false;
+    return AT.putDoc(applyState(JSON.parse(JSON.stringify(snap)), d));
   };
   AT.canUndo = function () { return undoStack.length > 0; };
   AT.canRedo = function () { return redoStack.length > 0; };
@@ -1102,6 +1126,12 @@
       b.type = "button";
       b.addEventListener("click", function () { pick = {}; renderHome(); });
       row.appendChild(b);
+      if (AT.recipes) {
+        var rb = el("button", "btn small", t("rc.short"));
+        rb.type = "button";
+        rb.addEventListener("click", function () { AT.recipes.open(); });
+        row.appendChild(rb);
+      }
       if (AT.manageFiles) {
         var f = el("button", "btn small", t("fm.short"));
         f.type = "button";
@@ -1134,6 +1164,7 @@
         AT.folders.moveMenu(mv, Object.keys(pick), function () { pick = null; renderHome(); });
       }, !n);
     }
+    if (AT.recipes) add(t("rc.runSel", { n: n }), "", function () { AT.recipes.open(Object.keys(pick)); }, !n);
     add(t("home.delSel", { n: n }), "danger", function () { deleteMany(Object.keys(pick)); }, !n);
     add(t("btn.cancel"), "", function () { pick = null; renderHome(); });
   }
