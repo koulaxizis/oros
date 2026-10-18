@@ -3308,6 +3308,7 @@
       };
       var opt = function (src) { return load(src).catch(function () {}); };
       cmdLoad = Promise.all([
+        cmdPack(),
         window.OrosCalQuick ? null : load("calendar/quickadd.js"),
         window.OrosCommands ? null : load("commands/core.js"),
         window.orosCmdBar ? null : load("commands/bar.js"),
@@ -3321,6 +3322,12 @@
       cmdLoad.catch(function () { cmdLoad = null; });
     }
     return cmdLoad;
+  }
+  // The command bar's own pack (i18n/<code>/commands.js) for a pack
+  // language; nothing for English and Greek. A missing pack = English.
+  function cmdPack() {
+    var I = window.orosI18n;
+    return I ? new Promise(function (r) { I.ensure(state.lang, "commands", r); }) : null;
   }
   function cmdAppName(id) {
     var k = "app." + id, v = window.t(k);
@@ -3367,7 +3374,7 @@
   function cmdForget() { try { localStorage.removeItem(CMD_HIST_KEY); } catch (e) {} }
   function cmdRun(cmd, q) {
     var C = window.OrosCommands;
-    var c = C ? C.call(cmd, langBase()) : null;
+    var c = C ? C.call(cmd, state.lang) : null;
     if (!c) return;
     if (typeof q === "string") cmdRemember(q);
     closeMenu();
@@ -3404,7 +3411,7 @@
       window.orosCmdBar.open({
         lang: function () { return langBase(); },
         parse: cmdParse,
-        describe: function (cmd) { return window.OrosCommands.describe(cmd, langBase()); },
+        describe: function (cmd) { return window.OrosCommands.describe(cmd, state.lang); },
         appName: cmdAppName,
         apps: cmdMatchApps,
         run: cmdRun,
@@ -3578,7 +3585,7 @@
       var cmd = cmdParse(q);
       if (!cmd || cmd.kind === "convert") return;     // conversions: the Unit Converter's own search row
       menuCmd = cmd;
-      var d = window.OrosCommands.describe(cmd, langBase());
+      var d = window.OrosCommands.describe(cmd, state.lang);
       var b = document.createElement("button");
       b.type = "button";
       b.className = "menu-cmd";
@@ -5817,6 +5824,7 @@
     var I = window.orosI18n;
     function go() {
       if (I && window.OROS_TRANSLATIONS) I.table(window.OROS_TRANSLATIONS, "shell", state.lang);
+      if (I && window.OrosCommands) cmdPack();     // the command bar, if it is loaded
       applyLang();
       refreshRunningApp();        // opened apps follow the language too
       langKeepOffline();
