@@ -19,18 +19,25 @@
 
     <!-- 1. Before sharing: options and the start button -->
     <section id="v-idle" class="view">
-      <p class="lead" data-i18n="idle.lead">Take a picture of your screen, a window or a browser tab.</p>
+      <p class="lead" id="idle-lead" data-i18n="idle.lead">Take a picture of your screen, a window or a browser tab.</p>
+      <div id="mode" class="chips seg" role="radiogroup" aria-label="Mode">
+        <button type="button" class="chip" data-mode="shot" role="radio" data-i18n="mode.shot">Screenshot</button>
+        <button type="button" class="chip" data-mode="rec" role="radio" data-i18n="mode.rec">Recording</button>
+      </div>
       <div id="opts" class="card">
         <div class="row">
           <span class="lbl" id="delay-lbl" data-i18n="opt.delay">Delay</span>
           <div id="delay" class="chips" role="radiogroup" aria-labelledby="delay-lbl"></div>
         </div>
         <label class="row check"><input type="checkbox" id="opt-cursor"> <span data-i18n="opt.cursor">Show the mouse pointer</span></label>
-        <label class="row check"><input type="checkbox" id="opt-edit"> <span data-i18n="opt.edit">Open in Photo Lab after saving</span></label>
+        <label class="row check" id="row-edit"><input type="checkbox" id="opt-edit"> <span data-i18n="opt.edit">Open in Photo Lab after saving</span></label>
+        <label class="row check rec-only"><input type="checkbox" id="opt-sys"> <span data-i18n="opt.sys">Record the sound of the screen or tab</span></label>
+        <label class="row check rec-only"><input type="checkbox" id="opt-mic"> <span data-i18n="opt.mic">Record the microphone</span></label>
+        <label class="row check rec-only"><input type="checkbox" id="opt-montage"> <span data-i18n="opt.montage">Open in Montage after saving</span></label>
       </div>
       <button type="button" id="b-start" class="chip pri big" data-i18n="btn.start">Choose what to capture</button>
       <p id="unsupported" class="note" hidden data-i18n="err.unsupported">This browser cannot capture the screen. Phones and tablets do not offer it; use orOS on a computer (Chrome, Edge or Firefox).</p>
-      <p class="hint" data-i18n="idle.hint">Your browser asks what to share. Nothing leaves this device: the picture is saved in Files › Pictures.</p>
+      <p class="hint" id="idle-hint" data-i18n="idle.hint">Your browser asks what to share. Nothing leaves this device: the picture is saved in Files › Pictures.</p>
     </section>
 
     <!-- 2. Sharing: live view, take a picture -->
@@ -39,11 +46,15 @@
         <video id="live" muted playsinline autoplay></video>
         <div id="count" aria-live="assertive"></div>
       </div>
+      <p id="rec-status" class="rec-status" aria-live="polite" hidden><span class="dot"></span><span id="rec-time">0:00</span><span id="rec-size"></span></p>
       <div class="bar">
+        <button type="button" id="b-rec" class="chip pri big" data-i18n="btn.rec">Start recording</button>
+        <button type="button" id="b-pause" class="chip" data-i18n="btn.pause" hidden>Pause</button>
+        <button type="button" id="b-end" class="chip pri big" data-i18n="btn.end" hidden>Stop recording</button>
         <button type="button" id="b-take" class="chip pri big" data-i18n="btn.take">Take screenshot</button>
         <button type="button" id="b-stop" class="chip" data-i18n="btn.stop">Stop sharing</button>
       </div>
-      <p class="hint" data-i18n="live.hint">You can take as many pictures as you like while sharing.</p>
+      <p class="hint" id="live-hint" data-i18n="live.hint">You can take as many pictures as you like while sharing.</p>
     </section>
 
     <!-- 3. A picture: crop, save, copy -->
@@ -63,6 +74,19 @@
         <button type="button" id="b-drop" class="chip del" data-i18n="btn.drop">Discard</button>
       </div>
       <p class="hint" data-i18n="shot.hint">Drag on the picture to keep only part of it.</p>
+    </section>
+
+    <!-- 4. A recording: watch, save -->
+    <section id="v-rec" class="view" hidden>
+      <div class="stage">
+        <video id="clip" controls playsinline></video>
+      </div>
+      <p id="clip-info" class="hint"></p>
+      <div class="bar">
+        <button type="button" id="b-rsave" class="chip pri" data-i18n="btn.rsave">Save to Videos</button>
+        <button type="button" id="b-ragain" class="chip" data-i18n="btn.ragain">Record another</button>
+        <button type="button" id="b-rdrop" class="chip del" data-i18n="btn.drop">Discard</button>
+      </div>
     </section>
 
   </main>
