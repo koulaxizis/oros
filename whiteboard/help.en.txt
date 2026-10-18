@@ -31,6 +31,24 @@ Whiteboard is an endless board for ideas: sticky notes, text, shapes, arrows tha
 - `Export` in the top bar saves the `Whole board`, the `Selection` or, with one frame selected, `This frame`, as PNG, SVG or PDF, on a `Paper` or `Transparent` background. `Save in Files` keeps it in Files › Whiteboard.
 - A selected frame also has `Export this frame` in its bar, which makes frames handy as pages.
 
+## Templates
+- `More` (the three dots at the top right) › `Templates…` adds a ready board in the middle of the screen: `Brainstorm` (a topic with room for ideas around it), `Retrospective` (what went well, what to improve, what we do next), `SWOT` and `Roadmap` (now, next and later on a time line). It is one step: `Undo` takes it all back.
+
+## Dot voting
+- `More` › `Dot voting…` asks how many dots each person gets (1 to 20), then the bar at the top shows who is voting and how many dots are left.
+- Tap a sticky note, shape, text or picture to put one of your dots on it. Tap your own dot again to take it back. Dragging still moves around the board.
+- Hand the device over and tap `Next person`: the next person gets dots of another colour. `Done` ends the voting, and so does choosing a tool.
+- `Results` lists what got votes, most first; tap one to go to it. From there you can also send the list to another app or `Remove all dots`.
+- Dots are small circles on the board, so they sync, export and move with the note they sit on like everything else.
+
+## Timer
+- `More` › `Timer…` starts a countdown of 1 to 25 minutes, or as many minutes as you type. It stays at the bottom left with `Pause`, `One more minute` and `Stop the timer`, and rings and vibrates when the time is up. The timer belongs to this device and keeps going if you close the app.
+
+## Other apps
+- With notes, shapes or texts selected, `Send to an app…` in the bar at the top sends them as a list: to To-Do as tasks, to Kanban as cards, to Notes, Flashcards and the other apps that take lists. The first line of each note becomes the item, the rest its note. `More` › `Send the notes to an app…` sends every note on the board, top to bottom.
+- `More` › `Bring in a mind map…` lays out one of your maps from Mind map as sticky notes joined by arrows, each main branch in its own colour (up to 250 ideas). The mind map itself does not change.
+- A selected frame has `Open in Atelier` in its bar: the frame becomes a picture and a new design in Atelier, to finish as a poster, a post or slides.
+
 ## Your data
 - Everything stays on this device and is saved as you go. Pictures are made smaller (at most 1024 pixels) so the boards stay light.
 - With orOS sync switched on in [Settings](app:settings), your boards follow you to your other devices, encrypted. Each object syncs on its own, so edits to different objects on two devices both stay; for the same object the newer edit wins.
