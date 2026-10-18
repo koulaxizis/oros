@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.32.01
+- Apps open at once on a bad connection: each app now starts from the copy saved on your device instead of waiting for the network. A new version still arrives with the usual update.
+
 ## Version 3.32.00
 - Whiteboard: dot voting (a colour for each person, results ranked), a timer that rings, templates (Brainstorm, Retrospective, SWOT, Roadmap), Bring in a mind map, Send notes to To-Do, Kanban and other apps, and Open a frame in Atelier as a new design.
 
