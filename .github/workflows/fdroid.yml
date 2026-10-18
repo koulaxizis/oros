@@ -32,7 +32,7 @@ on:
   # repository (no new APKs needed)
   push:
     branches: [main]
-    paths: ['tools/fdroid-metadata.js', 'tools/fdroid/**', '.github/workflows/fdroid.yml']
+    paths: ['tools/fdroid-metadata.js', 'tools/fdroid-keep.js', 'tools/fdroid/**', '.github/workflows/fdroid.yml']
   workflow_dispatch:
     inputs:
       force:
@@ -70,7 +70,15 @@ jobs:
             echo "::notice::No F-Droid secrets: nothing published."
             echo "go=0" >> "$GITHUB_OUTPUT"; exit 0
           fi
-          hash=$(git ls-files -s android phone.js manifest.webmanifest '*/manifest.webmanifest' icons/solo icons/icon-512.png .github/workflows/fdroid.yml tools/fdroid-metadata.js tools/fdroid | sha256sum | cut -d' ' -f1)
+          # The web manifests count without their "version" line: the
+          # version bot (bump-version.yml) stamps it after every release,
+          # and that alone must not republish every APK.
+          hash=$( {
+            git ls-files -s android phone.js icons/solo icons/icon-512.png .github/workflows/fdroid.yml tools/fdroid-metadata.js tools/fdroid-keep.js tools/fdroid
+            for m in $(git ls-files manifest.webmanifest '*/manifest.webmanifest'); do
+              echo "$m $(sed -E '/^[[:space:]]*"version"[[:space:]]*:/d' "$m" | sha256sum | cut -d' ' -f1)"
+            done
+          } | sha256sum | cut -d' ' -f1)
           echo "hash=$hash" >> "$GITHUB_OUTPUT"
           last=$(curl -fsSL "https://raw.githubusercontent.com/$DEST/main/shell-hash.txt" 2>/dev/null || true)
           if [ "$FORCE" != "1" ] && [ "$hash" = "$last" ]; then
@@ -174,6 +182,17 @@ jobs:
           cp -r "$fd/repo" "$site/repo"
           cp "$fd/versions.json" "$site/"
           echo "$HASH" > "$site/shell-hash.txt"
+          # Keep the APKs of earlier publishes for 3 days (kept-apks.json:
+          # file → when it left the index). A phone downloads with the
+          # index it fetched last, often hours old (F-Droid refreshes on
+          # Wi-Fi only by default); if that file were gone it would get a
+          # 404. Kept files are not in the index, only downloadable.
+          prev="$RUNNER_TEMP/prev"
+          if GIT_LFS_SKIP_SMUDGE=1 git clone -q --depth 1 "https://github.com/$DEST.git" "$prev"; then
+            node tools/fdroid-keep.js "$prev" "$site"
+          else
+            echo "::warning::Could not read the published repository: earlier APKs not kept."
+          fi
           touch "$site/.nojekyll"
           # Front page: how to add the repository, its QR code, the apps
           cp -r "$fd/site/." "$site/"
@@ -204,7 +223,9 @@ jobs:
           set -e
           git fetch -q --tags origin
           last=$(git tag -l 'android-v*' --sort=-creatordate | head -1)
-          if [ -n "$last" ] && git diff --quiet "$last" HEAD -- android phone.js manifest.webmanifest icons/icon-512.png; then
+          # The manifest's "version" line alone (version bot) is no change
+          if [ -n "$last" ] && git diff --quiet "$last" HEAD -- android phone.js icons/icon-512.png \
+             && git diff --quiet -I '^[[:space:]]*"version"[[:space:]]*:' "$last" HEAD -- manifest.webmanifest; then
             echo "Android shell unchanged since $last"; exit 0
           fi
           v=$(sed -n 's/.*APP_VERSION = "\([0-9][0-9.]*\)".*/\1/p' shell.js | head -1)
