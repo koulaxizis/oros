@@ -127,6 +127,13 @@ Control Studio's mixer and transport from a tablet or phone while the sound play
 > Use headphones when you record, so the click and the other tracks do not end up in the take.
 - Browsers cannot use ASIO drivers. Your sound card works through the system's own driver, with a little more delay than in a desktop studio app.
 
+## NULL Drum Machine
+- Besides the built-in sounds, an instrument track can be played by `NULL Drum Machine`, the first instrument of NULL JSFX: ten synthesized drum voices (kick, snare, clap, rim, closed and open hat, two toms, cowbell, cymbal) and a 16-step sequencer. Pick it in `+ Track`, or as the `Instrument` in a track's settings or as the keyboard's `Sound`.
+- Its notes follow the General MIDI drum map (36 kick, 38 snare, 42 closed hat, …), so drum loops and drum parts of MIDI files play on it as they are.
+- Its sequencer plays the chosen `Pattern` (House, Techno, Boom Bap and eight more) in time with the song while it plays, on top of the clip notes; `Off` leaves only the notes. With no clips, turn on the loop: the loop is then the song, for playing and for export.
+- `Effects` on the track shows it first, with its own interface: click a step to cycle it (hit, accent, flam, roll, off), right-click to clear it, set each track's length (1 to 16 steps), click a voice's name to hear it, and turn its knobs. A step you draw switches to the `User` pattern, which is saved with the track and syncs like the rest. Every control is also in `All controls`, and each one can be automated.
+- The keyboard and the piano roll play it straight away; the song plays it through the track's effects.
+
 ## Limits
 - Up to 50 projects, 8 tracks and 500 clips per project, one hour per project.
 - An imported file can be up to 100 MB, and a take up to 30 minutes.
@@ -135,7 +142,7 @@ Control Studio's mixer and transport from a tablet or phone while the sound play
 - While you play the keyboard live, you hear the sound without the track's effects; the recorded clip plays with them. The synth recorded as audio is also dry until the take plays. Only Sidechain Ducker takes a key input.
 - A MIDI file's tempo changes are not kept: Studio uses its first tempo. Controllers other than the sustain pedal (pitch bend, modulation) are not recorded into clips.
 - Loops are in 4/4. Audio clips do not stretch with the tempo; only MIDI clips follow it.
-- An older Studio on another device does not show MIDI clips, and when it saves an instrument track, the track plays as piano until its sound is chosen again.
+- An older Studio on another device does not show MIDI clips, and when it saves an instrument track, the track plays as piano until its sound is chosen again. It plays a NULL Drum Machine track with the built-in drum kit, and when it saves the track the drawn `User` pattern is lost.
 - Automation has straight lines only, and the master has no lanes. An older Studio on another device drops lanes and sidechain choices when it saves that track.
 - The MP3 encoder is simple and has constant bitrate: at 128 kbit/s it sounds less clean than other encoders, so choose 192 or more.
 - Effects reset when playback starts, as in a desktop studio.

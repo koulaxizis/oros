@@ -65,6 +65,7 @@
   var DEFAULT      = { bpm: 120, sig: 4 };
   var MAX_FX       = 8;            // effects in one chain
   var FX_ID_RE     = /^[a-z0-9_]{1,40}$/;
+  var MAX_FX_STATE = 4096;         // numbers a plugin's own state may hold (fx item .st)
   var FXU_RE       = /^f[a-z0-9]{6,20}$/;
   var SLIDER_RE    = /^[1-9][0-9]?$/;  // slider1 .. slider64
   var TRACK_RE     = /^t[a-z0-9]{6,20}$/;
@@ -111,6 +112,10 @@
       }
       var o = { u: x.u, id: x.id, on: x.on !== false, s: s };
       if (hasF) o.f = f;
+      // st: what the plugin saves beyond its sliders (@serialize: an instrument's own pattern)
+      if (Array.isArray(x.st) && x.st.length && x.st.length <= MAX_FX_STATE && x.st.every(isNum)) {
+        o.st = x.st.map(function (v) { return round(clamp(v, -1e9, 1e9), 6); });
+      }
       if (typeof x.sc === "string" && TRACK_RE.test(x.sc)) o.sc = x.sc;
       out.push(o);
     });
@@ -343,7 +348,7 @@
       if (s >= end) return;
       var e = Math.min(end, s + q[2]), a = Math.max(s, from);
       if (e - a <= 1e-4) return;
-      out.push({ at: a, end: e, p: q[0], v: q[3], g: cg * fadeGainAt(c, a - c.at) });
+      out.push({ at: a, end: e, s: s, p: q[0], v: q[3], g: cg * fadeGainAt(c, a - c.at) });
     });
     return out;
   }

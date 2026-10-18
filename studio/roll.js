@@ -310,7 +310,7 @@
       setNotes(N.moveNotes(c.n, sel, dt, dp, c.off), false, host.burst("prn" + c.id));
       if (dp && sel.length === 1) audition(clip().n[sel[0]][0], clip().n[sel[0]][3]);
     }
-    function audition(p, v) { var c = clip(); if (c) host.audition(p, v || 100, instOf(c)); }
+    function audition(p, v) { var c = clip(); if (c) host.audition(p, v || 100, instOf(c), c.t); }
 
     // ---------- Pointer: grid ----------
     function local(e) {

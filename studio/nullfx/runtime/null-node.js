@@ -31,7 +31,9 @@
     return Promise.all(parts.concat([st.proc]));
   }
 
-  // opts: { chain: [{ uid, id, sliders, bypass }], time: { tempo, playing, position } }
+  // opts: { chain: [{ uid, id, sliders, bypass, state }], time: { tempo, playing, position },
+  //        midi: [[at, status, data1, data2]], times: [{ at, playing, position }] } (the last two
+  //        for an OfflineAudioContext, where messages can arrive after the render started)
   function Chain(ctx, opts) {
     opts = opts || {};
     var self = this;
@@ -39,7 +41,7 @@
     this.node = new AudioWorkletNode(ctx, "null-fx-chain", {
       numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [2],
       channelCount: 2, channelCountMode: "explicit", channelInterpretation: "speakers",
-      processorOptions: { chain: opts.chain || [], time: opts.time || null }
+      processorOptions: { chain: opts.chain || [], time: opts.time || null, midi: opts.midi || null, times: opts.times || null }
     });
     this.pdc = 0;
     this.waiting = {};
@@ -59,6 +61,15 @@
   Chain.prototype.setBypass = function (uid, on) { this.send({ type: "bypass", uid: uid, on: !!on }); };
   // { tempo, playing, position (seconds), num, denom }
   Chain.prototype.setTime = function (t) { var m = { type: "time" }; for (var k in t) m[k] = t[k]; this.send(m); };
+  // { at (seconds on ctx.currentTime's clock), tempo, playing, position, num, denom }: the
+  // transport changes at that sample (a play start, a loop jump)
+  Chain.prototype.setTimeAt = function (at, t) { var m = { type: "time", at: at }; for (var k in t) m[k] = t[k]; this.send(m); };
+  // MIDI for the chain's instruments: [[at, status, data1, data2], ...]
+  Chain.prototype.midi = function (ev) { this.send({ type: "midi", ev: ev }); };
+  Chain.prototype.midiClear = function () { this.send({ type: "midi-clear" }); };
+  // what Effect.getState() returned (@serialize), and variables an interface set (FX.pokes)
+  Chain.prototype.setState = function (uid, data) { this.send({ type: "state", uid: uid, data: data }); };
+  Chain.prototype.setVars = function (uid, vars) { this.send({ type: "vars", uid: uid, vars: vars }); };
   // an AudioBuffer for a file slider (Convolution's IR File); v: the new slider value
   Chain.prototype.setFile = function (uid, i, v, buf) {
     var ch = buf.numberOfChannels, n = buf.length, data = new Float64Array(n * ch);
