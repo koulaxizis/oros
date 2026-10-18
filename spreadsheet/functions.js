@@ -204,8 +204,8 @@ var T = { NUM: 1, STR: 2, OP: 3, REF: 4, FUNC: 5, SEP: 6, LP: 7, RP: 8, ERR: 9, 
 var OPS2 = { "<>": 1, "<=": 1, ">=": 1 };
 var OPS1 = { "+": 1, "-": 1, "*": 1, "/": 1, "^": 1, "&": 1, "=": 1, "<": 1, ">": 1, "%": 1 };
 var ERR_LIT = /^#(DIV\/0!|N\/A|NAME\?|NUM!|REF!|VALUE!|NULL!)/i;
-var SHEET_Q = /^'((?:[^']|'')+)'!/;
-var SHEET_U = /^([^\s'!:(),;+\-*\/^&<>=%"{}\[\]]+)!/;
+var SHEET_Q = /^\x27((?:[^\x27]|\x27\x27)+)\x27!/;
+var SHEET_U = /^([^\s\x27!:(),;+\-*\/^&<>=%\x22{}\[\]]+)!/;
 var CELL_RE = /^(\$?)([A-Za-z]{1,3})(\$?)([0-9]+)(?::(\$?)([A-Za-z]{1,3})(\$?)([0-9]+))?(?![A-Za-z0-9_.(])/;
 var COLS_RE = /^(\$?)([A-Za-z]{1,3}):(\$?)([A-Za-z]{1,3})(?![A-Za-z0-9_.(])/;
 var IDENT_RE = /^[A-Za-z_Ͱ-Ͽ][A-Za-z0-9_.Ͱ-Ͽ]*/;
@@ -254,7 +254,7 @@ function tokenize(formula) {
     var sheet = null, sheetRaw = "", p = i;
     m = rest.match(SHEET_Q) || rest.match(SHEET_U);
     if (m) {
-      sheet = m[0].charAt(0) === "'" ? m[1].replace(/''/g, "'") : m[1];
+      sheet = m[0].charAt(0) === "'" ? m[1].replace(/\x27\x27/g, "'") : m[1];
       sheetRaw = m[0];
       p = i + m[0].length;
       rest = s.slice(p);
@@ -428,7 +428,7 @@ function formatNumber(n, pat) {
   else if (n === 0 && sections.length > 2) sec = sections[2];
   var core, before, after;
   /* split literal text around the numeric core */
-  var cm = sec.replace(/"[^"]*"/g, function (q) { return new Array(q.length + 1).join("\u0001"); })
+  var cm = sec.replace(/\x22[^\x22]*\x22/g, function (q) { return new Array(q.length + 1).join("\u0001"); })
     .match(/[#0?][#0?,]*(\.[#0?]*)?|\.[#0?]+/);
   if (!cm) return unquoteLit(sec);
   core = cm[0];
@@ -468,13 +468,13 @@ function splitSections(pat) {
   out.push(cur);
   return out;
 }
-function unquoteLit(s) { return s.replace(/"([^"]*)"/g, "$1").replace(/\\(.)/g, "$1"); }
+function unquoteLit(s) { return s.replace(/\x22([^\x22]*)\x22/g, "$1").replace(/\\(.)/g, "$1"); }
 function roundHalfAway(x, d) {
   var f = Math.pow(10, d), y = Number((Math.abs(x) * f).toPrecision(15));
   return (x < 0 ? -1 : 1) * Math.round(y) / f;
 }
 function isDatePattern(p) {
-  var q = p.replace(/"[^"]*"/g, "");
+  var q = p.replace(/\x22[^\x22]*\x22/g, "");
   return /[dy]/i.test(q) || (/m/i.test(q) && !/[0#]/.test(q)) || /h/i.test(q);
 }
 function formatDate(serial, pat, lang) {
@@ -960,7 +960,7 @@ def("MID", 3, 3, function (a) {
 def("UPPER", 1, 1, function (a) { return toStr(a[0]).toUpperCase(); });
 def("LOWER", 1, 1, function (a) { return toStr(a[0]).toLowerCase(); });
 def("PROPER", 1, 1, function (a) {
-  return toStr(a[0]).toLowerCase().replace(/(^|[^\p{L}\p{N}'])(\p{L})/gu, function (m, p, l) { return p + l.toUpperCase(); });
+  return toStr(a[0]).toLowerCase().replace(/(^|[^\p{L}\p{N}\x27])(\p{L})/gu, function (m, p, l) { return p + l.toUpperCase(); });
 });
 def("TRIM", 1, 1, function (a) { return toStr(a[0]).replace(/ +/g, " ").replace(/^ | $/g, ""); });
 def("SUBSTITUTE", 3, 4, function (a) {
