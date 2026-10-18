@@ -17,6 +17,7 @@
   "use strict";
 
   var LY = window.LY, M = LY.M, R = LY.R, T = LY.T, t = LY.t, $ = LY.$, el = LY.el;
+  var LB = window.LayoutBlend;
 
   // ---------- 1. State + geometry ----------
   var K = 96 / 72;          // CSS px per pt at 100%
@@ -1383,6 +1384,7 @@
         if (sameOwner || offset) { it.x += 10; it.y += 10; }
         if (it.grp) { grpMap[it.grp] = grpMap[it.grp] || M.newId("gr"); it.grp = grpMap[it.grp]; }
         if (it.t === "text") it.story = storyMap[it.story];
+        LB.unlink(it);
         doc.items.push(it);
         made.push(it.id);
       });

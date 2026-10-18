@@ -119,7 +119,9 @@
   }
   // a shape's outline: PowerPoint's own where it has one, else Atelier's
   // exact path as custom geometry (in the shape's box, EMU)
-  function geom(shp, rd, w, h, k) {
+  // own = the item's own outline (blend steps, AX.shapeCmds), if any
+  function geom(shp, rd, w, h, k, own) {
+    if (own) return custom(own, w, h, k);
     if (!shp || shp === "rect") return "<a:prstGeom prst=\"rect\"><a:avLst/></a:prstGeom>";
     if (shp === "circle") return "<a:prstGeom prst=\"ellipse\"><a:avLst/></a:prstGeom>";
     var round = rd === undefined ? AX.RD_DEF : rd;
@@ -127,7 +129,9 @@
       // Atelier: r = round% of half the short side; PowerPoint: adj/50000 of half the short side
       return "<a:prstGeom prst=\"roundRect\"><a:avLst><a:gd name=\"adj\" fmla=\"val " + int(round / 100 * 50000) + "\"/></a:avLst></a:prstGeom>";
     }
-    var cmds = FX.shapePath(shp, Math.max(0.01, w), Math.max(0.01, h), { round: round });
+    return custom(FX.shapePath(shp, Math.max(0.01, w), Math.max(0.01, h), { round: round }), w, h, k);
+  }
+  function custom(cmds, w, h, k) {
     if (!cmds.length) return "<a:prstGeom prst=\"rect\"><a:avLst/></a:prstGeom>";
     var pw = Math.max(1, int(w * k * EMU)), ph = Math.max(1, int(h * k * EMU));
     function P(x, y) { return "<a:pt x=\"" + int(x * k * EMU) + "\" y=\"" + int(y * k * EMU) + "\"/>"; }
@@ -165,7 +169,7 @@
   function shapeXml(it, id, k) {
     var ax = it.ax, op = opOf(it);
     return "<p:sp>" + nv("Sp", id, "Shape " + id, "<p:cNvSpPr/>") + "<p:spPr>" +
-      xfrm(k, it.x, it.y, it.w, it.h, it.rot) + geom(ax.shp, ax.rd, it.w, it.h, k) + fillXml(ax, op) +
+      xfrm(k, it.x, it.y, it.w, it.h, it.rot) + geom(ax.shp, ax.rd, it.w, it.h, k, AX.pthOf(it) ? AX.shapeCmds(it) : null) + fillXml(ax, op) +
       lineXml(ax.sc, it.sw, it.dash, op, k) + "</p:spPr></p:sp>";
   }
   var ALIGN = { l: "l", c: "ctr", r: "r", j: "just" };

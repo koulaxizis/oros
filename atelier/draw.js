@@ -49,6 +49,12 @@
   }
   function itemShape(it) {
     var ax = it.ax || {};
+    var own = it.ext && it.ext.pth;
+    if (own) {                                     // blend steps: their own outline (wave C1)
+      var key = "p|" + it.w + "|" + it.h + "|" + (typeof own === "string" ? own : own.join(""));
+      var p = shapeCache.get(key);
+      return p || shapeCache.set(key, new Path2D(FX.toSvgPath(AX.shapeCmds(it)) || "M0 0"));
+    }
     return shapePath(ax.shp || "rect", it.w, it.h, ax.rd === undefined ? AX.RD_DEF : ax.rd);
   }
 

@@ -195,10 +195,7 @@
       else if (c[0] === "Z") pdf.close();
     });
   }
-  function shapeCmds(it) {
-    var ax = it.ax;
-    return FX.shapePath(ax.shp || "rect", Math.max(0.01, it.w), Math.max(0.01, it.h), { round: ax.rd === undefined ? AX.RD_DEF : ax.rd });
-  }
+  function shapeCmds(it) { return AX.shapeCmds(it); }
   function dashOf(pdf, it) { pdf.setLineDashPattern(it.dash ? [it.sw * 3, it.sw * 2] : [], 0); }
 
   function drawShape(pdf, it) {

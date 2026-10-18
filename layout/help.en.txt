@@ -11,6 +11,8 @@ Pick a tool on the left and drag on the page: `Text frame (T)`, `Image frame (F)
 
 With something selected, the `Properties` panel sets position and size, `Rotation`, `Opacity`, `Fill`, `Gradient` (for shapes: `Linear` or `Radial`, start and end colour, angle), `Stroke`, `Arrange`, `Align`, `Group` and `Lock position`. Right-click (or long-press) an object for a quick menu. `Hide` hides an object; with nothing selected, the page panel has `Show hidden objects`.
 
+Blend: select two shapes (rectangles, ellipses or paths) and the `Properties` panel shows `Blend`. Set `Steps` (1 to 50) and press `Blend`: new shapes appear in between, changing evenly in place, size, rotation, outline and colours. Each step gets a colour swatch of its own when its colour is new. Changed one of the two ends? Select a step and press `Update`, or change `Steps`. `Release` keeps the steps as plain shapes.
+
 Drag from a ruler to add a guide, and drag a guide back onto the ruler to remove it. The `Zoom` menu has `Fit page`, `Fit spread`, 50, 100 and 200 %.
 
 ### Text
