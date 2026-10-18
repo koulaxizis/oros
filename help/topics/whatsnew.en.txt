@@ -1,6 +1,10 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.35.00
+- Newsletter: a better editor. Drag blocks into place (or move them with the arrow keys), duplicate them, and Undo or Redo every change. New blocks: quote, space, list, headings in three sizes, dashed or dotted lines in your own colour and width, and up to three buttons in a row, filled or outlined. Every block can be centred or right-aligned, get space around it or its own background colour. Each list also gets its own font, heading size, button shape, link colour and e-mail background.
+
+
 ## Version 3.34.01
 - Back on a phone (or in the browser) inside an app now returns to the desktop, like the Back button in the bar. Before, it could show an app you had closed earlier for a few seconds, empty and without text.
 
