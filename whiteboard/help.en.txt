@@ -1,0 +1,40 @@
+# Whiteboard
+Whiteboard is an endless board for ideas: sticky notes, text, shapes, arrows that join them, pen lines, pictures and frames. Keep as many boards as you like, move around and zoom freely, and export a board or one frame as PNG, SVG or PDF.
+
+## Getting started
+- Pick a tool in the bar on the left, then tap the board. `Sticky note` (N) and `Text` (T) open the text box right away; type and tap anywhere else to finish.
+- `Shape` (S) and `Frame` (F): drag to draw one, or tap for the usual size.
+- `Arrow` (A): drag from one object to another. The arrow sticks to both and follows them when they move. An arrow can also start or end on an empty spot.
+- `Pen` (P) draws with your finger, a pen or the mouse until you pick `Select and move` (V) again.
+- `Add a picture` in the top bar puts a picture in the middle of the screen. You can also drop pictures on the board or paste one with [[Ctrl+V]].
+- The first object you add makes your first board. The name at the top left opens the list of `Boards`, with `New board`, `Rename` and `Delete board`.
+
+## Select, move and change
+- With `Select and move`, tap an object to select it and drag it to move it. [[Shift]] + tap adds to the selection, and dragging an empty spot with the mouse draws a box around several objects.
+- Moving a frame moves everything inside it.
+- The square handle at the bottom right of a selected object resizes it. A selected arrow shows a dot at each end: drag one onto another object to stick it there, or onto an empty spot to free it.
+- The bar at the top shows what the selection can change: `Colour`, `Shape`, `Fill`, `Arrow heads`, `Dashed line`, `Line width`, `Smaller text` and `Bigger text`, then `Edit text`, `Bring to front`, `Send to back`, `Duplicate` and `Delete`. With a tool chosen and nothing selected, it sets the colour of the next object.
+- Double-tap an object, or press [[Enter]], to change its text. A note makes its text smaller as it fills up. Double-tap an empty spot to add a sticky note there.
+- `Undo` and `Redo` in the top bar ([[Ctrl+Z]] and [[Ctrl+Y]]) go back through your changes on this board.
+
+## Move around
+- Drag an empty spot with your finger, or use `Move around` (H), the middle mouse button or [[Space]] + drag. The mouse wheel scrolls; [[Ctrl]] + wheel or a pinch zooms.
+- The buttons at the bottom right zoom out, show the zoom (tap it for 100%), zoom in and `Show everything`.
+
+## Keyboard
+- [[V]] [[H]] [[N]] [[T]] [[S]] [[A]] [[P]] [[F]] choose a tool, [[I]] adds a picture.
+- [[Tab]] goes from one object to the next and the screen reader reads it out. Arrow keys move the selection (with [[Shift]] one step at a time), [[Delete]] removes it.
+- [[Ctrl+A]] selects everything, [[Ctrl+D]] duplicates, [[Ctrl+C]], [[Ctrl+X]] and [[Ctrl+V]] copy, cut and paste on this board.
+- [[+]] and [[-]] zoom, [[0]] goes to 100%, [[1]] shows everything, [[Esc]] lets go of the selection.
+
+## Export
+- `Export` in the top bar saves the `Whole board`, the `Selection` or, with one frame selected, `This frame`, as PNG, SVG or PDF, on a `Paper` or `Transparent` background. `Save in Files` keeps it in Files › Whiteboard.
+- A selected frame also has `Export this frame` in its bar, which makes frames handy as pages.
+
+## Your data
+- Everything stays on this device and is saved as you go. Pictures are made smaller (at most 1024 pixels) so the boards stay light.
+- With orOS sync switched on in [Settings](app:settings), your boards follow you to your other devices, encrypted. Each object syncs on its own, so edits to different objects on two devices both stay; for the same object the newer edit wins.
+- There is no live collaboration: that would need a server that sees your boards.
+
+## Find it from anywhere
+- The menu's search box finds board names and the words on notes, texts, shapes, arrows and frames. Choosing one opens the board on that object.

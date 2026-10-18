@@ -111,6 +111,15 @@
       "type": "internal"
     },
     {
+      "id": "whiteboard",
+      "name": "Whiteboard",
+      "category": "Office",
+      "icon": "whiteboard",
+      "url": "whiteboard/",
+      "search": "search.js",
+      "type": "internal"
+    },
+    {
       "id": "notes",
       "name": "Notes",
       "category": "Office",

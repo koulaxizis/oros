@@ -126,6 +126,7 @@ orosPack("de", "shell", {
  "app.water": "Wasser",
  "app.weather": "Wetter",
  "app.whack": "Hau den Maulwurf",
+ "app.whiteboard": "Whiteboard",
  "app.wheel": "Glücksrad",
  "app.wiki": "Wiki",
  "app.wordle": "Wordle",
