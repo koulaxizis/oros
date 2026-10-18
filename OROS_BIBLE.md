@@ -7821,3 +7821,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 ### 2026-10-18 — German: Settings phone reminder strings (#538) — 3.25.01
 - `i18n/de/settings.js`: `n.phone.status`, `n.phone.next` (new in #534) and the updated `n.phone.hint`; `i18n/de/STATUS.md` regenerated (Settings 100%).
   - Tests: all pass. Not reviewed by a native speaker.
+
+### 2026-10-18 — Mini Assistant window (quick access wave 2, #539) — 3.26.00
+- The desktop menu's Assistant items (Ask, tasks, Briefing) and Ctrl+Alt+Shift+Q (SC_DEFS `q`) open a small Assistant window (`#qa-mini`, `assistant/index.html?mini=1`) over the desktop or a running app: New conversation, Open in the Assistant (same conversation in the full app), Close. One live Assistant at a time: when the full app runs, targets go there; opening it closes the window. The mini frame never registers the sync slice (AS-MINI).
+- Files: `quickmenu.js` 1.1.0, `shell.js` (SC_DEFS `q`), `assistant/assistant.{js,css}` (mini mode), strings EN/EL/DE, help EN/EL/DE + Shortcuts topic. sw.js precache: nothing new.
+  - Tests: all pass. Chromium in the real shell with a mock local OpenAI-compatible server, EN + EL, 1280 and 360 px: shortcut + focus, task into the open window, Send on tap answer, Open in the Assistant shows the same conversation, no mini while the full app is open, over a running app, Close; wave 1 E2E still passes. Not tested: real phone, Safari, a real AI provider.
