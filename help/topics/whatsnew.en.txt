@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.27.00
+- New app: Whiteboard (Office). Sticky notes, text, shapes, arrows that join them, pen lines, pictures and frames on an endless board, with zoom and undo. Export a board or one frame as PNG, SVG or PDF; each object syncs on its own.
+
 ## Version 3.26.00
 - Mini Assistant: the desktop menu's Assistant items and the new shortcut Ctrl+Alt+Shift+Q open a small Assistant window over the desktop or over any app. Ask, read the answer, then close it or carry on in the full Assistant with the same conversation.
 
