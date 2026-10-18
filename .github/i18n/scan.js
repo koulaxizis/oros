@@ -12,7 +12,7 @@ const path = require("path");
 const ROOT = path.join(__dirname, "..", "..");
 
 // Data files whose tables are not UI strings (word lists, OSM presets).
-const SKIP = /(^|\/)(words[\w-]*\.js|presets-data\.js|wordlist[\w-]*\.js)$|\/(vendor|lib|tests|android|extension|relay|node_modules|i18n)\//;
+const SKIP = /(^|\/)(words(-[\w-]+)?\.js|presets-data\.js|wordlist[\w-]*\.js)$|\/(vendor|lib|tests|android|extension|relay|node_modules|i18n)\//;
 
 function jsFiles() {
   const out = [];
