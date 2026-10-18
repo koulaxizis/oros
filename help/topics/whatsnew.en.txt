@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.18.00
+- Maps, Assistant, Wiki, Time, Passwords, Split, Text Tools and Pet Health Book are now in German.
+
 ## Version 3.17.00
 - 13 more apps are now in German, among them Weather, Library, Scanner & PDF, QR Generator and Bookmarks.
 
