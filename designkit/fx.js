@@ -45,6 +45,53 @@
     return isFinite(n) ? clamp(n, lo, hi) : def;
   }
 
+  // ---------- 0. Names of filters, shapes and text effects ----------
+  // flt.<id>, shp.<id>, tfx.<id>. Every list entry carries .en and .el
+  // (apps read them); with a pack language active (i18n/<code>/
+  // designkit.js, "designkit" in data-app) also .<code>.
+  var NAMES = {
+    en: {
+      "flt.none": "Original", "flt.vivid": "Vivid", "flt.warm": "Warm", "flt.cool": "Cool",
+      "flt.aegean": "Aegean", "flt.summer": "Summer", "flt.mono": "Mono", "flt.noir": "Noir",
+      "flt.sepia": "Sepia", "flt.vintage": "Vintage", "flt.faded": "Faded", "flt.drama": "Dramatic",
+      "flt.soft": "Soft", "shp.rect": "Square", "shp.rounded": "Rounded", "shp.circle": "Circle",
+      "shp.triangle": "Triangle", "shp.rtriangle": "Right triangle", "shp.diamond": "Diamond",
+      "shp.pentagon": "Pentagon", "shp.hexagon": "Hexagon", "shp.octagon": "Octagon", "shp.star": "Star",
+      "shp.burst": "Badge", "shp.heart": "Heart", "shp.cross": "Cross", "shp.arrow": "Arrow",
+      "shp.chevron": "Chevron", "shp.parallelogram": "Parallelogram", "shp.trapezoid": "Trapezoid",
+      "shp.arch": "Arch", "shp.drop": "Drop", "shp.shield": "Shield", "shp.bubble": "Speech bubble",
+      "tfx.none": "None", "tfx.shadow": "Shadow", "tfx.lift": "Lift", "tfx.hollow": "Hollow",
+      "tfx.outline": "Outline", "tfx.splice": "Splice", "tfx.echo": "Echo", "tfx.glitch": "Glitch",
+      "tfx.neon": "Neon", "tfx.background": "Background"
+    },
+    el: {
+      "flt.none": "Πρωτότυπο", "flt.vivid": "Ζωντανό", "flt.warm": "Ζεστό", "flt.cool": "Δροσερό",
+      "flt.aegean": "Αιγαίο", "flt.summer": "Καλοκαίρι", "flt.mono": "Ασπρόμαυρο", "flt.noir": "Νουάρ",
+      "flt.sepia": "Σέπια", "flt.vintage": "Ρετρό", "flt.faded": "Ξεθωριασμένο", "flt.drama": "Δραματικό",
+      "flt.soft": "Απαλό", "shp.rect": "Τετράγωνο", "shp.rounded": "Στρογγυλεμένο", "shp.circle": "Κύκλος",
+      "shp.triangle": "Τρίγωνο", "shp.rtriangle": "Ορθογώνιο τρίγωνο", "shp.diamond": "Ρόμβος",
+      "shp.pentagon": "Πεντάγωνο", "shp.hexagon": "Εξάγωνο", "shp.octagon": "Οκτάγωνο", "shp.star": "Αστέρι",
+      "shp.burst": "Σήμα", "shp.heart": "Καρδιά", "shp.cross": "Σταυρός", "shp.arrow": "Βέλος",
+      "shp.chevron": "Σιρίτι", "shp.parallelogram": "Παραλληλόγραμμο", "shp.trapezoid": "Τραπέζιο",
+      "shp.arch": "Αψίδα", "shp.drop": "Σταγόνα", "shp.shield": "Ασπίδα", "shp.bubble": "Συννεφάκι",
+      "tfx.none": "Κανένα", "tfx.shadow": "Σκιά", "tfx.lift": "Ανύψωση", "tfx.hollow": "Κούφιο",
+      "tfx.outline": "Περίγραμμα", "tfx.splice": "Μετατόπιση", "tfx.echo": "Ηχώ", "tfx.glitch": "Glitch",
+      "tfx.neon": "Νέον", "tfx.background": "Φόντο"
+    }
+  };
+  var PK = null;   // the pack language whose names the lists carry
+  function named(list, pre) {
+    var I = typeof window !== "undefined" && window.orosI18n, c = I ? I.lang() : "en";
+    var pk = I && c !== "en" && c !== "el" ? I.table(NAMES, "designkit", c) : null;
+    if (pk) PK = c;
+    list.forEach(function (x) {
+      x.en = NAMES.en[pre + x.id]; x.el = NAMES.el[pre + x.id];
+      if (pk) x[c] = pk[pre + x.id];
+    });
+    return list;
+  }
+  function withPk(o, x) { if (PK) o[PK] = x[PK]; return o; }
+
   // ---------- 1. Adjustments ----------
 
   // Fixed order = canonical order of the stored record.
@@ -172,21 +219,21 @@
 
   // ---------- 2. Filter presets ----------
 
-  var FILTERS = [
-    { id: "none",    en: "Original",  el: "Πρωτότυπο",      p: {} },
-    { id: "vivid",   en: "Vivid",     el: "Ζωντανό",        p: { sat: 35, contrast: 15 } },
-    { id: "warm",    en: "Warm",      el: "Ζεστό",          p: { warmth: 30, sat: 10 } },
-    { id: "cool",    en: "Cool",      el: "Δροσερό",        p: { warmth: -30, tint: -5 } },
-    { id: "aegean",  en: "Aegean",    el: "Αιγαίο",         p: { warmth: -15, tint: -5, sat: 25, contrast: 10 } },
-    { id: "summer",  en: "Summer",    el: "Καλοκαίρι",      p: { warmth: 20, bright: 10, sat: 20 } },
-    { id: "mono",    en: "Mono",      el: "Ασπρόμαυρο",     p: { sat: -100 } },
-    { id: "noir",    en: "Noir",      el: "Νουάρ",          p: { sat: -100, contrast: 45, vignette: 40 } },
-    { id: "sepia",   en: "Sepia",     el: "Σέπια",          p: { sepia: 85 } },
-    { id: "vintage", en: "Vintage",   el: "Ρετρό",          p: { sepia: 35, fade: 30, vignette: 30, sat: -15 } },
-    { id: "faded",   en: "Faded",     el: "Ξεθωριασμένο",   p: { fade: 45, contrast: -10 } },
-    { id: "drama",   en: "Dramatic",  el: "Δραματικό",      p: { contrast: 40, sat: -20, vignette: 35, bright: -5 } },
-    { id: "soft",    en: "Soft",      el: "Απαλό",          p: { blur: 6, bright: 8, contrast: -12 } }
-  ];
+  var FILTERS = named([
+    { id: "none", p: {} },
+    { id: "vivid", p: { sat: 35, contrast: 15 } },
+    { id: "warm", p: { warmth: 30, sat: 10 } },
+    { id: "cool", p: { warmth: -30, tint: -5 } },
+    { id: "aegean", p: { warmth: -15, tint: -5, sat: 25, contrast: 10 } },
+    { id: "summer", p: { warmth: 20, bright: 10, sat: 20 } },
+    { id: "mono", p: { sat: -100 } },
+    { id: "noir", p: { sat: -100, contrast: 45, vignette: 40 } },
+    { id: "sepia", p: { sepia: 85 } },
+    { id: "vintage", p: { sepia: 35, fade: 30, vignette: 30, sat: -15 } },
+    { id: "faded", p: { fade: 45, contrast: -10 } },
+    { id: "drama", p: { contrast: 40, sat: -20, vignette: 35, bright: -5 } },
+    { id: "soft", p: { blur: 6, bright: 8, contrast: -12 } }
+  ], "flt.");
 
   function filterById(id) {
     for (var i = 0; i < FILTERS.length; i++) {
@@ -350,29 +397,29 @@
     return c;
   }
 
-  var SHAPES = [
-    { id: "rect",          en: "Square",        el: "Τετράγωνο" },
-    { id: "rounded",       en: "Rounded",       el: "Στρογγυλεμένο", round: true },
-    { id: "circle",        en: "Circle",        el: "Κύκλος" },
-    { id: "triangle",      en: "Triangle",      el: "Τρίγωνο" },
-    { id: "rtriangle",     en: "Right triangle", el: "Ορθογώνιο τρίγωνο" },
-    { id: "diamond",       en: "Diamond",       el: "Ρόμβος" },
-    { id: "pentagon",      en: "Pentagon",      el: "Πεντάγωνο" },
-    { id: "hexagon",       en: "Hexagon",       el: "Εξάγωνο" },
-    { id: "octagon",       en: "Octagon",       el: "Οκτάγωνο" },
-    { id: "star",          en: "Star",          el: "Αστέρι" },
-    { id: "burst",         en: "Badge",         el: "Σήμα" },
-    { id: "heart",         en: "Heart",         el: "Καρδιά" },
-    { id: "cross",         en: "Cross",         el: "Σταυρός" },
-    { id: "arrow",         en: "Arrow",         el: "Βέλος" },
-    { id: "chevron",       en: "Chevron",       el: "Σιρίτι" },
-    { id: "parallelogram", en: "Parallelogram", el: "Παραλληλόγραμμο" },
-    { id: "trapezoid",     en: "Trapezoid",     el: "Τραπέζιο" },
-    { id: "arch",          en: "Arch",          el: "Αψίδα" },
-    { id: "drop",          en: "Drop",          el: "Σταγόνα" },
-    { id: "shield",        en: "Shield",        el: "Ασπίδα" },
-    { id: "bubble",        en: "Speech bubble", el: "Συννεφάκι", round: true }
-  ];
+  var SHAPES = named([
+    { id: "rect" },
+    { id: "rounded", round: true },
+    { id: "circle" },
+    { id: "triangle" },
+    { id: "rtriangle" },
+    { id: "diamond" },
+    { id: "pentagon" },
+    { id: "hexagon" },
+    { id: "octagon" },
+    { id: "star" },
+    { id: "burst" },
+    { id: "heart" },
+    { id: "cross" },
+    { id: "arrow" },
+    { id: "chevron" },
+    { id: "parallelogram" },
+    { id: "trapezoid" },
+    { id: "arch" },
+    { id: "drop" },
+    { id: "shield" },
+    { id: "bubble", round: true }
+  ], "shp.");
 
   // o.round 0..100 for "rounded" and "bubble" (default 30).
   function shapePath(id, w, h, o) {
@@ -400,18 +447,18 @@
 
   // ---------- 5. Text effects ----------
 
-  var TEXT_FX = [
-    { id: "none",       en: "None",       el: "Κανένα" },
-    { id: "shadow",     en: "Shadow",     el: "Σκιά" },
-    { id: "lift",       en: "Lift",       el: "Ανύψωση" },
-    { id: "hollow",     en: "Hollow",     el: "Κούφιο" },
-    { id: "outline",    en: "Outline",    el: "Περίγραμμα" },
-    { id: "splice",     en: "Splice",     el: "Μετατόπιση" },
-    { id: "echo",       en: "Echo",       el: "Ηχώ" },
-    { id: "glitch",     en: "Glitch",     el: "Glitch" },
-    { id: "neon",       en: "Neon",       el: "Νέον" },
-    { id: "background", en: "Background", el: "Φόντο" }
-  ];
+  var TEXT_FX = named([
+    { id: "none" },
+    { id: "shadow" },
+    { id: "lift" },
+    { id: "hollow" },
+    { id: "outline" },
+    { id: "splice" },
+    { id: "echo" },
+    { id: "glitch" },
+    { id: "neon" },
+    { id: "background" }
+  ], "tfx.");
   var FX_IDS = TEXT_FX.map(function (f) { return f.id; });
 
   // Canonical record: { type, off, dir, blur, alpha, color, thick, pad, round }
@@ -581,14 +628,14 @@
     normAdjust: normAdjust,
     isIdentity: isIdentity,
     adjustPixels: adjustPixels,
-    FILTERS: FILTERS.map(function (f) { return { id: f.id, en: f.en, el: f.el }; }),
+    FILTERS: FILTERS.map(function (f) { return withPk({ id: f.id, en: f.en, el: f.el }, f); }),
     filterById: filterById,
     applyToCanvas: applyToCanvas,
     fitRect: fitRect,
     normCrop: normCrop,
     cropPixels: cropPixels,
     rotatedBounds: rotatedBounds,
-    SHAPES: SHAPES.map(function (s) { return { id: s.id, en: s.en, el: s.el, round: !!s.round }; }),
+    SHAPES: SHAPES.map(function (s) { return withPk({ id: s.id, en: s.en, el: s.el, round: !!s.round }, s); }),
     shapePath: shapePath,
     toSvgPath: toSvgPath,
     TEXT_FX: TEXT_FX.slice(),
