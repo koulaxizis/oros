@@ -340,6 +340,7 @@ orosPack("de", "assistant", {
  "set.keySaved": "Auf diesem Gerät gespeichert (…{tail})",
  "set.kit": "Server",
  "set.model": "Modell",
+ "set.modelPick": "Modell aus der Liste wählen…",
  "set.models": "Modelle laden",
  "set.modelsBusy": "Wird geladen…",
  "set.modelsFree": "Der Schlüssel funktioniert · {n} kostenlose Modelle",

@@ -5,7 +5,7 @@ Der Assistent ist ein Chat mit dem KI-Assistenten deiner Wahl: Claude, ChatGPT, 
 1. Öffne `Assistent` und tippe oder klicke auf `Assistenten einrichten`.
 2. Wähle unter `Assistent`, mit wem du sprechen willst.
 3. Füge deinen `API-Schlüssel` von diesem Dienst ein und drücke `Schlüssel speichern`. `Schlüssel holen` öffnet die Seite, auf der du einen erstellst.
-4. Prüfe das `Modell`. `Modelle laden` listet die Modelle, die dein Schlüssel nutzen kann, und zeigt dir dabei auch, dass der Schlüssel funktioniert.
+4. Prüfe das `Modell`. `Modelle laden` listet die Modelle, die dein Schlüssel nutzen kann, und zeigt dir dabei auch, dass der Schlüssel funktioniert (das passiert von selbst, sobald ein Schlüssel gespeichert ist). Wähle eines aus der Liste unter dem Feld oder tippe selbst einen Modellnamen.
 5. Drücke `Verbindung testen`. Es sendet eine kurze Nachricht und sagt dir, ob der Dienst hier antwortet. Wenn es heißt, der Dienst nimmt keine Aufrufe aus einem Webbrowser an, wähle einen anderen: Das lässt sich in orOS nicht beheben.
 6. Drücke `Schließen`, tippe deine Frage und drücke `Senden`.
 

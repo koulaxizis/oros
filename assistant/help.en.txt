@@ -5,7 +5,7 @@ Assistant is a chat with the AI assistant you choose: Claude, ChatGPT, Gemini, M
 1. Open `Assistant` and tap or click `Set up the assistant`.
 2. Under `Assistant`, choose who you want to talk to.
 3. Paste your `API key` from that service and press `Save key`. `Get a key` opens the page where you create one.
-4. Check the `Model`. `Load models` lists the models your key can use and also tells you that the key works.
+4. Check the `Model`. `Load models` lists the models your key can use and also tells you that the key works (it runs by itself once a key is saved). Pick one from the list under the box, or type a model name yourself.
 5. Press `Test the connection`. It sends one short message and tells you if the service answers here. If it says the service does not accept calls from a web browser, pick another one: that can't be fixed from orOS.
 6. Press `Close`, type your question and press `Send`.
 
