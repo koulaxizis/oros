@@ -1,16 +1,41 @@
 # orOS
 
 **A static operating system in your browser.** Live at
-[useoros.online](https://useoros.online). Every way to get it (browser,
-app, orOS Portable, bootable USB, single apps, Android APKs) is on
+[useoros.online](https://useoros.online). Every way to get it is on
 [useoros.online/download](https://useoros.online/download/).
 
-orOS is a desktop in a web page: a menu, a taskbar, notifications and a
-growing set of apps (notes, calendar, to-do, writer, spreadsheet, maps,
-weather, radio, games and more). It installs as an app (PWA), works offline,
-and keeps your data on your device. If you want your data on more than one
-device, it syncs through your own Dropbox, encrypted before it leaves the
+orOS is a desktop in a web page: a menu, a taskbar, notifications, a
+universal search (`Ctrl+K`) and 132 apps, from notes, calendar, writer,
+spreadsheet and mail to maps, music, a DAW, business tools and 37 games.
+It installs as an app (PWA), works offline, and keeps your data on your
+device. If you want your data on more than one device, it syncs through your
+own Dropbox or WebDAV / Nextcloud server, encrypted before it leaves the
 browser.
+
+## Get orOS
+
+All of it is free (see [Free forever](#free-forever)), and none of it goes
+through an app store.
+
+- **In the browser:** open [useoros.online](https://useoros.online). Chrome,
+  Edge and Brave can install it as an app with its own window.
+- **Windows and Linux installers** (v0.2.0): a Windows setup
+  (`orOS-Setup-<version>.exe`), an AppImage and a `.deb`, plus Scoop (`scoop bucket add oros https://github.com/koulaxizis/oros-portable`,
+  then `scoop install oros`) and winget. Installed copies update themselves.
+  See [koulaxizis/oros-portable](https://github.com/koulaxizis/oros-portable).
+- **orOS Portable** (v0.1.0): run orOS from a USB stick on any Windows or
+  Linux PC, with or without internet; the data stays on the stick. Same repo.
+- **Bootable USB** (beta): start a PC straight into orOS,
+  [koulaxizis/oros-usb](https://github.com/koulaxizis/oros-usb).
+- **Android:** orOS and single apps as APKs from the download page, with
+  updates through the orOS repository for F-Droid, Droid-ify and Obtainium.
+- **Single apps:** many apps install on their own, with their own icon,
+  sharing data with orOS on the same device.
+- **orOS Drive** (v0.2.0): a native app for Windows, Linux and Android that
+  mirrors chosen folders both ways into the encrypted orOS disk in your
+  Dropbox, and can show the whole disk as a folder (Windows Explorer, Linux,
+  the Android Files app).
+  [koulaxizis/oros-drive](https://github.com/koulaxizis/oros-drive).
 
 ## Principles
 
@@ -18,44 +43,54 @@ browser.
   keeps the whole system on the device; online features (weather, maps,
   radio, TV, media search) say so and degrade gracefully.
 - **Your data stays yours.** Data lives in the browser (localStorage /
-  IndexedDB). Optional sync goes to *your* Dropbox app folder, end-to-end
+  IndexedDB / OPFS). Optional sync goes to *your* Dropbox app folder or
+  *your* WebDAV server (Nextcloud, ownCloud, Synology and others), end-to-end
   encrypted (AES-GCM, key from your passphrase via PBKDF2, 600,000 rounds).
-  Neither Dropbox nor anyone else can read it.
+  Neither the provider nor anyone else can read it. You can move between
+  providers and restore any of the last cloud backups from Settings.
 - **Sync that never loses data.** Each app merges changes from all devices
   (per-item last-writer-wins with tombstones), so editing on two devices
   never silently overwrites one of them.
 - **No cookies, no tracking, no analytics, no ads.** No third-party scripts
-  are loaded; every library is bundled in the repository.
+  are loaded; every library is bundled in the repository. orOS depends on
+  no Google service: fonts are bundled, there is no speech recognition that
+  sends audio away, and read-aloud uses only voices on the device.
 - **Safe with untrusted content.** Imported files, mail and anything from an
   online service are treated as hostile: sanitised in inert documents, shown
-  as text, never executed.
-- **Bilingual.** English and Greek throughout.
+  as text, never executed. Every page has a Content-Security-Policy.
+- **Languages.** English and Greek throughout; German as a third language
+  (translator packs in [`i18n/`](i18n/), needs native review). New languages
+  are welcome, see [`docs/translate/`](docs/translate/).
 - **Phone to desktop.** Layouts work from 360 px wide up to large screens,
   with keyboard shortcuts on desktop (`Ctrl+Alt+Shift+I` shows them all).
 
 ## Apps
 
-Released apps, by menu category:
+All 132 apps, by menu category:
 
 | Category | Apps |
 |---|---|
-| Accessories | Weather, Time, Files, Calculator |
-| Office | To-Do, Kanban, Notes, Calendar, Quote, Contacts, Storage, Spreadsheet, Writer |
-| Lifestyle | Minimalism |
-| Creativity | Prompter, Characters, Name Generator, Wallpaper Generator |
-| Personal | Mood, Habits, Micro-Zen, Cycle |
-| Internet | Bookmarks, Maps |
-| Fun | Dice & Coin, Wheel of Fate, Netizen ID, Pet World |
-| Sound | Radio, Sound Mixer |
-| Video | Television |
-| Games | Memory, Connect 4, Dots & Boxes, Tic-Tac-Toe, Simon Says, Number Slider, Lights Out, Whack-a-Mole, Snake, 2048, Wordle |
-| Security | Password Generator |
+| Accessories | Weather, Time, Moon & Sky, Files, Calculator, Text Tools, Unit Converter, Sticky Notes, Case Converter |
+| Office | To-Do, Kanban, Mind Map, Whiteboard, Notes, Wiki, Calendar, Contacts, Storage, Spreadsheet, Writer, Layout, Slides, Public Domain Calculator, QR Generator, orOS Converter, Scanner & PDF |
+| Lifestyle | Minimalism, Split, Travel, Chore Wheel, Meal Planner |
+| Learning | Flashcards |
+| Business | Quote, Timesheet, CRM, Stock, Invoices, Newsletter, Email Signature, Certificates |
+| Creativity | Prompter, Typewriter, Label Maker, Characters, Name Generator, Atelier, Mockups |
+| Image | Photo Lab, Screen Capture, Pixel Avatar, Wallpaper Generator, Tree Sketcher, Aura Painter |
+| Personal | Mood, One-Sentence Diary, Habits, Micro-Zen, Health, Budget, Water, Workouts, Cycle, Pet Health Book, Baby, Family Tree, Garage, Plant Care, Media Shelf, Library |
+| Internet | Bookmarks, Maps, Reader, One-Minute Museum, Mail |
+| Fun | Dice & Coin, Wheel of Fate, Oracle, Netizen ID, Pet World, Score Keeper |
+| Sound | Radio, Podcasts, Music, Sound Mixer, Ringtone Composer, Studio |
+| Video | Television, Montage |
+| Games | Memory, Connect 4, Dots & Boxes, Tic-Tac-Toe, Simon Says, Number Slider, Lights Out, Whack-a-Mole, Snake, 2048, Wordle, Spot the Difference, Hexagon Puzzle, Chess, Sudoku, Tetris, Minesweeper, Mahjong, Gomoku, Bubble Shooter, Checkers, Mastermind, Battleship, Rock Paper Scissors, Hangman, Flow Free, Nonogram, Breakout, Reversi, Mancala, Pong, Backgammon, Word Search, Solitaire, Jigsaw, Crossword, Xeri, Game Center |
+| Security | Passwords |
+| System | Device Info, Assistant, Help, Today, Settings |
 
-More apps are already in the repository and are released one at a time
-(budget, chores, QR codes, public domain calculator, plants, water,
-travel, meals, family tree, media shelf, workouts, mail, the design studio
-and 21 more games). The games and several apps are full rewrites of
-[tablogames.online](https://tablogames.online) and
+Apps talk to each other (send a note to Writer, a contact to Mail, an
+invoice to Budget), open files by type, and share one encrypted disk in
+Files. Many open and save open formats (ODF, ICS, vCard, CSV, PDF and the
+documented [orOS bundle format](docs/oros-bundle.md)). The games and several
+apps are full rewrites of [tablogames.online](https://tablogames.online) and
 [soffitta.site](https://soffitta.site).
 
 ## Run it yourself
@@ -74,16 +109,19 @@ python3 -m http.server 8000
   to the page that started it. To self-host sync on another domain, create
   your own Dropbox app (scoped, App folder access, PKCE) and put its key in
   `DROPBOX_APP_KEY`.
-- The Mail app talks IMAP through a small stateless relay; its code and
-  deploy steps are in [`relay/`](relay/README.md). You can run your own on
-  Cloudflare Workers.
+- Mail (IMAP/SMTP), notifications while orOS is closed (Web Push), share
+  links and WebDAV servers without CORS go through a small stateless relay;
+  its code and deploy steps are in [`relay/`](relay/README.md). You can run
+  your own on Cloudflare Workers.
 
 ## Development
 
 - **Layout:** the shell lives at the root (`index.html`, `shell.js`,
   `sync.js`, `notifications.js`, `fs.js`, `vault.js`, `dialogs.js`,
-  `pet.js`, `sw.js`, `style.css`, `translations.js`); each app is a folder
-  with its own `index.html`, loaded in a frame. `apps.json` is the app list.
+  `pet.js`, `search.js`, `i18n.js`, `sw.js`, `style.css`, `translations.js`);
+  each app is a folder with its own `index.html`, loaded in a frame.
+  `apps.json` is the app list. `android/` is the Android app, `extension/`
+  the "Send to orOS" browser add-on.
 - **Tests:** `node --test tests/*.test.js` (Node 22, no packages). They run
   in GitHub Actions on pull requests that touch tested code.
 - **Versions:** `APP_VERSION` in `shell.js` is the only version set by hand.
