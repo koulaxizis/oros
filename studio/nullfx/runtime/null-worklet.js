@@ -2,7 +2,9 @@
 // License). Load eel-rt.js, null-fx.js, the effect files and then this file with
 // audioWorklet.addModule() (null-node.js does it), and drive it from the page through
 // null-node.js. Input and output are stereo; effects process in place, one after another.
-/* global AudioWorkletProcessor, registerProcessor, sampleRate, NULLRT, NULLFXHost, NULLFX */
+// Instruments (FX.usesMidi) get the MIDI the page schedules ("midi" messages, on the audio
+// clock) and make sound from it; they ignore the input.
+/* global AudioWorkletProcessor, registerProcessor, sampleRate, currentTime, NULLRT, NULLFXHost, NULLFX */
 (function () {
   "use strict";
   var BLOCK = 128;
@@ -17,9 +19,13 @@
       this.a = [new Float32Array(BLOCK), new Float32Array(BLOCK)];
       this.zero = new Float32Array(BLOCK);
       this.lastPdc = -1;
+      this.sched = new NULLFXHost.Sched();
       this.port.onmessage = function (e) { self.onMessage(e.data); };
       if (o.time) this.setTime(o.time);
       if (o.chain) this.setChain(o.chain);
+      // an offline render gets its whole timeline up front (messages may arrive too late)
+      if (o.midi) this.sched.addMidi(o.midi);
+      if (o.times) o.times.forEach(function (t) { self.sched.addTime(t); });
     }
   }
 
@@ -32,7 +38,14 @@
       case "chain": this.setChain(m.chain || []); break;
       case "slider": if (s) s.fx.setSlider(m.i, +m.v); break;
       case "bypass": if (s) s.bypass = !!m.on; break;
-      case "time": this.setTime(m); break;
+      // with "at" (seconds on the audio clock) the change waits for that sample
+      case "time": if (m.at >= 0) this.sched.addTime(m); else { if (m.playing === false) this.sched.clear(); this.setTime(m); } break;
+      // MIDI for the instruments: ev = [[at, status, data1, data2], ...]; "midi-clear" drops what waits
+      case "midi": if (Array.isArray(m.ev)) this.sched.addMidi(m.ev); break;
+      case "midi-clear": this.sched.midi = []; break;
+      // the state an effect saves (@serialize), and variables its interface sets (FX.pokes)
+      case "state": if (s) s.fx.setState(m.data); break;
+      case "vars": if (s && m.vars) setVars(s, m.vars); break;
       case "file":
         // a decoded audio file for a file slider (Convolution's IR): channels, srate, data
         // (interleaved); the slider gets a new value so the effect reloads it
@@ -44,6 +57,10 @@
       case "peek": if (s) this.peek(s, m.req); break;
     }
   };
+
+  function setVars(s, vars) {
+    (s.FX.pokes || []).forEach(function (k) { if (typeof vars[k] === "number" && isFinite(vars[k])) s.fx.inst.setVar(k, vars[k]); });
+  }
 
   NullFxChain.prototype.find = function (uid) {
     for (var i = 0; i < this.slots.length; i++) if (this.slots[i].uid === uid) return this.slots[i];
@@ -73,6 +90,7 @@
     var fx;
     try {
       fx = new NULLFXHost.Effect(FX, NULLRT, { srate: sampleRate, blockSize: BLOCK, sliders: it.sliders || {}, playing: this.time.playing });
+      if (it.state) fx.setState(it.state);
     } catch (e) {
       this.post({ type: "error", uid: it.uid, id: it.id, message: String(e && e.message || e) });
       return null;
@@ -102,8 +120,21 @@
       var base = inst.getVar("ng_tb"), len = inst.getVar("ng_tl") * 2;
       if (base > 0 && len > 0 && len <= 65536) msg.mem = { base: base, data: inst.mem.read(base, len) };
     }
+    flashOut(s, msg);
     this.post(msg);
   };
+  // memory the audio writes for @gfx to fade (FX.flash): handed over once, then cleared here
+  function flashOut(s, msg) {
+    if (!s.FX.flash) return;
+    var inst = s.fx.inst;
+    msg.flash = s.FX.flash.map(function (f) {
+      var base = inst.getVar(f[0]), n = f[1] | 0;
+      if (!(base >= 0) || n < 1 || n > 4096) return null;
+      var d = inst.mem.read(base, n);
+      inst.mem.write(base, new Float64Array(n));
+      return { base: base, data: d };
+    }).filter(Boolean);
+  }
 
   NullFxChain.prototype.reportPdc = function () {
     var total = 0;
@@ -118,13 +149,15 @@
     var l = inp[0], r = inp[1] || inp[0];
     if (l) { for (i = 0; i < n; i++) { a0[i] = l[i]; a1[i] = r[i]; } }
     else { a0.fill(0); a1.fill(0); }
+    var due = this.sched.block(currentTime, n, sampleRate);
+    if (due.time) this.setTime(due.time);
     var T = this.time;
     for (var k = 0; k < this.slots.length; k++) {
       var s = this.slots[k];
       if (s.bypass) continue;
       if (this.timeDirty || T.playing) s.fx.setTime(T);
       try {
-        s.fx.process(s.ins, this.a, n, 2);
+        s.fx.process(s.ins, this.a, n, 2, s.FX.usesMidi ? due.midi : null);
       } catch (e) {
         s.bypass = true;
         this.post({ type: "error", uid: s.uid, id: s.id, message: String(e && e.message || e) });

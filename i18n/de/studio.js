@@ -111,6 +111,7 @@ orosPack("de", "studio", {
  "fx.cat1": "Ein Regler",
  "fx.cat2": "Grundlagen",
  "fx.cat3": "Fortgeschritten",
+ "fx.catInst": "Instrumente",
  "fx.chooseFile": "Datei wählen",
  "fx.controls": "Alle Regler",
  "fx.credit": "Effekte: NULL JSFX (nulljsfx.tech), MIT-Lizenz.",

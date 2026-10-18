@@ -63,6 +63,7 @@
         if (any) o.f = f;
       }
       if (x.sc) o.sc = x.sc;
+      if (x.st) o.st = x.st.slice();      // an instrument's own state (its drawn pattern)
       return o;
     });
   }
@@ -173,6 +174,7 @@
           y.f = f;
         }
         if (typeof x.sc === "string" && tmap[x.sc]) y.sc = tmap[x.sc];
+        if (Array.isArray(x.st)) y.st = x.st;        // normFx keeps it only when valid
         umap[x.u] = u;
         out.push(y);
       });

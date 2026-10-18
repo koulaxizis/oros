@@ -6,8 +6,10 @@
 //   node .github/scripts/sync-nullfx.js <path to a null-jsfx checkout>
 //
 // Only generated files are copied: web/runtime/*.js, web/fx/*.js and
-// web/fx/index.json. An effect that left index.json is removed. Prints a
-// summary line per added, changed and removed file; exits 1 on bad input.
+// web/fx/index.json, for the effects and the instruments ("instruments"
+// in index.json, played by MIDI on instrument tracks). A plugin that left
+// index.json is removed. Prints a summary line per added, changed and
+// removed file; exits 1 on bad input.
 // Used by .github/workflows/sync-nullfx.yml.
 "use strict";
 const fs = require("fs");
@@ -26,9 +28,10 @@ let index;
 try { index = JSON.parse(fs.readFileSync(path.join(web, "fx", "index.json"), "utf8")); }
 catch (e) { fail("cannot read web/fx/index.json: " + e.message); }
 if (!index || !Array.isArray(index.effects) || !index.effects.length) fail("index.json has no effects");
-const ids = index.effects.map((e) => e && e.id);
+if (index.instruments != null && !Array.isArray(index.instruments)) fail("index.json instruments is not a list");
+const ids = index.effects.concat(index.instruments || []).map((e) => e && e.id);
 ids.forEach((id) => { if (typeof id !== "string" || !ID_RE.test(id)) fail("bad effect id " + JSON.stringify(id)); });
-if (new Set(ids).size !== ids.length) fail("duplicate effect ids");
+if (new Set(ids).size !== ids.length) fail("duplicate plugin ids");
 
 const runtime = fs.readdirSync(path.join(web, "runtime")).filter((f) => /^[a-z0-9-]+\.js$/.test(f)).sort();
 if (runtime.indexOf("null-worklet.js") < 0 || runtime.indexOf("eel-rt.js") < 0) fail("web/runtime is incomplete");
@@ -77,4 +80,4 @@ if (before !== block.join("\n")) {
 }
 
 console.log(log.length ? log.join("\n") : "studio/nullfx is up to date");
-console.log("effects: " + ids.length);
+console.log("effects: " + index.effects.length + ", instruments: " + (index.instruments || []).length);

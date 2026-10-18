@@ -144,7 +144,7 @@
       "fx.removed": "Effect removed", "fx.max": "A chain has up to {n} effects", "fx.controls": "All controls",
       "fx.gfx": "{name} interface", "fx.unknown": "Unknown effect ({id})",
       "fx.unknownHint": "This effect comes from a newer Studio. It is kept, but does not play here.",
-      "fx.cat1": "One Slider", "fx.cat2": "Essentials", "fx.cat3": "Advanced",
+      "fx.cat1": "One Slider", "fx.cat2": "Essentials", "fx.cat3": "Advanced", "fx.catInst": "Instruments",
       "fx.noFile": "No file", "fx.chooseFile": "Choose file", "fx.failed": "{name} stopped: it is bypassed",
       "fx.noCatalog": "The effects could not be loaded.", "fx.credit": "Effects: NULL JSFX (nulljsfx.tech), MIT License.",
       "rm.title": "Remote control", "rm.sec": "Remote control", "rm.host": "Connect a tablet or phone", "rm.join": "Control Studio on another device",
@@ -273,7 +273,7 @@
       "fx.removed": "Το εφέ αφαιρέθηκε", "fx.max": "Μια αλυσίδα έχει έως {n} εφέ", "fx.controls": "Όλα τα χειριστήρια",
       "fx.gfx": "Περιβάλλον του {name}", "fx.unknown": "Άγνωστο εφέ ({id})",
       "fx.unknownHint": "Αυτό το εφέ έρχεται από νεότερο Studio. Κρατιέται, αλλά δεν παίζει εδώ.",
-      "fx.cat1": "Ένα ρυθμιστικό", "fx.cat2": "Βασικά", "fx.cat3": "Προχωρημένα",
+      "fx.cat1": "Ένα ρυθμιστικό", "fx.cat2": "Βασικά", "fx.cat3": "Προχωρημένα", "fx.catInst": "Όργανα",
       "fx.noFile": "Κανένα αρχείο", "fx.chooseFile": "Επιλογή αρχείου", "fx.failed": "Το {name} σταμάτησε: παρακάμπτεται",
       "fx.noCatalog": "Τα εφέ δεν φόρτωσαν.", "fx.credit": "Εφέ: NULL JSFX (nulljsfx.tech), άδεια MIT.",
       "rm.title": "Τηλεχειρισμός", "rm.sec": "Τηλεχειρισμός", "rm.host": "Σύνδεση tablet ή κινητού", "rm.join": "Χειρισμός του Studio άλλης συσκευής",
@@ -699,7 +699,45 @@
   // an instrument track, or one that holds MIDI clips (an older Studio may have dropped its instrument)
   function isInst(tr) { return !!tr && (!!tr.inst || clipsOf(tr.id).some(C.isMidi)); }
   function instOf(tr) { return (tr && tr.inst) || "piano"; }
-  function instName(tr) { var i = instOf(tr); return window.StudioMidi.PRESETS[i] ? t("snd." + i) : i; }
+  function instName(tr) {
+    var x = nxOf(tr), i = instOf(tr);
+    if (x) return "NULL " + FX.nameOf(x.id);
+    return window.StudioMidi.PRESETS[i] ? t("snd." + i) : i;
+  }
+  // A NULL JSFX instrument (fx.js) plays the track's notes instead of a
+  // built-in sound: it is the first item of the track's chain. The
+  // track keeps a built-in sound of the same kind in inst, which an
+  // older Studio (and the piano roll's drum names) go by.
+  function nxOf(tr) { return tr && FX ? FX.instrumentOf(tr.fx) : null; }
+  function soundOf(tr) { var x = nxOf(tr); return x ? "nx:" + x.id : instOf(tr); }
+  function nxKind(id) {
+    var e = (FX.instruments() || []).filter(function (x) { return x.id === id; })[0];
+    return e && /\bdrum/.test(e.tags || "") ? "drums" : "piano";
+  }
+  // the sound choices of a <select>: the built-in ones, then the NULL instruments
+  function fillSounds(sel) {
+    sel.innerHTML = "";
+    M.ORDER.forEach(function (id) { var o = el("option", "", t("snd." + id)); o.value = id; sel.appendChild(o); });
+    var list = FX ? FX.instruments() : [];
+    if (!list.length) return;
+    var g = el("optgroup", "");
+    g.label = "NULL JSFX";
+    list.forEach(function (e) { var o = el("option", "", "NULL " + e.name); o.value = "nx:" + e.id; g.appendChild(o); });
+    sel.appendChild(g);
+  }
+  // fields for a track that takes sound `v` (a built-in id or "nx:<id>"), or null (no room)
+  function soundFields(tr, v) {
+    var m = /^nx:([a-z0-9_]{1,40})$/.exec(v || "");
+    if (m) {
+      if (!FX.isInstrument(m[1])) return null;
+      var fx = FX.withInstrument(tr.fx, m[1]);
+      if (!fx) { showToast(t("fx.max", { n: C.MAX_FX })); return null; }
+      return { fx: fx, inst: nxKind(m[1]) };
+    }
+    if (!M.PRESETS[v]) return null;
+    return { inst: v, fx: FX.withInstrument(tr.fx, null) };
+  }
+  function setSound(tr, v) { var f = soundFields(tr, v); if (f) setTrack(tr.id, f); }
 
   // ---------- 4. Audio files: disk, decoding, peaks ----------
   var buffers = {};      // source id → AudioBuffer
@@ -1512,7 +1550,8 @@
   // clips started later by the difference (nodes[id].shift, seconds), so
   // all tracks stay in time; the faders all hear their audio `late`
   // seconds after it was scheduled. Returns the largest delay (samples).
-  function buildTracks(a, out, nodes, offline) {
+  // extraFor(tr, shift): an export's MIDI and transport for the track's chain (fx.js insert)
+  function buildTracks(a, out, nodes, offline, extraFor) {
     var trs = tracks(), solo = C.anySolo(trs), sr = a.sampleRate, lat = {}, max = 0;
     trs.forEach(function (tr) {
       lat[tr.id] = FX.isReady(a, [tr.fx]) ? FX.chainLatency(tr.fx, sr) : 0;
@@ -1523,14 +1562,16 @@
       g.gain.value = staticGain(tr, solo);
       if (C.activeLane(tr, "vol")) { ag = a.createGain(); tap.connect(ag); ag.connect(g); } else tap.connect(g);
       if (pn) { pn.pan.value = tr.pan / 100; g.connect(pn); pn.connect(out); } else g.connect(out);
-      var chain = FX.insert(a, tr.id, tr.fx, tap, offline, tr.auto), meter = null;
+      var shift = (max - lat[tr.id]) / sr;
+      var chain = FX.insert(a, tr.id, tr.fx, tap, offline, tr.auto, extraFor ? extraFor(tr, shift) : null), meter = null;
       if (!offline && a.createAnalyser) {             // the track's level, for Studio Remote
         meter = a.createAnalyser(); meter.fftSize = 512;
         (pn || g).connect(meter);
       }
       // not a DelayNode: Chromium drops a DelayNode's tail once its source has ended
-      nodes[tr.id] = { gain: g, pan: pn, tap: tap, ag: ag, chain: chain, input: chain || tap, meter: meter,
-                       shift: (max - lat[tr.id]) / sr, late: max / sr, inst: instOf(tr) };
+      // nx: a NULL instrument in the chain plays the notes (as MIDI), else the built-in sound
+      nodes[tr.id] = { id: tr.id, gain: g, pan: pn, tap: tap, ag: ag, chain: chain, input: chain || tap, meter: meter,
+                       shift: shift, late: max / sr, inst: instOf(tr), nx: !!(chain && nxOf(tr)) };
     });
     wireKeys(trs, nodes);
     return max;
@@ -1552,9 +1593,9 @@
     return C.trackGain(tr, solo);
   }
   // master → its effects → `to`; returns the effects' delay (samples)
-  function routeMaster(a, from, to, offline, nodes) {
+  function routeMaster(a, from, to, offline, nodes, extra) {
     try { from.disconnect(); } catch (e) {}
-    var n = FX.insert(a, "master", proj.fx, to, offline);
+    var n = FX.insert(a, "master", proj.fx, to, offline, null, extra);
     from.connect(n || to);
     if (n && nodes) FX.keyInputs(proj.fx).forEach(function (k) {
       if (nodes[k.sc]) { try { nodes[k.sc].tap.connect(n, 0, k.input); } catch (e) {} }
@@ -1657,11 +1698,35 @@
   }
   // one note on its track's instrument; `when` = context time of project time `from`
   function scheduleNote(a, q, from, when, n, list) {
+    if (n.nx) { FX.midi(n.id, noteMidi(q, from, when, a.currentTime)); return; }
     var at = when + (q.at - from), dur = q.end - q.at, now = a.currentTime;
     if (at < now) { dur -= now - at; at = now; }
     if (dur <= 0.002) return;
     var h = M.playNote(a, n.input, n.inst, q.p, q.v, at, dur, q.g);
     if (list) list.push(h);
+  }
+  // a note as MIDI for a NULL instrument (channel 10, the drums' channel):
+  // [[at, status, note, velocity], ...] on the audio clock. A note that
+  // began before `from` is not struck again (a drum hit is its start);
+  // the clip's gain and fades scale the velocity.
+  function noteMidi(q, from, when, now) {
+    var v = Math.round(q.v * q.g);
+    if (q.s < from - 1e-6 || v < 1) return [];
+    var at = Math.max(now, when + (q.at - from)), off = Math.max(at + 0.001, when + (q.end - from));
+    v = Math.min(127, v);
+    return [[at, 0x99, q.p, v], [off, 0x89, q.p, 0]];
+  }
+  function transport(pos) { return { playing: true, tempo: proj.bpm, num: proj.sig, denom: 4, position: pos }; }
+  // every chain's transport starts (or jumps to `pos`) where its audio is heard from
+  function timeAt(nodes, start, pos) {
+    var late = 0;
+    tracks().forEach(function (tr) {
+      var n = nodes[tr.id];
+      if (!n) return;
+      late = n.late;
+      FX.setTimeAt(tr.id, start + n.shift, transport(pos));
+    });
+    FX.setTimeAt("master", start + late, transport(pos));
   }
   function play(fromSec, opts) {
     opts = opts || {};
@@ -1683,12 +1748,12 @@
     lat += routeMaster(a, masterGain, analyser, false, trackNodes);
     fxLat = lat / a.sampleRate;
     FX.prune(tracks().map(function (tr) { return tr.id; }).concat(["master"]));
-    FX.setTime({ playing: true, tempo: proj.bpm, num: proj.sig, denom: 4, position: fromSec });
     var loop = !opts.noLoop && proj.loop.on && fromSec < proj.loop.b ? proj.loop : null;
     var end = loop ? loop.b : Math.max(songLen(), opts.open ? C.MAX_SEC : 0);
     if (!loop && fromSec >= end) { if (opts.open) end = C.MAX_SEC; else fromSec = 0; }
     var t0 = a.currentTime + 0.06;
     playing = { t0: t0, loop: loop, passes: [newPass(fromSec, end, t0)], sources: [], clicks: [] };
+    timeAt(trackNodes, t0, fromSec);
     schedAuto(a, trackNodes, fromSec, end, t0, true);
     if (projClips().some(function (c) { return !C.isMidi(c) && state[c.s] !== "ok"; })) showToast(t("toast.missing"));
     tick();
@@ -1704,6 +1769,7 @@
     var horizon = a.currentTime + LOOKAHEAD, last = p.passes[p.passes.length - 1];
     if (p.loop && last.end < horizon) {
       p.passes.push(newPass(p.loop.a, p.loop.b, last.end));
+      timeAt(trackNodes, last.end, p.loop.a);
       schedAuto(a, trackNodes, p.loop.a, p.loop.b, last.end, false);
     }
     p.passes.forEach(function (ps) {
@@ -1774,12 +1840,14 @@
     if (playing) {
       playing.sources.concat(playing.clicks).forEach(function (s) { try { s.stop(); } catch (e) {} try { s.disconnect(); } catch (e) {} });
     }
+    if (FX) FX.setTime({ playing: false });          // also drops the MIDI that waits
     Object.keys(trackNodes).forEach(function (k) {
       var n = trackNodes[k];
+      if (n.nx) FX.midi(k, [[0, 0xB9, 123, 0]]);     // all notes off
       [n.gain, n.pan, n.tap, n.ag].forEach(function (x) { try { if (x) x.disconnect(); } catch (e) {} });
     });
     trackNodes = {};
-    if (FX) { FX.setTime({ playing: false }); FX.disconnect(); }
+    if (FX) FX.disconnect();
     playing = null;
   }
   function pause() {
@@ -1967,7 +2035,8 @@
   function syncKb() {
     var tr = kbTarget(), snd = kbSound(), sel = $("kb-snd");
     if (synth && synth.preset !== M.PRESETS[snd] && M.PRESETS[snd]) { synth.allOff(); held = {}; synth.setPreset(snd); }
-    if (sel && document.activeElement !== sel) sel.value = M.PRESETS[snd] ? snd : "piano";
+    if (sel && FX && sel.querySelectorAll("option").length !== M.ORDER.length + FX.instruments().length) fillSounds(sel);
+    if (sel && document.activeElement !== sel) sel.value = nxOf(tr) ? soundOf(tr) : M.PRESETS[snd] ? snd : "piano";
     var tl = $("kb-target");
     if (tl) { tl.hidden = !tr; tl.textContent = tr ? t("mi.target", { name: tr.name }) : ""; }
   }
@@ -2071,12 +2140,26 @@
     var b = document.querySelector('#kb-keys [data-n="' + n + '"]');
     if (b) b.classList.toggle("on", !!on);
   }
-  function play1(n, vel) { var sy = getSynth(); if (!sy) return; sy.noteOn(n, vel); lightKey(n, true); recEvent("on", n, vel); }
-  function stop1(n) { if (synth) synth.noteOff(n); lightKey(n, false); recEvent("off", n, 0); }
+  // the target track when a NULL instrument plays it (the keys go there instead of the synth)
+  function nxKeys() { var tr = kbTarget(); return nxOf(tr) ? tr : null; }
+  function play1(n, vel) {
+    var nt = nxKeys();
+    if (nt) nxNote(nt, 0x99, n, vel);
+    else { var sy = getSynth(); if (!sy) return; sy.noteOn(n, vel); }
+    lightKey(n, true); recEvent("on", n, vel);
+  }
+  function stop1(n) {
+    var nt = nxKeys();
+    if (nt) nxNote(nt, 0x89, n, 0);
+    else if (synth) synth.noteOff(n);
+    lightKey(n, false); recEvent("off", n, 0);
+  }
   function onMidi(e) {
     var m = M.parse(e.data), sy = m && getSynth();
     if (!sy) return;
-    sy.midi(m);
+    var nt = nxKeys();
+    if (nt && (m.type === "on" || m.type === "off")) nxNote(nt, m.type === "on" ? 0x99 : 0x89, m.note, m.type === "on" ? m.vel : 0);
+    else if (!nt) sy.midi(m);
     if (m.type === "on") lightKey(m.note, true);
     else if (m.type === "off") lightKey(m.note, false);
     if (midiRec) {
@@ -2117,13 +2200,15 @@
     $("kb-oct-dn").addEventListener("click", function () { if (synth) synth.allOff(); held = {}; prefs.oct = Math.max(-2, prefs.oct - 1); savePrefs(); renderKeys(); });
     $("kb-oct-up").addEventListener("click", function () { if (synth) synth.allOff(); held = {}; prefs.oct = Math.min(2, prefs.oct + 1); savePrefs(); renderKeys(); });
     var snd = $("kb-snd");
-    M.ORDER.forEach(function (id) { var o = el("option", "", t("snd." + id)); o.value = id; snd.appendChild(o); });
+    fillSounds(snd);
     snd.value = prefs.snd;
     snd.addEventListener("change", function () {
       var tr = kbTarget();
-      if (tr) { setTrack(tr.id, { inst: snd.value }); renderTrackDlgIfOpen(); }   // the sound of an instrument track is its instrument
-      else { prefs.snd = snd.value; savePrefs(); }
-      if (synth) { synth.allOff(); held = {}; synth.setPreset(snd.value); }
+      if (tr) { setSound(tr, snd.value); renderTrackDlgIfOpen(); }   // the sound of an instrument track is its instrument
+      else if (M.PRESETS[snd.value]) { prefs.snd = snd.value; savePrefs(); }
+      else { snd.value = prefs.snd; return; }                        // a NULL instrument needs an instrument track
+      if (synth) { synth.allOff(); held = {}; if (M.PRESETS[snd.value]) synth.setPreset(snd.value); }
+      syncKb();
     });
     var sv = $("kb-vol");
     sv.value = String(prefs.svol);
@@ -2218,12 +2303,25 @@
     redoStack = [];
     changed();
   }
-  // a short note on an instrument (piano roll keys, a note drawn)
-  function audition(p, v, inst) {
+  // a short note on an instrument (piano roll keys, a note drawn); tid:
+  // the track, whose NULL instrument plays it when it has one
+  function audition(p, v, inst, tid) {
     var a = audio();
     if (!a) return;
     resume();
+    var tr = tid ? C.find(data, "tracks", tid) : null;
+    if (nxOf(tr)) { nxNote(tr, 0x99, p, v); nxNote(tr, 0x89, p, 0, 0.28); return; }
     M.playNote(a, synthBus(a), inst, p, v, a.currentTime + 0.005, 0.28, 1);
+  }
+  // one MIDI message to a track's NULL instrument, now or `later` seconds from now (preview chain)
+  function nxNote(tr, status, p, v, later) {
+    var a = audio();
+    if (!a) return;
+    resume();
+    var tid = tr.id;
+    FX.preview(a, tid, synthBus(a)).then(function (ok) {
+      if (ok) FX.previewMidi(tid, [[a.currentTime + (later || 0), status, p, v]]);
+    });
   }
 
   // .mid files
@@ -2363,6 +2461,25 @@
       b.addEventListener("click", function () { hideDlg("add-dlg"); edit(function () { addTrack(null, id); }); });
       host.appendChild(b);
     });
+    // the NULL JSFX instruments (once the list of effects is in)
+    var nx = function () {
+      FX.instruments().forEach(function (e) {
+        if (host.querySelector('[data-nx="' + e.id + '"]')) return;
+        var b = el("button", "chip", "NULL " + e.name);
+        b.type = "button";
+        b.setAttribute("data-nx", e.id);
+        b.addEventListener("click", function () {
+          hideDlg("add-dlg");
+          edit(function () {
+            var tr = addTrack("NULL " + e.name, nxKind(e.id));
+            if (tr) put("tracks", Object.assign({}, tr, { fx: FX.withInstrument(tr.fx, e.id) }));
+          });
+        });
+        host.appendChild(b);
+      });
+    };
+    nx();
+    FX.loadCatalog().then(nx, function () {});
     showDlg("add-dlg");
   }
   function renderTrackDlgIfOpen() { if ($("track-dlg").open) renderTrackDlg(); }
@@ -2424,7 +2541,9 @@
   var E = window.StudioEncode;
   var opusOk = null;               // null: not asked yet
   function openExport() {
-    if (!proj || !projClips().length) { showToast(t("export.empty")); return; }
+    // a NULL instrument's own pattern plays without clips: the loop is the song then
+    var seq = proj && proj.loop.on && tracks().some(function (tr) { return !!nxOf(tr); });
+    if (!proj || !(projClips().length || seq)) { showToast(t("export.empty")); return; }
     var r = C.exportRange(proj, projClips());
     $("export-range").textContent = t(proj.loop.on ? "export.loop" : "export.all", { a: C.fmtTime(r.a), b: C.fmtTime(r.b) });
     $("export-status").textContent = "";
@@ -2474,12 +2593,17 @@
       return FX.ensure(oc, chains);
     }).then(function () {
       var master = oc.createGain(); master.gain.value = C.dbToGain(proj.vol);
-      var nodes = {};
-      buildTracks(oc, master, nodes, true);
-      routeMaster(oc, master, oc.destination, true, nodes);
+      var nodes = {}, notes = passNotes(r.a, r.b);
+      // the chains get their transport (and a NULL instrument its notes) up front
+      var late = buildTracks(oc, master, nodes, true, function (tr, shift) {
+        var ev = [];
+        if (nxOf(tr)) notes.forEach(function (q) { if (q.t === tr.id) ev = ev.concat(noteMidi(q, r.a, shift, 0)); });
+        return { times: [Object.assign({ at: shift }, transport(r.a))], midi: ev.length ? ev : null };
+      }) / rate;
+      routeMaster(oc, master, oc.destination, true, nodes, { times: [Object.assign({ at: late }, transport(r.a))] });
       schedAuto(oc, nodes, r.a, r.b, 0, true);
       clips.forEach(function (c) { var n = nodes[c.t]; if (n && !C.isMidi(c)) scheduleClip(oc, c, r.a, r.b, n.shift, n.input, null); });
-      passNotes(r.a, r.b).forEach(function (q) { var n = nodes[q.t]; if (n) scheduleNote(oc, q, r.a, n.shift, n, null); });
+      notes.forEach(function (q) { var n = nodes[q.t]; if (n && !n.nx) scheduleNote(oc, q, r.a, n.shift, n, null); });
       var p = oc.startRendering();
       if (p && typeof p.then === "function") return p;
       return new Promise(function (res) { oc.oncomplete = function (e) { res(e.renderedBuffer); }; });
@@ -2989,8 +3113,8 @@
     $("track-inst-sec").hidden = !inst;
     $("track-midi-row").hidden = !inst;
     if (inst) {
-      if (!is.options.length) M.ORDER.forEach(function (id) { var o = el("option", "", t("snd." + id)); o.value = id; is.appendChild(o); });
-      is.value = M.PRESETS[instOf(tr)] ? instOf(tr) : "piano";
+      if (is.querySelectorAll("option").length !== M.ORDER.length + FX.instruments().length) fillSounds(is);
+      is.value = nxOf(tr) ? soundOf(tr) : M.PRESETS[instOf(tr)] ? instOf(tr) : "piano";
       $("track-midi").disabled = !clipsOf(tr.id).some(C.isMidi);
     }
     var trs = tracks();
@@ -3374,7 +3498,11 @@
     $("fx-play").addEventListener("click", function () { togglePlay(); });
     FX.wire();
     wireKeys2();
-    $("track-inst").addEventListener("change", function () { setTrack(dlgTrack, { inst: $("track-inst").value }); renderTrackDlg(); });
+    $("track-inst").addEventListener("change", function () {
+      var tr = C.find(data, "tracks", dlgTrack);
+      if (tr) setSound(tr, $("track-inst").value);
+      renderTrackDlg();
+    });
     $("track-newclip").addEventListener("click", function () { var id = dlgTrack; hideDlg("track-dlg"); newMidiClip(id, playhead); });
     $("track-midi").addEventListener("click", function () { exportTrackMidi(dlgTrack); });
     $("notes-btn").addEventListener("click", function () { if (selClip) openRoll(selClip); });
@@ -3405,6 +3533,7 @@
       if (recording) stopRecording();
       stopNodes();
       if (synth) synth.allOff();
+      if (FX) FX.dropPreview();
       if (Roll) Roll.stopPreview();
       if (vaultUnsub) { try { vaultUnsub(); } catch (e) {} vaultUnsub = null; }
     });
@@ -3418,6 +3547,7 @@
       C: C, t: t, el: el, setLabel: setLabel, numTxt: numTxt, version: VER,
       data: function () { return data; }, proj: function () { return proj; },
       audio: function () { return actx; }, isPlaying: function () { return !!playing; },
+      previewOut: function (a) { return synthBus(a); },
       fsApi: fsApi, decode: decode, showToast: showToast, burst: burst,
       undoToast: function (text) { undoToast(text, function () { undo(); }); },
       showDlg: showDlg, hideDlg: hideDlg,
@@ -3513,7 +3643,8 @@
         if (pending) openTarget(pending);
       }
     } catch (e) {}
-    FX.loadCatalog().then(function () { if (proj && Object.keys(prefs.auto).length) renderRows(); }, function () {});
+    // the catalog also names the NULL instruments the tracks play
+    FX.loadCatalog().then(function () { if (proj) { renderRows(); syncKb(); renderTrackDlgIfOpen(); } }, function () {});
   }
 
   boot();
