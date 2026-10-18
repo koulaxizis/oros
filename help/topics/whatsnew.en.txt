@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.19.00
+- German is now complete: the Info window, Ctrl+K, profiles, reminders, Flashcards, Word Search and the shared dialogs are in German too.
+
 ## Version 3.18.00
 - Maps, Assistant, Wiki, Time, Passwords, Split, Text Tools and Pet Health Book are now in German.
 
