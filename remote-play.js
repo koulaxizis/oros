@@ -117,7 +117,10 @@
 
   function create(o) {
     var L = root.OrosRemoteLink;
-    var S0 = STR[o.lang === "el" ? "el" : "en"];
+    // Greek when the app says so, else the page's pack language
+    // (i18n/<code>/remote-play.js, "remote-play" in data-app), else English
+    var I = root.orosI18n, LANG = o.lang === "el" ? "el" : (I && I.lang() !== "el" ? I.lang() : "en");
+    var S0 = STR[LANG] || (I ? I.table(STR, "remote-play", LANG) : STR.en);
     function t(k, p) {
       var s = S0[k] || STR.en[k] || k;
       if (p) Object.keys(p).forEach(function (x) { s = s.split("{" + x + "}").join(String(p[x])); });
