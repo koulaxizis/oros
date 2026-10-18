@@ -324,3 +324,65 @@ test("a quick network answer ends the slow spell", async () => {
   const res = await fire(sw, new sw.Req("/apps.json")).answer;
   assert.equal(await res.text(), '{"apps":[1]}');
 });
+
+// SW-F1: an app frame opens from this release's precache, never
+// waiting for the network; the shell page stays network-first.
+test("app frame: the precached page answers at once even when the network hangs", async () => {
+  const sw = loadSW(() => never());
+  sw.ctx.NET_TIMEOUT_MS = 500;
+  await seed(sw, sw.ctx.SHELL_CACHE, "./calendar/", "cached calendar");
+  const t0 = Date.now();
+  const res = await fire(sw, new sw.Req("/calendar/", { mode: "navigate", destination: "iframe" })).answer;
+  assert.equal(await res.text(), "cached calendar");
+  assert.ok(Date.now() - t0 < 200, "no network wait");
+  assert.equal(sw.ctx.netSlowUntil, 0, "no slow spell either");
+});
+
+test("app frame: the precached page wins over a fast newer page from the network", async () => {
+  const sw = loadSW(() => Promise.resolve(html("newer release")));
+  await seed(sw, sw.ctx.SHELL_CACHE, "./calendar/", "this release");
+  const res = await fire(sw, new sw.Req("/calendar/?standalone", { mode: "navigate", destination: "iframe" })).answer;
+  assert.equal(await res.text(), "this release");
+  assert.equal(sw.fetchLog.length, 0, "no network request");
+});
+
+test("app frame: an older release's runtime copy does not count, the network is asked", async () => {
+  const sw = loadSW(() => Promise.resolve(html("fresh")));
+  await seed(sw, "oros-runtime-oros-v0.0.1", "./calendar/", "old");
+  const res = await fire(sw, new sw.Req("/calendar/", { mode: "navigate", destination: "iframe" })).answer;
+  assert.equal(await res.text(), "fresh");
+});
+
+test("app frame: the shell page in a frame (?solo=) stays network-first", async () => {
+  const sw = loadSW(() => Promise.resolve(html("fresh shell")));
+  await seed(sw, sw.ctx.SHELL_CACHE, "./", "cached shell");
+  const res = await fire(sw, new sw.Req("/?solo=calendar", { mode: "navigate", destination: "iframe" })).answer;
+  assert.equal(await res.text(), "fresh shell");
+});
+
+test("top window: an app page opened directly stays network-first", async () => {
+  const sw = loadSW(() => Promise.resolve(html("fresh")));
+  await seed(sw, sw.ctx.SHELL_CACHE, "./calendar/", "cached");
+  const res = await fire(sw, new sw.Req("/calendar/?standalone", { mode: "navigate", destination: "document" })).answer;
+  assert.equal(await res.text(), "fresh");
+});
+
+test("every app page and every script it loads is precached (SW-F1 opens it with no network)", () => {
+  const sw = loadSW(() => never());
+  const pre = new Set(sw.ctx.PRECACHE_URLS.map((u) => new URL(u, BASE).pathname));
+  const apps = JSON.parse(fs.readFileSync(path.join(ROOT, "apps.json"), "utf8")).apps;
+  const missing = [];
+  for (const a of apps) {
+    if (a.type !== "internal") continue;
+    const dir = a.url.replace(/\/$/, "");
+    const file = path.join(ROOT, dir, "index.html");
+    if (!fs.existsSync(file)) continue;
+    if (!pre.has("/" + dir + "/")) missing.push("/" + dir + "/");
+    const page = fs.readFileSync(file, "utf8");
+    for (const m of page.matchAll(/<(?:script|link)\b[^>]*?(?:src|href)="([^"#:]+?)(?:\?v=[^"]*)?"/g)) {
+      const p = new URL(m[1], BASE + dir + "/").pathname;
+      if (/\.(js|css)$/.test(p) && !pre.has(p)) missing.push(p + " (" + dir + ")");
+    }
+  }
+  assert.deepEqual(missing, []);
+});
