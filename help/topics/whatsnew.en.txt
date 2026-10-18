@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.31.00
+- Automations in Layout and Photo Lab: set steps once and run them again. Layout finds and replaces text, changes paragraph styles, masters and margins, checks preflight and exports PDFs, in this document or all of them; Photo Lab adjusts tone and looks, blurs, sharpens, crops to a ratio, resizes, adds a watermark and exports, on the open picture or inside Batch process. One Undo takes it all back.
+
 ## Version 3.30.00
 - Ask the Assistant from outside orOS: "Ask the Assistant" on the orOS app icon (right-click it in the taskbar, or press and hold on Android); share text or a link to orOS and pick the Assistant (or Bookmarks, Notes…); with the Send to orOS browser add-on 1.1, right-click selected text on any page; and in the Android app, an Assistant button on the widgets and an orOS Assistant tile in Quick Settings. Nothing is sent until you press Send.
 
