@@ -7783,7 +7783,7 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Files: `.github/scripts/sync-nullfx.js`, `studio/nullfx/**`, `studio/core.js`, `studio/fx.js`, `studio/fxchain.worklet.js`, `studio/package.js`, `studio/studio.js`, `studio/roll.js`, Studio help EN/EL/DE, `i18n/de/studio.js`, `tests/studio-mix.test.js`.
   - Tests: 4788/4788; Chromium export with pattern and MIDI clips, GFX edit + reload, 390 px. Not tested: live playback on a real sound device, real phone, Safari, sync between two devices.
 
-### 2026-10-18 — Atelier: automations without code (wave A1, #PR) — 3.21.00
+### 2026-10-18 — Atelier: automations without code (wave A1, #533) — 3.21.00
 - Atelier: Automations (home screen `Automations`, `Select` › `Automation (n)`, editor `More` › `Automations…` / `Record an automation`). Steps: replace text, colour, font, text size, photo filter, centre on the page, remove photo backgrounds, new sizes, download. Make them from a list or record what you do by hand; run on this design, the picked designs or all, with a preview of what changes first and one Undo for the whole run. No code: steps are data checked against Atelier's catalog.
 - New sync slice `recipes` (RECIPES v1, see Part IV) shared with the apps that get automations next (Layout, Photo Lab, plan /automation).
 - Files: new `recipes/core.js`, `atelier/recipesteps.js`, `atelier/recipes.js`; `atelier/core.js` (`AT.putDoc`, `AT.restoreDoc`, home buttons, strings, icons up/down), `atelier/io.js` (`renderFiles`, `relaid`, Record notes, More menu), `atelier/ai.js` (Record note), `atelier/index.html`, `atelier/atelier.css`, Atelier help EN/EL/DE, `i18n/de/atelier.js`, `tests/recipes.test.js`.
