@@ -1454,6 +1454,7 @@ var PRECACHE_URLS = [
   "studio/nullfx/fx/dj_filter.js",
   "studio/nullfx/fx/doubler.js",
   "studio/nullfx/fx/driver.js",
+  "studio/nullfx/fx/drum_machine.js",
   "studio/nullfx/fx/dynamic_eq.js",
   "studio/nullfx/fx/dynamics.js",
   "studio/nullfx/fx/envelope_follower.js",
