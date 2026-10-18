@@ -1,6 +1,13 @@
 {
  "apps": [
   {
+   "app": "assistant",
+   "files": [
+    "assistant/assistant.js",
+    "assistant/summary.js"
+   ]
+  },
+  {
    "app": "atelier",
    "files": [
     "atelier/ai.js",
@@ -389,6 +396,32 @@
    ]
   },
   {
+   "app": "maps",
+   "files": [
+    "maps/discover.js",
+    "maps/entrances.js",
+    "maps/everydoor-core.js",
+    "maps/fav.js",
+    "maps/heat.js",
+    "maps/import-ui.js",
+    "maps/maps.js",
+    "maps/notes.js",
+    "maps/offline.js",
+    "maps/osm-callback.js",
+    "maps/overlays-core.js",
+    "maps/package-ui.js",
+    "maps/planner.js",
+    "maps/poi.js",
+    "maps/quests-core.js",
+    "maps/quests.js",
+    "maps/search.js",
+    "maps/tools-core.js",
+    "maps/tools.js",
+    "maps/tracks.js",
+    "maps/transit.js"
+   ]
+  },
+  {
    "app": "mastermind",
    "files": [
     "mastermind/mastermind.js"
@@ -524,6 +557,23 @@
    "files": [
     "oracle/oracle.js",
     "oracle/prophecies.js"
+   ]
+  },
+  {
+   "app": "passwords",
+   "files": [
+    "passwords/passwords.js",
+    "passwords/pmapp.js"
+   ]
+  },
+  {
+   "app": "petcare",
+   "files": [
+    "petcare/core.js",
+    "petcare/package.js",
+    "petcare/petcare.js",
+    "petcare/search.js",
+    "petcare/today.js"
    ]
   },
   {
@@ -717,6 +767,14 @@
    ]
   },
   {
+   "app": "split",
+   "files": [
+    "split/package.js",
+    "split/search.js",
+    "split/split.js"
+   ]
+  },
+  {
    "app": "spot",
    "files": [
     "spot/spot.js"
@@ -791,9 +849,28 @@
    ]
   },
   {
+   "app": "texttools",
+   "files": [
+    "texttools/texttools.js"
+   ]
+  },
+  {
    "app": "tictactoe",
    "files": [
     "tictactoe/tictactoe.js"
+   ]
+  },
+  {
+   "app": "time",
+   "files": [
+    "time/astro.js",
+    "time/display.js",
+    "time/stage-link.js",
+    "time/stage-tools.js",
+    "time/stage-view.js",
+    "time/stage.js",
+    "time/time.js",
+    "time/today.js"
    ]
   },
   {
@@ -883,6 +960,13 @@
    "app": "wheel",
    "files": [
     "wheel/wheel.js"
+   ]
+  },
+  {
+   "app": "wiki",
+   "files": [
+    "wiki/io.js",
+    "wiki/wiki.js"
    ]
   },
   {
