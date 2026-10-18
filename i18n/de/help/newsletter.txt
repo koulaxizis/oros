@@ -36,7 +36,11 @@ Hast du auch Abonnenten bei MailerLite, Mailchimp oder Brevo, verbinde das Konto
 - Mailchimp spricht nur mit Servern, also geht es immer über das orOS-Relay; das Relay speichert nichts. Deine Schlüssel bleiben in Verbundene Dienste und kommen nie in Newsletter.
 
 ## Eine Ausgabe schreiben
-Schreib in `Blöcke` (Überschrift, Text, Bild, Schaltfläche, Linie, zwei Spalten) oder in `Markdown`. `{first}` und `{name}` setzen den Namen des Abonnenten ein; `{first|friend}` setzt „friend“ ein, wenn kein Name da ist. Unter `Geht an` sendest du an alle Aktiven, an Abonnenten mit bestimmten Tags oder an ein gespeichertes Segment. `Segmente…` legt Segmente an: Abonnenten mit bestimmten Tags (einem davon oder allen), einer Sprache oder beidem. Bilder werden verkleinert und in der E-Mail mitgeschickt.
+Schreib in `Blöcke` (Überschrift, Text, Liste, Zitat, Bild, Schaltflächen, Linie, Abstand, zwei Spalten) oder in `Markdown`. `{first}` und `{name}` setzen den Namen des Abonnenten ein; `{first|friend}` setzt „friend“ ein, wenn kein Name da ist. Unter `Geht an` sendest du an alle Aktiven, an Abonnenten mit bestimmten Tags oder an ein gespeichertes Segment. `Segmente…` legt Segmente an: Abonnenten mit bestimmten Tags (einem davon oder allen), einer Sprache oder beidem. Bilder werden verkleinert und in der E-Mail mitgeschickt.
+
+Einen Block verschiebst du, indem du seinen Griff ziehst (mit Maus oder Finger), oder du fokussierst den Griff und nimmst die Pfeiltasten. Das Kopiersymbol dupliziert einen Block, das Zahnrad öffnet Ausrichtung, Abstand oben und unten und Hintergrundfarbe (der Text wird weiß oder dunkel, damit er lesbar bleibt). Eine Linie kann durchgezogen, gestrichelt oder gepunktet, dicker, kürzer oder in eigener Farbe sein; eine Schaltfläche gefüllt oder umrandet, in voller Breite, oder mit bis zu zwei weiteren Schaltflächen daneben. `Rückgängig` und `Wiederholen` oben am Inhalt (oder Strg+Z, und Strg+Y oder Strg+Umschalt+Z, außerhalb eines Textfelds) gehen deine Änderungen Schritt für Schritt durch.
+
+Das Aussehen jeder Liste stellst du auf der Listenkarte ein (`Bearbeiten`): Thema und Farbe, außerdem Schrift, Größe der Überschriften, Form der Schaltflächen, eine Linkfarbe und einen E-Mail-Hintergrund. Alle Ausgaben der Liste verwenden sie.
 
 `+ Version auf Griechisch` (oder `+ Version auf Englisch`) fügt der Ausgabe eine zweite Sprache hinzu: Abonnenten, die diese Sprache lesen, bekommen sie, alle anderen die Hauptversion. Oben im Editor wechselst du zwischen den beiden Versionen.
 

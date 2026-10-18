@@ -53,7 +53,12 @@
   var PLINK_PS = ["mlite", "mchimp", "brevo"];
   var OFF_STS = ["off", "bounce", "spam"];
   var ISSUE_STS = ["draft", "sched", "sending", "paused", "sent"];
-  var BLOCK_KINDS = ["h", "p", "img", "btn", "hr", "cols"];
+  var BLOCK_KINDS = ["h", "p", "img", "btn", "hr", "cols", "quote", "sp", "list"];
+  var ALIGNS = ["left", "center", "right"];
+  var HR_STYLES = ["solid", "dashed", "dotted"];
+  var FONTS = ["sans", "serif", "mono"];
+  var BTN_SHAPES = ["round", "square", "pill"];
+  var HEAD_SIZES = ["s", "m", "l"];
   var LOCK_STALE = 15 * 60 * 1000;       // a sending device silent this long lets another take over
   var SOFT_LIMIT = 3;                    // soft bounces before an address counts as bounced
 
@@ -182,7 +187,7 @@
   }
   function isApi(ch) { return !!ch && ch.kind === "smtp" && ch.via === "api"; }
   function normList(x) {
-    return {
+    var o = {
       id: x.id, m: nat(x.m), name: oneLine(x.name, LIM.name),
       chan: validId(x.chan) ? x.chan : "",
       from: normEmail(x.from), fromName: oneLine(x.fromName, LIM.name),
@@ -193,6 +198,9 @@
       salt: typeof x.salt === "string" && /^[a-z0-9]{8,32}$/.test(x.salt) ? x.salt : hash53("salt|" + x.id),
       form: normForm(x.form)
     };
+    var sty = normSty(x.sty);
+    if (sty) o.sty = sty;
+    return keepExtra(x, o, LIST_KEYS);
   }
   // The web sign-up form + one-click unsubscribe kept by the relay
   // (relay/newsletter.js): its list key k, secret sec and private key
@@ -248,22 +256,106 @@
       c: typeof x.c === "string" && x.c.length <= 60 && !/[\x00-\x1f]/.test(x.c) ? x.c : ""
     };
   }
-  function normBlock(b) {
-    if (!b || typeof b !== "object" || BLOCK_KINDS.indexOf(b.k) < 0) return null;
-    switch (b.k) {
-      case "h": return { k: "h", t: oneLine(b.t, 300) };
-      case "p": return { k: "p", t: multi(b.t, LIM.text) };
-      case "btn": return { k: "btn", t: oneLine(b.t, 80), href: safeUrl(b.href) };
-      case "hr": return { k: "hr" };
-      case "cols": return { k: "cols", a: multi(b.a, LIM.text), b: multi(b.b, LIM.text) };
-      case "img":
-        return { k: "img",
-                 f: typeof b.f === "string" && /^\/internal\/Newsletter\/[A-Za-z0-9._-]{1,80}\.(jpg|png)$/.test(b.f) ? b.f : "",
-                 alt: oneLine(b.alt, 300), href: safeUrl(b.href),
-                 w: clamp(b.w, 1, 4000, 600), h: clamp(b.h, 1, 8000, 400), b: clamp(b.b, 0, 10000000, 0) };
-    }
-    return null;
+  // Fields a newer orOS may add to a block or a list: kept as they are
+  // (short scalars only), so this device never strips them on a save.
+  var NO_KEYS = { __proto__: 1, constructor: 1, prototype: 1 };
+  var BLOCK_KEYS = ["k", "t", "href", "a", "b", "f", "alt", "w", "h", "lv", "st", "full", "more", "c", "wd", "by", "ord", "al", "pad", "bg", "url"];
+  var LIST_KEYS = ["id", "m", "del", "name", "chan", "from", "fromName", "reply", "lang", "addr", "why", "theme", "color", "salt", "form", "sty"];
+  function keepExtra(src, out, skip) {
+    var n = 0;
+    Object.keys(src).forEach(function (k) {
+      if (n >= 16 || k in out || skip.indexOf(k) >= 0 || NO_KEYS[k] === 1 || !/^[a-z][A-Za-z0-9]{0,15}$/.test(k)) return;
+      var v = src[k];
+      if ((typeof v === "string" && v.length <= 2000 && !/[\x00-\x08\x0b-\x1f]/.test(v)) || typeof v === "boolean" ||
+          (typeof v === "number" && isFinite(v))) { out[k] = v; n++; }
+    });
+    return out;
   }
+  // A block of a kind this version doesn't know (from a newer orOS):
+  // kept whole (as JSON data, never rendered) so a save here keeps it.
+  function keepUnknown(b) {
+    if (typeof b.k !== "string" || !/^[a-z][a-z0-9]{0,11}$/.test(b.k)) return null;
+    var j;
+    try { j = JSON.stringify(b); } catch (e) { return null; }
+    if (!j || j.length > 20000) return null;
+    var o = JSON.parse(j);
+    Object.keys(NO_KEYS).forEach(function (k) { if (Object.prototype.hasOwnProperty.call(o, k)) delete o[k]; });
+    o.k = b.k;
+    return o;
+  }
+  function known(b) { return BLOCK_KINDS.indexOf(b.k) >= 0; }
+  // Settings any block may carry (wave E1): alignment, padding (px,
+  // top and bottom), background colour. Left out while default.
+  function blockLook(b, o) {
+    if (ALIGNS.indexOf(b.al) > 0) o.al = b.al;
+    var pad = clamp(b.pad, 0, 48, 0);
+    if (pad) o.pad = pad;
+    if (validColor(b.bg)) o.bg = b.bg.toLowerCase();
+    return o;
+  }
+  function normBtnStyle(b, o) {
+    if (b.st === "line") o.st = "line";
+    if (b.full === 1) o.full = 1;
+    return o;
+  }
+  function normBlock(b) {
+    if (!b || typeof b !== "object") return null;
+    if (!known(b)) return keepUnknown(b);
+    var o = null;
+    switch (b.k) {
+      case "h":
+        o = { k: "h", t: oneLine(b.t, 300) };
+        if (b.lv === 1 || b.lv === 3) o.lv = b.lv;
+        break;
+      case "p": o = { k: "p", t: multi(b.t, LIM.text) }; break;
+      case "btn": {
+        o = normBtnStyle(b, { k: "btn", t: oneLine(b.t, 80), href: safeUrl(b.href) });
+        // up to two more buttons in the same row
+        var more = (Array.isArray(b.more) ? b.more : []).slice(0, 2).map(function (m) {
+          return m && typeof m === "object" ? { t: oneLine(m.t, 80), href: safeUrl(m.href) } : null;
+        }).filter(Boolean);
+        if (more.length) { o.more = more; delete o.full; }
+        break;
+      }
+      case "hr": {
+        o = { k: "hr" };
+        if (HR_STYLES.indexOf(b.st) > 0) o.st = b.st;
+        var w = clamp(b.w, 1, 8, 1);
+        if (w > 1) o.w = w;
+        if (validColor(b.c)) o.c = b.c.toLowerCase();
+        var wd = clamp(b.wd, 10, 100, 100);
+        if (wd < 100) o.wd = wd;
+        break;
+      }
+      case "cols": o = { k: "cols", a: multi(b.a, LIM.text), b: multi(b.b, LIM.text) }; break;
+      case "img":
+        o = { k: "img",
+              f: typeof b.f === "string" && /^\/internal\/Newsletter\/[A-Za-z0-9._-]{1,80}\.(jpg|png)$/.test(b.f) ? b.f : "",
+              alt: oneLine(b.alt, 300), href: safeUrl(b.href),
+              w: clamp(b.w, 1, 4000, 600), h: clamp(b.h, 1, 8000, 400), b: clamp(b.b, 0, 10000000, 0) };
+        break;
+      case "quote": o = { k: "quote", t: multi(b.t, 4000), by: oneLine(b.by, 200) }; break;
+      case "sp": o = { k: "sp", h: clamp(b.h, 4, 120, 24) }; break;
+      case "list":
+        o = { k: "list", t: multi(b.t, LIM.text) };
+        if (b.ord === 1) o.ord = 1;
+        break;
+    }
+    return keepExtra(b, blockLook(b, o), BLOCK_KEYS);
+  }
+  // The list's look beyond theme + colour (wave E1). null = defaults.
+  function normSty(v) {
+    if (!v || typeof v !== "object") return null;
+    var o = {};
+    if (FONTS.indexOf(v.font) > 0) o.font = v.font;
+    if (HEAD_SIZES.indexOf(v.hs) >= 0 && v.hs !== "m") o.hs = v.hs;
+    if (BTN_SHAPES.indexOf(v.btn) > 0) o.btn = v.btn;
+    if (validColor(v.link)) o.link = v.link.toLowerCase();
+    if (validColor(v.bg)) o.bg = v.bg.toLowerCase();
+    return Object.keys(o).length ? o : null;
+  }
+  // Every button of a button block (the first plus "more").
+  function buttonsOf(b) { return b && b.k === "btn" ? [{ t: b.t, href: b.href }].concat(b.more || []) : []; }
   function normIssue(x) {
     var fail = {};
     if (x.fail && typeof x.fail === "object") {
@@ -743,14 +835,21 @@
         if (/!!|\$\$\$|€€€/.test(v.subj)) add("warn", "shouty");
       }
       var hasBody = v.fmt === "md" ? !!v.md.trim() : v.blocks.some(function (b) {
+        if (!known(b)) return false;
         if (b.k === "img") return !!b.f;
-        return b.k !== "hr" && !!(b.t || b.a || b.b);
+        return b.k !== "hr" && b.k !== "sp" && !!(b.t || b.a || (b.k === "cols" && b.b));
       });
       if (!hasBody) add("err", "noBody");
-      if (v.fmt === "blocks" && v.blocks.some(function (b) { return (b.k === "btn" && (!b.href || !b.t)) || (b.k === "img" && !b.f); })) {
+      if (v.fmt === "blocks" && v.blocks.some(function (b) {
+        return (b.k === "btn" && buttonsOf(b).some(function (x) { return !x.href || !x.t; })) || (b.k === "img" && !b.f);
+      })) {
         add("err", "badBlock");
       }
-      var text = v.fmt === "md" ? v.md : v.blocks.map(function (b) { return [b.t, b.a, b.b].join(" "); }).join(" ");
+      // a block from a newer orOS: this device can't draw it, so it doesn't send it
+      if (v.fmt === "blocks" && v.blocks.some(function (b) { return !known(b); })) add("err", "newerBlock");
+      var text = v.fmt === "md" ? v.md : v.blocks.map(function (b) {
+        return known(b) ? [b.t, b.a, b.k === "cols" ? b.b : "", b.by].concat(buttonsOf(b).slice(1).map(function (x) { return x.t; })).join(" ") : "";
+      }).join(" ");
       if (badPlaceholders(text + " " + v.subj)) add("warn", "placeholder");
     });
     if (!l || !l.addr) add("err", "noAddr");
@@ -969,7 +1068,9 @@
 
   var api = {
     STORAGE_KEY: STORAGE_KEY, LIM: LIM, PRESETS: PRESETS, MAIL_DEFAULTS: MAIL_DEFAULTS, SECS: SECS,
-    THEMES: THEMES, BASES: BASES, OFF_STS: OFF_STS, LOCK_STALE: LOCK_STALE, SOFT_LIMIT: SOFT_LIMIT,
+    THEMES: THEMES, FONTS: FONTS, BTN_SHAPES: BTN_SHAPES, HEAD_SIZES: HEAD_SIZES, ALIGNS: ALIGNS, HR_STYLES: HR_STYLES,
+    BLOCK_KINDS: BLOCK_KINDS, knownBlock: known, buttonsOf: buttonsOf, normSty: normSty,
+    BASES: BASES, OFF_STS: OFF_STS, LOCK_STALE: LOCK_STALE, SOFT_LIMIT: SOFT_LIMIT,
     validEmail: validEmail, normEmail: normEmail, emailKey: emailKey, validHost: validHost, validColor: validColor,
     safeUrl: safeUrl, fold: fold, hash53: hash53, subId: subId, suppHash: suppHash, token: token, listCode: listCode,
     randomId: randomId, oneLine: oneLine, multi: multi,

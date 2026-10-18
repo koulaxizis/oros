@@ -67,7 +67,7 @@ test("segments and templates merge per record; deletes win a tie", () => {
   assert.equal(C.live(ab.tpls).length, 0);
   const t = C.normTpl({ id: "tpl-2", m: 1, name: "  x ", subj: "S", fmt: "blocks", blocks: [{ k: "p", t: "a" }, { k: "zz" }],
                         l2: { lang: "el", subj: "Θ", fmt: "md", md: "Γεια" } });
-  assert.equal(t.blocks.length, 1);
+  assert.equal(t.blocks.length, 2);       // { k: "zz" } is kept for the newer orOS that wrote it
   assert.equal(t.l2.lang, "el");
 });
 

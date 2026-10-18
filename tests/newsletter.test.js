@@ -69,7 +69,8 @@ test("normalize: blocks are cleaned, unsafe links dropped, image paths fenced", 
     { k: "script", t: "x" }
   ] })] });
   const b = d.issues[0].blocks;
-  assert.equal(b.length, 3);
+  assert.equal(b.length, 4);
+  assert.deepEqual(b[3], { k: "script", t: "x" });      // unknown kind: kept as data for a newer orOS, never drawn
   assert.equal(b[0].href, "");
   assert.equal(b[1].f, "");
   assert.equal(b[2].f, "/internal/Newsletter/img-1.jpg");
