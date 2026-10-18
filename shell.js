@@ -409,7 +409,7 @@
   function refreshRunningApp() {
     mtDropAll();                  // hidden apps would stay in the old language
     if (state.running) {
-      document.getElementById("app-frame").src = state.running.url;
+      frameGo(document.getElementById("app-frame"), state.running.url);
     }
   }
 
@@ -9397,6 +9397,17 @@
     return out;
   };
 
+  // frameGo(el, url): every shell navigation of an app frame replaces
+  // the frame's page instead of adding a history entry. Setting src on
+  // a frame that already showed a page adds one, and the phone's Back
+  // key then walked the frame back into an app that had been closed:
+  // its page, without text while it loaded, under the name of the app
+  // in front (Chris 2026-10-18, BK-1). Back itself is section 10d.
+  function frameGo(el, url) {
+    try { el.contentWindow.location.replace(new URL(url, document.baseURI).href); return; } catch (e) {}
+    el.src = url;
+  }
+
   // ---------- 10b. Multitasking (experimental, off by default, wave M2) ----------
   // Settings › System › "Multitasking (experimental)", per device
   // (oros-multitask = "1", never synced; Chris 2026-10-17: experimental
@@ -9492,8 +9503,10 @@
     } catch (e4) {}
   }
 
+  var mtFrameSeq = 0;
   function mtNewFrame(side) {
     var f = document.createElement("iframe");
+    f.name = "oros-app-" + (++mtFrameSeq) + "-" + Date.now().toString(36);   // own name: the browser's history never takes it for an older frame
     if (!side) f.id = "app-frame";
     f.setAttribute("title", "orOS application");
     document.getElementById("oros-running").appendChild(f);
@@ -9501,7 +9514,7 @@
     return f;
   }
   function mtDrop(el) {
-    try { el.src = "about:blank"; } catch (e) {}
+    try { frameGo(el, "about:blank"); } catch (e) {}
     if (el.parentNode) el.parentNode.removeChild(el);
   }
   // The front frame steps back: hidden, paused, still live.
@@ -9569,8 +9582,8 @@
     if (mtSideIs(app.id)) { mtSideFocus(); return true; }
     mtSideEnd(true);
     var r = mtTake(app.id), el;
-    if (r) { el = r.el; if (at) el.src = app.url + at; }
-    else { el = mtNewFrame(true); el.src = app.url + (at || ""); }
+    if (r) { el = r.el; if (at) frameGo(el, app.url + at); }
+    else { el = mtNewFrame(true); frameGo(el, app.url + (at || "")); }
     mtSideShow(app, el);
     mtFit(state.running);
     mtChanged();
@@ -9632,16 +9645,20 @@
   // openApp with multitasking on: `prev` was in front, `app` comes.
   function mtSwitch(prev, app, at) {
     var front = document.getElementById("app-frame");
-    if (prev && prev.id === app.id) { front.src = app.url + (at || ""); return; }   // reopen = reload, as before
+    if (prev && prev.id === app.id) { frameGo(front, app.url + (at || "")); return; }   // reopen = reload, as before
     var back = mtTake(app.id);
     if (prev && !mtNoKeep && mtKeepable(prev) && mtHasDoc(front)) { mtHide(front, prev); front = null; }
     if (back) {
       if (front) mtDrop(front);
       mtShow(back.el);
-      if (at) back.el.src = app.url + at;
+      if (at) frameGo(back.el, app.url + at);
     } else {
-      if (!front) front = mtNewFrame();
-      front.src = app.url + (at || "");
+      // A new frame, never the old one: Back (10d) puts frames that
+      // existed when its history entry was made back on the page they
+      // showed then, so a frame must keep one app for its whole life.
+      if (front) mtDrop(front);
+      front = mtNewFrame();
+      frameGo(front, app.url + (at || ""));
     }
     mtFit(app);
   }
@@ -9686,9 +9703,10 @@
     }
     var prev = state.running;
     state.running = app;
+    if (appAway()) backArm();
     document.body.classList.add("app-running");   // narrow bar: "?" takes the language button's place
     if (mtActive()) mtSwitch(prev, app, at);
-    else document.getElementById("app-frame").src = app.url + (at || "");   // at: DL-1 launchAppSuffix only
+    else frameGo(document.getElementById("app-frame"), app.url + (at || ""));   // at: DL-1 launchAppSuffix only
     if (typeof window.t === "function") frameTitle();
     mtChanged();
     document.getElementById("oros-running").classList.add("active");
@@ -9710,7 +9728,7 @@
     mtSideEnd(true);   // home ends side by side; the side app waits behind
     state.running = null;
     document.body.classList.remove("app-running");
-    if (!(mtActive() && mtLeave(prev))) document.getElementById("app-frame").src = "about:blank";
+    if (!(mtActive() && mtLeave(prev))) frameGo(document.getElementById("app-frame"), "about:blank");
     mtChanged();
     document.getElementById("oros-running").classList.remove("active");
     document.getElementById("oros-desktop").style.display = "";
@@ -9723,6 +9741,28 @@
     if (window.orosSeasonal) window.orosSeasonal.refresh();   // decorations move again
     tourMaybe();   // a first-run tour put off by a launch-param app
   }
+
+  // ---------- 10d. Back key (BK-1) ----------
+  // The phone's Back key (and the browser's Back) does what the bar's
+  // Back does: an open app returns to the desktop (in a single app, to
+  // that app). Opening an app from the desktop adds one history entry
+  // marked { orosApp: 1 }; Back leaves it and popstate closes the app.
+  // The entry stays when the bar button is used, and the next app
+  // reuses it, so entries never pile up. An app's own page changes
+  // inside its frame come first, as in any browser.
+  function appAway() {
+    return !!state.running && !(SOLO && state.running.id === SOLO);
+  }
+  function backArm() {
+    try {
+      if (window.history.state && window.history.state.orosApp) return;
+      window.history.pushState({ orosApp: 1 }, "", window.location.href);
+    } catch (e) {}
+  }
+  window.addEventListener("popstate", function (e) {
+    if (e.state && e.state.orosApp) return;   // Forward onto the entry: nothing to do
+    if (appAway()) returnToDesktop();
+  });
 
   // ---------- 10c. App switcher (multitasking, wave M3) ----------
   // The open apps of 10b in one list: the bar button (shown while

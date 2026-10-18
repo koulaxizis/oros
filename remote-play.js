@@ -357,7 +357,7 @@
         var hs = root.parent.location.hash || "", re = new RegExp("^#" + o.app + "-play=([0-9]{6})$"), mm = hs.match(re);
         if (mm) {
           code = mm[1];
-          root.parent.history.replaceState(null, "", root.parent.location.pathname + root.parent.location.search);
+          root.parent.history.replaceState(root.parent.history.state, "", root.parent.location.pathname + root.parent.location.search);
         }
       } catch (e) {}
       var p = readJSON(KEY);
