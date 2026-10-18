@@ -24,6 +24,8 @@
 //     rss:    [{ id, m, list, url, name, every: "day"|"week"|"month", wd, hour,
 //                mode: "draft"|"send", max, seg, last (newest item used), ran, dev, on }],
 //   issues may carry imp: 1 (imported from an archive: sent elsewhere).
+//     blks:   [{ id, m, name, b (one block) }]   saved blocks (wave E3), any
+//              list may use them; left out while empty, like plinks
 //     plinks: [{ id, m, list, acct, p: "mlite"|"mchimp"|"brevo", grp, gname, last }]
 //              a list linked to a group / audience on an email platform
 //              (Connected services account acct; 1.59.00). The key is left
@@ -42,7 +44,7 @@
   var LIM = {
     chans: 10, lists: 20, subs: 5000, issues: 200, blocks: 60, text: 20000, md: 50000,
     name: 120, subj: 200, pre: 200, tags: 20, tag: 40, fail: 500, why: 1000, addr: 600,
-    imgBytes: 400 * 1024, email: 254, segs: 50, tpls: 50, rss: 20, archive: 500,
+    imgBytes: 400 * 1024, email: 254, segs: 50, tpls: 50, rss: 20, archive: 500, blks: 100,
     dataChars: 2500000
   };
   var KINDS = ["mail", "smtp"];
@@ -53,7 +55,8 @@
   var PLINK_PS = ["mlite", "mchimp", "brevo"];
   var OFF_STS = ["off", "bounce", "spam"];
   var ISSUE_STS = ["draft", "sched", "sending", "paused", "sent"];
-  var BLOCK_KINDS = ["h", "p", "img", "btn", "hr", "cols", "quote", "sp", "list", "head", "foot", "social"];
+  var BLOCK_KINDS = ["h", "p", "img", "btn", "hr", "cols", "quote", "sp", "list", "head", "foot", "social",
+                     "imgtxt", "cols3", "gallery", "video", "table", "event"];
   var S = root.OrosNewsletterSocial || (typeof require === "function" ? require("./social.js") : null);
   var ALIGNS = ["left", "center", "right"];
   var HR_STYLES = ["solid", "dashed", "dotted"];
@@ -263,7 +266,7 @@
   // (short scalars only), so this device never strips them on a save.
   var NO_KEYS = { __proto__: 1, constructor: 1, prototype: 1 };
   var BLOCK_KEYS = ["k", "t", "href", "a", "b", "f", "alt", "w", "h", "lv", "st", "full", "more", "c", "wd", "by", "ord", "al", "pad", "bg", "url",
-                    "lw", "sub", "links", "items", "sz"];
+                    "lw", "sub", "links", "items", "sz", "hd", "side", "bt", "bh", "per", "rows", "d", "tm", "te", "loc", "ics"];
   var LIST_KEYS = ["id", "m", "del", "name", "chan", "from", "fromName", "reply", "lang", "addr", "why", "theme", "color", "salt", "form", "sty", "hf"];
   function keepExtra(src, out, skip) {
     var n = 0;
@@ -360,9 +363,71 @@
         o = { k: "social", items: socialItems(b.items), st: S.STYLES.indexOf(b.st) >= 0 ? b.st : "c",
               sz: S.SIZES.indexOf(b.sz) >= 0 ? b.sz : 32 };
         break;
+      // wave E3: picture + text side by side, 3 columns, gallery,
+      // video (a picture with a play mark, linked), table, event card
+      case "imgtxt":
+        o = pic(b, { k: "imgtxt" });
+        o.alt = oneLine(b.alt, 300); o.href = safeUrl(b.href);
+        o.hd = oneLine(b.hd, 200); o.t = multi(b.t, 4000);
+        o.bt = oneLine(b.bt, 80); o.bh = safeUrl(b.bh);
+        if (b.side === "r") o.side = "r";
+        break;
+      case "cols3": o = { k: "cols3", a: multi(b.a, LIM.text), b: multi(b.b, LIM.text), c: multi(b.c, LIM.text) }; break;
+      case "gallery":
+        o = { k: "gallery", items: (Array.isArray(b.items) ? b.items : []).slice(0, 9).map(function (g) {
+          if (!g || typeof g !== "object") return null;
+          var q = pic(g, {});
+          q.alt = oneLine(g.alt, 300); q.href = safeUrl(g.href);
+          return q;
+        }).filter(Boolean) };
+        if (b.per === 3) o.per = 3;
+        break;
+      case "video":
+        o = pic(b, { k: "video" });
+        o.url = webUrl(b.url); o.alt = oneLine(b.alt, 300); o.t = oneLine(b.t, 300);
+        break;
+      case "table": {
+        var rows = (Array.isArray(b.rows) ? b.rows : []).filter(Array.isArray).slice(0, 20), n = 0;
+        rows.forEach(function (r) { n = Math.max(n, Math.min(r.length, 6)); });
+        o = { k: "table", rows: rows.map(function (r) {
+          var out = [];
+          for (var j = 0; j < n; j++) out.push(oneLine(r[j], 200));
+          return out;
+        }) };
+        if (b.hd === 1) o.hd = 1;
+        break;
+      }
+      case "event":
+        o = { k: "event", t: oneLine(b.t, 200), d: validDay(b.d) ? b.d : "", tm: validTime(b.tm) ? b.tm : "",
+              te: validTime(b.te) ? b.te : "", loc: oneLine(b.loc, 200), sub: multi(b.sub, 1000),
+              bt: oneLine(b.bt, 80), bh: safeUrl(b.bh) };
+        if (!o.tm) o.te = "";
+        if (b.ics === 1) o.ics = 1;
+        break;
     }
     return keepExtra(b, blockLook(b, o), BLOCK_KEYS);
   }
+  // the picture fields of a block or a gallery item
+  function pic(src, o) {
+    o.f = imgPath(src.f); o.w = clamp(src.w, 1, 4000, 600); o.h = clamp(src.h, 1, 8000, 400); o.b = clamp(src.b, 0, 10000000, 0);
+    return o;
+  }
+  function webUrl(u) { u = safeUrl(u); return /^https?:/i.test(u) ? u : ""; }
+  function validDay(v) {
+    var m = typeof v === "string" && /^(\d{4})-(\d{2})-(\d{2})$/.exec(v);
+    if (!m) return false;
+    var d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]));
+    return d.getUTCFullYear() === +m[1] && d.getUTCMonth() === +m[2] - 1 && d.getUTCDate() === +m[3] && +m[1] >= 2000 && +m[1] <= 2200;
+  }
+  function validTime(v) { return typeof v === "string" && /^([01]\d|2[0-3]):[0-5]\d$/.test(v); }
+  // The objects holding a picture of a block (f, w, h, b): the block
+  // itself or its gallery items. Callers may set f/w/h/b on them.
+  function picRefs(b) {
+    if (!b || typeof b !== "object") return [];
+    if (b.k === "gallery") return (Array.isArray(b.items) ? b.items : []).filter(function (g) { return g && typeof g === "object"; });
+    return PIC_KINDS[b.k] ? [b] : [];
+  }
+  var PIC_KINDS = { img: 1, head: 1, imgtxt: 1, video: 1 };
   function imgPath(f) { return typeof f === "string" && /^\/internal\/Newsletter\/[A-Za-z0-9._-]{1,80}\.(jpg|png)$/.test(f) ? f : ""; }
   function links(v, max) {
     return (Array.isArray(v) ? v : []).slice(0, max).map(function (x) {
@@ -389,7 +454,8 @@
     var seen = {}, out = [];
     var add = function (f, n) { if (f && !seen[f]) { seen[f] = 1; out.push({ f: f, b: n || 0 }); } };
     (blocks || []).forEach(function (b) {
-      if (b.k === "img" || b.k === "head") add(b.f, b.b);
+      // a video's picture is sent with its play mark drawn on it
+      picRefs(b).forEach(function (r) { add(r.f && b.k === "video" ? "play:" + r.f : r.f, r.b); });
       if (b.k === "social" || b.k === "foot") {
         b.items.forEach(function (x) { if (x.href) add(S.key(x.n, b.st, b.k === "foot" ? 24 : b.sz)); });
       }
@@ -494,6 +560,13 @@
     return { id: x.id, m: nat(x.m), list: x.list, acct: x.acct, p: x.p, grp: x.grp,
              gname: oneLine(x.gname, LIM.name), last: nat(x.last) };
   }
+  // A saved block (wave E3): a name and one block of a kind this
+  // version knows (an unknown one is kept whole, like in an issue).
+  function normBlk(x) {
+    var b = x.b && typeof x.b === "object" ? normBlock(x.b) : null;
+    if (!b) return null;
+    return { id: x.id, m: nat(x.m), name: oneLine(x.name, LIM.name), b: b };
+  }
   function plinkId(list, acct, grp) { return "pl" + hash53("plink|" + list + "|" + acct + "|" + grp); }
   function clampInt(v, lo, hi, def) {
     v = Math.round(Number(v));
@@ -528,6 +601,8 @@
     o.rss = normColl(d.rss, normRss, 200).filter(function (x) { return x.del || liveLists[x.list]; });
     var pl = normColl(d.plinks, normPlink, 200).filter(function (x) { return x.del || liveLists[x.list]; });
     if (pl.length) o.plinks = pl;
+    var bk = normColl(d.blks, normBlk, 400);
+    if (bk.length) o.blks = bk;
     var open = {};
     o.issues.forEach(function (x) { if (!x.del && (x.st === "sending" || x.st === "paused")) open[x.id] = 1; });
     var sent = d.sent && typeof d.sent === "object" ? d.sent : {};
@@ -598,6 +673,7 @@
       tpls: mergeColl(A.tpls, B.tpls),
       rss: mergeColl(A.rss, B.rss),
       plinks: mergeColl(A.plinks, B.plinks),
+      blks: mergeColl(A.blks, B.blks),
       sent: {},
       supp: A.supp.concat(B.supp)
     };
@@ -883,6 +959,58 @@
     }
     return false;
   }
+  // wave E3 blocks that can't be sent as they are: a picture block
+  // with no picture, a button / video with half a link, an event
+  // with no title or day
+  function badE3(b) {
+    switch (b.k) {
+      case "imgtxt": return !b.f || (!!b.bt !== !!b.bh);
+      case "gallery": return !b.items.length || b.items.some(function (g) { return !g.f; });
+      case "video": return !b.url;
+      case "event": return !b.t || !b.d || (!!b.bt !== !!b.bh);
+    }
+    return false;
+  }
+  // An event block → an iCalendar file (RFC 5545), attached to the
+  // e-mail when the block asks (ics: 1). Times are "floating": the
+  // reader's calendar shows them at the same clock time wherever it is.
+  // uid: stable for this issue + block; now: ms (DTSTAMP).
+  function icsOf(b, uid, now) {
+    if (!b || b.k !== "event" || !validDay(b.d) || !b.t) return "";
+    var esc = function (v) { return String(v || "").replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n"); };
+    // lines of at most 75 octets, continued with a space (UTF-8 safe)
+    var fold = function (line) {
+      var out = [], cur = "", n = 0;
+      for (var i = 0; i < line.length; i++) {
+        var ch = line.charAt(i), code = line.charCodeAt(i);
+        if (code >= 0xd800 && code <= 0xdbff && i + 1 < line.length) ch += line.charAt(++i);
+        var len = unescape(encodeURIComponent(ch)).length;
+        if (n + len > (out.length ? 74 : 75)) { out.push(cur); cur = ""; n = 0; }
+        cur += ch; n += len;
+      }
+      out.push(cur);
+      return out.join("\r\n ");
+    };
+    var day = b.d.replace(/-/g, "");
+    var stamp = new Date(now || 0).toISOString().replace(/[-:]/g, "").replace(/\.\d+Z$/, "Z");
+    var L = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//orOS//Newsletter//EN", "CALSCALE:GREGORIAN", "METHOD:PUBLISH", "BEGIN:VEVENT",
+             "UID:" + String(uid).replace(/[^A-Za-z0-9.@_-]/g, "") + "@oros", "DTSTAMP:" + stamp];
+    if (b.tm) {
+      L.push("DTSTART:" + day + "T" + b.tm.replace(":", "") + "00");
+      var end = b.te && b.te > b.tm ? b.te : "";
+      if (end) L.push("DTEND:" + day + "T" + end.replace(":", "") + "00");
+      else L.push("DURATION:PT1H");
+    } else {
+      var nx = new Date(Date.UTC(+b.d.slice(0, 4), +b.d.slice(5, 7) - 1, +b.d.slice(8, 10) + 1));
+      L.push("DTSTART;VALUE=DATE:" + day, "DTEND;VALUE=DATE:" + nx.toISOString().slice(0, 10).replace(/-/g, ""));
+    }
+    L.push("SUMMARY:" + esc(b.t));
+    if (b.loc) L.push("LOCATION:" + esc(b.loc));
+    if (b.sub) L.push("DESCRIPTION:" + esc(b.sub));
+    if (b.bh && /^https?:/i.test(b.bh)) L.push("URL:" + b.bh);
+    L.push("END:VEVENT", "END:VCALENDAR");
+    return L.map(fold).join("\r\n") + "\r\n";
+  }
   // info: { imgBytes, chan (resolved or null), inbox (bool), aud (number) }
   // → [{ lvl: "err"|"warn", k }]
   function preflight(d, x, info) {
@@ -901,22 +1029,27 @@
       }
       var hasBody = v.fmt === "md" ? !!v.md.trim() : v.blocks.some(function (b) {
         if (!known(b)) return false;
-        if (b.k === "img") return !!b.f;
+        if (b.k === "img" || b.k === "video") return !!(b.f || (b.k === "video" && b.url));
         if (b.k === "head" || b.k === "foot" || b.k === "social") return false;    // a frame, not the content
-        return b.k !== "hr" && b.k !== "sp" && !!(b.t || b.a || (b.k === "cols" && b.b));
+        if (b.k === "gallery") return b.items.some(function (g) { return !!g.f; });
+        if (b.k === "table") return b.rows.some(function (r) { return r.some(Boolean); });
+        return b.k !== "hr" && b.k !== "sp" && !!(b.t || b.a || b.hd || b.f || ((b.k === "cols" || b.k === "cols3") && (b.b || b.c)));
       });
       if (!hasBody) add("err", "noBody");
       if (v.fmt === "blocks" && v.blocks.some(function (b) {
         return (b.k === "btn" && buttonsOf(b).some(function (x) { return !x.href || !x.t; })) || (b.k === "img" && !b.f) ||
                ((b.k === "social" || b.k === "foot") && b.items.some(function (x) { return !x.href; })) ||
-               (b.k === "head" && b.links.some(function (x) { return !x.href || !x.t; }));
+               (b.k === "head" && b.links.some(function (x) { return !x.href || !x.t; })) || badE3(b);
       })) {
         add("err", "badBlock");
       }
       // a block from a newer orOS: this device can't draw it, so it doesn't send it
       if (v.fmt === "blocks" && v.blocks.some(function (b) { return !known(b); })) add("err", "newerBlock");
       var text = v.fmt === "md" ? v.md : v.blocks.map(function (b) {
-        return known(b) ? [b.t, b.a, b.k === "cols" ? b.b : "", b.by, b.k === "head" ? b.sub : ""].concat(buttonsOf(b).slice(1).map(function (x) { return x.t; })).join(" ") : "";
+        if (!known(b)) return "";
+        var parts = [b.t, b.a, b.k === "cols" || b.k === "cols3" ? b.b : "", b.k === "cols3" ? b.c : "", b.by, b.k === "head" || b.k === "event" ? b.sub : "", b.hd, b.bt, b.loc];
+        if (b.k === "table") parts = parts.concat.apply(parts, b.rows);
+        return parts.concat(buttonsOf(b).slice(1).map(function (x) { return x.t; })).join(" ");
       }).join(" ");
       if (badPlaceholders(text + " " + v.subj)) add("warn", "placeholder");
     });
@@ -1137,7 +1270,7 @@
   var api = {
     STORAGE_KEY: STORAGE_KEY, LIM: LIM, PRESETS: PRESETS, MAIL_DEFAULTS: MAIL_DEFAULTS, SECS: SECS,
     THEMES: THEMES, FONTS: FONTS, BTN_SHAPES: BTN_SHAPES, HEAD_SIZES: HEAD_SIZES, ALIGNS: ALIGNS, HR_STYLES: HR_STYLES,
-    BLOCK_KINDS: BLOCK_KINDS, knownBlock: known, alignOf: alignOf, picsOf: picsOf, normHf: normHf, socialItems: socialItems, buttonsOf: buttonsOf, normSty: normSty,
+    BLOCK_KINDS: BLOCK_KINDS, knownBlock: known, alignOf: alignOf, picsOf: picsOf, picRefs: picRefs, normBlk: normBlk, icsOf: icsOf, validDay: validDay, validTime: validTime, normHf: normHf, socialItems: socialItems, buttonsOf: buttonsOf, normSty: normSty,
     BASES: BASES, OFF_STS: OFF_STS, LOCK_STALE: LOCK_STALE, SOFT_LIMIT: SOFT_LIMIT,
     validEmail: validEmail, normEmail: normEmail, emailKey: emailKey, validHost: validHost, validColor: validColor,
     safeUrl: safeUrl, fold: fold, hash53: hash53, subId: subId, suppHash: suppHash, token: token, listCode: listCode,

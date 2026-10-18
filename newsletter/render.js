@@ -28,7 +28,9 @@
       confBody: "Someone (we hope you) asked to receive {l} at this address. To confirm, send the e-mail the button below prepares for you. If it wasn't you, ignore this message and you won't hear from us again.",
       confBtn: "Yes, subscribe me",
       confText: "To confirm, send an e-mail to {a} with the subject: confirm {t}",
-      test: "[Test] "
+      test: "[Test] ",
+      video: "Watch the video", ics: "The event is attached as a calendar file: open it to add it to your calendar.",
+      mon: "Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec"
     },
     el: {
       why: "Το λαμβάνεις επειδή έχεις εγγραφεί στο {l}.",
@@ -41,7 +43,9 @@
       confBody: "Κάποιος (ελπίζουμε εσύ) ζήτησε να λαμβάνει το {l} σε αυτή τη διεύθυνση. Για να το επιβεβαιώσεις, στείλε το email που ετοιμάζει το κουμπί παρακάτω. Αν δεν ήσουν εσύ, αγνόησε αυτό το μήνυμα και δεν θα ξανακούσεις από εμάς.",
       confBtn: "Ναι, θέλω να εγγραφώ",
       confText: "Για επιβεβαίωση, στείλε email στο {a} με θέμα: confirm {t}",
-      test: "[Δοκιμή] "
+      test: "[Δοκιμή] ",
+      video: "Δες το βίντεο", ics: "Η εκδήλωση είναι συνημμένη ως αρχείο ημερολογίου: άνοιξέ το για να την προσθέσεις στο ημερολόγιό σου.",
+      mon: "ΙΑΝ ΦΕΒ ΜΑΡ ΑΠΡ ΜΑΪ ΙΟΥΝ ΙΟΥΛ ΑΥΓ ΣΕΠ ΟΚΤ ΝΟΕ ΔΕΚ"
     }
   };
   function S(lang, k, p) {
@@ -170,10 +174,10 @@
   var HEAD_SCALE = { s: 0.86, m: 1, l: 1.18 };
   var RADIUS = { round: 8, square: 0, pill: 999 };
   // st: what every block needs to know about the list's look
-  function lookOf(l, th) {
+  function lookOf(l, th, lang) {
     var y = (l && l.sty) || {};
     var accent = (l && l.color) || "#2f6fde";
-    return { th: th, accent: accent, link: y.link || accent, font: FONTS[y.font] || FONT,
+    return { lang: lang === "el" ? "el" : "en", th: th, accent: accent, link: y.link || accent, font: FONTS[y.font] || FONT,
              hs: HEAD_SCALE[y.hs] || 1, rad: RADIUS[y.btn] === undefined ? 8 : RADIUS[y.btn], bg: y.bg || th.bg };
   }
 
@@ -267,6 +271,75 @@
         if (!row && !ft) return "";
         return "<div style=\"text-align:" + fa + ";margin:20px 0 0;padding-top:16px;border-top:1px solid " + th.line + "\">" + row + ft + "</div>";
       }
+      case "imgtxt": {
+        var isrc = b.f && img ? img({ f: b.f }) : "";
+        if (!isrc) return "";
+        var pim = "<img src=\"" + esc(isrc) + "\" alt=\"" + esc(b.alt || "") + "\" width=\"258\" style=\"display:block;width:100%;max-width:258px;height:auto;border:0;border-radius:6px\">";
+        if (b.href) pim = "<a href=\"" + esc(b.href) + "\">" + pim + "</a>";
+        var txt = (b.hd ? "<p style=\"margin:0 0 8px;font-size:" + Math.round(19 * st.hs) + "px;line-height:1.3;font-weight:700;font-family:" + st.font + ";color:" + th.text + "\">" + inlineHtml(t(b.hd), lc) + "</p>" : "") +
+          (b.t ? paraHtml(t(b.t), th, lc) : "") +
+          (b.bt && b.bh ? "<table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"margin:0 0 12px\"><tr>" + buttonHtml({ t: t(b.bt), href: b.bh }, st, false, false) + "</tr></table>" : "");
+        // dir="rtl" puts the picture on the right but keeps it first when the columns stack on a phone
+        var cell = function (h) { return "<div dir=\"ltr\" style=\"display:inline-block;vertical-align:middle;width:100%;max-width:258px;margin:0 4px 12px;text-align:left\">" + h + "</div>"; };
+        return "<div" + (b.side === "r" ? " dir=\"rtl\"" : "") + " style=\"font-size:0;text-align:" + (b.side === "r" ? "right" : "left") + "\">" + cell(pim) + cell(txt) + "</div>";
+      }
+      case "cols3": {
+        var col3 = function (s) {
+          return "<div style=\"display:inline-block;vertical-align:top;width:100%;max-width:170px;margin:0 4px\">" + paraHtml(t(s), th, lc) + "</div>";
+        };
+        return "<div style=\"font-size:0;text-align:left\">" + col3(b.a) + col3(b.b) + col3(b.c) + "</div>";
+      }
+      case "gallery": {
+        var per = b.per === 3 ? 3 : 2, gw = per === 3 ? 170 : 262;
+        var gs = (b.items || []).map(function (g) {
+          var u = g.f && img ? img({ f: g.f }) : "";
+          if (!u) return "";
+          var gi = "<img src=\"" + esc(u) + "\" alt=\"" + esc(g.alt || "") + "\" width=\"" + gw + "\" style=\"display:block;width:100%;max-width:" + gw + "px;height:auto;border:0;border-radius:6px\">";
+          return "<div style=\"display:inline-block;vertical-align:top;width:100%;max-width:" + gw + "px;margin:0 3px 8px\">" + (g.href ? "<a href=\"" + esc(g.href) + "\">" + gi + "</a>" : gi) + "</div>";
+        }).filter(Boolean);
+        return gs.length ? "<div style=\"font-size:0;text-align:center;margin:0 0 8px\">" + gs.join("") + "</div>" : "";
+      }
+      case "video": {
+        if (!b.url) return "";
+        var vsrc = b.f && img ? img({ f: "play:" + b.f }) : "";
+        var vcap = b.t ? "<p style=\"margin:0 0 16px;font-size:14px;line-height:1.5;color:" + th.dim + ";text-align:center\">" + esc(t(b.t)) + "</p>" : "";
+        if (vsrc) {
+          var vw = Math.min(b.w || 536, 536);
+          return "<a href=\"" + esc(b.url) + "\"><img src=\"" + esc(vsrc) + "\" alt=\"" + esc(b.alt || b.t || S(st.lang, "video")) + "\" width=\"" + vw +
+                 "\" style=\"display:block;width:100%;max-width:" + vw + "px;height:auto;border:0;margin:0 auto 8px;border-radius:6px\"></a>" + vcap;
+        }
+        return "<table role=\"presentation\" align=\"center\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"margin:8px auto 20px\"><tr>" +
+               buttonHtml({ t: "\u25b6 " + (b.t ? t(b.t) : S(st.lang, "video")), href: b.url }, st, false, false) + "</tr></table>";
+      }
+      case "table": {
+        var trs = (b.rows || []).filter(function (r) { return r.some(Boolean); });
+        if (!trs.length) return "";
+        var td = "padding:8px 10px;border:1px solid " + th.line + ";font-size:14px;line-height:1.4;text-align:left;vertical-align:top;color:" + th.text;
+        return "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"border-collapse:collapse;margin:0 0 16px\">" +
+          trs.map(function (r, ri) {
+            var head = ri === 0 && b.hd === 1;
+            return "<tr>" + r.map(function (c) {
+              return "<td style=\"" + td + (head ? ";font-weight:700;background:" + th.line : "") + "\">" + inlineHtml(t(c), lc) + "</td>";
+            }).join("") + "</tr>";
+          }).join("") + "</table>";
+      }
+      case "event": {
+        if (!b.t || !C.validDay(b.d)) return "";
+        var mon = S(st.lang, "mon").split(" ")[+b.d.slice(5, 7) - 1], dnum = +b.d.slice(8, 10), ink = onColor(st.accent);
+        var badge = "<td width=\"64\" valign=\"top\" style=\"width:64px;padding:0 16px 0 0\"><div style=\"background:" + st.accent + ";border-radius:8px;text-align:center;padding:8px 0;color:" + ink + "\">" +
+          "<div style=\"font-size:12px;font-weight:700;letter-spacing:1px;line-height:1.2\">" + esc(mon) + "</div>" +
+          "<div style=\"font-size:26px;font-weight:800;line-height:1.1\">" + dnum + "</div>" +
+          "<div style=\"font-size:11px;line-height:1.2\">" + b.d.slice(0, 4) + "</div></div></td>";
+        var info = "<p style=\"margin:0 0 6px;font-size:" + Math.round(19 * st.hs) + "px;line-height:1.3;font-weight:700;font-family:" + st.font + ";color:" + th.text + "\">" + esc(t(b.t)) + "</p>";
+        if (b.tm) info += "<p style=\"margin:0 0 4px;font-size:14px;color:" + th.dim + "\">" + b.tm + (b.te ? " \u2013 " + b.te : "") + "</p>";
+        if (b.loc) info += "<p style=\"margin:0 0 4px;font-size:14px;color:" + th.dim + "\">" + esc(t(b.loc)) + "</p>";
+        if (b.sub) info += "<div style=\"margin:8px 0 0\">" + paraHtml(t(b.sub), th, lc) + "</div>";
+        if (b.bt && b.bh) info += "<table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"margin:4px 0 8px\"><tr>" + buttonHtml({ t: t(b.bt), href: b.bh }, st, false, false) + "</tr></table>";
+        if (b.ics) info += "<p style=\"margin:4px 0 0;font-size:12px;line-height:1.5;color:" + th.dim + "\">" + esc(S(st.lang, "ics")) + "</p>";
+        return "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"margin:0 0 20px;border:1px solid " + th.line +
+               ";border-radius:8px\"><tr><td style=\"padding:16px\"><table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\"><tr>" +
+               badge + "<td valign=\"top\" style=\"text-align:left\">" + info + "</td></tr></table></td></tr></table>";
+      }
     }
     return "";      // a block from a newer orOS: not drawn here
   }
@@ -332,6 +405,19 @@
           .filter(Boolean).join("\n") + "\n" + new Array(31).join("=");
       case "social": return socialText(b);
       case "foot": return new Array(31).join("-") + "\n" + [socialText(b), b.t ? paraText(t(b.t)) : ""].filter(Boolean).join("\n\n");
+      case "imgtxt":
+        return [b.hd ? inlineText(t(b.hd)) : "", b.t ? paraText(t(b.t)) : "", b.alt ? "[" + b.alt + "]" + (b.href ? " " + b.href : "") : "",
+                b.bt && b.bh ? t(b.bt) + ": " + b.bh.replace(/^mailto:/i, "") : ""].filter(Boolean).join("\n\n");
+      case "cols3": return [paraText(t(b.a)), paraText(t(b.b)), paraText(t(b.c))].filter(Boolean).join("\n\n");
+      case "gallery":
+        return (b.items || []).filter(function (g) { return g.alt || g.href; }).map(function (g) { return "[" + (g.alt || "\u2026") + "]" + (g.href ? " " + g.href : ""); }).join("\n");
+      case "video": return b.url ? (b.t ? t(b.t) + ": " : "\u25b6 ") + b.url : "";
+      case "table":
+        return (b.rows || []).filter(function (r) { return r.some(Boolean); }).map(function (r) { return r.map(function (c) { return inlineText(t(c)); }).join(" | "); }).join("\n");
+      case "event":
+        if (!b.t || !C.validDay(b.d)) return "";
+        return [t(b.t).toUpperCase(), b.d + (b.tm ? " " + b.tm + (b.te ? "\u2013" + b.te : "") : ""), b.loc ? t(b.loc) : "", b.sub ? paraText(t(b.sub)) : "",
+                b.bt && b.bh ? t(b.bt) + ": " + b.bh.replace(/^mailto:/i, "") : ""].filter(Boolean).join("\n");
     }
     return "";
   }
@@ -344,7 +430,7 @@
     var lang = o.lang === "el" ? "el" : "en", l = o.list;
     var x = o.issue.l2 ? C.contentFor(o.issue, lang) : o.issue;     // the version in their language
     var th = THEMES[l.theme] || THEMES.classic, accent = l.color || "#2f6fde";
-    var st = lookOf(l, th);
+    var st = lookOf(l, th, lang);
     var body = blocksOf(x).map(function (b) { return blockHtml(b, st, o.img, o.sub); }).join("");
     var foot = footer(o, th, accent, lang);
     var pre = x.pre ? "<div style=\"display:none;max-height:0;overflow:hidden;opacity:0;mso-hide:all\">" + esc(personalize(x.pre, o.sub)) +
@@ -408,7 +494,7 @@
   // ---------- the message ----------
   // M = Mail's compose.js (window.orosMailCompose).
   // o: { from{name,addr}, to{name,addr}, reply, subject, text, html,
-  //      inline[{cid,type,bin}], listId, listName, unsub (mailto:), unsubWeb (https:), tag,
+  //      inline[{cid,type,bin}], files[{name,type,bin}] (attachments), listId, listName, unsub (mailto:), unsubWeb (https:), tag,
   //      hdr ([name, value] extra header of the provider) }
   // → { bin, messageId, rcpt[] }
   // The list headers of one message → [[name, value], …] (ASCII)
@@ -430,7 +516,7 @@
   }
   function message(M, o) {
     var built = M.build({ from: o.from, to: [o.to], cc: [], bcc: [], subject: o.subject, text: o.text,
-                          html: o.html, inline: o.inline || [] });
+                          html: o.html, inline: o.inline || [], attachments: o.files || [] });
     var CRLF = "\r\n", h = "";
     if (o.reply && C.validEmail(o.reply)) h += "Reply-To: " + M.fmtAddr({ name: "", addr: o.reply }) + CRLF;
     listHeaders(M, o).forEach(function (x) { h += x[0] + ": " + x[1] + CRLF; });
@@ -448,6 +534,8 @@
     var inline = (o.inline || []).map(function (i) {
       return { cid: i.cid, type: i.type, name: i.cid.replace(/@oros$/, ""), b64: btoa(i.bin) };
     });
+    // files (an event's .ics): plain attachments
+    var files = (o.files || []).map(function (f) { return { name: f.name, type: f.type, b64: btoa(f.bin) }; });
     var obj = function (pairs) { var h = {}; pairs.forEach(function (x) { h[x[0]] = x[1]; }); return h; };
     var who = function (a) { var r = { email: a.addr }; if (a.name) r.name = a.name; return r; };
     var body;
@@ -455,6 +543,7 @@
       body = { sender: who(o.from), to: [who(o.to)], subject: o.subject, htmlContent: o.html, textContent: o.text, headers: obj(hdrs) };
       if (reply) body.replyTo = { email: reply };
       if (o.tag) body.tags = [String(o.tag).replace(/[^a-z0-9-]/gi, "")];
+      if (files.length) body.attachment = files.map(function (f) { return { name: f.name, content: f.b64 }; });
     } else if (prov === "postmark") {
       // UTF-8 names as they are (the JSON is UTF-8), quoted
       var fmt = function (a) { return a.name ? "\"" + String(a.name).replace(/[\\"\r\n]/g, "") + "\" <" + a.addr + ">" : a.addr; };
@@ -462,12 +551,18 @@
                Headers: hdrs.filter(function (x) { return x[0] !== "X-PM-Message-Stream"; }).map(function (x) { return { Name: x[0], Value: x[1] }; }) };
       if (reply) body.ReplyTo = reply;
       if (o.tag) body.Tag = String(o.tag).replace(/[^a-z0-9-]/gi, "");
-      if (inline.length) body.Attachments = inline.map(function (i) { return { Name: i.name, Content: i.b64, ContentType: i.type, ContentID: "cid:" + i.cid }; });
+      if (inline.length || files.length) {
+        body.Attachments = inline.map(function (i) { return { Name: i.name, Content: i.b64, ContentType: i.type, ContentID: "cid:" + i.cid }; })
+          .concat(files.map(function (f) { return { Name: f.name, Content: f.b64, ContentType: f.type }; }));
+      }
     } else {
       body = { personalizations: [{ to: [who(o.to)] }], from: who(o.from), subject: o.subject,
                content: [{ type: "text/plain", value: o.text }, { type: "text/html", value: o.html }], headers: obj(hdrs) };
       if (reply) body.reply_to = { email: reply };
-      if (inline.length) body.attachments = inline.map(function (i) { return { content: i.b64, type: i.type, filename: i.name, disposition: "inline", content_id: i.cid }; });
+      if (inline.length || files.length) {
+        body.attachments = inline.map(function (i) { return { content: i.b64, type: i.type, filename: i.name, disposition: "inline", content_id: i.cid }; })
+          .concat(files.map(function (f) { return { content: f.b64, type: f.type, filename: f.name, disposition: "attachment" }; }));
+      }
     }
     return { m: "POST", path: prov === "brevo" ? "/smtp/email" : prov === "postmark" ? "/email" : "/mail/send", body: JSON.stringify(body) };
   }

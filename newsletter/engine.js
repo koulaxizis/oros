@@ -295,11 +295,17 @@
     var todo = paths.filter(function (p, i) { return paths.indexOf(p) === i && !imgData[p]; });
     if (!todo.length) return Promise.resolve(true);
     var S = root.OrosNewsletterSocial;
-    // social icons are drawn here (wave E2); files come from the orOS disk
-    var icons = todo.filter(function (p) { return /^icon:/.test(p); }), files = todo.filter(function (p) { return !/^icon:/.test(p); });
+    // social icons are drawn here (wave E2), a video's picture gets its
+    // play mark here (E3); files come from the orOS disk
+    var icons = todo.filter(function (p) { return /^icon:/.test(p); });
+    var plays = todo.filter(function (p) { return /^play:/.test(p); });
+    var files = todo.filter(function (p) { return !/^(icon|play):/.test(p); });
     var drawn = Promise.all(icons.map(function (p) {
       return S ? S.draw(p).then(function (d) { imgData[p] = d; return true; }, function () { return false; }) : Promise.resolve(false);
-    }));
+    }).concat(plays.map(function (p) {
+      if (!fs) return Promise.resolve(false);
+      return fs.readBlob(p.slice(5)).then(drawPlay).then(function (d) { imgData[p] = d; return true; })["catch"](function () { return false; });
+    })));
     if (files.length && !fs) return drawn.then(function () { return false; });
     return Promise.all([drawn].concat(files.map(function (p) {
       return fs.readBlob(p).then(function (blob) { return blob.arrayBuffer(); }).then(function (buf) {
@@ -311,7 +317,50 @@
       })["catch"](function () { return false; });
     }))).then(function (r) { return r[0].every(Boolean) && r.slice(1).every(Boolean); });
   }
-  function cidOf(path) { return path.split("/").pop().replace(/[^A-Za-z0-9._-]/g, "") + "@oros"; }   // "icon:x:c:32" → "iconxc32@oros"
+  // A picture with a round play mark in the middle → { bin, type, url } (JPEG)
+  function drawPlay(blob) {
+    return new Promise(function (resolve, reject) {
+      var url = URL.createObjectURL(blob), im = new Image();
+      im.onerror = function () { URL.revokeObjectURL(url); reject(new Error("img")); };
+      im.onload = function () {
+        URL.revokeObjectURL(url);
+        var w = Math.min(im.naturalWidth || 1, 1200), h = Math.round((im.naturalHeight || 1) * w / (im.naturalWidth || 1));
+        var cv = document.createElement("canvas");
+        cv.width = w; cv.height = h;
+        var g = cv.getContext("2d");
+        g.drawImage(im, 0, 0, w, h);
+        var r = Math.max(18, Math.round(Math.min(w, h) * 0.12)), cx = w / 2, cy = h / 2;
+        g.fillStyle = "rgba(0,0,0,0.55)";
+        g.beginPath(); g.arc(cx, cy, r, 0, Math.PI * 2); g.fill();
+        g.lineWidth = Math.max(2, r * 0.08); g.strokeStyle = "#ffffff"; g.stroke();
+        g.fillStyle = "#ffffff";
+        g.beginPath(); g.moveTo(cx - r * 0.32, cy - r * 0.45); g.lineTo(cx + r * 0.5, cy); g.lineTo(cx - r * 0.32, cy + r * 0.45); g.closePath(); g.fill();
+        cv.toBlob(function (out) {
+          if (!out) { reject(new Error("canvas")); return; }
+          out.arrayBuffer().then(function (buf) {
+            var u8 = new Uint8Array(buf), bin = "";
+            for (var i = 0; i < u8.length; i += 0x8000) bin += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000));
+            resolve({ bin: bin, type: "image/jpeg", url: "data:image/jpeg;base64," + btoa(bin) });
+          }, reject);
+        }, "image/jpeg", 0.86);
+      };
+      im.src = url;
+    });
+  }
+  // The calendar files of the event blocks that ask for one (wave E3)
+  function filesFor(x, lang, now) {
+    var v = x.l2 ? C.contentFor(x, lang) : x, seen = {};
+    return R.blocksOf(v).map(function (b, i) {
+      if (b.k !== "event" || !b.ics) return null;
+      var ics = C.icsOf(b, x.id + "-" + i, now);
+      if (!ics) return null;
+      var base = C.slug(b.t) || "event", name = base, n = 2;
+      while (seen[name]) name = base + "-" + (n++);
+      seen[name] = 1;
+      return { name: name + ".ics", type: "text/calendar", bin: unescape(encodeURIComponent(ics)) };
+    }).filter(Boolean);
+  }
+  function cidOf(path) { return (/^play:/.test(path) ? "play-" : "") + path.split("/").pop().replace(/[^A-Za-z0-9._-]/g, "") + "@oros"; }   // "icon:x:c:32" → "iconxc32@oros"
   // One message for one subscriber (or a test: opts.test + opts.to) → { bin, … }
   function buildFor(x, l, s, opts) {
     opts = opts || {};
@@ -332,7 +381,7 @@
                       } });
     var mo = {
       from: { name: l.fromName, addr: l.from }, to: { name: s ? s.name : "", addr: opts.to || s.email },
-      reply: l.reply, subject: e.subject, text: e.text, html: e.html, inline: inline,
+      reply: l.reply, subject: e.subject, text: e.text, html: e.html, inline: inline, files: filesFor(x, lang, Date.now()),
       listId: l.id, listName: l.name, unsub: unsub, unsubWeb: unsubWeb, tag: x.id, hdr: opts.hdr
     };
     return opts.raw ? mo : R.message(M, mo);          // raw: the parts, for R.apiReq
@@ -1135,7 +1184,7 @@
     mailAccounts: mailAccounts, mailAccount: mailAccount, inboxAccount: inboxAccount,
     apiCreds: apiCreds, apiCheck: apiCheck, checkApi: checkApi, applyApiEvent: applyApiEvent,
     savePass: savePass, ownPass: ownPass, delPass: delPass, sendCreds: sendCreds, relay: relay, errCode: errCode,
-    images: imgData, loadImages: loadImages, buildFor: buildFor, confirmFor: confirmFor, sendBin: sendBin,
+    images: imgData, loadImages: loadImages, filesFor: filesFor, buildFor: buildFor, confirmFor: confirmFor, sendBin: sendBin,
     pause: pause, resume: resume, finish: finish, issueFromFeed: issueFromFeed, runFeeds: runFeeds,
     formOn: formOn, formOff: formOff, formHere: formHere, pullForms: pullForms, openSealed: openSealed, relayUrl: relayUrl,
     applyRequest: applyRequest, markBounce: markBounce,
