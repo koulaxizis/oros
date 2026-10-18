@@ -53,6 +53,12 @@
   var DB_NAME     = "oros-assistant";
   var MAX_CHATS   = 2000;          // room for an imported history (import.js MAX_CONVS)
   var MAX_INPUT   = 20000;
+  // The mini window over the desktop or an app (shell quickmenu.js,
+  // quick access wave 2): the same Assistant in a small frame. It
+  // never registers the sync slice (the frame is not an app frame, so
+  // the sync engine could not tell when it closes); it reads settings
+  // from storage and marks them dirty like a closed app's proxy does.
+  var MINI = /[?&]mini=1\b/.test(location.search);
 
   // ---------- 1. Constants, i18n, helpers ----------
   // orosI18n (../i18n.js): the full language code, a pack language included.
@@ -4193,6 +4199,17 @@
         if (api && typeof api.markDirty === "function") api.markDirty();
       }
     };
+    if (MINI) {
+      // Settings pulled or changed elsewhere while the mini window is
+      // open: take them from storage, never write back an older copy.
+      window.addEventListener("storage", function (e) {
+        if (e.key !== STORAGE_KEY) return;
+        var before = JSON.stringify(data);
+        load();
+        if (JSON.stringify(data) !== before) { syncKeys(); renderAll(); }
+      });
+      return;
+    }
     if (!api || typeof api.registerSlice !== "function") return;
     api.registerSlice("assistant", sliceGet, sliceSet, STORAGE_KEY, C.mergeAssist);
   }
@@ -4316,15 +4333,32 @@
     setSide(false);
     renderAll();
     var pending = null;
-    try {
-      var p = shell();
-      if (p && typeof p.__orosTakeTarget === "function") pending = p.__orosTakeTarget("assistant");
-    } catch (e) {}
+    if (MINI) {
+      document.body.classList.add("as-mini");
+      prefs.open = "";      // the mini window starts a new conversation
+      try {
+        var q = shell() && shell().orosQuick;
+        if (q && typeof q.takeMini === "function") pending = q.takeMini();
+      } catch (e) {}
+    } else {
+      try {
+        var p = shell();
+        if (p && typeof p.__orosTakeTarget === "function") pending = p.__orosTakeTarget("assistant");
+      } catch (e) {}
+    }
     var biP = curProv() === "browser" ? checkBuiltin() : curProv() === "webllm" ? wlCheck(modelOf("webllm")) : null;
     Promise.all([loadChats(), loadKey(curProv() || "anthropic"), biP]).then(function () {
       renderAll();
       scrollEnd();
       if (pending) openTarget(pending);
+      if (MINI) {
+        window.__asMini = {
+          busy: function () { return !!busy; },
+          newChat: function () { newChat(); $("input").focus(); },
+          chatId: function () { return chat ? chat.id : ""; }
+        };
+        if (!pending) $("input").focus();
+      }
       watchVault();
       document.addEventListener("visibilitychange", function () {
         if (document.visibilityState === "visible") scheduleReconcile();
