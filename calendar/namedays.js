@@ -1,3 +1,4 @@
+// i18n-inline-ok: Greek name days, Greek public holiday names (en/el pairs) and letter skeletons are calendar data, no UI text
 // ============================================================
 // orOS Calendar — namedays.js (Greek name days, public holidays,
 // observances; v1.0.0)
