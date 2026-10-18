@@ -605,6 +605,7 @@
       { id: "exportOros", run: function () { PL.io.exportImage("oros"); }, on: function () { return has() && PL.io.canPackage(); } },
       { id: "toPictures", run: function () { exportDialog(true); }, on: has },
       { id: "batch", run: function () { PL.batch.open(); } },
+      { id: "recipes", run: function () { PL.recipes.open(); }, on: function () { return !!PL.recipes; } },
       { id: "wallpaper", run: function () { PL.io.setWallpaper(); }, on: function () { return has() && PL.io.canWallpaper(); } },
       { id: "sendTo", run: function () { PL.io.sendTo(); }, on: function () { return has() && PL.io.canSend(); } },
       { id: "share", run: function () { PL.io.sendToSomeone(); }, on: function () { return has() && PL.io.canShare(); } }

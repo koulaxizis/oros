@@ -697,7 +697,7 @@
     sendTo: sendTo, canSend: function () { return !!sendApi(); },
     saveThumb: saveThumb, wire: wire, sendBack: sendBack, openLrPreset: openLrPreset,
     IMG_EXT: IMG_EXT, RAW_ACCEPT: RAW_ACCEPT, RAW_MAX: RAW_MAX, rawPixels: rawPixels, source: source,
-    dialogHost: dialogHost, saveToPictures: saveToPictures,
+    dialogHost: dialogHost, saveToPictures: saveToPictures, render: render, fileName: fileName,
     canPackage: pkgReady, openPackageFolder: openPackageFolder, isPackageFile: isPackageFile
   };
 })();

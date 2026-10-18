@@ -66,6 +66,13 @@ On a phone all menus are under the menu button.
 - `Saving`: JPG, PNG or WebP with a `Quality`, and the `File names`: {name} is the photo's own name, {n} a number, {nnn} a number with zeros (001), {date} today's date, {w} and {h} the new size. Save into a folder of `Pictures` on the orOS disk, or as `One ZIP file`; the end screen has `Save ZIP…`.
 - `Stop` ends the run after the photo it is working on; what is done stays done. Photos that can't be read are listed at the end.
 
+## Automations
+Steps you set once and run again and again, on the open picture or on many photos. No code: you pick the steps from a list.
+- `File` › `Automations…` (or `Automations` on the projects screen) lists them. `New automation`, give it a name, then `Add a step`: `Tone` (brightness, contrast, saturation, warmth, tint, fade, sepia, vignette), `Look`, `Black and white`, `Blur`, `Sharpen`, `Grain`, `Crop to a ratio` (the largest centred part, such as 1 : 1 or 16 : 9), `Resize`, `Watermark` (a text, its size, colour, place and opacity) and `Export to Pictures` (JPG, PNG or WebP). Move steps with ↑ and ↓.
+- `Run` on `The open picture` works like the menus: on the active layer and the selection. The watermark becomes a layer of its own. `Undo` on the message that follows takes every step back.
+- `Run` on `Many photos (Batch process)` opens `Batch process…` with the automation picked under `Adjustments`; you can also pick it there yourself. The steps run on every photo after the batch's own resize, before its watermark; an `Export` step only sets the format and quality.
+- Automations sync with your other devices, together with those of Atelier and Layout.
+
 ## Editing a picture from Atelier
 When Atelier sends a picture here to edit, a `Done` button appears at the top. It saves the result as a new picture and sends it back to Atelier; the project also stays in Photo Lab for later changes.
 
