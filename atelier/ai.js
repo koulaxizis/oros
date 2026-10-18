@@ -560,6 +560,7 @@
               close();
               AT.noteUpload(r.id);
               AT.editItems([id], function (x) { x.a = r.id; x.iw = r.w; x.ih = r.h; });
+              AT.emit("rc-note", { op: "cutout" });
               AT.toast(t("ai.cutDone"), t("btn.undo"), AT.undo);
             }, function (e) {
               stat.textContent = t("ai.cutFail", { why: e && e.message === "nofs" ? t("img.nofs") : String(e && e.message || e).slice(0, 120) });
