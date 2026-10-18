@@ -208,3 +208,11 @@ test("a shown language has the shell, Settings and Help translated", () => {
   if (lag.length) console.log("# shown languages, still to translate:\n# " + lag.join("\n# "));
   assert.deepEqual(bad, [], "Translate these, or set the language back to status \"hidden\" in i18n.js:\n" + bad.join("\n"));
 });
+
+test("i18n: a shared root module can have its own pack (<name>.js)", () => {
+  assert.ok(S.owns("recordpkg", "recordpkg.js"));
+  assert.ok(S.owns("notes", "notes/notes.js"));
+  assert.ok(!S.owns("notes", "notes2/x.js"));
+  assert.ok(!S.owns("shell", "shell.js"));
+  assert.ok(S.appKeys("recordpkg", ALL).size > 0, "recordpkg.js has an { en, el } table");
+});

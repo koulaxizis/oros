@@ -97,7 +97,10 @@
     }
   };
   function message(e, lang) {
-    var tab = S[lang === "el" ? "el" : "en"], c = e && e.code;
+    // Greek when asked, else the page's pack language
+    // (i18n/<code>/google-import.js, "google-import" in data-app)
+    var I = root.orosI18n, L = lang === "el" ? "el" : (I && I.lang() !== "el" ? I.lang() : "en");
+    var tab = S[L] || (I ? I.table(S, "google-import", L) : S.en), c = e && e.code;
     var k = tab[c] !== undefined && c !== "other" ? c : "other";
     return tab[k].replace("{e}", String((e && (e.detail || e.code)) || "?").slice(0, 80));
   }

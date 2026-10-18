@@ -406,6 +406,7 @@
   // parts with t === null, resolved when placed.
   // All caps; Greek capitals drop the tonos (Όνομα → ΟΝΟΜΑ) but keep
   // the dialytika (ϊ → Ϊ).
+  // i18n-inline-ok: Greek capital letters without tonos (text layout data, no UI text)
   var TONOS = { "Ά": "Α", "Έ": "Ε", "Ή": "Η", "Ί": "Ι", "Ό": "Ο", "Ύ": "Υ", "Ώ": "Ω", "ΐ": "Ϊ", "ΰ": "Ϋ" };
   function caseOf(a, t) {
     if (!a.caps) return t;

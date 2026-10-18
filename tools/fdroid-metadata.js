@@ -30,7 +30,10 @@ const TEXT = {
       "Free and open source (MIT), free forever. More: " + WEB,
     oros: "orOS is an offline-first workspace in one app: notes, calendar, office, money, health, maps, media, games and more. Works offline, no cookies, no tracking; encrypted sync only if you turn it on.\n\n" +
       "The app's content updates by itself from useoros.online. A new APK is only published when the app's Android shell changes (icon, name, phone features).\n\n" +
-      "Free and open source (MIT), free forever. More: " + WEB
+      "Free and open source (MIT), free forever. More: " + WEB,
+    // The repository page (site()) shows these under the English text
+    siteTitle: "The orOS F-Droid repository",
+    siteHowto: "On your phone, tap the button or scan the QR code with F-Droid or Droid-ify. Then install any orOS app you like; updates come by themselves."
   },
   el: {
     summary: "Μέρος του orOS: χωρίς σύνδεση, χωρίς cookies, χωρίς παρακολούθηση",
@@ -40,7 +43,9 @@ const TEXT = {
       "Δωρεάν και ανοιχτού κώδικα (MIT), δωρεάν για πάντα. Περισσότερα: " + WEB,
     oros: "Το orOS είναι ένας χώρος εργασίας χωρίς σύνδεση σε μία εφαρμογή: σημειώσεις, ημερολόγιο, γραφείο, οικονομικά, υγεία, χάρτες, πολυμέσα, παιχνίδια και άλλα. Δουλεύει χωρίς σύνδεση, χωρίς cookies, χωρίς παρακολούθηση· κρυπτογραφημένος συγχρονισμός μόνο αν τον ανοίξεις.\n\n" +
       "Το περιεχόμενο της εφαρμογής ενημερώνεται μόνο του από το useoros.online. Νέο APK βγαίνει μόνο όταν αλλάζει το κέλυφος Android της εφαρμογής (εικονίδιο, όνομα, λειτουργίες του κινητού).\n\n" +
-      "Δωρεάν και ανοιχτού κώδικα (MIT), δωρεάν για πάντα. Περισσότερα: " + WEB
+      "Δωρεάν και ανοιχτού κώδικα (MIT), δωρεάν για πάντα. Περισσότερα: " + WEB,
+    siteTitle: "Το αποθετήριο F-Droid του orOS",
+    siteHowto: "Στο κινητό πάτα το κουμπί ή σκάναρε τον κωδικό QR από το F-Droid ή το Droid-ify. Μετά εγκατέστησε όποια εφαρμογή του orOS θέλεις· οι ενημερώσεις έρχονται μόνες τους."
   }
 };
 const LOCALE = { en: "en-US", el: "el" };
@@ -153,7 +158,7 @@ a { color: var(--accent); }
 <body>
 <main>
 <header><img src="icons/online.useoros.twa.png" alt="" width="64" height="64"><div><h1>orOS F-Droid repository</h1>
-<div class="muted">Το αποθετήριο F-Droid του orOS · ${apps.length} apps · free and open source (MIT), free forever</div></div></header>
+<div class="muted">${TEXT.el.siteTitle} · ${apps.length} apps · free and open source (MIT), free forever</div></div></header>
 <section class="card add">
 <img class="qr" src="repo/index.png" alt="QR code of the repository" width="180" height="180">
 <ol>
@@ -163,7 +168,7 @@ a { color: var(--accent); }
 </ol>
 <div style="flex-basis:100%">
 <a class="btn" href="${esc(add)}">Add the orOS repository</a>
-<p class="muted">Στο κινητό πάτα το κουμπί ή σκάναρε τον κωδικό QR από το F-Droid ή το Droid-ify. Μετά εγκατέστησε όποια εφαρμογή του orOS θέλεις· οι ενημερώσεις έρχονται μόνες τους.</p>
+<p class="muted">${TEXT.el.siteHowto}</p>
 <p>Address: <code>${esc(repo)}</code><br>Fingerprint (SHA-256): <code>${esc(fp)}</code></p>
 </div>
 </section>

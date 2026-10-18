@@ -516,7 +516,7 @@
   // ---------- The bridge call (built again from data, never trusted) ----------
   function call(cmd, lang) {
     if (!cmd || typeof cmd !== "object" || !cmd.data) return null;
-    var d = cmd.data, el = lang === "el";
+    var d = cmd.data, from = strings(lang).from;
     switch (cmd.kind) {
       case "event": {
         if (!okDay(d.date) || typeof d.title !== "string" || !d.title) return null;
@@ -533,7 +533,7 @@
           return { text: String(it && it.text || "").slice(0, MAX_ITEM), note: "" };
         }).filter(function (it) { return it.text; });
         if (!items.length) return null;
-        var add = { from: el ? "Γραμμή εντολών" : "Command bar", items: items };
+        var add = { from: from, items: items };
         if (d.list === "tdl-groceries") add.list = "tdl-groceries";
         return { fn: "__orosOpenAt", args: ["todo", { addItems: add }] };
       }
@@ -575,7 +575,7 @@
         var SC = sendCore();
         if (!SC || (d.kind !== "text" && d.kind !== "link") || typeof d.text !== "string") return null;
         var pl = d.kind === "link" ? { url: d.text } : { text: d.text.slice(0, MAX_TEXT) };
-        var tg = SC.target(d.to, d.kind, pl, el ? "Γραμμή εντολών" : "Command bar");
+        var tg = SC.target(d.to, d.kind, pl, from);
         return tg ? { fn: "__orosOpenAt", args: [d.to, tg] } : null;
       }
       case "calc":
@@ -594,50 +594,63 @@
   }
 
   // ---------- Preview text ----------
+  // English and Greek here; other languages from the "commands" pack
+  // (i18n/<code>/commands.js, loaded by the shell with this file).
+  // The parser's words above are data (what a person may type).
   var STR = {
     en: { event: "New event", todo: "Add to To-Do", groc: "Add to the shopping list", expense: "New expense",
           income: "New income", note: "New note", water: "A glass of water", open: "Open",
           timer: "Start a timer", alarm: "New alarm", daily: "every day", card: "New Kanban card", habit: "Tick a habit",
-          newhabit: "New habit", send: "Send", copy: "Copy",
-          allDay: "all day", cats: { "o-eat": "Eating out", "o-groc": "Groceries", "o-trans": "Transport", "o-bills": "Bills",
-          "o-home": "Rent & home", "o-health": "Health", "o-fun": "Entertainment", "o-cloth": "Clothing", "o-gift": "Gifts",
-          "o-other": "Other", "i-salary": "Salary", "i-free": "Freelance", "i-gift": "Gifts", "i-other": "Other" } },
+          newhabit: "New habit", send: "Send", copy: "Copy", allDay: "all day", from: "Command bar",
+          wd: "Sun,Mon,Tue,Wed,Thu,Fri,Sat",
+          "cat.o-eat": "Eating out", "cat.o-groc": "Groceries", "cat.o-trans": "Transport", "cat.o-bills": "Bills",
+          "cat.o-home": "Rent & home", "cat.o-health": "Health", "cat.o-fun": "Entertainment", "cat.o-cloth": "Clothing",
+          "cat.o-gift": "Gifts", "cat.o-other": "Other", "cat.i-salary": "Salary", "cat.i-free": "Freelance",
+          "cat.i-gift": "Gifts", "cat.i-other": "Other" },
     el: { event: "Νέο συμβάν", todo: "Προσθήκη στο To-Do", groc: "Στη λίστα για ψώνια", expense: "Νέο έξοδο",
           income: "Νέο έσοδο", note: "Νέα σημείωση", water: "Ένα ποτήρι νερό", open: "Άνοιγμα",
           timer: "Έναρξη αντίστροφης μέτρησης", alarm: "Νέο ξυπνητήρι", daily: "κάθε μέρα", card: "Νέα κάρτα Kanban",
           habit: "Τσεκάρισμα συνήθειας", newhabit: "Νέα συνήθεια", send: "Αποστολή", copy: "Αντιγραφή",
-          allDay: "όλη μέρα", cats: { "o-eat": "Φαγητό έξω", "o-groc": "Σούπερ μάρκετ", "o-trans": "Μεταφορές", "o-bills": "Λογαριασμοί",
-          "o-home": "Ενοίκιο & σπίτι", "o-health": "Υγεία", "o-fun": "Ψυχαγωγία", "o-cloth": "Ρούχα", "o-gift": "Δώρα",
-          "o-other": "Άλλα", "i-salary": "Μισθός", "i-free": "Ελεύθερο επάγγελμα", "i-gift": "Δώρα", "i-other": "Άλλα" } }
+          allDay: "όλη μέρα", from: "Γραμμή εντολών",
+          wd: "Κυρ,Δευ,Τρί,Τετ,Πέμ,Παρ,Σάβ",
+          "cat.o-eat": "Φαγητό έξω", "cat.o-groc": "Σούπερ μάρκετ", "cat.o-trans": "Μεταφορές", "cat.o-bills": "Λογαριασμοί",
+          "cat.o-home": "Ενοίκιο & σπίτι", "cat.o-health": "Υγεία", "cat.o-fun": "Ψυχαγωγία", "cat.o-cloth": "Ρούχα",
+          "cat.o-gift": "Δώρα", "cat.o-other": "Άλλα", "cat.i-salary": "Μισθός", "cat.i-free": "Ελεύθερο επάγγελμα",
+          "cat.i-gift": "Δώρα", "cat.i-other": "Άλλα" }
   };
-  var WD = { en: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], el: ["Κυρ", "Δευ", "Τρί", "Τετ", "Πέμ", "Παρ", "Σάβ"] };
-  function dayText(s, lang) {
+  // The strings of a language: en / el here, any other through the pack.
+  function strings(lang) {
+    if (lang === "en" || lang === "el") return STR[lang];
+    var I = root && root.orosI18n;
+    return I && I.known(lang) ? I.table(STR, "commands", lang) : STR.en;
+  }
+  function dayText(s, S) {
     if (!okDay(s)) return "";
     var p = s.split("-");
     var wd = ((dayNum(s) % 7) + 7 + 4) % 7;
-    return WD[lang][wd] + " " + (+p[2]) + "/" + (+p[1]);
+    return (S.wd.split(",")[wd] || "") + " " + (+p[2]) + "/" + (+p[1]);
   }
   function euros(c, lang) {
     var v = (c / 100).toFixed(2);
-    return (lang === "el" ? v.replace(".", ",") : v) + " €";
+    return (lang === "en" ? v : v.replace(".", ",")) + " €";   // a decimal comma outside English
   }
   function hms(sec) {
     var h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), x = sec % 60;
     return (h ? h + ":" + (m < 10 ? "0" : "") : "") + m + ":" + (x < 10 ? "0" : "") + x;
   }
   function describe(cmd, lang) {
-    var lg = lang === "el" ? "el" : "en", S = STR[lg], d = cmd && cmd.data || {};
+    var S = strings(lang), d = cmd && cmd.data || {}, lg = lang;
     switch (cmd && cmd.kind) {
       case "event":
-        return { verb: S.event, detail: [dayText(d.date, lg), d.start ? d.start + (d.end ? "–" + d.end : "") : S.allDay,
+        return { verb: S.event, detail: [dayText(d.date, S), d.start ? d.start + (d.end ? "–" + d.end : "") : S.allDay,
                                            d.title, d.location].filter(Boolean).join(" · ") };
       case "todo":
         return { verb: d.list === "tdl-groceries" ? S.groc : S.todo,
                  detail: (d.items || []).map(function (it) { return it.text; }).join(", ") };
       case "expense":
       case "income":
-        return { verb: S[cmd.kind], detail: [euros(d.cents, lg), S.cats[d.cat] || "", d.note,
-                                             d.date ? dayText(d.date, lg) : ""].filter(Boolean).join(" · ") };
+        return { verb: S[cmd.kind], detail: [euros(d.cents, lg), (d.cat && S["cat." + d.cat]) || "", d.note,
+                                             d.date ? dayText(d.date, S) : ""].filter(Boolean).join(" · ") };
       case "note": return { verb: S.note, detail: d.title };
       case "water": return { verb: S.water, detail: "" };
       case "open": return { verb: S.open, detail: "" };

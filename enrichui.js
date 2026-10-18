@@ -142,7 +142,10 @@
   }
 
   function open(opts) {
-    var L = S[opts.lang === "el" ? "el" : "en"];
+    // Greek when the app says so, else the page's pack language
+    // (i18n/<code>/enrichui.js, "enrichui" in data-app), else English
+    var I = root.orosI18n, LANG = opts.lang === "el" ? "el" : (I && I.lang() !== "el" ? I.lang() : "en");
+    var L = S[LANG] || (I ? I.table(S, "enrichui", LANG) : S.en);
     var kinds = opts.kinds || ["photo", "link", "phone", "email", "birthday", "job", "org", "address", "name"];
     var items = (opts.items || []).filter(function (x) { return x && x.id && x.rec; });
     if (!document.getElementById("oe-css")) {

@@ -75,6 +75,8 @@
   // HUD in the old language until the next full reload. currentLang()
   // is re-read on every HUD refresh (once a second).
   function currentLang() {
+    // en, el or a pack language (i18n/<code>/pet.js, "pet" in data-app)
+    if (window.orosI18n) return window.orosI18n.lang();
     var l = window.orosLang;
     if (l !== "el" && l !== "en") {
       try { l = localStorage.getItem("oros-lang"); } catch (e) { l = "en"; }
@@ -126,29 +128,60 @@
       "confirm.no":      "Cancel",
       "confirm.yes":     "New pet",
       "speech.hello":    "Hi! My name is {name}!",
-      "speech.firstfed": ["You're the first to feed me today!",
-                          "Fresh breakfast! Thanks!",
-                          "Best way to start the day!"],
-      "speech.hungry":   ["I'm hungry...", "Food? Any food?", "My tummy is rumbling!",
-                          "Feed me, please!", "Is it dinner time yet?"],
-      "speech.bored":    ["Pet me!", "I'm bored...", "Play with me!",
-                          "Hey! Look at me!", "So quiet here..."],
-      "speech.tired":    ["I'm sleepy...", "Yaaawn...", "Ohh...",
-                          "Can't keep my eyes open...", "Need... sleep..."],
-      "speech.happy":    ["Lalala!", "I'm so happy!", "Whooo!",
-                          "Best day ever!", "Hehe!"],
-      "speech.eat":      ["Yum yum!", "Delicious!", "More please!",
-                          "Tasty!", "Nom nom!"],
-      "speech.wake":     ["Good morning!", "I'm awake!", "Slept great!",
-                          "Hello sunshine!", "Ready to play!"],
-      "speech.sleep":    ["Good night...", "Zzz...", "Sweet dreams",
-                          "Nighty night...", "See you tomorrow..."],
-      "speech.fav":      ["My favourite!!", "Yesss, my favourite!", "You remembered!"],
-      "speech.back":     ["I'm back!", "What a walk!", "Look what I found!"],
-      "speech.catch":    ["Gotcha!", "Nailed it!", "Awesome!",
-                          "Perfect catch!", "Yes!"],
-      "speech.contemp":  ["Just thinking...", "Hmm...", "Contemplating...",
-                          "Quiet moment...", "Reflecting..."],
+      "speech.firstfed.1": "You're the first to feed me today!",
+      "speech.firstfed.2": "Fresh breakfast! Thanks!",
+      "speech.firstfed.3": "Best way to start the day!",
+      "speech.hungry.1": "I'm hungry...",
+      "speech.hungry.2": "Food? Any food?",
+      "speech.hungry.3": "My tummy is rumbling!",
+      "speech.hungry.4": "Feed me, please!",
+      "speech.hungry.5": "Is it dinner time yet?",
+      "speech.bored.1": "Pet me!",
+      "speech.bored.2": "I'm bored...",
+      "speech.bored.3": "Play with me!",
+      "speech.bored.4": "Hey! Look at me!",
+      "speech.bored.5": "So quiet here...",
+      "speech.tired.1": "I'm sleepy...",
+      "speech.tired.2": "Yaaawn...",
+      "speech.tired.3": "Ohh...",
+      "speech.tired.4": "Can't keep my eyes open...",
+      "speech.tired.5": "Need... sleep...",
+      "speech.happy.1": "Lalala!",
+      "speech.happy.2": "I'm so happy!",
+      "speech.happy.3": "Whooo!",
+      "speech.happy.4": "Best day ever!",
+      "speech.happy.5": "Hehe!",
+      "speech.eat.1": "Yum yum!",
+      "speech.eat.2": "Delicious!",
+      "speech.eat.3": "More please!",
+      "speech.eat.4": "Tasty!",
+      "speech.eat.5": "Nom nom!",
+      "speech.wake.1": "Good morning!",
+      "speech.wake.2": "I'm awake!",
+      "speech.wake.3": "Slept great!",
+      "speech.wake.4": "Hello sunshine!",
+      "speech.wake.5": "Ready to play!",
+      "speech.sleep.1": "Good night...",
+      "speech.sleep.2": "Zzz...",
+      "speech.sleep.3": "Sweet dreams",
+      "speech.sleep.4": "Nighty night...",
+      "speech.sleep.5": "See you tomorrow...",
+      "speech.fav.1": "My favourite!!",
+      "speech.fav.2": "Yesss, my favourite!",
+      "speech.fav.3": "You remembered!",
+      "speech.back.1": "I'm back!",
+      "speech.back.2": "What a walk!",
+      "speech.back.3": "Look what I found!",
+      "speech.catch.1": "Gotcha!",
+      "speech.catch.2": "Nailed it!",
+      "speech.catch.3": "Awesome!",
+      "speech.catch.4": "Perfect catch!",
+      "speech.catch.5": "Yes!",
+      "speech.contemp.1": "Just thinking...",
+      "speech.contemp.2": "Hmm...",
+      "speech.contemp.3": "Contemplating...",
+      "speech.contemp.4": "Quiet moment...",
+      "speech.contemp.5": "Reflecting...",
       "event.log.title": "Activity Log",
       "event.log.empty": "No recent activity",
       "event.type.feed": "Was fed",
@@ -169,7 +202,16 @@
       "cal.pet.wake": "{name} woke up",
       "cal.pet.new": "{name} started life",
       "cal.pet.catch": "Ball catch!",
-      "cal.pet.bday": "{name}'s birthday!"
+      "cal.pet.bday": "{name}'s birthday!",
+      "hud.minimize": "Minimize",
+      "hud.expand": "Expand",
+      "hud.renameHint": "Double-click to rename",
+      "hud.namePh": "Name…",
+      "pal.0": "Sky blue",
+      "pal.1": "Orange",
+      "pal.2": "Green",
+      "pal.3": "Pink",
+      "pal.4": "Purple"
     },
     el: {
       "hud.name":        "{name}",
@@ -194,29 +236,60 @@
       "confirm.no":      "Άκυρο",
       "confirm.yes":     "Νέο πλάσμα",
       "speech.hello":    "Γεια! Με λένε {name}!",
-      "speech.firstfed": ["Το πρώτο φαγητό της ημέρας!",
-                          "Φρέσκο πρωινό! Ευχαριστώ!",
-                          "Ο καλύτερος τρόπος να ξεκινήσεις την ημέρα!"],
-      "speech.hungry":   ["Πεινάω...", "Μμμ, φαγητό;", "Το στομάχι μου γκρινιάζει!",
-                          "Τάισέ με, σε παρακαλώ!", "Είναι ώρα για φαγητό;"],
-      "speech.bored":    ["Χάιδεψέ με!", "Βαριέμαι...", "Παίξε μαζί μου!",
-                          "Έλα! Κοίτα με!", "Τόση ησυχία εδώ..."],
-      "speech.tired":    ["Νυστάζω...", "Ωωχ...", "Νιώθω το κρεβάτι να με φωνάζει",
-                          "Δεν ανοίγω τα μάτια μου...", "Χρειάζομαι... ύπνο..."],
-      "speech.happy":    ["Λαλάλα!", "Τι χαρά!", "Χοοοοπ!",
-                          "Κορυφαία μέρα!", "Χιχι!"],
-      "speech.eat":      ["Ναμ ναμ!", "Νόστιμο!", "Κι άλλο!",
-                          "Πεντανόστιμο!", "Ναμ ναμ ναμ!"],
-      "speech.wake":     ["Καλημέρααα!", "Ξύπνησα!", "Τι ωραίος ύπνος!",
-                          "Γεια σου ήλιε!", "Πάμε για παιχνίδι!"],
-      "speech.sleep":    ["Καληνύχτα...", "Zzz...", "Όνειρα γλυκά",
-                          "Υπνάκια...", "Τα λέμε αύριο..."],
-      "speech.fav":      ["Το αγαπημένο μου!!", "Ναιιι, το αγαπημένο μου!", "Το θυμήθηκες!"],
-      "speech.back":     ["Γύρισα!", "Τι ωραία βόλτα!", "Δες τι βρήκα!"],
-      "speech.catch":    ["Την έπιασα!", "Το 'χω!", "Τέλεια!",
-                          "Τι πιάσιμο!", "Ναι!"],
-      "speech.contemp":  ["Σκέφτομαι...", "Μμμ...", "Απολαμβάνω...",
-                          "Ηρεμία...", "Σιωπηλή στιγμή..."],
+      "speech.firstfed.1": "Το πρώτο φαγητό της ημέρας!",
+      "speech.firstfed.2": "Φρέσκο πρωινό! Ευχαριστώ!",
+      "speech.firstfed.3": "Ο καλύτερος τρόπος να ξεκινήσεις την ημέρα!",
+      "speech.hungry.1": "Πεινάω...",
+      "speech.hungry.2": "Μμμ, φαγητό;",
+      "speech.hungry.3": "Το στομάχι μου γκρινιάζει!",
+      "speech.hungry.4": "Τάισέ με, σε παρακαλώ!",
+      "speech.hungry.5": "Είναι ώρα για φαγητό;",
+      "speech.bored.1": "Χάιδεψέ με!",
+      "speech.bored.2": "Βαριέμαι...",
+      "speech.bored.3": "Παίξε μαζί μου!",
+      "speech.bored.4": "Έλα! Κοίτα με!",
+      "speech.bored.5": "Τόση ησυχία εδώ...",
+      "speech.tired.1": "Νυστάζω...",
+      "speech.tired.2": "Ωωχ...",
+      "speech.tired.3": "Νιώθω το κρεβάτι να με φωνάζει",
+      "speech.tired.4": "Δεν ανοίγω τα μάτια μου...",
+      "speech.tired.5": "Χρειάζομαι... ύπνο...",
+      "speech.happy.1": "Λαλάλα!",
+      "speech.happy.2": "Τι χαρά!",
+      "speech.happy.3": "Χοοοοπ!",
+      "speech.happy.4": "Κορυφαία μέρα!",
+      "speech.happy.5": "Χιχι!",
+      "speech.eat.1": "Ναμ ναμ!",
+      "speech.eat.2": "Νόστιμο!",
+      "speech.eat.3": "Κι άλλο!",
+      "speech.eat.4": "Πεντανόστιμο!",
+      "speech.eat.5": "Ναμ ναμ ναμ!",
+      "speech.wake.1": "Καλημέρααα!",
+      "speech.wake.2": "Ξύπνησα!",
+      "speech.wake.3": "Τι ωραίος ύπνος!",
+      "speech.wake.4": "Γεια σου ήλιε!",
+      "speech.wake.5": "Πάμε για παιχνίδι!",
+      "speech.sleep.1": "Καληνύχτα...",
+      "speech.sleep.2": "Zzz...",
+      "speech.sleep.3": "Όνειρα γλυκά",
+      "speech.sleep.4": "Υπνάκια...",
+      "speech.sleep.5": "Τα λέμε αύριο...",
+      "speech.fav.1": "Το αγαπημένο μου!!",
+      "speech.fav.2": "Ναιιι, το αγαπημένο μου!",
+      "speech.fav.3": "Το θυμήθηκες!",
+      "speech.back.1": "Γύρισα!",
+      "speech.back.2": "Τι ωραία βόλτα!",
+      "speech.back.3": "Δες τι βρήκα!",
+      "speech.catch.1": "Την έπιασα!",
+      "speech.catch.2": "Το 'χω!",
+      "speech.catch.3": "Τέλεια!",
+      "speech.catch.4": "Τι πιάσιμο!",
+      "speech.catch.5": "Ναι!",
+      "speech.contemp.1": "Σκέφτομαι...",
+      "speech.contemp.2": "Μμμ...",
+      "speech.contemp.3": "Απολαμβάνω...",
+      "speech.contemp.4": "Ηρεμία...",
+      "speech.contemp.5": "Σιωπηλή στιγμή...",
       "event.log.title": "Ιστορικό Δραστηριότητας",
       "event.log.empty": "Καμία πρόσφατη δραστηριότητα",
       "event.type.feed": "Έφαγε",
@@ -237,7 +310,16 @@
       "cal.pet.wake": "{name}: ξύπνημα",
       "cal.pet.new": "{name}: πρώτη μέρα",
       "cal.pet.catch": "Πιάστηκε η μπάλα!",
-      "cal.pet.bday": "Γενέθλια: {name}!"
+      "cal.pet.bday": "Γενέθλια: {name}!",
+      "hud.minimize": "Ελαχιστοποίηση",
+      "hud.expand": "Ανάπτυξη",
+      "hud.renameHint": "Διπλό κλικ για μετονομασία",
+      "hud.namePh": "Όνομα…",
+      "pal.0": "Γαλάζιο",
+      "pal.1": "Πορτοκαλί",
+      "pal.2": "Πράσινο",
+      "pal.3": "Ροζ",
+      "pal.4": "Μωβ"
     }
   };
 
@@ -247,21 +329,37 @@
          "Φασολάκης", "Καφέ", "Ζίτα", "Πάντζαρης", "Μπέγια", "Σουάρι", "Τρίγωνο"]
   };
 
-  // v0.2: bilingual palette names (picker tooltips follow LANG)
+  // v0.2: palette names (picker tooltips follow LANG): pal.<i>
   var PALETTES = [
-    { nameEn: "Sky blue", nameEl: "Γαλάζιο",   body: "#81d4fa", belly: "#e1f5fe", eye: "#0b2030" },
-    { nameEn: "Orange",  nameEl: "Πορτοκαλί", body: "#ffb74d", belly: "#fff3e0", eye: "#5d2900" },
-    { nameEn: "Green",   nameEl: "Πράσινο",   body: "#a5d6a7", belly: "#f1f8e9", eye: "#1b3a1e" },
-    { nameEn: "Pink",    nameEl: "Ροζ",       body: "#f48fb1", belly: "#fce4ec", eye: "#4a1430" },
-    { nameEn: "Purple",  nameEl: "Μωβ",       body: "#b39ddb", belly: "#ede7f6", eye: "#2c1849" }
+    { body: "#81d4fa", belly: "#e1f5fe", eye: "#0b2030" },
+    { body: "#ffb74d", belly: "#fff3e0", eye: "#5d2900" },
+    { body: "#a5d6a7", belly: "#f1f8e9", eye: "#1b3a1e" },
+    { body: "#f48fb1", belly: "#fce4ec", eye: "#4a1430" },
+    { body: "#b39ddb", belly: "#ede7f6", eye: "#2c1849" }
   ];
   function palName(i) {
-    var p = PALETTES[clamp(i, 0, PALETTES.length - 1)];
-    return LANG === "el" ? p.nameEl : p.nameEn;
+    return t("pal." + clamp(i, 0, PALETTES.length - 1));
   }
 
+  var packAsked = {}, titlesStale = false;
+  function strTable() {
+    if (STRINGS[LANG]) return STRINGS[LANG];
+    var I = window.orosI18n;
+    if (!I || !I.known(LANG)) return STRINGS.en;
+    var tb = I.table(STRINGS, "pet", LANG);
+    if (!I.coverage(STRINGS, "pet", LANG)) {
+      // the pack is not here yet (a language change in the shell):
+      // English now, the pack's text from the next HUD refresh on
+      delete STRINGS[LANG];
+      if (!packAsked[LANG]) {
+        packAsked[LANG] = true;
+        I.ensure(LANG, "pet", function () { titlesStale = true; });
+      }
+    }
+    return tb;
+  }
   function t(key, params) {
-    var p = STRINGS[LANG] || STRINGS.en;
+    var p = strTable();
     var v = p[key] !== undefined ? p[key] : (STRINGS.en[key] !== undefined ? STRINGS.en[key] : key);
     if (typeof v === "string" && params) {
       Object.keys(params).forEach(function (k) {
@@ -270,13 +368,15 @@
     }
     return v;
   }
+  // A speech group is group.1, group.2 … (English decides how many).
   function speakLine(group) {
-    var arr = t(group);
-    if (!Array.isArray(arr)) return String(arr);
+    var arr = [];
+    for (var i = 1; STRINGS.en[group + "." + i] !== undefined; i++) arr.push(t(group + "." + i));
+    if (!arr.length) return String(t(group));
     return arr[Math.floor(Math.random() * arr.length)];
   }
   function rndName() {
-    var arr = NAMES[LANG] || NAMES.el;
+    var arr = NAMES[LANG === "el" ? "el" : "en"];
     return arr[Math.floor(Math.random() * arr.length)];
   }
   function uid() {
@@ -1644,12 +1744,12 @@ function applyPetSettings(s) {
       '<div class="pet-hud-name-row" style="display:flex;align-items:center;' +
         'justify-content:center;gap:5px;">' +
         '<button type="button" id="pet-minimize-btn" title="' +
-          (LANG === "el" ? "Ελαχιστοποίηση" : "Minimize") + '" ' +
+          t("hud.minimize") + '" ' +
           'style="border:none;background:transparent;color:inherit;padding:2px;' +
           'cursor:pointer;line-height:0;font-size:14px;">◀</button>' +
         '<span class="pet-hud-name" id="pet-hud-name"></span>' +
         '<button type="button" id="pet-pencil-btn" title="' +
-          (LANG === "el" ? "Μετονομασία" : "Rename") + '" ' +
+          t("action.rename") + '" ' +
           'style="border:none;background:transparent;color:inherit;padding:2px;' +
           'cursor:pointer;line-height:0;">' + PENCIL_SVG + '</button>' +
       '</div>' +
@@ -1723,7 +1823,7 @@ function applyPetSettings(s) {
 
     // Rename entry points: pencil (single click) + dblclick (kept)
     var nameEl = $("pet-hud-name");
-    nameEl.title = LANG === "el" ? "Διπλό κλικ για μετονομασία" : "Double-click to rename";
+    nameEl.title = t("hud.renameHint");
     nameEl.addEventListener("dblclick", function (e) {
       e.stopPropagation();
       touchInteraction();
@@ -1782,7 +1882,7 @@ function applyPetSettings(s) {
     input.type = "text";
     input.value = state.pet.name;
     input.maxLength = MAX_NAME_LEN;
-    input.placeholder = LANG === "el" ? "Όνομα…" : "Name…";
+    input.placeholder = t("hud.namePh");
     input.style.cssText =
       "width:130px;background:transparent;border:none;" +
       "border-bottom:1px solid var(--border);color:var(--text);" +
@@ -1841,11 +1941,12 @@ function applyPetSettings(s) {
     if (!hud || !stats || !state.pet) return;
     // PT-4: follow a language switch made in the shell.
     var langNow = currentLang();
-    if (langNow !== LANG) {
+    if (langNow !== LANG || titlesStale) {
       LANG = langNow;
+      titlesStale = false;
       var nm = $("pet-hud-name"), pc = $("pet-pencil-btn");
-      if (nm) nm.title = LANG === "el" ? "Διπλό κλικ για μετονομασία" : "Double-click to rename";
-      if (pc) pc.title = LANG === "el" ? "Μετονομασία" : "Rename";
+      if (nm) nm.title = t("hud.renameHint");
+      if (pc) pc.title = t("action.rename");
       buildPaletteRow();
     }
     if (!$("pet-hud-name").getAttribute("data-editing")) {
@@ -1857,8 +1958,8 @@ function applyPetSettings(s) {
     hud.classList.toggle("pet-hud-collapsed", collapsed);
     $("pet-minimize-btn").textContent = collapsed ? "▶" : "◀";
     $("pet-minimize-btn").title = collapsed
-      ? (LANG === "el" ? "Ανάπτυξη" : "Expand")
-      : (LANG === "el" ? "Ελαχιστοποίηση" : "Minimize");
+      ? t("hud.expand")
+      : t("hud.minimize");
 
     // Show/hide dependent sections based on collapsed state
     $("pet-hud-age").style.display = collapsed ? "none" : "block";

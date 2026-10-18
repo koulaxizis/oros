@@ -90,8 +90,16 @@
     }
     return str(v, max);
   }
+  // lang "el" → Greek; else the page's pack language for a seed name,
+  // else English.
   function label(name, lang) {
-    if (name && typeof name === "object") return name[lang === "el" ? "el" : "en"] || name.en || "";
+    if (name && typeof name === "object") {
+      if (lang !== "el" && typeof window !== "undefined" && window.orosI18n) {
+        var c = window.orosI18n.lang();
+        if (c !== "en" && c !== "el") { var v = seedLabel(name.en, c); if (v) return v; }
+      }
+      return name[lang === "el" ? "el" : "en"] || name.en || "";
+    }
     return name || "";
   }
 
@@ -566,29 +574,70 @@
   }
 
   // ---------- 5. Seeds + new documents ----------
+  // Seed names are saved in documents as { en, el } (that format stays);
+  // label() shows a pack language's name for them (i18n/<code>/
+  // designkit.js, "designkit" in data-app), found by their English text.
+  var SEED = {
+    en: {
+      "seed.sw-black": "Black", "seed.sw-paper": "Paper", "seed.sw-gray": "Gray 50%", "seed.sw-red": "Red",
+      "seed.sw-blue": "Blue", "seed.sw-yellow": "Yellow", "seed.sw-green": "Green",
+      "seed.ps-base": "Basic paragraph", "seed.ps-body": "Body", "seed.ps-h1": "Heading 1",
+      "seed.ps-h2": "Heading 2", "seed.ps-h3": "Heading 3", "seed.ps-cap": "Caption", "seed.ps-quote": "Quote",
+      "seed.ps-list": "List", "seed.cs-strong": "Strong", "seed.cs-em": "Emphasis",
+      "seed.cs-accent": "Accent colour"
+    },
+    el: {
+      "seed.sw-black": "Μαύρο", "seed.sw-paper": "Χαρτί", "seed.sw-gray": "Γκρι 50%", "seed.sw-red": "Κόκκινο",
+      "seed.sw-blue": "Μπλε", "seed.sw-yellow": "Κίτρινο", "seed.sw-green": "Πράσινο",
+      "seed.ps-base": "Βασική παράγραφος", "seed.ps-body": "Κείμενο", "seed.ps-h1": "Τίτλος 1",
+      "seed.ps-h2": "Τίτλος 2", "seed.ps-h3": "Τίτλος 3", "seed.ps-cap": "Λεζάντα", "seed.ps-quote": "Παράθεση",
+      "seed.ps-list": "Λίστα", "seed.cs-strong": "Έντονα", "seed.cs-em": "Πλάγια",
+      "seed.cs-accent": "Χρώμα έμφασης"
+    }
+  };
+  function nm(k) { return { en: SEED.en[k], el: SEED.el[k] }; }
+  var seedByEn = null, seedPack = {};
+  // templates.js adds the names of its own styles and swatches.
+  function seedNames(t) {
+    if (!t || !t.en || !t.el) return;
+    Object.keys(t.en).forEach(function (k) { SEED.en[k] = t.en[k]; SEED.el[k] = t.el[k]; });
+    seedByEn = null; seedPack = {};
+  }
+  function seedLabel(en, code) {
+    var I = typeof window !== "undefined" && window.orosI18n;
+    if (!I || typeof en !== "string") return "";
+    if (!seedByEn) {
+      seedByEn = {};
+      Object.keys(SEED.en).forEach(function (k) { if (!(SEED.en[k] in seedByEn)) seedByEn[SEED.en[k]] = k; });
+    }
+    var k = seedByEn[en];
+    if (!k) return "";
+    var tb = seedPack[code] || (seedPack[code] = I.table({ en: SEED.en, el: SEED.el }, "designkit", code));
+    return tb[k] || "";
+  }
   var SEED_SWATCHES = [
-    ["sw-black", { en: "Black", el: "Μαύρο" }, "cmyk", [0, 0, 0, 100]],
-    ["sw-paper", { en: "Paper", el: "Χαρτί" }, "rgb", [255, 255, 255]],
-    ["sw-gray", { en: "Gray 50%", el: "Γκρι 50%" }, "cmyk", [0, 0, 0, 50]],
-    ["sw-red", { en: "Red", el: "Κόκκινο" }, "cmyk", [0, 90, 85, 0]],
-    ["sw-blue", { en: "Blue", el: "Μπλε" }, "cmyk", [100, 60, 0, 0]],
-    ["sw-yellow", { en: "Yellow", el: "Κίτρινο" }, "cmyk", [0, 10, 95, 0]],
-    ["sw-green", { en: "Green", el: "Πράσινο" }, "cmyk", [75, 0, 100, 0]]
+    ["sw-black", nm("seed.sw-black"), "cmyk", [0, 0, 0, 100]],
+    ["sw-paper", nm("seed.sw-paper"), "rgb", [255, 255, 255]],
+    ["sw-gray", nm("seed.sw-gray"), "cmyk", [0, 0, 0, 50]],
+    ["sw-red", nm("seed.sw-red"), "cmyk", [0, 90, 85, 0]],
+    ["sw-blue", nm("seed.sw-blue"), "cmyk", [100, 60, 0, 0]],
+    ["sw-yellow", nm("seed.sw-yellow"), "cmyk", [0, 10, 95, 0]],
+    ["sw-green", nm("seed.sw-green"), "cmyk", [75, 0, 100, 0]]
   ];
   var SEED_PS = [
-    { id: "ps-base", name: { en: "Basic paragraph", el: "Βασική παράγραφος" }, font: "serif", size: 10.5, lead: 14, align: "l", color: "sw-black" },
-    { id: "ps-body", name: { en: "Body", el: "Κείμενο" }, base: "ps-base", align: "j", sa: 6 },
-    { id: "ps-h1", name: { en: "Heading 1", el: "Τίτλος 1" }, base: "ps-base", font: "sans", b: 1, size: 28, lead: 32, sa: 10 },
-    { id: "ps-h2", name: { en: "Heading 2", el: "Τίτλος 2" }, base: "ps-h1", size: 18, lead: 22, sb: 10, sa: 6 },
-    { id: "ps-h3", name: { en: "Heading 3", el: "Τίτλος 3" }, base: "ps-h1", size: 13, lead: 16, sb: 8, sa: 4 },
-    { id: "ps-cap", name: { en: "Caption", el: "Λεζάντα" }, base: "ps-base", font: "sans", i: 1, size: 8.5, lead: 11 },
-    { id: "ps-quote", name: { en: "Quote", el: "Παράθεση" }, base: "ps-base", i: 1, size: 12, lead: 16, li: 18, ri: 18, sb: 6, sa: 6 },
-    { id: "ps-list", name: { en: "List", el: "Λίστα" }, base: "ps-base", bul: 1, sa: 2 }
+    { id: "ps-base", name: nm("seed.ps-base"), font: "serif", size: 10.5, lead: 14, align: "l", color: "sw-black" },
+    { id: "ps-body", name: nm("seed.ps-body"), base: "ps-base", align: "j", sa: 6 },
+    { id: "ps-h1", name: nm("seed.ps-h1"), base: "ps-base", font: "sans", b: 1, size: 28, lead: 32, sa: 10 },
+    { id: "ps-h2", name: nm("seed.ps-h2"), base: "ps-h1", size: 18, lead: 22, sb: 10, sa: 6 },
+    { id: "ps-h3", name: nm("seed.ps-h3"), base: "ps-h1", size: 13, lead: 16, sb: 8, sa: 4 },
+    { id: "ps-cap", name: nm("seed.ps-cap"), base: "ps-base", font: "sans", i: 1, size: 8.5, lead: 11 },
+    { id: "ps-quote", name: nm("seed.ps-quote"), base: "ps-base", i: 1, size: 12, lead: 16, li: 18, ri: 18, sb: 6, sa: 6 },
+    { id: "ps-list", name: nm("seed.ps-list"), base: "ps-base", bul: 1, sa: 2 }
   ];
   var SEED_CS = [
-    { id: "cs-strong", name: { en: "Strong", el: "Έντονα" }, b: 1 },
-    { id: "cs-em", name: { en: "Emphasis", el: "Πλάγια" }, i: 1 },
-    { id: "cs-accent", name: { en: "Accent colour", el: "Χρώμα έμφασης" }, color: "sw-blue" }
+    { id: "cs-strong", name: nm("seed.cs-strong"), b: 1 },
+    { id: "cs-em", name: nm("seed.cs-em"), i: 1 },
+    { id: "cs-accent", name: nm("seed.cs-accent"), color: "sw-blue" }
   ];
 
   // opts: { name, w, h, unit, bleed, mt, mb, mi, mo, cols, gut,
@@ -676,7 +725,7 @@
   var api = {
     DATA_VER: DATA_VER, MODEL_LEVEL: MODEL_LEVEL, PT_PER: PT_PER,
     normX: normX, unknownX: unknownX, minLevel: minLevel, needsNewer: needsNewer, keepsMore: keepsMore, PRESETS: PRESETS, MAX_ITEMS: MAX_ITEMS, MAX_PAGES: MAX_PAGES,
-    preset: preset, toUnit: toUnit, fromUnit: fromUnit, label: label, nameOf: nameOf,
+    preset: preset, toUnit: toUnit, fromUnit: fromUnit, label: label, seedNames: seedNames, nameOf: nameOf,
     newId: newId, touch: touch, isId: isId, cmpStr: cmpStr, setItemExt: setItemExt, parsePath: parsePath, pathText: pathText, normGrad: normGrad,
     normSetup: normSetup, normItem: normItem, normStory: normStory, normPs: normPs, normCs: normCs,
     normSwatch: normSwatch, normPage: normPage, normMaster: normMaster, normGuide: normGuide, normPara: normPara,

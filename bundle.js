@@ -44,6 +44,7 @@
 // sanitiser still decide what of content.json is kept.
 // UMD: window.OrosBundle in the browser, module.exports in Node.
 // ============================================================
+// i18n-inline-ok: the README inside an exported orOS file is bilingual by format (both lines always written), not UI text
 (function (root) {
   "use strict";
 

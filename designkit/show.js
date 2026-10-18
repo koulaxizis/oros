@@ -60,16 +60,15 @@
       fsHint: "Click here for full screen. Move this window to the projector first.",
       popupBlocked: "The second window was blocked, so the show runs here. Allow pop-ups for the presenter view.",
       help: "Help", helpTitle: "Keys",
-      helpRows: [
-        ["→  Space  PageDown  click", "Next"],
-        ["←  Backspace  PageUp", "Previous"],
-        ["Home / End", "First / last slide"],
-        ["number + Enter", "Go to slide"],
-        ["B / W", "Black / white screen"],
-        ["L", "Laser pointer"],
-        ["N", "Speaker notes"],
-        ["Esc", "End show"]
-      ],
+      // the Keys table: help.k<n> (keys) and help.d<n> (what they do)
+      "help.k1": "→  Space  PageDown  click", "help.d1": "Next",
+      "help.k2": "←  Backspace  PageUp", "help.d2": "Previous",
+      "help.k3": "Home / End", "help.d3": "First / last slide",
+      "help.k4": "number + Enter", "help.d4": "Go to slide",
+      "help.k5": "B / W", "help.d5": "Black / white screen",
+      "help.k6": "L", "help.d6": "Laser pointer",
+      "help.k7": "N", "help.d7": "Speaker notes",
+      "help.k8": "Esc", "help.d8": "End show",
       bigger: "Larger notes", smaller: "Smaller notes", laser: "Laser pointer", close: "Close",
       builds: "{n} more on this slide", build1: "1 more on this slide"
     },
@@ -81,20 +80,26 @@
       fsHint: "Κάνε κλικ εδώ για πλήρη οθόνη. Πρώτα μετακίνησε αυτό το παράθυρο στον προβολέα.",
       popupBlocked: "Το δεύτερο παράθυρο μπλοκαρίστηκε, οπότε η προβολή γίνεται εδώ. Επίτρεψε τα αναδυόμενα παράθυρα για το presenter view.",
       help: "Βοήθεια", helpTitle: "Πλήκτρα",
-      helpRows: [
-        ["→  Space  PageDown  κλικ", "Επόμενη"],
-        ["←  Backspace  PageUp", "Προηγούμενη"],
-        ["Home / End", "Πρώτη / τελευταία"],
-        ["αριθμός + Enter", "Μετάβαση σε διαφάνεια"],
-        ["B / W", "Μαύρη / λευκή οθόνη"],
-        ["L", "Δείκτης laser"],
-        ["N", "Σημειώσεις ομιλητή"],
-        ["Esc", "Τέλος προβολής"]
-      ],
+      // the Keys table: help.k<n> (keys) and help.d<n> (what they do)
+      "help.k1": "→  Space  PageDown  κλικ", "help.d1": "Επόμενη",
+      "help.k2": "←  Backspace  PageUp", "help.d2": "Προηγούμενη",
+      "help.k3": "Home / End", "help.d3": "Πρώτη / τελευταία",
+      "help.k4": "αριθμός + Enter", "help.d4": "Μετάβαση σε διαφάνεια",
+      "help.k5": "B / W", "help.d5": "Μαύρη / λευκή οθόνη",
+      "help.k6": "L", "help.d6": "Δείκτης laser",
+      "help.k7": "N", "help.d7": "Σημειώσεις ομιλητή",
+      "help.k8": "Esc", "help.d8": "Τέλος προβολής",
       bigger: "Μεγαλύτερα γράμματα", smaller: "Μικρότερα γράμματα", laser: "Δείκτης laser", close: "Κλείσιμο",
       builds: "Ακόμη {n} σε αυτή τη διαφάνεια", build1: "Ακόμη 1 σε αυτή τη διαφάνεια"
     }
   };
+  // Greek when asked, else the page's pack language
+  // (i18n/<code>/designkit.js, "designkit" in data-app), else English.
+  function dkTable(tables, lang) {
+    var I = typeof window !== "undefined" && window.orosI18n;
+    var c = lang === "el" ? "el" : (I && I.lang() !== "el" ? I.lang() : "en");
+    return tables[c] || (I ? I.table(tables, "designkit", c) : tables.en);
+  }
   var TRANSITIONS = ["none", "fade", "slide", "push", "wipe", "zoom"];
   var DUR = 450;
 
@@ -326,7 +331,7 @@
     opts = opts || {};
     var doc = opts.doc || root.document;
     var win = doc.defaultView || root;
-    var T = STRINGS[opts.lang === "el" ? "el" : "en"];
+    var T = dkTable(STRINGS, opts.lang);
     var count = Math.max(0, opts.count | 0);
     var aspect = opts.aspect > 0 ? opts.aspect : 16 / 9;
     var nav = new Nav(count, opts.hidden, opts.startAt);
@@ -531,12 +536,12 @@
     var hb = el(doc, "div");
     hb.appendChild(el(doc, "h3", "", T.helpTitle));
     var tbl = el(doc, "table");
-    T.helpRows.forEach(function (r) {
-      var tr = el(doc, "tr");
-      tr.appendChild(el(doc, "td", "", r[0]));
-      tr.appendChild(el(doc, "td", "", r[1]));
-      tbl.appendChild(tr);
-    });
+    for (var hr = 1; T["help.k" + hr] !== undefined; hr++) {
+      var htr = el(doc, "tr");
+      htr.appendChild(el(doc, "td", "", T["help.k" + hr]));
+      htr.appendChild(el(doc, "td", "", T["help.d" + hr]));
+      tbl.appendChild(htr);
+    }
     hb.appendChild(tbl);
     helpBox.appendChild(hb);
     helpBox.addEventListener("click", function (e) { e.stopPropagation(); act("help"); });

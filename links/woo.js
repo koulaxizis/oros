@@ -22,6 +22,21 @@
 
   var L = typeof module !== "undefined" && module.exports ? require("./core.js") : root.OrosLinksCore;
 
+  // Text written into the records an order prefills (invoice line and
+  // notes, budget entry, CRM log). Greek when the caller says so, else
+  // the page's pack language (i18n/<code>/links.js, "links" in
+  // data-app), else English.
+  var STR = {
+    en: { "woo.ship": "Shipping", "woo.order": "Order #{no}" },
+    el: { "woo.ship": "Μεταφορικά", "woo.order": "Παραγγελία #{no}" }
+  };
+  function tx(lang, k, no) {
+    var I = typeof window !== "undefined" && window.orosI18n;
+    var c = lang === "el" ? "el" : (I && I.lang() !== "el" ? I.lang() : "en");
+    var tb = STR[c] || (I ? I.table(STR, "links", c) : STR.en);
+    return (tb[k] || STR.en[k]).split("{no}").join(String(no));
+  }
+
   var MAX_PRODUCTS = 5000, MAX_LINES = 100;
   var TEXT = 200;
 
@@ -260,7 +275,7 @@
   // The BR-CRM-INV payload: lines net of VAT with their rate, shipping
   // as a line, the order number in the notes.
   function invoicePrefill(order, acct, lang) {
-    var el = lang === "el", items = [];
+    var items = [];
     order.lines.forEach(function (l) {
       var it = { d: l.name, q: l.q, p: Math.round(l.total / l.q) / 100 };
       var v = vatOf(l.total, l.tax);
@@ -269,7 +284,7 @@
       items.push(it);
     });
     if (order.ship > 0) {
-      var s = { d: (el ? "Μεταφορικά" : "Shipping") + (order.shipName ? " · " + order.shipName : ""), q: 1, p: order.ship / 100 };
+      var s = { d: tx(lang, "woo.ship") + (order.shipName ? " · " + order.shipName : ""), q: 1, p: order.ship / 100 };
       var sv = vatOf(order.ship, order.shipTax);
       if (sv !== null) s.vat = sv;
       items.push(s);
@@ -278,7 +293,7 @@
     var out = {
       name: b.company || b.name, email: b.email, phone: b.phone, addr: b.addr, country: b.country,
       cur: order.cur, items: items.slice(0, 50),
-      notes: (el ? "Παραγγελία #" : "Order #") + order.no + (order.pay ? " · " + order.pay : ""),
+      notes: tx(lang, "woo.order", order.no) + (order.pay ? " · " + order.pay : ""),
       ref: { app: "stock", id: ("woo-" + acct + "-" + order.id).slice(0, 60) }
     };
     if (b.company && b.name) out.job = b.name;
@@ -288,17 +303,16 @@
   function budgetPrefill(order, lang) {
     if (!(order.total > 0)) return null;
     return { k: "i", a: order.total, d: order.d || undefined, c: "i-other", src: "stock",
-             n: ((lang === "el" ? "Παραγγελία #" : "Order #") + order.no + " · " + (order.bill.company || order.bill.name)).slice(0, 140) };
+             n: (tx(lang, "woo.order", order.no) + " · " + (order.bill.company || order.bill.name)).slice(0, 140) };
   }
   // BR-CRM-MAIL: a log entry on the customer with that address (an
   // unknown address opens a new customer, prefilled).
   function crmLog(order, lang, money) {
     if (!order.bill.email) return null;
-    var el = lang === "el";
     var text = order.lines.map(function (l) { return l.q + " × " + l.name; }).join("\n");
     return {
       email: order.bill.email, name: order.bill.company || order.bill.name,
-      subject: ((el ? "Παραγγελία #" : "Order #") + order.no + (money ? " · " + money : "")).slice(0, 200),
+      subject: (tx(lang, "woo.order", order.no) + (money ? " · " + money : "")).slice(0, 200),
       text: text.slice(0, 1800)
     };
   }

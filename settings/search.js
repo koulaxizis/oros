@@ -9,43 +9,99 @@
 (function (root) {
   "use strict";
 
-  // section, English title + words, Greek title + words
+  // [section, topic]: the topic's title is "st.<topic>" and the words
+  // that find it "st.<topic>.words", in the table below (German and
+  // other languages from the "settings" pack).
   var TOPICS = [
-    ["appearance", "Theme: dark or light", "dark light mode night",
-                   "Θέμα: σκοτεινό ή φωτεινό", "σκοτεινό φωτεινό λειτουργία νύχτα"],
-    ["appearance", "System colour", "colour color accent skin palette",
-                   "Χρώμα συστήματος", "χρώμα χρώματα παλέτα skin"],
-    ["appearance", "Wallpaper", "background desktop picture",
-                   "Ταπετσαρία", "φόντο επιφάνεια εργασίας εικόνα"],
-    ["appearance", "Seasonal decorations", "christmas snow tree lights new year fireworks halloween pumpkin holiday festive easter carnival kites flag valentine epiphany may day",
-                   "Θεματική διακόσμηση", "χριστούγεννα χιόνι δέντρο λαμπάκια καραβάκι πρωτοχρονιά πυροτεχνήματα halloween κολοκύθα γιορτές πάσχα απόκριες χαρταετοί σημαία θεοφάνια πρωτομαγιά βαλεντίνου"],
-    ["appearance", "Screen pet", "companion pet",
-                   "Συντροφάκι", "κατοικίδιο σύντροφος"],
-    ["menu", "Apps in the menu", "hide show hidden choose menu apps list",
-             "Εφαρμογές στο μενού", "απόκρυψη εμφάνιση κρυφές κρυμμένες επιλογή μενού λίστα"],
-    ["notifications", "Notifications", "pop-up toast sound volume position style",
-                      "Ειδοποιήσεις", "αναδυόμενα ήχος ένταση θέση στυλ"],
-    ["notifications", "Quiet hours", "silent night do not disturb",
-                      "Ώρες ησυχίας", "σίγαση νύχτα μην ενοχλείτε"],
-    ["sync", "Sync with Dropbox", "cloud connect encrypted devices",
-             "Συγχρονισμός με Dropbox", "cloud σύνδεση κρυπτογράφηση συσκευές"],
-    ["sync", "Sync passphrase", "password unlock change forget",
-             "Συνθηματικό συγχρονισμού", "κωδικός ξεκλείδωμα αλλαγή"],
-    ["backup", "Backups", "export import backup file folder restore",
-               "Αντίγραφα ασφαλείας", "εξαγωγή εισαγωγή αρχείο φάκελος επαναφορά"],
-    ["language", "Language", "english greek",
-                 "Γλώσσα", "αγγλικά ελληνικά"],
-    ["language", "Menu search", "search find apps",
-                 "Αναζήτηση μενού", "αναζήτηση εύρεση εφαρμογές"],
-    ["files", "Opening files", "open with default app file type handler docx xlsx",
-              "Άνοιγμα αρχείων", "άνοιγμα με προεπιλογή εφαρμογή τύπος αρχείου"],
-    ["system", "Version and updates", "update about install",
-               "Έκδοση και ενημερώσεις", "ενημέρωση σχετικά εγκατάσταση"],
-    ["system", "Keyboard shortcuts", "keys shortcut",
-               "Συντομεύσεις πληκτρολογίου", "πλήκτρα"],
-    ["system", "Factory reset", "erase delete everything reset",
-               "Επαναφορά εργοστασιακών", "διαγραφή σβήσιμο όλα"]
+    ["appearance", "theme"],
+    ["appearance", "colour"],
+    ["appearance", "wallpaper"],
+    ["appearance", "seasonal"],
+    ["appearance", "pet"],
+    ["menu", "menuapps"],
+    ["notifications", "notifs"],
+    ["notifications", "quiet"],
+    ["sync", "dropbox"],
+    ["sync", "passphrase"],
+    ["backup", "backups"],
+    ["language", "language"],
+    ["language", "menusearch"],
+    ["files", "files"],
+    ["system", "version"],
+    ["system", "shortcuts"],
+    ["system", "reset"]
   ];
+  var TOPIC_T = {
+    en: { "st.theme": "Theme: dark or light",
+          "st.theme.words": "dark light mode night",
+          "st.colour": "System colour",
+          "st.colour.words": "colour color accent skin palette",
+          "st.wallpaper": "Wallpaper",
+          "st.wallpaper.words": "background desktop picture",
+          "st.seasonal": "Seasonal decorations",
+          "st.seasonal.words": "christmas snow tree lights new year fireworks halloween pumpkin holiday festive easter carnival kites flag valentine epiphany may day",
+          "st.pet": "Screen pet",
+          "st.pet.words": "companion pet",
+          "st.menuapps": "Apps in the menu",
+          "st.menuapps.words": "hide show hidden choose menu apps list",
+          "st.notifs": "Notifications",
+          "st.notifs.words": "pop-up toast sound volume position style",
+          "st.quiet": "Quiet hours",
+          "st.quiet.words": "silent night do not disturb",
+          "st.dropbox": "Sync with Dropbox",
+          "st.dropbox.words": "cloud connect encrypted devices",
+          "st.passphrase": "Sync passphrase",
+          "st.passphrase.words": "password unlock change forget",
+          "st.backups": "Backups",
+          "st.backups.words": "export import backup file folder restore",
+          "st.language": "Language",
+          "st.language.words": "english greek",
+          "st.menusearch": "Menu search",
+          "st.menusearch.words": "search find apps",
+          "st.files": "Opening files",
+          "st.files.words": "open with default app file type handler docx xlsx",
+          "st.version": "Version and updates",
+          "st.version.words": "update about install",
+          "st.shortcuts": "Keyboard shortcuts",
+          "st.shortcuts.words": "keys shortcut",
+          "st.reset": "Factory reset",
+          "st.reset.words": "erase delete everything reset" },
+    el: { "st.theme": "Θέμα: σκοτεινό ή φωτεινό",
+          "st.theme.words": "σκοτεινό φωτεινό λειτουργία νύχτα",
+          "st.colour": "Χρώμα συστήματος",
+          "st.colour.words": "χρώμα χρώματα παλέτα skin",
+          "st.wallpaper": "Ταπετσαρία",
+          "st.wallpaper.words": "φόντο επιφάνεια εργασίας εικόνα",
+          "st.seasonal": "Θεματική διακόσμηση",
+          "st.seasonal.words": "χριστούγεννα χιόνι δέντρο λαμπάκια καραβάκι πρωτοχρονιά πυροτεχνήματα halloween κολοκύθα γιορτές πάσχα απόκριες χαρταετοί σημαία θεοφάνια πρωτομαγιά βαλεντίνου",
+          "st.pet": "Συντροφάκι",
+          "st.pet.words": "κατοικίδιο σύντροφος",
+          "st.menuapps": "Εφαρμογές στο μενού",
+          "st.menuapps.words": "απόκρυψη εμφάνιση κρυφές κρυμμένες επιλογή μενού λίστα",
+          "st.notifs": "Ειδοποιήσεις",
+          "st.notifs.words": "αναδυόμενα ήχος ένταση θέση στυλ",
+          "st.quiet": "Ώρες ησυχίας",
+          "st.quiet.words": "σίγαση νύχτα μην ενοχλείτε",
+          "st.dropbox": "Συγχρονισμός με Dropbox",
+          "st.dropbox.words": "cloud σύνδεση κρυπτογράφηση συσκευές",
+          "st.passphrase": "Συνθηματικό συγχρονισμού",
+          "st.passphrase.words": "κωδικός ξεκλείδωμα αλλαγή",
+          "st.backups": "Αντίγραφα ασφαλείας",
+          "st.backups.words": "εξαγωγή εισαγωγή αρχείο φάκελος επαναφορά",
+          "st.language": "Γλώσσα",
+          "st.language.words": "αγγλικά ελληνικά",
+          "st.menusearch": "Αναζήτηση μενού",
+          "st.menusearch.words": "αναζήτηση εύρεση εφαρμογές",
+          "st.files": "Άνοιγμα αρχείων",
+          "st.files.words": "άνοιγμα με προεπιλογή εφαρμογή τύπος αρχείου",
+          "st.version": "Έκδοση και ενημερώσεις",
+          "st.version.words": "ενημέρωση σχετικά εγκατάσταση",
+          "st.shortcuts": "Συντομεύσεις πληκτρολογίου",
+          "st.shortcuts.words": "πλήκτρα",
+          "st.reset": "Επαναφορά εργοστασιακών",
+          "st.reset.words": "διαγραφή σβήσιμο όλα" }
+  };
+
 
   var SECTION_NAME = {
     en: { appearance: "Appearance", menu: "Menu", notifications: "Notifications", sync: "Sync",
@@ -54,19 +110,42 @@
           backup: "Αντίγραφα ασφαλείας", language: "Γλώσσα και αναζήτηση", files: "Άνοιγμα αρχείων", system: "Σύστημα" }
   };
 
+  // The two tables in language code: en / el here, another from the
+  // "settings" pack (asked for once; until it arrives, English).
+  var asked = {};
+  function tables(code) {
+    if (code === "en" || code === "el") {
+      var o = {}, a = TOPIC_T[code], b = SECTION_NAME[code], k;
+      for (k in a) o[k] = a[k];
+      for (k in b) o[k] = b[k];
+      return o;
+    }
+    var I = root && root.orosI18n;
+    if (!I || !I.known(code)) return tables("en");
+    if (!asked[code]) { asked[code] = 1; I.ensure(code, "settings", function () {}); }
+    var out = {}, t1 = I.table(TOPIC_T, "settings", code), t2 = I.table(SECTION_NAME, "settings", code), j;
+    for (j in t1) out[j] = t1[j];
+    for (j in t2) out[j] = t2[j];
+    return out;
+  }
+
   var PROVIDER = {
     id: "settings",
     keys: [],
     topics: TOPICS,
     search: function (ctx) {
-      var el = ctx.lang === "el";
+      var code = ctx.code || ctx.lang, L = tables(code);
       return TOPICS.map(function (tp, i) {
+        var w = tp[1] + ".words";
+        // section name first, then this language's words and the English
+        // and Greek ones, so any of them finds it
+        var words = [L["st." + w] || TOPIC_T.en["st." + w]];
+        if (code !== "en") words.push(TOPIC_T.en["st." + w]);
+        if (code !== "el") words.push(TOPIC_T.el["st." + w]);
         return {
           id: "t" + i,
-          title: el ? tp[3] : tp[1],
-          // section name first, then both languages' words, so either finds it
-          text: SECTION_NAME[el ? "el" : "en"][tp[0]] + " · " +
-                (el ? tp[4] + " " + tp[2] : tp[2] + " " + tp[4]),
+          title: L["st." + tp[1]] || TOPIC_T.en["st." + tp[1]],
+          text: (L[tp[0]] || SECTION_NAME.en[tp[0]]) + " · " + words.join(" "),
           target: { section: tp[0] }
         };
       });

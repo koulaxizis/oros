@@ -1,3 +1,4 @@
+// i18n-inline-ok: the Greek day, month, time and repeat words are quick-add parser data, no UI text
 // ============================================================
 // orOS Calendar — quick add: one line of plain words → an event
 // (English and Greek, mixed freely). Pure: no DOM, no storage.

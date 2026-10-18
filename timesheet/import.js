@@ -92,7 +92,7 @@
     return (rows || []).map(function (r) {
       return (r || []).map(function (v) {
         var s = cellText(v);
-        return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+        return /[\x22,\n\r]/.test(s) ? '"' + s.replace(/\x22/g, '""') + '"' : s;
       }).join(",");
     }).join("\r\n");
   }

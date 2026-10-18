@@ -569,7 +569,7 @@
     if (m) return +s <= 12 ? +s * 60 : +s;
     m = /^\d{1,3}\.\d{1,2}$/.exec(s);
     if (m) return Math.round(parseFloat(s) * 60);
-    m = /^(?:(\d{1,3}(?:\.\d{1,2})?) ?(?:h|hr|hrs|ω|ώ|ωρ[α-ωάέήίόύώ]*|ώρ[α-ωάέήίόύώ]*))? ?(?:(\d{1,4}) ?(m|min|mins|λ|λεπ[α-ωάέήίόύώ]*|')?)?$/.exec(s);
+    m = /^(?:(\d{1,3}(?:\.\d{1,2})?) ?(?:h|hr|hrs|ω|ώ|ωρ[α-ωάέήίόύώ]*|ώρ[α-ωάέήίόύώ]*))? ?(?:(\d{1,4}) ?(m|min|mins|λ|λεπ[α-ωάέήίόύώ]*|\x27)?)?$/.exec(s);
     if (!m || (!m[1] && !m[2])) return NaN;
     if (!m[1] && !m[3]) return NaN;
     return Math.round((m[1] ? parseFloat(m[1]) : 0) * 60) + (m[2] ? +m[2] : 0);
@@ -666,7 +666,7 @@
   function csvCell(v) {
     var s = String(v === null || v === undefined ? "" : v);
     if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
-    return /[";\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+    return /[\x22;\r\n]/.test(s) ? '"' + s.replace(/\x22/g, '""') + '"' : s;
   }
   // One row per piece (as in the report), `;` separated with a BOM so
   // spreadsheet apps read Greek right; decimals follow the language.

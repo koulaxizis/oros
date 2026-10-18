@@ -71,6 +71,15 @@
   /* ---------- pure helpers ---------- */
   function pad(n) { return (n < 10 ? "0" : "") + n; }
   function str(v, max) { return (typeof v === "string" ? v : "").slice(0, max); }
+  // Words of reminders and workout kinds: the shell's table
+  // (translations.js "rem.*" / "ph.*", German from the shell pack);
+  // the English given here where it is missing (node tests).
+  function tx(key, fb, vars) {
+    var f = root && root.t, v = typeof f === "function" ? f(key) : key;
+    if (v === key || typeof v !== "string") v = fb;
+    if (vars) Object.keys(vars).forEach(function (k) { v = v.split("{" + k + "}").join(String(vars[k])); });
+    return v;
+  }
   function fnv(s) {
     var h = 2166136261 >>> 0;
     for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
@@ -580,7 +589,7 @@
     var hours = src.hours > 0 && src.hours <= 192 ? src.hours : REM_HOURS;
     var el = src.lang === "el", end = now + hours * 3600000, rows = [], days = Math.ceil(hours / 24) + 1;
     function dayAt(ms, add, h) { var d = new Date(ms); d.setHours(h || 0, 0, 0, 0); d.setDate(d.getDate() + add); return d.getTime(); }
-    var alarmTitle = str(src.alarmTitle, 60) || (el ? "Ξυπνητήρι" : "Alarm");
+    var alarmTitle = str(src.alarmTitle, 60) || tx("alarm.title", "Alarm");
     (Array.isArray(src.alarms) ? src.alarms : []).forEach(function (a) {
       if (!a || a.state !== "pending" || typeof a.at !== "number" || !isFinite(a.at) || typeof a.id !== "string") return;
       var t = a.at, guard = 0;
@@ -617,8 +626,8 @@
         if (!sum || !sum.count) continue;
         rows.push({ id: "todo:due-" + ymd + "-" + sum.count, at: at, kind: "note", ns: "todo",
                     title: str(src.todoTitle, 60) || "To-Do",
-                    body: el ? sum.count + (sum.count === 1 ? " εργασία λήγει ή έχει λήξει" : " εργασίες λήγουν ή έχουν λήξει")
-                             : sum.count + (sum.count === 1 ? " task is due or overdue" : " tasks are due or overdue"),
+                    body: sum.count === 1 ? tx("rem.todo.one", "{n} task is due or overdue", { n: 1 })
+                                          : tx("rem.todo.other", "{n} tasks are due or overdue", { n: sum.count }),
                     link: sum.earliestList ? "todo:" + sum.earliestList : "" });
       }
     }
@@ -636,8 +645,8 @@
           var hy = ymdLocal(hAt);
           if (!HB.core.needsReminder(hix, h, hy)) continue;
           rows.push({ id: "habits:" + HB.core.remKey(h.id, hy), at: hAt, kind: "note", ns: "habits",
-                      title: str(src.habitsTitle, 60) || (el ? "Συνήθειες" : "Habits"),
-                      body: (el ? "Ώρα για: " : "Time for: ") + str(h.name, 120), link: "habits:0" });
+                      title: str(src.habitsTitle, 60) || tx("app.habits", "Habits"),
+                      body: tx("rem.habit", "Time for: {name}", { name: str(h.name, 120) }), link: "habits:0" });
         }
       });
     }
@@ -649,22 +658,22 @@
     if (HL && HL.core && HL.data && typeof HL.core.alarmsBetween === "function") {
       var hd = null;
       try { hd = HL.core.merge(HL.data, HL.data); } catch (e) { hd = null; }
-      var hTitle = str(src.healthTitle, 60) || (el ? "Υγεία" : "Health");
+      var hTitle = str(src.healthTitle, 60) || tx("app.health", "Health");
       var hm2 = function (ms) { var x = new Date(ms); return (x.getHours() < 10 ? "0" : "") + x.getHours() + ":" + (x.getMinutes() < 10 ? "0" : "") + x.getMinutes(); };
       var dm2 = function (ms) { var x = new Date(ms); return x.getDate() + "/" + (x.getMonth() + 1); };
       (hd ? HL.core.alarmsBetween(hd, now, end) : []).forEach(function (r) {
         var body = "", link = "health:meds";
         if (r.k === "dose") {
           var tm = (r.tm < 600 ? "0" : "") + Math.floor(r.tm / 60) + ":" + (r.tm % 60 < 10 ? "0" : "") + (r.tm % 60);
-          body = (el ? "Ώρα για το φάρμακο: " : "Time for your medicine: ") + r.med.n + (r.med.s ? " " + r.med.s : "") + " (" + tm + ")";
+          body = tx("rem.med", "Time for your medicine: {name} ({time})", { name: r.med.n + (r.med.s ? " " + r.med.s : ""), time: tm });
         } else if (r.k === "appt") {
           var a = r.ap, who = a.dr && a.sp ? a.dr + " · " + a.sp : (a.dr || a.sp);
-          body = (el ? "Ραντεβού με γιατρό: " : "Doctor's appointment: ") + who + ", " + dm2(a.at) + " " + hm2(a.at);
+          body = tx("rem.appt", "Doctor's appointment: {who}, {when}", { who: who, when: dm2(a.at) + " " + hm2(a.at) });
           link = "health:appts";
         } else if (r.k === "vax") {
           var p = r.vx.nx.split("-");
-          body = (r.st === "w" ? (el ? "Επόμενη δόση εμβολίου σε μία εβδομάδα: " : "Next vaccine dose in a week: ")
-                               : (el ? "Επόμενη δόση εμβολίου: " : "Next vaccine dose due: ")) + r.vx.n + " (" + (+p[2]) + "/" + (+p[1]) + ")";
+          body = r.st === "w" ? tx("rem.vax.week", "Next vaccine dose in a week: {name} ({when})", { name: r.vx.n, when: (+p[2]) + "/" + (+p[1]) })
+                              : tx("rem.vax.due", "Next vaccine dose due: {name} ({when})", { name: r.vx.n, when: (+p[2]) + "/" + (+p[1]) });
           link = "health:vax";
         } else return;
         rows.push({ id: "health:" + r.key, at: r.at, kind: "note", ns: "health",
@@ -724,12 +733,14 @@
   // in orOS (tombstone) is not brought back.
   // Names for a workout from another app that has no title of its
   // own, by the kind the app sends.
-  var HC_KINDS = {
-    en: { running: "Running", walking: "Walking", cycling: "Cycling", swimming: "Swimming", hiking: "Hiking",
-          yoga: "Yoga", strength: "Strength training", other: "Workout" },
-    el: { running: "Τρέξιμο", walking: "Περπάτημα", cycling: "Ποδήλατο", swimming: "Κολύμβηση", hiking: "Πεζοπορία",
-          yoga: "Γιόγκα", strength: "Ενδυνάμωση", other: "Προπόνηση" }
-  };
+  // English here; the shell's words come from translations.js ("ph.hc.*").
+  var HC_KINDS = { running: "Running", walking: "Walking", cycling: "Cycling", swimming: "Swimming", hiking: "Hiking",
+                   yoga: "Yoga", strength: "Strength training", other: "Workout" };
+  function hcKinds() {
+    var out = {};
+    Object.keys(HC_KINDS).forEach(function (k) { out[k] = tx("ph.hc." + k, HC_KINDS[k]); });
+    return out;
+  }
   // A reading from Health Connect in Health's storage units, or null:
   //   wt grams · hr bpm · sl minutes asleep (at = bedtime) · bp
   //   systolic, diastolic (a 1 left / 2 right arm, p 1 sitting /
@@ -961,13 +972,12 @@
         blobs[k] = k === "water" && W && W.parse ? W.parse(raw) : JSON.parse(raw || "null");
       } catch (e) { blobs[k] = null; }
     });
-    var el = (document.documentElement.lang || "").slice(0, 2) === "el";
     var res = healthIn(blobs, {
       water: "water" in blobs ? m.water : [],
       workouts: "fitness" in blobs ? m.workouts : [],
       steps: "health" in blobs ? m.steps : [],
       vitals: "health" in blobs ? m.vitals : []
-    }, now, el ? HC_KINDS.el : HC_KINDS.en);
+    }, now, hcKinds());
     var wrote = false;
     try {
       if (res.water) {
@@ -1037,8 +1047,8 @@
     var lang = (document.documentElement.lang || "en").slice(0, 2);
     return { alarms: alarms, water: water, todo: todo, habits: habits, health: health, lang: lang,
              alarmTitle: tr("alarm.title", ""), todoTitle: tr("app.todo", "To-Do"),
-             habitsTitle: tr("app.habits", lang === "el" ? "Συνήθειες" : "Habits"),
-             healthTitle: tr("app.health", lang === "el" ? "Υγεία" : "Health") };
+             habitsTitle: tr("app.habits", "Habits"),
+             healthTitle: tr("app.health", "Health") };
   }
   // Calendar reminders ring here, whether or not the events are also
   // copied to the phone's Calendar (the copies carry no reminder).

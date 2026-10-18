@@ -116,5 +116,5 @@ test("wiring: Assistant settings, Atelier, precache, help, credits", () => {
   assert.ok(read("assistant/help.el.txt").includes("## Εικόνες"));
   assert.ok(read("atelier/help.en.txt").includes("`Image from text`"));
   assert.ok(read("CREDITS.md").includes("Image AI you choose"));
-  assert.ok(read("shell.js").includes("Image AI you choose"));
+  assert.ok(read("translations.js").includes("Image AI you choose"));   // the credits line (shell.js cr.* key)
 });

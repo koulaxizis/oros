@@ -42,10 +42,16 @@
   var GAPI = "https://apis.google.com/js/api.js";
   var CAPS = { count: 100, file: 100 * 1024 * 1024, total: 500 * 1024 * 1024 };
   var POLL_MAX = 20 * 60 * 1000;           // our own limit on the picking
+  // The folder an import lands in, named at import time in the
+  // person's language (pack "files" for other languages)
   var FOLDERS = {
-    drive: { en: "Imported from Google Drive", el: "Εισαγωγή από το Google Drive" },
-    photos: { en: "Imported from Google Photos", el: "Εισαγωγή από το Google Photos" }
+    en: { "gm.folder.drive": "Imported from Google Drive", "gm.folder.photos": "Imported from Google Photos" },
+    el: { "gm.folder.drive": "Εισαγωγή από το Google Drive", "gm.folder.photos": "Εισαγωγή από το Google Photos" }
   };
+  function folders(lang) {
+    if (!FOLDERS[lang] && root && root.orosI18n && typeof lang === "string") root.orosI18n.table(FOLDERS, "files", lang);
+    return FOLDERS[lang] || FOLDERS.en;
+  }
   // Google's own formats → what orOS's apps open
   var EXPORTS = {
     "application/vnd.google-apps.document": { mime: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", ext: ".docx" },
@@ -313,11 +319,11 @@
   // ---- where it goes, and what is there already ----
   // An existing folder in either language is used; else the person's.
   function folderFor(kind, rootNames, lang) {
-    var f = FOLDERS[kind];
+    var k = "gm.folder." + kind;
     var names = Array.isArray(rootNames) ? rootNames : [];
-    if (names.indexOf(f.en) !== -1) return f.en;
-    if (names.indexOf(f.el) !== -1) return f.el;
-    return f[lang === "el" ? "el" : "en"];
+    if (names.indexOf(FOLDERS.en[k]) !== -1) return FOLDERS.en[k];
+    if (names.indexOf(FOLDERS.el[k]) !== -1) return FOLDERS.el[k];
+    return folders(lang)[k];
   }
   function uniqueName(name, taken) {
     if (taken.indexOf(name) === -1) return name;

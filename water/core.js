@@ -265,8 +265,9 @@
 
   // ---------- 4. Formatting ----------
   // Text shared by the app, the shell (reminders, Today) and Habits
-  // (feed row). Pack languages get WORDS[code] in the Water app only
-  // (the shell and Habits pass "el"/"en" or fall back to English).
+  // (feed row). Pack languages get WORDS[code] on every page that lists
+  // "water" in its i18n.js data-app (the app and the shell); others fall
+  // back to English.
   var WORDS = {
     en: {
       glass1: "glass", glassN: "glasses",

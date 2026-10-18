@@ -547,17 +547,28 @@
     return out;
   }
 
+  // EN: “Title” by Author, CC BY 4.0, via Openverse
+  // EL: «Τίτλος», δημιουργός: Author, CC BY 4.0, μέσω Openverse
+  var CREDIT = {
+    en: { "cr.quoted": "“{t}”", "cr.untitled": "Untitled", "cr.by": "{t} by {a}", "cr.via": "{l}, via {s}" },
+    el: { "cr.quoted": "«{t}»", "cr.untitled": "Χωρίς τίτλο", "cr.by": "{t}, δημιουργός: {a}", "cr.via": "{l}, μέσω {s}" }
+  };
+  // Greek when asked, else the page's pack language
+  // (i18n/<code>/designkit.js, "designkit" in data-app), else English.
+  function dkTable(tables, lang) {
+    var I = typeof window !== "undefined" && window.orosI18n;
+    var c = lang === "el" ? "el" : (I && I.lang() !== "el" ? I.lang() : "en");
+    return tables[c] || (I ? I.table(tables, "designkit", c) : tables.en);
+  }
+  function fill(s, v) { return s.replace(/\{([a-z])\}/g, function (m, k) { return v[k] !== undefined ? v[k] : m; }); }
   function credit(it, lang) {
     var c = normCredit(it);
     if (!c) return "";
-    var el = lang === "el";
-    var title = c.title ? (el ? "«" + c.title + "»" : "“" + c.title + "”") : (el ? "Χωρίς τίτλο" : "Untitled");
-    // EN: “Title” by Author, CC BY 4.0, via Openverse
-    // EL: «Τίτλος», δημιουργός: Author, CC BY 4.0, μέσω Openverse
-    var line = title;
-    if (c.author) line += el ? ", δημιουργός: " + c.author : " by " + c.author;
+    var T = dkTable(CREDIT, lang);
+    var line = c.title ? fill(T["cr.quoted"], { t: c.title }) : T["cr.untitled"];
+    if (c.author) line = fill(T["cr.by"], { t: line, a: c.author });
     if (c.lic !== "font") line += ", " + licenseOf(c.lic, c.licVer).label;
-    return line + ", " + (el ? "μέσω " : "via ") + SOURCES[c.src].name;
+    return fill(T["cr.via"], { l: line, s: SOURCES[c.src].name });
   }
 
   // Credit lines for a design: one per asset (deduped by id), the

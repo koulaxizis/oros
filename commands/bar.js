@@ -74,7 +74,9 @@
   function open(host, text) {
     if (box) { var i0 = box.querySelector("input"); if (i0) { i0.focus(); i0.select(); } return; }
     style();
-    var L = STR[host.lang() === "el" ? "el" : "en"];
+    // en / el here; another language from the "commands" pack (the shell loads it).
+    var I = window.orosI18n, code = I ? I.lang() : host.lang();
+    var L = (code === "en" || code === "el") ? STR[code] : I && I.known(code) ? I.table(STR, "commands", code) : STR.en;
     var prevFocus = document.activeElement;
     box = el("div");
     box.id = "oros-cmdbar";

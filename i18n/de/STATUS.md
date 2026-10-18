@@ -2,8 +2,8 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 30899 of 31163 (99%)
-- Help pages: 142 of 144 (98%)
+- Strings: 32200 of 32200 (100%)
+- Help pages: 144 of 144 (100%)
 - Shown in the language list: yes
 
 Apps marked "English for now" do not load language packs yet: their
@@ -24,31 +24,37 @@ text is still written in the code. They switch over wave by wave
 | budget | 100% | 555 / 555 |
 | calculator | 100% | 136 / 136 |
 | calendar | 100% | 370 / 370 |
+| cardkit | 100% | 9 / 9 |
 | certificates | 100% | 391 / 391 |
 | characters | 100% | 89 / 89 |
 | checkers | 100% | 72 / 72 |
 | chess | 100% | 405 / 405 |
 | chores | 100% | 192 / 192 |
+| commands | English for now | 41 / 41 |
 | connect4 | 100% | 62 / 62 |
-| contacts | 100% | 293 / 293 |
+| contacts | 100% | 297 / 297 |
 | converter | 100% | 68 / 68 |
 | crm | 100% | 444 / 444 |
 | crossword | 100% | 170 / 170 |
 | cycle | 100% | 203 / 203 |
+| designkit | 100% | 164 / 164 |
 | device | 100% | 124 / 124 |
 | diary | 100% | 234 / 234 |
 | dice | 100% | 52 / 52 |
 | dots | 100% | 54 / 54 |
+| enrichui | 100% | 28 / 28 |
 | familytree | 100% | 200 / 200 |
 | feeds | 100% | 325 / 325 |
-| files | 100% | 354 / 354 |
+| fileopen | 100% | 6 / 6 |
+| files | 100% | 360 / 360 |
 | fitness | 100% | 413 / 413 |
-| flashcards | 0% | 0 / 263 |
+| flashcards | 100% | 263 / 263 |
 | flow | 100% | 75 / 75 |
 | g2048 | 100% | 54 / 54 |
 | gamecenter | 100% | 99 / 99 |
 | garage | 100% | 422 / 422 |
 | gomoku | 100% | 57 / 57 |
+| google-import | 100% | 9 / 9 |
 | habits | 100% | 173 / 173 |
 | hangman | 100% | 52 / 52 |
 | health | 100% | 597 / 597 |
@@ -61,6 +67,7 @@ text is still written in the code. They switch over wave by wave
 | layout | 100% | 415 / 415 |
 | library | 100% | 323 / 323 |
 | lightsout | 100% | 51 / 51 |
+| links | 100% | 2 / 2 |
 | mahjong | 100% | 69 / 69 |
 | mail | 100% | 495 / 495 |
 | mancala | 100% | 60 / 60 |
@@ -84,6 +91,7 @@ text is still written in the code. They switch over wave by wave
 | notes | 100% | 172 / 172 |
 | oracle | 100% | 38 / 38 |
 | passwords | 100% | 321 / 321 |
+| pet | 100% | 106 / 106 |
 | petcare | 100% | 374 / 374 |
 | petworld | 100% | 256 / 256 |
 | photolab | 100% | 708 / 708 |
@@ -96,15 +104,17 @@ text is still written in the code. They switch over wave by wave
 | qr | 100% | 248 / 248 |
 | quote | 100% | 230 / 230 |
 | radio | 100% | 103 / 103 |
+| recordpkg | 100% | 21 / 21 |
+| remote-play | 100% | 35 / 35 |
 | reversi | 100% | 60 / 60 |
 | ringtones | 100% | 107 / 107 |
 | rps | 100% | 59 / 59 |
 | scanpdf | 100% | 270 / 270 |
 | scores | 100% | 147 / 147 |
-| settings | 99% | 480 / 481 |
+| settings | 100% | 515 / 515 |
 | share | 100% | 179 / 179 |
 | shelf | 100% | 291 / 291 |
-| shell | 100% | 452 / 452 |
+| shell | 100% | 824 / 824 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 49 / 49 |
 | sky | 100% | 383 / 383 |
@@ -112,6 +122,7 @@ text is still written in the code. They switch over wave by wave
 | slides | 100% | 418 / 418 |
 | snake | 100% | 52 / 52 |
 | solitaire | 100% | 102 / 102 |
+| solo | English for now | 89 / 89 |
 | split | 100% | 336 / 336 |
 | spot | 100% | 54 / 54 |
 | spreadsheet | 100% | 355 / 355 |
@@ -140,17 +151,7 @@ text is still written in the code. They switch over wave by wave
 | wheel | 100% | 107 / 107 |
 | wiki | 100% | 404 / 404 |
 | wordle | 100% | 76 / 76 |
+| wordsearch | 100% | 111 / 111 |
 | writer | 100% | 377 / 377 |
 | xeri | 100% | 108 / 108 |
 | zen | 100% | 91 / 91 |
-
-## Lines to fix
-
-These show English until fixed (usually the English text changed).
-
-- de/help/settings.txt: links or key caps differ from settings/help.en.txt
-
-## Help pages not translated yet
-
-- help/flashcards.txt
-- help/wordsearch.txt

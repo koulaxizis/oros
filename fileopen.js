@@ -203,8 +203,23 @@
     }
   };
 
+  // lang: "en", "el" or a pack language: i18n/<code>/fileopen.js
+  // ("fileopen" in the shell's data-app). After a language change in
+  // the shell the pack is fetched on first use; English until it is in.
+  var packAsked = {};
+  function strTable(lang) {
+    if (STRINGS[lang]) return STRINGS[lang];
+    var I = typeof window !== "undefined" && window.orosI18n;
+    if (!I || typeof lang !== "string" || !I.known(lang)) return STRINGS.en;
+    var t = I.table(STRINGS, "fileopen", lang);
+    if (!I.coverage(STRINGS, "fileopen", lang)) {
+      delete STRINGS[lang];
+      if (!packAsked[lang]) { packAsked[lang] = true; I.ensure(lang, "fileopen", function () {}); }
+    }
+    return t;
+  }
   function str(lang, key, vars) {
-    var s = (STRINGS[lang === "el" ? "el" : "en"] || STRINGS.en)[key] || STRINGS.en[key] || key;
+    var s = strTable(lang)[key] || STRINGS.en[key] || key;
     if (vars) Object.keys(vars).forEach(function (k) { s = s.split("{" + k + "}").join(String(vars[k])); });
     return s;
   }
@@ -374,7 +389,7 @@
   // ---------- Browser side (shell) ----------
   var w = root, doc = root.document;
 
-  function lang() { return w.orosLang === "el" ? "el" : "en"; }
+  function lang() { return w.orosI18n ? w.orosI18n.lang() : (w.orosLang === "el" ? "el" : "en"); }
   function T(key, vars) { return str(lang(), key, vars); }
   function appName(id) {
     try {

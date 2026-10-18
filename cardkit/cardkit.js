@@ -53,18 +53,25 @@
   var SUITS = ["S", "H", "D", "C"];
   var RANK_INTL = ["", "A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
   var RANK_EL   = ["", "Α", "2", "3", "4", "5", "6", "7", "8", "9", "10", "Β", "Ν", "Ρ"];
+  // Card names for screen readers. A pack language comes from
+  // i18n/<code>/cardkit.js ("cardkit" in the page's data-app).
   var NAMES = {
     en: {
-      ranks: ["", "Ace", "2", "3", "4", "5", "6", "7", "8", "9", "10", "Jack", "Queen", "King"],
-      suits: ["spades", "hearts", "diamonds", "clubs"],
-      pattern: "{r} of {s}"
+      "rank.1": "Ace", "rank.11": "Jack", "rank.12": "Queen", "rank.13": "King",
+      "suit.0": "spades", "suit.1": "hearts", "suit.2": "diamonds", "suit.3": "clubs",
+      "pattern": "{r} of {s}"
     },
     el: {
-      ranks: ["", "Άσσος", "2", "3", "4", "5", "6", "7", "8", "9", "10", "Βαλές", "Ντάμα", "Ρήγας"],
-      suits: ["μπαστούνι", "κούπα", "καρό", "σπαθί"],
-      pattern: "{r} {s}"
+      "rank.1": "Άσσος", "rank.11": "Βαλές", "rank.12": "Ντάμα", "rank.13": "Ρήγας",
+      "suit.0": "μπαστούνι", "suit.1": "κούπα", "suit.2": "καρό", "suit.3": "σπαθί",
+      "pattern": "{r} {s}"
     }
   };
+  function names(lang) {
+    if (NAMES[lang]) return NAMES[lang];
+    var I = typeof window !== "undefined" && window.orosI18n;
+    return I && typeof lang === "string" && I.known(lang) ? I.table(NAMES, "cardkit", lang) : NAMES.en;
+  }
 
   // Suit pips in a 24×24 box (own drawings, filled with currentColor).
   var PIPS = [
@@ -165,10 +172,11 @@
 
   // ---------- Names ----------
   function rankLabel(r, style) { return (style === "el" ? RANK_EL : RANK_INTL)[r] || ""; }
-  function suitName(s, lang) { return (NAMES[lang] || NAMES.en).suits[s] || ""; }
+  function suitName(s, lang) { return names(lang)["suit." + s] || ""; }
   function cardName(id, lang) {
-    var n = NAMES[lang] || NAMES.en;
-    return n.pattern.split("{r}").join(n.ranks[rank(id)]).split("{s}").join(n.suits[suit(id)]);
+    var n = names(lang), r = rank(id);
+    var rn = n["rank." + r] || (r >= 2 && r <= 10 ? String(r) : "");
+    return n.pattern.split("{r}").join(rn).split("{s}").join(n["suit." + suit(id)] || "");
   }
 
   // ---------- DOM faces ----------

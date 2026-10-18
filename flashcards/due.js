@@ -73,7 +73,13 @@
     var day = ymd(now), n = count(sum, day);
     return n > 0 ? { key: "study-" + day, n: n } : null;
   }
-  function words(lang) { return T[lang === "el" ? "el" : "en"]; }
+  // A pack language (de, …): English overlaid with the "flashcards" pack,
+  // when the page has loaded it (i18n.js); English otherwise.
+  function words(lang) {
+    if (lang === "el" || lang === "en") return T[lang];
+    var I = typeof window !== "undefined" && window.orosI18n;
+    return I && typeof lang === "string" ? I.table(T, "flashcards", lang) : T.en;
+  }
   function reminderText(n, lang) {
     var w = words(lang);
     return { title: w.app, body: n === 1 ? w.one : w.many.replace("{n}", n) };

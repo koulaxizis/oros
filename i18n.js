@@ -23,6 +23,7 @@
 // Versioning: orOS-wide version lives ONLY in shell.js.
 // ============================================================
 
+// i18n-inline-ok: language names in their own language (LANGS) are data
 (function () {
   "use strict";
   if (window.orosI18n) return;
@@ -36,7 +37,7 @@
   var LANGS = [
     { code: "en", name: "English",  locale: "en-GB", dir: "ltr", status: "full" },
     { code: "el", name: "Ελληνικά", locale: "el-GR", dir: "ltr", status: "full" },
-    { code: "de", name: "Deutsch",  locale: "de-DE", dir: "ltr", status: "partial" }
+    { code: "de", name: "Deutsch",  locale: "de-DE", dir: "ltr", status: "full" }
   ];
   // ---- end of languages ----
 

@@ -1,4 +1,5 @@
 /* ============================================================
+   i18n-inline-ok: the Greek sheet names fill the saved bilingual bi { en, el } field (data format, no UI text)
    sheetimport.js — orOS Spreadsheet, file import + the .orossheet
    pack (OrosSheetImport). Pure: no storage, no app state, no UI.
    One copy of the code that turns a CSV text or a SheetJS workbook

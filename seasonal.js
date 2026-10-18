@@ -114,45 +114,45 @@
     return [addDays(e, from), addDays(e, to)];
   }
   var EVENTS = [
-    { id: "epiphany", en: "Epiphany", el: "Θεοφάνια", prio: 3, def: true,
+    { id: "epiphany", en: "Epiphany", prio: 3, def: true,
       win: function (y) { return [y + "-01-05", y + "-01-06"]; } },
-    { id: "valentine", en: "Valentine's Day", el: "Αγίου Βαλεντίνου", prio: 4, def: true,   // its 2 days beat Carnival
+    { id: "valentine", en: "Valentine's Day", prio: 4, def: true,   // its 2 days beat Carnival
       win: function (y) { return [y + "-02-13", y + "-02-14"]; } },
-    { id: "carnival", en: "Carnival", el: "Απόκριες", prio: 3, def: true,
+    { id: "carnival", en: "Carnival", prio: 3, def: true,
       win: function (y) { return ez(y, -59, -49); } },          // Tsiknopempti to Cheesefare Sunday
-    { id: "cleanmon", en: "Clean Monday", el: "Καθαρά Δευτέρα", prio: 4, def: true,
+    { id: "cleanmon", en: "Clean Monday", prio: 4, def: true,
       win: function (y) { return ez(y, -48, -48); } },
-    { id: "mar25", en: "25 March", el: "25η Μαρτίου", prio: 3, def: true,
+    { id: "mar25", en: "25 March", prio: 3, def: true,
       win: function (y) { return [y + "-03-24", y + "-03-25"]; } },
-    { id: "easter", en: "Easter", el: "Πάσχα", prio: 4, def: true,
+    { id: "easter", en: "Easter", prio: 4, def: true,
       win: function (y, opt) {                                   // Holy Thursday to Easter Monday
         if (opt && opt.western) { var e = westernEaster(y); return [addDays(e, -3), addDays(e, 1)]; }
         return ez(y, -3, 1);
       } },
-    { id: "mayday", en: "May Day", el: "Πρωτομαγιά", prio: 2, def: true,
+    { id: "mayday", en: "May Day", prio: 2, def: true,
       win: function (y) { return [y + "-04-30", y + "-05-01"]; } },
-    { id: "xmas", en: "Christmas", el: "Χριστούγεννα", prio: 2, def: true,
+    { id: "xmas", en: "Christmas", prio: 2, def: true,
       win: function (y) { return [y + "-12-01", y + "-12-30"]; } },
-    { id: "newyear", en: "New Year", el: "Πρωτοχρονιά", prio: 3, def: true,
+    { id: "newyear", en: "New Year", prio: 3, def: true,
       win: function (y) { return [y + "-12-31", (y + 1) + "-01-02"]; } },
-    { id: "halloween", en: "Halloween", el: "Halloween", prio: 2, def: true,
+    { id: "halloween", en: "Halloween", prio: 2, def: true,
       win: function (y) { return [y + "-10-25", y + "-10-31"]; } },
-    { id: "oct28", en: "28 October", el: "28η Οκτωβρίου", prio: 3, def: true,
+    { id: "oct28", en: "28 October", prio: 3, def: true,
       win: function (y) { return [y + "-10-27", y + "-10-28"]; } },
-    { id: "birthday", en: "My birthday", el: "Τα γενέθλιά μου", prio: 5, def: true,
+    { id: "birthday", en: "My birthday", prio: 5, def: true,
       win: function (y, opt) {
         var b = opt && opt.bday;
         if (!b) return null;
         if (b === "02-29" && !isLeap(y)) b = "02-28";
         return [y + "-" + b, y + "-" + b];
       } },
-    { id: "spring", en: "Spring", el: "Άνοιξη", prio: 1, def: false, season: true,
+    { id: "spring", en: "Spring", prio: 1, def: false, season: true,
       win: function (y) { return [y + "-03-20", y + "-06-20"]; } },
-    { id: "summer", en: "Summer", el: "Καλοκαίρι", prio: 1, def: false, season: true,
+    { id: "summer", en: "Summer", prio: 1, def: false, season: true,
       win: function (y) { return [y + "-06-21", y + "-09-22"]; } },
-    { id: "autumn", en: "Autumn", el: "Φθινόπωρο", prio: 1, def: false, season: true,
+    { id: "autumn", en: "Autumn", prio: 1, def: false, season: true,
       win: function (y) { return [y + "-09-23", y + "-11-30"]; } },
-    { id: "winter", en: "Winter", el: "Χειμώνας", prio: 1, def: false, season: true,
+    { id: "winter", en: "Winter", prio: 1, def: false, season: true,
       win: function (y) { return [y + "-01-01", y + "-03-19"]; } }
   ];
 
@@ -343,8 +343,15 @@
   var weak = false;
   var mqReduce = null;
 
-  function lang() { return (host && host.lang && host.lang() === "el") ? "el" : "en"; }
-  function name(ev) { return lang() === "el" ? ev.el : ev.en; }
+  // Strings come from the shell's table (translations.js, "ssn.*",
+  // German from i18n/<code>/shell.js); English when it is not there.
+  function tx(key, fb, vars) {
+    var f = root && root.t, v = typeof f === "function" ? f(key) : key;
+    if (v === key || typeof v !== "string") v = fb;
+    if (vars) Object.keys(vars).forEach(function (k) { v = v.split("{" + k + "}").join(String(vars[k])); });
+    return v;
+  }
+  function name(ev) { return tx("ssn.ev." + ev.id, ev.en); }
   function running() { return !!(host && host.running && host.running()); }
   function changed() { if (host && typeof host.changed === "function") { try { host.changed(); } catch (e) {} } }
   function today() { return ymdOf(new Date()); }
@@ -1070,25 +1077,24 @@
     var want = !!(p && p.mode === "preview");
     if (!want) { if (bar && bar.parentNode) bar.parentNode.removeChild(bar); bar = null; return; }
     var ev = eventById(p.id);
-    var L = lang() === "el";
     if (!bar) {
       bar = document.createElement("div");
       bar.id = "ssn-bar";
       bar.setAttribute("role", "region");
       document.body.appendChild(bar);
     }
-    bar.setAttribute("aria-label", L ? "Προεπισκόπηση διακόσμησης" : "Decoration preview");
+    bar.setAttribute("aria-label", tx("ssn.bar", "Decoration preview"));
     bar.textContent = "";
     var txt = document.createElement("span");
-    txt.textContent = (L ? "Προεπισκόπηση: " : "Preview: ") + name(ev);
+    txt.textContent = tx("ssn.preview", "Preview: {name}", { name: name(ev) });
     var keep = document.createElement("button");
     keep.type = "button"; keep.className = "ssn-main";
-    keep.textContent = L ? "Κράτα το" : "Keep it";
-    keep.title = L ? "Μένει μέχρι να τελειώσει η περίοδος της γιορτής" : "Stays until the event's period ends";
+    keep.textContent = tx("ssn.keep", "Keep it");
+    keep.title = tx("ssn.keep.tip", "Stays until the event's period ends");
     keep.addEventListener("click", function () { keepPreview(); });
     var stop = document.createElement("button");
     stop.type = "button";
-    stop.textContent = L ? "Τέλος" : "Stop";
+    stop.textContent = tx("ssn.stop", "Stop");
     stop.addEventListener("click", function () { stopPreview(); });
     bar.appendChild(txt); bar.appendChild(keep); bar.appendChild(stop);
   }
@@ -1157,10 +1163,8 @@
 
   // For the Settings app (through the shell's orosSettings bridge).
   function fmtDay(s) {
-    var M = lang() === "el"
-      ? ["Ιαν", "Φεβ", "Μαρ", "Απρ", "Μαΐ", "Ιουν", "Ιουλ", "Αυγ", "Σεπ", "Οκτ", "Νοε", "Δεκ"]
-      : ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    return (+s.slice(8, 10)) + " " + M[+s.slice(5, 7) - 1];
+    var M = tx("ssn.months", "Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec").split(",");
+    return tx("ssn.day", "{d} {m}", { d: +s.slice(8, 10), m: M[+s.slice(5, 7) - 1] || "" });
   }
   function snapshot() {
     var d = load(), l = loadLocal(), s = today(), p = current();

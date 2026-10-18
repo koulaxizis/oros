@@ -59,8 +59,13 @@
   var THEME_IDS = ["animals", "food", "countries", "jobs", "home", "nature", "sports", "music",
     "school", "body", "clothes", "colours", "transport", "weather", "fruitveg", "sea", "city",
     "tools", "feelings", "holidays"];
-  var LETTERS = { en: "ABCDEFGHIJKLMNOPQRSTUVWXYZ", el: "ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ" };
-  var WORD_RE = { en: /^[A-Z]{3,15}$/, el: /^[Α-Ω]{3,15}$/ };
+  // el: the 24 capital letters of the Greek alphabet, Alpha (U+0391) to
+  // Omega (U+03A9), written as \u escapes (game data, not UI text).
+  var LETTERS = { en: "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+    el: "\u0391\u0392\u0393\u0394\u0395\u0396\u0397\u0398\u0399\u039a\u039b\u039c" +
+        "\u039d\u039e\u039f\u03a0\u03a1\u03a3\u03a4\u03a5\u03a6\u03a7\u03a8\u03a9" };
+  // el: Greek capitals Alpha to Omega (U+0391 to U+03A9).
+  var WORD_RE = { en: /^[A-Z]{3,15}$/, el: /^[\u0391-\u03a9]{3,15}$/ };
   var EPOCH_UTC = Date.UTC(2026, 0, 1);     // day 0 of the daily puzzles
   var MAX_DAY = 100000;
   var MAX_SEC = 360000;                     // 100 hours: longer times are capped
@@ -76,7 +81,10 @@
       return l === "el" ? "el" : "en";
     } catch (e) { return "en"; }
   }
-  var LANG = appLang();
+  var LANG = window.orosI18n ? window.orosI18n.lang() : appLang();
+  // Word lists exist in English and Greek; other UI languages play English.
+  var WORD_LANG = LANG === "el" ? "el" : "en";
+  function loc() { return window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB"); }
 
   var STRINGS = {
     en: {
@@ -271,6 +279,8 @@
     }
   };
 
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "wordsearch", LANG);
+
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;
     var str = p[key] !== undefined ? p[key] : (STRINGS.en[key] !== undefined ? STRINGS.en[key] : key);
@@ -317,7 +327,8 @@
   function normWord(s) {
     s = String(s || "");
     if (s.normalize) s = s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    return s.toUpperCase().replace(/ς/g, "Σ").replace(/[^A-ZΑ-Ω]/g, "");
+    // final sigma (U+03C2) → capital sigma (U+03A3); keep A-Z and Greek Alpha-Omega
+    return s.toUpperCase().replace(/\u03c2/g, "\u03a3").replace(/[^A-Z\u0391-\u03a9]/g, "");
   }
 
   // Seeded random numbers: FNV-1a hash of a string → mulberry32 stream.
@@ -798,7 +809,7 @@
   }
 
   // ---------- 4. Device-local prefs + session ----------
-  var prefs = { lang: LANG, mode: "d", size: "m", theme: "random" };
+  var prefs = { lang: WORD_LANG, mode: "d", size: "m", theme: "random" };
 
   function themeOk(th) {
     return th === "random" || THEME_IDS.indexOf(th) >= 0 || (/^u:/.test(th) && ID_RE.test(th.slice(2)));
@@ -1299,7 +1310,7 @@
   }
   function langName(l) { return t(l === "el" ? "lang.elLong" : "lang.enLong"); }
   function fmtDate(ts) {
-    try { return new Date(ts).toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB"); }
+    try { return new Date(ts).toLocaleDateString(loc()); }
     catch (e) { return ""; }
   }
   function bestText(s) {

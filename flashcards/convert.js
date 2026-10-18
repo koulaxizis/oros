@@ -75,6 +75,9 @@ function deckIdFor(path) {
 function convert(file, opts) {
   opts = opts || {};
   var lang = opts.lang === "el" ? "el" : "en", S = STR[lang];
+  // A pack language (de, …): English overlaid with the "flashcards" pack, when loaded.
+  var I = typeof window !== "undefined" && window.orosI18n;
+  if (I && typeof opts.lang === "string" && opts.lang !== "el" && opts.lang !== "en") S = I.table(STR, "flashcards", opts.lang);
   var prog = typeof opts.onProgress === "function" ? opts.onProgress : function () {};
   function step(x) { try { prog(x); } catch (e) {} }
   return Promise.resolve().then(function () {

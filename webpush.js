@@ -107,7 +107,9 @@
   function calendarRows(data, OCC, now, end, lang) {
     var rows = [];
     if (!data || !Array.isArray(data.events) || !OCC || typeof OCC.instancesBetween !== "function") return rows;
-    var loc = lang === "el" ? "el-GR" : "en-GB";
+    var I = root && root.orosI18n, loc = I ? I.locale(lang) : (lang === "el" ? "el-GR" : "en-GB");
+    // "Reminder" from the shell's table (translations.js), English in node.
+    var noTitle = root && typeof root.t === "function" && root.t("rem.title") !== "rem.title" ? root.t("rem.title") : "Reminder";
     function when(ts) {
       var d = new Date(ts);
       return d.toLocaleDateString(loc, { day: "2-digit", month: "short" }) + " · " +
@@ -129,7 +131,7 @@
         OCC.instancesBetween(ev, ymd(now - 86400000), ymd(end + lead + 86400000), function (inst) {
           var ts = startOf(ev, inst.occ), rem = ts - lead;
           if (rem > now && rem <= end) rows.push({ id: "calendar:rem:" + ev.id + ":" + inst.occ, at: rem, kind: "note", ns: "calendar",
-                                     title: String(ev.title || (lang === "el" ? "Υπενθύμιση" : "Reminder")).slice(0, 120),
+                                     title: String(ev.title || noTitle).slice(0, 120),
                                      body: when(ts), link: "calendar:" + ev.id + ":" + inst.occ });
           return true;
         });
