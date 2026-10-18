@@ -95,6 +95,17 @@ function releaseCopy(request, url) {
   }).catch(function () { return undefined; });
 }
 
+// SW-F1: the precached copy of a page in THIS release, or undefined.
+// The query is ignored (the pages are static; a frame may carry one).
+// A redirected copy cannot answer a navigation (SWK-4).
+function releasePage(request) {
+  return caches.open(SHELL_CACHE).then(function (cache) {
+    return cache.match(request, { ignoreSearch: true, ignoreVary: true });
+  }).then(function (hit) {
+    return hit && !hit.redirected ? hit : undefined;
+  }).catch(function () { return undefined; });
+}
+
 // SW-T1: on a bad connection ("lie-fi": online, but packets crawl or
 // stall) a network-first fetch() could hang for minutes before it
 // failed, and only THEN fell back to the cache — the installed PWA
@@ -2298,7 +2309,7 @@ self.addEventListener("fetch", function (event) {
     // = always revalidate with the server (304s are cheap) — the
     // auto-update chain stays end-to-end fresh.
     // SW-T1: the network gets NET_TIMEOUT_MS; then the cached page.
-    event.respondWith(networkFirst(event, request, { cache: "no-cache" },
+    var viaNet = function () { return networkFirst(event, request, { cache: "no-cache" },
       function (response) {
         // Cache only REAL pages: a cached 404/502 becomes the
         // offline "truth" for that URL. OAuth redirects (?code=...)
@@ -2350,7 +2361,25 @@ self.addEventListener("fetch", function (event) {
             { status: 503, headers: { "Content-Type": "text/html; charset=utf-8" } });
         }
         return Response.error();
+      }); };
+    // SW-F1: an app frame opens from THIS release's precache at once.
+    // Network-first made every app open wait for the network: up to
+    // NET_TIMEOUT_MS on a bad connection, and when a newer release
+    // was already live the fresh page then fetched every script under
+    // its new ?v= from the network, one stalled request after another
+    // (Calendar: about 10 s of empty boxes). The precached page and
+    // its scripts are one release, so they match; a new release
+    // reaches the frame through the worker update, whose
+    // controllerchange reloads the shell. The shell page itself ("/",
+    // also ?solo= frames) and apps that are not precached stay
+    // network-first.
+    if (frame && url.pathname !== "/" && url.pathname !== "/index.html") {
+      event.respondWith(releasePage(request).then(function (hit) {
+        return hit || viaNet();
       }));
+      return;
+    }
+    event.respondWith(viaNet());
     return;
   }
 
