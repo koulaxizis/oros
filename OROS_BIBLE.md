@@ -7758,3 +7758,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Maps, Assistant, Wiki, Time, Passwords, Split, Text Tools and Pet Health Book are now in German: packs in `i18n/de/`, inline texts moved into {en, el} tables, and each page loads `../i18n.js` before its own scripts. English still fills any missing line.
 - Files: `i18n/de/**`, the 8 app folders (index.html + scripts, `time/display.html`, `maps/osm-callback.html`), `.github/i18n/inline-baseline.json`, `i18n/apps.json`.
   - Tests: 4786/4786; Chromium 360 de / el. Not tested: a German native reader's review, real phone, Safari.
+
+### 2026-10-18 — Languages L8d: the last shell texts in German, German at 100% (#528) — 3.19.00
+- The Info window, Ctrl+K previews, seasonal decorations, single apps, profiles, the offline page, Settings search and reminders from Flashcards, Water, Media Shelf and Diary now show in German, as do the shared dialogs (record packages, remote play, cardkit, designkit) and Flashcards and Word Search. German covers 32200/32200 strings and 144/144 help pages and is marked `full`.
+- Files: `translations.js`, `i18n/de/**` (new `commands` and `solo` packs), `.github/i18n/scan.js` (packs for shared root modules), `index.html` `data-app`, single-app host pages (regenerated with `tools/solo-manifests.js`), coverage files and inline baseline, one Bible sentence.
+  - Tests: 4787/4787; Chromium 360 de / el. Not tested: a reminder firing in German, the install bar, a German native reader's review, real phone, Safari.
