@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.21.00
+- Atelier: Automations. Set steps once (replace text, colours and fonts, text size, photo filter, centring, background removal, new sizes, download) or record what you do by hand, then run them on one design or many. No code, and one Undo brings everything back.
+
 ## Version 3.20.00
 - Studio: NULL Drum Machine, the first NULL JSFX instrument, plays instrument tracks: ten drum voices, a 16-step sequencer with eleven patterns, and its own pattern editor.
 

@@ -750,9 +750,9 @@ input[type="color"] { width: 44px; height: 34px; padding: 2px; border: 1px solid
 .rc-sum { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; overflow-wrap: anywhere; }
 .rc-will .hint { margin: 2px 0; }
 .rc-recbar {
-  position: fixed; left: 50%; top: calc(64px + env(safe-area-inset-top, 0px)); transform: translateX(-50%);
+  position: absolute; left: 50%; top: 8px; transform: translateX(-50%);
   z-index: 55; display: flex; align-items: center; gap: 8px;
-  max-width: calc(100vw - 24px); padding: 6px 8px 6px 12px;
+  max-width: calc(100% - 16px); padding: 6px 8px 6px 12px;
   background: var(--panel-bg); border: 1px solid var(--danger); border-radius: 999px;
   box-shadow: 0 8px 24px var(--shadow);
 }

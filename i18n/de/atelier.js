@@ -645,6 +645,7 @@ orosPack("de", "atelier", {
  "rc.deleted": "Automation gelöscht.",
  "rc.done": "Fertig: {n} Elemente in {d} Designs geändert.",
  "rc.done0": "Fertig. Es musste nichts geändert werden.",
+ "rc.done1": "Fertig: {n} Elemente in 1 Design geändert.",
  "rc.down": "Nach unten",
  "rc.dpi": "Qualität",
  "rc.dup": "Duplizieren",

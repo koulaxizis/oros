@@ -58,6 +58,12 @@ Der Streifen unter der Arbeitsfläche zeigt die Seiten deines Designs. `+` fügt
 - Wähle ein eigenes Design für jede Zeile oder ein Design mit einer Seite pro Zeile, bereit, um es mit `Herunterladen` als ein einziges PDF zu speichern.
 - Ein Name, der zu lang für sein Feld ist, bekommt eine kleinere Schrift, bis hinunter auf 60 %. Bis zu 200 Zeilen auf einmal.
 
+## Automationen
+- Eine Automation ist eine Liste von Schritten, die du einmal festlegst und auf ein oder viele Designs anwendest: Text, Farbe oder Schriftart ersetzen, Textgröße ändern, Fotofilter, auf der Seite zentrieren, Fotohintergründe entfernen, neue Größen, Herunterladen. Es gibt keinen Code, nur diese Schritte.
+- Erstelle eine unter `Automationen` auf dem Startbildschirm (`Neue Automation`), oder öffne ein Design, wähle `Mehr` › `Automation aufzeichnen`, ändere das Design von Hand und tippe auf `Fertig`: die geänderten Wörter, Farben, Schriftarten, Textgrößen und Filter sowie jedes Größe ändern, Hintergrund entfernen oder Herunterladen werden zu Schritten.
+- `Ausführen` zeigt vorher, was sich ändert: dieses Design, die mit `Auswählen` gewählten Designs (`Automation (n)`) oder alle Designs. Danach holt `Rückgängig` alle Designs zurück. Mehrere Downloads kommen als eine ZIP-Datei.
+- Automationen werden wie deine Designs synchronisiert. Ein Schritt aus einem neueren orOS bleibt erhalten und wird übersprungen, bis dieses Gerät aktualisiert ist.
+
 ## Herunterladen und teilen
 - `Herunterladen` erstellt ein PNG (normal, ×2 oder ×3, auf Wunsch mit transparentem Hintergrund), ein JPG, ein PDF zum Drucken mit 150 oder 300 dpi oder eine PowerPoint-Datei (siehe unten).
 - Im PDF sind Texte echter Text in den eingebetteten Schriften (du kannst sie markieren, durchsuchen und kopieren), und Formen, Linien und Tabellen bleiben in jeder Vergrößerung scharf. Fotos, Icons, Diagramme, Verläufe und Texteffekte, die ein PDF nicht ausdrücken kann (Leuchten, Unschärfe), werden Element für Element zu Bildern mit den gewählten 150 oder 300 dpi; ein Text mit einem Zeichen, das den Schriften fehlt (zum Beispiel einem Emoji), wird ebenfalls zum Bild. Setz ein Häkchen bei `Ganze Seiten als Bilder` für das alte PDF mit genauem Aussehen.

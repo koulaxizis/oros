@@ -50,7 +50,7 @@
       "rc.willSize": "Make {n} new designs.", "rc.willSize1": "Resize the design.", "rc.willOut": "Download the pages ({fmt}).",
       "rc.go": "Run", "rc.working": "Design {i} of {n}…", "rc.cutting": "Background {i} of {n}…", "rc.stop": "Stop",
       "rc.stopped": "Stopped. What was done stays (Undo brings it back).",
-      "rc.done": "Done: {n} elements changed in {d} designs.", "rc.done0": "Done. Nothing needed changing.",
+      "rc.done": "Done: {n} elements changed in {d} designs.", "rc.done1": "Done: {n} elements changed in 1 design.", "rc.done0": "Done. Nothing needed changing.",
       "rc.made": " {n} new designs.", "rc.fail": "Could not finish: {why}", "rc.zip": "{name}",
       "rc.recOn": "Recording. Change the design by hand, then press Stop.", "rc.recBar": "Recording",
       "rc.recStop": "Stop", "rc.recCancel": "Cancel", "rc.recNone": "Nothing to keep: change words, colours, fonts, text sizes or filters, or use Resize, Background removal or Download.",
@@ -82,7 +82,7 @@
       "rc.willSize": "Θα φτιαχτούν {n} νέα σχέδια.", "rc.willSize1": "Αλλαγή μεγέθους του σχεδίου.", "rc.willOut": "Λήψη των σελίδων ({fmt}).",
       "rc.go": "Εκτέλεση", "rc.working": "Σχέδιο {i} από {n}…", "rc.cutting": "Φόντο {i} από {n}…", "rc.stop": "Διακοπή",
       "rc.stopped": "Σταμάτησε. Ό,τι έγινε μένει (η Αναίρεση το φέρνει πίσω).",
-      "rc.done": "Έγινε: άλλαξαν {n} στοιχεία σε {d} σχέδια.", "rc.done0": "Έγινε. Δεν χρειάστηκε αλλαγή.",
+      "rc.done": "Έγινε: άλλαξαν {n} στοιχεία σε {d} σχέδια.", "rc.done1": "Έγινε: άλλαξαν {n} στοιχεία σε 1 σχέδιο.", "rc.done0": "Έγινε. Δεν χρειάστηκε αλλαγή.",
       "rc.made": " {n} νέα σχέδια.", "rc.fail": "Δεν ολοκληρώθηκε: {why}", "rc.zip": "{name}",
       "rc.recOn": "Εγγραφή. Άλλαξε το σχέδιο με το χέρι και πάτα Τέλος.", "rc.recBar": "Εγγραφή",
       "rc.recStop": "Τέλος", "rc.recCancel": "Άκυρο", "rc.recNone": "Δεν υπάρχει κάτι να κρατηθεί: άλλαξε λέξεις, χρώματα, γραμματοσειρές, μέγεθος κειμένου ή φίλτρα, ή κάνε Αλλαγή μεγέθους, Αφαίρεση φόντου ή Λήψη.",
@@ -235,7 +235,11 @@
         body.appendChild(act);
       }
       listOpen = render;
-      dlg.addEventListener("close", function () { if (listOpen === render) listOpen = null; }, { once: true });
+      dlg.addEventListener("close", function onClose() {
+        if (dlg.open) return;                     // a close queued from the dialog before
+        dlg.removeEventListener("close", onClose);
+        if (listOpen === render) listOpen = null;
+      });
       render();
     }, true);
   }
@@ -566,7 +570,12 @@
       body.appendChild(act);
     });
     var dlg = AT.$("dlg");
-    dlg.addEventListener("close", function () { ctl.abort(); }, { once: true });
+    // a close still queued from the dialog before must not stop the run
+    dlg.addEventListener("close", function onClose() {
+      if (dlg.open) return;
+      dlg.removeEventListener("close", onClose);
+      ctl.abort();
+    });
 
     function oneDoc(id, idx) {
       var src = AT.findDoc(id);
@@ -671,7 +680,7 @@
       if (!AT.doc) AT.renderHome();
       var msg = err ? t("rc.fail", { why: String(err && err.message || err).slice(0, 120) })
         : stopped ? t("rc.stopped")
-        : (changed ? t("rc.done", { n: changed, d: docsChanged }) : t("rc.done0")) + (made.length ? t("rc.made", { n: made.length }) : "");
+        : (changed ? t(docsChanged === 1 ? "rc.done1" : "rc.done", { n: changed, d: docsChanged }) : t("rc.done0")) + (made.length ? t("rc.made", { n: made.length }) : "");
       if (!snaps.length && !made.length) { AT.toast(msg); return; }
       AT.toast(msg, t("btn.undo"), function () {
         made.forEach(function (id) { AT.dropDoc(id); });
@@ -693,8 +702,9 @@
       bar.appendChild(el("span", "rc-lbl", t("rc.recBar")));
       bar.appendChild(btn("btn small", t("rc.recCancel"), function () { rec = null; showBar(false); }));
       bar.appendChild(btn("btn small primary", t("rc.recStop"), stopRecord));
-      var host = AT.$("editor") || document.body;
-      host.appendChild(bar);
+      // on top of the stage, clear of the bars; taps stay off the canvas
+      ["pointerdown", "mousedown", "touchstart"].forEach(function (ev) { bar.addEventListener(ev, function (e) { e.stopPropagation(); }); });
+      (AT.$("stage") || AT.$("editor") || document.body).appendChild(bar);
     }
     bar.hidden = !on;
   }
