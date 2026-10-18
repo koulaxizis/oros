@@ -30,6 +30,13 @@ var WEBLLM_CACHE = "oros-webllm";
 // Language packs (i18n.js, i18n/<code>/…): one copy kept across
 // releases, so a chosen language keeps working offline after an update.
 var LANG_CACHE = "oros-lang-packs";
+// The page an app frame gets offline before it was saved (fetch,
+// below). "sw.offline" is also in translations.js, so a pack language
+// reads it from its shell pack.
+var OFFLINE_T = {
+  en: { "sw.offline": "Offline — this app has not been saved for offline use yet." },
+  el: { "sw.offline": "Εκτός σύνδεσης — η εφαρμογή δεν έχει αποθηκευτεί ακόμη για χρήση χωρίς δίκτυο." }
+};
 // MAPS-TILES (Wave 5): dedicated cache for map raster tiles.
 // Deliberately OUTSIDE CACHE_VERSION — tiles must survive SW
 // updates (browsing history is expensive to rebuild). Growth is
@@ -2227,8 +2234,15 @@ self.addEventListener("fetch", function (event) {
             '<body style="margin:0;min-height:100vh;display:flex;align-items:center;' +
             'justify-content:center;text-align:center;padding:24px;box-sizing:border-box;' +
             'font-family:system-ui,sans-serif;background:#1b1a18;color:#e8eaf0;">' +
-            '<p>Offline — this app has not been saved for offline use yet.<br>' +
-            'Εκτός σύνδεσης — η εφαρμογή δεν έχει αποθηκευτεί ακόμη για χρήση χωρίς δίκτυο.</p></body>',
+            '<p id="m">' + OFFLINE_T.en["sw.offline"] + '</p>' +
+            // The person's language: English and Greek from the table, a
+            // pack language from its shell pack (kept offline in LANG_CACHE).
+            '<script>(function(){var T=' + JSON.stringify(OFFLINE_T) + ',m=document.getElementById("m"),l="en";' +
+            'try{l=localStorage.getItem("oros-lang")||"en";}catch(e){}' +
+            'if(T[l]){m.textContent=T[l]["sw.offline"];return;}' +
+            'if(!/^[a-z]{2,3}(-[A-Z]{2})?$/.test(l))return;' +
+            'window.orosPack=function(c,a,t){var v=t&&t["sw.offline"];if(typeof v==="string"&&v.trim())m.textContent=v;};' +
+            'var s=document.createElement("script");s.src="/i18n/"+l+"/shell.js";document.head.appendChild(s);})();</script></body>',
             { status: 503, headers: { "Content-Type": "text/html; charset=utf-8" } });
         }
         return Response.error();

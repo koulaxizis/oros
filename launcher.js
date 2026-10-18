@@ -442,31 +442,12 @@
   }
   function overApps(p) { return p.over === true; }
 
-  // ---------- 4. Strings (EN / EL) ----------
-  var STR = {
-    en: {
-      star: "Shortcuts", desk: "On the desktop", inDock: "In the Dock", open: "Open",
-      earlier: "Move earlier", later: "Move later", remove: "Remove from desktop",
-      removeDock: "Remove from the Dock", deskLabel: "Desktop shortcuts",
-      dock: "Dock", dockOn: "Show the Dock", dockOff: "The Dock is off.", turnOn: "Turn on",
-      size: "Size", s: "Small", m: "Medium", l: "Large",
-      magnify: "Magnify on hover", autohide: "Hide automatically", over: "Show over open apps",
-      empty: "Add apps with the ☆ next to each app above.", reveal: "Show the Dock"
-    },
-    el: {
-      star: "Συντομεύσεις", desk: "Στην επιφάνεια εργασίας", inDock: "Στο Dock", open: "Άνοιγμα",
-      earlier: "Μετακίνηση νωρίτερα", later: "Μετακίνηση αργότερα", remove: "Αφαίρεση από την επιφάνεια εργασίας",
-      removeDock: "Αφαίρεση από το Dock", deskLabel: "Συντομεύσεις επιφάνειας εργασίας",
-      dock: "Dock", dockOn: "Εμφάνιση του Dock", dockOff: "Το Dock είναι κλειστό.", turnOn: "Ενεργοποίηση",
-      size: "Μέγεθος", s: "Μικρό", m: "Μεσαίο", l: "Μεγάλο",
-      magnify: "Μεγέθυνση στο πέρασμα του ποντικιού", autohide: "Αυτόματη απόκρυψη",
-      over: "Εμφάνιση πάνω από ανοιχτές εφαρμογές",
-      empty: "Πρόσθεσε εφαρμογές με το ☆ δίπλα σε κάθε εφαρμογή παραπάνω.", reveal: "Εμφάνιση του Dock"
-    }
-  };
+  // ---------- 4. Strings ----------
+  // The shell's table (translations.js "ln.<key>"), German and other
+  // languages from the shell pack.
   function tr(k) {
-    var lang = (host && host.lang && host.lang() === "el") ? "el" : "en";
-    return STR[lang][k] || STR.en[k] || k;
+    var f = root.t, v = typeof f === "function" ? f("ln." + k) : "";
+    return v && v !== "ln." + k ? v : k;
   }
 
   // ---------- 5. Styles (injected once; skin variables only) ----------
@@ -936,7 +917,7 @@
       desk.appendChild(grid);
     }
     grid.setAttribute("aria-label", tr("deskLabel"));
-    grid.lang = (host.lang && host.lang() === "el") ? "el" : "en";     // hyphenation of long names
+    grid.lang = root.orosI18n ? root.orosI18n.lang() : ((host.lang && host.lang() === "el") ? "el" : "en");     // hyphenation of long names
     grid.textContent = "";
     ids.forEach(function (id) {
       var app = appById(id);

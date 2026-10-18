@@ -73,27 +73,16 @@
   if (typeof module !== "undefined" && module.exports) module.exports = model;
   if (!root || !root.document) return;
 
-  // ---------- 2. Strings (EN / EL) ----------
-  var STR = {
-    en: {
-      title: "What will you do with orOS?",
-      intro: "Choose what your menu shows. The other apps stay in orOS: search finds them, and Settings › Menu brings them back.",
-      introSettings: "Choose what your menu shows. Hidden apps still open from search, the desktop and the Dock.",
-      all: "Everything", home: "Home", work: "Work / Business", school: "School", create: "Creating", games: "Games",
-      profiles: "Profiles", apps: "Apps in the menu", count: "{n} of {total} apps in the menu",
-      cont: "Continue", save: "Save", cancel: "Cancel", close: "Close",
-      already: "I already use orOS on another device"
-    },
-    el: {
-      title: "Τι θα κάνεις με το orOS;",
-      intro: "Διάλεξε τι δείχνει το μενού σου. Οι άλλες εφαρμογές μένουν στο orOS: τις βρίσκει η αναζήτηση και τις ξαναφέρνεις από τις Ρυθμίσεις › Μενού.",
-      introSettings: "Διάλεξε τι δείχνει το μενού σου. Οι κρυφές εφαρμογές ανοίγουν και πάλι από την αναζήτηση, την επιφάνεια εργασίας και το Dock.",
-      all: "Όλα διαθέσιμα", home: "Σπίτι", work: "Δουλειά / Επιχείρηση", school: "Σχολείο", create: "Δημιουργία", games: "Παιχνίδια",
-      profiles: "Προφίλ", apps: "Εφαρμογές στο μενού", count: "{n} από {total} εφαρμογές στο μενού",
-      cont: "Συνέχεια", save: "Αποθήκευση", cancel: "Ακύρωση", close: "Κλείσιμο",
-      already: "Χρησιμοποιώ ήδη το orOS σε άλλη συσκευή"
-    }
-  };
+  // ---------- 2. Strings ----------
+  // The shell's table (translations.js "pf.<key>"), German and other
+  // languages from the shell pack.
+  var STR_KEYS = ["title", "intro", "introSettings", "all", "home", "work", "school", "create", "games", "profiles", "apps", "count", "cont", "save", "cancel", "close", "already"];
+  function strings() {
+    var L = {}, f = root.t;
+    STR_KEYS.forEach(function (k) { var v = typeof f === "function" ? f("pf." + k) : ""; L[k] = v && v !== "pf." + k ? v : k; });
+    return L;
+  }
+
 
   // ---------- 3. Styles (injected once; skin variables only) ----------
   var CSS = [
@@ -152,7 +141,7 @@
   function show(opts) {
     if (open) return false;
     var doc = root.document;
-    var L = STR[opts.lang === "el" ? "el" : "en"];
+    var L = strings();
     var first = opts.mode !== "settings";
     var apps = Array.isArray(opts.apps) ? opts.apps : [];
     var ids = apps.map(function (a) { return a.id; });
@@ -214,7 +203,7 @@
       byCat[a.cat].apps.push(a);
     });
     // Categories in the order of the name the user reads, like the menu.
-    cats.sort(function (a, b) { return String(byCat[a].name).localeCompare(String(byCat[b].name), opts.lang === "el" ? "el" : "en"); });
+    cats.sort(function (a, b) { return String(byCat[a].name).localeCompare(String(byCat[b].name), root.orosI18n ? root.orosI18n.locale() : (opts.lang === "el" ? "el" : "en")); });
     cats.forEach(function (c) {
       list.appendChild(el("h3", "pf-cat", byCat[c].name));
       var grid = el("div", "pf-apps");
