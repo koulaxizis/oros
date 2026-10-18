@@ -26,71 +26,74 @@
   var H = window.__orosMapsHost;
   if (!O || !P || !ED || !A || !H || !H.map) return;
   var map = H.map;
-  var LANG = H.lang === "el" ? "el" : "en";
+  var LANG = window.orosI18n ? window.orosI18n.lang() : (H.lang === "el" ? "el" : "en");
   var OVERPASS = "https://overpass-api.de/api/interpreter";
   var MIN_ZOOM = 18, FRESH_MS = 30 * 60 * 1000;
 
   var STR = {
     en: {
-      "title": "Entrances and flats",
-      "hint": "Tap on a building's outline to add an entrance, or tap an entrance to change it.",
-      "zoomin": "Zoom in closer to see the buildings and their entrances.", "zoomgo": "Zoom in",
-      "loading": "Loading buildings…", "loadfail": "Could not load the area. Try again later.",
-      "count": "{b} buildings, {e} entrances here",
-      "miss": "{n} entrances without flat numbers or letter",
-      "pending": "{n} changes waiting to be uploaded",
-      "upload": "Upload {n}", "other": "From another device (it uploads them)",
-      "new": "New entrance", "edit": "Entrance",
-      "kind": "Kind", "ref": "Letter or number on the door", "ref.ph": "e.g. B",
-      "flats": "Flat numbers", "flats.ph": "e.g. 1-8 or 5;6;7",
-      "wheel": "Step-free access", "wheel.unknown": "Don't know",
-      "save": "Save", "cancel": "Cancel", "del": "Remove", "back": "Back", "close": "Close",
-      "bad.ref": "The letter can be up to 4 letters or digits.",
-      "bad.flats": "Flat numbers: numbers or letters, with - for a range and ; between them.",
-      "nochange": "Nothing changed.",
-      "saved": "Saved. Upload when you're done.",
-      "far": "Tap closer to a building's outline.",
-      "corner": "On the building's corner",
-      "up.title": "Upload to OpenStreetMap", "up.comment": "Comment",
-      "up.count": "{n} changes from this device will be published under your OpenStreetMap name.",
-      "up.go": "Upload", "up.ok": "Uploaded {n} changes to OpenStreetMap",
-      "up.fail": "Upload failed: {e}", "up.gone": "It no longer exists on OpenStreetMap",
-      "up.moved": "The building changed meanwhile. Remove it and put the entrance again.",
-      "up.conflict": "Someone else changed these meanwhile, their value was kept: {k}",
-      "up.signin": "Sign in with OpenStreetMap to upload", "up.offline": "You are offline. Your changes are kept.",
-      "leave": "{n} changes are waiting to be uploaded"
+      "ent.title": "Entrances and flats",
+      "ent.hint": "Tap on a building's outline to add an entrance, or tap an entrance to change it.",
+      "ent.zoomin": "Zoom in closer to see the buildings and their entrances.", "ent.zoomgo": "Zoom in",
+      "ent.loading": "Loading buildings…", "ent.loadfail": "Could not load the area. Try again later.",
+      "ent.count": "{b} buildings, {e} entrances here",
+      "ent.miss": "{n} entrances without flat numbers or letter",
+      "ent.pending": "{n} changes waiting to be uploaded",
+      "ent.upload": "Upload {n}", "ent.other": "From another device (it uploads them)",
+      "ent.new": "New entrance", "ent.edit": "Entrance",
+      "ent.kind": "Kind", "ent.ref": "Letter or number on the door", "ent.ref.ph": "e.g. B",
+      "ent.flats": "Flat numbers", "ent.flats.ph": "e.g. 1-8 or 5;6;7",
+      "ent.wheel": "Step-free access", "ent.wheel.unknown": "Don't know",
+      "ent.save": "Save", "ent.cancel": "Cancel", "ent.del": "Remove", "ent.back": "Back", "ent.close": "Close",
+      "ent.bad.ref": "The letter can be up to 4 letters or digits.",
+      "ent.bad.flats": "Flat numbers: numbers or letters, with - for a range and ; between them.",
+      "ent.nochange": "Nothing changed.",
+      "ent.saved": "Saved. Upload when you're done.",
+      "ent.far": "Tap closer to a building's outline.",
+      "ent.corner": "On the building's corner",
+      "ent.up.title": "Upload to OpenStreetMap", "ent.up.comment": "Comment",
+      "ent.up.count": "{n} changes from this device will be published under your OpenStreetMap name.",
+      "ent.up.go": "Upload", "ent.up.ok": "Uploaded {n} changes to OpenStreetMap",
+      "ent.up.fail": "Upload failed: {e}", "ent.up.gone": "It no longer exists on OpenStreetMap",
+      "ent.up.moved": "The building changed meanwhile. Remove it and put the entrance again.",
+      "ent.up.conflict": "Someone else changed these meanwhile, their value was kept: {k}",
+      "ent.up.signin": "Sign in with OpenStreetMap to upload", "ent.up.offline": "You are offline. Your changes are kept.",
+      "ent.leave": "{n} changes are waiting to be uploaded"
     },
     el: {
-      "title": "Είσοδοι και διαμερίσματα",
-      "hint": "Πάτα στο περίγραμμα ενός κτιρίου για να προσθέσεις είσοδο, ή πάτα μια είσοδο για να την αλλάξεις.",
-      "zoomin": "Πλησίασε περισσότερο για να δεις τα κτίρια και τις εισόδους τους.", "zoomgo": "Μεγέθυνση",
-      "loading": "Φόρτωση κτιρίων…", "loadfail": "Δεν φορτώθηκε η περιοχή. Δοκίμασε ξανά αργότερα.",
-      "count": "{b} κτίρια, {e} είσοδοι εδώ",
-      "miss": "{n} είσοδοι χωρίς αριθμούς διαμερισμάτων ή γράμμα",
-      "pending": "{n} αλλαγές περιμένουν αποστολή",
-      "upload": "Αποστολή {n}", "other": "Από άλλη συσκευή (εκείνη τις στέλνει)",
-      "new": "Νέα είσοδος", "edit": "Είσοδος",
-      "kind": "Είδος", "ref": "Γράμμα ή αριθμός στην πόρτα", "ref.ph": "π.χ. Β",
-      "flats": "Αριθμοί διαμερισμάτων", "flats.ph": "π.χ. 1-8 ή 5;6;7",
-      "wheel": "Πρόσβαση χωρίς σκαλιά", "wheel.unknown": "Δεν ξέρω",
-      "save": "Αποθήκευση", "cancel": "Άκυρο", "del": "Αφαίρεση", "back": "Πίσω", "close": "Κλείσιμο",
-      "bad.ref": "Το γράμμα μπορεί να έχει έως 4 γράμματα ή ψηφία.",
-      "bad.flats": "Αριθμοί διαμερισμάτων: αριθμοί ή γράμματα, με - για εύρος και ; ανάμεσα.",
-      "nochange": "Δεν άλλαξε τίποτα.",
-      "saved": "Αποθηκεύτηκε. Στείλ' το όταν τελειώσεις.",
-      "far": "Πάτα πιο κοντά στο περίγραμμα ενός κτιρίου.",
-      "corner": "Στη γωνία του κτιρίου",
-      "up.title": "Αποστολή στο OpenStreetMap", "up.comment": "Σχόλιο",
-      "up.count": "{n} αλλαγές από αυτή τη συσκευή θα δημοσιευτούν με το όνομά σου στο OpenStreetMap.",
-      "up.go": "Αποστολή", "up.ok": "Στάλθηκαν {n} αλλαγές στο OpenStreetMap",
-      "up.fail": "Η αποστολή απέτυχε: {e}", "up.gone": "Δεν υπάρχει πια στο OpenStreetMap",
-      "up.moved": "Το κτίριο άλλαξε στο μεταξύ. Αφαίρεσέ την και βάλε ξανά την είσοδο.",
-      "up.conflict": "Κάποιος άλλος τα άλλαξε στο μεταξύ, κρατήθηκε η δική του τιμή: {k}",
-      "up.signin": "Συνδέσου με το OpenStreetMap για αποστολή", "up.offline": "Είσαι εκτός σύνδεσης. Οι αλλαγές σου κρατιούνται.",
-      "leave": "{n} αλλαγές περιμένουν αποστολή"
+      "ent.title": "Είσοδοι και διαμερίσματα",
+      "ent.hint": "Πάτα στο περίγραμμα ενός κτιρίου για να προσθέσεις είσοδο, ή πάτα μια είσοδο για να την αλλάξεις.",
+      "ent.zoomin": "Πλησίασε περισσότερο για να δεις τα κτίρια και τις εισόδους τους.", "ent.zoomgo": "Μεγέθυνση",
+      "ent.loading": "Φόρτωση κτιρίων…", "ent.loadfail": "Δεν φορτώθηκε η περιοχή. Δοκίμασε ξανά αργότερα.",
+      "ent.count": "{b} κτίρια, {e} είσοδοι εδώ",
+      "ent.miss": "{n} είσοδοι χωρίς αριθμούς διαμερισμάτων ή γράμμα",
+      "ent.pending": "{n} αλλαγές περιμένουν αποστολή",
+      "ent.upload": "Αποστολή {n}", "ent.other": "Από άλλη συσκευή (εκείνη τις στέλνει)",
+      "ent.new": "Νέα είσοδος", "ent.edit": "Είσοδος",
+      "ent.kind": "Είδος", "ent.ref": "Γράμμα ή αριθμός στην πόρτα", "ent.ref.ph": "π.χ. Β",
+      "ent.flats": "Αριθμοί διαμερισμάτων", "ent.flats.ph": "π.χ. 1-8 ή 5;6;7",
+      "ent.wheel": "Πρόσβαση χωρίς σκαλιά", "ent.wheel.unknown": "Δεν ξέρω",
+      "ent.save": "Αποθήκευση", "ent.cancel": "Άκυρο", "ent.del": "Αφαίρεση", "ent.back": "Πίσω", "ent.close": "Κλείσιμο",
+      "ent.bad.ref": "Το γράμμα μπορεί να έχει έως 4 γράμματα ή ψηφία.",
+      "ent.bad.flats": "Αριθμοί διαμερισμάτων: αριθμοί ή γράμματα, με - για εύρος και ; ανάμεσα.",
+      "ent.nochange": "Δεν άλλαξε τίποτα.",
+      "ent.saved": "Αποθηκεύτηκε. Στείλ' το όταν τελειώσεις.",
+      "ent.far": "Πάτα πιο κοντά στο περίγραμμα ενός κτιρίου.",
+      "ent.corner": "Στη γωνία του κτιρίου",
+      "ent.up.title": "Αποστολή στο OpenStreetMap", "ent.up.comment": "Σχόλιο",
+      "ent.up.count": "{n} αλλαγές από αυτή τη συσκευή θα δημοσιευτούν με το όνομά σου στο OpenStreetMap.",
+      "ent.up.go": "Αποστολή", "ent.up.ok": "Στάλθηκαν {n} αλλαγές στο OpenStreetMap",
+      "ent.up.fail": "Η αποστολή απέτυχε: {e}", "ent.up.gone": "Δεν υπάρχει πια στο OpenStreetMap",
+      "ent.up.moved": "Το κτίριο άλλαξε στο μεταξύ. Αφαίρεσέ την και βάλε ξανά την είσοδο.",
+      "ent.up.conflict": "Κάποιος άλλος τα άλλαξε στο μεταξύ, κρατήθηκε η δική του τιμή: {k}",
+      "ent.up.signin": "Συνδέσου με το OpenStreetMap για αποστολή", "ent.up.offline": "Είσαι εκτός σύνδεσης. Οι αλλαγές σου κρατιούνται.",
+      "ent.leave": "{n} αλλαγές περιμένουν αποστολή"
     }
   };
+  if (window.orosI18n) window.orosI18n.table(STR, "maps", LANG);
+  function loc() { return window.orosI18n ? window.orosI18n.locale(LANG) : (loc()); }
   function t(k, vars) {
+    k = "ent." + k;
     var s = (STR[LANG] && STR[LANG][k]) || STR.en[k] || k;
     if (vars) Object.keys(vars).forEach(function (v) { s = s.split("{" + v + "}").join(String(vars[v])); });
     return s;
@@ -109,7 +112,7 @@
   }
   function toast(s) { (H.toast || H.localToast)(s); }
   function online() { return navigator.onLine !== false; }
-  function txt(o) { return LANG === "el" ? o.el : o.en; }
+  function txt(o) { return o[LANG] || o.en; }
 
   // ---------- synced slice "mapsentr" ----------
   var DATA_KEY = "oros-maps-entr-data";

@@ -18,6 +18,7 @@
 // API (window.OrosPetcareCore):
 //   SPECIES, SPECIES_IDS, CARE_KINDS, REC_KINDS, DEWORM_TYPES,
 //   VACCINES, ID_RE, DATA_VER, limits
+//   NAMES { en, el } species / vaccine names, label(key, lang)
 //   ymdOf, isYmd, isBirth, dayNum, ymdFromDay, addDays, cleanText
 //   normPet(x), normRec(x), merge(A, B, nowMs), touch(pet, before, nowMs)
 //   age(birth, today) → { y, mo, approx } | null
@@ -96,16 +97,48 @@
   var PHOTO_RE = /^data:image\/jpeg;base64,[A-Za-z0-9+\/]+={0,2}$/;
   var DAY_MS = 86400000;
 
+  // Names of species and ready vaccines: pack "petcare" (orosI18n),
+  // read by the app and package.js through label(key, lang). SPECIES / VACCINES keep .en / .el for older code.
+  var NAMES = {
+    en: {
+      "species.dog": "Dog", "species.cat": "Cat", "species.bird": "Bird", "species.rabbit": "Rabbit",
+      "species.rodent": "Rodent", "species.fish": "Fish", "species.reptile": "Reptile", "species.horse": "Horse",
+      "species.other": "Other",
+      "vaccine.dhpp": "Combination (DHPPi/L)", "vaccine.rabies": "Rabies", "vaccine.leish": "Leishmaniasis",
+      "vaccine.kennel": "Kennel cough", "vaccine.rcp": "Feline combination (RCP)", "vaccine.felv": "Feline leukaemia (FeLV)",
+      "vaccine.myxo": "Myxomatosis + RHD", "vaccine.flu": "Equine influenza", "vaccine.tetanus": "Tetanus"
+    },
+    el: {
+      "species.dog": "Σκύλος", "species.cat": "Γάτα", "species.bird": "Πουλί", "species.rabbit": "Κουνέλι",
+      "species.rodent": "Τρωκτικό", "species.fish": "Ψάρι", "species.reptile": "Ερπετό", "species.horse": "Άλογο",
+      "species.other": "Άλλο",
+      "vaccine.dhpp": "Πολυδύναμο (DHPPi/L)", "vaccine.rabies": "Λύσσα", "vaccine.leish": "Λεϊσμανίαση",
+      "vaccine.kennel": "Βήχας της κυνοτροφείου", "vaccine.rcp": "Τριδύναμο γάτας (RCP)", "vaccine.felv": "Λευχαιμία γάτας (FeLV)",
+      "vaccine.myxo": "Μυξωμάτωση + αιμορραγική νόσος (RHD)", "vaccine.flu": "Γρίπη των ίππων", "vaccine.tetanus": "Τέτανος"
+    }
+  };
+  // lang: "en", "el" or a pack language (window.orosI18n, when loaded;
+  // in Node or without the pack: English)
+  function label(key, lang) {
+    var tb = NAMES[lang];
+    if (!tb && lang && typeof window !== "undefined" && window.orosI18n && window.orosI18n.known(lang)) {
+      tb = window.orosI18n.table(NAMES, "petcare", lang);
+    }
+    tb = tb || NAMES.en;
+    return tb[key] !== undefined ? tb[key] : (NAMES.en[key] !== undefined ? NAMES.en[key] : key);
+  }
+  function named(o, key) { o.en = NAMES.en[key]; o.el = NAMES.el[key]; return o; }
+
   var SPECIES = {
-    dog:     { em: "🐕", en: "Dog",     el: "Σκύλος" },
-    cat:     { em: "🐈", en: "Cat",     el: "Γάτα" },
-    bird:    { em: "🐦", en: "Bird",    el: "Πουλί" },
-    rabbit:  { em: "🐇", en: "Rabbit",  el: "Κουνέλι" },
-    rodent:  { em: "🐹", en: "Rodent",  el: "Τρωκτικό" },
-    fish:    { em: "🐟", en: "Fish",    el: "Ψάρι" },
-    reptile: { em: "🦎", en: "Reptile", el: "Ερπετό" },
-    horse:   { em: "🐴", en: "Horse",   el: "Άλογο" },
-    other:   { em: "🐾", en: "Other",   el: "Άλλο" }
+    dog:     named({ em: "🐕" }, "species.dog"),
+    cat:     named({ em: "🐈" }, "species.cat"),
+    bird:    named({ em: "🐦" }, "species.bird"),
+    rabbit:  named({ em: "🐇" }, "species.rabbit"),
+    rodent:  named({ em: "🐹" }, "species.rodent"),
+    fish:    named({ em: "🐟" }, "species.fish"),
+    reptile: named({ em: "🦎" }, "species.reptile"),
+    horse:   named({ em: "🐴" }, "species.horse"),
+    other:   named({ em: "🐾" }, "species.other")
   };
   var SPECIES_IDS = ["dog", "cat", "bird", "rabbit", "rodent", "fish", "reptile", "horse", "other"];
   var REC_KINDS = ["vacc", "deworm", "visit", "med", "weight", "care", "food"];
@@ -117,22 +150,22 @@
   // gap to the next dose; the vet's word wins.
   var VACCINES = {
     dog: [
-      { id: "dhpp",   days: 365, en: "Combination (DHPPi/L)", el: "Πολυδύναμο (DHPPi/L)" },
-      { id: "rabies", days: 365, en: "Rabies", el: "Λύσσα" },
-      { id: "leish",  days: 365, en: "Leishmaniasis", el: "Λεϊσμανίαση" },
-      { id: "kennel", days: 365, en: "Kennel cough", el: "Βήχας της κυνοτροφείου" }
+      named({ id: "dhpp",   days: 365 }, "vaccine.dhpp"),
+      named({ id: "rabies", days: 365 }, "vaccine.rabies"),
+      named({ id: "leish",  days: 365 }, "vaccine.leish"),
+      named({ id: "kennel", days: 365 }, "vaccine.kennel")
     ],
     cat: [
-      { id: "rcp",    days: 365, en: "Feline combination (RCP)", el: "Τριδύναμο γάτας (RCP)" },
-      { id: "felv",   days: 365, en: "Feline leukaemia (FeLV)", el: "Λευχαιμία γάτας (FeLV)" },
-      { id: "rabies", days: 365, en: "Rabies", el: "Λύσσα" }
+      named({ id: "rcp",    days: 365 }, "vaccine.rcp"),
+      named({ id: "felv",   days: 365 }, "vaccine.felv"),
+      named({ id: "rabies", days: 365 }, "vaccine.rabies")
     ],
     rabbit: [
-      { id: "myxo",   days: 365, en: "Myxomatosis + RHD", el: "Μυξωμάτωση + αιμορραγική νόσος (RHD)" }
+      named({ id: "myxo",   days: 365 }, "vaccine.myxo")
     ],
     horse: [
-      { id: "flu",    days: 365, en: "Equine influenza", el: "Γρίπη των ίππων" },
-      { id: "tetanus", days: 730, en: "Tetanus", el: "Τέτανος" }
+      named({ id: "flu",    days: 365 }, "vaccine.flu"),
+      named({ id: "tetanus", days: 730 }, "vaccine.tetanus")
     ]
   };
   // Field groups of a pet, merged one by one (the newer group wins).
@@ -707,7 +740,7 @@
     NOTES_LEN: NOTES_LEN, REC_NOTES: REC_NOTES, PHONE_LEN: PHONE_LEN,
     MAX_PETS: MAX_PETS, MAX_RECS: MAX_RECS, TOMB_DAYS: TOMB_DAYS,
     PHOTO_MAX: PHOTO_MAX, PHOTO_BUDGET: PHOTO_BUDGET, PHOTO_RE: PHOTO_RE, FOOD_LEAD: FOOD_LEAD,
-    ID_RE: ID_RE, SPECIES: SPECIES, SPECIES_IDS: SPECIES_IDS, REC_KINDS: REC_KINDS,
+    ID_RE: ID_RE, NAMES: NAMES, label: label, SPECIES: SPECIES, SPECIES_IDS: SPECIES_IDS, REC_KINDS: REC_KINDS,
     CARE_KINDS: CARE_KINDS, DEWORM_TYPES: DEWORM_TYPES, DEWORM_DAYS: DEWORM_DAYS, VACCINES: VACCINES,
     ymdOf: ymdOf, isYmd: isYmd, isBirth: isBirth, dayNum: dayNum, ymdFromDay: ymdFromDay, addDays: addDays,
     cleanText: cleanText, cleanPhone: cleanPhone, cleanCode: cleanCode,

@@ -300,6 +300,7 @@
   }
 
   // Keyboard rows (and well-known column walks), Latin and Greek.
+  // i18n-inline-ok: the Greek keyboard rows below are strength-check data (no UI text in this file)
   var KEY_ROWS = [
     "`1234567890-=", "~!@#$%^&*()_+", "qwertyuiop[]\\", "asdfghjkl;'", "zxcvbnm,./",
     "1qaz2wsx3edc4rfv5tgb6yhn7ujm8ik,9ol.0p;/", "qazwsxedcrfvtgbyhnujmikolp",

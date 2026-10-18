@@ -21,54 +21,57 @@
   var PKG = window.OrosMapsPackage;
   var H = window.__orosMapsHost;
   if (!PKG || !H || !H.map) return;
-  var LANG = H.lang === "el" ? "el" : "en";
+  var LANG = window.orosI18n ? window.orosI18n.lang() : (H.lang === "el" ? "el" : "en");
   var MIME = "application/x-oros-map";
 
   var STR = {
     en: {
-      "btn": "orOS file",
-      "title": "orOS file (.orosmap)",
-      "intro": "Save the lists and tracks you pick as one file, to keep or to share. Open it with Import.",
-      "name": "Name", "def": "My places and tracks",
-      "places": "Saved places", "tracks": "My tracks", "all": "All",
-      "none": "No group", "count1": "1 place", "count": "{n} places",
-      "notracks": "No tracks yet.", "noplaces": "No saved places yet.",
-      "save": "Save", "busy": "Saving…", "cancel": "Cancel",
-      "empty": "Tick at least one list or track.",
-      "missing": "Not on this device yet, so left out: {n}",
-      "folder": "Unzipped orOS folder…",
-      "done": "Opened. Tracks: {t}, places: {p}",
-      "nothing": "Nothing new in this file: you have all of it already.",
-      "undo": "Undo", "undone": "Taken out again",
-      "bad": "This orOS file could not be opened.",
-      "newer": "This file was made by a newer orOS. Update orOS to open it.",
-      "fail": "The orOS file could not be made.",
-      "nodlg": "Saving files is not available here.",
-      "nosave": "Could not save the tracks."
+      "pkg.btn": "orOS file",
+      "pkg.title": "orOS file (.orosmap)",
+      "pkg.intro": "Save the lists and tracks you pick as one file, to keep or to share. Open it with Import.",
+      "pkg.name": "Name", "pkg.def": "My places and tracks",
+      "pkg.places": "Saved places", "pkg.tracks": "My tracks", "pkg.all": "All",
+      "pkg.none": "No group", "pkg.count1": "1 place", "pkg.count": "{n} places",
+      "pkg.notracks": "No tracks yet.", "pkg.noplaces": "No saved places yet.",
+      "pkg.save": "Save", "pkg.busy": "Saving…", "pkg.cancel": "Cancel",
+      "pkg.empty": "Tick at least one list or track.",
+      "pkg.missing": "Not on this device yet, so left out: {n}",
+      "pkg.folder": "Unzipped orOS folder…",
+      "pkg.done": "Opened. Tracks: {t}, places: {p}",
+      "pkg.nothing": "Nothing new in this file: you have all of it already.",
+      "pkg.undo": "Undo", "pkg.undone": "Taken out again",
+      "pkg.bad": "This orOS file could not be opened.",
+      "pkg.newer": "This file was made by a newer orOS. Update orOS to open it.",
+      "pkg.fail": "The orOS file could not be made.",
+      "pkg.nodlg": "Saving files is not available here.",
+      "pkg.nosave": "Could not save the tracks."
     },
     el: {
-      "btn": "Αρχείο orOS",
-      "title": "Αρχείο orOS (.orosmap)",
-      "intro": "Σώσε τις λίστες και τις διαδρομές που διαλέγεις σε ένα αρχείο, για να το κρατήσεις ή να το μοιραστείς. Το ανοίγεις με την Εισαγωγή.",
-      "name": "Όνομα", "def": "Οι τοποθεσίες και οι διαδρομές μου",
-      "places": "Αποθηκευμένες τοποθεσίες", "tracks": "Οι διαδρομές μου", "all": "Όλες",
-      "none": "Χωρίς ομάδα", "count1": "1 τοποθεσία", "count": "{n} τοποθεσίες",
-      "notracks": "Δεν υπάρχουν διαδρομές ακόμα.", "noplaces": "Δεν υπάρχουν αποθηκευμένες τοποθεσίες ακόμα.",
-      "save": "Αποθήκευση", "busy": "Γίνεται αποθήκευση…", "cancel": "Άκυρο",
-      "empty": "Διάλεξε τουλάχιστον μία λίστα ή διαδρομή.",
-      "missing": "Δεν είναι ακόμα σε αυτή τη συσκευή, οπότε παραλείπονται: {n}",
-      "folder": "Αποσυμπιεσμένος φάκελος orOS…",
-      "done": "Άνοιξε. Διαδρομές: {t}, τοποθεσίες: {p}",
-      "nothing": "Τίποτα νέο σε αυτό το αρχείο: τα έχεις ήδη όλα.",
-      "undo": "Αναίρεση", "undone": "Αφαιρέθηκαν ξανά",
-      "bad": "Δεν ήταν δυνατό να ανοίξει αυτό το αρχείο orOS.",
-      "newer": "Το αρχείο φτιάχτηκε από νεότερο orOS. Ενημέρωσε το orOS για να το ανοίξεις.",
-      "fail": "Δεν ήταν δυνατό να φτιαχτεί το αρχείο orOS.",
-      "nodlg": "Η αποθήκευση αρχείων δεν είναι διαθέσιμη εδώ.",
-      "nosave": "Οι διαδρομές δεν αποθηκεύτηκαν."
+      "pkg.btn": "Αρχείο orOS",
+      "pkg.title": "Αρχείο orOS (.orosmap)",
+      "pkg.intro": "Σώσε τις λίστες και τις διαδρομές που διαλέγεις σε ένα αρχείο, για να το κρατήσεις ή να το μοιραστείς. Το ανοίγεις με την Εισαγωγή.",
+      "pkg.name": "Όνομα", "pkg.def": "Οι τοποθεσίες και οι διαδρομές μου",
+      "pkg.places": "Αποθηκευμένες τοποθεσίες", "pkg.tracks": "Οι διαδρομές μου", "pkg.all": "Όλες",
+      "pkg.none": "Χωρίς ομάδα", "pkg.count1": "1 τοποθεσία", "pkg.count": "{n} τοποθεσίες",
+      "pkg.notracks": "Δεν υπάρχουν διαδρομές ακόμα.", "pkg.noplaces": "Δεν υπάρχουν αποθηκευμένες τοποθεσίες ακόμα.",
+      "pkg.save": "Αποθήκευση", "pkg.busy": "Γίνεται αποθήκευση…", "pkg.cancel": "Άκυρο",
+      "pkg.empty": "Διάλεξε τουλάχιστον μία λίστα ή διαδρομή.",
+      "pkg.missing": "Δεν είναι ακόμα σε αυτή τη συσκευή, οπότε παραλείπονται: {n}",
+      "pkg.folder": "Αποσυμπιεσμένος φάκελος orOS…",
+      "pkg.done": "Άνοιξε. Διαδρομές: {t}, τοποθεσίες: {p}",
+      "pkg.nothing": "Τίποτα νέο σε αυτό το αρχείο: τα έχεις ήδη όλα.",
+      "pkg.undo": "Αναίρεση", "pkg.undone": "Αφαιρέθηκαν ξανά",
+      "pkg.bad": "Δεν ήταν δυνατό να ανοίξει αυτό το αρχείο orOS.",
+      "pkg.newer": "Το αρχείο φτιάχτηκε από νεότερο orOS. Ενημέρωσε το orOS για να το ανοίξεις.",
+      "pkg.fail": "Δεν ήταν δυνατό να φτιαχτεί το αρχείο orOS.",
+      "pkg.nodlg": "Η αποθήκευση αρχείων δεν είναι διαθέσιμη εδώ.",
+      "pkg.nosave": "Οι διαδρομές δεν αποθηκεύτηκαν."
     }
   };
+  if (window.orosI18n) window.orosI18n.table(STR, "maps", LANG);
+  function loc() { return window.orosI18n ? window.orosI18n.locale(LANG) : (loc()); }
   function t(k, vars) {
+    k = "pkg." + k;
     var s = STR[LANG][k] !== undefined ? STR[LANG][k] : STR.en[k];
     if (s === undefined) s = k;
     if (vars) Object.keys(vars).forEach(function (v) { s = s.split("{" + v + "}").join(String(vars[v])); });

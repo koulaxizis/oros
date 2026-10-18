@@ -23,6 +23,100 @@
   var P = root && root.OrosMapsPoi ? root.OrosMapsPoi :
     (typeof require === "function" ? require("./poi-core.js") : null);
 
+  // ---------- texts ----------
+  // ov.<overlay>.title / .q / .lg.<legend>, ov.lit.<option>, ov.sw.<option>.
+  // Other languages: the "maps" pack.
+  var STR = {
+    en: {
+      "ov.lit.title": "Street lights",
+      "ov.lit.q": "Is {name} lit at night?",
+      "ov.lit.lg.yes": "Lit",
+      "ov.lit.lg.no": "Not lit",
+      "ov.lit.lg.miss": "Not known yet",
+      "ov.surface.title": "Surface",
+      "ov.surface.q": "What is the surface of {name}?",
+      "ov.surface.lg.paved": "Asphalt, concrete",
+      "ov.surface.lg.stones": "Paving stones, cobbles",
+      "ov.surface.lg.gravel": "Gravel",
+      "ov.surface.lg.soft": "Ground, grass, sand",
+      "ov.surface.lg.other": "Something else",
+      "ov.surface.lg.miss": "Not known yet",
+      "ov.sidewalk.title": "Sidewalks",
+      "ov.sidewalk.q": "Where does {name} have a sidewalk?",
+      "ov.sidewalk.lg.both": "Both sides",
+      "ov.sidewalk.lg.one": "One side",
+      "ov.sidewalk.lg.sep": "Separate path",
+      "ov.sidewalk.lg.none": "No sidewalk",
+      "ov.sidewalk.lg.miss": "Not known yet",
+      "ov.address.title": "Addresses",
+      "ov.address.q": "What is the house number of this building?",
+      "ov.address.lg.num": "Has a number",
+      "ov.address.lg.nonum": "No number or a house name",
+      "ov.address.lg.miss": "Not known yet",
+      "ov.building.title": "Buildings",
+      "ov.building.q": "Floors and kind of this building",
+      "ov.building.lg.num": "Floors and kind known",
+      "ov.building.lg.yes": "One of them known",
+      "ov.building.lg.miss": "Not known yet",
+      "ov.lit.yes": "Yes, it has street lights",
+      "ov.lit.24/7": "Lit day and night (tunnel)",
+      "ov.lit.no": "No",
+      "ov.sw.both": "On both sides",
+      "ov.sw.left": "Only on the left of the arrows",
+      "ov.sw.right": "Only on the right of the arrows",
+      "ov.sw.separate": "Drawn as a separate path",
+      "ov.sw.no": "No sidewalk"
+    },
+    el: {
+      "ov.lit.title": "Φωτισμός δρόμων",
+      "ov.lit.q": "Φωτίζεται τη νύχτα: {name};",
+      "ov.lit.lg.yes": "Φωτίζεται",
+      "ov.lit.lg.no": "Δεν φωτίζεται",
+      "ov.lit.lg.miss": "Άγνωστο ακόμα",
+      "ov.surface.title": "Επιφάνεια",
+      "ov.surface.q": "Τι επιφάνεια έχει: {name};",
+      "ov.surface.lg.paved": "Άσφαλτος, μπετόν",
+      "ov.surface.lg.stones": "Πλάκες, καλντερίμι",
+      "ov.surface.lg.gravel": "Χαλίκι",
+      "ov.surface.lg.soft": "Χώμα, χορτάρι, άμμος",
+      "ov.surface.lg.other": "Κάτι άλλο",
+      "ov.surface.lg.miss": "Άγνωστο ακόμα",
+      "ov.sidewalk.title": "Πεζοδρόμια",
+      "ov.sidewalk.q": "Πού έχει πεζοδρόμιο: {name};",
+      "ov.sidewalk.lg.both": "Και οι δύο πλευρές",
+      "ov.sidewalk.lg.one": "Μία πλευρά",
+      "ov.sidewalk.lg.sep": "Ξεχωριστό μονοπάτι",
+      "ov.sidewalk.lg.none": "Χωρίς πεζοδρόμιο",
+      "ov.sidewalk.lg.miss": "Άγνωστο ακόμα",
+      "ov.address.title": "Διευθύνσεις",
+      "ov.address.q": "Τι αριθμό έχει αυτό το κτίριο;",
+      "ov.address.lg.num": "Έχει αριθμό",
+      "ov.address.lg.nonum": "Χωρίς αριθμό ή με όνομα",
+      "ov.address.lg.miss": "Άγνωστο ακόμα",
+      "ov.building.title": "Κτίρια",
+      "ov.building.q": "Όροφοι και είδος του κτιρίου",
+      "ov.building.lg.num": "Γνωστοί όροφοι και είδος",
+      "ov.building.lg.yes": "Γνωστό το ένα από τα δύο",
+      "ov.building.lg.miss": "Άγνωστο ακόμα",
+      "ov.lit.yes": "Ναι, έχει φώτα",
+      "ov.lit.24/7": "Φωτίζεται μέρα νύχτα (τούνελ)",
+      "ov.lit.no": "Όχι",
+      "ov.sw.both": "Και στις δύο πλευρές",
+      "ov.sw.left": "Μόνο αριστερά από τα βελάκια",
+      "ov.sw.right": "Μόνο δεξιά από τα βελάκια",
+      "ov.sw.separate": "Σχεδιασμένο ως ξεχωριστό μονοπάτι",
+      "ov.sw.no": "Χωρίς πεζοδρόμιο"
+    }
+  };
+  if (typeof window !== "undefined" && window.orosI18n) window.orosI18n.table(STR, "maps", window.orosI18n.lang());
+  // { en, el, <pack language>… } of one key (English where a language lacks it)
+  function L(k) {
+    var r = {};
+    Object.keys(STR).forEach(function (c) { var v = STR[c] && STR[c][k]; r[c] = v !== undefined ? v : STR.en[k]; });
+    return r;
+  }
+  function fill(x, k) { var r = L(k); Object.keys(r).forEach(function (c) { x[c] = r[c]; }); return x; }
+
   var VER = "1.1.0";
   var LIM = { els: 2000, pts: 600 };
   // colours (fixed: they sit on the map, not on the page)
@@ -35,7 +129,8 @@
   function okLon(v) { return isNum(v) && v >= -180 && v <= 180; }
   function inList(v, list) { return typeof v === "string" && list.indexOf(v) >= 0; }
   function re(list) { return "^(" + list.join("|") + ")$"; }
-  function o(v, en, el, set) { return { v: v, en: en, el: el, set: set }; }
+  // An answer option; its text is STR "ov.<group>.<value>".
+  function o(g, v, set) { return fill({ v: v, set: set }, "ov." + g + "." + v); }
 
   var LIT_HW = ["residential", "living_street", "pedestrian", "footway", "cycleway", "steps", "path", "service",
     "unclassified", "tertiary", "secondary", "primary"];
@@ -71,11 +166,11 @@
     return { l: l, r: r, scheme: scheme };
   }
   var SW_OPTS = [
-    o("both", "On both sides", "Και στις δύο πλευρές", { l: "yes", r: "yes" }),
-    o("left", "Only on the left of the arrows", "Μόνο αριστερά από τα βελάκια", { l: "yes", r: "no" }),
-    o("right", "Only on the right of the arrows", "Μόνο δεξιά από τα βελάκια", { l: "no", r: "yes" }),
-    o("separate", "Drawn as a separate path", "Σχεδιασμένο ως ξεχωριστό μονοπάτι", { l: "separate", r: "separate" }),
-    o("no", "No sidewalk", "Χωρίς πεζοδρόμιο", { l: "no", r: "no" })
+    o("sw", "both", { l: "yes", r: "yes" }),
+    o("sw", "left", { l: "yes", r: "no" }),
+    o("sw", "right", { l: "no", r: "yes" }),
+    o("sw", "separate", { l: "separate", r: "separate" }),
+    o("sw", "no", { l: "no", r: "no" })
   ];
   // Tags for a sidewalk choice, in the scheme the way already uses.
   function sidewalkSet(t, v) {
@@ -98,9 +193,7 @@
     { id: "lit", icon: "💡", qid: "way_lit", kind: "line", zoom: 16,
       sel: 'way["highway"~"' + re(LIT_HW) + '"]',
       applies: function (t) { return inList(t.highway, LIT_HW) && t.indoor !== "yes" && t.area !== "yes"; },
-      title: { en: "Street lights", el: "Φωτισμός δρόμων" },
-      q: { en: "Is {name} lit at night?", el: "Φωτίζεται τη νύχτα: {name};" },
-      legend: [["yes", "Lit", "Φωτίζεται"], ["no", "Not lit", "Δεν φωτίζεται"], ["miss", "Not known yet", "Άγνωστο ακόμα"]],
+      legend: [["yes"], ["no"], ["miss"]],
       style: function (t) {
         if (t.lit === "no" || t.lit === "disused") return { c: C.no };
         if (t.lit) return { c: C.yes };
@@ -108,18 +201,16 @@
       },
       value: function (t) { return t.lit || ""; },
       options: function () {
-        return [o("yes", "Yes, it has street lights", "Ναι, έχει φώτα", { lit: "yes" }),
-          o("24/7", "Lit day and night (tunnel)", "Φωτίζεται μέρα νύχτα (τούνελ)", { lit: "24/7" }),
-          o("no", "No", "Όχι", { lit: "no" })];
+        return [o("lit", "yes", { lit: "yes" }),
+          o("lit", "24/7", { lit: "24/7" }),
+          o("lit", "no", { lit: "no" })];
       } },
     { id: "surface", icon: "🛣️", qid: "way_surface", kind: "line", zoom: 16,
       sel: 'way["highway"~"' + re(SURF_HW) + '"]',
       applies: function (t) { return inList(t.highway, SURF_HW) && t.indoor !== "yes"; },
-      title: { en: "Surface", el: "Επιφάνεια" },
-      q: { en: "What is the surface of {name}?", el: "Τι επιφάνεια έχει: {name};" },
-      legend: [["paved", "Asphalt, concrete", "Άσφαλτος, μπετόν"], ["stones", "Paving stones, cobbles", "Πλάκες, καλντερίμι"],
-        ["gravel", "Gravel", "Χαλίκι"], ["soft", "Ground, grass, sand", "Χώμα, χορτάρι, άμμος"], ["other", "Something else", "Κάτι άλλο"],
-        ["miss", "Not known yet", "Άγνωστο ακόμα"]],
+      legend: [["paved"], ["stones"],
+        ["gravel"], ["soft"], ["other"],
+        ["miss"]],
       style: function (t) {
         if (!t.surface) return { c: C.miss, dash: true };
         return { c: C[SURF_GROUP[t.surface] || "other"] };
@@ -129,10 +220,8 @@
     { id: "sidewalk", icon: "🚶", qid: "sidewalk", kind: "line", zoom: 16, arrows: true,
       sel: 'way["highway"~"' + re(WALK_HW) + '"]',
       applies: function (t) { return inList(t.highway, WALK_HW) && t.area !== "yes"; },
-      title: { en: "Sidewalks", el: "Πεζοδρόμια" },
-      q: { en: "Where does {name} have a sidewalk?", el: "Πού έχει πεζοδρόμιο: {name};" },
-      legend: [["both", "Both sides", "Και οι δύο πλευρές"], ["one", "One side", "Μία πλευρά"], ["sep", "Separate path", "Ξεχωριστό μονοπάτι"],
-        ["none", "No sidewalk", "Χωρίς πεζοδρόμιο"], ["miss", "Not known yet", "Άγνωστο ακόμα"]],
+      legend: [["both"], ["one"], ["sep"],
+        ["none"], ["miss"]],
       style: function (t) {
         var s = sides(t);
         if (!s.l && !s.r) return { c: C.miss, dash: true };
@@ -153,10 +242,8 @@
     { id: "address", icon: "🔢", qid: "housenumber", kind: "area", zoom: 17, text: true,
       sel: 'way["building"]',
       applies: function (t) { return !!t.building && t.building !== "no"; },
-      title: { en: "Addresses", el: "Διευθύνσεις" },
-      q: { en: "What is the house number of this building?", el: "Τι αριθμό έχει αυτό το κτίριο;" },
-      legend: [["num", "Has a number", "Έχει αριθμό"], ["nonum", "No number or a house name", "Χωρίς αριθμό ή με όνομα"],
-        ["miss", "Not known yet", "Άγνωστο ακόμα"]],
+      legend: [["num"], ["nonum"],
+        ["miss"]],
       style: function (t) {
         if (t["addr:housenumber"]) return { c: C.num };
         if (t.nohousenumber === "yes" || t["addr:housename"] || t["addr:conscriptionnumber"]) return { c: C.nonum };
@@ -168,10 +255,8 @@
     { id: "building", icon: "🏢", qid: "building_levels", kind: "area", zoom: 17, form: true,
       sel: 'way["building"]',
       applies: function (t) { return !!t.building && t.building !== "no" && !t["building:part"]; },
-      title: { en: "Buildings", el: "Κτίρια" },
-      q: { en: "Floors and kind of this building", el: "Όροφοι και είδος του κτιρίου" },
-      legend: [["num", "Floors and kind known", "Γνωστοί όροφοι και είδος"], ["yes", "One of them known", "Γνωστό το ένα από τα δύο"],
-        ["miss", "Not known yet", "Άγνωστο ακόμα"]],
+      legend: [["num"], ["yes"],
+        ["miss"]],
       style: function (t) {
         var lv = !!t["building:levels"], kd = !!t.building && t.building !== "yes";
         if (lv && kd) return { c: C.num };
@@ -186,8 +271,15 @@
       },
       options: function () { return []; } }
   ];
+  OVERLAYS.forEach(function (x) {
+    x.title = L("ov." + x.id + ".title");
+    x.q = L("ov." + x.id + ".q");
+    x.legend.forEach(function (l) { var k = "ov." + x.id + ".lg." + l[0]; l[1] = STR.en[k]; l[2] = STR.el[k]; });
+  });
   var BY_ID = {};
   OVERLAYS.forEach(function (x) { BY_ID[x.id] = x; });
+  // A legend line's text in a language (l = one entry of ov.legend).
+  function legendText(ov, l, lang) { var r = L("ov." + ov.id + ".lg." + l[0]); return r[lang] || r.en; }
   function legendColor(k) { return C[k] || C.other; }
 
   // ---------- Overpass ----------
@@ -311,7 +403,7 @@
   var api = {
     VER: VER, LIM: LIM, OVERLAYS: OVERLAYS, BY_ID: BY_ID, SW_OPTS: SW_OPTS,
     sides: sides, sidewalkSet: sidewalkSet, buildingSet: buildingSet, buildingKinds: buildingKinds, query: query, parse: parse, middle: middle,
-    bearing: bearing, arrows: arrows, answer: answer, legendColor: legendColor, text: text
+    bearing: bearing, arrows: arrows, answer: answer, legendColor: legendColor, legendText: legendText, text: text
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root) root.OrosMapsOverlays = api;

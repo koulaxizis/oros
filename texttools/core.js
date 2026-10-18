@@ -1,3 +1,4 @@
+// i18n-inline-ok: Greek letter maps for case folding, accents and slugs (text-processing data, no UI text)
 // ============================================================
 // orOS Text Tools — core (v1.1.0)
 // Pure logic, no DOM: the tools (lines, spaces, numbering, columns,

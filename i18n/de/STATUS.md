@@ -2,8 +2,8 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 26996 of 30647 (88%)
-- Help pages: 134 of 144 (93%)
+- Strings: 30899 of 31163 (99%)
+- Help pages: 142 of 144 (98%)
 - Shown in the language list: yes
 
 Apps marked "English for now" do not load language packs yet: their
@@ -12,7 +12,7 @@ text is still written in the code. They switch over wave by wave
 
 | App | Translated | Strings |
 |---|---|---|
-| assistant | English for now | 0 / 490 |
+| assistant | 100% | 492 / 492 |
 | atelier | 100% | 1210 / 1210 |
 | aura | 100% | 84 / 84 |
 | baby | 100% | 324 / 324 |
@@ -64,7 +64,7 @@ text is still written in the code. They switch over wave by wave
 | mahjong | 100% | 69 / 69 |
 | mail | 100% | 495 / 495 |
 | mancala | 100% | 60 / 60 |
-| maps | English for now | 0 / 810 |
+| maps | 100% | 1251 / 1251 |
 | mastermind | 100% | 73 / 73 |
 | meals | 100% | 448 / 448 |
 | memory | 100% | 76 / 76 |
@@ -83,8 +83,8 @@ text is still written in the code. They switch over wave by wave
 | nonogram | 100% | 70 / 70 |
 | notes | 100% | 172 / 172 |
 | oracle | 100% | 38 / 38 |
-| passwords | English for now | 0 / 321 |
-| petcare | English for now | 0 / 317 |
+| passwords | 100% | 321 / 321 |
+| petcare | 100% | 374 / 374 |
 | petworld | 100% | 256 / 256 |
 | photolab | 100% | 708 / 708 |
 | pixel | 100% | 101 / 101 |
@@ -112,7 +112,7 @@ text is still written in the code. They switch over wave by wave
 | slides | 100% | 418 / 418 |
 | snake | 100% | 52 / 52 |
 | solitaire | 100% | 102 / 102 |
-| split | English for now | 0 / 334 |
+| split | 100% | 336 / 336 |
 | spot | 100% | 54 / 54 |
 | spreadsheet | 100% | 355 / 355 |
 | stickies | 100% | 124 / 124 |
@@ -123,9 +123,9 @@ text is still written in the code. They switch over wave by wave
 | television | 100% | 82 / 82 |
 | tetris | 100% | 59 / 59 |
 | textcase | 100% | 91 / 91 |
-| texttools | English for now | 0 / 315 |
+| texttools | 100% | 315 / 315 |
 | tictactoe | 100% | 53 / 53 |
-| time | English for now | 0 / 408 |
+| time | 100% | 410 / 410 |
 | timesheet | 100% | 248 / 248 |
 | today | 100% | 85 / 85 |
 | todo | 100% | 208 / 208 |
@@ -138,7 +138,7 @@ text is still written in the code. They switch over wave by wave
 | weather | 100% | 186 / 186 |
 | whack | 100% | 49 / 49 |
 | wheel | 100% | 107 / 107 |
-| wiki | English for now | 0 / 392 |
+| wiki | 100% | 404 / 404 |
 | wordle | 100% | 76 / 76 |
 | writer | 100% | 377 / 377 |
 | xeri | 100% | 108 / 108 |
@@ -152,13 +152,5 @@ These show English until fixed (usually the English text changed).
 
 ## Help pages not translated yet
 
-- help/assistant.txt
 - help/flashcards.txt
-- help/maps.txt
-- help/passwords.txt
-- help/petcare.txt
-- help/split.txt
-- help/texttools.txt
-- help/time.txt
-- help/wiki.txt
 - help/wordsearch.txt

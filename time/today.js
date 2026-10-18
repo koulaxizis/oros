@@ -17,9 +17,15 @@
 // ============================================================
 (function (root) {
   "use strict";
-  var W = { en: "Alarm", el: "Ξυπνητήρι" };
+  var TXT = { en: { "today.alarm": "Alarm", "today.next": "Next: {t}" },
+              el: { "today.alarm": "Ξυπνητήρι", "today.next": "Επόμενο: {t}" } };
   var SHORT_MS = 3 * 3600000;      // shorter than this from now and "once": a timer
-  var NEXT = { en: "Next: {t}", el: "Επόμενο: {t}" };
+  // A pack language: English + the time pack, when one is loaded.
+  function txt(lang, k) {
+    var I = typeof window !== "undefined" && window.orosI18n;
+    if (I && lang && !TXT[lang]) I.table(TXT, "time", lang);
+    return (TXT[lang] || TXT.en)[k];
+  }
 
   function pad(n) { return (n < 10 ? "0" : "") + n; }
   function hmOf(ms) { var d = new Date(ms); return pad(d.getHours()) + ":" + pad(d.getMinutes()); }
@@ -29,7 +35,7 @@
     var C = root.OrosStageCore, raw = ctx.readJSON("oros-time-stage");
     if (!C || !raw || !Array.isArray(raw.events) || !raw.events.length) return [];
     var data = C.merge(C.empty(), raw), run = C.normRun(ctx.readJSON("oros-time-stage-run"));
-    var last = ctx.addDays(ctx.today, ctx.horizon), out = [], lang = ctx.lang === "el" ? "el" : "en";
+    var last = ctx.addDays(ctx.today, ctx.horizon), out = [], lang = ctx.lang;
     data.events.forEach(function (ev) {
       if (!ev.date || ev.date < ctx.today || ev.date > last) return;
       var target = { stage: { ev: ev.id } };
@@ -49,7 +55,7 @@
       target = { stage: { ev: ev.id, it: it.id } };
       out.push({ id: "stage-" + ev.id, due: ev.date, kind: "event",
                  time: (ev.start || run.ev === ev.id) && r.expStart !== null && r.expStart >= ctx.now - 60000 ? hmOf(r.expStart) : null,
-                 title: NEXT[lang].replace("{t}", it.title),
+                 title: txt(lang, "today.next").replace("{t}", it.title),
                  text: [it.speaker, ev.name].filter(Boolean).join(" · "), target: target });
     });
     return out;
@@ -70,7 +76,7 @@
         if (day !== ctx.today) return;
         if (a.repeat !== "daily" && a.mtime && a.at - a.mtime < SHORT_MS) return;
         out.push({ id: String(a.id), due: day, time: pad(d.getHours()) + ":" + pad(d.getMinutes()),
-                   kind: "event", title: a.label || (W[ctx.lang] || W.en) });
+                   kind: "event", title: a.label || txt(ctx.lang, "today.alarm") });
       });
       try { out = out.concat(stageRows(ctx)); } catch (e) {}
       return out;

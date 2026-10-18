@@ -24,8 +24,10 @@
   var SHOW_KEY = "oros-time-stage-show";
 
   /* ---------- 1. i18n ---------- */
+  // orosI18n (../i18n.js): the full language code, a pack language included.
   var LANG = "en";
-  try {
+  if (window.orosI18n) LANG = window.orosI18n.lang();
+  else try {
     if (window.parent && window.parent.orosLang) LANG = window.parent.orosLang;
     else if (localStorage.getItem("oros-lang")) LANG = localStorage.getItem("oros-lang");
   } catch (e) {}
@@ -126,6 +128,7 @@
       "stg.sum.cut": "Αυστηρό τέλος {t}: κόψτε {n} λεπτά", "stg.sum.fits": "Αυστηρό τέλος {t}: εντός χρόνου"
     }
   };
+  if (window.orosI18n) window.orosI18n.table(STR, "time", LANG);
   function t(k, vars) {
     var s = (STR[LANG] && STR[LANG][k] !== undefined) ? STR[LANG][k] : (STR.en[k] !== undefined ? STR.en[k] : k);
     if (vars) Object.keys(vars).forEach(function (v) { s = s.split("{" + v + "}").join(vars[v]); });

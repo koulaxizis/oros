@@ -43,7 +43,8 @@
       return l === "el" ? "el" : "en";
     } catch (e) { return "en"; }
   }
-  var LANG = appLang();
+  var LANG = window.orosI18n ? window.orosI18n.lang() : appLang();
+  function loc() { return window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB"); }
 
   var STRINGS = {
     en: {
@@ -159,6 +160,7 @@
       "about.seclists": "Λίστα κοινών κωδικών από το"
     }
   };
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "passwords", LANG);
 
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;
@@ -179,9 +181,9 @@
     return n;
   }
   function fmtBits(b) {
-    return (Math.round(b * 10) / 10).toLocaleString(LANG === "el" ? "el-GR" : "en-GB");
+    return (Math.round(b * 10) / 10).toLocaleString(loc());
   }
-  function fmtInt(n) { return n.toLocaleString(LANG === "el" ? "el-GR" : "en-GB"); }
+  function fmtInt(n) { return n.toLocaleString(loc()); }
   function timeText(h) {
     return t("time." + h.unit + (h.n === 1 ? "1" : ""), { n: fmtInt(h.n) });
   }

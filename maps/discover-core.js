@@ -234,8 +234,12 @@
   }
 
   // ---------- Wikipedia (MediaWiki geosearch) ----------
+  // The app language's Wikipedia (el, de…); a language not listed asks English.
+  var WIKI_LANGS = ["en", "el", "de", "fr", "es", "it", "pt", "nl", "pl", "ru", "uk", "tr", "sv", "cs", "ro", "hu",
+    "fi", "da", "no", "bg", "sr", "hr", "sq", "ja", "zh", "ko", "ar", "he", "fa", "hi"];
+  function wikiLang(lang) { return WIKI_LANGS.indexOf(lang) >= 0 ? lang : "en"; }
   function wikiUrl(lang, lat, lon, radius) {
-    var l = lang === "el" ? "el" : "en";
+    var l = wikiLang(lang);
     var r = Math.max(10, Math.min(10000, Math.round(radius || 5000)));
     return "https://" + l + ".wikipedia.org/w/api.php?action=query&format=json&formatversion=2&origin=*" +
       "&generator=geosearch&ggscoord=" + r6(lat) + "%7C" + r6(lon) + "&ggsradius=" + r + "&ggslimit=50" +
@@ -243,7 +247,7 @@
   }
   function parseWiki(json, lang, from) {
     var pages = json && json.query && Array.isArray(json.query.pages) ? json.query.pages : [];
-    var l = lang === "el" ? "el" : "en", out = [];
+    var l = wikiLang(lang), out = [];
     pages.forEach(function (p) {
       if (!p || typeof p.title !== "string" || !Array.isArray(p.coordinates) || !p.coordinates[0]) return;
       var c = p.coordinates[0];

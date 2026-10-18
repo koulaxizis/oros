@@ -33,7 +33,7 @@
   var DEV_KEY = "oros-time-stage-devices";
   var JOIN_KEY = "oros-time-stage-join";
   var KEEP_MS = 3 * 24 * 3600 * 1000;      // a pairing is kept this long after its last use
-  var LANG = S.lang === "el" ? "el" : "en";
+  var LANG = S.lang || "en";     // the full code (stage.js, orosI18n)
 
   var STR = {
     en: {
@@ -109,6 +109,7 @@
       "sl.cut": "Μεγάλο πρόγραμμα: εδώ φαίνονται μόνο τα στοιχεία γύρω από το τρέχον."
     }
   };
+  if (window.orosI18n) window.orosI18n.table(STR, "time", LANG);
   function t(k, vars) {
     var s = (STR[LANG] && STR[LANG][k] !== undefined) ? STR[LANG][k] : (STR.en[k] !== undefined ? STR.en[k] : k);
     if (vars) Object.keys(vars).forEach(function (v) { s = s.split("{" + v + "}").join(vars[v]); });

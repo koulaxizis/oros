@@ -1,0 +1,48 @@
+# Tier-Gesundheitspass
+Der Tier-Gesundheitspass führt die Gesundheitsakte deiner echten Haustiere: Impfungen, Entwurmungen, Tierarztbesuche, Medikamente, Gewicht und Futter. Er erinnert dich an Anstehendes und druckt eine Gesundheitskarte für den Tierarzt oder eine Reise.
+
+## Erste Schritte
+Tippe oder klicke auf `Tier hinzufügen` (oder oben auf die Schaltfläche `Tier`). Gib deinem Tier einen `Name` und wähle die `Tierart`: Hund, Katze, Vogel, Kaninchen, Nagetier, Fisch, Reptil, Pferd oder Andere. Alles andere ist optional: ein `Foto`, `Rasse`, `Geschlecht`, `Geburtsdatum` (hake `Ich kenne es nur ungefähr` an, wenn du nur Jahr und Monat weißt), Mikrochip, Heimtierausweis und Versicherung, Allergien, ein Idealgewicht, die Telefonnummern deines Tierarztes und `Notizen`. Tippe auf `Speichern`.
+
+## Anstehend
+`Anstehend` listet für alle deine Tiere, was `Überfällig`, `Heute` fällig und in den `Nächste 30 Tage` dran ist: nächste Impf- und Entwurmungstermine, Kontrollen, der letzte Tag eines Medikaments, Routinepflege und Futter, das ausgeht. Am Geburtstag gratuliert ein Banner deinem Tier.
+- `Eintragen` trägt eine Impfung, Entwurmung oder Kontrolle als heute erledigt ein, mit dem nächsten Termin einen üblichen Abstand später.
+- `Erledigt` hakt Routinepflege ab.
+- `Neuer Sack` sagt der App, dass du einen neuen Sack Futter geöffnet hast.
+- `Dosen heute` listet die heutigen Medikamentendosen mit ihren Uhrzeiten.
+
+## Die Seite eines Tieres
+Öffne ein Tier unter `Meine Tiere`. Die Seite hat vier Teile:
+- `Überblick`: was als Nächstes kommt, das Profil, dein Tierarzt mit den Schaltflächen `Anrufen` und `Notfall` sowie `Routinepflege`.
+- `Akte`: füge eine `Impfung`, `Entwurmung`, einen `Besuch` oder ein `Medikament` hinzu. Für Hunde, Katzen, Kaninchen und Pferde werden Impfstoffnamen vorgeschlagen, und Schaltflächen wie `+1 Jahr` füllen den nächsten Termin aus. Besuche können Kosten haben; die Seite summiert deine Tierarztkosten für das Jahr, und `Zum Budget hinzufügen` in einem Besuch schickt die Kosten an [Budget](app:budget). Ein Medikament kann bis zu 6 Dosiszeiten in `Erinnere mich um` haben; zu jeder bekommst du eine Benachrichtigung. Unter `Anhänge` kann eine Impfung, Entwurmung, ein Besuch oder Medikament bis zu 6 Fotos oder PDFs behalten, etwa ein Rezept oder Befunde: tippe oder klicke auf `+`, um eines hinzuzufügen, und tippe oder klicke auf ein Vorschaubild, um es anzusehen, zu `Öffnen` (PDF), `Kopie speichern` oder zu `Entfernen`. Filtere mit `Alle`, `Impfungen`, `Entwurmung`, `Besuche`, `Medikamente` oder `Pflege`.
+- `Gewicht`: ein Diagramm deiner Einträge, die Veränderung in den letzten 30+ Tagen und eine Warnung, wenn das Gewicht außerhalb des Idealbereichs liegt.
+- `Futter`: das Futter, Gramm und Mahlzeiten pro Tag, die Sackgröße und der Tag, an dem du ihn geöffnet hast. Die App berechnet, wann es `Geht etwa am … aus`. `Zur Einkaufsliste` setzt das Futter auf deine Einkaufsliste in [Aufgaben](app:todo).
+
+`Bearbeiten`, `Karte drucken` und `Löschen` stehen oben auf der Seite. Für Routinepflege stellst du in `Bearbeiten` `alle … Tage` ein (0 = aus). Ist ein Tier `Nicht mehr bei mir`, bleibt sein Gesundheitspass, aber die Erinnerungen stoppen.
+
+Die vorgeschlagenen Abstände sind nur ein Ausgangspunkt. Der Rat deines Tierarztes geht immer vor.
+
+## orOS-Datei speichern und öffnen
+In den `Einstellungen` speichert unter `Deine Tiere` der Punkt `orOS-Datei (.orospet)` alle deine Tiere und ihre Gesundheitspässe als eine `.orospet`-Datei, mit den Anhängen, zum Beispiel um sie ohne Synchronisierung auf ein anderes Gerät zu bringen oder eine Kopie für den Tierarzt zu behalten. Deine Erinnerungseinstellungen bleiben auf diesem Gerät und sind nie darin. Die Datei ist ein einfaches ZIP: Entpackt enthält sie alles als `content.json`, die Anhänge in `media/` sowie `preview/pets.md` und `preview/records.csv` für andere Programme. Sie ist nicht verschlüsselt und enthält die Gesundheitsdaten deiner Tiere, also bewahre sie sicher auf.
+
+`orOS-Datei öffnen…` (oder `Entpackter orOS-Ordner…`, oder „Öffnen mit“ orOS am Computer) zeigt, wie viele Tiere und Einträge neu und wie viele schon hier sind; dann fügt `Hinzufügen` nur die neuen hinzu, mit ihren eigenen IDs: Dieselbe Datei noch einmal zu öffnen, fügt nichts hinzu. Ein Tier oder Eintrag, der schon hier ist, bleibt, wie er ist, und einer, den du hier gelöscht hast, bleibt gelöscht; eine Datei löscht nie etwas. Hake `Mit neueren Versionen aktualisieren` an, damit später in der Datei geänderte Tiere und Einträge deine Kopie ersetzen. Ein Anhang wird nur dann in Dateien geschrieben, wenn er dort noch fehlt, und durchläuft dieselben Prüfungen wie einer, den du selbst hinzufügst. `Rückgängig` in der Meldung entfernt, was hinzugefügt wurde.
+
+## Synchronisierung und Sicherung
+Deine Tiere, Fotos und Gesundheitseinträge werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. Einstellungen und der offene Tab bleiben auf jedem Gerät.
+
+In den `Einstellungen` speichert `Exportieren` alle deine Tiere in eine Datei, und `Importieren` führt eine Datei wieder ein, ohne zu ersetzen, was du hast.
+
+Anhänge gehören nicht zu den Synchronisierungsdaten oder zur Datei von `Exportieren` (die orOS-Datei oben enthält sie). Sie sind Dateien in [Dateien](app:files), Ordner `Pet Health Book`, und erreichen deine anderen Geräte mit Vault Drive. Bis dahin zeigt ein anderes Gerät `Nicht auf diesem Gerät`.
+
+## Tastenkürzel
+- [[Left]] / [[Right]] auf den Tabs wechselt zwischen `Anstehend` und `Meine Tiere`.
+- [[Esc]] schließt die Seite eines Tieres.
+
+## Tipps
+- Wähle in den `Einstellungen` die Uhrzeit der `Tägliche Erinnerung` und wie früh du `Vor Impfungen, Entwurmungen und Kontrollen warnen` willst. `Bei jeder Medikamentendosis erinnern` schaltet die Dosis-Benachrichtigungen ein oder aus. Siehe [Benachrichtigungen](help:t/notifications).
+- Impfungen, Entwurmungen, Besuche, nächste Termine und Geburtstage erscheinen auch im [Kalender](app:calendar) unter `Tiergesundheit`.
+
+## Grenzen
+- Erinnerungen erscheinen, solange orOS offen ist, auch wenn diese App geschlossen ist. Ist orOS geschlossen, warten sie bis zum nächsten Öffnen.
+- Bis zu 50 Tiere, und Fotos werden klein gehalten.
+- Fotos in Anhängen werden auf 1600 Pixel verkleinert und verlieren ihre Standortdaten. PDFs dürfen bis zu 10 MB groß sein.

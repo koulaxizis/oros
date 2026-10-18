@@ -6,7 +6,24 @@
 // and does the token exchange; nothing here talks to the network.
 (function () {
   "use strict";
-  var el = (localStorage.getItem("oros-lang") === "el");
+  var LANG = window.orosI18n ? window.orosI18n.lang() : (localStorage.getItem("oros-lang") === "el" ? "el" : "en");
+  var STR = {
+    en: {
+      "cb.bad": "Invalid answer from OpenStreetMap.",
+      "cb.done": "Done. You can close this window.",
+      "cb.cancel": "Sign-in cancelled. You can close this window.",
+      "cb.back": "Back to Maps…"
+    },
+    el: {
+      "cb.bad": "Μη έγκυρη απάντηση από το OpenStreetMap.",
+      "cb.done": "Έτοιμο. Μπορείς να κλείσεις αυτό το παράθυρο.",
+      "cb.cancel": "Η σύνδεση ακυρώθηκε. Μπορείς να κλείσεις αυτό το παράθυρο.",
+      "cb.back": "Επιστροφή στους Χάρτες…"
+    }
+  };
+  if (window.orosI18n) window.orosI18n.table(STR, "maps", LANG);
+  function t(k) { return (STR[LANG] && STR[LANG][k]) || STR.en[k]; }
+  document.documentElement.lang = LANG;
   var msg = document.getElementById("msg");
   var q = new URLSearchParams(location.search);
   var cb = {
@@ -17,7 +34,7 @@
   };
   try { history.replaceState(null, "", location.pathname); } catch (e) {}
   if (!cb.state) {
-    msg.textContent = el ? "Μη έγκυρη απάντηση από το OpenStreetMap." : "Invalid answer from OpenStreetMap.";
+    msg.textContent = t("cb.bad");
     return;
   }
   // The popup can lose window.opener (OSM's cross-origin isolation),
@@ -31,12 +48,10 @@
 
   var ok = !cb.error && cb.code;
   if (mode !== "redirect") {
-    msg.textContent = ok
-      ? (el ? "Έτοιμο. Μπορείς να κλείσεις αυτό το παράθυρο." : "Done. You can close this window.")
-      : (el ? "Η σύνδεση ακυρώθηκε. Μπορείς να κλείσεις αυτό το παράθυρο." : "Sign-in cancelled. You can close this window.");
+    msg.textContent = ok ? t("cb.done") : t("cb.cancel");
     setTimeout(function () { try { window.close(); } catch (e) {} }, 400);
   } else {
-    msg.textContent = el ? "Επιστροφή στους Χάρτες…" : "Back to Maps…";
+    msg.textContent = t("cb.back");
     location.replace("../?open=maps");
   }
 })();

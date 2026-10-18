@@ -486,7 +486,12 @@
     "ο η το οι τα του της των τον την στο στη στην στον στα στους στις σε με για από απ και ή αλλά αν να θα δεν μη μην " +
     "πως πώς τι τί ποιο ποια ποιος ποιοι πού που πότε ποτέ γιατί είναι ήταν έχω έχει έχουν μου σου του μας σας τους " +
     "αυτό αυτή αυτός αυτά αυτές αυτοί εκείνο ένα μια μία ένας κάτι κάποιο όλα όλες όλοι πολύ πιο ποσο πόσο πόσα πόσες " +
-    "πες δείξε βρες θέλω μπορείς κάνε έχω ποιες").split(" ");
+    "πες δείξε βρες θέλω μπορείς κάνε έχω ποιες " +
+    "der die das den dem des ein eine einen einem einer eines und oder aber wenn von zum zur auf für mit über nach vor " +
+    "was welche welcher welches wer wen wem wann wo warum wie ist sind war waren sein bin habe hast hat haben hatte kann " +
+    "kannst könnte sollte würde wird mein meine meinen meinem dein deine ihr ihre unser unsere mich dich mir dir ihn ihm uns " +
+    "ich du er sie wir dieser diese dieses dort hier nicht kein keine bitte sag sage zeig zeige finde gib liste alle allen " +
+    "viel viele mehr auch nur sehr gibt etwas noch schon").split(" ");
   var STOP = {};
   STOP_WORDS.forEach(function (w) { if (w) STOP[w] = 1; });
   var PRE_WORDS = 3;
@@ -1579,7 +1584,7 @@
                (opts.tz ? " (" + opts.tz + ")" : "");
     var lines = [
       "You are the assistant inside orOS, an offline-first personal operating system that runs in the browser, with apps for notes, tasks, calendar, contacts, documents, money, health and more.",
-      "Now: " + when + ". The orOS interface language is " + (opts.lang === "el" ? "Greek" : "English") +
+      "Now: " + when + ". The orOS interface language is " + ({ el: "Greek", de: "German" }[opts.lang] || "English") +
         "; answer in the language the user writes in.",
       "Keep answers short and practical. You may use simple Markdown: **bold**, lists, `code`, code blocks. No tables, no images, no HTML."
     ];

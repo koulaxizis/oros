@@ -39,6 +39,74 @@
   function okLon(v) { return isNum(v) && v >= -180 && v <= 180; }
   function r7(v) { return Math.round(v * 1e7) / 1e7; }
 
+  // ---------- texts ----------
+  // ed.<quick-add id>, ed.ent.<entrance kind>, ed.wc.<wheelchair value>.
+  // Other languages: the "maps" pack.
+  var STR = {
+    en: {
+      "ed.bench": "Bench",
+      "ed.waste_basket": "Litter bin",
+      "ed.waste_disposal": "Dumpster",
+      "ed.recycling": "Recycling bin",
+      "ed.bollard": "Bollard",
+      "ed.street_lamp": "Street lamp",
+      "ed.post_box": "Post box",
+      "ed.drinking_water": "Drinking water",
+      "ed.bicycle_parking": "Bicycle parking",
+      "ed.fire_hydrant": "Fire hydrant",
+      "ed.defibrillator": "Defibrillator",
+      "ed.vending_machine": "Vending machine",
+      "ed.picnic_table": "Picnic table",
+      "ed.info_board": "Information board",
+      "ed.street_cabinet": "Street cabinet",
+      "ed.tree": "Tree",
+      "ed.ent.main": "Main entrance",
+      "ed.ent.staircase": "Staircase entrance",
+      "ed.ent.yes": "Other entrance",
+      "ed.ent.service": "Service entrance",
+      "ed.ent.garage": "Garage",
+      "ed.ent.emergency": "Emergency exit",
+      "ed.wc.yes": "Step-free",
+      "ed.wc.limited": "Partly",
+      "ed.wc.no": "No (steps)"
+    },
+    el: {
+      "ed.bench": "Παγκάκι",
+      "ed.waste_basket": "Καλάθι αχρήστων",
+      "ed.waste_disposal": "Κάδος απορριμμάτων",
+      "ed.recycling": "Κάδος ανακύκλωσης",
+      "ed.bollard": "Κολωνάκι",
+      "ed.street_lamp": "Φανοστάτης",
+      "ed.post_box": "Γραμματοκιβώτιο",
+      "ed.drinking_water": "Βρύση πόσιμου νερού",
+      "ed.bicycle_parking": "Στάθμευση ποδηλάτων",
+      "ed.fire_hydrant": "Πυροσβεστικός κρουνός",
+      "ed.defibrillator": "Απινιδωτής",
+      "ed.vending_machine": "Αυτόματος πωλητής",
+      "ed.picnic_table": "Τραπέζι πικνίκ",
+      "ed.info_board": "Πινακίδα πληροφοριών",
+      "ed.street_cabinet": "Καφάο",
+      "ed.tree": "Δέντρο",
+      "ed.ent.main": "Κεντρική είσοδος",
+      "ed.ent.staircase": "Είσοδος κλιμακοστασίου",
+      "ed.ent.yes": "Άλλη είσοδος",
+      "ed.ent.service": "Είσοδος υπηρεσίας",
+      "ed.ent.garage": "Γκαράζ",
+      "ed.ent.emergency": "Έξοδος κινδύνου",
+      "ed.wc.yes": "Χωρίς σκαλιά",
+      "ed.wc.limited": "Εν μέρει",
+      "ed.wc.no": "Όχι (σκαλιά)"
+    }
+  };
+  if (typeof window !== "undefined" && window.orosI18n) window.orosI18n.table(STR, "maps", window.orosI18n.lang());
+  // { en, el, <pack language>… } of one key (English where a language lacks it)
+  function L(k) {
+    var r = {};
+    Object.keys(STR).forEach(function (c) { var v = STR[c] && STR[c][k]; r[c] = v !== undefined ? v : STR.en[k]; });
+    return r;
+  }
+  function fill(x, k) { var r = L(k); Object.keys(r).forEach(function (c) { x[c] = r[c]; }); return x; }
+
   // ---------- completeness ----------
   // Places that normally have opening hours (shops, cafés, banks…).
   var OH_AMENITY = { cafe: 1, restaurant: 1, fast_food: 1, bar: 1, pub: 1, bank: 1, pharmacy: 1, post_office: 1,
@@ -61,24 +129,25 @@
   }
 
   // ---------- quick add ----------
-  function m(id, icon, en, el, tags) { return { id: id, icon: icon, en: en, el: el, tags: tags }; }
+  // Text: STR "ed.<id>".
+  function m(id, icon, tags) { return fill({ id: id, icon: icon, tags: tags }, "ed." + id); }
   var MICRO = [
-    m("bench", "🪑", "Bench", "Παγκάκι", { amenity: "bench" }),
-    m("waste_basket", "🗑️", "Litter bin", "Καλάθι αχρήστων", { amenity: "waste_basket" }),
-    m("waste_disposal", "🚮", "Dumpster", "Κάδος απορριμμάτων", { amenity: "waste_disposal" }),
-    m("recycling", "♻️", "Recycling bin", "Κάδος ανακύκλωσης", { amenity: "recycling", recycling_type: "container" }),
-    m("bollard", "🚧", "Bollard", "Κολωνάκι", { barrier: "bollard" }),
-    m("street_lamp", "💡", "Street lamp", "Φανοστάτης", { highway: "street_lamp" }),
-    m("post_box", "📮", "Post box", "Γραμματοκιβώτιο", { amenity: "post_box" }),
-    m("drinking_water", "🚰", "Drinking water", "Βρύση πόσιμου νερού", { amenity: "drinking_water" }),
-    m("bicycle_parking", "🚲", "Bicycle parking", "Στάθμευση ποδηλάτων", { amenity: "bicycle_parking" }),
-    m("fire_hydrant", "🧯", "Fire hydrant", "Πυροσβεστικός κρουνός", { emergency: "fire_hydrant" }),
-    m("defibrillator", "❤️", "Defibrillator", "Απινιδωτής", { emergency: "defibrillator" }),
-    m("vending_machine", "🥤", "Vending machine", "Αυτόματος πωλητής", { amenity: "vending_machine" }),
-    m("picnic_table", "🧺", "Picnic table", "Τραπέζι πικνίκ", { leisure: "picnic_table" }),
-    m("info_board", "ℹ️", "Information board", "Πινακίδα πληροφοριών", { tourism: "information", information: "board" }),
-    m("street_cabinet", "🗄️", "Street cabinet", "Καφάο", { man_made: "street_cabinet" }),
-    m("tree", "🌳", "Tree", "Δέντρο", { natural: "tree" })
+    m("bench", "🪑", { amenity: "bench" }),
+    m("waste_basket", "🗑️", { amenity: "waste_basket" }),
+    m("waste_disposal", "🚮", { amenity: "waste_disposal" }),
+    m("recycling", "♻️", { amenity: "recycling", recycling_type: "container" }),
+    m("bollard", "🚧", { barrier: "bollard" }),
+    m("street_lamp", "💡", { highway: "street_lamp" }),
+    m("post_box", "📮", { amenity: "post_box" }),
+    m("drinking_water", "🚰", { amenity: "drinking_water" }),
+    m("bicycle_parking", "🚲", { amenity: "bicycle_parking" }),
+    m("fire_hydrant", "🧯", { emergency: "fire_hydrant" }),
+    m("defibrillator", "❤️", { emergency: "defibrillator" }),
+    m("vending_machine", "🥤", { amenity: "vending_machine" }),
+    m("picnic_table", "🧺", { leisure: "picnic_table" }),
+    m("info_board", "ℹ️", { tourism: "information", information: "board" }),
+    m("street_cabinet", "🗄️", { man_made: "street_cabinet" }),
+    m("tree", "🌳", { natural: "tree" })
   ];
   var MICRO_BY = {};
   MICRO.forEach(function (x) { MICRO_BY[x.id] = x; });
@@ -91,16 +160,17 @@
   }
 
   // ---------- entrances ----------
-  function e(v, en, el) { return { v: v, en: en, el: el }; }
+  // Text: STR "ed.ent.<value>" (entrance kind) / "ed.wc.<value>" (wheelchair).
+  function e(g, v) { return fill({ v: v }, "ed." + g + "." + v); }
   var ENT_TYPES = [
-    e("main", "Main entrance", "Κεντρική είσοδος"),
-    e("staircase", "Staircase entrance", "Είσοδος κλιμακοστασίου"),
-    e("yes", "Other entrance", "Άλλη είσοδος"),
-    e("service", "Service entrance", "Είσοδος υπηρεσίας"),
-    e("garage", "Garage", "Γκαράζ"),
-    e("emergency", "Emergency exit", "Έξοδος κινδύνου")
+    e("ent", "main"),
+    e("ent", "staircase"),
+    e("ent", "yes"),
+    e("ent", "service"),
+    e("ent", "garage"),
+    e("ent", "emergency")
   ];
-  var WHEEL = [e("yes", "Step-free", "Χωρίς σκαλιά"), e("limited", "Partly", "Εν μέρει"), e("no", "No (steps)", "Όχι (σκαλιά)")];
+  var WHEEL = [e("wc", "yes"), e("wc", "limited"), e("wc", "no")];
   var REF_RE = /^[0-9A-Za-zΑ-Ωα-ω]{1,4}$/;
   var FLATS_RE = /^[0-9A-Za-zΑ-Ωα-ω]{1,6}([-–;,][0-9A-Za-zΑ-Ωα-ω]{1,6}){0,40}$/;
   // form { type, ref, flats, wheelchair } → { tags } or { error: field }

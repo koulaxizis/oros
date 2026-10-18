@@ -1,5 +1,6 @@
 // ============================================================
 // orOS Split — import.js (pure logic: "Import from another app")
+// i18n-inline-ok: the Greek words below are column, category and type names of imported files (parser data, no UI text)
 // Reads a group exported from another shared-expenses app, as DATA
 // only (nothing is run, nothing becomes HTML):
 //   - Splitwise  a group › Export as spreadsheet (CSV): Date,

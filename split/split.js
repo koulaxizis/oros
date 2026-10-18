@@ -84,8 +84,9 @@
       return l === "el" ? "el" : "en";
     } catch (e) { return "en"; }
   }
-  var LANG = appLang();
-  var LOCALE = LANG === "el" ? "el-GR" : "en-GB";
+  // orosI18n (../i18n.js): the full language code, a pack language included.
+  var LANG = window.orosI18n ? window.orosI18n.lang() : appLang();
+  var LOCALE = window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB");
 
   var STRINGS = {
     en: {
@@ -341,6 +342,7 @@
       "col.orig": "Αρχικό ποσό", "col.ocur": "Αρχικό νόμισμα", "col.rate": "Ισοτιμία"
     }
   };
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "split", LANG);
 
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;
@@ -353,16 +355,26 @@
     return s;
   }
 
-  var MONTHS_GEN = {   // "8 October" / «8 Οκτωβρίου»
-    en: ["January", "February", "March", "April", "May", "June", "July", "August",
-         "September", "October", "November", "December"],
-    el: ["Ιανουαρίου", "Φεβρουαρίου", "Μαρτίου", "Απριλίου", "Μαΐου", "Ιουνίου", "Ιουλίου",
-         "Αυγούστου", "Σεπτεμβρίου", "Οκτωβρίου", "Νοεμβρίου", "Δεκεμβρίου"]
-  };
-  var WEEKDAYS = {
-    en: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
-    el: ["Κυριακή", "Δευτέρα", "Τρίτη", "Τετάρτη", "Πέμπτη", "Παρασκευή", "Σάββατο"]
-  };
+  // Month names as after a day number ("8 October", the Greek
+  // genitive) and weekday names, from Intl in LOCALE.
+  function datePart(opt, d, type) {
+    opt.timeZone = "UTC";
+    try {
+      var ps = new Intl.DateTimeFormat(LOCALE, opt).formatToParts(d);
+      for (var i = 0; i < ps.length; i++) if (ps[i].type === type) return ps[i].value;
+    } catch (e) {}
+    return "";
+  }
+  function monthGen(m) { return datePart({ day: "numeric", month: "long" }, new Date(Date.UTC(2020, m - 1, 15)), "month"); }
+  function weekdayName(w) { return datePart({ weekday: "long" }, new Date(Date.UTC(2020, 0, 5 + w)), "weekday"); }   // 5 Jan 2020: a Sunday
+  // English and Greek keep "Thursday 8 October"; other languages use
+  // their own long date ("Donnerstag, 8. Oktober").
+  function intlLong(p, withDay, withYear) {
+    var o = { day: "numeric", month: "long", timeZone: "UTC" };
+    if (withDay) o.weekday = "long";
+    if (withYear) o.year = "numeric";
+    try { return new Date(Date.UTC(p.y, p.m - 1, p.d)).toLocaleDateString(LOCALE, o); } catch (e) { return p.d + "/" + p.m + "/" + p.y; }
+  }
 
   function $(id) { return document.getElementById(id); }
   function cmpStr(x, y) { return x < y ? -1 : (x > y ? 1 : 0); }
@@ -444,9 +456,17 @@
     var n = Number(v);
     return n <= MAX_SHARES ? n : null;
   }
+  // Does the language write a decimal comma? ("el" yes, "en" no, a
+  // pack language by its locale.)
+  function decComma(lang) {
+    if (lang === "el") return true;
+    if (!lang || lang === "en") return false;
+    var I = typeof window !== "undefined" && window.orosI18n;
+    try { return (1.5).toLocaleString(I ? I.locale(lang) : lang).indexOf(",") >= 0; } catch (e) { return false; }
+  }
   // Cents → plain input text in the user's language ("12,50" / "12.50").
   function centsToInput(c, lang) {
-    return (Math.floor(c / 100)) + (c % 100 ? (lang === "el" ? "," : ".") + pad2(c % 100) : "");
+    return (Math.floor(c / 100)) + (c % 100 ? (decComma(lang) ? "," : ".") + pad2(c % 100) : "");
   }
   // Cents → "12.50" / "12,50" for CSV (no thousands separators).
   function centsPlain(c, decSep) {
@@ -472,7 +492,7 @@
   function rateText(r, lang) {
     var s = String(roundRate(r));
     if (/e/i.test(s)) s = Number(r).toFixed(10).replace(/0+$/, "").replace(/\.$/, "");
-    return lang === "el" ? s.replace(".", ",") : s;
+    return decComma(lang) ? s.replace(".", ",") : s;
   }
   // Cents of the expense's own currency → cents of the group's.
   function convertCents(oa, r) { return Math.round(oa * r); }
@@ -1199,7 +1219,7 @@
     prefs = {
       g: typeof p.g === "string" && GID_RE.test(p.g) ? p.g : "",
       tab: p.tab === "bal" ? "bal" : "exp",
-      csv: p.csv === "std" || p.csv === "excel" ? p.csv : (LANG === "el" ? "excel" : "std")
+      csv: p.csv === "std" || p.csv === "excel" ? p.csv : (decComma(LANG) ? "excel" : "std")
     };
   }
   function savePrefs() {
@@ -1248,7 +1268,8 @@
   function money(cents) { var g = curGroup(); return moneyIn(cents, g ? g.cur : "EUR"); }
   function dayLabel(ymd) {
     var p = parseYmd(ymd);
-    var s = WEEKDAYS[LANG][weekday(ymd)] + " " + p.d + " " + MONTHS_GEN[LANG][p.m - 1];
+    if (LANG !== "en" && LANG !== "el") return intlLong(p, true, p.y !== +today.slice(0, 4));
+    var s = weekdayName(weekday(ymd)) + " " + p.d + " " + monthGen(p.m);
     return p.y === +today.slice(0, 4) ? s : s + " " + p.y;
   }
   function dateShort(ymd) { var p = parseYmd(ymd); return pad2(p.d) + "/" + pad2(p.m) + "/" + p.y; }
@@ -1646,7 +1667,7 @@
     amt.inputMode = "decimal";
     amt.autocomplete = "off";
     amt.value = cents ? centsToInput(cents, LANG) : "";
-    amt.placeholder = LANG === "el" ? "0,00" : "0.00";
+    amt.placeholder = decComma(LANG) ? "0,00" : "0.00";
     return amt;
   }
   function errLine() { var p = el("p", "err"); p.setAttribute("role", "alert"); p.hidden = true; return p; }
@@ -1708,7 +1729,8 @@
   }
   function dateLong(ymd) {
     var p = parseYmd(ymd);
-    return p ? p.d + " " + MONTHS_GEN[LANG][p.m - 1] + " " + p.y : "";
+    if (p && LANG !== "en" && LANG !== "el") return intlLong(p, false, true);
+    return p ? p.d + " " + monthGen(p.m) + " " + p.y : "";
   }
 
   // ---------- 8c. Receipt photos (files on the orOS disk) ----------
@@ -2035,7 +2057,7 @@
         else if (m === "pc") r.inp.value = w ? pctText(w, LANG) : "";
         else if (m === "sh") r.inp.value = w ? String(w) : (r.chk.checked ? "1" : "");
         r.inp.inputMode = m === "sh" ? "numeric" : "decimal";
-        r.inp.placeholder = m === "sh" ? "0" : (LANG === "el" ? "0,00" : "0.00");
+        r.inp.placeholder = m === "sh" ? "0" : (decComma(LANG) ? "0,00" : "0.00");
       });
     };
     var left = el("p", "left");
@@ -3273,7 +3295,7 @@
   }
   function recHooks(get) {
     return {
-      lang: function () { return LANG; },
+      lang: function () { return LANG === "el" ? "el" : "en"; },
       get: get,
       title: function (st) { return st && st.groups && st.groups.length === 1 && get !== recAll ? st.groups[0].n : t("app"); },
       files: recFiles,

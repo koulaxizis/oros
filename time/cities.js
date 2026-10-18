@@ -1,3 +1,4 @@
+// i18n-inline-ok: Greek city names (data, no UI text)
 // ============================================================
 // orOS Time — built-in city list (v1.0.0, wave 5)
 // Own data (no third-party list): about 500 cities, each as

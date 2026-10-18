@@ -1,0 +1,123 @@
+# Wiki
+Wiki ist deine eigene Enzyklopädie. Schreib auf, was du weißt, in Artikeln, die aufeinander verlinken, lies sie wie Wikipedia, mit Inhaltsverzeichnis, Abschnitten und Kategorien, und behalte jede Version jedes Artikels.
+
+## Erste Schritte
+Beim ersten Mal tippst du auf **Mein Wiki anlegen**. Wiki legt ein Wiki namens `Mein Wiki` an, mit einer `Hauptseite`, die die ersten Schritte erklärt.
+
+Für einen neuen Artikel tippst du oben auf **+**, gibst einen `Titel` und den Text ein und tippst auf `Speichern`. Oder du schreibst in einem anderen Artikel einen Titel in doppelte eckige Klammern, etwa `[[Olive trees]]`: Der Link ist rot, solange es den Artikel nicht gibt, und ein Tipp darauf öffnet den Editor dafür.
+
+Die Schaltfläche ☰ öffnet das Menü: `Hauptseite`, `Letzte Änderungen`, `Zufälliger Artikel`, `Alle Artikel`, `Kategorien` und `Gewünschte Artikel`. Am Computer bleibt das Menü links offen; ☰ blendet es aus.
+
+## Einen Artikel lesen
+Ein Artikel beginnt mit seiner Einleitung. Ab drei Überschriften folgt ein Kasten `Inhalt`; tippe auf eine Zeile, um zu diesem Abschnitt zu springen. Auf dem Handy tippst du auf die Überschrift eines Abschnitts, um ihn ein- oder auszuklappen.
+
+Links auf andere Artikel stehen in der Akzentfarbe; rote Links führen zu Artikeln, die es noch nicht gibt. Weblinks öffnen sich in einem neuen Tab. Die Kategorien des Artikels stehen ganz unten; tippe auf eine, um alle Artikel darin zu sehen.
+
+Bilder werden größer, wenn du darauf tippst. Eine kleine Zahl in Klammern, etwa `[1]`, ist ein Einzelnachweis: Tippe darauf, um zu seiner Quelle in der Liste `Einzelnachweise` am Ende zu springen, und tippe dort auf ↑, um zurückzukehren.
+
+Über jedem Artikel stehen `Lesen`, `Bearbeiten` und `Versionen`. Die Schaltfläche ⋯ enthält `Umbenennen…`, `Links auf diese Seite`, `Text kopieren`, `Zur Hauptseite machen`, `An jemanden senden…`, `Drucken`, `Als PDF speichern` und `Diesen Artikel löschen`.
+
+## Schreiben und formatieren
+`Bearbeiten` öffnet den ganzen Artikel. Der Link `bearbeiten` neben einer Überschrift öffnet nur diesen Abschnitt. Die Werkzeugleiste fügt die Formatierung für dich ein; `Vorschau` zeigt das Ergebnis vor dem Speichern. `Hilfe zur Formatierung` unter dem Editor listet alle Zeichen auf:
+- `## Überschrift` und `### Unterüberschrift` (`== Überschrift ==` geht auch).
+- `**fett**`, `*kursiv*`, `~~durchgestrichen~~` und ein Wort zwischen zwei Backticks für Code.
+- `[[Article]]`, `[[Article|other text]]`, `[[Article#Section]]`.
+- `[Text](https://example.com)` oder einfach eine `https://`-Adresse.
+- `- Punkt` für eine Liste, `1. Punkt` für eine nummerierte; zwei Leerzeichen davor gehen eine Ebene tiefer.
+- `> Zitat`, `---` für eine Linie, drei Backticks vor und nach einem Codeblock.
+- Eine Tabelle: eine Zeile wie `| A | B |`, dann `|---|---|`, dann eine Zeile pro Tabellenzeile.
+- `[[Category:Name]]` ordnet den Artikel einer Kategorie zu. `[[:Category:Name]]` ist stattdessen ein Link auf die Kategorie.
+- `#REDIRECT [[Article]]` in der ersten Zeile macht eine Seite zur Weiterleitung: Wer sie öffnet, landet bei diesem Artikel.
+- `[[File:…|Caption]]` ein Bild, `{{gallery … }}` mehrere, `{{infobox … }}` der Infokasten, `Text[^1]` mit einer Zeile `[^1]: Quelle` ein Einzelnachweis.
+
+## Bilder und Galerien
+Im Editor fügt die Schaltfläche 🖼 ein Bild ein: `Von diesem Gerät`, `Foto aufnehmen` (auf dem Handy) oder `Aus Dateien`. Dann schreibst du eine `Bildunterschrift` und wählst eine `Position` (`Rechts`, `Links`, `Mitte` oder `Volle Breite`) und eine `Größe`. Die Schaltfläche ▤ fügt mehrere Bilder auf einmal als Galerie ein.
+
+Im Text sieht ein Bild so aus: `[[File:…|left|200px|Caption]]`; der lange Name nach `File:` ist das Bild selbst, lass ihn also, wie er ist. Position, Größe (`200px`) und Bildunterschrift kannst du auch von Hand ändern. Eine Galerie ist ein Block zwischen `{{gallery` und `}}` mit einem Bild pro Zeile.
+
+Bilder werden einmal auf der orOS-Disk gespeichert und reisen mit ihr auf deine anderen Geräte. Bis ein Bild auf einem Gerät angekommen ist, steht an seiner Stelle ein gestrichelter Rahmen.
+
+## Infokasten
+Die Schaltfläche ⓘ öffnet das Formular für den Infokasten: einen `Titel`, ein `Bild`, eine `Bildunterschrift` und `Fakten`, pro Zeile ein `Name` und ein `Wert`. Der Kasten steht oben rechts im Artikel, auf dem Handy über dem Text. Tippe noch einmal auf ⓘ, um ihn zu ändern, oder auf `Infokasten entfernen`, um ihn herauszunehmen. Im Text ist er ein Block zwischen `{{infobox` und `}}` mit Zeilen wie `| Geboren = 1901`.
+
+## Einzelnachweise
+Die Schaltfläche [1] öffnet `Einzelnachweis hinzufügen`. Wähle die Art (`Buch`, `Webseite`, `Person` oder `Anmerkung`), füll aus, was du weißt, und tippe auf `Einfügen`: An der Stelle des Cursors steht eine Nummer, und die Quelle kommt als Zeile wie `[^1]: …` ans Ende des Texts. Du kannst sie auch von Hand schreiben: `Text[^1]` und eine Zeile `[^1]: woher es stammt`. Die Liste steht am Ende des Artikels unter `Einzelnachweise`; eine Zeile mit `{{references}}` setzt sie an eine andere Stelle.
+
+## Tabellen
+Die Schaltfläche ▦ öffnet den Tabelleneditor: Schreib in die Zellen, füge Zeilen und Spalten hinzu oder entferne sie und wähle die Ausrichtung jeder Spalte. Die erste Zeile ist die Kopfzeile. Steht der Cursor im Text in einer Tabelle, öffnet ▦ diese Tabelle zum Ändern.
+
+Schreib unter `Zusammenfassung deiner Änderungen`, was du geändert hast; das steht dann in der Versionsgeschichte und unter `Letzte Änderungen`. Gespeichert wird erst, wenn du auf `Speichern` tippst, aber was du tippst, bleibt auf diesem Gerät erhalten: Wenn Wiki sich schließt, ist dein Text wieder da, wenn du denselben Artikel das nächste Mal bearbeitest.
+
+## Umbenennen, Weiterleitungen und Löschen
+`Umbenennen…` ändert den Titel. Mit Haken bei `Weiterleitung vom alten Titel anlegen` funktionieren Links auf den alten Titel weiter. Eine Seite, die über eine Weiterleitung erreicht wurde, zeigt unter ihrem Titel `(Weitergeleitet von …)`.
+
+`Diesen Artikel löschen` entfernt ihn nach deiner Bestätigung von all deinen Geräten; `Rückgängig` in der Meldung holt ihn zurück.
+
+## Versionen
+`Versionen` listet jede gespeicherte Version auf, die neueste zuerst, mit Datum und Zusammenfassung. Für jede gilt:
+- `Ansehen` zeigt diese Version.
+- `Änderungen` zeigt, was sich gegenüber der vorigen Version geändert hat: entfernte Zeilen rot, hinzugefügte grün, die geänderten Wörter markiert.
+- `Mit aktueller vergleichen` zeigt den Unterschied zum Artikel, wie er jetzt ist.
+- `Wiederherstellen` speichert diese Version noch einmal als neueste. Nichts wird gelöscht: Die Versionsgeschichte behält alles.
+
+## Bearbeitungen auf zwei Geräten
+Änderst du denselben Artikel auf zwei Geräten, bevor sie synchronisiert sind, bleiben beide Texte erhalten. Der Artikel zeigt dann einen Hinweis: `Vergleichen` zeigt beide nebeneinander, `Diese Version behalten` behält die, die du siehst, `Andere Version nehmen` nimmt die andere. So oder so bleiben beide in der Versionsgeschichte.
+
+## Suchen und Listen
+Tippe oben ins Suchfeld: Passende Titel erscheinen schon beim Tippen. Drück [[Enter]], um den Artikel mit diesem Titel zu öffnen, oder sieh dir alle Artikel mit diesen Wörtern an, mit einem Link, um den Artikel zu schreiben, falls es ihn noch nicht gibt.
+
+`Letzte Änderungen` listet Artikel nach ihrer letzten Änderung auf, Tag für Tag. `Alle Artikel` ist eine Liste von A bis Z mit Filter. `Kategorien` listet jede Kategorie mit der Zahl ihrer Artikel auf. `Gewünschte Artikel` listet die roten Links auf: Titel, auf die andere Artikel verlinken, die aber noch niemand geschrieben hat. `Links auf diese Seite` listet die Artikel auf, die auf den Artikel verlinken, den du gerade liest.
+
+Wiki-Artikel erscheinen auch in der [Schnellsuche](help:t/menu#quick-search) von orOS.
+
+## Drucken und PDF
+`Drucken` druckt den Artikel so, wie du ihn liest, ohne die Schaltflächen drumherum. `Als PDF speichern` macht aus dem Artikel eine PDF-Datei mit Bildern, Infokasten, Tabellen und Einzelnachweisen und speichert sie dort, wo du willst.
+
+## Import und Export
+`Import und Export…` im Menü holt Artikel herein und speichert dein Wiki als Dateien. Importe fügen Artikel hinzu. Importierst du dieselbe Datei erneut, werden die Artikel aktualisiert, die sie gebracht hat, aber nur die, die du seitdem nicht geändert hast; sonst ändert sich nichts in deinem Wiki. Ist ein Titel schon vergeben, bekommt der neue Artikel eine Nummer, etwa `Oliven (2)`.
+- `Aus Notizen…` übernimmt ein Notizbuch aus [Notizen](app:notes) auf diesem Gerät, in ein neues Wiki oder in das geöffnete. Jede Seite wird ein Artikel; eine Seite mit Unterseiten wird zu einer Kategorie für sie, und auch Labels werden Kategorien. Links zwischen Seiten funktionieren weiter, und `- [ ]`-Aufgaben werden zu ☐ und ☑.
+- `Aus einer Datei…` übernimmt .md-Dateien oder eine .zip davon, aus Notizen, Obsidian oder einem anderen Wiki, und auch Exporte aus Notion, TiddlyWiki, MediaWiki und Confluence (siehe unten). Bei Markdown kommt der Titel aus der ersten Zeile `# Überschrift` oder aus dem Dateinamen; ein Ordner wird eine Kategorie; Bilder in der .zip kommen mit, und Links auf andere .md-Dateien werden Artikellinks.
+- `orOS-Datei (.oroswiki)` speichert das ganze geöffnete Wiki: seine Artikel, ihre Bilder und die Versionsgeschichte jedes Artikels. Öffne sie mit `Aus einer Datei…` oder mit orOS über `Öffnen mit` deines Computers; sie kommt immer als neues Wiki zurück, neben denen, die du schon hast. Eine .oroswiki ist eine offene ZIP-Datei: Entpackt findest du `content.json` (das Wiki), `media` (seine Bilder) und `preview` mit jedem Artikel als .md-Datei, die jedes Programm liest. `Entpackter orOS-Ordner…` öffnet so einen Ordner wieder, auch wenn du darin ein Bild geändert hast.
+- `Markdown (.zip)` speichert jeden Artikel des geöffneten Wikis als .md-Datei, mit seinen Bildern in einem Ordner `media`. Importierst du diese Datei wieder, behalten die Bilder Position und Größe.
+- `Website (.zip)` speichert das geöffnete Wiki als Offline-Website: Entpacke sie und öffne `index.html` in einem beliebigen Browser, ohne Internet und ohne etwas zu installieren. Links, Kategorien, Inhaltsverzeichnis, Einzelnachweise und Bilder funktionieren alle.
+
+## Aus anderen Wikis importieren
+`Aus einer Datei…` in `Import und Export…` erkennt die Datei von selbst und zeigt zuerst, was passieren wird: wie viele Artikel neu sind, welche ein früherer Import gebracht hat und jetzt den neueren Text bekommen, welche du seitdem geändert hast und die bleiben, wie du sie gelassen hast, und was weggelassen wird. Tippe auf `Importieren`, um sie in einem Schritt hereinzuholen; `Rückgängig` in der folgenden Meldung nimmt den ganzen Import zurück.
+- **Notion**: Öffne in Notion `Einstellungen` (oder das Menü `•••` einer Seite) › `Exportieren`, wähle `Markdown & CSV` mit Unterseiten und nimm die .zip, die du bekommst (eine .zip in einer .zip geht auch). Die langen IDs verschwinden aus den Titeln, Unterseiten kommen in eine Kategorie, benannt nach ihrer Seite, eine Datenbank wird ein Artikel mit einer Tabelle, und Links und Bilder bleiben erhalten.
+- **TiddlyWiki**: Nimm die .html-Datei des Wikis selbst, oder exportiere Tiddler als JSON (die Schaltfläche `Alle exportieren` unter `Werkzeuge` oder im Seitenleisten-Tab `Mehr`) oder als .tid-Dateien. System-Tiddler (`$:/…`) werden weggelassen; Tags werden Kategorien, und WikiText-Formatierung, Listen, Tabellen und Links werden umgewandelt.
+- **MediaWiki**: Öffne im Wiki `Spezial:Exportieren`, liste die Seiten (oder eine Kategorie) auf, behalte nur die aktuelle Version und speichere die .xml-Datei. Seiten des Artikelnamensraums kommen mit ihrer neuesten Version herein, mit ihren Kategorien und Weiterleitungen; Vorlagen werden weggelassen.
+- **Confluence**: Öffne im Bereich `Bereichseinstellungen` › `Bereich exportieren`, wähle `HTML` und nimm die .zip. Jede Seite wird ein Artikel in einer Kategorie, benannt nach ihrer übergeordneten Seite, mit Überschriften, Listen, Tabellen, Code, Links und Bildern.
+- Nichts in einer importierten Datei kann ausgeführt werden: Ihr Text wird umgewandelt, nie als eigene Seite angezeigt.
+
+## Mit Wikipedia beginnen
+`Mit Wikipedia beginnen…` (in `Import und Export…` oder unter dem Titel eines neuen Artikels) kopiert einen Wikipedia-Artikel als Ausgangstext. Wähle die Sprache, gib den Titel ein (oder füge die Adresse des Artikels ein) und tippe auf `Holen`. Der Artikel öffnet sich im Editor mit Text, Links, Fakten aus dem Infokasten, Tabellen und Einzelnachweisen; Bilder und die Kategorien von Wikipedia werden weggelassen. Prüf ihn und tippe auf `Speichern`.
+
+Der Text von Wikipedia steht unter der Lizenz CC BY-SA 4.0, deshalb endet der Artikel mit einem Abschnitt `Quelle`: dem Link zum Artikel, zur Versionsgeschichte seiner Autoren und zur Lizenz. Lass ihn dort. Wenn du den Artikel teilst, teile ihn unter derselben Lizenz.
+
+## An jemanden senden
+`An jemanden senden…` im Menü ⋯ packt den Artikel in einen Link: Die andere Person liest ihn in ihrem Browser, und mit orOS öffnet `Zu meinem orOS hinzufügen` ihn in ihrem Wiki, bereit zum Speichern. Der Text reist mit; Bilder bleiben bei dir. Siehe [An jemanden senden](help:t/share).
+
+## Mehrere Wikis
+Nimm getrennte Wikis für getrennte Bereiche deines Lebens, etwa Arbeit, Zuhause oder ein Hobby. Im Menü legt `Neues Wiki…` eines an, die Liste oben wechselt zwischen ihnen, und `Dieses Wiki umbenennen…` und `Dieses Wiki löschen…` ändern das geöffnete. Links, Kategorien und Suche funktionieren innerhalb eines Wikis.
+
+## Synchronisierung und Sicherung
+Deine Wikis und Artikel werden verschlüsselt über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten abgeglichen. Die Versionsgeschichte jedes Artikels liegt als Dateien auf der orOS-Disk und reist mit ihr, deshalb erscheinen Versionen von einem anderen Gerät, sobald die Disk synchronisiert ist. Das Menü zeigt, wie viele Artikel das geöffnete Wiki hat und wie viel Platz deine Wikis auf diesem Gerät belegen. Für eine vollständige Kopie von orOS siehe [Sicherung](help:t/backup).
+
+## Tastenkürzel
+- [[Ctrl+K]] springt ins Suchfeld ([[Cmd+K]] auf dem Mac).
+- [[E]] bearbeitet den Artikel, den du gerade liest.
+- [[Ctrl+S]] speichert beim Bearbeiten.
+- [[Ctrl+B]] und [[Ctrl+I]] machen den markierten Text fett oder kursiv; [[Ctrl+K]] im Editor macht daraus einen Link auf einen Artikel.
+- [[Esc]] schließt Menüs und Dialoge.
+
+## Tipps
+- Groß- und Kleinschreibung und Akzente spielen in Links keine Rolle: `[[olive trees]]` findet „Olive Trees“.
+- `Gewünschte Artikel` ist eine gute Aufgabenliste: Sie zeigt, was deinem Wiki noch fehlt.
+- `Zur Hauptseite machen` macht jeden Artikel zu der Seite, mit der sich das Wiki öffnet.
+
+## Grenzen
+- Eine Galerie fasst bis zu 60 Bilder, ein Infokasten bis zu 60 Zeilen.
+- Ein Artikel fasst bis zu 200.000 Zeichen, ein Wiki bis zu 5.000 Artikel. Ein Import bringt bis zu 2.000 Artikel.
+- Ein Link aus `An jemanden senden` fasst etwa 60.000 Zeichen Text; für längere Artikel nimm dort `Als Datei speichern`.
+- Mit Wikipedia beginnen braucht eine Internetverbindung; Wikipedia-Vorlagen, die orOS nicht kennt, werden weggelassen.
+- Der Text all deiner Wikis teilt sich den Platz, den orOS auf diesem Gerät hat (etwa 5 MB); die Versionsgeschichte liegt auf der orOS-Disk und zählt nicht dazu.

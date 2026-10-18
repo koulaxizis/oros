@@ -46,8 +46,10 @@
   watchPalette();
 
   /* ---------- 1. i18n (own packs; shell keys don't cover the app) ---------- */
+  // orosI18n (../i18n.js): the full language code, a pack language included.
   var LANG = "en";
-  try {
+  if (window.orosI18n) LANG = window.orosI18n.lang();
+  else try {
     if (window.parent && window.parent.orosLang) LANG = window.parent.orosLang;
     else if (localStorage.getItem("oros-lang")) LANG = localStorage.getItem("oros-lang");
   } catch (e) {}
@@ -144,6 +146,7 @@
       "tab.astro": "Άστρο", "astro.panel": "Ήλιος & Σελήνη"
     }
   };
+  if (window.orosI18n) window.orosI18n.table(STR, "time", LANG);
   function t(k) {
     return (STR[LANG] && STR[LANG][k] !== undefined) ? STR[LANG][k]
          : (STR.en[k] !== undefined ? STR.en[k] : k);
@@ -520,7 +523,7 @@
   }
 
   function renderSub(now) {
-    var loc = LANG === "el" ? "el-GR" : "en-GB";
+    var loc = locTag();
     var d = now.toLocaleDateString(loc, { weekday: "long", day: "numeric", month: "long", year: "numeric" });
     var off = -now.getTimezoneOffset();
     var sign = off >= 0 ? "+" : "-";
@@ -558,7 +561,7 @@
   var zoneFmt = {};
   function zFmt(tz) {
     if (!zoneFmt[tz]) {
-      zoneFmt[tz] = new Intl.DateTimeFormat(LANG === "el" ? "el-GR" : "en-GB",
+      zoneFmt[tz] = new Intl.DateTimeFormat(locTag(),
         { timeZone: tz, hour: "2-digit", minute: "2-digit", hourCycle: "h23" });   // TM-5: 24h in Greek too
     }
     return zoneFmt[tz];
@@ -569,7 +572,7 @@
     return CC.zoneLabel(z.tz, z.city || "", LANG);
   }
   var REGION = null;
-  try { REGION = new Intl.DisplayNames([LANG === "el" ? "el" : "en"], { type: "region" }); } catch (e) { REGION = null; }
+  try { REGION = new Intl.DisplayNames([window.orosI18n ? LANG : (LANG === "el" ? "el" : "en")], { type: "region" }); } catch (e) { REGION = null; }
   function regionName(cc) {
     if (!cc) return "";
     try { return REGION ? (REGION.of(cc) || cc) : cc; } catch (e) { return cc; }
@@ -870,7 +873,7 @@
     var p = v.split("-");
     return CC.midnightIn(places[0].tz, +p[0], +p[1], +p[2]);
   }
-  function locTag() { return LANG === "el" ? "el-GR" : "en-GB"; }
+  function locTag() { return window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB"); }
   function dayShort(c) {
     try {
       return new Intl.DateTimeFormat(locTag(), { weekday: "short", day: "numeric", timeZone: "UTC" })
@@ -1695,7 +1698,7 @@
     try { d = TS.parse(localStorage.getItem(TS.STORAGE_KEY)); } catch (e) { d = null; }
     if (!d) return [];
     return TS.live(d.projects).filter(function (p) { return !p.arch; })
-      .sort(function (a, b) { return a.name.localeCompare(b.name, LANG === "el" ? "el-GR" : "en-GB"); });
+      .sort(function (a, b) { return a.name.localeCompare(b.name, locTag()); });
   }
   function pmLogFill() {
     var sel = $("pm-log");

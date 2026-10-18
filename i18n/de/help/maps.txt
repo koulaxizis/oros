@@ -1,0 +1,286 @@
+# Karten
+
+Finde Orte, plane Routen mit Auto, Fahrrad, zu Fuß oder mit dem öffentlichen Verkehr, folge gesprochenen Abbiegehinweisen, zeichne GPX-Strecken auf und folge ihnen, und hilf mit Hinweisen und Ortsänderungen, OpenStreetMap besser zu machen.
+
+## Erste Schritte
+
+Gib einen Ort oder eine Adresse in `Ort suchen…` ein. Vorschläge erscheinen ab dem dritten Buchstaben, und Orte in der Nähe des Kartenausschnitts, den du gerade ansiehst, kommen zuerst. Tippe oder klicke auf einen, um eine Stecknadel zu setzen. Du kannst auch Koordinaten eingeben, etwa `37.9755, 23.7348` oder `37°58'32"N 23°44'05"E`.
+
+`Meinen Standort verwenden` zeigt, wo du bist (dein Browser fragt beim ersten Mal nach der Erlaubnis). Die Ebenen-Taste oben rechts wechselt zwischen den Karten `Standard`, `Humanitär`, `Satellit` und `Topo (Höhenlinien)`. `Topo` zeigt Höhenlinien und Schummerung, praktisch zum Wandern; seine Bilder enden bei mittlerem Zoom und werden darüber hinaus vergrößert.
+
+## Orte
+
+- Das Popup einer Stecknadel hat `Speichern` (Stern), `Route` (von deinem Standort dorthin) und `Von hier`.
+- Klicke mit der rechten Maustaste auf die Karte oder drücke am Handy lange, um einen beliebigen Punkt zu nutzen: `Hierhin`, `Hier starten`, `Als Zwischenstopp` (sobald eine Route steht) und `Speichern`.
+- Langes Drücken bietet auch `Entfernung messen` und `Hier geparkt` (siehe Messen und Parken unten).
+- `Gespeicherte Orte` listet alles, was du mit dem Stern markiert hast. Tippe auf einen Ort, um dorthin zu fliegen. Der Stift benennt ihn um (`Ort umbenennen`) und das × löscht ihn, mit `Rückgängig`.
+
+### Favoritengruppen
+
+- Lege gespeicherte Orte in Gruppen ab, wie in OsmAnd: die Ordner-Taste neben einem Ort oder `Gruppe` im Popup eines gespeicherten Orts wählt eine Gruppe oder legt eine `Neue Gruppe` mit Name und Farbe an. Die Stecknadel auf der Karte nimmt die Farbe der Gruppe an.
+- Die Liste zeigt jede Gruppe mit ihren Orten, danach `Keine Gruppe`. Neben einer Gruppe: der Pfeil klappt sie zu, das Auge blendet ihre Stecknadeln auf der Karte aus, der Stift bearbeitet sie und der Pfeil nach unten exportiert sie als GPX-Datei.
+- `Gruppen` oben listet jede Gruppe mit der Zahl ihrer Orte; tippe auf eine, um sie umzubenennen, ihre Farbe zu ändern oder sie zu löschen. Beim Löschen einer Gruppe bleiben ihre Orte erhalten, ohne Gruppe.
+- `Importieren` liest die Wegpunkte einer GPX-, KML- oder GeoJSON-Datei (zum Beispiel aus OsmAnd exportierte Favoriten) als gespeicherte Orte ein, in eine neue Gruppe mit dem Namen der Datei, eine vorhandene Gruppe oder keine. Eine Datei nur mit Wegpunkten, die du in `Meine Strecken` öffnest, landet genauso dort. Auch KMZ-Dateien und gespeicherte Orte und Listen aus Google kommen herein, eine Gruppe pro Liste (siehe Aus einer anderen App importieren).
+
+## Entdecken
+
+Die Kompass-Taste öffnet `Entdecken`, das sich rund um die Kartenmitte umsieht. Langes Drücken › `Was ist in der Nähe` macht dasselbe für einen beliebigen Punkt.
+
+- **Orte**: wähle eine Art (Restaurants, Cafés, Bars, Fast Food, Supermärkte, Bäckereien, Apotheken, Geldautomaten und Banken, Tanken und Laden, Toiletten, Sehenswürdigkeiten und Museen, Parks). Jeder Ort zeigt, ob er gerade geöffnet hat und wann er schließt oder öffnet, gelesen aus seinen Öffnungszeiten in OpenStreetMap; `Jetzt geöffnet` behält nur die offenen. Tippe auf einen für Öffnungszeiten, Adresse, Telefon und Website, `Hierhin` und `Speichern`.
+- **Wikipedia**: Artikel über Orte um dich herum, in der Sprache von orOS, mit Bild, wenn es eins gibt. Das Popup verlinkt den Artikel.
+- **Fotos**: Straßenfotos von Panoramax, der offenen Alternative zu Street View, sobald du nah heranzoomst. Der Pfeil am Punkt zeigt, in welche Richtung das Foto blickt; tippe auf ein Foto, um es größer zu sehen und in Panoramax zu öffnen.
+- Nachdem du die Karte verschoben hast, sucht `In diesem Gebiet suchen` erneut. Tab, Art und `Jetzt geöffnet` bleiben auf diesem Gerät so, wie du sie verlassen hast.
+
+## Route planen
+
+1. Tippe auf `Route planen`. Ein neuer Plan startet `Von` `Mein Standort`.
+2. Tippe in eine Zeile, um zu suchen. Deine gespeicherten und letzten Orte werden auch angeboten. Oder tippe in dieser Zeile auf `Auf der Karte wählen` und dann auf die Karte.
+3. Mit `Stopp` fügst du bis zu 3 Zwischenstopps hinzu. `Tauschen` dreht die ganze Fahrt um.
+
+Die Routenleiste zeigt Distanz und Fahrzeit (eine Schätzung ohne Live-Verkehr), dazu `Auto`, `Fahrrad`, `Zu Fuß`, `Wegbeschreibung` (die Liste der Schritte), `Route bearbeiten`, `An Kalender senden`, `Navigation starten` und `Route löschen`. `An Kalender senden` fragt nach einem `Tag` und fügt im [Kalender](app:calendar) einen Termin „Route nach …“ mit Distanz, Zeit und Verkehrsmittel hinzu.
+
+## Routenwahl und Teilen
+
+- Auf die Zeit in der Routenleiste folgt die Ankunftszeit, wenn du jetzt losfährst.
+- Findet der Server weitere gute Routen, erscheinen sie als graue gepunktete Linien. Tippe auf eine, um sie zu nehmen, oder wähle sie unter `Routen` oben in der `Wegbeschreibung` (mit der Angabe, wie viel länger sie dauert). Routen mit Zwischenstopps haben keine Alternativen.
+- Mit dem Auto lässt `Vermeiden` in der `Wegbeschreibung` `Maut`, `Autobahnen` oder `Fähren` aus, jeweils eins davon. Kann der Server das nicht, bekommst du die normale Route und eine Meldung. Die Wahl bleibt auf diesem Gerät.
+- `Teilen` (in der Routenleiste, in der `Wegbeschreibung`, an einem Ort oder nach langem Drücken) gibt dir einen Link, der den Ort oder die Route in orOS Karten öffnet, `In anderer App öffnen` (ein `geo:`-Link: unter Android bietet er OsmAnd, Organic Maps und andere an), `Auf OpenStreetMap öffnen`, `Koordinaten kopieren` für einen Ort und `Senden…`, wo das Gerät teilen kann.
+- `In Meine Strecken speichern` behält die Route als Strecke (mit Start, Zwischenstopps und Ziel als Wegpunkten), damit du sie als GPX exportieren oder ihr später folgen kannst.
+
+## Öffentlicher Verkehr
+
+Busse, U-Bahn, Straßenbahn, Züge und Fähren, mit Live-Zeiten, wo der Betreiber sie veröffentlicht. Die Fahrpläne kommen von [Transitous](https://transitous.org), einem kostenlosen Gemeinschaftsdienst auf Basis offener Daten.
+
+- Öffne ihn mit der Bus-Taste links, mit der Bus-Taste in der Routenleiste (gleicher Start und gleiches Ziel) oder mit langem Drücken › `Mit dem ÖPNV hierher`.
+- `Von` und `Nach`: die Zielscheiben-Taste setzt `Mein Standort`, mit der Stecknadel-Taste tippst du einen Punkt auf der Karte an. Die Pfeile tauschen sie. `Punkte der Route verwenden` übernimmt Start und Ziel der geplanten Route.
+- Wähle `Jetzt losfahren`, `Abfahrt um` oder `Ankunft bis` und eine Uhrzeit, dann `Verbindungen suchen`. `Früher` und `Später` blättern durch die Zeiten.
+- Jede Verbindung zeigt ihre Zeiten, die Linien in ihren Farben, die Umstiege und wie weit du gehst. Eine Verspätung erscheint als „+3 Min.“, eine ausfallende Fahrt ist markiert.
+- Öffne eine Verbindung, um sie Schritt für Schritt und auf der Karte gezeichnet zu sehen (Fußwege gepunktet). Tippe auf einen Schritt, um dorthin zu zoomen. `Teilen` sendet sie als Text mit Link, und `In Meine Strecken speichern` behält sie als Strecke.
+- Tippe auf einen Haltestellennamen in einer Fahrt, auf eine Haltestelle auf der Karte oder drücke lange › `Abfahrten in der Nähe` für die Abfahrtstafel. Sie aktualisiert sich jede Minute, solange sie offen ist. An Athener Bushaltestellen zeigt die Tafel auch `Live-Ankünfte (OASA)`: die Minuten bis zur Ankunft jedes Busses, von OASA Telematics über das orOS-Relay.
+- `Haltestellen auf der Karte zeigen` zeigt Haltestellen, wenn du heranzoomst. `Live-Fahrzeuge zeigen` bewegt Züge, U-Bahnen und Busse auf der Karte nach Fahrplan und Live-Daten.
+
+Die Abdeckung hängt von offenen Fahrplänen ab. In Griechenland gehören die Stadtbusse in Thessaloniki dazu, Hellenic Train mit Live-Daten und Bikesharing in manchen Gegenden. Athen ist auch dabei, aber seit Mitte September 2026 sind seine Fahrpläne bei Transitous veraltet, sodass Suchen dort nichts finden, bis Transitous sie aktualisiert; Karten sagt dir, wenn die Haltestellen nahe deinen Punkten gar keine Abfahrten zeigen. Überlandbusse (KTEL) und Fähren sind noch nicht enthalten.
+
+## Navigation
+
+`Navigation starten` folgt deiner GPS-Position und sagt jede Abbiegung in der Sprache von orOS an. Bist du mehr als etwa 150 m vom Start entfernt, wird die Route ab deinem Standort neu berechnet. Verlässt du die Route, wird sie automatisch neu berechnet (wenn du online bist).
+
+- Verschiebst du die Karte, folgt sie dir nicht mehr. `Zentrieren` holt sie zurück.
+- `Sprache stumm` schaltet die Ansagen stumm.
+- Die Ansagen werden nur mit einer Stimme gesprochen, die auf deinem Gerät installiert ist, nie mit einer Online-Stimme des Browsers (wie den „Google …“-Stimmen von Chrome), die sie an ihren Server schicken würde. Hat dein Gerät keine Stimme für die Sprache von orOS, sagt ein Hinweis das und du folgst dem Bildschirm; in den Spracheinstellungen deines Systems kannst du eine Stimme hinzufügen.
+- Mit dem Auto erscheint neben deinem Tempo ein Tempolimit-Schild, wenn OpenStreetMap das Limit deiner Straße kennt. Es zeigt die Zahl so, wie sie auf der Straße steht (ein eckiges Schild für mph), und wird rot, wenn du mehr als 5 km/h darüber fährst. Kein Schild heißt, das Limit ist unbekannt; folge immer den echten Verkehrsschildern.
+- Die untere Leiste zeigt Ankunftszeit, restliche Zeit und restliche Distanz. Vor einer Abbiegung erscheinen die Fahrspuren unter dem Hinweis: die hellen Pfeile sind die Spuren, die du nehmen sollst.
+- `Navigation beenden` braucht ein zweites Tippen innerhalb von 3 Sekunden.
+- Wo der Browser es erlaubt, bleibt der Bildschirm während der Navigation an.
+- Öffnet sich Karten innerhalb von 30 Minuten im selben Tab wieder, läuft die Navigation weiter.
+
+## Messen und Parken
+
+**Messen**: drücke lange auf einen Punkt › `Entfernung messen`. Jedes Tippen auf die Karte fügt einen Punkt hinzu, und du kannst einen Punkt ziehen, um ihn zu verschieben. Das Blatt zeigt die Entfernung, den letzten Abschnitt und die Zahl der Punkte. `Form schließen` verbindet den letzten Punkt mit dem ersten und zeigt Fläche (m², ha oder km²) und Umfang. `Rückgängig` entfernt den letzten Punkt, `Leeren` fängt neu an. Nichts wird gespeichert; Schließen des Blatts oder ein anderer Modus leert es.
+
+**Parken**: drücke lange auf die Stelle, wo das Auto steht › `Hier geparkt`. Wähle eine Erinnerung (`Keine Erinnerung`, `In 30 Min.`, `In 1 Stunde`, `In 2 Stunden` oder `Zu einer Uhrzeit`) und, wenn du magst, eine Notiz wie „Ebene -2, Platz 14“. Ein blaues P markiert das Auto. Tippe darauf für die Parkzeit, die Erinnerung, die Notiz, `Zu Fuß hin` (ein Fußweg von deinem Standort), `Ändern` und `Ich bin weg` (entfernt es). Langes Drücken irgendwo › `Mein geparktes Auto zeigen` bringt dich zurück zum Auto. Die Erinnerung ist eine orOS-Benachrichtigung, sie kommt also auch bei geschlossener Karten-App, solange orOS offen ist; Tippen darauf öffnet Karten am Auto.
+
+## OpenStreetMap-Hinweise
+
+Ein Hinweis sagt den Freiwilligen, die [OpenStreetMap](https://www.openstreetmap.org) kartieren, dass etwas falsch ist oder fehlt: ein Geschäft, das geschlossen hat, ein neuer Weg, ein falscher Straßenname. Sie lesen ihn, korrigieren die Karte und lösen den Hinweis.
+
+1. Tippe auf `Kartieren (OpenStreetMap-Hinweise)` (die Fahne). Die Hinweise des Gebiets erscheinen auf der Karte und im Bereich (zoome heran, wenn du `Zoome heran, um die Hinweise dieses Gebiets zu sehen.` siehst). Rote Hinweise sind offen, grüne in der letzten Woche gelöst.
+2. Um etwas zu melden, drücke lange auf die Karte (Rechtsklick am Computer) und wähle `An OpenStreetMap melden`, oder nimm `Neuer Hinweis in der Kartenmitte`. Beschreibe es klar: andere werden es lesen. Gibt es in der Nähe schon einen offenen Hinweis, zeigt Karten ihn zuerst.
+3. Tippe auf einen Hinweis, um ihn zu lesen. Du kannst `Kommentieren`, `Lösen` oder `Wieder öffnen`.
+
+Zum Schreiben brauchst du ein kostenloses OpenStreetMap-Konto: `Mit OpenStreetMap anmelden` öffnet die OpenStreetMap-Seite in einem kleinen Fenster, und du kommst angemeldet zurück. Lesen geht auch ohne. `Meine` listet die Hinweise, die du erstellt oder kommentiert hast, und Karten sagt dir Bescheid, wenn jemand antwortet.
+
+> Ohne Verbindung oder wenn OpenStreetMap nicht antwortet, kommt, was du schreibst, unter `Wartend` und wird von diesem Gerät gesendet, sobald es geht. Hast du es auf einem anderen Gerät geschrieben, übernimmt `Von hier senden` es.
+
+In `Karten-Einstellungen` › `OpenStreetMap` meldest du dich ab, wählst den `Testserver` (zum Ausprobieren, nicht die echte Karte) und legst den `Änderungskommentar` fest. Diese Zeile, „Uploaded using orOS Maps“, wenn du sie nicht änderst, steht am Ende deiner neuen Hinweise (du kannst sie jedes Mal in `Schlusszeile` bearbeiten) und wird der Kommentar deiner Kartenänderungen.
+
+## Orte auf OpenStreetMap bearbeiten
+
+Korrigiere Geschäfte, Cafés und andere Orte auf der echten Karte, so wie die App Every Door: vorbeigehen, prüfen, korrigieren.
+
+1. Zoome nah heran und tippe auf `Orte bearbeiten (OpenStreetMap)` (der Stift). Die Orte um dich herum erscheinen als Punkte und in einer Liste, die nächsten zuerst.
+2. Tippe auf einen Ort. `Details bearbeiten` öffnet ein Formular mit den Feldern, die zu seiner Art passen: Name, Adresse, Öffnungszeiten (Tage antippen, Zeiten eingeben), Telefon, Website und mehr. `Alle Tags` zeigt alles als Schlüssel=Wert für erfahrene Kartierende.
+3. `Heute geprüft` hält fest, dass der Ort noch so ist wie beschrieben. `Geschlossen / weg` behält Adresse und Gebäude und entfernt das Geschäft. `Verschieben` setzt ihn dorthin, wo das Kreuz ist, `Löschen` entfernt ihn.
+4. `Ort hinzufügen` zeigt ein Kreuz: ziehe die Karte, bis das Kreuz auf der Stelle sitzt, und wähle dann die Art (Suche auf Englisch oder Griechisch).
+5. Deine Änderungen warten in der Liste, bis du auf `Hochladen` tippst. Du siehst den Änderungskommentar noch einmal und kannst ihn ändern.
+
+> Hat jemand inzwischen dasselbe Detail auf OpenStreetMap geändert, bleibt sein Wert und Karten sagt dir, welcher. Details, die du nicht angefasst hast, folgen immer der Karte. Scheitert das Hochladen, geht nichts verloren: die Änderung bleibt mit dem Grund in der Liste, und `↻` versucht es noch einmal. `Meine Änderung verwerfen` an einem Ort lässt deine Änderung fallen.
+
+Änderungen von einem anderen Gerät zeigen `Von einem anderen Gerät` und werden von diesem Gerät hochgeladen. `Von hier hochladen` übernimmt sie.
+
+Ein oranger Ring um einen Punkt heißt, dem Ort fehlt etwas Wichtiges (sein Name oder bei einem Geschäft oder Café die Öffnungszeiten); der Ort zeigt, was fehlt.
+
+`Ort hinzufügen` hat auch `Kleinigkeiten (ein Tipp)`: eine Sitzbank, einen Mülleimer, einen Poller, eine Straßenlaterne, einen Briefkasten, Trinkwasser, einen Hydranten, einen Defibrillator, einen Baum und mehr. Setze das Kreuz auf die Stelle und tippe auf eins.
+
+### Eingänge und Wohnungen
+
+`Eingänge und Wohnungen` im Orte-Bereich zeigt die Gebäude um dich herum (zoome auf Straßenebene) mit ihren Eingängen: grün, wenn sie Wohnungsnummern oder einen Buchstaben haben, orange, wenn nicht.
+
+1. Tippe auf den Umriss eines Gebäudes, wo die Tür ist. Ein Tippen neben einer Ecke nimmt diese Ecke.
+2. Wähle die Art (Haupteingang, Treppenhaus, anderer, Lieferanten, Garage, Notausgang), gib den Buchstaben an der Tür ein (zum Beispiel Β), die Wohnungsnummern (zum Beispiel 5-8 oder 5;6;7) und ob es Stufen gibt.
+3. Tippe auf einen vorhandenen Eingang, um ihn zu ändern.
+
+Änderungen warten im Bereich, bis du auf `Hochladen` tippst; sie gehen in einem Änderungssatz mit deinem Änderungskommentar hinaus. Ein neuer Eingang wird Teil des Gebäudeumrisses. Hat sich das Gebäude inzwischen auf OpenStreetMap geändert, bleibt der Eingang mit einer Meldung in der Liste; entferne ihn und setze ihn neu.
+
+## Fragen (wie StreetComplete)
+
+Hilf OpenStreetMap, indem du kleine Fragen zu deiner Umgebung beantwortest. Du musst keine Tags kennen.
+
+1. Tippe auf `Fragen` (die Stecknadel mit Fragezeichen) und zoome auf Straßenebene. Stecknadeln zeigen die offenen Fragen: 🪑 Lehne der Bank, 🚏 Wartehäuschen, 🚌 Bank an der Haltestelle, 🚸 Art des Übergangs, 💡 Straßenbeleuchtung, 🛣️ Belag, 🕒 Öffnungszeiten, ♿ Rollstuhlzugang, 🚻 Toilettengebühr, ♻️ Recycling, 🛐 Religion, 🏢 Stockwerke, 🔢 Hausnummer, 🛝 Zugang zum Spielplatz, 🚬 Rauchen, 🏧 Geldautomat an der Bank, 🚦 Tempolimit, 🏷️ Straßenname, 🪜 Anzahl der Stufen, 🤚 Handlauf, 🦯 Blindenleitsystem am Übergang, 🪧 Name der Haltestelle, 🚧 Schranke am Bahnübergang, 🅿️ Parkgebühr, 🚗 Art des Parkplatzes, 🚲 Fahrradstellplätze, ☂️ überdachte Fahrradstellplätze, 🥗 vegetarisches Essen, 🌱 veganes Essen, 💳 Zahlungsarten, 📶 WLAN, 🚾 Rollstuhl-WC, ❤️ Defibrillator drinnen, 🧯 Hydrant, 📮 Leerungszeiten, 🏠 Gebäudeart.
+2. Tippe auf eine Stecknadel (oder eine Zeile der Liste) und dann auf die Antwort. Die nächste Frage in der Nähe öffnet sich von selbst.
+3. `Weiß nicht` überspringt die Frage vorerst. `Hier ausblenden` blendet sie für diesen Ort auf all deinen Geräten aus. `Gibt es nicht mehr` öffnet an der Stelle einen neuen Hinweis, damit Kartierende nachsehen können.
+4. Manche Antworten veralten: Karten fragt nach einigen Jahren erneut (Öffnungszeiten nach einem Jahr), und `Immer noch gleich` bestätigt sie.
+5. Antworten warten, bis du auf `Hochladen` tippst. Jede Art von Frage geht in einem eigenen Änderungssatz hinaus, mit deinem Änderungskommentar (anfangs „Uploaded using orOS Maps“). Hat jemand inzwischen dasselbe geändert, bleibt sein Wert.
+
+`Einstellungen` im Bereich schaltet Arten von Fragen ein oder aus. Der Zähler zeigt deine Antworten insgesamt, heute und die Tage in Folge.
+
+`Erfolge` zeigt eine Stufe für jede Gruppe von Fragen (Geschäfte und Cafés, Straßen und Wege, Haltestellen und Übergänge, Parken, Gebäude und Adressen, Stadtmobiliar). Die Stufen steigen bei 1, 10, 30, 100, 300 und 1000 hochgeladenen Antworten, und jede Stufe schaltet eine Seite frei, um mehr über das Thema zu lesen.
+
+Team-Kartierung: um ein Gebiet mit Freunden zu kartieren, ohne dasselbe doppelt zu beantworten, öffnet ihr `Einstellungen`, und alle wählen dieselben `Personen im Team` und einen anderen Buchstaben. Jede Person sieht dann nur ihren Teil der Fragen. Weder Konto noch Server sind nötig; wähle `Nur ich`, um wieder alle zu sehen.
+
+### Ebenen
+
+Eine Ebene färbt die Straßen oder Gebäude um dich herum nach einer Eigenschaft ein, damit die Lücken auffallen (rote Striche heißen „noch unbekannt“), und ein Tippen ändert sie. Wähle eine unter `Ebene` oben im Fragen-Bereich:
+
+- 💡 `Straßenbeleuchtung`: beleuchtet oder nicht.
+- 🛣️ `Belag`: Asphalt, Pflaster, Schotter, Erde und mehr.
+- 🚶 `Gehwege`: auf beiden Seiten, einer Seite, ein eigener Weg oder keiner. Pfeile auf der gewählten Straße zeigen ihre Richtung: links und rechts gelten so, wie du sie siehst, wenn du in diese Richtung gehst.
+- 🔢 `Adressen`: welche Gebäude eine Hausnummer haben. Gib die Nummer ein oder tippe auf `Es hat keine Nummer`.
+- 🏢 `Gebäude`: Stockwerke und Gebäudeart in einem Formular (leere Felder bleiben, wie sie sind).
+
+Zoome auf Straßenebene (Gebäude brauchen eine Stufe näher). Tippe auf eine Straße oder ein Gebäude, dann auf die Antwort. Änderungen warten mit deinen Antworten auf Fragen, bis du auf `Hochladen` tippst, und zählen für deine Erfolge. Solange eine Ebene an ist, sind die Fragen-Stecknadeln ausgeblendet; wähle `Keine`, um sie zurückzuholen. Die gewählte Ebene bleibt auf diesem Gerät.
+
+## Meine Strecken (GPX)
+
+Zeichne auf, wo du gehst, fährst oder radelst, behalte deine Strecken und folge ihnen erneut, wie in OsmAnd.
+
+1. Tippe auf `Meine Strecken (GPX)` (die Weg-Taste) und `Aufzeichnung starten`. Unterwegs siehst du Distanz, Zeit, Tempo und Höhe. `Pausieren` fügt keine Punkte mehr hinzu; `Fortsetzen` macht mit einer Lücke in der Linie weiter.
+2. Du kannst den Bereich schließen: ein roter Chip oben zeigt die Aufzeichnung, tippe darauf, um zurückzukommen.
+3. `Stopp` fragt nach einem Namen und speichert die Strecke. `Weiter aufzeichnen` geht zurück, `Verwerfen` wirft sie weg.
+4. Tippe auf eine Strecke für ihre Statistik und ein Diagramm von Höhe oder Tempo. `Alles zeigen` passt sie in die Karte ein. `Folgen` zeichnet sie dick und sagt dir, wie weit du von ihr weg bist und wie viel noch fehlt. `GPX exportieren` speichert eine Kopie an einem beliebigen Ort. `Name, Farbe, Ordner` ordnet sie, und die Augen-Taste zeigt oder versteckt sie auf der Karte.
+5. `Datei importieren` holt GPX-, KML- oder GeoJSON-Dateien herein, dazu KMZ, TCX, FIT und Google-Exporte (siehe Aus einer anderen App importieren unten). Auf einem Computer mit installiertem orOS funktioniert `Öffnen mit` › orOS auch für .gpx-, .kml-, .geojson- und .orosmap-Dateien.
+
+> Lass den Bildschirm beim Aufzeichnen an. Bei ausgeschaltetem Bildschirm oder mit orOS im Hintergrund stoppt der Browser das GPS und die Strecke bekommt eine gerade Lücke. Karten hält den Bildschirm wach, solange es aufzeichnet. Schließt sich der Tab oder startet das Gerät neu, geht nichts verloren: beim nächsten Mal bietet Karten `Weiter`, `Speichern` oder `Verwerfen` an.
+
+### Strecke planen
+
+Plane eine Wanderung, eine Radtour oder eine Fahrt im Voraus, wie mit dem Routenplaner von OsmAnd. Öffne ihn mit langem Drücken › `Strecke von hier planen` oder `Meine Strecken` › `Strecke planen`.
+
+- Wähle, wie der nächste Abschnitt verläuft: `Zu Fuß`, `Fahrrad` oder `Auto` folgen Straßen und Wegen (dieselben kostenlosen Server wie bei der Wegbeschreibung), `Luftlinie` geht gerade, zum Beispiel über ein Feld oder einen Strand. Jeder Abschnitt behält die Wahl, mit der er entstanden ist.
+- Tippe auf die Karte, um Punkte hinzuzufügen. Ziehe einen Punkt, um ihn zu verschieben; seine Abschnitte folgen wieder den Straßen. Tippe auf einen Punkt, um ihn zu entfernen. `Rückgängig` entfernt den letzten, `Leeren` fängt neu an.
+- Das Blatt zeigt die Länge und, wenn du online bist, das Höhenprofil mit Anstieg, Abstieg, tiefstem und höchstem Punkt.
+- Gib ihr einen Namen und tippe auf `In Meine Strecken speichern`. Sie wird eine normale GPX-Strecke (mit Höhe und deinen Punkten als Wegpunkte), der du folgen, die du bearbeiten, exportieren oder hochladen kannst.
+
+Offline sind neue Abschnitte gerade Linien und es gibt keine Höhe. Der Plan bleibt erhalten, solange Karten offen ist, auch wenn du in einen anderen Bereich wechselst, aber dauerhaft behalten wird er erst, wenn du ihn speicherst.
+
+### Strecke bearbeiten
+
+`Bearbeiten` öffnet den Strecken-Editor. Bewege die beiden Regler, um einen Teil der Strecke auszuwählen (grüner Anfang, rotes Ende auf der Karte):
+
+- `Nur die Auswahl behalten` schneidet den Rest ab, zum Beispiel die Anfahrt zum Wanderweg.
+- `Auswahl entfernen` schneidet einen Teil heraus, zum Beispiel einen GPS-Sprung, und lässt eine Lücke.
+- `Am Anfang teilen` macht am Anfang der Auswahl zwei Strecken daraus und speichert beide.
+- `Vereinfachen` lässt Punkte weg, die nichts zur Form beitragen. Wähle zuerst die Toleranz; die Zeile darunter zeigt, wie viele Punkte bleiben.
+- `Verbinden mit` hängt eine andere Strecke an das Ende dieser an.
+
+`Rückgängig` geht einen Schritt zurück. Gespeichert wird erst mit `Änderungen speichern`. Schließt du den Bereich, wartet der Editor mit deinen Änderungen auf dich; `Abbrechen` wirft sie weg.
+
+### Zu OpenStreetMap hochladen
+
+`Zu OSM hochladen` schickt die Strecke zu deinen GPS-Spuren auf OpenStreetMap, wo Kartierende damit Straßen und Wege zeichnen. Melde dich zuerst bei OpenStreetMap an (wie für Hinweise). Wähle die Beschreibung (anfangs dein Änderungskommentar), Tags und die Sichtbarkeit: `Privat` (nur du siehst die Spur; ihre Punkte erscheinen anonym in der GPS-Ebene, ohne Reihenfolge), `Verfolgbar`, `Öffentlich` oder `Identifizierbar`. OpenStreetMap braucht Zeiten an den Punkten, daher lassen sich geplante Routen und Exporte ohne Zeiten nicht hochladen. Nach dem Hochladen zeigt die Strecke `Auf OpenStreetMap ansehen`.
+
+### Heatmap und Statistik
+
+`Heatmap und Statistik` (in Meine Strecken) zeigt, wo du warst:
+
+- `Meine Heatmap auf der Karte zeigen` malt jede deiner Strecken auf die Karte. Die Farbe geht von Blau nach Rot mit der Zahl verschiedener Strecken, die dort entlangführten, sodass deine täglichen Wege auffallen. Sie bleibt an, wenn du den Bereich schließt.
+- Wähle ein `Jahr` oder einen `Ordner`, um nur diese Strecken zu sehen.
+- Die Summen zeigen Distanz, Zeit und Strecken, ein Diagramm pro Monat und eine Tabelle pro Jahr. `Neuland` ist der Weg durch Quadrate von etwa 40 m, die du in keiner früheren Strecke durchquert hast: geh irgendwo neu hin und es wächst, wiederhole deinen üblichen Weg und es wächst nicht.
+- `OpenStreetMap-GPS-Spuren (von allen)` fügt die Linien der GPS-Spuren hinzu, die Leute zu OpenStreetMap hochgeladen haben. Das hilft beim Kartieren von Wegen und Straßen.
+
+Die Heatmap wird auf deinem Gerät aus deinen GPX-Dateien gezeichnet. Eine Strecke, deren Datei noch nicht angekommen ist, zählt mit ihrer vereinfachten Linie.
+
+Jede Strecke ist eine GPX-Datei in Dateien › Maps › Tracks, daher sichert Vault Drive sie und bringt sie auf deine anderen Geräte. Bis die Datei ankommt, zeigt ein anderes Gerät eine vereinfachte Linie und die Statistik.
+
+## Aus einer anderen App importieren
+
+Hol deine Strecken und gespeicherten Orte aus einer anderen Karten- oder Sport-App herüber. Drücke `Datei importieren` in `Meine Strecken` oder `Importieren` in `Gespeicherte Orte` und wähle eine oder mehrere Dateien. Karten erkennt sie und zeigt, was es gefunden hat, bevor etwas gespeichert wird: wie viele Strecken und Orte, wohin sie kommen (Meine Strecken und ihr Ordner oder Gespeicherte Orte mit einer Gruppe pro Liste), die Daten, was du schon hast und was übersprungen wird. Drücke `Importieren`; die Meldung danach hat `Rückgängig`.
+
+So exportierst du aus jeder App:
+- **Organic Maps**, **OsmAnd**: teile oder exportiere eine Liste oder eine Strecke als KMZ (oder KML, GPX). Strecken kommen in Meine Strecken, Orte in eine Gruppe mit dem Namen der Liste.
+- **Google My Maps**: Menü der Karte › `Als KML/KMZ exportieren`. **Google Earth**: Rechtsklick auf einen Ordner oder Ort › `Ort speichern unter` (KMZ). Bilder in der Datei werden ignoriert.
+- **Gespeicherte Orte aus Google Maps**: Google Takeout (takeout.google.com), wähle `Maps (meine Orte)` und `Gespeichert`. Wähle die heruntergeladene ZIP-Datei so, wie sie ist, oder `Saved Places.json` und die Listendateien (`Want to go.csv`, `Favourite places.csv`…). Jede Liste wird eine Gruppe. Google speichert für viele Orte in Listen nur einen Link ohne Koordinaten; die zählen als übersprungen (Karten schlägt sie nicht online nach).
+- **Google Zeitachse**: am Handy Google Maps › dein Bild › `Deine Zeitachse` › das Menü › `Einstellungen für Standort und Datenschutz` › `Zeitachsendaten exportieren`; das ergibt `Timeline.json`. Ältere Takeout-Exporte mit `Records.json` oder den Monatsdateien von `Semantic Location History` funktionieren auch.
+- **Garmin**: in Garmin Connect eine Aktivität öffnen › das Zahnrad › `In TCX exportieren` oder `Original exportieren` (eine FIT-Datei, manchmal in einer ZIP). Andere Uhren und Apps, die TCX- oder FIT-Dateien speichern, funktionieren genauso.
+
+Deine Zeitachse ist persönlich. Karten liest sie auf diesem Gerät und sagt dir das in der Vorschau; sie verlässt das Gerät nur, wenn du die Karten-Daten synchronisierst. Nichts wird importiert, bevor du die Tage mit `Von` und `Bis` wählst (höchstens 366 Tage auf einmal). Du bekommst dann eine Strecke pro Tag im Ordner `Zeitachse` und, wenn du willst, die besuchten Orte in der Gruppe `Orte aus der Zeitachse`, die meistbesuchten zuerst.
+
+Importierst du dieselbe Datei noch einmal, kommt nur hinzu, was fehlt, und nie eine zweite Kopie. Strecken und Orte, die du schon hast, bleiben genau, wie sie sind.
+
+`orOS-Datei` (in `Gespeicherte Orte` und in `Meine Strecken`) speichert die Listen und Strecken, die du ankreuzt, als eine .orosmap-Datei, zum Aufbewahren oder Teilen: deine Gruppen mit ihren Orten und Farben und deine Strecken mit ihren Namen, Farben und Ordnern. Keine Kartenbilder und keine OpenStreetMap-Anmeldung kommen hinein. Eine .orosmap ist eine offene ZIP-Datei: entpackst du sie, findest du `content.json` (deine Daten) und `preview` mit `places.geojson` und `tracks.gpx`, die andere Karten-Apps öffnen. Öffne sie mit `Importieren` oder `Datei importieren` oder auf deinem Gerät mit „Öffnen mit“ orOS: ihre Strecken und Gruppen kommen immer als neue neben deine, die Orte, die du schon hast, bleiben, wie sie sind, und `Rückgängig` in der Meldung nimmt alles wieder heraus. `Entpackter orOS-Ordner…` im selben Fenster holt eine entpackte .orosmap zurück, auch wenn du ihre Dateien geändert hast.
+
+## Offline-Karten
+
+Lade ein Gebiet herunter, damit Karte und Suche ohne Verbindung funktionieren, wie in Organic Maps und OsmAnd.
+
+1. Verschiebe und zoome die Karte auf das gewünschte Gebiet. Öffne `Karten-Einstellungen` › `Offline-Karten`. Der gestrichelte Rahmen auf der Karte wird gespeichert.
+2. Gib ihm einen Namen und tippe auf `Größe prüfen`. Karten liest den Index der Karte und zeigt die Größe jeder Detailstufe, bevor etwas Großes heruntergeladen wird: `Übersicht: Städte, Hauptstraßen`, `Straßen und Dörfer`, `Straßen, Geschäfte und Orte` und `Volle Details mit Gebäuden`. Ein größeres Gebiet bietet weniger Details; zoome für mehr heran.
+3. Tippe auf `Herunterladen`. Der Balken zeigt den Fortschritt. `Pausieren` hält an und `Fortsetzen` macht dort weiter, wo es aufgehört hat, auch nachdem du Karten geschlossen hast; reißt die Verbindung ab, geht es von selbst weiter, wenn du wieder online bist. `Abbrechen` stoppt und löscht, was heruntergeladen wurde.
+
+Jedes Paket zeigt seine Größe, seine Details, wann du es heruntergeladen hast und das Datum der Kartendaten. `Zeigen` fliegt dorthin und schaltet die Offline-Karte ein, `Aktualisieren` lädt das Gebiet mit den neuesten Daten noch einmal herunter (das alte Paket bleibt, bis das neue fertig ist), und `Löschen` entfernt es. Die Liste zeigt auch, wie viel Platz die Pakete belegen und wie viel auf dem Gerät ungefähr frei ist.
+
+- `Offline-Karte (heruntergeladen)` in der Ebenen-Taste zeigt deine Pakete; außerhalb davon ist die Karte schraffiert. Geht das Gerät über einem Paket offline, wechselt Karten von selbst dorthin und zurück, wenn du wieder online bist. Über die höchste Detailstufe des Pakets hinaus wird die Karte größer gezeichnet, bleibt aber scharf.
+- Offline findet die Suche Namen aus deinen Paketen: Städte und Viertel, Straßen, Geschäfte und andere Orte, Parks und Gewässer sowie Adressen, wo die Kartendaten sie haben. Akzente spielen keine Rolle, und lateinische Buchstaben finden griechische Namen (`plaka` findet Πλάκα). Die Zeilen sagen `(offline)`.
+- Neue Routen brauchen weiterhin eine Verbindung.
+- `Kartenquelle (erweitert)` nimmt statt der Standardquelle die Adresse deiner eigenen PMTiles-Datei (Vektorkacheln im Protomaps-Layout).
+
+## Online-Dienste und Datenschutz
+
+- **Kartenbilder**: OpenStreetMap (`Standard`), OpenStreetMap France (`Humanitär`), Esri (`Satellit`) und OpenTopoMap (`Topo`).
+- **Suche und Ortsnamen**: Photon von komoot. Es bekommt deinen Suchtext und die Kartenmitte oder den Punkt, auf den du lange gedrückt hast.
+- **Routen**: der OSRM-Demoserver (Auto) und FOSSGIS (Fahrrad und zu Fuß). Sie bekommen die Koordinaten deiner Routenpunkte.
+- **Öffentlicher Verkehr**: Transitous (api.transitous.org). Es bekommt Start und Ziel deiner Suche, die Uhrzeit, die Haltestelle, deren Abfahrten du öffnest, und den Kartenausschnitt, wenn Haltestellen oder Live-Fahrzeuge an sind.
+- **Live-Busankünfte (Athen)**: wenn du die Tafel einer Athener Bushaltestelle öffnest, gibt das orOS-Relay (dasselbe, das E-Mail nutzt) den Code dieser Haltestelle an OASA Telematics (telematics.oasa.gr) weiter. Sonst wird nichts gesendet, und das Relay speichert nichts.
+- **Teilen**: Links entstehen auf deinem Gerät. Nichts verlässt es, bis du einen sendest oder öffnest; ein geteilter Link enthält die Koordinaten der Punkte und den Namen des Ziels.
+- **Hinweise**: die OpenStreetMap-API. Im Kartieren-Modus bekommt sie den Ausschnitt, den du ansiehst. Was du schreibst, wird unter deinem OpenStreetMap-Namen veröffentlicht, mit dem gewählten Punkt. Der Anmeldeschlüssel bleibt auf diesem Gerät.
+- **Orte und Fragen**: die Overpass-API (overpass-api.de) bekommt den Ausschnitt, den du ansiehst, um seine Orte und Fragen aufzulisten; deine Änderungen gehen unter deinem Namen an die OpenStreetMap-API. Die Arten von Orten stammen aus den Presets des iD-Editors.
+- **Tempolimits**: während du mit dem Auto navigierst, bekommt die Overpass-API die nächsten Kilometer deiner Route (Punkte entlang der Route), um die Tempolimits dieser Straßen zu lesen.
+- **Ebene der GPS-Spuren**: wenn sie an ist, kommen die Kartenbilder der öffentlichen GPS-Spuren von OpenStreetMap (gps.tile.openstreetmap.org), wie die Standardkarte.
+- **Entdecken**: die Overpass-API bekommt die Kartenmitte und die gewählte Art von Ort; Wikipedia (wikipedia.org) bekommt die Kartenmitte; Panoramax (api.panoramax.xyz) bekommt den Kartenausschnitt, den du ansiehst, und seine Fotos laden von den Servern, die sie hosten.
+- **Höhe**: wenn du eine Strecke planst, kommt die Höhe aus den AWS Terrain Tiles (Mapzen und andere, im Open-Data-Register von Amazon); sie bekommen die Kartenkacheln rund um deinen Plan, nicht den Plan selbst.
+- **Offline-Karten**: nur wenn du eine Größe prüfst oder herunterlädst, kommt die neueste Liste der Builds von Protomaps (build-metadata.protomaps.dev) und die Kartendaten von build.protomaps.com: Teile einer großen Datei, die dem Server das Gebiet verraten, das du herunterlädst. Kartendaten © OpenStreetMap-Mitwirkende (ODbL), Vektorkacheln von Protomaps. Eine selbst eingestellte Quelle bekommt stattdessen dieselben Anfragen.
+- **GPS-Spuren**: nur wenn du auf `Hochladen` tippst, geht die Strecke (Punkte, Zeiten, Höhe) unter deinem Konto an die OpenStreetMap-API, mit der gewählten Sichtbarkeit.
+
+Dein Standort bleibt auf deinem Gerät, außer er ist ein Routenpunkt. Mehr unter [Datenschutz](help:t/privacy).
+
+## Synchronisierung und Sicherung
+
+Gespeicherte Orte, deine Streckenliste (Namen, Farben, Ordner, Statistik), Hinweise, Ortsänderungen, Eingangsänderungen und Antworten auf Fragen, die auf das Senden warten, ausgeblendete Fragen, Fragen-Einstellungen, dein Antwortzähler, Erfolge und Team-Wahl, Favoritengruppen und welcher Gruppe jeder Ort angehört, und der Änderungskommentar werden über die [orOS-Synchronisierung](help:t/sync) abgeglichen. Deine OpenStreetMap-Anmeldung nicht: melde dich auf jedem Gerät einmal an. Diese Dinge bleiben auf diesem Gerät: deine 10 letzten Orte, die `Vermeiden`-Wahl, die ÖPNV-Schalter (Haltestellen, Live-Fahrzeuge), die gewählte Ebene der Fragen, Tab, Art und `Jetzt geöffnet` in Entdecken, welche Favoritengruppen ausgeblendet oder zugeklappt sind, dein geparktes Auto und seine Erinnerung, die letzte Route (sie kommt beim nächsten Öffnen von Karten zurück), offline gespeicherte Kartenbilder, deine Offline-Karten (lade jede auf jedem Gerät herunter, das sie braucht) und die eingestellte Kartenquelle sowie Kartenposition und -stil.
+
+`Karten-Einstellungen` zeigt, wie viele Kartenbilder gespeichert sind (`Kachel-Cache leeren`), und die gespeicherte Route (`Gespeicherte Route vergessen`). GPX-Strecken importierst und exportierst du in `Meine Strecken`.
+
+## Tastenkürzel
+
+- [[↑]] / [[↓]] bewegen sich durch die Vorschläge, im Suchfeld und im Routenplaner.
+- [[Enter]] öffnet den markierten Vorschlag oder den ersten.
+- [[Esc]] schließt die Vorschläge, offene Bereiche, den Planer oder eine „Auf der Karte wählen“-Auswahl.
+
+## Tipps
+
+- [Lesezeichen](app:bookmarks) und [Kalender](app:calendar) können einen Ort in Karten öffnen.
+- Lade vor einer Reise das Gebiet in `Offline-Karten` herunter. Gebiete, die du nur online angesehen hast, behalten auch ihre Kartenbilder, aber nur die Teile und Zoomstufen, die du gesehen hast.
+
+## Grenzen
+
+- Neue Routen brauchen eine Verbindung. Offline hast du deine Offline-Karten (Karte und Suche), früher angesehene Gebiete, gespeicherte Orte und deine letzte Route. Ohne Offline-Karte braucht die Suche eine Verbindung.
+- Offline-Karten brauchen einen Browser, der Dateien für eine Website speichern kann (aktuelles Chrome, Edge, Firefox, Safari 26). Der Browser kann sie entfernen, wenn der Gerätespeicher knapp wird. Die Offline-Karte ist einfacher gezeichnet als die Online-Karte: keine Hausnummern oder Einbahnpfeile auf der Karte, keine Schummerung, und Namen nahe am Rand einer Kartenkachel erscheinen eventuell nicht.
+- Die Offline-Suche findet nur Namen in den Kartendaten, nicht jede Adresse; ein Gebietspaket fasst höchstens 600.000 Kartenkacheln, daher kommt ein ganzes Land mit weniger Details.
+- Navigation braucht GPS, und Karten muss offen bleiben.
+- Tempolimits kommen nur aus OpenStreetMap-Tags (keine Limits nach Zone wie „innerorts“) und werden online gelesen; offline oder auf einer Straße ohne Tag gibt es kein Schild.
+- Die Park-Erinnerung kommt nur, solange orOS im Browser offen ist.
+- Die Routenserver sind kostenlose öffentliche Dienste und können manchmal langsam oder nicht erreichbar sein.
+- Der öffentliche Verkehr braucht eine Verbindung und zeigt nur, was Betreiber als offene Daten veröffentlichen; die Zeiten werden nicht mit den Aushängen an der Haltestelle abgeglichen.
+- Das Bearbeiten von Orten braucht eine Verbindung, um die Orte zu laden; offline gemachte Änderungen warten, bis du sie hochlädst.
+- `Jetzt geöffnet` ist nur so gut wie die in OpenStreetMap eingetragenen Öffnungszeiten. Zeiten, die es nicht sicher lesen kann (nach Monat, Sonnenaufgang, Feiertagen), erscheinen als unbekannt, und Feiertage kennt es nicht.
+- Die Höhe in `Strecke planen` stammt aus einem Geländemodell mit etwa 20 m Rastermaß, kurze Auf und Abs (eine Brücke, ein paar Stufen) erscheinen daher eventuell nicht.
+- Aufzeichnen braucht einen eingeschalteten Bildschirm und offene Karten-App; der Browser zeichnet nicht im Hintergrund auf.

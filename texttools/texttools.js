@@ -44,7 +44,8 @@
       return l === "el" ? "el" : "en";
     } catch (e) { return "en"; }
   }
-  var LANG = appLang();
+  var LANG = window.orosI18n ? window.orosI18n.lang() : appLang();
+  function loc() { return window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB"); }
 
   var STRINGS = {
     en: {
@@ -322,6 +323,7 @@
       "sheet.name": "Εργαλεία κειμένου", "note.title": "Εργαλεία κειμένου · {d}", "from": "Εργαλεία κειμένου"
     }
   };
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "texttools", LANG);
 
   function hasKey(key) { var p = STRINGS[LANG] || STRINGS.en; return p[key] !== undefined || STRINGS.en[key] !== undefined; }
   function t(key, params) {
@@ -330,7 +332,7 @@
     if (params) Object.keys(params).forEach(function (k) { s = s.split("{" + k + "}").join(String(params[k])); });
     return s;
   }
-  function fmtNum(n) { try { return n.toLocaleString(LANG === "el" ? "el-GR" : "en-GB"); } catch (e) { return String(n); } }
+  function fmtNum(n) { try { return n.toLocaleString(loc()); } catch (e) { return String(n); } }
 
   function $(id) { return document.getElementById(id); }
   function el(tag, cls, text) {
@@ -994,7 +996,7 @@
     dlg.appendChild(el("div", "dlg-title", t("rec.title")));
     var list = el("ul", "rec-list");
     var sorted = data.recipes.slice().sort(function (a, b) {
-      return a.name.localeCompare(b.name, LANG) || (a.id < b.id ? -1 : 1);
+      return a.name.localeCompare(b.name, loc()) || (a.id < b.id ? -1 : 1);
     });
     if (!sorted.length) dlg.appendChild(el("p", "hint", t("rec.empty")));
     sorted.forEach(function (r) {
@@ -1173,7 +1175,7 @@
     try { w.__orosOpenAt(app, target); return true; } catch (e) { showToast(t("toast.noBridge")); return false; }
   }
   function today() {
-    try { return new Date().toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB"); } catch (e) { return ""; }
+    try { return new Date().toLocaleDateString(loc()); } catch (e) { return ""; }
   }
 
   function sendDialog() {
@@ -1276,7 +1278,7 @@
 
   // ---------- 9. Keyboard ----------
   function wireKeyboard() {
-    // Contract Β: forward Ctrl+Alt+Shift shortcuts to the shell (capture)
+    // Contract B: forward Ctrl+Alt+Shift shortcuts to the shell (capture)
     document.addEventListener("keydown", function (e) {
       if (!(e.ctrlKey || e.metaKey) || !e.altKey || !e.shiftKey) return;
       var p = null;

@@ -108,34 +108,61 @@
   }
 
   // ---------- previews: pets.md and records.csv ----------
-  var WORDS = {
+  // Words of the previews: pack "petcare" (orosI18n), flat keys; wordsOf
+  // builds the nested shape the previews read.
+  var PKG_WORDS = {
     en: {
-      title: "Pet Health Book", profile: "Profile", records: "Health book", none: "No entries.",
-      species: "Species", breed: "Breed", sex: "Sex", birth: "Born", color: "Colour", chip: "Microchip",
-      pass: "Passport", ins: "Insurance", alg: "Allergies", vet: "Vet", eph: "Emergency phone", food: "Food",
-      gone: "No longer with me since", notes: "Notes", next: "next", until: "until", cost: "cost",
-      f: "Female", m: "Male", neut: "neutered", files: "attachments",
-      head: ["Pet", "Date", "Kind", "Name", "Next / until", "Details", "Cost", "Notes"],
-      kind: { vacc: "Vaccine", deworm: "Deworming", visit: "Vet visit", med: "Medicine", weight: "Weight",
-              care: "Care", food: "Food change" },
-      dw: { "int": "internal", ext: "external", both: "internal + external" },
-      care: { bath: "Bath", nails: "Nail trim", brush: "Brushing / grooming", teeth: "Teeth", ears: "Ear cleaning",
-              litter: "Litter change", cage: "Cage cleaning", tank: "Tank water change" }
+      "pkg.title": "Pet Health Book", "pkg.profile": "Profile", "pkg.records": "Health book", "pkg.none": "No entries.",
+      "pkg.species": "Species", "pkg.breed": "Breed", "pkg.sex": "Sex", "pkg.birth": "Born", "pkg.color": "Colour",
+      "pkg.chip": "Microchip", "pkg.pass": "Passport", "pkg.ins": "Insurance", "pkg.alg": "Allergies", "pkg.vet": "Vet",
+      "pkg.eph": "Emergency phone", "pkg.food": "Food", "pkg.gone": "No longer with me since", "pkg.notes": "Notes",
+      "pkg.next": "next", "pkg.until": "until", "pkg.cost": "cost",
+      "pkg.f": "Female", "pkg.m": "Male", "pkg.neut": "neutered", "pkg.files": "attachments",
+      "pkg.head.pet": "Pet", "pkg.head.date": "Date", "pkg.head.kind": "Kind", "pkg.head.name": "Name",
+      "pkg.head.next": "Next / until", "pkg.head.details": "Details", "pkg.head.cost": "Cost", "pkg.head.notes": "Notes",
+      "pkg.kind.vacc": "Vaccine", "pkg.kind.deworm": "Deworming", "pkg.kind.visit": "Vet visit", "pkg.kind.med": "Medicine",
+      "pkg.kind.weight": "Weight", "pkg.kind.care": "Care", "pkg.kind.food": "Food change",
+      "pkg.dw.int": "internal", "pkg.dw.ext": "external", "pkg.dw.both": "internal + external",
+      "pkg.care.bath": "Bath", "pkg.care.nails": "Nail trim", "pkg.care.brush": "Brushing / grooming", "pkg.care.teeth": "Teeth",
+      "pkg.care.ears": "Ear cleaning", "pkg.care.litter": "Litter change", "pkg.care.cage": "Cage cleaning",
+      "pkg.care.tank": "Tank water change"
     },
     el: {
-      title: "Βιβλιάριο κατοικιδίου", profile: "Στοιχεία", records: "Βιβλιάριο υγείας", none: "Καμία καταχώριση.",
-      species: "Είδος", breed: "Ράτσα", sex: "Φύλο", birth: "Γέννηση", color: "Χρώμα", chip: "Μικροτσίπ",
-      pass: "Διαβατήριο", ins: "Ασφάλεια", alg: "Αλλεργίες", vet: "Κτηνίατρος", eph: "Τηλέφωνο έκτακτης ανάγκης", food: "Τροφή",
-      gone: "Δεν είναι πια μαζί μου από", notes: "Σημειώσεις", next: "επόμενη", until: "έως", cost: "κόστος",
-      f: "Θηλυκό", m: "Αρσενικό", neut: "στειρωμένο", files: "συνημμένα",
-      head: ["Ζώο", "Ημερομηνία", "Είδος", "Όνομα", "Επόμενη / έως", "Λεπτομέρειες", "Κόστος", "Σημειώσεις"],
-      kind: { vacc: "Εμβόλιο", deworm: "Αποπαρασίτωση", visit: "Επίσκεψη", med: "Φάρμακο", weight: "Βάρος",
-              care: "Φροντίδα", food: "Αλλαγή τροφής" },
-      dw: { "int": "εσωτερική", ext: "εξωτερική", both: "εσωτερική + εξωτερική" },
-      care: { bath: "Μπάνιο", nails: "Κόψιμο νυχιών", brush: "Βούρτσισμα / καλλωπισμός", teeth: "Δόντια", ears: "Καθαρισμός αυτιών",
-              litter: "Αλλαγή άμμου", cage: "Καθαρισμός κλουβιού", tank: "Αλλαγή νερού ενυδρείου" }
+      "pkg.title": "Βιβλιάριο κατοικιδίου", "pkg.profile": "Στοιχεία", "pkg.records": "Βιβλιάριο υγείας", "pkg.none": "Καμία καταχώριση.",
+      "pkg.species": "Είδος", "pkg.breed": "Ράτσα", "pkg.sex": "Φύλο", "pkg.birth": "Γέννηση", "pkg.color": "Χρώμα",
+      "pkg.chip": "Μικροτσίπ", "pkg.pass": "Διαβατήριο", "pkg.ins": "Ασφάλεια", "pkg.alg": "Αλλεργίες", "pkg.vet": "Κτηνίατρος",
+      "pkg.eph": "Τηλέφωνο έκτακτης ανάγκης", "pkg.food": "Τροφή", "pkg.gone": "Δεν είναι πια μαζί μου από", "pkg.notes": "Σημειώσεις",
+      "pkg.next": "επόμενη", "pkg.until": "έως", "pkg.cost": "κόστος",
+      "pkg.f": "Θηλυκό", "pkg.m": "Αρσενικό", "pkg.neut": "στειρωμένο", "pkg.files": "συνημμένα",
+      "pkg.head.pet": "Ζώο", "pkg.head.date": "Ημερομηνία", "pkg.head.kind": "Είδος", "pkg.head.name": "Όνομα",
+      "pkg.head.next": "Επόμενη / έως", "pkg.head.details": "Λεπτομέρειες", "pkg.head.cost": "Κόστος", "pkg.head.notes": "Σημειώσεις",
+      "pkg.kind.vacc": "Εμβόλιο", "pkg.kind.deworm": "Αποπαρασίτωση", "pkg.kind.visit": "Επίσκεψη", "pkg.kind.med": "Φάρμακο",
+      "pkg.kind.weight": "Βάρος", "pkg.kind.care": "Φροντίδα", "pkg.kind.food": "Αλλαγή τροφής",
+      "pkg.dw.int": "εσωτερική", "pkg.dw.ext": "εξωτερική", "pkg.dw.both": "εσωτερική + εξωτερική",
+      "pkg.care.bath": "Μπάνιο", "pkg.care.nails": "Κόψιμο νυχιών", "pkg.care.brush": "Βούρτσισμα / καλλωπισμός", "pkg.care.teeth": "Δόντια",
+      "pkg.care.ears": "Καθαρισμός αυτιών", "pkg.care.litter": "Αλλαγή άμμου", "pkg.care.cage": "Καθαρισμός κλουβιού",
+      "pkg.care.tank": "Αλλαγή νερού ενυδρείου"
     }
   };
+  var HEAD = ["pet", "date", "kind", "name", "next", "details", "cost", "notes"];
+  var NESTED = { kind: 1, dw: 1, care: 1, head: 1 };
+  // lang: "en", "el" or a pack language (window.orosI18n, when loaded;
+  // in Node: English)
+  function wordsOf(lang) {
+    var tb = PKG_WORDS[lang];
+    if (!tb && lang && typeof window !== "undefined" && window.orosI18n && window.orosI18n.known(lang)) {
+      tb = window.orosI18n.table(PKG_WORDS, "petcare", lang);
+    }
+    tb = tb || PKG_WORDS.en;
+    var w = { kind: {}, dw: {}, care: {}, head: [] };
+    Object.keys(PKG_WORDS.en).forEach(function (k) {
+      var parts = k.split("."), v = tb[k] !== undefined ? tb[k] : PKG_WORDS.en[k];
+      if (parts.length === 2) w[parts[1]] = v;
+      else if (parts[1] !== "head" && NESTED[parts[1]]) w[parts[1]][parts[2]] = v;
+    });
+    HEAD.forEach(function (k) { w.head.push(tb["pkg.head." + k] || PKG_WORDS.en["pkg.head." + k]); });
+    return w;
+  }
   function csvCell(v) {
     var s = v == null ? "" : String(v);
     if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
@@ -160,7 +187,7 @@
     return r.n || "";
   }
   function previews(state, lang) {
-    var C = core(), el = lang === "el", W = WORDS[el ? "el" : "en"];
+    var C = core(), L = typeof lang === "string" && lang ? lang : "en", W = wordsOf(L);
     var s = isObj(state) ? state : {}, pets = Array.isArray(s.pets) ? s.pets : [], recs = Array.isArray(s.recs) ? s.recs : [];
     if (!pets.length) return {};
     var byPet = {};
@@ -171,10 +198,9 @@
     var md = ["# " + W.title, ""], csv = [W.head.map(csvCell).join(",")];
     pets.slice().sort(function (x, y) { return cmpStr(x.name.toLowerCase(), y.name.toLowerCase()) || cmpStr(x.id, y.id); })
       .forEach(function (p) {
-        var sp = C.SPECIES[p.sp] || C.SPECIES.other;
         md.push("## " + mdText(p.name), "", "### " + W.profile, "");
         function fact(label, v) { if (v) md.push("- " + label + ": " + mdText(v)); }
-        fact(W.species, sp[el ? "el" : "en"]);
+        fact(W.species, C.label("species." + (C.SPECIES[p.sp] ? p.sp : "other"), L));
         fact(W.breed, p.breed);
         fact(W.sex, p.sex ? W[p.sex] + (p.neut ? ", " + W.neut : "") : (p.neut ? W.neut : ""));
         fact(W.birth, p.birth);

@@ -23,15 +23,22 @@
   var KEY = "oros-petcare-data";
   var ID_RE = /^[a-z0-9]{6,40}$/;
   var YMD = /^(\d{4})-(\d{2})-(\d{2})$/;
-  var KIND = {
-    vacc:   { en: "Vaccine",      el: "Εμβόλιο" },
-    deworm: { en: "Deworming",    el: "Αποπαρασίτωση" },
-    visit:  { en: "Vet visit",    el: "Επίσκεψη στον κτηνίατρο" },
-    med:    { en: "Medicine",     el: "Φάρμακο" },
-    weight: { en: "Weight",       el: "Βάρος" },
-    care:   { en: "Routine care", el: "Φροντίδα ρουτίνας" },
-    food:   { en: "Food change",  el: "Αλλαγή τροφής" }
+  // Pack "petcare": the shell runs this file, so a pack language reads
+  // the "petcare" pack when the shell has it, else English.
+  var S = {
+    en: { "search.kind.vacc": "Vaccine", "search.kind.deworm": "Deworming", "search.kind.visit": "Vet visit",
+          "search.kind.med": "Medicine", "search.kind.weight": "Weight", "search.kind.care": "Routine care",
+          "search.kind.food": "Food change" },
+    el: { "search.kind.vacc": "Εμβόλιο", "search.kind.deworm": "Αποπαρασίτωση", "search.kind.visit": "Επίσκεψη στον κτηνίατρο",
+          "search.kind.med": "Φάρμακο", "search.kind.weight": "Βάρος", "search.kind.care": "Φροντίδα ρουτίνας",
+          "search.kind.food": "Αλλαγή τροφής" }
   };
+  var KINDS = ["vacc", "deworm", "visit", "med", "weight", "care", "food"];
+  function words(lang) {
+    var I = root && root.orosI18n;
+    if (I && I.known(lang) && !S[lang]) I.table(S, "petcare", lang);
+    return S[lang] || S.en;
+  }
 
   function str(v) { return typeof v === "string" ? v.trim() : ""; }
   function arr(a) { return Array.isArray(a) ? a : []; }
@@ -46,7 +53,7 @@
     search: function (ctx) {
       var d = ctx.readJSON(KEY), out = [];
       if (!d || !Array.isArray(d.pets)) return out;
-      var lang = ctx.lang === "el" ? "el" : "en";
+      var w = words(ctx.lang);
       var tombs = d.tombs && typeof d.tombs === "object" ? d.tombs : {};
       function live(x) {
         if (!x || typeof x !== "object" || typeof x.id !== "string" || !x.id) return false;
@@ -68,13 +75,13 @@
         });
       });
       arr(d.recs).forEach(function (r) {
-        if (!live(r) || !(r.p in pets) || !KIND[r.k]) return;
+        if (!live(r) || !(r.p in pets) || KINDS.indexOf(r.k) < 0) return;
         var words = [r.dg, r.tr, r.ds, r.fq, r.b, r.v, r.nt].map(str).filter(Boolean);
         var name = str(r.n);
         if (!name && !words.length) return;
         out.push({
           id: "rec:" + r.id,
-          title: name || KIND[r.k][lang],
+          title: name || w["search.kind." + r.k] || S.en["search.kind." + r.k],
           text: [pets[r.p]].concat(words).join(" · "),
           when: dayMs(r.d),
           target: { pet: r.p, rec: r.id }

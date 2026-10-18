@@ -20,7 +20,7 @@
   var C = window.OrosStageCore, S = window.OrosStage;
   if (!C || !S || !document.getElementById("st-imp-dlg")) return;
 
-  var LANG = S.lang === "el" ? "el" : "en";
+  var LANG = S.lang || "en";     // the full code (stage.js, orosI18n)
   var MAX_BYTES = 2 * 1024 * 1024;
   var STR = {
     en: {
@@ -74,6 +74,7 @@
       "st.rep.csv": "Λήψη CSV", "st.rep.print": "Εκτύπωση / PDF", "st.rep.skip": "δεν έτρεξε", "st.rep.open": "δεν ολοκληρώθηκε"
     }
   };
+  if (window.orosI18n) window.orosI18n.table(STR, "time", LANG);
   function t(k, vars) {
     var s = (STR[LANG] && STR[LANG][k] !== undefined) ? STR[LANG][k] : (STR.en[k] !== undefined ? STR.en[k] : k);
     if (vars) Object.keys(vars).forEach(function (v) { s = s.split("{" + v + "}").join(vars[v]); });

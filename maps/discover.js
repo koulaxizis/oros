@@ -26,58 +26,67 @@
   var H = window.__orosMapsHost;
   if (!DC || !H || !H.map || !window.L) return;
   var map = H.map;
-  var LANG = H.lang === "el" ? "el" : "en";
+  var LANG = window.orosI18n ? window.orosI18n.lang() : (H.lang === "el" ? "el" : "en");
   var OVERPASS = "https://overpass-api.de/api/interpreter";
   var PREFS_KEY = "oros-maps-discover";
   var PHOTO_ZOOM = 15;
 
   var STR = {
     en: {
-      "btn": "Discover", "title": "Discover", "close": "Close", "ctx": "What's nearby",
-      "tab.places": "Places", "tab.wiki": "Wikipedia", "tab.photos": "Photos",
-      "cat.restaurant": "Restaurants", "cat.cafe": "Cafés", "cat.bar": "Bars", "cat.fast_food": "Fast food",
-      "cat.supermarket": "Supermarkets", "cat.bakery": "Bakeries", "cat.pharmacy": "Pharmacies", "cat.atm": "ATMs and banks",
-      "cat.fuel": "Fuel and charging", "cat.toilets": "Toilets", "cat.museum": "Sights and museums", "cat.park": "Parks and playgrounds",
-      "one.restaurant": "Restaurant", "one.cafe": "Café", "one.bar": "Bar", "one.fast_food": "Fast food",
-      "one.supermarket": "Shop", "one.bakery": "Bakery", "one.pharmacy": "Pharmacy", "one.atm": "ATM / bank",
-      "one.fuel": "Fuel / charging", "one.toilets": "Toilets", "one.museum": "Sight", "one.park": "Park",
-      "open": "Open now", "area": "Search this area", "loading": "Loading…",
-      "offline": "You're offline. Discover needs a connection.", "fail": "The service didn't answer. Try again in a moment.",
-      "none": "Nothing found around here.", "none.open": "Nothing open right now around here.",
-      "n.places": "{n} places within {d}", "n.open": "{n} open of {all} within {d}",
-      "s.open": "Open", "s.closes": "Open · closes {t}", "s.24": "Open 24 hours", "s.closed": "Closed",
-      "s.opens": "Closed · opens {t}", "s.unknown": "Hours unknown",
-      "go": "Go here", "save": "Save", "saved": "Saved to Saved places", "hours": "Opening hours",
-      "site": "Website", "call": "Call",
-      "w.read": "Read on Wikipedia", "w.n": "{n} articles within {d}",
-      "p.zoom": "Zoom in closer to see photos.", "p.n": "{n} photos in view", "p.open": "Open in Panoramax",
-      "p.by": "By {b}", "p.look": "Photo looking {dir}", "unnamed": "No name"
+      "dsc.btn": "Discover", "dsc.title": "Discover", "dsc.close": "Close", "dsc.ctx": "What's nearby",
+      "dsc.tab.places": "Places", "dsc.tab.wiki": "Wikipedia", "dsc.tab.photos": "Photos",
+      "dsc.cat.restaurant": "Restaurants", "dsc.cat.cafe": "Cafés", "dsc.cat.bar": "Bars", "dsc.cat.fast_food": "Fast food",
+      "dsc.cat.supermarket": "Supermarkets", "dsc.cat.bakery": "Bakeries", "dsc.cat.pharmacy": "Pharmacies", "dsc.cat.atm": "ATMs and banks",
+      "dsc.cat.fuel": "Fuel and charging", "dsc.cat.toilets": "Toilets", "dsc.cat.museum": "Sights and museums", "dsc.cat.park": "Parks and playgrounds",
+      "dsc.one.restaurant": "Restaurant", "dsc.one.cafe": "Café", "dsc.one.bar": "Bar", "dsc.one.fast_food": "Fast food",
+      "dsc.one.supermarket": "Shop", "dsc.one.bakery": "Bakery", "dsc.one.pharmacy": "Pharmacy", "dsc.one.atm": "ATM / bank",
+      "dsc.one.fuel": "Fuel / charging", "dsc.one.toilets": "Toilets", "dsc.one.museum": "Sight", "dsc.one.park": "Park",
+      "dsc.open": "Open now", "dsc.area": "Search this area", "dsc.loading": "Loading…",
+      "dsc.offline": "You're offline. Discover needs a connection.", "dsc.fail": "The service didn't answer. Try again in a moment.",
+      "dsc.none": "Nothing found around here.", "dsc.none.open": "Nothing open right now around here.",
+      "dsc.n.places": "{n} places within {d}", "dsc.n.open": "{n} open of {all} within {d}",
+      "dsc.s.open": "Open", "dsc.s.closes": "Open · closes {t}", "dsc.s.24": "Open 24 hours", "dsc.s.closed": "Closed",
+      "dsc.s.opens": "Closed · opens {t}", "dsc.s.unknown": "Hours unknown",
+      "dsc.go": "Go here", "dsc.save": "Save", "dsc.saved": "Saved to Saved places", "dsc.hours": "Opening hours",
+      "dsc.site": "Website", "dsc.call": "Call",
+      "dsc.w.read": "Read on Wikipedia", "dsc.w.n": "{n} articles within {d}",
+      "dsc.p.zoom": "Zoom in closer to see photos.", "dsc.p.n": "{n} photos in view", "dsc.p.open": "Open in Panoramax",
+      "dsc.p.by": "By {b}", "dsc.p.look": "Photo looking {dir}", "dsc.unnamed": "No name",
+      "dsc.dir.0": "north", "dsc.dir.1": "north-east", "dsc.dir.2": "east", "dsc.dir.3": "south-east",
+      "dsc.dir.4": "south", "dsc.dir.5": "south-west", "dsc.dir.6": "west", "dsc.dir.7": "north-west",
+      "dsc.u.m": "{n} m", "dsc.u.km": "{n} km"
     },
     el: {
-      "btn": "Ανακάλυψη", "title": "Ανακάλυψη", "close": "Κλείσιμο", "ctx": "Τι υπάρχει κοντά",
-      "tab.places": "Μέρη", "tab.wiki": "Wikipedia", "tab.photos": "Φωτογραφίες",
-      "cat.restaurant": "Εστιατόρια", "cat.cafe": "Καφετέριες", "cat.bar": "Μπαρ", "cat.fast_food": "Γρήγορο φαγητό",
-      "cat.supermarket": "Σούπερ μάρκετ", "cat.bakery": "Φούρνοι", "cat.pharmacy": "Φαρμακεία", "cat.atm": "ATM και τράπεζες",
-      "cat.fuel": "Καύσιμα και φόρτιση", "cat.toilets": "Τουαλέτες", "cat.museum": "Αξιοθέατα και μουσεία", "cat.park": "Πάρκα και παιδικές χαρές",
-      "one.restaurant": "Εστιατόριο", "one.cafe": "Καφετέρια", "one.bar": "Μπαρ", "one.fast_food": "Γρήγορο φαγητό",
-      "one.supermarket": "Κατάστημα", "one.bakery": "Φούρνος", "one.pharmacy": "Φαρμακείο", "one.atm": "ATM / τράπεζα",
-      "one.fuel": "Καύσιμα / φόρτιση", "one.toilets": "Τουαλέτες", "one.museum": "Αξιοθέατο", "one.park": "Πάρκο",
-      "open": "Ανοιχτά τώρα", "area": "Αναζήτηση σε αυτή την περιοχή", "loading": "Φόρτωση…",
-      "offline": "Είσαι εκτός σύνδεσης. Η Ανακάλυψη θέλει σύνδεση.", "fail": "Η υπηρεσία δεν απάντησε. Δοκίμασε ξανά σε λίγο.",
-      "none": "Δεν βρέθηκε τίποτα εδώ γύρω.", "none.open": "Τίποτα ανοιχτό αυτή τη στιγμή εδώ γύρω.",
-      "n.places": "{n} μέρη σε {d}", "n.open": "{n} ανοιχτά από {all} σε {d}",
-      "s.open": "Ανοιχτό", "s.closes": "Ανοιχτό · κλείνει {t}", "s.24": "Ανοιχτό όλο το 24ωρο", "s.closed": "Κλειστό",
-      "s.opens": "Κλειστό · ανοίγει {t}", "s.unknown": "Άγνωστο ωράριο",
-      "go": "Πήγαινε εδώ", "save": "Αποθήκευση", "saved": "Αποθηκεύτηκε στις Αποθηκευμένες τοποθεσίες", "hours": "Ωράριο",
-      "site": "Ιστότοπος", "call": "Κλήση",
-      "w.read": "Διάβασε στη Wikipedia", "w.n": "{n} άρθρα σε {d}",
-      "p.zoom": "Μεγέθυνε τον χάρτη για να δεις φωτογραφίες.", "p.n": "{n} φωτογραφίες στην οθόνη", "p.open": "Άνοιγμα στο Panoramax",
-      "p.by": "Από {b}", "p.look": "Φωτογραφία προς {dir}", "unnamed": "Χωρίς όνομα"
+      "dsc.btn": "Ανακάλυψη", "dsc.title": "Ανακάλυψη", "dsc.close": "Κλείσιμο", "dsc.ctx": "Τι υπάρχει κοντά",
+      "dsc.tab.places": "Μέρη", "dsc.tab.wiki": "Wikipedia", "dsc.tab.photos": "Φωτογραφίες",
+      "dsc.cat.restaurant": "Εστιατόρια", "dsc.cat.cafe": "Καφετέριες", "dsc.cat.bar": "Μπαρ", "dsc.cat.fast_food": "Γρήγορο φαγητό",
+      "dsc.cat.supermarket": "Σούπερ μάρκετ", "dsc.cat.bakery": "Φούρνοι", "dsc.cat.pharmacy": "Φαρμακεία", "dsc.cat.atm": "ATM και τράπεζες",
+      "dsc.cat.fuel": "Καύσιμα και φόρτιση", "dsc.cat.toilets": "Τουαλέτες", "dsc.cat.museum": "Αξιοθέατα και μουσεία", "dsc.cat.park": "Πάρκα και παιδικές χαρές",
+      "dsc.one.restaurant": "Εστιατόριο", "dsc.one.cafe": "Καφετέρια", "dsc.one.bar": "Μπαρ", "dsc.one.fast_food": "Γρήγορο φαγητό",
+      "dsc.one.supermarket": "Κατάστημα", "dsc.one.bakery": "Φούρνος", "dsc.one.pharmacy": "Φαρμακείο", "dsc.one.atm": "ATM / τράπεζα",
+      "dsc.one.fuel": "Καύσιμα / φόρτιση", "dsc.one.toilets": "Τουαλέτες", "dsc.one.museum": "Αξιοθέατο", "dsc.one.park": "Πάρκο",
+      "dsc.open": "Ανοιχτά τώρα", "dsc.area": "Αναζήτηση σε αυτή την περιοχή", "dsc.loading": "Φόρτωση…",
+      "dsc.offline": "Είσαι εκτός σύνδεσης. Η Ανακάλυψη θέλει σύνδεση.", "dsc.fail": "Η υπηρεσία δεν απάντησε. Δοκίμασε ξανά σε λίγο.",
+      "dsc.none": "Δεν βρέθηκε τίποτα εδώ γύρω.", "dsc.none.open": "Τίποτα ανοιχτό αυτή τη στιγμή εδώ γύρω.",
+      "dsc.n.places": "{n} μέρη σε {d}", "dsc.n.open": "{n} ανοιχτά από {all} σε {d}",
+      "dsc.s.open": "Ανοιχτό", "dsc.s.closes": "Ανοιχτό · κλείνει {t}", "dsc.s.24": "Ανοιχτό όλο το 24ωρο", "dsc.s.closed": "Κλειστό",
+      "dsc.s.opens": "Κλειστό · ανοίγει {t}", "dsc.s.unknown": "Άγνωστο ωράριο",
+      "dsc.go": "Πήγαινε εδώ", "dsc.save": "Αποθήκευση", "dsc.saved": "Αποθηκεύτηκε στις Αποθηκευμένες τοποθεσίες", "dsc.hours": "Ωράριο",
+      "dsc.site": "Ιστότοπος", "dsc.call": "Κλήση",
+      "dsc.w.read": "Διάβασε στη Wikipedia", "dsc.w.n": "{n} άρθρα σε {d}",
+      "dsc.p.zoom": "Μεγέθυνε τον χάρτη για να δεις φωτογραφίες.", "dsc.p.n": "{n} φωτογραφίες στην οθόνη", "dsc.p.open": "Άνοιγμα στο Panoramax",
+      "dsc.p.by": "Από {b}", "dsc.p.look": "Φωτογραφία προς {dir}", "dsc.unnamed": "Χωρίς όνομα",
+      "dsc.dir.0": "βορρά", "dsc.dir.1": "βορειοανατολικά", "dsc.dir.2": "ανατολή", "dsc.dir.3": "νοτιοανατολικά",
+      "dsc.dir.4": "νότο", "dsc.dir.5": "νοτιοδυτικά", "dsc.dir.6": "δύση", "dsc.dir.7": "βορειοδυτικά",
+      "dsc.u.m": "{n} μ.", "dsc.u.km": "{n} χλμ."
     }
   };
-  var DIRS = { en: ["north", "north-east", "east", "south-east", "south", "south-west", "west", "north-west"],
-               el: ["βορρά", "βορειοανατολικά", "ανατολή", "νοτιοανατολικά", "νότο", "νοτιοδυτικά", "δύση", "βορειοδυτικά"] };
+  if (window.orosI18n) window.orosI18n.table(STR, "maps", LANG);
+  function loc() { return window.orosI18n ? window.orosI18n.locale(LANG) : (loc()); }
+  // Decimal comma (Greek, German…): what the language's locale writes.
+  function comma() { if (LANG === "el") return true; if (LANG === "en") return false; try { return (1.5).toLocaleString(loc()).indexOf(",") >= 0; } catch (e) { return false; } }
   function t(k, vars) {
+    k = "dsc." + k;
     var s = (STR[LANG] && STR[LANG][k]) || STR.en[k] || k;
     if (vars) Object.keys(vars).forEach(function (v) { s = s.split("{" + v + "}").join(String(vars[v])); });
     return s;
@@ -103,11 +112,11 @@
   function toast(s) { (H.toast || H.localToast)(s); }
   function online() { return navigator.onLine !== false; }
   function fmtDist(m) {
-    if (m < 1000) return Math.round(m) + (LANG === "el" ? " μ." : " m");
+    if (m < 1000) return t("u.m", { n: Math.round(m) });
     var k = m / 1000;
     var s = k < 10 ? k.toFixed(1) : String(Math.round(k));
-    if (LANG === "el") s = s.replace(".", ",");
-    return s + (LANG === "el" ? " χλμ." : " km");
+    if (comma()) s = s.replace(".", ",");
+    return t("u.km", { n: s });
   }
   function pad(n) { return (n < 10 ? "0" : "") + n; }
   function timeOf(d, now) {
@@ -115,7 +124,7 @@
     var same = d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
     if (same) return s;
     var wd = "";
-    try { wd = d.toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB", { weekday: "short" }); } catch (e) { wd = DC.DAYS[(d.getDay() + 6) % 7]; }
+    try { wd = d.toLocaleDateString(loc(), { weekday: "short" }); } catch (e) { wd = DC.DAYS[(d.getDay() + 6) % 7]; }
     return wd + " " + s;
   }
   // { cls: open|closed|unknown, text }
@@ -317,10 +326,10 @@
   function photoPopup(p) {
     var w = el("div", "dsc-pop");
     var im = el("img", "dsc-photo-img");
-    im.src = p.sd; im.alt = p.az === null ? "" : t("p.look", { dir: DIRS[LANG][Math.round(((p.az % 360) + 360) % 360 / 45) % 8] });
+    im.src = p.sd; im.alt = p.az === null ? "" : t("p.look", { dir: t("dir." + (Math.round(((p.az % 360) + 360) % 360 / 45) % 8)) });
     w.appendChild(im);
     var meta = [];
-    if (p.time) { try { meta.push(new Date(p.time).toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB", { year: "numeric", month: "short", day: "numeric" })); } catch (e) {} }
+    if (p.time) { try { meta.push(new Date(p.time).toLocaleDateString(loc(), { year: "numeric", month: "short", day: "numeric" })); } catch (e) {} }
     if (p.by) meta.push(t("p.by", { b: p.by }));
     if (p.lic) meta.push(p.lic);
     if (meta.length) w.appendChild(el("div", "dsc-pop-s", meta.join(" · ")));

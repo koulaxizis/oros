@@ -11,15 +11,18 @@
   var V = window.OrosStageView;
   if (!V) return;
   var lang = "en";
-  try { if (localStorage.getItem("oros-lang") === "el") lang = "el"; } catch (e) {}
+  if (window.orosI18n) lang = window.orosI18n.lang();
+  else try { if (localStorage.getItem("oros-lang") === "el") lang = "el"; } catch (e) {}
   document.documentElement.lang = lang;
-  var T = {
-    en: { fs: "Full screen", close: "Close", title: "Stage · orOS" },
-    el: { fs: "Πλήρης οθόνη", close: "Κλείσιμο", title: "Σκηνή · orOS" }
-  }[lang];
-  document.title = T.title;
-  document.getElementById("d-fs").textContent = T.fs;
-  document.getElementById("d-close").textContent = T.close;
+  var TT = {
+    en: { "disp.fs": "Full screen", "disp.close": "Close", "disp.title": "Stage · orOS" },
+    el: { "disp.fs": "Πλήρης οθόνη", "disp.close": "Κλείσιμο", "disp.title": "Σκηνή · orOS" }
+  };
+  if (window.orosI18n) window.orosI18n.table(TT, "time", lang);
+  var T = TT[lang] || TT.en;
+  document.title = T["disp.title"];
+  document.getElementById("d-fs").textContent = T["disp.fs"];
+  document.getElementById("d-close").textContent = T["disp.close"];
 
   var view = V.create(document.getElementById("d-root"), { lang: lang });
   var state = V.readState();

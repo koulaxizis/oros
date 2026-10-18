@@ -49,7 +49,9 @@
       return l === "el" ? "el" : "en";
     } catch (e) { return "en"; }
   }
-  var LANG = appLang();
+  // orosI18n (../i18n.js): the full language code, a pack language included.
+  var LANG = window.orosI18n ? window.orosI18n.lang() : appLang();
+  function loc() { return window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB"); }
 
   var STRINGS = {
     en: {
@@ -75,6 +77,7 @@
       "btn.compare": "Compare", "btn.keepMine": "Keep this version", "btn.useOther": "Use the other version",
       "main.missing": "This wiki has no main page yet.", "main.make": "Write the main page",
       "main.title": "Main page",
+      "main.welcome": "Welcome to your wiki. Write down what you want to remember, in articles that link to each other.\n\n## First steps\n- Press **Edit** to change this page.\n- Write a title in double square brackets, like [[My first article]], and tap it to write that article.\n- File an article in a category with [[:Category:Example|Category:Example]] in its text.\n",
       "nf.title": "No article called “{t}” yet.", "nf.make": "Write it",
       "ed.title": "Editing {t}", "ed.titleSec": "Editing {t} (section)", "ed.new": "New article",
       "ed.name": "Title", "ed.write": "Write", "ed.preview": "Preview", "ed.sum": "Summary of your changes",
@@ -115,20 +118,18 @@
       "toast.nofs": "Pictures need the orOS disk: open Wiki inside orOS.", "toast.imgFail": "Some files are not pictures that can be used.",
       "toast.importing": "Adding the pictures…", "toast.pdfBusy": "Making the PDF…", "toast.pdfFail": "The PDF could not be made.",
       "toast.file": "Saved",
-      "cheat": [
-        "## Heading  ·  ### Subheading",
-        "**bold**  ·  *italic*  ·  ~~struck~~  ·  `code`",
-        "[[Article]]  ·  [[Article|other text]]  ·  [[Article#Section]]",
-        "[text](https://example.com)  ·  https://example.com",
-        "- list item  ·  1. numbered item (two spaces in front: one level deeper)",
-        "> quote  ·  --- line  ·  ``` code block ```",
-        "| A | B |  then  |---|---|  then rows: a table",
-        "[[Category:Name]] files the article in a category",
-        "#REDIRECT [[Article]] as the first line sends readers to another article",
-        "[[File:…|left|200px|Caption]] a picture (use the Picture button)  ·  {{gallery … }} several pictures",
-        "{{infobox  | title = …  | Name = value  }} the facts box at the top",
-        "text[^1] then a line  [^1]: source  adds a numbered reference; {{references}} places the list"
-      ],
+      "cheat.1": "## Heading  ·  ### Subheading",
+      "cheat.2": "**bold**  ·  *italic*  ·  ~~struck~~  ·  `code`",
+      "cheat.3": "[[Article]]  ·  [[Article|other text]]  ·  [[Article#Section]]",
+      "cheat.4": "[text](https://example.com)  ·  https://example.com",
+      "cheat.5": "- list item  ·  1. numbered item (two spaces in front: one level deeper)",
+      "cheat.6": "> quote  ·  --- line  ·  ``` code block ```",
+      "cheat.7": "| A | B |  then  |---|---|  then rows: a table",
+      "cheat.8": "[[Category:Name]] files the article in a category",
+      "cheat.9": "#REDIRECT [[Article]] as the first line sends readers to another article",
+      "cheat.10": "[[File:…|left|200px|Caption]] a picture (use the Picture button)  ·  {{gallery … }} several pictures",
+      "cheat.11": "{{infobox  | title = …  | Name = value  }} the facts box at the top",
+      "cheat.12": "text[^1] then a line  [^1]: source  adds a numbered reference; {{references}} places the list",
       "hist.title": "History of {t}", "hist.cur": "Current version", "hist.none": "No saved versions on this device yet.",
       "hist.nofs": "History needs the orOS disk: open Wiki inside orOS.",
       "hist.later": "Versions saved on your other devices show up here once the orOS disk has synced.",
@@ -248,6 +249,7 @@
       "btn.compare": "Σύγκριση", "btn.keepMine": "Κράτα αυτή την εκδοχή", "btn.useOther": "Πάρε την άλλη εκδοχή",
       "main.missing": "Αυτό το wiki δεν έχει ακόμα κεντρική σελίδα.", "main.make": "Γράψε την κεντρική σελίδα",
       "main.title": "Κεντρική σελίδα",
+      "main.welcome": "Καλώς ήρθες στο wiki σου. Εδώ γράφεις ό,τι θέλεις να θυμάσαι, σε άρθρα που συνδέονται μεταξύ τους.\n\n## Πρώτα βήματα\n- Πάτα **Επεξεργασία** για να αλλάξεις αυτή τη σελίδα.\n- Γράψε έναν τίτλο σε διπλές αγκύλες, όπως [[Το πρώτο μου άρθρο]], και πάτα τον για να γράψεις το άρθρο.\n- Βάλε ένα άρθρο σε κατηγορία με [[:Κατηγορία:Παράδειγμα|Κατηγορία:Παράδειγμα]] στο κείμενό του.\n",
       "nf.title": "Δεν υπάρχει ακόμα άρθρο με τίτλο «{t}».", "nf.make": "Γράψ' το",
       "ed.title": "Επεξεργασία: {t}", "ed.titleSec": "Επεξεργασία: {t} (ενότητα)", "ed.new": "Νέο άρθρο",
       "ed.name": "Τίτλος", "ed.write": "Γραφή", "ed.preview": "Προεπισκόπηση", "ed.sum": "Σύνοψη των αλλαγών σου",
@@ -288,20 +290,18 @@
       "toast.nofs": "Οι εικόνες θέλουν τον δίσκο του orOS: άνοιξε το Wiki μέσα από το orOS.", "toast.imgFail": "Κάποια αρχεία δεν είναι εικόνες που μπορούν να χρησιμοποιηθούν.",
       "toast.importing": "Προστίθενται οι εικόνες…", "toast.pdfBusy": "Φτιάχνεται το PDF…", "toast.pdfFail": "Δεν ήταν δυνατό να γίνει το PDF.",
       "toast.file": "Αποθηκεύτηκε",
-      "cheat": [
-        "## Επικεφαλίδα  ·  ### Υποεπικεφαλίδα",
-        "**έντονα**  ·  *πλάγια*  ·  ~~διαγραμμένα~~  ·  `κώδικας`",
-        "[[Άρθρο]]  ·  [[Άρθρο|άλλο κείμενο]]  ·  [[Άρθρο#Ενότητα]]",
-        "[κείμενο](https://example.com)  ·  https://example.com",
-        "- στοιχείο λίστας  ·  1. αριθμημένο στοιχείο (δύο κενά μπροστά: ένα επίπεδο πιο μέσα)",
-        "> παράθεση  ·  --- γραμμή  ·  ``` μπλοκ κώδικα ```",
-        "| Α | Β |  μετά  |---|---|  μετά οι γραμμές: ένας πίνακας",
-        "[[Κατηγορία:Όνομα]] βάζει το άρθρο σε κατηγορία",
-        "#REDIRECT [[Άρθρο]] στην πρώτη γραμμή στέλνει τον αναγνώστη σε άλλο άρθρο",
-        "[[Αρχείο:…|αριστερά|200px|Λεζάντα]] μια εικόνα (με το κουμπί Εικόνα)  ·  {{γκαλερί … }} πολλές εικόνες",
-        "{{πλαίσιο  | τίτλος = …  | Όνομα = τιμή  }} το πλαίσιο πληροφοριών στην κορυφή",
-        "κείμενο[^1] και μια γραμμή  [^1]: πηγή  προσθέτει αριθμημένη παραπομπή· το {{παραπομπές}} βάζει τη λίστα"
-      ],
+      "cheat.1": "## Επικεφαλίδα  ·  ### Υποεπικεφαλίδα",
+      "cheat.2": "**έντονα**  ·  *πλάγια*  ·  ~~διαγραμμένα~~  ·  `κώδικας`",
+      "cheat.3": "[[Άρθρο]]  ·  [[Άρθρο|άλλο κείμενο]]  ·  [[Άρθρο#Ενότητα]]",
+      "cheat.4": "[κείμενο](https://example.com)  ·  https://example.com",
+      "cheat.5": "- στοιχείο λίστας  ·  1. αριθμημένο στοιχείο (δύο κενά μπροστά: ένα επίπεδο πιο μέσα)",
+      "cheat.6": "> παράθεση  ·  --- γραμμή  ·  ``` μπλοκ κώδικα ```",
+      "cheat.7": "| Α | Β |  μετά  |---|---|  μετά οι γραμμές: ένας πίνακας",
+      "cheat.8": "[[Κατηγορία:Όνομα]] βάζει το άρθρο σε κατηγορία",
+      "cheat.9": "#REDIRECT [[Άρθρο]] στην πρώτη γραμμή στέλνει τον αναγνώστη σε άλλο άρθρο",
+      "cheat.10": "[[Αρχείο:…|αριστερά|200px|Λεζάντα]] μια εικόνα (με το κουμπί Εικόνα)  ·  {{γκαλερί … }} πολλές εικόνες",
+      "cheat.11": "{{πλαίσιο  | τίτλος = …  | Όνομα = τιμή  }} το πλαίσιο πληροφοριών στην κορυφή",
+      "cheat.12": "κείμενο[^1] και μια γραμμή  [^1]: πηγή  προσθέτει αριθμημένη παραπομπή· το {{παραπομπές}} βάζει τη λίστα",
       "hist.title": "Ιστορικό: {t}", "hist.cur": "Τρέχουσα εκδοχή", "hist.none": "Δεν υπάρχουν ακόμα αποθηκευμένες εκδοχές σε αυτή τη συσκευή.",
       "hist.nofs": "Το ιστορικό θέλει τον δίσκο του orOS: άνοιξε το Wiki μέσα από το orOS.",
       "hist.later": "Οι εκδοχές που αποθηκεύτηκαν στις άλλες συσκευές σου εμφανίζονται εδώ μόλις συγχρονιστεί ο δίσκος του orOS.",
@@ -408,6 +408,8 @@
     vars = Object.assign({ n: n }, vars || {});
     return n === 1 && STRINGS.en[k + "1"] !== undefined ? t(k + "1", vars) : t(k, vars);
   }
+  // A pack language (../i18n.js): STRINGS[LANG] = English + the pack.
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "wiki", LANG);
 
   function $(id) { return document.getElementById(id); }
   function el(tag, cls, text) {
@@ -433,14 +435,14 @@
   function fmtDate(ms) {
     if (!ms) return "";
     try {
-      DTF = DTF || new Intl.DateTimeFormat(LANG === "el" ? "el-GR" : "en-GB", { dateStyle: "medium", timeStyle: "short" });
+      DTF = DTF || new Intl.DateTimeFormat(loc(), { dateStyle: "medium", timeStyle: "short" });
       return DTF.format(new Date(ms));
     } catch (e) { return new Date(ms).toISOString().slice(0, 16).replace("T", " "); }
   }
   var DAYF = null;
   function fmtDay(ms) {
     try {
-      DAYF = DAYF || new Intl.DateTimeFormat(LANG === "el" ? "el-GR" : "en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+      DAYF = DAYF || new Intl.DateTimeFormat(loc(), { weekday: "long", day: "numeric", month: "long", year: "numeric" });
       return DAYF.format(new Date(ms));
     } catch (e) { return new Date(ms).toISOString().slice(0, 10); }
   }
@@ -843,7 +845,7 @@
     var help = el("details", "cheat");
     help.appendChild(el("summary", null, t("ed.help")));
     var ul = el("ul");
-    t("cheat").forEach(function (line) { ul.appendChild(el("li", null, line)); });
+    for (var ci = 1; STRINGS.en["cheat." + ci] !== undefined; ci++) ul.appendChild(el("li", null, t("cheat." + ci)));
     help.appendChild(ul);
     box.appendChild(help);
     page.appendChild(box);
@@ -885,7 +887,7 @@
     ["cite", "[1]", function () { citeDialog(); }],
     ["code", "</>", function () { codeTool(); }],
     ["quote", "❝", function () { linePrefix("> "); }],
-    ["cat", "#", function () { insertBlock("[[" + (LANG === "el" ? "Κατηγορία" : "Category") + ":" + t("tb.catPh") + "]]\n", true); }]
+    ["cat", "#", function () { insertBlock("[[" + catWord() + ":" + t("tb.catPh") + "]]\n", true); }]
   ];
   function toolbar() {
     var bar = el("div", "tb");
@@ -1792,7 +1794,7 @@
         var b = books.filter(function (x) { return x.id === book.value; })[0];
         var isNew = where.value === "new" || !curWiki();
         var target = isNew ? null : curWiki();
-        var res = IO().fromNotes(nd, book.value, target ? takenTitles(target) : {}, t("imp.untitled"), LANG === "el" ? "Κατηγορία" : "Category");
+        var res = IO().fromNotes(nd, book.value, target ? takenTitles(target) : {}, t("imp.untitled"), catWord());
         if (!res || !res.arts.length) { toast(t("imp.none")); return; }
         if (isNew) target = newWikiObj((b && b.name) || t("imp.wiki"));
         if (!target) return;
@@ -1868,7 +1870,7 @@
       return false;
     });
   }
-  function catWord() { return LANG === "el" ? "Κατηγορία" : "Category"; }
+  function catWord() { return C.catWord(LANG); }
   // Pictures the import will store: those of pages added or updated.
   function picsFor(res, pl) {
     var on = {}, out = [];
@@ -1881,7 +1883,7 @@
   var SHORT = null;
   function fmtShort(ms) {
     try {
-      SHORT = SHORT || new Intl.DateTimeFormat(LANG === "el" ? "el-GR" : "en-GB", { dateStyle: "medium" });
+      SHORT = SHORT || new Intl.DateTimeFormat(loc(), { dateStyle: "medium" });
       return SHORT.format(new Date(ms));
     } catch (e) { return new Date(ms).toISOString().slice(0, 10); }
   }
@@ -2255,8 +2257,7 @@
   }
 
   // --- Start from Wikipedia ---
-  var WP_LANGS = [["el", "Ελληνικά"], ["en", "English"], ["de", "Deutsch"], ["fr", "Français"], ["es", "Español"],
-                  ["it", "Italiano"], ["pt", "Português"], ["nl", "Nederlands"]];
+  var WP_LANGS = C.WP_LANGS;
   function fetchJson(url) {
     var ctl = typeof AbortController === "function" ? new AbortController() : null;
     var timer = setTimeout(function () { if (ctl) ctl.abort(); }, 20000);
@@ -2268,7 +2269,7 @@
   function wpDialog(title, inEditor) {
     if (!curWiki() || !IO()) return;
     var body = el("div", "form");
-    var lang = sel(WP_LANGS, LANG === "el" ? "el" : "en");
+    var lang = sel(WP_LANGS, WP_LANGS.some(function (o) { return o[0] === LANG; }) ? LANG : "en");
     body.appendChild(field(t("wp.lang"), lang));
     var q = inp(title || "", t("wp.ph"), 300);
     q.type = "search";
@@ -2631,7 +2632,7 @@
       }
       var li = el("li");
       var tm = "";
-      try { tm = new Date(a.m).toLocaleTimeString(LANG === "el" ? "el-GR" : "en-GB", { hour: "2-digit", minute: "2-digit" }); } catch (e) {}
+      try { tm = new Date(a.m).toLocaleTimeString(loc(), { hour: "2-digit", minute: "2-digit" }); } catch (e) {}
       li.appendChild(el("span", "dim", tm + " "));
       li.appendChild(artLink(a));
       if (a.c && a.c === a.m) li.appendChild(el("span", "badge", t("recent.new")));
@@ -2797,7 +2798,7 @@
     if (data.wikis.length >= C.MAX_WIKIS) { toast(t("err.wikis")); return false; }
     var m = now(), w = { id: C.uid("w"), m: m, n: name, main: "" };
     if (withMain) {
-      var art = C.normArt({ id: C.uid("a"), m: m, w: w.id, t: t("main.title"), x: C.welcomeText(LANG), r: C.uid("r"), anc: [], alt: [], s: t("sum.new"), c: m });
+      var art = C.normArt({ id: C.uid("a"), m: m, w: w.id, t: t("main.title"), x: t("main.welcome"), r: C.uid("r"), anc: [], alt: [], s: t("sum.new"), c: m });
       data.arts.push(art);
       w.main = art.id;
     }

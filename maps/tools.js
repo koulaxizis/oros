@@ -22,50 +22,53 @@
   var H = window.__orosMapsHost;
   if (!TC || !H || !H.map || !window.L) return;
   var map = H.map;
-  var LANG = H.lang === "el" ? "el" : "en";
+  var LANG = window.orosI18n ? window.orosI18n.lang() : (H.lang === "el" ? "el" : "en");
   var PARK_KEY = "oros-maps-parking";
 
   var STR = {
     en: {
-      "ctx.measure": "Measure distance", "ctx.park": "I parked here", "ctx.car": "Show my parked car",
-      "m.title": "Measure", "m.hint": "Tap the map to add points. Drag a point to move it.",
-      "m.total": "Distance", "m.last": "Last part {d}", "m.points": "{n} points",
-      "m.area": "Area", "m.perim": "Perimeter {d}",
-      "m.close": "Close the shape", "m.open": "Open the shape",
-      "m.undo": "Undo", "m.clear": "Clear", "m.more": "Add at least one more point.",
-      "m.max": "That's the most points a measurement can have.",
-      "p.title": "Parked here", "p.remind": "Remind me", "p.none": "No reminder",
-      "p.30": "In 30 min", "p.60": "In 1 hour", "p.120": "In 2 hours", "p.at": "At a time",
-      "p.note": "Note (optional)", "p.note.ph": "e.g. level -2, spot 14",
-      "p.save": "Save", "p.cancel": "Cancel", "p.badtime": "Pick a time for the reminder.",
-      "p.saved": "Parking saved", "p.savedat": "Parking saved, reminder at {t}",
-      "p.pin": "My parked car", "p.since": "Parked at {t}", "p.until": "Reminder at {t}",
-      "p.due": "Time's up since {t}",
-      "p.walk": "Walk there", "p.change": "Change", "p.remove": "I left",
-      "p.removed": "Parking removed", "p.full": "Could not save: the device storage is full.",
-      "close": "Close"
+      "tl.ctx.measure": "Measure distance", "tl.ctx.park": "I parked here", "tl.ctx.car": "Show my parked car",
+      "tl.m.title": "Measure", "tl.m.hint": "Tap the map to add points. Drag a point to move it.",
+      "tl.m.total": "Distance", "tl.m.last": "Last part {d}", "tl.m.points": "{n} points",
+      "tl.m.area": "Area", "tl.m.perim": "Perimeter {d}",
+      "tl.m.close": "Close the shape", "tl.m.open": "Open the shape",
+      "tl.m.undo": "Undo", "tl.m.clear": "Clear", "tl.m.more": "Add at least one more point.",
+      "tl.m.max": "That's the most points a measurement can have.",
+      "tl.p.title": "Parked here", "tl.p.remind": "Remind me", "tl.p.none": "No reminder",
+      "tl.p.30": "In 30 min", "tl.p.60": "In 1 hour", "tl.p.120": "In 2 hours", "tl.p.at": "At a time",
+      "tl.p.note": "Note (optional)", "tl.p.note.ph": "e.g. level -2, spot 14",
+      "tl.p.save": "Save", "tl.p.cancel": "Cancel", "tl.p.badtime": "Pick a time for the reminder.",
+      "tl.p.saved": "Parking saved", "tl.p.savedat": "Parking saved, reminder at {t}",
+      "tl.p.pin": "My parked car", "tl.p.since": "Parked at {t}", "tl.p.until": "Reminder at {t}",
+      "tl.p.due": "Time's up since {t}",
+      "tl.p.walk": "Walk there", "tl.p.change": "Change", "tl.p.remove": "I left",
+      "tl.p.removed": "Parking removed", "tl.p.full": "Could not save: the device storage is full.",
+      "tl.close": "Close"
     },
     el: {
-      "ctx.measure": "Μέτρηση απόστασης", "ctx.park": "Πάρκαρα εδώ", "ctx.car": "Πού πάρκαρα",
-      "m.title": "Μέτρηση", "m.hint": "Πάτα στον χάρτη για να προσθέσεις σημεία. Σύρε ένα σημείο για να το μετακινήσεις.",
-      "m.total": "Απόσταση", "m.last": "Τελευταίο κομμάτι {d}", "m.points": "{n} σημεία",
-      "m.area": "Εμβαδόν", "m.perim": "Περίμετρος {d}",
-      "m.close": "Κλείσιμο σχήματος", "m.open": "Άνοιγμα σχήματος",
-      "m.undo": "Αναίρεση", "m.clear": "Καθαρισμός", "m.more": "Πρόσθεσε τουλάχιστον ένα σημείο ακόμα.",
-      "m.max": "Μια μέτρηση δεν μπορεί να έχει περισσότερα σημεία.",
-      "p.title": "Πάρκαρα εδώ", "p.remind": "Υπενθύμιση", "p.none": "Χωρίς υπενθύμιση",
-      "p.30": "Σε 30 λεπτά", "p.60": "Σε 1 ώρα", "p.120": "Σε 2 ώρες", "p.at": "Σε συγκεκριμένη ώρα",
-      "p.note": "Σημείωση (προαιρετικά)", "p.note.ph": "π.χ. επίπεδο -2, θέση 14",
-      "p.save": "Αποθήκευση", "p.cancel": "Άκυρο", "p.badtime": "Διάλεξε ώρα για την υπενθύμιση.",
-      "p.saved": "Η θέση στάθμευσης αποθηκεύτηκε", "p.savedat": "Η θέση στάθμευσης αποθηκεύτηκε, υπενθύμιση στις {t}",
-      "p.pin": "Το αυτοκίνητό μου", "p.since": "Πάρκαρες στις {t}", "p.until": "Υπενθύμιση στις {t}",
-      "p.due": "Ο χρόνος έληξε στις {t}",
-      "p.walk": "Πήγαινε με τα πόδια", "p.change": "Αλλαγή", "p.remove": "Έφυγα",
-      "p.removed": "Η θέση στάθμευσης αφαιρέθηκε", "p.full": "Δεν αποθηκεύτηκε: ο χώρος της συσκευής γέμισε.",
-      "close": "Κλείσιμο"
+      "tl.ctx.measure": "Μέτρηση απόστασης", "tl.ctx.park": "Πάρκαρα εδώ", "tl.ctx.car": "Πού πάρκαρα",
+      "tl.m.title": "Μέτρηση", "tl.m.hint": "Πάτα στον χάρτη για να προσθέσεις σημεία. Σύρε ένα σημείο για να το μετακινήσεις.",
+      "tl.m.total": "Απόσταση", "tl.m.last": "Τελευταίο κομμάτι {d}", "tl.m.points": "{n} σημεία",
+      "tl.m.area": "Εμβαδόν", "tl.m.perim": "Περίμετρος {d}",
+      "tl.m.close": "Κλείσιμο σχήματος", "tl.m.open": "Άνοιγμα σχήματος",
+      "tl.m.undo": "Αναίρεση", "tl.m.clear": "Καθαρισμός", "tl.m.more": "Πρόσθεσε τουλάχιστον ένα σημείο ακόμα.",
+      "tl.m.max": "Μια μέτρηση δεν μπορεί να έχει περισσότερα σημεία.",
+      "tl.p.title": "Πάρκαρα εδώ", "tl.p.remind": "Υπενθύμιση", "tl.p.none": "Χωρίς υπενθύμιση",
+      "tl.p.30": "Σε 30 λεπτά", "tl.p.60": "Σε 1 ώρα", "tl.p.120": "Σε 2 ώρες", "tl.p.at": "Σε συγκεκριμένη ώρα",
+      "tl.p.note": "Σημείωση (προαιρετικά)", "tl.p.note.ph": "π.χ. επίπεδο -2, θέση 14",
+      "tl.p.save": "Αποθήκευση", "tl.p.cancel": "Άκυρο", "tl.p.badtime": "Διάλεξε ώρα για την υπενθύμιση.",
+      "tl.p.saved": "Η θέση στάθμευσης αποθηκεύτηκε", "tl.p.savedat": "Η θέση στάθμευσης αποθηκεύτηκε, υπενθύμιση στις {t}",
+      "tl.p.pin": "Το αυτοκίνητό μου", "tl.p.since": "Πάρκαρες στις {t}", "tl.p.until": "Υπενθύμιση στις {t}",
+      "tl.p.due": "Ο χρόνος έληξε στις {t}",
+      "tl.p.walk": "Πήγαινε με τα πόδια", "tl.p.change": "Αλλαγή", "tl.p.remove": "Έφυγα",
+      "tl.p.removed": "Η θέση στάθμευσης αφαιρέθηκε", "tl.p.full": "Δεν αποθηκεύτηκε: ο χώρος της συσκευής γέμισε.",
+      "tl.close": "Κλείσιμο"
     }
   };
+  if (window.orosI18n) window.orosI18n.table(STR, "maps", LANG);
+  function loc() { return window.orosI18n ? window.orosI18n.locale(LANG) : (loc()); }
   function t(k, vars) {
+    k = "tl." + k;
     var s = (STR[LANG] && STR[LANG][k]) || STR.en[k] || k;
     if (vars) Object.keys(vars).forEach(function (v) { s = s.split("{" + v + "}").join(String(vars[v])); });
     return s;

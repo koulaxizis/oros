@@ -27,128 +27,131 @@
   var V = window.OrosMapsOverlays;      // maps wave 8B (may be missing: overlays off)
   if (!O || !P || !Q || !A || !H || !H.map) return;
   var map = H.map;
-  var LANG = H.lang === "el" ? "el" : "en";
+  var LANG = window.orosI18n ? window.orosI18n.lang() : (H.lang === "el" ? "el" : "en");
   var OVERPASS = "https://overpass-api.de/api/interpreter";
 
   var STR = {
     en: {
-      "btn": "Quests", "title": "Quests",
-      "zoomin": "Zoom in closer to see the quests around you.",
-      "zoomgo": "Zoom in",
-      "loading": "Looking for quests…", "loadfail": "Could not load the area. Try again later.",
-      "none": "No quests here. Move the map or turn more quests on in Settings.",
-      "count": "{n} quests here",
-      "stats": "Your answers: {a} · today {b} · {c} days in a row",
-      "pending": "{n} answers waiting to be uploaded",
-      "other": "From another device (it uploads them)",
-      "upload": "Upload {n}",
-      "settings": "Settings",
-      "set.title": "Which quests to show",
-      "set.all": "All on",
-      "skip": "Can't say", "hide": "Hide here", "gone": "It's not there any more",
-      "same": "Still the same",
-      "recheck": "Last checked {d}: {v}. Is it still right?",
-      "hours.ph": "e.g. Mo-Fr 09:00-17:00; Sa 10:00-14:00",
-      "hours.247": "Open 24/7", "hours.none": "No hours posted", "hours.none.ct": "No times posted", "hours.save": "Save",
-      "hours.hint": "Days Mo Tu We Th Fr Sa Su, times 24-hour, groups separated by ;",
-      "number.save": "Save", "text.save": "Save", "multi.save": "Save",
-      "bad": "That answer doesn't look right. Check it and try again.",
-      "saved": "Saved. Upload when you're done.",
-      "unnamed": "this place", "unnamed.way": "this street", "unnamed.b": "this building",
-      "back": "Back", "close": "Close", "cancel": "Cancel", "del": "Remove",
-      "note.text": "{q}: it is not there any more.",
-      "up.title": "Upload to OpenStreetMap",
-      "up.comment": "Comment",
-      "up.count": "{n} answers from this device will be published under your OpenStreetMap name.",
-      "up.go": "Upload",
-      "up.ok": "Uploaded {n} answers to OpenStreetMap",
-      "up.conflict": "Someone else changed these meanwhile, their value was kept: {k}",
-      "up.fail": "Upload failed: {e}",
-      "up.gone": "It no longer exists on OpenStreetMap",
-      "up.signin": "Sign in with OpenStreetMap to upload",
-      "up.offline": "You are offline. Your answers are kept.",
-      "leave": "{n} answers are waiting to be uploaded",
-      "name.save": "Save", "name.ph": "As written on the sign",
-      "ovl": "Overlay", "ovl.off": "None (show quests)",
-      "ovl.hint.line": "Tap a street to change it.", "ovl.hint.area": "Tap a building to change it.",
-      "ovl.zoom": "Zoom in closer to see the overlay.",
-      "ovl.loading": "Loading the overlay…",
-      "ovl.count": "{n} here, {m} not known yet",
-      "ovl.pins": "Quest pins are hidden while an overlay is on.",
-      "ovl.now": "Now: {v}", "ovl.unknown": "not known yet",
-      "ovl.arrows": "Left and right are seen walking in the direction of the arrows on the map.",
-      "ovl.same": "That is already on the map.",
-      "ovl.levels": "Floors above ground", "ovl.kind": "Kind of building", "ovl.kind.keep": "Keep as it is",
-      "badges": "Achievements", "badges.title": "Your achievements",
-      "badge.lv": "Level {l} · {n} answers", "badge.next": "{n} more for the next level", "badge.max": "Top level reached",
-      "badge.none": "Answer quests and upload them to earn achievements. Each level unlocks a page to learn more.",
-      "badge.new": "New achievement: {c}, level {l}",
-      "badge.links": "Unlocked reading",
-      "team": "Team mapping",
-      "team.hint": "Map an area with friends without answering the same things: everyone picks the same team size and a different letter. Each of you then sees only your share of the quests.",
-      "team.size": "People in the team", "team.solo": "Just me", "team.me": "My letter",
-      "team.on": "Team of {n}, you are {l}: you see your share of the quests"
+      "qst.btn": "Quests", "qst.title": "Quests",
+      "qst.zoomin": "Zoom in closer to see the quests around you.",
+      "qst.zoomgo": "Zoom in",
+      "qst.loading": "Looking for quests…", "qst.loadfail": "Could not load the area. Try again later.",
+      "qst.none": "No quests here. Move the map or turn more quests on in Settings.",
+      "qst.count": "{n} quests here",
+      "qst.stats": "Your answers: {a} · today {b} · {c} days in a row",
+      "qst.pending": "{n} answers waiting to be uploaded",
+      "qst.other": "From another device (it uploads them)",
+      "qst.upload": "Upload {n}",
+      "qst.settings": "Settings",
+      "qst.set.title": "Which quests to show",
+      "qst.set.all": "All on",
+      "qst.skip": "Can't say", "qst.hide": "Hide here", "qst.gone": "It's not there any more",
+      "qst.same": "Still the same",
+      "qst.recheck": "Last checked {d}: {v}. Is it still right?",
+      "qst.hours.ph": "e.g. Mo-Fr 09:00-17:00; Sa 10:00-14:00",
+      "qst.hours.247": "Open 24/7", "qst.hours.none": "No hours posted", "qst.hours.none.ct": "No times posted", "qst.hours.save": "Save",
+      "qst.hours.hint": "Days Mo Tu We Th Fr Sa Su, times 24-hour, groups separated by ;",
+      "qst.number.save": "Save", "qst.text.save": "Save", "qst.multi.save": "Save",
+      "qst.bad": "That answer doesn't look right. Check it and try again.",
+      "qst.saved": "Saved. Upload when you're done.",
+      "qst.unnamed": "this place", "qst.unnamed.way": "this street", "qst.unnamed.b": "this building",
+      "qst.back": "Back", "qst.close": "Close", "qst.cancel": "Cancel", "qst.del": "Remove",
+      "qst.note.text": "{q}: it is not there any more.",
+      "qst.up.title": "Upload to OpenStreetMap",
+      "qst.up.comment": "Comment",
+      "qst.up.count": "{n} answers from this device will be published under your OpenStreetMap name.",
+      "qst.up.go": "Upload",
+      "qst.up.ok": "Uploaded {n} answers to OpenStreetMap",
+      "qst.up.conflict": "Someone else changed these meanwhile, their value was kept: {k}",
+      "qst.up.fail": "Upload failed: {e}",
+      "qst.up.gone": "It no longer exists on OpenStreetMap",
+      "qst.up.signin": "Sign in with OpenStreetMap to upload",
+      "qst.up.offline": "You are offline. Your answers are kept.",
+      "qst.leave": "{n} answers are waiting to be uploaded",
+      "qst.name.save": "Save", "qst.name.ph": "As written on the sign",
+      "qst.ovl": "Overlay", "qst.ovl.off": "None (show quests)",
+      "qst.ovl.hint.line": "Tap a street to change it.", "qst.ovl.hint.area": "Tap a building to change it.",
+      "qst.ovl.zoom": "Zoom in closer to see the overlay.",
+      "qst.ovl.loading": "Loading the overlay…",
+      "qst.ovl.count": "{n} here, {m} not known yet",
+      "qst.ovl.pins": "Quest pins are hidden while an overlay is on.",
+      "qst.ovl.now": "Now: {v}", "qst.ovl.unknown": "not known yet",
+      "qst.ovl.arrows": "Left and right are seen walking in the direction of the arrows on the map.",
+      "qst.ovl.same": "That is already on the map.",
+      "qst.ovl.levels": "Floors above ground", "qst.ovl.kind": "Kind of building", "qst.ovl.kind.keep": "Keep as it is",
+      "qst.badges": "Achievements", "qst.badges.title": "Your achievements",
+      "qst.badge.lv": "Level {l} · {n} answers", "qst.badge.next": "{n} more for the next level", "qst.badge.max": "Top level reached",
+      "qst.badge.none": "Answer quests and upload them to earn achievements. Each level unlocks a page to learn more.",
+      "qst.badge.new": "New achievement: {c}, level {l}",
+      "qst.badge.links": "Unlocked reading",
+      "qst.team": "Team mapping",
+      "qst.team.hint": "Map an area with friends without answering the same things: everyone picks the same team size and a different letter. Each of you then sees only your share of the quests.",
+      "qst.team.size": "People in the team", "qst.team.solo": "Just me", "qst.team.me": "My letter",
+      "qst.team.on": "Team of {n}, you are {l}: you see your share of the quests"
     },
     el: {
-      "btn": "Ερωτήσεις", "title": "Ερωτήσεις",
-      "zoomin": "Πλησίασε περισσότερο για να δεις τις ερωτήσεις γύρω σου.",
-      "zoomgo": "Μεγέθυνση",
-      "loading": "Ψάχνω ερωτήσεις…", "loadfail": "Η περιοχή δεν φόρτωσε. Δοκίμασε αργότερα.",
-      "none": "Καμία ερώτηση εδώ. Μετακίνησε τον χάρτη ή άνοιξε κι άλλες στις Ρυθμίσεις.",
-      "count": "{n} ερωτήσεις εδώ",
-      "stats": "Οι απαντήσεις σου: {a} · σήμερα {b} · {c} μέρες στη σειρά",
-      "pending": "{n} απαντήσεις περιμένουν αποστολή",
-      "other": "Από άλλη συσκευή (εκείνη τις στέλνει)",
-      "upload": "Αποστολή {n}",
-      "settings": "Ρυθμίσεις",
-      "set.title": "Ποιες ερωτήσεις να φαίνονται",
-      "set.all": "Όλες ανοιχτές",
-      "skip": "Δεν ξέρω", "hide": "Κρύψε εδώ", "gone": "Δεν υπάρχει πια",
-      "same": "Ισχύει ακόμα",
-      "recheck": "Ελέγχθηκε {d}: {v}. Ισχύει ακόμα;",
-      "hours.ph": "π.χ. Mo-Fr 09:00-17:00; Sa 10:00-14:00",
-      "hours.247": "Ανοιχτό 24/7", "hours.none": "Δεν αναγράφεται ωράριο", "hours.none.ct": "Δεν αναγράφονται ώρες", "hours.save": "Αποθήκευση",
-      "hours.hint": "Μέρες Mo Tu We Th Fr Sa Su (Δευ–Κυρ), ώρες 24ωρες, ομάδες χωρισμένες με ;",
-      "number.save": "Αποθήκευση", "text.save": "Αποθήκευση", "multi.save": "Αποθήκευση",
-      "bad": "Η απάντηση δεν φαίνεται σωστή. Έλεγξέ τη και δοκίμασε ξανά.",
-      "saved": "Αποθηκεύτηκε. Στείλε όταν τελειώσεις.",
-      "unnamed": "αυτό το μέρος", "unnamed.way": "αυτός ο δρόμος", "unnamed.b": "αυτό το κτίριο",
-      "back": "Πίσω", "close": "Κλείσιμο", "cancel": "Άκυρο", "del": "Αφαίρεση",
-      "note.text": "{q}: δεν υπάρχει πια.",
-      "up.title": "Αποστολή στο OpenStreetMap",
-      "up.comment": "Σχόλιο",
-      "up.count": "{n} απαντήσεις από αυτή τη συσκευή θα δημοσιευτούν με το όνομά σου στο OpenStreetMap.",
-      "up.go": "Αποστολή",
-      "up.ok": "Στάλθηκαν {n} απαντήσεις στο OpenStreetMap",
-      "up.conflict": "Κάποιος άλλος τα άλλαξε στο μεταξύ και κρατήθηκε η δική του τιμή: {k}",
-      "up.fail": "Η αποστολή απέτυχε: {e}",
-      "up.gone": "Δεν υπάρχει πια στο OpenStreetMap",
-      "up.signin": "Συνδέσου με OpenStreetMap για αποστολή",
-      "up.offline": "Δεν έχεις σύνδεση. Οι απαντήσεις σου κρατιούνται.",
-      "leave": "{n} απαντήσεις περιμένουν αποστολή",
-      "name.save": "Αποθήκευση", "name.ph": "Όπως γράφει η πινακίδα",
-      "ovl": "Επικάλυψη", "ovl.off": "Καμία (δείξε τις ερωτήσεις)",
-      "ovl.hint.line": "Πάτα έναν δρόμο για να τον αλλάξεις.", "ovl.hint.area": "Πάτα ένα κτίριο για να το αλλάξεις.",
-      "ovl.zoom": "Πλησίασε περισσότερο για να δεις την επικάλυψη.",
-      "ovl.loading": "Φόρτωση της επικάλυψης…",
-      "ovl.count": "{n} εδώ, {m} άγνωστα ακόμα",
-      "ovl.pins": "Οι καρφίτσες των ερωτήσεων κρύβονται όσο είναι ανοιχτή μια επικάλυψη.",
-      "ovl.now": "Τώρα: {v}", "ovl.unknown": "άγνωστο ακόμα",
-      "ovl.arrows": "Αριστερά και δεξιά όπως τα βλέπεις περπατώντας προς την κατεύθυνση των βελών στον χάρτη.",
-      "ovl.same": "Αυτό υπάρχει ήδη στον χάρτη.",
-      "ovl.levels": "Όροφοι πάνω από το έδαφος", "ovl.kind": "Είδος κτιρίου", "ovl.kind.keep": "Να μείνει όπως είναι",
-      "badges": "Επιτεύγματα", "badges.title": "Τα επιτεύγματά σου",
-      "badge.lv": "Επίπεδο {l} · {n} απαντήσεις", "badge.next": "Ακόμα {n} για το επόμενο επίπεδο", "badge.max": "Έφτασες στο ανώτερο επίπεδο",
-      "badge.none": "Απάντησε σε ερωτήσεις και στείλ' τες για να κερδίσεις επιτεύγματα. Κάθε επίπεδο ξεκλειδώνει μια σελίδα για να μάθεις περισσότερα.",
-      "badge.new": "Νέο επίτευγμα: {c}, επίπεδο {l}",
-      "badge.links": "Ξεκλείδωτο διάβασμα",
-      "team": "Ομαδική χαρτογράφηση",
-      "team.hint": "Χαρτογραφήστε μια περιοχή με φίλους χωρίς να απαντάτε στα ίδια: όλοι διαλέγετε το ίδιο μέγεθος ομάδας και διαφορετικό γράμμα. Ο καθένας βλέπει μόνο το δικό του μερίδιο ερωτήσεων.",
-      "team.size": "Άτομα στην ομάδα", "team.solo": "Μόνο εγώ", "team.me": "Το γράμμα μου",
-      "team.on": "Ομάδα {n} ατόμων, είσαι το {l}: βλέπεις το δικό σου μερίδιο"
+      "qst.btn": "Ερωτήσεις", "qst.title": "Ερωτήσεις",
+      "qst.zoomin": "Πλησίασε περισσότερο για να δεις τις ερωτήσεις γύρω σου.",
+      "qst.zoomgo": "Μεγέθυνση",
+      "qst.loading": "Ψάχνω ερωτήσεις…", "qst.loadfail": "Η περιοχή δεν φόρτωσε. Δοκίμασε αργότερα.",
+      "qst.none": "Καμία ερώτηση εδώ. Μετακίνησε τον χάρτη ή άνοιξε κι άλλες στις Ρυθμίσεις.",
+      "qst.count": "{n} ερωτήσεις εδώ",
+      "qst.stats": "Οι απαντήσεις σου: {a} · σήμερα {b} · {c} μέρες στη σειρά",
+      "qst.pending": "{n} απαντήσεις περιμένουν αποστολή",
+      "qst.other": "Από άλλη συσκευή (εκείνη τις στέλνει)",
+      "qst.upload": "Αποστολή {n}",
+      "qst.settings": "Ρυθμίσεις",
+      "qst.set.title": "Ποιες ερωτήσεις να φαίνονται",
+      "qst.set.all": "Όλες ανοιχτές",
+      "qst.skip": "Δεν ξέρω", "qst.hide": "Κρύψε εδώ", "qst.gone": "Δεν υπάρχει πια",
+      "qst.same": "Ισχύει ακόμα",
+      "qst.recheck": "Ελέγχθηκε {d}: {v}. Ισχύει ακόμα;",
+      "qst.hours.ph": "π.χ. Mo-Fr 09:00-17:00; Sa 10:00-14:00",
+      "qst.hours.247": "Ανοιχτό 24/7", "qst.hours.none": "Δεν αναγράφεται ωράριο", "qst.hours.none.ct": "Δεν αναγράφονται ώρες", "qst.hours.save": "Αποθήκευση",
+      "qst.hours.hint": "Μέρες Mo Tu We Th Fr Sa Su (Δευ–Κυρ), ώρες 24ωρες, ομάδες χωρισμένες με ;",
+      "qst.number.save": "Αποθήκευση", "qst.text.save": "Αποθήκευση", "qst.multi.save": "Αποθήκευση",
+      "qst.bad": "Η απάντηση δεν φαίνεται σωστή. Έλεγξέ τη και δοκίμασε ξανά.",
+      "qst.saved": "Αποθηκεύτηκε. Στείλε όταν τελειώσεις.",
+      "qst.unnamed": "αυτό το μέρος", "qst.unnamed.way": "αυτός ο δρόμος", "qst.unnamed.b": "αυτό το κτίριο",
+      "qst.back": "Πίσω", "qst.close": "Κλείσιμο", "qst.cancel": "Άκυρο", "qst.del": "Αφαίρεση",
+      "qst.note.text": "{q}: δεν υπάρχει πια.",
+      "qst.up.title": "Αποστολή στο OpenStreetMap",
+      "qst.up.comment": "Σχόλιο",
+      "qst.up.count": "{n} απαντήσεις από αυτή τη συσκευή θα δημοσιευτούν με το όνομά σου στο OpenStreetMap.",
+      "qst.up.go": "Αποστολή",
+      "qst.up.ok": "Στάλθηκαν {n} απαντήσεις στο OpenStreetMap",
+      "qst.up.conflict": "Κάποιος άλλος τα άλλαξε στο μεταξύ και κρατήθηκε η δική του τιμή: {k}",
+      "qst.up.fail": "Η αποστολή απέτυχε: {e}",
+      "qst.up.gone": "Δεν υπάρχει πια στο OpenStreetMap",
+      "qst.up.signin": "Συνδέσου με OpenStreetMap για αποστολή",
+      "qst.up.offline": "Δεν έχεις σύνδεση. Οι απαντήσεις σου κρατιούνται.",
+      "qst.leave": "{n} απαντήσεις περιμένουν αποστολή",
+      "qst.name.save": "Αποθήκευση", "qst.name.ph": "Όπως γράφει η πινακίδα",
+      "qst.ovl": "Επικάλυψη", "qst.ovl.off": "Καμία (δείξε τις ερωτήσεις)",
+      "qst.ovl.hint.line": "Πάτα έναν δρόμο για να τον αλλάξεις.", "qst.ovl.hint.area": "Πάτα ένα κτίριο για να το αλλάξεις.",
+      "qst.ovl.zoom": "Πλησίασε περισσότερο για να δεις την επικάλυψη.",
+      "qst.ovl.loading": "Φόρτωση της επικάλυψης…",
+      "qst.ovl.count": "{n} εδώ, {m} άγνωστα ακόμα",
+      "qst.ovl.pins": "Οι καρφίτσες των ερωτήσεων κρύβονται όσο είναι ανοιχτή μια επικάλυψη.",
+      "qst.ovl.now": "Τώρα: {v}", "qst.ovl.unknown": "άγνωστο ακόμα",
+      "qst.ovl.arrows": "Αριστερά και δεξιά όπως τα βλέπεις περπατώντας προς την κατεύθυνση των βελών στον χάρτη.",
+      "qst.ovl.same": "Αυτό υπάρχει ήδη στον χάρτη.",
+      "qst.ovl.levels": "Όροφοι πάνω από το έδαφος", "qst.ovl.kind": "Είδος κτιρίου", "qst.ovl.kind.keep": "Να μείνει όπως είναι",
+      "qst.badges": "Επιτεύγματα", "qst.badges.title": "Τα επιτεύγματά σου",
+      "qst.badge.lv": "Επίπεδο {l} · {n} απαντήσεις", "qst.badge.next": "Ακόμα {n} για το επόμενο επίπεδο", "qst.badge.max": "Έφτασες στο ανώτερο επίπεδο",
+      "qst.badge.none": "Απάντησε σε ερωτήσεις και στείλ' τες για να κερδίσεις επιτεύγματα. Κάθε επίπεδο ξεκλειδώνει μια σελίδα για να μάθεις περισσότερα.",
+      "qst.badge.new": "Νέο επίτευγμα: {c}, επίπεδο {l}",
+      "qst.badge.links": "Ξεκλείδωτο διάβασμα",
+      "qst.team": "Ομαδική χαρτογράφηση",
+      "qst.team.hint": "Χαρτογραφήστε μια περιοχή με φίλους χωρίς να απαντάτε στα ίδια: όλοι διαλέγετε το ίδιο μέγεθος ομάδας και διαφορετικό γράμμα. Ο καθένας βλέπει μόνο το δικό του μερίδιο ερωτήσεων.",
+      "qst.team.size": "Άτομα στην ομάδα", "qst.team.solo": "Μόνο εγώ", "qst.team.me": "Το γράμμα μου",
+      "qst.team.on": "Ομάδα {n} ατόμων, είσαι το {l}: βλέπεις το δικό σου μερίδιο"
     }
   };
+  if (window.orosI18n) window.orosI18n.table(STR, "maps", LANG);
+  function loc() { return window.orosI18n ? window.orosI18n.locale(LANG) : (loc()); }
   function t(k, vars) {
+    k = "qst." + k;
     var s = (STR[LANG] && STR[LANG][k]) || STR.en[k] || k;
     if (vars) Object.keys(vars).forEach(function (v) { s = s.split("{" + v + "}").join(String(vars[v])); });
     return s;
@@ -454,7 +457,7 @@
       if (x[0] === "miss") sw.style.borderColor = V.legendColor(x[0]);
       sw.setAttribute("aria-hidden", "true");
       li.appendChild(sw);
-      li.appendChild(el("span", "", LANG === "el" ? x[2] : x[1]));
+      li.appendChild(el("span", "", V.legendText(ov, x, LANG)));
       lg.appendChild(li);
     });
     body.appendChild(lg);
@@ -687,7 +690,7 @@
     body.appendChild(el("p", "qst-q", Q.text(q, "q", LANG).split("{name}").join(nm || t(e.tags.highway ? "unnamed.way" : e.tags.building ? "unnamed.b" : "unnamed"))));
     if (mode === "recheck") {
       var last = Q.lastCheck(e, q.key);
-      var d = last ? new Date(last).toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB", { year: "numeric", month: "short" }) : "?";
+      var d = last ? new Date(last).toLocaleDateString(loc(), { year: "numeric", month: "short" }) : "?";
       body.appendChild(el("p", "osm-hint", t("recheck", { d: d, v: e.tags[q.key] || "" })));
       var sr = el("div", "osm-actions");
       sr.appendChild(button(t("same"), "osm-btn primary", function () { answer(e, q, "same"); }));
@@ -787,7 +790,7 @@
       ic.setAttribute("aria-hidden", "true");
       li.appendChild(ic);
       var b = el("div", "qst-badge-b");
-      b.appendChild(el("div", "osm-row-t", LANG === "el" ? c.el : c.en));
+      b.appendChild(el("div", "osm-row-t", c[LANG] || c.en));
       b.appendChild(el("div", "osm-row-s", t("badge.lv", { l: c.level, n: c.n }) + " · " + (c.next ? t("badge.next", { n: c.next }) : t("badge.max"))));
       var bar = el("div", "qst-bar");
       var fill = el("i", "");
@@ -1005,7 +1008,7 @@
       stats = Q.addCount(stats, A.deviceId(), qid, n);
       saveStats();
       Q.levelUps(before, stats).forEach(function (c, i) {
-        setTimeout(function () { toast(t("badge.new", { c: LANG === "el" ? c.el : c.en, l: c.level })); }, 3000 + i * 1500);
+        setTimeout(function () { toast(t("badge.new", { c: c[LANG] || c.en, l: c.level })); }, 3000 + i * 1500);
       });
     }
     var me = A.deviceId(), day = Q.today();

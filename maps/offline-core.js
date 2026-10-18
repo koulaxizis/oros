@@ -1,3 +1,4 @@
+// i18n-inline-ok: the only Greek here is search data (letter folding and Greek → Latin transliteration).
 // ============================================================
 // orOS Maps — offline-core.js (offline map packs, maps wave 51,
 // v1.0.0). Pure functions, no DOM, no network of its own: Node-tested
@@ -598,12 +599,18 @@
     });
     return best;
   }
+  // Decimal comma for el, de… (what the language's locale writes).
+  function decComma(lang) {
+    if (lang === "el") return true;
+    if (!lang || lang === "en") return false;
+    try { return (1.5).toLocaleString(lang).indexOf(",") >= 0; } catch (e) { return false; }
+  }
   function fmtBytes(n, lang) {
     var u = ["B", "KB", "MB", "GB"], i = 0;
     n = Math.max(0, +n || 0);
     while (n >= 1000 && i < u.length - 1) { n /= 1000; i++; }
     var s = i === 0 ? String(Math.round(n)) : n.toFixed(n < 10 ? 1 : 0);
-    if (lang === "el") s = s.replace(".", ",");
+    if (decComma(lang)) s = s.replace(".", ",");
     return s + " " + u[i];
   }
   function okUrl(s) {
