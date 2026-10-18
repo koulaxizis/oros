@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.37.00
+- Newsletter: richer blocks. Under More blocks: picture and text side by side, three columns, a gallery, a video (a picture of it with a play mark that opens the video), a table and an event card that can bring a calendar file. Save any block and use it again in every issue. New issues can start from three ready layouts: weekly news, announcement and product offer.
+
 ## Version 3.36.01
 - orOS itself now opens at once from the copy saved on your device, also right after a new version is published. The new version downloads in the background and orOS restarts into it when you are back on the desktop.
 
