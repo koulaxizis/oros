@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob: 'wasm-unsafe-eval' 'sha256-Y9Zogj5evuCrkMKTCQ5uPQOzbz5Jr92kuhwhFuuTxTo='; style-src 'self' 'unsafe-inline'; img-src 'self' https: data: blob:; media-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https: wss: data: blob: http://localhost:* http://127.0.0.1:*; worker-src 'self' blob:; frame-src 'self' https: blob: data:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <!-- DL-1: a direct link to this app opens it inside the orOS shell -->
+  <script>if (window.top === window.self && !/[?&]standalone\b/.test(location.search)) location.replace("../?open=whiteboard" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Whiteboard · orOS</title>
+  <link rel="stylesheet" href="app.css?v=3.27.00">
+</head>
+<body>
+
+  <header id="toolbar">
+    <button type="button" class="txt-btn" id="board-btn" aria-haspopup="dialog">
+      <span id="board-name" class="board-name"></span>
+    </button>
+    <span class="spacer"></span>
+    <button type="button" class="icon-btn" id="undo-btn"></button>
+    <button type="button" class="icon-btn" id="redo-btn"></button>
+    <button type="button" class="icon-btn" id="pic-btn"></button>
+    <button type="button" class="icon-btn" id="export-btn" aria-haspopup="dialog"></button>
+  </header>
+
+  <main id="stage">
+    <svg id="svg" tabindex="0" role="application"><g id="vp"><g id="objs"></g><g id="ui"></g></g></svg>
+    <textarea id="editor" rows="1" spellcheck="true" hidden></textarea>
+    <div id="ctx" class="bar ctx" role="toolbar" hidden></div>
+    <div id="tools" class="bar tools" role="toolbar"></div>
+    <div class="bar zoom" id="zoom">
+      <button type="button" class="icon-btn" id="zoom-out"></button>
+      <button type="button" class="txt-btn" id="zoom-pct"></button>
+      <button type="button" class="icon-btn" id="zoom-in"></button>
+      <button type="button" class="icon-btn" id="fit-btn"></button>
+    </div>
+    <p id="hint" class="hint" hidden></p>
+  </main>
+
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="../i18n.js?v=3.27.00" data-app="whiteboard"></script>
+  <script src="core.js?v=3.27.00"></script>
+  <script src="app.js?v=3.27.00"></script>
+
+</body>
+</html>
