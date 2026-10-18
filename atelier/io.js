@@ -179,6 +179,11 @@
     });
   }
   function exportPdf(doc, pages, dpi, J) {
+    return pdfBlob(doc, pages, dpi, J).then(function (b) {
+      return saveBlob(b, fileName(doc, ".pdf"), "application/pdf", "PDF", ".pdf");
+    });
+  }
+  function pdfBlob(doc, pages, dpi, J) {
     var P = window.AtelierPDF, ids = pages.map(function (p) { return p.id; });
     var plan = P.plan(doc, ids), pics = {}, chain = Promise.resolve();
     plan.filter(P.needsPicture).forEach(function (p) {
@@ -188,7 +193,30 @@
     });
     return chain.then(function () {
       var pdf = P.build(doc, { pages: ids, title: doc.name || "" }, { jsPDF: J, pictures: pics, plan: plan });
-      return saveBlob(pdf.output("blob"), fileName(doc, ".pdf"), "application/pdf", "PDF", ".pdf");
+      return pdf.output("blob");
+    });
+  }
+
+  // Every page of a design as files, not saved (automations, recipes.js):
+  // o = { fmt png|jpg|pdf, scale, dpi } → [{ name, blob }]
+  function renderFiles(doc, o) {
+    var pages = M.pagesInOrder(doc);
+    var chain = prepare(doc, o.fmt === "pdf" ? o.dpi / 72 : safeScale(doc, o.scale || 1));
+    if (o.fmt === "pdf") {
+      return chain.then(loadJsPDF).then(function (J) { return pdfBlob(doc, pages, o.dpi, J); })
+        .then(function (b) { return [{ name: fileName(doc, ".pdf"), blob: b }]; });
+    }
+    var mime = o.fmt === "png" ? "image/png" : "image/jpeg", ext = o.fmt === "png" ? ".png" : ".jpg", out = [];
+    return chain.then(function () {
+      var c2 = Promise.resolve();
+      pages.forEach(function (pg, i) {
+        c2 = c2.then(function () {
+          return toBlob(renderForExport(doc, pg, o.scale || 1, false), mime, 0.92).then(function (b) {
+            out.push({ name: fileName(doc, ext, pages.length > 1 ? i + 1 : 0), blob: b });
+          });
+        });
+      });
+      return c2.then(function () { return out; });
     });
   }
 
@@ -198,6 +226,8 @@
     if (!doc || exporting) return;
     ED.exitText();
     exporting = true;
+    // Record (recipes.js) notes a download of the whole design
+    if (/^(png|jpg|pdf)$/.test(o.type) && o.pages !== "cur") AT.emit("rc-note", { op: "export", fmt: o.type, scale: o.scale || 1, dpi: o.dpi || 300 });
     AT.toast(t("exp.working"));
     if (o.type === "video" || o.type === "gif") {
       AT.motion.exportFilm({ type: o.type, side: o.side, pages: o.pages }, function (blob, ext, mime) {
@@ -647,7 +677,7 @@
         AT.PRESETS.list.forEach(function (p, i) {
           if (!pick[i]) return;
           var s = AT.presetSize(p);
-          out.push({ w: s.w, h: s.h, unit: p[6], label: AT.presetName(p) });
+          out.push({ w: s.w, h: s.h, unit: p[6], label: AT.presetName(p), id: p[0] });
         });
         if (custom.on && custom.w > 0 && custom.h > 0) {
           var mm = custom.unit === "mm";
@@ -712,6 +742,10 @@
         var s = sizes();
         if (!s.length) return;
         close();
+        AT.emit("rc-note", { op: "resize", copies: copies ? 1 : 0, sizes: s.map(function (z) {
+          var mm = z.unit === "mm";
+          return { w: mm ? Math.round(M.toUnit(z.w, "mm") * 10) / 10 : Math.round(z.w), h: mm ? Math.round(M.toUnit(z.h, "mm") * 10) / 10 : Math.round(z.h), u: mm ? "mm" : "px", p: z.id || "" };
+        }) });
         if (copies) resizeCopies(s);
         else resizeTo(s[0].w, s[0].h, s[0].unit);
       });
@@ -799,6 +833,8 @@
         { sep: true },
         { label: t("more.resize"), fn: resizeDialog },
         { label: t("more.bulk"), fn: function () { if (AT.bulk) AT.bulk.open(); } },
+        { label: t("more.recipes"), hide: !AT.recipes, fn: function () { AT.recipes.open(); } },
+        { label: t("more.record"), hide: !AT.recipes || AT.recipes.recording(), fn: function () { AT.recipes.record(); } },
         { label: t("more.mockup"), disabled: !(AT.mockup && AT.mockup.can()), fn: function () { AT.mockup.open(); } },
         { label: t("more.pkg"), fn: function () { exportPackage(AT.doc); } },
         { label: t("more.sendTo"), hide: !canSend(), fn: sendTo },
@@ -818,6 +854,7 @@
   AT.io = {
     exportPackage: exportPackage, importAny: importAny, importFolder: importFolder, openFile: openFile, importPptx: importPptxFile, uploadImage: uploadImage,
     placePhoto: placePhoto, pickFile: pickFile, saveBlob: saveBlob, exportDialog: exportDialog, resizeTo: resizeTo,
+    renderFiles: renderFiles, relaid: relaid,
     sendTo: sendTo, canSend: canSend
   };
 })();
