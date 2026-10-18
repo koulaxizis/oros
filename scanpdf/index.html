@@ -89,6 +89,19 @@
       <button type="button" id="ed-sig" class="btn small"></button>
       <button type="button" id="ed-text" class="btn small"></button>
       <button type="button" id="ed-date" class="btn small"></button>
+      <button type="button" id="ed-shape" class="btn small" aria-expanded="false" aria-controls="ed-shapes"></button>
+      <button type="button" id="ed-pen" class="btn small" aria-pressed="false"></button>
+      <button type="button" id="ed-marker" class="btn small" aria-pressed="false"></button>
+      <button type="button" id="ed-cover" class="btn small"></button>
+      <button type="button" id="ed-pic" class="btn small"></button>
+    </div>
+    <div id="ed-shapes" class="ed-tools ed-sub" role="group" hidden>
+      <button type="button" class="btn small" data-k="rect"></button>
+      <button type="button" class="btn small" data-k="ellipse"></button>
+      <button type="button" class="btn small" data-k="line"></button>
+      <button type="button" class="btn small" data-k="arrow"></button>
+      <button type="button" class="btn small" data-k="check"></button>
+      <button type="button" class="btn small" data-k="cross"></button>
     </div>
     <div id="ed-props" class="ed-props" hidden>
       <input type="text" id="ed-input" maxlength="200" spellcheck="false">
@@ -96,9 +109,20 @@
         <button type="button" class="swatch" data-color="black"></button>
         <button type="button" class="swatch" data-color="blue"></button>
         <button type="button" class="swatch" data-color="red"></button>
+        <button type="button" class="swatch" data-color="green"></button>
+        <button type="button" class="swatch" data-color="yellow"></button>
+        <button type="button" class="swatch" data-color="white"></button>
       </div>
+      <div id="ed-widths" class="ed-widths" role="group">
+        <button type="button" class="wbtn" data-w="0"><span></span></button>
+        <button type="button" class="wbtn" data-w="1"><span></span></button>
+        <button type="button" class="wbtn" data-w="2"><span></span></button>
+      </div>
+      <button type="button" id="ed-fill" class="btn small" aria-pressed="false"></button>
+      <button type="button" id="ed-unstroke" class="btn small"></button>
       <button type="button" id="ed-all" class="btn small"></button>
       <button type="button" id="ed-del" class="btn small"></button>
+      <p id="ed-note" class="ed-note hint small" hidden></p>
     </div>
     <div id="ed-stage" class="ed-stage">
       <div id="ed-page" class="ed-page"><canvas id="ed-canvas"></canvas><div id="ed-layer"></div></div>

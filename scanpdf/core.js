@@ -7,18 +7,24 @@
 // Wave 2: overlays (signatures, text) and where they sit on a turned
 // page, page numbers, watermark, compress levels, the signature
 // library and turning a photo of a signature into ink.
+// Wave 5: shapes (box, oval, line, arrow, tick, cross), pen and marker
+// drawings, pictures and more colours, all drawn from one outline
+// (ovParts) on the screen and in the PDF.
 // scanpdf.js does the DOM and the I/O, pdfops.js the PDF writing.
 // UMD: window.ScanPdfCore, or module.exports in Node.
 // ============================================================
 (function (root) {
   "use strict";
 
-  var VERSION = "1.3.0";
+  var VERSION = "1.4.0";
   var PREFS_KEY = "oros-scanpdf-prefs";      // device-local (R10), never synced
   var SIGS_KEY = "oros-scanpdf-sigs";        // device-local (R10), never synced
   var MAX_SIGS = 6;
   var MAX_SIG_URL = 280000;                  // ~200 KB of PNG as a data: URL
+  var MAX_PIC_URL = 3000000;                 // a picture put on a page (~2.2 MB)
   var MAX_OV = 40;                           // additions on one page
+  var MAX_INK = 4000;                        // points of one drawing
+  var MAX_STROKES = 60;                      // strokes of one drawing
   var MAX_FILE = 200 * 1024 * 1024;          // one input file
   var MAX_PAGES = 2000;                      // pages in the list
   var MAX_HISTORY = 60;                      // undo steps
@@ -297,11 +303,21 @@
   //           turns the addition with it.
   //   A:      how the page was turned (0|90|180|270, clockwise) when
   //           it was put on, so it stood upright then.
-  //   img:    w, h as fractions of S = min(W, H); src a PNG data: URL.
-  //   text:   fs (font size / S), text, color ("black"|"blue"|"red").
+  //   img:    w, h as fractions of S = min(W, H); src a PNG data: URL
+  //           (signature) or a PNG / JPEG one (pic: true, a picture).
+  //   text:   fs (font size / S), text, color (a COLORS key).
+  //   shape:  k (SHAPES), w, h as fractions of S (a line or arrow goes
+  //           from -w/2, -h/2 to w/2, h/2 of its centre, so w and h may
+  //           be negative), color, sw (line width / S, 0 = none: a
+  //           filled box with no edge), fill (filled with its colour).
+  //   ink:    a pen or marker drawing: w, h (its box, fractions of S),
+  //           pts (strokes, each [x, y, x, y, ...] as fractions of the
+  //           box), color, sw, op (1 pen, below 1 marker).
   // The display of a page turned by R (clockwise) is W' × H' with
   // W' = H when R is 90 or 270.
-  var COLORS = { black: [0.07, 0.07, 0.09], blue: [0.1, 0.23, 0.6], red: [0.75, 0.1, 0.12] };
+  var COLORS = { black: [0.07, 0.07, 0.09], blue: [0.1, 0.23, 0.6], red: [0.75, 0.1, 0.12],
+                 green: [0.1, 0.5, 0.22], yellow: [1, 0.84, 0.1], white: [1, 1, 1] };
+  var SHAPES = ["rect", "ellipse", "line", "arrow", "check", "cross"];
   function dispSize(W, H, R) { return R % 180 ? [H, W] : [W, H]; }
   // Unturned point (px, py) → where it shows on the turned page.
   function toDisp(px, py, W, H, R) {
@@ -349,13 +365,35 @@
   // A clean overlay, or null: only known fields, numbers in range.
   function cleanOv(o) {
     if (!o || typeof o !== "object") return null;
-    var c = { id: String(o.id || "").slice(0, 40) || "o", t: o.t === "img" ? "img" : "text",
+    var t = o.t === "img" || o.t === "shape" || o.t === "ink" ? o.t : "text";
+    var c = { id: String(o.id || "").slice(0, 40) || "o", t: t,
               cx: clamp01(o.cx), cy: clamp01(o.cy), A: normRot(o.A) };
-    if (c.t === "img") {
-      if (typeof o.src !== "string" || o.src.indexOf("data:image/png;base64,") !== 0 || o.src.length > MAX_SIG_URL) return null;
-      c.src = o.src;
+    if (t === "img") {
+      var pic = o.pic === true, src = o.src;
+      if (typeof src !== "string") return null;
+      var okType = src.indexOf("data:image/png;base64,") === 0 || (pic && src.indexOf("data:image/jpeg;base64,") === 0);
+      if (!okType || src.length > (pic ? MAX_PIC_URL : MAX_SIG_URL)) return null;
+      c.src = src;
+      if (pic) c.pic = true;
       c.w = Math.min(2, Math.max(0.01, Number(o.w) || 0.3));
       c.h = Math.min(2, Math.max(0.005, Number(o.h) || 0.1));
+    } else if (t === "shape") {
+      c.k = SHAPES.indexOf(o.k) !== -1 ? o.k : "rect";
+      var signed = c.k === "line" || c.k === "arrow";
+      c.w = sizeOf(o.w, 0.2, signed);
+      c.h = sizeOf(o.h, 0.1, signed);
+      if (signed && Math.abs(c.w) < 0.01 && Math.abs(c.h) < 0.01) c.w = 0.01;
+      c.color = COLORS[o.color] ? o.color : "red";
+      c.fill = (c.k === "rect" || c.k === "ellipse") && o.fill === true;
+      c.sw = Math.min(0.05, Math.max(c.fill ? 0 : 0.0005, Number(o.sw) >= 0 ? Number(o.sw) : 0.004));
+    } else if (t === "ink") {
+      c.w = Math.min(2, Math.max(0.002, Number(o.w) || 0.002));
+      c.h = Math.min(2, Math.max(0.002, Number(o.h) || 0.002));
+      c.color = COLORS[o.color] ? o.color : "black";
+      c.sw = Math.min(0.08, Math.max(0.0005, Number(o.sw) || 0.004));
+      c.op = Math.min(1, Math.max(0.1, Number(o.op) || 1));
+      c.pts = cleanStrokes(o.pts);
+      if (!c.pts.length) return null;
     } else {
       c.text = String(o.text == null ? "" : o.text).replace(/[\u0000-\u001f\u007f]/g, " ").slice(0, 200);
       if (!c.text.trim()) return null;
@@ -364,6 +402,81 @@
     }
     return c;
   }
+  // A box side (fractions of S): 0.005 to 2, or -2 to 2 for a line.
+  function sizeOf(n, def, signed) {
+    n = Number(n);
+    if (!isFinite(n) || (n === 0 && !signed)) n = def;
+    var a = Math.min(2, Math.max(signed ? 0 : 0.005, Math.abs(n)));
+    return round4(signed && n < 0 ? -a : a);
+  }
+  // Strokes of a drawing: at most MAX_STROKES, MAX_INK points in all,
+  // each point inside the box.
+  function cleanStrokes(pts) {
+    var out = [], left = MAX_INK;
+    if (!Array.isArray(pts)) return out;
+    for (var i = 0; i < pts.length && out.length < MAX_STROKES && left > 0; i++) {
+      var st = pts[i];
+      if (!Array.isArray(st) || st.length < 2) continue;
+      var n = Math.min(Math.floor(st.length / 2), left), c = new Array(n * 2), ok = true;
+      for (var j = 0; j < n * 2; j++) {
+        var v = Number(st[j]);
+        if (!isFinite(v)) { ok = false; break; }
+        c[j] = round4(clamp01(v));
+      }
+      if (!ok) continue;
+      out.push(c);
+      left -= n;
+    }
+    return out;
+  }
+
+  // What to draw for a shape or a drawing, centred on (0, 0) of the
+  // addition, y down, `u` units (points, pixels) per S:
+  // [{ d (an SVG path of M, L, C, Z only), fill (COLORS key or null),
+  //    stroke (COLORS key or null), sw (line width in units), op }].
+  // The editor, the thumbnails and the PDF all draw from these.
+  var KAPPA = 0.5523;
+  function num(n) { return String(Math.round(n * 100) / 100); }
+  function pathOf(pts) {
+    var d = "";
+    for (var i = 0; i < pts.length; i += 2) d += (i ? " L " : "M ") + num(pts[i]) + " " + num(pts[i + 1]);
+    return d;
+  }
+  function ovParts(o, u) {
+    var w = o.w * u, h = o.h * u, sw = o.sw * u, hw = w / 2, hh = h / 2;
+    if (o.t === "ink") {
+      var d = o.pts.map(function (st) {
+        var p = [];
+        for (var i = 0; i < st.length; i += 2) p.push((st[i] - 0.5) * w, (st[i + 1] - 0.5) * h);
+        // a single tap is a dot: a stroke a hair long
+        if (p.length === 2) p.push(p[0] + 0.01, p[1]);
+        return pathOf(p);
+      }).join(" ");
+      return [{ d: d, fill: null, stroke: o.color, sw: sw, op: o.op }];
+    }
+    var k = o.k, line = { fill: null, stroke: o.color, sw: sw, op: 1 };
+    if (k === "rect" || k === "ellipse") {
+      var dd = k === "rect" ? pathOf([-hw, -hh, hw, -hh, hw, hh, -hw, hh]) + " Z" :
+        "M " + num(-hw) + " 0 C " + [-hw, -hh * KAPPA, -hw * KAPPA, -hh, 0, -hh].map(num).join(" ") +
+        " C " + [hw * KAPPA, -hh, hw, -hh * KAPPA, hw, 0].map(num).join(" ") +
+        " C " + [hw, hh * KAPPA, hw * KAPPA, hh, 0, hh].map(num).join(" ") +
+        " C " + [-hw * KAPPA, hh, -hw, hh * KAPPA, -hw, 0].map(num).join(" ") + " Z";
+      return [{ d: dd, fill: o.fill ? o.color : null, stroke: sw > 0 ? o.color : null, sw: sw, op: 1 }];
+    }
+    if (k === "line") return [Object.assign({ d: pathOf([-hw, -hh, hw, hh]) }, line)];
+    if (k === "arrow") {
+      var len = Math.hypot(w, h) || 1, ux = w / len, uy = h / len;
+      var head = Math.min(len * 0.6, Math.max(sw * 4.5, u * 0.025)), half = head * 0.45;
+      var bx = hw - ux * head, by = hh - uy * head;      // the base of the head
+      return [Object.assign({ d: pathOf([-hw, -hh, bx + ux * sw, by + uy * sw]) }, line),
+              { d: pathOf([hw, hh, bx - uy * half, by + ux * half, bx + uy * half, by - ux * half]) + " Z",
+                fill: o.color, stroke: null, sw: 0, op: 1 }];
+    }
+    if (k === "check") return [Object.assign({ d: pathOf([-hw * 0.8, 0, -hw * 0.2, hh * 0.7, hw * 0.9, -hh * 0.8]) }, line)];
+    return [Object.assign({ d: pathOf([-hw * 0.8, -hh * 0.8, hw * 0.8, hh * 0.8]) + " " +
+                               pathOf([hw * 0.8, -hh * 0.8, -hw * 0.8, hh * 0.8]) }, line)];
+  }
+
   // Put the additions of each key in `map` ({ key: [ov] }) on the list.
   function setOverlays(pages, map) {
     return clonePages(pages).map(function (p) {
@@ -573,6 +686,7 @@
     history: history, record: record, undo: undo, redo: redo,
     parseRanges: parseRanges, splitPlan: splitPlan, rangeLabel: rangeLabel, parseTarget: parseTarget,
     SIGS_KEY: SIGS_KEY, MAX_SIGS: MAX_SIGS, MAX_OV: MAX_OV, COLORS: COLORS, BASELINE: BASELINE,
+    SHAPES: SHAPES, MAX_INK: MAX_INK, MAX_STROKES: MAX_STROKES, MAX_PIC_URL: MAX_PIC_URL, ovParts: ovParts,
     COMPRESS: COMPRESS, WM_OP: WM_OP, NUM_POS: NUM_POS,
     cloneOv: cloneOv, dispSize: dispSize, toDisp: toDisp, fromDisp: fromDisp, ovAt: ovAt, ovDisp: ovDisp,
     anchor: anchor, cleanOv: cleanOv, setOverlays: setOverlays,

@@ -85,7 +85,7 @@
       "drop.hint": "Merge PDFs, split them, take pages out, put them in another order or turn them, sign them, number the pages, make them smaller, read the text of scans so they can be searched, and make a PDF from pictures (JPEG, PNG, WebP, GIF, BMP, AVIF).",
       "drop.local": "Everything happens on this device. Nothing is uploaded and your files are never changed.",
       "drop.veil": "Drop to add",
-      "pages.hint": "Tap pages to select them, then use the buttons above. Drag a page to move it. The pen on a page signs it or adds text.",
+      "pages.hint": "Tap pages to select them, then use the buttons above. Drag a page to move it. The pen on a page signs it, adds text or draws on it.",
       "info.pages": "{n} pages", "info.pages.one": "1 page",
       "info.sel": "{n} pages · {s} selected", "info.sel.one": "1 page · {s} selected",
       "foot.files": "{n} files · {size}", "foot.files.one": "1 file · {size}",
@@ -128,13 +128,21 @@
       "toast.split": "{n} PDFs made", "toast.undo": "Undone", "toast.redo": "Redone",
       "toast.deleted": "{n} pages deleted", "toast.deleted.one": "1 page deleted",
       "live.moved": "Moved to place {to}",
-      "btn.options": "Options", "btn.edit": "Sign or add text", "btn.use": "Use it", "btn.close": "Close without keeping the changes",
+      "btn.options": "Options", "btn.edit": "Sign, write or draw", "btn.use": "Use it", "btn.close": "Close without keeping the changes",
       "card.ov": "{n} additions", "card.ov.one": "1 addition",
       "ed.title": "Page {n} of {total}", "ed.prev": "Previous page", "ed.next": "Next page",
       "ed.sig": "Signature", "ed.text": "Text", "ed.date": "Date",
-      "ed.hint": "Add a signature, text or the date, then drag it into place. Drag its corner to make it bigger or smaller.",
+      "ed.hint": "Add a signature, text, the date, a shape, a drawing or a picture, then drag it into place. Drag its corner to change its size.",
+      "ed.shape": "Shape", "ed.pen": "Pen", "ed.marker": "Highlighter", "ed.cover": "Cover", "ed.pic": "Picture", "ed.shapes": "Shapes",
+      "shape.rect": "Box", "shape.ellipse": "Oval", "shape.line": "Line", "shape.arrow": "Arrow", "shape.check": "Tick", "shape.cross": "Cross",
+      "ed.width": "Line width", "width.thin": "Thin", "width.mid": "Medium", "width.thick": "Thick", "ed.fill": "Fill",
+      "ed.unstroke": "Undo the last stroke", "ed.start": "Start of the line", "ed.end": "End of the line",
+      "ed.drawHint": "Draw on the page with your finger, a stylus or the mouse. Press the button again when you're done.",
+      "ed.coverHint": "A cover only hides what is under it: the page beneath stays in the PDF. To remove it for good, save with “Make it smaller”, in a document whose text you have not had read (“Make it searchable”).",
+      "ed.itemPic": "Picture", "ed.itemInk": "Drawing", "ed.itemMark": "Highlight", "ed.itemCover": "Cover",
+      "err.pic": "This picture could not be read.",
       "ed.newText": "Your text", "ed.textLabel": "The text", "ed.color": "Colour",
-      "color.black": "Black", "color.blue": "Blue", "color.red": "Red",
+      "color.black": "Black", "color.blue": "Blue", "color.red": "Red", "color.green": "Green", "color.yellow": "Yellow", "color.white": "White",
       "ed.all": "Put on every page", "ed.del": "Remove", "ed.resize": "Resize",
       "ed.itemImg": "Signature", "ed.itemText": "Text: {text}",
       "ed.leaveTitle": "Leave without keeping the changes?", "ed.leaveBody": "What you added on these pages since you opened them is let go.", "ed.leave": "Leave",
@@ -207,7 +215,7 @@
       "drop.hint": "Ένωσε PDF, χώρισέ τα, βγάλε σελίδες, άλλαξε τη σειρά τους ή γύρισέ τες, υπόγραψέ τα, αρίθμησε τις σελίδες, κάνε τα μικρότερα, διάβασε το κείμενο των σαρώσεων ώστε να βρίσκεται στην αναζήτηση, και φτιάξε PDF από εικόνες (JPEG, PNG, WebP, GIF, BMP, AVIF).",
       "drop.local": "Όλα γίνονται σε αυτή τη συσκευή. Τίποτα δεν ανεβαίνει και τα αρχεία σου δεν αλλάζουν ποτέ.",
       "drop.veil": "Άφησέ τα για προσθήκη",
-      "pages.hint": "Πάτησε σελίδες για να τις επιλέξεις και μετά χρησιμοποίησε τα κουμπιά επάνω. Σύρε μια σελίδα για να τη μετακινήσεις. Η πένα σε μια σελίδα την υπογράφει ή προσθέτει κείμενο.",
+      "pages.hint": "Πάτησε σελίδες για να τις επιλέξεις και μετά χρησιμοποίησε τα κουμπιά επάνω. Σύρε μια σελίδα για να τη μετακινήσεις. Η πένα σε μια σελίδα την υπογράφει, προσθέτει κείμενο ή σχεδιάζει πάνω της.",
       "info.pages": "{n} σελίδες", "info.pages.one": "1 σελίδα",
       "info.sel": "{n} σελίδες · {s} επιλεγμένες", "info.sel.one": "1 σελίδα · {s} επιλεγμένες",
       "foot.files": "{n} αρχεία · {size}", "foot.files.one": "1 αρχείο · {size}",
@@ -250,13 +258,21 @@
       "toast.split": "Φτιάχτηκαν {n} PDF", "toast.undo": "Αναιρέθηκε", "toast.redo": "Επαναλήφθηκε",
       "toast.deleted": "Διαγράφηκαν {n} σελίδες", "toast.deleted.one": "Διαγράφηκε 1 σελίδα",
       "live.moved": "Μετακινήθηκε στη θέση {to}",
-      "btn.options": "Επιλογές", "btn.edit": "Υπογραφή ή κείμενο", "btn.use": "Χρήση", "btn.close": "Κλείσιμο χωρίς τις αλλαγές",
+      "btn.options": "Επιλογές", "btn.edit": "Υπογραφή, κείμενο ή σχέδιο", "btn.use": "Χρήση", "btn.close": "Κλείσιμο χωρίς τις αλλαγές",
       "card.ov": "{n} προσθήκες", "card.ov.one": "1 προσθήκη",
       "ed.title": "Σελίδα {n} από {total}", "ed.prev": "Προηγούμενη σελίδα", "ed.next": "Επόμενη σελίδα",
       "ed.sig": "Υπογραφή", "ed.text": "Κείμενο", "ed.date": "Ημερομηνία",
-      "ed.hint": "Πρόσθεσε υπογραφή, κείμενο ή την ημερομηνία και σύρε τα στη θέση τους. Σύρε τη γωνία τους για να τα μεγαλώσεις ή να τα μικρύνεις.",
+      "ed.hint": "Πρόσθεσε υπογραφή, κείμενο, ημερομηνία, σχήμα, σχέδιο ή εικόνα και σύρε τα στη θέση τους. Σύρε τη γωνία τους για να αλλάξεις το μέγεθός τους.",
+      "ed.shape": "Σχήμα", "ed.pen": "Πένα", "ed.marker": "Μαρκαδόρος", "ed.cover": "Κάλυψη", "ed.pic": "Εικόνα", "ed.shapes": "Σχήματα",
+      "shape.rect": "Ορθογώνιο", "shape.ellipse": "Οβάλ", "shape.line": "Γραμμή", "shape.arrow": "Βέλος", "shape.check": "Τικ", "shape.cross": "Χι",
+      "ed.width": "Πάχος γραμμής", "width.thin": "Λεπτή", "width.mid": "Μεσαία", "width.thick": "Χοντρή", "ed.fill": "Γέμισμα",
+      "ed.unstroke": "Αναίρεση της τελευταίας γραμμής", "ed.start": "Αρχή της γραμμής", "ed.end": "Τέλος της γραμμής",
+      "ed.drawHint": "Σχεδίασε πάνω στη σελίδα με το δάχτυλο, γραφίδα ή το ποντίκι. Πάτησε ξανά το κουμπί όταν τελειώσεις.",
+      "ed.coverHint": "Η κάλυψη κρύβει μόνο ό,τι φαίνεται από κάτω: η σελίδα μένει ίδια μέσα στο PDF. Για να φύγει οριστικά, αποθήκευσε με «Μικρότερο αρχείο», σε έγγραφο που το κείμενό του δεν έχει διαβαστεί («Να γίνει αναζητήσιμο»).",
+      "ed.itemPic": "Εικόνα", "ed.itemInk": "Σχέδιο", "ed.itemMark": "Επισήμανση", "ed.itemCover": "Κάλυψη",
+      "err.pic": "Αυτή η εικόνα δεν διαβάστηκε.",
       "ed.newText": "Το κείμενό σου", "ed.textLabel": "Το κείμενο", "ed.color": "Χρώμα",
-      "color.black": "Μαύρο", "color.blue": "Μπλε", "color.red": "Κόκκινο",
+      "color.black": "Μαύρο", "color.blue": "Μπλε", "color.red": "Κόκκινο", "color.green": "Πράσινο", "color.yellow": "Κίτρινο", "color.white": "Λευκό",
       "ed.all": "Σε κάθε σελίδα", "ed.del": "Αφαίρεση", "ed.resize": "Αλλαγή μεγέθους",
       "ed.itemImg": "Υπογραφή", "ed.itemText": "Κείμενο: {text}",
       "ed.leaveTitle": "Έξοδος χωρίς τις αλλαγές;", "ed.leaveBody": "Ό,τι πρόσθεσες σε αυτές τις σελίδες από τη στιγμή που τις άνοιξες χάνεται.", "ed.leave": "Έξοδος",
@@ -386,6 +402,16 @@
     camera: SVG + '<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>',
     image: SVG + '<rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>',
     torch: SVG + '<path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>',
+    shape: SVG + '<rect x="3" y="11" width="10" height="10" rx="1"/><circle cx="16" cy="8" r="5"/></svg>',
+    marker: SVG + '<path d="m9 11-6 6v3h9l3-3"/><path d="m22 12-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4"/></svg>',
+    cover: SVG + '<rect x="3" y="8" width="18" height="8" rx="1" fill="currentColor" fill-opacity="0.25"/><line x1="6" y1="4" x2="18" y2="4"/><line x1="6" y1="20" x2="18" y2="20"/></svg>',
+    rect: SVG + '<rect x="3" y="6" width="18" height="12" rx="1"/></svg>',
+    ellipse: SVG + '<ellipse cx="12" cy="12" rx="9" ry="6.5"/></svg>',
+    line: SVG + '<line x1="4" y1="20" x2="20" y2="4"/></svg>',
+    arrow: SVG + '<line x1="4" y1="20" x2="19" y2="5"/><polyline points="10 5 19 5 19 14"/></svg>',
+    tick: SVG + '<polyline points="4 13 9 18 20 6"/></svg>',
+    cross: SVG + '<line x1="5" y1="5" x2="19" y2="19"/><line x1="19" y1="5" x2="5" y2="19"/></svg>',
+    fill: SVG + '<path d="M19 11 11 3 3 11l8 8z" fill="currentColor" fill-opacity="0.3"/><path d="M20 15s2 2.5 2 4a2 2 0 0 1-4 0c0-1.5 2-4 2-4z"/></svg>',
     copy: SVG + '<rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>',
     grip: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>'
   };
@@ -679,8 +705,20 @@
     if (!im.complete && redraw) im.addEventListener("load", redraw, { once: true });
     return im;
   }
-  var CSS_COLOR = { black: "#121217", blue: "#1a3b99", red: "#bf1a1f" };
+  var CSS_COLOR = { black: "#121217", blue: "#1a3b99", red: "#bf1a1f", green: "#1a8038", yellow: "#ffd61a", white: "#ffffff" };
   var SANS = '"ScanPdfSans", "Noto Sans", sans-serif';
+  // A shape or a drawing on a canvas, around (0, 0) (core.ovParts).
+  function drawParts(ctx, o, u) {
+    if (typeof Path2D !== "function") return;
+    ctx.lineCap = "round"; ctx.lineJoin = "round";
+    C.ovParts(o, u).forEach(function (part) {
+      var path = new Path2D(part.d);
+      ctx.globalAlpha = part.op;
+      if (part.fill) { ctx.fillStyle = CSS_COLOR[part.fill]; ctx.fill(path); }
+      if (part.stroke) { ctx.strokeStyle = CSS_COLOR[part.stroke]; ctx.lineWidth = part.sw; ctx.stroke(path); }
+    });
+    ctx.globalAlpha = 1;
+  }
   function drawMarks(ctx, p, i, total, cw, ch, redraw) {
     var g = geomOf(p);
     if (!g) return;
@@ -693,6 +731,8 @@
       if (o.t === "img") {
         var im = ovImage(o.src, redraw), w = o.w * S * k, h = o.h * S * k;
         if (im.complete && im.naturalWidth) ctx.drawImage(im, -w / 2, -h / 2, w, h);
+      } else if (o.t === "shape" || o.t === "ink") {
+        drawParts(ctx, o, S * k);
       } else {
         var fs = o.fs * S * k;
         ctx.font = fs + "px " + SANS;
@@ -1482,6 +1522,8 @@
   function edList() { return ed.ov[ed.keys[ed.at]]; }
   function closeEditor(keep) {
     if (!ed) return;
+    endDraw();
+    showShapes(false);
     var e = ed, keys = Object.keys(e.changed);
     ed = null;
     $("editor").hidden = true;
@@ -1507,6 +1549,7 @@
     var i = ed.at + d;
     if (i < 0 || i >= ed.keys.length) return;
     ed.at = i; ed.sel = null;
+    if (ed.draw) { ed.draw.id = null; ed.draw.strokes = []; }
     showEdPage();
   }
 
@@ -1581,17 +1624,48 @@
       var im = document.createElement("img");
       im.src = o.src; im.alt = ""; im.draggable = false;
       n.appendChild(im);
-      n.setAttribute("aria-label", t("ed.itemImg"));
+    } else if (o.t === "shape" || o.t === "ink") {
+      n.appendChild(document.createElementNS(SVGNS, "svg")).setAttribute("aria-hidden", "true");
+      if (isLine(o)) n.classList.add("ov-line");
     } else {
       n.appendChild(el("span", "ov-txt", o.text));
-      n.setAttribute("aria-label", t("ed.itemText", { text: o.text }));
     }
-    var hd = el("span", "ov-h");
-    hd.setAttribute("aria-hidden", "true");
-    hd.title = t("ed.resize");
-    n.appendChild(hd);
+    n.setAttribute("aria-label", ovLabel(o));
+    (isLine(o) ? ["0", "1"] : [""]).forEach(function (end) {
+      var hd = el("span", "ov-h" + (end ? " ov-h" + end : ""));
+      hd.setAttribute("aria-hidden", "true");
+      hd.title = end === "0" ? t("ed.start") : end === "1" ? t("ed.end") : t("ed.resize");
+      if (end) hd.setAttribute("data-end", end);
+      n.appendChild(hd);
+    });
     placeOv(n, o);
     return n;
+  }
+  var SVGNS = "http://www.w3.org/2000/svg";
+  var MIN_HIT = window.matchMedia && window.matchMedia("(pointer: coarse)").matches ? 36 : 24;
+  function isLine(o) { return o.t === "shape" && (o.k === "line" || o.k === "arrow"); }
+  function isCover(o) { return o.t === "shape" && o.fill && !o.sw; }
+  function ovLabel(o) {
+    if (o.t === "img") return t(o.pic ? "ed.itemPic" : "ed.itemImg");
+    if (o.t === "ink") return t(o.op < 1 ? "ed.itemMark" : "ed.itemInk");
+    if (o.t === "shape") return isCover(o) ? t("ed.itemCover") : t("shape." + o.k);
+    return t("ed.itemText", { text: o.text });
+  }
+  // The outline of a shape or drawing, drawn as SVG paths around the
+  // element's centre.
+  function drawSvg(svg, o, u) {
+    svg.textContent = "";
+    C.ovParts(o, u).forEach(function (part) {
+      var pa = document.createElementNS(SVGNS, "path");
+      pa.setAttribute("d", part.d);
+      pa.setAttribute("fill", part.fill ? CSS_COLOR[part.fill] : "none");
+      pa.setAttribute("stroke", part.stroke ? CSS_COLOR[part.stroke] : "none");
+      pa.setAttribute("stroke-width", String(part.sw));
+      pa.setAttribute("stroke-linecap", "round");
+      pa.setAttribute("stroke-linejoin", "round");
+      if (part.op < 1) pa.setAttribute("opacity", String(part.op));
+      svg.appendChild(pa);
+    });
   }
   function placeOv(n, o) {
     var g = ed.g, v = C.ovDisp(o, g.W, g.H, g.R), d = C.dispSize(g.W, g.H, g.R);
@@ -1602,6 +1676,19 @@
     if (o.t === "img") {
       n.style.width = (o.w * S * k) + "px";
       n.style.height = (o.h * S * k) + "px";
+    } else if (o.t === "shape" || o.t === "ink") {
+      // at least a finger's width to grab, whatever its size
+      var u = S * k, w = Math.abs(o.w) * u, h = Math.abs(o.h) * u, pad = o.sw * u;
+      n.style.width = Math.max(MIN_HIT, w + pad) + "px";
+      n.style.height = Math.max(MIN_HIT, h + pad) + "px";
+      drawSvg(n.querySelector("svg"), o, u);
+      if (isLine(o)) {
+        [].forEach.call(n.querySelectorAll(".ov-h"), function (hd) {
+          var sg = hd.getAttribute("data-end") === "1" ? 1 : -1;
+          hd.style.left = "calc(50% + " + (sg * o.w * u / 2) + "px)";
+          hd.style.top = "calc(50% + " + (sg * o.h * u / 2) + "px)";
+        });
+      }
     } else {
       n.style.fontSize = (o.fs * S * k) + "px";
       n.style.color = CSS_COLOR[o.color] || CSS_COLOR.black;
@@ -1616,21 +1703,41 @@
     [].forEach.call($("ed-layer").children, function (n) { n.classList.toggle("on", n.getAttribute("data-id") === id); });
     syncProps();
   }
-  // The bar under the tools: the text and colour of a text addition,
-  // Put on every page, Remove.
+  // The bar under the tools: the text of a text addition, the colour,
+  // line width and fill of a shape or drawing (or of the pen while
+  // drawing), Put on every page, Remove.
+  var WIDTHS = { shape: [0.002, 0.004, 0.008], pen: [0.002, 0.004, 0.008], marker: [0.015, 0.025, 0.04] };
+  function widthSet(o) { return o && o.t === "ink" ? (o.op < 1 ? WIDTHS.marker : WIDTHS.pen) : WIDTHS.shape; }
   function syncProps() {
-    var o = ed && ed.sel ? ovById(ed.sel) : null;
-    $("ed-props").hidden = !o;
-    if (!o) return;
-    var isText = o.t === "text";
-    $("ed-input").hidden = !isText;
-    $("ed-colors").hidden = !isText;
-    if (isText) {
-      if (document.activeElement !== $("ed-input")) $("ed-input").value = o.text;
-      [].forEach.call($("ed-colors").children, function (b) {
-        b.setAttribute("aria-pressed", b.getAttribute("data-color") === o.color ? "true" : "false");
-      });
-    }
+    var o = ed && ed.sel ? ovById(ed.sel) : null, dr = ed && ed.draw;
+    $("ed-props").hidden = !o && !dr;
+    if (!o && !dr) return;
+    var isText = !!o && o.t === "text", vec = !!o && (o.t === "shape" || o.t === "ink");
+    var color = o ? o.color : dr.color, sw = o ? o.sw : dr.sw;
+    $("ed-input").hidden = !isText || !!dr;
+    $("ed-colors").hidden = !(isText || vec || dr);
+    $("ed-widths").hidden = !((vec && !(o.t === "shape" && o.fill)) || dr);
+    $("ed-fill").hidden = !(o && o.t === "shape" && (o.k === "rect" || o.k === "ellipse")) || !!dr;
+    $("ed-unstroke").hidden = !dr;
+    $("ed-unstroke").disabled = !(dr && dr.strokes.length);
+    $("ed-all").hidden = $("ed-del").hidden = !o;
+    var note = dr ? t("ed.drawHint") : o && isCover(o) ? t("ed.coverHint") : "";
+    $("ed-note").hidden = !note;
+    $("ed-note").textContent = note;
+    if (isText && document.activeElement !== $("ed-input")) $("ed-input").value = o.text;
+    [].forEach.call($("ed-colors").children, function (b) {
+      b.setAttribute("aria-pressed", b.getAttribute("data-color") === color ? "true" : "false");
+    });
+    var ws = dr ? (dr.op < 1 ? WIDTHS.marker : WIDTHS.pen) : widthSet(o), near = nearest(ws, sw);
+    [].forEach.call($("ed-widths").children, function (b) {
+      b.setAttribute("aria-pressed", Number(b.getAttribute("data-w")) === near ? "true" : "false");
+    });
+    if (o && o.t === "shape") $("ed-fill").setAttribute("aria-pressed", o.fill ? "true" : "false");
+  }
+  function nearest(list, v) {
+    var best = 0;
+    list.forEach(function (x, i) { if (Math.abs(x - v) < Math.abs(list[best] - v)) best = i; });
+    return best;
   }
 
   // New additions go where they are most often wanted, upright on the
@@ -1673,6 +1780,189 @@
     if (o && focusInput) { var i = $("ed-input"); i.focus(); i.select(); }
     else if (o) focusOv(o.id);
   }
+  // Shapes start in the middle of the page, red (a tick green): the
+  // colour of a correction or a mark.
+  function addShape(k) {
+    showShapes(false);
+    var sq = k === "check" || k === "cross", flat = k === "line" || k === "arrow";
+    var o = addOv({ t: "shape", k: k, w: sq ? 0.07 : 0.3, h: sq ? 0.07 : flat ? 0 : 0.18,
+                    color: k === "check" ? "green" : "red", sw: sq ? 0.008 : WIDTHS.shape[1], fill: false }, 0.5, 0.5);
+    if (o) focusOv(o.id);
+  }
+  // A white box with no edge, to hide something on the page.
+  function addCover() {
+    var o = addOv({ t: "shape", k: "rect", w: 0.3, h: 0.06, color: "white", sw: 0, fill: true }, 0.5, 0.5);
+    if (o) focusOv(o.id);
+  }
+  function showShapes(on) {
+    $("ed-shapes").hidden = !on;
+    $("ed-shape").setAttribute("aria-expanded", on ? "true" : "false");
+  }
+  // A picture (a logo, a stamp, a photo) on the page: upright, at most
+  // 1600 pixels on its long side, PNG when it has see-through parts,
+  // else JPEG, made smaller until it fits.
+  function addPic() {
+    endDraw();
+    pickImage(function (file) {
+      picFromFile(file).then(function (pic) {
+        if (!ed) return;
+        var g = ed.g, d = C.dispSize(g.W, g.H, g.R), S = Math.min(g.W, g.H);
+        var w = 0.4, h = w * pic.h / pic.w;
+        if (h > 0.5) { w *= 0.5 / h; h = 0.5; }
+        if (w * S > d[0] * 0.9) { var f = d[0] * 0.9 / (w * S); w *= f; h *= f; }
+        var o = addOv({ t: "img", pic: true, src: pic.src, w: Math.max(0.01, w), h: Math.max(0.005, h) }, 0.5, 0.5);
+        if (o) focusOv(o.id);
+      }, function () { showToast(t("err.pic")); });
+    });
+  }
+  function picFromFile(file) {
+    return createImageBitmap(file).then(function (bmp) {
+      var s0 = Math.min(1, 1600 / Math.max(bmp.width, bmp.height));
+      var cv = document.createElement("canvas");
+      cv.width = Math.max(1, Math.round(bmp.width * s0)); cv.height = Math.max(1, Math.round(bmp.height * s0));
+      var ctx = cv.getContext("2d");
+      ctx.drawImage(bmp, 0, 0, cv.width, cv.height);
+      try { bmp.close(); } catch (e) {}
+      var alpha = hasAlpha(ctx, cv.width, cv.height);
+      for (var s = 1; s > 0.05; s *= 0.75) {
+        var c2 = cv;
+        if (s < 1) {
+          c2 = document.createElement("canvas");
+          c2.width = Math.max(1, Math.round(cv.width * s)); c2.height = Math.max(1, Math.round(cv.height * s));
+          c2.getContext("2d").drawImage(cv, 0, 0, c2.width, c2.height);
+        }
+        var url = alpha ? c2.toDataURL("image/png") : c2.toDataURL("image/jpeg", 0.88);
+        if (C.cleanOv({ t: "img", pic: true, src: url, w: 0.1, h: 0.1 })) return { src: url, w: c2.width, h: c2.height };
+      }
+      throw codeErr("img");
+    });
+  }
+
+  // Pen and highlighter: strokes drawn on the page become one drawing
+  // until the button is pressed again or the page changes. Strokes are
+  // kept as fractions of the page as it shows, so a drawing is built
+  // upright on the page as it shows now (A = its turn).
+  function startDraw(kind) {
+    if (ed.draw && ed.draw.kind === kind) { endDraw(); return; }
+    endDraw();
+    showShapes(false);
+    var mk = kind === "marker";
+    ed.draw = { kind: kind, op: mk ? 0.4 : 1, color: mk ? "yellow" : "blue",
+                sw: mk ? WIDTHS.marker[1] : WIDTHS.pen[1], id: null, strokes: [], live: null };
+    selectOv(null);
+    $("ed-pen").setAttribute("aria-pressed", kind === "pen" ? "true" : "false");
+    $("ed-marker").setAttribute("aria-pressed", mk ? "true" : "false");
+    $("editor").classList.add("drawing");
+    syncProps();
+  }
+  function endDraw() {
+    if (!ed || !ed.draw) return;
+    var id = ed.draw.id;
+    ed.draw = null;
+    $("ed-pen").setAttribute("aria-pressed", "false");
+    $("ed-marker").setAttribute("aria-pressed", "false");
+    $("editor").classList.remove("drawing");
+    var lv = $("ed-layer").querySelector(".ov-live");
+    if (lv) lv.remove();
+    if (id && ovById(id)) selectOv(id); else syncProps();
+  }
+  // The drawing from the strokes so far: its box and its points.
+  function inkFrom(dr) {
+    var g = ed.g, d = C.dispSize(g.W, g.H, g.R), S = Math.min(g.W, g.H);
+    var x0 = 1, y0 = 1, x1 = 0, y1 = 0;
+    dr.strokes.forEach(function (st) {
+      for (var i = 0; i < st.length; i += 2) {
+        x0 = Math.min(x0, st[i]); x1 = Math.max(x1, st[i]);
+        y0 = Math.min(y0, st[i + 1]); y1 = Math.max(y1, st[i + 1]);
+      }
+    });
+    var w = Math.max(0.002, (x1 - x0) * d[0] / S), h = Math.max(0.002, (y1 - y0) * d[1] / S);
+    var bw = x1 - x0 || 1, bh = y1 - y0 || 1;
+    var pts = dr.strokes.map(function (st) {
+      var out = [];
+      for (var i = 0; i < st.length; i += 2) out.push(x1 > x0 ? (st[i] - x0) / bw : 0.5, y1 > y0 ? (st[i + 1] - y0) / bh : 0.5);
+      return out;
+    });
+    var at = C.ovAt((x0 + x1) / 2, (y0 + y1) / 2, g.W, g.H, g.R);
+    return { t: "ink", w: w, h: h, pts: pts, color: dr.color, sw: dr.sw, op: dr.op, cx: at.cx, cy: at.cy, A: g.R };
+  }
+  // Put the drawing (made again from all its strokes) on the page.
+  function placeInk() {
+    var dr = ed.draw, list = edList();
+    var old = dr.id ? ovById(dr.id) : null;
+    if (!dr.strokes.length) {
+      if (old) { list.splice(list.indexOf(old), 1); var n0 = ovNode(old.id); if (n0) n0.remove(); touched(); }
+      dr.id = null;
+      syncProps();
+      return;
+    }
+    var c = C.cleanOv(inkFrom(dr));
+    if (!c) return;
+    if (old) {
+      Object.assign(old, c, { id: old.id });
+    } else {
+      if (list.length >= C.MAX_OV) { dr.strokes = []; return; }
+      c.id = ovId();
+      list.push(c);
+      dr.id = c.id;
+      old = c;
+    }
+    touched();
+    var n = ovNode(old.id), fresh = ovEl(old);
+    if (n) n.replaceWith(fresh); else $("ed-layer").appendChild(fresh);
+    syncProps();
+  }
+  function drawCount(dr) { return dr.strokes.reduce(function (a, st) { return a + st.length / 2; }, 0); }
+  var drawing = null;     // { pid, r, pts } while a stroke is drawn
+  function onDrawDown(e) {
+    if (e.button !== 0 && e.pointerType === "mouse") return;
+    e.preventDefault();
+    var r = $("ed-page").getBoundingClientRect();
+    drawing = { pid: e.pointerId, r: r, pts: [], lx: -99, ly: -99 };
+    var lv = document.createElementNS(SVGNS, "svg");
+    lv.setAttribute("class", "ov-live");
+    lv.setAttribute("aria-hidden", "true");
+    var pa = document.createElementNS(SVGNS, "path");
+    pa.setAttribute("fill", "none");
+    pa.setAttribute("stroke", CSS_COLOR[ed.draw.color]);
+    pa.setAttribute("stroke-linecap", "round");
+    pa.setAttribute("stroke-linejoin", "round");
+    var g = ed.g, S = Math.min(g.W, g.H), k = ed.w / C.dispSize(g.W, g.H, g.R)[0];
+    pa.setAttribute("stroke-width", String(ed.draw.sw * S * k));
+    if (ed.draw.op < 1) pa.setAttribute("opacity", String(ed.draw.op));
+    lv.appendChild(pa);
+    $("ed-layer").appendChild(lv);
+    drawing.path = pa;
+    try { $("ed-layer").setPointerCapture(e.pointerId); } catch (x) {}
+    drawPoint(e);
+  }
+  function drawPoint(e) {
+    var dw = drawing, x = e.clientX - dw.r.left, y = e.clientY - dw.r.top;
+    if (Math.hypot(x - dw.lx, y - dw.ly) < 2) return;
+    dw.lx = x; dw.ly = y;
+    dw.pts.push(Math.min(1, Math.max(0, x / dw.r.width)), Math.min(1, Math.max(0, y / dw.r.height)));
+    var d = "";
+    for (var i = 0; i < dw.pts.length; i += 2) d += (i ? " L " : "M ") + (dw.pts[i] * dw.r.width).toFixed(1) + " " + (dw.pts[i + 1] * dw.r.height).toFixed(1);
+    if (dw.pts.length === 2) d += " l 0.01 0";
+    dw.path.setAttribute("d", d);
+  }
+  function onDrawUp(e) {
+    var dw = drawing;
+    drawing = null;
+    if (dw.path.parentNode) dw.path.parentNode.remove();
+    if (!ed || !ed.draw || !dw.pts.length) return;
+    var dr = ed.draw;
+    // a full drawing starts a new one
+    if (dr.strokes.length >= C.MAX_STROKES || drawCount(dr) + dw.pts.length / 2 > C.MAX_INK) { dr.id = null; dr.strokes = []; }
+    dr.strokes.push(dw.pts.slice(0, C.MAX_INK * 2));
+    placeInk();
+  }
+  function unstroke() {
+    if (!ed || !ed.draw || !ed.draw.strokes.length) return;
+    ed.draw.strokes.pop();
+    placeInk();
+  }
+
   function today() {
     try { return new Date().toLocaleDateString(LOC); }
     catch (e) { return new Date().toISOString().slice(0, 10); }
@@ -1711,6 +2001,7 @@
   // Drag to move, drag the corner to resize (both sides kept in step).
   var ovDrag = null;
   function onOvDown(e) {
+    if (ed && ed.draw) { onDrawDown(e); return; }
     var n = e.target.closest && e.target.closest(".ov");
     if (!n) { if (e.target === $("ed-layer")) selectOv(null); return; }
     if (e.button !== 0 && e.pointerType === "mouse") return;
@@ -1721,21 +2012,26 @@
     n.focus({ preventScroll: true });
     var r = $("ed-page").getBoundingClientRect(), g = ed.g, v = C.ovDisp(o, g.W, g.H, g.R);
     var cx = r.left + v.fx * r.width, cy = r.top + v.fy * r.height;
+    var hd = e.target.closest(".ov-h");
     ovDrag = { id: id, pid: e.pointerId, x: e.clientX, y: e.clientY, fx: v.fx, fy: v.fy, r: r,
-               resize: !!e.target.closest(".ov-h"), cx: cx, cy: cy,
+               resize: !!hd, cx: cx, cy: cy, turn: v.turn * Math.PI / 180,
+               u: Math.min(g.W, g.H) * r.width / C.dispSize(g.W, g.H, g.R)[0],
+               end: hd ? hd.getAttribute("data-end") : null,
                d0: Math.max(4, Math.hypot(e.clientX - cx, e.clientY - cy)), w: o.w, h: o.h, fs: o.fs };
     try { n.setPointerCapture(e.pointerId); } catch (x) {}
   }
   function onOvMove(e) {
+    if (drawing && e.pointerId === drawing.pid) { e.preventDefault(); drawPoint(e); return; }
     if (!ovDrag || e.pointerId !== ovDrag.pid || !ed) return;
     e.preventDefault();
     var o = ovById(ovDrag.id), n = ovNode(ovDrag.id), g = ed.g;
     if (!o || !n) return;
-    if (ovDrag.resize) {
+    if (ovDrag.resize && o.t === "shape") {
+      reshape(o, ovDrag, e.clientX, e.clientY);
+    } else if (ovDrag.resize) {
       var f = Math.max(0.1, Math.min(10, Math.hypot(e.clientX - ovDrag.cx, e.clientY - ovDrag.cy) / ovDrag.d0));
-      if (o.t === "img") {
-        var c = C.cleanOv({ t: "img", src: o.src, w: ovDrag.w * f, h: ovDrag.h * f });
-        if (c && Math.abs(c.w / c.h - ovDrag.w / ovDrag.h) < 0.01) { o.w = c.w; o.h = c.h; }
+      if (o.t === "img" || o.t === "ink") {
+        scaleBox(o, ovDrag.w * f, ovDrag.h * f);
       } else {
         o.fs = C.cleanOv({ t: "text", text: "x", fs: ovDrag.fs * f }).fs;
       }
@@ -1748,7 +2044,40 @@
     placeOv(n, o);
   }
   function onOvUp(e) {
+    if (drawing && e.pointerId === drawing.pid) { onDrawUp(e); return; }
     if (ovDrag && e.pointerId === ovDrag.pid) ovDrag = null;
+  }
+  // A new size for a picture or a drawing, its shape kept (nothing
+  // changes when one side would leave the allowed range).
+  function scaleBox(o, w, h) {
+    var c = C.cleanOv(o.t === "ink" ? { t: "ink", w: w, h: h, pts: [[0, 0]] } : { t: "img", pic: o.pic, src: o.src, w: w, h: h });
+    if (c && Math.abs(c.w / c.h - w / h) < 0.01 * (w / h)) { o.w = c.w; o.h = c.h; }
+  }
+  // Dragging a shape's corner keeps the opposite corner where it is;
+  // dragging one end of a line or arrow keeps the other end. Points
+  // on screen ↔ the shape's own (unturned) axes: turned by dr.turn.
+  function reshape(o, dr, px, py) {
+    var cs = Math.cos(dr.turn), sn = Math.sin(dr.turn), u = dr.u;
+    function toScreen(x, y) { return [x * cs - y * sn, x * sn + y * cs]; }
+    function toOwn(x, y) { return [x * cs + y * sn, -x * sn + y * cs]; }
+    var a, v, line = isLine(o);
+    if (line && dr.end === "0") {
+      a = toScreen(dr.w * u / 2, dr.h * u / 2);                 // the end stays
+      a = [dr.cx + a[0], dr.cy + a[1]];
+      v = toOwn(a[0] - px, a[1] - py);
+    } else {
+      a = toScreen(-dr.w * u / 2, -dr.h * u / 2);               // the start / top-left corner stays
+      a = [dr.cx + a[0], dr.cy + a[1]];
+      v = toOwn(px - a[0], py - a[1]);
+    }
+    var w = v[0] / u, h = v[1] / u;
+    if (!line) { w = Math.max(0.01, w); h = Math.max(0.01, h); }
+    var c = C.cleanOv({ t: "shape", k: o.k, w: w || 0.01, h: h, fill: o.fill, sw: o.sw, color: o.color });
+    o.w = c.w; o.h = c.h;
+    var m = toScreen(o.w * u / 2, o.h * u / 2), sx, sy;
+    if (line && dr.end === "0") { sx = a[0] - m[0]; sy = a[1] - m[1]; } else { sx = a[0] + m[0]; sy = a[1] + m[1]; }
+    var g = ed.g, at = C.ovAt((sx - dr.r.left) / dr.r.width, (sy - dr.r.top) / dr.r.height, g.W, g.H, g.R);
+    o.cx = at.cx; o.cy = at.cy;
   }
   // Arrows move the chosen addition (Shift: further); + and - resize.
   function edKey(e) {
@@ -1756,6 +2085,8 @@
     var typing = /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName);
     if (e.key === "Escape") {
       e.preventDefault();
+      if (ed.draw) { endDraw(); return true; }
+      if (!$("ed-shapes").hidden) { showShapes(false); $("ed-shape").focus(); return true; }
       if (ed.sel && !typing) { var id = ed.sel; selectOv(null); focusOv(id); } else cancelEditor();
       return true;
     }
@@ -1773,9 +2104,10 @@
     if (!dx && !dy && !grow) return true;
     e.preventDefault();
     if (grow) {
-      if (o.t === "img") {
-        var c = C.cleanOv({ t: "img", src: o.src, w: o.w * grow, h: o.h * grow });
-        if (c && Math.abs(c.w / c.h - o.w / o.h) < 0.01) { o.w = c.w; o.h = c.h; }
+      if (o.t === "img" || o.t === "ink") scaleBox(o, o.w * grow, o.h * grow);
+      else if (o.t === "shape") {
+        var c = C.cleanOv({ t: "shape", k: o.k, w: o.w * grow, h: o.h * grow, fill: o.fill, sw: o.sw });
+        o.w = c.w; o.h = c.h;
       } else o.fs = C.cleanOv({ t: "text", text: "x", fs: o.fs * grow }).fs;
     } else {
       var v = C.ovDisp(o, g.W, g.H, g.R), at = C.ovAt(v.fx + dx, v.fy + dy, g.W, g.H, g.R);
@@ -3031,6 +3363,9 @@
       setLabel($(id), t(btns[id][1]));
     });
     [["ed-sig", "sig", "ed.sig"], ["ed-text", "text", "ed.text"], ["ed-date", "date", "ed.date"],
+     ["ed-shape", "shape", "ed.shape"], ["ed-pen", "pen", "ed.pen"], ["ed-marker", "marker", "ed.marker"],
+     ["ed-cover", "cover", "ed.cover"], ["ed-pic", "image", "ed.pic"], ["ed-fill", "fill", "ed.fill"],
+     ["ed-unstroke", "undo", "ed.unstroke"],
      ["ed-all", "copy", "ed.all"], ["ed-del", "del", "ed.del"]].forEach(function (b) {
       $(b[0]).innerHTML = ICON[b[1]];
       $(b[0]).appendChild(el("span", "", t(b[2])));
@@ -3042,6 +3377,17 @@
     [].forEach.call(document.querySelectorAll(".sc-h"), function (b) { setLabel(b, t("sc.corner." + b.getAttribute("data-i"))); });
     $("ed-colors").setAttribute("aria-label", t("ed.color"));
     [].forEach.call($("ed-colors").children, function (b) { setLabel(b, t("color." + b.getAttribute("data-color"))); });
+    $("ed-shapes").setAttribute("aria-label", t("ed.shapes"));
+    [].forEach.call($("ed-shapes").children, function (b) {
+      var k = b.getAttribute("data-k");
+      b.innerHTML = ICON[k === "check" ? "tick" : k];
+      b.appendChild(el("span", "", t("shape." + k)));
+      setLabel(b, t("shape." + k));
+    });
+    $("ed-widths").setAttribute("aria-label", t("ed.width"));
+    [].forEach.call($("ed-widths").children, function (b) {
+      setLabel(b, t("width." + ["thin", "mid", "thick"][Number(b.getAttribute("data-w"))]));
+    });
   }
 
   var dragDepth = 0;
@@ -3084,9 +3430,43 @@
     $("ed-done").addEventListener("click", function () { closeEditor(true); });
     $("ed-prev").addEventListener("click", function () { edGo(-1); });
     $("ed-next").addEventListener("click", function () { edGo(1); });
-    $("ed-sig").addEventListener("click", addSig);
-    $("ed-text").addEventListener("click", function () { addText(t("ed.newText"), 0.03, 0.5, 0.5, true); });
-    $("ed-date").addEventListener("click", function () { addText(today(), 0.025, 0.3, 0.84, false); });
+    $("ed-sig").addEventListener("click", function () { endDraw(); showShapes(false); addSig(); });
+    $("ed-text").addEventListener("click", function () { endDraw(); showShapes(false); addText(t("ed.newText"), 0.03, 0.5, 0.5, true); });
+    $("ed-date").addEventListener("click", function () { endDraw(); showShapes(false); addText(today(), 0.025, 0.3, 0.84, false); });
+    $("ed-shape").addEventListener("click", function () { endDraw(); showShapes($("ed-shapes").hidden); });
+    [].forEach.call($("ed-shapes").children, function (b) {
+      b.addEventListener("click", function () { if (ed) addShape(b.getAttribute("data-k")); });
+    });
+    $("ed-pen").addEventListener("click", function () { if (ed) startDraw("pen"); });
+    $("ed-marker").addEventListener("click", function () { if (ed) startDraw("marker"); });
+    $("ed-cover").addEventListener("click", function () { endDraw(); showShapes(false); addCover(); });
+    $("ed-pic").addEventListener("click", function () { showShapes(false); addPic(); });
+    $("ed-unstroke").addEventListener("click", unstroke);
+    $("ed-fill").addEventListener("click", function () {
+      var o = ed && ed.sel ? ovById(ed.sel) : null;
+      if (!o || o.t !== "shape") return;
+      o.fill = !o.fill;
+      if (!o.fill && !o.sw) o.sw = WIDTHS.shape[1];
+      touched();
+      var n = ovNode(o.id);
+      placeOv(n, o);
+      n.setAttribute("aria-label", ovLabel(o));
+      syncProps();
+    });
+    [].forEach.call($("ed-widths").children, function (b) {
+      b.addEventListener("click", function () {
+        if (!ed) return;
+        var i = Number(b.getAttribute("data-w"));
+        if (ed.draw) ed.draw.sw = (ed.draw.op < 1 ? WIDTHS.marker : WIDTHS.pen)[i];
+        var o = ed.draw ? (ed.draw.id ? ovById(ed.draw.id) : null) : ed.sel ? ovById(ed.sel) : null;
+        if (o && (o.t === "shape" || o.t === "ink")) {
+          o.sw = widthSet(o)[i];
+          touched();
+          placeOv(ovNode(o.id), o);
+        }
+        syncProps();
+      });
+    });
     $("ed-del").addEventListener("click", function () { if (ed && ed.sel) removeOv(ed.sel); });
     $("ed-all").addEventListener("click", function () { if (ed && ed.sel) ovToAll(ed.sel); });
     $("ed-input").addEventListener("input", function () {
@@ -3104,11 +3484,15 @@
     });
     [].forEach.call($("ed-colors").children, function (b) {
       b.addEventListener("click", function () {
-        var o = ed && ed.sel ? ovById(ed.sel) : null;
-        if (!o || o.t !== "text") return;
-        o.color = b.getAttribute("data-color");
-        touched();
-        placeOv(ovNode(o.id), o);
+        if (!ed) return;
+        var col = b.getAttribute("data-color");
+        if (ed.draw) ed.draw.color = col;
+        var o = ed.draw ? (ed.draw.id ? ovById(ed.draw.id) : null) : ed.sel ? ovById(ed.sel) : null;
+        if (o && o.t !== "img") {
+          o.color = col;
+          touched();
+          placeOv(ovNode(o.id), o);
+        }
         syncProps();
       });
     });

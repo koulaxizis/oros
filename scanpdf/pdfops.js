@@ -9,7 +9,8 @@
 //             img: { bytes, type "jpg"|"png", w, h }, scan (a
 //             scanned page: its own shape, no margin) } }
 //     pages: the page list (core.js), in output order, with the
-//            additions of each page (p.ov: signatures, text).
+//            additions of each page (p.ov: signatures, text,
+//            pictures, shapes, drawings).
 //     meta: { title, opts (core.readDocOpts: page numbers,
 //            watermark, title, author), font: { fontkit, bytes },
 //            ocr: { "<src>:<idx>": ocr.record } (wave 4: text read
@@ -131,6 +132,7 @@
             page.drawImage(emb, { x: a.x, y: a.y, width: ow, height: oh, rotate: lib.degrees(o.A) });
           });
         }
+        if (o.t === "shape" || o.t === "ink") { drawParts(lib, page, c, o, S); return; }
         var size = o.fs * S, tw = font.widthOfTextAtSize(o.text, size), col = C.COLORS[o.color];
         var a = C.anchor(c[0], c[1], -tw / 2, -C.BASELINE * size, o.A);
         page.drawText(o.text, { x: a.x, y: a.y, size: size, font: font, color: lib.rgb(col[0], col[1], col[2]), rotate: lib.degrees(o.A) });
@@ -151,11 +153,34 @@
         page.drawText(nt, { x: na.x, y: na.y, size: ns, font: font, color: lib.rgb(0.2, 0.2, 0.2), rotate: lib.degrees(g.R) });
       }
     });
-    // One embedded picture per signature, however many pages carry it.
+    // One embedded picture per signature or picture, however many
+    // pages carry it.
     function image(src) {
-      if (!images[src]) images[src] = out.embedPng(C.dataUrlBytes(src));
+      if (!images[src]) {
+        var bytes = C.dataUrlBytes(src);
+        images[src] = src.indexOf("data:image/jpeg") === 0 ? out.embedJpg(bytes) : out.embedPng(bytes);
+      }
       return images[src];
     }
+  }
+
+  // A shape or a drawing (core.ovParts) as vector paths around its
+  // centre c, turned with it; round ends and corners, as on screen.
+  function drawParts(lib, page, c, o, S) {
+    page.pushOperators(lib.pushGraphicsState(), lib.setLineJoin(lib.LineJoinStyle.Round));
+    C.ovParts(o, S).forEach(function (part) {
+      var opt = { x: c[0], y: c[1], rotate: lib.degrees(o.A) };
+      if (part.fill) { var f = C.COLORS[part.fill]; opt.color = lib.rgb(f[0], f[1], f[2]); opt.opacity = part.op; }
+      if (part.stroke) {
+        var k = C.COLORS[part.stroke];
+        opt.borderColor = lib.rgb(k[0], k[1], k[2]);
+        opt.borderWidth = part.sw;
+        opt.borderOpacity = part.op;
+        opt.borderLineCap = lib.LineCapStyle.Round;
+      }
+      page.drawSvgPath(part.d, opt);
+    });
+    page.pushOperators(lib.popGraphicsState());
   }
 
   function build(lib, srcs, pages, prefs, meta) {

@@ -359,6 +359,101 @@ test("overlays: clean, kept on the list, copied by duplicate and undo", () => {
   assert.equal(C.setOverlays(p, { k0: [] })[0].ov, undefined);
 });
 
+test("wave 5: shapes, drawings and pictures are cleaned", () => {
+  // shapes: known kinds and colours only, sizes in range, lines may point any way
+  const r = C.cleanOv({ id: "s", t: "shape", k: "star", w: 9, h: -1, color: "pink", sw: 5, fill: "yes", cx: 0.5, cy: 0.5 });
+  assert.deepEqual(r, { id: "s", t: "shape", cx: 0.5, cy: 0.5, A: 0, k: "rect", w: 2, h: 1, color: "red", fill: false, sw: 0.05 });
+  const ln = C.cleanOv({ t: "shape", k: "arrow", w: -0.3, h: 0.2, color: "blue" });
+  assert.equal(ln.w, -0.3); assert.equal(ln.h, 0.2); assert.equal(ln.fill, false);
+  assert.equal(C.cleanOv({ t: "shape", k: "line", w: 0, h: 0 }).w, 0.01, "a line never has no length");
+  assert.equal(C.cleanOv({ t: "shape", k: "line", w: 0.3, h: 0 }).h, 0, "a level line stays level");
+  // a cover: filled, no edge; a line can't be filled
+  const cv = C.cleanOv({ t: "shape", k: "rect", w: 0.3, h: 0.06, color: "white", fill: true, sw: 0 });
+  assert.equal(cv.sw, 0); assert.equal(cv.fill, true);
+  assert.equal(C.cleanOv({ t: "shape", k: "line", w: 0.3, h: 0, fill: true, sw: 0 }).fill, false);
+  assert.ok(C.cleanOv({ t: "shape", k: "line", w: 0.3, h: 0, sw: 0 }).sw > 0, "an outline shape always has a line");
+  // drawings: points inside the box, no bad numbers, limits kept
+  assert.equal(C.cleanOv({ t: "ink", w: 0.1, h: 0.1, pts: [] }), null);
+  assert.equal(C.cleanOv({ t: "ink", w: 0.1, h: 0.1, pts: "M 0 0" }), null);
+  const ink = C.cleanOv({ t: "ink", w: 0.1, h: 0.1, pts: [[0.5, 2, -1, 0.25], [1], [NaN, 0], [0.1, 0.2]], op: 0.4, color: "yellow", sw: 9 });
+  assert.deepEqual(ink.pts, [[0.5, 1, 0, 0.25], [0.1, 0.2]]);
+  assert.equal(ink.op, 0.4); assert.equal(ink.sw, 0.08);
+  const many = C.cleanOv({ t: "ink", w: 0.1, h: 0.1, pts: Array.from({ length: 100 }, () => new Array(200).fill(0.5)) });
+  assert.ok(many.pts.length <= C.MAX_STROKES);
+  assert.ok(many.pts.reduce((a, st) => a + st.length / 2, 0) <= C.MAX_INK);
+  // pictures: PNG or JPEG data: URLs (a signature: PNG only), within the size
+  const jpg = "data:image/jpeg;base64,/9j/AA==";
+  assert.equal(C.cleanOv({ t: "img", src: jpg, w: 0.2, h: 0.1 }), null);
+  assert.equal(C.cleanOv({ t: "img", pic: true, src: jpg, w: 0.2, h: 0.1 }).pic, true);
+  assert.equal(C.cleanOv({ t: "img", pic: true, src: "data:image/svg+xml;base64,AA==" }), null);
+  assert.equal(C.cleanOv({ t: "img", pic: true, src: "data:image/png;base64," + "A".repeat(C.MAX_PIC_URL) }), null);
+  // a copy on the list keeps the drawing
+  const p = C.setOverlays(C.pagesOf("s", 1, keys()), { k0: [Object.assign({ id: "i" }, ink)] });
+  assert.deepEqual(p[0].ov[0].pts, ink.pts);
+});
+
+test("wave 5: outlines of shapes and drawings (M, L, C, Z only, centred, in units)", () => {
+  const ok = /^[MLCZ0-9 .\-]+$/;
+  C.SHAPES.forEach((k) => {
+    const o = C.cleanOv({ t: "shape", k, w: 0.2, h: 0.1, sw: 0.01, color: "green" });
+    const parts = C.ovParts(o, 100);
+    assert.ok(parts.length >= 1, k);
+    parts.forEach((pt) => {
+      assert.match(pt.d, ok, k);
+      pt.d.split(/[A-Z ]+/).filter(Boolean).map(Number).forEach((n) => assert.ok(Math.abs(n) <= 10.01 + 1e-9, k + " inside its box: " + n));
+    });
+  });
+  const rect = C.ovParts(C.cleanOv({ t: "shape", k: "rect", w: 0.2, h: 0.1, fill: true, sw: 0, color: "white" }), 100);
+  assert.deepEqual([rect[0].fill, rect[0].stroke], ["white", null]);
+  assert.equal(rect[0].d, "M -10 -5 L 10 -5 L 10 5 L -10 5 Z");
+  const arrow = C.ovParts(C.cleanOv({ t: "shape", k: "arrow", w: 0.2, h: 0, sw: 0.01, color: "blue" }), 100);
+  assert.equal(arrow.length, 2);
+  assert.equal(arrow[1].fill, "blue");
+  assert.ok(arrow[1].d.startsWith("M 10 0 "), "the head is at the end");
+  const ink = C.ovParts(C.cleanOv({ t: "ink", w: 0.2, h: 0.1, pts: [[0, 0, 1, 1], [0.5, 0.5]], color: "black", sw: 0.01, op: 0.4 }), 100);
+  assert.equal(ink[0].d, "M -10 -5 L 10 5 M 0 0 L 0.01 0");
+  assert.equal(ink[0].op, 0.4);
+});
+
+test("build: shapes and drawings are vector paths where the editor showed them; pictures as JPEG", async () => {
+  const src = await L.PDFDocument.create();
+  [0, 90].forEach((r) => src.addPage([300, 500]).setRotation(L.degrees(r)));
+  const s = await OPS.load(L, await src.save());
+  const srcs = { s: { kind: "pdf", doc: s.doc } };
+  const where = [[0.25, 0.2], [0.7, 0.8]];
+  const pages = C.pagesOf("s", 2, keys()).map((p, i) => {
+    const g = OPS.geom(L, srcs, p, {});
+    const at = (o) => Object.assign(o, { A: g.R }, C.ovAt(where[i][0], where[i][1], g.W, g.H, g.R));
+    return Object.assign(p, { ov: [
+      at({ id: "r", t: "shape", k: "ellipse", w: 0.2, h: 0.1, color: "red", sw: 0.004, fill: true }),
+      at({ id: "k", t: "ink", w: 0.2, h: 0.1, pts: [[0, 0, 1, 1]], color: "yellow", sw: 0.03, op: 0.4 })
+    ] });
+  });
+  const jpeg = fs.readdirSync(path.join(ROOT, "tests/fixtures/scanpdf")).find((f) => /\.jpe?g$/i.test(f));
+  if (jpeg) pages[0].ov.push({ id: "j", t: "img", pic: true, src: "data:image/jpeg;base64," + Buffer.from(fixture(jpeg)).toString("base64"), w: 0.1, h: 0.1, cx: 0.5, cy: 0.5, A: 0 });
+  const out = await OPS.build(L, srcs, pages, {});
+  const d = await L.PDFDocument.load(out);
+  const texts = await textOf(out);
+  d.getPages().forEach((pg, i) => {
+    const R = pg.getRotation().angle, W = pg.getWidth(), H = pg.getHeight();
+    const re = /1 0 0 1 (-?[\d.]+) (-?[\d.]+) cm\s+(-?[\d.]+) (-?[\d.]+) (-?[\d.]+) (-?[\d.]+) 0 0 cm\s+1 0 0 -1 0 0 cm/g;
+    const found = [...texts[i].matchAll(re)];
+    assert.equal(found.length, 2, "page " + (i + 1) + ": the oval and the drawing");
+    found.forEach((m) => {
+      const disp = C.toDisp(Number(m[1]), H - Number(m[2]), W, H, R), size = C.dispSize(W, H, R);
+      assert.ok(Math.abs(disp[0] / size[0] - where[i][0]) < 0.005 && Math.abs(disp[1] / size[1] - where[i][1]) < 0.005, "page " + (i + 1));
+    });
+    assert.match(texts[i], / c\b/, "the oval is curves");
+    assert.match(texts[i], /1 J/, "round line ends");
+    assert.match(texts[i], /1 j/, "round corners");
+  });
+  if (jpeg) {
+    const imgs = d.context.enumerateIndirectObjects().map(([, o]) => o)
+      .filter((o) => o instanceof L.PDFRawStream && String(o.dict.get(L.PDFName.of("Filter"))) === "/DCTDecode");
+    assert.equal(imgs.length, 1, "the picture goes in as a JPEG");
+  }
+});
+
 test("doc options, page number text and place, watermark size, render scale", () => {
   const o = C.readDocOpts(null);
   assert.deepEqual(o.num, { on: false, pos: "bc", fmt: "n", start: 1 });
