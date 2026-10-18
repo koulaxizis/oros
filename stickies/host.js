@@ -889,8 +889,18 @@
       else if (e.key === "ArrowUp") { e.preventDefault(); items[(i - 1 + items.length) % items.length].focus(); }
     });
   }
+  // The shell's desktop menu (quickmenu.js) shows these items and owns
+  // the right-click; without it this module opens its own menu.
+  (root.__orosDeskItems = root.__orosDeskItems || []).push(function (x, y) {
+    if (!registered()) return [];
+    var out = [{ label: T("new"), run: function () { newNote({ x: x, y: y }); } }];
+    if (!narrow() && C.live(cur()).length > 1 && prefs().show) out.push({ label: T("tidy"), run: tidy });
+    out.push({ label: T("app"), run: function () { var e = env(); if (e) e.open("stickies"); } });
+    return out;
+  });
   function onContextMenu(e) {
     if (!registered()) return;
+    if (root.orosQuick && root.orosQuick.ownsDesktop()) return;
     var t = e.target;
     if (!t || !t.closest) return;
     if (t.closest(".ld-ic, .sn-note, .sn-card, .sn-addcard, #sn-add, #ld-dock, input, textarea, button, a")) return;

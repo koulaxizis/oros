@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.24.00
+- Desktop menu: right-click an empty spot of the desktop (or press and hold on a phone) for the Assistant, your own tasks for it (such as "What do I have today?"), your apps and the wallpaper. Edit the list from the same menu or in the Assistant's settings.
+
 ## Version 3.23.00
 - Screen Capture can now record video: your screen, a window or a tab, with its sound and your microphone, with pause and resume. The video is saved in Files › Videos and can open straight in Montage.
 

@@ -1,0 +1,713 @@
+// ============================================================
+// orOS — quickmenu.js (desktop menu: Assistant tasks + apps, v1.0.0)
+// ------------------------------------------------------------
+// A shell component, like launcher.js: it runs IN the shell document,
+// keeps its own storage and registers its own sync slice. shell.js
+// only calls attach() once at boot. A bundle without this file draws
+// exactly what it drew before.
+//
+//   • Right-click (or a long press, or the context-menu key) on an
+//     empty spot of the desktop opens a small menu: "Ask the
+//     Assistant…", the user's tasks, the user's apps, the items other
+//     desktop components add (Sticky Notes: window.__orosDeskItems),
+//     "Change wallpaper…" and "Edit this menu…".
+//   • A task is a text for the Assistant. Tapping it opens the
+//     Assistant with the text in the message box (deep link { ask });
+//     nothing is sent unless the task says "Send on tap" ({ ask,
+//     send: 1 }), and then the Assistant's own consent rules
+//     (Ask first / never per app) still apply. {date} becomes today's
+//     date, {clipboard} the copied text (read on the tap).
+//   • An app item opens that app. "Briefing" opens the Assistant's
+//     one-tap briefing ({ brief: 1 }), as Today's button does.
+//   • The editor (a dialog in the shell) adds, edits, orders and
+//     removes items; the Assistant's settings open it too
+//     (window.orosQuick.edit()).
+//
+// Data (synced, slice "quickmenu", key oros-quick-menu):
+//   { ver:1, items:[{ id, k, n, p, app, send, o, d, m }] }
+//   • k    = "ask" | "app" | "brief";
+//   • n    = name ("" on an example = its translated name);
+//   • p    = the text for the Assistant (k "ask");
+//   • app  = the app id (k "app");
+//   • send = 1: send on tap (k "ask");
+//   • o    = order key (fractional: moving rewrites one item);
+//   • d    = 1: removed (the item is its own tombstone);
+//   • m    = ms of the last change to THIS item.
+//   Three examples (d-brief, d-today, d-week) exist without being
+//   stored; a stored item with the same id replaces one. A fresh
+//   device stores nothing until the first real change.
+// Merge: union by id; per id the higher m wins, a tie goes to the
+//   greater canonical JSON. Items sorted by id, fixed field order.
+// Pure logic is unit-tested in node (tests/quickmenu.test.js).
+// ============================================================
+(function (root) {
+  "use strict";
+
+  var VER = "1.0.0";
+  var DATA_KEY = "oros-quick-menu";
+  var MAX_ITEMS = 200;          // stored, tombstones included
+  var MAX_SHOWN = 24;           // in the menu
+  var MAX_NAME = 60, MAX_TEXT = 2000;
+  var ID_RE = /^[a-z0-9][a-z0-9_-]{0,47}$/;
+  var KINDS = ["ask", "app", "brief"];
+  var EXAMPLES = [
+    { id: "d-brief", k: "brief", n: "", p: "", app: "", send: 0, o: 1, d: 0, m: 0 },
+    { id: "d-today", k: "ask", n: "", p: "", app: "", send: 0, o: 2, d: 0, m: 0 },
+    { id: "d-week", k: "ask", n: "", p: "", app: "", send: 0, o: 3, d: 0, m: 0 }
+  ];
+
+  // ---------- 1. Model (pure) ----------
+  function str(v, max) {
+    return typeof v === "string" ? v.replace(/[\u0000-\u0008\u000b-\u001f\u007f]/g, " ").slice(0, max) : "";
+  }
+  function isExample(id) {
+    for (var i = 0; i < EXAMPLES.length; i++) if (EXAMPLES[i].id === id) return EXAMPLES[i];
+    return null;
+  }
+
+  function cleanItem(it) {
+    if (!it || typeof it !== "object" || typeof it.id !== "string" || !ID_RE.test(it.id)) return null;
+    if (KINDS.indexOf(it.k) === -1) return null;
+    var m = (typeof it.m === "number" && isFinite(it.m) && it.m >= 0) ? Math.floor(it.m) : 0;
+    var o = (typeof it.o === "number" && isFinite(it.o)) ? it.o : 0;
+    if (it.d) return { id: it.id, k: it.k, n: "", p: "", app: "", send: 0, o: o, d: 1, m: m };
+    var app = it.k === "app" && typeof it.app === "string" && ID_RE.test(it.app) ? it.app : "";
+    if (it.k === "app" && !app) return null;
+    return {
+      id: it.id, k: it.k,
+      n: str(it.n, MAX_NAME).trim(),
+      p: it.k === "ask" ? str(it.p, MAX_TEXT).replace(/^\s+|\s+$/g, "") : "",
+      app: app,
+      send: it.k === "ask" && it.send ? 1 : 0,
+      o: o, d: 0, m: m
+    };
+  }
+
+  function newer(a, b) {
+    if (a.m !== b.m) return a.m > b.m ? a : b;
+    return JSON.stringify(a) >= JSON.stringify(b) ? a : b;
+  }
+
+  // The single funnel: load, save, merge output, slice get and set.
+  function normalize(data) {
+    var byId = {};
+    var list = (data && typeof data === "object" && Array.isArray(data.items)) ? data.items : [];
+    for (var i = 0; i < list.length; i++) {
+      var it = cleanItem(list[i]);
+      if (!it) continue;
+      byId[it.id] = byId[it.id] ? newer(byId[it.id], it) : it;
+    }
+    var ids = Object.keys(byId).sort();
+    if (ids.length > MAX_ITEMS) {
+      ids = ids.sort(function (a, b) { return byId[b].m - byId[a].m || (a < b ? -1 : 1); }).slice(0, MAX_ITEMS).sort();
+    }
+    return { ver: 1, items: ids.map(function (id) { return byId[id]; }) };
+  }
+
+  function merge(a, b) {
+    return normalize({ items: normalize(a).items.concat(normalize(b).items) });
+  }
+
+  function find(data, id) {
+    for (var i = 0; i < data.items.length; i++) if (data.items[i].id === id) return data.items[i];
+    return null;
+  }
+
+  // Every item in its shown order: stored ones plus the examples not
+  // stored, removed ones left out (order key, then id).
+  function list(data) {
+    var d = normalize(data);
+    var all = d.items.slice();
+    EXAMPLES.forEach(function (ex) { if (!find(d, ex.id)) all.push(ex); });
+    return all.filter(function (it) { return !it.d; })
+      .sort(function (a, b) { return (a.o - b.o) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0); })
+      .map(function (it) { return { id: it.id, k: it.k, n: it.n, p: it.p, app: it.app, send: it.send, o: it.o, d: 0, m: it.m }; });
+  }
+
+  // Add or change one item (a NEW normalized object is returned). A new
+  // item goes to the end. Returns the data unchanged when nothing changes.
+  function put(data, item, now) {
+    var d = normalize(data);
+    if (!item || typeof item.id !== "string") return d;
+    var shown = list(d), cur = null;
+    for (var i = 0; i < shown.length; i++) if (shown[i].id === item.id) cur = shown[i];
+    var o = cur ? cur.o : shown.reduce(function (mx, it) { return Math.max(mx, Math.floor(it.o)); }, 0) + 1;
+    var stored = find(d, item.id);
+    var next = cleanItem({ id: item.id, k: item.k, n: item.n, p: item.p, app: item.app, send: item.send, o: o, d: 0,
+                           m: Math.max(now, stored ? stored.m + 1 : 0) });
+    if (!next) return d;
+    if (cur && JSON.stringify(Object.assign({}, cur, { m: 0 })) === JSON.stringify(Object.assign({}, next, { m: 0 }))) return d;
+    return normalize({ items: d.items.filter(function (x) { return x.id !== item.id; }).concat([next]) });
+  }
+
+  function remove(data, id, now) {
+    var d = normalize(data);
+    var shown = list(d), cur = null;
+    for (var i = 0; i < shown.length; i++) if (shown[i].id === id) cur = shown[i];
+    if (!cur) return d;
+    var stored = find(d, id);
+    var tomb = { id: id, k: cur.k, n: "", p: "", app: "", send: 0, o: cur.o, d: 1, m: Math.max(now, stored ? stored.m + 1 : 0) };
+    return normalize({ items: d.items.filter(function (x) { return x.id !== id; }).concat([tomb]) });
+  }
+
+  function withOrder(d, it, o, now) {
+    var stored = find(d, it.id);
+    var next = { id: it.id, k: it.k, n: it.n, p: it.p, app: it.app, send: it.send, o: o, d: 0,
+                 m: Math.max(now, stored ? stored.m + 1 : 0) };
+    return normalize({ items: d.items.filter(function (x) { return x.id !== it.id; }).concat([next]) });
+  }
+
+  // dir -1 = earlier, +1 = later. Only the moved item changes, unless
+  // the keys have become too close to split: then every shown item is
+  // renumbered 1..n (rare).
+  function move(data, id, dir, now) {
+    var d = normalize(data);
+    var shown = list(d);
+    var i = -1;
+    for (var k = 0; k < shown.length; k++) if (shown[k].id === id) i = k;
+    var j = i + (dir < 0 ? -1 : 1);
+    if (i === -1 || j < 0 || j >= shown.length) return d;
+    var lo, hi;
+    if (dir < 0) { hi = shown[j].o; lo = j - 1 >= 0 ? shown[j - 1].o : hi - 2; }
+    else { lo = shown[j].o; hi = j + 1 < shown.length ? shown[j + 1].o : lo + 2; }
+    var mid = (lo + hi) / 2;
+    if (!(mid > lo && mid < hi) || hi - lo < 1e-6) {
+      var it = shown.splice(i, 1)[0];
+      shown.splice(j, 0, it);
+      shown.forEach(function (x, n) { d = withOrder(d, x, n + 1, now); });
+      return d;
+    }
+    return withOrder(d, shown[i], mid, now);
+  }
+
+  // The examples come back as they were; the user's own items stay.
+  function reset(data, now) {
+    var d = normalize(data);
+    var items = d.items.filter(function (x) { return !isExample(x.id); });
+    EXAMPLES.forEach(function (ex) {
+      var stored = find(d, ex.id);
+      if (!stored) return;                       // never stored: already the example
+      items.push(Object.assign({}, ex, { m: Math.max(now, stored.m + 1) }));
+    });
+    return normalize({ items: items });
+  }
+
+  // {date}, {clipboard} and {selection} in a task's text.
+  function expand(text, ctx) {
+    ctx = ctx || {};
+    return String(text || "").replace(/\{(date|clipboard|selection)\}/g, function (all, k) {
+      var v = k === "date" ? ctx.date : k === "clipboard" ? ctx.clip : ctx.sel;
+      return typeof v === "string" ? v : "";
+    }).slice(0, MAX_TEXT);
+  }
+  function needsClip(text) { return /\{clipboard\}/.test(String(text || "")); }
+
+  function newId(now, rnd) {
+    return "q" + Math.floor(now).toString(36) + Math.floor((rnd === undefined ? Math.random() : rnd) * 1e6).toString(36);
+  }
+
+  var model = { normalize: normalize, merge: merge, list: list, put: put, remove: remove, move: move, reset: reset,
+                expand: expand, needsClip: needsClip, newId: newId, EXAMPLES: EXAMPLES, VER: VER, DATA_KEY: DATA_KEY,
+                MAX_SHOWN: MAX_SHOWN, MAX_NAME: MAX_NAME, MAX_TEXT: MAX_TEXT };
+
+  if (typeof module !== "undefined" && module.exports) module.exports = model;
+  if (!root || !root.document) return;
+
+  // ---------- 2. Storage + sync ----------
+  var doc = root.document;
+  var host = null;
+  var cache = null;
+
+  function load() {
+    if (cache) return cache;
+    var raw = null;
+    try { raw = root.localStorage.getItem(DATA_KEY); } catch (e) {}
+    var parsed = null;
+    if (raw) {
+      try { parsed = JSON.parse(raw); }
+      catch (e) { try { root.localStorage.setItem(DATA_KEY + "-broken", raw); } catch (e2) {} }
+    }
+    cache = normalize(parsed);
+    return cache;
+  }
+  function store(d) {
+    cache = normalize(d);
+    try { root.localStorage.setItem(DATA_KEY, JSON.stringify(cache)); } catch (e) {}
+  }
+  function change(d) {
+    if (JSON.stringify(d) === JSON.stringify(load())) return;
+    store(d);
+    var api = root.orosSync;
+    if (api && typeof api.markDirty === "function") api.markDirty();
+    repaintEditor();
+  }
+  function sliceGet() {
+    var raw = null;
+    try { raw = root.localStorage.getItem(DATA_KEY); } catch (e) {}
+    if (!raw) return null;     // nothing yet: a fresh device sends nothing
+    return load();
+  }
+  function sliceSet(data) {
+    if (!data) return;
+    store(data);               // no markDirty: pulled data must not re-push
+    repaintEditor();
+  }
+  function registerSync() {
+    var api = root.orosSync;
+    if (!api || typeof api.registerSlice !== "function") return;
+    api.registerSlice("quickmenu", sliceGet, sliceSet, DATA_KEY, merge);
+  }
+
+  // ---------- 3. Helpers ----------
+  function tr(k, vars) {
+    var f = root.t, v = typeof f === "function" ? f("qm." + k) : "";
+    v = v && v !== "qm." + k ? v : k;
+    if (vars) Object.keys(vars).forEach(function (n) { v = v.split("{" + n + "}").join(vars[n]); });
+    return v;
+  }
+  function apps() { return (host && host.apps && host.apps()) || []; }
+  function appById(id) {
+    var a = apps();
+    for (var i = 0; i < a.length; i++) if (a[i].id === id && a[i].type !== "external") return a[i];
+    return null;
+  }
+  function labelOf(app) { return host && host.label ? host.label(app) : app.name; }
+  function hasAssistant() { return !!appById("assistant"); }
+  function nameOf(it) {
+    if (it.n) return it.n;
+    if (it.k === "app") { var a = appById(it.app); return a ? labelOf(a) : it.app; }
+    if (isExample(it.id)) return tr("ex." + it.id);
+    return it.k === "brief" ? tr("kBrief") : tr("untitled");
+  }
+  function textOf(it) {
+    if (it.p) return it.p;
+    return isExample(it.id) && it.k === "ask" ? tr("exp." + it.id) : "";
+  }
+  // Items that can run on this device (an app not installed, or the
+  // Assistant missing, hides them; nothing is removed).
+  function usable(it) {
+    if (it.k === "app") return !!appById(it.app);
+    return hasAssistant();
+  }
+  function el(tag, cls, text) {
+    var n = doc.createElement(tag);
+    if (cls) n.className = cls;
+    if (text !== undefined) n.textContent = text;
+    return n;
+  }
+  function today() {
+    var lang = (host && host.lang && host.lang()) || "en";
+    try { return new Date().toLocaleDateString(lang, { weekday: "long", year: "numeric", month: "long", day: "numeric" }); }
+    catch (e) { return new Date().toDateString(); }
+  }
+  function toast(msg) {
+    if (host && typeof host.toast === "function") host.toast(msg);
+  }
+
+  // ---------- 4. Running an item ----------
+  function openAt(appId, target) {
+    if (typeof root.__orosOpenAt === "function") root.__orosOpenAt(appId, target);
+  }
+  function runItem(it) {
+    if (it.k === "app") { var a = appById(it.app); if (a && host.open) host.open(a); return; }
+    if (!hasAssistant()) return;
+    if (it.k === "brief") { openAt("assistant", { brief: 1 }); return; }
+    var text = textOf(it);
+    var ctx = { date: today(), sel: "" };
+    function go(clipOk) {
+      var q = expand(text, ctx).trim();
+      if (!q) { openAt("assistant", null); return; }
+      var tg = { ask: q };
+      if (it.send && clipOk) tg.send = 1;     // an unread clipboard waits in the box
+      openAt("assistant", tg);
+    }
+    if (!needsClip(text)) { go(true); return; }
+    var cb = root.navigator && root.navigator.clipboard;
+    if (!cb || typeof cb.readText !== "function") { ctx.clip = ""; toast(tr("clipFail")); go(false); return; }
+    cb.readText().then(function (s) { ctx.clip = str(s, MAX_TEXT); go(!!ctx.clip); },
+                       function () { ctx.clip = ""; toast(tr("clipFail")); go(false); });
+  }
+
+  // ---------- 5. Styles (injected once; skin variables only) ----------
+  var CSS = [
+    ".qm-menu{position:fixed;z-index:1100;min-width:220px;max-width:min(320px,calc(100vw - 16px));max-height:calc(100vh - 16px);",
+    "overflow:auto;padding:4px;background:var(--panel-bg);border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 32px var(--shadow)}",
+    ".qm-menu button{display:flex;align-items:center;gap:10px;width:100%;min-height:44px;padding:8px 12px;text-align:left;background:transparent;",
+    "border:none;border-radius:7px;color:var(--text);font-size:14px;cursor:pointer}",
+    ".qm-menu button:hover,.qm-menu button:focus-visible{background:var(--accent-soft)}",
+    ".qm-menu .qm-lbl{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+    ".qm-menu .qm-ic{flex:0 0 18px;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;color:var(--accent)}",
+    ".qm-menu .qm-ic svg{width:18px;height:18px}",
+    ".qm-menu .qm-send{font-size:11px;color:var(--text-dim)}",
+    ".qm-menu .qm-sep{height:1px;margin:4px 8px;background:var(--border)}",
+    "#qm-dlg{width:min(520px,calc(100vw - 16px));max-height:calc(100vh - 32px);padding:0;border:1px solid var(--border);border-radius:12px;",
+    "background:var(--panel-bg);color:var(--text);box-shadow:0 12px 40px var(--shadow)}",
+    "#qm-dlg::backdrop{background:rgba(0,0,0,.45)}",
+    "#qm-dlg .qm-body{padding:16px;display:flex;flex-direction:column;gap:12px}",
+    "#qm-dlg h2{margin:0;font-size:17px}",
+    "#qm-dlg .qm-hint{margin:0;font-size:13px;color:var(--text-dim);line-height:1.45}",
+    "#qm-dlg .qm-list{display:flex;flex-direction:column;gap:4px;margin:0;padding:0;list-style:none}",
+    "#qm-dlg .qm-row{display:flex;align-items:center;gap:4px;padding:4px 4px 4px 10px;border:1px solid var(--border);border-radius:8px}",
+    "#qm-dlg .qm-row .qm-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px}",
+    "#qm-dlg .qm-row .qm-kind{flex:0 0 auto;font-size:11px;color:var(--text-dim);margin-right:4px}",
+    "#qm-dlg .qm-row.qm-off .qm-name{opacity:.55}",
+    "#qm-dlg .qm-iconbtn{flex:0 0 auto;width:36px;height:36px;display:inline-flex;align-items:center;justify-content:center;",
+    "border:none;border-radius:7px;background:transparent;color:var(--text);cursor:pointer;font-size:16px}",
+    "#qm-dlg .qm-iconbtn:hover,#qm-dlg .qm-iconbtn:focus-visible{background:var(--accent-soft)}",
+    "#qm-dlg .qm-iconbtn:disabled{opacity:.35;cursor:default;background:transparent}",
+    "#qm-dlg .qm-actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end}",
+    "#qm-dlg .qm-actions .qm-left{margin-right:auto}",
+    "#qm-dlg .qm-btn{min-height:40px;padding:8px 14px;border:1px solid var(--border);border-radius:8px;background:transparent;",
+    "color:var(--text);font-size:14px;cursor:pointer}",
+    "#qm-dlg .qm-btn.qm-primary{background:var(--accent);border-color:var(--accent);color:var(--accent-text,#fff)}",
+    "#qm-dlg label.qm-field{display:flex;flex-direction:column;gap:4px;font-size:13px}",
+    "#qm-dlg input[type=text],#qm-dlg textarea,#qm-dlg select{font:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--border);",
+    "border-radius:8px;background:var(--input-bg,var(--panel-bg));color:var(--text);width:100%;box-sizing:border-box}",
+    "#qm-dlg textarea{min-height:110px;resize:vertical}",
+    "#qm-dlg .qm-check{display:flex;align-items:center;gap:10px;min-height:40px;font-size:14px;cursor:pointer}",
+    "#qm-dlg .qm-check input{width:18px;height:18px;accent-color:var(--accent);margin:0}"
+  ].join("");
+  function injectCss() {
+    if (doc.getElementById("qm-css")) return;
+    var s = doc.createElement("style");
+    s.id = "qm-css";
+    s.textContent = CSS;
+    doc.head.appendChild(s);
+  }
+
+  // Static shell icons (never data).
+  var IC_ASK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3l1.6 4.4L16 9l-4.4 1.6L10 15l-1.6-4.4L4 9l4.4-1.6z"/><path d="M18 13l.8 2.2L21 16l-2.2.8L18 19l-.8-2.2L15 16l2.2-.8z"/></svg>';
+  var IC_TASK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
+  var IC_WALL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></svg>';
+  var IC_EDIT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>';
+
+  function appIcon(app) {
+    var icons = (host && host.icons) || {};
+    return Object.prototype.hasOwnProperty.call(icons, app.icon) ? icons[app.icon] : "";
+  }
+
+  // ---------- 6. The desktop menu ----------
+  var menu = null;
+  function closeMenu(refocus) {
+    if (!menu) return;
+    var back = menu.back;
+    menu.el.remove();
+    menu = null;
+    doc.removeEventListener("pointerdown", outside, true);
+    if (refocus && back && back.isConnected && back.focus) back.focus();
+  }
+  function outside(e) { if (menu && !menu.el.contains(e.target)) closeMenu(false); }
+
+  function openMenu(x, y, kb) {
+    closeMenu(false);
+    var m = el("div", "qm-menu");
+    m.setAttribute("role", "menu");
+    m.setAttribute("aria-label", tr("title"));
+    var groups = 0, inGroup = 0;
+    function sep() { if (inGroup) { var s = el("div", "qm-sep"); s.setAttribute("role", "separator"); m.appendChild(s); } inGroup = 0; groups++; }
+    function item(label, icon, fn, extra) {
+      var b = el("button");
+      b.type = "button";
+      b.setAttribute("role", "menuitem");
+      var ic = el("span", "qm-ic");
+      ic.innerHTML = icon || "";               // static shell icon, not data
+      b.appendChild(ic);
+      b.appendChild(el("span", "qm-lbl", label));
+      if (extra) b.appendChild(el("span", "qm-send", extra));
+      b.title = label;
+      b.addEventListener("click", function () { closeMenu(false); fn(); });
+      m.appendChild(b);
+      inGroup++;
+    }
+    var items = list(load()).filter(usable).slice(0, MAX_SHOWN);
+    if (hasAssistant()) item(tr("ask"), IC_ASK, function () { openAt("assistant", null); });
+    items.filter(function (it) { return it.k !== "app"; }).forEach(function (it) {
+      item(nameOf(it), it.k === "brief" ? IC_ASK : IC_TASK, function () { runItem(it); }, it.send ? tr("sendMark") : "");
+    });
+    sep();
+    items.filter(function (it) { return it.k === "app"; }).forEach(function (it) {
+      var a = appById(it.app);
+      item(nameOf(it), a ? appIcon(a) : "", function () { runItem(it); });
+    });
+    // Items other desktop components add (Sticky Notes).
+    sep();
+    (root.__orosDeskItems || []).forEach(function (fn) {
+      var add = [];
+      try { add = fn(x, y) || []; } catch (e) { add = []; }
+      add.forEach(function (a) {
+        if (a && typeof a.label === "string" && typeof a.run === "function") item(a.label, a.icon || "", a.run);
+      });
+    });
+    sep();
+    item(tr("wall"), IC_WALL, function () { openAt("settings", { section: "appearance" }); });
+    item(tr("edit"), IC_EDIT, function () { edit(); });
+    m.addEventListener("keydown", function (e) {
+      var bs = Array.prototype.slice.call(m.querySelectorAll("button"));
+      var k = bs.indexOf(doc.activeElement);
+      if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); closeMenu(true); }
+      else if (e.key === "ArrowDown") { e.preventDefault(); bs[(k + 1) % bs.length].focus(); }
+      else if (e.key === "ArrowUp") { e.preventDefault(); bs[(k - 1 + bs.length) % bs.length].focus(); }
+      else if (e.key === "Home") { e.preventDefault(); bs[0].focus(); }
+      else if (e.key === "End") { e.preventDefault(); bs[bs.length - 1].focus(); }
+      else if (e.key === "Tab") { closeMenu(false); }
+    });
+    doc.body.appendChild(m);
+    var r = m.getBoundingClientRect(), vw = root.innerWidth, vh = root.innerHeight;
+    if (kb) { x = (vw - r.width) / 2; y = Math.max(56, (vh - r.height) / 3); }
+    m.style.left = Math.max(8, Math.min(x, vw - r.width - 8)) + "px";
+    m.style.top = Math.max(8, Math.min(y, vh - r.height - 8)) + "px";
+    menu = { el: m, back: doc.activeElement };
+    doc.addEventListener("pointerdown", outside, true);
+    var first = m.querySelector("button");
+    if (first) first.focus();
+  }
+
+  // An empty spot of the desktop: not an icon, a note, the pet, a field…
+  var SKIP = ".ld-ic, #ld-dock, .sn-note, .sn-card, .sn-addcard, #sn-add, #pet-layer, #pet-hud, " +
+             "input, textarea, select, button, a, [contenteditable], .qm-menu";
+  function emptySpot(t) {
+    if (!t || !t.closest || !host || !host.desktop) return false;
+    if (!host.desktop.contains(t)) return false;
+    if (host.running && host.running()) return false;
+    return !t.closest(SKIP);
+  }
+
+  var fired = 0;
+  function wireDesktop() {
+    var desk = host.desktop;
+    doc.addEventListener("contextmenu", function (e) {
+      if (e.defaultPrevented || !emptySpot(e.target)) return;
+      e.preventDefault();
+      if (fired && Date.now() - fired < 1500) return;      // the long press already opened it
+      var kb = !e.clientX && !e.clientY;           // context-menu key
+      openMenu(e.clientX, e.clientY, kb);
+    });
+    // Long press on touch (550 ms; moving more than 10 px cancels).
+    var timer = null, sx = 0, sy = 0;
+    desk.addEventListener("pointerdown", function (e) {
+      if (e.pointerType === "mouse" || !emptySpot(e.target)) return;
+      sx = e.clientX; sy = e.clientY;
+      clearTimeout(timer);
+      timer = setTimeout(function () {
+        timer = null;
+        fired = Date.now();
+        held = true;
+        openMenu(sx, sy, false);
+      }, 550);
+    });
+    desk.addEventListener("pointermove", function (e) {
+      if (timer && (Math.abs(e.clientX - sx) > 10 || Math.abs(e.clientY - sy) > 10)) { clearTimeout(timer); timer = null; }
+    });
+    ["pointerup", "pointercancel", "pointerleave"].forEach(function (t) {
+      desk.addEventListener(t, function () { if (timer) { clearTimeout(timer); timer = null; } });
+    });
+    // The click that ends the long press lands on whatever is under the
+    // finger now, often the menu's first item: swallow that one click
+    // (it comes right after the finger lifts; a new touch clears it).
+    var held = false, swallow = 0;
+    doc.addEventListener("pointerup", function () {
+      if (held) { held = false; swallow = Date.now() + 600; }
+    }, true);
+    doc.addEventListener("pointerdown", function () { swallow = 0; }, true);
+    doc.addEventListener("click", function (e) {
+      if (!swallow || Date.now() > swallow) return;
+      swallow = 0;
+      e.preventDefault();
+      e.stopPropagation();
+    }, true);
+  }
+
+  // ---------- 7. The editor ----------
+  var dlg = null, view = { mode: "list", id: null };
+
+  function kindLabel(it) { return it.k === "app" ? tr("kApp") : it.k === "brief" ? tr("kBrief") : tr("kAsk"); }
+
+  function iconBtn(text, label, fn, disabled) {
+    var b = el("button", "qm-iconbtn", text);
+    b.type = "button";
+    b.setAttribute("aria-label", label);
+    b.title = label;
+    b.disabled = !!disabled;
+    b.addEventListener("click", fn);
+    return b;
+  }
+  function btn(text, cls, fn) {
+    var b = el("button", "qm-btn" + (cls ? " " + cls : ""), text);
+    b.type = "button";
+    b.addEventListener("click", fn);
+    return b;
+  }
+
+  function drawList(body) {
+    body.appendChild(el("h2", "", tr("title")));
+    body.appendChild(el("p", "qm-hint", tr("hint")));
+    var shown = list(load());
+    var ul = el("ul", "qm-list");
+    if (!shown.length) body.appendChild(el("p", "qm-hint", tr("empty")));
+    shown.forEach(function (it, i) {
+      var li = el("li", "qm-row" + (usable(it) ? "" : " qm-off"));
+      li.setAttribute("data-id", it.id);
+      li.appendChild(el("span", "qm-name", nameOf(it)));
+      li.appendChild(el("span", "qm-kind", kindLabel(it) + (it.send ? " · " + tr("sendMark") : "")));
+      li.appendChild(iconBtn("↑", tr("up") + ": " + nameOf(it), function () { change(move(load(), it.id, -1, Date.now())); focusRow(it.id, "up"); }, i === 0));
+      li.appendChild(iconBtn("↓", tr("down") + ": " + nameOf(it), function () { change(move(load(), it.id, 1, Date.now())); focusRow(it.id, "down"); }, i === shown.length - 1));
+      li.appendChild(iconBtn("✎", tr("editItem") + ": " + nameOf(it), function () { view = { mode: it.k, id: it.id }; repaintEditor(); }));
+      li.appendChild(iconBtn("✕", tr("del") + ": " + nameOf(it), function () { change(remove(load(), it.id, Date.now())); }));
+      ul.appendChild(li);
+    });
+    body.appendChild(ul);
+    var acts = el("div", "qm-actions");
+    var rs = btn(tr("reset"), "qm-left", function () { change(reset(load(), Date.now())); });
+    acts.appendChild(rs);
+    acts.appendChild(btn(tr("newTask"), "", function () { view = { mode: "ask", id: null }; repaintEditor(); }));
+    acts.appendChild(btn(tr("addApp"), "", function () { view = { mode: "app", id: null }; repaintEditor(); }));
+    acts.appendChild(btn(tr("close"), "qm-primary", function () { dlg.close(); }));
+    body.appendChild(acts);
+  }
+
+  function focusRow(id, which) {
+    if (!dlg) return;
+    var row = dlg.querySelector('.qm-row[data-id="' + id + '"]');
+    if (!row) return;
+    var bs = row.querySelectorAll(".qm-iconbtn");
+    var b = which === "up" ? bs[0] : bs[1];
+    if (b && b.disabled) b = which === "up" ? bs[1] : bs[0];
+    if (b) b.focus();
+  }
+
+  function field(body, label, input) {
+    var l = el("label", "qm-field");
+    l.appendChild(el("span", "", label));
+    l.appendChild(input);
+    body.appendChild(l);
+    return input;
+  }
+
+  function drawForm(body) {
+    var cur = null;
+    if (view.id) list(load()).forEach(function (it) { if (it.id === view.id) cur = it; });
+    var kind = cur ? cur.k : view.mode;
+    body.appendChild(el("h2", "", cur ? tr("editItem") : kind === "app" ? tr("addApp") : tr("newTask")));
+    var name = el("input");
+    name.type = "text";
+    name.maxLength = MAX_NAME;
+    name.value = cur ? nameOf(cur) : "";
+    var text = null, send = null, pick = null;
+    if (kind === "app") {
+      pick = el("select");
+      apps().filter(function (a) { return a.type !== "external"; })
+        .map(function (a) { return { id: a.id, name: labelOf(a) }; })
+        .sort(function (a, b) { return a.name.localeCompare(b.name); })
+        .forEach(function (a) {
+          var o = el("option", "", a.name);
+          o.value = a.id;
+          pick.appendChild(o);
+        });
+      if (cur) pick.value = cur.app;
+      field(body, tr("app"), pick);
+      field(body, tr("name"), name);
+      name.placeholder = tr("nameAuto");
+      if (cur && !cur.n) name.value = "";
+    } else {
+      field(body, tr("name"), name);
+      if (kind === "ask") {
+        text = el("textarea");
+        text.maxLength = MAX_TEXT;
+        text.value = cur ? textOf(cur) : "";
+        field(body, tr("text"), text);
+        body.appendChild(el("p", "qm-hint", tr("vars")));
+        var lab = el("label", "qm-check");
+        send = el("input");
+        send.type = "checkbox";
+        send.checked = !!(cur && cur.send);
+        lab.appendChild(send);
+        lab.appendChild(el("span", "", tr("send")));
+        body.appendChild(lab);
+        body.appendChild(el("p", "qm-hint", tr("sendHint")));
+      }
+    }
+    var err = el("p", "qm-hint");
+    err.setAttribute("role", "status");
+    body.appendChild(err);
+    var acts = el("div", "qm-actions");
+    acts.appendChild(btn(tr("cancel"), "", function () { view = { mode: "list", id: null }; repaintEditor(); }));
+    acts.appendChild(btn(tr("save"), "qm-primary", function () {
+      var it = { id: cur ? cur.id : newId(Date.now()), k: kind, n: name.value.trim(), p: "", app: "", send: 0 };
+      if (kind === "app") {
+        it.app = pick.value;
+        if (!appById(it.app)) return;
+      } else if (kind === "ask") {
+        it.p = text.value.trim();
+        it.send = send.checked ? 1 : 0;
+        if (!it.p) { err.textContent = tr("needText"); text.focus(); return; }
+        if (!it.n) it.n = it.p.split("\n")[0].slice(0, MAX_NAME).trim();
+        // An example keeps following the language until its text is changed.
+        if (cur && isExample(cur.id) && it.p === tr("exp." + cur.id)) it.p = "";
+      }
+      if (cur && isExample(cur.id) && it.n === tr("ex." + cur.id)) it.n = "";
+      view = { mode: "list", id: null };
+      change(put(load(), it, Date.now()));
+      repaintEditor();
+    }));
+    body.appendChild(acts);
+    (pick || name).focus();
+  }
+
+  function repaintEditor() {
+    if (!dlg || !dlg.open) return;
+    var body = dlg.querySelector(".qm-body");
+    var act = doc.activeElement, keep = act && dlg.contains(act) && view.mode === "list";
+    if (view.mode !== "list" && body.querySelector("input,textarea,select")) return;   // never wipe a form being typed
+    body.textContent = "";
+    if (view.mode === "list") drawList(body); else drawForm(body);
+    if (keep && !dlg.contains(doc.activeElement)) { var f = body.querySelector("button"); if (f) f.focus(); }
+  }
+
+  function edit() {
+    closeMenu(false);
+    if (!host) return;
+    if (!dlg) {
+      dlg = el("dialog");
+      dlg.id = "qm-dlg";
+      dlg.setAttribute("aria-label", tr("title"));
+      dlg.appendChild(el("div", "qm-body"));
+      dlg.addEventListener("close", function () { view = { mode: "list", id: null }; });
+      dlg.addEventListener("keydown", function (e) {
+        if (e.key === "Escape" && view.mode !== "list") {
+          e.preventDefault();
+          view = { mode: "list", id: null };
+          dlg.querySelector(".qm-body").textContent = "";
+          repaintEditor();
+        }
+      });
+      doc.body.appendChild(dlg);
+    }
+    view = { mode: "list", id: null };
+    if (!dlg.open) { try { dlg.showModal(); } catch (e) { dlg.setAttribute("open", ""); } }
+    dlg.querySelector(".qm-body").textContent = "";
+    repaintEditor();
+  }
+
+  // ---------- 8. Public API ----------
+  // host = { desktop, apps(), open(app), label(app), icons, lang(),
+  //          running(), toast(msg) optional }
+  function attach(h) {
+    if (host) return;
+    host = h || {};
+    injectCss();
+    load();
+    registerSync();
+    if (host.desktop) wireDesktop();
+  }
+
+  root.orosQuick = {
+    VER: VER,
+    model: model,
+    attach: attach,
+    edit: edit,
+    // Sticky Notes leaves the desktop's right-click to this menu.
+    ownsDesktop: function () { return !!(host && host.desktop); },
+    items: function () { return list(load()).filter(usable).map(function (it) { return { id: it.id, k: it.k, name: nameOf(it) }; }); },
+    run: function (id) { list(load()).forEach(function (it) { if (it.id === id && usable(it)) runItem(it); }); }
+  };
+})(typeof window !== "undefined" ? window : globalThis);
