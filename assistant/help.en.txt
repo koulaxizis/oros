@@ -122,6 +122,13 @@ On a new conversation, `Briefing` sums up your day in one answer: today's agenda
 - In Writer, select some text and press the sparkle button: `Summarize`, `Rephrase`, `Fix spelling & grammar` or `Ask something else…` put the text and the request in the message box. Nothing is sent until you press `Send`.
 - `Copy` under every answer copies it, ready to paste into your document.
 
+## Desktop menu
+Right-click an empty spot of the desktop (on a phone or tablet, press and hold) for a small menu: `Ask the Assistant…`, your tasks, your apps, `Change wallpaper…` and `Edit this menu…`.
+- A task is a text for the assistant, such as `What do I have today?`. Tapping it opens the assistant with the text in the message box; nothing is sent until you press `Send`, unless you ticked `Send on tap` for that task. Apps set to `Ask first` still ask before anything of theirs goes out.
+- In a task's text, `{date}` becomes today's date and `{clipboard}` the text you copied (read only when you tap the task).
+- `Edit this menu…` (also in the assistant's Settings, under `Desktop menu`) adds tasks and apps, puts them in order and removes them. `Restore the examples` brings back the three examples; your own items stay.
+- The menu syncs with your other devices. Tasks for the assistant hide on a device without it, apps hide where they are not installed.
+
 ## Privacy: what leaves your device
 - Your messages and the results you share go only to the service you chose, straight from your browser. No orOS server is in between. The line above the message box says where they go.
 - In `Settings` → `Your data` you choose, per app, `Ask first`, `Always share` or `Never`. Health, Mood, Cycle, Baby and Budget start at `Never`. Mail and Passwords are never offered.

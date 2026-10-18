@@ -11237,6 +11237,23 @@
       menuChanged: function () { renderMenu(); }
     });
   }
+  // Desktop menu (quickmenu.js, a shell component like launcher.js):
+  // right-click or long press on the desktop → Assistant tasks + apps.
+  if (window.orosQuick && !SOLO) {
+    window.orosQuick.attach({
+      desktop: document.getElementById("oros-desktop"),
+      apps: function () { return state.apps; },
+      open: openApp,
+      running: function () { return !!state.running; },
+      icons: ICONS,
+      lang: function () { return langBase(); },
+      label: function (app) {
+        var k = "app." + app.id, v = window.t(k);
+        return (v === k) ? app.name : v;
+      },
+      toast: function (msg) { scToast("err", msg); }
+    });
+  }
   applySkin();
   applyWallpaper();
   applyTheme();
