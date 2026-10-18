@@ -21,6 +21,13 @@
 //   - Interface: effects with a GFX interface draw it on a canvas (a
 //     copy of the effect runs @init/@slider on the page, the worklet
 //     sends the meters); every slider is also a plain control.
+//   - Instruments (NULL Drum Machine, index.json "instruments"): an
+//     instrument track can be played by one instead of a built-in
+//     sound. It is the first item of the track's chain (it makes the
+//     sound the effects after it change) and gets the track's notes as
+//     MIDI on the audio clock; its own state (the drawn pattern, the
+//     plugin's @serialize) is kept in the item as .st. Keys and
+//     auditions play it through a preview chain on the keyboard's bus.
 // Loaded before studio.js; window.StudioFX(host) returns the API.
 // ============================================================
 (function () {
@@ -32,6 +39,8 @@
   window.StudioFX = function (host) {
     var C = host.C, t = host.t, el = host.el, setLabel = host.setLabel;
     var catalog = null, catalogP = null;      // index.json: { effects: [...] }
+    var instCat = [];                         // index.json: { instruments: [...] }
+    var pv = null;                            // preview chain { key, ctx, chain, items, out }
     var pageP = {};                           // id -> Promise (script on the page)
     var latCache = {};                        // key -> samples
     var fileBufs = {};                        // path -> AudioBuffer | Promise
@@ -50,6 +59,7 @@
         }).then(function (j) {
           // stereo effects, and those with a stereo key input (Sidechain Ducker)
           catalog = (j.effects || []).filter(function (e) { return C.FX_ID_RE.test(e.id) && (e.ins <= 2 || e.ins === 4) && e.outs === 2; });
+          instCat = (j.instruments || []).filter(function (e) { return C.FX_ID_RE.test(e.id) && e.ins === 0 && e.outs === 2; });
           return catalog;
         }, function (e) { catalogP = null; throw e; });
       }
@@ -58,7 +68,19 @@
     function info(id) {
       if (!catalog) return null;
       for (var i = 0; i < catalog.length; i++) if (catalog[i].id === id) return catalog[i];
+      for (var k = 0; k < instCat.length; k++) if (instCat[k].id === id) return instCat[k];
       return null;
+    }
+    function isInstrument(id) { return instCat.some(function (e) { return e.id === id; }); }
+    // the chain's instrument (its first item), else null
+    function instrumentOf(items) { var x = (items || [])[0]; return x && isInstrument(x.id) ? x : null; }
+    // the chain with instrument `id` first (null: without one); null when it has no room
+    function withInstrument(items, id) {
+      var rest = (items || []).filter(function (x) { return !isInstrument(x.id); });
+      if (!id) return rest;
+      if (rest.length >= C.MAX_FX) return null;
+      var old = instrumentOf(items);
+      return [old && old.id === id ? old : { u: C.newId("f", Math.random), id: id, on: true, s: {} }].concat(rest);
     }
     function fxMeta(id) { return window.NULLFX && window.NULLFX[id] || null; }
     // the effect's script on the page (for its interface and latency)
@@ -188,8 +210,10 @@
     function chainList(items) {
       var n = 0;
       return active(items).map(function (x) {
-        return { uid: x.u, id: x.id, sliders: sliders(fxMeta(x.id) || { sliders: [] }, x, false), bypass: false,
-                 key: x.sc && hasKey(x.id) ? ++n : 0 };
+        var it = { uid: x.u, id: x.id, sliders: sliders(fxMeta(x.id) || { sliders: [] }, x, false), bypass: false,
+                   key: x.sc && hasKey(x.id) ? ++n : 0 };
+        if (x.st) it.state = x.st;
+        return it;
       });
     }
     // The key inputs of a chain: [{ sc: track id, input }]
@@ -213,13 +237,14 @@
       return out;
     }
     // A chain node on Studio's processor; the same object NULLFXNode.Chain makes.
-    function makeChain(ctx, list, auto) {
+    // extra (an export): { midi: [[at, status, d1, d2]], times: [{ at, playing, position, ... }] }
+    function makeChain(ctx, list, auto, extra) {
       var NN = window.NULLFXNode, ch = Object.create(NN.Chain.prototype);
       ch.ctx = ctx;
       ch.node = new AudioWorkletNode(ctx, "studio-fx-chain", {
         numberOfInputs: 1 + KEY_INPUTS, numberOfOutputs: 1, outputChannelCount: [2],
         channelCount: 2, channelCountMode: "explicit", channelInterpretation: "speakers",
-        processorOptions: { chain: list, auto: auto }
+        processorOptions: { chain: list, auto: auto, midi: extra && extra.midi || null, times: extra && extra.times || null }
       });
       ch.pdc = 0; ch.waiting = {}; ch.req = 0;
       ch.onpdc = null; ch.onerror = null; ch.onmissing = null;
@@ -245,6 +270,9 @@
         });
       });
     }
+    function sendStates(chain, items) {
+      active(items).forEach(function (x) { if (x.st) chain.setState(x.u, x.st); });
+    }
     function sendSliders(chain, items) {
       active(items).forEach(function (x) {
         var FX = fxMeta(x.id);
@@ -257,13 +285,14 @@
     // Puts the chain of `key` in front of `target`; returns the node to
     // feed, or null when the chain has nothing to do (or is not loaded).
     // lanes: the track's automation (the chain's sliders follow theirs)
-    function insert(ctx, key, items, target, offline, lanes) {
+    // extra: the MIDI and transport of an export (makeChain)
+    function insert(ctx, key, items, target, offline, lanes, extra) {
       if (!active(items).length || !isReady(ctx, [items])) return null;
       var rec = offline ? null : live[key], ap = autoParams(items, lanes), map = ap.map(function (x) { return x.map; });
       if (rec && rec.ctx !== ctx) { rec.chain.disconnect(); rec = null; }
       if (!rec) {
         var ch;
-        try { ch = makeChain(ctx, chainList(items), map); } catch (e) { return null; }
+        try { ch = makeChain(ctx, chainList(items), map, offline ? extra : null); } catch (e) { return null; }
         ch.onerror = function (m) { host.showToast(t("fx.failed", { name: nameOf(m.id) })); };
         rec = { chain: ch, ctx: ctx, files: "" };
         if (!offline) live[key] = rec;
@@ -271,6 +300,7 @@
         rec.chain.setChain(chainList(items));
       }
       sendSliders(rec.chain, items);
+      if (!offline) sendStates(rec.chain, items);
       rec.chain.send({ type: "auto", map: map });
       var fk = JSON.stringify(active(items).map(function (x) { return [x.u, x.f || null, x.s]; }));
       if (rec.files !== fk) { rec.files = fk; sendFiles(rec.chain, items); }
@@ -282,6 +312,36 @@
     function setTime(tm) {
       Object.keys(live).forEach(function (k) { live[k].chain.setTime(tm); });
     }
+    // the transport of one chain at a time on the audio clock (a play start, a loop jump)
+    function setTimeAt(key, at, tm) { var rec = live[key]; if (rec) rec.chain.setTimeAt(at, tm); }
+    // MIDI for the instrument of a chain: [[at, status, d1, d2], ...]
+    function midi(key, ev) { var rec = live[key]; if (rec && ev.length) rec.chain.midi(ev); }
+
+    // ---------- Preview: the keys and auditions on an instrument ----------
+    // One chain with only the instrument of track `key`, on `out` (the
+    // keyboard's bus), heard whether or not the song plays. Resolves
+    // with true when it can play.
+    function preview(ctx, key, out) {
+      var items = chainOf(key), x = instrumentOf(items);
+      if (!x || !x.on) return Promise.resolve(false);
+      var one = [x];
+      if (pv && pv.key === key && pv.ctx === ctx && pv.id === x.id) {
+        if (pv.out !== out) { try { pv.chain.node.disconnect(); } catch (e) {} pv.chain.node.connect(out); pv.out = out; }
+        return Promise.resolve(true);
+      }
+      dropPreview();
+      return ensure(ctx, [one]).then(function () {
+        if (pv && pv.key === key && pv.id === x.id) return true;
+        var ch;
+        try { ch = makeChain(ctx, chainList(one), []); } catch (e) { return false; }
+        sendSliders(ch, one);
+        ch.node.connect(out);
+        pv = { key: key, ctx: ctx, chain: ch, id: x.id, u: x.u, out: out };
+        return true;
+      }, function () { return false; });
+    }
+    function previewMidi(key, ev) { if (pv && pv.key === key) pv.chain.midi(ev); }
+    function dropPreview() { if (pv) { pv.chain.disconnect(); pv = null; } }
     function disconnect() {
       Object.keys(live).forEach(function (k) { try { live[k].chain.node.disconnect(); } catch (e) { /* not connected */ } });
     }
@@ -295,6 +355,13 @@
     function liveSlider(key, u, i, v) {
       var rec = live[key];
       if (rec) rec.chain.setSlider(u, i, v);
+      if (pv && pv.key === key && pv.u === u) pv.chain.setSlider(u, i, v);
+    }
+    // an instrument's own state changed (its interface, undo, another device)
+    function liveState(key, u, st) {
+      var rec = live[key];
+      if (rec) rec.chain.setState(u, st);
+      if (pv && pv.key === key && pv.u === u) pv.chain.setState(u, st);
     }
 
     // ---------- Edits ----------
@@ -316,6 +383,7 @@
         var n = { u: x.u, id: x.id, on: x.on, s: Object.assign({}, x.s) };
         if (x.f) n.f = Object.assign({}, x.f);
         if (x.sc) n.sc = x.sc;
+        if (x.st) n.st = x.st.slice();
         fn(n);
         return n;
       }), opts);
@@ -340,6 +408,7 @@
       items.forEach(function (x, k) { if (x.u === u) i = k; });
       var j = i + d;
       if (i < 0 || j < 0 || j >= items.length) return false;
+      if (isInstrument(items[i].id) || isInstrument(items[j].id)) return false;   // the instrument stays first
       var tmp = items[i]; items[i] = items[j]; items[j] = tmp;
       setChain(key, items);
       render();
@@ -479,8 +548,9 @@
         if (f) f.focus();
       });
       head.appendChild(nm);
-      head.appendChild(iconBtn("fx-up", "M6 15l6-6 6 6", t("btn.up") + ": " + nameOf(x.id), k === 0, function () { moveFx(x.u, -1); }));
-      head.appendChild(iconBtn("fx-down", "M6 9l6 6 6-6", t("btn.down") + ": " + nameOf(x.id), k === n - 1, function () { moveFx(x.u, 1); }));
+      var inst = isInstrument(x.id), afterInst = k === 1 && !!instrumentOf(chainOf(key));
+      head.appendChild(iconBtn("fx-up", "M6 15l6-6 6 6", t("btn.up") + ": " + nameOf(x.id), k === 0 || inst || afterInst, function () { moveFx(x.u, -1); }));
+      head.appendChild(iconBtn("fx-down", "M6 9l6 6 6-6", t("btn.down") + ": " + nameOf(x.id), k === n - 1 || inst, function () { moveFx(x.u, 1); }));
       head.appendChild(iconBtn("fx-del", "M6 6l12 12M18 6L6 18", t("fx.remove") + ": " + nameOf(x.id), false, function () { removeFx(x.u); }));
       li.appendChild(head);
       if (!isOpen) return li;
@@ -547,7 +617,7 @@
       return b;
     }
     function catName(c) {
-      return c === "One Slider" ? t("fx.cat1") : c === "Essentials" ? t("fx.cat2") : c === "Advanced" ? t("fx.cat3") : c;
+      return c === "One Slider" ? t("fx.cat1") : c === "Essentials" ? t("fx.cat2") : c === "Advanced" ? t("fx.cat3") : c === "Instruments" ? t("fx.catInst") : c;
     }
     function decimals(sl) {
       if (sl.inc >= 1 || !(sl.inc > 0)) return sl.inc > 0 ? 0 : 2;
@@ -667,6 +737,7 @@
           var v = C.fxValue(x, sl);
           if (!sl.path && vw.view.fx.inst.getSlider(sl.i) !== v) vw.view.setSlider(sl.i, v);
         });
+        if (x.st && JSON.stringify(x.st) !== vw.view.lastState) vw.view.setState(x.st);
         return;
       }
       if (vw) dropView(x.u);
@@ -674,11 +745,30 @@
       var view;
       try {
         view = new window.NULLGfx.View(FX, canvas, {
-          srate: sr, sliders: sliders(FX, x, false),
+          srate: sr, sliders: sliders(FX, x, false), state: x.st || null,
           onSlider: function (i, v) { setSlider(key, x.u, i, v, true); }
         });
       } catch (e) { return; }
       views[x.u] = { view: view, canvas: canvas, id: x.id, key: key, busy: false, last: 0 };
+    }
+    // what an interface shares with its audio in REAPER: variables it sets
+    // for the audio (a voice to hear) and the plugin's own state (a drawn
+    // pattern, saved with the track and sent to the audio)
+    function shared(vw, u) {
+      var pk = vw.view.takePokes ? vw.view.takePokes() : null;
+      if (pk) {
+        var rec = live[vw.key];
+        if (rec && host.isPlaying()) rec.chain.setVars(u, pk);
+        else {
+          var a = host.audio();
+          if (a) preview(a, vw.key, host.previewOut(a)).then(function (ok) { if (ok && pv) pv.chain.setVars(u, pk); });
+        }
+      }
+      var st = vw.view.takeState ? vw.view.takeState() : null;
+      if (st) {
+        update(vw.key, u, function (n) { n.st = st; }, host.burst("fxst" + u, { live: true }));
+        liveState(vw.key, u, st);
+      }
     }
     function dropView(u) {
       var vw = views[u];
@@ -699,6 +789,7 @@
             rec.chain.peek(u).then(function (m) { vw.busy = false; if (views[u] === vw) vw.view.setLive(m); });
           }
           try { vw.view.draw(); } catch (e) { /* a drawing error must not stop the others */ }
+          shared(vw, u);
         });
         raf = requestAnimationFrame(frame);
       };
@@ -717,6 +808,8 @@
       wire: wire, open: open, render: render, loadCatalog: loadCatalog,
       ensure: ensure, preparePage: preparePage, isReady: isReady, insert: insert, setTime: setTime, disconnect: disconnect, prune: prune,
       chainLatency: chainLatency, active: active, nameOf: nameOf, isOpen: function () { return !!openKey; },
+      setTimeAt: setTimeAt, midi: midi, preview: preview, previewMidi: previewMidi, dropPreview: dropPreview,
+      instruments: function () { return instCat; }, isInstrument: isInstrument, instrumentOf: instrumentOf, withInstrument: withInstrument,
       keyInputs: keyInputs, autoParams: autoParams, hasKey: hasKey,
       // automatable sliders of a chain: [{ k: lane key, u, sl, name }] (loads what it needs, then onReady)
       params: function (items, onReady) {

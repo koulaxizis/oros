@@ -298,7 +298,7 @@
   // the page and draws @gfx, while the audio runs elsewhere (the worklet) and sends the
   // variables @gfx shows (setLive). Mouse and wheel drive the effect's own controls; when
   // the interface moves a slider, opts.onSlider(index, value) tells the page.
-  // FX: globalThis.NULLFX[id]; opts: { srate, sliders: { index: value }, onSlider }
+  // FX: globalThis.NULLFX[id]; opts: { srate, sliders: { index: value }, state (@serialize), onSlider }
   function View(FX, canvas, opts) {
     opts = opts || {};
     var self = this, Host = g.NULLFXHost, R = g.NULLRT;
@@ -306,6 +306,8 @@
     this.canvas = canvas;
     this.G = new Gfx(canvas, opts);
     this.fx = new Host.Effect(FX, R, { srate: opts.srate || 48000, sliders: opts.sliders || {}, gfx: this.G });
+    if (opts.state) this.fx.setState(opts.state);
+    this.lastState = FX.serialize ? JSON.stringify(this.fx.getState()) : "";
     this.fx.inst.slider();
     this.fx.mustSlider = false;
     this.onSlider = opts.onSlider || null;
@@ -359,6 +361,39 @@
     if (!m) return;
     if (m.live) this.fx.inst.setLive(m.live);
     if (m.mem) this.fx.inst.mem.write(m.mem.base, m.mem.data);
+    // FX.flash: what the audio wrote since the last peek; zeros leave the page's (fading) value
+    var mem = this.fx.inst.mem;
+    (m.flash || []).forEach(function (f) {
+      var cur = mem.read(f.base, f.data.length), any = false;
+      for (var i = 0; i < f.data.length; i++) if (f.data[i] !== 0) { cur[i] = f.data[i]; any = true; }
+      if (any) mem.write(f.base, cur);
+    });
+  };
+  // FX.pokes the interface set since the last call ({ name: value }, or null); the page sends
+  // them to the audio (Chain.setVars), which takes and clears them as REAPER's shared memory would
+  View.prototype.takePokes = function () {
+    var inst = this.fx.inst, out = null;
+    (this.FX.pokes || []).forEach(function (k) {
+      var v = inst.getVar(k);
+      if (v !== 0) { (out || (out = {}))[k] = v; inst.setVar(k, 0); }
+    });
+    return out;
+  };
+  // the state to save (@serialize) when the interface changed it, else null
+  View.prototype.takeState = function () {
+    if (!this.FX.serialize) return null;
+    var st = this.fx.getState(), key = JSON.stringify(st);
+    if (key === this.lastState) return null;
+    this.lastState = key;
+    return st;
+  };
+  // a saved state (another device, undo): the interface shows it
+  View.prototype.setState = function (data) {
+    if (!this.FX.serialize || !data) return;
+    this.fx.setState(data);
+    this.fx.inst.slider();
+    this.fx.mustSlider = false;
+    this.lastState = JSON.stringify(this.fx.getState());
   };
   // draws one frame at the canvas's CSS size
   View.prototype.draw = function () {

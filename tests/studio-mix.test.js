@@ -123,6 +123,7 @@ test("sidechain + automation: the chain processor ducks on the key and follows i
   let Proc = null;
   const posted = [];
   globalThis.sampleRate = 48000;
+  globalThis.currentTime = 0;
   globalThis.AudioWorkletProcessor = class { constructor() { this.port = { postMessage: (m) => posted.push(m) }; } };
   globalThis.registerProcessor = (name, cls) => { assert.equal(name, "studio-fx-chain"); Proc = cls; };
   require(path.join(ROOT, "studio/nullfx/runtime/eel-rt.js"));
@@ -150,7 +151,64 @@ test("sidechain + automation: the chain processor ducks on the key and follows i
   p.onMessage({ type: "auto", map: [] });
   p.onMessage({ type: "slider", uid: "fduck0001", i: 2, v: -12 });
   near(run(true, 3000), 0.5, 1e-3);
-  delete globalThis.registerProcessor; delete globalThis.AudioWorkletProcessor; delete globalThis.sampleRate;
+  delete globalThis.registerProcessor; delete globalThis.AudioWorkletProcessor; delete globalThis.sampleRate; delete globalThis.currentTime;
+});
+
+test("instrument: NULL Drum Machine in the chain processor plays MIDI and the transport at their samples", () => {
+  let Proc = null;
+  const posted = [];
+  globalThis.sampleRate = 48000;
+  globalThis.currentTime = 0;
+  globalThis.AudioWorkletProcessor = class { constructor() { this.port = { postMessage: (m) => posted.push(m) }; } };
+  globalThis.registerProcessor = (name, cls) => { Proc = cls; };
+  require(path.join(ROOT, "studio/nullfx/runtime/eel-rt.js"));
+  require(path.join(ROOT, "studio/nullfx/runtime/null-fx.js"));
+  require(path.join(ROOT, "studio/nullfx/fx/drum_machine.js"));
+  delete require.cache[require.resolve(path.join(ROOT, "studio/fxchain.worklet.js"))];
+  require(path.join(ROOT, "studio/fxchain.worklet.js"));
+  const sr = 48000;
+  // runs n blocks from frame `from` (the audio clock moves with them); returns both channels
+  const run = (p, from, n) => {
+    const L = new Float32Array(n * 128), R = new Float32Array(n * 128);
+    for (let b = 0; b < n; b++) {
+      globalThis.currentTime = (from + b * 128) / sr;
+      const out = [new Float32Array(128), new Float32Array(128)];
+      p.process([[]], [out], {});
+      L.set(out[0], b * 128); R.set(out[1], b * 128);
+    }
+    return [L, R];
+  };
+  const first = (y) => { for (let i = 0; i < y[0].length; i++) if (y[0][i] !== 0 || y[1][i] !== 0) return i; return -1; };
+  // Pattern Off: a note sent ahead sounds from its own sample; the input is ignored
+  let p = new Proc({ processorOptions: { chain: [{ uid: "fdrum0001", id: "drum_machine", sliders: { 1: 0 } }] } });
+  p.onMessage({ type: "midi", ev: [[(1000 + 77) / sr, 0x99, 36, 120], [(1000 + 900) / sr, 0x89, 36, 0]] });
+  let y = run(p, 0, 40);
+  assert.equal(first(y), 1077);
+  // House (the default) starts with the transport at its sample; stop drops what waits
+  p = new Proc({ processorOptions: { chain: [{ uid: "fdrum0001", id: "drum_machine", sliders: {} }] } });
+  p.onMessage({ type: "time", at: 3000 / sr, playing: true, tempo: 120, position: 0 });
+  y = run(p, 0, 60);
+  assert.ok(Math.abs(first(y) - 3000) <= 1, "step 1 at the transport's sample (rounding: one sample): " + first(y));
+  p.onMessage({ type: "midi", ev: [[1, 0x99, 38, 100]] });
+  p.onMessage({ type: "time", playing: false });
+  assert.equal(p.sched.midi.length, 0);
+  // the drawn pattern (state) and a voice from the interface (vars); the hit flashes once
+  const st = [1].concat(new Array(170).fill(0));
+  st[1 + 160] = 16;
+  p = new Proc({ processorOptions: { chain: [{ uid: "fdrum0001", id: "drum_machine", sliders: { 1: 1 }, state: st }] } });
+  assert.equal(p.slots[0].fx.inst.mem.r(0), 0, "state from the chain item: the basic beat is gone");
+  p.onMessage({ type: "vars", uid: "fdrum0001", vars: { dm_preview: 2, other: 5 } });
+  y = run(p, 0, 4);
+  assert.ok(first(y) >= 0 && first(y) < 128, "the snare from the interface sounds at once");
+  p.onMessage({ type: "peek", uid: "fdrum0001", req: 7 });
+  const live = posted.filter((m) => m.type === "live" && m.req === 7)[0];
+  assert.equal(live.flash[0].data[1], 1, "the snare's hit, for the interface");
+  p.onMessage({ type: "peek", uid: "fdrum0001", req: 8 });
+  assert.equal(posted.filter((m) => m.req === 8)[0].flash[0].data[1], 0, "handed over once");
+  // an export: MIDI and transport in processorOptions
+  p = new Proc({ processorOptions: { chain: [{ uid: "fdrum0001", id: "drum_machine", sliders: { 1: 0 } }], midi: [[500 / sr, 0x99, 42, 90]], times: [{ at: 0, playing: true, position: 0, tempo: 120 }] } });
+  assert.equal(first(run(p, 0, 10)), 500);
+  delete globalThis.registerProcessor; delete globalThis.AudioWorkletProcessor; delete globalThis.sampleRate; delete globalThis.currentTime;
 });
 
 // ---------- MP3 ----------

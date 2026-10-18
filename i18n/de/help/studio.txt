@@ -127,6 +127,13 @@ Steuere Mixer und Transport von Studio von einem Tablet oder Handy aus, während
 > Nimm mit Kopfhörern auf, damit Klick und andere Spuren nicht im Take landen.
 - Browser können keine ASIO-Treiber nutzen. Deine Soundkarte läuft über den eigenen Treiber des Systems, mit etwas mehr Verzögerung als in einer Desktop-Studio-App.
 
+## NULL Drum Machine
+- Neben den eingebauten Klängen kann eine Instrumentenspur von `NULL Drum Machine` gespielt werden, dem ersten Instrument von NULL JSFX: zehn synthetische Schlagzeugstimmen (Kick, Snare, Clap, Rim, geschlossene und offene Hi-Hat, zwei Toms, Cowbell, Becken) und ein Sequenzer mit 16 Schritten. Wähle es unter `+ Spur`, als `Instrument` in den Spureinstellungen oder als `Klang` der Tastatur.
+- Seine Noten folgen der General-MIDI-Schlagzeugbelegung (36 Kick, 38 Snare, 42 geschlossene Hi-Hat, …), sodass Schlagzeug-Loops und Schlagzeugparts aus MIDI-Dateien unverändert darauf spielen.
+- Sein Sequenzer spielt das gewählte `Pattern` (House, Techno, Boom Bap und acht weitere) im Takt des Songs, solange er spielt, zusätzlich zu den Noten der Clips; `Off` lässt nur die Noten. Ohne Clips schalte den Loop ein: Der Loop ist dann der Song, beim Abspielen und beim Export.
+- `Effekte` der Spur zeigt es zuerst, mit eigener Oberfläche: Klick auf einen Schritt wechselt ihn (Schlag, Akzent, Flam, Wirbel, aus), Rechtsklick leert ihn, für jede Stimme stellst du die Länge ein (1 bis 16 Schritte), ein Klick auf den Namen einer Stimme spielt sie an, und die Knöpfe drehst du. Ein gezeichneter Schritt wechselt zum Pattern `User`, das mit der Spur gespeichert und wie alles andere synchronisiert wird. Jede Einstellung steht auch unter `Alle Regler` und lässt sich automatisieren.
+- Tastatur und Pianorolle spielen es sofort; der Song spielt es durch die Effekte der Spur.
+
 ## Grenzen
 - Bis zu 50 Projekte, 8 Spuren und 500 Clips pro Projekt, eine Stunde pro Projekt.
 - Eine importierte Datei darf bis zu 100 MB groß sein, ein Take bis zu 30 Minuten lang.
@@ -135,7 +142,7 @@ Steuere Mixer und Transport von Studio von einem Tablet oder Handy aus, während
 - Während du live auf der Tastatur spielst, hörst du den Klang ohne die Effekte der Spur; der aufgenommene Clip spielt mit ihnen. Auch der als Audio aufgenommene Synth ist trocken, bis der Take spielt. Nur Sidechain Ducker nimmt einen Key-Eingang an.
 - Tempowechsel einer MIDI-Datei bleiben nicht erhalten: Studio nimmt ihr erstes Tempo. Andere Controller als das Haltepedal (Pitch Bend, Modulation) werden nicht in Clips aufgenommen.
 - Loops sind im 4/4-Takt. Audioclips dehnen sich nicht mit dem Tempo; nur MIDI-Clips folgen ihm.
-- Ein älteres Studio auf einem anderen Gerät zeigt keine MIDI-Clips, und wenn es eine Instrumentenspur speichert, spielt die Spur als Klavier, bis ihr Klang neu gewählt wird.
+- Ein älteres Studio auf einem anderen Gerät zeigt keine MIDI-Clips, und wenn es eine Instrumentenspur speichert, spielt die Spur als Klavier, bis ihr Klang neu gewählt wird. Eine Spur mit NULL Drum Machine spielt es mit dem eingebauten Schlagzeug, und wenn es die Spur speichert, geht das gezeichnete Pattern `User` verloren.
 - Automation kennt nur gerade Linien, und der Master hat keine Automationsspuren. Ein älteres Studio auf einem anderen Gerät verwirft Automationsspuren und Sidechain-Auswahl, wenn es diese Spur speichert.
 - Der MP3-Encoder ist einfach und hat eine konstante Bitrate: Bei 128 kbit/s klingt er weniger sauber als andere Encoder, wähle also 192 oder mehr.
 - Effekte werden beim Start der Wiedergabe zurückgesetzt, wie in einem Desktop-Studio.

@@ -14,10 +14,15 @@
 //     a mapped param whose value changed moves that slider. Because the
 //     values are scheduled on AudioParams, an offline export plays the
 //     automation at the very same samples as playback does.
+//   - instruments (NULL Drum Machine): like null-fx-chain, MIDI and
+//     transport changes scheduled on the audio clock (NULLFXHost.Sched,
+//     messages "midi" and "time" with at), the plugin's own state
+//     ("state", item.state) and its interface's pokes ("vars"); an
+//     export hands its MIDI and transport over in processorOptions.
 // Lives in studio/ (not studio/nullfx/, which the sync workflow owns).
 // Load eel-rt.js, null-fx.js and the effect files first.
 // ============================================================
-/* global AudioWorkletProcessor, registerProcessor, sampleRate, NULLRT, NULLFXHost, NULLFX */
+/* global AudioWorkletProcessor, registerProcessor, sampleRate, currentTime, NULLRT, NULLFXHost, NULLFX */
 (function () {
   "use strict";
   var BLOCK = 128, PARAMS = 16, UNSET = -3e38, KEYS = 8;
@@ -41,10 +46,13 @@
       this.map = [];
       this.last = new Float64Array(PARAMS).fill(NaN);
       this.lastPdc = -1;
+      this.sched = new NULLFXHost.Sched();
       this.port.onmessage = function (e) { self.onMessage(e.data); };
       if (o.time) this.setTime(o.time);
       if (o.chain) this.setChain(o.chain);
       if (o.auto) this.setAuto(o.auto);
+      if (o.midi) this.sched.addMidi(o.midi);
+      if (o.times) o.times.forEach(function (t) { self.sched.addTime(t); });
     }
   }
   var P = StudioFxChain.prototype;
@@ -57,8 +65,14 @@
       case "chain": this.setChain(m.chain || []); break;
       case "slider": if (s) s.fx.setSlider(m.i, +m.v); break;
       case "bypass": if (s) s.bypass = !!m.on; break;
-      case "time": this.setTime(m); break;
+      case "time": if (m.at >= 0) this.sched.addTime(m); else { if (m.playing === false) this.sched.clear(); this.setTime(m); } break;
       case "auto": this.setAuto(m.map || []); break;
+      case "midi": if (Array.isArray(m.ev)) this.sched.addMidi(m.ev); break;
+      case "midi-clear": this.sched.midi = []; break;
+      case "state": if (s) s.fx.setState(m.data); break;
+      case "vars":
+        if (s && m.vars) (s.FX.pokes || []).forEach(function (k) { var v = m.vars[k]; if (typeof v === "number" && isFinite(v)) s.fx.inst.setVar(k, v); });
+        break;
       case "file":
         if (s && m.data) {
           s.fx.files["slider" + m.i] = { channels: m.channels | 0, srate: +m.srate, data: m.data };
@@ -94,6 +108,7 @@
     var fx;
     try {
       fx = new NULLFXHost.Effect(FX, NULLRT, { srate: sampleRate, blockSize: BLOCK, sliders: it.sliders || {}, playing: this.time.playing });
+      if (it.state) fx.setState(it.state);
     } catch (e) {
       this.post({ type: "error", uid: it.uid, id: it.id, message: String(e && e.message || e) });
       return null;
@@ -127,6 +142,14 @@
       var base = inst.getVar("ng_tb"), len = inst.getVar("ng_tl") * 2;
       if (base > 0 && len > 0 && len <= 65536) msg.mem = { base: base, data: inst.mem.read(base, len) };
     }
+    // memory the audio writes for the interface to fade (FX.flash): once, then cleared
+    if (s.FX.flash) msg.flash = s.FX.flash.map(function (f) {
+      var b = inst.getVar(f[0]), n = f[1] | 0;
+      if (!(b >= 0) || n < 1 || n > 4096) return null;
+      var d = inst.mem.read(b, n);
+      inst.mem.write(b, new Float64Array(n));
+      return { base: b, data: d };
+    }).filter(Boolean);
     this.post(msg);
   };
   P.reportPdc = function () {
@@ -164,6 +187,8 @@
       else { kb[0].fill(0); kb[1].fill(0); }
     }
     if (params) this.applyAuto(params);
+    var due = this.sched.block(currentTime, n, sampleRate);
+    if (due.time) this.setTime(due.time);
     var T = this.time;
     for (var j = 0; j < this.slots.length; j++) {
       var s = this.slots[j];
@@ -178,7 +203,7 @@
         nin = s.pins;
       }
       try {
-        s.fx.process(ins, this.a, n, nin);
+        s.fx.process(ins, this.a, n, nin, s.FX.usesMidi ? due.midi : null);
       } catch (e) {
         s.bypass = true;
         this.post({ type: "error", uid: s.uid, id: s.id, message: String(e && e.message || e) });
