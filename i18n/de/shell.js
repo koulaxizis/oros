@@ -309,6 +309,7 @@ orosPack("de", "shell", {
  "cr.sheetjs-community": "Excel-/ODS-Dateien (Tabelle, Budget)",
  "cr.stripe-api": "Verbundene Dienste: Zahlungen importieren (Budget)",
  "cr.tabler-icons": "Offline-Symbolbibliothek (Atelier)",
+ "cr.simple-icons": "Symbole sozialer Netzwerke (Newsletter)",
  "cr.tavily": "Websuche, wenn gewählt (Assistent)",
  "cr.terrain-tiles": "Höhenprofil in „Strecke planen“ (Karten)",
  "cr.tesseract-js": "Text von einem Visitenkartenfoto lesen, auf dem Gerät (Kontakte); Text aus Fotos und gescannten PDFs (Assistent); durchsuchbare Scans (Scanner & PDF)",

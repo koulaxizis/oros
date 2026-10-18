@@ -14,6 +14,7 @@
   "use strict";
 
   var C = root.OrosNewsletterCore || (typeof require === "function" ? require("./core.js") : null);
+  var SO = root.OrosNewsletterSocial || (typeof require === "function" ? require("./social.js") : null);
 
   var STR = {
     en: {
@@ -238,8 +239,56 @@
         };
         return "<div style=\"font-size:0;text-align:left\">" + col(b.a) + col(b.b) + "</div>";
       }
+      case "head": {
+        var al = C.alignOf(b), parts = [];
+        var logo = b.f && img ? img({ f: b.f }) : "";
+        if (logo) {
+          var lw = Math.min(b.lw || 140, 300), lh = Math.round(lw * (b.h || 1) / (b.w || 1));
+          parts.push("<img src=\"" + esc(logo) + "\" alt=\"" + esc(b.t || "") + "\" width=\"" + lw + "\" height=\"" + lh +
+                     "\" style=\"display:" + (al === "center" ? "block;margin:0 auto 12px" : "inline-block;margin:0 0 12px") + ";width:" + lw + "px;max-width:100%;height:auto;border:0\">");
+        }
+        if (b.t) parts.push("<p style=\"margin:0 0 4px;font-size:" + Math.round(24 * st.hs) + "px;line-height:1.25;font-weight:800;font-family:" + st.font + ";color:" + th.text + "\">" + esc(t(b.t)) + "</p>");
+        if (b.sub) parts.push("<p style=\"margin:0 0 6px;font-size:14px;line-height:1.5;color:" + th.dim + "\">" + esc(t(b.sub)) + "</p>");
+        var ls = (b.links || []).filter(function (x) { return x.t && x.href; });
+        if (ls.length) {
+          parts.push("<p style=\"margin:8px 0 0;font-size:14px;line-height:1.6\">" + ls.map(function (x) {
+            return "<a href=\"" + esc(x.href) + "\" style=\"color:" + lc + ";text-decoration:none;font-weight:700\">" + esc(t(x.t)) + "</a>";
+          }).join("<span style=\"color:" + th.dim + "\">&nbsp;&nbsp;·&nbsp;&nbsp;</span>") + "</p>");
+        }
+        if (!parts.length) return "";
+        return "<div style=\"text-align:" + al + ";margin:0 0 20px;padding-bottom:16px;border-bottom:1px solid " + th.line + "\">" + parts.join("") + "</div>";
+      }
+      case "social": return socialRow(b, b.sz, img, C.alignOf(b), "0 0 16px");
+      case "foot": {
+        var fa = C.alignOf(b);
+        var row = socialRow(b, 24, img, fa, "0 0 10px");
+        var ft = b.t ? "<p style=\"margin:0;font-size:13px;line-height:1.6;color:" + th.dim + "\">" +
+          String(t(b.t)).split("\n").map(function (x) { return inlineHtml(x, lc); }).join("<br>") + "</p>" : "";
+        if (!row && !ft) return "";
+        return "<div style=\"text-align:" + fa + ";margin:20px 0 0;padding-top:16px;border-top:1px solid " + th.line + "\">" + row + ft + "</div>";
+      }
     }
     return "";      // a block from a newer orOS: not drawn here
+  }
+  // A row of social icons (PNG pictures drawn when sending)
+  function socialRow(b, sz, img, al, margin) {
+    var items = (b.items || []).filter(function (x) { return x.href && SO.NETS[x.n]; });
+    if (!items.length || !img) return "";
+    var cells = items.map(function (x, i) {
+      var src = img({ f: SO.key(x.n, b.st || "c", sz) });
+      if (!src) return "";
+      var name = SO.NETS[x.n].name;
+      return (i ? "<td style=\"width:8px\"></td>" : "") + "<td><a href=\"" + esc(x.href) + "\"><img src=\"" + esc(src) + "\" alt=\"" + esc(name) +
+             "\" title=\"" + esc(name) + "\" width=\"" + sz + "\" height=\"" + sz + "\" style=\"display:block;width:" + sz + "px;height:" + sz + "px;border:0\"></a></td>";
+    }).join("");
+    if (!cells) return "";
+    return "<table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\"" + (al !== "left" ? " align=\"" + al + "\"" : "") +
+           " style=\"margin:" + (al === "center" ? margin.replace(/^0 0/, "0 auto") : margin) + "\"><tr>" + cells + "</tr></table>" +
+           (al !== "left" ? "<div style=\"clear:both;line-height:0;font-size:0\"></div>" : "");
+  }
+  function socialText(b) {
+    return (b.items || []).filter(function (x) { return x.href && SO.NETS[x.n]; })
+      .map(function (x) { return SO.NETS[x.n].name + ": " + x.href.replace(/^mailto:/i, ""); }).join("\n");
   }
   // A block with its own alignment / padding / background is wrapped
   // in a one-cell table; on a coloured background the text switches to
@@ -256,7 +305,7 @@
     }
     var inner = blockCore(b, s2, img, t);
     if (!inner) return "";
-    var al = b.al || "left";
+    var al = C.alignOf(b);
     return "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\"" + (b.bg ? " bgcolor=\"" + b.bg + "\"" : "") +
       " style=\"margin:0 0 12px" + (b.bg ? ";background:" + b.bg + ";border-radius:6px" : "") + "\"><tr><td align=\"" + al + "\" style=\"text-align:" + al +
       ";padding:" + (b.pad || 0) + "px " + (b.bg ? 16 : 0) + "px\">" + inner + "</td></tr></table>";
@@ -277,6 +326,12 @@
           .map(function (x) { return t(x.t) + ": " + x.href.replace(/^mailto:/i, ""); }).join("\n");
       case "img": return b.alt ? "[" + b.alt + "]" + (b.href ? " " + b.href : "") : "";
       case "cols": return [paraText(t(b.a)), paraText(t(b.b))].filter(Boolean).join("\n\n");
+      case "head":
+        return [b.t ? t(b.t).toUpperCase() : "", b.sub ? t(b.sub) : "",
+                (b.links || []).filter(function (x) { return x.t && x.href; }).map(function (x) { return t(x.t) + ": " + x.href.replace(/^mailto:/i, ""); }).join("\n")]
+          .filter(Boolean).join("\n") + "\n" + new Array(31).join("=");
+      case "social": return socialText(b);
+      case "foot": return new Array(31).join("-") + "\n" + [socialText(b), b.t ? paraText(t(b.t)) : ""].filter(Boolean).join("\n\n");
     }
     return "";
   }

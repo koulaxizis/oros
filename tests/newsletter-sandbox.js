@@ -77,7 +77,7 @@ async function sandbox(data) {
   };
   ctx.window = ctx;
   vm.createContext(ctx);
-  for (const f of ["newsletter/core.js", "newsletter/render.js", "mail/compose.js", "mail/mime.js", "newsletter/engine.js"]) {
+  for (const f of ["newsletter/social.js", "newsletter/core.js", "newsletter/render.js", "mail/compose.js", "mail/mime.js", "newsletter/engine.js"]) {
     vm.runInContext(fs.readFileSync(path.join(ROOT, f), "utf8"), ctx, { filename: f });
   }
   // Mail's account and its sealed password, as Mail keeps them

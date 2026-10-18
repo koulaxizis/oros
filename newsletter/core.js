@@ -53,7 +53,8 @@
   var PLINK_PS = ["mlite", "mchimp", "brevo"];
   var OFF_STS = ["off", "bounce", "spam"];
   var ISSUE_STS = ["draft", "sched", "sending", "paused", "sent"];
-  var BLOCK_KINDS = ["h", "p", "img", "btn", "hr", "cols", "quote", "sp", "list"];
+  var BLOCK_KINDS = ["h", "p", "img", "btn", "hr", "cols", "quote", "sp", "list", "head", "foot", "social"];
+  var S = root.OrosNewsletterSocial || (typeof require === "function" ? require("./social.js") : null);
   var ALIGNS = ["left", "center", "right"];
   var HR_STYLES = ["solid", "dashed", "dotted"];
   var FONTS = ["sans", "serif", "mono"];
@@ -200,6 +201,8 @@
     };
     var sty = normSty(x.sty);
     if (sty) o.sty = sty;
+    var hf = normHf(x.hf);
+    if (hf) o.hf = hf;
     return keepExtra(x, o, LIST_KEYS);
   }
   // The web sign-up form + one-click unsubscribe kept by the relay
@@ -259,8 +262,9 @@
   // Fields a newer orOS may add to a block or a list: kept as they are
   // (short scalars only), so this device never strips them on a save.
   var NO_KEYS = { __proto__: 1, constructor: 1, prototype: 1 };
-  var BLOCK_KEYS = ["k", "t", "href", "a", "b", "f", "alt", "w", "h", "lv", "st", "full", "more", "c", "wd", "by", "ord", "al", "pad", "bg", "url"];
-  var LIST_KEYS = ["id", "m", "del", "name", "chan", "from", "fromName", "reply", "lang", "addr", "why", "theme", "color", "salt", "form", "sty"];
+  var BLOCK_KEYS = ["k", "t", "href", "a", "b", "f", "alt", "w", "h", "lv", "st", "full", "more", "c", "wd", "by", "ord", "al", "pad", "bg", "url",
+                    "lw", "sub", "links", "items", "sz"];
+  var LIST_KEYS = ["id", "m", "del", "name", "chan", "from", "fromName", "reply", "lang", "addr", "why", "theme", "color", "salt", "form", "sty", "hf"];
   function keepExtra(src, out, skip) {
     var n = 0;
     Object.keys(src).forEach(function (k) {
@@ -286,8 +290,11 @@
   function known(b) { return BLOCK_KINDS.indexOf(b.k) >= 0; }
   // Settings any block may carry (wave E1): alignment, padding (px,
   // top and bottom), background colour. Left out while default.
+  // header, footer and social icons are centred unless told otherwise
+  var CENTRED = { head: 1, foot: 1, social: 1 };
+  function alignOf(b) { return b.al || (CENTRED[b.k] ? "center" : "left"); }
   function blockLook(b, o) {
-    if (ALIGNS.indexOf(b.al) > 0) o.al = b.al;
+    if (ALIGNS.indexOf(b.al) >= 0 && b.al !== (CENTRED[o.k] ? "center" : "left")) o.al = b.al;
     var pad = clamp(b.pad, 0, 48, 0);
     if (pad) o.pad = pad;
     if (validColor(b.bg)) o.bg = b.bg.toLowerCase();
@@ -330,7 +337,7 @@
       case "cols": o = { k: "cols", a: multi(b.a, LIM.text), b: multi(b.b, LIM.text) }; break;
       case "img":
         o = { k: "img",
-              f: typeof b.f === "string" && /^\/internal\/Newsletter\/[A-Za-z0-9._-]{1,80}\.(jpg|png)$/.test(b.f) ? b.f : "",
+              f: imgPath(b.f),
               alt: oneLine(b.alt, 300), href: safeUrl(b.href),
               w: clamp(b.w, 1, 4000, 600), h: clamp(b.h, 1, 8000, 400), b: clamp(b.b, 0, 10000000, 0) };
         break;
@@ -340,9 +347,67 @@
         o = { k: "list", t: multi(b.t, LIM.text) };
         if (b.ord === 1) o.ord = 1;
         break;
+      // wave E2: header (logo, name, line under it, up to 4 links),
+      // footer (text + social icons), social icons
+      case "head":
+        o = { k: "head", f: imgPath(b.f), w: clamp(b.w, 1, 4000, 600), h: clamp(b.h, 1, 8000, 200), b: clamp(b.b, 0, 10000000, 0),
+              lw: clamp(b.lw, 40, 300, 140), t: oneLine(b.t, 120), sub: oneLine(b.sub, 200), links: links(b.links, 4) };
+        break;
+      case "foot":
+        o = { k: "foot", t: multi(b.t, 2000), items: socialItems(b.items), st: S.STYLES.indexOf(b.st) >= 0 ? b.st : "c" };
+        break;
+      case "social":
+        o = { k: "social", items: socialItems(b.items), st: S.STYLES.indexOf(b.st) >= 0 ? b.st : "c",
+              sz: S.SIZES.indexOf(b.sz) >= 0 ? b.sz : 32 };
+        break;
     }
     return keepExtra(b, blockLook(b, o), BLOCK_KEYS);
   }
+  function imgPath(f) { return typeof f === "string" && /^\/internal\/Newsletter\/[A-Za-z0-9._-]{1,80}\.(jpg|png)$/.test(f) ? f : ""; }
+  function links(v, max) {
+    return (Array.isArray(v) ? v : []).slice(0, max).map(function (x) {
+      return x && typeof x === "object" ? { t: oneLine(x.t, 60), href: safeUrl(x.href) } : null;
+    }).filter(Boolean);
+  }
+  // [{ n: network, href }]: one per network, in the order given
+  function socialItems(v) {
+    var seen = {};
+    return (Array.isArray(v) ? v : []).filter(function (x) {
+      if (!x || typeof x !== "object" || !S.NETS[x.n] || seen[x.n]) return false;
+      seen[x.n] = 1;
+      return true;
+    }).slice(0, S.ORDER.length).map(function (x) {
+      var u = safeUrl(x.href);
+      if (x.n !== "email" && /^mailto:/i.test(u)) u = "";
+      if (x.n === "email" && !/^mailto:/i.test(u) && validEmail(String(x.href || "").trim())) u = "mailto:" + String(x.href).trim();
+      return { n: x.n, href: u };
+    });
+  }
+  // The pictures blocks need: files on the orOS disk (with their size)
+  // and social icons ("icon:…", drawn when sending).
+  function picsOf(blocks) {
+    var seen = {}, out = [];
+    var add = function (f, n) { if (f && !seen[f]) { seen[f] = 1; out.push({ f: f, b: n || 0 }); } };
+    (blocks || []).forEach(function (b) {
+      if (b.k === "img" || b.k === "head") add(b.f, b.b);
+      if (b.k === "social" || b.k === "foot") {
+        b.items.forEach(function (x) { if (x.href) add(S.key(x.n, b.st, b.k === "foot" ? 24 : b.sz)); });
+      }
+    });
+    return out;
+  }
+  // A list's own header and footer, put into every new blank issue
+  // (wave E2). null while there are none.
+  function normHf(v) {
+    if (!v || typeof v !== "object") return null;
+    var o = {};
+    var hd = v.head && v.head.k === "head" ? normBlock(v.head) : null;
+    var ft = v.foot && v.foot.k === "foot" ? normBlock(v.foot) : null;
+    if (hd) o.head = hd;
+    if (ft) o.foot = ft;
+    return hd || ft ? o : null;
+  }
+
   // The list's look beyond theme + colour (wave E1). null = defaults.
   function normSty(v) {
     if (!v || typeof v !== "object") return null;
@@ -837,18 +902,21 @@
       var hasBody = v.fmt === "md" ? !!v.md.trim() : v.blocks.some(function (b) {
         if (!known(b)) return false;
         if (b.k === "img") return !!b.f;
+        if (b.k === "head" || b.k === "foot" || b.k === "social") return false;    // a frame, not the content
         return b.k !== "hr" && b.k !== "sp" && !!(b.t || b.a || (b.k === "cols" && b.b));
       });
       if (!hasBody) add("err", "noBody");
       if (v.fmt === "blocks" && v.blocks.some(function (b) {
-        return (b.k === "btn" && buttonsOf(b).some(function (x) { return !x.href || !x.t; })) || (b.k === "img" && !b.f);
+        return (b.k === "btn" && buttonsOf(b).some(function (x) { return !x.href || !x.t; })) || (b.k === "img" && !b.f) ||
+               ((b.k === "social" || b.k === "foot") && b.items.some(function (x) { return !x.href; })) ||
+               (b.k === "head" && b.links.some(function (x) { return !x.href || !x.t; }));
       })) {
         add("err", "badBlock");
       }
       // a block from a newer orOS: this device can't draw it, so it doesn't send it
       if (v.fmt === "blocks" && v.blocks.some(function (b) { return !known(b); })) add("err", "newerBlock");
       var text = v.fmt === "md" ? v.md : v.blocks.map(function (b) {
-        return known(b) ? [b.t, b.a, b.k === "cols" ? b.b : "", b.by].concat(buttonsOf(b).slice(1).map(function (x) { return x.t; })).join(" ") : "";
+        return known(b) ? [b.t, b.a, b.k === "cols" ? b.b : "", b.by, b.k === "head" ? b.sub : ""].concat(buttonsOf(b).slice(1).map(function (x) { return x.t; })).join(" ") : "";
       }).join(" ");
       if (badPlaceholders(text + " " + v.subj)) add("warn", "placeholder");
     });
@@ -857,7 +925,7 @@
     if (!info.chan) add("err", "noChan");
     // Brevo's API can't carry pictures inside a message (no Content-ID)
     else if (isApi(info.chan) && info.chan.preset === "brevo" &&
-             [x].concat(x.l2 ? [x.l2] : []).some(function (v) { return v.fmt === "blocks" && v.blocks.some(function (b) { return b.k === "img" && b.f; }); })) {
+             [x].concat(x.l2 ? [x.l2] : []).some(function (v) { return v.fmt === "blocks" && picsOf(v.blocks).length > 0; })) {
       add("err", "apiImg");
     }
     if (info.inbox === false) add("warn", "noInbox");
@@ -1069,7 +1137,7 @@
   var api = {
     STORAGE_KEY: STORAGE_KEY, LIM: LIM, PRESETS: PRESETS, MAIL_DEFAULTS: MAIL_DEFAULTS, SECS: SECS,
     THEMES: THEMES, FONTS: FONTS, BTN_SHAPES: BTN_SHAPES, HEAD_SIZES: HEAD_SIZES, ALIGNS: ALIGNS, HR_STYLES: HR_STYLES,
-    BLOCK_KINDS: BLOCK_KINDS, knownBlock: known, buttonsOf: buttonsOf, normSty: normSty,
+    BLOCK_KINDS: BLOCK_KINDS, knownBlock: known, alignOf: alignOf, picsOf: picsOf, normHf: normHf, socialItems: socialItems, buttonsOf: buttonsOf, normSty: normSty,
     BASES: BASES, OFF_STS: OFF_STS, LOCK_STALE: LOCK_STALE, SOFT_LIMIT: SOFT_LIMIT,
     validEmail: validEmail, normEmail: normEmail, emailKey: emailKey, validHost: validHost, validColor: validColor,
     safeUrl: safeUrl, fold: fold, hash53: hash53, subId: subId, suppHash: suppHash, token: token, listCode: listCode,

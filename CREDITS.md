@@ -62,7 +62,10 @@ Weather and Quote) reuse path data from [Feather Icons](https://feathericons.com
 © Cole Bemis, [MIT](https://github.com/feathericons/feather/blob/main/LICENSE).
 Atelier's offline icon library (`atelier/library/icons.js`) holds 365 outline
 icons from [Tabler Icons](https://tabler.io/icons) 3.49.0, © 2020-2026 Paweł Kuna,
-MIT (notice in the file). The app icons and all other artwork are drawn for orOS.
+MIT (notice in the file). Newsletter's social icons (`newsletter/social.js`) use
+path data from [Simple Icons](https://simpleicons.org/) 16.35.0, Simple Icons
+collaborators, [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/); brand
+names and logos belong to their owners. The app icons and all other artwork are drawn for orOS.
 
 ## Word lists and data
 

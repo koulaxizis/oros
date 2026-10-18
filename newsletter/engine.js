@@ -291,12 +291,17 @@
   // ---------- pictures (inline in the message) ----------
   var imgData = {};        // path → { bin, type, url (data:) } this window
   function loadImages(x, fs) {
-    var paths = R.blocksOf(x).concat(x.l2 ? R.blocksOf(x.l2) : [])
-      .filter(function (b) { return b.k === "img" && b.f; }).map(function (b) { return b.f; });
+    var paths = C.picsOf(R.blocksOf(x).concat(x.l2 ? R.blocksOf(x.l2) : [])).map(function (q) { return q.f; });
     var todo = paths.filter(function (p, i) { return paths.indexOf(p) === i && !imgData[p]; });
     if (!todo.length) return Promise.resolve(true);
-    if (!fs) return Promise.resolve(false);
-    return Promise.all(todo.map(function (p) {
+    var S = root.OrosNewsletterSocial;
+    // social icons are drawn here (wave E2); files come from the orOS disk
+    var icons = todo.filter(function (p) { return /^icon:/.test(p); }), files = todo.filter(function (p) { return !/^icon:/.test(p); });
+    var drawn = Promise.all(icons.map(function (p) {
+      return S ? S.draw(p).then(function (d) { imgData[p] = d; return true; }, function () { return false; }) : Promise.resolve(false);
+    }));
+    if (files.length && !fs) return drawn.then(function () { return false; });
+    return Promise.all([drawn].concat(files.map(function (p) {
       return fs.readBlob(p).then(function (blob) { return blob.arrayBuffer(); }).then(function (buf) {
         var u8 = new Uint8Array(buf), bin = "";
         for (var i = 0; i < u8.length; i += 0x8000) bin += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000));
@@ -304,9 +309,9 @@
         imgData[p] = { bin: bin, type: type, url: "data:" + type + ";base64," + btoa(bin) };
         return true;
       })["catch"](function () { return false; });
-    })).then(function (r) { return r.every(Boolean); });
+    }))).then(function (r) { return r[0].every(Boolean) && r.slice(1).every(Boolean); });
   }
-  function cidOf(path) { return path.split("/").pop().replace(/[^A-Za-z0-9._-]/g, "") + "@oros"; }
+  function cidOf(path) { return path.split("/").pop().replace(/[^A-Za-z0-9._-]/g, "") + "@oros"; }   // "icon:x:c:32" → "iconxc32@oros"
   // One message for one subscriber (or a test: opts.test + opts.to) → { bin, … }
   function buildFor(x, l, s, opts) {
     opts = opts || {};

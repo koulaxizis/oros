@@ -533,6 +533,7 @@ var PRECACHE_URLS = [
   "newsletter/",
   "newsletter/index.html",
   "newsletter/newsletter.css",
+  "newsletter/social.js",
   "newsletter/core.js",
   "newsletter/render.js",
   "newsletter/engine.js",
