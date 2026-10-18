@@ -1,0 +1,19 @@
+# Bildschirmfoto
+Mach ein Bild von deinem ganzen Bildschirm, einem Fenster oder einem Browser-Tab, schneide es zu und behalte es in Dateien › Pictures. Funktioniert auf einem Computer mit Chrome, Edge oder Firefox; Handys und Tablets erlauben einer Webseite nicht, den Bildschirm aufzunehmen.
+
+## Ein Bildschirmfoto machen
+- Drück `Wählen, was aufgenommen wird`. Dein Browser fragt, was du freigibst: den ganzen Bildschirm, ein Fenster oder einen Tab, auch den Tab von orOS selbst.
+- Die Live-Ansicht zeigt, was du freigibst. Drück `Aufnehmen`.
+- Mit einer Verzögerung (3, 5 oder 10 Sekunden) hast du Zeit, ein Menü zu öffnen oder zu einem anderen Fenster zu wechseln, bevor das Bild gemacht wird.
+- Solange du freigibst, kannst du so viele Bilder machen, wie du willst. `Freigabe beenden` beendet sie, ebenso der Stopp-Knopf des Browsers.
+
+## Zuschneiden, speichern und kopieren
+- Zieh über das Bild, um nur einen Teil davon zu behalten. `Ganzes Bild` holt alles zurück.
+- `In Pictures speichern` speichert ein PNG in Dateien › Pictures, benannt nach Datum und Uhrzeit.
+- Mit `Nach dem Speichern im Fotolabor öffnen` öffnet sich das Bild im [Fotolabor](app:photolab), um darauf zu zeichnen oder Text hinzuzufügen.
+- `Kopieren` legt das Bild in die Zwischenablage, um es in einer anderen App einzufügen.
+- `Noch eins` geht zurück zur Live-Ansicht; `Verwerfen` wirft das Bild weg.
+
+## Privatsphäre
+- Nichts verlässt dieses Gerät. orOS sieht nur, was du freigibst, und nur solange du es freigibst.
+- Ist der orOS-Sync in den [Einstellungen](app:settings) eingeschaltet, folgt dir dein Ordner Pictures verschlüsselt auf deine anderen Geräte, wie jede andere Datei.

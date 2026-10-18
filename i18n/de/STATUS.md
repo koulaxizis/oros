@@ -2,8 +2,8 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 32200 of 32200 (100%)
-- Help pages: 144 of 144 (100%)
+- Strings: 32234 of 32234 (100%)
+- Help pages: 145 of 145 (100%)
 - Shown in the language list: yes
 
 Apps marked "English for now" do not load language packs yet: their
@@ -12,7 +12,7 @@ text is still written in the code. They switch over wave by wave
 
 | App | Translated | Strings |
 |---|---|---|
-| assistant | 100% | 492 / 492 |
+| assistant | 100% | 493 / 493 |
 | atelier | 100% | 1210 / 1210 |
 | aura | 100% | 84 / 84 |
 | baby | 100% | 324 / 324 |
@@ -24,6 +24,7 @@ text is still written in the code. They switch over wave by wave
 | budget | 100% | 555 / 555 |
 | calculator | 100% | 136 / 136 |
 | calendar | 100% | 370 / 370 |
+| capture | 100% | 31 / 31 |
 | cardkit | 100% | 9 / 9 |
 | certificates | 100% | 391 / 391 |
 | characters | 100% | 89 / 89 |
@@ -114,7 +115,7 @@ text is still written in the code. They switch over wave by wave
 | settings | 100% | 515 / 515 |
 | share | 100% | 179 / 179 |
 | shelf | 100% | 291 / 291 |
-| shell | 100% | 824 / 824 |
+| shell | 100% | 825 / 825 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 49 / 49 |
 | sky | 100% | 383 / 383 |
@@ -129,7 +130,7 @@ text is still written in the code. They switch over wave by wave
 | stickies | 100% | 124 / 124 |
 | stock | 100% | 614 / 614 |
 | storage | 100% | 179 / 179 |
-| studio | 100% | 381 / 381 |
+| studio | 100% | 382 / 382 |
 | sudoku | 100% | 139 / 139 |
 | television | 100% | 82 / 82 |
 | tetris | 100% | 59 / 59 |

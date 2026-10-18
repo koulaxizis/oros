@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.21.00
+- New app Screen Capture (Image): take a picture of your screen, a window or a tab, crop it, and save it in Files › Pictures or copy it. Works on a computer; phones and tablets do not allow it.
+
 ## Version 3.20.00
 - Studio: NULL Drum Machine, the first NULL JSFX instrument, plays instrument tracks: ten drum voices, a 16-step sequencer with eleven patterns, and its own pattern editor.
 
