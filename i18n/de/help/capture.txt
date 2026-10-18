@@ -1,0 +1,28 @@
+# Bildschirmfoto
+Mach ein Bild von deinem ganzen Bildschirm, einem Fenster oder einem Browser-Tab, schneide es zu und behalte es in Dateien › Pictures, oder nimm es als Video in Dateien › Videos auf. Funktioniert auf einem Computer mit Chrome, Edge oder Firefox; Handys und Tablets erlauben einer Webseite nicht, den Bildschirm aufzunehmen.
+
+## Ein Bildschirmfoto machen
+- Drück `Wählen, was aufgenommen wird`. Dein Browser fragt, was du freigibst: den ganzen Bildschirm, ein Fenster oder einen Tab, auch den Tab von orOS selbst.
+- Die Live-Ansicht zeigt, was du freigibst. Drück `Aufnehmen`.
+- Mit einer Verzögerung (3, 5 oder 10 Sekunden) hast du Zeit, ein Menü zu öffnen oder zu einem anderen Fenster zu wechseln, bevor das Bild gemacht wird.
+- Solange du freigibst, kannst du so viele Bilder machen, wie du willst. `Freigabe beenden` beendet sie, ebenso der Stopp-Knopf des Browsers.
+
+## Zuschneiden, speichern und kopieren
+- Zieh über das Bild, um nur einen Teil davon zu behalten. `Ganzes Bild` holt alles zurück.
+- `In Pictures speichern` speichert ein PNG in Dateien › Pictures, benannt nach Datum und Uhrzeit.
+- Mit `Nach dem Speichern im Fotolabor öffnen` öffnet sich das Bild im [Fotolabor](app:photolab), um darauf zu zeichnen oder Text hinzuzufügen.
+- `Kopieren` legt das Bild in die Zwischenablage, um es in einer anderen App einzufügen.
+- `Noch eins` geht zurück zur Live-Ansicht; `Verwerfen` wirft das Bild weg.
+
+## Ein Video aufnehmen
+- Wähl oben `Aufnahme` und dann `Wählen, was aufgenommen wird`.
+- `Ton des Bildschirms oder Tabs aufnehmen` nimmt auf, was du hörst. In Chrome und Edge hak in der Frage des Browsers die Audiofreigabe an; ein Tab oder der ganze Bildschirm kann Ton freigeben, ein einzelnes Fenster nicht.
+- `Mikrofon aufnehmen` fügt deine Stimme hinzu. Beide Töne werden zu einer Spur gemischt.
+- Drück `Aufnahme starten` (nach der Verzögerung, falls gewählt). Mit `Pause` und `Weiter` lässt du einen Teil aus; `Aufnahme beenden` beendet sie. Während der Aufnahme kannst du auch Bildschirmfotos machen.
+- Sieh dir das Video an und drück `In Videos speichern`. Es wird als MP4 gespeichert, wo der Browser das kann, sonst als WebM.
+- Mit `Nach dem Speichern in Montage öffnen` öffnet sich das Video in [Montage](app:montage), um es zu schneiden oder Musik und Titel hinzuzufügen.
+- Eine Aufnahme bleibt im Speicher, bis du sie speicherst, und stoppt bei 1 GB von selbst. Schließt du die App vorher, ist sie verloren.
+
+## Privatsphäre
+- Nichts verlässt dieses Gerät. orOS sieht nur, was du freigibst, und nur solange du es freigibst.
+- Ist der orOS-Sync in den [Einstellungen](app:settings) eingeschaltet, folgen dir deine Ordner Pictures und Videos verschlüsselt auf deine anderen Geräte, wie jede andere Datei.

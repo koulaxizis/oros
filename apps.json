@@ -434,6 +434,14 @@
       "type": "internal"
     },
     {
+      "id": "capture",
+      "name": "Screen Capture",
+      "category": "Image",
+      "icon": "capture",
+      "url": "capture/",
+      "type": "internal"
+    },
+    {
       "id": "pixel",
       "name": "Pixel Avatar",
       "category": "Image",
