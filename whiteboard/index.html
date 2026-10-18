@@ -7,7 +7,7 @@
   <script>if (window.top === window.self && !/[?&]standalone\b/.test(location.search)) location.replace("../?open=whiteboard" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Whiteboard · orOS</title>
-  <link rel="stylesheet" href="app.css?v=3.31.00">
+  <link rel="stylesheet" href="app.css?v=3.32.00">
 </head>
 <body>
 
@@ -20,6 +20,7 @@
     <button type="button" class="icon-btn" id="redo-btn"></button>
     <button type="button" class="icon-btn" id="pic-btn"></button>
     <button type="button" class="icon-btn" id="export-btn" aria-haspopup="dialog"></button>
+    <button type="button" class="icon-btn" id="more-btn" aria-haspopup="menu"></button>
   </header>
 
   <main id="stage">
@@ -33,15 +34,18 @@
       <button type="button" class="icon-btn" id="zoom-in"></button>
       <button type="button" class="icon-btn" id="fit-btn"></button>
     </div>
+    <div id="vote-bar" class="bar vote" role="toolbar" hidden></div>
+    <div id="timer" class="bar timer" role="timer" hidden></div>
     <p id="hint" class="hint" hidden></p>
   </main>
 
   <div id="live" class="sr-only" aria-live="polite"></div>
   <div id="toast" role="status"></div>
 
-  <script src="../i18n.js?v=3.31.00" data-app="whiteboard"></script>
-  <script src="core.js?v=3.31.00"></script>
-  <script src="app.js?v=3.31.00"></script>
+  <script src="../i18n.js?v=3.32.00" data-app="whiteboard"></script>
+  <script src="core.js?v=3.32.00"></script>
+  <script src="kit.js?v=3.32.00"></script>
+  <script src="app.js?v=3.32.00"></script>
 
 </body>
 </html>
