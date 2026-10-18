@@ -1304,5 +1304,15 @@ orosPack("de", "atelier", {
  "lnk.ph": "https://…",
  "lnk.save": "Link speichern",
  "lnk.remove": "Link entfernen",
- "lnk.bad": "Das ist kein verwendbarer Link."
+ "lnk.bad": "Das ist kein verwendbarer Link.",
+ "ctx.blend": "Überblenden",
+ "bl.steps": "Schritte",
+ "bl.make": "Überblenden",
+ "bl.update": "Aktualisieren",
+ "bl.release": "Lösen",
+ "bl.hint": "Formen in gleichen Schritten von einer Form zur anderen: Lage, Größe, Umriss und Farben. Eine der beiden geändert? Tippe auf Aktualisieren.",
+ "bl.gone": "Eine der beiden Formen dieser Überblendung gibt es nicht mehr. Lösen behält die Schritte als einfache Formen.",
+ "bl.made": "{n} Schritte hinzugefügt",
+ "bl.released": "Die Schritte sind jetzt einfache Formen",
+ "bl.full": "Dieses Design hat zu viele Elemente für eine Überblendung."
 });

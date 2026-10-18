@@ -881,6 +881,8 @@
       c.id = M.newId("it"); c.m = nw; c.pg = pg; c.z = z++;
       c.x += off; c.y += off; c.lock = 0;
       if (c.ax) delete c.ax.bg;
+      // a copy of a blend step is a plain shape (Update would remove it)
+      if (c.ext && c.ext.bl) { delete c.ext.bl; if (!Object.keys(c.ext).length) delete c.ext; }
       var n = M.normItem(c);
       if (n) { d.items.push(n); out.push(n.id); }
     });
