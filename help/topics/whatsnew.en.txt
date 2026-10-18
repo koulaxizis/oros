@@ -4,6 +4,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 ## Version 3.20.00
 - Studio: NULL Drum Machine, the first NULL JSFX instrument, plays instrument tracks: ten drum voices, a 16-step sequencer with eleven patterns, and its own pattern editor.
 
+## Version 3.19.01
+- Updates are much lighter: orOS now downloads only the files that changed, not its whole offline copy (46 MB), so it opens faster after an update and uses far less mobile data.
+
 ## Version 3.19.00
 - German is now complete: the Info window, Ctrl+K, profiles, reminders, Flashcards, Word Search and the shared dialogs are in German too.
 
