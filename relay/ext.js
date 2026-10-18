@@ -34,6 +34,10 @@
 //   Odoo https://<host><base>/json/2<path> (Bearer, X-Odoo-Database = db),
 //   read-only: search_read with fixed filters and fields (POSTs that read)
 //   req: { m: "GET" | "PUT" | "POST", path, body? (JSON text) }
+//   WooCommerce only: { m: "GET", path: "/wp-content/uploads/…", img: 1 } = a
+//   product picture from the shop's own address, without the keys
+//   (Newsletter, when the shop doesn't let a browser read its pictures);
+//   answer { status, type, b64 } or { status, err: "type" | "too-big" }
 //   WooCommerce: https://<host><base>/wp-json/wc/v3<path>
 //   timologisi.online (Greek e-invoicing provider, fixed hosts):
 //     https://provider-dev.timologisi.online/api/v1/Provider<path> (test)
@@ -51,6 +55,7 @@ export const EXT_LIMITS = {
   reqBytes: 16 * 1024,              // one request body
   bodyOut: 2 * 1024 * 1024,         // one response body (a page of 100 products)
   totalOut: 8 * 1024 * 1024,        // all response bodies of one call
+  imgOut: 2 * 1024 * 1024,          // one product picture (bytes, before base64)
   concurrency: 4,
   timeout: 20000,                   // ms, per request
   budget: 28000                     // ms, the whole call
@@ -173,7 +178,10 @@ export const PLATFORMS = {
       ["GET", /^\/orders$/, q({ status: WORDS, after: DT, modified_after: DT }), null],
       ["GET", /^\/orders\/[0-9]{1,12}$/, null, null],
       ["PUT", /^\/orders\/[0-9]{1,12}$/, null, { status: "status" }],
-      ["POST", /^\/orders\/[0-9]{1,12}\/notes$/, null, { note: "text", customer_note: "bool" }]
+      ["POST", /^\/orders\/[0-9]{1,12}\/notes$/, null, { note: "text", customer_note: "bool" }],
+      // Newsletter wave E4: the shop's customers become subscribers
+      ["GET", /^\/customers$/, q({ role: /^(all|customer)$/ }), null],
+      ["GET", /^\/data\/currencies\/current$/, null, null]
     ]
   },
   tol: {
@@ -381,12 +389,25 @@ function okVal(kind, v) {
   return false;
 }
 
+// A WooCommerce product picture (Newsletter wave E4, same rule as
+// links/core.js checkImg): { m: "GET", path: "/wp-content/uploads/…", img: 1 }
+// from the shop's own address, fetched without the keys; the answer is
+// the picture itself (base64), only JPEG, PNG, GIF or WebP.
+const IMG_PATH = /^\/wp-content\/uploads(\/([A-Za-z0-9_~-]|%[89A-Fa-f][0-9A-Fa-f])([A-Za-z0-9._~-]|%[89A-Fa-f][0-9A-Fa-f]){0,150}){1,6}\.(jpe?g|png|gif|webp)$/i;
+const IMG_TYPE = /^image\/(jpeg|png|gif|webp)\s*(;|$)/i;
+function checkImg(p, r) {
+  if (p !== "woo" || r.img !== 1 || r.m !== "GET" || r.body !== undefined) return "path";
+  if (typeof r.path !== "string" || r.path.length > 400 || !IMG_PATH.test(r.path) || /\.\./.test(r.path)) return "path";
+  return "";
+}
+
 // "" when the request may go, else the reason. body is an object here
 // (checkReq in links/core.js takes the same shape).
 export function checkExtReq(p, r) {
   const pl = PLATFORMS[p];
   if (!pl || !Object.prototype.hasOwnProperty.call(PLATFORMS, p)) return "p";
   if (!r || typeof r !== "object") return "req";
+  if (r.img !== undefined) return checkImg(p, r);
   if (r.m !== "GET" && r.m !== "PUT" && r.m !== "POST") return "method";
   if (typeof r.path !== "string" || r.path.length > 400 || r.path[0] !== "/") return "path";
   if (/[#\\\s@]|%(?!2B|2F|3D)/.test(r.path) || r.path.indexOf("//") >= 0 || /(^|\/)\.\.?(\/|$|\?)/.test(r.path)) return "path";
@@ -452,16 +473,51 @@ export function validExt(b) {
 }
 
 // The address, re-checked after URL parsing (catches any normalisation).
-function target(b, path) {
+// img: a picture's path is from the site's address, not the API root.
+function target(b, path, img) {
   const pl = PLATFORMS[b.p];
   const fixed = !!(pl.env || pl.host || pl.hostOf);
   const host = pl.env ? pl.env[b.env] : pl.host ? pl.host : pl.hostOf ? pl.hostOf(b) : b.host.toLowerCase();
   if (!host) return null;
-  const baseHref = "https://" + host + (fixed ? "" : b.base) + pl.root;
+  const baseHref = "https://" + host + (fixed ? "" : b.base) + (img ? "" : pl.root);
   const u = new URL(baseHref + path);
   if (u.protocol !== "https:" || u.port !== "" || u.username || u.password) return null;
   if (u.hostname !== host || u.href !== baseHref + path) return null;
   return u.href;
+}
+
+async function readBytes(res, max) {
+  const reader = res.body ? res.body.getReader() : null;
+  if (!reader) return new Uint8Array(0);
+  const chunks = [];
+  let size = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.length;
+    if (size > max) { try { await reader.cancel(); } catch (e) {} return null; }
+    chunks.push(value);
+  }
+  const all = new Uint8Array(size);
+  let o = 0;
+  for (const c of chunks) { all.set(c, o); o += c.length; }
+  return all;
+}
+function b64(bytes) {
+  let s = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  return btoa(s);
+}
+// One product picture: no keys, no cookies, only an image back.
+async function oneImg(url, fetchFn, signal, room) {
+  const res = await fetchFn(url, { method: "GET", headers: { Accept: "image/webp,image/png,image/jpeg,image/gif", "User-Agent": "orOS-Connect/1.0 (+https://useoros.online)" },
+                                   redirect: "manual", signal });
+  if (res.status < 200 || res.status > 299) { try { if (res.body) await res.body.cancel(); } catch (e) {} return { status: res.status }; }
+  const type = (res.headers.get("Content-Type") || "").trim();
+  if (!IMG_TYPE.test(type)) { try { if (res.body) await res.body.cancel(); } catch (e) {} return { status: res.status, err: "type" }; }
+  const bytes = room > 0 ? await readBytes(res, room) : null;
+  if (!bytes) { try { if (res.body) await res.body.cancel(); } catch (e) {} return { status: res.status, err: "too-big" }; }
+  return { status: res.status, type: type.split(";")[0].toLowerCase(), b64: b64(bytes), n: bytes.length };
 }
 
 async function readCapped(res, max) {
@@ -495,8 +551,27 @@ export async function runExt(b, fetchFn, now) {
     const left = lim(b.p, "budget") - (now() - start);
     // never sent: a code of its own, so a caller knows a write did not happen
     if (left <= 0) { out[i] = { err: "skipped" }; return; }
-    const url = target(b, r.path);
+    const url = target(b, r.path, r.img === 1);
     if (!url) { out[i] = { err: "network" }; return; }
+    if (r.img === 1) {
+      const ctl = new AbortController();
+      const timer = setTimeout(() => ctl.abort(), Math.min(lim(b.p, "timeout"), left));
+      const room = Math.max(0, Math.min(EXT_LIMITS.imgOut, Math.floor((EXT_LIMITS.totalOut - outBytes) * 3 / 4)));
+      outBytes += room;
+      try {
+        const x = await oneImg(url, fetchFn, ctl.signal, room);
+        outBytes -= room;
+        outBytes += x.b64 ? x.b64.length : 0;
+        delete x.n;
+        out[i] = x;
+      } catch (e) {
+        outBytes -= room;
+        out[i] = { err: ctl.signal.aborted ? "timeout" : "network" };
+      } finally {
+        clearTimeout(timer);
+      }
+      return;
+    }
     const headers = { Accept: "application/json", "User-Agent": "orOS-Connect/1.0 (+https://useoros.online)" };
     headers[auth[0]] = auth[1];
     const extra = pl.extraOf ? pl.extraOf(b) : pl.extra;

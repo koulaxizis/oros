@@ -28,6 +28,8 @@
 // Platforms with fixed hosts (timologisi.online, MailerLite, Mailchimp,
 // Brevo) take a key instead of a site; the relay gets the same env or
 // key, never a host. Mailchimp doesn't answer browsers: always relay.
+// Shopify (Storefront API) answers browsers and the relay doesn't know
+// it: never relay.
 // ============================================================
 (function (root) {
   "use strict";
@@ -347,7 +349,7 @@
       var parts = L.siteParts(a.site);
       body.host = parts.host; body.base = parts.base; body.ck = keys.ck; body.cs = keys.cs;
     }
-    body.reqs = reqs.map(function (r) { var o = { m: r.m, path: r.path }; if (r.body) o.body = JSON.stringify(r.body); return o; });
+    body.reqs = reqs.map(function (r) { var o = { m: r.m, path: r.path }; if (r.body) o.body = JSON.stringify(r.body); if (r.img === 1) o.img = 1; return o; });
     return withTimeout(timeoutOf(a.p) + 30000, function (signal) {
       return fetch(relayUrl() + "/v1", {
         method: "POST", mode: "cors", credentials: "omit", cache: "no-store", referrerPolicy: "no-referrer",
@@ -355,7 +357,11 @@
       }).then(function (res) { return res.json(); });
     }).then(function (j) {
       if (!j || !j.ok || !j.data || !Array.isArray(j.data.res)) throw err("relay");
-      return j.data.res.map(function (x) { return x && x.err ? { status: x.status || 0, err: x.err } : parse(x.status, x.body); });
+      return j.data.res.map(function (x) {
+        if (x && x.err) return { status: x.status || 0, err: x.err };
+        if (x && typeof x.b64 === "string") return { status: x.status, type: String(x.type || ""), b64: x.b64 };   // a product picture
+        return parse(x.status, x.body);
+      });
     }, function (e) { if (e && e.code) throw e; throw err("relay"); });
   }
   // call(id, reqs) → Promise<[{ status, data } | { status, err }]>, in
@@ -368,6 +374,11 @@
     for (var i = 0; i < reqs.length; i++) if (L.checkReq(a.p, reqs[i])) return Promise.reject(err("denied"));
     if (typeof navigator !== "undefined" && navigator.onLine === false) return Promise.reject(err("offline"));
     var pl = L.PLATFORMS[a.p];
+    // Product pictures (WooCommerce, Newsletter wave E4) only come this
+    // way when the app could not read them itself: straight to the relay.
+    var imgs = reqs.filter(function (r) { return r.img === 1; }).length;
+    if (imgs && imgs !== reqs.length) return Promise.reject(err("bad"));
+    if (imgs) return openLocal(id).then(function (local) { if (!local) throw err("keys"); return viaRelay(a, local.keys, reqs); });
     var writes = reqs.some(function (r) { return r.m !== "GET"; });
     // a write that must happen once travels alone (the relay refuses more)
     if (pl.once && writes && reqs.length > 1) return Promise.reject(err("bad"));
@@ -383,7 +394,7 @@
     }
     return openLocal(id).then(function (local) {
       if (!local) throw err("keys");
-      var keys = local.keys, mode = pl.relayOnly ? "relay" : (prefs().mode[id] || "direct");
+      var keys = local.keys, mode = pl.relayOnly ? "relay" : pl.direct ? "direct" : (prefs().mode[id] || "direct");
       function all(how) {
         return reqs.reduce(function (p, r) {
           return p.then(function (out) { return direct(a, keys, r, how).then(function (x) { out.push(x); return out; }); });
@@ -409,6 +420,7 @@
       }, function (e) {
         if (once) throw err("unknown");            // it may have arrived: the app checks before trying again
         if (e && e.name === "AbortError") throw err("network");
+        if (pl.direct) throw err("network");       // a platform the relay doesn't know (Shopify)
         return relay();                            // the browser could not reach it: CORS or firewall
       });
     });

@@ -77,7 +77,23 @@ const CASES = [
   [{ m: "GET", path: "/products/12/variations?per_page=100" }, ""],
   [{ m: "GET", path: "/orders?status=processing,on-hold&after=2026-09-13T00:00:00&orderby=date&order=desc" }, ""],
   [{ m: "GET", path: "/orders/55" }, ""],
-  [{ m: "GET", path: "/customers" }, "path"],
+  [{ m: "GET", path: "/customers" }, ""],
+  [{ m: "GET", path: "/customers?role=customer&per_page=100&page=2&orderby=id&order=asc" }, ""],
+  [{ m: "GET", path: "/customers?role=administrator" }, "query"],
+  [{ m: "GET", path: "/customers/5" }, "path"],
+  [{ m: "PUT", path: "/customers", body: { email: "a@b.gr" } }, "path"],
+  [{ m: "GET", path: "/data/currencies/current" }, ""],
+  [{ m: "GET", path: "/data/currencies/current?x=1" }, "query"],
+  // product pictures (Newsletter wave E4): the shop's uploads only, no keys
+  [{ m: "GET", path: "/wp-content/uploads/2026/05/mug-300x300.jpg", img: 1 }, ""],
+  [{ m: "GET", path: "/wp-content/uploads/2026/05/%CE%BA%CE%BF%CF%8D%CF%80%CE%B1.webp", img: 1 }, ""],
+  [{ m: "GET", path: "/wp-content/uploads/%2E%2E/%2E%2E/x.jpg", img: 1 }, "path"],
+  [{ m: "GET", path: "/wp-content/uploads/../x.jpg", img: 1 }, "path"],
+  [{ m: "GET", path: "/wp-content/uploads/a.php", img: 1 }, "path"],
+  [{ m: "GET", path: "/wp-content/uploads/a.jpg?x=1", img: 1 }, "path"],
+  [{ m: "GET", path: "/wp-content/plugins/a.jpg", img: 1 }, "path"],
+  [{ m: "GET", path: "/wp-content/uploads/a.jpg", img: true }, "path"],
+  [{ m: "PUT", path: "/wp-content/uploads/a.jpg", img: 1, body: { a: 1 } }, "path"],
   [{ m: "GET", path: "/products/../customers" }, "path"],
   [{ m: "GET", path: "/products/%2e%2e/x" }, "path"],
   [{ m: "GET", path: "//evil.com/products" }, "path"],
@@ -155,13 +171,37 @@ test("relay call: URL under the shop's API root, Basic auth, no redirects, keys 
   assert.equal(JSON.stringify(r.json).indexOf(CK), -1);
   // a refused request never leaves
   const g = mock();
-  const bad = await relay(ext({ reqs: [{ m: "GET", path: "/customers" }] }), g);
+  const bad = await relay(ext({ reqs: [{ m: "GET", path: "/customers/5" }] }), g);
   assert.equal(bad.status, 400);
   assert.equal(g.calls.length, 0);
   // network errors carry no message
   const h = mock(() => { throw new Error("connect failed to https://" + CK); });
   const ne = await relay(ext({}), h);
   assert.deepEqual(ne.json.data.res[0], { err: "network" });
+});
+
+test("relay call: a product picture comes from the shop's uploads, without the keys (Newsletter E4)", async () => {
+  const png = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10, 1, 2, 3]);
+  const f = mock((url) => url.endsWith(".png")
+    ? new Response(png, { status: 200, headers: { "Content-Type": "image/png" } })
+    : new Response("<html></html>", { status: 200, headers: { "Content-Type": "text/html" } }));
+  const r = await relay(ext({ base: "/shop", reqs: [
+    { m: "GET", path: "/wp-content/uploads/2026/05/a.png", img: 1 },
+    { m: "GET", path: "/wp-content/uploads/2026/05/b.jpg", img: 1 }
+  ] }), f);
+  assert.equal(r.status, 200);
+  assert.equal(f.calls[0].url, "https://shop.example.gr/shop/wp-content/uploads/2026/05/a.png");
+  assert.equal(f.calls[0].init.redirect, "manual");
+  assert.equal(f.calls[0].init.headers.Authorization, undefined);
+  assert.deepEqual(r.json.data.res[0], { status: 200, type: "image/png", b64: Buffer.from(png).toString("base64") });
+  assert.deepEqual(r.json.data.res[1], { status: 200, err: "type" });
+  assert.equal(JSON.stringify(r.json).indexOf(CK), -1);
+  // anything else is refused before it leaves
+  const g = mock();
+  assert.equal((await relay(ext({ reqs: [{ m: "GET", path: "/wp-content/uploads/a.php", img: 1 }] }), g)).status, 400);
+  assert.equal((await relay(ext({ p: "mlite", host: undefined, base: undefined, ck: undefined, cs: undefined, key: "x".repeat(30),
+    reqs: [{ m: "GET", path: "/wp-content/uploads/a.png", img: 1 }] }), g)).status, 400);
+  assert.equal(g.calls.length, 0);
 });
 
 test("relay call: writes go one at a time, in order", async () => {

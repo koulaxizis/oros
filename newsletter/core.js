@@ -51,12 +51,14 @@
   var SECS = { 465: "tls", 587: "starttls" };
   var THEMES = ["classic", "warm", "dark", "plain"];
   var BASES = ["consent", "customer", "optin"];
-  var SRCS = ["manual", "paste", "csv", "contacts", "mail", "crm", "form", "platform"];
+  var SRCS = ["manual", "paste", "csv", "contacts", "mail", "crm", "form", "platform", "shop"];
   var PLINK_PS = ["mlite", "mchimp", "brevo"];
   var OFF_STS = ["off", "bounce", "spam"];
   var ISSUE_STS = ["draft", "sched", "sending", "paused", "sent"];
   var BLOCK_KINDS = ["h", "p", "img", "btn", "hr", "cols", "quote", "sp", "list", "head", "foot", "social",
-                     "imgtxt", "cols3", "gallery", "video", "table", "event"];
+                     "imgtxt", "cols3", "gallery", "video", "table", "event", "prod"];
+  // shops a product block can come from (wave E4: links/ accounts)
+  var SHOP_PS = ["woo", "shopify"];
   var S = root.OrosNewsletterSocial || (typeof require === "function" ? require("./social.js") : null);
   var ALIGNS = ["left", "center", "right"];
   var HR_STYLES = ["solid", "dashed", "dotted"];
@@ -266,7 +268,7 @@
   // (short scalars only), so this device never strips them on a save.
   var NO_KEYS = { __proto__: 1, constructor: 1, prototype: 1 };
   var BLOCK_KEYS = ["k", "t", "href", "a", "b", "f", "alt", "w", "h", "lv", "st", "full", "more", "c", "wd", "by", "ord", "al", "pad", "bg", "url",
-                    "lw", "sub", "links", "items", "sz", "hd", "side", "bt", "bh", "per", "rows", "d", "tm", "te", "loc", "ics"];
+                    "lw", "sub", "links", "items", "sz", "hd", "side", "bt", "bh", "per", "rows", "d", "tm", "te", "loc", "ics", "sh", "acct", "at"];
   var LIST_KEYS = ["id", "m", "del", "name", "chan", "from", "fromName", "reply", "lang", "addr", "why", "theme", "color", "salt", "form", "sty", "hf"];
   function keepExtra(src, out, skip) {
     var n = 0;
@@ -404,8 +406,33 @@
         if (!o.tm) o.te = "";
         if (b.ics === 1) o.ics = 1;
         break;
+      // wave E4: products from a connected shop (sh + acct: which one,
+      // at: when the prices were last read from it)
+      case "prod":
+        o = { k: "prod", items: (Array.isArray(b.items) ? b.items : []).slice(0, 9).map(normProd).filter(Boolean), bt: oneLine(b.bt, 40) };
+        if (b.per === 1 || b.per === 3) o.per = b.per;
+        if (SHOP_PS.indexOf(b.sh) >= 0 && typeof b.acct === "string" && /^[a-z0-9]{8,24}$/.test(b.acct)) { o.sh = b.sh; o.acct = b.acct; }
+        if (clamp(b.at, 1, 1e14, 0)) o.at = b.at;
+        break;
     }
     return keepExtra(b, blockLook(b, o), BLOCK_KEYS);
+  }
+  // One product of a product block: the shop's id, name, a line of
+  // text, price and old price (cents; -1 = not known), currency, the
+  // product page, its picture (copied into the issue) and the shop's
+  // address of that picture (to copy it again).
+  var PROD_ID = /^[A-Za-z0-9:\/._-]{1,80}$/;
+  function normProd(x) {
+    if (!x || typeof x !== "object") return null;
+    var q = pic(x, {});
+    q.id = typeof x.id === "string" && PROD_ID.test(x.id) ? x.id : "";
+    q.name = oneLine(x.name, 200); q.t = oneLine(x.t, 300); q.alt = oneLine(x.alt, 300);
+    q.href = webUrl(x.href); q.src = webUrl(x.src);
+    q.price = clamp(x.price, 0, 1e11, -1);
+    q.was = q.price >= 0 && clamp(x.was, q.price + 1, 1e11, 0) ? x.was : 0;
+    q.cur = typeof x.cur === "string" && /^[A-Z]{3}$/.test(x.cur) ? x.cur : "EUR";
+    if (x.out === 1) q.out = 1;
+    return q;
   }
   // the picture fields of a block or a gallery item
   function pic(src, o) {
@@ -424,7 +451,7 @@
   // itself or its gallery items. Callers may set f/w/h/b on them.
   function picRefs(b) {
     if (!b || typeof b !== "object") return [];
-    if (b.k === "gallery") return (Array.isArray(b.items) ? b.items : []).filter(function (g) { return g && typeof g === "object"; });
+    if (b.k === "gallery" || b.k === "prod") return (Array.isArray(b.items) ? b.items : []).filter(function (g) { return g && typeof g === "object"; });
     return PIC_KINDS[b.k] ? [b] : [];
   }
   var PIC_KINDS = { img: 1, head: 1, imgtxt: 1, video: 1 };
@@ -968,8 +995,14 @@
       case "gallery": return !b.items.length || b.items.some(function (g) { return !g.f; });
       case "video": return !b.url;
       case "event": return !b.t || !b.d || (!!b.bt !== !!b.bh);
+      case "prod": return !b.items.length || b.items.some(function (p) { return !p.name || !p.href; });
     }
     return false;
+  }
+  // Prices read from the shop more than a day ago (wave E4)
+  var PRICE_AGE = 24 * 3600 * 1000;
+  function oldPrices(blocks, now) {
+    return (blocks || []).some(function (b) { return b.k === "prod" && b.sh && b.items.length && (!b.at || now - b.at > PRICE_AGE); });
   }
   // An event block → an iCalendar file (RFC 5545), attached to the
   // e-mail when the block asks (ics: 1). Times are "floating": the
@@ -1032,6 +1065,7 @@
         if (b.k === "img" || b.k === "video") return !!(b.f || (b.k === "video" && b.url));
         if (b.k === "head" || b.k === "foot" || b.k === "social") return false;    // a frame, not the content
         if (b.k === "gallery") return b.items.some(function (g) { return !!g.f; });
+        if (b.k === "prod") return b.items.length > 0;
         if (b.k === "table") return b.rows.some(function (r) { return r.some(Boolean); });
         return b.k !== "hr" && b.k !== "sp" && !!(b.t || b.a || b.hd || b.f || ((b.k === "cols" || b.k === "cols3") && (b.b || b.c)));
       });
@@ -1045,6 +1079,7 @@
       }
       // a block from a newer orOS: this device can't draw it, so it doesn't send it
       if (v.fmt === "blocks" && v.blocks.some(function (b) { return !known(b); })) add("err", "newerBlock");
+      if (v.fmt === "blocks" && oldPrices(v.blocks, info.now || Date.now())) add("warn", "oldPrices");
       var text = v.fmt === "md" ? v.md : v.blocks.map(function (b) {
         if (!known(b)) return "";
         var parts = [b.t, b.a, b.k === "cols" || b.k === "cols3" ? b.b : "", b.k === "cols3" ? b.c : "", b.by, b.k === "head" || b.k === "event" ? b.sub : "", b.hd, b.bt, b.loc];
@@ -1270,7 +1305,7 @@
   var api = {
     STORAGE_KEY: STORAGE_KEY, LIM: LIM, PRESETS: PRESETS, MAIL_DEFAULTS: MAIL_DEFAULTS, SECS: SECS,
     THEMES: THEMES, FONTS: FONTS, BTN_SHAPES: BTN_SHAPES, HEAD_SIZES: HEAD_SIZES, ALIGNS: ALIGNS, HR_STYLES: HR_STYLES,
-    BLOCK_KINDS: BLOCK_KINDS, knownBlock: known, alignOf: alignOf, picsOf: picsOf, picRefs: picRefs, normBlk: normBlk, icsOf: icsOf, validDay: validDay, validTime: validTime, normHf: normHf, socialItems: socialItems, buttonsOf: buttonsOf, normSty: normSty,
+    BLOCK_KINDS: BLOCK_KINDS, knownBlock: known, alignOf: alignOf, picsOf: picsOf, picRefs: picRefs, normBlk: normBlk, icsOf: icsOf, SHOP_PS: SHOP_PS, normProd: normProd, oldPrices: oldPrices, PRICE_AGE: PRICE_AGE, validDay: validDay, validTime: validTime, normHf: normHf, socialItems: socialItems, buttonsOf: buttonsOf, normSty: normSty,
     BASES: BASES, OFF_STS: OFF_STS, LOCK_STALE: LOCK_STALE, SOFT_LIMIT: SOFT_LIMIT,
     validEmail: validEmail, normEmail: normEmail, emailKey: emailKey, validHost: validHost, validColor: validColor,
     safeUrl: safeUrl, fold: fold, hash53: hash53, subId: subId, suppHash: suppHash, token: token, listCode: listCode,

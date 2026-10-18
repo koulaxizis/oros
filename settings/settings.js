@@ -1368,14 +1368,14 @@
   // monogram each (no third-party logos), a search box and how many
   // accounts of that service this orOS already has.
   var SVC_GROUPS = [
-    { id: "shop", ps: ["woo", "tol", "ininja", "stripe"] },
+    { id: "shop", ps: ["woo", "shopify", "tol", "ininja", "stripe"] },
     { id: "mail", ps: ["mlite", "mchimp", "brevo"] },
     { id: "crm", ps: ["hubspot", "pdrive", "odoo"] },
     { id: "work", ps: ["todoist", "trello", "github", "notion", "raindrop"] }
   ];
   // monogram per service; its brand colour is in settings.css (.svc-mark.m-<id>)
   var SVC_MARK = {
-    woo: "Wo", tol: "t", ininja: "IN", stripe: "S", mlite: "ML", mchimp: "M", brevo: "B",
+    woo: "Wo", shopify: "Sh", tol: "t", ininja: "IN", stripe: "S", mlite: "ML", mchimp: "M", brevo: "B",
     hubspot: "H", pdrive: "P", odoo: "O", todoist: "Td", trello: "Tr", github: "GH", notion: "N", raindrop: "R"
   };
   function svcMark(p, name) {
