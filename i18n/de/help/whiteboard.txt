@@ -1,0 +1,40 @@
+# Whiteboard
+Whiteboard ist ein endloses Board für Ideen: Haftnotizen, Text, Formen, Pfeile, die sie verbinden, Stiftlinien, Bilder und Rahmen. Du kannst so viele Boards haben, wie du willst, dich frei bewegen und zoomen und ein Board oder einen Rahmen als PNG, SVG oder PDF exportieren.
+
+## Erste Schritte
+- Wähle in der Leiste links ein Werkzeug und tippe auf das Board. `Haftnotiz` (N) und `Text` (T) öffnen sofort das Textfeld; schreib und tippe woanders hin, um fertig zu werden.
+- `Form` (S) und `Rahmen` (F): ziehen, um eine zu zeichnen, oder tippen für die übliche Größe.
+- `Pfeil` (A): von einem Objekt zu einem anderen ziehen. Der Pfeil haftet an beiden und folgt ihnen, wenn sie sich bewegen. Ein Pfeil kann auch an einer leeren Stelle beginnen oder enden.
+- `Stift` (P) zeichnet mit dem Finger, einem Stift oder der Maus, bis du wieder `Auswählen und verschieben` (V) wählst.
+- `Bild hinzufügen` in der oberen Leiste setzt ein Bild in die Mitte des Bildschirms. Du kannst Bilder auch auf das Board ziehen oder eines mit [[Ctrl+V]] einfügen.
+- Das erste Objekt, das du hinzufügst, legt dein erstes Board an. Der Name oben links öffnet die Liste `Boards` mit `Neues Board`, `Umbenennen` und `Board löschen`.
+
+## Auswählen, verschieben und ändern
+- Mit `Auswählen und verschieben` tippst du ein Objekt an, um es auszuwählen, und ziehst es, um es zu verschieben. [[Shift]] + Tippen fügt zur Auswahl hinzu, und wenn du mit der Maus eine leere Stelle ziehst, zeichnest du einen Rahmen um mehrere Objekte.
+- Wenn du einen Rahmen verschiebst, wandert alles darin mit.
+- Der quadratische Griff unten rechts an einem ausgewählten Objekt ändert seine Größe. Ein ausgewählter Pfeil zeigt an jedem Ende einen Punkt: zieh ihn auf ein anderes Objekt, damit er dort haftet, oder auf eine leere Stelle, um ihn zu lösen.
+- Die Leiste oben zeigt, was sich an der Auswahl ändern lässt: `Farbe`, `Form`, `Füllung`, `Pfeilspitzen`, `Gestrichelte Linie`, `Linienstärke`, `Kleinerer Text` und `Größerer Text`, dann `Text bearbeiten`, `Nach vorne`, `Nach hinten`, `Duplizieren` und `Löschen`. Mit einem gewählten Werkzeug und ohne Auswahl legt sie die Farbe des nächsten Objekts fest.
+- Doppeltippen auf ein Objekt oder [[Enter]] ändert seinen Text. Eine Haftnotiz macht ihre Schrift kleiner, je voller sie wird. Doppeltippen auf eine leere Stelle fügt dort eine Haftnotiz hinzu.
+- `Rückgängig` und `Wiederholen` in der oberen Leiste ([[Ctrl+Z]] und [[Ctrl+Y]]) gehen durch deine Änderungen auf diesem Board zurück.
+
+## Auf dem Board bewegen
+- Zieh eine leere Stelle mit dem Finger, oder nimm `Auf dem Board bewegen` (H), die mittlere Maustaste oder [[Space]] + Ziehen. Das Mausrad scrollt; [[Ctrl]] + Mausrad oder zwei Finger zoomen.
+- Die Tasten unten rechts verkleinern, zeigen den Zoom (antippen für 100 %), vergrößern und `Alles zeigen`.
+
+## Tastatur
+- [[V]] [[H]] [[N]] [[T]] [[S]] [[A]] [[P]] [[F]] wählen ein Werkzeug, [[I]] fügt ein Bild hinzu.
+- [[Tab]] geht von einem Objekt zum nächsten, und der Screenreader liest es vor. Die Pfeiltasten verschieben die Auswahl (mit [[Shift]] in kleinen Schritten), [[Delete]] entfernt sie.
+- [[Ctrl+A]] wählt alles aus, [[Ctrl+D]] dupliziert, [[Ctrl+C]], [[Ctrl+X]] und [[Ctrl+V]] kopieren, schneiden aus und fügen ein, auf diesem Board.
+- [[+]] und [[-]] zoomen, [[0]] geht auf 100 %, [[1]] zeigt alles, [[Esc]] hebt die Auswahl auf.
+
+## Exportieren
+- `Exportieren` in der oberen Leiste speichert `Ganzes Board`, die `Auswahl` oder, bei einem ausgewählten Rahmen, `Dieser Rahmen` als PNG, SVG oder PDF, auf `Papier` oder `Transparent`. `In Dateien speichern` legt es in Dateien › Whiteboard ab.
+- Ein ausgewählter Rahmen hat in seiner Leiste auch `Diesen Rahmen exportieren`, so werden Rahmen zu praktischen Seiten.
+
+## Deine Daten
+- Alles bleibt auf diesem Gerät und wird laufend gespeichert. Bilder werden verkleinert (höchstens 1024 Pixel), damit die Boards leicht bleiben.
+- Mit der orOS-Synchronisierung, eingeschaltet in den [Einstellungen](app:settings), folgen dir deine Boards verschlüsselt auf deine anderen Geräte. Jedes Objekt wird für sich synchronisiert: Änderungen an verschiedenen Objekten auf zwei Geräten bleiben beide erhalten, beim selben Objekt gewinnt die neuere Änderung.
+- Es gibt keine Live-Zusammenarbeit: dafür bräuchte es einen Server, der deine Boards sieht.
+
+## Von überall finden
+- Das Suchfeld im Menü findet Board-Namen und die Wörter auf Haftnotizen, Texten, Formen, Pfeilen und Rahmen. Wenn du einen Treffer wählst, öffnet sich das Board bei diesem Objekt.

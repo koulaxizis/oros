@@ -1030,6 +1030,12 @@
    ]
   },
   {
+   "app": "whiteboard",
+   "files": [
+    "whiteboard/app.js"
+   ]
+  },
+  {
    "app": "wiki",
    "files": [
     "wiki/io.js",
