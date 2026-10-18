@@ -134,6 +134,7 @@
       "bk.alt": "Description (for people who can't see it)", "bk.pick": "Choose picture", "bk.noImg": "No picture yet",
       "bk.imgMissing": "This picture isn't on this device yet (it syncs with the orOS disk).",
       "bk.up": "Move up", "bk.down": "Move down", "bk.remove": "Remove",
+      "bk.noImgBtn": "Remove picture", "bk.imgtxt": "Picture + text", "bk.cols3": "3 columns", "bk.gallery": "Gallery", "bk.video": "Video", "bk.table": "Table", "bk.event": "Event", "bk.more": "More blocks", "bk.moreTitle": "Add a block", "bk.saved": "Saved blocks", "bk.savedNone": "No saved blocks yet. Open a block's settings (the gear) and choose Save block.", "bk.save": "Save block", "bk.saveName": "Name", "bk.savedDone": "Block saved: find it under More blocks", "bk.savedFull": "You have 100 saved blocks: delete one first", "bk.savedDel": "Delete saved block", "bk.side": "Picture", "bk.sideL": "On the left", "bk.sideR": "On the right", "bk.hd": "Title", "bk.colN": "Column {n}", "bk.per": "Per row", "bk.galAdd": "Picture", "bk.galRemove": "Remove this picture", "bk.galEmpty": "No pictures yet", "bk.videoUrl": "Video link (YouTube, Vimeo, PeerTube…)", "bk.videoCap": "Caption (optional)", "bk.videoHint": "Choose a picture from the video: a play mark is drawn on it and it opens the link. orOS fetches nothing from the video site. Without a picture a button opens the link.", "bk.tblHead": "First row is a header", "bk.tblRow": "Row", "bk.tblCol": "Column", "bk.tblRowDel": "Remove the last row", "bk.tblColDel": "Remove the last column", "bk.cell": "Row {r}, column {c}", "bk.evT": "Event name", "bk.evD": "Day", "bk.evTm": "Starts (optional)", "bk.evTe": "Ends (optional)", "bk.evLoc": "Place (optional)", "bk.evSub": "Details (optional)", "bk.evIcs": "Attach a calendar file (.ics)", "bk.evBtn": "Button (optional)", "tpl.layouts": "Or start from a ready layout", "lay.weekly": "Weekly news", "lay.announce": "Announcement", "lay.offer": "Product offer", "lay.w.title": "This week", "lay.w.intro": "Hello! Here is what happened this week.", "lay.w.s1": "The main story", "lay.w.s1t": "A few lines about it. Add a picture on the side.", "lay.w.s2": "Also new", "lay.w.s2t": "Another story, with its picture on the right.", "lay.w.links": "Worth reading", "lay.w.list": "First link\nSecond link\nThird link", "lay.w.more": "Read more", "lay.a.title": "Big news", "lay.a.intro": "Hello! We have something to tell you.", "lay.a.body": "Say what is new, why it matters and what to do next.", "lay.a.btn": "Find out more", "lay.a.quote": "A sentence from someone who tried it.", "lay.a.by": "Their name", "lay.o.title": "This week's offer", "lay.o.intro": "Hand-picked for you, while stocks last.", "lay.o.p1": "First product", "lay.o.p1t": "What makes it special. Was €40, now **€29**", "lay.o.p2": "Second product", "lay.o.p2t": "One or two lines about it. **€19**", "lay.o.buy": "Buy now", "lay.o.all": "See every offer",
       "bk.head": "Header", "bk.foot": "Footer", "bk.social": "Social icons", "bk.noLogo": "No logo", "bk.pickLogo": "Choose logo", "bk.noLogoBtn": "Remove logo", "bk.logoW": "Logo width", "bk.headT": "Name", "bk.headSub": "Line under the name (optional)", "bk.linkText": "Link text", "bk.linkRemove": "Remove this link", "bk.linkAdd": "Link", "bk.iconStyle": "Icons", "bk.ist.c": "Brand colours", "bk.ist.d": "Dark", "bk.ist.l": "Light (for dark backgrounds)", "bk.iconSize": "Size", "bk.network": "Network", "bk.netRemove": "Remove this network", "bk.netAdd": "Network", "bk.footHint": "Your address and the unsubscribe link are always added below the footer.", "bk.makeDefault": "Use in every new issue of this list", "bk.isDefault": "Used in every new issue of this list", "bk.defHeadDone": "New issues of this list start with this header", "bk.defFootDone": "New issues of this list end with this footer",
       "ed.undo": "Undo", "ed.redo": "Redo", "bk.list": "List", "bk.quote": "Quote", "bk.sp": "Space", "bk.drag": "Drag to move (or use the arrow keys)", "bk.newer": "Newer block", "bk.newerHint": "This block was made in a newer orOS. Update orOS on this device to see and edit it; it is kept as it is.", "bk.settings": "Block settings", "bk.dup": "Duplicate", "bk.full": "Too many blocks: remove one first", "bk.moved": "Moved to position {n}", "bk.level": "Size", "bk.listPh": "One item per line", "bk.listKind": "Kind", "bk.bullets": "Bullets", "bk.numbers": "Numbers", "bk.by": "Who said it (optional)", "bk.height": "Height", "bk.lineStyle": "Style", "bk.hr.solid": "Solid", "bk.hr.dashed": "Dashed", "bk.hr.dotted": "Dotted", "bk.thick": "Thickness", "bk.width": "Width", "bk.lineColor": "Own line colour", "bk.btnN": "Button {n}", "bk.btnRemove": "Remove this button", "bk.btnStyle": "Style", "bk.fill": "Filled", "bk.outline": "Outline", "bk.full100": "Full width", "bk.btnAdd": "Button next to it", "bk.align": "Alignment", "bk.al.left": "Left", "bk.al.center": "Centre", "bk.al.right": "Right", "bk.pad": "Space above and below", "bk.bg": "Background colour", "sty.font": "Font", "sty.font.sans": "Sans serif", "sty.font.serif": "Serif", "sty.font.mono": "Monospace", "sty.hs": "Headings", "sty.hs.s": "Small", "sty.hs.m": "Medium", "sty.hs.l": "Large", "sty.btn": "Buttons", "sty.btn.round": "Rounded", "sty.btn.square": "Square", "sty.btn.pill": "Pill", "sty.link": "Own link colour", "sty.bg": "Own e-mail background", "ck.newerBlock": "This issue has a block made in a newer orOS. Update orOS on this device before sending it.",
       "lists.rss": "RSS to e-mail",
@@ -336,6 +337,7 @@
       "bk.alt": "Περιγραφή (για όσους δεν τη βλέπουν)", "bk.pick": "Επιλογή εικόνας", "bk.noImg": "Δεν έχει μπει εικόνα",
       "bk.imgMissing": "Αυτή η εικόνα δεν υπάρχει ακόμα σε αυτή τη συσκευή (συγχρονίζεται με τον δίσκο του orOS).",
       "bk.up": "Μετακίνηση πάνω", "bk.down": "Μετακίνηση κάτω", "bk.remove": "Αφαίρεση",
+      "bk.noImgBtn": "Αφαίρεση εικόνας", "bk.imgtxt": "Εικόνα + κείμενο", "bk.cols3": "3 στήλες", "bk.gallery": "Γκαλερί", "bk.video": "Βίντεο", "bk.table": "Πίνακας", "bk.event": "Εκδήλωση", "bk.more": "Περισσότερα blocks", "bk.moreTitle": "Προσθήκη block", "bk.saved": "Αποθηκευμένα blocks", "bk.savedNone": "Δεν υπάρχουν αποθηκευμένα blocks ακόμα. Άνοιξε τις ρυθμίσεις ενός block (το γρανάζι) και διάλεξε Αποθήκευση block.", "bk.save": "Αποθήκευση block", "bk.saveName": "Όνομα", "bk.savedDone": "Το block αποθηκεύτηκε: θα το βρεις στα Περισσότερα blocks", "bk.savedFull": "Έχεις 100 αποθηκευμένα blocks: διάγραψε πρώτα ένα", "bk.savedDel": "Διαγραφή αποθηκευμένου block", "bk.side": "Εικόνα", "bk.sideL": "Αριστερά", "bk.sideR": "Δεξιά", "bk.hd": "Τίτλος", "bk.colN": "Στήλη {n}", "bk.per": "Ανά σειρά", "bk.galAdd": "Εικόνα", "bk.galRemove": "Αφαίρεση αυτής της εικόνας", "bk.galEmpty": "Δεν υπάρχουν εικόνες ακόμα", "bk.videoUrl": "Σύνδεσμος βίντεο (YouTube, Vimeo, PeerTube…)", "bk.videoCap": "Λεζάντα (προαιρετικά)", "bk.videoHint": "Διάλεξε μια εικόνα από το βίντεο: σχεδιάζεται πάνω της ένα σήμα αναπαραγωγής και ανοίγει τον σύνδεσμο. Το orOS δεν φέρνει τίποτα από τη σελίδα του βίντεο. Χωρίς εικόνα, ένα κουμπί ανοίγει τον σύνδεσμο.", "bk.tblHead": "Η πρώτη γραμμή είναι επικεφαλίδα", "bk.tblRow": "Γραμμή", "bk.tblCol": "Στήλη", "bk.tblRowDel": "Αφαίρεση της τελευταίας γραμμής", "bk.tblColDel": "Αφαίρεση της τελευταίας στήλης", "bk.cell": "Γραμμή {r}, στήλη {c}", "bk.evT": "Όνομα εκδήλωσης", "bk.evD": "Ημέρα", "bk.evTm": "Έναρξη (προαιρετικά)", "bk.evTe": "Λήξη (προαιρετικά)", "bk.evLoc": "Τόπος (προαιρετικά)", "bk.evSub": "Λεπτομέρειες (προαιρετικά)", "bk.evIcs": "Συνημμένο αρχείο ημερολογίου (.ics)", "bk.evBtn": "Κουμπί (προαιρετικά)", "tpl.layouts": "Ή ξεκίνα από έτοιμη διάταξη", "lay.weekly": "Εβδομαδιαία νέα", "lay.announce": "Ανακοίνωση", "lay.offer": "Προσφορά προϊόντων", "lay.w.title": "Αυτή την εβδομάδα", "lay.w.intro": "Γεια σου! Να τι έγινε αυτή την εβδομάδα.", "lay.w.s1": "Το κύριο θέμα", "lay.w.s1t": "Λίγες γραμμές γι' αυτό. Πρόσθεσε μια εικόνα στο πλάι.", "lay.w.s2": "Επίσης νέο", "lay.w.s2t": "Ένα ακόμα θέμα, με την εικόνα του δεξιά.", "lay.w.links": "Αξίζει να διαβάσεις", "lay.w.list": "Πρώτος σύνδεσμος\nΔεύτερος σύνδεσμος\nΤρίτος σύνδεσμος", "lay.w.more": "Διάβασε περισσότερα", "lay.a.title": "Μεγάλα νέα", "lay.a.intro": "Γεια σου! Έχουμε κάτι να σου πούμε.", "lay.a.body": "Πες τι είναι νέο, γιατί έχει σημασία και τι να κάνει κανείς μετά.", "lay.a.btn": "Μάθε περισσότερα", "lay.a.quote": "Μια φράση από κάποιον που το δοκίμασε.", "lay.a.by": "Το όνομά του", "lay.o.title": "Η προσφορά της εβδομάδας", "lay.o.intro": "Διαλεγμένα για σένα, μέχρι εξαντλήσεως.", "lay.o.p1": "Πρώτο προϊόν", "lay.o.p1t": "Τι το κάνει ξεχωριστό. Από 40 €, τώρα **29 €**", "lay.o.p2": "Δεύτερο προϊόν", "lay.o.p2t": "Μία ή δύο γραμμές γι' αυτό. **19 €**", "lay.o.buy": "Αγόρασέ το", "lay.o.all": "Όλες οι προσφορές",
       "bk.head": "Κεφαλίδα", "bk.foot": "Υποσέλιδο", "bk.social": "Εικονίδια social", "bk.noLogo": "Χωρίς λογότυπο", "bk.pickLogo": "Επιλογή λογοτύπου", "bk.noLogoBtn": "Αφαίρεση λογοτύπου", "bk.logoW": "Πλάτος λογοτύπου", "bk.headT": "Όνομα", "bk.headSub": "Γραμμή κάτω από το όνομα (προαιρετικά)", "bk.linkText": "Κείμενο συνδέσμου", "bk.linkRemove": "Αφαίρεση αυτού του συνδέσμου", "bk.linkAdd": "Σύνδεσμος", "bk.iconStyle": "Εικονίδια", "bk.ist.c": "Χρώματα του κάθε δικτύου", "bk.ist.d": "Σκούρα", "bk.ist.l": "Ανοιχτά (για σκούρο φόντο)", "bk.iconSize": "Μέγεθος", "bk.network": "Δίκτυο", "bk.netRemove": "Αφαίρεση αυτού του δικτύου", "bk.netAdd": "Δίκτυο", "bk.footHint": "Η διεύθυνσή σου και ο σύνδεσμος κατάργησης εγγραφής μπαίνουν πάντα κάτω από το υποσέλιδο.", "bk.makeDefault": "Χρήση σε κάθε νέο τεύχος της λίστας", "bk.isDefault": "Μπαίνει σε κάθε νέο τεύχος της λίστας", "bk.defHeadDone": "Τα νέα τεύχη της λίστας θα ξεκινούν με αυτή την κεφαλίδα", "bk.defFootDone": "Τα νέα τεύχη της λίστας θα τελειώνουν με αυτό το υποσέλιδο",
       "ed.undo": "Αναίρεση", "ed.redo": "Επανάληψη", "bk.list": "Λίστα", "bk.quote": "Παράθεση", "bk.sp": "Κενό", "bk.drag": "Σύρε για μετακίνηση (ή με τα βελάκια)", "bk.newer": "Νεότερο block", "bk.newerHint": "Αυτό το block φτιάχτηκε σε νεότερο orOS. Ενημέρωσε το orOS σε αυτή τη συσκευή για να το δεις και να το αλλάξεις· μένει όπως είναι.", "bk.settings": "Ρυθμίσεις block", "bk.dup": "Διπλασιασμός", "bk.full": "Πάρα πολλά blocks: αφαίρεσε πρώτα ένα", "bk.moved": "Μετακινήθηκε στη θέση {n}", "bk.level": "Μέγεθος", "bk.listPh": "Ένα στοιχείο σε κάθε γραμμή", "bk.listKind": "Είδος", "bk.bullets": "Κουκκίδες", "bk.numbers": "Αριθμοί", "bk.by": "Ποιος το είπε (προαιρετικά)", "bk.height": "Ύψος", "bk.lineStyle": "Στυλ", "bk.hr.solid": "Συνεχής", "bk.hr.dashed": "Διακεκομμένη", "bk.hr.dotted": "Με τελείες", "bk.thick": "Πάχος", "bk.width": "Πλάτος", "bk.lineColor": "Δικό της χρώμα γραμμής", "bk.btnN": "Κουμπί {n}", "bk.btnRemove": "Αφαίρεση αυτού του κουμπιού", "bk.btnStyle": "Στυλ", "bk.fill": "Γεμάτο", "bk.outline": "Περίγραμμα", "bk.full100": "Σε όλο το πλάτος", "bk.btnAdd": "Κουμπί δίπλα", "bk.align": "Στοίχιση", "bk.al.left": "Αριστερά", "bk.al.center": "Κέντρο", "bk.al.right": "Δεξιά", "bk.pad": "Κενό πάνω και κάτω", "bk.bg": "Χρώμα φόντου", "sty.font": "Γραμματοσειρά", "sty.font.sans": "Χωρίς πατούρες", "sty.font.serif": "Με πατούρες", "sty.font.mono": "Σταθερού πλάτους", "sty.hs": "Επικεφαλίδες", "sty.hs.s": "Μικρές", "sty.hs.m": "Μεσαίες", "sty.hs.l": "Μεγάλες", "sty.btn": "Κουμπιά", "sty.btn.round": "Στρογγυλεμένα", "sty.btn.square": "Τετράγωνα", "sty.btn.pill": "Χάπι", "sty.link": "Δικό τους χρώμα συνδέσμων", "sty.bg": "Δικό του φόντο email", "ck.newerBlock": "Το τεύχος έχει block από νεότερο orOS. Ενημέρωσε το orOS σε αυτή τη συσκευή πριν το στείλεις.",
       "lists.rss": "RSS σε email",
@@ -598,11 +600,11 @@
     for (var i = 0; i < arr.length; i++) if (arr[i].id === rec.id) { arr[i] = rec; return; }
     arr.push(rec);
   }
-  function put(coll, rec) { rec.m = stamp(rec.m); replaceIn(data[coll], rec); saveNow(); }
+  function put(coll, rec) { rec.m = stamp(rec.m); if (!data[coll]) data[coll] = []; replaceIn(data[coll], rec); saveNow(); }
   function copy(x) { return JSON.parse(JSON.stringify(x)); }
   function remove(coll, id) {
     var cur = null;
-    data[coll].forEach(function (x) { if (x.id === id) cur = x; });
+    (data[coll] || []).forEach(function (x) { if (x.id === id) cur = x; });
     if (!cur) return null;
     var before = copy(cur);
     replaceIn(data[coll], { id: id, m: stamp(cur.m), del: 1 });
@@ -889,7 +891,6 @@
     var l = curList();
     if (!l) { listDialog(null); return; }
     var tpls = C.live(data.tpls);
-    if (!tpls.length) { createIssue(l, null); return; }
     var dlg = makeDialog("nl-new", t("tpl.new"));
     var ul = el("ul", "plain tpl-list");
     var row = function (label, fn, tpl) {
@@ -915,14 +916,51 @@
     };
     row(t("tpl.blank"), function () { createIssue(l, null); });
     dlg.appendChild(ul);
-    dlg.appendChild(el("p", "dlg-h", t("tpl.from")));
-    var ul2 = el("ul", "plain tpl-list");
-    ul = ul2;
-    tpls.sort(function (a, b) { return C.fold(a.name) < C.fold(b.name) ? -1 : 1; })
-      .forEach(function (tp) { row(tp.name || shownSubj(tp), function () { createIssue(l, tp); }, tp); });
-    dlg.appendChild(ul2);
+    // ready layouts (wave E3), written in the app's language
+    dlg.appendChild(el("p", "dlg-h", t("tpl.layouts")));
+    ul = el("ul", "plain tpl-list");
+    LAYOUTS.forEach(function (k) {
+      row(t("lay." + k), function () { createIssue(l, { subj: "", pre: "", fmt: "blocks", blocks: layoutBlocks(k, l), md: "" }); });
+    });
+    dlg.appendChild(ul);
+    if (tpls.length) {
+      dlg.appendChild(el("p", "dlg-h", t("tpl.from")));
+      ul = el("ul", "plain tpl-list");
+      tpls.sort(function (a, b) { return C.fold(a.name) < C.fold(b.name) ? -1 : 1; })
+        .forEach(function (tp) { row(tp.name || shownSubj(tp), function () { createIssue(l, tp); }, tp); });
+      dlg.appendChild(ul);
+    }
     actionsRow(dlg, [], "", null);
     openDialog(dlg);
+  }
+  // The built-in layouts: the list's own header and footer (or new
+  // ones) around blocks to fill in.
+  var LAYOUTS = ["weekly", "announce", "offer"];
+  function layoutBlocks(k, l) {
+    var head = l.hf && l.hf.head ? copy(l.hf.head) : newBlock("head", l);
+    var foot = l.hf && l.hf.foot ? copy(l.hf.foot) : newBlock("foot", l);
+    var it = function (hd, tx, side, bt) {
+      var b = newBlock("imgtxt", l);
+      b.hd = t(hd); b.t = t(tx);
+      if (side) b.side = "r";
+      if (bt) b.bt = t(bt);
+      return b;
+    };
+    var mid;
+    if (k === "weekly") {
+      mid = [{ k: "h", t: t("lay.w.title"), lv: 1 }, { k: "p", t: t("lay.w.intro") }, { k: "hr" },
+             it("lay.w.s1", "lay.w.s1t"), it("lay.w.s2", "lay.w.s2t", true), { k: "hr" },
+             { k: "h", t: t("lay.w.links"), lv: 3 }, { k: "list", t: t("lay.w.list") }, { k: "btn", t: t("lay.w.more"), href: "" }];
+    } else if (k === "announce") {
+      mid = [{ k: "h", t: t("lay.a.title"), lv: 1, al: "center" }, { k: "p", t: t("lay.a.intro") }, newBlock("img", l),
+             { k: "p", t: t("lay.a.body") }, { k: "btn", t: t("lay.a.btn"), href: "", al: "center" },
+             { k: "quote", t: t("lay.a.quote"), by: t("lay.a.by") }];
+    } else {
+      mid = [{ k: "h", t: t("lay.o.title"), lv: 1, al: "center" }, { k: "p", t: t("lay.o.intro"), al: "center" },
+             it("lay.o.p1", "lay.o.p1t", false, "lay.o.buy"), it("lay.o.p2", "lay.o.p2t", true, "lay.o.buy"),
+             { k: "btn", t: t("lay.o.all"), href: "", al: "center", st: "line" }];
+    }
+    return [head].concat(mid, [foot]);
   }
   function createIssue(l, tpl) {
     var x = C.normIssue(tpl ? { id: C.randomId("i", null), m: 0, list: l.id, subj: tpl.subj, pre: tpl.pre, fmt: tpl.fmt,
@@ -1018,17 +1056,9 @@
       renderBlocks(x, box);
       var add = el("div", "acts add-blocks");
       ADD_KINDS.forEach(function (k) {
-        add.appendChild(mini("+ " + t("bk." + k), function () {
-          if (cx.blocks.length >= C.LIM.blocks) return;
-          snap(x);
-          var at = k === "head" ? 0 : cx.blocks.length;
-          cx.blocks.splice(at, 0, newBlock(k, l));
-          put("issues", x);
-          renderBlocks(x, $("blocks"));
-          if (k === "img") pickImage(x, at);
-          else focusBlock(at);
-        }));
+        add.appendChild(mini("+ " + t("bk." + k), function () { addBlock(x, newBlock(k, l)); }));
       });
+      add.appendChild(mini("+ " + t("bk.more") + "\u2026", function () { moreBlocks(x, l); }));
       c2.appendChild(add);
     }
     c2.appendChild(el("p", "hint", t("ed.phHint")));
@@ -1051,6 +1081,67 @@
     bar.appendChild(actsB);
     form.appendChild(bar);
     audienceNote(x);
+  }
+  // A new block at the end (a header at the top); a picture block asks
+  // for its picture at once.
+  function addBlock(x, b) {
+    var cx = side(x);
+    if (cx.blocks.length >= C.LIM.blocks) { showToast(t("bk.full")); return; }
+    snap(x);
+    var at = b.k === "head" ? 0 : cx.blocks.length;
+    cx.blocks.splice(at, 0, b);
+    put("issues", x);
+    renderBlocks(x, $("blocks"));
+    if ((b.k === "img" || b.k === "imgtxt" || b.k === "gallery") && !(C.picRefs(b)[0] || {}).f) pickImage(x, at);
+    else focusBlock(at);
+  }
+  // The other block kinds and the saved blocks (wave E3)
+  function moreBlocks(x, l) {
+    var dlg = makeDialog("nl-more", t("bk.moreTitle"));
+    var grid = el("div", "acts add-blocks");
+    MORE_KINDS.forEach(function (k) {
+      grid.appendChild(mini("+ " + t("bk." + k), function () { dlg.close(); addBlock(x, newBlock(k, l)); }));
+    });
+    dlg.appendChild(grid);
+    dlg.appendChild(el("p", "dlg-h", t("bk.saved")));
+    var saved = C.live(data.blks || []).sort(function (a, b) { return C.fold(a.name) < C.fold(b.name) ? -1 : 1; });
+    if (!saved.length) dlg.appendChild(el("p", "hint", t("bk.savedNone")));
+    var ul = el("ul", "plain tpl-list");
+    saved.forEach(function (sb) {
+      var li = el("li", "tpl-row");
+      var kind = C.knownBlock(sb.b) ? t("bk." + sb.b.k) : t("bk.newer");
+      var b = el("button", "row", (sb.name || kind) + " \u00b7 " + kind);
+      b.type = "button";
+      b.addEventListener("click", function () { dlg.close(); addBlock(x, copy(sb.b)); });
+      li.appendChild(b);
+      li.appendChild(iconBtn(UI.x, t("bk.savedDel") + ": " + (sb.name || kind), function () {
+        var before = remove("blks", sb.id);
+        li.remove();
+        undoToast(t("toast.deleted"), function () { if (before) restore("blks", before); });
+      }));
+      ul.appendChild(li);
+    });
+    dlg.appendChild(ul);
+    actionsRow(dlg, [], "", null);
+    openDialog(dlg);
+  }
+  function saveBlock(b) {
+    if (C.live(data.blks || []).length >= C.LIM.blks) { showToast(t("bk.savedFull")); return; }
+    var dlg = makeDialog("nl-blk", t("bk.save"));
+    var first = [b.hd, b.t].filter(function (v) { return typeof v === "string" && v.trim(); })[0];
+    var name = inp("text", first ? first.split("\n")[0].slice(0, 60) : t("bk." + b.k), C.LIM.name);
+    dlg.appendChild(field(t("bk.saveName"), name));
+    actionsRow(dlg, [], t("dlg.save"), function () {
+      var nm = name.value.trim();
+      name.classList.toggle("bad", !nm);
+      if (!nm) return;
+      var rec = C.normBlk({ id: C.randomId("b", null), m: 0, name: nm, b: copy(b) });
+      if (!rec) return;
+      put("blks", rec);
+      dlg.close();
+      showToast(t("bk.savedDone"));
+    });
+    openDialog(dlg, name);
   }
   // Main version | other language, and adding / removing the second one.
   function versionBar(x, l) {
@@ -1265,7 +1356,9 @@
   }
   var thumbs = {};      // path → object URL (this session)
   // ---------- the block editor (wave E1) ----------
-  var ADD_KINDS = ["head", "h", "p", "list", "quote", "img", "btn", "hr", "sp", "cols", "social", "foot"];
+  var ADD_KINDS = ["h", "p", "img", "btn", "list", "quote", "hr", "sp", "cols"];
+  // under "More blocks", with the saved blocks (wave E3)
+  var MORE_KINDS = ["head", "imgtxt", "gallery", "video", "cols3", "table", "event", "social", "foot"];
   var SO = window.OrosNewsletterSocial;
   function newBlock(k, l) {
     switch (k) {
@@ -1279,6 +1372,16 @@
       case "quote": return { k: "quote", t: "", by: "" };
       case "list": return { k: "list", t: "" };
       case "btn": return { k: "btn", t: "", href: "" };
+      case "imgtxt": return { k: "imgtxt", f: "", w: 600, h: 400, b: 0, alt: "", href: "", hd: "", t: "", bt: "", bh: "" };
+      case "cols3": return { k: "cols3", a: "", b: "", c: "" };
+      case "gallery": return { k: "gallery", items: [] };
+      case "video": return { k: "video", f: "", w: 600, h: 400, b: 0, url: "", alt: "", t: "" };
+      case "table": return { k: "table", rows: [["", ""], ["", ""]], hd: 1 };
+      case "event": {
+        var d = new Date(Date.now() + 7 * 86400000);
+        var day = d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2);
+        return { k: "event", t: "", d: day, tm: "", te: "", loc: "", sub: "", bt: "", bh: "", ics: 1 };
+      }
     }
     return { k: k, t: "" };
   }
@@ -1678,6 +1781,100 @@
           function (v) { setNow("st", v); })));
         socialEditor(b, card);
       }
+      else if (b.k === "imgtxt") {
+        picRow(b, card, function () { pickImage(x, i); }, null);
+        card.appendChild(field(t("bk.side"), selCtl([["l", t("bk.sideL")], ["r", t("bk.sideR")]], b.side === "r" ? "r" : "l",
+          function (v) { setNow("side", v === "r" ? "r" : ""); })));
+        card.appendChild(field(t("bk.alt"), bind(inp("text", b.alt, 300), "alt")));
+        card.appendChild(field(t("bk.link"), bind(inp("url", b.href, 2000), "href")));
+        card.appendChild(field(t("bk.hd"), bind(inp("text", b.hd, 200), "hd")));
+        card.appendChild(bind(area(b.t, 4), "t"));
+        var r7 = row();
+        r7.appendChild(field(t("bk.btnText"), bind(inp("text", b.bt, 80), "bt")));
+        r7.appendChild(field(t("bk.link"), bind(inp("url", b.bh, 2000), "bh")));
+        card.appendChild(el("p", "dlg-h", t("bk.evBtn")));
+        card.appendChild(r7);
+      } else if (b.k === "cols3") {
+        var c3 = el("div", "cols-ed cols3-ed");
+        ["a", "b", "c"].forEach(function (key, n) { c3.appendChild(field(t("bk.colN", { n: n + 1 }), bind(area(b[key], 4), key))); });
+        card.appendChild(c3);
+      } else if (b.k === "gallery") {
+        card.appendChild(field(t("bk.per"), selCtl([["2", "2"], ["3", "3"]], b.per === 3 ? 3 : 2, function (v) { setNow("per", v === "3" ? 3 : ""); })));
+        if (!(b.items || []).length) card.appendChild(el("p", "hint", t("bk.galEmpty")));
+        (b.items || []).forEach(function (g, j) {
+          var gb = el("div", "btn-more");
+          picRow(g, gb, function () { pickImage(x, i, j); }, function () { snap(x); b.items.splice(j, 1); redraw(); }, t("bk.galRemove"));
+          var gr = row();
+          gr.appendChild(field(t("bk.alt"), bind(inp("text", g.alt, 300), "alt", g)));
+          gr.appendChild(field(t("bk.link"), bind(inp("url", g.href, 2000), "href", g)));
+          gb.appendChild(gr);
+          card.appendChild(gb);
+        });
+        if ((b.items || []).length < 9) card.appendChild(mini("+ " + t("bk.galAdd"), function () { pickImage(x, i, -1); }));
+      } else if (b.k === "video") {
+        card.appendChild(field(t("bk.videoUrl"), bind(inp("url", b.url, 2000), "url")));
+        picRow(b, card, function () { pickImage(x, i); }, b.f ? function () { snap(x); b.f = ""; b.b = 0; redraw(); } : null, t("bk.noImgBtn"));
+        card.appendChild(el("p", "hint", t("bk.videoHint")));
+        card.appendChild(field(t("bk.videoCap"), bind(inp("text", b.t, 300), "t")));
+        if (b.f) card.appendChild(field(t("bk.alt"), bind(inp("text", b.alt, 300), "alt")));
+      } else if (b.k === "table") {
+        var tw = el("div", "tbl-ed");
+        var nc = (b.rows[0] || []).length;
+        b.rows.forEach(function (r, ri) {
+          var tr = el("div", "tbl-row");
+          tr.style.gridTemplateColumns = "repeat(" + Math.max(nc, 1) + ", minmax(0, 1fr))";
+          r.forEach(function (c, ci) {
+            var ci2 = bind(inp("text", c, 200), ci, r);
+            ci2.setAttribute("aria-label", t("bk.cell", { r: ri + 1, c: ci + 1 }));
+            if (ri === 0 && b.hd === 1) ci2.classList.add("tbl-h");
+            tr.appendChild(ci2);
+          });
+          tw.appendChild(tr);
+        });
+        card.appendChild(tw);
+        var ta2 = el("div", "acts");
+        if (b.rows.length < 20) ta2.appendChild(mini("+ " + t("bk.tblRow"), function () { snap(x); b.rows.push(new Array(nc).join(".").split(".").map(function () { return ""; })); redraw(); }));
+        if (nc < 6) ta2.appendChild(mini("+ " + t("bk.tblCol"), function () { snap(x); b.rows.forEach(function (r) { r.push(""); }); redraw(); }));
+        if (b.rows.length > 1) ta2.appendChild(mini(t("bk.tblRowDel"), function () { snap(x); b.rows.pop(); redraw(); }));
+        if (nc > 1) ta2.appendChild(mini(t("bk.tblColDel"), function () { snap(x); b.rows.forEach(function (r) { r.pop(); }); redraw(); }));
+        card.appendChild(ta2);
+        var hl = el("label", "check");
+        var hc = el("input");
+        hc.type = "checkbox";
+        hc.checked = b.hd === 1;
+        hc.addEventListener("change", function () { setNow("hd", hc.checked ? 1 : ""); redraw(); });
+        hl.appendChild(hc);
+        hl.appendChild(el("span", "", t("bk.tblHead")));
+        card.appendChild(hl);
+      } else if (b.k === "event") {
+        card.appendChild(field(t("bk.evT"), bind(inp("text", b.t, 200), "t")));
+        var r8 = row();
+        var dIn = inp("date", b.d, 10);
+        dIn.addEventListener("change", function () { setNow("d", dIn.value); });
+        r8.appendChild(field(t("bk.evD"), dIn));
+        var tmIn = inp("time", b.tm, 5), teIn = inp("time", b.te, 5);
+        tmIn.addEventListener("change", function () { setNow("tm", tmIn.value); if (!tmIn.value) { setNow("te", ""); teIn.value = ""; } teIn.disabled = !tmIn.value; });
+        teIn.addEventListener("change", function () { setNow("te", teIn.value); });
+        teIn.disabled = !b.tm;
+        r8.appendChild(field(t("bk.evTm"), tmIn));
+        r8.appendChild(field(t("bk.evTe"), teIn));
+        card.appendChild(r8);
+        card.appendChild(field(t("bk.evLoc"), bind(inp("text", b.loc, 200), "loc")));
+        card.appendChild(field(t("bk.evSub"), bind(area(b.sub, 3), "sub")));
+        var r9 = row();
+        r9.appendChild(field(t("bk.btnText"), bind(inp("text", b.bt, 80), "bt")));
+        r9.appendChild(field(t("bk.link"), bind(inp("url", b.bh, 2000), "bh")));
+        card.appendChild(el("p", "dlg-h", t("bk.evBtn")));
+        card.appendChild(r9);
+        var il = el("label", "check");
+        var ic = el("input");
+        ic.type = "checkbox";
+        ic.checked = b.ics === 1;
+        ic.addEventListener("change", function () { setNow("ics", ic.checked ? 1 : ""); });
+        il.appendChild(ic);
+        il.appendChild(el("span", "", t("bk.evIcs")));
+        card.appendChild(il);
+      }
       if ((b.k === "head" || b.k === "foot") && l) {
         var isDef = l.hf && l.hf[b.k] && JSON.stringify(l.hf[b.k]) === JSON.stringify(C.normBlock(b));
         var defBtn = mini(isDef ? t("bk.isDefault") : t("bk.makeDefault"), function () {
@@ -1697,15 +1894,29 @@
       setBox = el("div", "blk-set");
       setBox.hidden = true;
       var r5 = row();
-      r5.appendChild(field(t("bk.align"), selCtl(C.ALIGNS.map(function (k) { return [k, t("bk.al." + k)]; }), b.al || "left",
-        function (v) { setNow("al", v === "left" ? "" : v); })));
+      // header, footer, social icons are centred unless told otherwise
+      var alDef = C.alignOf({ k: b.k });
+      r5.appendChild(field(t("bk.align"), selCtl(C.ALIGNS.map(function (k) { return [k, t("bk.al." + k)]; }), C.alignOf(b),
+        function (v) { setNow("al", v === alDef ? "" : v); })));
       r5.appendChild(field(t("bk.pad"), selCtl([0, 8, 16, 24, 32, 48].map(function (n) { return [String(n), n + " px"]; }), b.pad || 0,
         function (v) { setNow("pad", v === "0" ? "" : Number(v)); })));
       setBox.appendChild(r5);
       setBox.appendChild(colorPick(t("bk.bg"), b.bg || "", accent, function (v) { setNow("bg", v); }));
+      setBox.appendChild(mini(t("bk.save"), function () { flushIssue(); saveBlock(b); }));
       card.appendChild(setBox);
       box.appendChild(card);
     });
+  }
+  // a picture's thumbnail with Choose (and, given onRemove, Remove)
+  function picRow(ref, box, onPick, onRemove, removeLabel) {
+    var r = el("div", "img-row");
+    var im = el("img", "img-thumb");
+    im.alt = "";
+    r.appendChild(im);
+    if (ref.f) showThumb(ref.f, im, r); else r.appendChild(el("span", "hint", t("bk.noImg")));
+    r.appendChild(mini(t("bk.pick"), onPick));
+    if (onRemove) r.appendChild(iconBtn(UI.x, removeLabel || t("bk.remove"), onRemove));
+    box.appendChild(r);
   }
   function showThumb(path, im, row) {
     if (thumbs[path]) { im.src = thumbs[path]; return; }
@@ -2780,7 +2991,8 @@
   }
   // A picture → at most 1200 px wide JPEG (PNG kept when small and
   // transparent-looking is not worth the bytes), on the orOS disk.
-  function pickImage(x, i) {
+  // j: a gallery's picture (none or past the end: a new one)
+  function pickImage(x, i, j) {
     var fs = orosFS(), onL2 = side(x) !== x;
     if (!fs) { showToast(t("toast.noDisk")); return; }
     var host = dialogHost(), acc = "image/png,image/jpeg,image/webp,image/gif";
@@ -2791,8 +3003,15 @@
         var path = "/internal/Newsletter/img-" + C.randomId("", null) + ".jpg";
         return fs.write(path, r.blob).then(function () {
           var cur = C.issue(data, x.id), cb = cur && (onL2 ? cur.l2 : cur), xb = onL2 ? x.l2 : x;
-          if (!cb || !xb || !cb.blocks[i] || (cb.blocks[i].k !== "img" && cb.blocks[i].k !== "head") || !xb.blocks[i]) return;
-          xb.blocks[i].f = path; xb.blocks[i].w = r.w; xb.blocks[i].h = r.h; xb.blocks[i].b = r.blob.size;
+          var blk = xb && xb.blocks[i];
+          if (!cb || !blk || !cb.blocks[i] || cb.blocks[i].k !== blk.k || !(C.picRefs(blk).length || blk.k === "gallery")) return;
+          var ref = blk;
+          if (blk.k === "gallery") {
+            if (typeof j === "number" && j >= 0 && j < blk.items.length) ref = blk.items[j];
+            else if (blk.items.length < 9) { ref = { alt: "", href: "" }; blk.items.push(ref); }
+            else return;
+          }
+          ref.f = path; ref.w = r.w; ref.h = r.h; ref.b = r.blob.size;
           put("issues", x);
           if (view === "edit") renderBlocks(x, $("blocks"));
         });
@@ -2985,10 +3204,12 @@
       res.addedIds.concat(res.updatedIds).forEach(function (id) { ids[id] = 1; });
       function fix(blocks) {
         (Array.isArray(blocks) ? blocks : []).forEach(function (b) {
-          if (!b || b.k !== "img" || !b.f) return;
-          chain = chain.then(function () { return storeImg(b.f, imgs[b.f] || "", media, memo); }).then(function (r) {
-            if (r === "bad") b.f = "";
-            else if (r && typeof r === "object") { b.f = r.f; b.w = r.w; b.h = r.h; b.b = r.b; }
+          C.picRefs(b).forEach(function (q) {
+            if (!q.f) return;
+            chain = chain.then(function () { return storeImg(q.f, imgs[q.f] || "", media, memo); }).then(function (r) {
+              if (r === "bad") q.f = "";
+              else if (r && typeof r === "object") { q.f = r.f; q.w = r.w; q.h = r.h; q.b = r.b; }
+            });
           });
         });
       }
@@ -2997,6 +3218,8 @@
         fix(x.blocks);
         if (x.l2) fix(x.l2.blocks);
       });
+      (next.blks || []).forEach(function (x) { if (x && !x.del && ids[x.id] && x.b) fix([x.b]); });
+      (next.lists || []).forEach(function (x) { if (x && !x.del && ids[x.id] && x.hf && x.hf.head) fix([x.hf.head]); });
       return chain.then(function () { return next; });
     },
     set: function (next, info) {
