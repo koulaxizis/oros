@@ -681,7 +681,7 @@
   }
   function normEmail(e) {
     e = String(e || "").trim();
-    return /^[^\s@<>()",;]+@[^\s@<>()",;]+\.[^\s@<>()",;]+$/.test(e) && e.length <= 254 ? e : "";
+    return /^[^\s@<>()\x22,;]+@[^\s@<>()\x22,;]+\.[^\s@<>()\x22,;]+$/.test(e) && e.length <= 254 ? e : "";
   }
   function normAccount(a) {
     if (!a || typeof a !== "object" || typeof a.id !== "string" || !/^[a-z0-9]{6,40}$/.test(a.id)) return null;
@@ -903,7 +903,7 @@
     leaf = String(leaf || "").trim();
     if (!leaf) return "fold.errEmpty";
     if (leaf.length > 100) return "fold.errLong";
-    if (/[\x00-\x1f\x7f*%"\\]/.test(leaf) || (delim && leaf.indexOf(delim) >= 0) || /^inbox$/i.test(leaf)) return "fold.errChars";
+    if (/[\x00-\x1f\x7f*%\x22\\]/.test(leaf) || (delim && leaf.indexOf(delim) >= 0) || /^inbox$/i.test(leaf)) return "fold.errChars";
     return "";
   }
   function childName(parent, delim, leaf) {
@@ -2919,7 +2919,7 @@
     var html = "";
     if (p.html !== null) {
       // inline pictures back to data: so the editor shows (and keeps) them
-      html = String(p.html).replace(/cid:([^"'\s)>]+)/gi, function (all, id) {
+      html = String(p.html).replace(/cid:([^\x22\x27\s)>]+)/gi, function (all, id) {
         var a = p.cids[id];
         try { a = a || p.cids[decodeURIComponent(id)]; } catch (e) {}
         return (a && dataUrl(a)) || all;
