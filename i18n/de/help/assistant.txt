@@ -130,6 +130,14 @@ Klicke mit der rechten Maustaste auf eine freie Stelle des Desktops (auf Handy o
 - Das Menü wird mit deinen anderen Geräten synchronisiert. Aufgaben für den Assistenten sind auf einem Gerät ohne ihn ausgeblendet, Apps dort, wo sie nicht installiert sind.
 - Die Assistenten-Einträge des Menüs öffnen ein kleines Assistentenfenster über dem Desktop. [[Ctrl+Alt+Shift+Q]] öffnet dasselbe Fenster von überall, auch über einer offenen App. Seine Knöpfe beginnen eine neue Unterhaltung, öffnen die Unterhaltung im vollen Assistenten (mit deiner Liste der Unterhaltungen) oder schließen das Fenster. Ist der volle Assistent schon offen, geht alles dorthin.
 
+## Markierter Text in einer App
+Markiere Text in einer beliebigen orOS-App und klicke ihn mit rechts an, für ein Menü: `Kopieren`, `Erklären`, `Zusammenfassen`, `Übersetzen`, `Rechtschreibung und Grammatik korrigieren`, `Dazu fragen…` und deine eigenen Aufgaben mit `{selection}`. Auf Handy oder Tablet, oder in einem Textfeld, erscheint unter dem markierten Text ein kleiner Knopf `Assistent`; tippe ihn für dasselbe Menü an. Mit markiertem Text öffnet auch [[Ctrl+Alt+Shift+Q]] das Menü.
+- Jeder Eintrag setzt den Text und die Bitte in das Nachrichtenfeld des Assistenten (im kleinen Fenster oder im vollen Assistenten, wenn er offen ist). Nichts wird gesendet, bevor du `Senden` drückst, außer deine Aufgabe sagt `Beim Tippen senden`.
+- `Übersetzen` übersetzt in deine orOS-Sprache, oder ins Englische, wenn der Text schon in ihr ist.
+- Im Text einer Aufgabe wird `{selection}` zum markierten Text. Solche Aufgaben stehen nur in diesem Menü, nicht auf dem Desktop. Bis zu 8000 Zeichen werden übernommen.
+- [[Shift]]+Rechtsklick behält das Menü des Browsers. Textfelder behalten ihren eigenen Rechtsklick (zum Ausschneiden und Einfügen); nutze dort den Knopf. Apps mit eigenem Rechtsklick-Menü, etwa Spreadsheet, behalten es. Writer hat dafür seinen eigenen Funkel-Knopf. Passwörter und Passwortfelder werden nie angeboten.
+- Du willst den Knopf nicht? Entferne den Haken bei `Assistent-Knopf unter Text zeigen, den ich markiere` in `Dieses Menü bearbeiten…` (pro Gerät).
+
 ## Datenschutz: was dein Gerät verlässt
 - Deine Nachrichten und die Ergebnisse, die du teilst, gehen nur an den gewählten Dienst, direkt aus deinem Browser. Kein orOS-Server ist dazwischen. Die Zeile über dem Nachrichtenfeld zeigt, wohin sie gehen.
 - Unter `Einstellungen` → `Deine Daten` wählst du pro App `Erst fragen`, `Immer teilen` oder `Nie`. Gesundheit, Stimmung, Zyklus, Baby und Budget stehen anfangs auf `Nie`. Mail und Passwörter werden nie angeboten.
@@ -161,7 +169,7 @@ Hol deinen Verlauf aus einem anderen KI-Chat. Drücke in den Einstellungen des A
 - [[Enter]] sendet, [[Shift+Enter]] beginnt eine neue Zeile.
 - [[Esc]] stoppt eine Antwort, die noch kommt.
 - [[Ctrl+Alt+Shift+A]] öffnet den Assistenten von überall in orOS.
-- [[Ctrl+Alt+Shift+Q]] öffnet ihn in einem kleinen Fenster über dem, was du gerade tust.
+- [[Ctrl+Alt+Shift+Q]] öffnet ihn in einem kleinen Fenster über dem, was du gerade tust; mit markiertem Text in einer App öffnet es das Menü für markierten Text.
 
 ## Tipps
 - `Neuer Chat` beginnt eine neue Unterhaltung; ältere stehen in der Liste links oder auf dem Handy hinter der Menüschaltfläche.

@@ -110,3 +110,15 @@ test("ids are short and valid", () => {
   assert.match(id, /^q[a-z0-9]+$/);
   assert.ok(id.length <= 48);
 });
+
+test("selected text: {selection} tasks, cleaning and the size cap", () => {
+  assert.equal(Q.needsSel("Explain {selection}"), true);
+  assert.equal(Q.needsSel("What do I have {date}?"), false);
+  assert.deepEqual(Q.cleanSel("  \r\n a\u0001b\r\nc \n "), { text: "a b\nc", cut: false });
+  const long = Q.cleanSel("x".repeat(Q.MAX_SEL + 5));
+  assert.equal(long.text.length, Q.MAX_SEL);
+  assert.equal(long.cut, true);
+  const q = Q.expand("Explain:\n\n{selection}", { sel: long.text });
+  assert.equal(q.length, "Explain:\n\n".length + Q.MAX_SEL);
+  assert.ok(Q.expand("{selection}{selection}", { sel: long.text }).length <= Q.MAX_ASK);
+});

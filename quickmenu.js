@@ -1,5 +1,5 @@
 // ============================================================
-// orOS — quickmenu.js (desktop menu: Assistant tasks + apps, mini Assistant, v1.1.0)
+// orOS — quickmenu.js (desktop menu: Assistant tasks + apps, mini Assistant, selected text, v1.2.0)
 // ------------------------------------------------------------
 // A shell component, like launcher.js: it runs IN the shell document,
 // keeps its own storage and registers its own sync slice. shell.js
@@ -27,6 +27,17 @@
 //     the desktop or an app, also with Ctrl+Alt+Shift+Q
 //     (orosQuick.mini()); "Open in the Assistant" goes on in the full
 //     app. When the full Assistant is already open, it gets them.
+//   • 1.2.0: selected text in any app. A right-click on selected text
+//     (Shift+right-click keeps the browser's menu), or the small
+//     Assistant button that shows under text selected by touch or in a
+//     text field, opens a menu: Copy, Explain, Summarize, Translate,
+//     Fix spelling and grammar, Ask about it…, and the user's tasks
+//     with {selection}. Each puts its text in the Assistant's box
+//     (nothing is sent, unless a task says "Send on tap").
+//     Ctrl+Alt+Shift+Q with text selected opens the same menu. Apps
+//     that set window.__orosNoSelAsk (Writer: its own Ask button), the
+//     Assistant, Passwords and password fields are left alone. A right-
+//     click the app takes for itself (preventDefault) stays the app's.
 //
 // Data (synced, slice "quickmenu", key oros-quick-menu):
 //   { ver:1, items:[{ id, k, n, p, app, send, o, d, m }] }
@@ -53,6 +64,8 @@
   var MAX_ITEMS = 200;          // stored, tombstones included
   var MAX_SHOWN = 24;           // in the menu
   var MAX_NAME = 60, MAX_TEXT = 2000;
+  var MAX_SEL = 8000;           // selected text taken into a question
+  var MAX_ASK = 12000;          // a whole question (the Assistant takes 20000)
   var ID_RE = /^[a-z0-9][a-z0-9_-]{0,47}$/;
   var KINDS = ["ask", "app", "brief"];
   var EXAMPLES = [
@@ -203,17 +216,27 @@
     return String(text || "").replace(/\{(date|clipboard|selection)\}/g, function (all, k) {
       var v = k === "date" ? ctx.date : k === "clipboard" ? ctx.clip : ctx.sel;
       return typeof v === "string" ? v : "";
-    }).slice(0, MAX_TEXT);
+    }).slice(0, MAX_ASK);
   }
   function needsClip(text) { return /\{clipboard\}/.test(String(text || "")); }
+  // A task with {selection} belongs to the menu of selected text only.
+  function needsSel(text) { return /\{selection\}/.test(String(text || "")); }
+  // Selected text as it goes into a question: control characters out,
+  // outer blank lines trimmed, at most MAX_SEL characters.
+  function cleanSel(text) {
+    var t = String(text || "").replace(/\r\n?/g, "\n").replace(/[\u0000-\u0008\u000b-\u001f\u007f]/g, " ")
+      .replace(/^\s+|\s+$/g, "");
+    return { text: t.slice(0, MAX_SEL), cut: t.length > MAX_SEL };
+  }
 
   function newId(now, rnd) {
     return "q" + Math.floor(now).toString(36) + Math.floor((rnd === undefined ? Math.random() : rnd) * 1e6).toString(36);
   }
 
   var model = { normalize: normalize, merge: merge, list: list, put: put, remove: remove, move: move, reset: reset,
-                expand: expand, needsClip: needsClip, newId: newId, EXAMPLES: EXAMPLES, VER: VER, DATA_KEY: DATA_KEY,
-                MAX_SHOWN: MAX_SHOWN, MAX_NAME: MAX_NAME, MAX_TEXT: MAX_TEXT };
+                expand: expand, needsClip: needsClip, needsSel: needsSel, cleanSel: cleanSel, newId: newId,
+                EXAMPLES: EXAMPLES, VER: VER, DATA_KEY: DATA_KEY,
+                MAX_SHOWN: MAX_SHOWN, MAX_NAME: MAX_NAME, MAX_TEXT: MAX_TEXT, MAX_SEL: MAX_SEL, MAX_ASK: MAX_ASK };
 
   if (typeof module !== "undefined" && module.exports) module.exports = model;
   if (!root || !root.document) return;
@@ -319,12 +342,12 @@
     if (assistantOpen()) { openAt("assistant", target); return; }
     mini(target);
   }
-  function runItem(it) {
+  function runItem(it, sel) {
     if (it.k === "app") { var a = appById(it.app); if (a && host.open) host.open(a); return; }
     if (!hasAssistant()) return;
     if (it.k === "brief") { ask({ brief: 1 }); return; }
     var text = textOf(it);
-    var ctx = { date: today(), sel: "" };
+    var ctx = { date: today(), sel: sel || "" };
     function go(clipOk) {
       var q = expand(text, ctx).trim();
       if (!q) { ask(null); return; }
@@ -388,6 +411,12 @@
     "#qa-mini .qa-btn:hover,#qa-mini .qa-btn:focus-visible{background:var(--accent-soft)}",
     "#qa-mini .qa-btn svg{width:18px;height:18px}",
     "#qa-mini iframe{flex:1 1 auto;width:100%;min-height:0;border:0;background:transparent}",
+    // the button under selected text (over apps and the mini window, under the menu)
+    ".qm-chip{position:fixed;z-index:970;display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:6px 14px;",
+    "border:1px solid var(--border);border-radius:20px;background:var(--panel-bg);color:var(--text);font-size:13px;",
+    "box-shadow:0 4px 16px var(--shadow);cursor:pointer}",
+    ".qm-chip .qm-ic{display:inline-flex;color:var(--accent)}",
+    ".qm-chip svg{width:16px;height:16px}",
     "@media (max-width:600px){#qa-mini{left:8px;right:8px;width:auto;bottom:calc(8px + env(safe-area-inset-bottom,0px));",
     "height:calc(100% - 64px - env(safe-area-inset-top,0px))}}"
   ].join("");
@@ -422,49 +451,32 @@
   }
   function outside(e) { if (menu && !menu.el.contains(e.target)) closeMenu(false); }
 
-  function openMenu(x, y, kb) {
+  // One menu at a time. fill(item, sep) adds the entries; item(label,
+  // icon, fn, extra) and sep() between groups (no empty groups).
+  function showMenu(x, y, kb, label, fill, at) {
     closeMenu(false);
     var m = el("div", "qm-menu");
     m.setAttribute("role", "menu");
-    m.setAttribute("aria-label", tr("title"));
-    var groups = 0, inGroup = 0;
-    function sep() { if (inGroup) { var s = el("div", "qm-sep"); s.setAttribute("role", "separator"); m.appendChild(s); } inGroup = 0; groups++; }
-    function item(label, icon, fn, extra) {
+    m.setAttribute("aria-label", label);
+    var inGroup = 0;
+    function sep() { if (inGroup) { var s = el("div", "qm-sep"); s.setAttribute("role", "separator"); m.appendChild(s); } inGroup = 0; }
+    function item(text, icon, fn, extra) {
       var b = el("button");
       b.type = "button";
       b.setAttribute("role", "menuitem");
       var ic = el("span", "qm-ic");
       ic.innerHTML = icon || "";               // static shell icon, not data
       b.appendChild(ic);
-      b.appendChild(el("span", "qm-lbl", label));
+      b.appendChild(el("span", "qm-lbl", text));
       if (extra) b.appendChild(el("span", "qm-send", extra));
-      b.title = label;
+      b.title = text;
       b.addEventListener("click", function () { closeMenu(false); fn(); });
       m.appendChild(b);
       inGroup++;
     }
-    var items = list(load()).filter(usable).slice(0, MAX_SHOWN);
-    if (hasAssistant()) item(tr("ask"), IC_ASK, function () { ask(null); });
-    items.filter(function (it) { return it.k !== "app"; }).forEach(function (it) {
-      item(nameOf(it), it.k === "brief" ? IC_ASK : IC_TASK, function () { runItem(it); }, it.send ? tr("sendMark") : "");
-    });
-    sep();
-    items.filter(function (it) { return it.k === "app"; }).forEach(function (it) {
-      var a = appById(it.app);
-      item(nameOf(it), a ? appIcon(a) : "", function () { runItem(it); });
-    });
-    // Items other desktop components add (Sticky Notes).
-    sep();
-    (root.__orosDeskItems || []).forEach(function (fn) {
-      var add = [];
-      try { add = fn(x, y) || []; } catch (e) { add = []; }
-      add.forEach(function (a) {
-        if (a && typeof a.label === "string" && typeof a.run === "function") item(a.label, a.icon || "", a.run);
-      });
-    });
-    sep();
-    item(tr("wall"), IC_WALL, function () { openAt("settings", { section: "appearance" }); });
-    item(tr("edit"), IC_EDIT, function () { edit(); });
+    fill(item, sep);
+    var last = m.lastChild;
+    if (last && last.className === "qm-sep") last.remove();
     m.addEventListener("keydown", function (e) {
       var bs = Array.prototype.slice.call(m.querySelectorAll("button"));
       var k = bs.indexOf(doc.activeElement);
@@ -477,13 +489,40 @@
     });
     doc.body.appendChild(m);
     var r = m.getBoundingClientRect(), vw = root.innerWidth, vh = root.innerHeight;
-    if (kb) { x = (vw - r.width) / 2; y = Math.max(56, (vh - r.height) / 3); }
+    if (kb && !at) { x = (vw - r.width) / 2; y = Math.max(56, (vh - r.height) / 3); }
     m.style.left = Math.max(8, Math.min(x, vw - r.width - 8)) + "px";
     m.style.top = Math.max(8, Math.min(y, vh - r.height - 8)) + "px";
     menu = { el: m, back: doc.activeElement };
     doc.addEventListener("pointerdown", outside, true);
     var first = m.querySelector("button");
     if (first) first.focus();
+  }
+
+  function openMenu(x, y, kb) {
+    showMenu(x, y, kb, tr("title"), function (item, sep) {
+      var items = list(load()).filter(usable).filter(function (it) { return !needsSel(textOf(it)); }).slice(0, MAX_SHOWN);
+      if (hasAssistant()) item(tr("ask"), IC_ASK, function () { ask(null); });
+      items.filter(function (it) { return it.k !== "app"; }).forEach(function (it) {
+        item(nameOf(it), it.k === "brief" ? IC_ASK : IC_TASK, function () { runItem(it); }, it.send ? tr("sendMark") : "");
+      });
+      sep();
+      items.filter(function (it) { return it.k === "app"; }).forEach(function (it) {
+        var a = appById(it.app);
+        item(nameOf(it), a ? appIcon(a) : "", function () { runItem(it); });
+      });
+      // Items other desktop components add (Sticky Notes).
+      sep();
+      (root.__orosDeskItems || []).forEach(function (fn) {
+        var add = [];
+        try { add = fn(x, y) || []; } catch (e) { add = []; }
+        add.forEach(function (a) {
+          if (a && typeof a.label === "string" && typeof a.run === "function") item(a.label, a.icon || "", a.run);
+        });
+      });
+      sep();
+      item(tr("wall"), IC_WALL, function () { openAt("settings", { section: "appearance" }); });
+      item(tr("edit"), IC_EDIT, function () { edit(); });
+    });
   }
 
   // An empty spot of the desktop: not an icon, a note, the pet, a field…
@@ -544,7 +583,10 @@
   // ---------- 7. The editor ----------
   var dlg = null, view = { mode: "list", id: null };
 
-  function kindLabel(it) { return it.k === "app" ? tr("kApp") : it.k === "brief" ? tr("kBrief") : tr("kAsk"); }
+  function kindLabel(it) {
+    if (it.k === "ask" && needsSel(textOf(it))) return tr("kSel");
+    return it.k === "app" ? tr("kApp") : it.k === "brief" ? tr("kBrief") : tr("kAsk");
+  }
 
   function iconBtn(text, label, fn, disabled) {
     var b = el("button", "qm-iconbtn", text);
@@ -580,6 +622,14 @@
       ul.appendChild(li);
     });
     body.appendChild(ul);
+    var lab = el("label", "qm-check");
+    var chk = el("input");
+    chk.type = "checkbox";
+    chk.checked = chipOn();
+    chk.addEventListener("change", function () { setChipOn(chk.checked); });
+    lab.appendChild(chk);
+    lab.appendChild(el("span", "", tr("chipOpt")));
+    body.appendChild(lab);
     var acts = el("div", "qm-actions");
     var rs = btn(tr("reset"), "qm-left", function () { change(reset(load(), Date.now())); });
     acts.appendChild(rs);
@@ -681,8 +731,9 @@
     if (!dlg || !dlg.open) return;
     var body = dlg.querySelector(".qm-body");
     var act = doc.activeElement, keep = act && dlg.contains(act) && view.mode === "list";
-    if (view.mode !== "list" && body.querySelector("input,textarea,select")) return;   // never wipe a form being typed
+    if (view.mode !== "list" && body.getAttribute("data-form") === "1") return;   // never wipe a form being typed
     body.textContent = "";
+    body.setAttribute("data-form", view.mode === "list" ? "0" : "1");
     if (view.mode === "list") drawList(body); else drawForm(body);
     if (keep && !dlg.contains(doc.activeElement)) { var f = body.querySelector("button"); if (f) f.focus(); }
   }
@@ -700,7 +751,7 @@
         if (e.key === "Escape" && view.mode !== "list") {
           e.preventDefault();
           view = { mode: "list", id: null };
-          dlg.querySelector(".qm-body").textContent = "";
+          dlg.querySelector(".qm-body").setAttribute("data-form", "0");
           repaintEditor();
         }
       });
@@ -708,7 +759,7 @@
     }
     view = { mode: "list", id: null };
     if (!dlg.open) { try { dlg.showModal(); } catch (e) { dlg.setAttribute("open", ""); } }
-    dlg.querySelector(".qm-body").textContent = "";
+    dlg.querySelector(".qm-body").setAttribute("data-form", "0");
     repaintEditor();
   }
 
@@ -794,11 +845,210 @@
   function watchRunning() {
     var run = doc.getElementById("oros-running");
     if (!run || !root.MutationObserver) return;
-    new root.MutationObserver(function () { if (panel && assistantOpen()) closeMini(); })
+    new root.MutationObserver(function () { hideChip(); if (panel && assistantOpen()) closeMini(); })
       .observe(run, { attributes: true, attributeFilter: ["class"], subtree: true });
   }
 
-  // ---------- 9. Public API ----------
+
+  // ---------- 9. Selected text in an app (quick access wave 3) ----------
+  // Every same-origin frame in the shell (apps, side and hidden frames)
+  // is wired on load. Mouse: a right-click on selected text that the
+  // app leaves alone (not preventDefault, no Shift, not in a text
+  // field, which keeps Cut / Paste) opens the menu. Touch, or text
+  // selected in a field: a small button shows under the selection
+  // (below the phone's own handles and bar) and opens it. The text is
+  // read when the menu opens; nothing leaves before Send.
+  var CHIP_KEY = "oros-quick-selchip";      // "0" = no button under selected text (this device)
+  var SKIP_APPS = { assistant: 1, passwords: 1 };
+  var IC_COPY = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg>';
+  var SEL_ACTS = ["explain", "sum", "tr", "fix", "ask"];
+
+  function chipOn() { try { return root.localStorage.getItem(CHIP_KEY) !== "0"; } catch (e) { return true; } }
+  function setChipOn(on) {
+    try { if (on) root.localStorage.removeItem(CHIP_KEY); else root.localStorage.setItem(CHIP_KEY, "0"); } catch (e) {}
+    if (!on) hideChip();
+  }
+  // The app folder of a frame: ".../notes/index.html" → "notes".
+  function frameApp(w) {
+    var parts = [];
+    try { parts = String(w.location.pathname || "").split("/").filter(Boolean); } catch (e) { return ""; }
+    if (parts.length && parts[parts.length - 1].indexOf(".") !== -1) parts.pop();
+    return parts.length ? parts[parts.length - 1] : "";
+  }
+  // The frame's window when its text may go to the Assistant, else null.
+  function frameOk(f) {
+    var w;
+    try { w = f.contentWindow; if (!w || !w.document || w.__orosNoSelAsk) return null; } catch (e) { return null; }
+    if (f.closest && f.closest("#qa-mini")) return null;
+    return SKIP_APPS[frameApp(w)] ? null : w;
+  }
+  // What is selected in a frame: { text, editable, rect } (rect in the
+  // frame's coordinates), or null.
+  function selOf(w) {
+    var d = w.document, a = d.activeElement, text = "", editable = false, rect = null;
+    if (a && (a.tagName === "TEXTAREA" || (a.tagName === "INPUT" && /^(text|search|url|email|tel)?$/i.test(a.getAttribute("type") || "")))) {
+      try { text = a.value.slice(a.selectionStart, a.selectionEnd); } catch (e) { text = ""; }
+      editable = true;
+      rect = a.getBoundingClientRect();
+    } else {
+      if (a && a.tagName === "INPUT") return null;          // a password or other field
+      var sel = w.getSelection && w.getSelection();
+      if (!sel || sel.isCollapsed || !sel.rangeCount) return null;
+      text = sel.toString();
+      var r = sel.getRangeAt(0), rs = r.getClientRects();
+      rect = rs.length ? rs[rs.length - 1] : r.getBoundingClientRect();
+      var n = sel.focusNode || sel.anchorNode;
+      n = n && (n.nodeType === 1 ? n : n.parentElement);
+      editable = !!(n && n.isContentEditable);
+    }
+    if (!text || !/\S/.test(text) || !rect) return null;
+    return { text: text, editable: editable, rect: { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom } };
+  }
+
+  function copyText(text) {
+    var cb = root.navigator && root.navigator.clipboard;
+    function legacy() {
+      var ta = el("textarea");
+      ta.value = text;
+      ta.setAttribute("readonly", "");
+      ta.style.cssText = "position:fixed;left:-9999px;top:0;opacity:0";
+      doc.body.appendChild(ta);
+      ta.select();
+      try { doc.execCommand("copy"); } catch (e) {}
+      ta.remove();
+    }
+    if (cb && typeof cb.writeText === "function") cb.writeText(text).then(null, legacy);
+    else legacy();
+  }
+
+  function selAsk(c, run) {
+    if (c.cut) toast(tr("sel.cut", { n: String(MAX_SEL) }));
+    run();
+  }
+  function openSelMenu(s, x, y) {
+    hideChip();
+    var c = cleanSel(s.text);
+    if (!c.text) return;
+    showMenu(x, y, false, tr("sel.title"), function (item, sep) {
+      item(tr("sel.copy"), IC_COPY, function () { copyText(c.text); });
+      sep();
+      if (!hasAssistant()) return;
+      SEL_ACTS.forEach(function (k) {
+        item(tr("sel." + k), k === "ask" ? IC_TASK : IC_ASK, function () {
+          selAsk(c, function () { ask({ ask: expand(tr("selp." + k), { sel: c.text }) }); });
+        });
+      });
+      sep();
+      list(load()).filter(function (it) { return it.k === "ask" && needsSel(textOf(it)); }).slice(0, MAX_SHOWN)
+        .forEach(function (it) {
+          item(nameOf(it), IC_TASK, function () { selAsk(c, function () { runItem(it, c.text); }); }, it.send ? tr("sendMark") : "");
+        });
+    });
+  }
+  // The menu for what is selected in frame f, under the selection.
+  function selMenuAt(f, s) {
+    var fr = f.getBoundingClientRect();
+    openSelMenu(s, fr.left + s.rect.left, fr.top + s.rect.bottom + 4);
+  }
+
+  var chip = null, chipTimer = null;
+  function hideChip() {
+    clearTimeout(chipTimer);
+    chipTimer = null;
+    if (chip) { chip.el.remove(); chip = null; }
+  }
+  function showChip(f, s, touch) {
+    hideChip();
+    var fr = f.getBoundingClientRect();
+    if (!fr.width || !fr.height) return;
+    var b = el("button", "qm-chip");
+    b.type = "button";
+    var ic = el("span", "qm-ic");
+    ic.innerHTML = IC_ASK;                      // static shell icon, not data
+    b.appendChild(ic);
+    b.appendChild(el("span", "", tr("sel.chip")));
+    b.setAttribute("aria-label", tr("sel.title"));
+    b.addEventListener("pointerdown", function (e) { e.preventDefault(); });   // the selection keeps its focus
+    b.addEventListener("click", function () {
+      var r = b.getBoundingClientRect(), cur = chip ? chip.sel : s;
+      hideChip();
+      openSelMenu(cur, r.left, r.bottom + 4);
+    });
+    doc.body.appendChild(b);
+    var cw = b.offsetWidth, ch = b.offsetHeight, gap = touch ? 30 : 8;   // under the phone's handles
+    var top = Math.max(fr.top, 0) + 8, bottom = Math.min(fr.bottom, root.innerHeight) - 8;
+    var x = fr.left + Math.min(s.rect.right, fr.width) - cw;
+    var y = fr.top + s.rect.bottom + gap;
+    if (y + ch > bottom) y = fr.top + s.rect.top - ch - gap;
+    if (y < top) y = bottom - ch;
+    b.style.left = Math.max(fr.left + 8, Math.min(x, fr.right - cw - 8)) + "px";
+    b.style.top = Math.max(top, Math.min(y, bottom - ch)) + "px";
+    chip = { el: b, frame: f, sel: s };
+  }
+
+  function wireFrame(f) {
+    var w = frameOk(f);
+    if (!w) return;
+    try { if (w.__qmSel) return; w.__qmSel = 1; } catch (e) { return; }
+    var ptr = "mouse", down = false;
+    function schedule() {
+      clearTimeout(chipTimer);
+      chipTimer = setTimeout(function () {
+        chipTimer = null;
+        if (down || menu || !chipOn() || !hasAssistant() || !frameOk(f)) return;
+        var s = selOf(w);
+        if (!s || (ptr === "mouse" && !s.editable)) return;     // with a mouse, a right-click does it
+        showChip(f, s, ptr !== "mouse");
+      }, 450);
+    }
+    w.addEventListener("pointerdown", function (e) {
+      ptr = e.pointerType || "mouse";
+      down = true;
+      hideChip();
+      if (menu) closeMenu(false);
+    }, true);
+    ["pointerup", "pointercancel"].forEach(function (t) {
+      w.addEventListener(t, function () { down = false; schedule(); }, true);
+    });
+    w.document.addEventListener("selectionchange", function () {
+      if (chip && chip.frame === f) hideChip();
+      schedule();
+    });
+    w.addEventListener("keydown", function (e) { if (e.key !== "Shift") ptr = "mouse"; if (chip) hideChip(); }, true);
+    w.addEventListener("scroll", function () { if (chip) hideChip(); }, true);
+    w.addEventListener("contextmenu", function (e) {
+      if (e.defaultPrevented || e.shiftKey || !hasAssistant() || !frameOk(f)) return;
+      var kb = !e.clientX && !e.clientY;          // the context-menu key
+      if (ptr !== "mouse" && !kb) return;         // touch: the button under the text does it
+      var s = selOf(w);
+      if (!s || s.editable) return;               // text fields keep Cut and Paste
+      e.preventDefault();
+      if (kb) { selMenuAt(f, s); return; }
+      var fr = f.getBoundingClientRect();
+      openSelMenu(s, fr.left + e.clientX, fr.top + e.clientY);
+    });
+  }
+  function wireFrames() {
+    doc.addEventListener("load", function (e) {
+      var t = e.target;
+      if (t && t.tagName === "IFRAME") wireFrame(t);
+    }, true);
+    Array.prototype.forEach.call(doc.querySelectorAll("iframe"), wireFrame);
+    root.addEventListener("resize", hideChip);
+  }
+
+  // Ctrl+Alt+Shift+Q: with text selected in the app in front, the menu
+  // of selected text; otherwise the mini window.
+  function quick() {
+    var f = doc.activeElement;
+    if (f && f.tagName === "IFRAME" && hasAssistant()) {
+      var w = frameOk(f), s = w && selOf(w);
+      if (s) { selMenuAt(f, s); return; }
+    }
+    ask(null);
+  }
+
+  // ---------- 10. Public API ----------
   // host = { desktop, apps(), open(app), label(app), icons, lang(),
   //          running() → the open app or null, isOpen(id) optional
   //          (alive behind, multitasking), toast(msg) optional }
@@ -809,6 +1059,7 @@
     load();
     registerSync();
     if (host.desktop) wireDesktop();
+    wireFrames();
     watchRunning();
   }
 
@@ -817,10 +1068,11 @@
     model: model,
     attach: attach,
     edit: edit,
-    mini: function (target) { ask(target || null); },
+    mini: function (target) { if (target) ask(target); else quick(); },
     takeMini: takeMini,
     // Sticky Notes leaves the desktop's right-click to this menu.
     ownsDesktop: function () { return !!(host && host.desktop); },
+    selChip: function (on) { if (on !== undefined) setChipOn(!!on); return chipOn(); },
     items: function () { return list(load()).filter(usable).map(function (it) { return { id: it.id, k: it.k, name: nameOf(it) }; }); },
     run: function (id) { list(load()).forEach(function (it) { if (it.id === id && usable(it)) runItem(it); }); }
   };
