@@ -1,5 +1,6 @@
 // ============================================================
 // orOS Crossword — import.js ("Import a crossword", v1.0.0)
+// i18n-inline-ok: the Greek final sigma in normCell is answer folding (data, no UI text)
 // Reads a clued crossword file and keeps it in the synced library of
 // imported puzzles. Pure: no DOM, no storage; crossword.js runs the
 // picker, the preview, the one write, the Undo and the clued play.
