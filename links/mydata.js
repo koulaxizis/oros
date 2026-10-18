@@ -22,6 +22,7 @@
 (function (root) {
   "use strict";
 
+  // i18n-inline-ok: Greek myDATA (tax authority) data: official category names with an English gloss, Greek unit words, request fields
   var VAT_CAT = { "24": 1, "13": 2, "6": 3, "17": 4, "9": 5, "4": 6, "0": 7 };
   // vatExemptionCategory (L.5144/2024; the old article in brackets)
   var EXEMPT = [
