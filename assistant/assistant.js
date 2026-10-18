@@ -265,7 +265,7 @@
       "err.webgpu": "This device can't run the in-browser model (WebGPU is missing or the graphics card refused it). Pick another assistant in Settings.",
       "err.wlget": "The in-browser model is not on this device yet. Download it in Settings first.",
       "err.wlspace": "There is not enough memory or storage for this model. Pick a smaller one in Settings.",
-      "set.model": "Model", "set.models": "Load models", "set.modelsBusy": "Loading…",
+      "set.model": "Model", "set.modelPick": "Pick a model from the list…", "set.models": "Load models", "set.modelsBusy": "Loading…",
       "set.modelsOk": "The key works · {n} models", "set.modelsNone": "No chat models came back",
       "set.data": "Your data", "set.chatOnly": "Chat only: the assistant can't search my orOS data",
       "set.dataHint": "When the assistant needs your data it searches these apps. “Ask first” shows you every result before it is shared.",
@@ -532,7 +532,7 @@
       "err.webgpu": "Αυτή η συσκευή δεν μπορεί να τρέξει το μοντέλο μέσα στον browser (λείπει το WebGPU ή η κάρτα γραφικών το αρνήθηκε). Διάλεξε άλλον βοηθό στις Ρυθμίσεις.",
       "err.wlget": "Το μοντέλο μέσα στον browser δεν υπάρχει ακόμα σε αυτή τη συσκευή. Κατέβασέ το πρώτα στις Ρυθμίσεις.",
       "err.wlspace": "Δεν φτάνει η μνήμη ή ο χώρος για αυτό το μοντέλο. Διάλεξε μικρότερο στις Ρυθμίσεις.",
-      "set.model": "Μοντέλο", "set.models": "Φόρτωση μοντέλων", "set.modelsBusy": "Φόρτωση…",
+      "set.model": "Μοντέλο", "set.modelPick": "Διάλεξε μοντέλο από τη λίστα…", "set.models": "Φόρτωση μοντέλων", "set.modelsBusy": "Φόρτωση…",
       "set.modelsOk": "Το κλειδί δουλεύει · {n} μοντέλα", "set.modelsNone": "Δεν ήρθαν μοντέλα συζήτησης",
       "set.data": "Τα δεδομένα σου", "set.chatOnly": "Μόνο συζήτηση: ο βοηθός δεν ψάχνει στα δεδομένα μου στο orOS",
       "set.dataHint": "Όταν ο βοηθός χρειάζεται τα δεδομένα σου, ψάχνει σε αυτές τις εφαρμογές. Το «Ρώτα πρώτα» σού δείχνει κάθε αποτέλεσμα πριν μοιραστεί.",
@@ -3419,6 +3419,8 @@
           status.classList.toggle("ok", has);
           rm.hidden = !has;
           renderAll();
+          // Fill the model list on its own once a key is there.
+          if (has && !P.local && !models.length && !lm.disabled) loadModels();
         });
       }
       drawKey();
@@ -3430,19 +3432,30 @@
       model.maxLength = 200;
       model.autocapitalize = "off";
       model.spellcheck = false;
-      model.setAttribute("list", "as-models");
       model.value = modelOf(pid);
-      var dl = el("datalist");
-      dl.id = "as-models";
       model.addEventListener("change", function () {
         setProvConf(pid, { model: model.value.trim().slice(0, 200) });
+        pick.value = model.value;
         renderAll();
       });
       mrow.appendChild(model);
       var lm = button(t("set.models"), "small", loadModels);
       mrow.appendChild(lm);
       provBox.appendChild(mrow);
-      provBox.appendChild(dl);
+      // The loaded models as a plain list. A <datalist> on the box
+      // would only suggest the models that match what is already
+      // typed there (the default model), so most stayed hidden.
+      var pick = el("select", "dlg-input");
+      pick.id = "as-model-pick";
+      pick.setAttribute("aria-label", t("set.modelPick"));
+      pick.hidden = true;
+      pick.addEventListener("change", function () {
+        if (!pick.value) return;
+        model.value = pick.value;
+        setProvConf(pid, { model: pick.value });
+        renderAll();
+      });
+      provBox.appendChild(pick);
       var models = [];
       if (pid === "openrouter") {
         var fr = checkbox(provBox, "as-free", t("set.freeOnly"), !!provConf(pid).free, function (on) {
@@ -3450,7 +3463,7 @@
           var shown = fillModels();
           // A paid model left in the box would still be charged.
           if (on && shown.length && !shown.some(function (m) { return m.id === model.value; })) {
-            model.value = shown[0].id;
+            model.value = pick.value = shown[0].id;
             setProvConf(pid, { model: shown[0].id });
             renderAll();
           }
@@ -3489,13 +3502,17 @@
       function fillModels() {
         var only = pid === "openrouter" && !!provConf(pid).free;
         var shown = models.filter(function (m) { return !only || m.free; });
-        dl.textContent = "";
+        pick.textContent = "";
+        var head = el("option", "", t("set.modelPick"));
+        head.value = "";
+        pick.appendChild(head);
         shown.forEach(function (m) {
-          var o = el("option");
+          var o = el("option", "", m.name !== m.id ? m.name + " (" + m.id + ")" : m.id);
           o.value = m.id;
-          if (m.name !== m.id) o.label = m.name;
-          dl.appendChild(o);
+          pick.appendChild(o);
         });
+        pick.hidden = !shown.length;
+        pick.value = shown.some(function (m) { return m.id === model.value; }) ? model.value : "";
         if (models.length) mstat.textContent = shown.length ? t(only ? "set.modelsFree" : "set.modelsOk", { n: shown.length }) : t("set.modelsNone");
         return shown;
       }
@@ -3520,13 +3537,13 @@
           var list = fillModels();
           if (!all.length) mstat.textContent = t("set.modelsNone");
           if ((P.free || provConf(pid).free) && !provConf(pid).model && list.length && !list.some(function (m) { return m.id === model.value; })) {
-            model.value = list[0].id;
+            model.value = pick.value = list[0].id;
             setProvConf(pid, { model: list[0].id });
             renderAll();
           }
           if (!model.value && list.length) {
-            var pick = P.model && list.some(function (m) { return m.id === P.model; }) ? P.model : "";
-            if (pick) { model.value = pick; setProvConf(pid, { model: pick }); renderAll(); }
+            var def = P.model && list.some(function (m) { return m.id === P.model; }) ? P.model : "";
+            if (def) { model.value = pick.value = def; setProvConf(pid, { model: def }); renderAll(); }
           }
         }, function (e) {
           mstat.textContent = errText(e, pid);
