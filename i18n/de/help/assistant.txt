@@ -128,6 +128,7 @@ Klicke mit der rechten Maustaste auf eine freie Stelle des Desktops (auf Handy o
 - Im Text einer Aufgabe wird `{date}` zum heutigen Datum und `{clipboard}` zum kopierten Text (erst beim Antippen gelesen).
 - `Dieses Menü bearbeiten…` (auch in den Einstellungen des Assistenten unter `Desktop-Menü`) fügt Aufgaben und Apps hinzu, ordnet und entfernt sie. `Beispiele wiederherstellen` bringt die drei Beispiele zurück; deine eigenen Einträge bleiben.
 - Das Menü wird mit deinen anderen Geräten synchronisiert. Aufgaben für den Assistenten sind auf einem Gerät ohne ihn ausgeblendet, Apps dort, wo sie nicht installiert sind.
+- Die Assistenten-Einträge des Menüs öffnen ein kleines Assistentenfenster über dem Desktop. [[Ctrl+Alt+Shift+Q]] öffnet dasselbe Fenster von überall, auch über einer offenen App. Seine Knöpfe beginnen eine neue Unterhaltung, öffnen die Unterhaltung im vollen Assistenten (mit deiner Liste der Unterhaltungen) oder schließen das Fenster. Ist der volle Assistent schon offen, geht alles dorthin.
 
 ## Datenschutz: was dein Gerät verlässt
 - Deine Nachrichten und die Ergebnisse, die du teilst, gehen nur an den gewählten Dienst, direkt aus deinem Browser. Kein orOS-Server ist dazwischen. Die Zeile über dem Nachrichtenfeld zeigt, wohin sie gehen.
@@ -160,6 +161,7 @@ Hol deinen Verlauf aus einem anderen KI-Chat. Drücke in den Einstellungen des A
 - [[Enter]] sendet, [[Shift+Enter]] beginnt eine neue Zeile.
 - [[Esc]] stoppt eine Antwort, die noch kommt.
 - [[Ctrl+Alt+Shift+A]] öffnet den Assistenten von überall in orOS.
+- [[Ctrl+Alt+Shift+Q]] öffnet ihn in einem kleinen Fenster über dem, was du gerade tust.
 
 ## Tipps
 - `Neuer Chat` beginnt eine neue Unterhaltung; ältere stehen in der Liste links oder auf dem Handy hinter der Menüschaltfläche.

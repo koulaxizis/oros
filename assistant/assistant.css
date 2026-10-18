@@ -667,3 +667,8 @@ dialog.as-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 /* Settings › Pictures: how to switch on an image AI */
 .img-steps { margin: 6px 0 0; padding-left: 22px; font-size: 13px; line-height: 1.5; color: var(--text); overflow-wrap: anywhere; }
 .img-steps li + li { margin-top: 4px; }
+
+/* ---------- Mini window (shell quickmenu.js, ?mini=1) ----------
+   The shell's panel has its own title bar (new chat, open the full
+   Assistant, close); the conversation list stays in the full app. */
+body.as-mini #toolbar, body.as-mini #side, body.as-mini #scrim { display: none !important; }
