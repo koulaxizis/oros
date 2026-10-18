@@ -159,45 +159,122 @@
   }
   function blocksOf(x) { return x.fmt === "md" ? mdToBlocks(x.md) : x.blocks; }
 
+  // ---------- the list's look ----------
+  var FONTS = {
+    sans: FONT,
+    serif: "Georgia,'Times New Roman',Times,serif",
+    mono: "Menlo,Consolas,'Courier New',monospace"
+  };
+  var HEAD_PX = { 1: 28, 2: 22, 3: 18 };
+  var HEAD_SCALE = { s: 0.86, m: 1, l: 1.18 };
+  var RADIUS = { round: 8, square: 0, pill: 999 };
+  // st: what every block needs to know about the list's look
+  function lookOf(l, th) {
+    var y = (l && l.sty) || {};
+    var accent = (l && l.color) || "#2f6fde";
+    return { th: th, accent: accent, link: y.link || accent, font: FONTS[y.font] || FONT,
+             hs: HEAD_SCALE[y.hs] || 1, rad: RADIUS[y.btn] === undefined ? 8 : RADIUS[y.btn], bg: y.bg || th.bg };
+  }
+
   // ---------- one block ----------
-  function blockHtml(b, th, accent, img, sub) {
-    var t = function (s) { return personalize(s, sub); };
+  function buttonHtml(x, st, line, full) {
+    var a = st.accent, r = st.rad;
+    var cell = line ? "border:2px solid " + a + ";border-radius:" + r + "px" : "border-radius:" + r + "px;background:" + a;
+    return "<td align=\"center\" style=\"" + cell + "\"><a href=\"" + esc(x.href) + "\" style=\"display:" + (full ? "block" : "inline-block") +
+      ";padding:" + (line ? "10px 20px" : "12px 22px") + ";font-family:" + st.font + ";font-size:16px;font-weight:700;color:" +
+      (line ? a : onColor(a)) + ";text-decoration:none;border-radius:" + r + "px\">" + esc(x.t) + "</a></td>";
+  }
+  function blockCore(b, st, img, t) {
+    var th = st.th, lc = st.link;
     switch (b.k) {
-      case "h":
-        return "<h2 style=\"margin:8px 0 14px;font-size:22px;line-height:1.3;font-weight:700;color:" + th.text + "\">" + inlineHtml(t(b.t), accent) + "</h2>";
-      case "p": return paraHtml(t(b.t), th, accent);
-      case "hr": return "<hr style=\"border:0;border-top:1px solid " + th.line + ";margin:24px 0\">";
+      case "h": {
+        var lv = b.lv === 1 || b.lv === 3 ? b.lv : 2;
+        var px = Math.round(HEAD_PX[lv] * st.hs);
+        return "<h" + lv + " style=\"margin:8px 0 14px;font-size:" + px + "px;line-height:1.3;font-weight:700;font-family:" + st.font + ";color:" + th.text + "\">" +
+               inlineHtml(t(b.t), lc) + "</h" + lv + ">";
+      }
+      case "p": return paraHtml(t(b.t), th, lc);
+      case "list": {
+        var items = String(t(b.t) || "").split("\n").map(function (x) { return x.replace(/^\s*(?:[-\u2022*]|\d{1,3}[.)])\s+/, "").trim(); }).filter(Boolean);
+        if (!items.length) return "";
+        var tag = b.ord ? "ol" : "ul";
+        return "<" + tag + " style=\"margin:0 0 16px;padding-left:22px;font-size:16px;line-height:1.6;color:" + th.text + "\">" + items.map(function (x) {
+          return "<li style=\"margin:0 0 6px\">" + inlineHtml(x, lc) + "</li>";
+        }).join("") + "</" + tag + ">";
+      }
+      case "quote": {
+        if (!b.t) return "";
+        var q = "<blockquote style=\"margin:0 0 16px;padding:4px 0 4px 16px;border-left:4px solid " + st.accent + "\">" +
+          "<p style=\"margin:0;font-size:18px;line-height:1.55;font-style:italic;color:" + th.text + "\">" +
+          String(t(b.t)).split("\n").map(function (x) { return inlineHtml(x, lc); }).join("<br>") + "</p>";
+        if (b.by) q += "<p style=\"margin:8px 0 0;font-size:14px;color:" + th.dim + "\">\u2014 " + esc(t(b.by)) + "</p>";
+        return q + "</blockquote>";
+      }
+      case "sp": return "<div style=\"height:" + b.h + "px;line-height:" + b.h + "px;font-size:1px\">&#8202;</div>";
+      case "hr":
+        return "<hr style=\"border:0;border-top:" + (b.w || 1) + "px " + (b.st || "solid") + " " + (b.c || th.line) + ";margin:24px auto;width:" + (b.wd || 100) + "%\">";
       case "btn": {
-        if (!b.href || !b.t) return "";
-        return "<table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"margin:8px 0 20px\"><tr>" +
-          "<td style=\"border-radius:8px;background:" + accent + "\"><a href=\"" + esc(b.href) + "\" style=\"display:inline-block;padding:12px 22px;" +
-          "font-family:" + FONT + ";font-size:16px;font-weight:700;color:" + onColor(accent) + ";text-decoration:none;border-radius:8px\">" +
-          esc(t(b.t)) + "</a></td></tr></table>";
+        var all = C.buttonsOf(b).filter(function (x) { return x.href && x.t; }).map(function (x) { return { t: t(x.t), href: x.href }; });
+        if (!all.length) return "";
+        var line = b.st === "line", full = all.length === 1 && b.full === 1;
+        var cells = all.map(function (x, i) {
+          return (i ? "<td style=\"width:12px\"></td>" : "") + buttonHtml(x, st, line, full);
+        }).join("");
+        var align = b.al === "center" || b.al === "right" ? " align=\"" + b.al + "\"" : "";
+        return "<table role=\"presentation\"" + align + " cellpadding=\"0\" cellspacing=\"0\" border=\"0\"" + (full ? " width=\"100%\"" : "") +
+               " style=\"margin:8px " + (b.al === "center" ? "auto" : "0") + " 20px\"><tr>" + cells + "</tr></table>";
       }
       case "img": {
         var src = b.url || (img ? img(b) : "");
         if (!src) return "";
         var w = Math.min(b.w || 536, 536);
-        var tag = "<img src=\"" + esc(src) + "\" alt=\"" + esc(b.alt || "") + "\" width=\"" + w + "\" style=\"display:block;width:100%;max-width:" + w +
+        var tg = "<img src=\"" + esc(src) + "\" alt=\"" + esc(b.alt || "") + "\" width=\"" + w + "\" style=\"display:block;width:100%;max-width:" + w +
                   "px;height:auto;border:0;margin:0 auto 16px;border-radius:6px\">";
-        return b.href ? "<a href=\"" + esc(b.href) + "\">" + tag + "</a>" : tag;
+        return b.href ? "<a href=\"" + esc(b.href) + "\">" + tg + "</a>" : tg;
       }
       case "cols": {
         var col = function (s) {
-          return "<div style=\"display:inline-block;vertical-align:top;width:100%;max-width:258px;margin:0 4px\">" + paraHtml(t(s), th, accent) + "</div>";
+          return "<div style=\"display:inline-block;vertical-align:top;width:100%;max-width:258px;margin:0 4px\">" + paraHtml(t(s), th, lc) + "</div>";
         };
         return "<div style=\"font-size:0;text-align:left\">" + col(b.a) + col(b.b) + "</div>";
       }
     }
-    return "";
+    return "";      // a block from a newer orOS: not drawn here
+  }
+  // A block with its own alignment / padding / background is wrapped
+  // in a one-cell table; on a coloured background the text switches to
+  // white or near-black, whichever reads.
+  function blockHtml(b, st, img, sub) {
+    var t = function (s) { return personalize(s, sub); };
+    if (!b.al && !b.pad && !b.bg) return blockCore(b, st, img, t);
+    var s2 = st;
+    if (b.bg) {
+      var ink = onColor(b.bg);
+      s2 = {}; Object.keys(st).forEach(function (k) { s2[k] = st[k]; });
+      s2.th = { bg: st.th.bg, card: b.bg, text: ink, dim: ink === "#ffffff" ? "#e5e7eb" : "#4b5563", line: ink === "#ffffff" ? "#f3f4f6" : "#6b7280", pad: st.th.pad };
+      if (onColor(st.link) === ink) s2.link = ink;         // a link the same tone as the background would vanish
+    }
+    var inner = blockCore(b, s2, img, t);
+    if (!inner) return "";
+    var al = b.al || "left";
+    return "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\"" + (b.bg ? " bgcolor=\"" + b.bg + "\"" : "") +
+      " style=\"margin:0 0 12px" + (b.bg ? ";background:" + b.bg + ";border-radius:6px" : "") + "\"><tr><td align=\"" + al + "\" style=\"text-align:" + al +
+      ";padding:" + (b.pad || 0) + "px " + (b.bg ? 16 : 0) + "px\">" + inner + "</td></tr></table>";
   }
   function blockText(b, sub) {
     var t = function (s) { return personalize(s, sub); };
     switch (b.k) {
-      case "h": { var h = inlineText(t(b.t)); return h + "\n" + new Array(Math.min(h.length, 60) + 1).join("="); }
+      case "h": { var h = inlineText(t(b.t)); return h + "\n" + new Array(Math.min(h.length, 60) + 1).join(b.lv === 3 ? "-" : "="); }
       case "p": return paraText(t(b.t));
+      case "list":
+        return String(t(b.t) || "").split("\n").map(function (x) { return x.replace(/^\s*(?:[-\u2022*]|\d{1,3}[.)])\s+/, "").trim(); }).filter(Boolean)
+          .map(function (x, i) { return (b.ord ? (i + 1) + ". " : "- ") + inlineText(x); }).join("\n");
+      case "quote":
+        return b.t ? String(t(b.t)).split("\n").map(function (x) { return "> " + inlineText(x); }).join("\n") + (b.by ? "\n\u2014 " + t(b.by) : "") : "";
       case "hr": return "----------";
-      case "btn": return b.href && b.t ? t(b.t) + ": " + b.href.replace(/^mailto:/i, "") : "";
+      case "btn":
+        return C.buttonsOf(b).filter(function (x) { return x.href && x.t; })
+          .map(function (x) { return t(x.t) + ": " + x.href.replace(/^mailto:/i, ""); }).join("\n");
       case "img": return b.alt ? "[" + b.alt + "]" + (b.href ? " " + b.href : "") : "";
       case "cols": return [paraText(t(b.a)), paraText(t(b.b))].filter(Boolean).join("\n\n");
     }
@@ -212,14 +289,15 @@
     var lang = o.lang === "el" ? "el" : "en", l = o.list;
     var x = o.issue.l2 ? C.contentFor(o.issue, lang) : o.issue;     // the version in their language
     var th = THEMES[l.theme] || THEMES.classic, accent = l.color || "#2f6fde";
-    var body = blocksOf(x).map(function (b) { return blockHtml(b, th, accent, o.img, o.sub); }).join("");
+    var st = lookOf(l, th);
+    var body = blocksOf(x).map(function (b) { return blockHtml(b, st, o.img, o.sub); }).join("");
     var foot = footer(o, th, accent, lang);
     var pre = x.pre ? "<div style=\"display:none;max-height:0;overflow:hidden;opacity:0;mso-hide:all\">" + esc(personalize(x.pre, o.sub)) +
                       new Array(40).join("&#8204;&nbsp;") + "</div>" : "";
     var html = pre +
-      "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"background:" + th.bg + "\"><tr><td align=\"center\" style=\"padding:24px 8px\">" +
+      "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"background:" + st.bg + "\"><tr><td align=\"center\" style=\"padding:24px 8px\">" +
       "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"max-width:600px;background:" + th.card +
-      (l.theme === "plain" ? "" : ";border-radius:12px;border-top:4px solid " + accent) + "\"><tr><td style=\"padding:" + th.pad + "px;font-family:" + FONT +
+      (l.theme === "plain" ? "" : ";border-radius:12px;border-top:4px solid " + accent) + "\"><tr><td style=\"padding:" + th.pad + "px;font-family:" + st.font +
       ";color:" + th.text + ";text-align:left\">" + body + "</td></tr></table>" + foot + "</td></tr></table>";
     var text = blocksOf(x).map(function (b) { return blockText(b, o.sub); }).filter(Boolean).join("\n\n") + "\n\n-- \n" + footText(o, lang);
     var subj = personalize(x.subj, o.sub);

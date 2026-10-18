@@ -36,7 +36,11 @@ If you also keep subscribers on MailerLite, Mailchimp or Brevo, connect the acco
 - Mailchimp only talks to servers, so it always goes through the orOS relay; the relay keeps nothing. Your keys stay in Connected services and never come into Newsletter.
 
 ## Writing an issue
-Write in `Blocks` (heading, text, picture, button, line, two columns) or in `Markdown`. `{first}` and `{name}` put in the subscriber's name; `{first|friend}` uses "friend" when there is no name. Under `Goes to` you send to everyone active, to subscribers with some tags, or to a saved segment. `Segments…` makes segments: subscribers with some tags (any or all of them), a language, or both. Pictures are shrunk and sent inside the e-mail.
+Write in `Blocks` (heading, text, list, quote, picture, buttons, line, space, two columns) or in `Markdown`. `{first}` and `{name}` put in the subscriber's name; `{first|friend}` uses "friend" when there is no name. Under `Goes to` you send to everyone active, to subscribers with some tags, or to a saved segment. `Segments…` makes segments: subscribers with some tags (any or all of them), a language, or both. Pictures are shrunk and sent inside the e-mail.
+
+Move a block by dragging its handle (with a mouse or a finger), or focus the handle and use the arrow keys. The copy icon duplicates a block, the gear icon opens its alignment, the space above and below it and its background colour (the text turns white or dark to stay readable). A line can be solid, dashed or dotted, thicker, shorter or in its own colour; a button can be filled or outlined, full width, or have up to two more buttons next to it. `Undo` and `Redo` at the top of the content (or Ctrl+Z, and Ctrl+Y or Ctrl+Shift+Z, outside a text box) step through your changes.
+
+Each list's look is set on the list card (`Edit`): theme and colour, and also the font, the heading size, the shape of the buttons, a link colour and an e-mail background. Every issue of the list uses them.
 
 `+ Greek version` (or `+ English version`) adds a second language to the issue: subscribers who read that language get it, everyone else gets the main one. Switch between the two versions at the top of the editor.
 

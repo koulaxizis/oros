@@ -134,6 +134,7 @@
       "bk.alt": "Description (for people who can't see it)", "bk.pick": "Choose picture", "bk.noImg": "No picture yet",
       "bk.imgMissing": "This picture isn't on this device yet (it syncs with the orOS disk).",
       "bk.up": "Move up", "bk.down": "Move down", "bk.remove": "Remove",
+      "ed.undo": "Undo", "ed.redo": "Redo", "bk.list": "List", "bk.quote": "Quote", "bk.sp": "Space", "bk.drag": "Drag to move (or use the arrow keys)", "bk.newer": "Newer block", "bk.newerHint": "This block was made in a newer orOS. Update orOS on this device to see and edit it; it is kept as it is.", "bk.settings": "Block settings", "bk.dup": "Duplicate", "bk.full": "Too many blocks: remove one first", "bk.moved": "Moved to position {n}", "bk.level": "Size", "bk.listPh": "One item per line", "bk.listKind": "Kind", "bk.bullets": "Bullets", "bk.numbers": "Numbers", "bk.by": "Who said it (optional)", "bk.height": "Height", "bk.lineStyle": "Style", "bk.hr.solid": "Solid", "bk.hr.dashed": "Dashed", "bk.hr.dotted": "Dotted", "bk.thick": "Thickness", "bk.width": "Width", "bk.lineColor": "Own line colour", "bk.btnN": "Button {n}", "bk.btnRemove": "Remove this button", "bk.btnStyle": "Style", "bk.fill": "Filled", "bk.outline": "Outline", "bk.full100": "Full width", "bk.btnAdd": "Button next to it", "bk.align": "Alignment", "bk.al.left": "Left", "bk.al.center": "Centre", "bk.al.right": "Right", "bk.pad": "Space above and below", "bk.bg": "Background colour", "sty.font": "Font", "sty.font.sans": "Sans serif", "sty.font.serif": "Serif", "sty.font.mono": "Monospace", "sty.hs": "Headings", "sty.hs.s": "Small", "sty.hs.m": "Medium", "sty.hs.l": "Large", "sty.btn": "Buttons", "sty.btn.round": "Rounded", "sty.btn.square": "Square", "sty.btn.pill": "Pill", "sty.link": "Own link colour", "sty.bg": "Own e-mail background", "ck.newerBlock": "This issue has a block made in a newer orOS. Update orOS on this device before sending it.",
       "lists.rss": "RSS to e-mail",
       "rss.title": "RSS to e-mail", "rss.none": "No feeds yet. Pick one of your Reader feeds or any feed address, and orOS makes an issue from its new articles on the day you choose.",
       "rss.add": "Add a feed", "rss.edit": "RSS to e-mail", "rss.src": "Feed", "rss.other": "Another address…",
@@ -334,6 +335,7 @@
       "bk.alt": "Περιγραφή (για όσους δεν τη βλέπουν)", "bk.pick": "Επιλογή εικόνας", "bk.noImg": "Δεν έχει μπει εικόνα",
       "bk.imgMissing": "Αυτή η εικόνα δεν υπάρχει ακόμα σε αυτή τη συσκευή (συγχρονίζεται με τον δίσκο του orOS).",
       "bk.up": "Μετακίνηση πάνω", "bk.down": "Μετακίνηση κάτω", "bk.remove": "Αφαίρεση",
+      "ed.undo": "Αναίρεση", "ed.redo": "Επανάληψη", "bk.list": "Λίστα", "bk.quote": "Παράθεση", "bk.sp": "Κενό", "bk.drag": "Σύρε για μετακίνηση (ή με τα βελάκια)", "bk.newer": "Νεότερο block", "bk.newerHint": "Αυτό το block φτιάχτηκε σε νεότερο orOS. Ενημέρωσε το orOS σε αυτή τη συσκευή για να το δεις και να το αλλάξεις· μένει όπως είναι.", "bk.settings": "Ρυθμίσεις block", "bk.dup": "Διπλασιασμός", "bk.full": "Πάρα πολλά blocks: αφαίρεσε πρώτα ένα", "bk.moved": "Μετακινήθηκε στη θέση {n}", "bk.level": "Μέγεθος", "bk.listPh": "Ένα στοιχείο σε κάθε γραμμή", "bk.listKind": "Είδος", "bk.bullets": "Κουκκίδες", "bk.numbers": "Αριθμοί", "bk.by": "Ποιος το είπε (προαιρετικά)", "bk.height": "Ύψος", "bk.lineStyle": "Στυλ", "bk.hr.solid": "Συνεχής", "bk.hr.dashed": "Διακεκομμένη", "bk.hr.dotted": "Με τελείες", "bk.thick": "Πάχος", "bk.width": "Πλάτος", "bk.lineColor": "Δικό της χρώμα γραμμής", "bk.btnN": "Κουμπί {n}", "bk.btnRemove": "Αφαίρεση αυτού του κουμπιού", "bk.btnStyle": "Στυλ", "bk.fill": "Γεμάτο", "bk.outline": "Περίγραμμα", "bk.full100": "Σε όλο το πλάτος", "bk.btnAdd": "Κουμπί δίπλα", "bk.align": "Στοίχιση", "bk.al.left": "Αριστερά", "bk.al.center": "Κέντρο", "bk.al.right": "Δεξιά", "bk.pad": "Κενό πάνω και κάτω", "bk.bg": "Χρώμα φόντου", "sty.font": "Γραμματοσειρά", "sty.font.sans": "Χωρίς πατούρες", "sty.font.serif": "Με πατούρες", "sty.font.mono": "Σταθερού πλάτους", "sty.hs": "Επικεφαλίδες", "sty.hs.s": "Μικρές", "sty.hs.m": "Μεσαίες", "sty.hs.l": "Μεγάλες", "sty.btn": "Κουμπιά", "sty.btn.round": "Στρογγυλεμένα", "sty.btn.square": "Τετράγωνα", "sty.btn.pill": "Χάπι", "sty.link": "Δικό τους χρώμα συνδέσμων", "sty.bg": "Δικό του φόντο email", "ck.newerBlock": "Το τεύχος έχει block από νεότερο orOS. Ενημέρωσε το orOS σε αυτή τη συσκευή πριν το στείλεις.",
       "lists.rss": "RSS σε email",
       "rss.title": "RSS σε email", "rss.none": "Δεν υπάρχουν ροές ακόμα. Διάλεξε μια ροή από τον Αναγνώστη ή οποιαδήποτε διεύθυνση ροής, και το orOS φτιάχνει τεύχος από τα νέα άρθρα της τη μέρα που θέλεις.",
       "rss.add": "Προσθήκη ροής", "rss.edit": "RSS σε email", "rss.src": "Ροή", "rss.other": "Άλλη διεύθυνση…",
@@ -519,7 +521,11 @@
     list:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>',
     up:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 15 12 9 18 15"/></svg>',
     down:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>',
-    x:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>'
+    x:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+    grip:  '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>',
+    copy:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg>',
+    undo:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg>',
+    redo:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14l5-5-5-5"/><path d="M20 9H9a5 5 0 0 0 0 10h3"/></svg>'
   };
 
   // BOOT MARKER
@@ -965,10 +971,10 @@
     var c1 = el("div", "card");
     c1.appendChild(versionBar(x, l));
     var subj = inp("text", cx.subj, C.LIM.subj);
-    subj.addEventListener("input", function () { cx.subj = subj.value; $("ed-title").textContent = x.subj || t("ed.new"); touchIssue(x); });
+    subj.addEventListener("input", function () { typed(x); cx.subj = subj.value; $("ed-title").textContent = x.subj || t("ed.new"); touchIssue(x); });
     c1.appendChild(field(t("ed.subj"), subj));
     var pre = inp("text", cx.pre, C.LIM.pre);
-    pre.addEventListener("input", function () { cx.pre = pre.value; touchIssue(x); });
+    pre.addEventListener("input", function () { typed(x); cx.pre = pre.value; touchIssue(x); });
     c1.appendChild(field(t("ed.pre"), pre, t("ed.preHint")));
     c1.appendChild(audienceField(x));
     form.appendChild(c1);
@@ -981,6 +987,7 @@
       b.setAttribute("aria-pressed", cx.fmt === o[0] ? "true" : "false");
       b.addEventListener("click", function () {
         if (cx.fmt === o[0]) return;
+        snap(x);
         cx.fmt = o[0];
         put("issues", x);
         renderEditor();
@@ -989,6 +996,7 @@
     });
     var hc = el("div", "card-head");
     hc.appendChild(el("h3", "sec-h", t("ed.content")));
+    hc.appendChild(histButtons(x));
     hc.appendChild(seg);
     c2.appendChild(hc);
     if (cx.fmt === "md") {
@@ -997,7 +1005,7 @@
       ta.maxLength = C.LIM.md;
       ta.rows = 16;
       ta.spellcheck = true;
-      ta.addEventListener("input", function () { cx.md = ta.value; touchIssue(x); });
+      ta.addEventListener("input", function () { typed(x); cx.md = ta.value; touchIssue(x); });
       c2.appendChild(ta);
       c2.appendChild(el("p", "hint", t("ed.mdHint")));
     } else {
@@ -1005,15 +1013,16 @@
       box.id = "blocks";
       c2.appendChild(box);
       renderBlocks(x, box);
-      var add = el("div", "acts");
-      ["h", "p", "img", "btn", "hr", "cols"].forEach(function (k) {
+      var add = el("div", "acts add-blocks");
+      ADD_KINDS.forEach(function (k) {
         add.appendChild(mini("+ " + t("bk." + k), function () {
           if (cx.blocks.length >= C.LIM.blocks) return;
-          cx.blocks.push(k === "hr" ? { k: "hr" } : (k === "cols" ? { k: "cols", a: "", b: "" } :
-                        (k === "img" ? { k: "img", f: "", alt: "", href: "", w: 600, h: 400, b: 0 } : { k: k, t: "", href: "" })));
+          snap(x);
+          cx.blocks.push(newBlock(k));
           put("issues", x);
           renderBlocks(x, $("blocks"));
           if (k === "img") pickImage(x, cx.blocks.length - 1);
+          else focusBlock(cx.blocks.length - 1);
         }));
       });
       c2.appendChild(add);
@@ -1251,49 +1260,280 @@
     else renderAll();
   }
   var thumbs = {};      // path → object URL (this session)
+  // ---------- the block editor (wave E1) ----------
+  var ADD_KINDS = ["h", "p", "list", "quote", "img", "btn", "hr", "sp", "cols"];
+  function newBlock(k) {
+    switch (k) {
+      case "hr": return { k: "hr" };
+      case "sp": return { k: "sp", h: 24 };
+      case "cols": return { k: "cols", a: "", b: "" };
+      case "img": return { k: "img", f: "", alt: "", href: "", w: 600, h: 400, b: 0 };
+      case "quote": return { k: "quote", t: "", by: "" };
+      case "list": return { k: "list", t: "" };
+      case "btn": return { k: "btn", t: "", href: "" };
+    }
+    return { k: k, t: "" };
+  }
+  // Undo / redo of the issue being edited: snapshots of its written
+  // part (both language versions), taken before each change; typing
+  // makes one snapshot per pause, not one per letter.
+  var hist = { id: "", past: [], future: [], at: 0 };
+  var HIST_MAX = 60;
+  function contentOf(x) {
+    return JSON.stringify({ subj: x.subj, pre: x.pre, fmt: x.fmt, blocks: x.blocks, md: x.md, l2: x.l2 });
+  }
+  function histFor(x) {
+    if (hist.id !== x.id) hist = { id: x.id, past: [], future: [], at: 0 };
+    return hist;
+  }
+  function snap(x) {
+    var h = histFor(x), c = contentOf(x);
+    if (h.past[h.past.length - 1] !== c) h.past.push(c);
+    if (h.past.length > HIST_MAX) h.past.shift();
+    h.future = [];
+    h.at = Date.now();
+    paintHist();
+  }
+  function typed(x) {
+    var h = histFor(x);
+    if (Date.now() - h.at > 1200) snap(x);
+    h.at = Date.now();
+  }
+  function stepHist(back) {
+    var x = edIssue;
+    if (!x || view !== "edit") return false;
+    var h = histFor(x), from = back ? h.past : h.future, to = back ? h.future : h.past;
+    if (!from.length) return false;
+    clearTimeout(saveTimer);
+    saveTimer = null;
+    to.push(contentOf(x));
+    var c = JSON.parse(from.pop());
+    ["subj", "pre", "fmt", "blocks", "md", "l2"].forEach(function (k) { x[k] = c[k]; });
+    var cur = C.issue(data, x.id);
+    if (!cur || cur.st !== "draft") return false;
+    put("issues", x);
+    h.at = 0;
+    renderEditor();
+    return true;
+  }
+  var histBtns = null;
+  function histButtons(x) {
+    histFor(x);
+    var w = el("div", "hist");
+    histBtns = [];
+    [[true, UI.undo, t("ed.undo")], [false, UI.redo, t("ed.redo")]].forEach(function (a) {
+      var b = el("button", "icon-btn sm");
+      b.type = "button";
+      b.innerHTML = a[1];
+      b.title = a[2];
+      b.setAttribute("aria-label", a[2]);
+      b.addEventListener("click", function () { flushIssue(); stepHist(a[0]); });
+      histBtns.push(b);
+      w.appendChild(b);
+    });
+    paintHist();
+    return w;
+  }
+  function paintHist() {
+    if (!histBtns) return;
+    histBtns[0].disabled = !hist.past.length;
+    histBtns[1].disabled = !hist.future.length;
+  }
+  function focusBlock(i) {
+    var card = $("blocks") && $("blocks").children[i];
+    var f = card && card.querySelector("input:not([type=color]):not([type=checkbox]),textarea");
+    if (f) { f.focus(); card.scrollIntoView({ block: "nearest" }); }
+  }
+  function moveBlock(x, from, to) {
+    var cx = side(x);
+    if (to < 0 || to >= cx.blocks.length || to === from) return;
+    snap(x);
+    var b = cx.blocks.splice(from, 1)[0];
+    cx.blocks.splice(to, 0, b);
+    put("issues", x);
+    renderBlocks(x, $("blocks"));
+    var h = $("blocks").children[to] && $("blocks").children[to].querySelector(".blk-drag");
+    if (h) h.focus();
+    $("live").textContent = t("bk.moved", { n: to + 1 });
+  }
+  // Drag by the handle (mouse, pen or finger); the arrow keys move a
+  // block too while the handle has focus.
+  function wireDrag(x, box, handle, i) {
+    handle.addEventListener("keydown", function (e) {
+      if (e.key === "ArrowUp" || e.key === "ArrowDown") { e.preventDefault(); moveBlock(x, i, i + (e.key === "ArrowUp" ? -1 : 1)); }
+    });
+    handle.addEventListener("pointerdown", function (e) {
+      if (e.button !== 0) return;
+      e.preventDefault();
+      var cards = Array.prototype.slice.call(box.children), card = cards[i];
+      var target = i, startY = e.clientY;
+      try { handle.setPointerCapture(e.pointerId); } catch (err) {}
+      card.classList.add("dragging");
+      var mark = function () {
+        cards.forEach(function (c, j) {
+          c.classList.toggle("drop-above", j === target && target < i);
+          c.classList.toggle("drop-below", j === target && target > i);
+        });
+      };
+      var onMove = function (ev) {
+        card.style.transform = "translateY(" + (ev.clientY - startY) + "px)";
+        target = i;
+        cards.forEach(function (c, j) {
+          if (j === i) return;
+          var r = c.getBoundingClientRect(), mid = r.top + r.height / 2;
+          if (j < i && ev.clientY < mid && j < target) target = j;
+          if (j > i && ev.clientY > mid && j > target) target = j;
+        });
+        mark();
+      };
+      var onUp = function () {
+        handle.removeEventListener("pointermove", onMove);
+        handle.removeEventListener("pointerup", onUp);
+        handle.removeEventListener("pointercancel", onUp);
+        card.classList.remove("dragging");
+        card.style.transform = "";
+        cards.forEach(function (c) { c.classList.remove("drop-above", "drop-below"); });
+        if (target !== i) moveBlock(x, i, target);
+      };
+      handle.addEventListener("pointermove", onMove);
+      handle.addEventListener("pointerup", onUp);
+      handle.addEventListener("pointercancel", onUp);
+    });
+  }
+  function iconBtn(icon, label, fn, on) {
+    var ib = el("button", "icon-btn sm");
+    ib.type = "button";
+    ib.innerHTML = icon;
+    ib.title = label;
+    ib.setAttribute("aria-label", label);
+    ib.disabled = on === false;
+    ib.addEventListener("click", fn);
+    return ib;
+  }
+  // a colour that may be "the theme's" (empty): a checkbox + a picker
+  function colorPick(label, value, dflt, onSet) {
+    var w = el("div", "fld color-opt");
+    var lb = el("label", "check");
+    var cb = el("input");
+    cb.type = "checkbox";
+    cb.checked = !!value;
+    lb.appendChild(cb);
+    lb.appendChild(el("span", "", label));
+    var ci = inp("color", value || dflt);
+    ci.className = "color-in";
+    ci.disabled = !value;
+    ci.setAttribute("aria-label", label);
+    cb.addEventListener("change", function () { ci.disabled = !cb.checked; onSet(cb.checked ? ci.value : ""); });
+    ci.addEventListener("input", function () { if (cb.checked) onSet(ci.value); });
+    w.appendChild(lb);
+    w.appendChild(ci);
+    return w;
+  }
   function renderBlocks(x, box) {
     box.innerHTML = "";
     var cx = side(x);
+    var l = C.list(data, x.list);
+    var accent = (l && l.color) || "#2f6fde";
     cx.blocks.forEach(function (b, i) {
       var card = el("div", "blk");
       var head = el("div", "blk-head");
-      head.appendChild(el("span", "blk-k", t("bk." + b.k)));
-      head.appendChild(el("span", "spacer"));
-      [["up", UI.up, t("bk.up"), i > 0], ["down", UI.down, t("bk.down"), i < cx.blocks.length - 1], ["x", UI.x, t("bk.remove"), true]]
-        .forEach(function (a) {
-          var ib = el("button", "icon-btn sm");
-          ib.type = "button";
-          ib.innerHTML = a[1];
-          ib.title = a[2];
-          ib.setAttribute("aria-label", a[2]);
-          ib.disabled = !a[3];
-          ib.addEventListener("click", function () {
-            if (a[0] === "x") {
-              var gone = cx.blocks.splice(i, 1)[0];
-              put("issues", x);
-              renderBlocks(x, box);
-              undoToast(t("toast.deleted"), function () {
-                cx.blocks.splice(Math.min(i, cx.blocks.length), 0, gone);
-                put("issues", x);
-                renderBlocks(x, box);
-              });
-              return;
-            }
-            var j = a[0] === "up" ? i - 1 : i + 1;
-            var tmp = cx.blocks[i]; cx.blocks[i] = cx.blocks[j]; cx.blocks[j] = tmp;
-            put("issues", x);
-            renderBlocks(x, box);
-          });
-          head.appendChild(ib);
+      var known = C.knownBlock(b);
+      var handle = el("button", "icon-btn sm blk-drag");
+      handle.type = "button";
+      handle.innerHTML = UI.grip;
+      handle.title = t("bk.drag");
+      handle.setAttribute("aria-label", t("bk.drag") + ": " + (known ? t("bk." + b.k) : t("bk.newer")));
+      wireDrag(x, box, handle, i);
+      head.appendChild(handle);
+      head.appendChild(el("span", "blk-k", known ? t("bk." + b.k) : t("bk.newer")));
+      var setBox = null;
+      if (known) {
+        var gear = iconBtn(UI.gear, t("bk.settings"), function () {
+          var open = setBox.hidden;
+          setBox.hidden = !open;
+          gear.setAttribute("aria-expanded", open ? "true" : "false");
         });
+        gear.setAttribute("aria-expanded", "false");
+        head.appendChild(gear);
+        head.appendChild(iconBtn(UI.copy, t("bk.dup"), function () {
+          if (cx.blocks.length >= C.LIM.blocks) { showToast(t("bk.full")); return; }
+          snap(x);
+          cx.blocks.splice(i + 1, 0, copy(b));
+          put("issues", x);
+          renderBlocks(x, box);
+          focusBlock(i + 1);
+        }));
+      }
+      head.appendChild(iconBtn(UI.up, t("bk.up"), function () { moveBlock(x, i, i - 1); }, i > 0));
+      head.appendChild(iconBtn(UI.down, t("bk.down"), function () { moveBlock(x, i, i + 1); }, i < cx.blocks.length - 1));
+      head.appendChild(iconBtn(UI.x, t("bk.remove"), function () {
+        snap(x);
+        var gone = cx.blocks.splice(i, 1)[0];
+        put("issues", x);
+        renderBlocks(x, box);
+        undoToast(t("toast.deleted"), function () {
+          cx.blocks.splice(Math.min(i, cx.blocks.length), 0, gone);
+          put("issues", x);
+          renderBlocks(x, box);
+        });
+      }));
       card.appendChild(head);
-      var bind = function (ctl, key) {
-        ctl.addEventListener("input", function () { b[key] = ctl.value; touchIssue(x); });
+      if (!known) {
+        card.appendChild(el("p", "hint", t("bk.newerHint")));
+        box.appendChild(card);
+        return;
+      }
+      var bind = function (ctl, key, obj) {
+        ctl.addEventListener("input", function () { typed(x); (obj || b)[key] = ctl.value; touchIssue(x); });
         return ctl;
       };
-      if (b.k === "h") card.appendChild(bind(inp("text", b.t, 300), "t"));
-      else if (b.k === "p") card.appendChild(bind(area(b.t, 5), "t"));
-      else if (b.k === "cols") {
+      // a setting that changes at once (select, checkbox, colour)
+      var setNow = function (key, v, obj) {
+        snap(x);
+        var o = obj || b;
+        if (v === "" || v === null || v === undefined) delete o[key]; else o[key] = v;
+        touchIssue(x);
+      };
+      var selCtl = function (opts, value, onSel) {
+        var s = sel(opts, String(value));
+        s.addEventListener("change", function () { onSel(s.value); });
+        return s;
+      };
+      var row = function () { return el("div", "fld-row"); };
+      if (b.k === "h") {
+        card.appendChild(bind(inp("text", b.t, 300), "t"));
+        var r1 = row();
+        r1.appendChild(field(t("bk.level"), selCtl([["1", "H1"], ["2", "H2"], ["3", "H3"]], b.lv || 2, function (v) {
+          setNow("lv", v === "2" ? "" : Number(v));
+        })));
+        card.appendChild(r1);
+      } else if (b.k === "p") card.appendChild(bind(area(b.t, 5), "t"));
+      else if (b.k === "list") {
+        var la = bind(area(b.t, 4), "t");
+        la.placeholder = t("bk.listPh");
+        card.appendChild(la);
+        var r2 = row();
+        r2.appendChild(field(t("bk.listKind"), selCtl([["0", t("bk.bullets")], ["1", t("bk.numbers")]], b.ord ? 1 : 0, function (v) {
+          setNow("ord", v === "1" ? 1 : "");
+        })));
+        card.appendChild(r2);
+      } else if (b.k === "quote") {
+        card.appendChild(bind(area(b.t, 3), "t"));
+        card.appendChild(field(t("bk.by"), bind(inp("text", b.by, 200), "by")));
+      } else if (b.k === "sp") {
+        card.appendChild(field(t("bk.height"), selCtl([8, 16, 24, 32, 48, 64, 96].map(function (n) { return [String(n), n + " px"]; }), b.h || 24,
+          function (v) { setNow("h", Number(v)); })));
+      } else if (b.k === "hr") {
+        var r3 = row();
+        r3.appendChild(field(t("bk.lineStyle"), selCtl(C.HR_STYLES.map(function (k) { return [k, t("bk.hr." + k)]; }), b.st || "solid",
+          function (v) { setNow("st", v === "solid" ? "" : v); })));
+        r3.appendChild(field(t("bk.thick"), selCtl([1, 2, 3, 4, 6, 8].map(function (n) { return [String(n), n + " px"]; }), b.w || 1,
+          function (v) { setNow("w", v === "1" ? "" : Number(v)); })));
+        r3.appendChild(field(t("bk.width"), selCtl([100, 75, 50, 25].map(function (n) { return [String(n), n + "%"]; }), b.wd || 100,
+          function (v) { setNow("wd", v === "100" ? "" : Number(v)); })));
+        card.appendChild(r3);
+        card.appendChild(colorPick(t("bk.lineColor"), b.c || "", "#999999", function (v) { setNow("c", v); }));
+      } else if (b.k === "cols") {
         var r = el("div", "cols-ed");
         r.appendChild(field(t("bk.left"), bind(area(b.a, 4), "a")));
         r.appendChild(field(t("bk.right"), bind(area(b.b, 4), "b")));
@@ -1301,19 +1541,69 @@
       } else if (b.k === "btn") {
         card.appendChild(field(t("bk.btnText"), bind(inp("text", b.t, 80), "t")));
         card.appendChild(field(t("bk.link"), bind(inp("url", b.href, 2000), "href")));
+        (b.more || []).forEach(function (m, j) {
+          var mb = el("div", "btn-more");
+          var mh = el("div", "blk-head");
+          mh.appendChild(el("span", "blk-k", t("bk.btnN", { n: j + 2 })));
+          mh.appendChild(iconBtn(UI.x, t("bk.btnRemove"), function () {
+            snap(x);
+            b.more.splice(j, 1);
+            if (!b.more.length) delete b.more;
+            put("issues", x);
+            renderBlocks(x, box);
+          }));
+          mb.appendChild(mh);
+          mb.appendChild(field(t("bk.btnText"), bind(inp("text", m.t, 80), "t", m)));
+          mb.appendChild(field(t("bk.link"), bind(inp("url", m.href, 2000), "href", m)));
+          card.appendChild(mb);
+        });
+        var r4 = row();
+        r4.appendChild(field(t("bk.btnStyle"), selCtl([["fill", t("bk.fill")], ["line", t("bk.outline")]], b.st || "fill",
+          function (v) { setNow("st", v === "line" ? "line" : ""); })));
+        if (!b.more) {
+          var fl = el("label", "check");
+          var fc = el("input");
+          fc.type = "checkbox";
+          fc.checked = b.full === 1;
+          fc.addEventListener("change", function () { setNow("full", fc.checked ? 1 : ""); });
+          fl.appendChild(fc);
+          fl.appendChild(el("span", "", t("bk.full100")));
+          r4.appendChild(fl);
+        }
+        card.appendChild(r4);
+        if (!b.more || b.more.length < 2) {
+          card.appendChild(mini("+ " + t("bk.btnAdd"), function () {
+            snap(x);
+            b.more = (b.more || []).concat([{ t: "", href: "" }]);
+            delete b.full;
+            put("issues", x);
+            renderBlocks(x, box);
+          }));
+        }
       } else if (b.k === "img") {
-        var row = el("div", "img-row");
+        var ir = el("div", "img-row");
         var im = el("img", "img-thumb");
         im.alt = "";
         if (b.f) {
-          showThumb(b.f, im, row);
-        } else row.appendChild(el("span", "hint", t("bk.noImg")));
-        row.insertBefore(im, row.firstChild);
-        row.appendChild(mini(t("bk.pick"), function () { pickImage(x, i); }));
-        card.appendChild(row);
+          showThumb(b.f, im, ir);
+        } else ir.appendChild(el("span", "hint", t("bk.noImg")));
+        ir.insertBefore(im, ir.firstChild);
+        ir.appendChild(mini(t("bk.pick"), function () { pickImage(x, i); }));
+        card.appendChild(ir);
         card.appendChild(field(t("bk.alt"), bind(inp("text", b.alt, 300), "alt")));
         card.appendChild(field(t("bk.link"), bind(inp("url", b.href, 2000), "href")));
       }
+      // alignment, padding, background: any block
+      setBox = el("div", "blk-set");
+      setBox.hidden = true;
+      var r5 = row();
+      r5.appendChild(field(t("bk.align"), selCtl(C.ALIGNS.map(function (k) { return [k, t("bk.al." + k)]; }), b.al || "left",
+        function (v) { setNow("al", v === "left" ? "" : v); })));
+      r5.appendChild(field(t("bk.pad"), selCtl([0, 8, 16, 24, 32, 48].map(function (n) { return [String(n), n + " px"]; }), b.pad || 0,
+        function (v) { setNow("pad", v === "0" ? "" : Number(v)); })));
+      setBox.appendChild(r5);
+      setBox.appendChild(colorPick(t("bk.bg"), b.bg || "", accent, function (v) { setNow("bg", v); }));
+      card.appendChild(setBox);
       box.appendChild(card);
     });
   }
@@ -1556,6 +1846,20 @@
     f.color.className = "color-in";
     r.appendChild(field(t("l.color"), f.color));
     dlg.appendChild(r);
+    // the look beyond theme + colour (wave E1)
+    var sty = copy(src.sty || {});
+    var r2 = el("div", "fld-row");
+    f.font = sel(C.FONTS.map(function (k) { return [k, t("sty.font." + k)]; }), sty.font || "sans");
+    r2.appendChild(field(t("sty.font"), f.font));
+    f.hs = sel(C.HEAD_SIZES.map(function (k) { return [k, t("sty.hs." + k)]; }), sty.hs || "m");
+    r2.appendChild(field(t("sty.hs"), f.hs));
+    f.btn = sel(C.BTN_SHAPES.map(function (k) { return [k, t("sty.btn." + k)]; }), sty.btn || "round");
+    r2.appendChild(field(t("sty.btn"), f.btn));
+    dlg.appendChild(r2);
+    var r3 = el("div", "fld-row");
+    r3.appendChild(colorPick(t("sty.link"), sty.link || "", src.color, function (v) { sty.link = v; }));
+    r3.appendChild(colorPick(t("sty.bg"), sty.bg || "", "#f2f3f5", function (v) { sty.bg = v; }));
+    dlg.appendChild(r3);
     var left = [];
     if (l) {
       left.push(btn(t("l.delete"), "danger", function () {
@@ -1574,11 +1878,14 @@
       f.addr.classList.toggle("bad", !f.addr.value.trim());
       f.name.classList.toggle("bad", !f.name.value.trim());
       if (!from || !f.addr.value.trim() || !f.name.value.trim()) return;
-      var rec = C.normList({
-        id: l ? l.id : C.randomId("l", null), m: l ? l.m : 0, name: f.name.value, chan: f.chan.value,
-        from: from, fromName: f.fromName.value, reply: f.reply.value, lang: f.lang.value, addr: f.addr.value, why: f.why.value,
-        theme: f.theme.value, color: f.color.value, salt: l ? l.salt : C.randomId("", null), form: l ? l.form : null
-      });
+      // start from the stored record, so fields a newer orOS added stay
+      var base = l ? copy(l) : {};
+      [["id", l ? l.id : C.randomId("l", null)], ["m", l ? l.m : 0], ["name", f.name.value], ["chan", f.chan.value],
+       ["from", from], ["fromName", f.fromName.value], ["reply", f.reply.value], ["lang", f.lang.value], ["addr", f.addr.value],
+       ["why", f.why.value], ["theme", f.theme.value], ["color", f.color.value], ["salt", l ? l.salt : C.randomId("", null)],
+       ["form", l ? l.form : null],
+       ["sty", { font: f.font.value, hs: f.hs.value, btn: f.btn.value, link: sty.link, bg: sty.bg }]].forEach(function (kv) { base[kv[0]] = kv[1]; });
+      var rec = C.normList(base);
       put("lists", rec);
       prefs.list = rec.id;
       savePrefs();
@@ -3147,6 +3454,13 @@
       if (document.querySelector("dialog[open]")) return;
       if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && (e.key === "z" || e.key === "Z")) {
         if (undoFn) { e.preventDefault(); runUndo(); }
+        else if (view === "edit") { e.preventDefault(); flushIssue(); stepHist(true); }
+        return;
+      }
+      // redo in the editor: Ctrl+Y or Ctrl+Shift+Z
+      if (view === "edit" && (e.ctrlKey || e.metaKey) && !e.altKey &&
+          ((!e.shiftKey && (e.key === "y" || e.key === "Y")) || (e.shiftKey && (e.key === "z" || e.key === "Z")))) {
+        e.preventDefault(); flushIssue(); stepHist(false);
         return;
       }
       if (e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;

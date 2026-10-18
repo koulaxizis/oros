@@ -190,7 +190,8 @@ test("newsletter: hostile content is cut down", () => {
   const x = D.strip(n).issues[0];
   assert.equal(x.st, "draft");
   assert.equal(x.lock, null);
-  assert.deepEqual(x.blocks, [{ k: "btn", t: "go", href: "" }, { k: "img", f: "", alt: "", href: "", w: 600, h: 400, b: 0 },
+  // a kind this version doesn't know is kept as data (a newer orOS wrote it), never drawn
+  assert.deepEqual(x.blocks, [{ k: "script", t: "x" }, { k: "btn", t: "go", href: "" }, { k: "img", f: "", alt: "", href: "", w: 600, h: 400, b: 0 },
                               { k: "img", f: "", alt: "", href: "", w: 600, h: 400, b: 0 }]);
   assert.deepEqual([n.chans[0].host, n.chans[0].port], ["", 587]);
   assert.equal(D.strip(n).chans[0].user, "");

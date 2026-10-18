@@ -388,10 +388,23 @@ input.bad, textarea.bad { border-color: var(--danger); box-shadow: 0 0 0 3px rgb
 .blocks { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
 .blk { padding: 10px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg); }
 .blk-head { display: flex; align-items: center; gap: 4px; margin-bottom: 8px; }
-.blk-k { flex: 1 1 auto; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dim); }
+.blk-k { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dim); }
 .blk textarea { min-height: 80px; }
 .blk input + input, .blk input + textarea, .blk textarea + input { margin-top: 6px; }
 .cols-ed { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
+.blk.dragging { position: relative; z-index: 2; box-shadow: 0 8px 24px rgba(0,0,0,.18); opacity: .92; }
+.blk.drop-above { box-shadow: 0 -3px 0 var(--accent); }
+.blk.drop-below { box-shadow: 0 3px 0 var(--accent); }
+.blk-drag { cursor: grab; touch-action: none; }
+.blk-drag:active { cursor: grabbing; }
+.blk-set { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border); }
+.blk-set[hidden] { display: none; }
+.btn-more { margin: 8px 0; padding: 8px; border: 1px dashed var(--border); border-radius: 8px; }
+.color-opt { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.color-opt .check { flex: 1 1 auto; }
+.color-in:disabled { opacity: .4; }
+.hist { display: flex; gap: 2px; }
+.add-blocks .mini-btn { flex: 0 0 auto; }
 .img-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 6px; }
 .img-thumb { width: 96px; height: 64px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border); background: var(--panel-bg); }
 .img-thumb:not([src]), .img-thumb[src=""] { visibility: hidden; }
@@ -642,6 +655,9 @@ button.pick-row:hover { border-color: var(--accent); background: var(--accent-so
   .filters { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   .filters #sq { grid-column: 1 / -1; }
   .cols-ed { grid-template-columns: minmax(0, 1fr); }
+  .blk-head { gap: 2px; }
+  .blk-head .icon-btn.sm { width: 32px; flex: 0 0 32px; }
+  .blk { padding: 8px; }
   .list-pick { flex: 1 1 100%; }
 }
 @media (max-width: 480px) {
