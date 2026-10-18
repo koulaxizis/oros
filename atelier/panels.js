@@ -6,7 +6,7 @@
 //     Effects (text), Filters / Adjust / Shape (photos), Position
 //   - the context bar above the stage: the tools of what is
 //     selected (font, size, colour, B I U, alignment, spacing,
-//     border, roundness, crop, flip, transparency, lock, …)
+//     border, roundness, crop, flip, transparency, link, lock, …)
 // Sliders run as one gesture (one undo step, one save).
 // ============================================================
 (function () {
@@ -1001,6 +1001,7 @@
     bar.appendChild(sep());
     bar.appendChild(tool("position", t("ctx.position"), function () { openView("position"); }, view === "position"));
     bar.appendChild(tool("op", t("ctx.op"), opacityPop));
+    bar.appendChild(tool("link", t("ctx.link"), linkPop, list.some(function (x) { return !!AX.linkOf(x); })));
     bar.appendChild(tool("anim", t("ctx.animate"), function () { openView("animate"); }, view === "animate"));
     bar.appendChild(tool("lock", t("ctx.lock"), function () { edit(function (it) { it.lock = 1; }); }));
     bar.appendChild(tool("copy", t("ctx.dup"), ED.duplicate));
@@ -1012,6 +1013,39 @@
     var it = ED.selItems()[0];
     AT.popover(anchor, function (m) {
       m.appendChild(slider(t("ctx.op"), 0, 100, 1, it ? it.op : 100, function (v) { edit(function (x) { x.op = v; }); }, function (v) { return v + "%"; }));
+    });
+  }
+
+  // The link of the picked elements (item ext.lnk, AX.normLink): the
+  // web page export and the PDF make them clickable.
+  function linkPop(anchor) {
+    var list = ED.selItems(), cur = "";
+    list.forEach(function (x) { if (!cur) cur = AX.linkOf(x); });
+    AT.popover(anchor, function (m, close) {
+      m.classList.add("lnk-pop");
+      var inp = el("input", "inp sm");
+      inp.type = "url"; inp.inputMode = "url"; inp.autocomplete = "off"; inp.spellcheck = false;
+      inp.value = cur; inp.placeholder = t("lnk.ph"); inp.maxLength = 2000;
+      inp.setAttribute("aria-label", t("ctx.link"));
+      var err = el("p", "hint warn");
+      err.hidden = true;
+      function save() {
+        var v = inp.value.trim();
+        if (v && !AX.normLink(v)) { err.textContent = t("lnk.bad"); err.hidden = false; inp.focus(); return; }
+        edit(function (x) { AX.setLink(x, v); });
+        close();
+      }
+      inp.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); save(); } });
+      inp.addEventListener("input", function () { err.hidden = true; });
+      m.appendChild(el("div", "fld-lbl", t("ctx.link")));
+      m.appendChild(inp);
+      m.appendChild(err);
+      m.appendChild(el("p", "hint", t("lnk.hint")));
+      var row = el("div", "dlg-actions");
+      if (cur) row.appendChild(btn("btn", t("lnk.remove"), function () { edit(function (x) { AX.setLink(x, ""); }); close(); }));
+      row.appendChild(btn("btn primary", t("lnk.save"), save));
+      m.appendChild(row);
+      setTimeout(function () { try { inp.focus(); } catch (e) {} }, 0);
     });
   }
 
