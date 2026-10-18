@@ -2,7 +2,8 @@
 // orOS Atelier — motion (v1.0.0): animation, present, video, GIF
 //   - Animate panel: an entrance per element (fade, rise, pop, wipe,
 //     typewriter), and per page its duration and the transition to
-//     it (anim.js keeps the timing rules)
+//     it (anim.js keeps the timing rules), Morph among them (wave C2,
+//     morph.js: the previous page turns into this one)
 //   - Play: previews the current page's animation on the stage
 //   - Present: full screen with designkit/show.js (keys, clicker,
 //     touch, transitions); pages show as they end up
@@ -41,7 +42,8 @@
     ED.exitText();
     var my = ++playing, pg = ED.pg;
     var items = doc.items.filter(function (it) { return it.pg === pg; }).sort(M.byZ);
-    var end = Anim.introLen(items) + 0.3;
+    var from = morphFrom(doc, pg), lead = from ? Anim.MORPH : 0;
+    var end = Anim.introLen(items) + lead + 0.3;
     var page = pages(doc).filter(function (p) { return p.id === pg; })[0];
     var s = AT.video && page ? AT.video.Session(doc, [page]) : null;
     (s ? s.prepare() : Promise.resolve()).then(function () {
@@ -56,7 +58,8 @@
         var sec = (performance.now() - t0) / 1000;
         if (sec >= end) { stopPlay(); return; }
         if (sess) sess.sync(sec, true);
-        ED.animTime = sec;
+        ED.animTime = sec - lead;
+        ED.morph = from && sec < lead ? { from: from, p: Anim.easeInOut(sec / lead) } : undefined;
         ED.redraw();
         requestAnimationFrame(frame);
       })();
@@ -66,10 +69,16 @@
     playing++;
     if (sess) { sess.stop(); sess = null; }
     ED.media = undefined;
+    ED.morph = undefined;
     if (ED.animTime !== undefined) ED.animTime = undefined;
     ED.redraw();
   }
   AT.on("open", function () { if (sess) stopPlay(); });
+  // the page before pg when pg morphs in from it, else ""
+  function morphFrom(doc, pg) {
+    var list = pages(doc), i = list.findIndex(function (p) { return p.id === pg; });
+    return i > 0 && Anim.pageTransition(doc, pg) === "morph" ? list[i - 1].id : "";
+  }
 
   // ---------- Animate panel ----------
   function view(body) {
@@ -117,14 +126,23 @@
       if (pages(doc)[0].id !== ED.pg) {
         s2.appendChild(el("div", "fld-lbl", t("an.tr")));
         var chips = el("div", "chips");
-        var ptr = bg.ax.ptr || Anim.PTR_DEF;
-        Anim.TRANSITIONS.forEach(function (id) {
-          chips.appendChild(btn("chip-btn" + (ptr === id ? " on" : ""), t("an.tr." + id), function () {
-            AT.editItems([bg.id], function (it) { if (id === Anim.PTR_DEF) delete it.ax.ptr; else it.ax.ptr = id; });
+        var ptr = Anim.pageTransition(doc, ED.pg);
+        // Morph lives in ext.mph; ptr stays what older copies show
+        Anim.TRANSITIONS.concat(["morph"]).forEach(function (id) {
+          var b = btn("chip-btn" + (ptr === id ? " on" : ""), t("an.tr." + id), function () {
+            AT.editItems([bg.id], function (it) {
+              if (id === "morph") { it.ext = it.ext || {}; it.ext.mph = 1; return; }
+              if (it.ext && it.ext.mph) { delete it.ext.mph; if (!Object.keys(it.ext).length) delete it.ext; }
+              if (id === Anim.PTR_DEF) delete it.ax.ptr; else it.ax.ptr = id;
+            });
             AT.renderDrawer();
-          }));
+            if (id === "morph") play();
+          });
+          b.setAttribute("aria-pressed", ptr === id ? "true" : "false");
+          chips.appendChild(b);
         });
         s2.appendChild(chips);
+        if (ptr === "morph") s2.appendChild(el("p", "hint", t("an.morphHint")));
       }
     }
     body.appendChild(s2);
@@ -155,6 +173,13 @@
     var hasVid = list.map(function (p) {
       return doc.items.some(function (it) { return it.pg === p.id && !it.hide && it.ax && it.ax.vid; });
     });
+    // A morph is drawn here, not by show.js: only when the show came
+    // from the page before (not on a jump, Previous or the first page
+    // shown). show.js asks transition(i) before it draws page i, while
+    // `shown` (onChange) still names the page it leaves.
+    var morph = list.map(function (p, i) { return i > 0 && Anim.pageTransition(doc, p.id) === "morph"; });
+    var shown = -1, morphTo = -1;
+    function lead(i) { return morphTo === i ? Anim.MORPH : 0; }
     // start() needs the click's user gesture (full screen), so no
     // waiting here: the open design's fonts and pictures are loaded,
     // a video shows its first frame until it has loaded.
@@ -163,14 +188,24 @@
       aspect: doc.setup.w / doc.setup.h,
       startAt: idx,
       lang: AT.BASE,
-      live: function (i, t) { return hasVid[i] || t < intro[i] + 0.1; },
+      live: function (i, t) { return hasVid[i] || t < intro[i] + lead(i) + 0.1; },
       renderSlide: function (i, canvas, cssW, cssH, t) {
-        var sc = canvas.width / doc.setup.w;
+        var sc = canvas.width / doc.setup.w, L = lead(i);
         AT.draw.renderPage(doc, list[i], sc, { canvas: canvas, maxSide: 0, background: "#ffffff",
-          time: t, media: t !== undefined && sess ? sess.media : undefined });
+          time: t === undefined ? t : t - L, media: t !== undefined && sess ? sess.media : undefined,
+          morph: t !== undefined && t < L ? { from: list[i - 1].id, p: Anim.easeInOut(t / L) } : undefined });
       },
       title: function (i) { return t("pg.n", { n: i + 1 }); },
-      transition: function (i) { return list[i] && i ? Anim.pageTransition(doc, list[i].id) : "none"; }
+      transition: function (i) {
+        if (!list[i] || !i) return "none";
+        if (i !== shown) morphTo = morph[i] && shown === i - 1 ? i : -1;
+        if (morph[i]) {
+          var bg = AX.background(doc, list[i].id);
+          return morphTo === i ? "none" : (bg && bg.ax.ptr) || Anim.PTR_DEF;
+        }
+        return Anim.pageTransition(doc, list[i].id);
+      },
+      onChange: function (st) { shown = st.index; if (st.index !== morphTo) morphTo = -1; }
     });
     presentSound(ctl, sess);
     // chart pictures at screen size, then the slide draws again
@@ -205,8 +240,8 @@
     var sc = w / doc.setup.w;
     var a = document.createElement("canvas"), b = document.createElement("canvas");
     a.width = b.width = w; a.height = b.height = h;
-    function pageTo(cv, pg, time) {
-      AT.draw.renderPage(doc, pg, sc, { canvas: cv, maxSide: 0, background: "#ffffff", time: time, media: media });
+    function pageTo(cv, pg, time, morph) {
+      AT.draw.renderPage(doc, pg, sc, { canvas: cv, maxSide: 0, background: "#ffffff", time: time, media: media, morph: morph });
       return cv;
     }
     var tl = Anim.timeline(doc, list);
@@ -217,8 +252,9 @@
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.globalAlpha = 1;
         ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, w, h);
-        var cur = pageTo(a, list[p.i], p.local);
-        if (p.prev < 0) { ctx.drawImage(cur, 0, 0); return; }
+        var mo = p.tr === "morph" && p.prev >= 0 ? { from: list[p.prev].id, p: p.mix } : undefined;
+        var cur = pageTo(a, list[p.i], p.pt, mo);
+        if (p.prev < 0 || mo) { ctx.drawImage(cur, 0, 0); return; }
         var prev = pageTo(b, list[p.prev], undefined), m = p.mix;
         if (p.tr === "push") { ctx.drawImage(prev, -m * w, 0); ctx.drawImage(cur, (1 - m) * w, 0); return; }
         ctx.drawImage(prev, 0, 0);

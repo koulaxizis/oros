@@ -75,7 +75,7 @@ test("shell accepts only a query/fragment as app-at", () => {
   assert.equal(f("?" + "x".repeat(9000)), "");
   // the shell strips app-at and only uses it next to ?open=
   assert.match(src, /params\.delete\("app-at"\)/);
-  assert.match(src, /app-frame"\)\.src = app\.url \+ \(at \|\| ""\)/);
+  assert.match(src, /frameGo\(document\.getElementById\("app-frame"\), app\.url \+ \(at \|\| ""\)\)/);
 });
 
 test("service worker does not cache one shell copy per direct link", () => {

@@ -418,7 +418,16 @@
   // opts.time (seconds since the page appeared): entrance
   // animations (anim.js) for the preview and the video / GIF export.
   // Without it every element is drawn as it ends up.
+  // opts.morph { from: page id, p: 0..1 } (wave C2): the page morphing
+  // in from page `from` (morph.js); its entrances wait (time < 0).
   function drawPage(ctx, doc, page, opts) {
+    var Mo = window.AtelierMorph;
+    if (opts && opts.morph && opts.morph.p < 1 && Mo) {
+      Mo.frame(doc, opts.morph.from, page.id, opts.morph.p).forEach(function (it) {
+        if (!(opts.skip && opts.skip[it.id])) drawItem(ctx, doc, it, opts);
+      });
+      return;
+    }
     var list = opts && opts.unknown
       ? doc.items.filter(function (it) { return it.pg === page.id && (it.ax || it.axu); }).sort(M.byZ)
       : itemsOf(doc, page.id);
@@ -466,6 +475,7 @@
   }
 
   // A page on a fresh canvas. scale = px per pt.
+  // opts: canvas, background, time, media, maxSide, skip, morph (drawPage)
   function renderPage(doc, page, scale, opts) {
     opts = opts || {};
     var s = doc.setup;
@@ -478,7 +488,7 @@
     else ctx.clearRect(0, 0, cv.width, cv.height);
     ctx.setTransform(scale, 0, 0, scale, 0, 0);
     ctx.beginPath(); ctx.rect(0, 0, s.w, s.h); ctx.clip();
-    drawPage(ctx, doc, page, { maxSide: opts.maxSide || 0, clean: true, time: opts.time, skip: opts.skip, media: opts.media });
+    drawPage(ctx, doc, page, { maxSide: opts.maxSide || 0, clean: true, time: opts.time, skip: opts.skip, media: opts.media, morph: opts.morph });
     return cv;
   }
 

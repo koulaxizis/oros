@@ -351,6 +351,12 @@
           var P = plan.pages[it.pg];
           if (P.dur === Anim.DUR_DEF) delete it.ax.dur; else it.ax.dur = P.dur;
           if (!P.ptr || P.ptr === Anim.PTR_DEF) delete it.ax.ptr; else it.ax.ptr = P.ptr;
+          // the plan's transition replaces a morph (wave C2)
+          if (it.ext && it.ext.mph) {
+            delete it.ext.mph;
+            if (!Object.keys(it.ext).length) delete it.ext;
+            M.touch(it, nw);
+          }
         }
         if (JSON.stringify(it.ax) !== before) M.touch(it, nw);
       });

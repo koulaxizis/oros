@@ -1308,7 +1308,7 @@
         var h = window.parent.location.hash || "", m = h.match(/^#studio-remote=([0-9]{6})$/);
         if (m) {
           code = m[1];
-          window.parent.history.replaceState(null, "", window.parent.location.pathname + window.parent.location.search);
+          window.parent.history.replaceState(window.parent.history.state, "", window.parent.location.pathname + window.parent.location.search);
         }
       } catch (e) {}
       if (code) openJoin(code);
