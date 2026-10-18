@@ -3249,7 +3249,7 @@
     if (!searchReader) searchReader = S.makeReader(localStorage);
     return S.load(apps, APP_VERSION).then(function () {
       return S.run(window.orosSearchProviders, String(q || ""), {
-        lang: langBase(), readJSON: searchReader,
+        lang: langBase(), code: state.lang, readJSON: searchReader,
         enabled: function (id) { return !!allow[id]; }
       });
     }).then(function (groups) {
@@ -3700,7 +3700,7 @@
         if (!searchReader) searchReader = S.makeReader(localStorage);
         S.load(searchApps(), APP_VERSION).then(function () {
           return S.run(window.orosSearchProviders, q, {
-            lang: langBase(), readJSON: searchReader,
+            lang: langBase(), code: state.lang, readJSON: searchReader,
             enabled: function (id) {
               for (var i = 0; i < state.apps.length; i++) {
                 if (state.apps[i].id === id) {

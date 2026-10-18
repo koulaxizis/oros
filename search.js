@@ -28,6 +28,7 @@
 //     skipped for that search; one app can never break the search.
 //   • No index and no history are stored: the query lives in memory.
 // ============================================================
+// i18n-inline-ok: Greek folding (final ς = σ) is search data, not UI text
 (function (root) {
   "use strict";
 
@@ -203,7 +204,10 @@
   }
 
   // ---------- 6. One search over a list of providers ----------
-  // opts: { lang, storage, readJSON, enabled(id) → bool, timeoutMs }
+  // opts: { lang, code, storage, readJSON, enabled(id) → bool, timeoutMs }
+  // ctx.lang is "el" or "en" (what every provider knows); ctx.code is
+  // the shell's own language (a pack language such as "de"), for the
+  // providers that read packs.
   // Resolves to [{ id, total, hits: [{…hit, score, snippet}] }] in
   // provider order; providers with no hit are left out.
   function run(providers, query, opts) {
@@ -217,6 +221,7 @@
     var ctx = {
       q: String(query), words: words.slice(), fold: fold,
       lang: opts.lang === "el" ? "el" : "en",
+      code: typeof opts.code === "string" && opts.code ? opts.code : (opts.lang === "el" ? "el" : "en"),
       limit: PER_APP_MAX, readJSON: readJSON
     };
     var list = (providers || []).filter(function (p) {
