@@ -14,6 +14,7 @@ orosPack("de", "shell", {
  "app.budget": "Budget",
  "app.calculator": "Rechner",
  "app.calendar": "Kalender",
+ "app.capture": "Bildschirmfoto",
  "app.certificates": "Urkunden",
  "app.characters": "Figuren",
  "app.checkers": "Dame",

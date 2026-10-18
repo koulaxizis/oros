@@ -2,8 +2,8 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 32289 of 32289 (100%)
-- Help pages: 144 of 144 (100%)
+- Strings: 32321 of 32321 (100%)
+- Help pages: 145 of 145 (100%)
 - Shown in the language list: yes
 
 Apps marked "English for now" do not load language packs yet: their
@@ -24,6 +24,7 @@ text is still written in the code. They switch over wave by wave
 | budget | 100% | 555 / 555 |
 | calculator | 100% | 136 / 136 |
 | calendar | 100% | 370 / 370 |
+| capture | 100% | 31 / 31 |
 | cardkit | 100% | 9 / 9 |
 | certificates | 100% | 391 / 391 |
 | characters | 100% | 89 / 89 |
@@ -114,7 +115,7 @@ text is still written in the code. They switch over wave by wave
 | settings | 100% | 515 / 515 |
 | share | 100% | 179 / 179 |
 | shelf | 100% | 291 / 291 |
-| shell | 100% | 824 / 824 |
+| shell | 100% | 825 / 825 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 49 / 49 |
 | sky | 100% | 383 / 383 |

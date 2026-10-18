@@ -1,0 +1,19 @@
+# Screen Capture
+Take a picture of your whole screen, one window or a browser tab, crop it, and keep it in Files › Pictures. Works on a computer with Chrome, Edge or Firefox; phones and tablets do not let a web page capture the screen.
+
+## Take a screenshot
+- Press `Choose what to capture`. Your browser asks what to share: the whole screen, a window or a tab, including the orOS tab itself.
+- The live view shows what you share. Press `Take screenshot`.
+- With a delay (3, 5 or 10 seconds) you have time to open a menu or switch to another window before the picture is taken.
+- While you share, you can take as many pictures as you like. `Stop sharing` ends it, as does the browser's own stop button.
+
+## Crop, save and copy
+- Drag on the picture to keep only part of it. `Whole picture` brings back all of it.
+- `Save to Pictures` saves a PNG in Files › Pictures, named with the date and time.
+- With `Open in Photo Lab after saving` switched on, the picture opens in [Photo Lab](app:photolab) to draw on it or add text.
+- `Copy` puts the picture on the clipboard, to paste it in another app.
+- `Take another` goes back to the live view; `Discard` drops the picture.
+
+## Privacy
+- Nothing leaves this device. orOS only sees what you choose to share, and only while you share it.
+- With orOS sync switched on in [Settings](app:settings), your Pictures folder follows you to your other devices, encrypted, like any other file.
