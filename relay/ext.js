@@ -37,6 +37,7 @@
 //   WooCommerce only: { m: "GET", path: "/wp-content/uploads/…", img: 1 } = a
 //   product picture from the shop's own address, without the keys
 //   (Newsletter, when the shop doesn't let a browser read its pictures);
+//   ≤ 512 KB, alone in its call (base64 costs relay CPU);
 //   answer { status, type, b64 } or { status, err: "type" | "too-big" }
 //   WooCommerce: https://<host><base>/wp-json/wc/v3<path>
 //   timologisi.online (Greek e-invoicing provider, fixed hosts):
@@ -55,7 +56,7 @@ export const EXT_LIMITS = {
   reqBytes: 16 * 1024,              // one request body
   bodyOut: 2 * 1024 * 1024,         // one response body (a page of 100 products)
   totalOut: 8 * 1024 * 1024,        // all response bodies of one call
-  imgOut: 2 * 1024 * 1024,          // one product picture (bytes, before base64)
+  imgOut: 512 * 1024,               // one product picture (bytes, before base64); base64 of 2 MB costs ~25 ms CPU, Free plan has ~10
   concurrency: 4,
   timeout: 20000,                   // ms, per request
   budget: 28000                     // ms, the whole call
@@ -457,6 +458,8 @@ export function validExt(b) {
   if (!Array.isArray(b.reqs) || !b.reqs.length || b.reqs.length > EXT_LIMITS.reqs) return "reqs";
   // a write that must happen once (an invoice) travels alone in its call
   if (pl.once && b.reqs.length > 1 && b.reqs.some(r => r && r.m !== "GET")) return "reqs";
+  // a product picture travels alone in its call (CPU: base64 runs on the relay)
+  if (b.reqs.length > 1 && b.reqs.some(r => r && r.img !== undefined)) return "reqs";
   for (const r of b.reqs) {
     if (r && r.body !== undefined) {
       if (typeof r.body !== "string" || r.body.length > lim(b.p, "reqBytes")) return "body";
@@ -504,6 +507,7 @@ async function readBytes(res, max) {
   return all;
 }
 function b64(bytes) {
+  if (typeof bytes.toBase64 === "function") return bytes.toBase64();
   let s = "";
   for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
   return btoa(s);

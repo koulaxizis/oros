@@ -377,7 +377,7 @@
     // Product pictures (WooCommerce, Newsletter wave E4) only come this
     // way when the app could not read them itself: straight to the relay.
     var imgs = reqs.filter(function (r) { return r.img === 1; }).length;
-    if (imgs && imgs !== reqs.length) return Promise.reject(err("bad"));
+    if (imgs && (imgs !== reqs.length || imgs > 1)) return Promise.reject(err("bad"));   // one picture per call (relay CPU)
     if (imgs) return openLocal(id).then(function (local) { if (!local) throw err("keys"); return viaRelay(a, local.keys, reqs); });
     var writes = reqs.some(function (r) { return r.m !== "GET"; });
     // a write that must happen once travels alone (the relay refuses more)

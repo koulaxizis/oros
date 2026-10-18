@@ -185,19 +185,25 @@ test("relay call: a product picture comes from the shop's uploads, without the k
   const f = mock((url) => url.endsWith(".png")
     ? new Response(png, { status: 200, headers: { "Content-Type": "image/png" } })
     : new Response("<html></html>", { status: 200, headers: { "Content-Type": "text/html" } }));
-  const r = await relay(ext({ base: "/shop", reqs: [
-    { m: "GET", path: "/wp-content/uploads/2026/05/a.png", img: 1 },
-    { m: "GET", path: "/wp-content/uploads/2026/05/b.jpg", img: 1 }
-  ] }), f);
+  const r = await relay(ext({ base: "/shop", reqs: [{ m: "GET", path: "/wp-content/uploads/2026/05/a.png", img: 1 }] }), f);
   assert.equal(r.status, 200);
   assert.equal(f.calls[0].url, "https://shop.example.gr/shop/wp-content/uploads/2026/05/a.png");
   assert.equal(f.calls[0].init.redirect, "manual");
   assert.equal(f.calls[0].init.headers.Authorization, undefined);
   assert.deepEqual(r.json.data.res[0], { status: 200, type: "image/png", b64: Buffer.from(png).toString("base64") });
-  assert.deepEqual(r.json.data.res[1], { status: 200, err: "type" });
   assert.equal(JSON.stringify(r.json).indexOf(CK), -1);
-  // anything else is refused before it leaves
+  const r2 = await relay(ext({ base: "/shop", reqs: [{ m: "GET", path: "/wp-content/uploads/2026/05/b.jpg", img: 1 }] }), f);
+  assert.deepEqual(r2.json.data.res[0], { status: 200, err: "type" });
+  // over 512 KB is too big (base64 costs relay CPU)
+  const big = mock(() => new Response(new Uint8Array(512 * 1024 + 1), { status: 200, headers: { "Content-Type": "image/jpeg" } }));
+  const r3 = await relay(ext({ reqs: [{ m: "GET", path: "/wp-content/uploads/big.jpg", img: 1 }] }), big);
+  assert.deepEqual(r3.json.data.res[0], { status: 200, err: "too-big" });
+  const fits = mock(() => new Response(new Uint8Array(512 * 1024), { status: 200, headers: { "Content-Type": "image/jpeg" } }));
+  assert.equal((await relay(ext({ reqs: [{ m: "GET", path: "/wp-content/uploads/ok.jpg", img: 1 }] }), fits)).json.data.res[0].b64.length, 699052);
+  // anything else is refused before it leaves: two pictures, or a picture with another request
   const g = mock();
+  assert.equal((await relay(ext({ reqs: [{ m: "GET", path: "/wp-content/uploads/a.png", img: 1 }, { m: "GET", path: "/wp-content/uploads/b.png", img: 1 }] }), g)).status, 400);
+  assert.equal((await relay(ext({ reqs: [{ m: "GET", path: "/wp-content/uploads/a.png", img: 1 }, { m: "GET", path: "/products" }] }), g)).status, 400);
   assert.equal((await relay(ext({ reqs: [{ m: "GET", path: "/wp-content/uploads/a.php", img: 1 }] }), g)).status, 400);
   assert.equal((await relay(ext({ p: "mlite", host: undefined, base: undefined, ck: undefined, cs: undefined, key: "x".repeat(30),
     reqs: [{ m: "GET", path: "/wp-content/uploads/a.png", img: 1 }] }), g)).status, 400);
