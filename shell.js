@@ -291,6 +291,20 @@
     return v === "en" || v === "el" || !!(window.orosI18n && window.orosI18n.known(v));
   }
   function langBase() { return state.lang === "el" ? "el" : "en"; }
+  // Dates and numbers in the shell's language (i18n.js locale).
+  function shLoc() { return window.orosI18n ? window.orosI18n.locale(state.lang) : (state.lang === "el" ? "el-GR" : "en-GB"); }
+  // A shell string with its {placeholders} filled: tr("rem.med", { name: n, time: hm }).
+  function tr(key, vars) {
+    var s = window.t(key);
+    if (vars) Object.keys(vars).forEach(function (k) { s = s.split("{" + k + "}").join(String(vars[k])); });
+    return s;
+  }
+  // key + ".one" for 1, else key + ".other" (the shell's two forms).
+  function trn(key, n, vars) {
+    var v = { n: n };
+    if (vars) Object.keys(vars).forEach(function (k) { v[k] = vars[k]; });
+    return tr(key + (n === 1 ? ".one" : ".other"), v);
+  }
 
   // ---------- 2. Preferences ----------
   function initPrefs() {
@@ -1263,10 +1277,6 @@
   // __orosOpenMinimalism opens the app on that exact date.
   var MINIMALISM_DATA_KEY = "oros-minimalism-data";
 
-  function minT(en, el) {
-    return state.lang === "el" ? el : en;
-  }
-
   // The rule lives in minimalism/core.js (OrosMinimalismCore, loaded
   // by index.html), shared with the Today summary.
   function minimalismRaw() {
@@ -1287,9 +1297,8 @@
       ns: "minimalism",
       key: "ritual-" + today,
       type: "reminder",
-      title: minT("Minimalism", "Μινιμαλισμός"),
-      body: minT("A small proposal for your day awaits.",
-                 "Μια μικρή πρόταση για τη μέρα σου σε περιμένει."),
+      title: window.t("app.minimalism"),
+      body: window.t("n.min.body"),
       deepLink: "minimalism:today:" + today
     });
   }
@@ -1311,11 +1320,8 @@
   // kinds never remind. Honest limit (alarms): orOS closed = nothing
   // fires; a time missed by more than 4 hours is dropped, not caught up.
   var HEALTH_DATA_KEY = "oros-health-data";
-  var HEALTH_NAMES = {
-    bp: ["Blood pressure", "Πίεση"], wt: ["Weight", "Βάρος"], gl: ["Blood sugar", "Σάκχαρο"],
-    sl: ["Sleep", "Ύπνος"], hr: ["Resting heart rate", "Σφυγμοί ηρεμίας"],
-    tp: ["Temperature", "Θερμοκρασία"], o2: ["Oxygen (SpO₂)", "Οξυγόνο (SpO₂)"]
-  };
+  // Names of the built-in kinds: translations.js "rem.hn.<kind>".
+  var HEALTH_NAMES = { bp: 1, wt: 1, gl: 1, sl: 1, hr: 1, tp: 1, o2: 1 };
   function healthCheckTick() {
     var Core = window.OrosHealthCore;
     if (!Core) return;                                  // stale bundle — silent
@@ -1332,22 +1338,21 @@
     var appts = typeof Core.dueAppts === "function" ? Core.dueAppts(d, now) : [];
     var vaxes = typeof Core.dueVax === "function" ? Core.dueVax(d, now) : [];
     if (appts.length || vaxes.length) {
-      var elR = state.lang === "el", titleR = window.t("app.health");
+      var titleR = window.t("app.health");
       if (titleR === "app.health") titleR = "Health";
       var dm = function (ms) { var x = new Date(ms); return x.getDate() + "/" + (x.getMonth() + 1); };
       var hmR = function (ms) { var x = new Date(ms); return (x.getHours() < 10 ? "0" : "") + x.getHours() + ":" + (x.getMinutes() < 10 ? "0" : "") + x.getMinutes(); };
       appts.forEach(function (r) {
         var a = r.ap, who = a.dr && a.sp ? a.dr + " · " + a.sp : (a.dr || a.sp);
         N.emit({ ns: "health", key: r.key, type: "reminder", title: titleR,
-                 body: (elR ? "Ραντεβού με γιατρό: " : "Doctor's appointment: ") + who + ", " + dm(a.at) + " " + hmR(a.at),
+                 body: tr("rem.appt", { who: who, when: dm(a.at) + " " + hmR(a.at) }),
                  deepLink: "health:appts" });
       });
       vaxes.forEach(function (r) {
         var p = r.vx.nx.split("-");
         var when = (+p[2]) + "/" + (+p[1]);
         N.emit({ ns: "health", key: r.key, type: "reminder", title: titleR,
-                 body: (r.st === "w" ? (elR ? "Επόμενη δόση εμβολίου σε μία εβδομάδα: " : "Next vaccine dose in a week: ")
-                                     : (elR ? "Επόμενη δόση εμβολίου: " : "Next vaccine dose due: ")) + r.vx.n + " (" + when + ")",
+                 body: tr(r.st === "w" ? "rem.vax.week" : "rem.vax.due", { name: r.vx.n, when: when }),
                  deepLink: "health:vax" });
       });
     }
@@ -1358,34 +1363,33 @@
     var doses = typeof Core.dueDoses === "function" ? Core.dueDoses(d, now) : [];
     var lows = typeof Core.lowStock === "function" ? Core.lowStock(d, now) : [];
     if (!due.length && !doses.length && !lows.length) return;
-    var el = state.lang === "el";
     var title = window.t("app.health");
     if (title === "app.health") title = "Health";       // missing-key fallback
     doses.forEach(function (r) {
       var hm = (r.tm < 600 ? "0" : "") + Math.floor(r.tm / 60) + ":" + (r.tm % 60 < 10 ? "0" : "") + (r.tm % 60);
       var name = r.med.n + (r.med.s ? " " + r.med.s : "");
       N.emit({ ns: "health", key: r.key, type: "reminder", title: title,
-               body: (el ? "Ώρα για το φάρμακο: " : "Time for your medicine: ") + name + " (" + hm + ")",
+               body: tr("rem.med", { name: name, time: hm }),
                deepLink: "health:meds" });
     });
     lows.forEach(function (r) {
       var name = r.med.n + (r.med.s ? " " + r.med.s : "");
-      var body = r.left <= 0 ? (el ? name + ": τελείωσε" : name + ": none left")
-        : r.days === null ? (el ? name + ": τελειώνει" : name + " is running low")
-        : r.days < 2 ? (el ? name + ": φτάνει για περίπου μία μέρα" : name + " runs out in about a day")
-        : (el ? name + ": φτάνει για περίπου " + r.days + " μέρες" : name + " runs out in about " + r.days + " days");
+      var body = r.left <= 0 ? tr("rem.low.none", { name: name })
+        : r.days === null ? tr("rem.low.soon", { name: name })
+        : r.days < 2 ? tr("rem.low.day", { name: name })
+        : tr("rem.low.days", { name: name, n: r.days });
       N.emit({ ns: "health", key: r.key, type: "reminder", title: title, body: body, deepLink: "health:meds" });
     });
     due.forEach(function (r) {
       var ty = Core.typeRow(d, r.t);
-      var name = HEALTH_NAMES[r.t] ? HEALTH_NAMES[r.t][el ? 1 : 0] : (ty ? ty.n : "");
+      var name = HEALTH_NAMES[r.t] ? window.t("rem.hn." + r.t) : (ty ? ty.n : "");
       var hm = (r.min < 600 ? "0" : "") + Math.floor(r.min / 60) + ":" + (r.min % 60 < 10 ? "0" : "") + (r.min % 60);
       N.emit({
         ns: "health",
         key: r.key,
         type: "reminder",
         title: title,
-        body: (el ? "Ώρα για μέτρηση: " : "Time to measure: ") + name + " (" + hm + ")",
+        body: tr("rem.measure", { name: name, time: hm }),
         deepLink: "health:" + r.t
       });
     });
@@ -1427,15 +1431,14 @@
     var who = (typeof ND.contactsCelebrating === "function" ? ND.contactsCelebrating(raw.contacts, today) : [])
       .map(function (x) { return x.name; });
     if (!who.length) return;
-    var el = state.lang === "el";
     var shown = who.slice(0, 3).join(", ");
-    if (who.length > 3) shown += el ? " και " + (who.length - 3) + " ακόμα" : " and " + (who.length - 3) + " more";
+    if (who.length > 3) shown += " " + tr("n.andmore", { n: who.length - 3 });
     N.emit({
       ns: "calendar",
       key: "nameday-" + today,
       type: "reminder",
-      title: el ? "Ονομαστικές εορτές" : "Name days",
-      body: (el ? "Σήμερα γιορτάζει: " : "Name day today: ") + shown,
+      title: window.t("n.nd.title"),
+      body: tr("n.nd.body", { names: shown }),
       deepLink: "calendar:nameday:" + today
     });
   }
@@ -1478,11 +1481,10 @@
     if (!prefs.notify || !st.fresh.length) return;
     var N = window.orosNotifs;
     if (!(N && typeof N.emit === "function")) return;
-    var el = state.lang === "el";
     var names = {};
     low.forEach(function (r) { names[r.item.id] = r.item.name; });
     var shown = st.fresh.slice(0, 3).map(function (id) { return names[id]; }).join(", ");
-    if (st.fresh.length > 3) shown += el ? " και " + (st.fresh.length - 3) + " ακόμα" : " and " + (st.fresh.length - 3) + " more";
+    if (st.fresh.length > 3) shown += " " + tr("n.andmore", { n: st.fresh.length - 3 });
     var title = window.t("app.stock");
     if (title === "app.stock") title = "Stock";        // missing-key fallback
     N.emit({
@@ -1490,7 +1492,7 @@
       key: "low-" + sysYmd() + "-" + garageHash(st.fresh.join("|")),
       type: "reminder",
       title: title,
-      body: (el ? "Για παραγγελία: " : "Time to reorder: ") + shown,
+      body: tr("n.stock.body", { names: shown }),
       deepLink: st.fresh.length === 1 ? "stock:" + st.fresh[0] : "stock:reorder"
     });
   }
@@ -1518,16 +1520,15 @@
     if (!due.length) return;
     var N = window.orosNotifs;
     if (!(N && typeof N.emit === "function")) return;
-    var el = state.lang === "el";
     function names(list) {
       var s = list.slice(0, 3).map(function (x) { return x.n; }).join(", ");
-      if (list.length > 3) s += el ? " και " + (list.length - 3) + " ακόμα" : " and " + (list.length - 3) + " more";
+      if (list.length > 3) s += " " + tr("n.andmore", { n: list.length - 3 });
       return s;
     }
     var td = due.filter(function (x) { return x.d === 0; }), tm = due.filter(function (x) { return x.d === 1; });
     var parts = [];
-    if (td.length) parts.push((el ? "Λήγει σήμερα: " : "Best before today: ") + names(td));
-    if (tm.length) parts.push((el ? "Λήγει αύριο: " : "Best before tomorrow: ") + names(tm));
+    if (td.length) parts.push(tr("n.meals.today", { names: names(td) }));
+    if (tm.length) parts.push(tr("n.meals.tomorrow", { names: names(tm) }));
     var title = window.t("app.meals");
     if (title === "app.meals") title = "Meal Planner";  // missing-key fallback
     N.emit({
@@ -1572,19 +1573,18 @@
     if (!due.length) return;
     var N = window.orosNotifs;
     if (!(N && typeof N.emit === "function")) return;
-    var el = state.lang === "el";
     var cur = raw.set && typeof raw.set.cur === "string" && /^[A-Z]{3}$/.test(raw.set.cur) ? raw.set.cur : "EUR";
     var fmt;
-    try { fmt = new Intl.NumberFormat(el ? "el-GR" : "en-GB", { style: "currency", currency: cur }); }
+    try { fmt = new Intl.NumberFormat(window.orosI18n ? window.orosI18n.locale(state.lang) : (state.lang === "el" ? "el-GR" : "en-GB"), { style: "currency", currency: cur }); }
     catch (e) { fmt = { format: function (v) { return v.toFixed(2) + " " + cur; } }; }
     var names = {};
     (Array.isArray(raw.cats) ? raw.cats : []).forEach(function (c) { if (c && typeof c.name === "string" && c.name) names[c.id] = c.name; });
     var title = window.t("app.budget");
     if (title === "app.budget") title = "Budget";       // missing-key fallback
     due.forEach(function (d) {
-      var name = String(d.n || names[d.c] || (el ? "Πάγιο έξοδο" : "Recurring expense")).slice(0, 80);
-      var when = d.days === 0 ? (el ? "σήμερα" : "today") : d.days === 1 ? (el ? "αύριο" : "tomorrow")
-               : (el ? "στις " : "on ") + d.next.slice(8, 10) + "/" + d.next.slice(5, 7);
+      var name = String(d.n || names[d.c] || window.t("n.budget.recurring")).slice(0, 80);
+      var when = d.days === 0 ? window.t("n.today") : d.days === 1 ? window.t("n.tomorrow")
+               : tr("n.budget.on", { date: d.next.slice(8, 10) + "/" + d.next.slice(5, 7) });
       N.emit({
         ns: "budget",
         key: d.key,
@@ -1737,7 +1737,7 @@
     if (!fresh.length) return;
     var lang = state.lang === "el" ? "el" : "en";
     var lines = fresh.slice(0, 3).map(function (a) { return Core.alertLine(a, data, lang); });
-    if (fresh.length > 3) lines.push(lang === "el" ? "και " + (fresh.length - 3) + " ακόμα" : "and " + (fresh.length - 3) + " more");
+    if (fresh.length > 3) lines.push(tr("n.andmore", { n: fresh.length - 3 }));
     var title = window.t("app.garage");
     if (title === "app.garage") title = "Garage";      // missing-key fallback
     N.emit({
@@ -1802,7 +1802,7 @@
     if (!fresh.length) return;
     var lang = state.lang === "el" ? "el" : "en";
     var lines = fresh.slice(0, 3).map(function (a) { return Core.alertLine(a, data.ents, lang); });
-    if (fresh.length > 3) lines.push(lang === "el" ? "και " + (fresh.length - 3) + " ακόμα" : "and " + (fresh.length - 3) + " more");
+    if (fresh.length > 3) lines.push(tr("n.andmore", { n: fresh.length - 3 }));
     var title = window.t("app.storage");
     if (title === "app.storage") title = "Storage";    // missing-key fallback
     var allLent = fresh.every(function (a) { return a.kind === "l"; });
@@ -1918,28 +1918,25 @@
     var same = JSON.stringify(res.fired) === JSON.stringify(fired);
     if (!same) { try { localStorage.setItem(PETCARE_FIRED_KEY, JSON.stringify(res.fired)); } catch (e) {} }
     if (!res.items.length) return;
-    var el = state.lang === "el";
-    var CARE = el
-      ? { bath: "μπάνιο", nails: "νύχια", brush: "βούρτσισμα", teeth: "δόντια", ears: "αυτιά", litter: "άμμος", cage: "κλουβί", tank: "ενυδρείο" }
-      : { bath: "bath", nails: "nail trim", brush: "brushing", teeth: "teeth", ears: "ears", litter: "litter", cage: "cage", tank: "tank" };
+    var CARE = { bath: 1, nails: 1, brush: 1, teeth: 1, ears: 1, litter: 1, cage: 1, tank: 1 };   // n.pet.care.<sub>
     function what(it) {
       if (it.kind === "vacc") return it.label;
-      if (it.kind === "deworm") return el ? "αποπαρασίτωση" : "deworming";
-      if (it.kind === "visit") return el ? "επανεξέταση" : "recheck";
-      if (it.kind === "med") return (el ? "τέλος: " : "last day: ") + it.label;
-      if (it.kind === "care") return CARE[it.sub] || it.sub;
-      return el ? "τελειώνει η τροφή" : "food runs out";
+      if (it.kind === "deworm") return window.t("n.pet.deworm");
+      if (it.kind === "visit") return window.t("n.pet.visit");
+      if (it.kind === "med") return tr("n.pet.med", { name: it.label });
+      if (it.kind === "care") return CARE[it.sub] ? window.t("n.pet.care." + it.sub) : it.sub;
+      return window.t("n.pet.food");
     }
     function when(d) {
-      if (d === 0) return el ? "σήμερα" : "today";
-      if (d === 1) return el ? "αύριο" : "tomorrow";
-      if (d > 1) return el ? "σε " + d + " μέρες" : "in " + d + " days";
-      return el ? (-d) + (d === -1 ? " μέρα πίσω" : " μέρες πίσω") : (-d) + (d === -1 ? " day late" : " days late");
+      if (d === 0) return window.t("n.today");
+      if (d === 1) return window.t("n.tomorrow");
+      if (d > 1) return tr("n.indays", { n: d });
+      return trn("n.late", -d);
     }
     var parts = res.items.slice(0, 4).map(function (it) {
       return it.pet.name + ": " + what(it) + " " + when(it.diff);
     });
-    if (res.items.length > 4) parts.push(el ? "και " + (res.items.length - 4) + " ακόμα" : "and " + (res.items.length - 4) + " more");
+    if (res.items.length > 4) parts.push(tr("n.andmore", { n: res.items.length - 4 }));
     var title = window.t("app.petcare");
     if (title === "app.petcare") title = "Pet Health Book";   // missing-key fallback
     // Key = today + what this batch says: a second batch the same day
@@ -1974,7 +1971,6 @@
       try { localStorage.setItem(PETCARE_DOSES_KEY, JSON.stringify(res.fired)); } catch (e) {}
     }
     if (!res.items.length) return;
-    var el = state.lang === "el";
     var title = window.t("app.petcare");
     if (title === "app.petcare") title = "Pet Health Book";
     var byTime = {};
@@ -1984,14 +1980,14 @@
       var body = list.slice(0, 4).map(function (it) {
         return it.pet.name + ": " + it.rec.n + (it.rec.ds ? " (" + it.rec.ds + ")" : "");
       });
-      if (list.length > 4) body.push(el ? "και " + (list.length - 4) + " ακόμα" : "and " + (list.length - 4) + " more");
+      if (list.length > 4) body.push(tr("n.andmore", { n: list.length - 4 }));
       var sig = list.map(function (it) { return it.key; }).join("|"), h = 0;
       for (var i = 0; i < sig.length; i++) h = (h * 31 + sig.charCodeAt(i)) | 0;
       N.emit({
         ns: "petcare",
         key: "dose-" + list[0].key.slice(-16) + "-" + (h >>> 0).toString(36),
         type: "reminder",
-        title: title + " · " + (el ? "δόση " : "dose ") + tm,
+        title: title + " · " + tr("n.pet.dose", { time: tm }),
         body: body.join(" · "),
         deepLink: "petcare:" + (list.length === 1 ? list[0].pet.id : "today")
       });
@@ -2032,12 +2028,9 @@
     var today = sysYmd();
     var sum = Core.summary(Core.merge(raw, raw), today, prefs.hemi);
     if (!sum.n) return;
-    var el = state.lang === "el";
     var names = sum.names.slice(0, 3).join(", ");
-    if (sum.names.length > 3) names += el ? " και " + (sum.names.length - 3) + " ακόμα"
-                                          : " and " + (sum.names.length - 3) + " more";
-    var body = (el ? (sum.names.length === 1 ? "Θέλει φροντίδα: " : "Θέλουν φροντίδα: ")
-                   : (sum.names.length === 1 ? "Needs care: " : "Need care: ")) + names;
+    if (sum.names.length > 3) names += " " + tr("n.andmore", { n: sum.names.length - 3 });
+    var body = tr(sum.names.length === 1 ? "n.plants.one" : "n.plants.other", { names: names });
     if (sum.outWater) {
       var wx = null;
       try {
@@ -2045,8 +2038,7 @@
                           JSON.parse(localStorage.getItem("oros-weatherapp-cache")),
                           wxRead(), today, Date.now());
       } catch (e) {}
-      if (wx && wx.rain) body += el ? ". Βροχή σήμερα: τα εξωτερικά ίσως δεν θέλουν πότισμα."
-                                    : ". Rain today: outdoor plants may not need water.";
+      if (wx && wx.rain) body += window.t("n.plants.rain");
     }
     var title = window.t("app.plants");
     if (title === "app.plants") title = "Plant Care";    // missing-key fallback
@@ -2083,14 +2075,11 @@
     if (!(N && typeof N.emit === "function")) return;
     var sum = Core.summary(Core.mergeChores(raw, raw), Core.localDn(new Date()), prefs.me);
     if (!sum.names.length && !sum.late) return;
-    var el = state.lang === "el";
     var names = sum.names.slice(0, 3).join(", ");
-    if (sum.names.length > 3) names += el ? " και " + (sum.names.length - 3) + " ακόμα"
-                                          : " and " + (sum.names.length - 3) + " more";
-    var body = sum.names.length ? (el ? "Σήμερα: " : "Today: ") + names : "";
+    if (sum.names.length > 3) names += " " + tr("n.andmore", { n: sum.names.length - 3 });
+    var body = sum.names.length ? tr("n.chores.today", { names: names }) : "";
     if (sum.late) {
-      var lt = el ? (sum.late === 1 ? "1 καθυστερεί" : sum.late + " καθυστερούν")
-                  : sum.late + " late";
+      var lt = trn("n.chores.late", sum.late);
       body = body ? body + " · " + lt : lt;
     }
     var title = window.t("app.chores");
@@ -2182,16 +2171,15 @@
     if (!raw || !Array.isArray(raw.habits) || !Array.isArray(raw.comps)) return;
     var due = HCore.dueReminders(raw, Date.now());
     if (!due.length) return;
-    var el = state.lang === "el";
     var title = window.t("app.habits");
-    if (title === "app.habits") title = el ? "Συνήθειες" : "Habits";   // missing-key fallback
+    if (title === "app.habits") title = "Habits";       // missing-key fallback
     due.forEach(function (r) {
       N.emit({
         ns: "habits",
         key: r.key,
         type: "reminder",
         title: title,
-        body: (el ? "Ώρα για: " : "Time for: ") + String(r.name).slice(0, 120),
+        body: tr("rem.habit", { name: String(r.name).slice(0, 120) }),
         deepLink: "habits:0"
       });
     });
@@ -2369,7 +2357,6 @@
   // C.IDLE_KEY; prefs come from C.IDLE_PREFS_KEY (both never synced).
   var TS_POP_ID = "ts-tray-pop";
   var tsIdle = { det: null, ctl: null, starting: false, from: 0, last: 0, perm: "", permAt: 0, prefs: null, prefsAt: 0 };
-  function tsT(en, el) { return state.lang === "el" ? el : en; }
   function tsIdlePrefs() {
     var C = window.orosTimesheetCore, now = Date.now();
     if (!C || typeof C.idlePrefs !== "function") return { on: 0, min: 10 };
@@ -2503,12 +2490,12 @@
     var pop = document.createElement("div");
     pop.id = TS_POP_ID;
     pop.setAttribute("role", "dialog");
-    pop.setAttribute("aria-label", tsT("Timer", "Χρονόμετρο"));
+    pop.setAttribute("aria-label", window.t("ts.pop.label"));
     var head = document.createElement("div");
     head.className = "ts-pop-head";
     var since = new Date(run.s);
     head.textContent = (run.name || window.t("ts.tray.noproj")) + " · " + C.fmtDur(Date.now() - run.s) +
-      " (" + tsT("since ", "από ") + String(since.getHours()).padStart(2, "0") + ":" + String(since.getMinutes()).padStart(2, "0") + ")";
+      " (" + tr("ts.pop.since", { time: String(since.getHours()).padStart(2, "0") + ":" + String(since.getMinutes()).padStart(2, "0") }) + ")";
     pop.appendChild(head);
     function mk(label, cls, fn) {
       var b = document.createElement("button");
@@ -2522,29 +2509,28 @@
     if (away) {
       var p = document.createElement("p");
       p.className = "ts-pop-away";
-      p.textContent = tsT("You were away ", "Έλειπες ") + C.hhmm(away.from) + "–" + C.hhmm(away.to) + " (" + C.fmtDur(away.to - away.from) + ")" +
-        tsT(" while the timer ran.", " ενώ έτρεχε το χρονόμετρο.");
+      p.textContent = tr("ts.pop.away", { from: C.hhmm(away.from), to: C.hhmm(away.to), dur: C.fmtDur(away.to - away.from) });
       pop.appendChild(p);
       var ar = document.createElement("div");
       ar.className = "ts-pop-row";
-      ar.appendChild(mk(tsT("Keep", "Να μείνει"), "", function () {
+      ar.appendChild(mk(window.t("ts.pop.keep"), "", function () {
         tsIdleSave(window.orosTimesheetCore.idleDrop(tsIdleList(), away));
         if (state.running && state.running.id === "timesheet") tsAppDo("__orosTimesheetIdle", [], "", "");
       }));
-      ar.appendChild(mk(tsT("Take it out", "Αφαίρεση"), "", function () {
+      ar.appendChild(mk(window.t("ts.pop.out"), "", function () {
         tsAppDo("__orosTimesheetIdle", ["discard", away], "oros-timesheet-idle-act", JSON.stringify({ mode: "discard", id: away.id, from: away.from, to: away.to }));
       }));
-      ar.appendChild(mk(tsT("Take out and stop", "Αφαίρεση και διακοπή"), "", function () {
+      ar.appendChild(mk(window.t("ts.pop.outstop"), "", function () {
         tsAppDo("__orosTimesheetIdle", ["stop", away], "oros-timesheet-idle-act", JSON.stringify({ mode: "stop", id: away.id, from: away.from, to: away.to }));
       }));
       pop.appendChild(ar);
     }
     var row = document.createElement("div");
     row.className = "ts-pop-row";
-    row.appendChild(mk(tsT("Stop timer", "Διακοπή"), "primary", function () {
+    row.appendChild(mk(window.t("ts.pop.stop"), "primary", function () {
       tsAppDo("__orosTimesheetStop", [run.id], "oros-timesheet-toggle", "stop:" + run.id);
     }));
-    row.appendChild(mk(tsT("Open Timesheet", "Άνοιγμα"), "", function () {
+    row.appendChild(mk(window.t("ts.pop.open"), "", function () {
       if (!(state.running && state.running.id === "timesheet")) openAppById("timesheet");
     }));
     pop.appendChild(row);
@@ -3086,9 +3072,7 @@
     return shareLoad;
   }
   function shareLoadFail() {
-    notifySys("dim", window.orosLang === "el"
-      ? "Η αποστολή δεν φορτώθηκε. Έλεγξε τη σύνδεση και δοκίμασε ξανά."
-      : "Sending could not load. Check your connection and try again.");
+    notifySys("dim", window.t("share.loadfail"));
   }
   window.orosShare = {
     open: function (opts) {
@@ -3165,9 +3149,7 @@
           }
         });
       }, function () {
-        notifySys("dim", window.orosLang === "el"
-          ? "Η αποστολή δεν φορτώθηκε. Έλεγξε τη σύνδεση και δοκίμασε ξανά."
-          : "Sending could not load. Check your connection and try again.");
+        notifySys("dim", window.t("share.loadfail"));
       });
     }
   };
@@ -3391,8 +3373,8 @@
     closeMenu();
     if (c.fn === "openAppById") { openAppById(c.args[0]); return; }
     if (c.fn === "copy") {
-      var el = state.lang === "el", txt = String(c.args[0]);
-      var done = function () { notifySys("dim", (el ? "Αντιγράφηκε: " : "Copied: ") + txt); };
+      var txt = String(c.args[0]);
+      var done = function () { notifySys("dim", tr("cmd.copied", { text: txt })); };
       try { navigator.clipboard.writeText(txt).then(done, function () { notifySys("dim", txt); }); }
       catch (e) { notifySys("dim", txt); }
       return;
@@ -3432,9 +3414,7 @@
         ask: hasApp("assistant") ? function (q) { openAssistant(q); } : null
       }, text);
     }, function () {
-      notifySys("dim", state.lang === "el"
-        ? "Η γραμμή εντολών δεν φορτώθηκε. Έλεγξε τη σύνδεση και δοκίμασε ξανά."
-        : "The command bar did not load. Check the connection and try again.");
+      notifySys("dim", window.t("cmd.loadfail"));
     });
   }
   // The Android widget's command button (phone.js, ?phone-quick=cmd).
@@ -3500,7 +3480,7 @@
     if (isNaN(d.getTime())) return "";
     var o = { day: "numeric", month: "short" };
     if (d.getFullYear() !== new Date().getFullYear()) o.year = "numeric";
-    try { return d.toLocaleDateString(state.lang === "el" ? "el-GR" : "en-GB", o); }
+    try { return d.toLocaleDateString(shLoc(), o); }
     catch (e) { return d.toISOString().slice(0, 10); }
   }
 
@@ -3525,11 +3505,11 @@
     // menu title. Expand = open every current category; Collapse =
     // clear the open map. Session-only (menuCatOpen, A74), same as the
     // per-category toggles — never stored, never synced, never dirty.
-    function mkCatBtn(svg, titleEn, titleEl, fn) {
+    function mkCatBtn(svg, title, fn) {
       var b = document.createElement("button");
       b.type = "button";
       b.innerHTML = svg;
-      b.title = (state.lang === "el") ? titleEl : titleEn;
+      b.title = title;
       b.setAttribute("aria-label", b.title);
       b.style.cssText =
         "flex-shrink:0;width:22px;height:22px;padding:0;display:inline-flex;" +
@@ -3541,7 +3521,7 @@
 
     heading.appendChild(mkCatBtn(
       '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="7 13 12 18 17 13"/><polyline points="7 6 12 11 17 6"/></svg>',
-      "Expand all", "Άνοιγμα όλων",
+      window.t("menu.expandall"),
       function () {
         state.apps.forEach(function (app) {
           menuCatOpen[String(app.category || "other").toLowerCase()] = true;
@@ -3551,7 +3531,7 @@
 
     heading.appendChild(mkCatBtn(
       '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="7 11 12 6 17 11"/><polyline points="7 18 12 13 17 18"/></svg>',
-      "Collapse all", "Κλείσιμο όλων",
+      window.t("menu.collapseall"),
       function () {
         menuCatOpen = {};
         renderMenu();
@@ -3923,7 +3903,7 @@
           ? catRaw[c].charAt(0).toUpperCase() + catRaw[c].slice(1)
           : label;
       }
-      var catLocale = (state.lang === "el") ? "el" : "en";
+      var catLocale = shLoc();
 
       // A74: while searching, keep only the matching apps (by the shown
       // name, the apps.json name, the id or the category label) and
@@ -4125,40 +4105,22 @@
   function skinTitle(id) {
     // Fixed display names where the id isn't the prettiest label
     var display = {
-      popos:    { en: "Pop!_OS",       el: "Pop!_OS" },
-      opensuse: { en: "openSUSE",      el: "openSUSE" },
-      nixos:    { en: "NixOS",         el: "NixOS" },
-      manjaro:  { en: "Manjaro",       el: "Manjaro" },
-      gentoo:   { en: "Gentoo",        el: "Gentoo" },
-      zorin:    { en: "Zorin",         el: "Zorin" }
+      popos:    "Pop!_OS",
+      opensuse: "openSUSE",
+      nixos:    "NixOS",
+      manjaro:  "Manjaro",
+      gentoo:   "Gentoo",
+      zorin:    "Zorin"
     };
     var d = display[id];
-    if (d) return state.lang === "el" ? d.el : d.en;
+    if (d) return d;
     return id.charAt(0).toUpperCase() + id.slice(1);
   }
 
+  // Names: translations.js "wp.name.<id>"; any other id shows as it is.
+  var WALLPAPER_NAMED = { dusk: 1, midnight: 1, plum: 1, forest: 1, ember: 1, nordic: 1, aurora: 1, sand: 1, mono: 1, nebula: 1, borealis: 1, hex: 1, obsidian: 1, terrazzo: 1, custom: 1, clear: 1 };
   function wallpaperTitle(id) {
-    var names = {
-      dusk:     { en: "Adwaita Dusk",  el: "Λυκόφως Adwaita" },
-      midnight: { en: "Midnight",      el: "Μεσάνυχτα" },
-      plum:     { en: "Aubergine",     el: "Μελανότσιρο" },
-      forest:   { en: "Forest Night",  el: "Νύχτα Δάσους" },
-      ember:    { en: "Ember",         el: "Στάχτη" },
-      nordic:   { en: "Nordic Frost",  el: "Σκανδιναβικός Πάγος" },
-      aurora:   { en: "Aurora",        el: "Αυγή" },
-      sand:     { en: "Desert Sand",   el: "Άμμος Ερήμου" },
-      mono:     { en: "Monochrome",    el: "Μονόχρωμο" },
-      nebula:   { en: "Nebula",        el: "Νεφέλωμα" },
-      borealis: { en: "Nordic Aurora", el: "Βόρειο Σέλας" },
-      hex:      { en: "Hex Grid",      el: "Εξαγωνικό Πλέγμα" },
-      obsidian: { en: "Obsidian Veil", el: "Πέπλο Οψιδιανού" },
-      terrazzo: { en: "Retro Terrazzo", el: "Ρετρό Terrazzo" },
-      custom:   { en: "Mine",          el: "Δική μου" },
-      clear:    { en: "None",          el: "Καμία" }
-    };
-    var n = names[id];
-    if (!n) return id;
-    return state.lang === "el" ? n.el : n.en;
+    return WALLPAPER_NAMED[id] ? window.t("wp.name." + id) : id;
   }
   
     // ---------- 9. Sync UI & shell slice ----------
@@ -5905,14 +5867,12 @@
   // Plain <a> links, NEVER platform widgets: embeds mean third-party
   // scripts/requests — violates the no-tracking doctrine. Opened in
   // a new tab with rel=noopener (same contract as the repo link).
-  // i18n: inline EN/EL literals via supT() — same doctrine as
-  // calRemT/cycleT; no translations.js dependency.
+  // i18n: words in translations.js (sup.*), German in the shell pack.
   var SUPPORT_OPTS = [
     {
       name: "Ko-fi",
       url:  "https://ko-fi.com/koulaxizis",
-      en:   "Buy me a coffee!",
-      el:   "Κέρασέ με έναν καφέ!"
+      k:    "sup.kofi"
     }
   ];
   // Extra plain links shown under the Ko-fi card (same rules: fixed
@@ -5920,19 +5880,13 @@
   var SUPPORT_LINKS = [
     {
       url: "https://ko-fi.com/koulaxizis/tiers",
-      en:  "Become a monthly supporter",
-      el:  "Γίνε μηνιαίος υποστηρικτής"
+      k:   "sup.tiers"
     },
     {
       url: "https://nulljsfx.tech/supporters/",
-      en:  "Supporters",
-      el:  "Υποστηρικτές"
+      k:   "sup.supporters"
     }
   ];
-
-  function supT(en, el) {
-    return state.lang === "el" ? el : en;
-  }
 
   function wireSupportSection(ov) {
     var box = ov.querySelector(".sc-box");
@@ -5944,16 +5898,13 @@
 
     var head = document.createElement("div");
     head.className = "sc-sec";
-    head.textContent = supT("Support", "Στήριξη");
+    head.textContent = window.t("sup.title");
     sec.appendChild(head);
 
     var intro = document.createElement("div");
     intro.style.cssText =
       "font-size:11.5px;line-height:1.5;color:var(--text-dim);margin:2px 0 8px;";
-    intro.textContent = supT(
-      "orOS is free, open source, and self-hostable. If it helps you, consider supporting it.",
-      "Το orOS είναι δωρεάν, ανοιχτού κώδικα και self-hostable. Αν σε βοηθάει, σκέψου να το στηρίξεις."
-    );
+    intro.textContent = window.t("sup.intro");
     sec.appendChild(intro);
 
     var cards = document.createElement("div");
@@ -5974,7 +5925,7 @@
       var ds = document.createElement("span");
       ds.style.cssText =
         "font-size:11px;color:var(--text-dim);font-weight:400;";
-      ds.textContent = supT(opt.en, opt.el);
+      ds.textContent = window.t(opt.k);
       a.appendChild(nm);
       a.appendChild(ds);
       cards.appendChild(a);
@@ -5991,7 +5942,7 @@
       a.target = "_blank";
       a.rel = "noopener";
       a.style.cssText = "color:var(--accent);";
-      a.textContent = supT(l.en, l.el);
+      a.textContent = window.t(l.k);
       links.appendChild(a);
     });
     sec.appendChild(links);
@@ -6007,417 +5958,408 @@
   // register" in OROS_BIBLE.md: a new dependency or service updates
   // all three. Built with createElement/textContent only; every URL
   // below is a fixed constant (never data from a service or a user).
-  // i18n: inline EN/EL via supT(), same doctrine as the Support box.
+  // i18n: each text is a key in translations.js (cr.*); the item's
+  // `k` is what it is used for, `lic.k` a licence that needs words.
   var CREDIT_GROUPS = [
     {
-      en: "Libraries (bundled, run on your device)",
-      el: "Βιβλιοθήκες (μέσα στο orOS, τρέχουν στη συσκευή σου)",
+      k: "cr.g.libs",
       items: [
         { name: "Leaflet 1.9.4", url: "https://leafletjs.com/",
           by: "Volodymyr Agafonkin & contributors", lic: "BSD-2-Clause",
-          en: "Maps", el: "Χάρτες" },
+          k: "cr.leaflet" },
         { name: "Health Connect client 1.1.0 + Kotlin", url: "https://developer.android.com/jetpack/androidx/releases/health-connect",
           by: "The Android Open Source Project; JetBrains & Kotlin contributors", lic: "Apache-2.0",
-          en: "Android app only: Health Connect (Health, Water, Workouts)",
-          el: "Μόνο στην εφαρμογή Android: Health Connect (Υγεία, Νερό, Προπονήσεις)" },
+          k: "cr.health-connect" },
         { name: "jsPDF 2.5.2", url: "https://github.com/parallax/jsPDF",
           by: "James Hall, yWorks & contributors", lic: "MIT",
-          en: "PDF export (Mood, Cycle, Quote, Writer, Netizen ID, Spreadsheet, Budget)",
-          el: "Εξαγωγή PDF (Mood, Cycle, Quote, Writer, Netizen ID, Spreadsheet, Budget)" },
+          k: "cr.jspdf" },
         { name: "SheetJS Community Edition 0.20.3", url: "https://sheetjs.com/",
           by: "SheetJS LLC", lic: "Apache-2.0",
-          en: "Excel / ODS files (Spreadsheet, Budget)",
-          el: "Αρχεία Excel / ODS (Spreadsheet, Budget)" },
+          k: "cr.sheetjs-community" },
         { name: "hls.js 1.7.3", url: "https://github.com/video-dev/hls.js",
           by: "Dailymotion & contributors", lic: "Apache-2.0",
-          en: "Live streams (Television)", el: "Ζωντανές ροές (Τηλεόραση)" },
+          k: "cr.hls-js" },
         { name: "PDF.js 5.4.394", url: "https://mozilla.github.io/pdf.js/",
           by: "Mozilla Foundation & contributors", lic: "Apache-2.0",
-          en: "Opening PDF files (Layout); reading PDF text on the device (Assistant)", el: "Άνοιγμα αρχείων PDF (Σελιδοποίηση)· ανάγνωση κειμένου PDF στη συσκευή (Βοηθός)" },
+          k: "cr.pdf-js" },
         { name: "pdf-lib 1.17.1", url: "https://pdf-lib.js.org/",
           by: "Andrew Dillon & contributors", lic: "MIT",
-          en: "Merging, splitting and making PDFs (Scanner & PDF)", el: "Ένωση, διαχωρισμός και δημιουργία PDF (Σαρωτής & PDF)" },
+          k: "cr.pdf-lib" },
         { name: "@pdf-lib/fontkit 1.1.1", url: "https://github.com/Hopding/fontkit",
           by: "Devon Govett, Andrew Dillon & contributors", lic: "MIT",
-          en: "Greek and other text in PDFs: page numbers, watermark, notes (Scanner & PDF)", el: "Ελληνικό και άλλο κείμενο σε PDF: αρίθμηση, υδατογράφημα, σημειώσεις (Σαρωτής & PDF)" },
+          k: "cr.pdf-lib-2" },
         { name: "three.js r180", url: "https://threejs.org/",
           by: "three.js authors", lic: "MIT",
-          en: "3D book mockups (Mockups)", el: "Τρισδιάστατες μακέτες βιβλίων (Μακέτες)" },
+          k: "cr.three-js" },
         { name: "Mediabunny 1.60.0", url: "https://mediabunny.dev/",
           by: "Vanilagy & contributors", lic: "MPL-2.0",
-          en: "Reading and writing video files (Montage)", el: "Ανάγνωση και εγγραφή αρχείων βίντεο (Μοντάζ)" },
+          k: "cr.mediabunny" },
         { name: "ONNX Runtime Web 1.22.0", url: "https://onnxruntime.ai/",
           by: "Microsoft Corporation", lic: "MIT",
-          en: "Background removal (Atelier, Photo Lab) and speech recognition (Montage) on the device", el: "Αφαίρεση φόντου (Ατελιέ, Εργαστήριο εικόνας) και αναγνώριση ομιλίας (Μοντάζ) στη συσκευή" },
+          k: "cr.onnx-runtime" },
         { name: "U²-Net (u2netp model)", url: "https://github.com/xuebinqin/U-2-Net",
           by: "Xuebin Qin & contributors", lic: "Apache-2.0",
-          en: "The background removal model (Atelier)", el: "Το μοντέλο αφαίρεσης φόντου (Ατελιέ)" },
+          k: "cr.u2-net" },
         { name: "MI-GAN (512 Places2 model)", url: "https://github.com/Picsart-AI-Research/MI-GAN",
           by: "Picsart AI Research", lic: "MIT",
-          en: "Filling a part of a picture: Magic eraser and Magic grab (Atelier)", el: "Γέμισμα μέρους μιας εικόνας: Μαγική γόμα και Μαγική λαβή (Ατελιέ)" },
+          k: "cr.mi-gan" },
         { name: "Tesseract.js 7.0.0 + tesseract.js-core 6.1.2", url: "https://github.com/naptha/tesseract.js",
           by: "Project Naptha, Google (Tesseract OCR) & contributors", lic: "Apache-2.0",
-          en: "Reading text from a business card photo, on the device (Contacts); text of photos and scanned PDFs (Assistant); searchable scans (Scanner & PDF)", el: "Ανάγνωση κειμένου από φωτογραφία κάρτας, στη συσκευή (Επαφές)· κείμενο φωτογραφιών και σκαναρισμένων PDF (Βοηθός)· σαρώσεις με αναζήτηση (Σαρωτής & PDF)" },
+          k: "cr.tesseract-js" },
         { name: "WebLLM 0.2.86", url: "https://github.com/mlc-ai/web-llm",
           by: "MLC AI & contributors", lic: "Apache-2.0",
-          en: "Open models running in the browser (Assistant); weights from huggingface.co/mlc-ai under each model's licence", el: "Ανοιχτά μοντέλα μέσα στον browser (Βοηθός)· βάρη από το huggingface.co/mlc-ai με την άδεια κάθε μοντέλου" },
+          k: "cr.webllm" },
         { name: "jsQR 1.4.0", url: "https://github.com/cozmo/jsQR",
           by: "Cosmo Wolfe", lic: "Apache-2.0",
-          en: "Reading QR codes from the camera or a picture (QR, Passwords)", el: "Ανάγνωση QR από την κάμερα ή εικόνα (QR, Κωδικοί)" },
+          k: "cr.jsqr" },
         { name: "fzstd 0.1.1", url: "https://github.com/101arrowz/fzstd",
           by: "Arjun Barrett", lic: "MIT",
-          en: "Reading new-format Anki decks (Flashcards)", el: "Ανάγνωση τραπουλών Anki νέου τύπου (Κάρτες μελέτης)" },
+          k: "cr.fzstd" },
         { name: "OpenPGP.js 6.3.1", url: "https://openpgpjs.org/",
           by: "OpenPGP.js contributors, Proton AG", lic: "LGPL-3.0-or-later",
-          en: "Signing and encrypting mail (Mail)", el: "Υπογραφή και κρυπτογράφηση email (Αλληλογραφία)" },
+          k: "cr.openpgp-js" },
         { name: "hash-wasm 4.12.0 (Argon2)", url: "https://github.com/Daninet/hash-wasm",
           by: "Dani Biró", lic: "MIT",
-          en: "Protecting the password vault (Passwords)", el: "Προστασία της κρύπτης κωδικών (Κωδικοί)" },
+          k: "cr.hash-wasm" },
         { name: "libarchive.js 2.0.2 (libarchive 3.7.2)", url: "https://github.com/nika-begiashvili/libarchivejs",
-          by: "Nika Begiashvili; libarchive, zlib, bzip2, liblzma, Comlink, Emscripten and OpenSSL authors", lic: { en: "MIT, BSD-2-Clause and the bundled parts' own licences", el: "MIT, BSD-2-Clause και οι άδειες των μερών που περιέχει" },
-          en: "Opening .cbr / RAR comics (Library)", el: "Άνοιγμα κόμικ .cbr / RAR (Βιβλιοθήκη)" },
+          by: "Nika Begiashvili; libarchive, zlib, bzip2, liblzma, Comlink, Emscripten and OpenSSL authors", lic: { k: "cr.lic.libarchive-js" },
+          k: "cr.libarchive-js" },
         { name: "LibRaw 0.22.1 (libraw-wasm 1.6.0)", url: "https://www.libraw.org/",
-          by: "LibRaw LLC; wrapper by Yanis Bouane; Little-CMS, libjpeg (IJG), Emscripten", lic: { en: "LGPL-2.1 or CDDL-1.0; wrapper ISC", el: "LGPL-2.1 ή CDDL-1.0· wrapper ISC" },
-          en: "Developing camera RAW photos (Photo Lab)", el: "Εμφάνιση φωτογραφιών RAW (Εργαστήριο εικόνας)" },
+          by: "LibRaw LLC; wrapper by Yanis Bouane; Little-CMS, libjpeg (IJG), Emscripten", lic: { k: "cr.lic.libraw-libraw" },
+          k: "cr.libraw-libraw" },
         { name: "RNNoise 0.1.1", url: "https://github.com/xiph/rnnoise",
           by: "Jean-Marc Valin, Xiph.Org Foundation, Mozilla, Amazon", lic: "BSD-3-Clause",
-          en: "Noise reduction in sound (Montage)", el: "Μείωση θορύβου στον ήχο (Μοντάζ)" },
+          k: "cr.rnnoise" },
         { name: "Whisper tiny (ONNX export by Xenova)", url: "https://huggingface.co/Xenova/whisper-tiny",
           by: "OpenAI; ONNX export by Joshua Lochner", lic: "MIT; Apache-2.0 (export)",
-          en: "Speech to subtitles on the device, downloaded when asked (Montage)", el: "Ομιλία σε υπότιτλους στη συσκευή, κατεβαίνει όταν το ζητήσεις (Μοντάζ)" },
+          k: "cr.whisper-tiny" },
         { name: "NULL JSFX", url: "https://nulljsfx.tech",
           by: "Christos Koulaxizis", lic: "MIT",
-          en: "Effects and their interfaces (Studio)", el: "Εφέ και τα περιβάλλοντά τους (Studio)" }
+          k: "cr.null-jsfx" }
       ]
     },
     {
-      en: "Fonts and icons", el: "Γραμματοσειρές και εικονίδια",
+      k: "cr.g.fonts",
       items: [
         { name: "Nunito", url: "https://github.com/googlefonts/nunito",
           by: "The Nunito Project Authors (Vernon Adams, Jacques Le Bailly)", lic: "SIL OFL 1.1",
-          en: "The orOS interface", el: "Το περιβάλλον του orOS" },
+          k: "cr.nunito" },
         { name: "Noto Sans", url: "https://notofonts.github.io/",
           by: "The Noto Project Authors", lic: "SIL OFL 1.1",
-          en: "Greek text in exported PDFs", el: "Ελληνικά στα PDF που εξάγεις" },
+          k: "cr.noto-sans" },
         { name: "Noto Sans, Noto Serif, Noto Sans Mono", url: "https://notofonts.github.io/",
           by: "The Noto Project Authors", lic: "SIL OFL 1.1",
-          en: "The fonts of Layout documents (screen and PDF)", el: "Οι γραμματοσειρές των εγγράφων της Σελιδοποίησης (οθόνη και PDF)" },
+          k: "cr.noto-sans-2" },
         { name: "Feather Icons", url: "https://feathericons.com/",
           by: "Cole Bemis", lic: "MIT",
-          en: "Some interface icons (search, refresh, map pin, cloud, heart)",
-          el: "Μερικά εικονίδια του περιβάλλοντος (αναζήτηση, ανανέωση, πινέζα, σύννεφο, καρδιά)" },
+          k: "cr.feather-icons" },
         { name: "Tabler Icons 3.49.0", url: "https://tabler.io/icons",
           by: "Paweł Kuna", lic: "MIT",
-          en: "Offline icon library (Atelier)", el: "Βιβλιοθήκη εικονιδίων χωρίς σύνδεση (Ατελιέ)" }
+          k: "cr.tabler-icons" }
       ]
     },
     {
-      en: "Word lists and data", el: "Λίστες λέξεων και δεδομένα",
+      k: "cr.g.data",
       items: [
         { name: "FSRS-6 (ts-fsrs 5.4.2)", url: "https://github.com/open-spaced-repetition/ts-fsrs",
           by: "Open Spaced Repetition", lic: "MIT",
-          en: "The method that schedules the cards (Flashcards, own rewrite checked against ts-fsrs)", el: "Η μέθοδος που προγραμματίζει τις κάρτες (Κάρτες μελέτης, δική μας υλοποίηση ελεγμένη με το ts-fsrs)" },
+          k: "cr.fsrs-ts" },
         { name: "EFF Diceware word lists", url: "https://www.eff.org/dice",
           by: "Electronic Frontier Foundation", lic: "CC BY 3.0 US",
-          en: "Passphrases (Passwords)", el: "Φράσεις-κλειδιά (Κωδικοί)" },
+          k: "cr.eff-diceware" },
         { name: "SecLists — 10k most common passwords", url: "https://github.com/danielmiessler/SecLists",
           by: "Daniel Miessler & contributors", lic: "MIT",
-          en: "Weak-password check (Passwords)", el: "Έλεγχος αδύναμων κωδικών (Κωδικοί)" },
+          k: "cr.seclists-most" },
         { name: "SCOWL (via wordlist-english)", url: "http://wordlist.aspell.net/",
-          by: "Kevin Atkinson", lic: { en: "SCOWL licence (permissive)", el: "Άδεια SCOWL (ελεύθερη)" },
-          en: "English words (Wordle, Hangman)", el: "Αγγλικές λέξεις (Wordle, Κρεμάλα)" },
+          by: "Kevin Atkinson", lic: { k: "cr.lic.scowl-via" },
+          k: "cr.scowl-via" },
         { name: "Hunspell el_GR", url: "https://github.com/wooorm/dictionaries",
           by: "Steve Stavropoulos & contributors (elspell)", lic: "MPL 1.1",
-          en: "Greek words (Λεξούλα, Hangman)", el: "Ελληνικές λέξεις (Λεξούλα, Κρεμάλα)" },
+          k: "cr.hunspell-el" },
         { name: "FrequencyWords", url: "https://github.com/hermitdave/FrequencyWords",
           by: "Hermit Dave (from OpenSubtitles)", lic: "CC BY-SA 4.0",
-          en: "Picking everyday words (Λεξούλα, Hangman)", el: "Επιλογή καθημερινών λέξεων (Λεξούλα, Κρεμάλα)" },
+          k: "cr.frequencywords" },
         { name: "Yale Bright Star Catalogue, 5th ed.", url: "http://tdc-www.harvard.edu/catalogs/bsc5.html",
           by: "D. Hoffleit, W. H. Warren Jr. (Yale University Observatory)", lic: "Public domain",
-          en: "Bright stars and their names (Moon & Sky)", el: "Λαμπρά αστέρια και τα ονόματά τους (Σελήνη & Ουρανός)" },
+          k: "cr.yale-bright" },
         { name: "d3-celestial (constellation figures)", url: "https://github.com/ofrohn/d3-celestial",
           by: "Olaf Frohn", lic: "BSD-3-Clause",
-          en: "Constellation lines (Moon & Sky)", el: "Γραμμές αστερισμών (Σελήνη & Ουρανός)" },
+          k: "cr.d3-celestial" },
         { name: "id-tagging-schema (iD presets)", url: "https://github.com/openstreetmap/id-tagging-schema",
           by: "OpenStreetMap iD contributors", lic: "ISC",
-          en: "Place kinds and fields (Maps)", el: "Είδη και πεδία μερών (Χάρτες)" },
+          k: "cr.id-tagging" },
         { name: "Hunspell dictionaries en_US (SCOWL) and el_GR", url: "https://github.com/LibreOffice/dictionaries",
-          by: "Kevin Atkinson & SCOWL contributors; Steve Stavropoulos & elspell contributors", lic: { en: "SCOWL licence; MPL 1.1 / GPL 2.0 / LGPL 2.1", el: "Άδεια SCOWL· MPL 1.1 / GPL 2.0 / LGPL 2.1" },
-          en: "Spelling check (Writer)", el: "Ορθογραφικός έλεγχος (Κειμενογράφος)" },
+          by: "Kevin Atkinson & SCOWL contributors; Steve Stavropoulos & elspell contributors", lic: { k: "cr.lic.hunspell-dictionaries" },
+          k: "cr.hunspell-dictionaries" },
         { name: "USDA FoodData Central", url: "https://fdc.nal.usda.gov/",
-          by: "U.S. Department of Agriculture", lic: { en: "Public domain", el: "Κοινό κτήμα" },
-          en: "Nutrition of common foods (Meal Planner)", el: "Θρεπτικά κοινών τροφίμων (Συνταγές & Μενού)" },
+          by: "U.S. Department of Agriculture", lic: { k: "cr.lic.usda-fooddata" },
+          k: "cr.usda-fooddata" },
         { name: "Lichess chess-openings", url: "https://github.com/lichess-org/chess-openings",
           by: "Lichess contributors", lic: "CC0 1.0",
-          en: "Opening names and the openings trainer (Chess)", el: "Ονόματα ανοιγμάτων και εξάσκηση (Σκάκι)" },
+          k: "cr.lichess-chess" },
         { name: "Lichess puzzle database", url: "https://database.lichess.org/#puzzles",
           by: "Lichess contributors", lic: "CC0 1.0",
-          en: "Puzzles for the puzzle trainer, offline (Chess)", el: "Γρίφοι για την εξάσκηση, χωρίς σύνδεση (Σκάκι)" },
+          k: "cr.lichess-puzzle" },
         { name: "PDMP3 (MP3 tables)", url: "https://github.com/technosaurus/PDMP3",
-          by: "Krister Lagerström & contributors", lic: { en: "Public domain", el: "Κοινό κτήμα" },
-          en: "Tables for MP3 export (Studio)", el: "Πίνακες για εξαγωγή MP3 (Studio)" }
+          by: "Krister Lagerström & contributors", lic: { k: "cr.lic.usda-fooddata" },
+          k: "cr.pdmp3-mp3" }
       ]
     },
     {
-      en: "Online services (only when you use them)",
-      el: "Υπηρεσίες στο διαδίκτυο (μόνο όταν τις χρησιμοποιείς)",
+      k: "cr.g.online",
       items: [
         { name: "Open-Meteo", url: "https://open-meteo.com/",
           by: "Open-Meteo.com", lic: "CC BY 4.0 (data)",
-          en: "Weather, places, air quality", el: "Καιρός, τοποθεσίες, ποιότητα αέρα" },
+          k: "cr.open-meteo" },
         { name: "MeteoAlarm", url: "https://meteoalarm.org/",
-          by: "EUMETNET and the national weather services", lic: { en: "MeteoAlarm terms (attribution)", el: "Όροι MeteoAlarm (αναφορά πηγής)" },
-          en: "Official weather warnings (Weather)", el: "Επίσημες προειδοποιήσεις καιρού (Καιρός)" },
+          by: "EUMETNET and the national weather services", lic: { k: "cr.lic.meteoalarm" },
+          k: "cr.meteoalarm" },
         { name: "NASA GIBS / IMERG", url: "https://nasa-gibs.github.io/gibs-api-docs/",
-          by: "NASA ESDIS, GPM IMERG", lic: { en: "NASA open data (no restrictions)", el: "Ανοιχτά δεδομένα NASA (χωρίς περιορισμούς)" },
-          en: "Satellite rain map (Weather)", el: "Δορυφορικός χάρτης βροχής (Καιρός)" },
+          by: "NASA ESDIS, GPM IMERG", lic: { k: "cr.lic.nasa-gibs" },
+          k: "cr.nasa-gibs" },
         { name: "OpenStreetMap", url: "https://www.openstreetmap.org/copyright",
           by: "OpenStreetMap contributors", lic: "ODbL (data)",
-          en: "Map data, standard tiles and the public GPS traces layer (Maps)", el: "Δεδομένα και πλακίδια χάρτη, επίπεδο δημόσιων GPS traces (Χάρτες)" },
+          k: "cr.openstreetmap" },
         { name: "OpenStreetMap France / HOT", url: "https://www.hotosm.org/",
           by: "OSM France, Humanitarian OpenStreetMap Team", lic: "ODbL (data)",
-          en: "Humanitarian map layer (Maps)", el: "Ανθρωπιστικό στρώμα χάρτη (Χάρτες)" },
+          k: "cr.openstreetmap-france" },
         { name: "Esri World Imagery", url: "https://www.esri.com/",
-          by: "Esri, Maxar, Earthstar Geographics", lic: { en: "Esri terms of use", el: "Όροι χρήσης της Esri" },
-          en: "Satellite layer (Maps)", el: "Δορυφορικό στρώμα (Χάρτες)" },
+          by: "Esri, Maxar, Earthstar Geographics", lic: { k: "cr.lic.esri-world" },
+          k: "cr.esri-world" },
         { name: "OpenTopoMap", url: "https://opentopomap.org/",
           by: "OpenTopoMap; data by OpenStreetMap contributors, SRTM", lic: "CC-BY-SA (style), ODbL (data)",
-          en: "Topo layer with contour lines (Maps)", el: "Τοπογραφικό στρώμα με ισοϋψείς (Χάρτες)" },
+          k: "cr.opentopomap" },
         { name: "Terrain Tiles (AWS)", url: "https://registry.opendata.aws/terrain-tiles/",
-          by: "Mapzen and others (SRTM, GMTED2010, ETOPO1, USGS NED, EU-DEM)", lic: { en: "Open data, attribution per source", el: "Ανοιχτά δεδομένα, αναφορά ανά πηγή" },
-          en: "Elevation profile in Plan a track (Maps)", el: "Προφίλ υψομέτρου στη Σχεδίαση διαδρομής (Χάρτες)" },
+          by: "Mapzen and others (SRTM, GMTED2010, ETOPO1, USGS NED, EU-DEM)", lic: { k: "cr.lic.terrain-tiles" },
+          k: "cr.terrain-tiles" },
         { name: "Wikipedia", url: "https://www.wikipedia.org/",
           by: "Wikimedia Foundation, Wikipedia contributors", lic: "CC BY-SA 4.0 (text)",
-          en: "Articles near you in Discover (Maps); Start from Wikipedia (Wiki); web search (Assistant)", el: "Άρθρα κοντά σου στην Ανακάλυψη (Χάρτες)· Ξεκίνα από τη Βικιπαίδεια (Wiki)· αναζήτηση στο web (Βοηθός)" },
+          k: "cr.wikipedia" },
         { name: "Tavily", url: "https://tavily.com/",
-          by: "Tavily", lic: { en: "Tavily terms, your own key", el: "Όροι της Tavily, δικό σου κλειδί" },
-          en: "Web search, if chosen (Assistant)", el: "Αναζήτηση στο web, αν την επιλέξεις (Βοηθός)" },
+          by: "Tavily", lic: { k: "cr.lic.tavily" },
+          k: "cr.tavily" },
         { name: "SearXNG", url: "https://searxng.org/",
-          by: "SearXNG contributors", lic: { en: "AGPL-3.0, your own server", el: "AGPL-3.0, δικός σου server" },
-          en: "Web search, if chosen (Assistant)", el: "Αναζήτηση στο web, αν την επιλέξεις (Βοηθός)" },
+          by: "SearXNG contributors", lic: { k: "cr.lic.searxng" },
+          k: "cr.tavily" },
         { name: "Jina Reader", url: "https://jina.ai/reader/",
-          by: "Jina AI", lic: { en: "Jina AI terms", el: "Όροι της Jina AI" },
-          en: "Reads a found web page as text (Assistant)", el: "Διαβάζει ως κείμενο μια σελίδα που βρέθηκε (Βοηθός)" },
+          by: "Jina AI", lic: { k: "cr.lic.jina-reader" },
+          k: "cr.jina-reader" },
         { name: "Panoramax", url: "https://panoramax.fr/",
-          by: "Panoramax (IGN, OpenStreetMap France and contributors)", lic: { en: "Each photo's own licence (usually CC BY-SA 4.0)", el: "Η άδεια κάθε φωτογραφίας (συνήθως CC BY-SA 4.0)" },
-          en: "Open street-level photos in Discover (Maps)", el: "Ανοιχτές φωτογραφίες δρόμου στην Ανακάλυψη (Χάρτες)" },
+          by: "Panoramax (IGN, OpenStreetMap France and contributors)", lic: { k: "cr.lic.panoramax" },
+          k: "cr.panoramax" },
         { name: "Photon", url: "https://photon.komoot.io/",
           by: "komoot", lic: "Apache-2.0 (software), ODbL (data)",
-          en: "Place search (Maps); businesses in Update online (Contacts, CRM)", el: "Αναζήτηση τοποθεσιών (Χάρτες)· επιχειρήσεις στην Ενημέρωση online (Επαφές, Πελάτες)" },
+          k: "cr.photon" },
         { name: "OSRM", url: "https://project-osrm.org/",
           by: "Project OSRM contributors", lic: "BSD-2-Clause (software)",
-          en: "Car routes, demo server (Maps)", el: "Διαδρομές με αυτοκίνητο, δοκιμαστικός server (Χάρτες)" },
+          k: "cr.osrm" },
         { name: "FOSSGIS routing", url: "https://routing.openstreetmap.de/",
           by: "FOSSGIS e.V.", lic: "ODbL (data)",
-          en: "Bike and walking routes (Maps)", el: "Διαδρομές με ποδήλατο και με τα πόδια (Χάρτες)" },
+          k: "cr.fossgis-routing" },
         { name: "Transitous", url: "https://transitous.org/sources/",
-          by: "The Transitous community (MOTIS); timetables by each operator", lic: { en: "Each feed's open licence; ODbL (map data)", el: "Η ανοιχτή άδεια κάθε πηγής· ODbL (δεδομένα χάρτη)" },
-          en: "Public transport: connections, departures, live vehicles (Maps)", el: "Μέσα μαζικής μεταφοράς: δρομολόγια, αναχωρήσεις, οχήματα (Χάρτες)" },
+          by: "The Transitous community (MOTIS); timetables by each operator", lic: { k: "cr.lic.transitous" },
+          k: "cr.transitous" },
         { name: "OASA Telematics", url: "https://telematics.oasa.gr/",
-          by: "OASA (Athens Urban Transport Organisation)", lic: { en: "OASA's terms of use", el: "Όροι χρήσης του ΟΑΣΑ" },
-          en: "Live bus arrivals at Athens stops, through the orOS relay (Maps)", el: "Ζωντανές αφίξεις λεωφορείων στις στάσεις της Αθήνας, μέσω του relay του orOS (Χάρτες)" },
+          by: "OASA (Athens Urban Transport Organisation)", lic: { k: "cr.lic.oasa-telematics" },
+          k: "cr.oasa-telematics" },
         { name: "OpenStreetMap API", url: "https://operations.osmfoundation.org/policies/api/",
           by: "OpenStreetMap Foundation; data by OpenStreetMap contributors", lic: "ODbL (data)",
-          en: "Notes, sign-in, place edits and GPS trace uploads (Maps)", el: "Σημειώσεις, σύνδεση, διορθώσεις μερών και ανέβασμα GPS traces (Χάρτες)" },
+          k: "cr.openstreetmap-api" },
         { name: "Overpass API", url: "https://overpass-api.de/",
           by: "Roland Olbricht & the Overpass community; data by OpenStreetMap contributors", lic: "ODbL (data)",
-          en: "Places and quests around you, speed limits while driving (Maps); business details in Update online (Contacts, CRM)", el: "Μέρη και ερωτήσεις γύρω σου, όρια ταχύτητας στην οδήγηση (Χάρτες)· στοιχεία επιχειρήσεων στην Ενημέρωση online (Επαφές, Πελάτες)" },
+          k: "cr.overpass-api" },
         { name: "Radio Browser", url: "https://www.radio-browser.info/",
-          by: "Alex Segler & the community", lic: { en: "Free community API", el: "Δωρεάν κοινοτικό API" },
-          en: "Station directory (Radio)", el: "Κατάλογος σταθμών (Ραδιόφωνο)" },
+          by: "Alex Segler & the community", lic: { k: "cr.lic.radio-browser" },
+          k: "cr.radio-browser" },
         { name: "Internet Archive", url: "https://archive.org/details/audio",
-          by: "Internet Archive; each recording by its artist", lic: { en: "Per item (CC / public domain; Live Music Archive: free non-commercial sharing)", el: "Ανά έργο (CC / κοινό κτήμα· Live Music Archive: ελεύθερη μη εμπορική διανομή)" },
-          en: "Free albums, live concerts, classical (Music)", el: "Ελεύθερα άλμπουμ, συναυλίες, κλασική (Μουσική)" },
+          by: "Internet Archive; each recording by its artist", lic: { k: "cr.lic.internet-archive" },
+          k: "cr.internet-archive" },
         { name: "ccMixter", url: "https://ccmixter.org/",
-          by: "ArtisTech Media; each upload by its artist", lic: { en: "Per item (Creative Commons)", el: "Ανά έργο (Creative Commons)" },
-          en: "Remixes and instrumentals (Music)", el: "Remix και ορχηστρικά (Μουσική)" },
+          by: "ArtisTech Media; each upload by its artist", lic: { k: "cr.lic.ccmixter" },
+          k: "cr.ccmixter" },
         { name: "Jamendo", url: "https://www.jamendo.com/",
-          by: "Jamendo S.A.; each track by its artist", lic: { en: "Per track (Creative Commons); API for non-commercial use, streaming only", el: "Ανά κομμάτι (Creative Commons)· API για μη εμπορική χρήση, μόνο streaming" },
-          en: "Songs, albums, moods and radios (Music)", el: "Τραγούδια, άλμπουμ, διαθέσεις και ραδιόφωνα (Μουσική)" },
+          by: "Jamendo S.A.; each track by its artist", lic: { k: "cr.lic.jamendo" },
+          k: "cr.jamendo" },
         { name: "OpenSubsonic API", url: "https://opensubsonic.netlify.app/",
-          by: "Subsonic API by Sindre Mehus; OpenSubsonic by its contributors", lic: { en: "Open API specification; your own server", el: "Ανοιχτή προδιαγραφή API· ο δικός σου server" },
-          en: "Navidrome, Airsonic, Gonic and other Subsonic servers (Music)", el: "Navidrome, Airsonic, Gonic και άλλοι servers Subsonic (Μουσική)" },
+          by: "Subsonic API by Sindre Mehus; OpenSubsonic by its contributors", lic: { k: "cr.lic.opensubsonic-api" },
+          k: "cr.opensubsonic-api" },
         { name: "Jellyfin", url: "https://jellyfin.org/",
-          by: "The Jellyfin project", lic: { en: "GPL-2.0 (server); your own server", el: "GPL-2.0 (server)· ο δικός σου server" },
-          en: "Your Jellyfin music library (Music)", el: "Η μουσική βιβλιοθήκη σου στο Jellyfin (Μουσική)" },
+          by: "The Jellyfin project", lic: { k: "cr.lic.jellyfin" },
+          k: "cr.jellyfin" },
         { name: "Funkwhale", url: "https://www.funkwhale.audio/",
-          by: "The Funkwhale collective", lic: { en: "AGPL-3.0 (server); public pods or your own", el: "AGPL-3.0 (server)· δημόσια pods ή το δικό σου" },
-          en: "Federated music libraries (Music)", el: "Ομοσπονδιακές μουσικές βιβλιοθήκες (Μουσική)" },
+          by: "The Funkwhale collective", lic: { k: "cr.lic.funkwhale" },
+          k: "cr.funkwhale" },
         { name: "LRCLIB", url: "https://lrclib.net/",
-          by: "The LRCLIB project and its contributors", lic: { en: "Free API, no key; lyrics are their writers' works", el: "Δωρεάν API χωρίς κλειδί· οι στίχοι ανήκουν στους δημιουργούς τους" },
-          en: "Song lyrics, only when you ask (Music)", el: "Στίχοι τραγουδιών, μόνο όταν το ζητήσεις (Μουσική)" },
+          by: "The LRCLIB project and its contributors", lic: { k: "cr.lic.lrclib" },
+          k: "cr.lrclib" },
         { name: "iptv-org", url: "https://github.com/iptv-org/iptv",
           by: "iptv-org contributors", lic: "Unlicense (public domain)",
-          en: "Channel directory (Television)", el: "Κατάλογος καναλιών (Τηλεόραση)" },
+          k: "cr.iptv-org" },
         { name: "Wikidata", url: "https://www.wikidata.org/",
           by: "Wikidata editors, Wikimedia Foundation", lic: "CC0 (data)",
-          en: "Authors and works (Public Domain); books, films, series and games (Media Shelf); Update online (Contacts, CRM)", el: "Δημιουργοί και έργα (Κοινό κτήμα)· βιβλία, ταινίες, σειρές και παιχνίδια (Το ράφι μου)· Ενημέρωση online (Επαφές, Πελάτες)" },
+          k: "cr.wikidata" },
         { name: "Frankfurter", url: "https://frankfurter.dev/",
-          by: "Hakan Ensari; rates: European Central Bank", lic: { en: "MIT (software), ECB reference rates (data)", el: "MIT (λογισμικό), ισοτιμίες αναφοράς ΕΚΤ (δεδομένα)" },
-          en: "Exchange rates (Unit Converter, Budget)", el: "Ισοτιμίες (Μετατροπέας μονάδων, Έσοδα & Έξοδα)" },
+          by: "Hakan Ensari; rates: European Central Bank", lic: { k: "cr.lic.frankfurter" },
+          k: "cr.frankfurter" },
         { name: "Open Food Facts", url: "https://world.openfoodfacts.org/",
           by: "Open Food Facts contributors", lic: "ODbL (data)",
-          en: "Food search and barcodes for nutrition (Meal Planner)", el: "Αναζήτηση τροφίμων και barcode για θρεπτικά (Συνταγές & Μενού)" },
+          k: "cr.open-food" },
         { name: "wger", url: "https://wger.de/",
           by: "wger project & contributors", lic: "CC BY-SA (images)",
-          en: "Exercise pictures (Workouts)", el: "Εικόνες ασκήσεων (Προπόνηση)" },
+          k: "cr.wger" },
         { name: "Pl@ntNet API", url: "https://my.plantnet.org/",
-          by: "Pl@ntNet consortium (Cirad, INRAE, Inria, IRD)", lic: { en: "Pl@ntNet terms; your own key", el: "Όροι Pl@ntNet· με δικό σου κλειδί" },
-          en: "Identifying a plant from a photo (Plant Care)", el: "Αναγνώριση φυτού από φωτογραφία (Φροντίδα φυτών)" },
+          by: "Pl@ntNet consortium (Cirad, INRAE, Inria, IRD)", lic: { k: "cr.lic.plntnet-api" },
+          k: "cr.plntnet-api" },
         { name: "TMDB", url: "https://www.themoviedb.org/",
-          by: "The Movie Database", lic: { en: "TMDB API terms; your own key. This product uses the TMDB API but is not endorsed or certified by TMDB.", el: "Όροι TMDB API· με δικό σου κλειδί. Χρησιμοποιεί το TMDB API χωρίς να εγκρίνεται ή να πιστοποιείται από το TMDB." },
-          en: "Films and series, optional (Media Shelf)", el: "Ταινίες και σειρές, προαιρετικά (Το ράφι μου)" },
+          by: "The Movie Database", lic: { k: "cr.lic.tmdb" },
+          k: "cr.tmdb" },
         { name: "Project Gutenberg", url: "https://www.gutenberg.org/",
-          by: "Project Gutenberg Literary Archive Foundation & volunteers", lic: { en: "Public-domain books (US)", el: "Βιβλία κοινού κτήματος (ΗΠΑ)" },
-          en: "Free e-book catalogue (Library)", el: "Κατάλογος δωρεάν e-books (Βιβλιοθήκη)" },
+          by: "Project Gutenberg Literary Archive Foundation & volunteers", lic: { k: "cr.lic.project-gutenberg" },
+          k: "cr.project-gutenberg" },
         { name: "Standard Ebooks", url: "https://standardebooks.org/",
-          by: "Standard Ebooks volunteers", lic: { en: "CC0 (editions of public-domain books)", el: "CC0 (εκδόσεις βιβλίων κοινού κτήματος)" },
-          en: "Free e-book catalogue (Library)", el: "Κατάλογος δωρεάν e-books (Βιβλιοθήκη)" },
+          by: "Standard Ebooks volunteers", lic: { k: "cr.lic.standard-ebooks" },
+          k: "cr.project-gutenberg" },
         { name: "Protomaps", url: "https://protomaps.com/",
           by: "Protomaps LLC; data by OpenStreetMap contributors", lic: "ODbL (data)",
-          en: "Offline map downloads (Maps)", el: "Λήψη χαρτών εκτός σύνδεσης (Χάρτες)" },
+          k: "cr.protomaps" },
         { name: "Hugging Face", url: "https://huggingface.co/",
-          by: "Hugging Face, Inc.", lic: { en: "Hosts the Whisper model (MIT)", el: "Φιλοξενεί το μοντέλο Whisper (MIT)" },
-          en: "Speech model download, only when asked (Montage)", el: "Λήψη του μοντέλου ομιλίας, μόνο όταν το ζητήσεις (Μοντάζ)" },
+          by: "Hugging Face, Inc.", lic: { k: "cr.lic.hugging-face" },
+          k: "cr.hugging-face" },
         { name: "gpodder.net / Nextcloud GPodder Sync", url: "https://gpodder.net/",
-          by: "gpodder.net; Nextcloud GPodder Sync contributors", lic: { en: "Your own account", el: "Δικός σου λογαριασμός" },
-          en: "Podcast subscription sync, optional (Podcasts)", el: "Συγχρονισμός συνδρομών, προαιρετικά (Podcasts)" },
+          by: "gpodder.net; Nextcloud GPodder Sync contributors", lic: { k: "cr.lic.gpodder-net" },
+          k: "cr.gpodder-net" },
         { name: "Wiktionary", url: "https://en.wiktionary.org/",
           by: "Wiktionary editors, Wikimedia Foundation", lic: "CC BY-SA 4.0 (text)",
-          en: "Word meanings (Library look-up)", el: "Σημασίες λέξεων (Βιβλιοθήκη)" },
+          k: "cr.wiktionary" },
         { name: "Openverse", url: "https://openverse.org/",
-          by: "WordPress.org, the creators of every work", lic: { en: "Per item (CC / public domain)", el: "Ανά έργο (CC / κοινό κτήμα)" },
-          en: "Photos, illustrations, sounds (Atelier); free songs (Music)", el: "Φωτογραφίες, εικονογραφήσεις, ήχοι (Ατελιέ)· ελεύθερα τραγούδια (Μουσική)" },
+          by: "WordPress.org, the creators of every work", lic: { k: "cr.lic.openverse" },
+          k: "cr.openverse" },
         { name: "Wikimedia Commons", url: "https://commons.wikimedia.org/",
-          by: "Commons contributors, Wikimedia Foundation", lic: { en: "Per item (free licences)", el: "Ανά έργο (ελεύθερες άδειες)" },
-          en: "Photos, drawings, sounds, video (Atelier); covers (Media Shelf)", el: "Φωτογραφίες, σχέδια, ήχοι, βίντεο (Ατελιέ)· εξώφυλλα (Το ράφι μου)" },
+          by: "Commons contributors, Wikimedia Foundation", lic: { k: "cr.lic.wikimedia-commons" },
+          k: "cr.wikimedia-commons" },
         { name: "Iconify", url: "https://iconify.design/",
-          by: "Vjacheslav Trushkin & the authors of each icon set", lic: { en: "Per icon set (MIT, Apache, CC BY, OFL…)", el: "Ανά σετ εικονιδίων (MIT, Apache, CC BY, OFL…)" },
-          en: "Icons and clipart (Atelier)", el: "Εικονίδια και clipart (Ατελιέ)" },
+          by: "Vjacheslav Trushkin & the authors of each icon set", lic: { k: "cr.lic.iconify" },
+          k: "cr.iconify" },
         { name: "Fontsource", url: "https://fontsource.org/",
-          by: "Fontsource & each font's designers", lic: { en: "Per font (OFL, Apache)", el: "Ανά γραμματοσειρά (OFL, Apache)" },
-          en: "Font catalogue and files (Atelier)", el: "Κατάλογος και αρχεία γραμματοσειρών (Ατελιέ)" },
+          by: "Fontsource & each font's designers", lic: { k: "cr.lic.fontsource" },
+          k: "cr.fontsource" },
         { name: "Pixabay", url: "https://pixabay.com/",
-          by: "Pixabay creators", lic: { en: "Pixabay Content License, your own key", el: "Pixabay Content License, με δικό σου κλειδί" },
-          en: "Optional photos and video (Atelier)", el: "Προαιρετικές φωτογραφίες και βίντεο (Ατελιέ)" },
+          by: "Pixabay creators", lic: { k: "cr.lic.pixabay" },
+          k: "cr.pixabay" },
         { name: "Pexels", url: "https://www.pexels.com/",
-          by: "Pexels creators", lic: { en: "Pexels License, your own key", el: "Pexels License, με δικό σου κλειδί" },
-          en: "Optional photos and video (Atelier)", el: "Προαιρετικές φωτογραφίες και βίντεο (Ατελιέ)" },
+          by: "Pexels creators", lic: { k: "cr.lic.pexels" },
+          k: "cr.pixabay" },
         { name: "Open Library", url: "https://openlibrary.org/",
           by: "Internet Archive", lic: "CC0 (data)",
-          en: "Book details (Media Shelf)", el: "Στοιχεία βιβλίων (Το ράφι μου)" },
+          k: "cr.open-library" },
         { name: "MusicBrainz", url: "https://musicbrainz.org/",
           by: "MetaBrainz Foundation", lic: "CC0 (core data)",
-          en: "Album details (Media Shelf, Music covers)", el: "Στοιχεία άλμπουμ (Το ράφι μου, εξώφυλλα στη Μουσική)" },
+          k: "cr.musicbrainz" },
         { name: "Cover Art Archive", url: "https://coverartarchive.org/",
-          by: "MetaBrainz Foundation and Internet Archive", lic: { en: "Free API, no key; each image belongs to its owner", el: "Δωρεάν API χωρίς κλειδί· κάθε εικόνα ανήκει στον κάτοχό της" },
-          en: "Album covers, only when you ask (Music)", el: "Εξώφυλλα άλμπουμ, μόνο όταν το ζητήσεις (Μουσική)" },
+          by: "MetaBrainz Foundation and Internet Archive", lic: { k: "cr.lic.cover-art" },
+          k: "cr.cover-art" },
         { name: "Anthropic, OpenAI, Google Gemini, Mistral, OpenRouter, Ollama, LM Studio", url: "https://www.anthropic.com/",
-          by: "Each provider", lic: { en: "Their terms, your own key", el: "Οι όροι τους, με δικό σου κλειδί" },
-          en: "AI chat you choose (Assistant)", el: "Συζήτηση με το AI που διαλέγεις (Βοηθός)" },
+          by: "Each provider", lic: { k: "cr.lic.anthropic-openai" },
+          k: "cr.anthropic-openai" },
         { name: "Groq", url: "https://groq.com/",
-          by: "Groq, Inc.", lic: { en: "Their terms, your own key (free plan)", el: "Οι όροι τους, με δικό σου κλειδί (δωρεάν πλάνο)" },
-          en: "AI chat you choose (Assistant)", el: "Συζήτηση με το AI που διαλέγεις (Βοηθός)" },
+          by: "Groq, Inc.", lic: { k: "cr.lic.groq" },
+          k: "cr.anthropic-openai" },
         { name: "Cerebras", url: "https://www.cerebras.ai/",
-          by: "Cerebras Systems", lic: { en: "Their terms, your own key (free plan)", el: "Οι όροι τους, με δικό σου κλειδί (δωρεάν πλάνο)" },
-          en: "AI chat you choose (Assistant)", el: "Συζήτηση με το AI που διαλέγεις (Βοηθός)" },
+          by: "Cerebras Systems", lic: { k: "cr.lic.groq" },
+          k: "cr.anthropic-openai" },
         { name: "GitHub Models", url: "https://github.com/marketplace/models",
-          by: "GitHub, Inc.", lic: { en: "Their terms, your own key (free plan)", el: "Οι όροι τους, με δικό σου κλειδί (δωρεάν πλάνο)" },
-          en: "AI chat you choose (Assistant)", el: "Συζήτηση με το AI που διαλέγεις (Βοηθός)" },
+          by: "GitHub, Inc.", lic: { k: "cr.lic.groq" },
+          k: "cr.anthropic-openai" },
         { name: "Cohere", url: "https://cohere.com/",
-          by: "Cohere Inc.", lic: { en: "Their terms, your own key (free plan)", el: "Οι όροι τους, με δικό σου κλειδί (δωρεάν πλάνο)" },
-          en: "AI chat you choose (Assistant)", el: "Συζήτηση με το AI που διαλέγεις (Βοηθός)" },
+          by: "Cohere Inc.", lic: { k: "cr.lic.groq" },
+          k: "cr.anthropic-openai" },
         { name: "Hugging Face Inference Providers", url: "https://huggingface.co/",
-          by: "Hugging Face, Inc.", lic: { en: "Their terms, your own key (free plan)", el: "Οι όροι τους, με δικό σου κλειδί (δωρεάν πλάνο)" },
-          en: "AI chat you choose (Assistant)", el: "Συζήτηση με το AI που διαλέγεις (Βοηθός)" },
+          by: "Hugging Face, Inc.", lic: { k: "cr.lic.groq" },
+          k: "cr.anthropic-openai" },
         { name: "SambaNova Cloud", url: "https://sambanova.ai/",
-          by: "SambaNova Systems", lic: { en: "Their terms, your own key (free plan)", el: "Οι όροι τους, με δικό σου κλειδί (δωρεάν πλάνο)" },
-          en: "AI chat you choose (Assistant)", el: "Συζήτηση με το AI που διαλέγεις (Βοηθός)" },
+          by: "SambaNova Systems", lic: { k: "cr.lic.groq" },
+          k: "cr.anthropic-openai" },
         { name: "Pollinations", url: "https://pollinations.ai/",
-          by: "Pollinations.AI", lic: { en: "Their terms, your own key (free plan)", el: "Οι όροι τους, με δικό σου κλειδί (δωρεάν πλάνο)" },
-          en: "AI chat you choose (Assistant)", el: "Συζήτηση με το AI που διαλέγεις (Βοηθός)" },
+          by: "Pollinations.AI", lic: { k: "cr.lic.groq" },
+          k: "cr.anthropic-openai" },
         { name: "Pollinations, Hugging Face, OpenAI, Stability AI, Stable Diffusion WebUI / Forge", url: "https://pollinations.ai/",
-          by: "Each provider or project", lic: { en: "Their terms; Pollinations free with no key, the others with your own key or your own computer", el: "Οι όροι τους· το Pollinations δωρεάν χωρίς κλειδί, τα άλλα με δικό σου κλειδί ή στον υπολογιστή σου" },
-          en: "Image AI you choose: Image from text (Atelier)", el: "AI εικόνας που διαλέγεις: Εικόνα από κείμενο (Ατελιέ)" },
+          by: "Each provider or project", lic: { k: "cr.lic.pollinations-hugging" },
+          k: "cr.pollinations-hugging" },
         { name: "Cloudflare Workers", url: "https://workers.cloudflare.com/",
-          by: "Cloudflare, Inc.", lic: { en: "Runs the orOS mail relay (code in relay/); D1 keeps encrypted share links with an expiry", el: "Τρέχει το relay αλληλογραφίας του orOS (κώδικας στο relay/)· το D1 κρατά κρυπτογραφημένους συνδέσμους με λήξη" },
-          en: "Mail: IMAP over HTTPS, nothing stored", el: "Αλληλογραφία: IMAP μέσω HTTPS, δεν αποθηκεύεται τίποτα" },
+          by: "Cloudflare, Inc.", lic: { k: "cr.lic.cloudflare-workers" },
+          k: "cr.cloudflare-workers" },
         { name: "Web Push: Google FCM, Mozilla Push, Microsoft WNS", url: "https://www.rfc-editor.org/rfc/rfc8030",
-          by: "Google LLC; Mozilla Foundation; Microsoft Corporation (your browser's)", lic: { en: "Their terms; only with the switch on", el: "Οι όροι τους· μόνο με ανοιχτό το διακόπτη" },
-          en: "Optional notifications with orOS closed, encrypted on the device (Settings › Notifications)",
-          el: "Προαιρετικές ειδοποιήσεις με κλειστό orOS, κρυπτογραφημένες στη συσκευή (Ρυθμίσεις › Ειδοποιήσεις)" },
+          by: "Google LLC; Mozilla Foundation; Microsoft Corporation (your browser's)", lic: { k: "cr.lic.web-push" },
+          k: "cr.web-push" },
         { name: "WooCommerce REST API", url: "https://woocommerce.github.io/woocommerce-rest-api-docs/",
-          by: "Automattic; your own shop", lic: { en: "Your own shop and keys", el: "Το δικό σου κατάστημα και κλειδιά" },
-          en: "Connected services: shop stock and orders (Stock)", el: "Συνδεδεμένες υπηρεσίες: απόθεμα και παραγγελίες καταστήματος (Απόθεμα)" },
+          by: "Automattic; your own shop", lic: { k: "cr.lic.woocommerce-rest" },
+          k: "cr.woocommerce-rest" },
         { name: "MailerLite, Mailchimp, Brevo", url: "https://www.mailerlite.com/",
-          by: "Each provider; your own account", lic: { en: "Their terms, your own key", el: "Οι όροι τους, με δικό σου κλειδί" },
-          en: "Connected services: sync subscribers (Newsletter)", el: "Συνδεδεμένες υπηρεσίες: συγχρονισμός συνδρομητών (Newsletter)" },
+          by: "Each provider; your own account", lic: { k: "cr.lic.anthropic-openai" },
+          k: "cr.mailerlite-mailchimp" },
         { name: "HubSpot, Pipedrive", url: "https://developers.hubspot.com/",
-          by: "Each provider; your own account", lic: { en: "Their terms, your own key", el: "Οι όροι τους, με δικό σου κλειδί" },
-          en: "Connected services: import customers and deals (CRM)", el: "Συνδεδεμένες υπηρεσίες: εισαγωγή πελατών και deals (CRM)" },
+          by: "Each provider; your own account", lic: { k: "cr.lic.anthropic-openai" },
+          k: "cr.hubspot-pipedrive" },
         { name: "Stripe API", url: "https://docs.stripe.com/api",
-          by: "Stripe, Inc.; your own account", lic: { en: "Their terms, your own restricted key", el: "Οι όροι τους, με δικό σου restricted key" },
-          en: "Connected services: import payments (Budget)", el: "Συνδεδεμένες υπηρεσίες: εισαγωγή πληρωμών (Έσοδα & Έξοδα)" },
+          by: "Stripe, Inc.; your own account", lic: { k: "cr.lic.stripe-api" },
+          k: "cr.stripe-api" },
         { name: "Invoice Ninja API", url: "https://api-docs.invoicing.co/",
-          by: "Invoice Ninja LLC; your own account or install", lic: { en: "Their terms, your own token", el: "Οι όροι τους, με δικό σου token" },
-          en: "Connected services: import clients (CRM) and payments (Budget)", el: "Συνδεδεμένες υπηρεσίες: εισαγωγή πελατών (CRM) και πληρωμών (Έσοδα & Έξοδα)" },
+          by: "Invoice Ninja LLC; your own account or install", lic: { k: "cr.lic.invoice-ninja" },
+          k: "cr.invoice-ninja" },
         { name: "Odoo API", url: "https://www.odoo.com/documentation/19.0/developer/reference/external_api.html",
-          by: "Odoo S.A.; your own database", lic: { en: "Their terms, your own API key", el: "Οι όροι τους, με δικό σου κλειδί API" },
-          en: "Connected services: import contacts and opportunities (CRM)", el: "Συνδεδεμένες υπηρεσίες: εισαγωγή επαφών και ευκαιριών (CRM)" },
+          by: "Odoo S.A.; your own database", lic: { k: "cr.lic.odoo-api" },
+          k: "cr.odoo-api" },
         { name: "Todoist API", url: "https://developer.todoist.com/api/v1/",
-          by: "Doist Inc.; your own account", lic: { en: "Their terms, your own API token", el: "Οι όροι τους, με δικό σου API token" },
-          en: "Connected services: import projects and tasks (To-Do)", el: "Συνδεδεμένες υπηρεσίες: εισαγωγή projects και εργασιών (To-Do)" },
+          by: "Doist Inc.; your own account", lic: { k: "cr.lic.todoist-api" },
+          k: "cr.todoist-api" },
         { name: "Trello API", url: "https://developer.atlassian.com/cloud/trello/rest/",
-          by: "Atlassian; your own account", lic: { en: "Their terms, your own key and token", el: "Οι όροι τους, με δικό σου κλειδί και token" },
-          en: "Connected services: import boards (Kanban)", el: "Συνδεδεμένες υπηρεσίες: εισαγωγή πινάκων (Kanban)" },
+          by: "Atlassian; your own account", lic: { k: "cr.lic.trello-api" },
+          k: "cr.trello-api" },
         { name: "GitHub REST API", url: "https://docs.github.com/en/rest/issues/issues",
-          by: "GitHub, Inc.; your own account", lic: { en: "Their terms, your own access token", el: "Οι όροι τους, με δικό σου access token" },
-          en: "Connected services: import a repository's issues (Kanban) and the issues assigned to you (To-Do)", el: "Συνδεδεμένες υπηρεσίες: εισαγωγή των issues ενός αποθετηρίου (Kanban) και όσων σου έχουν ανατεθεί (To-Do)" },
+          by: "GitHub, Inc.; your own account", lic: { k: "cr.lic.github-rest" },
+          k: "cr.github-rest" },
         { name: "Raindrop.io API", url: "https://developer.raindrop.io/",
-          by: "Raindrop.io; your own account", lic: { en: "Their terms, your own token", el: "Οι όροι τους, με δικό σου token" },
-          en: "Connected services: import bookmarks (Bookmarks)", el: "Συνδεδεμένες υπηρεσίες: εισαγωγή σελιδοδεικτών (Σελιδοδείκτες)" },
+          by: "Raindrop.io; your own account", lic: { k: "cr.lic.invoice-ninja" },
+          k: "cr.raindrop-io" },
         { name: "Lichess API", url: "https://lichess.org/api",
-          by: "Lichess.org (open source, AGPL-3.0); your own account", lic: { en: "Free API, game data CC0, your own sign-in", el: "Δωρεάν API, δεδομένα παρτίδων CC0, με δική σου σύνδεση" },
-          en: "Chess › Online accounts: your ratings and games, the daily puzzle, analysis and playing on Lichess", el: "Σκάκι › Online λογαριασμοί: βαθμολογίες και παρτίδες σου, γρίφος της ημέρας, ανάλυση και παιχνίδι στο Lichess" },
+          by: "Lichess.org (open source, AGPL-3.0); your own account", lic: { k: "cr.lic.lichess-api" },
+          k: "cr.lichess-api" },
         { name: "Chess.com Published-Data API", url: "https://support.chess.com/en/articles/9650547-published-data-api",
-          by: "Chess.com, LLC; your own public profile", lic: { en: "Their terms, read only, no sign-in", el: "Οι όροι τους, μόνο ανάγνωση, χωρίς σύνδεση" },
-          en: "Chess › Online accounts: your ratings, your games and the daily puzzle", el: "Σκάκι › Online λογαριασμοί: οι βαθμολογίες σου, οι παρτίδες σου και ο γρίφος της ημέρας" },
+          by: "Chess.com, LLC; your own public profile", lic: { k: "cr.lic.chess-com" },
+          k: "cr.chess-com" },
         { name: "Notion API", url: "https://developers.notion.com/reference/intro",
-          by: "Notion Labs, Inc.; your own workspace", lic: { en: "Their terms, your own integration secret", el: "Οι όροι τους, με δικό σου secret ενσωμάτωσης" },
-          en: "Connected services: import pages (Notes) and databases (Spreadsheet, Kanban)", el: "Συνδεδεμένες υπηρεσίες: εισαγωγή σελίδων (Σημειώσεις) και βάσεων δεδομένων (Υπολογιστικό φύλλο, Kanban)" },
+          by: "Notion Labs, Inc.; your own workspace", lic: { k: "cr.lic.notion-api" },
+          k: "cr.notion-api" },
         { name: "Google People API · Microsoft Graph", url: "https://developers.google.com/people",
-          by: "Google LLC; Microsoft Corporation; your own account", lic: { en: "Their terms, one sign-in per import, nothing kept", el: "Οι όροι τους, μία σύνδεση ανά εισαγωγή, τίποτα δεν κρατιέται" },
-          en: "One-time contacts import (Contacts › From an account)", el: "Εισαγωγή επαφών μία φορά (Επαφές › Από λογαριασμό)" },
+          by: "Google LLC; Microsoft Corporation; your own account", lic: { k: "cr.lic.google-people" },
+          k: "cr.google-people" },
         { name: "Google Calendar · Tasks · YouTube Data · Books APIs", url: "https://developers.google.com/calendar",
-          by: "Google LLC; your own account", lic: { en: "Their terms, one sign-in per import, nothing kept", el: "Οι όροι τους, μία σύνδεση ανά εισαγωγή, τίποτα δεν κρατιέται" },
-          en: "One-time imports from Google (Calendar, To-Do, Reader, Media Shelf)", el: "Εισαγωγή από Google μία φορά (Ημερολόγιο, Εργασίες, Αναγνώστης, Το ράφι μου)" },
+          by: "Google LLC; your own account", lic: { k: "cr.lic.google-people" },
+          k: "cr.google-calendar" },
         { name: "Google Drive · Picker · Photos Picker APIs", url: "https://developers.google.com/drive/picker",
-          by: "Google LLC; your own account", lic: { en: "Their terms, one sign-in per import, nothing kept", el: "Οι όροι τους, μία σύνδεση ανά εισαγωγή, τίποτα δεν κρατιέται" },
-          en: "One-time imports from Google Drive and Google Photos (Files, Photo Lab)", el: "Εισαγωγή μία φορά από Google Drive και Google Photos (Αρχεία, Εργαστήριο εικόνας)" },
+          by: "Google LLC; your own account", lic: { k: "cr.lic.google-people" },
+          k: "cr.google-drive" },
         { name: "Gravatar", url: "https://gravatar.com/",
-          by: "Automattic Inc.", lic: { en: "Their terms; only a hashed e-mail is sent, on request", el: "Οι όροι τους· στέλνεται μόνο κωδικοποιημένο email, όταν το ζητήσεις" },
-          en: "Public profiles (Contacts, CRM and Newsletter › Update online)", el: "Δημόσια προφίλ (Επαφές, Πελάτες και Ενημερωτικό δελτίο › Ενημέρωση online)" },
+          by: "Automattic Inc.", lic: { k: "cr.lic.gravatar" },
+          k: "cr.gravatar" },
         { name: "GitHub · Bluesky · Mastodon public APIs", url: "https://docs.bsky.app/",
-          by: "GitHub, Inc.; Bluesky Social PBC; each Mastodon server", lic: { en: "Their terms; public profiles only, no sign-in, on request", el: "Οι όροι τους· μόνο δημόσια προφίλ, χωρίς σύνδεση, όταν το ζητήσεις" },
-          en: "Update from online sources (Contacts, CRM)", el: "Ενημέρωση από online πηγές (Επαφές, Πελάτες)" },
+          by: "GitHub, Inc.; Bluesky Social PBC; each Mastodon server", lic: { k: "cr.lic.github-bluesky" },
+          k: "cr.github-bluesky" },
         { name: "timologisi.online", url: "https://www.timologisi.online/",
-          by: "Novus Conceptus; your own account", lic: { en: "Your own account and key", el: "Ο δικός σου λογαριασμός και κλειδί" },
-          en: "Connected services: send invoices to myDATA (Invoices)", el: "Συνδεδεμένες υπηρεσίες: αποστολή παραστατικών στο myDATA (Τιμολόγια)" },
+          by: "Novus Conceptus; your own account", lic: { k: "cr.lic.timologisi-online" },
+          k: "cr.timologisi-online" },
         { name: "Dropbox", url: "https://www.dropbox.com/",
-          by: "Dropbox, Inc.", lic: { en: "Your own account", el: "Ο δικός σου λογαριασμός" },
-          en: "Optional encrypted sync", el: "Προαιρετικός κρυπτογραφημένος συγχρονισμός" },
+          by: "Dropbox, Inc.", lic: { k: "cr.lic.gpodder-net" },
+          k: "cr.dropbox" },
         { name: "GitHub Pages", url: "https://pages.github.com/",
-          by: "GitHub, Inc.", lic: { en: "Hosting", el: "Φιλοξενία" },
-          en: "Serves useoros.online", el: "Φιλοξενεί το useoros.online" }
+          by: "GitHub, Inc.", lic: { k: "cr.lic.github-pages" },
+          k: "cr.github-pages" }
       ]
     }
   ];
 
   function creditsThanksText() {
-    return supT(
-      "Thank you to everyone who builds and shares these, often without knowing orOS exists. Radio and TV streams belong to their broadcasters. Full details: CREDITS.md in the source code.",
-      "Ευχαριστούμε όσους φτιάχνουν και μοιράζονται όλα αυτά, συχνά χωρίς να ξέρουν ότι υπάρχει το orOS. Οι ροές ραδιοφώνου και τηλεόρασης ανήκουν στους σταθμούς τους. Όλες οι λεπτομέρειες: CREDITS.md στον πηγαίο κώδικα."
-    );
+    return window.t("cr.thanks");
   }
 
   function creditLink(href, text) {
@@ -6439,7 +6381,7 @@
     var sum = document.createElement("summary");
     sum.className = "sc-sec";
     sum.style.cssText = "cursor:pointer;";
-    sum.textContent = supT("Credits & licences", "Ευχαριστίες & άδειες");
+    sum.textContent = window.t("cr.title");
     det.appendChild(sum);
 
     var intro = document.createElement("div");
@@ -6452,7 +6394,7 @@
       var gh = document.createElement("div");
       gh.style.cssText =
         "font-size:12px;font-weight:700;color:var(--text);margin:10px 0 2px;";
-      gh.textContent = supT(g.en, g.el);
+      gh.textContent = window.t(g.k);
       det.appendChild(gh);
       g.items.forEach(function (it) {
         var row = document.createElement("div");
@@ -6464,8 +6406,8 @@
         row.appendChild(nm);
         row.appendChild(document.createTextNode(
           " · " + it.by + " · " +
-          (typeof it.lic === "string" ? it.lic : supT(it.lic.en, it.lic.el)) +
-          " — " + supT(it.en, it.el)));
+          (typeof it.lic === "string" ? it.lic : window.t(it.lic.k)) +
+          " — " + window.t(it.k)));
         det.appendChild(row);
       });
     });
@@ -6478,15 +6420,14 @@
   function wireOwnCredits(ov) {
     var cred = ov.querySelector("#sc-cred");
     if (!cred) return;
-    var el = state.lang === "el";
-    cred.appendChild(document.createTextNode(
-      el ? "Σχεδιάστηκε με <3 από τον " : "Designed with <3 by "));
-    cred.appendChild(creditLink("https://koulaxizis.gr", "Christos Koulaxizis"));
-    cred.appendChild(document.createTextNode(el ? ". Με τη βοήθεια του " : ". Assisted by "));
-    cred.appendChild(creditLink("https://lumo.proton.me/", "Lumo"));
-    cred.appendChild(document.createTextNode(el ? ". Έλεγχος από το " : ". Audited by "));
-    cred.appendChild(creditLink("https://claude.ai/", "Claude"));
-    cred.appendChild(document.createTextNode("."));
+    // One sentence with three links: "own.cred" = "Designed with <3 by
+    // {a}. Assisted by {b}. Audited by {c}." (text nodes, no innerHTML).
+    var links = { a: ["https://koulaxizis.gr", "Christos Koulaxizis"], b: ["https://lumo.proton.me/", "Lumo"], c: ["https://claude.ai/", "Claude"] };
+    window.t("own.cred").split(/(\{[abc]\})/).forEach(function (part) {
+      var m = /^\{([abc])\}$/.exec(part);
+      if (m) cred.appendChild(creditLink(links[m[1]][0], links[m[1]][1]));
+      else if (part) cred.appendChild(document.createTextNode(part));
+    });
   }
 
   // Info modal — the FULL table is generated from SC_DEFS, never
@@ -6984,7 +6925,7 @@
       wxIconFor(c.code) +
         '<span class="wx-temp">' + Math.round(c.temp) + "°</span>",
       titleBase + " · " + new Date(c.at).toLocaleTimeString(
-        state.lang === "el" ? "el-GR" : "en-GB",
+        shLoc(),
         { hour: "2-digit", minute: "2-digit" }));
   }
   // #6 — fetch retry tick: the BOOT fetch (wxFetch(false) at the
@@ -7149,15 +7090,12 @@
         // keeps painting the off/waiting state — no toast here.
         if (navigator.onLine &&
             window.orosNotifs && typeof window.orosNotifs.emit === "function") {
-          var wxfEl = (localStorage.getItem("oros-lang") === "el");
           window.orosNotifs.emit({
             ns: "weather",
             key: "trayfail-" + sysYmd(),
             type: "sys",
-            title: wxfEl ? "Καιρός" : "Weather",
-            body: wxfEl
-              ? "Αποτυχία λήψης καιρού — έλεγξε τη σύνδεση"
-              : "Weather fetch failed — check connection"
+            title: window.t("app.weather"),
+            body: window.t("n.wx.fail")
           });
         }
       });
@@ -7240,32 +7178,22 @@
       if (dd.max !== null && (dmax === null || dd.max > dmax)) dmax = dd.max;
       if (dd.min !== null && (dmin === null || dd.min < dmin)) dmin = dd.min;
     });
-    var en, el;
-    if (code >= 95) {
-      en = "Storms around — take cover"; el = "Καταιγίδες — απόφυγε την έκθεση";
-    } else if (code === 45 || code === 48) {
-      en = "Fog patches — slow down"; el = "Ομίχλη — προσοχή στην οδήγηση";
-    } else if (maxPop >= 60 || (code >= 51 && code <= 67) || (code >= 80 && code <= 82)) {
-      en = "Umbrella day"; el = "Μέρα για ομπρέλα";
-    } else if (p.current.uv !== null && p.current.uv >= 6) {
-      en = "High UV — wear sunscreen"; el = "Υψηλή UV — αντηλιακό";
-    } else if (dmax !== null && dmax >= 33) {
-      en = "Hot one — stay hydrated"; el = "Ζέστη — πίνε νερό";
-    } else if (dmin !== null && dmin <= 0) {
-      en = "Freezing temperatures"; el = "Παγωμένες θερμοκρασίες";
-    } else if (dmax !== null && dmin !== null && (dmax - dmin) > 12) {
-      en = "Layer up — big day-night swing"; el = "Πάρε ζακέτα — μεγάλη διακύμανση";
-    } else {
-      return;   // pleasant day — no briefing noise
-    }
-    var wbEl = (localStorage.getItem("oros-lang") === "el");
+    var brief;                              // n.wx.brief.<kind>
+    if (code >= 95) brief = "storm";
+    else if (code === 45 || code === 48) brief = "fog";
+    else if (maxPop >= 60 || (code >= 51 && code <= 67) || (code >= 80 && code <= 82)) brief = "rain";
+    else if (p.current.uv !== null && p.current.uv >= 6) brief = "uv";
+    else if (dmax !== null && dmax >= 33) brief = "hot";
+    else if (dmin !== null && dmin <= 0) brief = "freeze";
+    else if (dmax !== null && dmin !== null && (dmax - dmin) > 12) brief = "swing";
+    else return;   // pleasant day — no briefing noise
 
     window.orosNotifs.emit({
       ns: "weather",
       key: "brief-" + sysYmd(),
       type: "reminder",
-      title: best.label || (wbEl ? "Καιρός" : "Weather"),
-      body: wbEl ? el : en,
+      title: best.label || window.t("app.weather"),
+      body: window.t("n.wx.brief." + brief),
       deepLink: "weather:open"
     });
   }
@@ -7354,7 +7282,7 @@
       // in the city's clock (the app's cache knows its offset), like the app
       var tzOff = (p && typeof p.tz === "number") ? p.tz : null;
       var until = typeof x.exp === "number"
-        ? new Date(x.exp + (tzOff !== null ? tzOff * 1000 : 0)).toLocaleString(lang === "el" ? "el-GR" : "en-GB",
+        ? new Date(x.exp + (tzOff !== null ? tzOff * 1000 : 0)).toLocaleString(window.orosI18n ? window.orosI18n.locale(state.lang) : (lang === "el" ? "el-GR" : "en-GB"),
             tzOff !== null ? { weekday: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone: "UTC" }
                            : { weekday: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23" })
         : "";
@@ -7363,7 +7291,7 @@
         key: key,
         type: "reminder",
         title: C.warnTitle(x, lang),
-        body: [city.label || "", x.area, until ? (lang === "el" ? "έως " : "until ") + until : ""]
+        body: [city.label || "", x.area, until ? tr("n.wx.until", { time: until }) : ""]
           .filter(Boolean).join(" · "),
         deepLink: "weather:open"
       });
@@ -7688,7 +7616,7 @@
     timeStr.style.cssText = "font-size:12px;color:var(--text-dim);margin-top:1px;" +
       "font-variant-numeric:tabular-nums;";
     timeStr.textContent = new Date().toLocaleTimeString(
-      window.orosLang === "el" ? "el-GR" : "en-GB",
+      shLoc(),
       { hour: "2-digit", minute: "2-digit" });
     body.appendChild(title);
     body.appendChild(label);
@@ -7872,10 +7800,6 @@
   // that came due while the tab slept still catches up on open.
   var CALREM_STOP_MS   = (7200 + 3 * 1440) * 60000;
 
-  function calRemT(en, el) {
-    return state.lang === "el" ? el : en;
-  }
-
   function calRemFiredRead() {
     try {
       var arr = JSON.parse(localStorage.getItem(CALREM_FIRED_KEY));
@@ -7978,7 +7902,7 @@
           ns: "calendar",
           key: due.remKey,
           type: "reminder",
-          title: due.ev.title || calRemT("Reminder", "Υπενθύμιση"),
+          title: due.ev.title || window.t("rem.title"),
           body: calRemWhen(due.startTs),
           deepLink: "calendar:" + due.ev.id + ":" + due.remKey.split(":")[2]
         });
@@ -7991,7 +7915,7 @@
     // Wave 1B — when-string for emitted calendar reminders (shared
   // shape with the legacy overlay's body copy).
   function calRemWhen(ts) {
-    var loc = state.lang === "el" ? "el-GR" : "en-GB";
+    var loc = shLoc();
     var when = new Date(ts);
     return when.toLocaleDateString(loc, { day: "2-digit", month: "short" }) +
       " · " + when.toLocaleTimeString(loc, { hour: "2-digit", minute: "2-digit" });
@@ -8010,8 +7934,8 @@
   // doctrine as alarmNotify). Inline styles, palette vars only.
   function calRemNotify(due) {
     calRemStopRing();   // one at a time — new replaces old
-    var loc = state.lang === "el" ? "el-GR" : "en-GB";
-    var titleTxt = calRemT("Reminder", "Υπενθύμιση");
+    var loc = shLoc();
+    var titleTxt = window.t("rem.title");
     var when = new Date(due.startTs);
     var whenStr = when.toLocaleDateString(loc, { day: "2-digit", month: "short" }) +
       " · " + when.toLocaleTimeString(loc, { hour: "2-digit", minute: "2-digit" });
@@ -8128,9 +8052,8 @@
         ns: "mood",
         key: dedupeKey,
         type: "checkin",
-        title: calRemT("Mood check-in", "Καταγραφή διάθεσης"),
-        body: calRemT("How are you feeling today? Log your entry.",
-                     "Πώς νιώθεις σήμερα; Κατέγραψε την είσοδό σου."),
+        title: window.t("n.mood.title"),
+        body: window.t("n.mood.body"),
         deepLink: "mood:checkin"
       });
     }
@@ -8156,10 +8079,6 @@
   // too (maintenance note — changelog knows).
   var CYCLE_DATA_KEY = "oros-cycle-data";
 
-  function cycleT(en, el) {
-    return state.lang === "el" ? el : en;
-  }
-
   function cycleShellCheck() {
     var raw;
     try { raw = JSON.parse(localStorage.getItem(CYCLE_DATA_KEY)); }
@@ -8178,21 +8097,15 @@
     if (daysLeft >= 0) {
       return {
         key: "pred-" + ymd + "-soon",
-        title: cycleT("Cycle", "Κύκλος"),
-        body: cycleT(
-          "Period expected in ~{n} days",
-          "Η περίοδος αναμένεται σε ~{n} ημέρες"
-        ).replace("{n}", String(Math.max(1, daysLeft))),
+        title: window.t("app.cycle"),
+        body: tr("n.cycle.soon", { n: Math.max(1, daysLeft) }),
         deepLink: "cycle:pred:" + ymd
       };
     }
     return {
       key: "pred-" + ymd + "-late",
-      title: cycleT("Cycle", "Κύκλος"),
-      body: cycleT(
-        "Period appears overdue — expected ~{n} days ago",
-        "Η περίοδος φαίνεται να αργεί — αναμενόταν πριν ~{n} ημέρες"
-      ).replace("{n}", String(-daysLeft)),
+      title: window.t("app.cycle"),
+      body: tr("n.cycle.late", { n: -daysLeft }),
       deepLink: "cycle:pred:" + ymd
     };
   }
@@ -8226,17 +8139,12 @@
 
     var title = window.t("app.todo");
     if (title === "app.todo") title = "To-Do";          // missing-key fallback
-    var el = state.lang === "el";
     N.emit({
       ns: "todo",
       key: "due-" + today + "-" + due,
       type: "due",
       title: title,
-      body: el
-        ? (due + (due === 1 ? " εργασία λήγει ή έχει λήξει"
-                            : " εργασίες λήγουν ή έχουν λήξει"))
-        : (due + (due === 1 ? " task is due or overdue"
-                            : " tasks are due or overdue")),
+      body: trn("rem.todo", due),
       deepLink: earliestList ? "todo:" + earliestList : ""
     });
   }
@@ -8274,17 +8182,12 @@
 
     var title = window.t("app.quote");
     if (title === "app.quote") title = "Quote";         // missing-key fallback
-    var el = state.lang === "el";
     N.emit({
       ns: "quote",
       key: "due-" + today + "-" + due,
       type: "due",
       title: title,
-      body: el
-        ? (due + (due === 1 ? " προσφορά λήγει ή έχει λήξει"
-                            : " προσφορές λήγουν ή έχουν λήξει"))
-        : (due + (due === 1 ? " quote is due or overdue"
-                            : " quotes are due or overdue")),
+      body: trn("n.quote.due", due),
       deepLink: earliestId ? "quote:" + earliestId : ""
     });
   }
@@ -8318,17 +8221,15 @@
     if (!(N && typeof N.emit === "function")) return;   // stale bundle — silent
     var title = window.t("app.invoices");
     if (title === "app.invoices") title = "Invoices";   // missing-key fallback
-    var el = state.lang === "el", parts = [];
-    if (r.late) parts.push(el ? (r.late + (r.late === 1 ? " ληξιπρόθεσμο" : " ληξιπρόθεσμα"))
-                              : (r.late + " overdue"));
-    if (r.soon) parts.push(el ? (r.soon + " λήγ" + (r.soon === 1 ? "ει" : "ουν") + " σύντομα")
-                              : (r.soon + " due soon"));
+    var parts = [];
+    if (r.late) parts.push(trn("n.inv.late", r.late));
+    if (r.soon) parts.push(trn("n.inv.soon", r.soon));
     N.emit({
       ns: "invoices",
       key: r.key,
       type: "due",
       title: title,
-      body: parts.join(" · ") + (el ? " (ανεξόφλητα παραστατικά)" : (r.late + r.soon === 1 ? " (unpaid document)" : " (unpaid documents)")),
+      body: trn("n.inv.body", r.late + r.soon, { parts: parts.join(" · ") }),
       deepLink: "invoices:" + r.first
     });
   }
@@ -8443,10 +8344,6 @@
   var RX_POP_ID = "rx-tray-pop";
   var rxPopWired = false;
 
-  function rxTrayT(en, el) {
-    return state.lang === "el" ? el : en;
-  }
-
   function rxTrayPop() { return document.getElementById(RX_POP_ID); }
 
   function rxTrayClosePop() {
@@ -8522,8 +8419,7 @@
       paused = !(st && st.playing && !st.paused);
     } catch (e) {}
     pp.innerHTML = paused ? RX_PLAY : RX_PAUSE;
-    pp.title = rxTrayT(paused ? "Play" : "Pause",
-                       paused ? "Αναπαραγωγή" : "Παύση");
+    pp.title = window.t(paused ? "rxt.play" : "rxt.pause");
     pp.setAttribute("aria-label", pp.title);
   }
 
@@ -8583,13 +8479,13 @@
       return b;
     }
 
-    row.appendChild(mkIcoBtn(RX_STOP, rxTrayT("Stop", "Διακοπή"), function () {
+    row.appendChild(mkIcoBtn(RX_STOP, window.t("rxt.stop"), function () {
       rxTrayStop();
       rxTrayPaintLive();
     }));
 
     row.appendChild(mkIcoBtn(
-      RX_PLAY, rxTrayT("Play / Pause", "Αναπαραγωγή / Παύση"),
+      RX_PLAY, window.t("rxt.playpause"),
       function () {
         var h = window.__orosRadioHost;
         if (h && h.audio) {
@@ -8598,11 +8494,11 @@
         rxTrayPaintLive();
       }, "rx-pop-pp"));
 
-    row.appendChild(mkIcoBtn(RX_HEART, rxTrayT("Favorite", "Αγαπημένο"),
+    row.appendChild(mkIcoBtn(RX_HEART, window.t("rxt.fav"),
       rxTrayFav));
 
     row.appendChild(mkIcoBtn(ICONS.radio,
-      rxTrayT("Open Radio", "Άνοιγμα Ραδιοφώνου"), function () {
+      window.t("rxt.open"), function () {
         rxTrayClosePop();
         if (state.running && state.running.id === "radio") returnToDesktop();
         else openAppById("radio");
@@ -8621,7 +8517,7 @@
       if (typeof host.audio.volume === "number") startVol = host.audio.volume;
     } catch (e) {}
     vol.value = String(startVol);
-    vol.setAttribute("aria-label", rxTrayT("Volume", "Ένταση"));
+    vol.setAttribute("aria-label", window.t("rxt.volume"));
     vol.style.cssText =
       "width:150px;accent-color:var(--accent);cursor:pointer;margin:0;";
     var pct = document.createElement("span");
@@ -8689,7 +8585,7 @@
     var dstate = errored ? "err" : (playing ? "on" : "off");
     var title =
       (playing ? "▶ " : "⏸ ") + name +
-      (errored ? " · " + (state.lang === "el" ? "Σφάλμα ροής" : "Stream error") : "");
+      (errored ? " · " + window.t("rxt.err") : "");
 
     if (chip.getAttribute("data-state") !== dstate || chip.title !== title) {
       chip.setAttribute("data-state", dstate);
@@ -8750,7 +8646,7 @@
     var pp = document.getElementById("mx-pop-pp");
     if (pp) {
       var paused = !st.playing;
-      var tip = rxTrayT(paused ? "Play" : "Pause", paused ? "Αναπαραγωγή" : "Παύση");
+      var tip = window.t(paused ? "rxt.play" : "rxt.pause");
       if (pp.title !== tip) {
         pp.innerHTML = paused ? RX_PLAY : RX_PAUSE;
         pp.title = tip;
@@ -8767,7 +8663,7 @@
     var left = document.getElementById("mx-pop-left");
     if (left) {
       var l = mxLeft(st);
-      var txt = l ? rxTrayT("Stops in ", "Σταματά σε ") + l : "";
+      var txt = l ? tr("mxt.left", { time: l }) : "";
       if (left.textContent !== txt) left.textContent = txt;
     }
     var vol = document.getElementById("mx-pop-vol");
@@ -8803,7 +8699,7 @@
     lbl.style.cssText =
       "font-size:12px;font-weight:600;color:var(--text-dim);" +
       "max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;";
-    lbl.textContent = st.label || rxTrayT("Sound Mixer", "Μίκτης ήχων");
+    lbl.textContent = st.label || window.t("app.mixer");
     pop.appendChild(lbl);
 
     function mkBtn(html, tip, fn, idAttr) {
@@ -8824,18 +8720,18 @@
 
     var row = document.createElement("div");
     row.style.cssText = "display:flex;gap:6px;";
-    row.appendChild(mkBtn(RX_PLAY, rxTrayT("Play", "Αναπαραγωγή"), function () {
+    row.appendChild(mkBtn(RX_PLAY, window.t("rxt.play"), function () {
       var x = mxHost();
       if (x) x.toggle();
       mixerTrayTick();
     }, "mx-pop-pp"));
-    row.appendChild(mkBtn(RX_STOP, rxTrayT("Stop", "Διακοπή"), function () {
+    row.appendChild(mkBtn(RX_STOP, window.t("rxt.stop"), function () {
       var x = mxHost();
       mxClosePop();
       if (x) x.stop();
       mixerTrayTick();
     }));
-    row.appendChild(mkBtn(ICONS.mixer, rxTrayT("Open Sound Mixer", "Άνοιγμα Μίκτη ήχων"), function () {
+    row.appendChild(mkBtn(ICONS.mixer, window.t("mxt.open"), function () {
       mxClosePop();
       if (!(state.running && state.running.id === "mixer")) openAppById("mixer");
     }));
@@ -8848,7 +8744,7 @@
     vol.id = "mx-pop-vol";
     vol.min = "0"; vol.max = "100"; vol.step = "1";
     vol.value = String(st.vol);
-    vol.setAttribute("aria-label", rxTrayT("Volume", "Ένταση"));
+    vol.setAttribute("aria-label", window.t("rxt.volume"));
     vol.style.cssText = "width:150px;accent-color:var(--accent);cursor:pointer;margin:0;";
     var pct = document.createElement("span");
     pct.id = "mx-pop-pct";
@@ -8868,13 +8764,13 @@
 
     var tLbl = document.createElement("div");
     tLbl.style.cssText = "font-size:11px;color:var(--text-dim);";
-    tLbl.textContent = rxTrayT("Sleep timer", "Χρονόμετρο ύπνου");
+    tLbl.textContent = window.t("mxt.sleep");
     pop.appendChild(tLbl);
     var tRow = document.createElement("div");
     tRow.style.cssText = "display:flex;gap:4px;flex-wrap:wrap;";
     MX_TIMERS.forEach(function (m) {
-      var b = mkBtn(m ? String(m) + "′" : rxTrayT("Off", "Όχι"),
-        m ? rxTrayT(m + " min", m + " λεπτά") : rxTrayT("Timer off", "Χωρίς χρονόμετρο"),
+      var b = mkBtn(m ? String(m) + "′" : window.t("mxt.off"),
+        m ? tr("mxt.min", { n: m }) : window.t("mxt.timeroff"),
         function () {
           var x = mxHost();
           if (x) x.setTimer(m);
@@ -8919,7 +8815,7 @@
       bar.insertBefore(chip, document.getElementById("btn-lang"));
     }
     var dstate = st.playing ? "on" : "off";
-    var name = st.label || rxTrayT("Sound Mixer", "Μίκτης ήχων");
+    var name = st.label || window.t("app.mixer");
     var l = mxLeft(st);
     var title = (st.playing ? "▶ " : "⏸ ") + name + (l ? " · " + l : "");
     if (chip.getAttribute("data-state") !== dstate || chip.title !== title) {

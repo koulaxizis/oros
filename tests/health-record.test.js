@@ -175,22 +175,23 @@ test("phone bridge: Health rows in reminderRows with the shell's keys and words"
   const P = require(path.join(__dirname, "..", "phone.js"));
   const raw = data({ md: [med("ma", { n: "Lisinopril", s: "10 mg" })], ap: [ap("p1", { at: at(15, 10), rm: 60 })], vx: [vx("v1", { nx: "2026-10-22" })] });
   const now = at(14, 12);
-  const rows = P.reminderRows({ lang: "el", healthTitle: "Υγεία", health: { core: C, data: JSON.parse(JSON.stringify(raw)) } }, now);
+  const rows = P.reminderRows({ lang: "en", healthTitle: "Health", health: { core: C, data: JSON.parse(JSON.stringify(raw)) } }, now);
   const h = rows.filter((r) => r.ns === "health");
   assert.deepEqual(h.map((r) => r.id), [
     "health:d-ma-20261014-2000", "health:d-ma-20261015-0800", "health:a-p1-" + at(15, 10).toString(36) + "-60",
     "health:v-v1-20261022-w", "health:d-ma-20261015-2000", "health:d-ma-20261016-0800"]);
   const dose = h[0];
-  assert.deepEqual([dose.kind, dose.title, dose.body, dose.link], ["note", "Υγεία", "Ώρα για το φάρμακο: Lisinopril 10 mg (20:00)", "health:meds"]);
-  assert.equal(h.find((r) => /:a-/.test(r.id)).body, "Ραντεβού με γιατρό: Dr A · Cardiology, 15/10 10:00");
+  assert.deepEqual([dose.kind, dose.title, dose.body, dose.link], ["note", "Health", "Time for your medicine: Lisinopril 10 mg (20:00)", "health:meds"]);
+  assert.equal(h.find((r) => /:a-/.test(r.id)).body, "Doctor's appointment: Dr A · Cardiology, 15/10 10:00");
   assert.equal(h.find((r) => /:a-/.test(r.id)).link, "health:appts");
-  assert.equal(h.find((r) => /:v-/.test(r.id)).body, "Επόμενη δόση εμβολίου σε μία εβδομάδα: Tetanus (22/10)");
+  assert.equal(h.find((r) => /:v-/.test(r.id)).body, "Next vaccine dose in a week: Tetanus (22/10)");
   assert.ok(h.every((r) => r.at > now && r.at <= now + 48 * 3600000), "the next 48 hours");
   // the shell's engine emits the same dedup keys (ns "health" + ":" + key)
   const shell = fs.readFileSync(path.join(__dirname, "..", "shell.js"), "utf8");
-  assert.ok(/Core\.dueAppts\(d, now\)/.test(shell) && /Core\.dueVax\(d, now\)/.test(shell), "shell engine reads appointments and vaccines");
-  assert.ok(shell.includes('"Doctor\'s appointment: "') && shell.includes('"Time for your medicine: "'), "same words in the shell");
   const ph = fs.readFileSync(path.join(__dirname, "..", "phone.js"), "utf8");
+  assert.ok(/Core\.dueAppts\(d, now\)/.test(shell) && /Core\.dueVax\(d, now\)/.test(shell), "shell engine reads appointments and vaccines");
+  // same words: both read the shell's table (translations.js rem.*)
+  assert.ok(shell.includes('"rem.appt"') && shell.includes('"rem.med"') && ph.includes('"rem.appt"') && ph.includes('"rem.med"'), "same words in the shell");
   assert.ok(/localStorage\.getItem\("oros-health-data"\)\]\.join/.test(ph), "a Health change re-sends the reminders");
   assert.deepEqual(P.reminderRows({ health: { core: C, data: null } }, now), []);
 });

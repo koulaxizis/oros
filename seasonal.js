@@ -346,7 +346,7 @@
   // Strings come from the shell's table (translations.js, "ssn.*",
   // German from i18n/<code>/shell.js); English when it is not there.
   function tx(key, fb, vars) {
-    var f = root.t, v = typeof f === "function" ? f(key) : key;
+    var f = root && root.t, v = typeof f === "function" ? f(key) : key;
     if (v === key || typeof v !== "string") v = fb;
     if (vars) Object.keys(vars).forEach(function (k) { v = v.split("{" + k + "}").join(String(vars[k])); });
     return v;
