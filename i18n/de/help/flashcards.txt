@@ -1,0 +1,117 @@
+# Karteikarten
+Lerne alles mit Karten: eine Frage auf der Vorderseite, die Antwort auf der Rückseite. Karteikarten zeigt dir jede Karte wieder, kurz bevor du sie vergessen würdest. So reichen ein paar Minuten am Tag, um Gelerntes zu behalten. Der Plan kommt von FSRS, einer modernen, offenen Methode für verteilte Wiederholung.
+
+## Erste Schritte
+1. Tippe auf `Neuer Stapel` und gib dem Stapel einen Namen, zum Beispiel „Spanische Wörter“.
+2. Tippe auf `Neue Karte`, schreib Vorder- und Rückseite und tippe auf `Speichern`. `Speichern und weitere` lässt das Fenster für die nächste Karte offen.
+3. Zurück in der Stapelliste tippst du neben dem Stapel auf `Lernen`.
+4. Lies die Vorderseite und versuch, dich an die Antwort zu erinnern. Tippe auf `Antwort zeigen` und sag dann, wie es lief (siehe unten).
+
+## Stapel
+- Jeder Stapel hat seine eigenen Karten. Tippe auf einen Stapel, um seine Karten zu sehen, finde eine mit dem Suchfeld und öffne sie, um sie zu ändern.
+- Ein Stapel kann in einem anderen Stapel liegen: Wähle ihn unter `Im Stapel`. Wenn du einen Stapel lernst, lernst du auch die Stapel darin.
+- Die drei Zahlen neben einem Stapel sind die neuen Karten (blau), die Karten, die du noch lernst (orange), und die Karten, die heute zur Wiederholung dran sind (grün).
+- `Stapel-Einstellungen` ändert den Namen, wie viele neue Karten und Wiederholungen du pro Tag bekommst und wie viel du behalten willst.
+- `Löschen` in `Stapel-Einstellungen` entfernt den Stapel, die Stapel darin und ihre Karten.
+
+## Kartentypen
+- `Einfach`: eine Karte, Vorder- und Rückseite.
+- `Einfach und umgekehrt`: zwei Karten, eine in jede Richtung. Gut für Wörter: „dog → σκύλος“ und „σκύλος → dog“.
+- `Lückentext`: Schreib einen Satz, markiere ein Wort und tippe auf `Lücke machen`. Beim Lernen ist das Wort versteckt und du füllst es aus. Jede Lückennummer ergibt eine eigene Karte; `Lücke mit gleicher Nummer` versteckt mehrere Wörter auf derselben Karte. Eine Lücke kann einen Hinweis tragen: `{{c1::Athen::Stadt}}` zeigt „[Stadt]“.
+Tags (Wörter, durch Leerzeichen getrennt) helfen dir, Karten später zu finden.
+
+## Bilder, Töne und Formatierung
+- Unter jedem Feld einer Karte fügen `Bild` und `Tondatei` Dateien von deinem Gerät hinzu. Du kannst auch ein Bild in ein Feld einfügen oder Dateien darauf ziehen. Bis zu 6 pro Feld.
+- `Aufnehmen` nimmt deine Stimme mit dem Mikrofon auf; tippe noch einmal, um zu stoppen. Aufnahmen bleiben auf deinen Geräten.
+- Bilder werden verkleinert (höchstens 1600 Pixel) und ohne versteckte Details wie den Aufnahmeort gespeichert. Töne dürfen bis zu 10 MB groß sein.
+- Die Knöpfe über den Feldern fügen einfache Formatierung hinzu: `**fett**`, `*kursiv*`, und Zeilen, die mit `- ` oder `1. ` beginnen, werden Listen.
+- Wenn eine Karte erscheint, spielen ihre Töne von selbst. Das schaltest du in den Einstellungen oben aus.
+- Ein Bild oder Ton, das auf einem anderen Gerät hinzugefügt wurde, zeigt `Noch nicht auf diesem Gerät`, bis Vault Drive es kopiert hat.
+
+## Vorlesen
+- Der 🔊-Knopf auf einer Karte liest sie mit einer Stimme vor, die auf deinem Gerät installiert ist. Stimmen, die den Text an einen Onlinedienst schicken, werden nie benutzt. Der Knopf erscheint also nur, wenn dein Gerät eigene Stimmen hat.
+- In `Stapel-Einstellungen` wählen `Stimme für die Vorderseite` und `Stimme für die Rückseite` die Sprache jeder Seite. `Automatisch` liest griechischen Text auf Griechisch und anderen Text in der Sprache der App.
+
+## Lernen
+Nach `Antwort zeigen` wählst du einen von vier Knöpfen. Jeder zeigt, wann du die Karte wiedersiehst:
+- `Nochmal`: Du hast es vergessen. Die Karte kommt in ein paar Minuten wieder.
+- `Schwer`: Du hast dich mit Mühe erinnert.
+- `Gut`: Du hast dich erinnert.
+- `Leicht`: Du wusstest es sofort.
+Sei ehrlich: Der Plan lernt aus deinen Antworten. `Rückgängig` nimmt die letzte Antwort zurück. `Bearbeiten` korrigiert einen Fehler auf der Karte, die du gerade siehst.
+Der Knopf `⋯` hat zwei weitere Aktionen für die Karte auf dem Bildschirm:
+- `Bis morgen ausblenden` legt die Karte für den Rest des Lerntags weg.
+- `Karte aussetzen` hält die Karte aus dem Lernen heraus, bis du sie in `Durchsuchen` fortsetzt. Ihr Plan bleibt erhalten.
+Auch das nimmt `Rückgängig` zurück.
+Neue Karten kommen pro Notiz einzeln an je einem Tag, die beiden Karten einer umgekehrten Notiz erscheinen also an verschiedenen Tagen.
+
+### Wie viel du behalten willst
+`Wie viel du behalten willst` in `Stapel-Einstellungen` ist die Chance, mit der du dich an eine Karte erinnern willst, wenn sie wiederkommt. 90 % sind ein guter Anfang. Ein höheres Ziel zeigt Karten öfter; ein niedrigeres braucht weniger Zeit, aber du vergisst mehr.
+
+### Der Lerntag
+Ein Lerntag beginnt um 04:00, Lernen nach Mitternacht zählt also noch für den Vortag. Die Uhrzeit änderst du mit dem Einstellungsknopf oben.
+
+## Import aus Anki und anderen Apps
+`Importieren` (in der Stapelliste) holt Karten aus einer Datei:
+- **Anki-Stapel** (`.apkg` und ganze Sammlungen `.colpkg`), alte und neue Anki-Versionen. Stapel, Tags, Bilder und Töne kommen mit. Lückentext-Notizen bleiben Lückentext-Karten, und „Einfach und umgekehrt“ bleibt umgekehrt.
+- **Dein Anki-Lernverlauf**: Setz den Haken bei `Meinen Lernverlauf mitnehmen`, dann macht jede Karte dort weiter, wo Anki aufgehört hat. Ausgesetzte Karten bleiben ausgesetzt.
+- **orOS-Kartendateien** (`.oroscards`), erstellt hier mit `Exportieren` oder vom [orOS Konverter](app:converter) aus einem Anki-Stapel. Nur was noch nicht da ist, wird hinzugefügt: neue Stapel, neue Karten und, wenn du den Haken setzt, der Lernverlauf. Dieselbe Datei zweimal zu öffnen fügt nichts hinzu, und hier wird nichts geändert oder entfernt. Du kannst die Datei auch direkt in [Dateien](app:files) oder mit „Öffnen mit“ deines Geräts öffnen.
+- **Textdateien** (`.csv`, `.tsv`, `.txt`), zum Beispiel Ankis Export „Notes in plain text“ oder ein Quizlet-Export: eine Karte pro Zeile. Wähle, welche Spalte Vorderseite, Rückseite und Tags ist, dazu den Kartentyp und den Stapel. Eine Vorderseite mit `{{c1::…}}` wird eine Lückentext-Karte.
+Wenn du denselben Anki-Stapel noch einmal importierst, kommt nur Neues dazu. Nichts aus der Datei wird je ausgeführt: Kartenstile und Skripte bleiben draußen, und der Text behält Fett, Kursiv und Listen.
+
+## Karten aus Notizen, Wiki, Texteditor und anderen Apps
+Wähle in Notizen, Wiki, Texteditor, Reader oder Tabelle `An eine App senden…` und dann `Karteikarten`. In Notizen und Texteditor markierst du vorher Text, um nur diesen Teil zu senden. Karteikarten findet die Karten und zeigt sie, bevor etwas gespeichert wird:
+- eine Zeile `Frage :: Antwort` wird eine einfache Karte, und `Frage ::: Antwort` eine Karte „Einfach und umgekehrt“;
+- eine Zeile mit Wörtern, die `==so==` markiert sind, wird eine Lückentext-Karte, eine Lücke für jeden markierten Teil;
+- eine Überschrift mit Text darunter wird eine Karte mit der Überschrift auf der Vorderseite;
+- in einer Tabelle enthält die erste Zeile die Spaltennamen, dann ist die erste Spalte die Vorderseite und die zweite die Rückseite.
+Wird nichts davon gefunden, bekommst du eine Karte mit dem Titel auf der Vorderseite und dem ganzen Text auf der Rückseite. Entferne den Haken bei Karten, die du nicht willst, ändere beliebige davon, wähle den Stapel und tippe dann auf `Karten erstellen`. Karten, die schon da sind, starten ohne Haken.
+
+## Heute und die Lernerinnerung
+Wenn Karten warten, zeigt die App Heute eine Zeile wie „12 Karten zum Lernen“. In den Einstellungen oben sendet `Jeden Tag ans Lernen erinnern um` ab dieser Uhrzeit eine Benachrichtigung am Tag, solange Karten warten. Die Erinnerung ist anfangs aus und wird auf jedem Gerät einzeln eingestellt. Die Zahl kommt von diesem Gerät: Antworten von einem anderen Gerät zählen, sobald Karteikarten hier geöffnet wird.
+
+## Statistik
+`Statistik` (in der Stapelliste oder in einem Stapel) zeigt deinen Fortschritt für alle Stapel oder für einen Stapel samt den Stapeln darin:
+- **Heute**: Antworten, Minuten, wie oft du „Nochmal“ getippt hast und wie viele Tage in Folge du gelernt hast.
+- **Karten**: neu, in Lernen, jung (innerhalb von 21 Tagen wieder dran) und gefestigt (21 Tage oder mehr) sowie ausgesetzt.
+- **Echte Behaltensquote**: der Anteil deiner Antworten auf Karten in Wiederholung, der nicht „Nochmal“ war, für die letzten 30 Tage und die gesamte Zeit. Liegt er nah an `Wie viel du behalten willst` in den Stapel-Einstellungen, passt der Plan zu dir.
+- **Lerntage**: ein Quadrat für jeden Tag der letzten 12 Monate, dunkler an Tagen mit mehr Antworten.
+- **Antworten pro Tag** für die letzten 30 Tage (Lernen und Wiederholen) und **fällige Wiederholungen** an jedem der nächsten 30 Tage.
+- **Abstände** und **Schwierigkeit** der Karten in Wiederholung.
+Alles wird aus deinen Antworten berechnet und ist darum auf jedem Gerät gleich, sobald Vault Drive die Dateien kopiert hat.
+
+## Exportieren und teilen
+`Exportieren` (in der Stapelliste oder in einem Stapel) speichert alle Stapel oder einen Stapel samt den Stapeln darin:
+- **orOS-Datei** (`.oroscards`): Stapel, Karten, Bilder und Töne und, wenn du den Haken setzt, dein Lernverlauf. Öffne sie in Karteikarten auf jedem Gerät oder schick sie an Freunde. Sie ist eine ZIP-Datei: Entpackt enthält `content.json` die Karten und `preview/cards.csv` eine einfache Kopie.
+- **CSV-Text**: eine Zeile pro Notiz mit Vorderseite, Rückseite, Tags, Stapel und Kartentyp, für Tabellen und andere Karten-Apps. Bilder und Töne sind nicht dabei.
+Bilder oder Töne, die noch nicht auf diesem Gerät angekommen sind, fehlen in der Datei, und die Meldung sagt, wie viele.
+
+## Alle Karten durchsuchen
+`Durchsuchen` oben listet jede Karte auf, eine Zeile pro Karte. Grenze die Liste mit dem Suchfeld, einem Stapel, einem Tag oder einem Status ein (neu, in Lernen, heute fällig, später wiederholen, ausgeblendet, ausgesetzt). Setz bei Karten den Haken (oder oben im Kästchen für alle), um:
+- ihre Notizen mit `Verschieben` in einen anderen Stapel zu legen,
+- `Tag hinzufügen` oder `Tag entfernen`,
+- sie zu `Aussetzen` oder `Fortsetzen`,
+- ihre Notizen zu `Löschen`.
+Tippe auf eine Zeile, um die Karte zu bearbeiten.
+
+## Synchronisierung und Sicherung
+- Stapel und Einstellungen reisen verschlüsselt mit der orOS-Synchronisierung.
+- Karten und Antworten sind Dateien im Ordner `Flashcards` der orOS-Disk ([Dateien](app:files)), und Vault Drive kopiert sie auf deine anderen Geräte. Jedes Gerät schreibt nur seine eigenen Dateien, so können zwei Geräte gleichzeitig offline lernen und jede Antwort bleibt erhalten.
+- Bilder und Töne sind Dateien in `Flashcards/Media`, benannt nach ihrem Inhalt, dasselbe Bild auf zwei Geräten ist also eine Datei.
+- Der Plan jeder Karte wird auf jedem Gerät neu aus deinen Antworten berechnet, er ist also überall gleich.
+
+## Tastenkürzel
+- [[Space]] oder [[Enter]]: Antwort zeigen.
+- [[1]] [[2]] [[3]] [[4]]: Nochmal, Schwer, Gut, Leicht. Wenn die Antwort zu sehen ist, heißt [[Space]] auch Gut.
+- [[Ctrl+Z]]: letzte Antwort rückgängig machen.
+- [[R]]: Karte vorlesen.
+- [[-]]: Karte bis morgen ausblenden.
+- [[Ctrl+Enter]]: Karte im Kartenfenster speichern.
+- [[Esc]]: Fenster schließen oder zurückgehen.
+
+## Von überall finden
+- Das Suchfeld im Menü findet deine Stapel und Karten über ihre Wörter. Wählst du eins, öffnet es sich in Karteikarten.
+
+## Grenzen
+- Aufnehmen braucht ein Mikrofon und deine Erlaubnis; wie Stimmen klingen, hängt von deinem Gerät ab.
+- Ohne die orOS-Disk (die App allein geöffnet, außerhalb von orOS) werden Karten nicht gespeichert.
