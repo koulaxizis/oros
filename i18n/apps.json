@@ -711,6 +711,12 @@
    ]
   },
   {
+   "app": "recipes",
+   "files": [
+    "recipes/ui.js"
+   ]
+  },
+  {
    "app": "recordpkg",
    "files": [
     "recordpkg.js"

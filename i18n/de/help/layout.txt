@@ -47,6 +47,14 @@ Erstelle viele Namenskarten, Etiketten, Namensschilder oder Urkunden aus einem E
 - `Eine pro Seite` wiederholt die aktuelle Seite (oder `Alle Seiten`, für Vorder- und Rückseite) einmal pro Zeile. `Mehrere pro Bogen` platziert so viele Karten, wie auf A4, A3 oder Letter passen (hoch oder quer, je nachdem, was mehr fasst), mit dem gewählten `Abstand` und Schnittmarken drumherum.
 - `PDF erstellen` speichert ein PDF mit echtem, auswählbarem Text.
 
+## Automationen
+Schritte, die du einmal festlegst und immer wieder ausführst, im geöffneten Dokument oder in allen Dokumenten. Kein Code: du wählst die Schritte aus einer Liste.
+- `Mehr` › `Automationen…` (oder `Automationen` auf dem Startbildschirm) zeigt sie. `Neue Automation`, gib ihr einen Namen, dann `Schritt hinzufügen`: `Text suchen und ersetzen` (mit `Groß-/Kleinschreibung beachten` und `Nur ganze Wörter`), `Absatzformat` (Absätze in einem Format, oder alle, erhalten ein anderes), `Musterseite zuweisen` (alle, ungerade oder gerade Seiten), `Seitenränder` in mm, `Preflight-Prüfung` und `PDF exportieren` (Anschnitt, Schnittmarken, Doppelseiten, Bilder für Druck oder Bildschirm). Mit ↑ und ↓ verschiebst du Schritte.
+- `Ausführen` zeigt die Schritte und fragt `Ausführen für`: `Dieses Dokument` oder `Alle Dokumente`. Das geöffnete Dokument ändert sich in einem Schritt, den du rückgängig machen kannst; für die anderen stellt `Rückgängig` in der folgenden Meldung alle Dokumente wieder her.
+- Formate und Musterseiten werden über den Namen gefunden, so passt eine Automation zu jedem Dokument mit einem Format dieses Namens. Ein Dokument ohne es bleibt, wie es ist.
+- Mit `Dokumente mit Fehlern nicht exportieren` wird ein Dokument mit Preflight-Fehlern nicht exportiert. Ein PDF wird mit dem üblichen Speichern-Dialog gesichert; mehrere landen in Dateien, im Ordner `Layout`, ohne ältere zu überschreiben.
+- Automationen werden mit deinen anderen Geräten synchronisiert, zusammen mit denen von Atelier und Photo Lab.
+
 ## Arbeit aus anderen Programmen holen
 `Datei öffnen` auf der Startseite öffnet als neues Dokument auch:
 - Scribus-Dateien `.sla` und komprimierte `.sla.gz`: Seiten, Musterseiten, Formate, Farben, verketteten Text, Formen und freie Formen (Polygone, Kurven, Bögen, Spiralen), lineare und radiale Verläufe, Ebenen (ihre Reihenfolge; Objekte auf ausgeblendeten Ebenen kommen ausgeblendet, auf gesperrten Ebenen gesperrt) und eingebettete Bilder.

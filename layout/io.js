@@ -107,6 +107,26 @@
     });
   }
 
+  // A PDF of any document (not only the open one) → Promise<Blob>.
+  // opts: pages (ids, default all), spreads, bleed, marks, ppi.
+  function pdfBlob(doc, opts) {
+    var images = {}, JsPDF;
+    var pages = opts.pages || M.pagesInOrder(doc).map(function (p) { return p.id; });
+    return loadJsPDF().then(function (J) {
+      JsPDF = J;
+      var chain = Promise.resolve();
+      imageItems(doc, pages).forEach(function (it) {
+        chain = chain.then(function () { return cropImage(it, opts.ppi || 300); }).then(function (im) { if (im) images[it.id] = im; });
+      });
+      return chain;
+    }).then(function () {
+      var L = doc === LY.doc && ED.L ? ED.L : LY.R.computeLayout(doc);
+      var pdf = P.build(doc, { pages: pages, spreads: !!(opts.spreads && doc.setup.facing), bleed: opts.bleed, marks: opts.marks, title: doc.name },
+        { jsPDF: JsPDF, layout: L, images: images });
+      return pdf.output("blob");
+    });
+  }
+
   var exporting = false;
   function exportPdf(opts) {
     var doc = LY.doc;
@@ -114,18 +134,8 @@
     LY.flushStory && LY.flushStory();
     exporting = true;
     LY.toast(t("exp.working"));
-    var images = {}, JsPDF;
-    loadJsPDF().then(function (J) {
-      JsPDF = J;
-      var chain = Promise.resolve();
-      imageItems(doc, opts.pages).forEach(function (it) {
-        chain = chain.then(function () { return cropImage(it, opts.ppi || 300); }).then(function (im) { if (im) images[it.id] = im; });
-      });
-      return chain;
-    }).then(function () {
-      var pdf = P.build(doc, { pages: opts.pages, spreads: opts.spreads, bleed: opts.bleed, marks: opts.marks, title: doc.name },
-        { jsPDF: JsPDF, layout: ED.L, images: images });
-      return saveBlob(pdf.output("blob"), fileName(doc, ".pdf"), "application/pdf", "PDF", ".pdf");
+    pdfBlob(doc, opts).then(function (blob) {
+      return saveBlob(blob, fileName(doc, ".pdf"), "application/pdf", "PDF", ".pdf");
     }).then(function (ok) {
       exporting = false;
       if (ok) LY.toast(t("exp.done"));
@@ -493,7 +503,7 @@
   }
 
   LY.io = {
-    exportPdf: exportPdf, exportImage: exportImage, exportPackage: exportPackage, importPackage: importPackage, importFolder: importFolder, openFile: openFile,
+    exportPdf: exportPdf, pdfBlob: pdfBlob, saveBlob: saveBlob, fileName: fileName, exportImage: exportImage, exportPackage: exportPackage, importPackage: importPackage, importFolder: importFolder, openFile: openFile,
     placeImage: placeImage, importText: importText, placeFromBlob: placeFromBlob,
     // for the data merge (mergeui.js)
     saveBlob: saveBlob, pickFile: pickFile, loadJsPDF: loadJsPDF, fileName: fileName

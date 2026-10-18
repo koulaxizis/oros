@@ -47,6 +47,14 @@ Make many name cards, labels, badges or certificates from one design and a CSV f
 - `One per page` repeats the current page (or `All pages`, for a front and a back) once per row. `Several per sheet` places as many cards as fit on A4, A3 or Letter (portrait or landscape, whichever holds more) with the `Gap` you choose and cut marks around them.
 - `Create PDF` saves one PDF with real, selectable text.
 
+## Automations
+Steps you set once and run again and again, on the open document or on all documents. No code: you pick the steps from a list.
+- `More` › `Automations…` (or `Automations` on the home screen) lists them. `New automation`, give it a name, then `Add a step`: `Find and replace text` (with `Match case` and `Whole words only`), `Paragraph style` (paragraphs in one style, or any, get another), `Master on pages` (all, odd or even pages), `Page margins` in mm, `Preflight check` and `Export PDF` (bleed, crop marks, spreads, print or screen pictures). Move steps with ↑ and ↓.
+- `Run` shows the steps and asks `Run on`: `This document` or `All documents`. The open document changes as one step you can undo; for the others, `Undo` on the message that follows puts every document back.
+- Styles and masters are matched by name, so one automation works in every document that has a style of that name. A document without it is left as it is.
+- With `Do not export a document with errors`, a document whose preflight finds errors is not exported. One PDF is saved with the usual Save dialog; several go to Files, in the `Layout` folder, without overwriting older ones.
+- Automations sync with your other devices, together with those of Atelier and Photo Lab.
+
 ## Bring work from other programs
 `Open file` on the home screen also opens, as a new document:
 - Scribus `.sla` and compressed `.sla.gz` files: pages, masters, styles, colours, threaded text, shapes and free shapes (polygons, curves, arcs, spirals), linear and radial gradients, layers (their order; objects on hidden layers come in hidden, on locked layers locked) and embedded images.

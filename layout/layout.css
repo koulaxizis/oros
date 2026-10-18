@@ -502,6 +502,9 @@ body.inframe #cv { cursor: text; }
   .icon-btn { width: 34px; height: 34px; }
   #ed-export { padding: 2px 8px; }
   #home .btn { padding: 4px 8px; }
+  #home .bar { flex-wrap: wrap; row-gap: 6px; }
+  #home .bar .title { flex: 1 1 100%; }
+  #home .bar .spacer { display: none; }
 }
 @media (max-width: 400px) {
   #ed-redo { display: none; }
@@ -533,3 +536,23 @@ body.inframe #cv { cursor: text; }
 .mg-prev { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start; }
 .mg-over { flex-basis: 100%; margin-top: 0; }
 .mg-page { display: block; max-width: 100%; height: auto; border: 1px solid var(--border); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18); }
+
+/* ---------- Automations (recipes/ui.js, wave A2) ---------- */
+.rc-list { display: flex; flex-direction: column; gap: 6px; }
+.rc-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 10px; }
+.rc-txt { flex: 1 1 160px; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.rc-name { font-weight: 700; overflow-wrap: anywhere; }
+.rc-sub { font-size: 12px; color: var(--text-dim); overflow-wrap: anywhere; }
+.rc-acts { display: flex; flex-wrap: wrap; gap: 4px; }
+.rc-steps { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.rc-step { border: 1px solid var(--border); border-radius: 10px; padding: 6px 10px 10px; }
+.rc-step.bad { border-color: var(--danger); }
+.rc-step-h { display: flex; align-items: center; gap: 4px; margin-bottom: 4px; }
+.rc-step-t { flex: 1; min-width: 0; font-weight: 700; font-size: 13px; overflow-wrap: anywhere; }
+.rc-step-b { display: flex; flex-wrap: wrap; gap: 6px 10px; }
+.rc-step-b > .fld { flex: 1 1 120px; }
+.rc-step-b > .chk, .rc-step-b > .hint { flex: 1 1 100%; margin: 0; }
+.rc-add { margin-top: 8px; }
+.rc-add select { width: 100%; }
+.rc-sum { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; overflow-wrap: anywhere; }
+.rc-will .hint { margin: 2px 0; }

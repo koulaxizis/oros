@@ -1263,6 +1263,7 @@
       { label: t("more.story"), disabled: !(it && it.t === "text"), fn: function () { LY.story.open(it.id); } },
       { label: t("more.text"), fn: function () { LY.io.importText(); } },
       { label: t("more.merge"), fn: function () { LY.merge.open(); } },
+      { label: t("more.recipes"), disabled: !LY.recipes, fn: function () { LY.recipes.open(); } },
       { label: t("more.selall"), fn: ED.selectAll },
       { sep: true },
       { label: t("more.pkg"), fn: function () { LY.io.exportPackage(doc); } }

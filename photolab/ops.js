@@ -318,9 +318,9 @@
     var fit = C.fitSize(w, h, PL.limits);
     if (fit.scaled) PL.toast(t("msg.scaled", { w: fit.w, h: fit.h }));
     w = fit.w; h = fit.h;
-    if (w === d.w && h === d.h) return;
+    if (w === d.w && h === d.h) return Promise.resolve();
     var kx = w / d.w, ky = h / d.h;
-    eachRaster(t("step.resize"), function (c) {
+    return eachRaster(t("step.resize"), function (c) {
       return PL.job("resize", { img: c.img, w: Math.max(1, Math.round(c.img.w * kx)), h: Math.max(1, Math.round(c.img.h * ky)) });
     }, function (c) { return { x: Math.round(c.x * kx), y: Math.round(c.y * ky) }; }, function (L) {
       L.x = Math.round(L.x * kx); L.y = Math.round(L.y * ky);

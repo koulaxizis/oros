@@ -78,6 +78,13 @@
     acts.forEach(function (a) {
       var b = $(a[0]); b.textContent = t(a[1]); b.addEventListener("click", a[2]);
     });
+    // Automations (recipes.js)
+    if (PL.recipes && !$("home-recipes")) {
+      var rb = el("button", "btn ghost", t("btn.recipes"));
+      rb.type = "button"; rb.id = "home-recipes";
+      rb.addEventListener("click", function () { PL.recipes.open(); });
+      $("home-batch").parentNode.insertBefore(rb, $("home-batch").nextSibling);
+    }
     // One picture from Google Photos (../google-import.js + ../files/gmedia.js),
     // offered only when this orOS can sign in to Google.
     var GI = window.OrosGoogleImport, GM = window.OrosGoogleMedia;

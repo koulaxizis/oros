@@ -4,8 +4,10 @@
 // screen): many photos at once, from the device or the orOS disk,
 // camera RAW files too.
 //   1. adjustments: none, the adjustment layers of the open picture
-//      (visible ones, with their opacity; masks are left out) or a
-//      Lightroom preset (.xmp, through xmp.js)
+//      (visible ones, with their opacity; masks are left out), a
+//      Lightroom preset (.xmp, through xmp.js) or one of Photo Lab's
+//      automations (recipes.js onCanvas, after the resize below; its
+//      Export step only presets the format and quality here)
 //   2. resize: long side, width, height or percent (never larger
 //      unless asked)
 //   3. watermark: a text or a picture, at one of nine places, with
@@ -132,10 +134,14 @@
   function row(kids) { var r = el("div", "bt-row"); kids.forEach(function (k) { r.appendChild(k); }); return r; }
   function button(label, fn, cls) { var b = el("button", "btn small " + (cls || "")); b.type = "button"; b.textContent = label; b.addEventListener("click", fn); return b; }
 
-  function open() {
+  // opts.recipe: an automation id to start with (Automations › Run ›
+  // Batch process).
+  function open(opts) {
     var P = prefs(), dlgHost = PL.io.dialogHost();
     var docStack = st.doc ? B.stackOf(st.doc.layers) : [];
     if (P.adj === "doc" && !docStack.length) P.adj = "none";
+    var RC = PL.recipes, rcList = RC ? RC.list() : [];
+    var startRc = opts && opts.recipe && rcList.some(function (r) { return r.id === opts.recipe; }) ? "rc:" + opts.recipe : "";
 
     // 1. Photos
     var s1 = sec(t("batch.photos"));
@@ -177,13 +183,16 @@
     var adjOpts = [["none", t("batch.adjNone")]];
     if (docStack.length) adjOpts.push(["doc", t("batch.adjDoc", { n: docStack.length })]);
     adjOpts.push(["xmp", t("batch.adjXmp")]);
-    var adj = PL.ui.select(adjOpts, P.adj);
+    rcList.forEach(function (r) { adjOpts.push(["rc:" + r.id, t("batch.adjRecipe", { name: r.nm })]); });
+    var adj = PL.ui.select(adjOpts, startRc || P.adj);
+    function rcOf(v) { return v.indexOf("rc:") === 0 ? RC.steps(v.slice(3)) : null; }
     var xmpBtn = button(t("batch.pickXmp"), pickXmp);
     var adjHint = el("p", "hint");
     function updAdj() {
       xmpBtn.hidden = adj.value !== "xmp";
       if (adj.value === "doc") adjHint.textContent = t("batch.adjDocHint") + (docStack.masked ? " " + t("batch.adjMasked") : "");
       else if (adj.value === "xmp") adjHint.textContent = xmp ? t("batch.xmpLoaded", { name: xmp.name, n: xmp.stack.length }) : t("batch.xmpNone");
+      else if (rcOf(adj.value)) adjHint.textContent = t("batch.adjRecipeHint", { steps: RC.summary(rcOf(adj.value)) });
       else adjHint.textContent = "";
       adjHint.hidden = !adjHint.textContent;
     }
@@ -202,7 +211,15 @@
         });
       }).catch(function () { PL.toast(t("msg.xmpBad")); });
     }
-    adj.addEventListener("change", updAdj);
+    // an automation's Export step sets the format and quality
+    function rcOut() {
+      var ex = (rcOf(adj.value) || []).filter(function (x) { return x.op === "export"; }).pop();
+      if (!ex) return;
+      fmt.value = ex.fmt; q.input.value = String(ex.q);
+      q.input.dispatchEvent(new Event("input"));
+      updOut();
+    }
+    adj.addEventListener("change", function () { updAdj(); rcOut(); });
     s2.appendChild(row([PL.ui.field(t("batch.adjFrom"), adj), xmpBtn]));
     s2.appendChild(adjHint);
 
@@ -305,22 +322,25 @@
       title: t("dlg.batch"), ok: t("batch.start"), wide: true,
       body: [el("p", "hint", t("batch.intro")), s1, s2, s3, s4, s5],
       onOk: function () {
+        var rcSteps = rcOf(adj.value);
         var cfg = B.norm({
-          adj: adj.value, rs: { mode: mode.value, v: +val.value, up: up.input.checked },
+          adj: rcSteps ? "none" : adj.value, rs: { mode: mode.value, v: +val.value, up: up.input.checked },
           wm: { kind: kind.value, text: text.value, size: +size.input.value, c: color.value, pos: pos, op: +op.input.value },
           fmt: fmt.value, q: +q.input.value, pattern: pattern.value, dest: dest.value, folder: folder.value
         });
         PL.prefs.batch = cfg; PL.savePrefs();
+        if (adj.value.indexOf("rc:") === 0 && !rcSteps) { PL.toast(t("batch.rcGone")); return false; }
         if (!items.length) { PL.toast(t("batch.none")); return false; }
         if (cfg.adj === "xmp" && !xmp) { PL.toast(t("batch.xmpNone")); return false; }
         if (cfg.wm.kind === "image" && !wmPic) { PL.toast(t("batch.wmNoPic")); return false; }
         if (cfg.wm.kind === "text" && !cfg.wm.text.trim()) cfg.wm.kind = "none";
         if (cfg.dest === "disk" && !PL.fs()) { PL.toast(t("msg.noDisk")); return false; }
         var stack = cfg.adj === "doc" ? docStack : cfg.adj === "xmp" ? xmp.stack : [];
-        run(cfg, items.slice(), stack);
+        run(cfg, items.slice(), stack, rcSteps || []);
       }
     });
     renderList(); updAdj(); updSize(); updWm(); updOut();
+    if (startRc) rcOut();
     return dlg;
   }
 
@@ -373,8 +393,10 @@
     });
   }
   function fitDevice(sz) { var f = C.fitSize(sz.w, sz.h, PL.limits); return { w: f.w, h: f.h }; }
-  function watermark(cv, wm) {
+  // pic: the picture of an image watermark (the dialog's one by default)
+  function watermark(cv, wm, pic) {
     if (wm.kind === "none") return;
+    pic = pic || wmPic;
     var W = cv.width, H = cv.height, g = cv.getContext("2d"), m = B.wmMargin(W, H);
     g.save();
     g.globalAlpha = wm.op / 100;
@@ -392,10 +414,10 @@
       g.shadowColor = "rgba(0, 0, 0, 0.45)"; g.shadowBlur = Math.max(1, fs / 8); g.shadowOffsetY = Math.max(1, fs / 24);
       g.fillStyle = wm.c;
       g.fillText(line, p.x, p.y + Math.round(fs * 0.1));
-    } else if (wmPic) {
-      var sz = B.wmImageSize(W, H, wmPic.w, wmPic.h, wm.size), q = B.wmPos(W, H, sz.w, sz.h, wm.pos, m);
+    } else if (pic) {
+      var sz = B.wmImageSize(W, H, pic.w, pic.h, wm.size), q = B.wmPos(W, H, sz.w, sz.h, wm.pos, m);
       g.imageSmoothingQuality = "high";
-      g.drawImage(wmPic.src, q.x, q.y, sz.w, sz.h);
+      g.drawImage(pic.src, q.x, q.y, sz.w, sz.h);
     }
     g.restore();
   }
@@ -425,7 +447,7 @@
     return t("batch.errRead");
   }
 
-  function run(cfg, list, stack) {
+  function run(cfg, list, stack, rcSteps) {
     var fs = PL.fs(), stop = false, ok = 0, fails = [], zip = [], zipBytes = 0, taken = {};
     var folder = PL.io.PICTURES + "/" + cfg.folder, now = new Date();
     var ctl = typeof AbortController === "function" ? new AbortController() : null;
@@ -466,7 +488,11 @@
             });
           });
         }
+        if (rcSteps.length) {
+          next = next.then(function (c) { return PL.recipes.onCanvas(c, rcSteps, ctl && ctl.signal); }).then(function (c) { cv = c; return c; });
+        }
         return next.then(function () {
+          if (stop) { cv.width = cv.height = 0; throw new Error("stop"); }
           watermark(cv, cfg.wm);
           var W = cv.width, H = cv.height;
           return encode(cv, cfg.fmt, cfg.q).then(function (r) {
@@ -517,5 +543,5 @@
     PL.live(t(stopped ? "batch.stopped" : "batch.done", { ok: ok, n: total }));
   }
 
-  PL.batch = { open: open, addFiles: addFiles, items: function () { return items; } };
+  PL.batch = { open: open, addFiles: addFiles, items: function () { return items; }, watermark: watermark, drawScaled: drawScaled, fitDevice: fitDevice };
 })();

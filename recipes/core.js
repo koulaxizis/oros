@@ -3,8 +3,8 @@
 // An automation ("recipe") is a named list of steps, kept as DATA,
 // never code: each app has a catalog of the steps it knows, and a
 // step whose op or arguments its catalog does not accept is never
-// run. Atelier is first (atelier/recipesteps.js); Layout and Photo
-// Lab add their own catalogs later.
+// run. Catalogs: atelier/recipesteps.js, layout/recipesteps.js,
+// photolab/recipesteps.js (the last two through recipes/ui.js).
 // Synced slice "recipes" (oros-recipes), one record for every app:
 //   { ver: 1,
 //     list: [{ id "rc-…", m, app, nm, steps[{ op, …args }], pos }] ≤ 200

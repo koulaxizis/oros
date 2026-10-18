@@ -66,6 +66,13 @@ Auf dem Handy sind alle Menüs unter der Menü-Taste.
 - `Speichern`: JPG, PNG oder WebP mit einer `Qualität`, und die `Dateinamen`: {name} ist der eigene Name des Fotos, {n} eine Zahl, {nnn} eine Zahl mit Nullen (001), {date} das heutige Datum, {w} und {h} die neue Größe. Speichere in einen Ordner in `Pictures` auf der orOS-Disk oder als `Eine ZIP-Datei`; der Abschlussbildschirm hat `ZIP speichern…`.
 - `Stoppen` beendet den Lauf nach dem Foto, an dem gerade gearbeitet wird; was fertig ist, bleibt fertig. Fotos, die nicht gelesen werden können, stehen am Ende in einer Liste.
 
+## Automationen
+Schritte, die du einmal festlegst und immer wieder ausführst, im geöffneten Bild oder für viele Fotos. Kein Code: du wählst die Schritte aus einer Liste.
+- `Datei` › `Automationen…` (oder `Automationen` auf dem Projektbildschirm) zeigt sie. `Neue Automation`, gib ihr einen Namen, dann `Schritt hinzufügen`: `Tonwert` (Helligkeit, Kontrast, Sättigung, Wärme, Tönung, Verblassen, Sepia, Vignette), `Look`, `Schwarzweiß`, `Weichzeichnen`, `Schärfen`, `Körnung`, `Auf Seitenverhältnis zuschneiden` (der größte Teil von der Mitte aus, etwa 1 : 1 oder 16 : 9), `Größe ändern`, `Wasserzeichen` (Text, Größe, Farbe, Position und Deckkraft) und `In Bilder exportieren` (JPG, PNG oder WebP). Mit ↑ und ↓ verschiebst du Schritte.
+- `Ausführen` für `Das geöffnete Bild` wirkt wie die Menüs: auf die aktive Ebene und die Auswahl. Das Wasserzeichen wird eine eigene Ebene. `Rückgängig` in der folgenden Meldung nimmt alle Schritte zurück.
+- `Ausführen` für `Viele Fotos (Stapelverarbeitung)` öffnet die `Stapelverarbeitung…` mit der Automation unter `Anpassungen`; du kannst sie dort auch selbst wählen. Die Schritte laufen für jedes Foto nach der Größenänderung des Stapels und vor dessen Wasserzeichen; ein Schritt `Exportieren` legt nur Format und Qualität fest.
+- Automationen werden mit deinen anderen Geräten synchronisiert, zusammen mit denen von Atelier und Layout.
+
 ## Ein Bild aus dem Atelier bearbeiten
 Wenn das Atelier ein Bild zum Bearbeiten hierher schickt, erscheint oben eine Taste `Fertig`. Sie speichert das Ergebnis als neues Bild und schickt es zurück ans Atelier; das Projekt bleibt auch im Fotolabor für spätere Änderungen.
 

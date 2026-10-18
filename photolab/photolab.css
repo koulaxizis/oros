@@ -650,3 +650,25 @@ body.dropping .drop-hint { display: flex; }
 .dk-item > span:last-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dk-ic { display: inline-flex; width: 18px; height: 18px; flex: 0 0 auto; color: var(--accent); }
 .dk-ic svg { width: 18px; height: 18px; }
+
+/* ---------- Automations (recipes/ui.js, wave A2) ---------- */
+.rc-dlg .dlg-body .dlg-actions { padding: 10px 0 0; justify-content: flex-end; }
+.rc-list { display: flex; flex-direction: column; gap: 6px; }
+.rc-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 10px; }
+.rc-txt { flex: 1 1 160px; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.rc-name { font-weight: 700; overflow-wrap: anywhere; }
+.rc-sub { font-size: 12px; color: var(--text-dim); overflow-wrap: anywhere; }
+.rc-acts { display: flex; flex-wrap: wrap; gap: 4px; }
+.rc-acts .btn.danger { color: var(--danger, #e5484d); }
+.rc-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.rc-step { border: 1px solid var(--border); border-radius: 10px; padding: 6px 10px 10px; }
+.rc-step.bad { border-color: var(--danger, #e5484d); }
+.rc-step-h { display: flex; align-items: center; gap: 4px; margin-bottom: 4px; }
+.rc-step-t { flex: 1; min-width: 0; font-weight: 700; font-size: 13px; overflow-wrap: anywhere; }
+.rc-step-b { display: flex; flex-wrap: wrap; gap: 6px 10px; }
+.rc-step-b > .fld { flex: 1 1 120px; min-width: 0; }
+.rc-step-b > .chk, .rc-step-b > .hint { flex: 1 1 100%; margin: 0; }
+.rc-add select { width: 100%; }
+.rc-sum { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; overflow-wrap: anywhere; }
+.rc-will .hint { margin: 2px 0; }
+.hint.warn { color: var(--danger, #e5484d); }

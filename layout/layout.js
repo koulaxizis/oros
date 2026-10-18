@@ -185,6 +185,55 @@
       "toast.flowDone": "Text placed on {n} new pages.", "toast.flowMax": "Stopped after {n} pages: the text still overflows.",
       "toast.copied": "Copied", "ed.paste": "Paste",
       "dlg.rename": "Rename", "dlg.delDoc": "Delete this document?", "dlg.delDocSub": "You can undo right after.",
+      "home.recipes": "Automations",
+      "more.recipes": "Automations…",
+      "rc.op.text": "Find and replace text",
+      "rc.op.pstyle": "Paragraph style",
+      "rc.op.master": "Master on pages",
+      "rc.op.margins": "Page margins",
+      "rc.op.preflight": "Preflight check",
+      "rc.op.export": "Export PDF",
+      "rc.f.find": "Find",
+      "rc.f.repl": "Replace with",
+      "rc.f.cs": "Match case",
+      "rc.f.word": "Whole words only",
+      "rc.f.from": "Paragraphs in style",
+      "rc.f.to": "Give them style",
+      "rc.f.ms": "Master",
+      "rc.f.on": "Pages",
+      "rc.f.t": "Top (mm)",
+      "rc.f.b": "Bottom (mm)",
+      "rc.f.i": "Inside (mm)",
+      "rc.f.o": "Outside (mm)",
+      "rc.f.stop": "Do not export a document with errors",
+      "rc.f.bleed": "Include bleed",
+      "rc.f.marks": "Crop marks",
+      "rc.f.spreads": "Spreads (facing pages)",
+      "rc.f.q": "Pictures",
+      "rc.e.on.all": "All pages",
+      "rc.e.on.odd": "Odd pages",
+      "rc.e.on.even": "Even pages",
+      "rc.e.q.print": "Print (300 ppi)",
+      "rc.e.q.screen": "Screen (150 ppi)",
+      "rc.anyStyle": "Any style",
+      "rc.noMaster": "None",
+      "rc.n.text": "Text split across differently formatted parts is still found; the new text takes the formatting of the first part.",
+      "rc.n.pstyle": "Styles are matched by name, so one automation works in every document that has a style of that name.",
+      "rc.n.export": "One document: the usual Save dialog. Several: the PDFs go to Files, in the Layout folder.",
+      "rc.on.this": "This document ({name})",
+      "rc.on.all": "All documents ({n})",
+      "rc.pv.none": "There are no documents yet.",
+      "rc.pv.one": "Works on one document. You can undo it right after.",
+      "rc.pv.many": "Works on {n} documents. You can undo it right after.",
+      "rc.pv.pdfs": "The PDFs are saved in Files, in the Layout folder.",
+      "rc.doing": "{i} of {n}: {name}",
+      "rc.done": "{n} changes in {d} documents.",
+      "rc.nochange": "Nothing needed changing.",
+      "rc.pf": "Preflight: {e} errors, {w} warnings.",
+      "rc.held": "{n} not exported because of preflight errors.",
+      "rc.pdfs": "{n} PDFs saved in Files › Layout.",
+      "rc.pdfs1": "1 PDF saved in Files › Layout.",
+      "rc.undone": "Documents are back as they were.",
       "a11y.canvas": "Page canvas"
     },
     el: {
@@ -314,6 +363,55 @@
       "toast.flowDone": "Το κείμενο μπήκε σε {n} νέες σελίδες.", "toast.flowMax": "Σταμάτησα στις {n} σελίδες: το κείμενο ακόμα περισσεύει.",
       "toast.copied": "Αντιγράφηκε", "ed.paste": "Επικόλληση",
       "dlg.rename": "Μετονομασία", "dlg.delDoc": "Διαγραφή αυτού του εγγράφου;", "dlg.delDocSub": "Μπορείς να το αναιρέσεις αμέσως μετά.",
+      "home.recipes": "Αυτοματισμοί",
+      "more.recipes": "Αυτοματισμοί…",
+      "rc.op.text": "Εύρεση και αντικατάσταση κειμένου",
+      "rc.op.pstyle": "Στυλ παραγράφου",
+      "rc.op.master": "Master στις σελίδες",
+      "rc.op.margins": "Περιθώρια σελίδας",
+      "rc.op.preflight": "Έλεγχος preflight",
+      "rc.op.export": "Εξαγωγή PDF",
+      "rc.f.find": "Εύρεση",
+      "rc.f.repl": "Αντικατάσταση με",
+      "rc.f.cs": "Ταίριασμα πεζών/κεφαλαίων",
+      "rc.f.word": "Μόνο ολόκληρες λέξεις",
+      "rc.f.from": "Παράγραφοι με στυλ",
+      "rc.f.to": "Παίρνουν το στυλ",
+      "rc.f.ms": "Master",
+      "rc.f.on": "Σελίδες",
+      "rc.f.t": "Πάνω (mm)",
+      "rc.f.b": "Κάτω (mm)",
+      "rc.f.i": "Μέσα (mm)",
+      "rc.f.o": "Έξω (mm)",
+      "rc.f.stop": "Να μη γίνεται εξαγωγή εγγράφου με σφάλματα",
+      "rc.f.bleed": "Με περιθώριο κοπής (bleed)",
+      "rc.f.marks": "Σημάδια κοπής",
+      "rc.f.spreads": "Δισέλιδα (αντικριστές σελίδες)",
+      "rc.f.q": "Εικόνες",
+      "rc.e.on.all": "Όλες οι σελίδες",
+      "rc.e.on.odd": "Μονές σελίδες",
+      "rc.e.on.even": "Ζυγές σελίδες",
+      "rc.e.q.print": "Εκτύπωση (300 ppi)",
+      "rc.e.q.screen": "Οθόνη (150 ppi)",
+      "rc.anyStyle": "Οποιοδήποτε στυλ",
+      "rc.noMaster": "Κανένα",
+      "rc.n.text": "Βρίσκει και κείμενο που χωρίζεται σε κομμάτια με διαφορετική μορφή· το νέο κείμενο παίρνει τη μορφή του πρώτου κομματιού.",
+      "rc.n.pstyle": "Τα στυλ ταιριάζουν με το όνομα, οπότε ένας αυτοματισμός δουλεύει σε κάθε έγγραφο που έχει στυλ με αυτό το όνομα.",
+      "rc.n.export": "Ένα έγγραφο: το συνηθισμένο παράθυρο αποθήκευσης. Πολλά: τα PDF πάνε στα Αρχεία, στον φάκελο Layout.",
+      "rc.on.this": "Αυτό το έγγραφο ({name})",
+      "rc.on.all": "Όλα τα έγγραφα ({n})",
+      "rc.pv.none": "Δεν υπάρχουν έγγραφα ακόμα.",
+      "rc.pv.one": "Δουλεύει σε ένα έγγραφο. Μπορείς να το αναιρέσεις αμέσως μετά.",
+      "rc.pv.many": "Δουλεύει σε {n} έγγραφα. Μπορείς να το αναιρέσεις αμέσως μετά.",
+      "rc.pv.pdfs": "Τα PDF αποθηκεύονται στα Αρχεία, στον φάκελο Layout.",
+      "rc.doing": "{i} από {n}: {name}",
+      "rc.done": "{n} αλλαγές σε {d} έγγραφα.",
+      "rc.nochange": "Δεν χρειάστηκε καμία αλλαγή.",
+      "rc.pf": "Preflight: {e} σφάλματα, {w} προειδοποιήσεις.",
+      "rc.held": "{n} χωρίς εξαγωγή λόγω σφαλμάτων preflight.",
+      "rc.pdfs": "{n} PDF αποθηκεύτηκαν στα Αρχεία › Layout.",
+      "rc.pdfs1": "1 PDF αποθηκεύτηκε στα Αρχεία › Layout.",
+      "rc.undone": "Τα έγγραφα γύρισαν όπως ήταν.",
       "a11y.canvas": "Καμβάς σελίδας"
     }
   };
@@ -562,8 +660,9 @@
   LY.commit = commit;
 
   // Make the open doc look like `target` with fresh stamps.
-  function applyState(target) {
-    var cur = LY.doc, t0 = now();
+  function applyState(target, cur) {
+    cur = cur || LY.doc;
+    var t0 = now();
     var nd = JSON.parse(JSON.stringify(cur));
     if (cur.name !== target.name || JSON.stringify(cur.setup) !== JSON.stringify(target.setup)) {
       nd.name = target.name; nd.setup = target.setup; nd.m = Math.max(t0, cur.m + 1);
@@ -604,6 +703,34 @@
     undoStack.push(JSON.stringify(LY.doc));
     replaceDoc(applyState(JSON.parse(snap)));
     commit();
+  };
+  // Data-level edits of any stored document (automations, recipes.js).
+  // putDoc: an edited copy replaces a document that is not open.
+  // restoreDoc: a document goes back to a snapshot with fresh stamps
+  // (as undo does), so it syncs like any other change; the open one
+  // takes it as one more undo step.
+  LY.putDoc = function (nd) {
+    if (LY.doc && LY.doc.id === nd.id) return false;
+    var i = data.docs.findIndex(function (d) { return d.id === nd.id; });
+    if (i < 0) return false;
+    data.docs[i] = M.normDoc(nd);
+    save();
+    return true;
+  };
+  LY.restoreDoc = function (snap) {
+    var cur = findDoc(snap.id);
+    if (!cur) return false;
+    var nd = applyState(snap, cur);
+    if (cur === LY.doc) {
+      LY.flushStory && LY.flushStory();
+      pushUndo(JSON.stringify(cur));
+      replaceDoc(nd);
+      commit();
+    } else {
+      data.docs[data.docs.indexOf(cur)] = nd;
+      save();
+    }
+    return true;
   };
   LY.canUndo = function () { return undoStack.length > 0; };
   LY.canRedo = function () { return redoStack.length > 0; };
