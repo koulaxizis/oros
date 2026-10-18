@@ -30,7 +30,10 @@
   "use strict";
 
   // ---------- 1. Constants, i18n, helpers ----------
-  var LANG = localStorage.getItem("oros-lang") === "el" ? "el" : "en";
+  var LANG = window.orosI18n ? window.orosI18n.lang() : (localStorage.getItem("oros-lang") === "el" ? "el" : "en");
+  function loc() { return window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB"); }
+  // Decimal comma (Greek, German…): what the language's locale writes.
+  function comma() { if (LANG === "el") return true; if (LANG === "en") return false; try { return (1.5).toLocaleString(loc()).indexOf(",") >= 0; } catch (e) { return false; } }
 
   var STRINGS = {
     en: {
@@ -356,6 +359,7 @@
     }
   };
 
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "maps", LANG);
   function t(key) {
     var p = STRINGS[LANG] || STRINGS.en;
     return p[key] !== undefined ? p[key] : (STRINGS.en[key] !== undefined ? STRINGS.en[key] : key);
@@ -652,6 +656,8 @@
   STRINGS.el["nav.nolimit"] = "Χωρίς όριο ταχύτητας εδώ";
   STRINGS.en["nav.over"] = "Over the speed limit";
   STRINGS.el["nav.over"] = "Πάνω από το όριο ταχύτητας";
+  // again, now with the keys added above
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "maps", LANG);
 
   // ---------- 4. Markers + geolocation ----------
   // All icons are inline SVG divIcons — zero PNG assets, so the
@@ -1191,7 +1197,7 @@
   // Localized number / units (EL: decimal comma, Greek unit labels).
   function fmtNum(x, dec) {
     var v = x.toFixed(dec);
-    return LANG === "el" ? v.replace(".", ",") : v;
+    return comma() ? v.replace(".", ",") : v;
   }
   function fmtDist(m) {
     if (m < 1000) return Math.round(m) + " " + t("u.m");
@@ -2443,7 +2449,7 @@
   function navVoice() {
     var vs = [];
     try { vs = window.speechSynthesis.getVoices() || []; } catch (e) { vs = []; }
-    var v = RC.localVoice(vs, LANG === "el" ? "el-GR" : "en-US");
+    var v = RC.localVoice(vs, LANG === "en" ? "en-US" : loc());
     if (v) { voiceEmptySince = 0; return v; }
     if (!vs.length) {
       if (!voiceEmptySince) voiceEmptySince = Date.now();
@@ -2467,7 +2473,7 @@
       if (!urgent && window.speechSynthesis.speaking) return false;
       var u = new SpeechSynthesisUtterance(text);
       u.voice = v;                                // always a local voice
-      u.lang = v.lang || (LANG === "el" ? "el-GR" : "en-US");
+      u.lang = v.lang || (LANG === "en" ? "en-US" : loc());
       u.rate = 1;
       window.speechSynthesis.cancel();            // never queue behind
       window.speechSynthesis.speak(u);
@@ -2903,8 +2909,7 @@
     var mm = ("0" + now.getMinutes()).slice(-2);
     return {
       date: dateYmd,
-      title: (LANG === "el" ? "Διαδρομή προς " : "Route to ") +
-             (routeTo && routeTo.name ? routeTo.name : "?"),
+      title: t("share.routeto").replace("{n}", routeTo && routeTo.name ? routeTo.name : "?"),
       location: (routeTo && routeTo.name) ? routeTo.name : "",
       start: hh + ":" + mm,
       note: fmtDist(lastDist) + " · " + fmtTime(lastDur) + " · " +

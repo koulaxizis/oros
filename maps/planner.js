@@ -20,42 +20,45 @@
   var H = window.__orosMapsHost;
   if (!PC || !RC || !H || !H.map || !window.L) return;
   var map = H.map;
-  var LANG = H.lang === "el" ? "el" : "en";
+  var LANG = window.orosI18n ? window.orosI18n.lang() : (H.lang === "el" ? "el" : "en");
   var TC = window.OrosMapsTools;
 
   var STR = {
     en: {
-      "ctx": "Plan a track from here", "title": "Plan a track",
-      "hint": "Tap the map to add points. Drag a point to move it, tap it to remove it.",
-      "m.foot": "Walk", "m.bike": "Bike", "m.car": "Car", "m.line": "Straight line",
-      "next": "Next part", "dist": "Length", "pts": "{n} points",
-      "ele": "Elevation", "ele.wait": "Getting elevation…", "ele.off": "Elevation needs a connection.",
-      "ele.fail": "Elevation could not be loaded.", "ele.more": "Add a second point to see the profile.",
-      "up": "Climb {n} m", "down": "Descent {n} m", "range": "Lowest {a} m · highest {b} m",
-      "routing": "Following the roads…", "noroute": "No road route there, so that part is a straight line.",
-      "offline": "Offline: new parts are straight lines.",
-      "undo": "Undo", "clear": "Clear", "name": "Name", "name.def": "Planned track {d}",
-      "save": "Save to My tracks", "saved": "Saved to My tracks", "savefail": "Could not save the track.",
-      "need2": "Add at least two points.", "max": "That's the most points a plan can have.",
-      "profile": "Elevation profile", "close": "Close"
+      "pln.ctx": "Plan a track from here", "pln.title": "Plan a track",
+      "pln.hint": "Tap the map to add points. Drag a point to move it, tap it to remove it.",
+      "pln.m.foot": "Walk", "pln.m.bike": "Bike", "pln.m.car": "Car", "pln.m.line": "Straight line",
+      "pln.next": "Next part", "pln.dist": "Length", "pln.pts": "{n} points",
+      "pln.ele": "Elevation", "pln.ele.wait": "Getting elevation…", "pln.ele.off": "Elevation needs a connection.",
+      "pln.ele.fail": "Elevation could not be loaded.", "pln.ele.more": "Add a second point to see the profile.",
+      "pln.up": "Climb {n} m", "pln.down": "Descent {n} m", "pln.range": "Lowest {a} m · highest {b} m",
+      "pln.routing": "Following the roads…", "pln.noroute": "No road route there, so that part is a straight line.",
+      "pln.offline": "Offline: new parts are straight lines.",
+      "pln.undo": "Undo", "pln.clear": "Clear", "pln.name": "Name", "pln.name.def": "Planned track {d}",
+      "pln.save": "Save to My tracks", "pln.saved": "Saved to My tracks", "pln.savefail": "Could not save the track.",
+      "pln.need2": "Add at least two points.", "pln.max": "That's the most points a plan can have.",
+      "pln.profile": "Elevation profile", "pln.close": "Close"
     },
     el: {
-      "ctx": "Σχεδίασε διαδρομή από εδώ", "title": "Σχεδίαση διαδρομής",
-      "hint": "Πάτα στον χάρτη για να προσθέσεις σημεία. Σύρε ένα σημείο για να το μετακινήσεις, πάτα το για να το αφαιρέσεις.",
-      "m.foot": "Με τα πόδια", "m.bike": "Ποδήλατο", "m.car": "Αυτοκίνητο", "m.line": "Ευθεία γραμμή",
-      "next": "Επόμενο κομμάτι", "dist": "Μήκος", "pts": "{n} σημεία",
-      "ele": "Υψόμετρο", "ele.wait": "Φόρτωση υψομέτρου…", "ele.off": "Το υψόμετρο θέλει σύνδεση.",
-      "ele.fail": "Δεν φορτώθηκε το υψόμετρο.", "ele.more": "Πρόσθεσε δεύτερο σημείο για να δεις το προφίλ.",
-      "up": "Ανάβαση {n} μ.", "down": "Κατάβαση {n} μ.", "range": "Χαμηλότερο {a} μ. · υψηλότερο {b} μ.",
-      "routing": "Ακολουθεί τους δρόμους…", "noroute": "Δεν βρέθηκε δρόμος εκεί, οπότε το κομμάτι είναι ευθεία γραμμή.",
-      "offline": "Χωρίς σύνδεση: τα νέα κομμάτια είναι ευθείες γραμμές.",
-      "undo": "Αναίρεση", "clear": "Καθαρισμός", "name": "Όνομα", "name.def": "Σχεδιασμένη διαδρομή {d}",
-      "save": "Αποθήκευση στις Διαδρομές μου", "saved": "Αποθηκεύτηκε στις Διαδρομές μου", "savefail": "Δεν αποθηκεύτηκε η διαδρομή.",
-      "need2": "Πρόσθεσε τουλάχιστον δύο σημεία.", "max": "Ένα σχέδιο δεν μπορεί να έχει περισσότερα σημεία.",
-      "profile": "Προφίλ υψομέτρου", "close": "Κλείσιμο"
+      "pln.ctx": "Σχεδίασε διαδρομή από εδώ", "pln.title": "Σχεδίαση διαδρομής",
+      "pln.hint": "Πάτα στον χάρτη για να προσθέσεις σημεία. Σύρε ένα σημείο για να το μετακινήσεις, πάτα το για να το αφαιρέσεις.",
+      "pln.m.foot": "Με τα πόδια", "pln.m.bike": "Ποδήλατο", "pln.m.car": "Αυτοκίνητο", "pln.m.line": "Ευθεία γραμμή",
+      "pln.next": "Επόμενο κομμάτι", "pln.dist": "Μήκος", "pln.pts": "{n} σημεία",
+      "pln.ele": "Υψόμετρο", "pln.ele.wait": "Φόρτωση υψομέτρου…", "pln.ele.off": "Το υψόμετρο θέλει σύνδεση.",
+      "pln.ele.fail": "Δεν φορτώθηκε το υψόμετρο.", "pln.ele.more": "Πρόσθεσε δεύτερο σημείο για να δεις το προφίλ.",
+      "pln.up": "Ανάβαση {n} μ.", "pln.down": "Κατάβαση {n} μ.", "pln.range": "Χαμηλότερο {a} μ. · υψηλότερο {b} μ.",
+      "pln.routing": "Ακολουθεί τους δρόμους…", "pln.noroute": "Δεν βρέθηκε δρόμος εκεί, οπότε το κομμάτι είναι ευθεία γραμμή.",
+      "pln.offline": "Χωρίς σύνδεση: τα νέα κομμάτια είναι ευθείες γραμμές.",
+      "pln.undo": "Αναίρεση", "pln.clear": "Καθαρισμός", "pln.name": "Όνομα", "pln.name.def": "Σχεδιασμένη διαδρομή {d}",
+      "pln.save": "Αποθήκευση στις Διαδρομές μου", "pln.saved": "Αποθηκεύτηκε στις Διαδρομές μου", "pln.savefail": "Δεν αποθηκεύτηκε η διαδρομή.",
+      "pln.need2": "Πρόσθεσε τουλάχιστον δύο σημεία.", "pln.max": "Ένα σχέδιο δεν μπορεί να έχει περισσότερα σημεία.",
+      "pln.profile": "Προφίλ υψομέτρου", "pln.close": "Κλείσιμο"
     }
   };
+  if (window.orosI18n) window.orosI18n.table(STR, "maps", LANG);
+  function loc() { return window.orosI18n ? window.orosI18n.locale(LANG) : (loc()); }
   function t(k, vars) {
+    k = "pln." + k;
     var s = (STR[LANG] && STR[LANG][k]) || STR.en[k] || k;
     if (vars) Object.keys(vars).forEach(function (v) { s = s.split("{" + v + "}").join(String(vars[v])); });
     return s;

@@ -67,15 +67,23 @@
     }
     return Math.abs(s) / 2;
   }
+  // Decimal comma for el, de… (what the language's locale writes).
+  function decComma(lang) {
+    if (lang === "el") return true;
+    if (!lang || lang === "en") return false;
+    try { return (1.5).toLocaleString(lang).indexOf(",") >= 0; } catch (e) { return false; }
+  }
   function num(v, d, lang) {
     var s = v.toFixed(d);
-    return lang === "el" ? s.replace(".", ",") : s;
+    return decComma(lang) ? s.replace(".", ",") : s;
   }
   // Units as Maps shows them (Greek: μ., χλμ., στρ. for 1000 m²).
   var UNITS = {
     en: { m: "m", km: "km", m2: "m²", ha: "ha", km2: "km²" },
     el: { m: "μ.", km: "χλμ.", m2: "τ.μ.", ha: "στρ.", km2: "τ.χλμ." }
   };
+  // Pack languages (de…): UNITS[code] from the "maps" pack, English fallback.
+  if (typeof window !== "undefined" && window.orosI18n) window.orosI18n.table(UNITS, "maps", window.orosI18n.lang());
   function fmtLen(m, lang) {
     if (!(m >= 0)) return "";
     var u = UNITS[lang] || UNITS.en;

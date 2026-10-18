@@ -25,53 +25,56 @@
   var H = window.__orosMapsHost;
   if (!HC || !T || !H || !H.map || !window.L) return;
   var map = H.map;
-  var LANG = H.lang === "el" ? "el" : "en";
+  var LANG = window.orosI18n ? window.orosI18n.lang() : (H.lang === "el" ? "el" : "en");
 
   var STR = {
     en: {
-      "title": "Heatmap and statistics",
-      "show": "Show my heatmap on the map",
-      "gps": "OpenStreetMap GPS traces (everyone's)",
-      "gps.hint": "Lines where people uploaded GPS traces. Useful when you map paths and roads.",
-      "year": "Year", "folder": "Folder", "all": "All", "allf": "All folders",
-      "reading": "Reading tracks… {a} of {b}",
-      "built": "From {n} tracks",
-      "prev": "{n} of them with a simplified line (the GPX file is not on this device yet)",
-      "none": "No tracks yet. Record one or import a GPX file in My tracks.",
-      "nomatch": "No track matches the filter.",
-      "tot.dist": "Distance", "tot.time": "Time", "tot.n": "Tracks", "tot.new": "New ground",
-      "new.hint": "New ground counts the path through squares of about 40 m that you had not crossed in an earlier track.",
-      "years": "Per year", "months": "Per month in {y}",
-      "col.year": "Year", "col.dist": "Distance", "col.n": "Tracks", "col.new": "New ground",
-      "back": "Back", "close": "Close",
-      "km": "{n} km", "h": "{n} h",
-      "m1": "Jan", "m2": "Feb", "m3": "Mar", "m4": "Apr", "m5": "May", "m6": "Jun",
-      "m7": "Jul", "m8": "Aug", "m9": "Sep", "m10": "Oct", "m11": "Nov", "m12": "Dec",
-      "chart.label": "Distance per month in {y}: {list}"
+      "heat.title": "Heatmap and statistics",
+      "heat.show": "Show my heatmap on the map",
+      "heat.gps": "OpenStreetMap GPS traces (everyone's)",
+      "heat.gps.hint": "Lines where people uploaded GPS traces. Useful when you map paths and roads.",
+      "heat.year": "Year", "heat.folder": "Folder", "heat.all": "All", "heat.allf": "All folders",
+      "heat.reading": "Reading tracks… {a} of {b}",
+      "heat.built": "From {n} tracks",
+      "heat.prev": "{n} of them with a simplified line (the GPX file is not on this device yet)",
+      "heat.none": "No tracks yet. Record one or import a GPX file in My tracks.",
+      "heat.nomatch": "No track matches the filter.",
+      "heat.tot.dist": "Distance", "heat.tot.time": "Time", "heat.tot.n": "Tracks", "heat.tot.new": "New ground",
+      "heat.new.hint": "New ground counts the path through squares of about 40 m that you had not crossed in an earlier track.",
+      "heat.years": "Per year", "heat.months": "Per month in {y}",
+      "heat.col.year": "Year", "heat.col.dist": "Distance", "heat.col.n": "Tracks", "heat.col.new": "New ground",
+      "heat.back": "Back", "heat.close": "Close",
+      "heat.km": "{n} km", "heat.h": "{n} h",
+      "heat.m1": "Jan", "heat.m2": "Feb", "heat.m3": "Mar", "heat.m4": "Apr", "heat.m5": "May", "heat.m6": "Jun",
+      "heat.m7": "Jul", "heat.m8": "Aug", "heat.m9": "Sep", "heat.m10": "Oct", "heat.m11": "Nov", "heat.m12": "Dec",
+      "heat.chart.label": "Distance per month in {y}: {list}"
     },
     el: {
-      "title": "Heatmap και στατιστικά",
-      "show": "Εμφάνιση του heatmap μου στον χάρτη",
-      "gps": "GPS traces του OpenStreetMap (όλων)",
-      "gps.hint": "Γραμμές όπου ο κόσμος ανέβασε GPS traces. Χρήσιμο όταν χαρτογραφείς μονοπάτια και δρόμους.",
-      "year": "Έτος", "folder": "Φάκελος", "all": "Όλα", "allf": "Όλοι οι φάκελοι",
-      "reading": "Διαβάζονται διαδρομές… {a} από {b}",
-      "built": "Από {n} διαδρομές",
-      "prev": "{n} από αυτές με απλοποιημένη γραμμή (το αρχείο GPX δεν έχει έρθει σε αυτή τη συσκευή)",
-      "none": "Καμία διαδρομή ακόμα. Κατέγραψε μία ή φέρε ένα αρχείο GPX στις Διαδρομές μου.",
-      "nomatch": "Καμία διαδρομή δεν ταιριάζει στο φίλτρο.",
-      "tot.dist": "Απόσταση", "tot.time": "Χρόνος", "tot.n": "Διαδρομές", "tot.new": "Νέο έδαφος",
-      "new.hint": "Το νέο έδαφος μετρά τη διαδρομή μέσα από τετράγωνα περίπου 40 μ. που δεν είχες περάσει σε προηγούμενη διαδρομή.",
-      "years": "Ανά έτος", "months": "Ανά μήνα το {y}",
-      "col.year": "Έτος", "col.dist": "Απόσταση", "col.n": "Διαδρομές", "col.new": "Νέο έδαφος",
-      "back": "Πίσω", "close": "Κλείσιμο",
-      "km": "{n} χλμ.", "h": "{n} ώ.",
-      "m1": "Ιαν", "m2": "Φεβ", "m3": "Μαρ", "m4": "Απρ", "m5": "Μάι", "m6": "Ιούν",
-      "m7": "Ιούλ", "m8": "Αύγ", "m9": "Σεπ", "m10": "Οκτ", "m11": "Νοέ", "m12": "Δεκ",
-      "chart.label": "Απόσταση ανά μήνα το {y}: {list}"
+      "heat.title": "Heatmap και στατιστικά",
+      "heat.show": "Εμφάνιση του heatmap μου στον χάρτη",
+      "heat.gps": "GPS traces του OpenStreetMap (όλων)",
+      "heat.gps.hint": "Γραμμές όπου ο κόσμος ανέβασε GPS traces. Χρήσιμο όταν χαρτογραφείς μονοπάτια και δρόμους.",
+      "heat.year": "Έτος", "heat.folder": "Φάκελος", "heat.all": "Όλα", "heat.allf": "Όλοι οι φάκελοι",
+      "heat.reading": "Διαβάζονται διαδρομές… {a} από {b}",
+      "heat.built": "Από {n} διαδρομές",
+      "heat.prev": "{n} από αυτές με απλοποιημένη γραμμή (το αρχείο GPX δεν έχει έρθει σε αυτή τη συσκευή)",
+      "heat.none": "Καμία διαδρομή ακόμα. Κατέγραψε μία ή φέρε ένα αρχείο GPX στις Διαδρομές μου.",
+      "heat.nomatch": "Καμία διαδρομή δεν ταιριάζει στο φίλτρο.",
+      "heat.tot.dist": "Απόσταση", "heat.tot.time": "Χρόνος", "heat.tot.n": "Διαδρομές", "heat.tot.new": "Νέο έδαφος",
+      "heat.new.hint": "Το νέο έδαφος μετρά τη διαδρομή μέσα από τετράγωνα περίπου 40 μ. που δεν είχες περάσει σε προηγούμενη διαδρομή.",
+      "heat.years": "Ανά έτος", "heat.months": "Ανά μήνα το {y}",
+      "heat.col.year": "Έτος", "heat.col.dist": "Απόσταση", "heat.col.n": "Διαδρομές", "heat.col.new": "Νέο έδαφος",
+      "heat.back": "Πίσω", "heat.close": "Κλείσιμο",
+      "heat.km": "{n} χλμ.", "heat.h": "{n} ώ.",
+      "heat.m1": "Ιαν", "heat.m2": "Φεβ", "heat.m3": "Μαρ", "heat.m4": "Απρ", "heat.m5": "Μάι", "heat.m6": "Ιούν",
+      "heat.m7": "Ιούλ", "heat.m8": "Αύγ", "heat.m9": "Σεπ", "heat.m10": "Οκτ", "heat.m11": "Νοέ", "heat.m12": "Δεκ",
+      "heat.chart.label": "Απόσταση ανά μήνα το {y}: {list}"
     }
   };
+  if (window.orosI18n) window.orosI18n.table(STR, "maps", LANG);
+  function loc() { return window.orosI18n ? window.orosI18n.locale(LANG) : (loc()); }
   function t(k, vars) {
+    k = "heat." + k;
     var s = (STR[LANG] && STR[LANG][k]) || STR.en[k] || k;
     if (vars) Object.keys(vars).forEach(function (v) { s = s.split("{" + v + "}").join(String(vars[v])); });
     return s;
@@ -89,7 +92,7 @@
     return b;
   }
   function fmtNum(v, d) {
-    try { return Number(v).toLocaleString(LANG === "el" ? "el-GR" : "en-GB", { minimumFractionDigits: d, maximumFractionDigits: d }); }
+    try { return Number(v).toLocaleString(loc(), { minimumFractionDigits: d, maximumFractionDigits: d }); }
     catch (e) { return Number(v).toFixed(d); }
   }
   function fmtKm(m) { return t("km", { n: fmtNum((m || 0) / 1000, m >= 100000 ? 0 : 1) }); }

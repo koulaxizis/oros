@@ -26,92 +26,95 @@
   var K = window.OrosImportKit;
   var H = window.__orosMapsHost;
   if (!IMP || !K || !H) return;
-  var LANG = H.lang === "el" ? "el" : "en";
+  var LANG = window.orosI18n ? window.orosI18n.lang() : (H.lang === "el" ? "el" : "en");
   var MAX_DAYS = 366;
 
   var STR = {
     en: {
-      "title": "Import from another app",
-      "src.kmz": "KMZ (Organic Maps, OsmAnd, Google My Maps, Google Earth)",
-      "src.gsaved": "Google Maps saved places",
-      "src.glist": "Google Maps lists",
-      "src.timeline": "Google Timeline",
-      "src.tcx": "Garmin TCX",
-      "src.fit": "Garmin FIT",
-      "tracks": "Tracks: {n}",
-      "tracks.where": "They go to My tracks.",
-      "tracks.folder": "They go to My tracks, folder {f}.",
-      "tracks.dates": "From {a} to {b}",
-      "there.t": "Already in My tracks: {n} (left as they are).",
-      "places": "Places: {n}",
-      "places.where": "They go to Saved places, a group per list: {g}.",
-      "there.p": "Already saved: {n} (left as they are).",
-      "skipped": "Skipped, without coordinates: {n}. Google keeps only a link for many saved places; open them in Google Maps if you need them.",
-      "full.t": "My tracks holds at most {n} tracks: only the first {k} fit.",
-      "full.p": "Only the first {k} places fit in your groups.",
-      "tl.head": "Google Timeline",
-      "tl.private": "Your location history is personal. It stays on this device, unless you sync Maps data with your other devices.",
-      "tl.range": "Data from {a} to {b} ({n} days). Pick the days to import:",
-      "tl.from": "From", "tl.to": "To",
-      "tl.tracks": "A track for each day (My tracks, folder {f})",
-      "tl.places": "Visited places as saved places (group {g})",
-      "tl.pick": "Nothing is imported until you pick the days.",
-      "tl.sum": "Days with a track: {d} · places: {v}",
-      "tl.max": "Pick at most {n} days at a time.",
-      "tl.folder": "Timeline", "tl.name": "Timeline {d}", "tl.group": "Timeline places",
-      "tl.home": "Home", "tl.work": "Work", "tl.place": "Visited place",
-      "tl.visits1": "1 visit", "tl.visits": "{n} visits",
-      "go": "Import", "busy": "Importing…", "cancel": "Cancel",
-      "done": "Imported. Tracks: {t}, places: {p}",
-      "nothing": "Nothing new to import",
-      "undo": "Undo", "undone": "Import undone",
-      "err.read": "This file couldn't be read.",
-      "err.big": "This file is too large to import (100 MB at most).",
-      "err.unknown": "Maps can't read this file. It takes GPX, KML, KMZ, GeoJSON, TCX, FIT and Google Takeout or Timeline exports.",
-      "err.save": "Could not save the tracks."
+      "imp.title": "Import from another app",
+      "imp.src.kmz": "KMZ (Organic Maps, OsmAnd, Google My Maps, Google Earth)",
+      "imp.src.gsaved": "Google Maps saved places",
+      "imp.src.glist": "Google Maps lists",
+      "imp.src.timeline": "Google Timeline",
+      "imp.src.tcx": "Garmin TCX",
+      "imp.src.fit": "Garmin FIT",
+      "imp.tracks": "Tracks: {n}",
+      "imp.tracks.where": "They go to My tracks.",
+      "imp.tracks.folder": "They go to My tracks, folder {f}.",
+      "imp.tracks.dates": "From {a} to {b}",
+      "imp.there.t": "Already in My tracks: {n} (left as they are).",
+      "imp.places": "Places: {n}",
+      "imp.places.where": "They go to Saved places, a group per list: {g}.",
+      "imp.there.p": "Already saved: {n} (left as they are).",
+      "imp.skipped": "Skipped, without coordinates: {n}. Google keeps only a link for many saved places; open them in Google Maps if you need them.",
+      "imp.full.t": "My tracks holds at most {n} tracks: only the first {k} fit.",
+      "imp.full.p": "Only the first {k} places fit in your groups.",
+      "imp.tl.head": "Google Timeline",
+      "imp.tl.private": "Your location history is personal. It stays on this device, unless you sync Maps data with your other devices.",
+      "imp.tl.range": "Data from {a} to {b} ({n} days). Pick the days to import:",
+      "imp.tl.from": "From", "imp.tl.to": "To",
+      "imp.tl.tracks": "A track for each day (My tracks, folder {f})",
+      "imp.tl.places": "Visited places as saved places (group {g})",
+      "imp.tl.pick": "Nothing is imported until you pick the days.",
+      "imp.tl.sum": "Days with a track: {d} · places: {v}",
+      "imp.tl.max": "Pick at most {n} days at a time.",
+      "imp.tl.folder": "Timeline", "imp.tl.name": "Timeline {d}", "imp.tl.group": "Timeline places",
+      "imp.tl.home": "Home", "imp.tl.work": "Work", "imp.tl.place": "Visited place",
+      "imp.tl.visits1": "1 visit", "imp.tl.visits": "{n} visits",
+      "imp.go": "Import", "imp.busy": "Importing…", "imp.cancel": "Cancel",
+      "imp.done": "Imported. Tracks: {t}, places: {p}",
+      "imp.nothing": "Nothing new to import",
+      "imp.undo": "Undo", "imp.undone": "Import undone",
+      "imp.err.read": "This file couldn't be read.",
+      "imp.err.big": "This file is too large to import (100 MB at most).",
+      "imp.err.unknown": "Maps can't read this file. It takes GPX, KML, KMZ, GeoJSON, TCX, FIT and Google Takeout or Timeline exports.",
+      "imp.err.save": "Could not save the tracks."
     },
     el: {
-      "title": "Εισαγωγή από άλλη εφαρμογή",
-      "src.kmz": "KMZ (Organic Maps, OsmAnd, Google My Maps, Google Earth)",
-      "src.gsaved": "Αποθηκευμένα μέρη των Χαρτών Google",
-      "src.glist": "Λίστες των Χαρτών Google",
-      "src.timeline": "Χρονολόγιο Google",
-      "src.tcx": "Garmin TCX",
-      "src.fit": "Garmin FIT",
-      "tracks": "Διαδρομές: {n}",
-      "tracks.where": "Μπαίνουν στις Διαδρομές μου.",
-      "tracks.folder": "Μπαίνουν στις Διαδρομές μου, στον φάκελο {f}.",
-      "tracks.dates": "Από {a} έως {b}",
-      "there.t": "Ήδη στις Διαδρομές μου: {n} (μένουν όπως είναι).",
-      "places": "Τοποθεσίες: {n}",
-      "places.where": "Μπαίνουν στις Αποθηκευμένες τοποθεσίες, σε μια ομάδα ανά λίστα: {g}.",
-      "there.p": "Ήδη αποθηκευμένες: {n} (μένουν όπως είναι).",
-      "skipped": "Παραλείπονται, χωρίς συντεταγμένες: {n}. Η Google κρατά μόνο έναν σύνδεσμο για πολλά αποθηκευμένα μέρη· άνοιξέ τα στους Χάρτες Google αν τα χρειάζεσαι.",
-      "full.t": "Οι Διαδρομές μου χωρούν έως {n} διαδρομές: μπαίνουν μόνο οι πρώτες {k}.",
-      "full.p": "Στις ομάδες σου χωρούν μόνο οι πρώτες {k} τοποθεσίες.",
-      "tl.head": "Χρονολόγιο Google",
-      "tl.private": "Το ιστορικό τοποθεσιών σου είναι προσωπικό. Μένει σε αυτή τη συσκευή, εκτός αν συγχρονίζεις τα δεδομένα των Χαρτών με τις άλλες συσκευές σου.",
-      "tl.range": "Δεδομένα από {a} έως {b} ({n} ημέρες). Διάλεξε τις ημέρες για εισαγωγή:",
-      "tl.from": "Από", "tl.to": "Έως",
-      "tl.tracks": "Μια διαδρομή για κάθε ημέρα (Διαδρομές μου, φάκελος {f})",
-      "tl.places": "Τα μέρη που επισκέφθηκες ως αποθηκευμένες τοποθεσίες (ομάδα {g})",
-      "tl.pick": "Δεν εισάγεται τίποτα πριν διαλέξεις τις ημέρες.",
-      "tl.sum": "Ημέρες με διαδρομή: {d} · μέρη: {v}",
-      "tl.max": "Διάλεξε έως {n} ημέρες κάθε φορά.",
-      "tl.folder": "Χρονολόγιο", "tl.name": "Χρονολόγιο {d}", "tl.group": "Μέρη από το Χρονολόγιο",
-      "tl.home": "Σπίτι", "tl.work": "Δουλειά", "tl.place": "Μέρος που επισκέφθηκες",
-      "tl.visits1": "1 επίσκεψη", "tl.visits": "{n} επισκέψεις",
-      "go": "Εισαγωγή", "busy": "Γίνεται εισαγωγή…", "cancel": "Άκυρο",
-      "done": "Έγινε η εισαγωγή. Διαδρομές: {t}, τοποθεσίες: {p}",
-      "nothing": "Δεν υπάρχει κάτι νέο για εισαγωγή",
-      "undo": "Αναίρεση", "undone": "Η εισαγωγή αναιρέθηκε",
-      "err.read": "Δεν ήταν δυνατό να διαβαστεί το αρχείο.",
-      "err.big": "Το αρχείο είναι πολύ μεγάλο για εισαγωγή (έως 100 MB).",
-      "err.unknown": "Οι Χάρτες δεν μπορούν να διαβάσουν αυτό το αρχείο. Δέχονται GPX, KML, KMZ, GeoJSON, TCX, FIT και εξαγωγές του Google Takeout ή του Χρονολογίου.",
-      "err.save": "Οι διαδρομές δεν αποθηκεύτηκαν."
+      "imp.title": "Εισαγωγή από άλλη εφαρμογή",
+      "imp.src.kmz": "KMZ (Organic Maps, OsmAnd, Google My Maps, Google Earth)",
+      "imp.src.gsaved": "Αποθηκευμένα μέρη των Χαρτών Google",
+      "imp.src.glist": "Λίστες των Χαρτών Google",
+      "imp.src.timeline": "Χρονολόγιο Google",
+      "imp.src.tcx": "Garmin TCX",
+      "imp.src.fit": "Garmin FIT",
+      "imp.tracks": "Διαδρομές: {n}",
+      "imp.tracks.where": "Μπαίνουν στις Διαδρομές μου.",
+      "imp.tracks.folder": "Μπαίνουν στις Διαδρομές μου, στον φάκελο {f}.",
+      "imp.tracks.dates": "Από {a} έως {b}",
+      "imp.there.t": "Ήδη στις Διαδρομές μου: {n} (μένουν όπως είναι).",
+      "imp.places": "Τοποθεσίες: {n}",
+      "imp.places.where": "Μπαίνουν στις Αποθηκευμένες τοποθεσίες, σε μια ομάδα ανά λίστα: {g}.",
+      "imp.there.p": "Ήδη αποθηκευμένες: {n} (μένουν όπως είναι).",
+      "imp.skipped": "Παραλείπονται, χωρίς συντεταγμένες: {n}. Η Google κρατά μόνο έναν σύνδεσμο για πολλά αποθηκευμένα μέρη· άνοιξέ τα στους Χάρτες Google αν τα χρειάζεσαι.",
+      "imp.full.t": "Οι Διαδρομές μου χωρούν έως {n} διαδρομές: μπαίνουν μόνο οι πρώτες {k}.",
+      "imp.full.p": "Στις ομάδες σου χωρούν μόνο οι πρώτες {k} τοποθεσίες.",
+      "imp.tl.head": "Χρονολόγιο Google",
+      "imp.tl.private": "Το ιστορικό τοποθεσιών σου είναι προσωπικό. Μένει σε αυτή τη συσκευή, εκτός αν συγχρονίζεις τα δεδομένα των Χαρτών με τις άλλες συσκευές σου.",
+      "imp.tl.range": "Δεδομένα από {a} έως {b} ({n} ημέρες). Διάλεξε τις ημέρες για εισαγωγή:",
+      "imp.tl.from": "Από", "imp.tl.to": "Έως",
+      "imp.tl.tracks": "Μια διαδρομή για κάθε ημέρα (Διαδρομές μου, φάκελος {f})",
+      "imp.tl.places": "Τα μέρη που επισκέφθηκες ως αποθηκευμένες τοποθεσίες (ομάδα {g})",
+      "imp.tl.pick": "Δεν εισάγεται τίποτα πριν διαλέξεις τις ημέρες.",
+      "imp.tl.sum": "Ημέρες με διαδρομή: {d} · μέρη: {v}",
+      "imp.tl.max": "Διάλεξε έως {n} ημέρες κάθε φορά.",
+      "imp.tl.folder": "Χρονολόγιο", "imp.tl.name": "Χρονολόγιο {d}", "imp.tl.group": "Μέρη από το Χρονολόγιο",
+      "imp.tl.home": "Σπίτι", "imp.tl.work": "Δουλειά", "imp.tl.place": "Μέρος που επισκέφθηκες",
+      "imp.tl.visits1": "1 επίσκεψη", "imp.tl.visits": "{n} επισκέψεις",
+      "imp.go": "Εισαγωγή", "imp.busy": "Γίνεται εισαγωγή…", "imp.cancel": "Άκυρο",
+      "imp.done": "Έγινε η εισαγωγή. Διαδρομές: {t}, τοποθεσίες: {p}",
+      "imp.nothing": "Δεν υπάρχει κάτι νέο για εισαγωγή",
+      "imp.undo": "Αναίρεση", "imp.undone": "Η εισαγωγή αναιρέθηκε",
+      "imp.err.read": "Δεν ήταν δυνατό να διαβαστεί το αρχείο.",
+      "imp.err.big": "Το αρχείο είναι πολύ μεγάλο για εισαγωγή (έως 100 MB).",
+      "imp.err.unknown": "Οι Χάρτες δεν μπορούν να διαβάσουν αυτό το αρχείο. Δέχονται GPX, KML, KMZ, GeoJSON, TCX, FIT και εξαγωγές του Google Takeout ή του Χρονολογίου.",
+      "imp.err.save": "Οι διαδρομές δεν αποθηκεύτηκαν."
     }
   };
+  if (window.orosI18n) window.orosI18n.table(STR, "maps", LANG);
+  function loc() { return window.orosI18n ? window.orosI18n.locale(LANG) : (loc()); }
   function t(k, vars) {
+    k = "imp." + k;
     var s = STR[LANG][k] !== undefined ? STR[LANG][k] : STR.en[k];
     if (s === undefined) s = k;
     if (vars) Object.keys(vars).forEach(function (v) { s = s.split("{" + v + "}").join(String(vars[v])); });
@@ -131,13 +134,13 @@
   }
   function toast(s) { (H.toast || H.localToast)(s); }
   function fmt(n) {
-    try { return Number(n).toLocaleString(LANG === "el" ? "el-GR" : "en-GB"); } catch (e) { return String(n); }
+    try { return Number(n).toLocaleString(loc()); } catch (e) { return String(n); }
   }
   function fmtDay(ymd) {
     var m = /^(\d{4})-(\d\d)-(\d\d)$/.exec(ymd || "");
     if (!m) return ymd || "";
     try {
-      return new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB",
+      return new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString(loc(),
         { day: "numeric", month: "short", year: "numeric" });
     } catch (e) { return ymd; }
   }

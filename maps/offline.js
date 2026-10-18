@@ -37,7 +37,7 @@
   var H = window.__orosMapsHost;
   if (!OC || !H || !H.map || !window.L) return;
   var map = H.map;
-  var LANG = H.lang === "el" ? "el" : "en";
+  var LANG = window.orosI18n ? window.orosI18n.lang() : (H.lang === "el" ? "el" : "en");
   var PREF_KEY = "oros-maps-packs";            // device-local: { src }
   var DIR = "maps-packs";
   var BUILDS = "https://build-metadata.protomaps.dev/builds.json";
@@ -47,93 +47,96 @@
 
   var STR = {
     en: {
-      "title": "Offline maps", "btn": "Offline maps",
-      "intro": "Download an area so the map and search work with no connection, as in Organic Maps and OsmAnd.",
-      "nosupport": "This browser can't store offline maps (it has no private file storage). Try a recent Chrome, Edge, Firefox or Safari 26.",
-      "packs": "Your packs", "none": "No offline maps yet.",
-      "new": "Download an area", "area.hint": "The dashed box on the map is what will be saved. Move or zoom the map to change it.",
-      "name": "Name", "name.ph": "e.g. Athens", "area.default": "My area",
-      "check": "Check size", "checking": "Reading the map index… {p}",
-      "detail": "Detail",
-      "lvl.10": "Overview: towns, main roads", "lvl.12": "Roads and villages", "lvl.14": "Streets, shops and places", "lvl.15": "Full detail with buildings",
-      "tiles": "{n} map tiles", "download": "Download {s}", "toobig": "This area is too big. Zoom in on the map and check again.",
-      "nofree": "Not enough free space on this device for {s}.",
-      "moved": "The map moved: check the size again.",
-      "offline": "You're offline. Downloading needs a connection.",
-      "src.err": "Couldn't reach the map data. Try again later.",
-      "src.bad": "This map source can't be used: it must be a PMTiles file of vector tiles (gzip or uncompressed).",
-      "src.range": "The map source doesn't allow partial downloads.",
-      "src.changed": "The map data was replaced on the server. Delete this pack and download it again.",
-      "st.dl": "Downloading {p}%", "st.paused": "Paused at {p}%", "st.plan": "Preparing…", "st.index": "Preparing search {p}%",
-      "st.ready": "Ready", "st.err": "Stopped: {e}",
-      "meta": "{size} · detail up to zoom {z} · {date}", "data": "Map data of {d}",
-      "pause": "Pause", "resume": "Resume", "cancel": "Cancel", "show": "Show", "update": "Update", "del": "Delete",
-      "del.q": "Delete the offline map “{n}”?", "cancel.q": "Cancel the download of “{n}” and delete what was downloaded?",
-      "del.ok": "Delete", "keep": "Keep", "deleted": "Offline map deleted",
-      "done": "Offline map ready: {n}", "updated": "Offline map updated: {n}", "started": "Downloading {n}…",
-      "resumed": "Continuing the download of {n}", "paused.net": "Download paused: no connection. It continues when you're back online.",
-      "full": "Download stopped: the device storage is full.",
-      "storage": "Packs use {u}. Free on this device: about {f}.", "storage.u": "Packs use {u}.",
-      "persist.no": "The browser may remove offline maps if the device runs out of space.",
-      "layer": "Offline map (downloaded)", "auto": "You're offline: showing your downloaded map",
-      "back": "Back online: showing the online map again",
-      "src": "Map source (advanced)", "src.hint": "Leave empty for the newest Protomaps build of OpenStreetMap. Or the address of your own PMTiles file (vector tiles, Protomaps layout).",
-      "src.save": "Save source", "src.saved": "Map source saved", "src.badurl": "Enter an http(s) address, or leave it empty.",
-      "credit": "Map data © OpenStreetMap contributors (ODbL), vector tiles by Protomaps.",
-      "settings.sum": "{n} packs · {u}", "settings.none": "No offline maps",
-      "close": "Close", "updating": "Update of {n}",
-      "k.places:country": "Country", "k.places:region": "Region", "k.places:locality": "Town or village",
-      "k.places:neighbourhood": "Neighbourhood", "k.places:macrohood": "District", "k.roads:street": "Street",
-      "k.roads:path": "Path", "k.address": "Address", "k.water": "Water", "k.park": "Park", "k.station": "Station",
-      "k.food": "Food and drink", "k.shop": "Shop", "k.health": "Health", "k.school": "School", "k.stay": "Hotel",
-      "k.culture": "Culture", "k.worship": "Place of worship", "k.nature": "Nature", "k.transport": "Transport",
-      "k.place": "Place", "k.offline": "offline"
+      "off.title": "Offline maps", "off.btn": "Offline maps",
+      "off.intro": "Download an area so the map and search work with no connection, as in Organic Maps and OsmAnd.",
+      "off.nosupport": "This browser can't store offline maps (it has no private file storage). Try a recent Chrome, Edge, Firefox or Safari 26.",
+      "off.packs": "Your packs", "off.none": "No offline maps yet.",
+      "off.new": "Download an area", "off.area.hint": "The dashed box on the map is what will be saved. Move or zoom the map to change it.",
+      "off.name": "Name", "off.name.ph": "e.g. Athens", "off.area.default": "My area",
+      "off.check": "Check size", "off.checking": "Reading the map index… {p}",
+      "off.detail": "Detail",
+      "off.lvl.10": "Overview: towns, main roads", "off.lvl.12": "Roads and villages", "off.lvl.14": "Streets, shops and places", "off.lvl.15": "Full detail with buildings",
+      "off.tiles": "{n} map tiles", "off.download": "Download {s}", "off.toobig": "This area is too big. Zoom in on the map and check again.",
+      "off.nofree": "Not enough free space on this device for {s}.",
+      "off.moved": "The map moved: check the size again.",
+      "off.offline": "You're offline. Downloading needs a connection.",
+      "off.src.err": "Couldn't reach the map data. Try again later.",
+      "off.src.bad": "This map source can't be used: it must be a PMTiles file of vector tiles (gzip or uncompressed).",
+      "off.src.range": "The map source doesn't allow partial downloads.",
+      "off.src.changed": "The map data was replaced on the server. Delete this pack and download it again.",
+      "off.st.dl": "Downloading {p}%", "off.st.paused": "Paused at {p}%", "off.st.plan": "Preparing…", "off.st.index": "Preparing search {p}%",
+      "off.st.ready": "Ready", "off.st.err": "Stopped: {e}",
+      "off.meta": "{size} · detail up to zoom {z} · {date}", "off.data": "Map data of {d}",
+      "off.pause": "Pause", "off.resume": "Resume", "off.cancel": "Cancel", "off.show": "Show", "off.update": "Update", "off.del": "Delete",
+      "off.del.q": "Delete the offline map “{n}”?", "off.cancel.q": "Cancel the download of “{n}” and delete what was downloaded?",
+      "off.del.ok": "Delete", "off.keep": "Keep", "off.deleted": "Offline map deleted",
+      "off.done": "Offline map ready: {n}", "off.updated": "Offline map updated: {n}", "off.started": "Downloading {n}…",
+      "off.resumed": "Continuing the download of {n}", "off.paused.net": "Download paused: no connection. It continues when you're back online.",
+      "off.full": "Download stopped: the device storage is full.",
+      "off.storage": "Packs use {u}. Free on this device: about {f}.", "off.storage.u": "Packs use {u}.",
+      "off.persist.no": "The browser may remove offline maps if the device runs out of space.",
+      "off.layer": "Offline map (downloaded)", "off.auto": "You're offline: showing your downloaded map",
+      "off.back": "Back online: showing the online map again",
+      "off.src": "Map source (advanced)", "off.src.hint": "Leave empty for the newest Protomaps build of OpenStreetMap. Or the address of your own PMTiles file (vector tiles, Protomaps layout).",
+      "off.src.save": "Save source", "off.src.saved": "Map source saved", "off.src.badurl": "Enter an http(s) address, or leave it empty.",
+      "off.credit": "Map data © OpenStreetMap contributors (ODbL), vector tiles by Protomaps.",
+      "off.settings.sum": "{n} packs · {u}", "off.settings.none": "No offline maps",
+      "off.close": "Close", "off.updating": "Update of {n}",
+      "off.k.places:country": "Country", "off.k.places:region": "Region", "off.k.places:locality": "Town or village",
+      "off.k.places:neighbourhood": "Neighbourhood", "off.k.places:macrohood": "District", "off.k.roads:street": "Street",
+      "off.k.roads:path": "Path", "off.k.address": "Address", "off.k.water": "Water", "off.k.park": "Park", "off.k.station": "Station",
+      "off.k.food": "Food and drink", "off.k.shop": "Shop", "off.k.health": "Health", "off.k.school": "School", "off.k.stay": "Hotel",
+      "off.k.culture": "Culture", "off.k.worship": "Place of worship", "off.k.nature": "Nature", "off.k.transport": "Transport",
+      "off.k.place": "Place", "off.k.offline": "offline"
     },
     el: {
-      "title": "Χάρτες εκτός σύνδεσης", "btn": "Χάρτες εκτός σύνδεσης",
-      "intro": "Κατέβασε μια περιοχή για να δουλεύουν ο χάρτης και η αναζήτηση χωρίς σύνδεση, όπως στα Organic Maps και OsmAnd.",
-      "nosupport": "Αυτός ο περιηγητής δεν μπορεί να αποθηκεύσει χάρτες εκτός σύνδεσης (δεν έχει ιδιωτικό χώρο αρχείων). Δοκίμασε πρόσφατο Chrome, Edge, Firefox ή Safari 26.",
-      "packs": "Τα πακέτα σου", "none": "Δεν υπάρχουν ακόμα χάρτες εκτός σύνδεσης.",
-      "new": "Λήψη περιοχής", "area.hint": "Το διακεκομμένο πλαίσιο στον χάρτη είναι ό,τι θα αποθηκευτεί. Μετακίνησε ή μεγέθυνε τον χάρτη για να το αλλάξεις.",
-      "name": "Όνομα", "name.ph": "π.χ. Αθήνα", "area.default": "Η περιοχή μου",
-      "check": "Έλεγχος μεγέθους", "checking": "Διαβάζω το ευρετήριο του χάρτη… {p}",
-      "detail": "Λεπτομέρεια",
-      "lvl.10": "Επισκόπηση: πόλεις, κεντρικοί δρόμοι", "lvl.12": "Δρόμοι και χωριά", "lvl.14": "Οδοί, καταστήματα και μέρη", "lvl.15": "Πλήρης λεπτομέρεια με κτίρια",
-      "tiles": "{n} πλακίδια χάρτη", "download": "Λήψη {s}", "toobig": "Η περιοχή είναι πολύ μεγάλη. Μεγέθυνε τον χάρτη και έλεγξε ξανά.",
-      "nofree": "Δεν υπάρχει αρκετός ελεύθερος χώρος στη συσκευή για {s}.",
-      "moved": "Ο χάρτης μετακινήθηκε: έλεγξε ξανά το μέγεθος.",
-      "offline": "Είσαι εκτός σύνδεσης. Η λήψη χρειάζεται σύνδεση.",
-      "src.err": "Δεν ήταν δυνατή η σύνδεση με τα δεδομένα του χάρτη. Δοκίμασε αργότερα.",
-      "src.bad": "Αυτή η πηγή χάρτη δεν μπορεί να χρησιμοποιηθεί: πρέπει να είναι αρχείο PMTiles με διανυσματικά πλακίδια (gzip ή χωρίς συμπίεση).",
-      "src.range": "Η πηγή του χάρτη δεν επιτρέπει λήψη σε κομμάτια.",
-      "src.changed": "Τα δεδομένα του χάρτη αντικαταστάθηκαν στον διακομιστή. Διάγραψε αυτό το πακέτο και κατέβασέ το ξανά.",
-      "st.dl": "Λήψη {p}%", "st.paused": "Σε παύση στο {p}%", "st.plan": "Προετοιμασία…", "st.index": "Προετοιμασία αναζήτησης {p}%",
-      "st.ready": "Έτοιμο", "st.err": "Σταμάτησε: {e}",
-      "meta": "{size} · λεπτομέρεια έως ζουμ {z} · {date}", "data": "Δεδομένα χάρτη της {d}",
-      "pause": "Παύση", "resume": "Συνέχεια", "cancel": "Ακύρωση", "show": "Εμφάνιση", "update": "Ενημέρωση", "del": "Διαγραφή",
-      "del.q": "Να διαγραφεί ο χάρτης εκτός σύνδεσης «{n}»;", "cancel.q": "Να ακυρωθεί η λήψη του «{n}» και να διαγραφεί ό,τι κατέβηκε;",
-      "del.ok": "Διαγραφή", "keep": "Διατήρηση", "deleted": "Ο χάρτης εκτός σύνδεσης διαγράφηκε",
-      "done": "Ο χάρτης εκτός σύνδεσης είναι έτοιμος: {n}", "updated": "Ο χάρτης εκτός σύνδεσης ενημερώθηκε: {n}", "started": "Λήψη του {n}…",
-      "resumed": "Συνεχίζεται η λήψη του {n}", "paused.net": "Η λήψη σταμάτησε: δεν υπάρχει σύνδεση. Θα συνεχίσει όταν ξανασυνδεθείς.",
-      "full": "Η λήψη σταμάτησε: ο χώρος της συσκευής γέμισε.",
-      "storage": "Τα πακέτα πιάνουν {u}. Ελεύθερα στη συσκευή: περίπου {f}.", "storage.u": "Τα πακέτα πιάνουν {u}.",
-      "persist.no": "Ο περιηγητής μπορεί να σβήσει τους χάρτες εκτός σύνδεσης αν γεμίσει ο χώρος της συσκευής.",
-      "layer": "Χάρτης εκτός σύνδεσης (λήψη)", "auto": "Είσαι εκτός σύνδεσης: εμφανίζεται ο χάρτης που κατέβασες",
-      "back": "Ξανά σε σύνδεση: εμφανίζεται πάλι ο online χάρτης",
-      "src": "Πηγή χάρτη (για προχωρημένους)", "src.hint": "Άφησέ το κενό για την πιο πρόσφατη έκδοση Protomaps του OpenStreetMap. Ή γράψε τη διεύθυνση δικού σου αρχείου PMTiles (διανυσματικά πλακίδια, διάταξη Protomaps).",
-      "src.save": "Αποθήκευση πηγής", "src.saved": "Η πηγή χάρτη αποθηκεύτηκε", "src.badurl": "Γράψε διεύθυνση http(s) ή άφησέ το κενό.",
-      "credit": "Δεδομένα χάρτη © συντελεστές OpenStreetMap (ODbL), διανυσματικά πλακίδια από Protomaps.",
-      "settings.sum": "{n} πακέτα · {u}", "settings.none": "Κανένας χάρτης εκτός σύνδεσης",
-      "close": "Κλείσιμο", "updating": "Ενημέρωση του {n}",
-      "k.places:country": "Χώρα", "k.places:region": "Περιφέρεια", "k.places:locality": "Πόλη ή χωριό",
-      "k.places:neighbourhood": "Γειτονιά", "k.places:macrohood": "Συνοικία", "k.roads:street": "Οδός",
-      "k.roads:path": "Μονοπάτι", "k.address": "Διεύθυνση", "k.water": "Νερό", "k.park": "Πάρκο", "k.station": "Σταθμός",
-      "k.food": "Φαγητό και ποτό", "k.shop": "Κατάστημα", "k.health": "Υγεία", "k.school": "Σχολείο", "k.stay": "Ξενοδοχείο",
-      "k.culture": "Πολιτισμός", "k.worship": "Χώρος λατρείας", "k.nature": "Φύση", "k.transport": "Συγκοινωνία",
-      "k.place": "Μέρος", "k.offline": "εκτός σύνδεσης"
+      "off.title": "Χάρτες εκτός σύνδεσης", "off.btn": "Χάρτες εκτός σύνδεσης",
+      "off.intro": "Κατέβασε μια περιοχή για να δουλεύουν ο χάρτης και η αναζήτηση χωρίς σύνδεση, όπως στα Organic Maps και OsmAnd.",
+      "off.nosupport": "Αυτός ο περιηγητής δεν μπορεί να αποθηκεύσει χάρτες εκτός σύνδεσης (δεν έχει ιδιωτικό χώρο αρχείων). Δοκίμασε πρόσφατο Chrome, Edge, Firefox ή Safari 26.",
+      "off.packs": "Τα πακέτα σου", "off.none": "Δεν υπάρχουν ακόμα χάρτες εκτός σύνδεσης.",
+      "off.new": "Λήψη περιοχής", "off.area.hint": "Το διακεκομμένο πλαίσιο στον χάρτη είναι ό,τι θα αποθηκευτεί. Μετακίνησε ή μεγέθυνε τον χάρτη για να το αλλάξεις.",
+      "off.name": "Όνομα", "off.name.ph": "π.χ. Αθήνα", "off.area.default": "Η περιοχή μου",
+      "off.check": "Έλεγχος μεγέθους", "off.checking": "Διαβάζω το ευρετήριο του χάρτη… {p}",
+      "off.detail": "Λεπτομέρεια",
+      "off.lvl.10": "Επισκόπηση: πόλεις, κεντρικοί δρόμοι", "off.lvl.12": "Δρόμοι και χωριά", "off.lvl.14": "Οδοί, καταστήματα και μέρη", "off.lvl.15": "Πλήρης λεπτομέρεια με κτίρια",
+      "off.tiles": "{n} πλακίδια χάρτη", "off.download": "Λήψη {s}", "off.toobig": "Η περιοχή είναι πολύ μεγάλη. Μεγέθυνε τον χάρτη και έλεγξε ξανά.",
+      "off.nofree": "Δεν υπάρχει αρκετός ελεύθερος χώρος στη συσκευή για {s}.",
+      "off.moved": "Ο χάρτης μετακινήθηκε: έλεγξε ξανά το μέγεθος.",
+      "off.offline": "Είσαι εκτός σύνδεσης. Η λήψη χρειάζεται σύνδεση.",
+      "off.src.err": "Δεν ήταν δυνατή η σύνδεση με τα δεδομένα του χάρτη. Δοκίμασε αργότερα.",
+      "off.src.bad": "Αυτή η πηγή χάρτη δεν μπορεί να χρησιμοποιηθεί: πρέπει να είναι αρχείο PMTiles με διανυσματικά πλακίδια (gzip ή χωρίς συμπίεση).",
+      "off.src.range": "Η πηγή του χάρτη δεν επιτρέπει λήψη σε κομμάτια.",
+      "off.src.changed": "Τα δεδομένα του χάρτη αντικαταστάθηκαν στον διακομιστή. Διάγραψε αυτό το πακέτο και κατέβασέ το ξανά.",
+      "off.st.dl": "Λήψη {p}%", "off.st.paused": "Σε παύση στο {p}%", "off.st.plan": "Προετοιμασία…", "off.st.index": "Προετοιμασία αναζήτησης {p}%",
+      "off.st.ready": "Έτοιμο", "off.st.err": "Σταμάτησε: {e}",
+      "off.meta": "{size} · λεπτομέρεια έως ζουμ {z} · {date}", "off.data": "Δεδομένα χάρτη της {d}",
+      "off.pause": "Παύση", "off.resume": "Συνέχεια", "off.cancel": "Ακύρωση", "off.show": "Εμφάνιση", "off.update": "Ενημέρωση", "off.del": "Διαγραφή",
+      "off.del.q": "Να διαγραφεί ο χάρτης εκτός σύνδεσης «{n}»;", "off.cancel.q": "Να ακυρωθεί η λήψη του «{n}» και να διαγραφεί ό,τι κατέβηκε;",
+      "off.del.ok": "Διαγραφή", "off.keep": "Διατήρηση", "off.deleted": "Ο χάρτης εκτός σύνδεσης διαγράφηκε",
+      "off.done": "Ο χάρτης εκτός σύνδεσης είναι έτοιμος: {n}", "off.updated": "Ο χάρτης εκτός σύνδεσης ενημερώθηκε: {n}", "off.started": "Λήψη του {n}…",
+      "off.resumed": "Συνεχίζεται η λήψη του {n}", "off.paused.net": "Η λήψη σταμάτησε: δεν υπάρχει σύνδεση. Θα συνεχίσει όταν ξανασυνδεθείς.",
+      "off.full": "Η λήψη σταμάτησε: ο χώρος της συσκευής γέμισε.",
+      "off.storage": "Τα πακέτα πιάνουν {u}. Ελεύθερα στη συσκευή: περίπου {f}.", "off.storage.u": "Τα πακέτα πιάνουν {u}.",
+      "off.persist.no": "Ο περιηγητής μπορεί να σβήσει τους χάρτες εκτός σύνδεσης αν γεμίσει ο χώρος της συσκευής.",
+      "off.layer": "Χάρτης εκτός σύνδεσης (λήψη)", "off.auto": "Είσαι εκτός σύνδεσης: εμφανίζεται ο χάρτης που κατέβασες",
+      "off.back": "Ξανά σε σύνδεση: εμφανίζεται πάλι ο online χάρτης",
+      "off.src": "Πηγή χάρτη (για προχωρημένους)", "off.src.hint": "Άφησέ το κενό για την πιο πρόσφατη έκδοση Protomaps του OpenStreetMap. Ή γράψε τη διεύθυνση δικού σου αρχείου PMTiles (διανυσματικά πλακίδια, διάταξη Protomaps).",
+      "off.src.save": "Αποθήκευση πηγής", "off.src.saved": "Η πηγή χάρτη αποθηκεύτηκε", "off.src.badurl": "Γράψε διεύθυνση http(s) ή άφησέ το κενό.",
+      "off.credit": "Δεδομένα χάρτη © συντελεστές OpenStreetMap (ODbL), διανυσματικά πλακίδια από Protomaps.",
+      "off.settings.sum": "{n} πακέτα · {u}", "off.settings.none": "Κανένας χάρτης εκτός σύνδεσης",
+      "off.close": "Κλείσιμο", "off.updating": "Ενημέρωση του {n}",
+      "off.k.places:country": "Χώρα", "off.k.places:region": "Περιφέρεια", "off.k.places:locality": "Πόλη ή χωριό",
+      "off.k.places:neighbourhood": "Γειτονιά", "off.k.places:macrohood": "Συνοικία", "off.k.roads:street": "Οδός",
+      "off.k.roads:path": "Μονοπάτι", "off.k.address": "Διεύθυνση", "off.k.water": "Νερό", "off.k.park": "Πάρκο", "off.k.station": "Σταθμός",
+      "off.k.food": "Φαγητό και ποτό", "off.k.shop": "Κατάστημα", "off.k.health": "Υγεία", "off.k.school": "Σχολείο", "off.k.stay": "Ξενοδοχείο",
+      "off.k.culture": "Πολιτισμός", "off.k.worship": "Χώρος λατρείας", "off.k.nature": "Φύση", "off.k.transport": "Συγκοινωνία",
+      "off.k.place": "Μέρος", "off.k.offline": "εκτός σύνδεσης"
     }
   };
+  if (window.orosI18n) window.orosI18n.table(STR, "maps", LANG);
+  function loc() { return window.orosI18n ? window.orosI18n.locale(LANG) : (loc()); }
   function t(k, vars) {
+    k = "off." + k;
     var s = (STR[LANG] && STR[LANG][k]) || STR.en[k] || k;
     if (vars) Object.keys(vars).forEach(function (v) { s = s.split("{" + v + "}").join(String(vars[v])); });
     return s;
@@ -154,7 +157,7 @@
   function size(n) { return OC.fmtBytes(n, LANG); }
   function online() { return navigator.onLine !== false; }
   function fmtDate(ms) {
-    try { return new Date(ms).toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB", { day: "numeric", month: "short", year: "numeric" }); }
+    try { return new Date(ms).toLocaleDateString(loc(), { day: "numeric", month: "short", year: "numeric" }); }
     catch (e) { return new Date(ms).toDateString(); }
   }
   function fmtBuild(d) {
@@ -518,7 +521,7 @@
     park: /^(park|garden|playground|dog_park|golf_course|pitch|sports_centre|stadium|recreation_ground)$/
   };
   function kindLabel(k) {
-    if (STR.en["k." + k]) return t("k." + k);
+    if (STR.en["off.k." + k]) return t("k." + k);
     var parts = String(k).split(":"), layer = parts[0], kind = parts[1] || "";
     if (kind === "address") return t("k.address");
     if (layer === "water") return t("k.water");
@@ -706,7 +709,7 @@
       return true;
     }
     function nameOf(pr) {
-      var n = (LANG === "el" && (pr["name:el"] || pr.name_el)) || pr.name || "";
+      var n = (LANG !== "en" && (pr["name:" + LANG] || (LANG === "el" && pr.name_el))) || pr.name || "";
       return typeof n === "string" ? n.slice(0, 60) : "";
     }
     function label(text, x, y, font, color) {
@@ -1080,7 +1083,7 @@
       row.appendChild(r);
       var tx2 = el("span", "off-level-t");
       tx2.appendChild(el("b", "", t("lvl." + z)));
-      tx2.appendChild(el("small", "", size(draft.sizes.bytes[z]) + " · " + t("tiles", { n: draft.sizes.tiles[z].toLocaleString(LANG === "el" ? "el-GR" : "en-GB") })));
+      tx2.appendChild(el("small", "", size(draft.sizes.bytes[z]) + " · " + t("tiles", { n: draft.sizes.tiles[z].toLocaleString(loc()) })));
       row.appendChild(tx2);
       opts.appendChild(row);
     });

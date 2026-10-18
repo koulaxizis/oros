@@ -18,6 +18,10 @@
   var KEY = "oros-maps-data";
   var TKEY = "oros-maps-tracks-data";
   var TID = /^[a-z0-9]{6,40}$/;
+  var STR = {
+    en: { "srch.track": "Track", "srch.gpx": "GPX track", "srch.km": "{n} km", "srch.unnamed": "Unnamed place" },
+    el: { "srch.track": "Διαδρομή", "srch.gpx": "Διαδρομή GPX", "srch.km": "{n} χλμ.", "srch.unnamed": "Τοποθεσία χωρίς όνομα" }
+  };
 
   function str(v) { return typeof v === "string" ? v.trim() : ""; }
   function num(v) { return typeof v === "number" && isFinite(v); }
@@ -26,7 +30,10 @@
     id: "maps",
     keys: [KEY, TKEY],
     search: function (ctx) {
-      var d = ctx.readJSON(KEY), out = [];
+      var d = ctx.readJSON(KEY), out = [], K = STR[ctx.lang];
+      // a pack language: the "maps" pack when loaded, else English
+      if (!K && typeof ctx.lang === "string" && root && root.orosI18n) K = root.orosI18n.table(STR, "maps", ctx.lang);
+      K = K || STR.en;
       var td = ctx.readJSON(TKEY);
       if (td && td.tracks && typeof td.tracks === "object") {
         Object.keys(td.tracks).forEach(function (k) {
@@ -35,8 +42,8 @@
           var km = num(e.dist) ? (e.dist / 1000).toFixed(1) : "";
           out.push({
             id: "t" + k,
-            title: str(e.name) || (ctx.lang === "el" ? "Διαδρομή" : "Track"),
-            text: (ctx.lang === "el" ? "Διαδρομή GPX" : "GPX track") + (km ? " · " + km + (ctx.lang === "el" ? " χλμ." : " km") : "") + (str(e.folder) ? " · " + str(e.folder) : ""),
+            title: str(e.name) || K["srch.track"],
+            text: K["srch.gpx"] + (km ? " · " + K["srch.km"].replace("{n}", km) : "") + (str(e.folder) ? " · " + str(e.folder) : ""),
             target: { track: k }
           });
         });
@@ -52,7 +59,7 @@
         if (name === "?") name = "";
         out.push({
           id: id,
-          title: name || str(p.sub) || (ctx.lang === "el" ? "Τοποθεσία χωρίς όνομα" : "Unnamed place"),
+          title: name || str(p.sub) || K["srch.unnamed"],
           text: name ? str(p.sub) : "",
           target: { lat: p.lat, lon: p.lon, name: name || str(p.sub) }
         });

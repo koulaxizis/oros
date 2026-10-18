@@ -1,3 +1,4 @@
+// i18n-inline-ok: the only Greek here is search data (final-sigma folding).
 // ============================================================
 // orOS Maps — poi-core.js (place editing core, OSM upgrade wave 2,
 // v1.0.0). Pure functions, no DOM, no network: Node-tested in

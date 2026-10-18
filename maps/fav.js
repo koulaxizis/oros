@@ -24,52 +24,55 @@
   var T = window.OrosMapsTracks;
   var H = window.__orosMapsHost;
   if (!FC || !H || !H.map || typeof H.places !== "function") return;
-  var LANG = H.lang === "el" ? "el" : "en";
+  var LANG = window.orosI18n ? window.orosI18n.lang() : (H.lang === "el" ? "el" : "en");
   var DATA_KEY = "oros-maps-fav-data";
   var PREFS_KEY = "oros-maps-fav-prefs";
   var NONE = "_none";                 // fold key of "No group"
 
   var STR = {
     en: {
-      "label": "Group", "groups": "Groups", "import": "Import",
-      "none": "No group", "pick": "Group for “{n}”", "new": "New group",
-      "edit": "Edit group", "name": "Name", "color": "Colour",
-      "save": "Save", "cancel": "Cancel", "close": "Close", "delete": "Delete group",
-      "del.ask": "Delete the group “{n}”? Its places stay saved, without a group.",
-      "show": "Show on the map", "hide": "Hide from the map",
-      "fold": "Fold", "unfold": "Unfold",
-      "export": "Export GPX", "count1": "1 place", "count": "{n} places",
-      "manage": "Favourite groups", "manage.empty": "No groups yet. Make one to colour and sort your saved places.",
-      "moved": "Moved to {g}", "ungrouped": "Now without a group",
-      "dup": "A group with this name exists already.", "noname": "Give the group a name.",
-      "full": "That's the most groups you can have.", "deleted": "Group deleted",
-      "imp.title": "Import places", "imp.found": "{n} places in “{f}”", "imp.into": "Put them in",
-      "imp.newgrp": "New group “{f}”", "imp.go": "Import", "imp.done": "{n} places saved",
-      "imp.bad": "No places (waypoints) found in this file.", "imp.big": "This file is too big.",
-      "nodlg": "Saving files isn't available here.", "empty": "This group has no places yet.",
-      "saved": "Saved places"
+      "fav.label": "Group", "fav.groups": "Groups", "fav.import": "Import",
+      "fav.none": "No group", "fav.pick": "Group for “{n}”", "fav.new": "New group",
+      "fav.edit": "Edit group", "fav.name": "Name", "fav.color": "Colour",
+      "fav.save": "Save", "fav.cancel": "Cancel", "fav.close": "Close", "fav.delete": "Delete group",
+      "fav.del.ask": "Delete the group “{n}”? Its places stay saved, without a group.",
+      "fav.show": "Show on the map", "fav.hide": "Hide from the map",
+      "fav.fold": "Fold", "fav.unfold": "Unfold",
+      "fav.export": "Export GPX", "fav.count1": "1 place", "fav.count": "{n} places",
+      "fav.manage": "Favourite groups", "fav.manage.empty": "No groups yet. Make one to colour and sort your saved places.",
+      "fav.moved": "Moved to {g}", "fav.ungrouped": "Now without a group",
+      "fav.dup": "A group with this name exists already.", "fav.noname": "Give the group a name.",
+      "fav.full": "That's the most groups you can have.", "fav.deleted": "Group deleted",
+      "fav.imp.title": "Import places", "fav.imp.found": "{n} places in “{f}”", "fav.imp.into": "Put them in",
+      "fav.imp.newgrp": "New group “{f}”", "fav.imp.go": "Import", "fav.imp.done": "{n} places saved",
+      "fav.imp.bad": "No places (waypoints) found in this file.", "fav.imp.big": "This file is too big.",
+      "fav.nodlg": "Saving files isn't available here.", "fav.empty": "This group has no places yet.",
+      "fav.saved": "Saved places"
     },
     el: {
-      "label": "Ομάδα", "groups": "Ομάδες", "import": "Εισαγωγή",
-      "none": "Χωρίς ομάδα", "pick": "Ομάδα για «{n}»", "new": "Νέα ομάδα",
-      "edit": "Επεξεργασία ομάδας", "name": "Όνομα", "color": "Χρώμα",
-      "save": "Αποθήκευση", "cancel": "Άκυρο", "close": "Κλείσιμο", "delete": "Διαγραφή ομάδας",
-      "del.ask": "Διαγραφή της ομάδας «{n}»; Οι τοποθεσίες της μένουν αποθηκευμένες, χωρίς ομάδα.",
-      "show": "Εμφάνιση στον χάρτη", "hide": "Απόκρυψη από τον χάρτη",
-      "fold": "Σύμπτυξη", "unfold": "Ανάπτυξη",
-      "export": "Εξαγωγή GPX", "count1": "1 τοποθεσία", "count": "{n} τοποθεσίες",
-      "manage": "Ομάδες αγαπημένων", "manage.empty": "Δεν υπάρχουν ομάδες ακόμα. Φτιάξε μία για να χρωματίσεις και να οργανώσεις τις αποθηκευμένες τοποθεσίες σου.",
-      "moved": "Μετακινήθηκε στην ομάδα {g}", "ungrouped": "Τώρα χωρίς ομάδα",
-      "dup": "Υπάρχει ήδη ομάδα με αυτό το όνομα.", "noname": "Δώσε ένα όνομα στην ομάδα.",
-      "full": "Δεν μπορείς να έχεις περισσότερες ομάδες.", "deleted": "Η ομάδα διαγράφηκε",
-      "imp.title": "Εισαγωγή τοποθεσιών", "imp.found": "{n} τοποθεσίες στο «{f}»", "imp.into": "Βάλ' τα στην ομάδα",
-      "imp.newgrp": "Νέα ομάδα «{f}»", "imp.go": "Εισαγωγή", "imp.done": "Αποθηκεύτηκαν {n} τοποθεσίες",
-      "imp.bad": "Δεν βρέθηκαν τοποθεσίες (σημεία) σε αυτό το αρχείο.", "imp.big": "Το αρχείο είναι πολύ μεγάλο.",
-      "nodlg": "Η αποθήκευση αρχείων δεν είναι διαθέσιμη εδώ.", "empty": "Αυτή η ομάδα δεν έχει τοποθεσίες ακόμα.",
-      "saved": "Αποθηκευμένες τοποθεσίες"
+      "fav.label": "Ομάδα", "fav.groups": "Ομάδες", "fav.import": "Εισαγωγή",
+      "fav.none": "Χωρίς ομάδα", "fav.pick": "Ομάδα για «{n}»", "fav.new": "Νέα ομάδα",
+      "fav.edit": "Επεξεργασία ομάδας", "fav.name": "Όνομα", "fav.color": "Χρώμα",
+      "fav.save": "Αποθήκευση", "fav.cancel": "Άκυρο", "fav.close": "Κλείσιμο", "fav.delete": "Διαγραφή ομάδας",
+      "fav.del.ask": "Διαγραφή της ομάδας «{n}»; Οι τοποθεσίες της μένουν αποθηκευμένες, χωρίς ομάδα.",
+      "fav.show": "Εμφάνιση στον χάρτη", "fav.hide": "Απόκρυψη από τον χάρτη",
+      "fav.fold": "Σύμπτυξη", "fav.unfold": "Ανάπτυξη",
+      "fav.export": "Εξαγωγή GPX", "fav.count1": "1 τοποθεσία", "fav.count": "{n} τοποθεσίες",
+      "fav.manage": "Ομάδες αγαπημένων", "fav.manage.empty": "Δεν υπάρχουν ομάδες ακόμα. Φτιάξε μία για να χρωματίσεις και να οργανώσεις τις αποθηκευμένες τοποθεσίες σου.",
+      "fav.moved": "Μετακινήθηκε στην ομάδα {g}", "fav.ungrouped": "Τώρα χωρίς ομάδα",
+      "fav.dup": "Υπάρχει ήδη ομάδα με αυτό το όνομα.", "fav.noname": "Δώσε ένα όνομα στην ομάδα.",
+      "fav.full": "Δεν μπορείς να έχεις περισσότερες ομάδες.", "fav.deleted": "Η ομάδα διαγράφηκε",
+      "fav.imp.title": "Εισαγωγή τοποθεσιών", "fav.imp.found": "{n} τοποθεσίες στο «{f}»", "fav.imp.into": "Βάλ' τα στην ομάδα",
+      "fav.imp.newgrp": "Νέα ομάδα «{f}»", "fav.imp.go": "Εισαγωγή", "fav.imp.done": "Αποθηκεύτηκαν {n} τοποθεσίες",
+      "fav.imp.bad": "Δεν βρέθηκαν τοποθεσίες (σημεία) σε αυτό το αρχείο.", "fav.imp.big": "Το αρχείο είναι πολύ μεγάλο.",
+      "fav.nodlg": "Η αποθήκευση αρχείων δεν είναι διαθέσιμη εδώ.", "fav.empty": "Αυτή η ομάδα δεν έχει τοποθεσίες ακόμα.",
+      "fav.saved": "Αποθηκευμένες τοποθεσίες"
     }
   };
+  if (window.orosI18n) window.orosI18n.table(STR, "maps", LANG);
+  function loc() { return window.orosI18n ? window.orosI18n.locale(LANG) : (loc()); }
   function t(k, vars) {
+    k = "fav." + k;
     var s = (STR[LANG] && STR[LANG][k]) || STR.en[k] || k;
     if (vars) Object.keys(vars).forEach(function (v) { s = s.split("{" + v + "}").join(String(vars[v])); });
     return s;
