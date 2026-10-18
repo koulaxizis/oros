@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.25.01
+- German: the Android app's reminder status line in Settings › Notifications is now in German too.
+
 ## Version 3.25.00
 - Atelier makes a web page from your design (Download › Web page): a ZIP you upload to any web host, with real text that search engines and screen readers read, sized to any screen, with no code in it. Elements can have a link (a web address, an e-mail, a phone or another page) that works in the web page and in the PDF.
 
