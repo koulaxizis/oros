@@ -52,6 +52,28 @@ test("stamp mode writes ?v= to every page", () => {
   assert.match(fs.readFileSync(path.join(dir, "app/index.html"), "utf8"), /app\.js\?v=9\.9\.99/);
 });
 
+test("stamp mode writes the precache content hashes into sw.js (SW-U1)", () => {
+  const dir = fixture(["app"]);
+  const sw = path.join(dir, "sw.js");
+  fs.writeFileSync(sw, fs.readFileSync(sw, "utf8") + "\nvar PRECACHE_HASH = {};\n");
+  assert.strictEqual(run(dir, { OROS_VERSION: "9.9.99" }).status, 0);
+  const m = /^var PRECACHE_HASH = (\{.*\});$/m.exec(fs.readFileSync(sw, "utf8"));
+  const h = JSON.parse(m[1]);
+  const sha = (f) => require("crypto").createHash("sha256").update(fs.readFileSync(path.join(dir, f))).digest("hex").slice(0, 16);
+  // Hashes of the bytes that ship: app/index.html after its ?v= stamp.
+  assert.strictEqual(h["app/index.html"], sha("app/index.html"));
+  assert.strictEqual(h["app/app.js"], sha("app/app.js"));
+  assert.strictEqual(h["./shell.js"], sha("shell.js"));
+  // Check mode leaves the table alone.
+  const before = fs.readFileSync(sw, "utf8");
+  run(dir, { OROS_CHECK: "1" });
+  assert.strictEqual(fs.readFileSync(sw, "utf8"), before);
+});
+
+test("the repository's sw.js has the PRECACHE_HASH line the stamp fills", () => {
+  assert.match(fs.readFileSync(path.join(ROOT, "sw.js"), "utf8"), /^var PRECACHE_HASH = \{.*\};$/m);
+});
+
 test("G3: an unregistered standalone page does not block the stamp", () => {
   const r = run(fixture(["app"]), { OROS_CHECK: "1" });
   assert.strictEqual(r.status, 0, r.stdout + r.stderr);

@@ -1969,6 +1969,74 @@ var PRECACHE_URLS = [
   "fonts/nunito-bold.woff2",
   "fonts/nunito-extrabold.woff2"
 ];
+
+// SW-U1: every release used to download the WHOLE precache again
+// (1,658 files, 46 MB in 3.19.00), all at once, even though a release
+// changes a handful of them. On a phone that meant a 46 MB download per
+// release, and it competed with the page for the network: after a
+// release orOS took many seconds to show its desktop. Now a file whose
+// content did not change is copied from the previous release's cache.
+// PRECACHE_HASH is written by the release stamp (stamp-assets.js) on main
+// (same pass as CACHE_VERSION): the first 16 hex digits of the SHA-256
+// of each file, keyed by its PRECACHE_URLS entry. The old copy is
+// hashed here before it is reused, so a stale or wrong copy (or a stale
+// table) only costs a download, never serves old code. No table, no
+// entry, no previous cache or no crypto: the file is downloaded as
+// before.
+var PRECACHE_HASH = {};
+// SW-U2: at most this many precache files at a time, at low fetch
+// priority, so an install leaves room on the network for the page.
+var PRECACHE_POOL = 4;
+
+function pool(items, size, fn) {
+  var i = 0;
+  function next() {
+    if (i >= items.length) return Promise.resolve();
+    var item = items[i++];
+    return Promise.resolve().then(function () { return fn(item); }).then(next);
+  }
+  var runners = [];
+  for (var k = 0; k < Math.min(size, items.length); k++) runners.push(next());
+  return Promise.all(runners);
+}
+
+// The other releases' shell caches, newest name first.
+function previousShells() {
+  return caches.keys().then(function (names) {
+    var prev = names.filter(function (n) {
+      return n.indexOf("oros-shell-") === 0 && n !== SHELL_CACHE;
+    }).sort().reverse();
+    return Promise.all(prev.map(function (n) { return caches.open(n); }));
+  }).catch(function () { return []; });
+}
+
+function hex16(buf) {
+  var b = new Uint8Array(buf), s = "";
+  for (var i = 0; i < 8; i++) s += (b[i] < 16 ? "0" : "") + b[i].toString(16);
+  return s;
+}
+
+// A previous release's copy of u whose content hashes to the expected
+// value, or undefined.
+function unchangedCopy(prev, u) {
+  var want = Object.prototype.hasOwnProperty.call(PRECACHE_HASH, u) ? PRECACHE_HASH[u] : "";
+  var subtle = self.crypto && self.crypto.subtle;
+  if (!want || !subtle || !prev.length) return Promise.resolve(undefined);
+  var i = 0;
+  function tryNext() {
+    if (i >= prev.length) return undefined;
+    return prev[i++].match(u).then(function (hit) {
+      if (!hit || !hit.ok) return tryNext();
+      return hit.clone().arrayBuffer().then(function (buf) {
+        return subtle.digest("SHA-256", buf);
+      }).then(function (d) {
+        return hex16(d) === want ? hit : tryNext();
+      });
+    });
+  }
+  return Promise.resolve().then(tryNext).catch(function () { return undefined; });
+}
+
 self.addEventListener("install", function (event) {
   self.skipWaiting();          // zero-gate update: install → activate
   event.waitUntil(
@@ -2000,11 +2068,14 @@ self.addEventListener("install", function (event) {
       // Resume only after a FAILED attempt of this same release (its
       // marker): a worker re-installed under an unchanged version
       // still refreshes every file, as before.
-      return cache.match(PARTIAL_MARK).then(function (resume) {
-      return Promise.all(PRECACHE_URLS.map(function (u) {
+      return Promise.all([cache.match(PARTIAL_MARK), previousShells()]).then(function (got) {
+      var resume = got[0], prev = got[1];
+      return pool(PRECACHE_URLS, PRECACHE_POOL, function (u) {
         return (resume ? cache.match(u) : Promise.resolve(undefined)).then(function (have) {
           if (have) return;
-          return fetch(new Request(u, { cache: "reload" })).then(function (response) {
+          return unchangedCopy(prev, u).then(function (same) {
+          if (same) return cache.put(u, same);
+          return fetch(new Request(u, { cache: "reload", priority: "low" })).then(function (response) {
             if (!response.ok) {
               console.warn("[SW] precache MISS:", u, response.status);
               return;
@@ -2014,8 +2085,9 @@ self.addEventListener("install", function (event) {
             netFailed.push(u);
             console.warn("[SW] precache MISS:", u, e && e.message);
           });
+          });   // unchangedCopy
         });
-      })).then(function () {
+      }).then(function () {
         if (updating && netFailed.length) {
           return cache.put(PARTIAL_MARK, new Response("")).catch(function () {}).then(function () {
             throw new Error("precache: " + netFailed.length +
@@ -2024,7 +2096,7 @@ self.addEventListener("install", function (event) {
         }
         return cache.delete(PARTIAL_MARK);
       });
-      });   // PARTIAL_MARK
+      });   // PARTIAL_MARK + previous release
     })
   );
 });
