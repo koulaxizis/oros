@@ -224,8 +224,11 @@
 
   function relay(body) {
     body.op = "push";
+    var json = JSON.stringify(body);
+    // keepalive: a schedule sent as orOS closes still gets there
+    // (browsers cap keepalive bodies at 64 KB, so only small ones).
     return fetch(RELAY + "/v1", { method: "POST", headers: { "Content-Type": "application/json" },
-                                  body: JSON.stringify(body) })
+                                  body: json, keepalive: json.length < 60000 })
       .catch(function () { throw fail("network"); })   // offline, blocked, or the relay refused this origin
       .then(function (r) { return r.json().catch(function () { return { ok: false, error: { code: "proto" } }; }); })
       .then(function (j) {
@@ -427,6 +430,18 @@
   setInterval(function () { schedule(false); }, 60000);
   document.addEventListener("visibilitychange", function () { if (document.hidden) { lastCheck = 0; schedule(false); } });
   setTimeout(function () { schedule(false); }, 8000);
+  // An app saved something (a Calendar event, an alarm): send soon, not
+  // up to a minute later, so closing orOS right after still counts.
+  // The apps run in frames, so their writes reach this page as storage events.
+  var soon = 0;
+  root.addEventListener("storage", function (e) {
+    if (!e.key || e.key.indexOf("oros-webpush") === 0) return;
+    clearTimeout(soon);
+    soon = setTimeout(function again() {
+      if (busy) { soon = setTimeout(again, 1500); return; }
+      lastCheck = 0; schedule(false);
+    }, 1500);
+  });
 
   root.orosPush = {
     calendarRows: calendarRows,   // also used by phone.js (the Android app's own reminders)
