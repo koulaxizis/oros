@@ -34,6 +34,10 @@
 //   table: tb (objects.js normTable), font, size (text size before
 //          shrink-to-fit, default 24), al l|c|r; fc text, sc lines
 //   chart: ch (objects.js normChart), fc background, size labels
+// Since wave B1 (R39: new fields live in the item's `ext`, not here):
+//   ext.lnk  the element's link: https / http / mailto / tel, or
+//            "#p<n>" = page n of the same design (normLink); the web
+//            page export (webout.js) and the PDF make it clickable
 // Defaults are omitted, keys come in one fixed order: the record is
 // canonical (R26), so equal designs give equal JSON on every device.
 // Pure: no DOM. Exposes window.AtelierAX (browser) or module.exports.
@@ -491,7 +495,55 @@
     return Object.keys(ids).sort();
   }
 
+  // ---------- 6. Links (item ext.lnk, wave B1) ----------
+  // What someone typed → a link that is safe to put in a page or a
+  // PDF, or "" (nothing else: no javascript:, data:, file:, …).
+  // "example.com/x" gets https://; "#p2" = the design's page 2.
+  var LINK_MAX = 2000;
+  function normLink(v) {
+    if (typeof v !== "string") return "";
+    var s = v.replace(/[\u0000-\u0020\u007F-\u009F]+/g, " ").trim();
+    if (/^tel:/i.test(s)) s = s.replace(/ /g, "");          // "+30 210 …"
+    if (!s || s.length > LINK_MAX || /\s/.test(s)) return "";
+    var pm = /^#p([1-9][0-9]{0,2})$/.exec(s);
+    if (pm) return "#p" + pm[1];
+    if (/^(mailto|tel):/i.test(s)) {
+      var rest = s.slice(s.indexOf(":") + 1);
+      if (!rest || /[<>"'`\\]/.test(rest)) return "";
+      if (/^tel:/i.test(s) && !/^\+?[0-9().\-\/]{3,40}$/.test(rest)) return "";
+      if (/^mailto:/i.test(s) && !/^[^@\s]+@[^@\s]+$/.test(rest.split("?")[0])) return "";
+      return s.slice(0, s.indexOf(":")).toLowerCase() + ":" + rest;
+    }
+    if (!/^[a-z][a-z0-9+.-]*:/i.test(s)) {
+      if (!/^[a-z0-9\u00a1-\uffff-]+(\.[a-z0-9\u00a1-\uffff-]+)+([\/?#:].*)?$/i.test(s)) return "";
+      s = "https://" + s;
+    }
+    if (!/^https?:\/\//i.test(s) || typeof URL === "undefined") return "";
+    try {
+      var u = new URL(s);
+      if ((u.protocol !== "https:" && u.protocol !== "http:") || !u.hostname || u.username || u.password) return "";
+      var out = u.href;
+      return out.length <= LINK_MAX && !/[<>"'`\\]/.test(out) ? out : "";
+    } catch (e) { return ""; }
+  }
+  // The link of an element ("" = none), checked again on the way out.
+  function linkOf(it) {
+    var v = it && it.ext && it.ext.lnk;
+    return typeof v === "string" ? normLink(v) : "";
+  }
+  // Sets / removes an element's link in place; false = not a link.
+  function setLink(it, v) {
+    var l = normLink(v);
+    if (v && String(v).trim() && !l) return false;
+    var x = {};
+    if (it.ext) Object.keys(it.ext).forEach(function (k) { if (k !== "lnk") x[k] = it.ext[k]; });
+    if (l) x.lnk = l;
+    if (Object.keys(x).length) it.ext = x; else delete it.ext;
+    return true;
+  }
+
   var api = {
+    normLink: normLink, linkOf: linkOf, setLink: setLink,
     KINDS: KINDS, BASE: BASE, TEXT_DEF: TEXT_DEF, RD_DEF: RD_DEF, MAX_TX: MAX_TX, HEADS: HEADS,
     normAx: normAx, newDesign: newDesign, addItem: addItem, addBackground: addBackground, background: background,
     nextZ: nextZ, textStyle: textStyle, textLayout: textLayout, curveLayout: curveLayout, textHeight: textHeight,

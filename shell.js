@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "3.23.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "3.25.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -11236,6 +11236,23 @@
       },
       desktop: document.getElementById("oros-desktop"),
       menuChanged: function () { renderMenu(); }
+    });
+  }
+  // Desktop menu (quickmenu.js, a shell component like launcher.js):
+  // right-click or long press on the desktop → Assistant tasks + apps.
+  if (window.orosQuick && !SOLO) {
+    window.orosQuick.attach({
+      desktop: document.getElementById("oros-desktop"),
+      apps: function () { return state.apps; },
+      open: openApp,
+      running: function () { return !!state.running; },
+      icons: ICONS,
+      lang: function () { return langBase(); },
+      label: function (app) {
+        var k = "app." + app.id, v = window.t(k);
+        return (v === k) ? app.name : v;
+      },
+      toast: function (msg) { scToast("err", msg); }
     });
   }
   applySkin();

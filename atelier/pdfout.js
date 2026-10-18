@@ -13,7 +13,8 @@
 //   - pictures: photos (with filters, cropped to the frame and cut to
 //     their shape by a clipping path), icons, charts, gradients,
 //     videos (first frame) and anything else the PDF can't hold.
-// Rotation and transparency per element as on the canvas.
+// Rotation and transparency per element as on the canvas; an
+// element's link (ext.lnk) is a clickable area over it.
 // plan() says what goes how; the caller draws the pictures (the
 // browser: io.js, through draw.js) and build() writes the PDF.
 // Exposes window.AtelierPDF (browser) or module.exports (Node).
@@ -300,6 +301,29 @@
     pdf.addImage(pic.data, pic.fmt, it.x + pic.x, it.y + pic.y, pic.w, pic.h, alias, "FAST");
   }
 
+  // An element's link (item ext.lnk, wave B1) as a clickable area over
+  // its bounds on the page (turned elements: the box around them).
+  // "#p<n>" goes to page n of this PDF when that page is in it.
+  function linkBox(it) {
+    if (it.t === "line") {
+      var p = Math.max(4, (it.sw || 1) * 2);
+      return { x: Math.min(it.x, it.x + it.w) - p, y: Math.min(it.y, it.y + it.h) - p, w: Math.abs(it.w) + 2 * p, h: Math.abs(it.h) + 2 * p };
+    }
+    var a = (it.rot || 0) * Math.PI / 180, c = Math.abs(Math.cos(a)), n = Math.abs(Math.sin(a));
+    var w = it.w * c + it.h * n, h = it.w * n + it.h * c;
+    return { x: it.x + it.w / 2 - w / 2, y: it.y + it.h / 2 - h / 2, w: w, h: h };
+  }
+  function addLink(pdf, it, pages) {
+    var l = AX.linkOf(it);
+    if (!l || typeof pdf.link !== "function") return;
+    var b = linkBox(it), pm = /^#p(\d+)$/.exec(l), o;
+    if (pm) {
+      if (+pm[1] > pages.length) return;
+      o = { pageNumber: +pm[1] };
+    } else o = { url: l };
+    pdf.link(b.x, b.y, b.w, b.h, o);
+  }
+
   // opts: { pages [pageId] (default all), title }
   // deps: { jsPDF, pictures: { itemId: { data, fmt "PNG"|"JPEG",
   //   x, y, w, h (item-local points, unrotated) } }, plan (optional) }
@@ -344,12 +368,13 @@
           else if (it.ax.k === "table") drawTable(pdf, W, it);
         }
         pdf.restoreGraphicsState();
+        addLink(pdf, it, pages);
       });
     });
     return pdf;
   }
 
-  var api = { plan: plan, kindOf: kindOf, needsPicture: needsPicture, build: build, faceFor: faceFor, coversRuns: coversRuns };
+  var api = { plan: plan, kindOf: kindOf, needsPicture: needsPicture, build: build, linkBox: linkBox, faceFor: faceFor, coversRuns: coversRuns };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.AtelierPDF = api;
 })(typeof window !== "undefined" ? window : this);

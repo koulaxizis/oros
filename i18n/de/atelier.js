@@ -1295,5 +1295,14 @@ orosPack("de", "atelier", {
  "vd.type": "Diese Datei ist kein Video und kein Ton, den Atelier abspielen kann (MP4, WebM, MP3, M4A, OGG, WAV).",
  "vd.upload": "Video oder Ton hinzufügen",
  "vd.vol": "Lautstärke",
- "vd.working": "Datei wird gelesen…"
+ "vd.working": "Datei wird gelesen…",
+ "exp.web": "Webseite",
+ "exp.webHint": "Eine Website aus deinem Design: echter Text, den Suchmaschinen und Screenreader lesen, alle Seiten untereinander, passend für jeden Bildschirm. Du bekommst eine ZIP-Datei: Lade ihren Inhalt zu GitHub Pages, Netlify oder auf deinen eigenen Server hoch. Darin läuft kein Code.",
+ "exp.webDone": "Gespeichert. Entpacke sie und lade die Dateien bei einem beliebigen Webhoster hoch.",
+ "ctx.link": "Link",
+ "lnk.hint": "Eine Webadresse, eine E-Mail (mailto:name@example.com), eine Telefonnummer (tel:+49…) oder #p2 für Seite 2 dieses Designs. Funktioniert in der Webseite und im PDF.",
+ "lnk.ph": "https://…",
+ "lnk.save": "Link speichern",
+ "lnk.remove": "Link entfernen",
+ "lnk.bad": "Das ist kein verwendbarer Link."
 });

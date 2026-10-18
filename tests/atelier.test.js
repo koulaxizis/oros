@@ -264,7 +264,7 @@ test("i18n: every key the app uses exists in English and Greek", () => {
   ["off", "dir", "blur", "alpha", "color", "thick", "pad", "round"].forEach((k) => used.add("fx." + k));
   ["front", "fwd", "bwd", "back", "al", "ac", "ar", "at", "am", "ab"].forEach((k) => used.add("pos." + k));
   ["none", "arrow", "dot"].forEach((k) => used.add("ctx.head." + k));
-  ["png", "jpg", "pdf", "pngHint", "jpgHint", "pdfHint", "scale1", "scale2", "scale3", "dpi150", "dpi300", "all", "cur"].forEach((k) => used.add("exp." + k));
+  ["png", "jpg", "pdf", "web", "pngHint", "jpgHint", "pdfHint", "webHint", "scale1", "scale2", "scale3", "dpi150", "dpi300", "all", "cur"].forEach((k) => used.add("exp." + k));
   ["px", "mm"].forEach((k) => used.add("custom." + k));
   const missing = [...used].filter((k) => !k.endsWith(".") && !(k in STRINGS.en));
   assert.deepEqual(missing, []);
