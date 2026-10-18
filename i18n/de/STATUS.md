@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 32330 of 32330 (100%)
+- Strings: 32391 of 32393 (99%)
 - Help pages: 145 of 145 (100%)
 - Shown in the language list: yes
 
@@ -12,7 +12,7 @@ text is still written in the code. They switch over wave by wave
 
 | App | Translated | Strings |
 |---|---|---|
-| assistant | 100% | 493 / 493 |
+| assistant | 100% | 496 / 496 |
 | atelier | 100% | 1306 / 1306 |
 | aura | 100% | 84 / 84 |
 | baby | 100% | 324 / 324 |
@@ -24,7 +24,7 @@ text is still written in the code. They switch over wave by wave
 | budget | 100% | 555 / 555 |
 | calculator | 100% | 136 / 136 |
 | calendar | 100% | 370 / 370 |
-| capture | 100% | 31 / 31 |
+| capture | 100% | 54 / 54 |
 | cardkit | 100% | 9 / 9 |
 | certificates | 100% | 391 / 391 |
 | characters | 100% | 89 / 89 |
@@ -112,10 +112,10 @@ text is still written in the code. They switch over wave by wave
 | rps | 100% | 59 / 59 |
 | scanpdf | 100% | 270 / 270 |
 | scores | 100% | 147 / 147 |
-| settings | 100% | 515 / 515 |
+| settings | 99% | 515 / 517 |
 | share | 100% | 179 / 179 |
 | shelf | 100% | 291 / 291 |
-| shell | 100% | 825 / 825 |
+| shell | 100% | 860 / 860 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 49 / 49 |
 | sky | 100% | 383 / 383 |

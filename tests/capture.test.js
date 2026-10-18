@@ -7,9 +7,11 @@ const assert = require("node:assert/strict");
 const C = require("../capture/core.js");
 
 test("options: unknown values fall back to the defaults", () => {
-  assert.deepEqual(C.prefs(null), { delay: 0, cursor: true, edit: false });
-  assert.deepEqual(C.prefs({ delay: 7, cursor: "no", edit: 1 }), { delay: 0, cursor: true, edit: false });
-  assert.deepEqual(C.prefs({ delay: 5, cursor: false, edit: true }), { delay: 5, cursor: false, edit: true });
+  const def = { mode: "shot", delay: 0, cursor: true, edit: false, sys: true, mic: false, montage: false };
+  assert.deepEqual(C.prefs(null), def);
+  assert.deepEqual(C.prefs({ mode: "video", delay: 7, cursor: "no", edit: 1, mic: "yes" }), def);
+  assert.deepEqual(C.prefs({ mode: "rec", delay: 5, cursor: false, edit: true, sys: false, mic: true, montage: true }),
+    { mode: "rec", delay: 5, cursor: false, edit: true, sys: false, mic: true, montage: true });
 });
 
 test("file names sort by time and have no characters Windows refuses", () => {
@@ -23,6 +25,7 @@ test("file names sort by time and have no characters Windows refuses", () => {
 test("a taken name gets a number before the extension", () => {
   assert.equal(C.pathFor("s.png", 1), "/internal/Pictures/s.png");
   assert.equal(C.pathFor("s.png", 3), "/internal/Pictures/s (3).png");
+  assert.equal(C.pathFor("r.webm", 2, C.VIDEOS), "/internal/Videos/r (2).webm");
 });
 
 test("a drag on a half-size preview crops the full-size picture", () => {
@@ -42,4 +45,25 @@ test("a click or a tiny drag keeps the whole picture", () => {
 test("the overlay is the crop in percentages", () => {
   assert.deepEqual(C.rectStyle({ x: 480, y: 270, w: 960, h: 540 }, 1920, 1080), { left: 25, top: 25, width: 50, height: 50 });
   assert.equal(C.rectStyle(null, 1920, 1080), null);
+});
+
+test("the recorder prefers MP4, then WebM, and says when it cannot record", () => {
+  assert.equal(C.recType(() => true), "video/mp4;codecs=avc1,mp4a");
+  assert.equal(C.recType((t) => /webm/.test(t)), "video/webm;codecs=vp9,opus");
+  assert.equal(C.recType((t) => t === "video/webm"), "video/webm");
+  assert.equal(C.recType(() => false), "");
+  assert.equal(C.recType(undefined), null);
+  assert.equal(C.recExt("video/mp4"), "mp4");
+  assert.equal(C.recExt("video/webm;codecs=vp9"), "webm");
+  assert.equal(C.recExt(""), "webm");
+});
+
+test("recording time and size read like a clock and a file size", () => {
+  assert.equal(C.clock(0), "0:00");
+  assert.equal(C.clock(75000), "1:15");
+  assert.equal(C.clock(3725000), "1:02:05");
+  assert.equal(C.clock(-5), "0:00");
+  assert.equal(C.size(0), "0.0 MB");
+  assert.equal(C.size(1048576 * 12.4), "12 MB");
+  assert.equal(C.size(1048576 * 1536), "1.5 GB");
 });

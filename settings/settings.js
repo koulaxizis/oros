@@ -630,6 +630,14 @@
       c.appendChild(el("div", "hint", t("n.phone.exact")));
       c.appendChild(actions(button(t("n.phone.allow"), "n.phone.exact", function () { P.askPermission("reminders"); })));
     }
+    // What the phone holds right now: how many, of them from Calendar, and the next one.
+    var ls = on && P.lastSync ? P.lastSync("reminders") : null;
+    if (ls && ls.at) {
+      var lang = document.documentElement.lang || undefined;
+      var fmt = function (ms) { return new Date(ms).toLocaleString(lang, { dateStyle: "short", timeStyle: "short" }); };
+      c.appendChild(el("div", "hint", t("n.phone.status", { n: ls.n, cal: ls.cal || 0, when: fmt(ls.at) }) +
+        (ls.next && ls.next.at ? " · " + t("n.phone.next", { title: ls.next.t || "?", when: fmt(ls.next.at) }) : "")));
+    }
     host.appendChild(c);
   }
 

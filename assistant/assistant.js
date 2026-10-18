@@ -267,6 +267,7 @@
       "err.wlspace": "There is not enough memory or storage for this model. Pick a smaller one in Settings.",
       "set.model": "Model", "set.modelPick": "Pick a model from the list…", "set.models": "Load models", "set.modelsBusy": "Loading…",
       "set.modelsOk": "The key works · {n} models", "set.modelsNone": "No chat models came back",
+      "set.quick": "Desktop menu", "set.quickHint": "Your tasks and apps for a right-click or long press on the desktop.", "set.quickBtn": "Edit the desktop menu…",
       "set.data": "Your data", "set.chatOnly": "Chat only: the assistant can't search my orOS data",
       "set.dataHint": "When the assistant needs your data it searches these apps. “Ask first” shows you every result before it is shared.",
       "perm.ask": "Ask first", "perm.always": "Always share", "perm.never": "Never",
@@ -534,6 +535,7 @@
       "err.wlspace": "Δεν φτάνει η μνήμη ή ο χώρος για αυτό το μοντέλο. Διάλεξε μικρότερο στις Ρυθμίσεις.",
       "set.model": "Μοντέλο", "set.modelPick": "Διάλεξε μοντέλο από τη λίστα…", "set.models": "Φόρτωση μοντέλων", "set.modelsBusy": "Φόρτωση…",
       "set.modelsOk": "Το κλειδί δουλεύει · {n} μοντέλα", "set.modelsNone": "Δεν ήρθαν μοντέλα συζήτησης",
+      "set.quick": "Μενού επιφάνειας εργασίας", "set.quickHint": "Οι εργασίες και οι εφαρμογές σου για δεξί κλικ ή παρατεταμένο πάτημα στην επιφάνεια εργασίας.", "set.quickBtn": "Επεξεργασία μενού…",
       "set.data": "Τα δεδομένα σου", "set.chatOnly": "Μόνο συζήτηση: ο βοηθός δεν ψάχνει στα δεδομένα μου στο orOS",
       "set.dataHint": "Όταν ο βοηθός χρειάζεται τα δεδομένα σου, ψάχνει σε αυτές τις εφαρμογές. Το «Ρώτα πρώτα» σού δείχνει κάθε αποτέλεσμα πριν μοιραστεί.",
       "perm.ask": "Ρώτα πρώτα", "perm.always": "Πάντα", "perm.never": "Ποτέ",
@@ -3694,6 +3696,19 @@
     });
     secD.appendChild(list);
 
+    // The desktop menu (shell quickmenu.js): tasks and apps on a
+    // right-click or long press of the desktop. Its editor lives in
+    // the shell, so the same list shows on every device.
+    var qm = null;
+    try { qm = shell() && shell().orosQuick; } catch (e) { qm = null; }
+    if (qm && typeof qm.edit === "function") {
+      var secQ = section(body, t("set.quick"));
+      secQ.appendChild(el("p", "dlg-hint", t("set.quickHint")));
+      var qRow = el("div", "row");
+      qRow.appendChild(button(t("set.quickBtn"), "small", function () { qm.edit(); }));
+      secQ.appendChild(qRow);
+    }
+
     // Web search (off by default): Claude's own, or orOS's tool with
     // the source picked here (phase 5 wave 1)
     var secW = section(body, t("set.web"));
@@ -4269,7 +4284,8 @@
 
   // Deep link (shell __orosOpenAt / __orosTakeTarget): { ask: "text" }
   // puts the text in the message box, ready to send. Nothing is sent
-  // by itself. { brief: 1 } (Today's Briefing button, the user's own
+  // by itself, unless { send: 1 } (a desktop-menu task set to "Send
+  // on tap"). { brief: 1 } (Today's Briefing button, the user's own
   // tap) starts a briefing, with its card for "Ask first" apps. A
   // dialog open or an answer running → ignored.
   function openTarget(tg) {
@@ -4282,6 +4298,9 @@
     box.value = text;
     autosize();
     box.focus();
+    // { send: 1 }: a desktop-menu task the user set to "Send on tap";
+    // the tap is the user's own, consent cards still come first.
+    if (tg.send === 1) send();
     return true;
   }
   window.__orosOpenAt = openTarget;
