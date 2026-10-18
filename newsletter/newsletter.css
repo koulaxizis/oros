@@ -392,6 +392,12 @@ input.bad, textarea.bad { border-color: var(--danger); box-shadow: 0 0 0 3px rgb
 .blk textarea { min-height: 80px; }
 .blk input + input, .blk input + textarea, .blk textarea + input { margin-top: 6px; }
 .cols-ed { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
+.cols3-ed { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+/* table block editor (wave E3): one grid row per table row */
+.tbl-ed { display: flex; flex-direction: column; gap: 4px; margin: 0 0 8px; overflow-x: auto; }
+.tbl-row { display: grid; gap: 4px; min-width: 0; }
+.tbl-row > input { min-width: 0; margin: 0 !important; padding: 6px 8px; }
+.tbl-row > input.tbl-h { font-weight: 700; }
 .blk.dragging { position: relative; z-index: 2; box-shadow: 0 8px 24px rgba(0,0,0,.18); opacity: .92; }
 .blk.drop-above { box-shadow: 0 -3px 0 var(--accent); }
 .blk.drop-below { box-shadow: 0 3px 0 var(--accent); }
@@ -657,7 +663,7 @@ button.pick-row:hover { border-color: var(--accent); background: var(--accent-so
   .tab { padding: 4px 10px; }
   .filters { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   .filters #sq { grid-column: 1 / -1; }
-  .cols-ed { grid-template-columns: minmax(0, 1fr); }
+  .cols-ed, .cols3-ed { grid-template-columns: minmax(0, 1fr); }
   .blk-head { gap: 2px; }
   .link-row { flex-wrap: wrap; }
   .link-row > input { flex: 1 1 140px; }

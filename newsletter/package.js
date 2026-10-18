@@ -38,18 +38,18 @@
 //   imgs                     pictures: { "<disk path>": "<sha256>.jpg|png" },
 //                            the media key of each picture an issue or
 //                            template names (/internal/Newsletter/)
-//   imgPaths(state)          the picture paths the live issues and
-//                            templates name
+//   imgPaths(state)          the picture paths the live issues,
+//                            templates, saved blocks and list headers name
 //   normImgs(v)              a file's imgs map, checked
 //   kindOf(id, state)        "chans" | "lists" | "subs" | "issues" |
-//                            "segs" | "tpls" | "rss" | ""
+//                            "segs" | "tpls" | "rss" | "blks" | ""
 // ============================================================
 (function (root) {
   "use strict";
 
   var C = typeof module === "object" && module.exports ? require("./core.js") : root.OrosNewsletterCore;
 
-  var COLLS = ["chans", "lists", "subs", "issues", "segs", "tpls", "rss"];
+  var COLLS = ["chans", "lists", "subs", "issues", "segs", "tpls", "rss", "blks"];
   var IMG_PATH = /^\/internal\/Newsletter\/[A-Za-z0-9._-]{1,80}\.(jpg|png)$/;
   var IMG_KEY = /^[0-9a-f]{64}\.(jpg|png)$/;
   var IMG_MAX = 2000;
@@ -87,6 +87,7 @@
     var s = isObj(state) ? clone(state) : {};
     var out = { ver: 1 };
     COLLS.forEach(function (k) { out[k] = live(s[k]); });
+    if (!out.blks.length) delete out.blks;           // saved blocks: left out while none, like in the slice
     out.chans.forEach(function (ch) { ch.user = ""; });
     out.lists.forEach(function (l) { delete l.salt; delete l.form; });
     out.issues.forEach(function (x) {
@@ -114,7 +115,9 @@
     var seen = {}, out = [];
     function blocks(arr) {
       (Array.isArray(arr) ? arr : []).forEach(function (b) {
-        if (b && (b.k === "img" || b.k === "head") && typeof b.f === "string" && IMG_PATH.test(b.f) && !seen[b.f]) { seen[b.f] = 1; out.push(b.f); }
+        C.picRefs(b).forEach(function (q) {
+          if (typeof q.f === "string" && IMG_PATH.test(q.f) && !seen[q.f]) { seen[q.f] = 1; out.push(q.f); }
+        });
       });
     }
     if (!isObj(state)) return out;
@@ -122,6 +125,9 @@
       blocks(x.blocks);
       if (isObj(x.l2)) blocks(x.l2.blocks);
     });
+    // saved blocks and the lists' own headers (wave E3)
+    blocks(live(state.blks).map(function (x) { return x.b; }));
+    live(state.lists).forEach(function (l) { if (isObj(l.hf)) blocks([l.hf.head]); });
     return out;
   }
 
@@ -176,6 +182,11 @@
         .map(function (x, i) { return (b.ord ? (i + 1) + ". " : "- ") + mdText(x.replace(/^\s*(?:[-\u2022*]|\d{1,3}[.)])\s+/, "")); }).join("\n"));
       else if (b.k === "head") out.push([b.t ? "### " + mdText(b.t) : "", mdText(b.sub)].filter(Boolean).join("\n\n"));
       else if (b.k === "foot") out.push(mdText(b.t));
+      else if (b.k === "imgtxt") out.push([b.hd ? "#### " + mdText(b.hd) : "", mdText(b.t)].filter(Boolean).join("\n\n"));
+      else if (b.k === "cols3") { out.push(mdText(b.a)); out.push(mdText(b.b)); out.push(mdText(b.c)); }
+      else if (b.k === "video" && b.url) out.push("[" + (mdText(b.t) || "\u25b6") + "](" + b.url.replace(/[()\s]/g, encodeURIComponent) + ")");
+      else if (b.k === "table") out.push((b.rows || []).map(function (r) { return "| " + r.map(function (c) { return mdText(c).replace(/\|/g, "\\|"); }).join(" | ") + " |"; }).join("\n"));
+      else if (b.k === "event") out.push(["**" + mdText(b.t) + "**", mdText(b.d + (b.tm ? " " + b.tm + (b.te ? "\u2013" + b.te : "") : "")), mdText(b.loc)].filter(Boolean).join("  \n"));
     });
     return out.filter(function (x) { return x !== ""; }).join("\n\n");
   }
@@ -223,7 +234,8 @@
       issues: { shape: "array", id: "id", stamp: "m" },
       segs: { shape: "array", id: "id", stamp: "m" },
       tpls: { shape: "array", id: "id", stamp: "m" },
-      rss: { shape: "array", id: "id", stamp: "m" }
+      rss: { shape: "array", id: "id", stamp: "m" },
+      blks: { shape: "array", id: "id", stamp: "m" }
     },
     norm: norm, strip: strip, tombIds: tombIds, previews: previews
   };

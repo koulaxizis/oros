@@ -125,20 +125,20 @@ test("hostile text in the new blocks is escaped", () => {
 });
 
 test("forward compatibility: a newer orOS's blocks and fields are kept, never drawn or sent", () => {
-  const future = { k: "gallery", items: [{ f: "/internal/Newsletter/a.jpg" }], cols: 3, constructor: "x" };
+  const future = { k: "carousel", items: [{ f: "/internal/Newsletter/a.jpg" }], cols: 3, constructor: "x" };
   const d = model([issue([{ k: "p", t: "Hi", glow: "soft", deep: { no: 1 } }, future])], { m: 2, tagline: "Weekly", nested: { a: 1 } });
   const x = d.issues[0];
   assert.deepEqual(x.blocks[0], { k: "p", t: "Hi", glow: "soft" });
-  assert.deepEqual(x.blocks[1], { k: "gallery", items: [{ f: "/internal/Newsletter/a.jpg" }], cols: 3 });
+  assert.deepEqual(x.blocks[1], { k: "carousel", items: [{ f: "/internal/Newsletter/a.jpg" }], cols: 3 });
   assert.equal(d.lists[0].tagline, "Weekly");
   assert.equal(d.lists[0].nested, undefined);
   // the merge keeps them too
   const m = C.mergeNewsletter(d, model());
-  assert.equal(C.issue(m, "iss-1").blocks[1].k, "gallery");
+  assert.equal(C.issue(m, "iss-1").blocks[1].k, "carousel");
   assert.equal(m.lists[0].tagline, "Weekly");
   // not drawn, and the issue can't go out from this version
   const e = R.email({ issue: x, list: d.lists[0], sub: null, lang: "en", img: () => "", unsub: "" });
-  assert.doesNotMatch(e.html, /gallery/);
+  assert.doesNotMatch(e.html, /carousel/);
   const keys = C.preflight(d, x, { chan: CHAN, inbox: true, aud: 1 }).map((r) => r.lvl + ":" + r.k);
   assert.ok(keys.includes("err:newerBlock"));
   // hostile unknown kinds: bad names or too big are dropped
@@ -233,4 +233,134 @@ test("E2: hostile text in header, footer and links is escaped", () => {
   const e = renderImg([{ k: "head", t: "<script>x</script>", sub: "\"><img src=x>", links: [{ t: "<b>", href: "https://a.gr\"onclick=1" }] },
                        { k: "foot", t: "<svg onload=1>" }]);
   assert.doesNotMatch(e.html, /<script>|<svg|<img src=x|<b>|onclick/);
+});
+
+// ---------------------------------------------------------------
+// Wave E3: picture + text, 3 columns, gallery, video, table, event
+// card (+ .ics), saved blocks
+const P = (n) => "/internal/Newsletter/" + n + ".jpg";
+
+test("E3: new blocks normalize with limits", () => {
+  const n = (b) => C.normBlock(b);
+  assert.deepEqual(n({ k: "imgtxt", f: P("a"), w: 800, h: 600, b: 10, hd: " Title ", t: "Body", bt: "Go", bh: "javascript:x", side: "x" }),
+    { k: "imgtxt", f: P("a"), w: 800, h: 600, b: 10, alt: "", href: "", hd: "Title", t: "Body", bt: "Go", bh: "" });
+  assert.equal(n({ k: "imgtxt", f: "../etc/passwd", side: "r" }).f, "");
+  assert.equal(n({ k: "imgtxt", side: "r" }).side, "r");
+  assert.deepEqual(n({ k: "cols3", a: "1", b: "2", c: "3" }), { k: "cols3", a: "1", b: "2", c: "3" });
+  const g = n({ k: "gallery", per: 3, items: Array.from({ length: 12 }, (_, i) => ({ f: P("g" + i), href: "https://x.gr/" + i })).concat(["junk"]) });
+  assert.equal(g.items.length, 9);
+  assert.equal(g.per, 3);
+  assert.equal(n({ k: "gallery", per: 4, items: [] }).per, undefined);
+  assert.equal(n({ k: "video", url: "mailto:a@b.gr" }).url, "");
+  assert.equal(n({ k: "video", url: "https://youtu.be/abc" }).url, "https://youtu.be/abc");
+  const tb = n({ k: "table", hd: 1, rows: [["a", "b", "c", "d", "e", "f", "g"], ["1"], "nope"].concat(Array(30).fill(["x"])) });
+  assert.equal(tb.rows[0].length, 6);
+  assert.deepEqual(tb.rows[1], ["1", "", "", "", "", ""]);
+  assert.equal(tb.rows.length, 20);
+  const ev = n({ k: "event", t: "Launch", d: "2026-02-30", tm: "25:00", te: "21:00", ics: true });
+  assert.deepEqual([ev.d, ev.tm, ev.te, ev.ics], ["", "", "", undefined]);
+  const ev2 = n({ k: "event", t: "Launch", d: "2026-11-03", tm: "19:30", te: "21:00", ics: 1 });
+  assert.deepEqual([ev2.d, ev2.tm, ev2.te, ev2.ics], ["2026-11-03", "19:30", "21:00", 1]);
+});
+
+test("E3: pictures of every block are found; a video's picture gets its play mark", () => {
+  const bl = [{ k: "imgtxt", f: P("a"), b: 5 }, { k: "gallery", items: [{ f: P("b"), b: 6 }, { f: P("a"), b: 5 }] },
+              { k: "video", f: P("v"), url: "https://youtu.be/x", b: 7 }].map(C.normBlock);
+  assert.deepEqual(C.picsOf(bl).map((p) => p.f), [P("a"), P("b"), "play:" + P("v")]);
+  assert.equal(C.picRefs(bl[1]).length, 2);
+  assert.deepEqual(C.picRefs({ k: "p", t: "x" }), []);
+  const NPK = require("../newsletter/package.js");
+  const d = model([issue(bl)]);
+  d.blks = [{ id: "blk-1", m: 1, name: "Logo", b: { k: "head", f: P("logo") } }];
+  assert.deepEqual(NPK.imgPaths(d).sort(), [P("a"), P("b"), P("logo"), P("v")]);
+});
+
+test("E3: the new blocks render as e-mail HTML and plain text, escaped, on a phone too", () => {
+  const e = renderImg([
+    { k: "imgtxt", f: P("a"), hd: "<b>Big</b>", t: "Text", bt: "Buy", bh: "https://shop.gr/p", side: "r" },
+    { k: "cols3", a: "One", b: "Two", c: "Three" },
+    { k: "gallery", per: 3, items: [{ f: P("g1"), alt: "First" }, { f: P("g2"), href: "https://x.gr" }] },
+    { k: "video", f: P("v"), url: "https://youtu.be/x", t: "Our clip" },
+    { k: "video", url: "https://vimeo.com/1" },
+    { k: "table", hd: 1, rows: [["Size", "Price"], ["S", "<i>9</i>"]] },
+    { k: "event", t: "Opening", d: "2026-11-03", tm: "19:30", te: "21:00", loc: "Shop", ics: 1, bt: "Book", bh: "https://x.gr/b" }]);
+  assert.match(e.html, /dir="rtl"/);
+  assert.match(e.html, /&lt;b&gt;Big&lt;\/b&gt;/);
+  assert.match(e.html, /cid:playinternalNewsletterv/);
+  assert.match(e.html, /href="https:\/\/vimeo.com\/1"[^>]*>▶ Watch the video/);
+  assert.match(e.html, /NOV/i);
+  assert.match(e.html, /calendar file/);
+  assert.doesNotMatch(e.html, /<i>9<\/i>|<b>Big/);
+  // stacking columns are at most 270 px wide, so two fit side by side and a phone stacks them
+  (e.html.match(/max-width:(\d+)px/g) || []).forEach((m) => assert.ok(+m.match(/\d+/)[0] <= 600, m));
+  assert.match(e.text, /Our clip: https:\/\/youtu.be\/x/);
+  assert.match(e.text, /Size \| Price/);
+  assert.match(e.text, /OPENING\n2026-11-03 19:30–21:00\nShop/);
+  const el = R.email({ issue: model([issue([{ k: "event", t: "Γιορτή", d: "2026-05-01" }])]).issues[0], list: model().lists[0], lang: "el", img: () => "", unsub: "" });
+  assert.match(el.html, /ΜΑΪ/);
+});
+
+test("E3: preflight asks for the missing parts of the new blocks", () => {
+  const bad = (blocks) => { const d = model([issue([{ k: "p", t: "x" }].concat(blocks))]); return C.preflight(d, d.issues[0], { chan: CHAN, inbox: true, aud: 1 }).some((r) => r.k === "badBlock"); };
+  assert.ok(bad([{ k: "imgtxt", t: "no picture" }]));
+  assert.ok(bad([{ k: "imgtxt", f: P("a"), bt: "Buy" }]));
+  assert.ok(!bad([{ k: "imgtxt", f: P("a"), bt: "Buy", bh: "https://x.gr" }]));
+  assert.ok(bad([{ k: "gallery", items: [] }]));
+  assert.ok(bad([{ k: "video", f: P("v") }]));
+  assert.ok(!bad([{ k: "video", url: "https://youtu.be/x" }]));
+  assert.ok(bad([{ k: "event", t: "No day" }]));
+  assert.ok(!bad([{ k: "event", t: "Day", d: "2026-11-03" }]));
+  assert.ok(!bad([{ k: "table", rows: [["a"]] }, { k: "cols3", a: "x" }]));
+  const d = model([issue([{ k: "table", rows: [["Only", "a table"]] }])]);
+  assert.ok(!C.preflight(d, d.issues[0], { chan: CHAN, inbox: true, aud: 1 }).some((r) => r.k === "noBody"));
+});
+
+test("E3: an event's calendar file is valid iCalendar with escaped, folded lines", () => {
+  const b = C.normBlock({ k: "event", t: "Launch, party; yes\\no", d: "2026-11-03", tm: "19:30", loc: "Shop", sub: "Line 1\nLine 2", bh: "https://x.gr", bt: "Go" });
+  const ics = C.icsOf(b, "iss-1-4", Date.UTC(2026, 9, 18, 10));
+  assert.match(ics, /^BEGIN:VCALENDAR\r\n/);
+  assert.match(ics, /\r\nDTSTART:20261103T193000\r\nDURATION:PT1H\r\n/);
+  assert.ok(ics.includes("SUMMARY:Launch\\, party\\; yes\\\\no\r\n"));
+  assert.match(ics, /DESCRIPTION:Line 1\\nLine 2/);
+  assert.match(ics, /UID:iss-1-4@oros/);
+  assert.match(ics, /DTSTAMP:20261018T100000Z/);
+  const day = C.icsOf(C.normBlock({ k: "event", t: "Π".repeat(80), d: "2026-12-31" }), "u", 0);
+  assert.match(day, /DTSTART;VALUE=DATE:20261231\r\nDTEND;VALUE=DATE:20270101/);
+  day.split("\r\n").forEach((line) => assert.ok(Buffer.byteLength(line, "utf8") <= 75, line));
+  assert.equal(C.icsOf(C.normBlock({ k: "event", t: "", d: "2026-12-31" }), "u", 0), "");
+});
+
+test("E3: saved blocks are their own synced collection, left out while empty", () => {
+  assert.equal(model().blks, undefined);
+  const d = C.normalize({ lists: [LIST], blks: [{ id: "blk-1", m: 1, name: "Promo", b: { k: "btn", t: "Shop", href: "https://x.gr" } },
+                                               { id: "blk-2", m: 1, name: "Bad", b: { k: "Bad Kind" } }, { id: "blk-3", m: 2, del: 1 }] });
+  assert.deepEqual(d.blks.map((x) => x.id), ["blk-1", "blk-3"]);
+  assert.equal(d.blks[0].b.t, "Shop");
+  const other = C.normalize({ lists: [LIST], blks: [{ id: "blk-1", m: 5, name: "Promo 2", b: { k: "p", t: "x" } }] });
+  const m = C.mergeNewsletter(d, other);
+  assert.equal(C.live(m.blks)[0].name, "Promo 2");
+  // a device that doesn't know saved blocks loses nothing in the union
+  assert.equal(C.mergeNewsletter(model(), d).blks.length, 2);
+});
+
+test("E3: an event that asks for it goes out with its .ics attached (SMTP and provider APIs)", async () => {
+  const { sandbox } = require("./newsletter-sandbox.js");
+  const M = require("../mail/compose.js");
+  const d = model([issue([{ k: "p", t: "Come!" }, { k: "event", t: "Opening night", d: "2026-11-03", tm: "19:30", ics: 1 },
+                          { k: "event", t: "No file", d: "2026-11-04" }])]);
+  const S = await sandbox(d);
+  const sub = { id: "sub-1", m: 1, list: "list-1", email: "a@x.gr", name: "Ann" };
+  const files = S.E.filesFor(d.issues[0], "en", Date.UTC(2026, 9, 18));
+  assert.deepEqual(files.map((f) => [f.name, f.type]), [["opening-night.ics", "text/calendar"]]);
+  const bin = S.E.buildFor(d.issues[0], d.lists[0], sub).bin;
+  assert.match(bin, /Content-Type: multipart\/mixed/);
+  assert.match(bin, /Content-Type: text\/calendar; name="opening-night.ics"/);
+  const raw = S.E.buildFor(d.issues[0], d.lists[0], sub, { raw: true });
+  const pm = JSON.parse(R.apiReq(M, "postmark", "", raw).body);
+  assert.deepEqual(pm.Attachments.map((a) => [a.Name, a.ContentType]), [["opening-night.ics", "text/calendar"]]);
+  const sg = JSON.parse(R.apiReq(M, "sendgrid", "", raw).body);
+  assert.equal(sg.attachments[0].disposition, "attachment");
+  const br = JSON.parse(R.apiReq(M, "brevo", "", raw).body);
+  assert.equal(br.attachment[0].name, "opening-night.ics");
+  assert.match(Buffer.from(br.attachment[0].content, "base64").toString("utf8"), /SUMMARY:Opening night/);
 });
