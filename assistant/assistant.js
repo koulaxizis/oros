@@ -197,6 +197,8 @@
       "entry.quote": "New quote · {app}", "entry.sheet": "New sheet · {app}",
       "entry.slides": "New presentation · {app}", "entry.bookmark": "New bookmark · {app}", "entry.note": "New note · {app}",
       "entry.open": "Open in {app}", "entry.dismiss": "Dismiss",
+      "rc.head": "Automation · {app}", "rc.hint": "Opens in {app} with these steps. You check them and save; nothing runs until you press Run there.",
+      "rc.file": "Save as file", "rc.saved": "Saved {name}. Send it to anyone with orOS.",
       "entry.hint.form": "Opens {app} with this filled in. Nothing is saved until you save it there.",
       "entry.hint.make": "The button makes it in {app}; you can change or delete it there.",
       "entry.hint.slides": "Opens {app}; the presentation is made when you pick a theme there.",
@@ -465,6 +467,8 @@
       "entry.quote": "Νέα προσφορά · {app}", "entry.sheet": "Νέο φύλλο · {app}",
       "entry.slides": "Νέα παρουσίαση · {app}", "entry.bookmark": "Νέος σελιδοδείκτης · {app}", "entry.note": "Νέα σημείωση · {app}",
       "entry.open": "Άνοιγμα: {app}", "entry.dismiss": "Απόρριψη",
+      "rc.head": "Αυτοματισμός · {app}", "rc.hint": "Ανοίγει ({app}) με αυτά τα βήματα. Τα ελέγχεις και αποθηκεύεις· τίποτα δεν τρέχει πριν πατήσεις Εκτέλεση εκεί.",
+      "rc.file": "Αποθήκευση ως αρχείο", "rc.saved": "Αποθηκεύτηκε το {name}. Στείλ' το σε όποιον έχει orOS.",
       "entry.hint.form": "Ανοίγει συμπληρωμένη η φόρμα ({app}). Δεν αποθηκεύεται τίποτα μέχρι να την αποθηκεύσεις εκεί.",
       "entry.hint.make": "Το κουμπί το δημιουργεί ({app})· εκεί μπορείς να το αλλάξεις ή να το σβήσεις.",
       "entry.hint.slides": "Ανοίγει: {app}· η παρουσίαση δημιουργείται όταν διαλέξεις θέμα εκεί.",
@@ -1930,15 +1934,18 @@
     var kinds = builtin ? [] : entryKinds();
     var sumIds = summaryIds(apps);
     var chgApps = builtin ? [] : changeApps(apps);
+    var rcApps = builtin ? [] : recipeApps();
     var wmode = webMode(pid);
     var tools = builtin ? [] : C.toolsFor({ data: apps.length > 0, summary: sumIds.length > 0, entries: kinds.length > 0,
-                                            changes: chgApps.length > 0, web: !!wmode && wmode !== "native" });
+                                            changes: chgApps.length > 0, web: !!wmode && wmode !== "native",
+                                            recipes: rcApps.map(function (a) { return a.id; }) });
     var system = C.systemPrompt({
       lang: LANG, now: Date.now(), chatOnly: !!data.set.chat, builtin: builtin, pre: preApps.length > 0,
       tz: (function () { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch (e) { return ""; } })(),
       apps: apps.map(function (a) { return a.name + " (" + a.id + ")"; }),
       entries: kinds,
       changes: chgApps.map(function (a) { return a.name + " (" + a.id + ")"; }),
+      recipes: rcApps.map(function (a) { return a.name + " (" + a.id + ")"; }),
       files: builtin ? "" : "pdf",
       web: wmode === "native" ? "native" : wmode ? "tool" : "",
       webName: wmode && wmode !== "native" ? t("ws." + wmode) : ""
@@ -2088,6 +2095,7 @@
     }
     if (call.name === "app_summary") return appSummary(c, call.args, apps);
     if (call.name === "propose_entry") return Promise.resolve(proposeEntry(call.args));
+    if (call.name === "propose_automation") return Promise.resolve(proposeAutomation(call.args));
     if (call.name === "read_item") return readItem(c, call.args, apps);
     if (call.name === "change_item") return changeItem(c, call.args, apps);
     if (call.name === "web_search") return webSearch(call.args);
@@ -2148,6 +2156,24 @@
     return {
       content: "Shown to the user as a card. They will open it in the app and save it themselves, or dismiss it. It is not saved yet.",
       ui: { k: "entry", args: JSON.parse(JSON.stringify(args)), st: "" }
+    };
+  }
+
+  // propose_automation (wave A3, recipes/share.js): checked now
+  // against the app's steps (the model hears what to fix), shown as a
+  // card with the steps in plain words; the button opens the app's
+  // editor with them ({ newRecipe }), where the user saves and runs.
+  function recipeApps() {
+    var have = installed(), SH = window.orosRecipeShare;
+    return SH ? SH.APPS.filter(function (id) { return !!have[id]; }).map(function (id) { return { id: id, name: have[id] }; }) : [];
+  }
+  function proposeAutomation(args) {
+    var have = installed();
+    var a = C.normAutomation(args, function (id) { return !!have[id]; });
+    if (!a.ok) return { content: "Error: " + a.err, err: 1, ui: { k: "recipeErr" } };
+    return {
+      content: "Shown to the user as a card with the " + a.steps.length + " steps. They will open it in the app, check it, save it and run it themselves, or dismiss it. Nothing is saved or run yet.",
+      ui: { k: "recipe", args: JSON.parse(JSON.stringify(args)), st: "" }
     };
   }
 
@@ -3059,6 +3085,8 @@
         var ui = r.ui || {};
         if (ui.k === "entry") { drawEntry(host, r, c); return; }
         if (ui.k === "entryErr") return;
+        if (ui.k === "recipe") { drawRecipe(host, r, c); return; }
+        if (ui.k === "recipeErr") return;
         if (ui.k === "change") { drawChange(host, r, c); return; }
         if (ui.k === "web" || ui.k === "page" || ui.k === "webErr") { drawWebTool(host, ui); return; }
         var line = el("div", "tool-line");
@@ -3214,6 +3242,71 @@
       card.appendChild(acts);
     }
     host.appendChild(card);
+  }
+
+  // An automation card (propose_automation): rebuilt from the stored
+  // arguments with the same check every time.
+  function drawRecipe(host, r, c) {
+    var ui = r.ui, have = installed(), SH = window.orosRecipeShare;
+    var a = C.normAutomation(ui.args, function (id) { return !!have[id]; });
+    if (!a.ok || !SH) {
+      var app0 = ui.args && typeof ui.args.app === "string" ? ui.args.app : "?";
+      host.appendChild(el("div", "tool-line", t("entry.gone", { app: have[app0] || app0 })));
+      return;
+    }
+    var name = have[a.app] || SH.appName(a.app);
+    var card = el("section", "entry-card rc-card");
+    card.appendChild(el("h3", "entry-head", t("rc.head", { app: name })));
+    if (a.nm) card.appendChild(el("p", "entry-title", a.nm));
+    var ol = el("ol", "entry-list rc-steps");
+    a.view.forEach(function (w) {
+      var li = el("li");
+      li.appendChild(el("b", "", w.name));
+      if (w.detail) li.appendChild(document.createTextNode(" " + w.detail));
+      ol.appendChild(li);
+    });
+    card.appendChild(ol);
+    var draft = { app: a.app, nm: a.nm, steps: a.steps };
+    if (ui.st) {
+      card.appendChild(el("p", "entry-state" + (ui.st === "failed" ? " err" : ""), t("entry." + ui.st, { app: name })));
+    } else {
+      card.appendChild(el("p", "dlg-hint", t("rc.hint", { app: name })));
+      var acts = el("div", "dlg-actions");
+      acts.appendChild(button(t("entry.dismiss"), "", function () {
+        ui.st = "dismissed";
+        saveChat(c);
+        renderMessages();
+      }));
+      acts.appendChild(button(t("rc.file"), "", function () { saveRecipeFile(draft); }));
+      acts.appendChild(button(t("entry.open", { app: name }), "primary", function () {
+        ui.st = "opened";
+        saveChat(c).then(function () {
+          if (!runEntry({ call: { fn: "openAt", args: [a.app, { newRecipe: draft }] } })) { ui.st = "failed"; saveChat(c); }
+          renderMessages();
+        });
+      }));
+      card.appendChild(acts);
+    }
+    host.appendChild(card);
+  }
+  function saveRecipeFile(d) {
+    var SH = window.orosRecipeShare, text = SH ? SH.pack(d) : "";
+    if (!text) return;
+    var name = SH.fileName(d.nm), blob = new Blob([text], { type: SH.MIME }), dh = null;
+    try { dh = window.parent && window.parent !== window ? window.parent.orosDialog : null; } catch (e) {}
+    var done;
+    if (dh && typeof dh.saveFile === "function") {
+      var types = [{ description: "orOS automation", accept: {} }];
+      types[0].accept[SH.MIME] = [SH.EXT];
+      done = Promise.resolve(dh.saveFile({ blob: blob, filename: name, mime: SH.MIME, types: types })).then(function (x) { return !!(x && x.ok); });
+    } else {
+      var url = URL.createObjectURL(blob), link = el("a");
+      link.href = url; link.download = name;
+      document.body.appendChild(link); link.click(); link.remove();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 40000);
+      done = Promise.resolve(true);
+    }
+    done.then(function (ok) { if (ok) showToast(t("rc.saved", { name: name })); }, function () {});
   }
 
   // A card field's value as the user reads it: ready ids → words.

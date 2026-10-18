@@ -63,6 +63,7 @@ Der Streifen unter der Arbeitsfläche zeigt die Seiten deines Designs. `+` fügt
 - Erstelle eine unter `Automationen` auf dem Startbildschirm (`Neue Automation`), oder öffne ein Design, wähle `Mehr` › `Automation aufzeichnen`, ändere das Design von Hand und tippe auf `Fertig`: die geänderten Wörter, Farben, Schriftarten, Textgrößen und Filter sowie jedes Größe ändern, Hintergrund entfernen oder Herunterladen werden zu Schritten.
 - `Ausführen` zeigt vorher, was sich ändert: dieses Design, die mit `Auswählen` gewählten Designs (`Automation (n)`) oder alle Designs. Danach holt `Rückgängig` alle Designs zurück. Mehrere Downloads kommen als eine ZIP-Datei.
 - Automationen werden wie deine Designs synchronisiert. Ein Schritt aus einem neueren orOS bleibt erhalten und wird übersprungen, bis dieses Gerät aktualisiert ist.
+- `Teilen` speichert eine Automation als `.orosrecipe`-Datei, die du an alle mit orOS schicken kannst; `Importieren` in der Liste liest sie wieder ein. Die Datei enthält nur die Schritte, nie Code: Sie wird beim Einlesen geprüft und öffnet sich im Editor, wo du sie ansiehst und auf `Speichern` tippst. Eine Datei für eine andere App bietet an, sie dort zu öffnen.
 
 ## Herunterladen und teilen
 - `Herunterladen` erstellt ein PNG (normal, ×2 oder ×3, auf Wunsch mit transparentem Hintergrund), ein JPG, ein PDF zum Drucken mit 150 oder 300 dpi, eine PowerPoint-Datei (siehe unten) oder eine Webseite.

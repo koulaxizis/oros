@@ -54,6 +54,7 @@ Schritte, die du einmal festlegst und immer wieder ausführst, im geöffneten Do
 - Formate und Musterseiten werden über den Namen gefunden, so passt eine Automation zu jedem Dokument mit einem Format dieses Namens. Ein Dokument ohne es bleibt, wie es ist.
 - Mit `Dokumente mit Fehlern nicht exportieren` wird ein Dokument mit Preflight-Fehlern nicht exportiert. Ein PDF wird mit dem üblichen Speichern-Dialog gesichert; mehrere landen in Dateien, im Ordner `Layout`, ohne ältere zu überschreiben.
 - Automationen werden mit deinen anderen Geräten synchronisiert, zusammen mit denen von Atelier und Photo Lab.
+- `Teilen` speichert eine Automation als `.orosrecipe`-Datei, die du an alle mit orOS schicken kannst; `Importieren` in der Liste liest sie wieder ein. Die Datei enthält nur die Schritte, nie Code: Sie wird beim Einlesen geprüft und öffnet sich im Editor, wo du sie ansiehst und auf `Speichern` tippst. Eine Datei für eine andere App bietet an, sie dort zu öffnen.
 
 ## Arbeit aus anderen Programmen holen
 `Datei öffnen` auf der Startseite öffnet als neues Dokument auch:

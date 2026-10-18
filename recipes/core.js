@@ -57,7 +57,7 @@
     return undefined;
   }
   function rawStep(s) {
-    if (!s || typeof s !== "object" || Array.isArray(s) || !OP.test(s.op)) return null;
+    if (!s || typeof s !== "object" || Array.isArray(s) || typeof s.op !== "string" || !OP.test(s.op)) return null;
     var o = plain(s, 0);
     return o && typeof o === "object" ? o : null;
   }

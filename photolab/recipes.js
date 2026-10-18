@@ -230,7 +230,7 @@
     return r;
   }
   PL.recipes = {
-    open: panel.open, list: panel.list, onCanvas: onCanvas, summary: summary,
+    open: panel.open, list: panel.list, draft: panel.draft, onCanvas: onCanvas, summary: summary,
     // the steps of an automation that may run here (none: null)
     steps: function (id) {
       var r = byId(id);

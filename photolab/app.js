@@ -21,6 +21,7 @@
 // { openFile: "/internal/…", back: { app, key } } also remembers who
 // asked (Atelier "Edit picture"): "Done" sends the result back as
 // __orosOpenAt(app, { editedPicture: { key, path, w, h } }).
+// { newRecipe: { app, nm, steps } } opens a drafted automation (A3).
 // An .orosphoto handed over the same ways opens as a new project
 // (io.js openPictureFile sniffs it).
 // ============================================================
@@ -651,6 +652,13 @@
     // Single app (solo.js) icon shortcut { newPic: true }.
     if (target.newPic === true) {
       if (!document.querySelector("dialog[open]")) PL.panels.newDialog();
+      return;
+    }
+    // { newRecipe: { app, nm, steps } }: an automation drafted by the
+    // Assistant or sent from another app (recipes/share.js) opens in
+    // the editor; it is saved only on Save and runs only on Run.
+    if (target.newRecipe) {
+      if (PL.recipes && PL.recipes.draft) PL.recipes.draft(target.newRecipe);
       return;
     }
     if (typeof target.id === "string" && C.ID_RE.test(target.id)) { PL.openProject(target.id); return; }

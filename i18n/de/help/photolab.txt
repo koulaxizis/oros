@@ -72,6 +72,7 @@ Schritte, die du einmal festlegst und immer wieder ausführst, im geöffneten Bi
 - `Ausführen` für `Das geöffnete Bild` wirkt wie die Menüs: auf die aktive Ebene und die Auswahl. Das Wasserzeichen wird eine eigene Ebene. `Rückgängig` in der folgenden Meldung nimmt alle Schritte zurück.
 - `Ausführen` für `Viele Fotos (Stapelverarbeitung)` öffnet die `Stapelverarbeitung…` mit der Automation unter `Anpassungen`; du kannst sie dort auch selbst wählen. Die Schritte laufen für jedes Foto nach der Größenänderung des Stapels und vor dessen Wasserzeichen; ein Schritt `Exportieren` legt nur Format und Qualität fest.
 - Automationen werden mit deinen anderen Geräten synchronisiert, zusammen mit denen von Atelier und Layout.
+- `Teilen` speichert eine Automation als `.orosrecipe`-Datei, die du an alle mit orOS schicken kannst; `Importieren` in der Liste liest sie wieder ein. Die Datei enthält nur die Schritte, nie Code: Sie wird beim Einlesen geprüft und öffnet sich im Editor, wo du sie ansiehst und auf `Speichern` tippst. Eine Datei für eine andere App bietet an, sie dort zu öffnen.
 
 ## Ein Bild aus dem Atelier bearbeiten
 Wenn das Atelier ein Bild zum Bearbeiten hierher schickt, erscheint oben eine Taste `Fertig`. Sie speichert das Ergebnis als neues Bild und schickt es zurück ans Atelier; das Projekt bleibt auch im Fotolabor für spätere Änderungen.

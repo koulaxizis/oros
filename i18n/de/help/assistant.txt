@@ -58,6 +58,14 @@ Notizen und Tabelle legen die neue Notiz oder Tabelle an, wenn du `In … öffne
 
 Du kannst auch nach einem Kontakt fragen („Füge Maria von ACME hinzu, 6971234567“), einem CRM-Kunden, einer Kanban-Karte, einer Gewohnheit, einem beendeten Training, einer Wartung oder Verlängerungserinnerung in Garage („TÜV für den Golf ist am 1. März fällig“), einer neuen Pflanze, einer Impfung oder einem Tierarztbesuch für ein Haustier, einem Buch, Film, einer Serie, einem Album, Podcast oder Spiel für das Medienregal, einem Ort auf der Karte oder einer geteilten Ausgabe in Kosten teilen („Ich habe 64 fürs Abendessen auf der Kreta-Reise bezahlt“). Jedes davon öffnet das Formular der jeweiligen App ausgefüllt, und nichts wird gespeichert, bis du es dort speicherst. Eine Kanban-Karte wartet im Feld „Karte hinzufügen“ der Spalte, bis du Enter drückst, und ein Ort öffnet sich auf der Karte, wo du ihn über seine Markierung speicherst, wenn er der richtige ist.
 
+## Automationen
+Für Arbeit, die du in [Atelier](app:atelier), [Seitenlayout](app:layout) oder [Fotolabor](app:photolab) wiederholst, beschreib sie, zum Beispiel „jedes Foto 1080 px an der langen Seite, mein Name als Wasserzeichen unten rechts, als JPG speichern“ oder „ersetze 2025 durch 2026 in all meinen Plakaten und lade sie als PNG herunter“. Der Assistent antwortet mit einer Karte, die die Schritte in einfachen Worten zeigt:
+- `In … öffnen` öffnet den Automationen-Editor der App mit diesen Schritten. Prüfe sie, tippe auf `Speichern` und dann auf `Ausführen`, wenn du willst: Vorher läuft nichts.
+- `Als Datei speichern` speichert die Schritte als `.orosrecipe`-Datei, die du jemandem schicken kannst (geöffnet mit `Importieren` in den Automationen der App).
+- `Verwerfen` schließt die Karte.
+
+Der Assistent nutzt nur die Schritte, die die Automationen der App anbieten (dieselbe Liste wie `Schritt hinzufügen`), nie Code. Wenn du etwas willst, das damit nicht geht, sagt er es.
+
 ## Ändern, was du schon hast
 Frag zum Beispiel „Markiere den Anruf beim Klempner als erledigt“, „Verschieb den Zahnarzt auf Freitag um 10:00“, „Das Mittagessen war 14,50, nicht 12,50“ oder „Lösch das alte Lesezeichen über Züge“. Der Assistent findet den Eintrag zuerst mit einer Suche (du siehst und teilst ihn wie gewohnt) und zeigt dann eine Karte: was sich ändert, `Vorher` und `Nachher`, oder was gelöscht wird.
 - `Übernehmen` (oder `Löschen`) führt die Änderung aus. `Nicht ändern` lässt alles, wie es ist. Nichts ändert sich, bis du darauf drückst, auch bei Apps auf `Immer teilen`.
