@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.22.01
+- Reminders with orOS closed: on the computer, a reminder you just saved now reaches the push service right away, even if you close orOS straight after. In the Android app, Settings › Notifications shows how many reminders the phone holds and the next one.
+
 ## Version 3.22.00
 - Atelier: Automations. Set steps once (replace text, colours and fonts, text size, photo filter, centring, background removal, new sizes, download) or record what you do by hand, then run them on one design or many. No code, and one Undo brings everything back.
 
