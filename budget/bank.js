@@ -1,5 +1,6 @@
 // ============================================================
 // orOS Budget — bank statement core (budget/bank.js)
+// i18n-inline-ok: Greek bank-statement words (column names, month abbreviations, transaction kinds) and letter folding are parser data, no UI text
 // Pure logic, no DOM, no storage: loaded by budget/index.html as
 // window.OrosBudgetBank and by tests/budget-bank.test.js in Node.
 //   1. Text: decode (UTF-8 / UTF-16 / windows-1253 sniff), fold
@@ -52,7 +53,7 @@
       try { return { text: new TextDecoder("utf-8", { fatal: true }).decode(b), enc: "utf-8" }; } catch (e) {}
       var head = "";
       for (var i = 0; i < Math.min(b.length, 400); i++) head += String.fromCharCode(b[i]);
-      var m = /encoding=["']([\w.:-]+)["']/i.exec(head) || /CHARSET:\s*([\w-]+)/i.exec(head);
+      var m = /encoding=[\x22\x27]([\w.:-]+)[\x22\x27]/i.exec(head) || /CHARSET:\s*([\w-]+)/i.exec(head);
       if (m) {
         var c = m[1].toLowerCase();
         if (/^\d{4}$/.test(c)) c = "windows-" + c;
@@ -97,7 +98,7 @@
     if (/^\(.*\)$/.test(s)) { neg = true; s = s.slice(1, -1); }
     if (/\s*(dr|db|debit)\.?$/i.test(s)) { neg = true; s = s.replace(/\s*(dr|db|debit)\.?$/i, ""); }
     else s = s.replace(/\s*(cr|credit)\.?$/i, "");
-    s = s.replace(/[A-Za-z€$£¥₺  \s'’]/g, "");
+    s = s.replace(/[A-Za-z€$£¥₺  \s\x27’]/g, "");
     if (/^[-−–]/.test(s)) { neg = !neg; s = s.slice(1); }
     else if (/[-−–]$/.test(s)) { neg = !neg; s = s.slice(0, -1); }
     else if (/^\+/.test(s)) s = s.slice(1);
@@ -132,7 +133,7 @@
   // (Greece, most of Europe), "mdy" (USA) or "ymd"; only used when
   // the shape itself does not tell.
   function parseDate(v, order) {
-    var s = String(v == null ? "" : v).trim().replace(/'/g, "/");
+    var s = String(v == null ? "" : v).trim().replace(/\x27/g, "/");
     var m = /^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})(?:$|[T\s])/.exec(s);
     if (m) return ymd(+m[1], +m[2], +m[3]);
     m = /^(\d{4})(\d{2})(\d{2})(?:$|[\d.\[T\s])/.exec(s);
@@ -153,7 +154,7 @@
   function detectDateOrder(values, fallback) {
     var dmy = 0, mdy = 0, iso = 0;
     values.forEach(function (v) {
-      var s = String(v || "").trim().replace(/'/g, "/");
+      var s = String(v || "").trim().replace(/\x27/g, "/");
       if (/^\d{4}[-/.]?\d{1,2}/.test(s) && !/^\d{1,2}[-/.]/.test(s)) { iso++; return; }
       var m = /^(\d{1,2})[-/.](\d{1,2})[-/.]\d{2,4}/.exec(s);
       if (!m) return;
@@ -212,7 +213,7 @@
   function isDateCell(v) { return !!parseDate(v, "dmy") || !!parseDate(v, "mdy"); }
   function isMoneyCell(v) {
     var s = String(v || "");
-    return /\d/.test(s) && !/[^\d\s.,'’()+\-−–€$£¥]/.test(s.replace(/\b(eur|usd|gbp|chf|cr|dr)\b/gi, "")) &&
+    return /\d/.test(s) && !/[^\d\s.,\x27’()+\-−–€$£¥]/.test(s.replace(/\b(eur|usd|gbp|chf|cr|dr)\b/gi, "")) &&
       parseMoney(s, ",") !== null && !isDateCell(s) && s.replace(/\D/g, "").length < 16;
   }
   // The header row: the first row as wide as most rows, unless that
@@ -436,7 +437,7 @@
     out.cur = ccy ? ccy[1] : "";
     xAll(stmt, "Ntry").forEach(function (e, i) {
       if (out.items.length >= MAX_ROWS) return;
-      var am = /<(?:[\w.-]+:)?Amt(?:\s+Ccy="([A-Z]{3})")?[^>]*>([^<]*)</.exec(e);
+      var am = /<(?:[\w.-]+:)?Amt(?:\s+Ccy=\x22([A-Z]{3})\x22)?[^>]*>([^<]*)</.exec(e);
       var amt = am ? parseMoney(am[2], ".") : null;
       var ind = xText(e, "CdtDbtInd");
       if (amt !== null && ind === "DBIT") amt = -Math.abs(amt);
@@ -514,7 +515,7 @@
   ["pos", "eft", "eftpos", "card", "visa", "mastercard", "maestro", "debit", "credit", "purchase", "payment",
    "transfer", "online", "contactless", "αγορα", "αγορεσ", "πληρωμη", "καρτα", "καρτασ", "μεταφορα", "χρεωση",
    "πιστωση", "αναληψη", "καταθεση", "εμβασμα", "συναλλαγη", "ηλεκτρονικη"].forEach(function (w) { NOISE[w] = 1; });
-  function wordOk(w) { return w.length >= 3 && /^[\p{L}][\p{L}&.'-]*$/u.test(w) && !NOISE[fold(w)]; }
+  function wordOk(w) { return w.length >= 3 && /^[\p{L}][\p{L}&.\x27-]*$/u.test(w) && !NOISE[fold(w)]; }
   function suggestQ(text) {
     var words = clean(text).split(/[\s·*#/:,;]+/);
     for (var i = 0; i < words.length; i++) {

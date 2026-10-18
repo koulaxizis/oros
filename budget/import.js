@@ -150,7 +150,7 @@
       return { d: g(["date"]), amt: g(["amount"]), sign: 0, cur: curOf(g(["currency"])),
                alt: g(["converted amount"]), altCur: c2 >= 0 ? curOf(row[c2]) : "",
                cat: cat, acc: g(["account"]), payee: "", memo: g(["description", "note"]),
-               kind: /^(to|from) ['‘’"]/i.test(K.clean(cat, 60)) || /^transfer$/i.test(K.clean(cat, 30)) ? "xfer" : "" };
+               kind: /^(to|from) [\x27‘’\x22]/i.test(K.clean(cat, 60)) || /^transfer$/i.test(K.clean(cat, 30)) ? "xfer" : "" };
     },
     moneymgr: function (g, row, head) {
       var type = fold(g(["Income/Expense", "Inc./Exp.", "Type"]));
