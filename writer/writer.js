@@ -2021,6 +2021,10 @@ function bindToolbar() {
   }
   binds['btn-settings'] = () => openSettingsDialog();
 
+  // Writer has its own Ask menu, so the shell's menu and button for
+  // selected text (quickmenu.js) leave it alone.
+  window.__orosNoSelAsk = true;
+
   // btn-ask — "Ask the Assistant" (Assistant phase 3): only when the
   // Assistant app is installed; placed before btn-settings.
   if (assistantInstalled() && !document.getElementById('btn-ask')) {
