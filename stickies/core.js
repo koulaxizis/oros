@@ -1,5 +1,6 @@
 // ============================================================
 // orOS Sticky Notes — pure core (no DOM)
+// i18n-inline-ok: the Greek final sigma fold is search data, no UI text
 // Small coloured notes on the desktop that can ring at a time and
 // fade away at a time.
 //
