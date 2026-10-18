@@ -30,6 +30,7 @@
   var IMG_TOTAL = 2000000;                  // chars of all pictures together
   var SVGNS = "http://www.w3.org/2000/svg";
   var C = window.WhiteboardCore;
+  var K = window.WhiteboardKit;
 
   // ---------- 1. Language (every string in English and Greek) ----------
   var STR = {
@@ -74,7 +75,36 @@
       "toast.undo": "Undo", "toast.deleted": "Deleted", "toast.nothingUndo": "Nothing to undo", "toast.nothingRedo": "Nothing to redo",
       "toast.limit": "This board is full (2000 items). Start a new board.",
       "full": "This device is out of storage space. The change was not saved.",
-      "drop": "Drop pictures here"
+      "drop": "Drop pictures here",
+      "btn.more": "More",
+      "m.vote": "Dot voting…", "m.results": "Voting results…", "m.timer": "Timer…", "m.tpl": "Templates…",
+      "m.mind": "Bring in a mind map…", "m.send": "Send the notes to an app…",
+      "ctx.send": "Send to an app…", "ctx.atelier": "Open in Atelier",
+      "vote.title": "Dot voting", "vote.per": "Dots for each person",
+      "vote.how": "Tap a note, shape, text or picture to put one of your dots on it; tap your dot again to take it back. When you are done, hand over the device and tap Next person: they get dots of another colour.",
+      "vote.start": "Start voting", "vote.left": "{n} of {per} dots left", "vote.none": "No dots left. Tap one of yours to take it back.",
+      "vote.next": "Next person", "vote.results": "Results", "vote.done": "Done", "vote.person": "Person {n}",
+      "vote.miss": "Tap a note, shape, text or picture.",
+      "res.title": "Voting results", "res.empty": "No votes on this board yet.", "res.n": "{n} votes", "res.n1": "1 vote",
+      "res.clear": "Remove all dots", "res.cleared": "Dots removed", "res.send": "Send to an app…",
+      "res.picture": "Picture", "res.noText": "(no text)",
+      "tm.title": "Timer", "tm.min": "Minutes", "tm.start": "Start", "tm.pause": "Pause", "tm.resume": "Go on",
+      "tm.add": "One more minute", "tm.stop": "Stop the timer", "tm.up": "Time is up", "tm.label": "Timer: {left} left",
+      "tm.preset": "{n} min",
+      "tpl.title": "Templates", "tpl.added": "Template added",
+      "tpl.brainstorm": "Brainstorm", "tpl.brainstorm.d": "A topic in the middle with room for ideas around it.",
+      "tpl.retro": "Retrospective", "tpl.retro.d": "What went well, what to improve and what we do next.",
+      "tpl.swot": "SWOT", "tpl.swot.d": "Strengths, weaknesses, opportunities and threats.",
+      "tpl.roadmap": "Roadmap", "tpl.roadmap.d": "Now, next and later on a time line.",
+      "tpl.topic": "Our topic", "tpl.well": "What went well", "tpl.better": "What to improve", "tpl.actions": "What we do next",
+      "tpl.s": "Strengths", "tpl.w": "Weaknesses", "tpl.o": "Opportunities", "tpl.t": "Threats",
+      "tpl.now": "Now", "tpl.next": "Next", "tpl.later": "Later", "tpl.time": "Time",
+      "mm.title": "Bring in a mind map", "mm.none": "There are no mind maps on this device yet. Make one in Mind map first.",
+      "mm.count": "{n} ideas", "mm.untitled": "Mind map without a title", "mm.added": "{n} ideas brought in",
+      "mm.cut": "Only the first {n} ideas were brought in.", "mm.fail": "The mind maps could not be read.",
+      "send.none": "Sending to other apps works inside orOS.", "send.empty": "There are no notes with words to send.",
+      "at.none": "Atelier is not installed here.", "at.making": "Making the picture…", "at.done": "Opened in Atelier as a new design",
+      "at.fail": "The frame could not go to Atelier.", "at.nofs": "Atelier needs the orOS disk, which is not available here."
     },
     el: {
       "app.name": "Πίνακας ιδεών",
@@ -117,7 +147,36 @@
       "toast.undo": "Αναίρεση", "toast.deleted": "Διαγράφηκε", "toast.nothingUndo": "Δεν υπάρχει κάτι για αναίρεση", "toast.nothingRedo": "Δεν υπάρχει κάτι για επανάληψη",
       "toast.limit": "Ο πίνακας γέμισε (2000 στοιχεία). Ξεκίνα νέο πίνακα.",
       "full": "Ο χώρος αποθήκευσης της συσκευής γέμισε. Η αλλαγή δεν αποθηκεύτηκε.",
-      "drop": "Άφησε εδώ τις εικόνες"
+      "drop": "Άφησε εδώ τις εικόνες",
+      "btn.more": "Περισσότερα",
+      "m.vote": "Ψηφοφορία με κουκκίδες…", "m.results": "Αποτελέσματα ψηφοφορίας…", "m.timer": "Χρονόμετρο…", "m.tpl": "Πρότυπα…",
+      "m.mind": "Εισαγωγή νοητικού χάρτη…", "m.send": "Αποστολή των σημειώσεων σε εφαρμογή…",
+      "ctx.send": "Αποστολή σε εφαρμογή…", "ctx.atelier": "Άνοιγμα στο Atelier",
+      "vote.title": "Ψηφοφορία με κουκκίδες", "vote.per": "Κουκκίδες για κάθε άτομο",
+      "vote.how": "Πάτησε ένα αυτοκόλλητο, σχήμα, κείμενο ή εικόνα για να βάλεις μια κουκκίδα σου· πάτησε ξανά την κουκκίδα σου για να την πάρεις πίσω. Όταν τελειώσεις, δώσε τη συσκευή στον επόμενο και πάτησε Επόμενο άτομο: παίρνει κουκκίδες άλλου χρώματος.",
+      "vote.start": "Έναρξη ψηφοφορίας", "vote.left": "Απομένουν {n} από {per} κουκκίδες", "vote.none": "Δεν απομένουν κουκκίδες. Πάτησε μια δική σου για να την πάρεις πίσω.",
+      "vote.next": "Επόμενο άτομο", "vote.results": "Αποτελέσματα", "vote.done": "Τέλος", "vote.person": "Άτομο {n}",
+      "vote.miss": "Πάτησε ένα αυτοκόλλητο, σχήμα, κείμενο ή εικόνα.",
+      "res.title": "Αποτελέσματα ψηφοφορίας", "res.empty": "Δεν υπάρχουν ακόμα ψήφοι σε αυτόν τον πίνακα.", "res.n": "{n} ψήφοι", "res.n1": "1 ψήφος",
+      "res.clear": "Αφαίρεση όλων των κουκκίδων", "res.cleared": "Οι κουκκίδες αφαιρέθηκαν", "res.send": "Αποστολή σε εφαρμογή…",
+      "res.picture": "Εικόνα", "res.noText": "(χωρίς κείμενο)",
+      "tm.title": "Χρονόμετρο", "tm.min": "Λεπτά", "tm.start": "Έναρξη", "tm.pause": "Παύση", "tm.resume": "Συνέχεια",
+      "tm.add": "Ένα λεπτό ακόμα", "tm.stop": "Διακοπή χρονομέτρου", "tm.up": "Ο χρόνος τελείωσε", "tm.label": "Χρονόμετρο: απομένουν {left}",
+      "tm.preset": "{n} λεπ.",
+      "tpl.title": "Πρότυπα", "tpl.added": "Το πρότυπο προστέθηκε",
+      "tpl.brainstorm": "Καταιγισμός ιδεών", "tpl.brainstorm.d": "Ένα θέμα στη μέση και χώρος για ιδέες γύρω του.",
+      "tpl.retro": "Αναδρομή", "tpl.retro.d": "Τι πήγε καλά, τι να βελτιώσουμε και τι κάνουμε μετά.",
+      "tpl.swot": "SWOT", "tpl.swot.d": "Δυνάμεις, αδυναμίες, ευκαιρίες και απειλές.",
+      "tpl.roadmap": "Χάρτης πορείας", "tpl.roadmap.d": "Τώρα, μετά και αργότερα σε μια γραμμή χρόνου.",
+      "tpl.topic": "Το θέμα μας", "tpl.well": "Τι πήγε καλά", "tpl.better": "Τι να βελτιώσουμε", "tpl.actions": "Τι κάνουμε μετά",
+      "tpl.s": "Δυνάμεις", "tpl.w": "Αδυναμίες", "tpl.o": "Ευκαιρίες", "tpl.t": "Απειλές",
+      "tpl.now": "Τώρα", "tpl.next": "Μετά", "tpl.later": "Αργότερα", "tpl.time": "Χρόνος",
+      "mm.title": "Εισαγωγή νοητικού χάρτη", "mm.none": "Δεν υπάρχουν ακόμα νοητικοί χάρτες σε αυτή τη συσκευή. Φτιάξε πρώτα έναν στο Mind map.",
+      "mm.count": "{n} ιδέες", "mm.untitled": "Νοητικός χάρτης χωρίς τίτλο", "mm.added": "Μπήκαν {n} ιδέες",
+      "mm.cut": "Μπήκαν μόνο οι πρώτες {n} ιδέες.", "mm.fail": "Οι νοητικοί χάρτες δεν διαβάστηκαν.",
+      "send.none": "Η αποστολή σε άλλες εφαρμογές γίνεται μέσα στο orOS.", "send.empty": "Δεν υπάρχουν σημειώσεις με λέξεις για αποστολή.",
+      "at.none": "Το Atelier δεν είναι εγκατεστημένο εδώ.", "at.making": "Φτιάχνεται η εικόνα…", "at.done": "Άνοιξε στο Atelier ως νέο σχέδιο",
+      "at.fail": "Το πλαίσιο δεν πήγε στο Atelier.", "at.nofs": "Το Atelier χρειάζεται τον δίσκο του orOS, που δεν είναι διαθέσιμος εδώ."
     }
   };
 
@@ -138,7 +197,8 @@
 
   // ---------- 2. Data: local first, then sync ----------
   var data = C.empty();
-  var prefs = { board: "", views: {}, tool: "select", note: "yellow", shape: "rect", line: "ink", pen: "ink", sw: 3, bg: "paper", fmt: "png" };
+  var prefs = { board: "", views: {}, tool: "select", note: "yellow", shape: "rect", line: "ink", pen: "ink", sw: 3, bg: "paper", fmt: "png",
+    votes: 5, timer: { end: 0, left: 0, dur: 0 } };
 
   function syncApi() {
     try { return (window.parent && window.parent.orosSync) || window.orosSync || null; }
@@ -155,6 +215,10 @@
       });
     } catch (e) { /* defaults */ }
     if (["select", "hand", "pen"].indexOf(prefs.tool) < 0) prefs.tool = "select";
+    prefs.votes = Math.max(1, Math.min(K.MAX_VOTES, Math.round(+prefs.votes) || 5));
+    var tm = prefs.timer || {};
+    function msOk(v) { return typeof v === "number" && isFinite(v) && v >= 0 ? v : 0; }
+    prefs.timer = { end: msOk(tm.end), left: msOk(tm.left), dur: msOk(tm.dur) };
   }
 
   function persist() {
@@ -269,7 +333,18 @@
     h_none: ic('<path d="M4 12h16"/>'),
     f_none: ic('<rect x="4" y="5" width="16" height="14" rx="2"/>'),
     f_soft: ic('<rect x="4" y="5" width="16" height="14" rx="2" fill="currentColor" fill-opacity=".3"/>'),
-    f_solid: ic('<rect x="4" y="5" width="16" height="14" rx="2" fill="currentColor"/>')
+    f_solid: ic('<rect x="4" y="5" width="16" height="14" rx="2" fill="currentColor"/>'),
+    more: ic('<circle cx="5" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="19" cy="12" r="1.5" fill="currentColor"/>'),
+    vote: ic('<circle cx="8" cy="9" r="3" fill="currentColor"/><circle cx="16" cy="9" r="3"/><circle cx="12" cy="16" r="3" fill="currentColor"/>'),
+    timer: ic('<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/>'),
+    tpl: ic('<rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="18" height="8" rx="1"/>'),
+    mind: ic('<circle cx="12" cy="12" r="3"/><circle cx="4" cy="5" r="2"/><circle cx="20" cy="5" r="2"/><circle cx="4" cy="19" r="2"/><circle cx="20" cy="19" r="2"/><path d="M6 6l4 4M18 6l-4 4M6 18l4-4M18 18l-4-4"/>'),
+    send: ic('<path d="M4 12l16-8-6 16-3-7z"/><path d="M11 13l9-9"/>'),
+    atelier: ic('<path d="M12 3a9 9 0 1 0 0 18c1.5 0 2-1 2-2s-1-1.5-1-2.5S14 15 15 15h2a4 4 0 0 0 4-4c0-4.4-4-8-9-8z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="15" cy="7.5" r="1"/>'),
+    pause: ic('<path d="M9 5v14M15 5v14"/>'),
+    play: ic('<path d="M7 5l12 7-12 7z"/>'),
+    close: ic('<path d="M6 6l12 12M18 6L6 18"/>'),
+    next: ic('<path d="M5 12h14M13 6l6 6-6 6"/>')
   };
   function iconBtn(cls, icon, lbl, fn) {
     var b = el("button", cls);
@@ -459,6 +534,8 @@
     });
     paintView();
     paintUi();
+    paintVote();
+    paintTimer();
     renderCtx();
     renderTools();
     updateButtons();
@@ -615,6 +692,7 @@
       if (o && handle === "se") { gesture = Object.assign(start, { type: "resize", id: o.id, orig: clone(o) }); return; }
     }
     var id = hitId(e.target);
+    if (voting) { gesture = Object.assign(start, { type: "vote", view: { x: view.x, y: view.y } }); return; }
     if (tool === "select") {
       if (id) {
         if (e.shiftKey || e.ctrlKey || e.metaKey) {
@@ -662,6 +740,8 @@
       var o = objById(id);
       if (o && o.k === "frame") C.inFrame(list, o, measure).forEach(function (x) { out[x.id] = 1; });
     });
+    // votes go with what they were cast for
+    K.dotsOn(list, Object.keys(out), measure).forEach(function (id) { out[id] = 1; });
     return Object.keys(out);
   }
 
@@ -686,7 +766,7 @@
     if (!g.moved && Math.abs(dx) + Math.abs(dy) < (isTouch ? 8 : 4)) return;
     g.moved = true;
     var w = toWorld(e.clientX, e.clientY), wdx = w.x - g.w.x, wdy = w.y - g.w.y;
-    if (g.type === "pan") {
+    if (g.type === "pan" || g.type === "vote") {
       view.x = g.view.x + dx; view.y = g.view.y + dy;
       viewChanged();
       return;
@@ -788,6 +868,8 @@
         rows[g.id] = C.penFrom(simple, p);
         commit(rows);
       }
+    } else if (g.type === "vote") {
+      if (!g.moved) castVote(e.clientX, e.clientY);
     } else if (g.type === "marquee") {
       announce();
     } else if (g.type === "pan") {
@@ -904,7 +986,7 @@
     var bar = $("tools");
     if (!bar.childNodes.length) {
       TOOLS.forEach(function (tl) {
-        var b = iconBtn("icon-btn", tl, t("tool." + tl), function () { setTool(tl); });
+        var b = iconBtn("icon-btn", tl, t("tool." + tl), function () { if (voting) stopVote(); setTool(tl); });
         b.dataset.tool = tl;
         bar.appendChild(b);
       });
@@ -959,7 +1041,7 @@
 
   function renderCtx() {
     var bar = $("ctx");
-    if (gesture && gesture.moved) { bar.hidden = true; return; }
+    if ((gesture && gesture.moved) || voting) { bar.hidden = true; return; }
     bar.textContent = "";
     var list = sel.map(objById).filter(Boolean);
     var kinds = {};
@@ -1029,7 +1111,11 @@
     add(iconBtn("icon-btn", "front", t("ctx.front"), function () { var z = C.zTop(data, board); each(null, function (o) { o.z = z++; }); }));
     add(iconBtn("icon-btn", "back", t("ctx.back"), function () { var z = C.zBottom(data, board) - sel.length; each(null, function (o) { o.z = z++; }); }));
     add(iconBtn("icon-btn", "dup", t("ctx.dup"), duplicate));
-    if (list.length === 1 && list[0].k === "frame") add(iconBtn("icon-btn", "exp", t("ctx.exportFrame"), function () { openExport("frame"); }));
+    if (list.length === 1 && list[0].k === "frame") {
+      add(iconBtn("icon-btn", "exp", t("ctx.exportFrame"), function () { openExport("frame"); }));
+      if (atelierInstalled()) add(iconBtn("icon-btn", "atelier", t("ctx.atelier"), function () { frameToAtelier(list[0]); }));
+    }
+    if (sendApi() && K.items(list).length) add(iconBtn("icon-btn", "send", t("ctx.send"), function () { sendItems(K.items(list)); }));
     add(iconBtn("icon-btn del", "trash", t("ctx.del"), removeSel));
     bar.hidden = false;
   }
@@ -1459,6 +1545,447 @@
     showDialog(dlg);
   }
 
+  // ---------- 13b. Wave D2: voting, timer, templates, Mind map, other apps ----------
+  function shell() {
+    try { return window.parent && window.parent !== window ? window.parent : null; } catch (e) { return null; }
+  }
+  function fsApi() {
+    try { return (window.parent && window.parent.orosFS) || window.orosFS || null; } catch (e) { return window.orosFS || null; }
+  }
+  function sendApi() {
+    var p = shell();
+    try { return p && p.orosSend && typeof p.orosSend.open === "function" ? p.orosSend : null; } catch (e) { return null; }
+  }
+  function installed(id) {
+    var p = shell();
+    try {
+      if (!p || typeof p.__orosOpenAt !== "function") return false;
+      if (typeof p.orosAssistInstalled !== "function") return true;
+      return p.orosAssistInstalled().some(function (a) { return a && a.id === id; });
+    } catch (e) { return false; }
+  }
+  function atelierInstalled() { return installed("atelier"); }
+  // A script of orOS loaded on first use, with this file's ?v=.
+  var loaded = {};
+  function loadScript(src) {
+    if (loaded[src]) return loaded[src];
+    loaded[src] = new Promise(function (resolve, reject) {
+      var sc = document.createElement("script");
+      sc.src = src + (SCRIPT_V ? "?v=" + encodeURIComponent(SCRIPT_V) : "");
+      sc.onload = function () { resolve(); };
+      sc.onerror = function () { delete loaded[src]; reject(new Error("load " + src)); };
+      document.head.appendChild(sc);
+    });
+    return loaded[src];
+  }
+  function boardTitle() { var b = board && C.board(data, board); return b ? b.name || t("board.untitled") : t("app.name"); }
+  function pickBtn(name, sub, n, fn) {
+    var b = textBtn("pick-btn", "", fn);
+    if (n !== null && n !== undefined) b.appendChild(el("span", "pk-n", String(n)));
+    var tx = el("span", "pk-txt");
+    tx.appendChild(el("span", "pk-name", name));
+    if (sub) tx.appendChild(el("span", "pk-sub", sub));
+    b.appendChild(tx);
+    return b;
+  }
+  // Shows the given objects (after a template or an import).
+  function showList(list) {
+    var r = stageRect(), b = C.bounds(list, measure, 40);
+    if (!b) return;
+    var s = Math.max(0.1, Math.min(1, (r.width - 80) / b.w, (r.height - 120) / b.h));
+    view.s = s;
+    view.x = r.width / 2 - (b.x + b.w / 2) * s;
+    view.y = r.height / 2 - (b.y + b.h / 2) * s;
+    viewChanged();
+  }
+  // New objects in one undo step: in the middle of the screen on an
+  // empty board, else to the right of what is there (never on top).
+  function insertObjs(list, msg) {
+    if (!list.length) return;
+    var r = stageRect(), c = toWorld(r.left + r.width / 2, r.top + r.height / 2);
+    var have = C.bounds(objs(), measure, 0), size = C.bounds(list, measure, 0);
+    if (have && size) c = { x: have.x + have.w + 200 + size.w / 2, y: have.y + size.h / 2 };
+    var placed = K.place(list, Math.round(c.x), Math.round(c.y), zTop(), board || "-"), rows = {};
+    placed.forEach(function (o) { rows[o.id] = o; });
+    if (voting) stopVote();
+    setTool("select");
+    if (!commit(rows)) return;
+    sel = placed.map(function (o) { return o.id; });
+    showList(placed);
+    var h = H(), step = h.u[h.u.length - 1];
+    toast(msg, function () { if (H() === h && h.u[h.u.length - 1] === step) undo(); });
+    announce();
+    render();
+  }
+
+  function openMore() {
+    var items = [];
+    function item(lbl, fn) {
+      var b = textBtn("pop-txt", lbl, function () { closePop(); fn(); });
+      b.setAttribute("role", "menuitem");
+      items.push(b);
+    }
+    item(t("m.tpl"), openTemplates);
+    item(t("m.vote"), openVote);
+    if (objs().some(K.isDot)) item(t("m.results"), openResults);
+    item(t("m.timer"), openTimer);
+    item(t("m.mind"), openMindmap);
+    if (sendApi()) item(t("m.send"), function () { sendItems(K.items(objs())); });
+    pop($("more-btn"), items);
+  }
+
+  // ---- Dot voting ----
+  // voting = { per, n (person), c (their colour), mine: [dot ids] }.
+  // Screen state only: the dots themselves are ordinary objects.
+  var voting = null;
+  var VOTE_COLORS = ["red", "blue", "green", "purple", "orange", "pink", "teal", "ink"];
+  function openVote() {
+    var dlg = makeDialog("wb-vote", t("vote.title"));
+    dlg.appendChild(el("p", "dlg-sub", t("vote.how")));
+    var form = el("form");
+    var lbl = el("label", "fld-lbl", t("vote.per"));
+    var inp = el("input");
+    inp.type = "number"; inp.min = "1"; inp.max = String(K.MAX_VOTES); inp.step = "1";
+    inp.id = "wb-vote-per"; lbl.htmlFor = inp.id;
+    inp.value = String(prefs.votes);
+    form.appendChild(lbl);
+    form.appendChild(inp);
+    var acts = el("div", "dlg-actions wrap");
+    var ok = textBtn("dlg-btn primary", t("vote.start"));
+    ok.type = "submit";
+    acts.appendChild(ok);
+    if (objs().some(K.isDot)) acts.appendChild(textBtn("dlg-btn", t("vote.results"), function () { dlg.close(); openResults(); }));
+    acts.appendChild(textBtn("dlg-btn", t("cancel"), function () { dlg.close(); }));
+    form.appendChild(acts);
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var n = Math.max(1, Math.min(K.MAX_VOTES, Math.round(+inp.value) || prefs.votes));
+      prefs.votes = n;
+      savePrefs();
+      dlg.close();
+      startVote(n);
+    });
+    dlg.appendChild(form);
+    showDialog(dlg);
+    inp.focus();
+  }
+  function startVote(per) {
+    setTool("select");
+    sel = [];
+    voting = { per: per, n: 1, c: VOTE_COLORS[0], mine: [] };
+    say(t("vote.person", { n: 1 }) + ". " + t("vote.left", { n: per, per: per }));
+    render();
+  }
+  function stopVote() { voting = null; render(); }
+  function nextPerson() {
+    if (!voting) return;
+    voting.n++;
+    voting.c = VOTE_COLORS[(voting.n - 1) % VOTE_COLORS.length];
+    voting.mine = [];
+    say(t("vote.person", { n: voting.n }) + ". " + t("vote.left", { n: voting.per, per: voting.per }));
+    render();
+  }
+  function votesLeft() {
+    voting.mine = voting.mine.filter(function (id) { return !!objById(id); });
+    return voting.per - voting.mine.length;
+  }
+  function castVote(cx, cy) {
+    var hits = document.elementsFromPoint ? document.elementsFromPoint(cx, cy) : [document.elementFromPoint(cx, cy)];
+    var target = null, rows = {};
+    for (var i = 0; i < hits.length && !target; i++) {
+      var o = objById(hitId(hits[i]));
+      if (!o) continue;
+      if (K.isDot(o)) {
+        if (voting.mine.indexOf(o.id) >= 0) {           // your own dot: take it back
+          rows[o.id] = null;
+          if (commit(rows)) say(t("vote.left", { n: votesLeft(), per: voting.per }));
+          render();
+          return;
+        }
+        continue;                                       // someone else's: look under it
+      }
+      if (K.votable(o)) target = o;
+    }
+    if (!target) { toast(t("vote.miss")); return; }
+    if (votesLeft() <= 0) { toast(t("vote.none")); return; }
+    var dot = K.dotFor(target, objs(), { id: newId(), c: voting.c, z: zTop() }, measure);
+    if (!dot) { toast(t("vote.none")); return; }
+    rows[dot.id] = dot;
+    if (commit(rows)) {
+      voting.mine.push(dot.id);
+      say(t("vote.left", { n: votesLeft(), per: voting.per }));
+    }
+    render();
+  }
+  function paintVote() {
+    var bar = $("vote-bar");
+    if (!voting) { bar.hidden = true; bar.textContent = ""; bar.dataset.key = ""; return; }
+    var left = votesLeft(), key = [voting.n, voting.c, left, LANG].join("|");
+    bar.hidden = false;
+    if (bar.dataset.key === key) return;
+    bar.dataset.key = key;
+    bar.textContent = "";
+    var info = el("span", "vote-left");
+    var d = el("span", "vote-dot");
+    d.style.background = C.COLORS[voting.c][0];
+    info.appendChild(d);
+    info.appendChild(el("span", "", t("vote.person", { n: voting.n }) + " · " + t("vote.left", { n: left, per: voting.per })));
+    bar.appendChild(info);
+    bar.appendChild(textBtn("txt-btn", t("vote.next"), nextPerson));
+    bar.appendChild(textBtn("txt-btn", t("vote.results"), openResults));
+    bar.appendChild(textBtn("txt-btn", t("vote.done"), stopVote));
+  }
+  function itemOf(o) {
+    var it = K.items([o])[0];
+    if (it) return it;
+    return { text: o.k === "image" ? t("res.picture") : t("res.noText"), note: "" };
+  }
+  function votesText(n) { return n === 1 ? t("res.n1") : t("res.n", { n: n }); }
+  function openResults() {
+    var ranked = K.ranked(objs(), measure);
+    var dlg = makeDialog("wb-results", t("res.title"));
+    if (!ranked.length) dlg.appendChild(el("p", "dlg-sub", t("res.empty")));
+    else {
+      var ul = el("ul", "pick-list");
+      ranked.forEach(function (r) {
+        var it = itemOf(r.o), li = el("li");
+        var pb = li.appendChild(pickBtn(it.text, it.note, r.n, function () {
+          dlg.close();
+          if (voting) stopVote();
+          setTool("select");
+          sel = [r.id];
+          reveal(r.id, true);
+          announce();
+          render();
+        }));
+        pb.setAttribute("aria-label", it.text + ", " + votesText(r.n));
+        ul.appendChild(li);
+      });
+      dlg.appendChild(ul);
+    }
+    var acts = el("div", "dlg-actions wrap");
+    if (ranked.length && sendApi()) {
+      acts.appendChild(textBtn("dlg-btn", t("res.send"), function () {
+        dlg.close();
+        sendItems(ranked.map(function (r) {
+          var it = itemOf(r.o);
+          return { text: it.text, note: (votesText(r.n) + (it.note ? "\n" + it.note : "")).slice(0, 1000) };
+        }));
+      }));
+    }
+    var dots = objs().filter(K.isDot);
+    if (dots.length) {
+      acts.appendChild(textBtn("dlg-btn danger", t("res.clear"), function () {
+        dlg.close();
+        var rows = {};
+        dots.forEach(function (o) { rows[o.id] = null; });
+        if (commit(rows)) {
+          var h = H(), step = h.u[h.u.length - 1];
+          toast(t("res.cleared"), function () { if (H() === h && h.u[h.u.length - 1] === step) undo(); });
+        }
+        render();
+      }));
+    }
+    acts.appendChild(textBtn("dlg-btn", t("close"), function () { dlg.close(); }));
+    dlg.appendChild(acts);
+    showDialog(dlg);
+  }
+
+  // ---- Notes to other apps (BR-SEND items: To-Do, Kanban, …) ----
+  function sendItems(items) {
+    var api = sendApi();
+    if (!api) { toast(t("send.none")); return; }
+    if (!items.length) { toast(t("send.empty")); return; }
+    api.open({ kind: "items", data: { title: boardTitle(), items: items.slice(0, 200) } });
+  }
+
+  // ---- A frame to Atelier (BR-MK-AT's newPicture: a new design) ----
+  function frameToAtelier(f) {
+    var p = shell();
+    if (!p || !atelierInstalled()) { toast(t("at.none")); return; }
+    if (!fsApi()) { toast(t("at.nofs")); return; }
+    var title = f.tx || boardTitle();
+    var r = exportSvg(C.inFrame(objs(), f, measure), true, title);
+    if (!r) return;
+    toast(t("at.making"));
+    Promise.all([toPng(r, true), loadScript("../designkit/assets.js")]).then(function (res) {
+      var png = res[0], AS = window.orosDK && window.orosDK.assets;
+      if (!png || !AS) throw new Error("png");
+      var file;
+      try { file = new File([png.blob], fileBase(title) + ".png", { type: "image/png" }); }
+      catch (e) { file = png.blob; file.name = fileBase(title) + ".png"; }
+      return AS.importFile(file).then(function (a) {
+        p.__orosOpenAt("atelier", { newPicture: { path: AS.FOLDER + "/" + a.id, w: a.w, h: a.h, name: title.slice(0, 120) } });
+        toast(t("at.done"));
+      });
+    }).catch(function (e) {
+      console.error("[orOS] whiteboard: frame to Atelier failed", e);
+      toast(e && e.message === "nofs" ? t("at.nofs") : t("at.fail"));
+    });
+  }
+
+  // ---- Templates ----
+  function openTemplates() {
+    var dlg = makeDialog("wb-tpl", t("tpl.title"));
+    var ul = el("ul", "tpl-list");
+    K.TEMPLATES.forEach(function (k) {
+      var li = el("li");
+      li.appendChild(pickBtn(t("tpl." + k), t("tpl." + k + ".d"), null, function () { dlg.close(); addTemplate(k); }));
+      ul.appendChild(li);
+    });
+    dlg.appendChild(ul);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(textBtn("dlg-btn", t("close"), function () { dlg.close(); }));
+    dlg.appendChild(acts);
+    showDialog(dlg);
+  }
+  function addTemplate(kind) {
+    var L = {};
+    ["brainstorm", "retro", "swot", "roadmap", "topic", "well", "better", "actions", "s", "w", "o", "t", "now", "next", "later", "time"]
+      .forEach(function (k) { L[k] = t("tpl." + k); });
+    insertObjs(K.template(kind, L, newId), t("tpl.added"));
+  }
+
+  // ---- Bring in a mind map (read only: oros-mindmap-data) ----
+  function openMindmap() {
+    loadScript("../mindmap/mm-core.js").then(function () {
+      var MM = window.MMCore, md;
+      var raw = JSON.parse(localStorage.getItem("oros-mindmap-data") || "null");
+      md = MM.merge(MM.emptyData(), raw && typeof raw === "object" ? raw : MM.emptyData());
+      var maps = (md.maps || []).map(function (mp) {
+        var R = MM.resolve(md, mp.id);
+        return { id: mp.id, R: R, name: MM.title(R.root.text, 120) || t("mm.untitled") };
+      }).sort(function (a, b) { return a.name.localeCompare(b.name); });
+      var dlg = makeDialog("wb-mind", t("mm.title"));
+      if (!maps.length) dlg.appendChild(el("p", "dlg-sub", t("mm.none")));
+      else {
+        var ul = el("ul", "pick-list");
+        maps.forEach(function (mp) {
+          var li = el("li");
+          li.appendChild(pickBtn(mp.name, t("mm.count", { n: mp.R.count }), null, function () { dlg.close(); addMindmap(mp); }));
+          ul.appendChild(li);
+        });
+        dlg.appendChild(ul);
+      }
+      var acts = el("div", "dlg-actions");
+      acts.appendChild(textBtn("dlg-btn", t("close"), function () { dlg.close(); }));
+      dlg.appendChild(acts);
+      showDialog(dlg);
+    }).catch(function (e) { console.error("[orOS] whiteboard: mind maps", e); toast(t("mm.fail")); });
+  }
+  function addMindmap(mp) {
+    var R = mp.R, n = 0;
+    // one more node than the cap, so fromTree knows it was cut
+    function tree(id, depth) {
+      var nd = R.N[id];
+      n++;
+      var out = { tx: ((nd.emoji ? nd.emoji + " " : "") + (nd.text || "")).trim(), kids: [] };
+      if (id === R.root.id && !out.tx) out.tx = mp.name;
+      (R.kids[id] || []).forEach(function (k) { if (n <= K.MAX_TREE && depth < 200) out.kids.push(tree(k, depth + 1)); });
+      return out;
+    }
+    var res = K.fromTree(tree(R.root.id, 0), newId);
+    insertObjs(res.objs, t("mm.added", { n: res.count }) + (res.cut ? " " + t("mm.cut", { n: K.MAX_TREE }) : ""));
+  }
+
+  // ---- Timer (device-local, prefs.timer = { end, left, dur }) ----
+  // running: end > 0; paused: left > 0; time is up: dur > 0 only.
+  var tmTimer = 0, tmFlash = false;
+  function openTimer() {
+    var dlg = makeDialog("wb-timer", t("tm.title"));
+    var pre = el("div", "presets");
+    [1, 2, 3, 5, 10, 15, 25].forEach(function (n) {
+      pre.appendChild(textBtn("dlg-btn", t("tm.preset", { n: n }), function () { dlg.close(); startTimer(n); }));
+    });
+    dlg.appendChild(pre);
+    var form = el("form");
+    var lbl = el("label", "fld-lbl", t("tm.min"));
+    var inp = el("input");
+    inp.type = "number"; inp.min = "1"; inp.max = "180"; inp.step = "1";
+    inp.id = "wb-tm-min"; lbl.htmlFor = inp.id;
+    inp.value = String(Math.max(1, Math.round((prefs.timer.dur || 300000) / 60000)));
+    form.appendChild(lbl);
+    form.appendChild(inp);
+    var acts = el("div", "dlg-actions");
+    var ok = textBtn("dlg-btn primary", t("tm.start"));
+    ok.type = "submit";
+    acts.appendChild(ok);
+    acts.appendChild(textBtn("dlg-btn", t("cancel"), function () { dlg.close(); }));
+    form.appendChild(acts);
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var n = Math.max(1, Math.min(180, Math.round(+inp.value) || 5));
+      dlg.close();
+      startTimer(n);
+    });
+    dlg.appendChild(form);
+    showDialog(dlg);
+  }
+  function setTimer(tm) { prefs.timer = tm; tmFlash = false; savePrefs(); timerTick(); }
+  function startTimer(min) { setTimer({ end: Date.now() + min * 60000, left: 0, dur: min * 60000 }); }
+  function pauseTimer() { var tm = prefs.timer; if (tm.end) setTimer({ end: 0, left: K.remaining(tm, Date.now()), dur: tm.dur }); }
+  function resumeTimer() { var tm = prefs.timer; if (tm.left) setTimer({ end: Date.now() + tm.left, left: 0, dur: tm.dur }); }
+  function addMinute() {
+    var tm = prefs.timer;
+    if (tm.end) setTimer({ end: tm.end + 60000, left: 0, dur: tm.dur + 60000 });
+    else if (tm.left) setTimer({ end: 0, left: tm.left + 60000, dur: tm.dur + 60000 });
+  }
+  function stopTimer() { setTimer({ end: 0, left: 0, dur: 0 }); }
+  function timerTick() {
+    clearTimeout(tmTimer);
+    var tm = prefs.timer, now = Date.now();
+    if (tm.end) {
+      var left = tm.end - now;
+      if (left <= 0) {
+        var late = now - tm.end;
+        prefs.timer = { end: 0, left: 0, dur: tm.dur };
+        savePrefs();
+        if (late < 60000) ring();
+      } else tmTimer = setTimeout(timerTick, Math.min(1000, (left % 1000) || 1000) + 5);
+    }
+    paintTimer();
+  }
+  function ring() {
+    tmFlash = true;
+    say(t("tm.up"));
+    toast(t("tm.up"));
+    try { if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 200]); } catch (e) { /* no vibration */ }
+    try {
+      var AC = window.AudioContext || window.webkitAudioContext, ac = new AC();
+      [0, 0.35, 0.7].forEach(function (at) {
+        var o = ac.createOscillator(), g = ac.createGain();
+        o.type = "sine";
+        o.frequency.value = 880;
+        g.gain.setValueAtTime(0.0001, ac.currentTime + at);
+        g.gain.exponentialRampToValueAtTime(0.25, ac.currentTime + at + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + at + 0.25);
+        o.connect(g); g.connect(ac.destination);
+        o.start(ac.currentTime + at); o.stop(ac.currentTime + at + 0.3);
+      });
+      setTimeout(function () { try { ac.close(); } catch (e) { /* closed */ } }, 1500);
+    } catch (e) { /* no sound here */ }
+  }
+  function paintTimer() {
+    var box = $("timer"), tm = prefs.timer;
+    if (!tm.dur) { box.hidden = true; box.textContent = ""; box.dataset.state = ""; return; }
+    var state = tm.end ? "run" : tm.left ? "pause" : "up";
+    var text = state === "up" ? t("tm.up") : K.clock(K.remaining(tm, Date.now()));
+    box.hidden = false;
+    box.classList.toggle("up", state === "up");
+    box.classList.toggle("flash", state === "up" && tmFlash);
+    if (box.dataset.state !== state + LANG) {
+      box.dataset.state = state + LANG;
+      box.textContent = "";
+      box.appendChild(el("span", "tm-clock"));
+      if (state === "run") box.appendChild(iconBtn("icon-btn", "pause", t("tm.pause"), pauseTimer));
+      if (state === "pause") box.appendChild(iconBtn("icon-btn", "play", t("tm.resume"), resumeTimer));
+      if (state !== "up") box.appendChild(iconBtn("icon-btn", "plus", t("tm.add"), addMinute));
+      box.appendChild(iconBtn("icon-btn", "close", t("tm.stop"), stopTimer));
+    }
+    box.firstChild.textContent = text;
+    box.setAttribute("aria-label", state === "up" ? t("tm.up") : t("tm.label", { left: text }));
+  }
+
   // ---------- 14. Keyboard ----------
   var spaceDown = false;
   function inField(e) {
@@ -1502,6 +2029,7 @@
       if (e.code === "Space" && (document.activeElement === $("svg") || document.activeElement === document.body)) { e.preventDefault(); spaceDown = true; return; }
       if (e.code === "Escape") {
         if (gesture) { cancelGesture(); return; }
+        if (voting) { stopVote(); return; }
         if (sel.length) { sel = []; announce(); render(); return; }
         if (tool !== "select") setTool("select");
         return;
@@ -1528,7 +2056,7 @@
       if (e.code === "Digit0") { zoomAt(1 / view.s); return; }
       if (e.code === "Digit1") { fit(); return; }
       if (e.code === "KeyI") { pickPicture(); return; }
-      if (KEY_TOOLS[e.code]) { setTool(KEY_TOOLS[e.code]); }
+      if (KEY_TOOLS[e.code]) { if (voting) stopVote(); setTool(KEY_TOOLS[e.code]); }
     });
     document.addEventListener("keyup", function (e) { if (e.code === "Space") spaceDown = false; });
     // Pasting: copied objects of this board, or a picture
@@ -1550,6 +2078,7 @@
     setIcon("redo-btn", "redo", t("btn.redo"));
     setIcon("pic-btn", "image", t("btn.pic"));
     setIcon("export-btn", "exp", t("btn.export"));
+    setIcon("more-btn", "more", t("btn.more"));
     setIcon("zoom-in", "plus", t("btn.zoomIn"));
     setIcon("zoom-out", "minus", t("btn.zoomOut"));
     setIcon("fit-btn", "fit", t("btn.fit"));
@@ -1597,6 +2126,7 @@
     $("redo-btn").addEventListener("click", redo);
     $("pic-btn").addEventListener("click", pickPicture);
     $("export-btn").addEventListener("click", function () { openExport(); });
+    $("more-btn").addEventListener("click", openMore);
     $("zoom-in").addEventListener("click", function () { zoomAt(1.25); });
     $("zoom-out").addEventListener("click", function () { zoomAt(1 / 1.25); });
     $("zoom-pct").addEventListener("click", function () { zoomAt(1 / view.s); });
@@ -1644,6 +2174,7 @@
     openBoard(firstBoard());
     if (!board) { var r = stageRect(); view = { x: r.width / 2, y: r.height / 2, s: 1 }; }
     render();
+    timerTick();
     takePending();
   }
   boot();

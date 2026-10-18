@@ -31,6 +31,24 @@ Whiteboard ist ein endloses Board für Ideen: Haftnotizen, Text, Formen, Pfeile,
 - `Exportieren` in der oberen Leiste speichert `Ganzes Board`, die `Auswahl` oder, bei einem ausgewählten Rahmen, `Dieser Rahmen` als PNG, SVG oder PDF, auf `Papier` oder `Transparent`. `In Dateien speichern` legt es in Dateien › Whiteboard ab.
 - Ein ausgewählter Rahmen hat in seiner Leiste auch `Diesen Rahmen exportieren`, so werden Rahmen zu praktischen Seiten.
 
+## Vorlagen
+- `Mehr` (die drei Punkte oben rechts) › `Vorlagen…` setzt ein fertiges Board in die Mitte des Bildschirms: `Brainstorming` (ein Thema mit Platz für Ideen rundherum), `Retrospektive` (was gut lief, was besser werden soll, was wir als Nächstes tun), `SWOT` und `Roadmap` (jetzt, als Nächstes und später auf einer Zeitachse). Es ist ein Schritt: `Rückgängig` nimmt alles zurück.
+
+## Punkte-Abstimmung
+- `Mehr` › `Punkte-Abstimmung…` fragt, wie viele Punkte jede Person bekommt (1 bis 20), dann zeigt die Leiste oben, wer abstimmt und wie viele Punkte noch übrig sind.
+- Tippe auf eine Haftnotiz, eine Form, einen Text oder ein Bild, um einen deiner Punkte daraufzusetzen. Tippe noch einmal auf deinen eigenen Punkt, um ihn zurückzunehmen. Ziehen bewegt weiterhin über das Board.
+- Gib das Gerät weiter und tippe auf `Nächste Person`: Die nächste Person bekommt Punkte in einer anderen Farbe. `Fertig` beendet die Abstimmung, ebenso die Wahl eines Werkzeugs.
+- `Ergebnis` zeigt, was Stimmen bekommen hat, das Meiste zuerst; tippe auf einen Eintrag, um dorthin zu gehen. Von dort kannst du die Liste auch an eine andere App senden oder `Alle Punkte entfernen`.
+- Punkte sind kleine Kreise auf dem Board, sie werden also wie alles andere synchronisiert, exportiert und mit der Notiz verschoben, auf der sie sitzen.
+
+## Timer
+- `Mehr` › `Timer…` startet einen Countdown von 1 bis 25 Minuten oder so vielen Minuten, wie du eingibst. Er bleibt unten links mit `Pause`, `Eine Minute mehr` und `Timer beenden`, und er klingelt und vibriert, wenn die Zeit um ist. Der Timer gehört zu diesem Gerät und läuft weiter, wenn du die App schließt.
+
+## Andere Apps
+- Mit ausgewählten Haftnotizen, Formen oder Texten sendet `An eine App senden…` in der Leiste oben sie als Liste: an Aufgaben als Aufgaben, an Kanban als Karten, an Notizen, Karteikarten und die anderen Apps, die Listen annehmen. Die erste Zeile jeder Notiz wird zum Eintrag, der Rest zu seiner Notiz. `Mehr` › `Die Notizen an eine App senden…` sendet alle Notizen des Boards, von oben nach unten.
+- `Mehr` › `Mindmap übernehmen…` legt eine deiner Maps aus Mind map als Haftnotizen aus, verbunden mit Pfeilen, jeder Hauptzweig in seiner eigenen Farbe (bis zu 250 Ideen). Die Mindmap selbst ändert sich nicht.
+- Ein ausgewählter Rahmen hat `In Atelier öffnen` in seiner Leiste: Der Rahmen wird zu einem Bild und einem neuen Design in Atelier, um ihn als Poster, Beitrag oder Folien fertigzustellen.
+
 ## Deine Daten
 - Alles bleibt auf diesem Gerät und wird laufend gespeichert. Bilder werden verkleinert (höchstens 1024 Pixel), damit die Boards leicht bleiben.
 - Mit der orOS-Synchronisierung, eingeschaltet in den [Einstellungen](app:settings), folgen dir deine Boards verschlüsselt auf deine anderen Geräte. Jedes Objekt wird für sich synchronisiert: Änderungen an verschiedenen Objekten auf zwei Geräten bleiben beide erhalten, beim selben Objekt gewinnt die neuere Änderung.
