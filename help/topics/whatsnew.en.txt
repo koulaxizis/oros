@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.28.00
+- Selected text: select text in any app and right-click it (on a phone, or in a text field, tap the small Assistant button under it) to Copy, Explain, Summarize, Translate or Fix it with the Assistant, or to run your own tasks with {selection}. Ctrl+Alt+Shift+Q with text selected opens the same menu. Nothing is sent until you press Send.
+
 ## Version 3.27.00
 - New app: Whiteboard (Office). Sticky notes, text, shapes, arrows that join them, pen lines, pictures and frames on an endless board, with zoom and undo. Export a board or one frame as PNG, SVG or PDF; each object syncs on its own.
 
