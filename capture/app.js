@@ -5,6 +5,11 @@
 // save as PNG to Files › Pictures (optionally open it in Photo
 // Lab) or copy it. The shared source stays open until the person
 // stops it, so several pictures need one choice.
+// Recording (wave 2): the same live view records with MediaRecorder
+// (MP4 where the browser writes it, else WebM), with the shared
+// source's sound and/or the microphone mixed in, pause and resume,
+// up to MAX_BYTES held in memory → Files › Videos (optionally
+// opened in Montage).
 // Rules that apply to every orOS app:
 //   - R8: this frame has no shell globals; read every shell API
 //     from window.parent, guarded, so ?standalone still works;
@@ -58,7 +63,30 @@
       "err.empty":     "The shared source sent no picture yet. Wait a moment and try again.",
       "err.save":      "The picture could not be saved. Is the device out of space?",
       "err.copy":      "This browser cannot copy pictures. Save it instead.",
-      "err.full":      "This device is out of storage space. The option was not saved."
+      "err.full":      "This device is out of storage space. The option was not saved.",
+      "mode.label":    "What to make",
+      "mode.shot":     "Screenshot",
+      "mode.rec":      "Recording",
+      "idle.leadRec":  "Record your screen, a window or a browser tab as a video.",
+      "idle.hintRec":  "Your browser asks what to share. Nothing leaves this device: the video is saved in Files › Videos.",
+      "opt.sys":       "Record the sound of the screen or tab",
+      "opt.mic":       "Record the microphone",
+      "opt.montage":   "Open in Montage after saving",
+      "btn.rec":       "Start recording",
+      "btn.pause":     "Pause",
+      "btn.resume":    "Resume",
+      "btn.end":       "Stop recording",
+      "btn.rsave":     "Save to Videos",
+      "btn.ragain":    "Record another",
+      "live.hintRec":  "You can also take screenshots while you record.",
+      "rec.paused":    "Paused",
+      "clip.info":     "{time} · {size}",
+      "file.rec":      "Screen recording",
+      "toast.rsaved":  "Saved in Files › Videos as {name}",
+      "toast.limit":   "The recording reached 1 GB and stopped.",
+      "err.rec":       "This browser cannot record video.",
+      "err.mic":       "The microphone was not allowed, so the recording has no microphone sound.",
+      "err.nosys":     "The shared source sends no sound. In Chrome and Edge, a tab or the whole screen can share sound, a window cannot."
     },
     el: {
       "app.name":      "Λήψη οθόνης",
@@ -91,7 +119,30 @@
       "err.empty":     "Η πηγή δεν έστειλε ακόμα εικόνα. Περίμενε λίγο και δοκίμασε ξανά.",
       "err.save":      "Η εικόνα δεν αποθηκεύτηκε. Μήπως γέμισε ο χώρος της συσκευής;",
       "err.copy":      "Αυτός ο browser δεν αντιγράφει εικόνες. Αποθήκευσέ την καλύτερα.",
-      "err.full":      "Ο χώρος αποθήκευσης της συσκευής γέμισε. Η επιλογή δεν αποθηκεύτηκε."
+      "err.full":      "Ο χώρος αποθήκευσης της συσκευής γέμισε. Η επιλογή δεν αποθηκεύτηκε.",
+      "mode.label":    "Τι θα κάνεις",
+      "mode.shot":     "Στιγμιότυπο",
+      "mode.rec":      "Εγγραφή",
+      "idle.leadRec":  "Γράψε σε βίντεο την οθόνη σου, ένα παράθυρο ή μια καρτέλα του browser.",
+      "idle.hintRec":  "Ο browser σε ρωτά τι θα μοιραστείς. Τίποτα δεν φεύγει από τη συσκευή: το βίντεο αποθηκεύεται στα Αρχεία › Videos.",
+      "opt.sys":       "Εγγραφή του ήχου της οθόνης ή της καρτέλας",
+      "opt.mic":       "Εγγραφή του μικροφώνου",
+      "opt.montage":   "Άνοιγμα στο Μοντάζ μετά την αποθήκευση",
+      "btn.rec":       "Έναρξη εγγραφής",
+      "btn.pause":     "Παύση",
+      "btn.resume":    "Συνέχεια",
+      "btn.end":       "Τέλος εγγραφής",
+      "btn.rsave":     "Αποθήκευση στα Videos",
+      "btn.ragain":    "Νέα εγγραφή",
+      "live.hintRec":  "Όσο γράφεις, μπορείς να τραβάς και στιγμιότυπα.",
+      "rec.paused":    "Σε παύση",
+      "clip.info":     "{time} · {size}",
+      "file.rec":      "Εγγραφή οθόνης",
+      "toast.rsaved":  "Αποθηκεύτηκε στα Αρχεία › Videos ως {name}",
+      "toast.limit":   "Η εγγραφή έφτασε το 1 GB και σταμάτησε.",
+      "err.rec":       "Αυτός ο browser δεν μπορεί να γράψει βίντεο.",
+      "err.mic":       "Το μικρόφωνο δεν επιτράπηκε, οπότε η εγγραφή δεν έχει τον ήχο του.",
+      "err.nosys":     "Η πηγή που μοιράζεσαι δεν στέλνει ήχο. Σε Chrome και Edge ήχο μοιράζονται μια καρτέλα ή όλη η οθόνη, όχι ένα παράθυρο."
     }
   };
 
@@ -114,6 +165,7 @@
     document.documentElement.lang = LANG;
     [].forEach.call(document.querySelectorAll("[data-i18n]"), function (n) { n.textContent = t(n.getAttribute("data-i18n")); });
     document.title = t("app.name") + " · orOS";
+    $("mode").setAttribute("aria-label", t("mode.label"));
   }
 
   // ---------- 2. Options (this device only, no sync) ----------
@@ -179,7 +231,8 @@
   }
 
   function show(view) {
-    ["idle", "live", "shot"].forEach(function (v) { $("v-" + v).hidden = v !== view; });
+    ["idle", "live", "shot", "rec"].forEach(function (v) { $("v-" + v).hidden = v !== view; });
+    if (view === "live") renderLive();
   }
 
   function supported() {
@@ -199,9 +252,35 @@
     });
     $("opt-cursor").checked = prefs.cursor;
     $("opt-edit").checked = prefs.edit;
-    var ok = supported();
+    $("opt-sys").checked = prefs.sys;
+    $("opt-mic").checked = prefs.mic;
+    $("opt-montage").checked = prefs.montage;
+    var recMode = prefs.mode === "rec";
+    [].forEach.call($("mode").children, function (b) {
+      var on = b.getAttribute("data-mode") === prefs.mode;
+      b.classList.toggle("on", on);
+      b.setAttribute("aria-checked", on ? "true" : "false");
+    });
+    [].forEach.call(document.querySelectorAll(".rec-only"), function (n) { n.hidden = !recMode; });
+    $("row-edit").hidden = recMode;
+    $("idle-lead").textContent = t(recMode ? "idle.leadRec" : "idle.lead");
+    $("idle-hint").textContent = t(recMode ? "idle.hintRec" : "idle.hint");
+    var ok = supported() && (!recMode || canRecord());
     $("b-start").disabled = !ok;
     $("unsupported").hidden = ok;
+    $("unsupported").textContent = t(supported() ? "err.rec" : "err.unsupported");
+  }
+
+  // The live view's buttons follow the mode and the recorder.
+  function renderLive() {
+    var recMode = prefs.mode === "rec", on = !!rec;
+    $("b-rec").hidden = !recMode || on;
+    $("b-pause").hidden = !on;
+    $("b-end").hidden = !on;
+    $("b-pause").textContent = t(on && rec.mr.state === "paused" ? "btn.resume" : "btn.pause");
+    $("b-take").className = recMode ? "chip" : "chip pri big";
+    $("rec-status").hidden = !on;
+    $("live-hint").textContent = t(recMode ? "live.hintRec" : "live.hint");
   }
 
   // ---------- 5. Sharing ----------
@@ -212,6 +291,7 @@
     clearInterval(counting);
     counting = 0;
     $("count").textContent = "";
+    if (rec) endRec();
     if (stream) stream.getTracks().forEach(function (tr) { try { tr.stop(); } catch (e) {} });
     stream = null;
     $("live").srcObject = null;
@@ -220,37 +300,41 @@
 
   function start() {
     if (!supported()) { renderOptions(); return; }
+    var wantSound = prefs.mode === "rec" && prefs.sys;
     var opts = {
       video: { cursor: prefs.cursor ? "always" : "never" },
-      audio: false,
+      audio: wantSound,
       selfBrowserSurface: "include",   // orOS itself is a fine thing to capture
       surfaceSwitching: "include"
     };
+    if (wantSound) opts.systemAudio = "include";
     navigator.mediaDevices.getDisplayMedia(opts).then(function (s) {
       stopStream();
       stream = s;
       var tr = s.getVideoTracks()[0];
       if (tr) tr.addEventListener("ended", function () {
         if (stream !== s) return;
+        var live = !$("v-live").hidden && !rec;
         stopStream();
-        if (!$("v-live").hidden) { show("idle"); toast(t("toast.ended")); }
+        if (live) { show("idle"); toast(t("toast.ended")); }
       });
       var v = $("live");
       v.srcObject = s;
       try { v.play().catch(function () {}); } catch (e) {}
       $("b-again").textContent = t("btn.again");
       show("live");
-      $("b-take").focus();
+      $(prefs.mode === "rec" ? "b-rec" : "b-take").focus();
     }, function (e) {
       toast(e && e.name === "NotAllowedError" ? t("err.denied") : t("err.fail"));
     });
   }
 
-  function take() {
-    if (!stream || counting) return;
+  // The delay, shown big on the live view, then cb().
+  function countdown(cb) {
     var left = prefs.delay;
-    if (!left) { grab(); return; }
+    if (!left) { cb(); return; }
     $("b-take").disabled = true;
+    $("b-rec").disabled = true;
     $("count").textContent = String(left);
     counting = setInterval(function () {
       left--;
@@ -259,8 +343,176 @@
       counting = 0;
       $("count").textContent = "";
       $("b-take").disabled = false;
-      grab();
+      $("b-rec").disabled = false;
+      cb();
     }, 1000);
+  }
+
+  function take() {
+    if (!stream || counting) return;
+    // While recording, a picture comes at once: the delay was for the start.
+    if (rec) grab(); else countdown(grab);
+  }
+
+  // ---------- 6. Recording ----------
+  var rec = null;      // { mr, chunks, bytes, type, at, paused, pausedAt, extra[], ctx, tick }
+  var clip = null;     // { blob, type, at, ms, url }
+
+  function canRecord() {
+    return !!(window.MediaRecorder && C.recType(function (x) {
+      return typeof MediaRecorder.isTypeSupported !== "function" || MediaRecorder.isTypeSupported(x);
+    }) !== null);
+  }
+
+  function micStream() {
+    if (!prefs.mic) return Promise.resolve(null);
+    return navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } })
+      .then(null, function () { toast(t("err.mic")); return null; });
+  }
+
+  // One video track plus one sound track: a single source as it is,
+  // the screen's sound and the microphone mixed in an AudioContext.
+  function recStream(mic) {
+    var video = stream.getVideoTracks()[0];
+    var sources = [];
+    if (prefs.sys) {
+      var sys = stream.getAudioTracks();
+      if (sys.length) sources.push(new MediaStream([sys[0]]));
+      else toast(t("err.nosys"));
+    }
+    if (mic) sources.push(mic);
+    if (sources.length < 2) {
+      var one = sources[0] ? sources[0].getAudioTracks()[0] : null;
+      return { stream: new MediaStream(one ? [video, one] : [video]), ctx: null };
+    }
+    var AC = window.AudioContext || window.webkitAudioContext;
+    var ctx = new AC(), dest = ctx.createMediaStreamDestination();
+    sources.forEach(function (src) { ctx.createMediaStreamSource(src).connect(dest); });
+    return { stream: new MediaStream([video, dest.stream.getAudioTracks()[0]]), ctx: ctx };
+  }
+
+  function startRec() {
+    if (!stream || rec || counting) return;
+    countdown(function () {
+      if (!stream) return;
+      micStream().then(function (mic) {
+        if (!stream || rec) { if (mic) mic.getTracks().forEach(function (tr) { tr.stop(); }); return; }
+        var type = C.recType(function (x) {
+          return typeof MediaRecorder.isTypeSupported !== "function" || MediaRecorder.isTypeSupported(x);
+        });
+        var parts = recStream(mic), mr;
+        try { mr = new MediaRecorder(parts.stream, type ? { mimeType: type } : {}); }
+        catch (e) {
+          if (mic) mic.getTracks().forEach(function (tr) { tr.stop(); });
+          if (parts.ctx) parts.ctx.close();
+          toast(t("err.rec"));
+          return;
+        }
+        var r = { mr: mr, chunks: [], bytes: 0, type: mr.mimeType || type || "video/webm", at: new Date(),
+                  paused: 0, pausedAt: 0, mic: mic, ctx: parts.ctx, tick: 0 };
+        mr.ondataavailable = function (ev) {
+          if (!ev.data || !ev.data.size) return;
+          r.chunks.push(ev.data);
+          r.bytes += ev.data.size;
+          if (r.bytes >= C.MAX_BYTES && rec === r) { toast(t("toast.limit")); endRec(); }
+        };
+        mr.onstop = function () { finishRec(r); };
+        rec = r;
+        mr.start(1000);
+        r.tick = setInterval(paintRec, 500);
+        paintRec();
+        renderLive();
+        $("b-end").focus();
+      });
+    });
+  }
+
+  function recMs(r) {
+    var now = r.pausedAt || Date.now();
+    return now - r.at.getTime() - r.paused;
+  }
+
+  function paintRec() {
+    if (!rec) return;
+    var paused = rec.mr.state === "paused";
+    $("rec-time").textContent = paused ? t("rec.paused") + " " + C.clock(recMs(rec)) : C.clock(recMs(rec));
+    // MP4 recorders may hold every chunk until the end: no size until one comes.
+    $("rec-size").textContent = rec.bytes ? " · " + C.size(rec.bytes) : "";
+    $("rec-status").classList.toggle("paused", paused);
+  }
+
+  function pauseRec() {
+    if (!rec) return;
+    if (rec.mr.state === "recording") { rec.mr.pause(); rec.pausedAt = Date.now(); }
+    else if (rec.mr.state === "paused") { rec.mr.resume(); rec.paused += Date.now() - rec.pausedAt; rec.pausedAt = 0; }
+    paintRec();
+    renderLive();
+  }
+
+  function endRec() {
+    var r = rec;
+    if (!r) return;
+    rec = null;
+    clearInterval(r.tick);
+    if (r.pausedAt) { r.paused += Date.now() - r.pausedAt; r.pausedAt = 0; }
+    r.ms = recMs(r);
+    try { if (r.mr.state !== "inactive") r.mr.stop(); else finishRec(r); }
+    catch (e) { finishRec(r); }
+    renderLive();
+  }
+
+  // The recorder's last chunk is in: the clip is ready to watch and save.
+  function finishRec(r) {
+    if (r.done) return;
+    r.done = true;
+    if (r.mic) r.mic.getTracks().forEach(function (tr) { try { tr.stop(); } catch (e) {} });
+    if (r.ctx) { try { r.ctx.close(); } catch (e) {} }
+    if (!r.bytes) { toast(t("err.rec")); if (stream) show("live"); else show("idle"); return; }
+    dropClip();
+    var blob = new Blob(r.chunks, { type: r.type.split(";")[0] });
+    clip = { blob: blob, type: blob.type, at: r.at, ms: r.ms || recMs(r), url: URL.createObjectURL(blob) };
+    var v = $("clip");
+    v.src = clip.url;
+    $("clip-info").textContent = t("clip.info", { time: C.clock(clip.ms), size: C.size(blob.size) });
+    show("rec");
+    $("b-rsave").focus();
+  }
+
+  function dropClip() {
+    if (!clip) return;
+    try { $("clip").pause(); } catch (e) {}
+    $("clip").removeAttribute("src");
+    try { $("clip").load(); } catch (e) {}
+    URL.revokeObjectURL(clip.url);
+    clip = null;
+  }
+
+  function saveRec() {
+    if (!clip) return;
+    var name = C.fileName(t("file.rec"), clip.at, C.recExt(clip.type));
+    var blob = clip.blob;
+    var F = fsApi();
+    if (!F) { download(blob, name); return; }
+    var n = 1;
+    (function tryName() {
+      var path = C.pathFor(name, n, C.VIDEOS);
+      F.stat(path).then(function () { n++; if (n < 100) tryName(); else toast(t("err.save")); }, function () {
+        F.write(path, blob).then(function () {
+          toast(t("toast.rsaved", { name: path.slice(C.VIDEOS.length) }));
+          if (prefs.montage) openAt("montage", { openFile: path });
+        }, function () { toast(t("err.save")); });
+      });
+    })();
+  }
+
+  function recAgain() {
+    dropClip();
+    if (stream) show("live"); else start();
+  }
+
+  function recDiscard() {
+    dropClip();
+    show(stream ? "live" : "idle");
   }
 
   // Wait for a frame drawn after the countdown left the screen (orOS
@@ -298,7 +550,7 @@
     });
   }
 
-  // ---------- 6. Crop ----------
+  // ---------- 7. Crop ----------
   var drag = null;
 
   function paintCrop() {
@@ -352,7 +604,7 @@
     finalCanvas().toBlob(function (b) { cb(b); }, "image/png");
   }
 
-  // ---------- 7. Save and copy ----------
+  // ---------- 8. Save and copy ----------
   function save() {
     if (!shot.canvas) return;
     var name = C.fileName(t("file.base"), new Date(), "png");
@@ -422,6 +674,18 @@
     $("b-drop").addEventListener("click", discard);
     $("opt-cursor").addEventListener("change", function () { prefs.cursor = this.checked; savePrefs(); });
     $("opt-edit").addEventListener("change", function () { prefs.edit = this.checked; savePrefs(); });
+    $("opt-sys").addEventListener("change", function () { prefs.sys = this.checked; savePrefs(); });
+    $("opt-mic").addEventListener("change", function () { prefs.mic = this.checked; savePrefs(); });
+    $("opt-montage").addEventListener("change", function () { prefs.montage = this.checked; savePrefs(); });
+    [].forEach.call($("mode").children, function (b) {
+      b.addEventListener("click", function () { prefs.mode = b.getAttribute("data-mode"); savePrefs(); renderOptions(); });
+    });
+    $("b-rec").addEventListener("click", startRec);
+    $("b-pause").addEventListener("click", pauseRec);
+    $("b-end").addEventListener("click", endRec);
+    $("b-rsave").addEventListener("click", saveRec);
+    $("b-ragain").addEventListener("click", recAgain);
+    $("b-rdrop").addEventListener("click", recDiscard);
     wireCrop();
     window.addEventListener("pagehide", stopStream);
 
@@ -435,7 +699,7 @@
     }, true);
   }
 
-  // ---------- 8. Boot (last, after every declaration) ----------
+  // ---------- 9. Boot (last, after every declaration) ----------
   function boot() {
     loadPrefs();
     applyI18n();

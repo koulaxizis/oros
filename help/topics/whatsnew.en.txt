@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.23.00
+- Screen Capture can now record video: your screen, a window or a tab, with its sound and your microphone, with pause and resume. The video is saved in Files › Videos and can open straight in Montage.
+
 ## Version 3.22.01
 - Reminders with orOS closed: on the computer, a reminder you just saved now reaches the push service right away, even if you close orOS straight after. In the Android app, Settings › Notifications shows how many reminders the phone holds and the next one.
 
