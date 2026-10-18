@@ -2808,6 +2808,8 @@
         // Files from the system's "Open with" (fileopen.js) wait for the app list.
         if (window.orosFileOpen) window.orosFileOpen.ready();
         if (window.orosPhone && window.orosPhone.ready) window.orosPhone.ready();
+        // "#quick-ask" from outside orOS (quickmenu.js, AS-OUT).
+        if (window.orosQuick && window.orosQuick.ready && !SOLO) window.orosQuick.ready();
       })
       .catch(function () {
         state.apps = [];
@@ -3009,7 +3011,10 @@
   // dialog prefilled and nothing is saved until the user presses
   // Save. Only http(s) links pass. Android's share sheet often puts
   // the link inside share-text, so the first http(s) URL there counts.
-  var SHARE_KEYS = ["share-url", "share-title", "share-text"];
+  // share-pick=1 (the system's share sheet, sw.js; AS-OUT): the
+  // "Send to…" sheet opens instead, so the user picks the app
+  // (Bookmarks, the Assistant, Notes…); text without a link comes too.
+  var SHARE_KEYS = ["share-url", "share-title", "share-text", "share-pick"];
   function shareFromHref(href) {
     var u;
     try { u = new URL(href, window.location.href); } catch (e) { return null; }
@@ -3021,6 +3026,11 @@
     var text = String(p.get("share-text") || "").trim();
     var inText = text.match(/https?:\/\/[^\s<>"']+/i);
     if (!/^https?:\/\//i.test(link) && inText) link = inText[0];
+    var pick = p.get("share-pick") === "1";
+    if (pick && !/^https?:\/\//i.test(link)) {
+      var body = (text || title).slice(0, 20000);
+      return body ? { pick: true, kind: "text", data: { title: text ? title.slice(0, 200) : "", text: body } } : { bad: true };
+    }
     if (!title && text) title = text.replace(link, "").replace(/\s+/g, " ").trim();
     try {
       var ok = new URL(link);
@@ -3028,6 +3038,7 @@
       link = ok.href;
     } catch (e) { return { bad: true }; }
     if (link.length > 2048) return { bad: true };
+    if (pick) return { pick: true, kind: "link", data: { url: link, title: title.slice(0, 256) } };
     return { url: link, title: title.slice(0, 256) };
   }
   var pendingShare = null;
@@ -3185,6 +3196,7 @@
     if (!pendingShare || !state.apps.length) return;
     var s = pendingShare;
     pendingShare = null;
+    if (s.pick) { window.orosSend.open({ kind: s.kind, data: s.data }); return; }
     window.__orosOpenAt("bookmarks", { add: { url: s.url, title: s.title } });
   }
 

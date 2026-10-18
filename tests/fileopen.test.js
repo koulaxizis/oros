@@ -309,11 +309,11 @@ const form = (o) => ({ formData: () => Promise.resolve({
   getAll: (k) => (k === "files" ? o.files || [] : []),
   get: (k) => (k in o ? o[k] : null) }) });
 
-test("sw share target: a link goes on to Bookmarks as GET share- params", async () => {
+test("sw share target: text and links go on as GET share- params, with share-pick for the Send to… sheet", async () => {
   const { sb, puts } = swSandbox();
   const r = await sb.shareTargetPost(form({ url: "", title: "Read this", text: "see https://example.com/a" }));
   assert.equal(r.status, 303);
-  assert.equal(r.redirect, "https://useoros.online/?share-title=Read+this&share-text=see+https%3A%2F%2Fexample.com%2Fa");
+  assert.equal(r.redirect, "https://useoros.online/?share-title=Read+this&share-text=see+https%3A%2F%2Fexample.com%2Fa&share-pick=1");
   assert.deepEqual(Object.keys(puts), []);
 });
 
@@ -341,7 +341,7 @@ test("sw share target: a single app's share goes back to its own page (solo.js)"
   assert.equal(r.redirect, "https://useoros.online/bookmarks/solo.html?share-url=https%3A%2F%2Fexample.com%2Fx");
   const odd = form({ url: "https://example.com/x" });
   odd.url = "https://useoros.online/x/y/solo.html?share-target";
-  assert.equal((await sb.shareTargetPost(odd)).redirect, "https://useoros.online/?share-url=https%3A%2F%2Fexample.com%2Fx");
+  assert.equal((await sb.shareTargetPost(odd)).redirect, "https://useoros.online/?share-url=https%3A%2F%2Fexample.com%2Fx&share-pick=1");
 });
 
 test("every registered type routes by file name, long .oros words included", () => {

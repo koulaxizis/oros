@@ -1,7 +1,8 @@
-/* Send to orOS: toolbar button, Alt+Shift+O, right-click menu and the
-   "oros" address-bar keyword. Every action opens orOS in a new tab
-   next to the current one; nothing is read from or stored about the
-   pages you visit beyond the one address you send. */
+/* Send to orOS: toolbar button, Alt+Shift+O, right-click menu (page,
+   link, selected text for the Assistant) and the "oros" address-bar
+   keyword. Every action opens orOS in a new tab next to the current
+   one; nothing is read from or stored about the pages you visit beyond
+   the one address or the selected text you send. */
 "use strict";
 
 if (typeof OrosExt === "undefined" && typeof importScripts === "function") {
@@ -47,6 +48,7 @@ function buildMenus() {
   api.contextMenus.removeAll(() => {
     api.contextMenus.create({ id: "oros-page", title: msg("menuPage"), contexts: ["page"] });
     api.contextMenus.create({ id: "oros-link", title: msg("menuLink"), contexts: ["link"] });
+    api.contextMenus.create({ id: "oros-ask", title: msg("menuAsk"), contexts: ["selection"] });
     api.contextMenus.create({ id: "oros-open", title: msg("menuOpen"), contexts: ["action"] });
   });
 }
@@ -64,6 +66,9 @@ api.contextMenus.onClicked.addListener(async (info, tab) => {
     /* linkText exists in Firefox only; elsewhere orOS falls back to
        the address as the title, which the dialog lets you edit. */
     send(info.linkUrl, info.linkText || "", tab);
+  } else if (info.menuItemId === "oros-ask") {
+    /* The selected text goes in the fragment only (OrosExt.askUrl). */
+    openNext(OrosExt.askUrl(await getBase(), info.selectionText || ""), tab);
   } else if (info.menuItemId === "oros-open") {
     openNext(await getBase(), tab);
   }

@@ -138,6 +138,13 @@ Select some text in any orOS app, then right-click it for a menu: `Copy`, `Expla
 - [[Shift]]+right-click keeps the browser's own menu. Text fields keep their own right-click (for cut and paste); use the button there. Apps with their own right-click menu, such as Spreadsheet, keep it. Writer has its own sparkle button for this. Passwords and password fields are never offered.
 - Don't want the button? Untick `Show an Assistant button under text I select` in `Edit this menu…` (per device).
 
+## From outside orOS
+- On a computer, right-click the orOS icon in the taskbar or dock (on Android, press and hold the orOS app icon): `Ask the Assistant` opens orOS with the small Assistant window.
+- Share text or a link to orOS from another app (Android's `Share`): orOS asks where it should go, and `Assistant` is one of the choices. A link can also go to Bookmarks, Notes and the other apps as before.
+- With the `Send to orOS` browser add-on (1.1 and later), select text on any web page and right-click it: `Ask the orOS Assistant about …` opens orOS with the text in the Assistant's box. The text travels after the `#` of the address, which browsers never send to a server.
+- In the Android app: an Assistant button on the `orOS Today` and `orOS quick add` widgets, and an `orOS Assistant` tile you can add to Quick Settings (pull down the notifications, then the pencil).
+- Each way only opens the Assistant with the text ready; nothing is sent until you press `Send`.
+
 ## Privacy: what leaves your device
 - Your messages and the results you share go only to the service you chose, straight from your browser. No orOS server is in between. The line above the message box says where they go.
 - In `Settings` → `Your data` you choose, per app, `Ask first`, `Always share` or `Never`. Health, Mood, Cycle, Baby and Budget start at `Never`. Mail and Passwords are never offered.

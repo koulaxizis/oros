@@ -385,6 +385,14 @@ ${aliases}
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_quick_info" />
         </receiver>
 
+        <!-- Quick Settings tile (quick access wave 4): opens the Assistant. -->
+        <service android:name=".AskTile" android:exported="true" android:label="@string/tile_ask"
+            android:icon="@drawable/ic_tile_ask" android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
         <!-- The "orOS" account: a stub authenticator plus sync adapters
              that only declare the account to Contacts and Calendar. The
              data is written by PhoneBridge when the page sends it. -->
@@ -431,7 +439,7 @@ const REMOVE_PERMS = ["SCHEDULE_EXACT_ALARM", "RECEIVE_BOOT_COMPLETED", "READ_CO
   "health.READ_BLOOD_PRESSURE", "health.READ_BLOOD_GLUCOSE", "health.READ_OXYGEN_SATURATION"];
 const REMOVE_NODES = [["activity", ".AddActivity"], ["activity", ".DiagActivity"], ["activity", ".PermissionActivity"],
   ["receiver", ".ReminderReceiver"], ["activity", ".HealthPermissionActivity"], ["activity", ".HealthPrivacyActivity"],
-  ["activity-alias", "ViewPermissionUsageActivity"], ["receiver", ".TodayWidget"], ["receiver", ".QuickWidget"],
+  ["activity-alias", "ViewPermissionUsageActivity"], ["receiver", ".TodayWidget"], ["receiver", ".QuickWidget"], ["service", ".AskTile"],
   ["service", ".AuthenticatorService"], ["service", ".ContactsSyncService"], ["service", ".CalendarSyncService"]];
 
 function soloApps() {

@@ -6,14 +6,19 @@ orOS in a new tab, and orOS asks before it saves anything.
 
 - **Toolbar button / Alt+Shift+O:** save the current page to Bookmarks.
 - **Right-click a page or a link:** "Save page / link to orOS".
+- **Right-click selected text:** "Ask the orOS Assistant about …": orOS
+  opens its Assistant with the text in the message box (nothing is sent
+  until you press Send there).
 - **Right-click the button:** "Open orOS".
 - **Address bar:** `oros` + space + words → orOS menu search with those words.
 - **Options:** the orOS address (default `https://useoros.online/`;
   `https://` anywhere, `http://` only for localhost).
 
 How it talks to orOS: `/?share-url=…&share-title=…` (Bookmarks add
-dialog, see `shareFromHref` in `shell.js`) and `/?search=…`
-(`searchFromLaunchParam`). The same URLs serve the bookmarklet and
+dialog, see `shareFromHref` in `shell.js`), `/?search=…`
+(`searchFromLaunchParam`) and `/#quick-ask=…` (the Assistant,
+`quickmenu.js`; the text is in the fragment, so it never reaches a
+server). The same URLs serve the bookmarklet and
 Android's Share → orOS.
 
 Permissions: `activeTab` (address and title of the tab you click on,

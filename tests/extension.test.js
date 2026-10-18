@@ -46,6 +46,15 @@ test("searchUrl: ?search= with the words, empty opens orOS", () => {
   assert.equal(X.searchUrl("https://useoros.online/", "   "), "https://useoros.online/");
 });
 
+test("askUrl: the selected text rides in the fragment only, capped", () => {
+  const u = new URL(X.askUrl("https://useoros.online/", "  Τι σημαίνει αυτό; & #x  "));
+  assert.equal(u.search, "");
+  assert.equal(u.hash.slice(0, 11), "#quick-ask=");
+  assert.equal(decodeURIComponent(u.hash.slice(11)), "Τι σημαίνει αυτό; & #x");
+  assert.equal(X.askUrl("https://useoros.online/", " "), "https://useoros.online/#quick-ask");
+  assert.equal(decodeURIComponent(new URL(X.askUrl("https://x.example/", "a".repeat(9000))).hash.slice(11)).length, 8000);
+});
+
 test("manifest: MV3, minimal permissions, files exist", () => {
   const m = JSON.parse(read("manifest.json"));
   assert.equal(m.manifest_version, 3);

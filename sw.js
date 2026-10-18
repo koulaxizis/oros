@@ -2193,6 +2193,9 @@ function shareTargetPost(request) {
         var v = fd.get(k);
         if (typeof v === "string" && v) q.set("share-" + k, v.slice(0, 4000));
       });
+      // orOS itself lets the user pick the app ("Send to…" sheet);
+      // a single app takes it as before.
+      if (!soloPage && q.toString()) q.set("share-pick", "1");
       return go(q.toString());
     }
     var f = files[0];
