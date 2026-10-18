@@ -2,7 +2,9 @@
 // orOS Atelier — anim.js: animation timing (v1.0.0)
 // Entrance animations of elements (ax.an), how long a page shows
 // (ax.dur on the page background) and the move to the next page
-// (ax.ptr on the page background). Used by the editor preview, the
+// (ax.ptr on the page background, or a morph: ext.mph, morph.js,
+// which runs over its first MORPH seconds; the page's entrances start
+// after it). Used by the editor preview, the
 // video / GIF export and nowhere else: a still export, a thumbnail
 // and the editor draw the END state, so nothing is ever half-shown
 // by accident.
@@ -15,7 +17,7 @@
   var TRANSITIONS = ["none", "fade", "slide", "push", "zoom"];
   var DUR_DEF = 5, DUR_MIN = 1, DUR_MAX = 60;
   var PTR_DEF = "fade";
-  var LEN = 0.7, STAGGER = 0.15, TRANS = 0.5;
+  var LEN = 0.7, STAGGER = 0.15, TRANS = 0.5, MORPH = 1;
 
   function clamp(v) { return v < 0 ? 0 : v > 1 ? 1 : v; }
   function easeOut(p) { return 1 - Math.pow(1 - p, 3); }
@@ -29,7 +31,14 @@
     return null;
   }
   function pageDur(doc, pg) { var b = bgOf(doc, pg); return b && b.ax.dur ? b.ax.dur : DUR_DEF; }
-  function pageTransition(doc, pg) { var b = bgOf(doc, pg); return b && b.ax.ptr ? b.ax.ptr : PTR_DEF; }
+  function pageTransition(doc, pg) {
+    var b = bgOf(doc, pg);
+    if (b && b.ext && b.ext.mph === 1) return "morph";
+    return b && b.ax.ptr ? b.ax.ptr : PTR_DEF;
+  }
+  // seconds before a page's own entrances start (its morph)
+  function lead(tr) { return tr === "morph" ? MORPH : 0; }
+  function easeInOut(p) { return p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2; }
 
   // seconds an entrance takes (the typewriter follows the text length)
   function lenOf(it) {
@@ -75,33 +84,37 @@
 
   // The whole design as a film: [{ pg, t0, dur, tr }] + total seconds.
   // A page lasts its duration (at least its intro); the transition
-  // to it runs over its first TRANS seconds (none on the first page).
+  // to it runs over its first TRANS seconds (a morph MORPH; none on
+  // the first page).
   function timeline(doc, pages) {
     var t = 0, list = [];
     pages.forEach(function (p, i) {
       var items = doc.items.filter(function (it) { return it.pg === p.id; }).sort(function (a, b) { return a.z - b.z; });
-      var dur = Math.max(pageDur(doc, p.id), Math.ceil(introLen(items) * 10) / 10);
-      list.push({ pg: p.id, t0: t, dur: dur, tr: i ? pageTransition(doc, p.id) : "none" });
+      var tr = i ? pageTransition(doc, p.id) : "none";
+      var dur = Math.max(pageDur(doc, p.id), Math.ceil((introLen(items) + lead(tr)) * 10) / 10);
+      list.push({ pg: p.id, t0: t, dur: dur, tr: tr });
       t += dur;
     });
     return { pages: list, total: t };
   }
-  // where the film is at time t: { i, local, prev (index or -1), mix 0..1 }
+  // where the film is at time t: { i, local, prev (index or -1),
+  // mix 0..1, tr, pt (the page's time for its entrances) }
   function at(tl, t) {
     var L = tl.pages;
     for (var i = 0; i < L.length; i++) {
       if (t < L[i].t0 + L[i].dur || i === L.length - 1) {
-        var local = Math.max(0, t - L[i].t0);
-        var mix = L[i].tr === "none" || i === 0 ? 1 : clamp(local / TRANS);
-        return { i: i, local: local, prev: mix < 1 ? i - 1 : -1, mix: easeOut(mix), tr: L[i].tr };
+        var local = Math.max(0, t - L[i].t0), tr = i ? L[i].tr : "none";
+        var mix = tr === "none" ? 1 : clamp(local / (tr === "morph" ? MORPH : TRANS));
+        return { i: i, local: local, prev: mix < 1 ? i - 1 : -1, mix: tr === "morph" ? easeInOut(mix) : easeOut(mix),
+          tr: tr, pt: local - lead(tr) };
       }
     }
-    return { i: 0, local: 0, prev: -1, mix: 1, tr: "none" };
+    return { i: 0, local: 0, prev: -1, mix: 1, tr: "none", pt: 0 };
   }
 
   var api = {
-    ANIMS: ANIMS, TRANSITIONS: TRANSITIONS, DUR_DEF: DUR_DEF, DUR_MIN: DUR_MIN, DUR_MAX: DUR_MAX, PTR_DEF: PTR_DEF, TRANS: TRANS,
-    pageDur: pageDur, pageTransition: pageTransition, schedule: schedule, stateAt: stateAt, introLen: introLen,
+    ANIMS: ANIMS, TRANSITIONS: TRANSITIONS, DUR_DEF: DUR_DEF, DUR_MIN: DUR_MIN, DUR_MAX: DUR_MAX, PTR_DEF: PTR_DEF, TRANS: TRANS, MORPH: MORPH,
+    lead: lead, easeInOut: easeInOut, pageDur: pageDur, pageTransition: pageTransition, schedule: schedule, stateAt: stateAt, introLen: introLen,
     timeline: timeline, at: at, lenOf: lenOf
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
