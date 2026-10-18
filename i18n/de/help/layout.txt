@@ -11,6 +11,8 @@ Wähle links ein Werkzeug und zieh auf der Seite: `Textrahmen (T)`, `Bildrahmen 
 
 Ist etwas ausgewählt, stellst du im Bereich `Eigenschaften` Position und Größe ein, außerdem `Drehung`, `Deckkraft`, `Füllung`, `Verlauf` (für Formen: `Linear` oder `Radial`, Start- und Endfarbe, Winkel), `Kontur`, `Anordnen`, `Ausrichten`, `Gruppieren` und `Position sperren`. Ein Rechtsklick (oder langes Drücken) auf ein Objekt öffnet ein Schnellmenü. `Ausblenden` blendet ein Objekt aus; ist nichts ausgewählt, hat der Seitenbereich `Ausgeblendete Objekte zeigen`.
 
+Überblenden: Wähle zwei Formen (Rechtecke, Ellipsen oder Pfade), dann zeigt der Bereich `Eigenschaften` `Überblenden`. Stell `Schritte` ein (1 bis 50) und tippe auf `Überblenden`: Dazwischen erscheinen neue Formen, die sich gleichmäßig in Lage, Größe, Drehung, Umriss und Farben ändern. Jeder Schritt bekommt ein eigenes Farbfeld, wenn seine Farbe neu ist. Eines der beiden Enden geändert? Wähle einen Schritt und tippe auf `Aktualisieren`, oder ändere `Schritte`. `Lösen` behält die Schritte als einfache Formen.
+
 Zieh aus einem Lineal, um eine Hilfslinie anzulegen, und zieh sie zurück aufs Lineal, um sie zu entfernen. Das Menü `Zoom` hat `Seite einpassen`, `Doppelseite einpassen`, 50, 100 und 200 %.
 
 ### Text

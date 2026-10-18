@@ -11,7 +11,7 @@
   "use strict";
 
   var LY = window.LY, M = LY.M, R = LY.R, T = LY.T, t = LY.t, $ = LY.$, el = LY.el;
-  var ED = LY.ed;
+  var ED = LY.ed, BL = window.LayoutBlend;
   var TABS = ["props", "pages", "styles", "colors"];
   var tab = "props";
 
@@ -243,6 +243,9 @@
     if (one && one.t === "text") body.appendChild(textSection(one));
     if (one && one.t === "img") body.appendChild(imageSection(one));
 
+    var sb = blendSection(items);
+    if (sb) body.appendChild(sb);
+
     // wrap
     var s4 = section(t("props.wrap"));
     s4.appendChild(seg([["none", t("props.wrap.none")], ["box", t("props.wrap.box")], ["ell", t("props.wrap.ell")]], common(items, "wrap"), function (v) {
@@ -287,6 +290,44 @@
     s5.appendChild(r3);
     body.appendChild(s5);
     void doc;
+  }
+
+  // Blend (wave C1, blend.js): two shapes picked → make the steps;
+  // a step (or an end picked alone) → steps, Update, Release.
+  function blendSection(items) {
+    var doc = LY.doc, g = "";
+    items.forEach(function (it) { if (!g) g = BL.groupOf(it); });
+    if (!g && items.length === 1) doc.items.forEach(function (it) {
+      var bl = it.ext && it.ext.bl;
+      if (!g && bl && (bl.a === items[0].id || bl.b === items[0].id) && BL.ends(doc, bl.g)) g = bl.g;
+    });
+    if (!g && !(items.length === 2 && BL.canBlend(items[0], items[1]))) return null;
+    var s = section(t("bl.title")), live = !!(g && BL.ends(doc, g));
+    var first = g ? BL.members(doc, g)[0] : null, n = first ? first.ext.bl.n : BL.DEF_STEPS;
+    if (g && !live) s.appendChild(el("p", "hint", t("bl.gone")));
+    if (!g || live) {
+      s.appendChild(field(t("bl.steps"), numInput(n, function (v) {
+        n = BL.steps(v);
+        if (g) LY.op(function (d, now) { if (!BL.update(d, g, n, now)) return false; });
+      }, { unit: "raw", min: BL.MIN_STEPS, max: BL.MAX_STEPS, step: 1, label: t("bl.steps") })));
+    }
+    var r = row();
+    if (g) {
+      if (live) r.appendChild(btn(t("bl.update"), function () { LY.op(function (d, now) { if (!BL.update(d, g, n, now)) return false; }); }, "small"));
+      r.appendChild(btn(t("bl.release"), function () {
+        LY.op(function (d, now) { if (!BL.release(d, g, now)) return false; });
+        LY.toast(t("bl.released"));
+      }, "small"));
+    } else {
+      r.appendChild(btn(t("bl.make"), function () {
+        var res = null, a = items[0].id, b = items[1].id;
+        LY.op(function (d, now) { res = BL.make(d, a, b, n, now); if (!res) return false; });
+        LY.toast(res ? t("bl.made", { n: res.ids.length }) : t("bl.full"));
+      }, "small primary"));
+    }
+    s.appendChild(r);
+    s.appendChild(el("p", "hint", t("bl.hint")));
+    return s;
   }
 
   function typeName(it) {

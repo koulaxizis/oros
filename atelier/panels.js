@@ -13,7 +13,7 @@
   "use strict";
 
   var AT = window.AT, M = AT.M, T = AT.T, FX = AT.FX, AX = AT.AX, A = AT.A, t = AT.t, $ = AT.$, el = AT.el;
-  var ED = AT.ed, ICONS = window.ATELIER_ICONS;
+  var ED = AT.ed, ICONS = window.ATELIER_ICONS, BL = window.AtelierBlend;
 
   var RAIL = ["templates", "elements", "text", "ai", "brand", "sources", "uploads", "background"];
   var PALETTE = ["#000000", "#545454", "#737373", "#a6a6a6", "#d9d9d9", "#ffffff",
@@ -998,6 +998,11 @@
     else if (k === "table") tableTools(bar, one);
     else if (k === "chart") chartTools(bar, one);
     else bar.appendChild(el("span", "ctx-hint", t("ctx.n", { n: list.length })));
+    var bg = blendOf(list);
+    if (bg || (list.length === 2 && BL.canBlend(list[0], list[1]))) {
+      if (k !== "shape") bar.appendChild(sep());
+      bar.appendChild(tool("blend", t("ctx.blend"), blendPop, !!bg));
+    }
     bar.appendChild(sep());
     bar.appendChild(tool("position", t("ctx.position"), function () { openView("position"); }, view === "position"));
     bar.appendChild(tool("op", t("ctx.op"), opacityPop));
@@ -1008,6 +1013,58 @@
     bar.appendChild(tool("trash", t("ctx.del"), ED.remove));
   }
   AT.renderCtx = renderCtx;
+
+  // ---------- Blend (wave C1, blend.js) ----------
+  // The blend the picked elements belong to: a step of it, or one of
+  // its two ends picked alone.
+  function blendOf(list) {
+    for (var i = 0; i < list.length; i++) { var g = BL.groupOf(list[i]); if (g) return g; }
+    if (list.length !== 1) return "";
+    var id = list[0].id, found = "";
+    AT.doc.items.forEach(function (it) {
+      var bl = it.ext && it.ext.bl;
+      if (!found && bl && (bl.a === id || bl.b === id) && BL.ends(AT.doc, bl.g)) found = bl.g;
+    });
+    return found;
+  }
+  function blendPop(anchor) {
+    var list = ED.selItems(), g = blendOf(list);
+    var first = g ? BL.members(AT.doc, g)[0] : null;
+    var n = first ? first.ext.bl.n : BL.DEF_STEPS, live = !!(g && BL.ends(AT.doc, g));
+    AT.popover(anchor, function (m, close) {
+      m.classList.add("bl-pop");
+      m.appendChild(el("div", "fld-lbl", t("ctx.blend")));
+      if (g && !live) m.appendChild(el("p", "hint warn", t("bl.gone")));
+      if (!g || live) {
+        m.appendChild(slider(t("bl.steps"), BL.MIN_STEPS, BL.MAX_STEPS, 1, n, function (v) {
+          n = v;
+          if (g) AT.op(function (d, nw) { if (!BL.update(d, g, v, nw)) return false; });
+        }));
+      }
+      m.appendChild(el("p", "hint", t("bl.hint")));
+      var row = el("div", "dlg-actions");
+      if (g) {
+        row.appendChild(btn("btn", t("bl.release"), function () {
+          AT.op(function (d, nw) { if (!BL.release(d, g, nw)) return false; });
+          close();
+          AT.toast(t("bl.released"));
+        }));
+        if (live) row.appendChild(btn("btn primary", t("bl.update"), function () {
+          AT.op(function (d, nw) { if (!BL.update(d, g, n, nw)) return false; });
+          close();
+        }));
+      } else {
+        row.appendChild(btn("btn primary", t("bl.make"), function () {
+          var res = null;
+          AT.op(function (d, nw) { res = BL.make(d, list[0].id, list[1].id, n, nw); if (!res) return false; });
+          close();
+          if (res) AT.toast(t("bl.made", { n: res.ids.length }), t("btn.undo"), AT.undo);
+          else AT.toast(t("bl.full"));
+        }));
+      }
+      m.appendChild(row);
+    });
+  }
 
   function opacityPop(anchor) {
     var it = ED.selItems()[0];

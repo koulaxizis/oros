@@ -131,8 +131,7 @@
   }
 
   function shapeD(it) {
-    var ax = it.ax;
-    return FX.toSvgPath(FX.shapePath(ax.shp || "rect", Math.max(0.01, it.w), Math.max(0.01, it.h), { round: ax.rd === undefined ? AX.RD_DEF : ax.rd })) || "M0 0";
+    return FX.toSvgPath(AX.shapeCmds(it)) || "M0 0";
   }
   function dashAt(it, sw) { return it.dash ? at("stroke-dasharray", n2(sw * 3) + " " + n2(sw * 2)) : ""; }
 

@@ -38,6 +38,14 @@
 //   ext.lnk  the element's link: https / http / mailto / tel, or
 //            "#p<n>" = page n of the same design (normLink); the web
 //            page export (webout.js) and the PDF make it clickable
+// Since wave C1 (blend, atelier/blend.js):
+//   ext.pth  a shape's own outline: designkit path text in unit space
+//            (fractions of the box, "M0 0C…Z"), in chunks of at most
+//            4000 chars (normX's string limit); drawn instead of shp
+//            by shapeCmds(). Older copies ignore it and draw shp, the
+//            nearer end's shape, so the file still opens.
+//   ext.bl   { g, a, b, n, i }: this shape is step i of n of blend g
+//            between items a and b (re-made by Blend › Update)
 // Defaults are omitted, keys come in one fixed order: the record is
 // canonical (R26), so equal designs give equal JSON on every device.
 // Pure: no DOM. Exposes window.AtelierAX (browser) or module.exports.
@@ -542,8 +550,29 @@
     return true;
   }
 
+  // A shape's own outline (ext.pth, wave C1) as unit commands, or
+  // null. Checked again on the way out like the link.
+  function pthOf(it) {
+    var v = it && it.ext && it.ext.pth;
+    if (typeof v === "string") v = [v];
+    if (!Array.isArray(v) || !v.length || !v.every(function (c) { return typeof c === "string"; })) return null;
+    return M.parsePath(v.join(""));
+  }
+  // The outline a shape item draws, in its box (pt): ext.pth when it
+  // has one, else the library shape. Every renderer uses this.
+  function shapeCmds(it) {
+    var ax = it.ax || {}, w = Math.max(0.01, it.w), h = Math.max(0.01, it.h);
+    var own = ax.k === "shape" ? pthOf(it) : null;
+    if (own) return own.map(function (c) {
+      var o = [c[0]];
+      for (var i = 1; i < c.length; i += 2) o.push(c[i] * w, c[i + 1] * h);
+      return o;
+    });
+    return FX.shapePath(ax.shp || "rect", w, h, { round: ax.rd === undefined ? RD_DEF : ax.rd });
+  }
+
   var api = {
-    normLink: normLink, linkOf: linkOf, setLink: setLink,
+    normLink: normLink, linkOf: linkOf, setLink: setLink, pthOf: pthOf, shapeCmds: shapeCmds,
     KINDS: KINDS, BASE: BASE, TEXT_DEF: TEXT_DEF, RD_DEF: RD_DEF, MAX_TX: MAX_TX, HEADS: HEADS,
     normAx: normAx, newDesign: newDesign, addItem: addItem, addBackground: addBackground, background: background,
     nextZ: nextZ, textStyle: textStyle, textLayout: textLayout, curveLayout: curveLayout, textHeight: textHeight,
