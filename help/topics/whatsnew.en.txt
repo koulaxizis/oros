@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.19.02
+- Assistant: Settings now list every model your key can use (with Claude: Fable, Opus, Sonnet, Haiku), not only the ones matching the model already filled in. The list loads by itself when a key is saved.
+
 ## Version 3.19.01
 - Updates are much lighter: orOS now downloads only the files that changed, not its whole offline copy (46 MB), so it opens faster after an update and uses far less mobile data.
 
