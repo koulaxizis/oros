@@ -122,6 +122,7 @@ orosPack("de", "settings", {
  "n.pos.top-right": "Oben rechts",
  "n.position": "Position auf dem Bildschirm",
  "n.push": "Benachrichtigungen bei geschlossenem orOS",
+ "n.push.brave": "In Brave: Öffne brave://settings/privacy, schalte „Use Google services for push messaging“ ein, starte Brave neu und schalte dies dann wieder ein. Erinnerungen laufen dann verschlüsselt über den Push-Dienst von Google. Firefox braucht keine Einstellung.",
  "n.push.denied": "Dieser Browser blockiert Benachrichtigungen für orOS. Erlaube sie in den Website-Einstellungen und schalte dies dann wieder ein.",
  "n.push.desktop": "Auf einem Computer muss der Browser im Hintergrund weiterlaufen. Das orOS-Fenster selbst kann geschlossen sein.",
  "n.push.devices": "Geräte, bei denen dieser Schalter an ist. Eine Änderung auf einem deiner synchronisierten Geräte gilt für alle.",
