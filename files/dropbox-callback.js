@@ -6,7 +6,23 @@
 // and does the token exchange; nothing here talks to the network.
 (function () {
   "use strict";
-  var el = (localStorage.getItem("oros-lang") === "el");
+  var LANG = window.orosI18n ? window.orosI18n.lang() : (localStorage.getItem("oros-lang") === "el" ? "el" : "en");
+  var T = {
+    en: {
+      "dbxcb.invalid": "Invalid answer from Dropbox.",
+      "dbxcb.done": "Done. You can close this window.",
+      "dbxcb.cancelled": "Sign-in cancelled. You can close this window.",
+      "dbxcb.back": "Back to Files…"
+    },
+    el: {
+      "dbxcb.invalid": "Μη έγκυρη απάντηση από το Dropbox.",
+      "dbxcb.done": "Έτοιμο. Μπορείς να κλείσεις αυτό το παράθυρο.",
+      "dbxcb.cancelled": "Η σύνδεση ακυρώθηκε. Μπορείς να κλείσεις αυτό το παράθυρο.",
+      "dbxcb.back": "Επιστροφή στα Αρχεία…"
+    }
+  };
+  if (window.orosI18n) window.orosI18n.table(T, "files", LANG);
+  function t(k) { return (T[LANG] || T.en)[k] || T.en[k]; }
   var msg = document.getElementById("msg");
   var q = new URLSearchParams(location.search);
   var cb = {
@@ -17,7 +33,7 @@
   };
   try { history.replaceState(null, "", location.pathname); } catch (e) {}
   if (!cb.state) {
-    msg.textContent = el ? "Μη έγκυρη απάντηση από το Dropbox." : "Invalid answer from Dropbox.";
+    msg.textContent = t("dbxcb.invalid");
     return;
   }
   // Read the mode BEFORE posting: an open Files deletes the record at once.
@@ -28,12 +44,10 @@
 
   var ok = !cb.error && cb.code;
   if (mode !== "redirect") {
-    msg.textContent = ok
-      ? (el ? "Έτοιμο. Μπορείς να κλείσεις αυτό το παράθυρο." : "Done. You can close this window.")
-      : (el ? "Η σύνδεση ακυρώθηκε. Μπορείς να κλείσεις αυτό το παράθυρο." : "Sign-in cancelled. You can close this window.");
+    msg.textContent = ok ? t("dbxcb.done") : t("dbxcb.cancelled");
     setTimeout(function () { try { window.close(); } catch (e) {} }, 400);
   } else {
-    msg.textContent = el ? "Επιστροφή στα Αρχεία…" : "Back to Files…";
+    msg.textContent = t("dbxcb.back");
     location.replace("../?open=files");
   }
 })();
