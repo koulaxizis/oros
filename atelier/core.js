@@ -1693,6 +1693,13 @@
     }
     // { newTemplate: { guides, art, w, h, bleed, name } }: the cover
     // sheet from Mockups' Print tab (BR-MK-TPL, editpic.js)
+    // { newRecipe: { app, nm, steps } }: an automation drafted by the
+    // Assistant or sent from another app (recipes/share.js) opens in
+    // the editor; it is saved only on Save and runs only on Run.
+    if (tg && tg.newRecipe) {
+      if (AT.recipes && AT.recipes.draft) AT.recipes.draft(tg.newRecipe);
+      return;
+    }
     if (tg && tg.newTemplate) {
       if (AT.mockup && AT.mockup.fromTemplate) AT.mockup.fromTemplate(tg.newTemplate);
       return;

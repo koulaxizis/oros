@@ -15,6 +15,8 @@
 //   9. System prompt
 //  10. Entry cards (propose_entry → an app's own prefill bridge)
 //  11. Conversation files (optional sync through Vault Drive)
+//  12. Automation cards (propose_automation → the app's editor,
+//      recipes/share.js; wave A3)
 // Exposed as window.OrosAssistCore (and module.exports in node).
 // ============================================================
 (function (root) {
@@ -1382,11 +1384,49 @@
       required: ["ref", "action"]
     }
   };
+  // Wave A3: an automation (recipes/core.js) written from a
+  // description. The user sees the steps in plain words and opens
+  // them in the app's editor; they save it and press Run themselves.
+  // Every field any step takes is listed, so strict providers
+  // (Gemini) keep them; recipes/share.js says which step takes which.
+  var RC_STR = ["find", "repl", "from", "to", "flt", "what", "fmt", "ms", "on", "id", "ratio", "mode", "text", "c", "pos", "q", "u", "p"];
+  var RC_NUM = ["pct", "scale", "dpi", "t", "b", "i", "o", "bright", "contrast", "sat", "warmth", "tint", "fade", "sepia", "vignette",
+                "r", "amt", "v", "size", "opacity"];
+  var RC_BOOL = ["cs", "word", "copies", "stop", "bleed", "marks", "spreads", "mono", "up"];
+  function recipeTool(apps) {
+    var props = { op: { type: "string", description: "The step's name (see the list above)." } };
+    RC_STR.forEach(function (k) { props[k] = { type: "string" }; });
+    RC_NUM.forEach(function (k) { props[k] = { type: "number" }; });
+    RC_BOOL.forEach(function (k) { props[k] = { type: "boolean" }; });
+    props.q.description = "layout export: print or screen; photolab export: quality 10-100.";
+    props.sizes = { type: "array", description: "atelier resize: the sizes.",
+                    items: { type: "object", properties: { w: { type: "number" }, h: { type: "number" }, u: { type: "string", "enum": ["px", "mm"] } }, required: ["w", "h"] } };
+    var SH = share();
+    return {
+      name: "propose_automation",
+      description: "Write an automation: a named list of steps the user runs again and again in one app, " +
+        "for example 'replace the date on every poster and download PNGs' or 'make every photo 1080 px, add my watermark, save as JPG'. " +
+        "The user sees the steps in plain words and opens them in the app's editor, where they check them, save and press Run; " +
+        "nothing is saved or run by this call. Use only these steps and fields (any not listed is refused):\n" +
+        (SH ? SH.forModel(apps) : ""),
+      params: {
+        type: "object",
+        properties: {
+          app: { type: "string", "enum": apps && apps.length ? apps.slice() : ["atelier", "layout", "photolab"] },
+          name: { type: "string", description: "A short name for the automation, in the user's language." },
+          steps: { type: "array", description: "The steps in order, at most 40.", items: { type: "object", properties: props, required: ["op"] } }
+        },
+        required: ["app", "name", "steps"]
+      }
+    };
+  }
+
   // The tools phase 1 offered (searching only); kept for the tests.
   var TOOLS = [TOOL_SEARCH, TOOL_APPS];
   // opts = { data: the user lets it search, summary: at least one
   // readable app has a summary, entries: at least one entry kind's app
-  // is installed, changes: at least one readable app takes changes)
+  // is installed, changes: at least one readable app takes changes,
+  // recipes: the installed apps with automations)
   function toolsFor(opts) {
     opts = opts || {};
     var out = [];
@@ -1394,6 +1434,7 @@
     if (opts.data && opts.summary) out.push(TOOL_SUMMARY);
     if (opts.entries) out.push(TOOL_ENTRY);
     if (opts.data && opts.changes) out.push(TOOL_CHANGE);
+    if (opts.recipes && opts.recipes.length && share()) out.push(recipeTool(opts.recipes));
     if (opts.web) out.push(TOOL_WEB, TOOL_PAGE);
     return out;
   }
@@ -1624,6 +1665,9 @@
       lines.push(changeLine);
     } else {
       lines.push("You cannot create, change or delete anything in orOS. When asked to, say which app does it and offer the text the user can paste.");
+    }
+    if (!opts.builtin && opts.recipes && opts.recipes.length) {
+      lines.push("For work the user repeats (the same edits on many designs, documents or photos) in these apps: " + opts.recipes.join(", ") + ", offer an automation with propose_automation. The user opens it in the app, checks the steps and presses Run; nothing runs before that, so never say it ran. Use only the steps the tool lists; if the user wants something they cannot do, say so plainly.");
     }
     return lines.join("\n");
   }
@@ -2168,6 +2212,30 @@
     return { chat: win, copy: cp };
   }
 
+  // ---------- 12. Automation cards (wave A3) ----------
+  function share() {
+    if (typeof module !== "undefined" && module.exports) { try { return require("../recipes/share.js"); } catch (e) { return null; } }
+    return root.orosRecipeShare || null;
+  }
+  // propose_automation arguments → { ok, app, nm, steps (checked),
+  // view: [{ name, detail }] } or { ok: false, err } (in English, for
+  // the model). has(app): the app is installed.
+  function normAutomation(args, has) {
+    var SH = share();
+    if (!SH) return { ok: false, err: "automations are not available." };
+    args = args && typeof args === "object" ? args : {};
+    var app = String(args.app || "");
+    if (SH.APPS.indexOf(app) < 0) return { ok: false, err: "app must be one of: " + SH.APPS.join(", ") + "." };
+    if (has && !has(app)) return { ok: false, err: "the app " + app + " is not installed." };
+    var steps = Array.isArray(args.steps) ? args.steps : [];
+    var bad = SH.problems(app, steps);
+    if (bad.length) return { ok: false, err: bad.slice(0, 8).join(" ") };
+    var cat = SH.CATALOGS[app], pr = SH.prepare(steps, cat, null);
+    var d = SH.draft({ app: app, nm: squash(args.name || "").slice(0, 80), steps: pr.steps });
+    if (!d || pr.bad || pr.newer) return { ok: false, err: "the steps are not valid." };
+    return { ok: true, app: app, nm: d.nm, steps: d.steps, view: d.steps.map(function (st) { return SH.words(app, st); }) };
+  }
+
   // ---------- Misc ----------
   function chatTitle(text) {
     var s = squash(text);
@@ -2197,7 +2265,8 @@
     WEB_USES: WEB_USES, webCan: webCan, webTool: webTool, webSources: webSources,
     KEY_IDS: KEY_IDS, SEARCH_IDS: SEARCH_IDS, SEARCH_N: SEARCH_N, PAGE_MAX: PAGE_MAX, webAny: webAny, webSrc: webSrc,
     searchReq: searchReq, searchParse: searchParse, pageReq: pageReq, pageParse: pageParse, pageAllowed: pageAllowed, webResult: webResult,
-    BRIEF_MAX: BRIEF_MAX, briefPlan: briefPlan, briefKeep: briefKeep, briefText: briefText
+    BRIEF_MAX: BRIEF_MAX, briefPlan: briefPlan, briefKeep: briefKeep, briefText: briefText,
+    normAutomation: normAutomation
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root && root.document) root.OrosAssistCore = api;

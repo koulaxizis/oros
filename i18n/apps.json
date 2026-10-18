@@ -713,6 +713,7 @@
   {
    "app": "recipes",
    "files": [
+    "recipes/share.js",
     "recipes/ui.js"
    ]
   },

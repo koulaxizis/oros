@@ -494,5 +494,9 @@ orosPack("de", "assistant", {
  "ws.searx": "SearXNG",
  "ws.tavily": "Tavily",
  "ws.wiki": "Wikipedia",
- "you": "Du"
+ "you": "Du",
+ "rc.head": "Automation · {app}",
+ "rc.hint": "Öffnet {app} mit diesen Schritten. Du prüfst und speicherst sie; nichts läuft, bevor du dort auf Ausführen tippst.",
+ "rc.file": "Als Datei speichern",
+ "rc.saved": "{name} gespeichert. Schick sie an alle, die orOS haben."
 });

@@ -72,6 +72,7 @@ Steps you set once and run again and again, on the open picture or on many photo
 - `Run` on `The open picture` works like the menus: on the active layer and the selection. The watermark becomes a layer of its own. `Undo` on the message that follows takes every step back.
 - `Run` on `Many photos (Batch process)` opens `Batch process…` with the automation picked under `Adjustments`; you can also pick it there yourself. The steps run on every photo after the batch's own resize, before its watermark; an `Export` step only sets the format and quality.
 - Automations sync with your other devices, together with those of Atelier and Layout.
+- `Share` saves an automation as a `.orosrecipe` file to send to anyone with orOS; `Import` in the list reads one back. The file holds only the steps, never code: it is checked when it is read and opens in the editor, where you look at it and press `Save`. A file made for another app offers to open it there.
 
 ## Editing a picture from Atelier
 When Atelier sends a picture here to edit, a `Done` button appears at the top. It saves the result as a new picture and sends it back to Atelier; the project also stays in Photo Lab for later changes.

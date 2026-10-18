@@ -1127,6 +1127,13 @@
       LY.io.openFile(f);
       return;
     }
+    // { newRecipe: { app, nm, steps } }: an automation drafted by the
+    // Assistant or sent from another app (recipes/share.js) opens in
+    // the editor; it is saved only on Save and runs only on Run.
+    if (tg && tg.newRecipe) {
+      if (LY.recipes && LY.recipes.draft) LY.recipes.draft(tg.newRecipe);
+      return;
+    }
     if (tg && tg.placeImage) {
       if (document.querySelector("dialog[open]")) return;
       var pi = tg.placeImage, fs = diskFs();

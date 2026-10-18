@@ -58,6 +58,14 @@ Notes and Spreadsheet make the new note or sheet when you press `Open in …`, a
 
 You can also ask for a contact («add Maria from ACME, 6971234567»), a CRM customer, a Kanban card, a habit, a finished workout, a Garage service or renewal reminder («KTEO for the Golf is due on 1 March»), a new plant, a pet's vaccine or vet visit, a book, film, series, album, podcast or game for Media Shelf, a place on the map, or a shared expense in Split («I paid 64 for dinner in the Crete trip»). Each one opens that app's own form filled in, and nothing is saved until you save it there. A Kanban card waits in the column's "Add a card" box until you press Enter, and a place opens on the map, where you save it from its pin if it is the right one.
 
+## Automations
+For work you repeat in [Atelier](app:atelier), [Layout](app:layout) or [Photo Lab](app:photolab), describe it, for example "every photo 1080 px on the long side, my name as a watermark bottom right, saved as JPG" or "replace 2025 with 2026 in all my posters and download them as PNG". The assistant answers with a card that lists the steps in plain words:
+- `Open in …` opens the app's Automations editor with these steps. Check them, press `Save`, then `Run` when you want it: nothing runs before that.
+- `Save as file` saves the steps as a `.orosrecipe` file to send to someone (they open it with `Import` in the app's Automations).
+- `Dismiss` drops the card.
+
+The assistant can only use the steps the app's Automations offer (the same list as `Add a step`), never code. If you ask for something they cannot do, it says so.
+
 ## Change what you already have
 Ask, for example, "mark the plumber call as done", "move the dentist to Friday at 10:00", "the lunch was 14.50, not 12.50" or "delete the old bookmark about trains". The assistant first finds the item with a search (you see and share it as usual), then shows a card: what changes, `Before` and `After`, or what is deleted.
 - `Apply` (or `Delete`) makes the change. `Don't change` leaves everything as it is. Nothing changes until you press it, even for apps set to `Always share`.

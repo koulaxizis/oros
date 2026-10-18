@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.33.00
+- Automations travel: ask the Assistant for one ("every photo 1080 px with my watermark, saved as JPG") and it shows the steps in plain words; Open in Photo Lab, Atelier or Layout fills them in for you to check, save and run. Share any automation as a .orosrecipe file and Import one from someone else. Only steps, never code, and nothing runs until you press Run.
+
 ## Version 3.32.01
 - Apps open at once on a bad connection: each app now starts from the copy saved on your device instead of waiting for the network. A new version still arrives with the usual update.
 

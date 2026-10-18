@@ -18,7 +18,7 @@
   "use strict";
 
   var AT = window.AT, M = AT.M, A = AT.A, AX = AT.AX, FX = AT.FX, T = AT.T, t = AT.t, el = AT.el;
-  var R = window.orosRecipes, S = window.AtelierRecipes, CUT = window.AtelierCutout;
+  var R = window.orosRecipes, S = window.AtelierRecipes, CUT = window.AtelierCutout, SH = window.orosRecipeShare || null;
   if (!R || !S) return;
   var APP = "atelier", KEY = "oros-recipes";
   var CAT = S.CATALOG;
@@ -215,6 +215,7 @@
                 c.id = R.newId(); c.nm = t("rc.copyOf", { name: r.nm || t("rc.untitled") }).slice(0, R.MAX_NAME); c.pos = nextPos();
                 put(c); render();
               } },
+              { label: SH ? SH.str("sh.share") : "", hide: !SH, fn: function () { share(r); } },
               { label: t("rc.del"), danger: true, fn: function () {
                 remove(r.id); render();
                 AT.toast(t("rc.deleted"), t("btn.undo"), function () { var b = JSON.parse(JSON.stringify(r)); put(b); if (listOpen) listOpen(); });
@@ -228,6 +229,7 @@
         var act = el("div", "dlg-actions");
         if (AT.doc) act.appendChild(btn("btn", t("rc.record"), function () { close(); record(); }));
         act.appendChild(btn("btn", t("btn.close"), close));
+        if (SH) act.appendChild(btn("btn", SH.str("sh.import"), function () { importFile(); }));
         act.appendChild(btn("btn primary", t("rc.new"), function () {
           close();
           edit({ id: R.newId(), app: APP, nm: "", steps: [], pos: nextPos() }, true);
@@ -388,7 +390,8 @@
     }
   }
 
-  function edit(rec, isNew) {
+  // notes: lines shown above the steps (a draft: check, then Save)
+  function edit(rec, isNew, notes) {
     var work = JSON.parse(JSON.stringify(rec));
     var known = R.check(work, CAT);
     var unknown = work.steps.filter(function (s) { return !R.normStep(s, CAT) && !CAT[s.op]; });
@@ -398,6 +401,7 @@
       var nm = el("input", "inp"); nm.type = "text"; nm.maxLength = R.MAX_NAME; nm.value = work.nm; nm.placeholder = t("rc.namePh");
       nm.addEventListener("input", function () { work.nm = nm.value; });
       body.appendChild(field(t("rc.name"), nm));
+      (notes || []).forEach(function (s) { body.appendChild(el("p", "hint rc-note", s)); });
       if (unknown.length) body.appendChild(el("p", "hint warn", t("rc.newer", { n: unknown.length })));
       var list = el("ol", "rc-steps");
       body.appendChild(list);
@@ -737,5 +741,52 @@
     edit({ id: R.newId(), app: APP, nm: t("rc.recName", { date: date }), steps: steps, pos: nextPos() }, true);
   }
 
-  AT.recipes = { open: open, record: record, recording: function () { return !!rec; } };
+  // ---------- 7. Sharing (recipes/share.js) ----------
+  // Share: the automation as a .orosrecipe file (data only). Import
+  // and the { newRecipe } deep link (the Assistant, another app) open
+  // the editor with the steps filled in; nothing is saved before Save.
+  function share(r) {
+    var text = SH.pack(r);
+    if (!text) return;
+    var name = SH.fileName(r.nm || t("rc.untitled"));
+    AT.io.saveBlob(new Blob([text], { type: SH.MIME }), name, SH.MIME, "orOS automation", SH.EXT).then(function (ok) {
+      if (ok) AT.toast(SH.str("sh.shared", { name: name }));
+    }, function () {});
+  }
+  function importFile() {
+    AT.io.pickFile(SH.EXT + ",application/json").then(function (f) {
+      if (!f) return;
+      if (f.size > SH.MAX_FILE) { AT.toast(SH.str("sh.err.big")); return; }
+      return f.text().then(function (text) {
+        var res = SH.unpack(text);
+        if (!res.ok) { AT.toast(SH.str("sh.err." + res.err)); return; }
+        draft(res.draft);
+      });
+    }).then(null, function () { AT.toast(SH.str("sh.err.read")); });
+  }
+  function draft(x) {
+    var d = SH ? SH.draft(x) : null;
+    if (!d) return false;
+    if (d.app !== APP) {
+      var p = null, name = SH.appName(d.app);
+      try { p = window.parent && window.parent !== window && typeof window.parent.__orosOpenAt === "function" ? window.parent : null; } catch (e) {}
+      AT.openDialog(d.nm || t("rc.untitled"), function (body, close) {
+        body.appendChild(el("p", "hint", SH.str("sh.other", { app: name })));
+        var act = el("div", "dlg-actions");
+        act.appendChild(btn("btn", t("btn.close"), close));
+        if (p) act.appendChild(btn("btn primary", SH.str("sh.openIn", { app: name }), function () {
+          close();
+          p.__orosOpenAt(d.app, { newRecipe: d });
+        }));
+        body.appendChild(act);
+      }, true);
+      return true;
+    }
+    var pr = SH.prepare(d.steps, CAT, newStep), notes = [SH.str("sh.check")];
+    if (pr.bad) notes.push(pr.bad === 1 ? SH.str("sh.bad1") : SH.str("sh.bad", { n: pr.bad }));
+    edit({ id: R.newId(), app: APP, nm: d.nm, steps: pr.steps, pos: nextPos() }, true, notes);
+    return true;
+  }
+
+  AT.recipes = { open: open, record: record, draft: draft, recording: function () { return !!rec; } };
 })();

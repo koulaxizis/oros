@@ -21,7 +21,11 @@
 //     run(steps, target, ctl, recipe) Promise → { msg, undo? };
 //                             ctl.status(text), ctl.signal (aborted
 //                             when the person stops)
-//   }) → { open(), list() }
+//   }) → { open(), list(), run, edit, draft(d) }
+// With recipes/share.js loaded, each automation can be shared as a
+// .orosrecipe file (Share) and one read back (Import); draft(d) opens
+// the editor with a draft from the Assistant or another app
+// (deep link { newRecipe }), saved only when the person presses Save.
 // Fields are drawn from the catalog's argument specs (recipes/core.js):
 // str → text (or a list when choices() gives one), color, num / int,
 // enum → list, bool → tick box. Saving runs every step through the
@@ -34,7 +38,7 @@
 (function (root) {
   "use strict";
 
-  var R = root.orosRecipes;
+  var R = root.orosRecipes, SH = root.orosRecipeShare || null;
   if (!R) return;
   var KEY = "oros-recipes";
 
@@ -199,6 +203,7 @@
               c.id = R.newId(); c.nm = u("copyOf", { name: r.nm || u("untitled") }).slice(0, R.MAX_NAME); c.pos = nextPos();
               put(c); render();
             }));
+            if (SH) acts.appendChild(btn("btn small", SH.str("sh.share"), function () { share(r); }));
             acts.appendChild(btn("btn small danger", u("del"), function () {
               remove(r.id); render();
               ad.toast(u("deleted"), u("undo"), function () { put(JSON.parse(JSON.stringify(r))); if (listOpen) listOpen(); });
@@ -209,6 +214,7 @@
           body.appendChild(ul);
           var act = el("div", "dlg-actions");
           act.appendChild(btn("btn", u("close"), function () { stop(); close(); }));
+          if (SH) act.appendChild(btn("btn", SH.str("sh.import"), function () { importFile(function () { stop(); close(); }); }));
           act.appendChild(btn("btn primary", u("new"), function () {
             stop(); close();
             edit({ id: R.newId(), app: APP, nm: "", steps: [], pos: nextPos() }, true);
@@ -262,7 +268,8 @@
       if (note) box.appendChild(el("p", "hint", note));
     }
 
-    function edit(rec, isNew) {
+    // notes: lines shown above the steps (a draft: check, then Save)
+    function edit(rec, isNew, notes) {
       var work = JSON.parse(JSON.stringify(rec));
       var unknown = work.steps.filter(function (s) { return !CAT[s.op]; });
       work.steps = work.steps.filter(function (s) { return CAT[s.op]; });
@@ -270,6 +277,7 @@
         var nm = inp("text"); nm.maxLength = R.MAX_NAME; nm.value = work.nm; nm.placeholder = u("namePh");
         nm.addEventListener("input", function () { work.nm = nm.value; });
         body.appendChild(field(u("name"), nm));
+        (notes || []).forEach(function (s) { body.appendChild(el("p", "hint rc-note", s)); });
         if (unknown.length) body.appendChild(el("p", "hint warn", u("newer", { n: unknown.length })));
         var list = el("ol", "rc-steps");
         body.appendChild(list);
@@ -391,7 +399,81 @@
       });
     }
 
-    return { open: open, list: mine, run: run, edit: edit };
+    // ---------- 5. Sharing (recipes/share.js) ----------
+    function host() {
+      try { return root.orosDialog || (root.parent && root.parent.orosDialog) || null; }
+      catch (e) { return root.orosDialog || null; }
+    }
+    function share(r) {
+      var text = SH.pack(r);
+      if (!text) return;
+      var name = SH.fileName(r.nm || u("untitled")), blob = new Blob([text], { type: SH.MIME }), h = host(), done;
+      if (h && typeof h.saveFile === "function") {
+        var types = [{ description: "orOS automation", accept: {} }];
+        types[0].accept[SH.MIME] = [SH.EXT];
+        done = h.saveFile({ blob: blob, filename: name, mime: SH.MIME, types: types }).then(function (x) { return !!(x && x.ok); });
+      } else {
+        var url = URL.createObjectURL(blob), a = el("a");
+        a.href = url; a.download = name;
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(function () { URL.revokeObjectURL(url); }, 40000);
+        done = Promise.resolve(true);
+      }
+      done.then(function (ok) { if (ok) ad.toast(SH.str("sh.shared", { name: name })); }, function () {});
+    }
+    function pick() {
+      var h = host(), accept = SH.EXT + ",application/json";
+      if (h && typeof h.openFile === "function") return h.openFile(accept);
+      return new Promise(function (resolve) {
+        var i = inp("file");
+        i.accept = accept;
+        i.addEventListener("change", function () { resolve(i.files && i.files[0] || null); });
+        i.click();
+      });
+    }
+    // done(): closes the list once a file was read
+    function importFile(done) {
+      Promise.resolve(pick()).then(function (f) {
+        if (!f) return;
+        if (f.size > SH.MAX_FILE) { ad.toast(SH.str("sh.err.big")); return; }
+        return f.text().then(function (text) {
+          var res = SH.unpack(text);
+          if (!res.ok) { ad.toast(SH.str("sh.err." + res.err)); return; }
+          if (done) done();
+          draft(res.draft);
+        });
+      }).then(null, function () { ad.toast(SH.str("sh.err.read")); });
+    }
+    function openAt() {
+      try { var p = root.parent; return p && p !== root && typeof p.__orosOpenAt === "function" ? p : null; }
+      catch (e) { return null; }
+    }
+    // A draft (file, Assistant, another app) → the editor, not saved.
+    // A draft for another app offers to open it there.
+    function draft(x) {
+      var d = SH ? SH.draft(x) : null;
+      if (!d) return false;
+      if (d.app !== APP) {
+        var p = openAt(), name = SH.appName(d.app);
+        ad.dialog(d.nm || u("untitled"), function (body, close) {
+          body.appendChild(el("p", "hint", SH.str("sh.other", { app: name })));
+          var act = el("div", "dlg-actions");
+          act.appendChild(btn("btn", u("close"), close));
+          if (p) act.appendChild(btn("btn primary", SH.str("sh.openIn", { app: name }), function () {
+            close();
+            p.__orosOpenAt(d.app, { newRecipe: d });
+          }));
+          body.appendChild(act);
+        });
+        return true;
+      }
+      var pr = SH.prepare(d.steps, CAT, ad.newStep), notes = [SH.str("sh.check")];
+      if (pr.bad) notes.push(pr.bad === 1 ? SH.str("sh.bad1") : SH.str("sh.bad", { n: pr.bad }));
+      edit({ id: R.newId(), app: APP, nm: d.nm, steps: pr.steps, pos: nextPos() }, true, notes);
+      return true;
+    }
+
+    return { open: open, list: mine, run: run, edit: edit, draft: draft };
   }
 
   root.orosRecipesUI = { mount: mount, str: u, _data: function () { return D; } };

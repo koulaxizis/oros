@@ -63,6 +63,7 @@ The strip under the canvas shows the pages of your design. `+` adds a page; each
 - Make one from `Automations` on the home screen (`New automation`), or open a design, choose `More` › `Record an automation`, change the design by hand and press `Stop`: the words, colours, fonts, text sizes and filters you changed, and any Resize, Background removal or Download, become the steps.
 - `Run` shows what will change before it runs: this design, the designs picked with `Select` (`Automation (n)`), or all designs. After a run, `Undo` brings every design back. Several downloads come as one ZIP.
 - Automations sync like your designs. A step from a newer orOS is kept and skipped until this device updates.
+- `Share` saves an automation as a `.orosrecipe` file to send to anyone with orOS; `Import` in the list reads one back. The file holds only the steps, never code: it is checked when it is read and opens in the editor, where you look at it and press `Save`. A file made for another app offers to open it there.
 
 ## Download and share
 - `Download` makes a PNG (normal, ×2 or ×3, optionally with a transparent background), a JPG, a PDF for printing at 150 or 300 dpi, a PowerPoint file (see below) or a web page.
