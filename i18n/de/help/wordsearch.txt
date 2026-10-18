@@ -1,0 +1,28 @@
+# Wortsuche
+Finde die versteckten Wörter in einem Gitter aus Buchstaben. Spiel das Tagesrätsel oder so viele Rätsel, wie du willst, auch mit deinen eigenen Wortlisten.
+
+## So wird gespielt
+Die gesuchten Wörter stehen neben dem Gitter. Jedes ist in einer geraden Linie versteckt. Zieh über ein Wort von seinem ersten bis zu seinem letzten Buchstaben, oder tippe oder klicke auf den ersten und dann auf den letzten Buchstaben. Ein gefundenes Wort wird farbig markiert und in der Liste abgehakt.
+
+Die Wörter gibt es auf Englisch oder Griechisch, du wählst sie mit `EN` / `ΕΛ` in der Werkzeugleiste. Auf Deutsch spielst du mit den englischen Wörtern. Griechische Wörter stehen in Großbuchstaben ohne Akzente, ein End-ς wird als Σ geschrieben.
+
+## Bedienung
+- `Täglich` oder `Frei`: das Tagesrätsel oder freies Spiel.
+- `8×8`, `12×12`, `15×15`: die Größe im freien Spiel. 8×8 hat Wörter waagerecht und senkrecht, 12×12 auch diagonal und 15×15 auch rückwärts.
+- `Thema`: Wähle ein fertiges Thema (`Tiere`, `Essen`, `Länder` und mehr) oder `Zufällige Wörter`, oder mach dein eigenes.
+- Der Hinweis-Knopf (`Hinweis (H)`) kreist den ersten Buchstaben eines Worts ein, das du noch nicht gefunden hast.
+
+Tastatur: Die Pfeiltasten bewegen dich durchs Gitter, [[Enter]] oder [[Space]] wählt den ersten und dann den letzten Buchstaben, und [[Esc]] bricht die erste Wahl ab. [[H]] gibt einen Hinweis, [[Shift+N]] ein neues Rätsel.
+
+### Deine eigenen Themen
+Wähle in `Thema` unter `Meine Themen` den Punkt `Neues Thema`. Gib ihm unter `Name` einen Namen und tippe unter `Wörter` die Wörter ein, eins pro Zeile oder durch Kommas getrennt: 3 bis 15 Buchstaben, mindestens 3 und höchstens 60 Wörter. Themen gehören zu der Wortsprache, die beim Erstellen eingestellt ist.
+
+## Stufen und Wertung
+`Täglich` ist ein 12×12-Rätsel pro Tag, auf jedem Gerät dasselbe. `Statistik` zeigt die gelösten Tage, deine Serie, deine beste Serie und die beste Tageszeit, dazu wie viele Rätsel du im freien Spiel gelöst hast und deine Bestzeit für jede Größe. Mit einem Hinweis gibt es für dieses Rätsel keinen Rekord. `Statistik zurücksetzen` löscht sie, behält aber deine eigenen Themen.
+
+## Synchronisierung
+Deine Tagesergebnisse, Rekorde im freien Spiel und deine eigenen Themen werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten abgeglichen. Hast du das heutige Rätsel schon auf einem anderen Gerät gelöst, siehst du dessen Zeit. Angefangene Rätsel und deine Einstellungen bleiben auf diesem Gerät.
+
+## Tipps
+- Eigene Themen sind praktisch, um mit einer Klasse Wörter für die Rechtschreibung zu üben.
+- Dieselben Wortlisten nutzt auch das [Kreuzworträtsel](help:a/crossword).
