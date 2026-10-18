@@ -144,13 +144,13 @@
     if ((m = /^help:([at])\/([a-z0-9-]+)(?:#([a-z0-9α-ω-]+))?$/.exec(href)) && ID_RE.test(m[2])) {
       return { kind: "help", route: m[1] + "/" + m[2] + (m[3] ? "/" + m[3] : "") };
     }
-    if (/^https:\/\/[^\s"'<>\\]+$/.test(href)) return { kind: "url", href: href };
+    if (/^https:\/\/[^\s\x22\x27<>\\]+$/.test(href)) return { kind: "url", href: href };
     if (href === "tour:start") return { kind: "tour" };
     return null;
   }
 
   // One line of text → tokens: text, b, code, kbd (keys[]), link.
-  var INLINE_RE = /\*\*([^*]+)\*\*|`([^`]+)`|\[\[([^\]]+)\]\]|\[([^\]]+)\]\(([^)\s]+)\)/g;
+  var INLINE_RE = /\*\*([^*]+)\*\*|\x60([^\x60]+)\x60|\[\[([^\]]+)\]\]|\[([^\]]+)\]\(([^)\s]+)\)/g;
   function parseInline(s) {
     var out = [], last = 0, m;
     s = String(s || "");

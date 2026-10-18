@@ -1807,7 +1807,7 @@
     page.scrollTop = top;
 
     if (keepKey) {
-      var again = document.querySelector('[data-k="' + keepKey.replace(/["\\]/g, "") + '"]');
+      var again = document.querySelector('[data-k="' + keepKey.replace(/[\x22\\]/g, "") + '"]');
       if (again) {
         again.focus();
         if (caret) { try { again.setSelectionRange(caret[0], caret[1]); } catch (e) {} }

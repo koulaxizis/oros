@@ -19,6 +19,7 @@
 // Opens through the existing bridge window.orosHelp.open(route):
 // target { route: "t/<id>[/<section>]" | "a/<id>[/<section>]" }.
 // ============================================================
+// i18n-inline-ok: Greek folding (final ς = σ) is search data, not UI text
 (function (root) {
   "use strict";
 
@@ -52,7 +53,7 @@
   function slugify(s) {
     return fold(s).replace(/[^a-z0-9α-ω]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60);
   }
-  var INLINE_RE = /\*\*([^*]+)\*\*|`([^`]+)`|\[\[([^\]]+)\]\]|\[([^\]]+)\]\(([^)\s]+)\)/g;
+  var INLINE_RE = /\*\*([^*]+)\*\*|\x60([^\x60]+)\x60|\[\[([^\]]+)\]\]|\[([^\]]+)\]\(([^)\s]+)\)/g;
   function inlineText(s) {
     s = String(s || "");
     return s.replace(INLINE_RE, function (all, b, code, kbd, linkText) {
