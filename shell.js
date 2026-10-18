@@ -2133,7 +2133,7 @@
     if (!data) return;                     // unreadable: the app keeps the rescue copy
     var due = W.reminderDue(data, new Date());
     if (!due) return;
-    var txt = W.reminderText(due, data.prefs, state.lang === "el" ? "el" : "en");
+    var txt = W.reminderText(due, data.prefs, state.lang);
     N.emit({
       ns: "water",
       key: due.key,
@@ -2209,7 +2209,7 @@
     if (!rem) return;                                        // never switched on
     var due = D.reminderDue(D.read(sum), rem, Date.now());
     if (!due) return;
-    var txt = D.reminderText(due.n, state.lang === "el" ? "el" : "en");
+    var txt = D.reminderText(due.n, state.lang);
     N.emit({ ns: "flashcards", key: due.key, type: "reminder", title: txt.title, body: txt.body, deepLink: "system:open:flashcards" });
   }
 
@@ -2620,7 +2620,7 @@
     try { data = JSON.parse(localStorage.getItem("oros-shelf-data") || "null"); } catch (e) { return; }
     var due = F.reminderDue(data, rem, new Date());
     if (!due) return;
-    var txt = F.reminderText(due, state.lang === "el" ? "el" : "en");
+    var txt = F.reminderText(due, state.lang);
     N.emit({
       ns: "shelf",
       key: due.key,
@@ -2655,7 +2655,7 @@
     try { data = D.mergeDiary(JSON.parse(localStorage.getItem("oros-diary-data") || "null"), null); } catch (e) { return; }
     var now = new Date(), due = D.reminderDue(data, prefs, now);
     if (!due) return;
-    var txt = D.reminderText(state.lang === "el" ? "el" : "en", D.streak(data, due.day));
+    var txt = D.reminderText(state.lang, D.streak(data, due.day));
     N.emit({
       ns: "diary",
       key: due.key,

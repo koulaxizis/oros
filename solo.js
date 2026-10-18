@@ -678,6 +678,7 @@
         "#solo-frame{display:block;border:0;width:100%;height:100%}</style>",
       "</head>",
       "<body>",
+      '  <script src="/i18n.js" data-app="solo"></script>',   // the install bar in pack languages
       '  <script src="/solo.js"></script>',
       "  <script>window.orosSolo.hostBoot(window);</script>",
       "</body>",

@@ -98,7 +98,9 @@ test("locale, choices and plural forms", () => {
   assert.equal(r.I.base("el"), "el");
   // Shown languages are always offered (partial ones marked); hidden
   // ones only while active.
-  assert.ok(r.I.choices().some((l) => l.code === "de" && l.partial));
+  for (const l of r.I.LANGS.filter((x) => x.status !== "hidden")) {
+    assert.ok(r.I.choices().some((c) => c.code === l.code && c.partial === (l.status !== "full")), l.code);
+  }
   const en = load({ stored: "en" }).I;
   for (const l of en.LANGS) {
     assert.equal(en.choices().some((c) => c.code === l.code), l.status !== "hidden", l.code);

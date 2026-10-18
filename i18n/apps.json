@@ -98,6 +98,12 @@
    ]
   },
   {
+   "app": "cardkit",
+   "files": [
+    "cardkit/cardkit.js"
+   ]
+  },
+  {
    "app": "certificates",
    "files": [
     "certificates/certificates.js",
@@ -145,6 +151,7 @@
    "files": [
     "contacts/contacts.js",
     "contacts/keep.js",
+    "contacts/oauth-callback.js",
     "contacts/package.js",
     "contacts/search.js",
     "contacts/today.js"
@@ -183,6 +190,16 @@
    ]
   },
   {
+   "app": "designkit",
+   "files": [
+    "designkit/fx.js",
+    "designkit/media.js",
+    "designkit/model.js",
+    "designkit/show.js",
+    "designkit/templates.js"
+   ]
+  },
+  {
    "app": "device",
    "files": [
     "device/device.js"
@@ -210,6 +227,12 @@
    ]
   },
   {
+   "app": "enrichui",
+   "files": [
+    "enrichui.js"
+   ]
+  },
+  {
    "app": "familytree",
    "files": [
     "familytree/familytree.js",
@@ -228,9 +251,16 @@
    ]
   },
   {
+   "app": "fileopen",
+   "files": [
+    "fileopen.js"
+   ]
+  },
+  {
    "app": "files",
    "files": [
     "files/drive.js",
+    "files/dropbox-callback.js",
     "files/dropbox.js",
     "files/files.js",
     "files/gmedia.js"
@@ -285,6 +315,12 @@
    "app": "gomoku",
    "files": [
     "gomoku/gomoku.js"
+   ]
+  },
+  {
+   "app": "google-import",
+   "files": [
+    "google-import.js"
    ]
   },
   {
@@ -372,6 +408,12 @@
    "app": "lightsout",
    "files": [
     "lightsout/lightsout.js"
+   ]
+  },
+  {
+   "app": "links",
+   "files": [
+    "links/woo.js"
    ]
   },
   {
@@ -567,6 +609,12 @@
    ]
   },
   {
+   "app": "pet",
+   "files": [
+    "pet.js"
+   ]
+  },
+  {
    "app": "petcare",
    "files": [
     "petcare/core.js",
@@ -653,6 +701,18 @@
    "files": [
     "radio/radio.js",
     "radio/search.js"
+   ]
+  },
+  {
+   "app": "recordpkg",
+   "files": [
+    "recordpkg.js"
+   ]
+  },
+  {
+   "app": "remote-play",
+   "files": [
+    "remote-play.js"
    ]
   },
   {
@@ -973,6 +1033,12 @@
    "app": "wordle",
    "files": [
     "wordle/wordle.js"
+   ]
+  },
+  {
+   "app": "wordsearch",
+   "files": [
+    "wordsearch/wordsearch.js"
    ]
   },
   {

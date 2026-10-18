@@ -37,7 +37,7 @@
   var LANGS = [
     { code: "en", name: "English",  locale: "en-GB", dir: "ltr", status: "full" },
     { code: "el", name: "Ελληνικά", locale: "el-GR", dir: "ltr", status: "full" },
-    { code: "de", name: "Deutsch",  locale: "de-DE", dir: "ltr", status: "partial" }
+    { code: "de", name: "Deutsch",  locale: "de-DE", dir: "ltr", status: "full" }
   ];
   // ---- end of languages ----
 
