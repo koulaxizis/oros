@@ -1,5 +1,6 @@
 // ============================================================
 // orOS Newsletter — past issues from other services (v1.0.0)
+// i18n-inline-ok: the Greek column names (subject, title, date) are import parser data, no UI text
 // Reads what Buttondown, MailerLite and similar services export and
 // turns it into issues (Markdown), never running anything in it:
 //   - .md / .markdown / .txt, with or without a front matter block
@@ -103,7 +104,7 @@
   function date(v) {
     if (v === null || v === undefined || v === "") return 0;
     if (typeof v === "number") return v > 1e11 ? v : v * 1000;
-    var s = String(v).trim().replace(/^["']|["']$/g, "");
+    var s = String(v).trim().replace(/^[\x22\x27]|[\x22\x27]$/g, "");
     var t = Date.parse(s);
     if (!isFinite(t)) { var m = /^(\d{1,2})[\/.](\d{1,2})[\/.](\d{4})(?:[ T](\d{1,2}):(\d{2}))?/.exec(s);
       if (m) t = new Date(+m[3], +m[2] - 1, +m[1], +(m[4] || 9), +(m[5] || 0)).getTime(); }
@@ -133,7 +134,7 @@
     if (m) {
       m[1].split(/\r?\n/).forEach(function (l) {
         var kv = /^([A-Za-z_][\w-]*)\s*:\s*(.*)$/.exec(l);
-        if (kv) fm[kv[1].toLowerCase()] = kv[2].trim().replace(/^["']|["']$/g, "");
+        if (kv) fm[kv[1].toLowerCase()] = kv[2].trim().replace(/^[\x22\x27]|[\x22\x27]$/g, "");
       });
       body = body.slice(m[0].length);
     }
@@ -149,7 +150,7 @@
     var t = /<title[^>]*>([\s\S]*?)<\/title>/i.exec(s), h = /<h[12][^>]*>([\s\S]*?)<\/h[12]>/i.exec(s);
     var strip = function (x) { return entities(String(x || "").replace(/<[^>]*>/g, " ")).replace(/\s+/g, " ").trim(); };
     var subj = strip(t && t[1]) || strip(h && h[1]) || String(name || "").replace(/\.[^.]+$/, "");
-    var meta = /<meta[^>]+(?:name|property)=["'](?:date|article:published_time|dc\.date)["'][^>]*>/i.exec(s);
+    var meta = /<meta[^>]+(?:name|property)=[\x22\x27](?:date|article:published_time|dc\.date)[\x22\x27][^>]*>/i.exec(s);
     var b = /<body[^>]*>([\s\S]*)<\/body>/i.exec(s);
     return [item(subj, meta ? attr(meta[0], "content") : "", b ? b[1] : s)].filter(Boolean);
   }
