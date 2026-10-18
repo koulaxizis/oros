@@ -152,3 +152,30 @@ for (const dir of appDirs.filter(d => internal.some(a => a.id === d))) {
   }
 }
 console.log('Palette contract: all registered apps inherit shell palette.');
+
+// ---- SW-U1: content hashes of the precache ----
+// sw.js copies a file from the previous release's cache instead of
+// downloading it again when the copy hashes to the value written here
+// (first 16 hex digits of SHA-256). Written last, after every page got
+// its ?v= and CSP, so each hash is of the bytes that ship. A missing
+// file gets no entry (it is downloaded, and logged as a miss, as before).
+if (!check) {
+  const crypto = require('crypto');
+  const path = require('path');
+  const swSrc = fs.readFileSync('sw.js', 'utf8');
+  const re = /^var PRECACHE_HASH = \{.*\};$/m;
+  if (!re.test(swSrc)) {
+    console.warn('WARNING: no "var PRECACHE_HASH = {...};" line in sw.js, hashes not written');
+  } else {
+    const hashes = {};
+    for (const m of pc[1].matchAll(/"([^"]+)"/g)) {
+      const u = m[1];
+      let p = u.split(/[?#]/)[0].replace(/^\.\//, '');
+      if (p === '' || p.endsWith('/')) p += 'index.html';
+      try { hashes[u] = crypto.createHash('sha256').update(fs.readFileSync(path.normalize(p))).digest('hex').slice(0, 16); }
+      catch (e) { /* missing file: no entry */ }
+    }
+    fs.writeFileSync('sw.js', swSrc.replace(re, () => 'var PRECACHE_HASH = ' + JSON.stringify(hashes) + ';'));
+    console.log('Precache hashes: ' + Object.keys(hashes).length + ' file(s).');
+  }
+}

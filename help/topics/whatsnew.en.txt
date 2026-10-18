@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.19.01
+- Updates are much lighter: orOS now downloads only the files that changed, not its whole offline copy (46 MB), so it opens faster after an update and uses far less mobile data.
+
 ## Version 3.19.00
 - German is now complete: the Info window, Ctrl+K, profiles, reminders, Flashcards, Word Search and the shared dialogs are in German too.
 

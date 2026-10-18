@@ -70,6 +70,7 @@ function loadSW(fetchImpl, opts) {
     registration: { active: opts && opts.updating ? {} : null },
     clients: { claim: () => Promise.resolve() },
     skipWaiting() {},
+    crypto: globalThis.crypto,
     addEventListener(type, fn) { handlers[type] = fn; }
   };
   const fetchLog = [];
@@ -223,6 +224,50 @@ test("first install stays tolerant of network failures", async () => {
     ? Promise.reject(new TypeError("Failed to fetch"))
     : Promise.resolve(new Response("x")), { updating: false });
   await install(sw);
+});
+
+// SW-U1: a file whose content did not change since the previous
+// release is copied from that release's cache, never downloaded again.
+const crypto = require("crypto");
+const h16 = (s) => crypto.createHash("sha256").update(s).digest("hex").slice(0, 16);
+
+async function prevRelease(sw, files) {
+  const c = await sw.caches.open("oros-shell-oros-v0.0.1");
+  for (const [u, body] of Object.entries(files)) await c.put(u, new Response(body));
+}
+
+test("update install: unchanged files come from the previous release, changed ones from the network", async () => {
+  const sw = loadSW((u) => Promise.resolve(new Response("net " + u)), { updating: true });
+  sw.ctx.PRECACHE_HASH = { "./shell.js": h16("old shell"), "./sync.js": h16("new sync"), "./fs.js": h16("fs") };
+  // shell.js unchanged; sync.js changed (old copy hashes differently);
+  // fs.js has no old copy; everything else has no hash entry.
+  await prevRelease(sw, { "./shell.js": "old shell", "./sync.js": "old sync" });
+  await install(sw);
+  assert.ok(!sw.fetchLog.includes(abs("./shell.js")), "shell.js not downloaded");
+  assert.ok(sw.fetchLog.includes(abs("./sync.js")), "changed sync.js downloaded");
+  assert.ok(sw.fetchLog.includes(abs("./fs.js")), "fs.js without an old copy downloaded");
+  assert.equal(sw.fetchLog.length, sw.ctx.PRECACHE_URLS.length - 1);
+  const c = await sw.caches.open(sw.ctx.SHELL_CACHE);
+  assert.equal(await (await c.match("./shell.js")).text(), "old shell");
+  assert.equal(await (await c.match("./sync.js")).text(), "net " + abs("./sync.js"));
+});
+
+test("update install: no hash table means every file is downloaded, as before", async () => {
+  const sw = loadSW(() => Promise.resolve(new Response("x")), { updating: true });
+  await prevRelease(sw, { "./shell.js": "old shell" });
+  await install(sw);
+  assert.equal(sw.fetchLog.length, sw.ctx.PRECACHE_URLS.length);
+});
+
+test("update install: at most PRECACHE_POOL downloads at a time", async () => {
+  let open = 0, peak = 0;
+  const sw = loadSW(() => {
+    open++; peak = Math.max(peak, open);
+    return delay(1).then(() => { open--; return new Response("x"); });
+  }, { updating: true });
+  await install(sw);
+  assert.equal(sw.fetchLog.length, sw.ctx.PRECACHE_URLS.length);
+  assert.ok(peak <= sw.ctx.PRECACHE_POOL, "peak " + peak);
 });
 
 test("the network timeout is a few seconds", () => {
