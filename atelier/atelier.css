@@ -416,6 +416,7 @@ input[type="color"] { width: 44px; height: 34px; padding: 2px; border: 1px solid
 }
 .an-tile.on { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
 .seg.wrap { flex-wrap: wrap; }
+.seg.wrap .seg-btn { flex: 1 0 auto; min-width: 56px; border-bottom: 1px solid var(--border); margin-bottom: -1px; }
 
 /* Fonts */
 .fn-row {
@@ -761,3 +762,8 @@ input[type="color"] { width: 44px; height: 34px; padding: 2px; border: 1px solid
 .rc-lbl { font-weight: 700; font-size: 13px; }
 @keyframes rc-blink { 50% { opacity: 0.3; } }
 @media (prefers-reduced-motion: reduce) { .rc-dot { animation: none; } }
+
+/* Link of an element (panels.js linkPop, wave B1) */
+.menu.pop.lnk-pop { width: min(340px, calc(100vw - 24px)); }
+.lnk-pop .inp { width: 100%; }
+.lnk-pop .dlg-actions { margin-top: 10px; }

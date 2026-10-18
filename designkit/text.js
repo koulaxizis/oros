@@ -291,14 +291,19 @@
   }
 
   // The files of a loaded face (a Fontsource face can be several
-  // subset files): [{ map: { codepoint: glyph }, b64() }]. A PDF
-  // embeds each file as its own font (Atelier's vector PDF).
+  // subset files): [{ map: { codepoint: glyph }, b64(), bytes(),
+  // range }]. A PDF embeds each file as its own font (Atelier's
+  // vector PDF); a web page lists each as an @font-face with its
+  // unicode-range ("" when the face is one file).
   function faceParts(key) {
     var f = fonts[key];
     if (!f) return [];
+    var many = f.parts.length > 1;
     return f.parts.map(function (p) {
       return {
         map: p.m ? p.m.map : f.m.map,
+        range: many && p.m ? unicodeRange(p.m) : "",
+        bytes: function () { return new Uint8Array(p.buf.slice(0)); },
         b64: function () {
           if (p.b64) return p.b64;
           var bytes = new Uint8Array(p.buf), s = "", CH = 0x8000;
