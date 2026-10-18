@@ -1314,5 +1314,7 @@ orosPack("de", "atelier", {
  "bl.gone": "Eine der beiden Formen dieser Überblendung gibt es nicht mehr. Lösen behält die Schritte als einfache Formen.",
  "bl.made": "{n} Schritte hinzugefügt",
  "bl.released": "Die Schritte sind jetzt einfache Formen",
- "bl.full": "Dieses Design hat zu viele Elemente für eine Überblendung."
+ "bl.full": "Dieses Design hat zu viele Elemente für eine Überblendung.",
+ "an.tr.morph": "Morphen",
+ "an.morphHint": "Die vorige Seite verwandelt sich in diese: Was beide Seiten gemeinsam haben, bewegt sich, ändert Größe und Farbe und geht an seinen Platz, eine Form wird zu einer anderen, der Rest blendet aus. Elemente mit eigenem Eingang kommen nach dem Morphen. Ältere orOS-Versionen zeigen eine Überblendung."
 });
