@@ -1,6 +1,10 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.39.01
+- Credits: Info › Credits & licences has a new group, orOS outside the browser. It thanks the projects inside orOS Portable, the Windows and Linux installers, the Live USB, the Android app and orOS Drive: ungoogled-chromium, Chromium, Debian, cage, Go, Inno Setup, AppImage and more. Each of those downloads now carries every licence text and says where the source code is.
+
+
 ## Version 3.39.00
 - Newsletter: products from your shop. The new Products block (under More blocks…) takes up to 9 products from your WooCommerce shop or Shopify store (Settings › Connected services), with search and categories, 1, 2 or 3 in a row. Each card shows the picture, name, short text and price, the old price struck through on a sale and Sold out when nothing is left. Refresh prices before you send; the check before sending reminds you when prices are more than a day old. Subscribers › From the shop brings in your WooCommerce customers, and a Shopify customer file brings in only the people who said yes to e-mail marketing.
 
