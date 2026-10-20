@@ -730,7 +730,7 @@
     var hist = prepHistory(msgs, pid, !!opts.web && webCan(pid), conf);
     var tools = Array.isArray(opts.tools) ? opts.tools : [];
     var model = str(conf && conf.model, 200).trim();
-    if (p.kind === "anthropic") return anthropicReq(pid, conf, model, hist, opts.system || "", tools, !!opts.web && webCan(pid));
+    if (p.kind === "anthropic") return anthropicReq(pid, conf, model, hist, opts.system || "", tools, !!opts.web && webCan(pid), !!opts.noThinking);
     if (p.kind === "gemini") return geminiReq(pid, conf, model, hist, opts.system || "", tools);
     return openaiReq(pid, conf, model, hist, opts.system || "", tools);
   }
@@ -798,13 +798,28 @@
     if (h.text) out.push({ text: h.text });
     return out;
   }
-  function anthropicReq(pid, conf, model, hist, system, tools, web) {
-    var messages = [];
-    hist.forEach(function (h) {
+  // A Claude thinking block is bound to everything sent before it (the
+  // system prompt, the tools, earlier messages). The system prompt holds
+  // the time and the apps the user allowed, so it differs on every new
+  // question: blocks from earlier questions would be refused ("bound to a
+  // different conversation"). Only the turn in progress (since the last
+  // question the user typed) keeps its thinking; earlier answers go back
+  // without it. Removing blocks from the front is allowed. strip: none kept.
+  function isThinking(b) { return isObj(b) && (b.type === "thinking" || b.type === "redacted_thinking"); }
+  function anthropicBlocks(h, keep) {
+    var blocks = keep ? h.raw.blocks : h.raw.blocks.filter(function (b) { return !isThinking(b); });
+    if (blocks.length) return blocks;
+    return h.text ? String(h.text) : null;
+  }
+  function anthropicReq(pid, conf, model, hist, system, tools, web, strip) {
+    var messages = [], turn = -1;
+    hist.forEach(function (h, i) { if (h.r === "user") turn = i; });
+    hist.forEach(function (h, i) {
       if (h.r === "user") messages.push({ role: "user", content: h.att ? anthropicUser(h) : h.text });
       else if (h.r === "asst") {
-        if (h.raw && Array.isArray(h.raw.blocks) && h.raw.blocks.length) {
-          messages.push({ role: "assistant", content: h.raw.blocks });
+        var content = h.raw && Array.isArray(h.raw.blocks) && h.raw.blocks.length ? anthropicBlocks(h, !strip && i > turn) : null;
+        if (content) {
+          messages.push({ role: "assistant", content: content });
         } else if (h.text) {
           messages.push({ role: "assistant", content: h.text });
         }
@@ -1126,6 +1141,13 @@
     else if (status === 400 || status === 422) code = /model/i.test(msg) ? "model" : "bad";
     else if (status === 529 || status === 503) code = "busy";
     return new ProviderError(code, msg, status);
+  }
+
+  // Claude refused a thinking block of this conversation's history
+  // (bound to another conversation, or a signature it can't read): the
+  // same request goes once more without any thinking blocks.
+  function thinkingRefused(e) {
+    return !!(e && e.status === 400 && /thinking/i.test(String(e.msg || "")) && /signature/i.test(String(e.msg || "")));
   }
 
   function modelsRequest(pid, conf) {
@@ -2251,7 +2273,7 @@
     TOOL_ROUNDS: TOOL_ROUNDS, MAX_TOKENS: MAX_TOKENS, NEVER_APPS: NEVER_APPS,
     provBase: provBase, normBase: normBase,
     mergeAssist: mergeAssist, emptyData: emptyData, permFor: permFor,
-    prepHistory: prepHistory, buildRequest: buildRequest,
+    prepHistory: prepHistory, buildRequest: buildRequest, thinkingRefused: thinkingRefused,
     makeSSE: makeSSE, makeReducer: makeReducer, ProviderError: ProviderError, errorFrom: errorFrom,
     modelsRequest: modelsRequest, parseModels: parseModels,
     packHits: packHits, searchResult: searchResult, ymd: ymd,
