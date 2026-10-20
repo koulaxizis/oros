@@ -94,10 +94,15 @@ var RELEASE = CACHE_VERSION.replace(/^oros-v/, "");
 // network (SWK-1), and deleted with the release. A request with any
 // other stamp (a page newer or older than this worker) goes to the
 // network as before — the precache never decides for another release.
+// SW-K1: looked up by its exact unversioned key, never with
+// ignoreSearch: Chrome answers an ignoreSearch match by reading every
+// entry of the cache (about 1,800), so each script cost about 180 ms
+// on the first open after the browser started, one after another:
+// 8 s and more of "--:--" before the desktop, the same in every app.
 function releaseCopy(request, url) {
   if (url.searchParams.get("v") !== RELEASE) return Promise.resolve(undefined);
   return caches.open(SHELL_CACHE).then(function (cache) {
-    return cache.match(request, { ignoreSearch: true, ignoreVary: true });
+    return cache.match(url.origin + url.pathname, { ignoreVary: true });
   }).catch(function () { return undefined; });
 }
 
@@ -105,9 +110,11 @@ function releaseCopy(request, url) {
 // The query is ignored (the pages are static; the script on the page
 // reads its own query: ?code=, ?file-open=, ?solo=, ?standalone).
 // A redirected copy cannot answer a navigation (SWK-4).
+// SW-K1: exact key without the query, not ignoreSearch (above).
 function releasePage(request) {
+  var url = new URL(request.url);
   return caches.open(SHELL_CACHE).then(function (cache) {
-    return cache.match(request, { ignoreSearch: true, ignoreVary: true });
+    return cache.match(url.origin + url.pathname, { ignoreVary: true });
   }).then(function (hit) {
     return hit && !hit.redirected ? hit : undefined;
   }).catch(function () { return undefined; });

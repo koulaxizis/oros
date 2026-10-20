@@ -20,6 +20,7 @@ const noSearch = (u) => u.split("?")[0];
 
 function fakeCaches() {
   const store = new Map();   // name → Map(url → Response)
+  const scans = [];          // cache names matched with ignoreSearch
   function open(name) {
     if (!store.has(name)) store.set(name, new Map());
     const m = store.get(name);
@@ -28,6 +29,7 @@ function fakeCaches() {
         const key = abs(req);
         if (m.has(key)) return Promise.resolve(m.get(key).clone());
         if (opts && opts.ignoreSearch) {
+          scans.push(name);
           for (const [k, v] of m) if (noSearch(k) === noSearch(key)) return Promise.resolve(v.clone());
         }
         return Promise.resolve(undefined);
@@ -39,6 +41,7 @@ function fakeCaches() {
   }
   return {
     store,
+    scans,
     open,
     keys() { return Promise.resolve([...store.keys()]); },
     delete(name) { return Promise.resolve(store.delete(name)); },
@@ -386,6 +389,21 @@ test("apps.json: this release's list answers at once; without one, network-first
   assert.equal(sw.fetchLog.length, 0);
   sw = loadSW(() => Promise.resolve(new Response('{"apps":["net"]}')));
   assert.equal(await (await fire(sw, new sw.Req("/apps.json")).answer).text(), '{"apps":["net"]}');
+});
+
+test("this release's scripts and pages come from the precache by exact key, never an ignoreSearch scan (SW-K1)", async () => {
+  const sw = loadSW(() => never());
+  const v = sw.ctx.RELEASE;
+  await seed(sw, sw.ctx.SHELL_CACHE, "./", "shell page");
+  await seed(sw, sw.ctx.SHELL_CACHE, "./shell.js", "shell script");
+  await seed(sw, sw.ctx.SHELL_CACHE, "./todo/", "todo page");
+  const page = await fire(sw, new sw.Req("/?standalone", { mode: "navigate", destination: "document" })).answer;
+  assert.equal(await page.text(), "shell page");
+  const script = await fire(sw, new sw.Req("/shell.js?v=" + v)).answer;
+  assert.equal(await script.text(), "shell script");
+  const frame = await fire(sw, new sw.Req("/todo/?standalone", { mode: "navigate", destination: "iframe" })).answer;
+  assert.equal(await frame.text(), "todo page");
+  assert.deepEqual(sw.caches.scans.filter((n) => n === sw.ctx.SHELL_CACHE), []);
 });
 
 test("every app page and every script it loads is precached (SW-F1 opens it with no network)", () => {
