@@ -299,15 +299,15 @@
    "id": "auto_pan",
    "name": "Auto Pan",
    "category": "Essentials",
-   "tags": "autopan pan modulation lfo movement stereo width tempo sync gui",
+   "tags": "autopan pan modulation lfo movement stereo width tempo sync step pattern gui",
    "gfx": [
     480,
-    294
+    380
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 5,
-   "bytes": 34498
+   "sliders": 7,
+   "bytes": 42449
   },
   {
    "id": "auto_leveler",
@@ -335,7 +335,7 @@
    "ins": 8,
    "outs": 8,
    "sliders": 6,
-   "bytes": 58157
+   "bytes": 58244
   },
   {
    "id": "breath_control",
@@ -358,12 +358,12 @@
    "tags": "cabinet cab speaker guitar bass amp simulation di re-amp gui",
    "gfx": [
     480,
-    294
+    380
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 5,
-   "bytes": 65021
+   "sliders": 7,
+   "bytes": 85100
   },
   {
    "id": "channel_utility",
@@ -383,15 +383,15 @@
    "id": "chorus",
    "name": "Chorus",
    "category": "Essentials",
-   "tags": "chorus modulation thickening detune lfo stereo width gui",
+   "tags": "chorus modulation thickening detune lfo stereo width ensemble dimension tempo sync gui",
    "gfx": [
     480,
-    294
+    380
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 3,
-   "bytes": 31256
+   "sliders": 9,
+   "bytes": 50973
   },
   {
    "id": "click_repair",
@@ -408,6 +408,20 @@
    "bytes": 31951
   },
   {
+   "id": "clipper",
+   "name": "Clipper",
+   "category": "Essentials",
+   "tags": "clipper clip soft clip hard clip saturation oversampling ceiling loudness peak drums mastering gui",
+   "gfx": [
+    480,
+    380
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 7,
+   "bytes": 56268
+  },
+  {
    "id": "de_hum",
    "name": "De-Hum",
    "category": "Essentials",
@@ -422,32 +436,46 @@
    "bytes": 44334
   },
   {
-   "id": "deesser",
-   "name": "DeEsser",
+   "id": "de_plosive",
+   "name": "De-Plosive",
    "category": "Essentials",
-   "tags": "deess sibilance sibilants hiss vocal harshness frequency gui",
+   "tags": "de-plosive deplosive plosive pop p b vocal voice dialogue podcast low end thump repair restoration gui",
    "gfx": [
     480,
     294
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 2,
-   "bytes": 31676
+   "sliders": 5,
+   "bytes": 45884
   },
   {
-   "id": "delay",
-   "name": "Delay",
+   "id": "deesser",
+   "name": "DeEsser",
    "category": "Essentials",
-   "tags": "delay echo slapback feedback pre-delay timing sync tempo gui",
+   "tags": "deess sibilance sibilants hiss vocal harshness frequency wideband listen gui",
    "gfx": [
     480,
     380
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 9,
-   "bytes": 41729
+   "sliders": 7,
+   "bytes": 43921
+  },
+  {
+   "id": "delay",
+   "name": "Delay",
+   "category": "Essentials",
+   "tags": "delay echo slapback feedback pre-delay timing sync tempo tape modulation diffusion ducking freeze dotted triplet gui",
+   "gfx": [
+    480,
+    408
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 13,
+   "bytes": 66973
   },
   {
    "id": "disperser",
@@ -462,6 +490,20 @@
    "outs": 2,
    "sliders": 5,
    "bytes": 40217
+  },
+  {
+   "id": "draw_eq",
+   "name": "Draw EQ",
+   "category": "Essentials",
+   "tags": "equalizer eq draw drawable curve graphic 10-band smooth tone shaping mixing mastering gui",
+   "gfx": [
+    480,
+    394
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 13,
+   "bytes": 73494
   },
   {
    "id": "dynamic_eq",
@@ -481,15 +523,15 @@
    "id": "dynamics",
    "name": "Dynamics",
    "category": "Essentials",
-   "tags": "dynamics compressor expander gain reduction ratio threshold knee gui",
+   "tags": "dynamics compressor expander gain reduction ratio threshold knee sidechain parallel bus fet opto upward gui",
    "gfx": [
     480,
     380
    ],
-   "ins": 2,
+   "ins": 4,
    "outs": 2,
-   "sliders": 7,
-   "bytes": 38806
+   "sliders": 11,
+   "bytes": 57859
   },
   {
    "id": "envelope_follower",
@@ -509,43 +551,43 @@
    "id": "filter",
    "name": "Filter",
    "category": "Essentials",
-   "tags": "filter lowpass resonance q cutoff svf tpt gui",
+   "tags": "filter lowpass resonance q cutoff svf tpt 24 db drive lfo envelope auto-wah wobble tempo sync gui",
    "gfx": [
     480,
-    294
+    322
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 4,
-   "bytes": 34611
+   "sliders": 12,
+   "bytes": 55934
   },
   {
    "id": "flanger",
    "name": "Flanger",
    "category": "Essentials",
-   "tags": "flanger jet sweep modulation feedback comb filter gui",
+   "tags": "flanger jet sweep modulation feedback comb filter thru-zero tape tempo sync gui",
    "gfx": [
     480,
-    294
+    380
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 4,
-   "bytes": 31780
+   "sliders": 8,
+   "bytes": 47075
   },
   {
    "id": "gate",
    "name": "Gate",
    "category": "Essentials",
-   "tags": "gate noise vocal floor reduce silence threshold mute sidechain gui",
+   "tags": "gate noise vocal floor reduce silence threshold mute sidechain hold lookahead ducking gui",
    "gfx": [
     480,
-    294
+    380
    ],
-   "ins": 2,
+   "ins": 4,
    "outs": 2,
-   "sliders": 5,
-   "bytes": 35285
+   "sliders": 10,
+   "bytes": 51287
   },
   {
    "id": "limiter",
@@ -565,15 +607,15 @@
    "id": "maximizer",
    "name": "Maximizer",
    "category": "Essentials",
-   "tags": "limiter maximizing loudness ceiling mastering peak protection dither gui",
+   "tags": "limiter maximizing loudness ceiling mastering peak protection dither multiband saturation lufs gui",
    "gfx": [
     480,
     380
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 8,
-   "bytes": 43636
+   "sliders": 12,
+   "bytes": 71825
   },
   {
    "id": "mid_side_matrix",
@@ -607,15 +649,15 @@
    "id": "noise_generator",
    "name": "Noise Generator",
    "category": "Essentials",
-   "tags": "noise generator pink white brown test tone calibration stereo gui",
+   "tags": "noise generator pink white brown test tone calibration stereo filter envelope follower ducking layer gui",
    "gfx": [
     480,
-    294
+    380
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 3,
-   "bytes": 33121
+   "sliders": 8,
+   "bytes": 46135
   },
   {
    "id": "octaver",
@@ -657,21 +699,35 @@
    "ins": 2,
    "outs": 2,
    "sliders": 25,
-   "bytes": 77093
+   "bytes": 83451
+  },
+  {
+   "id": "phase_align",
+   "name": "Phase Align",
+   "category": "Essentials",
+   "tags": "phase alignment align polarity invert delay time all-pass rotation correlation sidechain multi-mic drums bass di mixing utility gui",
+   "gfx": [
+    480,
+    440
+   ],
+   "ins": 4,
+   "outs": 2,
+   "sliders": 8,
+   "bytes": 49811
   },
   {
    "id": "phaser",
    "name": "Phaser",
    "category": "Essentials",
-   "tags": "phaser modulation sweep notch moving filter allpass gui",
+   "tags": "phaser modulation sweep notch moving filter allpass feedback stereo tempo sync gui",
    "gfx": [
     480,
-    294
+    380
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 3,
-   "bytes": 33166
+   "sliders": 8,
+   "bytes": 49553
   },
   {
    "id": "pitch_shifter",
@@ -691,15 +747,15 @@
    "id": "reverb",
    "name": "Reverb",
    "category": "Essentials",
-   "tags": "reverb room space ambience hall plate decay gui",
+   "tags": "reverb room space ambience hall plate decay pre-delay freeze modulation gui",
    "gfx": [
     480,
-    294
+    380
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 5,
-   "bytes": 43898
+   "sliders": 12,
+   "bytes": 75877
   },
   {
    "id": "ring_mod",
@@ -719,15 +775,29 @@
    "id": "saturation",
    "name": "Saturation",
    "category": "Essentials",
-   "tags": "saturation distortion tape tube overdrive fuzz bitcrush waveshaper wavefolder drive gui",
+   "tags": "saturation distortion tape tube overdrive fuzz bitcrush waveshaper wavefolder drive oversampling emphasis gui",
    "gfx": [
     480,
-    294
+    380
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 4,
-   "bytes": 37358
+   "sliders": 8,
+   "bytes": 59773
+  },
+  {
+   "id": "shaper",
+   "name": "Shaper",
+   "category": "Essentials",
+   "tags": "shaper waveshaper waveshaping distortion saturation fold wavefolder transfer curve drawable oversampling harmonics gui",
+   "gfx": [
+    480,
+    460
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 24,
+   "bytes": 86174
   },
   {
    "id": "sidechain_ducker",
@@ -768,36 +838,50 @@
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 8,
-   "bytes": 51472
+   "sliders": 10,
+   "bytes": 60227
+  },
+  {
+   "id": "tape_echo",
+   "name": "Tape Echo",
+   "category": "Essentials",
+   "tags": "tape echo delay space multi-head repeat dub reggae spring reverb wow flutter saturation self-oscillation vintage sync freeze gui",
+   "gfx": [
+    480,
+    380
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 11,
+   "bytes": 61265
   },
   {
    "id": "transient_shaper",
    "name": "Transient Shaper",
    "category": "Essentials",
-   "tags": "transient attack sustain punch envelope dynamics shaping gui",
+   "tags": "transient attack sustain punch envelope dynamics shaping focus band clip gui",
    "gfx": [
     480,
-    294
+    380
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 3,
-   "bytes": 33249
+   "sliders": 8,
+   "bytes": 50445
   },
   {
    "id": "tremolo",
    "name": "Tremolo",
    "category": "Essentials",
-   "tags": "tremolo amplitude modulation lfo rhythmic pulsing gui",
+   "tags": "tremolo amplitude modulation lfo rhythmic pulsing harmonic auto-pan tempo sync gui",
    "gfx": [
     480,
-    294
+    380
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 3,
-   "bytes": 29218
+   "sliders": 7,
+   "bytes": 44167
   },
   {
    "id": "vibrato",
@@ -817,15 +901,29 @@
    "id": "volume_shaper",
    "name": "Volume Shaper",
    "category": "Essentials",
-   "tags": "volume shaper lfo envelope sidechain pump duck gate trance tempo sync rhythm gui",
+   "tags": "volume shaper lfo envelope sidechain pump duck gate trance tempo sync rhythm midi trigger one-shot gui",
    "gfx": [
     480,
-    294
+    380
+   ],
+   "ins": 4,
+   "outs": 2,
+   "sliders": 8,
+   "bytes": 48644
+  },
+  {
+   "id": "wah",
+   "name": "Wah",
+   "category": "Essentials",
+   "tags": "wah wah-wah pedal auto-wah envelope filter lfo funk guitar quack vocal formant band-pass sweep tempo sync gui",
+   "gfx": [
+    480,
+    380
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 6,
-   "bytes": 40325
+   "sliders": 11,
+   "bytes": 46166
   },
   {
    "id": "amp_simulator",
@@ -838,8 +936,8 @@
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 11,
-   "bytes": 69603
+   "sliders": 12,
+   "bytes": 79467
   },
   {
    "id": "comb_filter",
@@ -901,15 +999,15 @@
    "id": "glitch_fx",
    "name": "Glitch FX",
    "category": "Advanced",
-   "tags": "glitch stutter pitch tape-stop reverse granular freeze random creative gui",
+   "tags": "glitch stutter pitch tape-stop reverse granular freeze random creative midi trigger gui",
    "gfx": [
     480,
     408
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 14,
-   "bytes": 50127
+   "sliders": 15,
+   "bytes": 61601
   },
   {
    "id": "granular_delay",
@@ -926,18 +1024,32 @@
    "bytes": 39796
   },
   {
+   "id": "half_speed",
+   "name": "Half Speed",
+   "category": "Advanced",
+   "tags": "half speed halftime half-time slow down octave down tempo sync time stretch granular pitch creative gui",
+   "gfx": [
+    480,
+    294
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 6,
+   "bytes": 38280
+  },
+  {
    "id": "harmonizer",
    "name": "Harmonizer",
    "category": "Advanced",
-   "tags": "harmonizer harmony pitch shift voices interval thirds fifths octave backing vocals gui",
+   "tags": "harmonizer harmony pitch shift voices interval thirds fifths octave backing vocals scale diatonic key midi formant psola gui",
    "gfx": [
     480,
     380
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 8,
-   "bytes": 35673
+   "sliders": 12,
+   "bytes": 72842
   },
   {
    "id": "kick_shaper",
@@ -1013,15 +1125,15 @@
    "id": "pitch_correction",
    "name": "Pitch Correction",
    "category": "Advanced",
-   "tags": "pitch correction auto tune autotune vocal tuning key scale retune hard tune psola gui",
+   "tags": "pitch correction auto tune autotune vocal tuning key scale retune hard tune psola midi vibrato gui",
    "gfx": [
     480,
     410
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 7,
-   "bytes": 56379
+   "sliders": 10,
+   "bytes": 67033
   },
   {
    "id": "resonance_suppressor",
@@ -1108,6 +1220,20 @@
    "bytes": 39339
   },
   {
+   "id": "slicer",
+   "name": "Slicer",
+   "category": "Advanced",
+   "tags": "slicer slice beat repeat rearrange shuffle stutter reverse backspin chop remix loop tempo sync glitch creative gui",
+   "gfx": [
+    480,
+    380
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 8,
+   "bytes": 49671
+  },
+  {
    "id": "spectral_freeze",
    "name": "Spectral Freeze",
    "category": "Advanced",
@@ -1148,6 +1274,20 @@
    "outs": 2,
    "sliders": 6,
    "bytes": 34574
+  },
+  {
+   "id": "step_fx",
+   "name": "Step FX",
+   "category": "Advanced",
+   "tags": "step fx 16-step sequencer glitch stutter repeat reverse filter gate tape stop pitch crush tempo sync midi creative gui",
+   "gfx": [
+    480,
+    390
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 25,
+   "bytes": 72477
   },
   {
    "id": "stereo_scope",
@@ -1195,15 +1335,15 @@
    "id": "trance_gate",
    "name": "Trance Gate",
    "category": "Advanced",
-   "tags": "trance gate 16-step sequencer rhythmic pattern staccato tempo sync gui",
+   "tags": "trance gate 16-step sequencer rhythmic pattern staccato tempo sync probability random gui",
    "gfx": [
     480,
     408
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 22,
-   "bytes": 54249
+   "sliders": 24,
+   "bytes": 67729
   },
   {
    "id": "vinyl_age",
@@ -1216,8 +1356,8 @@
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 8,
-   "bytes": 37823
+   "sliders": 11,
+   "bytes": 59093
   },
   {
    "id": "vocoder",
@@ -1250,18 +1390,202 @@
  ],
  "instruments": [
   {
+   "id": "bass",
+   "name": "Bass",
+   "category": "Instruments",
+   "tags": "instrument bass synth bass 808 sub saw square mono glide portamento acid filter drive phrase player key switch midi gui",
+   "gfx": [
+    560,
+    502
+   ],
+   "ins": 0,
+   "outs": 2,
+   "sliders": 19,
+   "bytes": 81940
+  },
+  {
    "id": "drum_machine",
    "name": "Drum Machine",
    "category": "Instruments",
-   "tags": "instrument drum machine drums beat sequencer synth 808 909 kick snare hats midi gui",
+   "tags": "instrument drum machine drums beat sequencer synth 808 909 kick snare hats midi probability generator multi-out gui",
+   "gfx": [
+    640,
+    580
+   ],
+   "ins": 0,
+   "outs": 8,
+   "sliders": 63,
+   "bytes": 183205
+  },
+  {
+   "id": "fm",
+   "name": "FM",
+   "category": "Instruments",
+   "tags": "instrument synth synthesizer fm frequency modulation 4-operator polyphonic electric piano bells bass brass mallets pad midi gui",
+   "gfx": [
+    600,
+    438
+   ],
+   "ins": 0,
+   "outs": 2,
+   "sliders": 37,
+   "bytes": 227929
+  },
+  {
+   "id": "keys",
+   "name": "Keys",
+   "category": "Instruments",
+   "tags": "instrument keys electric piano ep tine reed fm music box celesta glockenspiel vibraphone marimba kalimba mallets bell tremolo autopan chorus drive midi gui",
+   "gfx": [
+    560,
+    416
+   ],
+   "ins": 0,
+   "outs": 2,
+   "sliders": 12,
+   "bytes": 86786
+  },
+  {
+   "id": "organ",
+   "name": "Organ",
+   "category": "Instruments",
+   "tags": "instrument organ tonewheel drawbar percussion key click vibrato chorus rotary speaker drive gospel jazz rock midi gui",
+   "gfx": [
+    560,
+    430
+   ],
+   "ins": 0,
+   "outs": 2,
+   "sliders": 20,
+   "bytes": 91923
+  },
+  {
+   "id": "percussion",
+   "name": "Percussion",
+   "category": "Instruments",
+   "tags": "instrument percussion latin hand drums conga bongo shaker tambourine cowbell claves guiro cabasa triangle groove synth midi gui",
    "gfx": [
     640,
     494
    ],
    "ins": 0,
    "outs": 2,
-   "sliders": 56,
-   "bytes": 154428
+   "sliders": 52,
+   "bytes": 160748
+  },
+  {
+   "id": "pluck",
+   "name": "Pluck",
+   "category": "Instruments",
+   "tags": "instrument pluck plucked string karplus strong guitar nylon steel harp koto pipa lute banjo dulcimer strum strummer chord rhythm body midi gui",
+   "gfx": [
+    560,
+    416
+   ],
+   "ins": 0,
+   "outs": 2,
+   "sliders": 12,
+   "bytes": 94132
+  },
+  {
+   "id": "sampler",
+   "name": "Sampler",
+   "category": "Instruments",
+   "tags": "instrument sampler sample player one-shot chromatic wav flac loop adsr filter polyphonic midi gui",
+   "gfx": [
+    640,
+    448
+   ],
+   "ins": 0,
+   "outs": 2,
+   "sliders": 21,
+   "bytes": 95603
+  },
+  {
+   "id": "synth",
+   "name": "Synth",
+   "category": "Instruments",
+   "tags": "instrument synth synthesizer polyphonic virtual analog wavetable pad lead keys bass strings bells unison chorus delay reverb midi gui",
+   "gfx": [
+    600,
+    438
+   ],
+   "ins": 0,
+   "outs": 2,
+   "sliders": 45,
+   "bytes": 219175
+  }
+ ],
+ "midi": [
+  {
+   "id": "arpeggiator",
+   "name": "Arpeggiator",
+   "category": "MIDI",
+   "tags": "midi arpeggiator arp arpeggio sequencer pattern up down random chord latch gate swing velocity tempo sync gui",
+   "gfx": [
+    480,
+    430
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 24,
+   "bytes": 95450
+  },
+  {
+   "id": "chords",
+   "name": "Chords",
+   "category": "MIDI",
+   "tags": "midi chords chord generator one finger triad seventh ninth sus power inversion voicing strum progression key scale diatonic gui",
+   "gfx": [
+    480,
+    400
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 11,
+   "bytes": 83895
+  },
+  {
+   "id": "humanize",
+   "name": "Humanize",
+   "category": "MIDI",
+   "tags": "midi humanize humanizer random timing velocity groove swing shuffle laid back push feel quantize gui",
+   "gfx": [
+    480,
+    324
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 5,
+   "bytes": 50235
+  },
+  {
+   "id": "riff",
+   "name": "Riff",
+   "category": "MIDI",
+   "tags": "midi riff generator melody pattern sequencer step random seed tempo sync key scale bassline lead hold gui",
+   "gfx": [
+    480,
+    420
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 12,
+   "bytes": 63619
+  },
+  {
+   "id": "scale",
+   "name": "Scale",
+   "category": "MIDI",
+   "tags": "midi scale quantize snap key force to scale white keys transpose octave filter diatonic pentatonic blues gui",
+   "gfx": [
+    480,
+    314
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 5,
+   "bytes": 59484
   }
  ]
 }

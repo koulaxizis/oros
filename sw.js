@@ -30,6 +30,12 @@ var WEBLLM_CACHE = "oros-webllm";
 // Language packs (i18n.js, i18n/<code>/…): one copy kept across
 // releases, so a chosen language keeps working offline after an update.
 var LANG_CACHE = "oros-lang-packs";
+// Studio's NULL JSFX effect files (studio/nullfx/fx/<id>.js, about 4 MB
+// for all of them) are not precached: each one is stored here the first
+// time Studio loads it, and this cache outlives releases, so an effect
+// that was opened once keeps working offline. A copy from an older
+// release is refreshed while online and only used as an offline fallback.
+var NULLFX_CACHE = "oros-nullfx";
 // The page an app frame gets offline before it was saved (fetch,
 // below). "sw.offline" is also in translations.js, so a pack language
 // reads it from its shell pack.
@@ -1468,96 +1474,6 @@ var PRECACHE_URLS = [
   "studio/nullfx/runtime/null-gfx.js",
   "studio/nullfx/runtime/null-node.js",
   "studio/nullfx/runtime/null-worklet.js",
-  "studio/nullfx/fx/amp_simulator.js",
-  "studio/nullfx/fx/auto_leveler.js",
-  "studio/nullfx/fx/auto_pan.js",
-  "studio/nullfx/fx/band_splitter.js",
-  "studio/nullfx/fx/breath_control.js",
-  "studio/nullfx/fx/brighter.js",
-  "studio/nullfx/fx/cabinet_simulator.js",
-  "studio/nullfx/fx/channel_utility.js",
-  "studio/nullfx/fx/chorus.js",
-  "studio/nullfx/fx/chorus_one.js",
-  "studio/nullfx/fx/click_repair.js",
-  "studio/nullfx/fx/comb_filter.js",
-  "studio/nullfx/fx/convolution.js",
-  "studio/nullfx/fx/crunch.js",
-  "studio/nullfx/fx/de_hum.js",
-  "studio/nullfx/fx/deesser.js",
-  "studio/nullfx/fx/delay.js",
-  "studio/nullfx/fx/disperser.js",
-  "studio/nullfx/fx/dj_filter.js",
-  "studio/nullfx/fx/doubler.js",
-  "studio/nullfx/fx/driver.js",
-  "studio/nullfx/fx/drum_machine.js",
-  "studio/nullfx/fx/dynamic_eq.js",
-  "studio/nullfx/fx/dynamics.js",
-  "studio/nullfx/fx/envelope_follower.js",
-  "studio/nullfx/fx/exciter.js",
-  "studio/nullfx/fx/filter.js",
-  "studio/nullfx/fx/flanger.js",
-  "studio/nullfx/fx/formant_filter.js",
-  "studio/nullfx/fx/formant_shift.js",
-  "studio/nullfx/fx/frequency_shifter.js",
-  "studio/nullfx/fx/gate.js",
-  "studio/nullfx/fx/glitch_fx.js",
-  "studio/nullfx/fx/granular_delay.js",
-  "studio/nullfx/fx/grit.js",
-  "studio/nullfx/fx/harmonizer.js",
-  "studio/nullfx/fx/kick_shaper.js",
-  "studio/nullfx/fx/ladder_filter.js",
-  "studio/nullfx/fx/limiter.js",
-  "studio/nullfx/fx/louder.js",
-  "studio/nullfx/fx/loudness_meter.js",
-  "studio/nullfx/fx/maximizer.js",
-  "studio/nullfx/fx/mid_side_matrix.js",
-  "studio/nullfx/fx/mono_maker.js",
-  "studio/nullfx/fx/multiband_compressor.js",
-  "studio/nullfx/fx/noise_generator.js",
-  "studio/nullfx/fx/noise_reduction.js",
-  "studio/nullfx/fx/octaver.js",
-  "studio/nullfx/fx/ott.js",
-  "studio/nullfx/fx/panner.js",
-  "studio/nullfx/fx/parametric_eq.js",
-  "studio/nullfx/fx/phaser.js",
-  "studio/nullfx/fx/phatter.js",
-  "studio/nullfx/fx/pitch_correction.js",
-  "studio/nullfx/fx/pitch_shifter.js",
-  "studio/nullfx/fx/pressure.js",
-  "studio/nullfx/fx/pumper.js",
-  "studio/nullfx/fx/resonance_suppressor.js",
-  "studio/nullfx/fx/resonator.js",
-  "studio/nullfx/fx/reverb.js",
-  "studio/nullfx/fx/reverser.js",
-  "studio/nullfx/fx/ring_mod.js",
-  "studio/nullfx/fx/riser.js",
-  "studio/nullfx/fx/robotizer.js",
-  "studio/nullfx/fx/rotary_speaker.js",
-  "studio/nullfx/fx/saturation.js",
-  "studio/nullfx/fx/shimmer_reverb.js",
-  "studio/nullfx/fx/sidechain_ducker.js",
-  "studio/nullfx/fx/snappy.js",
-  "studio/nullfx/fx/spectral_freeze.js",
-  "studio/nullfx/fx/spectrum_analyzer.js",
-  "studio/nullfx/fx/spread.js",
-  "studio/nullfx/fx/spring_reverb.js",
-  "studio/nullfx/fx/stereo_scope.js",
-  "studio/nullfx/fx/stereo_width.js",
-  "studio/nullfx/fx/stretch.js",
-  "studio/nullfx/fx/sub_bloom.js",
-  "studio/nullfx/fx/sweeper.js",
-  "studio/nullfx/fx/tape.js",
-  "studio/nullfx/fx/tape_stop.js",
-  "studio/nullfx/fx/tilt.js",
-  "studio/nullfx/fx/trance_gate.js",
-  "studio/nullfx/fx/transient_shaper.js",
-  "studio/nullfx/fx/tremolo.js",
-  "studio/nullfx/fx/vibrato.js",
-  "studio/nullfx/fx/vinyl_age.js",
-  "studio/nullfx/fx/vocoder.js",
-  "studio/nullfx/fx/volume_shaper.js",
-  "studio/nullfx/fx/warped_delay.js",
-  "studio/nullfx/fx/wetter.js",
   "studio/nullfx/fx/index.json",
   "maps/",
   "maps/index.html",
@@ -2134,6 +2050,8 @@ self.addEventListener("install", function (event) {
           });   // unchangedCopy
         });
       }).then(function () {
+        return adoptNullfx(prev);
+      }).then(function () {
         if (updating && netFailed.length) {
           return cache.put(PARTIAL_MARK, new Response("")).catch(function () {}).then(function () {
             throw new Error("precache: " + netFailed.length +
@@ -2149,7 +2067,7 @@ self.addEventListener("install", function (event) {
 
 // ---------- Activate: purge old caches ----------
 self.addEventListener("activate", function (event) {
-  var keep = [SHELL_CACHE, RUNTIME_CACHE, TILE_CACHE, LANG_CACHE, "oros-television-api", SHARE_INBOX];
+  var keep = [SHELL_CACHE, RUNTIME_CACHE, TILE_CACHE, LANG_CACHE, NULLFX_CACHE, "oros-television-api", SHARE_INBOX];
   // SW-I: Add a guard against slow cache cleanup blocking claim.
   // If cleanup takes >30s (extreme), we still want to claim clients
   // to restore online/offline functionality. The background cleanup
@@ -2189,6 +2107,48 @@ self.addEventListener("activate", function (event) {
 
   event.waitUntil(claimWithTimeout);
 });
+
+// ---------- Studio effects (NULLFX_CACHE) ----------
+var NULLFX_RE = /\/studio\/nullfx\/fx\/[a-z0-9_]+\.js$/;
+// Releases before NULLFX_CACHE precached every effect: the newest
+// previous shell's copies move here (no X-Oros-Release, so they are
+// refreshed while online), so effects that worked offline still do.
+function adoptNullfx(prev) {
+  if (!prev.length) return Promise.resolve();
+  return caches.open(NULLFX_CACHE).then(function (nc) {
+    return prev[0].keys().then(function (reqs) {
+      return Promise.all(reqs.map(function (r) {
+        var u = new URL(r.url), key = u.origin + u.pathname;
+        if (u.origin !== self.location.origin || !NULLFX_RE.test(u.pathname)) return;
+        return nc.match(key).then(function (have) {
+          if (have) return;
+          return prev[0].match(r).then(function (res) {
+            if (res && res.ok) return nc.put(key, res);
+          });
+        });
+      }));
+    });
+  }).catch(function () {});
+}
+function nullfxFile(event, request, key) {
+  return caches.open(NULLFX_CACHE).then(function (cache) {
+    return cache.match(key).then(function (hit) {
+      if (hit && hit.headers.get("X-Oros-Release") === CACHE_VERSION) return hit;
+      return fetch(request, { cache: "no-cache" }).then(function (response) {
+        if (!response || response.status !== 200) return hit || response;
+        var copy = response.clone();
+        event.waitUntil(copy.blob().then(function (body) {
+          var h = new Headers(copy.headers);
+          h.set("X-Oros-Release", CACHE_VERSION);
+          return cache.put(key, new Response(body, { status: 200, headers: h }));
+        }).catch(function () {}));
+        return response;
+      }, function () {
+        return hit || Response.error();
+      });
+    });
+  });
+}
 
 // ---------- Fetch strategy ----------
 // Android "Share → orOS" (manifest share_target, POST multipart to
@@ -2426,6 +2386,14 @@ self.addEventListener("fetch", function (event) {
         return net.catch(function () { return Response.error(); });
       });
     }));
+    return;
+  }
+  // Studio's NULL JSFX effects (NULLFX_CACHE above): matched without
+  // ?v= (the worklet loads them without one). A copy stored by this
+  // release answers at once; an older one is replaced from the network
+  // and answers only when the network fails.
+  if (url.origin === self.location.origin && NULLFX_RE.test(url.pathname)) {
+    event.respondWith(nullfxFile(event, request, url.origin + url.pathname));
     return;
   }
   // WebLLM: cache-first in its own cache, matched without ?v=. The
