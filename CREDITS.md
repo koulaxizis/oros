@@ -189,3 +189,29 @@ there are no recorded audio files. Emoji come from the device's own font.
 
 Radio and TV streams belong to their broadcasters; orOS only plays the
 public addresses listed in the two directories above.
+
+## orOS outside the browser (Portable, installers, Live USB, Android, orOS Drive)
+
+These pieces are not part of the web app. They ship in the separate orOS
+downloads, and each download carries their licence texts.
+[orOS Portable](https://github.com/koulaxizis/oros-portable) and the
+installers carry them in `LICENSES/` (start with `CREDITS.txt`), plus
+`SOURCES.txt` and `WRITTEN-OFFER.txt`.
+[orOS Live USB](https://github.com/koulaxizis/oros-usb) carries them at the
+root of the stick and in `/usr/share/doc/oros/`. Every Debian package's own
+licence is in `/usr/share/doc/<package>/copyright`, and the release lists the
+exact source of every package.
+[orOS Drive](https://github.com/koulaxizis/oros-drive) carries them in
+`THIRD-PARTY-NOTICES.txt`.
+
+| Component | Copyright | Licence | Used by |
+|---|---|---|---|
+| [ungoogled-chromium](https://github.com/ungoogled-software/ungoogled-chromium) | ungoogled-chromium contributors | [BSD-3-Clause](https://github.com/ungoogled-software/ungoogled-chromium/blob/master/LICENSE) | The browser in orOS Portable (full edition) and the Windows and Linux installers |
+| [Chromium](https://www.chromium.org/) | The Chromium Authors | [BSD-3-Clause](https://chromium.googlesource.com/chromium/src/+/HEAD/LICENSE); its components (LGPL, MPL, Apache-2.0, MIT and more) keep their own licences, listed at `chrome://credits` | Browser engine of orOS Portable, the installers (through ungoogled-chromium) and the Live USB (Debian's `chromium` package) |
+| [Debian 13 "trixie"](https://www.debian.org/) with Linux, GRUB and shim, SYSLINUX, live-boot/live-config, systemd, NetworkManager, wpa_supplicant, PipeWire/WirePlumber, ALSA, Mesa, Plymouth, ntfs-3g, exfatprogs, Noto fonts | The Debian Project and the authors of each package | Free software, each package under its own licence (Linux GPL-2.0, GRUB GPL-3.0+, systemd LGPL-2.1+, Mesa MIT, Noto OFL-1.1, ...); hardware firmware and CPU microcode are non-free but redistributable | The orOS Live USB system |
+| [cage](https://github.com/cage-kiosk/cage) | © Jente Hidskes Ankarberg and contributors | [MIT](https://github.com/cage-kiosk/cage/blob/master/LICENSE) | Live USB: shows orOS full screen |
+| [Go](https://go.dev/) (language and standard library) | © The Go Authors | [BSD-3-Clause](https://go.dev/LICENSE) | The orOS Portable launcher, the Live USB's System button (`oros-system`), orOS Drive |
+| orOS Drive's Go modules: [fyne.io/systray](https://github.com/fyne-io/systray), [fsnotify](https://github.com/fsnotify/fsnotify), [go-fuse](https://github.com/hanwen/go-fuse), [go-keyring](https://github.com/zalando/go-keyring), [wincred](https://github.com/danieljoos/wincred), [godbus](https://github.com/godbus/dbus), [golang.org/x/sys and x/term](https://pkg.go.dev/golang.org/x) | Their authors | Apache-2.0 (systray), BSD-3-Clause (fsnotify, go-fuse, golang.org/x), BSD-2-Clause (godbus), MIT (go-keyring, wincred) | orOS Drive: tray icon, folder watching, the disk as a folder, passphrase storage |
+| [Inno Setup](https://jrsoftware.org/isinfo.php) and its Greek translation | © Jordan Russell and Martijn Laan; Greek texts by Anastasis Chatzioglou, XhmikosR and Vasileios Karamichail | [Inno Setup License](https://jrsoftware.org/files/is/license.txt) | The Windows setups of orOS and orOS Drive |
+| [appimagetool](https://github.com/AppImage/appimagetool) and the [AppImage runtime](https://github.com/AppImage/type2-runtime) | © probonopd and AppImage contributors | [MIT](https://github.com/AppImage/type2-runtime/blob/main/LICENSE); the runtime is statically linked with libfuse 3 (LGPL-2.1), squashfuse (BSD-2-Clause), zstd (BSD-3-Clause), zlib, mimalloc (MIT) and musl (MIT) | The Linux AppImage of orOS |
+| [Android Browser Helper](https://github.com/GoogleChrome/android-browser-helper) | 2.7.4, © Google LLC | [Apache-2.0](https://github.com/GoogleChrome/android-browser-helper/blob/main/LICENSE) | Android app only: opens orOS full screen |
