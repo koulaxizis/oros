@@ -6383,6 +6383,38 @@
           by: "GitHub, Inc.", lic: { k: "cr.lic.github-pages" },
           k: "cr.github-pages" }
       ]
+    },
+    {
+      k: "cr.g.dist",
+      items: [
+        { name: "ungoogled-chromium", url: "https://github.com/ungoogled-software/ungoogled-chromium",
+          by: "ungoogled-chromium contributors", lic: "BSD-3-Clause",
+          k: "cr.ungoogled-chromium" },
+        { name: "Chromium", url: "https://www.chromium.org/",
+          by: "The Chromium Authors", lic: { k: "cr.lic.chromium" },
+          k: "cr.chromium" },
+        { name: "Debian 13", url: "https://www.debian.org/",
+          by: "The Debian Project and the authors of each package", lic: { k: "cr.lic.debian" },
+          k: "cr.debian" },
+        { name: "cage", url: "https://github.com/cage-kiosk/cage",
+          by: "Jente Hidskes Ankarberg & contributors", lic: "MIT",
+          k: "cr.cage" },
+        { name: "Go", url: "https://go.dev/",
+          by: "The Go Authors", lic: "BSD-3-Clause",
+          k: "cr.go" },
+        { name: "orOS Drive Go modules (fyne systray, fsnotify, go-fuse, go-keyring, golang.org/x)", url: "https://github.com/koulaxizis/oros-drive",
+          by: "Their authors", lic: "Apache-2.0, BSD-3-Clause, MIT",
+          k: "cr.drive-modules" },
+        { name: "Inno Setup", url: "https://jrsoftware.org/isinfo.php",
+          by: "Jordan Russell & Martijn Laan; Greek texts by Anastasis Chatzioglou, XhmikosR, Vasileios Karamichail", lic: "Inno Setup License",
+          k: "cr.inno-setup" },
+        { name: "AppImage (appimagetool, type2-runtime)", url: "https://appimage.org/",
+          by: "probonopd & AppImage contributors", lic: { k: "cr.lic.appimage" },
+          k: "cr.appimage" },
+        { name: "Android Browser Helper 2.7.4", url: "https://github.com/GoogleChrome/android-browser-helper",
+          by: "Google LLC", lic: "Apache-2.0",
+          k: "cr.android-browser-helper" }
+      ]
     }
   ];
 
