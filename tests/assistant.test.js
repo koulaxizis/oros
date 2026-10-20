@@ -102,13 +102,44 @@ test("Anthropic request: browser headers, raw blocks echoed, tool results, fallb
   assert.equal(req.body.tools[0].input_schema.required[0], "query");
   const msgs = req.body.messages;
   assert.deepEqual(msgs.map((m) => m.role), ["user", "assistant", "user", "assistant", "user"]);
-  assert.equal(msgs[1].content[0].signature, "sig");               // thinking block kept as is
+  assert.equal(msgs[1].content[0].type, "tool_use");               // an earlier question's thinking is not sent back
   assert.equal(msgs[2].content[0].type, "tool_result");
   assert.equal(msgs[2].content[0].tool_use_id, "tu1");
   const old = A.buildRequest("anthropic", { key: "k", model: "claude-haiku-4-5" }, histTool, {});
   assert.equal(old.body.fallbacks, undefined);
   assert.equal(old.headers["anthropic-beta"], undefined);
   assert.equal(old.body.tools, undefined);
+});
+
+test("Anthropic request: only the turn in progress keeps its thinking blocks", () => {
+  const think = { type: "thinking", thinking: "", signature: "old" };
+  const hist = [
+    { r: "user", text: "Hi" },
+    { r: "asst", prov: "anthropic", text: "Hello", raw: { prov: "anthropic", blocks: [think, { type: "text", text: "Hello" }] } },
+    { r: "user", text: "Only thinking" },
+    { r: "asst", prov: "anthropic", text: "Short", raw: { prov: "anthropic", blocks: [{ type: "redacted_thinking", data: "x" }] } },
+    { r: "user", text: "When is the dentist?" },
+    { r: "asst", prov: "anthropic", text: "", tools: [{ id: "tu1", name: "search_data", args: { query: "dentist" } }],
+      raw: { prov: "anthropic", blocks: [{ type: "thinking", thinking: "", signature: "now" },
+                                          { type: "tool_use", id: "tu1", name: "search_data", input: { query: "dentist" } }] } },
+    { r: "tool", results: [{ id: "tu1", name: "search_data", content: "{}" }] }
+  ];
+  const msgs = A.buildRequest("anthropic", { key: "k", model: "claude-opus-5-5" }, hist, {}).body.messages;
+  assert.deepEqual(msgs.map((m) => m.role), ["user", "assistant", "user", "assistant", "user", "assistant", "user"]);
+  assert.deepEqual(msgs[1].content, [{ type: "text", text: "Hello" }]);
+  assert.equal(msgs[3].content, "Short");                           // nothing but thinking: the text instead
+  assert.equal(msgs[5].content[0].signature, "now");                 // the tool round in progress keeps it
+  const bare = A.buildRequest("anthropic", { key: "k", model: "claude-opus-5-5" }, hist, { noThinking: true }).body.messages;
+  assert.equal(bare[5].content.length, 1);
+  assert.equal(bare[5].content[0].type, "tool_use");
+});
+
+test("Anthropic error: a refused thinking block is recognised for the retry without thinking", () => {
+  const body = JSON.stringify({ type: "error", error: { type: "invalid_request_error",
+    message: "messages.1.content.0: Invalid `signature` in `thinking` block. The block is bound to a different conversation. Remove the block, or set `thinking.block_binding.prefix_mismatch_behavior` to \"drop_block\"." } });
+  assert.equal(A.thinkingRefused(A.errorFrom(400, body)), true);
+  assert.equal(A.thinkingRefused(A.errorFrom(400, JSON.stringify({ error: { message: "max_tokens: too large" } }))), false);
+  assert.equal(A.thinkingRefused(A.errorFrom(401, body)), false);
 });
 
 test("history: another provider's answers go back as text, without tools", () => {

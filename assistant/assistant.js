@@ -1002,20 +1002,28 @@
     if (p.kind === "webllm") return webllmCall(modelOf(pid), msgs, opts, signal, onText);
     return loadKey(pid).then(function (k) {
       if (p.key === "yes" && !(k && k.key)) throw new C.ProviderError("nokey");
-      var req = C.buildRequest(pid, { key: k ? k.key : "", base: provConf(pid).base, model: modelOf(pid), vis: provConf(pid).vis, nt: provConf(pid).nt }, msgs, opts);
-      return fetch(req.url, {
-        method: "POST", headers: req.headers, body: JSON.stringify(req.body), signal: signal,
-        credentials: "omit", cache: "no-store", referrerPolicy: "no-referrer"
-      }).catch(function (e) {
-        if (signal && signal.aborted) throw e;
-        throw new C.ProviderError("net");
-      });
-    }).then(function (res) {
-      if (!res.ok) {
-        return res.text().catch(function () { return ""; }).then(function (body) {
-          throw C.errorFrom(res.status, body);
+      function send(o) {
+        var req = C.buildRequest(pid, { key: k ? k.key : "", base: provConf(pid).base, model: modelOf(pid), vis: provConf(pid).vis, nt: provConf(pid).nt }, msgs, o);
+        return fetch(req.url, {
+          method: "POST", headers: req.headers, body: JSON.stringify(req.body), signal: signal,
+          credentials: "omit", cache: "no-store", referrerPolicy: "no-referrer"
+        }).catch(function (e) {
+          if (signal && signal.aborted) throw e;
+          throw new C.ProviderError("net");
+        }).then(function (res) {
+          if (res.ok) return res;
+          return res.text().catch(function () { return ""; }).then(function (body) {
+            var err = C.errorFrom(res.status, body);
+            // Thinking blocks Claude won't take back: once more without them.
+            if (p.kind === "anthropic" && !(o && o.noThinking) && C.thinkingRefused(err)) {
+              return send(Object.assign({}, o, { noThinking: true }));
+            }
+            throw err;
+          });
         });
       }
+      return send(opts || {});
+    }).then(function (res) {
       var red = C.makeReducer(pid);
       var sse = C.makeSSE(function (d) {
         var j;
