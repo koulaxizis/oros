@@ -247,11 +247,27 @@ test("effects: runtime files are static and loaded through validated ids", () =>
     .forEach((s) => assert.ok(html.indexOf('src="' + s) >= 0 && html.indexOf('src="' + s) < html.indexOf('src="core.js'), s));
 });
 
-test("effects: every studio/nullfx file is precached for offline use", () => {
+test("effects: runtime precached, effect files kept on first use", () => {
   const sw = read("sw.js"), dir = path.join(__dirname, "..", "studio/nullfx");
-  ["runtime", "fx"].forEach((d) => fs.readdirSync(path.join(dir, d)).forEach((f) => {
-    assert.ok(sw.includes('"studio/nullfx/' + d + "/" + f + '"'), "sw.js PRECACHE_URLS lacks studio/nullfx/" + d + "/" + f);
-  }));
+  fs.readdirSync(path.join(dir, "runtime")).forEach((f) => {
+    assert.ok(sw.includes('"studio/nullfx/runtime/' + f + '"'), "sw.js PRECACHE_URLS lacks studio/nullfx/runtime/" + f);
+  });
+  assert.ok(sw.includes('"studio/nullfx/fx/index.json"'));
+  // effect files are lazy: never in the precache (budget), but in the kept
+  // NULLFX_CACHE, which activate spares and install fills from the old shell
+  const pre = sw.match(/var PRECACHE_URLS = \[([\s\S]*?)\n\];/)[1];
+  assert.doesNotMatch(pre, /"studio\/nullfx\/fx\/[a-z0-9_]+\.js"/);
+  assert.match(sw, /var NULLFX_CACHE = "oros-nullfx";/);
+  assert.match(sw, /var keep = \[[^\]]*NULLFX_CACHE/);
+  assert.match(sw, /NULLFX_RE\.test\(url\.pathname\)\) \{\s*event\.respondWith\(nullfxFile\(/);
+  assert.match(sw, /return adoptNullfx\(prev\);/);
+  const NULLFX_RE = new Function(sw.match(/var NULLFX_RE = [^;]+;/)[0] + " return NULLFX_RE;")();
+  assert.ok(NULLFX_RE.test("/studio/nullfx/fx/reverb.js"));
+  assert.ok(!NULLFX_RE.test("/studio/nullfx/fx/index.json"));
+  assert.ok(!NULLFX_RE.test("/studio/nullfx/runtime/eel-rt.js"));
+  // the effects the projects use are fetched while online so they work offline
+  assert.match(read("studio/fx.js"), /function keepOffline\(ids\)/);
+  assert.match(read("studio/studio.js"), /keepFxOffline\(\);/);
 });
 
 test("remote: codes, keys and frames", async () => {

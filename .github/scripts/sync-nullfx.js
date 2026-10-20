@@ -1,7 +1,11 @@
 #!/usr/bin/env node
 // Copies the web version of NULL JSFX (koulaxizis/null-jsfx, web/) into
-// studio/nullfx/ and rewrites the studio/nullfx block of sw.js PRECACHE_URLS
-// so every effect stays available offline.
+// studio/nullfx/ and rewrites the studio/nullfx block of sw.js PRECACHE_URLS.
+// Only the runtime and fx/index.json are precached. The effect files
+// (fx/<id>.js, several MB together) are lazy: sw.js keeps each one in its
+// "oros-nullfx" cache the first time Studio loads it, across releases, so
+// an effect opened once stays available offline without growing the
+// precache with every new effect.
 //
 //   node .github/scripts/sync-nullfx.js <path to a null-jsfx checkout>
 //
@@ -36,10 +40,10 @@ if (new Set(ids).size !== ids.length) fail("duplicate plugin ids");
 const runtime = fs.readdirSync(path.join(web, "runtime")).filter((f) => /^[a-z0-9-]+\.js$/.test(f)).sort();
 if (runtime.indexOf("null-worklet.js") < 0 || runtime.indexOf("eel-rt.js") < 0) fail("web/runtime is incomplete");
 
-// Wanted files, relative to studio/nullfx/, in the order sw.js lists them.
-const wanted = runtime.map((f) => "runtime/" + f)
-  .concat(ids.slice().sort().map((id) => "fx/" + id + ".js"))
-  .concat(["fx/index.json"]);
+// Wanted files, relative to studio/nullfx/; the precached ones in the
+// order sw.js lists them.
+const precached = runtime.map((f) => "runtime/" + f).concat(["fx/index.json"]);
+const wanted = precached.concat(ids.slice().sort().map((id) => "fx/" + id + ".js"));
 
 const log = [];
 wanted.forEach((rel) => {
@@ -71,12 +75,12 @@ let last = first;
 while (last + 1 < lines.length && isFx(lines[last + 1])) last++;
 if (lines.slice(last + 1).some(isFx)) fail("sw.js studio/nullfx lines are not contiguous");
 const indent = lines[first].match(/^\s*/)[0];
-const block = wanted.map((rel) => indent + '"studio/nullfx/' + rel + '",');
+const block = precached.map((rel) => indent + '"studio/nullfx/' + rel + '",');
 const before = lines.slice(first, last + 1).join("\n");
 if (before !== block.join("\n")) {
   lines.splice(first, last - first + 1, ...block);
   fs.writeFileSync(swPath, lines.join("\n"));
-  log.push("changed sw.js precache (" + block.length + " studio/nullfx files)");
+  log.push("changed sw.js precache (" + block.length + " studio/nullfx files; effects load on first use)");
 }
 
 console.log(log.length ? log.join("\n") : "studio/nullfx is up to date");

@@ -3335,6 +3335,7 @@
       window.__orosSyncApi._suppress = false;
     }
     if (JSON.stringify(data) === before) return;   // no toast on merge
+    keepFxOffline();
     if (drag || rdrag || adrag || recording || (Roll && Roll.busy())) return;   // the gesture finishes on the local copy; the next edit merges
     if (proj) {
       var fresh = C.find(data, "projects", proj.id);
@@ -3644,7 +3645,14 @@
       }
     } catch (e) {}
     // the catalog also names the NULL instruments the tracks play
-    FX.loadCatalog().then(function () { if (proj) { renderRows(); syncKb(); renderTrackDlgIfOpen(); } }, function () {});
+    FX.loadCatalog().then(function () { if (proj) { renderRows(); syncKb(); renderTrackDlgIfOpen(); } keepFxOffline(); }, function () {});
+  }
+  // every effect the projects use, kept for offline use (fx.js keepOffline)
+  function keepFxOffline() {
+    if (!FX) return;
+    var ids = {};
+    data.projects.concat(data.tracks).forEach(function (x) { (x.fx || []).forEach(function (f) { if (f && f.id) ids[f.id] = true; }); });
+    FX.keepOffline(Object.keys(ids));
   }
 
   boot();

@@ -4,7 +4,10 @@ name: Sync NULL JSFX effects
 # NULL JSFX (koulaxizis/null-jsfx, web/). Every Monday, or from the Actions
 # tab ("Run workflow"), it takes null-jsfx main, checks that web/fx is
 # generated from the current JSFX, copies it with
-# .github/scripts/sync-nullfx.js (files + sw.js precache), runs the tests and,
+# .github/scripts/sync-nullfx.js (files + sw.js precache of the runtime and
+# fx/index.json; effect files load on first use and sw.js keeps them in its
+# "oros-nullfx" cache, so new effects do not grow the precache), runs the
+# precache budget check and the tests and,
 # when anything changed, opens or updates ONE pull request from the branch
 # auto/nullfx-sync. Nothing reaches main without that PR being merged.
 #
@@ -59,6 +62,12 @@ jobs:
             echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Precache budget
+        if: steps.sync.outputs.changed == 'true'
+        run: |
+          git show HEAD:sw.js > "$RUNNER_TEMP/base-sw.js"
+          node .github/qa/budget.js --precache --base-sw "$RUNNER_TEMP/base-sw.js"
+
       - name: Tests
         if: steps.sync.outputs.changed == 'true'
         run: node --test tests/*.test.js
@@ -79,9 +88,9 @@ jobs:
           {
             echo "Before: Studio carried an older copy of the NULL JSFX effects."
             echo
-            echo "After: Studio has the effects of koulaxizis/null-jsfx main at $UPSTREAM, all of them in the offline cache."
+            echo "After: Studio has the effects of koulaxizis/null-jsfx main at $UPSTREAM. The runtime and the effect list are precached; each effect file is kept for offline use the first time Studio loads it."
             echo
-            echo "How: opened by the Sync NULL JSFX effects workflow. It ran \`node tools/build.js --check\` in null-jsfx, copied web/runtime and web/fx into studio/nullfx, rewrote the studio/nullfx block of the sw.js precache and ran \`node --test tests/*.test.js\` (passed). No version, changelog or Bible change: the merge thread stamps it."
+            echo "How: opened by the Sync NULL JSFX effects workflow. It ran \`node tools/build.js --check\` in null-jsfx, copied web/runtime and web/fx into studio/nullfx, rewrote the studio/nullfx block of the sw.js precache (runtime + fx/index.json), checked the precache budget and ran \`node --test tests/*.test.js\` (passed). No version, changelog or Bible change: the merge thread stamps it."
             echo
             echo '```'
             cat "$RUNNER_TEMP/sync.txt"

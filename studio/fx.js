@@ -98,6 +98,26 @@
       }
       return pageP[id];
     }
+    // Effect files are not precached (sw.js keeps each one the first time
+    // it loads, across releases): while online, fetch the effects the
+    // projects use, one at a time, so they work offline later, also
+    // projects synced from another device. Once per id per session.
+    var kept = {}, keepQ = [], keeping = false;
+    function keepOffline(ids) {
+      var sw = navigator.serviceWorker;
+      if (!sw || !sw.controller || navigator.onLine === false) return;
+      (ids || []).forEach(function (id) {
+        if (!kept[id] && info(id)) { kept[id] = true; keepQ.push(id); }
+      });
+      if (keeping) return;
+      keeping = true;
+      (function next() {
+        var id = keepQ.shift();
+        if (!id) { keeping = false; return; }
+        fetch(BASE + "fx/" + id + ".js", { priority: "low" }).then(function (r) { return r.ok ? r.blob() : null; })
+          .catch(function () { delete kept[id]; }).then(next);
+      })();
+    }
     function known(item) { return !!info(item.id); }
     // an effect with a key input (its extra pins)
     function hasKey(id) { var e = info(id); return !!(e && e.ins > 2); }
@@ -805,7 +825,7 @@
     }
 
     return {
-      wire: wire, open: open, render: render, loadCatalog: loadCatalog,
+      wire: wire, open: open, render: render, loadCatalog: loadCatalog, keepOffline: keepOffline,
       ensure: ensure, preparePage: preparePage, isReady: isReady, insert: insert, setTime: setTime, disconnect: disconnect, prune: prune,
       chainLatency: chainLatency, active: active, nameOf: nameOf, isOpen: function () { return !!openKey; },
       setTimeAt: setTimeAt, midi: midi, preview: preview, previewMidi: previewMidi, dropPreview: dropPreview,
