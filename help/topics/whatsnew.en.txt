@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.42.01
+- orOS Drive for Android 0.6.0: it now looks like orOS (its colours, light or dark like your phone) and nothing hides under the phone's top and bottom bars any more. Photos and videos: orOS Drive finds the photo folders of your phone (camera, screenshots, WhatsApp and others); turn on the ones you want, with the photos already in them or only new ones. A folder that is already on can also send its older photos.
+
 ## Version 3.42.00
 - orOS Drive for Android grew: keep files and folders offline (press and hold), send files from any app with Share › orOS Drive, back up new camera photos and videos (upload only), and get a notification when both versions of a changed file were kept.
 - orOS for Android: orOS Drive is no longer built into the orOS app, which gets smaller. In Files › orOS Drive, the phone button opens the orOS Drive app, or shows where to get it. Add your phone folders again in orOS Drive; the files already in your Vault stay where they are.
