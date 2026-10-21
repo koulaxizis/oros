@@ -767,3 +767,16 @@ input[type="color"] { width: 44px; height: 34px; padding: 2px; border: 1px solid
 .menu.pop.lnk-pop { width: min(340px, calc(100vw - 24px)); }
 .lnk-pop .inp { width: 100%; }
 .lnk-pop .dlg-actions { margin-top: 10px; }
+
+/* Photo collage (collage.js) */
+.cl-card svg { width: 38px; height: 38px; flex-shrink: 0; fill: var(--accent); opacity: 0.85; }
+.cl-grids { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.cl-grid {
+  display: flex; align-items: center; justify-content: center; width: 56px; height: 56px; padding: 0;
+  border: 1px solid var(--border); border-radius: 8px; background: var(--bg); cursor: pointer;
+}
+.cl-grid svg { fill: var(--text-dim); }
+.cl-grid:hover, .cl-grid:focus-visible { border-color: var(--accent); outline: none; }
+.cl-grid.on { border-color: var(--accent); background: var(--accent-soft); }
+.cl-grid.on svg { fill: var(--accent); }
+.cl-count { font-size: 12px; color: var(--text-dim); margin-top: 8px; }
