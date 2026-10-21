@@ -12,6 +12,24 @@ public class OrosApp extends Application {
         super.onCreate();
         bridge = new PhoneBridge(this);
         if (BuildConfig.DIAG) diagnostics();
+        dropOldDriveCache();
+    }
+
+    /** Until wave 5 (DRIVE-APP) this app held orOS Drive itself; its
+     *  downloaded copies (files/drive/cache, up to 2 GB, all of them in
+     *  the Vault) are not needed any more. Its settings stay, and so does
+     *  the Trash of removed phone files (external files/Trash). */
+    private void dropOldDriveCache() {
+        java.io.File cache = new java.io.File(new java.io.File(getFilesDir(), "drive"), "cache");
+        if (!cache.exists()) return;
+        new Thread(() -> deleteTree(cache), "drive-cache").start();
+    }
+
+    private static void deleteTree(java.io.File f) {
+        java.io.File[] kids = f.listFiles();
+        if (kids != null) for (java.io.File k : kids) deleteTree(k);
+        //noinspection ResultOfMethodCallIgnored
+        f.delete();
     }
 
     /** Diagnostic builds: record crashes in the bridge trail and add a

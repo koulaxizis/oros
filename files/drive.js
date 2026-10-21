@@ -57,7 +57,8 @@
       "intro.title":"No computers or phones yet",
       "intro.body": "Folders you mirror with the orOS Drive app (Windows, Linux, Android) appear here. They stay in the cloud until you open them, so this device does not fill up.",
       "intro.get":  "Get orOS Drive",
-      "phone":      "Mirror folders of this phone",
+      "phone":      "Open orOS Drive to back up folders of this phone",
+      "phoneGet":   "Get orOS Drive to back up folders of this phone",
       "rm.title":   "Delete",
       "rm.btn":     "Delete {name}",
       "rm.folderMsg":"Delete \u201c{name}\u201d and everything inside it from orOS Drive?",
@@ -98,7 +99,8 @@
       "intro.title":"Δεν υπάρχουν ακόμα υπολογιστές ή κινητά",
       "intro.body": "Οι φάκελοι που αντικατοπτρίζεις με την εφαρμογή orOS Drive (Windows, Linux, Android) εμφανίζονται εδώ. Μένουν στο cloud μέχρι να τους ανοίξεις, ώστε να μη γεμίζει αυτή η συσκευή.",
       "intro.get":  "Λήψη του orOS Drive",
-      "phone":      "Αντικατόπτριση φακέλων αυτού του κινητού",
+      "phone":      "Άνοιγμα του orOS Drive για αντίγραφα φακέλων του κινητού",
+      "phoneGet":   "Λήψη του orOS Drive για αντίγραφα φακέλων του κινητού",
       "rm.title":   "Διαγραφή",
       "rm.btn":     "Διαγραφή του {name}",
       "rm.folderMsg":"Διαγραφή του «{name}» και όλων των περιεχομένων του από το orOS Drive;",
@@ -157,18 +159,25 @@
     b.addEventListener("click", fn);
     return b;
   }
-  // DRIVE-A: inside the orOS Android app (phone.js in the shell), the
-  // app's own screen mirrors phone folders; null anywhere else.
+  // DRIVE-APP: inside the orOS Android app (phone.js in the shell) the
+  // phone button opens the orOS Drive app (state.drive: installed) or
+  // its download; null anywhere else.
   function phone() {
     try {
       var p = window.parent && window.parent !== window ? window.parent.orosPhone : null;
-      var st = p && p.available() ? p.state() : null;
-      return st && st.drive ? p : null;
+      return p && p.available() && p.state() ? p : null;
     } catch (e) { return null; }
   }
   function paintPhone() {
     var b = $("drv-phone");
-    if (b) b.hidden = !phone();
+    if (!b) return;
+    var p = phone();
+    b.hidden = !p;
+    if (p) {
+      var label = t(p.state().drive ? "phone" : "phoneGet");
+      b.title = label;
+      b.setAttribute("aria-label", label);
+    }
   }
   function toast(s) { if (ctx && ctx.toast) ctx.toast(s); }
   function vault() {

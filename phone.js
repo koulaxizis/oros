@@ -41,8 +41,8 @@
 //               {t:"health", seq, since, water, workouts}  (v5: Health
 //                 Connect, see healthOut)
 //   app → page: {t:"state", v, contacts, calendar, reminders, exact,
-//                widgets, health, drive, app}  (drive: the app can
-//                mirror phone folders, DRIVE-A)
+//                widgets, health, drive, app}  (drive: the orOS Drive
+//                app is installed, DRIVE-APP)
 //               {t:"health-in", steps, water, workouts}  (v5: what other
 //                 apps put in Health Connect, see healthIn)
 //               {t:"changes", what, items}   (v2: edits made on the phone)
@@ -64,7 +64,7 @@
                    calendar: "intent://calendar#Intent;scheme=oros-permission;package=online.useoros.twa;end",
                    reminders: "intent://reminders#Intent;scheme=oros-permission;package=online.useoros.twa;end",
                    health: "intent://health#Intent;scheme=oros-permission;package=online.useoros.twa;end",
-                   // DRIVE-A: orOS Drive's folders screen (orOS app only, state.drive).
+                   // DRIVE-APP: opens the orOS Drive app, or its download.
                    drive: "intent://drive#Intent;scheme=oros-permission;package=online.useoros.twa;end" };
   var HEALTH_KEYS = { water: "oros-water-data", fitness: "oros-fitness-data", health: "oros-health-data" };
 

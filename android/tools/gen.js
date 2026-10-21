@@ -174,6 +174,8 @@ function build(manifest) {
         </intent>
         <!-- Health Connect on Android 13 and older (an app of its own). -->
         <package android:name="com.google.android.apps.healthdata" />
+        <!-- orOS Drive (DRIVE-APP): Files › orOS Drive opens it when installed. -->
+        <package android:name="online.useoros.drive" />
     </queries>
 
     <application
