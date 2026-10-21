@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.41.01
+- The download page (useoros.online/download) now has orOS Drive (Beta): the Windows and Linux app that mirrors folders of your computer into your encrypted Vault.
+
 ## Version 3.41.00
 - Atelier: Photo collage. On Atelier's home, choose up to 9 photos at once, pick one of 22 ready grids, set the spacing, the corners and the background, and the collage is ready. Drag a photo onto another to swap them, tap an empty box to add one, and change the grid any time from More › Photo collage. Filters, crop, text and every download work as on any design.
 
