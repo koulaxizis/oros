@@ -104,3 +104,15 @@ test("wave 5 follow-up: pickers don't load the core before sign-in; a failed sav
     for (const k of ["drive_channel", "drive_not_saved_title", "drive_not_saved_text"]) assert.match(x, new RegExp(`name="${k}"`));
   }
 });
+
+test("DRIVE-DL: an empty Drive links to orOS Drive on the download page, EN + EL + DE", () => {
+  const d = read("files", "drive.js");
+  assert.match(d, /showMsg\(t\("intro\.title"\), t\("intro\.body"\), getDrive\(\)\)/);
+  assert.match(d, /a\.href = "\/download\/" \+ \(LANG === "el" \? "\?lang=el" : ""\);/);
+  assert.match(d, /a\.rel = "noopener";/);
+  assert.equal((d.match(/"intro\.get":\s+"/g) || []).length, 2);
+  assert.match(read("i18n", "de", "files.js"), /"intro\.get": "/);
+  const page = read("download", "index.html");
+  assert.match(page, /<h2>orOS Drive \(your folders in the Vault\)<\/h2>/);
+  assert.match(page, /<h2>orOS Drive \(οι φάκελοί σου στο Vault\)<\/h2>/);
+});

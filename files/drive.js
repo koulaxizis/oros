@@ -56,6 +56,7 @@
       "off.body":   "orOS Drive folders live in your encrypted Vault. Connect Dropbox and unlock sync in Settings.",
       "intro.title":"No computers or phones yet",
       "intro.body": "Folders you mirror with the orOS Drive app (Windows, Linux, Android) appear here. They stay in the cloud until you open them, so this device does not fill up.",
+      "intro.get":  "Get orOS Drive",
       "phone":      "Mirror folders of this phone",
       "rm.title":   "Delete",
       "rm.btn":     "Delete {name}",
@@ -96,6 +97,7 @@
       "off.body":   "Οι φάκελοι του orOS Drive βρίσκονται στο κρυπτογραφημένο Vault σου. Σύνδεσε το Dropbox και ξεκλείδωσε το sync στις Ρυθμίσεις.",
       "intro.title":"Δεν υπάρχουν ακόμα υπολογιστές ή κινητά",
       "intro.body": "Οι φάκελοι που αντικατοπτρίζεις με την εφαρμογή orOS Drive (Windows, Linux, Android) εμφανίζονται εδώ. Μένουν στο cloud μέχρι να τους ανοίξεις, ώστε να μη γεμίζει αυτή η συσκευή.",
+      "intro.get":  "Λήψη του orOS Drive",
       "phone":      "Αντικατόπτριση φακέλων αυτού του κινητού",
       "rm.title":   "Διαγραφή",
       "rm.btn":     "Διαγραφή του {name}",
@@ -230,7 +232,7 @@
     if (split) split.appendChild(panel);
   }
 
-  function showMsg(title, body) {
+  function showMsg(title, body, extra) {
     var m = $("drv-msg");
     $("drv-entries").innerHTML = "";
     m.innerHTML = "";
@@ -240,9 +242,19 @@
     m.appendChild(ic);
     if (title) m.appendChild(el("strong", "", title));
     if (body) m.appendChild(el("p", "", body));
+    if (extra) m.appendChild(extra);
     $("drv-head").hidden = true;
     $("drv-entries").hidden = true;
     $("drv-status").textContent = "";
+  }
+  // DRIVE-DL: the empty Drive points to the app on the download page
+  // (same origin; a new tab, so this window stays where it is).
+  function getDrive() {
+    var a = el("a", "pv-btn primary drv-get", t("intro.get"));
+    a.href = "/download/" + (LANG === "el" ? "?lang=el" : "");
+    a.target = "_blank";
+    a.rel = "noopener";
+    return a;
   }
   function hideMsg() { $("drv-msg").hidden = true; $("drv-head").hidden = false; $("drv-entries").hidden = false; }
 
@@ -339,7 +351,7 @@
     var ul = $("drv-entries");
     ul.innerHTML = "";
     if (!rows.length) {
-      if (cwd === root) showMsg(t("intro.title"), t("intro.body"));
+      if (cwd === root) showMsg(t("intro.title"), t("intro.body"), getDrive());
       else showMsg("", t("empty"));
       return;
     }
