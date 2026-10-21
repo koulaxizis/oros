@@ -8,6 +8,12 @@
      Files app and in every file picker; only the system's documents
      UI may bind to it (MANAGE_DOCUMENTS). -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- One phone, one mirror (DRIVE-APP): DriveWorker stops when the
+         orOS Drive app is installed, which Android 11+ only lets it see
+         when named here. -->
+    <queries>
+        <package android:name="online.useoros.drive" />
+    </queries>
     <application>
         <activity android:name=".DriveActivity"
             android:exported="false"

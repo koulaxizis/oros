@@ -1,0 +1,12 @@
+{
+  "category": "System",
+  "screenshotsLater": true,
+  "en": {
+    "summary": "Back up phone folders to your encrypted orOS Vault, with Dropbox or Nextcloud",
+    "description": "orOS Drive keeps folders of your phone in your encrypted orOS Vault, the same Vault the orOS apps and the orOS Drive desktop app use.\n\nSign in with your own Dropbox, your own Nextcloud, or any WebDAV server that keeps exact ETags. Everything is encrypted on the phone with your sync passphrase before it leaves it; the cloud only sees encrypted pieces.\n\nPick folders to back up: they are synced in the background, by default only on Wi-Fi. A file you delete on the phone goes to the app's Trash first, and nothing is ever deleted because the cloud looked empty.\n\nThe whole orOS disk appears in Android's Files app and in every file picker as \"orOS\": files download only when you open them, and changes you save go back to the Vault. The app also has its own simple file browser.\n\nNo account with us, no ads, no trackers. Free and open source (MIT), free forever."
+  },
+  "el": {
+    "summary": "Φάκελοι του κινητού στο κρυπτογραφημένο Vault του orOS, με Dropbox ή Nextcloud",
+    "description": "Το orOS Drive κρατά φακέλους του κινητού σου στο κρυπτογραφημένο Vault του orOS, το ίδιο Vault που χρησιμοποιούν οι εφαρμογές του orOS και η εφαρμογή orOS Drive για υπολογιστή.\n\nΣυνδέσου με το δικό σου Dropbox, το δικό σου Nextcloud ή οποιονδήποτε διακομιστή WebDAV που κρατά ακριβή ETags. Όλα κρυπτογραφούνται στο κινητό με τη φράση συγχρονισμού σου πριν φύγουν· το cloud βλέπει μόνο κρυπτογραφημένα κομμάτια.\n\nΔιάλεξε φακέλους για αντίγραφα: συγχρονίζονται στο παρασκήνιο, από προεπιλογή μόνο με Wi-Fi. Ένα αρχείο που διαγράφεις στο κινητό πηγαίνει πρώτα στον Κάδο της εφαρμογής, και τίποτα δεν διαγράφεται ποτέ επειδή το cloud φάνηκε άδειο.\n\nΌλος ο δίσκος του orOS εμφανίζεται στην εφαρμογή Αρχεία του Android και σε κάθε επιλογή αρχείων ως «orOS»: τα αρχεία κατεβαίνουν μόνο όταν τα ανοίγεις, και ό,τι αποθηκεύεις γυρίζει στο Vault. Η εφαρμογή έχει και δικό της απλό περιηγητή αρχείων.\n\nΧωρίς λογαριασμό σε εμάς, χωρίς διαφημίσεις, χωρίς παρακολούθηση. Δωρεάν και ανοιχτού κώδικα (MIT), δωρεάν για πάντα."
+  }
+}

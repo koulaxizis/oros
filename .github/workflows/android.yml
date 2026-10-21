@@ -16,13 +16,15 @@ name: Android app
 # to them directly (no GitHub account needed), e.g.
 #   https://github.com/koulaxizis/oros/releases/download/android-apks/oros.apk
 #   https://github.com/koulaxizis/oros/releases/download/android-apks/oros-notes.apk
+# and orOS Drive (online.useoros.drive, built from koulaxizis/oros-drive
+# android/ at the commit in .github/oros-drive.env) as oros-drive.apk.
 
 on:
   push:
     branches: [main]
-    paths: ['android/**', 'phone.js', 'manifest.webmanifest', '*/manifest.webmanifest', 'icons/solo/**', 'shell.js', '.github/workflows/android.yml']
+    paths: ['android/**', 'phone.js', 'manifest.webmanifest', '*/manifest.webmanifest', 'icons/solo/**', 'shell.js', '.github/oros-drive.env', '.github/workflows/android.yml']
   pull_request:
-    paths: ['android/**', 'phone.js', 'manifest.webmanifest', '*/manifest.webmanifest', 'icons/solo/**', '.github/workflows/android.yml']
+    paths: ['android/**', 'phone.js', 'manifest.webmanifest', '*/manifest.webmanifest', 'icons/solo/**', '.github/oros-drive.env', '.github/workflows/android.yml']
   workflow_dispatch:
     inputs:
       diag:
@@ -59,15 +61,18 @@ jobs:
           gradle-version: 8.11.1
 
       # orOS Drive (DRIVE-A): the Go core of koulaxizis/oros-drive at a
-      # pinned commit, bound with gomobile into the library the orOS
-      # flavour embeds (app/libs/orosdrive.aar, not committed). Moving
-      # the pin is a deliberate change, like any dependency update.
-      # F-Droid and other builds without the library get the app
-      # without the Drive screen (build.gradle driveLib).
+      # pinned commit (.github/oros-drive.env), bound with gomobile into
+      # the library the orOS flavour embeds (app/libs/orosdrive.aar, not
+      # committed). Moving the pin is a deliberate change, like any
+      # dependency update. F-Droid and other builds without the library
+      # get the app without the Drive screen (build.gradle driveLib).
+      - name: orOS Drive pin
+        id: drive
+        run: grep -E '^(commit|version)=' .github/oros-drive.env >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v4
         with:
           repository: koulaxizis/oros-drive
-          ref: 242b3758b8b248823526f3c2b0526818a54b6193
+          ref: ${{ steps.drive.outputs.commit }}
           path: oros-drive-src
       - uses: actions/setup-go@v5
         with:
@@ -107,6 +112,40 @@ jobs:
           echo "$KS_B64" | base64 -d > "$RUNNER_TEMP/oros.keystore"
           OROS_KEYSTORE_FILE="$RUNNER_TEMP/oros.keystore" gradle -p android --no-daemon assembleRelease bundleRelease
           rm -f "$RUNNER_TEMP/oros.keystore"
+
+      # The orOS Drive app (online.useoros.drive, DRIVE-APP): the same
+      # library in oros-drive's own small native app, signed with the
+      # same key on main. Published as oros-drive.apk below and in the
+      # F-Droid repo (tools/fdroid-metadata.js).
+      - name: Build the orOS Drive app
+        env:
+          DRIVE_VERSION: ${{ steps.drive.outputs.version }}
+          KS_B64: ${{ github.event_name != 'pull_request' && secrets.OROS_KEYSTORE_BASE64 || '' }}
+          OROS_KEYSTORE_PASSWORD: ${{ secrets.OROS_KEYSTORE_PASSWORD }}
+          OROS_KEY_ALIAS: ${{ secrets.OROS_KEY_ALIAS }}
+          OROS_KEY_PASSWORD: ${{ secrets.OROS_KEY_PASSWORD }}
+        run: |
+          src=oros-drive-src/android
+          mkdir -p "$src/app/libs"
+          cp android/app/libs/orosdrive.aar "$src/app/libs/"
+          if [ -n "$KS_B64" ]; then
+            echo "$KS_B64" | base64 -d > "$RUNNER_TEMP/oros.keystore"
+            export OROS_KEYSTORE_FILE="$RUNNER_TEMP/oros.keystore"
+          fi
+          gradle -p "$src" --no-daemon assembleRelease
+          rm -f "$RUNNER_TEMP/oros.keystore"
+          ls -l "$src/app/build/outputs/apk/release/"
+          # Signed: next to the orOS APKs, so "Publish APKs" names it
+          # oros-drive.apk (flavour folder "drive").
+          if [ -f "$src/app/build/outputs/apk/release/app-release.apk" ]; then
+            mkdir -p android/app/build/outputs/apk/drive/release
+            cp "$src/app/build/outputs/apk/release/app-release.apk" android/app/build/outputs/apk/drive/release/app-drive-release.apk
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: oros-drive-android
+          path: oros-drive-src/android/app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
 
       # The orOS app itself (flavour "oros", online.useoros.twa).
       - uses: actions/upload-artifact@v4

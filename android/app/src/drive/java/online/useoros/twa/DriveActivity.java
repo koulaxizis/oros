@@ -152,6 +152,15 @@ public class DriveActivity extends Activity {
         JSONObject settings = status.optJSONObject("settings");
         String device = settings != null ? settings.optString("device") : "";
         body.addView(text(getString(R.string.drive_intro, device), 15));
+        if (DriveWorker.handedOver(this)) {
+            // One phone, one mirror (DRIVE-APP): the orOS Drive app has it.
+            body.addView(text(getString(R.string.drive_handed_over), 15));
+            body.addView(button(R.string.drive_open_app, v -> {
+                Intent i = getPackageManager().getLaunchIntentForPackage(DriveWorker.DRIVE_APP);
+                if (i != null) startActivity(i);
+            }));
+            return;
+        }
 
         if (!status.optBoolean("signedIn")) {
             body.addView(heading(R.string.drive_login));

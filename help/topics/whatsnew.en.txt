@@ -1,6 +1,10 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.41.02
+- orOS Drive for Android: a separate app that backs up folders of your phone to your encrypted Vault (with Dropbox, Nextcloud or another WebDAV server), shows the whole orOS disk in the phone's Files app and has its own file browser. It is in the orOS F-Droid repository, so F-Droid, Droid-ify and Obtainium install and update it.
+- orOS for Android: once orOS Drive is installed, the Drive screen of the orOS app stops syncing and opens orOS Drive instead, so two apps never work on the same folders.
+
 ## Version 3.41.01
 - The download page (useoros.online/download) now has orOS Drive (Beta), the Windows and Linux app that mirrors folders of your computer into your encrypted Vault, and the orOS installer for Windows and Linux.
 - Files › orOS Drive: while nothing is mirrored yet, a button leads to the orOS Drive download.
