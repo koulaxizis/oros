@@ -20,7 +20,7 @@
   var cv, ctx, stage, dpr = 1, W = 0, H = 0;
   var fitted = false, needDraw = false;
   var HANDLE = 5, HIT = 12;
-  var guides = [], marquee = null, hoverId = null;
+  var guides = [], marquee = null, hoverId = null, dropId = null;
 
   // ---------- 1. Queries ----------
   function doc() { return AT.doc; }
@@ -137,6 +137,10 @@
     if (hoverId && ED.sel.indexOf(hoverId) < 0) {
       var hv = find(hoverId);
       if (hv) outline(hv, "rgba(77,163,255,0.8)", 1);
+    }
+    if (dropId) {
+      var dt = find(dropId);
+      if (dt) { outline(dt, accent(), 3); }
     }
     var sel = selItems();
     if (sel.length === 1 && !ED.editId) drawHandles(sel[0]);
@@ -478,7 +482,12 @@
     }
     if (drag.locked) { if (first) AT.toast(t("toast.locked")); return; }
     if (first) AT.beginGesture();
-    if (drag.kind === "move") doMove(p, e.shiftKey);
+    if (drag.kind === "move") {
+      doMove(p, e.shiftKey);
+      // a collage box over another: the one it would swap with
+      var tg = drag.start.length === 1 && AT.collage ? AT.collage.dropTarget(drag.start[0].id, p) : null;
+      dropId = tg ? tg.id : null;
+    }
     else if (drag.kind === "size") doResize(p, e.shiftKey);
     else if (drag.kind === "rot") doRotate(p, e.shiftKey);
     else if (drag.kind === "end") doEnd(p, e.shiftKey);
@@ -493,6 +502,11 @@
     }
     if (!drag) return;
     var d = drag;
+    // a collage box dropped on another: swap their photos (same gesture)
+    if (d.kind === "move" && d.moved && !d.locked && d.start.length === 1 && AT.collage) {
+      var up = evPos(e);
+      AT.collage.drop(d.start[0].id, d.start[0], toPage(up.x, up.y));
+    }
     endDrag(false);
     if (d.moved) return;
     // taps
@@ -506,6 +520,7 @@
       lastTap = { t: nowT, id: it.id };
       if (it.ax.k === "text" && !it.lock && (d.was || dbl)) { enterText(it.id); return; }
       if (it.ax.k === "photo" && it.a && !it.lock && dbl) { enterCrop(it.id); return; }
+      if (d.was && AT.collage && AT.collage.tapEmpty(it)) return;
     }
   }
 
@@ -513,7 +528,7 @@
     if (!drag) return;
     var k = drag.kind;
     drag = null;
-    guides = []; marquee = null;
+    guides = []; marquee = null; dropId = null;
     if (k !== "pan" && k !== "marquee") AT.endGesture();
     redraw();
   }

@@ -865,6 +865,7 @@
         { label: t("more.present"), fn: AT.motion ? AT.motion.present : function () {} },
         { sep: true },
         { label: t("more.resize"), fn: resizeDialog },
+        { label: t("more.collage"), hide: !AT.collage, fn: function () { AT.collage.open(); } },
         { label: t("more.bulk"), fn: function () { if (AT.bulk) AT.bulk.open(); } },
         { label: t("more.recipes"), hide: !AT.recipes, fn: function () { AT.recipes.open(); } },
         { label: t("more.record"), hide: !AT.recipes || AT.recipes.recording(), fn: function () { AT.recipes.record(); } },

@@ -64,7 +64,7 @@
       "custom.px": "Pixels (screen)", "custom.mm": "Millimetres (print)", "custom.range": "Between {a} and {b} {u}.",
       "ed.back": "Designs", "ed.undo": "Undo", "ed.redo": "Redo", "ed.zin": "Zoom in", "ed.zout": "Zoom out",
       "ed.fit": "Fit to screen", "ed.more": "More", "ed.export": "Download", "ed.rename": "Rename design",
-      "more.resize": "Resize…", "more.pkg": "Save as package (.orosdesign)", "more.sendTo": "Send to…", "send.fail": "The picture could not be sent.", "more.credits": "Credits",
+      "more.resize": "Resize…", "more.collage": "Photo collage", "ctx.collage": "Collage", "tab.collage": "Photo collage", "more.pkg": "Save as package (.orosdesign)", "more.sendTo": "Send to…", "send.fail": "The picture could not be sent.", "more.credits": "Credits",
       "more.selall": "Select all", "more.copy": "Copy", "more.paste": "Paste",
       "tab.templates": "Templates", "tab.elements": "Elements", "tab.text": "Text", "tab.uploads": "Uploads",
       "tab.background": "Background", "tab.colour": "Colour", "tab.effects": "Effects", "tab.filters": "Filters",
@@ -280,7 +280,7 @@
       "custom.px": "Pixels (οθόνη)", "custom.mm": "Χιλιοστά (εκτύπωση)", "custom.range": "Από {a} έως {b} {u}.",
       "ed.back": "Σχέδια", "ed.undo": "Αναίρεση", "ed.redo": "Επανάληψη", "ed.zin": "Μεγέθυνση", "ed.zout": "Σμίκρυνση",
       "ed.fit": "Προσαρμογή στην οθόνη", "ed.more": "Περισσότερα", "ed.export": "Λήψη", "ed.rename": "Μετονομασία σχεδίου",
-      "more.resize": "Αλλαγή μεγέθους…", "more.pkg": "Αποθήκευση ως πακέτο (.orosdesign)", "more.sendTo": "Αποστολή σε…", "send.fail": "Η εικόνα δεν στάλθηκε.", "more.credits": "Αναφορές δημιουργών",
+      "more.resize": "Αλλαγή μεγέθους…", "more.collage": "Κολάζ φωτογραφιών", "ctx.collage": "Κολάζ", "tab.collage": "Κολάζ φωτογραφιών", "more.pkg": "Αποθήκευση ως πακέτο (.orosdesign)", "more.sendTo": "Αποστολή σε…", "send.fail": "Η εικόνα δεν στάλθηκε.", "more.credits": "Αναφορές δημιουργών",
       "more.selall": "Επιλογή όλων", "more.copy": "Αντιγραφή", "more.paste": "Επικόλληση",
       "tab.templates": "Πρότυπα", "tab.elements": "Στοιχεία", "tab.text": "Κείμενο", "tab.uploads": "Μεταφορτώσεις",
       "tab.background": "Φόντο", "tab.colour": "Χρώμα", "tab.effects": "Εφέ", "tab.filters": "Φίλτρα",
@@ -1060,6 +1060,7 @@
     // sizes
     var sizes = $("sizes");
     if (!sizes.childNodes.length) {
+      if (AT.collage) sizes.appendChild(AT.collage.homeCard());
       AT.PRESETS.groups.forEach(function (g) {
         var sec = el("div", "size-group");
         sec.appendChild(el("h3", "size-h", AT.lbl3(g)));

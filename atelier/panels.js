@@ -1272,6 +1272,7 @@
     }
     if (AT.editPic && AT.editPic.can(it)) bar.appendChild(tool("editpic", t("ctx.editPic"), function () { AT.editPic.open(it.id); }));
     if (it.ax.vid) bar.insertBefore(btn("ctx-txt" + (view === "video" ? " on" : ""), t("ctx.video"), function () { openView("video"); }), bar.firstChild);
+    if (AT.collage && AT.collage.isCell(it)) bar.insertBefore(btn("ctx-txt" + (view === "collage" ? " on" : ""), t("ctx.collage"), AT.collage.open), bar.firstChild);
   }
 
   // ---------- 4. Wiring ----------

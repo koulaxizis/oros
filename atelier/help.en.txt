@@ -22,6 +22,12 @@ Under `What will you make?` tap or click a size, for example a square post or an
 - `Background` can use the selected photo as the page background.
 - `Edit in Photo Lab` opens the photo in Photo Lab for deeper changes (layers, retouching, selections). Press `Done` there and you come back to the design with the new picture in the same frame; the Photo Lab project stays, so you can change it again later. `Undo` brings back the earlier picture.
 
+## Photo collage
+- On Atelier's home, `Photo collage` makes a collage in a few taps: pick a size (square, portrait, story, landscape or A4), tap `Choose photos…` and select up to 9 photos at once, pick a grid, set `Spacing`, `Corners` and the `Background`, and tap `Make collage`. You can also start without photos and fill the boxes later.
+- Drag a photo onto another box to swap the two. Tap an empty box (select it, then tap it again) to put a photo in it. `Crop`, or a double-click, moves and zooms a photo inside its box; filters, adjustments and text on top work as on any photo.
+- `More` › `Photo collage`, or `Collage` on the bar of a selected box, opens the collage panel: another grid (from 1 to 9 photos), spacing, corners, background and `Add photos…`, which fills the empty boxes and moves to a bigger grid when they run out. Any page can become a collage there; what is already on it stays.
+- A smaller grid keeps your photos in order and removes empty boxes first. If photos still do not fit, a message says how many and `Undo` brings them back.
+
 ## Free photos, illustrations and icons
 `Sources` searches open libraries: Openverse and Wikimedia Commons for photos and illustrations, Iconify for icons and clipart. Pixabay and Pexels appear too once you add your own free key under `Pixabay and Pexels keys`. Tap or click a result to add it.
 - By default you only see pieces you may use for anything, also commercially, and change. `Show licences with limits` adds the rest, marked `Limits`.

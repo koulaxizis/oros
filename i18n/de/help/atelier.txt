@@ -22,6 +22,12 @@ Tippe oder klicke unter `Was möchtest du gestalten?` auf eine Größe, zum Beis
 - `Hintergrund` kann das ausgewählte Foto als Seitenhintergrund verwenden.
 - `Im Fotolabor bearbeiten` öffnet das Foto für tiefere Änderungen im Fotolabor (Ebenen, Retusche, Auswahlen). Tippe dort auf `Fertig`, und du kommst mit dem neuen Bild im selben Rahmen zum Design zurück; das Fotolabor-Projekt bleibt, du kannst es also später wieder ändern. `Rückgängig` holt das frühere Bild zurück.
 
+## Fotocollage
+- Auf der Startseite von Atelier macht `Fotocollage` eine Collage mit wenigen Tipps: Wähle eine Größe (quadratisch, Hochformat, Story, Querformat oder A4), tippe auf `Fotos auswählen…` und wähle bis zu 9 Fotos auf einmal, wähle ein Raster, stelle `Abstand`, `Ecken` und den `Hintergrund` ein und tippe auf `Collage erstellen`. Du kannst auch ohne Fotos beginnen und die Felder später füllen.
+- Ziehe ein Foto auf ein anderes Feld, um die beiden zu tauschen. Tippe auf ein leeres Feld (auswählen, dann noch einmal tippen), um ein Foto hineinzusetzen. `Zuschneiden` oder ein Doppelklick verschiebt und zoomt ein Foto in seinem Feld; Filter, Anpassungen und Text darüber funktionieren wie bei jedem Foto.
+- `Mehr` › `Fotocollage` oder `Collage` in der Leiste eines ausgewählten Felds öffnet das Collage-Feld: ein anderes Raster (1 bis 9 Fotos), Abstand, Ecken, Hintergrund und `Fotos hinzufügen…`, das die leeren Felder füllt und zu einem größeren Raster wechselt, wenn sie ausgehen. Dort kann jede Seite zur Collage werden; was schon darauf ist, bleibt.
+- Ein kleineres Raster behält deine Fotos in ihrer Reihenfolge und entfernt zuerst leere Felder. Passen trotzdem Fotos nicht hinein, sagt eine Meldung wie viele, und `Rückgängig` holt sie zurück.
+
 ## Freie Fotos, Illustrationen und Icons
 `Quellen` durchsucht offene Bibliotheken: Openverse und Wikimedia Commons für Fotos und Illustrationen, Iconify für Icons und Cliparts. Pixabay und Pexels erscheinen ebenfalls, sobald du unter `Schlüssel für Pixabay und Pexels` deinen eigenen kostenlosen Schlüssel einträgst. Tippe oder klicke auf ein Ergebnis, um es hinzuzufügen.
 - Standardmäßig siehst du nur Stücke, die du für alles nutzen darfst, auch kommerziell, und verändern darfst. `Lizenzen mit Einschränkungen zeigen` fügt den Rest hinzu, markiert mit `Einschränkungen`.

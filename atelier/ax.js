@@ -49,6 +49,9 @@
 // Since wave C2 (morph, atelier/morph.js):
 //   ext.mph  1 on a page background: the page morphs in from the page
 //            before it; ptr stays what older copies show instead
+// Since CL-1 (photo collage, atelier/collage.js):
+//   ext.clg  on a photo { i }: box i of the page's collage; on a page
+//            background { l, g, r }: grid id, spacing and corners
 // Defaults are omitted, keys come in one fixed order: the record is
 // canonical (R26), so equal designs give equal JSON on every device.
 // Pure: no DOM. Exposes window.AtelierAX (browser) or module.exports.

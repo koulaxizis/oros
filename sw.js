@@ -1302,6 +1302,7 @@ var PRECACHE_URLS = [
   "atelier/imagine.js",
   "atelier/magicai.js",
   "atelier/magicdesign.js",
+  "atelier/collage.js",
   "atelier/bulk.js",
   "recipes/core.js",
   "recipes/ui.js",

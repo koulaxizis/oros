@@ -12,6 +12,7 @@
    "files": [
     "atelier/ai.js",
     "atelier/bulk.js",
+    "atelier/collage.js",
     "atelier/core.js",
     "atelier/imagine.js",
     "atelier/library/icons.js",
