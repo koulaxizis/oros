@@ -60,12 +60,12 @@ jobs:
         with:
           gradle-version: 8.11.1
 
-      # orOS Drive (DRIVE-A): the Go core of koulaxizis/oros-drive at a
-      # pinned commit (.github/oros-drive.env), bound with gomobile into
-      # the library the orOS flavour embeds (app/libs/orosdrive.aar, not
+      # orOS Drive (DRIVE-APP): koulaxizis/oros-drive at a pinned commit
+      # (.github/oros-drive.env), its Go core bound with gomobile into
+      # the library its Android app embeds (android/app/libs there, not
       # committed). Moving the pin is a deliberate change, like any
-      # dependency update. F-Droid and other builds without the library
-      # get the app without the Drive screen (build.gradle driveLib).
+      # dependency update. The orOS app itself no longer embeds Drive
+      # (wave 5): its Drive button opens the orOS Drive app.
       - name: orOS Drive pin
         id: drive
         run: grep -E '^(commit|version)=' .github/oros-drive.env >> "$GITHUB_OUTPUT"
@@ -83,11 +83,10 @@ jobs:
         run: |
           go install golang.org/x/mobile/cmd/gomobile golang.org/x/mobile/cmd/gobind
           export ANDROID_NDK_HOME="$ANDROID_NDK_LATEST_HOME"
-          mkdir -p ../android/app/libs
+          mkdir -p android/app/libs
           # Phones (arm64, arm) and x86_64 Chromebooks; no 32-bit x86.
-          gomobile bind -target=android/arm64,android/arm,android/amd64 -androidapi 24 -javapkg online.useoros.drive -o ../android/app/libs/orosdrive.aar ./mobile
-          # Without it Gradle builds the app without Drive: never here.
-          test -s ../android/app/libs/orosdrive.aar
+          gomobile bind -target=android/arm64,android/arm,android/amd64 -androidapi 24 -javapkg online.useoros.drive -o android/app/libs/orosdrive.aar ./mobile
+          test -s android/app/libs/orosdrive.aar
 
       # The runner image ships the Android SDK (ANDROID_HOME); Gradle
       # fetches a missing platform or build-tools on its own.
@@ -113,9 +112,9 @@ jobs:
           OROS_KEYSTORE_FILE="$RUNNER_TEMP/oros.keystore" gradle -p android --no-daemon assembleRelease bundleRelease
           rm -f "$RUNNER_TEMP/oros.keystore"
 
-      # The orOS Drive app (online.useoros.drive, DRIVE-APP): the same
+      # The orOS Drive app (online.useoros.drive, DRIVE-APP): that
       # library in oros-drive's own small native app, signed with the
-      # same key on main. Published as oros-drive.apk below and in the
+      # orOS key on main. Published as oros-drive.apk below and in the
       # F-Droid repo (tools/fdroid-metadata.js).
       - name: Build the orOS Drive app
         env:
@@ -126,8 +125,6 @@ jobs:
           OROS_KEY_PASSWORD: ${{ secrets.OROS_KEY_PASSWORD }}
         run: |
           src=oros-drive-src/android
-          mkdir -p "$src/app/libs"
-          cp android/app/libs/orosdrive.aar "$src/app/libs/"
           if [ -n "$KS_B64" ]; then
             echo "$KS_B64" | base64 -d > "$RUNNER_TEMP/oros.keystore"
             export OROS_KEYSTORE_FILE="$RUNNER_TEMP/oros.keystore"

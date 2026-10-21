@@ -84,14 +84,15 @@ public class PhoneBridge {
 
     static final String DIAG_KEY = "diag-trail";
 
-    /** orOS Drive (DRIVE-A) lives in the orOS flavour only (app/src/oros). */
-    static final String DRIVE_ACTIVITY = "online.useoros.twa.DriveActivity";
+    /** orOS Drive for Android (DRIVE-APP, online.useoros.drive): its own
+     *  app since wave 5; this app only opens it (or its download). */
+    static final String DRIVE_APP = "online.useoros.drive";
 
-    /** Whether this app can mirror phone folders (orOS Drive). */
+    /** Whether the orOS Drive app is installed (named in <queries>). */
     static boolean hasDrive(Context c) {
         try {
-            return c.getPackageManager().getActivityInfo(
-                    new android.content.ComponentName(c, DRIVE_ACTIVITY), 0) != null;
+            c.getPackageManager().getPackageInfo(DRIVE_APP, 0);
+            return true;
         } catch (android.content.pm.PackageManager.NameNotFoundException e) {
             return false;
         }

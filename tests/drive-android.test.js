@@ -1,7 +1,9 @@
-// orOS Drive on the phone (DRIVE-A): the orOS Android app mirrors
-// phone folders with the Go core of koulaxizis/oros-drive. The Java
-// side builds only in CI (android.yml), so these checks pin the wiring
-// that a broken build would not show: routes, state, strings, pin.
+// orOS Drive on the phone: until wave 5 the orOS Android app held it
+// (DRIVE-A); since then it is the orOS Drive app (DRIVE-APP,
+// online.useoros.drive, koulaxizis/oros-drive android/), built and
+// signed by android.yml and published in the F-Droid repository. The
+// Java side builds only in CI, so these checks pin the wiring a broken
+// build would not show: routes, state, strings, pin.
 "use strict";
 const test = require("node:test");
 const assert = require("node:assert/strict");
@@ -10,31 +12,34 @@ const path = require("path");
 
 const ROOT = path.join(__dirname, "..");
 const read = (...p) => fs.readFileSync(path.join(ROOT, ...p), "utf8");
-const JAVA = ["android", "app", "src", "drive", "java", "online", "useoros", "twa"];
 const MAIN = ["android", "app", "src", "main", "java", "online", "useoros", "twa"];
 
-test("DriveActivity is declared in the orOS flavour only, not exported, and only with the library", () => {
-  const m = read("android", "app", "src", "drive", "AndroidManifest.xml");
-  assert.match(m, /<activity android:name="\.DriveActivity"\s+android:exported="false"/);
-  assert.ok(fs.existsSync(path.join(ROOT, ...JAVA, "DriveActivity.java")));
-  assert.doesNotMatch(read("android", "tools", "gen.js"), /DriveActivity/);
+test("wave 5: the orOS app no longer embeds orOS Drive", () => {
+  assert.ok(!fs.existsSync(path.join(ROOT, "android", "app", "src", "drive")));
   const g = read("android", "app", "build.gradle");
-  assert.match(g, /orosImplementation files\('libs\/orosdrive\.aar'\)/);
-  // Optional: without the library (F-Droid) the app builds without Drive.
-  assert.match(g, /def driveLib = file\('libs\/orosdrive\.aar'\)\.exists\(\)/);
-  assert.match(g, /if \(driveLib\) \{\n\s+getByName\('oros'\) \{\n\s+manifest\.srcFile 'src\/drive\/AndroidManifest\.xml'/);
-  assert.match(g, /if \(driveLib\) \{\n\s+orosImplementation files/);
-  assert.ok(!fs.existsSync(path.join(ROOT, "android", "app", "src", "oros")), "src/oros would build without the library");
-  assert.match(g, /orosImplementation 'androidx\.work:work-runtime:/);
+  assert.doesNotMatch(g, /orosdrive|driveLib|work-runtime/);
+  assert.doesNotMatch(read("android", "app", "proguard-rules.pro"), /online\.useoros\.drive/);
+  // Its old downloaded copies go; settings and the phone-file Trash stay.
+  const app = read(...MAIN, "OrosApp.java");
+  assert.match(app, /new java\.io\.File\(new java\.io\.File\(getFilesDir\(\), "drive"\), "cache"\)/);
+  assert.doesNotMatch(app, /"Trash"/);
 });
 
-test("the page opens it through PermissionActivity by class name", () => {
+test("the page opens the orOS Drive app, or its download", () => {
   const p = read(...MAIN, "PermissionActivity.java");
   assert.match(p, /"drive"\.equals\(kind\)/);
-  assert.doesNotMatch(p, /DriveActivity\.class/); // other flavours have no such class
+  assert.match(p, /getLaunchIntentForPackage\(PhoneBridge\.DRIVE_APP\)/);
+  assert.match(p, /"https:\/\/useoros\.online\/download\/" \+ \(el \? "\?lang=el#drive-el" : "#drive"\)/);
   const b = read(...MAIN, "PhoneBridge.java");
-  assert.match(b, /DRIVE_ACTIVITY = "online\.useoros\.twa\.DriveActivity"/);
+  assert.match(b, /DRIVE_APP = "online\.useoros\.drive"/);
+  assert.match(b, /getPackageInfo\(DRIVE_APP, 0\)/);
   assert.match(b, /o\.put\("drive", hasDrive\(app\)\)/);
+  // Android 11+ shows the package only when named
+  assert.match(read("android", "tools", "gen.js"), /<package android:name="online\.useoros\.drive" \/>/);
+  const page = read("download", "index.html");
+  assert.match(page, /<section class="card" id="drive">/);
+  assert.match(page, /<section class="card" id="drive-el">/);
+  assert.equal((page.match(/android-apks\/oros-drive\.apk/g) || []).length, 2);
 });
 
 test("phone.js: drive link and state flag", () => {
@@ -43,73 +48,28 @@ test("phone.js: drive link and state flag", () => {
   assert.match(src, /drive: m\.drive === true/);
 });
 
-test("Files › orOS Drive: phone folders button, EN + EL", () => {
+test("Files › orOS Drive: phone button opens or gets orOS Drive, EN + EL + DE", () => {
   const d = read("files", "drive.js");
   assert.match(d, /askPermission\("drive"\)/);
+  assert.match(d, /t\(p\.state\(\)\.drive \? "phone" : "phoneGet"\)/);
   assert.equal((d.match(/"phone":\s+"/g) || []).length, 2);
+  assert.equal((d.match(/"phoneGet":\s+"/g) || []).length, 2);
+  const de = read("i18n", "de", "files.js");
+  assert.match(de, /"phone": "/);
+  assert.match(de, /"phoneGet": "/);
 });
 
-test("every drive string the Java uses exists in English and Greek", () => {
-  const keys = (x) => new Set([...x.matchAll(/<string name="(drive_[a-z0-9_]+)"/g)].map((m) => m[1]));
-  const en = keys(read("android", "app", "src", "drive", "res", "values", "drive_strings.xml"));
-  const el = keys(read("android", "app", "src", "drive", "res", "values-el", "drive_strings.xml"));
-  assert.deepEqual([...en].sort(), [...el].sort());
-  const used = new Set();
-  for (const f of fs.readdirSync(path.join(ROOT, ...JAVA))) {
-    for (const m of read(...JAVA, f).matchAll(/R\.string\.(drive_[a-z0-9_]+)/g)) used.add(m[1]);
-  }
-  used.add("drive_title"); // the manifest label
-  for (const k of used) assert.ok(en.has(k), k + " missing");
-});
-
-test("android.yml builds the library from a pinned oros-drive commit", () => {
+test("android.yml builds orOS Drive from a pinned oros-drive commit", () => {
   const y = read(".github", "workflows", "android.yml");
-  // The pin lives in .github/oros-drive.env (DRIVE-APP: also the orOS Drive app's version)
   const env = read(".github", "oros-drive.env");
   assert.match(env, /^commit=[0-9a-f]{40}$/m);
   assert.match(env, /^version=\d+\.\d+\.\d+$/m);
   assert.match(y, /grep -E '\^\(commit\|version\)=' \.github\/oros-drive\.env >> "\$GITHUB_OUTPUT"/);
   assert.match(y, /repository: koulaxizis\/oros-drive\n\s+ref: \$\{\{ steps\.drive\.outputs\.commit \}\}\n/);
+  assert.match(y, /gomobile bind -target=android\/arm64,android\/arm,android\/amd64 -androidapi 24 -javapkg online\.useoros\.drive -o android\/app\/libs\/orosdrive\.aar \.\/mobile/);
+  assert.match(y, /test -s android\/app\/libs\/orosdrive\.aar/);
   assert.match(y, /DRIVE_VERSION: \$\{\{ steps\.drive\.outputs\.version \}\}/);
   assert.match(y, /apk\/drive\/release\/app-drive-release\.apk/);
-  assert.match(y, /gomobile bind -target=android\/arm64,android\/arm,android\/amd64 -androidapi 24 -javapkg online\.useoros\.drive -o \.\.\/android\/app\/libs\/orosdrive\.aar \.\/mobile/);
-  assert.match(y, /test -s \.\.\/android\/app\/libs\/orosdrive\.aar/);
-  assert.match(read("android", ".gitignore"), /^app\/libs\/orosdrive\.aar$/m);
-  const pg = read("android", "app", "proguard-rules.pro");
-  assert.match(pg, /-keep class go\.\*\* \{ \*; \}/);
-  assert.match(pg, /-keep class online\.useoros\.drive\.\*\* \{ \*; \}/);
-});
-
-test("wave 5: the disk is a documents provider only the system can bind, shown while unlocked", () => {
-  const m = read("android", "app", "src", "drive", "AndroidManifest.xml");
-  assert.match(m, /<provider android:name="\.DriveProvider"\s+android:authorities="\$\{applicationId\}\.drive"\s+android:grantUriPermissions="true"\s+android:exported="true"\s+android:permission="android\.permission\.MANAGE_DOCUMENTS">/);
-  assert.match(m, /<action android:name="android\.content\.action\.DOCUMENTS_PROVIDER" \/>/);
-  const p = read(...JAVA, "DriveProvider.java");
-  assert.match(p, /extends DocumentsProvider/);
-  assert.match(p, /getPackageName\(\) \+ "\.drive"/);
-  assert.match(p, /signedIn"\) && s\.optBoolean\("unlocked"\)/);
-  // Ids stay inside the disk.
-  assert.match(p, /id\.startsWith\(ROOT \+ "\/"\)\) \|\| id\.contains\("\/\.\.\/"\)/);
-  // A write uploads on close with the hash it started from (conflict copies).
-  assert.match(p, /d\.diskPut\(id, tmp\.getAbsolutePath\(\), base\)/);
-  const a = read(...JAVA, "DriveActivity.java");
-  assert.match(a, /DriveProvider\.rootsChanged\(this\)/);
-  assert.match(a, /Drive::diskClearCache/);
-});
-
-test("wave 5 follow-up: pickers don't load the core before sign-in; a failed save is told", () => {
-  const p = read(...JAVA, "DriveProvider.java");
-  const ready = p.slice(p.indexOf("private boolean ready()"), p.indexOf("public Cursor queryRoots"));
-  assert.ok(ready.indexOf("DriveCore.everSignedIn") >= 0 && ready.indexOf("everSignedIn") < ready.indexOf("drive()"));
-  const core = read(...JAVA, "DriveCore.java");
-  assert.match(core, /static boolean everSignedIn\(Context c\)/);
-  assert.match(core, /getSharedPreferences\(KeystoreSecrets\.PREFS/);
-  assert.equal((p.match(/notSaved\(id, /g) || []).length, 2);
-  assert.match(p, /areNotificationsEnabled\(\)/);
-  for (const dir of ["values", "values-el"]) {
-    const x = read("android", "app", "src", "drive", "res", dir, "drive_strings.xml");
-    for (const k of ["drive_channel", "drive_not_saved_title", "drive_not_saved_text"]) assert.match(x, new RegExp(`name="${k}"`));
-  }
 });
 
 test("DRIVE-DL: an empty Drive links to orOS Drive on the download page, EN + EL + DE", () => {
@@ -122,20 +82,4 @@ test("DRIVE-DL: an empty Drive links to orOS Drive on the download page, EN + EL
   const page = read("download", "index.html");
   assert.match(page, /<h2>orOS Drive \(your folders in the Vault\)<\/h2>/);
   assert.match(page, /<h2>orOS Drive \(οι φάκελοί σου στο Vault\)<\/h2>/);
-});
-
-test("one phone, one mirror (DRIVE-APP): the orOS app stops when the orOS Drive app is installed", () => {
-  const m = read("android", "app", "src", "drive", "AndroidManifest.xml");
-  assert.match(m, /<queries>\s*<package android:name="online\.useoros\.drive" \/>\s*<\/queries>/);
-  const w = read(...JAVA, "DriveWorker.java");
-  assert.match(w, /static final String DRIVE_APP = "online\.useoros\.drive";/);
-  // The check comes before the core is even loaded, and the schedule goes.
-  assert.match(w, /public Result doWork\(\) \{[\s\S]*?if \(handedOver\(getApplicationContext\(\)\)\) \{\s*cancel\(getApplicationContext\(\)\);\s*return Result\.success\(\);\s*\}\s*try \{\s*Drive d = DriveCore\.get/);
-  const a = read(...JAVA, "DriveActivity.java");
-  assert.match(a, /if \(DriveWorker\.handedOver\(this\)\) \{[\s\S]*?R\.string\.drive_handed_over[\s\S]*?getLaunchIntentForPackage\(DriveWorker\.DRIVE_APP\)[\s\S]*?return;\s*\}/);
-  for (const l of ["values", "values-el"]) {
-    const s = read("android", "app", "src", "drive", "res", l, "drive_strings.xml");
-    assert.match(s, /name="drive_handed_over"/);
-    assert.match(s, /name="drive_open_app"/);
-  }
 });

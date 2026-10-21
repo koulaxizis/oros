@@ -23,12 +23,6 @@ def soloApps = new groovy.json.JsonSlurper().parse(file('../solo-apps.json')).ap
 // assetlinks.json keep trusting the app.
 def ks = System.getenv('OROS_KEYSTORE_FILE')
 
-// orOS Drive (DRIVE-A) joins the orOS flavour only when its library is
-// there: android.yml builds libs/orosdrive.aar first (and fails if it
-// cannot); a build without it (F-Droid, a local checkout) is the app
-// without the Drive screen.
-def driveLib = file('libs/orosdrive.aar').exists()
-
 android {
     namespace 'online.useoros.twa'
     compileSdk 36
@@ -60,13 +54,6 @@ android {
         }
     }
     sourceSets {
-        if (driveLib) {
-            getByName('oros') {
-                manifest.srcFile 'src/drive/AndroidManifest.xml'
-                java.srcDir 'src/drive/java'
-                res.srcDir 'src/drive/res'
-            }
-        }
         soloApps.each { id, pkg ->
             getByName(id) {
                 manifest.srcFile "solo-gen/${id}/AndroidManifest.xml"
@@ -127,11 +114,4 @@ dependencies {
     implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.7.4'
     // Health Connect (BR-PHONE v5): steps, water and workouts.
     implementation 'androidx.health.connect:connect-client:1.1.0'
-    // orOS Drive (DRIVE-A), orOS flavour only: the Go core of
-    // koulaxizis/oros-drive bound with gomobile, synced in the
-    // background by WorkManager.
-    if (driveLib) {
-        orosImplementation files('libs/orosdrive.aar')
-        orosImplementation 'androidx.work:work-runtime:2.10.1'
-    }
 }

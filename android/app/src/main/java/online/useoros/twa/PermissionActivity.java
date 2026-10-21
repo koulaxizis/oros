@@ -78,12 +78,18 @@ public class PermissionActivity extends Activity {
         finish();
     }
 
-    /** orOS Drive (DRIVE-A): its folders screen. Only the orOS flavour
-     *  has it (app/src/oros), so it is named, not linked. */
+    /** orOS Drive (DRIVE-APP): the orOS Drive app when it is installed,
+     *  else where to get it (the download page, which names the F-Droid
+     *  repository and the APK). */
     private void drive() {
-        if (PhoneBridge.hasDrive(this)) {
-            startActivity(new Intent().setClassName(this, PhoneBridge.DRIVE_ACTIVITY));
+        Intent open = PhoneBridge.hasDrive(this) ? getPackageManager().getLaunchIntentForPackage(PhoneBridge.DRIVE_APP) : null;
+        if (open == null) {
+            boolean el = java.util.Locale.getDefault().getLanguage().equals("el");
+            open = new Intent(Intent.ACTION_VIEW, Uri.parse("https://useoros.online/download/" + (el ? "?lang=el#drive-el" : "#drive")));
         }
+        try {
+            startActivity(open.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+        } catch (android.content.ActivityNotFoundException ignored) { }
         finish();
     }
 
