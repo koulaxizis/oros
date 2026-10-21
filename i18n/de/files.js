@@ -142,6 +142,7 @@ orosPack("de", "files", {
  "gm.folder.drive": "Aus Google Drive importiert",
  "gm.folder.photos": "Aus Google Fotos importiert",
  "intro.body": "Ordner, die du mit der orOS-Drive-App (Windows, Linux, Android) spiegelst, erscheinen hier. Sie bleiben in der Cloud, bis du sie öffnest, damit dieses Gerät nicht vollläuft.",
+ "intro.get": "orOS Drive herunterladen",
  "intro.title": "Noch keine Computer oder Handys",
  "items": "{n} Elemente",
  "keep": "Auf diesem Gerät behalten",

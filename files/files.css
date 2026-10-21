@@ -661,6 +661,7 @@ dialog label {
 
 .pv-btn:hover { background: var(--accent-soft, #33313d); }
 .pv-btn.primary { background: var(--accent, #6d4aff); color: #fff; border-color: transparent; }
+a.pv-btn.drv-get { text-decoration: none; }
 .pv-btn.primary:hover { background: var(--accent-hover, #7d5aff); }
 
 .pv-x {
