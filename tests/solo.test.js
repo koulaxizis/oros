@@ -322,7 +322,12 @@ test("F-Droid repo (FDROID-1): packages, links, launch version and metadata for 
   // The metadata tool covers exactly the APKs the android workflow publishes
   const M = require(path.join(ROOT, "tools", "fdroid-metadata.js"));
   const l = M.list();
-  assert.deepEqual(l.map((a) => a.apk).sort(), ["oros.apk"].concat(Object.keys(pk).map((id) => "oros-" + id + ".apk")).sort());
+  // orOS Drive (DRIVE-APP) is built from koulaxizis/oros-drive by the same workflow
+  assert.deepEqual(l.map((a) => a.apk).sort(), ["oros.apk", "oros-drive.apk"].concat(Object.keys(pk).map((id) => "oros-" + id + ".apk")).sort());
+  assert.ok(!pk.drive, "a single app called drive would publish a second oros-drive.apk");
+  const dr = l.find((a) => a.id === "drive");
+  assert.equal(dr.pkg, "online.useoros.drive");
+  assert.equal(M.texts(dr, "el").name, "orOS Drive");
   l.forEach((a) => {
     assert.ok(fs.existsSync(a.icon), a.icon);
     ["en", "el"].forEach((lg) => {
@@ -355,7 +360,8 @@ test("F-Droid store listing (FDROID-2): texts, categories, pictures and front pa
       assert.ok(t[l].summary.length <= 80 && !/\.$/.test(t[l].summary), id + " " + l + " summary");
       assert.ok(t[l].description.length > 200 && t[l].description.length < 4000, id + " " + l + " description");
       assert.ok(!/google/i.test(t[l].summary + t[l].description), id + " mentions Google");
-      assert.ok(M.shots(id, l).length >= 2, id + " " + l + " screenshots");
+      // screenshotsLater: an app whose phone screenshots are still to come (orOS Drive, DRIVE-APP wave 5)
+      assert.ok(M.shots(id, l).length >= 2 || t.screenshotsLater === true, id + " " + l + " screenshots");
     });
     assert.ok(M.feature(id), id + " feature.jpg");
   });

@@ -6,8 +6,9 @@ name: F-Droid repository
 # It runs after each "Android app" build on main, takes the signed APKs
 # from the "android-apks" release, and publishes only when the Android
 # shell changed since the last publish (android/, the web manifests and
-# icons, phone.js): the apps' content updates from the web by itself, so
-# a version bump alone must not send every phone an update.
+# icons, phone.js, the orOS Drive pin in .github/oros-drive.env): the
+# apps' content updates from the web by itself, so a version bump alone
+# must not send every phone an update.
 # Store texts and pictures (tools/fdroid-metadata.js, tools/fdroid/)
 # and this workflow are part of that hash too, and a push touching
 # them republishes.
@@ -74,7 +75,7 @@ jobs:
           # version bot (bump-version.yml) stamps it after every release,
           # and that alone must not republish every APK.
           hash=$( {
-            git ls-files -s android phone.js icons/solo icons/icon-512.png .github/workflows/fdroid.yml tools/fdroid-metadata.js tools/fdroid-keep.js tools/fdroid
+            git ls-files -s android phone.js icons/solo icons/icon-512.png .github/oros-drive.env .github/workflows/fdroid.yml tools/fdroid-metadata.js tools/fdroid-keep.js tools/fdroid
             for m in $(git ls-files manifest.webmanifest '*/manifest.webmanifest'); do
               echo "$m $(sed -E '/^[[:space:]]*"version"[[:space:]]*:/d' "$m" | sha256sum | cut -d' ' -f1)"
             done

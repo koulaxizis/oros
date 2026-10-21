@@ -50,12 +50,15 @@ const TEXT = {
 };
 const LOCALE = { en: "en-US", el: "el" };
 
-// Every APK the android workflow publishes: oros.apk and oros-<id>.apk
+// Every APK the android workflow publishes: oros.apk, oros-<id>.apk and
+// oros-drive.apk (orOS Drive, DRIVE-APP: its own source repository)
 function list() {
   const out = [{ id: "oros", pkg: "online.useoros.twa", apk: "oros.apk", icon: path.join(ROOT, "icons", "icon-512.png") }];
   for (const [id, pkg] of Object.entries(APPS)) {
     out.push({ id, pkg, apk: "oros-" + id + ".apk", icon: path.join(ROOT, "icons", "solo", id + "-512.png") });
   }
+  out.push({ id: "drive", pkg: "online.useoros.drive", apk: "oros-drive.apk", icon: path.join(ROOT, "icons", "icon-512.png"),
+    name: "orOS Drive", source: "https://github.com/koulaxizis/oros-drive", web: WEB + "download/" });
   return out;
 }
 
@@ -79,7 +82,7 @@ function feature(id) {
 
 function texts(a, l) {
   const T = TEXT[l];
-  const name = a.id === "oros" ? "orOS" : S.nameOf(a.id, l);
+  const name = a.name || (a.id === "oros" ? "orOS" : S.nameOf(a.id, l));
   const own = store(a.id);
   if (own && own[l] && own[l].summary && own[l].description) {
     return { name, summary: own[l].summary, description: own[l].description };
@@ -103,10 +106,10 @@ function yml(a) {
     "License: MIT",
     "AuthorName: orOS",
     "AuthorWebSite: " + WEB,
-    "WebSite: " + WEB + (a.id === "oros" ? "" : a.id + "/"),
-    "SourceCode: " + SOURCE,
-    "IssueTracker: " + SOURCE + "/issues",
-    "Translation: " + SOURCE,
+    "WebSite: " + (a.web || WEB + (a.id === "oros" ? "" : a.id + "/")),
+    "SourceCode: " + (a.source || SOURCE),
+    "IssueTracker: " + (a.source || SOURCE) + "/issues",
+    "Translation: " + (a.source || SOURCE),
     "Donate: " + DONATE,
     ""
   ].join("\n");

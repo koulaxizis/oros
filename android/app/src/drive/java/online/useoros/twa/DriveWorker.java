@@ -33,6 +33,13 @@ public class DriveWorker extends Worker {
 
     @NonNull @Override
     public Result doWork() {
+        // One phone, one mirror (DRIVE-APP): once the orOS Drive app is
+        // installed it mirrors this phone's folders, and two engines on
+        // the same folders would fight. This one stops for good.
+        if (handedOver(getApplicationContext())) {
+            cancel(getApplicationContext());
+            return Result.success();
+        }
         try {
             Drive d = DriveCore.get(getApplicationContext());
             for (int i = 0; i < 3; i++) {
@@ -46,6 +53,18 @@ public class DriveWorker extends Worker {
             return Result.success();
         }
     }
+
+    /** The orOS Drive app (online.useoros.drive) is on this phone. */
+    static boolean handedOver(Context c) {
+        try {
+            c.getPackageManager().getPackageInfo(DRIVE_APP, 0);
+            return true;
+        } catch (android.content.pm.PackageManager.NameNotFoundException e) {
+            return false;
+        }
+    }
+
+    static final String DRIVE_APP = "online.useoros.drive";
 
     private static Constraints constraints(Context c) {
         SharedPreferences p = c.getSharedPreferences(PREFS, Context.MODE_PRIVATE);

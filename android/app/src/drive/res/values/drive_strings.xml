@@ -57,4 +57,6 @@
     <string name="drive_channel">orOS Drive</string>
     <string name="drive_not_saved_title">Not saved to orOS</string>
     <string name="drive_not_saved_text">%1$s could not be saved to orOS (%2$s). Save it again from the app you used.</string>
+    <string name="drive_handed_over">The orOS Drive app is installed on this phone, so it now backs up your folders and this screen no longer syncs (two apps on the same folders would get in each other\'s way). Add your folders in orOS Drive; files already in the Vault stay where they are.</string>
+    <string name="drive_open_app">Open orOS Drive</string>
 </resources>

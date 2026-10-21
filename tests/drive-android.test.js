@@ -64,7 +64,14 @@ test("every drive string the Java uses exists in English and Greek", () => {
 
 test("android.yml builds the library from a pinned oros-drive commit", () => {
   const y = read(".github", "workflows", "android.yml");
-  assert.match(y, /repository: koulaxizis\/oros-drive\n\s+ref: [0-9a-f]{40}\n/);
+  // The pin lives in .github/oros-drive.env (DRIVE-APP: also the orOS Drive app's version)
+  const env = read(".github", "oros-drive.env");
+  assert.match(env, /^commit=[0-9a-f]{40}$/m);
+  assert.match(env, /^version=\d+\.\d+\.\d+$/m);
+  assert.match(y, /grep -E '\^\(commit\|version\)=' \.github\/oros-drive\.env >> "\$GITHUB_OUTPUT"/);
+  assert.match(y, /repository: koulaxizis\/oros-drive\n\s+ref: \$\{\{ steps\.drive\.outputs\.commit \}\}\n/);
+  assert.match(y, /DRIVE_VERSION: \$\{\{ steps\.drive\.outputs\.version \}\}/);
+  assert.match(y, /apk\/drive\/release\/app-drive-release\.apk/);
   assert.match(y, /gomobile bind -target=android\/arm64,android\/arm,android\/amd64 -androidapi 24 -javapkg online\.useoros\.drive -o \.\.\/android\/app\/libs\/orosdrive\.aar \.\/mobile/);
   assert.match(y, /test -s \.\.\/android\/app\/libs\/orosdrive\.aar/);
   assert.match(read("android", ".gitignore"), /^app\/libs\/orosdrive\.aar$/m);
@@ -115,4 +122,20 @@ test("DRIVE-DL: an empty Drive links to orOS Drive on the download page, EN + EL
   const page = read("download", "index.html");
   assert.match(page, /<h2>orOS Drive \(your folders in the Vault\)<\/h2>/);
   assert.match(page, /<h2>orOS Drive \(οι φάκελοί σου στο Vault\)<\/h2>/);
+});
+
+test("one phone, one mirror (DRIVE-APP): the orOS app stops when the orOS Drive app is installed", () => {
+  const m = read("android", "app", "src", "drive", "AndroidManifest.xml");
+  assert.match(m, /<queries>\s*<package android:name="online\.useoros\.drive" \/>\s*<\/queries>/);
+  const w = read(...JAVA, "DriveWorker.java");
+  assert.match(w, /static final String DRIVE_APP = "online\.useoros\.drive";/);
+  // The check comes before the core is even loaded, and the schedule goes.
+  assert.match(w, /public Result doWork\(\) \{[\s\S]*?if \(handedOver\(getApplicationContext\(\)\)\) \{\s*cancel\(getApplicationContext\(\)\);\s*return Result\.success\(\);\s*\}\s*try \{\s*Drive d = DriveCore\.get/);
+  const a = read(...JAVA, "DriveActivity.java");
+  assert.match(a, /if \(DriveWorker\.handedOver\(this\)\) \{[\s\S]*?R\.string\.drive_handed_over[\s\S]*?getLaunchIntentForPackage\(DriveWorker\.DRIVE_APP\)[\s\S]*?return;\s*\}/);
+  for (const l of ["values", "values-el"]) {
+    const s = read("android", "app", "src", "drive", "res", l, "drive_strings.xml");
+    assert.match(s, /name="drive_handed_over"/);
+    assert.match(s, /name="drive_open_app"/);
+  }
 });

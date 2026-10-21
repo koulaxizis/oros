@@ -56,4 +56,6 @@
     <string name="drive_channel">orOS Drive</string>
     <string name="drive_not_saved_title">Δεν αποθηκεύτηκε στο orOS</string>
     <string name="drive_not_saved_text">Το %1$s δεν αποθηκεύτηκε στο orOS (%2$s). Αποθήκευσέ το ξανά από την εφαρμογή που χρησιμοποίησες.</string>
+    <string name="drive_handed_over">Η εφαρμογή orOS Drive είναι εγκατεστημένη σε αυτό το κινητό, οπότε αυτή κρατά πλέον τα αντίγραφα των φακέλων σου και αυτή η οθόνη δεν συγχρονίζει (δύο εφαρμογές στους ίδιους φακέλους θα μπέρδευαν η μία την άλλη). Πρόσθεσε τους φακέλους σου στο orOS Drive· τα αρχεία που είναι ήδη στο Vault μένουν όπου είναι.</string>
+    <string name="drive_open_app">Άνοιγμα orOS Drive</string>
 </resources>
