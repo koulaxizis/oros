@@ -28,6 +28,14 @@ On `Reports`, choose a `Period` (this week, last month, this year or `Custom`), 
 ## Projects and clients
 On `Projects`, add a `New project` or `New client`. A project has a `Name`, `Client`, `Colour`, `Hourly rate`, an optional `Hours budget` (e.g. 40 or 12:30) and `Billable`. With a budget, the project shows a bar of the hours used: it turns gold from 90 % and red when the budget is exceeded. Leave the rate empty to use the client's rate, or the default from `Settings`. A project with entries can't be deleted; tick `Archived` instead to hide it from the timer and keep its time.
 
+## Minimum charge, overtime and extra charges
+Open a client on `Projects` to set `Minimum billable hours` (e.g. 2 or 1:30) and `Minimum per` `Day`, `Week` or `Month`. A day (or week, or month) with less billable work for that client is charged up to the minimum, and the time beyond it is overtime. `Overtime hourly rate` sets what overtime costs; leave it empty to keep each project's usual rate. Reports show the parts under the table: `Work time`, `Overtime`, `Up to the minimum charge` and the `Total to charge`.
+- Only billable time in the report's filters counts. A day, week or month without work charges nothing.
+- A minimum per week or month counts only for whole weeks or months inside the report's period (for a monthly minimum, pick `This month` or `Last month`). The note above the table says when one was left out.
+- Your entries keep their real times: the minimum and the overtime only change reports, CSV, quotes and invoices.
+
+`Add an extra charge` under the day's entries records a cost beyond the hours, such as fuel or work away from the office: a `Date`, a `Project` (or just a client), `What it is for` and the `Amount`. Extra charges show under the day's entries, are added to the report's amount and listed under it (tap one to edit it), come into the CSV as rows without times, and become their own lines in `Create quote` and `Create invoice`. `Mark … as invoiced` marks them too.
+
 ## Settings
 The gear button opens `Settings`: `Currency`, `Default hourly rate`, a `Daily goal` (shown as a bar under the day) and `Rounding in reports`. Rounding only changes reports and CSV; your entries keep their exact times.
 

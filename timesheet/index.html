@@ -67,7 +67,12 @@
       <div id="goal" hidden><div id="goal-fill"></div></div>
       <ol id="entries"></ol>
       <p class="hint" id="entries-empty" data-i18n="entries.empty">No time logged on this day.</p>
-      <button type="button" class="wide-btn" id="add-entry"></button>
+      <h2 class="sub-h" id="extras-h" hidden></h2>
+      <ol id="extras" hidden></ol>
+      <div class="rep-acts day-acts">
+        <button type="button" class="wide-btn" id="add-entry"></button>
+        <button type="button" class="wide-btn" id="add-extra"></button>
+      </div>
     </section>
 
     <!-- Week grid -->
@@ -100,6 +105,9 @@
       <p class="hint" id="rep-note"></p>
       <div class="grid-wrap"><table id="rep-table" class="rep"></table></div>
       <p class="hint" id="rep-empty" data-i18n="rep.empty">Nothing in this period.</p>
+      <div id="rep-sum" class="rep-sum" hidden></div>
+      <h2 class="sub-h" id="rep-extras-h" hidden></h2>
+      <ul id="rep-extras" class="rep-extras" hidden></ul>
       <div class="rep-acts">
         <button type="button" class="wide-btn" id="rep-csv"></button>
         <button type="button" class="wide-btn" id="rep-sheet" hidden></button>

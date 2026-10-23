@@ -2,7 +2,8 @@
 // orOS Timesheet — .oroshours file (timesheet/package.js,
 // window.OrosTimesheetPackage). The descriptor of Timesheet for the
 // record apps' kit (../recordpkg.js, docs/oros-bundle.md "Record
-// apps"): every client, project and finished time entry in one orOS
+// apps"): every client, project, finished time entry and extra
+// charge in one orOS
 // bundle; opening one ADDS what this device lacks, with its ids.
 // Pure (no DOM, no storage), so the app and `node --test` run the
 // same code.
@@ -14,7 +15,7 @@
 //                            typed, text cleaned and capped), at most
 //                            LIM records per list
 //   DESC.strip(state)        the slice → { ver, clients, projects,
-//                            entries, prefs }: no tombstones (del), no
+//                            entries, extras (only when there is one), prefs }: no tombstones (del), no
 //                            prefs stamp (pm) and no RUNNING entry
 //                            (e === 0): a running timer belongs to the
 //                            device it runs on, so the file holds
@@ -25,14 +26,14 @@
 //   DESC.tombIds(state)      the ids of the tombstones (del: 1)
 //   DESC.previews(state, l)  hours.csv: core.js toCsv over every day
 //                            of the file (its formula guard, ; and BOM)
-//   kindOf(id, state)        "client" | "project" | "entry" | ""
+//   kindOf(id, state)        "client" | "project" | "entry" | "extra" | ""
 // ============================================================
 (function (root) {
   "use strict";
 
   var C = typeof module === "object" && module.exports ? require("./core.js") : root.orosTimesheetCore;
-  var LIM = { clients: 5000, projects: 5000, entries: 200000 };
-  var LISTS = ["clients", "projects", "entries"];
+  var LIM = { clients: 5000, projects: 5000, entries: 200000, extras: 50000 };
+  var LISTS = ["clients", "projects", "entries", "extras"];
 
   function isObj(v) { return !!v && typeof v === "object" && !Array.isArray(v); }
   function capped(v, n) { return Array.isArray(v) ? v.slice(0, n) : []; }
@@ -47,6 +48,7 @@
       clients: capped(data.clients, LIM.clients),
       projects: capped(data.projects, LIM.projects),
       entries: capped(data.entries, LIM.entries),
+      extras: capped(data.extras, LIM.extras),
       prefs: isObj(data.prefs) ? data.prefs : null,
       pm: 0
     });
@@ -54,13 +56,16 @@
   function strip(state) {
     var s = isObj(state) ? state : {};
     var keep = function (x) { return isObj(x) && !x.del; };
-    return JSON.parse(JSON.stringify({
+    var out = {
       ver: C.DATA_VER,
       clients: (Array.isArray(s.clients) ? s.clients : []).filter(keep),
       projects: (Array.isArray(s.projects) ? s.projects : []).filter(keep),
-      entries: (Array.isArray(s.entries) ? s.entries : []).filter(function (x) { return keep(x) && x.e !== 0; }),
-      prefs: C.normPrefs(s.prefs)
-    }));
+      entries: (Array.isArray(s.entries) ? s.entries : []).filter(function (x) { return keep(x) && x.e !== 0; })
+    };
+    var extras = (Array.isArray(s.extras) ? s.extras : []).filter(keep);
+    if (extras.length) out.extras = extras;
+    out.prefs = C.normPrefs(s.prefs);
+    return JSON.parse(JSON.stringify(out));
   }
   function tombIds(state) {
     var out = [];
@@ -84,6 +89,12 @@
       if (x.s < lo) lo = x.s;
       if (x.e > hi) hi = x.e;
     });
+    (d.extras || []).forEach(function (x) {
+      if (x.del) return;
+      var a = C.dayStart(x.d);
+      if (a < lo) lo = a;
+      if (a + 1 > hi) hi = a + 1;
+    });
     if (!isFinite(lo) || !hi) return {};
     return { "hours.csv": C.toCsv(d, C.dayKeyOf(lo), C.dayKeyOf(hi), {}, hi, lang === "el" ? "el" : "en") };
   }
@@ -91,7 +102,7 @@
   // What an id names in a state (Undo tombstones it in that list).
   function kindOf(id, state) {
     var s = isObj(state) ? state : {}, k = "";
-    [["clients", "client"], ["projects", "project"], ["entries", "entry"]].forEach(function (p) {
+    [["clients", "client"], ["projects", "project"], ["entries", "entry"], ["extras", "extra"]].forEach(function (p) {
       (Array.isArray(s[p[0]]) ? s[p[0]] : []).forEach(function (x) { if (!k && isObj(x) && x.id === id && !x.del) k = p[1]; });
     });
     return k;
@@ -102,7 +113,8 @@
     colls: {
       clients: { shape: "array", id: "id", stamp: "m" },
       projects: { shape: "array", id: "id", stamp: "m" },
-      entries: { shape: "array", id: "id", stamp: "m" }
+      entries: { shape: "array", id: "id", stamp: "m" },
+      extras: { shape: "array", id: "id", stamp: "m" }
     },
     norm: norm, strip: strip, tombIds: tombIds, previews: previews,
     merge: function (a, b) { return C.mergeTimesheet(a, b); }
