@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "3.42.01";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "3.42.02";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -3465,6 +3465,31 @@
     });
   }
   appFrames().forEach(cmdWireFrame);
+
+  // Phone, SMS, mail and map links inside an app frame (EXT-1). A
+  // frame that follows a tel: link itself shows Chrome's error page in
+  // the Android app instead of the dialer chooser, and the app is lost
+  // until it is reopened. The shell hands such links to the top window,
+  // where the browser passes them to the phone's apps.
+  var EXT_SCHEME = /^(tel|sms|smsto|mailto|geo):/i;
+  var extHandoffAt = 0;
+  function extWireFrame(frame) {
+    frame.addEventListener("load", function () {
+      var w;
+      try { w = frame.contentWindow; if (!w || !w.document) return; } catch (e) { return; }   // not same-origin
+      w.addEventListener("click", function (e) {
+        if (e.defaultPrevented || e.button !== 0) return;
+        var a = e.target && e.target.closest ? e.target.closest("a[href]") : null;
+        if (!a) return;
+        var href = a.getAttribute("href") || "";
+        if (!EXT_SCHEME.test(href)) return;
+        e.preventDefault();
+        extHandoffAt = Date.now();   // the unsaved-changes guard stays silent
+        window.location.href = href;
+      });
+    });
+  }
+  appFrames().forEach(extWireFrame);
 
   // Ctrl+Alt+Shift+F: the menu opens with the cursor in the field,
   // from the desktop or from inside an app.
@@ -9549,6 +9574,7 @@
     f.setAttribute("title", "orOS application");
     document.getElementById("oros-running").appendChild(f);
     cmdWireFrame(f);
+    extWireFrame(f);
     return f;
   }
   function mtDrop(el) {
@@ -10151,6 +10177,7 @@
   // (offline data is safe in localStorage — nothing to warn about).
   window.addEventListener("beforeunload", function (e) {
     if (osResetting) return;   // factory reset owns this unload
+    if (Date.now() - extHandoffAt < 2000) return;   // EXT-1: a tel:/mailto: handoff, the page stays
     // SH-B8: sync.js arms the dirty flag on EVERY change, connected or
     // not, and only a successful push clears it. Without Dropbox (or
     // while locked) the flag is permanent — and this guard asked
