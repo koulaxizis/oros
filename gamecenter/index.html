@@ -28,6 +28,17 @@
       <div id="today-grid"></div>
     </section>
 
+    <!-- Every game, by kind, to pick and play -->
+    <section class="block" id="all-block" aria-labelledby="all-h">
+      <div class="block-head">
+        <h2 id="all-h" data-i18n="all.title">All games</h2>
+        <span class="block-note" id="all-note"></span>
+      </div>
+      <input type="search" id="all-find" autocomplete="off" spellcheck="false" maxlength="40">
+      <div id="all-groups"></div>
+      <p id="all-none" class="empty" hidden data-i18n="all.none">No game by that name.</p>
+    </section>
+
     <!-- Achievements, computed from the games' own data -->
     <section class="block" id="ach-block" aria-labelledby="ach-h">
       <div class="block-head">
