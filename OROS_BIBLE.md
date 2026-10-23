@@ -1444,7 +1444,7 @@ Multitasking (several live app frames) is an approved EXPERIMENT, off by default
 ```
 oros-calculator-data = { ver:1, troll, trollIntensity (0|1|2), mem (number|null), sciOn,
   sm{ mem, sciOn, troll, trollIntensity },              // ms stamps, LWW per setting
-  history[{ id, expr, res, ts, lied? }] (ts DESC, cap 50),
+  history[{ id, expr, res, ts, lied? }] (ts DESC, cap 50),  // lied: only old entries (TR-1), never written now
   deleted{ id: ts } }                                    // tombstones, pruned 30 days of data time
 ```
 
@@ -2597,6 +2597,7 @@ Every PR that touches app code, every push to main and every night, CI opens **e
 ## Part IX — Decisions log + doctrinal exemptions
 
 ### Decisions (newest first)
+- **2026-10-22 · Calculator Troll mode never lies (TR-1), Chris 17:03 «Troll mode on αλλά με πάντα σωστά αποτελέσματα συνοδευόμενα από ατάκες»:** Troll mode keeps the toggle and its three levels but the answer is ALWAYS the real one; it only adds a quip under the result (`#calc-quip` in Standard, `#sci-quip` in Scientific), picked by `CalcCore.trollQuip(ctx, level, last)`: a line about the answer first (error, bare `=`, `x+0`/`x×1`, 42, unit conversion, zero, sums of small whole numbers, trig, repeated digits, ≥ 1e9, negative, 4+ decimals), else a pool by level (Subtle gentle, Balanced + cheeky, Rampant + roast), never the same key twice in a row. EN/EL in `TROLL_STRINGS`, DE in `i18n/de/calculator.js`. New history entries carry no `lied`; old ones that the former Troll mode changed show a `≈` mark (`calc.history.lied`). This is NOT the rejected Prank Calculator (wrong results). Tests `tests/calculator-core.test.js` (any `shouldLie`/`applyLie` back in `calculator.js` fails them).
 - **2026-10-16 · Notifications with orOS closed (optional Web Push), Chris 23:56 «Ναι σε όλα»:** an explicit, user-approved exception to the no-Google rule, ONLY as this switch (Settings › Notifications › Notifications with orOS closed): OFF by default, opt-in per device, with a clear EN/EL note that the push goes through Google (Chrome, Android), Microsoft (Edge) or Mozilla (Firefox), which see only an encrypted packet (RFC 8291) and its time. Relay boxes are Durable Objects with alarms (#460, 2.71.x); the app side is `webpush.js` (#471, 2.77.00). Nothing else changes: no Google speech, no other Google dependency.
 - **2026-10-16 · App interoperability, Chris 23:35 "Όλα με τη σειρά":** six waves from /mnt/project-files/app-interop/app-interop-report.md, one PR each, auto-continue after each merge: 1 "Send to an app" sheet (BR-SEND), 2 Files opens files in apps, 3 Office apps linked to each other, 4 record apps → Spreadsheet, 5 pictures and sound, 6 small everyday links. One writer per slice stays; no new service.
 
@@ -3349,7 +3350,7 @@ Every PR that touches app code, every push to main and every night, CI opens **e
 - Pet World: F key always feeds kibble, Feed button offers a choice.
 - Meals EL `toast.importBad` says "Meal Planner"; Characters MD export headings always English; Names: Enter/Space on a focused mode tab does nothing; Pixel: size/seed change silently drops hand painting.
 - Quote: reminders treat Sent/Accepted quotes with no due date as due (empty date compares early); PDF fallback prints US dates in EN.
-- Calculator: Troll-mode wrong answers saved/synced with no visible mark (`lied` stored, not shown).
+- ~~Calculator: Troll-mode wrong answers saved/synced with no visible mark (`lied` stored, not shown).~~ Fixed by TR-1 (2026-10-22): Troll mode no longer changes answers; old `lied` entries show `≈`.
 - Gomoku records vs-computer games after undo, Chess does not; Sudoku EL "Ρυθμίσεις" vs Wordle "Επιλογές" for Options.
 
 ## Part X-B — Troubleshooting (known symptoms → cause → fix)
