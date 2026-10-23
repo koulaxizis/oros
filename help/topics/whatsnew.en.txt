@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.42.02
+- Sync: after you sign in to Dropbox (for example with "I already use orOS on another device"), orOS now goes back to Settings › Sync so you can type your passphrase, instead of leaving you on the desktop.
+
 ## Version 3.42.01
 - orOS Drive for Android 0.6.0: it now looks like orOS (its colours, light or dark like your phone) and nothing hides under the phone's top and bottom bars any more. Photos and videos: orOS Drive finds the photo folders of your phone (camera, screenshots, WhatsApp and others); turn on the ones you want, with the photos already in them or only new ones. A folder that is already on can also send its older photos.
 
