@@ -497,7 +497,7 @@ const SUM = require("../assistant/summary.js");
 
 test("summary args: app id, month YYYY-MM (default this month), days 1-31 (default 7)", () => {
   assert.deepEqual(SUM.normArgs({ app: "budget" }, "2026-10-12"), { ok: true, app: "budget", month: "2026-10", days: 7 });
-  assert.deepEqual(SUM.normArgs({ app: "Calendar", days: 14 }, "2026-10-12"), { ok: true, app: "calendar", month: "2026-10", days: 14 });
+  assert.deepEqual(SUM.normArgs({ app: "Calendar", days: 14 }, "2026-10-12"), { ok: true, app: "calendar", month: "2026-10", days: 14, monthSet: false });
   assert.equal(SUM.normArgs({ app: "budget", month: "2026-09" }, "2026-10-12").month, "2026-09");
   ["2026-13", "26-09", "2026-9", "x"].forEach((m) => assert.equal(SUM.normArgs({ app: "budget", month: m }, "2026-10-12").ok, false, m));
   [0, 32, 2.5, "a"].forEach((d) => assert.equal(SUM.normArgs({ app: "todo", days: d }, "2026-10-12").ok, false, String(d)));

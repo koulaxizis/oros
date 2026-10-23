@@ -71,10 +71,11 @@ Ask, for example, "mark the plumber call as done", "move the dentist to Friday a
 - `Apply` (or `Delete`) makes the change. `Don't change` leaves everything as it is. Nothing changes until you press it, even for apps set to `Always share`.
 - After a change the card says what happened and has `Undo`. Undo works until you leave the Assistant; after that, change it back in the app itself.
 - If the item changed in the meantime (for example on another device), nothing is changed and the card says so.
+- The same change to several items (for example "give every event without a label the label Work") comes as one card that lists each item; one `Apply` changes them all, and `Undo` takes them all back.
 
 What it can change:
 - [To-Do](app:todo): mark a task done or not done, move its date, rename it, change its note, delete it.
-- [Calendar](app:calendar): move an event (day, start, end), rename it, change its place or note, delete it.
+- [Calendar](app:calendar): move an event (day, start, end), rename it, change its place, label or note, delete it. It can also list your events by label, or the ones without a label ("which events have no label?"). New labels are made in Calendar.
 - [Budget](app:budget): change an entry's amount, date, category or note, delete it.
 - [Bookmarks](app:bookmarks): rename a bookmark, change its note, delete it.
 - [Contacts](app:contacts): change a contact's name, organisation, birthday or note, add a phone number or e-mail (the old ones stay), delete it.

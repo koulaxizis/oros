@@ -322,6 +322,7 @@ orosPack("de", "calendar", {
  "ser.move.q": "Diesen Termin oder die ganze Serie verschieben?",
  "ser.this": "Dieser Termin",
  "srch.empty": "Keine Termine gefunden",
+ "srch.label": "Label: ",
  "stat.byLabel": "Termine nach Label",
  "stat.kpi.recurring": "Wiederkehrend",
  "stat.kpi.total": "Termine",

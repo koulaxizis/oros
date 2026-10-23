@@ -71,7 +71,7 @@
   // What each app's update may set (the tool's argument names).
   var SETTABLE = {
     todo:      { title: 1, date: 1, note: 1 },
-    calendar:  { title: 1, date: 1, start: 1, end: 1, location: 1, note: 1 },
+    calendar:  { title: 1, date: 1, start: 1, end: 1, location: 1, note: 1, label: 1 },
     budget:    { amount: 1, date: 1, category: 1, note: 1 },
     bookmarks: { title: 1, note: 1 },
     contacts:  { title: 1, org: 1, phone: 1, email: 1, date: 1, note: 1 },
@@ -81,7 +81,7 @@
     plants:    { title: 1, note: 1 }
   };
   // The diff's fields, in the order the card shows them.
-  var VIEW_ORDER = ["title", "column", "kind", "status", "done", "watered", "org", "phone", "email", "birthday", "amount", "date", "due", "start", "end", "category", "location", "url", "labels", "subtasks", "position", "note"];
+  var VIEW_ORDER = ["title", "column", "kind", "status", "done", "watered", "org", "phone", "email", "birthday", "amount", "date", "due", "start", "end", "category", "location", "label", "url", "labels", "subtasks", "position", "note"];
   // Budget's ready categories by the names the model knows (same
   // table as core.js BUDGET_CATS).
   var BUDGET_CATS = {
@@ -185,6 +185,11 @@
       var co = line(args.column, 120);
       if (!co) return bad("column must not be empty.");
       set.column = co;
+    }
+    // Calendar label: a label's name, or "" / "none" to take it off.
+    if (has(args, "label") && typeof args.label === "string") {
+      var lb = line(args.label, 40);
+      set.label = /^(none|no label)$/i.test(lb) ? "" : lb;
     }
     if (has(args, "status") && args.status !== null && args.status !== undefined && args.status !== "") {
       if (STATUS_NAMES.indexOf(args.status) < 0) return bad("status must be one of: " + STATUS_NAMES.join(", ") + ".");
@@ -371,21 +376,54 @@
     for (var i = 0; i < d.events.length; i++) if (isObj(d.events[i]) && d.events[i].id === id) return { ev: d.events[i], i: i };
     return null;
   }
-  function calView(ev) {
+  // The label an event shows: one of the user's own labels
+  // (calendar.js state.labels). Untouched seeds (mtime 0) are stored
+  // with their English name and shown translated (calendar.js
+  // SEED_NAMES), so either name finds them. An id that names no label
+  // (a removed one) shows as no label, as in Calendar.
+  var CAL_SEEDS = {
+    en: { "cal.lbl-personal": "Personal", "cal.lbl-work": "Work", "cal.lbl-family": "Family" },
+    el: { "cal.lbl-personal": "Προσωπικό", "cal.lbl-work": "Εργασία", "cal.lbl-family": "Οικογένεια" }
+  };
+  function foldName(s) {
+    return String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
+  }
+  function calLabels(d) {
+    return (Array.isArray(d.labels) ? d.labels : []).filter(function (l) {
+      return isObj(l) && typeof l.id === "string" && l.id && typeof l.name === "string";
+    });
+  }
+  function calLabelNames(l) {
+    return l.mtime === 0 && has(CAL_SEEDS.en, "cal." + l.id) ? [CAL_SEEDS.en["cal." + l.id], CAL_SEEDS.el["cal." + l.id]] : [l.name];
+  }
+  function calLabelName(d, id) {
+    if (typeof id !== "string" || !id) return "";
+    var l = calLabels(d).filter(function (x) { return x.id === id; })[0];
+    return l ? calLabelNames(l).join(" / ") : "";
+  }
+  function calFindLabel(d, name) {
+    var f = foldName(name), hit = null;
+    calLabels(d).forEach(function (l) {
+      if (!hit && calLabelNames(l).some(function (n) { return foldName(n) === f; })) hit = l;
+    });
+    return hit;
+  }
+  function calView(ev, d) {
     return {
       title: typeof ev.title === "string" ? ev.title : "",
       date: realDate(ev.date),
       start: hm(ev.start || ev.time || ""),
       end: hm(ev.end || ""),
       location: typeof ev.location === "string" ? ev.location : "",
+      label: calLabelName(d, ev.labelId),
       note: typeof ev.note === "string" ? ev.note : ""
     };
   }
-  var CAL_RAW = ["date", "dateEnd", "start", "end", "title", "location", "note"];
+  var CAL_RAW = ["date", "dateEnd", "start", "end", "title", "location", "labelId", "note"];
   function calChange(d, target, ch, now) {
     var h = calFind(d, target);
     if (!h) return bad("That event is no longer in Calendar.");
-    var ev = h.ev, before = calView(ev), title = before.title;
+    var ev = h.ev, before = calView(ev, d), title = before.title;
     var series = !!ev.recur;
     if (ch.action === "complete" || ch.action === "reopen") return bad("A calendar event can't be ticked off.");
     if (ch.action === "delete") {
@@ -440,11 +478,21 @@
     if (has(s, "title")) put("title", s.title.slice(0, 80));
     if (has(s, "location")) put("location", s.location);
     if (has(s, "note")) put("note", s.note.slice(0, 500));
+    if (has(s, "label")) {
+      var lb = s.label ? calFindLabel(d, s.label) : null;
+      if (s.label && !lb) {
+        var names = calLabels(d).map(function (l) { return calLabelNames(l).join(" / "); });
+        return bad("Calendar has no label named \"" + s.label + "\". " +
+          (names.length ? "Its labels: " + names.join(", ") + ". " : "It has no labels. ") +
+          "New labels are made in Calendar (Manage labels): tell the user.");
+      }
+      put("labelId", lb ? lb.id : null);
+    }
     if (!changed) return bad("Nothing would change: the event already looks like that.");
     ev.mtime = stampAfter(now, ev.mtime);
     var next = {};
     CAL_RAW.forEach(function (k) { next[k] = has(ev, k) ? clone(ev[k]) : null; });
-    return { ok: true, title: title, before: before, after: calView(ev), del: false,
+    return { ok: true, title: title, before: before, after: calView(ev, d), del: false,
              undo: { t: "set", app: "calendar", target: { id: ev.id }, prev: prev, next: next } };
   }
   function calUndo(d, u, now) {
@@ -469,7 +517,7 @@
     }
     CAL_RAW.forEach(function (k) {
       var v = u.prev ? u.prev[k] : null;
-      if (v === null || v === undefined) { if (k === "title" || k === "location" || k === "note") h.ev[k] = ""; else h.ev[k] = null; }
+      if (v === null || v === undefined) { if (k === "title" || k === "location" || k === "note") h.ev[k] = ""; else if (k === "labelId" && !has(h.ev, k)) return; else h.ev[k] = null; }
       else h.ev[k] = clone(v);
     });
     h.ev.mtime = stampAfter(now, h.ev.mtime);

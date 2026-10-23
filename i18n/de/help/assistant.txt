@@ -71,10 +71,11 @@ Frag zum Beispiel „Markiere den Anruf beim Klempner als erledigt“, „Versch
 - `Übernehmen` (oder `Löschen`) führt die Änderung aus. `Nicht ändern` lässt alles, wie es ist. Nichts ändert sich, bis du darauf drückst, auch bei Apps auf `Immer teilen`.
 - Nach einer Änderung sagt die Karte, was passiert ist, und hat `Rückgängig`. Rückgängig geht, bis du den Assistenten verlässt; danach änderst du es in der App selbst zurück.
 - Hat sich der Eintrag inzwischen geändert (zum Beispiel auf einem anderen Gerät), wird nichts geändert, und die Karte sagt es.
+- Dieselbe Änderung an mehreren Einträgen (zum Beispiel „gib jedem Termin ohne Label das Label Arbeit") kommt als eine Karte, die jeden Eintrag zeigt; ein `Übernehmen` ändert alle, und `Rückgängig` nimmt alle zurück.
 
 Was er ändern kann:
 - [Aufgaben](app:todo): eine Aufgabe als erledigt oder nicht erledigt markieren, ihr Datum verschieben, sie umbenennen, ihre Notiz ändern, sie löschen.
-- [Kalender](app:calendar): einen Termin verschieben (Tag, Beginn, Ende), umbenennen, Ort oder Notiz ändern, löschen.
+- [Kalender](app:calendar): einen Termin verschieben (Tag, Beginn, Ende), umbenennen, Ort, Label oder Notiz ändern, löschen. Er kann auch deine Termine nach Label auflisten oder die ohne Label („welche Termine haben kein Label?"). Neue Labels legst du im Kalender an.
 - [Budget](app:budget): Betrag, Datum, Kategorie oder Notiz eines Eintrags ändern, ihn löschen.
 - [Lesezeichen](app:bookmarks): ein Lesezeichen umbenennen, seine Notiz ändern, es löschen.
 - [Kontakte](app:contacts): Name, Organisation, Geburtstag oder Notiz eines Kontakts ändern, eine Telefonnummer oder E-Mail hinzufügen (die alten bleiben), ihn löschen.

@@ -4,6 +4,7 @@
    "app": "assistant",
    "files": [
     "assistant/assistant.js",
+    "assistant/edits.js",
     "assistant/summary.js"
    ]
   },
@@ -96,6 +97,7 @@
    "files": [
     "calendar/calendar.js",
     "calendar/package.js",
+    "calendar/search.js",
     "calendar/today.js"
    ]
   },

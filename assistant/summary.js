@@ -15,6 +15,10 @@
 //                                 rounding (OrosTimesheetCore.report)
 //   todoLists(raw, today)        To-Do: open / done / late / due today,
 //                                 in total and per list
+//   calendarEvents(raw, opts)    Calendar: the user's labels with how
+//                                 many events each has, and, with a
+//                                 label ("none" = no label) and/or a
+//                                 month, those events with every field
 //   agenda(rows, today, days)    any app with a Today provider
 //                                 (today/host.js agenda): what is late,
 //                                 today and in the next days
@@ -51,13 +55,14 @@
     if (!isObj(args)) return { ok: false, err: "The arguments must be an object." };
     var app = String(args.app || "").toLowerCase();
     if (!/^[a-z0-9_-]{1,40}$/.test(app)) return { ok: false, err: "app must be an app id from list_apps." };
-    var month = today.slice(0, 7);
+    var month = today.slice(0, 7), monthSet = false;
     if (args.month !== undefined && args.month !== null && args.month !== "") {
       var m = YM.exec(String(args.month).trim());
       if (!m || +m[2] < 1 || +m[2] > 12 || +m[1] < 2000 || +m[1] > 2100) {
         return { ok: false, err: "month must be YYYY-MM." };
       }
       month = m[0];
+      monthSet = true;
     }
     var days = 7;
     if (args.days !== undefined && args.days !== null && args.days !== "") {
@@ -65,7 +70,12 @@
       if (!(n >= 1 && n <= 31) || Math.floor(n) !== n) return { ok: false, err: "days must be a whole number from 1 to 31." };
       days = n;
     }
-    return { ok: true, app: app, month: month, days: days };
+    var out = { ok: true, app: app, month: month, days: days };
+    if (app === "calendar") {
+      out.monthSet = monthSet;
+      if (typeof args.label === "string" && args.label.trim()) out.label = args.label.replace(/\s+/g, " ").trim().slice(0, 40);
+    }
+    return out;
   }
 
   // ---------- Budget ----------
@@ -179,6 +189,83 @@
     return out;
   }
 
+  // ---------- Calendar ----------
+  // Same data as calendar/search.js (oros-calendar-data): the user's
+  // own labels (calendar.js state.labels; untouched seeds, mtime 0,
+  // are stored in English and shown translated, so both names count)
+  // and events[] (deleted events are not there). An event whose
+  // labelId names no label shows as no label, as in Calendar. Feed
+  // rows (birthdays, To-Do…) are not stored here.
+  var CAL_SEEDS = {
+    en: { "cal.lbl-personal": "Personal", "cal.lbl-work": "Work", "cal.lbl-family": "Family" },
+    el: { "cal.lbl-personal": "Προσωπικό", "cal.lbl-work": "Εργασία", "cal.lbl-family": "Οικογένεια" }
+  };
+  var NO_LABEL = /^(none|no label)$/i;
+  function foldName(s) {
+    return String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
+  }
+  function calLabelNames(l) {
+    return l.mtime === 0 && CAL_SEEDS.en["cal." + l.id] ? [CAL_SEEDS.en["cal." + l.id], CAL_SEEDS.el["cal." + l.id]] : [str(l.name, 40)];
+  }
+  // opts: { label?, month?, today }
+  function calendarEvents(raw, opts) {
+    opts = opts || {};
+    var d = isObj(raw) ? raw : {}, byId = {}, labels = [];
+    arr(d.labels).forEach(function (l) {
+      if (!isObj(l) || typeof l.id !== "string" || !l.id || typeof l.name !== "string" || byId[l.id]) return;
+      byId[l.id] = { name: calLabelNames(l).join(" / "), names: calLabelNames(l), events: 0 };
+      labels.push(byId[l.id]);
+    });
+    var events = arr(d.events).filter(function (e) {
+      return isObj(e) && typeof e.id === "string" && typeof e.date === "string" && YMD.test(e.date);
+    });
+    var none = 0;
+    events.forEach(function (e) {
+      var l = typeof e.labelId === "string" ? byId[e.labelId] : null;
+      if (l) l.events++; else none++;
+    });
+    var out = { app: "calendar", events: events.length,
+                labels: labels.map(function (l) { return { name: l.name, events: l.events }; }), no_label: none };
+    if (!opts.label && !opts.month) return out;
+    var want = null;
+    if (opts.label && !NO_LABEL.test(opts.label)) {
+      var f = foldName(opts.label);
+      labels.forEach(function (l) {
+        if (!want && l.names.some(function (n) { return foldName(n) === f; })) want = l;
+      });
+      if (!want) {
+        return { ok: false, err: "Calendar has no label named \"" + opts.label + "\". Its labels: " +
+          (labels.length ? labels.map(function (l) { return l.name; }).join(", ") : "none") + "." };
+      }
+    }
+    var items = [];
+    events.forEach(function (e) {
+      var l = typeof e.labelId === "string" ? byId[e.labelId] : null;
+      if (opts.label && (want ? l !== want : !!l)) return;
+      var end = typeof e.dateEnd === "string" && YMD.test(e.dateEnd) && e.dateEnd > e.date ? e.dateEnd : e.date;
+      var rep = isObj(e.recur);
+      if (opts.month && !rep && (end.slice(0, 7) < opts.month || e.date.slice(0, 7) > opts.month)) return;
+      if (opts.month && rep && e.date.slice(0, 7) > opts.month) return;
+      var it = { title: str(e.title, 160) || "—", date: e.date };
+      if (end !== e.date) it.date_end = end;
+      var st = typeof e.start === "string" ? e.start : typeof e.time === "string" ? e.time : "";
+      if (/^\d{2}:\d{2}$/.test(st)) it.time = st + (typeof e.end === "string" && /^\d{2}:\d{2}$/.test(e.end) ? "–" + e.end : "");
+      it.label = l ? l.name : "";
+      if (str(e.location, 150)) it.location = str(e.location, 150);
+      if (str(e.note, 240)) it.note = str(e.note, 240);
+      if (rep) it.repeats = true;
+      it.target = { id: e.id, date: e.date };       // → a ref (assistant.js)
+      items.push(it);
+    });
+    items.sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : (a.time || "") < (b.time || "") ? -1 : (a.time || "") > (b.time || "") ? 1 : 0; });
+    if (opts.label) out.filter_label = want ? want.name : "none";
+    if (opts.month) out.month = opts.month;
+    out.items = items.slice(0, MAX_ITEMS);
+    out.listed = items.length;
+    if (items.length > MAX_ITEMS) out.more_items = items.length - MAX_ITEMS;
+    return out;
+  }
+
   // ---------- Agenda (Today providers) ----------
   // rows: today/agg.js clean rows { due, time, title, text, kind }.
   function agenda(app, rows, today, days) {
@@ -210,10 +297,12 @@
   var L = {
     en: { inc: "Income", exp: "Expenses", net: "Balance", ent: "entries", h: "h", bill: "billable",
           open: "open", done: "done", late: "late", today: "due today", none: "Nothing in this period.",
-          run: "Running now", more: "+{n} more", uncat: "Uncategorized" },
+          run: "Running now", more: "+{n} more", uncat: "Uncategorized",
+          lbls: "Labels", lbl: "Label", nolbl: "No label" },
     el: { inc: "Έσοδα", exp: "Έξοδα", net: "Υπόλοιπο", ent: "καταχωρήσεις", h: "ώ", bill: "χρεώσιμες",
           open: "ανοιχτές", done: "έγιναν", late: "εκπρόθεσμες", today: "για σήμερα", none: "Τίποτα σε αυτή την περίοδο.",
-          run: "Τρέχει τώρα", more: "+{n} ακόμη", uncat: "Χωρίς κατηγορία" }
+          run: "Τρέχει τώρα", more: "+{n} ακόμη", uncat: "Χωρίς κατηγορία",
+          lbls: "Ετικέτες", lbl: "Ετικέτα", nolbl: "Χωρίς ετικέτα" }
   };
   // A pack language (orosI18n, ../i18n.js) gets its tables here; in Node
   // (tests) there is no window and only en / el exist.
@@ -252,11 +341,15 @@
                  (l.due_today ? ", " + l.due_today + " " + w.today : ""));
       });
       more(s.more_lists);
+    } else if (s.app === "calendar" && Array.isArray(s.labels)) {
+      out.push(w.lbls + ": " + s.labels.map(function (l) { return l.name + " (" + l.events + ")"; })
+        .concat([w.nolbl + " (" + s.no_label + ")"]).join(", "));
+      if (s.filter_label || s.month) out.push([s.month || "", s.filter_label ? w.lbl + ": " + (s.filter_label === "none" ? w.nolbl : s.filter_label) : ""].filter(Boolean).join(" · "));
     }
     if (Array.isArray(s.items)) {
       if (s.from) out.push(s.from + " → " + s.to);
       s.items.forEach(function (it) {
-        out.push([it.date || "", it.time || "", it.title, it.text || ""].filter(Boolean).join(" · ") + (it.late ? " (" + w.late + ")" : ""));
+        out.push([it.date || "", it.time || "", it.title, it.label ? w.lbl + ": " + it.label : "", it.location || "", it.text || it.note || ""].filter(Boolean).join(" · ") + (it.late ? " (" + w.late + ")" : ""));
       });
       more(s.more_items);
       if (!s.items.length) out.push(w.none);
@@ -267,7 +360,7 @@
   var API = {
     VERSION: "1.0.0", OWN: OWN, SEED_NAMES: SEED_NAMES,
     normArgs: normArgs, budgetMonth: budgetMonth, timesheetMonth: timesheetMonth,
-    todoLists: todoLists, agenda: agenda, preview: preview, addDays: addDays, lastDay: lastDay
+    todoLists: todoLists, calendarEvents: calendarEvents, agenda: agenda, preview: preview, addDays: addDays, lastDay: lastDay
   };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   if (root && root.document) root.OrosAssistSummary = API;
