@@ -180,6 +180,13 @@ body {
   flex-shrink: 0;
 }
 .chip-manage { border-style: dashed; color: var(--text-dim); }
+/* Quick filters (All / None / My events): plain text buttons. */
+.chip-acts { display: contents; }
+.chip-act { color: var(--text-dim); font-weight: 600; }
+.chip-sep { width: 1px; align-self: stretch; margin: 4px; background: var(--border); }
+/* No label: an empty ring instead of a colour dot. */
+.chip-nolabel .chip-dot { background: transparent; border: 1.5px dashed var(--text-dim); box-sizing: border-box; }
+.chip.off.chip-nolabel .chip-dot { background: transparent !important; }
 .chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
 
 /* Chip toggle: phones only. Desktop keeps the chips inline. */
