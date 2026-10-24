@@ -1,0 +1,41 @@
+# Household
+Share lists with the people you live with: family, a partner, flatmates. Each person uses their own orOS and nobody needs an account. Everything is encrypted on your devices before it leaves them.
+
+## Getting started
+- Tap `Create a household`, give it a name (for example "Home") and write your name as the others will see it.
+- Tap `+ Invite`. You get a link and a QR code. Send the link, or let the other person scan the code.
+- The other person opens the link and taps `Ask to join`. You (or anyone already in the household) see the request in the household and in your notifications. Tap `Let in`.
+- A household holds up to 12 people. You can be in several households.
+
+## Sharing a list
+- In [To-Do](app:todo), open a list's settings (the pencil on its tab). Under `Household`, pick the household and tap `Share`.
+- The list moves into the household: everyone sees it in their own To-Do, with a small house on its tab, and can add, tick and change tasks.
+- Changes reach the others in a few seconds while orOS is open, and when they next open orOS otherwise. Offline changes are sent when you are back online; two people changing different things at once both keep their change.
+- A task changed last by someone else shows their initials.
+- Labels stay yours: they are not shared.
+- `Stop sharing (keep my own copy)` takes the list out of the household for everyone and leaves you a copy of your own. `Delete list` removes it for everyone.
+- [Meal Planner](app:meals) can send a shopping list straight to a shared list: pick it in the `Add to To-Do` window.
+
+## Invites
+- `The link works for` one day up to 30 days, and `For` one person or several.
+- `Password` is optional: with it, the link alone is not enough. Tell the password in person, not in the same message as the link.
+- `Withdraw` under `Open invites` stops a link at once.
+- Nothing is shared with someone who asks to join until a member accepts them.
+
+## People
+- Tap your own name to change it or your colour.
+- An admin can rename the household, make someone else an admin and remove a person. Removing someone changes the household key, so what is added after that can no longer be read with their old copy.
+- `Leave this household` takes the shared lists off your devices; To-Do keeps your own copy of each.
+- `Delete the household` (admins) removes it for everyone; everyone keeps their own copy of the lists.
+
+## Removed lately
+- A list someone stopped sharing stays here for 30 days. `Share again` puts it back into the household.
+
+## Privacy and safety
+- The orOS server (a small Cloudflare worker) keeps only scrambled data it cannot read, and forgets a household nobody has opened for 180 days.
+- The key stays on your devices and travels with your own sync (Dropbox, WebDAV), so your other devices are in the household too.
+- A household is meant for people you trust: everyone in it can change or delete the shared lists.
+
+## Limits
+- Up to 64 shared lists per household, 300 KB each, 5 MB per household.
+- Reminders for due dates come only from lists of your own, and shared lists are not in the search yet.

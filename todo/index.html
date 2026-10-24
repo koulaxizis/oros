@@ -211,6 +211,27 @@
         <p class="hint" id="l-next-reset"></p>
       </fieldset>
 
+      <!-- Lists shared with a household (todo/house.js, BR-HH; shown inside the shell) -->
+      <fieldset id="l-hh" hidden>
+        <legend data-i18n="hh.title">Household</legend>
+        <div id="l-hh-off">
+          <p class="hint" data-i18n="hh.shareHint">Everyone in the household sees and edits this list from their own orOS.</p>
+          <div class="hh-row">
+            <select id="l-hh-box" data-i18n-title="hh.title"></select>
+            <button type="button" id="l-hh-go" class="ghost" data-i18n="hh.shareGo">Share</button>
+          </div>
+        </div>
+        <div id="l-hh-none">
+          <p class="hint" data-i18n="hh.none">No household yet. Make one in the Household app, then share lists from here.</p>
+          <button type="button" id="l-hh-open" class="ghost" data-i18n="hh.open">Open Household</button>
+        </div>
+        <div id="l-hh-on">
+          <p id="l-hh-in"></p>
+          <p class="hint" data-i18n="hh.hint">Everyone in the household sees and edits this list. Labels stay yours.</p>
+          <button type="button" id="l-hh-stop" class="ghost" data-i18n="hh.stop">Stop sharing (keep my own copy)</button>
+        </div>
+      </fieldset>
+
       <!-- Import from a task platform (todo/platforms.js; shown inside the shell) -->
       <button type="button" id="l-import" class="ghost import-btn" hidden></button>
       <!-- One-time import from Google Tasks (todo/gtasks.js) -->
@@ -287,6 +308,8 @@
   <script src="../bundle.js?v=3.47.00"></script>
   <script src="../recordpkg.js?v=3.47.00"></script>
   <script src="package.js?v=3.47.00"></script>
+  <script src="../household/core.js?v=3.47.00"></script>
+  <script src="house.js?v=3.47.00"></script>
   <script src="todo.js?v=3.47.00"></script>
 </body>
 </html>

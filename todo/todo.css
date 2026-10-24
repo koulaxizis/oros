@@ -1286,3 +1286,20 @@ dialog .import-btn + .import-btn { margin-top: 6px; }
 #todo-gtasks .gt-txt small, #todo-fimp .gt-txt small { opacity: 0.7; }
 #todo-gtasks menu button.primary, #todo-fimp menu button.primary { background: var(--accent); color: var(--bg); }
 #todo-gtasks menu button:disabled, #todo-fimp menu button:disabled { opacity: 0.5; cursor: default; }
+
+/* ---------- Lists shared with a household (BR-HH) ---------- */
+dialog .hh-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+dialog .hh-row select {
+  flex: 1 1 160px; min-width: 0; min-height: 36px; padding: 6px 10px;
+  font: inherit; font-size: 13.5px; color: var(--text);
+  background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+}
+dialog .hh-row select:focus { border-color: var(--accent); outline: none; }
+dialog .hh-row button.ghost { margin-top: 0; }
+#l-hh-in { font-weight: 600; overflow-wrap: anywhere; }
+.tab .t-hh { display: inline-flex; color: var(--accent); }
+.meta .chip-by {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px;
+  font-size: 10px; font-weight: 800; color: #111;
+}

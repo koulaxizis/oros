@@ -175,6 +175,22 @@
       "flt.delete":     "Delete filter",
       "confirm.fltdel": "Delete this saved filter? Its tasks stay where they are.",
       "toast.fltdel":   "Filter deleted",
+      "hh.title":       "Household",
+      "hh.shareHint":   "Everyone in the household sees and edits this list from their own orOS. It is encrypted on your devices.",
+      "hh.shareGo":     "Share",
+      "hh.none":        "No household yet. Make one in the Household app, then share lists from here.",
+      "hh.open":        "Open Household",
+      "hh.sharedIn":    "Shared with {hh}",
+      "hh.hint":        "Everyone in the household sees and edits this list. Labels stay yours.",
+      "hh.stop":        "Stop sharing (keep my own copy)",
+      "hh.by":          "Last changed by {name}",
+      "tab.shared":     "Shared with a household",
+      "confirm.hhdel":  "Delete this list for everyone in the household? The others can bring it back from Household for 30 days.",
+      "confirm.hhstop": "Stop sharing this list? It leaves the household for everyone, and you keep your own copy.",
+      "toast.hhShared": "Now shared with {hh}",
+      "toast.hhStopped":"Sharing stopped. Your own copy is in your lists.",
+      "toast.hhDel":    "List deleted for the household",
+      "toast.hhFail":   "That did not work. Try again in a moment.",
       "seed.general":   "General",
       "seed.groceries": "Groceries",
       "wd.0": "Sunday", "wd.1": "Monday", "wd.2": "Tuesday", "wd.3": "Wednesday",
@@ -302,6 +318,22 @@
       "flt.delete":     "Διαγραφή φίλτρου",
       "confirm.fltdel": "Διαγραφή αυτού του αποθηκευμένου φίλτρου; Οι εργασίες του μένουν όπου είναι.",
       "toast.fltdel":   "Το φίλτρο διαγράφηκε",
+      "hh.title":       "Νοικοκυριό",
+      "hh.shareHint":   "Όλοι στο νοικοκυριό βλέπουν και αλλάζουν αυτή τη λίστα από το δικό τους orOS. Κρυπτογραφείται στις συσκευές σου.",
+      "hh.shareGo":     "Κοινή χρήση",
+      "hh.none":        "Δεν έχεις ακόμα νοικοκυριό. Φτιάξε ένα στην εφαρμογή «Νοικοκυριό» και μετά μοιράσου λίστες από εδώ.",
+      "hh.open":        "Άνοιγμα «Νοικοκυριό»",
+      "hh.sharedIn":    "Κοινή με: {hh}",
+      "hh.hint":        "Όλοι στο νοικοκυριό βλέπουν και αλλάζουν αυτή τη λίστα. Οι ετικέτες μένουν δικές σου.",
+      "hh.stop":        "Διακοπή κοινής χρήσης (κρατάω δικό μου αντίγραφο)",
+      "hh.by":          "Τελευταία αλλαγή: {name}",
+      "tab.shared":     "Κοινή με νοικοκυριό",
+      "confirm.hhdel":  "Διαγραφή της λίστας για όλους στο νοικοκυριό; Οι άλλοι μπορούν να τη φέρουν πίσω από το «Νοικοκυριό» για 30 ημέρες.",
+      "confirm.hhstop": "Διακοπή κοινής χρήσης; Η λίστα φεύγει από το νοικοκυριό για όλους και εσύ κρατάς δικό σου αντίγραφο.",
+      "toast.hhShared": "Τώρα κοινή με: {hh}",
+      "toast.hhStopped":"Η κοινή χρήση σταμάτησε. Το αντίγραφό σου είναι στις λίστες σου.",
+      "toast.hhDel":    "Η λίστα διαγράφηκε για το νοικοκυριό",
+      "toast.hhFail":   "Δεν έγινε. Δοκίμασε ξανά σε λίγο.",
       "seed.general":   "Γενικά",
       "seed.groceries": "Ψώνια",
       "wd.0": "Κυριακή", "wd.1": "Δευτέρα", "wd.2": "Τρίτη", "wd.3": "Τετάρτη",
@@ -777,6 +809,7 @@
         var data = migrate(JSON.parse(raw));
         if (data && Array.isArray(data.lists) && data.lists.length > 0) {
           state = data;
+          lastSaved = raw;
           pruneTombstones(state);
           applyListCycles();      // section 3 — may reset lists
           return;
@@ -797,7 +830,11 @@
 
   // Auto-save: every mutation ends with save() + scheduleRender().
   function save() {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+    var mine;
+    try {
+      mine = JSON.stringify(personal(state));
+      if (mine !== lastSaved) localStorage.setItem(STORAGE_KEY, mine);
+    }
     catch (e) {
       // TD-6: a full disk used to be swallowed here — the task looked
       // saved and was gone at the next start. One inbox line per hour.
@@ -809,6 +846,11 @@
         } else { showToast(t("toast.saveFail"), false); }
       } catch (e2) {}
     }
+    hhPush();
+    // only the person's own lists sync to their cloud (shared ones go
+    // to the household): nothing of theirs changed → nothing to upload
+    if (mine === lastSaved) return;
+    lastSaved = mine;
     if (window.__orosSyncApi) window.__orosSyncApi.dirty();
   }
   function scheduleRender() {
@@ -923,6 +965,147 @@
       if (list.items[i].id === itemId) return list.items[i];
     }
     return null;
+  }
+
+
+  // ---------- 2a. Lists shared with a household (BR-HH) ----------
+  // A shared list is a household document (window.parent.orosHousehold,
+  // household/engine.js); todo/house.js turns it into a list with the
+  // id "tdh-<document id>" and back. Such a list lives only in memory:
+  // it never goes into "oros-todo-data" nor into the person's own cloud
+  // copy (personal()), and every edit leaves through save() → hhPush()
+  // as the fields that changed. Nothing here merges a shared list: the
+  // household merge does, field by field, and hhInject() rebuilds the
+  // list from its result, so the two can never answer each other.
+  var HHo = window.OrosTodoHouse || null, HC = window.OrosHouseCore || null;
+  var lastSaved = null;
+  var hhLast = {};        // document id → the projection last read or sent
+  var hhInfo = {};        // list id → { box, id, hh }
+  var hhWant = null;      // a deep link to a shared list not built yet
+  var hhNoCopy = {};      // documents deleted here: no own copy
+  function hhApi() {
+    if (!HHo || !HC) return null;
+    try {
+      var p = window.parent;
+      return p && p !== window && p.orosHousehold && typeof p.orosHousehold.docs === "function" ? p.orosHousehold : null;
+    } catch (e) { return null; }
+  }
+  function isShared(id) { return !!HHo && HHo.isShared(id); }
+  function personal(st) {
+    var o = {};
+    Object.keys(st).forEach(function (k) { o[k] = st[k]; });
+    o.lists = (st.lists || []).filter(function (l) { return !isShared(l.id); });
+    return o;
+  }
+  function personalCount() { return personal(state).lists.length; }
+  // The person keeps at least one list of their own (load() treats a
+  // state without lists as broken).
+  function keepOneList() {
+    if (personalCount() > 0) return null;
+    var fresh = freshList(t("new.list"));
+    fresh.pos = 0;
+    state.lists.unshift(fresh);
+    return fresh;
+  }
+  function hhSig(l) {
+    return JSON.stringify(HHo.project(l)) + "|" + l.items.map(function (it) { return it.hhBy || ""; }).join(",");
+  }
+  // Rebuilds the shared lists from the household; true when what is on
+  // screen changed. Also turns lists that left a household (this person
+  // stopped sharing, left, was removed) into lists of their own.
+  function hhInject() {
+    var h = hhApi();
+    if (!h || !state) return false;
+    var changed = false, keep = {}, next = [], info = {};
+    state.lists.forEach(function (l) { if (isShared(l.id)) keep[l.id] = l; });
+    h.docs("todo").forEach(function (d) {
+      if (!d.ready) return;
+      var v = h.view(d.box, d.id, ["o"]);
+      if (!v) return;
+      var lid = HHo.PREFIX + d.id, cur = keep[lid], built = HHo.build(v, d.id, cur);
+      info[lid] = { box: d.box, id: d.id, hh: d.hh };
+      hhLast[d.id] = HHo.project(built);
+      if (cur && hhSig(cur) === hhSig(built)) { next.push(cur); return; }
+      if (cur) { built.pos = cur.pos; }
+      next.push(built);
+      changed = true;
+    });
+    Object.keys(keep).forEach(function (id) { if (!info[id]) changed = true; });
+    hhInfo = info;
+    var copies = hhCopies(h);
+    if (changed || copies) {
+      state.lists = state.lists.filter(function (l) { return !isShared(l.id); }).concat(next);
+    }
+    if (copies) save();
+    if (hhWant && listById(hhWant.list)) { var w = hhWant; hhWant = null; setTimeout(function () { openSearchTarget(w); }, 0); }
+    return changed || copies;
+  }
+  function hhCopies(h) {
+    var made = false, now = Date.now();
+    h.archived("todo").forEach(function (a) {
+      if (!a.take) return;
+      if (hhNoCopy[a.id]) { h.dropArchived(a.box, a.id); return; }
+      var id = HHo.COPY + a.id;
+      if (!listById(id)) {
+        var l = HHo.copyOf(HC.view(a.doc, ["o"]), a.id);
+        // newer than any tombstone the share left on these ids
+        stampListNewest(l, now);
+        l.items.forEach(function (it) { stampItemNewest(it, now); delete state.deleted[it.id]; });
+        delete state.deleted[id];
+        l.pos = state.lists.length;
+        state.lists.push(l);
+        state.om = now;
+        made = true;
+      }
+      h.dropArchived(a.box, a.id);
+    });
+    return made;
+  }
+  // Sends what changed in the shared lists since they were last read.
+  function hhPush() {
+    var h = hhApi();
+    if (!h || !state) return;
+    state.lists.forEach(function (l) {
+      var inf = hhInfo[l.id];
+      if (!inf || !hhLast[inf.id]) return;
+      var prev = hhLast[inf.id], cur = HHo.project(l);
+      var d = HC.diffItems(prev.items, cur.items, HHo.FIELDS), m = {}, anyM = false;
+      ["rec", "last", "next"].forEach(function (f) {
+        if (JSON.stringify(prev.m[f]) !== JSON.stringify(cur.m[f])) { m[f] = cur.m[f]; anyM = true; }
+      });
+      hhLast[inf.id] = cur;
+      if (cur.m.t && cur.m.t !== prev.m.t) h.retitle(inf.box, inf.id, cur.m.t);
+      if (d || anyM) h.change(inf.box, inf.id, { set: d ? d.set : {}, del: d ? d.del : [], m: m });
+    });
+  }
+  // A task moved between a list of the person's own and a shared one:
+  // gone from the own lists everywhere (tombstone), or back in them.
+  function hhMoved(item, from, to) {
+    if (!isShared(from.id) && isShared(to.id)) tombstone(item.id);
+    else if (isShared(from.id) && !isShared(to.id)) { delete item.hhBy; stampItemNewest(item, Date.now()); delete state.deleted[item.id]; }
+  }
+  function hhByOf(list, item) {
+    var h = hhApi(), inf = hhInfo[list.id];
+    if (!h || !inf || !item.hhBy || item.hhBy === h.me(inf.box)) return null;
+    return h.member(inf.box, item.hhBy);
+  }
+  var hhQueued = false;
+  function hhRefresh() {
+    if (hhQueued) return;
+    hhQueued = true;
+    setTimeout(function () {
+      hhQueued = false;
+      if (hhInject()) scheduleRender();
+    }, 0);
+  }
+  function hhBoot() {
+    var h = hhApi();
+    if (!h) return;
+    var off = h.on(function (e) {
+      if (e && (e.type === "doc" || e.type === "list" || e.type === "roster" || e.type === "archive")) hhRefresh();
+    });
+    window.addEventListener("pagehide", function () { try { off(); } catch (e) {} });
+    Promise.resolve(h.ready()).then(hhRefresh, function () {});
   }
 
   // ---------- 2b. Cross-device merge engine (v0.4) ----------
@@ -1374,6 +1557,7 @@
   }
   var PEN_SVG = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>';
 
+  var HH_SVG = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>';
   function renderTabs() {
     var tabs = $("tabs");
     tabs.innerHTML = "";
@@ -1405,6 +1589,14 @@
       b.dataset.listId = list.id;
       b.type = "button";
 
+      if (isShared(list.id)) {
+        var hi = document.createElement("span");
+        hi.className = "t-hh";
+        hi.title = t("tab.shared");
+        hi.setAttribute("aria-label", t("tab.shared"));
+        hi.innerHTML = HH_SVG;
+        b.appendChild(hi);
+      }
       var name = document.createElement("span");
       name.textContent = list.name;
       b.appendChild(name);
@@ -1629,7 +1821,8 @@
 
     // meta row: priority + due chip + subtasks + repeat + source list chip
     var sc = Mdl.subCount(item);
-    var hasMeta = item.due || item.recurrence || opts.source || prio < 4 || sc.total;
+    var by = hhByOf(list, item);
+    var hasMeta = item.due || item.recurrence || opts.source || prio < 4 || sc.total || by;
     if (hasMeta) {
       var meta = document.createElement("div");
       meta.className = "meta";
@@ -1675,6 +1868,15 @@
         src.textContent = list.name;
         src.title = list.name;
         meta.appendChild(src);
+      }
+      if (by) {
+        var who = document.createElement("span");
+        who.className = "chip-by";
+        who.style.background = by.color;
+        who.textContent = by.initials;
+        who.title = t("hh.by").replace("{name}", by.name);
+        who.setAttribute("aria-label", who.title);
+        meta.appendChild(who);
       }
       body.appendChild(meta);
     }
@@ -2379,6 +2581,7 @@
       p.from.items.splice(idx, 1);
       to.items.unshift(p.item);
       touchXf(p.item, "list", now);
+      hhMoved(p.item, p.from, to);
       touched[p.from.id] = p.from;
     });
     touched[to.id] = to;
@@ -2398,6 +2601,7 @@
         hit.list.items.splice(hit.list.items.indexOf(hit.item), 1);
         home.items.splice(Math.min(b.idx, home.items.length), 0, hit.item);
         touchXf(hit.item, "list", now2);
+        hhMoved(hit.item, hit.list, home);
         tl[hit.list.id] = hit.list; tl[home.id] = home;
       });
       Object.keys(tl).forEach(function (id) {
@@ -2739,6 +2943,7 @@
     if (hasRec) fillRecFields("l-", list.recurrence);
 
     updateNextResetLabel(list);
+    hhFillDialog(list);
 
     $("dlg-list").showModal();
     setTimeout(function () { $("l-name").focus(); }, 50);
@@ -2755,6 +2960,78 @@
       el.textContent = "";
     }
   }
+
+  // The household part of the list dialog: share a list of one's own,
+  // or see where a shared one lives and stop sharing it.
+  function hhFillDialog(list) {
+    var h = hhApi(), box = $("l-hh");
+    if (!box) return;
+    box.hidden = !h;
+    if (!h) return;
+    var shared = isShared(list.id), hhs = h.list();
+    $("l-hh-on").hidden = !shared;
+    $("l-hh-off").hidden = shared || !hhs.length;
+    $("l-hh-none").hidden = shared || hhs.length > 0;
+    if (shared) {
+      var inf = hhInfo[list.id];
+      $("l-hh-in").textContent = t("hh.sharedIn").replace("{hh}", inf ? inf.hh : "");
+      return;
+    }
+    var sel = $("l-hh-box");
+    sel.textContent = "";
+    hhs.forEach(function (x) {
+      var o = document.createElement("option");
+      o.value = x.box;
+      o.textContent = x.name || "?";
+      sel.appendChild(o);
+    });
+    $("l-hh-go").disabled = false;
+  }
+  function hhShare() {
+    var h = hhApi(), list = listById(editingListId);
+    if (!h || !list || isShared(list.id)) return;
+    saveListDialog();                    // a new name or cycle goes along
+    editingListId = list.id;
+    var box = $("l-hh-box").value, hh = (h.list().filter(function (x) { return x.box === box; })[0] || {}).name || "";
+    var proj = HHo.project(list);
+    $("l-hh-go").disabled = true;
+    Promise.resolve(h.share(box, "todo", list.name, { set: proj.items, m: { rec: proj.m.rec, last: proj.m.last, next: proj.m.next } })).then(function (id) {
+      // the list leaves the person's own lists on every device of theirs
+      if (listById(list.id)) {
+        tombstone(list.id);
+        list.items.forEach(function (it) { tombstone(it.id); });
+        state.lists = state.lists.filter(function (l) { return l.id !== list.id; });
+        keepOneList();
+        state.om = Date.now();
+      }
+      undoSnapshot = null; undoFn = null;
+      hhInject();
+      if (listById(HHo.PREFIX + id)) setActiveList(HHo.PREFIX + id);
+      editingListId = null;
+      $("dlg-list").close();
+      save(); renderAll();
+      showToast(t("toast.hhShared").replace("{hh}", hh), false);
+    }, function () {
+      $("l-hh-go").disabled = false;
+      showToast(t("toast.hhFail"), false);
+    });
+  }
+  function hhStop(list, drop) {
+    var h = hhApi(), inf = hhInfo[list.id];
+    if (!h || !inf) return;
+    if (drop) hhNoCopy[inf.id] = 1;
+    editingListId = null;
+    $("dlg-list").close();
+    undoSnapshot = null; undoFn = null;
+    Promise.resolve(h.unshare(inf.box, inf.id)).then(function () {
+      hhInject();
+      save(); renderAll();
+      if (!drop && listById(HHo.COPY + inf.id)) setActiveList(HHo.COPY + inf.id);
+      renderAll();
+      showToast(t(drop ? "toast.hhDel" : "toast.hhStopped"), false);
+    }, function () { showToast(t("toast.hhFail"), false); });
+  }
+  function hhDelete(list) { confirmDialog("confirm.hhdel", function () { hhStop(list, true); }); }
 
   function createList() {
     var list = freshList(t("new.list"));
@@ -2888,6 +3165,7 @@
       if (e.target.closest && e.target.closest(".t-rename")) return;
       if (document.querySelector("dialog[open]")) return;
       if (state.lists.length < 2) return;        // nothing to reorder
+      if (isShared(list.id)) return;             // shared lists keep their place at the end
 
       var started = false;
       var sx = e.clientX, sy = e.clientY;
@@ -3361,7 +3639,7 @@
 
   function sliceGet() {
     // Canonical copy (TD-4): what the merge would return for this state.
-    return canonState(state);
+    return canonState(personal(state));
   }
 
   // data  — merged result (or plain remote on legacy LWW paths)
@@ -3371,12 +3649,15 @@
     data = migrate(JSON.parse(JSON.stringify(data || null)));
     if (!data || !Array.isArray(data.lists) || data.lists.length === 0) return;
     // Echo: nothing new → no rewrite, no re-render.
-    if (JSON.stringify(canonState(data)) === JSON.stringify(canonState(state))) return;
+    if (JSON.stringify(canonState(data)) === JSON.stringify(canonState(personal(state)))) return;
+    var shared = state.lists.filter(function (l) { return isShared(l.id); });
     window.__orosSyncApi._suppress = true;
     try {
       state = data;
       pruneTombstones(state);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      lastSaved = JSON.stringify(state);
+      localStorage.setItem(STORAGE_KEY, lastSaved);
+      state.lists = state.lists.concat(shared);
       applyListCycles();               // may fast-forward missed cycles
     } finally {
       window.__orosSyncApi._suppress = false;
@@ -3618,24 +3899,33 @@
       var list = listById(editingListId);
       if (!list) return;
 
+      if (isShared(list.id)) { hhDelete(list); return; }
       confirmDialog("confirm.listdel", function () {
         pushUndo("toast.listdel");
         tombstone(list.id);
         list.items.forEach(function (it) { tombstone(it.id); });   // cascade
         state.lists = state.lists.filter(function (l) { return l.id !== list.id; });
 
-        if (state.lists.length === 0) {
-          var fresh = freshList(t("new.list"));
-          fresh.pos = 0;
-          state.lists.push(fresh);
-          undoFreshListId = fresh.id;
-        }
+        var fresh = keepOneList();
+        if (fresh) undoFreshListId = fresh.id;
         state.om = Date.now();
         editingListId = null;
 
         $("dlg-list").close();
         save(); renderAll();
       });
+    });
+
+    // Household part of the list dialog
+    $("l-hh-go").addEventListener("click", hhShare);
+    $("l-hh-stop").addEventListener("click", function () {
+      var list = listById(editingListId);
+      if (list && isShared(list.id)) confirmDialog("confirm.hhstop", function () { hhStop(list, false); });
+    });
+    $("l-hh-open").addEventListener("click", function () {
+      editingListId = null;
+      $("dlg-list").close();
+      try { window.parent.__orosOpenAt("household", null); } catch (e) {}
     });
 
     // Recurrence toggles (item + list editors)
@@ -3882,7 +4172,9 @@
   var RP = window.OrosRecordPkg || null, TPK = window.OrosTodoPackage || null;
   var recFile = RP && TPK && window.OrosBundle ? RP.ui(TPK.DESC, {
     lang: function () { return LANG === "el" ? "el" : "en"; },
-    get: function () { return canonState(state); },
+    // the person's own lists (a list shared with a household is theirs
+    // only in part; a file of one comes in as a list of their own)
+    get: function () { return canonState(personal(state)); },
     title: function () { return "To-Do"; },
     set: function (next, info) {
       var data = migrate(JSON.parse(JSON.stringify(next)));
@@ -3899,7 +4191,10 @@
       });
       if (listsAdded) { data.lists.forEach(function (l, i) { l.pos = i; }); data.om = now; }
       if (data.labels.some(function (lb) { return added[lb.id]; })) data.labels.forEach(function (lb, i) { lb.pos = i; });
+      data.lists.forEach(function (l) { if (isShared(l.id)) l.id = HHo.COPY + HHo.docOf(l.id); });
+      var shared = state.lists.filter(function (l) { return isShared(l.id); });
       state = data;
+      state.lists = state.lists.concat(shared);
       pruneTombstones(state);
       applyListCycles();
       if (!listById(view.activeList)) setActiveList(state.lists[0].id);
@@ -3954,6 +4249,7 @@
   // ---------- Boot ----------
   load();
   loadView();
+  hhBoot();
   applyI18n();
   paintStaticAria();
   populateWeekdaySelects();
@@ -4175,6 +4471,7 @@
       return;
     }
     if (t && t.done) { doneFromToday(t.done); return; }
+    if (t && typeof t.list === "string" && isShared(t.list) && !listById(t.list)) { hhWant = t; hhRefresh(); return; }
     if (!t || typeof t.list !== "string" || !listById(t.list)) return;
     // A dialog in progress (maybe with unsaved edits) wins: no jump.
     if (document.querySelector("dialog[open]")) return;

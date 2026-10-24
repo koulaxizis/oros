@@ -2,8 +2,8 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 33558 of 33566 (99%)
-- Help pages: 147 of 147 (100%)
+- Strings: 33728 of 33736 (99%)
+- Help pages: 148 of 148 (100%)
 - Shown in the language list: yes
 
 Apps marked "English for now" do not load language packs yet: their
@@ -61,6 +61,7 @@ text is still written in the code. They switch over wave by wave
 | health | 100% | 597 / 597 |
 | help | 100% | 15 / 15 |
 | hexagon | 100% | 59 / 59 |
+| household | 100% | 111 / 111 |
 | invoices | 100% | 531 / 531 |
 | jigsaw | 100% | 85 / 85 |
 | kanban | 100% | 273 / 273 |
@@ -87,7 +88,7 @@ text is still written in the code. They switch over wave by wave
 | music | 100% | 432 / 432 |
 | names | 100% | 40 / 40 |
 | netizen | 100% | 121 / 121 |
-| newsletter | 100% | 817 / 817 |
+| newsletter | 100% | 854 / 854 |
 | nonogram | 100% | 70 / 70 |
 | notes | 100% | 173 / 173 |
 | oracle | 100% | 38 / 38 |
@@ -114,9 +115,9 @@ text is still written in the code. They switch over wave by wave
 | scanpdf | 100% | 300 / 300 |
 | scores | 100% | 147 / 147 |
 | settings | 100% | 525 / 525 |
-| share | 100% | 179 / 179 |
+| share | 100% | 184 / 184 |
 | shelf | 100% | 291 / 291 |
-| shell | 100% | 901 / 901 |
+| shell | 100% | 902 / 902 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 49 / 49 |
 | sky | 100% | 383 / 383 |
@@ -141,7 +142,7 @@ text is still written in the code. They switch over wave by wave
 | time | 100% | 410 / 410 |
 | timesheet | 100% | 293 / 293 |
 | today | 100% | 88 / 88 |
-| todo | 100% | 211 / 211 |
+| todo | 100% | 227 / 227 |
 | together | 100% | 289 / 289 |
 | travel | 100% | 555 / 555 |
 | trees | 100% | 76 / 76 |

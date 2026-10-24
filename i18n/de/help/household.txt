@@ -1,0 +1,41 @@
+# Haushalt
+Teile Listen mit den Menschen, mit denen du wohnst: Familie, Partner, Mitbewohner. Jede Person nutzt ihr eigenes orOS, und niemand braucht ein Konto. Alles wird auf deinen Geräten verschlüsselt, bevor es sie verlässt.
+
+## Erste Schritte
+- Tippe auf `Haushalt anlegen`, gib ihm einen Namen (zum Beispiel „Zuhause“) und schreib deinen Namen, wie die anderen ihn sehen.
+- Tippe auf `+ Einladen`. Du bekommst einen Link und einen QR-Code. Schick den Link oder lass die andere Person den Code scannen.
+- Die andere Person öffnet den Link und tippt auf `Beitritt anfragen`. Du (oder jemand, der schon im Haushalt ist) siehst die Anfrage im Haushalt und in deinen Benachrichtigungen. Tippe auf `Hereinlassen`.
+- Ein Haushalt fasst bis zu 12 Personen. Du kannst in mehreren Haushalten sein.
+
+## Eine Liste teilen
+- Öffne in [Aufgaben](app:todo) die Einstellungen einer Liste (der Stift auf ihrem Reiter). Wähle unter `Haushalt` den Haushalt und tippe auf `Teilen`.
+- Die Liste wandert in den Haushalt: Alle sehen sie in ihren eigenen Aufgaben, mit einem kleinen Haus auf dem Reiter, und können Aufgaben hinzufügen, abhaken und ändern.
+- Änderungen erreichen die anderen in wenigen Sekunden, solange orOS offen ist, sonst beim nächsten Öffnen. Offline-Änderungen gehen raus, sobald du wieder online bist; ändern zwei Personen gleichzeitig verschiedene Dinge, bleiben beide Änderungen.
+- Eine Aufgabe, die zuletzt jemand anderes geändert hat, zeigt seine Initialen.
+- Labels bleiben deine: Sie werden nicht geteilt.
+- `Nicht mehr teilen (eigene Kopie behalten)` nimmt die Liste für alle aus dem Haushalt und lässt dir eine eigene Kopie. `Liste löschen` entfernt sie für alle.
+- Der [Essensplaner](app:meals) kann eine Einkaufsliste direkt an eine geteilte Liste schicken: Wähle sie im Fenster `Zu Aufgaben hinzufügen`.
+
+## Einladungen
+- `Der Link gilt für` einen Tag bis 30 Tage, und `Für` eine oder mehrere Personen.
+- `Passwort` ist optional: Damit reicht der Link allein nicht. Sag das Passwort persönlich, nicht in derselben Nachricht wie den Link.
+- `Zurückziehen` unter `Offene Einladungen` stoppt einen Link sofort.
+- Mit jemandem, der beitreten möchte, wird nichts geteilt, bis ein Mitglied ihn hereinlässt.
+
+## Personen
+- Tippe auf deinen eigenen Namen, um ihn oder deine Farbe zu ändern.
+- Ein Admin kann den Haushalt umbenennen, jemand anderen zum Admin machen und eine Person entfernen. Das Entfernen ändert den Schlüssel des Haushalts, sodass alles, was danach dazukommt, mit der alten Kopie nicht mehr lesbar ist.
+- `Diesen Haushalt verlassen` nimmt die geteilten Listen von deinen Geräten; Aufgaben behält von jeder eine eigene Kopie.
+- `Haushalt löschen` (Admins) entfernt ihn für alle; alle behalten ihre eigene Kopie der Listen.
+
+## Kürzlich entfernt
+- Eine Liste, die jemand nicht mehr teilt, bleibt hier 30 Tage. `Wieder teilen` bringt sie zurück in den Haushalt.
+
+## Privatsphäre und Sicherheit
+- Der orOS-Server (ein kleiner Cloudflare-Worker) speichert nur unlesbare Daten und vergisst einen Haushalt, den 180 Tage niemand geöffnet hat.
+- Der Schlüssel bleibt auf deinen Geräten und reist mit deiner eigenen Synchronisierung (Dropbox, WebDAV), sodass auch deine anderen Geräte im Haushalt sind.
+- Ein Haushalt ist für Menschen, denen du vertraust: Alle darin können die geteilten Listen ändern oder löschen.
+
+## Grenzen
+- Bis zu 64 geteilte Listen pro Haushalt, je 300 KB, 5 MB pro Haushalt.
+- Erinnerungen an Fälligkeiten kommen nur aus deinen eigenen Listen, und geteilte Listen sind noch nicht in der Suche.
