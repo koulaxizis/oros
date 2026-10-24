@@ -127,6 +127,17 @@
       "set.remindHint": "Reminders appear while orOS is open (also with this app closed). With orOS closed they wait for the next time you open it.",
       "set.lead": "Warn me before vaccines, deworming and rechecks", "set.lead0": "Only on the day",
       "set.leadN": "{n} days before", "set.lead1": "1 day before",
+      "hh.sec": "Household", "hh.own": "Only mine", "hh.set": "Our pets",
+      "hh.share.t": "Share with a household",
+      "hh.share.x": "Everyone in the household gets the same pets and health book in their own Pet Health Book: a vaccine, a walk to the vet or a weight one person logs reaches everyone, and the reminders come once. Your own book stays under “Only mine”.",
+      "hh.which": "Household", "hh.go": "Share", "hh.open": "Open Household",
+      "hh.nohh": "Make or join a household first, in the Household app.",
+      "hh.in": "Shared in {hh}: what you log reaches everyone.",
+      "hh.stop.t": "Stop sharing",
+      "hh.stop.x": "The pets leave {hh} for everyone, and you keep a copy in your own book. The others can bring them back from Household for 30 days.",
+      "hh.by": "Written by {n}",
+      "toast.hhShared": "Shared with {hh}", "toast.hhStopped": "Sharing stopped. The pets are now in your own book.",
+      "toast.hhFail": "Could not reach the household. Try again.",
       "set.data": "Your pets", "set.export": "Export", "set.import": "Import", "set.close": "Close",
       "set.osave": "orOS file (.orospet)", "set.oopen": "Open orOS file…", "set.ofolder": "Unzipped orOS folder…",
       "toast.undo": "Undo", "toast.added": "{name} added", "toast.saved": "Saved", "toast.deleted": "{name} deleted",
@@ -227,6 +238,17 @@
       "set.remindHint": "Οι υπενθυμίσεις εμφανίζονται όσο το orOS είναι ανοιχτό (και με κλειστή αυτή την εφαρμογή). Με κλειστό το orOS περιμένουν το επόμενο άνοιγμα.",
       "set.lead": "Ειδοποίηση πριν από εμβόλια, αποπαρασιτώσεις και επανεξετάσεις", "set.lead0": "Μόνο την ίδια μέρα",
       "set.leadN": "{n} μέρες πριν", "set.lead1": "1 μέρα πριν",
+      "hh.sec": "Νοικοκυριό", "hh.own": "Μόνο τα δικά μου", "hh.set": "Τα ζώα μας",
+      "hh.share.t": "Κοινή χρήση με νοικοκυριό",
+      "hh.share.x": "Όλοι στο νοικοκυριό έχουν τα ίδια ζώα και το ίδιο βιβλιάριο υγείας στο δικό τους Βιβλιάριο Υγείας Ζώων: ένα εμβόλιο, μια επίσκεψη στον κτηνίατρο ή ένα ζύγισμα που καταγράφει ένας φτάνει σε όλους, και οι υπενθυμίσεις έρχονται μία φορά. Το δικό σου βιβλιάριο μένει στο «Μόνο τα δικά μου».",
+      "hh.which": "Νοικοκυριό", "hh.go": "Κοινή χρήση", "hh.open": "Άνοιγμα Νοικοκυριού",
+      "hh.nohh": "Φτιάξε πρώτα ένα νοικοκυριό ή μπες σε ένα, από την εφαρμογή Νοικοκυριό.",
+      "hh.in": "Κοινό στο «{hh}»: ό,τι καταγράφεις φτάνει σε όλους.",
+      "hh.stop.t": "Διακοπή κοινής χρήσης",
+      "hh.stop.x": "Τα ζώα φεύγουν από το «{hh}» για όλους και εσύ κρατάς αντίγραφο στο δικό σου βιβλιάριο. Οι άλλοι μπορούν να τα φέρουν πίσω από το Νοικοκυριό για 30 ημέρες.",
+      "hh.by": "Το έγραψε: {n}",
+      "toast.hhShared": "Κοινό με «{hh}»", "toast.hhStopped": "Η κοινή χρήση σταμάτησε. Τα ζώα είναι τώρα στο δικό σου βιβλιάριο.",
+      "toast.hhFail": "Δεν έγινε σύνδεση με το νοικοκυριό. Δοκίμασε ξανά.",
       "set.data": "Τα ζώα σου", "set.export": "Εξαγωγή", "set.import": "Εισαγωγή", "set.close": "Κλείσιμο",
       "set.osave": "Αρχείο orOS (.orospet)", "set.oopen": "Άνοιγμα αρχείου orOS…", "set.ofolder": "Αποσυμπιεσμένος φάκελος orOS…",
       "toast.undo": "Αναίρεση", "toast.added": "Προστέθηκε: {name}", "toast.saved": "Αποθηκεύτηκε", "toast.deleted": "Διαγράφηκε: {name}",
@@ -383,21 +405,27 @@
       try {
         var parsed = JSON.parse(raw);
         if (parsed && typeof parsed === "object" && Array.isArray(parsed.pets)) {
-          data = canonical(parsed);
+          data = pdata = canonical(parsed);
           return;
         }
       } catch (e) {}
       try { localStorage.setItem(STORAGE_KEY + "-broken", raw); } catch (e) {}
       try { console.error("[orOS] petcare: unreadable data copied to " + STORAGE_KEY + "-broken"); } catch (e) {}
     }
-    data = emptyData();
+    data = pdata = emptyData();
   }
 
   var saveFailShown = false;
+  // A shared book on screen: the change goes to the household instead.
   function save() {
     data = canonical(data);
+    if (HS && HS.active()) { HS.push(data); return; }
+    pdata = data;
+    saveOwn();
+  }
+  function saveOwn() {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(pdata));
       saveFailShown = false;
     } catch (e) {
       if (!saveFailShown) { saveFailShown = true; showToast(t("toast.save")); }   // R30
@@ -417,7 +445,8 @@
       tab: p.tab === "pets" ? "pets" : "up",
       pet: typeof p.pet === "string" && C.ID_RE.test(p.pet) ? p.pet : null,
       sub: SUBS.indexOf(p.sub) >= 0 ? p.sub : "info",
-      filter: FILTERS.indexOf(p.filter) >= 0 ? p.filter : "all"
+      filter: FILTERS.indexOf(p.filter) >= 0 ? p.filter : "all",
+      wh: HS && HS.okKey(p.wh) ? p.wh : ""
     };
   }
   var prefsTimer = null;
@@ -425,6 +454,167 @@
   function savePrefsNow() {
     clearTimeout(prefsTimer); prefsTimer = null;
     try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); } catch (e) {}
+  }
+
+  // ---------- 2b. Household (BR-HH wave 7c) ----------
+  // Sharing copies the book into a household document (petcare/house.js);
+  // the own book stays under "Only mine". While a shared book is on
+  // screen, `data` is that copy, in memory only, and every change leaves
+  // as the records that changed. Stop sharing leaves the stopper a copy.
+  var pdata = null;       // the own book (stored and synced)
+  var HS = (window.OrosHouseShare && window.OrosPetcareHouse && window.OrosPetcareHouse.whole && window.OrosHouseCore) ? window.OrosHouseShare.attach({
+    kind: "petcare",
+    whole: window.OrosPetcareHouse.whole,
+    adopt: function (copy) {
+      pdata = canonical(C.merge(pdata, copy));
+      if (!HS.active()) data = pdata;
+      saveOwn();
+    }
+  }) : null;
+  var HH_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-5h4v5"/></svg>';
+  function hhOn() { return !!(HS && HS.api()); }
+  function ownEmpty() { return !pdata.pets.length; }
+  function hhPick() {
+    var k = HS ? HS.pick(prefs.wh, ownEmpty()) : "";
+    data = k ? HS.get(k).data : pdata;
+  }
+  function hhSwitch(key) {
+    prefs.wh = key || "own";
+    prefs.pet = null;
+    savePrefsNow();
+    hhPick();
+    render();
+  }
+  function renderSets() {
+    var box = $("sets");
+    if (!box) return;
+    box.innerHTML = "";
+    var keys = HS ? HS.keys() : [], act = HS ? HS.active() : "";
+    if (!keys.length || (keys.length === 1 && ownEmpty() && act)) { box.hidden = true; return; }
+    box.hidden = false;
+    var chip = function (key, label, house) {
+      var b = el("button", "chip" + (act === key ? " on" : ""));
+      b.type = "button";
+      if (house) b.insertAdjacentHTML("beforeend", HH_SVG);
+      b.appendChild(document.createTextNode(label));
+      b.setAttribute("aria-pressed", act === key ? "true" : "false");
+      b.addEventListener("click", function () { if (HS.active() !== key) hhSwitch(key); });
+      box.appendChild(b);
+    };
+    chip("", t("hh.own"), false);
+    keys.forEach(function (k) { chip(k, HS.get(k).t || t("hh.set"), true); });
+  }
+  // Who wrote a record last (another member only: the initials).
+  function hhByChip(id) {
+    if (!HS || !HS.active()) return null;
+    var g = HS.get(HS.active()), mid = g && g.by[id];
+    if (!mid || mid === HS.me()) return null;
+    var m = HS.member(mid);
+    if (!m) return null;
+    var c = el("span", "by-chip", m.initials);
+    c.title = t("hh.by", { n: m.name });
+    c.setAttribute("aria-label", c.title);
+    return c;
+  }
+  // Settings › Household: share the own book, or stop sharing.
+  function hhSettings(dlg) {
+    if (!hhOn()) return;
+    var act = HS.active(), g = act ? HS.get(act) : null;
+    dlg.appendChild(el("div", "dlg-lbl", t("hh.sec")));
+    dlg.appendChild(el("p", "dlg-sub", g ? t("hh.in", { hh: g.hh || g.t }) : t("hh.share.x")));
+    var row = el("div", "dlg-actions tight");
+    var b = button(t(g ? "hh.stop.t" : "hh.share.t"), "", function () { dlg.close(); hhAsk(); });
+    b.id = "pc-hh";
+    row.appendChild(b);
+    dlg.appendChild(row);
+  }
+  function hhAsk() {
+    if (!hhOn()) return;
+    var act = HS.active(), mode = act ? "stop" : "share", g = act ? HS.get(act) : {}, hhs = HS.households();
+    var dlg = makeDialog("pc-hhdlg");
+    dlg.appendChild(el("div", "dlg-title", t("hh." + mode + ".t")));
+    dlg.appendChild(el("p", "dlg-sub", mode === "share" ? (hhs.length ? t("hh.share.x") : t("hh.nohh"))
+                                                        : t("hh.stop.x", { hh: g.hh || g.t || "" })));
+    var sel = el("select");
+    sel.id = "pc-hhbox";
+    hhs.forEach(function (x) { var o = el("option", "", x.name || "?"); o.value = x.box; sel.appendChild(o); });
+    if (mode === "share" && hhs.length > 1) dlg.appendChild(field(t("hh.which"), sel, "pc-hhbox"));
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("ed.cancel"), "", function () { dlg.close(); }));
+    var ok;
+    if (mode === "share" && !hhs.length) {
+      ok = button(t("hh.open"), "primary", function () {
+        dlg.close();
+        try { window.parent.__orosOpenAt("household", null); } catch (e) {}
+      });
+    } else {
+      ok = button(t(mode === "share" ? "hh.go" : "hh.stop.t"), "primary", function () {
+        ok.disabled = true;
+        var fail = function () { ok.disabled = false; showToast(t("toast.hhFail")); };
+        if (mode === "share") {
+          var box = sel.value, x = hhs.filter(function (y) { return y.box === box; })[0] || {};
+          HS.share(box, x.name || t("hh.set"), pdata).then(function (key) {
+            prefs.wh = key;
+            prefs.pet = null;
+            savePrefsNow();
+            hhPick();
+            render();
+            dlg.close();
+            showToast(t("toast.hhShared", { hh: x.name || "" }));
+          }, fail);
+          return;
+        }
+        HS.unshare().then(function () {
+          prefs.wh = "own";
+          prefs.pet = null;
+          savePrefsNow();
+          hhPick();
+          render();
+          dlg.close();
+          showToast(t("toast.hhStopped"));
+        }, fail);
+      });
+    }
+    ok.id = "pc-hhok";
+    acts.appendChild(ok);
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+  }
+  // A pet in another book (own or shared): show that book.
+  function hhFind(petId) {
+    if (!HS || petById(petId)) return;
+    var at = [""].concat(HS.keys()).filter(function (key) {
+      var d = key ? HS.get(key).data : pdata;
+      return d.pets.some(function (p) { return p.id === petId; });
+    })[0];
+    if (at === undefined) return;
+    prefs.wh = at || "own";
+    savePrefsNow();
+    hhPick();
+  }
+  var hhQueued = false;
+  function hhRefresh() {
+    if (hhQueued || !HS) return;
+    hhQueued = true;
+    setTimeout(function () {
+      hhQueued = false;
+      var before = data;
+      var changed = HS.inject();
+      hhPick();
+      if (document.querySelector("dialog[open]")) { renderSets(); pendingRender = true; return; }   // what is being typed stays (SS-4)
+      if (changed || data !== before) render();
+      else renderSets();
+    }, 0);
+  }
+  function hhBoot() {
+    var h = HS && HS.api();
+    if (!h) return;
+    var off = h.on(function (e) {
+      if (e && (e.type === "doc" || e.type === "list" || e.type === "roster" || e.type === "archive")) hhRefresh();
+    });
+    window.addEventListener("pagehide", function () { try { off(); } catch (e) {} });
+    Promise.resolve(h.ready()).then(hhRefresh, hhRefresh);
   }
 
   function petById(id) {
@@ -957,6 +1147,8 @@
     bd.firstChild.style.display = "block";
     if (bd.children[1]) bd.children[1].style.display = "block";
     b.appendChild(bd);
+    var by = hhByChip(r.id);
+    if (by) b.appendChild(by);
     b.appendChild(el("span", "rec-d", fmtDate(r.d)));
     b.addEventListener("click", function () { recEditor(p, r.k, r.id, null); });
     li.appendChild(b);
@@ -2167,6 +2359,7 @@
     dz.input.id = "pc-doses";
     dz.input.addEventListener("change", function () { prefs.doses = dz.input.checked; savePrefsNow(); });
     dlg.appendChild(dz.wrap);
+    hhSettings(dlg);
     dlg.appendChild(el("div", "dlg-lbl", t("set.data")));
     var io = el("div", "dlg-actions tight");
     io.appendChild(button(t("set.export"), "", exportData));
@@ -2453,6 +2646,7 @@
   window.__orosPetcareOpen = function (target) {
     if (typeof target !== "string" || !target) return;
     if (target === "today") { prefs.pet = null; setTab("up"); return; }
+    if (C.ID_RE.test(target)) hhFind(target);
     if (C.ID_RE.test(target) && petById(target)) openPet(target);
   };
   function takeStaged() {
@@ -2477,6 +2671,7 @@
   function openSearchTarget(t) {
     if (t && t.openFile) { if (recFile) recFile.openTarget(t.openFile); return; }
     if (t && t.asNew) { if (!document.querySelector("dialog[open]")) newRecFrom(t.asNew); return; }
+    if (t && typeof t.pet === "string" && C.ID_RE.test(t.pet) && !document.querySelector("dialog[open]")) hhFind(t.pet);
     var r = t && typeof t.rec === "string" ? recById(t.rec) : null;
     var p = r ? petById(r.p) : null;
     if (!p || document.querySelector("dialog[open]")) return;
@@ -2565,20 +2760,22 @@
     api.registerSlice("petcare", sliceGet, sliceSet, STORAGE_KEY, mergeFn);
   }
 
-  function sliceGet() { return canonical(data); }   // canonical copy (R26)
+  function sliceGet() { return canonical(pdata); }   // canonical copy (R26) of the own book only
 
   function sliceSet(incoming) {
     if (!incoming || typeof incoming !== "object" || !Array.isArray(incoming.pets)) return;
-    var before = JSON.stringify(data);
+    var before = JSON.stringify(pdata);
     window.__orosSyncApi._suppress = true;   // R6: a pull never marks dirty
     try {
-      data = canonical(incoming);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      pdata = canonical(incoming);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(pdata));
     } catch (e) {
     } finally {
       window.__orosSyncApi._suppress = false;
     }
-    if (JSON.stringify(data) === before) return;   // no toast (sync feedback = taskbar dot)
+    if (JSON.stringify(pdata) === before) return;   // no toast (sync feedback = taskbar dot)
+    if (HS && HS.active()) { renderSets(); return; }   // a shared book is on screen
+    data = pdata;
     if (!document.querySelector("dialog[open]")) render();   // never yank an open form
     else pendingRender = true;
   }
@@ -2596,6 +2793,7 @@
   function render() {
     renderedDay = todayYmd();
     pendingRender = false;
+    renderSets();
     var onPet = !!(prefs.pet && petById(prefs.pet));
     if (!onPet && prefs.pet) { prefs.pet = null; savePrefs(); }
     var tab = prefs.tab;
@@ -2680,6 +2878,7 @@
     applyI18n();
     wire();
     registerSync();
+    hhBoot();
     inheritPalette();
     watchPalette();
     render();

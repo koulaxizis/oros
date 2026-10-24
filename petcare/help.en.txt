@@ -22,6 +22,11 @@ Open a pet from `My pets`. It has four parts:
 
 Suggested intervals are only a starting point. Your vet's advice always wins.
 
+## Share with your household
+With a [household](app:household) set up, the gear › `Household` › `Share with a household` puts a copy of your pets and their health book in the household: everyone in it sees the same pets in their own Pet Health Book, and a vaccine, a vet visit, a dose or a weight one person logs reaches everyone. A record someone else wrote shows their initials. The reminders, Today and the Calendar read a shared pet from the household, so it reminds once. Your own book stays as it was under `Only mine`, and chips at the top switch between the two. Everything is end-to-end encrypted: the orOS relay only passes on what it cannot read.
+
+Photos travel while they fit (about eight); the others stay in your own book. Attached scans and PDFs stay on your orOS disk, so the others see their names only. `Stop sharing` takes the pets out of the household for everyone: you keep a copy in your own book, and the others can bring them back from the Household app for 30 days.
+
 ## Save and open an orOS file
 In `Settings`, under `Your pets`, `orOS file (.orospet)` saves all your pets and their health books as one `.orospet` file, with the attachments, for example to move them to another device without sync or to keep a copy for the vet. Your reminder settings stay on this device and are never in it. The file is a plain ZIP: unzipped it holds everything as `content.json`, the attachments in `media/`, and `preview/pets.md` and `preview/records.csv` for other programs. It is not encrypted and holds your pets' health data, so keep it somewhere safe.
 

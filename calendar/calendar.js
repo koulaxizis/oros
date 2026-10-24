@@ -2515,6 +2515,8 @@ function transientNote(title, body) {
       petcareCache.due = null;
       try {
         var d = JSON.parse(localStorage.getItem(PETCARE_DATA_KEY));
+        // shared books (BR-HH wave 7c): a pet in a household is read from there
+        if (window.OrosPetcareHouse) d = window.OrosPetcareHouse.withShared(d && Array.isArray(d.pets) ? d : null);
         if (d && typeof d === "object" && Array.isArray(d.pets)) {
           petcareCache.data = Core.merge(d, d, now);
           petcareCache.today = Core.ymdOf(new Date(now));

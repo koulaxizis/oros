@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "3.56.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "3.57.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -1911,6 +1911,9 @@
       prefs = Core.readPrefs(JSON.parse(localStorage.getItem("oros-petcare-prefs")));
       fired = JSON.parse(localStorage.getItem(PETCARE_FIRED_KEY) || "{}");
     } catch (e) { return; }
+    // Shared books (BR-HH wave 7c): a pet in a household is read from
+    // there, so it reminds once.
+    if (window.OrosPetcareHouse) raw = window.OrosPetcareHouse.withShared(raw && Array.isArray(raw.pets) ? raw : null);
     if (!raw || !Array.isArray(raw.pets) || !raw.pets.length) return;
     var N = window.orosNotifs;
     if (!(N && typeof N.emit === "function" && typeof N.getState === "function")) return;

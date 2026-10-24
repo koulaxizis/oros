@@ -22,6 +22,11 @@ Tippe oder klicke auf `Tier hinzufügen` (oder oben auf die Schaltfläche `Tier`
 
 Die vorgeschlagenen Abstände sind nur ein Ausgangspunkt. Der Rat deines Tierarztes geht immer vor.
 
+## Mit dem Haushalt teilen
+Ist ein [Haushalt](app:household) eingerichtet, legt das Zahnrad › `Haushalt` › `Mit einem Haushalt teilen` eine Kopie deiner Tiere und ihres Gesundheitshefts in den Haushalt: Alle darin sehen dieselben Tiere in ihrem eigenen Tier-Gesundheitsheft, und eine Impfung, ein Tierarztbesuch, eine Dosis oder ein Gewicht, das eine Person einträgt, erreicht alle. Ein Eintrag von jemand anderem zeigt dessen Initialen. Erinnerungen, Heute und der Kalender lesen ein geteiltes Tier aus dem Haushalt, es erinnert also nur einmal. Dein eigenes Heft bleibt, wie es war, unter `Nur meine`, und Chips oben wechseln zwischen beiden. Alles ist Ende-zu-Ende-verschlüsselt: Das orOS-Relay reicht nur weiter, was es nicht lesen kann.
+
+Fotos reisen mit, solange sie passen (etwa acht); die übrigen bleiben in deinem eigenen Heft. Angehängte Scans und PDFs bleiben auf deinem orOS-Laufwerk, die anderen sehen nur ihre Namen. `Teilen beenden` nimmt die Tiere für alle aus dem Haushalt: Du behältst eine Kopie in deinem eigenen Heft, und die anderen können sie 30 Tage lang über die App Haushalt zurückholen.
+
 ## orOS-Datei speichern und öffnen
 In den `Einstellungen` speichert unter `Deine Tiere` der Punkt `orOS-Datei (.orospet)` alle deine Tiere und ihre Gesundheitspässe als eine `.orospet`-Datei, mit den Anhängen, zum Beispiel um sie ohne Synchronisierung auf ein anderes Gerät zu bringen oder eine Kopie für den Tierarzt zu behalten. Deine Erinnerungseinstellungen bleiben auf diesem Gerät und sind nie darin. Die Datei ist ein einfaches ZIP: Entpackt enthält sie alles als `content.json`, die Anhänge in `media/` sowie `preview/pets.md` und `preview/records.csv` für andere Programme. Sie ist nicht verschlüsselt und enthält die Gesundheitsdaten deiner Tiere, also bewahre sie sicher auf.
 

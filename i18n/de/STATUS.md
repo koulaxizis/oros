@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 33862 of 33871 (99%)
+- Strings: 33878 of 33887 (99%)
 - Help pages: 148 of 148 (100%)
 - Shown in the language list: yes
 
@@ -94,7 +94,7 @@ text is still written in the code. They switch over wave by wave
 | oracle | 100% | 38 / 38 |
 | passwords | 100% | 321 / 321 |
 | pet | 100% | 106 / 106 |
-| petcare | 100% | 374 / 374 |
+| petcare | 100% | 390 / 390 |
 | petworld | 100% | 256 / 256 |
 | photolab | 100% | 767 / 767 |
 | pixel | 100% | 101 / 101 |
