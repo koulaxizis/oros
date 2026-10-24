@@ -370,6 +370,13 @@
    ]
   },
   {
+   "app": "household",
+   "files": [
+    "household/app.js",
+    "household/engine.js"
+   ]
+  },
+  {
    "app": "invoices",
    "files": [
     "invoices/invoices.js",

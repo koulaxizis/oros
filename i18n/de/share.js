@@ -177,5 +177,10 @@ orosPack("de", "share", {
  "web": "Website",
  "where": "Ort",
  "wiki": "Wiki-Artikel",
- "wrong": "Falsches Passwort."
+ "wrong": "Falsches Passwort.",
+ "hhTitle": "Du bist zu einem Haushalt in orOS eingeladen",
+ "hhText": "Jemand möchte Listen mit dir teilen, zum Beispiel die Einkaufsliste, über orOS. Öffne orOS, schreib deinen Namen und frag den Beitritt an; ein Mitglied des Haushalts lässt dich herein.",
+ "hhPw": "Die Einladung hat ein Passwort: man sagt es dir.",
+ "hhGo": "In orOS öffnen",
+ "hhPriv": "Der Link enthält einen Schlüssel, der deinen Browser nie verlässt. Bisher wurde nichts verschickt."
 });

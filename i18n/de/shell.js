@@ -32,6 +32,7 @@ orosPack("de", "shell", {
  "app.dots": "Käsekästchen",
  "app.familytree": "Stammbaum",
  "app.together": "Zusammen",
+ "app.household": "Haushalt",
  "app.feeds": "Reader",
  "app.files": "Dateien",
  "app.fitness": "Training",

@@ -209,5 +209,21 @@ orosPack("de", "todo", {
  "wd.4": "Donnerstag",
  "wd.5": "Freitag",
  "wd.6": "Samstag",
- "withDone": "Mit erledigten Aufgaben (abgehakt)"
+ "withDone": "Mit erledigten Aufgaben (abgehakt)",
+ "hh.title": "Haushalt",
+ "hh.shareHint": "Alle im Haushalt sehen und bearbeiten diese Liste in ihrem eigenen orOS. Sie wird auf deinen Geräten verschlüsselt.",
+ "hh.shareGo": "Teilen",
+ "hh.none": "Noch kein Haushalt. Leg einen in der App „Haushalt“ an und teile dann Listen von hier aus.",
+ "hh.open": "Haushalt öffnen",
+ "hh.sharedIn": "Geteilt mit {hh}",
+ "hh.hint": "Alle im Haushalt sehen und bearbeiten diese Liste. Labels bleiben deine.",
+ "hh.stop": "Nicht mehr teilen (eigene Kopie behalten)",
+ "hh.by": "Zuletzt geändert von {name}",
+ "tab.shared": "Mit einem Haushalt geteilt",
+ "confirm.hhdel": "Diese Liste für alle im Haushalt löschen? Die anderen können sie 30 Tage lang in „Haushalt“ zurückholen.",
+ "confirm.hhstop": "Diese Liste nicht mehr teilen? Sie verlässt den Haushalt für alle, und du behältst deine eigene Kopie.",
+ "toast.hhShared": "Jetzt geteilt mit {hh}",
+ "toast.hhStopped": "Nicht mehr geteilt. Deine eigene Kopie ist bei deinen Listen.",
+ "toast.hhDel": "Liste für den Haushalt gelöscht",
+ "toast.hhFail": "Das ging nicht. Versuch es gleich noch einmal."
 });

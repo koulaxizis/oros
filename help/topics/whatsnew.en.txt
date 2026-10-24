@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.48.00
+- New app Household (Lifestyle): share lists with the people you live with. Make a household, invite family or flatmates with a link or QR code, and share any To-Do list, like the shopping list, from its settings. Everyone edits from their own orOS and sees changes in seconds; offline changes join up later without losing anything. Everything is encrypted on your devices and no account is needed. Shared calendars, expenses, chores and maps come next.
+
 ## Version 3.47.00
 - Newsletter: subscribers who have shown no sign of life for 12 months (no sign-up or confirmation; opens are not counted) get one e-mail asking "Do you still want it?". Replying keeps them on the list; whoever doesn't answer within 30 days is unsubscribed. At most 20 a day per list, oldest first. Change the months, or switch it off, in Subscribers › Clean up….
 

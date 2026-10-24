@@ -187,6 +187,14 @@
       "today": "today.js"
     },
     {
+      "id": "household",
+      "name": "Household",
+      "category": "Lifestyle",
+      "icon": "household",
+      "url": "household/",
+      "type": "internal"
+    },
+    {
       "id": "meals",
       "name": "Meal Planner",
       "category": "Lifestyle",

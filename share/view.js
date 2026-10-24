@@ -51,7 +51,11 @@
       gone: "This link has expired or the sender took it back.",
       net: "Could not reach the orOS server. Check your connection and try again.", retry: "Try again",
       availUntil: "Available until {d}", refs: "References", docTitle: "orOS · Shared with you",
-      privRelay: "This came encrypted from the orOS server and was opened here with the key in the link. The server cannot see what is inside."
+      privRelay: "This came encrypted from the orOS server and was opened here with the key in the link. The server cannot see what is inside.",
+      hhTitle: "You are invited to a household in orOS",
+      hhText: "Someone wants to share lists with you, like the shopping list, through orOS. Open orOS, write your name and ask to join; a member of the household lets you in.",
+      hhPw: "The invite has a password: they will tell you.",
+      hhGo: "Open in orOS", hhPriv: "The link holds a key that never leaves your browser. Nothing has been sent anywhere yet."
     },
     el: {
       "top.sub": "Σου το έστειλαν", "state.loading": "Άνοιγμα…",
@@ -88,7 +92,11 @@
       gone: "Ο σύνδεσμος έληξε ή ο αποστολέας τον ανακάλεσε.",
       net: "Δεν ήταν δυνατή η σύνδεση με τον server του orOS. Έλεγξε τη σύνδεσή σου και δοκίμασε ξανά.", retry: "Δοκίμασε ξανά",
       availUntil: "Διαθέσιμο έως {d}", refs: "Παραπομπές", docTitle: "orOS · Σου το έστειλαν",
-      privRelay: "Ήρθε κρυπτογραφημένο από τον server του orOS και άνοιξε εδώ με το κλειδί του συνδέσμου. Ο server δεν βλέπει τι έχει μέσα."
+      privRelay: "Ήρθε κρυπτογραφημένο από τον server του orOS και άνοιξε εδώ με το κλειδί του συνδέσμου. Ο server δεν βλέπει τι έχει μέσα.",
+      hhTitle: "Σε καλούν σε ένα νοικοκυριό στο orOS",
+      hhText: "Κάποιος θέλει να μοιραστεί μαζί σου λίστες, όπως τη λίστα για ψώνια, μέσα από το orOS. Άνοιξε το orOS, γράψε το όνομά σου και ζήτα να μπεις· ένα μέλος του νοικοκυριού σε αφήνει να μπεις.",
+      hhPw: "Η πρόσκληση έχει κωδικό: θα σου τον πουν.",
+      hhGo: "Άνοιγμα στο orOS", hhPriv: "Ο σύνδεσμος έχει ένα κλειδί που δεν φεύγει από τον browser σου. Τίποτα δεν έχει σταλεί ακόμα πουθενά."
     }
   };
   // The orOS language of this browser (a pack language too, through
@@ -809,7 +817,27 @@
     c.appendChild(acts);
     c.appendChild(inp);
   }
+  // A household invite (household/, BR-HH): "#h1.<box>.<secret>" or
+  // "#h2.…" with a password. Nothing is fetched here: the code waits in
+  // this browser's storage for the Household app, which asks to join.
+  var HH_RE = /^#?(h[12]\.[A-Za-z0-9_-]{22}\.[A-Za-z0-9_.-]{43,140})$/;
+  function houseInvite(code) {
+    var c = card();
+    c.appendChild(el("h1", "", t("hhTitle")));
+    c.appendChild(el("p", "", t("hhText")));
+    if (code.charAt(1) === "2") c.appendChild(el("p", "hint", t("hhPw")));
+    var acts = el("div", "acts");
+    acts.appendChild(btn(t("hhGo"), "prim", function () {
+      try { localStorage.setItem("oros-household-invite", JSON.stringify({ code: code, at: Date.now() })); } catch (e) {}
+      location.href = "../?open=household";
+    }));
+    c.appendChild(acts);
+    var p = $("privacy");
+    if (p) p.textContent = t("hhPriv");
+  }
   function route() {
+    var hh = HH_RE.exec(String(location.hash || ""));
+    if (hh) { houseInvite(hh[1]); return; }
     var code = K ? K.codeFromHash(location.hash) : "";
     if (!code && R) {
       var h = String(location.hash || "").replace(/^#/, "");

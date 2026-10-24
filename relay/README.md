@@ -29,6 +29,7 @@ Mail app (browser) ──HTTPS/JSON──▶ relay (Worker) ──IMAP over TLS�
 | `oasa.js` | Maps' `oasa` operation: live bus arrivals at Athens stops from OASA Telematics, which sends no CORS headers; fixed host, exact `act` allowlist, digit-only stop codes, 64 KB / 8 s, JSON only, 15 s shared cache (see below) |
 | `remote.js` | Studio Remote's meeting rooms: a Durable Object that joins two WebSockets (see below) |
 | `push.js` | Notifications with orOS closed (op `push`): one Durable Object per device holding its encrypted reminders, sent by Web Push at their time (see below) |
+| `house.js` | Households (`/h/<box>`): one Durable Object per household holding only encrypted shared documents, invites, join requests and key envelopes, with live notices over a WebSocket (see below) |
 | `dav.js` | Sync through WebDAV: `/dav` passes one WebDAV request to the user's own server when that server sends no CORS headers (see below) |
 | `wrangler.toml` | Worker name and `ALLOWED_ORIGINS` |
 
@@ -518,6 +519,49 @@ The Durable Object is declared at the top level of `wrangler.toml`
 (binding plus a `new_sqlite_classes` migration, free plan), so the
 normal deploy from `main` creates it. The room reads no env and no
 secrets, and never logs frames.
+
+## Households (`/h/`)
+
+The Household app (`household/`, engine `household/engine.js` in the
+shell) lets people who live together share documents, such as To-Do
+lists, each from their own orOS. The relay keeps a household's box; it
+never sees a key or a readable byte. Contract: OROS_BIBLE.md, BR-HH.
+
+One Durable Object (`HouseBox`, binding `HOUSE`, SQLite) per household,
+addressed `/h/<box>` where `<box>` is 22 base64url characters made on
+a device. Allowed origins apply, with a per-IP limit of 240 requests a
+minute and 10 new boxes a day.
+
+- **Who may do what.** The box keeps sha256 of the write token
+  (`HMAC-SHA256(K, "oros-household/write")`, sent as a Bearer token)
+  and of the last 20 tokens, and sha256 of the admin token (header
+  `X-HH-Admin`). An invite secret (`Authorization: Invite …`) may only
+  file a join request or read its own answer.
+- **Documents** (`GET/PUT/DELETE /h/<box>/d/<id>`): opaque bytes, at
+  most 300 KB each, 64 per box and 5 MB in all. Every write names the
+  revision it read (`If-Match`); a stale one gets 412 with the current
+  revision, so a device merges and tries again.
+- **Invites and joins:** at most 5 open invites (≤ 30 days, ≤ 20 uses)
+  and 10 waiting requests (kept 7 days, 4 KB each); answers ≤ 8 KB.
+- **Keys:** `rot` (admin) swaps the write token for a new key epoch and
+  leaves one sealed envelope per member (at most 12).
+- **Live notices:** `GET /h/<box>/ws` with the subprotocols `hh1` and
+  `w.<token>`, at most 40 sockets. The hibernating socket only says what
+  changed (`{k, r}`, `{q:1}`, `{e}`, `{x:1}`); the devices then fetch.
+- **Budget and clean-up:** 120 writes a minute per box; an alarm wipes
+  a box nobody has opened for 180 days. Nothing is logged.
+
+Answers: 400 (bad request), 403 (origin), 404 (no box, nothing there,
+or a wrong token: a wrong token looks exactly like a missing box), 409
+(box exists), 410 (join request refused), 412 (stale revision or key
+epoch), 413 (too big or full), 426 (not a WebSocket), 428 (a write
+without the revision it read), 429 (rate or too many invites, requests,
+sockets), 503 (no `HOUSE` binding). Tests: `tests/house-relay.test.js`
+and, with the real engine, `tests/household-engine.test.js`.
+
+Like the other Durable Objects, `HouseBox` is declared at the top level
+of `wrangler.toml` (binding plus a `new_sqlite_classes` migration
+`house-v1`, free plan), so the normal deploy from `main` creates it.
 
 ## Notifications with orOS closed (op `push`)
 

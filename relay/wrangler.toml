@@ -24,6 +24,17 @@ class_name = "PushBox"
 tag = "push-v1"
 new_sqlite_classes = ["PushBox"]
 
+# Household boxes (house.js): one per household, holding only the
+# encrypted documents its members share, their revisions, encrypted join
+# requests and key envelopes. Deletes itself after 180 days unused.
+[[durable_objects.bindings]]
+name = "HOUSE"
+class_name = "HouseBox"
+
+[[migrations]]
+tag = "house-v1"
+new_sqlite_classes = ["HouseBox"]
+
 # Newsletter's public sign-up forms and one-click unsubscribes
 # (newsletter.js). Declared here: a binding added only in the dashboard is
 # replaced on the next deploy from main.
