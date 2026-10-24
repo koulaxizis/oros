@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.42.05
+- Sync: after you sign in to Dropbox (for example with "I already use orOS on another device"), orOS now goes back to Settings › Sync so you can type your passphrase, instead of leaving you on the desktop.
+
 ## Version 3.42.04
 - orOS Games and Game Center: a new All games section lists every game, grouped by kind, with how often you played each one and a search field. Tap a game to play it.
 
