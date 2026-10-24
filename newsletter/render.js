@@ -28,6 +28,10 @@
       confBody: "Someone (we hope you) asked to receive {l} at this address. To confirm, send the e-mail the button below prepares for you. If it wasn't you, ignore this message and you won't hear from us again.",
       confBtn: "Yes, subscribe me",
       confText: "To confirm, send an e-mail to {a} with the subject: confirm {t}",
+      askSubj: "Do you still want {l}?",
+      askBody: "You have been receiving {l} for a while. If you still want it, send the e-mail the button below prepares for you. If we don't hear from you within {d} days, we will stop sending it to you, and you won't have to do anything.",
+      askBtn: "Yes, keep sending it",
+      askText: "To keep receiving it, send an e-mail to {a} with the subject: confirm {t}",
       test: "[Test] ",
       video: "Watch the video", ics: "The event is attached as a calendar file: open it to add it to your calendar.",
       mon: "Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec",
@@ -44,6 +48,10 @@
       confBody: "Κάποιος (ελπίζουμε εσύ) ζήτησε να λαμβάνει το {l} σε αυτή τη διεύθυνση. Για να το επιβεβαιώσεις, στείλε το email που ετοιμάζει το κουμπί παρακάτω. Αν δεν ήσουν εσύ, αγνόησε αυτό το μήνυμα και δεν θα ξανακούσεις από εμάς.",
       confBtn: "Ναι, θέλω να εγγραφώ",
       confText: "Για επιβεβαίωση, στείλε email στο {a} με θέμα: confirm {t}",
+      askSubj: "Θέλεις να συνεχίσεις να λαμβάνεις το {l};",
+      askBody: "Λαμβάνεις το {l} εδώ και καιρό. Αν το θέλεις ακόμη, στείλε το email που ετοιμάζει το κουμπί παρακάτω. Αν δεν μάθουμε νέα σου μέσα σε {d} ημέρες, θα σταματήσουμε να σου το στέλνουμε, χωρίς να χρειαστεί να κάνεις κάτι.",
+      askBtn: "Ναι, συνεχίστε να μου το στέλνετε",
+      askText: "Για να συνεχίσεις να το λαμβάνεις, στείλε email στο {a} με θέμα: confirm {t}",
       test: "[Δοκιμή] ",
       video: "Δες το βίντεο", ics: "Η εκδήλωση είναι συνημμένη ως αρχείο ημερολογίου: άνοιξέ το για να την προσθέσεις στο ημερολόγιό σου.",
       mon: "ΙΑΝ ΦΕΒ ΜΑΡ ΑΠΡ ΜΑΪ ΙΟΥΝ ΙΟΥΛ ΑΥΓ ΣΕΠ ΟΚΤ ΝΟΕ ΔΕΚ",
@@ -530,6 +538,22 @@
     return { subject: out.subject, html: out.html, text: text };
   }
 
+  // "Stay?" (clean-up wave 2): the same reply as a confirmation
+  // ("confirm <token>") keeps them on the list. o: as confirmEmail.
+  function askEmail(o) {
+    var l = o.list, lang = o.lang === "el" ? "el" : "en", days = C ? C.ASK_WAIT : 30;
+    var first = o.sub && o.sub.name ? " " + o.sub.name.split(/\s+/)[0] : "";
+    var x = { fmt: "blocks", subj: S(lang, "askSubj", { l: l.name }), pre: "", blocks: [
+      { k: "p", t: S(lang, "confHi", { n: first }) },
+      { k: "p", t: S(lang, "askBody", { l: l.name, d: days }) },
+      { k: "btn", t: S(lang, "askBtn"), href: o.confirm }
+    ] };
+    var out = email({ issue: x, list: l, sub: null, lang: lang, img: null, unsub: "", why: false });
+    var text = [S(lang, "confHi", { n: first }), S(lang, "askBody", { l: l.name, d: days }),
+                S(lang, "askText", { a: o.mailbox, t: o.tok }), l.addr].filter(Boolean).join("\n\n");
+    return { subject: out.subject, html: out.html, text: text };
+  }
+
   // The issue as a standalone web page (for an archive on your site):
   // no greeting name, no unsubscribe link.
   function webPage(o) {
@@ -619,7 +643,7 @@
 
   var api = {
     THEMES: THEMES, esc: esc, onColor: onColor, personalize: personalize, inlineHtml: inlineHtml, inlineText: inlineText,
-    mdToBlocks: mdToBlocks, blocksOf: blocksOf, email: email, confirmEmail: confirmEmail, webPage: webPage,
+    mdToBlocks: mdToBlocks, blocksOf: blocksOf, email: email, confirmEmail: confirmEmail, askEmail: askEmail, webPage: webPage,
     message: message, listHeaders: listHeaders, apiReq: apiReq, mailto: mailto
   };
   root.OrosNewsletterRender = api;

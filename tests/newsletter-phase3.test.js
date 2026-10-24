@@ -16,7 +16,8 @@ const { sandbox } = require("./newsletter-sandbox.js");
 
 const ROOT = path.join(__dirname, "..");
 const LIST = { id: "list-1", m: 1, name: "Friends", chan: "chan-1", from: "me@example.com", reply: "", lang: "en",
-  addr: "1 Main St, Athens", why: "You signed up on my site.", theme: "classic", color: "#2f6fde", salt: "abcdefgh12" };
+  addr: "1 Main St, Athens", why: "You signed up on my site.", theme: "classic", color: "#2f6fde", salt: "abcdefgh12",
+  clnIdle: 0 }; // subscribers here signed up in 1970: no "Stay?" e-mails (see newsletter-clean.test.js)
 const CHAN = { id: "chan-1", m: 1, name: "My mail", kind: "mail", acct: "acct01", rate: 1, cap: 300 };
 function sub(email, extra) {
   return Object.assign({ id: C.subId("list-1", email), m: 5, list: "list-1", email, name: "", tags: [], src: "manual",

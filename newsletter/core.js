@@ -69,7 +69,10 @@
   var SOFT_LIMIT = 3;                    // soft bounces before an address counts as bounced
   // List clean-up (inactive subscribers): days, 0 = never.
   var CLEAN_PEND = [7, 14, 30, 60], CLEAN_GONE = [30, 90, 180, 365];
-  var CLEAN_DFLT = { pend: 30, gone: 90 };
+  var CLEAN_IDLE = [6, 12, 24];                              // months without a sign of life before "Stay?"
+  var CLEAN_DFLT = { pend: 30, gone: 90, idle: 12 };
+  var ASK_WAIT = 30;                                         // days to answer "Stay?" before they are unsubscribed
+  var ASK_DAY = 20, ASK_SHARE = 0.05;                        // "Stay?" e-mails per list and day: max(20, 5% of the active)
   var CLEAN_MAX = 200, CLEAN_SHARE = 0.2, CLEAN_FLOOR = 10;   // more than this in one day waits for the user
   var DAY = 864e5;
 
@@ -216,6 +219,7 @@
     // clean-up: defaults are left out, 0 = never
     if (x.clnPend === 0 || (CLEAN_PEND.indexOf(x.clnPend) >= 0 && x.clnPend !== CLEAN_DFLT.pend)) o.clnPend = x.clnPend;
     if (x.clnGone === 0 || (CLEAN_GONE.indexOf(x.clnGone) >= 0 && x.clnGone !== CLEAN_DFLT.gone)) o.clnGone = x.clnGone;
+    if (x.clnIdle === 0 || (CLEAN_IDLE.indexOf(x.clnIdle) >= 0 && x.clnIdle !== CLEAN_DFLT.idle)) o.clnIdle = x.clnIdle;
     if (typeof x.clnDev === "string" && /^[a-z0-9]{6,20}$/.test(x.clnDev)) o.clnDev = x.clnDev;
     return keepExtra(x, o, LIST_KEYS);
   }
@@ -261,7 +265,7 @@
     var email = normEmail(x.email);
     if (!email || !validId(x.list)) return null;
     var off = nat(x.off);
-    return {
+    var o = {
       id: x.id, m: nat(x.m), list: x.list, email: email, name: oneLine(x.name, LIM.name),
       lang: x.lang === "el" || x.lang === "en" ? x.lang : "",
       tags: normTags(x.tags),
@@ -272,6 +276,9 @@
       inv: nat(x.inv), bnc: clamp(x.bnc, 0, 99, 0),
       c: typeof x.c === "string" && x.c.length <= 60 && !/[\x00-\x1f]/.test(x.c) ? x.c : ""
     };
+    var ask = nat(x.ask);                // when "Stay?" was sent (left out while never)
+    if (ask) o.ask = ask;
+    return o;
   }
   // Fields a newer orOS may add to a block or a list: kept as they are
   // (short scalars only), so this device never strips them on a save.
@@ -279,7 +286,7 @@
   var BLOCK_KEYS = ["k", "t", "href", "a", "b", "f", "alt", "w", "h", "lv", "st", "full", "more", "c", "wd", "by", "ord", "al", "pad", "bg", "url",
                     "lw", "sub", "links", "items", "sz", "hd", "side", "bt", "bh", "per", "rows", "d", "tm", "te", "loc", "ics", "sh", "acct", "at"];
   var LIST_KEYS = ["id", "m", "del", "name", "chan", "from", "fromName", "reply", "lang", "addr", "why", "theme", "color", "salt", "form", "sty", "hf",
-                   "clnPend", "clnGone", "clnDev"];
+                   "clnPend", "clnGone", "clnIdle", "clnDev"];
   function keepExtra(src, out, skip) {
     var n = 0;
     Object.keys(src).forEach(function (k) {
@@ -687,6 +694,8 @@
     o.conf = Math.max(a.conf, b.conf);
     o.inv = Math.max(a.inv, b.inv);
     o.bnc = Math.max(a.bnc, b.bnc);
+    var ask = Math.max(a.ask || 0, b.ask || 0);
+    if (ask) o.ask = ask; else delete o.ask;
     var src = a.off !== b.off ? (a.off > b.off ? a : b) : ((OFF_RANK[a.offSt] || 0) >= (OFF_RANK[b.offSt] || 0) ? a : b);
     o.off = src.off;
     o.offSt = src.off ? src.offSt : "";
@@ -838,6 +847,7 @@
     l = l || {};
     return { pend: l.clnPend === 0 || CLEAN_PEND.indexOf(l.clnPend) >= 0 ? l.clnPend : CLEAN_DFLT.pend,
              gone: l.clnGone === 0 || CLEAN_GONE.indexOf(l.clnGone) >= 0 ? l.clnGone : CLEAN_DFLT.gone,
+             idle: l.clnIdle === 0 || CLEAN_IDLE.indexOf(l.clnIdle) >= 0 ? l.clnIdle : CLEAN_DFLT.idle,
              dev: typeof l.clnDev === "string" ? l.clnDev : "" };
   }
   // Who goes now: pend = still unconfirmed `pend` days after their
@@ -889,6 +899,48 @@
       });
     });
     return n;
+  }
+
+  // "Stay?" (wave 2). The last sign of life of an active subscriber:
+  // their sign-up or (re)confirmation. Newsletter counts no opens.
+  function lastSeen(s) { return Math.max(s.at, s.conf); }
+  function monthsMs(n) { return n * 30 * DAY; }
+  // Active people with no sign of life for `idle` months who were not
+  // asked since: oldest first, at most max(20, 5% of the active) a day
+  // per list (counting those asked in the last 24 h). → [sub]
+  function asksDue(d, listId, now) {
+    var c = cleanOf(list(d, listId));
+    if (!c.idle) return [];
+    var on = subsOf(d, listId).filter(function (s) { return status(s) === "on"; });
+    var today = on.filter(function (s) { return s.ask && now - s.ask < DAY; }).length;
+    var room = Math.max(ASK_DAY, Math.ceil(on.length * ASK_SHARE)) - today;
+    if (room <= 0) return [];
+    return on.filter(function (s) { return now - lastSeen(s) >= monthsMs(c.idle) && !(s.ask > lastSeen(s)); })
+      .sort(function (a, b) { return lastSeen(a) - lastSeen(b) || (a.id < b.id ? -1 : 1); })
+      .slice(0, room);
+  }
+  // Asked more than ASK_WAIT days ago and no answer (no reconfirmation
+  // since): unsubscribed (reversible; the clean-up deletes them later
+  // like anyone who left). Changes d in place. → count
+  function askTimeouts(d, listId, now) {
+    var n = 0;
+    for (var i = 0; i < d.subs.length; i++) {
+      var s = d.subs[i];
+      if (s.del || s.list !== listId || status(s) !== "on" || !(s.ask > lastSeen(s)) || now - s.ask < ASK_WAIT * DAY) continue;
+      var z = JSON.parse(JSON.stringify(s));
+      z.off = now; z.offSt = "off"; z.m = Math.max(now, s.m + 1);
+      d.subs[i] = z;
+      n++;
+    }
+    return n;
+  }
+  // Who would be asked now with `idle` months (the clean-up dialog's
+  // preview; no daily limit). → count
+  function idleCount(d, listId, now, idle) {
+    if (!idle) return 0;
+    return subsOf(d, listId).filter(function (s) {
+      return status(s) === "on" && now - lastSeen(s) >= monthsMs(idle) && !(s.ask > lastSeen(s));
+    }).length;
   }
 
   // Device-local daily counter { chanId: { d: "YYYY-MM-DD", n } }.
@@ -1379,6 +1431,7 @@
     BLOCK_KINDS: BLOCK_KINDS, knownBlock: known, alignOf: alignOf, picsOf: picsOf, picRefs: picRefs, normBlk: normBlk, icsOf: icsOf, SHOP_PS: SHOP_PS, normProd: normProd, oldPrices: oldPrices, PRICE_AGE: PRICE_AGE, validDay: validDay, validTime: validTime, normHf: normHf, socialItems: socialItems, buttonsOf: buttonsOf, normSty: normSty,
     BASES: BASES, OFF_STS: OFF_STS, LOCK_STALE: LOCK_STALE, SOFT_LIMIT: SOFT_LIMIT,
     CLEAN_PEND: CLEAN_PEND, CLEAN_GONE: CLEAN_GONE, CLEAN_DFLT: CLEAN_DFLT, CLEAN_MAX: CLEAN_MAX, cleanOf: cleanOf, cleanPlan: cleanPlan, cleanApply: cleanApply,
+    CLEAN_IDLE: CLEAN_IDLE, ASK_WAIT: ASK_WAIT, lastSeen: lastSeen, asksDue: asksDue, askTimeouts: askTimeouts, idleCount: idleCount,
     validEmail: validEmail, normEmail: normEmail, emailKey: emailKey, validHost: validHost, validColor: validColor,
     safeUrl: safeUrl, fold: fold, hash53: hash53, subId: subId, suppHash: suppHash, token: token, listCode: listCode,
     randomId: randomId, oneLine: oneLine, multi: multi,

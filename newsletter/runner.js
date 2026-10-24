@@ -54,6 +54,8 @@
       rssDraft: "New draft from RSS: “{s}”", rssDraftBody: "Open Newsletter to look it over and send it.",
       rssSend: "Sending “{s}” (RSS)",
       clean: "Newsletter: {list} cleaned up", cleanBody: "{p} unconfirmed and {g} who had left were deleted.",
+      cleanOff: "{o} who did not answer “Stay?” were unsubscribed.", stay: "{n} chose to stay",
+      askStop: "“Stay?” e-mails stopped", askStopBody: "Open Newsletter: the sending account needs a look.",
       cleanWait: "Newsletter: {list} waits for your OK", cleanWaitBody: "{n} people would be deleted at once. Open Subscribers › Clean up to look and confirm."
     },
     el: {
@@ -65,6 +67,8 @@
       rssDraft: "Νέο πρόχειρο από RSS: «{s}»", rssDraftBody: "Άνοιξε το Ενημερωτικό δελτίο για να το δεις και να το στείλεις.",
       rssSend: "Αποστολή «{s}» (RSS)",
       clean: "Ενημερωτικό δελτίο: καθαρισμός της λίστας {list}", cleanBody: "Διαγράφηκαν {p} που δεν επιβεβαίωσαν και {g} που είχαν φύγει.",
+      cleanOff: "Απεγγράφηκαν {o} που δεν απάντησαν στο «Θέλεις να συνεχίσεις;».", stay: "{n} επέλεξαν να μείνουν",
+      askStop: "Σταμάτησαν τα email «Θέλεις να συνεχίσεις;»", askStopBody: "Άνοιξε το Ενημερωτικό δελτίο: ο λογαριασμός αποστολής θέλει έλεγχο.",
       cleanWait: "Ενημερωτικό δελτίο: η λίστα {list} περιμένει το ΟΚ σου", cleanWaitBody: "Θα διαγράφονταν {n} άτομα μαζί. Άνοιξε Συνδρομητές › Καθαρισμός για να δεις και να επιβεβαιώσεις."
     }
   };
@@ -105,12 +109,15 @@
       if (t.s) parts.push(tx("subs", { n: t.s }));
       if (t.u) parts.push(tx("unsubs", { n: t.u }));
       if (t.b) parts.push(tx("bounced", { n: t.b }));
+      if (t.k) parts.push(tx("stay", { n: t.k }));
       if (!parts.length) return;
       var lists = C.live(E.read().lists);
       emit({ key: "inbox-" + Date.now(), type: "info", title: tx("inbox", { list: lists.length === 1 ? lists[0].name : "" }).replace(/: $/, ""),
              body: parts.join(" · ") });
     } else if (kind === "invfail") {
       emit({ key: "inv-" + info.list.id + "-" + E.dayKey(), type: "reminder", title: tx("inv"), body: tx("invBody") });
+    } else if (kind === "askfail") {
+      emit({ key: "ask-" + info.list.id + "-" + E.dayKey(), type: "reminder", title: tx("askStop"), body: tx("askStopBody") });
     }
   }
   // RSS to e-mail: feeds due on this device, read through the Reader's
@@ -167,7 +174,8 @@
       res.forEach(function (o) {
         var name = o.list.name.slice(0, 60);
         emit(o.wait ? { key: "cleanwait-" + o.list.id + "-" + E.dayKey(), type: "reminder", title: tx("cleanWait", { list: name }), body: tx("cleanWaitBody", { n: o.wait }) }
-                    : { key: "clean-" + o.list.id + "-" + E.dayKey(), type: "info", title: tx("clean", { list: name }), body: tx("cleanBody", { p: o.pend, g: o.gone }) });
+                    : { key: "clean-" + o.list.id + "-" + E.dayKey(), type: "info", title: tx("clean", { list: name }),
+                        body: [o.pend || o.gone ? tx("cleanBody", { p: o.pend, g: o.gone }) : "", o.off ? tx("cleanOff", { o: o.off }) : ""].filter(Boolean).join(" ") });
       });
       if (res.some(function (o) { return !o.wait; })) { dirty(); fire("data"); }
     }, function () {}).then(function () { setTimeout(clean, CLEAN_EVERY); });
