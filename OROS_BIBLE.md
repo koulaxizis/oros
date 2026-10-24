@@ -7974,7 +7974,7 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Files: `download/index.html`, `files/{drive.js,files.css}`, `i18n/de/{files.js,STATUS.md}`, `tests/drive-android.test.js` (+1), What's new, Bible. The page's generator (`/mnt/project-files/hardware/download-page/gen_dl.py`) was not changed and no longer matches the page; edit the page directly.
   - Tests: full suite green. Chromium, local server, 360 px EL and 1200 px EN: both new cards render, no horizontal scroll, no console errors; release asset names checked against oros-drive v0.2.1 and oros-portable v0.2.0. Not tested: the Drive empty state in the real shell (needs an unlocked vault with no Drive folders; covered by the source test), installing orOS Drive on a real Windows PC with a real Dropbox, Safari.
 
-### 2026-10-24 — Household wave 3: shared Split groups (#PR) — 3.50.00
+### 2026-10-24 — Household wave 3: shared Split groups (#581) — 3.50.00
 - Wave 3 of the Household plan. Split › a group's More › "Share with a household…": everyone in the household sees the group in their own Split, adds expenses and payments and sees the same balances; each person picks who they are (item `me:<member>`). "Stop sharing…" keeps an own copy; "Delete the group" on a shared group removes it for everyone. The group file stays for friends outside the household. BR-HH (Part VI).
 - Files: `split/{house.js (new),split.js,split.css,index.html,help.*.txt}`, `sw.js`, `shell.js` (APP_VERSION), `i18n/de/{split.js,help/split.txt}`, `tests/split-house.test.js` (7), What's new, Bible.
 
