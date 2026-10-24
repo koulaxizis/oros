@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.56.00
+- Baby: two parents, one baby. In Settings › Household, Share with a household moves your children into the household: both parents log feeds, sleep and nappies on their own phone and see the same day, with initials on what the other logged. Units and reminders stay your own, and a shared child reminds once.
+
 ## Version 3.55.00
 - Meal Planner: plan together with your household. In Settings › Household, Share with a household gives everyone the same recipes, week plan, shopping list and pantry: what one person plans or ticks in the shop reaches everyone, and Today shows the household's dinner. Your own plan stays under Only mine.
 

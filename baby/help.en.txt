@@ -65,6 +65,11 @@ Children, every entry, growth, milestones, the milk stash and units sync between
 
 In `Settings` you'll find `Export log (CSV)`, `Export growth (CSV)`, `Back up (JSON)` and `Restore from backup`. A restore merges: it adds and updates, and never removes what's already there.
 
+## Two parents, one baby
+With a [household](app:household) set up, the gear › `Household` › `Share with a household` moves your children into the household, with their log of the last 90 days, growth, milestones and the milk stash: both parents (or a grandparent) log feeds, sleep and nappies on their own phone and see the same day, and a running feed or sleep timer started on one phone shows on the other. A record someone else logged shows their initials. Units and reminders stay each person's own, and a shared child reminds only once. Chips at the top switch between `Only mine` and the household's Baby. Everything is end-to-end encrypted: the orOS relay only passes on what it cannot read.
+
+Older log entries stay on the device that shared them. `Stop sharing` takes the children out of the household for everyone and brings them back to your own Baby with everything logged; the others can bring them back from the Household app for 30 days.
+
 ## Keyboard shortcuts
 - [[1]] to [[4]] switch tabs.
 - [[Left]] / [[Right]] in `History` go to the previous or next day.

@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "3.55.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "3.56.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -2649,6 +2649,14 @@
     if (!B.remOn(rem)) return;
     try { data = B.parse(localStorage.getItem(B.STORAGE_KEY)); } catch (e) { return; }
     if (!data) return;                     // unreadable: the app keeps the rescue copy
+    // Shared Babies (BR-HH wave 7b): the household copies' mirror, one
+    // data with every child, so a shared child reminds once.
+    var BH = window.orosBabyHouse;
+    if (BH && typeof BH.union === "function") {
+      var sets = [];
+      try { sets = BH.readMirror(JSON.parse(localStorage.getItem(BH.MIRROR_KEY) || "null")); } catch (e) {}
+      if (sets.length) data = BH.union(data, sets);
+    }
     var now = Date.now(), lang = state.lang === "el" ? "el" : "en";
     B.reminderDue(data, rem, now).forEach(function (due) {
       var txt = B.reminderText(due, rem, lang, now);

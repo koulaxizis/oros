@@ -88,6 +88,17 @@
       "gr.w": "Weight", "gr.l": "Length", "gr.h": "Head", "gr.months": "months",
       "mk.add": "Add", "mk.addMs": "Add", "mk.emptyVac": "No vaccines recorded.", "mk.emptyDoc": "No visits recorded.",
       "mk.tick": "Mark “{x}”",
+      "hh.sec": "Household", "hh.own": "Only mine", "hh.set": "Our baby",
+      "hh.share.t": "Share with a household",
+      "hh.share.x": "Both parents (or a grandparent) log feeds, sleep and nappies on their own phone and see the same day. Your children, their log of the last 90 days, growth and milestones move into the household; your units and reminders stay yours.",
+      "hh.which": "Household", "hh.go": "Share", "hh.open": "Open Household",
+      "hh.nohh": "Make or join a household first, in the Household app.",
+      "hh.in": "Shared in {hh}: what you log reaches everyone.",
+      "hh.stop.t": "Stop sharing",
+      "hh.stop.x": "The children leave {hh} for everyone and come back to your own Baby with everything logged. The others can bring them back from Household for 30 days.",
+      "hh.by": "Logged by {n}",
+      "toast.hhShared": "Shared with {hh}", "toast.hhStopped": "Sharing stopped. The children are back in your own Baby.",
+      "toast.hhFail": "Could not reach the household. Try again.",
       "dlg.cancel": "Cancel", "dlg.save": "Save", "dlg.add": "Add", "dlg.del": "Delete", "dlg.close": "Close",
       "dlg.start": "Start", "dlg.end": "End", "dlg.time": "Time", "dlg.endNote": "Leave the end empty while it is still going.",
       "dlg.ml": "Amount (ml)", "dlg.oz": "Amount (fl oz)", "dlg.kind": "Kind", "dlg.side": "Side", "dlg.note": "Note (optional)",
@@ -180,6 +191,17 @@
       "gr.w": "Βάρος", "gr.l": "Μήκος", "gr.h": "Κεφάλι", "gr.months": "μήνες",
       "mk.add": "Προσθήκη", "mk.addMs": "Δικό σου", "mk.emptyVac": "Κανένα εμβόλιο ακόμα.", "mk.emptyDoc": "Καμία επίσκεψη ακόμα.",
       "mk.tick": "Σημείωσε «{x}»",
+      "hh.sec": "Νοικοκυριό", "hh.own": "Μόνο τα δικά μου", "hh.set": "Το μωρό μας",
+      "hh.share.t": "Κοινή χρήση με νοικοκυριό",
+      "hh.share.x": "Και οι δύο γονείς (ή ένας παππούς ή μια γιαγιά) καταγράφουν ταΐσματα, ύπνο και πάνες στο δικό τους κινητό και βλέπουν την ίδια μέρα. Τα παιδιά σου, το ημερολόγιο των τελευταίων 90 ημερών, η ανάπτυξη και τα ορόσημα μεταφέρονται στο νοικοκυριό· οι μονάδες και οι υπενθυμίσεις μένουν δικές σου.",
+      "hh.which": "Νοικοκυριό", "hh.go": "Κοινή χρήση", "hh.open": "Άνοιγμα Νοικοκυριού",
+      "hh.nohh": "Φτιάξε πρώτα ένα νοικοκυριό ή μπες σε ένα, από την εφαρμογή Νοικοκυριό.",
+      "hh.in": "Κοινό στο «{hh}»: ό,τι καταγράφεις φτάνει σε όλους.",
+      "hh.stop.t": "Διακοπή κοινής χρήσης",
+      "hh.stop.x": "Τα παιδιά φεύγουν από το «{hh}» για όλους και επιστρέφουν στο δικό σου Baby με όλες τις καταγραφές. Οι άλλοι μπορούν να τα φέρουν πίσω από το Νοικοκυριό για 30 ημέρες.",
+      "hh.by": "Το κατέγραψε: {n}",
+      "toast.hhShared": "Κοινό με «{hh}»", "toast.hhStopped": "Η κοινή χρήση σταμάτησε. Τα παιδιά είναι ξανά στο δικό σου Baby.",
+      "toast.hhFail": "Δεν έγινε σύνδεση με το νοικοκυριό. Δοκίμασε ξανά.",
       "dlg.cancel": "Άκυρο", "dlg.save": "Αποθήκευση", "dlg.add": "Προσθήκη", "dlg.del": "Διαγραφή", "dlg.close": "Κλείσιμο",
       "dlg.start": "Έναρξη", "dlg.end": "Λήξη", "dlg.time": "Ώρα", "dlg.endNote": "Άφησε τη λήξη κενή όσο συνεχίζεται.",
       "dlg.ml": "Ποσότητα (ml)", "dlg.oz": "Ποσότητα (fl oz)", "dlg.kind": "Είδος", "dlg.side": "Πλευρά", "dlg.note": "Σημείωση (προαιρετικά)",
@@ -313,23 +335,193 @@
   function load() {
     var raw = null;
     try { raw = localStorage.getItem(STORAGE_KEY); } catch (e) {}
-    data = C.parse(raw);
+    data = pdata = C.parse(raw);
     if (data) return;
     try { localStorage.setItem(STORAGE_KEY + "-broken", raw); } catch (e) {}
     try { console.error("[orOS] baby: unreadable data copied to " + STORAGE_KEY + "-broken"); } catch (e) {}
-    data = C.empty();
+    data = pdata = C.empty();
   }
 
   var saveFailShown = false;
+  // A shared Baby on screen: the change goes to the household instead.
   function saveNow() {
     data = C.normalize(data);
+    if (HS && HS.active()) { data.prefs = pdata.prefs; data.pm = pdata.pm; HS.push(data); return; }
+    pdata = data;
+    saveOwn();
+  }
+  function saveOwn() {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(pdata));
       saveFailShown = false;
     } catch (e) {
       if (!saveFailShown) { saveFailShown = true; showToast(t("toast.save")); }   // R30
     }
     if (window.__orosSyncApi) window.__orosSyncApi.dirty();
+  }
+
+  // ---------- 2b. Household (BR-HH wave 7b) ----------
+  // Sharing moves the children, their log, growth, marks and the milk
+  // stash into a household document (baby/house.js): the own copies get
+  // tombstones, so nothing is on screen twice and the shell reminds once.
+  // While a shared Baby is on screen, `data` is that copy, in memory
+  // only, with this person's own units; every change leaves as the
+  // records that changed. Stop sharing brings them back (adopt).
+  var pdata = null;       // the own data (stored and synced)
+  var HB = window.orosBabyHouse;
+  var HS = (window.OrosHouseShare && HB && window.OrosHouseCore) ? window.OrosHouseShare.attach({
+    kind: "baby",
+    whole: HB.whole,
+    adopt: function (copy) {
+      copy.prefs = pdata.prefs; copy.pm = pdata.pm;
+      pdata = C.mergeBaby(pdata, copy);
+      if (!HS.active()) data = pdata;
+      saveOwn();
+    }
+  }) : null;
+  var HH_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-5h4v5"/></svg>';
+  function hhOn() { return !!(HS && HS.api()); }
+  function ownEmpty() { return !C.liveKids(pdata).length; }
+  function hhPick() {
+    var k = HS ? HS.pick(view.hh, ownEmpty()) : "";
+    if (!k) { data = pdata; return; }
+    data = HS.get(k).data;
+    data.prefs = pdata.prefs; data.pm = pdata.pm;
+  }
+  function hhSwitch(key) {
+    view.hh = key || "own";
+    saveView();
+    hhPick();
+    renderAll();
+  }
+  function renderSets() {
+    var box = $("sets");
+    if (!box) return;
+    box.innerHTML = "";
+    var keys = HS ? HS.keys() : [], act = HS ? HS.active() : "";
+    if (!keys.length || (keys.length === 1 && ownEmpty() && act)) { box.hidden = true; return; }
+    box.hidden = false;
+    var chip = function (key, label, house) {
+      var b = el("button", "chip" + (act === key ? " on" : ""));
+      b.type = "button";
+      if (house) b.insertAdjacentHTML("beforeend", HH_SVG);
+      b.appendChild(document.createTextNode(label));
+      b.setAttribute("aria-pressed", act === key ? "true" : "false");
+      b.addEventListener("click", function () { if (HS.active() !== key) hhSwitch(key); });
+      box.appendChild(b);
+    };
+    chip("", t("hh.own"), false);
+    keys.forEach(function (k) { chip(k, HS.get(k).t || t("hh.set"), true); });
+  }
+  // Who logged a record (another member only: the initials).
+  function hhByChip(id) {
+    if (!HS || !HS.active()) return null;
+    var g = HS.get(HS.active()), mid = g && g.by[id];
+    if (!mid || mid === HS.me()) return null;
+    var m = HS.member(mid);
+    if (!m) return null;
+    var c = el("span", "by-chip", m.initials);
+    c.title = t("hh.by", { n: m.name });
+    c.setAttribute("aria-label", c.title);
+    return c;
+  }
+  // Settings › Household: share the own Baby, or stop sharing.
+  function hhSettings(form, dlg) {
+    if (!hhOn()) return;
+    var act = HS.active(), g = act ? HS.get(act) : null;
+    form.appendChild(el("h3", "dlg-h", t("hh.sec")));
+    form.appendChild(el("p", "hint", g ? t("hh.in", { hh: g.hh || g.t }) : t("hh.share.x")));
+    var b = button(t(g ? "hh.stop.t" : "hh.share.t"), "block", function () { dlg.close(); hhAsk(); });
+    b.id = "bb-hh";
+    form.appendChild(b);
+  }
+  // Tombstones for the own records that went into a household.
+  function hhMoved(ids) {
+    Object.keys(ids).forEach(function (f) {
+      ids[f].forEach(function (id) {
+        var x = C.findIn(pdata[f], id);
+        if (x && !x.del) put(pdata[f], { id: id, m: stamp(x.m), del: 1 });
+      });
+    });
+    pdata = C.normalize(pdata);
+    saveOwn();
+  }
+  function hhAsk() {
+    if (!hhOn()) return;
+    var act = HS.active(), mode = act ? "stop" : "share", g = act ? HS.get(act) : {}, hhs = HS.households();
+    var dlg = makeDialog("bb-hhdlg", t("hh." + mode + ".t"));
+    var form = el("form");
+    form.method = "dialog";
+    form.appendChild(el("p", "hint", mode === "share" ? (hhs.length ? t("hh.share.x") : t("hh.nohh"))
+                                                      : t("hh.stop.x", { hh: g.hh || g.t || "" })));
+    var sel = el("select");
+    sel.id = "bb-hhbox";
+    hhs.forEach(function (x) { var o = el("option", "", x.name || "?"); o.value = x.box; sel.appendChild(o); });
+    if (mode === "share" && hhs.length > 1) form.appendChild(field(t("hh.which"), sel));
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); }));
+    var ok;
+    if (mode === "share" && !hhs.length) {
+      ok = button(t("hh.open"), "primary", function () {
+        dlg.close();
+        try { window.parent.__orosOpenAt("household", null); } catch (e) {}
+      });
+    } else {
+      ok = button(t(mode === "share" ? "hh.go" : "hh.stop.t"), "primary", function () {
+        ok.disabled = true;
+        var fail = function () { ok.disabled = false; showToast(t("toast.hhFail")); };
+        if (mode === "share") {
+          var box = sel.value, x = hhs.filter(function (y) { return y.box === box; })[0] || {};
+          var ids = HB.moved(pdata, Date.now());
+          HS.share(box, x.name || t("hh.set"), pdata).then(function (key) {
+            hhMoved(ids);
+            view.hh = key;
+            saveView();
+            hhPick();
+            renderAll();
+            dlg.close();
+            showToast(t("toast.hhShared", { hh: x.name || "" }));
+          }, fail);
+          return;
+        }
+        HS.unshare().then(function () {
+          view.hh = "own";
+          saveView();
+          hhPick();
+          renderAll();
+          dlg.close();
+          showToast(t("toast.hhStopped"));
+        }, fail);
+      });
+    }
+    ok.id = "bb-hhok";
+    acts.appendChild(ok);
+    form.appendChild(acts);
+    dlg.appendChild(form);
+    openDialog(dlg, ok);
+  }
+  var hhQueued = false;
+  function hhRefresh() {
+    if (hhQueued || !HS) return;
+    hhQueued = true;
+    setTimeout(function () {
+      hhQueued = false;
+      var before = data;
+      var changed = HS.inject();
+      hhPick();
+      if (document.querySelector("dialog[open]")) { renderSets(); return; }   // what is being typed stays (SS-4)
+      if (changed || data !== before) renderAll();
+      else renderSets();
+    }, 0);
+  }
+  function hhBoot() {
+    var h = HS && HS.api();
+    if (!h) return;
+    var off = h.on(function (e) {
+      if (e && (e.type === "doc" || e.type === "list" || e.type === "roster" || e.type === "archive")) hhRefresh();
+    });
+    window.addEventListener("pagehide", function () { try { off(); } catch (e) {} });
+    Promise.resolve(h.ready()).then(hhRefresh, hhRefresh);
   }
 
   function loadView() {
@@ -340,7 +532,8 @@
       kid: typeof v.kid === "string" ? v.kid : "",
       tab: TABS.indexOf(v.tab) >= 0 ? v.tab : "today",
       night: v.night ? 1 : 0,
-      wk: ["sleep", "feeds", "nappies"].indexOf(v.wk) >= 0 ? v.wk : "sleep"
+      wk: ["sleep", "feeds", "nappies"].indexOf(v.wk) >= 0 ? v.wk : "sleep",
+      hh: HS && HS.okKey(v.hh) ? v.hh : ""
     };
   }
   function saveView() {
@@ -520,10 +713,11 @@
 
   function setPrefs(next) {
     var p = C.normPrefs(next);
-    if (JSON.stringify(p) === JSON.stringify(data.prefs)) return;
-    data.prefs = p;
-    data.pm = stamp(data.pm);
-    saveNow();
+    if (JSON.stringify(p) === JSON.stringify(pdata.prefs)) return;
+    pdata.prefs = p;                       // units are always the own ones
+    pdata.pm = stamp(pdata.pm);
+    data.prefs = pdata.prefs; data.pm = pdata.pm;
+    saveOwn();
   }
 
   // Reminder settings: device-local (C.REM_KEY), read by the shell
@@ -649,6 +843,8 @@
     if (d) body.appendChild(el("span", "ev-d", d));
     if (C.TIMED[e.t] && e.e === undefined) body.appendChild(el("span", "ev-run", t(e.t === "feed" ? "q.feedOn" : "tm.sleeping")));
     b.appendChild(body);
+    var by = hhByChip(e.id);
+    if (by) b.appendChild(by);
     b.setAttribute("aria-label", t("dlg.edit", { x: evTitle(e) }) + ", " + evTime(e, key) + (d ? ", " + d : ""));
     b.addEventListener("click", function () { evDialog(e.t, e.id); });
     li.appendChild(b);
@@ -1089,6 +1285,7 @@
 
   function renderAll() {
     var has = !!kid();
+    renderSets();
     renderToolbar();
     renderNav();
     $("welcome").hidden = has;
@@ -1907,6 +2104,7 @@
     form.appendChild(medRow);
     form.appendChild(el("p", "hint", t("set.remMedHint")));
     form.appendChild(el("p", "hint", t("set.remNote")));
+    hhSettings(form, dlg);
     form.appendChild(el("h3", "dlg-h", t("set.data")));
     var k = kid();
     if (k) form.appendChild(button(t("set.summary"), "block", function () { dlg.close(); summaryDialog(); }));
@@ -2374,20 +2572,22 @@
     api.registerSlice("baby", sliceGet, sliceSet, STORAGE_KEY, C.mergeBaby);
   }
   function sliceGet() {
-    return C.normalize(data);   // canonical copy (R26)
+    return C.normalize(pdata);   // canonical copy (R26) of the own data only
   }
   function sliceSet(incoming) {
     if (!C.looksLikeData(incoming)) return;
-    var before = JSON.stringify(data);
+    var before = JSON.stringify(pdata);
     window.__orosSyncApi._suppress = true;   // R6: a pull never marks dirty
     try {
-      data = C.mergeBaby(data, incoming);    // local edits are already on disk; the merge keeps them
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      pdata = C.mergeBaby(pdata, incoming);    // local edits are already on disk; the merge keeps them
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(pdata));
     } catch (e) {
     } finally {
       window.__orosSyncApi._suppress = false;
     }
-    if (JSON.stringify(data) === before) return;   // no toast (sync feedback = taskbar dot)
+    if (JSON.stringify(pdata) === before) return;   // no toast (sync feedback = taskbar dot)
+    if (HS && HS.active()) { data.prefs = pdata.prefs; data.pm = pdata.pm; renderSets(); return; }   // a shared Baby is on screen
+    data = pdata;
     renderAll();        // dialogs read the latest record on submit
   }
 
@@ -2452,6 +2652,13 @@
     if (t && t.openFile) { if (recFile) recFile.openTarget(t.openFile); return; }
     if (!t || typeof t.kid !== "string") return;
     var k = C.findIn(data.kids, t.kid);
+    if ((!k || k.del) && HS) {                // the child may be in another Baby (own or shared)
+      var at = [""].concat(HS.keys()).filter(function (key) {
+        var d = key ? HS.get(key).data : pdata, x = C.findIn(d.kids, t.kid);
+        return x && !x.del;
+      })[0];
+      if (at !== undefined && !document.querySelector("dialog[open]")) { hhSwitch(at); k = C.findIn(data.kids, t.kid); }
+    }
     if (!k || k.del) return;
     if (document.querySelector("dialog[open]")) return;
     var ev = typeof t.ev === "string" ? findEv(t.ev) : null;
@@ -2480,6 +2687,7 @@
     renderWeekPick();
     wire();
     registerSync();
+    hhBoot();
     inheritPalette();
     watchPalette();
     renderAll();
