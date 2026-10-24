@@ -293,6 +293,7 @@
   // tokens are in this origin's storage now, which the single app
   // shares. Only a "/<id>/solo.html" path is accepted.
   var SOLO_RETURN_KEY = "oros-solo-return";
+  var soloLeft = false;            // this page is on its way back to a single app
   function soloReturn() {
     var to = "";
     try {
@@ -300,6 +301,7 @@
       sessionStorage.removeItem(SOLO_RETURN_KEY);
     } catch (e) { to = ""; }
     if (!/^\/[a-z0-9-]+\/solo\.html$/.test(to)) return false;
+    soloLeft = true;
     window.location.replace(to);
     return true;
   }
@@ -3726,6 +3728,7 @@
     isConnected:         isConnected,
     getUserInfo:        function () { return provider.account(); },
     redirectHandled:    redirectHandled,
+    leftForSolo:        function () { return soloLeft; },   // the sign-in goes on in a single app
     vaultUnlocked:      vaultUnlocked,    // promise<bool>: true if auto-unlocked
 
     // Data
