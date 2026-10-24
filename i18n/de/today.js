@@ -13,6 +13,7 @@ orosPack("de", "today", {
  "d.soon": "Die nächsten drei Tage",
  "d.today": "Was heute fällig ist",
  "d.todos": "Aufgaben: überfällig, heute und die nächsten Tage",
+ "d.together": "Eure gemeinsamen Tage, aus Zusammen",
  "d.top": "Wetter, Namenstage, Timer und andere kurze Zeilen",
  "d.water": "Wie viel du heute getrunken hast",
  "d.weather": "Die heutige Wetterzeile in einer eigenen Karte",
@@ -52,6 +53,7 @@ orosPack("de", "today", {
  "none.events": "Keine Termine in den nächsten Tagen",
  "none.habits": "Keine Gewohnheiten mehr für heute",
  "none.todos": "Keine Aufgaben in den nächsten Tagen fällig",
+ "none.together": "Noch nichts aus Zusammen. Öffne die App, um mit dem Zählen zu beginnen.",
  "none.water": "Noch nichts aus Wasser. Öffne die App, um mit dem Zählen zu beginnen.",
  "none.weather": "Noch nichts aus Wetter. Öffne die App, um einen Ort zu wählen.",
  "off": "Die tägliche Übersicht ist aus. Schalte sie in den Einstellungen ein (das Zahnrad).",
@@ -81,6 +83,7 @@ orosPack("de", "today", {
  "w.soon": "Demnächst",
  "w.today": "Heute",
  "w.todos": "Aufgaben",
+ "w.together": "Zusammen",
  "w.top": "Auf einen Blick",
  "w.water": "Wasser",
  "w.weather": "Wetter"

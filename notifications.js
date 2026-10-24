@@ -22,7 +22,7 @@
   // mirrored arrays). "time" (alarms) and "system" (sync/version/
   // sc results) joined the toggleable universe: suppression is a
   // user decision there too.
-  const KNOWN_APPS = ['calendar', 'cycle', 'mood', 'todo', 'habits', 'time', 'system', 'weather', 'notes', 'quote', 'contacts', 'files', 'kanban', 'prompter', 'storage', 'spreadsheet', 'minimalism', 'television', 'plants', 'water', 'budget', 'health', 'garage', 'stock', 'petcare', 'feeds', 'travel', 'baby', 'chores', 'timesheet', 'shelf', 'mail', 'today', 'diary', 'stickies', 'crm', 'invoices', 'newsletter', 'maps', 'meals', 'flashcards'];
+  const KNOWN_APPS = ['calendar', 'cycle', 'mood', 'todo', 'habits', 'time', 'system', 'weather', 'notes', 'quote', 'contacts', 'files', 'kanban', 'prompter', 'storage', 'spreadsheet', 'minimalism', 'television', 'plants', 'water', 'budget', 'health', 'garage', 'stock', 'petcare', 'feeds', 'travel', 'baby', 'chores', 'timesheet', 'shelf', 'mail', 'today', 'diary', 'stickies', 'crm', 'invoices', 'newsletter', 'maps', 'meals', 'flashcards', 'together'];
 
   // ——— Runtime state ———
   // NOT-R3: intervalId/pendingToasts/lastFireTimestamp removed —
@@ -577,6 +577,8 @@
     plants:   function (target) { if (typeof window.__orosOpenPlants === 'function') window.__orosOpenPlants(target); },
     // Chore Wheel — "chores:today" (daily reminder) or "chores:<YYYY-MM-DD>".
     chores:   function (target) { if (typeof window.__orosOpenChores === 'function') window.__orosOpenChores(target); },
+    // Together — "together:<relId>": the morning notice opens that relationship.
+    together: function (id) { if (typeof window.__orosOpenAt === 'function') window.__orosOpenAt('together', { rel: String(id || '') }); },
     // "system:open:<appId>": plain open of an app (SY-D3 notice —
     // opening the app is what merges its waiting changes).
     // "system:open:settings/<section>": Settings at that section (A72

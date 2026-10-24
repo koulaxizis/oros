@@ -1,0 +1,77 @@
+# Together
+Count the time you have spent together with someone you love: days, weeks, months and years, a live counter, and the milestones coming up (every month, every anniversary, every 100 days, every 50 weeks and a few fun numbers). Inspired by the Android app Since Us.
+
+## Getting started
+- Tap `Start` (or `+` at the top) and choose who: `From Contacts` picks people from your [Contacts](app:contacts), or write a name and tap `Add`.
+- Choose the day it started (`Together since`) and, if you like, the time. With a time the hours, minutes and seconds count from that moment.
+- `Save`. The home screen shows the time together, the next milestone and what comes after it.
+- A day in the future works too: the counter then counts down to it (a wedding, a move together).
+
+## Several relationships
+- `+` adds another relationship, each with its own day and photo. Tabs at the top switch between them.
+- A relationship can have more than one person (up to eight).
+- `Archived` keeps a relationship but shows it last.
+- `Delete` in the editor removes the relationship from all your devices. Its photos stay in Files.
+
+## Names, pronouns and discreet mode
+- A person picked from Contacts always shows the name Contacts has now. Nothing is written into Contacts.
+- `A name for the two of you` replaces the list of names, for example "Anna & Chris".
+- `Settings` › `Your name` puts your own name next to theirs.
+- `Their pronouns` is optional and shown under the names.
+- `Discreet` shows initials only, for when other people can see your screen.
+
+## Photo
+- `From this device` picks a picture: it is redrawn at most 2048 pixels wide and saved as a JPEG in Files › `Pictures` › `Together`, so the camera data inside it (EXIF, location) is not kept and the browser storage does not fill up.
+- `From orOS Files` picks a picture you already have in Files › `Pictures`.
+- `Framing` moves the picture up or down in the card.
+- Sync carries the relationship, not the picture: Vault Drive brings the file to your other devices.
+
+## Milestones
+- Months (1 month, 2 months…), anniversaries, every 100 days, every 50 weeks and fun numbers: 222, 1111 or 12345 days, 10 000 hours, a million minutes, a billion seconds.
+- A date that does not exist in a month moves to its last day: together since 31 January means 1 month on 28 or 29 February, and 29 February becomes 28 February in other years.
+- `Settings` › `Milestones to show` switches each kind on or off.
+
+## Moments
+- `Moments` (next to `Time together`) is your timeline: the first date, the first trip, the day you said yes. Newest first.
+- `+ Add a moment`: a day, what happened, a note, a place and a photo (the same way as the cover photo, kept in Files).
+- `Remember it every year` brings it back in the Calendar, in Today and in the morning notice, with how many years ago it was.
+- Tap a moment to change or delete it. Its photo stays in Files.
+
+## Special days
+- Under the milestones, `+ Special day` adds a day to count down to: the first kiss, a concert, the day you move in. `Every year` makes it come back each year.
+- Days that have passed and do not repeat stay in the list as `Was on …`.
+
+## Calendar, Today and reminders
+- The Calendar shows anniversaries, every 100 days, every 50 weeks, fun numbers, moments and special days marked every year (chip `Together`). A tap opens Together there.
+- [Today](app:today) can list them too: Together starts switched off there, because it is private; switch it on in Today's settings, or add the `Together` card (it shows your days together).
+- `Settings` › `Reminders`: one notice in the morning (from the hour you choose) on a day with something to celebrate, while orOS is open. Choose which kinds remind you; months and fun numbers start off.
+- Discreet relationships show initials in all of these.
+
+## Gifts and other apps
+- `Gift ideas`: write ideas as they come. `Send to To-Do` puts the open ones in a new To-Do list "Gifts · …" (To-Do asks before adding). With no ideas it sends one task per birthday or anniversary in the next 60 days.
+- `Bought` ticks an idea and offers to put what it cost in [Budget](app:budget) as a gift expense (Budget opens the form; you save it there).
+- The birthdays of the people linked from Contacts show among the special days. `Settings` › `Reminders` adds a gift reminder 3 to 21 days before each birthday and your anniversary.
+- `Plan a date` opens a new Calendar event; `Anniversary in Contacts` opens the person's contact with your anniversary added.
+- In a moment: `Write in Notes` starts a new page with it, `Send to an app…` sends it anywhere in orOS, `Cost to Budget` notes what it cost.
+
+## Long distance
+- In `Edit`, write their time zone under `Long distance` (for example Asia/Tokyo). The home screen then shows the time where they are and how many hours ahead or behind it is.
+- `+ Meeting` adds the next time you see each other: the day, a time if you like (in your time or theirs) and the place. A countdown runs to the next one, and the meetings show in the Calendar too.
+
+## Fun numbers, confetti and the share card
+- `Fun numbers` counts the sunrises, the weekends and the full moons you have had together (from [Moon & Sky](app:sky)), and how far you travelled around the Sun.
+- On a big day (an anniversary, 100 days, a fun number) a little confetti falls once. Switch it off in `Settings`; it never shows when your device asks for less motion.
+- `Share card` makes an image with your names and your days, weeks or years together, on your photo. Save it in Files, download it, or share it with the apps of your phone. Only the image leaves orOS.
+- In `Moments`, `Slideshow` shows the photos of your moments one after the other (arrows, swipe, or pause).
+
+## Backup file
+- `Settings` › `Backup and moving` › `Save a backup file` saves everything in Together as one file, with a password if you like. The photos stay in Files.
+- `Import a file` brings such a file into this orOS (handy without sync). It only adds and updates: nothing here is deleted.
+
+## PIN lock
+- `Settings` › `PIN lock` adds a PIN screen when Together opens, and again after a minute away.
+- It is a privacy screen on this device, not encryption. The PIN lives only on this device.
+
+## Your data
+- Everything stays in orOS on your devices. With sync on in [Settings](app:settings), it follows you to your other devices, encrypted.
+- The menu search can find your relationships once you switch Together on in the search settings (it starts switched off, because it is private).

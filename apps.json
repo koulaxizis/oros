@@ -605,6 +605,17 @@
       "today": ["ft-core.js", "today.js"]
     },
     {
+      "id": "together",
+      "name": "Together",
+      "category": "Personal",
+      "icon": "together",
+      "url": "together/",
+      "search": "search.js",
+      "searchOff": true,
+      "type": "internal",
+      "today": ["core.js", "today.js"]
+    },
+    {
       "id": "garage",
       "name": "Garage",
       "category": "Personal",

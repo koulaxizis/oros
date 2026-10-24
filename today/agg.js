@@ -51,7 +51,7 @@
   // Apps the summary leaves out until the user switches them on in
   // the Today settings (sensitive, Chris 2026-10-11: "the user can
   // include them"). Every other app is in unless switched off.
-  var DEFAULT_OFF = { cycle: 1, mood: 1 };
+  var DEFAULT_OFF = { cycle: 1, mood: 1, together: 1 };
 
   var YMD_RE  = /^(\d{4})-(\d{2})-(\d{2})$/;
   var HM_RE   = /^([01]\d|2[0-3]):[0-5]\d$/;

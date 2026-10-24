@@ -265,7 +265,7 @@
       "rel.other": "Other",
       "ct.back": "Back",
       "ct.share": "Share",
-      "ct.familytree": "Family tree",
+      "ct.familytree": "Family tree", "ct.together": "Together",
       "ct.qr": "QR code",
       "ct.crm": "Customer: {name}",
       "ct.share.done": "Contact copied to clipboard",
@@ -551,7 +551,7 @@
       "rel.other": "Αλλη",
       "ct.back": "Πίσω",
       "ct.share": "Κοινοποίηση",
-      "ct.familytree": "Οικογενειακό δέντρο",
+      "ct.familytree": "Οικογενειακό δέντρο", "ct.together": "Μαζί",
       "ct.qr": "Κωδικός QR",
       "ct.crm": "Πελάτης: {name}",
       "ct.share.done": "Η επαφή αντιγράφηκε στο πρόχειρο",
@@ -2260,6 +2260,19 @@ function openViewCard(c) {
       shell.__orosOpenAt("familytree", { contact: c.id });
     });
     foot.appendChild(ft);
+    // Together: shown when this contact is one of the people of a
+    // relationship there (read only; Together opens it).
+    if (inTogether(c.id)) {
+      var tg = document.createElement("button");
+      tg.type = "button";
+      tg.className = "ct-view-share";
+      tg.textContent = t("ct.together");
+      tg.addEventListener("click", function () {
+        closeViewCard();
+        shell.__orosOpenAt("together", { contact: c.id });
+      });
+      foot.appendChild(tg);
+    }
     // QR app: a new vCard code from this contact (only the id travels).
     var qr = document.createElement("button");
     qr.type = "button";
@@ -3050,6 +3063,29 @@ document.addEventListener("keydown", function (e) {
       notifyTransient(t("sc.check"));
       return;
     }
+    // Together: { addEvent: { id, type: "anniversary", day: "MM-DD",
+    // year? } } → that contact's edit dialog with the date added as a
+    // new row (nothing saved until Save; a date already there → just
+    // the dialog).
+    var ae = target && typeof target === "object" ? target.addEvent : null;
+    if (ae && typeof ae === "object") {
+      if ($("ct-dlg").open) return;
+      var who = state.contacts.filter(function (x) { return x.id === ae.id; })[0];
+      if (!who || EVENT_TYPES.indexOf(ae.type) < 0 || !validDay(ae.day)) return;
+      try { closeViewCard(); } catch (e) {}
+      openDlg(who);
+      var yr = typeof ae.year === "number" && ae.year >= 1900 && ae.year <= 2200 ? Math.floor(ae.year) : null;
+      var dup = who.events.some(function (x) { return x.type === ae.type && x.day === ae.day; });
+      if (!dup) {
+        var holder = $("ct-events");
+        if (!who.events.length) holder.textContent = "";
+        var ev = { type: ae.type, day: ae.day };
+        if (yr) ev.year = yr;
+        buildEvtRow(holder, ev);
+        notifyTransient(t("sc.check"));
+      }
+      return;
+    }
     var fi = target && typeof target === "object" ? target.importVcf : null;
     if (fi && typeof fi === "object" && typeof fi.text === "string") {
       askImportVcf(fi.text, typeof fi.name === "string" ? fi.name : "");
@@ -3092,6 +3128,20 @@ document.addEventListener("keydown", function (e) {
     $("ct-given").value = words.join(" ");
     fillHolder($("ct-emails"), [{ v: email, type: "home" }], function (h, r) { buildValRow(h, r && r.v, r && r.type, EMAIL_TYPES, "name@example.com", 120, "em"); });
   };
+
+  // Is this contact one of the people of a living relationship in
+  // Together ("oros-together-data", read only)?
+  function inTogether(id) {
+    try {
+      var d = JSON.parse(localStorage.getItem("oros-together-data") || "null");
+      if (!d || !Array.isArray(d.rels)) return false;
+      var tombs = d.tombs && typeof d.tombs === "object" ? d.tombs : {};
+      return d.rels.some(function (r) {
+        return r && typeof r.id === "string" && !(tombs[r.id] >= r.m) && Array.isArray(r.people) &&
+          r.people.some(function (p) { return p && p.c === id; });
+      });
+    } catch (e) { return false; }
+  }
 
   window.__orosContactsOpen = function (contactId) {
     if (typeof contactId !== "string" || !contactId) return;

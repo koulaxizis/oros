@@ -980,6 +980,13 @@
    ]
   },
   {
+   "app": "together",
+   "files": [
+    "together/app.js",
+    "together/core.js"
+   ]
+  },
+  {
    "app": "travel",
    "files": [
     "travel/booking.js",
