@@ -51,6 +51,7 @@ Andere Apps fügen schreibgeschützte Zeilen hinzu, jede mit eigenem Chip, damit
 - `Kunden`: offene Nachfassaktionen und der erwartete Abschlusstag offener Deals, aus [CRM](app:crm).
 - `Reisen`: Reisetage und Reiseplan-Einträge mit Uhrzeit aus [Reisen](app:travel).
 - `Baby`: Meilensteine, Impfungen, Arztbesuche und das Alter in Monaten aus [Baby](app:baby).
+- `Zusammen`: Jahrestage, alle 100 Tage, lustige Zahlen, Momente und besondere Tage aus [Zusammen](app:together).
 - `Hausarbeit` aus [Hausarbeitsrad](app:chores); nur deine, wenn du dort gewählt hast, wer du bist.
 - `Arbeitszeit`: Zeit pro Projekt und Tag aus [Zeiterfassung](app:timesheet).
 - `Mahlzeiten`, geplant im [Essensplaner](app:meals), etwa „Abendessen: Fasolada“.

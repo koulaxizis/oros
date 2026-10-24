@@ -31,6 +31,22 @@ Count the time you have spent together with someone you love: days, weeks, month
 - A date that does not exist in a month moves to its last day: together since 31 January means 1 month on 28 or 29 February, and 29 February becomes 28 February in other years.
 - `Settings` › `Milestones to show` switches each kind on or off.
 
+## Moments
+- `Moments` (next to `Time together`) is your timeline: the first date, the first trip, the day you said yes. Newest first.
+- `+ Add a moment`: a day, what happened, a note, a place and a photo (the same way as the cover photo, kept in Files).
+- `Remember it every year` brings it back in the Calendar, in Today and in the morning notice, with how many years ago it was.
+- Tap a moment to change or delete it. Its photo stays in Files.
+
+## Special days
+- Under the milestones, `+ Special day` adds a day to count down to: the first kiss, a concert, the day you move in. `Every year` makes it come back each year.
+- Days that have passed and do not repeat stay in the list as `Was on …`.
+
+## Calendar, Today and reminders
+- The Calendar shows anniversaries, every 100 days, every 50 weeks, fun numbers, moments and special days marked every year (chip `Together`). A tap opens Together there.
+- [Today](app:today) can list them too: Together starts switched off there, because it is private; switch it on in Today's settings.
+- `Settings` › `Reminders`: one notice in the morning (from the hour you choose) on a day with something to celebrate, while orOS is open. Choose which kinds remind you; months and fun numbers start off.
+- Discreet relationships show initials in all of these.
+
 ## PIN lock
 - `Settings` › `PIN lock` adds a PIN screen when Together opens, and again after a minute away.
 - It is a privacy screen on this device, not encryption. The PIN lives only on this device.

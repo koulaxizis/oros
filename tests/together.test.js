@@ -169,3 +169,61 @@ test("the search provider skips deleted rows and hides discreet names", () => {
   assert.equal(r3.title, "ML");
   assert.ok(!/Maria/.test(r3.text));
 });
+
+test("wave 2: day rows for the Calendar, Today and the morning notice", () => {
+  let d = C.put(C.empty(), "rels", rel("r", "2020-02-14", { people: [{ n: "Anna Maria" }] }), 1);
+  d = C.put(d, "moments", { id: "m1", rel: "r", date: "2021-03-03", title: "Paris", yearly: true }, 2);
+  d = C.put(d, "moments", { id: "m2", rel: "r", date: "2021-04-04", title: "Rome" }, 3);
+  d = C.put(d, "days", { id: "d1", rel: "r", date: "2020-02-29", title: "Leap", yearly: true }, 4);
+  d = C.put(d, "meets", { id: "e1", rel: "r", date: "2026-11-01", time: "18:00" }, 5);
+  assert.deepEqual(C.dayRows(d, {}, "2025-02-14", "en").map((r) => r.title), ["Anna Maria · 5 years together"]);
+  assert.deepEqual(C.dayRows(d, {}, "2025-02-14", "el").map((r) => r.title), ["Anna Maria · 5 χρόνια μαζί"]);
+  assert.deepEqual(C.dayRows(d, {}, "2024-03-03", "en").map((r) => r.target), [{ rel: "r", moment: "m1" }]);
+  assert.equal(C.dayRows(d, {}, "2024-03-03", "en")[0].title, "Paris · 3 years ago");
+  assert.deepEqual(C.dayRows(d, {}, "2022-04-04", "en"), []);
+  assert.equal(C.dayRows(d, {}, "2021-04-04", "en")[0].title, "Rome · Anna Maria");
+  assert.equal(C.dayRows(d, {}, "2023-02-28", "en").filter((r) => r.kind === "day").length, 1);
+  assert.equal(C.dayRows(d, {}, "2024-02-28", "en").filter((r) => r.kind === "day").length, 0);
+  assert.equal(C.dayRows(d, {}, "2026-11-01", "en").filter((r) => r.kind === "meet")[0].time, "18:00");
+  // months: only with opts.months (Today) or notify.month
+  assert.equal(C.dayRows(d, {}, "2020-03-14", "en").length, 0);
+  assert.equal(C.dayRows(d, {}, "2020-03-14", "en", { months: true })[0].title, "Anna Maria · 1 month together");
+  assert.equal(C.dayRows(d, {}, "2020-03-14", "en", { notify: true }).length, 0);
+  const d2 = C.setPrefs(d, { notify: { month: true, moments: false } }, 9);
+  assert.equal(C.dayRows(d2, {}, "2020-03-14", "en", { notify: true }).length, 1);
+  assert.equal(C.dayRows(d2, {}, "2024-03-03", "en", { notify: true }).length, 0);
+  // discreet: initials, archived: nothing
+  const disc = C.put(d, "rels", rel("r", "2020-02-14", { people: [{ n: "Anna Maria" }], discreet: true }), 10);
+  assert.equal(C.dayRows(disc, {}, "2024-03-03", "en")[0].title, "P · 3 years ago");
+  assert.equal(C.dayRows(disc, {}, "2025-02-14", "en")[0].title, "AM · 5 years together");
+  const arch = C.put(d, "rels", rel("r", "2020-02-14", { people: [{ n: "Anna Maria" }], arch: true }), 11);
+  assert.deepEqual(C.dayRows(arch, {}, "2025-02-14", "en"), []);
+});
+
+test("wave 2: special days roll over every year, moments newest first", () => {
+  let d = C.put(C.empty(), "rels", rel("r", "2020-02-14"), 1);
+  d = C.put(d, "days", { id: "a", rel: "r", date: "2020-12-01", title: "Kiss", yearly: true }, 2);
+  d = C.put(d, "days", { id: "b", rel: "r", date: "2026-11-05", title: "Concert" }, 3);
+  d = C.put(d, "days", { id: "c", rel: "r", date: "2025-01-01", title: "Gone" }, 4);
+  const s = C.specialDays(d, "r", "2026-10-24");
+  assert.deepEqual(s.map((x) => [x.day.id, x.next]), [["b", "2026-11-05"], ["a", "2026-12-01"], ["c", null]]);
+  assert.deepEqual(C.specialDays(d, "r", "2026-12-02")[0].next, "2027-12-01");
+  d = C.put(d, "moments", { id: "m1", rel: "r", date: "2021-01-01", title: "x" }, 5);
+  d = C.put(d, "moments", { id: "m2", rel: "r", date: "2023-01-01", title: "y" }, 6);
+  assert.deepEqual(C.momentsOf(d, "r").map((m) => m.id), ["m2", "m1"]);
+  assert.equal(C.yearsOn("2020-02-29", "2021-02-28"), 1);
+  assert.equal(C.yearsOn("2020-02-29", "2024-02-28"), 0);
+  assert.equal(C.yearsOn("2020-05-05", "2020-05-05"), 0);
+});
+
+test("wave 2: the Today provider gives the feed's rows over the horizon", () => {
+  globalThis.TogetherCore = C;
+  const P = require("../together/today.js");
+  const d = JSON.parse(C.serialize(C.put(C.empty(), "rels", rel("r", "2020-02-14"), 1)));
+  const ctx = { today: "2026-02-13", horizon: 3, lang: "en", readJSON: (k) => (k === "oros-together-data" ? d : null),
+    addDays: (ymd, n) => C.addDays(ymd, n) };
+  const rows = P.collect(ctx);
+  assert.ok(rows.some((r) => r.due === "2026-02-14" && r.title === "Anna · 6 years together" && r.kind === "event"));
+  assert.deepEqual(rows.find((r) => r.due === "2026-02-14").target, { rel: "r" });
+  delete globalThis.TogetherCore;
+});

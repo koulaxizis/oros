@@ -1732,6 +1732,7 @@ var PRECACHE_URLS = [
   "together/core.js",
   "together/app.js",
   "together/search.js",
+  "together/today.js",
   "together/help.en.txt",
   "together/help.el.txt",
   "fitness/",

@@ -612,7 +612,8 @@
       "url": "together/",
       "search": "search.js",
       "searchOff": true,
-      "type": "internal"
+      "type": "internal",
+      "today": ["core.js", "today.js"]
     },
     {
       "id": "garage",

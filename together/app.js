@@ -98,6 +98,22 @@
       "lock.wrong": "Wrong PIN", "lock.wait": "Too many tries. Wait {n} s", "lock.unsupported": "This browser cannot check a PIN here",
       "lock.hint": "A PIN screen when Together opens, and again after a minute away. It is a privacy screen on this device, not encryption.",
       "lock.note": "Forgot the PIN? It lives only on this device: clearing orOS's site data removes it; with sync on, your data comes back from the cloud.",
+      "view.count": "Time together", "view.moments": "Moments",
+      "sec.days": "Special days", "day.add": "+ Special day",
+      "day.empty": "The first kiss, the day you moved in: add days to count down to.",
+      "day.new": "New special day", "day.edit": "Edit the special day", "day.title": "Name", "day.titlePh": "e.g. Our first kiss",
+      "day.yearly": "Every year", "day.was": "Was on {date}", "day.delAsk": "Delete the special day “{name}”?",
+      "day.needTitle": "Give the day a name.", "day.every": "every year",
+      "mo.add": "+ Add a moment", "mo.new": "New moment", "mo.edit": "Edit the moment",
+      "mo.empty": "No moments yet. Keep the first date, the first trip, the day you said yes, with a note and a photo.",
+      "mo.title": "What happened", "mo.titlePh": "e.g. Our first trip", "mo.date": "Day", "mo.note": "Note",
+      "mo.place": "Place (optional)", "mo.yearly": "Remember it every year",
+      "mo.needDate": "Choose the day.", "mo.needSome": "Write what happened, a note or add a photo.",
+      "mo.delAsk": "Delete the moment “{name}”? Its photo stays in Files.", "mo.untitled": "A moment",
+      "mo.ago.one": "{n} year ago", "mo.ago.other": "{n} years ago",
+      "set.remind": "Reminders", "set.hour": "From this hour of the day",
+      "set.remindHint": "One notice in the morning while orOS is open. The Calendar shows these days too (chip “Together”).",
+      "notify.moments": "Moments marked “every year”", "notify.days": "Special days", "notify.meets": "Meetings",
       "full": "This device is out of storage space. The change was not saved."
     },
     el: {
@@ -166,6 +182,22 @@
       "lock.wrong": "Λάθος PIN", "lock.wait": "Πολλές προσπάθειες. Περίμενε {n} δευτ.", "lock.unsupported": "Αυτό το πρόγραμμα περιήγησης δεν μπορεί να ελέγξει PIN εδώ",
       "lock.hint": "Μια οθόνη PIN όταν ανοίγει το Μαζί και ξανά μετά από ένα λεπτό μακριά. Είναι οθόνη ιδιωτικότητας σε αυτή τη συσκευή, όχι κρυπτογράφηση.",
       "lock.note": "Ξέχασες το PIN; Υπάρχει μόνο σε αυτή τη συσκευή: η διαγραφή των δεδομένων ιστότοπου του orOS το αφαιρεί· με ενεργό συγχρονισμό, τα δεδομένα σου επιστρέφουν από το cloud.",
+      "view.count": "Χρόνος μαζί", "view.moments": "Στιγμές",
+      "sec.days": "Ξεχωριστές μέρες", "day.add": "+ Ξεχωριστή μέρα",
+      "day.empty": "Το πρώτο φιλί, η μέρα που μείνατε μαζί: πρόσθεσε μέρες για αντίστροφη μέτρηση.",
+      "day.new": "Νέα ξεχωριστή μέρα", "day.edit": "Επεξεργασία ξεχωριστής μέρας", "day.title": "Όνομα", "day.titlePh": "π.χ. Το πρώτο μας φιλί",
+      "day.yearly": "Κάθε χρόνο", "day.was": "Ήταν στις {date}", "day.delAsk": "Να διαγραφεί η ξεχωριστή μέρα «{name}»;",
+      "day.needTitle": "Δώσε ένα όνομα στη μέρα.", "day.every": "κάθε χρόνο",
+      "mo.add": "+ Νέα στιγμή", "mo.new": "Νέα στιγμή", "mo.edit": "Επεξεργασία στιγμής",
+      "mo.empty": "Δεν υπάρχουν στιγμές ακόμα. Κράτα το πρώτο ραντεβού, το πρώτο ταξίδι, τη μέρα του «ναι», με σημείωση και φωτογραφία.",
+      "mo.title": "Τι έγινε", "mo.titlePh": "π.χ. Το πρώτο μας ταξίδι", "mo.date": "Μέρα", "mo.note": "Σημείωση",
+      "mo.place": "Μέρος (προαιρετικό)", "mo.yearly": "Θύμισέ το κάθε χρόνο",
+      "mo.needDate": "Διάλεξε τη μέρα.", "mo.needSome": "Γράψε τι έγινε, μια σημείωση ή βάλε φωτογραφία.",
+      "mo.delAsk": "Να διαγραφεί η στιγμή «{name}»; Η φωτογραφία της μένει στο Files.", "mo.untitled": "Μια στιγμή",
+      "mo.ago.one": "πριν από {n} χρόνο", "mo.ago.other": "πριν από {n} χρόνια",
+      "set.remind": "Υπενθυμίσεις", "set.hour": "Από αυτή την ώρα της μέρας",
+      "set.remindHint": "Μία ειδοποίηση το πρωί, όσο το orOS είναι ανοιχτό. Το Ημερολόγιο δείχνει κι αυτό αυτές τις μέρες (chip «Μαζί»).",
+      "notify.moments": "Στιγμές με «κάθε χρόνο»", "notify.days": "Ξεχωριστές μέρες", "notify.meets": "Συναντήσεις",
       "full": "Ο χώρος αποθήκευσης της συσκευής γέμισε. Η αλλαγή δεν αποθηκεύτηκε."
     }
   };
@@ -214,7 +246,7 @@
 
   // ---------- 2. Data: local first, then sync ----------
   var data = C.empty();
-  var local = { active: "" };
+  var local = { active: "", view: "count" };
 
   function syncApi() {
     try { return (window.parent && window.parent.orosSync) || window.orosSync || null; }
@@ -234,6 +266,7 @@
     try {
       var l = JSON.parse(localStorage.getItem(LOCAL_KEY) || "null");
       if (l && typeof l.active === "string") local.active = l.active.slice(0, 64);
+      if (l && l.view === "moments") local.view = "moments";
     } catch (e) {}
   }
   function persist() {
@@ -518,6 +551,8 @@
 
     renderCounter(rel);
     renderMilestones(rel);
+    renderDays(rel);
+    renderView(rel);
     startTick();
   }
 
@@ -607,6 +642,168 @@
     }, 1000);
   }
   function stopTick() { if (tickTimer) clearInterval(tickTimer); tickTimer = 0; }
+
+  // ---------- 6b. Views, special days and moments (wave 2) ----------
+  function renderView(rel) {
+    var mo = local.view === "moments";
+    $("pane-count").hidden = mo;
+    $("pane-moments").hidden = !mo;
+    $("view-count").setAttribute("aria-selected", mo ? "false" : "true");
+    $("view-moments").setAttribute("aria-selected", mo ? "true" : "false");
+    if (mo) renderMoments(rel);
+  }
+  function setView(v) {
+    local.view = v === "moments" ? "moments" : "count";
+    saveLocal();
+    var rel = activeRel();
+    if (rel) renderView(rel);
+  }
+
+  function renderDays(rel) {
+    var ul = $("day-list"), rows = C.specialDays(data, rel.id, shownDay);
+    ul.textContent = "";
+    rows.forEach(function (r) {
+      var x = r.day, li = el("li", "ms ms-day");
+      var dot = el("span", "dot");
+      dot.setAttribute("aria-hidden", "true");
+      li.appendChild(dot);
+      var b = btn("", "ms-body ms-open", function () { openDay(x); });
+      var top = el("span", "ms-what", rel.discreet ? C.initials(x.title) : x.title);
+      if (x.yearly) top.appendChild(el("span", "tag", t("day.every")));
+      b.appendChild(top);
+      b.appendChild(el("span", "ms-when", r.next ? fmtDate(r.next) : t("day.was", { date: fmtDate(x.date) })));
+      li.appendChild(b);
+      if (r.next) li.appendChild(el("span", "ms-in", whenLabel(r.next)));
+      ul.appendChild(li);
+    });
+    $("day-empty").hidden = rows.length > 0;
+  }
+
+  var dayDraft = null;
+  function openDay(x) {
+    var rel = activeRel();
+    if (!rel) return;
+    dayDraft = { id: x ? x.id : C.uid(), rel: rel.id, isNew: !x };
+    $("day-dlg-t").textContent = t(x ? "day.edit" : "day.new");
+    $("day-title").value = x ? x.title : "";
+    $("day-date").value = x ? x.date : shownDay;
+    $("day-yearly").checked = x ? x.yearly : true;
+    $("day-del").hidden = !x;
+    $("day-msg").textContent = "";
+    $("day-dlg").showModal();
+  }
+  function saveDay(ev) {
+    ev.preventDefault();
+    var title = $("day-title").value.trim(), date = $("day-date").value;
+    if (!title) { $("day-msg").textContent = t("day.needTitle"); $("day-title").focus(); return; }
+    if (!C.okYmd(date)) { $("day-msg").textContent = t("mo.needDate"); $("day-date").focus(); return; }
+    var row = { id: dayDraft.id, rel: dayDraft.rel, title: title, date: date, yearly: $("day-yearly").checked };
+    dayDraft = null;
+    $("day-dlg").close();
+    save(C.put(data, "days", row, Date.now()));
+    toast(t("rel.saved"));
+  }
+  function deleteDay() {
+    var x = dayDraft && C.find(data, "days", dayDraft.id);
+    if (!x) return;
+    ask(t("day.delAsk", { name: x.title }), t("btn.delete")).then(function (yes) {
+      if (!yes) return;
+      dayDraft = null;
+      $("day-dlg").close();
+      save(C.remove(data, "days", x.id, Date.now()));
+      toast(t("rel.deleted"));
+    });
+  }
+
+  function renderMoments(rel) {
+    var ol = $("mo-list"), rows = C.momentsOf(data, rel.id);
+    ol.textContent = "";
+    rows.forEach(function (m) {
+      var li = el("li", "moment");
+      li.dataset.id = m.id;
+      var b = btn("", "mo-card", function () { openMoment(m); });
+      if (m.photo) {
+        var img = el("img", "mo-photo");
+        img.alt = "";
+        img.hidden = true;
+        b.appendChild(img);
+        photoUrl(m.photo).then(function (u) { if (u) { img.src = u; img.hidden = false; } });
+      }
+      var body = el("span", "mo-body");
+      var when = fmtDate(m.date, { day: "numeric", month: "long", year: "numeric" });
+      var yrs = C.daysBetween(m.date, shownDay) >= 365 ? Math.floor(C.monthsBetween(m.date, shownDay) / 12) : 0;
+      if (yrs) when += " · " + plural("mo.ago", yrs);
+      body.appendChild(el("span", "mo-when", when));
+      var title = m.title || t("mo.untitled");
+      body.appendChild(el("span", "mo-title", rel.discreet ? C.initials(title) : title));
+      if (m.note && !rel.discreet) body.appendChild(el("span", "mo-note", m.note.length > 280 ? m.note.slice(0, 280) + "…" : m.note));
+      var meta = [];
+      if (m.place && !rel.discreet) meta.push("📍 " + m.place);
+      if (m.yearly) meta.push("↻ " + t("day.every"));
+      if (meta.length) body.appendChild(el("span", "mo-meta", meta.join(" · ")));
+      b.appendChild(body);
+      li.appendChild(b);
+      ol.appendChild(li);
+    });
+    $("mo-empty").hidden = rows.length > 0;
+  }
+
+  var moDraft = null;
+  function openMoment(m) {
+    var rel = activeRel();
+    if (!rel) return;
+    moDraft = { id: m ? m.id : C.uid(), rel: m ? m.rel : rel.id, photo: m ? m.photo : "" };
+    $("mo-dlg-t").textContent = t(m ? "mo.edit" : "mo.new");
+    $("mo-title").value = m ? m.title : "";
+    $("mo-date").value = m ? m.date : shownDay;
+    $("mo-note").value = m ? m.note : "";
+    $("mo-place").value = m ? m.place : "";
+    $("mo-yearly").checked = !!(m && m.yearly);
+    $("mo-del").hidden = !m;
+    $("mo-msg").textContent = "";
+    renderMoPhoto();
+    $("mo-dlg").showModal();
+  }
+  function renderMoPhoto() {
+    var img = $("mo-photo-img");
+    $("mo-photo-rm").hidden = !moDraft.photo;
+    if (!moDraft.photo) { img.hidden = true; img.removeAttribute("src"); return; }
+    var want = moDraft.photo;
+    photoUrl(want).then(function (u) {
+      if (!moDraft || moDraft.photo !== want) return;
+      if (u) { img.src = u; img.hidden = false; } else { img.hidden = true; toast(t("photo.missing")); }
+    });
+  }
+  function saveMoment(ev) {
+    ev.preventDefault();
+    var date = $("mo-date").value, title = $("mo-title").value.trim(), note = $("mo-note").value;
+    if (!C.okYmd(date)) { $("mo-msg").textContent = t("mo.needDate"); $("mo-date").focus(); return; }
+    if (!title && !note.trim() && !moDraft.photo) { $("mo-msg").textContent = t("mo.needSome"); $("mo-title").focus(); return; }
+    var row = { id: moDraft.id, rel: moDraft.rel, date: date, title: title, note: note, place: $("mo-place").value,
+                yearly: $("mo-yearly").checked, photo: moDraft.photo };
+    moDraft = null;
+    $("mo-dlg").close();
+    save(C.put(data, "moments", row, Date.now()));
+    toast(t("rel.saved"));
+  }
+  function deleteMoment() {
+    var m = moDraft && C.find(data, "moments", moDraft.id);
+    if (!m) return;
+    ask(t("mo.delAsk", { name: m.title || t("mo.untitled") }), t("btn.delete")).then(function (yes) {
+      if (!yes) return;
+      moDraft = null;
+      $("mo-dlg").close();
+      save(C.remove(data, "moments", m.id, Date.now()));
+      toast(t("rel.deleted"));
+    });
+  }
+  function flashMoment(id) {
+    var li = [].filter.call($("mo-list").children, function (n) { return n.dataset.id === id; })[0];
+    if (!li) return;
+    li.scrollIntoView({ block: "center" });
+    li.classList.add("flash");
+    setTimeout(function () { li.classList.remove("flash"); }, 1600);
+  }
 
   // ---------- 7. Relationship editor ----------
   var draft = null;   // { id, isNew, people, cover }
@@ -747,6 +944,21 @@
       lab.appendChild(cb);
       lab.appendChild(document.createTextNode(" " + t("ms." + k)));
       box.appendChild(lab);
+    });
+    var hs = $("set-hour");
+    hs.textContent = "";
+    for (var h = 0; h < 24; h++) { var o = el("option", "", (h < 10 ? "0" : "") + h + ":00"); o.value = String(h); hs.appendChild(o); }
+    hs.value = String(data.prefs.hour);
+    var nb = $("set-notify");
+    nb.textContent = "";
+    ["year", "month", "d100", "w50", "fun", "moments", "days", "meets"].forEach(function (k) {
+      var lab = el("label", "check"), cb = el("input");
+      cb.type = "checkbox";
+      cb.checked = data.prefs.notify[k] !== false;
+      cb.addEventListener("change", function () { var p = {}; p[k] = cb.checked; save(C.setPrefs(data, { notify: p }, Date.now())); });
+      lab.appendChild(cb);
+      lab.appendChild(document.createTextNode(" " + t(C.MS_KINDS.indexOf(k) >= 0 ? "ms." + k : "notify." + k)));
+      nb.appendChild(lab);
     });
     $("set-about").textContent = t("set.about");
     pinMode = null;
@@ -907,6 +1119,26 @@
     $("rel-photo-rm").addEventListener("click", function () { draft.cover = ""; renderDraftPhoto(); });
     $("rel-pos").addEventListener("input", function () { $("rel-photo-img").style.objectPosition = "50% " + this.value + "%"; });
 
+    $("view-count").addEventListener("click", function () { setView("count"); });
+    $("view-moments").addEventListener("click", function () { setView("moments"); });
+    $("day-add").addEventListener("click", function () { openDay(null); });
+    $("day-form").addEventListener("submit", saveDay);
+    $("day-cancel").addEventListener("click", function () { $("day-dlg").close(); });
+    $("day-dlg").addEventListener("close", function () { dayDraft = null; });
+    $("day-del").addEventListener("click", deleteDay);
+    $("mo-add").addEventListener("click", function () { openMoment(null); });
+    $("mo-form").addEventListener("submit", saveMoment);
+    $("mo-cancel").addEventListener("click", function () { $("mo-dlg").close(); });
+    $("mo-dlg").addEventListener("close", function () { moDraft = null; });
+    $("mo-del").addEventListener("click", deleteMoment);
+    $("mo-photo-dev").addEventListener("click", function () {
+      photoFromDevice().then(function (p) { if (p && moDraft) { moDraft.photo = p; renderMoPhoto(); } });
+    });
+    $("mo-photo-files").addEventListener("click", function () {
+      photoFromFiles().then(function (p) { if (p && moDraft) { moDraft.photo = p; renderMoPhoto(); } });
+    });
+    $("mo-photo-rm").addEventListener("click", function () { moDraft.photo = ""; renderMoPhoto(); });
+    $("set-hour").addEventListener("change", function () { save(C.setPrefs(data, { hour: +this.value }, Date.now())); });
     $("ct-close").addEventListener("click", function () { $("ct-dlg").close(); });
     $("pic-close").addEventListener("click", function () { $("pic-dlg").close(); });
     $("set-close").addEventListener("click", function () { $("set-dlg").close(); });
@@ -937,19 +1169,21 @@
     }, true);
   }
 
-  // ---------- 11. Deep link: { rel: id } ----------
+  // ---------- 11. Deep link: { rel: id, moment?: id, view?: "moments" } ----------
   var waiting = null;
   function openTarget(target) {
     if (!target || typeof target !== "object") return;
     if (typeof target.rel === "string" && C.find(data, "rels", target.rel)) {
       local.active = target.rel;
+      if (typeof target.moment === "string" || target.view === "moments") local.view = "moments";
       saveLocal();
       render();
+      if (typeof target.moment === "string") flashMoment(target.moment);
     }
   }
   window.__orosOpenAt = function (target) {
     if (locked) { waiting = target; return; }
-    if (draft) return;     // an open editor keeps its edits
+    if (draft || moDraft || dayDraft) return;     // an open editor keeps its edits
     openTarget(target);
   };
   function runWaiting() { var w = waiting; waiting = null; if (w) openTarget(w); }

@@ -168,6 +168,7 @@ orosPack("de", "calendar", {
  "lbl.feed.anniv": "Jahrestage",
  "lbl.feed.appts": "Arzttermine",
  "lbl.feed.baby": "Baby",
+ "lbl.feed.together": "Zusammen",
  "lbl.feed.bday": "Geburtstage",
  "lbl.feed.budget": "Budget",
  "lbl.feed.chores": "Hausarbeit",

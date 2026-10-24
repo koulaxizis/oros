@@ -428,6 +428,122 @@
     return out;
   }
 
+  // ---------- day rows: Calendar feed, Today, reminders (wave 2) ----------
+  // The words travel with the core (Calendar, Today and the shell show
+  // them); other languages: the "together" pack when it is loaded,
+  // else English.
+  var WORDS = {
+    en: {
+      "cal.year1": "{names} · 1 year together", "cal.year": "{names} · {n} years together",
+      "cal.month1": "{names} · 1 month together", "cal.month": "{names} · {n} months together",
+      "cal.d100": "{names} · {n} days together", "cal.w50": "{names} · {n} weeks together",
+      "cal.fun.d": "{names} · {n} days together ✨", "cal.fun.h": "{names} · {n} hours together ✨",
+      "cal.fun.min": "{names} · {n} minutes together ✨", "cal.fun.s": "{names} · {n} seconds together ✨",
+      "cal.start": "{names} · the big day", "cal.moment": "{title} · {names}",
+      "cal.moment1": "{title} · 1 year ago", "cal.momentN": "{title} · {n} years ago",
+      "cal.meet": "{names} · together again", "cal.untitled": "A moment"
+    },
+    el: {
+      "cal.year1": "{names} · 1 χρόνος μαζί", "cal.year": "{names} · {n} χρόνια μαζί",
+      "cal.month1": "{names} · 1 μήνας μαζί", "cal.month": "{names} · {n} μήνες μαζί",
+      "cal.d100": "{names} · {n} μέρες μαζί", "cal.w50": "{names} · {n} εβδομάδες μαζί",
+      "cal.fun.d": "{names} · {n} μέρες μαζί ✨", "cal.fun.h": "{names} · {n} ώρες μαζί ✨",
+      "cal.fun.min": "{names} · {n} λεπτά μαζί ✨", "cal.fun.s": "{names} · {n} δευτερόλεπτα μαζί ✨",
+      "cal.start": "{names} · η μεγάλη μέρα", "cal.moment": "{title} · {names}",
+      "cal.moment1": "{title} · πριν από 1 χρόνο", "cal.momentN": "{title} · πριν από {n} χρόνια",
+      "cal.meet": "{names} · ξανά μαζί", "cal.untitled": "Μια στιγμή"
+    }
+  };
+  function words(lang) {
+    var I = typeof window !== "undefined" && window.orosI18n;
+    if (I && lang && !WORDS[lang] && typeof I.table === "function") I.table(WORDS, "together", lang);
+    return WORDS[lang] || WORDS.en;
+  }
+  function fill(s, v) { return s.replace(/\{(\w+)\}/g, function (m, k) { return v[k] !== undefined ? String(v[k]) : m; }); }
+  function fmtNum(n, lang) {
+    try { return Number(n).toLocaleString(lang === "el" ? "el-GR" : lang === "de" ? "de-DE" : "en-GB"); } catch (e) { return String(n); }
+  }
+  // Does a yearly date (first on `from`) come back on `ymd`? → years, else 0.
+  // 29 February shows on 28 February in other years.
+  function yearsOn(from, ymd) {
+    if (!(ymd > from)) return 0;
+    var a = parseYmd(from), b = parseYmd(ymd);
+    var mmdd = from.slice(5), on = ymd.slice(5) === mmdd ||
+      (mmdd === "02-29" && !isLeap(b.y) && ymd.slice(5) === "02-28");
+    return on ? b.y - a.y : 0;
+  }
+
+  // Rows of one day, for every living relationship that is not archived.
+  //   opts.notify  true → the kinds of prefs.notify (reminders),
+  //                else the kinds shown in the app (prefs.kinds), months
+  //                only with opts.months.
+  // Row: { id, rel, kind: ms|start|moment|day|meet, title, time?, target }
+  function dayRows(d, idx, ymd, lang, opts) {
+    var out = [];
+    if (!okYmd(ymd)) return out;
+    var data = normalize(d), w = words(lang), o = opts || {}, pf = data.prefs;
+    var kinds = {};
+    MS_KINDS.forEach(function (k) { kinds[k] = o.notify ? pf.notify[k] : pf.kinds[k] !== false && (k !== "month" || !!o.months); });
+    var on = function (k) { return o.notify ? pf.notify[k] !== false : true; };
+    liveRels(data, false).forEach(function (rel) {
+      var names = relName(rel, idx || {}, pf.me);
+      var base = { rel: rel.id };
+      if (ymd === rel.start && on("year")) {
+        out.push({ id: "start-" + rel.id, rel: rel.id, kind: "start", title: fill(w["cal.start"], { names: names }), time: rel.time || null, target: base });
+      }
+      milestones(rel, ymd, ymd, kinds).forEach(function (m) {
+        var key = m.kind === "fun" ? "cal.fun." + (m.u || "d") : m.kind === "year" ? (m.n === 1 ? "cal.year1" : "cal.year")
+          : m.kind === "month" ? (m.n === 1 ? "cal.month1" : "cal.month") : "cal." + m.kind;
+        out.push({ id: "ms-" + rel.id + "-" + m.kind + "-" + m.n + (m.u || ""), rel: rel.id, kind: "ms",
+          title: fill(w[key], { names: names, n: fmtNum(m.n, lang) }), time: m.time || null, target: base });
+      });
+      [["moments", "moment"], ["days", "day"]].forEach(function (pair) {
+        if (!on(pair[0])) return;
+        data[pair[0]].forEach(function (x) {
+          if (x.rel !== rel.id) return;
+          var title = x.title || w["cal.untitled"];
+          if (rel.discreet) title = initials(title);
+          var n = x.yearly ? yearsOn(x.date, ymd) : 0;
+          if (x.date !== ymd && !n) return;
+          out.push({ id: pair[1] + "-" + x.id + "-" + ymd, rel: rel.id, kind: pair[1],
+            title: n ? fill(w[n === 1 ? "cal.moment1" : "cal.momentN"], { title: title, n: n }) : fill(w["cal.moment"], { title: title, names: names }),
+            target: pair[1] === "moment" ? { rel: rel.id, moment: x.id } : base });
+        });
+      });
+      if (on("meets")) data.meets.forEach(function (x) {
+        if (x.rel !== rel.id || x.date !== ymd) return;
+        out.push({ id: "meet-" + x.id, rel: rel.id, kind: "meet", title: fill(w["cal.meet"], { names: names }), time: x.time || null, target: base });
+      });
+    });
+    return out;
+  }
+
+  // Moments of a relationship, newest first.
+  function momentsOf(d, relId) {
+    return normalize(d).moments.filter(function (m) { return m.rel === relId; }).sort(function (a, b) {
+      return a.date < b.date ? 1 : a.date > b.date ? -1 : byId(b, a);
+    });
+  }
+  // Special days of a relationship with their next date (yearly ones
+  // roll over; a one-off day in the past has next = null), soonest first.
+  function specialDays(d, relId, today) {
+    return normalize(d).days.filter(function (x) { return x.rel === relId; }).map(function (x) {
+      var next = x.date >= today ? x.date : null;
+      if (!next && x.yearly) {
+        var p = parseYmd(x.date), t = parseYmd(today);
+        for (var y = t.y; y <= t.y + 1 && !next; y++) {
+          var dd = Math.min(p.d, dim(y, p.mo)), c = ymd(y, p.mo, dd);
+          if (c >= today) next = c;
+        }
+      }
+      return { day: x, next: next };
+    }).sort(function (a, b) {
+      if (!a.next !== !b.next) return a.next ? -1 : 1;
+      if (a.next && a.next !== b.next) return a.next < b.next ? -1 : 1;
+      return a.day.date < b.day.date ? 1 : a.day.date > b.day.date ? -1 : byId(a.day, b.day);
+    });
+  }
+
   // ---------- PIN lock (device-local privacy screen) ----------
   // Same scheme as the Diary's: PBKDF2-SHA-256, a salted hash in
   // "oros-together-lock" on this device. Not encryption.
@@ -481,8 +597,9 @@
     monthsBetween: monthsBetween, todayYmd: todayYmd, startMs: startMs, isLeap: isLeap,
     elapsed: elapsed, milestones: milestones, upcoming: upcoming, recent: recent,
     contactIndex: contactIndex, personName: personName, initials: initials, relName: relName, birthdays: birthdays,
+    WORDS: WORDS, words: words, yearsOn: yearsOn, dayRows: dayRows, momentsOf: momentsOf, specialDays: specialDays,
     pinOk: pinOk, makeLock: makeLock, readLock: readLock, checkPin: checkPin, lockWait: lockWait,
-    LOCK_KEY: "oros-together-lock"
+    LOCK_KEY: "oros-together-lock", STORAGE_KEY: "oros-together-data"
   };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   if (root) root.TogetherCore = API;

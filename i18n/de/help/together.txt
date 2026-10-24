@@ -31,6 +31,22 @@ Zählt die Zeit, die du mit einem geliebten Menschen verbracht hast: Tage, Woche
 - Ein Datum, das es in einem Monat nicht gibt, rückt auf dessen letzten Tag: zusammen seit dem 31. Januar heißt 1 Monat am 28. oder 29. Februar, und der 29. Februar wird in anderen Jahren zum 28. Februar.
 - `Einstellungen` › `Gezeigte Meilensteine` schaltet jede Art ein oder aus.
 
+## Momente
+- `Momente` (neben `Zeit zusammen`) ist eure Zeitleiste: das erste Date, die erste Reise, der Tag des Jaworts. Die neuesten zuerst.
+- `+ Moment hinzufügen`: ein Tag, was geschah, eine Notiz, ein Ort und ein Foto (wie das Titelfoto, in Dateien gespeichert).
+- `Jedes Jahr daran erinnern` bringt ihn im Kalender, in Heute und in der Morgenmitteilung zurück, mit wie vielen Jahren her.
+- Tippe auf einen Moment, um ihn zu ändern oder zu löschen. Sein Foto bleibt in Dateien.
+
+## Besondere Tage
+- Unter den Meilensteinen fügt `+ Besonderer Tag` einen Tag zum Herunterzählen hinzu: der erste Kuss, ein Konzert, der Tag des Zusammenziehens. `Jedes Jahr` lässt ihn jedes Jahr wiederkommen.
+- Vergangene Tage ohne Wiederholung bleiben als `War am …` in der Liste.
+
+## Kalender, Heute und Erinnerungen
+- Der Kalender zeigt Jahrestage, alle 100 Tage, alle 50 Wochen, lustige Zahlen, Momente und besondere Tage mit „jedes Jahr“ (Chip `Zusammen`). Ein Tipp öffnet Zusammen dort.
+- [Heute](app:today) kann sie auch zeigen: Dort startet Zusammen ausgeschaltet, weil es privat ist; schalte es in den Einstellungen von Heute ein.
+- `Einstellungen` › `Erinnerungen`: eine Mitteilung am Morgen (ab der gewählten Uhrzeit) an einem Tag mit etwas zu feiern, solange orOS geöffnet ist. Wähle, welche Arten erinnern; Monate und lustige Zahlen starten ausgeschaltet.
+- Diskrete Beziehungen zeigen überall nur Initialen.
+
 ## PIN-Sperre
 - `Einstellungen` › `PIN-Sperre` zeigt einen PIN-Bildschirm, wenn Zusammen öffnet, und wieder nach einer Minute Abwesenheit.
 - Es ist ein Sichtschutz auf diesem Gerät, keine Verschlüsselung. Die PIN liegt nur auf diesem Gerät.

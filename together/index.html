@@ -39,6 +39,12 @@
         <button type="button" class="chip hero-edit" id="edit-btn" data-i18n="btn.edit">Edit</button>
       </div>
 
+      <div class="views" role="tablist">
+        <button type="button" class="view-btn" id="view-count" role="tab" data-i18n="view.count">Time together</button>
+        <button type="button" class="view-btn" id="view-moments" role="tab" data-i18n="view.moments">Moments</button>
+      </div>
+
+      <div id="pane-count">
       <div class="counter" aria-live="off">
         <p id="cnt-big" class="cnt-big"></p>
         <div id="cnt-tiles" class="tiles"></div>
@@ -50,8 +56,22 @@
       <h3 class="sec" data-i18n="sec.coming">Coming up</h3>
       <ul id="up-list" class="ms-list"></ul>
 
+      <div class="sec-row">
+        <h3 class="sec" data-i18n="sec.days">Special days</h3>
+        <button type="button" class="chip sm" id="day-add" data-i18n="day.add">+ Special day</button>
+      </div>
+      <ul id="day-list" class="ms-list"></ul>
+      <p class="hint small" id="day-empty" data-i18n="day.empty">The first kiss, the day you moved in: add days to count down to.</p>
+
       <h3 class="sec" id="recent-h" data-i18n="sec.recent">Recently</h3>
       <ul id="recent-list" class="ms-list past"></ul>
+      </div>
+
+      <div id="pane-moments" hidden>
+        <button type="button" class="chip pri" id="mo-add" data-i18n="mo.add">+ Add a moment</button>
+        <ol id="mo-list" class="timeline"></ol>
+        <p class="hint" id="mo-empty" data-i18n="mo.empty">No moments yet. Keep the first date, the first trip, the day you said yes, with a note and a photo.</p>
+      </div>
     </section>
   </main>
 
@@ -124,6 +144,67 @@
     </form>
   </dialog>
 
+  <!-- Moment editor -->
+  <dialog id="mo-dlg" class="dlg" aria-labelledby="mo-dlg-t">
+    <form method="dialog" id="mo-form" class="dlg-body" autocomplete="off">
+      <h2 id="mo-dlg-t"></h2>
+      <div class="row wrap">
+        <label class="field grow"><span data-i18n="mo.title">What happened</span>
+          <input type="text" id="mo-title" maxlength="120" data-i18n-ph="mo.titlePh">
+        </label>
+        <label class="field"><span data-i18n="mo.date">Day</span>
+          <input type="date" id="mo-date" required min="1900-01-01" max="2200-12-31">
+        </label>
+      </div>
+      <label class="field"><span data-i18n="mo.note">Note</span>
+        <textarea id="mo-note" rows="4" maxlength="4000"></textarea>
+      </label>
+      <label class="field"><span data-i18n="mo.place">Place (optional)</span>
+        <input type="text" id="mo-place" maxlength="150">
+      </label>
+      <label class="check"><input type="checkbox" id="mo-yearly"> <span data-i18n="mo.yearly">Remember it every year</span></label>
+      <fieldset class="field">
+        <legend data-i18n="rel.photo">Photo</legend>
+        <div class="photo-row">
+          <div class="photo-prev"><img id="mo-photo-img" alt="" hidden></div>
+          <div class="col">
+            <button type="button" class="chip" id="mo-photo-dev" data-i18n="photo.device">From this device</button>
+            <button type="button" class="chip" id="mo-photo-files" data-i18n="photo.files">From orOS Files</button>
+            <button type="button" class="link-btn danger" id="mo-photo-rm" data-i18n="photo.remove">Remove the photo</button>
+          </div>
+        </div>
+      </fieldset>
+      <p class="msg" id="mo-msg" role="alert"></p>
+      <div class="actions">
+        <button type="button" class="link-btn danger" id="mo-del" data-i18n="btn.delete">Delete</button>
+        <span class="spacer"></span>
+        <button type="button" class="chip" id="mo-cancel" data-i18n="btn.cancel">Cancel</button>
+        <button type="submit" class="chip pri" data-i18n="btn.save">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Special day editor -->
+  <dialog id="day-dlg" class="dlg small" aria-labelledby="day-dlg-t">
+    <form method="dialog" id="day-form" class="dlg-body" autocomplete="off">
+      <h2 id="day-dlg-t"></h2>
+      <label class="field"><span data-i18n="day.title">Name</span>
+        <input type="text" id="day-title" maxlength="120" data-i18n-ph="day.titlePh">
+      </label>
+      <label class="field"><span data-i18n="mo.date">Day</span>
+        <input type="date" id="day-date" required min="1900-01-01" max="2200-12-31">
+      </label>
+      <label class="check"><input type="checkbox" id="day-yearly"> <span data-i18n="day.yearly">Every year</span></label>
+      <p class="msg" id="day-msg" role="alert"></p>
+      <div class="actions">
+        <button type="button" class="link-btn danger" id="day-del" data-i18n="btn.delete">Delete</button>
+        <span class="spacer"></span>
+        <button type="button" class="chip" id="day-cancel" data-i18n="btn.cancel">Cancel</button>
+        <button type="submit" class="chip pri" data-i18n="btn.save">Save</button>
+      </div>
+    </form>
+  </dialog>
+
   <!-- Contact picker -->
   <dialog id="ct-dlg" class="dlg" aria-labelledby="ct-dlg-t">
     <div class="dlg-body">
@@ -156,6 +237,14 @@
       <fieldset class="field">
         <legend data-i18n="set.kinds">Milestones to show</legend>
         <div id="set-kinds" class="checks"></div>
+      </fieldset>
+      <fieldset class="field">
+        <legend data-i18n="set.remind">Reminders</legend>
+        <label class="field"><span data-i18n="set.hour">From this hour of the day</span>
+          <select id="set-hour"></select>
+        </label>
+        <div id="set-notify" class="checks"></div>
+        <p class="hint small" data-i18n="set.remindHint">One notice in the morning while orOS is open. The Calendar shows these days too (chip “Together”).</p>
       </fieldset>
       <fieldset class="field">
         <legend data-i18n="sec.lock">PIN lock</legend>

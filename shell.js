@@ -1175,6 +1175,7 @@
       tickSafe("namedayCheckTick", namedayCheckTickThrottled); // Calendar: contacts' name days, morning notice (60s throttle)
       tickSafe("babyCheckTick", babyCheckTickThrottled); // Baby: feed gap + daily medicine reminders (60s throttle)
       tickSafe("choresCheckTick", choresCheckTickThrottled); // Chore Wheel: daily "your chores" reminder (60s throttle)
+      tickSafe("togetherCheckTick", togetherCheckTickThrottled); // Together: anniversaries, milestones, moments (60s throttle)
       tickSafe("timesheetCheckTick", timesheetCheckTickThrottled); // Timesheet: forgotten timer (60s throttle)
       tickSafe("parkCheckTick", parkCheckTickThrottled);   // Maps: parking reminder (60s throttle)
       tickSafe("shelfCheckTick", shelfCheckTickThrottled); // Media Shelf: daily reading reminder (60s throttle)
@@ -2103,6 +2104,48 @@
     if (now - choresLastTick < 60000) return;
     choresLastTick = now;
     choresCheckTick();
+  }
+
+  // Together — one morning notice on a day with an anniversary, a
+  // milestone, a moment or special day marked every year, or a
+  // meeting. Reads "oros-together-data" directly (works with the app
+  // CLOSED) and asks together/core.js (loaded by index.html, the SAME
+  // file the app runs) for the rows of today, filtered by the synced
+  // prefs.notify; from prefs.hour on (default 09:00). Discreet
+  // relationships show initials. Key "day-<ymd>": one per day, the
+  // inbox dedup keeps a second device quiet.
+  function togetherCheckTick() {
+    var Core = window.TogetherCore;
+    if (!Core) return;
+    var raw;
+    try { raw = JSON.parse(localStorage.getItem(Core.STORAGE_KEY)); } catch (e) { return; }
+    if (!raw || !Array.isArray(raw.rels) || !raw.rels.length) return;
+    var data = Core.normalize(raw);
+    if (new Date().getHours() < data.prefs.hour) return;
+    var N = window.orosNotifs;
+    if (!(N && typeof N.emit === "function")) return;
+    var idx = {};
+    try { idx = Core.contactIndex(JSON.parse(localStorage.getItem("oros-contacts-data"))); } catch (e) {}
+    var lang = window.orosLang || "en";
+    var rows = Core.dayRows(data, idx, sysYmd(), lang, { notify: true });
+    if (!rows.length) return;
+    var title = window.t("app.together");
+    if (title === "app.together") title = "Together";   // missing-key fallback
+    N.emit({
+      ns: "together",
+      key: "day-" + sysYmd(),
+      type: "reminder",
+      title: title,
+      body: rows.slice(0, 3).map(function (r) { return r.title; }).join(" · ") + (rows.length > 3 ? " …" : ""),
+      deepLink: "together:" + rows[0].rel
+    });
+  }
+  var togetherLastTick = 0;
+  function togetherCheckTickThrottled() {
+    var now = Date.now();
+    if (now - togetherLastTick < 60000) return;
+    togetherLastTick = now;
+    togetherCheckTick();
   }
 
   var plantsLastTick = 0;
