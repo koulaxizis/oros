@@ -49,6 +49,11 @@ Im Menü `Mehr` einer Gruppe:
 - `Exportieren (CSV, PDF)`: eine CSV für deutsches Excel oder andere Apps oder eine PDF-Übersicht. In orOS legt `In Tabelle öffnen` dieselbe Tabelle in ein neues Blatt der Tabelle, mit Summen unter den Beträgen.
 - `Gruppe und Personen`, `Gruppe archivieren` und `Gruppe löschen`.
 
+## Eine Gruppe mit deinem Haushalt teilen
+Sobald du in einem Haushalt bist (App [Haushalt](app:household)), kann eine Gruppe dort leben, statt als Datei hin und her zu gehen, passend für eine WG oder eine Familie. In der Gruppe schickt `Mehr` › `Mit einem Haushalt teilen…` sie dorthin. Danach sehen alle im Haushalt die Gruppe in ihrem eigenen Kosten teilen, fügen Ausgaben und Zahlungen hinzu und sehen innerhalb von Sekunden dieselben Salden; Änderungen ohne Verbindung kommen später zusammen, ohne etwas doppelt zu zählen. Jede Person wählt mit `Wer davon bist du?`, wer sie ist. Ein kleines Haus markiert eine geteilte Gruppe auf dem Startbildschirm, und ein Kreis mit Initialen an einer Ausgabe zeigt, wer im Haushalt sie zuletzt geändert hat.
+
+Die Gruppe wird auf deinen Geräten verschlüsselt, bevor sie sie verlässt, und ist nicht mehr in deiner eigenen Sync-Kopie; dein Anteil fürs Budget, Exporte und die Gruppendatei funktionieren wie bisher. `Mehr` › `Teilen beenden…` nimmt sie für alle aus dem Haushalt und lässt dir eine eigene Kopie; `Gruppe löschen` entfernt eine geteilte Gruppe für alle und lässt dir keine. In beiden Fällen können die anderen sie 30 Tage lang über [Haushalt](app:household) zurückholen. Freunde außerhalb deines Haushalts bekommen weiter die Gruppendatei.
+
 ## Eine orOS-Datei speichern und öffnen
 Auf dem Startbildschirm speichert `orOS-Datei (.orossplit)` im Menü `Mehr` jede Gruppe mit ihren Personen, Ausgaben, Zahlungen, wiederkehrenden Ausgaben und Belegfotos als eine `.orossplit`-Datei. In einer Gruppe speichert `Diese Gruppe als orOS-Datei (.orossplit)` nur diese Gruppe: die Datei, die du deinen Freunden schickst. Die Datei ist ein einfaches ZIP: Entpackt enthält sie die Gruppen als `content.json`, die Fotos in `media/` und eine CSV pro Gruppe in `preview/` (wie bei `Exportieren (CSV, PDF)`) für andere Programme. Wer du in einer Gruppe bist, steht nie darin. Sie ist nicht verschlüsselt, bewahre sie also sicher auf.
 

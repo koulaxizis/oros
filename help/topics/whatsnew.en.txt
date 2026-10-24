@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.50.00
+- Split: share a group with your household. In a group, More › Share with a household… puts it in the household: everyone sees it in their own Split, adds expenses and payments, and sees the same balances within seconds, with initials showing who changed an expense last. Stop sharing leaves you an own copy; friends outside the household still get the group file.
+
 ## Version 3.49.00
 - Calendar: share a calendar with your household. In Manage labels, the house icon next to a label shares it: everyone in the household sees its events in their own Calendar and can add, change, move and delete them. Reminders stay your own and still come when the Calendar is closed, and a small circle with initials shows who changed an event last. Stop sharing leaves you an own copy.
 

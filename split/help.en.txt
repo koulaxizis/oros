@@ -49,6 +49,11 @@ From the `More` menu in a group:
 - `Export (CSV, PDF)`: a CSV for Greek Excel or other apps, or a PDF summary. Inside orOS, `Open in Spreadsheet` puts the same table in a new sheet of the Spreadsheet, with totals under the amounts.
 - `Group and people`, `Archive the group` and `Delete the group`.
 
+## Share a group with your household
+Once you're in a household (the [Household](app:household) app), a group can live there instead of going back and forth as a file, which suits a shared flat or a family. In the group, `More` › `Share with a household…` sends it. Everyone in the household then sees the group in their own Split, adds expenses and payments, and sees the same balances within seconds; changes made offline join up later without counting anything twice. Each person picks which one they are with `Which one is you?`. A small house marks a shared group on the home screen, and a circle with initials on an expense shows who in the household changed it last.
+
+The group is encrypted on your devices before it leaves and is no longer in your own sync copy; your Budget share, exports and the group file still work as before. `More` › `Stop sharing…` takes it out of the household for everyone and leaves you an own copy; `Delete the group` on a shared group removes it for everyone and leaves you none. Either way, the others can bring it back from [Household](app:household) for 30 days. Friends outside your household still get the group file.
+
 ## Save and open an orOS file
 On the home screen, `orOS file (.orossplit)` in the `More` menu saves every group, with its people, expenses, payments, repeating expenses and receipt photos, as one `.orossplit` file. Inside a group, `This group as orOS file (.orossplit)` saves only that group: the file to send your friends. The file is a plain ZIP: unzipped it holds the groups as `content.json`, the photos in `media/` and one CSV per group in `preview/` (the same as `Export (CSV, PDF)`) for other programs. Who you are in a group is never in it. It is not encrypted, so keep it somewhere safe.
 
