@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 33215 of 33215 (100%)
+- Strings: 33215 of 33223 (99%)
 - Help pages: 146 of 146 (100%)
 - Shown in the language list: yes
 
@@ -23,7 +23,7 @@ text is still written in the code. They switch over wave by wave
 | bubble | 100% | 53 / 53 |
 | budget | 100% | 555 / 555 |
 | calculator | 100% | 165 / 165 |
-| calendar | 100% | 371 / 371 |
+| calendar | 97% | 371 / 379 |
 | capture | 100% | 54 / 54 |
 | cardkit | 100% | 9 / 9 |
 | certificates | 100% | 391 / 391 |
