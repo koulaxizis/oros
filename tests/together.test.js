@@ -227,3 +227,44 @@ test("wave 2: the Today provider gives the feed's rows over the horizon", () => 
   assert.deepEqual(rows.find((r) => r.due === "2026-02-14").target, { rel: "r" });
   delete globalThis.TogetherCore;
 });
+
+test("wave 3: gift ideas sync like the rest and go with their relationship", () => {
+  let d = C.put(C.empty(), "rels", rel("r", "2020-02-14"), 1);
+  d = C.put(d, "gifts", { id: "g1", rel: "r", text: "Book", done: false }, 2);
+  d = C.put(d, "gifts", { id: "g2", rel: "r", text: "  " }, 3);
+  assert.deepEqual(d.gifts.map((g) => g.id), ["g1"]);
+  const done = C.put(d, "gifts", { id: "g1", rel: "r", text: "Book", done: true }, 10);
+  assert.equal(C.serialize(C.merge(d, done)), C.serialize(C.merge(done, d)));
+  assert.equal(C.find(C.merge(d, done), "gifts", "g1").done, true);
+  assert.equal(C.find(C.remove(d, "rels", "r", 20), "gifts", "g1"), null);
+  assert.equal(C.normalize({ prefs: { giftDays: 5 } }).prefs.giftDays, 7);
+  assert.equal(C.normalize({ prefs: { giftDays: 14 } }).prefs.giftDays, 14);
+});
+
+test("wave 3: occasions and gift reminders", () => {
+  const idx = C.contactIndex({ contacts: [{ id: "c1", given: "Anna", mtime: 1, events: [{ type: "birthday", day: "02-29", year: 1992 }] }] });
+  let d = C.put(C.empty(), "rels", rel("r", "2020-06-10", { people: [{ c: "c1", n: "A" }] }), 1);
+  const r = C.find(d, "rels", "r");
+  assert.deepEqual(C.occasions(r, idx, "2027-01-01", "").map((o) => [o.kind, o.date, o.years]), [["bday", "2027-02-28", 35], ["anniv", "2027-06-10", 7]]);
+  assert.equal(C.nextYearly("02-29", "2028-01-01"), "2028-02-29");
+  // 7 days before (default) and on the day, only in notify mode
+  assert.deepEqual(C.dayRows(d, idx, "2027-02-21", "en", { notify: true }).map((x) => x.kind), ["gift"]);
+  assert.equal(C.dayRows(d, idx, "2027-02-21", "en", { notify: true })[0].title, "Anna: birthday in 7 days · time for a gift");
+  assert.deepEqual(C.dayRows(d, idx, "2027-02-21", "en", { notify: true })[0].target, { rel: "r", gifts: true });
+  assert.deepEqual(C.dayRows(d, idx, "2027-02-28", "en", { notify: true }).map((x) => x.kind), ["bday"]);
+  assert.deepEqual(C.dayRows(d, idx, "2027-02-21", "en"), []);
+  assert.equal(C.dayRows(d, idx, "2027-06-03", "en", { notify: true })[0].kind, "gift");
+  const off = C.setPrefs(d, { giftDays: 0 }, 5);
+  assert.deepEqual(C.dayRows(off, idx, "2027-02-21", "en", { notify: true }), []);
+  const nob = C.setPrefs(d, { notify: { bdays: false } }, 5);
+  assert.deepEqual(C.dayRows(nob, idx, "2027-02-28", "en", { notify: true }), []);
+});
+
+test("wave 3: Contacts takes { addEvent } and shows the Together button, Together takes { contact }", () => {
+  const fs = require("fs");
+  const ct = fs.readFileSync(__dirname + "/../contacts/contacts.js", "utf8");
+  assert.ok(/target\.addEvent/.test(ct) && /__orosOpenAt\("together", \{ contact: c\.id \}\)/.test(ct));
+  const app = fs.readFileSync(__dirname + "/../together/app.js", "utf8");
+  assert.ok(/target\.contact/.test(app) && /"contacts", \{ addEvent:/.test(app) && /"todo", \{ addItems:/.test(app));
+  assert.ok(/"notes", \{ add:/.test(app) && /__orosOpenBudgetNew\(\{ k: "o"/.test(app) && /__orosOpenCalendarNew\(\{ date:/.test(app));
+});

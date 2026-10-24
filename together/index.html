@@ -53,6 +53,11 @@
 
       <div id="next" class="card next"></div>
 
+      <div class="row wrap acts" id="acts">
+        <button type="button" class="chip sm" id="act-date" data-i18n="act.date" hidden>Plan a date</button>
+        <button type="button" class="chip sm" id="act-anniv" data-i18n="act.anniv" hidden>Anniversary in Contacts</button>
+      </div>
+
       <h3 class="sec" data-i18n="sec.coming">Coming up</h3>
       <ul id="up-list" class="ms-list"></ul>
 
@@ -62,6 +67,16 @@
       </div>
       <ul id="day-list" class="ms-list"></ul>
       <p class="hint small" id="day-empty" data-i18n="day.empty">The first kiss, the day you moved in: add days to count down to.</p>
+
+      <div class="sec-row" id="gifts-h">
+        <h3 class="sec" data-i18n="sec.gifts">Gift ideas</h3>
+        <button type="button" class="chip sm" id="gift-todo" data-i18n="gift.todo" hidden>Send to To-Do</button>
+      </div>
+      <form id="gift-form" class="row" autocomplete="off">
+        <input type="text" id="gift-text" maxlength="200" data-i18n-ph="gift.ph">
+        <button type="submit" class="chip" data-i18n="rel.addName">Add</button>
+      </form>
+      <ul id="gift-list" class="gift-list"></ul>
 
       <h3 class="sec" id="recent-h" data-i18n="sec.recent">Recently</h3>
       <ul id="recent-list" class="ms-list past"></ul>
@@ -174,6 +189,11 @@
           </div>
         </div>
       </fieldset>
+      <div class="row wrap" id="mo-links" hidden>
+        <button type="button" class="chip sm" id="mo-notes" data-i18n="mo.toNotes" hidden>Write in Notes</button>
+        <button type="button" class="chip sm" id="mo-send" data-i18n="mo.send" hidden>Send to an app…</button>
+        <button type="button" class="chip sm" id="mo-budget" data-i18n="mo.budget" hidden>Cost to Budget</button>
+      </div>
       <p class="msg" id="mo-msg" role="alert"></p>
       <div class="actions">
         <button type="button" class="link-btn danger" id="mo-del" data-i18n="btn.delete">Delete</button>
@@ -201,6 +221,20 @@
         <span class="spacer"></span>
         <button type="button" class="chip" id="day-cancel" data-i18n="btn.cancel">Cancel</button>
         <button type="submit" class="chip pri" data-i18n="btn.save">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Amount for Budget -->
+  <dialog id="amt-dlg" class="dlg small" aria-labelledby="amt-dlg-t">
+    <form method="dialog" id="amt-form" class="dlg-body" autocomplete="off">
+      <h2 id="amt-dlg-t" data-i18n="amt.title">How much did it cost?</h2>
+      <p class="hint small" id="amt-what"></p>
+      <input type="text" id="amt-val" inputmode="decimal" maxlength="14" data-i18n-ph="amt.ph">
+      <p class="msg" id="amt-msg" role="alert"></p>
+      <div class="actions"><span class="spacer"></span>
+        <button type="button" class="chip" id="amt-cancel" data-i18n="btn.cancel">Cancel</button>
+        <button type="submit" class="chip pri" data-i18n="amt.go">Open Budget</button>
       </div>
     </form>
   </dialog>
@@ -244,6 +278,9 @@
           <select id="set-hour"></select>
         </label>
         <div id="set-notify" class="checks"></div>
+        <label class="field"><span data-i18n="set.giftDays">Gift reminder before birthdays and anniversaries</span>
+          <select id="set-gift"></select>
+        </label>
         <p class="hint small" data-i18n="set.remindHint">One notice in the morning while orOS is open. The Calendar shows these days too (chip “Together”).</p>
       </fieldset>
       <fieldset class="field">

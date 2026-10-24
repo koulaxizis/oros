@@ -47,6 +47,13 @@ Count the time you have spent together with someone you love: days, weeks, month
 - `Settings` › `Reminders`: one notice in the morning (from the hour you choose) on a day with something to celebrate, while orOS is open. Choose which kinds remind you; months and fun numbers start off.
 - Discreet relationships show initials in all of these.
 
+## Gifts and other apps
+- `Gift ideas`: write ideas as they come. `Send to To-Do` puts the open ones in a new To-Do list "Gifts · …" (To-Do asks before adding). With no ideas it sends one task per birthday or anniversary in the next 60 days.
+- `Bought` ticks an idea and offers to put what it cost in [Budget](app:budget) as a gift expense (Budget opens the form; you save it there).
+- The birthdays of the people linked from Contacts show among the special days. `Settings` › `Reminders` adds a gift reminder 3 to 21 days before each birthday and your anniversary.
+- `Plan a date` opens a new Calendar event; `Anniversary in Contacts` opens the person's contact with your anniversary added.
+- In a moment: `Write in Notes` starts a new page with it, `Send to an app…` sends it anywhere in orOS, `Cost to Budget` notes what it cost.
+
 ## PIN lock
 - `Settings` › `PIN lock` adds a PIN screen when Together opens, and again after a minute away.
 - It is a privacy screen on this device, not encryption. The PIN lives only on this device.

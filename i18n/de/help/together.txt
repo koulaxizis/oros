@@ -47,6 +47,13 @@ Zählt die Zeit, die du mit einem geliebten Menschen verbracht hast: Tage, Woche
 - `Einstellungen` › `Erinnerungen`: eine Mitteilung am Morgen (ab der gewählten Uhrzeit) an einem Tag mit etwas zu feiern, solange orOS geöffnet ist. Wähle, welche Arten erinnern; Monate und lustige Zahlen starten ausgeschaltet.
 - Diskrete Beziehungen zeigen überall nur Initialen.
 
+## Geschenke und andere Apps
+- `Geschenkideen`: schreib Ideen auf, wie sie kommen. `An To-Do senden` legt die offenen in eine neue To-Do-Liste „Geschenke · …“ (To-Do fragt vor dem Hinzufügen). Ohne Ideen sendet es eine Aufgabe pro Geburtstag oder Jahrestag in den nächsten 60 Tagen.
+- `Gekauft` hakt eine Idee ab und bietet an, die Kosten als Geschenk-Ausgabe ins [Budget](app:budget) zu übernehmen (Budget öffnet das Formular; du speicherst dort).
+- Die Geburtstage der Personen aus Kontakten stehen bei den besonderen Tagen. `Einstellungen` › `Erinnerungen` fügt eine Geschenk-Erinnerung 3 bis 21 Tage vor jedem Geburtstag und eurem Jahrestag hinzu.
+- `Date planen` öffnet einen neuen Kalendertermin; `Jahrestag in Kontakte` öffnet den Kontakt der Person mit eurem Jahrestag.
+- In einem Moment: `In Notizen schreiben` beginnt eine neue Seite damit, `An eine App senden…` schickt ihn überall in orOS hin, `Kosten ins Budget` hält fest, was er gekostet hat.
+
 ## PIN-Sperre
 - `Einstellungen` › `PIN-Sperre` zeigt einen PIN-Bildschirm, wenn Zusammen öffnet, und wieder nach einer Minute Abwesenheit.
 - Es ist ein Sichtschutz auf diesem Gerät, keine Verschlüsselung. Die PIN liegt nur auf diesem Gerät.

@@ -235,6 +235,18 @@ textarea { min-height: 80px; padding: 8px 10px; border: 1px solid var(--border);
 .mo-note { white-space: pre-wrap; overflow-wrap: anywhere; }
 .mo-meta { color: var(--text-dim); font-size: 13px; overflow-wrap: anywhere; }
 
+/* ---------- gifts and links (wave 3) ---------- */
+.acts { margin-top: 10px; }
+.acts:not(:has(button:not([hidden]))) { display: none; }
+.ms-bday .dot { background: #9ece6a; }
+#gift-form { margin-bottom: 8px; }
+.gift-list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.gift { display: flex; align-items: center; gap: 8px; padding: 4px 6px 4px 10px; border-radius: 10px; background: var(--panel-bg); border: 1px solid var(--border); }
+.gift input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent); flex: 0 0 auto; }
+.gtxt { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.gift.done .gtxt { color: var(--text-dim); text-decoration: line-through; }
+#mo-links { padding-top: 4px; border-top: 1px solid var(--border); }
+
 /* ---------- lock ---------- */
 .lock {
   position: fixed; inset: 0; z-index: 50;

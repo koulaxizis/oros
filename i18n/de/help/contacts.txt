@@ -94,6 +94,7 @@ Siehe auch [Sicherung](help:t/backup).
 ## Tipps
 - Geburtstage, Jahrestage und eigene Daten erscheinen jedes Jahr im [Kalender](app:calendar). Ein Tipp darauf öffnet den Kontakt hier.
 - `Stammbaum` auf der Karte eines Kontakts öffnet diese Person im [Stammbaum](app:familytree). Ist noch niemand im Stammbaum mit dem Kontakt verknüpft, bietet er an, stattdessen einen Stammbaum aus deinen Kontakten zu erstellen.
+- `Zusammen` erscheint auf der Karte von jemandem, der in [Zusammen](app:together) in einer Beziehung ist, und öffnet sie dort. Aus Zusammen öffnet `Jahrestag in Kontakte` diesen Dialog mit dem Datum; gespeichert wird erst mit `Speichern`.
 - `QR-Code` auf der Karte eines Kontakts öffnet den [QR-Generator](app:qr) mit einem Kontaktcode (vCard) für diese Person, bereit zum Speichern oder Drucken. Der Kontakt selbst wird nicht geändert.
 
 ## Grenzen

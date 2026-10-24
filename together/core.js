@@ -11,8 +11,9 @@
 //     moments: [{ id, m, rel, date, title, note, photo, yearly, place }],
 //     days:    [{ id, m, rel, date, title, yearly }],
 //     meets:   [{ id, m, rel, date, time, tz, place }],
+//     gifts:   [{ id, m, rel, text, done }]            (wave 3: gift ideas)
 //     prefs:   { m, me, live, kinds{month,year,d100,w50,fun}, hour,
-//                notify{…}, confetti },
+//                notify{…}, confetti, giftDays },
 //     tombs:   { id: ms } }
 // Sync rules (OROS_BIBLE.md Part I, Part VI):
 //   - merge(a, b) === merge(b, a): union by id, the newer m wins, a
@@ -30,11 +31,12 @@
   "use strict";
 
   var VER = 1;
-  var LISTS = ["rels", "moments", "days", "meets"];
+  var LISTS = ["rels", "moments", "days", "meets", "gifts"];
   var KINDS = ["couple", "engaged", "married", "partners", "friends", "other"];
   var MS_KINDS = ["month", "year", "d100", "w50", "fun"];
   var NOTIFY = ["month", "year", "d100", "w50", "fun", "moments", "days", "bdays", "meets"];
   var MAX_PEOPLE = 8;
+  var GIFT_DAYS = [0, 3, 7, 14, 21];
 
   // ---------- small checks ----------
   var YMD_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
@@ -109,6 +111,11 @@
       if (!rel || !okYmd(r.date)) return null;
       return { rel: rel, date: r.date, title: line(r.title, 120), yearly: r.yearly === true };
     },
+    gifts: function (r) {
+      var rel = cleanId(r.rel), text = line(r.text, 200);
+      if (!rel || !text) return null;
+      return { rel: rel, text: text, done: r.done === true };
+    },
     meets: function (r) {
       var rel = cleanId(r.rel);
       if (!rel || !okYmd(r.date)) return null;
@@ -131,7 +138,7 @@
     var kinds = {}, notify = {};
     MS_KINDS.forEach(function (k) { kinds[k] = true; });
     NOTIFY.forEach(function (k) { notify[k] = k !== "month" && k !== "fun"; });
-    return { m: 0, me: "", live: true, kinds: kinds, hour: 9, notify: notify, confetti: true };
+    return { m: 0, me: "", live: true, kinds: kinds, hour: 9, notify: notify, confetti: true, giftDays: 7 };
   }
   function cleanPrefs(p) {
     var d = defaultPrefs();
@@ -141,6 +148,7 @@
     if (typeof p.live === "boolean") d.live = p.live;
     if (typeof p.confetti === "boolean") d.confetti = p.confetti;
     if (typeof p.hour === "number" && p.hour >= 0 && p.hour <= 23) d.hour = Math.floor(p.hour);
+    if (GIFT_DAYS.indexOf(p.giftDays) >= 0) d.giftDays = p.giftDays;
     MS_KINDS.forEach(function (k) { if (p.kinds && typeof p.kinds[k] === "boolean") d.kinds[k] = p.kinds[k]; });
     NOTIFY.forEach(function (k) { if (p.notify && typeof p.notify[k] === "boolean") d.notify[k] = p.notify[k]; });
     return d;
@@ -219,7 +227,7 @@
     var old = find(out, list, id);
     var ids = [id];
     if (list === "rels") {
-      ["moments", "days", "meets"].forEach(function (k) {
+      ["moments", "days", "meets", "gifts"].forEach(function (k) {
         out[k].forEach(function (r) { if (r.rel === id) ids.push(r.id); });
       });
     }
@@ -441,7 +449,9 @@
       "cal.fun.min": "{names} · {n} minutes together ✨", "cal.fun.s": "{names} · {n} seconds together ✨",
       "cal.start": "{names} · the big day", "cal.moment": "{title} · {names}",
       "cal.moment1": "{title} · 1 year ago", "cal.momentN": "{title} · {n} years ago",
-      "cal.meet": "{names} · together again", "cal.untitled": "A moment"
+      "cal.meet": "{names} · together again", "cal.untitled": "A moment",
+      "cal.bday": "{name}: birthday today", "cal.giftBday": "{name}: birthday in {n} days · time for a gift",
+      "cal.giftAnniv": "{names}: anniversary in {n} days · time for a gift"
     },
     el: {
       "cal.year1": "{names} · 1 χρόνος μαζί", "cal.year": "{names} · {n} χρόνια μαζί",
@@ -451,7 +461,9 @@
       "cal.fun.min": "{names} · {n} λεπτά μαζί ✨", "cal.fun.s": "{names} · {n} δευτερόλεπτα μαζί ✨",
       "cal.start": "{names} · η μεγάλη μέρα", "cal.moment": "{title} · {names}",
       "cal.moment1": "{title} · πριν από 1 χρόνο", "cal.momentN": "{title} · πριν από {n} χρόνια",
-      "cal.meet": "{names} · ξανά μαζί", "cal.untitled": "Μια στιγμή"
+      "cal.meet": "{names} · ξανά μαζί", "cal.untitled": "Μια στιγμή",
+      "cal.bday": "{name}: γενέθλια σήμερα", "cal.giftBday": "{name}: γενέθλια σε {n} μέρες · ώρα για δώρο",
+      "cal.giftAnniv": "{names}: επέτειος σε {n} μέρες · ώρα για δώρο"
     }
   };
   function words(lang) {
@@ -471,6 +483,32 @@
     var mmdd = from.slice(5), on = ymd.slice(5) === mmdd ||
       (mmdd === "02-29" && !isLeap(b.y) && ymd.slice(5) === "02-28");
     return on ? b.y - a.y : 0;
+  }
+
+  // The next yearly date of "MM-DD" on or after today (29 Feb → 28 Feb).
+  function nextYearly(mmdd, today) {
+    var t = parseYmd(today), mo = +mmdd.slice(0, 2), dd = +mmdd.slice(3, 5);
+    if (!t || !(mo >= 1 && mo <= 12) || !(dd >= 1 && dd <= 31)) return null;
+    for (var y = t.y; y <= t.y + 1; y++) {
+      var c = ymd(y, mo, Math.min(dd, dim(y, mo)));
+      if (c >= today) return c;
+    }
+    return null;
+  }
+  // Occasions for a gift: the birthdays of the linked people (from
+  // Contacts) and the relationship's next anniversary, soonest first.
+  // Row: { kind: "bday"|"anniv", date, name, c?, years }
+  function occasions(rel, idx, today, me) {
+    var out = [];
+    birthdays(rel, idx || {}).forEach(function (b) {
+      var next = nextYearly(b.day, today);
+      if (next) out.push({ kind: "bday", date: next, name: rel.discreet ? initials(b.name) : b.name, c: b.c, years: b.year ? +next.slice(0, 4) - b.year : 0 });
+    });
+    if (rel.start < today || rel.start === today) {
+      var a = nextYearly(rel.start.slice(5), today === rel.start ? addDays(today, 1) : today);
+      if (a) out.push({ kind: "anniv", date: a, name: relName(rel, idx || {}, me), years: +a.slice(0, 4) - +rel.start.slice(0, 4) });
+    }
+    return out.sort(function (x, y) { return x.date < y.date ? -1 : x.date > y.date ? 1 : x.kind < y.kind ? -1 : 1; });
   }
 
   // Rows of one day, for every living relationship that is not archived.
@@ -510,6 +548,21 @@
             target: pair[1] === "moment" ? { rel: rel.id, moment: x.id } : base });
         });
       });
+      // Reminders only: birthdays today (the Calendar has them from
+      // Contacts) and "a gift for …" giftDays before an occasion.
+      if (o.notify && pf.notify.bdays !== false) {
+        var soon = pf.giftDays ? addDays(ymd, pf.giftDays) : null;
+        occasions(rel, idx, ymd, pf.me).forEach(function (oc) {
+          if (oc.kind === "bday" && oc.date === ymd) {
+            out.push({ id: "bday-" + rel.id + "-" + oc.c, rel: rel.id, kind: "bday", title: fill(w["cal.bday"], { name: oc.name }), target: base });
+          }
+          if (soon && oc.date === soon) {
+            out.push({ id: "gift-" + rel.id + "-" + oc.kind + (oc.c || ""), rel: rel.id, kind: "gift",
+              title: oc.kind === "bday" ? fill(w["cal.giftBday"], { name: oc.name, n: pf.giftDays }) : fill(w["cal.giftAnniv"], { names: oc.name, n: pf.giftDays }),
+              target: { rel: rel.id, gifts: true } });
+          }
+        });
+      }
       if (on("meets")) data.meets.forEach(function (x) {
         if (x.rel !== rel.id || x.date !== ymd) return;
         out.push({ id: "meet-" + x.id, rel: rel.id, kind: "meet", title: fill(w["cal.meet"], { names: names }), time: x.time || null, target: base });
@@ -597,7 +650,7 @@
     monthsBetween: monthsBetween, todayYmd: todayYmd, startMs: startMs, isLeap: isLeap,
     elapsed: elapsed, milestones: milestones, upcoming: upcoming, recent: recent,
     contactIndex: contactIndex, personName: personName, initials: initials, relName: relName, birthdays: birthdays,
-    WORDS: WORDS, words: words, yearsOn: yearsOn, dayRows: dayRows, momentsOf: momentsOf, specialDays: specialDays,
+    WORDS: WORDS, words: words, GIFT_DAYS: GIFT_DAYS, nextYearly: nextYearly, occasions: occasions, yearsOn: yearsOn, dayRows: dayRows, momentsOf: momentsOf, specialDays: specialDays,
     pinOk: pinOk, makeLock: makeLock, readLock: readLock, checkPin: checkPin, lockWait: lockWait,
     LOCK_KEY: "oros-together-lock", STORAGE_KEY: "oros-together-data"
   };

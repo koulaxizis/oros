@@ -114,6 +114,15 @@
       "set.remind": "Reminders", "set.hour": "From this hour of the day",
       "set.remindHint": "One notice in the morning while orOS is open. The Calendar shows these days too (chip “Together”).",
       "notify.moments": "Moments marked “every year”", "notify.days": "Special days", "notify.meets": "Meetings",
+      "act.date": "Plan a date", "act.anniv": "Anniversary in Contacts", "act.dateTitle": "Date: {names}",
+      "sec.gifts": "Gift ideas", "gift.todo": "Send to To-Do", "gift.ph": "A gift idea", "gift.bought": "Bought",
+      "gift.done": "Done", "gift.list": "Gifts · {names}", "gift.nothing": "No open ideas and no birthday or anniversary in the next 60 days.",
+      "gift.forBday": "A gift for {name}: birthday {date}", "gift.forAnniv": "A gift for {name}: anniversary {date}",
+      "occ.bday": "{name}: birthday",
+      "mo.toNotes": "Write in Notes", "mo.send": "Send to an app…", "mo.budget": "Cost to Budget",
+      "amt.title": "How much did it cost?", "amt.ph": "e.g. 25.50", "amt.go": "Open Budget", "amt.bad": "Write an amount above zero.",
+      "set.giftDays": "Gift reminder before birthdays and anniversaries", "gift.off": "Off", "gift.daysN": "{n} days before",
+      "notify.bdays": "Birthdays and gift reminders",
       "full": "This device is out of storage space. The change was not saved."
     },
     el: {
@@ -198,6 +207,15 @@
       "set.remind": "Υπενθυμίσεις", "set.hour": "Από αυτή την ώρα της μέρας",
       "set.remindHint": "Μία ειδοποίηση το πρωί, όσο το orOS είναι ανοιχτό. Το Ημερολόγιο δείχνει κι αυτό αυτές τις μέρες (chip «Μαζί»).",
       "notify.moments": "Στιγμές με «κάθε χρόνο»", "notify.days": "Ξεχωριστές μέρες", "notify.meets": "Συναντήσεις",
+      "act.date": "Κανόνισε ραντεβού", "act.anniv": "Επέτειος στις Επαφές", "act.dateTitle": "Ραντεβού: {names}",
+      "sec.gifts": "Ιδέες για δώρα", "gift.todo": "Στο To-Do", "gift.ph": "Μια ιδέα για δώρο", "gift.bought": "Αγοράστηκε",
+      "gift.done": "Έγινε", "gift.list": "Δώρα · {names}", "gift.nothing": "Δεν υπάρχουν ανοιχτές ιδέες ούτε γενέθλια ή επέτειος τις επόμενες 60 μέρες.",
+      "gift.forBday": "Δώρο: γενέθλια {name}, {date}", "gift.forAnniv": "Δώρο: επέτειος {name}, {date}",
+      "occ.bday": "{name}: γενέθλια",
+      "mo.toNotes": "Γράψε στις Σημειώσεις", "mo.send": "Αποστολή σε εφαρμογή…", "mo.budget": "Κόστος στα Έσοδα & Έξοδα",
+      "amt.title": "Πόσο κόστισε;", "amt.ph": "π.χ. 25,50", "amt.go": "Άνοιγμα Εσόδων & Εξόδων", "amt.bad": "Γράψε ποσό πάνω από μηδέν.",
+      "set.giftDays": "Υπενθύμιση για δώρο πριν από γενέθλια και επετείους", "gift.off": "Ανενεργή", "gift.daysN": "{n} μέρες πριν",
+      "notify.bdays": "Γενέθλια και υπενθυμίσεις για δώρα",
       "full": "Ο χώρος αποθήκευσης της συσκευής γέμισε. Η αλλαγή δεν αποθηκεύτηκε."
     }
   };
@@ -552,6 +570,9 @@
     renderCounter(rel);
     renderMilestones(rel);
     renderDays(rel);
+    renderOccasions(rel);
+    renderGifts(rel);
+    renderActs(rel);
     renderView(rel);
     startTick();
   }
@@ -664,6 +685,7 @@
     ul.textContent = "";
     rows.forEach(function (r) {
       var x = r.day, li = el("li", "ms ms-day");
+      li.dataset.date = r.next || "9999";
       var dot = el("span", "dot");
       dot.setAttribute("aria-hidden", "true");
       li.appendChild(dot);
@@ -762,6 +784,7 @@
     $("mo-del").hidden = !m;
     $("mo-msg").textContent = "";
     renderMoPhoto();
+    renderMoLinks(m);
     $("mo-dlg").showModal();
   }
   function renderMoPhoto() {
@@ -804,6 +827,153 @@
     li.classList.add("flash");
     setTimeout(function () { li.classList.remove("flash"); }, 1600);
   }
+
+  // ---------- 6c. Gifts and links to other apps (wave 3) ----------
+  // Every link opens the other app's own form or dialog prefilled
+  // (BR-W8-6): nothing is written there until the person saves.
+  function shellFn(name) {
+    try { var p = window.parent; return p && p !== window && typeof p[name] === "function" ? p : null; } catch (e) { return null; }
+  }
+  function sendApi() {
+    try { var s = window.parent && window.parent !== window && window.parent.orosSend; return s && typeof s.open === "function" ? s : null; } catch (e) { return null; }
+  }
+
+  function renderGifts(rel) {
+    var ul = $("gift-list"), rows = data.gifts.filter(function (g) { return g.rel === rel.id; })
+      .sort(function (a, b) { return a.done !== b.done ? (a.done ? 1 : -1) : a.id < b.id ? -1 : 1; });
+    ul.textContent = "";
+    var budget = !!shellFn("__orosOpenBudgetNew");
+    rows.forEach(function (g) {
+      var li = el("li", "gift" + (g.done ? " done" : ""));
+      var cb = el("input");
+      cb.type = "checkbox";
+      cb.checked = g.done;
+      cb.setAttribute("aria-label", t("gift.done"));
+      cb.addEventListener("change", function () { save(C.put(data, "gifts", { id: g.id, rel: g.rel, text: g.text, done: cb.checked }, Date.now())); });
+      li.appendChild(cb);
+      li.appendChild(el("span", "gtxt", g.text));
+      if (budget) li.appendChild(btn(t("gift.bought"), "link-btn", function () {
+        askAmount(g.text, function (cents) {
+          shellFn("__orosOpenBudgetNew").__orosOpenBudgetNew({ k: "o", a: cents, n: t("app.name") + ": " + g.text, c: "o-gift", src: "together" });
+          if (!g.done) save(C.put(data, "gifts", { id: g.id, rel: g.rel, text: g.text, done: true }, Date.now()));
+        });
+      }));
+      var x = btn("", "icon-btn sm", function () { save(C.remove(data, "gifts", g.id, Date.now())); });
+      setIcon(x, ICON.x, t("rel.unlink", { name: g.text }));
+      li.appendChild(x);
+      ul.appendChild(li);
+    });
+    $("gift-todo").hidden = !shellFn("__orosOpenAt");
+  }
+
+  // To-Do (BR-TD-ADD): the open ideas, else one task per coming
+  // occasion, as a new list "Gifts · names" (To-Do asks before adding).
+  function giftsToTodo() {
+    var rel = activeRel(), p = shellFn("__orosOpenAt");
+    if (!rel || !p) return;
+    var idx = contacts(), names = C.relName(rel, idx, "");
+    var items = data.gifts.filter(function (g) { return g.rel === rel.id && !g.done; }).map(function (g) { return { text: g.text }; });
+    if (!items.length) {
+      items = C.occasions(rel, idx, shownDay, data.prefs.me).filter(function (o) { return C.daysBetween(shownDay, o.date) <= 60; })
+        .map(function (o) {
+          return { text: t(o.kind === "bday" ? "gift.forBday" : "gift.forAnniv", { name: o.name, date: fmtDate(o.date, { day: "numeric", month: "long" }) }) };
+        });
+    }
+    if (!items.length) { toast(t("gift.nothing")); return; }
+    p.__orosOpenAt("todo", { addItems: { newList: t("gift.list", { names: names }).slice(0, 60), from: t("app.name"), items: items.slice(0, 200) } });
+  }
+
+  // Coming birthdays of the linked people, in the special days list.
+  function renderOccasions(rel) {
+    var ul = $("day-list"), idx = contacts();
+    C.occasions(rel, idx, shownDay, data.prefs.me).forEach(function (o) {
+      if (o.kind !== "bday") return;
+      var li = el("li", "ms ms-bday");
+      var dot = el("span", "dot");
+      dot.setAttribute("aria-hidden", "true");
+      li.appendChild(dot);
+      var b = btn("", "ms-body ms-open", function () {
+        var p = shellFn("__orosOpenContact");
+        if (p) p.__orosOpenContact(o.c);
+      });
+      var top = el("span", "ms-what", t("occ.bday", { name: o.name }));
+      if (o.years && !rel.discreet) top.appendChild(el("span", "tag", String(o.years)));
+      b.appendChild(top);
+      b.appendChild(el("span", "ms-when", fmtDate(o.date)));
+      li.appendChild(b);
+      li.appendChild(el("span", "ms-in", whenLabel(o.date)));
+      // keep the list in date order: insert before the first later row
+      var later = [].filter.call(ul.children, function (n) { return n.dataset.date && n.dataset.date > o.date; })[0];
+      li.dataset.date = o.date;
+      ul.insertBefore(li, later || null);
+    });
+    if (ul.children.length) $("day-empty").hidden = true;
+  }
+
+  function renderActs(rel) {
+    $("act-date").hidden = !shellFn("__orosOpenCalendarNew");
+    var idx = contacts(), mmdd = rel.start.slice(5), y = +rel.start.slice(0, 4);
+    var linked = rel.people.filter(function (p) { return p.c && idx[p.c]; })[0];
+    var has = linked && idx[linked.c].events.some(function (ev) { return ev && ev.type === "anniversary" && ev.day === mmdd; });
+    $("act-anniv").hidden = !(linked && !has && shellFn("__orosOpenAt"));
+    $("act-anniv").dataset.c = linked ? linked.c : "";
+    $("act-anniv").dataset.y = String(y);
+  }
+  function planDate() {
+    var rel = activeRel(), p = shellFn("__orosOpenCalendarNew");
+    if (!rel || !p) return;
+    p.__orosOpenCalendarNew({ date: shownDay, title: t("act.dateTitle", { names: C.relName(rel, contacts(), "") }).slice(0, 200) });
+  }
+  function annivToContacts() {
+    var rel = activeRel(), p = shellFn("__orosOpenAt"), c = $("act-anniv").dataset.c;
+    if (!rel || !p || !c) return;
+    p.__orosOpenAt("contacts", { addEvent: { id: c, type: "anniversary", day: rel.start.slice(5), year: +rel.start.slice(0, 4) } });
+  }
+
+  // Amount → cents (12 / 12.5 / 12,50 / 1.234,56 / 1,234.56).
+  function parseCents(v) {
+    var s = String(v || "").replace(/[\s€$£]/g, "");
+    if (!/^\d[\d.,]*$/.test(s)) return 0;
+    var lastSep = Math.max(s.lastIndexOf(","), s.lastIndexOf("."));
+    var dec = lastSep >= 0 && s.length - lastSep - 1 <= 2 ? s.slice(lastSep + 1) : "";
+    var int = (dec || lastSep === s.length - 1 ? s.slice(0, lastSep) : s).replace(/[.,]/g, "");
+    var n = Math.round(parseFloat(int + "." + (dec || "0")) * 100);
+    return isFinite(n) && n > 0 && n <= 100000000000 ? n : 0;
+  }
+  var amtCb = null;
+  function askAmount(what, cb) {
+    amtCb = cb;
+    $("amt-what").textContent = what;
+    $("amt-val").value = "";
+    $("amt-msg").textContent = "";
+    $("amt-dlg").showModal();
+    $("amt-val").focus();
+  }
+  function amountOk(ev) {
+    ev.preventDefault();
+    var cents = parseCents($("amt-val").value);
+    if (!cents) { $("amt-msg").textContent = t("amt.bad"); $("amt-val").focus(); return; }
+    var cb = amtCb;
+    amtCb = null;
+    $("amt-dlg").close();
+    if (cb) cb(cents);
+  }
+
+  // A moment → Notes (a new page), any app (BR-SEND), Budget.
+  function momentText(m) {
+    var lines = [m.title || t("mo.untitled"), fmtDate(m.date, { day: "numeric", month: "long", year: "numeric" })];
+    if (m.place) lines.push(m.place);
+    if (m.note) lines.push("", m.note);
+    return lines.join("\n");
+  }
+  function renderMoLinks(m) {
+    var notes = !!shellFn("__orosOpenAt"), send = !!sendApi(), budget = !!shellFn("__orosOpenBudgetNew");
+    $("mo-links").hidden = !m || !(notes || send || budget);
+    $("mo-notes").hidden = !notes;
+    $("mo-send").hidden = !send;
+    $("mo-budget").hidden = !budget;
+  }
+  function currentMoment() { return moDraft && C.find(data, "moments", moDraft.id); }
 
   // ---------- 7. Relationship editor ----------
   var draft = null;   // { id, isNew, people, cover }
@@ -951,7 +1121,7 @@
     hs.value = String(data.prefs.hour);
     var nb = $("set-notify");
     nb.textContent = "";
-    ["year", "month", "d100", "w50", "fun", "moments", "days", "meets"].forEach(function (k) {
+    ["year", "month", "d100", "w50", "fun", "moments", "days", "bdays", "meets"].forEach(function (k) {
       var lab = el("label", "check"), cb = el("input");
       cb.type = "checkbox";
       cb.checked = data.prefs.notify[k] !== false;
@@ -960,6 +1130,10 @@
       lab.appendChild(document.createTextNode(" " + t(C.MS_KINDS.indexOf(k) >= 0 ? "ms." + k : "notify." + k)));
       nb.appendChild(lab);
     });
+    var gs = $("set-gift");
+    gs.textContent = "";
+    C.GIFT_DAYS.forEach(function (n) { var o = el("option", "", n ? t("gift.daysN", { n: n }) : t("gift.off")); o.value = String(n); gs.appendChild(o); });
+    gs.value = String(data.prefs.giftDays);
     $("set-about").textContent = t("set.about");
     pinMode = null;
     renderPinArea();
@@ -1138,6 +1312,41 @@
       photoFromFiles().then(function (p) { if (p && moDraft) { moDraft.photo = p; renderMoPhoto(); } });
     });
     $("mo-photo-rm").addEventListener("click", function () { moDraft.photo = ""; renderMoPhoto(); });
+    $("set-gift").addEventListener("change", function () { save(C.setPrefs(data, { giftDays: +this.value }, Date.now())); });
+    $("gift-form").addEventListener("submit", function (ev) {
+      ev.preventDefault();
+      var rel = activeRel(), v = $("gift-text").value.trim();
+      if (!rel || !v) { $("gift-text").focus(); return; }
+      save(C.put(data, "gifts", { id: C.uid(), rel: rel.id, text: v, done: false }, Date.now()));
+      $("gift-text").value = "";
+      $("gift-text").focus();
+    });
+    $("gift-todo").addEventListener("click", giftsToTodo);
+    $("act-date").addEventListener("click", planDate);
+    $("act-anniv").addEventListener("click", annivToContacts);
+    $("amt-form").addEventListener("submit", amountOk);
+    $("amt-cancel").addEventListener("click", function () { amtCb = null; $("amt-dlg").close(); });
+    $("mo-notes").addEventListener("click", function () {
+      var m = currentMoment(), p = shellFn("__orosOpenAt");
+      if (!m || !p) return;
+      $("mo-dlg").close();
+      p.__orosOpenAt("notes", { add: { title: (m.title || t("mo.untitled")).slice(0, 200), text: momentText(m) } });
+    });
+    $("mo-send").addEventListener("click", function () {
+      var m = currentMoment(), api = sendApi();
+      if (!m || !api) return;
+      $("mo-dlg").close();
+      api.open({ kind: "text", data: { title: m.title || t("mo.untitled"), text: momentText(m) } });
+    });
+    $("mo-budget").addEventListener("click", function () {
+      var m = currentMoment();
+      if (!m) return;
+      $("mo-dlg").close();
+      askAmount(m.title || t("mo.untitled"), function (cents) {
+        var p = shellFn("__orosOpenBudgetNew");
+        if (p) p.__orosOpenBudgetNew({ k: "o", a: cents, d: m.date, n: t("app.name") + ": " + (m.title || t("mo.untitled")), c: "o-fun", src: "together" });
+      });
+    });
     $("set-hour").addEventListener("change", function () { save(C.setPrefs(data, { hour: +this.value }, Date.now())); });
     $("ct-close").addEventListener("click", function () { $("ct-dlg").close(); });
     $("pic-close").addEventListener("click", function () { $("pic-dlg").close(); });
@@ -1169,16 +1378,31 @@
     }, true);
   }
 
-  // ---------- 11. Deep link: { rel: id, moment?: id, view?: "moments" } ----------
+  // ---------- 11. Deep link: { rel: id, moment?: id, view?: "moments", gifts?: true } | { contact: id } ----------
   var waiting = null;
   function openTarget(target) {
     if (!target || typeof target !== "object") return;
+    // From a Contacts card: { contact: id } → the relationship with that
+    // person, else a new one with them already in it.
+    if (typeof target.contact === "string" && target.contact) {
+      var hit = C.liveRels(data, true).filter(function (r) { return r.people.some(function (p) { return p.c === target.contact; }); })[0];
+      if (hit) { target = { rel: hit.id }; }
+      else {
+        var who = contacts()[target.contact];
+        if (!who) return;
+        openEditor(null);
+        addPerson({ c: who.id, n: who.name });
+        return;
+      }
+    }
     if (typeof target.rel === "string" && C.find(data, "rels", target.rel)) {
       local.active = target.rel;
       if (typeof target.moment === "string" || target.view === "moments") local.view = "moments";
+      else if (target.gifts === true) local.view = "count";
       saveLocal();
       render();
       if (typeof target.moment === "string") flashMoment(target.moment);
+      if (target.gifts === true) $("gifts-h").scrollIntoView({ block: "start" });
     }
   }
   window.__orosOpenAt = function (target) {
