@@ -7459,6 +7459,31 @@
   };
 
 
+  // Back from the Dropbox sign-in with no passphrase on this device
+  // (a new device, "I already use orOS on another device", or Connect
+  // in Settings): the page reloaded on the desktop, but the passphrase
+  // is the next step, so Settings › Sync opens again. A remembered
+  // passphrase (vault auto-unlock) or a single app taking the sign-in
+  // back leaves the desktop as it is.
+  function syncPassAfterSignIn() {
+    var S = window.orosSync;
+    if (!S || !S.vaultUnlocked || SOLO) return;
+    S.vaultUnlocked.then(function () {
+      if (typeof S.leftForSolo === "function" && S.leftForSolo()) return;
+      var tries = 0;
+      (function wait() {
+        if (!S.isConnected() || S.hasPassphrase()) return;
+        // Splash still up or apps.json not in yet.
+        if (document.getElementById("oro-splash") || !state.apps.length) {
+          if (++tries > 120) return;
+          setTimeout(wait, 250);
+          return;
+        }
+        if (window.orosSettings) window.orosSettings.open("sync");
+      })();
+    }, function () {});
+  }
+
   function initSyncIntegration() {
     registerShellSlice();
     fdMigrateLegacy();          // FILES-V: one-time cleanup of the blob model
@@ -7471,7 +7496,9 @@
     // OAuth return → flip the menu to connected state once tokens land
     if (window.orosSync && window.orosSync.redirectHandled) {
       window.orosSync.redirectHandled.then(function (handled) {
-        if (handled) renderMenu();
+        if (!handled) return;
+        renderMenu();
+        syncPassAfterSignIn();
       });
     }
 
