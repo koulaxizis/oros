@@ -139,3 +139,17 @@ test("gamecenter: the core never writes what it reads", () => {
   C.summarize((k) => store[k] || null, TODAY);
   assert.equal(JSON.stringify(store), before);
 });
+
+test("gamecenter: All games groups list every game exactly once, every Games app is known", () => {
+  const seen = [];
+  C.GROUPS.forEach((g) => { assert.ok(g.games.length > 0, g.id); seen.push(...g.games); });
+  assert.deepEqual([...seen].sort(), [...C.GAMES].sort());
+  assert.equal(new Set(seen).size, seen.length);
+  const fs = require("fs"), path = require("path");
+  const apps = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "apps.json"), "utf8")).apps;
+  const games = apps.filter((a) => a.category === "Games" && a.id !== "gamecenter").map((a) => a.id);
+  assert.deepEqual([...games].sort(), [...C.GAMES].sort());
+  // Each group's heading has words in both languages.
+  const src = fs.readFileSync(path.join(__dirname, "..", "gamecenter", "gamecenter.js"), "utf8");
+  C.GROUPS.forEach((g) => assert.equal(src.split('"all.g.' + g.id + '"').length - 1, 2, g.id));
+});

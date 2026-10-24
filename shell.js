@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "3.42.01";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "3.43.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -3297,7 +3297,7 @@
     home: function () { if (state.running) returnToDesktop(); },
     open: function (id) { openAppById(id); }
   };
-  window.orosAssistSearch = function (q, ids) {
+  window.orosAssistSearch = function (q, ids, opts) {
     var S = window.orosSearch;
     if (!S) return Promise.resolve([]);
     var allow = {};
@@ -3305,6 +3305,23 @@
     var apps = searchApps().filter(function (a) { return allow[a.id]; });
     if (!apps.length) return Promise.resolve([]);
     if (!searchReader) searchReader = S.makeReader(localStorage);
+    // { all: true } (AS-LBL): every item of the allowed apps, unscored,
+    // for the Assistant's label filter ("events without a label").
+    if (opts && opts.all) {
+      return S.load(apps, APP_VERSION).then(function () {
+        var ctx = { q: "", words: [], fold: S.fold, lang: langBase(), code: state.lang, limit: 1000, readJSON: searchReader };
+        var out = [];
+        (window.orosSearchProviders || []).forEach(function (pv) {
+          if (!pv || typeof pv.search !== "function" || !allow[pv.id]) return;
+          var list;
+          try { list = pv.search(ctx); } catch (e) { list = null; }
+          if (!Array.isArray(list)) return;
+          var hits = list.map(S.cleanHit).filter(Boolean).slice(0, 1000);
+          if (hits.length) out.push({ id: pv.id, total: hits.length, hits: hits });
+        });
+        return JSON.parse(JSON.stringify(out));
+      });
+    }
     return S.load(apps, APP_VERSION).then(function () {
       return S.run(window.orosSearchProviders, String(q || ""), {
         lang: langBase(), code: state.lang, readJSON: searchReader,
@@ -3509,6 +3526,31 @@
     });
   }
   appFrames().forEach(cmdWireFrame);
+
+  // Phone, SMS, mail and map links inside an app frame (EXT-1). A
+  // frame that follows a tel: link itself shows Chrome's error page in
+  // the Android app instead of the dialer chooser, and the app is lost
+  // until it is reopened. The shell hands such links to the top window,
+  // where the browser passes them to the phone's apps.
+  var EXT_SCHEME = /^(tel|sms|smsto|mailto|geo):/i;
+  var extHandoffAt = 0;
+  function extWireFrame(frame) {
+    frame.addEventListener("load", function () {
+      var w;
+      try { w = frame.contentWindow; if (!w || !w.document) return; } catch (e) { return; }   // not same-origin
+      w.addEventListener("click", function (e) {
+        if (e.defaultPrevented || e.button !== 0) return;
+        var a = e.target && e.target.closest ? e.target.closest("a[href]") : null;
+        if (!a) return;
+        var href = a.getAttribute("href") || "";
+        if (!EXT_SCHEME.test(href)) return;
+        e.preventDefault();
+        extHandoffAt = Date.now();   // the unsaved-changes guard stays silent
+        window.location.href = href;
+      });
+    });
+  }
+  appFrames().forEach(extWireFrame);
 
   // Ctrl+Alt+Shift+F: the menu opens with the cursor in the field,
   // from the desktop or from inside an app.
@@ -7461,6 +7503,31 @@
   };
 
 
+  // Back from the Dropbox sign-in with no passphrase on this device
+  // (a new device, "I already use orOS on another device", or Connect
+  // in Settings): the page reloaded on the desktop, but the passphrase
+  // is the next step, so Settings › Sync opens again. A remembered
+  // passphrase (vault auto-unlock) or a single app taking the sign-in
+  // back leaves the desktop as it is.
+  function syncPassAfterSignIn() {
+    var S = window.orosSync;
+    if (!S || !S.vaultUnlocked || SOLO) return;
+    S.vaultUnlocked.then(function () {
+      if (typeof S.leftForSolo === "function" && S.leftForSolo()) return;
+      var tries = 0;
+      (function wait() {
+        if (!S.isConnected() || S.hasPassphrase()) return;
+        // Splash still up or apps.json not in yet.
+        if (document.getElementById("oro-splash") || !state.apps.length) {
+          if (++tries > 120) return;
+          setTimeout(wait, 250);
+          return;
+        }
+        if (window.orosSettings) window.orosSettings.open("sync");
+      })();
+    }, function () {});
+  }
+
   function initSyncIntegration() {
     registerShellSlice();
     fdMigrateLegacy();          // FILES-V: one-time cleanup of the blob model
@@ -7473,7 +7540,9 @@
     // OAuth return → flip the menu to connected state once tokens land
     if (window.orosSync && window.orosSync.redirectHandled) {
       window.orosSync.redirectHandled.then(function (handled) {
-        if (handled) renderMenu();
+        if (!handled) return;
+        renderMenu();
+        syncPassAfterSignIn();
       });
     }
 
@@ -9593,6 +9662,7 @@
     f.setAttribute("title", "orOS application");
     document.getElementById("oros-running").appendChild(f);
     cmdWireFrame(f);
+    extWireFrame(f);
     return f;
   }
   function mtDrop(el) {
@@ -10195,6 +10265,7 @@
   // (offline data is safe in localStorage — nothing to warn about).
   window.addEventListener("beforeunload", function (e) {
     if (osResetting) return;   // factory reset owns this unload
+    if (Date.now() - extHandoffAt < 2000) return;   // EXT-1: a tel:/mailto: handoff, the page stays
     // SH-B8: sync.js arms the dirty flag on EVERY change, connected or
     // not, and only a successful push clears it. Without Dropbox (or
     // while locked) the flag is permanent — and this guard asked

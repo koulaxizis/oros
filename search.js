@@ -182,13 +182,19 @@
     var title = squash(h.title);
     if (!title) return null;
     var when = typeof h.when === "number" && isFinite(h.when) ? h.when : 0;
-    return {
+    var out = {
       id: String(h.id == null ? "" : h.id),
       title: title.slice(0, 200),
       text: typeof h.text === "string" ? h.text : "",
       when: when,
       target: h.target === undefined ? null : h.target
     };
+    // The item's label names, for the Assistant's label filter (AS-LBL).
+    if (Array.isArray(h.labels)) {
+      out.labels = h.labels.filter(function (x) { return typeof x === "string" && x.trim(); })
+        .slice(0, 20).map(function (x) { return squash(x).slice(0, 60); });
+    }
+    return out;
   }
 
   function withTimeout(p, ms) {

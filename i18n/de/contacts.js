@@ -1,4 +1,5 @@
 orosPack("de", "contacts", {
+ "srch.labels": "Labels: ",
  "ac.btn": "Aus einem Konto",
  "ac.cancelled": "Anmeldung abgebrochen.",
  "ac.err": "Kontakte konnten nicht gelesen werden ({e}).",

@@ -70,18 +70,18 @@
   var APP_IDS = ["todo", "calendar", "budget", "bookmarks", "contacts", "kanban", "shelf", "habits", "plants"];
   // What each app's update may set (the tool's argument names).
   var SETTABLE = {
-    todo:      { title: 1, date: 1, note: 1 },
-    calendar:  { title: 1, date: 1, start: 1, end: 1, location: 1, note: 1 },
+    todo:      { title: 1, date: 1, note: 1, label: 1, labels: 1, priority: 1 },
+    calendar:  { title: 1, date: 1, start: 1, end: 1, location: 1, note: 1, label: 1, labels: 1 },
     budget:    { amount: 1, date: 1, category: 1, note: 1 },
-    bookmarks: { title: 1, note: 1 },
-    contacts:  { title: 1, org: 1, phone: 1, email: 1, date: 1, note: 1 },
-    kanban:    { title: 1, date: 1, note: 1 },
+    bookmarks: { title: 1, note: 1, label: 1, labels: 1 },
+    contacts:  { title: 1, org: 1, phone: 1, email: 1, date: 1, note: 1, label: 1, labels: 1 },
+    kanban:    { title: 1, date: 1, note: 1, label: 1, labels: 1 },
     shelf:     { title: 1, note: 1, status: 1 },
     habits:    { title: 1 },
     plants:    { title: 1, note: 1 }
   };
   // The diff's fields, in the order the card shows them.
-  var VIEW_ORDER = ["title", "column", "kind", "status", "done", "watered", "org", "phone", "email", "birthday", "amount", "date", "due", "start", "end", "category", "location", "url", "labels", "subtasks", "position", "note"];
+  var VIEW_ORDER = ["title", "column", "kind", "status", "done", "watered", "org", "phone", "email", "birthday", "amount", "date", "due", "start", "end", "category", "location", "label", "priority", "url", "labels", "subtasks", "position", "note"];
   // Budget's ready categories by the names the model knows (same
   // table as core.js BUDGET_CATS).
   var BUDGET_CATS = {
@@ -186,6 +186,29 @@
       if (!co) return bad("column must not be empty.");
       set.column = co;
     }
+    // Labels (AS-LBL): label = one label's name (Calendar: THE label;
+    // the other apps: add it), "none" / "" takes them all off; labels =
+    // the whole new list of names (replaces; [] takes them all off).
+    if (has(args, "label") && typeof args.label === "string") {
+      var lb = line(args.label, 40);
+      set.label = /^(none|no label)$/i.test(lb) ? "" : lb;
+    }
+    if (has(args, "labels") && args.labels !== null && args.labels !== undefined) {
+      if (!Array.isArray(args.labels)) return bad("labels must be a list of label names.");
+      if (args.labels.length > 20) return bad("labels takes at most 20 names.");
+      var lbs = [];
+      args.labels.forEach(function (x) {
+        var n = line(typeof x === "string" ? x : "", 40);
+        if (n && !lbs.some(function (y) { return foldName(y) === foldName(n); })) lbs.push(n);
+      });
+      if (has(set, "label")) return bad("give label or labels, not both.");
+      set.labels = lbs;
+    }
+    if (has(args, "priority") && args.priority !== null && args.priority !== undefined && args.priority !== "") {
+      var pr = typeof args.priority === "number" ? args.priority : parseInt(String(args.priority).replace(/^p/i, ""), 10);
+      if (!(pr >= 1 && pr <= 4) || Math.floor(pr) !== pr) return bad("priority must be 1 (urgent), 2, 3 or 4 (none).");
+      set.priority = pr;
+    }
     if (has(args, "status") && args.status !== null && args.status !== undefined && args.status !== "") {
       if (STATUS_NAMES.indexOf(args.status) < 0) return bad("status must be one of: " + STATUS_NAMES.join(", ") + ".");
       set.status = args.status;
@@ -258,6 +281,29 @@
     it.fm[f] = t;
     it.mtime = t;
   }
+  // todo.js touchXf (prio, subs, …): fm spelled out first.
+  function tdTouchXf(it, f, now) {
+    tdEnsureFm(it);
+    var t = stampAfter(now, it.mtime), xf = {};
+    XF_FIELDS.forEach(function (k) { if (isObj(it.xf) && typeof it.xf[k] === "number") xf[k] = it.xf[k]; });
+    xf[f] = t;
+    it.xf = xf;
+    it.mtime = t;
+  }
+  // The user's To-Do labels (state.labels, a tombstone hides one).
+  function tdLabels(d) {
+    var dead = isObj(d.deleted) ? d.deleted : {};
+    return (Array.isArray(d.labels) ? d.labels : []).filter(function (l) {
+      return isObj(l) && typeof l.id === "string" && typeof l.name === "string" && !(typeof dead[l.id] === "number" && dead[l.id] >= (l.mtime || 0));
+    }).map(function (l) { return { id: l.id, names: [l.name] }; });
+  }
+  function tdLabelNames(d, ids) {
+    var ls = tdLabels(d);
+    return (Array.isArray(ids) ? ids : []).map(function (id) {
+      var l = ls.filter(function (x) { return x.id === id; })[0];
+      return l ? l.names[0] : "";
+    }).filter(Boolean).join(", ");
+  }
   function tdStampNewest(it, now, floor) {
     var t = stampAfter(now, Math.max(it.mtime || 0, floor || 0));
     it.fm = {};
@@ -277,11 +323,13 @@
     });
     return hit;
   }
-  function tdView(it) {
+  function tdView(it, d) {
     return {
       title: typeof it.text === "string" ? it.text : "",
       done: !!it.done,
       due: realDate(it.due),
+      priority: it.prio === 1 || it.prio === 2 || it.prio === 3 ? "P" + it.prio : "",
+      labels: tdLabelNames(d, it.labels),
       note: typeof it.notes === "string" ? it.notes : ""
     };
   }
@@ -289,7 +337,7 @@
   function todoChange(d, target, ch, now) {
     var h = tdFind(d, target);
     if (!h) return bad("That task is no longer in To-Do.");
-    var it = h.it, before = tdView(it);
+    var it = h.it, before = tdView(it, d);
     var title = before.title;
     if (ch.action === "delete") {
       var copy = clone(it);
@@ -316,20 +364,32 @@
       if (has(s, "note")) next.notes = s.note;
       var notOk = Object.keys(s).filter(function (k) { return !SETTABLE.todo[k]; });
       if (notOk.length) return bad("A To-Do task has no " + notOk.join(", ") + ".");
+      if (has(s, "label") || has(s, "labels")) {
+        var nl = newLabelIds(tdLabels(d), Array.isArray(it.labels) ? it.labels : [], s, "To-Do", "To-Do (a task's Labels)");
+        if (nl.err) return bad(nl.err);
+        next.labels = nl.ids;
+      }
+      if (has(s, "priority")) next.prio = s.priority;
     }
     var prev = {}, changed = [];
     Object.keys(next).forEach(function (k) {
-      var cur = k === "done" ? !!it[k] : (typeof it[k] === "string" ? it[k] : "");
-      if (cur === next[k]) return;
+      var cur = k === "done" ? !!it[k] : k === "labels" ? (Array.isArray(it.labels) ? it.labels : []) :
+                k === "prio" ? (it.prio === 1 || it.prio === 2 || it.prio === 3 ? it.prio : 4) : (typeof it[k] === "string" ? it[k] : "");
+      if (JSON.stringify(cur) === JSON.stringify(next[k])) return;
       prev[k] = has(it, k) ? clone(it[k]) : null;
-      it[k] = next[k];
-      tdTouch(it, k, now);
+      if (k === "prio") {
+        if (next[k] === 4) delete it.prio; else it.prio = next[k];
+        tdTouchXf(it, "prio", now);
+      } else {
+        it[k] = next[k];
+        tdTouch(it, k, now);
+      }
       changed.push(k);
     });
     if (!changed.length) return bad("Nothing would change: the task already looks like that.");
     var nextRaw = {};
-    changed.forEach(function (k) { nextRaw[k] = clone(it[k]); });
-    return { ok: true, title: title, before: before, after: tdView(it), del: false,
+    changed.forEach(function (k) { nextRaw[k] = has(it, k) ? clone(it[k]) : null; });
+    return { ok: true, title: title, before: before, after: tdView(it, d), del: false,
              undo: { t: "set", app: "todo", target: { list: h.list.id, item: it.id }, prev: prev, next: nextRaw } };
   }
   function todoUndo(d, u, now) {
@@ -350,16 +410,16 @@
     }
     var h = tdFind(d, u.target);
     if (!h) return bad("That task is no longer in To-Do.");
-    var keys = Object.keys(u.next || {}).filter(function (k) { return ITEM_FIELDS.indexOf(k) >= 0; });
+    var keys = Object.keys(u.next || {}).filter(function (k) { return ITEM_FIELDS.indexOf(k) >= 0 || k === "prio"; });
     for (var i = 0; i < keys.length; i++) {
-      if (JSON.stringify(h.it[keys[i]] === undefined ? null : h.it[keys[i]]) !== JSON.stringify(u.next[keys[i]])) {
+      if (JSON.stringify(h.it[keys[i]] === undefined ? null : h.it[keys[i]]) !== JSON.stringify(u.next[keys[i]] === undefined ? null : u.next[keys[i]])) {
         return bad("The task changed since; nothing was undone.");
       }
     }
     keys.forEach(function (k) {
       var v = u.prev ? u.prev[k] : null;
       if (v === null || v === undefined) delete h.it[k]; else h.it[k] = clone(v);
-      tdTouch(h.it, k, now);
+      if (k === "prio") tdTouchXf(h.it, k, now); else tdTouch(h.it, k, now);
     });
     return { ok: true };
   }
@@ -371,21 +431,87 @@
     for (var i = 0; i < d.events.length; i++) if (isObj(d.events[i]) && d.events[i].id === id) return { ev: d.events[i], i: i };
     return null;
   }
-  function calView(ev) {
+  // The label an event shows: one of the user's own labels
+  // (calendar.js state.labels). Untouched seeds (mtime 0) are stored
+  // with their English name and shown translated (calendar.js
+  // SEED_NAMES), so either name finds them. An id that names no label
+  // (a removed one) shows as no label, as in Calendar.
+  var CAL_SEEDS = {
+    en: { "cal.lbl-personal": "Personal", "cal.lbl-work": "Work", "cal.lbl-family": "Family" },
+    el: { "cal.lbl-personal": "Προσωπικό", "cal.lbl-work": "Εργασία", "cal.lbl-family": "Οικογένεια" }
+  };
+  function foldName(s) {
+    return String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
+  }
+  // The seed labels (Calendar, Contacts) answer to their name in every
+  // language: an exact name wins, then a seed's other name.
+  function seedGroup(name) {
+    var f = foldName(name), g = -1;
+    ["cal.lbl-personal", "cal.lbl-work", "cal.lbl-family"].forEach(function (k, i) {
+      if (foldName(CAL_SEEDS.en[k]) === f || foldName(CAL_SEEDS.el[k]) === f) g = i;
+    });
+    return g;
+  }
+  // list = [{ id, names: [..] }] → the entry a name means, or null.
+  function pickLabel(list, name) {
+    var f = foldName(name), hit = null;
+    list.forEach(function (l) { if (!hit && l.names.some(function (n) { return foldName(n) === f; })) hit = l; });
+    if (hit) return hit;
+    var g = seedGroup(name);
+    if (g < 0) return null;
+    list.forEach(function (l) { if (!hit && l.names.some(function (n) { return seedGroup(n) === g; })) hit = l; });
+    return hit;
+  }
+  // The label ids a change leaves on an item: s.labels replaces, s.label
+  // adds one ("" = none at all). → { ids } | { err }
+  function newLabelIds(list, cur, s, appName, where) {
+    var names = has(s, "labels") ? s.labels : (s.label ? [s.label] : []);
+    var ids = has(s, "labels") || !s.label ? [] : cur.slice(), miss = [];
+    names.forEach(function (n) {
+      var l = pickLabel(list, n);
+      if (!l) miss.push(n);
+      else if (ids.indexOf(l.id) < 0) ids.push(l.id);
+    });
+    if (miss.length) {
+      return { err: appName + " has no label named \"" + miss.join("\", \"") + "\". " +
+        (list.length ? "Its labels: " + list.map(function (l) { return l.names.join(" / "); }).join(", ") + ". " : "It has no labels. ") +
+        "New labels are made in " + where + ": tell the user." };
+    }
+    return { ids: ids };
+  }
+  function calLabels(d) {
+    return (Array.isArray(d.labels) ? d.labels : []).filter(function (l) {
+      return isObj(l) && typeof l.id === "string" && l.id && typeof l.name === "string";
+    });
+  }
+  function calLabelNames(l) {
+    return l.mtime === 0 && has(CAL_SEEDS.en, "cal." + l.id) ? [CAL_SEEDS.en["cal." + l.id], CAL_SEEDS.el["cal." + l.id]] : [l.name];
+  }
+  function calLabelName(d, id) {
+    if (typeof id !== "string" || !id) return "";
+    var l = calLabels(d).filter(function (x) { return x.id === id; })[0];
+    return l ? calLabelNames(l).join(" / ") : "";
+  }
+  function calFindLabel(d, name) {
+    var hit = pickLabel(calLabels(d).map(function (l) { return { id: l.id, names: calLabelNames(l), l: l }; }), name);
+    return hit ? hit.l : null;
+  }
+  function calView(ev, d) {
     return {
       title: typeof ev.title === "string" ? ev.title : "",
       date: realDate(ev.date),
       start: hm(ev.start || ev.time || ""),
       end: hm(ev.end || ""),
       location: typeof ev.location === "string" ? ev.location : "",
+      label: calLabelName(d, ev.labelId),
       note: typeof ev.note === "string" ? ev.note : ""
     };
   }
-  var CAL_RAW = ["date", "dateEnd", "start", "end", "title", "location", "note"];
+  var CAL_RAW = ["date", "dateEnd", "start", "end", "title", "location", "labelId", "note"];
   function calChange(d, target, ch, now) {
     var h = calFind(d, target);
     if (!h) return bad("That event is no longer in Calendar.");
-    var ev = h.ev, before = calView(ev), title = before.title;
+    var ev = h.ev, before = calView(ev, d), title = before.title;
     var series = !!ev.recur;
     if (ch.action === "complete" || ch.action === "reopen") return bad("A calendar event can't be ticked off.");
     if (ch.action === "delete") {
@@ -440,11 +566,27 @@
     if (has(s, "title")) put("title", s.title.slice(0, 80));
     if (has(s, "location")) put("location", s.location);
     if (has(s, "note")) put("note", s.note.slice(0, 500));
+    if (has(s, "labels")) {
+      if (s.labels.length > 1) return bad("A calendar event has one label; give label with one name.");
+      s = clone(s);
+      s.label = s.labels[0] || "";
+      delete s.labels;
+    }
+    if (has(s, "label")) {
+      var lb = s.label ? calFindLabel(d, s.label) : null;
+      if (s.label && !lb) {
+        var names = calLabels(d).map(function (l) { return calLabelNames(l).join(" / "); });
+        return bad("Calendar has no label named \"" + s.label + "\". " +
+          (names.length ? "Its labels: " + names.join(", ") + ". " : "It has no labels. ") +
+          "New labels are made in Calendar (Manage labels): tell the user.");
+      }
+      put("labelId", lb ? lb.id : null);
+    }
     if (!changed) return bad("Nothing would change: the event already looks like that.");
     ev.mtime = stampAfter(now, ev.mtime);
     var next = {};
     CAL_RAW.forEach(function (k) { next[k] = has(ev, k) ? clone(ev[k]) : null; });
-    return { ok: true, title: title, before: before, after: calView(ev), del: false,
+    return { ok: true, title: title, before: before, after: calView(ev, d), del: false,
              undo: { t: "set", app: "calendar", target: { id: ev.id }, prev: prev, next: next } };
   }
   function calUndo(d, u, now) {
@@ -469,7 +611,7 @@
     }
     CAL_RAW.forEach(function (k) {
       var v = u.prev ? u.prev[k] : null;
-      if (v === null || v === undefined) { if (k === "title" || k === "location" || k === "note") h.ev[k] = ""; else h.ev[k] = null; }
+      if (v === null || v === undefined) { if (k === "title" || k === "location" || k === "note") h.ev[k] = ""; else if (k === "labelId" && !has(h.ev, k)) return; else h.ev[k] = null; }
       else h.ev[k] = clone(v);
     });
     h.ev.mtime = stampAfter(now, h.ev.mtime);
@@ -578,10 +720,12 @@
     if (!isObj(d) || !isObj(d.items) || !isObj(target) || typeof target.id !== "string") return null;
     return has(d.items, target.id) && isObj(d.items[target.id]) ? d.items[target.id] : null;
   }
+  function bmTags(it) { return Array.isArray(it.tags) ? it.tags.filter(function (x) { return typeof x === "string"; }) : []; }
   function bmView(it) {
     return {
       title: typeof it.title === "string" ? it.title : "",
       url: typeof it.url === "string" ? it.url : "",
+      labels: bmTags(it).join(", "),
       note: typeof it.note === "string" ? it.note : ""
     };
   }
@@ -604,13 +748,25 @@
     var s = ch.set;
     var notOk = Object.keys(s).filter(function (k) { return !SETTABLE.bookmarks[k]; });
     if (notOk.length) return bad("A bookmark has no " + notOk.join(", ") + ".");
-    var prev = { title: it.title, note: it.note === undefined ? "" : it.note }, changed = false;
+    var prev = { title: it.title, note: it.note === undefined ? "" : it.note, tags: bmTags(it) }, changed = false;
     if (has(s, "title") && s.title.slice(0, 256) !== it.title) { it.title = s.title.slice(0, 256); changed = true; }
     if (has(s, "note") && s.note.slice(0, 1024) !== (it.note || "")) { it.note = s.note.slice(0, 1024); changed = true; }
+    // Tags are free words (bookmarks.js sanitizeItem: 12 at most, 32
+    // characters each): label adds one (an existing tag keeps its
+    // spelling), labels sets the whole list, none takes them all off.
+    if (has(s, "label") || has(s, "labels")) {
+      var tags = has(s, "labels") ? [] : (s.label ? bmTags(it).slice() : []);
+      (has(s, "labels") ? s.labels : (s.label ? [s.label] : [])).forEach(function (n) {
+        var tg = n.slice(0, 32), old = bmTags(it).filter(function (x) { return foldName(x) === foldName(tg); })[0];
+        if (!tags.some(function (x) { return foldName(x) === foldName(tg); })) tags.push(old || tg);
+      });
+      if (tags.length > 12) return bad("A bookmark takes at most 12 tags.");
+      if (JSON.stringify(tags) !== JSON.stringify(bmTags(it))) { it.tags = tags; changed = true; }
+    }
     if (!changed) return bad("Nothing would change: the bookmark already looks like that.");
     it.modified = stampAfter(now, it.modified);
     return { ok: true, title: title, before: before, after: bmView(it), del: false,
-             undo: { t: "set", app: "bookmarks", target: { id: it.id }, prev: prev, next: { title: it.title, note: it.note } } };
+             undo: { t: "set", app: "bookmarks", target: { id: it.id }, prev: prev, next: { title: it.title, note: it.note, tags: bmTags(it) } } };
   }
   function bookmarksUndo(d, u, now) {
     if (!isObj(d) || !isObj(d.items)) return bad("Bookmarks has no items.");
@@ -626,9 +782,11 @@
     }
     var cur = bmFind(d, u.target);
     if (!cur) return bad("That bookmark is no longer in Bookmarks.");
-    if (!u.next || cur.title !== u.next.title || (cur.note || "") !== (u.next.note || "")) return bad("The bookmark changed since; nothing was undone.");
+    if (!u.next || cur.title !== u.next.title || (cur.note || "") !== (u.next.note || "") ||
+        (Array.isArray(u.next.tags) && JSON.stringify(bmTags(cur)) !== JSON.stringify(u.next.tags))) return bad("The bookmark changed since; nothing was undone.");
     cur.title = String(u.prev && u.prev.title || cur.title);
     cur.note = String(u.prev && u.prev.note || "");
+    if (u.prev && Array.isArray(u.prev.tags)) cur.tags = clone(u.prev.tags);
     cur.modified = stampAfter(now, cur.modified);
     return { ok: true };
   }
@@ -653,7 +811,7 @@
   var CT_FIELDS = CT_OLD.concat(CT_NEW);
   var CT_STAMPS = CT_FIELDS.concat(["log"]);
   // what this adapter may change (and Undo puts back)
-  var CT_RAW = ["given", "middle", "family", "org", "phones", "emails", "events", "note"];
+  var CT_RAW = ["given", "middle", "family", "org", "phones", "emails", "events", "labelIds", "note"];
   function ctNum(v) { return typeof v === "number" && isFinite(v); }
   function ctJ(v) { return JSON.stringify(v === undefined ? null : v); }
   function ctMaxStamp(c) {
@@ -729,13 +887,28 @@
     if (!ev) return "";
     return (typeof ev.year === "number" ? String(ev.year) : "-") + "-" + ev.day;
   }
-  function ctView(c) {
+  // The user's contact labels (contacts.js state.labels; untouched
+  // seeds are stored in the device's language, either name finds them).
+  function ctLabels(d) {
+    return (Array.isArray(d.labels) ? d.labels : []).filter(function (l) {
+      return isObj(l) && typeof l.id === "string" && typeof l.name === "string";
+    }).map(function (l) {
+      var k = "cal." + l.id;
+      return { id: l.id, names: l.mtime === 0 && has(CAL_SEEDS.en, k) ? [l.name, CAL_SEEDS.en[k], CAL_SEEDS.el[k]].filter(function (n, i, a) { return a.indexOf(n) === i; }) : [l.name] };
+    });
+  }
+  function ctView(c, d) {
+    var ls = ctLabels(d);
     return {
       title: ctName(c),
       org: ctStr(c.org),
       phone: ctVals(c.phones).join(", "),
       email: ctVals(c.emails).join(", "),
       birthday: ctBday(c),
+      labels: (Array.isArray(c.labelIds) ? c.labelIds : []).map(function (id) {
+        var l = ls.filter(function (x) { return x.id === id; })[0];
+        return l ? l.names[0] : "";
+      }).filter(Boolean).join(", "),
       note: typeof c.note === "string" ? c.note : ""
     };
   }
@@ -754,7 +927,7 @@
   function contactsChange(d, target, ch, now) {
     var h = ctFind(d, target);
     if (!h) return bad("That contact is no longer in Contacts.");
-    var c = h.c, before = ctView(c), title = before.title || before.phone || before.email;
+    var c = h.c, before = ctView(c, d), title = before.title || before.phone || before.email;
     if (ch.action !== "update" && ch.action !== "delete") return bad("A contact can only be updated or deleted.");
     if (ch.action === "delete") {
       var copy = clone(c);
@@ -803,6 +976,12 @@
       if (ctJ(evs) !== ctJ(c.events)) c.events = evs.sort(ctEvSort);
     }
     if (has(s, "note")) c.note = s.note.slice(0, 500);
+    if (has(s, "label") || has(s, "labels")) {
+      var nl = newLabelIds(ctLabels(d), Array.isArray(c.labelIds) ? c.labelIds : [], s, "Contacts", "Contacts (Labels)");
+      if (nl.err) { CT_RAW.forEach(function (k) { if (has(prev, k)) c[k] = prev[k]; else delete c[k]; }); return bad(nl.err); }
+      var sorted = nl.ids.slice().sort();          // contacts.js sanitizeContact
+      if (ctJ(sorted) !== ctJ(Array.isArray(c.labelIds) ? c.labelIds : [])) c.labelIds = sorted;
+    }
     if (!ctRestamp(prev, c, now)) {
       CT_RAW.forEach(function (k) { if (has(prev, k)) c[k] = prev[k]; else delete c[k]; });
       return bad("Nothing would change: the contact already looks like that.");
@@ -813,7 +992,7 @@
       p[k] = has(prev, k) ? clone(prev[k]) : null;
       n[k] = clone(c[k]);
     });
-    return { ok: true, title: title, before: before, after: ctView(c), del: false,
+    return { ok: true, title: title, before: before, after: ctView(c, d), del: false,
              undo: { t: "set", app: "contacts", target: c.id, prev: p, next: n } };
   }
   function contactsUndo(d, u, now) {
@@ -1026,6 +1205,13 @@
     if (has(s, "title") && s.title.slice(0, 500) !== card.text) { card.text = s.title.slice(0, 500); groups.push("t"); next.text = card.text; }
     if (has(s, "note") && s.note !== (typeof card.notes === "string" ? card.notes : "")) { card.notes = s.note; groups.push("n"); next.notes = card.notes; }
     if (has(s, "date") && s.date !== card.due) { card.due = s.date; groups.push("d"); next.due = card.due; }
+    if (has(s, "label") || has(s, "labels")) {
+      var bl = kbArr(b.labels).filter(function (l) { return isObj(l) && typeof l.id === "string" && typeof l.name === "string"; })
+        .map(function (l) { return { id: l.id, names: [kbName(l.name)] }; });
+      var nl = newLabelIds(bl, kbArr(card.labels), s, "The board " + kbName(b.name), "Kanban (the board's labels)");
+      if (nl.err) return bad(nl.err);
+      if (JSON.stringify(nl.ids) !== JSON.stringify(kbArr(card.labels))) { card.labels = nl.ids; groups.push("l"); next.labels = clone(nl.ids); }
+    }
     if (!groups.length) return bad("Nothing would change: the card already looks like that.");
     kbStamp(card, groups, now);
     kbCanon(d, h.bi);

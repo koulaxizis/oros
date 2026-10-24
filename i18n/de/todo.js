@@ -1,4 +1,7 @@
 orosPack("de", "todo", {
+ "srch.labels": "Labels: ",
+ "srch.done": "Erledigt",
+ "srch.prio": "Priorität {n}",
  "acct": "Konto",
  "add.go": "{n} hinzufügen",
  "add.none": "Nichts angehakt",

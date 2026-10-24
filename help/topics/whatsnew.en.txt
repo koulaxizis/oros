@@ -1,6 +1,24 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.43.00
+- Assistant: it now sees the labels of your items (Calendar, To-Do, Kanban, Contacts, Notes, Bookmarks tags, Media Shelf tags), whether a task is done and its priority, and a title's status and rating. Ask "which events have no label?" or "show my cards with the label Bug" and it lists them, up to 50 per app. It can also set, add or remove labels and a task's priority, and the same change to many items comes as one card with one Apply and one Undo.
+
+## Version 3.42.06
+- Calendar: more ways to filter. Long-press a chip (or right-click / Alt+click it) to show only that one; do it again to bring them all back. A new No label chip shows or hides your events without a label. All, None and My events sit before the chips.
+
+## Version 3.42.05
+- Sync: after you sign in to Dropbox (for example with "I already use orOS on another device"), orOS now goes back to Settings › Sync so you can type your passphrase, instead of leaving you on the desktop.
+
+## Version 3.42.04
+- orOS Games and Game Center: a new All games section lists every game, grouped by kind, with how often you played each one and a search field. Tap a game to play it.
+
+## Version 3.42.03
+- Calculator: Troll mode now always gives the correct answer and adds a cheeky line under it (in Basic and Scientific, in English, Greek and German). Right-click or long-press the button to choose how cheeky it gets. Answers the old Troll mode had changed keep a ≈ mark in the history.
+
+## Version 3.42.02
+- Contacts and other apps: tapping a phone number, an SMS, an email address or a map link now opens the right app on your phone (in the orOS Android app it showed an error page before).
+
 ## Version 3.42.01
 - orOS Drive for Android 0.6.0: it now looks like orOS (its colours, light or dark like your phone) and nothing hides under the phone's top and bottom bars any more. Photos and videos: orOS Drive finds the photo folders of your phone (camera, screenshots, WhatsApp and others); turn on the ones you want, with the photos already in them or only new ones. A folder that is already on can also send its older photos.
 

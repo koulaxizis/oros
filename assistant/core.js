@@ -1228,15 +1228,16 @@
       "contacts, documents, bookmarks, boards and more). Returns matching items with their app, " +
       "title, a short text, a date and a ref. The user sees every result first and may share " +
       "only some of them, or none. Use short keyword queries (1-3 words), in the language the " +
-      "data is probably written in; search again with other words if nothing comes back.",
+      "data is probably written in; search again with other words if nothing comes back. Each result shows " +
+      "its labels; with label it returns only items with that label, or with none.",
     params: {
       type: "object",
       properties: {
-        query: { type: "string", description: "Words to look for (every word must match)." },
+        query: { type: "string", description: "Words to look for (every word must match). May be left out when label is given." },
+        label: { type: "string", description: "Only items with this label (a label's or tag's name), or \"none\" for items without any label. Without query it lists every such item (up to 50 per app) of the apps that have labels: todo, calendar, kanban, contacts, notes, bookmarks (tags), shelf (tags)." },
         apps: { type: "array", items: { type: "string" },
                 description: "Optional app ids to search (from list_apps). Leave out to search every allowed app." }
-      },
-      required: ["query"]
+      }
     }
   };
   var TOOL_APPS = {
@@ -1356,12 +1357,16 @@
       "todo (open, late and due-today tasks per list, and what is due next) and, for the other apps " +
       "list_apps marks with summary, what is late, today and in the next days (calendar, habits, " +
       "plants and more). Better than search_data for questions like 'how much did I spend on food " +
-      "this month' or 'what is on this week'. The user sees the summary first and may hold it back.",
+      "this month' or 'what is on this week'. calendar also lists the user's labels with how many events " +
+      "each has; with label (a label's name, or \"none\" for events without a label) and/or month it lists " +
+      "those events, any date, with their label, time, place and note, and a ref for change_item. " +
+      "The user sees the summary first and may hold it back.",
     params: {
       type: "object",
       properties: {
         app: { type: "string", description: "The app id (from list_apps)." },
-        month: { type: "string", description: "budget, timesheet: YYYY-MM (default: this month)." },
+        month: { type: "string", description: "budget, timesheet: YYYY-MM (default: this month). calendar: list that month's events." },
+        label: { type: "string", description: "calendar: list the events with this label, or \"none\" for the events without one." },
         days: { type: "integer", description: "Other apps: how many days from today, 1-31 (default 7)." }
       },
       required: ["app"]
@@ -1372,28 +1377,35 @@
   // nothing changes before that.
   var TOOL_CHANGE = {
     name: "change_item",
-    description: "Propose a change to ONE existing item that search_data or app_summary returned in this " +
+    description: "Propose a change to an existing item that search_data or app_summary returned in this " +
       "conversation, by its ref. The user sees exactly what would change (before → after) and must press " +
-      "Apply; they may refuse. The result says whether it was applied. Apps and actions: " +
-      "todo (complete, reopen, reschedule: date, update: title / date / note, delete) · " +
-      "calendar (reschedule: date / start / end, update: title / date / start / end / location / note, delete) · " +
+      "Apply; they may refuse. The result says whether it was applied. To make the same update to several " +
+      "items of one app (e.g. give 16 events the same label), pass refs instead of ref: the user sees one " +
+      "card for all of them. Apps and actions: " +
+      "todo (complete, reopen, reschedule: date, update: title / date / note / labels / priority, delete) · " +
+      "calendar (reschedule: date / start / end, update: title / date / start / end / location / label / note, delete) · " +
       "budget (reschedule: date, update: amount / date / category / note, delete) · " +
-      "bookmarks (update: title / note, delete) · " +
-      "contacts (update: title = name / org / phone or email = add one / date = birthday / note, delete) · " +
-      "kanban (reschedule: date = due, update: title / date / note, move: column, delete) · " +
+      "bookmarks (update: title / note / labels = tags, delete) · " +
+      "contacts (update: title = name / org / phone or email = add one / date = birthday / labels / note, delete) · " +
+      "kanban (reschedule: date = due, update: title / date / note / labels, move: column, delete) · " +
       "shelf (update: title / note / status, delete) · " +
       "habits (complete / reopen = today's tick of a yes/no habit, update: title) · " +
-      "plants (complete = watered today, update: title / note). One item per call; never guess a ref.",
+      "plants (complete = watered today, update: title / note). Never guess a ref.",
     params: {
       type: "object",
       properties: {
         ref: { type: "string", description: "The item's ref from search_data or app_summary, e.g. r3." },
+        refs: { type: "array", items: { type: "string" },
+                description: "update only: several refs of the same app (up to 50) that get the same change, instead of ref." },
         action: { type: "string", "enum": ["complete", "reopen", "reschedule", "update", "move", "delete"] },
         title: { type: "string", description: "New title (task text, event title, bookmark title)." },
         date: { type: "string", description: "New date YYYY-MM-DD (task due date, event day, entry date)." },
         start: { type: "string", description: "calendar: new start time HH:MM (24h)." },
         end: { type: "string", description: "calendar: new end time HH:MM (24h)." },
         location: { type: "string", description: "calendar: new location." },
+        label: { type: "string", description: "One label's name: calendar sets THE event's label; todo, kanban, contacts, bookmarks ADD it to the item's labels. \"none\" takes the label(s) off. Only labels the user has (search results show them); bookmarks tags are free words." },
+        labels: { type: "array", items: { type: "string" }, description: "todo, kanban, contacts, bookmarks: the item's whole new list of label names (replaces the old list; [] = none)." },
+        priority: { type: "integer", description: "todo: 1 urgent, 2 high, 3 medium, 4 none." },
         note: { type: "string", description: "New note (replaces the old one; empty clears it)." },
         amount: { type: "number", description: "budget: new amount in currency units, e.g. 12.5." },
         org: { type: "string", description: "contacts: new organisation / company." },
@@ -1403,7 +1415,7 @@
         status: { type: "string", "enum": ["want", "now", "done", "dropped"], description: "shelf: want to watch/read, watching/reading now, finished, dropped." },
         category: { type: "string", "enum": ["groceries", "eating-out", "bills", "home", "transport", "health", "fun", "clothes", "gift", "salary", "freelance", "other"] }
       },
-      required: ["ref", "action"]
+      required: ["action"]
     }
   };
   // Wave A3: an automation (recipes/core.js) written from a
@@ -1464,6 +1476,7 @@
   var RESULT_TEXT = 400;   // characters of an item's text sent to the model
   var PER_APP     = 8;     // items per app
   var MAX_ITEMS   = 30;    // items per search
+  var WIDE        = 50;    // items per app and search: one app, or a label filter
 
   function ymd(ms) {
     if (!ms) return "";
@@ -1476,21 +1489,63 @@
 
   // Shell search groups → the items a search would share, in rank
   // order. nameOf(id) gives the app's shown name.
-  function packHits(groups, nameOf) {
-    var items = [];
+  // opts.wide (one app, or a label filter): up to WIDE items per app
+  // and in all, instead of PER_APP / MAX_ITEMS.
+  function packHits(groups, nameOf, opts) {
+    var items = [], wide = !!(opts && opts.wide);
     (Array.isArray(groups) ? groups : []).forEach(function (g) {
       if (!g || !Array.isArray(g.hits)) return;
-      g.hits.slice(0, PER_APP).forEach(function (h) {
+      g.hits.slice(0, wide ? WIDE : PER_APP).forEach(function (h) {
         if (!h || !h.title) return;
         var text = squash(h.text);
         if (text.length > RESULT_TEXT) text = text.slice(0, RESULT_TEXT) + "…";
-        items.push({ app: g.id, appName: nameOf(g.id), id: String(h.id == null ? "" : h.id), title: squash(h.title).slice(0, 200),
-                     text: text, date: ymd(h.when), target: h.target === undefined ? null : h.target,
-                     score: h.score || 0 });
+        var it = { app: g.id, appName: nameOf(g.id), id: String(h.id == null ? "" : h.id), title: squash(h.title).slice(0, 200),
+                   text: text, date: ymd(h.when), target: h.target === undefined ? null : h.target,
+                   score: h.score || 0 };
+        if (Array.isArray(h.labels)) it.labels = h.labels.slice(0, 20);
+        items.push(it);
       });
     });
     items.sort(function (a, b) { return b.score - a.score; });
-    return items.slice(0, MAX_ITEMS);
+    return items.slice(0, wide ? WIDE : MAX_ITEMS);
+  }
+
+  // ---------- 7b. Label filter (AS-LBL) ----------
+  // search_data { label }: a label's name, or "none" for items without
+  // one. Hits carry labels: [names] from apps that have labels (an app
+  // whose hits carry none has no labels and drops out). Names compare
+  // without case and accents; the seed labels (Personal, Work, Family)
+  // answer to their English, Greek and German names.
+  var LABEL_SEEDS = [["personal", "προσωπικο", "privat"], ["work", "εργασια", "arbeit"], ["family", "οικογενεια", "familie"]];
+  function foldLabel(s) {
+    return String(s == null ? "" : s).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
+  }
+  function seedOf(f) {
+    for (var i = 0; i < LABEL_SEEDS.length; i++) if (LABEL_SEEDS[i].indexOf(f) >= 0) return i;
+    return -1;
+  }
+  function isNoLabel(want) { return /^(none|no label|-)$/i.test(String(want || "").trim()); }
+  function labelHit(names, want) {
+    if (!Array.isArray(names)) return false;
+    if (isNoLabel(want)) return names.length === 0;
+    var f = foldLabel(want), g = seedOf(f);
+    return names.some(function (n) {
+      var x = foldLabel(n);
+      return x === f || (g >= 0 && seedOf(x) === g);
+    });
+  }
+  // → { groups (filtered), apps: ids that have labels, more: { id: n } }
+  function filterLabel(groups, want) {
+    var out = [], apps = [], more = {};
+    (Array.isArray(groups) ? groups : []).forEach(function (g) {
+      if (!g || !Array.isArray(g.hits)) return;
+      if (!g.hits.some(function (h) { return h && Array.isArray(h.labels); })) return;
+      apps.push(g.id);
+      var hits = g.hits.filter(function (h) { return h && labelHit(h.labels, want); });
+      if (hits.length > WIDE) more[g.id] = hits.length - WIDE;
+      if (hits.length) out.push({ id: g.id, total: hits.length, hits: hits });
+    });
+    return { groups: out, apps: apps, more: more };
   }
 
   // Several searches (one per word, wave 5) → one list of groups: the
@@ -1530,8 +1585,12 @@
       var r = { ref: it.ref, app: it.appName, title: it.title };
       if (it.text) r.text = it.text;
       if (it.date) r.date = it.date;
+      if (it.labels) r.labels = it.labels;
       return r;
     });
+    if (info.label) out.label = info.label;
+    if (info.more) out.more = info.more;
+    if (info.noLabels && info.noLabels.length) out.apps_without_labels = info.noLabels;
     if (info.declined) out.note = "The user chose not to share " + info.declined + " result(s).";
     if (info.blocked && info.blocked.length) {
       out.not_allowed = info.blocked;
@@ -1665,6 +1724,10 @@
         "For totals and overviews (money spent per category in a month, hours worked, what is due this week) call app_summary instead of searching item by item; it works only for the apps list_apps marks with summary.",
         "To let the user open an item, link its title with its ref, e.g. [Dentist](oros:r3). Use only refs that a search returned."
       );
+      lines.push("Items in several apps have labels or tags (events, tasks, cards, contacts, notes, bookmarks); each search result lists its labels. For questions about labels (which items have one, which have none) call search_data with label (\"none\" = no label), never guess from titles.");
+      if (opts.apps.some(function (a) { return /\(calendar\)$/.test(a); })) {
+        lines.push("For Calendar, app_summary also counts the events of each label and lists them by label or month.");
+      }
     }
     if (opts.web) {
       lines.push(opts.web === "tool"
@@ -1676,7 +1739,7 @@
     }
     var canChange = !opts.builtin && !opts.chatOnly && opts.apps && opts.apps.length && opts.changes && opts.changes.length;
     var changeLine = canChange
-      ? "To change or delete an existing item (apps: " + opts.changes.join(", ") + "), find it first with search_data or app_summary, then call change_item with its ref. The user sees the change before → after and must press Apply; say what happened only from the tool result (applied, refused or failed). Never claim a change you did not get confirmed. Other apps' items can't be changed: say which app does it."
+      ? "To change or delete an existing item (apps: " + opts.changes.join(", ") + "), find it first with search_data or app_summary, then call change_item with its ref (refs for the same update to several items). The user sees the change before → after and must press Apply; say what happened only from the tool result (applied, refused or failed). Never claim a change you did not get confirmed. Other apps' items can't be changed: say which app does it."
       : "You cannot change or delete anything in orOS.";
     if (opts.builtin) {
       lines.push("You cannot create, change or delete anything in orOS.");
@@ -2277,6 +2340,7 @@
     makeSSE: makeSSE, makeReducer: makeReducer, ProviderError: ProviderError, errorFrom: errorFrom,
     modelsRequest: modelsRequest, parseModels: parseModels,
     packHits: packHits, searchResult: searchResult, ymd: ymd,
+    labelHit: labelHit, filterLabel: filterLabel, isNoLabel: isNoLabel, WIDE: WIDE,
     parseMd: parseMd, parseInline: parseInline, linkKind: linkKind,
     systemPrompt: systemPrompt, chatTitle: chatTitle, monthKey: monthKey,
     toolsFor: toolsFor, browserPrompts: browserPrompts, INV_CURRENCIES: INV_CURRENCIES, ENTRY_KINDS: ENTRY_KINDS, normEntry: normEntry, entryKinds: entryKinds,

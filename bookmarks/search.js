@@ -33,7 +33,8 @@
           text: [url, str(it.note),
                  (Array.isArray(it.tags) ? it.tags : []).map(str).filter(Boolean).map(function (t) { return "#" + t; }).join(" "),
                  fname].filter(Boolean).join(" · "),
-          target: { id: id }
+          target: { id: id },
+          labels: (Array.isArray(it.tags) ? it.tags : []).map(str).filter(Boolean)
         });
       });
       return out;
