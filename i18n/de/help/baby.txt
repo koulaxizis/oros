@@ -65,6 +65,11 @@ Kinder, alle Einträge, Wachstum, Meilensteine, der Milchvorrat und die Einheite
 
 In den `Einstellungen` findest du `Protokoll exportieren (CSV)`, `Wachstum exportieren (CSV)`, `Sichern (JSON)` und `Aus Sicherung wiederherstellen`. Wiederherstellen führt zusammen: Es fügt hinzu und aktualisiert und entfernt nie, was schon da ist.
 
+## Zwei Eltern, ein Baby
+Ist ein [Haushalt](app:household) eingerichtet, bringt das Zahnrad › `Haushalt` › `Mit einem Haushalt teilen` deine Kinder in den Haushalt, mit ihrem Tagebuch der letzten 90 Tage, Wachstum, Meilensteinen und dem Milchvorrat: Beide Eltern (oder Oma oder Opa) tragen Mahlzeiten, Schlaf und Windeln auf dem eigenen Handy ein und sehen denselben Tag, und ein auf einem Handy gestarteter Still- oder Schlaf-Timer erscheint auch auf dem anderen. Ein Eintrag von jemand anderem zeigt dessen Initialen. Einheiten und Erinnerungen bleiben bei jeder Person, und ein geteiltes Kind erinnert nur einmal. Chips oben wechseln zwischen `Nur meine` und dem Baby des Haushalts. Alles ist Ende-zu-Ende-verschlüsselt: Das orOS-Relay reicht nur weiter, was es nicht lesen kann.
+
+Ältere Einträge bleiben auf dem Gerät, das geteilt hat. `Teilen beenden` nimmt die Kinder für alle aus dem Haushalt und bringt sie mit allen Einträgen in dein eigenes Baby zurück; die anderen können sie 30 Tage lang über die App Haushalt zurückholen.
+
 ## Tastenkürzel
 - [[1]] bis [[4]] wechseln die Tabs.
 - [[Left]] / [[Right]] in `Verlauf` gehen zum vorherigen oder nächsten Tag.

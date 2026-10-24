@@ -1130,6 +1130,7 @@ var PRECACHE_URLS = [
   "baby/search.js",
   "baby/baby.css",
   "baby/core.js",
+  "baby/house.js",
   "baby/baby.js",
   "baby/import.js",
   "passwords/",

@@ -1,7 +1,8 @@
 // ============================================================
 // orOS Baby — Today provider (v1.0.0)
 // Loaded by the shell (today/host.js) through apps.json "today".
-// Read-only: reads oros-baby-data and the device-local reminder
+// Read-only: reads oros-baby-data, the shared Babies' mirror
+// (oros-baby-hh, BR-HH wave 7b) and the device-local reminder
 // settings (oros-baby-rem), never writes. Rows come from
 // baby/core.js: calendarRows (milestones, vaccines, doctor visits
 // on their day; "N months old today" as a top line) and reminderDue
@@ -22,11 +23,16 @@
 
   var PROVIDER = {
     id: "baby",
-    keys: ["oros-baby-data", "oros-baby-rem"],
+    keys: ["oros-baby-data", "oros-baby-hh", "oros-baby-rem"],
     collect: function (ctx) {
       var C = root.orosBabyCore;
       if (!C) return [];
       var data = C.parse(ctx.readRaw(C.STORAGE_KEY));
+      var BH = root.orosBabyHouse;
+      if (data && BH && typeof BH.union === "function") {
+        var sets = BH.readMirror(ctx.readJSON(BH.MIRROR_KEY));
+        if (sets.length) data = BH.union(data, sets);    // every child once, shared ones too
+      }
       if (!data || !C.liveKids(data).length) return [];
       var out = [];
       for (var d = 0; d <= ctx.horizon; d++) {
