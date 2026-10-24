@@ -1141,6 +1141,10 @@
       actions.appendChild(grp);
     }
 
+    // Household (hh.js, BR-HH): put the place in a household's folder.
+    var HHu = window.__orosMapsHH;
+    if (HHu) actions.appendChild(HHu.popupButton(place, function () { map.closePopup(); }));
+
     wrap.appendChild(actions);
     marker.unbindPopup();
     marker.bindPopup(wrap, { maxWidth: 280 });
@@ -3282,7 +3286,8 @@
     var ul = $("places-list");
     if (!ul) return;
     ul.innerHTML = "";
-    var hasAny = state.places.length > 0;
+    var HHu = window.__orosMapsHH;
+    var hasAny = state.places.length > 0 || !!(HHu && HHu.count());
     $("places-empty").hidden = hasAny;
     ul.hidden = !hasAny;
 
@@ -3300,6 +3305,8 @@
       }
       sec.places.forEach(function (p) { ul.appendChild(placeRow(p, F)); });
     });
+    // the household folders (hh.js, BR-HH) after the own places
+    if (HHu) HHu.listInto(ul, function () { $("places").hidden = true; });
   }
 
   function placeRow(p, F) {
@@ -3834,6 +3841,9 @@
       getUserLocation(function (pos) { cb(pos || userPos || null); }, true);
     },
     reverseName: function (place, after) { nameByReverse(place, after); },
+    // Household places (hh.js, BR-HH): route to a place, the pin.
+    routeTo: function (place) { startRouteTo(place); },
+    markerIcon: function (color) { return makeMarkerIcon(color); },
     transitLink: function (f, to) {
       if (!f || !to || !isFinite(f.lat) || !isFinite(to.lat)) return "";
       return RC.orosRouteLink(mapsBase(), [f, to], "transit", to.name || "");
