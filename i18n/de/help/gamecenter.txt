@@ -3,6 +3,7 @@ Alle deine Spiele an einem Ort: die heutigen Tagesrätsel, deine Erfolge und die
 
 ## So geht's
 - `Heutige Tagesrätsel` zeigt die sechs Spiele mit einem Tagesrätsel: Wordle, Kreuzworträtsel, Sudoku, Nonogramm, Flow Free und Minesweeper. Jede Karte zeigt, ob das heutige Rätsel gelöst, nicht gelöst oder noch offen ist, und deine Serie in diesem Spiel. `Spielen` öffnet das Spiel direkt mit dem heutigen Rätsel; ist es erledigt, zeigt `Ansehen` dein Ergebnis.
+- `Alle Spiele` zeigt jedes Spiel, in Gruppen: Rätsel, Wortspiele, Karten und Steine, Brettspiele und zu zweit sowie Arcade, und wie oft du jedes gespielt hast (`Neu`, wenn nie). Tippe auf ein Spiel, um es zu spielen. Tippe in `Spiel suchen`, um die Liste nach Namen einzugrenzen.
 - Die Zeile unter dem Titel zeigt deine tägliche Serie: die Tage in Folge, an denen du mindestens ein Tagesrätsel gelöst hast.
 - `Erfolge` listet Ziele wie den ersten Sieg, eine 7-Tage-Serie bei Tagesrätseln oder alle sechs Tagesrätsel an einem Tag. Ein Pokal markiert die erreichten; die anderen zeigen, wie weit du bist.
 - `Statistik` listet jedes Spiel, das du gespielt hast, die meistgespielten zuerst: gespielte, gewonnene oder gelöste Spiele, gelöste Tagesrätsel, Serie, Bestzeit und Highscore, soweit das Spiel sie hat. Tippe auf den Namen eines Spiels, um es zu öffnen. Noch nicht gespielte Spiele stehen ganz unten.
