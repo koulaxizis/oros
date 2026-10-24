@@ -5,6 +5,7 @@
      1. Palette fallback + reset
      2. Page + blocks
      3. Today (Daily cards)
+     3b. All games
      4. Achievements
      5. Statistics
      6. Toast
@@ -117,6 +118,61 @@ button:disabled { cursor: default; opacity: 0.5; }
 .day-btn:not(:disabled):hover { background: var(--accent-hover); }
 .day-card.solved .day-btn { background: transparent; color: var(--accent); }
 
+/* ---------- 3b. All games ---------- */
+#all-find {
+  width: 100%;
+  min-height: 40px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  margin-bottom: 4px;
+}
+.all-group[hidden], .all-item[hidden] { display: none; }
+.all-gh {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 14px 0 8px;
+}
+.all-grid {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 8px;
+}
+.all-tile {
+  width: 100%;
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  text-align: left;
+}
+.all-tile:not(:disabled):hover { border-color: var(--accent); }
+.all-ico {
+  flex: none;
+  width: 36px; height: 36px;
+  border-radius: 9px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 800;
+}
+.all-ico svg { width: 22px; height: 22px; }
+.all-txt { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.all-name { font-weight: 800; overflow-wrap: anywhere; -webkit-hyphens: auto; hyphens: auto; }
+.all-sub { color: var(--text-dim); font-size: 0.8rem; }
+.all-sub.new { color: var(--accent); }
+
 /* ---------- 4. Achievements ---------- */
 #ach-list {
   list-style: none;
@@ -228,6 +284,9 @@ button:disabled { cursor: default; opacity: 0.5; }
   .day-card { padding: 10px; }
   .day-foot { flex-direction: column; align-items: stretch; }
   .day-btn { width: 100%; }
+  .all-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .all-tile { gap: 8px; padding: 8px; }
+  .all-ico { width: 32px; height: 32px; }
 }
 
 /* ---------- 8. Reduced motion ---------- */

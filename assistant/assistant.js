@@ -339,6 +339,10 @@
       "chg.err": "Could not prepare a change in {app}",
       "chg.storage": "it could not be saved (storage full?)",
       "chg.conflict": "the item changed meanwhile",
+      "chg.ask.many": "Change these {n} items in {app}?",
+      "chg.textMany": "{name} asks to make the same change to {n} of your items. Check them: nothing changes until you press Apply.",
+      "chg.many": "{n} items", "f.label": "Label",
+      "lbl.search": "label: {label}", "lbl.none": "no label", "f.priority": "Priority",
       "v.done": "done", "v.open": "not done", "v.empty": "(none)", "v.income": "income", "v.expense": "expense",
       "f.title": "Title", "f.done": "Status", "f.due": "Due", "f.end": "Ends", "f.note": "Note", "f.kind": "Type",
       "f.watered": "Last watered", "f.labels": "Labels", "f.subtasks": "Subtasks", "f.position": "Position"
@@ -609,6 +613,10 @@
       "chg.err": "Δεν ετοιμάστηκε αλλαγή ({app})",
       "chg.storage": "δεν αποθηκεύτηκε (γεμάτος χώρος;)",
       "chg.conflict": "το στοιχείο άλλαξε στο μεταξύ",
+      "chg.ask.many": "Αλλαγή σε αυτά τα {n} στοιχεία ({app});",
+      "chg.textMany": "Το {name} ζητά την ίδια αλλαγή σε {n} στοιχεία σου. Έλεγξέ τα: τίποτα δεν αλλάζει πριν πατήσεις Εφαρμογή.",
+      "chg.many": "{n} στοιχεία", "f.label": "Ετικέτα",
+      "lbl.search": "ετικέτα: {label}", "lbl.none": "χωρίς ετικέτα", "f.priority": "Προτεραιότητα",
       "v.done": "έγινε", "v.open": "εκκρεμεί", "v.empty": "(κενό)", "v.income": "έσοδο", "v.expense": "έξοδο",
       "f.title": "Τίτλος", "f.done": "Κατάσταση", "f.due": "Προθεσμία", "f.end": "Λήξη", "f.note": "Σημείωση", "f.kind": "Είδος",
       "f.watered": "Τελευταίο πότισμα", "f.labels": "Ετικέτες", "f.subtasks": "Υποεργασίες", "f.position": "Θέση"
@@ -2110,7 +2118,8 @@
     if (call.name === "read_page") return readPage(c, call.args);
     if (call.name !== "search_data") return Promise.resolve({ content: "Error: unknown tool " + call.name, err: 1 });
     var q = String(call.args && call.args.query || "").replace(/\s+/g, " ").trim().slice(0, 200);
-    if (!q) return Promise.resolve({ content: "Error: query is empty.", err: 1 });
+    var label = typeof (call.args && call.args.label) === "string" ? call.args.label.replace(/\s+/g, " ").trim().slice(0, 40) : "";
+    if (!q && !label) return Promise.resolve({ content: "Error: query is empty.", err: 1 });
     var byId = {};
     apps.forEach(function (a) { byId[a.id] = a; });
     var all = appList(), allById = {};
@@ -2126,12 +2135,16 @@
       });
     }
     var p = shell();
-    var search = (p && typeof p.orosAssistSearch === "function") ? p.orosAssistSearch(q, ids) : Promise.resolve([]);
+    var search = (p && typeof p.orosAssistSearch === "function") ? p.orosAssistSearch(q, ids, { all: !q }) : Promise.resolve([]);
+    // What the user sees on the consent card: the words, or the label.
+    var shown = q || t("lbl.search", { label: C.isNoLabel(label) ? t("lbl.none") : label });
     return Promise.resolve(search).then(function (groups) {
-      var items = C.packHits(groups, function (id) { return byId[id] ? byId[id].name : id; });
+      var lf = label ? C.filterLabel(groups, label) : null;
+      if (lf) groups = lf.groups;
+      var items = C.packHits(groups, function (id) { return byId[id] ? byId[id].name : id; }, { wide: !!label || ids.length === 1 });
       var free = items.filter(function (it) { return byId[it.app] && byId[it.app].perm === "always"; });
       var ask = items.filter(function (it) { return byId[it.app] && byId[it.app].perm === "ask"; });
-      var choice = ask.length ? askConsent(q, ask) : Promise.resolve({ chosen: [], always: [] });
+      var choice = ask.length ? askConsent(shown, ask) : Promise.resolve({ chosen: [], always: [] });
       return choice.then(function (ch) {
         if (!ch) ch = { chosen: [], always: [] };
         ch.always.forEach(function (id) { setPerm(id, "always"); });
@@ -2139,14 +2152,24 @@
         shared.forEach(function (it) {
           c.refN = (c.refN || 0) + 1;
           it.ref = "r" + c.refN;
-          c.refs[it.ref] = { app: it.app, target: it.target, title: it.title, q: q, id: it.id };
+          // read_item finds the item again with the same search (q),
+          // or by its label when there were no words.
+          c.refs[it.ref] = { app: it.app, target: it.target, title: it.title, q: q || it.title, id: it.id };
         });
         var held = ask.length - ch.chosen.length;
         var names = [];
         shared.forEach(function (it) { if (names.indexOf(it.appName) < 0) names.push(it.appName); });
+        var info = { declined: held, blocked: blocked, unknown: unknown };
+        if (lf) {
+          info.label = C.isNoLabel(label) ? "none" : label;
+          var more = {};
+          Object.keys(lf.more).forEach(function (id) { more[byId[id] ? byId[id].name : id] = lf.more[id]; });
+          if (Object.keys(more).length) info.more = more;
+          info.noLabels = ids.filter(function (id) { return lf.apps.indexOf(id) < 0; }).map(function (id) { return byId[id] ? byId[id].name : id; });
+        }
         return {
-          content: C.searchResult(q, shared, { declined: held, blocked: blocked, unknown: unknown }),
-          ui: { k: "search", q: q, n: shared.length, held: held, found: items.length, apps: names }
+          content: C.searchResult(q, shared, info),
+          ui: { k: "search", q: shown, n: shared.length, held: held, found: items.length, apps: names }
         };
       });
     }, function () {
@@ -2242,6 +2265,7 @@
   }
   function changeItem(c, args, apps) {
     if (!E) return Promise.resolve({ content: "Error: changes are not available.", err: 1 });
+    if (args && Array.isArray(args.refs)) return changeMany(c, args, apps);
     var ch = E.normArgs(args);
     if (!ch.ok) return Promise.resolve({ content: "Error: " + ch.err, err: 1 });
     var r = c.refs ? c.refs[ch.ref] : null;
@@ -2283,10 +2307,102 @@
       return { content: JSON.stringify({ ref: ch.ref, applied: true, action: ch.action, note: "The user applied the change. They can undo it." }), ui: base };
     });
   }
+  // The same update to several items of one app (refs): one card, one
+  // Apply, one write. Every item is checked again on Apply against
+  // what the card showed; if any one changed meanwhile or no longer
+  // fits, nothing is written. Undo takes all of them back, or none.
+  var MANY_MAX = 50;
+  function changeMany(c, args, apps) {
+    if (args.action !== "update") return Promise.resolve({ content: "Error: refs is only for update; change other things one item at a time with ref.", err: 1 });
+    if (args.ref !== undefined && args.ref !== null && args.ref !== "") return Promise.resolve({ content: "Error: give ref or refs, not both.", err: 1 });
+    var refs = [];
+    args.refs.forEach(function (x) {
+      var v = String(x == null ? "" : x).replace(/^oros:/, "").trim();
+      if (refs.indexOf(v) < 0) refs.push(v);
+    });
+    if (!refs.length) return Promise.resolve({ content: "Error: refs is empty.", err: 1 });
+    if (refs.length > MANY_MAX) return Promise.resolve({ content: "Error: at most " + MANY_MAX + " refs at a time.", err: 1 });
+    var chs = [], appId = "", miss = [];
+    for (var i = 0; i < refs.length; i++) {
+      var one = {};
+      Object.keys(args).forEach(function (k) { if (k !== "refs") one[k] = args[k]; });
+      one.ref = refs[i];
+      var ch = E.normArgs(one);
+      if (!ch.ok) return Promise.resolve({ content: "Error: " + ch.err, err: 1 });
+      var r = c.refs ? c.refs[ch.ref] : null;
+      if (!r) { miss.push(refs[i]); continue; }
+      if (appId && r.app !== appId) return Promise.resolve({ content: "Error: refs must all be items of the same app.", err: 1 });
+      appId = r.app;
+      chs.push({ ch: ch, target: r.target });
+    }
+    if (miss.length) return Promise.resolve({ content: "Error: unknown ref(s) " + miss.join(", ") + ". Find the items with search_data or app_summary first.", err: 1 });
+    var app = null;
+    changeApps(apps).forEach(function (a) { if (a.id === appId) app = a; });
+    if (!app) {
+      var readable = apps.some(function (a) { return a.id === appId; });
+      return Promise.resolve({ content: readable
+        ? "Error: items of this app can't be changed by the assistant. Changes work for: " + changeApps(apps).map(function (a) { return a.id; }).join(", ") + "."
+        : "Error: the user does not allow this app to be read any more.", err: 1 });
+    }
+    var key = E.storageKey(app.id), now = Date.now(), data = readStore(key), plans = [], bad = [], same = [];
+    chs.forEach(function (x) {
+      // Planned one after the other on the same data, as Apply writes them.
+      var res = E.apply(app.id, data, x.target, x.ch, now, null);
+      if (!res.ok && /^Nothing would change/.test(res.err)) { same.push(x.ch.ref); return; }
+      if (!res.ok) { bad.push(x.ch.ref + ": " + res.err); return; }
+      var pl = E.plan(app.id, data, x.target, x.ch, now);
+      data = res.data;
+      plans.push({ x: x, pl: pl });
+    });
+    if (bad.length) return Promise.resolve({ content: "Error: nothing was proposed, because these can't be changed: " + bad.join(" · ") + " Leave them out and try again.", err: 1, ui: { k: "chgErr", app: app.name } });
+    if (!plans.length) return Promise.resolve({ content: "Error: nothing would change: every item already looks like that.", err: 1 });
+    var sameNote = same.length ? " " + same.length + " item(s) already looked like that and were left as they are: " + same.join(", ") + "." : "";
+    var many = plans.map(function (p) { return { title: p.pl.title, rows: p.pl.rows }; });
+    var base = { k: "change", app: app.name, act: "update", title: t("chg.many", { n: plans.length }), many: many };
+    return askChange(app.name, { many: many }, "update").then(function (ok) {
+      if (!ok) {
+        base.st = "declined";
+        return { content: JSON.stringify({ refs: refs, applied: false, note: "The user did not apply the change. Nothing changed." }), ui: base };
+      }
+      var d = readStore(key), undos = [], t2 = Date.now(), fail = null;
+      plans.forEach(function (p) {
+        if (fail) return;
+        var res = E.apply(app.id, d, p.x.target, p.x.ch, t2, p.pl.before);
+        if (!res.ok) { fail = res; return; }
+        d = res.data;
+        undos.push(res.undo);
+      });
+      if (fail) {
+        base.st = "failed";
+        base.msg = fail.conflict ? t("chg.conflict") : fail.err;
+        return { content: "Error: " + fail.err + " Nothing was changed.", err: 1, ui: base };
+      }
+      if (!writeStore(key, d)) {
+        base.st = "failed";
+        base.msg = t("chg.storage");
+        return { content: "Error: the change could not be saved on the device (storage full?). Nothing changed.", err: 1, ui: base };
+      }
+      markAppDirty();
+      var uid = newId();
+      undoMem[uid] = { app: app.id, key: key, undos: undos };
+      base.st = "done";
+      base.u = uid;
+      return { content: JSON.stringify({ refs: refs, applied: true, action: "update", items: plans.length, note: "The user applied the change to " + plans.length + " items. They can undo it." + sameNote }), ui: base };
+    });
+  }
   function undoChange(c, r) {
     var ui = r.ui, mem = undoMem[ui.u];
     if (!mem) return;
-    var res = E.undo(mem.app, readStore(mem.key), mem.undo, Date.now());
+    var res;
+    if (mem.undos) {
+      // Newest first, all or nothing.
+      var d = readStore(mem.key), now = Date.now();
+      res = { ok: true, data: d };
+      for (var i = mem.undos.length - 1; i >= 0 && res.ok; i--) {
+        res = E.undo(mem.app, d, mem.undos[i], now);
+        if (res.ok) d = res.data;
+      }
+    } else res = E.undo(mem.app, readStore(mem.key), mem.undo, Date.now());
     if (!res.ok) { showToast(t("chg.undoFail", { msg: res.err })); return; }
     if (!writeStore(mem.key, res.data)) { showToast(t("chg.undoFail", { msg: t("chg.storage") })); return; }
     markAppDirty();
@@ -2326,6 +2442,19 @@
     wrap.appendChild(tb);
     return wrap;
   }
+  function chgRows(rows) {
+    return Array.isArray(rows) ? rows.filter(function (x) { return x && typeof x.f === "string" && /^[a-z]{1,12}$/.test(x.f); }) : [];
+  }
+  // A batch (refs): each item's title and its own before → after.
+  function chgList(host, many) {
+    var box = el("div", "chg-many");
+    (Array.isArray(many) ? many : []).forEach(function (m) {
+      if (!m) return;
+      if (m.title) box.appendChild(el("p", "entry-title", String(m.title)));
+      box.appendChild(chgTable(chgRows(m.rows), false));
+    });
+    host.appendChild(box);
+  }
   // The confirm card. → Promise<bool>
   function askChange(appName, pl, action) {
     return new Promise(function (resolve) {
@@ -2339,10 +2468,16 @@
       }
       var card = el("section", "consent chg-card");
       card.setAttribute("role", "group");
-      card.appendChild(el("h3", "", t("chg.ask." + action, { app: appName })));
-      card.appendChild(el("p", "consent-text", t("chg.text", { name: provName(curProv()) })));
-      if (pl.title) card.appendChild(el("p", "entry-title", pl.title));
-      card.appendChild(chgTable(pl.rows, pl.del));
+      if (pl.many) {
+        card.appendChild(el("h3", "", t("chg.ask.many", { app: appName, n: pl.many.length })));
+        card.appendChild(el("p", "consent-text", t("chg.textMany", { name: provName(curProv()), n: pl.many.length })));
+        chgList(card, pl.many);
+      } else {
+        card.appendChild(el("h3", "", t("chg.ask." + action, { app: appName })));
+        card.appendChild(el("p", "consent-text", t("chg.text", { name: provName(curProv()) })));
+        if (pl.title) card.appendChild(el("p", "entry-title", pl.title));
+        card.appendChild(chgTable(pl.rows, pl.del));
+      }
       var acts = el("div", "dlg-actions");
       acts.appendChild(button(t("chg.no"), "", function () { finish(false); }));
       var yes = button(pl.del ? t("chg.yesDel") : t("chg.yes"), pl.del ? "danger" : "primary", function () { finish(true); });
@@ -2357,14 +2492,15 @@
   // The card that stays in the conversation.
   function drawChange(host, r, c) {
     var ui = r.ui;
-    var rows = Array.isArray(ui.rows) ? ui.rows.filter(function (x) { return x && typeof x.f === "string" && /^[a-z]{1,12}$/.test(x.f); }) : [];
+    var rows = chgRows(ui.rows);
     var del = ui.act === "delete";
     var card = el("section", "entry-card chg-card");
     var head = ui.st === "done" ? (del ? "chg.deleted" : "chg.done") :
                ui.st === "undone" ? "chg.undone" : ui.st === "declined" ? "chg.declined" : "chg.failed";
     card.appendChild(el("h3", "entry-head", t(head, { app: String(ui.app || ""), msg: String(ui.msg || "") })));
     if (ui.title) card.appendChild(el("p", "entry-title", String(ui.title)));
-    if (rows.length) card.appendChild(chgTable(rows, del));
+    if (ui.many) chgList(card, ui.many);
+    else if (rows.length) card.appendChild(chgTable(rows, del));
     if (ui.st === "done" && ui.u && undoMem[ui.u]) {
       card.appendChild(el("p", "dlg-hint", t("chg.undoHint")));
       var acts = el("div", "dlg-actions");
@@ -2426,6 +2562,12 @@
       });
     }
     var own = a.app === "todo" ? S.todoLists(readStore("oros-todo-data"), today) : null;
+    // Calendar: its labels always; with a label or a month, those
+    // events (every date) instead of what is coming.
+    if (a.app === "calendar") {
+      own = S.calendarEvents(readStore("oros-calendar-data"), { label: a.label, month: a.monthSet ? a.month : "", today: today });
+      if (own.ok === false || own.items) return Promise.resolve(own);
+    }
     if (!ag) return Promise.resolve(own);
     return agendaRows(a.app, a.days).then(function (rows) {
       var g = S.agenda(a.app, rows, today, a.days);
@@ -2453,6 +2595,7 @@
     }
     return buildSummary(a, today).then(function (sum) {
       if (!sum) return { content: "Error: " + app.name + " has no summary. Use search_data instead.", err: 1 };
+      if (sum.ok === false) return { content: "Error: " + sum.err, err: 1 };
       var lines = S.preview(sum, LANG);
       var okP = app.perm === "always" ? Promise.resolve(true) : askSummary(app.name, lines);
       return okP.then(function (ok) {

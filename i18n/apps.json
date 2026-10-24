@@ -4,6 +4,7 @@
    "app": "assistant",
    "files": [
     "assistant/assistant.js",
+    "assistant/edits.js",
     "assistant/summary.js"
    ]
   },
@@ -96,6 +97,7 @@
    "files": [
     "calendar/calendar.js",
     "calendar/package.js",
+    "calendar/search.js",
     "calendar/today.js"
    ]
   },
@@ -387,6 +389,7 @@
    "app": "kanban",
    "files": [
     "kanban/kanban.js",
+    "kanban/search.js",
     "kanban/tools.js"
    ]
   },
@@ -972,6 +975,7 @@
     "todo/import.js",
     "todo/package.js",
     "todo/platforms.js",
+    "todo/search.js",
     "todo/todo.js"
    ]
   },

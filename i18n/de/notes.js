@@ -1,4 +1,5 @@
 orosPack("de", "notes", {
+ "srch.labels": "Labels: ",
  "acct": "Konto",
  "book.confirm": "Dieses Notizbuch löschen? Alle Seiten und Labels darin werden entfernt.",
  "book.default": "Notizen",

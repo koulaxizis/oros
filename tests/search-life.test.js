@@ -192,9 +192,9 @@ test("shelf: items with creator, tags, review; tombstones hide; target", async (
     goals: {}, tombs: { film01: 25 } } });
   const h = byId(P("shelf").search(ctxFor(st, "x")));
   assert.deepEqual(Object.keys(h).sort(), ["book01", "game01"]);
-  assert.equal(h.book01.text, "Book · Homer · 1996 · classics, epic · Wine-dark sea, again.");
+  assert.equal(h.book01.text, "Book · Now · Rating 4.5/5 · Favourite · Homer · 1996 · classics, epic · Wine-dark sea, again.");
   assert.deepEqual(h.book01.target, { item: "book01" });
-  assert.equal(h.game01.text, "Game · Supergiant · 2020 · Switch · Nikos");
+  assert.equal(h.game01.text, "Game · Want · Supergiant · 2020 · Switch · Nikos");
   assert.equal(byId(P("shelf").search(ctxFor(st, "x", "el"))).game01.text.split(" · ")[0], "Παιχνίδι");
   const od = await find("shelf", st, "odyssey");
   assert.deepEqual(od.map((x) => x.id), ["book01"]);
