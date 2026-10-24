@@ -303,7 +303,8 @@ test("life providers: ids, keys, empty storage", () => {
   IDS.forEach((id) => {
     const p = P(id);
     assert.equal(p.id, id);
-    assert.deepEqual(p.keys, ["oros-" + id + "-data"]);
+    // Chore Wheel and Plant Care also read the household mirror (chores/house.js, plants/house.js)
+    assert.deepEqual(p.keys, ["oros-" + id + "-data"].concat(id === "chores" || id === "plants" ? ["oros-" + id + "-hh"] : []));
     assert.deepEqual(p.search(ctxFor(store({}), "ab")), [], id);
     assert.deepEqual(p.search(ctxFor(store({ ["oros-" + id + "-data"]: "garbage" }), "ab")), [], id);
   });

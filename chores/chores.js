@@ -114,6 +114,16 @@
       "toast.setNone": "Those chores are already here", "toast.done": "“{t}” done", "toast.needMembers": "Add a member first",
       "toast.awayBad": "The return date is before the leaving date",
       "toast.daysBad": "Pick at least one day",
+      "hh.sec": "Household", "hh.own": "My wheel", "hh.wheel": "Home chores",
+      "hh.share.t": "Share with a household",
+      "hh.share.x": "Everyone in the household sees the same members, chores and done marks in their own Chore Wheel. Each person picks who they are, and gets reminders only for their own turn.",
+      "hh.which": "Household", "hh.go": "Share", "hh.open": "Open Household",
+      "hh.nohh": "Make or join a household first, in the Household app.",
+      "hh.in": "Shared in {hh}: changes reach everyone. Who you are and the reminder hour are yours.",
+      "hh.stop.t": "Stop sharing",
+      "hh.stop.x": "The wheel leaves {hh} for everyone, and you keep your own copy. The others can bring it back from Household for 30 days.",
+      "toast.hhShared": "Shared with {hh}", "toast.hhStopped": "Sharing stopped. Your own copy is under “My wheel”.",
+      "toast.hhFail": "Could not reach the household. Try again.",
       "live.spin": "{m} gets {t}",
       "set.kitchen": "Kitchen", "set.clean": "Weekly cleaning", "set.pet": "Pet", "set.home": "Around the house",
       "home.file": "Save and open", "file.save": "orOS file (.oroschores)", "file.open": "Open orOS file…",
@@ -179,6 +189,16 @@
       "toast.setNone": "Αυτές οι δουλειές υπάρχουν ήδη", "toast.done": "Έγινε: «{t}»", "toast.needMembers": "Πρόσθεσε πρώτα ένα μέλος",
       "toast.awayBad": "Η επιστροφή είναι πριν από την αναχώρηση",
       "toast.daysBad": "Διάλεξε τουλάχιστον μία μέρα",
+      "hh.sec": "Νοικοκυριό", "hh.own": "Ο δικός μου τροχός", "hh.wheel": "Δουλειές σπιτιού",
+      "hh.share.t": "Κοινή χρήση με νοικοκυριό",
+      "hh.share.x": "Όλοι στο νοικοκυριό βλέπουν τα ίδια μέλη, δουλειές και σημάδια «έγινε» στον δικό τους Τροχό δουλειών. Ο καθένας διαλέγει ποιος είναι και παίρνει υπενθύμιση μόνο για τη δική του σειρά.",
+      "hh.which": "Νοικοκυριό", "hh.go": "Κοινή χρήση", "hh.open": "Άνοιγμα Νοικοκυριού",
+      "hh.nohh": "Φτιάξε πρώτα ένα νοικοκυριό ή μπες σε ένα, από την εφαρμογή Νοικοκυριό.",
+      "hh.in": "Κοινός στο «{hh}»: οι αλλαγές φτάνουν σε όλους. Ποιος είσαι και η ώρα υπενθύμισης είναι δικά σου.",
+      "hh.stop.t": "Διακοπή κοινής χρήσης",
+      "hh.stop.x": "Ο τροχός φεύγει από το «{hh}» για όλους και εσύ κρατάς δικό σου αντίγραφο. Οι άλλοι μπορούν να τον φέρουν πίσω από το Νοικοκυριό για 30 ημέρες.",
+      "toast.hhShared": "Κοινός με «{hh}»", "toast.hhStopped": "Η κοινή χρήση σταμάτησε. Το αντίγραφό σου είναι στον «Ο δικός μου τροχός».",
+      "toast.hhFail": "Δεν έγινε σύνδεση με το νοικοκυριό. Δοκίμασε ξανά.",
       "live.spin": "{t}: την παίρνει {m}",
       "set.kitchen": "Κουζίνα", "set.clean": "Εβδομαδιαίο καθάρισμα", "set.pet": "Κατοικίδιο", "set.home": "Γύρω από το σπίτι",
       "home.file": "Αποθήκευση και άνοιγμα", "file.save": "Αρχείο orOS (.oroschores)", "file.open": "Άνοιγμα αρχείου orOS…",
@@ -235,6 +255,10 @@
   var ID_RE = C.ID_RE, KEY_RE = C.KEY_RE, SETS = C.SETS, SET_IDS = C.SET_IDS;
   // ---------- 5. Storage, prefs ----------
   var data = null, prefs = null;
+  // data = the wheel on screen; pdata = the person's own wheel (stored
+  // and synced). They are the same object unless a household wheel is
+  // on screen (section 6a).
+  var pdata = null;
 
   function emptyData() { return { ver: DATA_VER, members: [], tasks: [], done: {}, set: {}, tombs: {} }; }
 
@@ -245,20 +269,25 @@
       try {
         var parsed = JSON.parse(raw);
         if (parsed && typeof parsed === "object" && Array.isArray(parsed.members)) {
-          data = mergeChores(parsed, parsed);
+          data = pdata = mergeChores(parsed, parsed);
           return;
         }
       } catch (e) {}
       try { localStorage.setItem(STORAGE_KEY + "-broken", raw); } catch (e) {}
       try { console.error("[orOS] chores: unreadable data copied to " + STORAGE_KEY + "-broken"); } catch (e) {}
     }
-    data = emptyData();
+    data = pdata = emptyData();
   }
 
   var saveFailShown = false;
   function saveNow() {
+    if (active) { hhPush(); return; }          // a household wheel: the change goes to the household
+    pdata = data;
+    savePersonal();
+  }
+  function savePersonal() {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(pdata));
       saveFailShown = false;
     } catch (e) {
       if (!saveFailShown) { saveFailShown = true; showToast(t("toast.save")); }   // R30
@@ -278,11 +307,15 @@
       tab: TABS.indexOf(p.tab) >= 0 ? p.tab : "",
       grp: ["d", "w", "mo"].indexOf(p.grp) >= 0 ? p.grp : "",
       only: p.only === 1 ? 1 : 0,
-      range: ["wk", "mo", "yr"].indexOf(p.range) >= 0 ? p.range : "wk"
+      range: ["wk", "mo", "yr"].indexOf(p.range) >= 0 ? p.range : "wk",
+      wh: typeof p.wh === "string" && /^(own|[A-Za-z0-9_-]{1,40}\/[A-Za-z0-9_-]{1,40})$/.test(p.wh) ? p.wh : ""
     };
   }
   function savePrefs() {
-    try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); } catch (e) {}
+    var out = {};
+    Object.keys(prefs).forEach(function (k) { out[k] = prefs[k]; });
+    if (active) out.me = pMe;                  // "me" of a household wheel lives in the household
+    try { localStorage.setItem(PREFS_KEY, JSON.stringify(out)); } catch (e) {}
   }
 
   // ---------- 6. Mutations ----------
@@ -371,6 +404,231 @@
     if (!added) { showToast(data.tasks.length >= MAX_TASKS ? t("toast.maxTasks", { n: MAX_TASKS }) : t("toast.setNone")); return; }
     commit();
     showToast(t("toast.setAdded", { n: added }));
+  }
+
+  // ---------- 6a. Wheels shared with a household (BR-HH) ----------
+  // A shared wheel is a household document of kind "chores"
+  // (window.parent.orosHousehold, household/engine.js; chores/house.js
+  // turns it into Chore Wheel data and back). Sharing moves the own
+  // wheel into the household with its ids; while a household wheel is
+  // on screen, `data` is that wheel, in memory only, and every change
+  // leaves as the items that changed. "Who am I" there is the
+  // document's "me:<member>" item, so each person picks their own and
+  // the reminder follows it. Nothing here merges a shared wheel: the
+  // household merge does, and hhInject() rebuilds it from the result.
+  var HHc = window.OrosChoresHouse || null, HC = window.OrosHouseCore || null;
+  var hhW = {};           // "<box>/<doc id>" → { box, id, hh, t, last, me, data }
+  var active = "";        // the household wheel on screen, "" = the own one
+  var pMe = "";           // the own wheel's "me" while a household wheel is on screen
+  var hhWant = null;      // a search target in a household wheel not read yet
+  var HH_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-5h4v5"/></svg>';
+  function hhApi() {
+    if (!HHc || !HC) return null;
+    try {
+      var p = window.parent;
+      return p && p !== window && p.orosHousehold && typeof p.orosHousehold.docs === "function" ? p.orosHousehold : null;
+    } catch (e) { return null; }
+  }
+  function ymdToday() { return dnToYmd(todayDn()); }
+  function ownEmpty() { return !pdata.members.length && !pdata.tasks.length; }
+  function hhSig() {
+    return Object.keys(hhW).sort().map(function (k) { return k + ":" + hhW[k].t; }).join(",") + "|" + active + "|" +
+           (active ? JSON.stringify(data) : "");
+  }
+  // Picks the wheel on screen: the one chosen here, else a household
+  // wheel when the own one is empty, else the own one.
+  function hhPick() {
+    var keys = Object.keys(hhW).sort(), h = hhApi(), want = "";
+    if (prefs.wh && hhW[prefs.wh]) want = prefs.wh;
+    else if (prefs.wh !== "own" || ownEmpty()) want = ownEmpty() && keys.length ? keys[0] : "";
+    if (want) {
+      if (!active) pMe = prefs.me;
+      var w = hhW[want], mid = h ? h.me(w.box) : "";
+      active = want;
+      data = w.data;
+      prefs.me = mid && w.me[mid] && memberById(data, w.me[mid]) ? w.me[mid] : "";
+    } else {
+      if (active) prefs.me = pMe;
+      active = "";
+      data = pdata;
+    }
+  }
+  // Rebuilds the household wheels; true when what is on screen changed.
+  function hhInject() {
+    var h = hhApi();
+    if (!h) return false;
+    var before = hhSig(), was = active, w = {};
+    h.docs("chores").forEach(function (d) {
+      if (!d.ready) return;
+      var v = h.view(d.box, d.id);
+      if (!v) return;
+      var b = HHc.build(v);
+      w[d.box + "/" + d.id] = { box: d.box, id: d.id, hh: d.hh || "", t: (typeof v.m.t === "string" && v.m.t) || d.title || d.hh || "",
+                                last: HHc.fromDoc(v), me: b.me, data: b.data };
+    });
+    hhW = w;
+    var copies = hhCopies(h);
+    hhPick();
+    if (active !== was) { wheelPer = null; lastAngles = {}; }
+    return copies || hhSig() !== before;
+  }
+  // The own copy of a wheel that left a household (stopped sharing, the
+  // household left or removed): same ids, stamped now, so it is newer
+  // than the tombstones the share left.
+  function hhCopies(h) {
+    var made = false, now = Date.now();
+    h.archived("chores").forEach(function (a) {
+      if (!a.take) return;
+      var c = HHc.copyOf(HC.view(a.doc), now);
+      if (c && (c.data.members.length || c.data.tasks.length)) {
+        pdata = mergeChores(pdata, c.data);
+        var mid = h.me(a.box), mine = mid && c.me[mid];
+        if (mine && memberById(pdata, mine)) { if (active) pMe = mine; else prefs.me = mine; }
+        if (!active) data = pdata;
+        savePersonal();
+        savePrefs();
+        made = true;
+      }
+      h.dropArchived(a.box, a.id);
+    });
+    return made;
+  }
+  // Sends what changed in the household wheel on screen.
+  function hhPush() {
+    var h = hhApi(), w = hhW[active];
+    if (!h || !w) return;
+    var me = {}, mid = h.me(w.box);
+    Object.keys(w.me).forEach(function (k) { me[k] = w.me[k]; });
+    if (mid) { if (prefs.me) me[mid] = prefs.me; else delete me[mid]; }
+    var cur = HHc.project(data, me, ymdToday());
+    var d = HC.diffItems(w.last, cur.items, HHc.FIELDS);
+    w.last = cur.items;
+    w.me = me;
+    if (d) h.change(w.box, w.id, { set: d.set, del: d.del });
+  }
+  function hhSwitch(key) {
+    prefs.wh = key || "own";
+    var was = active;
+    hhPick();
+    if (active !== was) { wheelPer = null; lastAngles = {}; }
+    savePrefs();
+    renderAll();
+  }
+  // The wheel chips: shown when there is more than one wheel to see.
+  function renderWheels() {
+    var box = $("wheels");
+    if (!box) return;
+    box.innerHTML = "";
+    var keys = Object.keys(hhW).sort();
+    if (!keys.length || (keys.length === 1 && ownEmpty() && active)) { box.hidden = true; return; }
+    box.hidden = false;
+    var chip = function (key, label, house) {
+      var b = el("button", "chip" + (active === key ? " on" : ""));
+      b.type = "button";
+      if (house) b.insertAdjacentHTML("beforeend", HH_SVG);
+      b.appendChild(document.createTextNode(label));
+      b.setAttribute("aria-pressed", active === key ? "true" : "false");
+      b.addEventListener("click", function () { if (active !== key) hhSwitch(key); });
+      box.appendChild(b);
+    };
+    chip("", t("hh.own"), false);
+    keys.forEach(function (k) { chip(k, hhW[k].t || t("hh.wheel"), true); });
+  }
+  // Home: share the own wheel, or stop sharing the household one.
+  function renderHh() {
+    var sec = $("hh-sec"), h = hhApi();
+    if (!sec) return;
+    sec.hidden = !h;
+    if (!h) return;
+    var w = hhW[active];
+    $("hh-line").textContent = w ? t("hh.in", { hh: w.hh || w.t }) : t("hh.share.x");
+    var b = $("hh-btn");
+    b.textContent = t(w ? "hh.stop.t" : "hh.share.t");
+    b.disabled = !w && ownEmpty();
+  }
+  function hhAsk() {
+    var h = hhApi();
+    if (!h) return;
+    var mode = active ? "stop" : "share", w = hhW[active] || {}, hhs = h.list();
+    var dlg = makeDialog("hh-dlg");
+    dlg.appendChild(el("h2", "dlg-title", t("hh." + mode + ".t")));
+    dlg.appendChild(el("p", "hint", mode === "share" ? (hhs.length ? t("hh.share.x") : t("hh.nohh"))
+                                                     : t("hh.stop.x", { hh: w.hh || w.t || "" })));
+    var sel = el("select");
+    sel.id = "hh-box";
+    hhs.forEach(function (x) { var o = el("option", "", x.name || "?"); o.value = x.box; sel.appendChild(o); });
+    if (mode === "share" && hhs.length > 1) dlg.appendChild(field(t("hh.which"), sel));
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); }));
+    var ok;
+    if (mode === "share" && !hhs.length) {
+      ok = button(t("hh.open"), "primary", function () {
+        dlg.close();
+        try { window.parent.__orosOpenAt("household", null); } catch (e) {}
+      });
+    } else {
+      ok = button(t(mode === "share" ? "hh.go" : "hh.stop.t"), "primary", function () {
+        ok.disabled = true;
+        var fail = function () { ok.disabled = false; showToast(t("toast.hhFail")); };
+        if (mode === "share") {
+          var box = sel.value, x = hhs.filter(function (y) { return y.box === box; })[0] || {};
+          var me = {}, mid = h.me(box);
+          if (mid && prefs.me) me[mid] = prefs.me;
+          var proj = HHc.project(pdata, me, ymdToday());
+          Promise.resolve(h.share(box, "chores", x.name || t("hh.wheel"), { set: proj.items })).then(function (id) {
+            // the wheel leaves the own data on every device of the person
+            var now = Date.now();
+            pdata.members.forEach(function (mb) { pdata.tombs[mb.id] = Math.max(now, mb.m, mb.om || 0); });
+            pdata.tasks.forEach(function (tk) { pdata.tombs[tk.id] = Math.max(now, tk.m); });
+            pdata = mergeChores(pdata, pdata);
+            data = pdata;
+            savePersonal();
+            prefs.wh = box + "/" + id;
+            hhInject();
+            savePrefs();
+            renderAll();
+            dlg.close();
+            showToast(t("toast.hhShared", { hh: x.name || "" }));
+          }, fail);
+          return;
+        }
+        Promise.resolve(h.unshare(w.box, w.id)).then(function () {
+          prefs.wh = "own";
+          hhInject();
+          savePrefs();
+          renderAll();
+          dlg.close();
+          showToast(t("toast.hhStopped"));
+        }, fail);
+      });
+    }
+    acts.appendChild(ok);
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+  }
+  var hhQueued = false;
+  function hhRefresh() {
+    if (hhQueued) return;
+    hhQueued = true;
+    setTimeout(function () {
+      hhQueued = false;
+      var open = document.querySelector("dialog[open]");
+      if (hhInject() && !open) renderAll();
+      else if (!open) { renderWheels(); renderHh(); }
+      if (hhWant && Object.keys(hhW).length) { var w = hhWant; hhWant = null; openSearchTarget(w); }
+    }, 0);
+  }
+  function hhBoot() {
+    var h = hhApi();
+    if (!h) return;
+    $("hh-btn").addEventListener("click", hhAsk);
+    var off = h.on(function (e) {
+      if (e && (e.type === "doc" || e.type === "list" || e.type === "roster" || e.type === "archive")) hhRefresh();
+    });
+    window.addEventListener("pagehide", function () { try { off(); } catch (e) {} });
+    Promise.resolve(h.ready()).then(hhRefresh, hhRefresh);
+    renderHh();
   }
 
   // ---------- 7. The wheel: drawing + turning ----------
@@ -994,9 +1252,11 @@
       });
     $("tasks-empty").hidden = !!data.tasks.length;
     $("new-task").disabled = data.tasks.length >= MAX_TASKS;
+    renderHh();
   }
 
   function renderAll() {
+    renderWheels();
     renderTabs();
     renderWheel();
     renderToday();
@@ -1515,21 +1775,27 @@
   }
 
   function sliceGet() {
-    return mergeChores(data, data);   // canonical copy (R26)
+    return mergeChores(pdata, pdata);   // canonical copy (R26) of the own wheel only
   }
 
   function sliceSet(incoming) {
     if (!incoming || typeof incoming !== "object" || !Array.isArray(incoming.members)) return;
-    var before = JSON.stringify(data);
+    var before = JSON.stringify(pdata);
     window.__orosSyncApi._suppress = true;   // R6: a pull never marks dirty
     try {
-      data = mergeChores(incoming, incoming);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      pdata = mergeChores(incoming, incoming);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(pdata));
     } catch (e) {
     } finally {
       window.__orosSyncApi._suppress = false;
     }
-    if (JSON.stringify(data) === before) return;
+    if (JSON.stringify(pdata) === before) return;
+    if (active) {                              // a household wheel is on screen
+      if (pMe && !memberById(pdata, pMe)) { pMe = ""; savePrefs(); }
+      if (!document.querySelector("dialog[open]")) renderAll();     // the wheel chips
+      return;
+    }
+    data = pdata;
     if (prefs.me && !memberById(data, prefs.me)) { prefs.me = ""; savePrefs(); }
     var open = document.querySelector("dialog[open]");
     if (open && open.id === "spin-dlg") return;       // never repaint under a running spin
@@ -1615,7 +1881,7 @@
     $("add-member-in").addEventListener("keydown", function (e) {
       if (e.key === "Enter") { e.preventDefault(); addM(); }
     });
-    $("me-sel").addEventListener("change", function () { prefs.me = this.value; savePrefs(); renderAll(); });
+    $("me-sel").addEventListener("change", function () { prefs.me = this.value; savePrefs(); if (active) hhPush(); renderAll(); });
     $("remind-sel").addEventListener("change", function () {
       var v = parseInt(this.value, 10);
       prefs.rh = v >= -1 && v <= 23 ? v : 9;
@@ -1649,7 +1915,7 @@
     if (!RP || !CPK || !window.OrosBundle) return;
     recFile = RP.ui(CPK.DESC, {
       lang: function () { return LANG; },
-      get: function () { return sliceGet(); },
+      get: function () { return mergeChores(data, data); },      // the wheel on screen
       title: function () { return t("app"); },
       set: function (next) {
         if (!next || typeof next !== "object" || !Array.isArray(next.members)) return;
@@ -1716,6 +1982,7 @@
     initRecFile();
     wireKeyboard();
     renderAll();
+    hhBoot();
     var staged = null;
     try { staged = sessionStorage.getItem(OPEN_KEY); sessionStorage.removeItem(OPEN_KEY); } catch (e) {}
     if (staged) openTarget(staged);
@@ -1737,6 +2004,11 @@
     // the File taken once with window.parent.__orosTakeFile(token)
     if (t && t.openFile) { if (recFile) recFile.openTarget(t.openFile); return; }
     if (!t || document.querySelector("dialog[open]")) return;
+    // a household wheel's chore or member (search, BR-HH): that wheel first
+    var want = "";
+    if (typeof t.wheel === "string") Object.keys(hhW).forEach(function (k) { if (k.slice(k.indexOf("/") + 1) === t.wheel) want = k; });
+    if (t.wheel && !want) { if (hhApi()) hhWant = t; return; }      // not read yet: opens after the first build
+    if (want !== active) hhSwitch(want);
     var tk = typeof t.task === "string" ? taskById(data, t.task) : null;
     var mb = !tk && typeof t.member === "string" ? memberById(data, t.member) : null;
     if (!tk && !mb) return;

@@ -36,6 +36,13 @@ Wähle in `Zuhause` unter `Wer bist du auf diesem Gerät?` dich selbst und dann 
 ## Statistik
 Für `Diese Woche`, `Diesen Monat` oder `12 Monate` siehst du für jedes Mitglied die Punkte, erledigte und verpasste Hausarbeiten und die Serie, mit einer Marke für den fairen Anteil. `Verlauf (90 Tage)` listet, was erledigt wurde.
 
+## Das Rad mit dem Haushalt teilen
+Mit einem [Haushalt](app:household) verschiebt `Zuhause` › `Haushalt` › `Mit einem Haushalt teilen` dieses Rad in den Haushalt: Alle sehen dieselben Mitglieder, Hausarbeiten und Haken in ihrem eigenen Hausarbeitsrad, und ein Haken auf einem Handy erreicht die anderen. Jede Person wählt unter `Wer bist du auf diesem Gerät?`, wer sie ist, so erinnert die tägliche Erinnerung nur an die eigene Reihe; die Uhrzeit der Erinnerung bleibt auf jedem Gerät. Alles ist Ende-zu-Ende verschlüsselt: Das orOS-Relay leitet nur weiter, was es nicht lesen kann.
+
+Das Rad behält seine Mitglieder, Hausarbeiten und IDs. Nur die Haken, Überspringen und Abgaben der letzten drei Monate reisen mit, daher beginnt die Statistik über längere Zeiträume dort neu.
+
+Gibt es mehr als ein Rad (dein eigenes und eines Haushalts), wechseln Chips oben zwischen ihnen. `Teilen beenden` nimmt das Rad für alle aus dem Haushalt: Du behältst eine eigene Kopie unter `Mein Rad`, und die anderen können es 30 Tage lang in der App Haushalt zurückholen.
+
 ## Eine orOS-Datei speichern und öffnen
 In `Zuhause` unter `Speichern und öffnen` speichert `orOS-Datei (.oroschores)` alle Mitglieder, Hausarbeiten und alles Abgehakte, Übersprungene oder Abgegebene als eine `.oroschores`-Datei, zum Beispiel um sie ohne Synchronisierung auf ein anderes Gerät zu bringen oder eine Kopie zu behalten. Die Datei ist ein einfaches ZIP: Entpackt enthält sie die Daten als `content.json` sowie `preview/chores.md`, `preview/chores.csv` und `preview/history.csv` für andere Programme. Sie ist nicht verschlüsselt, also bewahre sie sicher auf.
 

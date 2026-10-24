@@ -2361,26 +2361,34 @@ function transientNote(title, body) {
   // on this device" set in the app, only your own chores; otherwise
   // everyone's, with the name. Only ±60 days around today. Rows are
   // never stored; micro-cached ~1s like the other feeds.
-  var CHORES_DATA_KEY = "oros-chores-data";
-  var choresCache = { when: 0, data: null, me: "", today: 0 };
+  var CHORES_DATA_KEY = "oros-chores-data", CHORES_HH_KEY = "oros-chores-hh";
+  var choresCache = { when: 0, list: null, today: 0 };
 
+  // [{ data, me }]: the own wheel, then the wheels shared with a
+  // household (the device-local mirror chores/house.js keeps, BR-HH).
   function choresRaw() {
     var now = Date.now();
     var Core = window.OrosChoresCore;
     if (!Core) return null;
     if (now - choresCache.when > 1000) {
-      choresCache.data = null;
+      var list = [];
       try {
         var d = JSON.parse(localStorage.getItem(CHORES_DATA_KEY));
         if (d && typeof d === "object" && Array.isArray(d.tasks) && d.tasks.length) {
-          choresCache.data = Core.mergeChores(d, d, now);
-          choresCache.me = Core.readPrefs(JSON.parse(localStorage.getItem("oros-chores-prefs"))).me;
-          choresCache.today = Core.localDn(new Date(now));
+          list.push({ data: Core.mergeChores(d, d, now), me: Core.readPrefs(JSON.parse(localStorage.getItem("oros-chores-prefs"))).me });
         }
-      } catch (e) { choresCache.data = null; }
+      } catch (e) {}
+      try {
+        var hh = JSON.parse(localStorage.getItem(CHORES_HH_KEY));
+        (hh && Array.isArray(hh.wheels) ? hh.wheels : []).forEach(function (w) {
+          if (w && w.data && typeof w.data === "object") list.push({ data: Core.mergeChores(w.data, w.data, now), me: typeof w.me === "string" ? w.me : "" });
+        });
+      } catch (e) {}
+      choresCache.list = list.length ? list : null;
+      choresCache.today = Core.localDn(new Date(now));
       choresCache.when = now;
     }
-    return choresCache.data ? choresCache : null;
+    return choresCache.list ? choresCache : null;
   }
 
   function choresFeedOn(dateStr) {
@@ -2389,19 +2397,23 @@ function transientNote(title, body) {
     if (!c) return [];
     var Core = window.OrosChoresCore, n = Core.ymdToDn(dateStr);
     if (isNaN(n) || Math.abs(n - c.today) > 60) return [];
-    var mine = !!(c.me && Core.memberById(c.data, c.me));
-    return Core.feedRows(c.data, n, c.me).map(function (r) {
-      var title = (r.state === 1 ? "✓ " : "") + (r.task.icon ? r.task.icon + " " : "") + r.task.name;
-      if (!mine && r.name) title += " · " + r.name;
-      return {
-        id: "chr-" + r.key,                     // per-render key, never stored
-        title: title.slice(0, 80),
-        labelId: "lbl-feed-chores",
-        start: null,                            // all-day
-        _feed: true,
-        _choresDay: dateStr
-      };
+    var out = [];
+    c.list.forEach(function (w) {
+      var mine = !!(w.me && Core.memberById(w.data, w.me));
+      Core.feedRows(w.data, n, w.me).forEach(function (r) {
+        var title = (r.state === 1 ? "✓ " : "") + (r.task.icon ? r.task.icon + " " : "") + r.task.name;
+        if (!mine && r.name) title += " · " + r.name;
+        out.push({
+          id: "chr-" + r.key,                     // per-render key, never stored
+          title: title.slice(0, 80),
+          labelId: "lbl-feed-chores",
+          start: null,                            // all-day
+          _feed: true,
+          _choresDay: dateStr
+        });
+      });
     });
+    return out;
   }
 
   // Plant Care read-only feed (plants/core.js, loaded by index.html:
@@ -2422,8 +2434,20 @@ function transientNote(title, body) {
       plantsCache.due = null;
       try {
         var d = JSON.parse(localStorage.getItem(PLANTS_DATA_KEY));
-        if (d && typeof d === "object" && Array.isArray(d.plants)) {
-          plantsCache.data = Core.merge(d, d, now);
+        // plants shared with a household (plants/house.js mirror, BR-HH):
+        // each garden merged on its own, then shown next to the own ones
+        var hh = null;
+        try { hh = JSON.parse(localStorage.getItem("oros-plants-hh")); } catch (e) {}
+        var gardens = hh && Array.isArray(hh.gardens) ? hh.gardens : [];
+        if ((d && typeof d === "object" && Array.isArray(d.plants)) || gardens.length) {
+          var all = Core.merge(d && Array.isArray(d.plants) ? d : null, null, now);
+          gardens.forEach(function (g) {
+            if (!g || !g.data || typeof g.data !== "object") return;
+            var x = Core.merge(g.data, g.data, now);
+            all.plants = all.plants.concat(x.plants);
+            all.log = all.log.concat(x.log);
+          });
+          plantsCache.data = all;
           var prefs = Core.readPrefs(JSON.parse(localStorage.getItem("oros-plants-prefs")));
           plantsCache.today = Core.ymdOf(new Date(now));
           plantsCache.due = Core.tasks(plantsCache.data, plantsCache.today, 400, prefs.hemi);

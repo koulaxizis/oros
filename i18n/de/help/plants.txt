@@ -20,6 +20,11 @@ Tippe auf eine Pflanze, um ihre Details zu sehen: den Plan mit dem nächsten Tag
 ## Wetterhinweise
 Wenn du [Wetter](app:weather) nutzt, liest Pflanzenpflege für deine Pflanzen draußen die letzte Vorhersage auf diesem Gerät. Wird heute Regen erwartet, siehst du ein Banner mit `Gießen draußen überspringen`; an einem sehr heißen Tag schlägt sie vor, früher nach ihnen zu sehen. Pflanzenpflege selbst geht nie ins Netz.
 
+## Pflanzen mit dem Haushalt teilen
+Mit einem [Haushalt](app:household) verschiebt das Zahnrad › `Haushalt` › `Mit einem Haushalt teilen` deine Pflanzen in den Haushalt: Alle sehen dieselben Pflanzen in ihrer eigenen Pflanzenpflege, und `Erledigt` auf einem Handy verschiebt das nächste Gießen für alle, damit niemand doppelt gießt. Im Editor einer Pflanze wählt `Erinnerung für`, wer die tägliche Erinnerung bekommt: alle im Haushalt oder eine Person (ihre Initialen stehen bei den Aufgaben der Pflanze). Erinnerungszeit und Halbkugel bleiben auf jedem Gerät. Alles ist Ende-zu-Ende verschlüsselt: Das orOS-Relay leitet nur weiter, was es nicht lesen kann.
+
+Mit den Pflanzen reist nur der Verlauf der letzten sechs Monate (plus das letzte Mal jeder Aufgabe, das der Plan braucht). Gibt es mehr als eine Pflanzengruppe (deine eigene und die eines Haushalts), wechseln Chips oben zwischen ihnen. `Teilen beenden` nimmt die Pflanzen für alle aus dem Haushalt: Du behältst eine eigene Kopie unter `Nur meine`, und die anderen können sie 30 Tage lang in der App Haushalt zurückholen.
+
 ## orOS-Datei speichern und öffnen
 In den `Einstellungen` speichert unter `Deine Pflanzen` die Option `orOS-Datei (.orosplants)` jede Pflanze (Plan, Raum, Notizen) mit ihrem Pflegeverlauf als eine `.orosplants`-Datei, zum Beispiel um sie ohne Synchronisierung auf ein anderes Gerät zu bringen oder eine Kopie aufzuheben. Die Erinnerungszeit, die Erdhalbkugel und dein Pl@ntNet-Schlüssel bleiben auf jedem Gerät. Die Datei ist ein einfaches ZIP: Entpackt enthält sie die Pflanzen als `content.json` sowie `preview/plants.md`, `preview/plants.csv` und `preview/history.csv` für andere Programme. Sie ist nicht verschlüsselt, also bewahre sie sicher auf.
 
