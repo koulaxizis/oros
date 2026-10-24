@@ -7977,7 +7977,7 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Files: `download/index.html`, `files/{drive.js,files.css}`, `i18n/de/{files.js,STATUS.md}`, `tests/drive-android.test.js` (+1), What's new, Bible. The page's generator (`/mnt/project-files/hardware/download-page/gen_dl.py`) was not changed and no longer matches the page; edit the page directly.
   - Tests: full suite green. Chromium, local server, 360 px EL and 1200 px EN: both new cards render, no horizontal scroll, no console errors; release asset names checked against oros-drive v0.2.1 and oros-portable v0.2.0. Not tested: the Drive empty state in the real shell (needs an unlocked vault with no Drive folders; covered by the source test), installing orOS Drive on a real Windows PC with a real Dropbox, Safari.
 
-### 2026-10-24 — Household wave 5: shared Maps places (#PR) — 3.52.00
+### 2026-10-24 — Household wave 5: shared Maps places (#583) — 3.52.00
 - Wave 5 of the Household plan. Maps › a place's popup › "Household": the place goes into the household's folder of places with a name and a note; everyone sees the folder in Saved places and as orange pins, with the note and who changed it last; Route, Edit, Remove (with Undo). "Stop sharing" makes the places own saved places for the stopper; the others can bring the folder back from Household for 30 days. No live location. BR-HH (Part VI).
 - Files: `maps/{hh-core.js (new),hh.js (new),maps.js (popup button, list, host routeTo/markerIcon),maps.css,index.html,help.*.txt}`, `sw.js`, `shell.js` (APP_VERSION), `i18n/de/{maps.js,help/maps.txt}`, `tests/maps-hh.test.js` (4), What's new, Bible.
 
