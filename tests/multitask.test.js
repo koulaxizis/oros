@@ -94,6 +94,7 @@ function sandbox(opts) {
       createElement: () => new FakeFrame(),
     },
     cmdWireFrame: () => {},
+    extWireFrame: () => {},
     Date, Array, Object,
   };
   ctx.window = ctx;
