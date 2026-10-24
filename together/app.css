@@ -267,3 +267,22 @@ textarea { min-height: 80px; padding: 8px 10px; border: 1px solid var(--border);
 #toast.show { opacity: 1; }
 
 @media (prefers-reduced-motion: reduce) { #toast { transition: none; } }
+
+/* ---------- wave 4: long distance, fun numbers, card, slideshow ---------- */
+.dist { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+.dist .sec { margin: 0; }
+.dist-clock { font-weight: 600; overflow-wrap: anywhere; }
+.dist-next .link-btn { padding-left: 0; text-align: left; overflow-wrap: anywhere; }
+.ms-meet .dot { background: #5bc0eb; }
+.tiles.fun .tile b { color: var(--love); }
+.card-cv { width: 100%; max-width: 420px; height: auto; aspect-ratio: 1; align-self: center; border-radius: 12px; border: 1px solid var(--border); }
+.actions.wrap { flex-wrap: wrap; }
+.confetti { position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 50; }
+.show { width: 100vw; height: 100vh; max-width: 100vw; max-height: 100vh; margin: 0; padding: 0; border: 0; background: #000; color: #fff; display: none; }
+.show[open] { display: flex; flex-direction: column; }
+.show::backdrop { background: #000; }
+.show img { flex: 1 1 auto; min-height: 0; width: 100%; object-fit: contain; }
+.show-cap { padding: 8px 16px 0; text-align: center; overflow-wrap: anywhere; }
+.show-bar { display: flex; align-items: center; gap: 8px; padding: 8px 12px calc(8px + env(safe-area-inset-bottom)); }
+.show-bar .icon-btn { color: #fff; }
+.show-n { font-size: 13px; opacity: .8; }

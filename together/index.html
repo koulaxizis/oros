@@ -56,6 +56,18 @@
       <div class="row wrap acts" id="acts">
         <button type="button" class="chip sm" id="act-date" data-i18n="act.date" hidden>Plan a date</button>
         <button type="button" class="chip sm" id="act-anniv" data-i18n="act.anniv" hidden>Anniversary in Contacts</button>
+        <button type="button" class="chip sm" id="act-card" data-i18n="act.card">Share card</button>
+      </div>
+
+      <div id="dist" class="card dist" hidden>
+        <div class="sec-row">
+          <h3 class="sec" data-i18n="sec.dist">Long distance</h3>
+          <button type="button" class="chip sm" id="meet-add" data-i18n="meet.add">+ Meeting</button>
+        </div>
+        <p class="dist-clock" id="dist-clock"></p>
+        <div id="dist-next" class="dist-next"></div>
+        <ul id="meet-list" class="ms-list"></ul>
+        <p class="hint small" id="dist-met"></p>
       </div>
 
       <h3 class="sec" data-i18n="sec.coming">Coming up</h3>
@@ -78,12 +90,18 @@
       </form>
       <ul id="gift-list" class="gift-list"></ul>
 
+      <h3 class="sec" id="fun-h" data-i18n="sec.fun">Fun numbers</h3>
+      <div id="fun-tiles" class="tiles fun"></div>
+
       <h3 class="sec" id="recent-h" data-i18n="sec.recent">Recently</h3>
       <ul id="recent-list" class="ms-list past"></ul>
       </div>
 
       <div id="pane-moments" hidden>
-        <button type="button" class="chip pri" id="mo-add" data-i18n="mo.add">+ Add a moment</button>
+        <div class="row wrap">
+          <button type="button" class="chip pri" id="mo-add" data-i18n="mo.add">+ Add a moment</button>
+          <button type="button" class="chip" id="mo-show" data-i18n="mo.show" hidden>Slideshow</button>
+        </div>
         <ol id="mo-list" class="timeline"></ol>
         <p class="hint" id="mo-empty" data-i18n="mo.empty">No moments yet. Keep the first date, the first trip, the day you said yes, with a note and a photo.</p>
       </div>
@@ -128,6 +146,12 @@
           <datalist id="pron-list"></datalist>
         </label>
       </div>
+
+      <label class="field"><span data-i18n="rel.tz">Long distance: their time zone (optional)</span>
+        <input type="text" id="rel-tz" maxlength="64" list="tz-list" autocapitalize="off" spellcheck="false" data-i18n-ph="rel.tzPh">
+        <datalist id="tz-list"></datalist>
+        <span class="hint small" data-i18n="rel.tzHint">Shows their time and counts down to your next meeting.</span>
+      </label>
 
       <label class="check"><input type="checkbox" id="rel-discreet"> <span data-i18n="rel.discreet">Discreet: show initials only</span></label>
 
@@ -225,6 +249,80 @@
     </form>
   </dialog>
 
+  <!-- Meeting editor (long distance) -->
+  <dialog id="meet-dlg" class="dlg small" aria-labelledby="meet-dlg-t">
+    <form method="dialog" id="meet-form" class="dlg-body" autocomplete="off">
+      <h2 id="meet-dlg-t"></h2>
+      <div class="row wrap">
+        <label class="field grow"><span data-i18n="mo.date">Day</span>
+          <input type="date" id="meet-date" required min="1900-01-01" max="2200-12-31">
+        </label>
+        <label class="field"><span data-i18n="rel.time">Time (optional)</span>
+          <input type="time" id="meet-time">
+        </label>
+      </div>
+      <label class="field" id="meet-zone-wrap"><span data-i18n="meet.zone">This time is</span>
+        <select id="meet-zone"></select>
+      </label>
+      <label class="field"><span data-i18n="meet.place">Where (optional)</span>
+        <input type="text" id="meet-place" maxlength="150">
+      </label>
+      <p class="msg" id="meet-msg" role="alert"></p>
+      <div class="actions">
+        <button type="button" class="link-btn danger" id="meet-del" data-i18n="btn.delete">Delete</button>
+        <span class="spacer"></span>
+        <button type="button" class="chip" id="meet-cancel" data-i18n="btn.cancel">Cancel</button>
+        <button type="submit" class="chip pri" data-i18n="btn.save">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Share card -->
+  <dialog id="card-dlg" class="dlg" aria-labelledby="card-dlg-t">
+    <div class="dlg-body">
+      <h2 id="card-dlg-t" data-i18n="card.title">A card to share</h2>
+      <label class="field"><span data-i18n="card.what">Show</span>
+        <select id="card-what"></select>
+      </label>
+      <canvas id="card-cv" class="card-cv" width="1080" height="1080"></canvas>
+      <p class="hint small" data-i18n="card.hint">An image only: nothing else leaves orOS.</p>
+      <div class="actions wrap">
+        <button type="button" class="chip" id="card-files" data-i18n="card.files">Save to Files</button>
+        <button type="button" class="chip" id="card-down" data-i18n="card.download">Download</button>
+        <button type="button" class="chip" id="card-share" data-i18n="card.share" hidden>Share…</button>
+        <span class="spacer"></span>
+        <button type="button" class="chip pri" id="card-close" data-i18n="btn.close">Close</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Slideshow of the moments' photos -->
+  <dialog id="show-dlg" class="show" aria-labelledby="show-cap">
+    <img id="show-img" alt="">
+    <p id="show-cap" class="show-cap"></p>
+    <div class="show-bar">
+      <button type="button" class="icon-btn" id="show-prev"></button>
+      <span id="show-n" class="show-n"></span>
+      <button type="button" class="icon-btn" id="show-play"></button>
+      <button type="button" class="icon-btn" id="show-next"></button>
+      <span class="spacer"></span>
+      <button type="button" class="icon-btn" id="show-close"></button>
+    </div>
+  </dialog>
+
+  <!-- Password for a backup file -->
+  <dialog id="pass-dlg" class="dlg small" aria-labelledby="pass-dlg-t">
+    <form method="dialog" id="pass-form" class="dlg-body" autocomplete="off">
+      <h2 id="pass-dlg-t" data-i18n="imp.passAsk">This file has a password</h2>
+      <input type="password" id="pass-val" maxlength="200" autocomplete="off">
+      <p class="msg" id="pass-msg" role="alert"></p>
+      <div class="actions"><span class="spacer"></span>
+        <button type="button" class="chip" id="pass-cancel" data-i18n="btn.cancel">Cancel</button>
+        <button type="submit" class="chip pri" data-i18n="imp.open">Open</button>
+      </div>
+    </form>
+  </dialog>
+
   <!-- Amount for Budget -->
   <dialog id="amt-dlg" class="dlg small" aria-labelledby="amt-dlg-t">
     <form method="dialog" id="amt-form" class="dlg-body" autocomplete="off">
@@ -268,6 +366,7 @@
         <input type="text" id="set-me" maxlength="60">
       </label>
       <label class="check"><input type="checkbox" id="set-live"> <span data-i18n="set.live">Live counter (seconds tick by)</span></label>
+      <label class="check"><input type="checkbox" id="set-confetti"> <span data-i18n="set.confetti">Confetti on big days (never when the device asks for less motion)</span></label>
       <fieldset class="field">
         <legend data-i18n="set.kinds">Milestones to show</legend>
         <div id="set-kinds" class="checks"></div>
@@ -287,6 +386,17 @@
         <legend data-i18n="sec.lock">PIN lock</legend>
         <p class="hint small" data-i18n="lock.hint">A PIN screen when Together opens, and again after a minute away. It is a privacy screen on this device, not encryption.</p>
         <div id="pin-area"></div>
+      </fieldset>
+      <fieldset class="field">
+        <legend data-i18n="sec.backup">Backup and moving</legend>
+        <p class="hint small" data-i18n="exp.hint">A file with everything in Together (the photos stay in Files). Keep it as a backup, or import it into an orOS without sync.</p>
+        <label class="field"><span data-i18n="exp.pass">Password for the file (optional)</span>
+          <input type="password" id="exp-pass" maxlength="200" autocomplete="new-password">
+        </label>
+        <div class="row wrap">
+          <button type="button" class="chip" id="exp-go" data-i18n="exp.go">Save a backup file</button>
+          <button type="button" class="chip" id="imp-go" data-i18n="imp.go">Import a file</button>
+        </div>
       </fieldset>
       <p class="hint small" id="set-about"></p>
       <div class="actions"><span class="spacer"></span><button type="button" class="chip pri" id="set-close" data-i18n="btn.done">Done</button></div>
@@ -318,6 +428,9 @@
 
   <div id="toast" role="status"></div>
 
+  <canvas id="confetti" class="confetti" aria-hidden="true" hidden></canvas>
+
+  <script src="../sky/core.js"></script>
   <script src="core.js"></script>
   <script src="app.js"></script>
 

@@ -7,10 +7,12 @@
 //   { ver: 1,
 //     rels:    [{ id, m, people: [{ c?, n }], title, start "YYYY-MM-DD",
 //                 time "HH:MM"|"", kind, pron, discreet, cover, pos,
-//                 ord, arch }],
+//                 ord, arch, tz }],   (wave 4: tz = their time zone,
+//                 "" = not long distance)
 //     moments: [{ id, m, rel, date, title, note, photo, yearly, place }],
 //     days:    [{ id, m, rel, date, title, yearly }],
-//     meets:   [{ id, m, rel, date, time, tz, place }],
+//     meets:   [{ id, m, rel, date, time, tz, place }],  (tz = the zone of
+//                 date + time, "" = this device's)
 //     gifts:   [{ id, m, rel, text, done }]            (wave 3: gift ideas)
 //     prefs:   { m, me, live, kinds{month,year,d100,w50,fun}, hour,
 //                notify{…}, confetti, giftDays },
@@ -63,6 +65,14 @@
       p.split("/").indexOf("..") < 0 && p.split("/").indexOf(".") < 0;
   }
 
+  // An IANA time zone name ("Europe/Athens", "America/Argentina/Salta",
+  // "UTC"). Only the shape is checked here (the merge must not depend
+  // on the browser's zone list); tzOffset() falls back to UTC for a
+  // name the browser does not know.
+  function okTzName(s) {
+    return typeof s === "string" && s.length <= 64 && /^(UTC|[A-Z][A-Za-z_]+(\/[A-Za-z0-9_+-]+){1,2})$/.test(s);
+  }
+
   // ---------- rows ----------
   function cleanId(v) { var s = str(v, 64); return /^[A-Za-z0-9_-]+$/.test(s) ? s : ""; }
 
@@ -95,7 +105,8 @@
         cover: okPath(r.cover) ? r.cover : "",
         pos: pos,
         ord: typeof r.ord === "number" && isFinite(r.ord) ? r.ord : 0,
-        arch: r.arch === true
+        arch: r.arch === true,
+        tz: okTzName(r.tz) ? r.tz : ""
       };
     },
     moments: function (r) {
@@ -119,7 +130,7 @@
     meets: function (r) {
       var rel = cleanId(r.rel);
       if (!rel || !okYmd(r.date)) return null;
-      return { rel: rel, date: r.date, time: okHm(r.time) ? r.time : "", tz: line(r.tz, 64), place: line(r.place, 150) };
+      return { rel: rel, date: r.date, time: okHm(r.time) ? r.time : "", tz: okTzName(r.tz) ? r.tz : "", place: line(r.place, 150) };
     }
   };
 
@@ -451,7 +462,8 @@
       "cal.moment1": "{title} · 1 year ago", "cal.momentN": "{title} · {n} years ago",
       "cal.meet": "{names} · together again", "cal.untitled": "A moment",
       "cal.bday": "{name}: birthday today", "cal.giftBday": "{name}: birthday in {n} days · time for a gift",
-      "cal.giftAnniv": "{names}: anniversary in {n} days · time for a gift"
+      "cal.giftAnniv": "{names}: anniversary in {n} days · time for a gift",
+      "today.days1": "1 day together", "today.days": "{n} days together", "today.first": "the first day together"
     },
     el: {
       "cal.year1": "{names} · 1 χρόνος μαζί", "cal.year": "{names} · {n} χρόνια μαζί",
@@ -463,7 +475,8 @@
       "cal.moment1": "{title} · πριν από 1 χρόνο", "cal.momentN": "{title} · πριν από {n} χρόνια",
       "cal.meet": "{names} · ξανά μαζί", "cal.untitled": "Μια στιγμή",
       "cal.bday": "{name}: γενέθλια σήμερα", "cal.giftBday": "{name}: γενέθλια σε {n} μέρες · ώρα για δώρο",
-      "cal.giftAnniv": "{names}: επέτειος σε {n} μέρες · ώρα για δώρο"
+      "cal.giftAnniv": "{names}: επέτειος σε {n} μέρες · ώρα για δώρο",
+      "today.days1": "1 μέρα μαζί", "today.days": "{n} μέρες μαζί", "today.first": "η πρώτη μέρα μαζί"
     }
   };
   function words(lang) {
@@ -564,11 +577,23 @@
         });
       }
       if (on("meets")) data.meets.forEach(function (x) {
-        if (x.rel !== rel.id || x.date !== ymd) return;
-        out.push({ id: "meet-" + x.id, rel: rel.id, kind: "meet", title: fill(w["cal.meet"], { names: names }), time: x.time || null, target: base });
+        var at = x.rel === rel.id ? meetLocal(x) : null;   // its zone → this device's day and time
+        if (!at || at.ymd !== ymd) return;
+        out.push({ id: "meet-" + x.id, rel: rel.id, kind: "meet", title: fill(w["cal.meet"], { names: names }), time: at.hm || null, target: base });
       });
     });
     return out;
+  }
+
+  // Today's "Together" card (wave 4): the first living relationship
+  // that has started → { title: names, text: "n days together", target }.
+  function todayLine(d, idx, day, lang) {
+    if (!okYmd(day)) return null;
+    var data = normalize(d), w = words(lang);
+    var rel = liveRels(data, false).filter(function (r) { return r.start <= day; })[0];
+    if (!rel) return null;
+    var n = daysBetween(rel.start, day);
+    return { title: relName(rel, idx || {}, data.prefs.me), text: n === 0 ? w["today.first"] : n === 1 ? w["today.days1"] : fill(w["today.days"], { n: fmtNum(n, lang) }), target: { rel: rel.id } };
   }
 
   // Moments of a relationship, newest first.
@@ -595,6 +620,174 @@
       if (a.next && a.next !== b.next) return a.next < b.next ? -1 : 1;
       return a.day.date < b.day.date ? 1 : a.day.date > b.day.date ? -1 : byId(a.day, b.day);
     });
+  }
+
+  // ---------- wave 4: long distance ----------
+  // Minutes east of UTC of zone tz at instant t ("" = this device).
+  var tzFmt = {};
+  function tzParts(tz, t) {
+    var f = tzFmt[tz];
+    if (!f) {
+      f = tzFmt[tz] = new Intl.DateTimeFormat("en-US", { timeZone: tz, hourCycle: "h23", year: "numeric", month: "2-digit",
+        day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", weekday: "short" });
+    }
+    var o = {};
+    f.formatToParts(new Date(t)).forEach(function (p) { o[p.type] = p.value; });
+    return o;
+  }
+  function okTz(tz) {
+    if (!okTzName(tz)) return false;
+    try { tzParts(tz, 0); return true; } catch (e) { return false; }
+  }
+  function tzOffset(tz, t) {
+    if (!tz) return -new Date(t).getTimezoneOffset();
+    if (!okTz(tz)) return 0;
+    var o = tzParts(tz, t);
+    var asUtc = Date.UTC(+o.year, +o.month - 1, +o.day, +o.hour % 24, +o.minute, +o.second);
+    return Math.round((asUtc - Math.floor(t / 1000) * 1000) / 60000);
+  }
+  var WD = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+  // The wall clock of zone tz at instant t: { ymd, hm, wd 0-6 }.
+  function wallIn(tz, t) {
+    if (!tz || !okTz(tz)) {
+      var dt = new Date(t);
+      return { ymd: ymd(dt.getFullYear(), dt.getMonth() + 1, dt.getDate()), hm: pad(dt.getHours()) + ":" + pad(dt.getMinutes()), wd: dt.getDay() };
+    }
+    var o = tzParts(tz, t);
+    return { ymd: o.year + "-" + o.month + "-" + o.day, hm: pad(+o.hour % 24) + ":" + o.minute, wd: WD[o.weekday] };
+  }
+  // The instant of wall time day + hm in zone tz ("" = this device).
+  function zonedMs(day, hm, tz) {
+    var p = parseYmd(day);
+    if (!p) return NaN;
+    var h = okHm(hm) ? hm.split(":") : ["0", "0"];
+    if (!tz) return new Date(p.y, p.mo - 1, p.d, +h[0], +h[1]).getTime();
+    var wall = Date.UTC(p.y, p.mo - 1, p.d, +h[0], +h[1]);
+    var t = wall - tzOffset(tz, wall) * 60000;
+    return wall - tzOffset(tz, t) * 60000;
+  }
+  // A meeting as this device's day and time (its own zone may differ).
+  function meetLocal(x) {
+    if (!x.tz) return { ymd: x.date, hm: x.time };
+    if (!x.time) return { ymd: x.date, hm: "" };
+    var w = wallIn("", zonedMs(x.date, x.time, x.tz));
+    return { ymd: w.ymd, hm: w.hm };
+  }
+  // The meetings of a relationship still to come at instant now
+  // (a meeting without a time lasts its whole day), soonest first:
+  // [{ meet, at (ms), allDay }].
+  function nextMeets(d, relId, now) {
+    return normalize(d).meets.filter(function (x) { return x.rel === relId; }).map(function (x) {
+      var at = zonedMs(x.date, x.time, x.tz);
+      return { meet: x, at: at, allDay: !x.time };
+    }).filter(function (o) {
+      return isFinite(o.at) && (o.allDay ? o.at + 86400000 > now : o.at > now - 3600000);
+    }).sort(function (a, b) { return a.at - b.at || byId(a.meet, b.meet); });
+  }
+  // Meetings already behind (for "you met n times").
+  function pastMeets(d, relId, now) {
+    return normalize(d).meets.filter(function (x) {
+      var at = zonedMs(x.date, x.time, x.tz);
+      return x.rel === relId && isFinite(at) && at + (x.time ? 0 : 86400000) <= now;
+    }).length;
+  }
+  // Countdown from now to at → { d, h, min } (zeros once it is here).
+  function countdown(now, at) {
+    var s = Math.max(0, Math.floor((at - now) / 60000));
+    return { d: Math.floor(s / 1440), h: Math.floor(s / 60) % 24, min: s % 60 };
+  }
+
+  // ---------- wave 4: fun numbers ----------
+  // sky = OrosSkyCore (sky/core.js) or null. → { sunrises, weekends,
+  // moons (null without sky), km } since the start; all 0 before it.
+  var KM_S = 29.78;   // the Earth's mean speed around the Sun, km/s
+  function funFacts(rel, today, now, sky) {
+    var out = { sunrises: 0, weekends: 0, moons: sky ? 0 : null, km: 0 };
+    if (!rel || today < rel.start) return out;
+    var days = daysBetween(rel.start, today);
+    out.sunrises = days + 1;
+    var p = parseYmd(rel.start), wd = new Date(Date.UTC(p.y, p.mo - 1, p.d)).getUTCDay();
+    var firstSat = (6 - wd + 7) % 7;
+    out.weekends = days >= firstSat ? Math.floor((days - firstSat) / 7) + 1 : 0;
+    var from = startMs(rel);
+    out.km = Math.max(0, Math.floor((now - from) / 1000 * KM_S));
+    if (sky && typeof sky.phasesBetween === "function") {
+      for (var a = from; a < now;) {
+        var b = Math.min(now, a + 1000 * 86400000);
+        out.moons += sky.phasesBetween(a, b).filter(function (x) { return x.q === 2; }).length;
+        a = b;
+      }
+    }
+    return out;
+  }
+  // Is day a big day for rel (its start, a year, 100 days, 50 weeks,
+  // a fun number, a month when kinds.month)? For the confetti.
+  function bigDay(rel, day, kinds) {
+    if (!rel || !okYmd(day) || day < rel.start) return false;
+    if (day === rel.start) return true;
+    var k = {};
+    MS_KINDS.forEach(function (x) { k[x] = !kinds || kinds[x] !== false; });
+    return milestones(rel, day, day, k).length > 0;
+  }
+
+  // ---------- wave 4: export / import file ----------
+  // { format: "oros-together", v: 1, data } or, with a password,
+  // { format: "oros-together", v: 1, enc: { it, s, iv, ct } }
+  // (AES-256-GCM, key = PBKDF2-SHA-256 of the password, base64).
+  // The file carries no tombstones, so an import only adds or updates:
+  // it never deletes anything here. Photos stay files (paths only).
+  var FORMAT = "oros-together", EXP_ITER = 600000;
+  function exportData(d) {
+    var n = normalize(d);
+    n.tombs = {};
+    return n;
+  }
+  function aesKey(subtle, pass, salt, it) {
+    return subtle.importKey("raw", new TextEncoder().encode(pass), { name: "PBKDF2" }, false, ["deriveKey"]).then(function (k) {
+      return subtle.deriveKey({ name: "PBKDF2", salt: salt, iterations: it, hash: "SHA-256" }, k, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
+    });
+  }
+  function packExport(cryptoObj, d, pass, iter) {
+    var doc = { format: FORMAT, v: 1, data: exportData(d) };
+    if (!pass) return Promise.resolve(JSON.stringify(doc));
+    var it = iter || EXP_ITER, salt = new Uint8Array(16), iv = new Uint8Array(12);
+    cryptoObj.getRandomValues(salt);
+    cryptoObj.getRandomValues(iv);
+    return aesKey(cryptoObj.subtle, pass, salt, it).then(function (key) {
+      return cryptoObj.subtle.encrypt({ name: "AES-GCM", iv: iv }, key, new TextEncoder().encode(JSON.stringify(doc.data)));
+    }).then(function (ct) {
+      return JSON.stringify({ format: FORMAT, v: 1, enc: { it: it, s: b64(salt), iv: b64(iv), ct: b64(ct) } });
+    });
+  }
+  // text → Promise<{ data } | { error: "bad" | "locked" | "pass" }>
+  // "locked": the file has a password and none was given.
+  var MAX_FILE = 20 * 1024 * 1024;
+  function readExport(cryptoObj, text, pass) {
+    var doc = null;
+    try { doc = typeof text === "string" && text.length <= MAX_FILE ? JSON.parse(text) : null; } catch (e) { doc = null; }
+    if (!doc || typeof doc !== "object" || doc.format !== FORMAT || doc.v !== 1) return Promise.resolve({ error: "bad" });
+    if (doc.data && typeof doc.data === "object") return Promise.resolve({ data: exportData(doc.data) });
+    var e = doc.enc;
+    if (!e || typeof e !== "object" || typeof e.s !== "string" || typeof e.iv !== "string" || typeof e.ct !== "string" ||
+        typeof e.it !== "number" || e.it < 1000 || e.it > 5000000) return Promise.resolve({ error: "bad" });
+    if (!pass) return Promise.resolve({ error: "locked" });
+    return aesKey(cryptoObj.subtle, pass, unb64(e.s), e.it).then(function (key) {
+      return cryptoObj.subtle.decrypt({ name: "AES-GCM", iv: unb64(e.iv) }, key, unb64(e.ct));
+    }).then(function (plain) {
+      var raw = JSON.parse(new TextDecoder().decode(plain));
+      return raw && typeof raw === "object" ? { data: exportData(raw) } : { error: "bad" };
+    }, function () { return { error: "pass" }; });
+  }
+  // What an import brings: counts of rows that are new or newer here.
+  function importCounts(cur, inc) {
+    var a = normalize(cur), b = normalize(inc), out = {};
+    LISTS.forEach(function (k) {
+      out[k] = b[k].filter(function (r) {
+        var o = find(a, k, r.id);
+        return !(a.tombs[r.id] >= r.m) && (!o || newer(r, o));
+      }).length;
+    });
+    return out;
   }
 
   // ---------- PIN lock (device-local privacy screen) ----------
@@ -650,7 +843,10 @@
     monthsBetween: monthsBetween, todayYmd: todayYmd, startMs: startMs, isLeap: isLeap,
     elapsed: elapsed, milestones: milestones, upcoming: upcoming, recent: recent,
     contactIndex: contactIndex, personName: personName, initials: initials, relName: relName, birthdays: birthdays,
-    WORDS: WORDS, words: words, GIFT_DAYS: GIFT_DAYS, nextYearly: nextYearly, occasions: occasions, yearsOn: yearsOn, dayRows: dayRows, momentsOf: momentsOf, specialDays: specialDays,
+    WORDS: WORDS, words: words, GIFT_DAYS: GIFT_DAYS, nextYearly: nextYearly, occasions: occasions, yearsOn: yearsOn, dayRows: dayRows, todayLine: todayLine, momentsOf: momentsOf, specialDays: specialDays,
+    okTzName: okTzName, okTz: okTz, tzOffset: tzOffset, wallIn: wallIn, zonedMs: zonedMs, meetLocal: meetLocal,
+    nextMeets: nextMeets, pastMeets: pastMeets, countdown: countdown, funFacts: funFacts, bigDay: bigDay,
+    FORMAT: FORMAT, exportData: exportData, packExport: packExport, readExport: readExport, importCounts: importCounts,
     pinOk: pinOk, makeLock: makeLock, readLock: readLock, checkPin: checkPin, lockWait: lockWait,
     LOCK_KEY: "oros-together-lock", STORAGE_KEY: "oros-together-data"
   };

@@ -81,13 +81,14 @@
       custom: "Customise", editDone: "Done",
       "w.top": "At a glance", "w.overdue": "Overdue", "w.today": "Today", "w.soon": "Coming up",
       "w.clock": "Clock", "w.weather": "Weather", "w.water": "Water", "w.habits": "Habits",
-      "w.events": "Upcoming events", "w.todos": "To-dos",
+      "w.events": "Upcoming events", "w.todos": "To-dos", "w.together": "Together",
       "d.top": "Weather, name days, timers and other short lines",
       "d.overdue": "Tasks whose day has passed", "d.today": "What is due today",
       "d.soon": "The next three days", "d.clock": "The time and the date",
       "d.weather": "Today's weather line, in its own card", "d.water": "How much you've drunk today",
       "d.habits": "Habits still to do today", "d.events": "Calendar events of today and the next days",
       "d.todos": "To-Do tasks: late, today and the next days",
+      "d.together": "Your days together, from Together",
       "e.move": "Drag to move: {w}", "e.up": "Move up: {w}", "e.down": "Move down: {w}",
       "e.small": "Small", "e.wide": "Wide", "e.size": "Size of {w}: {s}. Change",
       "e.remove": "Remove {w}", "e.add": "Add a widget", "e.addOne": "Add {w}",
@@ -98,7 +99,8 @@
       "none.habits": "No habits left for today", "none.todos": "No to-dos due in the next days",
       "none.events": "No events in the next days",
       "none.weather": "Nothing from Weather yet. Open it to choose a place.",
-      "none.water": "Nothing from Water yet. Open it to start counting."
+      "none.water": "Nothing from Water yet. Open it to start counting.",
+      "none.together": "Nothing from Together yet. Open it to start counting."
     },
     el: {
       app: "Σήμερα", refresh: "Ανανέωση", settings: "Ρυθμίσεις", close: "Κλείσιμο",
@@ -124,13 +126,14 @@
       custom: "Προσαρμογή", editDone: "Τέλος",
       "w.top": "Με μια ματιά", "w.overdue": "Εκπρόθεσμα", "w.today": "Σήμερα", "w.soon": "Έρχονται",
       "w.clock": "Ρολόι", "w.weather": "Καιρός", "w.water": "Νερό", "w.habits": "Συνήθειες",
-      "w.events": "Επόμενα γεγονότα", "w.todos": "Εργασίες",
+      "w.events": "Επόμενα γεγονότα", "w.todos": "Εργασίες", "w.together": "Μαζί",
       "d.top": "Καιρός, γιορτές, χρονόμετρα και άλλες σύντομες γραμμές",
       "d.overdue": "Εργασίες που πέρασε η μέρα τους", "d.today": "Ό,τι λήγει σήμερα",
       "d.soon": "Οι επόμενες τρεις μέρες", "d.clock": "Η ώρα και η ημερομηνία",
       "d.weather": "Η γραμμή του καιρού, σε δική της κάρτα", "d.water": "Πόσο νερό ήπιες σήμερα",
       "d.habits": "Συνήθειες που μένουν για σήμερα", "d.events": "Γεγονότα του Ημερολογίου, σήμερα και τις επόμενες μέρες",
       "d.todos": "Εργασίες: εκπρόθεσμες, σήμερα και τις επόμενες μέρες",
+      "d.together": "Οι μέρες σας μαζί, από το Μαζί",
       "e.move": "Σύρε για μετακίνηση: {w}", "e.up": "Πάνω: {w}", "e.down": "Κάτω: {w}",
       "e.small": "Μικρό", "e.wide": "Φαρδύ", "e.size": "Μέγεθος ({w}): {s}. Αλλαγή",
       "e.remove": "Αφαίρεση: {w}", "e.add": "Προσθήκη γραφικού στοιχείου", "e.addOne": "Προσθήκη: {w}",
@@ -141,7 +144,8 @@
       "none.habits": "Δεν μένουν συνήθειες για σήμερα", "none.todos": "Καμία εργασία τις επόμενες μέρες",
       "none.events": "Κανένα γεγονός τις επόμενες μέρες",
       "none.weather": "Τίποτα από τον Καιρό ακόμη. Άνοιξέ τον για να διαλέξεις τόπο.",
-      "none.water": "Τίποτα από το Νερό ακόμη. Άνοιξέ το για να αρχίσεις να μετράς."
+      "none.water": "Τίποτα από το Νερό ακόμη. Άνοιξέ το για να αρχίσεις να μετράς.",
+      "none.together": "Τίποτα από το Μαζί ακόμη. Άνοιξέ το για να αρχίσει η μέτρηση."
     }
   };
   if (window.orosI18n) window.orosI18n.table(I18N, "today", LANG);
@@ -315,7 +319,7 @@
     var id = it.id, list = parts[id] || [];
     if (id === "top") return list.length ? topLines(list[0].rows, it) : null;
     if (id === "clock") return clockTile(it);
-    if (id === "weather" || id === "water") return appTile(it, list.length ? list[0].rows : []);
+    if (id === "weather" || id === "water" || id === "together") return appTile(it, list.length ? list[0].rows : []);
     if (id === "overdue" || id === "today") {
       if (!list.length) {
         if (!showEmpty) return null;
@@ -601,6 +605,10 @@
       b.appendChild(tx);
       b.setAttribute("aria-label", t("e.addOne", { w: wName(id) }));
       b.addEventListener("click", function () {
+        // A card of an app that is off in the summary (Together is off
+        // until asked) switches that app on: the card asked for it.
+        var app = L.WIDGETS[id].app, H = host();
+        if (app && H && typeof H.setSetting === "function" && appInfo(app).on === false && H.setSetting("app", true, app)) refresh();
         setLayout(L.add(layout, id));
         render();
         say(t("e.added", { w: wName(id) }));

@@ -43,7 +43,7 @@ Count the time you have spent together with someone you love: days, weeks, month
 
 ## Calendar, Today and reminders
 - The Calendar shows anniversaries, every 100 days, every 50 weeks, fun numbers, moments and special days marked every year (chip `Together`). A tap opens Together there.
-- [Today](app:today) can list them too: Together starts switched off there, because it is private; switch it on in Today's settings.
+- [Today](app:today) can list them too: Together starts switched off there, because it is private; switch it on in Today's settings, or add the `Together` card (it shows your days together).
 - `Settings` › `Reminders`: one notice in the morning (from the hour you choose) on a day with something to celebrate, while orOS is open. Choose which kinds remind you; months and fun numbers start off.
 - Discreet relationships show initials in all of these.
 
@@ -53,6 +53,20 @@ Count the time you have spent together with someone you love: days, weeks, month
 - The birthdays of the people linked from Contacts show among the special days. `Settings` › `Reminders` adds a gift reminder 3 to 21 days before each birthday and your anniversary.
 - `Plan a date` opens a new Calendar event; `Anniversary in Contacts` opens the person's contact with your anniversary added.
 - In a moment: `Write in Notes` starts a new page with it, `Send to an app…` sends it anywhere in orOS, `Cost to Budget` notes what it cost.
+
+## Long distance
+- In `Edit`, write their time zone under `Long distance` (for example Asia/Tokyo). The home screen then shows the time where they are and how many hours ahead or behind it is.
+- `+ Meeting` adds the next time you see each other: the day, a time if you like (in your time or theirs) and the place. A countdown runs to the next one, and the meetings show in the Calendar too.
+
+## Fun numbers, confetti and the share card
+- `Fun numbers` counts the sunrises, the weekends and the full moons you have had together (from [Moon & Sky](app:sky)), and how far you travelled around the Sun.
+- On a big day (an anniversary, 100 days, a fun number) a little confetti falls once. Switch it off in `Settings`; it never shows when your device asks for less motion.
+- `Share card` makes an image with your names and your days, weeks or years together, on your photo. Save it in Files, download it, or share it with the apps of your phone. Only the image leaves orOS.
+- In `Moments`, `Slideshow` shows the photos of your moments one after the other (arrows, swipe, or pause).
+
+## Backup file
+- `Settings` › `Backup and moving` › `Save a backup file` saves everything in Together as one file, with a password if you like. The photos stay in Files.
+- `Import a file` brings such a file into this orOS (handy without sync). It only adds and updates: nothing here is deleted.
 
 ## PIN lock
 - `Settings` › `PIN lock` adds a PIN screen when Together opens, and again after a minute away.

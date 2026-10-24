@@ -24,7 +24,7 @@
 
   var APP_ID = "together";
   var STORAGE_KEY = "oros-together-data";
-  var LOCAL_KEY = "oros-together-local";     // device-local: { active, arch }
+  var LOCAL_KEY = "oros-together-local";     // device-local: { active, view, fx }
   var CONTACTS_KEY = "oros-contacts-data";
   var PICS = "/internal/Pictures";
   var OWN_PICS = "/internal/Pictures/Together";
@@ -123,6 +123,33 @@
       "amt.title": "How much did it cost?", "amt.ph": "e.g. 25.50", "amt.go": "Open Budget", "amt.bad": "Write an amount above zero.",
       "set.giftDays": "Gift reminder before birthdays and anniversaries", "gift.off": "Off", "gift.daysN": "{n} days before",
       "notify.bdays": "Birthdays and gift reminders",
+      "rel.tz": "Long distance: their time zone (optional)", "rel.tzPh": "e.g. Asia/Tokyo",
+      "rel.tzHint": "Shows their time and counts down to your next meeting.", "rel.tzBad": "This time zone is not known. Pick one from the list.",
+      "sec.dist": "Long distance", "meet.add": "+ Meeting", "dist.their": "Their time: {time}, {day}", "dist.ahead": "{h} h ahead of you",
+      "dist.behind": "{h} h behind you", "dist.same": "the same as yours", "dist.next": "Next meeting", "dist.now": "Together now!",
+      "dist.cd": "{d} d {h} h {min} min", "dist.none": "No meeting planned yet. Add the next one to count down to it.",
+      "dist.met.one": "You have met {n} time so far.", "dist.met.other": "You have met {n} times so far.",
+      "meet.new": "New meeting", "meet.edit": "Edit the meeting", "meet.zone": "This time is", "meet.zoneMine": "My time ({tz})",
+      "meet.zoneTheirs": "Their time ({tz})", "meet.place": "Where (optional)", "meet.delAsk": "Delete the meeting on {date}?",
+      "meet.local": "your time {time}",
+      "sec.fun": "Fun numbers", "fun.sunrises": "sunrises", "fun.weekends": "weekends", "fun.moons": "full moons",
+      "fun.km": "km around the Sun",
+      "set.confetti": "Confetti on big days (never when the device asks for less motion)",
+      "mo.show": "Slideshow", "show.prev": "Previous", "show.next": "Next", "show.pause": "Pause", "show.play": "Play",
+      "show.n": "{i} of {n}", "show.none": "The photos of the moments are not on this device (yet).",
+      "act.card": "Share card", "card.title": "A card to share", "card.what": "Show", "card.days": "Days together",
+      "card.weeks": "Weeks together", "card.ym": "Years and months", "card.hint": "An image only: nothing else leaves orOS.",
+      "card.files": "Save to Files", "card.download": "Download", "card.share": "Share…",
+      "card.saved": "Saved in Files › Pictures › Together", "card.fail": "The image could not be made.",
+      "card.daysW": "days together", "card.weeksW": "weeks together", "card.togetherW": "together", "card.since": "since {date}",
+      "sec.backup": "Backup and moving",
+      "exp.hint": "A file with everything in Together (the photos stay in Files). Keep it as a backup, or import it into an orOS without sync.",
+      "exp.pass": "Password for the file (optional)", "exp.go": "Save a backup file", "imp.go": "Import a file",
+      "exp.done": "Backup file saved", "exp.fail": "The file could not be made.",
+      "imp.passAsk": "This file has a password", "imp.open": "Open", "imp.pass": "The password is wrong.",
+      "imp.bad": "This is not a Together backup file.", "imp.none": "Nothing in this file is new for this orOS.",
+      "imp.ask": "Import “{name}”? New or newer here: relationships {rels}, moments {moments}, other entries {other}. Nothing here is deleted.",
+      "imp.yes": "Import", "imp.done": "Imported",
       "full": "This device is out of storage space. The change was not saved."
     },
     el: {
@@ -216,6 +243,33 @@
       "amt.title": "Πόσο κόστισε;", "amt.ph": "π.χ. 25,50", "amt.go": "Άνοιγμα Εσόδων & Εξόδων", "amt.bad": "Γράψε ποσό πάνω από μηδέν.",
       "set.giftDays": "Υπενθύμιση για δώρο πριν από γενέθλια και επετείους", "gift.off": "Ανενεργή", "gift.daysN": "{n} μέρες πριν",
       "notify.bdays": "Γενέθλια και υπενθυμίσεις για δώρα",
+      "rel.tz": "Από απόσταση: η ζώνη ώρας του/της (προαιρετικό)", "rel.tzPh": "π.χ. Asia/Tokyo",
+      "rel.tzHint": "Δείχνει την ώρα στη μεριά του/της και μετρά αντίστροφα ως την επόμενη συνάντηση.", "rel.tzBad": "Αυτή η ζώνη ώρας δεν είναι γνωστή. Διάλεξε μία από τη λίστα.",
+      "sec.dist": "Από απόσταση", "meet.add": "+ Συνάντηση", "dist.their": "Η ώρα εκεί: {time}, {day}", "dist.ahead": "{h} ώρ. μπροστά από σένα",
+      "dist.behind": "{h} ώρ. πίσω από σένα", "dist.same": "ίδια με τη δική σου", "dist.next": "Επόμενη συνάντηση", "dist.now": "Μαζί τώρα!",
+      "dist.cd": "{d} μ. {h} ώρ. {min} λεπ.", "dist.none": "Δεν έχει οριστεί συνάντηση. Πρόσθεσε την επόμενη για να μετράει αντίστροφα.",
+      "dist.met.one": "Έχετε συναντηθεί {n} φορά ως τώρα.", "dist.met.other": "Έχετε συναντηθεί {n} φορές ως τώρα.",
+      "meet.new": "Νέα συνάντηση", "meet.edit": "Αλλαγή της συνάντησης", "meet.zone": "Η ώρα είναι", "meet.zoneMine": "Η δική μου ({tz})",
+      "meet.zoneTheirs": "Η δική του/της ({tz})", "meet.place": "Πού (προαιρετικό)", "meet.delAsk": "Διαγραφή της συνάντησης της {date};",
+      "meet.local": "για σένα {time}",
+      "sec.fun": "Αστείοι αριθμοί", "fun.sunrises": "ανατολές", "fun.weekends": "Σαββατοκύριακα", "fun.moons": "πανσέληνοι",
+      "fun.km": "χλμ. γύρω από τον Ήλιο",
+      "set.confetti": "Κομφετί στις μεγάλες μέρες (ποτέ όταν η συσκευή ζητά λιγότερη κίνηση)",
+      "mo.show": "Προβολή φωτογραφιών", "show.prev": "Προηγούμενη", "show.next": "Επόμενη", "show.pause": "Παύση", "show.play": "Αναπαραγωγή",
+      "show.n": "{i} από {n}", "show.none": "Οι φωτογραφίες των στιγμών δεν είναι (ακόμη) σε αυτή τη συσκευή.",
+      "act.card": "Κάρτα για αποστολή", "card.title": "Μια κάρτα για να τη στείλεις", "card.what": "Τι δείχνει", "card.days": "Μέρες μαζί",
+      "card.weeks": "Εβδομάδες μαζί", "card.ym": "Χρόνια και μήνες", "card.hint": "Μόνο μια εικόνα: τίποτε άλλο δεν φεύγει από το orOS.",
+      "card.files": "Αποθήκευση στα Αρχεία", "card.download": "Λήψη", "card.share": "Κοινοποίηση…",
+      "card.saved": "Αποθηκεύτηκε στα Αρχεία › Pictures › Together", "card.fail": "Η εικόνα δεν φτιάχτηκε.",
+      "card.daysW": "μέρες μαζί", "card.weeksW": "εβδομάδες μαζί", "card.togetherW": "μαζί", "card.since": "από {date}",
+      "sec.backup": "Αντίγραφο και μεταφορά",
+      "exp.hint": "Ένα αρχείο με όλα όσα έχει το Μαζί (οι φωτογραφίες μένουν στα Αρχεία). Κράτησέ το ως αντίγραφο ή φέρ' το σε ένα orOS χωρίς συγχρονισμό.",
+      "exp.pass": "Κωδικός για το αρχείο (προαιρετικό)", "exp.go": "Αποθήκευση αντιγράφου", "imp.go": "Εισαγωγή αρχείου",
+      "exp.done": "Το αντίγραφο αποθηκεύτηκε", "exp.fail": "Το αρχείο δεν φτιάχτηκε.",
+      "imp.passAsk": "Το αρχείο έχει κωδικό", "imp.open": "Άνοιγμα", "imp.pass": "Λάθος κωδικός.",
+      "imp.bad": "Αυτό δεν είναι αντίγραφο του Μαζί.", "imp.none": "Τίποτα σε αυτό το αρχείο δεν είναι νέο για αυτό το orOS.",
+      "imp.ask": "Εισαγωγή του «{name}»; Νέα ή νεότερα εδώ: σχέσεις {rels}, στιγμές {moments}, άλλες εγγραφές {other}. Τίποτα εδώ δεν διαγράφεται.",
+      "imp.yes": "Εισαγωγή", "imp.done": "Η εισαγωγή έγινε",
       "full": "Ο χώρος αποθήκευσης της συσκευής γέμισε. Η αλλαγή δεν αποθηκεύτηκε."
     }
   };
@@ -285,6 +339,10 @@
       var l = JSON.parse(localStorage.getItem(LOCAL_KEY) || "null");
       if (l && typeof l.active === "string") local.active = l.active.slice(0, 64);
       if (l && l.view === "moments") local.view = "moments";
+      if (l && l.fx && typeof l.fx === "object") {                    // confetti shown: { relId: day }
+        local.fx = {};
+        Object.keys(l.fx).slice(0, 4).forEach(function (k) { if (typeof l.fx[k] === "string") local.fx[k.slice(0, 64)] = l.fx[k].slice(0, 10); });
+      }
     } catch (e) {}
   }
   function persist() {
@@ -360,7 +418,11 @@
   var ICON = {
     add: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
     gear: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
-    x: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>'
+    x: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+    prev: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>',
+    next: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>',
+    play: '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>',
+    pause: '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>'
   };
   function setIcon(b, svg, label) { b.innerHTML = svg; b.setAttribute("aria-label", label); b.title = label; }
 
@@ -573,8 +635,11 @@
     renderOccasions(rel);
     renderGifts(rel);
     renderActs(rel);
+    renderDist(rel);
+    renderFun(rel);
     renderView(rel);
     startTick();
+    maybeConfetti(rel);
   }
 
   function renderTabs(rels, rel, idx, me) {
@@ -659,7 +724,9 @@
       var rel = activeRel();
       if (!rel) { stopTick(); return; }
       if (today() !== shownDay) { render(); return; }
-      if (data.prefs.live) renderLive(rel, Date.now());
+      var now = Date.now();
+      if (data.prefs.live) renderLive(rel, now);
+      renderDistClock(rel, now);
     }, 1000);
   }
   function stopTick() { if (tickTimer) clearInterval(tickTimer); tickTimer = 0; }
@@ -739,6 +806,7 @@
 
   function renderMoments(rel) {
     var ol = $("mo-list"), rows = C.momentsOf(data, rel.id);
+    $("mo-show").hidden = !rows.some(function (m) { return !!m.photo; });
     ol.textContent = "";
     rows.forEach(function (m) {
       var li = el("li", "moment");
@@ -975,6 +1043,413 @@
   }
   function currentMoment() { return moDraft && C.find(data, "moments", moDraft.id); }
 
+  // ---------- 6d. Long distance, fun numbers, confetti (wave 4) ----------
+  function tzLabel(tz) { return tz ? tz.replace(/_/g, " ") : ""; }
+  function hereTz() { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch (e) { return ""; } }
+  function wdName(wd) {
+    try { return new Intl.DateTimeFormat(LOCALE, { weekday: "long", timeZone: "UTC" }).format(new Date(Date.UTC(2023, 0, 1 + wd))); }
+    catch (e) { return ""; }
+  }
+  function meetWhen(x) {
+    var loc = C.meetLocal(x), s = fmtDate(x.date, { weekday: "short", day: "numeric", month: "long" });
+    if (x.time) s = t("ms.at", { date: s, time: x.time });
+    if (x.tz && x.time && x.tz !== hereTz()) s += " (" + t("meet.local", { time: loc.ymd === x.date ? loc.hm : fmtDate(loc.ymd, { day: "numeric", month: "short" }) + " " + loc.hm }) + ")";
+    return s;
+  }
+  function renderDist(rel) {
+    var now = Date.now(), list = C.nextMeets(data, rel.id, now);
+    var box = $("dist");
+    box.hidden = !rel.tz && !list.length;
+    if (box.hidden) return;
+    renderDistClock(rel, now);
+    var ul = $("meet-list");
+    ul.textContent = "";
+    list.slice(1, 6).forEach(function (o) {
+      var li = el("li", "ms ms-meet");
+      var dot = el("span", "dot");
+      dot.setAttribute("aria-hidden", "true");
+      li.appendChild(dot);
+      var b = btn("", "ms-body ms-open", function () { openMeet(o.meet); });
+      b.appendChild(el("p", "ms-what", o.meet.place || t("dist.next")));
+      b.appendChild(el("p", "ms-when", meetWhen(o.meet)));
+      li.appendChild(b);
+      li.appendChild(el("span", "ms-in", whenLabel(C.meetLocal(o.meet).ymd)));
+      ul.appendChild(li);
+    });
+    var met = C.pastMeets(data, rel.id, now);
+    $("dist-met").textContent = met ? plural("dist.met", met) : "";
+  }
+  // Their clock and the countdown (every tick while visible).
+  function renderDistClock(rel, now) {
+    var box = $("dist");
+    if (box.hidden) return;
+    var clock = $("dist-clock");
+    if (rel.tz && C.okTz(rel.tz)) {
+      var w = C.wallIn(rel.tz, now), diff = C.tzOffset(rel.tz, now) - C.tzOffset("", now), h = Math.abs(diff) / 60;
+      var hs = h % 1 ? num(Math.round(h * 100) / 100) : num(h);
+      var rel2 = diff === 0 ? t("dist.same") : t(diff > 0 ? "dist.ahead" : "dist.behind", { h: hs });
+      var s = t("dist.their", { time: w.hm, day: wdName(w.wd) }) + " · " + rel2 + " · " + tzLabel(rel.tz);
+      if (clock.textContent !== s) clock.textContent = s;
+      clock.hidden = false;
+    } else clock.hidden = true;
+    var next = C.nextMeets(data, rel.id, now)[0], nb = $("dist-next");
+    var key = next ? next.meet.id + "|" + next.meet.m : "none";
+    if (nb.dataset.key !== key) {
+      nb.dataset.key = key;
+      nb.textContent = "";
+      if (!next) nb.appendChild(el("p", "hint", t("dist.none")));
+      else {
+        nb.appendChild(el("p", "next-t", t("dist.next")));
+        nb.appendChild(el("p", "next-what dist-cd"));
+        var b = btn(meetWhen(next.meet) + (next.meet.place ? " · " + next.meet.place : ""), "link-btn", function () { openMeet(next.meet); });
+        nb.appendChild(b);
+      }
+    }
+    if (next) {
+      var cd = C.countdown(now, next.at), here = now >= next.at;
+      var txt = here ? t("dist.now") : t("dist.cd", { d: num(cd.d), h: cd.h, min: cd.min });
+      var n = nb.querySelector(".dist-cd");
+      if (n && n.textContent !== txt) n.textContent = txt;
+    }
+  }
+
+  // Meeting editor.
+  var meetDraft = null;   // { id, rel, isNew }
+  function openMeet(x) {
+    var rel = activeRel();
+    if (!rel) return;
+    meetDraft = { id: x ? x.id : C.uid(), rel: x ? x.rel : rel.id, isNew: !x };
+    $("meet-dlg-t").textContent = t(x ? "meet.edit" : "meet.new");
+    $("meet-date").value = x ? x.date : "";
+    $("meet-time").value = x ? x.time : "";
+    $("meet-place").value = x ? x.place : "";
+    var sel = $("meet-zone"), mine = hereTz();
+    sel.textContent = "";
+    var o1 = el("option", "", t("meet.zoneMine", { tz: tzLabel(mine) || "—" }));
+    o1.value = "";
+    sel.appendChild(o1);
+    var theirs = x && x.tz && x.tz !== rel.tz ? x.tz : rel.tz;
+    if (theirs) {
+      var o2 = el("option", "", t("meet.zoneTheirs", { tz: tzLabel(theirs) }));
+      o2.value = theirs;
+      sel.appendChild(o2);
+    }
+    sel.value = x && x.tz ? x.tz : "";
+    $("meet-zone-wrap").hidden = !theirs;
+    $("meet-del").hidden = !x;
+    $("meet-msg").textContent = "";
+    $("meet-dlg").showModal();
+  }
+  function saveMeet(ev) {
+    ev.preventDefault();
+    if (!meetDraft) return;
+    var date = $("meet-date").value;
+    if (!C.okYmd(date)) { $("meet-msg").textContent = t("mo.needDate"); $("meet-date").focus(); return; }
+    var row = { id: meetDraft.id, rel: meetDraft.rel, date: date, time: $("meet-time").value, tz: $("meet-time").value ? $("meet-zone").value : "", place: $("meet-place").value };
+    meetDraft = null;
+    $("meet-dlg").close();
+    save(C.put(data, "meets", row, Date.now()));
+  }
+  function deleteMeet() {
+    var x = meetDraft && C.find(data, "meets", meetDraft.id);
+    if (!x) return;
+    ask(t("meet.delAsk", { date: fmtDate(x.date) }), t("btn.delete")).then(function (yes) {
+      if (!yes) return;
+      meetDraft = null;
+      $("meet-dlg").close();
+      save(C.remove(data, "meets", x.id, Date.now()));
+    });
+  }
+  var tzNames = null;
+  function fillTzList() {
+    if (tzNames) return;
+    tzNames = [];
+    try { if (typeof Intl.supportedValuesOf === "function") tzNames = Intl.supportedValuesOf("timeZone"); } catch (e) {}
+    var dl = $("tz-list");
+    tzNames.forEach(function (z) { var o = el("option"); o.value = z; dl.appendChild(o); });
+  }
+
+  // Fun numbers: sunrises, weekends, full moons (Moon & Sky core),
+  // the way around the Sun. Counted once a day.
+  var funCache = { key: "", v: null };
+  function renderFun(rel) {
+    var box = $("fun-tiles"), off = shownDay < rel.start;
+    $("fun-h").hidden = box.hidden = off;
+    if (off) return;
+    var key = rel.id + "|" + rel.start + "|" + rel.time + "|" + shownDay;
+    if (funCache.key !== key) funCache = { key: key, v: C.funFacts(rel, shownDay, Date.now(), window.OrosSkyCore || null) };
+    var f = funCache.v;
+    box.textContent = "";
+    box.appendChild(tile(f.sunrises, t("fun.sunrises")));
+    box.appendChild(tile(f.weekends, t("fun.weekends")));
+    if (f.moons !== null) box.appendChild(tile(f.moons, t("fun.moons")));
+    box.appendChild(tile(f.km, t("fun.km")));
+  }
+
+  // Confetti once a day per relationship on a big day; never with
+  // "reduce motion", never when switched off.
+  function reducedMotion() { try { return window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) { return false; } }
+  function maybeConfetti(rel) {
+    if (!data.prefs.confetti || reducedMotion() || locked || document.hidden) return;
+    if (!C.bigDay(rel, shownDay, data.prefs.kinds)) return;
+    local.fx = local.fx && typeof local.fx === "object" ? local.fx : {};
+    if (local.fx[rel.id] === shownDay) return;
+    local.fx = {};
+    local.fx[rel.id] = shownDay;
+    saveLocal();
+    confetti();
+  }
+  function confetti() {
+    var cv = $("confetti"), ctx = cv.getContext && cv.getContext("2d");
+    if (!ctx) return;
+    var w = cv.width = window.innerWidth, h = cv.height = window.innerHeight;
+    cv.hidden = false;
+    var cs = getComputedStyle(document.documentElement);
+    var cols = [cs.getPropertyValue("--accent").trim() || "#ef5d8a", "#ef5d8a", "#f4c542", "#5bc0eb", "#9bc53d", "#ffffff"];
+    var bits = [];
+    for (var i = 0; i < 140; i++) {
+      bits.push({ x: Math.random() * w, y: -20 - Math.random() * h * 0.5, vx: (Math.random() - 0.5) * 2.4, vy: 2 + Math.random() * 3.5,
+        r: Math.random() * Math.PI, vr: (Math.random() - 0.5) * 0.3, s: 5 + Math.random() * 6, c: cols[i % cols.length] });
+    }
+    var t0 = performance.now();
+    function frame(now) {
+      var age = now - t0;
+      ctx.clearRect(0, 0, w, h);
+      ctx.globalAlpha = age > 2600 ? Math.max(0, 1 - (age - 2600) / 900) : 1;
+      bits.forEach(function (b) {
+        b.x += b.vx; b.y += b.vy; b.r += b.vr; b.vy += 0.03;
+        ctx.save();
+        ctx.translate(b.x, b.y);
+        ctx.rotate(b.r);
+        ctx.fillStyle = b.c;
+        ctx.fillRect(-b.s / 2, -b.s / 4, b.s, b.s / 2);
+        ctx.restore();
+      });
+      if (age < 3500) requestAnimationFrame(frame);
+      else { ctx.clearRect(0, 0, w, h); cv.hidden = true; }
+    }
+    requestAnimationFrame(frame);
+  }
+
+  // ---------- 6e. Slideshow of the moments' photos ----------
+  var show = { list: [], i: 0, timer: 0, play: true };
+  function showList(rel) {
+    return C.momentsOf(data, rel.id).filter(function (m) { return !!m.photo; }).reverse();   // oldest first
+  }
+  function openShow() {
+    var rel = activeRel();
+    if (!rel) return;
+    show.list = showList(rel);
+    if (!show.list.length) return;
+    show.i = 0;
+    show.play = !reducedMotion();
+    $("show-dlg").showModal();
+    showAt(0);
+  }
+  function showAt(i) {
+    var n = show.list.length;
+    if (!n) return;
+    show.i = (i + n) % n;
+    var m = show.list[show.i], img = $("show-img"), want = m.photo;
+    $("show-cap").textContent = (m.title || t("mo.untitled")) + " · " + fmtDate(m.date, { day: "numeric", month: "long", year: "numeric" });
+    $("show-n").textContent = t("show.n", { i: show.i + 1, n: n });
+    photoUrl(want).then(function (u) {
+      if (!$("show-dlg").open || show.list[show.i] !== m) return;
+      if (u) { img.src = u; img.hidden = false; }
+      else {
+        img.hidden = true;
+        $("show-cap").textContent = t("show.none");
+      }
+    });
+    setShowTimer();
+  }
+  function setShowTimer() {
+    clearTimeout(show.timer);
+    setIcon($("show-play"), show.play ? ICON.pause : ICON.play, t(show.play ? "show.pause" : "show.play"));
+    if (show.play && show.list.length > 1) show.timer = setTimeout(function () { if ($("show-dlg").open) showAt(show.i + 1); }, 5000);
+  }
+  function closeShow() { clearTimeout(show.timer); show.list = []; }
+
+  // ---------- 6f. Share card (an image) ----------
+  function cardText(rel, what) {
+    var e = C.elapsed(rel, shownDay, Date.now());
+    if (what === "weeks") return { big: num(e.totalWeeks), small: t("card.weeksW") };
+    if (what === "ym") {
+      var parts = [];
+      if (e.years) parts.push(plural("unit.y", e.years));
+      if (e.months || !e.years) parts.push(plural("unit.mo", e.months));
+      return { big: parts.join(", "), small: t("card.togetherW") };
+    }
+    return { big: num(e.totalDays), small: t("card.daysW") };
+  }
+  function fitFont(ctx, text, weight, maxPx, maxW) {
+    var px = maxPx;
+    do { ctx.font = weight + " " + px + "px system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"; px -= 4; }
+    while (px > 20 && ctx.measureText(text).width > maxW);
+  }
+  function drawCard() {
+    var rel = activeRel(), cv = $("card-cv"), ctx = cv.getContext("2d");
+    if (!rel || !ctx) return Promise.resolve();
+    var W = cv.width, H = cv.height, what = $("card-what").value;
+    var cs = getComputedStyle(document.documentElement), accent = cs.getPropertyValue("--accent").trim() || "#ef5d8a";
+    function text() {
+      var tx = cardText(rel, what);
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = "#ffffff";
+      ctx.shadowColor = "rgba(0,0,0,0.45)";
+      ctx.shadowBlur = 18;
+      fitFont(ctx, C.relName(rel, contacts(), data.prefs.me), "600", 64, W - 140);
+      ctx.fillText(C.relName(rel, contacts(), data.prefs.me), W / 2, H * 0.24);
+      fitFont(ctx, tx.big, "800", 240, W - 140);
+      ctx.fillText(tx.big, W / 2, H * 0.5);
+      fitFont(ctx, tx.small, "500", 72, W - 140);
+      ctx.fillText(tx.small, W / 2, H * 0.66);
+      var since = t("card.since", { date: fmtDate(rel.start, { day: "numeric", month: "long", year: "numeric" }) });
+      fitFont(ctx, since, "400", 44, W - 140);
+      ctx.globalAlpha = 0.85;
+      ctx.fillText(since, W / 2, H * 0.8);
+      ctx.globalAlpha = 0.7;
+      ctx.shadowBlur = 0;
+      ctx.font = "500 30px system-ui, sans-serif";
+      ctx.fillText("♥ " + t("app.name") + " · orOS", W / 2, H - 60);
+      ctx.globalAlpha = 1;
+    }
+    function plain() {
+      var g = ctx.createLinearGradient(0, 0, W, H);
+      g.addColorStop(0, accent);
+      g.addColorStop(1, "#1d1426");
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H);
+    }
+    ctx.clearRect(0, 0, W, H);
+    plain();
+    if (!rel.cover || rel.discreet) { text(); return Promise.resolve(); }
+    return photoUrl(rel.cover).then(function (u) {
+      if (!u) { text(); return; }
+      return new Promise(function (resolve) {
+        var img = new Image();
+        img.onload = function () {
+          var k = Math.max(W / img.width, H / img.height), dw = img.width * k, dh = img.height * k;
+          ctx.drawImage(img, (W - dw) / 2, (H - dh) * rel.pos / 100, dw, dh);
+          ctx.fillStyle = "rgba(0,0,0,0.42)";
+          ctx.fillRect(0, 0, W, H);
+          text();
+          resolve();
+        };
+        img.onerror = function () { text(); resolve(); };
+        img.src = u;
+      });
+    });
+  }
+  function cardBlob() {
+    return new Promise(function (resolve) { $("card-cv").toBlob(function (b) { resolve(b); }, "image/png"); });
+  }
+  function cardName() {
+    var rel = activeRel(), tx = rel ? cardText(rel, $("card-what").value) : { big: "" };
+    return safeBase(t("app.name") + " " + String(tx.big).replace(/[^\p{L}\p{N} ]+/gu, "")) + ".png";
+  }
+  function openCard() {
+    var sel = $("card-what");
+    if (!sel.options.length) {
+      [["days", "card.days"], ["weeks", "card.weeks"], ["ym", "card.ym"]].forEach(function (p) {
+        var o = el("option", "", t(p[1])); o.value = p[0]; sel.appendChild(o);
+      });
+    }
+    $("card-files").hidden = !fsApi();
+    $("card-share").hidden = !(navigator.canShare && navigator.share);
+    $("card-dlg").showModal();
+    drawCard();
+  }
+  function cardToFiles() {
+    var fs = fsApi();
+    if (!fs) return;
+    cardBlob().then(function (b) {
+      if (!b) { toast(t("card.fail")); return; }
+      var name = cardName();
+      return uniquePath(fs, OWN_PICS, name.replace(/\.png$/, ""), ".png").then(function (p) {
+        return fs.write(p, b).then(function () { toast(t("card.saved")); });
+      });
+    }).catch(function () { toast(t("card.fail")); });
+  }
+  function cardDownload() {
+    var dlg = dialogApi();
+    cardBlob().then(function (b) {
+      if (!b) { toast(t("card.fail")); return; }
+      if (dlg && typeof dlg.saveFile === "function") return dlg.saveFile({ blob: b, filename: cardName(), mime: "image/png" });
+      var a = document.createElement("a"), u = URL.createObjectURL(b);
+      a.href = u; a.download = cardName(); a.click();
+      setTimeout(function () { URL.revokeObjectURL(u); }, 40000);
+    });
+  }
+  function cardShare() {
+    cardBlob().then(function (b) {
+      if (!b) { toast(t("card.fail")); return; }
+      var f = new File([b], cardName(), { type: "image/png" });
+      if (!navigator.canShare || !navigator.canShare({ files: [f] })) { cardDownload(); return; }
+      return navigator.share({ files: [f] }).catch(function () {});
+    });
+  }
+
+  // ---------- 6g. Backup file (export / import) ----------
+  function exportFile() {
+    var pass = $("exp-pass").value, dlg = dialogApi();
+    if (pass && !cryptoOk()) { toast(t("lock.unsupported")); return; }
+    C.packExport(window.crypto, data, pass).then(function (text) {
+      var name = "Together-" + shownDay + ".json", blob = new Blob([text], { type: "application/json" });
+      $("exp-pass").value = "";
+      if (dlg && typeof dlg.saveFile === "function") {
+        return dlg.saveFile({ blob: blob, filename: name, mime: "application/json" }).then(function (r) { if (r && r.ok) toast(t("exp.done")); });
+      }
+      var a = document.createElement("a"), u = URL.createObjectURL(blob);
+      a.href = u; a.download = name; a.click();
+      setTimeout(function () { URL.revokeObjectURL(u); }, 40000);
+      toast(t("exp.done"));
+    }).catch(function () { toast(t("exp.fail")); });
+  }
+  function askPass() {
+    return new Promise(function (resolve) {
+      var dlg = $("pass-dlg"), done = false;
+      $("pass-val").value = "";
+      $("pass-msg").textContent = "";
+      function end(v) { if (done) return; done = true; $("pass-form").onsubmit = $("pass-cancel").onclick = dlg.onclose = null; if (dlg.open) dlg.close(); resolve(v); }
+      $("pass-form").onsubmit = function (ev) { ev.preventDefault(); end($("pass-val").value); };
+      $("pass-cancel").onclick = function () { end(""); };
+      dlg.onclose = function () { end(""); };
+      dlg.showModal();
+      $("pass-val").focus();
+    });
+  }
+  function importFile() {
+    var dlg = dialogApi();
+    if (!dlg || typeof dlg.openFile !== "function") return;
+    dlg.openFile(".json,application/json").then(function (file) {
+      if (!file) return;
+      if (file.size > 20 * 1024 * 1024) { toast(t("imp.bad")); return; }
+      return file.text().then(function (text) {
+        function attempt(pass) {
+          return C.readExport(window.crypto, text, pass).then(function (r) {
+            if (r.error === "locked" || r.error === "pass") {
+              if (r.error === "pass") toast(t("imp.pass"));
+              if (!cryptoOk()) { toast(t("lock.unsupported")); return; }
+              return askPass().then(function (p) { if (p) return attempt(p); });
+            }
+            if (r.error) { toast(t("imp.bad")); return; }
+            var n = C.importCounts(data, r.data);
+            var other = n.days + n.meets + n.gifts;
+            if (!n.rels && !n.moments && !other) { toast(t("imp.none")); return; }
+            return ask(t("imp.ask", { name: file.name || "", rels: n.rels, moments: n.moments, other: other }), t("imp.yes")).then(function (yes) {
+              if (!yes) return;
+              save(C.merge(data, r.data));
+              toast(t("imp.done"));
+            });
+          });
+        }
+        return attempt("");
+      });
+    }).catch(function () { toast(t("imp.bad")); });
+  }
+
   // ---------- 7. Relationship editor ----------
   var draft = null;   // { id, isNew, people, cover }
   function openEditor(rel) {
@@ -991,6 +1466,8 @@
     $("rel-kind").value = rel ? rel.kind : "couple";
     $("rel-pron").value = rel ? rel.pron : "";
     $("rel-discreet").checked = !!(rel && rel.discreet);
+    $("rel-tz").value = rel ? rel.tz : "";
+    fillTzList();
     $("rel-pos").value = rel ? rel.pos : 50;
     $("rel-arch").checked = !!(rel && rel.arch);
     $("rel-arch-wrap").hidden = !rel;
@@ -1041,11 +1518,13 @@
     if (typed) { addPerson({ n: typed }); $("rel-name").value = ""; }
     if (!draft.people.length) { $("rel-msg").textContent = t("rel.needPerson"); $("rel-name").focus(); return; }
     if (!C.okYmd(start)) { $("rel-msg").textContent = t("rel.needStart"); $("rel-start").focus(); return; }
+    var tz = $("rel-tz").value.trim();
+    if (tz && !C.okTz(tz)) { $("rel-msg").textContent = t("rel.tzBad"); $("rel-tz").focus(); return; }
     var old = C.find(data, "rels", draft.id);
     var row = {
       id: draft.id, people: draft.people.map(function (p) { return p.c ? { c: p.c, n: p.n } : { n: p.n }; }),
       title: $("rel-title").value, start: start, time: $("rel-time").value, kind: $("rel-kind").value,
-      pron: $("rel-pron").value, discreet: $("rel-discreet").checked, cover: draft.cover,
+      pron: $("rel-pron").value, discreet: $("rel-discreet").checked, cover: draft.cover, tz: tz,
       pos: +$("rel-pos").value, arch: draft.isNew ? false : $("rel-arch").checked,
       ord: old ? old.ord : C.liveRels(data, true).reduce(function (mx, r) { return Math.max(mx, r.ord + 1); }, 0)
     };
@@ -1100,6 +1579,7 @@
   function openSettings() {
     $("set-me").value = data.prefs.me;
     $("set-live").checked = data.prefs.live;
+    $("set-confetti").checked = data.prefs.confetti;
     var box = $("set-kinds");
     box.textContent = "";
     C.MS_KINDS.forEach(function (k) {
@@ -1353,6 +1833,43 @@
     $("set-close").addEventListener("click", function () { $("set-dlg").close(); });
     $("set-me").addEventListener("change", function () { save(C.setPrefs(data, { me: this.value }, Date.now())); });
     $("set-live").addEventListener("change", function () { save(C.setPrefs(data, { live: this.checked }, Date.now())); });
+    $("set-confetti").addEventListener("change", function () { save(C.setPrefs(data, { confetti: this.checked }, Date.now())); });
+    // Wave 4: meetings, share card, slideshow, backup file.
+    $("meet-add").addEventListener("click", function () { openMeet(null); });
+    $("meet-form").addEventListener("submit", saveMeet);
+    $("meet-cancel").addEventListener("click", function () { $("meet-dlg").close(); });
+    $("meet-dlg").addEventListener("close", function () { meetDraft = null; });
+    $("meet-del").addEventListener("click", deleteMeet);
+    $("act-card").addEventListener("click", openCard);
+    $("card-what").addEventListener("change", drawCard);
+    $("card-files").addEventListener("click", cardToFiles);
+    $("card-down").addEventListener("click", cardDownload);
+    $("card-share").addEventListener("click", cardShare);
+    $("card-close").addEventListener("click", function () { $("card-dlg").close(); });
+    $("mo-show").addEventListener("click", openShow);
+    setIcon($("show-prev"), ICON.prev, t("show.prev"));
+    setIcon($("show-next"), ICON.next, t("show.next"));
+    setIcon($("show-close"), ICON.x, t("btn.close"));
+    $("show-prev").addEventListener("click", function () { showAt(show.i - 1); });
+    $("show-next").addEventListener("click", function () { showAt(show.i + 1); });
+    $("show-play").addEventListener("click", function () { show.play = !show.play; setShowTimer(); });
+    $("show-close").addEventListener("click", function () { $("show-dlg").close(); });
+    $("show-dlg").addEventListener("close", closeShow);
+    $("show-dlg").addEventListener("keydown", function (e) {
+      if (e.key === "ArrowLeft") { e.preventDefault(); showAt(show.i - 1); }
+      else if (e.key === "ArrowRight") { e.preventDefault(); showAt(show.i + 1); }
+      else if (e.key === " " && e.target === $("show-dlg")) { e.preventDefault(); show.play = !show.play; setShowTimer(); }
+    });
+    var swipeX = null;
+    $("show-dlg").addEventListener("touchstart", function (e) { swipeX = e.touches.length === 1 ? e.touches[0].clientX : null; }, { passive: true });
+    $("show-dlg").addEventListener("touchend", function (e) {
+      if (swipeX === null || !e.changedTouches.length) return;
+      var dx = e.changedTouches[0].clientX - swipeX;
+      swipeX = null;
+      if (Math.abs(dx) > 50) showAt(show.i + (dx < 0 ? 1 : -1));
+    });
+    $("exp-go").addEventListener("click", exportFile);
+    $("imp-go").addEventListener("click", importFile);
     $("lock-form").addEventListener("submit", tryUnlock);
 
     // A click on the backdrop closes a dialog (R32).
@@ -1407,7 +1924,7 @@
   }
   window.__orosOpenAt = function (target) {
     if (locked) { waiting = target; return; }
-    if (draft || moDraft || dayDraft) return;     // an open editor keeps its edits
+    if (draft || moDraft || dayDraft || meetDraft) return;     // an open editor keeps its edits
     openTarget(target);
   };
   function runWaiting() { var w = waiting; waiting = null; if (w) openTarget(w); }

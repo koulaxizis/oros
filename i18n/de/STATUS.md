@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 33376 of 33376 (100%)
+- Strings: 33450 of 33450 (100%)
 - Help pages: 147 of 147 (100%)
 - Shown in the language list: yes
 
@@ -140,9 +140,9 @@ text is still written in the code. They switch over wave by wave
 | tictactoe | 100% | 53 / 53 |
 | time | 100% | 410 / 410 |
 | timesheet | 100% | 248 / 248 |
-| today | 100% | 85 / 85 |
+| today | 100% | 88 / 88 |
 | todo | 100% | 208 / 208 |
-| together | 100% | 218 / 218 |
+| together | 100% | 289 / 289 |
 | travel | 100% | 555 / 555 |
 | trees | 100% | 76 / 76 |
 | typewriter | 100% | 46 / 46 |

@@ -29,6 +29,7 @@ Die Widgets:
 - `Gewohnheiten`: die Gewohnheiten, die heute noch abzuhaken sind.
 - `Nächste Termine`: Termine aus dem [Kalender](app:calendar) von heute und den nächsten drei Tagen.
 - `Aufgaben`: Aufgaben aus [Aufgaben](app:todo), die überfällig, heute oder in den nächsten drei Tagen fällig sind.
+- `Zusammen`: eure gemeinsamen Tage aus [Zusammen](app:together), in einer eigenen Karte. Zusammen ist privat und bleibt aus Heute heraus, bis du diese Karte hinzufügst (das schaltet Zusammen in den `Einstellungen` ein).
 
 Eine Zeile erscheint nur an einer Stelle: Ist das Widget `Aufgaben` auf dem Bildschirm, verlassen die Aufgaben `Überfällig`, `Heute` und `Demnächst` und erscheinen dort; dasselbe gilt für Gewohnheiten, Kalendertermine, Wetter und Wasser. Entfernst du das Widget, kehren sie zurück. Die Widgets zeigen, was die in den `Einstellungen` eingeschalteten Apps liefern; eine App, die du dort ausgeschaltet hast, bleibt leer.
 

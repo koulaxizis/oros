@@ -5,7 +5,9 @@
 // the names of linked people from oros-contacts-data, never writes.
 // The rows are the Calendar feed's (TogetherCore.dayRows: milestones
 // incl. months, the start day, moments and special days marked every
-// year, meetings). Together is private: Today keeps it off until the
+// year, meetings), plus one top line "names · n days together"
+// (TogetherCore.todayLine) that the Today widget "Together" shows as a
+// card. Together is private: Today keeps it off until the
 // person switches it on (today/agg.js DEFAULT_OFF).
 // Opens through the generic deep link (Together's __orosOpenAt).
 // ============================================================
@@ -22,7 +24,9 @@
       var raw = ctx.readJSON(KEY);
       if (!raw || !Array.isArray(raw.rels) || !raw.rels.length) return [];
       var data = C.normalize(raw), idx = C.contactIndex(ctx.readJSON("oros-contacts-data"));
-      var out = [];
+      var out = [], line = C.todayLine(data, idx, ctx.today, ctx.lang);
+      // The "Together" card (Today widget): one top line, today only.
+      if (line) out.push({ id: "days", kind: "info", title: line.title, text: line.text, target: line.target });
       for (var d = 0; d <= ctx.horizon; d++) {
         var day = ctx.addDays(ctx.today, d);
         C.dayRows(data, idx, day, ctx.lang, { months: true }).forEach(function (r) {

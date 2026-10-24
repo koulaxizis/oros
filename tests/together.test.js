@@ -268,3 +268,105 @@ test("wave 3: Contacts takes { addEvent } and shows the Together button, Togethe
   assert.ok(/target\.contact/.test(app) && /"contacts", \{ addEvent:/.test(app) && /"todo", \{ addItems:/.test(app));
   assert.ok(/"notes", \{ add:/.test(app) && /__orosOpenBudgetNew\(\{ k: "o"/.test(app) && /__orosOpenCalendarNew\(\{ date:/.test(app));
 });
+
+test("wave 4: time zones and meetings", () => {
+  assert.ok(C.okTz("Asia/Tokyo") && C.okTz("UTC") && !C.okTz("Mars/Base") && !C.okTz("asia/tokyo") && !C.okTz("../x"));
+  assert.equal(C.tzOffset("Asia/Tokyo", Date.UTC(2026, 0, 1)), 540);
+  assert.equal(C.tzOffset("America/New_York", Date.UTC(2026, 6, 1)), -240);
+  assert.equal(C.zonedMs("2026-11-08", "18:00", "Asia/Tokyo"), Date.UTC(2026, 10, 8, 9, 0));
+  assert.equal(C.zonedMs("2026-07-01", "08:30", "America/New_York"), Date.UTC(2026, 6, 1, 12, 30));
+  assert.deepEqual(C.wallIn("Asia/Tokyo", Date.UTC(2026, 10, 8, 16, 5)), { ymd: "2026-11-09", hm: "01:05", wd: 1 });
+  // the zone is kept on the relationship (shape only) and on meetings
+  let d = C.put(C.empty(), "rels", rel("r", "2024-01-01", { tz: "Asia/Tokyo" }), 1);
+  assert.equal(C.find(d, "rels", "r").tz, "Asia/Tokyo");
+  assert.equal(C.normalize({ rels: [{ id: "x", m: 1, start: "2024-01-01", tz: "<b>" }] }).rels[0].tz, "");
+  const now = Date.UTC(2026, 10, 1, 12, 0);
+  d = C.put(d, "meets", { id: "m1", rel: "r", date: "2026-11-08", time: "18:00", tz: "Asia/Tokyo", place: "Narita" }, 2);
+  d = C.put(d, "meets", { id: "m2", rel: "r", date: "2026-10-01", time: "", tz: "", place: "" }, 3);
+  d = C.put(d, "meets", { id: "m3", rel: "r", date: "2026-12-24", time: "", tz: "", place: "" }, 4);
+  const next = C.nextMeets(d, "r", now);
+  assert.deepEqual(next.map((o) => o.meet.id), ["m1", "m3"]);
+  assert.equal(next[0].at, Date.UTC(2026, 10, 8, 9, 0));
+  assert.equal(C.pastMeets(d, "r", now), 1);
+  assert.deepEqual(C.countdown(now, next[0].at), { d: 6, h: 21, min: 0 });
+  assert.deepEqual(C.countdown(next[0].at + 5, next[0].at), { d: 0, h: 0, min: 0 });
+  // removing the relationship removes its meetings
+  assert.equal(C.remove(d, "rels", "r", 9).meets.length, 0);
+});
+
+test("wave 4: meetings in the Calendar feed use this device's day and time", () => {
+  const tz = process.env.TZ;
+  let d = C.put(C.empty(), "rels", rel("r", "2024-01-01"), 1);
+  d = C.put(d, "meets", { id: "m1", rel: "r", date: "2026-11-08", time: "18:00", tz: "", place: "" }, 2);
+  const rows = C.dayRows(d, {}, "2026-11-08", "en");
+  assert.deepEqual(rows.filter((x) => x.kind === "meet").map((x) => [x.title, x.time]), [["Anna · together again", "18:00"]]);
+  const loc = C.meetLocal({ date: "2026-11-08", time: "18:00", tz: "Asia/Tokyo" });
+  const at = new Date(Date.UTC(2026, 10, 8, 9, 0));
+  assert.equal(loc.hm, String(at.getHours()).padStart(2, "0") + ":" + String(at.getMinutes()).padStart(2, "0"));
+  assert.equal(tz, process.env.TZ);
+});
+
+test("wave 4: fun numbers and big days", () => {
+  const r = { start: "2026-10-01", time: "" };          // a Thursday
+  const f = C.funFacts(r, "2026-10-24", new Date(2026, 9, 24).getTime(), null);
+  assert.equal(f.sunrises, 24);
+  assert.equal(f.weekends, 4);                          // 3, 10, 17, 24 October
+  assert.equal(f.moons, null);
+  assert.equal(f.km, Math.floor(23 * 86400 * 29.78));
+  assert.deepEqual(C.funFacts(r, "2026-09-01", 0, null), { sunrises: 0, weekends: 0, moons: null, km: 0 });
+  const S = require("../sky/core.js");
+  // full moons of 2025: 13 Jan … 5 Dec = 12
+  const y = C.funFacts({ start: "2025-01-01", time: "" }, "2026-01-01", Date.UTC(2026, 0, 1), S);
+  assert.equal(y.moons, 12);
+  const b = { start: "2020-02-14", time: "" };
+  assert.ok(C.bigDay(b, "2020-02-14") && C.bigDay(b, "2021-02-14") && C.bigDay(b, "2020-05-24"));   // start, 1 year, 100 days
+  assert.ok(!C.bigDay(b, "2021-02-15") && !C.bigDay(b, "2019-02-14"));
+  assert.ok(!C.bigDay(b, "2021-02-14", { year: false }) && C.bigDay(b, "2020-03-14", { month: true }));
+});
+
+test("wave 4: backup file round trip, with and without a password; an import never deletes", async () => {
+  const { webcrypto } = require("crypto");
+  let d = C.put(C.empty(), "rels", rel("r", "2024-01-01"), 10);
+  d = C.put(d, "moments", { id: "mo", rel: "r", date: "2024-05-01", title: "Paris" }, 11);
+  d = C.remove(C.put(d, "gifts", { id: "g", rel: "r", text: "x" }, 12), "gifts", "g", 13);
+  const plain = await C.packExport(webcrypto, d, "");
+  assert.equal(JSON.parse(plain).format, "oros-together");
+  assert.deepEqual(JSON.parse(plain).data.tombs, {});
+  const back = await C.readExport(webcrypto, plain, "");
+  assert.equal(C.serialize(C.merge(d, back.data)), C.serialize(d));
+  const enc = await C.packExport(webcrypto, d, "secret", 2000);
+  assert.ok(!/Paris/.test(enc));
+  assert.deepEqual(await C.readExport(webcrypto, enc, ""), { error: "locked" });
+  assert.deepEqual(await C.readExport(webcrypto, enc, "wrong"), { error: "pass" });
+  const ok = await C.readExport(webcrypto, enc, "secret");
+  assert.equal(C.find(ok.data, "moments", "mo").title, "Paris");
+  assert.deepEqual(await C.readExport(webcrypto, "{\"format\":\"x\"}", ""), { error: "bad" });
+  assert.deepEqual(await C.readExport(webcrypto, "not json", ""), { error: "bad" });
+  // an old file brings nothing new and deletes nothing that was added since
+  const later = C.put(d, "moments", { id: "mo2", rel: "r", date: "2025-05-01", title: "Rome" }, 20);
+  assert.deepEqual(C.importCounts(later, back.data), { rels: 0, moments: 0, days: 0, meets: 0, gifts: 0 });
+  assert.equal(C.serialize(C.merge(later, back.data)), C.serialize(later));
+  assert.deepEqual(C.importCounts(C.empty(), back.data), { rels: 1, moments: 1, days: 0, meets: 0, gifts: 0 });
+  // a row deleted here stays deleted when an older copy comes in
+  const del = C.remove(d, "moments", "mo", 30);
+  assert.equal(C.importCounts(del, back.data).moments, 0);
+  assert.equal(C.find(C.merge(del, back.data), "moments", "mo"), null);
+});
+
+test("wave 4: Today card line and widget", () => {
+  let d = C.put(C.empty(), "rels", rel("r", "2026-01-01"), 1);
+  assert.deepEqual(C.todayLine(d, {}, "2026-01-11", "en"), { title: "Anna", text: "10 days together", target: { rel: "r" } });
+  assert.equal(C.todayLine(d, {}, "2026-01-01", "el").text, "η πρώτη μέρα μαζί");
+  assert.equal(C.todayLine(d, {}, "2025-12-31", "en"), null);
+  const disc = C.put(d, "rels", rel("r", "2026-01-01", { discreet: true, people: [{ n: "Anna Maria" }] }), 2);
+  assert.equal(C.todayLine(disc, {}, "2026-01-11", "en").title, "AM");
+  global.TogetherCore = C;
+  const P = require("../together/today.js");
+  const rows = P.collect({ readJSON: () => d, today: "2026-01-11", horizon: 3, lang: "en", addDays: C.addDays });
+  assert.deepEqual(rows[0], { id: "days", kind: "info", title: "Anna", text: "10 days together", target: { rel: "r" } });
+  const L = require("../today/layout.js");
+  assert.ok(L.ORDER.includes("together") && L.WIDGETS.together.app === "together");
+  const out = L.distribute({ info: [{ app: "together", kind: "info", title: "Anna" }, { app: "weather", kind: "info", title: "Sun" }] }, ["top", "together"]);
+  assert.deepEqual(out.together[0].rows.map((r) => r.title), ["Anna"]);
+  assert.deepEqual(out.top[0].rows.map((r) => r.title), ["Sun"]);
+});

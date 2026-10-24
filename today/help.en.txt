@@ -29,6 +29,7 @@ The widgets:
 - `Habits`: the habits still to tick today.
 - `Upcoming events`: [Calendar](app:calendar) events of today and the next three days.
 - `To-dos`: [To-Do](app:todo) tasks that are late, due today or due in the next three days.
+- `Together`: your days together from [Together](app:together), in a card of its own. Together is private, so it stays out of Today until you add this card (adding it switches Together on in `Settings`).
 
 A row shows in one place only: with the `To-dos` widget on the screen, To-Do tasks leave `Overdue`, `Today` and `Coming up` and appear there; the same goes for Habits, Calendar events, Weather and Water. Remove the widget and they go back. The widgets show what the apps switched on in `Settings` give; an app you switched off there stays empty.
 
