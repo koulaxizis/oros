@@ -110,6 +110,17 @@
       "subs.enrich": "Fill in names online", "en.none": "Every subscriber shown already has a name.",
       "en.done": "Names added: {n}",
       "subs.export": "Export CSV", "subs.inbox": "Check Inbox", "subs.invite": "Send confirmation requests ({n})",
+      "subs.clean": "Clean up…", "cl.title": "Clean up the list",
+      "cl.text": "Keeps the list from growing with people who will never read it. Newsletter doesn't track opens, so it deletes only people who never confirmed or who already left.",
+      "cl.pend": "Delete people who did not confirm", "cl.pendN": "{n} days after the request",
+      "cl.gone": "Delete people who left (unsubscribed, bounced, spam)", "cl.goneN": "{n} days after they left",
+      "cl.goneHint": "A fingerprint of the address stays, so an import can't add them again. If they sign up again themselves, they are welcome.",
+      "cl.never": "Never", "cl.devHere": "Runs once a day on this device while orOS is open.",
+      "cl.devOther": "Runs once a day on another of your devices.", "cl.devNone": "Starts on the device that sends this list.",
+      "cl.here": "Run it on this device", "cl.now": "Now: {p} unconfirmed and {g} who left would be deleted.", "cl.nobody": "Nobody to delete now.",
+      "cl.wait": "That is more than Newsletter deletes on its own in one day ({max}, or a fifth of the list), so it waits for you.",
+      "cl.csv": "Export them (CSV)", "cl.go": "Clean up now", "cl.goText": "Delete {n} people from “{l}” for good? This can't be undone.",
+      "cl.done": "Deleted: {n}",
       "subs.more": "Showing {a} of {b}. Search to find the others.", "subs.none": "Nothing matches.",
       "inbox.never": "The Inbox has not been checked on this device yet.",
       "inbox.at": "Inbox checked {t}.", "inbox.no": "This list's sending account has no Inbox here: unsubscribe and subscribe e-mails can't be read automatically. Set one in Lists › Sending accounts.",
@@ -314,6 +325,17 @@
       "subs.enrich": "Συμπλήρωση ονομάτων online", "en.none": "Όλοι οι συνδρομητές της λίστας έχουν ήδη όνομα.",
       "en.done": "Προστέθηκαν ονόματα: {n}",
       "subs.export": "Εξαγωγή CSV", "subs.inbox": "Έλεγχος Εισερχομένων", "subs.invite": "Αποστολή αιτημάτων επιβεβαίωσης ({n})",
+      "subs.clean": "Καθαρισμός…", "cl.title": "Καθαρισμός της λίστας",
+      "cl.text": "Για να μη μεγαλώνει η λίστα με ανθρώπους που δεν θα τη διαβάσουν ποτέ. Το Ενημερωτικό δελτίο δεν μετρά ανοίγματα, οπότε διαγράφει μόνο όσους δεν επιβεβαίωσαν ποτέ ή έχουν ήδη φύγει.",
+      "cl.pend": "Διαγραφή όσων δεν επιβεβαίωσαν", "cl.pendN": "{n} ημέρες μετά το αίτημα",
+      "cl.gone": "Διαγραφή όσων έφυγαν (απεγγραφή, επιστροφή, spam)", "cl.goneN": "{n} ημέρες αφού έφυγαν",
+      "cl.goneHint": "Μένει ένα αποτύπωμα της διεύθυνσης, ώστε μια εισαγωγή να μην τους ξαναβάλει. Αν ξαναγραφτούν μόνοι τους, είναι ευπρόσδεκτοι.",
+      "cl.never": "Ποτέ", "cl.devHere": "Γίνεται μία φορά τη μέρα σε αυτή τη συσκευή, όσο είναι ανοιχτό το orOS.",
+      "cl.devOther": "Γίνεται μία φορά τη μέρα σε άλλη συσκευή σου.", "cl.devNone": "Ξεκινά στη συσκευή που στέλνει αυτή τη λίστα.",
+      "cl.here": "Να γίνεται σε αυτή τη συσκευή", "cl.now": "Τώρα θα διαγράφονταν {p} που δεν επιβεβαίωσαν και {g} που έφυγαν.", "cl.nobody": "Κανείς για διαγραφή τώρα.",
+      "cl.wait": "Είναι περισσότεροι από όσους διαγράφει μόνο του το Ενημερωτικό δελτίο σε μία μέρα ({max} ή το ένα πέμπτο της λίστας), οπότε περιμένει εσένα.",
+      "cl.csv": "Εξαγωγή τους (CSV)", "cl.go": "Καθαρισμός τώρα", "cl.goText": "Να διαγραφούν οριστικά {n} άτομα από τη λίστα «{l}»; Δεν αναιρείται.",
+      "cl.done": "Διαγράφηκαν: {n}",
       "subs.more": "Φαίνονται {a} από {b}. Αναζήτησε για τους υπόλοιπους.", "subs.none": "Δεν ταιριάζει κανείς.",
       "inbox.never": "Τα Εισερχόμενα δεν έχουν ελεγχθεί ακόμα σε αυτή τη συσκευή.",
       "inbox.at": "Τα Εισερχόμενα ελέγχθηκαν {t}.", "inbox.no": "Ο λογαριασμός αποστολής αυτής της λίστας δεν έχει Εισερχόμενα εδώ: τα email εγγραφής και διαγραφής δεν διαβάζονται αυτόματα. Όρισέ τα στις Λίστες › Λογαριασμοί αποστολής.",
@@ -730,6 +752,7 @@
     if (P && P.has()) acts.appendChild(mini(P.label(), P.open));
     acts.appendChild(mini(t("subs.enrich"), function () { enrichNames(shownSubs); }));
     acts.appendChild(mini(t("subs.export"), exportCsv));
+    acts.appendChild(mini(t("subs.clean"), function () { cleanDialog(l.id); }));
     var ch = C.chan(data, l.chan), inbox = inboxAccount(ch);
     if (inbox) acts.appendChild(mini(t("subs.inbox"), inboxNow));
     var due = C.invitesDue(data, l.id).length;
@@ -2234,6 +2257,80 @@
       renderAll();
     });
     openDialog(dlg, f.name);
+  }
+
+  // Clean-up of inactive subscribers (core cleanPlan / cleanApply; the
+  // shell runner does it once a day on the list's clean-up device).
+  function cleanDialog(id) {
+    var l = C.list(data, id);
+    if (!l) return;
+    var c = C.cleanOf(l), dev = E.devState().dev;
+    var dlg = makeDialog("nl-clean", t("cl.title"), true);
+    dlg.appendChild(el("p", "dlg-text", t("cl.text")));
+    var opts = function (days, key) {
+      return days.map(function (n) { return [String(n), t(key, { n: n })]; }).concat([["0", t("cl.never")]]);
+    };
+    var fp = sel(opts(C.CLEAN_PEND, "cl.pendN"), String(c.pend));
+    dlg.appendChild(field(t("cl.pend"), fp));
+    var fg = sel(opts(C.CLEAN_GONE, "cl.goneN"), String(c.gone));
+    dlg.appendChild(field(t("cl.gone"), fg, t("cl.goneHint")));
+    var devP = el("p", "hint");
+    dlg.appendChild(devP);
+    var here = btn(t("cl.here"), "", function () { c.dev = dev; showDev(); });
+    dlg.appendChild(here);
+    var now = el("p", "dlg-text");
+    dlg.appendChild(now);
+    var plan = null;
+    var csv = btn(t("cl.csv"), "", function () {
+      var only = {};
+      plan.pend.concat(plan.gone).forEach(function (s) { only[s.id] = 1; });
+      var heads = [t("s.email"), t("s.name"), t("s.lang"), t("s.tags"), t("s.status"), "source", t("s.basis"),
+                   t("s.since", { t: "" }).trim(), t("s.conf", { t: "" }).trim(), t("s.left", { t: "" }).trim()];
+      saveText(C.subsCsv(data, l.id, heads, function (st) { return t("sst." + st); }, function (b) { return t("basis." + b); }, only),
+               "oros-newsletter-" + C.slug(l.name) + "-cleanup.csv", "text/csv", ".csv", "CSV");
+    });
+    var go = btn(t("cl.go"), "danger", function () {
+      var p = plan;
+      confirmDialog(t("cl.go"), t("cl.goText", { n: p.n, l: l.name }), t("dlg.delete"), function () {
+        dlg.close();
+        save();
+        var n = C.cleanApply(data, p, Date.now());
+        saveNow();
+        renderAll();
+        showToast(t("cl.done", { n: n.pend + n.gone }));
+      }, true);
+    });
+    var row = el("div", "fld-row");
+    row.appendChild(csv);
+    row.appendChild(go);
+    dlg.appendChild(row);
+    function set() { return { pend: +fp.value, gone: +fg.value }; }
+    function showDev() {
+      devP.textContent = t(c.dev === dev ? "cl.devHere" : c.dev ? "cl.devOther" : "cl.devNone");
+      here.hidden = c.dev === dev;
+    }
+    function preview() {
+      plan = C.cleanPlan(data, l.id, Date.now(), set());
+      now.textContent = plan.n ? t("cl.now", { p: plan.pend.length, g: plan.gone.length }) + (plan.ok ? "" : " " + t("cl.wait", { max: C.CLEAN_MAX }))
+                               : t("cl.nobody");
+      csv.disabled = go.disabled = !plan.n;
+    }
+    // the settings onto the stored record (fields a newer orOS added stay)
+    function save() {
+      var cur = C.list(data, l.id);
+      if (!cur) return;
+      var base = copy(cur), v = set();
+      base.clnPend = v.pend; base.clnGone = v.gone;
+      if (c.dev) base.clnDev = c.dev;
+      var rec = C.normList(base);
+      if (JSON.stringify(rec) !== JSON.stringify(C.normList(cur))) put("lists", rec);
+    }
+    fp.addEventListener("change", preview);
+    fg.addEventListener("change", preview);
+    showDev();
+    preview();
+    actionsRow(dlg, [], t("dlg.save"), function () { save(); dlg.close(); renderAll(); });
+    openDialog(dlg, fp);
   }
 
   function linkDialog(id) {

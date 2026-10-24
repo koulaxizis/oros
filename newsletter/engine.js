@@ -41,6 +41,7 @@
   var INBOX_EVERY = 10 * 60 * 1000;
   var IDLE_EVERY = 5 * 60 * 1000;
   var LOCK_SEND = "oros-newsletter-send", LOCK_INBOX = "oros-newsletter-inbox", LOCK_RSS = "oros-newsletter-rss";
+  var LOCK_CLEAN = "oros-newsletter-clean";
 
   function stamp(prev) { return Math.max(Date.now(), (prev || 0) + 1); }
   function copy(x) { return JSON.parse(JSON.stringify(x)); }
@@ -83,7 +84,8 @@
       dev: typeof v.dev === "string" && /^[a-z0-9]{6,20}$/.test(v.dev) ? v.dev : C.randomId("d", null).slice(0, 11),
       used: v.used && typeof v.used === "object" ? v.used : {},
       inbox: v.inbox && typeof v.inbox === "object" ? v.inbox : {},
-      papi: v.papi && typeof v.papi === "object" ? v.papi : {}       // chan id → last read of its API events (ms)
+      papi: v.papi && typeof v.papi === "object" ? v.papi : {},      // chan id → last read of its API events (ms)
+      cln: v.cln && typeof v.cln === "object" ? v.cln : {}           // list id → day of its last clean-up here
     };
     if (!v.dev) saveDev(o);
     return o;
@@ -868,6 +870,50 @@
     return run();
   }
 
+  // ---------- list clean-up (inactive subscribers) ----------
+  // One device per list cleans it (list.clnDev): the first device that
+  // sends the list's issues or confirmation requests takes it (it reads
+  // that list's Inbox, so a confirmation that just came in is applied
+  // where the deletions happen), or the user picks one in the app.
+  function claimClean(listId, dev) {
+    return change(function (d) {
+      var l = C.list(d, listId);
+      if (!l || l.clnDev) return false;
+      var y = copy(l); y.clnDev = dev;
+      put(d, "lists", y);
+    });
+  }
+  // Once a day per list on its device: those the plan names go (C.cleanApply,
+  // re-checked on fresh data). More than C.cleanPlan allows in one go
+  // waits for the user ({ wait: n }).
+  // → Promise<[{ list, pend, gone } | { list, wait }]>
+  function runClean() {
+    var run = function () {
+      var now = Date.now(), o = devState(), day = dayKey(now), out = [];
+      C.live(read().lists).forEach(function (l0) {
+        if (C.cleanOf(l0).dev !== o.dev || o.cln[l0.id] === day) return;
+        change(function (d) {
+          var l = C.list(d, l0.id);
+          if (!l || C.cleanOf(l).dev !== o.dev) return false;
+          var plan = C.cleanPlan(d, l.id, now);
+          if (!plan.n) return false;
+          if (!plan.ok) { out.push({ list: l, wait: plan.n }); return false; }
+          var n = C.cleanApply(d, plan, now);
+          if (!n.pend && !n.gone) return false;
+          out.push({ list: l, pend: n.pend, gone: n.gone });
+        });
+        o.cln[l0.id] = day;
+      });
+      saveDev(o);
+      return out;
+    };
+    if (root.navigator && navigator.locks && typeof navigator.locks.request === "function") {
+      return navigator.locks.request(LOCK_CLEAN, { ifAvailable: true }, function (lock) { return lock ? run() : []; })
+        .then(function (r) { return r || []; }, function () { return []; });
+    }
+    return Promise.resolve(run());
+  }
+
   // ---------- the engine ----------
   // env: { fs() → orosFS|null, dirty(), onState(state), onChange(),
   //        notify(kind, info) }   kind: "done" {issue} | "paused" {issue, err}
@@ -991,6 +1037,7 @@
         return;
       }
       busy = true;
+      if (!job.list.clnDev && claimClean(job.list.id, dev)) changed();
       if (job.kind === "issue") {
         // hold the lock (refreshed at most once a minute: each refresh syncs)
         var x = job.issue;
@@ -1186,6 +1233,7 @@
     savePass: savePass, ownPass: ownPass, delPass: delPass, sendCreds: sendCreds, relay: relay, errCode: errCode,
     images: imgData, loadImages: loadImages, filesFor: filesFor, buildFor: buildFor, confirmFor: confirmFor, sendBin: sendBin,
     pause: pause, resume: resume, finish: finish, issueFromFeed: issueFromFeed, runFeeds: runFeeds,
+    runClean: runClean, claimClean: claimClean,
     formOn: formOn, formOff: formOff, formHere: formHere, pullForms: pullForms, openSealed: openSealed, relayUrl: relayUrl,
     applyRequest: applyRequest, markBounce: markBounce,
     create: create

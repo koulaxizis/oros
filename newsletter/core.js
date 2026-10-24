@@ -67,6 +67,11 @@
   var HEAD_SIZES = ["s", "m", "l"];
   var LOCK_STALE = 15 * 60 * 1000;       // a sending device silent this long lets another take over
   var SOFT_LIMIT = 3;                    // soft bounces before an address counts as bounced
+  // List clean-up (inactive subscribers): days, 0 = never.
+  var CLEAN_PEND = [7, 14, 30, 60], CLEAN_GONE = [30, 90, 180, 365];
+  var CLEAN_DFLT = { pend: 30, gone: 90 };
+  var CLEAN_MAX = 200, CLEAN_SHARE = 0.2, CLEAN_FLOOR = 10;   // more than this in one day waits for the user
+  var DAY = 864e5;
 
   // Sending providers (SMTP). Starting points: the user checks the
   // host and their plan's limits in the provider's own docs.
@@ -208,6 +213,10 @@
     if (sty) o.sty = sty;
     var hf = normHf(x.hf);
     if (hf) o.hf = hf;
+    // clean-up: defaults are left out, 0 = never
+    if (x.clnPend === 0 || (CLEAN_PEND.indexOf(x.clnPend) >= 0 && x.clnPend !== CLEAN_DFLT.pend)) o.clnPend = x.clnPend;
+    if (x.clnGone === 0 || (CLEAN_GONE.indexOf(x.clnGone) >= 0 && x.clnGone !== CLEAN_DFLT.gone)) o.clnGone = x.clnGone;
+    if (typeof x.clnDev === "string" && /^[a-z0-9]{6,20}$/.test(x.clnDev)) o.clnDev = x.clnDev;
     return keepExtra(x, o, LIST_KEYS);
   }
   // The web sign-up form + one-click unsubscribe kept by the relay
@@ -269,7 +278,8 @@
   var NO_KEYS = { __proto__: 1, constructor: 1, prototype: 1 };
   var BLOCK_KEYS = ["k", "t", "href", "a", "b", "f", "alt", "w", "h", "lv", "st", "full", "more", "c", "wd", "by", "ord", "al", "pad", "bg", "url",
                     "lw", "sub", "links", "items", "sz", "hd", "side", "bt", "bh", "per", "rows", "d", "tm", "te", "loc", "ics", "sh", "acct", "at"];
-  var LIST_KEYS = ["id", "m", "del", "name", "chan", "from", "fromName", "reply", "lang", "addr", "why", "theme", "color", "salt", "form", "sty", "hf"];
+  var LIST_KEYS = ["id", "m", "del", "name", "chan", "from", "fromName", "reply", "lang", "addr", "why", "theme", "color", "salt", "form", "sty", "hf",
+                   "clnPend", "clnGone", "clnDev"];
   function keepExtra(src, out, skip) {
     var n = 0;
     Object.keys(src).forEach(function (k) {
@@ -821,6 +831,66 @@
   function invitesDue(d, listId) {
     return subsOf(d, listId).filter(function (s) { return status(s) === "pend" && s.inv < s.at; });
   }
+  // ---------- clean-up (inactive subscribers) ----------
+  // A list's settings: { pend, gone } in days (0 = never), dev = the
+  // one device that cleans it every day ("" = not chosen yet).
+  function cleanOf(l) {
+    l = l || {};
+    return { pend: l.clnPend === 0 || CLEAN_PEND.indexOf(l.clnPend) >= 0 ? l.clnPend : CLEAN_DFLT.pend,
+             gone: l.clnGone === 0 || CLEAN_GONE.indexOf(l.clnGone) >= 0 ? l.clnGone : CLEAN_DFLT.gone,
+             dev: typeof l.clnDev === "string" ? l.clnDev : "" };
+  }
+  // Who goes now: pend = still unconfirmed `pend` days after their
+  // confirmation request went out (never before it went out); gone =
+  // left (unsubscribed, bounced, spam) more than `gone` days ago.
+  // Active people never. A record changed in the last day is left for
+  // the next day (a change on its way from another device).
+  // `set` overrides the list's settings ({ pend, gone }).
+  // → { list, set, pend: [sub], gone: [sub], n, all, ok } (ok: few
+  // enough to go without asking the user)
+  function cleanPlan(d, listId, now, set) {
+    var c = set || cleanOf(list(d, listId)), all = subsOf(d, listId);
+    var out = { list: listId, set: { pend: c.pend, gone: c.gone }, pend: [], gone: [], n: 0, all: all.length, ok: true };
+    all.forEach(function (s) {
+      if (now - s.m < DAY) return;
+      var st = status(s);
+      if (st === "pend") {
+        if (c.pend && s.inv && s.inv >= s.at && now - s.inv >= c.pend * DAY) out.pend.push(s);
+      } else if (st === "off" || st === "bounce" || st === "spam") {
+        if (c.gone && now - s.off >= c.gone * DAY) out.gone.push(s);
+      }
+    });
+    out.n = out.pend.length + out.gone.length;
+    out.ok = out.n <= CLEAN_MAX && out.n <= Math.max(CLEAN_FLOOR, Math.floor(out.all * CLEAN_SHARE));
+    return out;
+  }
+  // Carry out a plan on d (changed in place, re-checked on d): the
+  // unconfirmed are deleted (they never agreed, so an import may add
+  // them again); those who left are deleted for good, a fingerprint of
+  // the address stays (supp) so an import never adds them back, while
+  // their own new sign-up still counts. → { pend, gone } counts
+  function cleanApply(d, plan, now) {
+    var n = { pend: 0, gone: 0 }, supp = {};
+    d.supp.forEach(function (h) { supp[h] = 1; });
+    var fresh = cleanPlan(d, plan.list, now, plan.set);
+    var ok = {};
+    fresh.pend.concat(fresh.gone).forEach(function (s) { ok[s.id] = s; });
+    ["pend", "gone"].forEach(function (k) {
+      plan[k].forEach(function (p) {
+        var s = ok[p.id];
+        if (!s) return;
+        for (var i = 0; i < d.subs.length; i++) {
+          if (d.subs[i].id !== s.id) continue;
+          d.subs[i] = { id: s.id, m: Math.max(now, s.m + 1), del: 1 };
+          break;
+        }
+        if (k === "gone") { var h = suppHash(s.email); if (!supp[h]) { supp[h] = 1; d.supp.push(h); } }
+        n[k]++;
+      });
+    });
+    return n;
+  }
+
   // Device-local daily counter { chanId: { d: "YYYY-MM-DD", n } }.
   function usedToday(used, chanId, dayKey) {
     var u = used && used[chanId];
@@ -950,9 +1020,10 @@
   }
   function iso(ms) { return ms ? new Date(ms).toISOString().slice(0, 16).replace("T", " ") : ""; }
   // heads: column titles in the user's language; st(s) → status name
-  function subsCsv(d, listId, heads, stName, basisName) {
+  // only: { subId: 1 } to export just those (the clean-up's list)
+  function subsCsv(d, listId, heads, stName, basisName, only) {
     var lines = [heads.map(csvCell).join(";")];
-    subsOf(d, listId).sort(function (a, b) { return a.email < b.email ? -1 : 1; }).forEach(function (s) {
+    subsOf(d, listId).filter(function (s) { return !only || only[s.id]; }).sort(function (a, b) { return a.email < b.email ? -1 : 1; }).forEach(function (s) {
       lines.push([s.email, s.name, s.lang, s.tags.join(", "), stName(status(s)), s.src, basisName(s.basis),
                   iso(s.at), iso(s.conf), iso(s.off)].map(csvCell).join(";"));
     });
@@ -1307,6 +1378,7 @@
     THEMES: THEMES, FONTS: FONTS, BTN_SHAPES: BTN_SHAPES, HEAD_SIZES: HEAD_SIZES, ALIGNS: ALIGNS, HR_STYLES: HR_STYLES,
     BLOCK_KINDS: BLOCK_KINDS, knownBlock: known, alignOf: alignOf, picsOf: picsOf, picRefs: picRefs, normBlk: normBlk, icsOf: icsOf, SHOP_PS: SHOP_PS, normProd: normProd, oldPrices: oldPrices, PRICE_AGE: PRICE_AGE, validDay: validDay, validTime: validTime, normHf: normHf, socialItems: socialItems, buttonsOf: buttonsOf, normSty: normSty,
     BASES: BASES, OFF_STS: OFF_STS, LOCK_STALE: LOCK_STALE, SOFT_LIMIT: SOFT_LIMIT,
+    CLEAN_PEND: CLEAN_PEND, CLEAN_GONE: CLEAN_GONE, CLEAN_DFLT: CLEAN_DFLT, CLEAN_MAX: CLEAN_MAX, cleanOf: cleanOf, cleanPlan: cleanPlan, cleanApply: cleanApply,
     validEmail: validEmail, normEmail: normEmail, emailKey: emailKey, validHost: validHost, validColor: validColor,
     safeUrl: safeUrl, fold: fold, hash53: hash53, subId: subId, suppHash: suppHash, token: token, listCode: listCode,
     randomId: randomId, oneLine: oneLine, multi: multi,
