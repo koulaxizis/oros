@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "3.50.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "3.51.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -2016,22 +2016,32 @@
   // Weather app's cache, no network. SH-B7: no plants → silent.
   // Honest limit (alarms): orOS closed = nothing fires; the inbox
   // catch-up runs at the next boot.
+  // Plants shared with a household (BR-HH) come from the device-local
+  // mirror plants/house.js keeps: only the ones that remind this person.
   var PLANTS_DATA_KEY = "oros-plants-data";
   function plantsCheckTick() {
-    var Core = window.OrosPlantsCore;
+    var Core = window.OrosPlantsCore, HHp = window.OrosPlantsHouse;
     if (!Core) return;                                  // stale bundle — silent
-    var raw, prefs;
+    var raw, prefs, sets = [];
     try {
       raw = JSON.parse(localStorage.getItem(PLANTS_DATA_KEY));
       prefs = Core.readPrefs(JSON.parse(localStorage.getItem("oros-plants-prefs")));
+      if (HHp) HHp.readMirror(JSON.parse(localStorage.getItem(HHp.MIRROR_KEY))).forEach(function (g) { if (g.own.plants.length) sets.push(g.own); });
     } catch (e) { return; }
-    if (!raw || !Array.isArray(raw.plants) || !raw.plants.length) return;
+    if (raw && Array.isArray(raw.plants) && raw.plants.length) sets.unshift(Core.merge(raw, raw));
+    if (!sets.length) return;
     if (prefs.remind < 0 || new Date().getHours() < prefs.remind) return;
     if (todayAbsorbs("plants")) return;                 // said in today's summary
     var N = window.orosNotifs;
     if (!(N && typeof N.emit === "function")) return;
     var today = sysYmd();
-    var sum = Core.summary(Core.merge(raw, raw), today, prefs.hemi);
+    var sum = { n: 0, names: [], outWater: false };
+    sets.forEach(function (d) {
+      var s = Core.summary(d, today, prefs.hemi);
+      sum.n += s.n;
+      sum.names = sum.names.concat(s.names);
+      sum.outWater = sum.outWater || s.outWater;
+    });
     if (!sum.n) return;
     var names = sum.names.slice(0, 3).join(", ");
     if (sum.names.length > 3) names += " " + tr("n.andmore", { n: sum.names.length - 3 });
@@ -2064,21 +2074,31 @@
   // device (oros-chores-prefs, device-local), from the reminder hour
   // on (default 09:00, -1 = off): one notice per day. No "me", no
   // chores of mine → silent (SH-B7).
+  // Wheels shared with a household (BR-HH) come from the device-local
+  // mirror chores/house.js keeps, each with this person's own "me".
   var CHORES_DATA_KEY = "oros-chores-data";
   function choresCheckTick() {
-    var Core = window.OrosChoresCore;
+    var Core = window.OrosChoresCore, HHc = window.OrosChoresHouse;
     if (!Core) return;                                  // stale bundle — silent
-    var raw, prefs;
+    var raw, prefs, wheels = [];
     try {
       raw = JSON.parse(localStorage.getItem(CHORES_DATA_KEY));
       prefs = Core.readPrefs(JSON.parse(localStorage.getItem("oros-chores-prefs")));
+      if (HHc) wheels = HHc.readMirror(JSON.parse(localStorage.getItem(HHc.MIRROR_KEY)));
     } catch (e) { return; }
-    if (!prefs.me || !raw || !Array.isArray(raw.tasks) || !raw.tasks.length) return;
+    if (prefs.me && raw && Array.isArray(raw.tasks) && raw.tasks.length) wheels.unshift({ data: Core.mergeChores(raw, raw), me: prefs.me });
+    wheels = wheels.filter(function (w) { return w.me; });
+    if (!wheels.length) return;
     if (prefs.rh < 0 || new Date().getHours() < prefs.rh) return;
     if (todayAbsorbs("chores")) return;                 // said in today's summary
     var N = window.orosNotifs;
     if (!(N && typeof N.emit === "function")) return;
-    var sum = Core.summary(Core.mergeChores(raw, raw), Core.localDn(new Date()), prefs.me);
+    var sum = { names: [], late: 0 }, dn = Core.localDn(new Date());
+    wheels.forEach(function (w) {
+      var s = Core.summary(w.data, dn, w.me);
+      sum.names = sum.names.concat(s.names);
+      sum.late += s.late;
+    });
     if (!sum.names.length && !sum.late) return;
     var names = sum.names.slice(0, 3).join(", ");
     if (sum.names.length > 3) names += " " + tr("n.andmore", { n: sum.names.length - 3 });

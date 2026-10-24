@@ -1839,6 +1839,8 @@ var PRECACHE_URLS = [
   "calendar/quickadd.js",
   "calendar/subs.js",
   "calendar/house.js",
+  "chores/house.js",
+  "plants/house.js",
   "certificates/sign.js",
   "certificates/verify.css",
   "certificates/verify.html",

@@ -22,6 +22,7 @@
       <button type="button" role="tab" class="tab" id="tab-home" aria-controls="view-home"></button>
     </nav>
   </header>
+  <div id="wheels" class="chips wheels" hidden></div>
 
   <main id="main">
     <!-- Wheel: two concentric discs -->
@@ -125,6 +126,13 @@
         <p class="hint" id="tasks-empty" data-i18n="home.tasksEmpty">Add a chore, or start from a ready set.</p>
       </section>
 
+      <!-- Share the wheel with a household (house.js, BR-HH) -->
+      <section class="sec" id="hh-sec" hidden>
+        <h2 class="sec-title" data-i18n="hh.sec">Household</h2>
+        <p class="hint" id="hh-line"></p>
+        <button type="button" class="txt-btn" id="hh-btn"></button>
+      </section>
+
       <section class="sec">
         <h2 class="sec-title" data-i18n="home.sets">Ready sets</h2>
         <div id="sets" class="chips"></div>
@@ -147,6 +155,8 @@
 
   <script src="../i18n.js?v=3.49.00" data-app="chores,recordpkg"></script>
   <script src="core.js?v=3.49.00"></script>
+  <script src="../household/core.js?v=3.49.00"></script>
+  <script src="house.js?v=3.49.00"></script>
   <script src="../bundle.js?v=3.49.00"></script>
   <script src="../recordpkg.js?v=3.49.00"></script>
   <script src="package.js?v=3.49.00"></script>

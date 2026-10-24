@@ -36,6 +36,13 @@ In `Home`, pick yourself under `Who are you on this device?`, then choose an hou
 ## Stats
 For `This week`, `This month` or `12 months`, each member's points, chores done and missed, and their streak, with a mark for their fair share. `History (90 days)` lists what was done.
 
+## Share the wheel with your household
+With a [household](app:household) set up, `Home` › `Household` › `Share with a household` moves this wheel into the household: everyone in it sees the same members, chores and ticks in their own Chore Wheel, and a tick on one phone reaches the others. Each person picks who they are under `Who are you on this device?`, so the daily reminder only tells them about their own turn; the reminder hour stays on each device. Everything is end-to-end encrypted: the orOS relay only passes on what it cannot read.
+
+The wheel keeps its members, chores and ids. Only the ticks, skips and hand-overs of the last three months travel with it, so stats over longer ranges start again from there.
+
+When there is more than one wheel (your own and a household's), chips at the top switch between them. `Stop sharing` takes the wheel out of the household for everyone: you keep your own copy under `My wheel`, and the others can bring it back from the Household app for 30 days.
+
 ## Save and open an orOS file
 In `Home`, under `Save and open`, `orOS file (.oroschores)` saves every member, chore and everything ticked, skipped or handed over as one `.oroschores` file, for example to move them to another device without sync or to keep a copy. The file is a plain ZIP: unzipped it holds the data as `content.json` plus `preview/chores.md`, `preview/chores.csv` and `preview/history.csv` for other programs. It is not encrypted, so keep it somewhere safe.
 

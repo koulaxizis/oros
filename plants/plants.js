@@ -126,7 +126,18 @@
       "toast.badFile": "This is not a Plant Care file",
       "confirm.del": "Delete {name} and its history?", "confirm.yes": "Delete",
       "live.done": "{kind} done for {name}",
-      "app.title": "Plant Care"
+      "app.title": "Plant Care",
+      "hh.sec": "Household", "hh.own": "Only mine", "hh.garden": "Home plants",
+      "hh.share.t": "Share with a household",
+      "hh.share.x": "Everyone in the household sees the same plants in their own Plant Care, and “Done” on one phone moves the next watering for everyone. Each plant can remind everyone or one person.",
+      "hh.which": "Household", "hh.go": "Share", "hh.open": "Open Household",
+      "hh.nohh": "Make or join a household first, in the Household app.",
+      "hh.in": "Shared in {hh}: changes reach everyone. The reminder hour is yours.",
+      "hh.stop.t": "Stop sharing",
+      "hh.stop.x": "The plants leave {hh} for everyone, and you keep your own copy. The others can bring them back from Household for 30 days.",
+      "hh.who": "Reminder for", "hh.everyone": "Everyone in the household", "hh.whoIs": "Reminds {n}",
+      "toast.hhShared": "Shared with {hh}", "toast.hhStopped": "Sharing stopped. Your own copy is under “Only mine”.",
+      "toast.hhFail": "Could not reach the household. Try again."
     },
     el: {
       "tab.today": "Σήμερα", "tab.plants": "Τα φυτά μου", "btn.add": "Φυτό", "btn.addAria": "Νέο φυτό",
@@ -200,7 +211,18 @@
       "toast.badFile": "Αυτό δεν είναι αρχείο Φροντίδας φυτών",
       "confirm.del": "Διαγραφή του «{name}» και του ιστορικού του;", "confirm.yes": "Διαγραφή",
       "live.done": "{kind} έγινε για {name}",
-      "app.title": "Φροντίδα φυτών"
+      "app.title": "Φροντίδα φυτών",
+      "hh.sec": "Νοικοκυριό", "hh.own": "Μόνο τα δικά μου", "hh.garden": "Φυτά του σπιτιού",
+      "hh.share.t": "Κοινή χρήση με νοικοκυριό",
+      "hh.share.x": "Όλοι στο νοικοκυριό βλέπουν τα ίδια φυτά στη δική τους Φροντίδα φυτών, και το «Έγινε» σε ένα κινητό μεταθέτει το επόμενο πότισμα για όλους. Κάθε φυτό υπενθυμίζει σε όλους ή σε έναν.",
+      "hh.which": "Νοικοκυριό", "hh.go": "Κοινή χρήση", "hh.open": "Άνοιγμα Νοικοκυριού",
+      "hh.nohh": "Φτιάξε πρώτα ένα νοικοκυριό ή μπες σε ένα, από την εφαρμογή Νοικοκυριό.",
+      "hh.in": "Κοινά στο «{hh}»: οι αλλαγές φτάνουν σε όλους. Η ώρα υπενθύμισης είναι δική σου.",
+      "hh.stop.t": "Διακοπή κοινής χρήσης",
+      "hh.stop.x": "Τα φυτά φεύγουν από το «{hh}» για όλους και εσύ κρατάς δικό σου αντίγραφο. Οι άλλοι μπορούν να τα φέρουν πίσω από το Νοικοκυριό για 30 ημέρες.",
+      "hh.who": "Υπενθύμιση για", "hh.everyone": "Όλους στο νοικοκυριό", "hh.whoIs": "Υπενθύμιση για: {n}",
+      "toast.hhShared": "Κοινά με «{hh}»", "toast.hhStopped": "Η κοινή χρήση σταμάτησε. Το αντίγραφό σου είναι στο «Μόνο τα δικά μου».",
+      "toast.hhFail": "Δεν έγινε σύνδεση με το νοικοκυριό. Δοκίμασε ξανά."
     }
   };
   if (window.orosI18n) window.orosI18n.table(STRINGS, "plants", LANG);
@@ -283,21 +305,26 @@
       try {
         var parsed = JSON.parse(raw);
         if (parsed && typeof parsed === "object" && Array.isArray(parsed.plants)) {
-          data = canonical(parsed);
+          data = pdata = canonical(parsed);
           return;
         }
       } catch (e) {}
       try { localStorage.setItem(STORAGE_KEY + "-broken", raw); } catch (e) {}
       try { console.error("[orOS] plants: unreadable data copied to " + STORAGE_KEY + "-broken"); } catch (e) {}
     }
-    data = emptyData();
+    data = pdata = emptyData();
   }
 
   var saveFailShown = false;
   function save() {
     data = canonical(data);
+    if (active) { hhG[active].data = data; hhPush(); return; }      // a household garden: the change goes there
+    pdata = data;
+    saveOwn();
+  }
+  function saveOwn() {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(pdata));
       saveFailShown = false;
     } catch (e) {
       if (!saveFailShown) { saveFailShown = true; showToast(t("toast.save")); }   // R30
@@ -316,7 +343,9 @@
       tab: p.tab === "plants" ? "plants" : "today",
       room: typeof p.room === "string" ? p.room.slice(0, C.ROOM_LEN) : null,
       // wave 34: the person's own Pl@ntNet key — device-local, never synced
-      pnKey: typeof p.pnKey === "string" && ID.keyOk(p.pnKey) ? p.pnKey.trim() : ""
+      pnKey: typeof p.pnKey === "string" && ID.keyOk(p.pnKey) ? p.pnKey.trim() : "",
+      // the garden on screen (BR-HH): "own", "<box>/<doc>" or "" (not picked)
+      wh: typeof p.wh === "string" && /^(own|[A-Za-z0-9_-]{1,40}\/[A-Za-z0-9_-]{1,40})$/.test(p.wh) ? p.wh : ""
     };
   }
   var prefsTimer = null;
@@ -324,6 +353,221 @@
   function savePrefsNow() {
     clearTimeout(prefsTimer); prefsTimer = null;
     try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); } catch (e) {}
+  }
+
+  // ---------- 2a. Plants shared with a household (BR-HH) ----------
+  // A shared garden is a household document of kind "plants"
+  // (window.parent.orosHousehold, household/engine.js; plants/house.js
+  // turns it into Plant Care data and back). Sharing moves the own
+  // plants into the household with their ids; while a household garden
+  // is on screen, `data` is that garden, in memory only, and every
+  // change leaves as the records that changed. Each plant's reminder
+  // can be for one member of the household (item "wh:<plant>"),
+  // otherwise it is for everyone. Nothing here merges a shared garden:
+  // the household merge does, and hhInject() rebuilds it.
+  var HHp = window.OrosPlantsHouse || null, HC = window.OrosHouseCore || null;
+  var pdata = null;       // the own plants (stored and synced)
+  var hhG = {};           // "<box>/<doc id>" → { box, id, hh, t, last, who, by, data }
+  var active = "";        // the household garden on screen, "" = the own plants
+  var HH_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-5h4v5"/></svg>';
+  function hhApi() {
+    if (!HHp || !HC) return null;
+    try {
+      var p = window.parent;
+      return p && p !== window && p.orosHousehold && typeof p.orosHousehold.docs === "function" ? p.orosHousehold : null;
+    } catch (e) { return null; }
+  }
+  function ownEmpty() { return !pdata.plants.length; }
+  function hhSig() {
+    return Object.keys(hhG).sort().map(function (k) { return k + ":" + hhG[k].t; }).join(",") + "|" + active + "|" +
+           (active ? JSON.stringify(data) + JSON.stringify(hhG[active].who) : "");
+  }
+  // The garden on screen: the one chosen here, else a household garden
+  // when the own one is empty, else the own one.
+  function hhPick() {
+    var keys = Object.keys(hhG).sort(), want = "";
+    if (prefs.wh && hhG[prefs.wh]) want = prefs.wh;
+    else if (prefs.wh !== "own" || ownEmpty()) want = ownEmpty() && keys.length ? keys[0] : "";
+    active = want;
+    data = want ? hhG[want].data : pdata;
+  }
+  function hhInject() {
+    var h = hhApi();
+    if (!h) return false;
+    var before = hhSig(), g = {};
+    h.docs("plants").forEach(function (d) {
+      if (!d.ready) return;
+      var v = h.view(d.box, d.id);
+      if (!v) return;
+      var b = HHp.build(v);
+      g[d.box + "/" + d.id] = { box: d.box, id: d.id, hh: d.hh || "", t: (typeof v.m.t === "string" && v.m.t) || d.title || d.hh || "",
+                                last: HHp.fromDoc(v), who: b.who, by: b.by, data: b.data };
+    });
+    hhG = g;
+    var copies = hhCopies(h);
+    hhPick();
+    return copies || hhSig() !== before;
+  }
+  // The own copy of a garden that left a household: same ids, stamped
+  // now, so it is newer than the tombstones the share left.
+  function hhCopies(h) {
+    var made = false, now = Date.now();
+    h.archived("plants").forEach(function (a) {
+      if (!a.take) return;
+      var c = HHp.copyOf(HC.view(a.doc), now);
+      if (c && c.data.plants.length) {
+        pdata = C.merge(pdata, c.data);
+        if (!active) data = pdata;
+        saveOwn();
+        made = true;
+      }
+      h.dropArchived(a.box, a.id);
+    });
+    return made;
+  }
+  function hhPush() {
+    var h = hhApi(), g = hhG[active];
+    if (!h || !g) return;
+    var cur = HHp.project(data, g.who, todayYmd());
+    var d = HC.diffItems(g.last, cur.items, HHp.FIELDS);
+    g.last = cur.items;
+    if (d) h.change(g.box, g.id, { set: d.set, del: d.del });
+  }
+  function hhSwitch(key) {
+    prefs.wh = key || "own";
+    hhPick();
+    savePrefsNow();
+    render();
+  }
+  function renderGardens() {
+    var box = $("gardens");
+    if (!box) return;
+    box.innerHTML = "";
+    var keys = Object.keys(hhG).sort();
+    if (!keys.length || (keys.length === 1 && ownEmpty() && active)) { box.hidden = true; return; }
+    box.hidden = false;
+    var chip = function (key, label, house) {
+      var b = el("button", "chip" + (active === key ? " on" : ""));
+      b.type = "button";
+      if (house) b.insertAdjacentHTML("beforeend", HH_SVG);
+      b.appendChild(document.createTextNode(label));
+      b.setAttribute("aria-pressed", active === key ? "true" : "false");
+      b.addEventListener("click", function () { if (active !== key) hhSwitch(key); });
+      box.appendChild(b);
+    };
+    chip("", t("hh.own"), false);
+    keys.forEach(function (k) { chip(k, hhG[k].t || t("hh.garden"), true); });
+  }
+  // The household members of the garden on screen.
+  function hhMembers() {
+    var h = hhApi(), g = hhG[active];
+    if (!h || !g) return [];
+    var x = h.list().filter(function (y) { return y.box === g.box; })[0];
+    return x ? x.members.map(function (m) { return h.member(g.box, m.id); }).filter(Boolean) : [];
+  }
+  // Whose reminder a plant is (another member only: the initials).
+  function hhWhoChip(p) {
+    var h = hhApi(), g = hhG[active];
+    if (!h || !g || !g.who[p.id]) return null;
+    var m = h.member(g.box, g.who[p.id]);
+    if (!m) return null;
+    var c = el("span", "by-chip", m.initials);
+    c.title = t("hh.whoIs", { n: m.name });
+    c.setAttribute("aria-label", c.title);
+    return c;
+  }
+  // Settings › Household: share the own plants, or stop sharing.
+  function hhSettings(dlg) {
+    var h = hhApi();
+    if (!h) return;
+    var g = hhG[active];
+    dlg.appendChild(el("div", "dlg-lbl", t("hh.sec")));
+    dlg.appendChild(el("p", "dlg-sub", g ? t("hh.in", { hh: g.hh || g.t }) : t("hh.share.x")));
+    var b = button(t(g ? "hh.stop.t" : "hh.share.t"), "", function () { dlg.close(); hhAsk(); });
+    b.id = "pc-hh";
+    b.disabled = !g && ownEmpty();
+    var row = el("div", "dlg-actions tight");
+    row.appendChild(b);
+    dlg.appendChild(row);
+  }
+  function hhAsk() {
+    var h = hhApi();
+    if (!h) return;
+    var mode = active ? "stop" : "share", g = hhG[active] || {}, hhs = h.list();
+    var dlg = makeDialog("pc-hhdlg");
+    dlg.appendChild(el("div", "dlg-title", t("hh." + mode + ".t")));
+    dlg.appendChild(el("p", "dlg-sub", mode === "share" ? (hhs.length ? t("hh.share.x") : t("hh.nohh"))
+                                                       : t("hh.stop.x", { hh: g.hh || g.t || "" })));
+    var sel = el("select");
+    hhs.forEach(function (x) { var o = el("option", "", x.name || "?"); o.value = x.box; sel.appendChild(o); });
+    if (mode === "share" && hhs.length > 1) dlg.appendChild(field(t("hh.which"), sel, "pc-hhbox"));
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("ed.cancel"), "", function () { dlg.close(); }));
+    var ok;
+    if (mode === "share" && !hhs.length) {
+      ok = button(t("hh.open"), "primary", function () {
+        dlg.close();
+        try { window.parent.__orosOpenAt("household", null); } catch (e) {}
+      });
+    } else {
+      ok = button(t(mode === "share" ? "hh.go" : "hh.stop.t"), "primary", function () {
+        ok.disabled = true;
+        var fail = function () { ok.disabled = false; showToast(t("toast.hhFail")); };
+        if (mode === "share") {
+          var box = sel.value, x = hhs.filter(function (y) { return y.box === box; })[0] || {};
+          var proj = HHp.project(pdata, {}, todayYmd());
+          Promise.resolve(h.share(box, "plants", x.name || t("hh.garden"), { set: proj.items })).then(function (id) {
+            // the plants leave the own data on every device of the person
+            var now = Date.now();
+            pdata.plants.forEach(function (p) { pdata.tombs[p.id] = Math.max(now, p.m); });
+            pdata = canonical(pdata);
+            data = pdata;
+            saveOwn();
+            prefs.wh = box + "/" + id;
+            hhInject();
+            savePrefsNow();
+            render();
+            dlg.close();
+            showToast(t("toast.hhShared", { hh: x.name || "" }));
+          }, fail);
+          return;
+        }
+        Promise.resolve(h.unshare(g.box, g.id)).then(function () {
+          prefs.wh = "own";
+          hhInject();
+          savePrefsNow();
+          render();
+          dlg.close();
+          showToast(t("toast.hhStopped"));
+        }, fail);
+      });
+    }
+    acts.appendChild(ok);
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+  }
+  var hhQueued = false;
+  function hhRefresh() {
+    if (hhQueued) return;
+    hhQueued = true;
+    setTimeout(function () {
+      hhQueued = false;
+      var open = document.querySelector("dialog[open]");
+      if (hhInject() && !open) render();
+      else if (!open) renderGardens();
+      if (hhWant && Object.keys(hhG).length) { var w = hhWant; hhWant = null; openTarget(w); }
+    }, 0);
+  }
+  var hhWant = null;      // a search target in a household garden not read yet
+  function hhBoot() {
+    var h = hhApi();
+    if (!h) return;
+    var off = h.on(function (e) {
+      if (e && (e.type === "doc" || e.type === "list" || e.type === "roster" || e.type === "archive")) hhRefresh();
+    });
+    window.addEventListener("pagehide", function () { try { off(); } catch (e) {} });
+    Promise.resolve(h.ready()).then(hhRefresh, hhRefresh);
   }
 
   function plantById(id) {
@@ -551,6 +795,8 @@
     sub.appendChild(kb);
     sub.appendChild(el("span", "when", whenText(tk.due, today)));
     if (p.room) sub.appendChild(el("span", "room", p.room));
+    var whoC = hhWhoChip(p);
+    if (whoC) sub.appendChild(whoC);
     body.appendChild(sub);
     li.appendChild(body);
     var done = el("button", "done-btn");
@@ -951,6 +1197,19 @@
     notes.value = p ? p.notes : "";
     form.appendChild(field(t("ed.notes"), notes, "pc-notes"));
 
+    // a household garden: whose reminder this plant is (BR-HH)
+    var whoSel = null, gH = hhG[active];
+    if (gH) {
+      whoSel = el("select");
+      var o0 = el("option", "", t("hh.everyone"));
+      o0.value = "";
+      whoSel.appendChild(o0);
+      hhMembers().forEach(function (m) { var o = el("option", "", m.name); o.value = m.id; whoSel.appendChild(o); });
+      whoSel.value = p && gH.who[p.id] ? gH.who[p.id] : "";
+      if (whoSel.value !== (p && gH.who[p.id] ? gH.who[p.id] : "")) whoSel.value = "";
+      form.appendChild(field(t("hh.who"), whoSel, "pc-who"));
+    }
+
     // Species → suggested values (only fields the user has not typed in)
     var lastPresetName = p && p.sp ? presetName(p.sp) : "";
     function paintTip() { tip.textContent = sp.value ? t("ed.tip", { tip: presetTip(sp.value) }) : ""; tip.hidden = !sp.value; }
@@ -1004,14 +1263,26 @@
         r: (readNum(r, 0, 36) || 0) * 30,
         notes: C.cleanText(notes.value, C.NOTES_LEN, true)
       };
+      // whose reminder (a household garden): set before save() sends it
+      var whoChanged = false;
+      function setWho(pid) {
+        if (!whoSel || !hhG[active]) return;
+        var w = hhG[active].who, v = whoSel.value;
+        if ((w[pid] || "") === v) return;
+        if (v) w[pid] = v; else delete w[pid];
+        whoChanged = true;
+      }
       if (p) {
         var cur = plantById(p.id);
         if (!cur) { dlg.close(); return; }
         var changed = Object.keys(vals).some(function (k) { return k === "sci" ? (cur.sci || "") !== vals.sci : cur[k] !== vals[k]; });
+        setWho(p.id);
         if (changed) {                       // R27: no stamp without a real change
           Object.keys(vals).forEach(function (k) { cur[k] = vals[k]; });
           if (!cur.sci) delete cur.sci;      // absent when empty (canonical form)
           stamp(cur);
+        }
+        if (changed || whoChanged) {
           save();
           showToast(t("toast.saved"));
         }
@@ -1020,6 +1291,7 @@
         var np = Object.assign({ id: newId(), m: Date.now(), st: st, sn: {} }, vals);
         if (!np.sci) delete np.sci;
         data.plants.push(np);
+        setWho(np.id);
         save();
         showToast(t("toast.added", { name: nm }));
       }
@@ -1235,6 +1507,7 @@
       hint.appendChild(lnk);
       dlg.appendChild(hint);
     }
+    hhSettings(dlg);
     dlg.appendChild(el("div", "dlg-lbl", t("set.data")));
     var io = el("div", "dlg-actions tight");
     io.appendChild(button(t("set.export"), "", exportData));
@@ -1448,6 +1721,7 @@
   window.__orosPlantsOpen = function (target) {
     if (typeof target !== "string" || !target) return;
     if (target === "today") { setTab("today"); return; }
+    if (C.ID_RE.test(target) && !plantById(target) && !hhFind(target)) { if (hhApi()) hhWant = { plant: target }; return; }
     if (C.ID_RE.test(target) && plantById(target)) {
       setTab("plants");
       details(target);
@@ -1491,6 +1765,7 @@
     }
     if (tg.done && typeof tg.done === "object") {
       var id = tg.done.plant, kind = tg.done.kind;
+      if (typeof id === "string" && !plantById(id)) hhFind(id);
       var p = typeof id === "string" ? plantById(id) : null;
       setTab("today");
       if (!p) return;
@@ -1504,6 +1779,17 @@
     if (typeof tg.plant === "string") window.__orosPlantsOpen(tg.plant);
   }
   window.__orosOpenAt = openAt;
+  function openTarget(tg) { if (tg && typeof tg.plant === "string") window.__orosPlantsOpen(tg.plant); }
+  // A plant that is in another garden (own or household): that garden
+  // goes on screen. False when no garden here has it.
+  function hhFind(id) {
+    var key = null;
+    if (pdata.plants.some(function (p) { return p.id === id; })) key = "";
+    Object.keys(hhG).forEach(function (k) { if (key === null && hhG[k].data.plants.some(function (p) { return p.id === id; })) key = k; });
+    if (key === null) return false;
+    if (key !== active) hhSwitch(key);
+    return true;
+  }
 
   // ---------- 10. Sync slice + palette ----------
   var PAL_VARS = ["--bg", "--bg-desktop", "--bar-bg", "--text", "--text-dim",
@@ -1551,20 +1837,22 @@
     api.registerSlice("plants", sliceGet, sliceSet, STORAGE_KEY, mergeFn);
   }
 
-  function sliceGet() { return canonical(data); }   // canonical copy (R26)
+  function sliceGet() { return canonical(pdata); }   // canonical copy (R26) of the own plants only
 
   function sliceSet(incoming) {
     if (!incoming || typeof incoming !== "object" || !Array.isArray(incoming.plants)) return;
-    var before = JSON.stringify(data);
+    var before = JSON.stringify(pdata);
     window.__orosSyncApi._suppress = true;   // R6: a pull never marks dirty
     try {
-      data = canonical(incoming);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      pdata = canonical(incoming);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(pdata));
     } catch (e) {
     } finally {
       window.__orosSyncApi._suppress = false;
     }
-    if (JSON.stringify(data) === before) return;   // no toast (sync feedback = taskbar dot)
+    if (JSON.stringify(pdata) === before) return;   // no toast (sync feedback = taskbar dot)
+    if (active) { renderGardens(); return; }        // a household garden is on screen
+    data = pdata;
     render();
   }
 
@@ -1578,6 +1866,7 @@
   var renderedDay = null;
   function render() {
     renderedDay = todayYmd();
+    renderGardens();
     var tab = prefs.tab;
     ["today", "plants"].forEach(function (v) {
       var on = v === tab;
@@ -1643,6 +1932,7 @@
     watchPalette();
     render();
     takeStaged();
+    hhBoot();
   }
 
   boot();

@@ -13,7 +13,7 @@
 // ============================================================
 (function (root) {
   "use strict";
-  var KEY = "oros-plants-data";
+  var KEY = "oros-plants-data", HH_KEY = "oros-plants-hh";
   // Same keys and English as plants.js (orosI18n packs: pack "plants").
   // The shell runs this file: a pack language reads the "plants" pack
   // when the shell has it, else English.
@@ -38,23 +38,13 @@
 
   var PROVIDER = {
     id: "plants",
-    keys: [KEY],
+    keys: [KEY, HH_KEY],
     search: function (ctx) {
-      var d = ctx.readJSON(KEY), out = [], w = words(ctx.lang);
-      if (!d || !Array.isArray(d.plants)) return out;
-      var tombs = d.tombs && typeof d.tombs === "object" ? d.tombs : {};
-      d.plants.forEach(function (p) {
-        if (!p || typeof p.id !== "string") return;
-        if (typeof tombs[p.id] === "number" && tombs[p.id] >= (Number(p.m) || 0)) return;
-        var name = str(p.name) || w["search.unnamed"];
-        out.push({
-          id: p.id,
-          title: name,
-          text: [str(p.room), species(p.sp, ctx.lang), str(p.sci),
-                 p.out === 1 ? w["search.out"] : "",
-                 str(p.notes)].filter(Boolean).join(" · "),
-          target: p.id
-        });
+      var out = hitsOf(ctx.readJSON(KEY), ctx);
+      // gardens shared with a household (plants/house.js mirror, BR-HH)
+      var hh = ctx.readJSON(HH_KEY);
+      (hh && Array.isArray(hh.gardens) ? hh.gardens : []).forEach(function (g) {
+        if (g && g.data) out = out.concat(hitsOf(g.data, ctx));
       });
       return out;
     },
@@ -66,6 +56,25 @@
       }
     }
   };
+  function hitsOf(d, ctx) {
+    var out = [], w = words(ctx.lang);
+    if (!d || !Array.isArray(d.plants)) return out;
+    var tombs = d.tombs && typeof d.tombs === "object" ? d.tombs : {};
+    d.plants.forEach(function (p) {
+      if (!p || typeof p.id !== "string") return;
+      if (typeof tombs[p.id] === "number" && tombs[p.id] >= (Number(p.m) || 0)) return;
+      var name = str(p.name) || w["search.unnamed"];
+      out.push({
+        id: p.id,
+        title: name,
+        text: [str(p.room), species(p.sp, ctx.lang), str(p.sci),
+               p.out === 1 ? w["search.out"] : "",
+               str(p.notes)].filter(Boolean).join(" · "),
+        target: p.id
+      });
+    });
+    return out;
+  }
 
   if (typeof module !== "undefined" && module.exports) module.exports = PROVIDER;
   if (root && root.document) {
