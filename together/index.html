@@ -382,6 +382,11 @@
         </label>
         <p class="hint small" data-i18n="set.remindHint">One notice in the morning while orOS is open. The Calendar shows these days too (chip “Together”).</p>
       </fieldset>
+      <fieldset class="field" id="set-hh" hidden>
+        <legend data-i18n="hh.sec">Household</legend>
+        <p class="hint small" id="set-hh-p"></p>
+        <div class="row wrap"><button type="button" class="chip" id="set-hh-go"></button></div>
+      </fieldset>
       <fieldset class="field">
         <legend data-i18n="sec.lock">PIN lock</legend>
         <p class="hint small" data-i18n="lock.hint">A PIN screen when Together opens, and again after a minute away. It is a privacy screen on this device, not encryption.</p>
@@ -432,6 +437,11 @@
 
   <script src="../sky/core.js?v=3.57.00"></script>
   <script src="core.js?v=3.57.00"></script>
+  <script src="../household/core.js?v=3.57.00"></script>
+  <script src="../household/whole.js?v=3.57.00"></script>
+  <script src="../household/share.js?v=3.57.00"></script>
+  <script src="../household/group.js?v=3.57.00"></script>
+  <script src="house.js?v=3.57.00"></script>
   <script src="app.js?v=3.57.00"></script>
 
 </body>

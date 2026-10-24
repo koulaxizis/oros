@@ -2630,6 +2630,7 @@ function transientNote(title, body) {
       togetherCache.data = null;
       try {
         var raw = JSON.parse(localStorage.getItem(Core.STORAGE_KEY) || "null");
+        if (window.TogetherHouse) raw = window.TogetherHouse.withShared(raw);   // shared relationships (BR-HH wave 7d)
         if (raw && Array.isArray(raw.rels) && raw.rels.length) {
           togetherCache.data = Core.normalize(raw);
           togetherCache.idx = Core.contactIndex(JSON.parse(localStorage.getItem("oros-contacts-data") || "null"));

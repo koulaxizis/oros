@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.58.00
+- Together: share a relationship with your partner. Open it, then Settings › Household › Share with a household: you both see the same counter, milestones, moments and special days, and what either of you adds reaches the other. Gift ideas, reminders and the PIN stay your own.
+
 ## Version 3.57.00
 - Pet Health Book: share your pets with your household. In Settings › Household, Share with a household gives everyone the same pets and health book: a vaccine, vet visit, dose or weight one person logs reaches everyone, and a shared pet reminds once. Your own book stays under Only mine.
 
