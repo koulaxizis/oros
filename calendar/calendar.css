@@ -1615,11 +1615,6 @@ dialog#qa-dlg::backdrop, dialog#subs-dlg::backdrop, dialog#sv-dlg::backdrop, dia
 }
 
 /* ---------- X. [hidden] must ALWAYS win ---------- */
-[hidden] { display: none !important; }
-/* Weather on days (app links wave 6): the Weather app's cached forecast */
-.cal-wx { position: absolute; top: 3px; right: 4px; font-size: 11px; line-height: 1; pointer-events: none; }
-.wk-wx, .day-wx { margin-left: 6px; font-size: 11.5px; font-weight: 600; color: var(--text-dim); white-space: nowrap; }
-
 /* ---------- Calendars shared with a household (BR-HH) ---------- */
 .lbl-hh { min-height: 38px; min-width: 40px; padding: 6px 10px; display: inline-flex; align-items: center; justify-content: center; }
 .lbl-hh-stop { min-height: 38px; padding: 6px 10px; font-size: 12px; }
@@ -1651,3 +1646,9 @@ dialog#hh-dlg {
 dialog#hh-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 #hh-dlg h3 { font-size: 14px; color: var(--accent); margin-bottom: 10px; }
 #hh-dlg .del-text { margin-bottom: 10px; }
+
+[hidden] { display: none !important; }
+/* Weather on days (app links wave 6): the Weather app's cached forecast */
+.cal-wx { position: absolute; top: 3px; right: 4px; font-size: 11px; line-height: 1; pointer-events: none; }
+.wk-wx, .day-wx { margin-left: 6px; font-size: 11.5px; font-weight: 600; color: var(--text-dim); white-space: nowrap; }
+
