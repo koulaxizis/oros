@@ -319,6 +319,22 @@ html, body {
 #calc-root[data-troll="on"] #calc-res {
   color: var(--accent);
 }
+/* The quip beside a Troll mode answer: wraps, never pushes the keypad
+   off a 360px screen (one line kept free while Troll mode is on). */
+.calc-quip {
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--text-dim);
+  font-style: italic;
+  overflow-wrap: anywhere;
+}
+.calc-quip:empty { display: none; }
+#calc-root[data-troll="on"] .calc-quip { display: block; min-height: 1.35em; }
+.h-lied {
+  margin-right: 4px;
+  color: var(--text-dim);
+  cursor: help;
+}
 
 /* ---------- Wide screens: side-docked, draggable history ---------- */
 @media (min-width: 880px) {

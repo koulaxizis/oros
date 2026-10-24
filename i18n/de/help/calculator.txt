@@ -1,5 +1,5 @@
 # Rechner
-Ein Alltagsrechner mit fünf Modi: `Standard` mit Speichertasten, `Wissenschaftlich` mit Klammern und Funktionen, `Graphen` für bis zu vier Funktionen, `Programmierer` für Hex und Binär und `Finanzen` für MwSt., Prozente, Kredite und Sparen. Er führt einen Verlauf deiner Ergebnisse und hat zum Spaß einen `Troll-Modus`, der dich neckt und manchmal eine leicht falsche Antwort gibt.
+Ein Alltagsrechner mit fünf Modi: `Standard` mit Speichertasten, `Wissenschaftlich` mit Klammern und Funktionen, `Graphen` für bis zu vier Funktionen, `Programmierer` für Hex und Binär und `Finanzen` für MwSt., Prozente, Kredite und Sparen. Er führt einen Verlauf deiner Ergebnisse und hat zum Spaß einen `Troll-Modus`, der dich bei jeder Antwort neckt. Die Antworten selbst sind immer richtig.
 
 ## Erste Schritte
 Wähle einen Modus in der Leiste unter dem Titel. Auf einem schmalen Bildschirm sind die Namen gekürzt (`Basis`, `Wiss.`, `Graph`, `Prog`, `Geld`). Die App merkt sich den Modus, den du zuletzt auf diesem Gerät benutzt hast.
@@ -74,11 +74,11 @@ Jedes Ergebnis aus `Standard` und `Wissenschaftlich` kommt in den `Verlauf`, das
 Auf einem breiten Bildschirm kannst du den linken Rand des Verlaufs ziehen, um ihn breiter oder schmaler zu machen.
 
 ## Troll-Modus
-Tippe oder klicke auf `Troll-Modus`, um ihn ein- oder auszuschalten. Solange er an ist, kommt jede Antwort in `Standard` und `Wissenschaftlich` mit einem frechen Kommentar, und ab und zu liegt das Ergebnis heimlich ein paar Prozent daneben (nie zweimal hintereinander). Falsche Antworten landen auch im Verlauf. Graphen, Programmierer und Finanzen geben immer ehrliche Antworten.
+Tippe oder klicke auf `Troll-Modus`, um ihn ein- oder auszuschalten. Solange er an ist, kommt jede Antwort in `Standard` und `Wissenschaftlich` mit einem frechen Spruch unter dem Ergebnis. Das Ergebnis selbst ist immer richtig: Der Troll-Modus ändert nur, was der Rechner sagt, nie die Zahlen. Manche Sprüche passen zur Antwort, etwa zu null, zu 42, zu einer negativen Zahl oder zu einer Einheitenumrechnung. Graphen, Programmierer und Finanzen bleiben still.
 
-Klick mit rechts oder drück lange auf einem Touchscreen auf die Taste `Troll-Modus`, um einzustellen, wie oft er lügt: `Dezent`, `Ausgewogen` oder `Hemmungslos`. Die Punkte auf der Taste zeigen die Stufe.
+Klick mit rechts oder drück lange auf einem Touchscreen auf die Taste `Troll-Modus`, um einzustellen, wie frech er wird: `Dezent` (sanftes Necken), `Ausgewogen` oder `Hemmungslos` (ohne Gnade). Die Punkte auf der Taste zeigen die Stufe.
 
->! Nimm den Troll-Modus für nichts, was wichtig ist, etwa Geld oder Messungen.
+Ältere Versionen des Troll-Modus haben eine Antwort manchmal um ein paar Prozent verändert. Diese Antworten stehen weiter in deinem Verlauf, mit einem `≈` davor, damit du sie erkennst.
 
 ## Synchronisierung und Sicherung
 Dein Verlauf, der Speicherwert, die `fx`-Zeile und die Einstellungen des Troll-Modus werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten abgeglichen. Der Modus, die Winkeleinheiten, die Funktionen des Graphen, die Programmierer-Einstellungen, die Finanzzahlen und die Breite des Verlaufs bleiben auf jedem Gerät. `Ans` und die Rechnung auf dem Bildschirm werden nicht gespeichert.

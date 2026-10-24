@@ -6,8 +6,8 @@
 //      canonical pattern — CI requirement)
 //   3. State + persistence (slice "calculator", LWW + tombstones)
 //   4. Engine (standard calculator semantics, full keyboard)
-//   5. Troll mode (teasing language ALWAYS, plausible lies,
-//      never consecutive, 3 intensity levels)
+//   5. Troll mode (a quip beside every answer, the answer itself
+//      always correct; 3 levels of cheek)
 //   6. Rendering (display, keypad, history)
 //   7. Sync slice registration (parent orosSync, cache key)
 //   8. Contract B forwarding (Ctrl+Alt+Shift shell shortcuts)
@@ -66,6 +66,7 @@
       "calc.intensity.rampant": "Rampant",
       "calc.exported": "History exported to CSV.",
       "calc.history.empty_export": "History is empty.",
+      "calc.history.lied": "From the old Troll mode, which sometimes changed answers: this one may be wrong.",
       "calc.mem.stored": "Stored in memory.",
       "calc.mem.recalled": "Recalled from memory.",
       "calc.mem.cleared": "Memory cleared.",
@@ -160,6 +161,7 @@
       "calc.intensity.rampant": "Καταιγιστικό",
       "calc.exported": "Το ιστορικό εξήχθη σε CSV.",
       "calc.history.empty_export": "Το ιστορικό είναι κενό.",
+      "calc.history.lied": "Από την παλιά Λειτουργία πειράγματος, που κάπου κάπου άλλαζε τις απαντήσεις: αυτή μπορεί να είναι λάθος.",
       "calc.mem.stored": "Αποθηκεύτηκε στη μνήμη.",
       "calc.mem.recalled": "Ανακλήθηκε από τη μνήμη.",
       "calc.mem.cleared": "Η μνήμη καθαρίστηκε.",
@@ -234,33 +236,89 @@
     }
   };
 
-  // Troll pack — used ONLY when troll mode is on. These REPLACE
-  // the display hint strings, so the app talks smack regardless of
-  // whether the current result is right or wrong.
+  // Troll pack — used ONLY when troll mode is on. "troll.<key>"
+  // REPLACES <key> (history title, hints); "troll.q.*" are the quips
+  // CalcCore.trollQuip picks beside each answer. Answers stay correct.
   var TROLL_STRINGS = {
     en: {
-      "troll.calc.history": "Receipts of my crimes",
+      "troll.calc.history": "Proof of my genius",
       "troll.calc.history.empty": "You haven't annoyed me yet.",
       "troll.calc.troll.hint": "Trust me. I'm a calculator.",
-      "troll.toast.true": "Fine, take your correct answer. Nerd.",
-      "troll.toast.false.1": "Math is hard. You understand, right?",
-      "troll.toast.false.2": "I did the math. Probably. Mostly. Trust me.",
-      "troll.toast.false.3": "That's the answer. Any other calculator would agree*.\n*terms apply",
-      "troll.toast.false.4": "Rounded for your convenience. Generously.",
-      "troll.toast.false.5": "Confidently calculated. Confidence is free.",
-      "troll.welcome": "I'll take good care of you… my way."
+      "troll.welcome": "Answers stay correct. My manners, not so much.",
+      "troll.q.g1": "Correct. As always. I'm a calculator, not a magician.",
+      "troll.q.g2": "There you go. No need to thank me. Well, maybe a little.",
+      "troll.q.g3": "Done. That was the highlight of my day.",
+      "troll.q.g4": "Exact to the last digit. I'm a little proud.",
+      "troll.q.g5": "Right answer. Your maths teacher would be thrilled.",
+      "troll.q.g6": "Easy for me. Was it hard for you?",
+      "troll.q.g7": "Here's your number. Handle it with care.",
+      "troll.q.g8": "Correct. I checked twice, just to show off.",
+      "troll.q.c1": "Correct. Unlike your guess, I bet.",
+      "troll.q.c2": "Worked out faster than you can find your phone.",
+      "troll.q.c3": "Outsourcing your brain again, are we?",
+      "troll.q.c4": "Right answer. Try to look surprised.",
+      "troll.q.c5": "Another one solved. I'm keeping a list.",
+      "troll.q.c6": "I could do this all day. Sadly, so could you.",
+      "troll.q.c7": "Correct. Write it down before you forget it.",
+      "troll.q.c8": "That's the answer. You're welcome, genius.",
+      "troll.q.r1": "Correct. My battery is smarter than this question.",
+      "troll.q.r2": "I needed a millisecond. You needed a while just to type it.",
+      "troll.q.r3": "Maths: solved. Your life choices: still pending.",
+      "troll.q.r4": "Correct. Even my keys are rolling their eyes.",
+      "troll.q.r5": "Somewhere, a maths teacher just sighed.",
+      "troll.q.r6": "Fine. I'll pretend that was a hard one.",
+      "troll.q.err": "Even I can't do that. And I can do everything.",
+      "troll.q.bare": "You pressed = on a single number. Bold move.",
+      "troll.q.same": "You changed nothing. Truly inspiring work.",
+      "troll.q.42": "42. The answer to life, the universe and everything.",
+      "troll.q.units": "Converted. Units fear me.",
+      "troll.q.zero": "Zero. All that effort for nothing.",
+      "troll.q.easy": "You needed me for that? You have fingers.",
+      "troll.q.trig": "Trigonometry? Look at you, all fancy.",
+      "troll.q.rep": "All the same digit. I'm a natural.",
+      "troll.q.big": "That's a big number. Don't spend it all at once.",
+      "troll.q.neg": "Negative. Like my mood today.",
+      "troll.q.dec": "So many decimals. Precision is my love language."
     },
     el: {
-      "troll.calc.history": "Αποδείξεις των εγκλημάτων μου",
+      "troll.calc.history": "Αποδείξεις της ιδιοφυΐας μου",
       "troll.calc.history.empty": "Δεν με έχεις εκνευρίσει ακόμα.",
-      "troll.calc.troll.hint": "Έμπισέ με. Είμαι αριθμομηχανή.",
-      "troll.toast.true": "Πάλι καλά που το πήρες σωστό. Φροντισμένος/η.",
-      "troll.toast.false.1": "Τα μαθηματικά είναι δύσκολα. Με καταλαβαίνεις, έτσι;",
-      "troll.toast.false.2": "Το υπολόγισα. Πιθανόν. Κυρίως. Έμπισέ με.",
-      "troll.toast.false.3": "Αυτή είναι η απάντηση. Οποιαδήποτε άλλη αριθμομηχανή θα συμφωνούσε*.\n*με όρους",
-      "troll.toast.false.4": "Στρογγυλοποιήθηκε για την ευκολία σου. Γενναιόδωρα.",
-      "troll.toast.false.5": "Υπολογίστηκε με σιγουριά. Η σιγουριά είναι δωρεάν.",
-      "troll.welcome": "Θα σε φροντίσω… με τον δικό μου τρόπο."
+      "troll.calc.troll.hint": "Εμπιστέψου με. Είμαι αριθμομηχανή.",
+      "troll.welcome": "Οι απαντήσεις μένουν σωστές. Οι τρόποι μου, όχι και τόσο.",
+      "troll.q.g1": "Σωστό. Όπως πάντα. Αριθμομηχανή είμαι, όχι μάγος.",
+      "troll.q.g2": "Ορίστε. Δε χρειάζεται να με ευχαριστήσεις. Λίγο μόνο.",
+      "troll.q.g3": "Έγινε. Αυτή ήταν η καλύτερη στιγμή της μέρας μου.",
+      "troll.q.g4": "Ακριβές ως το τελευταίο ψηφίο. Είμαι λίγο περήφανη.",
+      "troll.q.g5": "Σωστή απάντηση. Ο δάσκαλος των μαθηματικών σου θα χαιρόταν.",
+      "troll.q.g6": "Για μένα ήταν εύκολο. Για σένα;",
+      "troll.q.g7": "Ορίστε ο αριθμός σου. Να τον προσέχεις.",
+      "troll.q.g8": "Σωστό. Το έλεγξα δύο φορές, μόνο για να κάνω φιγούρα.",
+      "troll.q.c1": "Σωστό. Όχι σαν τη δική σου εκτίμηση, βάζω στοίχημα.",
+      "troll.q.c2": "Το βρήκα πιο γρήγορα απ' ό,τι βρίσκεις το κινητό σου.",
+      "troll.q.c3": "Πάλι μου φορτώνεις τη σκέψη σου, ε;",
+      "troll.q.c4": "Σωστή απάντηση. Κάνε τουλάχιστον πως εκπλήσσεσαι.",
+      "troll.q.c5": "Άλλο ένα λύθηκε. Τα σημειώνω όλα.",
+      "troll.q.c6": "Θα μπορούσα να το κάνω όλη μέρα. Δυστυχώς, κι εσύ.",
+      "troll.q.c7": "Σωστό. Γράψ' το κάπου πριν το ξεχάσεις.",
+      "troll.q.c8": "Αυτή είναι η απάντηση. Παρακαλώ, ιδιοφυΐα μου.",
+      "troll.q.r1": "Σωστό. Η μπαταρία μου είναι πιο έξυπνη από αυτή την ερώτηση.",
+      "troll.q.r2": "Εμένα μου πήρε ένα χιλιοστό του δευτερολέπτου. Εσένα σου πήρε ώρα μόνο να το γράψεις.",
+      "troll.q.r3": "Τα μαθηματικά λύθηκαν. Οι επιλογές της ζωής σου εκκρεμούν ακόμα.",
+      "troll.q.r4": "Σωστό. Ακόμα και τα πλήκτρα μου γουρλώνουν τα μάτια.",
+      "troll.q.r5": "Κάπου, ένας καθηγητής μαθηματικών μόλις αναστέναξε.",
+      "troll.q.r6": "Καλά. Θα κάνω πως ήταν δύσκολο.",
+      "troll.q.err": "Ούτε εγώ μπορώ να το κάνω αυτό. Κι εγώ τα μπορώ όλα.",
+      "troll.q.bare": "Πάτησες = σε σκέτο αριθμό. Τολμηρή κίνηση.",
+      "troll.q.same": "Δεν άλλαξες τίποτα. Πραγματικά εμπνευσμένη δουλειά.",
+      "troll.q.42": "42. Η απάντηση για τη ζωή, το σύμπαν και τα πάντα.",
+      "troll.q.units": "Έγινε η μετατροπή. Οι μονάδες με φοβούνται.",
+      "troll.q.zero": "Μηδέν. Τόσος κόπος για το τίποτα.",
+      "troll.q.easy": "Γι' αυτό με χρειάστηκες; Έχεις δάχτυλα.",
+      "troll.q.trig": "Τριγωνομετρία; Για δες, κάνουμε και τους σοβαρούς.",
+      "troll.q.rep": "Όλα τα ψηφία ίδια. Ταλέντο.",
+      "troll.q.big": "Μεγάλος αριθμός. Μην τον ξοδέψεις μονομιάς.",
+      "troll.q.neg": "Αρνητικό. Όπως η διάθεσή μου σήμερα.",
+      "troll.q.dec": "Τόσα δεκαδικά. Η ακρίβεια είναι η γλώσσα της αγάπης μου."
     }
   };
 
@@ -325,7 +383,7 @@
     acc: null,               // accumulated value
     op: null,                // pending operator
     fresh: true,             // true = next digit starts fresh
-    lastTrolled: false,      // prevents consecutive troll lies
+    lastQuip: null,          // troll: the same quip never twice in a row
     lastAnswer: null,        // reused by Ans
     lastRes: "0",            // value offered by click-to-copy
     prev: null               // single-level undo snapshot
@@ -740,9 +798,7 @@
     saveUndoState();
     if (state.op === null || state.acc === null) {
       // Bare "=" on a fresh number — troll still comments
-      if (state.troll && state.cur !== "0") {
-        trollToast(true);
-      }
+      if (state.troll && state.cur !== "0") showQuip({ bare: true });
       return;
     }
     var a = state.acc;
@@ -756,24 +812,13 @@
     var result = OPS[op](a, b);
     var shown = (isFinite(result)) ? numToString(result) : "Error";
 
-    var lied = false;
-    if (state.troll && isFinite(result) && shouldLie()) {
-      shown = numToString(applyLie(result));
-      lied = true;
-      state.lastTrolled = true;
-    } else if (state.troll) {
-      state.lastTrolled = false;
-    }
-
     // History entry (skip pure-error results)
     if (shown !== "Error") {
       state.history.unshift({
         id: uid(),
         expr: exprStr,
         res: shown,
-        ts: Date.now(),
-        lied: lied    // local-only annotation, merges fine (unused by
-                      // other devices for decisions)
+        ts: Date.now()
       });
       if (state.history.length > HISTORY_MAX) {
         state.history.length = HISTORY_MAX;
@@ -791,11 +836,15 @@
 
     render();
 
-    if (state.troll) trollToast(!lied);
+    if (state.troll) {
+      showQuip(shown === "Error" ? { err: true }
+        : { v: parseFloat(shown), a: a, b: b, op: op });
+    }
   }
 
   function pressAc() {
     saveUndoState();
+    setQuip("");
     state.cur = "0";
     state.acc = null;
     state.op = null;
@@ -938,49 +987,30 @@
   }
 
   // ---------- 5. Troll logic ----------
-  // Lie cadence by intensity, NEVER two consecutive lies.
-  // If the last evaluation trolled, this one is honest.
-  function shouldLie() {
-    if (state.lastTrolled) return false;
-    var probabilities = [0.16, 0.34, 0.66];  // subtle/balanced/rampant
-    var prob = probabilities[state.trollIntensity] || 0.34;
-    return Math.random() < prob;
+  // The answer is always the real one (Chris 2026-10-22: Troll mode
+  // with correct results and quips). Until 2026-10-23 Troll mode changed
+  // some answers by a few percent; those history entries keep their
+  // `lied` flag and show a mark (renderHistory).
+  function showQuip(ctx) {
+    var key = CC.trollQuip(ctx, state.trollIntensity, state.lastQuip);
+    state.lastQuip = key;
+    setQuip(trolls()[key] || TROLL_STRINGS.en[key] || "");
   }
 
-  // Plausible lie: relative error sized by intensity.
-  function applyLie(result) {
-    var magnitude = Math.abs(result);
-    if (magnitude === 0) return result + (Math.random() < 0.5 ? 1 : -1);
-    var magMult = (state.trollIntensity === 0) ? 0.02
-                : (state.trollIntensity === 2) ? 0.08
-                : 0.05;
-    var pct = 0.01 + Math.random() * magMult;
-    var sign = Math.random() < 0.5 ? 1 : -1;
-    var lied = result + sign * pct * magnitude;
-    // Round to a "believable" precision (never surgically identical)
-    return parseFloat(lied.toPrecision(
-      Math.max(2, String(Math.round(magnitude)).length + 1)));
-  }
-
-  // In troll mode, EVERY action gets commentary — even the honest
-  // answers. Snark always; only the TRUTH varies.
-  function trollToast(honest) {
-    var pack = trolls();
-    var key;
-    if (honest) {
-      key = "troll.toast.true";
-    } else {
-      var pool = ["troll.toast.false.1", "troll.toast.false.2", "troll.toast.false.3",
-                  "troll.toast.false.4", "troll.toast.false.5"];
-      key = pool[Math.floor(Math.random() * pool.length)];
-    }
-    transientNote(pack[key], "");
+  // The quip line under the result of the mode on screen; each mode
+  // keeps its own line. setQuip("", true) clears both.
+  function setQuip(text, both) {
+    var el = state.ui.mode === "sci" ? els.sciQuip : els.quip;
+    if (both && els.sciQuip) els.sciQuip.textContent = "";
+    if (both && els.quip) els.quip.textContent = "";
+    if (el) el.textContent = text;
   }
 
   function toggleTroll() {
     state.troll = !state.troll;
     touchSetting("troll");
     persist(true);
+    if (!state.troll) setQuip("", true);
     render();
     if (state.troll) {
       transientNote(t("calc.troll"), t("troll.welcome"));
@@ -1061,6 +1091,15 @@
       var res = document.createElement("div");
       res.className = "h-res";
       res.textContent = fmtDisplay(h.res);
+      if (h.lied === true) {
+        // An answer the old Troll mode changed (until 2026-10-23)
+        var mark = document.createElement("span");
+        mark.className = "h-lied";
+        mark.textContent = "≈";
+        mark.title = t("calc.history.lied");
+        mark.setAttribute("aria-label", t("calc.history.lied"));
+        res.insertBefore(mark, res.firstChild);
+      }
 
       li.appendChild(expr);
       li.appendChild(res);
@@ -1619,7 +1658,7 @@
   function sciEval() {
     var src = els.sciIn.value.trim();
     if (!src) return;
-    if (sci.fresh) { if (state.troll) trollToast(true); return; }
+    if (sci.fresh) { if (state.troll) showQuip({ bare: true }); return; }
     var r = sciCompute(src);
     if (!r.ok) {
       if (r.err === "rates") {
@@ -1637,17 +1676,10 @@
     if (r.cat === "currency" && window.UnitsCore && window.UnitsCore.ratesStale(rates, Date.now())) {
       fetchRates(null);                          // refresh quietly for next time
     }
-    var v = r.v, lied = false;
-    if (state.troll && shouldLie()) {
-      v = applyLie(v);
-      lied = true;
-      state.lastTrolled = true;
-    } else if (state.troll) {
-      state.lastTrolled = false;
-    }
+    var v = r.v;
     var plain = CC.formatNum(v);
     var shown = r.sym ? plain + " " + r.sym : plain;
-    state.history.unshift({ id: uid(), expr: src, res: shown, ts: Date.now(), lied: lied });
+    state.history.unshift({ id: uid(), expr: src, res: shown, ts: Date.now() });
     if (state.history.length > HISTORY_MAX) state.history.length = HISTORY_MAX;
     persist(true);
     renderHistory();
@@ -1660,7 +1692,7 @@
     try { els.sciIn.setSelectionRange(plain.length, plain.length); } catch (e) {}
     sci.fresh = true;
     sci.hist = -1;
-    if (state.troll) trollToast(!lied);
+    if (state.troll) showQuip({ v: v, expr: src, unit: !!r.sym });
   }
 
   function sciStartTyping(text) {
@@ -2677,6 +2709,8 @@
     els.trollToggle = document.getElementById("troll-toggle");
     els.trollState = document.getElementById("troll-state");
     els.trollIntensity = document.getElementById("troll-intensity");
+    els.quip = document.getElementById("calc-quip");
+    els.sciQuip = document.getElementById("sci-quip");
 
     // ⌫ keeps its glyph on screen; the label is translated here
     document.querySelector('.key[data-k="back"]').setAttribute(
