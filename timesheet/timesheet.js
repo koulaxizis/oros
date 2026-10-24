@@ -145,7 +145,25 @@
       "toast.restored": "Restored: {n} new entries", "toast.restored1": "Restored: 1 new entry", "toast.restoredNone": "Restored: nothing new",
       "toast.tooLong": "An entry can be at most 366 days long",
       "live.started": "Timer started", "live.stopped": "Timer stopped",
-      "toast.pomo1": "Pomodoro: 1 focus session logged", "toast.pomo": "Pomodoro: {n} focus sessions logged"
+      "toast.pomo1": "Pomodoro: 1 focus session logged", "toast.pomo": "Pomodoro: {n} focus sessions logged",
+      "bill.h": "Day rate, minimum and overtime", "bill.hintP": "Empty: what the client has, if anything. With a day rate here, the project uses only its own hourly rate (none: the day rate alone).",
+      "bill.hintC": "For the client's projects that have none of their own.",
+      "f.minPer": "Per", "per.d": "Day worked", "per.w": "Week", "per.m": "Month",
+      "f.minAmt": "Minimum charge (day rate)", "f.minAmtHint": "Charged for every day (or week, month) with work, even a short one. Time beyond the overtime limit is charged on top. Empty: none.",
+      "f.minH": "Minimum billable hours", "f.minHint": "Charged even when you work less, e.g. 2 or 1:30. Empty: no minimum.",
+      "f.otH": "Overtime after (hours)", "f.otHHint": "e.g. 8. Empty: after the minimum hours, or no overtime.",
+      "f.otRate": "Overtime hourly rate", "f.otHint": "Empty: the usual hourly rate of the project.",
+      "cli.min.d": "min {h} h/day", "cli.min.w": "min {h} h/week", "cli.min.m": "min {h} h/month",
+      "cli.amt.d": "{a}/day", "cli.amt.w": "min {a}/week", "cli.amt.m": "min {a}/month",
+      "cli.otH": "overtime after {h} h", "cli.ot": "overtime {r}/h", "sum.min0": "Day rates and minimum charges ({n})",
+      "add.extra": "Add an extra charge", "dlg.extra": "Extra charge", "dlg.newExtra": "New extra charge",
+      "f.date": "Date", "f.exDesc": "What it is for", "f.exDescHint": "e.g. Fuel, Work away from the office, Parking.",
+      "f.amount": "Amount", "f.exClient": "Client (when there is no project)",
+      "toast.badDesc": "Say what the charge is for", "toast.exDel": "Extra charge deleted",
+      "extra.edit": "Edit extra charge: {d}, {a}", "extra.h": "Extra charges",
+      "sum.time": "Work time", "sum.ot": "Overtime ({d})", "sum.min": "Up to the minimum charge (+{d})",
+      "sum.ex": "Extra charges ({n})", "sum.total": "Total to charge",
+      "rep.partial": "A minimum per week or month counts only for whole weeks or months in the period: {n} left out (no minimum, no overtime)."
     },
     el: {
       "app": "Ώρες εργασίας", "settings": "Ρυθμίσεις",
@@ -244,7 +262,25 @@
       "toast.restored": "Επαναφορά: {n} νέες καταγραφές", "toast.restored1": "Επαναφορά: 1 νέα καταγραφή", "toast.restoredNone": "Επαναφορά: τίποτα καινούριο",
       "toast.tooLong": "Μια καταγραφή μπορεί να κρατά έως 366 μέρες",
       "live.started": "Το χρονόμετρο ξεκίνησε", "live.stopped": "Το χρονόμετρο σταμάτησε",
-      "toast.pomo1": "Pomodoro: καταγράφηκε 1 περίοδος εστίασης", "toast.pomo": "Pomodoro: καταγράφηκαν {n} περίοδοι εστίασης"
+      "toast.pomo1": "Pomodoro: καταγράφηκε 1 περίοδος εστίασης", "toast.pomo": "Pomodoro: καταγράφηκαν {n} περίοδοι εστίασης",
+      "bill.h": "Μεροκάματο, ελάχιστη χρέωση και υπερωρία", "bill.hintP": "Κενά: ισχύουν όσα έχει ο πελάτης, αν έχει. Με μεροκάματο εδώ, το έργο κρατά μόνο τη δική του ωριαία χρέωση (καμία: μόνο το μεροκάματο).",
+      "bill.hintC": "Για τα έργα του πελάτη που δεν έχουν δικά τους.",
+      "f.minPer": "Ανά", "per.d": "Ενεργή μέρα", "per.w": "Εβδομάδα", "per.m": "Μήνα",
+      "f.minAmt": "Ελάχιστη χρέωση (μεροκάματο)", "f.minAmtHint": "Χρεώνεται για κάθε μέρα (ή εβδομάδα, μήνα) με δουλειά, ακόμα κι αν είναι λίγες ώρες. Ο χρόνος πάνω από το όριο υπερωρίας χρεώνεται επιπλέον. Κενό: χωρίς.",
+      "f.minH": "Ελάχιστες χρεώσιμες ώρες", "f.minHint": "Χρεώνονται ακόμα κι αν δουλέψεις λιγότερο, π.χ. 2 ή 1:30. Κενό: χωρίς ελάχιστες ώρες.",
+      "f.otH": "Υπερωρία μετά από (ώρες)", "f.otHHint": "π.χ. 8. Κενό: μετά τις ελάχιστες ώρες, αλλιώς χωρίς υπερωρία.",
+      "f.otRate": "Χρέωση υπερωρίας ανά ώρα", "f.otHint": "Κενό: η κανονική ωριαία χρέωση του έργου.",
+      "cli.min.d": "ελάχ. {h} ώρες/μέρα", "cli.min.w": "ελάχ. {h} ώρες/εβδομάδα", "cli.min.m": "ελάχ. {h} ώρες/μήνα",
+      "cli.amt.d": "μεροκάματο {a}", "cli.amt.w": "ελάχ. {a}/εβδομάδα", "cli.amt.m": "ελάχ. {a}/μήνα",
+      "cli.otH": "υπερωρία μετά τις {h} ώρες", "cli.ot": "υπερωρία {r}/ώρα", "sum.min0": "Μεροκάματα και ελάχιστες χρεώσεις ({n})",
+      "add.extra": "Πρόσθετη χρέωση", "dlg.extra": "Πρόσθετη χρέωση", "dlg.newExtra": "Νέα πρόσθετη χρέωση",
+      "f.date": "Ημερομηνία", "f.exDesc": "Για τι είναι", "f.exDescHint": "π.χ. Βενζίνη, Δουλειά εκτός έδρας, Στάθμευση.",
+      "f.amount": "Ποσό", "f.exClient": "Πελάτης (όταν δεν υπάρχει έργο)",
+      "toast.badDesc": "Γράψε για τι είναι η χρέωση", "toast.exDel": "Η πρόσθετη χρέωση διαγράφηκε",
+      "extra.edit": "Επεξεργασία πρόσθετης χρέωσης: {d}, {a}", "extra.h": "Πρόσθετες χρεώσεις",
+      "sum.time": "Χρόνος εργασίας", "sum.ot": "Υπερωρία ({d})", "sum.min": "Συμπλήρωση ελάχιστης χρέωσης (+{d})",
+      "sum.ex": "Πρόσθετες χρεώσεις ({n})", "sum.total": "Σύνολο χρέωσης",
+      "rep.partial": "Το ελάχιστο ανά εβδομάδα ή μήνα μετράει μόνο για ολόκληρες εβδομάδες ή μήνες μέσα στην περίοδο: {n} έμειναν εκτός (χωρίς ελάχιστο και υπερωρία)."
     }
   };
   if (window.orosI18n) window.orosI18n.table(STRINGS, "timesheet", LANG);
@@ -525,12 +561,13 @@
     if (!out.budget) delete out.budget;
     return out;
   }
+  function sameBilling(a, b) { return JSON.stringify(C.billingPart(a)) === JSON.stringify(C.billingPart(b)); }
   function saveProject(id, rec) {
     var cur = id ? findIn(data.projects, id) : null;
     if (cur && !cur.del) {
       var same = cur.name === rec.name && cur.client === rec.client && cur.color === rec.color &&
                  cur.rate === rec.rate && cur.bill === rec.bill && cur.arch === rec.arch &&
-                 (cur.budget || 0) === (rec.budget || 0);
+                 (cur.budget || 0) === (rec.budget || 0) && sameBilling(cur, rec);
       if (same) return cur.id;
       rec = keepExtras(cur, rec);
       rec.id = cur.id;
@@ -564,7 +601,7 @@
   function saveClient(id, rec) {
     var cur = id ? findIn(data.clients, id) : null;
     if (cur && !cur.del) {
-      if (cur.name === rec.name && cur.rate === rec.rate) return cur.id;
+      if (cur.name === rec.name && cur.rate === rec.rate && sameBilling(cur, rec)) return cur.id;
       rec = keepExtras(cur, rec);
       rec.id = cur.id;
       rec.m = stamp(cur.m);
@@ -594,6 +631,41 @@
     });
     return true;
   }
+  // Extra charges (fuel, work away, …): records of their own list,
+  // created only when the first one is added.
+  function extrasList() { if (!data.extras) data.extras = []; return data.extras; }
+  function findExtra(id) { var x = findIn(data.extras || [], id); return x && !x.del ? x : null; }
+  function saveExtra(id, rec) {
+    var cur = id ? findExtra(id) : null;
+    if (cur) {
+      if (cur.d === rec.d && cur.p === rec.p && cur.c === rec.c && cur.desc === rec.desc &&
+          cur.amt === rec.amt && cur.billed === rec.billed) return cur.id;
+      rec = keepExtras(cur, rec);
+      rec.id = cur.id;
+      rec.m = stamp(cur.m);
+    } else {
+      rec.id = newId();
+      rec.m = Date.now();
+    }
+    replaceIn(extrasList(), rec);
+    saveNow();
+    return rec.id;
+  }
+  function deleteExtra(id) {
+    var cur = findExtra(id);
+    if (!cur) return;
+    var snap = JSON.parse(JSON.stringify(cur));
+    replaceIn(extrasList(), { id: id, m: stamp(cur.m), del: 1 });
+    saveNow();
+    renderAll();
+    undoToast(t("toast.exDel"), function () {
+      var c = findIn(extrasList(), id);
+      snap.m = stamp(c ? c.m : snap.m);
+      replaceIn(extrasList(), snap);
+      saveNow();
+      renderAll();
+    });
+  }
   function setPrefs(next) {
     var p = C.normPrefs(next);
     if (JSON.stringify(p) === JSON.stringify(data.prefs)) return;
@@ -605,7 +677,7 @@
   function markBilled(ids, flag) {
     var changed = [];
     ids.forEach(function (id) {
-      var x = findEntry(id);
+      var x = findEntry(id) || findExtra(id);
       if (!x || x.billed === flag) return;
       x.billed = flag;
       x.m = stamp(x.m);
@@ -616,7 +688,7 @@
     renderAll();
     undoToast(t(flag ? "toast.marked" : "toast.unmarked", { n: changed.length }), function () {
       changed.forEach(function (id) {
-        var x = findEntry(id);
+        var x = findEntry(id) || findExtra(id);
         if (!x) return;
         x.billed = flag ? 0 : 1;
         x.m = stamp(x.m);
@@ -861,6 +933,45 @@
       host.appendChild(li);
     });
     $("entries-empty").hidden = list.length > 0;
+    renderDayExtras();
+  }
+  // The day's extra charges, under its entries.
+  function extraLabel(x) {
+    var pid = C.extraProject(data, x), c = C.client(data, C.extraClient(data, x));
+    return [pid ? projLabel(pid) : "", c ? c.name : ""].filter(Boolean).join(" · ");
+  }
+  function renderDayExtras() {
+    var host = $("extras"), list = C.extrasIn(data, dayKey, dayKey, {});
+    host.innerHTML = "";
+    host.hidden = !list.length;
+    $("extras-h").hidden = !list.length;
+    list.forEach(function (x) {
+      var li = el("li", "ent extra");
+      var b = el("button", "ent-main");
+      b.type = "button";
+      var dot = el("i", "dot");
+      dot.style.background = projColor(C.extraProject(data, x));
+      b.appendChild(dot);
+      var txt = el("span", "ent-txt");
+      txt.appendChild(el("span", "ent-p", x.desc || t("dlg.extra")));
+      var who = extraLabel(x);
+      if (who) txt.appendChild(el("span", "ent-d", who));
+      b.appendChild(txt);
+      var meta = el("span", "ent-meta");
+      meta.appendChild(el("span", "ent-dur", money(x.amt)));
+      if (x.billed) {
+        var bl = el("span", "ent-billed");
+        bl.innerHTML = UI.check;
+        bl.title = t("entry.billed");
+        bl.setAttribute("aria-label", t("entry.billed"));
+        meta.appendChild(bl);
+      }
+      b.appendChild(meta);
+      b.setAttribute("aria-label", t("extra.edit", { d: x.desc || t("dlg.extra"), a: money(x.amt) }));
+      b.addEventListener("click", function () { extraDialog(x.id, null); });
+      li.appendChild(b);
+      host.appendChild(li);
+    });
   }
 
   // ---------- 5. Render: week ----------
@@ -1025,7 +1136,8 @@
       : t("rep.noteExact");
     var runIn = C.running(data).some(function (x) { return rep.ids.indexOf(x.id) >= 0; });
     $("rep-note").textContent = note + (runIn ? " " + t("rep.running") : "") +
-      (f.group === "tag" ? " " + t("rep.multiTag") : "");
+      (f.group === "tag" ? " " + t("rep.multiTag") : "") +
+      (rep.partial ? " " + t("rep.partial", { n: rep.partial }) : "");
 
     var tbl = $("rep-table");
     tbl.innerHTML = "";
@@ -1069,6 +1181,7 @@
     tbl.appendChild(tf);
     tbl.hidden = !rep.rows.length;
     $("rep-empty").hidden = rep.rows.length > 0;
+    renderRepSum(rep);
     $("rep-csv").disabled = !rep.rows.length;
     // Open in Spreadsheet (BR-S1): shown only inside orOS.
     $("rep-sheet").hidden = !invoicesOpener();
@@ -1077,14 +1190,14 @@
     // Invoiced marks: in an "Invoiced" view the button undoes them.
     var mark = $("rep-mark");
     if (f.billed === "done") {
-      repState.markIds = rep.ids;
+      repState.markIds = rep.ids.concat(rep.exIds);
       repState.markFlag = 0;
-      mark.textContent = t("rep.unmark", { n: rep.ids.length });
-      mark.disabled = !rep.ids.length;
+      mark.textContent = t("rep.unmark", { n: repState.markIds.length });
+      mark.disabled = !repState.markIds.length;
     } else {
-      var open = C.report(data, keys[0], keys[1],
-        { client: f.client, project: f.project, bill: "bill", billed: "open", tag: f.tag, group: f.group }, now).ids;
-      open = open.filter(function (id) { var x = findEntry(id); return x && x.e !== 0; });
+      var orep = C.report(data, keys[0], keys[1],
+        { client: f.client, project: f.project, bill: "bill", billed: "open", tag: f.tag, group: f.group }, now);
+      var open = orep.ids.filter(function (id) { var x = findEntry(id); return x && x.e !== 0; }).concat(orep.exIds);
       repState.markIds = open;
       repState.markFlag = 1;
       mark.textContent = open.length ? t("rep.mark", { n: open.length }) : t("rep.markNone");
@@ -1093,11 +1206,60 @@
     // Quote bridge (BR-Q1): shown only when the shell offers it.
     var qb = $("rep-quote");
     qb.hidden = !quoteBridge();
-    qb.disabled = !rep.total.billMs;
+    var charge = rep.total.billMs > 0 || rep.total.exAmount > 0;
+    qb.disabled = !charge;
     // Invoices (BR-INV-NEW, generic deep link { new }): same lines.
     var ib = $("rep-invoice");
     ib.hidden = !invoicesOpener();
-    ib.disabled = !rep.total.billMs;
+    ib.disabled = !charge;
+  }
+  // Under the table, when a minimum, overtime or extra charges count:
+  // what the total is made of, then the period's extra charges.
+  function renderRepSum(rep) {
+    var tot = rep.total, box = $("rep-sum"), list = $("rep-extras");
+    box.innerHTML = "";
+    list.innerHTML = "";
+    var any = tot.minN > 0 || tot.otMs > 0 || tot.exN > 0;
+    box.hidden = !any || !rep.rows.length;
+    if (!box.hidden) {
+      var line = function (label, cents, cls) {
+        var r = el("div", "sum-row" + (cls ? " " + cls : ""));
+        r.appendChild(el("span", "", label));
+        r.appendChild(el("span", "num", money(cents)));
+        box.appendChild(r);
+      };
+      var timeAmt = tot.amount - tot.minAmount - tot.otAmount - tot.exAmount;
+      if (timeAmt || !tot.minN) line(t("sum.time"), timeAmt);
+      if (tot.otMs) line(t("sum.ot", { d: dur(tot.otMs) }), tot.otAmount);
+      if (tot.minN) line(tot.minMs ? t("sum.min", { d: dur(tot.minMs) }) : t("sum.min0", { n: tot.minN }), tot.minAmount);
+      if (tot.exN) line(t("sum.ex", { n: tot.exN }), tot.exAmount);
+      line(t("sum.total"), tot.amount, "total");
+    }
+    var ex = C.extrasIn(data, repState.keys[0], repState.keys[1], repState.f);
+    $("rep-extras-h").hidden = list.hidden = !ex.length;
+    ex.forEach(function (x) {
+      var li = el("li");
+      var b = el("button", "ex-row");
+      b.type = "button";
+      b.appendChild(el("span", "ex-d", shortDate(x.d)));
+      var txt = el("span", "ex-txt");
+      txt.appendChild(el("span", "ex-name", x.desc || t("dlg.extra")));
+      var who = extraLabel(x);
+      if (who) txt.appendChild(el("small", "", who));
+      b.appendChild(txt);
+      b.appendChild(el("span", "num", money(x.amt)));
+      if (x.billed) {
+        var bl = el("span", "ent-billed");
+        bl.innerHTML = UI.check;
+        bl.title = t("entry.billed");
+        bl.setAttribute("aria-label", t("entry.billed"));
+        b.appendChild(bl);
+      }
+      b.setAttribute("aria-label", t("extra.edit", { d: x.desc || t("dlg.extra"), a: money(x.amt) }));
+      b.addEventListener("click", function () { extraDialog(x.id, null); });
+      li.appendChild(b);
+      list.appendChild(li);
+    });
   }
 
   // ---------- 7. Render: projects ----------
@@ -1122,9 +1284,10 @@
     var bits = [];
     if (!p.bill) bits.push(t("proj.nobill"));
     else {
-      var rate = C.rateOf(data, p.id);
+      var rate = p.minAmt ? p.rate : C.rateOf(data, p.id);
       if (rate) bits.push(t("proj.rate", { r: money(rate) }));
     }
+    if (p.bill && C.hasBilling(p)) bits.push(billingText(p));
     var use = C.budgetUse(data, p.id, Date.now());
     if (totals[p.id] && !use) bits.push(t("proj.total", { d: dur(totals[p.id]) }));
     if (bits.length) txt.appendChild(el("span", "p-sub", bits.join(" · ")));
@@ -1160,6 +1323,7 @@
         hb.type = "button";
         hb.appendChild(el("span", "", c.name));
         if (c.rate) hb.appendChild(el("small", "", t("proj.rate", { r: money(c.rate) })));
+        if (C.hasBilling(c)) hb.appendChild(el("small", "", billingText(c)));
         hb.addEventListener("click", function () { clientDialog(c.id); });
         head.appendChild(hb);
       } else head.appendChild(el("span", "p-client plain", t("noClient")));
@@ -1533,6 +1697,7 @@
     form.appendChild(field(t("f.budget"), budget, t("f.budgetHint")));
     var bill = checkRow(t("f.billable"), p ? p.bill : 1);
     form.appendChild(bill.row);
+    var bf = billingFields(form, p, "bill.hintP");
     var arch = checkRow(t("f.archived"), p ? p.arch : 0);
     if (p) form.appendChild(arch.row);
 
@@ -1547,6 +1712,8 @@
       if (isNaN(cents) || !C.inRange(cents, C.LIM.rate)) { showToast(t("toast.badMoney")); rate.focus(); return; }
       var mins = C.parseHours(budget.value);
       if (isNaN(mins) || !C.inRange(mins, C.LIM.budget)) { showToast(t("toast.badHours")); budget.focus(); return; }
+      var bpart = bf.read();
+      if (!bpart) return;
       var picked = colorBox.querySelector("input:checked");
       if (id && !C.project(data, id)) { dlg.close(); return; }    // deleted elsewhere meanwhile
       var prec = {
@@ -1554,6 +1721,7 @@
         bill: bill.box.checked ? 1 : 0, arch: p && arch.box.checked ? 1 : 0
       };
       if (mins) prec.budget = mins;
+      Object.assign(prec, bpart);
       var newPid = saveProject(id, prec);
       dlg.close();
       if (!id && !C.running(data).length) { draft.p = newPid; prefs.lastP = newPid; savePrefs(); }
@@ -1562,6 +1730,71 @@
     });
     dlg.appendChild(form);
     openDialog(dlg, p ? null : name);
+  }
+
+  // Day rate, minimum and overtime of a client or project (core
+  // normBilling), folded away until used. read() → every field
+  // (cleared ones as 0 / "", so an edit removes them; normalize drops
+  // them), or null after a toast when a value can't be read.
+  function billingFields(form, rec, hintKey) {
+    rec = rec || {};
+    var box = el("details", "bill-box");
+    box.open = C.hasBilling(rec);
+    box.appendChild(el("summary", "", t("bill.h")));
+    box.appendChild(el("p", "hint", t(hintKey)));
+    var hoursIn = function (min) {
+      var i = input("text", min ? budgetText(min) : "");
+      i.inputMode = "decimal";
+      i.autocomplete = "off";
+      i.placeholder = "0";
+      return i;
+    };
+    var per = el("select");
+    fillSelect(per, C.MIN_PERS.map(function (k) { return [k, t("per." + k)]; }), rec.minPer || "d");
+    box.appendChild(field(t("f.minPer"), per));
+    var amt = moneyIn(rec.minAmt || 0);
+    box.appendChild(field(t("f.minAmt") + " (" + data.prefs.cur + ")", amt, t("f.minAmtHint")));
+    var minH = hoursIn(rec.minH);
+    box.appendChild(field(t("f.minH"), minH, t("f.minHint")));
+    var otH = hoursIn(rec.otH);
+    box.appendChild(field(t("f.otH"), otH, t("f.otHHint")));
+    var ot = moneyIn(rec.otRate || 0);
+    var otF = field(t("f.otRate") + " (" + data.prefs.cur + ")", ot, t("f.otHint"));
+    box.appendChild(otF);
+    var showOt = function () { otF.hidden = !minH.value.trim() && !otH.value.trim(); };
+    [minH, otH].forEach(function (i) { i.addEventListener("input", showOt); });
+    showOt();
+    form.appendChild(box);
+    function hours(i) {
+      var v = C.parseHours(i.value);
+      if (isNaN(v) || !C.inRange(v, C.LIM.minH)) { box.open = true; showToast(t("toast.badHours")); i.focus(); return NaN; }
+      return v;
+    }
+    function cents(i, lim) {
+      var v = C.parseMoney(i.value);
+      if (isNaN(v) || !C.inRange(v, lim)) { box.open = true; showToast(t("toast.badMoney")); i.focus(); return NaN; }
+      return v;
+    }
+    return {
+      read: function () {
+        var a = cents(amt, C.LIM.minAmt); if (isNaN(a)) return null;
+        var h = hours(minH); if (isNaN(h)) return null;
+        var o = hours(otH); if (isNaN(o)) return null;
+        var r = h || o ? cents(ot, C.LIM.rate) : 0; if (isNaN(r)) return null;
+        var any = a || h || o;
+        return { minH: h, minAmt: a, otH: o, minPer: any ? per.value : "", otRate: r };
+      }
+    };
+  }
+  // "100,00 €/day · overtime after 8 h · overtime 15,00 €/h"
+  function billingText(r) {
+    if (!C.hasBilling(r)) return "";
+    var per = r.minPer || "d", bits = [];
+    if (r.minAmt) bits.push(t("cli.amt." + per, { a: money(r.minAmt) }));
+    if (r.minH) bits.push(t("cli.min." + per, { h: budgetText(r.minH) }));
+    if (r.otH) bits.push(t("cli.otH", { h: budgetText(r.otH) }));
+    if (r.otRate) bits.push(t("cli.ot", { r: money(r.otRate) }));
+    return bits.join(" · ");
   }
 
   function clientDialog(id) {
@@ -1576,6 +1809,7 @@
     var rate = moneyIn(c ? c.rate : 0);
     form.appendChild(field(t("f.rate") + " (" + data.prefs.cur + ")", rate,
       data.prefs.rate ? t("f.rateHint", { r: money(data.prefs.rate), src: t("src.default") }) : t("f.rateNone")));
+    var bf = billingFields(form, c, "bill.hintC");
     var left = [];
     if (c) left.push(button(t("dlg.del"), "danger", function () { if (deleteClient(id)) dlg.close(); }));
     actions(form, left, c ? t("dlg.save") : t("dlg.add"));
@@ -1585,14 +1819,69 @@
       if (!nm) { showToast(t("toast.badName")); name.focus(); return; }
       var cents = C.parseMoney(rate.value);
       if (isNaN(cents) || !C.inRange(cents, C.LIM.rate)) { showToast(t("toast.badMoney")); rate.focus(); return; }
+      var bill = bf.read();
+      if (!bill) return;
       if (id && !C.client(data, id)) { dlg.close(); return; }
-      saveClient(id, { name: nm, rate: cents });
+      var crec = Object.assign({ name: nm, rate: cents }, bill);
+      saveClient(id, crec);
       dlg.close();
       renderAll();
       showToast(t("toast.saved"));
     });
     dlg.appendChild(form);
     openDialog(dlg, c ? null : name);
+  }
+
+  // An extra charge: date, project (or just a client), what it is
+  // for and the amount. preset: { d, p }.
+  function extraDialog(id, preset) {
+    var x = id ? findExtra(id) : null;
+    if (id && !x) return;
+    var dlg = makeDialog("ts-extra", t(x ? "dlg.extra" : "dlg.newExtra"));
+    dlg.classList.add("wide");
+    var form = el("form");
+    form.method = "dialog";
+    var day = input("date", x ? x.d : (preset && preset.d) || todayKey());
+    form.appendChild(field(t("f.date"), day));
+    var sel = el("select");
+    fillProjectSelect(sel, x ? x.p : (preset && preset.p) || prefs.lastP || "", false);
+    form.appendChild(field(t("f.project"), sel));
+    var cli = el("select");
+    var opts = [["", t("noClient")]];
+    C.live(data.clients).sort(function (a, b) { return a.name.localeCompare(b.name, locale()); })
+      .forEach(function (c) { opts.push([c.id, c.name]); });
+    fillSelect(cli, opts, x ? x.c : "");
+    var cliF = field(t("f.exClient"), cli);
+    form.appendChild(cliF);
+    var showCli = function () { cliF.hidden = !!sel.value; };
+    sel.addEventListener("change", showCli);
+    showCli();
+    var desc = input("text", x ? x.desc : "");
+    desc.maxLength = C.LIM.exDesc;
+    form.appendChild(field(t("f.exDesc"), desc, t("f.exDescHint")));
+    var amt = moneyIn(x ? x.amt : 0);
+    form.appendChild(field(t("f.amount") + " (" + data.prefs.cur + ")", amt));
+    var billed = checkRow(t("f.billed"), x ? x.billed : 0);
+    form.appendChild(billed.row);
+    var left = [];
+    if (x) left.push(button(t("dlg.del"), "danger", function () { dlg.close(); deleteExtra(id); }));
+    actions(form, left, x ? t("dlg.save") : t("dlg.add"));
+    form.addEventListener("submit", function (ev) {
+      ev.preventDefault();
+      if (!C.validDay(day.value)) { day.focus(); return; }
+      var d = C.cleanText(desc.value, C.LIM.exDesc);
+      if (!d) { showToast(t("toast.badDesc")); desc.focus(); return; }
+      var cents = C.parseMoney(amt.value);
+      if (isNaN(cents) || !C.inRange(cents, C.LIM.amt)) { showToast(t("toast.badMoney")); amt.focus(); return; }
+      if (id && !findExtra(id)) { dlg.close(); return; }     // deleted elsewhere meanwhile
+      saveExtra(id, { d: day.value, p: sel.value, c: sel.value ? "" : cli.value, desc: d, amt: cents,
+                      billed: billed.box.checked ? 1 : 0 });
+      dlg.close();
+      renderAll();
+      showToast(t("toast.saved"));
+    });
+    dlg.appendChild(form);
+    openDialog(dlg, x ? null : desc);
   }
 
   function settingsDialog() {
@@ -1828,7 +2117,7 @@
     deleteIds: function (ids) {
       var gone = {};
       ids.forEach(function (id) { gone[id] = 1; });
-      [data.clients, data.projects, data.entries].forEach(function (list) {
+      [data.clients, data.projects, data.entries, data.extras || []].forEach(function (list) {
         list.slice().forEach(function (x) {
           if (gone[x.id] && !x.del) replaceIn(list, { id: x.id, m: stamp(x.m), del: 1 });
         });
@@ -2144,6 +2433,10 @@
     $("idle-stop").textContent = t("idle.stop");
     $("add-entry").innerHTML = UI.plus + "<span></span>";
     $("add-entry").lastChild.textContent = t("add.entry");
+    $("add-extra").innerHTML = UI.plus + "<span></span>";
+    $("add-extra").lastChild.textContent = t("add.extra");
+    $("extras-h").textContent = t("extra.h");
+    $("rep-extras-h").textContent = t("extra.h");
     $("add-project").innerHTML = UI.plus + "<span></span>";
     $("add-project").lastChild.textContent = t("add.project");
     $("add-client").innerHTML = UI.plus + "<span></span>";
@@ -2180,6 +2473,7 @@
     $("next-btn").addEventListener("click", function () { shiftDay(1); });
     $("day-btn").addEventListener("click", function () { goDay(todayKey()); });
     $("add-entry").addEventListener("click", function () { entryDialog(null, null); });
+    $("add-extra").addEventListener("click", function () { extraDialog(null, { d: dayKey }); });
     $("wprev-btn").addEventListener("click", function () { shiftWeek(-1); });
     $("wnext-btn").addEventListener("click", function () { shiftWeek(1); });
     $("week-btn").addEventListener("click", function () { weekKey = C.weekStart(todayKey()); renderWeek(); });

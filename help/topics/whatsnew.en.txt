@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.44.00
+- Timesheet: set a minimum day rate per day worked (or a minimum per week or month, in money or hours) and the hours after which overtime counts, with its own hourly rate, on a project or a client. Add extra charges such as fuel or work away from the office under any day: they are added to the report's total, the CSV, quotes and invoices. Reports show what the total is made of.
+
 ## Version 3.43.00
 - Assistant: it now sees the labels of your items (Calendar, To-Do, Kanban, Contacts, Notes, Bookmarks tags, Media Shelf tags), whether a task is done and its priority, and a title's status and rating. Ask "which events have no label?" or "show my cards with the label Bug" and it lists them, up to 50 per app. It can also set, add or remove labels and a task's priority, and the same change to many items comes as one card with one Apply and one Undo.
 
