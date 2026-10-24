@@ -3,6 +3,7 @@ All your games in one place: today's daily puzzles, your achievements and the st
 
 ## How to use
 - `Today's dailies` shows the six games with a daily puzzle: Wordle, Crossword, Sudoku, Nonogram, Flow Free and Minesweeper. Each card says whether today's puzzle is solved, not solved or still open, and your streak in that game. `Play` opens the game straight on today's puzzle; once it's done, `See` shows your result.
+- `All games` lists every game, grouped into puzzles, word games, cards and tiles, board and two-player games, and arcade games, and says how often you've played each one (`New` if never). Tap a game to play it. Type in `Find a game` to narrow the list by name.
 - The line under the title shows your daily streak: the days in a row on which you solved at least one daily puzzle.
 - `Achievements` lists goals such as a first win, a 7-day daily streak or solving all six dailies on one day. A trophy marks the ones you've reached; the others show how far you are.
 - `Statistics` lists every game you've played, most played first: games played, won or solved, dailies solved, streak, best time and best score, where the game has them. Tap a game's name to open it. Games you haven't played yet are listed at the bottom.

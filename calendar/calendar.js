@@ -200,7 +200,7 @@
       "feed.plants.due": "{name}: {kind} due",
       "feed.plants.water": "watering", "feed.plants.fert": "fertilizing", "feed.plants.mist": "misting", "feed.plants.repot": "repotting",
       "lbl.feed.petcare": "Pet health",
-      "lbl.feed.baby": "Baby",
+      "lbl.feed.baby": "Baby", "lbl.feed.together": "Together",
       "feed.pc.due": "{name}: {what} due", "feed.pc.done": "{name}: {what}", "feed.pc.bday": "🎂 {name} turns {n}",
       "feed.pc.deworm": "deworming", "feed.pc.visit": "vet visit", "feed.pc.recheck": "recheck",
       "feed.pc.medDue": "{name}: last day of {what}", "feed.pc.food": "food runs out",
@@ -237,6 +237,14 @@
       "lbl.feeds": "App feeds",
       "lbl.feed.ro": "Read-only — managed by its app",
       "lbl.manage": "Manage labels",
+      "lbl.acts": "Quick filters",
+      "lbl.f.all": "All",
+      "lbl.f.all.hint": "Show every chip (Moon & Sky, Medicines and Doctor visits stay as they are)",
+      "lbl.f.none": "None",
+      "lbl.f.none.hint": "Hide every chip, then turn on only the ones you want",
+      "lbl.f.mine": "My events",
+      "lbl.f.mine.hint": "Only your own events: every label and No label, no feeds",
+      "lbl.chip.hint": "Click: show or hide. Right-click, Alt+click or long press: only this one (again: all)",
       "lbl.toggle": "Labels & feeds",
       "lbl.toggle.n": "{on} of {all} on",
       "lbl.new": "New label",
@@ -423,7 +431,7 @@
       "feed.plants.due": "{name}: ώρα για {kind}",
       "feed.plants.water": "πότισμα", "feed.plants.fert": "λίπανση", "feed.plants.mist": "ψέκασμα", "feed.plants.repot": "μεταφύτευση",
       "lbl.feed.petcare": "Υγεία ζώων",
-      "lbl.feed.baby": "Μωρό",
+      "lbl.feed.baby": "Μωρό", "lbl.feed.together": "Μαζί",
       "feed.pc.due": "{name}: ώρα για {what}", "feed.pc.done": "{name}: {what}", "feed.pc.bday": "🎂 {name}: γενέθλια ({n})",
       "feed.pc.deworm": "αποπαρασίτωση", "feed.pc.visit": "επίσκεψη στον κτηνίατρο", "feed.pc.recheck": "επανεξέταση",
       "feed.pc.medDue": "{name}: τελευταία μέρα για {what}", "feed.pc.food": "νέο σακί τροφής",
@@ -460,6 +468,14 @@
       "lbl.feeds": "Ροές εφαρμογών",
       "lbl.feed.ro": "Μόνο ανάγνωση — διαχειρίζεται η εφαρμογή της",
       "lbl.manage": "Διαχείριση ετικετών",
+      "lbl.acts": "Γρήγορα φίλτρα",
+      "lbl.f.all": "Όλα",
+      "lbl.f.all.hint": "Εμφάνιση όλων των ταμπελακιών (τα Σελήνη & Ουρανός, Φάρμακα και Ιατρικά ραντεβού μένουν όπως είναι)",
+      "lbl.f.none": "Κανένα",
+      "lbl.f.none.hint": "Απόκρυψη όλων των ταμπελακιών, και μετά άναψε μόνο όσα θέλεις",
+      "lbl.f.mine": "Τα δικά μου",
+      "lbl.f.mine.hint": "Μόνο τα δικά σου συμβάντα: όλες οι ετικέτες και το Χωρίς ετικέτα, χωρίς ροές",
+      "lbl.chip.hint": "Κλικ: εμφάνιση ή απόκρυψη. Δεξί κλικ, Alt+κλικ ή παρατεταμένο πάτημα: μόνο αυτό (ξανά: όλα)",
       "lbl.toggle": "Ετικέτες & ροές",
       "lbl.toggle.n": "{on} από {all} ενεργές",
       "lbl.new": "Νέα ετικέτα",
@@ -894,6 +910,7 @@ function transientNote(title, body) {
     { id: "lbl-feed-shelf",  color: "#d16ba5" },   // berry — Media Shelf finishes + wishlist release dates
     { id: "lbl-feed-inv",    color: "#e5a54b" },   // ochre — Invoices: unpaid documents on their due date
     { id: "lbl-feed-baby",   color: "#f4a3c8" },   // soft pink — Baby milestones, health, monthly age
+    { id: "lbl-feed-together", color: "#ef5d8a" }, // rose — Together anniversaries, milestones, moments
     { id: "lbl-feed-custom", color: "#c8a96e" },    // brown — Contacts custom event types
     { id: "lbl-feed-hol",     color: "#ef6b5b" },   // coral red — Greek public holidays
     { id: "lbl-feed-nameday", color: "#ffb74d" },   // amber — contacts who have a name day
@@ -922,6 +939,7 @@ function transientNote(title, body) {
     if (l.id === "lbl-feed-meals") return t("lbl.feed.meals");
     if (l.id === "lbl-feed-budget") return t("lbl.feed.budget");
     if (l.id === "lbl-feed-baby") return t("lbl.feed.baby");
+    if (l.id === "lbl-feed-together") return t("lbl.feed.together");
     if (l.id === "lbl-feed-shelf") return t("lbl.feed.shelf");
     if (l.id === "lbl-feed-inv") return t("lbl.feed.inv");
     if (l.id === "lbl-feed-fitness") return t("lbl.feed.fitness");
@@ -1308,6 +1326,16 @@ function transientNote(title, body) {
   function labelVisible(labelId) {
     if (!labelId) return true;
     return labelVis[labelId] !== false;
+  }
+  // Own events with no label (or one that no longer exists here) have
+  // their own chip, NO_LABEL. Filtering only hides, never changes them.
+  var NO_LABEL = "lbl-nolabel";
+  function eventVisible(e) {
+    var own = false;
+    for (var i = 0; i < state.labels.length; i++) {
+      if (state.labels[i].id === e.labelId) { own = true; break; }
+    }
+    return labelVisible(own ? e.labelId : NO_LABEL);
   }
 
   /* ---------- 3b. Recurrence + multi-day + time zone engine ----------
@@ -2343,6 +2371,42 @@ function transientNote(title, body) {
     });
   }
 
+  // Together read-only feed (together/core.js, loaded by index.html:
+  // TogetherCore.dayRows, the same rows as Today): anniversaries, every
+  // 100 days / 50 weeks, fun numbers, the start day, moments and
+  // special days marked every year, meetings. Discreet relationships
+  // show initials. A row opens Together on that relationship (or
+  // moment). Rows are never stored; micro-cached ~1s.
+  var togetherCache = { when: 0, data: null, idx: null };
+  function togetherFeedOn(dateStr) {
+    if (!labelVisible("lbl-feed-together")) return [];
+    var Core = window.TogetherCore;
+    if (!Core) return [];
+    var now = Date.now();
+    if (now - togetherCache.when > 1000) {
+      togetherCache.data = null;
+      try {
+        var raw = JSON.parse(localStorage.getItem(Core.STORAGE_KEY) || "null");
+        if (raw && Array.isArray(raw.rels) && raw.rels.length) {
+          togetherCache.data = Core.normalize(raw);
+          togetherCache.idx = Core.contactIndex(JSON.parse(localStorage.getItem("oros-contacts-data") || "null"));
+        }
+      } catch (e) {}
+      togetherCache.when = now;
+    }
+    if (!togetherCache.data) return [];
+    return Core.dayRows(togetherCache.data, togetherCache.idx, dateStr, LANG).map(function (r) {
+      return {
+        id: "tgf-" + r.id,                      // per-render key, never stored
+        title: r.title,
+        labelId: "lbl-feed-together",
+        start: null,                            // all-day
+        _feed: true,
+        _openAt: { app: "together", target: r.target }
+      };
+    });
+  }
+
   // Garage read-only feed (garage/core.js, loaded by index.html: the
   // same math as the app and the shell reminder). Renewals on their
   // expiry day, service plans on their due (or estimated) day; only
@@ -2734,7 +2798,7 @@ function transientNote(title, body) {
   function ownOn(dateStr) {
     var out = [];
     state.events.forEach(function (e) {
-      if (!labelVisible(e.labelId)) return;
+      if (!eventVisible(e)) return;
       var inst = OCC.instanceOn(e, dateStr);
       if (inst) out.push(viewOf(e, inst));
     });
@@ -2769,6 +2833,7 @@ function transientNote(title, body) {
     .concat(shelfFeedOn(dateStr))
     .concat(invoicesFeedOn(dateStr))
     .concat(babyFeedOn(dateStr))
+    .concat(togetherFeedOn(dateStr))
     .concat(holidaysFeedOn(dateStr))
     .concat(namedayContactsOn(dateStr))
     .concat(observancesFeedOn(dateStr))
@@ -3326,7 +3391,7 @@ function transientNote(title, body) {
     var busy = {};
     var from = ymd(viewYear, 0, 1), to = ymd(viewYear, 11, 31);
     state.events.forEach(function (e) {
-      if (!labelVisible(e.labelId)) return;
+      if (!eventVisible(e)) return;
       OCC.instancesBetween(e, from, to, function (inst) {
         var d = inst.date < from ? from : inst.date, last = inst.dateEnd || inst.date;
         for (var k = 0; k < 400 && d <= last && d <= to; k++) {
@@ -3467,7 +3532,7 @@ function transientNote(title, body) {
     if (!q) return;
 
     var hits = state.events.filter(function (e) {
-      return labelVisible(e.labelId) &&
+      return eventVisible(e) &&
         ((e.title || "").toLowerCase().indexOf(q) !== -1 ||
          (e.note || "").toLowerCase().indexOf(q) !== -1 ||
          (e.location || "").toLowerCase().indexOf(q) !== -1);
@@ -3626,14 +3691,83 @@ function transientNote(title, body) {
     renderChipsToggle();
   }
 
+  // Every chip of the filter row, in row order: own labels, "No label",
+  // the feeds, the subscribed calendars.
+  function filterIds() {
+    var ids = state.labels.map(function (l) { return l.id; });
+    ids.push(NO_LABEL);
+    FEED_LABELS.forEach(function (fl) { ids.push(fl.id); });
+    state.subs.forEach(function (x) { ids.push("sub-" + x.id); });
+    return ids;
+  }
+  function isOwnFilter(id) {
+    return id === NO_LABEL || state.labels.some(function (l) { return l.id === id; });
+  }
+
+  // One way to change the filter: sets each id, then saves the chips
+  // remembered on this device (saveFeedVis keeps only those) and redraws.
+  function applyVis(fn) {
+    filterIds().forEach(function (id) {
+      var v = fn(id);
+      if (v === true) delete labelVis[id];
+      else if (v === false) labelVis[id] = false;
+    });
+    saveFeedVis("lbl-feed-hol");    // any remembered id: saves them all
+    renderChips();
+    renderAll();
+    renderDay();
+  }
+
+  // Show only this chip. When it already is the only one on, the same
+  // gesture brings the others back (see showAll).
+  function soloChip(id) {
+    var ids = filterIds();
+    var alone = labelVisible(id) && ids.every(function (k) { return k === id || !labelVisible(k); });
+    if (alone) { showAll(); return; }
+    applyVis(function (k) { return k === id; });
+  }
+  // Everything on, except the opt-in feeds (Moon & Sky, Medicines,
+  // Doctor visits): those turn on only from their own chip.
+  function showAll() {
+    applyVis(function (k) { return OPT_IN_FEEDS.indexOf(k) === -1 ? true : undefined; });
+  }
+
+  // Click toggles; a long press (phone), right-click or Alt+click shows
+  // only this chip. The row is redrawn under the finger, so the click
+  // and contextmenu that follow a long press reach a NEW button: one
+  // shared time stamp tells them to do nothing.
+  var chipPressAt = 0;
+  function wireChip(btn, id, toggle) {
+    var timer = null;
+    function cancel() { if (timer) { clearTimeout(timer); timer = null; } }
+    function afterPress() { return Date.now() - chipPressAt < 700; }
+    btn.title = t("lbl.chip.hint");
+    btn.setAttribute("aria-pressed", labelVisible(id) ? "true" : "false");
+    btn.addEventListener("pointerdown", function (e) {
+      cancel();
+      if (e.button !== 0 || e.pointerType === "mouse") return;
+      timer = setTimeout(function () { timer = null; chipPressAt = Date.now(); soloChip(id); }, 550);
+    });
+    ["pointerup", "pointercancel", "pointerleave"].forEach(function (ev) { btn.addEventListener(ev, cancel); });
+    btn.addEventListener("contextmenu", function (e) {
+      e.preventDefault();
+      if (timer) { cancel(); chipPressAt = Date.now(); }   // touch: the press ends here
+      else if (afterPress()) return;                       // the long press already did it
+      soloChip(id);
+    });
+    btn.addEventListener("click", function (e) {
+      if (afterPress()) return;
+      if (e.altKey) { soloChip(id); return; }
+      toggle();
+    });
+  }
+
   function renderChipsToggle() {
     var btn = $("lbl-toggle");
     if (!btn) return;
-    var all = state.labels.length + FEED_LABELS.length + state.subs.length;
-    var on = 0;
-    state.labels.forEach(function (l) { if (labelVisible(l.id)) on++; });
-    FEED_LABELS.forEach(function (fl) { if (labelVisible(fl.id)) on++; });
-    state.subs.forEach(function (x) { if (labelVisible("sub-" + x.id)) on++; });
+    var ids = filterIds();
+    var all = ids.length;
+    var on = ids.filter(function (k) { return labelVisible(k); }).length;
     btn.textContent = "";
     var name = document.createElement("span");
     name.className = "lbl-tg-name";
@@ -3652,20 +3786,47 @@ function transientNote(title, body) {
     $("lbl-bar").classList.toggle("open", chipsOpen);
   }
 
+  function chipEl(id, color, text, cls) {
+    var c = document.createElement("button");
+    c.type = "button";
+    c.className = "chip" + (cls ? " " + cls : "") + (labelVisible(id) ? "" : " off");
+    var dot = document.createElement("span");
+    dot.className = "chip-dot";
+    if (color) dot.style.background = color;
+    c.appendChild(dot);
+    c.appendChild(document.createTextNode(text));
+    return c;
+  }
+
   function renderChips() {
     var row = $("lbl-chips");
     row.textContent = "";
     renderChipsToggle();
+    // Quick filters: all, none, only my own events.
+    var acts = document.createElement("div");
+    acts.className = "chip-acts";
+    acts.setAttribute("role", "group");
+    acts.setAttribute("aria-label", t("lbl.acts"));
+    [["lbl.f.all", showAll],
+     ["lbl.f.none", function () { applyVis(function () { return false; }); }],
+     ["lbl.f.mine", function () { applyVis(function (k) { return isOwnFilter(k); }); }]
+    ].forEach(function (a) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "chip chip-act";
+      b.textContent = t(a[0]);
+      b.title = t(a[0] + ".hint");
+      b.addEventListener("click", a[1]);
+      acts.appendChild(b);
+    });
+    var sep = document.createElement("span");
+    sep.className = "chip-sep";
+    sep.setAttribute("aria-hidden", "true");
+    acts.appendChild(sep);
+    row.appendChild(acts);
     state.labels.forEach(function (l) {
-      var c = document.createElement("button");
-      c.type = "button";
-      c.className = "chip" + (labelVisible(l.id) ? "" : " off");
-      var dot = document.createElement("span");
-      dot.className = "chip-dot";
-      dot.style.background = l.color;
-      c.appendChild(dot);
-      c.appendChild(document.createTextNode(lblName(l)));
-      c.addEventListener("click", function () {
+      var c = chipEl(l.id, l.color, lblName(l));
+      wireChip(c, l.id, function () {
         labelVis[l.id] = !labelVisible(l.id);
         renderChips();
         renderAll();
@@ -3673,16 +3834,17 @@ function transientNote(title, body) {
       });
       row.appendChild(c);
     });
+    var nc = chipEl(NO_LABEL, "", t("lbl.none"), "chip-nolabel");
+    wireChip(nc, NO_LABEL, function () {
+      labelVis[NO_LABEL] = !labelVisible(NO_LABEL);
+      renderChips();
+      renderAll();
+      renderDay();
+    });
+    row.appendChild(nc);
     FEED_LABELS.forEach(function (fl) {
-      var fc = document.createElement("button");
-      fc.type = "button";
-      fc.className = "chip" + (labelVisible(fl.id) ? "" : " off");
-      var fdot = document.createElement("span");
-      fdot.className = "chip-dot";
-      fdot.style.background = fl.color;
-      fc.appendChild(fdot);
-      fc.appendChild(document.createTextNode(feedLabelName(fl)));
-      fc.addEventListener("click", function () {
+      var fc = chipEl(fl.id, fl.color, feedLabelName(fl));
+      wireChip(fc, fl.id, function () {
         labelVis[fl.id] = !labelVisible(fl.id);
         saveFeedVis(fl.id);
         renderChips();
@@ -3694,23 +3856,16 @@ function transientNote(title, body) {
     // Wave 8: one chip per subscribed calendar (its own colour).
     state.subs.forEach(function (x) {
       var lid = "sub-" + x.id, sl = subLabel(x.id);
-      var sc = document.createElement("button");
-      sc.type = "button";
-      sc.className = "chip chip-sub" + (labelVisible(lid) ? "" : " off");
-      var sdot = document.createElement("span");
-      sdot.className = "chip-dot";
-      sdot.style.background = x.color;
-      sc.appendChild(sdot);
-      sc.appendChild(document.createTextNode(sl.name));
-      var se = subCache[x.id];
-      if (se && se.err) sc.title = subErrText(se);
-      sc.addEventListener("click", function () {
+      var sc = chipEl(lid, x.color, sl.name, "chip-sub");
+      wireChip(sc, lid, function () {
         labelVis[lid] = !labelVisible(lid);
         saveFeedVis(lid);
         renderChips();
         renderAll();
         renderDay();
       });
+      var se = subCache[x.id];
+      if (se && se.err) sc.title = subErrText(se);
       row.appendChild(sc);
     });
     var mg = document.createElement("button");
@@ -5579,7 +5734,7 @@ function transientNote(title, body) {
     var today = todayYMD();
     for (var i = 0; i < 30; i++) {
       up += state.events.filter(function (e) {
-        return occursOn(e, dAdd(today, i)) && labelVisible(e.labelId);
+        return occursOn(e, dAdd(today, i)) && eventVisible(e);
       }).length;
     }
 

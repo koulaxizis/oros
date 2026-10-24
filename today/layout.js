@@ -6,7 +6,9 @@
 // (tests/today-layout.test.js).
 //   - the widget catalogue: the four sections Today always had (top
 //     lines, Overdue, Today, Coming up) plus Clock, Weather, Water,
-//     Habits, Upcoming events and To-dos
+//     Habits, Upcoming events, To-dos and Together (its top line as a
+//     card; Together is off in the summary until the person adds the
+//     card or switches it on)
 //   - the layout { v: 1, items: [{ id, size }] }: which widgets, in
 //     which order, small or wide. It lives on THIS device only
 //     (localStorage "oros-today-layout", R10): a phone and a laptop
@@ -36,9 +38,10 @@
     water:   { kind: "tile", sizes: ["small", "wide"], def: "small", app: "water" },
     habits:  { kind: "list", sizes: ["small", "wide"], def: "small", app: "habits" },
     events:  { kind: "list", sizes: ["small", "wide"], def: "wide", app: "calendar" },
-    todos:   { kind: "list", sizes: ["small", "wide"], def: "small", app: "todo" }
+    todos:   { kind: "list", sizes: ["small", "wide"], def: "small", app: "todo" },
+    together: { kind: "tile", sizes: ["small", "wide"], def: "small", app: "together" }
   };
-  var ORDER = ["top", "overdue", "today", "soon", "clock", "weather", "water", "habits", "events", "todos"];
+  var ORDER = ["top", "overdue", "today", "soon", "clock", "weather", "water", "habits", "events", "todos", "together"];
   var DEFAULT = [
     { id: "top", size: "wide" },
     { id: "overdue", size: "small" },
@@ -146,6 +149,7 @@
     if (r.kind === "info") {
       if (c.weather && r.app === "weather") return "weather";
       if (c.water && r.app === "water") return "water";
+      if (c.together && r.app === "together") return "together";
       return "";
     }
     if (c.habits && r.app === "habits") return "habits";
@@ -188,6 +192,7 @@
     push("top", { rows: top.keep, more: {} });
     if (top.mine.weather) push("weather", { rows: top.mine.weather, more: {} });
     if (top.mine.water) push("water", { rows: top.mine.water, more: {} });
+    if (top.mine.together) push("together", { rows: top.mine.together, more: {} });
 
     var od = split(g.overdue), td = split(g.today);
     push("overdue", { late: true, rows: od.keep, more: moreWithout(g.overdueMore, taken) });

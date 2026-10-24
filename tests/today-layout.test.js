@@ -47,7 +47,7 @@ test("editing: move, move by id, reorder (lossless), add, remove, size", () => {
   l = L.add(l, "weather", 0);
   l = L.add(l, "nope");
   assert.deepEqual(L.ids(l), ["weather", "soon", "top", "overdue", "today", "clock"]);
-  assert.deepEqual(L.hidden(l), ["water", "habits", "events", "todos"]);
+  assert.deepEqual(L.hidden(l), ["water", "habits", "events", "todos", "together"]);
   l = L.remove(l, "top");
   assert.ok(!L.ids(l).includes("top"));
   l = L.setSize(l, "clock", "wide");
@@ -85,7 +85,7 @@ test("distribute: with the default layout every row stays where it always was", 
   assert.deepEqual(titles(p.today), [["Read", "Dentist", "Call", "BP"]]);
   assert.deepEqual(titles(p.soon), [["Gym", "Report", "Run"]]);
   assert.equal(p.soon[0].day, "2026-10-15");
-  ["clock", "weather", "water", "habits", "events", "todos"].forEach((id) => assert.deepEqual(p[id], []));
+  ["clock", "weather", "water", "habits", "events", "todos", "together"].forEach((id) => assert.deepEqual(p[id], []));
 });
 
 test("distribute: dedicated widgets take their rows, each row in one widget only", () => {

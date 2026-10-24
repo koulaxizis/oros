@@ -318,6 +318,26 @@ input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px v
 .ent-billed svg { width: 16px; height: 16px; }
 .ent-go { height: auto; min-height: 52px; color: var(--run); }
 #add-entry { width: 100%; }
+.day-acts { margin: 0 0 14px; }
+/* Extra charges: on the day (under its entries) and in reports */
+.sub-h { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dim); margin: 6px 0; }
+#extras { list-style: none; display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+.ent.extra .ent-dur { min-width: 0; white-space: nowrap; }
+.rep-sum { display: flex; flex-direction: column; gap: 2px; max-width: 520px; margin: 12px 0 0 auto; font-variant-numeric: tabular-nums; }
+.sum-row { display: flex; justify-content: space-between; gap: 12px; padding: 4px 0; font-size: 14px; }
+.sum-row .num { white-space: nowrap; font-weight: 700; }
+.sum-row.total { border-top: 1px solid var(--border); margin-top: 4px; padding-top: 8px; font-weight: 900; }
+.rep-extras { list-style: none; display: flex; flex-direction: column; gap: 6px; margin: 0 0 8px; padding: 0; }
+.ex-row {
+  display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px; padding: 6px 12px;
+  text-align: left; border: 1px solid var(--border); border-radius: 10px; background: var(--panel-bg);
+}
+.ex-row:hover { border-color: var(--accent); }
+.ex-d { flex-shrink: 0; font-size: 12px; color: var(--text-dim); min-width: 48px; }
+.ex-txt { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.ex-name { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ex-txt small { font-size: 12px; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ex-row .num { white-space: nowrap; font-weight: 800; font-variant-numeric: tabular-nums; }
 
 /* ---------- 6. Week ---------- */
 .grid-wrap { overflow-x: auto; scrollbar-width: thin; }
@@ -613,3 +633,8 @@ button.tag-chip:hover { color: var(--accent); border-color: var(--accent); }
 .p-budget.over .p-btxt { color: var(--danger); font-weight: 700; }
 
 [hidden] { display: none !important; }
+/* Day rate, minimum and overtime (client and project dialogs) */
+.bill-box { margin: 4px 0 10px; border: 1px solid var(--border); border-radius: 10px; padding: 0 12px; }
+.bill-box > summary { cursor: pointer; font-weight: 800; padding: 10px 0; min-height: 40px; }
+.bill-box[open] { padding-bottom: 4px; }
+.bill-box > .hint { margin: 0 0 10px; }

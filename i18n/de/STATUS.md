@@ -2,8 +2,8 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 33154 of 33154 (100%)
-- Help pages: 146 of 146 (100%)
+- Strings: 33558 of 33566 (99%)
+- Help pages: 147 of 147 (100%)
 - Shown in the language list: yes
 
 Apps marked "English for now" do not load language packs yet: their
@@ -12,7 +12,7 @@ text is still written in the code. They switch over wave by wave
 
 | App | Translated | Strings |
 |---|---|---|
-| assistant | 100% | 500 / 500 |
+| assistant | 100% | 513 / 513 |
 | atelier | 100% | 1353 / 1353 |
 | aura | 100% | 84 / 84 |
 | baby | 100% | 324 / 324 |
@@ -22,8 +22,8 @@ text is still written in the code. They switch over wave by wave
 | breakout | 100% | 55 / 55 |
 | bubble | 100% | 53 / 53 |
 | budget | 100% | 555 / 555 |
-| calculator | 100% | 136 / 136 |
-| calendar | 100% | 370 / 370 |
+| calculator | 100% | 165 / 165 |
+| calendar | 97% | 372 / 380 |
 | capture | 100% | 54 / 54 |
 | cardkit | 100% | 9 / 9 |
 | certificates | 100% | 391 / 391 |
@@ -33,7 +33,7 @@ text is still written in the code. They switch over wave by wave
 | chores | 100% | 192 / 192 |
 | commands | English for now | 41 / 41 |
 | connect4 | 100% | 62 / 62 |
-| contacts | 100% | 297 / 297 |
+| contacts | 100% | 299 / 299 |
 | converter | 100% | 68 / 68 |
 | crm | 100% | 444 / 444 |
 | crossword | 100% | 170 / 170 |
@@ -47,12 +47,12 @@ text is still written in the code. They switch over wave by wave
 | familytree | 100% | 200 / 200 |
 | feeds | 100% | 325 / 325 |
 | fileopen | 100% | 6 / 6 |
-| files | 100% | 361 / 361 |
+| files | 100% | 362 / 362 |
 | fitness | 100% | 413 / 413 |
 | flashcards | 100% | 263 / 263 |
 | flow | 100% | 75 / 75 |
 | g2048 | 100% | 54 / 54 |
-| gamecenter | 100% | 99 / 99 |
+| gamecenter | 100% | 110 / 110 |
 | garage | 100% | 422 / 422 |
 | gomoku | 100% | 57 / 57 |
 | google-import | 100% | 9 / 9 |
@@ -63,7 +63,7 @@ text is still written in the code. They switch over wave by wave
 | hexagon | 100% | 59 / 59 |
 | invoices | 100% | 531 / 531 |
 | jigsaw | 100% | 85 / 85 |
-| kanban | 100% | 272 / 272 |
+| kanban | 100% | 273 / 273 |
 | labels | 100% | 88 / 88 |
 | layout | 100% | 474 / 474 |
 | library | 100% | 323 / 323 |
@@ -89,7 +89,7 @@ text is still written in the code. They switch over wave by wave
 | netizen | 100% | 121 / 121 |
 | newsletter | 100% | 817 / 817 |
 | nonogram | 100% | 70 / 70 |
-| notes | 100% | 172 / 172 |
+| notes | 100% | 173 / 173 |
 | oracle | 100% | 38 / 38 |
 | passwords | 100% | 321 / 321 |
 | pet | 100% | 106 / 106 |
@@ -116,7 +116,7 @@ text is still written in the code. They switch over wave by wave
 | settings | 100% | 525 / 525 |
 | share | 100% | 179 / 179 |
 | shelf | 100% | 291 / 291 |
-| shell | 100% | 897 / 897 |
+| shell | 100% | 901 / 901 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 49 / 49 |
 | sky | 100% | 383 / 383 |
@@ -139,9 +139,10 @@ text is still written in the code. They switch over wave by wave
 | texttools | 100% | 315 / 315 |
 | tictactoe | 100% | 53 / 53 |
 | time | 100% | 410 / 410 |
-| timesheet | 100% | 248 / 248 |
-| today | 100% | 85 / 85 |
-| todo | 100% | 208 / 208 |
+| timesheet | 100% | 293 / 293 |
+| today | 100% | 88 / 88 |
+| todo | 100% | 211 / 211 |
+| together | 100% | 289 / 289 |
 | travel | 100% | 555 / 555 |
 | trees | 100% | 76 / 76 |
 | typewriter | 100% | 46 / 46 |

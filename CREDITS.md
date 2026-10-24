@@ -215,3 +215,12 @@ exact source of every package.
 | [Inno Setup](https://jrsoftware.org/isinfo.php) and its Greek translation | © Jordan Russell and Martijn Laan; Greek texts by Anastasis Chatzioglou, XhmikosR and Vasileios Karamichail | [Inno Setup License](https://jrsoftware.org/files/is/license.txt) | The Windows setups of orOS and orOS Drive |
 | [appimagetool](https://github.com/AppImage/appimagetool) and the [AppImage runtime](https://github.com/AppImage/type2-runtime) | © probonopd and AppImage contributors | [MIT](https://github.com/AppImage/type2-runtime/blob/main/LICENSE); the runtime is statically linked with libfuse 3 (LGPL-2.1), squashfuse (BSD-2-Clause), zstd (BSD-3-Clause), zlib, mimalloc (MIT) and musl (MIT) | The Linux AppImage of orOS |
 | [Android Browser Helper](https://github.com/GoogleChrome/android-browser-helper) | 2.7.4, © Google LLC | [Apache-2.0](https://github.com/GoogleChrome/android-browser-helper/blob/main/LICENSE) | Android app only: opens orOS full screen |
+
+## Ideas from other free apps
+
+No code, text or art of these apps is used in orOS: the feature was
+written from scratch after the idea.
+
+| App | Author | Licence of the app | In orOS |
+|---|---|---|---|
+| [Since Us](https://f-droid.org/packages/app.sinceus) | DerDieDasLian | GPL-3.0 | Together (counting the time together, milestones, moments) |

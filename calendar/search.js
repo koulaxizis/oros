@@ -2,7 +2,8 @@
 // orOS Calendar — universal search provider (v1.0.0)
 // Loaded by the shell on the first menu search (apps.json
 // "search"). Read-only: reads oros-calendar-data, never writes.
-// One hit per event (title; note and location as text). Feed rows
+// One hit per event (title; time, location, note and the event's
+// label as text, so a label's name finds its events). Feed rows
 // (birthdays, To-Do, Kanban…) are not stored here and are found in
 // their own apps. Deleted events are not in events[].
 // The date shown, and the day the Calendar opens on, is the next
@@ -63,6 +64,23 @@
     return last;
   }
 
+  // The user's own labels (calendar.js state.labels). Untouched seeds
+  // (mtime 0) are stored in English and shown translated.
+  // Same keys and texts as calendar.js.
+  var L = {
+    en: { "lbl.personal": "Personal", "lbl.work": "Work", "lbl.family": "Family", "srch.label": "Label: " },
+    el: { "lbl.personal": "Προσωπικό", "lbl.work": "Εργασία", "lbl.family": "Οικογένεια", "srch.label": "Ετικέτα: " }
+  };
+  var SEEDS = { "lbl-personal": "lbl.personal", "lbl-work": "lbl.work", "lbl-family": "lbl.family" };
+  function labelNames(d, w) {
+    var out = {};
+    (Array.isArray(d.labels) ? d.labels : []).forEach(function (l) {
+      if (!l || typeof l.id !== "string" || typeof l.name !== "string") return;
+      out[l.id] = l.mtime === 0 && SEEDS[l.id] ? w[SEEDS[l.id]] : str(l.name);
+    });
+    return out;
+  }
+
   var PROVIDER = {
     id: "calendar",
     keys: [KEY],
@@ -71,6 +89,7 @@
       var d = ctx.readJSON(KEY), out = [];
       if (!d || !Array.isArray(d.events)) return out;
       var now = new Date(), today = ymd(now.getFullYear(), now.getMonth(), now.getDate());
+      var w = L[ctx.lang] || L.en, lbl = labelNames(d, w);
       d.events.forEach(function (e) {
         if (!e || typeof e.id !== "string" || typeof e.date !== "string" || !YMD.test(e.date)) return;
         var day = pickDate(e, today);
@@ -80,9 +99,11 @@
           id: e.id,
           title: str(e.title),
           text: [str(e.start) && str(e.start) + (str(e.end) ? "–" + str(e.end) : ""),
+                 typeof e.labelId === "string" && lbl[e.labelId] ? w["srch.label"] + lbl[e.labelId] : "",
                  str(e.location), str(e.note)].filter(Boolean).join(" · "),
           when: new Date(+p[0], +p[1] - 1, +p[2], +hm[0], +hm[1]).getTime(),
-          target: { id: e.id, date: day }
+          target: { id: e.id, date: day },
+          labels: typeof e.labelId === "string" && lbl[e.labelId] ? [lbl[e.labelId]] : []
         });
       });
       return out;

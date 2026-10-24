@@ -1,5 +1,5 @@
 # Calculator
-An everyday calculator with five modes: `Standard` with memory keys, `Scientific` with brackets and functions, `Graphing` for up to four functions, `Programmer` for hex and binary, and `Finance` for VAT, percentages, loans and savings. It keeps a history of your results and, for fun, has a `Troll mode` that teases you and sometimes gives a slightly wrong answer.
+An everyday calculator with five modes: `Standard` with memory keys, `Scientific` with brackets and functions, `Graphing` for up to four functions, `Programmer` for hex and binary, and `Finance` for VAT, percentages, loans and savings. It keeps a history of your results and, for fun, has a `Troll mode` that teases you about every answer. The answers themselves are always correct.
 
 ## Getting started
 Pick a mode on the bar under the title. On a narrow screen the names are shortened (`Basic`, `Sci`, `Graph`, `Prog`, `Money`). The app remembers the mode you used last on this device.
@@ -74,11 +74,11 @@ Each result from `Standard` and `Scientific` is added to `History`, newest first
 On a wide screen you can drag the left edge of the history panel to make it wider or narrower.
 
 ## Troll mode
-Tap or click `Troll mode` to turn it on or off. While it's on, every answer in `Standard` and `Scientific` comes with a cheeky comment, and now and then the result is quietly off by a few percent (never twice in a row). Wrong answers go into the history too. Graphing, Programmer and Finance always give honest answers.
+Tap or click `Troll mode` to turn it on or off. While it's on, every answer in `Standard` and `Scientific` comes with a cheeky line under the result. The result itself is always correct: Troll mode only changes what the calculator says, never the numbers. Some lines depend on the answer, such as zero, 42, a negative number or a unit conversion. Graphing, Programmer and Finance stay quiet.
 
-Right-click, or long-press on a touch screen, the `Troll mode` button to change how often it lies: `Subtle`, `Balanced` or `Rampant`. The dots on the button show the level.
+Right-click, or long-press on a touch screen, the `Troll mode` button to choose how cheeky it gets: `Subtle` (gentle teasing), `Balanced` or `Rampant` (no mercy). The dots on the button show the level.
 
->! Don't use Troll mode for anything that matters, such as money or measurements.
+Older versions of Troll mode sometimes changed an answer by a few percent. Those answers are still in your history with a `≈` mark in front of them, so you can tell them apart.
 
 ## Sync and backup
 Your history, the memory value, the `fx` row and the Troll mode settings sync between your devices through [orOS sync](help:t/sync). The mode, the angle units, the graph's functions, the Programmer settings, the Finance numbers and the width of the history panel stay on each device. `Ans` and the calculation on screen are not saved.

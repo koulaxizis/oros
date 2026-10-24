@@ -1,4 +1,5 @@
 orosPack("de", "kanban", {
+ "srch.labels": "Labels: ",
  "add.board": "Board",
  "add.btn": "Hinzufügen",
  "add.col": "Spalte",

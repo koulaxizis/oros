@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "3.42.02";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "3.45.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -178,6 +178,7 @@
     cycle: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>',
     plants: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14h12l-1.6 7H7.6z"/><path d="M12 14V9"/><path d="M12 9c0-3 2-5.5 6-5.5 0 3.5-2 5.5-6 5.5z"/><path d="M12 11c0-2.5-1.8-4-5-4 0 3 1.8 4 5 4z"/></svg>',
     familytree: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="5" rx="1"/><rect x="2" y="17" width="6" height="5" rx="1"/><rect x="16" y="17" width="6" height="5" rx="1"/><path d="M12 7v5M5 17v-5h14v5"/></svg>',
+    together: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19.5s-6-3.7-7.6-7.4C.2 9.3 1.9 6.5 4.7 6.5c1.8 0 2.9 1 4.3 2.6 1.4-1.6 2.5-2.6 4.3-2.6"/><path d="M15 20.5s-6-3.7-7.6-7.4C6.2 10.3 7.9 7.5 10.7 7.5c1.8 0 2.9 1 4.3 2.6 1.4-1.6 2.5-2.6 4.3-2.6 2.8 0 4.5 2.8 3.3 5.6-1.6 3.7-7.6 7.4-7.6 7.4z"/></svg>',
     contacts: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 12c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm0 2c-3.33 0-10 1.67-10 5v2h20v-2c0-3.33-6.67-5-10-5z"/></svg>',
     bookmarks: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v14l-10-6-10 6V6a2 2 0 0 1 2-2z"/><path d="M8 4v16M16 4v16"/></svg>',
     maps: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>',
@@ -1174,6 +1175,7 @@
       tickSafe("namedayCheckTick", namedayCheckTickThrottled); // Calendar: contacts' name days, morning notice (60s throttle)
       tickSafe("babyCheckTick", babyCheckTickThrottled); // Baby: feed gap + daily medicine reminders (60s throttle)
       tickSafe("choresCheckTick", choresCheckTickThrottled); // Chore Wheel: daily "your chores" reminder (60s throttle)
+      tickSafe("togetherCheckTick", togetherCheckTickThrottled); // Together: anniversaries, milestones, moments (60s throttle)
       tickSafe("timesheetCheckTick", timesheetCheckTickThrottled); // Timesheet: forgotten timer (60s throttle)
       tickSafe("parkCheckTick", parkCheckTickThrottled);   // Maps: parking reminder (60s throttle)
       tickSafe("shelfCheckTick", shelfCheckTickThrottled); // Media Shelf: daily reading reminder (60s throttle)
@@ -2102,6 +2104,48 @@
     if (now - choresLastTick < 60000) return;
     choresLastTick = now;
     choresCheckTick();
+  }
+
+  // Together — one morning notice on a day with an anniversary, a
+  // milestone, a moment or special day marked every year, or a
+  // meeting. Reads "oros-together-data" directly (works with the app
+  // CLOSED) and asks together/core.js (loaded by index.html, the SAME
+  // file the app runs) for the rows of today, filtered by the synced
+  // prefs.notify; from prefs.hour on (default 09:00). Discreet
+  // relationships show initials. Key "day-<ymd>": one per day, the
+  // inbox dedup keeps a second device quiet.
+  function togetherCheckTick() {
+    var Core = window.TogetherCore;
+    if (!Core) return;
+    var raw;
+    try { raw = JSON.parse(localStorage.getItem(Core.STORAGE_KEY)); } catch (e) { return; }
+    if (!raw || !Array.isArray(raw.rels) || !raw.rels.length) return;
+    var data = Core.normalize(raw);
+    if (new Date().getHours() < data.prefs.hour) return;
+    var N = window.orosNotifs;
+    if (!(N && typeof N.emit === "function")) return;
+    var idx = {};
+    try { idx = Core.contactIndex(JSON.parse(localStorage.getItem("oros-contacts-data"))); } catch (e) {}
+    var lang = window.orosLang || "en";
+    var rows = Core.dayRows(data, idx, sysYmd(), lang, { notify: true });
+    if (!rows.length) return;
+    var title = window.t("app.together");
+    if (title === "app.together") title = "Together";   // missing-key fallback
+    N.emit({
+      ns: "together",
+      key: "day-" + sysYmd(),
+      type: "reminder",
+      title: title,
+      body: rows.slice(0, 3).map(function (r) { return r.title; }).join(" · ") + (rows.length > 3 ? " …" : ""),
+      deepLink: "together:" + rows[0].rel
+    });
+  }
+  var togetherLastTick = 0;
+  function togetherCheckTickThrottled() {
+    var now = Date.now();
+    if (now - togetherLastTick < 60000) return;
+    togetherLastTick = now;
+    togetherCheckTick();
   }
 
   var plantsLastTick = 0;
@@ -3253,7 +3297,7 @@
     home: function () { if (state.running) returnToDesktop(); },
     open: function (id) { openAppById(id); }
   };
-  window.orosAssistSearch = function (q, ids) {
+  window.orosAssistSearch = function (q, ids, opts) {
     var S = window.orosSearch;
     if (!S) return Promise.resolve([]);
     var allow = {};
@@ -3261,6 +3305,23 @@
     var apps = searchApps().filter(function (a) { return allow[a.id]; });
     if (!apps.length) return Promise.resolve([]);
     if (!searchReader) searchReader = S.makeReader(localStorage);
+    // { all: true } (AS-LBL): every item of the allowed apps, unscored,
+    // for the Assistant's label filter ("events without a label").
+    if (opts && opts.all) {
+      return S.load(apps, APP_VERSION).then(function () {
+        var ctx = { q: "", words: [], fold: S.fold, lang: langBase(), code: state.lang, limit: 1000, readJSON: searchReader };
+        var out = [];
+        (window.orosSearchProviders || []).forEach(function (pv) {
+          if (!pv || typeof pv.search !== "function" || !allow[pv.id]) return;
+          var list;
+          try { list = pv.search(ctx); } catch (e) { list = null; }
+          if (!Array.isArray(list)) return;
+          var hits = list.map(S.cleanHit).filter(Boolean).slice(0, 1000);
+          if (hits.length) out.push({ id: pv.id, total: hits.length, hits: hits });
+        });
+        return JSON.parse(JSON.stringify(out));
+      });
+    }
     return S.load(apps, APP_VERSION).then(function () {
       return S.run(window.orosSearchProviders, String(q || ""), {
         lang: langBase(), code: state.lang, readJSON: searchReader,
@@ -6440,6 +6501,14 @@
           by: "Google LLC", lic: "Apache-2.0",
           k: "cr.android-browser-helper" }
       ]
+    },
+    {
+      k: "cr.g.ideas",
+      items: [
+        { name: "Since Us", url: "https://f-droid.org/packages/app.sinceus",
+          by: "DerDieDasLian", lic: { k: "cr.lic.ideas" },
+          k: "cr.since-us" }
+      ]
     }
   ];
 
@@ -7442,6 +7511,31 @@
   };
 
 
+  // Back from the Dropbox sign-in with no passphrase on this device
+  // (a new device, "I already use orOS on another device", or Connect
+  // in Settings): the page reloaded on the desktop, but the passphrase
+  // is the next step, so Settings › Sync opens again. A remembered
+  // passphrase (vault auto-unlock) or a single app taking the sign-in
+  // back leaves the desktop as it is.
+  function syncPassAfterSignIn() {
+    var S = window.orosSync;
+    if (!S || !S.vaultUnlocked || SOLO) return;
+    S.vaultUnlocked.then(function () {
+      if (typeof S.leftForSolo === "function" && S.leftForSolo()) return;
+      var tries = 0;
+      (function wait() {
+        if (!S.isConnected() || S.hasPassphrase()) return;
+        // Splash still up or apps.json not in yet.
+        if (document.getElementById("oro-splash") || !state.apps.length) {
+          if (++tries > 120) return;
+          setTimeout(wait, 250);
+          return;
+        }
+        if (window.orosSettings) window.orosSettings.open("sync");
+      })();
+    }, function () {});
+  }
+
   function initSyncIntegration() {
     registerShellSlice();
     fdMigrateLegacy();          // FILES-V: one-time cleanup of the blob model
@@ -7454,7 +7548,9 @@
     // OAuth return → flip the menu to connected state once tokens land
     if (window.orosSync && window.orosSync.redirectHandled) {
       window.orosSync.redirectHandled.then(function (handled) {
-        if (handled) renderMenu();
+        if (!handled) return;
+        renderMenu();
+        syncPassAfterSignIn();
       });
     }
 

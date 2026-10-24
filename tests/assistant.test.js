@@ -99,7 +99,7 @@ test("Anthropic request: browser headers, raw blocks echoed, tool results, fallb
   assert.equal(req.body.fallbacks, "default");
   assert.equal(req.body.stream, true);
   assert.equal(req.body.system, "S");
-  assert.equal(req.body.tools[0].input_schema.required[0], "query");
+  assert.equal(req.body.tools[0].input_schema.properties.query.type, "string");
   const msgs = req.body.messages;
   assert.deepEqual(msgs.map((m) => m.role), ["user", "assistant", "user", "assistant", "user"]);
   assert.equal(msgs[1].content[0].type, "tool_use");               // an earlier question's thinking is not sent back
@@ -497,7 +497,7 @@ const SUM = require("../assistant/summary.js");
 
 test("summary args: app id, month YYYY-MM (default this month), days 1-31 (default 7)", () => {
   assert.deepEqual(SUM.normArgs({ app: "budget" }, "2026-10-12"), { ok: true, app: "budget", month: "2026-10", days: 7 });
-  assert.deepEqual(SUM.normArgs({ app: "Calendar", days: 14 }, "2026-10-12"), { ok: true, app: "calendar", month: "2026-10", days: 14 });
+  assert.deepEqual(SUM.normArgs({ app: "Calendar", days: 14 }, "2026-10-12"), { ok: true, app: "calendar", month: "2026-10", days: 14, monthSet: false });
   assert.equal(SUM.normArgs({ app: "budget", month: "2026-09" }, "2026-10-12").month, "2026-09");
   ["2026-13", "26-09", "2026-9", "x"].forEach((m) => assert.equal(SUM.normArgs({ app: "budget", month: m }, "2026-10-12").ok, false, m));
   [0, 32, 2.5, "a"].forEach((d) => assert.equal(SUM.normArgs({ app: "todo", days: d }, "2026-10-12").ok, false, String(d)));

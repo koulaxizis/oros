@@ -383,6 +383,8 @@ button:disabled { cursor: default; opacity: 0.4; }
 .chg-table tr:first-child th { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.4px; }
 .chg-table th { color: var(--text-dim); font-weight: 700; white-space: nowrap; }
 .chg-table td { overflow-wrap: anywhere; min-width: 0; }
+.chg-many { max-height: 50vh; overflow-y: auto; }
+.chg-many .entry-title { margin: 10px 0 0; }
 .chg-b { color: var(--text-dim); text-decoration: line-through; text-decoration-color: var(--danger); }
 .chg-b.gone { text-decoration: line-through; }
 .chg-a { font-weight: 700; }

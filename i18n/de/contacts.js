@@ -1,4 +1,5 @@
 orosPack("de", "contacts", {
+ "srch.labels": "Labels: ",
  "ac.btn": "Aus einem Konto",
  "ac.cancelled": "Anmeldung abgebrochen.",
  "ac.err": "Kontakte konnten nicht gelesen werden ({e}).",
@@ -83,6 +84,7 @@ orosPack("de", "contacts", {
  "ct.export.json": "JSON exportieren",
  "ct.export.json.done": "Datenbank exportiert (.json)",
  "ct.familytree": "Stammbaum",
+ "ct.together": "Zusammen",
  "ct.field.addresses": "Adressen",
  "ct.field.emails": "E-Mails",
  "ct.field.events": "Ereignisse",
