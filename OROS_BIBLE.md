@@ -7982,7 +7982,7 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Files: `download/index.html`, `files/{drive.js,files.css}`, `i18n/de/{files.js,STATUS.md}`, `tests/drive-android.test.js` (+1), What's new, Bible. The page's generator (`/mnt/project-files/hardware/download-page/gen_dl.py`) was not changed and no longer matches the page; edit the page directly.
   - Tests: full suite green. Chromium, local server, 360 px EL and 1200 px EN: both new cards render, no horizontal scroll, no console errors; release asset names checked against oros-drive v0.2.1 and oros-portable v0.2.0. Not tested: the Drive empty state in the real shell (needs an unlocked vault with no Drive folders; covered by the source test), installing orOS Drive on a real Windows PC with a real Dropbox, Safari.
 
-### 2026-10-24 — Household wave 7b: two parents, one baby (#PR) — 3.56.00
+### 2026-10-24 — Household wave 7b: two parents, one baby (#587) — 3.56.00
 - Wave 7b of the Household plan (Chris approved all of wave 7, 2026-10-24 23:14). Baby › Settings › Household › "Share with a household" moves the children, their last 90 days, growth, milestones and the milk stash into the household: both parents log on their own phone and see the same day, with initials on what the other logged. Units and reminders stay each person's own; the shell's reminders and Today read the own data and the shared Babies together, so a shared child reminds once. "Stop sharing" brings everything back. BR-HH (Part VI).
 - Files: `baby/{house.js (new),baby.js,baby.css,index.html,today.js,help.*.txt}`, `index.html`, `shell.js` (APP_VERSION, babyCheckTick), `sw.js`, `i18n/de/{baby.js,help/baby.txt,STATUS.md}`, `tests/baby-house.test.js`, What's new, Bible.
 
