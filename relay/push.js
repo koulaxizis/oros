@@ -12,7 +12,13 @@
 //   set  { items:[{k,at,ct,ttl?}] }  replace the whole schedule
 //   test { ct }              send one packet now
 //   del  {}                  forget the box
+//   wtok {}                  a wake token (43 base64url) for household
+//                            boxes; it can only `wake`, never set/del/sub
+//   wdel { wt }              revoke one wake token
 //   key  (no id, no tok)     the VAPID public key; 503 "nopush" when unset
+// Not on the public route: { act:"wake", wt, ct } from a household box
+// (relay/house.js, stub to stub in this Worker) sends that packet now,
+// at most once per WAKE gap per box.
 // id: 22 base64url chars (16 random bytes, made by the page); tok: 43
 // base64url chars (32 random bytes), kept here only as its SHA-256.
 // A wrong tok and a missing box get the same answer ("gone").
@@ -28,7 +34,10 @@ export const PUSH_LIMITS = {
   testGapMs: 30000,             // one `test` per box per 30 s
   setPerHour: 60,               // `set` per box per hour
   retries: [30000, 120000],     // after a 429 / 5xx: again in 30 s, then 2 min, then dropped
-  batch: 20                     // reminders sent per alarm run
+  batch: 20,                    // reminders sent per alarm run
+  wakeTokens: 6,                // wake tokens per box (one per household)
+  wakeGapMs: 15 * 60000,        // one household wake per box per 15 min
+  wakeTtl: 900
 };
 
 // Push services a subscription may point at: exact hosts, or a suffix
@@ -58,15 +67,16 @@ export function validEndpoint(s) {
   return PUSH_HOSTS.some((p) => p.charAt(0) === "." ? h.length > p.length && h.slice(-p.length) === p : h === p);
 }
 
-function validCt(c) { return typeof c === "string" && c.length >= 24 && c.length <= PUSH_LIMITS.ctChars && B64U_RE.test(c); }
+export function validCt(c) { return typeof c === "string" && c.length >= 24 && c.length <= PUSH_LIMITS.ctChars && B64U_RE.test(c); }
 
 export function validPush(b) {
-  if (["sub", "set", "test", "del", "key"].indexOf(b.act) < 0) return "act";
+  if (["sub", "set", "test", "del", "key", "wtok", "wdel"].indexOf(b.act) < 0) return "act";
   if (b.act === "key") return "";
   if (!ID_RE.test(b.id || "")) return "id";
   if (!TOK_RE.test(b.tok || "")) return "tok";
   if (b.act === "sub" && !validEndpoint(b.endpoint)) return "endpoint";
   if (b.act === "test" && !validCt(b.ct)) return "ct";
+  if (b.act === "wdel" && !TOK_RE.test(b.wt || "")) return "wt";
   if (b.act === "set") {
     if (!Array.isArray(b.items) || b.items.length > PUSH_LIMITS.rows) return "items";
     const seen = new Set();
@@ -100,6 +110,7 @@ export async function runPush(b, env, now, ip) {
   const inner = { act: b.act, tok: b.tok, now: now };
   if (b.act === "sub") inner.endpoint = b.endpoint;
   if (b.act === "test") inner.ct = b.ct;
+  if (b.act === "wdel") inner.wt = b.wt;
   if (b.act === "set") inner.items = b.items.map((it) => ({ k: it.k, at: it.at, ct: it.ct, ttl: it.ttl || PUSH_LIMITS.ttl }));
   let res;
   try {
@@ -229,6 +240,7 @@ export class PushBox {
 
   async act(b) {
     const now = b.now, m = this.meta();
+    if (b.act === "wake") return this.wake(m, b, now);
     const th = await sha256hex(b.tok);
     if (b.act === "sub") {
       if (m && !sameText(m.th, th)) return { ok: false, code: "gone" };
@@ -242,6 +254,18 @@ export class PushBox {
     }
     if (!m || !sameText(m.th, th)) return { ok: false, code: "gone" };
     if (b.act === "del") { await this.wipe(); return { ok: true, data: { ok: true } }; }
+    if (b.act === "wtok") {
+      const wt = b64u(crypto.getRandomValues(new Uint8Array(32)));
+      m.wk = (Array.isArray(m.wk) ? m.wk : []).concat([await sha256hex(wt)]).slice(-PUSH_LIMITS.wakeTokens);
+      this.saveMeta(m);
+      return { ok: true, data: { wt: wt } };
+    }
+    if (b.act === "wdel") {
+      const wh = await sha256hex(b.wt);
+      m.wk = (Array.isArray(m.wk) ? m.wk : []).filter((h) => !sameText(h, wh));
+      this.saveMeta(m);
+      return { ok: true, data: { ok: true } };
+    }
     if (b.act === "test") {
       if (now - (m.test || 0) < PUSH_LIMITS.testGapMs) return { ok: false, code: "rate" };
       m.test = now;
@@ -261,6 +285,23 @@ export class PushBox {
     });
     await this.arm(m);
     return { ok: true, data: { n: b.items.length } };
+  }
+
+  // A household box: "something changed there". Only a wake token this
+  // box issued; never touches `last` (the box still needs its own `set`).
+  async wake(m, b, now) {
+    if (typeof b.wt !== "string" || !validCt(b.ct)) return { ok: false, code: "bad-request" };
+    const wh = await sha256hex(b.wt);
+    let hit = false;
+    for (const h of (m && Array.isArray(m.wk) ? m.wk : [])) { if (sameText(h, wh)) hit = true; }
+    if (!hit) return { ok: false, code: "gone" };
+    if (now - (m.wake || 0) < PUSH_LIMITS.wakeGapMs) return { ok: false, code: "rate" };
+    if (!vapidReady(this.env)) return { ok: false, code: "nopush" };
+    m.wake = now;
+    this.saveMeta(m);
+    const st = await this.send(m, b.ct, PUSH_LIMITS.wakeTtl, now, "normal");
+    if (st === "gone") { await this.wipe(); return { ok: false, code: "gone" }; }
+    return { ok: true, data: { sent: st === "sent" } };
   }
 
   async alarm() {
@@ -286,7 +327,7 @@ export class PushBox {
   }
 
   // "sent" | "gone" (the subscription is dead) | "retry" | "drop"
-  async send(m, ct, ttl, now) {
+  async send(m, ct, ttl, now, urgency) {
     if (!validEndpoint(m.ep)) return "gone";
     const aud = new URL(m.ep).origin;
     let t = this.jwts.get(aud);
@@ -304,7 +345,7 @@ export class PushBox {
           "Content-Encoding": "aes128gcm",
           "Content-Type": "application/octet-stream",
           "TTL": String(ttl),
-          "Urgency": "high"
+          "Urgency": urgency || "high"
         },
         body: unb64u(ct)
       });

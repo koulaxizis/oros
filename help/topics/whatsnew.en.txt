@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.54.00
+- Household: hear about changes with orOS closed. Turn on "Tell me about changes when orOS is closed" in Household (with Notifications with orOS closed on), and a few minutes after someone else changes something shared, you get one short notification, at most every 15 minutes. Only "something changed" travels, encrypted for your device.
+
 ## Version 3.53.00
 - Household: see what the others changed. When someone in your household adds, changes or removes shared things, the bell gets one short line once they are done (for example "Shopping: Nikos +3 ~1, −1"), and Today shows what changed at home today. Your own changes are left out.
 

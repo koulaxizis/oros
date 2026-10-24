@@ -7,7 +7,7 @@ const ORIGIN = "https://useoros.online";
 
 // A tiny SQLite stand-in that knows exactly the statements house.js runs.
 function fakeStorage() {
-  const st = { meta: null, docs: new Map(), inv: new Map(), req: new Map(), env: new Map(), alarm: null, wiped: 0 };
+  const st = { meta: null, docs: new Map(), inv: new Map(), req: new Map(), env: new Map(), ping: new Map(), alarm: null, wiped: 0 };
   const res = (a) => ({ toArray: () => a });
   st.sql = {
     exec(q, ...v) {
@@ -39,6 +39,14 @@ function fakeStorage() {
       if (q.startsWith("INSERT OR REPLACE INTO env")) { st.env.set(v[0], new Uint8Array(v[1])); return res([]); }
       if (q.startsWith("SELECT data FROM env")) { const e = st.env.get(v[0]); return res(e ? [{ data: e }] : []); }
       if (q.startsWith("SELECT COUNT(*) AS n FROM env")) return res([{ n: st.env.size }]);
+      if (q.startsWith("SELECT COUNT(*) AS n FROM ping")) return res([{ n: st.ping.size }]);
+      if (q.startsWith("SELECT pid FROM ping")) return res(st.ping.has(v[0]) ? [{ pid: v[0] }] : []);
+      if (q.startsWith("INSERT OR REPLACE INTO ping")) { st.ping.set(v[0], { pid: v[0], wt: v[1], ct: v[2], due: 0, sent: 0 }); return res([]); }
+      if (q === "DELETE FROM ping") { st.ping.clear(); return res([]); }
+      if (q.startsWith("DELETE FROM ping WHERE")) { st.ping.delete(v[0]); return res([]); }
+      if (q.startsWith("UPDATE ping SET due = 1")) { st.ping.forEach((r) => { if (r.pid !== v[0]) r.due = 1; }); return res([]); }
+      if (q.startsWith("SELECT pid, wt, ct, sent FROM ping")) return res(Array.from(st.ping.values()).filter((r) => r.due === 1).map((r) => Object.assign({}, r)));
+      if (q.startsWith("UPDATE ping SET due = 0")) { const r = st.ping.get(v[1]); if (r) { r.due = 0; r.sent = v[0]; } return res([]); }
       throw new Error("unknown SQL " + q);
     }
   };
@@ -46,7 +54,7 @@ function fakeStorage() {
     sql: st.sql,
     setAlarm(t) { st.alarm = t; },
     deleteAlarm() { st.alarm = null; },
-    deleteAll() { st.meta = null; st.docs.clear(); st.inv.clear(); st.req.clear(); st.env.clear(); st.wiped++; },
+    deleteAll() { st.meta = null; st.docs.clear(); st.inv.clear(); st.req.clear(); st.env.clear(); st.ping.clear(); st.wiped++; },
     transactionSync(fn) { return fn(); }
   };
   return st;

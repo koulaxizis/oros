@@ -311,3 +311,138 @@ test("alarm without the secrets keeps the rows and looks again in an hour", asyn
   assert.equal(st.rows.size, 1);
   assert.ok(st.alarm >= now + 3590000);
 });
+
+// ---------- household wakes (relay/house.js → PushBox "wake") ----------
+const crypto2 = require("node:crypto");
+const hex = (s) => crypto2.createHash("sha256").update(s).digest("hex");
+const HBOX = "HoUsEbOx0123456789_-ab", HW = "W".repeat(43), HA = "A".repeat(43);
+const ID2 = "ZyXwVuTsRqPoNmLkJiHgFe", TOK2 = "S".repeat(43);
+
+test("wake token: issued per box, can only wake, revoked by wdel; wake is not a public act", async () => {
+  const { env, w } = await freshEnv();
+  const now = 1_800_000_000_000;
+  await call(env, { act: "sub", id: ID, tok: TOK, endpoint: EP }, now);
+  const r = await call(env, { act: "wtok", id: ID, tok: TOK }, now);
+  assert.equal(r.status, 200);
+  const wt = r.body.data.wt;
+  assert.match(wt, /^[A-Za-z0-9_-]{43}$/);
+  assert.ok(!w.boxes.get(ID).st.meta.get("box").includes(wt), "kept only as its hash");
+  assert.equal((await call(env, { act: "wtok", id: ID, tok: "U".repeat(43) }, now)).body.error.code, "gone");
+  // the wake token is no tok: set, del, sub, test refuse it
+  for (const act of ["set", "del", "test"]) {
+    const x = await call(env, { act, id: ID, tok: wt, items: [], ct: CT }, now + 60000);
+    assert.equal(x.body.error.code, "gone", act);
+  }
+  assert.equal((await call(env, { act: "sub", id: ID, tok: wt, endpoint: EP }, now)).body.error.code, "gone");
+  assert.equal(P.validPush({ op: "push", act: "wake", id: ID, tok: TOK }), "act");
+  // the box itself answers wake (stub to stub): once per 15 minutes, Urgency normal, last untouched
+  const stub = env.PUSH.get(ID);
+  const wake = async (t, x) => (await stub.fetch("https://push.box/", { method: "POST", body: JSON.stringify({ act: "wake", wt: x || wt, ct: CT, now: t }) })).json();
+  const last = JSON.parse(w.boxes.get(ID).st.meta.get("box")).last;
+  assert.equal((await wake(now + 1)).ok, true);
+  assert.equal(w.sent.length, 1);
+  assert.equal(w.sent[0].o.headers.Urgency, "normal");
+  assert.equal(w.sent[0].o.headers.TTL, String(P.PUSH_LIMITS.wakeTtl));
+  assert.equal((await wake(now + 2)).code, "rate");
+  assert.equal((await wake(now + 2, "X".repeat(43))).code, "gone");
+  assert.equal(JSON.parse(w.boxes.get(ID).st.meta.get("box")).last, last);
+  assert.equal((await call(env, { act: "wdel", id: ID, tok: TOK, wt }, now)).status, 200);
+  assert.equal((await wake(now + P.PUSH_LIMITS.wakeGapMs + 10)).code, "gone");
+  assert.equal(P.validPush({ op: "push", act: "wdel", id: ID, tok: TOK, wt: "short" }), "wt");
+});
+
+async function houseCall(env, method, path, opts) {
+  opts = opts || {};
+  const h = { Origin: ORIGIN, "CF-Connecting-IP": "10.9.0.1" };
+  if (opts.w) h.Authorization = "Bearer " + opts.w;
+  if (opts.a) h["X-HH-Admin"] = opts.a;
+  if (opts.rev !== undefined) h["If-Match"] = '"' + opts.rev + '"';
+  if (opts.dev) h["X-HH-Dev"] = opts.dev;
+  let body = opts.body;
+  if (opts.json) { body = JSON.stringify(opts.json); h["Content-Type"] = "application/json"; }
+  const r = await handle(new Request("https://relay.example" + path, { method, headers: h, body }), env, null, opts.now);
+  return { status: r.status, body: await r.json().catch(() => null) };
+}
+
+test("household box: a change wakes the other devices once, after 2 minutes, never the writer", async () => {
+  const HF = require("./house-fake.js");
+  const H = await HF.load();
+  const hw = HF.world();
+  const v = await vapidEnv();
+  Object.assign(hw.env, { VAPID_PRIVATE: v.VAPID_PRIVATE, VAPID_SUBJECT: v.VAPID_SUBJECT });
+  const pw = world(hw.env);
+  const env = hw.env, now = 1_800_000_000_000;
+  assert.equal((await houseCall(env, "POST", "/h/" + HBOX, { json: { act: "new", wh: hex(HW), ah: hex(HA) }, now })).status, 200);
+  // two devices with push boxes, each registered with the household
+  const wts = {};
+  for (const [id, tk] of [[ID, TOK], [ID2, TOK2]]) {
+    await call(env, { act: "sub", id, tok: tk, endpoint: EP + id }, now);
+    wts[id] = (await call(env, { act: "wtok", id, tok: tk }, now)).body.data.wt;
+    assert.equal((await houseCall(env, "POST", "/h/" + HBOX + "/p", { w: HW, json: { pid: id, wt: wts[id], ct: CT, extra: 1 }, now })).status, 200);
+  }
+  assert.equal((await houseCall(env, "POST", "/h/" + HBOX + "/p", { w: HW, json: { pid: ID, wt: "x", ct: CT }, now })).status, 400);
+  assert.equal((await houseCall(env, "POST", "/h/" + HBOX + "/p", { w: "Q".repeat(43), json: { pid: ID, wt: wts[ID], ct: CT }, now })).status, 404);
+  const hb = hw.boxes.get(HBOX);
+  // never returned
+  const info = await houseCall(env, "GET", "/h/" + HBOX, { w: HW, now });
+  assert.ok(!JSON.stringify(info.body).includes(wts[ID]) && !JSON.stringify(info.body).includes(ID));
+  // device 1 writes twice: one wake for device 2 only, 2 minutes later; the idle deadline stays
+  await houseCall(env, "PUT", "/h/" + HBOX + "/d/doc1", { w: HW, rev: 0, body: new Uint8Array(5), dev: ID, now });
+  await houseCall(env, "PUT", "/h/" + HBOX + "/d/doc1", { w: HW, rev: 1, body: new Uint8Array(5), dev: ID, now: now + 1000 });
+  assert.equal(hb.st.alarm, now + H.HOUSE_LIMITS.wakeDelayMs);
+  const realNow = Date.now;
+  try {
+    Date.now = () => now + H.HOUSE_LIMITS.wakeDelayMs;
+    await hb.box.alarm();
+    assert.deepEqual(pw.sent.map((x) => x.u), [EP + ID2]);
+    assert.equal(hb.st.alarm, now + H.HOUSE_LIMITS.idleMs);                  // back to the idle deadline
+    // a write from device 2 inside device 1's quiet gap: device 1 woken; device 2 is not
+    await houseCall(env, "PUT", "/h/" + HBOX + "/d/doc1", { w: HW, rev: 2, body: new Uint8Array(5), dev: ID2, now: now + 200000 });
+    // and one from device 1 again: device 2 was woken under 15 min ago, so it waits for the gap
+    await houseCall(env, "PUT", "/h/" + HBOX + "/d/doc1", { w: HW, rev: 3, body: new Uint8Array(5), dev: ID, now: now + 200001 });
+    Date.now = () => now + 200000 + H.HOUSE_LIMITS.wakeDelayMs;
+    await hb.box.alarm();
+    assert.deepEqual(pw.sent.map((x) => x.u), [EP + ID2, EP + ID]);
+    const gapEnd = now + H.HOUSE_LIMITS.wakeDelayMs + H.HOUSE_LIMITS.wakeGapMs;
+    assert.equal(hb.st.alarm, gapEnd);
+    Date.now = () => gapEnd;
+    await hb.box.alarm();
+    assert.deepEqual(pw.sent.map((x) => x.u), [EP + ID2, EP + ID, EP + ID2]);
+    // a dead subscription: the push box wipes itself and the row goes
+    pw.setReply(() => ({ status: 410 }));
+    await houseCall(env, "PUT", "/h/" + HBOX + "/d/doc1", { w: HW, rev: 4, body: new Uint8Array(5), now: gapEnd + 1 });
+    Date.now = () => gapEnd + H.HOUSE_LIMITS.wakeGapMs + 10;
+    await hb.box.alarm();
+    assert.equal(hb.st.ping.size, 0);
+    // the idle deadline still wins when it comes
+    Date.now = () => now + H.HOUSE_LIMITS.idleMs + 10;
+    await hb.box.alarm();
+    assert.equal(hb.st.wiped, 1);
+  } finally { Date.now = realNow; }
+});
+
+test("household box: a key rotation clears the wake rows; unping removes one", async () => {
+  const HF = require("./house-fake.js");
+  await HF.load();
+  const hw = HF.world();
+  const env = hw.env, now = 1_800_000_000_000;
+  await houseCall(env, "POST", "/h/" + HBOX, { json: { act: "new", wh: hex(HW), ah: hex(HA) }, now });
+  await houseCall(env, "POST", "/h/" + HBOX + "/p", { w: HW, json: { pid: ID, wt: "w".repeat(43), ct: CT }, now });
+  await houseCall(env, "POST", "/h/" + HBOX + "/p", { w: HW, json: { pid: ID2, wt: "v".repeat(43), ct: CT }, now });
+  const hb = hw.boxes.get(HBOX);
+  assert.equal(hb.st.ping.size, 2);
+  assert.equal((await houseCall(env, "DELETE", "/h/" + HBOX + "/p/" + ID2, { w: HW, now })).status, 200);
+  assert.equal(hb.st.ping.size, 1);
+  const W2 = "V".repeat(43);
+  const rot = await houseCall(env, "POST", "/h/" + HBOX + "/rot", { w: HW, a: HA, json: { epoch: 2, wh: hex(W2), env: { [ID]: Buffer.from(new Uint8Array(30)).toString("base64url") } }, now });
+  assert.equal(rot.status, 200);
+  assert.equal(hb.st.ping.size, 0);
+  // no PUSH binding, or a failing one: a change and its alarm never throw
+  await houseCall(env, "POST", "/h/" + HBOX + "/p", { w: W2, json: { pid: ID, wt: "w".repeat(43), ct: CT }, now });
+  await houseCall(env, "PUT", "/h/" + HBOX + "/d/d", { w: W2, rev: 0, body: new Uint8Array(3), now });
+  env.PUSH = { idFromName: (n) => n, get() { return { fetch: async () => { throw new Error("down"); } }; } };
+  const realNow = Date.now;
+  try { Date.now = () => now + 3 * 60000; await hb.box.alarm(); } finally { Date.now = realNow; }
+  assert.equal(hb.st.ping.size, 1);
+  assert.equal(hb.st.ping.get(ID).due, 0);
+});

@@ -458,6 +458,25 @@
     },
     permission: function () { try { return Notification.permission; } catch (e) { return "default"; } },
     enable: enable, disable: disable, remove: remove, test: test,
+    // Household wakes (household/engine.js, relay/house.js): this
+    // device's box id, a wake token that can only wake it, and one
+    // packet encrypted for this device.
+    deviceId: function () { var p = prefs(); return p.on && p.id ? p.id : ""; },
+    wakeToken: function () {
+      var p = prefs();
+      if (!p.on || !p.id) return Promise.reject(fail("off"));
+      return relay({ act: "wtok", id: p.id, tok: p.tok }).then(function (d) { return d.wt; });
+    },
+    dropWake: function (wt) {
+      var p = prefs();
+      if (!p.on || !p.id) return Promise.resolve();
+      return relay({ act: "wdel", id: p.id, tok: p.tok, wt: wt });
+    },
+    wakePacket: function (k, title, body, link) {
+      var p = prefs(), dev = p.id && list().d[p.id];
+      if (!p.on || !dev || dev.x) return Promise.reject(fail("off"));
+      return encrypt(payload({ id: k, at: Date.now(), ns: "household", kind: "note", title: title, body: body, link: link }), dev.k1, dev.k2);
+    },
     refresh: function () { return schedule(true); },
     onChange: function (fn) {
       if (typeof fn !== "function") return function () {};

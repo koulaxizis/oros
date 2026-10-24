@@ -169,3 +169,5 @@ input[type="text"], input[type="password"], select {
   padding: 8px 14px; border-radius: 8px;
   background: var(--panel-bg); border: 1px solid var(--accent);
 }
+.check-row { display: flex; gap: 8px; align-items: flex-start; cursor: pointer; }
+.check-row input { flex: none; width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--accent); }

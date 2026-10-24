@@ -548,6 +548,18 @@ minute and 10 new boxes a day.
 - **Live notices:** `GET /h/<box>/ws` with the subprotocols `hh1` and
   `w.<token>`, at most 40 sockets. The hibernating socket only says what
   changed (`{k, r}`, `{q:1}`, `{e}`, `{x:1}`); the devices then fetch.
+- **Wakes with orOS closed** (optional, per device): `POST /h/<box>/p`
+  `{ pid, wt, ct }` (current write token) keeps a device's push box id,
+  a wake token issued by that push box (`wtok`, it can only `wake`) and
+  one packet the device encrypted for itself ("something changed in …");
+  `DELETE /h/<box>/p/<pid>` removes it. At most 24 rows, never returned
+  by any request, all cleared by a `rot`. A document PUT or DELETE marks
+  every other row due (the writer names itself with `X-HH-Dev: <pid>`);
+  two minutes later the box's alarm calls each due device's `PushBox`
+  (stub to stub, no outbound fetch from the house box) with
+  `{ act: "wake", wt, ct }`, at most once per device per 15 minutes; a
+  `gone` answer deletes the row, a failed call is not retried. The same
+  alarm keeps the idle deadline, each with its own time.
 - **Budget and clean-up:** 120 writes a minute per box; an alarm wipes
   a box nobody has opened for 180 days. Nothing is logged.
 
@@ -587,6 +599,13 @@ for its next reminder.
 | `set` | `id`, `tok`, `items[{ k, at, ct, ttl? }]` | `{ n }`. The whole schedule, replaced in one transaction. |
 | `test` | `id`, `tok`, `ct` | `{ sent }` (one packet now) |
 | `del` | `id`, `tok` | `{ ok }` (the box is erased) |
+| `wtok` | `id`, `tok` | `{ wt }`, a wake token for a household box (at most 6 per box; kept as SHA-256) |
+| `wdel` | `id`, `tok`, `wt` | `{ ok }` (that wake token no longer works) |
+
+`wake` is not on the public route: only a household box sends it, stub
+to stub, with a wake token this box issued and the device's own packet.
+It is sent at once with `Urgency: normal` and TTL 900, at most once per
+15 minutes per box, and never moves the box's idle deadline.
 
 Rules:
 - `id` is exactly 22 base64url characters and `tok` exactly 43, both
