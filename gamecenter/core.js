@@ -13,6 +13,7 @@
 //           streak (-1 = none), dn dailies solved (-1 = no Daily),
 //           today 0 not yet | 1 solved | 2 lost (Daily games only) }
 //   achievements(sum) → [{ id, done, have, need }]
+//   GROUPS → [{ id, games: [<id>] }]: every game once, by kind
 //
 // Each game's adapter follows that game's schema in OROS_BIBLE.md
 // Part IV; rows older than the reset stamp br are skipped, the same
@@ -32,6 +33,17 @@
     "memory", "hangman", "mastermind", "g2048", "tetris", "snake", "breakout", "bubble",
     "simon", "whack", "pong", "chess", "checkers", "reversi", "gomoku", "connect4", "dots",
     "tictactoe", "mancala", "backgammon", "battleship", "rps", "xeri"];
+  // The "All games" section (Chris 2026-10-22): every game once, by
+  // kind, in the order each group shows them.
+  var GROUPS = [
+    { id: "puzzle", games: ["sudoku", "nonogram", "flow", "minesweeper", "hexagon", "slider",
+      "lightsout", "mastermind", "g2048", "jigsaw", "spot", "memory"] },
+    { id: "word", games: ["wordle", "crossword", "wordsearch", "hangman"] },
+    { id: "cards", games: ["solitaire", "xeri", "mahjong"] },
+    { id: "board", games: ["chess", "checkers", "backgammon", "reversi", "gomoku", "connect4",
+      "dots", "tictactoe", "mancala", "battleship", "rps"] },
+    { id: "arcade", games: ["tetris", "snake", "breakout", "bubble", "pong", "simon", "whack"] }
+  ];
   var WORDLE_LOST = 7;
   var SOL_VARIANTS = { k: ["k1c", "k1n", "k3c", "k3n"], f: ["f"], s: ["s1", "s2", "s4"], p: ["p"] };
   var MAX_MS = 360000000;
@@ -378,7 +390,7 @@
   }
 
   var API = {
-    DAILY: DAILY, GAMES: GAMES, keyOf: keyOf, streaks: streaks,
+    DAILY: DAILY, GAMES: GAMES, GROUPS: GROUPS, keyOf: keyOf, streaks: streaks,
     summarize: summarize, achievements: achievements
   };
   if (typeof module !== "undefined" && module.exports) module.exports = API;

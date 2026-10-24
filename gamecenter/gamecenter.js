@@ -1,6 +1,7 @@
 // ============================================================
 // orOS Game Center — App logic (v1.0.0)
-// One page for every game: today's six Daily challenges, the
+// One page for every game: today's six Daily challenges, every
+// game by kind to pick and play (with a name filter), the
 // achievements and the statistics of each game (played, won,
 // streak, best time, best score).
 //   - READ-ONLY: it reads the games' own synced data from this
@@ -11,12 +12,13 @@
 //     the deep link { daily: true }); a game that is not installed
 //     shows as such
 //   - deep link __orosOpenAt("gamecenter", { game: "<id>" }) (the
-//     "All games" link in each game) scrolls to that game's row
+//     "All games" link in each game) scrolls to that game's row;
+//     { all: true } scrolls to the All games section
 // Data: none (no synced slice, no device-local keys).
 // Sections:
 //   1. Constants, i18n, helpers
 //   2. Shell bridge (installed apps, open a game)
-//   3. Render (header, today, achievements, statistics)
+//   3. Render (header, today, all games, achievements, statistics)
 //   4. Palette + Contract Β
 //   5. Wiring & boot
 // ============================================================
@@ -53,6 +55,17 @@
       "today.play": "Play",
       "today.see": "See",
       "today.missing": "Not installed",
+      "all.title": "All games",
+      "all.note": "{n} games",
+      "all.find": "Find a game",
+      "all.none": "No game by that name.",
+      "all.played": "Played {n}",
+      "all.new": "New",
+      "all.g.puzzle": "Puzzles",
+      "all.g.word": "Word games",
+      "all.g.cards": "Cards and tiles",
+      "all.g.board": "Board and two-player",
+      "all.g.arcade": "Arcade",
       "ach.title": "Achievements",
       "ach.note": "{n} of {k}",
       "ach.done": "Done",
@@ -102,6 +115,17 @@
       "today.play": "Παίξε",
       "today.see": "Δες",
       "today.missing": "Δεν είναι εγκατεστημένο",
+      "all.title": "Όλα τα παιχνίδια",
+      "all.note": "{n} παιχνίδια",
+      "all.find": "Βρες παιχνίδι",
+      "all.none": "Δεν υπάρχει παιχνίδι με αυτό το όνομα.",
+      "all.played": "Παίχτηκε {n}",
+      "all.new": "Νέο",
+      "all.g.puzzle": "Γρίφοι",
+      "all.g.word": "Παιχνίδια λέξεων",
+      "all.g.cards": "Τράπουλα και πλακίδια",
+      "all.g.board": "Επιτραπέζια και για δύο",
+      "all.g.arcade": "Arcade",
       "ach.title": "Επιτεύγματα",
       "ach.note": "{n} από {k}",
       "ach.done": "Έγινε",
@@ -221,6 +245,16 @@
     try { shell().__orosOpenAt(id, target || null); } catch (e) {}
   }
 
+  // The game's static shell icon (shell markup from shell.js ICONS,
+  // not data), or "" standalone.
+  function iconOf(id) {
+    try {
+      var env = shell() && shell().orosTodayEnv;
+      var svg = env && typeof env.icon === "function" ? env.icon(id) : "";
+      return typeof svg === "string" && /^<svg[\s>]/.test(svg) ? svg : "";
+    } catch (e) { return ""; }
+  }
+
   function readJSON(key) {
     try {
       var raw = localStorage.getItem(key);
@@ -236,6 +270,7 @@
     var day = today(), sum = CORE.summarize(readJSON, day);
     renderHead(sum, day);
     renderToday(sum);
+    renderAll(sum);
     renderAch(sum);
     renderStats(sum);
   }
@@ -285,6 +320,69 @@
       grid.appendChild(card);
     });
     $("today-note").textContent = t("today.note", { n: done, k: CORE.DAILY.length });
+  }
+
+  // Lower case without accents (and one sigma), so a typed name finds
+  // the game with or without its accents.
+  function fold(s) {
+    s = String(s || "").toLowerCase();
+    try { s = s.normalize("NFD").replace(/[\u0300-\u036f]/g, ""); } catch (e) {}
+    return s.replace(/\u03c2/g, "\u03c3").trim();   // final sigma
+  }
+
+  function renderAll(sum) {
+    var box = $("all-groups"), n = 0;
+    box.textContent = "";
+    CORE.GROUPS.forEach(function (g) {
+      var sec = el("div", "all-group");
+      sec.setAttribute("data-group", g.id);
+      sec.appendChild(el("h3", "all-gh", t("all.g." + g.id)));
+      var grid = el("ul", "all-grid");
+      g.games.forEach(function (id) {
+        var S = sum.games[id], nm = nameOf(id);
+        n++;
+        var li = el("li", "all-item");
+        // Matched on the shown name, the English name and the id.
+        li.setAttribute("data-find", fold(nm + " " + (NAMES.en[id] || "") + " " + id));
+        var b = el("button", "all-tile");
+        b.type = "button";
+        b.disabled = !!APPS && !canOpen(id);
+        var ico = el("span", "all-ico");
+        var svg = iconOf(id);
+        if (svg) ico.innerHTML = svg;              // static shell icon, not data
+        else ico.textContent = nm.charAt(0);
+        b.appendChild(ico);
+        var txt = el("span", "all-txt");
+        txt.appendChild(el("span", "all-name", nm));
+        var sub = APPS && !canOpen(id) ? t("today.missing") :
+          S.p > 0 ? t("all.played", { n: num(S.p) }) : t("all.new");
+        txt.appendChild(el("span", "all-sub" + (S.p > 0 ? "" : " new"), sub));
+        b.appendChild(txt);
+        b.setAttribute("aria-label", nm + ", " + sub);
+        b.addEventListener("click", function () { openGame(id, null); });
+        li.appendChild(b);
+        grid.appendChild(li);
+      });
+      sec.appendChild(grid);
+      box.appendChild(sec);
+    });
+    $("all-note").textContent = t("all.note", { n: n });
+    filterAll();
+  }
+
+  function filterAll() {
+    var q = fold($("all-find").value), any = false;
+    [].forEach.call(document.querySelectorAll(".all-group"), function (sec) {
+      var shown = 0;
+      [].forEach.call(sec.querySelectorAll(".all-item"), function (li) {
+        var hit = !q || li.getAttribute("data-find").indexOf(q) >= 0;
+        li.hidden = !hit;
+        if (hit) shown++;
+      });
+      sec.hidden = !shown;
+      if (shown) any = true;
+    });
+    $("all-none").hidden = any;
   }
 
   function renderAch(sum) {
@@ -430,6 +528,9 @@
       n.textContent = t(n.getAttribute("data-i18n"));
     });
     document.title = t("app.name") + " · orOS";
+    var f = $("all-find");
+    f.placeholder = t("all.find");
+    f.setAttribute("aria-label", t("all.find"));
   }
 
   var renderTimer = null;
@@ -444,6 +545,7 @@
     watchPalette();
     wireKeyboard();
     render();
+    $("all-find").addEventListener("input", filterAll);
     // A game's data changed (synced in, or the game was played in
     // another window): the numbers follow.
     window.addEventListener("storage", function (e) {
@@ -453,13 +555,16 @@
       if (document.visibilityState === "visible") render();
     });
     window.addEventListener("focus", renderSoon);
-    // { game } scrolls to its row; { play, daily? } (orOS Games icon
+    // { game } scrolls to its row; { all } to All games; { play, daily? } (orOS Games icon
     // shortcuts) opens that game, straight into its Daily if asked.
     function openTarget(tg) {
       if (!tg || typeof tg !== "object") return;
       if (typeof tg.play === "string" && CORE.GAMES.indexOf(tg.play) >= 0) {
         openGame(tg.play, tg.daily === true && CORE.DAILY.indexOf(tg.play) >= 0 ? { daily: true } : null);
       } else if (tg.game) focusOn(tg.game);
+      else if (tg.all === true) {
+        try { $("all-block").scrollIntoView({ block: "start" }); } catch (e) { $("all-block").scrollIntoView(); }
+      }
     }
     window.__orosOpenAt = openTarget;
     openTarget(DK ? DK.takeTarget("gamecenter") : null);
