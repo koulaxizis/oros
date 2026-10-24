@@ -273,8 +273,13 @@ export async function handleHouse(request, env, url, okOrigin, ip, now) {
     const stub = env.HOUSE.get(env.HOUSE.idFromName(m[1]));
     let res;
     if (op === "ws") {
-      const hh = new Headers(request.headers);
-      Object.keys(h).forEach((k) => hh.set(k, h[k]));
+      // only what the upgrade needs: nothing else of the caller's request
+      // (cookies, Authorization, client hints) reaches the box
+      const hh = new Headers(h);
+      ["Upgrade", "Connection", "Sec-WebSocket-Key", "Sec-WebSocket-Version", "Sec-WebSocket-Protocol", "Sec-WebSocket-Extensions"].forEach((k) => {
+        const v = request.headers.get(k);
+        if (v !== null) hh.set(k, v);
+      });
       res = await stub.fetch(new Request("https://house.box/", { method: "GET", headers: hh }));
     } else {
       res = await stub.fetch("https://house.box/", { method: "POST", headers: h, body: body });
