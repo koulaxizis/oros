@@ -69,8 +69,8 @@
       "ms": 59
     },
     "chores": {
-      "bytes": 220220,
-      "ms": 54
+      "bytes": 273897,
+      "ms": 68
     },
     "connect4": {
       "bytes": 128023,
@@ -309,8 +309,8 @@
       "ms": 48
     },
     "plants": {
-      "bytes": 214948,
-      "ms": 39
+      "bytes": 268728,
+      "ms": 65
     },
     "podcasts": {
       "bytes": 478917,
