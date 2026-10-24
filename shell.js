@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "3.43.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "3.45.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -6500,6 +6500,14 @@
         { name: "Android Browser Helper 2.7.4", url: "https://github.com/GoogleChrome/android-browser-helper",
           by: "Google LLC", lic: "Apache-2.0",
           k: "cr.android-browser-helper" }
+      ]
+    },
+    {
+      k: "cr.g.ideas",
+      items: [
+        { name: "Since Us", url: "https://f-droid.org/packages/app.sinceus",
+          by: "DerDieDasLian", lic: { k: "cr.lic.ideas" },
+          k: "cr.since-us" }
       ]
     }
   ];

@@ -8,7 +8,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Timesheet · orOS</title>
 
-  <link rel="stylesheet" href="timesheet.css?v=3.43.00">
+  <link rel="stylesheet" href="timesheet.css?v=3.44.00">
 
 </head>
 <body>
@@ -67,7 +67,12 @@
       <div id="goal" hidden><div id="goal-fill"></div></div>
       <ol id="entries"></ol>
       <p class="hint" id="entries-empty" data-i18n="entries.empty">No time logged on this day.</p>
-      <button type="button" class="wide-btn" id="add-entry"></button>
+      <h2 class="sub-h" id="extras-h" hidden></h2>
+      <ol id="extras" hidden></ol>
+      <div class="rep-acts day-acts">
+        <button type="button" class="wide-btn" id="add-entry"></button>
+        <button type="button" class="wide-btn" id="add-extra"></button>
+      </div>
     </section>
 
     <!-- Week grid -->
@@ -100,6 +105,9 @@
       <p class="hint" id="rep-note"></p>
       <div class="grid-wrap"><table id="rep-table" class="rep"></table></div>
       <p class="hint" id="rep-empty" data-i18n="rep.empty">Nothing in this period.</p>
+      <div id="rep-sum" class="rep-sum" hidden></div>
+      <h2 class="sub-h" id="rep-extras-h" hidden></h2>
+      <ul id="rep-extras" class="rep-extras" hidden></ul>
       <div class="rep-acts">
         <button type="button" class="wide-btn" id="rep-csv"></button>
         <button type="button" class="wide-btn" id="rep-sheet" hidden></button>
@@ -127,15 +135,15 @@
   <div id="live" class="sr-only" aria-live="polite"></div>
   <div id="toast" role="status"></div>
 
-  <script src="../i18n.js?v=3.43.00" data-app="timesheet,recordpkg"></script>
-  <script src="core.js?v=3.43.00"></script>
-  <script src="../importkit.js?v=3.43.00"></script>
-  <script src="import.js?v=3.43.00"></script>
+  <script src="../i18n.js?v=3.44.00" data-app="timesheet,recordpkg"></script>
+  <script src="core.js?v=3.44.00"></script>
+  <script src="../importkit.js?v=3.44.00"></script>
+  <script src="import.js?v=3.44.00"></script>
   <!-- .oroshours: clients, projects and entries as one orOS file -->
-  <script src="../bundle.js?v=3.43.00"></script>
-  <script src="../recordpkg.js?v=3.43.00"></script>
-  <script src="package.js?v=3.43.00"></script>
-  <script src="timesheet.js?v=3.43.00"></script>
+  <script src="../bundle.js?v=3.44.00"></script>
+  <script src="../recordpkg.js?v=3.44.00"></script>
+  <script src="package.js?v=3.44.00"></script>
+  <script src="timesheet.js?v=3.44.00"></script>
 
 </body>
 </html>
