@@ -633,3 +633,8 @@ button.tag-chip:hover { color: var(--accent); border-color: var(--accent); }
 .p-budget.over .p-btxt { color: var(--danger); font-weight: 700; }
 
 [hidden] { display: none !important; }
+/* Day rate, minimum and overtime (client and project dialogs) */
+.bill-box { margin: 4px 0 10px; border: 1px solid var(--border); border-radius: 10px; padding: 0 12px; }
+.bill-box > summary { cursor: pointer; font-weight: 800; padding: 10px 0; min-height: 40px; }
+.bill-box[open] { padding-bottom: 4px; }
+.bill-box > .hint { margin: 0 0 10px; }

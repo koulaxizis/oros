@@ -146,11 +146,16 @@
       "toast.tooLong": "An entry can be at most 366 days long",
       "live.started": "Timer started", "live.stopped": "Timer stopped",
       "toast.pomo1": "Pomodoro: 1 focus session logged", "toast.pomo": "Pomodoro: {n} focus sessions logged",
+      "bill.h": "Day rate, minimum and overtime", "bill.hintP": "Empty: what the client has, if anything. With a day rate here, the project uses only its own hourly rate (none: the day rate alone).",
+      "bill.hintC": "For the client's projects that have none of their own.",
+      "f.minPer": "Per", "per.d": "Day worked", "per.w": "Week", "per.m": "Month",
+      "f.minAmt": "Minimum charge (day rate)", "f.minAmtHint": "Charged for every day (or week, month) with work, even a short one. Time beyond the overtime limit is charged on top. Empty: none.",
       "f.minH": "Minimum billable hours", "f.minHint": "Charged even when you work less, e.g. 2 or 1:30. Empty: no minimum.",
-      "f.minPer": "Minimum per", "per.d": "Day", "per.w": "Week", "per.m": "Month",
-      "f.otRate": "Overtime hourly rate", "f.otHint": "For time beyond the minimum. Empty: the usual rate of each project.",
+      "f.otH": "Overtime after (hours)", "f.otHHint": "e.g. 8. Empty: after the minimum hours, or no overtime.",
+      "f.otRate": "Overtime hourly rate", "f.otHint": "Empty: the usual hourly rate of the project.",
       "cli.min.d": "min {h} h/day", "cli.min.w": "min {h} h/week", "cli.min.m": "min {h} h/month",
-      "cli.ot": "overtime {r}/h",
+      "cli.amt.d": "{a}/day", "cli.amt.w": "min {a}/week", "cli.amt.m": "min {a}/month",
+      "cli.otH": "overtime after {h} h", "cli.ot": "overtime {r}/h", "sum.min0": "Day rates and minimum charges ({n})",
       "add.extra": "Add an extra charge", "dlg.extra": "Extra charge", "dlg.newExtra": "New extra charge",
       "f.date": "Date", "f.exDesc": "What it is for", "f.exDescHint": "e.g. Fuel, Work away from the office, Parking.",
       "f.amount": "Amount", "f.exClient": "Client (when there is no project)",
@@ -258,11 +263,16 @@
       "toast.tooLong": "Μια καταγραφή μπορεί να κρατά έως 366 μέρες",
       "live.started": "Το χρονόμετρο ξεκίνησε", "live.stopped": "Το χρονόμετρο σταμάτησε",
       "toast.pomo1": "Pomodoro: καταγράφηκε 1 περίοδος εστίασης", "toast.pomo": "Pomodoro: καταγράφηκαν {n} περίοδοι εστίασης",
-      "f.minH": "Ελάχιστες χρεώσιμες ώρες", "f.minHint": "Χρεώνονται ακόμα κι αν δουλέψεις λιγότερο, π.χ. 2 ή 1:30. Κενό: χωρίς ελάχιστη χρέωση.",
-      "f.minPer": "Ελάχιστο ανά", "per.d": "Μέρα", "per.w": "Εβδομάδα", "per.m": "Μήνα",
-      "f.otRate": "Χρέωση υπερωρίας ανά ώρα", "f.otHint": "Για τον χρόνο πάνω από το ελάχιστο. Κενό: η κανονική χρέωση κάθε έργου.",
+      "bill.h": "Μεροκάματο, ελάχιστη χρέωση και υπερωρία", "bill.hintP": "Κενά: ισχύουν όσα έχει ο πελάτης, αν έχει. Με μεροκάματο εδώ, το έργο κρατά μόνο τη δική του ωριαία χρέωση (καμία: μόνο το μεροκάματο).",
+      "bill.hintC": "Για τα έργα του πελάτη που δεν έχουν δικά τους.",
+      "f.minPer": "Ανά", "per.d": "Ενεργή μέρα", "per.w": "Εβδομάδα", "per.m": "Μήνα",
+      "f.minAmt": "Ελάχιστη χρέωση (μεροκάματο)", "f.minAmtHint": "Χρεώνεται για κάθε μέρα (ή εβδομάδα, μήνα) με δουλειά, ακόμα κι αν είναι λίγες ώρες. Ο χρόνος πάνω από το όριο υπερωρίας χρεώνεται επιπλέον. Κενό: χωρίς.",
+      "f.minH": "Ελάχιστες χρεώσιμες ώρες", "f.minHint": "Χρεώνονται ακόμα κι αν δουλέψεις λιγότερο, π.χ. 2 ή 1:30. Κενό: χωρίς ελάχιστες ώρες.",
+      "f.otH": "Υπερωρία μετά από (ώρες)", "f.otHHint": "π.χ. 8. Κενό: μετά τις ελάχιστες ώρες, αλλιώς χωρίς υπερωρία.",
+      "f.otRate": "Χρέωση υπερωρίας ανά ώρα", "f.otHint": "Κενό: η κανονική ωριαία χρέωση του έργου.",
       "cli.min.d": "ελάχ. {h} ώρες/μέρα", "cli.min.w": "ελάχ. {h} ώρες/εβδομάδα", "cli.min.m": "ελάχ. {h} ώρες/μήνα",
-      "cli.ot": "υπερωρία {r}/ώρα",
+      "cli.amt.d": "μεροκάματο {a}", "cli.amt.w": "ελάχ. {a}/εβδομάδα", "cli.amt.m": "ελάχ. {a}/μήνα",
+      "cli.otH": "υπερωρία μετά τις {h} ώρες", "cli.ot": "υπερωρία {r}/ώρα", "sum.min0": "Μεροκάματα και ελάχιστες χρεώσεις ({n})",
       "add.extra": "Πρόσθετη χρέωση", "dlg.extra": "Πρόσθετη χρέωση", "dlg.newExtra": "Νέα πρόσθετη χρέωση",
       "f.date": "Ημερομηνία", "f.exDesc": "Για τι είναι", "f.exDescHint": "π.χ. Βενζίνη, Δουλειά εκτός έδρας, Στάθμευση.",
       "f.amount": "Ποσό", "f.exClient": "Πελάτης (όταν δεν υπάρχει έργο)",
@@ -551,12 +561,13 @@
     if (!out.budget) delete out.budget;
     return out;
   }
+  function sameBilling(a, b) { return JSON.stringify(C.billingPart(a)) === JSON.stringify(C.billingPart(b)); }
   function saveProject(id, rec) {
     var cur = id ? findIn(data.projects, id) : null;
     if (cur && !cur.del) {
       var same = cur.name === rec.name && cur.client === rec.client && cur.color === rec.color &&
                  cur.rate === rec.rate && cur.bill === rec.bill && cur.arch === rec.arch &&
-                 (cur.budget || 0) === (rec.budget || 0);
+                 (cur.budget || 0) === (rec.budget || 0) && sameBilling(cur, rec);
       if (same) return cur.id;
       rec = keepExtras(cur, rec);
       rec.id = cur.id;
@@ -590,9 +601,7 @@
   function saveClient(id, rec) {
     var cur = id ? findIn(data.clients, id) : null;
     if (cur && !cur.del) {
-      if (cur.name === rec.name && cur.rate === rec.rate && (cur.minH || 0) === (rec.minH || 0) &&
-          (cur.minH ? cur.minPer : "") === (rec.minH ? rec.minPer : "") &&
-          (cur.minH ? cur.otRate || 0 : 0) === (rec.minH ? rec.otRate || 0 : 0)) return cur.id;
+      if (cur.name === rec.name && cur.rate === rec.rate && sameBilling(cur, rec)) return cur.id;
       rec = keepExtras(cur, rec);
       rec.id = cur.id;
       rec.m = stamp(cur.m);
@@ -1210,7 +1219,7 @@
     var tot = rep.total, box = $("rep-sum"), list = $("rep-extras");
     box.innerHTML = "";
     list.innerHTML = "";
-    var any = tot.minMs > 0 || tot.otMs > 0 || tot.exN > 0;
+    var any = tot.minN > 0 || tot.otMs > 0 || tot.exN > 0;
     box.hidden = !any || !rep.rows.length;
     if (!box.hidden) {
       var line = function (label, cents, cls) {
@@ -1219,9 +1228,10 @@
         r.appendChild(el("span", "num", money(cents)));
         box.appendChild(r);
       };
-      line(t("sum.time"), tot.amount - tot.minAmount - tot.otAmount - tot.exAmount);
+      var timeAmt = tot.amount - tot.minAmount - tot.otAmount - tot.exAmount;
+      if (timeAmt || !tot.minN) line(t("sum.time"), timeAmt);
       if (tot.otMs) line(t("sum.ot", { d: dur(tot.otMs) }), tot.otAmount);
-      if (tot.minMs) line(t("sum.min", { d: dur(tot.minMs) }), tot.minAmount);
+      if (tot.minN) line(tot.minMs ? t("sum.min", { d: dur(tot.minMs) }) : t("sum.min0", { n: tot.minN }), tot.minAmount);
       if (tot.exN) line(t("sum.ex", { n: tot.exN }), tot.exAmount);
       line(t("sum.total"), tot.amount, "total");
     }
@@ -1274,9 +1284,10 @@
     var bits = [];
     if (!p.bill) bits.push(t("proj.nobill"));
     else {
-      var rate = C.rateOf(data, p.id);
+      var rate = p.minAmt ? p.rate : C.rateOf(data, p.id);
       if (rate) bits.push(t("proj.rate", { r: money(rate) }));
     }
+    if (p.bill && C.hasBilling(p)) bits.push(billingText(p));
     var use = C.budgetUse(data, p.id, Date.now());
     if (totals[p.id] && !use) bits.push(t("proj.total", { d: dur(totals[p.id]) }));
     if (bits.length) txt.appendChild(el("span", "p-sub", bits.join(" · ")));
@@ -1312,10 +1323,7 @@
         hb.type = "button";
         hb.appendChild(el("span", "", c.name));
         if (c.rate) hb.appendChild(el("small", "", t("proj.rate", { r: money(c.rate) })));
-        if (c.minH) {
-          hb.appendChild(el("small", "", t("cli.min." + (c.minPer || "d"), { h: budgetText(c.minH) }) +
-            (c.otRate ? " · " + t("cli.ot", { r: money(c.otRate) }) : "")));
-        }
+        if (C.hasBilling(c)) hb.appendChild(el("small", "", billingText(c)));
         hb.addEventListener("click", function () { clientDialog(c.id); });
         head.appendChild(hb);
       } else head.appendChild(el("span", "p-client plain", t("noClient")));
@@ -1689,6 +1697,7 @@
     form.appendChild(field(t("f.budget"), budget, t("f.budgetHint")));
     var bill = checkRow(t("f.billable"), p ? p.bill : 1);
     form.appendChild(bill.row);
+    var bf = billingFields(form, p, "bill.hintP");
     var arch = checkRow(t("f.archived"), p ? p.arch : 0);
     if (p) form.appendChild(arch.row);
 
@@ -1703,6 +1712,8 @@
       if (isNaN(cents) || !C.inRange(cents, C.LIM.rate)) { showToast(t("toast.badMoney")); rate.focus(); return; }
       var mins = C.parseHours(budget.value);
       if (isNaN(mins) || !C.inRange(mins, C.LIM.budget)) { showToast(t("toast.badHours")); budget.focus(); return; }
+      var bpart = bf.read();
+      if (!bpart) return;
       var picked = colorBox.querySelector("input:checked");
       if (id && !C.project(data, id)) { dlg.close(); return; }    // deleted elsewhere meanwhile
       var prec = {
@@ -1710,6 +1721,7 @@
         bill: bill.box.checked ? 1 : 0, arch: p && arch.box.checked ? 1 : 0
       };
       if (mins) prec.budget = mins;
+      Object.assign(prec, bpart);
       var newPid = saveProject(id, prec);
       dlg.close();
       if (!id && !C.running(data).length) { draft.p = newPid; prefs.lastP = newPid; savePrefs(); }
@@ -1718,6 +1730,71 @@
     });
     dlg.appendChild(form);
     openDialog(dlg, p ? null : name);
+  }
+
+  // Day rate, minimum and overtime of a client or project (core
+  // normBilling), folded away until used. read() → every field
+  // (cleared ones as 0 / "", so an edit removes them; normalize drops
+  // them), or null after a toast when a value can't be read.
+  function billingFields(form, rec, hintKey) {
+    rec = rec || {};
+    var box = el("details", "bill-box");
+    box.open = C.hasBilling(rec);
+    box.appendChild(el("summary", "", t("bill.h")));
+    box.appendChild(el("p", "hint", t(hintKey)));
+    var hoursIn = function (min) {
+      var i = input("text", min ? budgetText(min) : "");
+      i.inputMode = "decimal";
+      i.autocomplete = "off";
+      i.placeholder = "0";
+      return i;
+    };
+    var per = el("select");
+    fillSelect(per, C.MIN_PERS.map(function (k) { return [k, t("per." + k)]; }), rec.minPer || "d");
+    box.appendChild(field(t("f.minPer"), per));
+    var amt = moneyIn(rec.minAmt || 0);
+    box.appendChild(field(t("f.minAmt") + " (" + data.prefs.cur + ")", amt, t("f.minAmtHint")));
+    var minH = hoursIn(rec.minH);
+    box.appendChild(field(t("f.minH"), minH, t("f.minHint")));
+    var otH = hoursIn(rec.otH);
+    box.appendChild(field(t("f.otH"), otH, t("f.otHHint")));
+    var ot = moneyIn(rec.otRate || 0);
+    var otF = field(t("f.otRate") + " (" + data.prefs.cur + ")", ot, t("f.otHint"));
+    box.appendChild(otF);
+    var showOt = function () { otF.hidden = !minH.value.trim() && !otH.value.trim(); };
+    [minH, otH].forEach(function (i) { i.addEventListener("input", showOt); });
+    showOt();
+    form.appendChild(box);
+    function hours(i) {
+      var v = C.parseHours(i.value);
+      if (isNaN(v) || !C.inRange(v, C.LIM.minH)) { box.open = true; showToast(t("toast.badHours")); i.focus(); return NaN; }
+      return v;
+    }
+    function cents(i, lim) {
+      var v = C.parseMoney(i.value);
+      if (isNaN(v) || !C.inRange(v, lim)) { box.open = true; showToast(t("toast.badMoney")); i.focus(); return NaN; }
+      return v;
+    }
+    return {
+      read: function () {
+        var a = cents(amt, C.LIM.minAmt); if (isNaN(a)) return null;
+        var h = hours(minH); if (isNaN(h)) return null;
+        var o = hours(otH); if (isNaN(o)) return null;
+        var r = h || o ? cents(ot, C.LIM.rate) : 0; if (isNaN(r)) return null;
+        var any = a || h || o;
+        return { minH: h, minAmt: a, otH: o, minPer: any ? per.value : "", otRate: r };
+      }
+    };
+  }
+  // "100,00 €/day · overtime after 8 h · overtime 15,00 €/h"
+  function billingText(r) {
+    if (!C.hasBilling(r)) return "";
+    var per = r.minPer || "d", bits = [];
+    if (r.minAmt) bits.push(t("cli.amt." + per, { a: money(r.minAmt) }));
+    if (r.minH) bits.push(t("cli.min." + per, { h: budgetText(r.minH) }));
+    if (r.otH) bits.push(t("cli.otH", { h: budgetText(r.otH) }));
+    if (r.otRate) bits.push(t("cli.ot", { r: money(r.otRate) }));
+    return bits.join(" · ");
   }
 
   function clientDialog(id) {
@@ -1732,22 +1809,7 @@
     var rate = moneyIn(c ? c.rate : 0);
     form.appendChild(field(t("f.rate") + " (" + data.prefs.cur + ")", rate,
       data.prefs.rate ? t("f.rateHint", { r: money(data.prefs.rate), src: t("src.default") }) : t("f.rateNone")));
-    // Minimum charge per day / week / month, then overtime.
-    var minH = input("text", c && c.minH ? budgetText(c.minH) : "");
-    minH.inputMode = "decimal";
-    minH.autocomplete = "off";
-    minH.placeholder = "0";
-    form.appendChild(field(t("f.minH"), minH, t("f.minHint")));
-    var per = el("select");
-    fillSelect(per, C.MIN_PERS.map(function (k) { return [k, t("per." + k)]; }), c && c.minPer ? c.minPer : "d");
-    var perF = field(t("f.minPer"), per);
-    form.appendChild(perF);
-    var ot = moneyIn(c && c.otRate ? c.otRate : 0);
-    var otF = field(t("f.otRate") + " (" + data.prefs.cur + ")", ot, t("f.otHint"));
-    form.appendChild(otF);
-    var showMin = function () { perF.hidden = otF.hidden = !minH.value.trim(); };
-    minH.addEventListener("input", showMin);
-    showMin();
+    var bf = billingFields(form, c, "bill.hintC");
     var left = [];
     if (c) left.push(button(t("dlg.del"), "danger", function () { if (deleteClient(id)) dlg.close(); }));
     actions(form, left, c ? t("dlg.save") : t("dlg.add"));
@@ -1757,21 +1819,10 @@
       if (!nm) { showToast(t("toast.badName")); name.focus(); return; }
       var cents = C.parseMoney(rate.value);
       if (isNaN(cents) || !C.inRange(cents, C.LIM.rate)) { showToast(t("toast.badMoney")); rate.focus(); return; }
-      var mins = C.parseHours(minH.value);
-      if (isNaN(mins) || !C.inRange(mins, C.LIM.minH)) { showToast(t("toast.badHours")); minH.focus(); return; }
-      var otc = mins ? C.parseMoney(ot.value) : 0;
-      if (isNaN(otc) || !C.inRange(otc, C.LIM.rate)) { showToast(t("toast.badMoney")); ot.focus(); return; }
+      var bill = bf.read();
+      if (!bill) return;
       if (id && !C.client(data, id)) { dlg.close(); return; }
-      var crec = { name: nm, rate: cents };
-      if (mins) {
-        crec.minH = mins;
-        crec.minPer = per.value;
-        if (otc) crec.otRate = otc;
-      }
-      // keepExtras keeps fields the record had: cleared ones go here
-      var cur = id ? C.client(data, id) : null;
-      if (cur && !mins) { crec.minH = 0; crec.minPer = ""; }
-      if (cur && !otc) crec.otRate = 0;
+      var crec = Object.assign({ name: nm, rate: cents }, bill);
       saveClient(id, crec);
       dlg.close();
       renderAll();

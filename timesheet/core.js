@@ -6,8 +6,10 @@
 //
 // Data (synced slice "timesheet", key oros-timesheet-data):
 //   { ver: 1,
-//     clients:  [ { id, name, rate, minH?, minPer?, otRate?, m } | { id, m, del: 1 } ]
-//     projects: [ { id, name, client, color, rate, bill, arch, m } | tomb ]
+//     clients:  [ { id, name, rate, <billing>, m } | { id, m, del: 1 } ]
+//     projects: [ { id, name, client, color, rate, bill, arch, <billing>, m } | tomb ]
+//               <billing> = minH?, minAmt?, otH?, minPer?, otRate? (minimum
+//               charge and overtime, see normBilling)
 //     entries:  [ { id, p, desc, s, e, billed, m } | tomb ]
 //     extras:   [ { id, d, p, c, desc, amt, billed, m } | tomb ]
 //               extra charges (fuel, travel, …): written only when
@@ -47,7 +49,8 @@
     color: [0, 7],
     task: 80, tag: 30, tags: 10,     // per entry (Wave 6)
     budget: [0, 6000000],            // minutes per project (100.000 h), 0 = no budget
-    minH: [0, 44640],                // minimum minutes per client and period (31 days), 0 = none
+    minH: [0, 44640],                // minimum minutes per period (31 days), 0 = none; also otH
+    minAmt: [0, 100000000],          // minimum amount per period in cents (a day rate), 0 = none
     exDesc: 200, amt: [1, 100000000] // extra charge: text, cents (1.000.000,00 max)
   };
   var MIN_PERS = ["d", "w", "m"];    // the minimum applies per day, week or month
@@ -121,8 +124,9 @@
   // (stripping would make two versions re-upload forever).
   var EXTRA_RE = /^[a-z][a-z0-9]{0,15}$/, EXTRA_MAX = 16;
   var KNOWN = {
-    client:  ["id", "name", "rate", "minH", "minPer", "otRate", "m", "del"],
-    project: ["id", "name", "client", "color", "rate", "bill", "arch", "budget", "m", "del"],
+    client:  ["id", "name", "rate", "minH", "minAmt", "otH", "minPer", "otRate", "m", "del"],
+    project: ["id", "name", "client", "color", "rate", "bill", "arch", "budget",
+              "minH", "minAmt", "otH", "minPer", "otRate", "m", "del"],
     entry:   ["id", "p", "desc", "s", "e", "billed", "task", "tags", "m", "del"],
     extra:   ["id", "d", "p", "c", "desc", "amt", "billed", "m", "del"]
   };
@@ -161,14 +165,7 @@
     var name = cleanText(x.name, LIM.name);
     if (!name) return null;
     var out = { id: x.id, name: name, rate: inRange(x.rate, LIM.rate) ? x.rate : 0 };
-    // Minimum charge: written only when set, so clients without one
-    // stay byte-identical. minPer d|w|m (day default), otRate = the
-    // hourly rate above the minimum, 0 = the usual rate.
-    if (inRange(x.minH, LIM.minH) && x.minH > 0) {
-      out.minH = x.minH;
-      out.minPer = MIN_PERS.indexOf(x.minPer) >= 0 ? x.minPer : "d";
-      if (inRange(x.otRate, LIM.rate) && x.otRate > 0) out.otRate = x.otRate;
-    }
+    normBilling(out, x);
     out.m = x.m;
     return withExtras(out, x, KNOWN.client);
   }
@@ -186,9 +183,29 @@
     };
     // Written only when set, so records without one stay byte-identical.
     if (inRange(x.budget, LIM.budget) && x.budget > 0) out.budget = x.budget;
+    normBilling(out, x);
     out.m = x.m;
     return withExtras(out, x, KNOWN.project);
   }
+  // Minimum charge and overtime of a client or a project, per period
+  // minPer d|w|m (day by default): minH minimum hours (minutes),
+  // minAmt minimum amount (cents: a day rate), otH hours after which
+  // time is overtime (minutes; 0 = after minH, none without it),
+  // otRate the overtime hourly rate (0 = the usual rate). All written
+  // only when one of minH / minAmt / otH is set, so records without
+  // them stay byte-identical.
+  function normBilling(out, x) {
+    var h = inRange(x.minH, LIM.minH) ? x.minH : 0, a = inRange(x.minAmt, LIM.minAmt) ? x.minAmt : 0;
+    var o = inRange(x.otH, LIM.minH) ? x.otH : 0;
+    if (!h && !a && !o) return out;
+    if (h) out.minH = h;
+    if (a) out.minAmt = a;
+    if (o) out.otH = o;
+    out.minPer = MIN_PERS.indexOf(x.minPer) >= 0 ? x.minPer : "d";
+    if ((h || o) && inRange(x.otRate, LIM.rate) && x.otRate > 0) out.otRate = x.otRate;
+    return out;
+  }
+  function hasBilling(r) { return !!r && !!(r.minH || r.minAmt || r.otH); }
   function normEntry(x) {
     if (!baseOk(x)) return null;
     if (x.del) return tomb(x);
@@ -459,21 +476,44 @@
   }
 
   // ---------- Minimum charge, overtime, extra charges ----------
-  // A client can have a minimum of billable time per day, week or
-  // month (minH, minPer): a period with less work is charged up to
-  // the minimum (a "top-up" at the rate of the period's last piece),
-  // time beyond it is overtime at otRate (0 = the usual rate). Only
-  // billable time in the report's filter counts, a period counts only
-  // when it lies wholly inside the report's range (a week or month cut
-  // by the range gets no minimum and no overtime: "partial"), and a
-  // period without work charges nothing. Nothing here touches the
-  // stored entries.
+  // A project, or else its client, can have a minimum charge and an
+  // overtime threshold per day, week or month (normBilling). In each
+  // period with work, billable time up to the threshold (otH, else
+  // minH) is charged at its usual rate and time beyond it is overtime
+  // at otRate (0 = the usual rate); when the time up to the threshold
+  // comes to less than the minimum (minH hours at the rate of the
+  // period's last piece, or the amount minAmt, whichever is more), a
+  // "top-up" charges the difference. A project's own settings make
+  // its periods its own; a client's cover all its projects without
+  // their own, together. Only billable time in the report's filter
+  // counts, a period counts only when it lies wholly inside the
+  // report's range (a week or month cut by the range gets no minimum
+  // and no overtime: "partial"), and a period without work charges
+  // nothing. Nothing here touches the stored entries.
   function periodOf(k, per) { return per === "w" ? weekStart(k) : per === "m" ? monthStart(k) : k; }
   function periodEnd(from, per) { return per === "w" ? addDays(from, 6) : per === "m" ? monthEnd(from) : from; }
+  // Whose minimum / overtime applies to a project: { key, src (the
+  // record), pid, cid }, or null.
+  function billingOf(data, p) {
+    if (!p) return null;
+    if (hasBilling(p)) return { key: "p" + p.id, src: p, pid: p.id, cid: "" };
+    var c = client(data, p.client);
+    return hasBilling(c) ? { key: "c" + c.id, src: c, pid: "", cid: c.id } : null;
+  }
+  // The hourly rate time is charged at: rateOf, except that a project
+  // with its own day rate (minAmt) has only its own hourly rate (none
+  // inherited from the client or Settings), so a day-rate project
+  // without one charges its day rate and overtime alone.
+  function chargeRate(data, pid) {
+    var p = project(data, pid);
+    return p && hasBilling(p) && p.minAmt ? p.rate : rateOf(data, pid);
+  }
   // The report's pieces in the range and filter, oldest first, each
   // with ms (rounded), bill, rate, amount (overtime included), otMs,
   // otRate and otAmount (what the overtime part is charged).
-  // → { pcs, tops: [{ cid, per, from, to, ms, rate, amount, pc }], partial }
+  // → { pcs, tops: [{ key, pid, cid, per, from, to, ms, rate, amount, pc }], partial }
+  //   a top-up's ms > 0 when the minimum hours decided it (ms × rate),
+  //   0 when the minimum amount did.
   function chargedPieces(data, fromKey, toKey, f, now) {
     var prefs = data.prefs, groups = {}, order = [], tops = [], partial = 0;
     var pcs = piecesIn(data, fromKey, toKey, now).filter(function (pc) {
@@ -482,35 +522,41 @@
     pcs.forEach(function (pc) {
       pc.bill = billable(data, pc.x.p);
       pc.ms = roundMs(pc.e - pc.s, prefs.round, prefs.rup);
-      pc.rate = pc.bill ? rateOf(data, pc.x.p) : 0;
+      pc.rate = pc.bill ? chargeRate(data, pc.x.p) : 0;
       pc.amount = pc.bill ? Math.round(pc.ms * pc.rate / HOUR) : 0;
       pc.otMs = 0;
       pc.otRate = 0;
       pc.otAmount = 0;
       if (!pc.bill) return;
-      var p = project(data, pc.x.p), c = p ? client(data, p.client) : null;
-      if (!c || !c.minH) return;
-      var from = periodOf(pc.k, c.minPer), gk = c.id + TASK_SEP + from;
-      if (!groups[gk]) { groups[gk] = { c: c, from: from, to: periodEnd(from, c.minPer), list: [] }; order.push(gk); }
+      var b = billingOf(data, project(data, pc.x.p));
+      if (!b) return;
+      var per = b.src.minPer, from = periodOf(pc.k, per), gk = b.key + TASK_SEP + from;
+      if (!groups[gk]) { groups[gk] = { b: b, from: from, to: periodEnd(from, per), list: [] }; order.push(gk); }
       groups[gk].list.push(pc);
     });
     order.forEach(function (gk) {
-      var g = groups[gk];
+      var g = groups[gk], src = g.b.src;
       if (g.from < fromKey || g.to > toKey) { partial++; return; }
-      var minMs = g.c.minH * 60000, cum = 0;
+      var thr = (src.otH || src.minH || 0) * 60000, cum = 0, base = 0;
       g.list.forEach(function (pc) {
-        var within = Math.max(0, Math.min(pc.ms, minMs - cum)), over = pc.ms - within;
+        var within = thr ? Math.max(0, Math.min(pc.ms, thr - cum)) : pc.ms, over = pc.ms - within;
         cum += pc.ms;
+        base += Math.round(within * pc.rate / HOUR);
         if (!over) return;
         pc.otMs = over;
-        pc.otRate = g.c.otRate || pc.rate;
+        pc.otRate = src.otRate || pc.rate;
         pc.otAmount = Math.round(over * pc.otRate / HOUR);
         pc.amount = Math.round(within * pc.rate / HOUR) + pc.otAmount;
       });
-      if (cum < minMs) {
-        var last = g.list[g.list.length - 1], ms = minMs - cum;
-        tops.push({ cid: g.c.id, per: g.c.minPer, from: g.from, to: g.to, ms: ms, rate: last.rate,
-                    amount: Math.round(ms * last.rate / HOUR), pc: last });
+      var last = g.list[g.list.length - 1];
+      var shortMs = src.minH ? Math.max(0, src.minH * 60000 - cum) : 0;
+      var byHours = Math.round(shortMs * last.rate / HOUR), byAmt = src.minAmt ? Math.max(0, src.minAmt - base) : 0;
+      if (shortMs || byAmt > 0) {
+        var hoursWin = byHours >= byAmt && shortMs > 0;
+        var amount = Math.max(byHours, byAmt);
+        if (!amount && !hoursWin) return;
+        tops.push({ key: g.b.key, pid: g.b.pid, cid: g.b.cid, per: src.minPer, from: g.from, to: g.to,
+                    ms: hoursWin ? shortMs : 0, rate: hoursWin ? last.rate : 0, amount: amount, pc: last });
       }
     });
     return { pcs: pcs, tops: tops, partial: partial };
@@ -563,7 +609,7 @@
   function report(data, fromKey, toKey, f, now) {
     f = f || {};
     var groups = {}, ids = {}, exIds = [];
-    var tot = { ms: 0, billMs: 0, amount: 0, n: 0, minMs: 0, minAmount: 0, otMs: 0, otAmount: 0, exAmount: 0, exN: 0 };
+    var tot = { ms: 0, billMs: 0, amount: 0, n: 0, minMs: 0, minAmount: 0, minN: 0, otMs: 0, otAmount: 0, exAmount: 0, exN: 0 };
     function grp(kl) {
       return groups[kl[0]] || (groups[kl[0]] = { key: kl[0], label: kl[1], ms: 0, billMs: 0, amount: 0, n: 0,
                                                 minMs: 0, otMs: 0, exAmount: 0 });
@@ -595,6 +641,7 @@
       });
       tot.minMs += tp.ms;
       tot.minAmount += tp.amount;
+      tot.minN++;
       tot.amount += tp.amount;
     });
     extrasIn(data, fromKey, toKey, f).forEach(function (x) {
@@ -862,7 +909,7 @@
     plan.tops.forEach(function (tp) {
       var x = tp.pc.x, n = names(x.p, "");
       out.push({ k: tp.pc.k, s: 0, e: 0, ms: tp.ms, c: n.c, p: n.p, desc: w["exp.minimum"], task: "", tags: "",
-                 bill: true, rate: tp.rate, amount: tp.amount, billed: x.billed, ot: 0, top: true });
+                 bill: true, rate: tp.rate, amount: tp.amount, billed: x.billed, ot: 0, top: true, ex: !tp.ms });
     });
     extrasIn(data, fromKey, toKey, f).forEach(function (x) {
       var n = names(extraProject(data, x), extraClient(data, x));
@@ -870,7 +917,7 @@
                  task: "", tags: "", bill: true, rate: 0, amount: x.amt, billed: x.billed, ot: 0, ex: true });
     });
     return out.sort(function (a, b) {
-      return cmpStr(a.k, b.k) || (a.ex ? 2 : a.top ? 1 : 0) - (b.ex ? 2 : b.top ? 1 : 0) || a.s - b.s;
+      return cmpStr(a.k, b.k) || (a.top ? 1 : a.ex ? 2 : 0) - (b.top ? 1 : b.ex ? 2 : 0) || a.s - b.s;
     });
   }
   function endText(r) { return r.e === dayStart(addDays(r.k, 1)) ? "24:00" : hhmm(r.e); }
@@ -940,19 +987,26 @@
     }).forEach(function (r) {
       var p = project(data, r.pid);
       noteClient(p ? p.client : "");
-      items.push({ d: nameOf(r.pid) + " · " + range, q: hrs(r.ms), p: rateOf(data, r.pid) / 100 });
+      var rate = chargeRate(data, r.pid), b = billingOf(data, p);
+      // a day-rate project without an hourly rate: the minimum line says it all
+      if (rate || !(b && b.src.minAmt)) items.push({ d: nameOf(r.pid) + " · " + range, q: hrs(r.ms), p: rate / 100 });
       if (r.ot) items.push({ d: nameOf(r.pid) + " · " + w["exp.overtime"] + " · " + range, q: hrs(r.ot), p: r.otRate / 100 });
     });
+    // Top-ups: hours at a rate (per owner and rate), or an amount per
+    // period (per owner and amount, the quantity = periods).
     var tops = {}, topOrder = [];
     plan.tops.forEach(function (tp) {
-      var k = tp.cid + TASK_SEP + tp.rate;
-      if (!tops[k]) { tops[k] = { cid: tp.cid, rate: tp.rate, ms: 0 }; topOrder.push(k); }
+      var k = tp.key + TASK_SEP + (tp.ms ? "h" + tp.rate : "a" + tp.amount);
+      if (!tops[k]) { tops[k] = { tp: tp, ms: 0, n: 0 }; topOrder.push(k); }
       tops[k].ms += tp.ms;
+      tops[k].n++;
     });
     topOrder.forEach(function (k) {
-      var tp = tops[k], c = client(data, tp.cid);
-      noteClient(tp.cid);
-      items.push({ d: w["exp.minimum"] + (c ? " · " + c.name : "") + " · " + range, q: hrs(tp.ms), p: tp.rate / 100 });
+      var t = tops[k], tp = t.tp, c = client(data, tp.cid), p = project(data, tp.pid);
+      noteClient(p ? p.client : tp.cid);
+      var who = p ? p.name : (c ? c.name : "");
+      var d = w["exp.minimum"] + (who ? " · " + who : "") + " · " + range;
+      items.push(tp.ms ? { d: d, q: hrs(t.ms), p: tp.rate / 100 } : { d: d, q: t.n, p: tp.amount / 100 });
     });
     var exIds = [];
     extrasIn(data, fromKey, toKey, ff).forEach(function (x) {
@@ -1359,7 +1413,7 @@
     dayKey: dayKey, dayKeyOf: dayKeyOf, keyDate: keyDate, addDays: addDays, validDay: validDay,
     dayStart: dayStart, weekStart: weekStart, monthStart: monthStart, monthEnd: monthEnd,
     normClient: normClient, normProject: normProject, normEntry: normEntry, normExtra: normExtra, normPrefs: normPrefs,
-    MIN_PERS: MIN_PERS, chargedPieces: chargedPieces, extrasIn: extrasIn, extraProject: extraProject,
+    MIN_PERS: MIN_PERS, hasBilling: hasBilling, billingPart: function (x) { return normBilling({}, x || {}); }, billingOf: billingOf, chargedPieces: chargedPieces, extrasIn: extrasIn, extraProject: extraProject,
     extraClient: extraClient, exportRows: exportRows,
     mergeTimesheet: mergeTimesheet, normalize: normalize, empty: empty, parse: parse,
     live: live, project: project, client: client, projectClient: projectClient,

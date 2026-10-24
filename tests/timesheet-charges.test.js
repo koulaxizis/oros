@@ -256,3 +256,68 @@ test(".oroshours file: extras travel (no tombstones), kindOf, and no extras key 
   assert.match(P.DESC.previews(s, "en")["hours.csv"], /Extra charge: Fuel/);
   assert.ok(P.DESC.colls.extras);
 });
+
+test("day rate: a minimum amount per day worked, overtime after a set number of hours", () => {
+  const d = C.normalize({
+    ver: 1,
+    clients: [{ id: "cccccc1", name: "Acme", rate: 5000, minH: 120, m: 1 }],
+    projects: [
+      { id: "pppppp1", name: "Shoot", client: "cccccc1", rate: 0, minAmt: 10000, otH: 480, otRate: 1500, m: 1 },
+      { id: "pppppp2", name: "Edit", client: "cccccc1", m: 1 }
+    ],
+    entries: [
+      ent("eeeeee1", "pppppp1", at(5, 9), at(5, 12)),       // 3 h → day rate
+      ent("eeeeee2", "pppppp1", at(6, 8), at(6, 16)),       // 8 h → day rate
+      ent("eeeeee3", "pppppp1", at(7, 8), at(7, 20)),       // 12 h → day rate + 4 h overtime
+      ent("eeeeee4", "pppppp2", at(7, 9), at(7, 10))        // the client's 2 h minimum, apart from Shoot
+    ]
+  });
+  assert.deepEqual(C.billingPart(d.projects[0]), { minAmt: 10000, otH: 480, minPer: "d", otRate: 1500 });
+  assert.equal(C.billingOf(d, d.projects[0]).key, "ppppppp1");
+  assert.equal(C.billingOf(d, d.projects[1]).key, "ccccccc1");
+  const r = C.report(d, key(1), key(31), { group: "project" }, NOW);
+  const shoot = r.rows.find((x) => x.key === "pppppp1"), edit = r.rows.find((x) => x.key === "pppppp2");
+  assert.equal(shoot.amount, 3 * 10000 + 4 * 1500);
+  assert.equal(shoot.otMs, 4 * H);
+  assert.equal(edit.amount, 2 * 5000);
+  assert.equal(r.total.minN, 4);
+  assert.equal(r.total.minMs, H, "only Edit's top-up is in hours");
+  assert.equal(r.total.amount, 3 * 10000 + 4 * 1500 + 2 * 5000);
+  const q = C.quoteLines(d, key(1), key(31), {}, NOW, "en");
+  assert.deepEqual(q.items.map((it) => [it.d, it.q, it.p]), [
+    ["Shoot · Overtime · 1 Oct – 31 Oct 2026", 4, 15],
+    ["Edit · 1 Oct – 31 Oct 2026", 1, 50],
+    ["Minimum charge · Shoot · 1 Oct – 31 Oct 2026", 3, 100],
+    ["Minimum charge · Acme · 1 Oct – 31 Oct 2026", 1, 50]
+  ]);
+  const total = q.items.reduce((s, it) => s + it.q * it.p * 100, 0);
+  assert.equal(Math.round(total), r.total.amount);
+  const csv = C.toCsv(d, key(5), key(5), {}, NOW, "en").trim().split("\r\n");
+  assert.match(csv[2], /^2026-10-05;;;;;Acme;Shoot;Minimum charge;;;Yes;;100\.00;No$/);
+});
+
+test("day rate with an hourly rate: the day rate is a floor, overtime only past its limit", () => {
+  const d = base(null, {
+    projects: [{ id: "pppppp1", name: "Site", client: "cccccc1", rate: 2000, minAmt: 10000, otH: 480, m: 1 }],
+    entries: [
+      ent("eeeeee1", "pppppp1", at(5, 9), at(5, 12)),       // 3 h × 20 = 60 → 100
+      ent("eeeeee2", "pppppp1", at(6, 8), at(6, 18))        // 10 h: 8 × 20 = 160, then 2 h at 20 (no overtime rate)
+    ]
+  });
+  const r = C.report(d, key(1), key(31), {}, NOW);
+  assert.equal(r.total.minAmount, 4000);
+  assert.equal(r.total.minN, 1);
+  assert.equal(r.total.otMs, 2 * H);
+  assert.equal(r.total.amount, 10000 + 10 * 2000);
+  // Only an overtime limit: no minimum, overtime past it.
+  const o = base(null, {
+    projects: [{ id: "pppppp1", name: "Site", client: "cccccc1", otH: 480, otRate: 3000, m: 1 }],
+    entries: [ent("eeeeee1", "pppppp1", at(5, 8), at(5, 18))]
+  });
+  const ro = C.report(o, key(1), key(31), {}, NOW);
+  assert.equal(ro.total.minN, 0);
+  assert.equal(ro.total.amount, 8 * 5000 + 2 * 3000);
+  // Normalize: otRate needs hours (minH or otH); minPer follows any field.
+  assert.deepEqual(C.billingPart({ minAmt: 5000, otRate: 900 }), { minAmt: 5000, minPer: "d" });
+  assert.deepEqual(C.billingPart({ minAmt: 0, minPer: "w" }), {});
+});

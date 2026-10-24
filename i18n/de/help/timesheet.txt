@@ -28,8 +28,13 @@ Wähle unter `Berichte` einen `Zeitraum` (diese Woche, letzter Monat, dieses Jah
 ## Projekte und Kunden
 Lege unter `Projekte` ein `Neues Projekt` oder einen Kunden (`Neuer Kunde`) an. Ein Projekt hat `Name`, `Kunde`, `Farbe`, `Stundensatz`, ein optionales `Stundenbudget` (z. B. 40 oder 12:30) und `Abrechenbar`. Mit Budget zeigt das Projekt einen Balken der verbrauchten Stunden: Er wird ab 90 % golden und rot, wenn das Budget überschritten ist. Lass den Satz leer, um den Satz des Kunden zu nutzen oder den Standard aus den `Einstellungen`. Ein Projekt mit Einträgen lässt sich nicht löschen; kreuze stattdessen `Archiviert` an, um es im Timer auszublenden und seine Zeit zu behalten.
 
-## Mindestabrechnung, Überstunden und Zusatzkosten
-Öffne unter `Projekte` einen Kunden und lege `Mindeststunden` (z. B. 2 oder 1:30) und `Mindestens pro` `Tag`, `Woche` oder `Monat` fest. Ein Tag (oder eine Woche, ein Monat) mit weniger abrechenbarer Arbeit für diesen Kunden wird bis zum Minimum berechnet, die Zeit darüber sind Überstunden. `Stundensatz für Überstunden` legt fest, was Überstunden kosten; leer bleibt der übliche Satz jedes Projekts. Berichte zeigen die Teile unter der Tabelle: `Arbeitszeit`, `Überstunden`, `Aufgefüllt bis zum Minimum` und `Gesamt abzurechnen`.
+## Tagessatz, Mindestabrechnung, Überstunden und Zusatzkosten
+Öffne unter `Projekte` ein Projekt (oder einen Kunden, für alle seine Projekte ohne eigene Angaben) und klappe `Tagessatz, Minimum und Überstunden` auf. Wähle `Pro` `Arbeitstag`, `Woche` oder `Monat`, dann beliebig:
+- `Mindestbetrag (Tagessatz)`: ein Betrag für jeden Tag mit Arbeit, auch wenn es nur wenige Stunden sind. Ein Projekt mit Tagessatz nutzt nur seinen eigenen Stundensatz; lass ihn leer, um nur den Tagessatz zu berechnen.
+- `Mindeststunden` (z. B. 2 oder 1:30): werden auch berechnet, wenn du weniger arbeitest.
+- `Überstunden ab (Stunden)` (z. B. 8): Zeit darüber sind Überstunden zum `Stundensatz für Überstunden` (leer: der übliche Satz des Projekts). Ohne Angabe beginnen Überstunden nach den Mindeststunden.
+
+Beispiel: Tagessatz 100 € mit Überstunden ab 8 Stunden zu 15 €/h: 3 oder 8 Stunden kosten 100 €, 12 Stunden 100 € + 4 × 15 €. Berichte zeigen die Teile unter der Tabelle: `Arbeitszeit`, `Überstunden`, `Aufgefüllt bis zum Minimum` und `Gesamt abzurechnen`.
 - Es zählt nur abrechenbare Zeit in den Filtern des Berichts. Ein Tag, eine Woche oder ein Monat ohne Arbeit kostet nichts.
 - Ein Minimum pro Woche oder Monat zählt nur für ganze Wochen oder Monate im Zeitraum des Berichts (für ein monatliches Minimum wähle `Dieser Monat` oder `Letzter Monat`). Der Hinweis über der Tabelle sagt, wenn eine(r) ausgelassen wurde.
 - Deine Einträge behalten ihre echten Zeiten: Minimum und Überstunden ändern nur Berichte, CSV, Angebote und Rechnungen.

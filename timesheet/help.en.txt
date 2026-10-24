@@ -28,8 +28,13 @@ On `Reports`, choose a `Period` (this week, last month, this year or `Custom`), 
 ## Projects and clients
 On `Projects`, add a `New project` or `New client`. A project has a `Name`, `Client`, `Colour`, `Hourly rate`, an optional `Hours budget` (e.g. 40 or 12:30) and `Billable`. With a budget, the project shows a bar of the hours used: it turns gold from 90 % and red when the budget is exceeded. Leave the rate empty to use the client's rate, or the default from `Settings`. A project with entries can't be deleted; tick `Archived` instead to hide it from the timer and keep its time.
 
-## Minimum charge, overtime and extra charges
-Open a client on `Projects` to set `Minimum billable hours` (e.g. 2 or 1:30) and `Minimum per` `Day`, `Week` or `Month`. A day (or week, or month) with less billable work for that client is charged up to the minimum, and the time beyond it is overtime. `Overtime hourly rate` sets what overtime costs; leave it empty to keep each project's usual rate. Reports show the parts under the table: `Work time`, `Overtime`, `Up to the minimum charge` and the `Total to charge`.
+## Day rate, minimum charge, overtime and extra charges
+Open a project (or a client, for all its projects without their own) on `Projects` and unfold `Day rate, minimum and overtime`. Choose `Per` `Day worked`, `Week` or `Month`, then any of:
+- `Minimum charge (day rate)`: an amount charged for every day with work, even a short one. A project with a day rate uses only its own hourly rate; leave that empty to charge the day rate alone.
+- `Minimum billable hours` (e.g. 2 or 1:30): charged even when you work less.
+- `Overtime after (hours)` (e.g. 8): time beyond it is overtime at `Overtime hourly rate` (empty: the project's usual rate). Without it, overtime starts after the minimum hours.
+
+For example a day rate of 100 € with overtime after 8 hours at 15 €/h: 3 hours or 8 hours cost 100 €, 12 hours cost 100 € + 4 × 15 €. Reports show the parts under the table: `Work time`, `Overtime`, `Up to the minimum charge` and the `Total to charge`.
 - Only billable time in the report's filters counts. A day, week or month without work charges nothing.
 - A minimum per week or month counts only for whole weeks or months inside the report's period (for a monthly minimum, pick `This month` or `Last month`). The note above the table says when one was left out.
 - Your entries keep their real times: the minimum and the overtime only change reports, CSV, quotes and invoices.
