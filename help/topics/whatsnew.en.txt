@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.55.00
+- Meal Planner: plan together with your household. In Settings › Household, Share with a household gives everyone the same recipes, week plan, shopping list and pantry: what one person plans or ticks in the shop reaches everyone, and Today shows the household's dinner. Your own plan stays under Only mine.
+
 ## Version 3.54.00
 - Household: hear about changes with orOS closed. Turn on "Tell me about changes when orOS is closed" in Household (with Notifications with orOS closed on), and a few minutes after someone else changes something shared, you get one short notification, at most every 15 minutes. Only "something changed" travels, encrypted for your device.
 

@@ -159,6 +159,17 @@
       "file.copyHint": "“Open as copy” adds the file's recipes as new ones, even recipes you already have.",
       "s.close": "Close", "s.slotName": "Name for {slot}",
       "toast.saved": "Recipe saved", "toast.deleted": "“{t}” deleted", "toast.copied": "Copied",
+      "hh.sec": "Household", "hh.own": "Only mine", "hh.plan": "Home plan",
+      "hh.share.t": "Share with a household",
+      "hh.share.x": "Everyone in the household gets the same recipes, week plan, shopping list and pantry in their own Meal Planner, and what one person plans or ticks reaches everyone. Your own plan stays under “Only mine”.",
+      "hh.which": "Household", "hh.go": "Share", "hh.open": "Open Household",
+      "hh.nohh": "Make or join a household first, in the Household app.",
+      "hh.in": "Shared in {hh}: what you plan, cook and tick reaches everyone.",
+      "hh.stop.t": "Stop sharing",
+      "hh.stop.x": "The plan leaves {hh} for everyone, and you keep a copy of it in your own plan. The others can bring it back from Household for 30 days.",
+      "hh.by": "Planned by {n}",
+      "toast.hhShared": "Shared with {hh}", "toast.hhStopped": "Sharing stopped. The plan is now in your own plan.",
+      "toast.hhFail": "Could not reach the household. Try again.",
       "toast.save": "Could not save: storage is full", "toast.imported": "Imported: {n} recipes", "toast.importBad": "That file is not a Meal Planner backup",
       "toast.exported": "Backup saved", "toast.nothing": "Nothing to share", "toast.removedItem": "Removed",
       "copy.suffix": "{t} (copy)", "share.serv": "{n} servings",
@@ -292,6 +303,17 @@
       "file.copyHint": "Το «Άνοιγμα ως αντίγραφο» προσθέτει τις συνταγές του αρχείου ως νέες, ακόμη κι αυτές που έχεις ήδη.",
       "s.close": "Κλείσιμο", "s.slotName": "Όνομα για: {slot}",
       "toast.saved": "Η συνταγή αποθηκεύτηκε", "toast.deleted": "Διαγράφηκε: «{t}»", "toast.copied": "Αντιγράφηκε",
+      "hh.sec": "Νοικοκυριό", "hh.own": "Μόνο τα δικά μου", "hh.plan": "Πρόγραμμα του σπιτιού",
+      "hh.share.t": "Κοινή χρήση με νοικοκυριό",
+      "hh.share.x": "Όλοι στο νοικοκυριό έχουν τις ίδιες συνταγές, το ίδιο πρόγραμμα της εβδομάδας, την ίδια λίστα για ψώνια και το ίδιο κελάρι στο δικό τους Συνταγές & Μενού, και ό,τι προγραμματίζει ή τσεκάρει ένας φτάνει σε όλους. Το δικό σου πρόγραμμα μένει στο «Μόνο τα δικά μου».",
+      "hh.which": "Νοικοκυριό", "hh.go": "Κοινή χρήση", "hh.open": "Άνοιγμα Νοικοκυριού",
+      "hh.nohh": "Φτιάξε πρώτα ένα νοικοκυριό ή μπες σε ένα, από την εφαρμογή Νοικοκυριό.",
+      "hh.in": "Κοινό στο «{hh}»: ό,τι προγραμματίζεις, μαγειρεύεις και τσεκάρεις φτάνει σε όλους.",
+      "hh.stop.t": "Διακοπή κοινής χρήσης",
+      "hh.stop.x": "Το πρόγραμμα φεύγει από το «{hh}» για όλους και εσύ κρατάς αντίγραφό του στο δικό σου πρόγραμμα. Οι άλλοι μπορούν να το φέρουν πίσω από το Νοικοκυριό για 30 ημέρες.",
+      "hh.by": "Το προγραμμάτισε: {n}",
+      "toast.hhShared": "Κοινό με «{hh}»", "toast.hhStopped": "Η κοινή χρήση σταμάτησε. Το πρόγραμμα είναι τώρα στο δικό σου.",
+      "toast.hhFail": "Δεν έγινε σύνδεση με το νοικοκυριό. Δοκίμασε ξανά.",
       "toast.save": "Δεν αποθηκεύτηκε: ο χώρος είναι γεμάτος", "toast.imported": "Εισήχθησαν: {n} συνταγές", "toast.importBad": "Αυτό το αρχείο δεν είναι αντίγραφο του Meal Planner",
       "toast.exported": "Το αντίγραφο αποθηκεύτηκε", "toast.nothing": "Τίποτα για μοίρασμα", "toast.removedItem": "Αφαιρέθηκε",
       "copy.suffix": "{t} (αντίγραφο)", "share.serv": "{n} μερίδες",
@@ -392,22 +414,28 @@
       try {
         var parsed = JSON.parse(raw);
         if (parsed && typeof parsed === "object" && Array.isArray(parsed.rc)) {
-          data = C.mergeMeals(parsed, parsed);
+          data = pdata = C.mergeMeals(parsed, parsed);
           return;
         }
       } catch (e) {}
       try { localStorage.setItem(STORAGE_KEY + "-broken", raw); } catch (e) {}
       try { console.error("[orOS] meals: unreadable data copied to " + STORAGE_KEY + "-broken"); } catch (e) {}
     }
-    data = C.emptyData();
+    data = pdata = C.emptyData();
   }
 
   var saveFailShown = false;
   // Canonical form, write, mark dirty. Called only on a user change.
+  // A household plan on screen: the change goes there instead.
   function commit() {
     data = C.mergeMeals(data, data);
+    if (HS && HS.active()) { HS.push(data); return; }
+    pdata = data;
+    saveOwn();
+  }
+  function saveOwn() {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(pdata));
       saveFailShown = false;
     } catch (e) {
       if (!saveFailShown) { saveFailShown = true; showToast(t("toast.save")); }   // R30
@@ -426,10 +454,167 @@
       un: p.un === "metric" || p.un === "us" ? p.un : "",     // units shown (wave 2): "" as written
       nu: p.nu === 0 ? 0 : 1,                                 // nutrition estimates shown (wave 3)
       nt: P.notifyHour(p),                                    // best-before reminder hour, -1 off (wave 3; read by the shell)
-      loc: C.LOCS.indexOf(p.loc) >= 0 ? p.loc : ""            // pantry filter (wave 3)
+      loc: C.LOCS.indexOf(p.loc) >= 0 ? p.loc : "",           // pantry filter (wave 3)
+      // the plan on screen (BR-HH): "own", "<box>/<doc>" or "" (not picked)
+      wh: typeof p.wh === "string" && /^(own|[A-Za-z0-9_-]{1,40}\/[A-Za-z0-9_-]{1,40})$/.test(p.wh) ? p.wh : ""
     };
   }
   function savePrefs() { try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); } catch (e) {} }
+
+  // ---------- 2a. The plan shared with a household (BR-HH wave 7) ----------
+  // A shared plan is a household document of kind "meals"
+  // (window.parent.orosHousehold; meals/house.js and household/whole.js
+  // turn it into Meal Planner data and back, household/share.js keeps
+  // the books). Sharing copies the own data into the household; the own
+  // data stays as it is under "Only mine". While a household plan is on
+  // screen, `data` is that plan, in memory only, and every change leaves
+  // as the records that changed. Nothing here merges a shared plan: the
+  // household merge does, and hhRefresh() rebuilds it.
+  var pdata = null;       // the own data (stored and synced)
+  var HS = (window.OrosHouseShare && window.OrosMealsHouse && window.OrosHouseCore) ? window.OrosHouseShare.attach({
+    kind: "meals",
+    whole: window.OrosMealsHouse.whole,
+    extra: function (g, d) { return window.OrosMealsHouse.extra(d); },
+    adopt: function (copy) {
+      pdata = C.mergeMeals(pdata, copy);
+      if (!HS.active()) data = pdata;
+      saveOwn();
+    }
+  }) : null;
+  var HH_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-5h4v5"/></svg>';
+  function hhOn() { return !!(HS && HS.api()); }
+  function ownEmpty() { return !pdata.rc.length && !Object.keys(pdata.pl).length && !pdata.mn.length && !pdata.pa.length; }
+  function hhPick() {
+    var k = HS.pick(prefs.wh, ownEmpty());
+    data = k ? HS.get(k).data : pdata;
+  }
+  function hhSwitch(key) {
+    prefs.wh = key || "own";
+    savePrefs();
+    hhPick();
+    renderAll();
+  }
+  function renderPlans() {
+    var box = $("plans");
+    if (!box) return;
+    box.innerHTML = "";
+    var keys = HS ? HS.keys() : [], act = HS ? HS.active() : "";
+    if (!keys.length || (keys.length === 1 && ownEmpty() && act)) { box.hidden = true; return; }
+    box.hidden = false;
+    var chip = function (key, label, house) {
+      var b = el("button", "chip" + (act === key ? " on" : ""));
+      b.type = "button";
+      if (house) b.insertAdjacentHTML("beforeend", HH_SVG);
+      b.appendChild(document.createTextNode(label));
+      b.setAttribute("aria-pressed", act === key ? "true" : "false");
+      b.addEventListener("click", function () { if (HS.active() !== key) hhSwitch(key); });
+      box.appendChild(b);
+    };
+    chip("", t("hh.own"), false);
+    keys.forEach(function (k) { chip(k, HS.get(k).t || t("hh.plan"), true); });
+  }
+  // Who changed a plan cell last (another member only: the initials).
+  function hhByChip(key) {
+    if (!HS || !HS.active()) return null;
+    var g = HS.get(HS.active()), mid = g && g.by[key];
+    if (!mid || mid === HS.me()) return null;
+    var m = HS.member(mid);
+    if (!m) return null;
+    var c = el("span", "by-chip", m.initials);
+    c.title = t("hh.by", { n: m.name });
+    c.setAttribute("aria-label", c.title);
+    return c;
+  }
+  // Settings › Household: share the own plan, or stop sharing.
+  function hhSettings(dlg) {
+    if (!hhOn()) return;
+    var act = HS.active(), g = act ? HS.get(act) : null;
+    var fs = el("fieldset", "");
+    fs.appendChild(el("legend", "dlg-lbl", t("hh.sec")));
+    fs.appendChild(el("p", "hint", g ? t("hh.in", { hh: g.hh || g.t }) : t("hh.share.x")));
+    var row = el("div", "dlg-actions wrap");
+    var b = button(t(g ? "hh.stop.t" : "hh.share.t"), "", function () { dlg.close(); hhAsk(); });
+    b.id = "s-hh";
+    row.appendChild(b);
+    fs.appendChild(row);
+    dlg.appendChild(fs);
+  }
+  function hhAsk() {
+    if (!hhOn()) return;
+    var act = HS.active(), mode = act ? "stop" : "share", g = act ? HS.get(act) : {}, hhs = HS.households();
+    var dlg = makeDialog("ml-hh");
+    dlg.appendChild(el("h2", "v-title", t("hh." + mode + ".t")));
+    dlg.appendChild(el("p", "hint", mode === "share" ? (hhs.length ? t("hh.share.x") : t("hh.nohh"))
+                                                    : t("hh.stop.x", { hh: g.hh || g.t || "" })));
+    var sel = el("select");
+    sel.id = "ml-hhbox";
+    sel.setAttribute("aria-label", t("hh.which"));
+    hhs.forEach(function (x) { var o = el("option", "", x.name || "?"); o.value = x.box; sel.appendChild(o); });
+    if (mode === "share" && hhs.length > 1) dlg.appendChild(sel);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("e.cancel"), "", function () { dlg.close(); }));
+    var ok;
+    if (mode === "share" && !hhs.length) {
+      ok = button(t("hh.open"), "primary", function () {
+        dlg.close();
+        try { window.parent.__orosOpenAt("household", null); } catch (e) {}
+      });
+    } else {
+      ok = button(t(mode === "share" ? "hh.go" : "hh.stop.t"), "primary", function () {
+        ok.disabled = true;
+        var fail = function () { ok.disabled = false; showToast(t("toast.hhFail")); };
+        if (mode === "share") {
+          var box = sel.value, x = hhs.filter(function (y) { return y.box === box; })[0] || {};
+          HS.share(box, x.name || t("hh.plan"), pdata).then(function (key) {
+            prefs.wh = key;
+            savePrefs();
+            hhPick();
+            renderAll();
+            dlg.close();
+            showToast(t("toast.hhShared", { hh: x.name || "" }));
+          }, fail);
+          return;
+        }
+        HS.unshare().then(function () {
+          prefs.wh = "own";
+          savePrefs();
+          hhPick();
+          renderAll();
+          dlg.close();
+          showToast(t("toast.hhStopped"));
+        }, fail);
+      });
+    }
+    ok.id = "ml-hhok";
+    acts.appendChild(ok);
+    dlg.appendChild(acts);
+    showDialog(dlg);
+  }
+  var hhQueued = false;
+  function hhRefresh() {
+    if (hhQueued || !HS) return;
+    hhQueued = true;
+    setTimeout(function () {
+      hhQueued = false;
+      var before = data;
+      var changed = HS.inject();
+      hhPick();
+      if (document.querySelector("dialog[open]")) { renderPlans(); return; }   // what is being typed stays (SS-4)
+      if (changed || data !== before) {
+        if (view.wk) view.wk = C.weekStartOf(view.wk, data.set.ws);
+        renderAll();
+      } else renderPlans();
+    }, 0);
+  }
+  function hhBoot() {
+    var h = HS && HS.api();
+    if (!h) return;
+    var off = h.on(function (e) {
+      if (e && (e.type === "doc" || e.type === "list" || e.type === "roster" || e.type === "archive")) hhRefresh();
+    });
+    window.addEventListener("pagehide", function () { try { off(); } catch (e) {} });
+    Promise.resolve(h.ready()).then(hhRefresh, hhRefresh);
+  }
 
   // View state (session only).
   var view = { wk: null, q: "", fav: false, course: "" };
@@ -821,6 +1006,8 @@
         var items = el("div", "slot-items");
         cellItems(k).forEach(function (it, idx) { items.appendChild(itemChip(k, it, idx)); });
         slot.appendChild(items);
+        var byc = hhByChip(k);
+        if (byc && items.firstChild) slot.appendChild(byc);
         var add = el("button", "mini add");
         add.type = "button";
         add.innerHTML = UI.plus;
@@ -1074,6 +1261,7 @@
   }
 
   function renderAll() {
+    renderPlans();
     renderRecipes();
     renderWeek();
     renderShop();
@@ -3104,6 +3292,8 @@
     nuSet.appendChild(el("p", "hint", t("nu.credit")));
     dlg.appendChild(nuSet);
 
+    hhSettings(dlg);
+
     var bk = el("fieldset", "");
     bk.appendChild(el("legend", "dlg-lbl", t("s.backup")));
     var brow = el("div", "dlg-actions wrap");
@@ -3459,20 +3649,22 @@
     if (!api || typeof api.registerSlice !== "function") return;
     api.registerSlice("meals", sliceGet, sliceSet, STORAGE_KEY, C.mergeMeals);
   }
-  function sliceGet() { return C.mergeMeals(data, data); }   // canonical copy (R26)
+  function sliceGet() { return C.mergeMeals(pdata, pdata); }   // canonical copy (R26) of the own data only
   function sliceSet(incoming) {
     if (!incoming || typeof incoming !== "object" || !Array.isArray(incoming.rc)) return;
-    var before = JSON.stringify(data);
+    var before = JSON.stringify(pdata);
     var wsWas = data.set.ws;
     window.__orosSyncApi._suppress = true;   // R6: a pull never marks dirty
     try {
-      data = C.mergeMeals(incoming, incoming);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      pdata = C.mergeMeals(incoming, incoming);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(pdata));
     } catch (e) {
     } finally {
       window.__orosSyncApi._suppress = false;
     }
-    if (JSON.stringify(data) === before) return;
+    if (JSON.stringify(pdata) === before) return;
+    if (HS && HS.active()) { renderPlans(); return; }   // a household plan is on screen
+    data = pdata;
     if (data.set.ws !== wsWas) view.wk = C.weekStartOf(view.wk, data.set.ws);
     // Open dialogs (editor, recipe, settings) are left alone: what the
     // user is typing stays (SS-4). The views behind them repaint.
@@ -3595,6 +3787,7 @@
     applyI18n();
     wire();
     registerSync();
+    hhBoot();
     inheritPalette();
     watchPalette();
     setTab(prefs.tab);

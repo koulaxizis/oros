@@ -716,4 +716,10 @@ dialog.mm-dlg.cook:not([open]) { display: none; }
   #toast, #toast.show { transition: none; }
 }
 
+/* plans shared with a household (BR-HH wave 7) */
+.plans { flex-shrink: 0; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin: 0; padding: 8px 12px; border-bottom: 1px solid var(--border); }
+.plans::-webkit-scrollbar { display: none; }
+.plans .chip { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.plans .chip svg { width: 14px; height: 14px; }
+.slot .by-chip { position: absolute; right: 4px; bottom: 4px; display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--accent-soft); color: var(--accent); font-size: 10px; font-weight: 800; }
 [hidden] { display: none !important; }

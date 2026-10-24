@@ -78,6 +78,11 @@ The numbers are an estimate to help you plan, not dietary or medical advice.
 ## Sync and backup
 Recipes, the week plan, the shopping ticks, your extra items, the pantry, your nutrition choices and settings sync between your devices through [orOS sync](help:t/sync), so two phones can tick the same list. The open tab, the filters, the units, the best-before reminder and showing nutrition stay on each device. `Settings` has `Export (JSON)` and `Import (JSON)`; an import merges and never wipes. The orOS [backup](help:t/backup) covers this app too.
 
+## Plan together with your household
+With a [household](app:household) set up, the gear › `Household` › `Share with a household` puts a copy of your recipes, week plan, shopping list and pantry in the household: everyone in it sees the same plan in their own Meal Planner, and what one person plans, cooks or ticks in the shop reaches everyone. A meal someone else planned shows their initials. Your own plan stays as it was under `Only mine`, and chips at the top switch between your own plan and the household's. Today shows the household's meals of the day too. Everything is end-to-end encrypted: the orOS relay only passes on what it cannot read.
+
+Only the last four months of plan days, ticks and own shopping items travel; older ones stay in your own plan. `Stop sharing` takes the plan out of the household for everyone: you keep a copy of it in your own plan, and the others can bring it back from the Household app for 30 days.
+
 ## Save and open an orOS file
 In `Settings` › `Save and open`, `orOS file (.orosmeals)` saves your recipes, the week plan, the shopping ticks and extra items, the pantry and the "always at home" choices as one `.orosmeals` file, for example to move them to another device without sync or to give your recipes to someone. The file is a plain ZIP: unzipped it holds the data as `content.json` plus `preview/recipes.md` (every recipe as text) and `preview/shopping.txt` (the shopping list of the week on screen). Settings, aisle choices and nutrition choices are not in the file. It is not encrypted, so keep it somewhere safe.
 
