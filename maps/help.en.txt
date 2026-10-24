@@ -202,6 +202,11 @@ The heatmap is drawn on your device from your GPX files. A track whose file hasn
 
 Each track is a GPX file in Files › Maps › Tracks, so Vault Drive backs it up and brings it to your other devices. Until the file arrives, another device shows a simplified line and the statistics.
 
+## Places shared with your household
+With a [household](app:household) set up, `Household` in a place's popup puts the place in the household's places, with a name and a note (opening hours, which entrance, who to ask for). Everyone in the household sees them in their own Maps: in `Saved places` after your own, and on the map as orange pins. A pin's popup shows the note and who changed it last, with `Route`, `Edit` and `Remove` (`Undo` brings a removed place back). A place already in the household shows `In` plus the household's name on its button. Everything is end-to-end encrypted: the orOS relay only passes on what it cannot read. Nobody's location is shared, only the places someone put there.
+
+`Stop sharing` next to the household's name takes the folder out of the household for everyone. Its places become your own saved places (the note goes after the name), and the others can bring the folder back from the Household app for 30 days.
+
 ## Import from another app
 
 Bring your tracks and saved places over from another maps or sports app. Press `Import file` in `My tracks` or `Import` in `Saved places` and pick one or more files. Maps recognises them and shows what it found before anything is saved: how many tracks and places, where they go (My tracks and its folder, or Saved places with a group for each list), the dates, what you have already and what is skipped. Press `Import`; the message that follows has `Undo`.

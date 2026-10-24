@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.52.00
+- Maps: places shared with your household. Household in a place's popup puts it in the household's places with a note (opening hours, which entrance): everyone sees them in Saved places and as orange pins, with who changed them last. Stop sharing leaves you the places as your own saved places. Nobody's location is shared, only the places.
+
 ## Version 3.51.00
 - Chore Wheel: share the wheel with your household. In Home › Household, Share with a household puts the members, chores and ticks in the household: a tick on one phone reaches everyone, each person picks who they are, and the daily reminder only tells you about your own turn. Stop sharing leaves you an own copy.
 - Plant Care: share your plants with your household. In Settings › Household, everyone gets the same plants and Done on one phone moves the next watering for everyone, so nobody waters twice. Each plant can remind everyone or just one person.

@@ -202,6 +202,11 @@ Die Heatmap wird auf deinem Gerät aus deinen GPX-Dateien gezeichnet. Eine Strec
 
 Jede Strecke ist eine GPX-Datei in Dateien › Maps › Tracks, daher sichert Vault Drive sie und bringt sie auf deine anderen Geräte. Bis die Datei ankommt, zeigt ein anderes Gerät eine vereinfachte Linie und die Statistik.
 
+## Orte mit dem Haushalt teilen
+Mit einem [Haushalt](app:household) legt `Haushalt` im Popup eines Ortes den Ort zu den Orten des Haushalts, mit Name und Notiz (Öffnungszeiten, welcher Eingang, nach wem fragen). Alle im Haushalt sehen sie in ihren eigenen Karten: unter `Gespeicherte Orte` nach den eigenen und auf der Karte als orange Stecknadeln. Das Popup einer Stecknadel zeigt die Notiz und wer sie zuletzt geändert hat, mit `Route`, `Bearbeiten` und `Entfernen` (`Rückgängig` holt einen entfernten Ort zurück). Ein Ort, der schon im Haushalt ist, zeigt `In` und den Namen des Haushalts auf seiner Schaltfläche. Alles ist Ende-zu-Ende verschlüsselt: das orOS-Relay leitet nur weiter, was es nicht lesen kann. Niemandes Standort wird geteilt, nur die Orte, die jemand dort abgelegt hat.
+
+`Nicht mehr teilen` neben dem Namen des Haushalts nimmt den Ordner für alle aus dem Haushalt. Seine Orte werden zu deinen eigenen gespeicherten Orten (die Notiz kommt hinter den Namen), und die anderen können den Ordner 30 Tage lang in der App Haushalt zurückholen.
+
 ## Aus einer anderen App importieren
 
 Hol deine Strecken und gespeicherten Orte aus einer anderen Karten- oder Sport-App herüber. Drücke `Datei importieren` in `Meine Strecken` oder `Importieren` in `Gespeicherte Orte` und wähle eine oder mehrere Dateien. Karten erkennt sie und zeigt, was es gefunden hat, bevor etwas gespeichert wird: wie viele Strecken und Orte, wohin sie kommen (Meine Strecken und ihr Ordner oder Gespeicherte Orte mit einer Gruppe pro Liste), die Daten, was du schon hast und was übersprungen wird. Drücke `Importieren`; die Meldung danach hat `Rückgängig`.

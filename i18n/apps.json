@@ -463,6 +463,7 @@
     "maps/everydoor-core.js",
     "maps/fav.js",
     "maps/heat.js",
+    "maps/hh.js",
     "maps/import-ui.js",
     "maps/maps.js",
     "maps/notes.js",
