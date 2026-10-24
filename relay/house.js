@@ -28,14 +28,22 @@
 //   POST   /h/<box>/rot        W+A { epoch, wh, ah?, env{mid:b64url} } new key epoch
 //   GET    /h/<box>/e/<mid>    W (current or past) this member's key envelope
 //   PUT    /h/<box>/e/<mid>    W+A one envelope (bytes ≤ 8 KB)
+//   POST   /h/<box>/p          W   { pid, wt, ct } wake this device's push box
+//                              (relay/push.js) when the others change something
+//   DELETE /h/<box>/p/<pid>    W   stop that
 //   GET    /h/<box>/ws         WebSocket, subprotocols ["hh1", "w.<W>"]; notices
 //                              {k,r} a document changed, {q:1} a join request,
 //                              {e} a new key epoch, {x:1} the household is gone
+// A document PUT/DELETE may name the writing device ("X-HH-Dev: <pid>"),
+// which is then not woken for its own change. Wake rows are never
+// returned by any request and are cleared on a key rotation.
 // W = "Authorization: Bearer <43>", A = "X-HH-Admin: <43>",
 // I = "Authorization: Invite <43>". A wrong token and a missing box get
 // the same answer (404 "gone"). Nothing is logged; storage failures are
 // a 503 with fixed text.
 // ============================================================
+
+import { validCt } from "./push.js";
 
 export const HOUSE_LIMITS = {
   docs: 64,                    // documents per box
@@ -55,10 +63,14 @@ export const HOUSE_LIMITS = {
   idleMs: 180 * 86400000,      // no member request for this long: the box deletes itself
   touchMs: 6 * 3600000,        // `last` is written at most this often
   perIpMin: 240,               // requests under /h/ per client IP per minute (per isolate)
-  newPerIpDay: 10              // new boxes per client IP per UTC day (per isolate)
+  newPerIpDay: 10,             // new boxes per client IP per UTC day (per isolate)
+  pings: 24,                   // devices to wake (members × devices)
+  pingBytes: 8192,
+  wakeDelayMs: 2 * 60000,      // a burst of writes wakes once, after this
+  wakeGapMs: 15 * 60000        // per device (push.js keeps the same gap)
 };
 
-export const HOUSE_RE = /^\/h\/([A-Za-z0-9_-]{22})(?:\/(d|i|j|a|r|e|rot|ws)(?:\/([A-Za-z0-9_-]{1,64}))?)?$/;
+export const HOUSE_RE = /^\/h\/([A-Za-z0-9_-]{22})(?:\/(d|i|j|a|r|e|p|rot|ws)(?:\/([A-Za-z0-9_-]{1,64}))?)?$/;
 const TOK_RE = /^[A-Za-z0-9_-]{43}$/;
 const HEX64_RE = /^[0-9a-f]{64}$/;
 const KEY_RE = /^[A-Za-z0-9_-]{1,32}$/;
@@ -123,7 +135,7 @@ function cors(origin) {
   return {
     "Access-Control-Allow-Origin": origin,
     "Access-Control-Allow-Methods": "GET, PUT, POST, DELETE, OPTIONS",
-    "Access-Control-Allow-Headers": "Authorization, Content-Type, If-Match, X-HH-Admin",
+    "Access-Control-Allow-Headers": "Authorization, Content-Type, If-Match, X-HH-Admin, X-HH-Dev",
     "Access-Control-Expose-Headers": "X-Rev",
     "Access-Control-Max-Age": "600",
     "Vary": "Origin"
@@ -181,6 +193,7 @@ export function houseOp(method, part, arg) {
   if (part === "r" && arg && ID_RE.test(arg)) return { GET: "rget", PUT: "ans", DELETE: "refuse" }[method] || "";
   if (part === "e" && arg && ID_RE.test(arg)) return { GET: "eget", PUT: "eput" }[method] || "";
   if (part === "rot") return !arg && method === "POST" ? "rot" : "";
+  if (part === "p") return !arg && method === "POST" ? "ping" : (arg && ID_RE.test(arg) && method === "DELETE" ? "unping" : "");
   if (part === "ws") return !arg && method === "GET" ? "ws" : "";
   return "";
 }
@@ -243,14 +256,16 @@ export async function handleHouse(request, env, url, okOrigin, ip, now) {
         const im = /^"?(\d{1,12})"?$/.exec(request.headers.get("If-Match") || "");
         if (!im) return withCors(err(428, "bad-request"), okOrigin);
         h["X-Rev"] = im[1];
+        const dev = request.headers.get("X-HH-Dev") || "";
+        if (ID_RE.test(dev)) h["X-Dev"] = dev;
       }
       const max = op === "dput" ? HOUSE_LIMITS.docBytes : op === "join" ? HOUSE_LIMITS.reqBytes :
                   (op === "ans" || op === "eput") ? HOUSE_LIMITS.ansBytes :
-                  (op === "new" || op === "inv" || op === "rot") ? 16384 : 0;
+                  (op === "new" || op === "inv" || op === "rot") ? 16384 : op === "ping" ? HOUSE_LIMITS.pingBytes : 0;
       if (max) {
         const bytes = await readBytes(request, max);
         if (bytes === null) return withCors(err(413, "too-large"), okOrigin);
-        if (op === "new" || op === "inv" || op === "rot") {
+        if (op === "new" || op === "inv" || op === "rot" || op === "ping") {
           let j;
           try { j = JSON.parse(new TextDecoder().decode(bytes)); } catch (e) { return withCors(err(400, "bad-request"), okOrigin); }
           let bad = "";
@@ -261,9 +276,10 @@ export async function handleHouse(request, env, url, okOrigin, ip, now) {
                   Number.isSafeInteger(j.n) && j.n >= 1 && j.n <= HOUSE_LIMITS.inviteUses ? "" : "body";
           }
           if (op === "rot") bad = validRot(j);
+          if (op === "ping") bad = j && ID_RE.test(j.pid || "") && TOK_RE.test(j.wt || "") && validCt(j.ct) ? "" : "body";
           if (bad) return withCors(err(400, "bad-request"), okOrigin);
           if (op === "new" && newLimited(ip, now)) return withCors(err(429, "rate"), okOrigin);
-          body = JSON.stringify(j);
+          body = JSON.stringify(op === "ping" ? { pid: j.pid, wt: j.wt, ct: j.ct } : j);
         } else {
           if (!bytes.length) return withCors(err(400, "bad-request"), okOrigin);
           body = bytes;
@@ -297,6 +313,7 @@ const SQL = {
   inv: "CREATE TABLE IF NOT EXISTS inv (ih TEXT PRIMARY KEY, exp INTEGER NOT NULL, n INTEGER NOT NULL)",
   req: "CREATE TABLE IF NOT EXISTS req (rid TEXT PRIMARY KEY, ih TEXT NOT NULL, at INTEGER NOT NULL, st INTEGER NOT NULL, data BLOB NOT NULL, ans BLOB)",
   env: "CREATE TABLE IF NOT EXISTS env (mid TEXT PRIMARY KEY, data BLOB NOT NULL)",
+  ping: "CREATE TABLE IF NOT EXISTS ping (pid TEXT PRIMARY KEY, wt TEXT NOT NULL, ct TEXT NOT NULL, due INTEGER NOT NULL, sent INTEGER NOT NULL)",
   getMeta: "SELECT v FROM meta WHERE k = 'box'",
   putMeta: "INSERT OR REPLACE INTO meta (k, v) VALUES ('box', ?)",
   revs: "SELECT k, rev FROM docs",
@@ -320,7 +337,15 @@ const SQL = {
   clearEnv: "DELETE FROM env",
   putEnv: "INSERT OR REPLACE INTO env (mid, data) VALUES (?, ?)",
   getEnv: "SELECT data FROM env WHERE mid = ?",
-  envCount: "SELECT COUNT(*) AS n FROM env"
+  envCount: "SELECT COUNT(*) AS n FROM env",
+  pingCount: "SELECT COUNT(*) AS n FROM ping",
+  getPing: "SELECT pid FROM ping WHERE pid = ?",
+  putPing: "INSERT OR REPLACE INTO ping (pid, wt, ct, due, sent) VALUES (?, ?, ?, 0, 0)",
+  delPing: "DELETE FROM ping WHERE pid = ?",
+  clearPing: "DELETE FROM ping",
+  duePing: "UPDATE ping SET due = 1 WHERE pid != ?",
+  duePings: "SELECT pid, wt, ct, sent FROM ping WHERE due = 1",
+  sentPing: "UPDATE ping SET due = 0, sent = ? WHERE pid = ?"
 };
 
 export class HouseBox {
@@ -335,7 +360,7 @@ export class HouseBox {
   }
   schema() {
     this.sql.exec(SQL.meta); this.sql.exec(SQL.docs); this.sql.exec(SQL.inv);
-    this.sql.exec(SQL.req); this.sql.exec(SQL.env);
+    this.sql.exec(SQL.req); this.sql.exec(SQL.env); this.sql.exec(SQL.ping);
   }
   meta() {
     const r = this.sql.exec(SQL.getMeta).toArray()[0];
@@ -370,7 +395,23 @@ export class HouseBox {
     if (now - (m.last || 0) < HOUSE_LIMITS.touchMs) return;
     m.last = now;
     this.saveMeta(m);
-    await this.state.storage.setAlarm(now + HOUSE_LIMITS.idleMs);
+    await this.arm(m);
+  }
+  // One alarm for two deadlines: the idle wipe and the next wake.
+  async arm(m) {
+    const idle = (m.last || 0) + HOUSE_LIMITS.idleMs;
+    await this.state.storage.setAlarm(m.nw ? Math.min(m.nw, idle) : idle);
+  }
+  // A document changed: every other device that asked is due a wake.
+  async changed(m, dev, now) {
+    const n = this.one(SQL.pingCount);
+    if (!n || !n.n) return;
+    this.sql.exec(SQL.duePing, dev || "");
+    if (!m.nw) {
+      m.nw = now + HOUSE_LIMITS.wakeDelayMs;
+      this.saveMeta(m);
+      await this.arm(m);
+    }
   }
   wrote(m, now) {   // per-box write budget; false when it is used up
     if (!Array.isArray(m.wr) || now - m.wr[0] > 60000) m.wr = [now, 0];
@@ -433,7 +474,7 @@ export class HouseBox {
 
     await this.touch(m, now);
     const isWrite = op === "dput" || op === "ddel" || op === "inv" || op === "invdel" || op === "ans" ||
-                    op === "refuse" || op === "rot" || op === "eput";
+                    op === "refuse" || op === "rot" || op === "eput" || op === "ping" || op === "unping";
     if (isWrite) {
       if (!this.wrote(m, now)) { this.saveMeta(m); return err(429, "rate"); }
       this.saveMeta(m);
@@ -464,6 +505,7 @@ export class HouseBox {
           if (!cur) return ok({ rev: 0 });
           this.sql.exec(SQL.delDoc, arg);
           this.notice({ k: arg, r: 0 });
+          await this.changed(m, request.headers.get("X-Dev") || "", now);
           return ok({ rev: 0 });
         }
         const data = new Uint8Array(await request.arrayBuffer());
@@ -473,6 +515,7 @@ export class HouseBox {
         const rev = have + 1;
         this.sql.exec(SQL.putDoc, arg, rev, data.length, buf(data));
         this.notice({ k: arg, r: rev });
+        await this.changed(m, request.headers.get("X-Dev") || "", now);
         return ok({ rev: rev });
       }
       case "inv": {
@@ -511,6 +554,7 @@ export class HouseBox {
         m.epoch = b.epoch;
         this.state.storage.transactionSync(() => {
           this.sql.exec(SQL.clearEnv);
+          this.sql.exec(SQL.clearPing);       // a removed member's devices stop hearing of changes
           for (const id of Object.keys(b.env)) this.sql.exec(SQL.putEnv, id, buf(unb64u(b.env[id])));
           this.saveMeta(m);
         });
@@ -529,6 +573,16 @@ export class HouseBox {
         if (!r) return err(404, "none");
         return bin(200, bytesOf(r.data), m.epoch);
       }
+      case "ping": {
+        const b = JSON.parse(await request.text());
+        const n = this.one(SQL.pingCount);
+        if (!this.one(SQL.getPing, b.pid) && n && n.n >= HOUSE_LIMITS.pings) return err(413, "full");
+        this.sql.exec(SQL.putPing, b.pid, b.wt, b.ct);
+        return ok({ ok: true });
+      }
+      case "unping":
+        this.sql.exec(SQL.delPing, arg);
+        return ok({ ok: true });
       case "eput": {
         const data = new Uint8Array(await request.arrayBuffer());
         const n = this.one(SQL.envCount);
@@ -560,12 +614,36 @@ export class HouseBox {
   async webSocketClose(ws) { try { ws.close(1000, "bye"); } catch (e) {} }
   async webSocketError(ws) { await this.webSocketClose(ws); }
 
-  // The idle deadline: deletes the box when no member asked for
-  // anything for idleMs.
+  // Two deadlines on one alarm: the wakes (wakeDelayMs after a change)
+  // and the idle wipe (no member asked for anything for idleMs).
   async alarm() {
     const now = Date.now(), m = this.meta();
     if (!m) { await this.wipe(); return; }
     if (now - (m.last || 0) >= HOUSE_LIMITS.idleMs) { await this.wipe(); return; }
-    await this.state.storage.setAlarm((m.last || now) + HOUSE_LIMITS.idleMs);
+    if (m.nw && m.nw <= now) {
+      m.nw = 0;
+      let later = 0;
+      for (const r of this.sql.exec(SQL.duePings).toArray()) {
+        if (now - (r.sent || 0) < HOUSE_LIMITS.wakeGapMs) {          // woken a moment ago: once the gap is over
+          const at = r.sent + HOUSE_LIMITS.wakeGapMs;
+          later = later ? Math.min(later, at) : at;
+          continue;
+        }
+        this.sql.exec(SQL.sentPing, now, r.pid);
+        let res = null;
+        try {
+          if (this.env && this.env.PUSH) {
+            const stub = this.env.PUSH.get(this.env.PUSH.idFromName(r.pid));
+            const x = await stub.fetch("https://push.box/", { method: "POST", headers: { "Content-Type": "application/json" },
+                                                             body: JSON.stringify({ act: "wake", wt: r.wt, ct: r.ct, now: now }) });
+            res = await x.json();
+          }
+        } catch (e) { res = null; }                                   // no retry loop
+        if (res && res.ok === false && res.code === "gone") this.sql.exec(SQL.delPing, r.pid);
+      }
+      m.nw = later;
+      this.saveMeta(m);
+    }
+    await this.arm(m);
   }
 }

@@ -35,6 +35,9 @@
       "sec.reqs": "Asking to join", "sec.members": "People", "sec.invites": "Open invites", "sec.shared": "Shared here", "sec.removed": "Removed lately",
       "docs.none": "Nothing shared yet. In To-Do, open a list's settings (the pencil on its tab), pick this household under “Household” and tap “Share”.",
       "arch.hint": "Lists someone stopped sharing stay here for 30 days.",
+      "push.on": "Tell me about changes when orOS is closed",
+      "push.hint": "On this device, for every household: a couple of minutes after someone else changes something, at most every 15 minutes. Only “something changed” travels, encrypted for this device.",
+      "push.need": "First turn on Settings › Notifications › “Notifications with orOS closed” on this device.",
       "arch.restore": "Share again", "arch.drop": "Forget",
       "leave.btn": "Leave this household", "del.btn": "Delete the household",
       "gone.forget": "Remove from this device",
@@ -89,6 +92,9 @@
       "sec.reqs": "Ζητούν να μπουν", "sec.members": "Άτομα", "sec.invites": "Ανοιχτές προσκλήσεις", "sec.shared": "Κοινά εδώ", "sec.removed": "Αφαιρέθηκαν πρόσφατα",
       "docs.none": "Τίποτα κοινό ακόμα. Στις Εργασίες άνοιξε τις ρυθμίσεις μιας λίστας (το μολύβι στην καρτέλα της), διάλεξε αυτό το νοικοκυριό στο «Νοικοκυριό» και πάτησε «Κοινή χρήση».",
       "arch.hint": "Οι λίστες που κάποιος έπαψε να μοιράζεται μένουν εδώ 30 μέρες.",
+      "push.on": "Ειδοποίησέ με για αλλαγές όταν το orOS είναι κλειστό",
+      "push.hint": "Σε αυτή τη συσκευή, για κάθε νοικοκυριό: λίγα λεπτά αφού κάποιος άλλος αλλάξει κάτι, το πολύ κάθε 15 λεπτά. Ταξιδεύει μόνο το «κάτι άλλαξε», κρυπτογραφημένο για αυτή τη συσκευή.",
+      "push.need": "Άνοιξε πρώτα τις «Ειδοποιήσεις με κλειστό orOS» στις Ρυθμίσεις › Ειδοποιήσεις, σε αυτή τη συσκευή.",
       "arch.restore": "Κοινή ξανά", "arch.drop": "Διαγραφή",
       "leave.btn": "Αποχώρηση από το νοικοκυριό", "del.btn": "Διαγραφή του νοικοκυριού",
       "gone.forget": "Αφαίρεση από αυτή τη συσκευή",
@@ -268,6 +274,18 @@
     renderInvites(hh, out);
     renderDocs(hh);
     renderArchive(hh);
+    renderPush();
+  }
+  // Wakes with orOS closed (engine.js orosHouseholdPush), per device.
+  function pushApi() {
+    try { var p = window.parent.orosHouseholdPush; return p && typeof p.state === "function" ? p : null; } catch (e) { return null; }
+  }
+  function renderPush() {
+    var P = pushApi(), st = P ? P.state() : null;
+    $("push-card").hidden = !st || !st.can;
+    if (!st || !st.can) return;
+    $("push-on").checked = st.on;
+    $("push-hint").textContent = st.on && !st.push ? t("push.need") : t("push.hint");
   }
   function renderTabs(list) {
     var box = $("hh-tabs");
@@ -548,6 +566,12 @@
 
   // ---------- 5. Wire ----------
   function wire() {
+    $("push-on").addEventListener("change", function () {
+      var P = pushApi();
+      if (!P) return;
+      Promise.resolve(P.set($("push-on").checked)).then(renderPush, renderPush);
+      renderPush();
+    });
     setIcon($("add-btn"), ICON.plus, t("add"));
     setIcon($("hh-rename"), ICON.pen, t("rename"));
     $("add-btn").addEventListener("click", function () {

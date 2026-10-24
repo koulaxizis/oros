@@ -52,7 +52,8 @@
     var pendIO = opts.pending;              // { load() → obj, save(obj) }
     var now = opts.now || function () { return Date.now(); };
     var notify = opts.notify || function () {};
-    var onChanged = opts.changed || function () {};   // (box, id, before, after): a pull changed a shared document
+    var onChanged = opts.changed || function () {};
+    var devId = opts.dev || function () { return ""; };   // this device's push box id: not woken for its own writes   // (box, id, before, after): a pull changed a shared document
     var WS = opts.WebSocket || null;
     var relay = String(opts.relay || RELAY).replace(/\/+$/, "");
     var lang = opts.lang || function () { return "en"; };
@@ -140,6 +141,7 @@
       };
       if (o.rev !== undefined) h["If-Match"] = '"' + o.rev + '"';
       if (o.admin) h["X-HH-Admin"] = o.admin;
+      if (o.dev) h["X-HH-Dev"] = o.dev;
       if (o.invite) { h.Authorization = "Invite " + o.invite; return go(); }
       if (o.noauth) return go();
       return (o.w ? Promise.resolve(o.w) : token(box)).then(function (w) { h.Authorization = "Bearer " + w; return go(); });
@@ -283,7 +285,7 @@
           emit({ type: "status", box: box });
           return null;
         }
-        return call("PUT", box, "/d/" + k, { rev: r.rev, bytes: bytes }).then(function (res) {
+        return call("PUT", box, "/d/" + k, { rev: r.rev, bytes: bytes, dev: devId() }).then(function (res) {
           if (res.status === 412) {
             if (tries >= 3) throw fail("busy");
             return fetchDoc(box, k).then(function () { return pushDoc(box, k, tries + 1); });
@@ -726,7 +728,7 @@
         return changeDoc(box, ROSTER, { del: ["c:" + id] });
       }).then(function () {
         emit({ type: "doc", box: box, id: id, gone: true });
-        if (rev > 0) return call("DELETE", box, "/d/" + id, { rev: rev }).catch(function () {});
+        if (rev > 0) return call("DELETE", box, "/d/" + id, { rev: rev, dev: devId() }).catch(function () {});
       });
     }
     function docsOf(kind) {
@@ -838,6 +840,15 @@
       retitle: retitle, unshare: unshare,
       archived: archived, dropArchived: dropArchived, restore: restore,
       liveOn: liveOn, liveOff: liveOff,
+      // Wakes with orOS closed (relay /h/<box>/p): { pid, wt, ct }
+      ping: function (box, body) {
+        if (!entry(box)) return Promise.resolve(false);
+        return call("POST", box, "/p", { json: body }).then(function (res) { return res.ok; }, function () { return false; });
+      },
+      unping: function (box, pid) {
+        if (!entry(box)) return Promise.resolve(false);
+        return call("DELETE", box, "/p/" + pid).then(function (res) { return res.ok; }, function () { return false; });
+      },
       sliceGet: sliceGet, sliceSet: sliceSet, merge: Core.mergeMembership,
       on: function (fn) {
         if (typeof fn !== "function") return function () {};
@@ -886,8 +897,8 @@
   }
 
   var STR = {
-    en: { "n.req": "{name}: someone asks to join", "n.joined": "You are now in {name}", "n.removed": "You are no longer in {name}", "n.title": "Household" },
-    el: { "n.req": "{name}: κάποιος ζητά να μπει", "n.joined": "Είσαι πλέον στο νοικοκυριό {name}", "n.removed": "Δεν είσαι πια στο νοικοκυριό {name}", "n.title": "Νοικοκυριό" }
+    en: { "n.req": "{name}: someone asks to join", "n.joined": "You are now in {name}", "n.removed": "You are no longer in {name}", "n.title": "Household", "n.wake": "Something changed. Open orOS to see it." },
+    el: { "n.req": "{name}: κάποιος ζητά να μπει", "n.joined": "Είσαι πλέον στο νοικοκυριό {name}", "n.removed": "Δεν είσαι πια στο νοικοκυριό {name}", "n.title": "Νοικοκυριό", "n.wake": "Κάτι άλλαξε. Άνοιξε το orOS για να το δεις." }
   };
   // What the others changed (household/recent.js): device-local, rung
   // on the bell once a burst is over (one line per household), shown by
@@ -921,6 +932,64 @@
       });
     }
   };
+  // Wakes with orOS closed (optional, off by default, per device): each
+  // household box keeps this device's push box id, a wake token
+  // (webpush.js wakeToken, it can only wake) and one packet encrypted
+  // here ("Something changed in <household>"). The box sends it a
+  // couple of minutes after someone else's change (relay/house.js). A
+  // new key epoch clears the rows on the relay, so they are sent again.
+  var WAKE_KEY = "oros-household-push";
+  var wake = {
+    eng: null, busy: false, timer: null,
+    io: function () { return lsIO(WAKE_KEY); },
+    prefs: function () { var p = wake.io().load(); return p && typeof p === "object" && p.b && typeof p.b === "object" ? p : { on: false, b: {} }; },
+    push: function () { var P = root.orosPush; return P && typeof P.wakeToken === "function" && P.enabled() ? P : null; },
+    pid: function () { var p = wake.prefs(), P = wake.push(); return p.on && P ? P.deviceId() : ""; },
+    state: function () { var P = root.orosPush; return { on: !!wake.prefs().on, push: !!(P && P.enabled && P.enabled()), can: !!(P && P.supported && P.supported()) }; },
+    later: function () { clearTimeout(wake.timer); wake.timer = setTimeout(wake.sync, 1500); },
+    set: function (on) {
+      var p = wake.prefs();
+      p.on = !!on;
+      wake.io().save(p);
+      return wake.sync();
+    },
+    // Registers every household that lacks this device at its current
+    // epoch; takes the rows back when off (or a household is gone).
+    sync: function () {
+      var eng = wake.eng, P = root.orosPush;
+      if (!eng || wake.busy) return Promise.resolve(false);
+      var p = wake.prefs(), live = wake.push(), want = p.on && live ? live.deviceId() : "";
+      var list = eng.list(), have = {};
+      list.forEach(function (h) { have[h.box] = h; });
+      wake.busy = true;
+      var jobs = Object.keys(p.b).reduce(function (chain, box) {
+        var r = p.b[box];
+        if (want && have[box] && r.pid === want) return chain;
+        return chain.then(function () {
+          var drop = r.wt && P && typeof P.dropWake === "function" ? P.dropWake(r.wt).catch(function () {}) : null;
+          return Promise.all([drop, have[box] && r.pid ? eng.unping(box, r.pid) : null]).then(function () { delete p.b[box]; });
+        });
+      }, Promise.resolve());
+      if (want) {
+        jobs = list.reduce(function (chain, h) {
+          var r = p.b[h.box];
+          if (r && r.pid === want && r.e === h.epoch) return chain;
+          return chain.then(function () {
+            var lang = String((root.orosI18n && root.orosI18n.lang && root.orosI18n.lang()) || "en").slice(0, 2) === "el" ? "el" : "en";
+            return Promise.resolve(r && r.wt ? r.wt : live.wakeToken()).then(function (wt) {
+              return live.wakePacket("household:wake:" + h.box, h.name || STR[lang]["n.title"], STR[lang]["n.wake"], "household:" + h.box).then(function (ct) {
+                return eng.ping(h.box, { pid: want, wt: wt, ct: ct }).then(function (okk) {
+                  p.b[h.box] = { pid: want, wt: wt, e: okk ? h.epoch : 0 };
+                });
+              });
+            }).catch(function () {});
+          });
+        }, jobs);
+      }
+      return jobs.then(function () { wake.io().save(p); }, function () {}).then(function () { wake.busy = false; return true; });
+    }
+  };
+
   function boot() {
     if (!root || !root.document || !Core || !X || !root.indexedDB || !root.crypto || !root.crypto.subtle) return;
     var lang = function () {
@@ -937,6 +1006,7 @@
       lang: lang,
       log: function (e) { try { console.warn("orOS household:", e && e.message || e); } catch (x) {} },
       changed: function (box, id, before, after) { recent.note(box, id, before, after); },
+      dev: function () { return wake.pid(); },
       notify: function (what, box, d) {
         var N = root.orosNotifs, s = STR[lang()];
         if (!N || typeof N.emit !== "function") return;
@@ -947,6 +1017,10 @@
     });
     root.orosHousehold = eng;
     recent.eng = eng;
+    wake.eng = eng;
+    root.orosHouseholdPush = { state: wake.state, set: wake.set };
+    eng.on(function (e) { if (e && (e.type === "list" || e.type === "status")) wake.later(); });
+    eng.ready().then(function () { wake.later(); });
     setInterval(recent.ring, 60000);
     var registered = false;
     function register() {

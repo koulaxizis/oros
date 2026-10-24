@@ -34,6 +34,8 @@ Share lists with the people you live with: family, a partner, flatmates. Each pe
 ## What the others changed
 When someone in the household adds, changes or removes shared things, the bell gets one line per household once they are done (after ten quiet minutes, or an hour at most), for example `Shopping: Nikos +3 ~1, −1`: + added, ~ changed, − removed. Today shows the same for the whole day under the household's name. Your own changes, also from your other devices, are left out. This list stays on this device, and only what reached it while orOS was open counts.
 
+With orOS closed: tick `Tell me about changes when orOS is closed` at the bottom of a household's page (Settings › Notifications › `Notifications with orOS closed` must be on for this device). A few minutes after someone else changes something shared, this device gets one notification, at most every 15 minutes. Only "something changed" travels, encrypted on this device for itself; the relay never sees what changed or who changed it.
+
 ## Privacy and safety
 - The orOS server (a small Cloudflare worker) keeps only scrambled data it cannot read, and forgets a household nobody has opened for 180 days.
 - The key stays on your devices and travels with your own sync (Dropbox, WebDAV), so your other devices are in the household too.
