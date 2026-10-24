@@ -1,0 +1,40 @@
+# Zusammen
+Zählt die Zeit, die du mit einem geliebten Menschen verbracht hast: Tage, Wochen, Monate und Jahre, ein Live-Zähler und die kommenden Meilensteine (jeder Monat, jeder Jahrestag, alle 100 Tage, alle 50 Wochen und ein paar lustige Zahlen). Inspiriert von der Android-App Since Us.
+
+## Erste Schritte
+- Tippe auf `Los geht's` (oder oben auf `+`) und wähle, wer: `Aus Kontakten` nimmt Personen aus deinen [Kontakten](app:contacts), oder schreibe einen Namen und tippe auf `Hinzufügen`.
+- Wähle den Tag, an dem es begann (`Zusammen seit`), und wenn du magst die Uhrzeit. Mit Uhrzeit zählen Stunden, Minuten und Sekunden ab diesem Moment.
+- `Speichern`. Der Startbildschirm zeigt die gemeinsame Zeit, den nächsten Meilenstein und was danach kommt.
+- Ein Tag in der Zukunft geht auch: Der Zähler zählt dann bis dahin herunter (eine Hochzeit, ein Umzug).
+
+## Mehrere Beziehungen
+- `+` fügt eine weitere Beziehung hinzu, jede mit eigenem Tag und Foto. Die Reiter oben wechseln zwischen ihnen.
+- Eine Beziehung kann mehr als eine Person haben (bis zu acht).
+- `Archiviert` behält eine Beziehung, zeigt sie aber zuletzt.
+- `Löschen` im Editor entfernt die Beziehung von allen deinen Geräten. Ihre Fotos bleiben in Dateien.
+
+## Namen, Pronomen und diskreter Modus
+- Eine Person aus Kontakten zeigt immer den Namen, den Kontakte jetzt hat. In Kontakte wird nichts geschrieben.
+- `Ein Name für euch zwei` ersetzt die Liste der Namen, zum Beispiel „Anna & Chris“.
+- `Einstellungen` › `Dein Name` setzt deinen eigenen Namen neben ihren.
+- `Pronomen` ist optional und steht unter den Namen.
+- `Diskret` zeigt nur Initialen, wenn andere deinen Bildschirm sehen können.
+
+## Foto
+- `Von diesem Gerät` wählt ein Bild: Es wird mit höchstens 2048 Pixeln Breite neu gezeichnet und als JPEG in Dateien › `Pictures` › `Together` gespeichert, sodass die Kameradaten darin (EXIF, Ort) nicht erhalten bleiben und der Browserspeicher nicht voll wird.
+- `Aus orOS-Dateien` wählt ein Bild, das du schon in Dateien › `Pictures` hast.
+- `Ausschnitt` schiebt das Bild in der Karte nach oben oder unten.
+- Sync überträgt die Beziehung, nicht das Bild: Vault Drive bringt die Datei auf deine anderen Geräte.
+
+## Meilensteine
+- Monate (1 Monat, 2 Monate…), Jahrestage, alle 100 Tage, alle 50 Wochen und lustige Zahlen: 222, 1111 oder 12345 Tage, 10 000 Stunden, eine Million Minuten, eine Milliarde Sekunden.
+- Ein Datum, das es in einem Monat nicht gibt, rückt auf dessen letzten Tag: zusammen seit dem 31. Januar heißt 1 Monat am 28. oder 29. Februar, und der 29. Februar wird in anderen Jahren zum 28. Februar.
+- `Einstellungen` › `Gezeigte Meilensteine` schaltet jede Art ein oder aus.
+
+## PIN-Sperre
+- `Einstellungen` › `PIN-Sperre` zeigt einen PIN-Bildschirm, wenn Zusammen öffnet, und wieder nach einer Minute Abwesenheit.
+- Es ist ein Sichtschutz auf diesem Gerät, keine Verschlüsselung. Die PIN liegt nur auf diesem Gerät.
+
+## Deine Daten
+- Alles bleibt in orOS auf deinen Geräten. Mit Sync in den [Einstellungen](app:settings) folgt es dir verschlüsselt auf deine anderen Geräte.
+- Die Menüsuche findet deine Beziehungen, sobald du Zusammen in den Sucheinstellungen einschaltest (sie startet ausgeschaltet, weil es privat ist).

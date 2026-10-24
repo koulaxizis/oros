@@ -2,8 +2,8 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 33154 of 33154 (100%)
-- Help pages: 146 of 146 (100%)
+- Strings: 33295 of 33295 (100%)
+- Help pages: 147 of 147 (100%)
 - Shown in the language list: yes
 
 Apps marked "English for now" do not load language packs yet: their
@@ -47,7 +47,7 @@ text is still written in the code. They switch over wave by wave
 | familytree | 100% | 200 / 200 |
 | feeds | 100% | 325 / 325 |
 | fileopen | 100% | 6 / 6 |
-| files | 100% | 361 / 361 |
+| files | 100% | 362 / 362 |
 | fitness | 100% | 413 / 413 |
 | flashcards | 100% | 263 / 263 |
 | flow | 100% | 75 / 75 |
@@ -116,7 +116,7 @@ text is still written in the code. They switch over wave by wave
 | settings | 100% | 525 / 525 |
 | share | 100% | 179 / 179 |
 | shelf | 100% | 291 / 291 |
-| shell | 100% | 897 / 897 |
+| shell | 100% | 898 / 898 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 49 / 49 |
 | sky | 100% | 383 / 383 |
@@ -142,6 +142,7 @@ text is still written in the code. They switch over wave by wave
 | timesheet | 100% | 248 / 248 |
 | today | 100% | 85 / 85 |
 | todo | 100% | 208 / 208 |
+| together | 100% | 139 / 139 |
 | travel | 100% | 555 / 555 |
 | trees | 100% | 76 / 76 |
 | typewriter | 100% | 46 / 46 |

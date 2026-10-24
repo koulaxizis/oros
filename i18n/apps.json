@@ -976,6 +976,12 @@
    ]
   },
   {
+   "app": "together",
+   "files": [
+    "together/app.js"
+   ]
+  },
+  {
    "app": "travel",
    "files": [
     "travel/booking.js",

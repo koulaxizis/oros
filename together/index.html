@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob: 'wasm-unsafe-eval' 'sha256-giycoMDoKMLIi2Jfq8yQQNQOeJwkRDpvCClao6aG4p4='; style-src 'self' 'unsafe-inline'; img-src 'self' https: data: blob:; media-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https: wss: data: blob: http://localhost:* http://127.0.0.1:*; worker-src 'self' blob:; frame-src 'self' https: blob: data:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <!-- DL-1: a direct link to this app opens it inside the orOS shell -->
+  <script>if (window.top === window.self && !/[?&]standalone\b/.test(location.search)) location.replace("../?open=together" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Together · orOS</title>
+  <link rel="stylesheet" href="app.css">
+  <script src="../i18n.js" data-app="together"></script>
+</head>
+<body>
+
+  <header id="toolbar">
+    <h1 id="title" data-i18n="app.name">Together</h1>
+    <div id="rel-tabs" class="rel-tabs" role="tablist"></div>
+    <span class="spacer"></span>
+    <button type="button" class="icon-btn" id="add-btn"></button>
+    <button type="button" class="icon-btn" id="set-btn" aria-haspopup="dialog"></button>
+  </header>
+
+  <main id="main">
+    <section id="first" class="first" hidden>
+      <div class="first-heart" aria-hidden="true"></div>
+      <h2 data-i18n="first.title">Count your time together</h2>
+      <p class="hint" data-i18n="first.text">Pick the person (or the people) from your Contacts, choose the day it all started, and orOS counts the days, weeks and years, and tells you when a round number is coming.</p>
+      <button type="button" class="chip pri" id="first-go" data-i18n="first.go">Start</button>
+      <p class="hint small" data-i18n="first.private">Everything stays in orOS on your devices. Nobody else sees it.</p>
+    </section>
+
+    <section id="home" hidden>
+      <div id="hero" class="hero">
+        <img id="cover" alt="" hidden>
+        <div class="hero-text">
+          <p id="names" class="names"></p>
+          <p id="since" class="since"></p>
+        </div>
+        <button type="button" class="chip hero-edit" id="edit-btn" data-i18n="btn.edit">Edit</button>
+      </div>
+
+      <div class="counter" aria-live="off">
+        <p id="cnt-big" class="cnt-big"></p>
+        <div id="cnt-tiles" class="tiles"></div>
+        <p id="cnt-live" class="cnt-live"></p>
+      </div>
+
+      <div id="next" class="card next"></div>
+
+      <h3 class="sec" data-i18n="sec.coming">Coming up</h3>
+      <ul id="up-list" class="ms-list"></ul>
+
+      <h3 class="sec" id="recent-h" data-i18n="sec.recent">Recently</h3>
+      <ul id="recent-list" class="ms-list past"></ul>
+    </section>
+  </main>
+
+  <!-- Relationship editor -->
+  <dialog id="rel-dlg" class="dlg" aria-labelledby="rel-dlg-t">
+    <form method="dialog" id="rel-form" class="dlg-body" autocomplete="off">
+      <h2 id="rel-dlg-t"></h2>
+
+      <fieldset class="field">
+        <legend data-i18n="rel.people">Who</legend>
+        <ul id="rel-people" class="people"></ul>
+        <div class="row wrap">
+          <button type="button" class="chip" id="rel-from-ct" data-i18n="rel.fromContacts">From Contacts</button>
+          <input type="text" id="rel-name" maxlength="60" data-i18n-ph="rel.namePh">
+          <button type="button" class="chip" id="rel-name-add" data-i18n="rel.addName">Add</button>
+        </div>
+        <p class="hint small" id="rel-people-hint" data-i18n="rel.peopleHint">One person, or more for a relationship of several people.</p>
+      </fieldset>
+
+      <label class="field"><span data-i18n="rel.title">A name for the two of you (optional)</span>
+        <input type="text" id="rel-title" maxlength="60" data-i18n-ph="rel.titlePh">
+      </label>
+
+      <div class="row wrap">
+        <label class="field grow"><span data-i18n="rel.start">Together since</span>
+          <input type="date" id="rel-start" required min="1900-01-01" max="2200-12-31">
+        </label>
+        <label class="field"><span data-i18n="rel.time">Time (optional)</span>
+          <input type="time" id="rel-time">
+        </label>
+      </div>
+
+      <div class="row wrap">
+        <label class="field grow"><span data-i18n="rel.kind">What you are</span>
+          <select id="rel-kind"></select>
+        </label>
+        <label class="field grow"><span data-i18n="rel.pron">Their pronouns (optional)</span>
+          <input type="text" id="rel-pron" maxlength="24" list="pron-list">
+          <datalist id="pron-list"></datalist>
+        </label>
+      </div>
+
+      <label class="check"><input type="checkbox" id="rel-discreet"> <span data-i18n="rel.discreet">Discreet: show initials only</span></label>
+
+      <fieldset class="field">
+        <legend data-i18n="rel.photo">Photo</legend>
+        <div class="photo-row">
+          <div class="photo-prev" id="rel-photo-prev"><img id="rel-photo-img" alt="" hidden></div>
+          <div class="col">
+            <button type="button" class="chip" id="rel-photo-dev" data-i18n="photo.device">From this device</button>
+            <button type="button" class="chip" id="rel-photo-files" data-i18n="photo.files">From orOS Files</button>
+            <button type="button" class="link-btn danger" id="rel-photo-rm" data-i18n="photo.remove">Remove the photo</button>
+          </div>
+        </div>
+        <label class="field" id="rel-pos-wrap"><span data-i18n="photo.pos">Framing (up / down)</span>
+          <input type="range" id="rel-pos" min="0" max="100" step="1">
+        </label>
+        <p class="hint small" data-i18n="photo.hint">The photo is kept as a file in Files › Pictures › Together, so it never fills the browser storage.</p>
+      </fieldset>
+
+      <label class="check" id="rel-arch-wrap"><input type="checkbox" id="rel-arch"> <span data-i18n="rel.archive">Archived (kept, but not shown first)</span></label>
+
+      <p class="msg" id="rel-msg" role="alert"></p>
+      <div class="actions">
+        <button type="button" class="link-btn danger" id="rel-del" data-i18n="btn.delete">Delete</button>
+        <span class="spacer"></span>
+        <button type="button" class="chip" id="rel-cancel" data-i18n="btn.cancel">Cancel</button>
+        <button type="submit" class="chip pri" id="rel-save" data-i18n="btn.save">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Contact picker -->
+  <dialog id="ct-dlg" class="dlg" aria-labelledby="ct-dlg-t">
+    <div class="dlg-body">
+      <h2 id="ct-dlg-t" data-i18n="ct.title">Choose from Contacts</h2>
+      <input type="search" id="ct-q" maxlength="60" data-i18n-ph="ct.search">
+      <ul id="ct-list" class="pick-list"></ul>
+      <p class="hint" id="ct-empty" hidden></p>
+      <div class="actions"><span class="spacer"></span><button type="button" class="chip" id="ct-close" data-i18n="btn.close">Close</button></div>
+    </div>
+  </dialog>
+
+  <!-- Pictures from orOS Files -->
+  <dialog id="pic-dlg" class="dlg" aria-labelledby="pic-dlg-t">
+    <div class="dlg-body">
+      <h2 id="pic-dlg-t" data-i18n="pic.title">A picture from Files</h2>
+      <div id="pic-grid" class="pic-grid"></div>
+      <p class="hint" id="pic-empty" hidden></p>
+      <div class="actions"><span class="spacer"></span><button type="button" class="chip" id="pic-close" data-i18n="btn.close">Close</button></div>
+    </div>
+  </dialog>
+
+  <!-- Settings -->
+  <dialog id="set-dlg" class="dlg" aria-labelledby="set-dlg-t">
+    <div class="dlg-body">
+      <h2 id="set-dlg-t" data-i18n="set.title">Settings</h2>
+      <label class="field"><span data-i18n="set.me">Your name (shown next to theirs, optional)</span>
+        <input type="text" id="set-me" maxlength="60">
+      </label>
+      <label class="check"><input type="checkbox" id="set-live"> <span data-i18n="set.live">Live counter (seconds tick by)</span></label>
+      <fieldset class="field">
+        <legend data-i18n="set.kinds">Milestones to show</legend>
+        <div id="set-kinds" class="checks"></div>
+      </fieldset>
+      <fieldset class="field">
+        <legend data-i18n="sec.lock">PIN lock</legend>
+        <p class="hint small" data-i18n="lock.hint">A PIN screen when Together opens, and again after a minute away. It is a privacy screen on this device, not encryption.</p>
+        <div id="pin-area"></div>
+      </fieldset>
+      <p class="hint small" id="set-about"></p>
+      <div class="actions"><span class="spacer"></span><button type="button" class="chip pri" id="set-close" data-i18n="btn.done">Done</button></div>
+    </div>
+  </dialog>
+
+  <!-- Ask -->
+  <dialog id="ask-dlg" class="dlg small" aria-labelledby="ask-t">
+    <div class="dlg-body">
+      <p id="ask-t"></p>
+      <div class="actions"><span class="spacer"></span>
+        <button type="button" class="chip" id="ask-no" data-i18n="btn.cancel">Cancel</button>
+        <button type="button" class="chip danger-btn" id="ask-yes"></button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- PIN lock -->
+  <div id="lock" class="lock" hidden>
+    <form id="lock-form" class="lock-box" autocomplete="off">
+      <div class="first-heart" aria-hidden="true"></div>
+      <h2 data-i18n="lock.title">Together is locked</h2>
+      <input type="password" id="lock-pin" inputmode="numeric" pattern="[0-9]*" maxlength="8" data-i18n-ph="lock.pin">
+      <button type="submit" class="chip pri" id="lock-go" data-i18n="lock.go">Unlock</button>
+      <p class="msg" id="lock-msg" aria-live="polite"></p>
+      <p class="hint small" data-i18n="lock.note">Forgot the PIN? It lives only on this device: clearing orOS's site data removes it; with sync on, your data comes back from the cloud.</p>
+    </form>
+  </div>
+
+  <div id="toast" role="status"></div>
+
+  <script src="core.js"></script>
+  <script src="app.js"></script>
+
+</body>
+</html>
