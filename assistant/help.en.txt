@@ -36,6 +36,8 @@ When a question needs your data, the assistant searches your apps, much like the
 
 In the answer, titles in the accent colour are links: tap one to open that item in its app. A grey line above the answer shows what was searched and what you shared.
 
+Each result also shows its labels (tags in Bookmarks and Media Shelf), and for a task whether it is done and its priority. So you can ask "which tasks have no label?" or "show my cards with the label Bug": the assistant then lists every such item of the apps that have labels (To-Do, Calendar, Kanban, Contacts, Notes, Bookmarks, Media Shelf), up to 50 per app. Labels are changed only to ones you already have (tags in Bookmarks are free words); new labels are made in the app.
+
 When a short result is not enough, the assistant may ask for the whole item, for example a long note. For an app set to `Ask first` you see one more card with the beginning of the item and its size; press `Share` or `Don't share`.
 
 Models that can't call tools (the built-in browser model, the in-browser model, and a local model marked `This model can't use tools`) can't search by themselves. For them orOS does it before your message goes: it takes a few words from your question, searches the apps you allow, shows the same `Share with …?` card for `Ask first` apps, and sends what you share along with the message. A grey line says what was searched. They can also do a `Briefing`, and read photos and PDFs as text. They can't prepare entries or change anything.
@@ -74,12 +76,12 @@ Ask, for example, "mark the plumber call as done", "move the dentist to Friday a
 - The same change to several items (for example "give every event without a label the label Work") comes as one card that lists each item; one `Apply` changes them all, and `Undo` takes them all back.
 
 What it can change:
-- [To-Do](app:todo): mark a task done or not done, move its date, rename it, change its note, delete it.
+- [To-Do](app:todo): mark a task done or not done, move its date, rename it, change its note, labels or priority, delete it.
 - [Calendar](app:calendar): move an event (day, start, end), rename it, change its place, label or note, delete it. It can also list your events by label, or the ones without a label ("which events have no label?"). New labels are made in Calendar.
 - [Budget](app:budget): change an entry's amount, date, category or note, delete it.
-- [Bookmarks](app:bookmarks): rename a bookmark, change its note, delete it.
-- [Contacts](app:contacts): change a contact's name, organisation, birthday or note, add a phone number or e-mail (the old ones stay), delete it.
-- [Kanban](app:kanban): move a card to another column ("move the invoice card to Done"), change its due date, title or note, delete it. A move runs the column's own automations, and the card shows what they change.
+- [Bookmarks](app:bookmarks): rename a bookmark, change its note or tags, delete it.
+- [Contacts](app:contacts): change a contact's name, organisation, birthday , note or labels, add a phone number or e-mail (the old ones stay), delete it.
+- [Kanban](app:kanban): move a card to another column ("move the invoice card to Done"), change its due date, title, note or labels, delete it. A move runs the column's own automations, and the card shows what they change.
 - [Media Shelf](app:shelf): change a title's status (want to, in progress, done, dropped), name or note, delete it.
 - [Habits](app:habits): tick or untick a yes/no habit for today, rename a habit.
 - [Plant Care](app:plants): mark a plant watered today, rename it, change its notes.

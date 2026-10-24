@@ -19,9 +19,13 @@
   // when the shell has it, else English.
   var S = {
     en: { "type.book": "Book", "type.film": "Film", "type.series": "Series", "type.album": "Music",
-          "type.podcast": "Podcast", "type.game": "Game", "item.untitled": "Untitled" },
+          "type.podcast": "Podcast", "type.game": "Game", "item.untitled": "Untitled",
+          "st.want": "Want", "tab.now": "Now", "st.done": "Done", "st.drop": "Dropped",
+          "rate": "Rating", "fav": "Favourite" },
     el: { "type.book": "Βιβλίο", "type.film": "Ταινία", "type.series": "Σειρά", "type.album": "Μουσική",
-          "type.podcast": "Podcast", "type.game": "Παιχνίδι", "item.untitled": "Χωρίς τίτλο" }
+          "type.podcast": "Podcast", "type.game": "Παιχνίδι", "item.untitled": "Χωρίς τίτλο",
+          "st.want": "Θέλω", "tab.now": "Τώρα", "st.done": "Ολοκληρώθηκε", "st.drop": "Το παράτησα",
+          "rate": "Βαθμολογία", "fav": "Αγαπημένο" }
   };
   function words(lang) {
     var I = root && root.orosI18n;
@@ -45,11 +49,15 @@
         out.push({
           id: it.id,
           title: str(it.title) || w["item.untitled"],
-          text: [(typeof it.type === "string" && w["type." + it.type]) || "", str(it.by),
+          text: [(typeof it.type === "string" && w["type." + it.type]) || "",
+                 (it.st === "now" ? w["tab.now"] : typeof it.st === "string" && w["st." + it.st]) || "",
+                 typeof it.rate === "number" && it.rate > 0 ? w.rate + " " + it.rate / 2 + "/5" : "",
+                 it.fav === 1 ? w.fav : "", str(it.by),
                  typeof it.year === "number" && it.year > 0 ? String(it.year) : "",
                  str(it.plat), arr(it.tags).map(str).filter(Boolean).join(", "),
                  str(it.rev), str(it.src)].filter(Boolean).join(" · "),
-          target: { item: it.id }
+          target: { item: it.id },
+          labels: arr(it.tags).map(str).filter(Boolean)
         });
       });
       return out;

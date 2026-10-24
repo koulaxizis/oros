@@ -36,6 +36,8 @@ Wenn eine Frage deine Daten braucht, durchsucht der Assistent deine Apps, ähnli
 
 In der Antwort sind Titel in der Akzentfarbe Links: Tippe auf einen, um diesen Eintrag in seiner App zu öffnen. Eine graue Zeile über der Antwort zeigt, wonach gesucht wurde und was du geteilt hast.
 
+Jedes Ergebnis zeigt auch seine Labels (Tags bei Lesezeichen und im Medienregal) und bei einer Aufgabe, ob sie erledigt ist, und ihre Priorität. So kannst du fragen „Welche Aufgaben haben kein Label?“ oder „Zeig meine Karten mit dem Label Bug“: Der Assistent bringt dann jeden solchen Eintrag aus den Apps mit Labels (Aufgaben, Kalender, Kanban, Kontakte, Notizen, Lesezeichen, Medienregal), bis zu 50 pro App. Er setzt nur Labels, die du schon hast (Tags bei Lesezeichen sind freie Wörter); neue Labels legst du in der App an.
+
 Reicht ein kurzes Ergebnis nicht, fragt der Assistent eventuell nach dem ganzen Eintrag, zum Beispiel einer langen Notiz. Bei einer App auf `Erst fragen` siehst du noch eine Karte mit dem Anfang des Eintrags und seiner Größe; drücke `Teilen` oder `Nicht teilen`.
 
 Modelle, die keine Werkzeuge aufrufen können (das eingebaute Browsermodell, das Modell im Browser und ein lokales Modell mit Haken bei `Dieses Modell kann keine Werkzeuge nutzen`), können nicht selbst suchen. Für sie erledigt orOS das, bevor deine Nachricht losgeht: Es nimmt ein paar Wörter aus deiner Frage, durchsucht die erlaubten Apps, zeigt für Apps auf `Erst fragen` dieselbe Karte `Mit … teilen?` und sendet, was du teilst, mit der Nachricht mit. Eine graue Zeile zeigt, wonach gesucht wurde. Sie können auch ein `Briefing` machen und Fotos und PDFs als Text lesen. Einträge vorbereiten oder etwas ändern können sie nicht.
@@ -74,12 +76,12 @@ Frag zum Beispiel „Markiere den Anruf beim Klempner als erledigt“, „Versch
 - Dieselbe Änderung an mehreren Einträgen (zum Beispiel „gib jedem Termin ohne Label das Label Arbeit") kommt als eine Karte, die jeden Eintrag zeigt; ein `Übernehmen` ändert alle, und `Rückgängig` nimmt alle zurück.
 
 Was er ändern kann:
-- [Aufgaben](app:todo): eine Aufgabe als erledigt oder nicht erledigt markieren, ihr Datum verschieben, sie umbenennen, ihre Notiz ändern, sie löschen.
+- [Aufgaben](app:todo): eine Aufgabe als erledigt oder nicht erledigt markieren, ihr Datum verschieben, sie umbenennen, ihre Notiz, Labels oder Priorität ändern, sie löschen.
 - [Kalender](app:calendar): einen Termin verschieben (Tag, Beginn, Ende), umbenennen, Ort, Label oder Notiz ändern, löschen. Er kann auch deine Termine nach Label auflisten oder die ohne Label („welche Termine haben kein Label?"). Neue Labels legst du im Kalender an.
 - [Budget](app:budget): Betrag, Datum, Kategorie oder Notiz eines Eintrags ändern, ihn löschen.
-- [Lesezeichen](app:bookmarks): ein Lesezeichen umbenennen, seine Notiz ändern, es löschen.
-- [Kontakte](app:contacts): Name, Organisation, Geburtstag oder Notiz eines Kontakts ändern, eine Telefonnummer oder E-Mail hinzufügen (die alten bleiben), ihn löschen.
-- [Kanban](app:kanban): eine Karte in eine andere Spalte verschieben („Verschieb die Rechnungskarte nach Erledigt“), Fälligkeit, Titel oder Notiz ändern, sie löschen. Ein Verschieben startet die eigenen Automatisierungen der Spalte, und die Karte zeigt, was sie ändern.
+- [Lesezeichen](app:bookmarks): ein Lesezeichen umbenennen, seine Notiz oder Tags ändern, es löschen.
+- [Kontakte](app:contacts): Name, Organisation, Geburtstag, Notiz oder Labels eines Kontakts ändern, eine Telefonnummer oder E-Mail hinzufügen (die alten bleiben), ihn löschen.
+- [Kanban](app:kanban): eine Karte in eine andere Spalte verschieben („Verschieb die Rechnungskarte nach Erledigt“), Fälligkeit, Titel, Notiz oder Labels ändern, sie löschen. Ein Verschieben startet die eigenen Automatisierungen der Spalte, und die Karte zeigt, was sie ändern.
 - [Medienregal](app:shelf): den Status eines Titels ändern (vorgemerkt, läuft gerade, fertig, abgebrochen), Name oder Notiz ändern, ihn löschen.
 - [Gewohnheiten](app:habits): eine Ja/Nein-Gewohnheit für heute abhaken oder den Haken entfernen, eine Gewohnheit umbenennen.
 - [Pflanzenpflege](app:plants): eine Pflanze als heute gegossen markieren, sie umbenennen, ihre Notizen ändern.

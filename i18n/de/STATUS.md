@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 33166 of 33166 (100%)
+- Strings: 33175 of 33175 (100%)
 - Help pages: 146 of 146 (100%)
 - Shown in the language list: yes
 
@@ -12,7 +12,7 @@ text is still written in the code. They switch over wave by wave
 
 | App | Translated | Strings |
 |---|---|---|
-| assistant | 100% | 510 / 510 |
+| assistant | 100% | 513 / 513 |
 | atelier | 100% | 1353 / 1353 |
 | aura | 100% | 84 / 84 |
 | baby | 100% | 324 / 324 |
@@ -33,7 +33,7 @@ text is still written in the code. They switch over wave by wave
 | chores | 100% | 192 / 192 |
 | commands | English for now | 41 / 41 |
 | connect4 | 100% | 62 / 62 |
-| contacts | 100% | 297 / 297 |
+| contacts | 100% | 298 / 298 |
 | converter | 100% | 68 / 68 |
 | crm | 100% | 444 / 444 |
 | crossword | 100% | 170 / 170 |
@@ -63,7 +63,7 @@ text is still written in the code. They switch over wave by wave
 | hexagon | 100% | 59 / 59 |
 | invoices | 100% | 531 / 531 |
 | jigsaw | 100% | 85 / 85 |
-| kanban | 100% | 272 / 272 |
+| kanban | 100% | 273 / 273 |
 | labels | 100% | 88 / 88 |
 | layout | 100% | 474 / 474 |
 | library | 100% | 323 / 323 |
@@ -89,7 +89,7 @@ text is still written in the code. They switch over wave by wave
 | netizen | 100% | 121 / 121 |
 | newsletter | 100% | 817 / 817 |
 | nonogram | 100% | 70 / 70 |
-| notes | 100% | 172 / 172 |
+| notes | 100% | 173 / 173 |
 | oracle | 100% | 38 / 38 |
 | passwords | 100% | 321 / 321 |
 | pet | 100% | 106 / 106 |
@@ -141,7 +141,7 @@ text is still written in the code. They switch over wave by wave
 | time | 100% | 410 / 410 |
 | timesheet | 100% | 248 / 248 |
 | today | 100% | 85 / 85 |
-| todo | 100% | 208 / 208 |
+| todo | 100% | 211 / 211 |
 | travel | 100% | 555 / 555 |
 | trees | 100% | 76 / 76 |
 | typewriter | 100% | 46 / 46 |

@@ -389,6 +389,7 @@
    "app": "kanban",
    "files": [
     "kanban/kanban.js",
+    "kanban/search.js",
     "kanban/tools.js"
    ]
   },
@@ -974,6 +975,7 @@
     "todo/import.js",
     "todo/package.js",
     "todo/platforms.js",
+    "todo/search.js",
     "todo/todo.js"
    ]
   },

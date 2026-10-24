@@ -157,15 +157,19 @@ test("calendar: Undo refuses when the label changed again since", () => {
 });
 
 // ---------- wiring ----------
-test("tools: change_item takes label and refs; app_summary takes label; the prompt names labels only with Calendar", () => {
+test("tools: change_item takes label, labels, priority and refs; app_summary takes label; the prompt names labels", () => {
   const tools = C.toolsFor({ data: true, summary: true, changes: true });
   const chg = tools.find((t) => t.name === "change_item"), sum = tools.find((t) => t.name === "app_summary");
-  assert.ok(chg.params.properties.label && chg.params.properties.refs);
+  assert.ok(chg.params.properties.label && chg.params.properties.labels && chg.params.properties.priority && chg.params.properties.refs);
+  const srch = tools.find((t) => t.name === "search_data");
+  assert.ok(srch.params.properties.label);
+  assert.equal(srch.params.required, undefined);
   assert.deepEqual(chg.params.required, ["action"]);
   assert.ok(sum.params.properties.label);
   const base = { lang: "en", now: NOW, changes: ["Calendar (calendar)"] };
-  assert.match(C.systemPrompt(Object.assign({ apps: ["Calendar (calendar)"] }, base)), /Calendar events can have a label/);
-  assert.doesNotMatch(C.systemPrompt(Object.assign({ apps: ["Notes (notes)"] }, base)), /Calendar events can have a label/);
+  assert.match(C.systemPrompt(Object.assign({ apps: ["Calendar (calendar)"] }, base)), /For Calendar, app_summary/);
+  assert.doesNotMatch(C.systemPrompt(Object.assign({ apps: ["Notes (notes)"] }, base)), /For Calendar, app_summary/);
+  assert.match(C.systemPrompt(Object.assign({ apps: ["Notes (notes)"] }, base)), /search_data with label/);
 });
 
 test("assistant.js: refs go through one card, are checked again on Apply, and undo all or none", () => {
@@ -179,4 +183,128 @@ test("assistant.js: refs go through one card, are checked again on Apply, and un
   const undo = src.slice(src.indexOf("function undoChange("), src.indexOf("function chgValue("));
   assert.match(undo, /mem\.undos\.length - 1; i >= 0 && res\.ok; i--/);
   assert.match(src, /if \(a\.app === "calendar"\) \{\s*own = S\.calendarEvents/);
+});
+
+// ---------- labels everywhere (Chris 2026-10-24) ----------
+const TODO = () => ({
+  ver: 3, deleted: { "lb-old": 50 },
+  labels: [{ id: "lb-home", name: "Home", color: "#fff", mtime: 1 }, { id: "lb-urgent", name: "Urgent", color: "#fff", mtime: 1 },
+           { id: "lb-old", name: "Old", color: "#fff", mtime: 1 }],
+  lists: [{ id: "l1", name: "Inbox", mtime: 1, items: [
+    { id: "t1", text: "Call plumber", done: false, due: "", notes: "", labels: ["lb-home"], mtime: 1 },
+    { id: "t2", text: "Pay rent", done: true, due: "", notes: "", labels: [], prio: 1, mtime: 1 }
+  ] }]
+});
+
+test("todo: labels replace, label adds, none clears; a deleted label is unknown; priority 1-4", () => {
+  const d = TODO();
+  let ap = E.apply("todo", d, { list: "l1", item: "t1" }, ok({ ref: "r1", action: "update", label: "urgent" }), NOW);
+  assert.deepEqual(ap.data.lists[0].items[0].labels, ["lb-home", "lb-urgent"]);
+  assert.equal(ap.data.lists[0].items[0].fm.labels, NOW);
+  ap = E.apply("todo", d, { list: "l1", item: "t1" }, ok({ ref: "r1", action: "update", labels: ["Urgent"] }), NOW);
+  assert.deepEqual(ap.data.lists[0].items[0].labels, ["lb-urgent"]);
+  ap = E.apply("todo", d, { list: "l1", item: "t1" }, ok({ ref: "r1", action: "update", label: "none" }), NOW);
+  assert.deepEqual(ap.data.lists[0].items[0].labels, []);
+  const old = E.plan("todo", d, { list: "l1", item: "t1" }, ok({ ref: "r1", action: "update", label: "Old" }), NOW);
+  assert.match(old.err, /no label named "Old".*Home, Urgent/);
+  const pl = E.plan("todo", d, { list: "l1", item: "t1" }, ok({ ref: "r1", action: "update", priority: 2 }), NOW);
+  assert.deepEqual(pl.rows, [{ f: "priority", b: "", a: "P2" }]);
+  const pr = E.apply("todo", d, { list: "l1", item: "t2" }, ok({ ref: "r1", action: "update", priority: "p4" }), NOW);
+  assert.equal(pr.data.lists[0].items[1].prio, undefined);
+  assert.equal(pr.data.lists[0].items[1].xf.prio, NOW);
+  const un = E.undo("todo", pr.data, pr.undo, NOW + 1);
+  assert.equal(un.ok, true, un.err);
+  assert.equal(un.data.lists[0].items[1].prio, 1);
+  assert.equal(E.normArgs({ ref: "r1", action: "update", priority: 7 }).ok, false);
+  assert.equal(E.normArgs({ ref: "r1", action: "update", label: "a", labels: ["b"] }).ok, false);
+});
+
+test("kanban: card labels from the board's labels, group l stamped, Undo puts them back", () => {
+  const d = { ver: 1, boards: [{ id: "b1", name: "Home", mtime: 1, om: 1, labels: [{ id: "k1", name: "Bug", color: "#f00" }, { id: "k2", name: "Idea", color: "#0f0" }],
+    deleted: {}, columns: [{ id: "c1", name: "To do", mtime: 1, om: 1, cards: [{ id: "x1", text: "Fix tap", notes: "", labels: [], subtasks: [], info: [], mtime: 1 }] }] }] };
+  const ap = E.apply("kanban", d, { board: "b1", card: "x1" }, ok({ ref: "r1", action: "update", labels: ["idea", "BUG"] }), NOW);
+  const card = ap.data.boards[0].columns[0].cards[0];
+  assert.deepEqual(card.labels, ["k2", "k1"]);
+  assert.equal(card.fm.l, NOW);
+  assert.match(E.plan("kanban", d, { board: "b1", card: "x1" }, ok({ ref: "r1", action: "update", label: "Later" }), NOW).err, /Bug, Idea/);
+  const un = E.undo("kanban", ap.data, ap.undo, NOW + 1);
+  assert.deepEqual(un.data.boards[0].columns[0].cards[0].labels, []);
+});
+
+test("contacts: labels by name (a seed in either language), kept sorted, stamped per field", () => {
+  const d = { ver: 1, labels: [{ id: "lbl-work", name: "Εργασία", color: "#e06c75", mtime: 0 }, { id: "lbl-x", name: "Gym", color: "#7aa2f7", mtime: 4 }],
+    contacts: [{ id: "c1", given: "Anna", family: "P", labelIds: [], mtime: 1 }], deleted: [] };
+  const ap = E.apply("contacts", d, "c1", ok({ ref: "r1", action: "update", labels: ["gym", "Work"] }), NOW);
+  const c = ap.data.contacts[0];
+  assert.deepEqual(c.labelIds, ["lbl-work", "lbl-x"]);
+  assert.equal(c.fm.labelIds, c.mtime);
+  assert.equal(ap.rows ? ap.rows.find((r) => r.f === "labels").a : "", "Εργασία, Gym");
+  const un = E.undo("contacts", ap.data, ap.undo, NOW + 1);
+  assert.deepEqual(un.data.contacts[0].labelIds, []);
+});
+
+test("bookmarks: tags are free words; label adds keeping an old spelling, labels sets, none clears; Undo", () => {
+  const d = { items: { b1: { id: "b1", url: "https://x.org", title: "X", note: "", tags: ["News"], modified: 1 } }, deleted: {} };
+  let ap = E.apply("bookmarks", d, { id: "b1" }, ok({ ref: "r1", action: "update", label: "read later" }), NOW);
+  assert.deepEqual(ap.data.items.b1.tags, ["News", "read later"]);
+  assert.equal(ap.data.items.b1.modified, NOW);
+  ap = E.apply("bookmarks", d, { id: "b1" }, ok({ ref: "r1", action: "update", labels: ["news", "AI"] }), NOW);
+  assert.deepEqual(ap.data.items.b1.tags, ["News", "AI"]);
+  const un = E.undo("bookmarks", ap.data, ap.undo, NOW + 1);
+  assert.deepEqual(un.data.items.b1.tags, ["News"]);
+  assert.deepEqual(E.apply("bookmarks", d, { id: "b1" }, ok({ ref: "r1", action: "update", label: "none" }), NOW).data.items.b1.tags, []);
+});
+
+// ---------- reading and the filter ----------
+const PROV = (app) => require("../" + app + "/search.js");
+test("search hits carry labels and the hidden fields: To-Do, Kanban, Contacts, Notes, Shelf, Bookmarks", () => {
+  const ctx = (data, lang) => ({ lang: lang || "en", code: lang || "en", readJSON: () => data });
+  const td = PROV("todo").search(ctx(TODO()));
+  const t2 = td.find((h) => h.id === "t2"), t1 = td.find((h) => h.id === "t1");
+  assert.match(t2.text, /^Done · Priority 1/);
+  assert.deepEqual(t1.labels, ["Home"]);
+  assert.match(t1.text, /Labels: Home/);
+  assert.deepEqual(t2.labels, []);
+  assert.match(PROV("todo").search(ctx(TODO(), "el")).find((h) => h.id === "t1").text, /Ετικέτες: Home/);
+  const ct = PROV("contacts").search(ctx({ labels: [{ id: "l1", name: "Gym" }], contacts: [{ id: "c1", given: "Anna", labelIds: ["l1"], starred: true }] }));
+  assert.equal(ct[0].text, "Favorite · Labels: Gym");
+  assert.deepEqual(ct[0].labels, ["Gym"]);
+  const nt = PROV("notes").search(ctx({ notebooks: [{ id: "n1", name: "Work" }], labels: [{ id: "a", name: "Draft" }], pages: [{ id: "p1", nb: "n1", title: "Plan", text: "body", labels: ["a"] }] }));
+  assert.equal(nt[0].text, "📓 Work · Labels: Draft · body");
+  assert.deepEqual(nt[0].labels, ["Draft"]);
+  const bm = PROV("bookmarks").search(ctx({ items: { b: { id: "b", url: "https://x.org", title: "X", tags: ["ai"] } } }));
+  assert.deepEqual(bm[0].labels, ["ai"]);
+  const S2 = require("../search.js");
+  assert.deepEqual(S2.cleanHit({ title: "x", labels: ["a", 3, " b "] }).labels, ["a", "b"]);
+  assert.equal(S2.cleanHit({ title: "x" }).labels, undefined);
+});
+
+test("label filter: none, a name with its seed names, apps without labels drop out, 50 per app", () => {
+  assert.equal(C.labelHit([], "none"), true);
+  assert.equal(C.labelHit(["Work"], "none"), false);
+  assert.equal(C.labelHit(["Εργασία"], "work"), true);
+  assert.equal(C.labelHit(["Arbeit"], "ΕΡΓΑΣΙΑ"), true);
+  assert.equal(C.labelHit(["Workout"], "work"), false);
+  assert.equal(C.labelHit(undefined, "none"), false);
+  const hits = [];
+  for (let i = 0; i < 60; i++) hits.push({ id: "h" + i, title: "E" + i, text: "", labels: [] });
+  const f = C.filterLabel([{ id: "calendar", hits }, { id: "files", hits: [{ id: "f", title: "doc" }] }], "none");
+  assert.deepEqual(f.apps, ["calendar"]);
+  assert.deepEqual(f.more, { calendar: 10 });
+  const packed = C.packHits(f.groups, (id) => id, { wide: true });
+  assert.equal(packed.length, 50);
+  assert.equal(C.packHits(f.groups, (id) => id).length, 8);
+  const res = JSON.parse(C.searchResult("", packed.slice(0, 1).map((x) => Object.assign(x, { ref: "r1" })), { label: "none", more: { Calendar: 10 }, noLabels: ["Files"] }));
+  assert.equal(res.label, "none");
+  assert.deepEqual(res.results[0].labels, []);
+  assert.deepEqual(res.apps_without_labels, ["Files"]);
+});
+
+test("shell: the Assistant's search has an all-items mode for the label filter", () => {
+  const sh = fs.readFileSync(path.join(ROOT, "shell.js"), "utf8");
+  assert.match(sh, /window\.orosAssistSearch = function \(q, ids, opts\)/);
+  assert.match(sh, /if \(opts && opts\.all\) \{/);
+  const src = fs.readFileSync(path.join(ROOT, "assistant/assistant.js"), "utf8");
+  assert.match(src, /orosAssistSearch\(q, ids, \{ all: !q \}\)/);
+  assert.match(src, /C\.filterLabel\(groups, label\)/);
 });

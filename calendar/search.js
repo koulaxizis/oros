@@ -102,7 +102,8 @@
                  typeof e.labelId === "string" && lbl[e.labelId] ? w["srch.label"] + lbl[e.labelId] : "",
                  str(e.location), str(e.note)].filter(Boolean).join(" · "),
           when: new Date(+p[0], +p[1] - 1, +p[2], +hm[0], +hm[1]).getTime(),
-          target: { id: e.id, date: day }
+          target: { id: e.id, date: day },
+          labels: typeof e.labelId === "string" && lbl[e.labelId] ? [lbl[e.labelId]] : []
         });
       });
       return out;

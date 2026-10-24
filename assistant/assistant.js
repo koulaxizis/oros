@@ -342,6 +342,7 @@
       "chg.ask.many": "Change these {n} items in {app}?",
       "chg.textMany": "{name} asks to make the same change to {n} of your items. Check them: nothing changes until you press Apply.",
       "chg.many": "{n} items", "f.label": "Label",
+      "lbl.search": "label: {label}", "lbl.none": "no label", "f.priority": "Priority",
       "v.done": "done", "v.open": "not done", "v.empty": "(none)", "v.income": "income", "v.expense": "expense",
       "f.title": "Title", "f.done": "Status", "f.due": "Due", "f.end": "Ends", "f.note": "Note", "f.kind": "Type",
       "f.watered": "Last watered", "f.labels": "Labels", "f.subtasks": "Subtasks", "f.position": "Position"
@@ -615,6 +616,7 @@
       "chg.ask.many": "Αλλαγή σε αυτά τα {n} στοιχεία ({app});",
       "chg.textMany": "Το {name} ζητά την ίδια αλλαγή σε {n} στοιχεία σου. Έλεγξέ τα: τίποτα δεν αλλάζει πριν πατήσεις Εφαρμογή.",
       "chg.many": "{n} στοιχεία", "f.label": "Ετικέτα",
+      "lbl.search": "ετικέτα: {label}", "lbl.none": "χωρίς ετικέτα", "f.priority": "Προτεραιότητα",
       "v.done": "έγινε", "v.open": "εκκρεμεί", "v.empty": "(κενό)", "v.income": "έσοδο", "v.expense": "έξοδο",
       "f.title": "Τίτλος", "f.done": "Κατάσταση", "f.due": "Προθεσμία", "f.end": "Λήξη", "f.note": "Σημείωση", "f.kind": "Είδος",
       "f.watered": "Τελευταίο πότισμα", "f.labels": "Ετικέτες", "f.subtasks": "Υποεργασίες", "f.position": "Θέση"
@@ -2116,7 +2118,8 @@
     if (call.name === "read_page") return readPage(c, call.args);
     if (call.name !== "search_data") return Promise.resolve({ content: "Error: unknown tool " + call.name, err: 1 });
     var q = String(call.args && call.args.query || "").replace(/\s+/g, " ").trim().slice(0, 200);
-    if (!q) return Promise.resolve({ content: "Error: query is empty.", err: 1 });
+    var label = typeof (call.args && call.args.label) === "string" ? call.args.label.replace(/\s+/g, " ").trim().slice(0, 40) : "";
+    if (!q && !label) return Promise.resolve({ content: "Error: query is empty.", err: 1 });
     var byId = {};
     apps.forEach(function (a) { byId[a.id] = a; });
     var all = appList(), allById = {};
@@ -2132,12 +2135,16 @@
       });
     }
     var p = shell();
-    var search = (p && typeof p.orosAssistSearch === "function") ? p.orosAssistSearch(q, ids) : Promise.resolve([]);
+    var search = (p && typeof p.orosAssistSearch === "function") ? p.orosAssistSearch(q, ids, { all: !q }) : Promise.resolve([]);
+    // What the user sees on the consent card: the words, or the label.
+    var shown = q || t("lbl.search", { label: C.isNoLabel(label) ? t("lbl.none") : label });
     return Promise.resolve(search).then(function (groups) {
-      var items = C.packHits(groups, function (id) { return byId[id] ? byId[id].name : id; });
+      var lf = label ? C.filterLabel(groups, label) : null;
+      if (lf) groups = lf.groups;
+      var items = C.packHits(groups, function (id) { return byId[id] ? byId[id].name : id; }, { wide: !!label || ids.length === 1 });
       var free = items.filter(function (it) { return byId[it.app] && byId[it.app].perm === "always"; });
       var ask = items.filter(function (it) { return byId[it.app] && byId[it.app].perm === "ask"; });
-      var choice = ask.length ? askConsent(q, ask) : Promise.resolve({ chosen: [], always: [] });
+      var choice = ask.length ? askConsent(shown, ask) : Promise.resolve({ chosen: [], always: [] });
       return choice.then(function (ch) {
         if (!ch) ch = { chosen: [], always: [] };
         ch.always.forEach(function (id) { setPerm(id, "always"); });
@@ -2145,14 +2152,24 @@
         shared.forEach(function (it) {
           c.refN = (c.refN || 0) + 1;
           it.ref = "r" + c.refN;
-          c.refs[it.ref] = { app: it.app, target: it.target, title: it.title, q: q, id: it.id };
+          // read_item finds the item again with the same search (q),
+          // or by its label when there were no words.
+          c.refs[it.ref] = { app: it.app, target: it.target, title: it.title, q: q || it.title, id: it.id };
         });
         var held = ask.length - ch.chosen.length;
         var names = [];
         shared.forEach(function (it) { if (names.indexOf(it.appName) < 0) names.push(it.appName); });
+        var info = { declined: held, blocked: blocked, unknown: unknown };
+        if (lf) {
+          info.label = C.isNoLabel(label) ? "none" : label;
+          var more = {};
+          Object.keys(lf.more).forEach(function (id) { more[byId[id] ? byId[id].name : id] = lf.more[id]; });
+          if (Object.keys(more).length) info.more = more;
+          info.noLabels = ids.filter(function (id) { return lf.apps.indexOf(id) < 0; }).map(function (id) { return byId[id] ? byId[id].name : id; });
+        }
         return {
-          content: C.searchResult(q, shared, { declined: held, blocked: blocked, unknown: unknown }),
-          ui: { k: "search", q: q, n: shared.length, held: held, found: items.length, apps: names }
+          content: C.searchResult(q, shared, info),
+          ui: { k: "search", q: shown, n: shared.length, held: held, found: items.length, apps: names }
         };
       });
     }, function () {
