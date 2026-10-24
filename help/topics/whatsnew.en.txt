@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.49.00
+- Calendar: share a calendar with your household. In Manage labels, the house icon next to a label shares it: everyone in the household sees its events in their own Calendar and can add, change, move and delete them. Reminders stay your own and still come when the Calendar is closed, and a small circle with initials shows who changed an event last. Stop sharing leaves you an own copy.
+
 ## Version 3.48.00
 - New app Household (Lifestyle): share lists with the people you live with. Make a household, invite family or flatmates with a link or QR code, and share any To-Do list, like the shopping list, from its settings. Everyone edits from their own orOS and sees changes in seconds; offline changes join up later without losing anything. Everything is encrypted on your devices and no account is needed. Shared calendars, expenses, chores and maps come next.
 

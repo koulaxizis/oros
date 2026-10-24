@@ -219,6 +219,18 @@
     </div>
   </dialog>
 
+  <!-- BR-HH: share / stop sharing / delete a shared calendar -->
+  <dialog id="hh-dlg" aria-labelledby="hh-dlg-title">
+    <h3 id="hh-dlg-title"></h3>
+    <p id="hh-dlg-text" class="del-text"></p>
+    <p id="hh-dlg-nohh" class="del-text" data-i18n="hh.nohh" hidden></p>
+    <select id="hh-dlg-box" class="hh-dlg-box" data-i18n-aria="hh.share" hidden></select>
+    <div class="dlg-row">
+      <button id="hh-dlg-go" type="button" class="btn prim"></button>
+      <button id="hh-dlg-no" type="button" class="btn" data-i18n="ev.cancel"></button>
+    </div>
+  </dialog>
+
   <!-- ICS import preview (never a silent import) -->
   <dialog id="imp-dlg" aria-labelledby="imp-dlg-title">
     <h3 id="imp-dlg-title" data-i18n="imp.title"></h3>
@@ -407,6 +419,8 @@
   <script src="../crm/core.js?v=3.47.00"></script>
   <script src="../health/core.js?v=3.47.00"></script>
   <script src="occur.js?v=3.47.00"></script>
+  <script src="../household/core.js?v=3.47.00"></script>
+  <script src="house.js?v=3.47.00"></script>
   <script src="namedays.js?v=3.47.00"></script>
   <script src="ics.js?v=3.47.00"></script>
   <script src="../google-import.js?v=3.47.00"></script>

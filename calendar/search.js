@@ -14,6 +14,7 @@
 (function (root) {
   "use strict";
   var KEY = "oros-calendar-data";
+  var HH_KEY = "oros-calendar-hh";        // calendars shared with a household (calendar/house.js)
   var YMD = /^\d{4}-\d{2}-\d{2}$/;
 
   function pad(n) { return (n < 10 ? "0" : "") + n; }
@@ -83,10 +84,14 @@
 
   var PROVIDER = {
     id: "calendar",
-    keys: [KEY],
+    keys: [KEY, HH_KEY],
     pickDate: pickDate,
     search: function (ctx) {
-      var d = ctx.readJSON(KEY), out = [];
+      var d = ctx.readJSON(KEY), hh = ctx.readJSON(HH_KEY), out = [];
+      if (hh && Array.isArray(hh.events) && hh.events.length) {
+        d = { labels: (d && Array.isArray(d.labels) ? d.labels : []).concat(Array.isArray(hh.labels) ? hh.labels : []),
+              events: (d && Array.isArray(d.events) ? d.events : []).concat(hh.events) };
+      }
       if (!d || !Array.isArray(d.events)) return out;
       var now = new Date(), today = ymd(now.getFullYear(), now.getMonth(), now.getDate());
       var w = L[ctx.lang] || L.en, lbl = labelNames(d, w);

@@ -1619,3 +1619,35 @@ dialog#qa-dlg::backdrop, dialog#subs-dlg::backdrop, dialog#sv-dlg::backdrop, dia
 /* Weather on days (app links wave 6): the Weather app's cached forecast */
 .cal-wx { position: absolute; top: 3px; right: 4px; font-size: 11px; line-height: 1; pointer-events: none; }
 .wk-wx, .day-wx { margin-left: 6px; font-size: 11.5px; font-weight: 600; color: var(--text-dim); white-space: nowrap; }
+
+/* ---------- Calendars shared with a household (BR-HH) ---------- */
+.lbl-hh { min-height: 38px; min-width: 40px; padding: 6px 10px; display: inline-flex; align-items: center; justify-content: center; }
+.lbl-hh-stop { min-height: 38px; padding: 6px 10px; font-size: 12px; }
+.lbl-row.hh .lbl-name-in { flex: 1 1 calc(100% - 40px); }
+.lbl-row.hh .lbl-hh-stop { margin-left: 30px; flex: 0 1 auto; }
+.lbl-row.hh .lbl-del { flex: 0 1 auto; }
+.lbl-hh-in { flex-basis: 100%; font-size: 12px; color: var(--text-dim); padding-left: 30px; margin-top: -4px; overflow-wrap: anywhere; }
+.lbl-hh-hint { font-size: 13px; color: var(--text-dim); }
+.lbl-hh-open { align-self: flex-start; min-height: 38px; }
+.ev-by {
+  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+  min-width: 20px; height: 20px; padding: 0 4px; border-radius: 999px;
+  font-size: 10px; font-weight: 800; color: #14120d;
+}
+.hh-dlg-box {
+  width: 100%; min-height: 40px; margin: 4px 0 8px;
+  background: var(--bg); color: var(--text);
+  border: 1px solid var(--border); border-radius: 7px; padding: 6px 10px; font: inherit;
+}
+dialog#hh-dlg {
+  background: var(--panel-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 12px 40px var(--shadow);
+  padding: 16px;
+  width: min(380px, calc(100vw - 32px));
+}
+dialog#hh-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
+#hh-dlg h3 { font-size: 14px; color: var(--accent); margin-bottom: 10px; }
+#hh-dlg .del-text { margin-bottom: 10px; }

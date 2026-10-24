@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "3.48.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "3.49.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -8028,7 +8028,14 @@
   function calRemTick() {
     var raw;
     try { raw = JSON.parse(localStorage.getItem(CALREM_DATA_KEY)); }
-    catch (e) { return; }
+    catch (e) { raw = null; }
+    // BR-HH: calendars shared with a household (calendar/house.js
+    // mirror, this device's own reminders)
+    var hhCal = null;
+    try { hhCal = JSON.parse(localStorage.getItem("oros-calendar-hh")); } catch (e) {}
+    if (hhCal && Array.isArray(hhCal.events) && hhCal.events.length) {
+      raw = { events: (raw && Array.isArray(raw.events) ? raw.events : []).concat(hhCal.events) };
+    }
     if (!raw || !Array.isArray(raw.events)) return;
 
     var now = Date.now();
