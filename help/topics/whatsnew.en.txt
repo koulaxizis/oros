@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.46.00
+- Newsletter: lists clean themselves up. Once a day, people who never confirmed (30 days after the request) and people who left (90 days after they unsubscribed or bounced) are deleted, so the list doesn't grow for nothing. Active subscribers are never touched, and a big clean-up waits for your OK. Subscribers › Clean up… sets the days, shows who would go and exports them first.
+
 ## Version 3.45.00
 - New app Together (Personal): count your time together with the people you love, from the first day, with milestones (months, anniversaries, every 100 days, fun numbers), moments with photos, special days, gift ideas and long-distance meetings. It links with Contacts, Calendar, To-Do, Notes, Budget and Today, makes a card to share, and keeps everything private (PIN lock, discreet mode, backup file with a password). Inspired by the Android app Since Us.
 
