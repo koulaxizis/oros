@@ -31,6 +31,9 @@ Teile Listen mit den Menschen, mit denen du wohnst: Familie, Partner, Mitbewohne
 ## Kürzlich entfernt
 - Eine Liste, die jemand nicht mehr teilt, bleibt hier 30 Tage. `Wieder teilen` bringt sie zurück in den Haushalt.
 
+## Was die anderen geändert haben
+Wenn jemand im Haushalt geteilte Dinge hinzufügt, ändert oder entfernt, bekommt die Glocke eine Zeile pro Haushalt, sobald er fertig ist (nach zehn ruhigen Minuten oder spätestens nach einer Stunde), zum Beispiel `Einkauf: Nikos +3 ~1, −1`: + hinzugefügt, ~ geändert, − entfernt. Heute zeigt dasselbe für den ganzen Tag unter dem Namen des Haushalts. Deine eigenen Änderungen, auch von deinen anderen Geräten, zählen nicht. Diese Liste bleibt auf diesem Gerät, und es zählt nur, was ankam, während orOS offen war.
+
 ## Privatsphäre und Sicherheit
 - Der orOS-Server (ein kleiner Cloudflare-Worker) speichert nur unlesbare Daten und vergisst einen Haushalt, den 180 Tage niemand geöffnet hat.
 - Der Schlüssel bleibt auf deinen Geräten und reist mit deiner eigenen Synchronisierung (Dropbox, WebDAV), sodass auch deine anderen Geräte im Haushalt sind.

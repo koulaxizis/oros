@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.53.00
+- Household: see what the others changed. When someone in your household adds, changes or removes shared things, the bell gets one short line once they are done (for example "Shopping: Nikos +3 ~1, −1"), and Today shows what changed at home today. Your own changes are left out.
+
 ## Version 3.52.00
 - Maps: places shared with your household. Household in a place's popup puts it in the household's places with a note (opening hours, which entrance): everyone sees them in Saved places and as orange pins, with who changed them last. Stop sharing leaves you the places as your own saved places. Nobody's location is shared, only the places.
 

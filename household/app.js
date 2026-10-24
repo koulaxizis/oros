@@ -695,11 +695,20 @@
     wire();
     inheritPalette();
     watchPalette();
-    if (H) {
-      H.ready().then(function () { render(); refresh(); takePending(); });
-      watch();
-    }
-    render();
+    // The shell may open this page (an invite link) a moment before its
+    // engine is there: wait for it a few seconds before saying so.
+    var tries = 0;
+    (function start() {
+      if (!H && window.parent !== window && tries++ < 40) {
+        H = engine();
+        if (!H) { setTimeout(start, 250); return; }
+      }
+      if (H) {
+        H.ready().then(function () { render(); refresh(); takePending(); });
+        watch();
+      }
+      render();
+    })();
   }
   boot();
 })();
