@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.43.00
+- Assistant: it now sees the labels of your items (Calendar, To-Do, Kanban, Contacts, Notes, Bookmarks tags, Media Shelf tags), whether a task is done and its priority, and a title's status and rating. Ask "which events have no label?" or "show my cards with the label Bug" and it lists them, up to 50 per app. It can also set, add or remove labels and a task's priority, and the same change to many items comes as one card with one Apply and one Undo.
+
 ## Version 3.42.03
 - Calculator: Troll mode now always gives the correct answer and adds a cheeky line under it (in Basic and Scientific, in English, Greek and German). Right-click or long-press the button to choose how cheeky it gets. Answers the old Troll mode had changed keep a ≈ mark in the history.
 
